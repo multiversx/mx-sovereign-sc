@@ -28,12 +28,11 @@ pub trait SetupModule:
     ) {
         let mut metadata = CodeMetadata::UPGRADEABLE;
         if is_payable {
-            // TODO: Replace with PayableBySc when it's available
-            metadata |= CodeMetadata::PAYABLE;
+            metadata |= CodeMetadata::PAYABLE_BY_SC;
         }
 
         let gas = self.blockchain().get_gas_left();
-        Self::Api::send_api_impl().upgrade_from_source_contract(
+        self.send_raw().upgrade_from_source_contract(
             &child_sc_address,
             gas,
             &BigUint::zero(),
