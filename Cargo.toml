@@ -1,7 +1,11 @@
 [workspace]
-resolver = "2"
-
 members = [
-  "neversea",
-  "neversea/meta"
+  "esdt-safe",
+  "esdt-safe/meta",
+  "multi-transfer-esdt",
+  "multi-transfer-esdt/meta",
+  "multisig",
+  "multisig/meta",
+  "bridged-tokens-wrapper",
+  "bridged-tokens-wrapper/meta"
 ]
