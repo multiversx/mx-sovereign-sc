@@ -1,12 +1,12 @@
 [package]
 name = "token-module"
 version = "0.0.0"
-authors = ["dorin-iancu <dorin.iancu@elrond.com>"]
+authors = ["dorin-iancu <dorin.iancu@multiversx.com>"]
 edition = "2018"
 [dependencies.fee-estimator-module]
 path = "../fee-estimator-module"
 
 [dependencies.multiversx-sc]
-version = "0.41.3"
+version = "0.43.4"
 [dev-dependencies.multiversx-sc-scenario]
-version = "0.41.3"
+version = "0.43.4"

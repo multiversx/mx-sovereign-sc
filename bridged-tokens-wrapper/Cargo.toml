@@ -1,19 +1,21 @@
 [package]
 name = "bridged-tokens-wrapper"
 version = "0.0.0"
-authors = ["Alin Cruceat <alin.cruceat@elrond.com>"]
+authors = ["Alin Cruceat <alin.cruceat@multiversx.com>"]
 edition = "2018"
 publish = false
 
 [lib]
 path = "src/lib.rs"
+
 [dependencies.transaction]
 path = "../common/transaction"
 
 [dependencies.multiversx-sc]
-version = "0.41.3"
+version = "0.43.4"
 
 [dependencies.multiversx-sc-modules]
-version = "0.41.3"
+version = "0.43.4"
+
 [dev-dependencies.multiversx-sc-scenario]
-version = "0.41.3"
+version = "0.43.4"

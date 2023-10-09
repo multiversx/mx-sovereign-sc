@@ -1,7 +1,7 @@
 [package]
 name = "bridged-tokens-wrapper-wasm"
 version = "0.0.0"
-authors = ["Alin Cruceat <alin.cruceat@elrond.com>"]
+authors = ["Alin Cruceat <alin.cruceat@multiversx.com>"]
 edition = "2018"
 publish = false
 
@@ -17,7 +17,7 @@ panic = "abort"
 path = ".."
 
 [dependencies.multiversx-sc-wasm-adapter]
-version = "0.41.3"
+version = "0.43.4"
 
 [workspace]
 members = ["."]
