@@ -684,8 +684,6 @@ dependencies = [
 name = "esdt-safe"
 version = "0.0.0"
 dependencies = [
- "eth-address",
- "fee-estimator-module",
  "max-bridged-amount-module",
  "multiversx-sc",
  "multiversx-sc-modules",
@@ -704,25 +702,10 @@ dependencies = [
 ]
 
 [[package]]
-name = "eth-address"
-version = "0.0.0"
-dependencies = [
- "multiversx-sc",
-]
-
-[[package]]
 name = "fastrand"
 version = "2.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "25cbce373ec4653f1a01a31e8a5e5ec0c622dc27ff9c4e6606eefef5cbbed4a5"
-
-[[package]]
-name = "fee-estimator-module"
-version = "0.0.0"
-dependencies = [
- "multiversx-sc",
- "multiversx-sc-scenario",
-]
 
 [[package]]
 name = "fiat-crypto"
@@ -1247,8 +1230,6 @@ name = "multisig"
 version = "0.0.0"
 dependencies = [
  "esdt-safe",
- "eth-address",
- "fee-estimator-module",
  "max-bridged-amount-module",
  "multi-transfer-esdt",
  "multiversx-sc",
@@ -2279,7 +2260,6 @@ checksum = "1f3ccbac311fea05f86f61904b462b55fb3df8837a366dfc601a0161d0532f20"
 name = "token-module"
 version = "0.0.0"
 dependencies = [
- "fee-estimator-module",
  "multiversx-sc",
  "multiversx-sc-scenario",
 ]
@@ -2378,7 +2358,6 @@ dependencies = [
 name = "transaction"
 version = "0.0.0"
 dependencies = [
- "eth-address",
  "multiversx-sc",
 ]
 
