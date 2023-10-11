@@ -1,13 +1,12 @@
 multiversx_sc::imports!();
 multiversx_sc::derive_imports!();
 
-use eth_address::EthAddress;
 use transaction::transaction_status::TransactionStatus;
 
 use crate::action::Action;
 use crate::user_role::UserRole;
 
-pub type EthBatchHash<M> = ManagedByteArray<M, 32>; // keccak256(ManagedVec<EthTransaction<Self::Api>)
+pub type SovBatchHash<M> = ManagedByteArray<M, 32>; // keccak256(ManagedVec<Transaction<Self::Api>)
 
 #[multiversx_sc::module]
 pub trait StorageModule {
@@ -54,19 +53,19 @@ pub trait StorageModule {
     #[storage_mapper("slashedTokensAmount")]
     fn slashed_tokens_amount(&self) -> SingleValueMapper<BigUint>;
 
-    #[view(getLastExecutedEthBatchId)]
-    #[storage_mapper("lastExecutedEthBatchId")]
-    fn last_executed_eth_batch_id(&self) -> SingleValueMapper<u64>;
+    #[view(getLastExecutedSovBatchId)]
+    #[storage_mapper("lastExecutedSovBatchId")]
+    fn last_executed_sov_batch_id(&self) -> SingleValueMapper<u64>;
 
-    #[view(getLastExecutedEthTxId)]
-    #[storage_mapper("lastExecutedEthTxId")]
-    fn last_executed_eth_tx_id(&self) -> SingleValueMapper<u64>;
+    #[view(getLastExecutedSovTxId)]
+    #[storage_mapper("lastExecutedSovTxId")]
+    fn last_executed_sov_tx_id(&self) -> SingleValueMapper<u64>;
 
     #[storage_mapper("batchIdToActionIdMapping")]
     fn batch_id_to_action_id_mapping(
         &self,
         batch_id: u64,
-    ) -> MapMapper<EthBatchHash<Self::Api>, usize>;
+    ) -> MapMapper<SovBatchHash<Self::Api>, usize>;
 
     #[storage_mapper("actionIdForSetCurrentTransactionBatchStatus")]
     fn action_id_for_set_current_transaction_batch_status(
@@ -74,20 +73,20 @@ pub trait StorageModule {
         esdt_safe_batch_id: u64,
     ) -> MapMapper<ManagedVec<TransactionStatus>, usize>;
 
-    /// Mapping between ERC20 Ethereum address and Elrond ESDT Token Identifiers
+    /// Mapping between Token Identifiers on Sovereign and Elrond ESDT Token Identifiers
 
-    #[view(getErc20AddressForTokenId)]
-    #[storage_mapper("erc20AddressForTokenId")]
-    fn erc20_address_for_token_id(
+    #[view(getSovTokenIdForElrondTokenId)]
+    #[storage_mapper("sovTokenIdForElrondTokenId")]
+    fn sov_token_id_for_elrond_token_id(
         &self,
-        token_id: &TokenIdentifier,
-    ) -> SingleValueMapper<EthAddress<Self::Api>>;
+        elrond_token_id: &TokenIdentifier,
+    ) -> SingleValueMapper<TokenIdentifier>;
 
-    #[view(getTokenIdForErc20Address)]
-    #[storage_mapper("tokenIdForErc20Address")]
-    fn token_id_for_erc20_address(
+    #[view(getElrondTokenIdForSovTokenId)]
+    #[storage_mapper("elrondTokenIdForSovTokenId")]
+    fn elrond_token_id_for_sov_token_id(
         &self,
-        erc20_address: &EthAddress<Self::Api>,
+        sov_token_id: &TokenIdentifier,
     ) -> SingleValueMapper<TokenIdentifier>;
 
     // SC addresses

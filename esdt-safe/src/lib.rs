@@ -9,6 +9,7 @@ use transaction::{transaction_status::TransactionStatus, Transaction, TransferDa
 const DEFAULT_MAX_TX_BATCH_SIZE: usize = 10;
 const DEFAULT_MAX_TX_BATCH_BLOCK_DURATION: u64 = 100; // ~10 minutes
 const MAX_TRANSFERS_PER_TX: usize = 10;
+const MAX_GAS_LIMIT: u64 = 300_000_000;
 
 #[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, ManagedVecItem)]
 pub struct NonceAmountPair<M: ManagedTypeApi> {
@@ -44,6 +45,9 @@ pub trait EsdtSafe:
 
         self.set_paused(true);
     }
+
+    #[endpoint]
+    fn upgrade(&self) {}
 
     /// Sets the statuses for the transactions, after they were executed on the Sovereign side.
     ///
@@ -160,6 +164,13 @@ pub trait EsdtSafe:
         let payments = self.call_value().all_esdt_transfers().clone_value();
         require!(!payments.is_empty(), "Nothing to transfer");
         require!(payments.len() <= MAX_TRANSFERS_PER_TX, "Too many tokens");
+
+        if let OptionalValue::Some(transfer_data) = &opt_transfer_data {
+            require!(
+                transfer_data.gas_limit <= MAX_GAS_LIMIT,
+                "Gas limit too high"
+            );
+        }
 
         let own_sc_address = self.blockchain().get_sc_address();
         let mut all_token_data = ManagedVec::new();

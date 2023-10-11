@@ -10,7 +10,6 @@ mod user_role;
 mod util;
 
 use action::Action;
-use token_module::{AddressPercentagePair, INVALID_PERCENTAGE_SUM_OVER_ERR_MSG, PERCENTAGE_TOTAL};
 use transaction::transaction_status::TransactionStatus;
 use transaction::TxBatchSplitInFields;
 use transaction::*;
@@ -18,7 +17,6 @@ use user_role::UserRole;
 
 use esdt_safe::ProxyTrait as _;
 use multi_transfer_esdt::ProxyTrait as _;
-use token_module::ProxyTrait as _;
 use tx_batch_module::ProxyTrait as _;
 
 multiversx_sc::imports!();
@@ -85,49 +83,15 @@ pub trait Multisig:
         self.set_paused(true);
     }
 
-    /// Distributes the accumulated fees to the given addresses.
-    /// Expected arguments are pairs of (address, percentage),
-    /// where percentages must add up to the PERCENTAGE_TOTAL constant
-    #[only_owner]
-    #[endpoint(distributeFeesFromChildContracts)]
-    fn distribute_fees_from_child_contracts(
-        &self,
-        dest_address_percentage_pairs: MultiValueEncoded<MultiValue2<ManagedAddress, u32>>,
-    ) {
-        let mut args = ManagedVec::new();
-        let mut total_percentage = 0u64;
-
-        for pair in dest_address_percentage_pairs {
-            let (dest_address, percentage) = pair.into_tuple();
-
-            require!(
-                !self.blockchain().is_smart_contract(&dest_address),
-                "Cannot transfer to smart contract dest_address"
-            );
-
-            total_percentage += percentage as u64;
-            args.push(AddressPercentagePair {
-                address: dest_address,
-                percentage,
-            });
-        }
-
-        require!(
-            total_percentage == PERCENTAGE_TOTAL as u64,
-            INVALID_PERCENTAGE_SUM_OVER_ERR_MSG
-        );
-
-        let _: IgnoreValue = self
-            .get_esdt_safe_proxy_instance()
-            .distribute_fees(args)
-            .execute_on_dest_context();
-    }
+    #[endpoint]
+    fn upgrade(&self) {}
 
     /// Board members have to stake a certain amount of EGLD
     /// before being allowed to sign actions
     #[payable("EGLD")]
     #[endpoint]
-    fn stake(&self, #[payment] payment: BigUint) {
+    fn stake(&self) {
+        let egld_payment = self.call_value().egld_value().clone_value();
         let caller = self.blockchain().get_caller();
         let caller_role = self.user_role(&caller);
         require!(
@@ -136,7 +100,7 @@ pub trait Multisig:
         );
 
         self.amount_staked(&caller)
-            .update(|amount_staked| *amount_staked += payment);
+            .update(|amount_staked| *amount_staked += egld_payment);
     }
 
     #[endpoint]
@@ -163,7 +127,7 @@ pub trait Multisig:
 
     // ESDT Safe SC calls
 
-    /// After a batch is processed on the Ethereum side,
+    /// After a batch is processed on the Sovereign side,
     /// the EsdtSafe expects a list of statuses of said transactions (success or failure).
     ///
     /// This endpoint proposes an action to set the statuses to a certain list of values.
@@ -215,48 +179,48 @@ pub trait Multisig:
 
     // Multi-transfer ESDT SC calls
 
-    /// Proposes a batch of Ethereum -> Elrond transfers.
+    /// Proposes a batch of Sovereign -> Elrond transfers.
     /// Transactions have to be separated by fields, in the following order:
     /// Sender Address, Destination Address, Token ID, Amount, Tx Nonce
     #[endpoint(proposeMultiTransferEsdtBatch)]
     fn propose_multi_transfer_esdt_batch(
         &self,
-        eth_batch_id: u64,
-        transfers: MultiValueEncoded<EthTxAsMultiValue<Self::Api>>,
+        sov_batch_id: u64,
+        transfers: MultiValueEncoded<TxAsMultiValue<Self::Api>>,
     ) -> usize {
-        let next_eth_batch_id = self.last_executed_eth_batch_id().get() + 1;
+        let next_sov_batch_id = self.last_executed_sov_batch_id().get() + 1;
         require!(
-            eth_batch_id == next_eth_batch_id,
+            sov_batch_id == next_sov_batch_id,
             "Can only propose for next batch ID"
         );
 
-        let transfers_as_eth_tx = self.transfers_multi_value_to_eth_tx_vec(transfers);
-        self.require_valid_eth_tx_ids(&transfers_as_eth_tx);
+        let transfers_as_sov_tx = self.transfers_multi_value_to_sov_tx_vec(transfers);
+        self.require_valid_sov_tx_ids(&transfers_as_sov_tx);
 
-        let batch_hash = self.hash_eth_tx_batch(&transfers_as_eth_tx);
+        let batch_hash = self.hash_sov_tx_batch(&transfers_as_sov_tx);
         require!(
-            self.batch_id_to_action_id_mapping(eth_batch_id)
+            self.batch_id_to_action_id_mapping(sov_batch_id)
                 .get(&batch_hash)
                 .is_none(),
             "This batch was already proposed"
         );
 
         let action_id = self.propose_action(Action::BatchTransferEsdtToken {
-            eth_batch_id,
-            transfers: transfers_as_eth_tx,
+            sov_batch_id,
+            transfers: transfers_as_sov_tx,
         });
 
-        self.batch_id_to_action_id_mapping(eth_batch_id)
+        self.batch_id_to_action_id_mapping(sov_batch_id)
             .insert(batch_hash, action_id);
 
         action_id
     }
 
-    /// Failed Ethereum -> Elrond transactions are saved in the MultiTransfer SC
+    /// Failed Sovereign -> Elrond transactions are saved in the MultiTransfer SC
     /// as "refund transactions", and stored in batches, using the same mechanism as EsdtSafe.
     ///
     /// This function moves the first refund batch into the EsdtSafe SC,
-    /// converting the transactions into Elrond -> Ethereum transactions
+    /// converting the transactions into Elrond -> Sovereign transactions
     /// and adding them into EsdtSafe batches
     #[only_owner]
     #[endpoint(moveRefundBatchToSafe)]
@@ -338,10 +302,10 @@ pub trait Multisig:
                     .execute_on_dest_context();
             }
             Action::BatchTransferEsdtToken {
-                eth_batch_id,
+                sov_batch_id,
                 transfers,
             } => {
-                let mut action_ids_mapper = self.batch_id_to_action_id_mapping(eth_batch_id);
+                let mut action_ids_mapper = self.batch_id_to_action_id_mapping(sov_batch_id);
 
                 // if there's only one proposed action,
                 // the action was already cleared at the beginning of this function
@@ -352,17 +316,17 @@ pub trait Multisig:
                 }
 
                 action_ids_mapper.clear();
-                self.last_executed_eth_batch_id().update(|id| *id += 1);
+                self.last_executed_sov_batch_id().update(|id| *id += 1);
 
                 let last_tx_index = transfers.len() - 1;
                 let last_tx = transfers.get(last_tx_index);
-                self.last_executed_eth_tx_id().set(last_tx.tx_nonce);
+                self.last_executed_sov_tx_id().set(last_tx.nonce);
 
-                let transfers_multi: MultiValueEncoded<Self::Api, EthTransaction<Self::Api>> =
+                let transfers_multi: MultiValueEncoded<Self::Api, Transaction<Self::Api>> =
                     transfers.into();
                 let _: IgnoreValue = self
                     .get_multi_transfer_esdt_proxy_instance()
-                    .batch_transfer_esdt_token(eth_batch_id, transfers_multi)
+                    .batch_transfer_esdt_token(sov_batch_id, transfers_multi)
                     .execute_on_dest_context();
             }
         }
