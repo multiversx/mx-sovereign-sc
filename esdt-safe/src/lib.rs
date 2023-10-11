@@ -24,9 +24,6 @@ pub trait EsdtSafe:
     + max_bridged_amount_module::MaxBridgedAmountModule
     + multiversx_sc_modules::pause::PauseModule
 {
-    /// fee_estimator_contract_address - The address of a Price Aggregator contract,
-    /// which will get the price of token A in token B
-    ///
     /// sovereign_tx_gas_limit - The gas limit that will be used for transactions on the Sovereign side.
     /// In case of SC gas limits, this value is provided by the user
     /// Will be used to compute the fees for the transfer

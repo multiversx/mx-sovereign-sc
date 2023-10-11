@@ -231,24 +231,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8d696c370c750c948ada61c69a0ee2cbbb9c50b1019ddb86d9317157a99c2cae"
 
 [[package]]
-name = "bridged-tokens-wrapper"
-version = "0.0.0"
-dependencies = [
- "multiversx-sc",
- "multiversx-sc-modules",
- "multiversx-sc-scenario",
- "transaction",
-]
-
-[[package]]
-name = "bridged-tokens-wrapper-meta"
-version = "0.0.0"
-dependencies = [
- "bridged-tokens-wrapper",
- "multiversx-sc-meta",
-]
-
-[[package]]
 name = "bstr"
 version = "1.6.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1209,7 +1191,6 @@ dependencies = [
 name = "multi-transfer-esdt"
 version = "0.0.0"
 dependencies = [
- "bridged-tokens-wrapper",
  "max-bridged-amount-module",
  "multiversx-sc",
  "multiversx-sc-scenario",
@@ -1222,29 +1203,6 @@ name = "multi-transfer-esdt-meta"
 version = "0.0.0"
 dependencies = [
  "multi-transfer-esdt",
- "multiversx-sc-meta",
-]
-
-[[package]]
-name = "multisig"
-version = "0.0.0"
-dependencies = [
- "esdt-safe",
- "max-bridged-amount-module",
- "multi-transfer-esdt",
- "multiversx-sc",
- "multiversx-sc-modules",
- "multiversx-sc-scenario",
- "token-module",
- "transaction",
- "tx-batch-module",
-]
-
-[[package]]
-name = "multisig-meta"
-version = "0.0.0"
-dependencies = [
- "multisig",
  "multiversx-sc-meta",
 ]
 

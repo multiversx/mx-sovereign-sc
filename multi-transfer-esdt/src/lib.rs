@@ -15,13 +15,11 @@ pub trait MultiTransferEsdt:
     tx_batch_module::TxBatchModule + max_bridged_amount_module::MaxBridgedAmountModule
 {
     #[init]
-    fn init(&self, opt_wrapping_contract_address: OptionalValue<ManagedAddress>) {
+    fn init(&self) {
         self.max_tx_batch_size()
             .set_if_empty(DEFAULT_MAX_TX_BATCH_SIZE);
         self.max_tx_batch_block_duration()
             .set_if_empty(DEFAULT_MAX_TX_BATCH_BLOCK_DURATION);
-
-        self.set_wrapping_contract_address(opt_wrapping_contract_address);
 
         // batch ID 0 is considered invalid
         self.first_batch_id().set_if_empty(1);
@@ -80,8 +78,7 @@ pub trait MultiTransferEsdt:
             valid_payments_list.push(user_tokens_to_send);
         }
 
-        let payments_after_wrapping = self.wrap_tokens(valid_payments_list);
-        self.distribute_payments(valid_dest_addresses_list, payments_after_wrapping);
+        self.distribute_payments(valid_dest_addresses_list, valid_payments_list);
 
         self.add_multiple_tx_to_batch(&refund_tx_list);
     }
@@ -100,22 +97,6 @@ pub trait MultiTransferEsdt:
         opt_current_batch
     }
 
-    #[only_owner]
-    #[endpoint(setWrappingContractAddress)]
-    fn set_wrapping_contract_address(&self, opt_new_address: OptionalValue<ManagedAddress>) {
-        match opt_new_address {
-            OptionalValue::Some(sc_addr) => {
-                require!(
-                    self.blockchain().is_smart_contract(&sc_addr),
-                    "Invalid unwrapping contract address"
-                );
-
-                self.wrapping_contract_address().set(&sc_addr);
-            }
-            OptionalValue::None => self.wrapping_contract_address().clear(),
-        }
-    }
-
     // private
 
     fn check_must_refund(
@@ -132,18 +113,10 @@ pub trait MultiTransferEsdt:
 
                 return true;
             }
-        } else {
-            if !self.is_local_role_set(&token.token_identifier, &EsdtLocalRole::NftCreate) {
-                self.transfer_failed_invalid_token(batch_id, tx_nonce);
+        } else if !self.has_nft_roles(token) {
+            self.transfer_failed_invalid_token(batch_id, tx_nonce);
 
-                return true;
-            } else if token.amount > NFT_AMOUNT
-                && !self.is_local_role_set(&token.token_identifier, &EsdtLocalRole::NftAddQuantity)
-            {
-                self.transfer_failed_invalid_token(batch_id, tx_nonce);
-
-                return true;
-            }
+            return true;
         }
 
         if self.is_above_max_amount(&token.token_identifier, &token.amount) {
@@ -159,6 +132,20 @@ pub trait MultiTransferEsdt:
         }
 
         false
+    }
+
+    fn has_nft_roles(&self, payment: &EsdtTokenPayment) -> bool {
+        if !self.is_local_role_set(&payment.token_identifier, &EsdtLocalRole::NftCreate) {
+            return false;
+        }
+
+        if payment.amount > NFT_AMOUNT
+            && !self.is_local_role_set(&payment.token_identifier, &EsdtLocalRole::NftAddQuantity)
+        {
+            return false;
+        }
+
+        true
     }
 
     fn convert_to_refund_tx(
@@ -243,29 +230,6 @@ pub trait MultiTransferEsdt:
         token_data.frozen
     }
 
-    fn wrap_tokens(
-        &self,
-        payments: ManagedVec<PaymentsVec<Self::Api>>,
-    ) -> ManagedVec<PaymentsVec<Self::Api>> {
-        if self.wrapping_contract_address().is_empty() {
-            return payments;
-        }
-
-        // TODO: Think about making a single call here
-        let mut output_payments = ManagedVec::new();
-        for user_payments in &payments {
-            let wrapped_payments: PaymentsVec<Self::Api> = self
-                .get_wrapping_contract_proxy_instance()
-                .wrap_tokens()
-                .with_multi_token_transfer(user_payments)
-                .execute_on_dest_context();
-
-            output_payments.push(wrapped_payments);
-        }
-
-        output_payments
-    }
-
     fn distribute_payments(
         &self,
         dest_addresses: ManagedVec<ManagedAddress>,
@@ -275,24 +239,6 @@ pub trait MultiTransferEsdt:
             self.send().direct_multi(&dest, &user_tokens);
         }
     }
-
-    // proxies
-
-    #[proxy]
-    fn wrapping_contract_proxy(
-        &self,
-        sc_address: ManagedAddress,
-    ) -> bridged_tokens_wrapper::Proxy<Self::Api>;
-
-    fn get_wrapping_contract_proxy_instance(&self) -> bridged_tokens_wrapper::Proxy<Self::Api> {
-        self.wrapping_contract_proxy(self.wrapping_contract_address().get())
-    }
-
-    // storage
-
-    #[view(getWrappingContractAddress)]
-    #[storage_mapper("wrappingContractAddress")]
-    fn wrapping_contract_address(&self) -> SingleValueMapper<ManagedAddress>;
 
     // events
 
