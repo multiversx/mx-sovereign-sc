@@ -9,8 +9,11 @@ pub mod transaction_status;
 pub const MIN_BLOCKS_FOR_FINALITY: u64 = 10;
 pub const TX_MULTIRESULT_NR_FIELDS: usize = 6;
 
+pub type BatchId = u64;
+pub type TxId = u64;
 pub type GasLimit = u64;
 pub type TxNonce = u64;
+
 pub type BlockNonce = u64;
 pub type SenderAddress<M> = ManagedAddress<M>;
 pub type ReceiverAddress<M> = ManagedAddress<M>;
@@ -24,7 +27,7 @@ pub type TxAsMultiValue<M> = MultiValue7<
     Option<TransferData<M>>,
 >;
 pub type PaymentsVec<M> = ManagedVec<M, EsdtTokenPayment<M>>;
-pub type TxBatchSplitInFields<M> = MultiValue2<u64, MultiValueEncoded<M, TxAsMultiValue<M>>>;
+pub type TxBatchSplitInFields<M> = MultiValue2<BatchId, MultiValueEncoded<M, TxAsMultiValue<M>>>;
 
 #[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, TypeAbi, ManagedVecItem, Clone)]
 pub struct TransferData<M: ManagedTypeApi> {
