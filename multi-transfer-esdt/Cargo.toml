@@ -17,9 +17,6 @@ path = "../common/tx-batch-module"
 [dependencies.max-bridged-amount-module]
 path = "../common/max-bridged-amount-module"
 
-[dependencies.bridged-tokens-wrapper]
-path = "../bridged-tokens-wrapper"
-
 [dependencies.multiversx-sc]
 version = "0.43.4"
 
