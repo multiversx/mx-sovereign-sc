@@ -2,10 +2,13 @@
 
 multiversx_sc::imports!();
 
-use transaction::{EthTransaction, PaymentsVec, Transaction, TxBatchSplitInFields};
+use transaction::{
+    PaymentsVec, StolenFromFrameworkEsdtTokenData, Transaction, TxBatchSplitInFields,
+};
 
 const DEFAULT_MAX_TX_BATCH_SIZE: usize = 10;
 const DEFAULT_MAX_TX_BATCH_BLOCK_DURATION: u64 = u64::MAX;
+const NFT_AMOUNT: u32 = 1;
 
 #[multiversx_sc::contract]
 pub trait MultiTransferEsdt:
@@ -30,7 +33,7 @@ pub trait MultiTransferEsdt:
     fn batch_transfer_esdt_token(
         &self,
         batch_id: u64,
-        transfers: MultiValueEncoded<EthTransaction<Self::Api>>,
+        transfers: MultiValueEncoded<Transaction<Self::Api>>,
     ) {
         let mut valid_payments_list = ManagedVec::new();
         let mut valid_dest_addresses_list = ManagedVec::new();
@@ -39,37 +42,39 @@ pub trait MultiTransferEsdt:
         let own_sc_address = self.blockchain().get_sc_address();
         let sc_shard = self.blockchain().get_shard_of_address(&own_sc_address);
 
-        for eth_tx in transfers {
-            let mut must_refund = false;
-            if eth_tx.to.is_zero() || self.blockchain().is_smart_contract(&eth_tx.to) {
-                self.transfer_failed_invalid_destination(batch_id, eth_tx.tx_nonce);
-                must_refund = true;
-            } else if !self.is_local_role_set(&eth_tx.token_id, &EsdtLocalRole::Mint) {
-                self.transfer_failed_invalid_token(batch_id, eth_tx.tx_nonce);
-                must_refund = true;
-            } else if self.is_above_max_amount(&eth_tx.token_id, &eth_tx.amount) {
-                self.transfer_over_max_amount(batch_id, eth_tx.tx_nonce);
-                must_refund = true;
-            } else if self.is_account_same_shard_frozen(sc_shard, &eth_tx.to, &eth_tx.token_id) {
-                self.transfer_failed_frozen_destination_account(batch_id, eth_tx.tx_nonce);
-                must_refund = true;
+        for sov_tx in transfers {
+            let mut refund_tokens_for_user = ManagedVec::new();
+            let mut tokens_to_send = ManagedVec::new();
+            let mut sent_token_data = ManagedVec::new();
+
+            for (token, opt_token_data) in sov_tx.tokens.iter().zip(sov_tx.token_data.iter()) {
+                let must_refund =
+                    self.check_must_refund(&token, &sov_tx.to, batch_id, sov_tx.nonce, sc_shard);
+
+                if must_refund {
+                    refund_tokens_for_user.push(token);
+                } else {
+                    tokens_to_send.push(token);
+                    sent_token_data.push(opt_token_data);
+                }
             }
 
-            if must_refund {
-                let refund_tx = self.convert_to_refund_tx(eth_tx);
+            if !refund_tokens_for_user.is_empty() {
+                let refund_tx = self.convert_to_refund_tx(sov_tx.clone(), refund_tokens_for_user);
                 refund_tx_list.push(refund_tx);
+            }
 
+            if tokens_to_send.is_empty() {
                 continue;
             }
 
-            self.send()
-                .esdt_local_mint(&eth_tx.token_id, 0, &eth_tx.amount);
+            let user_tokens_to_send = self.mint_tokens(tokens_to_send, sent_token_data);
 
             // emit event before the actual transfer so we don't have to save the tx_nonces as well
-            self.transfer_performed_event(batch_id, eth_tx.tx_nonce);
+            self.transfer_performed_event(batch_id, sov_tx.nonce);
 
-            valid_dest_addresses_list.push(eth_tx.to);
-            valid_payments_list.push(EsdtTokenPayment::new(eth_tx.token_id, 0, eth_tx.amount));
+            valid_dest_addresses_list.push(sov_tx.to);
+            valid_payments_list.push(user_tokens_to_send);
         }
 
         let payments_after_wrapping = self.wrap_tokens(valid_payments_list);
@@ -110,16 +115,106 @@ pub trait MultiTransferEsdt:
 
     // private
 
-    fn convert_to_refund_tx(&self, eth_tx: EthTransaction<Self::Api>) -> Transaction<Self::Api> {
+    fn check_must_refund(
+        &self,
+        token: &EsdtTokenPayment,
+        dest: &ManagedAddress,
+        batch_id: u64,
+        tx_nonce: u64,
+        sc_shard: u32,
+    ) -> bool {
+        if token.token_nonce == 0 {
+            if !self.is_local_role_set(&token.token_identifier, &EsdtLocalRole::Mint) {
+                self.transfer_failed_invalid_token(batch_id, tx_nonce);
+
+                return true;
+            }
+        } else {
+            if !self.is_local_role_set(&token.token_identifier, &EsdtLocalRole::NftCreate) {
+                self.transfer_failed_invalid_token(batch_id, tx_nonce);
+
+                return true;
+            } else if token.amount > NFT_AMOUNT
+                && !self.is_local_role_set(&token.token_identifier, &EsdtLocalRole::NftAddQuantity)
+            {
+                self.transfer_failed_invalid_token(batch_id, tx_nonce);
+
+                return true;
+            }
+        }
+
+        if self.is_above_max_amount(&token.token_identifier, &token.amount) {
+            self.transfer_over_max_amount(batch_id, tx_nonce);
+
+            return true;
+        }
+
+        if self.is_account_same_shard_frozen(sc_shard, dest, &token.token_identifier) {
+            self.transfer_failed_frozen_destination_account(batch_id, tx_nonce);
+
+            return true;
+        }
+
+        false
+    }
+
+    fn convert_to_refund_tx(
+        &self,
+        sov_tx: Transaction<Self::Api>,
+        tokens_to_refund: PaymentsVec<Self::Api>,
+    ) -> Transaction<Self::Api> {
         Transaction {
             block_nonce: self.blockchain().get_block_nonce(),
-            nonce: eth_tx.tx_nonce,
-            from: eth_tx.from.as_managed_buffer().clone(),
-            to: eth_tx.to.as_managed_buffer().clone(),
-            token_identifier: eth_tx.token_id,
-            amount: eth_tx.amount,
+            nonce: sov_tx.nonce,
+            from: sov_tx.from,
+            to: sov_tx.to,
+            tokens: tokens_to_refund,
+            token_data: ManagedVec::new(),
+            opt_transfer_data: None,
             is_refund_tx: true,
         }
+    }
+
+    fn mint_tokens(
+        &self,
+        payments: PaymentsVec<Self::Api>,
+        all_token_data: ManagedVec<Option<StolenFromFrameworkEsdtTokenData<Self::Api>>>,
+    ) -> PaymentsVec<Self::Api> {
+        let mut output_payments = PaymentsVec::new();
+        for (payment, opt_token_data) in payments.iter().zip(all_token_data.iter()) {
+            if payment.token_nonce == 0 {
+                self.send()
+                    .esdt_local_mint(&payment.token_identifier, 0, &payment.amount);
+
+                output_payments.push(EsdtTokenPayment::new(
+                    payment.token_identifier,
+                    0,
+                    payment.amount,
+                ));
+
+                continue;
+            }
+
+            require!(opt_token_data.is_some(), "Invalid token data");
+
+            let token_data = unsafe { opt_token_data.unwrap_unchecked() };
+            let token_nonce = self.send().esdt_nft_create(
+                &payment.token_identifier,
+                &payment.amount,
+                &token_data.name,
+                &token_data.royalties,
+                &token_data.hash,
+                &token_data.attributes,
+                &token_data.uris,
+            );
+            output_payments.push(EsdtTokenPayment::new(
+                payment.token_identifier,
+                token_nonce,
+                payment.amount,
+            ));
+        }
+
+        output_payments
     }
 
     fn is_local_role_set(&self, token_id: &TokenIdentifier, role: &EsdtLocalRole) -> bool {
@@ -145,25 +240,36 @@ pub trait MultiTransferEsdt:
         token_data.frozen
     }
 
-    fn wrap_tokens(&self, payments: PaymentsVec<Self::Api>) -> PaymentsVec<Self::Api> {
+    fn wrap_tokens(
+        &self,
+        payments: ManagedVec<PaymentsVec<Self::Api>>,
+    ) -> ManagedVec<PaymentsVec<Self::Api>> {
         if self.wrapping_contract_address().is_empty() {
             return payments;
         }
 
-        self.get_wrapping_contract_proxy_instance()
-            .wrap_tokens()
-            .with_multi_token_transfer(payments)
-            .execute_on_dest_context()
+        // TODO: Think about making a single call here
+        let mut output_payments = ManagedVec::new();
+        for user_payments in &payments {
+            let wrapped_payments: PaymentsVec<Self::Api> = self
+                .get_wrapping_contract_proxy_instance()
+                .wrap_tokens()
+                .with_multi_token_transfer(user_payments)
+                .execute_on_dest_context();
+
+            output_payments.push(wrapped_payments);
+        }
+
+        output_payments
     }
 
     fn distribute_payments(
         &self,
         dest_addresses: ManagedVec<ManagedAddress>,
-        payments: PaymentsVec<Self::Api>,
+        payments: ManagedVec<PaymentsVec<Self::Api>>,
     ) {
-        for (dest, p) in dest_addresses.iter().zip(payments.iter()) {
-            self.send()
-                .direct_esdt(&dest, &p.token_identifier, 0, &p.amount);
+        for (dest, user_tokens) in dest_addresses.iter().zip(payments.iter()) {
+            self.send().direct_multi(&dest, &user_tokens);
         }
     }
 
@@ -189,9 +295,6 @@ pub trait MultiTransferEsdt:
 
     #[event("transferPerformedEvent")]
     fn transfer_performed_event(&self, #[indexed] batch_id: u64, #[indexed] tx_id: u64);
-
-    #[event("transferFailedInvalidDestination")]
-    fn transfer_failed_invalid_destination(&self, #[indexed] batch_id: u64, #[indexed] tx_id: u64);
 
     #[event("transferFailedInvalidToken")]
     fn transfer_failed_invalid_token(&self, #[indexed] batch_id: u64, #[indexed] tx_id: u64);

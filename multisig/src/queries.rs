@@ -1,7 +1,7 @@
 multiversx_sc::imports!();
 
 use crate::{action::Action, user_role::UserRole};
-use transaction::{transaction_status::TransactionStatus, EthTxAsMultiValue, TxBatchSplitInFields};
+use transaction::{transaction_status::TransactionStatus, TxBatchSplitInFields};
 
 use tx_batch_module::ProxyTrait as _;
 
