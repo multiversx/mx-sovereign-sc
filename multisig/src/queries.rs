@@ -1,7 +1,7 @@
 multiversx_sc::imports!();
 
 use crate::{action::Action, user_role::UserRole};
-use transaction::{transaction_status::TransactionStatus, TxBatchSplitInFields};
+use transaction::{transaction_status::TransactionStatus, TxBatchSplitInFields, TxAsMultiValue};
 
 use tx_batch_module::ProxyTrait as _;
 
@@ -10,10 +10,10 @@ use tx_batch_module::ProxyTrait as _;
 pub trait QueriesModule: crate::storage::StorageModule + crate::util::UtilModule {
     /// Returns the current EsdtSafe batch.
     ///
-    /// First result is the batch ID, then pairs of 6 results, representing transactions
+    /// First result is the batch ID, then pairs of 7 results, representing transactions
     /// split by fields:
     ///
-    /// Block Nonce, Tx Nonce, Sender Address, Receiver Address, Token ID, Amount
+    /// Block Nonce, Tx Nonce, Sender Address, Receiver Address, Token IDs, Token data, Opt transfer data
     #[view(getCurrentTxBatch)]
     fn get_current_tx_batch(&self) -> OptionalValue<TxBatchSplitInFields<Self::Api>> {
         self.get_esdt_safe_proxy_instance()
@@ -21,7 +21,7 @@ pub trait QueriesModule: crate::storage::StorageModule + crate::util::UtilModule
             .execute_on_dest_context()
     }
 
-    /// Returns a batch of failed Ethereum -> Elrond transactions.
+    /// Returns a batch of failed Sovereign -> Elrond transactions.
     /// The result format is the same as getCurrentTxBatch
     #[view(getCurrentRefundBatch)]
     fn get_current_refund_batch(&self) -> OptionalValue<TxBatchSplitInFields<Self::Api>> {
@@ -41,38 +41,38 @@ pub trait QueriesModule: crate::storage::StorageModule + crate::util::UtilModule
         }
     }
 
-    /// Used for Ethereum -> Elrond batches.
+    /// Used for Sovereign -> Elrond batches.
     /// If the mapping was made, it means that the transfer action was proposed in the past.
     /// To check if it was executed as well, use the wasActionExecuted view
     #[view(wasTransferActionProposed)]
     fn was_transfer_action_proposed(
         &self,
-        eth_batch_id: u64,
-        transfers: MultiValueEncoded<EthTxAsMultiValue<Self::Api>>,
+        sov_batch_id: u64,
+        transfers: MultiValueEncoded<TxAsMultiValue<Self::Api>>,
     ) -> bool {
-        let action_id = self.get_action_id_for_transfer_batch(eth_batch_id, transfers);
+        let action_id = self.get_action_id_for_transfer_batch(sov_batch_id, transfers);
 
         self.is_valid_action_id(action_id)
     }
 
-    /// Used for Ethereum -> Elrond batches.
+    /// Used for TxBatchSplitInFields -> Elrond batches.
     /// If `wasActionExecuted` returns true, then this can be used to get the action ID.
     /// Will return 0 if the transfers were not proposed
     #[view(getActionIdForTransferBatch)]
     fn get_action_id_for_transfer_batch(
         &self,
-        eth_batch_id: u64,
-        transfers: MultiValueEncoded<EthTxAsMultiValue<Self::Api>>,
+        sov_batch_id: u64,
+        transfers: MultiValueEncoded<TxAsMultiValue<Self::Api>>,
     ) -> usize {
-        let transfers_as_struct = self.transfers_multi_value_to_eth_tx_vec(transfers);
-        let batch_hash = self.hash_eth_tx_batch(&transfers_as_struct);
+        let transfers_as_struct = self.transfers_multi_value_to_sov_tx_vec(transfers);
+        let batch_hash = self.hash_sov_tx_batch(&transfers_as_struct);
 
-        self.batch_id_to_action_id_mapping(eth_batch_id)
+        self.batch_id_to_action_id_mapping(sov_batch_id)
             .get(&batch_hash)
             .unwrap_or(0)
     }
 
-    /// Used for Elrond -> Ethereum batches.
+    /// Used for Elrond -> Sovereign batches.
     /// Returns "true" if an action was already proposed for the given batch,
     /// with these exact transaction statuses, in this exact order
     #[view(wasSetCurrentTransactionBatchStatusActionProposed)]

@@ -1,7 +1,7 @@
 use multiversx_sc::api::ManagedTypeApi;
 use multiversx_sc::types::ManagedVec;
 use transaction::transaction_status::TransactionStatus;
-use transaction::EthTransaction;
+use transaction::Transaction;
 
 multiversx_sc::derive_imports!();
 
@@ -13,8 +13,8 @@ pub enum Action<M: ManagedTypeApi> {
         tx_batch_status: ManagedVec<M, TransactionStatus>,
     },
     BatchTransferEsdtToken {
-        eth_batch_id: u64,
-        transfers: ManagedVec<M, EthTransaction<M>>,
+        sov_batch_id: u64,
+        transfers: ManagedVec<M, Transaction<M>>,
     },
 }
 

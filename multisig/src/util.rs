@@ -1,8 +1,8 @@
 multiversx_sc::imports!();
 
-use transaction::{EthTransaction, EthTxAsMultiValue};
+use transaction::{Transaction, TxAsMultiValue};
 
-use crate::storage::EthBatchHash;
+use crate::storage::SovBatchHash;
 use crate::user_role::UserRole;
 
 #[multiversx_sc::module]
@@ -43,42 +43,36 @@ pub trait UtilModule: crate::storage::StorageModule {
         amount_staked >= required_stake
     }
 
-    fn transfers_multi_value_to_eth_tx_vec(
+    fn transfers_multi_value_to_sov_tx_vec(
         &self,
-        transfers: MultiValueEncoded<EthTxAsMultiValue<Self::Api>>,
-    ) -> ManagedVec<EthTransaction<Self::Api>> {
-        let mut transfers_as_eth_tx = ManagedVec::new();
+        transfers: MultiValueEncoded<TxAsMultiValue<Self::Api>>,
+    ) -> ManagedVec<Transaction<Self::Api>> {
+        let mut transfers_as_sov_tx = ManagedVec::new();
         for transfer in transfers {
-            let (from, to, token_id, amount, tx_nonce) = transfer.into_tuple();
+            let transaction = Transaction::from(transfer);
 
-            transfers_as_eth_tx.push(EthTransaction {
-                from,
-                to,
-                token_id,
-                amount,
-                tx_nonce,
-            });
+            transfers_as_sov_tx.push(transaction);
         }
 
-        transfers_as_eth_tx
+        transfers_as_sov_tx
     }
 
-    fn require_valid_eth_tx_ids(&self, eth_tx_vec: &ManagedVec<EthTransaction<Self::Api>>) {
-        let last_executed_eth_tx_id = self.last_executed_eth_tx_id().get();
-        let mut current_expected_tx_id = last_executed_eth_tx_id + 1;
+    fn require_valid_sov_tx_ids(&self, sov_tx_vec: &ManagedVec<Transaction<Self::Api>>) {
+        let last_executed_sov_tx_id = self.last_executed_sov_tx_id().get();
+        let mut current_expected_tx_id = last_executed_sov_tx_id + 1;
 
-        for eth_tx in eth_tx_vec {
-            require!(eth_tx.tx_nonce == current_expected_tx_id, "Invalid Tx ID");
+        for sov_tx in sov_tx_vec {
+            require!(sov_tx.nonce == current_expected_tx_id, "Invalid Tx ID");
             current_expected_tx_id += 1;
         }
     }
 
-    fn hash_eth_tx_batch(
+    fn hash_sov_tx_batch(
         &self,
-        eth_tx_batch: &ManagedVec<EthTransaction<Self::Api>>,
-    ) -> EthBatchHash<Self::Api> {
+        sov_tx_batch: &ManagedVec<Transaction<Self::Api>>,
+    ) -> SovBatchHash<Self::Api> {
         let mut serialized = ManagedBuffer::new();
-        if eth_tx_batch.top_encode(&mut serialized).is_err() {
+        if sov_tx_batch.top_encode(&mut serialized).is_err() {
             sc_panic!("Failed to serialized batch");
         }
 
