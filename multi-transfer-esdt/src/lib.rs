@@ -256,7 +256,7 @@ pub trait MultiTransferEsdt:
                 None => {
                     self.send().direct_multi(&tx.to, payments.deref());
 
-                    self.transfer_performed_event(batch_id, tx.nonce);
+                    self.transfer_performed_event(batch_id, tx.nonce, tx);
                 }
             }
         }
@@ -272,7 +272,7 @@ pub trait MultiTransferEsdt:
     ) {
         match result {
             ManagedAsyncCallResult::Ok(_) => {
-                self.transfer_performed_event(batch_id, tx_nonce);
+                self.transfer_performed_event(batch_id, tx_nonce, original_tx);
             }
             ManagedAsyncCallResult::Err(_) => {
                 let tokens = original_tx.tokens.clone();
@@ -287,7 +287,12 @@ pub trait MultiTransferEsdt:
     // events
 
     #[event("transferPerformedEvent")]
-    fn transfer_performed_event(&self, #[indexed] batch_id: BatchId, #[indexed] tx_id: TxId);
+    fn transfer_performed_event(
+        &self,
+        #[indexed] batch_id: BatchId,
+        #[indexed] tx_id: TxId,
+        tx: Transaction<Self::Api>,
+    );
 
     #[event("transferFailedInvalidToken")]
     fn transfer_failed_invalid_token(&self, #[indexed] batch_id: BatchId, #[indexed] tx_id: TxId);
