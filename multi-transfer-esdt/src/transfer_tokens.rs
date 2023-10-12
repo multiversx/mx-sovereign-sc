@@ -18,6 +18,7 @@ pub trait TransferTokensModule:
     + crate::token_mapping::TokenMappingModule
     + tx_batch_module::TxBatchModule
     + max_bridged_amount_module::MaxBridgedAmountModule
+    + multiversx_sc_modules::default_issue_callbacks::DefaultIssueCallbacksModule
 {
     #[only_owner]
     #[endpoint(batchTransferEsdtToken)]
@@ -92,9 +93,14 @@ pub trait TransferTokensModule:
                 continue;
             }
 
-            let mx_token_id = self
+            let mx_token_id_state = self
                 .sovereign_to_multiversx_token_id(&payment.token_identifier)
                 .get();
+
+            let mx_token_id = match mx_token_id_state {
+                TokenMapperState::Token(token_id) => token_id,
+                _ => sc_panic!("No token config set!"),
+            };
 
             if payment.token_nonce == 0 {
                 self.send()
@@ -145,7 +151,10 @@ pub trait TransferTokensModule:
                         .with_gas_limit(tx_data.gas_limit)
                         .async_call_promise()
                         .with_extra_gas_for_callback(CALLBACK_GAS)
-                        .with_callback(self.callbacks().transfer_callback(batch_id, tx.nonce, tx))
+                        .with_callback(
+                            <Self as TransferTokensModule>::callbacks(self)
+                                .transfer_callback(batch_id, tx.nonce, tx),
+                        )
                         .register_promise();
                 }
                 None => {
