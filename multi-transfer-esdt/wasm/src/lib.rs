@@ -24,8 +24,8 @@ multiversx_sc_wasm_adapter::endpoints! {
     (
         init => init
         upgrade => upgrade
-        batchTransferEsdtToken => batch_transfer_esdt_token
         getAndClearFirstRefundBatch => get_and_clear_first_refund_batch
+        batchTransferEsdtToken => batch_transfer_esdt_token
         setMaxTxBatchSize => set_max_tx_batch_size
         setMaxTxBatchBlockDuration => set_max_tx_batch_block_duration
         getCurrentTxBatch => get_current_tx_batch
