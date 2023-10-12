@@ -53,7 +53,7 @@ pub trait MultiTransferEsdt:
             let mut tokens_to_send = ManagedVec::new();
             let mut sent_token_data = ManagedVec::new();
 
-            for (token, opt_token_data) in sov_tx.tokens.iter().zip(sov_tx.token_data.iter()) {
+            for (token, token_data) in sov_tx.tokens.iter().zip(sov_tx.token_data.iter()) {
                 let must_refund =
                     self.check_must_refund(&token, &sov_tx.to, batch_id, sov_tx.nonce, sc_shard);
 
@@ -61,7 +61,7 @@ pub trait MultiTransferEsdt:
                     refund_tokens_for_user.push(token);
                 } else {
                     tokens_to_send.push(token);
-                    sent_token_data.push(opt_token_data);
+                    sent_token_data.push(token_data);
                 }
             }
 
@@ -170,10 +170,10 @@ pub trait MultiTransferEsdt:
     fn mint_tokens(
         &self,
         payments: PaymentsVec<Self::Api>,
-        all_token_data: ManagedVec<Option<StolenFromFrameworkEsdtTokenData<Self::Api>>>,
+        all_token_data: ManagedVec<StolenFromFrameworkEsdtTokenData<Self::Api>>,
     ) -> PaymentsVec<Self::Api> {
         let mut output_payments = PaymentsVec::new();
-        for (payment, opt_token_data) in payments.iter().zip(all_token_data.iter()) {
+        for (payment, token_data) in payments.iter().zip(all_token_data.iter()) {
             if payment.token_nonce == 0 {
                 self.send()
                     .esdt_local_mint(&payment.token_identifier, 0, &payment.amount);
@@ -187,9 +187,6 @@ pub trait MultiTransferEsdt:
                 continue;
             }
 
-            require!(opt_token_data.is_some(), "Invalid token data");
-
-            let token_data = unsafe { opt_token_data.unwrap_unchecked() };
             let token_nonce = self.send().esdt_nft_create(
                 &payment.token_identifier,
                 &payment.amount,

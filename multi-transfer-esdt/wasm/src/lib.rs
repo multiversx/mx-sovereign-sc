@@ -5,9 +5,10 @@
 ////////////////////////////////////////////////////
 
 // Init:                                 1
-// Endpoints:                           15
+// Endpoints:                           13
 // Async Callback (empty):               1
-// Total number of exported functions:  17
+// Promise callbacks:                    1
+// Total number of exported functions:  16
 
 #![no_std]
 
@@ -25,8 +26,6 @@ multiversx_sc_wasm_adapter::endpoints! {
         upgrade => upgrade
         batchTransferEsdtToken => batch_transfer_esdt_token
         getAndClearFirstRefundBatch => get_and_clear_first_refund_batch
-        setWrappingContractAddress => set_wrapping_contract_address
-        getWrappingContractAddress => wrapping_contract_address
         setMaxTxBatchSize => set_max_tx_batch_size
         setMaxTxBatchBlockDuration => set_max_tx_batch_block_duration
         getCurrentTxBatch => get_current_tx_batch
@@ -37,6 +36,7 @@ multiversx_sc_wasm_adapter::endpoints! {
         getLastBatchId => last_batch_id
         setMaxBridgedAmount => set_max_bridged_amount
         getMaxBridgedAmount => max_bridged_amount
+        transfer_callback => transfer_callback
     )
 }
 

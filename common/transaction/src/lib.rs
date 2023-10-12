@@ -23,7 +23,7 @@ pub type TxAsMultiValue<M> = MultiValue7<
     SenderAddress<M>,
     ReceiverAddress<M>,
     ManagedVec<M, EsdtTokenPayment<M>>,
-    ManagedVec<M, Option<StolenFromFrameworkEsdtTokenData<M>>>,
+    ManagedVec<M, StolenFromFrameworkEsdtTokenData<M>>,
     Option<TransferData<M>>,
 >;
 pub type PaymentsVec<M> = ManagedVec<M, EsdtTokenPayment<M>>;
@@ -56,6 +56,13 @@ pub enum StolenFromFrameworkEsdtTokenType {
     Invalid,
 }
 
+impl Default for StolenFromFrameworkEsdtTokenType {
+    #[inline]
+    fn default() -> Self {
+        Self::Fungible
+    }
+}
+
 impl From<EsdtTokenType> for StolenFromFrameworkEsdtTokenType {
     fn from(value: EsdtTokenType) -> Self {
         match value {
@@ -83,6 +90,22 @@ pub struct StolenFromFrameworkEsdtTokenData<M: ManagedTypeApi> {
     pub uris: ManagedVec<M, ManagedBuffer<M>>,
 }
 
+impl<M: ManagedTypeApi> Default for StolenFromFrameworkEsdtTokenData<M> {
+    fn default() -> Self {
+        StolenFromFrameworkEsdtTokenData {
+            token_type: StolenFromFrameworkEsdtTokenType::Fungible,
+            amount: BigUint::zero(),
+            frozen: false,
+            hash: ManagedBuffer::new(),
+            name: ManagedBuffer::new(),
+            attributes: ManagedBuffer::new(),
+            creator: ManagedAddress::zero(),
+            royalties: BigUint::zero(),
+            uris: ManagedVec::new(),
+        }
+    }
+}
+
 impl<M: ManagedTypeApi> From<EsdtTokenData<M>> for StolenFromFrameworkEsdtTokenData<M> {
     fn from(value: EsdtTokenData<M>) -> Self {
         StolenFromFrameworkEsdtTokenData {
@@ -106,7 +129,7 @@ pub struct Transaction<M: ManagedTypeApi> {
     pub from: ManagedAddress<M>,
     pub to: ManagedAddress<M>,
     pub tokens: ManagedVec<M, EsdtTokenPayment<M>>,
-    pub token_data: ManagedVec<M, Option<StolenFromFrameworkEsdtTokenData<M>>>,
+    pub token_data: ManagedVec<M, StolenFromFrameworkEsdtTokenData<M>>,
     pub opt_transfer_data: Option<TransferData<M>>,
     pub is_refund_tx: bool,
 }

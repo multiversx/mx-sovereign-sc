@@ -5,7 +5,8 @@ multiversx_sc::imports!();
 multiversx_sc::derive_imports!();
 
 use transaction::{
-    transaction_status::TransactionStatus, BatchId, GasLimit, Transaction, TransferData, TxId,
+    transaction_status::TransactionStatus, BatchId, GasLimit, StolenFromFrameworkEsdtTokenData,
+    Transaction, TransferData, TxId,
 };
 use tx_batch_module::FIRST_BATCH_ID;
 
@@ -184,9 +185,9 @@ pub trait EsdtSafe:
                     &payment.token_identifier,
                     payment.token_nonce,
                 );
-                all_token_data.push(Some(current_token_data.into()));
+                all_token_data.push(current_token_data.into());
             } else {
-                all_token_data.push(None);
+                all_token_data.push(StolenFromFrameworkEsdtTokenData::default());
             }
         }
 
