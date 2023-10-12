@@ -10,7 +10,6 @@ use tx_batch_module::FIRST_BATCH_ID;
 const DEFAULT_MAX_TX_BATCH_SIZE: usize = 10;
 const DEFAULT_MAX_TX_BATCH_BLOCK_DURATION: u64 = 100; // ~10 minutes
 
-pub mod bls_signature;
 pub mod create_tx;
 pub mod events;
 pub mod refund;
@@ -18,8 +17,7 @@ pub mod set_tx_status;
 
 #[multiversx_sc::contract]
 pub trait EsdtSafe:
-    bls_signature::BlsSignatureModule
-    + create_tx::CreateTxModule
+    create_tx::CreateTxModule
     + events::EventsModule
     + refund::RefundModule
     + set_tx_status::SetTxStatusModule

@@ -4,13 +4,16 @@ use transaction::{
     BatchId, GasLimit, PaymentsVec, StolenFromFrameworkEsdtTokenData, Transaction, TxNonce,
 };
 
+use crate::bls_signature::BlsSignature;
+
 multiversx_sc::imports!();
 
 const CALLBACK_GAS: GasLimit = 1_000_000; // Increase if not enough
 
 #[multiversx_sc::module]
 pub trait TransferTokensModule:
-    crate::events::EventsModule
+    crate::bls_signature::BlsSignatureModule
+    + crate::events::EventsModule
     + crate::refund::RefundModule
     + tx_batch_module::TxBatchModule
     + max_bridged_amount_module::MaxBridgedAmountModule
@@ -20,16 +23,19 @@ pub trait TransferTokensModule:
     fn batch_transfer_esdt_token(
         &self,
         batch_id: BatchId,
+        signature: BlsSignature<Self::Api>,
         transfers: MultiValueEncoded<Transaction<Self::Api>>,
     ) {
         let mut successful_tx_list = ManagedVec::new();
         let mut all_tokens_to_send = ManagedVec::new();
         let mut refund_tx_list = ManagedVec::new();
 
+        let signed_transactions = self.verify_bls_signature(transfers, &signature);
+
         let own_sc_address = self.blockchain().get_sc_address();
         let sc_shard = self.blockchain().get_shard_of_address(&own_sc_address);
 
-        for sov_tx in transfers {
+        for sov_tx in &signed_transactions {
             let mut refund_tokens_for_user = ManagedVec::new();
             let mut tokens_to_send = ManagedVec::new();
             let mut sent_token_data = ManagedVec::new();
