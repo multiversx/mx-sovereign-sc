@@ -113,14 +113,6 @@ pub trait RefundModule:
             });
     }
 
-    fn is_burn_role_set(&self, payment: &EsdtTokenPayment) -> bool {
-        if payment.token_nonce == 0 {
-            self.is_local_role_set(&payment.token_identifier, &EsdtLocalRole::Burn)
-        } else {
-            self.is_local_role_set(&payment.token_identifier, &EsdtLocalRole::NftBurn)
-        }
-    }
-
     #[storage_mapper("refundAmount")]
     fn refund_amount(
         &self,
