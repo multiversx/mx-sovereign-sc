@@ -23,12 +23,12 @@ multiversx_sc_wasm_adapter::endpoints! {
     (
         init => init
         upgrade => upgrade
-        setTransactionBatchStatus => set_transaction_batch_status
-        addRefundBatch => add_refund_batch
         createTransaction => create_transaction
+        getSovereignTxGasLimit => sovereign_tx_gas_limit
+        addRefundBatch => add_refund_batch
         claimRefund => claim_refund
         getRefundAmounts => get_refund_amounts
-        getSovereignTxGasLimit => sovereign_tx_gas_limit
+        setTransactionBatchStatus => set_transaction_batch_status
         addTokenToWhitelist => add_token_to_whitelist
         removeTokenFromWhitelist => remove_token_from_whitelist
         getAllKnownTokens => token_whitelist
