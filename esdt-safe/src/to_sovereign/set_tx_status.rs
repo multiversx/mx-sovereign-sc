@@ -45,7 +45,6 @@ pub trait SetTxStatusModule:
 
         self.multi_verify_signature(&serialized_data, &signature);
 
-        let mut sent_tokens = ManagedVec::new();
         for (tx, tx_status) in tx_batch.iter().zip(tx_statuses_vec.iter()) {
             // Since tokens don't exist in the EsdtSafe in the case of a refund transaction
             // we have no tokens to burn, nor to refund
@@ -54,11 +53,7 @@ pub trait SetTxStatusModule:
             }
 
             match tx_status {
-                TransactionStatus::Executed => {
-                    for token in &tx.tokens {
-                        sent_tokens.push(token);
-                    }
-                }
+                TransactionStatus::Executed => {}
                 TransactionStatus::Rejected => {
                     for token in &tx.tokens {
                         self.mark_refund(&tx.from, &token);
@@ -72,13 +67,6 @@ pub trait SetTxStatusModule:
             self.set_status_event(batch_id, tx.nonce, tx_status);
         }
 
-        let multi_transfer_sc_address = self.multi_transfer_sc_address().get();
-        self.send()
-            .direct_multi(&multi_transfer_sc_address, &sent_tokens);
-
         self.clear_first_batch(&mut tx_batch);
     }
-
-    #[storage_mapper("multiTransferScAddress")]
-    fn multi_transfer_sc_address(&self) -> SingleValueMapper<ManagedAddress>;
 }

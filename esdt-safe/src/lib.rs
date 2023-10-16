@@ -36,19 +36,10 @@ pub trait EsdtSafe:
     fn init(
         &self,
         sovereign_tx_gas_limit: GasLimit,
-        multi_transfer_sc_address: ManagedAddress,
         min_valid_signers: u32,
         signers: MultiValueEncoded<ManagedAddress>,
     ) {
-        require!(
-            self.blockchain()
-                .is_smart_contract(&multi_transfer_sc_address),
-            "Invalid SC address"
-        );
-
         self.sovereign_tx_gas_limit().set(sovereign_tx_gas_limit);
-        self.multi_transfer_sc_address()
-            .set(multi_transfer_sc_address);
 
         self.max_tx_batch_size().set(DEFAULT_MAX_TX_BATCH_SIZE);
         self.max_tx_batch_block_duration()
