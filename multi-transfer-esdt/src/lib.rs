@@ -2,13 +2,19 @@
 
 multiversx_sc::imports!();
 
+use core::ops::Deref;
+
 use transaction::{
-    PaymentsVec, StolenFromFrameworkEsdtTokenData, Transaction, TxBatchSplitInFields,
+    BatchId, GasLimit, PaymentsVec, StolenFromFrameworkEsdtTokenData, Transaction,
+    TxBatchSplitInFields, TxId, TxNonce,
 };
+use tx_batch_module::FIRST_BATCH_ID;
 
 const DEFAULT_MAX_TX_BATCH_SIZE: usize = 10;
 const DEFAULT_MAX_TX_BATCH_BLOCK_DURATION: u64 = u64::MAX;
 const NFT_AMOUNT: u32 = 1;
+
+const CALLBACK_GAS: GasLimit = 1_000_000; // Increase if not enough
 
 #[multiversx_sc::contract]
 pub trait MultiTransferEsdt:
@@ -16,14 +22,13 @@ pub trait MultiTransferEsdt:
 {
     #[init]
     fn init(&self) {
-        self.max_tx_batch_size()
-            .set_if_empty(DEFAULT_MAX_TX_BATCH_SIZE);
+        self.max_tx_batch_size().set(DEFAULT_MAX_TX_BATCH_SIZE);
         self.max_tx_batch_block_duration()
-            .set_if_empty(DEFAULT_MAX_TX_BATCH_BLOCK_DURATION);
+            .set(DEFAULT_MAX_TX_BATCH_BLOCK_DURATION);
 
         // batch ID 0 is considered invalid
-        self.first_batch_id().set_if_empty(1);
-        self.last_batch_id().set_if_empty(1);
+        self.first_batch_id().set(FIRST_BATCH_ID);
+        self.last_batch_id().set(FIRST_BATCH_ID);
     }
 
     #[endpoint]
@@ -33,11 +38,11 @@ pub trait MultiTransferEsdt:
     #[endpoint(batchTransferEsdtToken)]
     fn batch_transfer_esdt_token(
         &self,
-        batch_id: u64,
+        batch_id: BatchId,
         transfers: MultiValueEncoded<Transaction<Self::Api>>,
     ) {
-        let mut valid_payments_list = ManagedVec::new();
-        let mut valid_dest_addresses_list = ManagedVec::new();
+        let mut successful_tx_list = ManagedVec::new();
+        let mut all_tokens_to_send = ManagedVec::new();
         let mut refund_tx_list = ManagedVec::new();
 
         let own_sc_address = self.blockchain().get_sc_address();
@@ -48,7 +53,7 @@ pub trait MultiTransferEsdt:
             let mut tokens_to_send = ManagedVec::new();
             let mut sent_token_data = ManagedVec::new();
 
-            for (token, opt_token_data) in sov_tx.tokens.iter().zip(sov_tx.token_data.iter()) {
+            for (token, token_data) in sov_tx.tokens.iter().zip(sov_tx.token_data.iter()) {
                 let must_refund =
                     self.check_must_refund(&token, &sov_tx.to, batch_id, sov_tx.nonce, sc_shard);
 
@@ -56,7 +61,7 @@ pub trait MultiTransferEsdt:
                     refund_tokens_for_user.push(token);
                 } else {
                     tokens_to_send.push(token);
-                    sent_token_data.push(opt_token_data);
+                    sent_token_data.push(token_data);
                 }
             }
 
@@ -70,15 +75,12 @@ pub trait MultiTransferEsdt:
             }
 
             let user_tokens_to_send = self.mint_tokens(tokens_to_send, sent_token_data);
+            all_tokens_to_send.push(user_tokens_to_send);
 
-            // emit event before the actual transfer so we don't have to save the tx_nonces as well
-            self.transfer_performed_event(batch_id, sov_tx.nonce);
-
-            valid_dest_addresses_list.push(sov_tx.to);
-            valid_payments_list.push(user_tokens_to_send);
+            successful_tx_list.push(sov_tx);
         }
 
-        self.distribute_payments(valid_dest_addresses_list, valid_payments_list);
+        self.distribute_payments(batch_id, successful_tx_list, all_tokens_to_send);
 
         self.add_multiple_tx_to_batch(&refund_tx_list);
     }
@@ -103,8 +105,8 @@ pub trait MultiTransferEsdt:
         &self,
         token: &EsdtTokenPayment,
         dest: &ManagedAddress,
-        batch_id: u64,
-        tx_nonce: u64,
+        batch_id: BatchId,
+        tx_nonce: TxNonce,
         sc_shard: u32,
     ) -> bool {
         if token.token_nonce == 0 {
@@ -168,10 +170,10 @@ pub trait MultiTransferEsdt:
     fn mint_tokens(
         &self,
         payments: PaymentsVec<Self::Api>,
-        all_token_data: ManagedVec<Option<StolenFromFrameworkEsdtTokenData<Self::Api>>>,
+        all_token_data: ManagedVec<StolenFromFrameworkEsdtTokenData<Self::Api>>,
     ) -> PaymentsVec<Self::Api> {
         let mut output_payments = PaymentsVec::new();
-        for (payment, opt_token_data) in payments.iter().zip(all_token_data.iter()) {
+        for (payment, token_data) in payments.iter().zip(all_token_data.iter()) {
             if payment.token_nonce == 0 {
                 self.send()
                     .esdt_local_mint(&payment.token_identifier, 0, &payment.amount);
@@ -185,9 +187,6 @@ pub trait MultiTransferEsdt:
                 continue;
             }
 
-            require!(opt_token_data.is_some(), "Invalid token data");
-
-            let token_data = unsafe { opt_token_data.unwrap_unchecked() };
             let token_nonce = self.send().esdt_nft_create(
                 &payment.token_identifier,
                 &payment.amount,
@@ -232,29 +231,86 @@ pub trait MultiTransferEsdt:
 
     fn distribute_payments(
         &self,
-        dest_addresses: ManagedVec<ManagedAddress>,
-        payments: ManagedVec<PaymentsVec<Self::Api>>,
+        batch_id: BatchId,
+        tx_list: ManagedVec<Transaction<Self::Api>>,
+        tokens_list: ManagedVec<PaymentsVec<Self::Api>>,
     ) {
-        for (dest, user_tokens) in dest_addresses.iter().zip(payments.iter()) {
-            self.send().direct_multi(&dest, &user_tokens);
+        for (tx, payments) in tx_list.iter().zip(tokens_list.iter()) {
+            match &tx.opt_transfer_data {
+                Some(tx_data) => {
+                    let mut args = ManagedArgBuffer::new();
+                    for arg in &tx_data.args {
+                        args.push_arg(arg);
+                    }
+
+                    self.send()
+                        .contract_call::<()>(tx.to.clone(), tx_data.function.clone())
+                        .with_raw_arguments(args)
+                        .with_multi_token_transfer(payments.deref().clone())
+                        .with_gas_limit(tx_data.gas_limit)
+                        .async_call_promise()
+                        .with_extra_gas_for_callback(CALLBACK_GAS)
+                        .with_callback(self.callbacks().transfer_callback(batch_id, tx.nonce, tx))
+                        .register_promise();
+                }
+                None => {
+                    self.send().direct_multi(&tx.to, payments.deref());
+
+                    self.transfer_performed_event(batch_id, tx.nonce, tx);
+                }
+            }
+        }
+    }
+
+    #[promises_callback]
+    fn transfer_callback(
+        &self,
+        batch_id: BatchId,
+        tx_nonce: TxNonce,
+        original_tx: Transaction<Self::Api>,
+        #[call_result] result: ManagedAsyncCallResult<IgnoreValue>,
+    ) {
+        match result {
+            ManagedAsyncCallResult::Ok(_) => {
+                self.transfer_performed_event(batch_id, tx_nonce, original_tx);
+            }
+            ManagedAsyncCallResult::Err(_) => {
+                let tokens = original_tx.tokens.clone();
+                let refund_tx = self.convert_to_refund_tx(original_tx, tokens);
+                self.add_multiple_tx_to_batch(&ManagedVec::from_single_item(refund_tx));
+
+                self.transfer_failed_execution_failed(batch_id, tx_nonce);
+            }
         }
     }
 
     // events
 
     #[event("transferPerformedEvent")]
-    fn transfer_performed_event(&self, #[indexed] batch_id: u64, #[indexed] tx_id: u64);
+    fn transfer_performed_event(
+        &self,
+        #[indexed] batch_id: BatchId,
+        #[indexed] tx_id: TxId,
+        tx: Transaction<Self::Api>,
+    );
 
     #[event("transferFailedInvalidToken")]
-    fn transfer_failed_invalid_token(&self, #[indexed] batch_id: u64, #[indexed] tx_id: u64);
+    fn transfer_failed_invalid_token(&self, #[indexed] batch_id: BatchId, #[indexed] tx_id: TxId);
 
     #[event("transferFailedFrozenDestinationAccount")]
     fn transfer_failed_frozen_destination_account(
         &self,
-        #[indexed] batch_id: u64,
-        #[indexed] tx_id: u64,
+        #[indexed] batch_id: BatchId,
+        #[indexed] tx_id: TxId,
     );
 
     #[event("transferOverMaxAmount")]
-    fn transfer_over_max_amount(&self, #[indexed] batch_id: u64, #[indexed] tx_id: u64);
+    fn transfer_over_max_amount(&self, #[indexed] batch_id: BatchId, #[indexed] tx_id: TxId);
+
+    #[event("transferFailedExecutionFailed")]
+    fn transfer_failed_execution_failed(
+        &self,
+        #[indexed] batch_id: BatchId,
+        #[indexed] tx_id: TxId,
+    );
 }

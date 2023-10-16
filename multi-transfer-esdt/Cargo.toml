@@ -19,6 +19,7 @@ path = "../common/max-bridged-amount-module"
 
 [dependencies.multiversx-sc]
 version = "0.43.4"
+features = ["promises"]
 
 [dev-dependencies.multiversx-sc-scenario]
 version = "0.43.4"

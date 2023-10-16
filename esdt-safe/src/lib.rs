@@ -4,12 +4,17 @@
 multiversx_sc::imports!();
 multiversx_sc::derive_imports!();
 
-use transaction::{transaction_status::TransactionStatus, Transaction, TransferData};
+use transaction::{
+    transaction_status::TransactionStatus, BatchId, GasLimit, StolenFromFrameworkEsdtTokenData,
+    Transaction, TransferData, TxId,
+};
+use tx_batch_module::FIRST_BATCH_ID;
 
 const DEFAULT_MAX_TX_BATCH_SIZE: usize = 10;
 const DEFAULT_MAX_TX_BATCH_BLOCK_DURATION: u64 = 100; // ~10 minutes
 const MAX_TRANSFERS_PER_TX: usize = 10;
-const MAX_GAS_LIMIT: u64 = 300_000_000;
+
+const MAX_USER_TX_GAS_LIMIT: GasLimit = 300_000_000;
 
 #[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, ManagedVecItem)]
 pub struct NonceAmountPair<M: ManagedTypeApi> {
@@ -28,17 +33,16 @@ pub trait EsdtSafe:
     /// In case of SC gas limits, this value is provided by the user
     /// Will be used to compute the fees for the transfer
     #[init]
-    fn init(&self, sovereign_tx_gas_limit: BigUint) {
-        self.sovereign_tx_gas_limit().set(&sovereign_tx_gas_limit);
+    fn init(&self, sovereign_tx_gas_limit: GasLimit) {
+        self.sovereign_tx_gas_limit().set(sovereign_tx_gas_limit);
 
-        self.max_tx_batch_size()
-            .set_if_empty(DEFAULT_MAX_TX_BATCH_SIZE);
+        self.max_tx_batch_size().set(DEFAULT_MAX_TX_BATCH_SIZE);
         self.max_tx_batch_block_duration()
-            .set_if_empty(DEFAULT_MAX_TX_BATCH_BLOCK_DURATION);
+            .set(DEFAULT_MAX_TX_BATCH_BLOCK_DURATION);
 
         // batch ID 0 is considered invalid
-        self.first_batch_id().set_if_empty(1);
-        self.last_batch_id().set_if_empty(1);
+        self.first_batch_id().set(FIRST_BATCH_ID);
+        self.last_batch_id().set(FIRST_BATCH_ID);
 
         self.set_paused(true);
     }
@@ -54,7 +58,7 @@ pub trait EsdtSafe:
     #[endpoint(setTransactionBatchStatus)]
     fn set_transaction_batch_status(
         &self,
-        batch_id: u64,
+        batch_id: BatchId,
         tx_statuses: MultiValueEncoded<TransactionStatus>,
     ) {
         let first_batch_id = self.first_batch_id().get();
@@ -82,7 +86,7 @@ pub trait EsdtSafe:
                     // tokens will remain locked forever in that case
                     // otherwise, the whole batch would fail
                     for token in &tx.tokens {
-                        if self.is_local_role_set(&token.token_identifier, &EsdtLocalRole::Burn) {
+                        if self.is_burn_role_set(&token) {
                             self.send().esdt_local_burn(
                                 &token.token_identifier,
                                 token.token_nonce,
@@ -164,7 +168,7 @@ pub trait EsdtSafe:
 
         if let OptionalValue::Some(transfer_data) = &opt_transfer_data {
             require!(
-                transfer_data.gas_limit <= MAX_GAS_LIMIT,
+                transfer_data.gas_limit <= MAX_USER_TX_GAS_LIMIT,
                 "Gas limit too high"
             );
         }
@@ -181,9 +185,9 @@ pub trait EsdtSafe:
                     &payment.token_identifier,
                     payment.token_nonce,
                 );
-                all_token_data.push(Some(current_token_data.into()));
+                all_token_data.push(current_token_data.into());
             } else {
-                all_token_data.push(None);
+                all_token_data.push(StolenFromFrameworkEsdtTokenData::default());
             }
         }
 
@@ -201,7 +205,8 @@ pub trait EsdtSafe:
             is_refund_tx: false,
         };
 
-        let batch_id = self.add_to_batch(tx);
+        let default_gas_cost = self.sovereign_tx_gas_limit().get();
+        let batch_id = self.add_to_batch(tx, default_gas_cost);
         self.create_transaction_event(batch_id, tx_nonce);
     }
 
@@ -265,24 +270,32 @@ pub trait EsdtSafe:
             });
     }
 
+    fn is_burn_role_set(&self, payment: &EsdtTokenPayment) -> bool {
+        if payment.token_nonce == 0 {
+            self.is_local_role_set(&payment.token_identifier, &EsdtLocalRole::Burn)
+        } else {
+            self.is_local_role_set(&payment.token_identifier, &EsdtLocalRole::NftBurn)
+        }
+    }
+
     // events
 
     #[event("createTransactionEvent")]
-    fn create_transaction_event(&self, #[indexed] batch_id: u64, #[indexed] tx_id: u64);
+    fn create_transaction_event(&self, #[indexed] batch_id: BatchId, #[indexed] tx_id: TxId);
 
     #[event("addRefundTransactionEvent")]
     fn add_refund_transaction_event(
         &self,
-        #[indexed] batch_id: u64,
-        #[indexed] tx_id: u64,
-        #[indexed] original_tx_id: u64,
+        #[indexed] batch_id: BatchId,
+        #[indexed] tx_id: TxId,
+        #[indexed] original_tx_id: TxId,
     );
 
     #[event("setStatusEvent")]
     fn set_status_event(
         &self,
-        #[indexed] batch_id: u64,
-        #[indexed] tx_id: u64,
+        #[indexed] batch_id: BatchId,
+        #[indexed] tx_id: TxId,
         #[indexed] tx_status: TransactionStatus,
     );
 
@@ -297,5 +310,5 @@ pub trait EsdtSafe:
 
     #[view(getSovereignTxGasLimit)]
     #[storage_mapper("sovereignTxGasLimit")]
-    fn sovereign_tx_gas_limit(&self) -> SingleValueMapper<BigUint>;
+    fn sovereign_tx_gas_limit(&self) -> SingleValueMapper<GasLimit>;
 }

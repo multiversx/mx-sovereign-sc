@@ -9,8 +9,11 @@ pub mod transaction_status;
 pub const MIN_BLOCKS_FOR_FINALITY: u64 = 10;
 pub const TX_MULTIRESULT_NR_FIELDS: usize = 6;
 
+pub type BatchId = u64;
+pub type TxId = u64;
 pub type GasLimit = u64;
 pub type TxNonce = u64;
+
 pub type BlockNonce = u64;
 pub type SenderAddress<M> = ManagedAddress<M>;
 pub type ReceiverAddress<M> = ManagedAddress<M>;
@@ -20,11 +23,11 @@ pub type TxAsMultiValue<M> = MultiValue7<
     SenderAddress<M>,
     ReceiverAddress<M>,
     ManagedVec<M, EsdtTokenPayment<M>>,
-    ManagedVec<M, Option<StolenFromFrameworkEsdtTokenData<M>>>,
+    ManagedVec<M, StolenFromFrameworkEsdtTokenData<M>>,
     Option<TransferData<M>>,
 >;
 pub type PaymentsVec<M> = ManagedVec<M, EsdtTokenPayment<M>>;
-pub type TxBatchSplitInFields<M> = MultiValue2<u64, MultiValueEncoded<M, TxAsMultiValue<M>>>;
+pub type TxBatchSplitInFields<M> = MultiValue2<BatchId, MultiValueEncoded<M, TxAsMultiValue<M>>>;
 
 #[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, TypeAbi, ManagedVecItem, Clone)]
 pub struct TransferData<M: ManagedTypeApi> {
@@ -51,6 +54,13 @@ pub enum StolenFromFrameworkEsdtTokenType {
     SemiFungible,
     Meta,
     Invalid,
+}
+
+impl Default for StolenFromFrameworkEsdtTokenType {
+    #[inline]
+    fn default() -> Self {
+        Self::Fungible
+    }
 }
 
 impl From<EsdtTokenType> for StolenFromFrameworkEsdtTokenType {
@@ -80,6 +90,22 @@ pub struct StolenFromFrameworkEsdtTokenData<M: ManagedTypeApi> {
     pub uris: ManagedVec<M, ManagedBuffer<M>>,
 }
 
+impl<M: ManagedTypeApi> Default for StolenFromFrameworkEsdtTokenData<M> {
+    fn default() -> Self {
+        StolenFromFrameworkEsdtTokenData {
+            token_type: StolenFromFrameworkEsdtTokenType::Fungible,
+            amount: BigUint::zero(),
+            frozen: false,
+            hash: ManagedBuffer::new(),
+            name: ManagedBuffer::new(),
+            attributes: ManagedBuffer::new(),
+            creator: ManagedAddress::zero(),
+            royalties: BigUint::zero(),
+            uris: ManagedVec::new(),
+        }
+    }
+}
+
 impl<M: ManagedTypeApi> From<EsdtTokenData<M>> for StolenFromFrameworkEsdtTokenData<M> {
     fn from(value: EsdtTokenData<M>) -> Self {
         StolenFromFrameworkEsdtTokenData {
@@ -103,7 +129,7 @@ pub struct Transaction<M: ManagedTypeApi> {
     pub from: ManagedAddress<M>,
     pub to: ManagedAddress<M>,
     pub tokens: ManagedVec<M, EsdtTokenPayment<M>>,
-    pub token_data: ManagedVec<M, Option<StolenFromFrameworkEsdtTokenData<M>>>,
+    pub token_data: ManagedVec<M, StolenFromFrameworkEsdtTokenData<M>>,
     pub opt_transfer_data: Option<TransferData<M>>,
     pub is_refund_tx: bool,
 }

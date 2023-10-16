@@ -4,8 +4,13 @@ multiversx_sc::imports!();
 multiversx_sc::derive_imports!();
 
 pub use batch_status::BatchStatus;
-use transaction::{Transaction, TxBatchSplitInFields, MIN_BLOCKS_FOR_FINALITY};
+use transaction::{
+    BatchId, GasLimit, Transaction, TxBatchSplitInFields, TxNonce, MIN_BLOCKS_FOR_FINALITY,
+};
 use tx_batch_mapper::TxBatchMapper;
+
+pub const FIRST_BATCH_ID: BatchId = 1;
+pub const MAX_GAS_LIMIT_PER_BATCH: GasLimit = 500_000_000;
 
 pub mod batch_status;
 pub mod tx_batch_mapper;
@@ -65,7 +70,7 @@ pub trait TxBatchModule {
     }
 
     #[view(getBatch)]
-    fn get_batch(&self, batch_id: u64) -> OptionalValue<TxBatchSplitInFields<Self::Api>> {
+    fn get_batch(&self, batch_id: BatchId) -> OptionalValue<TxBatchSplitInFields<Self::Api>> {
         let tx_batch = self.pending_batches(batch_id);
         if tx_batch.is_empty() {
             return OptionalValue::None;
@@ -80,7 +85,7 @@ pub trait TxBatchModule {
     }
 
     #[view(getBatchStatus)]
-    fn get_batch_status(&self, batch_id: u64) -> BatchStatus<Self::Api> {
+    fn get_batch_status(&self, batch_id: BatchId) -> BatchStatus<Self::Api> {
         let first_batch_id = self.first_batch_id().get();
         if batch_id < first_batch_id {
             return BatchStatus::AlreadyProcessed;
@@ -115,17 +120,34 @@ pub trait TxBatchModule {
 
     // private
 
-    fn add_to_batch(&self, transaction: Transaction<Self::Api>) -> u64 {
+    fn add_to_batch(
+        &self,
+        transaction: Transaction<Self::Api>,
+        default_gas_limit: GasLimit,
+    ) -> BatchId {
         let first_batch_id = self.first_batch_id().get();
         let last_batch_id = self.last_batch_id().get();
         let mut last_batch = self.pending_batches(last_batch_id);
 
-        if self.is_batch_full(&last_batch, last_batch_id, first_batch_id) {
+        let gas_cost = match &transaction.opt_transfer_data {
+            Some(transfer_data) => transfer_data.gas_limit,
+            None => transaction.tokens.len() as u64 * default_gas_limit,
+        };
+
+        let gas_cost_mapper = self.total_gas_cost(last_batch_id);
+        let last_batch_total_gas_cost = gas_cost_mapper.get();
+        let new_total_gas_cost = last_batch_total_gas_cost + gas_cost;
+
+        if self.is_batch_full(&last_batch, last_batch_id, first_batch_id)
+            || new_total_gas_cost > MAX_GAS_LIMIT_PER_BATCH
+        {
             let (new_batch_id, _) = self.create_new_batch(transaction);
+            self.total_gas_cost(new_batch_id).set(gas_cost);
 
             new_batch_id
         } else {
             last_batch.push(transaction);
+            gas_cost_mapper.set(new_total_gas_cost);
 
             last_batch_id
         }
@@ -135,7 +157,7 @@ pub trait TxBatchModule {
     fn add_multiple_tx_to_batch(
         &self,
         transactions: &ManagedVec<Transaction<Self::Api>>,
-    ) -> ManagedVec<u64> {
+    ) -> ManagedVec<BatchId> {
         if transactions.is_empty() {
             return ManagedVec::new();
         }
@@ -161,7 +183,7 @@ pub trait TxBatchModule {
     fn create_new_batch(
         &self,
         transaction: Transaction<Self::Api>,
-    ) -> (u64, TxBatchMapper<Self::Api>) {
+    ) -> (BatchId, TxBatchMapper<Self::Api>) {
         let last_batch_id = self.last_batch_id().get();
         let new_batch_id = last_batch_id + 1;
 
@@ -176,8 +198,8 @@ pub trait TxBatchModule {
     fn is_batch_full(
         &self,
         tx_batch: &TxBatchMapper<Self::Api>,
-        batch_id: u64,
-        first_batch_id: u64,
+        batch_id: BatchId,
+        first_batch_id: BatchId,
     ) -> bool {
         if tx_batch.is_empty() {
             return false;
@@ -242,7 +264,7 @@ pub trait TxBatchModule {
         mapper.clear();
     }
 
-    fn get_and_save_next_tx_id(&self) -> u64 {
+    fn get_and_save_next_tx_id(&self) -> TxNonce {
         self.last_tx_nonce().update(|last_tx_nonce| {
             *last_tx_nonce += 1;
             *last_tx_nonce
@@ -253,17 +275,20 @@ pub trait TxBatchModule {
 
     #[view(getFirstBatchId)]
     #[storage_mapper("firstBatchId")]
-    fn first_batch_id(&self) -> SingleValueMapper<u64>;
+    fn first_batch_id(&self) -> SingleValueMapper<BatchId>;
 
     #[view(getLastBatchId)]
     #[storage_mapper("lastBatchId")]
-    fn last_batch_id(&self) -> SingleValueMapper<u64>;
+    fn last_batch_id(&self) -> SingleValueMapper<BatchId>;
 
     #[storage_mapper("pendingBatches")]
-    fn pending_batches(&self, batch_id: u64) -> TxBatchMapper<Self::Api>;
+    fn pending_batches(&self, batch_id: BatchId) -> TxBatchMapper<Self::Api>;
+
+    #[storage_mapper("totalGasCost")]
+    fn total_gas_cost(&self, batch_id: BatchId) -> SingleValueMapper<GasLimit>;
 
     #[storage_mapper("lastTxNonce")]
-    fn last_tx_nonce(&self) -> SingleValueMapper<u64>;
+    fn last_tx_nonce(&self) -> SingleValueMapper<TxNonce>;
 
     // configurable
 
