@@ -18,12 +18,6 @@ pub trait TokenMappingModule:
         num_decimals: usize,
         bls_multisig: BlsSignature<Self::Api>,
     ) {
-        require!(
-            self.sovereign_to_multiversx_token_id(&sov_token_id)
-                .is_empty(),
-            "Token already registered"
-        );
-
         let mut serialized_data = ManagedBuffer::new();
         let _ = sov_token_id.dep_encode(&mut serialized_data);
         let _ = token_type.dep_encode(&mut serialized_data);
