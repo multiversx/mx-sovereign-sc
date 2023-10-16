@@ -66,12 +66,7 @@ pub trait CreateTxModule:
             is_refund_tx: false,
         };
 
-        let default_gas_cost = self.sovereign_tx_gas_limit().get();
-        let batch_id = self.add_to_batch(tx, default_gas_cost);
+        let batch_id = self.add_to_batch(tx);
         self.create_transaction_event(batch_id, tx_nonce);
     }
-
-    #[view(getSovereignTxGasLimit)]
-    #[storage_mapper("sovereignTxGasLimit")]
-    fn sovereign_tx_gas_limit(&self) -> SingleValueMapper<GasLimit>;
 }

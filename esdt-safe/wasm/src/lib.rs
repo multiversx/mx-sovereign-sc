@@ -25,7 +25,6 @@ multiversx_sc_wasm_adapter::endpoints! {
         init => init
         upgrade => upgrade
         createTransaction => create_transaction
-        getSovereignTxGasLimit => sovereign_tx_gas_limit
         claimRefund => claim_refund
         getRefundAmounts => get_refund_amounts
         setTransactionBatchStatus => set_transaction_batch_status
@@ -46,6 +45,7 @@ multiversx_sc_wasm_adapter::endpoints! {
         getBatchStatus => get_batch_status
         getFirstBatchId => first_batch_id
         getLastBatchId => last_batch_id
+        getSovereignTxGasLimit => sovereign_tx_gas_limit
         setMaxBridgedAmount => set_max_bridged_amount
         getMaxBridgedAmount => max_bridged_amount
         pause => pause_endpoint
