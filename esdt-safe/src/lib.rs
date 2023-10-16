@@ -1,5 +1,4 @@
 #![no_std]
-#![allow(non_snake_case)]
 
 multiversx_sc::imports!();
 multiversx_sc::derive_imports!();
