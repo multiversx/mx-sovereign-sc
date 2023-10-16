@@ -58,8 +58,7 @@ pub trait TransferTokensModule:
                     tx_nonce: sov_tx.nonce,
                     sc_shard,
                 };
-                let must_refund =
-                    self.check_must_refund(must_refund_args);
+                let must_refund = self.check_must_refund(must_refund_args);
 
                 if must_refund {
                     refund_tokens_for_user.push(token);
@@ -196,7 +195,7 @@ pub trait TransferTokensModule:
             ManagedAsyncCallResult::Err(_) => {
                 let tokens = original_tx.tokens.clone();
                 let refund_tx = self.convert_to_refund_tx(original_tx, tokens);
-                self.add_multiple_tx_to_batch(&ManagedVec::from_single_item(refund_tx));
+                self.add_to_batch(refund_tx);
 
                 self.transfer_failed_execution_failed(batch_id, tx_nonce);
             }
