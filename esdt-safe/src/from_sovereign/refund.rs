@@ -1,4 +1,4 @@
-use transaction::{BatchId, PaymentsVec, Transaction, TxBatchSplitInFields, TxNonce};
+use transaction::{BatchId, PaymentsVec, Transaction, TxNonce};
 
 multiversx_sc::imports!();
 
@@ -10,20 +10,6 @@ pub trait RefundModule:
     + tx_batch_module::TxBatchModule
     + max_bridged_amount_module::MaxBridgedAmountModule
 {
-    #[only_owner]
-    #[endpoint(getAndClearFirstRefundBatch)]
-    fn get_and_clear_first_refund_batch(&self) -> OptionalValue<TxBatchSplitInFields<Self::Api>> {
-        let opt_current_batch = self.get_first_batch_any_status();
-        if matches!(opt_current_batch, OptionalValue::Some(_)) {
-            let first_batch_id = self.first_batch_id().get();
-            let mut first_batch = self.pending_batches(first_batch_id);
-
-            self.clear_first_batch(&mut first_batch);
-        }
-
-        opt_current_batch
-    }
-
     fn check_must_refund(
         &self,
         token: &EsdtTokenPayment,
@@ -101,11 +87,15 @@ pub trait RefundModule:
         sov_tx: Transaction<Self::Api>,
         tokens_to_refund: PaymentsVec<Self::Api>,
     ) -> Transaction<Self::Api> {
+        let tx_nonce = self.get_and_save_next_tx_id();
+        self.add_refund_transaction_event(tx_nonce, sov_tx.nonce);
+
+        // invert from and to
         Transaction {
             block_nonce: self.blockchain().get_block_nonce(),
-            nonce: sov_tx.nonce,
-            from: sov_tx.from,
-            to: sov_tx.to,
+            nonce: tx_nonce,
+            from: sov_tx.to,
+            to: sov_tx.from,
             tokens: tokens_to_refund,
             token_data: ManagedVec::new(),
             opt_transfer_data: None,

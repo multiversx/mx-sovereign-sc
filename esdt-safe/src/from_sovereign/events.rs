@@ -4,6 +4,13 @@ multiversx_sc::imports!();
 
 #[multiversx_sc::module]
 pub trait EventsModule {
+    #[event("addRefundTransactionEvent")]
+    fn add_refund_transaction_event(
+        &self,
+        #[indexed] tx_id: TxId,
+        #[indexed] original_tx_id: TxId,
+    );
+
     #[event("transferPerformedEvent")]
     fn transfer_performed_event(
         &self,

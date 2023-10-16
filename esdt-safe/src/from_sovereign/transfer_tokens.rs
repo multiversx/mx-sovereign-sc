@@ -18,9 +18,9 @@ pub trait TransferTokensModule:
     + super::token_mapping::TokenMappingModule
     + tx_batch_module::TxBatchModule
     + max_bridged_amount_module::MaxBridgedAmountModule
+    + multiversx_sc_modules::pause::PauseModule
     + multiversx_sc_modules::default_issue_callbacks::DefaultIssueCallbacksModule
 {
-    #[only_owner]
     #[endpoint(batchTransferEsdtToken)]
     fn batch_transfer_esdt_token(
         &self,
@@ -28,6 +28,8 @@ pub trait TransferTokensModule:
         signature: BlsSignature<Self::Api>,
         transfers: MultiValueEncoded<Transaction<Self::Api>>,
     ) {
+        require!(self.not_paused(), "Cannot transfer while paused");
+
         let mut successful_tx_list = ManagedVec::new();
         let mut all_tokens_to_send = ManagedVec::new();
         let mut refund_tx_list = ManagedVec::new();
