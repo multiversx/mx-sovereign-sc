@@ -1,10 +1,12 @@
+use bls_signature::BlsSignature;
 use transaction::{transaction_status::TransactionStatus, BatchId};
 
 multiversx_sc::imports!();
 
 #[multiversx_sc::module]
 pub trait SetTxStatusModule:
-    super::events::EventsModule
+    bls_signature::BlsSignatureModule
+    + super::events::EventsModule
     + super::refund::RefundModule
     + token_module::TokenModule
     + tx_batch_module::TxBatchModule
@@ -14,11 +16,11 @@ pub trait SetTxStatusModule:
     ///
     /// Only TransactionStatus::Executed (3) and TransactionStatus::Rejected (4) values are allowed.
     /// Number of provided statuses must be equal to number of transactions in the batch.
-    #[only_owner]
     #[endpoint(setTransactionBatchStatus)]
     fn set_transaction_batch_status(
         &self,
         batch_id: BatchId,
+        signature: BlsSignature<Self::Api>,
         tx_statuses: MultiValueEncoded<TransactionStatus>,
     ) {
         let first_batch_id = self.first_batch_id().get();
@@ -33,8 +35,18 @@ pub trait SetTxStatusModule:
             "Invalid number of statuses provided"
         );
 
+        let mut serialized_data = ManagedBuffer::new();
+        let tx_statuses_vec = tx_statuses.to_vec();
+
+        let _ = batch_id.dep_encode(&mut serialized_data);
+        for status in &tx_statuses_vec {
+            let _ = status.dep_encode(&mut serialized_data);
+        }
+
+        self.multi_verify_signature(&serialized_data, &signature);
+
         let mut sent_tokens = ManagedVec::new();
-        for (tx, tx_status) in tx_batch.iter().zip(tx_statuses.to_vec().iter()) {
+        for (tx, tx_status) in tx_batch.iter().zip(tx_statuses_vec.iter()) {
             // Since tokens don't exist in the EsdtSafe in the case of a refund transaction
             // we have no tokens to burn, nor to refund
             if tx.is_refund_tx {

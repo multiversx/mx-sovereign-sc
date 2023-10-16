@@ -4,7 +4,7 @@ use transaction::{
     BatchId, GasLimit, PaymentsVec, StolenFromFrameworkEsdtTokenData, Transaction, TxNonce,
 };
 
-use super::bls_signature::BlsSignature;
+use bls_signature::BlsSignature;
 
 multiversx_sc::imports!();
 
@@ -12,7 +12,7 @@ const CALLBACK_GAS: GasLimit = 1_000_000; // Increase if not enough
 
 #[multiversx_sc::module]
 pub trait TransferTokensModule:
-    super::bls_signature::BlsSignatureModule
+    bls_signature::BlsSignatureModule
     + super::events::EventsModule
     + super::refund::RefundModule
     + super::token_mapping::TokenMappingModule

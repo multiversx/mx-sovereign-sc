@@ -20,6 +20,9 @@ path = "../common/tx-batch-module"
 [dependencies.max-bridged-amount-module]
 path = "../common/max-bridged-amount-module"
 
+[dependencies.bls-signature]
+path = "../common/bls-signature"
+
 [dependencies.multiversx-sc]
 version = "0.43.4"
 features = [ "promises" ]

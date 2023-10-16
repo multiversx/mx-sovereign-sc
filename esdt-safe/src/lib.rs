@@ -18,7 +18,7 @@ pub trait EsdtSafe:
     + to_sovereign::events::EventsModule
     + to_sovereign::refund::RefundModule
     + to_sovereign::set_tx_status::SetTxStatusModule
-    + from_sovereign::bls_signature::BlsSignatureModule
+    + bls_signature::BlsSignatureModule
     + from_sovereign::events::EventsModule
     + from_sovereign::refund::RefundModule
     + from_sovereign::token_mapping::TokenMappingModule

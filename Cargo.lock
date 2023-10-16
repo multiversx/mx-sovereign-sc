@@ -231,6 +231,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8d696c370c750c948ada61c69a0ee2cbbb9c50b1019ddb86d9317157a99c2cae"
 
 [[package]]
+name = "bls-signature"
+version = "0.0.0"
+dependencies = [
+ "multiversx-sc",
+ "multiversx-sc-scenario",
+ "transaction",
+]
+
+[[package]]
 name = "bstr"
 version = "1.6.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -666,6 +675,7 @@ dependencies = [
 name = "esdt-safe"
 version = "0.0.0"
 dependencies = [
+ "bls-signature",
  "max-bridged-amount-module",
  "multiversx-sc",
  "multiversx-sc-modules",
