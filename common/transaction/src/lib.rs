@@ -7,7 +7,6 @@ pub mod transaction_status;
 
 // revert protection
 pub const MIN_BLOCKS_FOR_FINALITY: u64 = 10;
-pub const TX_MULTIRESULT_NR_FIELDS: usize = 6;
 
 pub type BatchId = u64;
 pub type TxId = u64;

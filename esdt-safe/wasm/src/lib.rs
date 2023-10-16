@@ -5,10 +5,10 @@
 ////////////////////////////////////////////////////
 
 // Init:                                 1
-// Endpoints:                           30
+// Endpoints:                           28
 // Async Callback:                       1
 // Promise callbacks:                    1
-// Total number of exported functions:  33
+// Total number of exported functions:  31
 
 #![no_std]
 
@@ -26,14 +26,12 @@ multiversx_sc_wasm_adapter::endpoints! {
         upgrade => upgrade
         createTransaction => create_transaction
         getSovereignTxGasLimit => sovereign_tx_gas_limit
-        addRefundBatch => add_refund_batch
         claimRefund => claim_refund
         getRefundAmounts => get_refund_amounts
         setTransactionBatchStatus => set_transaction_batch_status
         setMinValidSigners => set_min_valid_signers
         addSigners => add_signers
         removeSigners => remove_signers
-        getAndClearFirstRefundBatch => get_and_clear_first_refund_batch
         registerToken => register_token
         clearRegisteredToken => clear_registered_token
         batchTransferEsdtToken => batch_transfer_esdt_token
