@@ -6,7 +6,7 @@ const NFT_AMOUNT: u32 = 1;
 
 #[multiversx_sc::module]
 pub trait RefundModule:
-    crate::events::EventsModule
+    super::events::EventsModule
     + tx_batch_module::TxBatchModule
     + max_bridged_amount_module::MaxBridgedAmountModule
 {

@@ -1188,26 +1188,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "multi-transfer-esdt"
-version = "0.0.0"
-dependencies = [
- "max-bridged-amount-module",
- "multiversx-sc",
- "multiversx-sc-modules",
- "multiversx-sc-scenario",
- "transaction",
- "tx-batch-module",
-]
-
-[[package]]
-name = "multi-transfer-esdt-meta"
-version = "0.0.0"
-dependencies = [
- "multi-transfer-esdt",
- "multiversx-sc-meta",
-]
-
-[[package]]
 name = "multiversx-chain-scenario-format"
 version = "0.20.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"

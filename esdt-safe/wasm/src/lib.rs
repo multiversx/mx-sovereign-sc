@@ -5,9 +5,10 @@
 ////////////////////////////////////////////////////
 
 // Init:                                 1
-// Endpoints:                           23
-// Async Callback (empty):               1
-// Total number of exported functions:  25
+// Endpoints:                           30
+// Async Callback:                       1
+// Promise callbacks:                    1
+// Total number of exported functions:  33
 
 #![no_std]
 
@@ -29,6 +30,13 @@ multiversx_sc_wasm_adapter::endpoints! {
         claimRefund => claim_refund
         getRefundAmounts => get_refund_amounts
         setTransactionBatchStatus => set_transaction_batch_status
+        setMinValidSigners => set_min_valid_signers
+        addSigners => add_signers
+        removeSigners => remove_signers
+        getAndClearFirstRefundBatch => get_and_clear_first_refund_batch
+        registerToken => register_token
+        clearRegisteredToken => clear_registered_token
+        batchTransferEsdtToken => batch_transfer_esdt_token
         addTokenToWhitelist => add_token_to_whitelist
         removeTokenFromWhitelist => remove_token_from_whitelist
         getAllKnownTokens => token_whitelist
@@ -45,7 +53,8 @@ multiversx_sc_wasm_adapter::endpoints! {
         pause => pause_endpoint
         unpause => unpause_endpoint
         isPaused => paused_status
+        transfer_callback => transfer_callback
     )
 }
 
-multiversx_sc_wasm_adapter::async_callback_empty! {}
+multiversx_sc_wasm_adapter::async_callback! { esdt_safe }

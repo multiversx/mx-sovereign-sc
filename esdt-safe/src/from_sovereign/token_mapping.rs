@@ -1,10 +1,10 @@
-use crate::bls_signature::BlsSignature;
+use super::bls_signature::BlsSignature;
 
 multiversx_sc::imports!();
 
 #[multiversx_sc::module]
 pub trait TokenMappingModule:
-    crate::bls_signature::BlsSignatureModule
+    super::bls_signature::BlsSignatureModule
     + multiversx_sc_modules::default_issue_callbacks::DefaultIssueCallbacksModule
 {
     #[payable("EGLD")]

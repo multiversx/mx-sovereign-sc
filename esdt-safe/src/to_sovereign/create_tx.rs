@@ -7,7 +7,7 @@ const MAX_TRANSFERS_PER_TX: usize = 10;
 
 #[multiversx_sc::module]
 pub trait CreateTxModule:
-    crate::events::EventsModule
+    super::events::EventsModule
     + token_module::TokenModule
     + tx_batch_module::TxBatchModule
     + max_bridged_amount_module::MaxBridgedAmountModule

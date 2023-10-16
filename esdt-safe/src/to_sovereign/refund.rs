@@ -11,7 +11,7 @@ pub struct NonceAmountPair<M: ManagedTypeApi> {
 
 #[multiversx_sc::module]
 pub trait RefundModule:
-    crate::events::EventsModule
+    super::events::EventsModule
     + token_module::TokenModule
     + tx_batch_module::TxBatchModule
     + max_bridged_amount_module::MaxBridgedAmountModule

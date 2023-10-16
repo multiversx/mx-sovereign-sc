@@ -4,7 +4,7 @@ use transaction::{
     BatchId, GasLimit, PaymentsVec, StolenFromFrameworkEsdtTokenData, Transaction, TxNonce,
 };
 
-use crate::bls_signature::BlsSignature;
+use super::bls_signature::BlsSignature;
 
 multiversx_sc::imports!();
 
@@ -12,10 +12,10 @@ const CALLBACK_GAS: GasLimit = 1_000_000; // Increase if not enough
 
 #[multiversx_sc::module]
 pub trait TransferTokensModule:
-    crate::bls_signature::BlsSignatureModule
-    + crate::events::EventsModule
-    + crate::refund::RefundModule
-    + crate::token_mapping::TokenMappingModule
+    super::bls_signature::BlsSignatureModule
+    + super::events::EventsModule
+    + super::refund::RefundModule
+    + super::token_mapping::TokenMappingModule
     + tx_batch_module::TxBatchModule
     + max_bridged_amount_module::MaxBridgedAmountModule
     + multiversx_sc_modules::default_issue_callbacks::DefaultIssueCallbacksModule
