@@ -5,10 +5,10 @@
 ////////////////////////////////////////////////////
 
 // Init:                                 1
-// Endpoints:                           13
+// Endpoints:                           16
 // Async Callback (empty):               1
 // Promise callbacks:                    1
-// Total number of exported functions:  16
+// Total number of exported functions:  19
 
 #![no_std]
 
@@ -24,6 +24,9 @@ multiversx_sc_wasm_adapter::endpoints! {
     (
         init => init
         upgrade => upgrade
+        setMinValidSigners => set_min_valid_signers
+        addSigners => add_signers
+        removeSigners => remove_signers
         getAndClearFirstRefundBatch => get_and_clear_first_refund_batch
         batchTransferEsdtToken => batch_transfer_esdt_token
         setMaxTxBatchSize => set_max_tx_batch_size
