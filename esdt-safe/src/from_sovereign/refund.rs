@@ -4,40 +4,46 @@ multiversx_sc::imports!();
 
 const NFT_AMOUNT: u32 = 1;
 
+pub struct CheckMustRefundArgs<M: ManagedTypeApi> {
+    pub token: EsdtTokenPayment<M>,
+    pub roles: EsdtLocalRoleFlags,
+    pub dest: ManagedAddress<M>,
+    pub batch_id: BatchId,
+    pub tx_nonce: TxNonce,
+    pub sc_shard: u32,
+}
+
 #[multiversx_sc::module]
 pub trait RefundModule:
     super::events::EventsModule
     + tx_batch_module::TxBatchModule
     + max_bridged_amount_module::MaxBridgedAmountModule
 {
-    fn check_must_refund(
-        &self,
-        token: &EsdtTokenPayment,
-        dest: &ManagedAddress,
-        batch_id: BatchId,
-        tx_nonce: TxNonce,
-        sc_shard: u32,
-    ) -> bool {
-        if token.token_nonce == 0 {
-            if !self.is_local_role_set(&token.token_identifier, &EsdtLocalRole::Mint) {
-                self.transfer_failed_invalid_token(batch_id, tx_nonce);
+    fn check_must_refund(&self, args: CheckMustRefundArgs<Self::Api>) -> bool {
+        if args.token.token_nonce == 0 {
+            if !args.roles.has_role(&EsdtLocalRole::Mint) {
+                self.transfer_failed_invalid_token(args.batch_id, args.tx_nonce);
 
                 return true;
             }
-        } else if !self.has_nft_roles(token) {
-            self.transfer_failed_invalid_token(batch_id, tx_nonce);
+        } else if !self.has_nft_roles(&args.token, args.roles) {
+            self.transfer_failed_invalid_token(args.batch_id, args.tx_nonce);
 
             return true;
         }
 
-        if self.is_above_max_amount(&token.token_identifier, &token.amount) {
-            self.transfer_over_max_amount(batch_id, tx_nonce);
+        if self.is_above_max_amount(&args.token.token_identifier, &args.token.amount) {
+            self.transfer_over_max_amount(args.batch_id, args.tx_nonce);
 
             return true;
         }
 
-        if self.is_account_same_shard_frozen(sc_shard, dest, &token.token_identifier) {
-            self.transfer_failed_frozen_destination_account(batch_id, tx_nonce);
+        if self.is_account_same_shard_frozen(
+            args.sc_shard,
+            &args.dest,
+            &args.token.token_identifier,
+        ) {
+            self.transfer_failed_frozen_destination_account(args.batch_id, args.tx_nonce);
 
             return true;
         }
@@ -45,24 +51,16 @@ pub trait RefundModule:
         false
     }
 
-    fn has_nft_roles(&self, payment: &EsdtTokenPayment) -> bool {
-        if !self.is_local_role_set(&payment.token_identifier, &EsdtLocalRole::NftCreate) {
+    fn has_nft_roles(&self, payment: &EsdtTokenPayment, roles: EsdtLocalRoleFlags) -> bool {
+        if !roles.has_role(&EsdtLocalRole::NftCreate) {
             return false;
         }
 
-        if payment.amount > NFT_AMOUNT
-            && !self.is_local_role_set(&payment.token_identifier, &EsdtLocalRole::NftAddQuantity)
-        {
+        if payment.amount > NFT_AMOUNT && !roles.has_role(&EsdtLocalRole::NftAddQuantity) {
             return false;
         }
 
         true
-    }
-
-    fn is_local_role_set(&self, token_id: &TokenIdentifier, role: &EsdtLocalRole) -> bool {
-        let roles = self.blockchain().get_esdt_local_roles(token_id);
-
-        roles.has_role(role)
     }
 
     fn is_account_same_shard_frozen(

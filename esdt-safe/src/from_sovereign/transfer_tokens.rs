@@ -6,6 +6,8 @@ use transaction::{
 
 use bls_signature::BlsSignature;
 
+use crate::from_sovereign::refund::CheckMustRefundArgs;
+
 multiversx_sc::imports!();
 
 const CALLBACK_GAS: GasLimit = 1_000_000; // Increase if not enough
@@ -45,8 +47,19 @@ pub trait TransferTokensModule:
             let mut sent_token_data = ManagedVec::new();
 
             for (token, token_data) in sov_tx.tokens.iter().zip(sov_tx.token_data.iter()) {
+                let token_roles = self
+                    .blockchain()
+                    .get_esdt_local_roles(&token.token_identifier);
+                let must_refund_args = CheckMustRefundArgs {
+                    token: token.clone(),
+                    roles: token_roles,
+                    dest: sov_tx.to.clone(),
+                    batch_id,
+                    tx_nonce: sov_tx.nonce,
+                    sc_shard,
+                };
                 let must_refund =
-                    self.check_must_refund(&token, &sov_tx.to, batch_id, sov_tx.nonce, sc_shard);
+                    self.check_must_refund(must_refund_args);
 
                 if must_refund {
                     refund_tokens_for_user.push(token);
