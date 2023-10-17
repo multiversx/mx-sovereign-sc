@@ -4,12 +4,13 @@ multiversx_sc::imports!();
 
 const NFT_AMOUNT: u32 = 1;
 
-pub struct CheckMustRefundArgs<M: ManagedTypeApi> {
-    pub token: EsdtTokenPayment<M>,
+pub struct CheckMustRefundArgs<'a, M: ManagedTypeApi> {
+    pub token: &'a EsdtTokenPayment<M>,
     pub roles: EsdtLocalRoleFlags,
-    pub dest: ManagedAddress<M>,
+    pub dest: &'a ManagedAddress<M>,
     pub batch_id: BatchId,
     pub tx_nonce: TxNonce,
+    pub sc_address: &'a ManagedAddress<M>,
     pub sc_shard: u32,
 }
 
@@ -20,16 +21,23 @@ pub trait RefundModule:
     + max_bridged_amount_module::MaxBridgedAmountModule
 {
     fn check_must_refund(&self, args: CheckMustRefundArgs<Self::Api>) -> bool {
-        if args.token.token_nonce == 0 {
-            if !args.roles.has_role(&EsdtLocalRole::Mint) {
+        let token_balance = self.blockchain().get_esdt_balance(
+            args.sc_address,
+            &args.token.token_identifier,
+            args.token.token_nonce,
+        );
+        if token_balance < args.token.amount {
+            if args.token.token_nonce == 0 {
+                if !args.roles.has_role(&EsdtLocalRole::Mint) {
+                    self.transfer_failed_invalid_token(args.batch_id, args.tx_nonce);
+
+                    return true;
+                }
+            } else if !self.has_nft_roles(args.token, args.roles) {
                 self.transfer_failed_invalid_token(args.batch_id, args.tx_nonce);
 
                 return true;
             }
-        } else if !self.has_nft_roles(&args.token, args.roles) {
-            self.transfer_failed_invalid_token(args.batch_id, args.tx_nonce);
-
-            return true;
         }
 
         if self.is_above_max_amount(&args.token.token_identifier, &args.token.amount) {
@@ -38,11 +46,8 @@ pub trait RefundModule:
             return true;
         }
 
-        if self.is_account_same_shard_frozen(
-            args.sc_shard,
-            &args.dest,
-            &args.token.token_identifier,
-        ) {
+        if self.is_account_same_shard_frozen(args.sc_shard, args.dest, &args.token.token_identifier)
+        {
             self.transfer_failed_frozen_destination_account(args.batch_id, args.tx_nonce);
 
             return true;

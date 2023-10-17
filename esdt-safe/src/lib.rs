@@ -3,7 +3,6 @@
 multiversx_sc::imports!();
 multiversx_sc::derive_imports!();
 
-use transaction::GasLimit;
 use tx_batch_module::FIRST_BATCH_ID;
 
 const DEFAULT_MAX_TX_BATCH_SIZE: usize = 10;
@@ -29,18 +28,8 @@ pub trait EsdtSafe:
     + multiversx_sc_modules::pause::PauseModule
     + multiversx_sc_modules::default_issue_callbacks::DefaultIssueCallbacksModule
 {
-    /// sovereign_tx_gas_limit - The gas limit that will be used for transactions on the Sovereign side.
-    /// In case of SC gas limits, this value is provided by the user
-    /// Will be used to compute the fees for the transfer
     #[init]
-    fn init(
-        &self,
-        sovereign_tx_gas_limit: GasLimit,
-        min_valid_signers: u32,
-        signers: MultiValueEncoded<ManagedAddress>,
-    ) {
-        self.sovereign_tx_gas_limit().set(sovereign_tx_gas_limit);
-
+    fn init(&self, min_valid_signers: u32, signers: MultiValueEncoded<ManagedAddress>) {
         self.max_tx_batch_size().set(DEFAULT_MAX_TX_BATCH_SIZE);
         self.max_tx_batch_block_duration()
             .set(DEFAULT_MAX_TX_BATCH_BLOCK_DURATION);
@@ -48,6 +37,7 @@ pub trait EsdtSafe:
         // batch ID 0 is considered invalid
         self.first_batch_id().set(FIRST_BATCH_ID);
         self.last_batch_id().set(FIRST_BATCH_ID);
+        self.next_batch_id().set(FIRST_BATCH_ID);
 
         self.set_min_valid_signers(min_valid_signers);
         self.add_signers(signers);
