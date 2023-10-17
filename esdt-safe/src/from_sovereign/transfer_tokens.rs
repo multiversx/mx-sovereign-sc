@@ -10,7 +10,7 @@ use crate::from_sovereign::refund::CheckMustRefundArgs;
 
 multiversx_sc::imports!();
 
-const CALLBACK_GAS: GasLimit = 1_000_000; // Increase if not enough
+const CALLBACK_GAS: GasLimit = 10_000_000; // Increase if not enough
 
 #[multiversx_sc::module]
 pub trait TransferTokensModule:
