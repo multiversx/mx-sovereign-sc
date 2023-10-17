@@ -35,6 +35,7 @@ pub struct TransferData<M: ManagedTypeApi> {
     pub args: ManagedVec<M, ManagedBuffer<M>>,
 }
 
+// Temporary until Clone is implemented for EsdtTokenData
 #[derive(
     TopDecode, TopEncode, NestedDecode, NestedEncode, TypeAbi, Debug, ManagedVecItem, Clone,
 )]
