@@ -35,50 +35,12 @@ pub struct TransferData<M: ManagedTypeApi> {
     pub args: ManagedVec<M, ManagedBuffer<M>>,
 }
 
-#[derive(
-    TopDecode,
-    TopEncode,
-    NestedDecode,
-    NestedEncode,
-    Clone,
-    PartialEq,
-    Eq,
-    Debug,
-    TypeAbi,
-    ManagedVecItem,
-)]
-pub enum StolenFromFrameworkEsdtTokenType {
-    Fungible,
-    NonFungible,
-    SemiFungible,
-    Meta,
-    Invalid,
-}
-
-impl Default for StolenFromFrameworkEsdtTokenType {
-    #[inline]
-    fn default() -> Self {
-        Self::Fungible
-    }
-}
-
-impl From<EsdtTokenType> for StolenFromFrameworkEsdtTokenType {
-    fn from(value: EsdtTokenType) -> Self {
-        match value {
-            EsdtTokenType::Fungible => StolenFromFrameworkEsdtTokenType::Fungible,
-            EsdtTokenType::NonFungible => StolenFromFrameworkEsdtTokenType::NonFungible,
-            EsdtTokenType::SemiFungible => StolenFromFrameworkEsdtTokenType::SemiFungible,
-            EsdtTokenType::Meta => StolenFromFrameworkEsdtTokenType::Meta,
-            EsdtTokenType::Invalid => StolenFromFrameworkEsdtTokenType::Invalid,
-        }
-    }
-}
-
+// Temporary until Clone is implemented for EsdtTokenData
 #[derive(
     TopDecode, TopEncode, NestedDecode, NestedEncode, TypeAbi, Debug, ManagedVecItem, Clone,
 )]
 pub struct StolenFromFrameworkEsdtTokenData<M: ManagedTypeApi> {
-    pub token_type: StolenFromFrameworkEsdtTokenType,
+    pub token_type: EsdtTokenType,
     pub amount: BigUint<M>,
     pub frozen: bool,
     pub hash: ManagedBuffer<M>,
@@ -92,7 +54,7 @@ pub struct StolenFromFrameworkEsdtTokenData<M: ManagedTypeApi> {
 impl<M: ManagedTypeApi> Default for StolenFromFrameworkEsdtTokenData<M> {
     fn default() -> Self {
         StolenFromFrameworkEsdtTokenData {
-            token_type: StolenFromFrameworkEsdtTokenType::Fungible,
+            token_type: EsdtTokenType::Fungible,
             amount: BigUint::zero(),
             frozen: false,
             hash: ManagedBuffer::new(),
@@ -108,7 +70,7 @@ impl<M: ManagedTypeApi> Default for StolenFromFrameworkEsdtTokenData<M> {
 impl<M: ManagedTypeApi> From<EsdtTokenData<M>> for StolenFromFrameworkEsdtTokenData<M> {
     fn from(value: EsdtTokenData<M>) -> Self {
         StolenFromFrameworkEsdtTokenData {
-            token_type: value.token_type.into(),
+            token_type: value.token_type,
             amount: value.amount,
             frozen: value.frozen,
             hash: value.hash,
