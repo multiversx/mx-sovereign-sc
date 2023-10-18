@@ -1,5 +1,7 @@
 use transaction::{GasLimit, StolenFromFrameworkEsdtTokenData, Transaction, TransferData};
 
+use crate::to_sovereign::events::DepositEvent;
+
 multiversx_sc::imports!();
 
 const MAX_USER_TX_GAS_LIMIT: GasLimit = 300_000_000;
@@ -8,15 +10,14 @@ const MAX_TRANSFERS_PER_TX: usize = 10;
 #[multiversx_sc::module]
 pub trait CreateTxModule:
     super::events::EventsModule
-    + token_module::TokenModule
     + tx_batch_module::TxBatchModule
     + max_bridged_amount_module::MaxBridgedAmountModule
     + multiversx_sc_modules::pause::PauseModule
 {
     /// Create an Elrond -> Sovereign transaction.
     #[payable("*")]
-    #[endpoint(createTransaction)]
-    fn create_transaction(
+    #[endpoint]
+    fn deposit(
         &self,
         to: ManagedAddress,
         opt_transfer_data: OptionalValue<TransferData<Self::Api>>,
@@ -37,7 +38,6 @@ pub trait CreateTxModule:
         let own_sc_address = self.blockchain().get_sc_address();
         let mut all_token_data = ManagedVec::new();
         for payment in &payments {
-            self.require_token_in_whitelist(&payment.token_identifier);
             self.require_below_max_amount(&payment.token_identifier, &payment.amount);
 
             if payment.token_nonce > 0 {
@@ -55,6 +55,13 @@ pub trait CreateTxModule:
         let caller = self.blockchain().get_caller();
         let block_nonce = self.blockchain().get_block_nonce();
         let tx_nonce = self.get_and_save_next_tx_id();
+
+        self.deposit_event(
+            &to,
+            &payments,
+            DepositEvent::from(tx_nonce, &opt_transfer_data),
+        );
+
         let tx = Transaction {
             block_nonce,
             nonce: tx_nonce,
@@ -65,8 +72,6 @@ pub trait CreateTxModule:
             opt_transfer_data: opt_transfer_data.into_option(),
             is_refund_tx: false,
         };
-
-        let batch_id = self.add_to_batch(tx);
-        self.create_transaction_event(batch_id, tx_nonce);
+        let _ = self.add_to_batch(tx);
     }
 }

@@ -10,7 +10,6 @@ pub struct NonceAmountPair<M: ManagedTypeApi> {
 #[multiversx_sc::module]
 pub trait RefundModule:
     super::events::EventsModule
-    + token_module::TokenModule
     + tx_batch_module::TxBatchModule
     + max_bridged_amount_module::MaxBridgedAmountModule
 {
@@ -35,31 +34,6 @@ pub trait RefundModule:
         self.send().direct_multi(&caller, &output_payments);
 
         output_payments
-    }
-
-    /// Query function that lists all refund amounts for a user.
-    /// Useful for knowing which token IDs to pass to the claimRefund endpoint.
-    #[view(getRefundAmounts)]
-    fn get_refund_amounts(
-        &self,
-        address: ManagedAddress,
-    ) -> MultiValueEncoded<MultiValue3<TokenIdentifier, u64, BigUint>> {
-        let mut refund_amounts = MultiValueEncoded::new();
-        for token_id in self.token_whitelist().iter() {
-            let nonce_amount_pairs = self.refund_amount(&address, &token_id).get();
-            for nonce_amount_pair in &nonce_amount_pairs {
-                refund_amounts.push(
-                    (
-                        token_id.clone(),
-                        nonce_amount_pair.nonce,
-                        nonce_amount_pair.amount,
-                    )
-                        .into(),
-                );
-            }
-        }
-
-        refund_amounts
     }
 
     fn mark_refund(&self, to: &ManagedAddress, token: &EsdtTokenPayment) {
