@@ -676,10 +676,13 @@ name = "esdt-safe"
 version = "0.0.0"
 dependencies = [
  "bls-signature",
+ "hex",
  "max-bridged-amount-module",
  "multiversx-sc",
  "multiversx-sc-modules",
  "multiversx-sc-scenario",
+ "num-bigint",
+ "num-traits",
  "token-module",
  "transaction",
  "tx-batch-module",

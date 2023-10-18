@@ -5,10 +5,10 @@
 ////////////////////////////////////////////////////
 
 // Init:                                 1
-// Endpoints:                           28
+// Endpoints:                           27
 // Async Callback:                       1
 // Promise callbacks:                    1
-// Total number of exported functions:  31
+// Total number of exported functions:  30
 
 #![no_std]
 
@@ -45,7 +45,6 @@ multiversx_sc_wasm_adapter::endpoints! {
         getBatchStatus => get_batch_status
         getFirstBatchId => first_batch_id
         getLastBatchId => last_batch_id
-        getSovereignTxGasLimit => sovereign_tx_gas_limit
         setMaxBridgedAmount => set_max_bridged_amount
         getMaxBridgedAmount => max_bridged_amount
         pause => pause_endpoint

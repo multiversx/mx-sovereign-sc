@@ -10,7 +10,7 @@ use crate::from_sovereign::refund::CheckMustRefundArgs;
 
 multiversx_sc::imports!();
 
-const CALLBACK_GAS: GasLimit = 1_000_000; // Increase if not enough
+const CALLBACK_GAS: GasLimit = 10_000_000; // Increase if not enough
 
 #[multiversx_sc::module]
 pub trait TransferTokensModule:
@@ -32,6 +32,9 @@ pub trait TransferTokensModule:
     ) {
         require!(self.not_paused(), "Cannot transfer while paused");
 
+        let next_batch_id = self.next_batch_id().get();
+        require!(batch_id == next_batch_id, "Unexpected batch ID");
+
         let mut successful_tx_list = ManagedVec::new();
         let mut all_tokens_to_send = ManagedVec::new();
         let mut refund_tx_list = ManagedVec::new();
@@ -51,11 +54,12 @@ pub trait TransferTokensModule:
                     .blockchain()
                     .get_esdt_local_roles(&token.token_identifier);
                 let must_refund_args = CheckMustRefundArgs {
-                    token: token.clone(),
+                    token: &token,
                     roles: token_roles,
-                    dest: sov_tx.to.clone(),
+                    dest: &sov_tx.to,
                     batch_id,
                     tx_nonce: sov_tx.nonce,
+                    sc_address: &own_sc_address,
                     sc_shard,
                 };
                 let must_refund = self.check_must_refund(must_refund_args);
@@ -86,6 +90,8 @@ pub trait TransferTokensModule:
         self.distribute_payments(batch_id, successful_tx_list, all_tokens_to_send);
 
         self.add_multiple_tx_to_batch(&refund_tx_list);
+
+        self.next_batch_id().set(batch_id + 1);
     }
 
     fn mint_tokens(
@@ -201,4 +207,7 @@ pub trait TransferTokensModule:
             }
         }
     }
+
+    #[storage_mapper("nextBatchId")]
+    fn next_batch_id(&self) -> SingleValueMapper<BatchId>;
 }

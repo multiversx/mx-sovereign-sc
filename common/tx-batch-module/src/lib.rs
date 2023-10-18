@@ -4,13 +4,10 @@ multiversx_sc::imports!();
 multiversx_sc::derive_imports!();
 
 pub use batch_status::BatchStatus;
-use transaction::{
-    BatchId, GasLimit, Transaction, TxBatchSplitInFields, TxNonce, MIN_BLOCKS_FOR_FINALITY,
-};
+use transaction::{BatchId, Transaction, TxBatchSplitInFields, TxNonce, MIN_BLOCKS_FOR_FINALITY};
 use tx_batch_mapper::TxBatchMapper;
 
 pub const FIRST_BATCH_ID: BatchId = 1;
-pub const MAX_GAS_LIMIT_PER_BATCH: GasLimit = 500_000_000;
 
 pub mod batch_status;
 pub mod tx_batch_mapper;
@@ -121,30 +118,16 @@ pub trait TxBatchModule {
     // private
 
     fn add_to_batch(&self, transaction: Transaction<Self::Api>) -> BatchId {
-        let default_gas_limit = self.sovereign_tx_gas_limit().get();
         let first_batch_id = self.first_batch_id().get();
         let last_batch_id = self.last_batch_id().get();
         let mut last_batch = self.pending_batches(last_batch_id);
 
-        let gas_cost = match &transaction.opt_transfer_data {
-            Some(transfer_data) => transfer_data.gas_limit,
-            None => transaction.tokens.len() as u64 * default_gas_limit,
-        };
-
-        let gas_cost_mapper = self.total_gas_cost(last_batch_id);
-        let last_batch_total_gas_cost = gas_cost_mapper.get();
-        let new_total_gas_cost = last_batch_total_gas_cost + gas_cost;
-
-        if self.is_batch_full(&last_batch, last_batch_id, first_batch_id)
-            || new_total_gas_cost > MAX_GAS_LIMIT_PER_BATCH
-        {
+        if self.is_batch_full(&last_batch, last_batch_id, first_batch_id) {
             let (new_batch_id, _) = self.create_new_batch(transaction);
-            self.total_gas_cost(new_batch_id).set(gas_cost);
 
             new_batch_id
         } else {
             last_batch.push(transaction);
-            gas_cost_mapper.set(new_total_gas_cost);
 
             last_batch_id
         }
@@ -159,36 +142,20 @@ pub trait TxBatchModule {
             return ManagedVec::new();
         }
 
-        let default_gas_limit = self.sovereign_tx_gas_limit().get();
         let first_batch_id = self.first_batch_id().get();
         let mut last_batch_id = self.last_batch_id().get();
         let mut last_batch = self.pending_batches(last_batch_id);
         let mut batch_ids = ManagedVec::new();
-        let mut total_gas_cost = self.total_gas_cost(last_batch_id).get();
 
         for tx in transactions {
-            let gas_cost = match &tx.opt_transfer_data {
-                Some(transfer_data) => transfer_data.gas_limit,
-                None => tx.tokens.len() as u64 * default_gas_limit,
-            };
-
-            let new_total_gas_cost = total_gas_cost + gas_cost;
-            if self.is_batch_full(&last_batch, last_batch_id, first_batch_id)
-                || new_total_gas_cost > MAX_GAS_LIMIT_PER_BATCH
-            {
-                self.total_gas_cost(last_batch_id).set(total_gas_cost);
-                total_gas_cost = gas_cost;
-
+            if self.is_batch_full(&last_batch, last_batch_id, first_batch_id) {
                 (last_batch_id, last_batch) = self.create_new_batch(tx);
             } else {
-                total_gas_cost = new_total_gas_cost;
                 last_batch.push(tx);
             }
 
             batch_ids.push(last_batch_id);
         }
-
-        self.total_gas_cost(last_batch_id).set(total_gas_cost);
 
         batch_ids
     }
@@ -297,9 +264,6 @@ pub trait TxBatchModule {
     #[storage_mapper("pendingBatches")]
     fn pending_batches(&self, batch_id: BatchId) -> TxBatchMapper<Self::Api>;
 
-    #[storage_mapper("totalGasCost")]
-    fn total_gas_cost(&self, batch_id: BatchId) -> SingleValueMapper<GasLimit>;
-
     #[storage_mapper("lastTxNonce")]
     fn last_tx_nonce(&self) -> SingleValueMapper<TxNonce>;
 
@@ -310,8 +274,4 @@ pub trait TxBatchModule {
 
     #[storage_mapper("maxTxBatchBlockDuration")]
     fn max_tx_batch_block_duration(&self) -> SingleValueMapper<u64>;
-
-    #[view(getSovereignTxGasLimit)]
-    #[storage_mapper("sovereignTxGasLimit")]
-    fn sovereign_tx_gas_limit(&self) -> SingleValueMapper<GasLimit>;
 }
