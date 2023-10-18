@@ -72,7 +72,6 @@ pub trait CreateTxModule:
             opt_transfer_data: opt_transfer_data.into_option(),
             is_refund_tx: false,
         };
-
         let _ = self.add_to_batch(tx);
     }
 }
