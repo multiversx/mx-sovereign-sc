@@ -5,9 +5,10 @@
 ////////////////////////////////////////////////////
 
 // Init:                                 1
-// Endpoints:                           23
-// Async Callback (empty):               1
-// Total number of exported functions:  25
+// Endpoints:                           28
+// Async Callback:                       1
+// Promise callbacks:                    1
+// Total number of exported functions:  31
 
 #![no_std]
 
@@ -24,11 +25,15 @@ multiversx_sc_wasm_adapter::endpoints! {
         init => init
         upgrade => upgrade
         createTransaction => create_transaction
-        getSovereignTxGasLimit => sovereign_tx_gas_limit
-        addRefundBatch => add_refund_batch
         claimRefund => claim_refund
         getRefundAmounts => get_refund_amounts
         setTransactionBatchStatus => set_transaction_batch_status
+        setMinValidSigners => set_min_valid_signers
+        addSigners => add_signers
+        removeSigners => remove_signers
+        registerToken => register_token
+        clearRegisteredToken => clear_registered_token
+        batchTransferEsdtToken => batch_transfer_esdt_token
         addTokenToWhitelist => add_token_to_whitelist
         removeTokenFromWhitelist => remove_token_from_whitelist
         getAllKnownTokens => token_whitelist
@@ -40,12 +45,14 @@ multiversx_sc_wasm_adapter::endpoints! {
         getBatchStatus => get_batch_status
         getFirstBatchId => first_batch_id
         getLastBatchId => last_batch_id
+        getSovereignTxGasLimit => sovereign_tx_gas_limit
         setMaxBridgedAmount => set_max_bridged_amount
         getMaxBridgedAmount => max_bridged_amount
         pause => pause_endpoint
         unpause => unpause_endpoint
         isPaused => paused_status
+        transfer_callback => transfer_callback
     )
 }
 
-multiversx_sc_wasm_adapter::async_callback_empty! {}
+multiversx_sc_wasm_adapter::async_callback! { esdt_safe }

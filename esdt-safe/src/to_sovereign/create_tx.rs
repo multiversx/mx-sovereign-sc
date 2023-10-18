@@ -7,7 +7,7 @@ const MAX_TRANSFERS_PER_TX: usize = 10;
 
 #[multiversx_sc::module]
 pub trait CreateTxModule:
-    crate::events::EventsModule
+    super::events::EventsModule
     + token_module::TokenModule
     + tx_batch_module::TxBatchModule
     + max_bridged_amount_module::MaxBridgedAmountModule
@@ -66,12 +66,7 @@ pub trait CreateTxModule:
             is_refund_tx: false,
         };
 
-        let default_gas_cost = self.sovereign_tx_gas_limit().get();
-        let batch_id = self.add_to_batch(tx, default_gas_cost);
+        let batch_id = self.add_to_batch(tx);
         self.create_transaction_event(batch_id, tx_nonce);
     }
-
-    #[view(getSovereignTxGasLimit)]
-    #[storage_mapper("sovereignTxGasLimit")]
-    fn sovereign_tx_gas_limit(&self) -> SingleValueMapper<GasLimit>;
 }

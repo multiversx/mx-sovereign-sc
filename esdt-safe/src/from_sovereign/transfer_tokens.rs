@@ -4,7 +4,9 @@ use transaction::{
     BatchId, GasLimit, PaymentsVec, StolenFromFrameworkEsdtTokenData, Transaction, TxNonce,
 };
 
-use crate::bls_signature::BlsSignature;
+use bls_signature::BlsSignature;
+
+use crate::from_sovereign::refund::CheckMustRefundArgs;
 
 multiversx_sc::imports!();
 
@@ -12,15 +14,15 @@ const CALLBACK_GAS: GasLimit = 1_000_000; // Increase if not enough
 
 #[multiversx_sc::module]
 pub trait TransferTokensModule:
-    crate::bls_signature::BlsSignatureModule
-    + crate::events::EventsModule
-    + crate::refund::RefundModule
-    + crate::token_mapping::TokenMappingModule
+    bls_signature::BlsSignatureModule
+    + super::events::EventsModule
+    + super::refund::RefundModule
+    + super::token_mapping::TokenMappingModule
     + tx_batch_module::TxBatchModule
     + max_bridged_amount_module::MaxBridgedAmountModule
+    + multiversx_sc_modules::pause::PauseModule
     + multiversx_sc_modules::default_issue_callbacks::DefaultIssueCallbacksModule
 {
-    #[only_owner]
     #[endpoint(batchTransferEsdtToken)]
     fn batch_transfer_esdt_token(
         &self,
@@ -28,6 +30,8 @@ pub trait TransferTokensModule:
         signature: BlsSignature<Self::Api>,
         transfers: MultiValueEncoded<Transaction<Self::Api>>,
     ) {
+        require!(self.not_paused(), "Cannot transfer while paused");
+
         let mut successful_tx_list = ManagedVec::new();
         let mut all_tokens_to_send = ManagedVec::new();
         let mut refund_tx_list = ManagedVec::new();
@@ -43,8 +47,18 @@ pub trait TransferTokensModule:
             let mut sent_token_data = ManagedVec::new();
 
             for (token, token_data) in sov_tx.tokens.iter().zip(sov_tx.token_data.iter()) {
-                let must_refund =
-                    self.check_must_refund(&token, &sov_tx.to, batch_id, sov_tx.nonce, sc_shard);
+                let token_roles = self
+                    .blockchain()
+                    .get_esdt_local_roles(&token.token_identifier);
+                let must_refund_args = CheckMustRefundArgs {
+                    token: token.clone(),
+                    roles: token_roles,
+                    dest: sov_tx.to.clone(),
+                    batch_id,
+                    tx_nonce: sov_tx.nonce,
+                    sc_shard,
+                };
+                let must_refund = self.check_must_refund(must_refund_args);
 
                 if must_refund {
                     refund_tokens_for_user.push(token);
@@ -181,7 +195,7 @@ pub trait TransferTokensModule:
             ManagedAsyncCallResult::Err(_) => {
                 let tokens = original_tx.tokens.clone();
                 let refund_tx = self.convert_to_refund_tx(original_tx, tokens);
-                self.add_multiple_tx_to_batch(&ManagedVec::from_single_item(refund_tx));
+                self.add_to_batch(refund_tx);
 
                 self.transfer_failed_execution_failed(batch_id, tx_nonce);
             }

@@ -1,3 +1,5 @@
+#![no_std]
+
 use transaction::Transaction;
 
 multiversx_sc::imports!();

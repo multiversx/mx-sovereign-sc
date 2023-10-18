@@ -7,14 +7,6 @@ pub trait EventsModule {
     #[event("createTransactionEvent")]
     fn create_transaction_event(&self, #[indexed] batch_id: BatchId, #[indexed] tx_id: TxId);
 
-    #[event("addRefundTransactionEvent")]
-    fn add_refund_transaction_event(
-        &self,
-        #[indexed] batch_id: BatchId,
-        #[indexed] tx_id: TxId,
-        #[indexed] original_tx_id: TxId,
-    );
-
     #[event("setStatusEvent")]
     fn set_status_event(
         &self,
