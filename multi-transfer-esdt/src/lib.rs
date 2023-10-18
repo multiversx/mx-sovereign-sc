@@ -10,6 +10,7 @@ const DEFAULT_MAX_TX_BATCH_BLOCK_DURATION: u64 = u64::MAX;
 pub mod bls_signature;
 pub mod events;
 pub mod refund;
+pub mod token_mapping;
 pub mod transfer_tokens;
 
 #[multiversx_sc::contract]
@@ -17,10 +18,12 @@ pub trait MultiTransferEsdt:
     bls_signature::BlsSignatureModule
     + events::EventsModule
     + refund::RefundModule
+    + token_mapping::TokenMappingModule
     + transfer_tokens::TransferTokensModule
     + tx_batch_module::TxBatchModule
     + max_bridged_amount_module::MaxBridgedAmountModule
 {
+    /// Needs to be Payable by SC to receive the tokens from EsdtSafe
     #[init]
     fn init(&self, min_valid_signers: u32, signers: MultiValueEncoded<ManagedAddress>) {
         self.max_tx_batch_size().set(DEFAULT_MAX_TX_BATCH_SIZE);

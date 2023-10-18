@@ -33,6 +33,7 @@ pub trait SetTxStatusModule:
             "Invalid number of statuses provided"
         );
 
+        let mut sent_tokens = ManagedVec::new();
         for (tx, tx_status) in tx_batch.iter().zip(tx_statuses.to_vec().iter()) {
             // Since tokens don't exist in the EsdtSafe in the case of a refund transaction
             // we have no tokens to burn, nor to refund
@@ -42,17 +43,8 @@ pub trait SetTxStatusModule:
 
             match tx_status {
                 TransactionStatus::Executed => {
-                    // local burn role might be removed while tx is executed
-                    // tokens will remain locked forever in that case
-                    // otherwise, the whole batch would fail
                     for token in &tx.tokens {
-                        if self.is_burn_role_set(&token) {
-                            self.send().esdt_local_burn(
-                                &token.token_identifier,
-                                token.token_nonce,
-                                &token.amount,
-                            )
-                        }
+                        sent_tokens.push(token);
                     }
                 }
                 TransactionStatus::Rejected => {
@@ -68,6 +60,13 @@ pub trait SetTxStatusModule:
             self.set_status_event(batch_id, tx.nonce, tx_status);
         }
 
+        let multi_transfer_sc_address = self.multi_transfer_sc_address().get();
+        self.send()
+            .direct_multi(&multi_transfer_sc_address, &sent_tokens);
+
         self.clear_first_batch(&mut tx_batch);
     }
+
+    #[storage_mapper("multiTransferScAddress")]
+    fn multi_transfer_sc_address(&self) -> SingleValueMapper<ManagedAddress>;
 }

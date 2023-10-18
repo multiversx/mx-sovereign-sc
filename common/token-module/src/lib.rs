@@ -9,15 +9,13 @@ pub trait TokenModule {
 
     #[only_owner]
     #[endpoint(addTokenToWhitelist)]
-    fn add_token_to_whitelist(&self, token_id: TokenIdentifier, ticker: ManagedBuffer) {
-        self.token_ticker(&token_id).set(&ticker);
+    fn add_token_to_whitelist(&self, token_id: TokenIdentifier) {
         let _ = self.token_whitelist().insert(token_id);
     }
 
     #[only_owner]
     #[endpoint(removeTokenFromWhitelist)]
     fn remove_token_from_whitelist(&self, token_id: TokenIdentifier) {
-        self.token_ticker(&token_id).clear();
         let _ = self.token_whitelist().swap_remove(&token_id);
     }
 
@@ -44,9 +42,6 @@ pub trait TokenModule {
     }
 
     // storage
-
-    #[storage_mapper("tokenTicker")]
-    fn token_ticker(&self, token_id: &TokenIdentifier) -> SingleValueMapper<ManagedBuffer>;
 
     #[view(getAllKnownTokens)]
     #[storage_mapper("tokenWhitelist")]

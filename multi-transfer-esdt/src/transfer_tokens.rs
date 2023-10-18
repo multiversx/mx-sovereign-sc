@@ -15,6 +15,7 @@ pub trait TransferTokensModule:
     crate::bls_signature::BlsSignatureModule
     + crate::events::EventsModule
     + crate::refund::RefundModule
+    + crate::token_mapping::TokenMappingModule
     + tx_batch_module::TxBatchModule
     + max_bridged_amount_module::MaxBridgedAmountModule
 {
@@ -77,23 +78,35 @@ pub trait TransferTokensModule:
         payments: PaymentsVec<Self::Api>,
         all_token_data: ManagedVec<StolenFromFrameworkEsdtTokenData<Self::Api>>,
     ) -> PaymentsVec<Self::Api> {
+        let own_sc_address = self.blockchain().get_sc_address();
         let mut output_payments = PaymentsVec::new();
         for (payment, token_data) in payments.iter().zip(all_token_data.iter()) {
+            let token_balance = self.blockchain().get_esdt_balance(
+                &own_sc_address,
+                &payment.token_identifier,
+                payment.token_nonce,
+            );
+            if token_balance >= payment.amount {
+                output_payments.push(payment);
+
+                continue;
+            }
+
+            let mx_token_id = self
+                .sovereign_to_multiversx_token_id(&payment.token_identifier)
+                .get();
+
             if payment.token_nonce == 0 {
                 self.send()
-                    .esdt_local_mint(&payment.token_identifier, 0, &payment.amount);
+                    .esdt_local_mint(&mx_token_id, 0, &payment.amount);
 
-                output_payments.push(EsdtTokenPayment::new(
-                    payment.token_identifier,
-                    0,
-                    payment.amount,
-                ));
+                output_payments.push(EsdtTokenPayment::new(mx_token_id, 0, payment.amount));
 
                 continue;
             }
 
             let token_nonce = self.send().esdt_nft_create(
-                &payment.token_identifier,
+                &mx_token_id,
                 &payment.amount,
                 &token_data.name,
                 &token_data.royalties,
@@ -102,7 +115,7 @@ pub trait TransferTokensModule:
                 &token_data.uris,
             );
             output_payments.push(EsdtTokenPayment::new(
-                payment.token_identifier,
+                mx_token_id,
                 token_nonce,
                 payment.amount,
             ));
