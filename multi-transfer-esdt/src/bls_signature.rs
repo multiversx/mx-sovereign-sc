@@ -38,17 +38,27 @@ pub trait BlsSignatureModule {
         let mut serialized_signature_data = ManagedBuffer::new();
         for transaction in transactions {
             let _ = transaction.dep_encode(&mut serialized_signature_data);
-            
+
             deserialized_transactions.push(transaction);
         }
 
+        self.multi_verify_signature(&serialized_signature_data, signature);
+
+        deserialized_transactions
+    }
+
+    fn multi_verify_signature(
+        &self,
+        signature_data: &ManagedBuffer,
+        signature: &BlsSignature<Self::Api>,
+    ) {
         let all_signers = self.all_signers();
 
         let mut total_valid_signatures = 0;
         for signer in all_signers.iter() {
             let is_valid = self.crypto().verify_bls(
                 signer.as_managed_buffer(),
-                &serialized_signature_data,
+                signature_data,
                 signature.as_managed_buffer(),
             );
             if is_valid {
@@ -61,8 +71,6 @@ pub trait BlsSignatureModule {
             total_valid_signatures >= min_valid_signers,
             "Invalid signature"
         );
-
-        deserialized_transactions
     }
 
     #[storage_mapper("allSigners")]

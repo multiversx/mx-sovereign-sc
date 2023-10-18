@@ -5,10 +5,10 @@
 ////////////////////////////////////////////////////
 
 // Init:                                 1
-// Endpoints:                           17
-// Async Callback (empty):               1
+// Endpoints:                           18
+// Async Callback:                       1
 // Promise callbacks:                    1
-// Total number of exported functions:  20
+// Total number of exported functions:  21
 
 #![no_std]
 
@@ -28,7 +28,8 @@ multiversx_sc_wasm_adapter::endpoints! {
         addSigners => add_signers
         removeSigners => remove_signers
         getAndClearFirstRefundBatch => get_and_clear_first_refund_batch
-        setSovToMxTokenId => set_sov_to_mx_token_id
+        registerToken => register_token
+        clearRegisteredToken => clear_registered_token
         batchTransferEsdtToken => batch_transfer_esdt_token
         setMaxTxBatchSize => set_max_tx_batch_size
         setMaxTxBatchBlockDuration => set_max_tx_batch_block_duration
@@ -44,4 +45,4 @@ multiversx_sc_wasm_adapter::endpoints! {
     )
 }
 
-multiversx_sc_wasm_adapter::async_callback_empty! {}
+multiversx_sc_wasm_adapter::async_callback! { multi_transfer_esdt }

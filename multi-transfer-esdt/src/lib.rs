@@ -22,6 +22,7 @@ pub trait MultiTransferEsdt:
     + transfer_tokens::TransferTokensModule
     + tx_batch_module::TxBatchModule
     + max_bridged_amount_module::MaxBridgedAmountModule
+    + multiversx_sc_modules::default_issue_callbacks::DefaultIssueCallbacksModule
 {
     /// Needs to be Payable by SC to receive the tokens from EsdtSafe
     #[init]
