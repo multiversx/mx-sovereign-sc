@@ -1,5 +1,7 @@
 [workspace]
 members = [
+  "chain-factory",
+  "chain-factory/meta",
   "esdt-safe",
   "esdt-safe/meta",
 ]
