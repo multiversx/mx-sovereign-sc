@@ -27,7 +27,7 @@ multiversx_sc_wasm_adapter::endpoints! {
         blacklistSovereignChainSc => blacklist_sovereign_chain_sc
         getDeployCost => deploy_cost
         slash => slash
-        distrubteSlashed => distribute_slashed
+        distributeSlashed => distribute_slashed
     )
 }
 

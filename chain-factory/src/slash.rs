@@ -12,7 +12,7 @@ mod validators_contract_proxy {
         #[endpoint]
         fn slash(&self, validator_address: ManagedAddress, value: BigUint);
 
-        #[endpoint(distrubteSlashed)]
+        #[endpoint(distributeSlashed)]
         fn distribute_slashed(&self, dest_amount_pairs: DestAmountPairs<Self::Api>);
     }
 }
@@ -31,7 +31,7 @@ pub trait SlashModule: crate::factory::FactoryModule {
             .execute_on_dest_context();
     }
 
-    #[endpoint(distrubteSlashed)]
+    #[endpoint(distributeSlashed)]
     fn distribute_slashed(&self, dest_amount_pairs: DestAmountPairs<Self::Api>) {
         let caller = self.blockchain().get_caller();
         self.require_deployed_sc(&caller);
