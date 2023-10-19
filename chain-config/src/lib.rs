@@ -1,11 +1,13 @@
 #![no_std]
 
+use validator_rules::TokenIdAmountPair;
+
 multiversx_sc::imports!();
 
 pub mod bridge;
 pub mod validator_rules;
 
-type StakeMultiArg<M> = MultiValue3<TokenIdentifier<M>, u64, BigUint<M>>;
+type StakeMultiArg<M> = MultiValue2<TokenIdentifier<M>, BigUint<M>>;
 
 #[multiversx_sc::contract]
 pub trait ChainConfigContract:
@@ -26,10 +28,10 @@ pub trait ChainConfigContract:
 
         let mut additional_stake_vec = ManagedVec::new();
         for multi_value in additional_stake_required {
-            let (token_id, nonce, amount) = multi_value.into_tuple();
-            let payment = EsdtTokenPayment::new(token_id, nonce, amount);
+            let (token_id, amount) = multi_value.into_tuple();
+            let value = TokenIdAmountPair { token_id, amount };
 
-            additional_stake_vec.push(payment);
+            additional_stake_vec.push(value);
         }
 
         self.min_validators().set(min_validators);

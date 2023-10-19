@@ -311,7 +311,6 @@ dependencies = [
  "multiversx-sc",
  "multiversx-sc-scenario",
  "num-bigint",
- "utils",
 ]
 
 [[package]]
