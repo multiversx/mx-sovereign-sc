@@ -2,6 +2,8 @@
 
 multiversx_sc::imports!();
 
+pub type PaymentsVec<M> = ManagedVec<M, EsdtTokenPayment<M>>;
+
 #[multiversx_sc::module]
 pub trait UtilsModule {
     fn require_sc_address(&self, address: &ManagedAddress) {

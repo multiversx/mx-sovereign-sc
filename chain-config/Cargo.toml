@@ -13,7 +13,6 @@ num-bigint = "0.4.2"
 
 [dependencies.multiversx-sc]
 version = "=0.43.5"
-features = ["esdt-token-payment-legacy-decode"]
 
 [dependencies.utils]
 path = "../common/utils"

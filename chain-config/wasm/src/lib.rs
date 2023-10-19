@@ -5,9 +5,9 @@
 ////////////////////////////////////////////////////
 
 // Init:                                 1
-// Endpoints:                            1
+// Endpoints:                            7
 // Async Callback (empty):               1
-// Total number of exported functions:   3
+// Total number of exported functions:   9
 
 #![no_std]
 
@@ -23,6 +23,12 @@ multiversx_sc_wasm_adapter::endpoints! {
     (
         init => init
         upgrade => upgrade
+        deployBridge => deploy_bridge
+        getMinValidators => min_validators
+        getMaxValidators => max_validators
+        getMinStake => min_stake
+        getAdditionalStakeRequired => additional_stake_required
+        wasPreviouslySlashed => was_previously_slashed
     )
 }
 
