@@ -22,7 +22,7 @@ path = "../common/bls-signature"
 
 [dependencies.multiversx-sc]
 version = "=0.43.5"
-features = [ "promises" ]
+features = [ "promises", "esdt-token-payment-legacy-decode" ]
 
 [dependencies.multiversx-sc-modules]
 version = "=0.43.5"
