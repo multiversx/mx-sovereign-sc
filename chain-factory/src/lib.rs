@@ -6,7 +6,9 @@ pub mod factory;
 pub mod slash;
 
 #[multiversx_sc::contract]
-pub trait ChainFactoryContract: factory::FactoryModule + slash::SlashModule {
+pub trait ChainFactoryContract:
+    factory::FactoryModule + slash::SlashModule + utils::UtilsModule
+{
     #[init]
     fn init(
         &self,
@@ -25,11 +27,4 @@ pub trait ChainFactoryContract: factory::FactoryModule + slash::SlashModule {
 
     #[endpoint]
     fn upgrade(&self) {}
-
-    fn require_sc_address(&self, address: &ManagedAddress) {
-        require!(
-            !address.is_zero() && self.blockchain().is_smart_contract(address),
-            "Invalid SC address"
-        );
-    }
 }

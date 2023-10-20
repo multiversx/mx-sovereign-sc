@@ -1,35 +1,38 @@
+use chain_config::StakeMultiArg;
+
 multiversx_sc::imports!();
 
 #[multiversx_sc::module]
 pub trait FactoryModule {
-    // TODO: Typed args
     #[payable("EGLD")]
     #[endpoint(deploySovereignChainConfigContract)]
-    fn deploy_sovereign_chain_config_contract(&self, args: MultiValueEncoded<ManagedBuffer>) {
+    fn deploy_sovereign_chain_config_contract(
+        &self,
+        min_validators: usize,
+        max_validators: usize,
+        min_stake: BigUint,
+        additional_stake_required: MultiValueEncoded<StakeMultiArg<Self::Api>>,
+    ) {
         let payment_amount = self.call_value().egld_value().clone_value();
         let deploy_cost = self.deploy_cost().get();
         require!(payment_amount == deploy_cost, "Invalid payment amount");
 
-        let mut serialized_args = ManagedArgBuffer::new();
-        for arg in args {
-            serialized_args.push_arg(arg);
-        }
-
-        // TODO: add caller as admin
-        // let caller = self.blockchain().get_caller();
-
-        // TODO: Typed call based on proxy
+        let caller = self.blockchain().get_caller();
         let source_address = self.chain_config_template().get();
-        let gas_left = self.blockchain().get_gas_left();
         let metadata =
             CodeMetadata::PAYABLE_BY_SC | CodeMetadata::UPGRADEABLE | CodeMetadata::READABLE;
-        let (sc_address, _) = self.send_raw().deploy_from_source_contract(
-            gas_left,
-            &BigUint::zero(),
-            &source_address,
-            metadata,
-            &serialized_args,
-        );
+
+        let (sc_address, _) = self
+            .chain_config_proxy()
+            .init(
+                min_validators,
+                max_validators,
+                min_stake,
+                caller,
+                additional_stake_required,
+            )
+            .deploy_from_source::<IgnoreValue>(&source_address, metadata);
+
         let _ = self.all_deployed_contracts().insert(sc_address);
     }
 
@@ -38,6 +41,9 @@ pub trait FactoryModule {
     fn blacklist_sovereign_chain_sc(&self, sc_address: ManagedAddress) {
         let _ = self.all_deployed_contracts().swap_remove(&sc_address);
     }
+
+    #[proxy]
+    fn chain_config_proxy(&self) -> chain_config::Proxy<Self::Api>;
 
     #[view(getDeployCost)]
     #[storage_mapper("deployCost")]

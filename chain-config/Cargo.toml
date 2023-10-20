@@ -1,5 +1,5 @@
 [package]
-name = "chain-factory"
+name = "chain-config"
 version = "0.0.0"
 authors = [ "you",]
 edition = "2018"
@@ -14,11 +14,8 @@ num-bigint = "0.4.2"
 [dependencies.multiversx-sc]
 version = "=0.43.5"
 
-[dependencies.utils]
-path = "../common/utils"
-
-[dependencies.chain-config]
-path = "../chain-config"
+[dependencies.multiversx-sc-modules]
+version = "=0.43.5"
 
 [dev-dependencies.multiversx-sc-scenario]
 version = "=0.43.5"
