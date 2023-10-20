@@ -309,6 +309,7 @@ name = "chain-config"
 version = "0.0.0"
 dependencies = [
  "multiversx-sc",
+ "multiversx-sc-modules",
  "multiversx-sc-scenario",
  "num-bigint",
 ]
@@ -325,6 +326,7 @@ dependencies = [
 name = "chain-factory"
 version = "0.0.0"
 dependencies = [
+ "chain-config",
  "multiversx-sc",
  "multiversx-sc-scenario",
  "num-bigint",

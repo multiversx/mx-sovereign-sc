@@ -17,5 +17,8 @@ version = "=0.43.5"
 [dependencies.utils]
 path = "../common/utils"
 
+[dependencies.chain-config]
+path = "../chain-config"
+
 [dev-dependencies.multiversx-sc-scenario]
 version = "=0.43.5"

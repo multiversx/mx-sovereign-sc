@@ -7,11 +7,13 @@ multiversx_sc::imports!();
 pub mod bridge;
 pub mod validator_rules;
 
-type StakeMultiArg<M> = MultiValue2<TokenIdentifier<M>, BigUint<M>>;
+pub type StakeMultiArg<M> = MultiValue2<TokenIdentifier<M>, BigUint<M>>;
 
 #[multiversx_sc::contract]
 pub trait ChainConfigContract:
-    bridge::BridgeModule + validator_rules::ValidatorRulesModule
+    bridge::BridgeModule
+    + validator_rules::ValidatorRulesModule
+    + multiversx_sc_modules::only_admin::OnlyAdminModule
 {
     #[init]
     fn init(
@@ -19,6 +21,7 @@ pub trait ChainConfigContract:
         min_validators: usize,
         max_validators: usize,
         min_stake: BigUint,
+        admin: ManagedAddress,
         additional_stake_required: MultiValueEncoded<StakeMultiArg<Self::Api>>,
     ) {
         require!(
@@ -37,6 +40,7 @@ pub trait ChainConfigContract:
         self.min_validators().set(min_validators);
         self.max_validators().set(max_validators);
         self.min_stake().set(min_stake);
+        self.add_admin(admin);
         self.additional_stake_required().set(additional_stake_vec);
     }
 

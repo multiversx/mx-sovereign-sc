@@ -14,5 +14,8 @@ num-bigint = "0.4.2"
 [dependencies.multiversx-sc]
 version = "=0.43.5"
 
+[dependencies.multiversx-sc-modules]
+version = "=0.43.5"
+
 [dev-dependencies.multiversx-sc-scenario]
 version = "=0.43.5"
