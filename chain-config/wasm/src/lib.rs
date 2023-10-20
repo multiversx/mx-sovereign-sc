@@ -5,9 +5,9 @@
 ////////////////////////////////////////////////////
 
 // Init:                                 1
-// Endpoints:                            7
+// Endpoints:                           11
 // Async Callback (empty):               1
-// Total number of exported functions:   9
+// Total number of exported functions:  13
 
 #![no_std]
 
@@ -29,6 +29,10 @@ multiversx_sc_wasm_adapter::endpoints! {
         getMinStake => min_stake
         getAdditionalStakeRequired => additional_stake_required
         wasPreviouslySlashed => was_previously_slashed
+        isAdmin => is_admin
+        addAdmin => add_admin
+        removeAdmin => remove_admin
+        getAdmins => admins
     )
 }
 

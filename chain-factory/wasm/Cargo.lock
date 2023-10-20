@@ -38,9 +38,18 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 
 [[package]]
+name = "chain-config"
+version = "0.0.0"
+dependencies = [
+ "multiversx-sc",
+ "multiversx-sc-modules",
+]
+
+[[package]]
 name = "chain-factory"
 version = "0.0.0"
 dependencies = [
+ "chain-config",
  "multiversx-sc",
  "utils",
 ]
@@ -127,6 +136,15 @@ dependencies = [
  "quote",
  "radix_trie",
  "syn",
+]
+
+[[package]]
+name = "multiversx-sc-modules"
+version = "0.43.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "45a02a1c14d05986661eff35beab26f5e72cdc44753b1f415eff64d6c4e4bc98"
+dependencies = [
+ "multiversx-sc",
 ]
 
 [[package]]
