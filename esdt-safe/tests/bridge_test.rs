@@ -56,7 +56,12 @@ fn transfer_two_tokens_to_sov_ok() {
             &bridge_setup.bridge_wrapper,
             &transfers,
             |sc| {
-                sc.deposit(managed_address!(&dest), OptionalValue::None);
+                sc.deposit(
+                    managed_address!(&dest),
+                    OptionalValue::None,
+                    OptionalValue::None,
+                    OptionalValue::None,
+                );
             },
         )
         .assert_ok();
@@ -107,7 +112,12 @@ fn refund_failed_tx_to_sov() {
             &bridge_setup.bridge_wrapper,
             &transfers,
             |sc| {
-                sc.deposit(managed_address!(&dest), OptionalValue::None);
+                sc.deposit(
+                    managed_address!(&dest),
+                    OptionalValue::None,
+                    OptionalValue::None,
+                    OptionalValue::None,
+                );
             },
         )
         .assert_ok();
@@ -185,7 +195,12 @@ fn transfer_token_to_and_from_sov_ok() {
             &bridge_setup.bridge_wrapper,
             &transfers,
             |sc| {
-                sc.deposit(managed_address!(&dest), OptionalValue::None);
+                sc.deposit(
+                    managed_address!(&dest),
+                    OptionalValue::None,
+                    OptionalValue::None,
+                    OptionalValue::None,
+                );
             },
         )
         .assert_ok();
@@ -341,7 +356,7 @@ fn transfer_token_from_sov_no_roles_refund() {
             &bridge_setup.bridge_wrapper,
             &rust_biguint!(0),
             |sc| {
-                // transactions were converted into Elrond -> Sov for refunding
+                // transactions were converted into MVX -> Sov for refunding
                 let opt_val = sc.get_current_tx_batch();
                 assert!(opt_val.is_some());
             },

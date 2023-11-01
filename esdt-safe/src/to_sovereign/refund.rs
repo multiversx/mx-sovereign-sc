@@ -13,7 +13,7 @@ pub trait RefundModule:
     + tx_batch_module::TxBatchModule
     + max_bridged_amount_module::MaxBridgedAmountModule
 {
-    /// Claim funds for failed Elrond -> Sovereign transactions.
+    /// Claim funds for failed MultiversX -> Sovereign transactions.
     /// These are not sent automatically to prevent the contract getting stuck.
     /// For example, if the receiver is a SC, a frozen account, etc.
     #[endpoint(claimRefund)]
