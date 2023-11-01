@@ -14,13 +14,15 @@ pub trait CreateTxModule:
     + max_bridged_amount_module::MaxBridgedAmountModule
     + multiversx_sc_modules::pause::PauseModule
 {
-    /// Create an Elrond -> Sovereign transaction.
+    /// Create an MultiversX -> Sovereign transaction.
     #[payable("*")]
     #[endpoint]
     fn deposit(
         &self,
         to: ManagedAddress,
-        opt_transfer_data: OptionalValue<TransferData<Self::Api>>,
+        opt_gas_limit: OptionalValue<GasLimit>,
+        opt_function: OptionalValue<ManagedBuffer>,
+        opt_args: OptionalValue<MultiValueEncoded<ManagedBuffer>>,
     ) {
         require!(self.not_paused(), "Cannot create transaction while paused");
 
@@ -28,15 +30,25 @@ pub trait CreateTxModule:
         require!(!payments.is_empty(), "Nothing to transfer");
         require!(payments.len() <= MAX_TRANSFERS_PER_TX, "Too many tokens");
 
-        if let OptionalValue::Some(transfer_data) = &opt_transfer_data {
-            require!(
-                transfer_data.gas_limit <= MAX_USER_TX_GAS_LIMIT,
-                "Gas limit too high"
-            );
-        }
+        let opt_transfer_data = if let OptionalValue::Some(gas_limit) = opt_gas_limit {
+            require!(gas_limit <= MAX_USER_TX_GAS_LIMIT, "Gas limit too high");
+            require!(opt_function.is_some(), "Must provide function name");
+
+            let args_list = opt_args.into_option().unwrap_or(MultiValueEncoded::new());
+            let args = args_list.to_vec();
+
+            OptionalValue::Some(TransferData {
+                gas_limit,
+                function: opt_function.into_option().unwrap(),
+                args,
+            })
+        } else {
+            OptionalValue::None
+        };
 
         let own_sc_address = self.blockchain().get_sc_address();
         let mut all_token_data = ManagedVec::new();
+        let mut event_payments = MultiValueEncoded::new();
         for payment in &payments {
             self.require_below_max_amount(&payment.token_identifier, &payment.amount);
 
@@ -50,6 +62,15 @@ pub trait CreateTxModule:
             } else {
                 all_token_data.push(StolenFromFrameworkEsdtTokenData::default());
             }
+
+            event_payments.push(
+                (
+                    payment.token_identifier,
+                    payment.token_nonce,
+                    payment.amount,
+                )
+                    .into(),
+            );
         }
 
         let caller = self.blockchain().get_caller();
@@ -58,7 +79,7 @@ pub trait CreateTxModule:
 
         self.deposit_event(
             &to,
-            &payments,
+            &event_payments,
             DepositEvent::from(tx_nonce, &opt_transfer_data),
         );
 

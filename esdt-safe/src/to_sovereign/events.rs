@@ -1,6 +1,4 @@
-use transaction::{
-    transaction_status::TransactionStatus, BatchId, GasLimit, PaymentsVec, TransferData, TxId,
-};
+use transaction::{transaction_status::TransactionStatus, BatchId, GasLimit, TransferData, TxId};
 
 multiversx_sc::imports!();
 multiversx_sc::derive_imports!();
@@ -8,9 +6,9 @@ multiversx_sc::derive_imports!();
 #[derive(TypeAbi, TopEncode, TopDecode)]
 pub struct DepositEvent<M: ManagedTypeApi> {
     pub tx_nonce: TxId,
+    pub opt_gas_limit: Option<GasLimit>,
     pub opt_function: Option<ManagedBuffer<M>>,
     pub opt_arguments: Option<ManagedVec<M, ManagedBuffer<M>>>,
-    pub opt_gas_limit: Option<GasLimit>,
 }
 
 impl<M: ManagedTypeApi> DepositEvent<M> {
@@ -38,7 +36,7 @@ pub trait EventsModule {
     fn deposit_event(
         &self,
         #[indexed] dest_address: &ManagedAddress,
-        #[indexed] tokens: &PaymentsVec<Self::Api>,
+        #[indexed] tokens: &MultiValueEncoded<MultiValue3<TokenIdentifier, u64, BigUint>>,
         event_data: DepositEvent<Self::Api>,
     );
 
