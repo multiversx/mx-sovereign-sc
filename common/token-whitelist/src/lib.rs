@@ -43,6 +43,13 @@ pub trait TokenWhitelistModule:
         self.remove_items(&mut self.token_whitelist(), token_list.into_iter());
     }
 
+    fn require_token_not_blacklisted(&self, token_id: &TokenIdentifier) {
+        require!(
+            !self.token_blacklist().contains(token_id),
+            "Token blacklisted"
+        );
+    }
+
     /// Tokens in blacklist cannot be transferred
     #[endpoint(addTokensToBlacklist)]
     fn add_tokens_to_blacklist(
