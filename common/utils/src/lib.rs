@@ -15,6 +15,10 @@ pub trait UtilsModule {
         );
     }
 
+    fn require_valid_token_id(&self, token_id: &TokenIdentifier) {
+        require!(token_id.is_valid_esdt_identifier(), "Invalid token ID");
+    }
+
     fn remove_items<
         T: TopEncode + TopDecode + NestedEncode + NestedDecode + 'static,
         I: IntoIterator<Item = T>,

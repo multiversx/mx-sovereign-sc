@@ -39,6 +39,7 @@ name = "esdt-safe"
 version = "0.0.0"
 dependencies = [
  "bls-signature",
+ "fee-market",
  "max-bridged-amount-module",
  "multiversx-sc",
  "multiversx-sc-modules",
@@ -55,6 +56,15 @@ version = "0.0.0"
 dependencies = [
  "esdt-safe",
  "multiversx-sc-wasm-adapter",
+]
+
+[[package]]
+name = "fee-market"
+version = "0.0.0"
+dependencies = [
+ "multiversx-sc",
+ "transaction",
+ "utils",
 ]
 
 [[package]]

@@ -518,6 +518,7 @@ name = "esdt-safe"
 version = "0.0.0"
 dependencies = [
  "bls-signature",
+ "fee-market",
  "hex",
  "max-bridged-amount-module",
  "multiversx-sc",
@@ -553,6 +554,8 @@ dependencies = [
  "multiversx-sc",
  "multiversx-sc-scenario",
  "num-bigint",
+ "transaction",
+ "utils",
 ]
 
 [[package]]

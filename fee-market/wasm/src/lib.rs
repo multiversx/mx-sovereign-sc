@@ -5,9 +5,9 @@
 ////////////////////////////////////////////////////
 
 // Init:                                 1
-// Endpoints:                            0
+// Endpoints:                           12
 // Async Callback (empty):               1
-// Total number of exported functions:   2
+// Total number of exported functions:  14
 
 #![no_std]
 #![allow(internal_features)]
@@ -20,6 +20,18 @@ multiversx_sc_wasm_adapter::endpoints! {
     fee_market
     (
         init => init
+        upgrade => upgrade
+        enableFee => enable_fee
+        disableFee => disable_fee
+        addFee => add_fee
+        removeFee => remove_fee
+        getTokenFee => token_fee
+        addUsersToWhitelist => add_users_to_whitelist
+        removeUsersFromWhitelist => remove_users_from_whitelist
+        subtractFee => subtract_fee
+        getUsersWhitelist => users_whitelist
+        addPairs => add_pairs
+        removePairs => remove_pairs
     )
 }
 
