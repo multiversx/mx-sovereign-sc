@@ -1,5 +1,7 @@
 [workspace]
 members = [
+  "chain-config",
+  "chain-config/meta",
   "chain-factory",
   "chain-factory/meta",
   "esdt-safe",
