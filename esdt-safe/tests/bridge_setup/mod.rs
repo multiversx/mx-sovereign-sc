@@ -3,11 +3,10 @@ use esdt_safe::EsdtSafe;
 use multiversx_sc::types::{Address, MultiValueEncoded};
 use multiversx_sc_modules::pause::PauseModule;
 use multiversx_sc_scenario::{
-    managed_token_id, rust_biguint,
+    rust_biguint,
     testing_framework::{BlockchainStateWrapper, ContractObjWrapper},
     DebugApi,
 };
-use token_module::TokenModule;
 use tx_batch_module::TxBatchModule;
 
 multiversx_sc::derive_imports!();
@@ -60,8 +59,6 @@ where
                 sc.init(0, MultiValueEncoded::new());
                 sc.set_max_tx_batch_size(1);
                 sc.set_paused(false);
-                sc.add_token_to_whitelist(managed_token_id!(FUNGIBLE_TOKEN_ID));
-                sc.add_token_to_whitelist(managed_token_id!(NFT_TOKEN_ID));
             })
             .assert_ok();
 

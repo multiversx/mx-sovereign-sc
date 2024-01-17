@@ -56,7 +56,7 @@ fn transfer_two_tokens_to_sov_ok() {
             &bridge_setup.bridge_wrapper,
             &transfers,
             |sc| {
-                sc.create_transaction(managed_address!(&dest), OptionalValue::None);
+                sc.deposit(managed_address!(&dest), OptionalValue::None);
             },
         )
         .assert_ok();
@@ -107,7 +107,7 @@ fn refund_failed_tx_to_sov() {
             &bridge_setup.bridge_wrapper,
             &transfers,
             |sc| {
-                sc.create_transaction(managed_address!(&dest), OptionalValue::None);
+                sc.deposit(managed_address!(&dest), OptionalValue::None);
             },
         )
         .assert_ok();
@@ -185,7 +185,7 @@ fn transfer_token_to_and_from_sov_ok() {
             &bridge_setup.bridge_wrapper,
             &transfers,
             |sc| {
-                sc.create_transaction(managed_address!(&dest), OptionalValue::None);
+                sc.deposit(managed_address!(&dest), OptionalValue::None);
             },
         )
         .assert_ok();

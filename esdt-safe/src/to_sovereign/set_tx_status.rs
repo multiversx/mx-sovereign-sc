@@ -8,7 +8,6 @@ pub trait SetTxStatusModule:
     bls_signature::BlsSignatureModule
     + super::events::EventsModule
     + super::refund::RefundModule
-    + token_module::TokenModule
     + tx_batch_module::TxBatchModule
     + max_bridged_amount_module::MaxBridgedAmountModule
 {

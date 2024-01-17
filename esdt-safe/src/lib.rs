@@ -22,7 +22,6 @@ pub trait EsdtSafe:
     + from_sovereign::refund::RefundModule
     + from_sovereign::token_mapping::TokenMappingModule
     + from_sovereign::transfer_tokens::TransferTokensModule
-    + token_module::TokenModule
     + tx_batch_module::TxBatchModule
     + max_bridged_amount_module::MaxBridgedAmountModule
     + multiversx_sc_modules::pause::PauseModule
