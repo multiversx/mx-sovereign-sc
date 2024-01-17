@@ -8,7 +8,7 @@ multiversx_sc::imports!();
 pub trait TokenWhitelistModule:
     bls_signature::BlsSignatureModule + setup_phase::SetupPhaseModule + utils::UtilsModule
 {
-    /// Tokens in the whitelist can be transfered without fees
+    /// Tokens in the whitelist can be transferred without fees
     #[endpoint(addTokensToWhitelist)]
     fn add_tokens_to_whitelist(
         &self,
@@ -43,7 +43,7 @@ pub trait TokenWhitelistModule:
         self.remove_items(&mut self.token_whitelist(), token_list.into_iter());
     }
 
-    /// Tokens in blacklist cannot be transfered
+    /// Tokens in blacklist cannot be transferred
     #[endpoint(addTokensToBlacklist)]
     fn add_tokens_to_blacklist(
         &self,
