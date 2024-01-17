@@ -6,4 +6,6 @@ members = [
   "chain-factory/meta",
   "esdt-safe",
   "esdt-safe/meta",
+  "fee-market",
+  "fee-market/meta"
 ]
