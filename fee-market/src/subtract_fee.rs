@@ -5,10 +5,18 @@ use crate::fee_type::FeeType;
 multiversx_sc::imports!();
 multiversx_sc::derive_imports!();
 
+const TOTAL_PERCENTAGE: usize = 10_000;
+
 #[derive(TypeAbi, TopEncode, TopDecode)]
 pub struct FinalPayment<M: ManagedTypeApi> {
     pub fee: EsdtTokenPayment<M>,
     pub remaining_tokens: EsdtTokenPayment<M>,
+}
+
+#[derive(TopEncode, TopDecode, ManagedVecItem)]
+pub struct AddressPercentagePair<M: ManagedTypeApi> {
+    pub address: ManagedAddress<M>,
+    pub percentage: usize,
 }
 
 pub struct SubtractPaymentArguments<M: ManagedTypeApi> {
@@ -42,11 +50,52 @@ pub trait SubtractFeeModule:
 
     /// Percentages have to be between 0 and 10_000, and must all add up to 100% (i.e. 10_000)
     #[only_owner]
+    #[endpoint(distributeFees)]
     fn distribute_fees(
         &self,
-        _user_percentage_pairs: MultiValueEncoded<MultiValue2<ManagedAddress, usize>>,
+        address_percentage_pairs: MultiValueEncoded<MultiValue2<ManagedAddress, usize>>,
     ) {
-        todo!();
+        let percentage_total = BigUint::from(TOTAL_PERCENTAGE);
+
+        let mut percentage_sum = 0u64;
+        let mut pairs = ManagedVec::<Self::Api, AddressPercentagePair<Self::Api>>::new();
+        for pair in address_percentage_pairs {
+            let (address, percentage) = pair.into_tuple();
+            pairs.push(AddressPercentagePair {
+                address,
+                percentage,
+            });
+            percentage_sum += percentage as u64;
+        }
+        require!(
+            percentage_sum == TOTAL_PERCENTAGE as u64,
+            "Invalid percentage sum"
+        );
+
+        for token_id in self.tokens_for_fees().iter() {
+            let accumulated_fees = self.accumulated_fees(&token_id).get();
+            if accumulated_fees == 0u32 {
+                continue;
+            }
+
+            let mut remaining_fees = accumulated_fees.clone();
+
+            for pair in &pairs {
+                let amount_to_send =
+                    &(&accumulated_fees * &BigUint::from(pair.percentage)) / &percentage_total;
+
+                if amount_to_send > 0 {
+                    remaining_fees -= &amount_to_send;
+
+                    self.send()
+                        .direct_esdt(&pair.address, &token_id, 0, &amount_to_send);
+                }
+            }
+
+            self.accumulated_fees(&token_id).set(&remaining_fees);
+        }
+
+        self.tokens_for_fees().clear();
     }
 
     #[payable("*")]
