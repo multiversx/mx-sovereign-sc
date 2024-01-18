@@ -14,6 +14,9 @@ path = "../common/utils"
 [dependencies.transaction]
 path = "../common/transaction"
 
+[dependencies.bls-signature]
+path = "../common/bls-signature"
+
 [dependencies.multiversx-sc]
 version = "=0.46.1"
 

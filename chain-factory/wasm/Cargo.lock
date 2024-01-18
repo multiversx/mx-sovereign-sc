@@ -21,6 +21,14 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ed570934406eb16438a4e976b1b4500774099c13b8cb96eec99f620f05090ddf"
 
 [[package]]
+name = "bls-signature"
+version = "0.0.0"
+dependencies = [
+ "multiversx-sc",
+ "transaction",
+]
+
+[[package]]
 name = "chain-config"
 version = "0.0.0"
 dependencies = [
@@ -32,6 +40,7 @@ dependencies = [
 name = "chain-factory"
 version = "0.0.0"
 dependencies = [
+ "bls-signature",
  "chain-config",
  "multiversx-sc",
  "utils",
@@ -193,6 +202,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "transaction"
+version = "0.0.0"
+dependencies = [
+ "multiversx-sc",
+]
+
+[[package]]
 name = "unicode-ident"
 version = "1.0.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -202,5 +218,6 @@ checksum = "3354b9ac3fae1ff6755cb6db53683adb661634f67557942dea4facebec0fee4b"
 name = "utils"
 version = "0.0.0"
 dependencies = [
+ "bls-signature",
  "multiversx-sc",
 ]
