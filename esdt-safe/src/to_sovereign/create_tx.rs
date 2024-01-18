@@ -35,15 +35,17 @@ pub trait CreateTxModule:
         require!(!payments.is_empty(), "Nothing to transfer");
         require!(payments.len() <= MAX_TRANSFERS_PER_TX, "Too many tokens");
 
-        let mut opt_gas_limit = OptionalValue::None;
-        if let OptionalValue::Some(transfer_data) = &opt_transfer_data {
-            require!(
-                transfer_data.gas_limit <= MAX_USER_TX_GAS_LIMIT,
-                "Gas limit too high"
-            );
+        let opt_gas_limit = match &opt_transfer_data {
+            OptionalValue::Some(transfer_data) => {
+                require!(
+                    transfer_data.gas_limit <= MAX_USER_TX_GAS_LIMIT,
+                    "Gas limit too high"
+                );
 
-            opt_gas_limit = OptionalValue::Some(transfer_data.gas_limit);
-        }
+                OptionalValue::Some(transfer_data.gas_limit)
+            }
+            OptionalValue::None => OptionalValue::None,
+        };
 
         let own_sc_address = self.blockchain().get_sc_address();
         let mut all_token_data = ManagedVec::new();
