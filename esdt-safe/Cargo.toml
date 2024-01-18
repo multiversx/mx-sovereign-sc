@@ -20,15 +20,23 @@ path = "../common/max-bridged-amount-module"
 [dependencies.bls-signature]
 path = "../common/bls-signature"
 
+[dependencies.setup-phase]
+path = "../common/setup-phase"
+
+[dependencies.token-whitelist]
+path = "../common/token-whitelist"
+
+[dependencies.utils]
+path = "../common/utils"
+
 [dependencies.multiversx-sc]
-version = "=0.43.5"
-features = [ "promises" ]
+version = "=0.46.1"
 
 [dependencies.multiversx-sc-modules]
-version = "=0.43.5"
+version = "=0.46.1"
 
 [dev-dependencies.multiversx-sc-scenario]
-version = "=0.43.5"
+version = "=0.46.1"
 
 [dev-dependencies]
 num-bigint = "0.4.2"

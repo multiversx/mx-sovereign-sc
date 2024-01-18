@@ -12,6 +12,10 @@ pub trait CreateTxModule:
     super::events::EventsModule
     + tx_batch_module::TxBatchModule
     + max_bridged_amount_module::MaxBridgedAmountModule
+    + token_whitelist::TokenWhitelistModule
+    + bls_signature::BlsSignatureModule
+    + setup_phase::SetupPhaseModule
+    + utils::UtilsModule
     + multiversx_sc_modules::pause::PauseModule
 {
     /// Create an Elrond -> Sovereign transaction.
@@ -39,6 +43,9 @@ pub trait CreateTxModule:
         let mut all_token_data = ManagedVec::new();
         for payment in &payments {
             self.require_below_max_amount(&payment.token_identifier, &payment.amount);
+            self.require_token_not_blacklisted(&payment.token_identifier);
+
+            // TODO: When adding fees, take whitelist into account
 
             if payment.token_nonce > 0 {
                 let current_token_data = self.blockchain().get_esdt_token_data(

@@ -1,5 +1,5 @@
 [package]
-name = "bls-signature"
+name = "setup-phase"
 version = "0.0.0"
 authors = ["dorin-iancu <dorin.iancu@multiversx.com>"]
 edition = "2018"
@@ -9,6 +9,3 @@ version = "=0.46.1"
 
 [dev-dependencies.multiversx-sc-scenario]
 version = "=0.46.1"
-
-[dependencies.transaction]
-path = "../transaction"

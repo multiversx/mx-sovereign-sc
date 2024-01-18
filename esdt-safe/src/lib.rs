@@ -24,11 +24,19 @@ pub trait EsdtSafe:
     + from_sovereign::transfer_tokens::TransferTokensModule
     + tx_batch_module::TxBatchModule
     + max_bridged_amount_module::MaxBridgedAmountModule
+    + setup_phase::SetupPhaseModule
+    + token_whitelist::TokenWhitelistModule
+    + utils::UtilsModule
     + multiversx_sc_modules::pause::PauseModule
     + multiversx_sc_modules::default_issue_callbacks::DefaultIssueCallbacksModule
 {
     #[init]
-    fn init(&self, min_valid_signers: u32, signers: MultiValueEncoded<ManagedAddress>) {
+    fn init(
+        &self,
+        min_valid_signers: u32,
+        initiator_address: ManagedAddress,
+        signers: MultiValueEncoded<ManagedAddress>,
+    ) {
         self.max_tx_batch_size().set(DEFAULT_MAX_TX_BATCH_SIZE);
         self.max_tx_batch_block_duration()
             .set(DEFAULT_MAX_TX_BATCH_BLOCK_DURATION);
@@ -41,7 +49,13 @@ pub trait EsdtSafe:
         self.set_min_valid_signers(min_valid_signers);
         self.add_signers(signers);
 
+        self.initiator_address().set(initiator_address);
+
         self.set_paused(true);
+
+        // Currently, false is the same as 0, which is the default value.
+        // If this ever changes, uncomment this line.
+        // self.setup_phase_complete.set(false);
     }
 
     #[endpoint]

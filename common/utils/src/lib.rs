@@ -10,4 +10,18 @@ pub trait UtilsModule {
             "Invalid SC address"
         );
     }
+
+    fn remove_items<
+        T: TopEncode + TopDecode + NestedEncode + NestedDecode + 'static,
+        I: IntoIterator<Item = T>,
+    >(
+        &self,
+        mapper: &mut UnorderedSetMapper<T>,
+        items: I,
+    ) {
+        for item in items {
+            let was_removed = mapper.swap_remove(&item);
+            require!(was_removed, "Item not found in list");
+        }
+    }
 }

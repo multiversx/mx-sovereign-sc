@@ -3,7 +3,7 @@ use esdt_safe::EsdtSafe;
 use multiversx_sc::types::{Address, MultiValueEncoded};
 use multiversx_sc_modules::pause::PauseModule;
 use multiversx_sc_scenario::{
-    rust_biguint,
+    managed_address, rust_biguint,
     testing_framework::{BlockchainStateWrapper, ContractObjWrapper},
     DebugApi,
 };
@@ -56,7 +56,7 @@ where
 
         b_mock
             .execute_tx(&owner, &bridge_wrapper, &rust_zero, |sc| {
-                sc.init(0, MultiValueEncoded::new());
+                sc.init(0, managed_address!(&owner), MultiValueEncoded::new());
                 sc.set_max_tx_batch_size(1);
                 sc.set_paused(false);
             })
