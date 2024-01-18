@@ -376,3 +376,40 @@ fn transfer_token_from_sov_no_roles_refund() {
         )
         .assert_ok();
 }
+
+#[test]
+fn not_enough_fee_test() {
+    let mut bridge_setup = BridgeSetup::new(esdt_safe::contract_obj, fee_market::contract_obj);
+
+    let transfers = [
+        TxTokenTransfer {
+            token_identifier: FEE_TOKEN_ID.to_vec(),
+            nonce: 0,
+            value: rust_biguint!(10),
+        },
+        TxTokenTransfer {
+            token_identifier: FUNGIBLE_TOKEN_ID.to_vec(),
+            nonce: 0,
+            value: rust_biguint!(1_000),
+        },
+        TxTokenTransfer {
+            token_identifier: NFT_TOKEN_ID.to_vec(),
+            nonce: 1,
+            value: rust_biguint!(2_000),
+        },
+    ];
+
+    let dest = bridge_setup.sov_dest_addr.clone();
+
+    bridge_setup
+        .b_mock
+        .execute_esdt_multi_transfer(
+            &bridge_setup.user,
+            &bridge_setup.bridge_wrapper,
+            &transfers,
+            |sc| {
+                sc.deposit(managed_address!(&dest), OptionalValue::None);
+            },
+        )
+        .assert_user_error("Payment does not cover fee");
+}
