@@ -40,6 +40,15 @@ pub trait SubtractFeeModule:
         self.remove_items(&mut self.users_whitelist(), users);
     }
 
+    /// Percentages have to be between 0 and 10_000, and must all add up to 100% (i.e. 10_000)
+    #[only_owner]
+    fn distribute_fees(
+        &self,
+        _user_percentage_pairs: MultiValueEncoded<MultiValue2<ManagedAddress, usize>>,
+    ) {
+        todo!();
+    }
+
     #[payable("*")]
     #[endpoint(subtractFee)]
     fn subtract_fee(
@@ -50,9 +59,13 @@ pub trait SubtractFeeModule:
     ) -> FinalPayment<Self::Api> {
         self.require_caller_esdt_safe();
 
+        let caller = self.blockchain().get_caller();
         let payment = self.call_value().single_esdt();
 
         if !self.is_fee_enabled() || self.users_whitelist().contains(&original_caller) {
+            self.send()
+                .direct_esdt(&caller, &payment.token_identifier, 0, &payment.amount);
+
             return FinalPayment {
                 fee: EsdtTokenPayment::new(payment.token_identifier.clone(), 0, BigUint::zero()),
                 remaining_tokens: payment,
@@ -65,6 +78,9 @@ pub trait SubtractFeeModule:
             .insert(final_payment.fee.token_identifier.clone());
         self.accumulated_fees(&final_payment.fee.token_identifier)
             .update(|amt| *amt += &final_payment.fee.amount);
+
+        self.send()
+            .direct_non_zero_esdt_payment(&caller, &final_payment.remaining_tokens);
 
         final_payment
     }

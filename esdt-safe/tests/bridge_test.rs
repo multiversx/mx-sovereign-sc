@@ -2,7 +2,8 @@
 
 use bls_signature::BlsSignature;
 use bridge_setup::{
-    BridgeSetup, DummyAttributes, DUMMY_SIG, FUNGIBLE_TOKEN_ID, NFT_TOKEN_ID, TOKEN_BALANCE,
+    BridgeSetup, DummyAttributes, DUMMY_SIG, FEE_TOKEN_ID, FUNGIBLE_TOKEN_ID, NFT_TOKEN_ID,
+    TOKEN_BALANCE,
 };
 use esdt_safe::{
     from_sovereign::transfer_tokens::TransferTokensModule,
@@ -27,14 +28,19 @@ mod bridge_setup;
 
 #[test]
 fn init_test() {
-    let _ = BridgeSetup::new(esdt_safe::contract_obj);
+    let _ = BridgeSetup::new(esdt_safe::contract_obj, fee_market::contract_obj);
 }
 
 #[test]
 fn transfer_two_tokens_to_sov_ok() {
-    let mut bridge_setup = BridgeSetup::new(esdt_safe::contract_obj);
+    let mut bridge_setup = BridgeSetup::new(esdt_safe::contract_obj, fee_market::contract_obj);
 
     let transfers = [
+        TxTokenTransfer {
+            token_identifier: FEE_TOKEN_ID.to_vec(),
+            nonce: 0,
+            value: rust_biguint!(TOKEN_BALANCE),
+        },
         TxTokenTransfer {
             token_identifier: FUNGIBLE_TOKEN_ID.to_vec(),
             nonce: 0,
@@ -79,13 +85,30 @@ fn transfer_two_tokens_to_sov_ok() {
             },
         )
         .assert_ok();
+
+    // fee is 100 per token
+    bridge_setup.b_mock.check_esdt_balance(
+        &bridge_setup.user,
+        FEE_TOKEN_ID,
+        &(rust_biguint!(TOKEN_BALANCE) - rust_biguint!(200)),
+    );
+    bridge_setup.b_mock.check_esdt_balance(
+        bridge_setup.fee_market_wrapper.address_ref(),
+        FEE_TOKEN_ID,
+        &rust_biguint!(200),
+    );
 }
 
 #[test]
 fn refund_failed_tx_to_sov() {
-    let mut bridge_setup = BridgeSetup::new(esdt_safe::contract_obj);
+    let mut bridge_setup = BridgeSetup::new(esdt_safe::contract_obj, fee_market::contract_obj);
 
     let transfers = [
+        TxTokenTransfer {
+            token_identifier: FEE_TOKEN_ID.to_vec(),
+            nonce: 0,
+            value: rust_biguint!(TOKEN_BALANCE),
+        },
         TxTokenTransfer {
             token_identifier: FUNGIBLE_TOKEN_ID.to_vec(),
             nonce: 0,
@@ -160,9 +183,14 @@ fn refund_failed_tx_to_sov() {
 
 #[test]
 fn transfer_token_to_and_from_sov_ok() {
-    let mut bridge_setup = BridgeSetup::new(esdt_safe::contract_obj);
+    let mut bridge_setup = BridgeSetup::new(esdt_safe::contract_obj, fee_market::contract_obj);
 
     let transfers = [
+        TxTokenTransfer {
+            token_identifier: FEE_TOKEN_ID.to_vec(),
+            nonce: 0,
+            value: rust_biguint!(TOKEN_BALANCE),
+        },
         TxTokenTransfer {
             token_identifier: FUNGIBLE_TOKEN_ID.to_vec(),
             nonce: 0,
@@ -269,7 +297,7 @@ fn transfer_token_to_and_from_sov_ok() {
 
 #[test]
 fn transfer_token_from_sov_no_roles_refund() {
-    let mut bridge_setup = BridgeSetup::new(esdt_safe::contract_obj);
+    let mut bridge_setup = BridgeSetup::new(esdt_safe::contract_obj, fee_market::contract_obj);
     let user_addr = bridge_setup.user.clone();
     let dest = bridge_setup.sov_dest_addr.clone();
 

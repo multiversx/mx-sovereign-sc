@@ -29,7 +29,11 @@ pub trait FeeTypeModule: utils::UtilsModule {
                 token,
                 per_transfer: _,
                 per_gas: _,
-            } => token,
+            } => {
+                require!(&base_token == token, "Invalid fee");
+
+                token
+            }
             FeeType::AnyToken {
                 base_fee_token,
                 per_transfer: _,

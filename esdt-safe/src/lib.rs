@@ -58,6 +58,14 @@ pub trait EsdtSafe:
         // self.setup_phase_complete.set(false);
     }
 
+    #[only_owner]
+    #[endpoint(setFeeMarketAddress)]
+    fn set_fee_market_address(&self, fee_market_address: ManagedAddress) {
+        self.require_sc_address(&fee_market_address);
+
+        self.fee_market_address().set(fee_market_address);
+    }
+
     #[endpoint]
     fn upgrade(&self) {}
 }

@@ -5,10 +5,10 @@
 ////////////////////////////////////////////////////
 
 // Init:                                 1
-// Endpoints:                           30
+// Endpoints:                           31
 // Async Callback:                       1
 // Promise callbacks:                    1
-// Total number of exported functions:  33
+// Total number of exported functions:  34
 
 #![no_std]
 #![allow(internal_features)]
@@ -21,6 +21,7 @@ multiversx_sc_wasm_adapter::endpoints! {
     esdt_safe
     (
         init => init
+        setFeeMarketAddress => set_fee_market_address
         upgrade => upgrade
         deposit => deposit
         claimRefund => claim_refund

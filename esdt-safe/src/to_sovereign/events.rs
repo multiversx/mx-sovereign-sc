@@ -38,6 +38,7 @@ pub trait EventsModule {
     fn deposit_event(
         &self,
         #[indexed] dest_address: &ManagedAddress,
+        #[indexed] fee: &EsdtTokenPayment,
         #[indexed] tokens: &PaymentsVec<Self::Api>,
         event_data: DepositEvent<Self::Api>,
     );
