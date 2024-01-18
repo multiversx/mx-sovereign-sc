@@ -11,6 +11,15 @@ pub struct FinalPayment<M: ManagedTypeApi> {
     pub remaining_tokens: EsdtTokenPayment<M>,
 }
 
+pub struct SubtractPaymentArguments<M: ManagedTypeApi> {
+    pub fee_token: TokenIdentifier<M>,
+    pub per_transfer: BigUint<M>,
+    pub per_gas: BigUint<M>,
+    pub payment: EsdtTokenPayment<M>,
+    pub total_transfers: usize,
+    pub opt_gas_limit: OptionalValue<GasLimit>,
+}
+
 #[multiversx_sc::module]
 pub trait SubtractFeeModule:
     crate::enable_fee::EnableFeeModule
@@ -50,14 +59,19 @@ pub trait SubtractFeeModule:
             };
         }
 
-        // TODO: Save fee in storage
+        let final_payment = self.subtract_fee_by_type(payment, total_transfers, opt_gas_limit);
+        let _ = self
+            .tokens_for_fees()
+            .insert(final_payment.fee.token_identifier.clone());
+        self.accumulated_fees(&final_payment.fee.token_identifier)
+            .update(|amt| *amt += &final_payment.fee.amount);
 
-        self.subtract_fee_by_type(payment, total_transfers, opt_gas_limit)
+        final_payment
     }
 
     fn subtract_fee_by_type(
         &self,
-        mut payment: EsdtTokenPayment,
+        payment: EsdtTokenPayment,
         total_transfers: usize,
         opt_gas_limit: OptionalValue<GasLimit>,
     ) -> FinalPayment<Self::Api> {
@@ -69,32 +83,96 @@ pub trait SubtractFeeModule:
                 per_transfer,
                 per_gas,
             } => {
-                require!(
-                    payment.token_identifier == token,
-                    "Invalid token provided for fee"
-                );
-
-                let mut total_fee = per_transfer * total_transfers as u32;
-                if let OptionalValue::Some(gas_limit) = opt_gas_limit {
-                    total_fee += per_gas * gas_limit;
-                }
-
-                require!(total_fee <= payment.amount, "Payment does not cover fee");
-
-                payment.amount -= &total_fee;
-
-                FinalPayment {
-                    fee: EsdtTokenPayment::new(payment.token_identifier.clone(), 0, total_fee),
-                    remaining_tokens: payment,
-                }
+                let args = SubtractPaymentArguments {
+                    fee_token: token,
+                    per_transfer,
+                    per_gas,
+                    payment,
+                    total_transfers,
+                    opt_gas_limit,
+                };
+                self.subtract_fee_same_token(args)
             }
             FeeType::AnyToken {
                 base_fee_token,
                 per_transfer,
                 per_gas,
             } => {
-                todo!();
+                let args = SubtractPaymentArguments {
+                    fee_token: base_fee_token.clone(),
+                    per_transfer,
+                    per_gas,
+                    payment: payment.clone(),
+                    total_transfers,
+                    opt_gas_limit,
+                };
+
+                if base_fee_token == payment.token_identifier {
+                    self.subtract_fee_same_token(args)
+                } else {
+                    self.subtract_fee_any_token(args)
+                }
             }
+        }
+    }
+
+    fn subtract_fee_same_token(
+        &self,
+        args: SubtractPaymentArguments<Self::Api>,
+    ) -> FinalPayment<Self::Api> {
+        require!(
+            args.payment.token_identifier == args.fee_token,
+            "Invalid token provided for fee"
+        );
+
+        let mut total_fee = args.per_transfer * args.total_transfers as u32;
+        if let OptionalValue::Some(gas_limit) = args.opt_gas_limit {
+            total_fee += args.per_gas * gas_limit;
+        }
+
+        let mut payment = args.payment;
+
+        require!(total_fee <= payment.amount, "Payment does not cover fee");
+
+        payment.amount -= &total_fee;
+
+        FinalPayment {
+            fee: EsdtTokenPayment::new(payment.token_identifier.clone(), 0, total_fee),
+            remaining_tokens: payment,
+        }
+    }
+
+    fn subtract_fee_any_token(
+        &self,
+        mut args: SubtractPaymentArguments<Self::Api>,
+    ) -> FinalPayment<Self::Api> {
+        let input_payment = args.payment.clone();
+        let payment_amount_in_fee_token = self.get_safe_price(args.payment, &args.fee_token);
+        args.payment = EsdtTokenPayment::new(
+            args.fee_token.clone(),
+            0,
+            payment_amount_in_fee_token.clone(),
+        );
+
+        let final_payment = self.subtract_fee_same_token(args);
+        if final_payment.remaining_tokens.amount == 0 {
+            return final_payment;
+        }
+
+        // Example: Total cost 1500 RIDE.
+        // User pays 100 EGLD, which by asking the pair you found out is 2000 RIDE
+        // Then the cost for the user is (1500 RIDE * 100 EGLD / 2000 RIDE = 75 EGLD)
+        let fee_amount_in_user_token =
+            &final_payment.fee.amount * &input_payment.amount / &payment_amount_in_fee_token;
+        let remaining_amount = input_payment.amount - fee_amount_in_user_token;
+
+        FinalPayment {
+            fee: final_payment.fee,
+            remaining_tokens: EsdtTokenPayment::new(
+                input_payment.token_identifier,
+                0,
+                remaining_amount,
+            ),
         }
     }
 
@@ -103,7 +181,7 @@ pub trait SubtractFeeModule:
     fn users_whitelist(&self) -> UnorderedSetMapper<ManagedAddress>;
 
     #[storage_mapper("accFees")]
-    fn accumulated_fees(&self, token_id: TokenIdentifier) -> SingleValueMapper<BigUint>;
+    fn accumulated_fees(&self, token_id: &TokenIdentifier) -> SingleValueMapper<BigUint>;
 
     #[storage_mapper("tokensForFees")]
     fn tokens_for_fees(&self) -> UnorderedSetMapper<TokenIdentifier>;

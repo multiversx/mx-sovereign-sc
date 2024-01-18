@@ -28,6 +28,8 @@ pub trait CreateTxModule:
     ) {
         require!(self.not_paused(), "Cannot create transaction while paused");
 
+        // TODO: Take fees, send remaining amount to user
+
         let payments = self.call_value().all_esdt_transfers().clone_value();
         require!(!payments.is_empty(), "Nothing to transfer");
         require!(payments.len() <= MAX_TRANSFERS_PER_TX, "Too many tokens");
