@@ -1,3 +1,4 @@
+use bls_signature::BlsSignature;
 use fee_market::subtract_fee::{FinalPayment, ProxyTrait as _};
 use transaction::{GasLimit, StolenFromFrameworkEsdtTokenData, Transaction, TransferData};
 
@@ -5,7 +6,6 @@ use crate::to_sovereign::events::DepositEvent;
 
 multiversx_sc::imports!();
 
-const MAX_USER_TX_GAS_LIMIT: GasLimit = 300_000_000;
 const MAX_TRANSFERS_PER_TX: usize = 10;
 
 #[multiversx_sc::module]
@@ -19,6 +19,31 @@ pub trait CreateTxModule:
     + utils::UtilsModule
     + multiversx_sc_modules::pause::PauseModule
 {
+    #[endpoint(setMaxUserTxGasLimit)]
+    fn set_max_user_tx_gas_limit(
+        &self,
+        new_value: GasLimit,
+        opt_sig: OptionalValue<BlsSignature<Self::Api>>,
+    ) {
+        if !self.is_setup_phase_complete() {
+            self.require_caller_initiator();
+            self.max_user_tx_gas_limit().set(new_value);
+
+            return;
+        }
+
+        let opt_signature = opt_sig.into_option();
+        require!(opt_signature.is_some(), "Must provide signature");
+
+        let signature = unsafe { opt_signature.unwrap_unchecked() };
+        let mut signature_data = ManagedBuffer::new();
+        let _ = new_value.dep_encode(&mut signature_data);
+
+        self.multi_verify_signature(&signature_data, &signature);
+
+        self.max_user_tx_gas_limit().set(new_value);
+    }
+
     /// Create an Elrond -> Sovereign transaction.
     #[payable("*")]
     #[endpoint]
@@ -37,8 +62,9 @@ pub trait CreateTxModule:
 
         let opt_gas_limit = match &opt_transfer_data {
             OptionalValue::Some(transfer_data) => {
+                let max_gas_limit = self.max_user_tx_gas_limit().get();
                 require!(
-                    transfer_data.gas_limit <= MAX_USER_TX_GAS_LIMIT,
+                    transfer_data.gas_limit <= max_gas_limit,
                     "Gas limit too high"
                 );
 
@@ -109,4 +135,7 @@ pub trait CreateTxModule:
 
     #[storage_mapper("feeMarketAddress")]
     fn fee_market_address(&self) -> SingleValueMapper<ManagedAddress>;
+
+    #[storage_mapper("maxUserTxGasLimit")]
+    fn max_user_tx_gas_limit(&self) -> SingleValueMapper<GasLimit>;
 }

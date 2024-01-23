@@ -3,10 +3,12 @@
 multiversx_sc::imports!();
 multiversx_sc::derive_imports!();
 
+use transaction::GasLimit;
 use tx_batch_module::FIRST_BATCH_ID;
 
 const DEFAULT_MAX_TX_BATCH_SIZE: usize = 10;
 const DEFAULT_MAX_TX_BATCH_BLOCK_DURATION: u64 = 100; // ~10 minutes
+const DEFAULT_MAX_USER_TX_GAS_LIMIT: GasLimit = 300_000_000;
 
 pub mod from_sovereign;
 pub mod to_sovereign;
@@ -40,6 +42,8 @@ pub trait EsdtSafe:
         self.max_tx_batch_size().set(DEFAULT_MAX_TX_BATCH_SIZE);
         self.max_tx_batch_block_duration()
             .set(DEFAULT_MAX_TX_BATCH_BLOCK_DURATION);
+        self.max_user_tx_gas_limit()
+            .set(DEFAULT_MAX_USER_TX_GAS_LIMIT);
 
         // batch ID 0 is considered invalid
         self.first_batch_id().set(FIRST_BATCH_ID);
