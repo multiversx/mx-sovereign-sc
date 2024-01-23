@@ -44,6 +44,40 @@ pub trait CreateTxModule:
         self.max_user_tx_gas_limit().set(new_value);
     }
 
+    #[endpoint(setBurnAndMint)]
+    fn set_burn_and_mint(
+        &self,
+        opt_signature: Option<BlsSignature<Self::Api>>,
+        tokens: MultiValueEncoded<TokenIdentifier>,
+    ) {
+        if !self.is_setup_phase_complete() {
+            self.require_caller_initiator();
+            self.burn_tokens().extend(tokens);
+
+            return;
+        }
+
+        let all_tokens = self.verfiy_tokens_signature(opt_signature, tokens);
+        self.burn_tokens().extend(&all_tokens);
+    }
+
+    #[endpoint(removeBurnAndMint)]
+    fn remove_burn_and_mint(
+        &self,
+        opt_signature: Option<BlsSignature<Self::Api>>,
+        tokens: MultiValueEncoded<TokenIdentifier>,
+    ) {
+        if !self.is_setup_phase_complete() {
+            self.require_caller_initiator();
+            self.remove_items(&mut self.burn_tokens(), tokens);
+
+            return;
+        }
+
+        let all_tokens = self.verfiy_tokens_signature(opt_signature, tokens);
+        self.remove_items(&mut self.burn_tokens(), &all_tokens);
+    }
+
     /// Create an Elrond -> Sovereign transaction.
     #[payable("*")]
     #[endpoint]
@@ -76,6 +110,7 @@ pub trait CreateTxModule:
         let own_sc_address = self.blockchain().get_sc_address();
         let mut all_token_data = ManagedVec::new();
         let mut total_tokens_for_fees = 0usize;
+        let burn_mapper = self.burn_tokens();
         for payment in &payments {
             self.require_below_max_amount(&payment.token_identifier, &payment.amount);
             self.require_token_not_blacklisted(&payment.token_identifier);
@@ -93,6 +128,14 @@ pub trait CreateTxModule:
                 all_token_data.push(current_token_data.into());
             } else {
                 all_token_data.push(StolenFromFrameworkEsdtTokenData::default());
+            }
+
+            if burn_mapper.contains(&payment.token_identifier) {
+                self.send().esdt_local_burn(
+                    &payment.token_identifier,
+                    payment.token_nonce,
+                    &payment.amount,
+                );
             }
         }
 
@@ -138,4 +181,7 @@ pub trait CreateTxModule:
 
     #[storage_mapper("maxUserTxGasLimit")]
     fn max_user_tx_gas_limit(&self) -> SingleValueMapper<GasLimit>;
+
+    #[storage_mapper("burnTokens")]
+    fn burn_tokens(&self) -> UnorderedSetMapper<TokenIdentifier>;
 }
