@@ -29,6 +29,9 @@ path = "../common/token-whitelist"
 [dependencies.utils]
 path = "../common/utils"
 
+[dependencies.fee-market]
+path = "../fee-market"
+
 [dependencies.multiversx-sc]
 version = "=0.46.1"
 

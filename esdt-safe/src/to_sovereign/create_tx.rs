@@ -1,3 +1,4 @@
+use fee_market::subtract_fee::{FinalPayment, ProxyTrait as _};
 use transaction::{GasLimit, StolenFromFrameworkEsdtTokenData, Transaction, TransferData};
 
 use crate::to_sovereign::events::DepositEvent;
@@ -28,24 +29,34 @@ pub trait CreateTxModule:
     ) {
         require!(self.not_paused(), "Cannot create transaction while paused");
 
-        let payments = self.call_value().all_esdt_transfers().clone_value();
+        let mut payments = self.call_value().all_esdt_transfers().clone_value();
+        let fees_payment = self.pop_first_payment(&mut payments);
+
         require!(!payments.is_empty(), "Nothing to transfer");
         require!(payments.len() <= MAX_TRANSFERS_PER_TX, "Too many tokens");
 
-        if let OptionalValue::Some(transfer_data) = &opt_transfer_data {
-            require!(
-                transfer_data.gas_limit <= MAX_USER_TX_GAS_LIMIT,
-                "Gas limit too high"
-            );
-        }
+        let opt_gas_limit = match &opt_transfer_data {
+            OptionalValue::Some(transfer_data) => {
+                require!(
+                    transfer_data.gas_limit <= MAX_USER_TX_GAS_LIMIT,
+                    "Gas limit too high"
+                );
+
+                OptionalValue::Some(transfer_data.gas_limit)
+            }
+            OptionalValue::None => OptionalValue::None,
+        };
 
         let own_sc_address = self.blockchain().get_sc_address();
         let mut all_token_data = ManagedVec::new();
+        let mut total_tokens_for_fees = 0usize;
         for payment in &payments {
             self.require_below_max_amount(&payment.token_identifier, &payment.amount);
             self.require_token_not_blacklisted(&payment.token_identifier);
 
-            // TODO: When adding fees, take whitelist into account
+            if !self.token_whitelist().contains(&payment.token_identifier) {
+                total_tokens_for_fees += 1;
+            }
 
             if payment.token_nonce > 0 {
                 let current_token_data = self.blockchain().get_esdt_token_data(
@@ -60,11 +71,22 @@ pub trait CreateTxModule:
         }
 
         let caller = self.blockchain().get_caller();
+        let fee_market_address = self.fee_market_address().get();
+        let final_payments: FinalPayment<Self::Api> = self
+            .fee_market_proxy(fee_market_address)
+            .subtract_fee(caller.clone(), total_tokens_for_fees, opt_gas_limit)
+            .with_esdt_transfer(fees_payment)
+            .execute_on_dest_context();
+
+        self.send()
+            .direct_non_zero_esdt_payment(&caller, &final_payments.remaining_tokens);
+
         let block_nonce = self.blockchain().get_block_nonce();
         let tx_nonce = self.get_and_save_next_tx_id();
 
         self.deposit_event(
             &to,
+            &final_payments.fee,
             &payments,
             DepositEvent::from(tx_nonce, &opt_transfer_data),
         );
@@ -81,4 +103,10 @@ pub trait CreateTxModule:
         };
         let _ = self.add_to_batch(tx);
     }
+
+    #[proxy]
+    fn fee_market_proxy(&self, sc_address: ManagedAddress) -> fee_market::Proxy<Self::Api>;
+
+    #[storage_mapper("feeMarketAddress")]
+    fn fee_market_address(&self) -> SingleValueMapper<ManagedAddress>;
 }

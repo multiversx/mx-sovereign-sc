@@ -17,13 +17,13 @@ pub trait TokenWhitelistModule:
     ) {
         if !self.is_setup_phase_complete() {
             self.require_caller_initiator();
-            self.token_whitelist().extend(tokens.into_iter());
+            self.token_whitelist().extend(tokens);
 
             return;
         }
 
         let token_list = self.verfiy_tokens_signature(opt_signature, tokens);
-        self.token_whitelist().extend(token_list.into_iter());
+        self.token_whitelist().extend(&token_list);
     }
 
     #[endpoint(removeTokensFromWhitelist)]
@@ -40,7 +40,7 @@ pub trait TokenWhitelistModule:
         }
 
         let token_list = self.verfiy_tokens_signature(opt_signature, tokens);
-        self.remove_items(&mut self.token_whitelist(), token_list.into_iter());
+        self.remove_items(&mut self.token_whitelist(), &token_list);
     }
 
     fn require_token_not_blacklisted(&self, token_id: &TokenIdentifier) {
@@ -59,13 +59,13 @@ pub trait TokenWhitelistModule:
     ) {
         if !self.is_setup_phase_complete() {
             self.require_caller_initiator();
-            self.token_blacklist().extend(tokens.into_iter());
+            self.token_blacklist().extend(tokens);
 
             return;
         }
 
         let token_list = self.verfiy_tokens_signature(opt_signature, tokens);
-        self.token_blacklist().extend(token_list.into_iter());
+        self.token_blacklist().extend(&token_list);
     }
 
     #[endpoint(removeTokensFromBlacklist)]
@@ -82,7 +82,7 @@ pub trait TokenWhitelistModule:
         }
 
         let token_list = self.verfiy_tokens_signature(opt_signature, tokens);
-        self.remove_items(&mut self.token_blacklist(), token_list.into_iter());
+        self.remove_items(&mut self.token_blacklist(), &token_list);
     }
 
     fn verfiy_tokens_signature(

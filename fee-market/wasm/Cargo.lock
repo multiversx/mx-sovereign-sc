@@ -21,42 +21,10 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ed570934406eb16438a4e976b1b4500774099c13b8cb96eec99f620f05090ddf"
 
 [[package]]
-name = "bls-signature"
-version = "0.0.0"
-dependencies = [
- "multiversx-sc",
- "transaction",
-]
-
-[[package]]
 name = "endian-type"
 version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c34f04666d835ff5d62e058c3995147c06f42fe86ff053337632bca83e42702d"
-
-[[package]]
-name = "esdt-safe"
-version = "0.0.0"
-dependencies = [
- "bls-signature",
- "fee-market",
- "max-bridged-amount-module",
- "multiversx-sc",
- "multiversx-sc-modules",
- "setup-phase",
- "token-whitelist",
- "transaction",
- "tx-batch-module",
- "utils",
-]
-
-[[package]]
-name = "esdt-safe-wasm"
-version = "0.0.0"
-dependencies = [
- "esdt-safe",
- "multiversx-sc-wasm-adapter",
-]
 
 [[package]]
 name = "fee-market"
@@ -65,6 +33,14 @@ dependencies = [
  "multiversx-sc",
  "transaction",
  "utils",
+]
+
+[[package]]
+name = "fee-market-wasm"
+version = "0.0.0"
+dependencies = [
+ "fee-market",
+ "multiversx-sc-wasm-adapter",
 ]
 
 [[package]]
@@ -78,13 +54,6 @@ name = "hex-literal"
 version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6fe2267d4ed49bc07b63801559be28c718ea06c4738b7a03c94df7386d2cde46"
-
-[[package]]
-name = "max-bridged-amount-module"
-version = "0.0.0"
-dependencies = [
- "multiversx-sc",
-]
 
 [[package]]
 name = "multiversx-sc"
@@ -135,15 +104,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "multiversx-sc-modules"
-version = "0.46.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c63ffaba95e630ff75981e2f5f50da64f523219b52f484234c66f3adc248885f"
-dependencies = [
- "multiversx-sc",
-]
-
-[[package]]
 name = "multiversx-sc-wasm-adapter"
 version = "0.46.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -172,18 +132,18 @@ dependencies = [
 
 [[package]]
 name = "proc-macro2"
-version = "1.0.69"
+version = "1.0.76"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "134c189feb4956b20f6f547d2cf727d4c0fe06722b20a0eec87ed445a97f92da"
+checksum = "95fc56cda0b5c3325f5fbbd7ff9fda9e02bb00bb3dac51252d2f1bfa1cb8cc8c"
 dependencies = [
  "unicode-ident",
 ]
 
 [[package]]
 name = "quote"
-version = "1.0.33"
+version = "1.0.35"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5267fca4496028628a95160fc423a33e8b2e6af8a5302579e322e4b520293cae"
+checksum = "291ec9ab5efd934aaf503a6466c5d5251535d108ee747472c3977cc5acc868ef"
 dependencies = [
  "proc-macro2",
 ]
@@ -199,23 +159,16 @@ dependencies = [
 ]
 
 [[package]]
-name = "setup-phase"
-version = "0.0.0"
-dependencies = [
- "multiversx-sc",
-]
-
-[[package]]
 name = "smallvec"
-version = "1.11.1"
+version = "1.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "942b4a808e05215192e39f4ab80813e599068285906cc91aa64f923db842bd5a"
+checksum = "2593d31f82ead8df961d8bd23a64c2ccf2eb5dd34b0a34bfb4dd54011c72009e"
 
 [[package]]
 name = "syn"
-version = "2.0.43"
+version = "2.0.48"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ee659fb5f3d355364e1f3e5bc10fb82068efbf824a1e9d1c9504244a6469ad53"
+checksum = "0f3531638e407dfc0814761abb7c00a5b54992b849452a0646b7f65c9f770f3f"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -223,28 +176,10 @@ dependencies = [
 ]
 
 [[package]]
-name = "token-whitelist"
-version = "0.0.0"
-dependencies = [
- "bls-signature",
- "multiversx-sc",
- "setup-phase",
- "utils",
-]
-
-[[package]]
 name = "transaction"
 version = "0.0.0"
 dependencies = [
  "multiversx-sc",
-]
-
-[[package]]
-name = "tx-batch-module"
-version = "0.0.0"
-dependencies = [
- "multiversx-sc",
- "transaction",
 ]
 
 [[package]]

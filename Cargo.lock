@@ -518,6 +518,7 @@ name = "esdt-safe"
 version = "0.0.0"
 dependencies = [
  "bls-signature",
+ "fee-market",
  "hex",
  "max-bridged-amount-module",
  "multiversx-sc",
@@ -545,6 +546,25 @@ name = "fastrand"
 version = "2.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "25cbce373ec4653f1a01a31e8a5e5ec0c622dc27ff9c4e6606eefef5cbbed4a5"
+
+[[package]]
+name = "fee-market"
+version = "0.0.0"
+dependencies = [
+ "multiversx-sc",
+ "multiversx-sc-scenario",
+ "num-bigint",
+ "transaction",
+ "utils",
+]
+
+[[package]]
+name = "fee-market-meta"
+version = "0.0.0"
+dependencies = [
+ "fee-market",
+ "multiversx-sc-meta",
+]
 
 [[package]]
 name = "fiat-crypto"
