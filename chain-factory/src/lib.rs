@@ -7,7 +7,7 @@ pub mod slash;
 
 #[multiversx_sc::contract]
 pub trait ChainFactoryContract:
-    factory::FactoryModule + slash::SlashModule + utils::UtilsModule
+    factory::FactoryModule + slash::SlashModule + utils::UtilsModule + bls_signature::BlsSignatureModule
 {
     #[init]
     fn init(

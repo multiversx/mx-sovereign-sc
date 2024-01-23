@@ -1,5 +1,7 @@
 #![no_std]
 
+use bls_signature::BlsSignature;
+
 multiversx_sc::imports!();
 
 pub type PaymentsVec<M> = ManagedVec<M, EsdtTokenPayment<M>>;
@@ -7,7 +9,7 @@ pub type PaymentsVec<M> = ManagedVec<M, EsdtTokenPayment<M>>;
 static ERR_EMPTY_PAYMENTS: &[u8] = b"No payments";
 
 #[multiversx_sc::module]
-pub trait UtilsModule {
+pub trait UtilsModule: bls_signature::BlsSignatureModule {
     fn require_sc_address(&self, address: &ManagedAddress) {
         require!(
             !address.is_zero() && self.blockchain().is_smart_contract(address),
@@ -43,5 +45,24 @@ pub trait UtilsModule {
         payments.remove(0);
 
         first_payment
+    }
+
+    fn verfiy_items_signature<T: TopDecode + NestedEncode + ManagedVecItem>(
+        &self,
+        opt_signature: Option<BlsSignature<Self::Api>>,
+        items: MultiValueEncoded<T>,
+    ) -> ManagedVec<T> {
+        require!(opt_signature.is_some(), "Must provide signature");
+
+        let list = items.to_vec();
+        let signature = unsafe { opt_signature.unwrap_unchecked() };
+        let mut signature_data = ManagedBuffer::new();
+        for token in &list {
+            let _ = token.dep_encode(&mut signature_data);
+        }
+
+        self.multi_verify_signature(&signature_data, &signature);
+
+        list
     }
 }

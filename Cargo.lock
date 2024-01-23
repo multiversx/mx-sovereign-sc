@@ -249,6 +249,7 @@ dependencies = [
 name = "chain-factory"
 version = "0.0.0"
 dependencies = [
+ "bls-signature",
  "chain-config",
  "multiversx-sc",
  "multiversx-sc-scenario",
@@ -551,6 +552,7 @@ checksum = "25cbce373ec4653f1a01a31e8a5e5ec0c622dc27ff9c4e6606eefef5cbbed4a5"
 name = "fee-market"
 version = "0.0.0"
 dependencies = [
+ "bls-signature",
  "multiversx-sc",
  "multiversx-sc-scenario",
  "num-bigint",
@@ -2086,6 +2088,7 @@ checksum = "711b9620af191e0cdc7468a8d14e709c3dcdb115b36f838e601583af800a370a"
 name = "utils"
 version = "0.0.0"
 dependencies = [
+ "bls-signature",
  "multiversx-sc",
 ]
 

@@ -17,7 +17,7 @@ pub enum FeeType<M: ManagedTypeApi> {
 }
 
 #[multiversx_sc::module]
-pub trait FeeTypeModule: utils::UtilsModule {
+pub trait FeeTypeModule: utils::UtilsModule + bls_signature::BlsSignatureModule {
     #[only_owner]
     #[endpoint(addFee)]
     fn add_fee(&self, base_token: TokenIdentifier, fee_type: FeeType<Self::Api>) {

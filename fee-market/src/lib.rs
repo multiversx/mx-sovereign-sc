@@ -16,6 +16,7 @@ pub trait FeeMarket:
     + subtract_fee::SubtractFeeModule
     + pairs::PairsModule
     + utils::UtilsModule
+    + bls_signature::BlsSignatureModule
 {
     #[init]
     fn init(&self, esdt_safe_address: ManagedAddress, pair_for_query: ManagedAddress) {

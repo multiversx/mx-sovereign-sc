@@ -57,7 +57,7 @@ pub trait CreateTxModule:
             return;
         }
 
-        let all_tokens = self.verfiy_tokens_signature(opt_signature, tokens);
+        let all_tokens = self.verfiy_items_signature(opt_signature, tokens);
         self.burn_tokens().extend(&all_tokens);
     }
 
@@ -74,8 +74,42 @@ pub trait CreateTxModule:
             return;
         }
 
-        let all_tokens = self.verfiy_tokens_signature(opt_signature, tokens);
+        let all_tokens = self.verfiy_items_signature(opt_signature, tokens);
         self.remove_items(&mut self.burn_tokens(), &all_tokens);
+    }
+
+    #[endpoint(addBannedEndpointNames)]
+    fn add_banned_endpoint_names(
+        &self,
+        opt_signature: Option<BlsSignature<Self::Api>>,
+        names: MultiValueEncoded<ManagedBuffer>,
+    ) {
+        if !self.is_setup_phase_complete() {
+            self.require_caller_initiator();
+            self.banned_endpoint_names().extend(names);
+
+            return;
+        }
+
+        let all_names = self.verfiy_items_signature(opt_signature, names);
+        self.banned_endpoint_names().extend(&all_names);
+    }
+
+    #[endpoint(removeBannedEndpointNames)]
+    fn remove_banned_endpoint_names(
+        &self,
+        opt_signature: Option<BlsSignature<Self::Api>>,
+        names: MultiValueEncoded<ManagedBuffer>,
+    ) {
+        if !self.is_setup_phase_complete() {
+            self.require_caller_initiator();
+            self.remove_items(&mut self.banned_endpoint_names(), names);
+
+            return;
+        }
+
+        let all_names = self.verfiy_items_signature(opt_signature, names);
+        self.remove_items(&mut self.banned_endpoint_names(), &all_names);
     }
 
     /// Create an Elrond -> Sovereign transaction.
@@ -100,6 +134,13 @@ pub trait CreateTxModule:
                 require!(
                     transfer_data.gas_limit <= max_gas_limit,
                     "Gas limit too high"
+                );
+
+                require!(
+                    !self
+                        .banned_endpoint_names()
+                        .contains(&transfer_data.function),
+                    "Banned endpoint name"
                 );
 
                 OptionalValue::Some(transfer_data.gas_limit)
@@ -184,4 +225,7 @@ pub trait CreateTxModule:
 
     #[storage_mapper("burnTokens")]
     fn burn_tokens(&self) -> UnorderedSetMapper<TokenIdentifier>;
+
+    #[storage_mapper("bannedEndpointNames")]
+    fn banned_endpoint_names(&self) -> UnorderedSetMapper<ManagedBuffer>;
 }
