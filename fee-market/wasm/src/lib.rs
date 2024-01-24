@@ -5,9 +5,9 @@
 ////////////////////////////////////////////////////
 
 // Init:                                 1
-// Endpoints:                           16
+// Endpoints:                           14
 // Async Callback (empty):               1
-// Total number of exported functions:  18
+// Total number of exported functions:  16
 
 #![no_std]
 #![allow(internal_features)]
@@ -31,8 +31,6 @@ multiversx_sc_wasm_adapter::endpoints! {
         distributeFees => distribute_fees
         subtractFee => subtract_fee
         getUsersWhitelist => users_whitelist
-        addPairs => add_pairs
-        removePairs => remove_pairs
         setMinValidSigners => set_min_valid_signers
         addSigners => add_signers
         removeSigners => remove_signers
