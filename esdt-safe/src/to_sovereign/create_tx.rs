@@ -173,12 +173,11 @@ pub trait CreateTxModule:
             }
             
             event_payments.push(
-                (
-                    payment.token_identifier,
-                    payment.token_nonce,
-                    payment.amount
-                )
-                    .into(),
+                MultiValue3 ((
+                    payment.token_identifier.clone(),
+                    payment.token_nonce.clone(),
+                    payment.amount.clone()    
+                ))
             );
 
             if burn_mapper.contains(&payment.token_identifier) {
