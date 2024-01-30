@@ -175,7 +175,7 @@ pub trait CreateTxModule:
             event_payments.push(
                 MultiValue3 ((
                     payment.token_identifier.clone(),
-                    payment.token_nonce.clone(),
+                    payment.token_nonce,
                     payment.amount.clone()    
                 ))
             );
