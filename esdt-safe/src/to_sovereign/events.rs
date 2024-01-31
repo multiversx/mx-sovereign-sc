@@ -1,5 +1,5 @@
 use transaction::{
-    transaction_status::TransactionStatus, BatchId, GasLimit, PaymentsVec, TransferData, TxId,
+    transaction_status::TransactionStatus, BatchId, GasLimit, TransferData, TxId
 };
 
 multiversx_sc::imports!();
@@ -38,8 +38,7 @@ pub trait EventsModule {
     fn deposit_event(
         &self,
         #[indexed] dest_address: &ManagedAddress,
-        #[indexed] fee: &EsdtTokenPayment,
-        #[indexed] tokens: &PaymentsVec<Self::Api>,
+        #[indexed] tokens: &MultiValueEncoded<MultiValue3<TokenIdentifier, u64, BigUint>>,
         event_data: DepositEvent<Self::Api>,
     );
 

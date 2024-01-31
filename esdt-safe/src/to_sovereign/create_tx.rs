@@ -151,6 +151,7 @@ pub trait CreateTxModule:
         let own_sc_address = self.blockchain().get_sc_address();
         let mut all_token_data = ManagedVec::new();
         let mut total_tokens_for_fees = 0usize;
+        let mut event_payments = MultiValueEncoded::new();
         let burn_mapper = self.burn_tokens();
         for payment in &payments {
             self.require_below_max_amount(&payment.token_identifier, &payment.amount);
@@ -170,6 +171,14 @@ pub trait CreateTxModule:
             } else {
                 all_token_data.push(StolenFromFrameworkEsdtTokenData::default());
             }
+            
+            event_payments.push(
+                MultiValue3 ((
+                    payment.token_identifier.clone(),
+                    payment.token_nonce,
+                    payment.amount.clone()    
+                ))
+            );
 
             if burn_mapper.contains(&payment.token_identifier) {
                 self.send().esdt_local_burn(
@@ -196,8 +205,7 @@ pub trait CreateTxModule:
 
         self.deposit_event(
             &to,
-            &final_payments.fee,
-            &payments,
+            &event_payments,
             DepositEvent::from(tx_nonce, &opt_transfer_data),
         );
 
