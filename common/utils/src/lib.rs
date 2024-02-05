@@ -47,7 +47,7 @@ pub trait UtilsModule: bls_signature::BlsSignatureModule {
         first_payment
     }
 
-    fn verfiy_items_signature<T: TopDecode + NestedEncode + ManagedVecItem>(
+    fn verify_items_signature<T: TopDecode + NestedEncode + ManagedVecItem>(
         &self,
         opt_signature: Option<BlsSignature<Self::Api>>,
         items: MultiValueEncoded<T>,

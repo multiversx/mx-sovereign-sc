@@ -176,6 +176,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "bls-signature"
+version = "0.0.0"
+dependencies = [
+ "multiversx-sc",
+ "transaction",
+]
+
+[[package]]
 name = "bstr"
 version = "1.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -217,6 +225,14 @@ name = "cfg-if"
 version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
+
+[[package]]
+name = "chain-config"
+version = "0.0.0"
+dependencies = [
+ "multiversx-sc",
+ "multiversx-sc-modules",
+]
 
 [[package]]
 name = "clap"
@@ -484,10 +500,36 @@ dependencies = [
 ]
 
 [[package]]
+name = "esdt-safe"
+version = "0.0.0"
+dependencies = [
+ "bls-signature",
+ "fee-market",
+ "max-bridged-amount-module",
+ "multiversx-sc",
+ "multiversx-sc-modules",
+ "setup-phase",
+ "token-whitelist",
+ "transaction",
+ "tx-batch-module",
+ "utils",
+]
+
+[[package]]
 name = "fastrand"
 version = "2.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "25cbce373ec4653f1a01a31e8a5e5ec0c622dc27ff9c4e6606eefef5cbbed4a5"
+
+[[package]]
+name = "fee-market"
+version = "0.0.0"
+dependencies = [
+ "bls-signature",
+ "multiversx-sc",
+ "transaction",
+ "utils",
+]
 
 [[package]]
 name = "fiat-crypto"
@@ -862,6 +904,13 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b5e6163cb8c49088c2c36f57875e58ccd8c87c7427f7fbd50ea6710b2f3f2e8f"
 
 [[package]]
+name = "max-bridged-amount-module"
+version = "0.0.0"
+dependencies = [
+ "multiversx-sc",
+]
+
+[[package]]
 name = "memchr"
 version = "2.7.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -897,9 +946,14 @@ dependencies = [
 name = "multisigverifier"
 version = "0.0.0"
 dependencies = [
+ "bls-signature",
+ "chain-config",
+ "esdt-safe",
  "multiversx-sc",
  "multiversx-sc-scenario",
  "num-bigint",
+ "setup-phase",
+ "transaction",
 ]
 
 [[package]]
@@ -1024,6 +1078,15 @@ dependencies = [
  "wasmparser 0.118.1",
  "wasmprinter",
  "zip",
+]
+
+[[package]]
+name = "multiversx-sc-modules"
+version = "0.46.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c63ffaba95e630ff75981e2f5f50da64f523219b52f484234c66f3adc248885f"
+dependencies = [
+ "multiversx-sc",
 ]
 
 [[package]]
@@ -1609,6 +1672,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "setup-phase"
+version = "0.0.0"
+dependencies = [
+ "multiversx-sc",
+]
+
+[[package]]
 name = "sha2"
 version = "0.10.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1755,6 +1825,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1f3ccbac311fea05f86f61904b462b55fb3df8837a366dfc601a0161d0532f20"
 
 [[package]]
+name = "token-whitelist"
+version = "0.0.0"
+dependencies = [
+ "bls-signature",
+ "multiversx-sc",
+ "setup-phase",
+ "utils",
+]
+
+[[package]]
 name = "tokio"
 version = "1.35.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1869,10 +1949,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "transaction"
+version = "0.0.0"
+dependencies = [
+ "multiversx-sc",
+]
+
+[[package]]
 name = "try-lock"
 version = "0.2.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e421abadd41a4225275504ea4d6566923418b7f05506fbc9c0fe86ba7396114b"
+
+[[package]]
+name = "tx-batch-module"
+version = "0.0.0"
+dependencies = [
+ "multiversx-sc",
+ "transaction",
+]
 
 [[package]]
 name = "typenum"
@@ -1923,6 +2018,14 @@ name = "utf8parse"
 version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "711b9620af191e0cdc7468a8d14e709c3dcdb115b36f838e601583af800a370a"
+
+[[package]]
+name = "utils"
+version = "0.0.0"
+dependencies = [
+ "bls-signature",
+ "multiversx-sc",
+]
 
 [[package]]
 name = "vcpkg"
