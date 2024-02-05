@@ -6,10 +6,25 @@ edition = "2021"
 publish = false
 
 [lib]
-path = "src/multisigverifier.rs"
+path = "src/lib.rs"
 
 [dependencies.multiversx-sc]
 version = "0.46.1"
+
+[dependencies.bls-signature]
+path = '../common/bls-signature'
+
+[dependencies.transaction]
+path = '../common/transaction'
+
+[dependencies.setup-phase]
+path = '../common/setup-phase'
+
+[dependencies.esdt-safe]
+path = '../esdt-safe'
+
+[dependencies.chain-config]
+path = '../chain-config'
 
 [dev-dependencies]
 num-bigint = "0.4.2"

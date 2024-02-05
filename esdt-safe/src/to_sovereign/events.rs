@@ -1,4 +1,3 @@
-use num_bigint::BigUint;
 use transaction::{
     transaction_status::TransactionStatus, BatchId, GasLimit, TransferData, TxId
 };

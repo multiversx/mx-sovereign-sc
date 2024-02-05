@@ -57,7 +57,7 @@ pub trait CreateTxModule:
             return;
         }
 
-        let all_tokens = self.verfiy_items_signature(opt_signature, tokens);
+        let all_tokens = self.verify_items_signature(opt_signature, tokens);
         self.burn_tokens().extend(&all_tokens);
     }
 
@@ -74,7 +74,7 @@ pub trait CreateTxModule:
             return;
         }
 
-        let all_tokens = self.verfiy_items_signature(opt_signature, tokens);
+        let all_tokens = self.verify_items_signature(opt_signature, tokens);
         self.remove_items(&mut self.burn_tokens(), &all_tokens);
     }
 
@@ -91,7 +91,7 @@ pub trait CreateTxModule:
             return;
         }
 
-        let all_names = self.verfiy_items_signature(opt_signature, names);
+        let all_names = self.verify_items_signature(opt_signature, names);
         self.banned_endpoint_names().extend(&all_names);
     }
 
@@ -108,7 +108,7 @@ pub trait CreateTxModule:
             return;
         }
 
-        let all_names = self.verfiy_items_signature(opt_signature, names);
+        let all_names = self.verify_items_signature(opt_signature, names);
         self.remove_items(&mut self.banned_endpoint_names(), &all_names);
     }
 
