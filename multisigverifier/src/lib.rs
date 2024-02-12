@@ -7,6 +7,7 @@ multiversx_sc::imports!();
 #[multiversx_sc::contract]
 pub trait Multisigverifier:
    bls_signature::BlsSignatureModule
+   // + esdt_safe::from_sovereign::transfer_tokens::ProxyTrait
    + bridge_operations::BridgeOperationsModule
    + utils::UtilsModule
 {

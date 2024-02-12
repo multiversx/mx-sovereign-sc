@@ -1,5 +1,5 @@
 use bls_signature::{self, BlsSignature};
-use esdt_safe::from_sovereign::{self, transfer_tokens};
+use esdt_safe::from_sovereign::{self, transfer_tokens::{self, ProxyTrait as _ }};
 use transaction::TransferData;
 
 use crate::utils::{self, UtilsModule};
@@ -10,6 +10,7 @@ multiversx_sc::derive_imports!();
 #[multiversx_sc::module]
 pub trait BridgeOperationsModule
 {
+    #[endpoint(registerBridgeOps)]
     fn register_bridge_operations(
         &self,
         hash_of_hashes: ManagedBuffer,
@@ -21,31 +22,35 @@ pub trait BridgeOperationsModule
 
         let caller = self.blockchain().get_caller();
         let is_batch_valid = self.check_validity(signature_data, &signature, caller);
+        
         self.is_operations_batch_valid().insert(hash_of_hashes.clone(), is_batch_valid);
         self.operations_mapper().insert(hash_of_hashes.clone(), hash_of_bridge_ops);
+        self.operations_signatures_mapper().insert(hash_of_hashes.clone(), signature);
     }
 
-    fn add_board_member(
+    #[only_owner]
+    #[endpoint(execBridgeOp)]
+    fn execute_bridge_operation_endpoint(
         &self,
-        user_address: &ManagedAddress,       
+        operation_hash: ManagedBuffer,
+        payments_list: MultiValueEncoded<EsdtTokenPayment<Self::Api>>,
+        transfer_data: TransferData<Self::Api>
     ) {
-        let user_id = self.board_members().get_or_create_user(user_address);
-    }
-
-    #[endpoint(sign)]
-    fn sign(
-        &self, 
-        signature_data: &ManagedBuffer,
-        signature: &BlsSignature<Self::Api>
-    ) {
+        // require action not executed
         let caller = self.blockchain().get_caller();
+        let caller_id = self.bls_pub_keys().get_user_id(&caller);
+        let operation_validity = self.is_operations_batch_valid().get(&operation_hash).unwrap();
 
-        // assert!(
-        //     !signers.get(caller),
-        //     "Caller already signed the operations!"
-        // );
+        require!(
+            operation_validity,
+            "Operation was not signed"
+        );
 
-        // self.signatures() = self.signatures() + 1; 
+        for payment in payments_list {
+            self.execute_operation(&operation_hash, &payment, &transfer_data); 
+        }
+
+        // transfer_tokens::batch_transfer_esdt_token();
     }
 
     fn check_validity(
@@ -54,37 +59,22 @@ pub trait BridgeOperationsModule
         signature: &BlsSignature<Self::Api>,
         user: ManagedAddress
     ) -> bool {
-        // let is_bls_valid = self.crypto().verify_bls(user.as_managed_buffer(), signature_data, signature);
-        // let signature_count = self.signatures().len();
+        let is_bls_valid = self.crypto().verify_bls(user.as_managed_buffer(), signature_data, signature.as_managed_buffer());
+        let signatures_count = self.signatures().get();
+        let bls_pub_keys = self.bls_pub_keys().get_user_count() as u32;
 
-        // if is_bls_valid && signature_count > 2/3 * self.board_members() {
-        //     return true
-        // }
+        if is_bls_valid && signatures_count > 2/3 * bls_pub_keys {
+            return true
+        }
 
         false
     }
-    
-    #[endpoint(execBridgeOp)]
-    fn execute_bridge_operation_endpoint(
-        &self,
-        operation_hash: ManagedBuffer,
-        payments_list: MultiValueEncoded<EsdtTokenPayment<Self::Api>>,
-        function_to_call: ManagedBuffer,
-        args: MultiValueEncoded<ManagedBuffer>,
-        gas_limit: u32
-    ) {
-        // require action not executed
-        let caller = self.blockchain().get_caller();
-        // require validator
-
-        // self.execute_operation(operation_hash);
-
-        // transfer_tokens::batch_transfer_esdt_token();
-    }
-    
-    fn execute_operation(&self, operation_hash: ManagedBuffer, data: TransferData<Self::Api>) {
+   
+    fn execute_operation(&self, operation_hash: &ManagedBuffer, payment: &EsdtTokenPayment, data: &TransferData<Self::Api>) {
         let esdt_address = self.esdt_proxy_address().get();
-        utils::contract_obj().get_esdt_safe_proxy_instance(esdt_address);
+        let esdt_proxy = utils::contract_obj().get_esdt_safe_proxy_instance(esdt_address);
+        let operation_signature = self.operations_signatures_mapper().get(operation_hash);
+        // esdt_proxy.batch_transfer_esdt_token(operation_hash, operation_signature, payment);
     }
 
     #[storage_mapper("esdt_proxy_address")]
@@ -98,11 +88,14 @@ pub trait BridgeOperationsModule
     fn is_operations_batch_valid(&self) -> MapMapper<ManagedBuffer, bool>;
 
     #[storage_mapper("board_members")]
-    fn board_members(&self) -> UserMapper; 
+    fn bls_pub_keys(&self) -> UserMapper; 
 
     #[storage_mapper("signers")]
     fn signatures(&self) -> SingleValueMapper<u32>;
 
     #[storage_mapper("operations_mapper")]
     fn operations_mapper(&self) -> MapMapper<ManagedBuffer, ManagedBuffer>;
+
+    #[storage_mapper("operations_signature")]
+    fn operations_signatures_mapper(&self) -> MapMapper<ManagedBuffer, BlsSignature<Self::Api>>;
 }
