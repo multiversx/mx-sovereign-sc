@@ -4,6 +4,7 @@ multiversx_sc::imports!();
 
 #[multiversx_sc::contract]
 pub trait Multisigverifier:
+  bls_signature::BlsSignatureModule
 {
     #[init]
     fn init(&self, bls_pub_keys: MultiValueEncoded<ManagedAddress>) {
@@ -18,30 +19,36 @@ pub trait Multisigverifier:
     fn register_bridge_operations(
         &self,
         hash_of_hashes: ManagedBuffer,
-        hash_of_bridge_ops: ManagedBuffer,
+        hash_of_bridge_ops: MultiValueEncoded<ManagedBuffer>,
         signature: BlsSignature<Self::Api>,
-        signature_data: &ManagedBuffer,
     ) {
-
         let caller = self.blockchain().get_caller();
-        let is_bls_valid = self.verify_bls_signature(signature_data, &signature, caller);
+        let is_bls_valid = self.verify_bls(hash_of_bridge_ops.clone(), &signature, caller);
         
-        if is_bls_valid {
-            self.operations_mapper().insert(hash_of_hashes.clone(), hash_of_bridge_ops);
+        if is_bls_valid { 
+            for hash in hash_of_bridge_ops {
+              self.pending_operations_mapper().insert(hash);
+            }
         }
     }
 
-    fn verify_bls_signature(
+    fn verify_bls (
         &self,
-        signature_data: &ManagedBuffer,
+        transactions: MultiValueEncoded<ManagedBuffer>,
         signature: &BlsSignature<Self::Api>,
         user: ManagedAddress
     ) -> bool {
+        let mut serialized_signature_data = ManagedBuffer::new();
+        for transaction in transactions.into_iter() {
+          let _ = transaction.dep_encode(&mut serialized_signature_data);
+        }
+
         let is_bls_valid = self.crypto().verify_bls(
             user.as_managed_buffer(), 
-            signature_data, 
+            &serialized_signature_data, 
             signature.as_managed_buffer()
         );
+
         let signatures_count = self.signatures().get();
         let bls_pub_keys = self.bls_pub_keys().get_user_count() as u32;
 
@@ -65,5 +72,5 @@ pub trait Multisigverifier:
     fn signatures(&self) -> SingleValueMapper<u32>;
 
     #[storage_mapper("operations_mapper")]
-    fn operations_mapper(&self) -> MapMapper<ManagedBuffer, ManagedBuffer>;
+    fn pending_operations_mapper(&self) -> SetMapper<ManagedBuffer>; 
 }
