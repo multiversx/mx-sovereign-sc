@@ -32,11 +32,11 @@ pub trait Multisigverifier:
             }
         } 
 
-        let transfer_data_sha256 = self.crypto().sha256(&serialized_transferred_data);
-        let transfer_data_hash = transfer_data_sha256.as_managed_buffer();
+        let transfers_data_sha256 = self.crypto().sha256(&serialized_transferred_data);
+        let transfers_data_hash = transfers_data_sha256.as_managed_buffer();
         
         require!(
-            hash_of_hashes.eq(transfer_data_hash),
+            hash_of_hashes.eq(transfers_data_hash),
             "Hash of all operations doesn't match the hash of transfer "
         );
 
