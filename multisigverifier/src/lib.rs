@@ -8,10 +8,8 @@ pub trait Multisigverifier:
 {
     #[init]
     fn init(&self, bls_pub_keys: MultiValueEncoded<ManagedAddress>) {
-        // self.bls_pub_keys().get_or_create_users(bls_pub_keys.into_iter(), |mut user_id, _| user_id += 1);
-        // or
         for key in bls_pub_keys {
-        self.pub_bls_keys().push(&key);
+            self.bls_pub_keys().push(&key);
       }
    }
     
@@ -50,7 +48,7 @@ pub trait Multisigverifier:
         );
 
         let signatures_count = self.signatures().get();
-        let bls_pub_keys = self.bls_pub_keys().get_user_count() as u32;
+        let bls_pub_keys = self.bls_pub_keys().len() as u32;
 
         if is_bls_valid && signatures_count > 2/3 * bls_pub_keys {
             return true
@@ -63,10 +61,7 @@ pub trait Multisigverifier:
     fn is_valid(&self) -> SingleValueMapper<bool>;
 
     #[storage_mapper("bls_pub_keys")]
-    fn pub_bls_keys(&self) -> VecMapper<ManagedAddress>;
-
-    #[storage_mapper("board_members")]
-    fn bls_pub_keys(&self) -> UserMapper; 
+    fn bls_pub_keys(&self) -> VecMapper<ManagedAddress>;
 
     #[storage_mapper("signers")]
     fn signatures(&self) -> SingleValueMapper<u32>;
