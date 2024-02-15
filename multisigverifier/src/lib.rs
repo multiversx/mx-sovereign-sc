@@ -65,25 +65,27 @@ pub trait Multisigverifier:
             signature.as_managed_buffer()
         );
 
+        self.calculate_validity_formula(is_bls_valid)
+    }
+
+    fn calculate_validity_formula(&self, is_bls_valid: bool) -> bool {
         let signatures_count = self.signatures().get();
         let bls_pub_keys = self.bls_pub_keys().len() as u32;
+        let minimum_signatures = 2 * bls_pub_keys / 3;
 
-        if is_bls_valid && signatures_count > 2/3 * bls_pub_keys {
+        if is_bls_valid && signatures_count > minimum_signatures {
             return true
         }
 
         false
     }
 
-    #[storage_mapper("isValid")]
-    fn is_valid(&self) -> SingleValueMapper<bool>;
-
     #[storage_mapper("bls_pub_keys")]
     fn bls_pub_keys(&self) -> VecMapper<ManagedAddress>;
 
-    #[storage_mapper("signers")]
+    #[storage_mapper("signatures")]
     fn signatures(&self) -> SingleValueMapper<u32>;
 
     #[storage_mapper("operations_mapper")]
-    fn pending_operations_mapper(&self) -> SetMapper<ManagedBuffer>; 
+    fn pending_operations_mapper(&self) -> UnorderedSetMapper<ManagedBuffer>; 
 }
