@@ -1,4 +1,5 @@
 use bls_signature::BlsSignature;
+use transaction::TransferData;
 
 multiversx_sc::imports!();
 
@@ -19,14 +20,31 @@ pub trait Multisigverifier:
         hash_of_hashes: ManagedBuffer,
         hash_of_bridge_ops: MultiValueEncoded<ManagedBuffer>,
         signature: BlsSignature<Self::Api>,
+        transfer_data: TransferData<Self::Api>
     ) {
         let caller = self.blockchain().get_caller();
         let is_bls_valid = self.verify_bls(hash_of_bridge_ops.clone(), &signature, caller);
+        let mut serialized_transferred_data = ManagedBuffer::new();
+
+        if let core::result::Result::Err(err) = transfer_data.top_encode(&mut serialized_transferred_data) {
+            sc_panic!("Transfer data encode error: {}", err.message_bytes());
+        }
+
+        let transfer_data_sha256 = self.crypto().sha256(&serialized_transferred_data);
+        let transfer_data_hash = transfer_data_sha256.as_managed_buffer();
         
-        if is_bls_valid { 
-            for hash in hash_of_bridge_ops {
-              self.pending_operations_mapper().insert(hash);
-            }
+        require!(
+            hash_of_hashes.eq(transfer_data_hash),
+            "Hash of all operations doesn't match the hash of transfer "
+        );
+
+        require!(
+            is_bls_valid,
+            "BLS signature is not valid"
+        );
+
+        for hash in hash_of_bridge_ops {
+          self.pending_operations_mapper().insert(hash);
         }
     }
 
