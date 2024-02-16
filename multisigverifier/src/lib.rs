@@ -25,6 +25,12 @@ pub trait Multisigverifier:
     ) {
         let caller = self.blockchain().get_caller();
         let is_bls_valid = self.verify_bls(&signature, caller, bridge_operations.clone());
+
+        require!(
+            is_bls_valid,
+            "BLS signature is not valid"
+        );
+
         let mut serialized_transferred_data = ManagedBuffer::new();
 
         for operation in bridge_operations {
@@ -32,17 +38,13 @@ pub trait Multisigverifier:
                 sc_panic!("Transfer data encode error: {}", err.message_bytes());
             }
         }
+
         let transfers_data_sha256 = self.crypto().sha256(&serialized_transferred_data);
         let transfers_data_hash = transfers_data_sha256.as_managed_buffer();
         
         require!(
             bridge_operations_hash.eq(transfers_data_hash),
             "Hash of all operations doesn't match the hash of transfer data"
-        );
-
-        require!(
-            is_bls_valid,
-            "BLS signature is not valid"
         );
 
         self.pending_operations().insert(bridge_operations_hash);
@@ -74,11 +76,7 @@ pub trait Multisigverifier:
         let bls_pub_keys = self.bls_pub_keys().len() as u32;
         let minimum_signatures = 2 * bls_pub_keys / 3;
 
-        if is_bls_valid && signatures_count > minimum_signatures {
-            return true
-        }
-
-        false
+        is_bls_valid && signatures_count > minimum_signatures 
     }
 
     #[storage_mapper("bls_pub_keys")]
