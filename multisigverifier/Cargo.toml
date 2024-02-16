@@ -17,15 +17,6 @@ path = '../common/bls-signature'
 [dependencies.transaction]
 path = '../common/transaction'
 
-[dependencies.setup-phase]
-path = '../common/setup-phase'
-
-[dependencies.esdt-safe]
-path = '../esdt-safe'
-
-[dependencies.chain-config]
-path = '../chain-config'
-
 [dev-dependencies]
 num-bigint = "0.4.2"
 

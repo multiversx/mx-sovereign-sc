@@ -1,3 +1,5 @@
+#![no_std]
+
 use bls_signature::BlsSignature;
 use transaction::TransferData;
 
@@ -17,27 +19,25 @@ pub trait Multisigverifier:
     #[endpoint(registerBridgeOps)]
     fn register_bridge_operations(
         &self,
-        hash_of_hashes: ManagedBuffer,
-        hash_of_bridge_ops: MultiValueEncoded<ManagedBuffer>,
+        bridge_operations_hash: ManagedBuffer,
         signature: BlsSignature<Self::Api>,
-        transfers_data: MultiValueEncoded<TransferData<Self::Api>>
+        bridge_operations: MultiValueEncoded<TransferData<Self::Api>>
     ) {
         let caller = self.blockchain().get_caller();
-        let is_bls_valid = self.verify_bls(hash_of_bridge_ops.clone(), &signature, caller);
+        let is_bls_valid = self.verify_bls(&signature, caller, bridge_operations.clone());
         let mut serialized_transferred_data = ManagedBuffer::new();
 
-        for transfer in transfers_data {
-            if let core::result::Result::Err(err) = transfer.top_encode(&mut serialized_transferred_data) {
+        for operation in bridge_operations {
+            if let core::result::Result::Err(err) = operation.top_encode(&mut serialized_transferred_data) {
                 sc_panic!("Transfer data encode error: {}", err.message_bytes());
             }
-        } 
-
+        }
         let transfers_data_sha256 = self.crypto().sha256(&serialized_transferred_data);
         let transfers_data_hash = transfers_data_sha256.as_managed_buffer();
         
         require!(
-            hash_of_hashes.eq(transfers_data_hash),
-            "Hash of all operations doesn't match the hash of transfer "
+            bridge_operations_hash.eq(transfers_data_hash),
+            "Hash of all operations doesn't match the hash of transfer data"
         );
 
         require!(
@@ -45,20 +45,19 @@ pub trait Multisigverifier:
             "BLS signature is not valid"
         );
 
-        for hash in hash_of_bridge_ops {
-          self.pending_operations_mapper().insert(hash);
-        }
+        self.pending_operations().insert(bridge_operations_hash);
     }
 
     fn verify_bls (
         &self,
-        transactions: MultiValueEncoded<ManagedBuffer>,
         signature: &BlsSignature<Self::Api>,
-        user: ManagedAddress
+        user: ManagedAddress,
+        bridge_operations: MultiValueEncoded<TransferData<Self::Api>>,
     ) -> bool {
         let mut serialized_signature_data = ManagedBuffer::new();
-        for transaction in transactions.into_iter() {
-          let _ = transaction.dep_encode(&mut serialized_signature_data);
+
+        for operation in bridge_operations.into_iter() {
+            let _ = operation.dep_encode(&mut serialized_signature_data);
         }
 
         let is_bls_valid = self.crypto().verify_bls(
@@ -67,10 +66,10 @@ pub trait Multisigverifier:
             signature.as_managed_buffer()
         );
 
-        self.calculate_validity_formula(is_bls_valid)
+        self.is_signature_valid_and_approved(is_bls_valid)
     }
 
-    fn calculate_validity_formula(&self, is_bls_valid: bool) -> bool {
+    fn is_signature_valid_and_approved(&self, is_bls_valid: bool) -> bool {
         let signatures_count = self.signatures().get();
         let bls_pub_keys = self.bls_pub_keys().len() as u32;
         let minimum_signatures = 2 * bls_pub_keys / 3;
@@ -89,5 +88,5 @@ pub trait Multisigverifier:
     fn signatures(&self) -> SingleValueMapper<u32>;
 
     #[storage_mapper("operations_mapper")]
-    fn pending_operations_mapper(&self) -> UnorderedSetMapper<ManagedBuffer>; 
+    fn pending_operations(&self) -> UnorderedSetMapper<ManagedBuffer>; 
 }
