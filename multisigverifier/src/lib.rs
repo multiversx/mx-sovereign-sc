@@ -50,7 +50,7 @@ pub trait Multisigverifier:
         self.pending_operations().insert(bridge_operations_hash);
     }
 
-    fn verify_bls (
+    fn verify_bls(
         &self,
         signature: &BlsSignature<Self::Api>,
         user: ManagedAddress,
