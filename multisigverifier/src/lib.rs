@@ -57,8 +57,11 @@ pub trait Multisigverifier:
             operations_hashes.append(&operation_hash);
         }
 
+        let hash_of_hashes_sha256 = self.crypto().sha256(&operations_hashes);
+        let hash_of_hashes = hash_of_hashes_sha256.as_managed_buffer();
+
         require!(
-            bridge_operations_hash.eq(&operations_hashes),
+            bridge_operations_hash.eq(hash_of_hashes),
             "Hash of all operations doesn't match the hash of transfer data"
         );
     }
