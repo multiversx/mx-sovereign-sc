@@ -1,5 +1,7 @@
 #![no_std]
 
+use core::ptr::null;
+
 use bls_signature::BlsSignature;
 use transaction::TransferData;
 
@@ -30,24 +32,35 @@ pub trait Multisigverifier:
             is_bls_valid,
             "BLS signature is not valid"
         );
+        
+        self.calculate_and_check_operations_hashes(&bridge_operations_hash, bridge_operations);  
 
+        self.pending_operations().insert(bridge_operations_hash);
+    }
+
+    fn calculate_and_check_operations_hashes(
+        &self,
+        bridge_operations_hash: &ManagedBuffer,
+        bridge_operations: MultiValueEncoded<TransferData<Self::Api>>
+    ) {
         let mut serialized_transferred_data = ManagedBuffer::new();
+        let mut operations_hashes = ManagedBuffer::new();
 
         for operation in bridge_operations {
             if let core::result::Result::Err(err) = operation.top_encode(&mut serialized_transferred_data) {
                 sc_panic!("Transfer data encode error: {}", err.message_bytes());
             }
+
+            let operation_sha256 = self.crypto().sha256(&serialized_transferred_data);
+            let operation_hash = operation_sha256.as_managed_buffer();
+
+            operations_hashes.append(&operation_hash);
         }
 
-        let transfers_data_sha256 = self.crypto().sha256(&serialized_transferred_data);
-        let transfers_data_hash = transfers_data_sha256.as_managed_buffer();
-        
         require!(
-            bridge_operations_hash.eq(transfers_data_hash),
+            bridge_operations_hash.eq(&operations_hashes),
             "Hash of all operations doesn't match the hash of transfer data"
         );
-
-        self.pending_operations().insert(bridge_operations_hash);
     }
 
     fn verify_bls(
