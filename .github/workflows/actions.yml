@@ -2,20 +2,27 @@ name: CI
 
 on:
   push:
-    branches:
-      - main
+    branches: [ main, feat/* ]
   pull_request:
+    branches: [ main, feat/* ]
+  workflow_dispatch:
 
 permissions:
+  actions: write
   checks: write
+  contents: write
+  id-token: write
+  issues: write
+  discussions: write
   pull-requests: write
+  statuses: write
 
 jobs:
   contracts:
     name: Contracts
-    uses: multiversx/mx-sc-actions/.github/workflows/contracts.yml@v2.3.1
+    uses: multiversx/mx-sc-actions/.github/workflows/contracts.yml@v2.3.5
     with:
-      rust-toolchain: nightly-2023-05-26
-      vmtools-version: v1.4.60
+      rust-toolchain: nightly-2023-12-11
+      vmtools-version: v1.5.24
     secrets:
       token: ${{ secrets.GITHUB_TOKEN }}
