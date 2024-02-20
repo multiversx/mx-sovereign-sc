@@ -22,7 +22,7 @@ pub trait TokenWhitelistModule:
             return;
         }
 
-        let token_list = self.verfiy_items_signature(opt_signature, tokens);
+        let token_list = self.verify_items_signature(opt_signature, tokens);
         self.token_whitelist().extend(&token_list);
     }
 
@@ -39,7 +39,7 @@ pub trait TokenWhitelistModule:
             return;
         }
 
-        let token_list = self.verfiy_items_signature(opt_signature, tokens);
+        let token_list = self.verify_items_signature(opt_signature, tokens);
         self.remove_items(&mut self.token_whitelist(), &token_list);
     }
 
@@ -64,7 +64,7 @@ pub trait TokenWhitelistModule:
             return;
         }
 
-        let token_list = self.verfiy_items_signature(opt_signature, tokens);
+        let token_list = self.verify_items_signature(opt_signature, tokens);
         self.token_blacklist().extend(&token_list);
     }
 
@@ -81,7 +81,7 @@ pub trait TokenWhitelistModule:
             return;
         }
 
-        let token_list = self.verfiy_items_signature(opt_signature, tokens);
+        let token_list = self.verify_items_signature(opt_signature, tokens);
         self.remove_items(&mut self.token_blacklist(), &token_list);
     }
 
