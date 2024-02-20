@@ -1,7 +1,5 @@
 #![no_std]
 
-use core::ptr::null;
-
 use bls_signature::BlsSignature;
 use transaction::TransferData;
 
@@ -54,7 +52,7 @@ pub trait Multisigverifier:
             let operation_sha256 = self.crypto().sha256(&serialized_transferred_data);
             let operation_hash = operation_sha256.as_managed_buffer();
 
-            operations_hashes.append(&operation_hash);
+            operations_hashes.append(operation_hash);
         }
 
         let hash_of_hashes_sha256 = self.crypto().sha256(&operations_hashes);

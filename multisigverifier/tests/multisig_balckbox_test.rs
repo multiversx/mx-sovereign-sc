@@ -1,6 +1,6 @@
 use bls_signature::BlsSignature;
 use multisigverifier::ProxyTrait;
-use multiversx_sc::{codec::multi_types::MultiValueVec, types::{Address, ManagedBuffer, ManagedByteArray, ManagedVec, RandomnessSource}};
+use multiversx_sc::{codec::multi_types::MultiValueVec, types::{Address, ManagedBuffer, ManagedByteArray, ManagedVec}};
 use multiversx_sc_scenario::{api::StaticApi, scenario_model::{Account, AddressValue, ScCallStep, ScDeployStep, SetStateStep}, ContractInfo, ScenarioWorld};
 use transaction::TransferData;
 
@@ -8,7 +8,6 @@ const MULTISIG_PATH_EXPR: &str = "file:output/multisigverifier.wasm";
 const OWNER_ADDRESS_EXPR: &str = "address:owner";
 const LEADER_ADDRESS_EXPR: &str = "address:proposer";
 const VALIDATOR_ADDRESS_EXPR: &str = "address:board-member";
-const QUORUM_SIZE: usize = 1;
 
 type MultisigverifierContract = ContractInfo<multisigverifier::Proxy<StaticApi>>;
 
@@ -93,16 +92,19 @@ fn test_register_bridge_ops() {
     let mock_signature: BlsSignature<StaticApi> = ManagedByteArray::new_from_bytes(
         b"EIZ2\x05\xf7q\xc7G\x96\x1f\xba0\xe2\xd1\xf5pE\x14\xd7?\xac\xff\x8d\x1a\x0c\x11\x900f5\xfb\xff4\x94\xb8@\xc5^\xc2,exn0\xe3\xf0\n"
     );
+
     let first_transfer_data = TransferData {
         args: ManagedVec::new(),
         gas_limit: 50000,
         function: ManagedBuffer::new()
     }; 
+
     let second_transfer_data = TransferData {
         args: ManagedVec::new(),
         gas_limit: 60000,
         function: ManagedBuffer::new()
     }; 
+
     let mut bridge_operations = MultiValueVec::new();
     bridge_operations.push(first_transfer_data);
     bridge_operations.push(second_transfer_data);
