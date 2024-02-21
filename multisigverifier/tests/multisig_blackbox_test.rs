@@ -8,6 +8,7 @@ const MULTISIG_PATH_EXPR: &str = "file:output/multisigverifier.wasm";
 const OWNER_ADDRESS_EXPR: &str = "address:owner";
 const LEADER_ADDRESS_EXPR: &str = "address:proposer";
 const VALIDATOR_ADDRESS_EXPR: &str = "address:board-member";
+const MULTISIG_ADDRESS_EXPR: &str = "sc:multisig";
 
 type MultisigverifierContract = ContractInfo<multisigverifier::Proxy<StaticApi>>;
 
@@ -34,7 +35,7 @@ impl MultisigTestState {
         world.set_state_step(
             SetStateStep::new()
                 .put_account(OWNER_ADDRESS_EXPR, Account::new().nonce(1))
-                .new_address(OWNER_ADDRESS_EXPR, 1, MULTISIG_PATH_EXPR)
+                .new_address(OWNER_ADDRESS_EXPR, 1, MULTISIG_ADDRESS_EXPR)
                 .put_account(
                     LEADER_ADDRESS_EXPR, 
                     Account::new().nonce(1).balance(LEADER_ADDRESS_EXPR),
@@ -44,7 +45,7 @@ impl MultisigTestState {
 
         let leader_address = AddressValue::from(LEADER_ADDRESS_EXPR).to_address();
         let validator_address = AddressValue::from(VALIDATOR_ADDRESS_EXPR).to_address(); 
-        let multisig_contract = MultisigverifierContract::new(MULTISIG_PATH_EXPR);
+        let multisig_contract = MultisigverifierContract::new(MULTISIG_ADDRESS_EXPR);
 
         Self {
             world,
@@ -81,6 +82,11 @@ impl MultisigTestState {
             )
         )
     }
+}
+#[test]
+fn test_deploy() {
+    let mut state = MultisigTestState::new();
+    state.deploy_multisig_contract();
 }
 
 #[test]
