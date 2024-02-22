@@ -14,6 +14,7 @@ pub trait EnableFeeModule {
         self.fee_enabled().set(false);
     }
 
+    #[endpoint(isFeeEnabled)]
     fn is_fee_enabled(&self) -> bool {
         self.fee_enabled().get()
     }

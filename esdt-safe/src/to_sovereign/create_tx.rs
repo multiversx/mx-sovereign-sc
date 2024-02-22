@@ -1,5 +1,6 @@
 use bls_signature::BlsSignature;
-use fee_market::subtract_fee::{FinalPayment, ProxyTrait as _};
+use fee_market::{__endpoints_3__::is_fee_enabled, enable_fee::ProxyTrait as _, subtract_fee::{FinalPayment, ProxyTrait as _}};
+use multiversx_sc::api::HandleConstraints;
 use transaction::{GasLimit, StolenFromFrameworkEsdtTokenData, Transaction, TransferData};
 
 use crate::to_sovereign::events::DepositEvent;
@@ -121,9 +122,8 @@ pub trait CreateTxModule:
         opt_transfer_data: OptionalValue<TransferData<Self::Api>>,
     ) {
         require!(self.not_paused(), "Cannot create transaction while paused");
-
+        let fee_market_address = self.fee_market_address().get();
         let mut payments = self.call_value().all_esdt_transfers().clone_value();
-        let fees_payment = self.pop_first_payment(&mut payments);
 
         require!(!payments.is_empty(), "Nothing to transfer");
         require!(payments.len() <= MAX_TRANSFERS_PER_TX, "Too many tokens");
@@ -190,7 +190,23 @@ pub trait CreateTxModule:
         }
 
         let caller = self.blockchain().get_caller();
-        let fee_market_address = self.fee_market_address().get();
+        let is_fee_enabled: bool = self.fee_market_proxy(fee_market_address.clone()).is_fee_enabled().execute_on_dest_context();
+        let token_id = TokenIdentifier::from(ManagedBuffer::new());
+        let mut fees_payment = EsdtTokenPayment::new(token_id, 0 as u64, BigUint::from(0u64));
+
+        if is_fee_enabled {
+            fees_payment = self.pop_first_payment(&mut payments);
+        }
+        // match is_fee_enabled {
+        //     true => {
+        //         fees_payment = self.pop_first_payment(&mut payments);
+        //     }
+        //
+        //     false => {
+        //         _
+        //     }
+        // }
+
         let final_payments: FinalPayment<Self::Api> = self
             .fee_market_proxy(fee_market_address)
             .subtract_fee(caller.clone(), total_tokens_for_fees, opt_gas_limit)
