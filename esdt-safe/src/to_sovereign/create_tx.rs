@@ -119,7 +119,7 @@ pub trait CreateTxModule:
     fn deposit(
         &self,
         to: ManagedAddress,
-        opt_transfer_data: OptionalValue<TransferData<Self::Api>>,
+        opt_transfer_data: OptionalValue<MultiValue3<GasLimit, ManagedBuffer, ManagedVec<ManagedBuffer>>>
     ) {
         require!(self.not_paused(), "Cannot create transaction while paused");
         let fee_market_address = self.fee_market_address().get();
@@ -130,20 +130,21 @@ pub trait CreateTxModule:
 
         let opt_gas_limit = match &opt_transfer_data {
             OptionalValue::Some(transfer_data) => {
+                let (gas_limit, function, args) = transfer_data.into_tuple();
                 let max_gas_limit = self.max_user_tx_gas_limit().get();
                 require!(
-                    transfer_data.gas_limit <= max_gas_limit,
+                    gas_limit <= max_gas_limit,
                     "Gas limit too high"
                 );
 
                 require!(
                     !self
                         .banned_endpoint_names()
-                        .contains(&transfer_data.function),
+                        .contains(&function),
                     "Banned endpoint name"
                 );
 
-                OptionalValue::Some(transfer_data.gas_limit)
+                OptionalValue::Some(gas_limit)
             }
             OptionalValue::None => OptionalValue::None,
         };
