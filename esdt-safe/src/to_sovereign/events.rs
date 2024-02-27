@@ -8,9 +8,9 @@ multiversx_sc::derive_imports!();
 #[derive(TypeAbi, TopEncode, TopDecode)]
 pub struct DepositEvent<M: ManagedTypeApi> {
     pub tx_nonce: TxId,
+    pub opt_gas_limit: Option<GasLimit>,
     pub opt_function: Option<ManagedBuffer<M>>,
     pub opt_arguments: Option<ManagedVec<M, ManagedBuffer<M>>>,
-    pub opt_gas_limit: Option<GasLimit>,
 }
 
 impl<M: ManagedTypeApi> DepositEvent<M> {
