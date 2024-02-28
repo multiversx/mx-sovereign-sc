@@ -1,5 +1,6 @@
 use bls_signature::BlsSignature;
 use fee_market::subtract_fee::{FinalPayment, ProxyTrait as _};
+use multiversx_sc::storage::StorageKey;
 use transaction::{GasLimit, StolenFromFrameworkEsdtTokenData, Transaction, TransferData};
 
 use crate::to_sovereign::events::DepositEvent;
@@ -125,9 +126,13 @@ pub trait CreateTxModule:
         require!(self.not_paused(), "Cannot create transaction while paused");
         let fee_market_address = self.fee_market_address().get();
         let mut payments = self.call_value().all_esdt_transfers().clone_value();
-        let is_fee_enabled_mapper = SingleValueMapper::get_from_address(&self.fee_enabled(), &fee_market_address); 
+        let fee_enabled_mapper = SingleValueMapper::new_from_address(
+            fee_market_address.clone(),
+            StorageKey::from("feeEnabledFlag"),
+        )
+        .get();
 
-        let fees_payment = if is_fee_enabled_mapper { 
+        let fees_payment = if fee_enabled_mapper {
             OptionalValue::Some(self.pop_first_payment(&mut payments))
         } else {
             OptionalValue::None
@@ -205,7 +210,7 @@ pub trait CreateTxModule:
             OptionalValue::Some(fee) => self
                 .fee_market_proxy(fee_market_address)
                 .subtract_fee(caller.clone(), total_tokens_for_fees, opt_gas_limit.clone())
-                .with_esdt_transfer(fee) 
+                .with_esdt_transfer(fee)
                 .execute_on_dest_context(),
             OptionalValue::None => self
                 .fee_market_proxy(fee_market_address)
