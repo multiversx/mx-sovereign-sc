@@ -125,10 +125,12 @@ pub trait CreateTxModule:
         require!(self.not_paused(), "Cannot create transaction while paused");
         let fee_market_address = self.fee_market_address().get();
         let mut payments = self.call_value().all_esdt_transfers().clone_value();
-        let fees_payment = if payments.len() == 1 {
-            OptionalValue::None
-        } else {
+        let is_fee_enabled_mapper = SingleValueMapper::get_from_address(&self.fee_enabled(), &fee_market_address); 
+
+        let fees_payment = if is_fee_enabled_mapper { 
             OptionalValue::Some(self.pop_first_payment(&mut payments))
+        } else {
+            OptionalValue::None
         };
 
         require!(!payments.is_empty(), "Nothing to transfer");
@@ -262,4 +264,7 @@ pub trait CreateTxModule:
 
     #[storage_mapper("bannedEndpointNames")]
     fn banned_endpoint_names(&self) -> UnorderedSetMapper<ManagedBuffer>;
+
+    #[storage_mapper("feeEnabledFlag")]
+    fn fee_enabled(&self) -> SingleValueMapper<bool>;
 }
