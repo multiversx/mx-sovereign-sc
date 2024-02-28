@@ -125,7 +125,11 @@ pub trait CreateTxModule:
         require!(self.not_paused(), "Cannot create transaction while paused");
         let fee_market_address = self.fee_market_address().get();
         let mut payments = self.call_value().all_esdt_transfers().clone_value();
-        let fees_payment = self.pop_first_payment(&mut payments);
+        let fees_payment = if payments.len() == 1 {
+            OptionalValue::None
+        } else {
+            OptionalValue::Some(self.pop_first_payment(&mut payments))
+        };
 
         require!(!payments.is_empty(), "Nothing to transfer");
         require!(payments.len() <= MAX_TRANSFERS_PER_TX, "Too many tokens");
@@ -195,11 +199,17 @@ pub trait CreateTxModule:
 
         let caller = self.blockchain().get_caller();
 
-        let final_payments: FinalPayment<Self::Api> = self
-            .fee_market_proxy(fee_market_address)
-            .subtract_fee(caller.clone(), total_tokens_for_fees, opt_gas_limit.clone())
-            .with_esdt_transfer(fees_payment)
-            .execute_on_dest_context();
+        let final_payments: FinalPayment<Self::Api> = match fees_payment {
+            OptionalValue::Some(fee) => self
+                .fee_market_proxy(fee_market_address)
+                .subtract_fee(caller.clone(), total_tokens_for_fees, opt_gas_limit.clone())
+                .with_esdt_transfer(fee) 
+                .execute_on_dest_context(),
+            OptionalValue::None => self
+                .fee_market_proxy(fee_market_address)
+                .subtract_fee(caller.clone(), total_tokens_for_fees, opt_gas_limit.clone())
+                .execute_on_dest_context(),
+        };
 
         self.send()
             .direct_non_zero_esdt_payment(&caller, &final_payments.remaining_tokens);
