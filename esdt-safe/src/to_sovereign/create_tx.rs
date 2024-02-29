@@ -2,7 +2,7 @@ use crate::to_sovereign::events::DepositEvent;
 use bls_signature::BlsSignature;
 use fee_market::subtract_fee::{FinalPayment, ProxyTrait as _};
 use multiversx_sc::storage::StorageKey;
-use transaction::{GasLimit, StolenFromFrameworkEsdtTokenData};
+use transaction::GasLimit;
 
 multiversx_sc::imports!();
 
@@ -184,19 +184,19 @@ pub trait CreateTxModule:
                 total_tokens_for_fees += 1;
             }
 
-            let mut current_token_data = StolenFromFrameworkEsdtTokenData::default();
+            let mut current_token_data = EsdtTokenData::default();
             if payment.token_nonce > 0 {
                 current_token_data = self.blockchain().get_esdt_token_data(
                     &own_sc_address,
                     &payment.token_identifier,
                     payment.token_nonce,
-                ).into();
+                );
             } 
 
             event_payments.push(MultiValue3((
                 payment.token_identifier.clone(),
                 payment.token_nonce,
-                payment.amount.clone(), //use current_token_data
+                current_token_data
             )));
 
             if burn_mapper.contains(&payment.token_identifier) {
