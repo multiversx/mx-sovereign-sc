@@ -22,8 +22,8 @@ pub trait Multisigverifier:
     fn register_bridge_operations(
         &self,
         bridge_operations_hash: ManagedBuffer,
+        operations_hashes: ManagedVec<ManagedBuffer>,
         signature: BlsSignature<Self::Api>,
-        operations_hashes: ManagedVec<ManagedBuffer>
     ) {
         let caller = self.blockchain().get_caller();
         let is_bls_valid = self.verify_bls(&signature, caller, &bridge_operations_hash);
