@@ -45,15 +45,10 @@ pub trait Multisigverifier:
         transfers_hash: &ManagedBuffer,
         transfers_data: ManagedVec<ManagedBuffer>
     ) {
-        let mut serialized_transferred_data = ManagedBuffer::new();
         let mut transfers_hashes = ManagedBuffer::new();
 
         for transfer in &transfers_data {
-            if let core::result::Result::Err(err) = transfer.top_encode(&mut serialized_transferred_data) {
-                sc_panic!("Transfer data encode error: {}", err.message_bytes());
-            }
-
-            let transfer_sha256 = self.crypto().sha256(&serialized_transferred_data);
+            let transfer_sha256 = self.crypto().sha256(&transfer);
             let transfer_hash = transfer_sha256.as_managed_buffer();
 
             transfers_hashes.append(transfer_hash);
