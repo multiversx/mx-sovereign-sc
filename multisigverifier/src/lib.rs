@@ -15,6 +15,9 @@ pub trait Multisigverifier:
       }
    }
     
+    #[endpoint]
+    fn upgrade(&self) {}
+
     #[endpoint(registerBridgeOps)]
     fn register_bridge_operations(
         &self,
