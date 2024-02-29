@@ -1,9 +1,8 @@
+use crate::to_sovereign::events::DepositEvent;
 use bls_signature::BlsSignature;
 use fee_market::subtract_fee::{FinalPayment, ProxyTrait as _};
 use multiversx_sc::storage::StorageKey;
-use transaction::{GasLimit, StolenFromFrameworkEsdtTokenData, Transaction, TransferData};
-
-use crate::to_sovereign::events::DepositEvent;
+use transaction::{GasLimit, StolenFromFrameworkEsdtTokenData};
 
 multiversx_sc::imports!();
 
@@ -166,33 +165,38 @@ pub trait CreateTxModule:
         };
 
         let own_sc_address = self.blockchain().get_sc_address();
-        let mut all_token_data = ManagedVec::new();
         let mut total_tokens_for_fees = 0usize;
         let mut event_payments = MultiValueEncoded::new();
         let burn_mapper = self.burn_tokens();
+        let mut refundable_payments: ManagedVec<Self::Api, EsdtTokenPayment<Self::Api>> =
+            ManagedVec::new();
+
         for payment in &payments {
             self.require_below_max_amount(&payment.token_identifier, &payment.amount);
             self.require_token_not_blacklisted(&payment.token_identifier);
 
-            if !self.token_whitelist().contains(&payment.token_identifier) {
+            if self.token_whitelist().len() > 0
+                && !self.token_whitelist().contains(&payment.token_identifier)
+            {
+                refundable_payments.push(payment.clone());
+                continue;
+            } else {
                 total_tokens_for_fees += 1;
             }
 
+            let mut current_token_data = StolenFromFrameworkEsdtTokenData::default();
             if payment.token_nonce > 0 {
-                let current_token_data = self.blockchain().get_esdt_token_data(
+                current_token_data = self.blockchain().get_esdt_token_data(
                     &own_sc_address,
                     &payment.token_identifier,
                     payment.token_nonce,
-                );
-                all_token_data.push(current_token_data.into());
-            } else {
-                all_token_data.push(StolenFromFrameworkEsdtTokenData::default());
-            }
+                ).into();
+            } 
 
             event_payments.push(MultiValue3((
                 payment.token_identifier.clone(),
                 payment.token_nonce,
-                payment.amount.clone(),
+                payment.amount.clone(), //use current_token_data
             )));
 
             if burn_mapper.contains(&payment.token_identifier) {
@@ -206,53 +210,36 @@ pub trait CreateTxModule:
 
         let caller = self.blockchain().get_caller();
 
-        let final_payments: FinalPayment<Self::Api> = match fees_payment {
-            OptionalValue::Some(fee) => self
-                .fee_market_proxy(fee_market_address)
-                .subtract_fee(caller.clone(), total_tokens_for_fees, opt_gas_limit.clone())
-                .with_esdt_transfer(fee)
-                .execute_on_dest_context(),
-            OptionalValue::None => self
-                .fee_market_proxy(fee_market_address)
-                .subtract_fee(caller.clone(), total_tokens_for_fees, opt_gas_limit.clone())
-                .execute_on_dest_context(),
+        match fees_payment {
+            OptionalValue::Some(fee) => {
+                let _final_payments: FinalPayment<Self::Api> = self
+                    .fee_market_proxy(fee_market_address)
+                    .subtract_fee(caller.clone(), total_tokens_for_fees, opt_gas_limit.clone())
+                    //why gas limit?
+                    .with_esdt_transfer(fee)
+                    .execute_on_dest_context();
+            }
+            OptionalValue::None => (),
         };
+        
+        // refund refundable_tokens
+        for payment in &refundable_payments {
+            self.send()
+                .direct_non_zero_esdt_payment(&caller, &payment);
+        }
 
-        self.send()
-            .direct_non_zero_esdt_payment(&caller, &final_payments.remaining_tokens);
-
-        let block_nonce = self.blockchain().get_block_nonce();
         let tx_nonce = self.get_and_save_next_tx_id();
-        let opt_transfer_data = match (opt_gas_limit, opt_function, opt_args) {
-            (
-                OptionalValue::Some(opt_gas_limit),
-                OptionalValue::Some(opt_function),
-                OptionalValue::Some(opt_args),
-            ) => OptionalValue::Some(TransferData {
-                gas_limit: opt_gas_limit,
-                function: opt_function,
-                args: opt_args,
-            }),
-            _ => OptionalValue::None,
-        };
 
         self.deposit_event(
             &to,
             &event_payments,
-            DepositEvent::from(tx_nonce, &opt_transfer_data),
+            DepositEvent {
+                tx_nonce,
+                opt_gas_limit: opt_gas_limit.into_option(),
+                opt_function: opt_function.into_option(),
+                opt_arguments: opt_args.into_option(),
+            }
         );
-
-        let tx = Transaction {
-            block_nonce,
-            nonce: tx_nonce,
-            from: caller,
-            to,
-            tokens: payments,
-            token_data: all_token_data,
-            opt_transfer_data: opt_transfer_data.into_option(),
-            is_refund_tx: false,
-        };
-        let _ = self.add_to_batch(tx);
     }
 
     #[proxy]
