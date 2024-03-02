@@ -5,9 +5,9 @@
 ////////////////////////////////////////////////////
 
 // Init:                                 1
-// Endpoints:                            4
+// Endpoints:                            5
 // Async Callback (empty):               1
-// Total number of exported functions:   6
+// Total number of exported functions:   7
 
 #![no_std]
 #![allow(internal_features)]
@@ -20,6 +20,7 @@ multiversx_sc_wasm_adapter::endpoints! {
     multisigverifier
     (
         init => init
+        upgrade => upgrade
         registerBridgeOps => register_bridge_operations
         setMinValidSigners => set_min_valid_signers
         addSigners => add_signers
