@@ -96,6 +96,6 @@ pub trait Multisigverifier:
     #[storage_mapper("signatures")]
     fn signatures(&self) -> SingleValueMapper<u32>;
 
-    #[storage_mapper("operations_mapper")]
+    #[storage_mapper("pending_hashes")]
     fn pending_hashes(&self) -> UnorderedSetMapper<ManagedBuffer>; 
 }
