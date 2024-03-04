@@ -34,7 +34,6 @@ pub trait CreateTxModule:
 
         let opt_signature = opt_sig.into_option();
         require!(opt_signature.is_some(), "Must provide signature");
-
         let signature = unsafe { opt_signature.unwrap_unchecked() };
         let mut signature_data = ManagedBuffer::new();
         let _ = new_value.dep_encode(&mut signature_data);
@@ -186,12 +185,15 @@ pub trait CreateTxModule:
 
             let mut current_token_data = StolenFromFrameworkEsdtTokenData::default();
             if payment.token_nonce > 0 {
-                current_token_data = self.blockchain().get_esdt_token_data(
-                    &own_sc_address,
-                    &payment.token_identifier,
-                    payment.token_nonce,
-                ).into();
-            } 
+                current_token_data = self
+                    .blockchain()
+                    .get_esdt_token_data(
+                        &own_sc_address,
+                        &payment.token_identifier,
+                        payment.token_nonce,
+                    )
+                    .into();
+            }
 
             event_payments.push(MultiValue3((
                 payment.token_identifier.clone(),
@@ -221,11 +223,10 @@ pub trait CreateTxModule:
             }
             OptionalValue::None => (),
         };
-        
+
         // refund refundable_tokens
         for payment in &refundable_payments {
-            self.send()
-                .direct_non_zero_esdt_payment(&caller, &payment);
+            self.send().direct_non_zero_esdt_payment(&caller, &payment);
         }
 
         let tx_nonce = self.get_and_save_next_tx_id();
@@ -238,7 +239,7 @@ pub trait CreateTxModule:
                 opt_gas_limit: opt_gas_limit.into_option(),
                 opt_function: opt_function.into_option(),
                 opt_arguments: opt_args.into_option(),
-            }
+            },
         );
     }
 

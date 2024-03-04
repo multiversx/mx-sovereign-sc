@@ -1,4 +1,4 @@
-use transaction::{BatchId, Transaction, TxId};
+use transaction::{BatchId, Operation, Transaction, TxId};
 
 multiversx_sc::imports!();
 
@@ -15,8 +15,8 @@ pub trait EventsModule {
     fn transfer_performed_event(
         &self,
         #[indexed] batch_id: BatchId,
-        #[indexed] tx_id: TxId,
-        tx: Transaction<Self::Api>,
+        // #[indexed] tx_id: TxId,
+        tx: Operation<Self::Api>,
     );
 
     #[event("transferFailedInvalidToken")]
@@ -36,6 +36,6 @@ pub trait EventsModule {
     fn transfer_failed_execution_failed(
         &self,
         #[indexed] batch_id: BatchId,
-        #[indexed] tx_id: TxId,
+        // #[indexed] tx_id: TxId,
     );
 }
