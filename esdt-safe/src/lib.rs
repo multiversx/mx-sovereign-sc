@@ -70,6 +70,14 @@ pub trait EsdtSafe:
         self.fee_market_address().set(fee_market_address);
     }
 
+    #[only_owner]
+    #[endpoint(setMultisigAddress)]
+    fn set_multisig_address(&self, multisig_address: ManagedAddress) {
+        self.require_sc_address(&multisig_address);
+
+        self.multisig_address().set(multisig_address);
+    }
+
     #[endpoint]
     fn upgrade(&self) {}
 }
