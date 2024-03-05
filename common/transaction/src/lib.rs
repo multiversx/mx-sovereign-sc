@@ -115,19 +115,23 @@ pub struct Transaction<M: ManagedTypeApi> {
 pub struct Operation<M: ManagedTypeApi> {
     pub to: ManagedAddress<M>,
     pub tokens: ManagedVec<M, OperationEsdtPayment<M>>,
-    pub opt_transfer_data: Option<TransferData<M>>
+    pub opt_transfer_data: Option<TransferData<M>>,
 }
 
 #[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, TypeAbi, ManagedVecItem, Clone)]
 pub struct OperationEsdtPayment<M: ManagedTypeApi> {
     pub token_identifier: TokenIdentifier<M>,
     pub token_nonce: u64,
-    pub token_data: StolenFromFrameworkEsdtTokenData<M>
+    pub token_data: StolenFromFrameworkEsdtTokenData<M>,
 }
 
 impl<M: ManagedTypeApi> Into<EsdtTokenPayment<M>> for OperationEsdtPayment<M> {
     fn into(self) -> EsdtTokenPayment<M> {
-        EsdtTokenPayment { token_identifier: self.token_identifier, token_nonce: self.token_nonce, amount: self.token_data.amount }
+        EsdtTokenPayment {
+            token_identifier: self.token_identifier,
+            token_nonce: self.token_nonce,
+            amount: self.token_data.amount,
+        }
     }
 }
 
