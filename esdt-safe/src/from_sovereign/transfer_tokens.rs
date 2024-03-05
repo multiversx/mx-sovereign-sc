@@ -22,13 +22,17 @@ pub trait TransferTokensModule:
     + utils::UtilsModule
 {
     #[endpoint(executeBridgeOps)]
-    fn execute_operations(&self, hash_of_hashes: ManagedBuffer, operations: MultiValueEncoded<Operation<Self::Api>>) {
+    fn execute_operations(
+        &self,
+        hash_of_hashes: ManagedBuffer,
+        operations: MultiValueEncoded<Operation<Self::Api>>,
+    ) {
         require!(self.not_paused(), "Cannot transfer while paused");
 
         let mut verified_operations = MultiValueEncoded::new();
         let mut minted_operations = ManagedVec::new();
         let multisig_address = self.multisig_address().get();
-        let _pending_operations_mapper: UnorderedSetMapper<ManagedAddress, _>=
+        let _pending_operations_mapper: UnorderedSetMapper<ManagedAddress, _> =
             UnorderedSetMapper::new_from_address(
                 multisig_address,
                 StorageKey::from("pending_hashes"),
@@ -41,10 +45,12 @@ pub trait TransferTokensModule:
             let minted_operation_tokens = self.mint_tokens(&operation.tokens);
 
             minted_operations.push(minted_operation_tokens);
-            verified_operations.push(MultiValue2::from((operation_hash.clone(), operation.clone())));
+            verified_operations.push(MultiValue2::from((
+                operation_hash.clone(),
+                operation.clone(),
+            )));
 
-            self.pending_hashes()
-                .swap_remove(&operation_hash);
+            self.pending_hashes().swap_remove(&operation_hash);
         }
 
         self.distribute_payments(hash_of_hashes, verified_operations, minted_operations);
@@ -145,10 +151,7 @@ pub trait TransferTokensModule:
                 None => {
                     self.send().direct_multi(&operation.to, &mapped_payments);
 
-                    self.transfer_performed_event(
-                        hash_of_hashes.clone(),
-                        operation_hash
-                    );
+                    self.transfer_performed_event(hash_of_hashes.clone(), operation_hash);
                 }
             }
         }
@@ -164,10 +167,7 @@ pub trait TransferTokensModule:
         let (operation_hash, operation) = operation_tuple.into_tuple();
         match result {
             ManagedAsyncCallResult::Ok(_) => {
-                self.transfer_performed_event(
-                    hash_of_hashes,
-                    operation_hash
-                );
+                self.transfer_performed_event(hash_of_hashes, operation_hash);
             }
             ManagedAsyncCallResult::Err(_) => {
                 let tx_nonce = self.get_and_save_next_tx_id();
@@ -211,11 +211,10 @@ pub trait TransferTokensModule:
     fn calculate_operation_hash(&self, operation: Operation<Self::Api>) -> ManagedBuffer {
         let mut serialized_data = ManagedBuffer::new();
 
-        let pending_operations_mapper =
-            UnorderedSetMapper::new_from_address(
-                self.multisig_address().get(),
-                StorageKey::from("pending_hashes"),
-            );
+        let pending_operations_mapper = UnorderedSetMapper::new_from_address(
+            self.multisig_address().get(),
+            StorageKey::from("pending_hashes"),
+        );
 
         if let core::result::Result::Err(err) = operation.top_encode(&mut serialized_data) {
             sc_panic!("Transfer data encode error: {}", err.message_bytes());
