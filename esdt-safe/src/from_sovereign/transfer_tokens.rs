@@ -38,7 +38,7 @@ pub trait TransferTokensModule:
                 StorageKey::from("pending_hashes"),
             );
 
-        for operation in operations {
+        for operation in &operations.to_vec() {
             let operation_hash = self.calculate_operation_hash(operation.clone());
             // check hash validity
 

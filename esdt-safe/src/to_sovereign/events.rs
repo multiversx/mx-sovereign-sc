@@ -36,6 +36,7 @@ impl<M: ManagedTypeApi> DepositEvent<M> {
 pub trait EventsModule {
     #[event("deposit")]
     fn deposit_event(
+        // TODO: Use ManagedVec of EsdtTokenPaymentInfo(EsdtTokenDataPayment, EsdtTokenData)
         &self,
         #[indexed] dest_address: &ManagedAddress,
         #[indexed] tokens: &MultiValueEncoded<MultiValue3<TokenIdentifier, u64, EsdtTokenData>>,
