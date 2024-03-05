@@ -1,12 +1,9 @@
 use core::ops::Deref;
 
-use transaction::{
-    BatchId, GasLimit, PaymentsVec, StolenFromFrameworkEsdtTokenData, Transaction, TxNonce,
-};
+use multiversx_sc::storage::StorageKey;
+use transaction::{BatchId, GasLimit, Operation, OperationEsdtPayment};
 
-use bls_signature::BlsSignature;
-
-use crate::from_sovereign::refund::CheckMustRefundArgs;
+use crate::to_sovereign::events::DepositEvent;
 
 multiversx_sc::imports!();
 
@@ -22,92 +19,58 @@ pub trait TransferTokensModule:
     + max_bridged_amount_module::MaxBridgedAmountModule
     + multiversx_sc_modules::pause::PauseModule
     + multiversx_sc_modules::default_issue_callbacks::DefaultIssueCallbacksModule
+    + utils::UtilsModule
 {
-    #[endpoint(batchTransferEsdtToken)]
-    fn batch_transfer_esdt_token(
+    #[endpoint(executeBridgeOps)]
+    fn execute_operations(
         &self,
-        batch_id: BatchId,
-        signature: BlsSignature<Self::Api>,
-        transfers: MultiValueEncoded<Transaction<Self::Api>>,
+        hash_of_hashes: ManagedBuffer,
+        operations: MultiValueEncoded<Operation<Self::Api>>,
     ) {
         require!(self.not_paused(), "Cannot transfer while paused");
 
-        let next_batch_id = self.next_batch_id().get();
-        require!(batch_id == next_batch_id, "Unexpected batch ID");
+        let mut verified_operations = MultiValueEncoded::new();
+        let mut minted_operations = ManagedVec::new();
+        let multisig_address = self.multisig_address().get();
+        let _pending_operations_mapper: UnorderedSetMapper<ManagedAddress, _> =
+            UnorderedSetMapper::new_from_address(
+                multisig_address,
+                StorageKey::from("pending_hashes"),
+            );
 
-        let mut successful_tx_list = ManagedVec::new();
-        let mut all_tokens_to_send = ManagedVec::new();
-        let mut refund_tx_list = ManagedVec::new();
+        for operation in &operations.to_vec() {
+            let operation_hash = self.calculate_operation_hash(operation.clone());
+            // check hash validity
 
-        let signed_transactions = self.verify_bls_signature(transfers, &signature);
+            let minted_operation_tokens = self.mint_tokens(&operation.tokens);
 
-        let own_sc_address = self.blockchain().get_sc_address();
-        let sc_shard = self.blockchain().get_shard_of_address(&own_sc_address);
+            minted_operations.push(minted_operation_tokens);
+            verified_operations.push(MultiValue2::from((
+                operation_hash.clone(),
+                operation.clone(),
+            )));
 
-        for sov_tx in &signed_transactions {
-            let mut refund_tokens_for_user = ManagedVec::new();
-            let mut tokens_to_send = ManagedVec::new();
-            let mut sent_token_data = ManagedVec::new();
-
-            for (token, token_data) in sov_tx.tokens.iter().zip(sov_tx.token_data.iter()) {
-                let token_roles = self
-                    .blockchain()
-                    .get_esdt_local_roles(&token.token_identifier);
-                let must_refund_args = CheckMustRefundArgs {
-                    token: &token,
-                    roles: token_roles,
-                    dest: &sov_tx.to,
-                    batch_id,
-                    tx_nonce: sov_tx.nonce,
-                    sc_address: &own_sc_address,
-                    sc_shard,
-                };
-                let must_refund = self.check_must_refund(must_refund_args);
-
-                if must_refund {
-                    refund_tokens_for_user.push(token);
-                } else {
-                    tokens_to_send.push(token);
-                    sent_token_data.push(token_data);
-                }
-            }
-
-            if !refund_tokens_for_user.is_empty() {
-                let refund_tx = self.convert_to_refund_tx(sov_tx.clone(), refund_tokens_for_user);
-                refund_tx_list.push(refund_tx);
-            }
-
-            if tokens_to_send.is_empty() {
-                continue;
-            }
-
-            let user_tokens_to_send = self.mint_tokens(tokens_to_send, sent_token_data);
-            all_tokens_to_send.push(user_tokens_to_send);
-
-            successful_tx_list.push(sov_tx);
+            self.pending_hashes().swap_remove(&operation_hash);
         }
 
-        self.distribute_payments(batch_id, successful_tx_list, all_tokens_to_send);
-
-        self.add_multiple_tx_to_batch(&refund_tx_list);
-
-        self.next_batch_id().set(batch_id + 1);
+        self.distribute_payments(hash_of_hashes, verified_operations, minted_operations);
     }
 
     fn mint_tokens(
         &self,
-        payments: PaymentsVec<Self::Api>,
-        all_token_data: ManagedVec<StolenFromFrameworkEsdtTokenData<Self::Api>>,
-    ) -> PaymentsVec<Self::Api> {
+        operation_tokens: &ManagedVec<OperationEsdtPayment<Self::Api>>,
+    ) -> ManagedVec<OperationEsdtPayment<Self::Api>> {
         let own_sc_address = self.blockchain().get_sc_address();
-        let mut output_payments = PaymentsVec::new();
-        for (payment, token_data) in payments.iter().zip(all_token_data.iter()) {
+        let mut output_payments = ManagedVec::new();
+
+        for payment in operation_tokens.iter() {
             let token_balance = self.blockchain().get_esdt_balance(
                 &own_sc_address,
                 &payment.token_identifier,
                 payment.token_nonce,
             );
-            if token_balance >= payment.amount {
+
+            if token_balance >= payment.token_data.amount {
                 output_payments.push(payment);
 
                 continue;
@@ -119,32 +82,37 @@ pub trait TransferTokensModule:
 
             let mx_token_id = match mx_token_id_state {
                 TokenMapperState::Token(token_id) => token_id,
-                _ => sc_panic!("No token config set!"),
+                _ => sc_panic!("No token config set!"), // add event
             };
 
             if payment.token_nonce == 0 {
                 self.send()
-                    .esdt_local_mint(&mx_token_id, 0, &payment.amount);
+                    .esdt_local_mint(&mx_token_id, 0, &payment.token_data.amount);
 
-                output_payments.push(EsdtTokenPayment::new(mx_token_id, 0, payment.amount));
+                output_payments.push(OperationEsdtPayment {
+                    token_identifier: mx_token_id,
+                    token_nonce: 0,
+                    token_data: payment.token_data,
+                });
 
                 continue;
             }
 
             let token_nonce = self.send().esdt_nft_create(
                 &mx_token_id,
-                &payment.amount,
-                &token_data.name,
-                &token_data.royalties,
-                &token_data.hash,
-                &token_data.attributes,
-                &token_data.uris,
+                &payment.token_data.amount,
+                &payment.token_data.name,
+                &payment.token_data.royalties,
+                &payment.token_data.hash,
+                &payment.token_data.attributes,
+                &payment.token_data.uris,
             );
-            output_payments.push(EsdtTokenPayment::new(
-                mx_token_id,
+
+            output_payments.push(OperationEsdtPayment {
+                token_identifier: mx_token_id,
                 token_nonce,
-                payment.amount,
-            ));
+                token_data: payment.token_data,
+            });
         }
 
         output_payments
@@ -152,12 +120,15 @@ pub trait TransferTokensModule:
 
     fn distribute_payments(
         &self,
-        batch_id: BatchId,
-        tx_list: ManagedVec<Transaction<Self::Api>>,
-        tokens_list: ManagedVec<PaymentsVec<Self::Api>>,
+        hash_of_hashes: ManagedBuffer,
+        verified_operations: MultiValueEncoded<MultiValue2<ManagedBuffer, Operation<Self::Api>>>,
+        tokens_list: ManagedVec<ManagedVec<OperationEsdtPayment<Self::Api>>>,
     ) {
-        for (tx, payments) in tx_list.iter().zip(tokens_list.iter()) {
-            match &tx.opt_transfer_data {
+        for (token, operation_tuple) in tokens_list.iter().zip(verified_operations) {
+            let mapped_payments = self.map_payments(token.deref().clone());
+            let (operation_hash, operation) = operation_tuple.clone().into_tuple();
+
+            match &operation.opt_transfer_data {
                 Some(tx_data) => {
                     let mut args = ManagedArgBuffer::new();
                     for arg in &tx_data.args {
@@ -165,22 +136,22 @@ pub trait TransferTokensModule:
                     }
 
                     self.send()
-                        .contract_call::<()>(tx.to.clone(), tx_data.function.clone())
+                        .contract_call::<()>(operation.to.clone(), tx_data.function.clone())
                         .with_raw_arguments(args)
-                        .with_multi_token_transfer(payments.deref().clone())
+                        .with_multi_token_transfer(mapped_payments)
                         .with_gas_limit(tx_data.gas_limit)
                         .async_call_promise()
                         .with_extra_gas_for_callback(CALLBACK_GAS)
                         .with_callback(
                             <Self as TransferTokensModule>::callbacks(self)
-                                .transfer_callback(batch_id, tx.nonce, tx),
+                                .transfer_callback(hash_of_hashes.clone(), operation_tuple),
                         )
                         .register_promise();
                 }
                 None => {
-                    self.send().direct_multi(&tx.to, payments.deref());
+                    self.send().direct_multi(&operation.to, &mapped_payments);
 
-                    self.transfer_performed_event(batch_id, tx.nonce, tx);
+                    self.transfer_performed_event(hash_of_hashes.clone(), operation_hash);
                 }
             }
         }
@@ -189,25 +160,97 @@ pub trait TransferTokensModule:
     #[promises_callback]
     fn transfer_callback(
         &self,
-        batch_id: BatchId,
-        tx_nonce: TxNonce,
-        original_tx: Transaction<Self::Api>,
+        hash_of_hashes: ManagedBuffer,
+        operation_tuple: MultiValue2<ManagedBuffer, Operation<Self::Api>>,
         #[call_result] result: ManagedAsyncCallResult<IgnoreValue>,
     ) {
+        let (operation_hash, operation) = operation_tuple.into_tuple();
         match result {
             ManagedAsyncCallResult::Ok(_) => {
-                self.transfer_performed_event(batch_id, tx_nonce, original_tx);
+                self.transfer_performed_event(hash_of_hashes, operation_hash);
             }
             ManagedAsyncCallResult::Err(_) => {
-                let tokens = original_tx.tokens.clone();
-                let refund_tx = self.convert_to_refund_tx(original_tx, tokens);
-                self.add_to_batch(refund_tx);
+                let tx_nonce = self.get_and_save_next_tx_id();
+                let mut tokens_topic = MultiValueEncoded::new();
 
-                self.transfer_failed_execution_failed(batch_id, tx_nonce);
+                for token_payment in operation.tokens.iter() {
+                    tokens_topic.push(MultiValue3::from((
+                        token_payment.token_identifier,
+                        token_payment.token_nonce,
+                        token_payment.token_data.amount,
+                    )));
+                }
+
+                match operation.opt_transfer_data {
+                    Some(opt_transfer_data) => self.transfer_failed_execution_failed(
+                        &operation.to,
+                        &tokens_topic,
+                        DepositEvent {
+                            tx_nonce,
+                            opt_gas_limit: Some(opt_transfer_data.gas_limit),
+                            opt_function: Some(opt_transfer_data.function),
+                            opt_arguments: Some(opt_transfer_data.args),
+                        },
+                    ),
+                    None => self.transfer_failed_execution_failed(
+                        &operation.to,
+                        &tokens_topic,
+                        DepositEvent {
+                            tx_nonce,
+                            opt_gas_limit: None,
+                            opt_function: None,
+                            opt_arguments: None,
+                        },
+                    ),
+                };
             }
         }
     }
 
+    // use pending_operations as param
+    fn calculate_operation_hash(&self, operation: Operation<Self::Api>) -> ManagedBuffer {
+        let mut serialized_data = ManagedBuffer::new();
+
+        let pending_operations_mapper = UnorderedSetMapper::new_from_address(
+            self.multisig_address().get(),
+            StorageKey::from("pending_hashes"),
+        );
+
+        if let core::result::Result::Err(err) = operation.top_encode(&mut serialized_data) {
+            sc_panic!("Transfer data encode error: {}", err.message_bytes());
+        }
+
+        let sha256 = self.crypto().sha256(&serialized_data);
+
+        let hash = sha256.as_managed_buffer().clone();
+
+        if pending_operations_mapper.contains(&hash) {
+            hash
+        } else {
+            sc_panic!("Invalid operation hash")
+        }
+    }
+
+    fn map_payments(
+        &self,
+        payments: ManagedVec<OperationEsdtPayment<Self::Api>>,
+    ) -> ManagedVec<EsdtTokenPayment<Self::Api>> {
+        let mut mapped_payments = ManagedVec::new();
+
+        for payment in &payments {
+            let mapped_payment = payment.into();
+            mapped_payments.push(mapped_payment);
+        }
+
+        mapped_payments
+    }
+
     #[storage_mapper("nextBatchId")]
     fn next_batch_id(&self) -> SingleValueMapper<BatchId>;
+
+    #[storage_mapper("pending_hashes")]
+    fn pending_hashes(&self) -> UnorderedSetMapper<ManagedBuffer>;
+
+    #[storage_mapper("multisig_address")]
+    fn multisig_address(&self) -> SingleValueMapper<ManagedAddress>;
 }

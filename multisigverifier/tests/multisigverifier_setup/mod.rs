@@ -1,7 +1,14 @@
+use bls_signature::BLS_SIGNATURE_LEN;
 use multiversx_sc::types::Address;
 use multiversx_sc_scenario::{rust_biguint, testing_framework::{BlockchainStateWrapper, ContractObjWrapper}, DebugApi};
 
 multiversx_sc::derive_imports!();
+
+pub static FUNGIBLE_TOKEN_ID: &[u8] = b"FUNGTOKEN-123456";
+pub static NFT_TOKEN_ID: &[u8] = b"NFT-123456";
+pub const TOKEN_BALANCE: u64 = 1_000_000_000_000_000_000;
+pub static DUMMY_SIG: [u8; BLS_SIGNATURE_LEN] = [0; BLS_SIGNATURE_LEN];
+pub static FEE_TOKEN_ID: &[u8] = b"FEE-123456";
 
 pub struct MultiSigVerifierSetup<MultisigverifierBuilder, BlsMultisigBuilder>
 where
@@ -30,6 +37,21 @@ where
         let bls_wrappep = 
             b_mock.create_sc_account(&rust_zero, Some(&owner), multisig_builder, "bls");
 
+        b_mock.set_esdt_balance(&user, FUNGIBLE_TOKEN_ID, &rust_biguint!(TOKEN_BALANCE));
+        b_mock.set_esdt_balance(&user, FEE_TOKEN_ID, &rust_biguint!(TOKEN_BALANCE));
+
+        b_mock.set_nft_balance(
+            &user,
+            NFT_TOKEN_ID,
+            1,
+            &rust_biguint!(TOKEN_BALANCE),
+            &DummyAttributes { dummy: 42 },
+        );
+
+        b_mock
+            .execute_tx(&owner, &multisig_wrapper, &rust_zero, |sc| {
+                sc.init();
+            });
 
         MultiSigVerifierSetup { b_mock, owner, user, multisig_wrapper, bls_wrapper: todo!() }
     }

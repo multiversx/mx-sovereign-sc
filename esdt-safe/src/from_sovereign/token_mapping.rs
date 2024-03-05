@@ -1,11 +1,9 @@
-use bls_signature::BlsSignature;
-
+const DEFAULT_ISSUE_COST: u64 = 500000000000000000;
 multiversx_sc::imports!();
 
 #[multiversx_sc::module]
 pub trait TokenMappingModule:
-    bls_signature::BlsSignatureModule
-    + multiversx_sc_modules::default_issue_callbacks::DefaultIssueCallbacksModule
+    multiversx_sc_modules::default_issue_callbacks::DefaultIssueCallbacksModule
 {
     #[payable("EGLD")]
     #[endpoint(registerToken)]
@@ -16,15 +14,17 @@ pub trait TokenMappingModule:
         token_display_name: ManagedBuffer,
         token_ticker: ManagedBuffer,
         num_decimals: usize,
-        bls_multisig: BlsSignature<Self::Api>,
     ) {
         let mut serialized_data = ManagedBuffer::new();
         let _ = sov_token_id.dep_encode(&mut serialized_data);
         let _ = token_type.dep_encode(&mut serialized_data);
 
-        self.multi_verify_signature(&serialized_data, &bls_multisig);
-
         let issue_cost = self.call_value().egld_value().clone_value();
+
+        require!(
+            issue_cost == BigUint::from(DEFAULT_ISSUE_COST),
+            "eGLD value should be 0.5"
+        );
 
         match token_type {
             EsdtTokenType::Invalid => sc_panic!("Invalid type"),

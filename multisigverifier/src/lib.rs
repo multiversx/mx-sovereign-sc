@@ -1,11 +1,10 @@
 #![no_std]
 
 use bls_signature::BlsSignature;
-use transaction::TransferData;
 
 multiversx_sc::imports!();
 
-#[multiversx_sc::contract]
+#[multiversx_sc::contract] 
 pub trait Multisigverifier:
   bls_signature::BlsSignatureModule
 {
@@ -16,50 +15,50 @@ pub trait Multisigverifier:
       }
    }
     
+    #[endpoint]
+    fn upgrade(&self) {}
+
     #[endpoint(registerBridgeOps)]
     fn register_bridge_operations(
         &self,
         bridge_operations_hash: ManagedBuffer,
+        operations_hashes: ManagedVec<ManagedBuffer>,
         signature: BlsSignature<Self::Api>,
-        bridge_operations: MultiValueEncoded<TransferData<Self::Api>>
     ) {
         let caller = self.blockchain().get_caller();
-        let is_bls_valid = self.verify_bls(&signature, caller, bridge_operations.clone());
+        let is_bls_valid = self.verify_bls(&signature, caller, &bridge_operations_hash);
 
         require!(
             is_bls_valid,
             "BLS signature is not valid"
         );
         
-        self.calculate_and_check_operations_hashes(&bridge_operations_hash, bridge_operations);  
+        self.calculate_and_check_transfers_hashes(&bridge_operations_hash, operations_hashes.clone());
 
-        self.pending_operations().insert(bridge_operations_hash);
+        for operation in &operations_hashes {
+            self.pending_hashes().insert(operation);
+        }
     }
 
-    fn calculate_and_check_operations_hashes(
+    fn calculate_and_check_transfers_hashes(
         &self,
-        bridge_operations_hash: &ManagedBuffer,
-        bridge_operations: MultiValueEncoded<TransferData<Self::Api>>
+        transfers_hash: &ManagedBuffer,
+        transfers_data: ManagedVec<ManagedBuffer>
     ) {
-        let mut serialized_transferred_data = ManagedBuffer::new();
-        let mut operations_hashes = ManagedBuffer::new();
+        let mut transfers_hashes = ManagedBuffer::new();
 
-        for operation in bridge_operations {
-            if let core::result::Result::Err(err) = operation.top_encode(&mut serialized_transferred_data) {
-                sc_panic!("Transfer data encode error: {}", err.message_bytes());
-            }
+        for transfer in &transfers_data {
+            let transfer_sha256 = self.crypto().sha256(&transfer);
+            let transfer_hash = transfer_sha256.as_managed_buffer();
 
-            let operation_sha256 = self.crypto().sha256(&serialized_transferred_data);
-            let operation_hash = operation_sha256.as_managed_buffer();
-
-            operations_hashes.append(operation_hash);
+            transfers_hashes.append(transfer_hash);
         }
 
-        let hash_of_hashes_sha256 = self.crypto().sha256(&operations_hashes);
+        let hash_of_hashes_sha256 = self.crypto().sha256(&transfers_hashes); 
         let hash_of_hashes = hash_of_hashes_sha256.as_managed_buffer();
 
         require!(
-            bridge_operations_hash.eq(hash_of_hashes),
+            transfers_hash.eq(hash_of_hashes),
             "Hash of all operations doesn't match the hash of transfer data"
         );
     }
@@ -68,13 +67,11 @@ pub trait Multisigverifier:
         &self,
         signature: &BlsSignature<Self::Api>,
         user: ManagedAddress,
-        bridge_operations: MultiValueEncoded<TransferData<Self::Api>>,
+        bridge_operations_hash: &ManagedBuffer
     ) -> bool {
         let mut serialized_signature_data = ManagedBuffer::new();
 
-        for operation in bridge_operations.into_iter() {
-            let _ = operation.dep_encode(&mut serialized_signature_data);
-        }
+        let _ = bridge_operations_hash.dep_encode(&mut serialized_signature_data);
 
         let is_bls_valid = self.crypto().verify_bls(
             user.as_managed_buffer(), 
@@ -99,6 +96,6 @@ pub trait Multisigverifier:
     #[storage_mapper("signatures")]
     fn signatures(&self) -> SingleValueMapper<u32>;
 
-    #[storage_mapper("operations_mapper")]
-    fn pending_operations(&self) -> UnorderedSetMapper<ManagedBuffer>; 
+    #[storage_mapper("pending_hashes")]
+    fn pending_hashes(&self) -> UnorderedSetMapper<ManagedBuffer>; 
 }

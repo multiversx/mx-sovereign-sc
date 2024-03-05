@@ -1,3 +1,5 @@
+mod multisigverifier_setup;
+
 use bls_signature::BlsSignature;
 use multisigverifier::ProxyTrait;
 use multiversx_sc::{codec::multi_types::MultiValueVec, types::{Address, ManagedBuffer, ManagedByteArray, ManagedVec}};
