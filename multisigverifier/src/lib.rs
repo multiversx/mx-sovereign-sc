@@ -9,7 +9,7 @@ pub trait Multisigverifier:
   bls_signature::BlsSignatureModule
 {
     #[init]
-    fn init(&self, bls_pub_keys: MultiValueEncoded<ManagedAddress>) {
+    fn init(&self, bls_pub_keys: MultiValueEncoded<ManagedBuffer>) {
         for key in bls_pub_keys {
             self.bls_pub_keys().push(&key);
       }
@@ -83,7 +83,7 @@ pub trait Multisigverifier:
     }
 
     fn is_signature_valid_and_approved(&self, is_bls_valid: bool) -> bool {
-        let signatures_count = self.signatures().get();
+        let signatures_count = self.bls_pub_keys().len() as u32;
         let bls_pub_keys = self.bls_pub_keys().len() as u32;
         let minimum_signatures = 2 * bls_pub_keys / 3;
 
@@ -91,11 +91,9 @@ pub trait Multisigverifier:
     }
 
     #[storage_mapper("bls_pub_keys")]
-    fn bls_pub_keys(&self) -> VecMapper<ManagedAddress>;
-
-    #[storage_mapper("signatures")]
-    fn signatures(&self) -> SingleValueMapper<u32>;
+    fn bls_pub_keys(&self) -> VecMapper<ManagedBuffer>;
 
     #[storage_mapper("pending_hashes")]
     fn pending_hashes(&self) -> UnorderedSetMapper<ManagedBuffer>; 
+
 }
