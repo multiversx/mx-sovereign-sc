@@ -39,9 +39,12 @@ pub trait TransferTokensModule:
             );
 
         for operation in &operations.to_vec() {
-            let operation_hash = self.calculate_operation_hash(operation.clone());
-            // check hash validity
+            let (operation_hash, is_registered) = self.calculate_operation_hash(operation.clone());
+            if !is_registered {
+                self.emit_transfer_failed_event(operation.clone());
+            }
 
+            // TODO: in case of fail, burn minted tokens
             let minted_operation_tokens = self.mint_tokens(&operation.tokens);
 
             minted_operations.push(minted_operation_tokens);
@@ -149,6 +152,7 @@ pub trait TransferTokensModule:
                         .register_promise();
                 }
                 None => {
+                    // does it end execution on fail?
                     self.send().direct_multi(&operation.to, &mapped_payments);
 
                     self.transfer_performed_event(hash_of_hashes.clone(), operation_hash);
@@ -170,45 +174,52 @@ pub trait TransferTokensModule:
                 self.transfer_performed_event(hash_of_hashes, operation_hash);
             }
             ManagedAsyncCallResult::Err(_) => {
-                let tx_nonce = self.get_and_save_next_tx_id();
-                let mut tokens_topic = MultiValueEncoded::new();
-
-                for token_payment in operation.tokens.iter() {
-                    tokens_topic.push(MultiValue3::from((
-                        token_payment.token_identifier,
-                        token_payment.token_nonce,
-                        token_payment.token_data.amount,
-                    )));
-                }
-
-                match operation.opt_transfer_data {
-                    Some(opt_transfer_data) => self.transfer_failed_execution_failed(
-                        &operation.to,
-                        &tokens_topic,
-                        DepositEvent {
-                            tx_nonce,
-                            opt_gas_limit: Some(opt_transfer_data.gas_limit),
-                            opt_function: Some(opt_transfer_data.function),
-                            opt_arguments: Some(opt_transfer_data.args),
-                        },
-                    ),
-                    None => self.transfer_failed_execution_failed(
-                        &operation.to,
-                        &tokens_topic,
-                        DepositEvent {
-                            tx_nonce,
-                            opt_gas_limit: None,
-                            opt_function: None,
-                            opt_arguments: None,
-                        },
-                    ),
-                };
+                self.emit_transfer_failed_event(operation);
             }
         }
     }
 
+    fn emit_transfer_failed_event(
+        &self,
+        operation: Operation<Self::Api>,
+    ) {
+        let tx_nonce = self.get_and_save_next_tx_id();
+        let mut tokens_topic = MultiValueEncoded::new();
+
+        for token_payment in operation.tokens.iter() {
+            tokens_topic.push(MultiValue3::from((
+                token_payment.token_identifier,
+                token_payment.token_nonce,
+                token_payment.token_data.amount,
+            )));
+        }
+
+        match operation.opt_transfer_data {
+            Some(opt_transfer_data) => self.transfer_failed_execution_failed(
+                &operation.to,
+                &tokens_topic,
+                DepositEvent {
+                    tx_nonce,
+                    opt_gas_limit: Some(opt_transfer_data.gas_limit),
+                    opt_function: Some(opt_transfer_data.function),
+                    opt_arguments: Some(opt_transfer_data.args),
+                },
+            ),
+            None => self.transfer_failed_execution_failed(
+                &operation.to,
+                &tokens_topic,
+                DepositEvent {
+                    tx_nonce,
+                    opt_gas_limit: None,
+                    opt_function: None,
+                    opt_arguments: None,
+                },
+            ),
+        };
+    }
+
     // use pending_operations as param
-    fn calculate_operation_hash(&self, operation: Operation<Self::Api>) -> ManagedBuffer {
+    fn calculate_operation_hash(&self, operation: Operation<Self::Api>) -> (ManagedBuffer, bool) {
         let mut serialized_data = ManagedBuffer::new();
 
         let pending_operations_mapper = UnorderedSetMapper::new_from_address(
@@ -225,9 +236,9 @@ pub trait TransferTokensModule:
         let hash = sha256.as_managed_buffer().clone();
 
         if pending_operations_mapper.contains(&hash) {
-            hash
+            (hash, true)
         } else {
-            sc_panic!("Invalid operation hash")
+            (hash, false)
         }
     }
 

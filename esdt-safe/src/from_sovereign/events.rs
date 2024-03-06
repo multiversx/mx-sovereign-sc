@@ -7,17 +7,13 @@ multiversx_sc::imports!();
 #[multiversx_sc::module]
 pub trait EventsModule {
     #[event("addRefundTransactionEvent")]
-    fn add_refund_transaction_event(
-        &self,
-        #[indexed] tx_id: TxId,
-        #[indexed] original_tx_id: TxId,
-    );
+    fn add_refund_transaction_event(&self, #[indexed] tx_id: TxId, #[indexed] original_tx_id: TxId);
 
     #[event("transferPerformedEvent")]
     fn transfer_performed_event(
         &self,
         #[indexed] hash_of_hashes: ManagedBuffer,
-        #[indexed] hash_of_bridge_op: ManagedBuffer
+        #[indexed] hash_of_bridge_op: ManagedBuffer,
     );
 
     #[event("transferFailedInvalidToken")]
@@ -38,6 +34,6 @@ pub trait EventsModule {
         &self,
         #[indexed] dest_address: &ManagedAddress,
         #[indexed] tokens: &MultiValueEncoded<MultiValue3<TokenIdentifier, u64, BigUint>>,
-        event_data: DepositEvent<Self::Api>, 
+        event_data: DepositEvent<Self::Api>,
     );
 }
