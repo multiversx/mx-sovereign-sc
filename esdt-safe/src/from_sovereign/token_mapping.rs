@@ -23,7 +23,7 @@ pub trait TokenMappingModule:
 
         require!(
             issue_cost == BigUint::from(DEFAULT_ISSUE_COST),
-            "eGLD value should be 0.5"
+            "eGLD value should be 0.05"
         );
 
         match token_type {
