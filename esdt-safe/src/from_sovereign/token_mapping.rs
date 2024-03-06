@@ -1,4 +1,4 @@
-const DEFAULT_ISSUE_COST: u64 = 500000000000000000;
+const DEFAULT_ISSUE_COST: u64 = 5000000000000000000;
 multiversx_sc::imports!();
 
 #[multiversx_sc::module]
