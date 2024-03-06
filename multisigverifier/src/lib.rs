@@ -4,17 +4,15 @@ use bls_signature::BlsSignature;
 
 multiversx_sc::imports!();
 
-#[multiversx_sc::contract] 
-pub trait Multisigverifier:
-  bls_signature::BlsSignatureModule
-{
+#[multiversx_sc::contract]
+pub trait Multisigverifier: bls_signature::BlsSignatureModule {
     #[init]
     fn init(&self, bls_pub_keys: MultiValueEncoded<ManagedBuffer>) {
-        for key in bls_pub_keys {
-            self.bls_pub_keys().push(&key);
-      }
-   }
-    
+        for pub_key in bls_pub_keys {
+            self.bls_pub_keys().insert(pub_key);
+        }
+    }
+
     #[endpoint]
     fn upgrade(&self) {}
 
@@ -24,16 +22,16 @@ pub trait Multisigverifier:
         bridge_operations_hash: ManagedBuffer,
         operations_hashes: ManagedVec<ManagedBuffer>,
         signature: BlsSignature<Self::Api>,
+        bitmap: MultiValueEncoded<u8>,
     ) {
-        let caller = self.blockchain().get_caller();
-        let is_bls_valid = self.verify_bls(&signature, caller, &bridge_operations_hash);
+        let is_bls_valid = self.verify_bls(&signature, &bridge_operations_hash, bitmap);
 
-        require!(
-            is_bls_valid,
-            "BLS signature is not valid"
+        require!(is_bls_valid, "BLS signature is not valid");
+
+        self.calculate_and_check_transfers_hashes(
+            &bridge_operations_hash,
+            operations_hashes.clone(),
         );
-        
-        self.calculate_and_check_transfers_hashes(&bridge_operations_hash, operations_hashes.clone());
 
         for operation in &operations_hashes {
             self.pending_hashes().insert(operation);
@@ -43,7 +41,7 @@ pub trait Multisigverifier:
     fn calculate_and_check_transfers_hashes(
         &self,
         transfers_hash: &ManagedBuffer,
-        transfers_data: ManagedVec<ManagedBuffer>
+        transfers_data: ManagedVec<ManagedBuffer>,
     ) {
         let mut transfers_hashes = ManagedBuffer::new();
 
@@ -54,7 +52,7 @@ pub trait Multisigverifier:
             transfers_hashes.append(transfer_hash);
         }
 
-        let hash_of_hashes_sha256 = self.crypto().sha256(&transfers_hashes); 
+        let hash_of_hashes_sha256 = self.crypto().sha256(&transfers_hashes);
         let hash_of_hashes = hash_of_hashes_sha256.as_managed_buffer();
 
         require!(
@@ -65,35 +63,49 @@ pub trait Multisigverifier:
 
     fn verify_bls(
         &self,
-        signature: &BlsSignature<Self::Api>,
-        user: ManagedAddress,
-        bridge_operations_hash: &ManagedBuffer
+        _signature: &BlsSignature<Self::Api>,
+        _bridge_operations_hash: &ManagedBuffer,
+        _bitmap: MultiValueEncoded<u8>,
     ) -> bool {
-        let mut serialized_signature_data = ManagedBuffer::new();
+        // let mut pub_keys: ManagedVec<ManagedBuffer> = ManagedVec::new();
+        let is_bls_valid = true;
 
-        let _ = bridge_operations_hash.dep_encode(&mut serialized_signature_data);
+        // for (pub_key, has_signed) in self.bls_pub_keys().iter().zip(bitmap) {
+        //     if has_signed == 1 {
+        //         pub_keys.push(pub_key);
+        //     }
+        // }
+        //
+        // for pub_key in pub_keys.iter() {
+        //     if self.crypto().verify_bls(
+        //         &pub_key,
+        //         &bridge_operations_hash,
+        //         &signature.as_managed_buffer(),
+        //     ) == false
+        //     {
+        //         is_bls_valid = false;
+        //         break;
+        //     }
+        // }
 
-        let is_bls_valid = self.crypto().verify_bls(
-            user.as_managed_buffer(), 
-            &serialized_signature_data, 
-            signature.as_managed_buffer()
-        );
-
-        self.is_signature_valid_and_approved(is_bls_valid)
+        // if !is_bls_valid {
+        //     false
+        // } else {
+        //     self.is_signature_count_valid(pub_keys.len())
+        // }
+        is_bls_valid
     }
 
-    fn is_signature_valid_and_approved(&self, is_bls_valid: bool) -> bool {
-        let signatures_count = self.bls_pub_keys().len() as u32;
-        let bls_pub_keys = self.bls_pub_keys().len() as u32;
-        let minimum_signatures = 2 * bls_pub_keys / 3;
+    fn is_signature_count_valid(&self, pub_keys_count: usize) -> bool {
+        let total_bls_pub_keys = self.bls_pub_keys().len();
+        let minimum_signatures = 2 * total_bls_pub_keys / 3;
 
-        is_bls_valid && signatures_count > minimum_signatures 
+        pub_keys_count > minimum_signatures
     }
 
     #[storage_mapper("bls_pub_keys")]
-    fn bls_pub_keys(&self) -> VecMapper<ManagedBuffer>;
+    fn bls_pub_keys(&self) -> SetMapper<ManagedBuffer>;
 
     #[storage_mapper("pending_hashes")]
-    fn pending_hashes(&self) -> UnorderedSetMapper<ManagedBuffer>; 
-
+    fn pending_hashes(&self) -> UnorderedSetMapper<ManagedBuffer>;
 }
