@@ -41,7 +41,10 @@ pub trait TransferTokensModule:
         for operation in &operations.to_vec() {
             let (operation_hash, is_registered) = self.calculate_operation_hash(operation.clone());
             if !is_registered {
-                self.emit_transfer_failed_event(operation.clone());
+                self.emit_transfer_failed_events(
+                    &hash_of_hashes,
+                    MultiValue2::from((operation_hash.clone(), operation.clone())),
+                );
             }
 
             // TODO: in case of fail, burn minted tokens
@@ -168,21 +171,27 @@ pub trait TransferTokensModule:
         operation_tuple: MultiValue2<ManagedBuffer, Operation<Self::Api>>,
         #[call_result] result: ManagedAsyncCallResult<IgnoreValue>,
     ) {
-        let (operation_hash, operation) = operation_tuple.into_tuple();
+        let (operation_hash, _) = operation_tuple.clone().into_tuple();
+
         match result {
             ManagedAsyncCallResult::Ok(_) => {
                 self.transfer_performed_event(hash_of_hashes, operation_hash);
             }
             ManagedAsyncCallResult::Err(_) => {
-                self.emit_transfer_failed_event(operation);
+                self.emit_transfer_failed_events(&hash_of_hashes, operation_tuple);
             }
         }
     }
 
-    fn emit_transfer_failed_event(
+    fn emit_transfer_failed_events(
         &self,
-        operation: Operation<Self::Api>,
+        hash_of_hashes: &ManagedBuffer,
+        operation_tuple: MultiValue2<ManagedBuffer, Operation<Self::Api>>,
     ) {
+        let (operation_hash, operation) = operation_tuple.into_tuple();
+
+        self.transfer_performed_event(hash_of_hashes.clone(), operation_hash);
+
         let tx_nonce = self.get_and_save_next_tx_id();
         let mut tokens_topic = MultiValueEncoded::new();
 
