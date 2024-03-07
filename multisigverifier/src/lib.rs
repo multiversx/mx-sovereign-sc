@@ -22,8 +22,13 @@ pub trait Multisigverifier: bls_signature::BlsSignatureModule {
         bridge_operations_hash: ManagedBuffer,
         operations_hashes: ManagedVec<ManagedBuffer>,
         signature: BlsSignature<Self::Api>,
-        bitmap: MultiValueEncoded<u8>,
+        // bitmap: MultiValueEncoded<u8>,
     ) {
+        let mut bitmap = MultiValueEncoded::new();
+        for _ in 0..self.bls_pub_keys().len() {
+            bitmap.push(1);
+        }
+
         let is_bls_valid = self.verify_bls(&signature, &bridge_operations_hash, bitmap);
 
         require!(is_bls_valid, "BLS signature is not valid");
