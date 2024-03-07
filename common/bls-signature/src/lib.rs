@@ -75,6 +75,49 @@ pub trait BlsSignatureModule {
         );
     }
 
+    fn bls_fast_aggregate_verify(
+        &self,
+        signature: &BlsSignature<Self::Api>,
+        message: ManagedBuffer,
+        pub_keys: MultiValueEncoded<ManagedBuffer>,
+    ) -> bool {
+        // aggregate the public keys
+        if pub_keys.to_vec().iter().any(|key| key.is_empty()) {
+            return false
+        }
+
+        let aggregated_pub_key = self.aggregate_pub_keys(pub_keys);
+
+        // hash the message to a point on the curve
+        self.hash_and_map_to_g(message);
+
+        // calculate the parining and verify the aggregated signature
+        false
+    }
+
+    fn aggregate_pub_keys(&self, pub_keys: MultiValueEncoded<ManagedBuffer>) -> ManagedBuffer {
+        let mut aggregated_pub_key = ManagedBuffer::new();
+
+        for key in pub_keys {
+            aggregated_pub_key.append(&key);
+        }
+
+        aggregated_pub_key
+    }
+
+    fn hash_and_map_to_g(&self, message: ManagedBuffer) {
+        let mut serialized_message = ManagedBuffer::new();
+
+        if let core::result::Result::Err(err) = message.top_encode(&mut serialized_message) {
+            sc_panic!("Message data encoding error: {}", err.message_bytes());
+        }
+
+        let sha256 = self.crypto().sha256(&serialized_message);
+        let message_hash = sha256.as_managed_buffer();
+
+        // hash -> curve alg
+    }
+
     #[storage_mapper("allSigners")]
     fn all_signers(&self) -> UnorderedSetMapper<ManagedAddress>;
 
