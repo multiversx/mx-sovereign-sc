@@ -116,6 +116,18 @@ pub trait BlsSignatureModule {
         let message_hash = sha256.as_managed_buffer();
 
         // hash -> curve alg
+        // hash_to_curve(msg)
+        //
+        // Input: msg, an arbitrary-length byte string.
+        // Output: P, a point in G.
+        //
+        // Steps:
+        // 1. u = hash_to_field(msg, 2)
+        // 2. Q0 = map_to_curve(u[0])
+        // 3. Q1 = map_to_curve(u[1])
+        // 4. R = Q0 + Q1              # Point addition
+        // 5. P = clear_cofactor(R)
+        // 6. return P
     }
 
     #[storage_mapper("allSigners")]
