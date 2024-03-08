@@ -3,7 +3,7 @@
 mod field_element;
 
 use field_element::FieldElement;
-use multiversx_sc_scenario::num_bigint::BigUint;
+use transaction::Transaction;
 
 multiversx_sc::imports!();
 
@@ -85,6 +85,7 @@ pub trait BlsSignatureModule {
         signature: &BlsSignature<Self::Api>,
         message: ManagedBuffer,
         count: usize,
+        prime: BigUint,
         pub_keys: MultiValueEncoded<ManagedBuffer>,
     ) -> bool {
         // aggregate the public keys
@@ -95,7 +96,7 @@ pub trait BlsSignatureModule {
         let aggregated_pub_key = self.aggregate_pub_keys(pub_keys);
 
         // hash the message to a point on the curve
-        self.hash_and_map_to_g(message, count);
+        self.hash_and_map_to_g(message, count, prime);
 
         // calculate the parining and verify the aggregated signature
         false
@@ -111,7 +112,7 @@ pub trait BlsSignatureModule {
         aggregated_pub_key
     }
 
-    fn hash_and_map_to_g(&self, message: ManagedBuffer, count: usize) {
+    fn hash_and_map_to_g(&self, message: ManagedBuffer, count: usize, prime: BigUint) {
         let mut serialized_message = ManagedBuffer::new();
 
         if let core::result::Result::Err(err) = message.top_encode(&mut serialized_message) {
@@ -128,7 +129,7 @@ pub trait BlsSignatureModule {
         // Output: P, a point in G.
         //
         // Steps:
-        self.hash_to_field(message, count);
+        self.hash_to_field(message, count, &prime);
         // 2. Q0 = map_to_curve(u[0])
         // 3. Q1 = map_to_curve(u[1])
         // 4. R = Q0 + Q1              # Point addition
@@ -136,21 +137,20 @@ pub trait BlsSignatureModule {
         // 6. return P
     }
 
-    fn hash_to_field(&self, message: ManagedBuffer, count: usize, prime: &BigUint) -> FieldElement {
-        let mut message_hash = self.crypto().sha256(message);
+    fn hash_to_field(&self, message: ManagedBuffer, count: usize, prime: &BigUint) -> FieldElement<Self::Api> {
+        let message_hash = self.crypto().sha256(message);
 
         for i in 0..count {
             // add i to the hash
-            //
         }
 
-        let mut big_uint = BigUint::from_bytes_be(message_hash);
+        let mut big_uint = BigUint::from_bytes_be(&message_hash.to_byte_array());
         big_uint = big_uint % prime;
 
-        FieldElement { value: big_uint, prime }
+        FieldElement { value: big_uint, prime: prime.clone() }
     }
 
-    fn map_to_curve(&self, field_element: ManagedBuffer) {
+    fn map_to_curve(&self, field_element: FieldElement<Self::Api>) {
         // map field element to point on the curve
     }
 
