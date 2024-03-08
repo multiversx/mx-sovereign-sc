@@ -79,6 +79,7 @@ pub trait BlsSignatureModule {
         &self,
         signature: &BlsSignature<Self::Api>,
         message: ManagedBuffer,
+        count: usize,
         pub_keys: MultiValueEncoded<ManagedBuffer>,
     ) -> bool {
         // aggregate the public keys
@@ -89,7 +90,7 @@ pub trait BlsSignatureModule {
         let aggregated_pub_key = self.aggregate_pub_keys(pub_keys);
 
         // hash the message to a point on the curve
-        self.hash_and_map_to_g(message);
+        self.hash_and_map_to_g(message, count);
 
         // calculate the parining and verify the aggregated signature
         false
@@ -105,7 +106,7 @@ pub trait BlsSignatureModule {
         aggregated_pub_key
     }
 
-    fn hash_and_map_to_g(&self, message: ManagedBuffer) {
+    fn hash_and_map_to_g(&self, message: ManagedBuffer, count: usize) {
         let mut serialized_message = ManagedBuffer::new();
 
         if let core::result::Result::Err(err) = message.top_encode(&mut serialized_message) {
@@ -122,12 +123,20 @@ pub trait BlsSignatureModule {
         // Output: P, a point in G.
         //
         // Steps:
-        // 1. u = hash_to_field(msg, 2)
+        self.hash_to_field(message, count);
         // 2. Q0 = map_to_curve(u[0])
         // 3. Q1 = map_to_curve(u[1])
         // 4. R = Q0 + Q1              # Point addition
         // 5. P = clear_cofactor(R)
         // 6. return P
+    }
+
+    fn hash_to_field(&self, message: ManagedBuffer, count: usize) {
+        let message_hash = self.crypto().sha256(message).as_managed_buffer();
+
+        for _ in 0..count {
+            // create point
+        }
     }
 
     #[storage_mapper("allSigners")]
