@@ -1,6 +1,9 @@
 #![no_std]
 
-use transaction::Transaction;
+mod field_element;
+
+use field_element::FieldElement;
+use multiversx_sc_scenario::num_bigint::BigUint;
 
 multiversx_sc::imports!();
 
@@ -133,12 +136,18 @@ pub trait BlsSignatureModule {
         // 6. return P
     }
 
-    fn hash_to_field(&self, message: ManagedBuffer, count: usize) {
-        let message_hash = self.crypto().sha256(message).as_managed_buffer();
+    fn hash_to_field(&self, message: ManagedBuffer, count: usize, prime: &BigUint) -> FieldElement {
+        let mut message_hash = self.crypto().sha256(message);
 
-        for _ in 0..count {
-            // create field element
+        for i in 0..count {
+            // add i to the hash
+            //
         }
+
+        let mut big_uint = BigUint::from_bytes_be(message_hash);
+        big_uint = big_uint % prime;
+
+        FieldElement { value: big_uint, prime }
     }
 
     fn map_to_curve(&self, field_element: ManagedBuffer) {
