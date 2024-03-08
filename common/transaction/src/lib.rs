@@ -118,6 +118,18 @@ pub struct Operation<M: ManagedTypeApi> {
     pub opt_transfer_data: Option<TransferData<M>>,
 }
 
+impl<M: ManagedTypeApi> Operation<M> {
+    pub fn map_tokens_to_tuple_arr(&self) -> MultiValueEncoded<M, MultiValue3<TokenIdentifier<M>, u64, StolenFromFrameworkEsdtTokenData<M>>> {
+        let mut tuple_arr = MultiValueEncoded::new();
+
+        for token in &self.tokens {
+            tuple_arr.push(MultiValue3::from((token.token_identifier, token.token_nonce, token.token_data)));
+        }
+
+        tuple_arr
+    }
+}
+
 #[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, TypeAbi, ManagedVecItem, Clone)]
 pub struct OperationEsdtPayment<M: ManagedTypeApi> {
     pub token_identifier: TokenIdentifier<M>,

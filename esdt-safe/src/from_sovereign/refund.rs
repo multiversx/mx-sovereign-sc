@@ -29,26 +29,22 @@ pub trait RefundModule:
         if token_balance < args.token.token_data.amount {
             if args.token.token_nonce == 0 {
                 if !args.roles.has_role(&EsdtLocalRole::Mint) {
-                    self.transfer_failed_invalid_token(args.batch_id, args.tx_nonce);
 
                     return true;
                 }
             } else if !self.has_nft_roles(args.token, args.roles) {
-                self.transfer_failed_invalid_token(args.batch_id, args.tx_nonce);
 
                 return true;
             }
         }
 
         if self.is_above_max_amount(&args.token.token_identifier, &args.token.token_data.amount) {
-            self.transfer_over_max_amount(args.batch_id, args.tx_nonce);
 
             return true;
         }
 
         if self.is_account_same_shard_frozen(args.sc_shard, args.dest, &args.token.token_identifier)
         {
-            self.transfer_failed_frozen_destination_account(args.batch_id, args.tx_nonce);
 
             return true;
         }
@@ -91,7 +87,6 @@ pub trait RefundModule:
         tokens_to_refund: PaymentsVec<Self::Api>,
     ) -> Transaction<Self::Api> {
         let tx_nonce = self.get_and_save_next_tx_id();
-        self.add_refund_transaction_event(tx_nonce, sov_tx.nonce);
 
         // invert from and to
         Transaction {

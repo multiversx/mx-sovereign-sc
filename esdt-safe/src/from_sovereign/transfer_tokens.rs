@@ -31,12 +31,6 @@ pub trait TransferTokensModule:
 
         let mut verified_operations = MultiValueEncoded::new();
         let mut minted_operations = ManagedVec::new();
-        let multisig_address = self.multisig_address().get();
-        let _pending_operations_mapper: UnorderedSetMapper<ManagedAddress, _> =
-            UnorderedSetMapper::new_from_address(
-                multisig_address,
-                StorageKey::from("pending_hashes"),
-            );
 
         for operation in &operations.to_vec() {
             let (operation_hash, is_registered) = self.calculate_operation_hash(operation.clone());
@@ -158,7 +152,7 @@ pub trait TransferTokensModule:
                     // does it end execution on fail?
                     self.send().direct_multi(&operation.to, &mapped_payments);
 
-                    self.transfer_performed_event(hash_of_hashes.clone(), operation_hash);
+                    self.execute_bridge_operation_event(hash_of_hashes.clone(), operation_hash);
                 }
             }
         }
@@ -175,7 +169,7 @@ pub trait TransferTokensModule:
 
         match result {
             ManagedAsyncCallResult::Ok(_) => {
-                self.transfer_performed_event(hash_of_hashes, operation_hash);
+                self.execute_bridge_operation_event(hash_of_hashes, operation_hash);
             }
             ManagedAsyncCallResult::Err(_) => {
                 self.emit_transfer_failed_events(&hash_of_hashes, operation_tuple);
@@ -190,21 +184,13 @@ pub trait TransferTokensModule:
     ) {
         let (operation_hash, operation) = operation_tuple.into_tuple();
 
-        self.transfer_performed_event(hash_of_hashes.clone(), operation_hash);
+        self.execute_bridge_operation_event(hash_of_hashes.clone(), operation_hash);
 
         let tx_nonce = self.get_and_save_next_tx_id();
-        let mut tokens_topic = MultiValueEncoded::new();
-
-        for token_payment in operation.tokens.iter() {
-            tokens_topic.push(MultiValue3::from((
-                token_payment.token_identifier,
-                token_payment.token_nonce,
-                token_payment.token_data.amount,
-            )));
-        }
+        let tokens_topic = &operation.map_tokens_to_tuple_arr();
 
         match operation.opt_transfer_data {
-            Some(opt_transfer_data) => self.transfer_failed_execution_failed(
+            Some(opt_transfer_data) => self.deposit_event(
                 &operation.to,
                 &tokens_topic,
                 DepositEvent {
@@ -214,7 +200,7 @@ pub trait TransferTokensModule:
                     opt_arguments: Some(opt_transfer_data.args),
                 },
             ),
-            None => self.transfer_failed_execution_failed(
+            None => self.deposit_event(
                 &operation.to,
                 &tokens_topic,
                 DepositEvent {
