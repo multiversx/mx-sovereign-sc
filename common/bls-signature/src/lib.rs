@@ -75,6 +75,8 @@ pub trait BlsSignatureModule {
         );
     }
 
+    // https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-bls-signature-02#section-3.1
+    // https://www.ietf.org/archive/id/draft-irtf-cfrg-hash-to-curve-10.html#montgomery
     fn bls_fast_aggregate_verify(
         &self,
         signature: &BlsSignature<Self::Api>,
@@ -135,8 +137,12 @@ pub trait BlsSignatureModule {
         let message_hash = self.crypto().sha256(message).as_managed_buffer();
 
         for _ in 0..count {
-            // create point
+            // create field element
         }
+    }
+
+    fn map_to_curve(&self, field_element: ManagedBuffer) {
+        // map field element to point on the curve
     }
 
     #[storage_mapper("allSigners")]
