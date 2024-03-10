@@ -1,7 +1,9 @@
 #![no_std]
 
 mod field_element;
+mod curve_points;
 
+use curve_points::Point;
 use field_element::FieldElement;
 use transaction::Transaction;
 
@@ -150,8 +152,10 @@ pub trait BlsSignatureModule {
         FieldElement { value: big_uint, prime: prime.clone() }
     }
 
-    fn map_to_curve(&self, field_element: FieldElement<Self::Api>) {
+    fn map_to_curve(&self, field_element: FieldElement<Self::Api>) -> Point {
         // map field element to point on the curve
+        
+        Point { x: 0, y: 0 }
     }
 
     #[storage_mapper("allSigners")]
