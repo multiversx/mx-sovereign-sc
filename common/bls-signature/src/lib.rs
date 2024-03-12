@@ -111,6 +111,11 @@ pub trait BlsSignatureModule {
             aggregated_pub_key.append(&key);
         }
 
+        require!(
+            !aggregated_pub_key.is_empty(),
+            "Aggregated pub keys should not be empty"
+        );
+
         aggregated_pub_key
     }
 
