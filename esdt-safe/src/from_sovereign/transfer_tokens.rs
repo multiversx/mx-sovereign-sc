@@ -144,7 +144,7 @@ pub trait TransferTokensModule:
             let mapped_payments = self.map_payments(token.deref().clone());
             let (operation_hash, operation) = operation_tuple.clone().into_tuple();
 
-            match &operation.opt_event_data {
+            match &operation.data.opt_transfer_data {
                 Some(tx_data) => {
                     let mut args = ManagedArgBuffer::new();
                     for arg in &tx_data.args {
@@ -225,7 +225,7 @@ pub trait TransferTokensModule:
             }
         }
 
-        match operation.opt_event_data {
+        match operation.data.opt_transfer_data {
             Some(opt_transfer_data) => self.deposit_event(
                 &operation.to,
                 &tokens_topic,

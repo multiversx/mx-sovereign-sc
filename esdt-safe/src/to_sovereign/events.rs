@@ -1,6 +1,4 @@
-use transaction::{
-    transaction_status::TransactionStatus, BatchId, GasLimit, EventData, TxId
-};
+use transaction::{transaction_status::TransactionStatus, BatchId, GasLimit, OperationData, TxId};
 
 multiversx_sc::imports!();
 multiversx_sc::derive_imports!();
@@ -14,19 +12,30 @@ pub struct DepositEvent<M: ManagedTypeApi> {
 }
 
 impl<M: ManagedTypeApi> DepositEvent<M> {
-    pub fn from(tx_nonce: TxId, opt_transfer_data: &OptionalValue<EventData<M>>) -> Self {
+    pub fn from(tx_nonce: TxId, opt_transfer_data: &OptionalValue<OperationData<M>>) -> Self {
         match opt_transfer_data {
-            OptionalValue::Some(transfer_data) => DepositEvent {
-                tx_nonce,
-                opt_function: Some(transfer_data.function.clone()),
-                opt_arguments: Some(transfer_data.args.clone()),
-                opt_gas_limit: Some(transfer_data.gas_limit),
-            },
+            OptionalValue::Some(transfer_data) => {
+                let tx_nonce = transfer_data.op_nonce;
+                match &transfer_data.opt_transfer_data {
+                    Some(some_transfer_data) => DepositEvent {
+                        tx_nonce,
+                        opt_gas_limit: Some(some_transfer_data.gas_limit),
+                        opt_function: Some(some_transfer_data.function.clone()),
+                        opt_arguments: Some(some_transfer_data.args.clone()),
+                    },
+                    None => DepositEvent {
+                        tx_nonce,
+                        opt_function: None,
+                        opt_arguments: None,
+                        opt_gas_limit: None,
+                    },
+                }
+            }
             OptionalValue::None => DepositEvent {
                 tx_nonce,
+                opt_gas_limit: None,
                 opt_function: None,
                 opt_arguments: None,
-                opt_gas_limit: None,
             },
         }
     }
