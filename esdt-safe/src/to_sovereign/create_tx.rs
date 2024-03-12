@@ -197,22 +197,24 @@ pub trait CreateTxModule:
                 .get();
 
             match mx_token_id_state {
-                TokenMapperState::Token(..) => {
+                TokenMapperState::Token(token_id) => {
                     let esdt_token_info = self
                         .esdt_token_info_mapper(&payment.token_identifier, &payment.token_nonce)
                         .get();
 
                     event_payments.push(MultiValue3((
-                        esdt_token_info.identifier,
+                        token_id.clone(),
                         esdt_token_info.nonce,
                         current_token_data,
                     )));
 
                     self.send().esdt_local_burn(
-                        &payment.token_identifier,
+                        &token_id,
                         payment.token_nonce,
                         &payment.amount,
-                    )
+                    );
+
+                    self.esdt_token_info_mapper(&token_id, &esdt_token_info.nonce).take();
                 }
                 _ => {
                     event_payments.push(MultiValue3((
@@ -231,7 +233,6 @@ pub trait CreateTxModule:
                 let _final_payments: FinalPayment<Self::Api> = self
                     .fee_market_proxy(fee_market_address)
                     .subtract_fee(caller.clone(), total_tokens_for_fees, opt_gas_limit.clone())
-                    //why gas limit?
                     .with_esdt_transfer(fee)
                     .execute_on_dest_context();
             }
