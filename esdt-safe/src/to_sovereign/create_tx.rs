@@ -1,4 +1,4 @@
-use crate::to_sovereign::events::DepositEvent;
+use crate::{from_sovereign::token_mapping, to_sovereign::events::DepositEvent};
 use bls_signature::BlsSignature;
 use fee_market::subtract_fee::{FinalPayment, ProxyTrait as _};
 use multiversx_sc::storage::StorageKey;
@@ -18,6 +18,8 @@ pub trait CreateTxModule:
     + setup_phase::SetupPhaseModule
     + utils::UtilsModule
     + multiversx_sc_modules::pause::PauseModule
+    + token_mapping::TokenMappingModule
+    + multiversx_sc_modules::default_issue_callbacks::DefaultIssueCallbacksModule
 {
     #[endpoint(setMaxUserTxGasLimit)]
     fn set_max_user_tx_gas_limit(
@@ -183,21 +185,44 @@ pub trait CreateTxModule:
                 total_tokens_for_fees += 1;
             }
 
-            let mut current_token_data = self   
-                .blockchain()
-                .get_esdt_token_data(
-                    &own_sc_address,
-                    &payment.token_identifier,
-                    payment.token_nonce,
-                );
+            let mut current_token_data = self.blockchain().get_esdt_token_data(
+                &own_sc_address,
+                &payment.token_identifier,
+                payment.token_nonce,
+            );
 
             current_token_data.amount = payment.amount.clone();
 
-            event_payments.push(MultiValue3((
-                payment.token_identifier.clone(),
-                payment.token_nonce,
-                current_token_data
-            )));
+            let mx_token_id_state = self
+                .sovereign_to_multiversx_token_id(&payment.token_identifier)
+                .get();
+
+            match mx_token_id_state {
+                TokenMapperState::Token(..) => {
+                    let esdt_token_info = self
+                        .esdt_token_info_mapper(&payment.token_identifier, &payment.token_nonce)
+                        .get();
+
+                    event_payments.push(MultiValue3((
+                        esdt_token_info.identifier,
+                        esdt_token_info.nonce,
+                        current_token_data,
+                    )));
+
+                    self.send().esdt_local_burn(
+                        &payment.token_identifier,
+                        payment.token_nonce,
+                        &payment.amount,
+                    )
+                }
+                _ => {
+                    event_payments.push(MultiValue3((
+                        payment.token_identifier.clone(),
+                        payment.token_nonce,
+                        current_token_data,
+                    )));
+                }
+            }
 
             if burn_mapper.contains(&payment.token_identifier) {
                 self.send().esdt_local_burn(

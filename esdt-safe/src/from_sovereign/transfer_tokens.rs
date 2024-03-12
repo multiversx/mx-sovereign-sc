@@ -5,6 +5,8 @@ use transaction::{BatchId, GasLimit, Operation, OperationEsdtPayment};
 
 use crate::to_sovereign::events::DepositEvent;
 
+use super::token_mapping::EsdtTokenInfo;
+
 multiversx_sc::imports!();
 
 const CALLBACK_GAS: GasLimit = 10_000_000; // Increase if not enough
@@ -89,6 +91,12 @@ pub trait TransferTokensModule:
                 self.send()
                     .esdt_local_mint(&mx_token_id, 0, &payment.token_data.amount);
 
+                self.esdt_token_info_mapper(&mx_token_id, &0)
+                    .set(EsdtTokenInfo {
+                        identifier: payment.token_identifier,
+                        nonce: payment.token_nonce,
+                    });
+
                 output_payments.push(OperationEsdtPayment {
                     token_identifier: mx_token_id,
                     token_nonce: 0,
@@ -98,6 +106,7 @@ pub trait TransferTokensModule:
                 continue;
             }
 
+            // save this for main -> sov
             let token_nonce = self.send().esdt_nft_create(
                 &mx_token_id,
                 &payment.token_data.amount,
@@ -107,6 +116,13 @@ pub trait TransferTokensModule:
                 &payment.token_data.attributes,
                 &payment.token_data.uris,
             );
+
+            // should register token here
+            self.esdt_token_info_mapper(&mx_token_id, &0)
+                .set(EsdtTokenInfo {
+                    identifier: payment.token_identifier,
+                    nonce: payment.token_nonce,
+                });
 
             output_payments.push(OperationEsdtPayment {
                 token_identifier: mx_token_id,

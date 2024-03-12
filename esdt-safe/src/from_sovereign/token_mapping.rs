@@ -1,5 +1,12 @@
 const DEFAULT_ISSUE_COST: u64 = 50000000000000000;
 multiversx_sc::imports!();
+multiversx_sc::derive_imports!();
+
+#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, TypeAbi, ManagedVecItem, Clone)]
+pub struct EsdtTokenInfo<M: ManagedTypeApi> {
+    pub identifier: TokenIdentifier<M>,
+    pub nonce: u64,
+}
 
 #[multiversx_sc::module]
 pub trait TokenMappingModule:
@@ -23,7 +30,7 @@ pub trait TokenMappingModule:
 
         require!(
             issue_cost == BigUint::from(DEFAULT_ISSUE_COST),
-            "eGLD value should be 0.05"
+            "eGLD value should be 0.5"
         );
 
         match token_type {
@@ -67,4 +74,11 @@ pub trait TokenMappingModule:
 
     #[storage_mapper("sovToMxTokenId")]
     fn non_fungible_token(&self, sov_token_id: &TokenIdentifier) -> NonFungibleTokenMapper;
+
+    #[storage_mapper("esdtTokenInfoMapper")]
+    fn esdt_token_info_mapper(
+        &self,
+        token_identifier: &TokenIdentifier,
+        nonce: &u64,
+    ) -> SingleValueMapper<EsdtTokenInfo<Self::Api>>;
 }
