@@ -118,7 +118,7 @@ pub trait TransferTokensModule:
             );
 
             // should register token here
-            self.esdt_token_info_mapper(&mx_token_id, &0)
+            self.esdt_token_info_mapper(&mx_token_id, &token_nonce)
                 .set(EsdtTokenInfo {
                     identifier: payment.token_identifier,
                     nonce: payment.token_nonce,
@@ -204,6 +204,21 @@ pub trait TransferTokensModule:
 
         let tx_nonce = self.get_and_save_next_tx_id();
         let tokens_topic = &operation.map_tokens_to_tuple_arr();
+
+        for token in &operation.tokens {
+            let mx_token_id_state = self
+                .sovereign_to_multiversx_token_id(&token.token_identifier)
+                .get();
+
+            match mx_token_id_state {
+                TokenMapperState::Token(token_id) => self.send().esdt_local_burn(
+                    &token_id,
+                    token.token_nonce,
+                    &token.token_data.amount,
+                ),
+                _ => {}
+            }
+        }
 
         match operation.opt_transfer_data {
             Some(opt_transfer_data) => self.deposit_event(

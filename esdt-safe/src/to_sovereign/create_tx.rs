@@ -168,7 +168,6 @@ pub trait CreateTxModule:
         let own_sc_address = self.blockchain().get_sc_address();
         let mut total_tokens_for_fees = 0usize;
         let mut event_payments = MultiValueEncoded::new();
-        let burn_mapper = self.burn_tokens();
         let mut refundable_payments: ManagedVec<Self::Api, EsdtTokenPayment<Self::Api>> =
             ManagedVec::new();
 
@@ -222,14 +221,6 @@ pub trait CreateTxModule:
                         current_token_data,
                     )));
                 }
-            }
-
-            if burn_mapper.contains(&payment.token_identifier) {
-                self.send().esdt_local_burn(
-                    &payment.token_identifier,
-                    payment.token_nonce,
-                    &payment.amount,
-                );
             }
         }
 
