@@ -114,7 +114,7 @@ pub struct Transaction<M: ManagedTypeApi> {
 #[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, TypeAbi, ManagedVecItem, Clone)]
 pub struct Operation<M: ManagedTypeApi> {
     pub to: ManagedAddress<M>,
-    pub event_nonce: TxId,
+    pub op_nonce: TxId,
     pub tokens: ManagedVec<M, OperationEsdtPayment<M>>,
     pub opt_event_data: Option<EventData<M>>,
 }
