@@ -206,17 +206,22 @@ pub trait TransferTokensModule:
         let tokens_topic = &operation.map_tokens_to_tuple_arr();
 
         for token in &operation.tokens {
+            let esdt_token_info = self
+                .esdt_token_info_mapper(&token.token_identifier, &token.token_nonce)
+                .get();
+
             let mx_token_id_state = self
                 .sovereign_to_multiversx_token_id(&token.token_identifier)
                 .get();
 
-            match mx_token_id_state {
-                TokenMapperState::Token(token_id) => self.send().esdt_local_burn(
+            if let TokenMapperState::Token(token_id) = mx_token_id_state {
+                self.send().esdt_local_burn(
                     &token_id,
-                    token.token_nonce,
+                    esdt_token_info.nonce,
                     &token.token_data.amount,
-                ),
-                _ => {}
+                );
+
+                self.esdt_token_info_mapper(&token_id, &esdt_token_info.nonce).take();
             }
         }
 
