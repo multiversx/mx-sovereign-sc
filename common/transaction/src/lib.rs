@@ -23,13 +23,13 @@ pub type TxAsMultiValue<M> = MultiValue7<
     ReceiverAddress<M>,
     ManagedVec<M, EsdtTokenPayment<M>>,
     ManagedVec<M, StolenFromFrameworkEsdtTokenData<M>>,
-    Option<TransferData<M>>,
+    Option<EventData<M>>,
 >;
 pub type PaymentsVec<M> = ManagedVec<M, EsdtTokenPayment<M>>;
 pub type TxBatchSplitInFields<M> = MultiValue2<BatchId, MultiValueEncoded<M, TxAsMultiValue<M>>>;
 
 #[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, TypeAbi, ManagedVecItem, Clone)]
-pub struct TransferData<M: ManagedTypeApi> {
+pub struct EventData<M: ManagedTypeApi> {
     pub gas_limit: GasLimit,
     pub function: ManagedBuffer<M>,
     pub args: ManagedVec<M, ManagedBuffer<M>>,
@@ -107,15 +107,16 @@ pub struct Transaction<M: ManagedTypeApi> {
     pub to: ManagedAddress<M>,
     pub tokens: ManagedVec<M, EsdtTokenPayment<M>>,
     pub token_data: ManagedVec<M, StolenFromFrameworkEsdtTokenData<M>>,
-    pub opt_transfer_data: Option<TransferData<M>>,
+    pub opt_transfer_data: Option<EventData<M>>,
     pub is_refund_tx: bool,
 }
 
 #[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, TypeAbi, ManagedVecItem, Clone)]
 pub struct Operation<M: ManagedTypeApi> {
     pub to: ManagedAddress<M>,
+    pub event_nonce: TxId,
     pub tokens: ManagedVec<M, OperationEsdtPayment<M>>,
-    pub opt_transfer_data: Option<TransferData<M>>,
+    pub opt_event_data: Option<EventData<M>>,
 }
 
 impl<M: ManagedTypeApi> Operation<M> {

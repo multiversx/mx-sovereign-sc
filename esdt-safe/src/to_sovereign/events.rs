@@ -1,5 +1,5 @@
 use transaction::{
-    transaction_status::TransactionStatus, BatchId, GasLimit, TransferData, TxId
+    transaction_status::TransactionStatus, BatchId, GasLimit, EventData, TxId
 };
 
 multiversx_sc::imports!();
@@ -14,7 +14,7 @@ pub struct DepositEvent<M: ManagedTypeApi> {
 }
 
 impl<M: ManagedTypeApi> DepositEvent<M> {
-    pub fn from(tx_nonce: TxId, opt_transfer_data: &OptionalValue<TransferData<M>>) -> Self {
+    pub fn from(tx_nonce: TxId, opt_transfer_data: &OptionalValue<EventData<M>>) -> Self {
         match opt_transfer_data {
             OptionalValue::Some(transfer_data) => DepositEvent {
                 tx_nonce,
