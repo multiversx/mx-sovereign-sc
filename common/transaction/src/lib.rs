@@ -32,6 +32,7 @@ pub type TxBatchSplitInFields<M> = MultiValue2<BatchId, MultiValueEncoded<M, TxA
 pub struct EventData<M: ManagedTypeApi> {
     pub gas_limit: GasLimit,
     pub function: ManagedBuffer<M>,
+    pub op_nonce: TxId,
     pub args: ManagedVec<M, ManagedBuffer<M>>,
 }
 
@@ -114,7 +115,6 @@ pub struct Transaction<M: ManagedTypeApi> {
 #[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, TypeAbi, ManagedVecItem, Clone)]
 pub struct Operation<M: ManagedTypeApi> {
     pub to: ManagedAddress<M>,
-    pub op_nonce: TxId,
     pub tokens: ManagedVec<M, OperationEsdtPayment<M>>,
     pub opt_event_data: Option<EventData<M>>,
 }
