@@ -9,19 +9,19 @@ publish = false
 path = "src/lib.rs"
 
 [dependencies.multiversx-sc]
-version = "0.46.1"
+version = "0.47.4"
 
 [dependencies.bls-signature]
-path = '../common/bls-signature'
+path = "../common/bls-signature"
 
 [dependencies.transaction]
-path = '../common/transaction'
+path = "../common/transaction"
 
 [dev-dependencies]
 num-bigint = "0.4.2"
 
 [dev-dependencies.multiversx-sc-scenario]
-version = "0.46.1"
+version = "0.47.4"
 
 [workspace]
 members = [

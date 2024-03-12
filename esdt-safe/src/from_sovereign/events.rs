@@ -1,22 +1,19 @@
-use transaction::{BatchId, Transaction, TxId};
+use transaction::{BatchId, TxId};
+
+use crate::to_sovereign::events::DepositEvent;
 
 multiversx_sc::imports!();
 
 #[multiversx_sc::module]
 pub trait EventsModule {
     #[event("addRefundTransactionEvent")]
-    fn add_refund_transaction_event(
-        &self,
-        #[indexed] tx_id: TxId,
-        #[indexed] original_tx_id: TxId,
-    );
+    fn add_refund_transaction_event(&self, #[indexed] tx_id: TxId, #[indexed] original_tx_id: TxId);
 
     #[event("transferPerformedEvent")]
     fn transfer_performed_event(
         &self,
-        #[indexed] batch_id: BatchId,
-        #[indexed] tx_id: TxId,
-        tx: Transaction<Self::Api>,
+        #[indexed] hash_of_hashes: ManagedBuffer,
+        #[indexed] hash_of_bridge_op: ManagedBuffer,
     );
 
     #[event("transferFailedInvalidToken")]
@@ -35,7 +32,8 @@ pub trait EventsModule {
     #[event("transferFailedExecutionFailed")]
     fn transfer_failed_execution_failed(
         &self,
-        #[indexed] batch_id: BatchId,
-        #[indexed] tx_id: TxId,
+        #[indexed] dest_address: &ManagedAddress,
+        #[indexed] tokens: &MultiValueEncoded<MultiValue3<TokenIdentifier, u64, BigUint>>,
+        event_data: DepositEvent<Self::Api>,
     );
 }

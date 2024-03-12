@@ -8,9 +8,9 @@ multiversx_sc::derive_imports!();
 #[derive(TypeAbi, TopEncode, TopDecode)]
 pub struct DepositEvent<M: ManagedTypeApi> {
     pub tx_nonce: TxId,
+    pub opt_gas_limit: Option<GasLimit>,
     pub opt_function: Option<ManagedBuffer<M>>,
     pub opt_arguments: Option<ManagedVec<M, ManagedBuffer<M>>>,
-    pub opt_gas_limit: Option<GasLimit>,
 }
 
 impl<M: ManagedTypeApi> DepositEvent<M> {
@@ -36,9 +36,10 @@ impl<M: ManagedTypeApi> DepositEvent<M> {
 pub trait EventsModule {
     #[event("deposit")]
     fn deposit_event(
+        // TODO: Use ManagedVec of EsdtTokenPaymentInfo(EsdtTokenDataPayment, EsdtTokenData)
         &self,
         #[indexed] dest_address: &ManagedAddress,
-        #[indexed] tokens: &MultiValueEncoded<MultiValue3<TokenIdentifier, u64, BigUint>>,
+        #[indexed] tokens: &MultiValueEncoded<MultiValue3<TokenIdentifier, u64, EsdtTokenData>>,
         event_data: DepositEvent<Self::Api>,
     );
 

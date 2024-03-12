@@ -5,10 +5,10 @@
 ////////////////////////////////////////////////////
 
 // Init:                                 1
-// Endpoints:                           36
+// Endpoints:                           37
 // Async Callback:                       1
 // Promise callbacks:                    1
-// Total number of exported functions:  39
+// Total number of exported functions:  40
 
 #![no_std]
 #![allow(internal_features)]
@@ -22,6 +22,7 @@ multiversx_sc_wasm_adapter::endpoints! {
     (
         init => init
         setFeeMarketAddress => set_fee_market_address
+        setMultisigAddress => set_multisig_address
         upgrade => upgrade
         setMaxUserTxGasLimit => set_max_user_tx_gas_limit
         setBurnAndMint => set_burn_and_mint
@@ -36,7 +37,7 @@ multiversx_sc_wasm_adapter::endpoints! {
         removeSigners => remove_signers
         registerToken => register_token
         clearRegisteredToken => clear_registered_token
-        batchTransferEsdtToken => batch_transfer_esdt_token
+        executeBridgeOps => execute_operations
         setMaxTxBatchSize => set_max_tx_batch_size
         setMaxTxBatchBlockDuration => set_max_tx_batch_block_duration
         getCurrentTxBatch => get_current_tx_batch

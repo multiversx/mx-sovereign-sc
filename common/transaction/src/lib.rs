@@ -83,6 +83,22 @@ impl<M: ManagedTypeApi> From<EsdtTokenData<M>> for StolenFromFrameworkEsdtTokenD
     }
 }
 
+impl<M: ManagedTypeApi> Into<EsdtTokenData<M>> for StolenFromFrameworkEsdtTokenData<M> {
+    fn into(self) -> EsdtTokenData<M> {
+        EsdtTokenData {
+            token_type: self.token_type,
+            amount: self.amount,
+            frozen: self.frozen,
+            hash: self.hash,
+            name: self.name,
+            attributes: self.attributes,
+            creator: self.creator,
+            royalties: self.royalties,
+            uris: self.uris,
+        }
+    }
+}
+
 #[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, TypeAbi, ManagedVecItem, Clone)]
 pub struct Transaction<M: ManagedTypeApi> {
     pub block_nonce: BlockNonce,
@@ -93,6 +109,30 @@ pub struct Transaction<M: ManagedTypeApi> {
     pub token_data: ManagedVec<M, StolenFromFrameworkEsdtTokenData<M>>,
     pub opt_transfer_data: Option<TransferData<M>>,
     pub is_refund_tx: bool,
+}
+
+#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, TypeAbi, ManagedVecItem, Clone)]
+pub struct Operation<M: ManagedTypeApi> {
+    pub to: ManagedAddress<M>,
+    pub tokens: ManagedVec<M, OperationEsdtPayment<M>>,
+    pub opt_transfer_data: Option<TransferData<M>>,
+}
+
+#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, TypeAbi, ManagedVecItem, Clone)]
+pub struct OperationEsdtPayment<M: ManagedTypeApi> {
+    pub token_identifier: TokenIdentifier<M>,
+    pub token_nonce: u64,
+    pub token_data: StolenFromFrameworkEsdtTokenData<M>,
+}
+
+impl<M: ManagedTypeApi> Into<EsdtTokenPayment<M>> for OperationEsdtPayment<M> {
+    fn into(self) -> EsdtTokenPayment<M> {
+        EsdtTokenPayment {
+            token_identifier: self.token_identifier,
+            token_nonce: self.token_nonce,
+            amount: self.token_data.amount,
+        }
+    }
 }
 
 impl<M: ManagedTypeApi> From<TxAsMultiValue<M>> for Transaction<M> {
