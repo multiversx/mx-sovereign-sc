@@ -1,8 +1,8 @@
-use crate::{from_sovereign::token_mapping, to_sovereign::events::DepositEvent};
+use crate::from_sovereign::token_mapping;
 use bls_signature::BlsSignature;
 use fee_market::subtract_fee::{FinalPayment, ProxyTrait as _};
 use multiversx_sc::storage::StorageKey;
-use transaction::GasLimit;
+use transaction::{GasLimit, OperationData, TransferData};
 
 multiversx_sc::imports!();
 
@@ -141,7 +141,7 @@ pub trait CreateTxModule:
         require!(!payments.is_empty(), "Nothing to transfer");
         require!(payments.len() <= MAX_TRANSFERS_PER_TX, "Too many tokens");
 
-        let (opt_gas_limit, opt_function, opt_args) = match &opt_transfer_data {
+        let opt_transfer_data = match &opt_transfer_data {
             OptionalValue::Some(transfer_data) => {
                 let (gas_limit, function, args) = transfer_data.clone().into_tuple();
                 let max_gas_limit = self.max_user_tx_gas_limit().get();
@@ -152,22 +152,20 @@ pub trait CreateTxModule:
                     "Banned endpoint name"
                 );
 
-                (
-                    OptionalValue::Some(gas_limit),
-                    OptionalValue::Some(function),
-                    OptionalValue::Some(args),
-                )
+                Some(TransferData {
+                    gas_limit,
+                    function,
+                    args,
+                })
             }
-            OptionalValue::None => (
-                OptionalValue::None,
-                OptionalValue::None,
-                OptionalValue::None,
-            ),
+            OptionalValue::None => None,
         };
 
         let own_sc_address = self.blockchain().get_sc_address();
         let mut total_tokens_for_fees = 0usize;
-        let mut event_payments = MultiValueEncoded::new();
+        let mut event_payments: MultiValueEncoded<
+            MultiValue3<TokenIdentifier, u64, EsdtTokenData>,
+        > = MultiValueEncoded::new();
         let mut refundable_payments: ManagedVec<Self::Api, EsdtTokenPayment<Self::Api>> =
             ManagedVec::new();
 
@@ -197,24 +195,38 @@ pub trait CreateTxModule:
                 .get();
 
             match mx_token_id_state {
-                TokenMapperState::Token(token_id) => {
+                TokenMapperState::Token(mx_token_id) => {
+                    if payment.token_nonce == 0 {
+                        self.send()
+                            .esdt_local_burn(&mx_token_id, 0, &payment.amount);
+
+                        event_payments.push(MultiValue3((
+                            payment.token_identifier,
+                            0,
+                            current_token_data.clone(),
+                        )));
+
+                        continue;
+                    }
+
                     let esdt_token_info = self
                         .esdt_token_info_mapper(&payment.token_identifier, &payment.token_nonce)
                         .get();
 
-                    event_payments.push(MultiValue3((
-                        token_id.clone(),
-                        esdt_token_info.nonce,
-                        current_token_data,
-                    )));
-
                     self.send().esdt_local_burn(
-                        &token_id,
-                        payment.token_nonce,
+                        &esdt_token_info.identifier,
+                        esdt_token_info.nonce,
                         &payment.amount,
                     );
 
-                    self.esdt_token_info_mapper(&token_id, &esdt_token_info.nonce).take();
+                    self.esdt_token_info_mapper(&payment.token_identifier, &payment.token_nonce)
+                        .take();
+
+                    event_payments.push(MultiValue3((
+                        mx_token_id.clone(),
+                        esdt_token_info.nonce,
+                        current_token_data,
+                    )));
                 }
                 _ => {
                     event_payments.push(MultiValue3((
@@ -230,11 +242,17 @@ pub trait CreateTxModule:
 
         match fees_payment {
             OptionalValue::Some(fee) => {
-                let _final_payments: FinalPayment<Self::Api> = self
-                    .fee_market_proxy(fee_market_address)
-                    .subtract_fee(caller.clone(), total_tokens_for_fees, opt_gas_limit.clone())
-                    .with_esdt_transfer(fee)
-                    .execute_on_dest_context();
+                if let Some(transfer_data) = &opt_transfer_data {
+                    let _final_payments: FinalPayment<Self::Api> = self
+                        .fee_market_proxy(fee_market_address)
+                        .subtract_fee(
+                            caller.clone(),
+                            total_tokens_for_fees,
+                            transfer_data.gas_limit.clone(),
+                        )
+                        .with_esdt_transfer(fee)
+                        .execute_on_dest_context();
+                }
             }
             OptionalValue::None => (),
         };
@@ -249,11 +267,9 @@ pub trait CreateTxModule:
         self.deposit_event(
             &to,
             &event_payments,
-            DepositEvent {
-                tx_nonce,
-                opt_gas_limit: opt_gas_limit.into_option(),
-                opt_function: opt_function.into_option(),
-                opt_arguments: opt_args.into_option(),
+            OperationData {
+                op_nonce: tx_nonce,
+                opt_transfer_data,
             },
         );
     }
