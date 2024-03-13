@@ -51,18 +51,11 @@ pub trait Multisigverifier: bls_signature::BlsSignatureModule {
         let mut transfers_hashes = ManagedBuffer::new();
 
         for transfer in &transfers_data {
-            let transfer_sha256 = self.crypto().sha256(&transfer);
-            let transfer_hash = transfer_sha256.as_managed_buffer();
-
-            self.transfer_hash_event(&transfer, &transfer_hash);
-
-            transfers_hashes.append(transfer_hash);
+            transfers_hashes.append(&transfer);
         }
 
         let hash_of_hashes_sha256 = self.crypto().sha256(&transfers_hashes);
         let hash_of_hashes = hash_of_hashes_sha256.as_managed_buffer();
-
-        self.transfer_hash_event(&hash_of_hashes, &transfers_hash);
 
         require!(
             transfers_hash.eq(hash_of_hashes),
@@ -117,12 +110,4 @@ pub trait Multisigverifier: bls_signature::BlsSignatureModule {
 
     #[storage_mapper("pending_hashes")]
     fn pending_hashes(&self) -> UnorderedSetMapper<ManagedBuffer>;
-
-    #[event("transfer_hash_event")]
-    fn transfer_hash_event(
-        &self,
-        #[indexed] first_hash: &ManagedBuffer<Self::Api>,
-        #[indexed] second_hash: &ManagedBuffer<Self::Api>
-    );
-
 }
