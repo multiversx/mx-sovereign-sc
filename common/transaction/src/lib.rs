@@ -29,6 +29,25 @@ pub type PaymentsVec<M> = ManagedVec<M, EsdtTokenPayment<M>>;
 pub type TxBatchSplitInFields<M> = MultiValue2<BatchId, MultiValueEncoded<M, TxAsMultiValue<M>>>;
 
 #[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, TypeAbi, ManagedVecItem, Clone)]
+pub struct Operation<M: ManagedTypeApi> {
+    pub to: ManagedAddress<M>,
+    pub tokens: ManagedVec<M, OperationEsdtPayment<M>>,
+    pub data: OperationData<M>,
+}
+
+impl<M: ManagedTypeApi> Operation<M> {
+    pub fn get_tokens_as_tuple_arr(&self) -> MultiValueEncoded<M, MultiValue3<TokenIdentifier<M>, u64, EsdtTokenData<M>>> {
+        let mut tuple_arr = MultiValueEncoded::new();
+
+        for token in &self.tokens {
+            tuple_arr.push(MultiValue3::from((token.token_identifier, token.token_nonce, token.token_data.into())));
+        }
+
+        tuple_arr
+    }
+}
+
+#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, TypeAbi, ManagedVecItem, Clone)]
 pub struct TransferData<M: ManagedTypeApi> {
     pub gas_limit: GasLimit,
     pub function: ManagedBuffer<M>,
@@ -38,6 +57,7 @@ pub struct TransferData<M: ManagedTypeApi> {
 #[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, TypeAbi, ManagedVecItem, Clone)]
 pub struct OperationData<M: ManagedTypeApi> {
     pub op_nonce: TxId,
+    pub op_sender: ManagedAddress<M>,
     pub opt_transfer_data: Option<TransferData<M>>,
 }
 
@@ -115,25 +135,6 @@ pub struct Transaction<M: ManagedTypeApi> {
     pub token_data: ManagedVec<M, StolenFromFrameworkEsdtTokenData<M>>,
     pub opt_transfer_data: Option<TransferData<M>>,
     pub is_refund_tx: bool,
-}
-
-#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, TypeAbi, ManagedVecItem, Clone)]
-pub struct Operation<M: ManagedTypeApi> {
-    pub to: ManagedAddress<M>,
-    pub tokens: ManagedVec<M, OperationEsdtPayment<M>>,
-    pub data: OperationData<M>,
-}
-
-impl<M: ManagedTypeApi> Operation<M> {
-    pub fn map_tokens_to_tuple_arr(&self) -> MultiValueEncoded<M, MultiValue3<TokenIdentifier<M>, u64, StolenFromFrameworkEsdtTokenData<M>>> {
-        let mut tuple_arr = MultiValueEncoded::new();
-
-        for token in &self.tokens {
-            tuple_arr.push(MultiValue3::from((token.token_identifier, token.token_nonce, token.token_data)));
-        }
-
-        tuple_arr
-    }
 }
 
 #[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, TypeAbi, ManagedVecItem, Clone)]
