@@ -78,6 +78,14 @@ pub trait EsdtSafe:
         self.multisig_address().set(multisig_address);
     }
 
+    #[only_owner]
+    #[endpoint(setSovereignBridgeAddress)]
+    fn set_sovereign_bridge_address(&self, bridge_address: ManagedAddress) {
+        self.require_sc_address(&bridge_address);
+
+        self.sovereign_bridge_address().set(bridge_address);
+    }
+
     #[endpoint]
     fn upgrade(&self) {}
 }

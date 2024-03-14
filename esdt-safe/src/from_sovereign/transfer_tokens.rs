@@ -1,7 +1,9 @@
 use core::ops::Deref;
 
 use multiversx_sc::storage::StorageKey;
-use transaction::{BatchId, GasLimit, Operation, OperationEsdtPayment};
+use transaction::{BatchId, GasLimit, Operation, OperationData, OperationEsdtPayment};
+
+use crate::to_sovereign;
 
 use super::token_mapping::EsdtTokenInfo;
 
@@ -20,6 +22,7 @@ pub trait TransferTokensModule:
     + multiversx_sc_modules::pause::PauseModule
     + multiversx_sc_modules::default_issue_callbacks::DefaultIssueCallbacksModule
     + utils::UtilsModule
+    + to_sovereign::events::EventsModule
 {
     #[endpoint(executeBridgeOps)]
     fn execute_operations(
@@ -37,10 +40,7 @@ pub trait TransferTokensModule:
             let operation_tuple = MultiValue2::from((operation_hash.clone(), operation.clone()));
 
             if !is_registered {
-                self.emit_transfer_failed_events(
-                    &hash_of_hashes,
-                    operation_tuple.clone()
-                );
+                self.emit_transfer_failed_events(&hash_of_hashes, operation_tuple.clone());
             }
 
             let minted_operation_tokens = self.mint_tokens(&operation.tokens);
@@ -66,7 +66,9 @@ pub trait TransferTokensModule:
                 .get();
 
             let mx_token_id = match mx_token_id_state {
+                // token is from sovereign -> continue and mint
                 TokenMapperState::Token(token_id) => token_id,
+                // token is from mainchain -> push token
                 _ => {
                     // TODO: will use sovereign prefix
                     output_payments.push(operation_token);
@@ -88,7 +90,7 @@ pub trait TransferTokensModule:
                 continue;
             }
 
-            // save this for main -> sov
+            // mint NFT
             let nft_nonce = self.send().esdt_nft_create(
                 &mx_token_id,
                 &operation_token.token_data.amount,
@@ -99,7 +101,7 @@ pub trait TransferTokensModule:
                 &operation_token.token_data.uris,
             );
 
-            // should register token here
+            // save token id and nonce
             self.esdt_token_info_mapper(
                 &operation_token.token_identifier,
                 &operation_token.token_nonce,
@@ -185,6 +187,7 @@ pub trait TransferTokensModule:
     ) {
         let (operation_hash, operation) = operation_tuple.into_tuple();
 
+        // confirmation event
         self.execute_bridge_operation_event(hash_of_hashes.clone(), operation_hash);
 
         for operation_token in &operation.tokens {
@@ -221,12 +224,19 @@ pub trait TransferTokensModule:
             }
         }
 
-        // TODO: deposit back to the sender
-        // self.deposit_event(
-        //     &operation.to,
-        //     &tokens_topic,
-        //     operation.data
-        // );
+        // deposit back mainchain tokens into user account
+        let sc_address = self.blockchain().get_sc_address();
+        let tx_nonce = self.get_and_save_next_tx_id();
+
+        self.deposit_event(
+            &operation.data.op_sender,
+            &operation.get_tokens_as_tuple_arr(),
+            OperationData {
+                op_nonce: tx_nonce,
+                op_sender: sc_address.clone(),
+                opt_transfer_data: None,
+            },
+        );
     }
 
     // use pending_operations as param
@@ -275,4 +285,7 @@ pub trait TransferTokensModule:
 
     #[storage_mapper("multisig_address")]
     fn multisig_address(&self) -> SingleValueMapper<ManagedAddress>;
+
+    #[storage_mapper("sovereign_bridge_address")]
+    fn sovereign_bridge_address(&self) -> SingleValueMapper<ManagedAddress>;
 }

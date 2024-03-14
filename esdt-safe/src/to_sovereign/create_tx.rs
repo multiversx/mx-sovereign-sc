@@ -1,11 +1,13 @@
 use crate::from_sovereign::token_mapping;
 use bls_signature::BlsSignature;
 use fee_market::subtract_fee::{FinalPayment, ProxyTrait as _};
-use multiversx_sc::storage::StorageKey;
+use multiversx_sc::{hex_literal::hex, storage::StorageKey};
 use transaction::{GasLimit, OperationData, TransferData};
 
 multiversx_sc::imports!();
 
+pub const ESDT_SYSTEM_SC_ADDRESS: [u8; 32] =
+    hex!("000000000000000000010000000000000000000000000000000000000002ffff");
 const MAX_TRANSFERS_PER_TX: usize = 10;
 
 #[multiversx_sc::module]
@@ -111,6 +113,18 @@ pub trait CreateTxModule:
 
         let all_names = self.verify_items_signature(opt_signature, names);
         self.remove_items(&mut self.banned_endpoint_names(), &all_names);
+    }
+
+    #[payable("*")]
+    #[endpoint(depositBack)]
+    fn deposit_back(&self, to: ManagedAddress) {
+        require!(self.not_paused(), "Cannot create transaction while paused");
+
+        let caller = self.blockchain().get_caller();
+        require!(caller == ESDT_SYSTEM_SC_ADDRESS.into(), "Caller is invalid");
+
+        let payments = self.call_value().all_esdt_transfers();
+        self.send().direct_multi(&to, &payments);
     }
 
     /// Create an Elrond -> Sovereign transaction.
@@ -269,6 +283,7 @@ pub trait CreateTxModule:
             &event_payments,
             OperationData {
                 op_nonce: tx_nonce,
+                op_sender: caller,
                 opt_transfer_data,
             },
         );
