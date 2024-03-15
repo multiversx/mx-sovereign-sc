@@ -61,6 +61,23 @@ pub struct OperationData<M: ManagedTypeApi> {
     pub opt_transfer_data: Option<TransferData<M>>,
 }
 
+#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, TypeAbi, ManagedVecItem, Clone)]
+pub struct OperationEsdtPayment<M: ManagedTypeApi> {
+    pub token_identifier: TokenIdentifier<M>,
+    pub token_nonce: u64,
+    pub token_data: StolenFromFrameworkEsdtTokenData<M>,
+}
+
+impl<M: ManagedTypeApi> Into<EsdtTokenPayment<M>> for OperationEsdtPayment<M> {
+    fn into(self) -> EsdtTokenPayment<M> {
+        EsdtTokenPayment {
+            token_identifier: self.token_identifier,
+            token_nonce: self.token_nonce,
+            amount: self.token_data.amount,
+        }
+    }
+}
+
 // Temporary until Clone is implemented for EsdtTokenData
 #[derive(
     TopDecode, TopEncode, NestedDecode, NestedEncode, TypeAbi, Debug, ManagedVecItem, Clone,
@@ -135,23 +152,6 @@ pub struct Transaction<M: ManagedTypeApi> {
     pub token_data: ManagedVec<M, StolenFromFrameworkEsdtTokenData<M>>,
     pub opt_transfer_data: Option<TransferData<M>>,
     pub is_refund_tx: bool,
-}
-
-#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, TypeAbi, ManagedVecItem, Clone)]
-pub struct OperationEsdtPayment<M: ManagedTypeApi> {
-    pub token_identifier: TokenIdentifier<M>,
-    pub token_nonce: u64,
-    pub token_data: StolenFromFrameworkEsdtTokenData<M>,
-}
-
-impl<M: ManagedTypeApi> Into<EsdtTokenPayment<M>> for OperationEsdtPayment<M> {
-    fn into(self) -> EsdtTokenPayment<M> {
-        EsdtTokenPayment {
-            token_identifier: self.token_identifier,
-            token_nonce: self.token_nonce,
-            amount: self.token_data.amount,
-        }
-    }
 }
 
 impl<M: ManagedTypeApi> From<TxAsMultiValue<M>> for Transaction<M> {

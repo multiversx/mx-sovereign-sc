@@ -112,7 +112,7 @@ pub trait TransferTokensModule:
         operation_tuple: MultiValue2<ManagedBuffer, Operation<Self::Api>>,
         tokens_list: ManagedVec<OperationEsdtPayment<Self::Api>>,
     ) {
-        let mapped_payments = self.map_payments(tokens_list.clone());
+        let mapped_tokens = tokens_list.iter().map(|token| token.into()).collect();
         let (_, operation) = operation_tuple.clone().into_tuple();
 
         match &operation.data.opt_transfer_data {
@@ -125,7 +125,7 @@ pub trait TransferTokensModule:
                 self.send()
                     .contract_call::<()>(operation.to.clone(), transfer_data.function.clone())
                     .with_raw_arguments(args)
-                    .with_multi_token_transfer(mapped_payments)
+                    .with_multi_token_transfer(mapped_tokens)
                     .with_gas_limit(transfer_data.gas_limit)
                     .async_call_promise()
                     .with_extra_gas_for_callback(CALLBACK_GAS)
@@ -138,9 +138,9 @@ pub trait TransferTokensModule:
             None => {
                 let mut args = ManagedArgBuffer::new();
                 args.push_arg(operation.to);
-                args.push_arg(mapped_payments.len());
+                args.push_arg(mapped_tokens.len());
 
-                for token in &mapped_payments {
+                for token in &mapped_tokens {
                     args.push_arg(token.token_identifier);
                     args.push_arg(token.token_nonce);
                     args.push_arg(token.amount);
@@ -266,21 +266,6 @@ pub trait TransferTokensModule:
         } else {
             (hash, false)
         }
-    }
-
-    // TODO: used trait instead
-    fn map_payments(
-        &self,
-        payments: ManagedVec<OperationEsdtPayment<Self::Api>>,
-    ) -> ManagedVec<EsdtTokenPayment<Self::Api>> {
-        let mut mapped_payments = ManagedVec::new();
-
-        for payment in &payments {
-            let mapped_payment = payment.into();
-            mapped_payments.push(mapped_payment);
-        }
-
-        mapped_payments
     }
 
     #[storage_mapper("nextBatchId")]
