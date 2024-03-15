@@ -131,7 +131,7 @@ pub trait TransferTokensModule:
                     .with_extra_gas_for_callback(CALLBACK_GAS)
                     .with_callback(
                         <Self as TransferTokensModule>::callbacks(self)
-                            .transfer_callback(hash_of_hashes.clone(), operation_tuple.clone()),
+                            .execute(hash_of_hashes.clone(), operation_tuple.clone()),
                     )
                     .register_promise();
             }
@@ -150,11 +150,11 @@ pub trait TransferTokensModule:
                 self.send()
                     .contract_call::<()>(own_address, ESDT_MULTI_TRANSFER_FUNC_NAME)
                     .with_raw_arguments(args)
+                    .with_gas_limit(self.blockchain().get_gas_left())
                     .async_call_promise()
-                    .with_extra_gas_for_callback(CALLBACK_GAS)
                     .with_callback(
                         <Self as TransferTokensModule>::callbacks(self)
-                            .transfer_callback(hash_of_hashes.clone(), operation_tuple),
+                            .execute(hash_of_hashes.clone(), operation_tuple),
                     )
                     .register_promise(); // does it end execution on fail?
             }
@@ -162,7 +162,7 @@ pub trait TransferTokensModule:
     }
 
     #[promises_callback]
-    fn transfer_callback(
+    fn execute(
         &self,
         hash_of_hashes: ManagedBuffer,
         operation_tuple: MultiValue2<ManagedBuffer, Operation<Self::Api>>,
