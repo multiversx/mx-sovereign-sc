@@ -13,14 +13,16 @@ use esdt_safe::{
 };
 use multiversx_sc::{
     codec::multi_types::OptionalValue,
-    types::{EsdtTokenPayment, ManagedVec, MultiValueEncoded},
+    types::{EsdtTokenPayment, ManagedBuffer, ManagedVec, MultiValueEncoded},
 };
 use multiversx_sc_scenario::{
-    managed_address, managed_biguint, managed_token_id, rust_biguint,
-    testing_framework::TxTokenTransfer,
+    managed_address, managed_biguint, managed_token_id,
+    multiversx_chain_vm::crypto_functions::sha256, rust_biguint,
+    testing_framework::TxTokenTransfer, DebugApi,
 };
 use transaction::{
-    transaction_status::TransactionStatus, StolenFromFrameworkEsdtTokenData, Transaction,
+    transaction_status::TransactionStatus, Operation, OperationData, OperationEsdtPayment,
+    StolenFromFrameworkEsdtTokenData, Transaction, TransferData,
 };
 use tx_batch_module::TxBatchModule;
 
@@ -244,39 +246,48 @@ fn transfer_token_to_and_from_sov_ok() {
             &bridge_setup.bridge_wrapper,
             &rust_biguint!(0),
             |sc| {
+                let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(b"all_operations"));
                 let mut tokens = ManagedVec::new();
-                tokens.push(EsdtTokenPayment::new(
-                    managed_token_id!(FUNGIBLE_TOKEN_ID),
-                    0,
-                    managed_biguint!(500),
-                ));
-                tokens.push(EsdtTokenPayment::new(
-                    managed_token_id!(NFT_TOKEN_ID),
-                    1,
-                    managed_biguint!(500),
-                ));
 
-                let mut token_data = ManagedVec::new();
-                token_data.push(StolenFromFrameworkEsdtTokenData::default());
-                token_data.push(StolenFromFrameworkEsdtTokenData::default());
-
-                let mut transfers = MultiValueEncoded::new();
-                transfers.push(Transaction {
-                    block_nonce: 1,
-                    nonce: 1,
-                    from: managed_address!(&dest),
-                    to: managed_address!(&user_addr),
-                    tokens,
-                    token_data,
-                    opt_transfer_data: None,
-                    is_refund_tx: false,
+                tokens.push(OperationEsdtPayment {
+                    token_identifier: managed_token_id!(FUNGIBLE_TOKEN_ID),
+                    token_nonce: 1,
+                    token_data: StolenFromFrameworkEsdtTokenData::default(),
+                });
+                tokens.push(OperationEsdtPayment {
+                    token_identifier: managed_token_id!(NFT_TOKEN_ID),
+                    token_nonce: 1,
+                    token_data: StolenFromFrameworkEsdtTokenData::default(),
                 });
 
-                sc.batch_transfer_esdt_token(
-                    1,
-                    BlsSignature::new_from_bytes(&DUMMY_SIG),
-                    transfers,
-                );
+                let first_args = ManagedBuffer::from(b"some_args");
+                let mut args = ManagedVec::new();
+
+                args.push(first_args);
+
+                let first_transfer_data = TransferData {
+                    gas_limit: 1000000000,
+                    function: ManagedBuffer::from(b"some_function"),
+                    args,
+                };
+
+                let operation_data = OperationData {
+                    op_nonce: 0,
+                    op_sender: managed_address!(&dest),
+                    opt_transfer_data: Option::from(first_transfer_data),
+                };
+
+                let mut operation_vec: ManagedVec<DebugApi, OperationData<DebugApi>> =
+                    ManagedVec::new();
+                operation_vec.push(operation_data.clone());
+
+                let operation = Operation {
+                    to: managed_address!(&user_addr),
+                    tokens: tokens.into(),
+                    data: operation_data,
+                };
+
+                sc.execute_operations(hash_of_hashes, operation);
             },
         )
         .assert_ok();
@@ -308,39 +319,48 @@ fn transfer_token_from_sov_no_roles_refund() {
             &bridge_setup.bridge_wrapper,
             &rust_biguint!(0),
             |sc| {
+                let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(b"all_operations"));
                 let mut tokens = ManagedVec::new();
-                tokens.push(EsdtTokenPayment::new(
-                    managed_token_id!(FUNGIBLE_TOKEN_ID),
-                    0,
-                    managed_biguint!(500),
-                ));
-                tokens.push(EsdtTokenPayment::new(
-                    managed_token_id!(NFT_TOKEN_ID),
-                    1,
-                    managed_biguint!(500),
-                ));
 
-                let mut token_data = ManagedVec::new();
-                token_data.push(StolenFromFrameworkEsdtTokenData::default());
-                token_data.push(StolenFromFrameworkEsdtTokenData::default());
-
-                let mut transfers = MultiValueEncoded::new();
-                transfers.push(Transaction {
-                    block_nonce: 1,
-                    nonce: 1,
-                    from: managed_address!(&dest),
-                    to: managed_address!(&user_addr),
-                    tokens,
-                    token_data,
-                    opt_transfer_data: None,
-                    is_refund_tx: false,
+                tokens.push(OperationEsdtPayment {
+                    token_identifier: managed_token_id!(FUNGIBLE_TOKEN_ID),
+                    token_nonce: 1,
+                    token_data: StolenFromFrameworkEsdtTokenData::default(),
+                });
+                tokens.push(OperationEsdtPayment {
+                    token_identifier: managed_token_id!(NFT_TOKEN_ID),
+                    token_nonce: 1,
+                    token_data: StolenFromFrameworkEsdtTokenData::default(),
                 });
 
-                sc.batch_transfer_esdt_token(
-                    1,
-                    BlsSignature::new_from_bytes(&DUMMY_SIG),
-                    transfers,
-                );
+                let first_args = ManagedBuffer::from(b"some_args");
+                let mut args = ManagedVec::new();
+
+                args.push(first_args);
+
+                let first_transfer_data = TransferData {
+                    gas_limit: 1000000000,
+                    function: ManagedBuffer::from(b"some_function"),
+                    args,
+                };
+
+                let operation_data = OperationData {
+                    op_nonce: 0,
+                    op_sender: managed_address!(&dest),
+                    opt_transfer_data: Option::from(first_transfer_data),
+                };
+
+                let mut operation_vec: ManagedVec<DebugApi, OperationData<DebugApi>> =
+                    ManagedVec::new();
+                operation_vec.push(operation_data.clone());
+
+                let operation = Operation {
+                    to: managed_address!(&user_addr),
+                    tokens: tokens.into(),
+                    data: operation_data,
+                };
+
+                sc.execute_operations(hash_of_hashes, operation);
             },
         )
         .assert_ok();
