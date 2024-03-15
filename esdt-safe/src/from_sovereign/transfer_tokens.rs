@@ -112,7 +112,6 @@ pub trait TransferTokensModule:
         operation_tuple: MultiValue2<ManagedBuffer, Operation<Self::Api>>,
         tokens_list: ManagedVec<OperationEsdtPayment<Self::Api>>,
     ) {
-        // use trait instead
         let mapped_payments = self.map_payments(tokens_list.clone());
         let (_, operation) = operation_tuple.clone().into_tuple();
 
@@ -269,7 +268,7 @@ pub trait TransferTokensModule:
         }
     }
 
-    // use trait instead
+    // TODO: used trait instead
     fn map_payments(
         &self,
         payments: ManagedVec<OperationEsdtPayment<Self::Api>>,
@@ -283,6 +282,9 @@ pub trait TransferTokensModule:
 
         mapped_payments
     }
+
+    #[storage_mapper("nextBatchId")]
+    fn next_batch_id(&self) -> SingleValueMapper<BatchId>;
 
     #[storage_mapper("pending_hashes")]
     fn pending_hashes(&self, hash_of_hashes: ManagedBuffer) -> UnorderedSetMapper<ManagedBuffer>;
