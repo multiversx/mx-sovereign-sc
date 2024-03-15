@@ -15,13 +15,14 @@ pub trait Multisigverifier: bls_signature::BlsSignatureModule {
 
     #[endpoint]
     fn upgrade(&self) {}
+    // #endpoint to remove pending hashes
 
     #[endpoint(registerBridgeOps)]
     fn register_bridge_operations(
         &self,
-        bridge_operations_hash: ManagedBuffer,
-        operations_hashes: ManagedVec<ManagedBuffer>,
         signature: BlsSignature<Self::Api>,
+        bridge_operations_hash: ManagedBuffer,
+        operations_hashes: MultiValueEncoded<ManagedBuffer>,
         // bitmap: MultiValueEncoded<u8>,
     ) {
         let mut bitmap = MultiValueEncoded::new();
@@ -38,19 +39,20 @@ pub trait Multisigverifier: bls_signature::BlsSignatureModule {
             operations_hashes.clone(),
         );
 
-        for operation in &operations_hashes {
-            self.pending_hashes().insert(operation);
+        for operation_hash in operations_hashes {
+            self.pending_hashes(bridge_operations_hash.clone())
+                .insert(operation_hash);
         }
     }
 
     fn calculate_and_check_transfers_hashes(
         &self,
         transfers_hash: &ManagedBuffer,
-        transfers_data: ManagedVec<ManagedBuffer>,
+        transfers_data: MultiValueEncoded<ManagedBuffer>,
     ) {
         let mut transfers_hashes = ManagedBuffer::new();
 
-        for transfer in &transfers_data {
+        for transfer in transfers_data {
             transfers_hashes.append(&transfer);
         }
 
@@ -108,6 +110,7 @@ pub trait Multisigverifier: bls_signature::BlsSignatureModule {
     #[storage_mapper("bls_pub_keys")]
     fn bls_pub_keys(&self) -> SetMapper<ManagedBuffer>;
 
+    // does it work or we use single value
     #[storage_mapper("pending_hashes")]
-    fn pending_hashes(&self) -> UnorderedSetMapper<ManagedBuffer>;
+    fn pending_hashes(&self, hash_of_hashes: ManagedBuffer) -> UnorderedSetMapper<ManagedBuffer>;
 }

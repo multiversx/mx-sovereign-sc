@@ -1,6 +1,4 @@
-use core::ops::Deref;
-
-use multiversx_sc::storage::StorageKey;
+use multiversx_sc::{api::ESDT_MULTI_TRANSFER_FUNC_NAME, storage::StorageKey};
 use transaction::{BatchId, GasLimit, Operation, OperationData, OperationEsdtPayment};
 
 use crate::to_sovereign;
@@ -25,33 +23,20 @@ pub trait TransferTokensModule:
     + to_sovereign::events::EventsModule
 {
     #[endpoint(executeBridgeOps)]
-    fn execute_operations(
-        &self,
-        hash_of_hashes: ManagedBuffer,
-        operations: MultiValueEncoded<Operation<Self::Api>>,
-    ) {
+    fn execute_operations(&self, hash_of_hashes: ManagedBuffer, operation: Operation<Self::Api>) {
         require!(self.not_paused(), "Cannot transfer while paused");
 
-        let mut verified_operations = MultiValueEncoded::new();
-        let mut minted_operations = ManagedVec::new();
+        let (operation_hash, is_registered) =
+            self.calculate_operation_hash(hash_of_hashes.clone(), operation.clone());
 
-        for operation in &operations.to_vec() {
-            let (operation_hash, is_registered) = self.calculate_operation_hash(operation.clone());
-            let operation_tuple = MultiValue2::from((operation_hash.clone(), operation.clone()));
-
-            if !is_registered {
-                self.emit_transfer_failed_events(&hash_of_hashes, operation_tuple.clone());
-            }
-
-            let minted_operation_tokens = self.mint_tokens(&operation.tokens);
-
-            minted_operations.push(minted_operation_tokens);
-            verified_operations.push(operation_tuple);
-
-            self.pending_hashes().swap_remove(&operation_hash);
+        if !is_registered {
+            return;
         }
 
-        self.distribute_payments(hash_of_hashes, verified_operations, minted_operations);
+        let minted_operation_tokens = self.mint_tokens(&operation.tokens);
+        let operation_tuple = MultiValue2::from((operation_hash.clone(), operation.clone()));
+
+        self.distribute_payments(hash_of_hashes, operation_tuple, minted_operation_tokens);
     }
 
     fn mint_tokens(
@@ -124,39 +109,55 @@ pub trait TransferTokensModule:
     fn distribute_payments(
         &self,
         hash_of_hashes: ManagedBuffer,
-        verified_operations: MultiValueEncoded<MultiValue2<ManagedBuffer, Operation<Self::Api>>>,
-        tokens_list: ManagedVec<ManagedVec<OperationEsdtPayment<Self::Api>>>,
+        operation_tuple: MultiValue2<ManagedBuffer, Operation<Self::Api>>,
+        tokens_list: ManagedVec<OperationEsdtPayment<Self::Api>>,
     ) {
-        for (token, operation_tuple) in tokens_list.iter().zip(verified_operations) {
-            let mapped_payments = self.map_payments(token.deref().clone());
-            let (operation_hash, operation) = operation_tuple.clone().into_tuple();
+        // use trait instead
+        let mapped_payments = self.map_payments(tokens_list.clone());
+        let (_, operation) = operation_tuple.clone().into_tuple();
 
-            match &operation.data.opt_transfer_data {
-                Some(transfer_data) => {
-                    let mut args = ManagedArgBuffer::new();
-                    for arg in &transfer_data.args {
-                        args.push_arg(arg);
-                    }
-
-                    self.send()
-                        .contract_call::<()>(operation.to.clone(), transfer_data.function.clone())
-                        .with_raw_arguments(args)
-                        .with_multi_token_transfer(mapped_payments)
-                        .with_gas_limit(transfer_data.gas_limit)
-                        .async_call_promise()
-                        .with_extra_gas_for_callback(CALLBACK_GAS)
-                        .with_callback(
-                            <Self as TransferTokensModule>::callbacks(self)
-                                .transfer_callback(hash_of_hashes.clone(), operation_tuple),
-                        )
-                        .register_promise();
+        match &operation.data.opt_transfer_data {
+            Some(transfer_data) => {
+                let mut args = ManagedArgBuffer::new();
+                for arg in &transfer_data.args {
+                    args.push_arg(arg);
                 }
-                None => {
-                    // does it end execution on fail?
-                    self.send().direct_multi(&operation.to, &mapped_payments);
 
-                    self.execute_bridge_operation_event(hash_of_hashes.clone(), operation_hash);
+                self.send()
+                    .contract_call::<()>(operation.to.clone(), transfer_data.function.clone())
+                    .with_raw_arguments(args)
+                    .with_multi_token_transfer(mapped_payments)
+                    .with_gas_limit(transfer_data.gas_limit)
+                    .async_call_promise()
+                    .with_extra_gas_for_callback(CALLBACK_GAS)
+                    .with_callback(
+                        <Self as TransferTokensModule>::callbacks(self)
+                            .transfer_callback(hash_of_hashes.clone(), operation_tuple.clone()),
+                    )
+                    .register_promise();
+            }
+            None => {
+                let mut args = ManagedArgBuffer::new();
+                args.push_arg(operation.to);
+                args.push_arg(mapped_payments.len());
+
+                for token in &mapped_payments {
+                    args.push_arg(token.token_identifier);
+                    args.push_arg(token.token_nonce);
+                    args.push_arg(token.amount);
                 }
+
+                let own_address = self.blockchain().get_sc_address();
+                self.send()
+                    .contract_call::<()>(own_address, ESDT_MULTI_TRANSFER_FUNC_NAME)
+                    .with_raw_arguments(args)
+                    .async_call_promise()
+                    .with_extra_gas_for_callback(CALLBACK_GAS)
+                    .with_callback(
+                        <Self as TransferTokensModule>::callbacks(self)
+                            .transfer_callback(hash_of_hashes.clone(), operation_tuple),
+                    )
+                    .register_promise(); // does it end execution on fail?
             }
         }
     }
@@ -172,12 +173,14 @@ pub trait TransferTokensModule:
 
         match result {
             ManagedAsyncCallResult::Ok(_) => {
-                self.execute_bridge_operation_event(hash_of_hashes, operation_hash);
+                self.execute_bridge_operation_event(hash_of_hashes, operation_hash.clone());
             }
             ManagedAsyncCallResult::Err(_) => {
                 self.emit_transfer_failed_events(&hash_of_hashes, operation_tuple);
             }
         }
+
+        // self.pending_hashes().swap_remove(&operation_hash);
     }
 
     fn emit_transfer_failed_events(
@@ -240,20 +243,23 @@ pub trait TransferTokensModule:
     }
 
     // use pending_operations as param
-    fn calculate_operation_hash(&self, operation: Operation<Self::Api>) -> (ManagedBuffer, bool) {
+    fn calculate_operation_hash(
+        &self,
+        hash_of_hashes: ManagedBuffer,
+        operation: Operation<Self::Api>,
+    ) -> (ManagedBuffer, bool) {
         let mut serialized_data = ManagedBuffer::new();
+        let mut storage_key = StorageKey::from("pending_hashes");
+        storage_key.append_item(&hash_of_hashes);
 
-        let pending_operations_mapper = UnorderedSetMapper::new_from_address(
-            self.multisig_address().get(),
-            StorageKey::from("pending_hashes"),
-        );
+        let pending_operations_mapper =
+            UnorderedSetMapper::new_from_address(self.multisig_address().get(), storage_key);
 
         if let core::result::Result::Err(err) = operation.top_encode(&mut serialized_data) {
             sc_panic!("Transfer data encode error: {}", err.message_bytes());
         }
 
         let sha256 = self.crypto().sha256(&serialized_data);
-
         let hash = sha256.as_managed_buffer().clone();
 
         if pending_operations_mapper.contains(&hash) {
@@ -263,6 +269,7 @@ pub trait TransferTokensModule:
         }
     }
 
+    // use trait instead
     fn map_payments(
         &self,
         payments: ManagedVec<OperationEsdtPayment<Self::Api>>,
@@ -277,11 +284,8 @@ pub trait TransferTokensModule:
         mapped_payments
     }
 
-    #[storage_mapper("nextBatchId")]
-    fn next_batch_id(&self) -> SingleValueMapper<BatchId>;
-
     #[storage_mapper("pending_hashes")]
-    fn pending_hashes(&self) -> UnorderedSetMapper<ManagedBuffer>;
+    fn pending_hashes(&self, hash_of_hashes: ManagedBuffer) -> UnorderedSetMapper<ManagedBuffer>;
 
     #[storage_mapper("multisig_address")]
     fn multisig_address(&self) -> SingleValueMapper<ManagedAddress>;
