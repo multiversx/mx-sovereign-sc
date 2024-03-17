@@ -30,7 +30,7 @@ pub trait TransferTokensModule:
             self.calculate_operation_hash(hash_of_hashes.clone(), operation.clone());
 
         if !is_registered {
-            return;
+            sc_panic!("Operation is not registered");
         }
 
         let minted_operation_tokens = self.mint_tokens(&operation.tokens);
