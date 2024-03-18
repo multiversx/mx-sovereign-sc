@@ -4,8 +4,8 @@ multiversx_sc::derive_imports!();
 
 #[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, TypeAbi, ManagedVecItem, Clone)]
 pub struct EsdtTokenInfo<M: ManagedTypeApi> {
-    pub identifier: TokenIdentifier<M>,
-    pub nonce: u64,
+    pub token_identifier: TokenIdentifier<M>,
+    pub token_nonce: u64,
 }
 
 #[multiversx_sc::module]
@@ -69,6 +69,12 @@ pub trait TokenMappingModule:
         sov_token_id: &TokenIdentifier,
     ) -> SingleValueMapper<TokenMapperState<Self::Api>>;
 
+    #[storage_mapper("mxToSovTokenId")]
+    fn multiversx_to_sovereign_token_id(
+        &self,
+        mx_token_id: &TokenIdentifier,
+    ) -> SingleValueMapper<TokenMapperState<Self::Api>>;
+
     #[storage_mapper("sovToMxTokenId")]
     fn fungible_token(&self, sov_token_id: &TokenIdentifier) -> FungibleTokenMapper;
 
@@ -76,7 +82,14 @@ pub trait TokenMappingModule:
     fn non_fungible_token(&self, sov_token_id: &TokenIdentifier) -> NonFungibleTokenMapper;
 
     #[storage_mapper("esdtTokenInfoMapper")]
-    fn esdt_token_info_mapper(
+    fn sovereign_esdt_token_info_mapper(
+        &self,
+        token_identifier: &TokenIdentifier,
+        nonce: &u64,
+    ) -> SingleValueMapper<EsdtTokenInfo<Self::Api>>;
+
+    #[storage_mapper("esdtTokenInfoMapper")]
+    fn multiversx_esdt_token_info_mapper(
         &self,
         token_identifier: &TokenIdentifier,
         nonce: &u64,

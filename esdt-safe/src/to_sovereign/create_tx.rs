@@ -223,26 +223,81 @@ pub trait CreateTxModule:
                         continue;
                     }
 
-                    let esdt_token_info = self
-                        .esdt_token_info_mapper(&payment.token_identifier, &payment.token_nonce)
+                    let sovereign_esdt_token_info = self
+                        .sovereign_esdt_token_info_mapper(
+                            &payment.token_identifier,
+                            &payment.token_nonce,
+                        )
                         .get();
 
                     self.send().esdt_local_burn(
-                        &esdt_token_info.identifier,
-                        esdt_token_info.nonce,
+                        &sovereign_esdt_token_info.token_identifier,
+                        sovereign_esdt_token_info.token_nonce,
                         &payment.amount,
                     );
 
-                    self.esdt_token_info_mapper(&payment.token_identifier, &payment.token_nonce)
-                        .take();
+                    self.sovereign_esdt_token_info_mapper(
+                        &payment.token_identifier,
+                        &payment.token_nonce,
+                    )
+                    .take();
 
                     event_payments.push(MultiValue3((
                         mx_token_id.clone(),
-                        esdt_token_info.nonce,
+                        sovereign_esdt_token_info.token_nonce,
                         current_token_data,
                     )));
                 }
                 _ => {
+                    let sov_token_id_state = self
+                        .multiversx_to_sovereign_token_id(&payment.token_identifier)
+                        .get();
+
+                    match sov_token_id_state {
+                        TokenMapperState::Token(sov_token_id) => {
+                            if payment.token_nonce == 0 {
+                                self.send()
+                                    .esdt_local_burn(&sov_token_id, 0, &payment.amount);
+
+                                event_payments.push(MultiValue3((
+                                    sov_token_id,
+                                    payment.token_nonce,
+                                    current_token_data.clone(),
+                                )));
+
+                                continue;
+                            }
+
+                            let multiversx_esdt_token_info = self
+                                .multiversx_esdt_token_info_mapper(
+                                    &payment.token_identifier,
+                                    &payment.token_nonce,
+                                )
+                                .get();
+
+                            self.send().esdt_local_burn(
+                                &multiversx_esdt_token_info.token_identifier,
+                                multiversx_esdt_token_info.token_nonce,
+                                &payment.amount,
+                            );
+
+                            self.multiversx_esdt_token_info_mapper(
+                                &payment.token_identifier,
+                                &payment.token_nonce,
+                            )
+                            .take();
+
+                            event_payments.push(MultiValue3((
+                                sov_token_id.clone(),
+                                multiversx_esdt_token_info.token_nonce,
+                                current_token_data.clone(),
+                            )));
+                        }
+                        _ => {
+                            self.multiversx_to_sovereign_token_id(&payment.token_identifier).set(TokenMapperState::Token(payment.token_identifier.clone()));
+                        }
+                    }
+
                     event_payments.push(MultiValue3((
                         payment.token_identifier.clone(),
                         payment.token_nonce,

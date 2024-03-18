@@ -1,4 +1,4 @@
-use multiversx_sc::{api::ESDT_MULTI_TRANSFER_FUNC_NAME, storage::StorageKey};
+use multiversx_sc::{api::ESDT_MULTI_TRANSFER_FUNC_NAME, storage::StorageKey, storage_set};
 use transaction::{BatchId, GasLimit, Operation, OperationData, OperationEsdtPayment};
 
 use crate::to_sovereign;
@@ -22,8 +22,8 @@ pub trait TransferTokensModule:
     + utils::UtilsModule
     + to_sovereign::events::EventsModule
 {
-    #[endpoint(executeBridgeOps)]
-    fn execute_operations(&self, hash_of_hashes: ManagedBuffer, operation: Operation<Self::Api>) {
+    #[endpoint(executeBridgeOp)]
+    fn execute_operation(&self, hash_of_hashes: ManagedBuffer, operation: Operation<Self::Api>) {
         require!(self.not_paused(), "Cannot transfer while paused");
 
         let (operation_hash, is_registered) =
@@ -56,7 +56,17 @@ pub trait TransferTokensModule:
                 // token is from mainchain -> push token
                 _ => {
                     // TODO: will use sovereign prefix
-                    output_payments.push(operation_token);
+                    output_payments.push(operation_token.clone());
+
+                    self.multiversx_to_sovereign_token_id(&operation_token.token_identifier)
+                        .set(TokenMapperState::Token(operation_token.token_identifier.clone()));
+
+                    // self.multiversx_esdt_token_info_mapper(
+                    //     &operation_token.token_identifier,
+                    //     &operation_token.token_nonce,
+                    // ).set(EsdtTokenInfo {
+                    //         operation_token.
+                    //     });
 
                     continue;
                 }
@@ -87,13 +97,13 @@ pub trait TransferTokensModule:
             );
 
             // save token id and nonce
-            self.esdt_token_info_mapper(
+            self.sovereign_esdt_token_info_mapper(
                 &operation_token.token_identifier,
                 &operation_token.token_nonce,
             )
             .set(EsdtTokenInfo {
-                identifier: mx_token_id.clone(),
-                nonce: nft_nonce,
+                token_identifier: mx_token_id.clone(),
+                token_nonce: nft_nonce,
             });
 
             output_payments.push(OperationEsdtPayment {
@@ -205,19 +215,19 @@ pub trait TransferTokensModule:
                 }
 
                 let esdt_token_info = self
-                    .esdt_token_info_mapper(
+                    .sovereign_esdt_token_info_mapper(
                         &operation_token.token_identifier,
                         &operation_token.token_nonce,
                     )
                     .get();
 
                 self.send().esdt_local_burn(
-                    &esdt_token_info.identifier,
-                    esdt_token_info.nonce,
+                    &esdt_token_info.token_identifier,
+                    esdt_token_info.token_nonce,
                     &operation_token.token_data.amount,
                 );
 
-                self.esdt_token_info_mapper(
+                self.sovereign_esdt_token_info_mapper(
                     &operation_token.token_identifier,
                     &operation_token.token_nonce,
                 )
