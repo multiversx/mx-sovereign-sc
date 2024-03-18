@@ -10,7 +10,7 @@ pub struct EsdtTokenInfo<M: ManagedTypeApi> {
 
 #[multiversx_sc::module]
 pub trait TokenMappingModule:
-    multiversx_sc_modules::default_issue_callbacks::DefaultIssueCallbacksModule
+    multiversx_sc_modules::default_issue_callbacks::DefaultIssueCallbacksModule 
 {
     #[payable("EGLD")]
     #[endpoint(registerToken)]
@@ -22,6 +22,10 @@ pub trait TokenMappingModule:
         token_ticker: ManagedBuffer,
         num_decimals: usize,
     ) {
+        require!(
+            self.is_sovereign_chain_mapper().get() == false,
+            "Invalid method to call"
+        );
         let issue_cost = self.call_value().egld_value().clone_value();
 
         require!(
@@ -48,8 +52,14 @@ pub trait TokenMappingModule:
             ),
         }
 
-        self.multiversx_to_sovereign_token_id(&sov_token_id)
-            .set(TokenMapperState::Token(sov_token_id.clone()));
+        match self.sovereign_to_multiversx_token_id(&sov_token_id).get() {
+            TokenMapperState::NotSet => sc_panic!("Token ID not set"),
+            TokenMapperState::Pending => {}
+            TokenMapperState::Token(mx_token_id) => {
+                self.multiversx_to_sovereign_token_id(&mx_token_id)
+                    .set(sov_token_id);
+            }
+        }
     }
 
     fn handle_fungible_token_type(
@@ -61,7 +71,7 @@ pub trait TokenMappingModule:
         num_decimals: usize,
     ) {
         self.multiversx_to_sovereign_token_id(&sov_token_id)
-            .set(TokenMapperState::Token(sov_token_id.clone()));
+            .set(sov_token_id.clone());
 
         self.fungible_token(&sov_token_id).issue_and_set_all_roles(
             issue_cost,
@@ -82,7 +92,7 @@ pub trait TokenMappingModule:
         num_decimals: usize,
     ) {
         self.multiversx_to_sovereign_token_id(&sov_token_id)
-            .set(TokenMapperState::Token(sov_token_id.clone()));
+            .set(sov_token_id.clone());
 
         self.non_fungible_token(&sov_token_id)
             .issue_and_set_all_roles(
@@ -119,7 +129,7 @@ pub trait TokenMappingModule:
     fn multiversx_to_sovereign_token_id(
         &self,
         mx_token_id: &TokenIdentifier,
-    ) -> SingleValueMapper<TokenMapperState<Self::Api>>;
+    ) -> SingleValueMapper<TokenIdentifier>;
 
     #[storage_mapper("sovToMxTokenId")]
     fn fungible_token(&self, sov_token_id: &TokenIdentifier) -> FungibleTokenMapper;
@@ -140,4 +150,7 @@ pub trait TokenMappingModule:
         token_identifier: &TokenIdentifier,
         nonce: &u64,
     ) -> SingleValueMapper<EsdtTokenInfo<Self::Api>>;
+
+    #[storage_mapper("isSovereignChain")]
+    fn is_sovereign_chain_mapper(&self) -> SingleValueMapper<bool>;
 }

@@ -249,63 +249,16 @@ pub trait CreateTxModule:
                     )));
                 }
                 _ => {
-                    let sov_token_id_state = self
+                    let sov_token_id = self
                         .multiversx_to_sovereign_token_id(&payment.token_identifier)
                         .get();
 
-                    match sov_token_id_state {
-                        TokenMapperState::Token(sov_token_id) => {
-                            if payment.token_nonce == 0 {
-                                self.send()
-                                    .esdt_local_burn(&sov_token_id, 0, &payment.amount);
+                    if sov_token_id.is_valid_esdt_identifier() {
 
-                                event_payments.push(MultiValue3((
-                                    sov_token_id,
-                                    payment.token_nonce,
-                                    current_token_data.clone(),
-                                )));
-
-                                continue;
-                            }
-
-                            let multiversx_esdt_token_info = self
-                                .multiversx_esdt_token_info_mapper(
-                                    &payment.token_identifier,
-                                    &payment.token_nonce,
-                                )
-                                .get();
-
-                            self.send().esdt_local_burn(
-                                &multiversx_esdt_token_info.token_identifier,
-                                multiversx_esdt_token_info.token_nonce,
-                                &payment.amount,
-                            );
-
-                            self.multiversx_esdt_token_info_mapper(
-                                &payment.token_identifier,
-                                &payment.token_nonce,
-                            )
-                            .take();
-
-                            event_payments.push(MultiValue3((
-                                sov_token_id.clone(),
-                                multiversx_esdt_token_info.token_nonce,
-                                current_token_data.clone(),
-                            )));
-                        }
-                        _ => {
-                            self.multiversx_to_sovereign_token_id(&payment.token_identifier).set(TokenMapperState::Token(payment.token_identifier.clone()));
-                        }
                     }
-
-                    event_payments.push(MultiValue3((
-                        payment.token_identifier.clone(),
-                        payment.token_nonce,
-                        current_token_data,
-                    )));
                 }
             }
-        }
+        };
 
         let caller = self.blockchain().get_caller();
 

@@ -91,6 +91,4 @@ pub trait EsdtSafe:
     #[endpoint]
     fn upgrade(&self) {}
 
-    #[storage_mapper("isSovereignChain")]
-    fn is_sovereign_chain_mapper(&self) -> SingleValueMapper<bool>;
 }
