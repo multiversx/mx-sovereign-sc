@@ -23,7 +23,7 @@ pub trait TokenMappingModule:
         num_decimals: usize,
     ) {
         require!(
-            self.is_sovereign_chain_mapper().get() == false,
+            self.is_sovereign_chain_mapper().get(),
             "Invalid method to call"
         );
         let issue_cost = self.call_value().egld_value().clone_value();
