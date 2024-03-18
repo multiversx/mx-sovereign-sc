@@ -1,4 +1,4 @@
-use multiversx_sc::{api::ESDT_MULTI_TRANSFER_FUNC_NAME, storage::StorageKey, storage_set};
+use multiversx_sc::{api::ESDT_MULTI_TRANSFER_FUNC_NAME, storage::StorageKey};
 use transaction::{BatchId, GasLimit, Operation, OperationData, OperationEsdtPayment};
 
 use crate::to_sovereign;
@@ -61,13 +61,6 @@ pub trait TransferTokensModule:
                     self.multiversx_to_sovereign_token_id(&operation_token.token_identifier)
                         .set(TokenMapperState::Token(operation_token.token_identifier.clone()));
 
-                    // self.multiversx_esdt_token_info_mapper(
-                    //     &operation_token.token_identifier,
-                    //     &operation_token.token_nonce,
-                    // ).set(EsdtTokenInfo {
-                    //         operation_token.
-                    //     });
-
                     continue;
                 }
             };
@@ -98,6 +91,15 @@ pub trait TransferTokensModule:
 
             // save token id and nonce
             self.sovereign_esdt_token_info_mapper(
+                &operation_token.token_identifier,
+                &operation_token.token_nonce,
+            )
+            .set(EsdtTokenInfo {
+                token_identifier: mx_token_id.clone(),
+                token_nonce: nft_nonce,
+            });
+
+            self.multiversx_esdt_token_info_mapper(
                 &operation_token.token_identifier,
                 &operation_token.token_nonce,
             )

@@ -35,24 +35,65 @@ pub trait TokenMappingModule:
 
         match token_type {
             EsdtTokenType::Invalid => sc_panic!("Invalid type"),
-            EsdtTokenType::Fungible => self.fungible_token(&sov_token_id).issue_and_set_all_roles(
+            EsdtTokenType::Fungible => self.handle_fungible_token_type(
+                sov_token_id,
+                issue_cost,
+                token_display_name,
+                token_ticker,
+                num_decimals,
+            ),
+            _ => self.handle_nonfungible_token_type(
+                sov_token_id,
+                token_type,
+                issue_cost,
+                token_display_name,
+                token_ticker,
+                num_decimals,
+            ),
+        }
+    }
+
+    fn handle_fungible_token_type(
+        &self,
+        sov_token_id: TokenIdentifier,
+        issue_cost: BigUint,
+        token_display_name: ManagedBuffer,
+        token_ticker: ManagedBuffer,
+        num_decimals: usize,
+    ) {
+        self.multiversx_to_sovereign_token_id(&sov_token_id)
+            .set(TokenMapperState::Token(sov_token_id.clone()));
+
+        self.fungible_token(&sov_token_id).issue_and_set_all_roles(
+            issue_cost,
+            token_display_name,
+            token_ticker,
+            num_decimals,
+            None,
+        );
+    }
+
+    fn handle_nonfungible_token_type(
+        &self,
+        sov_token_id: TokenIdentifier,
+        token_type: EsdtTokenType,
+        issue_cost: BigUint,
+        token_display_name: ManagedBuffer,
+        token_ticker: ManagedBuffer,
+        num_decimals: usize,
+    ) {
+        self.multiversx_to_sovereign_token_id(&sov_token_id)
+            .set(TokenMapperState::Token(sov_token_id.clone()));
+
+        self.non_fungible_token(&sov_token_id)
+            .issue_and_set_all_roles(
+                token_type,
                 issue_cost,
                 token_display_name,
                 token_ticker,
                 num_decimals,
                 None,
-            ),
-            _ => self
-                .non_fungible_token(&sov_token_id)
-                .issue_and_set_all_roles(
-                    token_type,
-                    issue_cost,
-                    token_display_name,
-                    token_ticker,
-                    num_decimals,
-                    None,
-                ),
-        }
+            );
     }
 
     #[only_owner]
