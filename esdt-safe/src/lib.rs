@@ -35,10 +35,12 @@ pub trait EsdtSafe:
     #[init]
     fn init(
         &self,
+        is_sovereign_chain: bool,
         min_valid_signers: u32,
         initiator_address: ManagedAddress,
         signers: MultiValueEncoded<ManagedAddress>,
     ) {
+        self.is_sovereign_chain_mapper().set(is_sovereign_chain);
         self.max_tx_batch_size().set(DEFAULT_MAX_TX_BATCH_SIZE);
         self.max_tx_batch_block_duration()
             .set(DEFAULT_MAX_TX_BATCH_BLOCK_DURATION);
@@ -88,4 +90,7 @@ pub trait EsdtSafe:
 
     #[endpoint]
     fn upgrade(&self) {}
+
+    #[storage_mapper("isSovereignChain")]
+    fn is_sovereign_chain_mapper(&self) -> SingleValueMapper<bool>;
 }

@@ -22,10 +22,6 @@ pub trait TokenMappingModule:
         token_ticker: ManagedBuffer,
         num_decimals: usize,
     ) {
-        let mut serialized_data = ManagedBuffer::new();
-        let _ = sov_token_id.dep_encode(&mut serialized_data);
-        let _ = token_type.dep_encode(&mut serialized_data);
-
         let issue_cost = self.call_value().egld_value().clone_value();
 
         require!(
@@ -36,14 +32,14 @@ pub trait TokenMappingModule:
         match token_type {
             EsdtTokenType::Invalid => sc_panic!("Invalid type"),
             EsdtTokenType::Fungible => self.handle_fungible_token_type(
-                sov_token_id,
+                sov_token_id.clone(),
                 issue_cost,
                 token_display_name,
                 token_ticker,
                 num_decimals,
             ),
             _ => self.handle_nonfungible_token_type(
-                sov_token_id,
+                sov_token_id.clone(),
                 token_type,
                 issue_cost,
                 token_display_name,
@@ -51,6 +47,9 @@ pub trait TokenMappingModule:
                 num_decimals,
             ),
         }
+
+        self.multiversx_to_sovereign_token_id(&sov_token_id)
+            .set(TokenMapperState::Token(sov_token_id.clone()));
     }
 
     fn handle_fungible_token_type(
@@ -97,9 +96,15 @@ pub trait TokenMappingModule:
     }
 
     #[only_owner]
-    #[endpoint(clearRegisteredToken)]
-    fn clear_registered_token(&self, sov_token_id: TokenIdentifier) {
+    #[endpoint(clearRegisteredSovereignToken)]
+    fn clear_registered_sovereign_token(&self, sov_token_id: TokenIdentifier) {
         self.sovereign_to_multiversx_token_id(&sov_token_id).clear();
+    }
+
+    #[only_owner]
+    #[endpoint(clearRegisteredMultiversxToken)]
+    fn clear_registered_multiversx_token(&self, mvx_token_id: TokenIdentifier) {
+        self.multiversx_to_sovereign_token_id(&mvx_token_id).clear();
     }
 
     // WARNING: All mappers must have the exact same storage key!

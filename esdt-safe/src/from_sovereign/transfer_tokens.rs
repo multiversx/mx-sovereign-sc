@@ -58,9 +58,6 @@ pub trait TransferTokensModule:
                     // TODO: will use sovereign prefix
                     output_payments.push(operation_token.clone());
 
-                    self.multiversx_to_sovereign_token_id(&operation_token.token_identifier)
-                        .set(TokenMapperState::Token(operation_token.token_identifier.clone()));
-
                     continue;
                 }
             };
@@ -100,12 +97,12 @@ pub trait TransferTokensModule:
             });
 
             self.multiversx_esdt_token_info_mapper(
-                &operation_token.token_identifier,
-                &operation_token.token_nonce,
+                &mx_token_id.clone(),
+                &nft_nonce,
             )
             .set(EsdtTokenInfo {
-                token_identifier: mx_token_id.clone(),
-                token_nonce: nft_nonce,
+                token_identifier: operation_token.token_identifier,
+                token_nonce: operation_token.token_nonce,
             });
 
             output_payments.push(OperationEsdtPayment {
