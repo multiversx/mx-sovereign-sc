@@ -81,14 +81,14 @@ pub trait TokenMappingModule:
     #[storage_mapper("sovToMxTokenId")]
     fn non_fungible_token(&self, sov_token_id: &TokenIdentifier) -> NonFungibleTokenMapper;
 
-    #[storage_mapper("esdtTokenInfoMapper")]
+    #[storage_mapper("sovEsdtTokenInfoMapper")]
     fn sovereign_esdt_token_info_mapper(
         &self,
         token_identifier: &TokenIdentifier,
         nonce: &u64,
     ) -> SingleValueMapper<EsdtTokenInfo<Self::Api>>;
 
-    #[storage_mapper("esdtTokenInfoMapper")]
+    #[storage_mapper("mxEsdtTokenInfoMapper")]
     fn multiversx_esdt_token_info_mapper(
         &self,
         token_identifier: &TokenIdentifier,
