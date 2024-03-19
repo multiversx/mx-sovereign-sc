@@ -68,12 +68,12 @@ pub struct OperationEsdtPayment<M: ManagedTypeApi> {
     pub token_data: StolenFromFrameworkEsdtTokenData<M>,
 }
 
-impl<M: ManagedTypeApi> Into<EsdtTokenPayment<M>> for OperationEsdtPayment<M> {
-    fn into(self) -> EsdtTokenPayment<M> {
+impl<M: ManagedTypeApi> From<OperationEsdtPayment<M>> for EsdtTokenPayment<M> {
+    fn from(payment: OperationEsdtPayment<M>) -> Self {
         EsdtTokenPayment {
-            token_identifier: self.token_identifier,
-            token_nonce: self.token_nonce,
-            amount: self.token_data.amount,
+            token_identifier: payment.token_identifier,
+            token_nonce: payment.token_nonce,
+            amount: payment.token_data.amount,
         }
     }
 }
@@ -126,18 +126,18 @@ impl<M: ManagedTypeApi> From<EsdtTokenData<M>> for StolenFromFrameworkEsdtTokenD
     }
 }
 
-impl<M: ManagedTypeApi> Into<EsdtTokenData<M>> for StolenFromFrameworkEsdtTokenData<M> {
-    fn into(self) -> EsdtTokenData<M> {
+impl<M: ManagedTypeApi> From<StolenFromFrameworkEsdtTokenData<M>> for EsdtTokenData<M> {
+    fn from(token_data: StolenFromFrameworkEsdtTokenData<M>) -> Self {
         EsdtTokenData {
-            token_type: self.token_type,
-            amount: self.amount,
-            frozen: self.frozen,
-            hash: self.hash,
-            name: self.name,
-            attributes: self.attributes,
-            creator: self.creator,
-            royalties: self.royalties,
-            uris: self.uris,
+            token_type: token_data.token_type,
+            amount: token_data.amount,
+            frozen: token_data.frozen,
+            hash: token_data.hash,
+            name: token_data.name,
+            attributes: token_data.attributes,
+            creator: token_data.creator,
+            royalties: token_data.royalties,
+            uris: token_data.uris,
         }
     }
 }

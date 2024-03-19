@@ -187,7 +187,7 @@ pub trait CreateTxModule:
             self.require_below_max_amount(&payment.token_identifier, &payment.amount);
             self.require_token_not_blacklisted(&payment.token_identifier);
 
-            if self.token_whitelist().len() > 0
+            if !self.token_whitelist().is_empty()
                 && !self.token_whitelist().contains(&payment.token_identifier)
             {
                 refundable_payments.push(payment.clone());
@@ -265,7 +265,7 @@ pub trait CreateTxModule:
                         .subtract_fee(
                             caller.clone(),
                             total_tokens_for_fees,
-                            transfer_data.gas_limit.clone(),
+                            transfer_data.gas_limit,
                         )
                         .with_esdt_transfer(fee)
                         .execute_on_dest_context();
