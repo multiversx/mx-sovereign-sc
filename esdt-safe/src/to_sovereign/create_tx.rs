@@ -187,7 +187,7 @@ pub trait CreateTxModule:
             self.require_below_max_amount(&payment.token_identifier, &payment.amount);
             self.require_token_not_blacklisted(&payment.token_identifier);
 
-            if self.token_whitelist().len() > 0
+            if !self.token_whitelist().is_empty()
                 && !self.token_whitelist().contains(&payment.token_identifier)
             {
                 refundable_payments.push(payment.clone());
@@ -204,49 +204,52 @@ pub trait CreateTxModule:
 
             current_token_data.amount = payment.amount.clone();
 
-            let mx_token_id_state = self
-                .sovereign_to_multiversx_token_id(&payment.token_identifier)
-                .get();
+            if self.is_sovereign_chain().get() {
+                self.send().esdt_local_burn(
+                    &payment.token_identifier,
+                    payment.token_nonce,
+                    &payment.amount,
+                );
 
-            match mx_token_id_state {
-                TokenMapperState::Token(mx_token_id) => {
-                    if payment.token_nonce == 0 {
-                        self.send()
-                            .esdt_local_burn(&mx_token_id, 0, &payment.amount);
+                event_payments.push(MultiValue3((
+                    payment.token_identifier.clone(),
+                    payment.token_nonce,
+                    current_token_data.clone(),
+                )));
+            } else {
+                let sov_token_id = self
+                    .multiversx_to_sovereign_token_id(&payment.token_identifier)
+                    .get();
 
-                        event_payments.push(MultiValue3((
-                            payment.token_identifier,
-                            0,
-                            current_token_data.clone(),
-                        )));
-
-                        continue;
-                    }
-
-                    let esdt_token_info = self
-                        .esdt_token_info_mapper(&payment.token_identifier, &payment.token_nonce)
-                        .get();
-
+                if sov_token_id.is_valid_esdt_identifier() {
                     self.send().esdt_local_burn(
-                        &esdt_token_info.identifier,
-                        esdt_token_info.nonce,
+                        &payment.token_identifier,
+                        payment.token_nonce,
                         &payment.amount,
                     );
 
-                    self.esdt_token_info_mapper(&payment.token_identifier, &payment.token_nonce)
-                        .take();
+                    let mut sov_token_nonce = 0;
+
+                    if payment.token_nonce > 0 {
+                        sov_token_nonce = self
+                            .multiversx_esdt_token_info_mapper(
+                                &payment.token_identifier,
+                                &payment.token_nonce,
+                            )
+                            .get()
+                            .token_nonce;
+                    }
 
                     event_payments.push(MultiValue3((
-                        mx_token_id.clone(),
-                        esdt_token_info.nonce,
-                        current_token_data,
+                        sov_token_id,
+                        sov_token_nonce,
+                        current_token_data.clone()
                     )));
-                }
-                _ => {
+                } else {
                     event_payments.push(MultiValue3((
-                        payment.token_identifier.clone(),
+                        sov_token_id.clone(),
                         payment.token_nonce,
-                        current_token_data,
+                        current_token_data.clone(),
                     )));
                 }
             }
@@ -262,7 +265,7 @@ pub trait CreateTxModule:
                         .subtract_fee(
                             caller.clone(),
                             total_tokens_for_fees,
-                            transfer_data.gas_limit.clone(),
+                            transfer_data.gas_limit,
                         )
                         .with_esdt_transfer(fee)
                         .execute_on_dest_context();
