@@ -8,6 +8,7 @@ use super::token_mapping::EsdtTokenInfo;
 multiversx_sc::imports!();
 
 const CALLBACK_GAS: GasLimit = 10_000_000; // Increase if not enough
+const TRANSACTION_GAS: GasLimit = 30_000_000;
 
 #[multiversx_sc::module]
 pub trait TransferTokensModule:
@@ -157,6 +158,7 @@ pub trait TransferTokensModule:
                 self.send()
                     .contract_call::<()>(own_address, ESDT_MULTI_TRANSFER_FUNC_NAME)
                     .with_raw_arguments(args)
+                    .with_gas_limit(TRANSACTION_GAS)
                     .async_call_promise()
                     .with_callback(
                         <Self as TransferTokensModule>::callbacks(self)

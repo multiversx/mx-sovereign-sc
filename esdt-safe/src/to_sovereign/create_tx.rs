@@ -139,6 +139,7 @@ pub trait CreateTxModule:
     ) {
         require!(self.not_paused(), "Cannot create transaction while paused");
 
+        // TODO: fn check and extract fee -> fees_payment, payments
         let fee_market_address = self.fee_market_address().get();
         let mut payments = self.call_value().all_esdt_transfers().clone_value();
         let fee_enabled_mapper = SingleValueMapper::new_from_address(
@@ -156,6 +157,7 @@ pub trait CreateTxModule:
         require!(!payments.is_empty(), "Nothing to transfer");
         require!(payments.len() <= MAX_TRANSFERS_PER_TX, "Too many tokens");
 
+        // TODO: fn process_transfer_data
         let opt_transfer_data = match &opt_transfer_data {
             OptionalValue::Some(transfer_data) => {
                 let (gas_limit, function, args) = transfer_data.clone().into_tuple();
