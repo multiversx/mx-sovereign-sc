@@ -1,3 +1,5 @@
+use core::usize;
+
 use transaction::GasLimit;
 
 use crate::fee_type::FeeType;
@@ -6,6 +8,7 @@ multiversx_sc::imports!();
 multiversx_sc::derive_imports!();
 
 const TOTAL_PERCENTAGE: usize = 10_000;
+const GET_SAFE_PRICE_ENDPOINT: &[u8] = b"get_safe_price";
 
 #[derive(TypeAbi, TopEncode, TopDecode)]
 pub struct FinalPayment<M: ManagedTypeApi> {
@@ -20,7 +23,7 @@ pub struct AddressPercentagePair<M: ManagedTypeApi> {
 }
 
 pub struct SubtractPaymentArguments<M: ManagedTypeApi> {
-    pub fee_token: TokenIdentifier<M>,
+    pub fee_token: TokenIdentifier<M>, //
     pub per_transfer: BigUint<M>,
     pub per_gas: BigUint<M>,
     pub payment: EsdtTokenPayment<M>,
@@ -213,8 +216,19 @@ pub trait SubtractFeeModule:
         mut args: SubtractPaymentArguments<Self::Api>,
     ) -> FinalPayment<Self::Api> {
         let input_payment = args.payment.clone();
-        let payment_amount_in_fee_token =
-            self.get_safe_price(&args.payment.token_identifier, &args.fee_token);
+
+        self.send()
+            .contract_call::<()>(
+                self.price_aggregator_address().get(),
+                GET_SAFE_PRICE_ENDPOINT,
+            )
+            .with_raw_arguments(self.map_args_to_managed_args(&args))
+            .async_call_promise()
+            .with_callback(<Self as SubtractFeeModule>::callbacks(self).get_safe_price_callback())
+            .register_promise();
+
+        let payment_amount_in_fee_token = self.safe_price().get();
+
         args.payment = EsdtTokenPayment::new(
             args.fee_token.clone(),
             0,
@@ -243,6 +257,37 @@ pub trait SubtractFeeModule:
         }
     }
 
+    fn map_args_to_managed_args(
+        &self,
+        args: &SubtractPaymentArguments<Self::Api>,
+    ) -> ManagedArgBuffer<Self::Api> {
+        let mut managed_args = ManagedArgBuffer::new();
+
+        let gas_limit: GasLimit = match args.opt_gas_limit {
+            OptionalValue::None => 0,
+            OptionalValue::Some(gas_limit) => gas_limit,
+        };
+
+        managed_args.push_arg(args.fee_token.clone());
+        managed_args.push_arg(args.per_transfer.clone());
+        managed_args.push_arg(args.per_gas.clone());
+        managed_args.push_arg(args.payment.clone());
+        managed_args.push_arg(args.total_transfers);
+        managed_args.push_arg(gas_limit);
+
+        managed_args
+    }
+
+    #[promises_callback]
+    fn get_safe_price_callback(&self, #[call_result] result: ManagedAsyncCallResult<BigUint>) {
+        match result {
+            ManagedAsyncCallResult::Ok(safe_price) => {
+                self.safe_price().set(safe_price);
+            }
+            ManagedAsyncCallResult::Err(_) => {}
+        }
+    }
+
     #[view(getUsersWhitelist)]
     #[storage_mapper("usersWhitelist")]
     fn users_whitelist(&self) -> UnorderedSetMapper<ManagedAddress>;
@@ -252,4 +297,7 @@ pub trait SubtractFeeModule:
 
     #[storage_mapper("tokensForFees")]
     fn tokens_for_fees(&self) -> UnorderedSetMapper<TokenIdentifier>;
+
+    #[storage_mapper("safePrice")]
+    fn safe_price(&self) -> SingleValueMapper<BigUint>;
 }
