@@ -67,7 +67,7 @@ where
 
         b_mock
             .execute_tx(&owner, &bridge_wrapper, &rust_zero, |sc| {
-                sc.init(0, managed_address!(&owner), MultiValueEncoded::new());
+                sc.init(false, 0, managed_address!(&owner), MultiValueEncoded::new());
                 sc.set_fee_market_address(managed_address!(fee_market_wrapper.address_ref()));
                 sc.set_max_tx_batch_size(1);
                 sc.set_paused(false);

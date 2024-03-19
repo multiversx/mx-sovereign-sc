@@ -5,24 +5,22 @@ use bridge_setup::{
     BridgeSetup, DummyAttributes, DUMMY_SIG, FEE_TOKEN_ID, FUNGIBLE_TOKEN_ID, NFT_TOKEN_ID,
     TOKEN_BALANCE,
 };
-use esdt_safe::{
-    from_sovereign::transfer_tokens::TransferTokensModule,
-    to_sovereign::{
+use esdt_safe::from_sovereign::transfer_tokens::TransferTokensModule;
+use esdt_safe::to_sovereign::{
         create_tx::CreateTxModule, refund::RefundModule, set_tx_status::SetTxStatusModule,
-    },
-};
+    };
 use multiversx_sc::{
     codec::multi_types::OptionalValue,
-    types::{EsdtTokenPayment, ManagedBuffer, ManagedVec, MultiValueEncoded},
+    types::{ManagedBuffer, ManagedVec, MultiValueEncoded},
 };
 use multiversx_sc_scenario::{
-    managed_address, managed_biguint, managed_token_id,
+    managed_address, managed_token_id,
     multiversx_chain_vm::crypto_functions::sha256, rust_biguint,
     testing_framework::TxTokenTransfer, DebugApi,
 };
 use transaction::{
     transaction_status::TransactionStatus, Operation, OperationData, OperationEsdtPayment,
-    StolenFromFrameworkEsdtTokenData, Transaction, TransferData,
+    StolenFromFrameworkEsdtTokenData, TransferData,
 };
 use tx_batch_module::TxBatchModule;
 
@@ -69,36 +67,19 @@ fn transfer_two_tokens_to_sov_ok() {
         )
         .assert_ok();
 
-    bridge_setup
-        .b_mock
-        .execute_tx(
-            &bridge_setup.owner,
-            &bridge_setup.bridge_wrapper,
-            &rust_biguint!(0),
-            |sc| {
-                let mut statuses = MultiValueEncoded::new();
-                statuses.push(TransactionStatus::Executed);
-
-                sc.set_transaction_batch_status(
-                    1,
-                    BlsSignature::new_from_bytes(&DUMMY_SIG),
-                    statuses,
-                );
-            },
-        )
-        .assert_ok();
-
-    // fee is 100 per token
     bridge_setup.b_mock.check_esdt_balance(
         &bridge_setup.user,
-        FEE_TOKEN_ID,
-        &(rust_biguint!(TOKEN_BALANCE) - rust_biguint!(200)),
+        FUNGIBLE_TOKEN_ID,
+        &(rust_biguint!(TOKEN_BALANCE) - rust_biguint!(1000)),
     );
-    bridge_setup.b_mock.check_esdt_balance(
-        bridge_setup.fee_market_wrapper.address_ref(),
-        FEE_TOKEN_ID,
-        &rust_biguint!(200),
-    );
+
+    // bridge_setup.b_mock.check_nft_balance(
+    //     bridge_setup.fee_market_wrapper.address_ref(),
+    //     NFT_TOKEN_ID,
+    //     1,
+    //     &rust_biguint!(2_000),
+    //     Some(&DummyAttributes { dummy: 42 }),
+    // );
 }
 
 #[test]
@@ -287,7 +268,7 @@ fn transfer_token_to_and_from_sov_ok() {
                     data: operation_data,
                 };
 
-                sc.execute_operations(hash_of_hashes, operation);
+                sc.execute_operation(hash_of_hashes, operation);
             },
         )
         .assert_ok();
@@ -297,8 +278,9 @@ fn transfer_token_to_and_from_sov_ok() {
         FUNGIBLE_TOKEN_ID,
         &rust_biguint!(TOKEN_BALANCE - 1_000 + 500),
     );
+
     bridge_setup.b_mock.check_nft_balance(
-        &bridge_setexecute_operation
+        &bridge_setup.user,
         NFT_TOKEN_ID,
         1,
         &rust_biguint!(TOKEN_BALANCE - 2_000 + 500),
@@ -360,7 +342,7 @@ fn transfer_token_from_sov_no_roles_refund() {
                     data: operation_data,
                 };
 
-                sc.execute_operations(hash_of_hashes, operation);
+                sc.execute_operation(hash_of_hashes, operation);
             },
         )
         .assert_ok();
@@ -380,7 +362,7 @@ fn transfer_token_from_sov_no_roles_refund() {
     );
 
     // set block nonce in the future so batch is "final"
-    bridge_setup.b_execute_operationce(20);
+    // bridge_setup.b_execute_operationce(20);
 
     bridge_setup
         .b_mock

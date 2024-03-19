@@ -28,24 +28,24 @@ struct ESDTSafeTestState {
     signers: [u8],
 }
 
-impl ESDTSafeTestState {
-    fn new() -> Self {
-        let mut world = world();
-
-        world.set_state_step(
-            SetStateStep::new()
-                .put_account(INITIATOR_ADDRESS_EXPR, Account::new().nonce(1))
-        );
-
-        let initiator_address = AddressValue::from(INITIATOR_ADDRESS_EXPR).to_address();
-        let min_valid_signers = SIGNERS_COUNT;
-        let signers = ManagedByteArray::new_from_bytes(&[u8, 32]);
-
-        Self {
-            world,
-            min_valid_signers,
-            initiator_address,
-            signers,
-        }
-    }
-}
+// impl ESDTSafeTestState {
+//     fn new() -> Self {
+//         let mut world = world();
+//
+//         world.set_state_step(
+//             SetStateStep::new()
+//                 .put_account(INITIATOR_ADDRESS_EXPR, Account::new().nonce(1))
+//         );
+//
+//         let initiator_address = AddressValue::from(INITIATOR_ADDRESS_EXPR).to_address();
+//         let min_valid_signers = SIGNERS_COUNT;
+//         let signers = ManagedByteArray::new_from_bytes(&[u8, 32]);
+//
+//         Self {
+//             world,
+//             min_valid_signers,
+//             initiator_address,
+//             signers,
+//         }
+//     }
+// }
