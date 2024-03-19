@@ -138,6 +138,7 @@ pub trait CreateTxModule:
         >,
     ) {
         require!(self.not_paused(), "Cannot create transaction while paused");
+
         let fee_market_address = self.fee_market_address().get();
         let mut payments = self.call_value().all_esdt_transfers().clone_value();
         let fee_enabled_mapper = SingleValueMapper::new_from_address(
@@ -159,6 +160,7 @@ pub trait CreateTxModule:
             OptionalValue::Some(transfer_data) => {
                 let (gas_limit, function, args) = transfer_data.clone().into_tuple();
                 let max_gas_limit = self.max_user_tx_gas_limit().get();
+
                 require!(gas_limit <= max_gas_limit, "Gas limit too high");
 
                 require!(
@@ -191,6 +193,7 @@ pub trait CreateTxModule:
                 && !self.token_whitelist().contains(&payment.token_identifier)
             {
                 refundable_payments.push(payment.clone());
+
                 continue;
             } else {
                 total_tokens_for_fees += 1;
@@ -221,37 +224,42 @@ pub trait CreateTxModule:
                     .multiversx_to_sovereign_token_id(&payment.token_identifier)
                     .get();
 
-                if sov_token_id.is_valid_esdt_identifier() {
-                    self.send().esdt_local_burn(
-                        &payment.token_identifier,
-                        payment.token_nonce,
-                        &payment.amount,
-                    );
-
-                    let mut sov_token_nonce = 0;
-
-                    if payment.token_nonce > 0 {
-                        sov_token_nonce = self
-                            .multiversx_esdt_token_info_mapper(
-                                &payment.token_identifier,
-                                &payment.token_nonce,
-                            )
-                            .get()
-                            .token_nonce;
-                    }
-
+                if !sov_token_id.is_valid_esdt_identifier() {
                     event_payments.push(MultiValue3((
-                        sov_token_id,
-                        sov_token_nonce,
-                        current_token_data.clone()
-                    )));
-                } else {
-                    event_payments.push(MultiValue3((
-                        sov_token_id.clone(),
+                        payment.token_identifier,
                         payment.token_nonce,
                         current_token_data.clone(),
                     )));
+
+                    continue;
                 }
+
+                self.send().esdt_local_burn(
+                    &payment.token_identifier,
+                    payment.token_nonce,
+                    &payment.amount,
+                );
+
+                let mut sov_token_nonce = 0;
+
+                if payment.token_nonce > 0 {
+                    sov_token_nonce = self
+                        .multiversx_esdt_token_info_mapper(
+                            &payment.token_identifier,
+                            &payment.token_nonce,
+                        )
+                        .take()
+                        .token_nonce;
+
+                    self.sovereign_esdt_token_info_mapper(&sov_token_id, &sov_token_nonce)
+                        .take();
+                }
+
+                event_payments.push(MultiValue3((
+                    sov_token_id,
+                    sov_token_nonce,
+                    current_token_data.clone(),
+                )));
             }
         }
 

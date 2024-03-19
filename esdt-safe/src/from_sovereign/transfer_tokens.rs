@@ -97,14 +97,11 @@ pub trait TransferTokensModule:
                 token_nonce: nft_nonce,
             });
 
-            self.multiversx_esdt_token_info_mapper(
-                &mx_token_id.clone(),
-                &nft_nonce,
-            )
-            .set(EsdtTokenInfo {
-                token_identifier: operation_token.token_identifier,
-                token_nonce: operation_token.token_nonce,
-            });
+            self.multiversx_esdt_token_info_mapper(&mx_token_id.clone(), &nft_nonce)
+                .set(EsdtTokenInfo {
+                    token_identifier: operation_token.token_identifier,
+                    token_nonce: operation_token.token_nonce,
+                });
 
             output_payments.push(OperationEsdtPayment {
                 token_identifier: mx_token_id,
@@ -206,32 +203,26 @@ pub trait TransferTokensModule:
                 .sovereign_to_multiversx_token_id(&operation_token.token_identifier)
                 .get();
 
-            if let TokenMapperState::Token(token_id) = mx_token_id_state {
-                if operation_token.token_nonce == 0 {
-                    self.send()
-                        .esdt_local_burn(&token_id, 0, &operation_token.token_data.amount);
+            if let TokenMapperState::Token(mx_token_id) = mx_token_id_state {
+                let mut mx_token_nonce = 0;
 
-                    continue;
+                if operation_token.token_nonce > 0 {
+                    mx_token_nonce = self
+                        .sovereign_esdt_token_info_mapper(
+                            &operation_token.token_identifier,
+                            &operation_token.token_nonce,
+                        )
+                        .take()
+                        .token_nonce;
+
+                    self.multiversx_esdt_token_info_mapper(&mx_token_id, &mx_token_nonce);
                 }
 
-                let esdt_token_info = self
-                    .sovereign_esdt_token_info_mapper(
-                        &operation_token.token_identifier,
-                        &operation_token.token_nonce,
-                    )
-                    .get();
-
                 self.send().esdt_local_burn(
-                    &esdt_token_info.token_identifier,
-                    esdt_token_info.token_nonce,
+                    &mx_token_id,
+                    mx_token_nonce,
                     &operation_token.token_data.amount,
                 );
-
-                self.sovereign_esdt_token_info_mapper(
-                    &operation_token.token_identifier,
-                    &operation_token.token_nonce,
-                )
-                .take();
             }
         }
 
