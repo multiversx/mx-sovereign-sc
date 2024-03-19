@@ -270,17 +270,16 @@ pub trait CreateTxModule:
 
         match fees_payment {
             OptionalValue::Some(fee) => {
+                let mut gas = 0;
+
                 if let Some(transfer_data) = &opt_transfer_data {
-                    let _final_payments: FinalPayment<Self::Api> = self
-                        .fee_market_proxy(fee_market_address)
-                        .subtract_fee(
-                            caller.clone(),
-                            total_tokens_for_fees,
-                            transfer_data.gas_limit,
-                        )
-                        .with_esdt_transfer(fee)
-                        .execute_on_dest_context();
+                    gas = transfer_data.gas_limit;
                 }
+
+                let _: FinalPayment<Self::Api> = self.fee_market_proxy(fee_market_address)
+                    .subtract_fee(caller.clone(), total_tokens_for_fees, gas)
+                    .with_esdt_transfer(fee)
+                    .execute_on_dest_context();
             }
             OptionalValue::None => (),
         };
