@@ -231,7 +231,7 @@ pub trait CreateTxModule:
                     &payment.amount,
                 );
 
-                self.sovereign_esdt_token_info_mapper(
+                self.multiversx_esdt_token_info_mapper(
                     &payment.token_identifier,
                     &payment.token_nonce,
                 )
