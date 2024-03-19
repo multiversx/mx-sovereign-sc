@@ -261,16 +261,16 @@ pub trait CreateTxModule:
                         continue;
                     }
 
-                    let multiversx_esdt_token_info = self
-                        .multiversx_esdt_token_info_mapper(
+                    let sovereign_esdt_token_info = self
+                        .sovereign_esdt_token_info_mapper(
                             &payment.token_identifier,
                             &payment.token_nonce,
                         )
                         .get();
 
                     self.send().esdt_local_burn(
-                        &multiversx_esdt_token_info.token_identifier,
-                        multiversx_esdt_token_info.token_nonce,
+                        &sovereign_esdt_token_info.token_identifier,
+                        sovereign_esdt_token_info.token_nonce,
                         &payment.amount,
                     );
 
@@ -282,7 +282,7 @@ pub trait CreateTxModule:
 
                     event_payments.push(MultiValue3((
                         sov_token_id.clone(),
-                        multiversx_esdt_token_info.token_nonce,
+                        sovereign_esdt_token_info.token_nonce,
                         current_token_data.clone(),
                     )));
                 } else {
