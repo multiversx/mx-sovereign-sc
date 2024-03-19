@@ -23,7 +23,7 @@ pub trait TokenMappingModule:
         num_decimals: usize,
     ) {
         require!(
-            self.is_sovereign_chain_mapper().get(),
+            self.is_sovereign_chain().get(),
             "Invalid method to call"
         );
         let issue_cost = self.call_value().egld_value().clone_value();
@@ -152,5 +152,5 @@ pub trait TokenMappingModule:
     ) -> SingleValueMapper<EsdtTokenInfo<Self::Api>>;
 
     #[storage_mapper("isSovereignChain")]
-    fn is_sovereign_chain_mapper(&self) -> SingleValueMapper<bool>;
+    fn is_sovereign_chain(&self) -> SingleValueMapper<bool>;
 }

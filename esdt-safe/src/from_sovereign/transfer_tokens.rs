@@ -24,7 +24,7 @@ pub trait TransferTokensModule:
 {
     #[endpoint(executeBridgeOp)]
     fn execute_operation(&self, hash_of_hashes: ManagedBuffer, operation: Operation<Self::Api>) {
-        require!(self.is_sovereign_chain_mapper().get(), "Invalid method to call");
+        require!(self.is_sovereign_chain().get(), "Invalid method to call");
         require!(self.not_paused(), "Cannot transfer while paused");
 
         let (operation_hash, is_registered) =

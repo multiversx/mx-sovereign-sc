@@ -40,7 +40,7 @@ pub trait EsdtSafe:
         initiator_address: ManagedAddress,
         signers: MultiValueEncoded<ManagedAddress>,
     ) {
-        self.is_sovereign_chain_mapper().set(is_sovereign_chain);
+        self.is_sovereign_chain().set(is_sovereign_chain);
         self.max_tx_batch_size().set(DEFAULT_MAX_TX_BATCH_SIZE);
         self.max_tx_batch_block_duration()
             .set(DEFAULT_MAX_TX_BATCH_BLOCK_DURATION);
