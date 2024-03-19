@@ -188,6 +188,7 @@ pub trait CreateTxModule:
             ManagedVec::new();
 
         for payment in &payments {
+            // TODO: fn validate_payment 
             self.require_below_max_amount(&payment.token_identifier, &payment.amount);
             self.require_token_not_blacklisted(&payment.token_identifier);
 

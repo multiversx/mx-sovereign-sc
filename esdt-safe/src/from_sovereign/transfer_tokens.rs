@@ -23,8 +23,8 @@ pub trait TransferTokensModule:
     + utils::UtilsModule
     + to_sovereign::events::EventsModule
 {
-    #[endpoint(executeBridgeOp)]
-    fn execute_operation(&self, hash_of_hashes: ManagedBuffer, operation: Operation<Self::Api>) {
+    #[endpoint(executeBridgeOps)]
+    fn execute_operations(&self, hash_of_hashes: ManagedBuffer, operation: Operation<Self::Api>) {
         require!(self.is_sovereign_chain().get(), "Invalid method to call");
         require!(self.not_paused(), "Cannot transfer while paused");
 
