@@ -217,12 +217,19 @@ pub trait SubtractFeeModule:
     ) -> FinalPayment<Self::Api> {
         let input_payment = args.payment.clone();
 
+        let mut gas_limit = 0;
+
+        if let OptionalValue::Some(args_gas_limit) = args.opt_gas_limit {
+            gas_limit = args_gas_limit;
+        }
+
         self.send()
             .contract_call::<()>(
                 self.price_aggregator_address().get(),
                 GET_SAFE_PRICE_ENDPOINT,
             )
             .with_raw_arguments(self.map_args_to_managed_args(&args))
+            .with_gas_limit(gas_limit)
             .async_call_promise()
             .with_callback(<Self as SubtractFeeModule>::callbacks(self).get_safe_price_callback())
             .register_promise();
