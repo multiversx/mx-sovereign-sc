@@ -2,20 +2,35 @@
 
 use bls_signature::BlsSignature;
 
+mod esdt_safe_proxy {
+    multiversx_sc::imports!();
+
+    #[multiversx_sc::proxy]
+    pub trait EsdtSafeProxy {
+        #[view(registerPendingOperations)]
+        fn register_pending_operations(&self, pending_operations: MultiValueEncoded<ManagedBuffer>);
+    }
+}
+
 multiversx_sc::imports!();
 
 #[multiversx_sc::contract]
 pub trait Multisigverifier: bls_signature::BlsSignatureModule {
     #[init]
-    fn init(&self, bls_pub_keys: MultiValueEncoded<ManagedBuffer>) {
-        for pub_key in bls_pub_keys {
-            self.bls_pub_keys().insert(pub_key);
+    fn init(
+        &self,
+        esdt_safe_address: ManagedAddress,
+        register_ops_whitelist: MultiValueEncoded<ManagedAddress>,
+    ) {
+        self.esdt_safe_address().set(esdt_safe_address);
+
+        for whitelisted_address in register_ops_whitelist {
+            self.register_ops_whitelist().insert(whitelisted_address);
         }
     }
 
     #[endpoint]
     fn upgrade(&self) {}
-    // #endpoint to remove pending hashes
 
     #[endpoint(registerBridgeOps)]
     fn register_bridge_operations(
@@ -23,14 +38,22 @@ pub trait Multisigverifier: bls_signature::BlsSignatureModule {
         signature: BlsSignature<Self::Api>,
         bridge_operations_hash: ManagedBuffer,
         operations_hashes: MultiValueEncoded<ManagedBuffer>,
-        // bitmap: MultiValueEncoded<u8>,
     ) {
-        let mut bitmap = MultiValueEncoded::new();
-        for _ in 0..self.bls_pub_keys().len() {
-            bitmap.push(1);
-        }
+        let caller = self.blockchain().get_caller();
 
-        let is_bls_valid = self.verify_bls(&signature, &bridge_operations_hash, bitmap);
+        require!(
+            self.register_ops_whitelist().contains(&caller),
+            "User has no permission to register an operation"
+        );
+
+        require!(
+            !self
+                .hash_of_hashes_history()
+                .contains(&bridge_operations_hash),
+            "OutGoingTxHashes is already registered"
+        );
+
+        let is_bls_valid = self.verify_bls(&signature, &bridge_operations_hash);
 
         require!(is_bls_valid, "BLS signature is not valid");
 
@@ -39,10 +62,12 @@ pub trait Multisigverifier: bls_signature::BlsSignatureModule {
             operations_hashes.clone(),
         );
 
-        for operation_hash in operations_hashes {
-            self.pending_hashes(bridge_operations_hash.clone())
-                .insert(operation_hash);
-        }
+        self.hash_of_hashes_history()
+            .insert(bridge_operations_hash.clone());
+
+        let _ = self
+            .esdt_safe_proxy(self.esdt_safe_address().get())
+            .register_pending_operations(operations_hashes);
     }
 
     fn calculate_and_check_transfers_hashes(
@@ -69,35 +94,8 @@ pub trait Multisigverifier: bls_signature::BlsSignatureModule {
         &self,
         _signature: &BlsSignature<Self::Api>,
         _bridge_operations_hash: &ManagedBuffer,
-        _bitmap: MultiValueEncoded<u8>,
     ) -> bool {
-        // let mut pub_keys: ManagedVec<ManagedBuffer> = ManagedVec::new();
-        let is_bls_valid = true;
-
-        // for (pub_key, has_signed) in self.bls_pub_keys().iter().zip(bitmap) {
-        //     if has_signed == 1 {
-        //         pub_keys.push(pub_key);
-        //     }
-        // }
-        //
-        // for pub_key in pub_keys.iter() {
-        //     if self.crypto().verify_bls(
-        //         &pub_key,
-        //         &bridge_operations_hash,
-        //         &signature.as_managed_buffer(),
-        //     ) == false
-        //     {
-        //         is_bls_valid = false;
-        //         break;
-        //     }
-        // }
-
-        // if !is_bls_valid {
-        //     false
-        // } else {
-        //     self.is_signature_count_valid(pub_keys.len())
-        // }
-        is_bls_valid
+        true
     }
 
     fn is_signature_count_valid(&self, pub_keys_count: usize) -> bool {
@@ -107,10 +105,18 @@ pub trait Multisigverifier: bls_signature::BlsSignatureModule {
         pub_keys_count > minimum_signatures
     }
 
+    #[proxy]
+    fn esdt_safe_proxy(&self, sc_address: ManagedAddress) -> esdt_safe_proxy::Proxy<Self::Api>;
+
     #[storage_mapper("bls_pub_keys")]
     fn bls_pub_keys(&self) -> SetMapper<ManagedBuffer>;
 
-    // does it work or we use single value
-    #[storage_mapper("pending_hashes")]
-    fn pending_hashes(&self, hash_of_hashes: ManagedBuffer) -> UnorderedSetMapper<ManagedBuffer>;
+    #[storage_mapper("hash_of_hashes_history")]
+    fn hash_of_hashes_history(&self) -> UnorderedSetMapper<ManagedBuffer>;
+
+    #[storage_mapper("esdtSafeAddress")]
+    fn esdt_safe_address(&self) -> SingleValueMapper<ManagedAddress>;
+
+    #[storage_mapper("registerOpsWhitelist")]
+    fn register_ops_whitelist(&self) -> UnorderedSetMapper<ManagedAddress>;
 }
