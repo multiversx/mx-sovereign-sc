@@ -1,4 +1,4 @@
-use multiversx_sc::api::ESDT_MULTI_TRANSFER_FUNC_NAME;
+use multiversx_sc::{api::ESDT_MULTI_TRANSFER_FUNC_NAME, storage::StorageKey};
 use transaction::{BatchId, GasLimit, Operation, OperationData, OperationEsdtPayment};
 
 use crate::to_sovereign;
@@ -29,7 +29,7 @@ pub trait TransferTokensModule:
         require!(self.not_paused(), "Cannot transfer while paused");
 
         let (operation_hash, is_registered) =
-            self.calculate_operation_hash(operation.clone());
+            self.calculate_operation_hash(hash_of_hashes.clone(), operation.clone());
 
         if !is_registered {
             sc_panic!("Operation is not registered");
@@ -39,13 +39,6 @@ pub trait TransferTokensModule:
         let operation_tuple = MultiValue2::from((operation_hash.clone(), operation.clone()));
 
         self.distribute_payments(hash_of_hashes, operation_tuple, minted_operation_tokens);
-    }
-
-    #[endpoint(registerPendingHashes)]
-    fn register_pending_hashes(&self, pending_hashes: MultiValueEncoded<ManagedBuffer>) {
-        for hash in pending_hashes {
-            self.pending_hashes().insert(hash);
-        }
     }
 
     fn mint_tokens(
@@ -188,13 +181,13 @@ pub trait TransferTokensModule:
         match result {
             ManagedAsyncCallResult::Ok(_) => {
                 self.execute_bridge_operation_event(hash_of_hashes, operation_hash.clone());
-
-                self.pending_hashes().swap_remove(&operation_hash);
             }
             ManagedAsyncCallResult::Err(_) => {
                 self.emit_transfer_failed_events(&hash_of_hashes, operation_tuple);
             }
         }
+
+        // self.pending_hashes().swap_remove(&operation_hash);
     }
 
     fn emit_transfer_failed_events(
@@ -253,9 +246,15 @@ pub trait TransferTokensModule:
     // use pending_operations as param
     fn calculate_operation_hash(
         &self,
+        hash_of_hashes: ManagedBuffer,
         operation: Operation<Self::Api>,
     ) -> (ManagedBuffer, bool) {
         let mut serialized_data = ManagedBuffer::new();
+        let mut storage_key = StorageKey::from("pending_hashes");
+        storage_key.append_item(&hash_of_hashes);
+
+        let pending_operations_mapper =
+            UnorderedSetMapper::new_from_address(self.multisig_address().get(), storage_key);
 
         if let core::result::Result::Err(err) = operation.top_encode(&mut serialized_data) {
             sc_panic!("Transfer data encode error: {}", err.message_bytes());
@@ -264,7 +263,7 @@ pub trait TransferTokensModule:
         let sha256 = self.crypto().sha256(&serialized_data);
         let hash = sha256.as_managed_buffer().clone();
 
-        if self.pending_hashes().contains(&hash) {
+        if pending_operations_mapper.contains(&hash) {
             (hash, true)
         } else {
             (hash, false)
@@ -274,12 +273,12 @@ pub trait TransferTokensModule:
     #[storage_mapper("nextBatchId")]
     fn next_batch_id(&self) -> SingleValueMapper<BatchId>;
 
+    #[storage_mapper("pending_hashes")]
+    fn pending_hashes(&self, hash_of_hashes: ManagedBuffer) -> UnorderedSetMapper<ManagedBuffer>;
+
     #[storage_mapper("multisig_address")]
     fn multisig_address(&self) -> SingleValueMapper<ManagedAddress>;
 
     #[storage_mapper("sovereign_bridge_address")]
     fn sovereign_bridge_address(&self) -> SingleValueMapper<ManagedAddress>;
-
-    #[storage_mapper("pending_operations")]
-    fn pending_hashes(&self) -> UnorderedSetMapper<ManagedBuffer>;
 }

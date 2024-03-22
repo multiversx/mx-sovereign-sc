@@ -4,7 +4,6 @@ pub type AggregatorOutputType<M> =
     OptionalValue<MultiValue6<u32, ManagedBuffer<M>, ManagedBuffer<M>, u64, BigUint<M>, u8>>;
 
 pub const DASH_TICKER_LEN: usize = 7;
-pub const HOUR_IN_SECONDS: u64 = 60 * 60;
 
 pub struct AggregatorResult<M: ManagedTypeApi> {
     pub round_id: u32,
@@ -52,21 +51,6 @@ mod price_aggregator_proxy {
     }
 }
 
-mod safe_price_proxy {
-    multiversx_sc::imports!();
-
-    #[multiversx_sc::proxy]
-    pub trait SafePriceProxy {
-        #[view(getSafePriceByTimestampOffset)]
-        fn get_safe_price_by_timestamp_offset(
-            &self,
-            pair_address: ManagedAddress,
-            timestamp_offset: u64,
-            input_payments: EsdtTokenPayment,
-        ) -> EsdtTokenPayment;
-    }
-}
-
 #[multiversx_sc::module]
 pub trait PriceAggregatorModule {
     fn get_safe_price(
@@ -77,11 +61,6 @@ pub trait PriceAggregatorModule {
         let price_aggregator_address = self.price_aggregator_address().get();
         let input_ticker = self.get_token_ticker(input_token_id);
         let output_ticker = self.get_token_ticker(output_token_id);
-
-        // let safe_price: EsdtTokenPayment = self
-        //     .pair_proxy(self.safe_price_pair().get())
-        //     .get_safe_price_by_timestamp_offset(self.safe_price_pair().get(), HOUR_IN_SECONDS, )
-        //     .execute_on_dest_context();
 
         let agg_output: AggregatorOutputType<Self::Api> = self
             .price_aggregator_proxy(price_aggregator_address)
@@ -107,15 +86,9 @@ pub trait PriceAggregatorModule {
     #[storage_mapper("priceAggregatorAddress")]
     fn price_aggregator_address(&self) -> SingleValueMapper<ManagedAddress>;
 
-    #[storage_mapper("safePricePair")]
-    fn safe_price_pair(&self) -> SingleValueMapper<ManagedAddress>;
-
     #[proxy]
     fn price_aggregator_proxy(
         &self,
         to: ManagedAddress,
     ) -> price_aggregator_proxy::Proxy<Self::Api>;
-
-    #[proxy]
-    fn pair_proxy(&self, sc_address: ManagedAddress) -> safe_price_proxy::Proxy<Self::Api>;
 }

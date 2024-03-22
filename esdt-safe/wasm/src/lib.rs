@@ -5,10 +5,10 @@
 ////////////////////////////////////////////////////
 
 // Init:                                 1
-// Endpoints:                           41
+// Endpoints:                           39
 // Async Callback:                       1
 // Promise callbacks:                    1
-// Total number of exported functions:  44
+// Total number of exported functions:  42
 
 #![no_std]
 #![allow(internal_features)]
@@ -38,10 +38,8 @@ multiversx_sc_wasm_adapter::endpoints! {
         addSigners => add_signers
         removeSigners => remove_signers
         registerToken => register_token
-        clearRegisteredSovereignToken => clear_registered_sovereign_token
-        clearRegisteredMultiversxToken => clear_registered_multiversx_token
-        executeBridgeOps => execute_operations
-        registerPendingHashes => register_pending_hashes
+        clearRegisteredToken => clear_registered_token
+        executeBridgeOp => execute_operation
         setMaxTxBatchSize => set_max_tx_batch_size
         setMaxTxBatchBlockDuration => set_max_tx_batch_block_duration
         getCurrentTxBatch => get_current_tx_batch
