@@ -24,7 +24,7 @@ pub trait Multisigverifier: bls_signature::BlsSignatureModule {
         operations_hashes: MultiValueEncoded<ManagedBuffer>,
     ) {
         require!(
-            !self.pending_hashes(bridge_operations_hash.clone()).is_empty(),
+            self.pending_hashes(bridge_operations_hash.clone()).is_empty(),
             "The OutGoingTxsHash has already been registered"
         );
 
