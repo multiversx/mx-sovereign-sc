@@ -5,6 +5,20 @@ use crate::to_sovereign;
 
 use super::token_mapping::EsdtTokenInfo;
 
+mod multisig_verifier_proxy {
+    multiversx_sc::imports!();
+
+    #[multiversx_sc::proxy]
+    pub trait MultisigVerifierProxy {
+        #[view(deleteExecutedHashes)]
+        fn remove_executed_hash(
+            &self,
+            hash_of_hashes: &ManagedBuffer,
+            operation_hash: &ManagedBuffer,
+        );
+    }
+}
+
 multiversx_sc::imports!();
 
 const CALLBACK_GAS: GasLimit = 10_000_000; // Increase if not enough
@@ -25,7 +39,11 @@ pub trait TransferTokensModule:
 {
     #[endpoint(executeBridgeOps)]
     fn execute_operations(&self, hash_of_hashes: ManagedBuffer, operation: Operation<Self::Api>) {
-        require!(self.is_sovereign_chain().get(), "Invalid method to call");
+        require!(
+            !self.is_sovereign_chain().get(),
+            "Invalid method to call in current chain"
+        );
+
         require!(self.not_paused(), "Cannot transfer while paused");
 
         let (operation_hash, is_registered) =
@@ -180,14 +198,17 @@ pub trait TransferTokensModule:
 
         match result {
             ManagedAsyncCallResult::Ok(_) => {
-                self.execute_bridge_operation_event(hash_of_hashes, operation_hash.clone());
+                self.execute_bridge_operation_event(hash_of_hashes.clone(), operation_hash.clone());
             }
             ManagedAsyncCallResult::Err(_) => {
                 self.emit_transfer_failed_events(&hash_of_hashes, operation_tuple);
             }
         }
 
-        // self.pending_hashes().swap_remove(&operation_hash);
+        let _: () = self
+            .multisig_verifier_proxy(self.multisig_address().get())
+            .remove_executed_hash(&hash_of_hashes, &operation_hash)
+            .execute_on_dest_context();
     }
 
     fn emit_transfer_failed_events(
@@ -269,6 +290,12 @@ pub trait TransferTokensModule:
             (hash, false)
         }
     }
+
+    #[proxy]
+    fn multisig_verifier_proxy(
+        &self,
+        multisig_verifier_address: ManagedAddress,
+    ) -> multisig_verifier_proxy::Proxy<Self::Api>;
 
     #[storage_mapper("nextBatchId")]
     fn next_batch_id(&self) -> SingleValueMapper<BatchId>;

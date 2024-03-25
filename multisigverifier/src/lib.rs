@@ -23,6 +23,11 @@ pub trait Multisigverifier: bls_signature::BlsSignatureModule {
         bridge_operations_hash: ManagedBuffer,
         operations_hashes: MultiValueEncoded<ManagedBuffer>,
     ) {
+        require!(
+            !self.pending_hashes(bridge_operations_hash.clone()).is_empty(),
+            "The OutGoingTxsHash has already been registered"
+        );
+
         let is_bls_valid = self.verify_bls(&signature, &bridge_operations_hash);
 
         require!(is_bls_valid, "BLS signature is not valid");
@@ -51,11 +56,6 @@ pub trait Multisigverifier: bls_signature::BlsSignatureModule {
         require!(
             caller == self.esdt_safe_address().get(),
             "Only ESDT Safe contract can call this endpoint"
-        );
-
-        require!(
-            self.pending_hashes(hash_of_hashes.clone()).is_empty(),
-            "The OutGoingTxsHash has already been registered"
         );
 
         self.pending_hashes(hash_of_hashes.clone())
