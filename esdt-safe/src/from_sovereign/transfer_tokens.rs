@@ -10,7 +10,7 @@ mod multisig_verifier_proxy {
 
     #[multiversx_sc::proxy]
     pub trait MultisigVerifierProxy {
-        #[view(deleteExecutedHashes)]
+        #[view(removeExecutedHash)]
         fn remove_executed_hash(
             &self,
             hash_of_hashes: &ManagedBuffer,
