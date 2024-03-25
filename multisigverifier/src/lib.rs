@@ -24,7 +24,7 @@ pub trait Multisigverifier: bls_signature::BlsSignatureModule {
         operations_hashes: MultiValueEncoded<ManagedBuffer>,
     ) {
         require!(
-            self.hash_of_hashes_history()
+            !self.hash_of_hashes_history()
                 .contains(&bridge_operations_hash),
             "The OutGoingTxsHash has already been registered"
         );
@@ -43,7 +43,7 @@ pub trait Multisigverifier: bls_signature::BlsSignatureModule {
                 .insert(operation_hash);
         }
 
-        // insert here
+        self.hash_of_hashes_history().insert(bridge_operations_hash);
     }
 
     #[only_owner]
