@@ -5,20 +5,6 @@ use crate::to_sovereign;
 
 use super::token_mapping::EsdtTokenInfo;
 
-mod multisig_verifier_proxy {
-    multiversx_sc::imports!();
-
-    #[multiversx_sc::proxy]
-    pub trait MultisigVerifierProxy {
-        #[view(removeExecutedHash)]
-        fn remove_executed_hash(
-            &self,
-            hash_of_hashes: &ManagedBuffer,
-            operation_hash: &ManagedBuffer,
-        );
-    }
-}
-
 multiversx_sc::imports!();
 
 const CALLBACK_GAS: GasLimit = 10_000_000; // Increase if not enough
@@ -301,7 +287,7 @@ pub trait TransferTokensModule:
     fn next_batch_id(&self) -> SingleValueMapper<BatchId>;
 
     #[storage_mapper("pending_hashes")]
-    fn pending_hashes(&self, hash_of_hashes: ManagedBuffer) -> UnorderedSetMapper<ManagedBuffer>;
+    fn pending_hashes(&self, hash_of_hashes: &ManagedBuffer) -> UnorderedSetMapper<ManagedBuffer>;
 
     #[storage_mapper("multisig_address")]
     fn multisig_address(&self) -> SingleValueMapper<ManagedAddress>;

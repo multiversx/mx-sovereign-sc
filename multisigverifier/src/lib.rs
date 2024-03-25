@@ -24,7 +24,8 @@ pub trait Multisigverifier: bls_signature::BlsSignatureModule {
         operations_hashes: MultiValueEncoded<ManagedBuffer>,
     ) {
         require!(
-            self.pending_hashes(bridge_operations_hash.clone()).is_empty(),
+            self.hash_of_hashes_history()
+                .contains(&bridge_operations_hash),
             "The OutGoingTxsHash has already been registered"
         );
 
@@ -38,9 +39,11 @@ pub trait Multisigverifier: bls_signature::BlsSignatureModule {
         );
 
         for operation_hash in operations_hashes {
-            self.pending_hashes(bridge_operations_hash.clone())
+            self.pending_hashes(&bridge_operations_hash)
                 .insert(operation_hash);
         }
+
+        // insert here
     }
 
     #[only_owner]
@@ -58,7 +61,7 @@ pub trait Multisigverifier: bls_signature::BlsSignatureModule {
             "Only ESDT Safe contract can call this endpoint"
         );
 
-        self.pending_hashes(hash_of_hashes.clone())
+        self.pending_hashes(hash_of_hashes)
             .swap_remove(operation_hash);
     }
 
@@ -101,7 +104,10 @@ pub trait Multisigverifier: bls_signature::BlsSignatureModule {
     fn bls_pub_keys(&self) -> SetMapper<ManagedBuffer>;
 
     #[storage_mapper("pending_hashes")]
-    fn pending_hashes(&self, hash_of_hashes: ManagedBuffer) -> UnorderedSetMapper<ManagedBuffer>;
+    fn pending_hashes(&self, hash_of_hashes: &ManagedBuffer) -> UnorderedSetMapper<ManagedBuffer>;
+
+    #[storage_mapper("hash_of_hashes_history")]
+    fn hash_of_hashes_history(&self) -> UnorderedSetMapper<ManagedBuffer>;
 
     #[storage_mapper("esdtSafeAddress")]
     fn esdt_safe_address(&self) -> SingleValueMapper<ManagedAddress>;
