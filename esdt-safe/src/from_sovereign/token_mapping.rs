@@ -10,7 +10,7 @@ pub struct EsdtTokenInfo<M: ManagedTypeApi> {
 
 #[multiversx_sc::module]
 pub trait TokenMappingModule:
-    multiversx_sc_modules::default_issue_callbacks::DefaultIssueCallbacksModule 
+    multiversx_sc_modules::default_issue_callbacks::DefaultIssueCallbacksModule
 {
     #[payable("EGLD")]
     #[endpoint(registerToken)]
@@ -23,15 +23,13 @@ pub trait TokenMappingModule:
         num_decimals: usize,
     ) {
         require!(
-            self.is_sovereign_chain().get(),
-            "Invalid method to call"
+            !self.is_sovereign_chain().get(),
+            "Invalid method to call in current chain"
         );
+
         let issue_cost = self.call_value().egld_value().clone_value();
 
-        require!(
-            issue_cost == DEFAULT_ISSUE_COST,
-            "eGLD value should be 0.5"
-        );
+        require!(issue_cost == DEFAULT_ISSUE_COST, "eGLD value should be 0.5");
 
         match token_type {
             EsdtTokenType::Invalid => sc_panic!("Invalid type"),
