@@ -502,6 +502,7 @@ dependencies = [
  "fee-market",
  "hex",
  "max-bridged-amount-module",
+ "multisigverifier",
  "multiversx-sc",
  "multiversx-sc-modules",
  "multiversx-sc-scenario",
@@ -980,6 +981,25 @@ dependencies = [
  "libc",
  "wasi 0.11.0+wasi-snapshot-preview1",
  "windows-sys",
+]
+
+[[package]]
+name = "multisigverifier"
+version = "0.0.0"
+dependencies = [
+ "bls-signature",
+ "multiversx-sc",
+ "multiversx-sc-scenario",
+ "num-bigint",
+ "transaction",
+]
+
+[[package]]
+name = "multisigverifier-meta"
+version = "0.0.0"
+dependencies = [
+ "multisigverifier",
+ "multiversx-sc-meta",
 ]
 
 [[package]]

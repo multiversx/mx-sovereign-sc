@@ -7,7 +7,7 @@ pub mod fee_common;
 pub mod fee_type;
 pub mod price_aggregator;
 pub mod subtract_fee;
-pub mod safe_price_query;
+// pub mod safe_price_query;
 
 #[multiversx_sc::contract]
 pub trait FeeMarket:
@@ -16,7 +16,7 @@ pub trait FeeMarket:
     + fee_type::FeeTypeModule
     + subtract_fee::SubtractFeeModule
     + price_aggregator::PriceAggregatorModule
-    + safe_price_query::SafePriceQueryModule
+    // + safe_price_query::SafePriceQueryModule
     + utils::UtilsModule
     + bls_signature::BlsSignatureModule
 {
