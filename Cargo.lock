@@ -1606,6 +1606,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "router-mock-meta"
+version = "0.0.0"
+dependencies = [
+ "multiversx-sc-meta",
+ "router-mock",
+]
+
+[[package]]
 name = "ruplacer"
 version = "0.8.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
