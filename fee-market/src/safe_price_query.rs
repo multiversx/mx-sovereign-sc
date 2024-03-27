@@ -20,7 +20,8 @@ pub trait SafePriceQueryModule {
                 token_to_wegld_pair,
                 wegld_to_usdc_pair,
             } => {
-                let wegld_price = self.call_get_safe_price(token_to_wegld_pair, token_payment.clone());
+                let wegld_price =
+                    self.call_get_safe_price(token_to_wegld_pair, token_payment.clone());
 
                 self.call_get_safe_price(wegld_to_usdc_pair, token_payment)
             }
@@ -38,7 +39,8 @@ pub trait SafePriceQueryModule {
     ) -> BigUint {
         let safe_price_payment: EsdtTokenPayment = self
             .pair_proxy(self.safe_price_pair_address().get())
-            .get_safe_price_by_timestamp_offset(pair_address, HOUR_IN_SECONDS, token_payment).execute_on_dest_context();
+            .get_safe_price_by_timestamp_offset(pair_address, HOUR_IN_SECONDS, token_payment)
+            .execute_on_dest_context();
 
         safe_price_payment.amount
     }
