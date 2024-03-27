@@ -1,6 +1,6 @@
 use transaction::GasLimit;
 
-use crate::fee_type::FeeType;
+use crate::{fee_type::FeeType, safe_price_query};
 
 multiversx_sc::imports!();
 multiversx_sc::derive_imports!();
@@ -35,6 +35,7 @@ pub trait SubtractFeeModule:
     + crate::fee_common::CommonFeeModule
     + crate::price_aggregator::PriceAggregatorModule
     + utils::UtilsModule
+    + safe_price_query::SafePriceQueryModule
     + bls_signature::BlsSignatureModule
 {
     #[only_owner]
