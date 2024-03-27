@@ -21,10 +21,10 @@ path = "../common/bls-signature"
 # git = "https://github.com/multiversx/mx-exchange-sc"
 # rev = "7864719"
 
-[dev-dependencies.pair-mock]
+[dependencies.pair-mock]
 path = "../pair-mock"
 
-[dev-dependencies.router-mock]
+[dependencies.router-mock]
 path = "../router-mock"
 
 [dependencies.multiversx-sc]
