@@ -1,3 +1,4 @@
+use pair_mock::Proxy as _;
 multiversx_sc::imports!();
 
 pub const HOUR_IN_SECONDS: u64 = 60 * 60;
@@ -86,10 +87,10 @@ pub trait SafePriceQueryModule {
     }
 
     #[proxy]
-    fn router_proxy(&self, sc_address: ManagedAddress) -> router::Proxy<Self::Api>;
+    fn router_proxy(&self, sc_address: ManagedAddress) -> router_mock::Proxy<Self::Api>;
 
     #[proxy]
-    fn pair_proxy(&self, sc_address: ManagedAddress) -> safe_price_proxy::Proxy<Self::Api>;
+    fn pair_proxy(&self, sc_address: ManagedAddress) -> pair_mock::Proxy<Self::Api>;
 
     #[storage_mapper("safePricePairAddress")]
     fn safe_price_pair_address(&self) -> SingleValueMapper<ManagedAddress>;

@@ -10,4 +10,6 @@ members = [
   "fee-market/meta",
   "multisigverifier",
   "multisigverifier/meta",
+  "pair-mock",
+  "pair-mock/meta",
 ]
