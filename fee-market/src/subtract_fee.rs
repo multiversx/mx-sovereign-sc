@@ -214,8 +214,12 @@ pub trait SubtractFeeModule:
         mut args: SubtractPaymentArguments<Self::Api>,
     ) -> FinalPayment<Self::Api> {
         let input_payment = args.payment.clone();
-        let payment_amount_in_fee_token =
-            self.get_safe_price(&input_payment, &args.payment.token_identifier, &args.fee_token);
+        let payment_amount_in_fee_token = self.get_safe_price(
+            &input_payment,
+            &args.payment.token_identifier,
+            &args.fee_token,
+        );
+
         args.payment = EsdtTokenPayment::new(
             args.fee_token.clone(),
             0,
