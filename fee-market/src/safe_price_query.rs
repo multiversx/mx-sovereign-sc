@@ -1,3 +1,5 @@
+use crate::price_aggregator;
+
 multiversx_sc::imports!();
 
 pub const HOUR_IN_SECONDS: u64 = 60 * 60;
@@ -11,7 +13,7 @@ pub enum PairQueryResponse<M: ManagedTypeApi> {
 }
 
 #[multiversx_sc::module]
-pub trait SafePriceQueryModule {
+pub trait SafePriceQueryModule: price_aggregator::PriceAggregatorModule {
     fn get_usdc_value(&self, token_id: &TokenIdentifier, amount: &BigUint) -> BigUint {
         let pair_query_response = self.get_pair_to_query(token_id);
 
@@ -20,10 +22,9 @@ pub trait SafePriceQueryModule {
                 token_to_wegld_pair,
                 wegld_to_usdc_pair,
             } => {
-                let wegld_price =
-                    self.call_get_safe_price(token_to_wegld_pair, token_id, amount);
+                let wegld_price = self.call_get_safe_price(token_to_wegld_pair, token_id, amount);
 
-                self.call_get_safe_price(wegld_to_usdc_pair, token_id, amount)
+                self.call_get_safe_price(wegld_to_usdc_pair, token_id, &wegld_price)
             }
 
             PairQueryResponse::TokenToUsdc(pair_address) => {
@@ -53,13 +54,12 @@ pub trait SafePriceQueryModule {
     fn get_pair_to_query(&self, token_id: &TokenIdentifier) -> PairQueryResponse<Self::Api> {
         let wegld_token_id = self.wegld_token_id().get();
         let usdc_token_id = self.usdc_token_id().get();
-        let router_address = self.router_address().get();
 
-        let token_to_wegld_pair = self.call_get_pair(&router_address, &token_id, &wegld_token_id);
+        let token_to_wegld_pair = self.call_get_pair(&token_id, &wegld_token_id);
 
         if !token_to_wegld_pair.is_zero() {
             let wegld_to_usdc_pair =
-                self.call_get_pair(&router_address, &wegld_token_id, &usdc_token_id);
+                self.call_get_pair(&wegld_token_id, &usdc_token_id);
             require!(
                 !wegld_to_usdc_pair.is_zero(),
                 "Invalid WEGLD-USDC pair address from router"
@@ -71,7 +71,7 @@ pub trait SafePriceQueryModule {
             };
         }
 
-        let token_to_usdc_pair = self.call_get_pair(&router_address, &token_id, &usdc_token_id);
+        let token_to_usdc_pair = self.call_get_pair(&token_id, &usdc_token_id);
 
         require!(
             !token_to_usdc_pair.is_zero(),
@@ -83,7 +83,6 @@ pub trait SafePriceQueryModule {
 
     fn call_get_pair(
         &self,
-        router_address: &ManagedAddress,
         first_token_id: &TokenIdentifier,
         second_token_id: &TokenIdentifier,
     ) -> ManagedAddress {

@@ -1,5 +1,3 @@
-use crate::safe_price_query;
-
 multiversx_sc::imports!();
 
 pub type AggregatorOutputType<M> =
@@ -54,7 +52,7 @@ mod price_aggregator_proxy {
 }
 
 #[multiversx_sc::module]
-pub trait PriceAggregatorModule: safe_price_query::SafePriceQueryModule {
+pub trait PriceAggregatorModule {
     fn get_safe_price(
         &self,
         input_token_id: &TokenIdentifier,
