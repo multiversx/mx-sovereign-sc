@@ -287,7 +287,7 @@ fn transfer_token_to_and_from_sov_ok() {
         &rust_biguint!(TOKEN_BALANCE - 1_000 + 500),
     );
     bridge_setup.b_mock.check_nft_balance(
-        &bridge_setup.user,
+        &bridge_setexecute_operation
         NFT_TOKEN_ID,
         1,
         &rust_biguint!(TOKEN_BALANCE - 2_000 + 500),
@@ -360,7 +360,7 @@ fn transfer_token_from_sov_no_roles_refund() {
     );
 
     // set block nonce in the future so batch is "final"
-    bridge_setup.b_mock.set_block_nonce(20);
+    bridge_setup.b_execute_operationce(20);
 
     bridge_setup
         .b_mock

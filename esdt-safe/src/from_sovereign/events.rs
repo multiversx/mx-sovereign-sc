@@ -1,41 +1,21 @@
-use transaction::{BatchId, Transaction, TxId};
-
 multiversx_sc::imports!();
 
 #[multiversx_sc::module]
 pub trait EventsModule {
-    #[event("addRefundTransactionEvent")]
-    fn add_refund_transaction_event(
+    #[event("executedBridgeOp")]
+    fn execute_bridge_operation_event(
         &self,
-        #[indexed] tx_id: TxId,
-        #[indexed] original_tx_id: TxId,
+        #[indexed] hash_of_hashes: ManagedBuffer,
+        #[indexed] hash_of_bridge_op: ManagedBuffer,
     );
 
-    #[event("transferPerformedEvent")]
-    fn transfer_performed_event(
-        &self,
-        #[indexed] batch_id: BatchId,
-        #[indexed] tx_id: TxId,
-        tx: Transaction<Self::Api>,
-    );
-
-    #[event("transferFailedInvalidToken")]
-    fn transfer_failed_invalid_token(&self, #[indexed] batch_id: BatchId, #[indexed] tx_id: TxId);
-
-    #[event("transferFailedFrozenDestinationAccount")]
-    fn transfer_failed_frozen_destination_account(
-        &self,
-        #[indexed] batch_id: BatchId,
-        #[indexed] tx_id: TxId,
-    );
-
-    #[event("transferOverMaxAmount")]
-    fn transfer_over_max_amount(&self, #[indexed] batch_id: BatchId, #[indexed] tx_id: TxId);
-
-    #[event("transferFailedExecutionFailed")]
-    fn transfer_failed_execution_failed(
-        &self,
-        #[indexed] batch_id: BatchId,
-        #[indexed] tx_id: TxId,
-    );
+    // #[event("deposit")]
+    // fn deposit_event(
+    //     &self,
+    //     #[indexed] dest_address: &ManagedAddress,
+    //     #[indexed] tokens: &MultiValueEncoded<
+    //         MultiValue3<TokenIdentifier, u64, StolenFromFrameworkEsdtTokenData<Self::Api>>,
+    //     >,
+    //     event_data: DepositEvent<Self::Api>,
+    // );
 }

@@ -17,11 +17,21 @@ path = "../common/transaction"
 [dependencies.bls-signature]
 path = "../common/bls-signature"
 
+# [dependencies.pair]
+# git = "https://github.com/multiversx/mx-exchange-sc"
+# rev = "7864719"
+
+[dependencies.pair-mock]
+path = "../pair-mock"
+
+[dependencies.router-mock]
+path = "../router-mock"
+
 [dependencies.multiversx-sc]
-version = "=0.46.1"
+version = "=0.47.4"
 
 [dev-dependencies]
 num-bigint = "0.4.2"
 
 [dev-dependencies.multiversx-sc-scenario]
-version = "=0.46.1"
+version = "=0.47.4"

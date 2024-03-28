@@ -1,3 +1,5 @@
+use crate::safe_price_query;
+
 multiversx_sc::imports!();
 
 pub type AggregatorOutputType<M> =
@@ -52,9 +54,10 @@ mod price_aggregator_proxy {
 }
 
 #[multiversx_sc::module]
-pub trait PriceAggregatorModule {
+pub trait PriceAggregatorModule: safe_price_query::SafePriceQueryModule {
     fn get_safe_price(
         &self,
+        input_token_payment: &EsdtTokenPayment,
         input_token_id: &TokenIdentifier,
         output_token_id: &TokenIdentifier,
     ) -> BigUint {
@@ -68,6 +71,7 @@ pub trait PriceAggregatorModule {
             .execute_on_dest_context();
         let result = AggregatorResult::from(agg_output);
 
+        let safe_price = self.get_usdc_value(input_token_payment.clone());
         result.price
     }
 

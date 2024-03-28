@@ -1,6 +1,6 @@
 use transaction::GasLimit;
 
-use crate::fee_type::FeeType;
+use crate::{fee_type::FeeType, safe_price_query};
 
 multiversx_sc::imports!();
 multiversx_sc::derive_imports!();
@@ -35,6 +35,7 @@ pub trait SubtractFeeModule:
     + crate::fee_common::CommonFeeModule
     + crate::price_aggregator::PriceAggregatorModule
     + utils::UtilsModule
+    + safe_price_query::SafePriceQueryModule
     + bls_signature::BlsSignatureModule
 {
     #[only_owner]
@@ -213,8 +214,12 @@ pub trait SubtractFeeModule:
         mut args: SubtractPaymentArguments<Self::Api>,
     ) -> FinalPayment<Self::Api> {
         let input_payment = args.payment.clone();
-        let payment_amount_in_fee_token =
-            self.get_safe_price(&args.payment.token_identifier, &args.fee_token);
+        let payment_amount_in_fee_token = self.get_safe_price(
+            &input_payment,
+            &args.payment.token_identifier,
+            &args.fee_token,
+        );
+
         args.payment = EsdtTokenPayment::new(
             args.fee_token.clone(),
             0,
