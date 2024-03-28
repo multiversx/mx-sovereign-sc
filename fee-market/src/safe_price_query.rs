@@ -12,8 +12,8 @@ pub enum PairQueryResponse<M: ManagedTypeApi> {
 
 #[multiversx_sc::module]
 pub trait SafePriceQueryModule {
-    fn get_usdc_value(&self, token_payment: EsdtTokenPayment) -> BigUint {
-        let pair_query_response = self.get_pair_to_query(token_payment.token_identifier.clone());
+    fn get_usdc_value(&self, token_id: &TokenIdentifier, amount: &BigUint) -> BigUint {
+        let pair_query_response = self.get_pair_to_query(token_id);
 
         match pair_query_response {
             PairQueryResponse::WegldIntermediary {
@@ -21,13 +21,13 @@ pub trait SafePriceQueryModule {
                 wegld_to_usdc_pair,
             } => {
                 let wegld_price =
-                    self.call_get_safe_price(token_to_wegld_pair, token_payment.clone());
+                    self.call_get_safe_price(token_to_wegld_pair, token_id, amount);
 
-                self.call_get_safe_price(wegld_to_usdc_pair, token_payment)
+                self.call_get_safe_price(wegld_to_usdc_pair, token_id, amount)
             }
 
             PairQueryResponse::TokenToUsdc(pair_address) => {
-                self.call_get_safe_price(pair_address, token_payment)
+                self.call_get_safe_price(pair_address, token_id, amount)
             }
         }
     }
@@ -35,17 +35,22 @@ pub trait SafePriceQueryModule {
     fn call_get_safe_price(
         &self,
         pair_address: ManagedAddress,
-        token_payment: EsdtTokenPayment,
+        token_id: &TokenIdentifier,
+        amount: &BigUint,
     ) -> BigUint {
         let safe_price_payment: EsdtTokenPayment = self
             .pair_proxy(self.safe_price_pair_address().get())
-            .get_safe_price_by_timestamp_offset(pair_address, HOUR_IN_SECONDS, token_payment)
+            .get_safe_price_by_timestamp_offset(
+                pair_address,
+                HOUR_IN_SECONDS,
+                EsdtTokenPayment::new(token_id.clone(), 0, amount.clone()),
+            )
             .execute_on_dest_context();
 
         safe_price_payment.amount
     }
 
-    fn get_pair_to_query(&self, token_id: TokenIdentifier) -> PairQueryResponse<Self::Api> {
+    fn get_pair_to_query(&self, token_id: &TokenIdentifier) -> PairQueryResponse<Self::Api> {
         let wegld_token_id = self.wegld_token_id().get();
         let usdc_token_id = self.usdc_token_id().get();
         let router_address = self.router_address().get();
