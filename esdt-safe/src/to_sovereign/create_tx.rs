@@ -127,37 +127,32 @@ pub trait CreateTxModule:
         self.send().direct_multi(&to, &payments);
     }
 
-    /// Create an Elrond -> Sovereign transaction.
-    #[payable("*")]
-    #[endpoint]
-    fn deposit(
+    fn check_and_extract_fee(
         &self,
-        to: ManagedAddress,
-        opt_transfer_data: OptionalValue<
-            MultiValue3<GasLimit, ManagedBuffer, ManagedVec<ManagedBuffer>>,
-        >,
-    ) {
-        require!(self.not_paused(), "Cannot create transaction while paused");
-
-        // TODO: fn check and extract fee -> fees_payment, payments
-        let fee_market_address = self.fee_market_address().get();
+    ) -> MultiValue2<OptionalValue<EsdtTokenPayment>, ManagedVec<EsdtTokenPayment>> {
         let mut payments = self.call_value().all_esdt_transfers().clone_value();
+        let fee_market_address = self.fee_market_address().get();
         let fee_enabled_mapper = SingleValueMapper::new_from_address(
             fee_market_address.clone(),
             StorageKey::from("feeEnabledFlag"),
         )
         .get();
 
-        let fees_payment = if fee_enabled_mapper {
+        let opt_transfer_data = if fee_enabled_mapper {
             OptionalValue::Some(self.pop_first_payment(&mut payments))
         } else {
             OptionalValue::None
         };
 
-        require!(!payments.is_empty(), "Nothing to transfer");
-        require!(payments.len() <= MAX_TRANSFERS_PER_TX, "Too many tokens");
+        MultiValue2::from((opt_transfer_data, payments))
+    }
 
-        // TODO: fn process_transfer_data
+    fn process_transfer_data(
+        &self,
+        opt_transfer_data: OptionalValue<
+            MultiValue3<GasLimit, ManagedBuffer, ManagedVec<ManagedBuffer>>,
+        >,
+    ) -> Option<TransferData<Self::Api>> {
         let opt_transfer_data = match &opt_transfer_data {
             OptionalValue::Some(transfer_data) => {
                 let (gas_limit, function, args) = transfer_data.clone().into_tuple();
@@ -179,6 +174,27 @@ pub trait CreateTxModule:
             OptionalValue::None => None,
         };
 
+        opt_transfer_data
+    }
+
+    /// Create an Elrond -> Sovereign transaction.
+    #[payable("*")]
+    #[endpoint]
+    fn deposit(
+        &self,
+        to: ManagedAddress,
+        opt_transfer_data: OptionalValue<
+            MultiValue3<GasLimit, ManagedBuffer, ManagedVec<ManagedBuffer>>,
+        >,
+    ) {
+        require!(self.not_paused(), "Cannot create transaction while paused");
+
+        let (fees_payment, payments) = self.check_and_extract_fee().into_tuple();
+
+        require!(!payments.is_empty(), "Nothing to transfer");
+        require!(payments.len() <= MAX_TRANSFERS_PER_TX, "Too many tokens");
+
+        let opt_transfer_data = self.process_transfer_data(opt_transfer_data);
         let own_sc_address = self.blockchain().get_sc_address();
         let mut total_tokens_for_fees = 0usize;
         let mut event_payments: MultiValueEncoded<
@@ -277,7 +293,7 @@ pub trait CreateTxModule:
                 }
 
                 let _: FinalPayment<Self::Api> = self
-                    .fee_market_proxy(fee_market_address)
+                    .fee_market_proxy(self.fee_market_address().get())
                     .subtract_fee(caller.clone(), total_tokens_for_fees, gas)
                     .with_esdt_transfer(fee)
                     .execute_on_dest_context();
