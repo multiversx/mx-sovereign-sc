@@ -214,17 +214,12 @@ pub trait SubtractFeeModule:
         mut args: SubtractPaymentArguments<Self::Api>,
     ) -> FinalPayment<Self::Api> {
         let input_payment = args.payment.clone();
-        let payment_amount_in_fee_token = self.get_safe_price(
-            &input_payment,
-            &args.payment.token_identifier,
-            &args.fee_token,
-        );
+        let payment_amount_in_fee_token =
+            self.get_safe_price(&args.payment.token_identifier, &args.fee_token);
 
-        args.payment = EsdtTokenPayment::new(
-            args.fee_token.clone(),
-            0,
-            payment_amount_in_fee_token.clone(),
-        );
+        let fee_safe_price = self.get_usdc_value(&args.fee_token, &input_payment.amount);
+
+        args.payment = EsdtTokenPayment::new(args.fee_token.clone(), 0, fee_safe_price.clone());
 
         let final_payment = self.subtract_fee_same_token(args);
         if final_payment.remaining_tokens.amount == 0 {
@@ -235,7 +230,7 @@ pub trait SubtractFeeModule:
         // User pays 100 EGLD, which by asking the pair you found out is 2000 RIDE
         // Then the cost for the user is (1500 RIDE * 100 EGLD / 2000 RIDE = 75 EGLD)
         let fee_amount_in_user_token =
-            &final_payment.fee.amount * &input_payment.amount / &payment_amount_in_fee_token;
+            &final_payment.fee.amount * &input_payment.amount / &fee_safe_price;
         let remaining_amount = input_payment.amount - fee_amount_in_user_token;
 
         FinalPayment {
