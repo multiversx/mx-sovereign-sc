@@ -16,6 +16,8 @@ use tx_batch_module::TxBatchModule;
 multiversx_sc::derive_imports!();
 
 pub static FUNGIBLE_TOKEN_ID: &[u8] = b"FUNGTOKEN-123456";
+pub static WEGLD_TOKEN_ID: &[u8] = b"WEGLD-123456";
+pub static USDC_TOKEN_ID: &[u8] = b"USDC-123456";
 pub static NFT_TOKEN_ID: &[u8] = b"NFT-123456";
 pub const TOKEN_BALANCE: u64 = 1_000_000_000_000_000_000;
 pub static DUMMY_SIG: [u8; BLS_SIGNATURE_LEN] = [0; BLS_SIGNATURE_LEN];
@@ -79,6 +81,8 @@ where
                 sc.init(
                     managed_address!(bridge_wrapper.address_ref()),
                     managed_address!(bridge_wrapper.address_ref()), // unused
+                    WEGLD_TOKEN_ID.into(),
+                    USDC_TOKEN_ID.into()
                 );
                 sc.add_fee(
                     managed_token_id!(FEE_TOKEN_ID),
