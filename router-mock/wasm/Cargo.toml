@@ -5,9 +5,9 @@
 # ##########################################
 
 [package]
-name = "chain-factory-wasm"
+name = "router-mock-wasm"
 version = "0.0.0"
-edition = "2018"
+edition = "2021"
 publish = false
 
 [lib]
@@ -21,11 +21,11 @@ debug = false
 panic = "abort"
 overflow-checks = false
 
-[dependencies.chain-factory]
+[dependencies.router-mock]
 path = ".."
 
 [dependencies.multiversx-sc-wasm-adapter]
-version = "=0.47.4"
+version = "0.47.4"
 
 [workspace]
 members = ["."]

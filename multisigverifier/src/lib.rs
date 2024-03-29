@@ -15,7 +15,6 @@ pub trait Multisigverifier: bls_signature::BlsSignatureModule {
 
     #[endpoint]
     fn upgrade(&self) {}
-    // #endpoint to remove pending hashes
 
     #[endpoint(registerBridgeOps)]
     fn register_bridge_operations(
@@ -23,14 +22,14 @@ pub trait Multisigverifier: bls_signature::BlsSignatureModule {
         signature: BlsSignature<Self::Api>,
         bridge_operations_hash: ManagedBuffer,
         operations_hashes: MultiValueEncoded<ManagedBuffer>,
-        // bitmap: MultiValueEncoded<u8>,
     ) {
-        let mut bitmap = MultiValueEncoded::new();
-        for _ in 0..self.bls_pub_keys().len() {
-            bitmap.push(1);
-        }
+        require!(
+            !self.hash_of_hashes_history()
+                .contains(&bridge_operations_hash),
+            "The OutGoingTxsHash has already been registered"
+        );
 
-        let is_bls_valid = self.verify_bls(&signature, &bridge_operations_hash, bitmap);
+        let is_bls_valid = self.verify_bls(&signature, &bridge_operations_hash);
 
         require!(is_bls_valid, "BLS signature is not valid");
 
@@ -40,9 +39,30 @@ pub trait Multisigverifier: bls_signature::BlsSignatureModule {
         );
 
         for operation_hash in operations_hashes {
-            self.pending_hashes(bridge_operations_hash.clone())
+            self.pending_hashes(&bridge_operations_hash)
                 .insert(operation_hash);
         }
+
+        self.hash_of_hashes_history().insert(bridge_operations_hash);
+    }
+
+    #[only_owner]
+    #[endpoint(setEsdtSafeAddress)]
+    fn set_esdt_safe_address(&self, esdt_safe_address: ManagedAddress) {
+        self.esdt_safe_address().set(esdt_safe_address);
+    }
+
+    #[endpoint(removeExecutedHash)]
+    fn remove_executed_hash(&self, hash_of_hashes: &ManagedBuffer, operation_hash: &ManagedBuffer) {
+        let caller = self.blockchain().get_caller();
+
+        require!(
+            caller == self.esdt_safe_address().get(),
+            "Only ESDT Safe contract can call this endpoint"
+        );
+
+        self.pending_hashes(hash_of_hashes)
+            .swap_remove(operation_hash);
     }
 
     fn calculate_and_check_transfers_hashes(
@@ -69,35 +89,8 @@ pub trait Multisigverifier: bls_signature::BlsSignatureModule {
         &self,
         _signature: &BlsSignature<Self::Api>,
         _bridge_operations_hash: &ManagedBuffer,
-        _bitmap: MultiValueEncoded<u8>,
     ) -> bool {
-        // let mut pub_keys: ManagedVec<ManagedBuffer> = ManagedVec::new();
-        let is_bls_valid = true;
-
-        // for (pub_key, has_signed) in self.bls_pub_keys().iter().zip(bitmap) {
-        //     if has_signed == 1 {
-        //         pub_keys.push(pub_key);
-        //     }
-        // }
-        //
-        // for pub_key in pub_keys.iter() {
-        //     if self.crypto().verify_bls(
-        //         &pub_key,
-        //         &bridge_operations_hash,
-        //         &signature.as_managed_buffer(),
-        //     ) == false
-        //     {
-        //         is_bls_valid = false;
-        //         break;
-        //     }
-        // }
-
-        // if !is_bls_valid {
-        //     false
-        // } else {
-        //     self.is_signature_count_valid(pub_keys.len())
-        // }
-        is_bls_valid
+        true
     }
 
     fn is_signature_count_valid(&self, pub_keys_count: usize) -> bool {
@@ -110,7 +103,12 @@ pub trait Multisigverifier: bls_signature::BlsSignatureModule {
     #[storage_mapper("bls_pub_keys")]
     fn bls_pub_keys(&self) -> SetMapper<ManagedBuffer>;
 
-    // does it work or we use single value
     #[storage_mapper("pending_hashes")]
-    fn pending_hashes(&self, hash_of_hashes: ManagedBuffer) -> UnorderedSetMapper<ManagedBuffer>;
+    fn pending_hashes(&self, hash_of_hashes: &ManagedBuffer) -> UnorderedSetMapper<ManagedBuffer>;
+
+    #[storage_mapper("hash_of_hashes_history")]
+    fn hash_of_hashes_history(&self) -> UnorderedSetMapper<ManagedBuffer>;
+
+    #[storage_mapper("esdtSafeAddress")]
+    fn esdt_safe_address(&self) -> SingleValueMapper<ManagedAddress>;
 }

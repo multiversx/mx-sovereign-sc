@@ -127,38 +127,37 @@ pub trait CreateTxModule:
         self.send().direct_multi(&to, &payments);
     }
 
-    /// Create an Elrond -> Sovereign transaction.
-    #[payable("*")]
-    #[endpoint]
-    fn deposit(
+    fn check_and_extract_fee(
         &self,
-        to: ManagedAddress,
-        opt_transfer_data: OptionalValue<
-            MultiValue3<GasLimit, ManagedBuffer, ManagedVec<ManagedBuffer>>,
-        >,
-    ) {
-        require!(self.not_paused(), "Cannot create transaction while paused");
-        let fee_market_address = self.fee_market_address().get();
+    ) -> MultiValue2<OptionalValue<EsdtTokenPayment>, ManagedVec<EsdtTokenPayment>> {
         let mut payments = self.call_value().all_esdt_transfers().clone_value();
+        let fee_market_address = self.fee_market_address().get();
         let fee_enabled_mapper = SingleValueMapper::new_from_address(
             fee_market_address.clone(),
             StorageKey::from("feeEnabledFlag"),
         )
         .get();
 
-        let fees_payment = if fee_enabled_mapper {
+        let opt_transfer_data = if fee_enabled_mapper {
             OptionalValue::Some(self.pop_first_payment(&mut payments))
         } else {
             OptionalValue::None
         };
 
-        require!(!payments.is_empty(), "Nothing to transfer");
-        require!(payments.len() <= MAX_TRANSFERS_PER_TX, "Too many tokens");
+        MultiValue2::from((opt_transfer_data, payments))
+    }
 
+    fn process_transfer_data(
+        &self,
+        opt_transfer_data: OptionalValue<
+            MultiValue3<GasLimit, ManagedBuffer, ManagedVec<ManagedBuffer>>,
+        >,
+    ) -> Option<TransferData<Self::Api>> {
         let opt_transfer_data = match &opt_transfer_data {
             OptionalValue::Some(transfer_data) => {
                 let (gas_limit, function, args) = transfer_data.clone().into_tuple();
                 let max_gas_limit = self.max_user_tx_gas_limit().get();
+
                 require!(gas_limit <= max_gas_limit, "Gas limit too high");
 
                 require!(
@@ -175,6 +174,27 @@ pub trait CreateTxModule:
             OptionalValue::None => None,
         };
 
+        opt_transfer_data
+    }
+
+    /// Create an Elrond -> Sovereign transaction.
+    #[payable("*")]
+    #[endpoint]
+    fn deposit(
+        &self,
+        to: ManagedAddress,
+        opt_transfer_data: OptionalValue<
+            MultiValue3<GasLimit, ManagedBuffer, ManagedVec<ManagedBuffer>>,
+        >,
+    ) {
+        require!(self.not_paused(), "Cannot create transaction while paused");
+
+        let (fees_payment, payments) = self.check_and_extract_fee().into_tuple();
+
+        require!(!payments.is_empty(), "Nothing to transfer");
+        require!(payments.len() <= MAX_TRANSFERS_PER_TX, "Too many tokens");
+
+        let opt_transfer_data = self.process_transfer_data(opt_transfer_data);
         let own_sc_address = self.blockchain().get_sc_address();
         let mut total_tokens_for_fees = 0usize;
         let mut event_payments: MultiValueEncoded<
@@ -184,6 +204,7 @@ pub trait CreateTxModule:
             ManagedVec::new();
 
         for payment in &payments {
+            // TODO: fn validate_payment
             self.require_below_max_amount(&payment.token_identifier, &payment.amount);
             self.require_token_not_blacklisted(&payment.token_identifier);
 
@@ -191,6 +212,7 @@ pub trait CreateTxModule:
                 && !self.token_whitelist().contains(&payment.token_identifier)
             {
                 refundable_payments.push(payment.clone());
+
                 continue;
             } else {
                 total_tokens_for_fees += 1;
@@ -221,37 +243,42 @@ pub trait CreateTxModule:
                     .multiversx_to_sovereign_token_id(&payment.token_identifier)
                     .get();
 
-                if sov_token_id.is_valid_esdt_identifier() {
-                    self.send().esdt_local_burn(
-                        &payment.token_identifier,
-                        payment.token_nonce,
-                        &payment.amount,
-                    );
-
-                    let mut sov_token_nonce = 0;
-
-                    if payment.token_nonce > 0 {
-                        sov_token_nonce = self
-                            .multiversx_esdt_token_info_mapper(
-                                &payment.token_identifier,
-                                &payment.token_nonce,
-                            )
-                            .get()
-                            .token_nonce;
-                    }
-
+                if !sov_token_id.is_valid_esdt_identifier() {
                     event_payments.push(MultiValue3((
-                        sov_token_id,
-                        sov_token_nonce,
-                        current_token_data.clone()
-                    )));
-                } else {
-                    event_payments.push(MultiValue3((
-                        sov_token_id.clone(),
+                        payment.token_identifier,
                         payment.token_nonce,
                         current_token_data.clone(),
                     )));
+
+                    continue;
                 }
+
+                self.send().esdt_local_burn(
+                    &payment.token_identifier,
+                    payment.token_nonce,
+                    &payment.amount,
+                );
+
+                let mut sov_token_nonce = 0;
+
+                if payment.token_nonce > 0 {
+                    sov_token_nonce = self
+                        .multiversx_esdt_token_info_mapper(
+                            &payment.token_identifier,
+                            &payment.token_nonce,
+                        )
+                        .take()
+                        .token_nonce;
+
+                    self.sovereign_esdt_token_info_mapper(&sov_token_id, &sov_token_nonce)
+                        .take();
+                }
+
+                event_payments.push(MultiValue3((
+                    sov_token_id,
+                    sov_token_nonce,
+                    current_token_data.clone(),
+                )));
             }
         }
 
@@ -259,17 +286,17 @@ pub trait CreateTxModule:
 
         match fees_payment {
             OptionalValue::Some(fee) => {
+                let mut gas = 0;
+
                 if let Some(transfer_data) = &opt_transfer_data {
-                    let _final_payments: FinalPayment<Self::Api> = self
-                        .fee_market_proxy(fee_market_address)
-                        .subtract_fee(
-                            caller.clone(),
-                            total_tokens_for_fees,
-                            transfer_data.gas_limit,
-                        )
-                        .with_esdt_transfer(fee)
-                        .execute_on_dest_context();
+                    gas = transfer_data.gas_limit;
                 }
+
+                let _: FinalPayment<Self::Api> = self
+                    .fee_market_proxy(self.fee_market_address().get())
+                    .subtract_fee(caller.clone(), total_tokens_for_fees, gas)
+                    .with_esdt_transfer(fee)
+                    .execute_on_dest_context();
             }
             OptionalValue::None => (),
         };

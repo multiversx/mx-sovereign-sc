@@ -5,9 +5,9 @@
 ////////////////////////////////////////////////////
 
 // Init:                                 1
-// Endpoints:                            7
+// Endpoints:                            1
 // Async Callback (empty):               1
-// Total number of exported functions:   9
+// Total number of exported functions:   3
 
 #![no_std]
 #![allow(internal_features)]
@@ -17,16 +17,10 @@ multiversx_sc_wasm_adapter::allocator!();
 multiversx_sc_wasm_adapter::panic_handler!();
 
 multiversx_sc_wasm_adapter::endpoints! {
-    multisigverifier
+    pair_mock
     (
         init => init
-        upgrade => upgrade
-        registerBridgeOps => register_bridge_operations
-        setEsdtSafeAddress => set_esdt_safe_address
-        removeExecutedHash => remove_executed_hash
-        setMinValidSigners => set_min_valid_signers
-        addSigners => add_signers
-        removeSigners => remove_signers
+        getSafePriceByTimestampOffset => get_safe_price_by_timestamp_offset
     )
 }
 

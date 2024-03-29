@@ -8,6 +8,7 @@ use super::token_mapping::EsdtTokenInfo;
 multiversx_sc::imports!();
 
 const CALLBACK_GAS: GasLimit = 10_000_000; // Increase if not enough
+const TRANSACTION_GAS: GasLimit = 30_000_000;
 
 #[multiversx_sc::module]
 pub trait TransferTokensModule:
@@ -22,9 +23,13 @@ pub trait TransferTokensModule:
     + utils::UtilsModule
     + to_sovereign::events::EventsModule
 {
-    #[endpoint(executeBridgeOp)]
-    fn execute_operation(&self, hash_of_hashes: ManagedBuffer, operation: Operation<Self::Api>) {
-        require!(self.is_sovereign_chain().get(), "Invalid method to call");
+    #[endpoint(executeBridgeOps)]
+    fn execute_operations(&self, hash_of_hashes: ManagedBuffer, operation: Operation<Self::Api>) {
+        require!(
+            !self.is_sovereign_chain().get(),
+            "Invalid method to call in current chain"
+        );
+
         require!(self.not_paused(), "Cannot transfer while paused");
 
         let (operation_hash, is_registered) =
@@ -97,14 +102,11 @@ pub trait TransferTokensModule:
                 token_nonce: nft_nonce,
             });
 
-            self.multiversx_esdt_token_info_mapper(
-                &mx_token_id.clone(),
-                &nft_nonce,
-            )
-            .set(EsdtTokenInfo {
-                token_identifier: operation_token.token_identifier,
-                token_nonce: operation_token.token_nonce,
-            });
+            self.multiversx_esdt_token_info_mapper(&mx_token_id.clone(), &nft_nonce)
+                .set(EsdtTokenInfo {
+                    token_identifier: operation_token.token_identifier,
+                    token_nonce: operation_token.token_nonce,
+                });
 
             output_payments.push(OperationEsdtPayment {
                 token_identifier: mx_token_id,
@@ -160,6 +162,7 @@ pub trait TransferTokensModule:
                 self.send()
                     .contract_call::<()>(own_address, ESDT_MULTI_TRANSFER_FUNC_NAME)
                     .with_raw_arguments(args)
+                    .with_gas_limit(TRANSACTION_GAS)
                     .async_call_promise()
                     .with_callback(
                         <Self as TransferTokensModule>::callbacks(self)
@@ -181,14 +184,17 @@ pub trait TransferTokensModule:
 
         match result {
             ManagedAsyncCallResult::Ok(_) => {
-                self.execute_bridge_operation_event(hash_of_hashes, operation_hash.clone());
+                self.execute_bridge_operation_event(hash_of_hashes.clone(), operation_hash.clone());
             }
             ManagedAsyncCallResult::Err(_) => {
                 self.emit_transfer_failed_events(&hash_of_hashes, operation_tuple);
             }
         }
 
-        // self.pending_hashes().swap_remove(&operation_hash);
+        let _: () = self
+            .multisig_verifier_proxy(self.multisig_address().get())
+            .remove_executed_hash(&hash_of_hashes, &operation_hash)
+            .execute_on_dest_context();
     }
 
     fn emit_transfer_failed_events(
@@ -206,32 +212,26 @@ pub trait TransferTokensModule:
                 .sovereign_to_multiversx_token_id(&operation_token.token_identifier)
                 .get();
 
-            if let TokenMapperState::Token(token_id) = mx_token_id_state {
-                if operation_token.token_nonce == 0 {
-                    self.send()
-                        .esdt_local_burn(&token_id, 0, &operation_token.token_data.amount);
+            if let TokenMapperState::Token(mx_token_id) = mx_token_id_state {
+                let mut mx_token_nonce = 0;
 
-                    continue;
+                if operation_token.token_nonce > 0 {
+                    mx_token_nonce = self
+                        .sovereign_esdt_token_info_mapper(
+                            &operation_token.token_identifier,
+                            &operation_token.token_nonce,
+                        )
+                        .take()
+                        .token_nonce;
+
+                    self.multiversx_esdt_token_info_mapper(&mx_token_id, &mx_token_nonce);
                 }
 
-                let esdt_token_info = self
-                    .sovereign_esdt_token_info_mapper(
-                        &operation_token.token_identifier,
-                        &operation_token.token_nonce,
-                    )
-                    .get();
-
                 self.send().esdt_local_burn(
-                    &esdt_token_info.token_identifier,
-                    esdt_token_info.token_nonce,
+                    &mx_token_id,
+                    mx_token_nonce,
                     &operation_token.token_data.amount,
                 );
-
-                self.sovereign_esdt_token_info_mapper(
-                    &operation_token.token_identifier,
-                    &operation_token.token_nonce,
-                )
-                .take();
             }
         }
 
@@ -277,11 +277,17 @@ pub trait TransferTokensModule:
         }
     }
 
+    #[proxy]
+    fn multisig_verifier_proxy(
+        &self,
+        multisig_verifier_address: ManagedAddress,
+    ) -> multisigverifier::Proxy<Self::Api>;
+
     #[storage_mapper("nextBatchId")]
     fn next_batch_id(&self) -> SingleValueMapper<BatchId>;
 
     #[storage_mapper("pending_hashes")]
-    fn pending_hashes(&self, hash_of_hashes: ManagedBuffer) -> UnorderedSetMapper<ManagedBuffer>;
+    fn pending_hashes(&self, hash_of_hashes: &ManagedBuffer) -> UnorderedSetMapper<ManagedBuffer>;
 
     #[storage_mapper("multisig_address")]
     fn multisig_address(&self) -> SingleValueMapper<ManagedAddress>;
