@@ -13,4 +13,25 @@ With Sovereign Shards we want to give an SDK for all builders to run their own h
     #[init]
     fn init(&self, bls_pub_keys: MultiValueEncoded<ManagedBuffer>);
 ```
-    The init function is called when deploying/upgrading a smart contract
+The init function is called when deploying/upgrading a smart contract. The __bls_pub_keys__ are inserted inside the contract's storage to know the public keys of the validators.
+
+### register_bridge_operations
+```rust
+    #[endpoint(registerBridgeOps)]
+    fn register_bridge_operations(
+        &self,
+        signature: BlsSignature<Self::Api>,
+        bridge_operations_hash: ManagedBuffer,
+        operations_hashes: MultiValueEncoded<ManagedBuffer>,
+    ); 
+```
+- __signature__: the BLS multisignature that should prove the authenticity of the operations that are being registered
+- __bridge_operations_hash__: the hash of all operations that will be registered, it is used as a key for further reference and checks, also known as __hash_of_hashes__
+- __operations_hashes__: an array of hashes, each being the corresponding hash of one operation
+
+Registering one or more operations is the first step to be able to execute them on the bridge smart contract after that. This endpoint will verify some conditions in order to successfully insert the operations in the storage:
+1. The __bridge_operations_hash__ can't be registered twice
+2. The BLS Multisignature has to be valid
+3. The __bridge_operations_hash__ and hash of __operations_hashes__ have to be equal 
+
+After the conditions are checked and valid, the contract's storage will be updated with the __operations_hashes__ as __pending_hashes__ and the __bridge_operations_hash__ in the __hash_of_hashes_history__ mapper.
