@@ -35,3 +35,11 @@ Registering one or more operations is the first step to be able to execute them 
 3. The __bridge_operations_hash__ and hash of __operations_hashes__ have to be equal 
 
 After the conditions are checked and valid, the contract's storage will be updated with the __operations_hashes__ as __pending_hashes__ and the __bridge_operations_hash__ in the __hash_of_hashes_history__ mapper.
+
+### set_esdt_safe_address
+```rust
+    #[only_owner]
+    #[endpoint(setEsdtSafeAddress)]
+    fn set_esdt_safe_address(&self, esdt_safe_address: ManagedAddress)
+```
+To be able to do calls with the Esdt Safe bridge contract, the Multisigverifier contract has to know the address of the bridge.
