@@ -57,7 +57,6 @@ mod price_aggregator_proxy {
 pub trait PriceAggregatorModule: safe_price_query::SafePriceQueryModule {
     fn get_safe_price(
         &self,
-        input_token_payment: &EsdtTokenPayment,
         input_token_id: &TokenIdentifier,
         output_token_id: &TokenIdentifier,
     ) -> BigUint {
@@ -71,7 +70,6 @@ pub trait PriceAggregatorModule: safe_price_query::SafePriceQueryModule {
             .execute_on_dest_context();
         let result = AggregatorResult::from(agg_output);
 
-        let safe_price = self.get_usdc_value(input_token_payment.clone());
         result.price
     }
 

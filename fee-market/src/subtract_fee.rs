@@ -215,7 +215,6 @@ pub trait SubtractFeeModule:
     ) -> FinalPayment<Self::Api> {
         let input_payment = args.payment.clone();
         let payment_amount_in_fee_token = self.get_safe_price(
-            &input_payment,
             &args.payment.token_identifier,
             &args.fee_token,
         );
