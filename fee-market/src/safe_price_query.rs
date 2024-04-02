@@ -55,7 +55,7 @@ pub trait SafePriceQueryModule: price_aggregator::PriceAggregatorModule {
         let wegld_token_id = self.wegld_token_id().get();
         let usdc_token_id = self.usdc_token_id().get();
 
-        let token_to_wegld_pair = self.call_get_pair(&token_id, &wegld_token_id);
+        let token_to_wegld_pair = self.call_get_pair(token_id, &wegld_token_id);
 
         if !token_to_wegld_pair.is_zero() {
             let wegld_to_usdc_pair =
@@ -71,7 +71,7 @@ pub trait SafePriceQueryModule: price_aggregator::PriceAggregatorModule {
             };
         }
 
-        let token_to_usdc_pair = self.call_get_pair(&token_id, &usdc_token_id);
+        let token_to_usdc_pair = self.call_get_pair(token_id, &usdc_token_id);
 
         require!(
             !token_to_usdc_pair.is_zero(),

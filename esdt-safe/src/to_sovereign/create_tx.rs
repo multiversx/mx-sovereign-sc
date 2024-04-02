@@ -153,7 +153,7 @@ pub trait CreateTxModule:
             MultiValue3<GasLimit, ManagedBuffer, ManagedVec<ManagedBuffer>>,
         >,
     ) -> Option<TransferData<Self::Api>> {
-        let opt_transfer_data = match &opt_transfer_data {
+        match &opt_transfer_data {
             OptionalValue::Some(transfer_data) => {
                 let (gas_limit, function, args) = transfer_data.clone().into_tuple();
                 let max_gas_limit = self.max_user_tx_gas_limit().get();
@@ -172,9 +172,7 @@ pub trait CreateTxModule:
                 })
             }
             OptionalValue::None => None,
-        };
-
-        opt_transfer_data
+        }
     }
 
     /// Create an Elrond -> Sovereign transaction.
