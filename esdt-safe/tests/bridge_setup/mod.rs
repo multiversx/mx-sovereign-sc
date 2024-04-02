@@ -46,7 +46,7 @@ where
     BridgeBuilder: 'static + Copy + Fn() -> esdt_safe::ContractObj<DebugApi>,
     FeeMarketBuilder: 'static + Copy + Fn() -> fee_market::ContractObj<DebugApi>,
 {
-    pub fn new(bridge_builder: BridgeBuilder, fee_market_builder: FeeMarketBuilder) -> Self {
+    pub fn new(bridge_builder: BridgeBuilder, fee_market_builder: FeeMarketBuilder, is_sovereign_chain: bool) -> Self {
         let rust_zero = rust_biguint!(0);
         let mut b_mock = BlockchainStateWrapper::new();
         let owner = b_mock.create_user_account(&rust_zero);
@@ -69,7 +69,7 @@ where
 
         b_mock
             .execute_tx(&owner, &bridge_wrapper, &rust_zero, |sc| {
-                sc.init(false, 0, managed_address!(&owner), MultiValueEncoded::new());
+                sc.init(is_sovereign_chain, 0, managed_address!(&owner), MultiValueEncoded::new());
                 sc.set_fee_market_address(managed_address!(fee_market_wrapper.address_ref()));
                 sc.set_max_tx_batch_size(1);
                 sc.set_paused(false);
