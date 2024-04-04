@@ -16,6 +16,8 @@ use tx_batch_module::TxBatchModule;
 multiversx_sc::derive_imports!();
 
 pub static FUNGIBLE_TOKEN_ID: &[u8] = b"FUNGTOKEN-123456";
+pub static WEGLD_TOKEN_ID: &[u8] = b"WEGLD-123456";
+pub static USDC_TOKEN_ID: &[u8] = b"USDC-123456";
 pub static NFT_TOKEN_ID: &[u8] = b"NFT-123456";
 pub const TOKEN_BALANCE: u64 = 1_000_000_000_000_000_000;
 pub static DUMMY_SIG: [u8; BLS_SIGNATURE_LEN] = [0; BLS_SIGNATURE_LEN];
@@ -44,7 +46,7 @@ where
     BridgeBuilder: 'static + Copy + Fn() -> esdt_safe::ContractObj<DebugApi>,
     FeeMarketBuilder: 'static + Copy + Fn() -> fee_market::ContractObj<DebugApi>,
 {
-    pub fn new(bridge_builder: BridgeBuilder, fee_market_builder: FeeMarketBuilder) -> Self {
+    pub fn new(bridge_builder: BridgeBuilder, fee_market_builder: FeeMarketBuilder, is_sovereign_chain: bool) -> Self {
         let rust_zero = rust_biguint!(0);
         let mut b_mock = BlockchainStateWrapper::new();
         let owner = b_mock.create_user_account(&rust_zero);
@@ -67,7 +69,7 @@ where
 
         b_mock
             .execute_tx(&owner, &bridge_wrapper, &rust_zero, |sc| {
-                sc.init(0, managed_address!(&owner), MultiValueEncoded::new());
+                sc.init(is_sovereign_chain, 0, managed_address!(&owner), MultiValueEncoded::new());
                 sc.set_fee_market_address(managed_address!(fee_market_wrapper.address_ref()));
                 sc.set_max_tx_batch_size(1);
                 sc.set_paused(false);
@@ -79,6 +81,8 @@ where
                 sc.init(
                     managed_address!(bridge_wrapper.address_ref()),
                     managed_address!(bridge_wrapper.address_ref()), // unused
+                    WEGLD_TOKEN_ID.into(),
+                    USDC_TOKEN_ID.into()
                 );
                 sc.add_fee(
                     managed_token_id!(FEE_TOKEN_ID),
