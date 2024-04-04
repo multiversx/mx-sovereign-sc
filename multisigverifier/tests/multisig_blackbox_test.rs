@@ -4,7 +4,7 @@ use bls_signature::BlsSignature;
 use multisigverifier::ProxyTrait;
 use multiversx_sc::{
     codec::multi_types::MultiValueVec,
-    types::{Address, ManagedBuffer, ManagedByteArray, ManagedVec},
+    types::{Address, ManagedBuffer, ManagedByteArray, ManagedVec, MultiValueEncoded},
 };
 use multiversx_sc_scenario::{
     api::StaticApi,
@@ -65,13 +65,12 @@ impl MultisigTestState {
 
     fn deploy_multisig_contract(&mut self) -> &mut Self {
         let multisig_code = self.world.code_expression(MULTISIG_PATH_EXPR);
-        let validators = MultiValueVec::from(vec![self.validator_address.clone()]);
+        // let validators = MultiValueVec::from(vec![self.validator_address.clone()]);
 
         self.world.sc_deploy(
             ScDeployStep::new()
                 .from(OWNER_ADDRESS_EXPR)
-                .code(multisig_code)
-                .call(self.multisig_contract.init(validators)),
+                .code(multisig_code), // .call(self.multisig_contract.init(validators)),
         );
 
         self
@@ -79,16 +78,16 @@ impl MultisigTestState {
 
     fn propose_register_bridge_ops(
         &mut self,
-        bridge_operations_hash: &str,
-        operations_hashes: ManagedVec<StaticApi, ManagedBuffer<StaticApi>>,
-        signature: &bls_signature::BlsSignature<StaticApi>,
+        bridge_operations_hash: &ManagedBuffer<StaticApi>,
+        operations_hashes: MultiValueEncoded<StaticApi, ManagedBuffer<StaticApi>>,
+        signature: &BlsSignature<StaticApi>,
     ) {
         self.world
             .sc_call_get_result(ScCallStep::new().from(LEADER_ADDRESS_EXPR).call(
                 self.multisig_contract.register_bridge_operations(
+                    signature,
                     bridge_operations_hash,
                     operations_hashes,
-                    signature,
                 ),
             ))
     }
@@ -105,7 +104,8 @@ fn test_register_bridge_ops() {
     let mut state = MultisigTestState::new();
     state.deploy_multisig_contract();
 
-    let bridge_operations_hash = "6ee1e00813a74f8293d2c63172c062d38bf780d8811ff63984813a49cd61ff9e";
+    let bridge_operations_hash =
+        ManagedBuffer::from("6ee1e00813a74f8293d2c63172c062d38bf780d8811ff63984813a49cd61ff9e");
     let mock_signature: BlsSignature<StaticApi> = ManagedByteArray::new_from_bytes(
         b"EIZ2\x05\xf7q\xc7G\x96\x1f\xba0\xe2\xd1\xf5pE\x14\xd7?\xac\xff\x8d\x1a\x0c\x11\x900f5\xfb\xff4\x94\xb8@\xc5^\xc2,exn0\xe3\xf0\n"
     );
@@ -120,8 +120,8 @@ fn test_register_bridge_ops() {
     bridge_operations.push(second_operation);
 
     let _ = state.propose_register_bridge_ops(
-        bridge_operations_hash,
-        bridge_operations,
+        &bridge_operations_hash,
+        bridge_operations.into(),
         &mock_signature,
     );
 }
