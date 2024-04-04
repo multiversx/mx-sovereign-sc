@@ -20,7 +20,7 @@ pub static WEGLD_TOKEN_ID: &[u8] = b"WEGLD-123456";
 pub static USDC_TOKEN_ID: &[u8] = b"USDC-123456";
 pub static NFT_TOKEN_ID: &[u8] = b"NFT-123456";
 pub const TOKEN_BALANCE: u64 = 1_000_000_000_000_000_000;
-pub static DUMMY_SIG: [u8; BLS_SIGNATURE_LEN] = [0; BLS_SIGNATURE_LEN];
+pub static _DUMMY_SIG: [u8; BLS_SIGNATURE_LEN] = [0; BLS_SIGNATURE_LEN];
 pub static FEE_TOKEN_ID: &[u8] = b"FEE-123456";
 
 #[derive(TopEncode, TopDecode, PartialEq, Debug)]

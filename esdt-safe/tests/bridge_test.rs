@@ -65,7 +65,7 @@ fn transfer_two_tokens_to_sov_ok() {
     );
 
     bridge_setup.b_mock.check_esdt_balance(
-        &bridge_setup.fee_market_wrapper.address_ref(),
+        bridge_setup.fee_market_wrapper.address_ref(),
         FEE_TOKEN_ID,
         &rust_biguint!(200),
     );
