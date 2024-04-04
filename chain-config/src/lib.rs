@@ -4,6 +4,9 @@ use validator_rules::TokenIdAmountPair;
 
 multiversx_sc::imports!();
 
+pub const BLS_SIGNATURE_LEN: usize = 48;
+pub type BlsSignature<M> = ManagedByteArray<M, BLS_SIGNATURE_LEN>;
+
 pub mod bridge;
 pub mod validator_rules;
 
@@ -44,6 +47,29 @@ pub trait ChainConfigContract:
         self.additional_stake_required().set(additional_stake_vec);
     }
 
+    #[endpoint(finishSetup)]
+    fn finish_setup(&self) {
+        self.require_caller_is_admin();
+
+        let caller = self.blockchain().get_caller();
+        self.remove_admin(caller);
+
+        self.add_admin(self.sovereign_multisig_address().get());
+    }
+
+    // #[payable("*")]
+    // #[endpoint(register)]
+    // fn register(
+    //     &self,
+    //     bls_authenticity: MultiValue2<ManagedBuffer, BlsSignature<Self::Api>>,
+    //     egldStakeValue: StakeMultiArg<Self::Api>,
+    // ) {
+    //     // check if genesis happened
+    // }
+
     #[endpoint]
     fn upgrade(&self) {}
+
+    #[storage_mapper("sovereignMultiSigAddress")]
+    fn sovereign_multisig_address(&self) -> SingleValueMapper<ManagedAddress>;
 }

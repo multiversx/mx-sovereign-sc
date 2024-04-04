@@ -2,6 +2,15 @@ use chain_config::StakeMultiArg;
 
 multiversx_sc::imports!();
 
+pub enum ContractName<M: ManagedTypeApi> {
+    ChainFactory(ManagedBuffer<M>),
+    Controller,
+    SovereignHeaderVerifier,
+    SovereignCrossChainOperation,
+    ChainConfig,
+    Slashing,
+}
+
 #[multiversx_sc::module]
 pub trait FactoryModule {
     #[payable("EGLD")]
@@ -28,18 +37,56 @@ pub trait FactoryModule {
                 min_validators,
                 max_validators,
                 min_stake,
-                caller,
+                caller.clone(),
                 additional_stake_required,
             )
             .deploy_from_source::<IgnoreValue>(&source_address, metadata);
 
         let _ = self.all_deployed_contracts().insert(sc_address);
+        self.config_admin().set(caller);
     }
 
     #[only_owner]
     #[endpoint(blacklistSovereignChainSc)]
     fn blacklist_sovereign_chain_sc(&self, sc_address: ManagedAddress) {
         let _ = self.all_deployed_contracts().swap_remove(&sc_address);
+    }
+
+    #[endpoint(deploySovereignCrossChainOperation)]
+    fn deploy_sovereign_cross_chain_operation(&self, _chain_id: u32) {
+        let caller = self.blockchain().get_caller();
+        require!(
+            caller == self.config_admin().get(),
+            "This endpoint can only be called by the chain config admin"
+        );
+        
+        // check if contract deployed
+    }
+
+    #[endpoint(deploySovereignHeaderVerifier)]
+    fn deploy_sovereign_header_verifier(&self, _chain_id: u32) {
+        let caller = self.blockchain().get_caller();
+        require!(
+            caller == self.config_admin().get(),
+            "This endpoint can only be called by the chain config admin"
+        );
+
+        // check if contract deployed
+    }
+
+    // upgrade contract endpoint
+
+    #[endpoint(addContractsToMap)]
+    fn add_contracts_to_map(
+        &self,
+        contracts_map: MultiValueEncoded<MultiValue2<ManagedBuffer, ManagedAddress>>,
+        // maybe use enum for contract name?
+    ) {
+        for contract_map in contracts_map {
+            let (contract_name, contract_address) = contract_map.into_tuple();
+
+            self.contracts_map(contract_name).set(contract_address);
+        }
     }
 
     #[proxy]
@@ -54,4 +101,10 @@ pub trait FactoryModule {
 
     #[storage_mapper("allDeployedContracts")]
     fn all_deployed_contracts(&self) -> UnorderedSetMapper<ManagedAddress>;
+
+    #[storage_mapper("contractsMap")]
+    fn contracts_map(&self, contract_name: ManagedBuffer) -> SingleValueMapper<ManagedAddress>;
+
+    #[storage_mapper("configAdmin")]
+    fn config_admin(&self) -> SingleValueMapper<ManagedAddress>;
 }
