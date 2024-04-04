@@ -97,7 +97,7 @@ fn test_deploy() {
 }
 
 #[test]
-fn test_register_bridge_ops() {
+fn test_register_bridge_ops_wrong_hashes() {
     let mut state = MultisigTestState::new();
     state.deploy_multisig_contract();
 
