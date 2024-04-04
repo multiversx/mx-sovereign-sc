@@ -2,13 +2,10 @@ mod multisigverifier_setup;
 
 use bls_signature::BlsSignature;
 use multisigverifier::ProxyTrait;
-use multiversx_sc::{
-    codec::multi_types::MultiValueVec,
-    types::{Address, ManagedBuffer, ManagedByteArray, ManagedVec, MultiValueEncoded},
-};
+use multiversx_sc::types::{ManagedBuffer, ManagedByteArray, MultiValueEncoded};
 use multiversx_sc_scenario::{
     api::StaticApi,
-    scenario_model::{Account, AddressValue, ScCallStep, ScDeployStep, SetStateStep},
+    scenario_model::{Account, ScCallStep, ScDeployStep, SetStateStep, TxExpect},
     ContractInfo, ScenarioWorld,
 };
 
@@ -31,8 +28,8 @@ fn world() -> ScenarioWorld {
 
 struct MultisigTestState {
     world: ScenarioWorld,
-    leader_address: Address,
-    validator_address: Address,
+    // leader_address: Address,
+    // validator_address: Address,
     multisig_contract: MultisigverifierContract,
 }
 
@@ -51,14 +48,14 @@ impl MultisigTestState {
                 .put_account(VALIDATOR_ADDRESS_EXPR, Account::new().nonce(1)),
         );
 
-        let leader_address = AddressValue::from(LEADER_ADDRESS_EXPR).to_address();
-        let validator_address = AddressValue::from(VALIDATOR_ADDRESS_EXPR).to_address();
+        // let leader_address = AddressValue::from(LEADER_ADDRESS_EXPR).to_address();
+        // let validator_address = AddressValue::from(VALIDATOR_ADDRESS_EXPR).to_address();
         let multisig_contract = MultisigverifierContract::new(MULTISIG_ADDRESS_EXPR);
 
         Self {
             world,
-            leader_address,
-            validator_address,
+            // leader_address,
+            // validator_address,
             multisig_contract,
         }
     }
@@ -76,7 +73,7 @@ impl MultisigTestState {
         self
     }
 
-    fn propose_register_bridge_ops(
+    fn _propose_register_bridge_ops(
         &mut self,
         bridge_operations_hash: &ManagedBuffer<StaticApi>,
         operations_hashes: MultiValueEncoded<StaticApi, ManagedBuffer<StaticApi>>,
@@ -110,18 +107,26 @@ fn test_register_bridge_ops() {
         b"EIZ2\x05\xf7q\xc7G\x96\x1f\xba0\xe2\xd1\xf5pE\x14\xd7?\xac\xff\x8d\x1a\x0c\x11\x900f5\xfb\xff4\x94\xb8@\xc5^\xc2,exn0\xe3\xf0\n"
     );
 
-    let first_operation =
+    let first_operation: ManagedBuffer<StaticApi> =
         ManagedBuffer::from("95cdb166d6e12a8c4a783a48d2e4f647e15fac4e5a115d4483f95881630a5433");
     let second_operation =
         ManagedBuffer::from("4851cd6e4a4799ad0d8e8ead37c88d930874302ab11edcc60f608654be14b2ed");
 
-    let mut bridge_operations = ManagedVec::new();
+    let mut bridge_operations: MultiValueEncoded<StaticApi, ManagedBuffer<StaticApi>> =
+        MultiValueEncoded::new();
     bridge_operations.push(first_operation);
     bridge_operations.push(second_operation);
 
-    let _ = state.propose_register_bridge_ops(
-        &bridge_operations_hash,
-        bridge_operations.into(),
-        &mock_signature,
+    state.world.sc_call(
+        ScCallStep::new()
+            .from(OWNER_ADDRESS_EXPR)
+            .call(state.multisig_contract.register_bridge_operations(
+                mock_signature,
+                bridge_operations_hash,
+                bridge_operations,
+            ))
+            .expect(TxExpect::user_error(
+                "str:Hash of all operations doesn't match the hash of transfer data",
+            )),
     );
 }
