@@ -1,25 +1,18 @@
 #![allow(deprecated)]
 
-use bls_signature::BlsSignature;
 use bridge_setup::{
-    BridgeSetup, DummyAttributes, DUMMY_SIG, FEE_TOKEN_ID, FUNGIBLE_TOKEN_ID, NFT_TOKEN_ID,
+    BridgeSetup, FEE_TOKEN_ID, FUNGIBLE_TOKEN_ID, NFT_TOKEN_ID,
     TOKEN_BALANCE,
 };
-use esdt_safe::{from_sovereign::transfer_tokens::TransferTokensModule, to_sovereign::{
-        create_tx::CreateTxModule, set_tx_status::SetTxStatusModule,
-    }};
-use multiversx_sc::{
-    types::{ManagedBuffer, ManagedVec, MultiValueEncoded},
-    codec::multi_types::OptionalValue,
-};
+use esdt_safe::to_sovereign::
+        create_tx::CreateTxModule
+    ;
+use multiversx_sc::
+    codec::multi_types::OptionalValue
+;
 use multiversx_sc_scenario::{
-    managed_address, managed_token_id,
-    multiversx_chain_vm::crypto_functions::sha256, rust_biguint,
-    testing_framework::TxTokenTransfer, DebugApi,
-};
-use transaction::{
-    transaction_status::TransactionStatus, Operation, OperationData, OperationEsdtPayment,
-    StolenFromFrameworkEsdtTokenData, TransferData,
+    managed_address, rust_biguint,
+    testing_framework::TxTokenTransfer,
 };
 
 mod bridge_setup;
