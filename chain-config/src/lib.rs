@@ -6,6 +6,7 @@ multiversx_sc::imports!();
 
 pub const BLS_SIGNATURE_LEN: usize = 48;
 pub type BlsSignature<M> = ManagedByteArray<M, BLS_SIGNATURE_LEN>;
+pub const MINIMUM_EGLD_STAKE_VALUE: i32 = 1000000000;
 
 pub mod bridge;
 pub mod validator_rules;
@@ -57,18 +58,45 @@ pub trait ChainConfigContract:
         self.add_admin(self.sovereign_multisig_address().get());
     }
 
-    // #[payable("*")]
-    // #[endpoint(register)]
-    // fn register(
-    //     &self,
-    //     bls_authenticity: MultiValue2<ManagedBuffer, BlsSignature<Self::Api>>,
-    //     egldStakeValue: StakeMultiArg<Self::Api>,
-    // ) {
-    //     // check if genesis happened
-    // }
+    #[payable("*")]
+    #[endpoint(register)]
+    fn register(
+        &self,
+        bls_authenticity: MultiValue2<ManagedBuffer, BlsSignature<Self::Api>>,
+        egld_stake_value: StakeMultiArg<Self::Api>,
+    ) {
+        // query sovereign validator staking contract
+        // check if genesis happened
+        let (bls_pub_key, bls_signature) = bls_authenticity.into_tuple();
+        let (_token_identifier, stake_amount) = egld_stake_value.into_tuple();
+
+        require!(
+            stake_amount >= MINIMUM_EGLD_STAKE_VALUE,
+            "Staked eGLD minimum value has not been met"
+        );
+
+        self.registered_validators(bls_pub_key).set(bls_signature);
+        // logEvent:
+        // Identifier = register
+        // Address = scAddress
+        // Topics = address, blsKeys, eGLDStake, tokenStake
+    }
+
+    #[endpoint(unregister)]
+    fn unregister(&self, _bls_pub_keys: MultiValueEncoded<ManagedBuffer>) {
+        // sov system SC 
+        // logEvent:
+        //     Identifier = unRegister
+        //     Address = scAddress
+        //     Topics = address, blsKeys, eGLDStake, tokenStake
+
+    }
 
     #[endpoint]
     fn upgrade(&self) {}
+
+    #[storage_mapper("registeredValidators")]
+    fn registered_validators(&self, bls_pub_key: ManagedBuffer) -> SingleValueMapper<BlsSignature<Self::Api>>;
 
     #[storage_mapper("sovereignMultiSigAddress")]
     fn sovereign_multisig_address(&self) -> SingleValueMapper<ManagedAddress>;
