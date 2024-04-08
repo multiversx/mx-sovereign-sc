@@ -143,7 +143,7 @@ pub trait TransferTokensModule:
                     .with_extra_gas_for_callback(CALLBACK_GAS)
                     .with_callback(
                         <Self as TransferTokensModule>::callbacks(self)
-                            .execute(hash_of_hashes.clone(), operation_tuple.clone()),
+                            .execute(&hash_of_hashes, operation_tuple),
                     )
                     .register_promise();
             }
@@ -166,7 +166,7 @@ pub trait TransferTokensModule:
                     .async_call_promise()
                     .with_callback(
                         <Self as TransferTokensModule>::callbacks(self)
-                            .execute(hash_of_hashes.clone(), operation_tuple),
+                            .execute(&hash_of_hashes, operation_tuple),
                     )
                     .register_promise();
             }
@@ -176,7 +176,7 @@ pub trait TransferTokensModule:
     #[promises_callback]
     fn execute(
         &self,
-        hash_of_hashes: ManagedBuffer,
+        hash_of_hashes: &ManagedBuffer,
         operation_tuple: MultiValue2<ManagedBuffer, Operation<Self::Api>>,
         #[call_result] result: ManagedAsyncCallResult<IgnoreValue>,
     ) {
@@ -187,13 +187,13 @@ pub trait TransferTokensModule:
                 self.execute_bridge_operation_event(hash_of_hashes.clone(), operation_hash.clone());
             }
             ManagedAsyncCallResult::Err(_) => {
-                self.emit_transfer_failed_events(&hash_of_hashes, operation_tuple);
+                self.emit_transfer_failed_events(hash_of_hashes, operation_tuple);
             }
         }
 
         let _: () = self
             .multisig_verifier_proxy(self.multisig_address().get())
-            .remove_executed_hash(&hash_of_hashes, &operation_hash)
+            .remove_executed_hash(hash_of_hashes, &operation_hash)
             .execute_on_dest_context();
     }
 
