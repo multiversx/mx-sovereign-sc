@@ -36,11 +36,17 @@ pub struct Operation<M: ManagedTypeApi> {
 }
 
 impl<M: ManagedTypeApi> Operation<M> {
-    pub fn get_tokens_as_tuple_arr(&self) -> MultiValueEncoded<M, MultiValue3<TokenIdentifier<M>, u64, EsdtTokenData<M>>> {
+    pub fn get_tokens_as_tuple_arr(
+        &self,
+    ) -> MultiValueEncoded<M, MultiValue3<TokenIdentifier<M>, u64, EsdtTokenData<M>>> {
         let mut tuple_arr = MultiValueEncoded::new();
 
         for token in &self.tokens {
-            tuple_arr.push(MultiValue3::from((token.token_identifier, token.token_nonce, token.token_data.into())));
+            tuple_arr.push(MultiValue3::from((
+                token.token_identifier,
+                token.token_nonce,
+                token.token_data.into(),
+            )));
         }
 
         tuple_arr
@@ -59,6 +65,12 @@ pub struct OperationData<M: ManagedTypeApi> {
     pub op_nonce: TxId,
     pub op_sender: ManagedAddress<M>,
     pub opt_transfer_data: Option<TransferData<M>>,
+}
+
+#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, TypeAbi, ManagedVecItem, Clone)]
+pub struct OperationTuple<M: ManagedTypeApi> {
+    pub op_hash: ManagedBuffer<M>,
+    pub operation: Operation<M>,
 }
 
 #[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, TypeAbi, ManagedVecItem, Clone)]

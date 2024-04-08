@@ -1,5 +1,7 @@
 use multiversx_sc::{api::ESDT_MULTI_TRANSFER_FUNC_NAME, storage::StorageKey};
-use transaction::{BatchId, GasLimit, Operation, OperationData, OperationEsdtPayment};
+use transaction::{
+    BatchId, GasLimit, Operation, OperationData, OperationEsdtPayment, OperationTuple,
+};
 
 use crate::to_sovereign;
 
@@ -40,7 +42,10 @@ pub trait TransferTokensModule:
         }
 
         let minted_operation_tokens = self.mint_tokens(&operation.tokens);
-        let operation_tuple = MultiValue2::from((operation_hash.clone(), operation.clone()));
+        let operation_tuple = OperationTuple {
+            op_hash: operation_hash,
+            operation,
+        };
 
         self.distribute_payments(hash_of_hashes, operation_tuple, minted_operation_tokens);
     }
@@ -121,13 +126,13 @@ pub trait TransferTokensModule:
     fn distribute_payments(
         &self,
         hash_of_hashes: ManagedBuffer,
-        operation_tuple: MultiValue2<ManagedBuffer, Operation<Self::Api>>,
+        operation_tuple: OperationTuple<Self::Api>,
         tokens_list: ManagedVec<OperationEsdtPayment<Self::Api>>,
     ) {
         let mapped_tokens = tokens_list.iter().map(|token| token.into()).collect();
-        let (_, operation) = operation_tuple.clone().into_tuple();
+        // let (_, operation) = operation_tuple.clone().into_tuple();
 
-        match &operation.data.opt_transfer_data {
+        match &operation_tuple.operation.data.opt_transfer_data {
             Some(transfer_data) => {
                 let mut args = ManagedArgBuffer::new();
                 for arg in &transfer_data.args {
@@ -135,7 +140,10 @@ pub trait TransferTokensModule:
                 }
 
                 self.send()
-                    .contract_call::<()>(operation.to.clone(), transfer_data.function.clone())
+                    .contract_call::<()>(
+                        operation_tuple.operation.to.clone(),
+                        transfer_data.function.clone(),
+                    )
                     .with_raw_arguments(args)
                     .with_multi_token_transfer(mapped_tokens)
                     .with_gas_limit(transfer_data.gas_limit)
@@ -143,13 +151,13 @@ pub trait TransferTokensModule:
                     .with_extra_gas_for_callback(CALLBACK_GAS)
                     .with_callback(
                         <Self as TransferTokensModule>::callbacks(self)
-                            .execute(&hash_of_hashes, operation_tuple),
+                            .execute(&hash_of_hashes, &operation_tuple),
                     )
                     .register_promise();
             }
             None => {
                 let mut args = ManagedArgBuffer::new();
-                args.push_arg(operation.to);
+                args.push_arg(operation_tuple.operation.to.clone());
                 args.push_arg(mapped_tokens.len());
 
                 for token in &mapped_tokens {
@@ -166,7 +174,7 @@ pub trait TransferTokensModule:
                     .async_call_promise()
                     .with_callback(
                         <Self as TransferTokensModule>::callbacks(self)
-                            .execute(&hash_of_hashes, operation_tuple),
+                            .execute(&hash_of_hashes, &operation_tuple),
                     )
                     .register_promise();
             }
@@ -177,14 +185,17 @@ pub trait TransferTokensModule:
     fn execute(
         &self,
         hash_of_hashes: &ManagedBuffer,
-        operation_tuple: MultiValue2<ManagedBuffer, Operation<Self::Api>>,
+        operation_tuple: &OperationTuple<Self::Api>,
         #[call_result] result: ManagedAsyncCallResult<IgnoreValue>,
     ) {
-        let (operation_hash, _) = operation_tuple.clone().into_tuple();
+        // let (operation_hash, _) = operation_tuple.clone().into_tuple();
 
         match result {
             ManagedAsyncCallResult::Ok(_) => {
-                self.execute_bridge_operation_event(hash_of_hashes.clone(), operation_hash.clone());
+                self.execute_bridge_operation_event(
+                    hash_of_hashes.clone(),
+                    operation_tuple.op_hash.clone(),
+                );
             }
             ManagedAsyncCallResult::Err(_) => {
                 self.emit_transfer_failed_events(hash_of_hashes, operation_tuple);
@@ -193,21 +204,24 @@ pub trait TransferTokensModule:
 
         let _: () = self
             .multisig_verifier_proxy(self.multisig_address().get())
-            .remove_executed_hash(hash_of_hashes, &operation_hash)
+            .remove_executed_hash(hash_of_hashes, &operation_tuple.op_hash)
             .execute_on_dest_context();
     }
 
     fn emit_transfer_failed_events(
         &self,
         hash_of_hashes: &ManagedBuffer,
-        operation_tuple: MultiValue2<ManagedBuffer, Operation<Self::Api>>,
+        operation_tuple: &OperationTuple<Self::Api>,
     ) {
-        let (operation_hash, operation) = operation_tuple.into_tuple();
+        // let (operation_hash, operation) = operation_tuple.into_tuple();
 
         // confirmation event
-        self.execute_bridge_operation_event(hash_of_hashes.clone(), operation_hash);
+        self.execute_bridge_operation_event(
+            hash_of_hashes.clone(),
+            operation_tuple.op_hash.clone(),
+        );
 
-        for operation_token in &operation.tokens {
+        for operation_token in &operation_tuple.operation.tokens {
             let mx_token_id_state = self
                 .sovereign_to_multiversx_token_id(&operation_token.token_identifier)
                 .get();
@@ -240,8 +254,8 @@ pub trait TransferTokensModule:
         let tx_nonce = self.get_and_save_next_tx_id();
 
         self.deposit_event(
-            &operation.data.op_sender,
-            &operation.get_tokens_as_tuple_arr(),
+            &operation_tuple.operation.data.op_sender,
+            &operation_tuple.operation.get_tokens_as_tuple_arr(),
             OperationData {
                 op_nonce: tx_nonce,
                 op_sender: sc_address.clone(),
