@@ -130,7 +130,6 @@ pub trait TransferTokensModule:
         tokens_list: ManagedVec<OperationEsdtPayment<Self::Api>>,
     ) {
         let mapped_tokens = tokens_list.iter().map(|token| token.into()).collect();
-        // let (_, operation) = operation_tuple.clone().into_tuple();
 
         match &operation_tuple.operation.data.opt_transfer_data {
             Some(transfer_data) => {
@@ -188,8 +187,6 @@ pub trait TransferTokensModule:
         operation_tuple: &OperationTuple<Self::Api>,
         #[call_result] result: ManagedAsyncCallResult<IgnoreValue>,
     ) {
-        // let (operation_hash, _) = operation_tuple.clone().into_tuple();
-
         match result {
             ManagedAsyncCallResult::Ok(_) => {
                 self.execute_bridge_operation_event(
@@ -213,8 +210,6 @@ pub trait TransferTokensModule:
         hash_of_hashes: &ManagedBuffer,
         operation_tuple: &OperationTuple<Self::Api>,
     ) {
-        // let (operation_hash, operation) = operation_tuple.into_tuple();
-
         // confirmation event
         self.execute_bridge_operation_event(
             hash_of_hashes.clone(),
