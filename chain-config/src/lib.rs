@@ -63,11 +63,11 @@ pub trait ChainConfigContract:
     fn register(
         &self,
         egld_stake_value: StakeMultiArg<Self::Api>,
-        bls_authenticity: MultiValue2<ManagedBuffer, BlsSignature<Self::Api>>,
+        // bls_authenticity: MultiValue2<ManagedBuffer, BlsSignature<Self::Api>>,
     ) {
         // query sovereign validator staking contract
         // check if genesis happened
-        let (bls_pub_key, bls_signature) = bls_authenticity.into_tuple();
+        // let (bls_pub_key, bls_signature) = bls_authenticity.into_tuple();
         let (_token_identifier, stake_amount) = egld_stake_value.into_tuple();
 
         require!(
@@ -75,7 +75,7 @@ pub trait ChainConfigContract:
             "Staked eGLD minimum value has not been met"
         );
 
-        self.registered_validators(bls_pub_key).set(bls_signature);
+        // self.registered_validators(bls_pub_key).set(bls_signature);
         // logEvent:
         // Identifier = register
         // Address = scAddress
