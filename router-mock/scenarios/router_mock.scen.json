@@ -23,7 +23,7 @@
             "tx": {
                 "from": "address:owner",
                 "contractCode": "mxsc:../output/router-mock.mxsc.json",
-                "arguments": [],
+                "arguments": ["address:pair", "str:usdc"],
                 "gasLimit": "5,000,000",
                 "gasPrice": "0"
             },
