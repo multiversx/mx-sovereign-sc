@@ -6,7 +6,7 @@ multiversx_sc::imports!();
 
 pub const BLS_SIGNATURE_LEN: usize = 48;
 pub type BlsSignature<M> = ManagedByteArray<M, BLS_SIGNATURE_LEN>;
-pub const MINIMUM_EGLD_STAKE_VALUE: i32 = 1000000000;
+pub const MINIMUM_EGLD_STAKE_VALUE: u32 = 1000000000;
 
 pub mod bridge;
 pub mod validator_rules;
