@@ -62,8 +62,8 @@ pub trait ChainConfigContract:
     #[endpoint(register)]
     fn register(
         &self,
-        bls_authenticity: MultiValue2<ManagedBuffer, BlsSignature<Self::Api>>,
         egld_stake_value: StakeMultiArg<Self::Api>,
+        bls_authenticity: MultiValue2<ManagedBuffer, BlsSignature<Self::Api>>,
     ) {
         // query sovereign validator staking contract
         // check if genesis happened
