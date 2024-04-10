@@ -23,7 +23,7 @@ pub trait PairMock {
             self.usdc_token_id().get(),
             0,
             input_payment.amount * DEFAULT_TOKEN_PRICE
-                / BigUint::from(10u32).pow(DEFAULT_TOKEN_DECIMALS),
+                // / BigUint::from(10u32).pow(DEFAULT_TOKEN_DECIMALS),
         )
     }
 
