@@ -6,7 +6,7 @@ multiversx_sc::imports!();
 
 pub const BLS_SIGNATURE_LEN: usize = 48;
 pub type BlsSignature<M> = ManagedByteArray<M, BLS_SIGNATURE_LEN>;
-pub const MINIMUM_EGLD_STAKE_VALUE: u32 = 1000000000;
+// pub const MINIMUM_EGLD_STAKE_VALUE: u32 = 1000000000;
 
 pub mod bridge;
 pub mod validator_rules;
@@ -62,18 +62,18 @@ pub trait ChainConfigContract:
     #[endpoint(register)]
     fn register(
         &self,
-        egld_stake_value: StakeMultiArg<Self::Api>,
+        _egld_stake_value: StakeMultiArg<Self::Api>,
         // bls_authenticity: MultiValue2<ManagedBuffer, BlsSignature<Self::Api>>,
     ) {
         // query sovereign validator staking contract
         // check if genesis happened
         // let (bls_pub_key, bls_signature) = bls_authenticity.into_tuple();
-        let (_token_identifier, stake_amount) = egld_stake_value.into_tuple();
-
-        require!(
-            stake_amount >= MINIMUM_EGLD_STAKE_VALUE,
-            "Staked eGLD minimum value has not been met"
-        );
+        // let (_token_identifier, stake_amount) = egld_stake_value.into_tuple();
+        //
+        // require!(
+        //     stake_amount >= MINIMUM_EGLD_STAKE_VALUE,
+        //     "Staked eGLD minimum value has not been met"
+        // );
 
         // self.registered_validators(bls_pub_key).set(bls_signature);
         // logEvent:
