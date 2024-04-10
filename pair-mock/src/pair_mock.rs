@@ -22,7 +22,7 @@ pub trait PairMock {
         EsdtTokenPayment::new(
             self.usdc_token_id().get(),
             0,
-            input_payment.amount * DEFAULT_TOKEN_PRICE
+            input_payment.amount 
                 // / BigUint::from(10u32).pow(DEFAULT_TOKEN_DECIMALS),
         )
     }
