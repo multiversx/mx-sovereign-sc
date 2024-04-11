@@ -26,38 +26,40 @@ pub trait RefundModule:
             &args.token.token_identifier,
             args.token.token_nonce,
         );
+
         if token_balance < args.token.token_data.amount {
             if args.token.token_nonce == 0 {
                 if !args.roles.has_role(&EsdtLocalRole::Mint) {
-
                     return true;
                 }
             } else if !self.has_nft_roles(args.token, args.roles) {
-
                 return true;
             }
         }
 
         if self.is_above_max_amount(&args.token.token_identifier, &args.token.token_data.amount) {
-
             return true;
         }
 
         if self.is_account_same_shard_frozen(args.sc_shard, args.dest, &args.token.token_identifier)
         {
-
             return true;
         }
 
         false
     }
 
-    fn has_nft_roles(&self, payment: &OperationEsdtPayment<Self::Api>, roles: EsdtLocalRoleFlags) -> bool {
+    fn has_nft_roles(
+        &self,
+        payment: &OperationEsdtPayment<Self::Api>,
+        roles: EsdtLocalRoleFlags,
+    ) -> bool {
         if !roles.has_role(&EsdtLocalRole::NftCreate) {
             return false;
         }
 
-        if payment.token_data.amount > NFT_AMOUNT && !roles.has_role(&EsdtLocalRole::NftAddQuantity) {
+        if payment.token_data.amount > NFT_AMOUNT && !roles.has_role(&EsdtLocalRole::NftAddQuantity)
+        {
             return false;
         }
 
