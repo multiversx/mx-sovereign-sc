@@ -1,11 +1,11 @@
-use transaction::{BatchId, PaymentsVec, Transaction, TxNonce};
+use transaction::{BatchId, OperationEsdtPayment, PaymentsVec, Transaction, TxNonce};
 
 multiversx_sc::imports!();
 
 const NFT_AMOUNT: u32 = 1;
 
 pub struct CheckMustRefundArgs<'a, M: ManagedTypeApi> {
-    pub token: &'a EsdtTokenPayment<M>,
+    pub token: &'a OperationEsdtPayment<M>,
     pub roles: EsdtLocalRoleFlags,
     pub dest: &'a ManagedAddress<M>,
     pub batch_id: BatchId,
@@ -26,29 +26,25 @@ pub trait RefundModule:
             &args.token.token_identifier,
             args.token.token_nonce,
         );
-        if token_balance < args.token.amount {
+        if token_balance < args.token.token_data.amount {
             if args.token.token_nonce == 0 {
                 if !args.roles.has_role(&EsdtLocalRole::Mint) {
-                    self.transfer_failed_invalid_token(args.batch_id, args.tx_nonce);
 
                     return true;
                 }
             } else if !self.has_nft_roles(args.token, args.roles) {
-                self.transfer_failed_invalid_token(args.batch_id, args.tx_nonce);
 
                 return true;
             }
         }
 
-        if self.is_above_max_amount(&args.token.token_identifier, &args.token.amount) {
-            self.transfer_over_max_amount(args.batch_id, args.tx_nonce);
+        if self.is_above_max_amount(&args.token.token_identifier, &args.token.token_data.amount) {
 
             return true;
         }
 
         if self.is_account_same_shard_frozen(args.sc_shard, args.dest, &args.token.token_identifier)
         {
-            self.transfer_failed_frozen_destination_account(args.batch_id, args.tx_nonce);
 
             return true;
         }
@@ -56,12 +52,12 @@ pub trait RefundModule:
         false
     }
 
-    fn has_nft_roles(&self, payment: &EsdtTokenPayment, roles: EsdtLocalRoleFlags) -> bool {
+    fn has_nft_roles(&self, payment: &OperationEsdtPayment<Self::Api>, roles: EsdtLocalRoleFlags) -> bool {
         if !roles.has_role(&EsdtLocalRole::NftCreate) {
             return false;
         }
 
-        if payment.amount > NFT_AMOUNT && !roles.has_role(&EsdtLocalRole::NftAddQuantity) {
+        if payment.token_data.amount > NFT_AMOUNT && !roles.has_role(&EsdtLocalRole::NftAddQuantity) {
             return false;
         }
 
@@ -91,7 +87,6 @@ pub trait RefundModule:
         tokens_to_refund: PaymentsVec<Self::Api>,
     ) -> Transaction<Self::Api> {
         let tx_nonce = self.get_and_save_next_tx_id();
-        self.add_refund_transaction_event(tx_nonce, sov_tx.nonce);
 
         // invert from and to
         Transaction {

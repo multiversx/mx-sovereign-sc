@@ -7,5 +7,7 @@ members = [
   "esdt-safe",
   "esdt-safe/meta",
   "fee-market",
-  "fee-market/meta"
+  "fee-market/meta",
+  "multisigverifier",
+  "multisigverifier/meta", 
 ]

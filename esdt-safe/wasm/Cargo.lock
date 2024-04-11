@@ -41,6 +41,7 @@ dependencies = [
  "bls-signature",
  "fee-market",
  "max-bridged-amount-module",
+ "multisigverifier",
  "multiversx-sc",
  "multiversx-sc-modules",
  "setup-phase",
@@ -85,6 +86,15 @@ name = "max-bridged-amount-module"
 version = "0.0.0"
 dependencies = [
  "multiversx-sc",
+]
+
+[[package]]
+name = "multisigverifier"
+version = "0.0.0"
+dependencies = [
+ "bls-signature",
+ "multiversx-sc",
+ "transaction",
 ]
 
 [[package]]
