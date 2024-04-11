@@ -12,4 +12,6 @@ members = [
   "pair-mock/meta",
   "router-mock",
   "router-mock/meta",
+  "multisigverifier",
+  "multisigverifier/meta", 
 ]

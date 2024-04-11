@@ -29,10 +29,65 @@ pub type PaymentsVec<M> = ManagedVec<M, EsdtTokenPayment<M>>;
 pub type TxBatchSplitInFields<M> = MultiValue2<BatchId, MultiValueEncoded<M, TxAsMultiValue<M>>>;
 
 #[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, TypeAbi, ManagedVecItem, Clone)]
+pub struct Operation<M: ManagedTypeApi> {
+    pub to: ManagedAddress<M>,
+    pub tokens: ManagedVec<M, OperationEsdtPayment<M>>,
+    pub data: OperationData<M>,
+}
+
+impl<M: ManagedTypeApi> Operation<M> {
+    pub fn get_tokens_as_tuple_arr(
+        &self,
+    ) -> MultiValueEncoded<M, MultiValue3<TokenIdentifier<M>, u64, EsdtTokenData<M>>> {
+        let mut tuple_arr = MultiValueEncoded::new();
+
+        for token in &self.tokens {
+            tuple_arr.push(MultiValue3::from((
+                token.token_identifier,
+                token.token_nonce,
+                token.token_data.into(),
+            )));
+        }
+
+        tuple_arr
+    }
+}
+
+#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, TypeAbi, ManagedVecItem, Clone)]
 pub struct TransferData<M: ManagedTypeApi> {
     pub gas_limit: GasLimit,
     pub function: ManagedBuffer<M>,
     pub args: ManagedVec<M, ManagedBuffer<M>>,
+}
+
+#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, TypeAbi, ManagedVecItem, Clone)]
+pub struct OperationData<M: ManagedTypeApi> {
+    pub op_nonce: TxId,
+    pub op_sender: ManagedAddress<M>,
+    pub opt_transfer_data: Option<TransferData<M>>,
+}
+
+#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, TypeAbi, ManagedVecItem, Clone)]
+pub struct OperationTuple<M: ManagedTypeApi> {
+    pub op_hash: ManagedBuffer<M>,
+    pub operation: Operation<M>,
+}
+
+#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, TypeAbi, ManagedVecItem, Clone)]
+pub struct OperationEsdtPayment<M: ManagedTypeApi> {
+    pub token_identifier: TokenIdentifier<M>,
+    pub token_nonce: u64,
+    pub token_data: StolenFromFrameworkEsdtTokenData<M>,
+}
+
+impl<M: ManagedTypeApi> From<OperationEsdtPayment<M>> for EsdtTokenPayment<M> {
+    fn from(payment: OperationEsdtPayment<M>) -> Self {
+        EsdtTokenPayment {
+            token_identifier: payment.token_identifier,
+            token_nonce: payment.token_nonce,
+            amount: payment.token_data.amount,
+        }
+    }
 }
 
 // Temporary until Clone is implemented for EsdtTokenData
@@ -79,6 +134,22 @@ impl<M: ManagedTypeApi> From<EsdtTokenData<M>> for StolenFromFrameworkEsdtTokenD
             creator: value.creator,
             royalties: value.royalties,
             uris: value.uris,
+        }
+    }
+}
+
+impl<M: ManagedTypeApi> From<StolenFromFrameworkEsdtTokenData<M>> for EsdtTokenData<M> {
+    fn from(token_data: StolenFromFrameworkEsdtTokenData<M>) -> Self {
+        EsdtTokenData {
+            token_type: token_data.token_type,
+            amount: token_data.amount,
+            frozen: token_data.frozen,
+            hash: token_data.hash,
+            name: token_data.name,
+            attributes: token_data.attributes,
+            creator: token_data.creator,
+            royalties: token_data.royalties,
+            uris: token_data.uris,
         }
     }
 }

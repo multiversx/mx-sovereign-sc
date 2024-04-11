@@ -1,11 +1,13 @@
+use crate::from_sovereign::token_mapping;
 use bls_signature::BlsSignature;
 use fee_market::subtract_fee::{FinalPayment, ProxyTrait as _};
-use transaction::{GasLimit, StolenFromFrameworkEsdtTokenData, Transaction, TransferData};
-
-use crate::to_sovereign::events::DepositEvent;
+use multiversx_sc::{hex_literal::hex, storage::StorageKey};
+use transaction::{GasLimit, OperationData, TransferData};
 
 multiversx_sc::imports!();
 
+pub const ESDT_SYSTEM_SC_ADDRESS: [u8; 32] =
+    hex!("000000000000000000010000000000000000000000000000000000000002ffff");
 const MAX_TRANSFERS_PER_TX: usize = 10;
 
 #[multiversx_sc::module]
@@ -18,6 +20,8 @@ pub trait CreateTxModule:
     + setup_phase::SetupPhaseModule
     + utils::UtilsModule
     + multiversx_sc_modules::pause::PauseModule
+    + token_mapping::TokenMappingModule
+    + multiversx_sc_modules::default_issue_callbacks::DefaultIssueCallbacksModule
 {
     #[endpoint(setMaxUserTxGasLimit)]
     fn set_max_user_tx_gas_limit(
@@ -34,7 +38,6 @@ pub trait CreateTxModule:
 
         let opt_signature = opt_sig.into_option();
         require!(opt_signature.is_some(), "Must provide signature");
-
         let signature = unsafe { opt_signature.unwrap_unchecked() };
         let mut signature_data = ManagedBuffer::new();
         let _ = new_value.dep_encode(&mut signature_data);
@@ -112,114 +115,205 @@ pub trait CreateTxModule:
         self.remove_items(&mut self.banned_endpoint_names(), &all_names);
     }
 
+    #[payable("*")]
+    #[endpoint(depositBack)]
+    fn deposit_back(&self, to: ManagedAddress) {
+        require!(self.not_paused(), "Cannot create transaction while paused");
+
+        let caller = self.blockchain().get_caller();
+        require!(caller == ESDT_SYSTEM_SC_ADDRESS.into(), "Caller is invalid");
+
+        let payments = self.call_value().all_esdt_transfers();
+        self.send().direct_multi(&to, &payments);
+    }
+
+    fn check_and_extract_fee(
+        &self,
+    ) -> MultiValue2<OptionalValue<EsdtTokenPayment>, ManagedVec<EsdtTokenPayment>> {
+        let mut payments = self.call_value().all_esdt_transfers().clone_value();
+        let fee_market_address = self.fee_market_address().get();
+        let fee_enabled_mapper = SingleValueMapper::new_from_address(
+            fee_market_address.clone(),
+            StorageKey::from("feeEnabledFlag"),
+        )
+        .get();
+
+        let opt_transfer_data = if fee_enabled_mapper {
+            OptionalValue::Some(self.pop_first_payment(&mut payments))
+        } else {
+            OptionalValue::None
+        };
+
+        MultiValue2::from((opt_transfer_data, payments))
+    }
+
+    fn process_transfer_data(
+        &self,
+        opt_transfer_data: OptionalValue<
+            MultiValue3<GasLimit, ManagedBuffer, ManagedVec<ManagedBuffer>>,
+        >,
+    ) -> Option<TransferData<Self::Api>> {
+        match &opt_transfer_data {
+            OptionalValue::Some(transfer_data) => {
+                let (gas_limit, function, args) = transfer_data.clone().into_tuple();
+                let max_gas_limit = self.max_user_tx_gas_limit().get();
+
+                require!(gas_limit <= max_gas_limit, "Gas limit too high");
+
+                require!(
+                    !self.banned_endpoint_names().contains(&function),
+                    "Banned endpoint name"
+                );
+
+                Some(TransferData {
+                    gas_limit,
+                    function,
+                    args,
+                })
+            }
+            OptionalValue::None => None,
+        }
+    }
+
     /// Create an Elrond -> Sovereign transaction.
     #[payable("*")]
     #[endpoint]
     fn deposit(
         &self,
         to: ManagedAddress,
-        opt_transfer_data: OptionalValue<TransferData<Self::Api>>,
+        opt_transfer_data: OptionalValue<
+            MultiValue3<GasLimit, ManagedBuffer, ManagedVec<ManagedBuffer>>,
+        >,
     ) {
         require!(self.not_paused(), "Cannot create transaction while paused");
 
-        let mut payments = self.call_value().all_esdt_transfers().clone_value();
-        let fees_payment = self.pop_first_payment(&mut payments);
+        let (fees_payment, payments) = self.check_and_extract_fee().into_tuple();
 
         require!(!payments.is_empty(), "Nothing to transfer");
         require!(payments.len() <= MAX_TRANSFERS_PER_TX, "Too many tokens");
 
-        let opt_gas_limit = match &opt_transfer_data {
-            OptionalValue::Some(transfer_data) => {
-                let max_gas_limit = self.max_user_tx_gas_limit().get();
-                require!(
-                    transfer_data.gas_limit <= max_gas_limit,
-                    "Gas limit too high"
-                );
-
-                require!(
-                    !self
-                        .banned_endpoint_names()
-                        .contains(&transfer_data.function),
-                    "Banned endpoint name"
-                );
-
-                OptionalValue::Some(transfer_data.gas_limit)
-            }
-            OptionalValue::None => OptionalValue::None,
-        };
-
+        let opt_transfer_data = self.process_transfer_data(opt_transfer_data);
         let own_sc_address = self.blockchain().get_sc_address();
-        let mut all_token_data = ManagedVec::new();
         let mut total_tokens_for_fees = 0usize;
-        let mut event_payments = MultiValueEncoded::new();
-        let burn_mapper = self.burn_tokens();
+        let mut event_payments: MultiValueEncoded<
+            MultiValue3<TokenIdentifier, u64, EsdtTokenData>,
+        > = MultiValueEncoded::new();
+        let mut refundable_payments: ManagedVec<Self::Api, EsdtTokenPayment<Self::Api>> =
+            ManagedVec::new();
+
         for payment in &payments {
             self.require_below_max_amount(&payment.token_identifier, &payment.amount);
             self.require_token_not_blacklisted(&payment.token_identifier);
 
-            if !self.token_whitelist().contains(&payment.token_identifier) {
+            if !self.token_whitelist().is_empty()
+                && !self.token_whitelist().contains(&payment.token_identifier)
+            {
+                refundable_payments.push(payment.clone());
+
+                continue;
+            } else {
                 total_tokens_for_fees += 1;
             }
 
-            if payment.token_nonce > 0 {
-                let current_token_data = self.blockchain().get_esdt_token_data(
-                    &own_sc_address,
-                    &payment.token_identifier,
-                    payment.token_nonce,
-                );
-                all_token_data.push(current_token_data.into());
-            } else {
-                all_token_data.push(StolenFromFrameworkEsdtTokenData::default());
-            }
-            
-            event_payments.push(
-                MultiValue3 ((
-                    payment.token_identifier.clone(),
-                    payment.token_nonce,
-                    payment.amount.clone()    
-                ))
+            let mut current_token_data = self.blockchain().get_esdt_token_data(
+                &own_sc_address,
+                &payment.token_identifier,
+                payment.token_nonce,
             );
 
-            if burn_mapper.contains(&payment.token_identifier) {
+            current_token_data.amount = payment.amount.clone();
+
+            if self.is_sovereign_chain().get() {
                 self.send().esdt_local_burn(
                     &payment.token_identifier,
                     payment.token_nonce,
                     &payment.amount,
                 );
+
+                event_payments.push(MultiValue3((
+                    payment.token_identifier.clone(),
+                    payment.token_nonce,
+                    current_token_data.clone(),
+                )));
+            } else {
+                let sov_token_id = self
+                    .multiversx_to_sovereign_token_id(&payment.token_identifier)
+                    .get();
+
+                if !sov_token_id.is_valid_esdt_identifier() {
+                    event_payments.push(MultiValue3((
+                        payment.token_identifier,
+                        payment.token_nonce,
+                        current_token_data.clone(),
+                    )));
+
+                    continue;
+                }
+
+                self.send().esdt_local_burn(
+                    &payment.token_identifier,
+                    payment.token_nonce,
+                    &payment.amount,
+                );
+
+                let mut sov_token_nonce = 0;
+
+                if payment.token_nonce > 0 {
+                    sov_token_nonce = self
+                        .multiversx_esdt_token_info_mapper(
+                            &payment.token_identifier,
+                            &payment.token_nonce,
+                        )
+                        .take()
+                        .token_nonce;
+
+                    self.sovereign_esdt_token_info_mapper(&sov_token_id, &sov_token_nonce)
+                        .take();
+                }
+
+                event_payments.push(MultiValue3((
+                    sov_token_id,
+                    sov_token_nonce,
+                    current_token_data.clone(),
+                )));
             }
         }
 
         let caller = self.blockchain().get_caller();
-        let fee_market_address = self.fee_market_address().get();
-        let final_payments: FinalPayment<Self::Api> = self
-            .fee_market_proxy(fee_market_address)
-            .subtract_fee(caller.clone(), total_tokens_for_fees, opt_gas_limit)
-            .with_esdt_transfer(fees_payment)
-            .execute_on_dest_context();
 
-        self.send()
-            .direct_non_zero_esdt_payment(&caller, &final_payments.remaining_tokens);
+        match fees_payment {
+            OptionalValue::Some(fee) => {
+                let mut gas = 0;
 
-        let block_nonce = self.blockchain().get_block_nonce();
+                if let Some(transfer_data) = &opt_transfer_data {
+                    gas = transfer_data.gas_limit;
+                }
+
+                let _: FinalPayment<Self::Api> = self
+                    .fee_market_proxy(self.fee_market_address().get())
+                    .subtract_fee(caller.clone(), total_tokens_for_fees, gas)
+                    .with_esdt_transfer(fee)
+                    .execute_on_dest_context();
+            }
+            OptionalValue::None => (),
+        };
+
+        // refund refundable_tokens
+        for payment in &refundable_payments {
+            self.send().direct_non_zero_esdt_payment(&caller, &payment);
+        }
+
         let tx_nonce = self.get_and_save_next_tx_id();
 
         self.deposit_event(
             &to,
             &event_payments,
-            DepositEvent::from(tx_nonce, &opt_transfer_data),
+            OperationData {
+                op_nonce: tx_nonce,
+                op_sender: caller,
+                opt_transfer_data,
+            },
         );
-
-        let tx = Transaction {
-            block_nonce,
-            nonce: tx_nonce,
-            from: caller,
-            to,
-            tokens: payments,
-            token_data: all_token_data,
-            opt_transfer_data: opt_transfer_data.into_option(),
-            is_refund_tx: false,
-        };
-        let _ = self.add_to_batch(tx);
     }
 
     #[proxy]
@@ -236,4 +330,7 @@ pub trait CreateTxModule:
 
     #[storage_mapper("bannedEndpointNames")]
     fn banned_endpoint_names(&self) -> UnorderedSetMapper<ManagedBuffer>;
+
+    #[storage_mapper("feeEnabledFlag")]
+    fn fee_enabled(&self) -> SingleValueMapper<bool>;
 }
