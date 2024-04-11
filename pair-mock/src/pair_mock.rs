@@ -19,12 +19,10 @@ pub trait PairMock {
         _timestamp_offset: u64,
         input_payment: EsdtTokenPayment,
     ) -> EsdtTokenPayment {
-        EsdtTokenPayment::new(
-            self.usdc_token_id().get(),
-            0,
-            input_payment.amount * DEFAULT_TOKEN_PRICE
-                / BigUint::from(10u32).pow(DEFAULT_TOKEN_DECIMALS),
-        )
+        let amount = input_payment.amount * DEFAULT_TOKEN_PRICE
+            / BigUint::from(10u32).pow(DEFAULT_TOKEN_DECIMALS);
+
+        EsdtTokenPayment::new(self.usdc_token_id().get(), 0, amount)
     }
 
     #[storage_mapper("usdcTokenId")]
