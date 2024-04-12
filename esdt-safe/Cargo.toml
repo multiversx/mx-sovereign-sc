@@ -36,10 +36,10 @@ path = "../fee-market"
 path = "../multisigverifier"
 
 [dependencies.multiversx-sc]
-version = "=0.47.4"
+version = "=0.48.0"
 
 [dependencies.multiversx-sc-modules]
-version = "=0.47.4"
+version = "=0.48.0"
 
 [dev-dependencies]
 num-bigint = "0.4.2"
@@ -47,4 +47,4 @@ num-traits = "0.2"
 hex = "0.4"
 
 [dev-dependencies.multiversx-sc-scenario]
-version = "=0.47.4"
+version = "=0.48.0"
