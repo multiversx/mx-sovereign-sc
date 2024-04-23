@@ -5,7 +5,7 @@ use bls_signature::BlsSignature;
 multiversx_sc::imports!();
 
 #[multiversx_sc::contract]
-pub trait Multisigverifier: bls_signature::BlsSignatureModule {
+pub trait Headerverifier: bls_signature::BlsSignatureModule {
     #[init]
     fn init(&self, bls_pub_keys: MultiValueEncoded<ManagedBuffer>) {
         for pub_key in bls_pub_keys {

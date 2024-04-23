@@ -1,10 +1,10 @@
 [package]
-name = "multisigverifier-meta"
+name = "header-verifier-meta"
 version = "0.0.0"
 edition = "2021"
 publish = false
 
-[dependencies.multisigverifier]
+[dependencies.header-verifier]
 path = ".."
 
 [dependencies.multiversx-sc-meta]

@@ -1,7 +1,7 @@
 mod multisigverifier_setup;
 
 use bls_signature::BlsSignature;
-use multisigverifier::ProxyTrait;
+use header_verifier::ProxyTrait;
 use multiversx_sc::types::{ManagedBuffer, ManagedByteArray, MultiValueEncoded};
 use multiversx_sc_scenario::{
     api::StaticApi,
@@ -9,19 +9,19 @@ use multiversx_sc_scenario::{
     ContractInfo, ScenarioWorld,
 };
 
-const MULTISIG_PATH_EXPR: &str = "file:output/multisigverifier.wasm";
+const HEADER_VERIFIER_PATH_EXPR: &str = "file:output/header-verifier.wasm";
 const OWNER_ADDRESS_EXPR: &str = "address:owner";
 const LEADER_ADDRESS_EXPR: &str = "address:proposer";
 const VALIDATOR_ADDRESS_EXPR: &str = "address:board-member";
-const MULTISIG_ADDRESS_EXPR: &str = "sc:multisig";
+const HEADER_VERIFIER_ADDRESS_EXPR: &str = "sc:multisig";
 
-type MultisigverifierContract = ContractInfo<multisigverifier::Proxy<StaticApi>>;
+type HeaderVerifierContract = ContractInfo<header_verifier::Proxy<StaticApi>>;
 
 fn world() -> ScenarioWorld {
     let mut blockchain = ScenarioWorld::new();
-    blockchain.set_current_dir_from_workspace("multisigverifier/src/lib");
+    blockchain.set_current_dir_from_workspace("header-verifier/src/lib");
 
-    blockchain.register_contract(MULTISIG_PATH_EXPR, multisigverifier::ContractBuilder);
+    blockchain.register_contract(HEADER_VERIFIER_PATH_EXPR, header_verifier::ContractBuilder);
 
     blockchain
 }
@@ -30,7 +30,7 @@ struct MultisigTestState {
     world: ScenarioWorld,
     // leader_address: Address,
     // validator_address: Address,
-    multisig_contract: MultisigverifierContract,
+    header_verifier_contract: HeaderVerifierContract,
 }
 
 impl MultisigTestState {
@@ -40,7 +40,7 @@ impl MultisigTestState {
         world.set_state_step(
             SetStateStep::new()
                 .put_account(OWNER_ADDRESS_EXPR, Account::new().nonce(1))
-                .new_address(OWNER_ADDRESS_EXPR, 1, MULTISIG_ADDRESS_EXPR)
+                .new_address(OWNER_ADDRESS_EXPR, 1, HEADER_VERIFIER_ADDRESS_EXPR)
                 .put_account(
                     LEADER_ADDRESS_EXPR,
                     Account::new().nonce(1).balance(LEADER_ADDRESS_EXPR),
@@ -50,18 +50,18 @@ impl MultisigTestState {
 
         // let leader_address = AddressValue::from(LEADER_ADDRESS_EXPR).to_address();
         // let validator_address = AddressValue::from(VALIDATOR_ADDRESS_EXPR).to_address();
-        let multisig_contract = MultisigverifierContract::new(MULTISIG_ADDRESS_EXPR);
+        let multisig_contract = HeaderVerifierContract::new(HEADER_VERIFIER_ADDRESS_EXPR);
 
         Self {
             world,
             // leader_address,
             // validator_address,
-            multisig_contract,
+            header_verifier_contract: multisig_contract,
         }
     }
 
     fn deploy_multisig_contract(&mut self) -> &mut Self {
-        let multisig_code = self.world.code_expression(MULTISIG_PATH_EXPR);
+        let multisig_code = self.world.code_expression(HEADER_VERIFIER_PATH_EXPR);
         // let validators = MultiValueVec::from(vec![self.validator_address.clone()]);
 
         self.world.sc_deploy(
@@ -81,7 +81,7 @@ impl MultisigTestState {
     ) {
         self.world
             .sc_call_get_result(ScCallStep::new().from(LEADER_ADDRESS_EXPR).call(
-                self.multisig_contract.register_bridge_operations(
+                self.header_verifier_contract.register_bridge_operations(
                     signature,
                     bridge_operations_hash,
                     operations_hashes,
@@ -120,7 +120,7 @@ fn test_register_bridge_ops_wrong_hashes() {
     state.world.sc_call(
         ScCallStep::new()
             .from(OWNER_ADDRESS_EXPR)
-            .call(state.multisig_contract.register_bridge_operations(
+            .call(state.header_verifier_contract.register_bridge_operations(
                 mock_signature,
                 bridge_operations_hash,
                 bridge_operations,

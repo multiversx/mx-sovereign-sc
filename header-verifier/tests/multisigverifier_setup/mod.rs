@@ -5,19 +5,19 @@ multiversx_sc::derive_imports!();
 
 pub struct MultiSigVerifierSetup<MultisigverifierBuilder, BlsMultisigBuilder>
 where
-    MultisigverifierBuilder: 'static + Copy + Fn() -> multisigverifier::ContractObj<DebugApi>,
+    MultisigverifierBuilder: 'static + Copy + Fn() -> header_verifier::ContractObj<DebugApi>,
     BlsMultisigBuilder: 'static + Copy + Fn() -> bls_signature::ContractObj<DebugApi>,
 {
     pub b_mock: BlockchainStateWrapper,
     pub owner: Address,
     pub user: Address,
-    pub multisig_wrapper: ContractObjWrapper<multisigverifier::ContractObj<DebugApi>, MultisigverifierBuilder>,
+    pub multisig_wrapper: ContractObjWrapper<header_verifier::ContractObj<DebugApi>, MultisigverifierBuilder>,
     pub bls_wrapper: ContractObjWrapper<bls_signature::ContractObj<DebugApi>, BlsMultisigBuilder>
 }
 
 impl<MultisigverifierBuilder, BlsMultisigBuilder> MultiSigVerifierSetup<MultisigverifierBuilder, BlsMultisigBuilder>
 where
-    MultisigverifierBuilder: 'static + Copy + Fn() -> multisigverifier::ContractObj<DebugApi>,
+    MultisigverifierBuilder: 'static + Copy + Fn() -> header_verifier::ContractObj<DebugApi>,
     BlsMultisigBuilder: 'static + Copy + Fn() -> bls_signature::ContractObj<DebugApi>,
 {
     pub fn new(multisig_builder: MultisigverifierBuilder, bls_signature_builder: BlsMultisigBuilder) -> Self {
