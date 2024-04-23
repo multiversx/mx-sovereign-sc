@@ -258,26 +258,7 @@ pub trait CreateTxModule:
                     continue;
                 }
 
-                self.send().esdt_local_burn(
-                    &payment.token_identifier,
-                    payment.token_nonce,
-                    &payment.amount,
-                );
-
-                let mut sov_token_nonce = 0;
-
-                if payment.token_nonce > 0 {
-                    sov_token_nonce = self
-                        .multiversx_esdt_token_info_mapper(
-                            &payment.token_identifier,
-                            &payment.token_nonce,
-                        )
-                        .take()
-                        .token_nonce;
-
-                    self.sovereign_esdt_token_info_mapper(&sov_token_id, &sov_token_nonce)
-                        .take();
-                }
+                let sov_token_nonce = self.remove_sovereign_token(payment, &sov_token_id);
 
                 event_payments.push(MultiValue3((
                     sov_token_id,
@@ -289,22 +270,7 @@ pub trait CreateTxModule:
 
         let caller = self.blockchain().get_caller();
 
-        match fees_payment {
-            OptionalValue::Some(fee) => {
-                let mut gas = 0;
-
-                if let Some(transfer_data) = &opt_transfer_data {
-                    gas = transfer_data.gas_limit;
-                }
-
-                let _: FinalPayment<Self::Api> = self
-                    .fee_market_proxy(self.fee_market_address().get())
-                    .subtract_fee(caller.clone(), total_tokens_for_fees, gas)
-                    .with_esdt_transfer(fee)
-                    .execute_on_dest_context();
-            }
-            OptionalValue::None => (),
-        };
+        self.match_fee_payment(total_tokens_for_fees, &fees_payment, &opt_transfer_data);
 
         // refund refundable_tokens
         for payment in &refundable_payments {
@@ -322,6 +288,60 @@ pub trait CreateTxModule:
                 opt_transfer_data,
             },
         );
+    }
+
+    fn remove_sovereign_token(
+        &self,
+        payment: EsdtTokenPayment<Self::Api>,
+        sov_token_id: &TokenIdentifier<Self::Api>,
+    ) -> u64 {
+        self.send().esdt_local_burn(
+            &payment.token_identifier,
+            payment.token_nonce,
+            &payment.amount,
+        );
+
+        let mut sov_token_nonce = 0;
+
+        if payment.token_nonce > 0 {
+            sov_token_nonce = self
+                .multiversx_esdt_token_info_mapper(&payment.token_identifier, &payment.token_nonce)
+                .take()
+                .token_nonce;
+
+            self.sovereign_esdt_token_info_mapper(sov_token_id, &sov_token_nonce)
+                .take();
+        }
+
+        sov_token_nonce
+    }
+
+    fn match_fee_payment(
+        &self,
+        total_tokens_for_fees: usize,
+        fees_payment: &OptionalValue<EsdtTokenPayment<Self::Api>>,
+        opt_transfer_data: &Option<TransferData<<Self as ContractBase>::Api>>,
+    ) {
+        match fees_payment {
+            OptionalValue::Some(fee) => {
+                let mut gas = 0;
+
+                if let Some(transfer_data) = opt_transfer_data {
+                    gas = transfer_data.gas_limit;
+                }
+
+                let _: FinalPayment<Self::Api> = self
+                    .fee_market_proxy(self.fee_market_address().get())
+                    .subtract_fee(
+                        self.blockchain().get_caller().clone(),
+                        total_tokens_for_fees,
+                        gas,
+                    )
+                    .with_esdt_transfer(fee.clone())
+                    .execute_on_dest_context();
+            }
+            OptionalValue::None => (),
+        };
     }
 
     #[proxy]
