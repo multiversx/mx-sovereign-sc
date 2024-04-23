@@ -124,6 +124,10 @@ pub trait CreateTxModule:
         require!(caller == ESDT_SYSTEM_SC_ADDRESS.into(), "Caller is invalid");
 
         let payments = self.call_value().all_esdt_transfers();
+
+        require!(!payments.is_empty(), "Nothing to transfer");
+        require!(payments.len() <= MAX_TRANSFERS_PER_TX, "Too many tokens");
+
         self.send().direct_multi(&to, &payments);
     }
 
@@ -131,6 +135,10 @@ pub trait CreateTxModule:
         &self,
     ) -> MultiValue2<OptionalValue<EsdtTokenPayment>, ManagedVec<EsdtTokenPayment>> {
         let mut payments = self.call_value().all_esdt_transfers().clone_value();
+
+        require!(!payments.is_empty(), "Nothing to transfer");
+        require!(payments.len() <= MAX_TRANSFERS_PER_TX, "Too many tokens");
+
         let fee_market_address = self.fee_market_address().get();
         let fee_enabled_mapper = SingleValueMapper::new_from_address(
             fee_market_address.clone(),
