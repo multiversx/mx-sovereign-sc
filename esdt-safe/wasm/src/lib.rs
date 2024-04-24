@@ -5,10 +5,10 @@
 ////////////////////////////////////////////////////
 
 // Init:                                 1
-// Endpoints:                           36
+// Endpoints:                           38
 // Async Callback:                       1
 // Promise callbacks:                    1
-// Total number of exported functions:  39
+// Total number of exported functions:  41
 
 #![no_std]
 #![allow(internal_features)]
@@ -28,6 +28,7 @@ multiversx_sc_wasm_adapter::endpoints! {
         removeBurnAndMint => remove_burn_and_mint
         addBannedEndpointNames => add_banned_endpoint_names
         removeBannedEndpointNames => remove_banned_endpoint_names
+        depositBack => deposit_back
         deposit => deposit
         claimRefund => claim_refund
         setTransactionBatchStatus => set_transaction_batch_status
@@ -35,8 +36,9 @@ multiversx_sc_wasm_adapter::endpoints! {
         addSigners => add_signers
         removeSigners => remove_signers
         registerToken => register_token
-        clearRegisteredToken => clear_registered_token
-        batchTransferEsdtToken => batch_transfer_esdt_token
+        clearRegisteredSovereignToken => clear_registered_sovereign_token
+        clearRegisteredMultiversxToken => clear_registered_multiversx_token
+        executeBridgeOps => execute_operations
         setMaxTxBatchSize => set_max_tx_batch_size
         setMaxTxBatchBlockDuration => set_max_tx_batch_block_duration
         getCurrentTxBatch => get_current_tx_batch
@@ -57,7 +59,7 @@ multiversx_sc_wasm_adapter::endpoints! {
         pause => pause_endpoint
         unpause => unpause_endpoint
         isPaused => paused_status
-        transfer_callback => transfer_callback
+        execute => execute
     )
 }
 

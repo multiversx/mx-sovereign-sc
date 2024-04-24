@@ -32,6 +32,9 @@ path = "../common/utils"
 [dependencies.fee-market]
 path = "../fee-market"
 
+[dependencies.multisigverifier]
+path = "../multisigverifier"
+
 [dependencies.multiversx-sc]
 version = "=0.48.0"
 

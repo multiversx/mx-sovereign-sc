@@ -35,10 +35,12 @@ pub trait EsdtSafe:
     #[init]
     fn init(
         &self,
+        is_sovereign_chain: bool,
         min_valid_signers: u32,
         initiator_address: ManagedAddress,
         signers: MultiValueEncoded<ManagedAddress>,
     ) {
+        self.is_sovereign_chain().set(is_sovereign_chain);
         self.max_tx_batch_size().set(DEFAULT_MAX_TX_BATCH_SIZE);
         self.max_tx_batch_block_duration()
             .set(DEFAULT_MAX_TX_BATCH_BLOCK_DURATION);
@@ -70,6 +72,23 @@ pub trait EsdtSafe:
         self.fee_market_address().set(fee_market_address);
     }
 
+    #[only_owner]
+    #[endpoint(setMultisigAddress)]
+    fn set_multisig_address(&self, multisig_address: ManagedAddress) {
+        self.require_sc_address(&multisig_address);
+
+        self.multisig_address().set(multisig_address);
+    }
+
+    #[only_owner]
+    #[endpoint(setSovereignBridgeAddress)]
+    fn set_sovereign_bridge_address(&self, bridge_address: ManagedAddress) {
+        self.require_sc_address(&bridge_address);
+
+        self.sovereign_bridge_address().set(bridge_address);
+    }
+
     #[endpoint]
     fn upgrade(&self) {}
+
 }

@@ -521,6 +521,7 @@ dependencies = [
  "fee-market",
  "hex",
  "max-bridged-amount-module",
+ "multisigverifier",
  "multiversx-sc",
  "multiversx-sc-modules",
  "multiversx-sc-scenario",
@@ -555,6 +556,8 @@ dependencies = [
  "multiversx-sc",
  "multiversx-sc-scenario",
  "num-bigint",
+ "pair-mock",
+ "router-mock",
  "transaction",
  "utils",
 ]
@@ -985,6 +988,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "multisigverifier"
+version = "0.0.0"
+dependencies = [
+ "bls-signature",
+ "multiversx-sc",
+ "multiversx-sc-scenario",
+ "num-bigint",
+ "transaction",
+]
+
+[[package]]
+name = "multisigverifier-meta"
+version = "0.0.0"
+dependencies = [
+ "multisigverifier",
+ "multiversx-sc-meta",
+]
+
+[[package]]
 name = "multiversx-chain-scenario-format"
 version = "0.22.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1297,6 +1319,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "pair-mock"
+version = "0.0.0"
+dependencies = [
+ "multiversx-sc",
+ "multiversx-sc-scenario",
+ "num-bigint",
+]
+
+[[package]]
+name = "pair-mock-meta"
+version = "0.0.0"
+dependencies = [
+ "multiversx-sc-meta",
+ "pair-mock",
+]
+
+[[package]]
 name = "parking_lot"
 version = "0.12.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1558,6 +1597,23 @@ dependencies = [
  "wasm-bindgen-futures",
  "web-sys",
  "winreg",
+]
+
+[[package]]
+name = "router-mock"
+version = "0.0.0"
+dependencies = [
+ "multiversx-sc",
+ "multiversx-sc-scenario",
+ "num-bigint",
+]
+
+[[package]]
+name = "router-mock-meta"
+version = "0.0.0"
+dependencies = [
+ "multiversx-sc-meta",
+ "router-mock",
 ]
 
 [[package]]
