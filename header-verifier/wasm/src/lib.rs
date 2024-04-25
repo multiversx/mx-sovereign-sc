@@ -17,7 +17,7 @@ multiversx_sc_wasm_adapter::allocator!();
 multiversx_sc_wasm_adapter::panic_handler!();
 
 multiversx_sc_wasm_adapter::endpoints! {
-    multisigverifier
+    header_verifier
     (
         init => init
         upgrade => upgrade

@@ -40,8 +40,8 @@ version = "0.0.0"
 dependencies = [
  "bls-signature",
  "fee-market",
+ "header-verifier",
  "max-bridged-amount-module",
- "multisigverifier",
  "multiversx-sc",
  "multiversx-sc-modules",
  "setup-phase",
@@ -72,6 +72,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "header-verifier"
+version = "0.0.0"
+dependencies = [
+ "bls-signature",
+ "multiversx-sc",
+ "transaction",
+]
+
+[[package]]
 name = "hex"
 version = "0.4.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -88,15 +97,6 @@ name = "max-bridged-amount-module"
 version = "0.0.0"
 dependencies = [
  "multiversx-sc",
-]
-
-[[package]]
-name = "multisigverifier"
-version = "0.0.0"
-dependencies = [
- "bls-signature",
- "multiversx-sc",
- "transaction",
 ]
 
 [[package]]

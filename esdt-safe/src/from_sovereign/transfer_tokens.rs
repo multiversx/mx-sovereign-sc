@@ -311,7 +311,7 @@ pub trait TransferTokensModule:
     fn multisig_verifier_proxy(
         &self,
         multisig_verifier_address: ManagedAddress,
-    ) -> multisigverifier::Proxy<Self::Api>;
+    ) -> header_verifier::Proxy<Self::Api>;
 
     #[storage_mapper("nextBatchId")]
     fn next_batch_id(&self) -> SingleValueMapper<BatchId>;

@@ -890,7 +890,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "multisigverifier"
+name = "header-verifier"
 version = "0.0.0"
 dependencies = [
  "bls-signature",
@@ -901,10 +901,10 @@ dependencies = [
 ]
 
 [[package]]
-name = "multisigverifier-meta"
+name = "header-verifier-meta"
 version = "0.0.0"
 dependencies = [
- "multisigverifier",
+ "header-verifier",
  "multiversx-sc-meta",
 ]
 
