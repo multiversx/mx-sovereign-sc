@@ -3,7 +3,7 @@ use multiversx_sc::types::{Address, ManagedAddress, MultiValueEncoded};
 use multiversx_sc_scenario::{
     api::StaticApi,
     managed_address,
-    scenario_model::{Account, AddressValue, ScDeployStep, SetStateStep},
+    scenario_model::{Account, AddressValue, ScCallStep, ScDeployStep, SetStateStep, TxExpect},
     ContractInfo, ScenarioWorld,
 };
 
@@ -49,7 +49,7 @@ impl BridgeTestState {
         world.set_state_step(
             SetStateStep::new()
                 .put_account(OWNER_ADDRESS_EXPR, Account::new().nonce(1))
-                .new_address(OWNER_ADDRESS_EXPR, 1, BRIDGE_ADDRESS_EXPR) 
+                .new_address(OWNER_ADDRESS_EXPR, 1, BRIDGE_ADDRESS_EXPR),
         );
 
         let bridge_contract = BridgeContract::new(BRIDGE_ADDRESS_EXPR);
@@ -76,10 +76,28 @@ impl BridgeTestState {
                     self.min_valid_signers,
                     self.initiator_address.clone(),
                     self.signers.clone(),
-                )),
+                ))
+                .expect(TxExpect::ok()),
         );
 
         self
+    }
+
+    fn propose_deposit(
+        &mut self,
+        to: Address,
+        opt_transfer_data: OptionalValue<
+            MultiValue3<GasLimit, ManagedBuffer, ManagedVec<ManagedBuffer>>,
+        >,
+    ) -> usize {
+        self.world.sc_call_get_result(
+            ScCallStep::new().from(OWNER_ADDRESS_EXPR).call(
+                self.bridge_contract.deposit(
+                    to,
+                    opt_transfer_data
+                )
+            )
+        )
     }
 }
 
@@ -88,4 +106,9 @@ fn test_deploy() {
     let mut state = BridgeTestState::new(false);
 
     state.deploy_bridge_contract();
+}
+
+#[test]
+fn test_deposit() {
+
 }

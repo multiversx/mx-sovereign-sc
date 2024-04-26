@@ -5,10 +5,10 @@
 ////////////////////////////////////////////////////
 
 // Init:                                 1
-// Endpoints:                           38
+// Endpoints:                           40
 // Async Callback:                       1
 // Promise callbacks:                    1
-// Total number of exported functions:  41
+// Total number of exported functions:  43
 
 #![no_std]
 #![allow(internal_features)]
@@ -22,6 +22,8 @@ multiversx_sc_wasm_adapter::endpoints! {
     (
         init => init
         setFeeMarketAddress => set_fee_market_address
+        setMultisigAddress => set_multisig_address
+        setSovereignBridgeAddress => set_sovereign_bridge_address
         upgrade => upgrade
         setMaxUserTxGasLimit => set_max_user_tx_gas_limit
         setBurnAndMint => set_burn_and_mint
