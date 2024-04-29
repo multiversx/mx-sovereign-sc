@@ -1,3 +1,4 @@
+use header_verifier::ProxyTrait as _;
 use multiversx_sc::{api::ESDT_MULTI_TRANSFER_FUNC_NAME, storage::StorageKey};
 use transaction::{
     BatchId, GasLimit, Operation, OperationData, OperationEsdtPayment, OperationTuple,
@@ -200,7 +201,7 @@ pub trait TransferTokensModule:
         }
 
         let _: () = self
-            .multisig_verifier_proxy(self.multisig_address().get())
+            .header_verifier_proxy(self.header_verifier_address().get())
             .remove_executed_hash(hash_of_hashes, &operation_tuple.op_hash)
             .execute_on_dest_context();
     }
@@ -270,7 +271,7 @@ pub trait TransferTokensModule:
         storage_key.append_item(&hash_of_hashes);
 
         let pending_operations_mapper =
-            UnorderedSetMapper::new_from_address(self.multisig_address().get(), storage_key);
+            UnorderedSetMapper::new_from_address(self.header_verifier_address().get(), storage_key);
 
         if let core::result::Result::Err(err) = operation.top_encode(&mut serialized_data) {
             sc_panic!("Transfer data encode error: {}", err.message_bytes());
@@ -287,7 +288,7 @@ pub trait TransferTokensModule:
     }
 
     #[proxy]
-    fn multisig_verifier_proxy(
+    fn header_verifier_proxy(
         &self,
         multisig_verifier_address: ManagedAddress,
     ) -> header_verifier::Proxy<Self::Api>;
@@ -299,7 +300,7 @@ pub trait TransferTokensModule:
     fn pending_hashes(&self, hash_of_hashes: &ManagedBuffer) -> UnorderedSetMapper<ManagedBuffer>;
 
     #[storage_mapper("multisig_address")]
-    fn multisig_address(&self) -> SingleValueMapper<ManagedAddress>;
+    fn header_verifier_address(&self) -> SingleValueMapper<ManagedAddress>;
 
     #[storage_mapper("sovereign_bridge_address")]
     fn sovereign_bridge_address(&self) -> SingleValueMapper<ManagedAddress>;
