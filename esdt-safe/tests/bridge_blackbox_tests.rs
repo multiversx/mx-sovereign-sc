@@ -1,5 +1,10 @@
-use esdt_safe::ProxyTrait as _;
-use multiversx_sc::{imports::{MultiValue3, OptionalValue}, types::{Address, ManagedAddress, ManagedBuffer, ManagedVec, MultiValueEncoded}};
+use std::borrow::BorrowMut;
+
+use esdt_safe::{to_sovereign::create_tx::ProxyTrait, ProxyTrait as _};
+use multiversx_sc::{
+    imports::{MultiValue3, OptionalValue},
+    types::{Address, ManagedAddress, ManagedBuffer, ManagedVec, MultiValueEncoded},
+};
 use multiversx_sc_scenario::{
     api::StaticApi,
     managed_address,
@@ -11,6 +16,7 @@ use transaction::GasLimit;
 const BRIDGE_PATH_EXPR: &str = "file:output/esdt-safe.wasm";
 const BRIDGE_ADDRESS_EXPR: &str = "sc:bridge";
 const OWNER_ADDRESS_EXPR: &str = "address:owner";
+const RECEIVER_ADDRESS_EXPR: &str = "address:receiver";
 const FIRST_SINGER_ADDRESS_EXPR: &str = "address:first_signer";
 const SECOND_SINGER_ADDRESS_EXPR: &str = "address:second_signer";
 
@@ -88,13 +94,18 @@ impl BridgeTestState {
         &mut self,
         to: Address,
         opt_transfer_data: OptionalValue<
-            MultiValue3<GasLimit, ManagedBuffer<StaticApi>, ManagedVec<StaticApi, ManagedBuffer<StaticApi>>>,
+            MultiValue3<
+                GasLimit,
+                ManagedBuffer<StaticApi>,
+                ManagedVec<StaticApi, ManagedBuffer<StaticApi>>,
+            >,
         >,
-    ) -> usize {
+    ) {
         self.world.sc_call_get_result(
-            ScCallStep::new().from(OWNER_ADDRESS_EXPR).call(
-                self.bridge_contract.
-            )
+            ScCallStep::new()
+                .from(OWNER_ADDRESS_EXPR)
+                .call(self.bridge_contract.deposit(to, opt_transfer_data))
+                .expect(TxExpect::ok()),
         )
     }
 }
@@ -108,5 +119,9 @@ fn test_deploy() {
 
 #[test]
 fn test_deposit() {
+    let mut state = BridgeTestState::new(false);
+    state.deploy_bridge_contract();
+    let receiver_address = AddressValue::from(RECEIVER_ADDRESS_EXPR).to_address();
 
+    state.propose_deposit(receiver_address, OptionalValue::None);
 }
