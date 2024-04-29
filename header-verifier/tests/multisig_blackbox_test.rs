@@ -11,7 +11,7 @@ const HEADER_VERIFIER_PATH_EXPR: &str = "file:output/header-verifier.wasm";
 const OWNER_ADDRESS_EXPR: &str = "address:owner";
 const LEADER_ADDRESS_EXPR: &str = "address:proposer";
 const VALIDATOR_ADDRESS_EXPR: &str = "address:board-member";
-const HEADER_VERIFIER_ADDRESS_EXPR: &str = "sc:multisig";
+const HEADER_VERIFIER_ADDRESS_EXPR: &str = "sc:header_verifier";
 
 type HeaderVerifierContract = ContractInfo<header_verifier::Proxy<StaticApi>>;
 
@@ -24,14 +24,12 @@ fn world() -> ScenarioWorld {
     blockchain
 }
 
-struct MultisigTestState {
+struct HeaderVerifierTestState {
     world: ScenarioWorld,
-    // leader_address: Address,
-    // validator_address: Address,
     header_verifier_contract: HeaderVerifierContract,
 }
 
-impl MultisigTestState {
+impl HeaderVerifierTestState {
     fn new() -> Self {
         let mut world = world();
 
@@ -46,26 +44,21 @@ impl MultisigTestState {
                 .put_account(VALIDATOR_ADDRESS_EXPR, Account::new().nonce(1)),
         );
 
-        // let leader_address = AddressValue::from(LEADER_ADDRESS_EXPR).to_address();
-        // let validator_address = AddressValue::from(VALIDATOR_ADDRESS_EXPR).to_address();
-        let multisig_contract = HeaderVerifierContract::new(HEADER_VERIFIER_ADDRESS_EXPR);
+        let header_verifier_contract = HeaderVerifierContract::new(HEADER_VERIFIER_ADDRESS_EXPR);
 
         Self {
             world,
-            // leader_address,
-            // validator_address,
-            header_verifier_contract: multisig_contract,
+            header_verifier_contract,
         }
     }
 
-    fn deploy_multisig_contract(&mut self) -> &mut Self {
-        let multisig_code = self.world.code_expression(HEADER_VERIFIER_PATH_EXPR);
-        // let validators = MultiValueVec::from(vec![self.validator_address.clone()]);
+    fn deploy_header_verifier_contract(&mut self) -> &mut Self {
+        let header_verifier_code = self.world.code_expression(HEADER_VERIFIER_PATH_EXPR);
 
         self.world.sc_deploy(
             ScDeployStep::new()
                 .from(OWNER_ADDRESS_EXPR)
-                .code(multisig_code), // .call(self.multisig_contract.init(validators)),
+                .code(header_verifier_code), 
         );
 
         self
@@ -90,14 +83,14 @@ impl MultisigTestState {
 
 #[test]
 fn test_deploy() {
-    let mut state = MultisigTestState::new();
-    state.deploy_multisig_contract();
+    let mut state = HeaderVerifierTestState::new();
+    state.deploy_header_verifier_contract();
 }
 
 #[test]
 fn test_register_bridge_ops_wrong_hashes() {
-    let mut state = MultisigTestState::new();
-    state.deploy_multisig_contract();
+    let mut state = HeaderVerifierTestState::new();
+    state.deploy_header_verifier_contract();
 
     let bridge_operations_hash =
         ManagedBuffer::from("6ee1e00813a74f8293d2c63172c062d38bf780d8811ff63984813a49cd61ff9e");
