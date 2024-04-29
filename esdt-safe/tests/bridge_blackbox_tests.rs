@@ -1,11 +1,12 @@
 use esdt_safe::ProxyTrait as _;
-use multiversx_sc::types::{Address, ManagedAddress, MultiValueEncoded};
+use multiversx_sc::{imports::{MultiValue3, OptionalValue}, types::{Address, ManagedAddress, ManagedBuffer, ManagedVec, MultiValueEncoded}};
 use multiversx_sc_scenario::{
     api::StaticApi,
     managed_address,
     scenario_model::{Account, AddressValue, ScCallStep, ScDeployStep, SetStateStep, TxExpect},
     ContractInfo, ScenarioWorld,
 };
+use transaction::GasLimit;
 
 const BRIDGE_PATH_EXPR: &str = "file:output/esdt-safe.wasm";
 const BRIDGE_ADDRESS_EXPR: &str = "sc:bridge";
@@ -87,15 +88,12 @@ impl BridgeTestState {
         &mut self,
         to: Address,
         opt_transfer_data: OptionalValue<
-            MultiValue3<GasLimit, ManagedBuffer, ManagedVec<ManagedBuffer>>,
+            MultiValue3<GasLimit, ManagedBuffer<StaticApi>, ManagedVec<StaticApi, ManagedBuffer<StaticApi>>>,
         >,
     ) -> usize {
         self.world.sc_call_get_result(
             ScCallStep::new().from(OWNER_ADDRESS_EXPR).call(
-                self.bridge_contract.deposit(
-                    to,
-                    opt_transfer_data
-                )
+                self.bridge_contract.
             )
         )
     }

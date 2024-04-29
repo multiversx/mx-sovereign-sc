@@ -22,7 +22,7 @@ multiversx_sc_wasm_adapter::endpoints! {
     (
         init => init
         setFeeMarketAddress => set_fee_market_address
-        setMultisigAddress => set_multisig_address
+        setMultisigAddress => set_header_verifier_address
         setSovereignBridgeAddress => set_sovereign_bridge_address
         upgrade => upgrade
         setMaxUserTxGasLimit => set_max_user_tx_gas_limit

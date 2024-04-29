@@ -74,10 +74,10 @@ pub trait EsdtSafe:
 
     #[only_owner]
     #[endpoint(setMultisigAddress)]
-    fn set_multisig_address(&self, multisig_address: ManagedAddress) {
-        self.require_sc_address(&multisig_address);
+    fn set_header_verifier_address(&self, header_verifier_address: ManagedAddress) {
+        self.require_sc_address(&header_verifier_address);
 
-        self.multisig_address().set(multisig_address);
+        self.header_verifier_address().set(header_verifier_address);
     }
 
     #[only_owner]
