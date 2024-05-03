@@ -5,7 +5,7 @@ use multiversx_sc::{
 };
 use multiversx_sc_scenario::{
     api::StaticApi,
-    managed_address,
+    managed_address, rust_biguint,
     scenario_model::{Account, AddressValue, ScCallStep, ScDeployStep, SetStateStep, TxExpect},
     ContractInfo, ScenarioWorld,
 };
@@ -14,6 +14,7 @@ use transaction::GasLimit;
 const BRIDGE_PATH_EXPR: &str = "file:output/esdt-safe.wasm";
 const BRIDGE_ADDRESS_EXPR: &str = "sc:bridge";
 const OWNER_ADDRESS_EXPR: &str = "address:owner";
+const OWNER_BALANCE_EXPR: &str = "100,000,000";
 const RECEIVER_ADDRESS_EXPR: &str = "address:receiver";
 const FIRST_SINGER_ADDRESS_EXPR: &str = "address:first_signer";
 const SECOND_SINGER_ADDRESS_EXPR: &str = "address:second_signer";
@@ -53,7 +54,10 @@ impl BridgeTestState {
 
         world.set_state_step(
             SetStateStep::new()
-                .put_account(OWNER_ADDRESS_EXPR, Account::new().nonce(1))
+                .put_account(
+                    OWNER_ADDRESS_EXPR,
+                    Account::new().nonce(1).balance(OWNER_BALANCE_EXPR),
+                )
                 .new_address(OWNER_ADDRESS_EXPR, 1, BRIDGE_ADDRESS_EXPR),
         );
 
@@ -102,6 +106,7 @@ impl BridgeTestState {
         self.world.sc_call_get_result(
             ScCallStep::new()
                 .from(OWNER_ADDRESS_EXPR)
+                .egld_value(rust_biguint!(1))
                 .call(self.bridge_contract.deposit(to, opt_transfer_data))
                 .expect(TxExpect::ok()),
         )
