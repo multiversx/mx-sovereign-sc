@@ -1,5 +1,3 @@
-use std::borrow::BorrowMut;
-
 use esdt_safe::{to_sovereign::create_tx::ProxyTrait, ProxyTrait as _};
 use multiversx_sc::{
     imports::{MultiValue3, OptionalValue},
