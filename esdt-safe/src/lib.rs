@@ -90,4 +90,5 @@ pub trait EsdtSafe:
 
     #[endpoint]
     fn upgrade(&self) {}
+
 }
