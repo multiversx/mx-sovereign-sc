@@ -77,7 +77,7 @@ pub trait EsdtSafe:
     fn set_header_verifier_address(&self, header_verifier_address: ManagedAddress) {
         self.require_sc_address(&header_verifier_address);
 
-        self.header_verifier_address().set(header_verifier_address);
+        self.header_verifier_address().set(&header_verifier_address);
     }
 
     #[only_owner]
