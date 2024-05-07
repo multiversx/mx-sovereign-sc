@@ -11,7 +11,7 @@ use multiversx_sc_scenario::{
 };
 use transaction::GasLimit;
 
-const BRIDGE_PATH_EXPR: &str = "file:output/esdt-safe.wasm";
+const BRIDGE_PATH_EXPR: &str = "mxsc:output/esdt-safe.mxsc.json";
 const BRIDGE_ADDRESS_EXPR: &str = "sc:bridge";
 const OWNER_ADDRESS_EXPR: &str = "address:owner";
 const OWNER_BALANCE_EXPR: &str = "100,000,000";
@@ -24,8 +24,8 @@ type BridgeContract = ContractInfo<esdt_safe::Proxy<StaticApi>>;
 fn world() -> ScenarioWorld {
     let mut blockchain = ScenarioWorld::new();
 
-    blockchain.set_current_dir_from_workspace("esdt-safe/src/lib");
-    blockchain.register_contract(BRIDGE_PATH_EXPR, header_verifier::ContractBuilder);
+    blockchain.set_current_dir_from_workspace("esdt-safe");
+    blockchain.register_contract(BRIDGE_PATH_EXPR, esdt_safe::ContractBuilder);
 
     blockchain
 }
