@@ -5,7 +5,8 @@
 ////////////////////////////////////////////////////
 
 // Init:                                 1
-// Endpoints:                           14
+// Upgrade:                              1
+// Endpoints:                           13
 // Async Callback (empty):               1
 // Total number of exported functions:  16
 

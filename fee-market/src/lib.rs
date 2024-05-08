@@ -39,6 +39,6 @@ pub trait FeeMarket:
         self.fee_enabled().set(true);
     }
 
-    #[endpoint]
+    #[upgrade]
     fn upgrade(&self) {}
 }

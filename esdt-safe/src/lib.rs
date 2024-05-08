@@ -88,7 +88,7 @@ pub trait EsdtSafe:
         self.sovereign_bridge_address().set(bridge_address);
     }
 
-    #[endpoint]
+    #[upgrade]
     fn upgrade(&self) {}
 
 }

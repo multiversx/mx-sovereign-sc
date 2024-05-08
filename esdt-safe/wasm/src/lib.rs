@@ -5,10 +5,11 @@
 ////////////////////////////////////////////////////
 
 // Init:                                 1
-// Endpoints:                           38
+// Upgrade:                              1
+// Endpoints:                           39
 // Async Callback:                       1
 // Promise callbacks:                    1
-// Total number of exported functions:  41
+// Total number of exported functions:  43
 
 #![no_std]
 #![allow(internal_features)]
@@ -21,8 +22,10 @@ multiversx_sc_wasm_adapter::endpoints! {
     esdt_safe
     (
         init => init
-        setFeeMarketAddress => set_fee_market_address
         upgrade => upgrade
+        setFeeMarketAddress => set_fee_market_address
+        setMultisigAddress => set_header_verifier_address
+        setSovereignBridgeAddress => set_sovereign_bridge_address
         setMaxUserTxGasLimit => set_max_user_tx_gas_limit
         setBurnAndMint => set_burn_and_mint
         removeBurnAndMint => remove_burn_and_mint
