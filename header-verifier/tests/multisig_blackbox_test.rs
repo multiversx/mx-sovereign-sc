@@ -1,3 +1,5 @@
+#![allow(deprecated)]
+
 use bls_signature::BlsSignature;
 use header_verifier::ProxyTrait;
 use multiversx_sc::types::{ManagedBuffer, ManagedByteArray, MultiValueEncoded};
