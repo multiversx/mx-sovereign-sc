@@ -13,7 +13,7 @@ pub trait Headerverifier: bls_signature::BlsSignatureModule {
         }
     }
 
-    #[endpoint]
+    #[upgrade]
     fn upgrade(&self) {}
 
     #[endpoint(registerBridgeOps)]
