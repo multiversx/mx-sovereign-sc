@@ -79,7 +79,7 @@ impl BridgeTestState {
         self.world.sc_deploy(
             ScDeployStep::new()
                 .from(OWNER_ADDRESS_EXPR)
-                .code(bridge_code)
+                .code(bridge_code.clone())
                 .call(self.bridge_contract.init(
                     self.is_sovereign_chain,
                     self.min_valid_signers,
@@ -88,6 +88,13 @@ impl BridgeTestState {
                 ))
                 .expect(TxExpect::ok()),
         );
+
+        // self.world.sc_call(
+        //     ScCallStep::new()
+        //         .from(OWNER_ADDRESS_EXPR)
+        //         .call(self.bridge_contract.pause_endpoint())
+        //         .expect(TxExpect::ok()),
+        // );
 
         self
     }
