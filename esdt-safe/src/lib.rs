@@ -12,6 +12,7 @@ const DEFAULT_MAX_USER_TX_GAS_LIMIT: GasLimit = 300_000_000;
 
 pub mod from_sovereign;
 pub mod to_sovereign;
+pub mod esdt_safe_proxy;
 
 #[multiversx_sc::contract]
 pub trait EsdtSafe:

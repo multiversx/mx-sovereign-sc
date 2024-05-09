@@ -16,4 +16,4 @@ add-unlabelled = false
 add-labels = ["fee-market-external-view"]
 
 [[proxy]]
-path = "src/fee-market_proxy.rs"
+path = "src/fee_market_proxy.rs"

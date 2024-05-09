@@ -16,4 +16,4 @@ add-unlabelled = false
 add-labels = ["header-verifier-external-view"]
 
 [[proxy]]
-path = "src/header-verifier_proxy.rs"
+path = "src/header_verifier_proxy.rs"
