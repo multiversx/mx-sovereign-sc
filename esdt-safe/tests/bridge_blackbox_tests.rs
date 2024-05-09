@@ -95,20 +95,20 @@ impl BridgeTestState {
             .run();
     }
 
-    fn propose_egld_deposit(&mut self) {
-        let transfer_data = OptionalValue::<
-            MultiValue3<u64, ManagedBuffer<StaticApi>, MultiValueVec<ManagedBuffer<StaticApi>>>
-        >::None;
-
-        self.world
-            .tx()
-            .from(USER_ADDRESS)
-            .to(BRIDGE_ADDRESS)
-            .typed(esdt_safe_proxy::EsdtSafeProxy)
-            .deposit(RECEIVER_ADDRESS, transfer_data)
-            .egld(10)
-            .run();
-    }
+    // fn propose_egld_deposit(&mut self) {
+    //     let transfer_data = OptionalValue::<
+    //         MultiValue3<u64, ManagedBuffer<StaticApi>, MultiValueVec<ManagedBuffer<StaticApi>>>
+    //     >::None;
+    //
+    //     self.world
+    //         .tx()
+    //         .from(USER_ADDRESS)
+    //         .to(BRIDGE_ADDRESS)
+    //         .typed(esdt_safe_proxy::EsdtSafeProxy)
+    //         .deposit(RECEIVER_ADDRESS, transfer_data)
+    //         .egld(10)
+    //         .run();
+    // }
 }
 
 #[test]
