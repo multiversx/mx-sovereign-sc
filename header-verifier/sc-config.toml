@@ -1,0 +1,19 @@
+[settings]
+main = "main"
+
+[contracts.main]
+name = "header-verifier"
+
+[contracts.full]
+name = "header-verifier-full"
+add-unlabelled = true
+add-labels = ["header-verifier-external-view"]
+
+[contracts.view]
+name = "multisig-view"
+external-view = true
+add-unlabelled = false
+add-labels = ["header-verifier-external-view"]
+
+[[proxy]]
+path = "src/header-verifier_proxy.rs"
