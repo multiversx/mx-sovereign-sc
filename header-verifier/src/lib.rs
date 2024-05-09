@@ -2,6 +2,8 @@
 
 use bls_signature::BlsSignature;
 
+pub mod header_verifier_proxy;
+
 multiversx_sc::imports!();
 
 #[multiversx_sc::contract]

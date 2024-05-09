@@ -16,4 +16,4 @@ add-unlabelled = false
 add-labels = ["esdt-safe-external-view"]
 
 [[proxy]]
-path = "src/esdt-safe_proxy.rs"
+path = "src/esdt_safe_proxy.rs"
