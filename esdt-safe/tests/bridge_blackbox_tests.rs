@@ -34,8 +34,9 @@ const ESDT_PROXY: EsdtSafeProxy = esdt_safe_proxy::EsdtSafeProxy;
 fn world() -> ScenarioWorld {
     let mut blockchain = ScenarioWorld::new();
 
-    blockchain.set_current_dir_from_workspace("mx-sovereign-sc/esdt-safe");
+    // blockchain.set_current_dir_from_workspace("mx-sovereign-sc/esdt-safe");
     blockchain.register_contract(BRIDGE_CODE_PATH, esdt_safe::ContractBuilder);
+    blockchain.register_contract(FEE_MARKET_CODE_PATH, fee_market::ContractBuilder);
 
     blockchain
 }
@@ -74,7 +75,7 @@ impl BridgeTestState {
             .new_address(BRIDGE_ADDRESS)
             .run();
 
-        // self.deploy_fee_market_contract();
+        self.deploy_fee_market_contract();
 
         self.propose_set_unpaused();
 
