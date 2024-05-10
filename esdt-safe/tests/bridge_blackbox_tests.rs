@@ -1,9 +1,11 @@
-use esdt_safe::esdt_safe_proxy;
+use esdt_safe::{endpoints::unpause_endpoint, esdt_safe_proxy};
 use multiversx_sc::{
     imports::{MultiValue3, MultiValueVec, OptionalValue},
-    types::{ManagedBuffer, ManagedVec, TestAddress, TestSCAddress},
+    types::{ManagedBuffer, ManagedVec, ReturnsResult, TestAddress, TestSCAddress, Tx},
 };
-use multiversx_sc_scenario::{api::StaticApi, imports::MxscPath, ScenarioTxRun, ScenarioWorld};
+use multiversx_sc_scenario::{
+    api::StaticApi, imports::MxscPath, ExpectError, ScenarioTxEnv, ScenarioTxRun, ScenarioWorld
+};
 
 const BRIDGE_ADDRESS: TestSCAddress = TestSCAddress::new("bridge");
 const BRIDGE_CODE_PATH: MxscPath = MxscPath::new("output/esdt-safe.mxsc.json");
@@ -60,7 +62,7 @@ impl BridgeTestState {
         self
     }
 
-    fn propose_egld_deposit(&mut self) {
+    fn propose_egld_deposit_and_expect_err(&mut self, err_message: &str) {
         let transfer_data = OptionalValue::<
             MultiValue3<
                 u64,
@@ -76,6 +78,19 @@ impl BridgeTestState {
             .typed(esdt_safe_proxy::EsdtSafeProxy)
             .deposit(RECEIVER_ADDRESS, transfer_data)
             .egld(10)
+            .with_result(ExpectError(4, err_message))
+            .run();
+    }
+
+    fn propose_set_unpaused(&mut self) {
+        self
+            .world
+            .tx()
+            .from(BRIDGE_OWNER_ADDRESS)
+            .to(BRIDGE_ADDRESS)
+            .typed(esdt_safe_proxy::EsdtSafeProxy)
+            .unpause_endpoint()
+            .returns(ReturnsResult)
             .run();
     }
 }
@@ -88,13 +103,11 @@ fn test_deploy() {
 }
 
 #[test]
-fn test_egld_deposit() {
+fn test_egld_deposit_nothing_to_transfer() {
     let mut state = BridgeTestState::new();
+    let err_message = "Nothing to transfer";
 
-    state.propose_egld_deposit();
-
-    state
-        .world
-        .check_account(USER_ADDRESS)
-        .balance(USER_BALANCE - 10);
+    state.deploy_bridge_contract(false);
+    state.propose_set_unpaused();
+    state.propose_egld_deposit_and_expect_err(err_message);
 }
