@@ -1,4 +1,4 @@
-use esdt_safe::esdt_safe_proxy::{self, EsdtSafeProxy};
+use esdt_safe::esdt_safe_proxy::{self};
 use fee_market::fee_market_proxy;
 use multiversx_sc::types::TestTokenIdentifier;
 use multiversx_sc::{
@@ -8,6 +8,7 @@ use multiversx_sc::{
         TestSCAddress,
     },
 };
+use multiversx_sc_modules::transfer_role_proxy::PaymentsVec;
 use multiversx_sc_scenario::{
     api::StaticApi, imports::MxscPath, ExpectError, ScenarioTxRun, ScenarioWorld,
 };
@@ -25,11 +26,10 @@ const USER_ADDRESS: TestAddress = TestAddress::new("user");
 const RECEIVER_ADDRESS: TestAddress = TestAddress::new("receiver");
 
 const BRIDGE_OWNER_BALANCE: u64 = 100_000_000;
-const USER_BALANCE: u64 = 100_000_000;
+const USER_EGLD_BALANCE: u64 = 100_000_000;
 
 const NFT_TOKEN_ID: TestTokenIdentifier = TestTokenIdentifier::new("NFT-123456");
-
-const ESDT_PROXY: EsdtSafeProxy = esdt_safe_proxy::EsdtSafeProxy;
+const FUNGIBLE_TOKEN_ID: TestTokenIdentifier = TestTokenIdentifier::new("FUNBIGLE-123456");
 
 fn world() -> ScenarioWorld {
     let mut blockchain = ScenarioWorld::new();
@@ -52,13 +52,16 @@ impl BridgeTestState {
         world
             .account(BRIDGE_OWNER_ADDRESS)
             .nonce(1)
-            .balance(BRIDGE_OWNER_BALANCE)
+            .balance(BRIDGE_OWNER_BALANCE);
+
+        world
             .account(USER_ADDRESS)
-            .esdt_nft_balance(NFT_TOKEN_ID, 1, 100, ManagedBuffer::new())
-            .nonce(1)
-            .balance(USER_BALANCE)
-            .account(RECEIVER_ADDRESS)
+            .esdt_nft_balance(NFT_TOKEN_ID, 1, 100_000, ManagedBuffer::new())
+            .esdt_balance(FUNGIBLE_TOKEN_ID, 100_000)
+            .balance(USER_EGLD_BALANCE)
             .nonce(1);
+
+        world.account(RECEIVER_ADDRESS).nonce(1);
 
         Self { world }
     }
@@ -69,7 +72,7 @@ impl BridgeTestState {
         self.world
             .tx()
             .from(BRIDGE_OWNER_ADDRESS)
-            .typed(ESDT_PROXY)
+            .typed(esdt_safe_proxy::EsdtSafeProxy)
             .init(is_sovereign_chain, 1u32, BRIDGE_OWNER_ADDRESS, signers)
             .code(BRIDGE_CODE_PATH)
             .new_address(BRIDGE_ADDRESS)
@@ -116,14 +119,14 @@ impl BridgeTestState {
             .tx()
             .from(USER_ADDRESS)
             .to(BRIDGE_ADDRESS)
-            .typed(ESDT_PROXY)
+            .typed(esdt_safe_proxy::EsdtSafeProxy)
             .deposit(RECEIVER_ADDRESS, transfer_data)
             .egld(10)
             .with_result(ExpectError(4, err_message))
             .run();
     }
 
-    fn propose_nft_deposit(&mut self) {
+    fn propose_esdt_deposit(&mut self) {
         let transfer_data = OptionalValue::<
             MultiValue3<
                 u64,
@@ -132,19 +135,21 @@ impl BridgeTestState {
             >,
         >::None;
 
-        let payment = EsdtTokenPayment::new(NFT_TOKEN_ID.into(), 1, BigUint::from(10u64));
+        let mut payments = PaymentsVec::new();
+        let nft_payment = EsdtTokenPayment::new(NFT_TOKEN_ID.into(), 1, BigUint::from(10u64));
+        let fungible_payment: EsdtTokenPayment<StaticApi> =
+            EsdtTokenPayment::new(FUNGIBLE_TOKEN_ID.into(), 0, BigUint::from(10u64));
+
+        payments.push(nft_payment);
+        payments.push(fungible_payment);
 
         self.world
             .tx()
             .from(USER_ADDRESS)
             .to(BRIDGE_ADDRESS)
-            .typed(ESDT_PROXY)
+            .typed(esdt_safe_proxy::EsdtSafeProxy)
             .deposit(RECEIVER_ADDRESS, transfer_data)
-            .single_esdt(
-                &payment.token_identifier,
-                payment.token_nonce,
-                &payment.amount,
-            )
+            .multi_esdt(payments)
             .with_result(ReturnsResult)
             .run();
     }
@@ -154,22 +159,18 @@ impl BridgeTestState {
             .tx()
             .from(BRIDGE_OWNER_ADDRESS)
             .to(BRIDGE_ADDRESS)
-            .typed(ESDT_PROXY)
+            .typed(esdt_safe_proxy::EsdtSafeProxy)
             .unpause_endpoint()
             .returns(ReturnsResult)
             .run();
     }
 
-    // fn propose_set_fee_market_address(&mut self) {
-    //     self.world
-    // }
-
-    fn propose_execute_operations(&mut self) {
+    fn _propose_execute_operations(&mut self) {
         self.world
             .tx()
             .from(BRIDGE_OWNER_ADDRESS)
             .to(BRIDGE_ADDRESS)
-            .typed(ESDT_PROXY);
+            .typed(esdt_safe_proxy::EsdtSafeProxy);
     }
 }
 
@@ -196,5 +197,5 @@ fn test_esdt_deposit() {
 
     state.deploy_bridge_contract(false);
 
-    state.propose_nft_deposit();
+    state.propose_esdt_deposit();
 }
