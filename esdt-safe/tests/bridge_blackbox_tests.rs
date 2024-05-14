@@ -149,8 +149,8 @@ impl BridgeTestState {
             .to(BRIDGE_ADDRESS)
             .typed(esdt_safe_proxy::EsdtSafeProxy)
             .deposit(RECEIVER_ADDRESS, transfer_data)
-            .multi_esdt(payments)
-            .with_result(ReturnsResult)
+            .payment(payments)
+            .returns(ReturnsResult)
             .run();
     }
 
