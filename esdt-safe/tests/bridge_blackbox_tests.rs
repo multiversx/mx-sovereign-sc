@@ -1,7 +1,9 @@
 use esdt_safe::esdt_safe_proxy::{self};
 use fee_market::fee_market_proxy::{self, FeeType};
 use multiversx_sc::codec::TopEncode;
-use multiversx_sc::types::{Address, AnnotatedValue, ManagedAddress, TestTokenIdentifier, TokenIdentifier, TxFrom};
+use multiversx_sc::types::{
+    Address, TestTokenIdentifier, TokenIdentifier,
+};
 use multiversx_sc::{
     imports::{MultiValue3, MultiValueVec, OptionalValue},
     types::{
@@ -9,12 +11,14 @@ use multiversx_sc::{
         TestSCAddress,
     },
 };
-use multiversx_sc_scenario::imports::AddressValue;
 use multiversx_sc_scenario::managed_address;
+use multiversx_sc_scenario::multiversx_chain_vm::crypto_functions::sha256;
 use multiversx_sc_scenario::{
     api::StaticApi, imports::MxscPath, ExpectError, ScenarioTxRun, ScenarioWorld,
 };
-use transaction::{Operation, OperationData, OperationEsdtPayment, StolenFromFrameworkEsdtTokenData};
+use transaction::{
+    Operation, OperationData, OperationEsdtPayment, StolenFromFrameworkEsdtTokenData,
+};
 
 const BRIDGE_ADDRESS: TestSCAddress = TestSCAddress::new("bridge");
 const BRIDGE_CODE_PATH: MxscPath = MxscPath::new("output/esdt-safe.mxsc.json");
@@ -22,6 +26,8 @@ const BRIDGE_OWNER_ADDRESS: TestAddress = TestAddress::new("bridge_owner");
 
 const FEE_MARKET_ADDRESS: TestSCAddress = TestSCAddress::new("fee_market");
 const FEE_MARKET_CODE_PATH: MxscPath = MxscPath::new("../fee-market/output/fee-market.mxsc.json");
+
+const HEADER_VERIFIER_ADDRESS: TestSCAddress = TestSCAddress::new("header-verifier");
 
 const PRICE_AGGREGATOR_ADDRESS: TestSCAddress = TestSCAddress::new("price_aggregator");
 
@@ -62,7 +68,6 @@ impl BridgeTestState {
             .account(USER_ADDRESS)
             .esdt_nft_balance(NFT_TOKEN_ID, 1, 100_000, ManagedBuffer::new())
             .esdt_balance(FUNGIBLE_TOKEN_ID, 100_000)
-            // .esdt_balance(TokenIdentifier::from("FSVN-ad03ef"), 100_000)
             .balance(USER_EGLD_BALANCE)
             .nonce(1);
 
@@ -111,6 +116,9 @@ impl BridgeTestState {
         self
     }
 
+    // TODO
+    // fn deploy_header_verifier_contract(&mut self) -> &mut Self {}
+
     fn propose_set_fee_market_address(&mut self) {
         self.world
             .tx()
@@ -118,6 +126,16 @@ impl BridgeTestState {
             .to(BRIDGE_ADDRESS)
             .typed(esdt_safe_proxy::EsdtSafeProxy)
             .set_fee_market_address(FEE_MARKET_ADDRESS)
+            .run();
+    }
+
+    fn propose_set_header_verifier_address(&mut self) {
+        self.world
+            .tx()
+            .from(BRIDGE_OWNER_ADDRESS)
+            .to(BRIDGE_ADDRESS)
+            .typed(esdt_safe_proxy::EsdtSafeProxy)
+            .set_header_verifier_address(HEADER_VERIFIER_ADDRESS)
             .run();
     }
 
@@ -215,8 +233,7 @@ impl BridgeTestState {
     }
 
     fn propose_execute_operation(&mut self) {
-        let mut tokens: ManagedVec<StaticApi, OperationEsdtPayment<StaticApi>> =
-            ManagedVec::new();
+        let mut tokens: ManagedVec<StaticApi, OperationEsdtPayment<StaticApi>> = ManagedVec::new();
         let nft_payment: OperationEsdtPayment<StaticApi> = OperationEsdtPayment {
             token_identifier: NFT_TOKEN_ID.into(),
             token_nonce: 1,
@@ -231,8 +248,8 @@ impl BridgeTestState {
         let op_sender = managed_address!(&Address::from(&USER_ADDRESS.eval_to_array()));
         let data: OperationData<StaticApi> = OperationData {
             op_nonce: 1,
-            op_sender, 
-            opt_transfer_data: Option::None
+            op_sender,
+            opt_transfer_data: Option::None,
         };
 
         tokens.push(fungible_payment);
@@ -240,20 +257,19 @@ impl BridgeTestState {
 
         let to = managed_address!(&Address::from(&RECEIVER_ADDRESS.eval_to_array()));
 
-        let operation = Operation {
-            to,
-            tokens,
-            data
-        };
-        // let mut serialized_attributes = ManagedBuffer::new();
-        // if let core::result::Result::Err(err) = operation.top_encode(&mut serialized_attributes) {}
+        let operation = Operation { to, tokens, data };
+        let mut serialized_operation: ManagedBuffer<StaticApi> = ManagedBuffer::new();
+        let _ = operation.top_encode(&mut serialized_operation);
+        let sha256 = sha256(&serialized_operation.to_vec());
+        let operation_hash: ManagedBuffer<StaticApi> = ManagedBuffer::new_from_bytes(&sha256);
 
-        // self.world
-        //     .tx()
-        //     .from(USER_ADDRESS)
-        //     .to(BRIDGE_ADDRESS)
-        //     .typed(esdt_safe_proxy::EsdtSafeProxy)
-        //     .execute_operations(hash_of_hashes, operation);
+        self.world
+            .tx()
+            .from(USER_ADDRESS)
+            .to(BRIDGE_ADDRESS)
+            .typed(esdt_safe_proxy::EsdtSafeProxy)
+            .execute_operations(operation_hash, operation)
+            .run();
     }
 
     fn propose_set_unpaused(&mut self) {
@@ -265,14 +281,6 @@ impl BridgeTestState {
             .unpause_endpoint()
             .returns(ReturnsResult)
             .run();
-    }
-
-    fn _propose_execute_operations(&mut self) {
-        self.world
-            .tx()
-            .from(BRIDGE_OWNER_ADDRESS)
-            .to(BRIDGE_ADDRESS)
-            .typed(esdt_safe_proxy::EsdtSafeProxy);
     }
 }
 
@@ -311,4 +319,15 @@ fn test_main_to_sov_deposit_ok() {
     state.propose_set_fee_token(FUNGIBLE_TOKEN_ID);
 
     state.propose_esdt_deposit();
+}
+
+#[test]
+fn test_execute_operation() {
+    let mut state = BridgeTestState::new();
+
+    state.deploy_bridge_contract(false);
+
+    state.propose_set_header_verifier_address();
+
+    state.propose_execute_operation();
 }
