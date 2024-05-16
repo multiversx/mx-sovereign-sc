@@ -1,6 +1,6 @@
 use esdt_safe::esdt_safe_proxy::{self};
-use fee_market::fee_market_proxy;
-use multiversx_sc::types::TestTokenIdentifier;
+use fee_market::fee_market_proxy::{self, FeeType};
+use multiversx_sc::types::{TestTokenIdentifier, TokenIdentifier};
 use multiversx_sc::{
     imports::{MultiValue3, MultiValueVec, OptionalValue},
     types::{
@@ -8,6 +8,7 @@ use multiversx_sc::{
         TestSCAddress,
     },
 };
+use multiversx_sc_scenario::ExpectStatus;
 use multiversx_sc_scenario::{
     api::StaticApi, imports::MxscPath, ExpectError, ScenarioTxRun, ScenarioWorld,
 };
@@ -28,7 +29,8 @@ const BRIDGE_OWNER_BALANCE: u64 = 100_000_000;
 const USER_EGLD_BALANCE: u64 = 100_000_000;
 
 const NFT_TOKEN_ID: TestTokenIdentifier = TestTokenIdentifier::new("NFT-123456");
-const FUNGIBLE_TOKEN_ID: TestTokenIdentifier = TestTokenIdentifier::new("FUNBIGLE-123456");
+// const FUNGIBLE_TOKEN_ID: TestTokenIdentifier = TestTokenIdentifier::new("FIRST-f56bf0");
+const FUNGIBLE_TOKEN_ID: TestTokenIdentifier = TestTokenIdentifier::new("CROWD-123456");
 
 fn world() -> ScenarioWorld {
     let mut blockchain = ScenarioWorld::new();
@@ -59,6 +61,7 @@ impl BridgeTestState {
             .account(USER_ADDRESS)
             .esdt_nft_balance(NFT_TOKEN_ID, 1, 100_000, ManagedBuffer::new())
             .esdt_balance(FUNGIBLE_TOKEN_ID, 100_000)
+            // .esdt_balance(TokenIdentifier::from("FSVN-ad03ef"), 100_000)
             .balance(USER_EGLD_BALANCE)
             .nonce(1);
 
@@ -137,6 +140,24 @@ impl BridgeTestState {
             .run();
     }
 
+    fn propose_set_fee_token(&mut self, token_identifier: TestTokenIdentifier) {
+        let fee_type = FeeType::AnyToken {
+            base_fee_token: token_identifier.into(),
+            per_transfer: BigUint::from(10u64),
+            per_gas: BigUint::from(10u64),
+        };
+        let fee_token_identifier: TokenIdentifier<StaticApi> =
+            TokenIdentifier::from(token_identifier);
+
+        self.world
+            .tx()
+            .from(BRIDGE_OWNER_ADDRESS)
+            .to(FEE_MARKET_ADDRESS)
+            .typed(fee_market_proxy::FeeMarketProxy)
+            .add_fee(fee_token_identifier, fee_type)
+            .run();
+    }
+
     fn propose_esdt_deposit_and_expect_err(&mut self, err_message: &str) {
         let transfer_data = OptionalValue::<
             MultiValue3<
@@ -162,6 +183,34 @@ impl BridgeTestState {
             .deposit(RECEIVER_ADDRESS, transfer_data)
             .payment(payments)
             .returns(ExpectError(4, err_message))
+            .run();
+    }
+
+    fn propose_esdt_deposit(&mut self) {
+        let transfer_data = OptionalValue::<
+            MultiValue3<
+                u64,
+                ManagedBuffer<StaticApi>,
+                ManagedVec<StaticApi, ManagedBuffer<StaticApi>>,
+            >,
+        >::None;
+
+        let mut payments = ManagedVec::new();
+        let nft_payment = EsdtTokenPayment::new(NFT_TOKEN_ID.into(), 1, BigUint::from(10u64));
+        let fungible_payment: EsdtTokenPayment<StaticApi> =
+            EsdtTokenPayment::new(FUNGIBLE_TOKEN_ID.into(), 0, BigUint::from(10u64));
+
+        payments.push(fungible_payment);
+        payments.push(nft_payment);
+
+        self.world
+            .tx()
+            .from(USER_ADDRESS)
+            .to(BRIDGE_ADDRESS)
+            .typed(esdt_safe_proxy::EsdtSafeProxy)
+            .deposit(RECEIVER_ADDRESS, transfer_data)
+            .payment(payments)
+            .returns(ExpectStatus(1))
             .run();
     }
 
@@ -193,7 +242,7 @@ fn test_deploy() {
 }
 
 #[test]
-fn test_egld_deposit_nothing_to_transfer() {
+fn test_main_to_sov_egld_deposit_nothing_to_transfer() {
     let mut state = BridgeTestState::new();
     let err_message = "Nothing to transfer";
 
@@ -203,12 +252,21 @@ fn test_egld_deposit_nothing_to_transfer() {
 }
 
 #[test]
-fn test_deposit_token_not_accepted() {
+fn test_main_to_sov_deposit_token_not_accepted() {
     let mut state = BridgeTestState::new();
     let err_message = "Token not accepted as fee";
 
     state.deploy_bridge_contract(false);
-
-
     state.propose_esdt_deposit_and_expect_err(err_message);
+}
+
+#[test]
+fn test_main_to_sov_deposit_ok() {
+    let mut state = BridgeTestState::new();
+
+    state.deploy_bridge_contract(false);
+
+    state.propose_set_fee_token(FUNGIBLE_TOKEN_ID);
+
+    state.propose_esdt_deposit();
 }
