@@ -1,22 +1,21 @@
 #![allow(deprecated)]
 
-use bls_signature::BlsSignature;
 use bridge_setup::{
-    BridgeSetup, DummyAttributes, DUMMY_SIG, FEE_TOKEN_ID, FUNGIBLE_TOKEN_ID, NFT_TOKEN_ID, TOKEN_BALANCE
+    BridgeSetup, DummyAttributes, FEE_TOKEN_ID, FUNGIBLE_TOKEN_ID, NFT_TOKEN_ID, TOKEN_BALANCE
 };
 use esdt_safe::to_sovereign::{
-        create_tx::CreateTxModule, refund::RefundModule, set_tx_status::SetTxStatusModule,
+        create_tx::CreateTxModule, refund::RefundModule,
     };
 use multiversx_sc::{
     codec::multi_types::OptionalValue,
-    types::{EsdtTokenPayment, ManagedVec, MultiValueEncoded},
+    types::{EsdtTokenPayment, ManagedVec},
 };
 use multiversx_sc_scenario::{
     managed_address, managed_biguint, managed_token_id, rust_biguint,
     testing_framework::TxTokenTransfer, DebugApi,
 };
 use transaction::{
-    transaction_status::TransactionStatus, StolenFromFrameworkEsdtTokenData, Transaction,
+    StolenFromFrameworkEsdtTokenData, Transaction,
 };
 use tx_batch_module::TxBatchModule;
 

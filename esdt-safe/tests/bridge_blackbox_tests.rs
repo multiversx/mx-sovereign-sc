@@ -29,13 +29,11 @@ const BRIDGE_OWNER_BALANCE: u64 = 100_000_000;
 const USER_EGLD_BALANCE: u64 = 100_000_000;
 
 const NFT_TOKEN_ID: TestTokenIdentifier = TestTokenIdentifier::new("NFT-123456");
-// const FUNGIBLE_TOKEN_ID: TestTokenIdentifier = TestTokenIdentifier::new("FIRST-f56bf0");
 const FUNGIBLE_TOKEN_ID: TestTokenIdentifier = TestTokenIdentifier::new("CROWD-123456");
 
 fn world() -> ScenarioWorld {
     let mut blockchain = ScenarioWorld::new();
 
-    // blockchain.set_current_dir_from_workspace("mx-sovereign-sc/esdt-safe");
     blockchain.register_contract(BRIDGE_CODE_PATH, esdt_safe::ContractBuilder);
     blockchain.register_contract(FEE_MARKET_CODE_PATH, fee_market::ContractBuilder);
 
@@ -210,7 +208,6 @@ impl BridgeTestState {
             .typed(esdt_safe_proxy::EsdtSafeProxy)
             .deposit(RECEIVER_ADDRESS, transfer_data)
             .payment(payments)
-            .returns(ExpectStatus(1))
             .run();
     }
 
