@@ -1,6 +1,7 @@
 use esdt_safe::esdt_safe_proxy::{self};
 use fee_market::fee_market_proxy::{self, FeeType};
-use multiversx_sc::types::{TestTokenIdentifier, TokenIdentifier};
+use multiversx_sc::codec::TopEncode;
+use multiversx_sc::types::{Address, AnnotatedValue, ManagedAddress, TestTokenIdentifier, TokenIdentifier, TxFrom};
 use multiversx_sc::{
     imports::{MultiValue3, MultiValueVec, OptionalValue},
     types::{
@@ -8,10 +9,12 @@ use multiversx_sc::{
         TestSCAddress,
     },
 };
-use multiversx_sc_scenario::ExpectStatus;
+use multiversx_sc_scenario::imports::AddressValue;
+use multiversx_sc_scenario::managed_address;
 use multiversx_sc_scenario::{
     api::StaticApi, imports::MxscPath, ExpectError, ScenarioTxRun, ScenarioWorld,
 };
+use transaction::{Operation, OperationData, OperationEsdtPayment, StolenFromFrameworkEsdtTokenData};
 
 const BRIDGE_ADDRESS: TestSCAddress = TestSCAddress::new("bridge");
 const BRIDGE_CODE_PATH: MxscPath = MxscPath::new("output/esdt-safe.mxsc.json");
@@ -209,6 +212,48 @@ impl BridgeTestState {
             .deposit(RECEIVER_ADDRESS, transfer_data)
             .payment(payments)
             .run();
+    }
+
+    fn propose_execute_operation(&mut self) {
+        let mut tokens: ManagedVec<StaticApi, OperationEsdtPayment<StaticApi>> =
+            ManagedVec::new();
+        let nft_payment: OperationEsdtPayment<StaticApi> = OperationEsdtPayment {
+            token_identifier: NFT_TOKEN_ID.into(),
+            token_nonce: 1,
+            token_data: StolenFromFrameworkEsdtTokenData::default(),
+        };
+        let fungible_payment: OperationEsdtPayment<StaticApi> = OperationEsdtPayment {
+            token_identifier: FUNGIBLE_TOKEN_ID.into(),
+            token_nonce: 0,
+            token_data: StolenFromFrameworkEsdtTokenData::default(),
+        };
+
+        let op_sender = managed_address!(&Address::from(&USER_ADDRESS.eval_to_array()));
+        let data: OperationData<StaticApi> = OperationData {
+            op_nonce: 1,
+            op_sender, 
+            opt_transfer_data: Option::None
+        };
+
+        tokens.push(fungible_payment);
+        tokens.push(nft_payment);
+
+        let to = managed_address!(&Address::from(&RECEIVER_ADDRESS.eval_to_array()));
+
+        let operation = Operation {
+            to,
+            tokens,
+            data
+        };
+        // let mut serialized_attributes = ManagedBuffer::new();
+        // if let core::result::Result::Err(err) = operation.top_encode(&mut serialized_attributes) {}
+
+        // self.world
+        //     .tx()
+        //     .from(USER_ADDRESS)
+        //     .to(BRIDGE_ADDRESS)
+        //     .typed(esdt_safe_proxy::EsdtSafeProxy)
+        //     .execute_operations(hash_of_hashes, operation);
     }
 
     fn propose_set_unpaused(&mut self) {
