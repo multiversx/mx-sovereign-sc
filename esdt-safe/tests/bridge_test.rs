@@ -17,7 +17,6 @@ use multiversx_sc_scenario::{
 use transaction::{
     StolenFromFrameworkEsdtTokenData, Transaction,
 };
-use tx_batch_module::TxBatchModule;
 
 mod bridge_setup;
 
