@@ -1,8 +1,9 @@
 use esdt_safe::esdt_safe_proxy::{self};
 use fee_market::fee_market_proxy::{self, FeeType};
+use header_verifier::header_verifier_proxy;
 use multiversx_sc::codec::TopEncode;
 use multiversx_sc::types::{
-    Address, TestTokenIdentifier, TokenIdentifier,
+    Address, MultiValueEncoded, TestTokenIdentifier, TokenIdentifier
 };
 use multiversx_sc::{
     imports::{MultiValue3, MultiValueVec, OptionalValue},
@@ -11,7 +12,7 @@ use multiversx_sc::{
         TestSCAddress,
     },
 };
-use multiversx_sc_scenario::managed_address;
+use multiversx_sc_scenario::{managed_address, ExpectMessage, ExpectStatus, ExpectValue, ReturnsMessage};
 use multiversx_sc_scenario::multiversx_chain_vm::crypto_functions::sha256;
 use multiversx_sc_scenario::{
     api::StaticApi, imports::MxscPath, ExpectError, ScenarioTxRun, ScenarioWorld,
@@ -27,7 +28,8 @@ const BRIDGE_OWNER_ADDRESS: TestAddress = TestAddress::new("bridge_owner");
 const FEE_MARKET_ADDRESS: TestSCAddress = TestSCAddress::new("fee_market");
 const FEE_MARKET_CODE_PATH: MxscPath = MxscPath::new("../fee-market/output/fee-market.mxsc.json");
 
-const HEADER_VERIFIER_ADDRESS: TestSCAddress = TestSCAddress::new("header-verifier");
+const HEADER_VERIFIER_ADDRESS: TestSCAddress = TestSCAddress::new("header_verifier");
+const HEADER_VERIFIER_CODE_PATH: MxscPath = MxscPath::new("../header-verifier/output/header-verifier.mxsc.json");
 
 const PRICE_AGGREGATOR_ADDRESS: TestSCAddress = TestSCAddress::new("price_aggregator");
 
@@ -45,6 +47,7 @@ fn world() -> ScenarioWorld {
 
     blockchain.register_contract(BRIDGE_CODE_PATH, esdt_safe::ContractBuilder);
     blockchain.register_contract(FEE_MARKET_CODE_PATH, fee_market::ContractBuilder);
+    blockchain.register_contract(HEADER_VERIFIER_CODE_PATH, header_verifier::ContractBuilder);
 
     blockchain
 }
@@ -116,8 +119,22 @@ impl BridgeTestState {
         self
     }
 
-    // TODO
-    // fn deploy_header_verifier_contract(&mut self) -> &mut Self {}
+    fn deploy_header_verifier_contract(&mut self) -> &mut Self {
+        let bls_pub_key: ManagedBuffer<StaticApi> = ManagedBuffer::new();
+        let mut bls_pub_keys = MultiValueEncoded::new();
+        bls_pub_keys.push(bls_pub_key);
+
+        self.world
+            .tx()
+            .from(BRIDGE_OWNER_ADDRESS)
+            .typed(header_verifier_proxy::HeaderverifierProxy)
+            .init(bls_pub_keys)
+            .code(HEADER_VERIFIER_CODE_PATH)
+            .new_address(HEADER_VERIFIER_ADDRESS)
+            .run();
+
+        self
+    }
 
     fn propose_set_fee_market_address(&mut self) {
         self.world
@@ -232,7 +249,7 @@ impl BridgeTestState {
             .run();
     }
 
-    fn propose_execute_operation(&mut self) {
+    fn propose_execute_operation_and_expect_err(&mut self) {
         let mut tokens: ManagedVec<StaticApi, OperationEsdtPayment<StaticApi>> = ManagedVec::new();
         let nft_payment: OperationEsdtPayment<StaticApi> = OperationEsdtPayment {
             token_identifier: NFT_TOKEN_ID.into(),
@@ -269,7 +286,10 @@ impl BridgeTestState {
             .to(BRIDGE_ADDRESS)
             .typed(esdt_safe_proxy::EsdtSafeProxy)
             .execute_operations(operation_hash, operation)
+            .returns(ExpectError(4, "Operation is not registered"))
             .run();
+
+        // assert_eq!(err_message, message);
     }
 
     fn propose_set_unpaused(&mut self) {
@@ -322,12 +342,14 @@ fn test_main_to_sov_deposit_ok() {
 }
 
 #[test]
-fn test_execute_operation() {
+fn test_execute_operation_not_registered() {
     let mut state = BridgeTestState::new();
 
     state.deploy_bridge_contract(false);
 
+    state.deploy_header_verifier_contract();
+
     state.propose_set_header_verifier_address();
 
-    state.propose_execute_operation();
+    state.propose_execute_operation_and_expect_err();
 }
