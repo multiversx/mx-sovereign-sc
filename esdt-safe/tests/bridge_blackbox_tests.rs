@@ -12,7 +12,7 @@ use multiversx_sc::{
         TestSCAddress,
     },
 };
-use multiversx_sc_scenario::{managed_address, ExpectMessage, ExpectStatus, ExpectValue, ReturnsMessage};
+use multiversx_sc_scenario::managed_address;
 use multiversx_sc_scenario::multiversx_chain_vm::crypto_functions::sha256;
 use multiversx_sc_scenario::{
     api::StaticApi, imports::MxscPath, ExpectError, ScenarioTxRun, ScenarioWorld,
@@ -249,7 +249,7 @@ impl BridgeTestState {
             .run();
     }
 
-    fn propose_execute_operation_and_expect_err(&mut self) {
+    fn propose_execute_operation_and_expect_err(&mut self, err_message: &str) {
         let mut tokens: ManagedVec<StaticApi, OperationEsdtPayment<StaticApi>> = ManagedVec::new();
         let nft_payment: OperationEsdtPayment<StaticApi> = OperationEsdtPayment {
             token_identifier: NFT_TOKEN_ID.into(),
@@ -286,7 +286,7 @@ impl BridgeTestState {
             .to(BRIDGE_ADDRESS)
             .typed(esdt_safe_proxy::EsdtSafeProxy)
             .execute_operations(operation_hash, operation)
-            .returns(ExpectError(4, "Operation is not registered"))
+            .returns(ExpectError(4, err_message))
             .run();
 
         // assert_eq!(err_message, message);
@@ -344,6 +344,7 @@ fn test_main_to_sov_deposit_ok() {
 #[test]
 fn test_execute_operation_not_registered() {
     let mut state = BridgeTestState::new();
+    let err_message = "Operation is not registered";
 
     state.deploy_bridge_contract(false);
 
@@ -351,5 +352,5 @@ fn test_execute_operation_not_registered() {
 
     state.propose_set_header_verifier_address();
 
-    state.propose_execute_operation_and_expect_err();
+    state.propose_execute_operation_and_expect_err(err_message);
 }
