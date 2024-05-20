@@ -1,10 +1,10 @@
 use esdt_safe::esdt_safe_proxy::{self};
 use fee_market::fee_market_proxy::{self, FeeType};
+use header_verifier::endpoints::remove_executed_hash;
 use header_verifier::header_verifier_proxy;
+use multiversx_sc::api::ManagedBufferApiImpl;
 use multiversx_sc::codec::TopEncode;
-use multiversx_sc::types::{
-    Address, MultiValueEncoded, TestTokenIdentifier, TokenIdentifier
-};
+use multiversx_sc::types::{Address, MultiValueEncoded, TestTokenIdentifier, TokenIdentifier};
 use multiversx_sc::{
     imports::{MultiValue3, MultiValueVec, OptionalValue},
     types::{
@@ -29,7 +29,8 @@ const FEE_MARKET_ADDRESS: TestSCAddress = TestSCAddress::new("fee_market");
 const FEE_MARKET_CODE_PATH: MxscPath = MxscPath::new("../fee-market/output/fee-market.mxsc.json");
 
 const HEADER_VERIFIER_ADDRESS: TestSCAddress = TestSCAddress::new("header_verifier");
-const HEADER_VERIFIER_CODE_PATH: MxscPath = MxscPath::new("../header-verifier/output/header-verifier.mxsc.json");
+const HEADER_VERIFIER_CODE_PATH: MxscPath =
+    MxscPath::new("../header-verifier/output/header-verifier.mxsc.json");
 
 const PRICE_AGGREGATOR_ADDRESS: TestSCAddress = TestSCAddress::new("price_aggregator");
 
@@ -250,35 +251,10 @@ impl BridgeTestState {
     }
 
     fn propose_execute_operation_and_expect_err(&mut self, err_message: &str) {
-        let mut tokens: ManagedVec<StaticApi, OperationEsdtPayment<StaticApi>> = ManagedVec::new();
-        let nft_payment: OperationEsdtPayment<StaticApi> = OperationEsdtPayment {
-            token_identifier: NFT_TOKEN_ID.into(),
-            token_nonce: 1,
-            token_data: StolenFromFrameworkEsdtTokenData::default(),
-        };
-        let fungible_payment: OperationEsdtPayment<StaticApi> = OperationEsdtPayment {
-            token_identifier: FUNGIBLE_TOKEN_ID.into(),
-            token_nonce: 0,
-            token_data: StolenFromFrameworkEsdtTokenData::default(),
-        };
-
-        let op_sender = managed_address!(&Address::from(&USER_ADDRESS.eval_to_array()));
-        let data: OperationData<StaticApi> = OperationData {
-            op_nonce: 1,
-            op_sender,
-            opt_transfer_data: Option::None,
-        };
-
-        tokens.push(fungible_payment);
-        tokens.push(nft_payment);
-
+        let (tokens, data) = self.setup_payments(vec![NFT_TOKEN_ID, FUNGIBLE_TOKEN_ID]);
         let to = managed_address!(&Address::from(&RECEIVER_ADDRESS.eval_to_array()));
-
         let operation = Operation { to, tokens, data };
-        let mut serialized_operation: ManagedBuffer<StaticApi> = ManagedBuffer::new();
-        let _ = operation.top_encode(&mut serialized_operation);
-        let sha256 = sha256(&serialized_operation.to_vec());
-        let operation_hash: ManagedBuffer<StaticApi> = ManagedBuffer::new_from_bytes(&sha256);
+        let operation_hash = self.get_operation_hash(&operation);
 
         self.world
             .tx()
@@ -288,8 +264,6 @@ impl BridgeTestState {
             .execute_operations(operation_hash, operation)
             .returns(ExpectError(4, err_message))
             .run();
-
-        // assert_eq!(err_message, message);
     }
 
     fn propose_set_unpaused(&mut self) {
@@ -301,6 +275,43 @@ impl BridgeTestState {
             .unpause_endpoint()
             .returns(ReturnsResult)
             .run();
+    }
+
+    fn setup_payments(
+        &mut self,
+        token_ids: Vec<TestTokenIdentifier>,
+    ) -> (
+        ManagedVec<StaticApi, OperationEsdtPayment<StaticApi>>,
+        OperationData<StaticApi>,
+    ) {
+        let mut tokens: ManagedVec<StaticApi, OperationEsdtPayment<StaticApi>> = ManagedVec::new();
+
+        for token_id in token_ids {
+            let payment: OperationEsdtPayment<StaticApi> = OperationEsdtPayment {
+                token_identifier: token_id.into(),
+                token_nonce: 1,
+                token_data: StolenFromFrameworkEsdtTokenData::default(),
+            };
+
+            tokens.push(payment);
+        }
+
+        let op_sender = managed_address!(&Address::from(&USER_ADDRESS.eval_to_array()));
+        let data: OperationData<StaticApi> = OperationData {
+            op_nonce: 1,
+            op_sender,
+            opt_transfer_data: Option::None,
+        };
+
+        (tokens, data)
+    }
+
+    fn get_operation_hash(&mut self, operation: &Operation<StaticApi>) -> ManagedBuffer<StaticApi> {
+        let mut serialized_operation: ManagedBuffer<StaticApi> = ManagedBuffer::new();
+        let _ = operation.top_encode(&mut serialized_operation);
+        let sha256 = sha256(&serialized_operation.to_vec());
+
+        ManagedBuffer::new_from_bytes(&sha256)
     }
 }
 
