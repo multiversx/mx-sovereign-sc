@@ -1,3 +1,4 @@
+use header_verifier::header_verifier_proxy;
 use multiversx_sc::{api::ESDT_MULTI_TRANSFER_FUNC_NAME, storage::StorageKey};
 use transaction::{
     BatchId, GasLimit, Operation, OperationData, OperationEsdtPayment, OperationTuple,
@@ -220,10 +221,11 @@ pub trait TransferTokensModule:
             }
         }
 
-        let _: () = self
-            .header_verifier_proxy(self.header_verifier_address().get())
-            .remove_executed_hash(hash_of_hashes, &operation_tuple.op_hash)
-            .execute_on_dest_context();
+        let header_verifier_address = self.header_verifier_address().get();
+        let _ = self.tx()
+            .to(header_verifier_address)
+            .typed(header_verifier_proxy::HeaderverifierProxy)
+            .remove_executed_hash(hash_of_hashes, &operation_tuple.op_hash);
     }
 
     fn emit_transfer_failed_events(
