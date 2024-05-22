@@ -13,6 +13,8 @@ multiversx_sc::imports!();
 const CALLBACK_GAS: GasLimit = 10_000_000; // Increase if not enough
 const TRANSACTION_GAS: GasLimit = 30_000_000;
 
+pub type MultiOperationEsdtPayment<Api> = ManagedVec<Api, OperationEsdtPayment<Api>>;
+
 #[multiversx_sc::module]
 pub trait TransferTokensModule:
     bls_signature::BlsSignatureModule
@@ -140,7 +142,8 @@ pub trait TransferTokensModule:
         operation_tuple: OperationTuple<Self::Api>,
         tokens_list: ManagedVec<OperationEsdtPayment<Self::Api>>,
     ) {
-        let mapped_tokens = tokens_list.iter().map(|token| token.into()).collect();
+        let mapped_tokens: ManagedVec<Self::Api, EsdtTokenPayment<Self::Api>> =
+            tokens_list.iter().map(|token| token.into()).collect();
 
         match &operation_tuple.operation.data.opt_transfer_data {
             Some(transfer_data) => {
@@ -149,32 +152,29 @@ pub trait TransferTokensModule:
                     args.push_arg(arg);
                 }
 
-                self.send()
-                    .contract_call::<()>(
-                        operation_tuple.operation.to.clone(),
-                        transfer_data.function.clone(),
-                    )
-                    .with_raw_arguments(args)
-                    .with_multi_token_transfer(mapped_tokens)
-                    .with_gas_limit(transfer_data.gas_limit)
-                    .async_call_promise()
-                    .with_extra_gas_for_callback(CALLBACK_GAS)
-                    .with_callback(
+                self.tx()
+                    .to(&operation_tuple.operation.to)
+                    .raw_call(transfer_data.function.clone())
+                    .arguments_raw(args.clone())
+                    .multi_esdt(mapped_tokens.clone())
+                    .gas(transfer_data.gas_limit)
+                    .callback(
                         <Self as TransferTokensModule>::callbacks(self)
                             .execute(&hash_of_hashes, &operation_tuple),
                     )
+                    .gas_for_callback(CALLBACK_GAS)
                     .register_promise();
             }
             None => {
                 let own_address = self.blockchain().get_sc_address();
+                let args =
+                    self.get_contract_call_args(&operation_tuple.operation.to, mapped_tokens);
 
-                self.send()
-                    .contract_call::<()>(own_address, ESDT_MULTI_TRANSFER_FUNC_NAME)
-                    .with_raw_arguments(
-                        self.get_contract_call_args(&operation_tuple.operation.to, mapped_tokens),
-                    )
-                    .with_gas_limit(TRANSACTION_GAS)
-                    .async_call_promise()
+                self.tx()
+                    .to(own_address)
+                    .raw_call(ESDT_MULTI_TRANSFER_FUNC_NAME)
+                    .arguments_raw(args)
+                    .gas(TRANSACTION_GAS)
                     .with_callback(
                         <Self as TransferTokensModule>::callbacks(self)
                             .execute(&hash_of_hashes, &operation_tuple),
@@ -222,7 +222,8 @@ pub trait TransferTokensModule:
         }
 
         let header_verifier_address = self.header_verifier_address().get();
-        let _ = self.tx()
+        let _ = self
+            .tx()
             .to(header_verifier_address)
             .typed(header_verifier_proxy::HeaderverifierProxy)
             .remove_executed_hash(hash_of_hashes, &operation_tuple.op_hash);
