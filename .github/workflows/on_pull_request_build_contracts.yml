@@ -10,6 +10,5 @@ jobs:
   build:
     uses: multiversx/mx-sc-actions/.github/workflows/reproducible-build.yml@v2.3.5
     with:
-      rust-toolchain: stable
       image_tag: v6.1.1
       package_whole_project_src: true
