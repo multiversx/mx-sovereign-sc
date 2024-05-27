@@ -8,7 +8,7 @@ permissions:
 
 jobs:
   build:
-    uses: multiversx/mx-sc-actions/.github/workflows/reproducible-build.yml@v3.1.0
+    uses: multiversx/mx-sc-actions/.github/workflows/reproducible-build.yml@v2.3.5
     with:
       rust-toolchain: stable
       image_tag: v6.1.1
