@@ -288,10 +288,14 @@ pub trait TransferTokensModule:
     ) -> (ManagedBuffer, bool) {
         let mut serialized_data = ManagedBuffer::new();
         let mut storage_key = StorageKey::from("pending_hashes");
+        let bar = "|";
+        storage_key.append_item(&bar);
         storage_key.append_item(&hash_of_hashes);
 
+        let header_verifier_address = self.header_verifier_address().get();
+
         let pending_operations_mapper =
-            UnorderedSetMapper::new_from_address(self.header_verifier_address().get(), storage_key);
+            UnorderedSetMapper::new_from_address(header_verifier_address, storage_key);
 
         if let core::result::Result::Err(err) = operation.top_encode(&mut serialized_data) {
             sc_panic!("Transfer data encode error: {}", err.message_bytes());
@@ -319,6 +323,7 @@ pub trait TransferTokensModule:
     #[storage_mapper("pending_hashes")]
     fn pending_hashes(&self, hash_of_hashes: &ManagedBuffer) -> UnorderedSetMapper<ManagedBuffer>;
 
+    #[view(headerVerifierAddress)]
     #[storage_mapper("header_verifier_address")]
     fn header_verifier_address(&self) -> SingleValueMapper<ManagedAddress>;
 

@@ -1,10 +1,12 @@
+use bls_signature::BlsSignature;
+use esdt_safe::endpoints::header_verifier_address;
 use esdt_safe::esdt_safe_proxy::{self};
 use fee_market::fee_market_proxy::{self, FeeType};
-use header_verifier::endpoints::remove_executed_hash;
 use header_verifier::header_verifier_proxy;
-use multiversx_sc::api::ManagedBufferApiImpl;
 use multiversx_sc::codec::TopEncode;
-use multiversx_sc::types::{Address, MultiValueEncoded, TestTokenIdentifier, TokenIdentifier};
+use multiversx_sc::types::{
+    Address, ManagedByteArray, MultiValueEncoded, TestTokenIdentifier, TokenIdentifier,
+};
 use multiversx_sc::{
     imports::{MultiValue3, MultiValueVec, OptionalValue},
     types::{
@@ -12,11 +14,12 @@ use multiversx_sc::{
         TestSCAddress,
     },
 };
-use multiversx_sc_scenario::managed_address;
+use multiversx_sc_scenario::imports::ScenarioRunner;
 use multiversx_sc_scenario::multiversx_chain_vm::crypto_functions::sha256;
 use multiversx_sc_scenario::{
     api::StaticApi, imports::MxscPath, ExpectError, ScenarioTxRun, ScenarioWorld,
 };
+use multiversx_sc_scenario::{managed_address, ExpectValue};
 use transaction::{
     Operation, OperationData, OperationEsdtPayment, StolenFromFrameworkEsdtTokenData,
 };
@@ -266,6 +269,21 @@ impl BridgeTestState {
             .run();
     }
 
+    fn propose_execute_operation(&mut self) {
+        let (tokens, data) = self.setup_payments(vec![NFT_TOKEN_ID, FUNGIBLE_TOKEN_ID]);
+        let to = managed_address!(&Address::from(&RECEIVER_ADDRESS.eval_to_array()));
+        let operation = Operation { to, tokens, data };
+        let operation_hash = self.get_operation_hash(&operation);
+
+        self.world
+            .tx()
+            .from(USER_ADDRESS)
+            .to(BRIDGE_ADDRESS)
+            .typed(esdt_safe_proxy::EsdtSafeProxy)
+            .execute_operations(operation_hash, operation)
+            .run();
+    }
+
     fn propose_set_unpaused(&mut self) {
         self.world
             .tx()
@@ -275,6 +293,54 @@ impl BridgeTestState {
             .unpause_endpoint()
             .returns(ReturnsResult)
             .run();
+    }
+
+    fn propose_register_operation(&mut self) {
+        let (tokens, data) = self.setup_payments(vec![NFT_TOKEN_ID, FUNGIBLE_TOKEN_ID]);
+        let to = managed_address!(&Address::from(RECEIVER_ADDRESS.eval_to_array()));
+        let operation = Operation { to, tokens, data };
+        let operation_hash = self.get_operation_hash(&operation);
+        let mut operations_hashes = MultiValueEncoded::new();
+
+        operations_hashes.push(operation_hash.clone());
+
+        let mock_signature = self.mock_bls_signature(&operation_hash);
+        let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&operation_hash.to_vec()));
+
+        self.world
+            .tx()
+            .from(BRIDGE_OWNER_ADDRESS)
+            .to(HEADER_VERIFIER_ADDRESS)
+            .typed(header_verifier_proxy::HeaderverifierProxy)
+            .register_bridge_operations(mock_signature, hash_of_hashes.clone(), operations_hashes.clone())
+            .run();
+
+        self.check_header_verifier_address();
+        self.check_pending_hashes_mapper(&hash_of_hashes, &operations_hashes);
+    }
+
+    fn check_header_verifier_address(&mut self) {
+        self.world
+            .query()
+            .to(BRIDGE_ADDRESS)
+            .typed(esdt_safe_proxy::EsdtSafeProxy)
+            .header_verifier_address()
+            .with_result(ExpectValue(HEADER_VERIFIER_ADDRESS))
+            .run()
+    }
+
+    fn check_pending_hashes_mapper(
+        &mut self,
+        hash_of_hashes: &ManagedBuffer<StaticApi>,
+        expected_hash: &MultiValueEncoded<StaticApi, ManagedBuffer<StaticApi>>,
+    ) {
+        self.world
+            .query()
+            .to(HEADER_VERIFIER_ADDRESS)
+            .typed(header_verifier_proxy::HeaderverifierProxy)
+            .pending_hashes(hash_of_hashes)
+            .with_result(ExpectValue(expected_hash))
+            .run()
     }
 
     fn setup_payments(
@@ -312,6 +378,17 @@ impl BridgeTestState {
         let sha256 = sha256(&serialized_operation.to_vec());
 
         ManagedBuffer::new_from_bytes(&sha256)
+    }
+
+    fn mock_bls_signature(
+        &mut self,
+        operation_hash: &ManagedBuffer<StaticApi>,
+    ) -> BlsSignature<StaticApi> {
+        let byte_arr: &mut [u8; 48] = &mut [0; 48];
+        operation_hash.load_to_byte_array(byte_arr);
+        let mock_signature: BlsSignature<StaticApi> = ManagedByteArray::new_from_bytes(&byte_arr);
+
+        mock_signature
     }
 }
 
@@ -364,4 +441,36 @@ fn test_execute_operation_not_registered() {
     state.propose_set_header_verifier_address();
 
     state.propose_execute_operation_and_expect_err(err_message);
+}
+
+#[test]
+fn test_register_operation() {
+    let mut state = BridgeTestState::new();
+
+    state.deploy_bridge_contract(false);
+
+    state.deploy_header_verifier_contract();
+
+    state.propose_set_header_verifier_address();
+
+    state.propose_register_operation();
+
+    state.world.dump_state_step();
+}
+
+#[test]
+fn test_execute_operation() {
+    let mut state = BridgeTestState::new();
+
+    state.deploy_bridge_contract(false);
+
+    state.deploy_header_verifier_contract();
+
+    state.propose_set_header_verifier_address();
+
+    state.propose_register_operation();
+
+    state.world.run_dump_state_step();
+
+    state.propose_execute_operation();
 }
