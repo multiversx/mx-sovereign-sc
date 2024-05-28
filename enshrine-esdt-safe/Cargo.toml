@@ -1,0 +1,24 @@
+[package]
+name = "enshrine-esdt-safe"
+version = "0.0.0"
+authors = ["you"]
+edition = "2021"
+publish = false
+
+[lib]
+path = "src/enshrine_esdt_safe.rs"
+
+[dependencies.multiversx-sc]
+version = "0.50.3"
+
+[dev-dependencies]
+num-bigint = "0.4"
+
+[dev-dependencies.multiversx-sc-scenario]
+version = "0.50.3"
+
+[workspace]
+members = [
+    ".",
+    "meta",
+]
