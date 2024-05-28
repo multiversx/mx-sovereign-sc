@@ -288,8 +288,6 @@ pub trait TransferTokensModule:
     ) -> (ManagedBuffer, bool) {
         let mut serialized_data = ManagedBuffer::new();
         let mut storage_key = StorageKey::from("pending_hashes");
-        let bar = "|";
-        storage_key.append_item(&bar);
         storage_key.append_item(&hash_of_hashes);
 
         let header_verifier_address = self.header_verifier_address().get();

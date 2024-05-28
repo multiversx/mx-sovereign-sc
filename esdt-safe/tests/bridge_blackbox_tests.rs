@@ -1,5 +1,4 @@
 use bls_signature::BlsSignature;
-use esdt_safe::endpoints::header_verifier_address;
 use esdt_safe::esdt_safe_proxy::{self};
 use fee_market::fee_market_proxy::{self, FeeType};
 use header_verifier::header_verifier_proxy;
@@ -274,13 +273,14 @@ impl BridgeTestState {
         let to = managed_address!(&Address::from(&RECEIVER_ADDRESS.eval_to_array()));
         let operation = Operation { to, tokens, data };
         let operation_hash = self.get_operation_hash(&operation);
+        let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&operation_hash.to_vec()));
 
         self.world
             .tx()
             .from(USER_ADDRESS)
             .to(BRIDGE_ADDRESS)
             .typed(esdt_safe_proxy::EsdtSafeProxy)
-            .execute_operations(operation_hash, operation)
+            .execute_operations(hash_of_hashes, operation)
             .run();
     }
 
