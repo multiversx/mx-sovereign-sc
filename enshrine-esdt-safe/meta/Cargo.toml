@@ -1,0 +1,12 @@
+[package]
+name = "enshrine-esdt-safe-meta"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[dependencies.enshrine-esdt-safe]
+path = ".."
+
+[dependencies.multiversx-sc-meta]
+version = "0.50.3"
+default-features = false
