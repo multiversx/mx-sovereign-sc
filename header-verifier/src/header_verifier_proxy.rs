@@ -48,8 +48,9 @@ where
     >(
         self,
         bls_pub_keys: Arg0,
-    ) -> TxProxyDeploy<Env, From, Gas, ()> {
+    ) -> TxTypedDeploy<Env, From, NotPayable, Gas, ()> {
         self.wrapped_tx
+            .payment(NotPayable)
             .raw_deploy()
             .argument(&bls_pub_keys)
             .original_result()
@@ -67,8 +68,9 @@ where
 {
     pub fn upgrade(
         self,
-    ) -> TxProxyUpgrade<Env, From, To, Gas, ()> {
+    ) -> TxTypedUpgrade<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
+            .payment(NotPayable)
             .raw_upgrade()
             .original_result()
     }
@@ -92,8 +94,9 @@ where
         signature: Arg0,
         bridge_operations_hash: Arg1,
         operations_hashes: Arg2,
-    ) -> TxProxyCall<Env, From, To, Gas, ()> {
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
+            .payment(NotPayable)
             .raw_call("registerBridgeOps")
             .argument(&signature)
             .argument(&bridge_operations_hash)
@@ -106,8 +109,9 @@ where
     >(
         self,
         esdt_safe_address: Arg0,
-    ) -> TxProxyCall<Env, From, To, Gas, ()> {
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
+            .payment(NotPayable)
             .raw_call("setEsdtSafeAddress")
             .argument(&esdt_safe_address)
             .original_result()
@@ -120,8 +124,9 @@ where
         self,
         hash_of_hashes: Arg0,
         operation_hash: Arg1,
-    ) -> TxProxyCall<Env, From, To, Gas, ()> {
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
+            .payment(NotPayable)
             .raw_call("removeExecutedHash")
             .argument(&hash_of_hashes)
             .argument(&operation_hash)
@@ -133,8 +138,9 @@ where
     >(
         self,
         new_value: Arg0,
-    ) -> TxProxyCall<Env, From, To, Gas, ()> {
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
+            .payment(NotPayable)
             .raw_call("setMinValidSigners")
             .argument(&new_value)
             .original_result()
@@ -145,8 +151,9 @@ where
     >(
         self,
         signers: Arg0,
-    ) -> TxProxyCall<Env, From, To, Gas, ()> {
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
+            .payment(NotPayable)
             .raw_call("addSigners")
             .argument(&signers)
             .original_result()
@@ -157,8 +164,9 @@ where
     >(
         self,
         signers: Arg0,
-    ) -> TxProxyCall<Env, From, To, Gas, ()> {
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
+            .payment(NotPayable)
             .raw_call("removeSigners")
             .argument(&signers)
             .original_result()

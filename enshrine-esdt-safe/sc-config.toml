@@ -1,0 +1,19 @@
+[settings]
+main = "main"
+
+[contracts.main]
+name = "enshrine-esdt-safe"
+
+[contracts.full]
+name = "enshrine-esdt-safe-full"
+add-unlabelled = true
+add-labels = ["enshrine-esdt-safe-external-view"]
+
+[contracts.view]
+name = "enshrine-esdt-safe-view"
+external-view = true
+add-unlabelled = false
+add-labels = ["enshrine-esdt-safe-external-view"]
+
+[[proxy]]
+path = "src/enshrine_esdt_safe_proxy.rs"
