@@ -54,8 +54,9 @@ where
         price_aggregator_address: Arg1,
         usdc_token_id: Arg2,
         wegld_token_id: Arg3,
-    ) -> TxProxyDeploy<Env, From, Gas, ()> {
+    ) -> TxTypedDeploy<Env, From, NotPayable, Gas, ()> {
         self.wrapped_tx
+            .payment(NotPayable)
             .raw_deploy()
             .argument(&esdt_safe_address)
             .argument(&price_aggregator_address)
@@ -76,8 +77,9 @@ where
 {
     pub fn upgrade(
         self,
-    ) -> TxProxyUpgrade<Env, From, To, Gas, ()> {
+    ) -> TxTypedUpgrade<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
+            .payment(NotPayable)
             .raw_upgrade()
             .original_result()
     }
@@ -94,16 +96,18 @@ where
 {
     pub fn enable_fee(
         self,
-    ) -> TxProxyCall<Env, From, To, Gas, ()> {
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
+            .payment(NotPayable)
             .raw_call("enableFee")
             .original_result()
     }
 
     pub fn disable_fee(
         self,
-    ) -> TxProxyCall<Env, From, To, Gas, ()> {
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
+            .payment(NotPayable)
             .raw_call("disableFee")
             .original_result()
     }
@@ -115,8 +119,9 @@ where
         self,
         base_token: Arg0,
         fee_type: Arg1,
-    ) -> TxProxyCall<Env, From, To, Gas, ()> {
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
+            .payment(NotPayable)
             .raw_call("addFee")
             .argument(&base_token)
             .argument(&fee_type)
@@ -128,8 +133,9 @@ where
     >(
         self,
         base_token: Arg0,
-    ) -> TxProxyCall<Env, From, To, Gas, ()> {
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
+            .payment(NotPayable)
             .raw_call("removeFee")
             .argument(&base_token)
             .original_result()
@@ -140,8 +146,9 @@ where
     >(
         self,
         token_id: Arg0,
-    ) -> TxProxyCall<Env, From, To, Gas, FeeType<Env::Api>> {
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, FeeType<Env::Api>> {
         self.wrapped_tx
+            .payment(NotPayable)
             .raw_call("getTokenFee")
             .argument(&token_id)
             .original_result()
@@ -152,8 +159,9 @@ where
     >(
         self,
         users: Arg0,
-    ) -> TxProxyCall<Env, From, To, Gas, ()> {
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
+            .payment(NotPayable)
             .raw_call("addUsersToWhitelist")
             .argument(&users)
             .original_result()
@@ -164,8 +172,9 @@ where
     >(
         self,
         users: Arg0,
-    ) -> TxProxyCall<Env, From, To, Gas, ()> {
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
+            .payment(NotPayable)
             .raw_call("removeUsersFromWhitelist")
             .argument(&users)
             .original_result()
@@ -177,8 +186,9 @@ where
     >(
         self,
         address_percentage_pairs: Arg0,
-    ) -> TxProxyCall<Env, From, To, Gas, ()> {
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
+            .payment(NotPayable)
             .raw_call("distributeFees")
             .argument(&address_percentage_pairs)
             .original_result()
@@ -193,7 +203,7 @@ where
         original_caller: Arg0,
         total_transfers: Arg1,
         opt_gas_limit: Arg2,
-    ) -> TxProxyCall<Env, From, To, Gas, FinalPayment<Env::Api>> {
+    ) -> TxTypedCall<Env, From, To, (), Gas, FinalPayment<Env::Api>> {
         self.wrapped_tx
             .raw_call("subtractFee")
             .argument(&original_caller)
@@ -204,8 +214,9 @@ where
 
     pub fn users_whitelist(
         self,
-    ) -> TxProxyCall<Env, From, To, Gas, MultiValueEncoded<Env::Api, ManagedAddress<Env::Api>>> {
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, MultiValueEncoded<Env::Api, ManagedAddress<Env::Api>>> {
         self.wrapped_tx
+            .payment(NotPayable)
             .raw_call("getUsersWhitelist")
             .original_result()
     }
@@ -215,8 +226,9 @@ where
     >(
         self,
         new_value: Arg0,
-    ) -> TxProxyCall<Env, From, To, Gas, ()> {
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
+            .payment(NotPayable)
             .raw_call("setMinValidSigners")
             .argument(&new_value)
             .original_result()
@@ -227,8 +239,9 @@ where
     >(
         self,
         signers: Arg0,
-    ) -> TxProxyCall<Env, From, To, Gas, ()> {
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
+            .payment(NotPayable)
             .raw_call("addSigners")
             .argument(&signers)
             .original_result()
@@ -239,8 +252,9 @@ where
     >(
         self,
         signers: Arg0,
-    ) -> TxProxyCall<Env, From, To, Gas, ()> {
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
+            .payment(NotPayable)
             .raw_call("removeSigners")
             .argument(&signers)
             .original_result()
