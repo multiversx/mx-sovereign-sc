@@ -65,4 +65,20 @@ pub trait UtilsModule: bls_signature::BlsSignatureModule {
 
         list
     }
+
+    fn has_sov_token_prefix(&self, token_id: &TokenIdentifier) -> bool {
+        let dash = b'-';
+        let mut array_buffer = [0u8, 30];
+        let slice = token_id.as_managed_buffer().load_to_byte_array(&mut array_buffer);
+
+        // if slice.contains(&dash) {
+        //     let result = slice.split(|dash| slice.contains(&dash));
+        //
+        //     for slice in result {
+        //
+        //     }
+        // }
+
+        slice.contains(&dash)
+    }
 }
