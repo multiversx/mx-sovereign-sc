@@ -14,4 +14,6 @@ members = [
   "router-mock/meta",
   "header-verifier",
   "header-verifier/meta", 
+  "enshrine-esdt-safe",
+  "enshrine-esdt-safe/meta"
 ]
