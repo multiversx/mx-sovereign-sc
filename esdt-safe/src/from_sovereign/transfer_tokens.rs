@@ -1,4 +1,5 @@
-use multiversx_sc::{api::ESDT_MULTI_TRANSFER_FUNC_NAME, storage::StorageKey};
+use builtin_func_names::{ESDT_MULTI_TRANSFER_FUNC_NAME, ESDT_NFT_CREATE_FUNC_NAME};
+use multiversx_sc::{codec, storage::StorageKey};
 use transaction::{
     BatchId, GasLimit, Operation, OperationData, OperationEsdtPayment, OperationTuple,
 };
@@ -57,47 +58,68 @@ pub trait TransferTokensModule:
         let mut output_payments = ManagedVec::new();
 
         for operation_token in operation_tokens.iter() {
-            let mx_token_id_state = self
-                .sovereign_to_multiversx_token_id(&operation_token.token_identifier)
-                .get();
-
-            let mx_token_id = match mx_token_id_state {
-                // token is from sovereign -> continue and mint
-                TokenMapperState::Token(token_id) => token_id,
-                // token is from mainchain -> push token
-                _ => {
-                    // TODO: will use sovereign prefix
-                    output_payments.push(operation_token.clone());
-
-                    continue;
-                }
-            };
-
-            if operation_token.token_nonce == 0 {
-                self.send()
-                    .esdt_local_mint(&mx_token_id, 0, &operation_token.token_data.amount);
-
-                output_payments.push(OperationEsdtPayment {
-                    token_identifier: mx_token_id,
-                    token_nonce: 0,
-                    token_data: operation_token.token_data,
-                });
-
+            if !self.has_sov_token_prefix(&operation_token.token_identifier) {
+                output_payments.push(operation_token.clone());
                 continue;
             }
 
-            let nft_nonce = self.mint_and_save_token(&mx_token_id, &operation_token);
+            let nonce = operation_token.token_nonce;
+            if nonce == 0 {
+                let _ = self.send().esdt_system_sc_proxy().mint(
+                    &operation_token.token_identifier,
+                    &operation_token.token_data.amount,
+                );
+            } else {
+                // nonce = self.send().esdt_nft_create(
+                //     &operation_token.token_identifier,
+                //     &operation_token.token_data.amount,
+                //     &operation_token.token_data.name,
+                //     &operation_token.token_data.royalties,
+                //     &operation_token.token_data.hash,
+                //     &operation_token.token_data.attributes,
+                //     &operation_token.token_data.uris,
+                // );
+
+                let token_data = operation_token.token_data.clone();
+                let mut arg_buffer = ManagedArgBuffer::new();
+
+                arg_buffer.push_arg(&operation_token.token_identifier);
+                arg_buffer.push_arg(token_data.amount);
+                arg_buffer.push_arg(token_data.name);
+                arg_buffer.push_arg(token_data.royalties);
+                arg_buffer.push_arg(token_data.hash);
+                arg_buffer.push_arg(token_data.attributes);
+
+                let uris = token_data.uris.clone();
+
+                if uris.is_empty() {
+                    // at least one URI is required, so we push an empty one
+                    arg_buffer.push_arg(codec::Empty);
+                } else {
+                    // The API function has the last argument as variadic,
+                    // so we top-encode each and send as separate argument
+                    for uri in &uris {
+                        arg_buffer.push_arg(uri);
+                    }
+                }
+                arg_buffer.push_arg(operation_token.token_nonce);
+
+                self.send_raw().call_local_esdt_built_in_function(
+                    self.blockchain().get_gas_left(),
+                    &ManagedBuffer::from(ESDT_NFT_CREATE_FUNC_NAME),
+                    &arg_buffer,
+                );
+            }
 
             output_payments.push(OperationEsdtPayment {
-                token_identifier: mx_token_id,
-                token_nonce: nft_nonce,
+                token_identifier: operation_token.token_identifier,
+                token_nonce: nonce,
                 token_data: operation_token.token_data,
             });
         }
 
         output_payments
     }
-
     fn mint_and_save_token(
         self,
         mx_token_id: &TokenIdentifier<Self::Api>,

@@ -231,13 +231,13 @@ pub trait CreateTxModule:
 
             current_token_data.amount = payment.amount.clone();
 
-            if self.is_sovereign_chain().get() || self.has_sov_token_prefix(&payment.token_identifier)
+            if self.is_sovereign_chain().get()
+                || self.has_sov_token_prefix(&payment.token_identifier)
             {
-                self.send().esdt_local_burn(
-                    &payment.token_identifier,
-                    payment.token_nonce,
-                    &payment.amount,
-                );
+                let _ = self
+                    .send()
+                    .esdt_system_sc_proxy()
+                    .burn(&payment.token_identifier, &payment.amount);
             }
 
             event_payments.push(MultiValue3((
@@ -253,7 +253,7 @@ pub trait CreateTxModule:
 
         // refund refundable_tokens
         for payment in &refundable_payments {
-            self.send().direct_non_zero_esdt_payment(&caller, &payment);
+            let _ = self.tx().to(&caller).payment(&payment);
         }
 
         let tx_nonce = self.get_and_save_next_tx_id();
@@ -274,11 +274,10 @@ pub trait CreateTxModule:
         payment: EsdtTokenPayment<Self::Api>,
         sov_token_id: &TokenIdentifier<Self::Api>,
     ) -> u64 {
-        self.send().esdt_local_burn(
-            &payment.token_identifier,
-            payment.token_nonce,
-            &payment.amount,
-        );
+        let _ = self
+            .send()
+            .esdt_system_sc_proxy()
+            .burn(&payment.token_identifier, &payment.amount);
 
         let mut sov_token_nonce = 0;
 
