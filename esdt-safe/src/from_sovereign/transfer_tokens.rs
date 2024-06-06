@@ -6,8 +6,6 @@ use transaction::{
 
 use crate::to_sovereign;
 
-use super::token_mapping::EsdtTokenInfo;
-
 multiversx_sc::imports!();
 
 const CALLBACK_GAS: GasLimit = 10_000_000; // Increase if not enough
