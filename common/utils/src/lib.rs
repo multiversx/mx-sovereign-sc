@@ -71,14 +71,12 @@ pub trait UtilsModule: bls_signature::BlsSignatureModule {
         let mut array_buffer = [0u8, 30];
         let slice = token_id.as_managed_buffer().load_to_byte_array(&mut array_buffer);
 
-        // if slice.contains(&dash) {
-        //     let result = slice.split(|dash| slice.contains(&dash));
-        //
-        //     for slice in result {
-        //
-        //     }
-        // }
+        let counter = slice.iter().filter(|&&c| c == dash).count();
 
-        slice.contains(&dash)
+        if counter >= 2 {
+            return true
+        }
+
+        false
     }
 }
