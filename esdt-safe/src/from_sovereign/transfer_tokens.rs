@@ -120,40 +120,6 @@ pub trait TransferTokensModule:
 
         output_payments
     }
-    fn mint_and_save_token(
-        self,
-        mx_token_id: &TokenIdentifier<Self::Api>,
-        operation_token: &OperationEsdtPayment<Self::Api>,
-    ) -> u64 {
-        // mint NFT
-        let nft_nonce = self.send().esdt_nft_create(
-            mx_token_id,
-            &operation_token.token_data.amount,
-            &operation_token.token_data.name,
-            &operation_token.token_data.royalties,
-            &operation_token.token_data.hash,
-            &operation_token.token_data.attributes,
-            &operation_token.token_data.uris,
-        );
-
-        // save token id and nonce
-        self.sovereign_esdt_token_info_mapper(
-            &operation_token.token_identifier,
-            &operation_token.token_nonce,
-        )
-        .set(EsdtTokenInfo {
-            token_identifier: mx_token_id.clone(),
-            token_nonce: nft_nonce,
-        });
-
-        self.multiversx_esdt_token_info_mapper(mx_token_id, &nft_nonce)
-            .set(EsdtTokenInfo {
-                token_identifier: operation_token.token_identifier.clone(),
-                token_nonce: operation_token.token_nonce,
-            });
-
-        nft_nonce
-    }
 
     fn distribute_payments(
         &self,
