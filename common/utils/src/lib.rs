@@ -73,7 +73,7 @@ pub trait UtilsModule: bls_signature::BlsSignatureModule {
 
         let counter = slice.iter().filter(|&&c| c == dash).count();
 
-        if counter >= 2 {
+        if counter == 2 {
             return true
         }
 
