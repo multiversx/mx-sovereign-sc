@@ -57,7 +57,7 @@ fn mint_tokens(
         let mut output_payments = ManagedVec::new();
 
         for operation_token in operation_tokens.iter() {
-            if !self.has_prefix(operation_token.token_identifier.clone()) {
+            if !self.has_sov_token_prefix(&operation_token.token_identifier) {
                 output_payments.push(operation_token.clone());
                 continue;
             }
