@@ -273,14 +273,13 @@ impl BridgeTestState {
         let to = managed_address!(&Address::from(&RECEIVER_ADDRESS.eval_to_array()));
         let operation = Operation { to, tokens, data };
         let operation_hash = self.get_operation_hash(&operation);
-        let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&operation_hash.to_vec()));
 
         self.world
             .tx()
             .from(USER_ADDRESS)
             .to(BRIDGE_ADDRESS)
             .typed(esdt_safe_proxy::EsdtSafeProxy)
-            .execute_operations(hash_of_hashes, operation)
+            .execute_operations(operation_hash, operation)
             .run();
     }
 
@@ -386,7 +385,7 @@ impl BridgeTestState {
     ) -> BlsSignature<StaticApi> {
         let byte_arr: &mut [u8; 48] = &mut [0; 48];
         operation_hash.load_to_byte_array(byte_arr);
-        let mock_signature: BlsSignature<StaticApi> = ManagedByteArray::new_from_bytes(&byte_arr);
+        let mock_signature: BlsSignature<StaticApi> = ManagedByteArray::new_from_bytes(byte_arr);
 
         mock_signature
     }
@@ -454,8 +453,6 @@ fn test_register_operation() {
     state.propose_set_header_verifier_address();
 
     state.propose_register_operation();
-
-    state.world.dump_state_step();
 }
 
 #[test]
@@ -469,8 +466,6 @@ fn test_execute_operation() {
     state.propose_set_header_verifier_address();
 
     state.propose_register_operation();
-
-    state.world.run_dump_state_step();
 
     state.propose_execute_operation();
 }
