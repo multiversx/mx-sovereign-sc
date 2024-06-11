@@ -50,7 +50,7 @@ pub trait TransferTokensModule:
         self.distribute_payments(hash_of_hashes, operation_tuple, minted_operation_tokens);
     }
 
-fn mint_tokens(
+    fn mint_tokens(
         &self,
         operation_tokens: &ManagedVec<OperationEsdtPayment<Self::Api>>,
     ) -> ManagedVec<OperationEsdtPayment<Self::Api>> {
@@ -70,7 +70,6 @@ fn mint_tokens(
                     &operation_token.token_data.amount,
                 );
             } else {
-
                 nonce = self.send().esdt_nft_create(
                     &operation_token.token_identifier,
                     &operation_token.token_data.amount,
