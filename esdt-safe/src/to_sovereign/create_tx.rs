@@ -324,7 +324,7 @@ pub trait CreateTxModule:
     ) {
         match fees_payment {
             OptionalValue::Some(fee) => {
-                let mut gas = 0;
+                let mut gas: GasLimit = 0;
 
                 if let Some(transfer_data) = opt_transfer_data {
                     gas = transfer_data.gas_limit;
@@ -335,7 +335,7 @@ pub trait CreateTxModule:
                     .subtract_fee(
                         self.blockchain().get_caller().clone(),
                         total_tokens_for_fees,
-                        gas,
+                        OptionalValue::Some(gas),
                     )
                     .with_esdt_transfer(fee.clone())
                     .execute_on_dest_context();

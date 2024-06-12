@@ -8,6 +8,7 @@ pub mod fee_type;
 pub mod price_aggregator;
 pub mod safe_price_query;
 pub mod subtract_fee;
+pub mod fee_market_proxy;
 
 #[multiversx_sc::contract]
 pub trait FeeMarket:
@@ -39,6 +40,6 @@ pub trait FeeMarket:
         self.fee_enabled().set(true);
     }
 
-    #[endpoint]
+    #[upgrade]
     fn upgrade(&self) {}
 }

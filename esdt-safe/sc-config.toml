@@ -1,0 +1,19 @@
+[settings]
+main = "main"
+
+[contracts.main]
+name = "esdt-safe"
+
+[contracts.full]
+name = "esdt-safe-full"
+add-unlabelled = true
+add-labels = ["esdt-safe-external-view"]
+
+[contracts.view]
+name = "esdt-safe-view"
+external-view = true
+add-unlabelled = false
+add-labels = ["esdt-safe-external-view"]
+
+[[proxy]]
+path = "src/esdt_safe_proxy.rs"
