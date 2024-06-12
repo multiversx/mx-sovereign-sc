@@ -175,7 +175,7 @@ pub trait TransferTokensModule:
                     .raw_call(ESDT_MULTI_TRANSFER_FUNC_NAME)
                     .arguments_raw(args)
                     .gas(TRANSACTION_GAS)
-                    .with_callback(
+                    .callback(
                         <Self as TransferTokensModule>::callbacks(self)
                             .execute(&hash_of_hashes, &operation_tuple),
                     )
