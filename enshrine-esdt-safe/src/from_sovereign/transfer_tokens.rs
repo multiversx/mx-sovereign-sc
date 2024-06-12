@@ -245,7 +245,7 @@ pub trait TransferTokensModule:
         let caller = self.blockchain().get_caller();
         let header_verifier_address = self.header_verifier_address().get();
 
-        self.tx()
+        let _ = self.tx()
             .from(caller)
             .to(header_verifier_address)
             .typed(header_verifier_proxy::HeaderverifierProxy)
@@ -332,12 +332,6 @@ pub trait TransferTokensModule:
             (hash, false)
         }
     }
-
-    #[proxy]
-    fn header_verifier_proxy(
-        &self,
-        header_verifier_address: ManagedAddress,
-    ) -> header_verifier::Proxy<Self::Api>;
 
     #[storage_mapper("nextBatchId")]
     fn next_batch_id(&self) -> SingleValueMapper<BatchId>;

@@ -1,4 +1,5 @@
 use builtin_func_names::{ESDT_MULTI_TRANSFER_FUNC_NAME, ESDT_NFT_CREATE_FUNC_NAME};
+use header_verifier::header_verifier_proxy;
 use multiversx_sc::{codec, storage::StorageKey};
 use transaction::{
     BatchId, GasLimit, Operation, OperationData, OperationEsdtPayment, OperationTuple,
@@ -206,9 +207,11 @@ pub trait TransferTokensModule:
             }
         }
 
+        let caller = self.blockchain().get_caller();
         let header_verifier_address = self.header_verifier_address().get();
-        let _ = self
-            .tx()
+
+        let _ = self.tx()
+            .from(caller)
             .to(header_verifier_address)
             .typed(header_verifier_proxy::HeaderverifierProxy)
             .remove_executed_hash(hash_of_hashes, &operation_tuple.op_hash);
@@ -294,12 +297,6 @@ pub trait TransferTokensModule:
             (hash, false)
         }
     }
-
-    #[proxy]
-    fn header_verifier_proxy(
-        &self,
-        header_verifier_address: ManagedAddress,
-    ) -> header_verifier::Proxy<Self::Api>;
 
     #[storage_mapper("nextBatchId")]
     fn next_batch_id(&self) -> SingleValueMapper<BatchId>;
