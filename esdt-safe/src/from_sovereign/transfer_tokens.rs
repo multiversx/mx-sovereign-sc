@@ -222,11 +222,12 @@ pub trait TransferTokensModule:
         }
 
         let header_verifier_address = self.header_verifier_address().get();
-        let _ = self
+        self
             .tx()
             .to(header_verifier_address)
             .typed(header_verifier_proxy::HeaderverifierProxy)
-            .remove_executed_hash(hash_of_hashes, &operation_tuple.op_hash);
+            .remove_executed_hash(hash_of_hashes, &operation_tuple.op_hash)
+            .async_call_and_exit();
     }
 
     fn emit_transfer_failed_events(
@@ -309,12 +310,6 @@ pub trait TransferTokensModule:
             (hash, false)
         }
     }
-
-    #[proxy]
-    fn header_verifier_proxy(
-        &self,
-        header_verifier_address: ManagedAddress,
-    ) -> header_verifier::Proxy<Self::Api>;
 
     #[storage_mapper("nextBatchId")]
     fn next_batch_id(&self) -> SingleValueMapper<BatchId>;

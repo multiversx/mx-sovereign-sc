@@ -339,13 +339,13 @@ pub trait CreateTxModule:
                 let fee_market_address = self.fee_market_address().get();
                 let caller = self.blockchain().get_caller();
 
-                let _ = self
+                self
                     .tx()
                     .to(fee_market_address)
                     .typed(fee_market_proxy::FeeMarketProxy)
                     .subtract_fee(caller, total_tokens_for_fees, OptionalValue::Some(gas))
                     .payment(fee)
-                    .returns(ReturnsResult);
+                    .async_call_and_exit();
             }
             OptionalValue::None => (),
         };
