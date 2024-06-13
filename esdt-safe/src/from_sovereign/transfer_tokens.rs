@@ -213,7 +213,7 @@ pub trait TransferTokensModule:
             .to(header_verifier_address)
             .typed(header_verifier_proxy::HeaderverifierProxy)
             .remove_executed_hash(hash_of_hashes, &operation_tuple.op_hash)
-            .async_call_and_exit();
+            .sync_call();
     }
 
     fn emit_transfer_failed_events(
