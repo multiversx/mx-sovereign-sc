@@ -231,43 +231,22 @@ pub trait CreateTxModule:
 
             current_token_data.amount = payment.amount.clone();
 
-            if self.is_sovereign_chain().get() {
+            if self.is_sovereign_chain().get()
+                || self.has_sov_token_prefix(&payment.token_identifier)
+            {
                 self.send().esdt_local_burn(
                     &payment.token_identifier,
                     payment.token_nonce,
                     &payment.amount,
                 );
-
-                event_payments.push(MultiValue3((
-                    payment.token_identifier.clone(),
-                    payment.token_nonce,
-                    current_token_data.clone(),
-                )));
-            } else {
-                let sov_token_id = self
-                    .multiversx_to_sovereign_token_id(&payment.token_identifier)
-                    .get();
-
-                if !sov_token_id.is_valid_esdt_identifier() {
-                    event_payments.push(MultiValue3((
-                        payment.token_identifier,
-                        payment.token_nonce,
-                        current_token_data.clone(),
-                    )));
-
-                    continue;
-                }
-
-                let sov_token_nonce = self.remove_sovereign_token(payment, &sov_token_id);
-
-                event_payments.push(MultiValue3((
-                    sov_token_id,
-                    sov_token_nonce,
-                    current_token_data.clone(),
-                )));
             }
-        }
 
+            event_payments.push(MultiValue3((
+                payment.token_identifier.clone(),
+                payment.token_nonce,
+                current_token_data.clone(),
+            )));
+        }
         let caller = self.blockchain().get_caller();
 
         self.match_fee_payment(total_tokens_for_fees, &fees_payment, &opt_transfer_data);
