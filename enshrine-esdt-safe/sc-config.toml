@@ -17,3 +17,6 @@ add-labels = ["enshrine-esdt-safe-external-view"]
 
 [[proxy]]
 path = "src/enshrine_esdt_safe_proxy.rs"
+
+[[proxy]]
+path = "../execute/src/enshrine_esdt_safe_proxy.rs"

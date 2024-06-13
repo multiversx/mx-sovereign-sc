@@ -1,0 +1,27 @@
+[package]
+name = "execute"
+version = "0.0.0"
+authors = ["you"]
+edition = "2021"
+publish = false
+
+[lib]
+path = "src/lib.rs"
+
+[dependencies.multiversx-sc]
+version = "0.50.4"
+
+[dependencies.transaction]
+path = "../common/transaction/"
+
+[dependencies.utils]
+path = "../common/utils/"
+
+[dependencies.tx-batch-module]
+path = "../common/tx-batch-module/"
+
+[dev-dependencies]
+num-bigint = "0.4"
+
+[dev-dependencies.multiversx-sc-scenario]
+version = "0.50.4"

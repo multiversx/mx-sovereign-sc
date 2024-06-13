@@ -68,6 +68,14 @@ pub trait Headerverifier: bls_signature::BlsSignatureModule {
             .swap_remove(operation_hash);
     }
 
+    // #[endpoint]
+    // fn execute_bridge_operations(&self, hash_of_hashes: ManagedBuffer) {
+    //     let caller = self.blockchain().get_caller();
+    //     let bridge_address = self.esdt_safe_address().get();
+    //
+    //     self.tx().from(caller).to(bridge_address).typed(enshrine_esdt_safe::EsdtSafeProxy).execute_operations();
+    // }
+
     fn calculate_and_check_transfers_hashes(
         &self,
         transfers_hash: &ManagedBuffer,

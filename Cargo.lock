@@ -609,6 +609,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "execute"
+version = "0.0.0"
+dependencies = [
+ "multiversx-sc",
+ "multiversx-sc-scenario",
+ "num-bigint",
+ "transaction",
+ "tx-batch-module",
+ "utils",
+]
+
+[[package]]
+name = "execute-meta"
+version = "0.0.0"
+dependencies = [
+ "execute",
+ "multiversx-sc-meta",
+]
+
+[[package]]
 name = "fastrand"
 version = "2.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
