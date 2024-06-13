@@ -222,11 +222,12 @@ pub trait TransferTokensModule:
         }
 
         let header_verifier_address = self.header_verifier_address().get();
-        let _ = self
-            .tx()
+
+        self.tx()
             .to(header_verifier_address)
             .typed(header_verifier_proxy::HeaderverifierProxy)
-            .remove_executed_hash(hash_of_hashes, &operation_tuple.op_hash);
+            .remove_executed_hash(hash_of_hashes, &operation_tuple.op_hash)
+            .async_call_and_exit();
     }
 
     fn emit_transfer_failed_events(
