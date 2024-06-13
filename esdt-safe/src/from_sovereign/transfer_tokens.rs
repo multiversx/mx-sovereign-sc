@@ -207,7 +207,6 @@ pub trait TransferTokensModule:
             }
         }
 
-        let caller = self.blockchain().get_caller();
         let header_verifier_address = self.header_verifier_address().get();
 
         self.tx()
