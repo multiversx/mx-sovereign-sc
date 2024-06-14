@@ -23,7 +23,7 @@
             "tx": {
                 "from": "address:owner",
                 "contractCode": "mxsc:../output/enshrine-esdt-safe.mxsc.json",
-                "arguments": [],
+                "arguments": [""],
                 "gasLimit": "5,000,000",
                 "gasPrice": "0"
             },
