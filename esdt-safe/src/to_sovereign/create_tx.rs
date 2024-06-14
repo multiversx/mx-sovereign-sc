@@ -1,5 +1,6 @@
 use crate::from_sovereign::token_mapping;
 use bls_signature::BlsSignature;
+use fee_market::fee_market_proxy;
 use fee_market::
     fee_market_proxy
 ;
@@ -255,7 +256,7 @@ pub trait CreateTxModule:
 
         // refund refundable_tokens
         for payment in &refundable_payments {
-            let _ = self.tx().to(&caller).payment(&payment);
+            self.tx().to(&caller).payment(payment).transfer();
         }
 
         let tx_nonce = self.get_and_save_next_tx_id();
@@ -313,13 +314,12 @@ pub trait CreateTxModule:
                 let fee_market_address = self.fee_market_address().get();
                 let caller = self.blockchain().get_caller();
 
-                let _ = self
-                    .tx()
+                self.tx()
                     .to(fee_market_address)
                     .typed(fee_market_proxy::FeeMarketProxy)
                     .subtract_fee(caller, total_tokens_for_fees, OptionalValue::Some(gas))
                     .payment(fee)
-                    .returns(ReturnsResult);
+                    .async_call_and_exit();
             }
             OptionalValue::None => (),
         };
