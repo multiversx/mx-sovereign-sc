@@ -44,6 +44,6 @@ pub trait ChainConfigContract:
         self.additional_stake_required().set(additional_stake_vec);
     }
 
-    #[endpoint]
+    #[upgrade]
     fn upgrade(&self) {}
 }

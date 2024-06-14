@@ -25,6 +25,6 @@ pub trait ChainFactoryContract:
         self.deploy_cost().set(deploy_cost);
     }
 
-    #[endpoint]
+    #[upgrade]
     fn upgrade(&self) {}
 }

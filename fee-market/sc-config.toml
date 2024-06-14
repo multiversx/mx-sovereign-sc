@@ -1,0 +1,19 @@
+[settings]
+main = "main"
+
+[contracts.main]
+name = "fee-market"
+
+[contracts.full]
+name = "fee-marker-full"
+add-unlabelled = true
+add-labels = ["fee-market-external-view"]
+
+[contracts.view]
+name = "multisig-view"
+external-view = true
+add-unlabelled = false
+add-labels = ["fee-market-external-view"]
+
+[[proxy]]
+path = "src/fee_market_proxy.rs"

@@ -3,7 +3,7 @@ name = "chain-config-meta"
 version = "0.0.0"
 edition = "2018"
 publish = false
-authors = [ "you",]
+authors = ["you"]
 
 [dev-dependencies]
 
@@ -11,4 +11,4 @@ authors = [ "you",]
 path = ".."
 
 [dependencies.multiversx-sc-meta]
-version = "=0.46.1"
+version = "=0.50.4"
