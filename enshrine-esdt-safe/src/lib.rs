@@ -6,6 +6,7 @@ multiversx_sc::derive_imports!();
 pub mod from_sovereign;
 pub mod to_sovereign;
 pub mod enshrine_esdt_safe_proxy;
+pub mod custom_builtin_func_proxy;
 
 #[multiversx_sc::contract]
 pub trait EnshrineEsdtSafe:

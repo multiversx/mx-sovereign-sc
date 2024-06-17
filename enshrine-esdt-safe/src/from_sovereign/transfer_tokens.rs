@@ -4,9 +4,14 @@ use transaction::{
     BatchId, GasLimit, Operation, OperationData, OperationEsdtPayment, OperationTuple,
 };
 
-use crate::to_sovereign;
+use crate::{
+    custom_builtin_func_proxy,
+    to_sovereign::{self, create_tx::ESDT_SYSTEM_SC_ADDRESS},
+};
 
 use super::token_mapping::EsdtTokenInfo;
+
+pub const ESDT_NFT_CREATE_FUNC_NAME: &str = "ESDTNFTCreate";
 
 multiversx_sc::imports!();
 
@@ -51,6 +56,25 @@ pub trait TransferTokensModule:
         self.distribute_payments(hash_of_hashes, operation_tuple, minted_operation_tokens);
     }
 
+    fn call_system_sc_nft_create(&self, operation_token: &OperationEsdtPayment<Self::Api>) -> u64 {
+        self.tx()
+            .to(ManagedAddress::from(ESDT_SYSTEM_SC_ADDRESS))
+            .typed(custom_builtin_func_proxy::UserBuiltinProxy)
+            .esdt_nft_create(
+                &operation_token.token_identifier,
+                &operation_token.token_data.amount,
+                &operation_token.token_data.name,
+                &operation_token.token_data.royalties,
+                &operation_token.token_data.hash,
+                &operation_token.token_data.attributes,
+                &operation_token.token_data.uris,
+                &operation_token.token_nonce,
+                &operation_token.token_data.creator,
+            )
+            .returns(ReturnsResult)
+            .sync_call()
+    }
+
     fn mint_tokens(
         &self,
         operation_tokens: &ManagedVec<OperationEsdtPayment<Self::Api>>,
@@ -71,15 +95,17 @@ pub trait TransferTokensModule:
                     &operation_token.token_data.amount,
                 );
             } else {
-                nonce = self.send().esdt_nft_create(
-                    &operation_token.token_identifier,
-                    &operation_token.token_data.amount,
-                    &operation_token.token_data.name,
-                    &operation_token.token_data.royalties,
-                    &operation_token.token_data.hash,
-                    &operation_token.token_data.attributes,
-                    &operation_token.token_data.uris,
-                );
+                nonce = self.call_system_sc_nft_create(&operation_token);
+
+                // nonce = self.send().esdt_nft_create(
+                //     &operation_token.token_identifier,
+                //     &operation_token.token_data.amount,
+                //     &operation_token.token_data.name,
+                //     &operation_token.token_data.royalties,
+                //     &operation_token.token_data.hash,
+                //     &operation_token.token_data.attributes,
+                //     &operation_token.token_data.uris,
+                // );
 
                 // let token_data = operation_token.token_data.clone();
                 // let mut arg_buffer = ManagedArgBuffer::new();
@@ -245,7 +271,8 @@ pub trait TransferTokensModule:
         let caller = self.blockchain().get_caller();
         let header_verifier_address = self.header_verifier_address().get();
 
-        let _ = self.tx()
+        let _ = self
+            .tx()
             .from(caller)
             .to(header_verifier_address)
             .typed(header_verifier_proxy::HeaderverifierProxy)
