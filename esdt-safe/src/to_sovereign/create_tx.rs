@@ -253,10 +253,7 @@ pub trait CreateTxModule:
 
         // refund refundable_tokens
         for payment in &refundable_payments {
-            self.tx()
-                .to(&caller)
-                .payment(payment)
-                .transfer();
+            self.tx().to(&caller).payment(payment).transfer();
         }
 
         let tx_nonce = self.get_and_save_next_tx_id();
@@ -320,7 +317,6 @@ pub trait CreateTxModule:
                     .subtract_fee(caller, total_tokens_for_fees, OptionalValue::Some(gas))
                     .payment(fee)
                     .async_call_and_exit();
-              
             }
             OptionalValue::None => (),
         };
