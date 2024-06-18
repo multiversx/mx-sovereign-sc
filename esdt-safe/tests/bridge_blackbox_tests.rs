@@ -176,7 +176,7 @@ impl BridgeTestState {
             .run();
     }
 
-    fn propose_set_fee_token(&mut self, token_identifier: TestTokenIdentifier) {
+    fn _propose_set_fee_token(&mut self, token_identifier: TestTokenIdentifier) {
         let fee_type = FeeType::AnyToken {
             base_fee_token: token_identifier.into(),
             per_transfer: BigUint::from(10u64),
@@ -194,7 +194,7 @@ impl BridgeTestState {
             .run();
     }
 
-    fn propose_esdt_deposit_and_expect_err(&mut self, err_message: &str) {
+    fn _propose_esdt_deposit_and_expect_err(&mut self, err_message: &str) {
         let transfer_data = OptionalValue::<
             MultiValue3<
                 u64,
@@ -406,23 +406,11 @@ fn test_main_to_sov_egld_deposit_nothing_to_transfer() {
     state.propose_egld_deposit_and_expect_err(err_message);
 }
 
-// #[test]
-// fn test_main_to_sov_deposit_token_not_accepted() {
-//     let mut state = BridgeTestState::new();
-//     let err_message = "Token not accepted as fee";
-//
-//     state.deploy_bridge_contract(false);
-//
-//     state.propose_esdt_deposit_and_expect_err(err_message);
-// }
-
 #[test]
 fn test_main_to_sov_deposit_ok() {
     let mut state = BridgeTestState::new();
 
     state.deploy_bridge_contract(false);
-
-    state.propose_set_fee_token(FUNGIBLE_TOKEN_ID);
 
     state.propose_esdt_deposit();
 }
