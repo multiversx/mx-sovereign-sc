@@ -1,6 +1,6 @@
 use crate::from_sovereign::token_mapping;
 use bls_signature::BlsSignature;
-use fee_market::subtract_fee::{FinalPayment, ProxyTrait as _};
+use fee_market::fee_market_proxy;
 use multiversx_sc::{hex_literal::hex, storage::StorageKey};
 use transaction::{GasLimit, OperationData, TransferData};
 
@@ -128,7 +128,8 @@ pub trait CreateTxModule:
         require!(!payments.is_empty(), "Nothing to transfer");
         require!(payments.len() <= MAX_TRANSFERS_PER_TX, "Too many tokens");
 
-        self.send().direct_multi(&to, &payments);
+        // self.send().direct_multi(&to, &payments);
+        self.tx().to(&to).payment(payments).transfer();
     }
 
     fn check_and_extract_fee(
@@ -274,7 +275,7 @@ pub trait CreateTxModule:
 
         // refund refundable_tokens
         for payment in &refundable_payments {
-            self.send().direct_non_zero_esdt_payment(&caller, &payment);
+            self.tx().to(&caller).payment(payment).transfer();
         }
 
         let tx_nonce = self.get_and_save_next_tx_id();
@@ -330,15 +331,15 @@ pub trait CreateTxModule:
                     gas = transfer_data.gas_limit;
                 }
 
-                let _: FinalPayment<Self::Api> = self
-                    .fee_market_proxy(self.fee_market_address().get())
-                    .subtract_fee(
-                        self.blockchain().get_caller().clone(),
-                        total_tokens_for_fees,
-                        OptionalValue::Some(gas),
-                    )
-                    .with_esdt_transfer(fee.clone())
-                    .execute_on_dest_context();
+                let fee_market_address = self.fee_market_address().get();
+                let caller = self.blockchain().get_caller();
+
+                self.tx()
+                    .to(fee_market_address)
+                    .typed(fee_market_proxy::FeeMarketProxy)
+                    .subtract_fee(caller, total_tokens_for_fees, OptionalValue::Some(gas))
+                    .payment(fee)
+                    .async_call_and_exit();
             }
             OptionalValue::None => (),
         };
