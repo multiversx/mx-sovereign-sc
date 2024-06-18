@@ -7,13 +7,12 @@ use multiversx_sc::types::{
     Address, ManagedByteArray, MultiValueEncoded, TestTokenIdentifier, TokenIdentifier,
 };
 use multiversx_sc::{
-    imports::{MultiValue3, MultiValueVec, OptionalValue},
+    imports::{MultiValue3, OptionalValue},
     types::{
         BigUint, EsdtTokenPayment, ManagedBuffer, ManagedVec, ReturnsResult, TestAddress,
         TestSCAddress,
     },
 };
-use multiversx_sc_scenario::imports::ScenarioRunner;
 use multiversx_sc_scenario::multiversx_chain_vm::crypto_functions::sha256;
 use multiversx_sc_scenario::{
     api::StaticApi, imports::MxscPath, ExpectError, ScenarioTxRun, ScenarioWorld,
@@ -83,13 +82,11 @@ impl BridgeTestState {
     }
 
     fn deploy_bridge_contract(&mut self, is_sovereign_chain: bool) -> &mut Self {
-        let signers = MultiValueVec::from(vec![USER_ADDRESS]);
-
         self.world
             .tx()
             .from(BRIDGE_OWNER_ADDRESS)
             .typed(esdt_safe_proxy::EsdtSafeProxy)
-            .init(is_sovereign_chain, 1u32, BRIDGE_OWNER_ADDRESS, signers)
+            .init(is_sovereign_chain)
             .code(BRIDGE_CODE_PATH)
             .new_address(BRIDGE_ADDRESS)
             .run();

@@ -45,23 +45,14 @@ where
 {
     pub fn init<
         Arg0: ProxyArg<bool>,
-        Arg1: ProxyArg<u32>,
-        Arg2: ProxyArg<ManagedAddress<Env::Api>>,
-        Arg3: ProxyArg<MultiValueEncoded<Env::Api, ManagedAddress<Env::Api>>>,
     >(
         self,
         is_sovereign_chain: Arg0,
-        min_valid_signers: Arg1,
-        initiator_address: Arg2,
-        signers: Arg3,
     ) -> TxTypedDeploy<Env, From, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_deploy()
             .argument(&is_sovereign_chain)
-            .argument(&min_valid_signers)
-            .argument(&initiator_address)
-            .argument(&signers)
             .original_result()
     }
 }
