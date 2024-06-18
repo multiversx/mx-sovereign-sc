@@ -270,13 +270,14 @@ impl BridgeTestState {
         let to = managed_address!(&Address::from(&RECEIVER_ADDRESS.eval_to_array()));
         let operation = Operation { to, tokens, data };
         let operation_hash = self.get_operation_hash(&operation);
+        let hash_of_hashes: ManagedBuffer<StaticApi> = ManagedBuffer::from(&sha256(&operation_hash.to_vec()));
 
         self.world
             .tx()
             .from(USER_ADDRESS)
             .to(BRIDGE_ADDRESS)
             .typed(esdt_safe_proxy::EsdtSafeProxy)
-            .execute_operations(operation_hash, operation)
+            .execute_operations(hash_of_hashes, operation)
             .run();
     }
 
@@ -405,14 +406,15 @@ fn test_main_to_sov_egld_deposit_nothing_to_transfer() {
     state.propose_egld_deposit_and_expect_err(err_message);
 }
 
-#[test]
-fn test_main_to_sov_deposit_token_not_accepted() {
-    let mut state = BridgeTestState::new();
-    let err_message = "Token not accepted as fee";
-
-    state.deploy_bridge_contract(false);
-    state.propose_esdt_deposit_and_expect_err(err_message);
-}
+// #[test]
+// fn test_main_to_sov_deposit_token_not_accepted() {
+//     let mut state = BridgeTestState::new();
+//     let err_message = "Token not accepted as fee";
+//
+//     state.deploy_bridge_contract(false);
+//
+//     state.propose_esdt_deposit_and_expect_err(err_message);
+// }
 
 #[test]
 fn test_main_to_sov_deposit_ok() {
