@@ -111,19 +111,6 @@ where
             .original_result()
     }
 
-    pub fn set_sovereign_bridge_address<
-        Arg0: ProxyArg<ManagedAddress<Env::Api>>,
-    >(
-        self,
-        bridge_address: Arg0,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("setSovereignBridgeAddress")
-            .argument(&bridge_address)
-            .original_result()
-    }
-
     pub fn set_max_user_tx_gas_limit<
         Arg0: ProxyArg<u64>,
         Arg1: ProxyArg<OptionalValue<ManagedByteArray<Env::Api, 48usize>>>,
@@ -232,45 +219,6 @@ where
             .original_result()
     }
 
-    /// Claim funds for failed Elrond -> Sovereign transactions. 
-    /// These are not sent automatically to prevent the contract getting stuck. 
-    /// For example, if the receiver is a SC, a frozen account, etc. 
-    pub fn claim_refund<
-        Arg0: ProxyArg<TokenIdentifier<Env::Api>>,
-    >(
-        self,
-        token_id: Arg0,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ManagedVec<Env::Api, EsdtTokenPayment<Env::Api>>> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("claimRefund")
-            .argument(&token_id)
-            .original_result()
-    }
-
-    /// Sets the statuses for the transactions, after they were executed on the Sovereign side. 
-    ///  
-    /// Only TransactionStatus::Executed (3) and TransactionStatus::Rejected (4) values are allowed. 
-    /// Number of provided statuses must be equal to number of transactions in the batch. 
-    pub fn set_transaction_batch_status<
-        Arg0: ProxyArg<u64>,
-        Arg1: ProxyArg<ManagedByteArray<Env::Api, 48usize>>,
-        Arg2: ProxyArg<MultiValueEncoded<Env::Api, transaction::transaction_status::TransactionStatus>>,
-    >(
-        self,
-        batch_id: Arg0,
-        signature: Arg1,
-        tx_statuses: Arg2,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("setTransactionBatchStatus")
-            .argument(&batch_id)
-            .argument(&signature)
-            .argument(&tx_statuses)
-            .original_result()
-    }
-
     pub fn set_min_valid_signers<
         Arg0: ProxyArg<u32>,
     >(
@@ -307,56 +255,6 @@ where
             .payment(NotPayable)
             .raw_call("removeSigners")
             .argument(&signers)
-            .original_result()
-    }
-
-    pub fn register_token<
-        Arg0: ProxyArg<TokenIdentifier<Env::Api>>,
-        Arg1: ProxyArg<EsdtTokenType>,
-        Arg2: ProxyArg<ManagedBuffer<Env::Api>>,
-        Arg3: ProxyArg<ManagedBuffer<Env::Api>>,
-        Arg4: ProxyArg<usize>,
-    >(
-        self,
-        sov_token_id: Arg0,
-        token_type: Arg1,
-        token_display_name: Arg2,
-        token_ticker: Arg3,
-        num_decimals: Arg4,
-    ) -> TxTypedCall<Env, From, To, (), Gas, ()> {
-        self.wrapped_tx
-            .raw_call("registerToken")
-            .argument(&sov_token_id)
-            .argument(&token_type)
-            .argument(&token_display_name)
-            .argument(&token_ticker)
-            .argument(&num_decimals)
-            .original_result()
-    }
-
-    pub fn clear_registered_sovereign_token<
-        Arg0: ProxyArg<TokenIdentifier<Env::Api>>,
-    >(
-        self,
-        sov_token_id: Arg0,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("clearRegisteredSovereignToken")
-            .argument(&sov_token_id)
-            .original_result()
-    }
-
-    pub fn clear_registered_multiversx_token<
-        Arg0: ProxyArg<TokenIdentifier<Env::Api>>,
-    >(
-        self,
-        mvx_token_id: Arg0,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("clearRegisteredMultiversxToken")
-            .argument(&mvx_token_id)
             .original_result()
     }
 
