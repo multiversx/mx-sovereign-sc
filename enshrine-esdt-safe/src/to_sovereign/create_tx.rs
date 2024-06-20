@@ -1,6 +1,6 @@
 use crate::from_sovereign::token_mapping;
 use bls_signature::BlsSignature;
-use fee_market::fee_market_proxy;
+use fee_market::subtract_fee::{FinalPayment, ProxyTrait as _};
 use multiversx_sc::{hex_literal::hex, storage::StorageKey};
 use transaction::{GasLimit, OperationData, TransferData};
 
@@ -128,8 +128,7 @@ pub trait CreateTxModule:
         require!(!payments.is_empty(), "Nothing to transfer");
         require!(payments.len() <= MAX_TRANSFERS_PER_TX, "Too many tokens");
 
-        // self.send().direct_multi(&to, &payments);
-        self.tx().to(&to).payment(payments).transfer();
+        self.send().direct_multi(&to, &payments);
     }
 
     fn check_and_extract_fee(
@@ -232,20 +231,41 @@ pub trait CreateTxModule:
 
             current_token_data.amount = payment.amount.clone();
 
-            if self.is_sovereign_chain().get()
-                || self.has_sov_token_prefix(&payment.token_identifier)
-            {
-                let _ = self
-                    .send()
-                    .esdt_system_sc_proxy()
-                    .burn(&payment.token_identifier, &payment.amount);
-            }
+            if self.is_sovereign_chain().get() {
+                self.send().esdt_local_burn(
+                    &payment.token_identifier,
+                    payment.token_nonce,
+                    &payment.amount,
+                );
 
-            event_payments.push(MultiValue3((
-                payment.token_identifier.clone(),
-                payment.token_nonce,
-                current_token_data.clone(),
-            )));
+                event_payments.push(MultiValue3((
+                    payment.token_identifier.clone(),
+                    payment.token_nonce,
+                    current_token_data.clone(),
+                )));
+            } else {
+                let sov_token_id = self
+                    .multiversx_to_sovereign_token_id(&payment.token_identifier)
+                    .get();
+
+                if !sov_token_id.is_valid_esdt_identifier() {
+                    event_payments.push(MultiValue3((
+                        payment.token_identifier,
+                        payment.token_nonce,
+                        current_token_data.clone(),
+                    )));
+
+                    continue;
+                }
+
+                let sov_token_nonce = self.remove_sovereign_token(payment, &sov_token_id);
+
+                event_payments.push(MultiValue3((
+                    sov_token_id,
+                    sov_token_nonce,
+                    current_token_data.clone(),
+                )));
+            }
         }
 
         let caller = self.blockchain().get_caller();
@@ -254,7 +274,7 @@ pub trait CreateTxModule:
 
         // refund refundable_tokens
         for payment in &refundable_payments {
-            self.tx().to(&caller).payment(payment).transfer();
+            self.send().direct_non_zero_esdt_payment(&caller, &payment);
         }
 
         let tx_nonce = self.get_and_save_next_tx_id();
@@ -275,10 +295,11 @@ pub trait CreateTxModule:
         payment: EsdtTokenPayment<Self::Api>,
         sov_token_id: &TokenIdentifier<Self::Api>,
     ) -> u64 {
-        let _ = self
-            .send()
-            .esdt_system_sc_proxy()
-            .burn(&payment.token_identifier, &payment.amount);
+        self.send().esdt_local_burn(
+            &payment.token_identifier,
+            payment.token_nonce,
+            &payment.amount,
+        );
 
         let mut sov_token_nonce = 0;
 
@@ -309,19 +330,22 @@ pub trait CreateTxModule:
                     gas = transfer_data.gas_limit;
                 }
 
-                let fee_market_address = self.fee_market_address().get();
-                let caller = self.blockchain().get_caller();
-
-                self.tx()
-                    .to(fee_market_address)
-                    .typed(fee_market_proxy::FeeMarketProxy)
-                    .subtract_fee(caller, total_tokens_for_fees, OptionalValue::Some(gas))
-                    .payment(fee)
-                    .async_call_and_exit();
+                let _: FinalPayment<Self::Api> = self
+                    .fee_market_proxy(self.fee_market_address().get())
+                    .subtract_fee(
+                        self.blockchain().get_caller().clone(),
+                        total_tokens_for_fees,
+                        OptionalValue::Some(gas),
+                    )
+                    .with_esdt_transfer(fee.clone())
+                    .execute_on_dest_context();
             }
             OptionalValue::None => (),
         };
     }
+
+    #[proxy]
+    fn fee_market_proxy(&self, sc_address: ManagedAddress) -> fee_market::Proxy<Self::Api>;
 
     #[storage_mapper("feeMarketAddress")]
     fn fee_market_address(&self) -> SingleValueMapper<ManagedAddress>;
@@ -334,4 +358,7 @@ pub trait CreateTxModule:
 
     #[storage_mapper("bannedEndpointNames")]
     fn banned_endpoint_names(&self) -> UnorderedSetMapper<ManagedBuffer>;
+
+    #[storage_mapper("feeEnabledFlag")]
+    fn fee_enabled(&self) -> SingleValueMapper<bool>;
 }
