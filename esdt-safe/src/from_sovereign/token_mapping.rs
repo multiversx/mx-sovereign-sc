@@ -1,5 +1,6 @@
 multiversx_sc::imports!();
 multiversx_sc::derive_imports!();
+const DEFAULT_ISSUE_COST: u64 = 50000000000000000;
 
 #[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, TypeAbi, ManagedVecItem, Clone)]
 pub struct EsdtTokenInfo<M: ManagedTypeApi> {
@@ -11,6 +12,54 @@ pub struct EsdtTokenInfo<M: ManagedTypeApi> {
 pub trait TokenMappingModule:
     multiversx_sc_modules::default_issue_callbacks::DefaultIssueCallbacksModule
 {
+    #[payable("EGLD")]
+    #[endpoint(registerToken)]
+    fn register_token(
+        &self,
+        sov_token_id: TokenIdentifier,
+        token_type: EsdtTokenType,
+        token_display_name: ManagedBuffer,
+        token_ticker: ManagedBuffer,
+        num_decimals: usize,
+    ) {
+        require!(
+            !self.is_sovereign_chain().get(),
+            "Invalid method to call in current chain"
+        );
+
+        let issue_cost = self.call_value().egld_value().clone_value();
+
+        require!(issue_cost == DEFAULT_ISSUE_COST, "eGLD value should be 0.5");
+
+        match token_type {
+            EsdtTokenType::Invalid => sc_panic!("Invalid type"),
+            EsdtTokenType::Fungible => self.handle_fungible_token_type(
+                sov_token_id.clone(),
+                issue_cost,
+                token_display_name,
+                token_ticker,
+                num_decimals,
+            ),
+            _ => self.handle_nonfungible_token_type(
+                sov_token_id.clone(),
+                token_type,
+                issue_cost,
+                token_display_name,
+                token_ticker,
+                num_decimals,
+            ),
+        }
+
+        match self.sovereign_to_multiversx_token_id(&sov_token_id).get() {
+            TokenMapperState::NotSet => sc_panic!("Token ID not set"),
+            TokenMapperState::Pending => {}
+            TokenMapperState::Token(mx_token_id) => {
+                self.multiversx_to_sovereign_token_id(&mx_token_id)
+                    .set(sov_token_id);
+            }
+        }
+    }
+
     fn handle_fungible_token_type(
         &self,
         sov_token_id: TokenIdentifier,
@@ -29,6 +78,29 @@ pub trait TokenMappingModule:
             num_decimals,
             None,
         );
+    }
+
+    fn handle_nonfungible_token_type(
+        &self,
+        sov_token_id: TokenIdentifier,
+        token_type: EsdtTokenType,
+        issue_cost: BigUint,
+        token_display_name: ManagedBuffer,
+        token_ticker: ManagedBuffer,
+        num_decimals: usize,
+    ) {
+        self.multiversx_to_sovereign_token_id(&sov_token_id)
+            .set(sov_token_id.clone());
+
+        self.non_fungible_token(&sov_token_id)
+            .issue_and_set_all_roles(
+                token_type,
+                issue_cost,
+                token_display_name,
+                token_ticker,
+                num_decimals,
+                None,
+            );
     }
 
     #[storage_mapper("sovToMxTokenId")]
