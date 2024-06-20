@@ -106,7 +106,6 @@ pub trait Headerverifier: bls_signature::BlsSignatureModule {
     #[storage_mapper("bls_pub_keys")]
     fn bls_pub_keys(&self) -> SetMapper<ManagedBuffer>;
 
-    #[view(pendingHashes)]
     #[storage_mapper("pending_hashes")]
     fn pending_hashes(&self, hash_of_hashes: &ManagedBuffer) -> UnorderedSetMapper<ManagedBuffer>;
 

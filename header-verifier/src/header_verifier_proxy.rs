@@ -133,19 +133,6 @@ where
             .original_result()
     }
 
-    pub fn pending_hashes<
-        Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
-    >(
-        self,
-        hash_of_hashes: Arg0,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, MultiValueEncoded<Env::Api, ManagedBuffer<Env::Api>>> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("pendingHashes")
-            .argument(&hash_of_hashes)
-            .original_result()
-    }
-
     pub fn set_min_valid_signers<
         Arg0: ProxyArg<u32>,
     >(
