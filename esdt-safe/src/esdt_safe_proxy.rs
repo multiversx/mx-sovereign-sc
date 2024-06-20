@@ -274,6 +274,15 @@ where
             .original_result()
     }
 
+    pub fn header_verifier_address(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ManagedAddress<Env::Api>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("headerVerifierAddress")
+            .original_result()
+    }
+
     pub fn set_max_tx_batch_size<
         Arg0: ProxyArg<usize>,
     >(
