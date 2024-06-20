@@ -6,10 +6,10 @@
 
 // Init:                                 1
 // Upgrade:                              1
-// Endpoints:                           33
+// Endpoints:                           27
 // Async Callback:                       1
 // Promise callbacks:                    1
-// Total number of exported functions:  37
+// Total number of exported functions:  31
 
 #![no_std]
 
@@ -23,12 +23,6 @@ multiversx_sc_wasm_adapter::endpoints! {
         upgrade => upgrade
         setFeeMarketAddress => set_fee_market_address
         setHeaderVerifierAddress => set_header_verifier_address
-        setMaxUserTxGasLimit => set_max_user_tx_gas_limit
-        setBurnAndMint => set_burn_and_mint
-        removeBurnAndMint => remove_burn_and_mint
-        addBannedEndpointNames => add_banned_endpoint_names
-        removeBannedEndpointNames => remove_banned_endpoint_names
-        depositBack => deposit_back
         deposit => deposit
         setMinValidSigners => set_min_valid_signers
         addSigners => add_signers
