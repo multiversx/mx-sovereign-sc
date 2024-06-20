@@ -1,7 +1,7 @@
 use header_verifier::header_verifier_proxy;
 use multiversx_sc::{api::ESDT_MULTI_TRANSFER_FUNC_NAME, storage::StorageKey};
 use transaction::{
-    BatchId, GasLimit, Operation, OperationData, OperationEsdtPayment, OperationTuple,
+    GasLimit, Operation, OperationData, OperationEsdtPayment, OperationTuple,
 };
 
 use crate::to_sovereign;
@@ -19,7 +19,6 @@ pub type MultiOperationEsdtPayment<Api> = ManagedVec<Api, OperationEsdtPayment<A
 pub trait TransferTokensModule:
     bls_signature::BlsSignatureModule
     + super::events::EventsModule
-    + super::refund::RefundModule
     + super::token_mapping::TokenMappingModule
     + tx_batch_module::TxBatchModule
     + max_bridged_amount_module::MaxBridgedAmountModule
@@ -310,15 +309,9 @@ pub trait TransferTokensModule:
         }
     }
 
-    #[storage_mapper("nextBatchId")]
-    fn next_batch_id(&self) -> SingleValueMapper<BatchId>;
-
     #[storage_mapper("pending_hashes")]
     fn pending_hashes(&self, hash_of_hashes: &ManagedBuffer) -> UnorderedSetMapper<ManagedBuffer>;
 
     #[storage_mapper("header_verifier_address")]
     fn header_verifier_address(&self) -> SingleValueMapper<ManagedAddress>;
-
-    #[storage_mapper("sovereign_bridge_address")]
-    fn sovereign_bridge_address(&self) -> SingleValueMapper<ManagedAddress>;
 }

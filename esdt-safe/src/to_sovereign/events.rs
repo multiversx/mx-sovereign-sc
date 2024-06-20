@@ -1,6 +1,4 @@
-use transaction::{
-    transaction_status::TransactionStatus, BatchId, OperationData, TxId
-};
+use transaction::OperationData;
 
 multiversx_sc::imports!();
 multiversx_sc::derive_imports!();
@@ -14,13 +12,5 @@ pub trait EventsModule {
         #[indexed] dest_address: &ManagedAddress,
         #[indexed] tokens: &MultiValueEncoded<MultiValue3<TokenIdentifier, u64, EsdtTokenData>>,
         event_data: OperationData<Self::Api>,
-    );
-
-    #[event("setStatusEvent")]
-    fn set_status_event(
-        &self,
-        #[indexed] batch_id: BatchId,
-        #[indexed] tx_id: TxId,
-        #[indexed] tx_status: TransactionStatus,
     );
 }
