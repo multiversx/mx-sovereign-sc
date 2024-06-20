@@ -3,7 +3,8 @@ use multiversx_sc::{api::ESDT_MULTI_TRANSFER_FUNC_NAME, storage::StorageKey};
 use transaction::{
     GasLimit, Operation, OperationData, OperationEsdtPayment, OperationTuple,
 };
-
+use multiversx_sc::codec;
+use crate::builtin_func_names::ESDT_NFT_CREATE_FUNC_NAME;
 use crate::to_sovereign;
 
 multiversx_sc::imports!();
