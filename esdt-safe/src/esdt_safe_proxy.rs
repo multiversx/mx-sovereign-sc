@@ -165,6 +165,30 @@ where
             .original_result()
     }
 
+    pub fn register_token<
+        Arg0: ProxyArg<TokenIdentifier<Env::Api>>,
+        Arg1: ProxyArg<EsdtTokenType>,
+        Arg2: ProxyArg<ManagedBuffer<Env::Api>>,
+        Arg3: ProxyArg<ManagedBuffer<Env::Api>>,
+        Arg4: ProxyArg<usize>,
+    >(
+        self,
+        sov_token_id: Arg0,
+        token_type: Arg1,
+        token_display_name: Arg2,
+        token_ticker: Arg3,
+        num_decimals: Arg4,
+    ) -> TxTypedCall<Env, From, To, (), Gas, ()> {
+        self.wrapped_tx
+            .raw_call("registerToken")
+            .argument(&sov_token_id)
+            .argument(&token_type)
+            .argument(&token_display_name)
+            .argument(&token_ticker)
+            .argument(&num_decimals)
+            .original_result()
+    }
+
     pub fn execute_operations<
         Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
         Arg1: ProxyArg<transaction::Operation<Env::Api>>,
