@@ -11,11 +11,8 @@ pub mod esdt_safe_proxy;
 pub trait EsdtSafe:
     to_sovereign::create_tx::CreateTxModule
     + to_sovereign::events::EventsModule
-    + to_sovereign::refund::RefundModule
-    + to_sovereign::set_tx_status::SetTxStatusModule
     + bls_signature::BlsSignatureModule
     + from_sovereign::events::EventsModule
-    + from_sovereign::refund::RefundModule
     + from_sovereign::token_mapping::TokenMappingModule
     + from_sovereign::transfer_tokens::TransferTokensModule
     + tx_batch_module::TxBatchModule
@@ -49,14 +46,6 @@ pub trait EsdtSafe:
         self.require_sc_address(&header_verifier_address);
 
         self.header_verifier_address().set(&header_verifier_address);
-    }
-
-    #[only_owner]
-    #[endpoint(setSovereignBridgeAddress)]
-    fn set_sovereign_bridge_address(&self, bridge_address: ManagedAddress) {
-        self.require_sc_address(&bridge_address);
-
-        self.sovereign_bridge_address().set(bridge_address);
     }
 
     #[upgrade]

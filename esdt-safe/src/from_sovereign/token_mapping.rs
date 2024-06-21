@@ -1,6 +1,6 @@
-const DEFAULT_ISSUE_COST: u64 = 50000000000000000;
 multiversx_sc::imports!();
 multiversx_sc::derive_imports!();
+const DEFAULT_ISSUE_COST: u64 = 50000000000000000;
 
 #[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, TypeAbi, ManagedVecItem, Clone)]
 pub struct EsdtTokenInfo<M: ManagedTypeApi> {
@@ -102,20 +102,6 @@ pub trait TokenMappingModule:
                 None,
             );
     }
-
-    #[only_owner]
-    #[endpoint(clearRegisteredSovereignToken)]
-    fn clear_registered_sovereign_token(&self, sov_token_id: TokenIdentifier) {
-        self.sovereign_to_multiversx_token_id(&sov_token_id).clear();
-    }
-
-    #[only_owner]
-    #[endpoint(clearRegisteredMultiversxToken)]
-    fn clear_registered_multiversx_token(&self, mvx_token_id: TokenIdentifier) {
-        self.multiversx_to_sovereign_token_id(&mvx_token_id).clear();
-    }
-
-    // WARNING: All mappers must have the exact same storage key!
 
     #[storage_mapper("sovToMxTokenId")]
     fn sovereign_to_multiversx_token_id(
