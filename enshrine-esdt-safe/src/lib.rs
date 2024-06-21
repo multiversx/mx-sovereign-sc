@@ -15,7 +15,6 @@ pub trait EnshrineEsdtSafe:
     + to_sovereign::set_tx_status::SetTxStatusModule
     + bls_signature::BlsSignatureModule
     + from_sovereign::events::EventsModule
-    + from_sovereign::refund::RefundModule
     + from_sovereign::token_mapping::TokenMappingModule
     + from_sovereign::transfer_tokens::TransferTokensModule
     + tx_batch_module::TxBatchModule
@@ -51,15 +50,6 @@ pub trait EnshrineEsdtSafe:
         self.header_verifier_address().set(&header_verifier_address);
     }
 
-    #[only_owner]
-    #[endpoint(setSovereignBridgeAddress)]
-    fn set_sovereign_bridge_address(&self, bridge_address: ManagedAddress) {
-        self.require_sc_address(&bridge_address);
-
-        self.sovereign_bridge_address().set(bridge_address);
-    }
-
     #[upgrade]
     fn upgrade(&self) {}
-
 }

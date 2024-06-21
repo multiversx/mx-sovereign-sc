@@ -111,19 +111,6 @@ where
             .original_result()
     }
 
-    pub fn set_sovereign_bridge_address<
-        Arg0: ProxyArg<ManagedAddress<Env::Api>>,
-    >(
-        self,
-        bridge_address: Arg0,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("setSovereignBridgeAddress")
-            .argument(&bridge_address)
-            .original_result()
-    }
-
     pub fn set_max_user_tx_gas_limit<
         Arg0: ProxyArg<u64>,
         Arg1: ProxyArg<OptionalValue<ManagedByteArray<Env::Api, 48usize>>>,
