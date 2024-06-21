@@ -322,9 +322,6 @@ pub trait CreateTxModule:
         };
     }
 
-    #[proxy]
-    fn fee_market_proxy(&self, sc_address: ManagedAddress) -> fee_market::Proxy<Self::Api>;
-
     #[storage_mapper("feeMarketAddress")]
     fn fee_market_address(&self) -> SingleValueMapper<ManagedAddress>;
 
