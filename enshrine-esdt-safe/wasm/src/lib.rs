@@ -6,10 +6,10 @@
 
 // Init:                                 1
 // Upgrade:                              1
-// Endpoints:                           32
+// Endpoints:                           29
 // Async Callback:                       1
 // Promise callbacks:                    1
-// Total number of exported functions:  36
+// Total number of exported functions:  33
 
 #![no_std]
 
@@ -24,12 +24,9 @@ multiversx_sc_wasm_adapter::endpoints! {
         setFeeMarketAddress => set_fee_market_address
         setMultisigAddress => set_header_verifier_address
         deposit => deposit
-        claimRefund => claim_refund
-        setTransactionBatchStatus => set_transaction_batch_status
         setMinValidSigners => set_min_valid_signers
         addSigners => add_signers
         removeSigners => remove_signers
-        registerToken => register_token
         clearRegisteredSovereignToken => clear_registered_sovereign_token
         clearRegisteredMultiversxToken => clear_registered_multiversx_token
         executeBridgeOps => execute_operations

@@ -1,8 +1,8 @@
-use builtin_func_names::{ESDT_MULTI_TRANSFER_FUNC_NAME, ESDT_NFT_CREATE_FUNC_NAME};
+use builtin_func_names::ESDT_MULTI_TRANSFER_FUNC_NAME;
 use header_verifier::header_verifier_proxy;
-use multiversx_sc::{codec, storage::StorageKey};
+use multiversx_sc::storage::StorageKey;
 use transaction::{
-    BatchId, GasLimit, Operation, OperationData, OperationEsdtPayment, OperationTuple,
+    GasLimit, Operation, OperationData, OperationEsdtPayment, OperationTuple,
 };
 
 use crate::to_sovereign;

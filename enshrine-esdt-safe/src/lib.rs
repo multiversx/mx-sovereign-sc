@@ -11,8 +11,6 @@ pub mod enshrine_esdt_safe_proxy;
 pub trait EnshrineEsdtSafe:
     to_sovereign::create_tx::CreateTxModule
     + to_sovereign::events::EventsModule
-    + to_sovereign::refund::RefundModule
-    + to_sovereign::set_tx_status::SetTxStatusModule
     + bls_signature::BlsSignatureModule
     + from_sovereign::events::EventsModule
     + from_sovereign::token_mapping::TokenMappingModule
