@@ -1,8 +1,5 @@
 use crate::from_sovereign::token_mapping;
-use bls_signature::BlsSignature;
-use fee_market::
-    fee_market_proxy
-;
+use fee_market::fee_market_proxy;
 use multiversx_sc::{hex_literal::hex, storage::StorageKey};
 use transaction::{GasLimit, OperationData, TransferData};
 
@@ -25,167 +22,6 @@ pub trait CreateTxModule:
     + token_mapping::TokenMappingModule
     + multiversx_sc_modules::default_issue_callbacks::DefaultIssueCallbacksModule
 {
-    #[endpoint(setMaxUserTxGasLimit)]
-    fn set_max_user_tx_gas_limit(
-        &self,
-        new_value: GasLimit,
-        opt_sig: OptionalValue<BlsSignature<Self::Api>>,
-    ) {
-        if !self.is_setup_phase_complete() {
-            self.require_caller_initiator();
-            self.max_user_tx_gas_limit().set(new_value);
-
-            return;
-        }
-
-        let opt_signature = opt_sig.into_option();
-        require!(opt_signature.is_some(), "Must provide signature");
-        let signature = unsafe { opt_signature.unwrap_unchecked() };
-        let mut signature_data = ManagedBuffer::new();
-        let _ = new_value.dep_encode(&mut signature_data);
-
-        self.multi_verify_signature(&signature_data, &signature);
-
-        self.max_user_tx_gas_limit().set(new_value);
-    }
-
-    #[endpoint(setBurnAndMint)]
-    fn set_burn_and_mint(
-        &self,
-        opt_signature: Option<BlsSignature<Self::Api>>,
-        tokens: MultiValueEncoded<TokenIdentifier>,
-    ) {
-        if !self.is_setup_phase_complete() {
-            self.require_caller_initiator();
-            self.burn_tokens().extend(tokens);
-
-            return;
-        }
-
-        let all_tokens = self.verify_items_signature(opt_signature, tokens);
-        self.burn_tokens().extend(&all_tokens);
-    }
-
-    #[endpoint(removeBurnAndMint)]
-    fn remove_burn_and_mint(
-        &self,
-        opt_signature: Option<BlsSignature<Self::Api>>,
-        tokens: MultiValueEncoded<TokenIdentifier>,
-    ) {
-        if !self.is_setup_phase_complete() {
-            self.require_caller_initiator();
-            self.remove_items(&mut self.burn_tokens(), tokens);
-
-            return;
-        }
-
-        let all_tokens = self.verify_items_signature(opt_signature, tokens);
-        self.remove_items(&mut self.burn_tokens(), &all_tokens);
-    }
-
-    #[endpoint(addBannedEndpointNames)]
-    fn add_banned_endpoint_names(
-        &self,
-        opt_signature: Option<BlsSignature<Self::Api>>,
-        names: MultiValueEncoded<ManagedBuffer>,
-    ) {
-        if !self.is_setup_phase_complete() {
-            self.require_caller_initiator();
-            self.banned_endpoint_names().extend(names);
-
-            return;
-        }
-
-        let all_names = self.verify_items_signature(opt_signature, names);
-        self.banned_endpoint_names().extend(&all_names);
-    }
-
-    #[endpoint(removeBannedEndpointNames)]
-    fn remove_banned_endpoint_names(
-        &self,
-        opt_signature: Option<BlsSignature<Self::Api>>,
-        names: MultiValueEncoded<ManagedBuffer>,
-    ) {
-        if !self.is_setup_phase_complete() {
-            self.require_caller_initiator();
-            self.remove_items(&mut self.banned_endpoint_names(), names);
-
-            return;
-        }
-
-        let all_names = self.verify_items_signature(opt_signature, names);
-        self.remove_items(&mut self.banned_endpoint_names(), &all_names);
-    }
-
-    #[payable("*")]
-    #[endpoint(depositBack)]
-    fn deposit_back(&self, to: ManagedAddress) {
-        require!(self.not_paused(), "Cannot create transaction while paused");
-
-        let caller = self.blockchain().get_caller();
-        require!(caller == ESDT_SYSTEM_SC_ADDRESS.into(), "Caller is invalid");
-
-        let payments = self.call_value().all_esdt_transfers();
-
-        require!(!payments.is_empty(), "Nothing to transfer");
-        require!(payments.len() <= MAX_TRANSFERS_PER_TX, "Too many tokens");
-
-        self.send().direct_multi(&to, &payments);
-    }
-
-    fn check_and_extract_fee(
-        &self,
-    ) -> MultiValue2<OptionalValue<EsdtTokenPayment>, ManagedVec<EsdtTokenPayment>> {
-        let mut payments = self.call_value().all_esdt_transfers().clone_value();
-
-        require!(!payments.is_empty(), "Nothing to transfer");
-        require!(payments.len() <= MAX_TRANSFERS_PER_TX, "Too many tokens");
-
-        let fee_market_address = self.fee_market_address().get();
-        let fee_enabled_mapper = SingleValueMapper::new_from_address(
-            fee_market_address.clone(),
-            StorageKey::from("feeEnabledFlag"),
-        )
-        .get();
-
-        let opt_transfer_data = if fee_enabled_mapper {
-            OptionalValue::Some(self.pop_first_payment(&mut payments))
-        } else {
-            OptionalValue::None
-        };
-
-        MultiValue2::from((opt_transfer_data, payments))
-    }
-
-    fn process_transfer_data(
-        &self,
-        opt_transfer_data: OptionalValue<
-            MultiValue3<GasLimit, ManagedBuffer, ManagedVec<ManagedBuffer>>,
-        >,
-    ) -> Option<TransferData<Self::Api>> {
-        match &opt_transfer_data {
-            OptionalValue::Some(transfer_data) => {
-                let (gas_limit, function, args) = transfer_data.clone().into_tuple();
-                let max_gas_limit = self.max_user_tx_gas_limit().get();
-
-                require!(gas_limit <= max_gas_limit, "Gas limit too high");
-
-                require!(
-                    !self.banned_endpoint_names().contains(&function),
-                    "Banned endpoint name"
-                );
-
-                Some(TransferData {
-                    gas_limit,
-                    function,
-                    args,
-                })
-            }
-            OptionalValue::None => None,
-        }
-    }
-
-    /// Create an Elrond -> Sovereign transaction.
     #[payable("*")]
     #[endpoint]
     fn deposit(
@@ -271,6 +107,58 @@ pub trait CreateTxModule:
         );
     }
 
+    fn check_and_extract_fee(
+        &self,
+    ) -> MultiValue2<OptionalValue<EsdtTokenPayment>, ManagedVec<EsdtTokenPayment>> {
+        let mut payments = self.call_value().all_esdt_transfers().clone_value();
+
+        require!(!payments.is_empty(), "Nothing to transfer");
+        require!(payments.len() <= MAX_TRANSFERS_PER_TX, "Too many tokens");
+
+        let fee_market_address = self.fee_market_address().get();
+        let fee_enabled_mapper = SingleValueMapper::new_from_address(
+            fee_market_address.clone(),
+            StorageKey::from("feeEnabledFlag"),
+        )
+        .get();
+
+        let opt_transfer_data = if fee_enabled_mapper {
+            OptionalValue::Some(self.pop_first_payment(&mut payments))
+        } else {
+            OptionalValue::None
+        };
+
+        MultiValue2::from((opt_transfer_data, payments))
+    }
+
+    fn process_transfer_data(
+        &self,
+        opt_transfer_data: OptionalValue<
+            MultiValue3<GasLimit, ManagedBuffer, ManagedVec<ManagedBuffer>>,
+        >,
+    ) -> Option<TransferData<Self::Api>> {
+        match &opt_transfer_data {
+            OptionalValue::Some(transfer_data) => {
+                let (gas_limit, function, args) = transfer_data.clone().into_tuple();
+                let max_gas_limit = self.max_user_tx_gas_limit().get();
+
+                require!(gas_limit <= max_gas_limit, "Gas limit too high");
+
+                require!(
+                    !self.banned_endpoint_names().contains(&function),
+                    "Banned endpoint name"
+                );
+
+                Some(TransferData {
+                    gas_limit,
+                    function,
+                    args,
+                })
+            }
+            OptionalValue::None => None,
+        }
+    }
+
     fn remove_sovereign_token(
         &self,
         payment: EsdtTokenPayment<Self::Api>,
@@ -336,7 +224,4 @@ pub trait CreateTxModule:
 
     #[storage_mapper("bannedEndpointNames")]
     fn banned_endpoint_names(&self) -> UnorderedSetMapper<ManagedBuffer>;
-
-    #[storage_mapper("feeEnabledFlag")]
-    fn fee_enabled(&self) -> SingleValueMapper<bool>;
 }
