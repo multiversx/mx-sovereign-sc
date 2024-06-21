@@ -1,13 +1,9 @@
-use builtin_func_names::ESDT_MULTI_TRANSFER_FUNC_NAME;
+use builtin_func_names::{ESDT_MULTI_TRANSFER_FUNC_NAME, ESDT_NFT_CREATE_FUNC_NAME};
 use header_verifier::header_verifier_proxy;
-use multiversx_sc::storage::StorageKey;
-use transaction::{
-    GasLimit, Operation, OperationData, OperationEsdtPayment, OperationTuple,
-};
+use multiversx_sc::{codec, storage::StorageKey};
+use transaction::{GasLimit, Operation, OperationData, OperationEsdtPayment, OperationTuple};
 
 use crate::to_sovereign;
-
-use super::token_mapping::EsdtTokenInfo;
 
 multiversx_sc::imports!();
 
@@ -60,79 +56,66 @@ pub trait TransferTokensModule:
         let mut output_payments = ManagedVec::new();
 
         for operation_token in operation_tokens.iter() {
-            let mx_token_id_state = self
-                .sovereign_to_multiversx_token_id(&operation_token.token_identifier)
-                .get();
-
-            let mx_token_id = match mx_token_id_state {
-                // token is from sovereign -> continue and mint
-                TokenMapperState::Token(token_id) => token_id,
-                // token is from mainchain -> push token
-                _ => {
-                    output_payments.push(operation_token.clone());
-
-                    continue;
-                }
-            };
-
-            if operation_token.token_nonce == 0 {
-                self.send()
-                    .esdt_local_mint(&mx_token_id, 0, &operation_token.token_data.amount);
-
-                output_payments.push(OperationEsdtPayment {
-                    token_identifier: mx_token_id,
-                    token_nonce: 0,
-                    token_data: operation_token.token_data,
-                });
-
+            if !self.has_sov_token_prefix(&operation_token.token_identifier) {
+                output_payments.push(operation_token.clone());
                 continue;
             }
 
-            let nft_nonce = self.mint_and_save_token(&mx_token_id, &operation_token);
+            let mut nonce = operation_token.token_nonce;
+            if nonce == 0 {
+                self.send().esdt_local_mint(
+                    &operation_token.token_identifier,
+                    operation_token.token_nonce,
+                    &operation_token.token_data.amount,
+                );
+            } else {
+                let token_data = operation_token.token_data.clone();
+                let mut arg_buffer = ManagedArgBuffer::new();
+
+                arg_buffer.push_arg(&operation_token.token_identifier);
+                arg_buffer.push_arg(token_data.amount);
+                arg_buffer.push_arg(token_data.name);
+                arg_buffer.push_arg(token_data.royalties);
+                arg_buffer.push_arg(token_data.hash);
+                arg_buffer.push_arg(token_data.attributes);
+
+                let uris = token_data.uris.clone();
+
+                if uris.is_empty() {
+                    // at least one URI is required, so we push an empty one
+                    arg_buffer.push_arg(codec::Empty);
+                } else {
+                    // The API function has the last argument as variadic,
+                    // so we top-encode each and send as separate argument
+                    for uri in &uris {
+                        arg_buffer.push_arg(uri);
+                    }
+                }
+
+                arg_buffer.push_arg(operation_token.token_nonce);
+                arg_buffer.push_arg(token_data.creator);
+
+                let output = self.send_raw().call_local_esdt_built_in_function(
+                    self.blockchain().get_gas_left(),
+                    &ManagedBuffer::from(ESDT_NFT_CREATE_FUNC_NAME),
+                    &arg_buffer,
+                );
+
+                if let Some(first_result_bytes) = output.try_get(0) {
+                    nonce = first_result_bytes.parse_as_u64().unwrap_or_default()
+                } else {
+                    nonce = 0
+                }
+            }
 
             output_payments.push(OperationEsdtPayment {
-                token_identifier: mx_token_id,
-                token_nonce: nft_nonce,
+                token_identifier: operation_token.token_identifier,
+                token_nonce: nonce,
                 token_data: operation_token.token_data,
             });
         }
 
         output_payments
-    }
-
-    fn mint_and_save_token(
-        self,
-        mx_token_id: &TokenIdentifier<Self::Api>,
-        operation_token: &OperationEsdtPayment<Self::Api>,
-    ) -> u64 {
-        // mint NFT
-        let nft_nonce = self.send().esdt_nft_create(
-            mx_token_id,
-            &operation_token.token_data.amount,
-            &operation_token.token_data.name,
-            &operation_token.token_data.royalties,
-            &operation_token.token_data.hash,
-            &operation_token.token_data.attributes,
-            &operation_token.token_data.uris,
-        );
-
-        // save token id and nonce
-        self.sovereign_esdt_token_info_mapper(
-            &operation_token.token_identifier,
-            &operation_token.token_nonce,
-        )
-        .set(EsdtTokenInfo {
-            token_identifier: mx_token_id.clone(),
-            token_nonce: nft_nonce,
-        });
-
-        self.multiversx_esdt_token_info_mapper(mx_token_id, &nft_nonce)
-            .set(EsdtTokenInfo {
-                token_identifier: operation_token.token_identifier.clone(),
-                token_nonce: operation_token.token_nonce,
-            });
-
-        nft_nonce
     }
 
     fn distribute_payments(
