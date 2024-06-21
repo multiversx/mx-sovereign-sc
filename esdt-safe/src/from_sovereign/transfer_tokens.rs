@@ -1,8 +1,6 @@
 use header_verifier::header_verifier_proxy;
 use multiversx_sc::{api::ESDT_MULTI_TRANSFER_FUNC_NAME, storage::StorageKey};
-use transaction::{
-    GasLimit, Operation, OperationData, OperationEsdtPayment, OperationTuple,
-};
+use transaction::{GasLimit, Operation, OperationData, OperationEsdtPayment, OperationTuple};
 
 use crate::to_sovereign;
 
