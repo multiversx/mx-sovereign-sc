@@ -1,9 +1,8 @@
-use header_verifier::header_verifier_proxy;
-use multiversx_sc::{api::ESDT_MULTI_TRANSFER_FUNC_NAME, storage::StorageKey};
-use transaction::{
-    GasLimit, Operation, OperationData, OperationEsdtPayment, OperationTuple,
-};
 use crate::to_sovereign;
+use builtin_func_names::ESDT_NFT_CREATE_FUNC_NAME;
+use header_verifier::header_verifier_proxy;
+use multiversx_sc::{api::ESDT_MULTI_TRANSFER_FUNC_NAME, codec, storage::StorageKey};
+use transaction::{GasLimit, Operation, OperationData, OperationEsdtPayment, OperationTuple};
 
 use super::token_mapping::EsdtTokenInfo;
 
@@ -69,43 +68,43 @@ pub trait TransferTokensModule:
                     &operation_token.token_data.amount,
                 );
             } else {
-                nonce = self.send().esdt_nft_create(
-                    &operation_token.token_identifier,
-                    &operation_token.token_data.amount,
-                    &operation_token.token_data.name,
-                    &operation_token.token_data.royalties,
-                    &operation_token.token_data.hash,
-                    &operation_token.token_data.attributes,
-                    &operation_token.token_data.uris,
+                let token_data = operation_token.token_data.clone();
+                let mut arg_buffer = ManagedArgBuffer::new();
+
+                arg_buffer.push_arg(&operation_token.token_identifier);
+                arg_buffer.push_arg(token_data.amount);
+                arg_buffer.push_arg(token_data.name);
+                arg_buffer.push_arg(token_data.royalties);
+                arg_buffer.push_arg(token_data.hash);
+                arg_buffer.push_arg(token_data.attributes);
+
+                let uris = token_data.uris.clone();
+
+                if uris.is_empty() {
+                    // at least one URI is required, so we push an empty one
+                    arg_buffer.push_arg(codec::Empty);
+                } else {
+                    // The API function has the last argument as variadic,
+                    // so we top-encode each and send as separate argument
+                    for uri in &uris {
+                        arg_buffer.push_arg(uri);
+                    }
+                }
+
+                arg_buffer.push_arg(operation_token.token_nonce);
+                arg_buffer.push_arg(token_data.creator);
+
+                let output = self.send_raw().call_local_esdt_built_in_function(
+                    self.blockchain().get_gas_left(),
+                    &ManagedBuffer::from(ESDT_NFT_CREATE_FUNC_NAME),
+                    &arg_buffer,
                 );
 
-                // let token_data = operation_token.token_data.clone();
-                // let mut arg_buffer = ManagedArgBuffer::new();
-                // arg_buffer.push_arg(&operation_token.token_identifier);
-                // arg_buffer.push_arg(token_data.amount);
-                // arg_buffer.push_arg(token_data.name);
-                // arg_buffer.push_arg(token_data.royalties);
-                // arg_buffer.push_arg(token_data.hash);
-                // arg_buffer.push_arg(token_data.attributes);
-                // let uris = token_data.uris.clone();
-
-                // if uris.is_empty() {
-                //     // at least one URI is required, so we push an empty one
-                //     arg_buffer.push_arg(codec::Empty);
-                // } else {
-                //     // The API function has the last argument as variadic,
-                //     // so we top-encode each and send as separate argument
-                //     for uri in &uris {
-                //         arg_buffer.push_arg(uri);
-                //     }
-                // }
-                // arg_buffer.push_arg(operation_token.token_nonce);
-
-                // self.send_raw().call_local_esdt_built_in_function(
-                //     self.blockchain().get_gas_left(),
-                //     &ManagedBuffer::from(ESDT_NFT_CREATE_FUNC_NAME),
-                //     &arg_buffer,
-                // );
+                if let Some(first_result_bytes) = output.try_get(0) {
+                    nonce = first_result_bytes.parse_as_u64().unwrap_or_default()
+                } else {
+                    nonce = 0
+                }
             }
 
             output_payments.push(OperationEsdtPayment {
