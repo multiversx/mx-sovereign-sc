@@ -1,9 +1,6 @@
 use crate::from_sovereign::token_mapping;
 use bls_signature::BlsSignature;
 use fee_market::fee_market_proxy;
-use fee_market::
-    fee_market_proxy
-;
 use multiversx_sc::{hex_literal::hex, storage::StorageKey};
 use transaction::{GasLimit, OperationData, TransferData};
 
@@ -324,9 +321,6 @@ pub trait CreateTxModule:
             OptionalValue::None => (),
         };
     }
-
-    #[proxy]
-    fn fee_market_proxy(&self, sc_address: ManagedAddress) -> fee_market::Proxy<Self::Api>;
 
     #[storage_mapper("feeMarketAddress")]
     fn fee_market_address(&self) -> SingleValueMapper<ManagedAddress>;
