@@ -1,9 +1,6 @@
 use crate::from_sovereign::token_mapping;
 use bls_signature::BlsSignature;
 use fee_market::fee_market_proxy;
-use fee_market::
-    fee_market_proxy
-;
 use multiversx_sc::{hex_literal::hex, storage::StorageKey};
 use transaction::{GasLimit, OperationData, TransferData};
 

@@ -44,7 +44,7 @@ pub trait EsdtSafe:
     }
 
     #[only_owner]
-    #[endpoint(setMultisigAddress)]
+    #[endpoint(setHeaderVerifierAddress)]
     fn set_header_verifier_address(&self, header_verifier_address: ManagedAddress) {
         self.require_sc_address(&header_verifier_address);
 
