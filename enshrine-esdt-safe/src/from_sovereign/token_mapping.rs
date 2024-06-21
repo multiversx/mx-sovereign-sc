@@ -115,8 +115,6 @@ pub trait TokenMappingModule:
         self.multiversx_to_sovereign_token_id(&mvx_token_id).clear();
     }
 
-    // WARNING: All mappers must have the exact same storage key!
-
     #[storage_mapper("sovToMxTokenId")]
     fn sovereign_to_multiversx_token_id(
         &self,
