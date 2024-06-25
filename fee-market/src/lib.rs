@@ -4,11 +4,11 @@ multiversx_sc::imports!();
 
 pub mod enable_fee;
 pub mod fee_common;
+pub mod fee_market_proxy;
 pub mod fee_type;
 pub mod price_aggregator;
 pub mod safe_price_query;
 pub mod subtract_fee;
-pub mod fee_market_proxy;
 
 #[multiversx_sc::contract]
 pub trait FeeMarket:

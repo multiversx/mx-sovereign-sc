@@ -3,9 +3,9 @@
 multiversx_sc::imports!();
 multiversx_sc::derive_imports!();
 
+pub mod esdt_safe_proxy;
 pub mod from_sovereign;
 pub mod to_sovereign;
-pub mod esdt_safe_proxy;
 
 #[multiversx_sc::contract]
 pub trait EsdtSafe:
@@ -24,10 +24,7 @@ pub trait EsdtSafe:
     + multiversx_sc_modules::default_issue_callbacks::DefaultIssueCallbacksModule
 {
     #[init]
-    fn init(
-        &self,
-        is_sovereign_chain: bool,
-    ) {
+    fn init(&self, is_sovereign_chain: bool) {
         self.is_sovereign_chain().set(is_sovereign_chain);
         self.set_paused(true);
     }
@@ -50,5 +47,4 @@ pub trait EsdtSafe:
 
     #[upgrade]
     fn upgrade(&self) {}
-
 }

@@ -1,10 +1,9 @@
-use crate::to_sovereign;
+use crate::{common, to_sovereign};
 use builtin_func_names::ESDT_NFT_CREATE_FUNC_NAME;
 use header_verifier::header_verifier_proxy;
+use multiversx_sc::imports::*;
 use multiversx_sc::{api::ESDT_MULTI_TRANSFER_FUNC_NAME, codec, storage::StorageKey};
 use transaction::{GasLimit, Operation, OperationData, OperationEsdtPayment, OperationTuple};
-
-multiversx_sc::imports!();
 
 const CALLBACK_GAS: GasLimit = 10_000_000; // Increase if not enough
 const TRANSACTION_GAS: GasLimit = 30_000_000;
@@ -19,6 +18,7 @@ pub trait TransferTokensModule:
     + multiversx_sc_modules::default_issue_callbacks::DefaultIssueCallbacksModule
     + utils::UtilsModule
     + to_sovereign::events::EventsModule
+    + common::storage::CommonStorage
 {
     #[endpoint(executeBridgeOps)]
     fn execute_operations(&self, hash_of_hashes: ManagedBuffer, operation: Operation<Self::Api>) {

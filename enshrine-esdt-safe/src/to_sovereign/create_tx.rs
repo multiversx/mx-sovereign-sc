@@ -1,8 +1,9 @@
+use crate::common;
 use fee_market::fee_market_proxy;
 use multiversx_sc::{hex_literal::hex, storage::StorageKey};
 use transaction::{GasLimit, OperationData, TransferData};
 
-multiversx_sc::imports!();
+use multiversx_sc::imports::*;
 
 pub const ESDT_SYSTEM_SC_ADDRESS: [u8; 32] =
     hex!("000000000000000000010000000000000000000000000000000000000002ffff");
@@ -19,6 +20,7 @@ pub trait CreateTxModule:
     + utils::UtilsModule
     + multiversx_sc_modules::pause::PauseModule
     + multiversx_sc_modules::default_issue_callbacks::DefaultIssueCallbacksModule
+    + common::storage::CommonStorage
 {
     #[payable("*")]
     #[endpoint]

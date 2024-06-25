@@ -1,11 +1,11 @@
 #![no_std]
 
-multiversx_sc::imports!();
-multiversx_sc::derive_imports!();
+use multiversx_sc::imports::*;
 
+pub mod common;
+pub mod enshrine_esdt_safe_proxy;
 pub mod from_sovereign;
 pub mod to_sovereign;
-pub mod enshrine_esdt_safe_proxy;
 
 #[multiversx_sc::contract]
 pub trait EnshrineEsdtSafe:
@@ -21,12 +21,10 @@ pub trait EnshrineEsdtSafe:
     + utils::UtilsModule
     + multiversx_sc_modules::pause::PauseModule
     + multiversx_sc_modules::default_issue_callbacks::DefaultIssueCallbacksModule
+    + common::storage::CommonStorage
 {
     #[init]
-    fn init(
-        &self,
-        is_sovereign_chain: bool,
-    ) {
+    fn init(&self, is_sovereign_chain: bool) {
         self.is_sovereign_chain().set(is_sovereign_chain);
         self.set_paused(true);
     }
@@ -49,7 +47,4 @@ pub trait EnshrineEsdtSafe:
 
     #[upgrade]
     fn upgrade(&self) {}
-    
-    #[storage_mapper("isSovereignChain")]
-    fn is_sovereign_chain(&self) -> SingleValueMapper<bool>;
 }

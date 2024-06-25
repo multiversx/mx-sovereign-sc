@@ -69,12 +69,14 @@ pub trait UtilsModule: bls_signature::BlsSignatureModule {
     fn has_sov_token_prefix(&self, token_id: &TokenIdentifier) -> bool {
         let dash = b'-';
         let mut array_buffer = [0u8, 30];
-        let slice = token_id.as_managed_buffer().load_to_byte_array(&mut array_buffer);
+        let slice = token_id
+            .as_managed_buffer()
+            .load_to_byte_array(&mut array_buffer);
 
         let counter = slice.iter().filter(|&&c| c == dash).count();
 
         if counter == 2 {
-            return true
+            return true;
         }
 
         false
