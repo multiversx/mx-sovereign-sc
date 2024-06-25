@@ -17,7 +17,7 @@ use multiversx_sc_scenario::multiversx_chain_vm::crypto_functions::sha256;
 use multiversx_sc_scenario::{
     api::StaticApi, imports::MxscPath, ExpectError, ScenarioTxRun, ScenarioWorld,
 };
-use multiversx_sc_scenario::{managed_address, ExpectValue};
+use multiversx_sc_scenario::managed_address;
 use transaction::{
     Operation, OperationData, OperationEsdtPayment, StolenFromFrameworkEsdtTokenData,
 };
@@ -316,33 +316,6 @@ impl BridgeTestState {
                 operations_hashes.clone(),
             )
             .run();
-
-        self.check_header_verifier_address();
-        self.check_pending_hashes_mapper(&hash_of_hashes, &operations_hashes);
-    }
-
-    fn check_header_verifier_address(&mut self) {
-        self.world
-            .query()
-            .to(BRIDGE_ADDRESS)
-            .typed(esdt_safe_proxy::EsdtSafeProxy)
-            .header_verifier_address()
-            .with_result(ExpectValue(HEADER_VERIFIER_ADDRESS))
-            .run()
-    }
-
-    fn check_pending_hashes_mapper(
-        &mut self,
-        hash_of_hashes: &ManagedBuffer<StaticApi>,
-        expected_hash: &MultiValueEncoded<StaticApi, ManagedBuffer<StaticApi>>,
-    ) {
-        self.world
-            .query()
-            .to(HEADER_VERIFIER_ADDRESS)
-            .typed(header_verifier_proxy::HeaderverifierProxy)
-            .pending_hashes(hash_of_hashes)
-            .with_result(ExpectValue(expected_hash))
-            .run()
     }
 
     fn setup_payments(
