@@ -1,4 +1,3 @@
-use crate::from_sovereign::token_mapping;
 use fee_market::fee_market_proxy;
 use multiversx_sc::{hex_literal::hex, storage::StorageKey};
 use transaction::{GasLimit, OperationData, TransferData};
@@ -19,7 +18,6 @@ pub trait CreateTxModule:
     + setup_phase::SetupPhaseModule
     + utils::UtilsModule
     + multiversx_sc_modules::pause::PauseModule
-    + token_mapping::TokenMappingModule
     + multiversx_sc_modules::default_issue_callbacks::DefaultIssueCallbacksModule
 {
     #[payable("*")]
@@ -157,32 +155,6 @@ pub trait CreateTxModule:
             }
             OptionalValue::None => None,
         }
-    }
-
-    fn remove_sovereign_token(
-        &self,
-        payment: EsdtTokenPayment<Self::Api>,
-        sov_token_id: &TokenIdentifier<Self::Api>,
-    ) -> u64 {
-        self.send().esdt_local_burn(
-            &payment.token_identifier,
-            payment.token_nonce,
-            &payment.amount,
-        );
-
-        let mut sov_token_nonce = 0;
-
-        if payment.token_nonce > 0 {
-            sov_token_nonce = self
-                .multiversx_esdt_token_info_mapper(&payment.token_identifier, &payment.token_nonce)
-                .take()
-                .token_nonce;
-
-            self.sovereign_esdt_token_info_mapper(sov_token_id, &sov_token_nonce)
-                .take();
-        }
-
-        sov_token_nonce
     }
 
     fn match_fee_payment(

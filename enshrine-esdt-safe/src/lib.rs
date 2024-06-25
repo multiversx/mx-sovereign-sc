@@ -13,7 +13,6 @@ pub trait EnshrineEsdtSafe:
     + to_sovereign::events::EventsModule
     + bls_signature::BlsSignatureModule
     + from_sovereign::events::EventsModule
-    + from_sovereign::token_mapping::TokenMappingModule
     + from_sovereign::transfer_tokens::TransferTokensModule
     + tx_batch_module::TxBatchModule
     + max_bridged_amount_module::MaxBridgedAmountModule
@@ -41,7 +40,7 @@ pub trait EnshrineEsdtSafe:
     }
 
     #[only_owner]
-    #[endpoint(setMultisigAddress)]
+    #[endpoint(setHeaderVerifierAddress)]
     fn set_header_verifier_address(&self, header_verifier_address: ManagedAddress) {
         self.require_sc_address(&header_verifier_address);
 
@@ -50,4 +49,7 @@ pub trait EnshrineEsdtSafe:
 
     #[upgrade]
     fn upgrade(&self) {}
+    
+    #[storage_mapper("isSovereignChain")]
+    fn is_sovereign_chain(&self) -> SingleValueMapper<bool>;
 }

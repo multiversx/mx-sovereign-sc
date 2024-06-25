@@ -4,8 +4,6 @@ use header_verifier::header_verifier_proxy;
 use multiversx_sc::{api::ESDT_MULTI_TRANSFER_FUNC_NAME, codec, storage::StorageKey};
 use transaction::{GasLimit, Operation, OperationData, OperationEsdtPayment, OperationTuple};
 
-use super::token_mapping::EsdtTokenInfo;
-
 multiversx_sc::imports!();
 
 const CALLBACK_GAS: GasLimit = 10_000_000; // Increase if not enough
@@ -15,7 +13,6 @@ const TRANSACTION_GAS: GasLimit = 30_000_000;
 pub trait TransferTokensModule:
     bls_signature::BlsSignatureModule
     + super::events::EventsModule
-    + super::token_mapping::TokenMappingModule
     + tx_batch_module::TxBatchModule
     + max_bridged_amount_module::MaxBridgedAmountModule
     + multiversx_sc_modules::pause::PauseModule
@@ -117,41 +114,6 @@ pub trait TransferTokensModule:
         output_payments
     }
 
-    fn mint_and_save_token(
-        self,
-        mx_token_id: &TokenIdentifier<Self::Api>,
-        operation_token: &OperationEsdtPayment<Self::Api>,
-    ) -> u64 {
-        // mint NFT
-        let nft_nonce = self.send().esdt_nft_create(
-            mx_token_id,
-            &operation_token.token_data.amount,
-            &operation_token.token_data.name,
-            &operation_token.token_data.royalties,
-            &operation_token.token_data.hash,
-            &operation_token.token_data.attributes,
-            &operation_token.token_data.uris,
-        );
-
-        // save token id and nonce
-        self.sovereign_esdt_token_info_mapper(
-            &operation_token.token_identifier,
-            &operation_token.token_nonce,
-        )
-        .set(EsdtTokenInfo {
-            token_identifier: mx_token_id.clone(),
-            token_nonce: nft_nonce,
-        });
-
-        self.multiversx_esdt_token_info_mapper(mx_token_id, &nft_nonce)
-            .set(EsdtTokenInfo {
-                token_identifier: operation_token.token_identifier.clone(),
-                token_nonce: operation_token.token_nonce,
-            });
-
-        nft_nonce
-    }
-
     fn distribute_payments(
         &self,
         hash_of_hashes: ManagedBuffer,
@@ -251,38 +213,17 @@ pub trait TransferTokensModule:
         hash_of_hashes: &ManagedBuffer,
         operation_tuple: &OperationTuple<Self::Api>,
     ) {
-        // confirmation event
         self.execute_bridge_operation_event(
             hash_of_hashes.clone(),
             operation_tuple.op_hash.clone(),
         );
 
         for operation_token in &operation_tuple.operation.tokens {
-            let mx_token_id_state = self
-                .sovereign_to_multiversx_token_id(&operation_token.token_identifier)
-                .get();
-
-            if let TokenMapperState::Token(mx_token_id) = mx_token_id_state {
-                let mut mx_token_nonce = 0;
-
-                if operation_token.token_nonce > 0 {
-                    mx_token_nonce = self
-                        .sovereign_esdt_token_info_mapper(
-                            &operation_token.token_identifier,
-                            &operation_token.token_nonce,
-                        )
-                        .take()
-                        .token_nonce;
-
-                    self.multiversx_esdt_token_info_mapper(&mx_token_id, &mx_token_nonce);
-                }
-
-                self.send().esdt_local_burn(
-                    &mx_token_id,
-                    mx_token_nonce,
-                    &operation_token.token_data.amount,
-                );
-            }
+            self.send().esdt_local_burn(
+                &operation_token.token_identifier,
+                operation_token.token_nonce,
+                &operation_token.token_data.amount,
+            );
         }
 
         // deposit back mainchain tokens into user account
