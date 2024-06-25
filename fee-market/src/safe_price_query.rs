@@ -58,8 +58,7 @@ pub trait SafePriceQueryModule: price_aggregator::PriceAggregatorModule {
         let token_to_wegld_pair = self.call_get_pair(token_id, &wegld_token_id);
 
         if !token_to_wegld_pair.is_zero() {
-            let wegld_to_usdc_pair =
-                self.call_get_pair(&wegld_token_id, &usdc_token_id);
+            let wegld_to_usdc_pair = self.call_get_pair(&wegld_token_id, &usdc_token_id);
             require!(
                 !wegld_to_usdc_pair.is_zero(),
                 "Invalid WEGLD-USDC pair address from router"

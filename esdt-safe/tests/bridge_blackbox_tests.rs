@@ -270,7 +270,8 @@ impl BridgeTestState {
         let to = managed_address!(&Address::from(&RECEIVER_ADDRESS.eval_to_array()));
         let operation = Operation { to, tokens, data };
         let operation_hash = self.get_operation_hash(&operation);
-        let hash_of_hashes: ManagedBuffer<StaticApi> = ManagedBuffer::from(&sha256(&operation_hash.to_vec()));
+        let hash_of_hashes: ManagedBuffer<StaticApi> =
+            ManagedBuffer::from(&sha256(&operation_hash.to_vec()));
 
         self.world
             .tx()
@@ -309,7 +310,11 @@ impl BridgeTestState {
             .from(BRIDGE_OWNER_ADDRESS)
             .to(HEADER_VERIFIER_ADDRESS)
             .typed(header_verifier_proxy::HeaderverifierProxy)
-            .register_bridge_operations(mock_signature, hash_of_hashes.clone(), operations_hashes.clone())
+            .register_bridge_operations(
+                mock_signature,
+                hash_of_hashes.clone(),
+                operations_hashes.clone(),
+            )
             .run();
 
         self.check_header_verifier_address();
