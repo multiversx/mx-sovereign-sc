@@ -13,11 +13,11 @@ use multiversx_sc::{
         TestSCAddress,
     },
 };
+use multiversx_sc_scenario::managed_address;
 use multiversx_sc_scenario::multiversx_chain_vm::crypto_functions::sha256;
 use multiversx_sc_scenario::{
     api::StaticApi, imports::MxscPath, ExpectError, ScenarioTxRun, ScenarioWorld,
 };
-use multiversx_sc_scenario::managed_address;
 use transaction::{
     Operation, OperationData, OperationEsdtPayment, StolenFromFrameworkEsdtTokenData,
 };
