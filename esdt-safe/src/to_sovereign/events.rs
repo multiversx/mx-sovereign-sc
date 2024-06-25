@@ -1,4 +1,4 @@
-use transaction::OperationData;
+use transaction::{transaction_status::TransactionStatus, BatchId, OperationData, TxId};
 
 multiversx_sc::imports!();
 multiversx_sc::derive_imports!();
