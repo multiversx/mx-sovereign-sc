@@ -106,7 +106,7 @@ where
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
-            .raw_call("setMultisigAddress")
+            .raw_call("setHeaderVerifierAddress")
             .argument(&header_verifier_address)
             .original_result()
     }
@@ -162,32 +162,6 @@ where
             .payment(NotPayable)
             .raw_call("removeSigners")
             .argument(&signers)
-            .original_result()
-    }
-
-    pub fn clear_registered_sovereign_token<
-        Arg0: ProxyArg<TokenIdentifier<Env::Api>>,
-    >(
-        self,
-        sov_token_id: Arg0,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("clearRegisteredSovereignToken")
-            .argument(&sov_token_id)
-            .original_result()
-    }
-
-    pub fn clear_registered_multiversx_token<
-        Arg0: ProxyArg<TokenIdentifier<Env::Api>>,
-    >(
-        self,
-        mvx_token_id: Arg0,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("clearRegisteredMultiversxToken")
-            .argument(&mvx_token_id)
             .original_result()
     }
 
