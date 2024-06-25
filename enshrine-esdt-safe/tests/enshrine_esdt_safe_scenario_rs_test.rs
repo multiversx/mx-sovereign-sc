@@ -3,7 +3,10 @@ use multiversx_sc_scenario::*;
 fn world() -> ScenarioWorld {
     let mut blockchain = ScenarioWorld::new();
 
-    blockchain.register_contract("mxsc:output/enshrine-esdt-safe.mxsc.json", enshrine_esdt_safe::ContractBuilder);
+    blockchain.register_contract(
+        "mxsc:output/enshrine-esdt-safe.mxsc.json",
+        enshrine_esdt_safe::ContractBuilder,
+    );
     blockchain
 }
 
