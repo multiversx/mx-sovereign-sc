@@ -30,6 +30,7 @@ const RECEIVER_ADDRESS: TestAddress = TestAddress::new("receiver");
 
 const NFT_TOKEN_ID: TestTokenIdentifier = TestTokenIdentifier::new("NFT-123456");
 const FUNGIBLE_TOKEN_ID: TestTokenIdentifier = TestTokenIdentifier::new("CROWD-123456");
+const PREFIX_NFT_TOKEN_ID: TestTokenIdentifier = TestTokenIdentifier::new("SOV-NFT-123456");
 
 fn world() -> ScenarioWorld {
     let mut blockchain = ScenarioWorld::new();
@@ -107,8 +108,12 @@ impl EnshrineTestState {
         self
     }
 
-    fn propose_execute_operation(&mut self) {
-        let (tokens, data) = self.setup_payments(vec![NFT_TOKEN_ID, FUNGIBLE_TOKEN_ID]);
+    fn propose_execute_operation(&mut self, has_prefix: bool) {
+        let (tokens, data) = if has_prefix {
+            self.setup_payments(vec![PREFIX_NFT_TOKEN_ID, FUNGIBLE_TOKEN_ID])
+        } else {
+            self.setup_payments(vec![NFT_TOKEN_ID, FUNGIBLE_TOKEN_ID])
+        };
         let to = managed_address!(&Address::from(&RECEIVER_ADDRESS.eval_to_array()));
         let operation = Operation { to, tokens, data };
         let operation_hash = self.get_operation_hash(&operation);
@@ -144,8 +149,12 @@ impl EnshrineTestState {
             .run();
     }
 
-    fn propose_register_operation(&mut self) {
-        let (tokens, data) = self.setup_payments(vec![NFT_TOKEN_ID, FUNGIBLE_TOKEN_ID]);
+    fn propose_register_operation(&mut self, has_prefix: bool) {
+        let (tokens, data) = if has_prefix {
+            self.setup_payments(vec![PREFIX_NFT_TOKEN_ID, FUNGIBLE_TOKEN_ID])
+        } else {
+            self.setup_payments(vec![NFT_TOKEN_ID, FUNGIBLE_TOKEN_ID])
+        };
         let to = managed_address!(&Address::from(RECEIVER_ADDRESS.eval_to_array()));
         let operation = Operation { to, tokens, data };
         let operation_hash = self.get_operation_hash(&operation);
@@ -226,10 +235,19 @@ fn test_deploy() {
 }
 
 #[test]
-fn test_sovereign_prefix() {
+fn test_sovereign_prefix_no_prefix() {
     let mut state = EnshrineTestState::new();
 
     state.propose_setup_contracts(false);
-    state.propose_register_operation();
-    state.propose_execute_operation();
+    state.propose_register_operation(false);
+    state.propose_execute_operation(false);
 }
+
+// #[test]
+// fn test_sovereign_prefix_has_prefix() {
+//     let mut state = EnshrineTestState::new();
+//
+//     state.propose_setup_contracts(false);
+//     state.propose_register_operation(true);
+//     state.propose_execute_operation(true);
+// }
