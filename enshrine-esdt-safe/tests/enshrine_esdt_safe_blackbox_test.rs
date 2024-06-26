@@ -1,9 +1,10 @@
+use bls_signature::BlsSignature;
 use enshrine_esdt_safe::enshrine_esdt_safe_proxy;
 use header_verifier::header_verifier_proxy;
 use multiversx_sc::codec::TopEncode;
 use multiversx_sc::types::{
-    Address, ManagedBuffer, ManagedVec, MultiValueEncoded, TestAddress, TestSCAddress,
-    TestTokenIdentifier,
+    Address, ManagedBuffer, ManagedByteArray, ManagedVec, MultiValueEncoded, TestAddress,
+    TestSCAddress, TestTokenIdentifier,
 };
 use multiversx_sc_scenario::api::StaticApi;
 use multiversx_sc_scenario::multiversx_chain_vm::crypto_functions::sha256;
@@ -143,6 +144,42 @@ impl EnshrineTestState {
             .run();
     }
 
+    fn propose_register_operation(&mut self) {
+        let (tokens, data) = self.setup_payments(vec![NFT_TOKEN_ID, FUNGIBLE_TOKEN_ID]);
+        let to = managed_address!(&Address::from(RECEIVER_ADDRESS.eval_to_array()));
+        let operation = Operation { to, tokens, data };
+        let operation_hash = self.get_operation_hash(&operation);
+        let mut operations_hashes = MultiValueEncoded::new();
+
+        operations_hashes.push(operation_hash.clone());
+
+        let mock_signature = self.mock_bls_signature(&operation_hash);
+        let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&operation_hash.to_vec()));
+
+        self.world
+            .tx()
+            .from(ENSHRINE_ESDT_OWNER_ADDRESS)
+            .to(HEADER_VERIFIER_ADDRESS)
+            .typed(header_verifier_proxy::HeaderverifierProxy)
+            .register_bridge_operations(
+                mock_signature,
+                hash_of_hashes.clone(),
+                operations_hashes.clone(),
+            )
+            .run();
+    }
+
+    fn mock_bls_signature(
+        &mut self,
+        operation_hash: &ManagedBuffer<StaticApi>,
+    ) -> BlsSignature<StaticApi> {
+        let byte_arr: &mut [u8; 48] = &mut [0; 48];
+        operation_hash.load_to_byte_array(byte_arr);
+        let mock_signature: BlsSignature<StaticApi> = ManagedByteArray::new_from_bytes(byte_arr);
+
+        mock_signature
+    }
+
     fn setup_payments(
         &mut self,
         token_ids: Vec<TestTokenIdentifier>,
@@ -193,6 +230,6 @@ fn test_sovereign_prefix() {
     let mut state = EnshrineTestState::new();
 
     state.propose_setup_contracts(false);
-
+    state.propose_register_operation();
     state.propose_execute_operation();
 }
