@@ -1,7 +1,9 @@
 use enshrine_esdt_safe::enshrine_esdt_safe_proxy;
+use header_verifier::header_verifier_proxy;
 use multiversx_sc::codec::TopEncode;
 use multiversx_sc::types::{
-    Address, ManagedBuffer, ManagedVec, TestAddress, TestSCAddress, TestTokenIdentifier,
+    Address, ManagedBuffer, ManagedVec, MultiValueEncoded, TestAddress, TestSCAddress,
+    TestTokenIdentifier,
 };
 use multiversx_sc_scenario::api::StaticApi;
 use multiversx_sc_scenario::multiversx_chain_vm::crypto_functions::sha256;
@@ -18,6 +20,10 @@ const ENSHRINE_ESDT_OWNER_ADDRESS: TestAddress = TestAddress::new("enshrine-esdt
 const ENSHRINE_OWNER_BALANCE: u64 = 100_000_000;
 const USER_EGLD_BALANCE: u64 = 100_000_000;
 
+const HEADER_VERIFIER_ADDRESS: TestSCAddress = TestSCAddress::new("header_verifier");
+const HEADER_VERIFIER_CODE_PATH: MxscPath =
+    MxscPath::new("../header-verifier/output/header-verifier.mxsc.json");
+
 const USER_ADDRESS: TestAddress = TestAddress::new("user");
 const RECEIVER_ADDRESS: TestAddress = TestAddress::new("receiver");
 
@@ -28,6 +34,7 @@ fn world() -> ScenarioWorld {
     let mut blockchain = ScenarioWorld::new();
 
     blockchain.register_contract(ENSHRINE_ESDT_CODE_PATH, enshrine_esdt_safe::ContractBuilder);
+    blockchain.register_contract(HEADER_VERIFIER_CODE_PATH, header_verifier::ContractBuilder);
 
     blockchain
 }
@@ -74,6 +81,31 @@ impl EnshrineTestState {
         self
     }
 
+    fn deploy_header_verifier_contract(&mut self) -> &mut Self {
+        let bls_pub_key: ManagedBuffer<StaticApi> = ManagedBuffer::new();
+        let mut bls_pub_keys = MultiValueEncoded::new();
+        bls_pub_keys.push(bls_pub_key);
+
+        self.world
+            .tx()
+            .from(ENSHRINE_ESDT_OWNER_ADDRESS)
+            .typed(header_verifier_proxy::HeaderverifierProxy)
+            .init(bls_pub_keys)
+            .code(HEADER_VERIFIER_CODE_PATH)
+            .new_address(HEADER_VERIFIER_ADDRESS)
+            .run();
+
+        self
+    }
+
+    fn propose_setup_contracts(&mut self, is_sovereign_chain: bool) -> &mut Self {
+        self.deploy_enshrine_esdt_contract(is_sovereign_chain);
+        self.deploy_header_verifier_contract();
+        self.propose_set_header_verifier_address();
+
+        self
+    }
+
     fn propose_execute_operation(&mut self) {
         let (tokens, data) = self.setup_payments(vec![NFT_TOKEN_ID, FUNGIBLE_TOKEN_ID]);
         let to = managed_address!(&Address::from(&RECEIVER_ADDRESS.eval_to_array()));
@@ -98,6 +130,16 @@ impl EnshrineTestState {
             .to(ENSHRINE_ESDT_ADDRESS)
             .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
             .unpause_endpoint()
+            .run();
+    }
+
+    fn propose_set_header_verifier_address(&mut self) {
+        self.world
+            .tx()
+            .from(ENSHRINE_ESDT_OWNER_ADDRESS)
+            .to(ENSHRINE_ESDT_ADDRESS)
+            .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
+            .set_header_verifier_address(HEADER_VERIFIER_ADDRESS)
             .run();
     }
 
@@ -143,14 +185,14 @@ impl EnshrineTestState {
 fn test_deploy() {
     let mut state = EnshrineTestState::new();
 
-    state.deploy_enshrine_esdt_contract(false);
+    state.propose_setup_contracts(false);
 }
 
 #[test]
 fn test_sovereign_prefix() {
     let mut state = EnshrineTestState::new();
 
-    state.deploy_enshrine_esdt_contract(false);
+    state.propose_setup_contracts(false);
 
     state.propose_execute_operation();
 }
