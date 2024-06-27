@@ -9,7 +9,7 @@ use multiversx_sc::types::{
 use multiversx_sc_scenario::api::StaticApi;
 use multiversx_sc_scenario::multiversx_chain_vm::crypto_functions::sha256;
 use multiversx_sc_scenario::{imports::MxscPath, ScenarioWorld};
-use multiversx_sc_scenario::{managed_address, ScenarioTxRun};
+use multiversx_sc_scenario::{managed_address, ExpectError, ScenarioTxRun};
 use transaction::{
     Operation, OperationData, OperationEsdtPayment, StolenFromFrameworkEsdtTokenData,
 };
@@ -108,7 +108,7 @@ impl EnshrineTestState {
         self
     }
 
-    fn propose_execute_operation(&mut self, has_prefix: bool) {
+    fn propose_execute_operation(&mut self, has_prefix: bool, error_msg: Option<&str>) {
         let (tokens, data) = if has_prefix {
             self.setup_payments(vec![PREFIX_NFT_TOKEN_ID, FUNGIBLE_TOKEN_ID])
         } else {
@@ -120,13 +120,28 @@ impl EnshrineTestState {
         let hash_of_hashes: ManagedBuffer<StaticApi> =
             ManagedBuffer::from(&sha256(&operation_hash.to_vec()));
 
-        self.world
-            .tx()
-            .from(USER_ADDRESS)
-            .to(ENSHRINE_ESDT_ADDRESS)
-            .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
-            .execute_operations(hash_of_hashes, operation)
-            .run();
+        match error_msg {
+            Some(msg) => {
+                self.world
+                    .tx()
+                    .from(USER_ADDRESS)
+                    .to(ENSHRINE_ESDT_ADDRESS)
+                    .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
+                    .execute_operations(hash_of_hashes, operation)
+                    .returns(ExpectError(10, msg))
+                    .run();
+            }
+
+            None => {
+                self.world
+                    .tx()
+                    .from(USER_ADDRESS)
+                    .to(ENSHRINE_ESDT_ADDRESS)
+                    .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
+                    .execute_operations(hash_of_hashes, operation)
+                    .run();
+            }
+        }
     }
 
     fn propose_set_unpaused(&mut self) {
@@ -240,14 +255,15 @@ fn test_sovereign_prefix_no_prefix() {
 
     state.propose_setup_contracts(false);
     state.propose_register_operation(false);
-    state.propose_execute_operation(false);
+    state.propose_execute_operation(false, None);
 }
 
-// #[test]
-// fn test_sovereign_prefix_has_prefix() {
-//     let mut state = EnshrineTestState::new();
-//
-//     state.propose_setup_contracts(false);
-//     state.propose_register_operation(true);
-//     state.propose_execute_operation(true);
-// }
+#[test]
+fn test_sovereign_prefix_has_prefix() {
+    let mut state = EnshrineTestState::new();
+    let error_message = "action is not allowed";
+
+    state.propose_setup_contracts(false);
+    state.propose_register_operation(true);
+    state.propose_execute_operation(true, Some(error_message));
+}
