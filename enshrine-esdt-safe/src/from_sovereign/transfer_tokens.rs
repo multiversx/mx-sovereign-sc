@@ -38,11 +38,15 @@ pub trait TransferTokensModule:
             sc_panic!("Operation is not registered");
         }
 
-        let minted_operation_tokens = self.mint_tokens(&operation.tokens);
+        let (wegld_amount, checked_tokens) = self.calculate_wegld_fee(&operation.tokens);
+
+        let minted_operation_tokens = self.mint_tokens(&checked_tokens);
         let operation_tuple = OperationTuple {
             op_hash: operation_hash,
-            operation,
+            operation: operation.clone(),
         };
+
+        self.refund_wegld(&operation.data.op_sender, wegld_amount);
 
         self.distribute_payments(hash_of_hashes, operation_tuple, minted_operation_tokens);
     }
@@ -71,16 +75,18 @@ pub trait TransferTokensModule:
 
     fn calculate_wegld_fee(
         &self,
-        tokens: ManagedVec<OperationEsdtPayment<Self::Api>>,
-    ) -> ManagedVec<OperationEsdtPayment<Self::Api>> {
+        tokens: &ManagedVec<OperationEsdtPayment<Self::Api>>,
+    ) -> (
+        BigUint<Self::Api>,
+        ManagedVec<OperationEsdtPayment<Self::Api>>,
+    ) {
+        let wegld_payment = tokens.get(0);
         if tokens.len() == 1 {
-            return tokens;
+            return (wegld_payment.token_data.amount, tokens.clone());
         }
 
-        let wegld_payment = tokens.get(0);
-
         let mut checked_tokens = tokens.clone();
-        let initial_wegld_amount = wegld_payment.token_data.amount;
+        let initial_wegld_amount = wegld_payment.token_data.amount.clone();
         let mut wegld_amount = initial_wegld_amount.clone();
 
         checked_tokens.remove(0);
@@ -92,13 +98,13 @@ pub trait TransferTokensModule:
         }
 
         if wegld_amount == initial_wegld_amount {
-            return tokens;
+            return (wegld_payment.token_data.amount, tokens.clone());
         }
 
-        checked_tokens
+        (wegld_amount, checked_tokens)
     }
 
-    fn sendback_wegld(&self, sender: &ManagedAddress<Self::Api>, wegld_amount: BigUint<Self::Api>) {
+    fn refund_wegld(&self, sender: &ManagedAddress<Self::Api>, wegld_amount: BigUint<Self::Api>) {
         let sc_address = self.blockchain().get_sc_address();
         let payment = EsdtTokenPayment::new(WEGLD_ID.into(), 0, wegld_amount);
 
