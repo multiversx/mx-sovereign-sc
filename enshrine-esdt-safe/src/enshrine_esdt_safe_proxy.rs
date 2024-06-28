@@ -181,6 +181,18 @@ where
             .original_result()
     }
 
+    pub fn register_tokens<
+        Arg0: ProxyArg<MultiValueEncoded<Env::Api, TokenIdentifier<Env::Api>>>,
+    >(
+        self,
+        tokens: Arg0,
+    ) -> TxTypedCall<Env, From, To, (), Gas, ()> {
+        self.wrapped_tx
+            .raw_call("registerTokens")
+            .argument(&tokens)
+            .original_result()
+    }
+
     pub fn set_max_tx_batch_size<
         Arg0: ProxyArg<usize>,
     >(
