@@ -24,10 +24,10 @@ path = "../pair-mock"
 path = "../router-mock"
 
 [dependencies.multiversx-sc]
-version = "=0.50.4"
+version = "=0.50.5"
 
 [dev-dependencies]
 num-bigint = "0.4.2"
 
 [dev-dependencies.multiversx-sc-scenario]
-version = "=0.50.4"
+version = "=0.50.5"
