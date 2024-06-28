@@ -8,6 +8,7 @@ use transaction::{GasLimit, Operation, OperationData, OperationEsdtPayment, Oper
 const CALLBACK_GAS: GasLimit = 10_000_000; // Increase if not enough
 const TRANSACTION_GAS: GasLimit = 30_000_000;
 const WEGLD_ID: &str = "WEGLD-bd4d79";
+const DEFAULT_ISSUE_COST: u64 = 50000000000000000;
 
 #[multiversx_sc::module]
 pub trait TransferTokensModule:
@@ -49,6 +50,20 @@ pub trait TransferTokensModule:
 
     //TODO: register_token payable endpoint
     // require x amount wegld
+    #[endpoint(registerTokens)]
+    #[payable("*")]
+    fn register_tokens(&self, tokens: MultiValueEncoded<TokenIdentifier>) {
+        let call_payment = self.call_value().single_esdt().clone();
+
+        require!(
+            call_payment.amount == DEFAULT_ISSUE_COST * tokens.len() as u64,
+            "WEGLD fee amount is not met"
+        );
+
+        for token in tokens {
+            self.paid_issued_tokens().insert(token);
+        }
+    }
 
     fn mint_tokens(
         &self,
