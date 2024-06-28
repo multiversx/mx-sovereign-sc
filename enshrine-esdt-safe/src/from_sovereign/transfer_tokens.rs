@@ -74,7 +74,9 @@ pub trait TransferTokensModule:
         let mut wegld_amount = BigUint::from(0u32);
 
         for operation_token in operation_tokens.iter() {
-            if self.is_wegld_identifier(&operation_token.token_identifier) {
+            // add amount of transferred WEGLD
+            if self.is_wegld(&operation_token.token_identifier) {
+                wegld_amount += &operation_token.token_data.amount;
                 continue;
             }
 
@@ -85,13 +87,12 @@ pub trait TransferTokensModule:
                 continue;
             }
 
-            // TODO: check storage + subtract 0.05 WEGLD
-
             if self.was_token_minted(&operation_token.token_identifier) {
                 continue;
             }
 
-            wegld_amount += &operation_token.token_data.amount;
+            // subtract the issue cost
+            wegld_amount -= BigUint::from(DEFAULT_ISSUE_COST);
 
             let mut nonce = operation_token.token_nonce;
             if nonce == 0 {
@@ -147,14 +148,16 @@ pub trait TransferTokensModule:
             });
         }
 
-        let sc_address = self.blockchain().get_sc_address();
-        let payment = EsdtTokenPayment::new(WEGLD_ID.into(), 0, wegld_amount);
+        if wegld_amount > 0 {
+            let sc_address = self.blockchain().get_sc_address();
+            let payment = EsdtTokenPayment::new(WEGLD_ID.into(), 0, wegld_amount);
 
-        self.tx()
-            .from(sc_address)
-            .to(sender)
-            .esdt(payment)
-            .transfer();
+            self.tx()
+                .from(sc_address)
+                .to(sender)
+                .esdt(payment)
+                .transfer();
+        }
 
         output_payments
     }
@@ -319,7 +322,7 @@ pub trait TransferTokensModule:
     }
 
     #[inline]
-    fn is_wegld_identifier(&self, token_id: &TokenIdentifier<Self::Api>) -> bool {
+    fn is_wegld(&self, token_id: &TokenIdentifier<Self::Api>) -> bool {
         token_id.eq(&TokenIdentifier::from(WEGLD_ID))
     }
 
