@@ -38,8 +38,7 @@ pub trait TransferTokensModule:
             sc_panic!("Operation is not registered");
         }
 
-        let minted_operation_tokens =
-            self.mint_tokens(&operation.data.op_sender, &operation.tokens);
+        let minted_operation_tokens = self.mint_tokens(&operation.tokens);
         let operation_tuple = OperationTuple {
             op_hash: operation_hash,
             operation,
@@ -70,34 +69,57 @@ pub trait TransferTokensModule:
         }
     }
 
+    fn calculate_wegld_fee(
+        &self,
+        tokens: ManagedVec<OperationEsdtPayment<Self::Api>>,
+    ) -> ManagedVec<OperationEsdtPayment<Self::Api>> {
+        if tokens.len() == 1 {
+            return tokens;
+        }
+
+        let wegld_payment = tokens.get(0);
+
+        let mut checked_tokens = tokens.clone();
+        let initial_wegld_amount = wegld_payment.token_data.amount;
+        let mut wegld_amount = initial_wegld_amount.clone();
+
+        checked_tokens.remove(0);
+
+        for token in checked_tokens.iter() {
+            if !self.was_token_minted(&token.token_identifier) {
+                wegld_amount -= token.token_data.amount;
+            }
+        }
+
+        if wegld_amount == initial_wegld_amount {
+            return tokens;
+        }
+
+        checked_tokens
+    }
+
+    fn sendback_wegld(&self, sender: &ManagedAddress<Self::Api>, wegld_amount: BigUint<Self::Api>) {
+        let sc_address = self.blockchain().get_sc_address();
+        let payment = EsdtTokenPayment::new(WEGLD_ID.into(), 0, wegld_amount);
+
+        self.tx()
+            .from(sc_address)
+            .to(sender)
+            .esdt(payment)
+            .transfer();
+    }
+
     fn mint_tokens(
         &self,
-        sender: &ManagedAddress<Self::Api>,
         operation_tokens: &ManagedVec<OperationEsdtPayment<Self::Api>>,
     ) -> ManagedVec<OperationEsdtPayment<Self::Api>> {
         let mut output_payments = ManagedVec::new();
-        let mut wegld_amount = BigUint::from(0u32);
 
         for operation_token in operation_tokens.iter() {
-            // add amount of transferred WEGLD
-            if self.is_wegld(&operation_token.token_identifier) {
-                wegld_amount += &operation_token.token_data.amount;
-                continue;
-            }
-
-            let has_sov_token_prefix = self.has_sov_token_prefix(&operation_token.token_identifier);
-
-            if !has_sov_token_prefix {
+            if !self.has_sov_token_prefix(&operation_token.token_identifier) {
                 output_payments.push(operation_token.clone());
                 continue;
             }
-
-            if self.was_token_minted(&operation_token.token_identifier) {
-                continue;
-            }
-
-            // subtract the issue cost
-            wegld_amount -= BigUint::from(DEFAULT_ISSUE_COST);
 
             let mut nonce = operation_token.token_nonce;
             if nonce == 0 {
@@ -153,20 +175,8 @@ pub trait TransferTokensModule:
             });
         }
 
-        if wegld_amount > 0 {
-            let sc_address = self.blockchain().get_sc_address();
-            let payment = EsdtTokenPayment::new(WEGLD_ID.into(), 0, wegld_amount);
-
-            self.tx()
-                .from(sc_address)
-                .to(sender)
-                .esdt(payment)
-                .transfer();
-        }
-
         output_payments
     }
-
     fn distribute_payments(
         &self,
         hash_of_hashes: ManagedBuffer,
