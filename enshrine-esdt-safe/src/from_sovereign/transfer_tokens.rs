@@ -56,6 +56,11 @@ pub trait TransferTokensModule:
         let call_payment = self.call_value().single_esdt().clone();
 
         require!(
+            call_payment.token_identifier == TokenIdentifier::from(WEGLD_ID),
+            "WEGLD is the only token accepted as register fee"
+        );
+
+        require!(
             call_payment.amount == DEFAULT_ISSUE_COST * tokens.len() as u64,
             "WEGLD fee amount is not met"
         );
