@@ -45,17 +45,25 @@ pub trait TransferTokensModule:
         self.distribute_payments(hash_of_hashes, operation_tuple, minted_operation_tokens);
     }
 
+    //TODO: register_token payable endpoint
+
     fn mint_tokens(
         &self,
         operation_tokens: &ManagedVec<OperationEsdtPayment<Self::Api>>,
     ) -> ManagedVec<OperationEsdtPayment<Self::Api>> {
         let mut output_payments = ManagedVec::new();
+        let mut wegld_amount = 0;
 
         for operation_token in operation_tokens.iter() {
-            if !self.has_sov_token_prefix(&operation_token.token_identifier) {
+            // TODO: check WEGLD -> continue
+            let has_sov_token_prefix = self.has_sov_token_prefix(&operation_token.token_identifier);
+
+            if !has_sov_token_prefix {
                 output_payments.push(operation_token.clone());
                 continue;
             }
+
+            // TODO: check storage + subtract 0.05 WEGLD
 
             let mut nonce = operation_token.token_nonce;
             if nonce == 0 {
@@ -110,6 +118,8 @@ pub trait TransferTokensModule:
                 token_data: operation_token.token_data,
             });
         }
+
+        // TODO: send remaining WEGLD to transfer_data.sender
 
         output_payments
     }
@@ -268,9 +278,17 @@ pub trait TransferTokensModule:
         }
     }
 
+    #[inline]
+    fn was_token_minted(&self, token_id: &TokenIdentifier<Self::Api>) -> bool {
+        self.paid_issued_tokens().contains(token_id)
+    }
+
     #[storage_mapper("pending_hashes")]
     fn pending_hashes(&self, hash_of_hashes: &ManagedBuffer) -> UnorderedSetMapper<ManagedBuffer>;
 
     #[storage_mapper("header_verifier_address")]
     fn header_verifier_address(&self) -> SingleValueMapper<ManagedAddress>;
+
+    #[storage_mapper("mintedTokens")]
+    fn paid_issued_tokens(&self) -> UnorderedSetMapper<TokenIdentifier<Self::Api>>;
 }
