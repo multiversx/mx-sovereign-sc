@@ -6,5 +6,5 @@ pub trait CommonStorage {
     fn is_sovereign_chain(&self) -> SingleValueMapper<bool>;
 
     #[storage_mapper("wegldTicker")]
-    fn wegld_ticker(&self) -> SingleValueMapper<TokenIdentifier>;
+    fn wegld_identifier(&self) -> SingleValueMapper<TokenIdentifier>;
 }

@@ -48,7 +48,8 @@ pub trait EnshrineEsdtSafe:
     #[only_owner]
     #[endpoint(setWegldTicker)]
     fn set_wegld_ticker(&self, wegld_ticker: ManagedBuffer) {
-        self.wegld_ticker().set(TokenIdentifier::from(wegld_ticker));
+        self.wegld_identifier()
+            .set(TokenIdentifier::from(wegld_ticker));
     }
 
     #[upgrade]
