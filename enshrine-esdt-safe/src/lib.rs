@@ -45,6 +45,12 @@ pub trait EnshrineEsdtSafe:
         self.header_verifier_address().set(&header_verifier_address);
     }
 
+    #[only_owner]
+    #[endpoint(setWegldTicker)]
+    fn set_wegld_ticker(&self, wegld_ticker: ManagedBuffer) {
+        self.wegld_ticker().set(wegld_ticker);
+    }
+
     #[upgrade]
     fn upgrade(&self) {}
 }
