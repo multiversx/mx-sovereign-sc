@@ -37,7 +37,8 @@ pub trait TransferTokensModule:
             sc_panic!("Operation is not registered");
         }
 
-        let (wegld_amount, checked_tokens) = self.calculate_wegld_fee(&operation.tokens);
+        let (wegld_amount, checked_tokens) =
+            self.check_tokens_for_wegld_fee(operation.tokens.clone());
 
         let minted_operation_tokens = self.mint_tokens(&checked_tokens);
         let operation_tuple = OperationTuple {
@@ -73,32 +74,33 @@ pub trait TransferTokensModule:
         }
     }
 
-    fn calculate_wegld_fee(
+    fn check_tokens_for_wegld_fee(
         &self,
-        tokens: &ManagedVec<OperationEsdtPayment<Self::Api>>,
+        tokens: ManagedVec<OperationEsdtPayment<Self::Api>>,
     ) -> (
         BigUint<Self::Api>,
         ManagedVec<OperationEsdtPayment<Self::Api>>,
     ) {
         let wegld_payment = tokens.get(0);
-        if tokens.len() == 1 {
-            return (wegld_payment.token_data.amount, tokens.clone());
+        let mut checked_tokens = tokens.clone();
+
+        if checked_tokens.len() == 1 {
+            return (wegld_payment.token_data.amount, checked_tokens);
         }
 
-        let mut checked_tokens = tokens.clone();
-        let initial_wegld_amount = wegld_payment.token_data.amount.clone();
-        let mut wegld_amount = initial_wegld_amount.clone();
+        let mut wegld_amount = wegld_payment.token_data.amount.clone();
 
         checked_tokens.remove(0);
 
         for token in checked_tokens.iter() {
-            if !self.was_token_minted(&token.token_identifier) {
+            if !self.was_token_registered(&token.token_identifier) {
                 wegld_amount -= token.token_data.amount;
+                self.register_token(token.token_identifier);
             }
         }
 
-        if wegld_amount == initial_wegld_amount {
-            return (wegld_payment.token_data.amount, tokens.clone());
+        if wegld_amount == wegld_payment.token_data.amount {
+            return (wegld_amount, tokens);
         }
 
         (wegld_amount, checked_tokens)
@@ -334,8 +336,13 @@ pub trait TransferTokensModule:
     }
 
     #[inline]
-    fn was_token_minted(&self, token_id: &TokenIdentifier<Self::Api>) -> bool {
+    fn was_token_registered(&self, token_id: &TokenIdentifier<Self::Api>) -> bool {
         self.paid_issued_tokens().contains(token_id)
+    }
+
+    #[inline]
+    fn register_token(&self, token_id: TokenIdentifier<Self::Api>) {
+        self.paid_issued_tokens().insert(token_id);
     }
 
     #[inline]
