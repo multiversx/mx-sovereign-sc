@@ -105,14 +105,9 @@ pub trait TransferTokensModule:
     }
 
     fn refund_wegld(&self, sender: &ManagedAddress<Self::Api>, wegld_amount: BigUint<Self::Api>) {
-        let sc_address = self.blockchain().get_sc_address();
         let payment = EsdtTokenPayment::new(WEGLD_ID.into(), 0, wegld_amount);
 
-        self.tx()
-            .from(sc_address)
-            .to(sender)
-            .esdt(payment)
-            .transfer();
+        self.tx().to(sender).esdt(payment).transfer();
     }
 
     fn mint_tokens(
