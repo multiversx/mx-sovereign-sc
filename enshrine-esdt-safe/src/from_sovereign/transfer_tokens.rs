@@ -7,7 +7,6 @@ use transaction::{GasLimit, Operation, OperationData, OperationEsdtPayment, Oper
 
 const CALLBACK_GAS: GasLimit = 10_000_000; // Increase if not enough
 const TRANSACTION_GAS: GasLimit = 30_000_000;
-const WEGLD_ID: &str = "WEGLD-bd4d79";
 const DEFAULT_ISSUE_COST: u64 = 50000000000000000;
 
 #[multiversx_sc::module]
@@ -57,9 +56,10 @@ pub trait TransferTokensModule:
     #[payable("*")]
     fn register_tokens(&self, tokens: MultiValueEncoded<TokenIdentifier>) {
         let call_payment = self.call_value().single_esdt().clone();
+        let wegld_identifier = self.wegld_identifier().get();
 
         require!(
-            call_payment.token_identifier == TokenIdentifier::from(WEGLD_ID),
+            call_payment.token_identifier == wegld_identifier,
             "WEGLD is the only token accepted as register fee"
         );
 
@@ -105,7 +105,8 @@ pub trait TransferTokensModule:
     }
 
     fn refund_wegld(&self, sender: &ManagedAddress<Self::Api>, wegld_amount: BigUint<Self::Api>) {
-        let payment = EsdtTokenPayment::new(WEGLD_ID.into(), 0, wegld_amount);
+        let wegld_identifier = self.wegld_identifier().get();
+        let payment = EsdtTokenPayment::new(wegld_identifier, 0, wegld_amount);
 
         self.tx().to(sender).esdt(payment).transfer();
     }
