@@ -111,6 +111,19 @@ where
             .original_result()
     }
 
+    pub fn set_wegld_ticker<
+        Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
+    >(
+        self,
+        wegld_ticker: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("setWegldTicker")
+            .argument(&wegld_ticker)
+            .original_result()
+    }
+
     pub fn deposit<
         Arg0: ProxyArg<ManagedAddress<Env::Api>>,
         Arg1: ProxyArg<OptionalValue<MultiValue3<u64, ManagedBuffer<Env::Api>, ManagedVec<Env::Api, ManagedBuffer<Env::Api>>>>>,
