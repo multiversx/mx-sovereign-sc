@@ -30,7 +30,7 @@ const RECEIVER_ADDRESS: TestAddress = TestAddress::new("receiver");
 
 const NFT_TOKEN_ID: TestTokenIdentifier = TestTokenIdentifier::new("NFT-123456");
 const FUNGIBLE_TOKEN_ID: TestTokenIdentifier = TestTokenIdentifier::new("CROWD-123456");
-const PREFIX_NFT_TOKEN_ID: TestTokenIdentifier = TestTokenIdentifier::new("SOV-NFT-123456");
+const PREFIX_NFT_TOKEN_ID: TestTokenIdentifier = TestTokenIdentifier::new("sov-NFT-123456");
 
 fn world() -> ScenarioWorld {
     let mut blockchain = ScenarioWorld::new();
