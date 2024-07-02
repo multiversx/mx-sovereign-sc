@@ -24,9 +24,21 @@ pub trait EnshrineEsdtSafe:
     + common::storage::CommonStorage
 {
     #[init]
-    fn init(&self, is_sovereign_chain: bool) {
+    fn init(&self, is_sovereign_chain: bool, wegld_ticker: OptionalValue<ManagedBuffer>) {
         self.is_sovereign_chain().set(is_sovereign_chain);
         self.set_paused(true);
+
+        if !is_sovereign_chain {
+            match wegld_ticker {
+                OptionalValue::Some(ticker) => {
+                    let identifier = TokenIdentifier::from(ticker);
+                    if identifier.is_valid_esdt_identifier() {
+                        self.wegld_identifier().set(identifier);
+                    }
+                }
+                OptionalValue::None => sc_panic!("WEGLD identifier must be set in Mainchain"),
+            }
+        }
     }
 
     #[only_owner]
@@ -43,20 +55,6 @@ pub trait EnshrineEsdtSafe:
         self.require_sc_address(&header_verifier_address);
 
         self.header_verifier_address().set(&header_verifier_address);
-    }
-
-    #[only_owner]
-    #[endpoint(setWegldTicker)]
-    fn set_wegld_ticker(&self, wegld_ticker: ManagedBuffer) {
-        let is_sovereign_chain = self.is_sovereign_chain().get();
-
-        require!(
-            is_sovereign_chain == true,
-            "WEGLD Identifier can be set only on Mainchain"
-        );
-
-        self.wegld_identifier()
-            .set(TokenIdentifier::from(wegld_ticker));
     }
 
     #[upgrade]

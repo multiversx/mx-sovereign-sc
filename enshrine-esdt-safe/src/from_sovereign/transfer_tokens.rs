@@ -39,7 +39,7 @@ pub trait TransferTokensModule:
             sc_panic!("Operation is not registered");
         }
 
-        let (wegld_amount, remaining_tokens) = self.verify_operation_tokens_for_issue_fee(
+        let remaining_tokens = self.verify_operation_tokens_for_issue_fee(
             &operation.data.op_sender,
             operation.tokens.clone(),
         );
