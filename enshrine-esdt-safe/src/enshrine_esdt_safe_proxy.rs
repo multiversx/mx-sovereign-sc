@@ -49,13 +49,13 @@ where
     >(
         self,
         is_sovereign_chain: Arg0,
-        wegld_ticker: Arg1,
+        wegld_identifier: Arg1,
     ) -> TxTypedDeploy<Env, From, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_deploy()
             .argument(&is_sovereign_chain)
-            .argument(&wegld_ticker)
+            .argument(&wegld_identifier)
             .original_result()
     }
 }
