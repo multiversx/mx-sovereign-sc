@@ -58,7 +58,13 @@ pub trait TransferTokensModule:
             );
         }
 
-        self.execute_bridge_operation_event(hash_of_hashes, operation_hash);
+        self.emit_transfer_failed_events(
+            &hash_of_hashes,
+            &OperationTuple {
+                op_hash: operation_hash,
+                operation,
+            },
+        );
     }
 
     #[endpoint(registerTokens)]
@@ -93,25 +99,26 @@ pub trait TransferTokensModule:
         if !is_first_payment_wegld {
             for token in tokens.iter() {
                 if !self.was_token_registered(&token.token_identifier)
-                    || self.has_sov_token_prefix(&token.token_identifier)
+                    && self.has_sov_token_prefix(&token.token_identifier)
                 {
                     return ManagedVec::new();
                 }
             }
+
+            return tokens;
         }
 
         if is_first_payment_wegld && tokens.len() == 1 {
             return tokens;
         }
 
-        let mut remaining_tokens = tokens.clone();
         let mut wegld_amount = first_payment.token_data.amount.clone();
         let mut unregistered_tokens_count = 0;
 
-        remaining_tokens.remove(0);
-
-        for token in remaining_tokens.iter() {
-            if !self.was_token_registered(&token.token_identifier) {
+        for token in tokens.iter().skip(1) {
+            if !self.was_token_registered(&token.token_identifier)
+                && self.has_sov_token_prefix(&token.token_identifier)
+            {
                 unregistered_tokens_count += 1;
                 self.register_token(token.token_identifier);
             }
