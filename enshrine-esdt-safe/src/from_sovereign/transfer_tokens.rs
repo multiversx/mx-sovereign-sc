@@ -370,8 +370,7 @@ pub trait TransferTokensModule:
 
     #[inline]
     fn is_wegld(&self, token_id: &TokenIdentifier<Self::Api>) -> bool {
-        let wegld_identifier = self.wegld_identifier().get();
-        token_id.eq(&wegld_identifier)
+        token_id.eq(&self.wegld_identifier().get())
     }
 
     #[storage_mapper("pending_hashes")]
