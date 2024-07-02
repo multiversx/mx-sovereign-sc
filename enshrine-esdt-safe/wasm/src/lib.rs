@@ -6,10 +6,10 @@
 
 // Init:                                 1
 // Upgrade:                              1
-// Endpoints:                           29
+// Endpoints:                           28
 // Async Callback:                       1
 // Promise callbacks:                    1
-// Total number of exported functions:  33
+// Total number of exported functions:  32
 
 #![no_std]
 
@@ -23,7 +23,6 @@ multiversx_sc_wasm_adapter::endpoints! {
         upgrade => upgrade
         setFeeMarketAddress => set_fee_market_address
         setHeaderVerifierAddress => set_header_verifier_address
-        setWegldTicker => set_wegld_ticker
         deposit => deposit
         setMinValidSigners => set_min_valid_signers
         addSigners => add_signers
