@@ -23,8 +23,10 @@ pub trait TransferTokensModule:
 {
     #[endpoint(executeBridgeOps)]
     fn execute_operations(&self, hash_of_hashes: ManagedBuffer, operation: Operation<Self::Api>) {
+        let is_sovereign_chain = self.is_sovereign_chain().get();
+
         require!(
-            !self.is_sovereign_chain().get(),
+            !is_sovereign_chain,
             "Invalid method to call in current chain"
         );
 
@@ -51,8 +53,6 @@ pub trait TransferTokensModule:
         self.distribute_payments(hash_of_hashes, operation_tuple, minted_operation_tokens);
     }
 
-    //TODO: register_token payable endpoint
-    // require x amount wegld
     #[endpoint(registerTokens)]
     #[payable("*")]
     fn register_tokens(&self, tokens: MultiValueEncoded<TokenIdentifier>) {
@@ -69,8 +69,8 @@ pub trait TransferTokensModule:
             "WEGLD fee amount is not met"
         );
 
-        for token in tokens {
-            self.paid_issued_tokens().insert(token);
+        for token_id in tokens {
+            self.register_token(token_id);
         }
     }
 

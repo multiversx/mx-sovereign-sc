@@ -48,6 +48,13 @@ pub trait EnshrineEsdtSafe:
     #[only_owner]
     #[endpoint(setWegldTicker)]
     fn set_wegld_ticker(&self, wegld_ticker: ManagedBuffer) {
+        let is_sovereign_chain = self.is_sovereign_chain().get();
+
+        require!(
+            is_sovereign_chain == true,
+            "WEGLD Identifier can be set only on Mainchain"
+        );
+
         self.wegld_identifier()
             .set(TokenIdentifier::from(wegld_ticker));
     }
