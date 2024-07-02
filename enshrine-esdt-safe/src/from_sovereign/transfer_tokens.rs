@@ -42,13 +42,13 @@ pub trait TransferTokensModule:
         let (wegld_amount, checked_tokens) =
             self.check_tokens_for_wegld_fee(operation.tokens.clone());
 
+        self.refund_wegld(&operation.data.op_sender, wegld_amount);
+
         let minted_operation_tokens = self.mint_tokens(&checked_tokens);
         let operation_tuple = OperationTuple {
             op_hash: operation_hash,
             operation: operation.clone(),
         };
-
-        self.refund_wegld(&operation.data.op_sender, wegld_amount);
 
         self.distribute_payments(hash_of_hashes, operation_tuple, minted_operation_tokens);
     }
@@ -81,29 +81,44 @@ pub trait TransferTokensModule:
         BigUint<Self::Api>,
         ManagedVec<OperationEsdtPayment<Self::Api>>,
     ) {
-        let wegld_payment = tokens.get(0);
-        let mut checked_tokens = tokens.clone();
+        let biguint_zero = BigUint::from(0u32);
+        let first_payment = tokens.get(0);
+        let is_first_payment_wegld = self.is_wegld(&first_payment.token_identifier);
 
-        if checked_tokens.len() == 1 {
-            return (wegld_payment.token_data.amount, checked_tokens);
+        if !is_first_payment_wegld {
+            for token in tokens.iter() {
+                if !self.was_token_registered(&token.token_identifier)
+                    || self.has_sov_token_prefix(&token.token_identifier)
+                {
+                    return (biguint_zero, ManagedVec::new());
+                }
+            }
         }
 
-        let mut wegld_amount = wegld_payment.token_data.amount.clone();
+        if is_first_payment_wegld && tokens.len() == 1 {
+            return (biguint_zero, tokens);
+        }
 
-        checked_tokens.remove(0);
+        let mut remaining_tokens = tokens.clone();
+        let mut wegld_amount = first_payment.token_data.amount.clone();
+        let mut unregistered_tokens_count = 0;
 
-        for token in checked_tokens.iter() {
+        remaining_tokens.remove(0);
+
+        for token in remaining_tokens.iter() {
             if !self.was_token_registered(&token.token_identifier) {
-                wegld_amount -= token.token_data.amount;
+                unregistered_tokens_count += 1;
                 self.register_token(token.token_identifier);
             }
         }
 
-        if wegld_amount == wegld_payment.token_data.amount {
+        wegld_amount -= DEFAULT_ISSUE_COST * unregistered_tokens_count;
+
+        if first_payment.token_data.amount >= wegld_amount {
             return (wegld_amount, tokens);
         }
 
-        (wegld_amount, checked_tokens)
+        (biguint_zero, tokens)
     }
 
     fn refund_wegld(&self, sender: &ManagedAddress<Self::Api>, wegld_amount: BigUint<Self::Api>) {
