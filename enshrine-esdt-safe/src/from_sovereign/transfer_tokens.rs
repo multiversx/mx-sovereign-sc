@@ -40,7 +40,7 @@ pub trait TransferTokensModule:
         }
 
         let (wegld_amount, remaining_tokens) =
-            self.check_tokens_for_wegld_fee(operation.tokens.clone());
+            self.verify_operation_tokens_for_issue_fee(operation.tokens.clone());
 
         if remaining_tokens.len() > 0 {
             self.refund_wegld(&operation.data.op_sender, wegld_amount);
@@ -82,7 +82,7 @@ pub trait TransferTokensModule:
         }
     }
 
-    fn check_tokens_for_wegld_fee(
+    fn verify_operation_tokens_for_issue_fee(
         &self,
         tokens: ManagedVec<OperationEsdtPayment<Self::Api>>,
     ) -> (
