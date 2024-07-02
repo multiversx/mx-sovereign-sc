@@ -39,18 +39,26 @@ pub trait TransferTokensModule:
             sc_panic!("Operation is not registered");
         }
 
-        let (wegld_amount, checked_tokens) =
+        let (wegld_amount, remaining_tokens) =
             self.check_tokens_for_wegld_fee(operation.tokens.clone());
 
-        self.refund_wegld(&operation.data.op_sender, wegld_amount);
+        if remaining_tokens.len() > 0 {
+            self.refund_wegld(&operation.data.op_sender, wegld_amount);
 
-        let minted_operation_tokens = self.mint_tokens(&checked_tokens);
-        let operation_tuple = OperationTuple {
-            op_hash: operation_hash,
-            operation: operation.clone(),
-        };
+            let minted_operation_tokens = self.mint_tokens(&remaining_tokens);
+            let operation_tuple = OperationTuple {
+                op_hash: operation_hash.clone(),
+                operation: operation.clone(),
+            };
 
-        self.distribute_payments(hash_of_hashes, operation_tuple, minted_operation_tokens);
+            self.distribute_payments(
+                hash_of_hashes.clone(),
+                operation_tuple,
+                minted_operation_tokens,
+            );
+        }
+
+        self.execute_bridge_operation_event(hash_of_hashes, operation_hash);
     }
 
     #[endpoint(registerTokens)]
