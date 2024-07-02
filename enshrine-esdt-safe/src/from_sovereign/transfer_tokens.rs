@@ -39,12 +39,12 @@ pub trait TransferTokensModule:
             sc_panic!("Operation is not registered");
         }
 
-        let (wegld_amount, remaining_tokens) =
-            self.verify_operation_tokens_for_issue_fee(operation.tokens.clone());
+        let (wegld_amount, remaining_tokens) = self.verify_operation_tokens_for_issue_fee(
+            &operation.data.op_sender,
+            operation.tokens.clone(),
+        );
 
         if remaining_tokens.len() > 0 {
-            self.refund_wegld(&operation.data.op_sender, wegld_amount);
-
             let minted_operation_tokens = self.mint_tokens(&remaining_tokens);
             let operation_tuple = OperationTuple {
                 op_hash: operation_hash.clone(),
@@ -84,12 +84,9 @@ pub trait TransferTokensModule:
 
     fn verify_operation_tokens_for_issue_fee(
         &self,
+        sender: &ManagedAddress<Self::Api>,
         tokens: ManagedVec<OperationEsdtPayment<Self::Api>>,
-    ) -> (
-        BigUint<Self::Api>,
-        ManagedVec<OperationEsdtPayment<Self::Api>>,
-    ) {
-        let biguint_zero = BigUint::from(0u32);
+    ) -> ManagedVec<OperationEsdtPayment<Self::Api>> {
         let first_payment = tokens.get(0);
         let is_first_payment_wegld = self.is_wegld(&first_payment.token_identifier);
 
@@ -98,13 +95,13 @@ pub trait TransferTokensModule:
                 if !self.was_token_registered(&token.token_identifier)
                     || self.has_sov_token_prefix(&token.token_identifier)
                 {
-                    return (biguint_zero, ManagedVec::new());
+                    return ManagedVec::new();
                 }
             }
         }
 
         if is_first_payment_wegld && tokens.len() == 1 {
-            return (biguint_zero, tokens);
+            return tokens;
         }
 
         let mut remaining_tokens = tokens.clone();
@@ -123,10 +120,11 @@ pub trait TransferTokensModule:
         wegld_amount -= DEFAULT_ISSUE_COST * unregistered_tokens_count;
 
         if first_payment.token_data.amount >= wegld_amount {
-            return (wegld_amount, tokens);
+            self.refund_wegld(sender, wegld_amount.clone());
+            return tokens;
         }
 
-        (biguint_zero, tokens)
+        tokens
     }
 
     fn refund_wegld(&self, sender: &ManagedAddress<Self::Api>, wegld_amount: BigUint<Self::Api>) {
