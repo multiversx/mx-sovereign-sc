@@ -24,12 +24,12 @@ pub trait EnshrineEsdtSafe:
     + common::storage::CommonStorage
 {
     #[init]
-    fn init(&self, is_sovereign_chain: bool, wegld_ticker: OptionalValue<ManagedBuffer>) {
+    fn init(&self, is_sovereign_chain: bool, wegld_identifier: OptionalValue<ManagedBuffer>) {
         self.is_sovereign_chain().set(is_sovereign_chain);
         self.set_paused(true);
 
         if !is_sovereign_chain {
-            match wegld_ticker {
+            match wegld_identifier {
                 OptionalValue::Some(ticker) => {
                     let identifier = TokenIdentifier::from(ticker);
                     if identifier.is_valid_esdt_identifier() {
