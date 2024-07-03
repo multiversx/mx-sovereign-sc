@@ -144,10 +144,12 @@ pub trait TransferTokensModule:
             return (true, registered_tokens);
         }
 
-        (false, tokens)
+        (false, ManagedVec::new())
     }
 
     fn refund_wegld(&self, sender: &ManagedAddress<Self::Api>, wegld_amount: BigUint<Self::Api>) {
+        require!(wegld_amount > 0, "No WEGLD fee sent");
+
         let wegld_identifier = self.wegld_identifier().get();
         let payment = EsdtTokenPayment::new(wegld_identifier, 0, wegld_amount);
 
