@@ -135,7 +135,7 @@ pub trait TransferTokensModule:
                 self.register_token(token_identifier.clone_value());
             }
 
-            let mut registered_tokens = tokens.clone();
+            let mut registered_tokens = tokens;
             registered_tokens.remove(0);
             self.refund_wegld(sender, wegld_fee_amount);
 
