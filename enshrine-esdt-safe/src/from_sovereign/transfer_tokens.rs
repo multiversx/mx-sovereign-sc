@@ -93,6 +93,8 @@ pub trait TransferTokensModule:
         sender: &ManagedAddress<Self::Api>,
         tokens: ManagedVec<OperationEsdtPayment<Self::Api>>,
     ) -> (bool, ManagedVec<OperationEsdtPayment<Self::Api>>) {
+        require!(!tokens.is_empty(), "Tokens array should not be empty");
+
         let first_payment = tokens.get(0);
         let is_first_payment_wegld = self.is_wegld(&first_payment.token_identifier);
 
@@ -129,6 +131,10 @@ pub trait TransferTokensModule:
         let wegld_fee_amount = BigUint::from(DEFAULT_ISSUE_COST * unregistered_tokens.len() as u64);
 
         if first_payment.token_data.amount >= wegld_fee_amount {
+            for token_identifier in unregistered_tokens.iter() {
+                self.register_token(token_identifier.clone_value());
+            }
+
             let mut registered_tokens = tokens.clone();
             registered_tokens.remove(0);
             self.refund_wegld(sender, wegld_fee_amount);
