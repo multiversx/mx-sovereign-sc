@@ -112,26 +112,31 @@ pub trait TransferTokensModule:
             return tokens;
         }
 
-        let mut wegld_amount = first_payment.token_data.amount.clone();
-        let mut unregistered_tokens_count = 0;
+        let mut unregistered_tokens: ManagedVec<TokenIdentifier> = ManagedVec::new();
 
         for token in tokens.iter().skip(1) {
             if !self.was_token_registered(&token.token_identifier)
                 && self.has_sov_token_prefix(&token.token_identifier)
             {
-                unregistered_tokens_count += 1;
-                self.register_token(token.token_identifier);
+                unregistered_tokens.push(token.token_identifier);
             }
         }
 
-        wegld_amount -= DEFAULT_ISSUE_COST * unregistered_tokens_count;
-
-        if first_payment.token_data.amount >= wegld_amount {
-            self.refund_wegld(sender, wegld_amount);
+        if unregistered_tokens.is_empty() {
             return tokens;
         }
 
-        tokens
+        let wegld_fee_amount = BigUint::from(DEFAULT_ISSUE_COST * unregistered_tokens.len() as u64);
+
+        if first_payment.token_data.amount >= wegld_fee_amount {
+            let mut registered_tokens = tokens.clone();
+            registered_tokens.remove(0);
+            self.refund_wegld(sender, wegld_fee_amount);
+
+            return registered_tokens;
+        }
+
+        sc_panic!("Not enough WEGLD to register all tokens");
     }
 
     fn refund_wegld(&self, sender: &ManagedAddress<Self::Api>, wegld_amount: BigUint<Self::Api>) {
