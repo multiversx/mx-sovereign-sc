@@ -143,6 +143,8 @@ pub trait TransferTokensModule:
 
             return (true, registered_tokens);
         }
+
+        (false, tokens)
     }
 
     fn refund_wegld(&self, sender: &ManagedAddress<Self::Api>, wegld_amount: BigUint<Self::Api>) {
