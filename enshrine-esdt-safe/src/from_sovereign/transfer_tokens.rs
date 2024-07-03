@@ -127,7 +127,7 @@ pub trait TransferTokensModule:
         wegld_amount -= DEFAULT_ISSUE_COST * unregistered_tokens_count;
 
         if first_payment.token_data.amount >= wegld_amount {
-            self.refund_wegld(sender, wegld_amount.clone());
+            self.refund_wegld(sender, wegld_amount);
             return tokens;
         }
 
@@ -290,6 +290,7 @@ pub trait TransferTokensModule:
                 );
             }
             ManagedAsyncCallResult::Err(_) => {
+                self.burn_sovereign_tokens(&operation_tuple.operation);
                 self.emit_transfer_failed_events(hash_of_hashes, operation_tuple);
             }
         }
@@ -303,6 +304,18 @@ pub trait TransferTokensModule:
             .sync_call();
     }
 
+    fn burn_sovereign_tokens(&self, operation: &Operation<Self::Api>) {
+        for token in operation.tokens.iter() {
+            if self.has_sov_token_prefix(&token.token_identifier) {
+                self.send().esdt_local_burn(
+                    &token.token_identifier,
+                    token.token_nonce,
+                    &token.token_data.amount,
+                );
+            }
+        }
+    }
+
     fn emit_transfer_failed_events(
         &self,
         hash_of_hashes: &ManagedBuffer,
@@ -312,14 +325,6 @@ pub trait TransferTokensModule:
             hash_of_hashes.clone(),
             operation_tuple.op_hash.clone(),
         );
-
-        for operation_token in &operation_tuple.operation.tokens {
-            self.send().esdt_local_burn(
-                &operation_token.token_identifier,
-                operation_token.token_nonce,
-                &operation_token.token_data.amount,
-            );
-        }
 
         // deposit back mainchain tokens into user account
         let sc_address = self.blockchain().get_sc_address();
