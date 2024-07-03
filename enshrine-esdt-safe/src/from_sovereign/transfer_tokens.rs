@@ -44,26 +44,28 @@ pub trait TransferTokensModule:
             operation.tokens.clone(),
         );
 
-        if is_wegld_fee_paid {
-            let minted_operation_tokens = self.mint_tokens(&remaining_tokens);
-            let operation_tuple = OperationTuple {
-                op_hash: operation_hash.clone(),
-                operation: operation.clone(),
-            };
-
-            self.distribute_payments(
-                hash_of_hashes.clone(),
-                operation_tuple,
-                minted_operation_tokens,
+        if !is_wegld_fee_paid {
+            self.emit_transfer_failed_events(
+                &hash_of_hashes,
+                &OperationTuple {
+                    op_hash: operation_hash,
+                    operation,
+                },
             );
+
+            sc_panic!("Not enough WEGLD to register all tokens");
         }
 
-        self.emit_transfer_failed_events(
-            &hash_of_hashes,
-            &OperationTuple {
-                op_hash: operation_hash,
-                operation,
-            },
+        let minted_operation_tokens = self.mint_tokens(&remaining_tokens);
+        let operation_tuple = OperationTuple {
+            op_hash: operation_hash.clone(),
+            operation: operation.clone(),
+        };
+
+        self.distribute_payments(
+            hash_of_hashes.clone(),
+            operation_tuple,
+            minted_operation_tokens,
         );
     }
 
@@ -141,8 +143,6 @@ pub trait TransferTokensModule:
 
             return (true, registered_tokens);
         }
-
-        sc_panic!("Not enough WEGLD to register all tokens");
     }
 
     fn refund_wegld(&self, sender: &ManagedAddress<Self::Api>, wegld_amount: BigUint<Self::Api>) {
