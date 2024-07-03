@@ -137,7 +137,7 @@ pub trait TransferTokensModule:
 
             let mut registered_tokens = tokens;
             registered_tokens.remove(0);
-            self.refund_wegld(sender, wegld_fee_amount);
+            self.refund_wegld(sender, first_payment.token_data.amount - wegld_fee_amount);
 
             return (true, registered_tokens);
         }
