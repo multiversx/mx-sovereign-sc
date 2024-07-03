@@ -39,12 +39,12 @@ pub trait TransferTokensModule:
             sc_panic!("Operation is not registered");
         }
 
-        let remaining_tokens = self.verify_operation_tokens_for_issue_fee(
+        let (is_wegld_fee_paid, remaining_tokens) = self.verify_operation_tokens_for_issue_fee(
             &operation.data.op_sender,
             operation.tokens.clone(),
         );
 
-        if remaining_tokens.len() > 0 {
+        if is_wegld_fee_paid {
             let minted_operation_tokens = self.mint_tokens(&remaining_tokens);
             let operation_tuple = OperationTuple {
                 op_hash: operation_hash.clone(),
@@ -92,7 +92,7 @@ pub trait TransferTokensModule:
         &self,
         sender: &ManagedAddress<Self::Api>,
         tokens: ManagedVec<OperationEsdtPayment<Self::Api>>,
-    ) -> ManagedVec<OperationEsdtPayment<Self::Api>> {
+    ) -> (bool, ManagedVec<OperationEsdtPayment<Self::Api>>) {
         let first_payment = tokens.get(0);
         let is_first_payment_wegld = self.is_wegld(&first_payment.token_identifier);
 
@@ -101,15 +101,15 @@ pub trait TransferTokensModule:
                 if !self.was_token_registered(&token.token_identifier)
                     && self.has_sov_token_prefix(&token.token_identifier)
                 {
-                    return ManagedVec::new();
+                    return (false, ManagedVec::new());
                 }
             }
 
-            return tokens;
+            return (true, tokens);
         }
 
         if is_first_payment_wegld && tokens.len() == 1 {
-            return tokens;
+            return (true, tokens);
         }
 
         let mut unregistered_tokens: ManagedVec<TokenIdentifier> = ManagedVec::new();
@@ -123,7 +123,7 @@ pub trait TransferTokensModule:
         }
 
         if unregistered_tokens.is_empty() {
-            return tokens;
+            return (true, tokens);
         }
 
         let wegld_fee_amount = BigUint::from(DEFAULT_ISSUE_COST * unregistered_tokens.len() as u64);
@@ -133,7 +133,7 @@ pub trait TransferTokensModule:
             registered_tokens.remove(0);
             self.refund_wegld(sender, wegld_fee_amount);
 
-            return registered_tokens;
+            return (true, registered_tokens);
         }
 
         sc_panic!("Not enough WEGLD to register all tokens");
