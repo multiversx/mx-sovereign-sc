@@ -1,3 +1,5 @@
+use core::iter::empty;
+
 use crate::{common, to_sovereign};
 use builtin_func_names::ESDT_NFT_CREATE_FUNC_NAME;
 use header_verifier::header_verifier_proxy;
@@ -93,14 +95,14 @@ pub trait TransferTokensModule:
     fn get_wegld_payment(
         &self,
         tokens: &ManagedVec<OperationEsdtPayment<Self::Api>>,
-    ) -> OperationEsdtPayment<Self::Api> {
-        for token in tokens.iter() {
+    ) -> (OperationEsdtPayment<Self::Api>, usize) {
+        for (i, token) in tokens.iter().enumerate() {
             if self.is_wegld(&token.token_identifier) {
-                return token;
+                return (token, i);
             }
         }
 
-        OperationEsdtPayment::default()
+        (OperationEsdtPayment::default(), 0)
     }
 
     fn verify_operation_tokens_for_issue_fee(
@@ -109,10 +111,11 @@ pub trait TransferTokensModule:
         tokens: ManagedVec<OperationEsdtPayment<Self::Api>>,
     ) -> (ManagedVec<OperationEsdtPayment<Self::Api>>, bool) {
         require!(!tokens.is_empty(), "Tokens array should not be empty");
-        let wegld_payment = self.get_wegld_payment(&tokens);
-        let is_first_payment_wegld = self.is_wegld(&wegld_payment.token_identifier);
+        let (wegld_payment, wegld_position) = self.get_wegld_payment(&tokens);
+        let is_empty_identifier =
+            wegld_payment.token_identifier == TokenIdentifier::from(ManagedBuffer::new());
 
-        if !is_first_payment_wegld {
+        if is_empty_identifier {
             for token in tokens.iter() {
                 if !self.was_token_registered(&token.token_identifier) {
                     return (ManagedVec::new(), false);
@@ -122,13 +125,13 @@ pub trait TransferTokensModule:
             return (tokens, false);
         };
 
-        if is_first_payment_wegld && tokens.len() == 1 {
+        if !is_empty_identifier && tokens.len() == 1 {
             return (tokens, false);
         }
 
         let mut unregistered_tokens: ManagedVec<TokenIdentifier> = ManagedVec::new();
 
-        for token in tokens.iter().skip(1) {
+        for token in tokens.iter() {
             if !self.was_token_registered(&token.token_identifier) {
                 unregistered_tokens.push(token.token_identifier);
             }
@@ -140,7 +143,7 @@ pub trait TransferTokensModule:
 
         let wegld_fee_amount = BigUint::from(DEFAULT_ISSUE_COST * unregistered_tokens.len() as u64);
         let mut registered_tokens = tokens;
-        registered_tokens.remove(0);
+        registered_tokens.remove(wegld_position);
 
         if wegld_payment.token_data.amount < wegld_fee_amount {
             return (ManagedVec::new(), false);
