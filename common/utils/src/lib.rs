@@ -81,10 +81,22 @@ pub trait UtilsModule: bls_signature::BlsSignatureModule {
         false
     }
 
-    #[inline]
-    fn has_sov_prefix(&self, token_id: &TokenIdentifier, sov_prefix: ManagedBuffer) -> bool {
+    fn has_sov_prefix(&self, token_id: &TokenIdentifier, chain_prefix: ManagedBuffer) -> bool {
         require!(self.has_prefix(token_id), "Token does not have prefix");
 
-        *token_id == TokenIdentifier::from(sov_prefix)
+        let dash = b'-';
+        let buffer = token_id.as_managed_buffer();
+        let mut array_buffer = [0u8; 32];
+        let slice = buffer.load_to_byte_array(&mut array_buffer);
+
+        if let Some(index) = slice.iter().position(|&b| b == dash) {
+            let prefix = ManagedBuffer::from(&slice[..index]);
+
+            if prefix == chain_prefix {
+                return true;
+            }
+        }
+
+        false
     }
 }
