@@ -183,7 +183,7 @@ pub trait TransferTokensModule:
         let mut output_payments = ManagedVec::new();
 
         for operation_token in operation_tokens.iter() {
-            if !self.has_sov_token_prefix(&operation_token.token_identifier) {
+            if !self.has_prefix(&operation_token.token_identifier) {
                 output_payments.push(operation_token.clone());
                 continue;
             }
@@ -341,7 +341,7 @@ pub trait TransferTokensModule:
 
     fn burn_sovereign_tokens(&self, operation: &Operation<Self::Api>) {
         for token in operation.tokens.iter() {
-            if self.has_sov_token_prefix(&token.token_identifier) {
+            if self.has_prefix(&token.token_identifier) {
                 self.send().esdt_local_burn(
                     &token.token_identifier,
                     token.token_nonce,
@@ -405,7 +405,7 @@ pub trait TransferTokensModule:
 
     #[inline]
     fn was_token_registered(&self, token_id: &TokenIdentifier<Self::Api>) -> bool {
-        self.has_sov_token_prefix(token_id) && self.paid_issued_tokens().contains(token_id)
+        self.has_prefix(token_id) && self.paid_issued_tokens().contains(token_id)
     }
 
     #[inline]

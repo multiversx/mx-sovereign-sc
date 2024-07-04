@@ -66,7 +66,7 @@ pub trait UtilsModule: bls_signature::BlsSignatureModule {
         list
     }
 
-    fn has_sov_token_prefix(&self, token_id: &TokenIdentifier) -> bool {
+    fn has_prefix(&self, token_id: &TokenIdentifier) -> bool {
         let dash = b'-';
         let buffer = token_id.as_managed_buffer();
         let mut array_buffer = [0u8; 32];

@@ -7,4 +7,7 @@ pub trait CommonStorage {
 
     #[storage_mapper("wegldIdentifier")]
     fn wegld_identifier(&self) -> SingleValueMapper<TokenIdentifier>;
+
+    #[storage_mapper("sovereignTokenPrefix")]
+    fn sovereign_token_prefix(&self) -> SingleValueMapper<ManagedBuffer>;
 }
