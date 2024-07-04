@@ -1,5 +1,3 @@
-use core::iter::empty;
-
 use crate::{common, to_sovereign};
 use builtin_func_names::ESDT_NFT_CREATE_FUNC_NAME;
 use header_verifier::header_verifier_proxy;
@@ -90,6 +88,17 @@ pub trait TransferTokensModule:
         for token_id in tokens {
             self.register_token(token_id);
         }
+    }
+
+    #[endpoint(depositForNewRegistrations)]
+    #[payable("*")]
+    fn deposit_for_new_registrations(&self) {
+        let call_value = self.call_value().single_esdt();
+
+        require!(
+            call_value.amount >= DEFAULT_ISSUE_COST,
+            "The minimum amount of WEGLD wasn't met"
+        );
     }
 
     fn get_wegld_payment(
