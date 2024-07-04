@@ -90,15 +90,27 @@ pub trait TransferTokensModule:
         }
     }
 
+    fn get_wegld_payment(
+        &self,
+        tokens: &ManagedVec<OperationEsdtPayment<Self::Api>>,
+    ) -> OperationEsdtPayment<Self::Api> {
+        for token in tokens.iter() {
+            if self.is_wegld(&token.token_identifier) {
+                return token;
+            }
+        }
+
+        OperationEsdtPayment::default()
+    }
+
     fn verify_operation_tokens_for_issue_fee(
         &self,
         sender: &ManagedAddress<Self::Api>,
         tokens: ManagedVec<OperationEsdtPayment<Self::Api>>,
     ) -> (ManagedVec<OperationEsdtPayment<Self::Api>>, bool) {
         require!(!tokens.is_empty(), "Tokens array should not be empty");
-
-        let first_payment = tokens.get(0);
-        let is_first_payment_wegld = self.is_wegld(&first_payment.token_identifier);
+        let wegld_payment = self.get_wegld_payment(&tokens);
+        let is_first_payment_wegld = self.is_wegld(&wegld_payment.token_identifier);
 
         if !is_first_payment_wegld {
             for token in tokens.iter() {
@@ -130,7 +142,7 @@ pub trait TransferTokensModule:
         let mut registered_tokens = tokens;
         registered_tokens.remove(0);
 
-        if first_payment.token_data.amount < wegld_fee_amount {
+        if wegld_payment.token_data.amount < wegld_fee_amount {
             return (ManagedVec::new(), false);
         }
 
@@ -138,7 +150,7 @@ pub trait TransferTokensModule:
             self.register_token(token_identifier.clone_value());
         }
 
-        self.refund_wegld(sender, first_payment.token_data.amount - wegld_fee_amount);
+        self.refund_wegld(sender, wegld_payment.token_data.amount - wegld_fee_amount);
 
         return (registered_tokens, false);
     }
