@@ -412,7 +412,7 @@ pub trait TransferTokensModule:
 
     #[inline]
     fn get_sovereign_prefix(&self) -> ManagedBuffer {
-        self.sovereign_token_prefix().get()
+        self.sovereign_tokens_prefix().get()
     }
 
     #[inline]

@@ -39,7 +39,7 @@ pub trait EnshrineEsdtSafe:
                     let identifier = TokenIdentifier::from(ticker);
                     if identifier.is_valid_esdt_identifier() {
                         self.wegld_identifier().set(identifier);
-                        self.sovereign_token_prefix().set(prefix);
+                        self.sovereign_tokens_prefix().set(prefix);
                     }
                 }
                 (Some(_), None) => {

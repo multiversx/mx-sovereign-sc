@@ -69,7 +69,7 @@ pub trait CreateTxModule:
 
             current_token_data.amount = payment.amount.clone();
 
-            if self.is_sovereign_chain().get() || self.has_prefix(&payment.token_identifier) {
+            if self.is_sovereign_chain().get() || self.has_sov_prefix(&payment.token_identifier) {
                 self.send().esdt_local_burn(
                     &payment.token_identifier,
                     payment.token_nonce,
