@@ -27,25 +27,25 @@ pub trait EnshrineEsdtSafe:
     fn init(
         &self,
         is_sovereign_chain: bool,
-        wegld_identifier: OptionalValue<ManagedBuffer>,
-        sov_token_prefix: OptionalValue<ManagedBuffer>,
+        wegld_identifier: Option<ManagedBuffer>,
+        sov_token_prefix: Option<ManagedBuffer>,
     ) {
         self.is_sovereign_chain().set(is_sovereign_chain);
         self.set_paused(true);
 
         if !is_sovereign_chain {
             match (wegld_identifier, sov_token_prefix) {
-                (OptionalValue::Some(ticker), OptionalValue::Some(prefix)) => {
+                (Some(ticker), Some(prefix)) => {
                     let identifier = TokenIdentifier::from(ticker);
                     if identifier.is_valid_esdt_identifier() {
                         self.wegld_identifier().set(identifier);
                         self.sovereign_token_prefix().set(prefix);
                     }
                 }
-                (OptionalValue::Some(_), OptionalValue::None) => {
+                (Some(_), None) => {
                     sc_panic!("Sovereign Token Prefix must be set in Mainchain")
                 }
-                (OptionalValue::None, OptionalValue::Some(_)) => {
+                (None, Some(_)) => {
                     sc_panic!("WEGLG identifier must be set in Mainchain")
                 }
                 _ => sc_panic!(
