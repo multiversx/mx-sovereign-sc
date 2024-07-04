@@ -45,17 +45,20 @@ where
 {
     pub fn init<
         Arg0: ProxyArg<bool>,
-        Arg1: ProxyArg<OptionalValue<ManagedBuffer<Env::Api>>>,
+        Arg1: ProxyArg<Option<ManagedBuffer<Env::Api>>>,
+        Arg2: ProxyArg<Option<ManagedBuffer<Env::Api>>>,
     >(
         self,
         is_sovereign_chain: Arg0,
         wegld_identifier: Arg1,
+        sov_token_prefix: Arg2,
     ) -> TxTypedDeploy<Env, From, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_deploy()
             .argument(&is_sovereign_chain)
             .argument(&wegld_identifier)
+            .argument(&sov_token_prefix)
             .original_result()
     }
 }
@@ -193,6 +196,14 @@ where
         self.wrapped_tx
             .raw_call("registerTokens")
             .argument(&tokens)
+            .original_result()
+    }
+
+    pub fn deposit_for_new_registrations(
+        self,
+    ) -> TxTypedCall<Env, From, To, (), Gas, ()> {
+        self.wrapped_tx
+            .raw_call("depositForNewRegistrations")
             .original_result()
     }
 
