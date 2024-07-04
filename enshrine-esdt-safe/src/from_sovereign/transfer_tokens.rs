@@ -102,15 +102,13 @@ pub trait TransferTokensModule:
 
         if !is_first_payment_wegld {
             for token in tokens.iter() {
-                if !self.was_token_registered(&token.token_identifier)
-                    && self.has_sov_token_prefix(&token.token_identifier)
-                {
+                if !self.was_token_registered(&token.token_identifier) {
                     return (false, ManagedVec::new());
                 }
             }
 
             return (true, tokens);
-        }
+        };
 
         if is_first_payment_wegld && tokens.len() == 1 {
             return (true, tokens);
@@ -119,9 +117,7 @@ pub trait TransferTokensModule:
         let mut unregistered_tokens: ManagedVec<TokenIdentifier> = ManagedVec::new();
 
         for token in tokens.iter().skip(1) {
-            if !self.was_token_registered(&token.token_identifier)
-                && self.has_sov_token_prefix(&token.token_identifier)
-            {
+            if !self.was_token_registered(&token.token_identifier) {
                 unregistered_tokens.push(token.token_identifier);
             }
         }
@@ -131,20 +127,20 @@ pub trait TransferTokensModule:
         }
 
         let wegld_fee_amount = BigUint::from(DEFAULT_ISSUE_COST * unregistered_tokens.len() as u64);
+        let mut registered_tokens = tokens;
+        registered_tokens.remove(0);
 
-        if first_payment.token_data.amount >= wegld_fee_amount {
-            for token_identifier in unregistered_tokens.iter() {
-                self.register_token(token_identifier.clone_value());
-            }
-
-            let mut registered_tokens = tokens;
-            registered_tokens.remove(0);
-            self.refund_wegld(sender, first_payment.token_data.amount - wegld_fee_amount);
-
-            return (true, registered_tokens);
+        if first_payment.token_data.amount < wegld_fee_amount {
+            return (false, ManagedVec::new());
         }
 
-        (false, ManagedVec::new())
+        for token_identifier in unregistered_tokens.iter() {
+            self.register_token(token_identifier.clone_value());
+        }
+
+        self.refund_wegld(sender, first_payment.token_data.amount - wegld_fee_amount);
+
+        return (true, registered_tokens);
     }
 
     fn refund_wegld(&self, sender: &ManagedAddress<Self::Api>, wegld_amount: BigUint<Self::Api>) {
@@ -385,7 +381,7 @@ pub trait TransferTokensModule:
 
     #[inline]
     fn was_token_registered(&self, token_id: &TokenIdentifier<Self::Api>) -> bool {
-        self.paid_issued_tokens().contains(token_id)
+        self.has_sov_token_prefix(token_id) && self.paid_issued_tokens().contains(token_id)
     }
 
     #[inline]
