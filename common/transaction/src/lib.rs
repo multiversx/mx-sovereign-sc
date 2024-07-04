@@ -90,6 +90,16 @@ impl<M: ManagedTypeApi> From<OperationEsdtPayment<M>> for EsdtTokenPayment<M> {
     }
 }
 
+impl<M: ManagedTypeApi> Default for OperationEsdtPayment<M> {
+    fn default() -> Self {
+        OperationEsdtPayment {
+            token_identifier: TokenIdentifier::from(ManagedBuffer::new()),
+            token_nonce: 0,
+            token_data: StolenFromFrameworkEsdtTokenData::default(),
+        }
+    }
+}
+
 // Temporary until Clone is implemented for EsdtTokenData
 #[derive(
     TopDecode, TopEncode, NestedDecode, NestedEncode, TypeAbi, Debug, ManagedVecItem, Clone,
