@@ -80,4 +80,11 @@ pub trait UtilsModule: bls_signature::BlsSignatureModule {
 
         false
     }
+
+    #[inline]
+    fn has_sov_prefix(&self, token_id: &TokenIdentifier, sov_prefix: ManagedBuffer) -> bool {
+        require!(self.has_prefix(token_id), "Token does not have prefix");
+
+        *token_id == TokenIdentifier::from(sov_prefix)
+    }
 }
