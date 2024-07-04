@@ -34,23 +34,24 @@ pub trait EnshrineEsdtSafe:
         self.set_paused(true);
 
         if !is_sovereign_chain {
-            match (wegld_identifier, sov_token_prefix) {
-                (Some(ticker), Some(prefix)) => {
+            match wegld_identifier {
+                Some(ticker) => {
                     let identifier = TokenIdentifier::from(ticker);
-                    if identifier.is_valid_esdt_identifier() {
-                        self.wegld_identifier().set(identifier);
-                        self.sovereign_tokens_prefix().set(prefix);
-                    }
+
+                    require!(
+                        identifier.is_valid_esdt_identifier(),
+                        "Sent Identifier is not valid"
+                    );
+
+                    self.wegld_identifier().set(identifier);
                 }
-                (Some(_), None) => {
-                    sc_panic!("Sovereign Token Prefix must be set in Mainchain")
-                }
-                (None, Some(_)) => {
-                    sc_panic!("WEGLG identifier must be set in Mainchain")
-                }
-                _ => sc_panic!(
-                    "Both WEGLD identifier and Sovereign Token Prefix must be set in Mainchain"
-                ),
+
+                None => sc_panic!("WEGLG identifier must be set in Mainchain"),
+            }
+
+            match sov_token_prefix {
+                Some(prefix) => self.sovereign_tokens_prefix().set(prefix),
+                None => sc_panic!("Sovereign Token Prefix must be set in Mainchain"),
             }
         }
     }
