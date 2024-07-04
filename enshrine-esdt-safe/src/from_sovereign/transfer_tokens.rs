@@ -101,17 +101,17 @@ pub trait TransferTokensModule:
         );
     }
 
-    fn get_wegld_payment(
+    fn get_wegld_payment_info(
         &self,
         tokens: &ManagedVec<OperationEsdtPayment<Self::Api>>,
-    ) -> (OperationEsdtPayment<Self::Api>, usize) {
+    ) -> (BigUint, isize) {
         for (i, token) in tokens.iter().enumerate() {
             if self.is_wegld(&token.token_identifier) {
-                return (token, i);
+                return (token.token_data.amount, i as isize);
             }
         }
 
-        (OperationEsdtPayment::default(), 0)
+        (BigUint::from(0u32), -1)
     }
 
     fn verify_operation_tokens_for_issue_fee(
@@ -120,11 +120,9 @@ pub trait TransferTokensModule:
         tokens: ManagedVec<OperationEsdtPayment<Self::Api>>,
     ) -> (ManagedVec<OperationEsdtPayment<Self::Api>>, bool) {
         require!(!tokens.is_empty(), "Tokens array should not be empty");
-        let (wegld_payment, wegld_position) = self.get_wegld_payment(&tokens);
-        let is_empty_identifier =
-            wegld_payment.token_identifier == TokenIdentifier::from(ManagedBuffer::new());
+        let (wegld_amount, wegld_position) = self.get_wegld_payment_info(&tokens);
 
-        if is_empty_identifier {
+        if wegld_position == -1 {
             for token in tokens.iter() {
                 if !self.was_token_registered(&token.token_identifier) {
                     return (ManagedVec::new(), false);
@@ -134,7 +132,7 @@ pub trait TransferTokensModule:
             return (tokens, false);
         };
 
-        if !is_empty_identifier && tokens.len() == 1 {
+        if wegld_position >= 0 && tokens.len() == 1 {
             return (tokens, false);
         }
 
@@ -152,9 +150,9 @@ pub trait TransferTokensModule:
 
         let wegld_fee_amount = BigUint::from(DEFAULT_ISSUE_COST * unregistered_tokens.len() as u64);
         let mut registered_tokens = tokens;
-        registered_tokens.remove(wegld_position);
+        registered_tokens.remove(wegld_position as usize);
 
-        if wegld_payment.token_data.amount < wegld_fee_amount {
+        if wegld_amount < wegld_fee_amount {
             return (ManagedVec::new(), false);
         }
 
@@ -162,7 +160,7 @@ pub trait TransferTokensModule:
             self.register_token(token_identifier.clone_value());
         }
 
-        self.refund_wegld(sender, wegld_payment.token_data.amount - wegld_fee_amount);
+        self.refund_wegld(sender, wegld_amount - wegld_fee_amount);
 
         return (registered_tokens, false);
     }
