@@ -129,11 +129,11 @@ pub trait TransferTokensModule:
                 }
             }
 
-            return (tokens, false);
+            return (tokens, true);
         };
 
-        if wegld_position >= 0 && tokens.len() == 1 {
-            return (tokens, false);
+        if tokens.len() == 1 {
+            return (tokens, true);
         }
 
         let mut unregistered_tokens: ManagedVec<TokenIdentifier> = ManagedVec::new();
@@ -162,7 +162,7 @@ pub trait TransferTokensModule:
 
         self.refund_wegld(sender, wegld_amount - wegld_fee_amount);
 
-        return (registered_tokens, false);
+        return (registered_tokens, true);
     }
 
     fn refund_wegld(&self, sender: &ManagedAddress<Self::Api>, wegld_amount: BigUint<Self::Api>) {
@@ -181,10 +181,7 @@ pub trait TransferTokensModule:
         let mut output_payments = ManagedVec::new();
 
         for operation_token in operation_tokens.iter() {
-            if !self.has_sov_prefix(
-                &operation_token.token_identifier,
-                self.get_sovereign_prefix(),
-            ) {
+            if !self.has_prefix(&operation_token.token_identifier) {
                 output_payments.push(operation_token.clone());
                 continue;
             }
@@ -342,13 +339,15 @@ pub trait TransferTokensModule:
 
     fn burn_sovereign_tokens(&self, operation: &Operation<Self::Api>) {
         for token in operation.tokens.iter() {
-            if self.has_sov_prefix(&token.token_identifier, self.get_sovereign_prefix()) {
-                self.send().esdt_local_burn(
-                    &token.token_identifier,
-                    token.token_nonce,
-                    &token.token_data.amount,
-                );
+            if self.has_prefix(&token.token_identifier) {
+                continue;
             }
+
+            self.send().esdt_local_burn(
+                &token.token_identifier,
+                token.token_nonce,
+                &token.token_data.amount,
+            );
         }
     }
 
