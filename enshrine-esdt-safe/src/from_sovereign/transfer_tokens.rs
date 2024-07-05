@@ -90,8 +90,6 @@ pub trait TransferTokensModule:
         &self,
         tokens: ManagedVec<OperationEsdtPayment<Self::Api>>,
     ) -> bool {
-        require!(!tokens.is_empty(), "Tokens array should not be empty");
-
         for token in tokens.iter() {
             if !self.was_token_registered(&token.token_identifier) {
                 return false;
