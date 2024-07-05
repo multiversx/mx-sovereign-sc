@@ -187,14 +187,14 @@ where
             .original_result()
     }
 
-    pub fn register_tokens<
+    pub fn register_new_token_id<
         Arg0: ProxyArg<MultiValueEncoded<Env::Api, TokenIdentifier<Env::Api>>>,
     >(
         self,
         tokens: Arg0,
     ) -> TxTypedCall<Env, From, To, (), Gas, ()> {
         self.wrapped_tx
-            .raw_call("registerTokens")
+            .raw_call("registerNewTokenID")
             .argument(&tokens)
             .original_result()
     }

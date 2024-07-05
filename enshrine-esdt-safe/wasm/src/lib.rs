@@ -28,7 +28,7 @@ multiversx_sc_wasm_adapter::endpoints! {
         addSigners => add_signers
         removeSigners => remove_signers
         executeBridgeOps => execute_operations
-        registerTokens => register_tokens
+        registerNewTokenID => register_new_token_id
         setMaxTxBatchSize => set_max_tx_batch_size
         setMaxTxBatchBlockDuration => set_max_tx_batch_block_duration
         getCurrentTxBatch => get_current_tx_batch

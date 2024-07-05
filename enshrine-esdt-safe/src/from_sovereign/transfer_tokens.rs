@@ -65,9 +65,9 @@ pub trait TransferTokensModule:
         );
     }
 
-    #[endpoint(registerTokens)]
+    #[endpoint(registerNewTokenID)]
     #[payable("*")]
-    fn register_tokens(&self, tokens: MultiValueEncoded<TokenIdentifier>) {
+    fn register_new_token_id(&self, tokens: MultiValueEncoded<TokenIdentifier>) {
         let call_payment = self.call_value().single_esdt().clone();
         let wegld_identifier = self.wegld_identifier().get();
 
