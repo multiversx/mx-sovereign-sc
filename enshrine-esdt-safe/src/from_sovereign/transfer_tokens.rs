@@ -39,24 +39,20 @@ pub trait TransferTokensModule:
             sc_panic!("Operation is not registered");
         }
 
-        let (remaining_tokens, is_wegld_fee_paid) = self.verify_operation_tokens_for_issue_fee(
-            &operation.data.op_sender,
-            operation.tokens.clone(),
-        );
+        let are_tokens_registered =
+            self.verify_operation_tokens_issue_paid(operation.tokens.clone());
 
-        if !is_wegld_fee_paid {
+        if !are_tokens_registered {
             self.emit_transfer_failed_events(
                 &hash_of_hashes,
                 &OperationTuple {
-                    op_hash: operation_hash,
-                    operation,
+                    op_hash: operation_hash.clone(),
+                    operation: operation.clone(),
                 },
             );
-
-            sc_panic!("Not enough WEGLD to register all tokens");
         }
 
-        let minted_operation_tokens = self.mint_tokens(&remaining_tokens);
+        let minted_operation_tokens = self.mint_tokens(&operation.tokens);
         let operation_tuple = OperationTuple {
             op_hash: operation_hash.clone(),
             operation: operation.clone(),
@@ -90,90 +86,19 @@ pub trait TransferTokensModule:
         }
     }
 
-    #[endpoint(depositForNewRegistrations)]
-    #[payable("*")]
-    fn deposit_for_new_registrations(&self) {
-        let call_value = self.call_value().single_esdt();
-
-        require!(
-            call_value.amount >= DEFAULT_ISSUE_COST,
-            "The minimum amount of WEGLD wasn't met"
-        );
-    }
-
-    fn get_wegld_payment_info(
+    fn verify_operation_tokens_issue_paid(
         &self,
-        tokens: &ManagedVec<OperationEsdtPayment<Self::Api>>,
-    ) -> (BigUint, isize) {
-        for (i, token) in tokens.iter().enumerate() {
-            if self.is_wegld(&token.token_identifier) {
-                return (token.token_data.amount, i as isize);
-            }
-        }
-
-        (BigUint::from(0u32), -1)
-    }
-
-    fn verify_operation_tokens_for_issue_fee(
-        &self,
-        sender: &ManagedAddress<Self::Api>,
         tokens: ManagedVec<OperationEsdtPayment<Self::Api>>,
-    ) -> (ManagedVec<OperationEsdtPayment<Self::Api>>, bool) {
+    ) -> bool {
         require!(!tokens.is_empty(), "Tokens array should not be empty");
-        let (wegld_amount, wegld_position) = self.get_wegld_payment_info(&tokens);
-
-        if wegld_position == -1 {
-            for token in tokens.iter() {
-                if !self.was_token_registered(&token.token_identifier) {
-                    return (ManagedVec::new(), false);
-                }
-            }
-
-            return (tokens, true);
-        };
-
-        if tokens.len() == 1 {
-            return (tokens, true);
-        }
-
-        let mut unregistered_tokens: ManagedVec<TokenIdentifier> = ManagedVec::new();
 
         for token in tokens.iter() {
             if !self.was_token_registered(&token.token_identifier) {
-                unregistered_tokens.push(token.token_identifier);
+                return false;
             }
         }
 
-        if unregistered_tokens.is_empty() {
-            return (tokens, true);
-        }
-
-        let wegld_fee_amount = BigUint::from(DEFAULT_ISSUE_COST * unregistered_tokens.len() as u64);
-        let mut registered_tokens = tokens;
-        registered_tokens.remove(wegld_position as usize);
-
-        if wegld_amount < wegld_fee_amount {
-            return (ManagedVec::new(), false);
-        }
-
-        for token_identifier in unregistered_tokens.iter() {
-            self.register_token(token_identifier.clone_value());
-        }
-
-        let remaining_wegld = wegld_amount - wegld_fee_amount;
-
-        if remaining_wegld > 0 {
-            self.refund_wegld(sender, remaining_wegld);
-        }
-
-        return (registered_tokens, true);
-    }
-
-    fn refund_wegld(&self, sender: &ManagedAddress<Self::Api>, wegld_amount: BigUint<Self::Api>) {
-        let wegld_identifier = self.wegld_identifier().get();
-        let payment = EsdtTokenPayment::new(wegld_identifier, 0, wegld_amount);
-
-        self.tx().to(sender).esdt(payment).transfer();
+        true
     }
 
     fn mint_tokens(
