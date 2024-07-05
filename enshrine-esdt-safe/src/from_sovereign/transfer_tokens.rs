@@ -160,14 +160,16 @@ pub trait TransferTokensModule:
             self.register_token(token_identifier.clone_value());
         }
 
-        self.refund_wegld(sender, wegld_amount - wegld_fee_amount);
+        let remaining_wegld = wegld_amount - wegld_fee_amount;
+
+        if remaining_wegld > 0 {
+            self.refund_wegld(sender, remaining_wegld);
+        }
 
         return (registered_tokens, true);
     }
 
     fn refund_wegld(&self, sender: &ManagedAddress<Self::Api>, wegld_amount: BigUint<Self::Api>) {
-        require!(wegld_amount > 0, "No WEGLD fee sent");
-
         let wegld_identifier = self.wegld_identifier().get();
         let payment = EsdtTokenPayment::new(wegld_identifier, 0, wegld_amount);
 
@@ -339,7 +341,7 @@ pub trait TransferTokensModule:
 
     fn burn_sovereign_tokens(&self, operation: &Operation<Self::Api>) {
         for token in operation.tokens.iter() {
-            if self.has_prefix(&token.token_identifier) {
+            if !self.has_prefix(&token.token_identifier) {
                 continue;
             }
 
