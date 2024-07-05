@@ -183,7 +183,8 @@ pub trait TransferTokensModule:
         let mut output_payments = ManagedVec::new();
 
         for operation_token in operation_tokens.iter() {
-            if !self.has_prefix(&operation_token.token_identifier) {
+            let sov_prefix = self.get_sovereign_prefix();
+            if !self.has_sov_prefix(&operation_token.token_identifier, sov_prefix) {
                 output_payments.push(operation_token.clone());
                 continue;
             }
@@ -341,7 +342,8 @@ pub trait TransferTokensModule:
 
     fn burn_sovereign_tokens(&self, operation: &Operation<Self::Api>) {
         for token in operation.tokens.iter() {
-            if !self.has_prefix(&token.token_identifier) {
+            let sov_prefix = self.get_sovereign_prefix();
+            if !self.has_sov_prefix(&token.token_identifier, sov_prefix) {
                 continue;
             }
 
