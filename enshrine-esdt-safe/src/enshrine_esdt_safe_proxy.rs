@@ -199,14 +199,6 @@ where
             .original_result()
     }
 
-    pub fn deposit_for_new_registrations(
-        self,
-    ) -> TxTypedCall<Env, From, To, (), Gas, ()> {
-        self.wrapped_tx
-            .raw_call("depositForNewRegistrations")
-            .original_result()
-    }
-
     pub fn set_max_tx_batch_size<
         Arg0: ProxyArg<usize>,
     >(
