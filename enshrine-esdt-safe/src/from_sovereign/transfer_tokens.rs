@@ -50,6 +50,8 @@ pub trait TransferTokensModule:
                     operation: operation.clone(),
                 },
             );
+
+            sc_panic!("One or more tokens are not registered");
         }
 
         let minted_operation_tokens = self.mint_tokens(&operation.tokens);
