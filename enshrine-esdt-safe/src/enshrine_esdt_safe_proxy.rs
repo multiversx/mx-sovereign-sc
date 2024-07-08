@@ -45,7 +45,7 @@ where
 {
     pub fn init<
         Arg0: ProxyArg<bool>,
-        Arg1: ProxyArg<Option<ManagedBuffer<Env::Api>>>,
+        Arg1: ProxyArg<Option<TokenIdentifier<Env::Api>>>,
         Arg2: ProxyArg<Option<ManagedBuffer<Env::Api>>>,
     >(
         self,
