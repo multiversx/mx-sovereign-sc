@@ -5,7 +5,6 @@ use multiversx_sc::codec::TopEncode;
 use multiversx_sc::types::{
     Address, BigUint, EsdtTokenPayment, ManagedBuffer, ManagedByteArray, ManagedVec,
     MultiValueEncoded, TestAddress, TestSCAddress, TestTokenIdentifier, TokenIdentifier,
-};
 use multiversx_sc_scenario::api::StaticApi;
 use multiversx_sc_scenario::multiversx_chain_vm::crypto_functions::sha256;
 use multiversx_sc_scenario::{imports::MxscPath, ScenarioWorld};
