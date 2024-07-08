@@ -4,7 +4,7 @@ use header_verifier::header_verifier_proxy;
 use multiversx_sc::codec::TopEncode;
 use multiversx_sc::types::{
     Address, ManagedBuffer, ManagedByteArray, ManagedVec, MultiValueEncoded, TestAddress,
-    TestSCAddress, TestTokenIdentifier,
+    TestSCAddress, TestTokenIdentifier, TokenIdentifier,
 };
 use multiversx_sc_scenario::api::StaticApi;
 use multiversx_sc_scenario::multiversx_chain_vm::crypto_functions::sha256;
@@ -31,6 +31,9 @@ const RECEIVER_ADDRESS: TestAddress = TestAddress::new("receiver");
 const NFT_TOKEN_ID: TestTokenIdentifier = TestTokenIdentifier::new("NFT-123456");
 const FUNGIBLE_TOKEN_ID: TestTokenIdentifier = TestTokenIdentifier::new("CROWD-123456");
 const PREFIX_NFT_TOKEN_ID: TestTokenIdentifier = TestTokenIdentifier::new("sov-NFT-123456");
+
+const WEGLD_IDENTIFIER: TestTokenIdentifier = TestTokenIdentifier::new("WEGLD-123456");
+const SOVEREIGN_TOKEN_PREFIX: &str = "sov-";
 
 fn world() -> ScenarioWorld {
     let mut blockchain = ScenarioWorld::new();
@@ -68,12 +71,17 @@ impl EnshrineTestState {
         Self { world }
     }
 
-    fn deploy_enshrine_esdt_contract(&mut self, is_sovereign_chain: bool) -> &mut Self {
+    fn deploy_enshrine_esdt_contract(
+        &mut self,
+        is_sovereign_chain: bool,
+        wegld_identifier: Option<TokenIdentifier<StaticApi>>,
+        sovereign_token_prefix: Option<ManagedBuffer<StaticApi>>,
+    ) -> &mut Self {
         self.world
             .tx()
             .from(ENSHRINE_ESDT_OWNER_ADDRESS)
             .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
-            .init(is_sovereign_chain)
+            .init(is_sovereign_chain, wegld_identifier, sovereign_token_prefix)
             .code(ENSHRINE_ESDT_CODE_PATH)
             .new_address(ENSHRINE_ESDT_ADDRESS)
             .run();
@@ -101,7 +109,11 @@ impl EnshrineTestState {
     }
 
     fn propose_setup_contracts(&mut self, is_sovereign_chain: bool) -> &mut Self {
-        self.deploy_enshrine_esdt_contract(is_sovereign_chain);
+        self.deploy_enshrine_esdt_contract(
+            is_sovereign_chain,
+            Some(WEGLD_IDENTIFIER.into()),
+            Some(SOVEREIGN_TOKEN_PREFIX.into()),
+        );
         self.deploy_header_verifier_contract();
         self.propose_set_header_verifier_address();
 
