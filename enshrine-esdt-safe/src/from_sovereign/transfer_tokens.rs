@@ -92,10 +92,8 @@ pub trait TransferTokensModule:
         &self,
         tokens: ManagedVec<OperationEsdtPayment<Self::Api>>,
     ) -> bool {
-        let sovereign_prefix = self.get_sovereign_prefix();
-
         for token in tokens.iter() {
-            if !self.has_sov_prefix(&token.token_identifier, sovereign_prefix) {
+            if !self.has_sov_prefix(&token.token_identifier, self.get_sovereign_prefix()) {
                 continue;
             }
 
