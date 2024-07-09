@@ -51,7 +51,7 @@ pub trait TransferTokensModule:
                 },
             );
 
-            sc_panic!("One or more tokens are not registered");
+            return;
         }
 
         let minted_operation_tokens = self.mint_tokens(&operation.tokens);
