@@ -92,8 +92,14 @@ pub trait TransferTokensModule:
         &self,
         tokens: ManagedVec<OperationEsdtPayment<Self::Api>>,
     ) -> bool {
+        let sovereign_prefix = self.get_sovereign_prefix();
+
         for token in tokens.iter() {
-            if !self.was_token_registered(&token.token_identifier) {
+            if !self.has_sov_prefix(&token.token_identifier, sovereign_prefix) {
+                continue;
+            }
+
+            if !self.paid_issued_tokens().contains(&token.token_identifier) {
                 return false;
             }
         }
@@ -330,12 +336,6 @@ pub trait TransferTokensModule:
         } else {
             (hash, false)
         }
-    }
-
-    #[inline]
-    fn was_token_registered(&self, token_id: &TokenIdentifier<Self::Api>) -> bool {
-        self.has_sov_prefix(token_id, self.get_sovereign_prefix())
-            && self.paid_issued_tokens().contains(token_id)
     }
 
     #[inline]
