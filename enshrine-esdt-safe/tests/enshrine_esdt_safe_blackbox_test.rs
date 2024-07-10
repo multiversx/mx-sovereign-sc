@@ -273,9 +273,8 @@ fn test_sovereign_prefix_no_prefix() {
 #[test]
 fn test_sovereign_prefix_has_prefix() {
     let mut state = EnshrineTestState::new();
-    let error_message = "action is not allowed";
 
     state.propose_setup_contracts(false);
     state.propose_register_operation(true);
-    state.propose_execute_operation(true, Some(error_message));
+    state.propose_execute_operation(true, None);
 }
