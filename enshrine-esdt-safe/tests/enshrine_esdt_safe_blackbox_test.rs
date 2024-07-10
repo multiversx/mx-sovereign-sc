@@ -205,6 +205,24 @@ impl EnshrineTestState {
             .run();
     }
 
+    fn propose_register_tokens(&mut self, token_ids: Vec<TestTokenIdentifier>) {
+        let mut managed_token_ids: MultiValueEncoded<StaticApi, TokenIdentifier<StaticApi>> =
+            MultiValueEncoded::new();
+        for token_id in token_ids {
+            managed_token_ids.push(TokenIdentifier::from(token_id))
+        }
+
+        self.world
+            .tx()
+            .from(ENSHRINE_ESDT_OWNER_ADDRESS)
+            .to(ENSHRINE_ESDT_ADDRESS)
+            .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
+            .register_new_token_id(managed_token_ids)
+            .run();
+    }
+
+    fn check_registered_tokens(&mut self) {}
+
     fn mock_bls_signature(
         &mut self,
         operation_hash: &ManagedBuffer<StaticApi>,
@@ -277,4 +295,11 @@ fn test_sovereign_prefix_has_prefix() {
     state.propose_setup_contracts(false);
     state.propose_register_operation(true);
     state.propose_execute_operation(true, None);
+}
+
+#[test]
+fn test_register_tokens() {
+    let mut state = EnshrineTestState::new();
+
+    state.propose_setup_contracts(false);
 }
