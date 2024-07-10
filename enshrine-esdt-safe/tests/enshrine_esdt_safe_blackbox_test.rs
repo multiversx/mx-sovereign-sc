@@ -111,7 +111,7 @@ impl EnshrineTestState {
     fn propose_setup_contracts(&mut self, is_sovereign_chain: bool) -> &mut Self {
         self.deploy_enshrine_esdt_contract(
             is_sovereign_chain,
-            Some(WEGLD_IDENTIFIER.into()),
+            Some(TokenIdentifier::from(WEGLD_IDENTIFIER)),
             Some(SOVEREIGN_TOKEN_PREFIX.into()),
         );
         self.deploy_header_verifier_contract();
