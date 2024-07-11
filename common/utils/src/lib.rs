@@ -7,6 +7,8 @@ multiversx_sc::imports!();
 pub type PaymentsVec<M> = ManagedVec<M, EsdtTokenPayment<M>>;
 
 static ERR_EMPTY_PAYMENTS: &[u8] = b"No payments";
+const DASH: u8 = b'-';
+const MAX_TOKEN_ID_LEN: usize = 32;
 
 #[multiversx_sc::module]
 pub trait UtilsModule: bls_signature::BlsSignatureModule {
@@ -67,12 +69,11 @@ pub trait UtilsModule: bls_signature::BlsSignatureModule {
     }
 
     fn has_prefix(&self, token_id: &TokenIdentifier) -> bool {
-        let dash = b'-';
         let buffer = token_id.as_managed_buffer();
-        let mut array_buffer = [0u8; 32];
+        let mut array_buffer = [0u8; MAX_TOKEN_ID_LEN];
         let slice = buffer.load_to_byte_array(&mut array_buffer);
 
-        let counter = slice.iter().filter(|&&c| c == dash).count();
+        let counter = slice.iter().filter(|&&c| c == DASH).count();
 
         if counter == 2 {
             return true;
@@ -86,12 +87,11 @@ pub trait UtilsModule: bls_signature::BlsSignatureModule {
             return false;
         }
 
-        let dash = b'-';
         let buffer = token_id.as_managed_buffer();
-        let mut array_buffer = [0u8; 32];
+        let mut array_buffer = [0u8; MAX_TOKEN_ID_LEN];
         let slice = buffer.load_to_byte_array(&mut array_buffer);
 
-        if let Some(index) = slice.iter().position(|&b| b == dash) {
+        if let Some(index) = slice.iter().position(|&b| b == DASH) {
             let prefix = ManagedBuffer::from(&slice[..index]);
 
             if prefix == chain_prefix {
