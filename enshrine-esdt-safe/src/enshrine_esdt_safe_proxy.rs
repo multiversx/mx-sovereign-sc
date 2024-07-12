@@ -50,15 +50,15 @@ where
     >(
         self,
         is_sovereign_chain: Arg0,
-        wegld_identifier: Arg1,
-        sov_token_prefix: Arg2,
+        opt_wegld_identifier: Arg1,
+        opt_sov_token_prefix: Arg2,
     ) -> TxTypedDeploy<Env, From, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_deploy()
             .argument(&is_sovereign_chain)
-            .argument(&wegld_identifier)
-            .argument(&sov_token_prefix)
+            .argument(&opt_wegld_identifier)
+            .argument(&opt_sov_token_prefix)
             .original_result()
     }
 }
