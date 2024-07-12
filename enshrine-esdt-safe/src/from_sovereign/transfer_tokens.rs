@@ -357,6 +357,6 @@ pub trait TransferTokensModule:
     #[storage_mapper("headerVerifierAddress")]
     fn header_verifier_address(&self) -> SingleValueMapper<ManagedAddress>;
 
-    #[storage_mapper("mintedTokens")]
+    #[storage_mapper("paidIssuedTokens")]
     fn paid_issued_tokens(&self) -> UnorderedSetMapper<TokenIdentifier<Self::Api>>;
 }
