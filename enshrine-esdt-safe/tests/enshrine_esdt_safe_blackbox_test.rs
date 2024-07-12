@@ -20,7 +20,7 @@ const ENSHRINE_ESDT_OWNER_ADDRESS: TestAddress = TestAddress::new("enshrine-esdt
 
 const ENSHRINE_OWNER_BALANCE: u64 = 100_000_000;
 const USER_EGLD_BALANCE: u64 = 100_000_000;
-const DEFAULT_ISSUE_COST: u64 = 50000000000000000;
+const DEFAULT_ISSUE_COST: u64 = 50_000_000_000_000_000;
 
 const HEADER_VERIFIER_ADDRESS: TestSCAddress = TestSCAddress::new("header_verifier");
 const HEADER_VERIFIER_CODE_PATH: MxscPath =
@@ -56,7 +56,10 @@ impl EnshrineTestState {
         world
             .account(ENSHRINE_ESDT_OWNER_ADDRESS)
             .esdt_balance(FUNGIBLE_TOKEN_ID, 100_000)
-            .esdt_balance(WEGLD_IDENTIFIER, 100_000)
+            .esdt_balance(
+                WEGLD_IDENTIFIER,
+                BigUint::from(100_000_000_000_000_000 as u128),
+            )
             .esdt_nft_balance(NFT_TOKEN_ID, 1, 100_000, ManagedBuffer::new())
             .nonce(1)
             .balance(ENSHRINE_OWNER_BALANCE);
