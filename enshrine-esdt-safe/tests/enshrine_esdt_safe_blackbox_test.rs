@@ -363,7 +363,7 @@ fn test_register_tokens_insufficient_funds() {
 }
 
 #[test]
-fn test_register_tokens_with_egld() {
+fn test_register_tokens() {
     let mut state = EnshrineTestState::new();
 
     state.propose_setup_contracts(false);
