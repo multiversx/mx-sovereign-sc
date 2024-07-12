@@ -103,13 +103,13 @@ pub trait Headerverifier: bls_signature::BlsSignatureModule {
         pub_keys_count > minimum_signatures
     }
 
-    #[storage_mapper("bls_pub_keys")]
+    #[storage_mapper("blsPubKeys")]
     fn bls_pub_keys(&self) -> SetMapper<ManagedBuffer>;
 
-    #[storage_mapper("pending_hashes")]
+    #[storage_mapper("pendingHashes")]
     fn pending_hashes(&self, hash_of_hashes: &ManagedBuffer) -> UnorderedSetMapper<ManagedBuffer>;
 
-    #[storage_mapper("hash_of_hashes_history")]
+    #[storage_mapper("hashOfHashesHistory")]
     fn hash_of_hashes_history(&self) -> UnorderedSetMapper<ManagedBuffer>;
 
     #[storage_mapper("esdtSafeAddress")]
