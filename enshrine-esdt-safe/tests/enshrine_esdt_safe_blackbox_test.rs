@@ -3,8 +3,8 @@ use enshrine_esdt_safe::enshrine_esdt_safe_proxy;
 use header_verifier::header_verifier_proxy;
 use multiversx_sc::codec::TopEncode;
 use multiversx_sc::types::{
-    Address, ManagedBuffer, ManagedByteArray, ManagedVec, MultiValueEncoded, TestAddress,
-    TestSCAddress, TestTokenIdentifier, TokenIdentifier,
+    Address, BigUint, EsdtTokenPayment, ManagedBuffer, ManagedByteArray, ManagedVec,
+    MultiValueEncoded, TestAddress, TestSCAddress, TestTokenIdentifier, TokenIdentifier,
 };
 use multiversx_sc_scenario::api::StaticApi;
 use multiversx_sc_scenario::multiversx_chain_vm::crypto_functions::sha256;
@@ -20,6 +20,7 @@ const ENSHRINE_ESDT_OWNER_ADDRESS: TestAddress = TestAddress::new("enshrine-esdt
 
 const ENSHRINE_OWNER_BALANCE: u64 = 100_000_000;
 const USER_EGLD_BALANCE: u64 = 100_000_000;
+const DEFAULT_ISSUE_COST: u64 = 50000000000000000;
 
 const HEADER_VERIFIER_ADDRESS: TestSCAddress = TestSCAddress::new("header_verifier");
 const HEADER_VERIFIER_CODE_PATH: MxscPath =
@@ -55,6 +56,7 @@ impl EnshrineTestState {
         world
             .account(ENSHRINE_ESDT_OWNER_ADDRESS)
             .esdt_balance(FUNGIBLE_TOKEN_ID, 100_000)
+            .esdt_balance(WEGLD_IDENTIFIER, 100_000)
             .esdt_nft_balance(NFT_TOKEN_ID, 1, 100_000, ManagedBuffer::new())
             .nonce(1)
             .balance(ENSHRINE_OWNER_BALANCE);
@@ -217,6 +219,9 @@ impl EnshrineTestState {
             managed_token_ids.push(TokenIdentifier::from(token_id))
         }
 
+        let wegld_amount = BigUint::from(DEFAULT_ISSUE_COST * managed_token_ids.len() as u64);
+        let wegld_payment = EsdtTokenPayment::new(WEGLD_IDENTIFIER.into(), 0, wegld_amount);
+
         match opt_err_message {
             Some(err_msg) => self
                 .world
@@ -226,6 +231,7 @@ impl EnshrineTestState {
                 .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
                 .register_new_token_id(managed_token_ids)
                 .returns(ExpectError(4, err_msg))
+                .esdt(wegld_payment)
                 .run(),
             None => self
                 .world
@@ -234,6 +240,7 @@ impl EnshrineTestState {
                 .to(ENSHRINE_ESDT_ADDRESS)
                 .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
                 .register_new_token_id(managed_token_ids)
+                .esdt(wegld_payment)
                 .run(),
         }
     }
@@ -322,4 +329,12 @@ fn test_register_tokens_multiple_esdt() {
         Vec::from([PREFIX_NFT_TOKEN_ID, FUNGIBLE_TOKEN_ID]),
         Some(error_message),
     );
+}
+
+#[test]
+fn test_register_tokens_with_egld() {
+    let mut state = EnshrineTestState::new();
+
+    state.propose_setup_contracts(false);
+    state.propose_register_tokens(Vec::from([PREFIX_NFT_TOKEN_ID, FUNGIBLE_TOKEN_ID]), None);
 }
