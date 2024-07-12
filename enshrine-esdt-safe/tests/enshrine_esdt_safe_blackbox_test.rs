@@ -205,23 +205,38 @@ impl EnshrineTestState {
             .run();
     }
 
-    fn propose_register_tokens(&mut self, token_ids: Vec<TestTokenIdentifier>) {
+    fn propose_register_tokens(
+        &mut self,
+        token_ids: Vec<TestTokenIdentifier>,
+        opt_err_message: Option<&str>,
+    ) {
         let mut managed_token_ids: MultiValueEncoded<StaticApi, TokenIdentifier<StaticApi>> =
             MultiValueEncoded::new();
+
         for token_id in token_ids {
             managed_token_ids.push(TokenIdentifier::from(token_id))
         }
 
-        self.world
-            .tx()
-            .from(ENSHRINE_ESDT_OWNER_ADDRESS)
-            .to(ENSHRINE_ESDT_ADDRESS)
-            .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
-            .register_new_token_id(managed_token_ids)
-            .run();
+        match opt_err_message {
+            Some(err_msg) => self
+                .world
+                .tx()
+                .from(ENSHRINE_ESDT_OWNER_ADDRESS)
+                .to(ENSHRINE_ESDT_ADDRESS)
+                .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
+                .register_new_token_id(managed_token_ids)
+                .returns(ExpectError(4, err_msg))
+                .run(),
+            None => self
+                .world
+                .tx()
+                .from(ENSHRINE_ESDT_OWNER_ADDRESS)
+                .to(ENSHRINE_ESDT_ADDRESS)
+                .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
+                .register_new_token_id(managed_token_ids)
+                .run(),
+        }
     }
-
-    fn check_registered_tokens(&mut self) {}
 
     fn mock_bls_signature(
         &mut self,
@@ -298,8 +313,13 @@ fn test_sovereign_prefix_has_prefix() {
 }
 
 #[test]
-fn test_register_tokens() {
+fn test_register_tokens_multiple_esdt() {
     let mut state = EnshrineTestState::new();
+    let error_message = "incorrect number of ESDT transfers";
 
     state.propose_setup_contracts(false);
+    state.propose_register_tokens(
+        Vec::from([PREFIX_NFT_TOKEN_ID, FUNGIBLE_TOKEN_ID]),
+        Some(error_message),
+    );
 }
