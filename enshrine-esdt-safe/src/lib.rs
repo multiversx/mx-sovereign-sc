@@ -27,8 +27,8 @@ pub trait EnshrineEsdtSafe:
     fn init(
         &self,
         is_sovereign_chain: bool,
-        wegld_identifier: Option<TokenIdentifier>,
-        sov_token_prefix: Option<ManagedBuffer>,
+        opt_wegld_identifier: Option<TokenIdentifier>,
+        opt_sov_token_prefix: Option<ManagedBuffer>,
     ) {
         self.is_sovereign_chain().set(is_sovereign_chain);
         self.set_paused(true);
@@ -37,7 +37,7 @@ pub trait EnshrineEsdtSafe:
             return;
         }
 
-        match wegld_identifier {
+        match opt_wegld_identifier {
             Some(identifier) => {
                 require!(
                     identifier.is_valid_esdt_identifier(),
@@ -50,7 +50,7 @@ pub trait EnshrineEsdtSafe:
             None => sc_panic!("WEGLG identifier must be set in Mainchain"),
         }
 
-        match sov_token_prefix {
+        match opt_sov_token_prefix {
             Some(prefix) => self.sovereign_tokens_prefix().set(prefix),
             None => sc_panic!("Sovereign Token Prefix must be set in Mainchain"),
         }
