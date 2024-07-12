@@ -45,14 +45,20 @@ where
 {
     pub fn init<
         Arg0: ProxyArg<bool>,
+        Arg1: ProxyArg<Option<TokenIdentifier<Env::Api>>>,
+        Arg2: ProxyArg<Option<ManagedBuffer<Env::Api>>>,
     >(
         self,
         is_sovereign_chain: Arg0,
+        opt_wegld_identifier: Arg1,
+        opt_sov_token_prefix: Arg2,
     ) -> TxTypedDeploy<Env, From, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_deploy()
             .argument(&is_sovereign_chain)
+            .argument(&opt_wegld_identifier)
+            .argument(&opt_sov_token_prefix)
             .original_result()
     }
 }
@@ -178,6 +184,18 @@ where
             .raw_call("executeBridgeOps")
             .argument(&hash_of_hashes)
             .argument(&operation)
+            .original_result()
+    }
+
+    pub fn register_new_token_id<
+        Arg0: ProxyArg<MultiValueEncoded<Env::Api, TokenIdentifier<Env::Api>>>,
+    >(
+        self,
+        tokens: Arg0,
+    ) -> TxTypedCall<Env, From, To, (), Gas, ()> {
+        self.wrapped_tx
+            .raw_call("registerNewTokenID")
+            .argument(&tokens)
             .original_result()
     }
 

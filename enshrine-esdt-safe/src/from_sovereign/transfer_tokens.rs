@@ -7,6 +7,7 @@ use transaction::{GasLimit, Operation, OperationData, OperationEsdtPayment, Oper
 
 const CALLBACK_GAS: GasLimit = 10_000_000; // Increase if not enough
 const TRANSACTION_GAS: GasLimit = 30_000_000;
+const DEFAULT_ISSUE_COST: u64 = 50000000000000000;
 
 #[multiversx_sc::module]
 pub trait TransferTokensModule:
@@ -22,8 +23,10 @@ pub trait TransferTokensModule:
 {
     #[endpoint(executeBridgeOps)]
     fn execute_operations(&self, hash_of_hashes: ManagedBuffer, operation: Operation<Self::Api>) {
+        let is_sovereign_chain = self.is_sovereign_chain().get();
+
         require!(
-            !self.is_sovereign_chain().get(),
+            !is_sovereign_chain,
             "Invalid method to call in current chain"
         );
 
@@ -36,13 +39,70 @@ pub trait TransferTokensModule:
             sc_panic!("Operation is not registered");
         }
 
+        let are_tokens_registered =
+            self.verify_operation_tokens_issue_paid(operation.tokens.clone());
+
+        if !are_tokens_registered {
+            self.emit_transfer_failed_events(
+                &hash_of_hashes,
+                &OperationTuple {
+                    op_hash: operation_hash.clone(),
+                    operation: operation.clone(),
+                },
+            );
+
+            return;
+        }
+
         let minted_operation_tokens = self.mint_tokens(&operation.tokens);
         let operation_tuple = OperationTuple {
-            op_hash: operation_hash,
-            operation,
+            op_hash: operation_hash.clone(),
+            operation: operation.clone(),
         };
 
-        self.distribute_payments(hash_of_hashes, operation_tuple, minted_operation_tokens);
+        self.distribute_payments(
+            hash_of_hashes.clone(),
+            operation_tuple,
+            minted_operation_tokens,
+        );
+    }
+
+    #[endpoint(registerNewTokenID)]
+    #[payable("*")]
+    fn register_new_token_id(&self, tokens: MultiValueEncoded<TokenIdentifier>) {
+        let call_payment = self.call_value().single_esdt().clone();
+        let wegld_identifier = self.wegld_identifier().get();
+
+        require!(
+            call_payment.token_identifier == wegld_identifier,
+            "WEGLD is the only token accepted as register fee"
+        );
+
+        require!(
+            call_payment.amount == DEFAULT_ISSUE_COST * tokens.len() as u64,
+            "WEGLD fee amount is not met"
+        );
+
+        for token_id in tokens {
+            self.register_token(token_id);
+        }
+    }
+
+    fn verify_operation_tokens_issue_paid(
+        &self,
+        tokens: ManagedVec<OperationEsdtPayment<Self::Api>>,
+    ) -> bool {
+        for token in tokens.iter() {
+            if !self.has_sov_prefix(&token.token_identifier, self.get_sovereign_prefix()) {
+                continue;
+            }
+
+            if !self.paid_issued_tokens().contains(&token.token_identifier) {
+                return false;
+            }
+        }
+
+        true
     }
 
     fn mint_tokens(
@@ -52,7 +112,8 @@ pub trait TransferTokensModule:
         let mut output_payments = ManagedVec::new();
 
         for operation_token in operation_tokens.iter() {
-            if !self.has_sov_token_prefix(&operation_token.token_identifier) {
+            let sov_prefix = self.get_sovereign_prefix();
+            if !self.has_sov_prefix(&operation_token.token_identifier, sov_prefix) {
                 output_payments.push(operation_token.clone());
                 continue;
             }
@@ -113,7 +174,6 @@ pub trait TransferTokensModule:
 
         output_payments
     }
-
     fn distribute_payments(
         &self,
         hash_of_hashes: ManagedBuffer,
@@ -195,6 +255,7 @@ pub trait TransferTokensModule:
                 );
             }
             ManagedAsyncCallResult::Err(_) => {
+                self.burn_sovereign_tokens(&operation_tuple.operation);
                 self.emit_transfer_failed_events(hash_of_hashes, operation_tuple);
             }
         }
@@ -208,6 +269,21 @@ pub trait TransferTokensModule:
             .sync_call();
     }
 
+    fn burn_sovereign_tokens(&self, operation: &Operation<Self::Api>) {
+        for token in operation.tokens.iter() {
+            let sov_prefix = self.get_sovereign_prefix();
+            if !self.has_sov_prefix(&token.token_identifier, sov_prefix) {
+                continue;
+            }
+
+            self.send().esdt_local_burn(
+                &token.token_identifier,
+                token.token_nonce,
+                &token.token_data.amount,
+            );
+        }
+    }
+
     fn emit_transfer_failed_events(
         &self,
         hash_of_hashes: &ManagedBuffer,
@@ -217,14 +293,6 @@ pub trait TransferTokensModule:
             hash_of_hashes.clone(),
             operation_tuple.op_hash.clone(),
         );
-
-        for operation_token in &operation_tuple.operation.tokens {
-            self.send().esdt_local_burn(
-                &operation_token.token_identifier,
-                operation_token.token_nonce,
-                &operation_token.token_data.amount,
-            );
-        }
 
         // deposit back mainchain tokens into user account
         let sc_address = self.blockchain().get_sc_address();
@@ -268,9 +336,27 @@ pub trait TransferTokensModule:
         }
     }
 
+    #[inline]
+    fn get_sovereign_prefix(&self) -> ManagedBuffer {
+        self.sovereign_tokens_prefix().get()
+    }
+
+    #[inline]
+    fn register_token(&self, token_id: TokenIdentifier<Self::Api>) {
+        self.paid_issued_tokens().insert(token_id);
+    }
+
+    #[inline]
+    fn is_wegld(&self, token_id: &TokenIdentifier<Self::Api>) -> bool {
+        token_id.eq(&self.wegld_identifier().get())
+    }
+
     #[storage_mapper("pending_hashes")]
     fn pending_hashes(&self, hash_of_hashes: &ManagedBuffer) -> UnorderedSetMapper<ManagedBuffer>;
 
     #[storage_mapper("header_verifier_address")]
     fn header_verifier_address(&self) -> SingleValueMapper<ManagedAddress>;
+
+    #[storage_mapper("mintedTokens")]
+    fn paid_issued_tokens(&self) -> UnorderedSetMapper<TokenIdentifier<Self::Api>>;
 }

@@ -24,9 +24,36 @@ pub trait EnshrineEsdtSafe:
     + common::storage::CommonStorage
 {
     #[init]
-    fn init(&self, is_sovereign_chain: bool) {
+    fn init(
+        &self,
+        is_sovereign_chain: bool,
+        opt_wegld_identifier: Option<TokenIdentifier>,
+        opt_sov_token_prefix: Option<ManagedBuffer>,
+    ) {
         self.is_sovereign_chain().set(is_sovereign_chain);
         self.set_paused(true);
+
+        if is_sovereign_chain {
+            return;
+        }
+
+        match opt_wegld_identifier {
+            Some(identifier) => {
+                require!(
+                    identifier.is_valid_esdt_identifier(),
+                    "Sent Identifier is not valid"
+                );
+
+                self.wegld_identifier().set(identifier);
+            }
+
+            None => sc_panic!("WEGLG identifier must be set in Mainchain"),
+        }
+
+        match opt_sov_token_prefix {
+            Some(prefix) => self.sovereign_tokens_prefix().set(prefix),
+            None => sc_panic!("Sovereign Token Prefix must be set in Mainchain"),
+        }
     }
 
     #[only_owner]
