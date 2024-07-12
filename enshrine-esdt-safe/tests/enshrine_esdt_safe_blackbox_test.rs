@@ -210,6 +210,33 @@ impl EnshrineTestState {
             .run();
     }
 
+    fn propose_register_tokens_insufficient_funds(
+        &mut self,
+        token_ids: Vec<TestTokenIdentifier>,
+        err_message: &str,
+        err_code: u64,
+    ) {
+        let mut managed_token_ids: MultiValueEncoded<StaticApi, TokenIdentifier<StaticApi>> =
+            MultiValueEncoded::new();
+
+        for token_id in token_ids {
+            managed_token_ids.push(TokenIdentifier::from(token_id))
+        }
+
+        let wegld_amount = BigUint::from(DEFAULT_ISSUE_COST * managed_token_ids.len() as u64);
+        let wegld_payment = EsdtTokenPayment::new(WEGLD_IDENTIFIER.into(), 0, wegld_amount);
+
+        self.world
+            .tx()
+            .from(USER_ADDRESS)
+            .to(ENSHRINE_ESDT_ADDRESS)
+            .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
+            .register_new_token_id(managed_token_ids)
+            .returns(ExpectError(err_code, err_message))
+            .esdt(wegld_payment)
+            .run();
+    }
+
     fn propose_register_tokens(
         &mut self,
         token_ids: Vec<TestTokenIdentifier>,
@@ -323,14 +350,15 @@ fn test_sovereign_prefix_has_prefix() {
 }
 
 #[test]
-fn test_register_tokens_multiple_esdt() {
+fn test_register_tokens_insufficient_funds() {
     let mut state = EnshrineTestState::new();
-    let error_message = "incorrect number of ESDT transfers";
+    let error_message = "insufficient funds";
 
     state.propose_setup_contracts(false);
-    state.propose_register_tokens(
+    state.propose_register_tokens_insufficient_funds(
         Vec::from([PREFIX_NFT_TOKEN_ID, FUNGIBLE_TOKEN_ID]),
-        Some(error_message),
+        error_message,
+        10,
     );
 }
 
