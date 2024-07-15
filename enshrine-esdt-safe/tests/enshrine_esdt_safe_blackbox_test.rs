@@ -61,7 +61,7 @@ impl EnshrineTestState {
 
         world
             .account(ENSHRINE_ESDT_OWNER_ADDRESS)
-            .esdt_balance(FUNGIBLE_TOKEN_ID, 100_000)
+            .esdt_balance(FUNGIBLE_TOKEN_ID, BigUint::from(WEGLD_BALANCE))
             .esdt_balance(WEGLD_IDENTIFIER, BigUint::from(WEGLD_BALANCE))
             .esdt_nft_balance(NFT_TOKEN_ID, 1, 100_000, ManagedBuffer::new())
             .nonce(1)
@@ -216,18 +216,19 @@ impl EnshrineTestState {
     fn propose_register_tokens(
         &mut self,
         sender: &TestAddress,
-        token_ids: Vec<TestTokenIdentifier>,
+        token_fee: &TestTokenIdentifier,
+        tokens_to_register: Vec<TestTokenIdentifier>,
         error_status: Option<ErrorStatus>,
     ) {
         let mut managed_token_ids: MultiValueEncoded<StaticApi, TokenIdentifier<StaticApi>> =
             MultiValueEncoded::new();
 
-        for token_id in token_ids {
+        for token_id in tokens_to_register {
             managed_token_ids.push(TokenIdentifier::from(token_id))
         }
 
         let wegld_amount = BigUint::from(DEFAULT_ISSUE_COST * managed_token_ids.len() as u64);
-        let wegld_payment = EsdtTokenPayment::new(WEGLD_IDENTIFIER.into(), 0, wegld_amount);
+        let wegld_payment = EsdtTokenPayment::new(token_fee.clone().into(), 0, wegld_amount);
 
         match error_status {
             Some(status) => self
@@ -335,6 +336,25 @@ fn test_register_tokens_insufficient_funds() {
     state.propose_setup_contracts(false);
     state.propose_register_tokens(
         &USER_ADDRESS,
+        &WEGLD_IDENTIFIER,
+        Vec::from([PREFIX_NFT_TOKEN_ID, FUNGIBLE_TOKEN_ID]),
+        Some(ErrorStatus {
+            code,
+            error_message,
+        }),
+    );
+}
+
+#[test]
+fn test_register_tokens_wrong_token_as_fee() {
+    let mut state = EnshrineTestState::new();
+    let code = 4u64;
+    let error_message = "WEGLD is the only token accepted as register fee";
+
+    state.propose_setup_contracts(false);
+    state.propose_register_tokens(
+        &ENSHRINE_ESDT_OWNER_ADDRESS,
+        &FUNGIBLE_TOKEN_ID,
         Vec::from([PREFIX_NFT_TOKEN_ID, FUNGIBLE_TOKEN_ID]),
         Some(ErrorStatus {
             code,
@@ -349,7 +369,12 @@ fn test_register_tokens() {
     let token_vec = Vec::from([PREFIX_NFT_TOKEN_ID, FUNGIBLE_TOKEN_ID]);
 
     state.propose_setup_contracts(false);
-    state.propose_register_tokens(&ENSHRINE_ESDT_OWNER_ADDRESS, token_vec, None);
+    state.propose_register_tokens(
+        &ENSHRINE_ESDT_OWNER_ADDRESS,
+        &WEGLD_IDENTIFIER,
+        token_vec,
+        None,
+    );
     state
         .world
         .check_account(ENSHRINE_ESDT_OWNER_ADDRESS)
