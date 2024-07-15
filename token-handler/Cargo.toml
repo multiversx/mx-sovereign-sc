@@ -1,0 +1,24 @@
+[package]
+name = "token-handler"
+version = "0.0.0"
+authors = ["you"]
+edition = "2021"
+publish = false
+
+[lib]
+path = "src/token_handler.rs"
+
+[dependencies.multiversx-sc]
+version = "0.51.1"
+
+[dev-dependencies]
+num-bigint = "0.4"
+
+[dev-dependencies.multiversx-sc-scenario]
+version = "0.51.1"
+
+[workspace]
+members = [
+    ".",
+    "meta",
+]
