@@ -299,6 +299,16 @@ impl EnshrineTestState {
 
         ManagedBuffer::new_from_bytes(&sha256)
     }
+
+    fn propose_check_wegld_balance(
+        &mut self,
+        account: TestAddress,
+        wegld_amount: BigUint<StaticApi>,
+    ) {
+        self.world
+            .check_account(account)
+            .esdt_balance(WEGLD_IDENTIFIER, wegld_amount);
+    }
 }
 
 #[test]
@@ -346,11 +356,12 @@ fn test_register_tokens_insufficient_funds() {
 #[test]
 fn test_register_tokens() {
     let mut state = EnshrineTestState::new();
+    let token_vec = Vec::from([PREFIX_NFT_TOKEN_ID, FUNGIBLE_TOKEN_ID]);
 
     state.propose_setup_contracts(false);
-    state.propose_register_tokens(
-        &ENSHRINE_ESDT_OWNER_ADDRESS,
-        Vec::from([PREFIX_NFT_TOKEN_ID, FUNGIBLE_TOKEN_ID]),
-        None,
-    );
+    state.propose_register_tokens(&ENSHRINE_ESDT_OWNER_ADDRESS, token_vec, None);
+    state
+        .world
+        .check_account(ENSHRINE_ESDT_OWNER_ADDRESS)
+        .esdt_balance(WEGLD_IDENTIFIER, BigUint::zero());
 }
