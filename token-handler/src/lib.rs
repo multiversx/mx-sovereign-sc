@@ -3,7 +3,9 @@
 #[allow(unused_imports)]
 use multiversx_sc::imports::*;
 
-/// An empty contract. To be used as a template when starting a new contract from scratch.
+pub mod burn_tokens;
+pub mod mint_tokens;
+
 #[multiversx_sc::contract]
 pub trait TokenHandler {
     #[init]
