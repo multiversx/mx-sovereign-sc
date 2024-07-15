@@ -79,6 +79,26 @@ impl EnshrineTestState {
         Self { world }
     }
 
+    fn propose_set_unpaused(&mut self) {
+        self.world
+            .tx()
+            .from(ENSHRINE_ESDT_OWNER_ADDRESS)
+            .to(ENSHRINE_ESDT_ADDRESS)
+            .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
+            .unpause_endpoint()
+            .run();
+    }
+
+    fn propose_set_header_verifier_address(&mut self) {
+        self.world
+            .tx()
+            .from(ENSHRINE_ESDT_OWNER_ADDRESS)
+            .to(ENSHRINE_ESDT_ADDRESS)
+            .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
+            .set_header_verifier_address(HEADER_VERIFIER_ADDRESS)
+            .run();
+    }
+
     fn deploy_enshrine_esdt_contract(
         &mut self,
         is_sovereign_chain: bool,
@@ -128,7 +148,7 @@ impl EnshrineTestState {
         self
     }
 
-    fn propose_execute_operation(&mut self, has_prefix: bool, error_msg: Option<&str>) {
+    fn propose_execute_operation(&mut self, has_prefix: bool, error_status: Option<ErrorStatus>) {
         let (tokens, data) = if has_prefix {
             self.setup_payments(vec![PREFIX_NFT_TOKEN_ID, FUNGIBLE_TOKEN_ID])
         } else {
@@ -140,15 +160,15 @@ impl EnshrineTestState {
         let hash_of_hashes: ManagedBuffer<StaticApi> =
             ManagedBuffer::from(&sha256(&operation_hash.to_vec()));
 
-        match error_msg {
-            Some(msg) => {
+        match error_status {
+            Some(status) => {
                 self.world
                     .tx()
                     .from(USER_ADDRESS)
                     .to(ENSHRINE_ESDT_ADDRESS)
                     .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
                     .execute_operations(hash_of_hashes, operation)
-                    .returns(ExpectError(10, msg))
+                    .returns(ExpectError(status.code, status.error_message))
                     .run();
             }
 
@@ -162,26 +182,6 @@ impl EnshrineTestState {
                     .run();
             }
         }
-    }
-
-    fn propose_set_unpaused(&mut self) {
-        self.world
-            .tx()
-            .from(ENSHRINE_ESDT_OWNER_ADDRESS)
-            .to(ENSHRINE_ESDT_ADDRESS)
-            .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
-            .unpause_endpoint()
-            .run();
-    }
-
-    fn propose_set_header_verifier_address(&mut self) {
-        self.world
-            .tx()
-            .from(ENSHRINE_ESDT_OWNER_ADDRESS)
-            .to(ENSHRINE_ESDT_ADDRESS)
-            .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
-            .set_header_verifier_address(HEADER_VERIFIER_ADDRESS)
-            .run();
     }
 
     fn propose_register_operation(&mut self, has_prefix: bool) {
@@ -298,16 +298,6 @@ impl EnshrineTestState {
         let sha256 = sha256(&serialized_operation.to_vec());
 
         ManagedBuffer::new_from_bytes(&sha256)
-    }
-
-    fn propose_check_wegld_balance(
-        &mut self,
-        account: TestAddress,
-        wegld_amount: BigUint<StaticApi>,
-    ) {
-        self.world
-            .check_account(account)
-            .esdt_balance(WEGLD_IDENTIFIER, wegld_amount);
     }
 }
 
