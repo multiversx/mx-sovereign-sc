@@ -34,7 +34,13 @@ const FUNGIBLE_TOKEN_ID: TestTokenIdentifier = TestTokenIdentifier::new("CROWD-1
 const PREFIX_NFT_TOKEN_ID: TestTokenIdentifier = TestTokenIdentifier::new("sov-NFT-123456");
 
 const WEGLD_IDENTIFIER: TestTokenIdentifier = TestTokenIdentifier::new("WEGLD-123456");
-const SOVEREIGN_TOKEN_PREFIX: &str = "sov-";
+const WEGLD_BALANCE: u128 = 100_000_000_000_000_000;
+const SOVEREIGN_TOKEN_PREFIX: &str = "sov";
+
+pub struct ErrorStatus<'a> {
+    code: u64,
+    error_message: &'a str,
+}
 
 fn world() -> ScenarioWorld {
     let mut blockchain = ScenarioWorld::new();
@@ -56,10 +62,7 @@ impl EnshrineTestState {
         world
             .account(ENSHRINE_ESDT_OWNER_ADDRESS)
             .esdt_balance(FUNGIBLE_TOKEN_ID, 100_000)
-            .esdt_balance(
-                WEGLD_IDENTIFIER,
-                BigUint::from(100_000_000_000_000_000 as u128),
-            )
+            .esdt_balance(WEGLD_IDENTIFIER, BigUint::from(WEGLD_BALANCE))
             .esdt_nft_balance(NFT_TOKEN_ID, 1, 100_000, ManagedBuffer::new())
             .nonce(1)
             .balance(ENSHRINE_OWNER_BALANCE);
@@ -210,37 +213,11 @@ impl EnshrineTestState {
             .run();
     }
 
-    fn propose_register_tokens_insufficient_funds(
-        &mut self,
-        token_ids: Vec<TestTokenIdentifier>,
-        err_message: &str,
-        err_code: u64,
-    ) {
-        let mut managed_token_ids: MultiValueEncoded<StaticApi, TokenIdentifier<StaticApi>> =
-            MultiValueEncoded::new();
-
-        for token_id in token_ids {
-            managed_token_ids.push(TokenIdentifier::from(token_id))
-        }
-
-        let wegld_amount = BigUint::from(DEFAULT_ISSUE_COST * managed_token_ids.len() as u64);
-        let wegld_payment = EsdtTokenPayment::new(WEGLD_IDENTIFIER.into(), 0, wegld_amount);
-
-        self.world
-            .tx()
-            .from(USER_ADDRESS)
-            .to(ENSHRINE_ESDT_ADDRESS)
-            .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
-            .register_new_token_id(managed_token_ids)
-            .returns(ExpectError(err_code, err_message))
-            .esdt(wegld_payment)
-            .run();
-    }
-
     fn propose_register_tokens(
         &mut self,
+        sender: &TestAddress,
         token_ids: Vec<TestTokenIdentifier>,
-        opt_err_message: Option<&str>,
+        error_status: Option<ErrorStatus>,
     ) {
         let mut managed_token_ids: MultiValueEncoded<StaticApi, TokenIdentifier<StaticApi>> =
             MultiValueEncoded::new();
@@ -252,21 +229,21 @@ impl EnshrineTestState {
         let wegld_amount = BigUint::from(DEFAULT_ISSUE_COST * managed_token_ids.len() as u64);
         let wegld_payment = EsdtTokenPayment::new(WEGLD_IDENTIFIER.into(), 0, wegld_amount);
 
-        match opt_err_message {
-            Some(err_msg) => self
+        match error_status {
+            Some(status) => self
                 .world
                 .tx()
-                .from(ENSHRINE_ESDT_OWNER_ADDRESS)
+                .from(sender.clone())
                 .to(ENSHRINE_ESDT_ADDRESS)
                 .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
                 .register_new_token_id(managed_token_ids)
-                .returns(ExpectError(4, err_msg))
+                .returns(ExpectError(status.code, status.error_message))
                 .esdt(wegld_payment)
                 .run(),
             None => self
                 .world
                 .tx()
-                .from(ENSHRINE_ESDT_OWNER_ADDRESS)
+                .from(sender.clone())
                 .to(ENSHRINE_ESDT_ADDRESS)
                 .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
                 .register_new_token_id(managed_token_ids)
@@ -352,13 +329,17 @@ fn test_sovereign_prefix_has_prefix() {
 #[test]
 fn test_register_tokens_insufficient_funds() {
     let mut state = EnshrineTestState::new();
+    let code = 10u64;
     let error_message = "insufficient funds";
 
     state.propose_setup_contracts(false);
-    state.propose_register_tokens_insufficient_funds(
+    state.propose_register_tokens(
+        &USER_ADDRESS,
         Vec::from([PREFIX_NFT_TOKEN_ID, FUNGIBLE_TOKEN_ID]),
-        error_message,
-        10,
+        Some(ErrorStatus {
+            code,
+            error_message,
+        }),
     );
 }
 
@@ -367,5 +348,9 @@ fn test_register_tokens() {
     let mut state = EnshrineTestState::new();
 
     state.propose_setup_contracts(false);
-    state.propose_register_tokens(Vec::from([PREFIX_NFT_TOKEN_ID, FUNGIBLE_TOKEN_ID]), None);
+    state.propose_register_tokens(
+        &ENSHRINE_ESDT_OWNER_ADDRESS,
+        Vec::from([PREFIX_NFT_TOKEN_ID, FUNGIBLE_TOKEN_ID]),
+        None,
+    );
 }
