@@ -351,12 +351,12 @@ pub trait TransferTokensModule:
         token_id.eq(&self.wegld_identifier().get())
     }
 
-    #[storage_mapper("pending_hashes")]
+    #[storage_mapper("pendingHashes")]
     fn pending_hashes(&self, hash_of_hashes: &ManagedBuffer) -> UnorderedSetMapper<ManagedBuffer>;
 
-    #[storage_mapper("header_verifier_address")]
+    #[storage_mapper("headerVerifierAddress")]
     fn header_verifier_address(&self) -> SingleValueMapper<ManagedAddress>;
 
-    #[storage_mapper("mintedTokens")]
+    #[storage_mapper("paidIssuedTokens")]
     fn paid_issued_tokens(&self) -> UnorderedSetMapper<TokenIdentifier<Self::Api>>;
 }
