@@ -4,8 +4,8 @@
 use multiversx_sc::imports::*;
 
 pub mod burn_tokens;
+pub mod events;
 pub mod mint_tokens;
-pub mod operation;
 
 #[multiversx_sc::contract]
 pub trait TokenHandler {
