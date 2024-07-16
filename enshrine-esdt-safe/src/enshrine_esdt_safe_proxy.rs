@@ -45,18 +45,21 @@ where
 {
     pub fn init<
         Arg0: ProxyArg<bool>,
-        Arg1: ProxyArg<Option<TokenIdentifier<Env::Api>>>,
-        Arg2: ProxyArg<Option<ManagedBuffer<Env::Api>>>,
+        Arg1: ProxyArg<ManagedAddress<Env::Api>>,
+        Arg2: ProxyArg<Option<TokenIdentifier<Env::Api>>>,
+        Arg3: ProxyArg<Option<ManagedBuffer<Env::Api>>>,
     >(
         self,
         is_sovereign_chain: Arg0,
-        opt_wegld_identifier: Arg1,
-        opt_sov_token_prefix: Arg2,
+        token_handler_address: Arg1,
+        opt_wegld_identifier: Arg2,
+        opt_sov_token_prefix: Arg3,
     ) -> TxTypedDeploy<Env, From, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_deploy()
             .argument(&is_sovereign_chain)
+            .argument(&token_handler_address)
             .argument(&opt_wegld_identifier)
             .argument(&opt_sov_token_prefix)
             .original_result()

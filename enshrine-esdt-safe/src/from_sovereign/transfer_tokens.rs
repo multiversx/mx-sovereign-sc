@@ -53,7 +53,8 @@ pub trait TransferTokensModule:
 
             return;
         }
-
+        // let token_handler_address = self.token_handler_address().get();
+        // self.tx().to(token_handler_address);
         let minted_operation_tokens = self.mint_tokens(&operation.tokens);
         let operation_tuple = OperationTuple {
             op_hash: operation_hash.clone(),

@@ -10,4 +10,7 @@ pub trait CommonStorage {
 
     #[storage_mapper("sovereignTokensPrefix")]
     fn sovereign_tokens_prefix(&self) -> SingleValueMapper<ManagedBuffer>;
+
+    #[storage_mapper("tokenHandlerAddress")]
+    fn token_handler_address(&self) -> SingleValueMapper<ManagedAddress>;
 }
