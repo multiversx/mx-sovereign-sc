@@ -400,27 +400,29 @@ fn test_register_tokens() {
         .check_account(ENSHRINE_ESDT_OWNER_ADDRESS)
         .esdt_balance(WEGLD_IDENTIFIER, BigUint::zero());
 }
-//
-// #[test]
-// fn test_register_tokens_insufficient_wegld() {
-//     let mut state = EnshrineTestState::new();
-//     let token_vec = Vec::from([
-//         NFT_TOKEN_ID,
-//         PREFIX_NFT_TOKEN_ID,
-//         FUNGIBLE_TOKEN_ID,
-//         CROWD_TOKEN_ID,
-//     ]);
-//     let code = 10u64;
-//     let error_message = "WEGLD fee amount is not met";
-//
-//     state.propose_setup_contracts(false);
-//     state.propose_register_tokens(
-//         &ENSHRINE_ESDT_OWNER_ADDRESS,
-//         &WEGLD_IDENTIFIER,
-//         token_vec,
-//         Some(ErrorStatus {
-//             code,
-//             error_message,
-//         }),
-//     );
-// }
+
+#[test]
+fn test_register_tokens_insufficient_wegld() {
+    let mut state = EnshrineTestState::new();
+    let token_vec = Vec::from([
+        NFT_TOKEN_ID,
+        PREFIX_NFT_TOKEN_ID,
+        FUNGIBLE_TOKEN_ID,
+        CROWD_TOKEN_ID,
+    ]);
+    let code = 4u64;
+    let error_message = "WEGLD fee amount is not met";
+    let payment_amount = BigUint::from(DEFAULT_ISSUE_COST + token_vec.len() as u64);
+    let payment = EsdtTokenPayment::new(WEGLD_IDENTIFIER.into(), 0, payment_amount);
+
+    state.propose_setup_contracts(false);
+    state.propose_register_tokens(
+        &ENSHRINE_ESDT_OWNER_ADDRESS,
+        payment,
+        token_vec,
+        Some(ErrorStatus {
+            code,
+            error_message,
+        }),
+    );
+}
