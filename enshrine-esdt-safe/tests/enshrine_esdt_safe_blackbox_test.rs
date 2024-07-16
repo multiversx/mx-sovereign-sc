@@ -27,10 +27,12 @@ const HEADER_VERIFIER_CODE_PATH: MxscPath =
     MxscPath::new("../header-verifier/output/header-verifier.mxsc.json");
 
 const USER_ADDRESS: TestAddress = TestAddress::new("user");
+const INSUFFICIENT_WEGLD_ADDRESS: TestAddress = TestAddress::new("insufficient_wegld");
 const RECEIVER_ADDRESS: TestAddress = TestAddress::new("receiver");
 
 const NFT_TOKEN_ID: TestTokenIdentifier = TestTokenIdentifier::new("NFT-123456");
-const FUNGIBLE_TOKEN_ID: TestTokenIdentifier = TestTokenIdentifier::new("CROWD-123456");
+const CROWD_TOKEN_ID: TestTokenIdentifier = TestTokenIdentifier::new("CROWD-123456");
+const FUNGIBLE_TOKEN_ID: TestTokenIdentifier = TestTokenIdentifier::new("FUNG-123456");
 const PREFIX_NFT_TOKEN_ID: TestTokenIdentifier = TestTokenIdentifier::new("sov-NFT-123456");
 
 const WEGLD_IDENTIFIER: TestTokenIdentifier = TestTokenIdentifier::new("WEGLD-123456");
@@ -61,16 +63,27 @@ impl EnshrineTestState {
 
         world
             .account(ENSHRINE_ESDT_OWNER_ADDRESS)
-            .esdt_balance(FUNGIBLE_TOKEN_ID, BigUint::from(WEGLD_BALANCE))
+            .esdt_balance(CROWD_TOKEN_ID, BigUint::from(WEGLD_BALANCE))
             .esdt_balance(WEGLD_IDENTIFIER, BigUint::from(WEGLD_BALANCE))
+            .esdt_balance(FUNGIBLE_TOKEN_ID, BigUint::from(WEGLD_BALANCE))
             .esdt_nft_balance(NFT_TOKEN_ID, 1, 100_000, ManagedBuffer::new())
+            .esdt_nft_balance(PREFIX_NFT_TOKEN_ID, 1, 100_000, ManagedBuffer::new())
             .nonce(1)
             .balance(ENSHRINE_OWNER_BALANCE);
 
         world
             .account(USER_ADDRESS)
             .esdt_nft_balance(NFT_TOKEN_ID, 1, 100_000, ManagedBuffer::new())
-            .esdt_balance(FUNGIBLE_TOKEN_ID, 100_000)
+            .esdt_balance(CROWD_TOKEN_ID, 100_000)
+            .balance(USER_EGLD_BALANCE)
+            .nonce(1);
+
+        world
+            .account(INSUFFICIENT_WEGLD_ADDRESS)
+            .esdt_nft_balance(NFT_TOKEN_ID, 1, 100_000, ManagedBuffer::new())
+            .esdt_balance(WEGLD_IDENTIFIER, BigUint::from(WEGLD_BALANCE + 100_000))
+            .esdt_balance(FUNGIBLE_TOKEN_ID, BigUint::from(WEGLD_BALANCE))
+            .esdt_balance(CROWD_TOKEN_ID, BigUint::from(WEGLD_BALANCE))
             .balance(USER_EGLD_BALANCE)
             .nonce(1);
 
@@ -148,11 +161,16 @@ impl EnshrineTestState {
         self
     }
 
-    fn propose_execute_operation(&mut self, has_prefix: bool, error_status: Option<ErrorStatus>) {
+    fn propose_execute_operation(
+        &mut self,
+        has_prefix: bool,
+        error_status: Option<ErrorStatus>,
+        tokens: &Vec<TestTokenIdentifier>,
+    ) {
         let (tokens, data) = if has_prefix {
-            self.setup_payments(vec![PREFIX_NFT_TOKEN_ID, FUNGIBLE_TOKEN_ID])
+            self.setup_payments(tokens)
         } else {
-            self.setup_payments(vec![NFT_TOKEN_ID, FUNGIBLE_TOKEN_ID])
+            self.setup_payments(tokens)
         };
         let to = managed_address!(&Address::from(&RECEIVER_ADDRESS.eval_to_array()));
         let operation = Operation { to, tokens, data };
@@ -184,11 +202,11 @@ impl EnshrineTestState {
         }
     }
 
-    fn propose_register_operation(&mut self, has_prefix: bool) {
+    fn propose_register_operation(&mut self, has_prefix: bool, tokens: &Vec<TestTokenIdentifier>) {
         let (tokens, data) = if has_prefix {
-            self.setup_payments(vec![PREFIX_NFT_TOKEN_ID, FUNGIBLE_TOKEN_ID])
+            self.setup_payments(tokens)
         } else {
-            self.setup_payments(vec![NFT_TOKEN_ID, FUNGIBLE_TOKEN_ID])
+            self.setup_payments(tokens)
         };
         let to = managed_address!(&Address::from(RECEIVER_ADDRESS.eval_to_array()));
         let operation = Operation { to, tokens, data };
@@ -227,8 +245,8 @@ impl EnshrineTestState {
             managed_token_ids.push(TokenIdentifier::from(token_id))
         }
 
-        let wegld_amount = BigUint::from(DEFAULT_ISSUE_COST * managed_token_ids.len() as u64);
-        let wegld_payment = EsdtTokenPayment::new(token_fee.clone().into(), 0, wegld_amount);
+        let payment_amount = BigUint::from(DEFAULT_ISSUE_COST * managed_token_ids.len() as u64);
+        let payment = EsdtTokenPayment::new(token_fee.clone().into(), 0, payment_amount);
 
         match error_status {
             Some(status) => self
@@ -239,7 +257,7 @@ impl EnshrineTestState {
                 .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
                 .register_new_token_id(managed_token_ids)
                 .returns(ExpectError(status.code, status.error_message))
-                .esdt(wegld_payment)
+                .esdt(payment)
                 .run(),
             None => self
                 .world
@@ -248,7 +266,7 @@ impl EnshrineTestState {
                 .to(ENSHRINE_ESDT_ADDRESS)
                 .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
                 .register_new_token_id(managed_token_ids)
-                .esdt(wegld_payment)
+                .esdt(payment)
                 .run(),
         }
     }
@@ -266,7 +284,7 @@ impl EnshrineTestState {
 
     fn setup_payments(
         &mut self,
-        token_ids: Vec<TestTokenIdentifier>,
+        token_ids: &Vec<TestTokenIdentifier>,
     ) -> (
         ManagedVec<StaticApi, OperationEsdtPayment<StaticApi>>,
         OperationData<StaticApi>,
@@ -275,7 +293,7 @@ impl EnshrineTestState {
 
         for token_id in token_ids {
             let payment: OperationEsdtPayment<StaticApi> = OperationEsdtPayment {
-                token_identifier: token_id.into(),
+                token_identifier: token_id.clone().into(),
                 token_nonce: 1,
                 token_data: StolenFromFrameworkEsdtTokenData::default(),
             };
@@ -312,24 +330,27 @@ fn test_deploy() {
 #[test]
 fn test_sovereign_prefix_no_prefix() {
     let mut state = EnshrineTestState::new();
+    let token_vec = Vec::from([NFT_TOKEN_ID, CROWD_TOKEN_ID]);
 
     state.propose_setup_contracts(false);
-    state.propose_register_operation(false);
-    state.propose_execute_operation(false, None);
+    state.propose_register_operation(false, &token_vec);
+    state.propose_execute_operation(false, None, &token_vec);
 }
 
 #[test]
 fn test_sovereign_prefix_has_prefix() {
     let mut state = EnshrineTestState::new();
+    let token_vec = Vec::from([PREFIX_NFT_TOKEN_ID, CROWD_TOKEN_ID]);
 
     state.propose_setup_contracts(false);
-    state.propose_register_operation(true);
-    state.propose_execute_operation(true, None);
+    state.propose_register_operation(true, &token_vec);
+    state.propose_execute_operation(true, None, &token_vec);
 }
 
 #[test]
 fn test_register_tokens_insufficient_funds() {
     let mut state = EnshrineTestState::new();
+    let token_vec = Vec::from([PREFIX_NFT_TOKEN_ID, CROWD_TOKEN_ID]);
     let code = 10u64;
     let error_message = "insufficient funds";
 
@@ -337,7 +358,7 @@ fn test_register_tokens_insufficient_funds() {
     state.propose_register_tokens(
         &USER_ADDRESS,
         &WEGLD_IDENTIFIER,
-        Vec::from([PREFIX_NFT_TOKEN_ID, FUNGIBLE_TOKEN_ID]),
+        token_vec,
         Some(ErrorStatus {
             code,
             error_message,
@@ -348,14 +369,15 @@ fn test_register_tokens_insufficient_funds() {
 #[test]
 fn test_register_tokens_wrong_token_as_fee() {
     let mut state = EnshrineTestState::new();
+    let token_vec = Vec::from([PREFIX_NFT_TOKEN_ID, CROWD_TOKEN_ID]);
     let code = 4u64;
     let error_message = "WEGLD is the only token accepted as register fee";
 
     state.propose_setup_contracts(false);
     state.propose_register_tokens(
         &ENSHRINE_ESDT_OWNER_ADDRESS,
-        &FUNGIBLE_TOKEN_ID,
-        Vec::from([PREFIX_NFT_TOKEN_ID, FUNGIBLE_TOKEN_ID]),
+        &CROWD_TOKEN_ID,
+        token_vec,
         Some(ErrorStatus {
             code,
             error_message,
@@ -366,7 +388,7 @@ fn test_register_tokens_wrong_token_as_fee() {
 #[test]
 fn test_register_tokens() {
     let mut state = EnshrineTestState::new();
-    let token_vec = Vec::from([PREFIX_NFT_TOKEN_ID, FUNGIBLE_TOKEN_ID]);
+    let token_vec = Vec::from([PREFIX_NFT_TOKEN_ID, CROWD_TOKEN_ID]);
 
     state.propose_setup_contracts(false);
     state.propose_register_tokens(
@@ -380,3 +402,27 @@ fn test_register_tokens() {
         .check_account(ENSHRINE_ESDT_OWNER_ADDRESS)
         .esdt_balance(WEGLD_IDENTIFIER, BigUint::zero());
 }
+//
+// #[test]
+// fn test_register_tokens_insufficient_wegld() {
+//     let mut state = EnshrineTestState::new();
+//     let token_vec = Vec::from([
+//         NFT_TOKEN_ID,
+//         PREFIX_NFT_TOKEN_ID,
+//         FUNGIBLE_TOKEN_ID,
+//         CROWD_TOKEN_ID,
+//     ]);
+//     let code = 10u64;
+//     let error_message = "WEGLD fee amount is not met";
+//
+//     state.propose_setup_contracts(false);
+//     state.propose_register_tokens(
+//         &ENSHRINE_ESDT_OWNER_ADDRESS,
+//         &WEGLD_IDENTIFIER,
+//         token_vec,
+//         Some(ErrorStatus {
+//             code,
+//             error_message,
+//         }),
+//     );
+// }
