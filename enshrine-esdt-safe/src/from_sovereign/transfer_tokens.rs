@@ -54,22 +54,52 @@ pub trait TransferTokensModule:
             return;
         }
 
-        // let token_handler_address = self.token_handler_address().get();
-        // self.tx()
-        //     .to(token_handler_address)
-        //     .typed(token_handler_proxy::TokenHandlerProxy)
-        //     .mint_tokens();
-        let minted_operation_tokens = self.mint_tokens(&operation.tokens);
-        let operation_tuple = OperationTuple {
-            op_hash: operation_hash.clone(),
-            operation: operation.clone(),
-        };
+        let token_handler_address = self.token_handler_address().get();
+        self.tx()
+            .to(token_handler_address)
+            .typed(token_handler_proxy::TokenHandlerProxy)
+            .mint_tokens(MultiValueEncoded::from(operation.tokens.clone()))
+            .callback(
+                <Self as TransferTokensModule>::callbacks(self).return_minted_tokens(
+                    operation_hash,
+                    hash_of_hashes,
+                    operation,
+                ),
+            )
+            .async_call_and_exit();
+
+        // let minted_operation_tokens = self.mint_tokens(&operation.tokens);
 
         self.distribute_payments(
             hash_of_hashes.clone(),
             operation_tuple,
             minted_operation_tokens,
         );
+    }
+
+    #[promises_callback]
+    fn return_minted_tokens(
+        &self,
+        operation_hash: ManagedBuffer,
+        hash_of_hashes: ManagedBuffer,
+        operation: Operation<Self::Api>,
+        #[call_result] result: ManagedAsyncCallResult<IgnoreValue>,
+    ) -> MultiValueEncoded<OperationEsdtPayment<Self::Api>> {
+        match result {
+            ManagedAsyncCallResult::Ok(tokens) => {
+                let operation_tuple = OperationTuple {
+                    op_hash: operation_hash.clone(),
+                    operation: operation.clone(),
+                };
+
+                self.distribute_payments(
+                    hash_of_hashes.clone(),
+                    operation_tuple,
+                    minted_operation_tokens,
+                );
+            }
+        }
+        MultiValueEncoded::new()
     }
 
     #[endpoint(registerNewTokenID)]
