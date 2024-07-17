@@ -9,10 +9,7 @@ use crate::common;
 #[multiversx_sc::module]
 pub trait MintTokens: utils::UtilsModule + common::storage::CommonStorage {
     #[endpoint(mintTokens)]
-    fn mint_tokens(
-        &self,
-        operation_tokens: MultiValueEncoded<OperationEsdtPayment<Self::Api>>,
-    ) -> MultiValueEncoded<OperationEsdtPayment<Self::Api>> {
+    fn mint_tokens(&self, operation_tokens: MultiValueEncoded<OperationEsdtPayment<Self::Api>>) {
         let mut output_payments: ManagedVec<Self::Api, OperationEsdtPayment<Self::Api>> =
             ManagedVec::new();
 
@@ -70,13 +67,13 @@ pub trait MintTokens: utils::UtilsModule + common::storage::CommonStorage {
                 }
             }
 
+            self.minted_tokens().push(&operation_token);
+
             output_payments.push(OperationEsdtPayment {
                 token_identifier: operation_token.token_identifier,
                 token_nonce: nonce,
                 token_data: operation_token.token_data,
             });
         }
-
-        output_payments.into()
     }
 }
