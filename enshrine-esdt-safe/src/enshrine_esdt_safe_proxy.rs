@@ -330,66 +330,54 @@ where
 
     /// Tokens in the whitelist can be transferred without fees 
     pub fn add_tokens_to_whitelist<
-        Arg0: ProxyArg<Option<ManagedByteArray<Env::Api, 48usize>>>,
-        Arg1: ProxyArg<MultiValueEncoded<Env::Api, TokenIdentifier<Env::Api>>>,
+        Arg0: ProxyArg<MultiValueEncoded<Env::Api, TokenIdentifier<Env::Api>>>,
     >(
         self,
-        opt_signature: Arg0,
-        tokens: Arg1,
+        tokens: Arg0,
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("addTokensToWhitelist")
-            .argument(&opt_signature)
             .argument(&tokens)
             .original_result()
     }
 
     pub fn remove_tokens_from_whitelist<
-        Arg0: ProxyArg<Option<ManagedByteArray<Env::Api, 48usize>>>,
-        Arg1: ProxyArg<MultiValueEncoded<Env::Api, TokenIdentifier<Env::Api>>>,
+        Arg0: ProxyArg<MultiValueEncoded<Env::Api, TokenIdentifier<Env::Api>>>,
     >(
         self,
-        opt_signature: Arg0,
-        tokens: Arg1,
+        tokens: Arg0,
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("removeTokensFromWhitelist")
-            .argument(&opt_signature)
             .argument(&tokens)
             .original_result()
     }
 
     /// Tokens in blacklist cannot be transferred 
     pub fn add_tokens_to_blacklist<
-        Arg0: ProxyArg<Option<ManagedByteArray<Env::Api, 48usize>>>,
-        Arg1: ProxyArg<MultiValueEncoded<Env::Api, TokenIdentifier<Env::Api>>>,
+        Arg0: ProxyArg<MultiValueEncoded<Env::Api, TokenIdentifier<Env::Api>>>,
     >(
         self,
-        opt_signature: Arg0,
-        tokens: Arg1,
+        tokens: Arg0,
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("addTokensToBlacklist")
-            .argument(&opt_signature)
             .argument(&tokens)
             .original_result()
     }
 
     pub fn remove_tokens_from_blacklist<
-        Arg0: ProxyArg<Option<ManagedByteArray<Env::Api, 48usize>>>,
-        Arg1: ProxyArg<MultiValueEncoded<Env::Api, TokenIdentifier<Env::Api>>>,
+        Arg0: ProxyArg<MultiValueEncoded<Env::Api, TokenIdentifier<Env::Api>>>,
     >(
         self,
-        opt_signature: Arg0,
-        tokens: Arg1,
+        tokens: Arg0,
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("removeTokensFromBlacklist")
-            .argument(&opt_signature)
             .argument(&tokens)
             .original_result()
     }

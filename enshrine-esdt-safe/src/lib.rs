@@ -6,6 +6,7 @@ pub mod common;
 pub mod enshrine_esdt_safe_proxy;
 pub mod from_sovereign;
 pub mod to_sovereign;
+pub mod token_handler_proxy;
 
 #[multiversx_sc::contract]
 pub trait EnshrineEsdtSafe:

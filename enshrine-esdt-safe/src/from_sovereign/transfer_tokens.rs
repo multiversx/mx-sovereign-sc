@@ -1,4 +1,4 @@
-use crate::{common, to_sovereign};
+use crate::{common, to_sovereign, token_handler_proxy};
 use builtin_func_names::ESDT_NFT_CREATE_FUNC_NAME;
 use header_verifier::header_verifier_proxy;
 use multiversx_sc::imports::*;
@@ -53,8 +53,12 @@ pub trait TransferTokensModule:
 
             return;
         }
+
         // let token_handler_address = self.token_handler_address().get();
-        // self.tx().to(token_handler_address);
+        // self.tx()
+        //     .to(token_handler_address)
+        //     .typed(token_handler_proxy::TokenHandlerProxy)
+        //     .mint_tokens();
         let minted_operation_tokens = self.mint_tokens(&operation.tokens);
         let operation_tuple = OperationTuple {
             op_hash: operation_hash.clone(),
