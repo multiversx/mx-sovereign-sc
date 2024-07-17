@@ -43,12 +43,16 @@ where
     From: TxFrom<Env>,
     Gas: TxGas<Env>,
 {
-    pub fn init(
+    pub fn init<
+        Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
+    >(
         self,
+        chain_prefix: Arg0,
     ) -> TxTypedDeploy<Env, From, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_deploy()
+            .argument(&chain_prefix)
             .original_result()
     }
 }
@@ -68,6 +72,42 @@ where
         self.wrapped_tx
             .payment(NotPayable)
             .raw_upgrade()
+            .original_result()
+    }
+}
+
+#[rustfmt::skip]
+impl<Env, From, To, Gas> TokenHandlerProxyMethods<Env, From, To, Gas>
+where
+    Env: TxEnv,
+    Env::Api: VMApi,
+    From: TxFrom<Env>,
+    To: TxTo<Env>,
+    Gas: TxGas<Env>,
+{
+    pub fn mint_tokens<
+        Arg0: ProxyArg<MultiValueEncoded<Env::Api, transaction::OperationEsdtPayment<Env::Api>>>,
+    >(
+        self,
+        operation_tokens: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, MultiValueEncoded<Env::Api, transaction::OperationEsdtPayment<Env::Api>>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("mintTokens")
+            .argument(&operation_tokens)
+            .original_result()
+    }
+
+    pub fn burn_tokens<
+        Arg0: ProxyArg<transaction::Operation<Env::Api>>,
+    >(
+        self,
+        operation: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("burnTokens")
+            .argument(&operation)
             .original_result()
     }
 }
