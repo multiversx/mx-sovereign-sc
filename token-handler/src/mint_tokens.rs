@@ -1,7 +1,7 @@
 use multiversx_sc::api::ESDT_NFT_CREATE_FUNC_NAME;
 use multiversx_sc::types::ManagedArgBuffer;
 use multiversx_sc::types::{ManagedVec, MultiValueEncoded};
-use multiversx_sc::{codec, err_msg};
+use multiversx_sc::{codec, err_msg, require};
 use transaction::OperationEsdtPayment;
 
 use crate::common;
