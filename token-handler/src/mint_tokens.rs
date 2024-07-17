@@ -8,7 +8,7 @@ use multiversx_sc::{
 use transaction::OperationEsdtPayment;
 
 #[multiversx_sc::module]
-pub trait MintTokens: utils::UtilsModule + bls_signature::BlsSignatureModule {
+pub trait MintTokens: utils::UtilsModule {
     #[endpoint(mintTokens)]
     fn mint_tokens(
         &self,
@@ -80,7 +80,4 @@ pub trait MintTokens: utils::UtilsModule + bls_signature::BlsSignatureModule {
 
         output_payments.into()
     }
-
-    #[storage_mapper]
-    fn sov_prefix(&self) -> SingleValueMapper<ManagedBuffer>;
 }

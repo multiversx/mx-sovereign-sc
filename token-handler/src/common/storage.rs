@@ -1,4 +1,7 @@
-use multiversx_sc::{imports::SingleValueMapper, types::ManagedBuffer};
+use multiversx_sc::imports::SingleValueMapper;
 
-#[storage_mapper]
-fn sov_prefix(&self) -> SingleValueMapper<ManagedBuffer>;
+#[multiversx_sc::module]
+pub trait CommonStorage {
+    #[storage_mapper]
+    fn sov_prefix(&self) -> SingleValueMapper<ManagedBuffer>;
+}

@@ -4,6 +4,7 @@
 use multiversx_sc::imports::*;
 
 pub mod burn_tokens;
+pub mod common;
 pub mod events;
 pub mod mint_tokens;
 pub mod token_handler_proxy;
