@@ -82,7 +82,7 @@ pub trait UtilsModule: bls_signature::BlsSignatureModule {
         false
     }
 
-    fn has_sov_prefix(&self, token_id: &TokenIdentifier, chain_prefix: ManagedBuffer) -> bool {
+    fn has_sov_prefix(&self, token_id: &TokenIdentifier, chain_prefix: &ManagedBuffer) -> bool {
         if !self.has_prefix(token_id) {
             return false;
         }
@@ -94,7 +94,7 @@ pub trait UtilsModule: bls_signature::BlsSignatureModule {
         if let Some(index) = slice.iter().position(|&b| b == DASH) {
             let prefix = ManagedBuffer::from(&slice[..index]);
 
-            if prefix == chain_prefix {
+            if prefix == chain_prefix.clone() {
                 return true;
             }
         }
