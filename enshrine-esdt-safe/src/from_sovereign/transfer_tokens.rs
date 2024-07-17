@@ -92,8 +92,10 @@ pub trait TransferTokensModule:
         &self,
         tokens: ManagedVec<OperationEsdtPayment<Self::Api>>,
     ) -> bool {
+        let sov_prefix = self.get_sovereign_prefix();
+
         for token in tokens.iter() {
-            if !self.has_sov_prefix(&token.token_identifier, self.get_sovereign_prefix()) {
+            if !self.has_sov_prefix(&token.token_identifier, &sov_prefix) {
                 continue;
             }
 
@@ -110,10 +112,10 @@ pub trait TransferTokensModule:
         operation_tokens: &ManagedVec<OperationEsdtPayment<Self::Api>>,
     ) -> ManagedVec<OperationEsdtPayment<Self::Api>> {
         let mut output_payments = ManagedVec::new();
+        let sov_prefix = self.get_sovereign_prefix();
 
         for operation_token in operation_tokens.iter() {
-            let sov_prefix = self.get_sovereign_prefix();
-            if !self.has_sov_prefix(&operation_token.token_identifier, sov_prefix) {
+            if !self.has_sov_prefix(&operation_token.token_identifier, &sov_prefix) {
                 output_payments.push(operation_token.clone());
                 continue;
             }
@@ -270,9 +272,9 @@ pub trait TransferTokensModule:
     }
 
     fn burn_sovereign_tokens(&self, operation: &Operation<Self::Api>) {
+        let sov_prefix = self.get_sovereign_prefix();
         for token in operation.tokens.iter() {
-            let sov_prefix = self.get_sovereign_prefix();
-            if !self.has_sov_prefix(&token.token_identifier, sov_prefix) {
+            if !self.has_sov_prefix(&token.token_identifier, &sov_prefix) {
                 continue;
             }
 
