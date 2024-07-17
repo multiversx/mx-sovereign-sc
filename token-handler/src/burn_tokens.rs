@@ -8,7 +8,7 @@ pub trait BurnTokens: utils::UtilsModule + common::storage::CommonStorage {
         let sov_prefix = self.sov_prefix().get();
 
         for token in operation.tokens.iter() {
-            if self.has_sov_prefix(&token.token_identifier, sov_prefix.clone()) {
+            if self.has_sov_prefix(&token.token_identifier, &sov_prefix) {
                 continue;
             }
 

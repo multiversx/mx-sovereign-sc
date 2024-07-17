@@ -18,7 +18,7 @@ pub trait MintTokens: utils::UtilsModule + common::storage::CommonStorage {
 
         for operation_token in operation_tokens {
             let sov_prefix = self.sov_prefix().get();
-            if !self.has_sov_prefix(&operation_token.token_identifier, sov_prefix) {
+            if !self.has_sov_prefix(&operation_token.token_identifier, &sov_prefix) {
                 output_payments.push(operation_token.clone());
                 continue;
             }
