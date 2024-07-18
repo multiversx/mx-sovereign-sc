@@ -163,15 +163,10 @@ impl EnshrineTestState {
 
     fn propose_execute_operation(
         &mut self,
-        has_prefix: bool,
         error_status: Option<ErrorStatus>,
         tokens: &Vec<TestTokenIdentifier>,
     ) {
-        let (tokens, data) = if has_prefix {
-            self.setup_payments(tokens)
-        } else {
-            self.setup_payments(tokens)
-        };
+        let (tokens, data) = self.setup_payments(tokens);
         let to = managed_address!(&Address::from(&RECEIVER_ADDRESS.eval_to_array()));
         let operation = Operation { to, tokens, data };
         let operation_hash = self.get_operation_hash(&operation);
@@ -202,12 +197,8 @@ impl EnshrineTestState {
         }
     }
 
-    fn propose_register_operation(&mut self, has_prefix: bool, tokens: &Vec<TestTokenIdentifier>) {
-        let (tokens, data) = if has_prefix {
-            self.setup_payments(tokens)
-        } else {
-            self.setup_payments(tokens)
-        };
+    fn propose_register_operation(&mut self, tokens: &Vec<TestTokenIdentifier>) {
+        let (tokens, data) = self.setup_payments(tokens);
         let to = managed_address!(&Address::from(RECEIVER_ADDRESS.eval_to_array()));
         let operation = Operation { to, tokens, data };
         let operation_hash = self.get_operation_hash(&operation);
@@ -330,8 +321,8 @@ fn test_sovereign_prefix_no_prefix() {
     let token_vec = Vec::from([NFT_TOKEN_ID, CROWD_TOKEN_ID]);
 
     state.propose_setup_contracts(false);
-    state.propose_register_operation(false, &token_vec);
-    state.propose_execute_operation(false, None, &token_vec);
+    state.propose_register_operation(&token_vec);
+    state.propose_execute_operation(None, &token_vec);
 }
 
 #[test]
@@ -340,8 +331,8 @@ fn test_sovereign_prefix_has_prefix() {
     let token_vec = Vec::from([PREFIX_NFT_TOKEN_ID, CROWD_TOKEN_ID]);
 
     state.propose_setup_contracts(false);
-    state.propose_register_operation(true, &token_vec);
-    state.propose_execute_operation(true, None, &token_vec);
+    state.propose_register_operation(&token_vec);
+    state.propose_execute_operation(None, &token_vec);
 }
 
 #[test]
