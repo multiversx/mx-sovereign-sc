@@ -54,39 +54,42 @@ pub trait TransferTokensModule:
             return;
         }
 
-        let token_handler_address = self.token_handler_address().get();
         let operation_tuple = OperationTuple {
             op_hash: operation_hash,
             operation: operation.clone(),
         };
 
+        // self.distribute_payments(
+        //     hash_of_hashes.clone(),
+        //     operation_tuple.clone(),
+        //     tokens.to_vec(),
+        // );
+    }
+
+    #[endpoint]
+    fn call_token_handler_mint_endpoint(&self, operation: Operation<Self::Api>) {
+        let token_handler_address = self.token_handler_address().get();
+
         self.tx()
             .to(token_handler_address)
             .typed(token_handler_proxy::TokenHandlerProxy)
             .mint_tokens(MultiValueEncoded::from(operation.tokens.clone()))
-            .callback(
-                <Self as TransferTokensModule>::callbacks(self)
-                    .save_minted_tokens(&operation_tuple, hash_of_hashes),
-            )
+            .callback(<Self as TransferTokensModule>::callbacks(self).save_minted_tokens())
             .async_call_and_exit();
     }
 
     #[promises_callback]
     fn save_minted_tokens(
         &self,
-        operation_tuple: &OperationTuple<Self::Api>,
-        hash_of_hashes: ManagedBuffer,
         #[call_result] result: ManagedAsyncCallResult<
             MultiValueEncoded<OperationEsdtPayment<Self::Api>>,
         >,
     ) {
         match result {
             ManagedAsyncCallResult::Ok(tokens) => {
-                self.distribute_payments(
-                    hash_of_hashes.clone(),
-                    operation_tuple.clone(),
-                    tokens.to_vec(),
-                );
+                for token in tokens {
+                    self.minted_tokens().push(&token);
+                }
             }
             ManagedAsyncCallResult::Err(_) => {
                 sc_panic!("Error at minting tokens");
