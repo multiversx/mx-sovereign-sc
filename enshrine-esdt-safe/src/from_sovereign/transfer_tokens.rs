@@ -206,6 +206,7 @@ pub trait TransferTokensModule:
 
         output_payments
     }
+
     fn distribute_payments(
         &self,
         hash_of_hashes: ManagedBuffer,

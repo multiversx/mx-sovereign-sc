@@ -1,8 +1,12 @@
-use multiversx_sc::api::ESDT_NFT_CREATE_FUNC_NAME;
-use multiversx_sc::types::ManagedArgBuffer;
+use multiversx_sc::api::{ESDT_MULTI_TRANSFER_FUNC_NAME, ESDT_NFT_CREATE_FUNC_NAME};
+use multiversx_sc::imports::IgnoreValue;
+use multiversx_sc::types::{EsdtTokenPayment, ManagedArgBuffer, ManagedAsyncCallResult};
 use multiversx_sc::types::{ManagedVec, MultiValueEncoded};
 use multiversx_sc::{codec, err_msg};
-use transaction::OperationEsdtPayment;
+use transaction::{GasLimit, OperationEsdtPayment, OperationTuple};
+
+const CALLBACK_GAS: GasLimit = 10_000_000; // Increase if not enough
+const TRANSACTION_GAS: GasLimit = 30_000_000;
 
 use crate::common;
 
@@ -75,5 +79,99 @@ pub trait MintTokens: utils::UtilsModule + common::storage::CommonStorage {
                 token_data: operation_token.token_data,
             });
         }
+    }
+    fn distribute_payments(
+        &self,
+        hash_of_hashes: ManagedBuffer,
+        operation_tuple: OperationTuple<Self::Api>,
+        tokens_list: ManagedVec<OperationEsdtPayment<Self::Api>>,
+    ) {
+        let mapped_tokens: ManagedVec<Self::Api, EsdtTokenPayment<Self::Api>> =
+            tokens_list.iter().map(|token| token.into()).collect();
+
+        match &operation_tuple.operation.data.opt_transfer_data {
+            Some(transfer_data) => {
+                let mut args = ManagedArgBuffer::new();
+                for arg in &transfer_data.args {
+                    args.push_arg(arg);
+                }
+
+                self.tx()
+                    .to(&operation_tuple.operation.to)
+                    .raw_call(transfer_data.function.clone())
+                    .arguments_raw(args.clone())
+                    .multi_esdt(mapped_tokens.clone())
+                    .gas(transfer_data.gas_limit)
+                    .callback(
+                        <Self as MintTokens>::callbacks(self)
+                            .execute(&hash_of_hashes, &operation_tuple),
+                    )
+                    .gas_for_callback(CALLBACK_GAS)
+                    .register_promise();
+            }
+            None => {
+                let own_address = self.blockchain().get_sc_address();
+                let args =
+                    self.get_contract_call_args(&operation_tuple.operation.to, mapped_tokens);
+
+                self.tx()
+                    .to(own_address)
+                    .raw_call(ESDT_MULTI_TRANSFER_FUNC_NAME)
+                    .arguments_raw(args)
+                    .gas(TRANSACTION_GAS)
+                    .callback(
+                        <Self as MintTokens>::callbacks(self)
+                            .execute(&hash_of_hashes, &operation_tuple),
+                    )
+                    .register_promise();
+            }
+        }
+    }
+
+    #[promises_callback]
+    fn execute(
+        &self,
+        hash_of_hashes: &ManagedBuffer,
+        operation_tuple: &OperationTuple<Self::Api>,
+        #[call_result] result: ManagedAsyncCallResult<IgnoreValue>,
+    ) {
+        match result {
+            ManagedAsyncCallResult::Ok(_) => {
+                // self.execute_bridge_operation_event(
+                //     hash_of_hashes.clone(),
+                //     operation_tuple.op_hash.clone(),
+                // );
+            }
+            ManagedAsyncCallResult::Err(_) => {
+                // self.burn_sovereign_tokens(&operation_tuple.operation);
+                // self.emit_transfer_failed_events(hash_of_hashes, operation_tuple);
+            }
+        }
+
+        // let header_verifier_address = self.header_verifier_address().get();
+        //
+        // self.tx()
+        //     .to(header_verifier_address)
+        //     .typed(header_verifier_proxy::HeaderverifierProxy)
+        //     .remove_executed_hash(hash_of_hashes, &operation_tuple.op_hash)
+        //     .sync_call();
+    }
+
+    fn get_contract_call_args(
+        self,
+        to: &ManagedAddress,
+        mapped_tokens: ManagedVec<EsdtTokenPayment<Self::Api>>,
+    ) -> ManagedArgBuffer<Self::Api> {
+        let mut args = ManagedArgBuffer::new();
+        args.push_arg(to);
+        args.push_arg(mapped_tokens.len());
+
+        for token in &mapped_tokens {
+            args.push_arg(token.token_identifier);
+            args.push_arg(token.token_nonce);
+            args.push_arg(token.amount);
+        }
+
+        args
     }
 }
