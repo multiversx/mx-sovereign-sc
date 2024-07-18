@@ -10,6 +10,7 @@ use multiversx_sc_scenario::api::StaticApi;
 use multiversx_sc_scenario::multiversx_chain_vm::crypto_functions::sha256;
 use multiversx_sc_scenario::{imports::MxscPath, ScenarioWorld};
 use multiversx_sc_scenario::{managed_address, ExpectError, ScenarioTxRun};
+use token_handler::token_handler_proxy;
 use transaction::{
     Operation, OperationData, OperationEsdtPayment, StolenFromFrameworkEsdtTokenData,
 };
@@ -25,6 +26,10 @@ const DEFAULT_ISSUE_COST: u64 = 50_000_000_000_000_000;
 const HEADER_VERIFIER_ADDRESS: TestSCAddress = TestSCAddress::new("header_verifier");
 const HEADER_VERIFIER_CODE_PATH: MxscPath =
     MxscPath::new("../header-verifier/output/header-verifier.mxsc.json");
+
+const TOKEN_HANDLER_ADDRESS: TestSCAddress = TestSCAddress::new("token_handler");
+const TOKEN_HANDLER_CODE_PATH: MxscPath =
+    MxscPath::new("../token-handler/output/token-handler.mxsc.json");
 
 const USER_ADDRESS: TestAddress = TestAddress::new("user");
 const INSUFFICIENT_WEGLD_ADDRESS: TestAddress = TestAddress::new("insufficient_wegld");
@@ -49,6 +54,7 @@ fn world() -> ScenarioWorld {
 
     blockchain.register_contract(ENSHRINE_ESDT_CODE_PATH, enshrine_esdt_safe::ContractBuilder);
     blockchain.register_contract(HEADER_VERIFIER_CODE_PATH, header_verifier::ContractBuilder);
+    blockchain.register_contract(TOKEN_HANDLER_CODE_PATH, token_handler::ContractBuilder);
 
     blockchain
 }
@@ -122,7 +128,12 @@ impl EnshrineTestState {
             .tx()
             .from(ENSHRINE_ESDT_OWNER_ADDRESS)
             .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
-            .init(is_sovereign_chain, wegld_identifier, sovereign_token_prefix)
+            .init(
+                is_sovereign_chain,
+                TOKEN_HANDLER_ADDRESS,
+                wegld_identifier,
+                sovereign_token_prefix,
+            )
             .code(ENSHRINE_ESDT_CODE_PATH)
             .new_address(ENSHRINE_ESDT_ADDRESS)
             .run();
@@ -149,6 +160,19 @@ impl EnshrineTestState {
         self
     }
 
+    fn deploy_token_handler_contract(&mut self) -> &mut Self {
+        self.world
+            .tx()
+            .from(ENSHRINE_ESDT_OWNER_ADDRESS)
+            .typed(token_handler_proxy::TokenHandlerProxy)
+            .init(SOVEREIGN_TOKEN_PREFIX)
+            .code(TOKEN_HANDLER_CODE_PATH)
+            .new_address(TOKEN_HANDLER_ADDRESS)
+            .run();
+
+        self
+    }
+
     fn propose_setup_contracts(&mut self, is_sovereign_chain: bool) -> &mut Self {
         self.deploy_enshrine_esdt_contract(
             is_sovereign_chain,
@@ -156,6 +180,7 @@ impl EnshrineTestState {
             Some(SOVEREIGN_TOKEN_PREFIX.into()),
         );
         self.deploy_header_verifier_contract();
+        self.deploy_token_handler_contract();
         self.propose_set_header_verifier_address();
 
         self
