@@ -67,7 +67,7 @@ pub trait MintTokens: utils::UtilsModule + common::storage::CommonStorage {
                 }
             }
 
-            self.minted_tokens().push(&operation_token);
+            // self.minted_tokens().push(&operation_token);
 
             output_payments.push(OperationEsdtPayment {
                 token_identifier: operation_token.token_identifier,

@@ -90,7 +90,7 @@ where
     >(
         self,
         operation_tokens: Arg0,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, MultiValueEncoded<Env::Api, transaction::OperationEsdtPayment<Env::Api>>> {
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("mintTokens")

@@ -55,51 +55,43 @@ pub trait TransferTokensModule:
         }
 
         let token_handler_address = self.token_handler_address().get();
+        let operation_tuple = OperationTuple {
+            op_hash: operation_hash,
+            operation: operation.clone(),
+        };
+
         self.tx()
             .to(token_handler_address)
             .typed(token_handler_proxy::TokenHandlerProxy)
             .mint_tokens(MultiValueEncoded::from(operation.tokens.clone()))
             .callback(
-                <Self as TransferTokensModule>::callbacks(self).return_minted_tokens(
-                    operation_hash,
-                    hash_of_hashes,
-                    operation,
-                ),
+                <Self as TransferTokensModule>::callbacks(self)
+                    .save_minted_tokens(&operation_tuple, hash_of_hashes),
             )
             .async_call_and_exit();
-
-        // let minted_operation_tokens = self.mint_tokens(&operation.tokens);
-
-        self.distribute_payments(
-            hash_of_hashes.clone(),
-            operation_tuple,
-            minted_operation_tokens,
-        );
     }
 
     #[promises_callback]
-    fn return_minted_tokens(
+    fn save_minted_tokens(
         &self,
-        operation_hash: ManagedBuffer,
+        operation_tuple: &OperationTuple<Self::Api>,
         hash_of_hashes: ManagedBuffer,
-        operation: Operation<Self::Api>,
-        #[call_result] result: ManagedAsyncCallResult<IgnoreValue>,
-    ) -> MultiValueEncoded<OperationEsdtPayment<Self::Api>> {
+        #[call_result] result: ManagedAsyncCallResult<
+            MultiValueEncoded<OperationEsdtPayment<Self::Api>>,
+        >,
+    ) {
         match result {
             ManagedAsyncCallResult::Ok(tokens) => {
-                let operation_tuple = OperationTuple {
-                    op_hash: operation_hash.clone(),
-                    operation: operation.clone(),
-                };
-
                 self.distribute_payments(
                     hash_of_hashes.clone(),
-                    operation_tuple,
-                    minted_operation_tokens,
+                    operation_tuple.clone(),
+                    tokens.to_vec(),
                 );
             }
+            ManagedAsyncCallResult::Err(_) => {
+                sc_panic!("Error at minting tokens");
+            }
         }
-        MultiValueEncoded::new()
     }
 
     #[endpoint(registerNewTokenID)]
