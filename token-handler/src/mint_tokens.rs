@@ -9,13 +9,14 @@ use transaction::{GasLimit, OperationData, OperationEsdtPayment, OperationTuple}
 const CALLBACK_GAS: GasLimit = 10_000_000; // Increase if not enough
 const TRANSACTION_GAS: GasLimit = 30_000_000;
 
-use crate::common;
+use crate::{burn_tokens, common};
 
 #[multiversx_sc::module]
 pub trait MintTokens:
     utils::UtilsModule
     + common::storage::CommonStorage
     + common::events::EventsModule
+    + burn_tokens::BurnTokens
     + tx_batch_module::TxBatchModule
 {
     #[endpoint(mintTokens)]
@@ -148,8 +149,8 @@ pub trait MintTokens:
                 );
             }
             ManagedAsyncCallResult::Err(_) => {
-                // self.burn_sovereign_tokens(&operation_tuple.operation);
-                // self.emit_transfer_failed_events(hash_of_hashes, operation_tuple);
+                self.burn_tokens(&operation_tuple.operation);
+                self.emit_transfer_failed_events(hash_of_hashes, operation_tuple);
             }
         }
 
