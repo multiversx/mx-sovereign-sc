@@ -17,7 +17,14 @@ pub trait TokenHandler:
     + common::storage::CommonStorage
 {
     #[init]
-    fn init(&self, chain_prefix: ManagedBuffer) {
+    fn init(&self, header_verifier_address: ManagedAddress, chain_prefix: ManagedBuffer) {
+        require!(
+            self.blockchain()
+                .is_smart_contract(&header_verifier_address),
+            "Header Verifier address is not a SC contract address"
+        );
+
+        self.header_verifier_address().set(header_verifier_address);
         self.sov_prefix().set(chain_prefix);
     }
 

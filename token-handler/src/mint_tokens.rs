@@ -71,8 +71,6 @@ pub trait MintTokens: utils::UtilsModule + common::storage::CommonStorage {
                 }
             }
 
-            // self.minted_tokens().push(&operation_token);
-
             output_payments.push(OperationEsdtPayment {
                 token_identifier: operation_token.token_identifier,
                 token_nonce: nonce,
@@ -80,6 +78,7 @@ pub trait MintTokens: utils::UtilsModule + common::storage::CommonStorage {
             });
         }
     }
+
     fn distribute_payments(
         &self,
         hash_of_hashes: ManagedBuffer,
