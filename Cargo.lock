@@ -1068,6 +1068,7 @@ dependencies = [
  "multiversx-sc-scenario",
  "num-bigint",
  "transaction",
+ "tx-batch-module",
  "utils",
 ]
 
