@@ -1,3 +1,4 @@
+use header_verifier::header_verifier_proxy;
 use multiversx_sc::api::{ESDT_MULTI_TRANSFER_FUNC_NAME, ESDT_NFT_CREATE_FUNC_NAME};
 use multiversx_sc::imports::IgnoreValue;
 use multiversx_sc::types::{EsdtTokenPayment, ManagedArgBuffer, ManagedAsyncCallResult};
@@ -147,13 +148,13 @@ pub trait MintTokens: utils::UtilsModule + common::storage::CommonStorage {
             }
         }
 
-        // let header_verifier_address = self.header_verifier_address().get();
-        //
-        // self.tx()
-        //     .to(header_verifier_address)
-        //     .typed(header_verifier_proxy::HeaderverifierProxy)
-        //     .remove_executed_hash(hash_of_hashes, &operation_tuple.op_hash)
-        //     .sync_call();
+        let header_verifier_address = self.header_verifier_address().get();
+
+        self.tx()
+            .to(header_verifier_address)
+            .typed(header_verifier_proxy::HeaderverifierProxy)
+            .remove_executed_hash(hash_of_hashes, &operation_tuple.op_hash)
+            .sync_call();
     }
 
     fn get_contract_call_args(
