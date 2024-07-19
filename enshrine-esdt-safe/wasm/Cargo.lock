@@ -45,6 +45,7 @@ dependencies = [
  "multiversx-sc",
  "multiversx-sc-modules",
  "setup-phase",
+ "token-handler",
  "token-whitelist",
  "transaction",
  "tx-batch-module",
@@ -249,6 +250,18 @@ dependencies = [
  "proc-macro2",
  "quote",
  "unicode-ident",
+]
+
+[[package]]
+name = "token-handler"
+version = "0.0.0"
+dependencies = [
+ "bls-signature",
+ "header-verifier",
+ "multiversx-sc",
+ "transaction",
+ "tx-batch-module",
+ "utils",
 ]
 
 [[package]]

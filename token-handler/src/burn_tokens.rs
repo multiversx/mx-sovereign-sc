@@ -3,7 +3,7 @@ use multiversx_sc::require;
 use transaction::Operation;
 
 #[multiversx_sc::module]
-pub trait BurnTokens: utils::UtilsModule + common::storage::CommonStorage {
+pub trait BurnTokensModule: utils::UtilsModule + common::storage::CommonStorage {
     #[endpoint(burnTokens)]
     fn burn_tokens_endpoint(&self, operation: Operation<Self::Api>) {
         require!(

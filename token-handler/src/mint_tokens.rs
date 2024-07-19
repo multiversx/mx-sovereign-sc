@@ -16,7 +16,7 @@ pub trait MintTokensModule:
     utils::UtilsModule
     + common::storage::CommonStorage
     + common::events::EventsModule
-    + burn_tokens::BurnTokens
+    + burn_tokens::BurnTokensModule
     + tx_batch_module::TxBatchModule
 {
     #[endpoint(mintTokens)]
