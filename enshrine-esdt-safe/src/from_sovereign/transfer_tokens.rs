@@ -53,6 +53,19 @@ pub trait TransferTokensModule:
 
             return;
         }
+
+        let mut managed_tokens = MultiValueEncoded::new();
+
+        for token in operation.tokens.iter() {
+            managed_tokens.push(token);
+        }
+
+        let token_handler_address = self.token_handler_address().get();
+        self.tx()
+            .to(token_handler_address)
+            .typed(token_handler_proxy::TokenHandlerProxy)
+            .mint_tokens(managed_tokens)
+            .async_call_and_exit();
     }
 
     #[endpoint]
