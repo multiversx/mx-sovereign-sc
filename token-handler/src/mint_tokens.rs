@@ -12,7 +12,7 @@ const TRANSACTION_GAS: GasLimit = 30_000_000;
 use crate::{burn_tokens, common};
 
 #[multiversx_sc::module]
-pub trait MintTokens:
+pub trait MintTokensModule:
     utils::UtilsModule
     + common::storage::CommonStorage
     + common::events::EventsModule
@@ -109,7 +109,7 @@ pub trait MintTokens:
                     .multi_esdt(mapped_tokens.clone())
                     .gas(transfer_data.gas_limit)
                     .callback(
-                        <Self as MintTokens>::callbacks(self)
+                        <Self as MintTokensModule>::callbacks(self)
                             .execute(&hash_of_hashes, &operation_tuple),
                     )
                     .gas_for_callback(CALLBACK_GAS)
@@ -126,7 +126,7 @@ pub trait MintTokens:
                     .arguments_raw(args)
                     .gas(TRANSACTION_GAS)
                     .callback(
-                        <Self as MintTokens>::callbacks(self)
+                        <Self as MintTokensModule>::callbacks(self)
                             .execute(&hash_of_hashes, &operation_tuple),
                     )
                     .register_promise();
