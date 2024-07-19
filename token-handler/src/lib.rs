@@ -5,7 +5,6 @@ use multiversx_sc::imports::*;
 
 pub mod burn_tokens;
 pub mod common;
-pub mod events;
 pub mod mint_tokens;
 pub mod token_handler_proxy;
 
@@ -15,6 +14,8 @@ pub trait TokenHandler:
     + burn_tokens::BurnTokens
     + utils::UtilsModule
     + common::storage::CommonStorage
+    + tx_batch_module::TxBatchModule
+    + common::events::EventsModule
 {
     #[init]
     fn init(&self, header_verifier_address: ManagedAddress, chain_prefix: ManagedBuffer) {

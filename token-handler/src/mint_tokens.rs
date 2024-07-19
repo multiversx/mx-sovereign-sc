@@ -4,7 +4,7 @@ use multiversx_sc::imports::IgnoreValue;
 use multiversx_sc::types::{EsdtTokenPayment, ManagedArgBuffer, ManagedAsyncCallResult};
 use multiversx_sc::types::{ManagedVec, MultiValueEncoded};
 use multiversx_sc::{codec, err_msg};
-use transaction::{GasLimit, OperationEsdtPayment, OperationTuple};
+use transaction::{GasLimit, OperationData, OperationEsdtPayment, OperationTuple};
 
 const CALLBACK_GAS: GasLimit = 10_000_000; // Increase if not enough
 const TRANSACTION_GAS: GasLimit = 30_000_000;
@@ -12,7 +12,12 @@ const TRANSACTION_GAS: GasLimit = 30_000_000;
 use crate::common;
 
 #[multiversx_sc::module]
-pub trait MintTokens: utils::UtilsModule + common::storage::CommonStorage {
+pub trait MintTokens:
+    utils::UtilsModule
+    + common::storage::CommonStorage
+    + common::events::EventsModule
+    + tx_batch_module::TxBatchModule
+{
     #[endpoint(mintTokens)]
     fn mint_tokens(&self, operation_tokens: MultiValueEncoded<OperationEsdtPayment<Self::Api>>) {
         let mut output_payments: ManagedVec<Self::Api, OperationEsdtPayment<Self::Api>> =
@@ -137,10 +142,10 @@ pub trait MintTokens: utils::UtilsModule + common::storage::CommonStorage {
     ) {
         match result {
             ManagedAsyncCallResult::Ok(_) => {
-                // self.execute_bridge_operation_event(
-                //     hash_of_hashes.clone(),
-                //     operation_tuple.op_hash.clone(),
-                // );
+                self.execute_bridge_operation_event(
+                    hash_of_hashes.clone(),
+                    operation_tuple.op_hash.clone(),
+                );
             }
             ManagedAsyncCallResult::Err(_) => {
                 // self.burn_sovereign_tokens(&operation_tuple.operation);
@@ -173,5 +178,30 @@ pub trait MintTokens: utils::UtilsModule + common::storage::CommonStorage {
         }
 
         args
+    }
+
+    fn emit_transfer_failed_events(
+        &self,
+        hash_of_hashes: &ManagedBuffer,
+        operation_tuple: &OperationTuple<Self::Api>,
+    ) {
+        self.execute_bridge_operation_event(
+            hash_of_hashes.clone(),
+            operation_tuple.op_hash.clone(),
+        );
+
+        // deposit back mainchain tokens into user account
+        let sc_address = self.blockchain().get_sc_address();
+        let tx_nonce = self.get_and_save_next_tx_id();
+
+        self.deposit_event(
+            &operation_tuple.operation.data.op_sender,
+            &operation_tuple.operation.get_tokens_as_tuple_arr(),
+            OperationData {
+                op_nonce: tx_nonce,
+                op_sender: sc_address.clone(),
+                opt_transfer_data: None,
+            },
+        );
     }
 }
