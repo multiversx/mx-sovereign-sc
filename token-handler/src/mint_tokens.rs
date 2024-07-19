@@ -1,7 +1,9 @@
 use header_verifier::header_verifier_proxy;
 use multiversx_sc::api::{ESDT_MULTI_TRANSFER_FUNC_NAME, ESDT_NFT_CREATE_FUNC_NAME};
 use multiversx_sc::imports::IgnoreValue;
-use multiversx_sc::types::{EsdtTokenPayment, ManagedArgBuffer, ManagedAsyncCallResult};
+use multiversx_sc::types::{
+    system_proxy, EsdtTokenPayment, ManagedArgBuffer, ManagedAsyncCallResult, ToSelf,
+};
 use multiversx_sc::types::{ManagedVec, MultiValueEncoded};
 use multiversx_sc::{codec, err_msg};
 use transaction::{GasLimit, OperationData, OperationEsdtPayment, OperationTuple};
@@ -33,11 +35,15 @@ pub trait MintTokensModule:
 
             let mut nonce = operation_token.token_nonce;
             if nonce == 0 {
-                self.send().esdt_local_mint(
-                    &operation_token.token_identifier,
-                    operation_token.token_nonce,
-                    &operation_token.token_data.amount,
-                );
+                self.tx()
+                    .to(ToSelf)
+                    .typed(system_proxy::UserBuiltinProxy)
+                    .esdt_local_mint(
+                        &operation_token.token_identifier,
+                        operation_token.token_nonce,
+                        &operation_token.token_data.amount,
+                    )
+                    .sync_call();
             } else {
                 let token_data = operation_token.token_data.clone();
                 let mut arg_buffer = ManagedArgBuffer::new();

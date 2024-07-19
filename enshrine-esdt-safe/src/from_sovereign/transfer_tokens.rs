@@ -53,17 +53,6 @@ pub trait TransferTokensModule:
 
             return;
         }
-
-        let operation_tuple = OperationTuple {
-            op_hash: operation_hash,
-            operation: operation.clone(),
-        };
-
-        // self.distribute_payments(
-        //     hash_of_hashes.clone(),
-        //     operation_tuple.clone(),
-        //     tokens.to_vec(),
-        // );
     }
 
     #[endpoint]

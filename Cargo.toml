@@ -15,5 +15,7 @@ members = [
   "header-verifier",
   "header-verifier/meta", 
   "enshrine-esdt-safe",
-  "enshrine-esdt-safe/meta"
+  "enshrine-esdt-safe/meta",
+  "token-handler",
+  "token-handler/meta",
 ]
