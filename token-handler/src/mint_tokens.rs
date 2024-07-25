@@ -6,7 +6,7 @@ use multiversx_sc::types::{
 };
 use multiversx_sc::types::{ManagedVec, MultiValueEncoded};
 use multiversx_sc::{codec, err_msg};
-use transaction::{GasLimit, Operation, OperationData, OperationEsdtPayment, OperationTuple};
+use transaction::{GasLimit, OperationData, OperationEsdtPayment, OperationTuple};
 
 const CALLBACK_GAS: GasLimit = 10_000_000; // Increase if not enough
 const TRANSACTION_GAS: GasLimit = 30_000_000;
