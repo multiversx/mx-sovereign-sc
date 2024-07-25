@@ -6,7 +6,7 @@ use multiversx_sc::types::{
 };
 use multiversx_sc::types::{ManagedVec, MultiValueEncoded};
 use multiversx_sc::{codec, err_msg};
-use transaction::{GasLimit, OperationData, OperationEsdtPayment, OperationTuple};
+use transaction::{GasLimit, Operation, OperationData, OperationEsdtPayment, OperationTuple};
 
 const CALLBACK_GAS: GasLimit = 10_000_000; // Increase if not enough
 const TRANSACTION_GAS: GasLimit = 30_000_000;
@@ -22,12 +22,18 @@ pub trait MintTokensModule:
     + tx_batch_module::TxBatchModule
 {
     #[endpoint(mintTokens)]
-    fn mint_tokens(&self, operation_tokens: MultiValueEncoded<OperationEsdtPayment<Self::Api>>) {
+    fn mint_tokens(
+        &self,
+        hash_of_hashes: ManagedBuffer,
+        operation_tuple: OperationTuple<Self::Api>,
+        operation_tokens: MultiValueEncoded<OperationEsdtPayment<Self::Api>>,
+    ) {
         let mut output_payments: ManagedVec<Self::Api, OperationEsdtPayment<Self::Api>> =
             ManagedVec::new();
 
         for operation_token in operation_tokens {
             let sov_prefix = self.sov_prefix().get();
+
             if !self.has_sov_prefix(&operation_token.token_identifier, &sov_prefix) {
                 output_payments.push(operation_token.clone());
                 continue;
@@ -90,16 +96,21 @@ pub trait MintTokensModule:
                 token_data: operation_token.token_data,
             });
         }
+
+        self.distribute_payments(hash_of_hashes, operation_tuple);
     }
 
     fn distribute_payments(
         &self,
         hash_of_hashes: ManagedBuffer,
         operation_tuple: OperationTuple<Self::Api>,
-        tokens_list: ManagedVec<OperationEsdtPayment<Self::Api>>,
     ) {
-        let mapped_tokens: ManagedVec<Self::Api, EsdtTokenPayment<Self::Api>> =
-            tokens_list.iter().map(|token| token.into()).collect();
+        let mapped_tokens: ManagedVec<Self::Api, EsdtTokenPayment<Self::Api>> = operation_tuple
+            .operation
+            .tokens
+            .iter()
+            .map(|token| token.into())
+            .collect();
 
         match &operation_tuple.operation.data.opt_transfer_data {
             Some(transfer_data) => {

@@ -61,21 +61,38 @@ pub trait TransferTokensModule:
         }
 
         let token_handler_address = self.token_handler_address().get();
+
         self.tx()
             .to(token_handler_address)
             .typed(token_handler_proxy::TokenHandlerProxy)
-            .mint_tokens(managed_tokens)
-            .async_call_and_exit();
+            .mint_tokens(
+                hash_of_hashes,
+                OperationTuple {
+                    op_hash: operation_hash,
+                    operation,
+                },
+                managed_tokens,
+            )
+            .sync_call();
     }
 
     #[endpoint]
-    fn call_token_handler_mint_endpoint(&self, operation: Operation<Self::Api>) {
+    fn call_token_handler_mint_endpoint(
+        &self,
+        hash_of_hashes: ManagedBuffer<Self::Api>,
+        operation_tuple: OperationTuple<Self::Api>,
+    ) {
         let token_handler_address = self.token_handler_address().get();
+        let mut multi_value_tokens = MultiValueEncoded::new();
+
+        for token in operation_tuple.operation.tokens.iter().clone() {
+            multi_value_tokens.push(token);
+        }
 
         self.tx()
             .to(token_handler_address)
             .typed(token_handler_proxy::TokenHandlerProxy)
-            .mint_tokens(MultiValueEncoded::from(operation.tokens.clone()))
+            .mint_tokens(hash_of_hashes, operation_tuple, multi_value_tokens)
             .callback(<Self as TransferTokensModule>::callbacks(self).save_minted_tokens())
             .async_call_and_exit();
     }
