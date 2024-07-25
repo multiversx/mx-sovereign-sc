@@ -51,16 +51,6 @@ impl<M: ManagedTypeApi> Operation<M> {
 
         tuple_arr
     }
-
-    pub fn map_tokens_vec_to_multi_value(&self) -> MultiValueEncoded<M, OperationEsdtPayment<M>> {
-        let mut multi_value_tokens = MultiValueEncoded::new();
-
-        for token in &self.tokens {
-            multi_value_tokens.push(token);
-        }
-
-        multi_value_tokens
-    }
 }
 
 #[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, TypeAbi, ManagedVecItem, Clone)]
