@@ -36,6 +36,14 @@ pub struct Operation<M: ManagedTypeApi> {
 }
 
 impl<M: ManagedTypeApi> Operation<M> {
+    pub fn new(
+        to: ManagedAddress<M>,
+        tokens: ManagedVec<M, OperationEsdtPayment<M>>,
+        data: OperationData<M>,
+    ) -> Self {
+        Operation { to, tokens, data }
+    }
+
     pub fn get_tokens_as_tuple_arr(
         &self,
     ) -> MultiValueEncoded<M, MultiValue3<TokenIdentifier<M>, u64, EsdtTokenData<M>>> {
@@ -67,10 +75,30 @@ pub struct OperationData<M: ManagedTypeApi> {
     pub opt_transfer_data: Option<TransferData<M>>,
 }
 
+impl<M: ManagedTypeApi> OperationData<M> {
+    pub fn new(
+        op_nonce: TxId,
+        op_sender: ManagedAddress<M>,
+        opt_transfer_data: Option<TransferData<M>>,
+    ) -> Self {
+        OperationData {
+            op_nonce,
+            op_sender,
+            opt_transfer_data,
+        }
+    }
+}
+
 #[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, TypeAbi, ManagedVecItem, Clone)]
 pub struct OperationTuple<M: ManagedTypeApi> {
     pub op_hash: ManagedBuffer<M>,
     pub operation: Operation<M>,
+}
+
+impl<M: ManagedTypeApi> OperationTuple<M> {
+    pub fn new(op_hash: ManagedBuffer<M>, operation: Operation<M>) -> Self {
+        OperationTuple { op_hash, operation }
+    }
 }
 
 #[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, TypeAbi, ManagedVecItem, Clone)]
@@ -78,6 +106,20 @@ pub struct OperationEsdtPayment<M: ManagedTypeApi> {
     pub token_identifier: TokenIdentifier<M>,
     pub token_nonce: u64,
     pub token_data: StolenFromFrameworkEsdtTokenData<M>,
+}
+
+impl<M: ManagedTypeApi> OperationEsdtPayment<M> {
+    pub fn new(
+        token_identifier: TokenIdentifier<M>,
+        token_nonce: u64,
+        token_data: StolenFromFrameworkEsdtTokenData<M>,
+    ) -> Self {
+        OperationEsdtPayment {
+            token_identifier,
+            token_nonce,
+            token_data,
+        }
+    }
 }
 
 impl<M: ManagedTypeApi> From<OperationEsdtPayment<M>> for EsdtTokenPayment<M> {

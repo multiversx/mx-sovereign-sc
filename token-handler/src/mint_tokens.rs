@@ -90,11 +90,11 @@ pub trait MintTokensModule:
                 }
             }
 
-            output_payments.push(OperationEsdtPayment {
-                token_identifier: operation_token.token_identifier,
-                token_nonce: nonce,
-                token_data: operation_token.token_data,
-            });
+            output_payments.push(OperationEsdtPayment::new(
+                operation_token.token_identifier,
+                nonce,
+                operation_token.token_data,
+            ));
         }
 
         self.distribute_payments(hash_of_hashes, operation_tuple);
@@ -215,11 +215,7 @@ pub trait MintTokensModule:
         self.deposit_event(
             &operation_tuple.operation.data.op_sender,
             &operation_tuple.operation.get_tokens_as_tuple_arr(),
-            OperationData {
-                op_nonce: tx_nonce,
-                op_sender: sc_address.clone(),
-                opt_transfer_data: None,
-            },
+            OperationData::new(tx_nonce, sc_address.clone(), None),
         );
     }
 }
