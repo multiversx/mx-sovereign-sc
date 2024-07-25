@@ -1071,6 +1071,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "token-handler-meta"
+version = "0.0.0"
+dependencies = [
+ "multiversx-sc-meta-lib",
+ "token-handler",
+]
+
+[[package]]
 name = "token-whitelist"
 version = "0.0.0"
 dependencies = [

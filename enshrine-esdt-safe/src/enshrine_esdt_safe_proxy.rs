@@ -190,6 +190,19 @@ where
             .original_result()
     }
 
+    pub fn call_token_handler_mint_endpoint<
+        Arg0: ProxyArg<transaction::Operation<Env::Api>>,
+    >(
+        self,
+        operation: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("call_token_handler_mint_endpoint")
+            .argument(&operation)
+            .original_result()
+    }
+
     pub fn register_new_token_id<
         Arg0: ProxyArg<MultiValueEncoded<Env::Api, TokenIdentifier<Env::Api>>>,
     >(
