@@ -91,19 +91,16 @@ where
     pub fn mint_tokens<
         Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
         Arg1: ProxyArg<transaction::OperationTuple<Env::Api>>,
-        Arg2: ProxyArg<MultiValueEncoded<Env::Api, transaction::OperationEsdtPayment<Env::Api>>>,
     >(
         self,
         hash_of_hashes: Arg0,
         operation_tuple: Arg1,
-        operation_tokens: Arg2,
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("mintTokens")
             .argument(&hash_of_hashes)
             .argument(&operation_tuple)
-            .argument(&operation_tokens)
             .original_result()
     }
 

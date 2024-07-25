@@ -28,7 +28,7 @@ pub trait TransferTokensModule:
 
         require!(self.not_paused(), "Cannot transfer while paused");
 
-        let (operation_hash, is_registered) =
+        let (op_hash, is_registered) =
             self.calculate_operation_hash(hash_of_hashes.clone(), operation.clone());
 
         if !is_registered {
@@ -42,7 +42,7 @@ pub trait TransferTokensModule:
             self.emit_transfer_failed_events(
                 &hash_of_hashes,
                 &OperationTuple {
-                    op_hash: operation_hash.clone(),
+                    op_hash: op_hash.clone(),
                     operation: operation.clone(),
                 },
             );
@@ -50,25 +50,12 @@ pub trait TransferTokensModule:
             return;
         }
 
-        let mut managed_tokens = MultiValueEncoded::new();
-
-        for token in operation.tokens.iter() {
-            managed_tokens.push(token);
-        }
-
         let token_handler_address = self.token_handler_address().get();
 
         self.tx()
             .to(token_handler_address)
             .typed(token_handler_proxy::TokenHandlerProxy)
-            .mint_tokens(
-                hash_of_hashes,
-                OperationTuple {
-                    op_hash: operation_hash,
-                    operation,
-                },
-                managed_tokens,
-            )
+            .mint_tokens(hash_of_hashes, OperationTuple { op_hash, operation })
             .sync_call();
     }
 
@@ -79,13 +66,11 @@ pub trait TransferTokensModule:
         operation_tuple: OperationTuple<Self::Api>,
     ) {
         let token_handler_address = self.token_handler_address().get();
-        let multi_value_tokens: MultiValueEncoded<Self::Api, OperationEsdtPayment<Self::Api>> =
-            operation_tuple.operation.tokens.clone().into();
 
         self.tx()
             .to(token_handler_address)
             .typed(token_handler_proxy::TokenHandlerProxy)
-            .mint_tokens(hash_of_hashes, operation_tuple, multi_value_tokens)
+            .mint_tokens(hash_of_hashes, operation_tuple)
             .callback(<Self as TransferTokensModule>::callbacks(self).save_minted_tokens())
             .async_call_and_exit();
     }
