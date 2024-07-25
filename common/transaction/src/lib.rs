@@ -73,7 +73,6 @@ pub struct OperationTuple<M: ManagedTypeApi> {
     pub operation: Operation<M>,
 }
 
-// TODO: Implement IntoMultiValue
 #[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, TypeAbi, ManagedVecItem, Clone)]
 pub struct OperationEsdtPayment<M: ManagedTypeApi> {
     pub token_identifier: TokenIdentifier<M>,
