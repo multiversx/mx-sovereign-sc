@@ -1,7 +1,5 @@
 #![no_std]
 
-use codec::arrayvec::IntoIter;
-
 multiversx_sc::imports!();
 multiversx_sc::derive_imports!();
 
