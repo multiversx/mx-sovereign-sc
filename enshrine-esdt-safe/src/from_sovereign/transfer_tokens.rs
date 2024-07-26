@@ -55,43 +55,8 @@ pub trait TransferTokensModule:
         self.tx()
             .to(token_handler_address)
             .typed(token_handler_proxy::TokenHandlerProxy)
-            .mint_tokens(hash_of_hashes, OperationTuple { op_hash, operation })
+            .transfer_tokens(hash_of_hashes, OperationTuple { op_hash, operation })
             .sync_call();
-    }
-
-    #[endpoint]
-    fn call_token_handler_mint_endpoint(
-        &self,
-        hash_of_hashes: ManagedBuffer<Self::Api>,
-        operation_tuple: OperationTuple<Self::Api>,
-    ) {
-        let token_handler_address = self.token_handler_address().get();
-
-        self.tx()
-            .to(token_handler_address)
-            .typed(token_handler_proxy::TokenHandlerProxy)
-            .mint_tokens(hash_of_hashes, operation_tuple)
-            .callback(<Self as TransferTokensModule>::callbacks(self).save_minted_tokens())
-            .async_call_and_exit();
-    }
-
-    #[promises_callback]
-    fn save_minted_tokens(
-        &self,
-        #[call_result] result: ManagedAsyncCallResult<
-            MultiValueEncoded<OperationEsdtPayment<Self::Api>>,
-        >,
-    ) {
-        match result {
-            ManagedAsyncCallResult::Ok(tokens) => {
-                for token in tokens {
-                    self.minted_tokens().push(&token);
-                }
-            }
-            ManagedAsyncCallResult::Err(_) => {
-                sc_panic!("Error at minting tokens");
-            }
-        }
     }
 
     #[endpoint(registerNewTokenID)]
