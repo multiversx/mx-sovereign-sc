@@ -88,7 +88,7 @@ where
     To: TxTo<Env>,
     Gas: TxGas<Env>,
 {
-    pub fn mint_tokens<
+    pub fn transfer_tokens<
         Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
         Arg1: ProxyArg<transaction::OperationTuple<Env::Api>>,
     >(
@@ -98,7 +98,7 @@ where
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
-            .raw_call("mintTokens")
+            .raw_call("transferTokens")
             .argument(&hash_of_hashes)
             .argument(&operation_tuple)
             .original_result()

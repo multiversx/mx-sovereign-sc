@@ -21,7 +21,7 @@ multiversx_sc_wasm_adapter::endpoints! {
     (
         init => init
         upgrade => upgrade
-        mintTokens => mint_tokens
+        transferTokens => transfer_tokens
         burnTokens => burn_tokens_endpoint
         setMaxTxBatchSize => set_max_tx_batch_size
         setMaxTxBatchBlockDuration => set_max_tx_batch_block_duration

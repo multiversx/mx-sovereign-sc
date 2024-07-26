@@ -10,7 +10,7 @@ pub mod token_handler_proxy;
 
 #[multiversx_sc::contract]
 pub trait TokenHandler:
-    mint_tokens::MintTokensModule
+    mint_tokens::TransferTokensModule
     + burn_tokens::BurnTokensModule
     + utils::UtilsModule
     + common::storage::CommonStorage

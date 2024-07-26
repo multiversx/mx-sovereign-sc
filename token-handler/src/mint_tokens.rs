@@ -16,15 +16,15 @@ const TRANSACTION_GAS: GasLimit = 30_000_000;
 use crate::{burn_tokens, common};
 
 #[multiversx_sc::module]
-pub trait MintTokensModule:
+pub trait TransferTokensModule:
     utils::UtilsModule
     + common::storage::CommonStorage
     + common::events::EventsModule
     + burn_tokens::BurnTokensModule
     + tx_batch_module::TxBatchModule
 {
-    #[endpoint(mintTokens)]
-    fn mint_tokens(
+    #[endpoint(transferTokens)]
+    fn transfer_tokens(
         &self,
         hash_of_hashes: ManagedBuffer,
         operation_tuple: OperationTuple<Self::Api>,
@@ -143,7 +143,7 @@ pub trait MintTokensModule:
                     .multi_esdt(mapped_tokens.clone())
                     .gas(transfer_data.gas_limit)
                     .callback(
-                        <Self as MintTokensModule>::callbacks(self)
+                        <Self as TransferTokensModule>::callbacks(self)
                             .execute(&hash_of_hashes, &operation_tuple),
                     )
                     .gas_for_callback(CALLBACK_GAS)
@@ -160,7 +160,7 @@ pub trait MintTokensModule:
                     .arguments_raw(args)
                     .gas(TRANSACTION_GAS)
                     .callback(
-                        <Self as MintTokensModule>::callbacks(self)
+                        <Self as TransferTokensModule>::callbacks(self)
                             .execute(&hash_of_hashes, &operation_tuple),
                     )
                     .register_promise();
