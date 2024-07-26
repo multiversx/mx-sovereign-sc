@@ -85,16 +85,16 @@ where
     To: TxTo<Env>,
     Gas: TxGas<Env>,
 {
-    pub fn set_enshrine_esdt_whitelist<
-        Arg0: ProxyArg<MultiValueEncoded<Env::Api, ManagedAddress<Env::Api>>>,
+    pub fn whitelist_enshrine_esdt<
+        Arg0: ProxyArg<ManagedAddress<Env::Api>>,
     >(
         self,
-        enshrine_esdt_addresses: Arg0,
+        enshrine_esdt_address: Arg0,
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
-            .raw_call("setEnshrineEsdtWhitelist")
-            .argument(&enshrine_esdt_addresses)
+            .raw_call("whitelistEnshrineEsdt")
+            .argument(&enshrine_esdt_address)
             .original_result()
     }
 

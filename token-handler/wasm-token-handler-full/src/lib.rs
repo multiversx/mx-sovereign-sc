@@ -20,7 +20,7 @@ multiversx_sc_wasm_adapter::endpoints! {
     (
         init => init
         upgrade => upgrade
-        setEnshrineEsdtWhitelist => set_enshrine_esdt_whitelist
+        whitelistEnshrineEsdt => whitelist_enshrine_esdt
         mintTokens => mint_tokens
         burnTokens => burn_tokens
     )
