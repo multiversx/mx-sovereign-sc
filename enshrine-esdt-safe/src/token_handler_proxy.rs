@@ -85,6 +85,19 @@ where
     To: TxTo<Env>,
     Gas: TxGas<Env>,
 {
+    pub fn set_enshrine_esdt_whitelist<
+        Arg0: ProxyArg<MultiValueEncoded<Env::Api, ManagedAddress<Env::Api>>>,
+    >(
+        self,
+        enshrine_esdt_addresses: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("setEnshrineEsdtWhitelist")
+            .argument(&enshrine_esdt_addresses)
+            .original_result()
+    }
+
     pub fn mint_tokens<
         Arg0: ProxyArg<MultiValueEncoded<Env::Api, transaction::OperationEsdtPayment<Env::Api>>>,
     >(
