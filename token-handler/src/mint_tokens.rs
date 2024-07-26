@@ -53,7 +53,7 @@ pub trait MintTokensModule:
                     )
                     .sync_call();
             } else {
-                let arg_buffer = self.prepare_nft_create_args(
+                let arg_buffer = self.get_nft_create_args(
                     &operation_token.token_identifier,
                     &operation_token.token_nonce,
                     &operation_token.token_data,
@@ -82,7 +82,7 @@ pub trait MintTokensModule:
         self.distribute_payments(&hash_of_hashes, &operation_tuple);
     }
 
-    fn prepare_nft_create_args(
+    fn get_nft_create_args(
         &self,
         token_identifier: &TokenIdentifier<Self::Api>,
         token_nonce: &u64,
