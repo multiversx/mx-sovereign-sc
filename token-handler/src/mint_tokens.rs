@@ -1,12 +1,14 @@
 use header_verifier::header_verifier_proxy;
 use multiversx_sc::api::{ESDT_MULTI_TRANSFER_FUNC_NAME, ESDT_NFT_CREATE_FUNC_NAME};
 use multiversx_sc::imports::IgnoreValue;
-use multiversx_sc::types::ManagedVec;
 use multiversx_sc::types::{
     system_proxy, EsdtTokenPayment, ManagedArgBuffer, ManagedAsyncCallResult, ToSelf,
 };
+use multiversx_sc::types::{ManagedVec, TokenIdentifier};
 use multiversx_sc::{codec, err_msg};
-use transaction::{GasLimit, OperationData, OperationEsdtPayment, OperationTuple};
+use transaction::{
+    GasLimit, OperationData, OperationEsdtPayment, OperationTuple, StolenFromFrameworkEsdtTokenData,
+};
 
 const CALLBACK_GAS: GasLimit = 10_000_000; // Increase if not enough
 const TRANSACTION_GAS: GasLimit = 30_000_000;
@@ -51,31 +53,11 @@ pub trait MintTokensModule:
                     )
                     .sync_call();
             } else {
-                let token_data = operation_token.token_data.clone();
-                let mut arg_buffer = ManagedArgBuffer::new();
-
-                arg_buffer.push_arg(&operation_token.token_identifier);
-                arg_buffer.push_arg(token_data.amount);
-                arg_buffer.push_arg(token_data.name);
-                arg_buffer.push_arg(token_data.royalties);
-                arg_buffer.push_arg(token_data.hash);
-                arg_buffer.push_arg(token_data.attributes);
-
-                let uris = token_data.uris.clone();
-
-                if uris.is_empty() {
-                    // at least one URI is required, so we push an empty one
-                    arg_buffer.push_arg(codec::Empty);
-                } else {
-                    // The API function has the last argument as variadic,
-                    // so we top-encode each and send as separate argument
-                    for uri in &uris {
-                        arg_buffer.push_arg(uri);
-                    }
-                }
-
-                arg_buffer.push_arg(operation_token.token_nonce);
-                arg_buffer.push_arg(token_data.creator);
+                let arg_buffer = self.prepare_nft_create_args(
+                    &operation_token.token_identifier,
+                    &operation_token.token_nonce,
+                    &operation_token.token_data,
+                );
 
                 let output = self.send_raw().call_local_esdt_built_in_function(
                     self.blockchain().get_gas_left(),
@@ -98,6 +80,41 @@ pub trait MintTokensModule:
         }
 
         self.distribute_payments(&hash_of_hashes, &operation_tuple);
+    }
+
+    fn prepare_nft_create_args(
+        &self,
+        token_identifier: &TokenIdentifier<Self::Api>,
+        token_nonce: &u64,
+        token_data: &StolenFromFrameworkEsdtTokenData<Self::Api>,
+    ) -> ManagedArgBuffer<Self::Api> {
+        let mut arg_buffer = ManagedArgBuffer::new();
+        let cloned_token_data = token_data.clone();
+
+        arg_buffer.push_arg(&token_identifier);
+        arg_buffer.push_arg(cloned_token_data.amount);
+        arg_buffer.push_arg(cloned_token_data.name);
+        arg_buffer.push_arg(cloned_token_data.royalties);
+        arg_buffer.push_arg(cloned_token_data.hash);
+        arg_buffer.push_arg(cloned_token_data.attributes);
+
+        let uris = token_data.uris.clone();
+
+        if uris.is_empty() {
+            // at least one URI is required, so we push an empty one
+            arg_buffer.push_arg(codec::Empty);
+        } else {
+            // The API function has the last argument as variadic,
+            // so we top-encode each and send as separate argument
+            for uri in &uris {
+                arg_buffer.push_arg(uri);
+            }
+        }
+
+        arg_buffer.push_arg(token_nonce);
+        arg_buffer.push_arg(cloned_token_data.creator);
+
+        arg_buffer
     }
 
     fn distribute_payments(
