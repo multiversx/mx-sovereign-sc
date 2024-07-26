@@ -1,4 +1,5 @@
 use crate::{common, to_sovereign, token_handler_proxy};
+use header_verifier::header_verifier_proxy;
 use multiversx_sc::imports::*;
 use multiversx_sc::storage::StorageKey;
 use transaction::{Operation, OperationData, OperationEsdtPayment, OperationTuple};
@@ -62,6 +63,7 @@ pub trait TransferTokensModule:
             )
             .sync_call();
 
+        self.remove_executed_hash(&hash_of_hashes, &op_hash);
         self.execute_bridge_operation_event(hash_of_hashes, op_hash);
     }
 
@@ -103,6 +105,16 @@ pub trait TransferTokensModule:
         }
 
         true
+    }
+
+    fn remove_executed_hash(&self, hash_of_hashes: &ManagedBuffer, op_hash: &ManagedBuffer) {
+        let header_verifier_address = self.header_verifier_address().get();
+
+        self.tx()
+            .to(header_verifier_address)
+            .typed(header_verifier_proxy::HeaderverifierProxy)
+            .remove_executed_hash(hash_of_hashes, op_hash)
+            .sync_call();
     }
 
     fn emit_transfer_failed_events(

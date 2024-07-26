@@ -1,4 +1,3 @@
-use header_verifier::header_verifier_proxy;
 use multiversx_sc::api::{ESDT_MULTI_TRANSFER_FUNC_NAME, ESDT_NFT_CREATE_FUNC_NAME};
 use multiversx_sc::imports::IgnoreValue;
 use multiversx_sc::types::{
@@ -91,7 +90,7 @@ pub trait TransferTokensModule:
         let mut arg_buffer = ManagedArgBuffer::new();
         let cloned_token_data = token_data.clone();
 
-        arg_buffer.push_arg(&token_identifier);
+        arg_buffer.push_arg(token_identifier);
         arg_buffer.push_arg(cloned_token_data.amount);
         arg_buffer.push_arg(cloned_token_data.name);
         arg_buffer.push_arg(cloned_token_data.royalties);
@@ -144,7 +143,7 @@ pub trait TransferTokensModule:
                     .gas(transfer_data.gas_limit)
                     .callback(
                         <Self as TransferTokensModule>::callbacks(self)
-                            .execute(&hash_of_hashes, &operation_tuple),
+                            .execute(hash_of_hashes, operation_tuple),
                     )
                     .gas_for_callback(CALLBACK_GAS)
                     .register_promise();
@@ -161,7 +160,7 @@ pub trait TransferTokensModule:
                     .gas(TRANSACTION_GAS)
                     .callback(
                         <Self as TransferTokensModule>::callbacks(self)
-                            .execute(&hash_of_hashes, &operation_tuple),
+                            .execute(hash_of_hashes, operation_tuple),
                     )
                     .register_promise();
             }
@@ -176,15 +175,7 @@ pub trait TransferTokensModule:
         #[call_result] result: ManagedAsyncCallResult<IgnoreValue>,
     ) {
         match result {
-            ManagedAsyncCallResult::Ok(_) => {
-                let header_verifier_address = self.header_verifier_address().get();
-
-                self.tx()
-                    .to(header_verifier_address)
-                    .typed(header_verifier_proxy::HeaderverifierProxy)
-                    .remove_executed_hash(hash_of_hashes, &operation_tuple.op_hash)
-                    .sync_call();
-            }
+            ManagedAsyncCallResult::Ok(_) => {}
             ManagedAsyncCallResult::Err(_) => {
                 self.burn_tokens(&operation_tuple.operation);
                 self.emit_transfer_failed_events(hash_of_hashes, operation_tuple);
