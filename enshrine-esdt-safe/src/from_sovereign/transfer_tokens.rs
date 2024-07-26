@@ -28,15 +28,13 @@ pub trait TransferTokensModule:
 
         require!(self.not_paused(), "Cannot transfer while paused");
 
-        let (op_hash, is_registered) =
-            self.calculate_operation_hash(hash_of_hashes.clone(), operation.clone());
+        let (op_hash, is_registered) = self.calculate_operation_hash(&hash_of_hashes, &operation);
 
         if !is_registered {
             sc_panic!("Operation is not registered");
         }
 
-        let are_tokens_registered =
-            self.verify_operation_tokens_issue_paid(operation.tokens.clone());
+        let are_tokens_registered = self.verify_operation_tokens_issue_paid(&operation.tokens);
 
         if !are_tokens_registered {
             self.emit_transfer_failed_events(
@@ -55,8 +53,16 @@ pub trait TransferTokensModule:
         self.tx()
             .to(token_handler_address)
             .typed(token_handler_proxy::TokenHandlerProxy)
-            .transfer_tokens(hash_of_hashes, OperationTuple { op_hash, operation })
+            .transfer_tokens(
+                hash_of_hashes.clone(),
+                OperationTuple {
+                    op_hash: op_hash.clone(),
+                    operation,
+                },
+            )
             .sync_call();
+
+        self.execute_bridge_operation_event(hash_of_hashes, op_hash);
     }
 
     #[endpoint(registerNewTokenID)]
@@ -82,7 +88,7 @@ pub trait TransferTokensModule:
 
     fn verify_operation_tokens_issue_paid(
         &self,
-        tokens: ManagedVec<OperationEsdtPayment<Self::Api>>,
+        tokens: &ManagedVec<OperationEsdtPayment<Self::Api>>,
     ) -> bool {
         let sov_prefix = self.get_sovereign_prefix();
 
@@ -127,8 +133,8 @@ pub trait TransferTokensModule:
     // use pending_operations as param
     fn calculate_operation_hash(
         &self,
-        hash_of_hashes: ManagedBuffer,
-        operation: Operation<Self::Api>,
+        hash_of_hashes: &ManagedBuffer,
+        operation: &Operation<Self::Api>,
     ) -> (ManagedBuffer, bool) {
         let mut serialized_data = ManagedBuffer::new();
         let mut storage_key = StorageKey::from("pending_hashes");

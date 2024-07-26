@@ -177,24 +177,19 @@ pub trait TransferTokensModule:
     ) {
         match result {
             ManagedAsyncCallResult::Ok(_) => {
-                self.execute_bridge_operation_event(
-                    hash_of_hashes.clone(),
-                    operation_tuple.op_hash.clone(),
-                );
+                let header_verifier_address = self.header_verifier_address().get();
+
+                self.tx()
+                    .to(header_verifier_address)
+                    .typed(header_verifier_proxy::HeaderverifierProxy)
+                    .remove_executed_hash(hash_of_hashes, &operation_tuple.op_hash)
+                    .sync_call();
             }
             ManagedAsyncCallResult::Err(_) => {
                 self.burn_tokens(&operation_tuple.operation);
                 self.emit_transfer_failed_events(hash_of_hashes, operation_tuple);
             }
         }
-
-        let header_verifier_address = self.header_verifier_address().get();
-
-        self.tx()
-            .to(header_verifier_address)
-            .typed(header_verifier_proxy::HeaderverifierProxy)
-            .remove_executed_hash(hash_of_hashes, &operation_tuple.op_hash)
-            .sync_call();
     }
 
     fn get_contract_call_args(
