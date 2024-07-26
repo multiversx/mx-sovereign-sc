@@ -17,5 +17,5 @@ members = [
   "enshrine-esdt-safe",
   "enshrine-esdt-safe/meta",
   "token-handler",
-  "token-handler/meta",
+  "token-handler/meta"
 ]
