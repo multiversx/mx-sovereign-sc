@@ -23,4 +23,25 @@ pub trait TokenHandler:
 
     #[upgrade]
     fn upgrade(&self) {}
+
+    #[only_owner]
+    #[endpoint(setEnshrineEsdtWhitelist)]
+    fn set_enshrine_esdt_whitelist(
+        &self,
+        enshrine_esdt_addresses: MultiValueEncoded<ManagedAddress<Self::Api>>,
+    ) {
+        require!(
+            !enshrine_esdt_addresses.is_empty(),
+            "There are no addresses sent to be registered"
+        );
+
+        for esdt_address in enshrine_esdt_addresses.into_iter() {
+            require!(
+                self.blockchain().is_smart_contract(&esdt_address),
+                "One of the addresses passed is not a valid smart contract address"
+            );
+
+            self.enshrine_esdt_whitelist().insert(esdt_address);
+        }
+    }
 }
