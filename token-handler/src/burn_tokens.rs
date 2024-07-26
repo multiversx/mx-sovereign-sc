@@ -5,6 +5,8 @@ use transaction::Operation;
 pub trait BurnTokens: utils::UtilsModule + common::storage::CommonStorage {
     #[endpoint(burnTokens)]
     fn burn_tokens(&self, operation: Operation<Self::Api>) {
+        self.require_caller_to_be_whitelisted();
+
         let sov_prefix = self.sov_prefix().get();
 
         for token in operation.tokens.iter() {

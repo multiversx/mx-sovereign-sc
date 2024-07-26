@@ -1,7 +1,7 @@
 use multiversx_sc::api::ESDT_NFT_CREATE_FUNC_NAME;
 use multiversx_sc::types::ManagedArgBuffer;
 use multiversx_sc::types::{ManagedVec, MultiValueEncoded};
-use multiversx_sc::{codec, err_msg, require};
+use multiversx_sc::{codec, err_msg};
 use transaction::OperationEsdtPayment;
 
 use crate::common;
@@ -77,14 +77,5 @@ pub trait MintTokens: utils::UtilsModule + common::storage::CommonStorage {
                 token_data: operation_token.token_data,
             });
         }
-    }
-
-    fn require_caller_to_be_whitelisted(&self) {
-        let caller = self.blockchain().get_caller();
-
-        require!(
-            self.enshrine_esdt_whitelist().contains(&caller),
-            "Caller is not whitelisted"
-        );
     }
 }
