@@ -97,13 +97,13 @@ pub trait MintTokensModule:
             });
         }
 
-        self.distribute_payments(hash_of_hashes, operation_tuple);
+        self.distribute_payments(&hash_of_hashes, &operation_tuple);
     }
 
     fn distribute_payments(
         &self,
-        hash_of_hashes: ManagedBuffer,
-        operation_tuple: OperationTuple<Self::Api>,
+        hash_of_hashes: &ManagedBuffer,
+        operation_tuple: &OperationTuple<Self::Api>,
     ) {
         let mapped_tokens: ManagedVec<Self::Api, EsdtTokenPayment<Self::Api>> = operation_tuple
             .operation
@@ -135,7 +135,7 @@ pub trait MintTokensModule:
             None => {
                 let own_address = self.blockchain().get_sc_address();
                 let args =
-                    self.get_contract_call_args(&operation_tuple.operation.to, mapped_tokens);
+                    self.get_contract_call_args(&operation_tuple.operation.to, &mapped_tokens);
 
                 self.tx()
                     .to(own_address)
@@ -183,13 +183,13 @@ pub trait MintTokensModule:
     fn get_contract_call_args(
         self,
         to: &ManagedAddress,
-        mapped_tokens: ManagedVec<EsdtTokenPayment<Self::Api>>,
+        mapped_tokens: &ManagedVec<EsdtTokenPayment<Self::Api>>,
     ) -> ManagedArgBuffer<Self::Api> {
         let mut args = ManagedArgBuffer::new();
         args.push_arg(to);
         args.push_arg(mapped_tokens.len());
 
-        for token in &mapped_tokens {
+        for token in mapped_tokens {
             args.push_arg(token.token_identifier);
             args.push_arg(token.token_nonce);
             args.push_arg(token.amount);
