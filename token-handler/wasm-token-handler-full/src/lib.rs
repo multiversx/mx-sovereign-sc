@@ -8,8 +8,7 @@
 // Upgrade:                              1
 // Endpoints:                           10
 // Async Callback (empty):               1
-// Promise callbacks:                    1
-// Total number of exported functions:  14
+// Total number of exported functions:  13
 
 #![no_std]
 
@@ -31,7 +30,6 @@ multiversx_sc_wasm_adapter::endpoints! {
         getBatchStatus => get_batch_status
         getFirstBatchId => first_batch_id
         getLastBatchId => last_batch_id
-        execute => execute
     )
 }
 

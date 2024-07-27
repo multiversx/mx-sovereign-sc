@@ -35,32 +35,31 @@ pub trait TransferTokensModule:
             sc_panic!("Operation is not registered");
         }
 
-        let are_tokens_registered = self.verify_operation_tokens_issue_paid(&operation.tokens);
+        let (sov_tokens, non_sov_tokens, are_tokens_registered) =
+            self.split_payments_for_prefix_and_fee(&operation.tokens);
 
         if !are_tokens_registered {
             self.emit_transfer_failed_events(
                 &hash_of_hashes,
-                &OperationTuple {
-                    op_hash: op_hash.clone(),
-                    operation: operation.clone(),
-                },
+                &OperationTuple { op_hash, operation },
             );
 
             return;
         }
 
         let token_handler_address = self.token_handler_address().get();
+        let multi_value_tokens: MultiValueEncoded<OperationEsdtPayment<Self::Api>> =
+            non_sov_tokens.into();
 
         self.tx()
             .to(token_handler_address)
             .typed(token_handler_proxy::TokenHandlerProxy)
             .transfer_tokens(
-                hash_of_hashes.clone(),
-                OperationTuple {
-                    op_hash: op_hash.clone(),
-                    operation,
-                },
+                operation.data.opt_transfer_data,
+                operation.to,
+                multi_value_tokens,
             )
+            .multi_esdt(sov_tokens)
             .sync_call();
 
         self.remove_executed_hash(&hash_of_hashes, &op_hash);
@@ -88,23 +87,33 @@ pub trait TransferTokensModule:
         }
     }
 
-    fn verify_operation_tokens_issue_paid(
+    fn split_payments_for_prefix_and_fee(
         &self,
         tokens: &ManagedVec<OperationEsdtPayment<Self::Api>>,
-    ) -> bool {
+    ) -> (
+        ManagedVec<Self::Api, EsdtTokenPayment<Self::Api>>,
+        ManagedVec<Self::Api, OperationEsdtPayment<Self::Api>>,
+        bool,
+    ) {
         let sov_prefix = self.get_sovereign_prefix();
+        let mut sov_tokens: ManagedVec<Self::Api, EsdtTokenPayment<Self::Api>> = ManagedVec::new();
+        let mut non_sov_tokens: ManagedVec<Self::Api, OperationEsdtPayment<Self::Api>> =
+            ManagedVec::new();
 
         for token in tokens.iter() {
             if !self.has_sov_prefix(&token.token_identifier, &sov_prefix) {
+                non_sov_tokens.push(token);
                 continue;
             }
 
             if !self.paid_issued_tokens().contains(&token.token_identifier) {
-                return false;
+                return (ManagedVec::new(), ManagedVec::new(), false);
             }
+
+            sov_tokens.push(token.into());
         }
 
-        true
+        (sov_tokens, non_sov_tokens, true)
     }
 
     fn remove_executed_hash(&self, hash_of_hashes: &ManagedBuffer, op_hash: &ManagedBuffer) {

@@ -86,18 +86,20 @@ where
     Gas: TxGas<Env>,
 {
     pub fn transfer_tokens<
-        Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
-        Arg1: ProxyArg<transaction::OperationTuple<Env::Api>>,
+        Arg0: ProxyArg<Option<transaction::TransferData<Env::Api>>>,
+        Arg1: ProxyArg<ManagedAddress<Env::Api>>,
+        Arg2: ProxyArg<MultiValueEncoded<Env::Api, transaction::OperationEsdtPayment<Env::Api>>>,
     >(
         self,
-        hash_of_hashes: Arg0,
-        operation_tuple: Arg1,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        opt_transfer_data: Arg0,
+        to: Arg1,
+        tokens: Arg2,
+    ) -> TxTypedCall<Env, From, To, (), Gas, ()> {
         self.wrapped_tx
-            .payment(NotPayable)
             .raw_call("transferTokens")
-            .argument(&hash_of_hashes)
-            .argument(&operation_tuple)
+            .argument(&opt_transfer_data)
+            .argument(&to)
+            .argument(&tokens)
             .original_result()
     }
 

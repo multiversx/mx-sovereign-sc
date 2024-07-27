@@ -1,12 +1,14 @@
 use multiversx_sc::api::{ESDT_MULTI_TRANSFER_FUNC_NAME, ESDT_NFT_CREATE_FUNC_NAME};
 use multiversx_sc::imports::IgnoreValue;
 use multiversx_sc::types::{
-    system_proxy, EsdtTokenPayment, ManagedArgBuffer, ManagedAsyncCallResult, ToSelf,
+    system_proxy, EsdtTokenPayment, ManagedArgBuffer, ManagedAsyncCallResult, MultiValueEncoded,
+    ToSelf,
 };
 use multiversx_sc::types::{ManagedVec, TokenIdentifier};
 use multiversx_sc::{codec, err_msg};
 use transaction::{
-    GasLimit, OperationData, OperationEsdtPayment, OperationTuple, StolenFromFrameworkEsdtTokenData,
+    GasLimit, OperationData, OperationEsdtPayment, OperationTuple,
+    StolenFromFrameworkEsdtTokenData, TransferData,
 };
 
 const CALLBACK_GAS: GasLimit = 10_000_000; // Increase if not enough
@@ -22,16 +24,19 @@ pub trait TransferTokensModule:
     + burn_tokens::BurnTokensModule
     + tx_batch_module::TxBatchModule
 {
+    #[payable("*")]
     #[endpoint(transferTokens)]
     fn transfer_tokens(
         &self,
-        hash_of_hashes: ManagedBuffer,
-        operation_tuple: OperationTuple<Self::Api>,
+        opt_transfer_data: Option<TransferData<Self::Api>>,
+        to: ManagedAddress,
+        tokens: MultiValueEncoded<OperationEsdtPayment<Self::Api>>,
     ) {
         let mut output_payments: ManagedVec<Self::Api, OperationEsdtPayment<Self::Api>> =
             ManagedVec::new();
 
-        for operation_token in operation_tuple.operation.tokens.iter() {
+        // TODO: Check if you can remove the clone here
+        for operation_token in tokens.clone() {
             let sov_prefix = self.sov_prefix().get();
 
             if !self.has_sov_prefix(&operation_token.token_identifier, &sov_prefix) {
@@ -78,7 +83,7 @@ pub trait TransferTokensModule:
             });
         }
 
-        self.distribute_payments(&hash_of_hashes, &operation_tuple);
+        self.distribute_payments(&tokens.to_vec(), &opt_transfer_data, &to);
     }
 
     fn get_nft_create_args(
@@ -118,17 +123,14 @@ pub trait TransferTokensModule:
 
     fn distribute_payments(
         &self,
-        hash_of_hashes: &ManagedBuffer,
-        operation_tuple: &OperationTuple<Self::Api>,
+        tokens: &ManagedVec<OperationEsdtPayment<Self::Api>>,
+        opt_transfer_data: &Option<TransferData<Self::Api>>,
+        to: &ManagedAddress,
     ) {
-        let mapped_tokens: ManagedVec<Self::Api, EsdtTokenPayment<Self::Api>> = operation_tuple
-            .operation
-            .tokens
-            .iter()
-            .map(|token| token.into())
-            .collect();
+        let mapped_tokens: ManagedVec<Self::Api, EsdtTokenPayment<Self::Api>> =
+            tokens.iter().map(|token| token.into()).collect();
 
-        match &operation_tuple.operation.data.opt_transfer_data {
+        match &opt_transfer_data {
             Some(transfer_data) => {
                 let mut args = ManagedArgBuffer::new();
                 for arg in &transfer_data.args {
@@ -136,49 +138,23 @@ pub trait TransferTokensModule:
                 }
 
                 self.tx()
-                    .to(&operation_tuple.operation.to)
+                    .to(to)
                     .raw_call(transfer_data.function.clone())
                     .arguments_raw(args.clone())
                     .multi_esdt(mapped_tokens.clone())
                     .gas(transfer_data.gas_limit)
-                    .callback(
-                        <Self as TransferTokensModule>::callbacks(self)
-                            .execute(hash_of_hashes, operation_tuple),
-                    )
-                    .gas_for_callback(CALLBACK_GAS)
                     .register_promise();
             }
             None => {
                 let own_address = self.blockchain().get_sc_address();
-                let args =
-                    self.get_contract_call_args(&operation_tuple.operation.to, &mapped_tokens);
+                let args = self.get_contract_call_args(&to, &mapped_tokens);
 
                 self.tx()
                     .to(own_address)
                     .raw_call(ESDT_MULTI_TRANSFER_FUNC_NAME)
                     .arguments_raw(args)
                     .gas(TRANSACTION_GAS)
-                    .callback(
-                        <Self as TransferTokensModule>::callbacks(self)
-                            .execute(hash_of_hashes, operation_tuple),
-                    )
                     .register_promise();
-            }
-        }
-    }
-
-    #[promises_callback]
-    fn execute(
-        &self,
-        hash_of_hashes: &ManagedBuffer,
-        operation_tuple: &OperationTuple<Self::Api>,
-        #[call_result] result: ManagedAsyncCallResult<IgnoreValue>,
-    ) {
-        match result {
-            ManagedAsyncCallResult::Ok(_) => {}
-            ManagedAsyncCallResult::Err(_) => {
-                self.burn_tokens(&operation_tuple.operation);
-                self.emit_transfer_failed_events(hash_of_hashes, operation_tuple);
             }
         }
     }
