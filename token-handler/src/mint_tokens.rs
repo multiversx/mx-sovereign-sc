@@ -31,9 +31,9 @@ pub trait TransferTokensModule:
     ) {
         let mut output_payments: ManagedVec<Self::Api, OperationEsdtPayment<Self::Api>> =
             ManagedVec::new();
+        let tokens_vec = tokens.to_vec();
 
-        // TODO: Check if you can remove the clone here
-        for operation_token in tokens.clone() {
+        for operation_token in tokens_vec.iter() {
             let sov_prefix = self.sov_prefix().get();
 
             if !self.has_sov_prefix(&operation_token.token_identifier, &sov_prefix) {
@@ -70,7 +70,7 @@ pub trait TransferTokensModule:
             });
         }
 
-        self.distribute_payments(&tokens.to_vec(), &opt_transfer_data, &to);
+        self.distribute_payments(&tokens_vec, &opt_transfer_data, &to);
     }
 
     fn call_nft_create_built_in_function(&self, arg_buffer: &ManagedArgBuffer<Self::Api>) -> u64 {
