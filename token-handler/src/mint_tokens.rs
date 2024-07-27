@@ -1,8 +1,6 @@
 use multiversx_sc::api::{ESDT_MULTI_TRANSFER_FUNC_NAME, ESDT_NFT_CREATE_FUNC_NAME};
-use multiversx_sc::imports::IgnoreValue;
 use multiversx_sc::types::{
-    system_proxy, EsdtTokenPayment, ManagedArgBuffer, ManagedAsyncCallResult, MultiValueEncoded,
-    ToSelf,
+    system_proxy, EsdtTokenPayment, ManagedArgBuffer, MultiValueEncoded, ToSelf,
 };
 use multiversx_sc::types::{ManagedVec, TokenIdentifier};
 use multiversx_sc::{codec, err_msg};
@@ -11,7 +9,6 @@ use transaction::{
     StolenFromFrameworkEsdtTokenData, TransferData,
 };
 
-const CALLBACK_GAS: GasLimit = 10_000_000; // Increase if not enough
 const TRANSACTION_GAS: GasLimit = 30_000_000;
 
 use crate::{burn_tokens, common};
@@ -80,7 +77,7 @@ pub trait TransferTokensModule:
         let output = self.send_raw().call_local_esdt_built_in_function(
             self.blockchain().get_gas_left(),
             &ManagedBuffer::from(ESDT_NFT_CREATE_FUNC_NAME),
-            &arg_buffer,
+            arg_buffer,
         );
 
         if let Some(first_result_bytes) = output.try_get(0) {
@@ -89,6 +86,7 @@ pub trait TransferTokensModule:
             0
         }
     }
+
     fn get_nft_create_args(
         &self,
         token_identifier: &TokenIdentifier<Self::Api>,
@@ -150,7 +148,7 @@ pub trait TransferTokensModule:
             }
             None => {
                 let own_address = self.blockchain().get_sc_address();
-                let args = self.get_contract_call_args(&to, &mapped_tokens);
+                let args = self.get_contract_call_args(to, &mapped_tokens);
 
                 self.tx()
                     .to(own_address)
