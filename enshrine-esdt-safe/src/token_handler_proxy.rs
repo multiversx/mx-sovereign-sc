@@ -44,17 +44,14 @@ where
     Gas: TxGas<Env>,
 {
     pub fn init<
-        Arg0: ProxyArg<ManagedAddress<Env::Api>>,
-        Arg1: ProxyArg<ManagedBuffer<Env::Api>>,
+        Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
     >(
         self,
-        header_verifier_address: Arg0,
-        chain_prefix: Arg1,
+        chain_prefix: Arg0,
     ) -> TxTypedDeploy<Env, From, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_deploy()
-            .argument(&header_verifier_address)
             .argument(&chain_prefix)
             .original_result()
     }
@@ -88,19 +85,21 @@ where
     To: TxTo<Env>,
     Gas: TxGas<Env>,
 {
-    pub fn mint_tokens<
-        Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
-        Arg1: ProxyArg<transaction::OperationTuple<Env::Api>>,
+    pub fn transfer_tokens<
+        Arg0: ProxyArg<Option<transaction::TransferData<Env::Api>>>,
+        Arg1: ProxyArg<ManagedAddress<Env::Api>>,
+        Arg2: ProxyArg<MultiValueEncoded<Env::Api, transaction::OperationEsdtPayment<Env::Api>>>,
     >(
         self,
-        hash_of_hashes: Arg0,
-        operation_tuple: Arg1,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        opt_transfer_data: Arg0,
+        to: Arg1,
+        tokens: Arg2,
+    ) -> TxTypedCall<Env, From, To, (), Gas, ()> {
         self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("mintTokens")
-            .argument(&hash_of_hashes)
-            .argument(&operation_tuple)
+            .raw_call("transferTokens")
+            .argument(&opt_transfer_data)
+            .argument(&to)
+            .argument(&tokens)
             .original_result()
     }
 

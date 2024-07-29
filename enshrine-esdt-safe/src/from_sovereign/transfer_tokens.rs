@@ -1,4 +1,5 @@
 use crate::{common, to_sovereign, token_handler_proxy};
+use header_verifier::header_verifier_proxy;
 use multiversx_sc::imports::*;
 use multiversx_sc::storage::StorageKey;
 use transaction::{Operation, OperationData, OperationEsdtPayment, OperationTuple};
@@ -28,15 +29,14 @@ pub trait TransferTokensModule:
 
         require!(self.not_paused(), "Cannot transfer while paused");
 
-        let (op_hash, is_registered) =
-            self.calculate_operation_hash(hash_of_hashes.clone(), operation.clone());
+        let (op_hash, is_registered) = self.calculate_operation_hash(&hash_of_hashes, &operation);
 
         if !is_registered {
             sc_panic!("Operation is not registered");
         }
 
-        let are_tokens_registered =
-            self.verify_operation_tokens_issue_paid(operation.tokens.clone());
+        let (sov_tokens, non_sov_tokens, are_tokens_registered) =
+            self.split_payments_for_prefix_and_fee(&operation.tokens);
 
         if !are_tokens_registered {
             self.emit_transfer_failed_events(
@@ -48,47 +48,22 @@ pub trait TransferTokensModule:
         }
 
         let token_handler_address = self.token_handler_address().get();
+        let multi_value_tokens: MultiValueEncoded<OperationEsdtPayment<Self::Api>> =
+            non_sov_tokens.into();
 
         self.tx()
             .to(token_handler_address)
             .typed(token_handler_proxy::TokenHandlerProxy)
-            .mint_tokens(hash_of_hashes, OperationTuple::new(op_hash, operation))
+            .transfer_tokens(
+                operation.data.opt_transfer_data,
+                operation.to,
+                multi_value_tokens,
+            )
+            .multi_esdt(sov_tokens)
             .sync_call();
-    }
 
-    #[endpoint]
-    fn call_token_handler_mint_endpoint(
-        &self,
-        hash_of_hashes: ManagedBuffer<Self::Api>,
-        operation_tuple: OperationTuple<Self::Api>,
-    ) {
-        let token_handler_address = self.token_handler_address().get();
-
-        self.tx()
-            .to(token_handler_address)
-            .typed(token_handler_proxy::TokenHandlerProxy)
-            .mint_tokens(hash_of_hashes, operation_tuple)
-            .callback(<Self as TransferTokensModule>::callbacks(self).save_minted_tokens())
-            .async_call_and_exit();
-    }
-
-    #[promises_callback]
-    fn save_minted_tokens(
-        &self,
-        #[call_result] result: ManagedAsyncCallResult<
-            MultiValueEncoded<OperationEsdtPayment<Self::Api>>,
-        >,
-    ) {
-        match result {
-            ManagedAsyncCallResult::Ok(tokens) => {
-                for token in tokens {
-                    self.minted_tokens().push(&token);
-                }
-            }
-            ManagedAsyncCallResult::Err(_) => {
-                sc_panic!("Error at minting tokens");
-            }
-        }
+        self.remove_executed_hash(&hash_of_hashes, &op_hash);
+        self.execute_bridge_operation_event(hash_of_hashes, op_hash);
     }
 
     #[endpoint(registerNewTokenID)]
@@ -112,23 +87,43 @@ pub trait TransferTokensModule:
         }
     }
 
-    fn verify_operation_tokens_issue_paid(
+    fn split_payments_for_prefix_and_fee(
         &self,
-        tokens: ManagedVec<OperationEsdtPayment<Self::Api>>,
-    ) -> bool {
+        tokens: &ManagedVec<OperationEsdtPayment<Self::Api>>,
+    ) -> (
+        ManagedVec<Self::Api, EsdtTokenPayment<Self::Api>>,
+        ManagedVec<Self::Api, OperationEsdtPayment<Self::Api>>,
+        bool,
+    ) {
         let sov_prefix = self.get_sovereign_prefix();
+        let mut sov_tokens: ManagedVec<Self::Api, EsdtTokenPayment<Self::Api>> = ManagedVec::new();
+        let mut non_sov_tokens: ManagedVec<Self::Api, OperationEsdtPayment<Self::Api>> =
+            ManagedVec::new();
 
         for token in tokens.iter() {
             if !self.has_sov_prefix(&token.token_identifier, &sov_prefix) {
+                non_sov_tokens.push(token);
                 continue;
             }
 
             if !self.paid_issued_tokens().contains(&token.token_identifier) {
-                return false;
+                return (ManagedVec::new(), ManagedVec::new(), false);
             }
+
+            sov_tokens.push(token.into());
         }
 
-        true
+        (sov_tokens, non_sov_tokens, true)
+    }
+
+    fn remove_executed_hash(&self, hash_of_hashes: &ManagedBuffer, op_hash: &ManagedBuffer) {
+        let header_verifier_address = self.header_verifier_address().get();
+
+        self.tx()
+            .to(header_verifier_address)
+            .typed(header_verifier_proxy::HeaderverifierProxy)
+            .remove_executed_hash(hash_of_hashes, op_hash)
+            .sync_call();
     }
 
     fn emit_transfer_failed_events(
@@ -155,8 +150,8 @@ pub trait TransferTokensModule:
     // use pending_operations as param
     fn calculate_operation_hash(
         &self,
-        hash_of_hashes: ManagedBuffer,
-        operation: Operation<Self::Api>,
+        hash_of_hashes: &ManagedBuffer,
+        operation: &Operation<Self::Api>,
     ) -> (ManagedBuffer, bool) {
         let mut serialized_data = ManagedBuffer::new();
         let mut storage_key = StorageKey::from("pending_hashes");

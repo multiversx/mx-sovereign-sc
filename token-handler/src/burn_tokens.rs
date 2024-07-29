@@ -14,7 +14,7 @@ pub trait BurnTokensModule: utils::UtilsModule + common::storage::CommonStorage 
     #[endpoint(burnTokens)]
     fn burn_tokens_endpoint(&self, operation: Operation<Self::Api>) {
         require!(
-            operation.tokens.len() > 0,
+            !operation.tokens.is_empty(),
             "Operation tokens array is empty"
         );
 
