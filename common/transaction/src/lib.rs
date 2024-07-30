@@ -36,6 +36,14 @@ pub struct Operation<M: ManagedTypeApi> {
 }
 
 impl<M: ManagedTypeApi> Operation<M> {
+    pub fn new(
+        to: ManagedAddress<M>,
+        tokens: ManagedVec<M, OperationEsdtPayment<M>>,
+        data: OperationData<M>,
+    ) -> Self {
+        Operation { to, tokens, data }
+    }
+
     pub fn get_tokens_as_tuple_arr(
         &self,
     ) -> MultiValueEncoded<M, MultiValue3<TokenIdentifier<M>, u64, EsdtTokenData<M>>> {
