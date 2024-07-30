@@ -149,7 +149,7 @@ fn test_transfer_tokens_no_payment() {
 }
 
 #[test]
-fn test_transfer_tokens_fungieble_payment() {
+fn test_transfer_tokens_fungible_payment() {
     let mut state = TokenHandlerTestState::new();
     let token_ids = [NFT_TOKEN_ID, FUNGIBLE_TOKEN_ID];
     let tokens = state.setup_payments(&token_ids.to_vec());
