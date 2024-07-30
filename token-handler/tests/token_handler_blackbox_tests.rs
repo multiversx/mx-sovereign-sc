@@ -138,5 +138,10 @@ fn test_transfer_tokens_no_payment() {
         opt_transfer_data,
         USER_ADDRESS.to_managed_address(),
         tokens,
-    )
+    );
+
+    state
+        .world
+        .check_account(USER_ADDRESS)
+        .esdt_balance(FUNGIBLE_TOKEN_ID, 0);
 }
