@@ -17,6 +17,12 @@ path = "../common/transaction"
 [dependencies.bls-signature]
 path = "../common/bls-signature/"
 
+[dependencies.header-verifier]
+path = "../header-verifier/"
+
+[dependencies.tx-batch-module]
+path = "../common/tx-batch-module"
+
 [dependencies.multiversx-sc]
 version = "0.51.1"
 
