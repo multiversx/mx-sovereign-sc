@@ -85,6 +85,19 @@ where
     To: TxTo<Env>,
     Gas: TxGas<Env>,
 {
+    pub fn whitelist_enshrine_esdt<
+        Arg0: ProxyArg<ManagedAddress<Env::Api>>,
+    >(
+        self,
+        enshrine_esdt_address: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("whitelistEnshrineEsdt")
+            .argument(&enshrine_esdt_address)
+            .original_result()
+    }
+
     pub fn transfer_tokens<
         Arg0: ProxyArg<Option<transaction::TransferData<Env::Api>>>,
         Arg1: ProxyArg<ManagedAddress<Env::Api>>,
@@ -103,7 +116,7 @@ where
             .original_result()
     }
 
-    pub fn burn_tokens_endpoint<
+    pub fn burn_tokens<
         Arg0: ProxyArg<transaction::Operation<Env::Api>>,
     >(
         self,
