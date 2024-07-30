@@ -40,6 +40,7 @@ impl TokenHandlerTestState {
         world
             .account(OWNER_ADDRESS)
             .esdt_nft_balance(NFT_TOKEN_ID, 1, 100_000, ManagedBuffer::new())
+            .esdt_nft_balance(FUNGIBLE_TOKEN_ID, 0, 100_000, ManagedBuffer::new())
             .esdt_balance(CROWD_TOKEN_ID, 100_000)
             .balance(BigUint::from(WEGLD_BALANCE))
             .nonce(1);
@@ -47,6 +48,7 @@ impl TokenHandlerTestState {
         world
             .account(USER_ADDRESS)
             .esdt_nft_balance(NFT_TOKEN_ID, 1, 100_000, ManagedBuffer::new())
+            .esdt_nft_balance(FUNGIBLE_TOKEN_ID, 0, 100_000, ManagedBuffer::new())
             .esdt_balance(CROWD_TOKEN_ID, 100_000)
             .balance(BigUint::from(WEGLD_BALANCE))
             .nonce(1);
@@ -82,7 +84,7 @@ impl TokenHandlerTestState {
                 .to(TOKEN_HANDLER_ADDRESS)
                 .typed(token_handler_proxy::TokenHandlerProxy)
                 .transfer_tokens(opt_transfer_data, to, tokens)
-                .esdt(payment)
+                .multi_esdt(payment)
                 .run(),
             Option::None => self
                 .world
@@ -142,6 +144,33 @@ fn test_transfer_tokens_no_payment() {
 
     state
         .world
-        .check_account(USER_ADDRESS)
+        .check_account(TOKEN_HANDLER_ADDRESS)
         .esdt_balance(FUNGIBLE_TOKEN_ID, 0);
+}
+
+#[test]
+fn test_transfer_tokens_fungieble_payment() {
+    let mut state = TokenHandlerTestState::new();
+    let token_ids = [NFT_TOKEN_ID, FUNGIBLE_TOKEN_ID];
+    let tokens = state.setup_payments(&token_ids.to_vec());
+    let esdt_payment = Option::Some(EsdtTokenPayment {
+        token_identifier: FUNGIBLE_TOKEN_ID.into(),
+        token_nonce: 0,
+        amount: BigUint::from(100u64),
+    });
+    let opt_transfer_data = Option::None;
+
+    state.propose_deploy(CHAIN_PREFIX.into());
+
+    state.propose_transfer_tokens(
+        esdt_payment,
+        opt_transfer_data,
+        USER_ADDRESS.to_managed_address(),
+        tokens,
+    );
+
+    state
+        .world
+        .check_account(TOKEN_HANDLER_ADDRESS)
+        .esdt_balance(FUNGIBLE_TOKEN_ID, 100);
 }
