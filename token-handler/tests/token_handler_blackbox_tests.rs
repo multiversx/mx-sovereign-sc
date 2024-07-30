@@ -1,9 +1,9 @@
 use multiversx_sc::types::{
-    Address, BigUint, EsdtTokenPayment, ManagedAddress, ManagedBuffer, ManagedVec,
-    MultiValueEncoded, TestAddress, TestSCAddress, TestTokenIdentifier,
+    BigUint, EsdtTokenPayment, ManagedAddress, ManagedBuffer, MultiValueEncoded, TestAddress,
+    TestSCAddress, TestTokenIdentifier,
 };
+use multiversx_sc_scenario::ScenarioTxRun;
 use multiversx_sc_scenario::{api::StaticApi, imports::MxscPath, ScenarioWorld};
-use multiversx_sc_scenario::{managed_address, ScenarioTxRun};
 use token_handler::token_handler_proxy;
 use transaction::{OperationEsdtPayment, StolenFromFrameworkEsdtTokenData, TransferData};
 
@@ -15,10 +15,9 @@ const USER_ADDRESS: TestAddress = TestAddress::new("user");
 const NFT_TOKEN_ID: TestTokenIdentifier = TestTokenIdentifier::new("NFT-123456");
 const CROWD_TOKEN_ID: TestTokenIdentifier = TestTokenIdentifier::new("CROWD-123456");
 const FUNGIBLE_TOKEN_ID: TestTokenIdentifier = TestTokenIdentifier::new("FUNG-123456");
-const PREFIX_NFT_TOKEN_ID: TestTokenIdentifier = TestTokenIdentifier::new("sov-NFT-123456");
+const _PREFIX_NFT_TOKEN_ID: TestTokenIdentifier = TestTokenIdentifier::new("sov-NFT-123456");
 
 const WEGLD_BALANCE: u128 = 100_000_000_000_000_000;
-const OWNER_BALANCE: u64 = 100_000_000;
 const CHAIN_PREFIX: &str = "sov";
 
 fn world() -> ScenarioWorld {
