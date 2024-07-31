@@ -17,12 +17,14 @@ pub trait TransferTokensModule:
     + burn_tokens::BurnTokensModule
     + tx_batch_module::TxBatchModule
 {
+    // NOTE: will use operation.data.op_sender as well when TransferAndExecuteByUser is implemented
     #[payable("*")]
     #[endpoint(transferTokens)]
     fn transfer_tokens(
         &self,
         opt_transfer_data: Option<TransferData<Self::Api>>,
         to: ManagedAddress,
+        // original_sender: ManagedAddress,
         tokens: MultiValueEncoded<OperationEsdtPayment<Self::Api>>,
     ) {
         let mut output_payments: ManagedVec<Self::Api, OperationEsdtPayment<Self::Api>> =
