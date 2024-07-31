@@ -15,7 +15,6 @@ pub trait TokenHandler:
     + utils::UtilsModule
     + common::storage::CommonStorage
     + tx_batch_module::TxBatchModule
-    + common::events::EventsModule
 {
     #[init]
     fn init(&self, chain_prefix: ManagedBuffer) {

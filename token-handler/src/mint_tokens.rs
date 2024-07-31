@@ -4,10 +4,7 @@ use multiversx_sc::types::{
 };
 use multiversx_sc::types::{ManagedVec, TokenIdentifier};
 use multiversx_sc::{codec, err_msg};
-use transaction::{
-    GasLimit, OperationData, OperationEsdtPayment, OperationTuple,
-    StolenFromFrameworkEsdtTokenData, TransferData,
-};
+use transaction::{GasLimit, OperationEsdtPayment, StolenFromFrameworkEsdtTokenData, TransferData};
 
 const TRANSACTION_GAS: GasLimit = 30_000_000;
 
@@ -17,7 +14,6 @@ use crate::{burn_tokens, common};
 pub trait TransferTokensModule:
     utils::UtilsModule
     + common::storage::CommonStorage
-    + common::events::EventsModule
     + burn_tokens::BurnTokensModule
     + tx_batch_module::TxBatchModule
 {
@@ -176,30 +172,5 @@ pub trait TransferTokensModule:
         }
 
         args
-    }
-
-    fn emit_transfer_failed_events(
-        &self,
-        hash_of_hashes: &ManagedBuffer,
-        operation_tuple: &OperationTuple<Self::Api>,
-    ) {
-        self.execute_bridge_operation_event(
-            hash_of_hashes.clone(),
-            operation_tuple.op_hash.clone(),
-        );
-
-        // deposit back mainchain tokens into user account
-        let sc_address = self.blockchain().get_sc_address();
-        let tx_nonce = self.get_and_save_next_tx_id();
-
-        self.deposit_event(
-            &operation_tuple.operation.data.op_sender,
-            &operation_tuple.operation.get_tokens_as_tuple_arr(),
-            OperationData {
-                op_nonce: tx_nonce,
-                op_sender: sc_address.clone(),
-                opt_transfer_data: None,
-            },
-        );
     }
 }
