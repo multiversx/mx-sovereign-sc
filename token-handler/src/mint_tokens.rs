@@ -28,7 +28,7 @@ pub trait TransferTokensModule:
         tokens: MultiValueEncoded<OperationEsdtPayment<Self::Api>>,
     ) {
         let output_payments = self.mint_tokens(&tokens.to_vec());
-        self.distribute_payments(&output_payments, &opt_transfer_data, &to);
+        self.distribute_payments(&to, &output_payments, &opt_transfer_data);
     }
 
     fn mint_tokens(
@@ -123,9 +123,9 @@ pub trait TransferTokensModule:
 
     fn distribute_payments(
         &self,
+        receiver: &ManagedAddress,
         tokens: &ManagedVec<OperationEsdtPayment<Self::Api>>,
         opt_transfer_data: &Option<TransferData<Self::Api>>,
-        to: &ManagedAddress,
     ) {
         let mapped_tokens: ManagedVec<Self::Api, EsdtTokenPayment<Self::Api>> =
             tokens.iter().map(|token| token.into()).collect();
@@ -138,7 +138,7 @@ pub trait TransferTokensModule:
                 }
 
                 self.tx()
-                    .to(to)
+                    .to(receiver)
                     .raw_call(transfer_data.function.clone())
                     .arguments_raw(args.clone())
                     .multi_esdt(mapped_tokens.clone())
@@ -147,7 +147,7 @@ pub trait TransferTokensModule:
             }
             None => {
                 let own_address = self.blockchain().get_sc_address();
-                let args = self.get_contract_call_args(to, &mapped_tokens);
+                let args = self.get_contract_call_args(receiver, &mapped_tokens);
 
                 self.tx()
                     .to(own_address)
