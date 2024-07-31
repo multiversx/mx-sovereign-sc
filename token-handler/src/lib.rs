@@ -17,9 +17,7 @@ pub trait TokenHandler:
     + tx_batch_module::TxBatchModule
 {
     #[init]
-    fn init(&self, chain_prefix: ManagedBuffer) {
-        self.sov_prefix().set(chain_prefix);
-    }
+    fn init(&self) {}
 
     #[upgrade]
     fn upgrade(&self) {}
