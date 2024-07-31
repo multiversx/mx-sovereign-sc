@@ -114,6 +114,7 @@ pub trait TransferTokensModule:
             }
         }
 
+        arg_buffer.push_arg(cloned_token_data.token_type);
         arg_buffer.push_arg(token_nonce);
         arg_buffer.push_arg(cloned_token_data.creator);
 
