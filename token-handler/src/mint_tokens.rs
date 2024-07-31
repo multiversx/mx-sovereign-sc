@@ -27,7 +27,15 @@ pub trait TransferTokensModule:
         // original_sender: ManagedAddress,
         tokens: MultiValueEncoded<OperationEsdtPayment<Self::Api>>,
     ) {
-        let output_payments = self.mint_tokens(&tokens.to_vec());
+        let mut output_payments = self.mint_tokens(&tokens.to_vec());
+        let call_value_esdt_transfer = self.call_value().all_esdt_transfers();
+        let mapped_esdt_transfers: ManagedVec<OperationEsdtPayment<Self::Api>> =
+            call_value_esdt_transfer
+                .iter()
+                .map(|transfer| transfer.into())
+                .collect();
+        output_payments.extend(&mapped_esdt_transfers);
+
         self.distribute_payments(&to, &output_payments, &opt_transfer_data);
     }
 
