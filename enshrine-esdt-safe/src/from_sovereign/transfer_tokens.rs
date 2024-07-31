@@ -35,7 +35,7 @@ pub trait TransferTokensModule:
             sc_panic!("Operation is not registered");
         }
 
-        let (sov_tokens, non_sov_tokens, are_tokens_registered) =
+        let (non_sov_tokens, sov_tokens, are_tokens_registered) =
             self.split_payments_for_prefix_and_fee(&operation.tokens);
 
         if !are_tokens_registered {
@@ -49,7 +49,7 @@ pub trait TransferTokensModule:
 
         let token_handler_address = self.token_handler_address().get();
         let multi_value_tokens: MultiValueEncoded<OperationEsdtPayment<Self::Api>> =
-            non_sov_tokens.into();
+            sov_tokens.into();
 
         self.tx()
             .to(token_handler_address)
@@ -59,7 +59,7 @@ pub trait TransferTokensModule:
                 operation.to,
                 multi_value_tokens,
             )
-            .multi_esdt(sov_tokens)
+            .multi_esdt(non_sov_tokens)
             .sync_call();
 
         self.remove_executed_hash(&hash_of_hashes, &op_hash);
