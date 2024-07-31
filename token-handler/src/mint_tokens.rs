@@ -27,18 +27,18 @@ pub trait TransferTokensModule:
         // original_sender: ManagedAddress,
         tokens: MultiValueEncoded<OperationEsdtPayment<Self::Api>>,
     ) {
+        let output_payments = self.mint_tokens(&tokens.to_vec());
+        self.distribute_payments(&output_payments, &opt_transfer_data, &to);
+    }
+
+    fn mint_tokens(
+        &self,
+        tokens: &ManagedVec<OperationEsdtPayment<Self::Api>>,
+    ) -> ManagedVec<OperationEsdtPayment<Self::Api>> {
         let mut output_payments: ManagedVec<Self::Api, OperationEsdtPayment<Self::Api>> =
             ManagedVec::new();
-        let tokens_vec = tokens.to_vec();
 
-        for operation_token in tokens_vec.iter() {
-            let sov_prefix = self.sov_prefix().get();
-
-            if !self.has_sov_prefix(&operation_token.token_identifier, &sov_prefix) {
-                output_payments.push(operation_token.clone());
-                continue;
-            }
-
+        for operation_token in tokens.iter() {
             let mut nonce = operation_token.token_nonce;
 
             if nonce == 0 {
@@ -68,7 +68,7 @@ pub trait TransferTokensModule:
             });
         }
 
-        self.distribute_payments(&tokens_vec, &opt_transfer_data, &to);
+        output_payments
     }
 
     fn call_nft_create_built_in_function(&self, arg_buffer: &ManagedArgBuffer<Self::Api>) -> u64 {
