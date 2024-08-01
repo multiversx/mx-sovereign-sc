@@ -5,12 +5,12 @@ use multiversx_sc::imports::*;
 
 pub mod burn_tokens;
 pub mod common;
-pub mod mint_tokens;
 pub mod token_handler_proxy;
+pub mod transfer_tokens;
 
 #[multiversx_sc::contract]
 pub trait TokenHandler:
-    mint_tokens::TransferTokensModule
+    transfer_tokens::TransferTokensModule
     + burn_tokens::BurnTokensModule
     + utils::UtilsModule
     + common::storage::CommonStorage
