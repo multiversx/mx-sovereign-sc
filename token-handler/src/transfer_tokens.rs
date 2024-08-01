@@ -47,9 +47,7 @@ pub trait TransferTokensModule:
             ManagedVec::new();
 
         for operation_token in tokens.iter() {
-            let mut nonce = operation_token.token_nonce;
-
-            if nonce == 0 {
+            if operation_token.token_nonce == 0 {
                 self.tx()
                     .to(ToSelf)
                     .typed(system_proxy::UserBuiltinProxy)
@@ -75,7 +73,7 @@ pub trait TransferTokensModule:
 
             output_payments.push(OperationEsdtPayment {
                 token_identifier: operation_token.token_identifier,
-                token_nonce: nonce,
+                token_nonce: operation_token.token_nonce,
                 token_data: operation_token.token_data,
             });
         }
