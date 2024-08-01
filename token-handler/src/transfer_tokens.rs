@@ -119,9 +119,6 @@ pub trait TransferTokensModule:
         tokens: &ManagedVec<EsdtTokenPayment<Self::Api>>,
         opt_transfer_data: &Option<TransferData<Self::Api>>,
     ) {
-        let mapped_tokens: ManagedVec<Self::Api, EsdtTokenPayment<Self::Api>> =
-            tokens.iter().map(|token| token.into()).collect();
-
         match &opt_transfer_data {
             Some(transfer_data) => {
                 let mut args = ManagedArgBuffer::new();
@@ -133,13 +130,13 @@ pub trait TransferTokensModule:
                     .to(receiver)
                     .raw_call(transfer_data.function.clone())
                     .arguments_raw(args.clone())
-                    .multi_esdt(mapped_tokens.clone())
+                    .payment(tokens)
                     .gas(transfer_data.gas_limit)
                     .register_promise();
             }
             None => {
                 let own_address = self.blockchain().get_sc_address();
-                let args = self.get_contract_call_args(receiver, &mapped_tokens);
+                let args = self.get_contract_call_args(receiver, tokens);
 
                 self.tx()
                     .to(own_address)
