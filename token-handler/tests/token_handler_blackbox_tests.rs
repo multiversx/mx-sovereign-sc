@@ -18,7 +18,6 @@ const FUNGIBLE_TOKEN_ID: TestTokenIdentifier = TestTokenIdentifier::new("FUNG-12
 const _PREFIX_NFT_TOKEN_ID: TestTokenIdentifier = TestTokenIdentifier::new("sov-NFT-123456");
 
 const WEGLD_BALANCE: u128 = 100_000_000_000_000_000;
-const CHAIN_PREFIX: &str = "sov";
 
 fn world() -> ScenarioWorld {
     let mut blockchain = ScenarioWorld::new();
@@ -55,12 +54,12 @@ impl TokenHandlerTestState {
         Self { world }
     }
 
-    fn propose_deploy(&mut self, chain_prefix: ManagedBuffer<StaticApi>) -> &mut Self {
+    fn propose_deploy(&mut self) -> &mut Self {
         self.world
             .tx()
             .from(OWNER_ADDRESS)
             .typed(token_handler_proxy::TokenHandlerProxy)
-            .init(chain_prefix)
+            .init()
             .code(TOKEN_HANDLER_CODE_PATH)
             .new_address(TOKEN_HANDLER_ADDRESS)
             .run();
@@ -121,7 +120,7 @@ impl TokenHandlerTestState {
 fn test_deploy() {
     let mut state = TokenHandlerTestState::new();
 
-    state.propose_deploy(CHAIN_PREFIX.into());
+    state.propose_deploy();
 }
 
 #[test]
@@ -132,7 +131,7 @@ fn test_transfer_tokens_no_payment() {
     let esdt_payment = Option::None;
     let opt_transfer_data = Option::None;
 
-    state.propose_deploy(CHAIN_PREFIX.into());
+    state.propose_deploy();
 
     state.propose_transfer_tokens(
         esdt_payment,
@@ -159,7 +158,7 @@ fn test_transfer_tokens_fungible_payment() {
     });
     let opt_transfer_data = Option::None;
 
-    state.propose_deploy(CHAIN_PREFIX.into());
+    state.propose_deploy();
 
     state.propose_transfer_tokens(
         esdt_payment,
