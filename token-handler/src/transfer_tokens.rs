@@ -66,7 +66,11 @@ pub trait TransferTokensModule:
                     &operation_token.token_data,
                 );
 
-                nonce = self.call_nft_create_built_in_function(&arg_buffer);
+                self.send_raw().call_local_esdt_built_in_function(
+                    self.blockchain().get_gas_left(),
+                    &ManagedBuffer::from(ESDT_NFT_CREATE_FUNC_NAME),
+                    &arg_buffer,
+                );
             }
 
             output_payments.push(OperationEsdtPayment {
@@ -77,20 +81,6 @@ pub trait TransferTokensModule:
         }
 
         output_payments
-    }
-
-    fn call_nft_create_built_in_function(&self, arg_buffer: &ManagedArgBuffer<Self::Api>) -> u64 {
-        let output = self.send_raw().call_local_esdt_built_in_function(
-            self.blockchain().get_gas_left(),
-            &ManagedBuffer::from(ESDT_NFT_CREATE_FUNC_NAME),
-            arg_buffer,
-        );
-
-        if let Some(first_result_bytes) = output.try_get(0) {
-            first_result_bytes.parse_as_u64().unwrap_or_default()
-        } else {
-            0
-        }
     }
 
     fn get_nft_create_args(
