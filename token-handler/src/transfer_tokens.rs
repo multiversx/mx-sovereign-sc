@@ -29,12 +29,7 @@ pub trait TransferTokensModule:
     ) {
         let mut output_payments = self.mint_tokens(&tokens.to_vec());
         let call_value_esdt_transfer = self.call_value().all_esdt_transfers();
-        let mapped_esdt_transfers: ManagedVec<OperationEsdtPayment<Self::Api>> =
-            call_value_esdt_transfer
-                .iter()
-                .map(|transfer| transfer.into())
-                .collect();
-        output_payments.extend(&mapped_esdt_transfers);
+        output_payments.extend(&call_value_esdt_transfer.clone_value());
 
         self.distribute_payments(&to, &output_payments, &opt_transfer_data);
     }
@@ -42,9 +37,8 @@ pub trait TransferTokensModule:
     fn mint_tokens(
         &self,
         tokens: &ManagedVec<OperationEsdtPayment<Self::Api>>,
-    ) -> ManagedVec<OperationEsdtPayment<Self::Api>> {
-        let mut output_payments: ManagedVec<Self::Api, OperationEsdtPayment<Self::Api>> =
-            ManagedVec::new();
+    ) -> ManagedVec<EsdtTokenPayment<Self::Api>> {
+        let mut output_payments: ManagedVec<Self::Api, EsdtTokenPayment> = ManagedVec::new();
 
         for operation_token in tokens.iter() {
             if operation_token.token_nonce == 0 {
@@ -71,11 +65,13 @@ pub trait TransferTokensModule:
                 );
             }
 
-            output_payments.push(OperationEsdtPayment {
-                token_identifier: operation_token.token_identifier,
-                token_nonce: operation_token.token_nonce,
-                token_data: operation_token.token_data,
-            });
+            let esdt_token_payment = EsdtTokenPayment::new(
+                operation_token.token_identifier,
+                operation_token.token_nonce,
+                operation_token.token_data.amount,
+            );
+
+            output_payments.push(esdt_token_payment);
         }
 
         output_payments
@@ -120,7 +116,7 @@ pub trait TransferTokensModule:
     fn distribute_payments(
         &self,
         receiver: &ManagedAddress,
-        tokens: &ManagedVec<OperationEsdtPayment<Self::Api>>,
+        tokens: &ManagedVec<EsdtTokenPayment<Self::Api>>,
         opt_transfer_data: &Option<TransferData<Self::Api>>,
     ) {
         let mapped_tokens: ManagedVec<Self::Api, EsdtTokenPayment<Self::Api>> =
