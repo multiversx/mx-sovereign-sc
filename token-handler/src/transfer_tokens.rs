@@ -34,6 +34,41 @@ pub trait TransferTokensModule:
         self.distribute_payments(&to, &output_payments, &opt_transfer_data);
     }
 
+    fn distribute_payments(
+        &self,
+        receiver: &ManagedAddress,
+        tokens: &ManagedVec<EsdtTokenPayment<Self::Api>>,
+        opt_transfer_data: &Option<TransferData<Self::Api>>,
+    ) {
+        match &opt_transfer_data {
+            Some(transfer_data) => {
+                let mut args = ManagedArgBuffer::new();
+                for arg in &transfer_data.args {
+                    args.push_arg(arg);
+                }
+
+                self.tx()
+                    .to(receiver)
+                    .raw_call(transfer_data.function.clone())
+                    .arguments_raw(args.clone())
+                    .payment(tokens)
+                    .gas(transfer_data.gas_limit)
+                    .register_promise();
+            }
+            None => {
+                let own_address = self.blockchain().get_sc_address();
+                let args = self.get_contract_call_args(receiver, tokens);
+
+                self.tx()
+                    .to(own_address)
+                    .raw_call(ESDT_MULTI_TRANSFER_FUNC_NAME)
+                    .arguments_raw(args)
+                    .gas(TRANSACTION_GAS)
+                    .register_promise();
+            }
+        }
+    }
+
     fn mint_tokens(
         &self,
         tokens: &ManagedVec<OperationEsdtPayment<Self::Api>>,
@@ -111,41 +146,6 @@ pub trait TransferTokensModule:
         arg_buffer.push_arg(cloned_token_data.creator);
 
         arg_buffer
-    }
-
-    fn distribute_payments(
-        &self,
-        receiver: &ManagedAddress,
-        tokens: &ManagedVec<EsdtTokenPayment<Self::Api>>,
-        opt_transfer_data: &Option<TransferData<Self::Api>>,
-    ) {
-        match &opt_transfer_data {
-            Some(transfer_data) => {
-                let mut args = ManagedArgBuffer::new();
-                for arg in &transfer_data.args {
-                    args.push_arg(arg);
-                }
-
-                self.tx()
-                    .to(receiver)
-                    .raw_call(transfer_data.function.clone())
-                    .arguments_raw(args.clone())
-                    .payment(tokens)
-                    .gas(transfer_data.gas_limit)
-                    .register_promise();
-            }
-            None => {
-                let own_address = self.blockchain().get_sc_address();
-                let args = self.get_contract_call_args(receiver, tokens);
-
-                self.tx()
-                    .to(own_address)
-                    .raw_call(ESDT_MULTI_TRANSFER_FUNC_NAME)
-                    .arguments_raw(args)
-                    .gas(TRANSACTION_GAS)
-                    .register_promise();
-            }
-        }
     }
 
     fn get_contract_call_args(
