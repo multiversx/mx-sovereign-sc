@@ -4,10 +4,7 @@ use multiversx_sc::types::{
 };
 use multiversx_sc::types::{ManagedVec, TokenIdentifier};
 use multiversx_sc::{codec, err_msg};
-use transaction::{
-    GasLimit, OperationData, OperationEsdtPayment, OperationTuple,
-    StolenFromFrameworkEsdtTokenData, TransferData,
-};
+use transaction::{GasLimit, OperationEsdtPayment, StolenFromFrameworkEsdtTokenData, TransferData};
 
 const TRANSACTION_GAS: GasLimit = 30_000_000;
 
@@ -17,33 +14,34 @@ use crate::{burn_tokens, common};
 pub trait TransferTokensModule:
     utils::UtilsModule
     + common::storage::CommonStorage
-    + common::events::EventsModule
     + burn_tokens::BurnTokensModule
     + tx_batch_module::TxBatchModule
 {
+    // NOTE: will use operation.data.op_sender as well when TransferAndExecuteByUser is implemented
     #[payable("*")]
     #[endpoint(transferTokens)]
     fn transfer_tokens(
         &self,
         opt_transfer_data: Option<TransferData<Self::Api>>,
         to: ManagedAddress,
+        // original_sender: ManagedAddress,
         tokens: MultiValueEncoded<OperationEsdtPayment<Self::Api>>,
     ) {
-        let mut output_payments: ManagedVec<Self::Api, OperationEsdtPayment<Self::Api>> =
-            ManagedVec::new();
-        let tokens_vec = tokens.to_vec();
+        let mut output_payments = self.mint_tokens(&tokens.to_vec());
+        let call_value_esdt_transfer = self.call_value().all_esdt_transfers();
+        output_payments.extend(&call_value_esdt_transfer.clone_value());
 
-        for operation_token in tokens_vec.iter() {
-            let sov_prefix = self.sov_prefix().get();
+        self.distribute_payments(&to, &output_payments, &opt_transfer_data);
+    }
 
-            if !self.has_sov_prefix(&operation_token.token_identifier, &sov_prefix) {
-                output_payments.push(operation_token.clone());
-                continue;
-            }
+    fn mint_tokens(
+        &self,
+        tokens: &ManagedVec<OperationEsdtPayment<Self::Api>>,
+    ) -> ManagedVec<EsdtTokenPayment<Self::Api>> {
+        let mut output_payments: ManagedVec<Self::Api, EsdtTokenPayment> = ManagedVec::new();
 
-            let mut nonce = operation_token.token_nonce;
-
-            if nonce == 0 {
+        for operation_token in tokens.iter() {
+            if operation_token.token_nonce == 0 {
                 self.tx()
                     .to(ToSelf)
                     .typed(system_proxy::UserBuiltinProxy)
@@ -60,31 +58,23 @@ pub trait TransferTokensModule:
                     &operation_token.token_data,
                 );
 
-                nonce = self.call_nft_create_built_in_function(&arg_buffer);
+                self.send_raw().call_local_esdt_built_in_function(
+                    self.blockchain().get_gas_left(),
+                    &ManagedBuffer::from(ESDT_NFT_CREATE_FUNC_NAME),
+                    &arg_buffer,
+                );
             }
 
-            output_payments.push(OperationEsdtPayment {
-                token_identifier: operation_token.token_identifier,
-                token_nonce: nonce,
-                token_data: operation_token.token_data,
-            });
+            let esdt_token_payment = EsdtTokenPayment::new(
+                operation_token.token_identifier,
+                operation_token.token_nonce,
+                operation_token.token_data.amount,
+            );
+
+            output_payments.push(esdt_token_payment);
         }
 
-        self.distribute_payments(&tokens_vec, &opt_transfer_data, &to);
-    }
-
-    fn call_nft_create_built_in_function(&self, arg_buffer: &ManagedArgBuffer<Self::Api>) -> u64 {
-        let output = self.send_raw().call_local_esdt_built_in_function(
-            self.blockchain().get_gas_left(),
-            &ManagedBuffer::from(ESDT_NFT_CREATE_FUNC_NAME),
-            arg_buffer,
-        );
-
-        if let Some(first_result_bytes) = output.try_get(0) {
-            first_result_bytes.parse_as_u64().unwrap_or_default()
-        } else {
-            0
-        }
+        output_payments
     }
 
     fn get_nft_create_args(
@@ -116,6 +106,7 @@ pub trait TransferTokensModule:
             }
         }
 
+        arg_buffer.push_arg(cloned_token_data.token_type);
         arg_buffer.push_arg(token_nonce);
         arg_buffer.push_arg(cloned_token_data.creator);
 
@@ -124,13 +115,10 @@ pub trait TransferTokensModule:
 
     fn distribute_payments(
         &self,
-        tokens: &ManagedVec<OperationEsdtPayment<Self::Api>>,
+        receiver: &ManagedAddress,
+        tokens: &ManagedVec<EsdtTokenPayment<Self::Api>>,
         opt_transfer_data: &Option<TransferData<Self::Api>>,
-        to: &ManagedAddress,
     ) {
-        let mapped_tokens: ManagedVec<Self::Api, EsdtTokenPayment<Self::Api>> =
-            tokens.iter().map(|token| token.into()).collect();
-
         match &opt_transfer_data {
             Some(transfer_data) => {
                 let mut args = ManagedArgBuffer::new();
@@ -139,16 +127,16 @@ pub trait TransferTokensModule:
                 }
 
                 self.tx()
-                    .to(to)
+                    .to(receiver)
                     .raw_call(transfer_data.function.clone())
                     .arguments_raw(args.clone())
-                    .multi_esdt(mapped_tokens.clone())
+                    .payment(tokens)
                     .gas(transfer_data.gas_limit)
                     .register_promise();
             }
             None => {
                 let own_address = self.blockchain().get_sc_address();
-                let args = self.get_contract_call_args(to, &mapped_tokens);
+                let args = self.get_contract_call_args(receiver, tokens);
 
                 self.tx()
                     .to(own_address)
@@ -176,30 +164,5 @@ pub trait TransferTokensModule:
         }
 
         args
-    }
-
-    fn emit_transfer_failed_events(
-        &self,
-        hash_of_hashes: &ManagedBuffer,
-        operation_tuple: &OperationTuple<Self::Api>,
-    ) {
-        self.execute_bridge_operation_event(
-            hash_of_hashes.clone(),
-            operation_tuple.op_hash.clone(),
-        );
-
-        // deposit back mainchain tokens into user account
-        let sc_address = self.blockchain().get_sc_address();
-        let tx_nonce = self.get_and_save_next_tx_id();
-
-        self.deposit_event(
-            &operation_tuple.operation.data.op_sender,
-            &operation_tuple.operation.get_tokens_as_tuple_arr(),
-            OperationData {
-                op_nonce: tx_nonce,
-                op_sender: sc_address.clone(),
-                opt_transfer_data: None,
-            },
-        );
     }
 }

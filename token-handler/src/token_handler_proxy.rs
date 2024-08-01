@@ -43,16 +43,12 @@ where
     From: TxFrom<Env>,
     Gas: TxGas<Env>,
 {
-    pub fn init<
-        Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
-    >(
+    pub fn init(
         self,
-        chain_prefix: Arg0,
     ) -> TxTypedDeploy<Env, From, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_deploy()
-            .argument(&chain_prefix)
             .original_result()
     }
 }
