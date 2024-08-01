@@ -29,6 +29,7 @@ pub trait TransferTokensModule:
         to: ManagedAddress,
         tokens: MultiValueEncoded<OperationEsdtPayment<Self::Api>>,
     ) {
+        self.require_caller_to_be_whitelisted();
         let mut output_payments: ManagedVec<Self::Api, OperationEsdtPayment<Self::Api>> =
             ManagedVec::new();
         let tokens_vec = tokens.to_vec();
