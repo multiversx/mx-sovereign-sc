@@ -1,7 +1,6 @@
 use crate::{common, err_msg};
 use multiversx_sc::{
     hex_literal::hex,
-    require,
     types::{system_proxy, ToSelf},
 };
 use transaction::Operation;
