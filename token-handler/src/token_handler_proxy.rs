@@ -99,19 +99,6 @@ where
             .original_result()
     }
 
-    pub fn burn_tokens_endpoint<
-        Arg0: ProxyArg<transaction::Operation<Env::Api>>,
-    >(
-        self,
-        operation: Arg0,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("burnTokens")
-            .argument(&operation)
-            .original_result()
-    }
-
     pub fn set_max_tx_batch_size<
         Arg0: ProxyArg<usize>,
     >(
