@@ -80,6 +80,12 @@ pub struct OperationEsdtPayment<M: ManagedTypeApi> {
     pub token_data: StolenFromFrameworkEsdtTokenData<M>,
 }
 
+impl<M: ManagedTypeApi> From<EsdtTokenPayment<M>> for OperationEsdtPayment<M> {
+    fn from(payment: EsdtTokenPayment<M>) -> Self {
+        payment.into()
+    }
+}
+
 impl<M: ManagedTypeApi> From<OperationEsdtPayment<M>> for EsdtTokenPayment<M> {
     fn from(payment: OperationEsdtPayment<M>) -> Self {
         EsdtTokenPayment {

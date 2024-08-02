@@ -6,9 +6,9 @@
 
 // Init:                                 1
 // Upgrade:                              1
-// Endpoints:                           11
+// Endpoints:                            9
 // Async Callback (empty):               1
-// Total number of exported functions:  14
+// Total number of exported functions:  12
 
 #![no_std]
 
@@ -22,7 +22,6 @@ multiversx_sc_wasm_adapter::endpoints! {
         upgrade => upgrade
         whitelistEnshrineEsdt => whitelist_enshrine_esdt
         transferTokens => transfer_tokens
-        burnTokens => burn_tokens
         setMaxTxBatchSize => set_max_tx_batch_size
         setMaxTxBatchBlockDuration => set_max_tx_batch_block_duration
         getCurrentTxBatch => get_current_tx_batch

@@ -344,20 +344,28 @@ fn test_deploy() {
 fn test_sovereign_prefix_no_prefix() {
     let mut state = EnshrineTestState::new();
     let token_vec = Vec::from([NFT_TOKEN_ID, CROWD_TOKEN_ID]);
+    let error_status = Option::Some(ErrorStatus {
+        code: 4,
+        error_message: "Operation is not registered",
+    });
 
     state.propose_setup_contracts(false);
     state.propose_register_operation(&token_vec);
-    state.propose_execute_operation(None, &token_vec);
+    state.propose_execute_operation(error_status, &token_vec);
 }
 
 #[test]
 fn test_sovereign_prefix_has_prefix() {
     let mut state = EnshrineTestState::new();
     let token_vec = Vec::from([PREFIX_NFT_TOKEN_ID, CROWD_TOKEN_ID]);
+    let error_status = Option::Some(ErrorStatus {
+        code: 4,
+        error_message: "Operation is not registered",
+    });
 
     state.propose_setup_contracts(false);
     state.propose_register_operation(&token_vec);
-    state.propose_execute_operation(None, &token_vec);
+    state.propose_execute_operation(error_status, &token_vec);
 }
 
 #[test]

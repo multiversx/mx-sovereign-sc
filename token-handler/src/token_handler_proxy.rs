@@ -43,16 +43,12 @@ where
     From: TxFrom<Env>,
     Gas: TxGas<Env>,
 {
-    pub fn init<
-        Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
-    >(
+    pub fn init(
         self,
-        chain_prefix: Arg0,
     ) -> TxTypedDeploy<Env, From, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_deploy()
-            .argument(&chain_prefix)
             .original_result()
     }
 }
@@ -113,19 +109,6 @@ where
             .argument(&opt_transfer_data)
             .argument(&to)
             .argument(&tokens)
-            .original_result()
-    }
-
-    pub fn burn_tokens<
-        Arg0: ProxyArg<transaction::Operation<Env::Api>>,
-    >(
-        self,
-        operation: Arg0,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("burnTokens")
-            .argument(&operation)
             .original_result()
     }
 

@@ -3,24 +3,19 @@
 #[allow(unused_imports)]
 use multiversx_sc::imports::*;
 
-pub mod burn_tokens;
-pub mod common;
-pub mod mint_tokens;
+pub mod storage;
 pub mod token_handler_proxy;
+pub mod transfer_tokens;
 
 #[multiversx_sc::contract]
 pub trait TokenHandler:
-    mint_tokens::TransferTokensModule
-    + burn_tokens::BurnTokensModule
+    transfer_tokens::TransferTokensModule
     + utils::UtilsModule
-    + common::storage::CommonStorage
+    + storage::CommonStorage
     + tx_batch_module::TxBatchModule
-    + common::events::EventsModule
 {
     #[init]
-    fn init(&self, chain_prefix: ManagedBuffer) {
-        self.sov_prefix().set(chain_prefix);
-    }
+    fn init(&self) {}
 
     #[upgrade]
     fn upgrade(&self) {}
