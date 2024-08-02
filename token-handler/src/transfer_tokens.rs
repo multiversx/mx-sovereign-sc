@@ -100,13 +100,7 @@ pub trait TransferTokensModule:
                 );
             }
 
-            let esdt_token_payment = EsdtTokenPayment::new(
-                operation_token.token_identifier,
-                operation_token.token_nonce,
-                operation_token.token_data.amount,
-            );
-
-            output_payments.push(esdt_token_payment);
+            output_payments.push(operation_token.into());
         }
 
         output_payments
