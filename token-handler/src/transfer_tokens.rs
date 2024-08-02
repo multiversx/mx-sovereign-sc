@@ -6,10 +6,14 @@ use multiversx_sc::types::{ManagedVec, TokenIdentifier};
 use multiversx_sc::{codec, err_msg};
 use transaction::{GasLimit, OperationEsdtPayment, StolenFromFrameworkEsdtTokenData, TransferData};
 
+use crate::storage;
+
 const TRANSACTION_GAS: GasLimit = 30_000_000;
 
 #[multiversx_sc::module]
-pub trait TransferTokensModule: utils::UtilsModule + tx_batch_module::TxBatchModule {
+pub trait TransferTokensModule:
+    utils::UtilsModule + tx_batch_module::TxBatchModule + storage::CommonStorage
+{
     // NOTE: will use operation.data.op_sender as well when TransferAndExecuteByUser is implemented
     #[payable("*")]
     #[endpoint(transferTokens)]
@@ -20,6 +24,7 @@ pub trait TransferTokensModule: utils::UtilsModule + tx_batch_module::TxBatchMod
         // original_sender: ManagedAddress,
         tokens: MultiValueEncoded<OperationEsdtPayment<Self::Api>>,
     ) {
+        self.require_caller_to_be_whitelisted();
         let mut output_payments = self.mint_tokens(&tokens.to_vec());
         let call_value_esdt_transfer = self.call_value().all_esdt_transfers();
         output_payments.extend(&call_value_esdt_transfer.clone_value());
