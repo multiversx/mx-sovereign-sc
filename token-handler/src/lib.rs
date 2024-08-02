@@ -3,7 +3,7 @@
 #[allow(unused_imports)]
 use multiversx_sc::imports::*;
 
-pub mod common;
+pub mod storage;
 pub mod token_handler_proxy;
 pub mod transfer_tokens;
 
@@ -11,7 +11,7 @@ pub mod transfer_tokens;
 pub trait TokenHandler:
     transfer_tokens::TransferTokensModule
     + utils::UtilsModule
-    + common::storage::CommonStorage
+    + storage::CommonStorage
     + tx_batch_module::TxBatchModule
 {
     #[init]
