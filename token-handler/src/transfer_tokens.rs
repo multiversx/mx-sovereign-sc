@@ -8,15 +8,8 @@ use transaction::{GasLimit, OperationEsdtPayment, StolenFromFrameworkEsdtTokenDa
 
 const TRANSACTION_GAS: GasLimit = 30_000_000;
 
-use crate::{burn_tokens, common};
-
 #[multiversx_sc::module]
-pub trait TransferTokensModule:
-    utils::UtilsModule
-    + common::storage::CommonStorage
-    + burn_tokens::BurnTokensModule
-    + tx_batch_module::TxBatchModule
-{
+pub trait TransferTokensModule: utils::UtilsModule + tx_batch_module::TxBatchModule {
     // NOTE: will use operation.data.op_sender as well when TransferAndExecuteByUser is implemented
     #[payable("*")]
     #[endpoint(transferTokens)]
