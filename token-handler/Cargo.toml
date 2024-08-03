@@ -24,10 +24,10 @@ path = "../header-verifier/"
 path = "../common/tx-batch-module"
 
 [dependencies.multiversx-sc]
-version = "0.52.0"
+version = "0.52.2"
 
 [dev-dependencies]
 num-bigint = "0.4"
 
 [dev-dependencies.multiversx-sc-scenario]
-version = "0.52.0"
+version = "0.52.2"
