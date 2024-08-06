@@ -8,7 +8,9 @@ pub mod token_handler_proxy;
 pub mod transfer_tokens;
 
 #[multiversx_sc::contract]
-pub trait TokenHandler: transfer_tokens::TransferTokensModule {
+pub trait TokenHandler:
+    transfer_tokens::TransferTokensModule + common_storage::CommonStorage
+{
     #[init]
     fn init(&self) {}
 
