@@ -24,6 +24,7 @@ pub trait TransferTokensModule: common_storage::CommonStorage {
         tokens: MultiValueEncoded<OperationEsdtPayment<Self::Api>>,
     ) {
         self.require_caller_to_be_whitelisted();
+
         let mut output_payments = self.mint_tokens(&tokens.to_vec());
         let call_value_esdt_transfer = self.call_value().all_esdt_transfers();
         output_payments.extend(&call_value_esdt_transfer.clone_value());
