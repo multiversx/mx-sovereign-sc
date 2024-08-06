@@ -2,8 +2,8 @@ use multiversx_sc::types::{
     BigUint, EsdtTokenPayment, ManagedAddress, ManagedBuffer, MultiValueEncoded, TestAddress,
     TestSCAddress, TestTokenIdentifier,
 };
-use multiversx_sc_scenario::ScenarioTxRun;
 use multiversx_sc_scenario::{api::StaticApi, imports::MxscPath, ScenarioWorld};
+use multiversx_sc_scenario::{ExpectError, ScenarioTxRun};
 use token_handler::token_handler_proxy;
 use transaction::{OperationEsdtPayment, StolenFromFrameworkEsdtTokenData, TransferData};
 
@@ -11,6 +11,7 @@ const TOKEN_HANDLER_ADDRESS: TestSCAddress = TestSCAddress::new("token-handler")
 const TOKEN_HANDLER_CODE_PATH: MxscPath = MxscPath::new("output/token-handler.mxsc.json");
 const OWNER_ADDRESS: TestAddress = TestAddress::new("token-handler-owner");
 const USER_ADDRESS: TestAddress = TestAddress::new("user");
+const ENSRHINE_ADDRESS: TestSCAddress = TestSCAddress::new("enshrine");
 
 const NFT_TOKEN_ID: TestTokenIdentifier = TestTokenIdentifier::new("NFT-123456");
 const CROWD_TOKEN_ID: TestTokenIdentifier = TestTokenIdentifier::new("CROWD-123456");
@@ -18,6 +19,11 @@ const FUNGIBLE_TOKEN_ID: TestTokenIdentifier = TestTokenIdentifier::new("FUNG-12
 const _PREFIX_NFT_TOKEN_ID: TestTokenIdentifier = TestTokenIdentifier::new("sov-NFT-123456");
 
 const WEGLD_BALANCE: u128 = 100_000_000_000_000_000;
+
+pub struct ErrorStatus<'a> {
+    code: u64,
+    message: &'a str,
+}
 
 fn world() -> ScenarioWorld {
     let mut blockchain = ScenarioWorld::new();
@@ -95,6 +101,33 @@ impl TokenHandlerTestState {
         }
     }
 
+    fn propose_whitelist_caller(
+        &mut self,
+        caller: TestAddress,
+        enshrine_address: TestSCAddress,
+        error: Option<ErrorStatus>,
+    ) {
+        match error {
+            None => self
+                .world
+                .tx()
+                .to(TOKEN_HANDLER_ADDRESS)
+                .from(caller)
+                .typed(token_handler_proxy::TokenHandlerProxy)
+                .whitelist_enshrine_esdt(enshrine_address)
+                .run(),
+            Some(error_status) => self
+                .world
+                .tx()
+                .to(TOKEN_HANDLER_ADDRESS)
+                .from(caller)
+                .typed(token_handler_proxy::TokenHandlerProxy)
+                .whitelist_enshrine_esdt(enshrine_address)
+                .returns(ExpectError(error_status.code, error_status.message))
+                .run(),
+        }
+    }
+
     fn setup_payments(
         &mut self,
         token_ids: &Vec<TestTokenIdentifier>,
@@ -124,6 +157,26 @@ fn test_deploy() {
 }
 
 #[test]
+fn test_whitelist_ensrhine_esdt_caller_not_owner() {
+    let mut state = TokenHandlerTestState::new();
+    let error = ErrorStatus {
+        code: 4,
+        message: "Endpoint can only be called by owner",
+    };
+
+    state.propose_deploy();
+    state.propose_whitelist_caller(USER_ADDRESS, ENSRHINE_ADDRESS, Some(error));
+}
+
+#[test]
+fn test_whitelist_ensrhine() {
+    let mut state = TokenHandlerTestState::new();
+
+    state.propose_deploy();
+    state.propose_whitelist_caller(OWNER_ADDRESS, ENSRHINE_ADDRESS, None);
+}
+
+#[test]
 fn test_transfer_tokens_no_payment() {
     let mut state = TokenHandlerTestState::new();
     let token_ids = [NFT_TOKEN_ID, FUNGIBLE_TOKEN_ID];
@@ -132,6 +185,8 @@ fn test_transfer_tokens_no_payment() {
     let opt_transfer_data = Option::None;
 
     state.propose_deploy();
+
+    state.propose_whitelist_caller(OWNER_ADDRESS, ENSRHINE_ADDRESS, None);
 
     state.propose_transfer_tokens(
         esdt_payment,
