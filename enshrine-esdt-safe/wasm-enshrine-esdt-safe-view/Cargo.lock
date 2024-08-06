@@ -257,8 +257,10 @@ name = "token-handler"
 version = "0.0.0"
 dependencies = [
  "bls-signature",
+ "header-verifier",
  "multiversx-sc",
  "transaction",
+ "tx-batch-module",
  "utils",
 ]
 
