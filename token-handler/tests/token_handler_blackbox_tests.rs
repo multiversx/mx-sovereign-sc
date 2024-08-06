@@ -10,8 +10,12 @@ use transaction::{OperationEsdtPayment, StolenFromFrameworkEsdtTokenData, Transf
 const TOKEN_HANDLER_ADDRESS: TestSCAddress = TestSCAddress::new("token-handler");
 const TOKEN_HANDLER_CODE_PATH: MxscPath = MxscPath::new("output/token-handler.mxsc.json");
 const OWNER_ADDRESS: TestAddress = TestAddress::new("token-handler-owner");
+
 const USER_ADDRESS: TestAddress = TestAddress::new("user");
-const ENSRHINE_ADDRESS: TestSCAddress = TestSCAddress::new("enshrine");
+
+const DUMMY_ENSRHINE_ADDRESS: TestSCAddress = TestSCAddress::new("enshrine");
+const DUMMY_ENSHRINE_CODE_PATH: MxscPath =
+    MxscPath::new("../enshrine-esdt-safe/output/enshrine-esdt-safe.mxsc.json");
 
 const NFT_TOKEN_ID: TestTokenIdentifier = TestTokenIdentifier::new("NFT-123456");
 const CROWD_TOKEN_ID: TestTokenIdentifier = TestTokenIdentifier::new("CROWD-123456");
@@ -29,6 +33,7 @@ fn world() -> ScenarioWorld {
     let mut blockchain = ScenarioWorld::new();
 
     blockchain.register_contract(TOKEN_HANDLER_CODE_PATH, token_handler::ContractBuilder);
+    blockchain.register_contract(DUMMY_ENSHRINE_CODE_PATH, pair_mock::ContractBuilder);
 
     blockchain
 }
@@ -75,6 +80,7 @@ impl TokenHandlerTestState {
 
     fn propose_transfer_tokens(
         &mut self,
+        caller: TestSCAddress,
         esdt_payment: Option<EsdtTokenPayment<StaticApi>>,
         opt_transfer_data: Option<TransferData<StaticApi>>,
         to: ManagedAddress<StaticApi>,
@@ -84,7 +90,7 @@ impl TokenHandlerTestState {
             Option::Some(payment) => self
                 .world
                 .tx()
-                .from(OWNER_ADDRESS)
+                .from(caller)
                 .to(TOKEN_HANDLER_ADDRESS)
                 .typed(token_handler_proxy::TokenHandlerProxy)
                 .transfer_tokens(opt_transfer_data, to, tokens)
@@ -93,7 +99,7 @@ impl TokenHandlerTestState {
             Option::None => self
                 .world
                 .tx()
-                .from(OWNER_ADDRESS)
+                .from(caller)
                 .to(TOKEN_HANDLER_ADDRESS)
                 .typed(token_handler_proxy::TokenHandlerProxy)
                 .transfer_tokens(opt_transfer_data, to, tokens)
@@ -165,7 +171,7 @@ fn test_whitelist_ensrhine_esdt_caller_not_owner() {
     };
 
     state.propose_deploy();
-    state.propose_whitelist_caller(USER_ADDRESS, ENSRHINE_ADDRESS, Some(error));
+    state.propose_whitelist_caller(USER_ADDRESS, DUMMY_ENSRHINE_ADDRESS, Some(error));
 }
 
 #[test]
@@ -173,7 +179,7 @@ fn test_whitelist_ensrhine() {
     let mut state = TokenHandlerTestState::new();
 
     state.propose_deploy();
-    state.propose_whitelist_caller(OWNER_ADDRESS, ENSRHINE_ADDRESS, None);
+    state.propose_whitelist_caller(OWNER_ADDRESS, DUMMY_ENSRHINE_ADDRESS, None);
 }
 
 #[test]
@@ -186,9 +192,10 @@ fn test_transfer_tokens_no_payment() {
 
     state.propose_deploy();
 
-    state.propose_whitelist_caller(OWNER_ADDRESS, ENSRHINE_ADDRESS, None);
+    state.propose_whitelist_caller(OWNER_ADDRESS, DUMMY_ENSRHINE_ADDRESS, None);
 
     state.propose_transfer_tokens(
+        DUMMY_ENSRHINE_ADDRESS,
         esdt_payment,
         opt_transfer_data,
         USER_ADDRESS.to_managed_address(),
@@ -216,6 +223,7 @@ fn test_transfer_tokens_fungible_payment() {
     state.propose_deploy();
 
     state.propose_transfer_tokens(
+        DUMMY_ENSRHINE_ADDRESS,
         esdt_payment,
         opt_transfer_data,
         USER_ADDRESS.to_managed_address(),
