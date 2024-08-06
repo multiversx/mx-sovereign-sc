@@ -1,6 +1,7 @@
 use bls_signature::BlsSignature;
 use enshrine_esdt_safe::enshrine_esdt_safe_proxy;
 use header_verifier::header_verifier_proxy;
+use multiversx_sc::api::StaticVarApi;
 use multiversx_sc::codec::TopEncode;
 use multiversx_sc::types::{
     Address, BigUint, EsdtTokenPayment, ManagedBuffer, ManagedByteArray, ManagedVec,
@@ -193,7 +194,7 @@ impl EnshrineTestState {
     ) {
         let (tokens, data) = self.setup_payments(tokens);
         let to = managed_address!(&Address::from(&RECEIVER_ADDRESS.eval_to_array()));
-        let operation = Operation { to, tokens, data };
+        let operation = Operation::new(to, tokens, data);
         let operation_hash = self.get_operation_hash(&operation);
         let hash_of_hashes: ManagedBuffer<StaticApi> =
             ManagedBuffer::from(&sha256(&operation_hash.to_vec()));
@@ -225,7 +226,7 @@ impl EnshrineTestState {
     fn propose_register_operation(&mut self, tokens: &Vec<TestTokenIdentifier>) {
         let (tokens, data) = self.setup_payments(tokens);
         let to = managed_address!(&Address::from(RECEIVER_ADDRESS.eval_to_array()));
-        let operation = Operation { to, tokens, data };
+        let operation = Operation::new(to, tokens, data);
         let operation_hash = self.get_operation_hash(&operation);
         let mut operations_hashes = MultiValueEncoded::new();
 
@@ -305,21 +306,17 @@ impl EnshrineTestState {
         let mut tokens: ManagedVec<StaticApi, OperationEsdtPayment<StaticApi>> = ManagedVec::new();
 
         for token_id in token_ids {
-            let payment: OperationEsdtPayment<StaticApi> = OperationEsdtPayment {
-                token_identifier: token_id.clone().into(),
-                token_nonce: 1,
-                token_data: StolenFromFrameworkEsdtTokenData::default(),
-            };
+            let payment: OperationEsdtPayment<StaticApi> = OperationEsdtPayment::new(
+                token_id.clone().into(),
+                1,
+                StolenFromFrameworkEsdtTokenData::default(),
+            );
 
             tokens.push(payment);
         }
 
         let op_sender = managed_address!(&Address::from(&USER_ADDRESS.eval_to_array()));
-        let data: OperationData<StaticApi> = OperationData {
-            op_nonce: 1,
-            op_sender,
-            opt_transfer_data: Option::None,
-        };
+        let data: OperationData<StaticApi> = OperationData::new(1, op_sender, Option::None);
 
         (tokens, data)
     }
