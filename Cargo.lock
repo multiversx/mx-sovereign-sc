@@ -1067,7 +1067,6 @@ dependencies = [
  "multiversx-sc-scenario",
  "num-bigint",
  "transaction",
- "utils",
 ]
 
 [[package]]

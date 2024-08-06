@@ -8,9 +8,6 @@ publish = false
 [lib]
 path = "src/lib.rs"
 
-[dependencies.utils]
-path = "../common/utils"
-
 [dependencies.transaction]
 path = "../common/transaction"
 
