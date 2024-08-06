@@ -1,7 +1,6 @@
 use bls_signature::BlsSignature;
 use enshrine_esdt_safe::enshrine_esdt_safe_proxy;
 use header_verifier::header_verifier_proxy;
-use multiversx_sc::api::StaticVarApi;
 use multiversx_sc::codec::TopEncode;
 use multiversx_sc::types::{
     Address, BigUint, EsdtTokenPayment, ManagedBuffer, ManagedByteArray, ManagedVec,
@@ -166,7 +165,7 @@ impl EnshrineTestState {
             .tx()
             .from(ENSHRINE_ESDT_OWNER_ADDRESS)
             .typed(token_handler_proxy::TokenHandlerProxy)
-            .init(SOVEREIGN_TOKEN_PREFIX)
+            .init()
             .code(TOKEN_HANDLER_CODE_PATH)
             .new_address(TOKEN_HANDLER_ADDRESS)
             .run();
