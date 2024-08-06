@@ -181,12 +181,9 @@ dependencies = [
 name = "token-handler"
 version = "0.0.0"
 dependencies = [
- "bls-signature",
  "header-verifier",
  "multiversx-sc",
  "transaction",
- "tx-batch-module",
- "utils",
 ]
 
 [[package]]
@@ -205,14 +202,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "tx-batch-module"
-version = "0.0.0"
-dependencies = [
- "multiversx-sc",
- "transaction",
-]
-
-[[package]]
 name = "unicode-ident"
 version = "1.0.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -223,11 +212,3 @@ name = "unwrap-infallible"
 version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "151ac09978d3c2862c4e39b557f4eceee2cc72150bc4cb4f16abf061b6e381fb"
-
-[[package]]
-name = "utils"
-version = "0.0.0"
-dependencies = [
- "bls-signature",
- "multiversx-sc",
-]

@@ -6,9 +6,9 @@
 
 // Init:                                 1
 // Upgrade:                              1
-// Endpoints:                            9
+// Endpoints:                            1
 // Async Callback (empty):               1
-// Total number of exported functions:  12
+// Total number of exported functions:   4
 
 #![no_std]
 
@@ -21,14 +21,6 @@ multiversx_sc_wasm_adapter::endpoints! {
         init => init
         upgrade => upgrade
         transferTokens => transfer_tokens
-        setMaxTxBatchSize => set_max_tx_batch_size
-        setMaxTxBatchBlockDuration => set_max_tx_batch_block_duration
-        getCurrentTxBatch => get_current_tx_batch
-        getFirstBatchAnyStatus => get_first_batch_any_status
-        getBatch => get_batch
-        getBatchStatus => get_batch_status
-        getFirstBatchId => first_batch_id
-        getLastBatchId => last_batch_id
     )
 }
 
