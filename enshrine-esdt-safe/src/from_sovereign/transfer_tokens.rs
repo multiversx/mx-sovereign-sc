@@ -41,7 +41,7 @@ pub trait TransferTokensModule:
         if !are_tokens_registered {
             self.emit_transfer_failed_events(
                 &hash_of_hashes,
-                &OperationTuple { op_hash, operation },
+                &OperationTuple::new(op_hash, operation),
             );
 
             return;
@@ -144,11 +144,7 @@ pub trait TransferTokensModule:
         self.deposit_event(
             &operation_tuple.operation.data.op_sender,
             &operation_tuple.operation.get_tokens_as_tuple_arr(),
-            OperationData {
-                op_nonce: tx_nonce,
-                op_sender: sc_address.clone(),
-                opt_transfer_data: None,
-            },
+            OperationData::new(tx_nonce, sc_address.clone(), None),
         );
     }
 
