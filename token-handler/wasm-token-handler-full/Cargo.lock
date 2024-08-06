@@ -106,6 +106,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "multiversx-sc-modules"
+version = "0.52.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "795f323df153249e27a84b13234625cb76122188e024d320e8882bef469ab51b"
+dependencies = [
+ "multiversx-sc",
+]
+
+[[package]]
 name = "multiversx-sc-wasm-adapter"
 version = "0.52.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -183,6 +192,7 @@ version = "0.0.0"
 dependencies = [
  "header-verifier",
  "multiversx-sc",
+ "multiversx-sc-modules",
  "transaction",
 ]
 

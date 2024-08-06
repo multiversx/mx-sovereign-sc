@@ -1064,6 +1064,7 @@ version = "0.0.0"
 dependencies = [
  "header-verifier",
  "multiversx-sc",
+ "multiversx-sc-modules",
  "multiversx-sc-scenario",
  "num-bigint",
  "transaction",
