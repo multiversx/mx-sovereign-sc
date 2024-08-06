@@ -1,15 +1,15 @@
 use multiversx_sc::api::{ESDT_MULTI_TRANSFER_FUNC_NAME, ESDT_NFT_CREATE_FUNC_NAME};
+use multiversx_sc::codec;
 use multiversx_sc::types::{
     system_proxy, EsdtTokenPayment, ManagedArgBuffer, MultiValueEncoded, ToSelf,
 };
 use multiversx_sc::types::{ManagedVec, TokenIdentifier};
-use multiversx_sc::{codec, err_msg};
 use transaction::{GasLimit, OperationEsdtPayment, StolenFromFrameworkEsdtTokenData, TransferData};
 
 const TRANSACTION_GAS: GasLimit = 30_000_000;
 
 #[multiversx_sc::module]
-pub trait TransferTokensModule: utils::UtilsModule + tx_batch_module::TxBatchModule {
+pub trait TransferTokensModule {
     // NOTE: will use operation.data.op_sender as well when TransferAndExecuteByUser is implemented
     #[payable("*")]
     #[endpoint(transferTokens)]

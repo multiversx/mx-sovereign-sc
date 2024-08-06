@@ -7,9 +7,7 @@ pub mod token_handler_proxy;
 pub mod transfer_tokens;
 
 #[multiversx_sc::contract]
-pub trait TokenHandler:
-    transfer_tokens::TransferTokensModule + utils::UtilsModule + tx_batch_module::TxBatchModule
-{
+pub trait TokenHandler: transfer_tokens::TransferTokensModule {
     #[init]
     fn init(&self) {}
 
