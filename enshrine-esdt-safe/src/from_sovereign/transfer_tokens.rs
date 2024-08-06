@@ -57,6 +57,7 @@ pub trait TransferTokensModule:
             .transfer_tokens(
                 operation.data.opt_transfer_data,
                 operation.to,
+                // operation.data.opt_sender
                 multi_value_tokens,
             )
             .multi_esdt(sov_tokens)
