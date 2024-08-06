@@ -12,14 +12,7 @@ pub trait TokenHandler:
     transfer_tokens::TransferTokensModule + common_storage::CommonStorage
 {
     #[init]
-    fn init(&self, factory_sc_address: ManagedAddress) {
-        require!(
-            self.blockchain().is_smart_contract(&factory_sc_address),
-            "The caller must be a SC"
-        );
-
-        self.factory_sc_address().set(&factory_sc_address);
-    }
+    fn init(&self) {}
 
     #[upgrade]
     fn upgrade(&self) {}

@@ -6,9 +6,6 @@ use multiversx_sc::{
 
 #[multiversx_sc::module]
 pub trait CommonStorage {
-    #[storage_mapper("factoryScAddress")]
-    fn factory_sc_address(&self) -> SingleValueMapper<ManagedAddress>;
-
     #[storage_mapper]
     fn sov_prefix(&self) -> SingleValueMapper<ManagedBuffer>;
 
