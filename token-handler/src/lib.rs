@@ -4,6 +4,7 @@
 use multiversx_sc::imports::*;
 
 pub mod common_storage;
+pub mod dummy_enshrine_proxy;
 pub mod token_handler_proxy;
 pub mod transfer_tokens;
 

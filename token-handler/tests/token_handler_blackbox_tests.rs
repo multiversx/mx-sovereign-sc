@@ -4,7 +4,7 @@ use multiversx_sc::types::{
 };
 use multiversx_sc_scenario::{api::StaticApi, imports::MxscPath, ScenarioWorld};
 use multiversx_sc_scenario::{ExpectError, ScenarioTxRun};
-use token_handler::token_handler_proxy;
+use token_handler::{dummy_enshrine_proxy, token_handler_proxy};
 use transaction::{OperationEsdtPayment, StolenFromFrameworkEsdtTokenData, TransferData};
 
 const TOKEN_HANDLER_ADDRESS: TestSCAddress = TestSCAddress::new("token-handler");
@@ -14,8 +14,7 @@ const OWNER_ADDRESS: TestAddress = TestAddress::new("token-handler-owner");
 const USER_ADDRESS: TestAddress = TestAddress::new("user");
 
 const DUMMY_ENSRHINE_ADDRESS: TestSCAddress = TestSCAddress::new("enshrine");
-const DUMMY_ENSHRINE_CODE_PATH: MxscPath =
-    MxscPath::new("../enshrine-esdt-safe/output/enshrine-esdt-safe.mxsc.json");
+const DUMMY_ENSHRINE_CODE_PATH: MxscPath = MxscPath::new("../pair-mock/output/pair-mock.mxsc.json");
 
 const NFT_TOKEN_ID: TestTokenIdentifier = TestTokenIdentifier::new("NFT-123456");
 const CROWD_TOKEN_ID: TestTokenIdentifier = TestTokenIdentifier::new("CROWD-123456");
@@ -65,7 +64,7 @@ impl TokenHandlerTestState {
         Self { world }
     }
 
-    fn propose_deploy(&mut self) -> &mut Self {
+    fn propose_deploy_token_handler(&mut self) -> &mut Self {
         self.world
             .tx()
             .from(OWNER_ADDRESS)
@@ -73,6 +72,19 @@ impl TokenHandlerTestState {
             .init()
             .code(TOKEN_HANDLER_CODE_PATH)
             .new_address(TOKEN_HANDLER_ADDRESS)
+            .run();
+
+        self
+    }
+
+    fn propose_deploy_dummy_enshrine(&mut self) -> &mut Self {
+        self.world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .typed(dummy_enshrine_proxy::PairMockProxy)
+            .init(NFT_TOKEN_ID)
+            .code(DUMMY_ENSHRINE_CODE_PATH)
+            .new_address(DUMMY_ENSRHINE_ADDRESS)
             .run();
 
         self
@@ -159,7 +171,8 @@ impl TokenHandlerTestState {
 fn test_deploy() {
     let mut state = TokenHandlerTestState::new();
 
-    state.propose_deploy();
+    state.propose_deploy_token_handler();
+    state.propose_deploy_dummy_enshrine();
 }
 
 #[test]
@@ -170,7 +183,7 @@ fn test_whitelist_ensrhine_esdt_caller_not_owner() {
         message: "Endpoint can only be called by owner",
     };
 
-    state.propose_deploy();
+    state.propose_deploy_token_handler();
     state.propose_whitelist_caller(USER_ADDRESS, DUMMY_ENSRHINE_ADDRESS, Some(error));
 }
 
@@ -178,7 +191,7 @@ fn test_whitelist_ensrhine_esdt_caller_not_owner() {
 fn test_whitelist_ensrhine() {
     let mut state = TokenHandlerTestState::new();
 
-    state.propose_deploy();
+    state.propose_deploy_token_handler();
     state.propose_whitelist_caller(OWNER_ADDRESS, DUMMY_ENSRHINE_ADDRESS, None);
 }
 
@@ -190,7 +203,15 @@ fn test_transfer_tokens_no_payment() {
     let esdt_payment = Option::None;
     let opt_transfer_data = Option::None;
 
-    state.propose_deploy();
+    state.propose_deploy_token_handler();
+    state.propose_deploy_dummy_enshrine();
+
+    state
+        .world
+        .set_esdt_balance(DUMMY_ENSRHINE_ADDRESS, b"NFT_TOKEN_ID", 100);
+    state
+        .world
+        .set_esdt_balance(DUMMY_ENSRHINE_ADDRESS, b"FUNGIBLE_TOKEN_ID", 100);
 
     state.propose_whitelist_caller(OWNER_ADDRESS, DUMMY_ENSRHINE_ADDRESS, None);
 
@@ -220,7 +241,15 @@ fn test_transfer_tokens_fungible_payment() {
     });
     let opt_transfer_data = Option::None;
 
-    state.propose_deploy();
+    state.propose_deploy_token_handler();
+    state.propose_deploy_dummy_enshrine();
+
+    state
+        .world
+        .set_esdt_balance(DUMMY_ENSRHINE_ADDRESS, b"NFT_TOKEN_ID", 100);
+    state
+        .world
+        .set_esdt_balance(DUMMY_ENSRHINE_ADDRESS, b"FUNGIBLE_TOKEN_ID", 200);
 
     state.propose_transfer_tokens(
         DUMMY_ENSRHINE_ADDRESS,
