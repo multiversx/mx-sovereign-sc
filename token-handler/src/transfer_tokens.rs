@@ -6,14 +6,12 @@ use multiversx_sc::types::{ManagedVec, TokenIdentifier};
 use multiversx_sc::{codec, err_msg};
 use transaction::{GasLimit, OperationEsdtPayment, StolenFromFrameworkEsdtTokenData, TransferData};
 
-use crate::storage;
+use crate::common_storage;
 
 const TRANSACTION_GAS: GasLimit = 30_000_000;
 
 #[multiversx_sc::module]
-pub trait TransferTokensModule:
-    utils::UtilsModule + tx_batch_module::TxBatchModule + storage::CommonStorage
-{
+pub trait TransferTokensModule: utils::UtilsModule + common_storage::CommonStorage {
     // NOTE: will use operation.data.op_sender as well when TransferAndExecuteByUser is implemented
     #[payable("*")]
     #[endpoint(transferTokens)]
