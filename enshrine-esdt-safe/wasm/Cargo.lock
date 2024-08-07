@@ -261,7 +261,6 @@ dependencies = [
  "chain-factory",
  "header-verifier",
  "multiversx-sc",
- "pair-mock",
  "transaction",
 ]
 
