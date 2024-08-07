@@ -7,6 +7,6 @@ publish = false
 [dependencies.enshrine-esdt-safe]
 path = ".."
 
-[dependencies.multiversx-sc-meta]
-version = "0.50.4"
+[dependencies.multiversx-sc-meta-lib]
+version = "0.52.3"
 default-features = false
