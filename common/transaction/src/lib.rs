@@ -129,20 +129,6 @@ impl<M: ManagedTypeApi> OperationEsdtPayment<M> {
     }
 }
 
-impl<M: ManagedTypeApi> OperationEsdtPayment<M> {
-    pub fn new(
-        token_identifier: TokenIdentifier<M>,
-        token_nonce: u64,
-        token_data: StolenFromFrameworkEsdtTokenData<M>,
-    ) -> Self {
-        OperationEsdtPayment {
-            token_identifier,
-            token_nonce,
-            token_data,
-        }
-    }
-}
-
 impl<M: ManagedTypeApi> From<EsdtTokenPayment<M>> for OperationEsdtPayment<M> {
     #[inline]
     fn from(payment: EsdtTokenPayment<M>) -> Self {
