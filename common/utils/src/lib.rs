@@ -65,7 +65,7 @@ pub trait UtilsModule {
     //
     //     list
     // }
-    //
+
     fn has_prefix(&self, token_id: &TokenIdentifier) -> bool {
         let buffer = token_id.as_managed_buffer();
         let mut array_buffer = [0u8; MAX_TOKEN_ID_LEN];

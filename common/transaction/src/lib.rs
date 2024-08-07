@@ -22,7 +22,7 @@ pub type TxAsMultiValue<M> = MultiValue7<
     SenderAddress<M>,
     ReceiverAddress<M>,
     ManagedVec<M, EsdtTokenPayment<M>>,
-    ManagedVec<M, StolenFromFrameworkEsdtTokenData<M>>,
+    ManagedVec<M, EsdtTokenData<M>>,
     Option<TransferData<M>>,
 >;
 pub type PaymentsVec<M> = ManagedVec<M, EsdtTokenPayment<M>>;
@@ -36,6 +36,7 @@ pub struct Operation<M: ManagedTypeApi> {
 }
 
 impl<M: ManagedTypeApi> Operation<M> {
+    #[inline]
     pub fn new(
         to: ManagedAddress<M>,
         tokens: ManagedVec<M, OperationEsdtPayment<M>>,
@@ -44,20 +45,23 @@ impl<M: ManagedTypeApi> Operation<M> {
         Operation { to, tokens, data }
     }
 
-    pub fn get_tokens_as_tuple_arr(
+    pub fn get_tokens_as_multi_value_encoded(
         &self,
     ) -> MultiValueEncoded<M, MultiValue3<TokenIdentifier<M>, u64, EsdtTokenData<M>>> {
-        let mut tuple_arr = MultiValueEncoded::new();
+        let mut tuples = MultiValueEncoded::new();
 
         for token in &self.tokens {
-            tuple_arr.push(MultiValue3::from((
-                token.token_identifier,
-                token.token_nonce,
-                token.token_data.into(),
-            )));
+            tuples.push(
+                (
+                    token.token_identifier,
+                    token.token_nonce,
+                    token.token_data.into(),
+                )
+                    .into(),
+            );
         }
 
-        tuple_arr
+        tuples
     }
 }
 
@@ -76,6 +80,7 @@ pub struct OperationData<M: ManagedTypeApi> {
 }
 
 impl<M: ManagedTypeApi> OperationData<M> {
+    #[inline]
     pub fn new(
         op_nonce: TxId,
         op_sender: ManagedAddress<M>,
@@ -96,6 +101,7 @@ pub struct OperationTuple<M: ManagedTypeApi> {
 }
 
 impl<M: ManagedTypeApi> OperationTuple<M> {
+    #[inline]
     pub fn new(op_hash: ManagedBuffer<M>, operation: Operation<M>) -> Self {
         OperationTuple { op_hash, operation }
     }
@@ -105,16 +111,33 @@ impl<M: ManagedTypeApi> OperationTuple<M> {
 pub struct OperationEsdtPayment<M: ManagedTypeApi> {
     pub token_identifier: TokenIdentifier<M>,
     pub token_nonce: u64,
-    pub token_data: StolenFromFrameworkEsdtTokenData<M>,
+    pub token_data: EsdtTokenData<M>,
+}
+
+impl<M: ManagedTypeApi> OperationEsdtPayment<M> {
+    #[inline]
+    pub fn new(
+        token_identifier: TokenIdentifier<M>,
+        token_nonce: u64,
+        token_data: EsdtTokenData<M>,
+    ) -> Self {
+        Self {
+            token_identifier,
+            token_nonce,
+            token_data,
+        }
+    }
 }
 
 impl<M: ManagedTypeApi> From<EsdtTokenPayment<M>> for OperationEsdtPayment<M> {
+    #[inline]
     fn from(payment: EsdtTokenPayment<M>) -> Self {
         payment.into()
     }
 }
 
 impl<M: ManagedTypeApi> From<OperationEsdtPayment<M>> for EsdtTokenPayment<M> {
+    #[inline]
     fn from(payment: OperationEsdtPayment<M>) -> Self {
         EsdtTokenPayment {
             token_identifier: payment.token_identifier,
@@ -129,71 +152,7 @@ impl<M: ManagedTypeApi> Default for OperationEsdtPayment<M> {
         OperationEsdtPayment {
             token_identifier: TokenIdentifier::from(ManagedBuffer::new()),
             token_nonce: 0,
-            token_data: StolenFromFrameworkEsdtTokenData::default(),
-        }
-    }
-}
-
-// Temporary until Clone is implemented for EsdtTokenData
-#[derive(
-    TopDecode, TopEncode, NestedDecode, NestedEncode, TypeAbi, Debug, ManagedVecItem, Clone,
-)]
-pub struct StolenFromFrameworkEsdtTokenData<M: ManagedTypeApi> {
-    pub token_type: EsdtTokenType,
-    pub amount: BigUint<M>,
-    pub frozen: bool,
-    pub hash: ManagedBuffer<M>,
-    pub name: ManagedBuffer<M>,
-    pub attributes: ManagedBuffer<M>,
-    pub creator: ManagedAddress<M>,
-    pub royalties: BigUint<M>,
-    pub uris: ManagedVec<M, ManagedBuffer<M>>,
-}
-
-impl<M: ManagedTypeApi> Default for StolenFromFrameworkEsdtTokenData<M> {
-    fn default() -> Self {
-        StolenFromFrameworkEsdtTokenData {
-            token_type: EsdtTokenType::Fungible,
-            amount: BigUint::zero(),
-            frozen: false,
-            hash: ManagedBuffer::new(),
-            name: ManagedBuffer::new(),
-            attributes: ManagedBuffer::new(),
-            creator: ManagedAddress::zero(),
-            royalties: BigUint::zero(),
-            uris: ManagedVec::new(),
-        }
-    }
-}
-
-impl<M: ManagedTypeApi> From<EsdtTokenData<M>> for StolenFromFrameworkEsdtTokenData<M> {
-    fn from(value: EsdtTokenData<M>) -> Self {
-        StolenFromFrameworkEsdtTokenData {
-            token_type: value.token_type,
-            amount: value.amount,
-            frozen: value.frozen,
-            hash: value.hash,
-            name: value.name,
-            attributes: value.attributes,
-            creator: value.creator,
-            royalties: value.royalties,
-            uris: value.uris,
-        }
-    }
-}
-
-impl<M: ManagedTypeApi> From<StolenFromFrameworkEsdtTokenData<M>> for EsdtTokenData<M> {
-    fn from(token_data: StolenFromFrameworkEsdtTokenData<M>) -> Self {
-        EsdtTokenData {
-            token_type: token_data.token_type,
-            amount: token_data.amount,
-            frozen: token_data.frozen,
-            hash: token_data.hash,
-            name: token_data.name,
-            attributes: token_data.attributes,
-            creator: token_data.creator,
-            royalties: token_data.royalties,
-            uris: token_data.uris,
+            token_data: EsdtTokenData::default(),
         }
     }
 }
@@ -205,7 +164,7 @@ pub struct Transaction<M: ManagedTypeApi> {
     pub from: ManagedAddress<M>,
     pub to: ManagedAddress<M>,
     pub tokens: ManagedVec<M, EsdtTokenPayment<M>>,
-    pub token_data: ManagedVec<M, StolenFromFrameworkEsdtTokenData<M>>,
+    pub token_data: ManagedVec<M, EsdtTokenData<M>>,
     pub opt_transfer_data: Option<TransferData<M>>,
     pub is_refund_tx: bool,
 }

@@ -1,10 +1,9 @@
 use bls_signature::BlsSignature;
 use enshrine_esdt_safe::enshrine_esdt_safe_proxy;
 use header_verifier::header_verifier_proxy;
-use multiversx_sc::api::StaticVarApi;
 use multiversx_sc::codec::TopEncode;
 use multiversx_sc::types::{
-    Address, BigUint, EsdtTokenPayment, ManagedBuffer, ManagedByteArray, ManagedVec,
+    Address, BigUint, EsdtTokenData, EsdtTokenPayment, ManagedBuffer, ManagedByteArray, ManagedVec,
     MultiValueEncoded, TestAddress, TestSCAddress, TestTokenIdentifier, TokenIdentifier,
 };
 use multiversx_sc_scenario::api::StaticApi;
@@ -12,9 +11,7 @@ use multiversx_sc_scenario::multiversx_chain_vm::crypto_functions::sha256;
 use multiversx_sc_scenario::{imports::MxscPath, ScenarioWorld};
 use multiversx_sc_scenario::{managed_address, ExpectError, ScenarioTxRun};
 use token_handler::token_handler_proxy;
-use transaction::{
-    Operation, OperationData, OperationEsdtPayment, StolenFromFrameworkEsdtTokenData,
-};
+use transaction::{Operation, OperationData, OperationEsdtPayment};
 
 const ENSHRINE_ESDT_ADDRESS: TestSCAddress = TestSCAddress::new("enshrine-esdt");
 const ENSHRINE_ESDT_CODE_PATH: MxscPath = MxscPath::new("output/enshrine-esdt-safe.mxsc-json");
@@ -166,7 +163,7 @@ impl EnshrineTestState {
             .tx()
             .from(ENSHRINE_ESDT_OWNER_ADDRESS)
             .typed(token_handler_proxy::TokenHandlerProxy)
-            .init(SOVEREIGN_TOKEN_PREFIX)
+            .init(/* SOVEREIGN_TOKEN_PREFIX */)
             .code(TOKEN_HANDLER_CODE_PATH)
             .new_address(TOKEN_HANDLER_ADDRESS)
             .run();
@@ -306,11 +303,8 @@ impl EnshrineTestState {
         let mut tokens: ManagedVec<StaticApi, OperationEsdtPayment<StaticApi>> = ManagedVec::new();
 
         for token_id in token_ids {
-            let payment: OperationEsdtPayment<StaticApi> = OperationEsdtPayment::new(
-                token_id.clone().into(),
-                1,
-                StolenFromFrameworkEsdtTokenData::default(),
-            );
+            let payment: OperationEsdtPayment<StaticApi> =
+                OperationEsdtPayment::new(token_id.clone().into(), 1, EsdtTokenData::default());
 
             tokens.push(payment);
         }
