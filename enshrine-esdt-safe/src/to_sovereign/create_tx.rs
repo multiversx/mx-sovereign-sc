@@ -121,7 +121,10 @@ pub trait CreateTxModule:
         require!(self.not_paused(), "Cannot create transaction while paused");
 
         let caller = self.blockchain().get_caller();
-        require!(caller == ESDT_SYSTEM_SC_ADDRESS.into(), "Caller is invalid");
+        require!(
+            caller == ManagedAddress::from(ESDT_SYSTEM_SC_ADDRESS),
+            "Caller is invalid"
+        );
 
         let payments = self.call_value().all_esdt_transfers();
 
