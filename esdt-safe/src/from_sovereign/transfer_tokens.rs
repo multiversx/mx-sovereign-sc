@@ -272,7 +272,9 @@ pub trait TransferTokensModule:
 
         self.deposit_event(
             &operation_tuple.operation.data.op_sender,
-            &operation_tuple.operation.get_tokens_as_tuple_arr(),
+            &operation_tuple
+                .operation
+                .get_tokens_as_multi_value_encoded(),
             OperationData {
                 op_nonce: tx_nonce,
                 op_sender: sc_address.clone(),

@@ -5,7 +5,7 @@ use multiversx_sc::types::{
     system_proxy, EsdtTokenPayment, ManagedArgBuffer, MultiValueEncoded, ToSelf,
 };
 use multiversx_sc::types::{ManagedVec, TokenIdentifier};
-use transaction::{GasLimit, OperationEsdtPayment, StolenFromFrameworkEsdtTokenData, TransferData};
+use transaction::{GasLimit, OperationEsdtPayment, TransferData};
 
 use crate::common_storage;
 
@@ -108,7 +108,7 @@ pub trait TransferTokensModule: common_storage::CommonStorage {
         &self,
         token_identifier: &TokenIdentifier<Self::Api>,
         token_nonce: &u64,
-        token_data: &StolenFromFrameworkEsdtTokenData<Self::Api>,
+        token_data: &EsdtTokenData,
     ) -> ManagedArgBuffer<Self::Api> {
         let mut arg_buffer = ManagedArgBuffer::new();
         let cloned_token_data = token_data.clone();
@@ -121,7 +121,6 @@ pub trait TransferTokensModule: common_storage::CommonStorage {
         arg_buffer.push_arg(cloned_token_data.attributes);
 
         let uris = token_data.uris.clone();
-
         if uris.is_empty() {
             // at least one URI is required, so we push an empty one
             arg_buffer.push_arg(codec::Empty);

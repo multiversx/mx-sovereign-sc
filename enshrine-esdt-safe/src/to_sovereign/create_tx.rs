@@ -1,12 +1,9 @@
 use crate::common;
 use fee_market::fee_market_proxy;
-use multiversx_sc::{hex_literal::hex, storage::StorageKey};
 use transaction::{GasLimit, OperationData, TransferData};
 
 use multiversx_sc::imports::*;
 
-pub const ESDT_SYSTEM_SC_ADDRESS: [u8; 32] =
-    hex!("000000000000000000010000000000000000000000000000000000000002ffff");
 const MAX_TRANSFERS_PER_TX: usize = 10;
 
 #[multiversx_sc::module]
@@ -34,18 +31,16 @@ pub trait CreateTxModule:
         require!(self.not_paused(), "Cannot create transaction while paused");
 
         let (fees_payment, payments) = self.check_and_extract_fee().into_tuple();
-
         require!(!payments.is_empty(), "Nothing to transfer");
         require!(payments.len() <= MAX_TRANSFERS_PER_TX, "Too many tokens");
 
+        let mut total_tokens_for_fees = 0usize;
+        let mut event_payments = MultiValueEncoded::new();
+        let mut refundable_payments = ManagedVec::<Self::Api, _>::new();
+
         let opt_transfer_data = self.process_transfer_data(opt_transfer_data);
         let own_sc_address = self.blockchain().get_sc_address();
-        let mut total_tokens_for_fees = 0usize;
-        let mut event_payments: MultiValueEncoded<
-            MultiValue3<TokenIdentifier, u64, EsdtTokenData>,
-        > = MultiValueEncoded::new();
-        let mut refundable_payments: ManagedVec<Self::Api, EsdtTokenPayment<Self::Api>> =
-            ManagedVec::new();
+        let is_sov_chain = self.is_sovereign_chain().get();
 
         for payment in &payments {
             self.require_below_max_amount(&payment.token_identifier, &payment.amount);
@@ -66,10 +61,9 @@ pub trait CreateTxModule:
                 &payment.token_identifier,
                 payment.token_nonce,
             );
-
             current_token_data.amount = payment.amount.clone();
 
-            if self.is_sovereign_chain().get() || self.has_prefix(&payment.token_identifier) {
+            if is_sov_chain || self.has_prefix(&payment.token_identifier) {
                 self.send().esdt_local_burn(
                     &payment.token_identifier,
                     payment.token_nonce,
@@ -77,23 +71,25 @@ pub trait CreateTxModule:
                 );
             }
 
-            event_payments.push(MultiValue3((
-                payment.token_identifier.clone(),
-                payment.token_nonce,
-                current_token_data.clone(),
-            )));
+            event_payments.push(
+                (
+                    payment.token_identifier.clone(),
+                    payment.token_nonce,
+                    current_token_data.clone(),
+                )
+                    .into(),
+            );
         }
-        let caller = self.blockchain().get_caller();
 
         self.match_fee_payment(total_tokens_for_fees, &fees_payment, &opt_transfer_data);
 
         // refund refundable_tokens
+        let caller = self.blockchain().get_caller();
         for payment in &refundable_payments {
             self.send().direct_non_zero_esdt_payment(&caller, &payment);
         }
 
         let tx_nonce = self.get_and_save_next_tx_id();
-
         self.deposit_event(
             &to,
             &event_payments,
@@ -114,13 +110,8 @@ pub trait CreateTxModule:
         require!(payments.len() <= MAX_TRANSFERS_PER_TX, "Too many tokens");
 
         let fee_market_address = self.fee_market_address().get();
-        let fee_enabled_mapper = SingleValueMapper::new_from_address(
-            fee_market_address.clone(),
-            StorageKey::from("feeEnabledFlag"),
-        )
-        .get();
-
-        let opt_transfer_data = if fee_enabled_mapper {
+        let fee_enabled = self.external_fee_enabled(fee_market_address).get();
+        let opt_transfer_data = if fee_enabled {
             OptionalValue::Some(self.pop_first_payment(&mut payments))
         } else {
             OptionalValue::None
@@ -196,4 +187,10 @@ pub trait CreateTxModule:
 
     #[storage_mapper("bannedEndpointNames")]
     fn banned_endpoint_names(&self) -> UnorderedSetMapper<ManagedBuffer>;
+
+    #[storage_mapper_from_address("feeEnabledFlag")]
+    fn external_fee_enabled(
+        &self,
+        sc_address: ManagedAddress,
+    ) -> SingleValueMapper<bool, ManagedAddress>;
 }
