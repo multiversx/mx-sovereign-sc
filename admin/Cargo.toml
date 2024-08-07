@@ -15,10 +15,4 @@ version = "0.52.3"
 num-bigint = "0.4"
 
 [dev-dependencies.multiversx-sc-scenario]
-version = "0.52.3"
-
-[workspace]
-members = [
-    ".",
-    "meta",
-]
+version ="0.52.3"
