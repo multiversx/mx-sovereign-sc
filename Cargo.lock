@@ -758,23 +758,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c08d65885ee38876c4f86fa503fb49d7b507c2b62552df7c70b2fce627e06381"
 
 [[package]]
-name = "pair-mock"
-version = "0.0.0"
-dependencies = [
- "multiversx-sc",
- "multiversx-sc-scenario",
- "num-bigint",
-]
-
-[[package]]
-name = "pair-mock-meta"
-version = "0.0.0"
-dependencies = [
- "multiversx-sc-meta-lib",
- "pair-mock",
-]
-
-[[package]]
 name = "pathdiff"
 version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -892,23 +875,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cf2890aaef0aa82719a50e808de264f9484b74b442e1a3a0e5ee38243ac40bdb"
 dependencies = [
  "rand_core 0.6.4",
-]
-
-[[package]]
-name = "router-mock"
-version = "0.0.0"
-dependencies = [
- "multiversx-sc",
- "multiversx-sc-scenario",
- "num-bigint",
-]
-
-[[package]]
-name = "router-mock-meta"
-version = "0.0.0"
-dependencies = [
- "multiversx-sc-meta-lib",
- "router-mock",
 ]
 
 [[package]]
