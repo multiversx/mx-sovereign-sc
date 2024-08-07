@@ -35,53 +35,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c34f04666d835ff5d62e058c3995147c06f42fe86ff053337632bca83e42702d"
 
 [[package]]
-name = "enshrine-esdt-safe"
-version = "0.0.0"
-dependencies = [
- "bls-signature",
- "fee-market",
- "header-verifier",
- "max-bridged-amount-module",
- "multiversx-sc",
- "multiversx-sc-modules",
- "setup-phase",
- "token-handler",
- "token-whitelist",
- "transaction",
- "tx-batch-module",
- "utils",
-]
-
-[[package]]
-name = "enshrine-esdt-safe-wasm"
-version = "0.0.0"
-dependencies = [
- "enshrine-esdt-safe",
- "multiversx-sc-wasm-adapter",
-]
-
-[[package]]
-name = "fee-market"
-version = "0.0.0"
-dependencies = [
- "bls-signature",
- "multiversx-sc",
- "pair-mock",
- "router-mock",
- "transaction",
- "utils",
-]
-
-[[package]]
-name = "header-verifier"
-version = "0.0.0"
-dependencies = [
- "bls-signature",
- "multiversx-sc",
- "transaction",
-]
-
-[[package]]
 name = "hex"
 version = "0.4.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -94,17 +47,10 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6fe2267d4ed49bc07b63801559be28c718ea06c4738b7a03c94df7386d2cde46"
 
 [[package]]
-name = "max-bridged-amount-module"
-version = "0.0.0"
-dependencies = [
- "multiversx-sc",
-]
-
-[[package]]
 name = "multiversx-sc"
-version = "0.52.2"
+version = "0.52.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "290e945d3d268d2b0b7cc68f3c74844d35eaa06c1b7861a18ded3726bc6e6587"
+checksum = "31bcb4dc736ef975b59878720de1c731788aa1a5a197888606e7d3d6600b1925"
 dependencies = [
  "bitflags",
  "hex-literal",
@@ -139,9 +85,9 @@ dependencies = [
 
 [[package]]
 name = "multiversx-sc-derive"
-version = "0.52.2"
+version = "0.52.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f6363ecf098fa4687ca532d621af1222890ffe97ed333e19b6b206d621c3f9d4"
+checksum = "ae92e4121bad55ffc476028c25722bc01ba989b4953837fb7f4b6be9dba398ed"
 dependencies = [
  "hex",
  "proc-macro2",
@@ -151,19 +97,10 @@ dependencies = [
 ]
 
 [[package]]
-name = "multiversx-sc-modules"
-version = "0.52.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "795f323df153249e27a84b13234625cb76122188e024d320e8882bef469ab51b"
-dependencies = [
- "multiversx-sc",
-]
-
-[[package]]
 name = "multiversx-sc-wasm-adapter"
-version = "0.52.2"
+version = "0.52.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d3a7ef581b703ca0cef3ebc500ee2bf739c4def405ab2490e8b680a039e3408d"
+checksum = "bbb8f0bf218a2e3f02d37c3112fd099bdd72d307e69e97b4773fa8c16bf6ab87"
 dependencies = [
  "multiversx-sc",
 ]
@@ -184,13 +121,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "071dfc062690e90b734c0b2273ce72ad0ffa95f0c74596bc250dcfd960262841"
 dependencies = [
  "autocfg",
-]
-
-[[package]]
-name = "pair-mock"
-version = "0.0.0"
-dependencies = [
- "multiversx-sc",
 ]
 
 [[package]]
@@ -222,20 +152,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "router-mock"
-version = "0.0.0"
-dependencies = [
- "multiversx-sc",
-]
-
-[[package]]
-name = "setup-phase"
-version = "0.0.0"
-dependencies = [
- "multiversx-sc",
-]
-
-[[package]]
 name = "smallvec"
 version = "1.13.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -263,13 +179,11 @@ dependencies = [
 ]
 
 [[package]]
-name = "token-whitelist"
+name = "token-handler-view-wasm"
 version = "0.0.0"
 dependencies = [
- "bls-signature",
- "multiversx-sc",
- "setup-phase",
- "utils",
+ "multiversx-sc-wasm-adapter",
+ "token-handler",
 ]
 
 [[package]]
@@ -277,14 +191,6 @@ name = "transaction"
 version = "0.0.0"
 dependencies = [
  "multiversx-sc",
-]
-
-[[package]]
-name = "tx-batch-module"
-version = "0.0.0"
-dependencies = [
- "multiversx-sc",
- "transaction",
 ]
 
 [[package]]

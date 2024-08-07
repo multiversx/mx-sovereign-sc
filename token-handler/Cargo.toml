@@ -1,0 +1,27 @@
+[package]
+name = "token-handler"
+version = "0.0.0"
+authors = ["you"]
+edition = "2021"
+publish = false
+
+[lib]
+path = "src/lib.rs"
+
+[dependencies.utils]
+path = "../common/utils"
+
+[dependencies.transaction]
+path = "../common/transaction"
+
+[dependencies.bls-signature]
+path = "../common/bls-signature/"
+
+[dependencies.multiversx-sc]
+version = "0.52.0"
+
+[dev-dependencies]
+num-bigint = "0.4"
+
+[dev-dependencies.multiversx-sc-scenario]
+version = "0.52.0"

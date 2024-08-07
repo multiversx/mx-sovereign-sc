@@ -1,4 +1,5 @@
 use multiversx_sc::imports::*;
+use transaction::OperationEsdtPayment;
 
 #[multiversx_sc::module]
 pub trait CommonStorage {
@@ -10,4 +11,10 @@ pub trait CommonStorage {
 
     #[storage_mapper("sovereignTokensPrefix")]
     fn sovereign_tokens_prefix(&self) -> SingleValueMapper<ManagedBuffer>;
+
+    #[storage_mapper("tokenHandlerAddress")]
+    fn token_handler_address(&self) -> SingleValueMapper<ManagedAddress>;
+
+    #[storage_mapper("mintedTokens")]
+    fn minted_tokens(&self) -> VecMapper<OperationEsdtPayment<Self::Api>>;
 }

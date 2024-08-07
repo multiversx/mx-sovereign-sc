@@ -1,4 +1,4 @@
-use crate::{common, to_sovereign};
+use crate::{common, to_sovereign, token_handler_proxy};
 use builtin_func_names::ESDT_NFT_CREATE_FUNC_NAME;
 use header_verifier::header_verifier_proxy;
 use multiversx_sc::imports::*;
@@ -53,18 +53,37 @@ pub trait TransferTokensModule:
 
             return;
         }
+    }
 
-        let minted_operation_tokens = self.mint_tokens(&operation.tokens);
-        let operation_tuple = OperationTuple {
-            op_hash: operation_hash.clone(),
-            operation: operation.clone(),
-        };
+    #[endpoint]
+    fn call_token_handler_mint_endpoint(&self, operation: Operation<Self::Api>) {
+        let token_handler_address = self.token_handler_address().get();
 
-        self.distribute_payments(
-            hash_of_hashes.clone(),
-            operation_tuple,
-            minted_operation_tokens,
-        );
+        self.tx()
+            .to(token_handler_address)
+            .typed(token_handler_proxy::TokenHandlerProxy)
+            .mint_tokens(MultiValueEncoded::from(operation.tokens.clone()))
+            .callback(<Self as TransferTokensModule>::callbacks(self).save_minted_tokens())
+            .async_call_and_exit();
+    }
+
+    #[promises_callback]
+    fn save_minted_tokens(
+        &self,
+        #[call_result] result: ManagedAsyncCallResult<
+            MultiValueEncoded<OperationEsdtPayment<Self::Api>>,
+        >,
+    ) {
+        match result {
+            ManagedAsyncCallResult::Ok(tokens) => {
+                for token in tokens {
+                    self.minted_tokens().push(&token);
+                }
+            }
+            ManagedAsyncCallResult::Err(_) => {
+                sc_panic!("Error at minting tokens");
+            }
+        }
     }
 
     #[endpoint(registerNewTokenID)]
