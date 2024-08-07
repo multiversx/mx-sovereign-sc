@@ -133,13 +133,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "pair-mock"
-version = "0.0.0"
-dependencies = [
- "multiversx-sc",
-]
-
-[[package]]
 name = "proc-macro2"
 version = "1.0.86"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -190,7 +183,6 @@ version = "0.0.0"
 dependencies = [
  "header-verifier",
  "multiversx-sc",
- "pair-mock",
  "transaction",
 ]
 

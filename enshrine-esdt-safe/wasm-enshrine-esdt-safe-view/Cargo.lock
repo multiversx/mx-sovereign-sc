@@ -242,7 +242,6 @@ version = "0.0.0"
 dependencies = [
  "header-verifier",
  "multiversx-sc",
- "pair-mock",
  "transaction",
 ]
 
