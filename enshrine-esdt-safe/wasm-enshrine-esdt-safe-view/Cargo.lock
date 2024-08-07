@@ -66,8 +66,6 @@ version = "0.0.0"
 dependencies = [
  "bls-signature",
  "multiversx-sc",
- "pair-mock",
- "router-mock",
  "transaction",
  "utils",
 ]
@@ -187,13 +185,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "pair-mock"
-version = "0.0.0"
-dependencies = [
- "multiversx-sc",
-]
-
-[[package]]
 name = "proc-macro2"
 version = "1.0.86"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -219,13 +210,6 @@ checksum = "c069c179fcdc6a2fe24d8d18305cf085fdbd4f922c041943e203685d6a1c58fd"
 dependencies = [
  "endian-type",
  "nibble_vec",
-]
-
-[[package]]
-name = "router-mock"
-version = "0.0.0"
-dependencies = [
- "multiversx-sc",
 ]
 
 [[package]]
@@ -258,7 +242,6 @@ version = "0.0.0"
 dependencies = [
  "header-verifier",
  "multiversx-sc",
- "pair-mock",
  "transaction",
 ]
 

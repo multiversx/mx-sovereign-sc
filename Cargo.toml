@@ -1,4 +1,6 @@
 [workspace]
+resolver = "2"
+
 members = [
   "chain-config",
   "chain-config/meta",
@@ -8,10 +10,6 @@ members = [
   "esdt-safe/meta",
   "fee-market",
   "fee-market/meta",
-  "pair-mock",
-  "pair-mock/meta",
-  "router-mock",
-  "router-mock/meta",
   "header-verifier",
   "header-verifier/meta", 
   "enshrine-esdt-safe",
