@@ -198,9 +198,9 @@ fn test_whitelist_ensrhine() {
     state.propose_whitelist_caller(OWNER_ADDRESS, FACTORY_ADDRESS, None);
 }
 
-//TODO:
-// Use byte array instead of TestTokenIdentifier in test
-// and create the TestTokenIndetifiers in helper functions
+// NOTE:
+// This test at the moment is expected to fail since there is no way
+// to give the correct permissions to the TokenHandler SC
 #[test]
 fn test_transfer_tokens_no_payment() {
     let mut state = TokenHandlerTestState::new();
