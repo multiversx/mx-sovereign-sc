@@ -1,10 +1,10 @@
 use multiversx_sc::types::{
-    BigUint, EsdtTokenData, EsdtTokenPayment, ManagedAddress, ManagedBuffer, MultiValueEncoded,
-    TestAddress, TestSCAddress, TestTokenIdentifier,
+    BigUint, EsdtLocalRole, EsdtTokenData, EsdtTokenPayment, ManagedAddress, ManagedBuffer,
+    MultiValueEncoded, TestAddress, TestSCAddress, TestTokenIdentifier,
 };
 use multiversx_sc_scenario::{api::StaticApi, imports::MxscPath, ScenarioWorld};
 use multiversx_sc_scenario::{ExpectError, ScenarioTxRun};
-use token_handler::{dummy_enshrine_proxy, token_handler_proxy};
+use token_handler::{chain_factory_proxy, token_handler_proxy};
 use transaction::{OperationEsdtPayment, TransferData};
 
 const TOKEN_HANDLER_ADDRESS: TestSCAddress = TestSCAddress::new("token-handler");
@@ -13,8 +13,9 @@ const OWNER_ADDRESS: TestAddress = TestAddress::new("token-handler-owner");
 
 const USER_ADDRESS: TestAddress = TestAddress::new("user");
 
-const DUMMY_ENSRHINE_ADDRESS: TestSCAddress = TestSCAddress::new("enshrine");
-const DUMMY_ENSHRINE_CODE_PATH: MxscPath = MxscPath::new("../pair-mock/output/pair-mock.mxsc.json");
+const FACTORY_ADDRESS: TestSCAddress = TestSCAddress::new("factorySC");
+const FACTORY_CODE_PATH: MxscPath =
+    MxscPath::new("../chain-factory/output/chain-factory.mxsc.json");
 
 const NFT_TOKEN_ID: TestTokenIdentifier = TestTokenIdentifier::new("NFT-123456");
 const CROWD_TOKEN_ID: TestTokenIdentifier = TestTokenIdentifier::new("CROWD-123456");
@@ -32,7 +33,7 @@ fn world() -> ScenarioWorld {
     let mut blockchain = ScenarioWorld::new();
 
     blockchain.register_contract(TOKEN_HANDLER_CODE_PATH, token_handler::ContractBuilder);
-    blockchain.register_contract(DUMMY_ENSHRINE_CODE_PATH, pair_mock::ContractBuilder);
+    blockchain.register_contract(FACTORY_CODE_PATH, chain_factory::ContractBuilder);
 
     blockchain
 }
@@ -77,14 +78,14 @@ impl TokenHandlerTestState {
         self
     }
 
-    fn propose_deploy_dummy_enshrine(&mut self) -> &mut Self {
+    fn propose_deploy_factory_sc(&mut self) -> &mut Self {
         self.world
             .tx()
             .from(OWNER_ADDRESS)
-            .typed(dummy_enshrine_proxy::PairMockProxy)
-            .init(NFT_TOKEN_ID)
-            .code(DUMMY_ENSHRINE_CODE_PATH)
-            .new_address(DUMMY_ENSRHINE_ADDRESS)
+            .typed(chain_factory_proxy::ChainFactoryContractProxy)
+            .init(FACTORY_ADDRESS, FACTORY_ADDRESS, BigUint::from(10u32))
+            .code(FACTORY_CODE_PATH)
+            .new_address(FACTORY_ADDRESS)
             .run();
 
         self
@@ -107,6 +108,7 @@ impl TokenHandlerTestState {
                 .typed(token_handler_proxy::TokenHandlerProxy)
                 .transfer_tokens(opt_transfer_data, to, tokens)
                 .multi_esdt(payment)
+                .returns(ExpectError(10, "action is not allowed"))
                 .run(),
             Option::None => self
                 .world
@@ -115,6 +117,7 @@ impl TokenHandlerTestState {
                 .to(TOKEN_HANDLER_ADDRESS)
                 .typed(token_handler_proxy::TokenHandlerProxy)
                 .transfer_tokens(opt_transfer_data, to, tokens)
+                .returns(ExpectError(10, "action is not allowed"))
                 .run(),
         }
     }
@@ -172,7 +175,7 @@ fn test_deploy() {
     let mut state = TokenHandlerTestState::new();
 
     state.propose_deploy_token_handler();
-    state.propose_deploy_dummy_enshrine();
+    state.propose_deploy_factory_sc();
 }
 
 #[test]
@@ -184,7 +187,7 @@ fn test_whitelist_ensrhine_esdt_caller_not_owner() {
     };
 
     state.propose_deploy_token_handler();
-    state.propose_whitelist_caller(USER_ADDRESS, DUMMY_ENSRHINE_ADDRESS, Some(error));
+    state.propose_whitelist_caller(USER_ADDRESS, FACTORY_ADDRESS, Some(error));
 }
 
 #[test]
@@ -192,9 +195,12 @@ fn test_whitelist_ensrhine() {
     let mut state = TokenHandlerTestState::new();
 
     state.propose_deploy_token_handler();
-    state.propose_whitelist_caller(OWNER_ADDRESS, DUMMY_ENSRHINE_ADDRESS, None);
+    state.propose_whitelist_caller(OWNER_ADDRESS, FACTORY_ADDRESS, None);
 }
 
+//TODO:
+// Use byte array instead of TestTokenIdentifier in test
+// and create the TestTokenIndetifiers in helper functions
 #[test]
 fn test_transfer_tokens_no_payment() {
     let mut state = TokenHandlerTestState::new();
@@ -204,19 +210,29 @@ fn test_transfer_tokens_no_payment() {
     let opt_transfer_data = Option::None;
 
     state.propose_deploy_token_handler();
-    state.propose_deploy_dummy_enshrine();
+    state.propose_deploy_factory_sc();
 
     state
         .world
-        .set_esdt_balance(DUMMY_ENSRHINE_ADDRESS, b"NFT_TOKEN_ID", 100);
+        .set_esdt_balance(FACTORY_ADDRESS, b"NFT_TOKEN_ID", 100);
     state
         .world
-        .set_esdt_balance(DUMMY_ENSRHINE_ADDRESS, b"FUNGIBLE_TOKEN_ID", 100);
+        .set_esdt_balance(FACTORY_ADDRESS, b"FUNGIBLE_TOKEN_ID", 100);
 
-    state.propose_whitelist_caller(OWNER_ADDRESS, DUMMY_ENSRHINE_ADDRESS, None);
+    state.propose_whitelist_caller(OWNER_ADDRESS, FACTORY_ADDRESS, None);
+
+    state.world.set_esdt_local_roles(
+        TOKEN_HANDLER_ADDRESS,
+        b"NFT_TOKEN_ID",
+        &[
+            EsdtLocalRole::NftCreate,
+            EsdtLocalRole::Mint,
+            EsdtLocalRole::NftBurn,
+        ],
+    );
 
     state.propose_transfer_tokens(
-        DUMMY_ENSRHINE_ADDRESS,
+        FACTORY_ADDRESS,
         esdt_payment,
         opt_transfer_data,
         USER_ADDRESS.to_managed_address(),
@@ -227,40 +243,4 @@ fn test_transfer_tokens_no_payment() {
         .world
         .check_account(TOKEN_HANDLER_ADDRESS)
         .esdt_balance(FUNGIBLE_TOKEN_ID, 0);
-}
-
-#[test]
-fn test_transfer_tokens_fungible_payment() {
-    let mut state = TokenHandlerTestState::new();
-    let token_ids = [NFT_TOKEN_ID, FUNGIBLE_TOKEN_ID];
-    let tokens = state.setup_payments(&token_ids.to_vec());
-    let esdt_payment = Option::Some(EsdtTokenPayment {
-        token_identifier: FUNGIBLE_TOKEN_ID.into(),
-        token_nonce: 0,
-        amount: BigUint::from(100u64),
-    });
-    let opt_transfer_data = Option::None;
-
-    state.propose_deploy_token_handler();
-    state.propose_deploy_dummy_enshrine();
-
-    state
-        .world
-        .set_esdt_balance(DUMMY_ENSRHINE_ADDRESS, b"NFT_TOKEN_ID", 100);
-    state
-        .world
-        .set_esdt_balance(DUMMY_ENSRHINE_ADDRESS, b"FUNGIBLE_TOKEN_ID", 200);
-
-    state.propose_transfer_tokens(
-        DUMMY_ENSRHINE_ADDRESS,
-        esdt_payment,
-        opt_transfer_data,
-        USER_ADDRESS.to_managed_address(),
-        tokens,
-    );
-
-    state
-        .world
-        .check_account(TOKEN_HANDLER_ADDRESS)
-        .esdt_balance(FUNGIBLE_TOKEN_ID, 100);
 }

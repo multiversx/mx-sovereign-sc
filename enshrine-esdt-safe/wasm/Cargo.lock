@@ -29,6 +29,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "chain-config"
+version = "0.0.0"
+dependencies = [
+ "multiversx-sc",
+ "multiversx-sc-modules",
+]
+
+[[package]]
+name = "chain-factory"
+version = "0.0.0"
+dependencies = [
+ "bls-signature",
+ "chain-config",
+ "multiversx-sc",
+ "utils",
+]
+
+[[package]]
 name = "endian-type"
 version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -256,6 +274,7 @@ dependencies = [
 name = "token-handler"
 version = "0.0.0"
 dependencies = [
+ "chain-factory",
  "header-verifier",
  "multiversx-sc",
  "transaction",
