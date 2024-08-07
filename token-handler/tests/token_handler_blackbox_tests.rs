@@ -1,11 +1,11 @@
 use multiversx_sc::types::{
-    BigUint, EsdtTokenPayment, ManagedAddress, ManagedBuffer, MultiValueEncoded, TestAddress,
-    TestSCAddress, TestTokenIdentifier,
+    BigUint, EsdtTokenData, EsdtTokenPayment, ManagedAddress, ManagedBuffer, MultiValueEncoded,
+    TestAddress, TestSCAddress, TestTokenIdentifier,
 };
 use multiversx_sc_scenario::{api::StaticApi, imports::MxscPath, ScenarioWorld};
 use multiversx_sc_scenario::{ExpectError, ScenarioTxRun};
 use token_handler::{dummy_enshrine_proxy, token_handler_proxy};
-use transaction::{OperationEsdtPayment, StolenFromFrameworkEsdtTokenData, TransferData};
+use transaction::{OperationEsdtPayment, TransferData};
 
 const TOKEN_HANDLER_ADDRESS: TestSCAddress = TestSCAddress::new("token-handler");
 const TOKEN_HANDLER_CODE_PATH: MxscPath = MxscPath::new("output/token-handler.mxsc.json");
@@ -157,7 +157,7 @@ impl TokenHandlerTestState {
             let payment: OperationEsdtPayment<StaticApi> = OperationEsdtPayment {
                 token_identifier: token_id.clone().into(),
                 token_nonce: 1,
-                token_data: StolenFromFrameworkEsdtTokenData::default(),
+                token_data: EsdtTokenData::default(),
             };
 
             tokens.push(payment);
