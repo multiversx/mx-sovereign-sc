@@ -17,9 +17,6 @@ path = "../header-verifier/"
 [dependencies.chain-factory]
 path = "../chain-factory/"
 
-[dependencies.pair-mock]
-path = "../pair-mock/"
-
 [dependencies.multiversx-sc]
 version = "0.52.3"
 
