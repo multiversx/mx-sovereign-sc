@@ -46,22 +46,16 @@ where
     pub fn init<
         Arg0: ProxyArg<ManagedAddress<Env::Api>>,
         Arg1: ProxyArg<ManagedAddress<Env::Api>>,
-        Arg2: ProxyArg<TokenIdentifier<Env::Api>>,
-        Arg3: ProxyArg<TokenIdentifier<Env::Api>>,
     >(
         self,
         esdt_safe_address: Arg0,
         price_aggregator_address: Arg1,
-        usdc_token_id: Arg2,
-        wegld_token_id: Arg3,
     ) -> TxTypedDeploy<Env, From, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_deploy()
             .argument(&esdt_safe_address)
             .argument(&price_aggregator_address)
-            .argument(&usdc_token_id)
-            .argument(&wegld_token_id)
             .original_result()
     }
 }
