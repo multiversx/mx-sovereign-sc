@@ -68,6 +68,7 @@ pub trait SubtractFeeModule:
             });
             percentage_sum += percentage as u64;
         }
+
         require!(
             percentage_sum == TOTAL_PERCENTAGE as u64,
             "Invalid percentage sum"
@@ -80,7 +81,6 @@ pub trait SubtractFeeModule:
             }
 
             let mut remaining_fees = accumulated_fees.clone();
-
             for pair in &pairs {
                 let amount_to_send =
                     &(&accumulated_fees * &BigUint::from(pair.percentage)) / &percentage_total;
@@ -197,7 +197,6 @@ pub trait SubtractFeeModule:
         }
 
         let mut payment = args.payment;
-
         require!(total_fee <= payment.amount, "Payment does not cover fee");
 
         payment.amount -= &total_fee;

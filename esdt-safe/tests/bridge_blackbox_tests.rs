@@ -4,7 +4,8 @@ use fee_market::fee_market_proxy::{self, FeeType};
 use header_verifier::header_verifier_proxy;
 use multiversx_sc::codec::TopEncode;
 use multiversx_sc::types::{
-    Address, ManagedByteArray, MultiValueEncoded, TestTokenIdentifier, TokenIdentifier,
+    Address, EsdtTokenData, ManagedByteArray, MultiValueEncoded, TestTokenIdentifier,
+    TokenIdentifier,
 };
 use multiversx_sc::{
     imports::{MultiValue3, OptionalValue},
@@ -18,9 +19,7 @@ use multiversx_sc_scenario::multiversx_chain_vm::crypto_functions::sha256;
 use multiversx_sc_scenario::{
     api::StaticApi, imports::MxscPath, ExpectError, ScenarioTxRun, ScenarioWorld,
 };
-use transaction::{
-    Operation, OperationData, OperationEsdtPayment, StolenFromFrameworkEsdtTokenData,
-};
+use transaction::{Operation, OperationData, OperationEsdtPayment};
 
 const BRIDGE_ADDRESS: TestSCAddress = TestSCAddress::new("bridge");
 const BRIDGE_CODE_PATH: MxscPath = MxscPath::new("output/esdt-safe.mxsc.json");
@@ -331,7 +330,7 @@ impl BridgeTestState {
             let payment: OperationEsdtPayment<StaticApi> = OperationEsdtPayment {
                 token_identifier: token_id.into(),
                 token_nonce: 1,
-                token_data: StolenFromFrameworkEsdtTokenData::default(),
+                token_data: EsdtTokenData::default(),
             };
 
             tokens.push(payment);
