@@ -1062,6 +1062,7 @@ dependencies = [
 name = "token-handler"
 version = "0.0.0"
 dependencies = [
+ "chain-factory",
  "header-verifier",
  "multiversx-sc",
  "multiversx-sc-scenario",

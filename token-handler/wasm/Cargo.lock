@@ -29,6 +29,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "chain-config"
+version = "0.0.0"
+dependencies = [
+ "multiversx-sc",
+ "multiversx-sc-modules",
+]
+
+[[package]]
+name = "chain-factory"
+version = "0.0.0"
+dependencies = [
+ "bls-signature",
+ "chain-config",
+ "multiversx-sc",
+ "utils",
+]
+
+[[package]]
 name = "endian-type"
 version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -103,6 +121,15 @@ dependencies = [
  "quote",
  "radix_trie",
  "syn",
+]
+
+[[package]]
+name = "multiversx-sc-modules"
+version = "0.52.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "61f5c29c6044f3dc9e866858feee625d7fae5604a68ac7bd66dec683eee97563"
+dependencies = [
+ "multiversx-sc",
 ]
 
 [[package]]
@@ -188,6 +215,7 @@ dependencies = [
 name = "token-handler"
 version = "0.0.0"
 dependencies = [
+ "chain-factory",
  "header-verifier",
  "multiversx-sc",
  "pair-mock",
@@ -220,3 +248,11 @@ name = "unwrap-infallible"
 version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "151ac09978d3c2862c4e39b557f4eceee2cc72150bc4cb4f16abf061b6e381fb"
+
+[[package]]
+name = "utils"
+version = "0.0.0"
+dependencies = [
+ "bls-signature",
+ "multiversx-sc",
+]
