@@ -3,6 +3,22 @@
 version = 3
 
 [[package]]
+name = "admin"
+version = "0.0.0"
+dependencies = [
+ "multiversx-sc",
+ "num-bigint",
+]
+
+[[package]]
+name = "admin-meta"
+version = "0.0.0"
+dependencies = [
+ "admin",
+ "multiversx-sc-meta-lib",
+]
+
+[[package]]
 name = "ahash"
 version = "0.8.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
