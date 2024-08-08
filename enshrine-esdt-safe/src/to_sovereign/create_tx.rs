@@ -30,7 +30,14 @@ pub trait CreateTxModule:
     ) {
         require!(self.not_paused(), "Cannot create transaction while paused");
 
-        let (fees_payment, payments) = self.check_and_extract_fee().into_tuple();
+        let caller = self.blockchain().get_caller();
+        require!(
+            caller == ManagedAddress::from(ESDT_SYSTEM_SC_ADDRESS),
+            "Caller is invalid"
+        );
+
+        let payments = self.call_value().all_esdt_transfers();
+
         require!(!payments.is_empty(), "Nothing to transfer");
         require!(payments.len() <= MAX_TRANSFERS_PER_TX, "Too many tokens");
 
