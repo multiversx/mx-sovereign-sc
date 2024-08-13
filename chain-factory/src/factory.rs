@@ -1,5 +1,7 @@
 use chain_config::StakeMultiArg;
 
+use crate::chain_config_proxy;
+
 multiversx_sc::imports!();
 
 #[multiversx_sc::module]
@@ -22,8 +24,11 @@ pub trait FactoryModule {
         let metadata =
             CodeMetadata::PAYABLE_BY_SC | CodeMetadata::UPGRADEABLE | CodeMetadata::READABLE;
 
-        let (sc_address, _) = self
-            .chain_config_proxy()
+        let chain_config_address = self.chain_config_address().get();
+        self.tx()
+            .from(caller)
+            .to(chain_config_address)
+            .typed(chain_config_proxy::ChainConfigContractProxy)
             .init(
                 min_validators,
                 max_validators,
@@ -31,9 +36,18 @@ pub trait FactoryModule {
                 caller,
                 additional_stake_required,
             )
-            .deploy_from_source::<IgnoreValue>(&source_address, metadata);
-
-        let _ = self.all_deployed_contracts().insert(sc_address);
+        // let (sc_address, _) = self
+        //     .chain_config_proxy()
+        //     .init(
+        //         min_validators,
+        //         max_validators,
+        //         min_stake,
+        //         caller,
+        //         additional_stake_required,
+        //     )
+        //     .deploy_from_source::<IgnoreValue>(&source_address, metadata);
+        //
+        // let _ = self.all_deployed_contracts().insert(sc_address);
     }
 
     #[only_owner]
@@ -41,6 +55,9 @@ pub trait FactoryModule {
     fn blacklist_sovereign_chain_sc(&self, sc_address: ManagedAddress) {
         let _ = self.all_deployed_contracts().swap_remove(&sc_address);
     }
+
+    #[storage_mapper("chainConfigAddress")]
+    fn chain_config_address(&self) -> SingleValueMapper<ManagedAddress>;
 
     #[proxy]
     fn chain_config_proxy(&self) -> chain_config::Proxy<Self::Api>;

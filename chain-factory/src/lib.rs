@@ -2,6 +2,7 @@
 
 multiversx_sc::imports!();
 
+pub mod chain_config_proxy;
 pub mod factory;
 pub mod slash;
 
