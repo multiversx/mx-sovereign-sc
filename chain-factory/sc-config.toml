@@ -17,6 +17,3 @@ add-labels = ["chain-factory-external-view"]
 
 [[proxy]]
 path = "src/chain_factory_proxy.rs"
-
-[[proxy]]
-path = "../chain-config/src/chain_factory_proxy.rs"
