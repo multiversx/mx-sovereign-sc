@@ -1,7 +1,5 @@
 use chain_config::StakeMultiArg;
 
-use crate::chain_config_proxy;
-
 multiversx_sc::imports!();
 
 #[multiversx_sc::module]
@@ -19,35 +17,49 @@ pub trait FactoryModule {
         let deploy_cost = self.deploy_cost().get();
         require!(payment_amount == deploy_cost, "Invalid payment amount");
 
-        let caller = self.blockchain().get_caller();
         let source_address = self.chain_config_template().get();
         let metadata =
             CodeMetadata::PAYABLE_BY_SC | CodeMetadata::UPGRADEABLE | CodeMetadata::READABLE;
 
-        let chain_config_address = self.chain_config_address().get();
-        self.tx()
-            .from(caller)
-            .to(chain_config_address)
-            .typed(chain_config_proxy::ChainConfigContractProxy)
-            .init(
-                min_validators,
-                max_validators,
-                min_stake,
-                caller,
-                additional_stake_required,
-            )
-        // let (sc_address, _) = self
-        //     .chain_config_proxy()
-        //     .init(
-        //         min_validators,
-        //         max_validators,
-        //         min_stake,
-        //         caller,
-        //         additional_stake_required,
-        //     )
-        //     .deploy_from_source::<IgnoreValue>(&source_address, metadata);
-        //
-        // let _ = self.all_deployed_contracts().insert(sc_address);
+        let args = self.format_args_for_deploy(
+            min_validators,
+            max_validators,
+            min_stake,
+            additional_stake_required,
+        );
+
+        let chain_config_address = self
+            .tx()
+            .raw_deploy()
+            .gas(self.blockchain().get_gas_left())
+            .from_source(source_address)
+            .code_metadata(metadata)
+            .arguments_raw(args)
+            .returns(ReturnsNewManagedAddress)
+            .sync_call();
+
+        let _ = self.all_deployed_contracts().insert(chain_config_address);
+    }
+
+    fn format_args_for_deploy(
+        &self,
+        min_validators: usize,
+        max_validators: usize,
+        min_stake: BigUint,
+        additional_stake_required: MultiValueEncoded<StakeMultiArg<Self::Api>>,
+    ) -> ManagedArgBuffer<Self::Api> {
+        let mut args = ManagedArgBuffer::new();
+        args.push_arg(min_validators);
+        args.push_arg(max_validators);
+        args.push_arg(min_stake);
+        for stake_required in additional_stake_required {
+            let (token_identifier, amount) = stake_required.into_tuple();
+
+            args.push_arg(token_identifier);
+            args.push_arg(amount);
+        }
+
+        args
     }
 
     #[only_owner]
