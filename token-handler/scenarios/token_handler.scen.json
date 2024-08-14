@@ -22,8 +22,8 @@
             "id": "deploy",
             "tx": {
                 "from": "address:owner",
-                "contractCode": "mxsc:../output/pair-mock.mxsc.json",
-                "arguments": ["str:usdc"],
+                "contractCode": "mxsc:../output/token-handler.mxsc.json",
+                "arguments": [],
                 "gasLimit": "5,000,000",
                 "gasPrice": "0"
             },

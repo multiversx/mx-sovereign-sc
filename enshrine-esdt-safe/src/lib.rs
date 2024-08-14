@@ -6,6 +6,7 @@ pub mod common;
 pub mod enshrine_esdt_safe_proxy;
 pub mod from_sovereign;
 pub mod to_sovereign;
+pub mod token_handler_proxy;
 
 #[multiversx_sc::contract]
 pub trait EnshrineEsdtSafe:
@@ -27,11 +28,13 @@ pub trait EnshrineEsdtSafe:
     fn init(
         &self,
         is_sovereign_chain: bool,
+        token_handler_address: ManagedAddress,
         opt_wegld_identifier: Option<TokenIdentifier>,
         opt_sov_token_prefix: Option<ManagedBuffer>,
     ) {
         self.is_sovereign_chain().set(is_sovereign_chain);
         self.set_paused(true);
+        self.token_handler_address().set(token_handler_address);
 
         if is_sovereign_chain {
             return;
