@@ -35,6 +35,9 @@ path = "../fee-market"
 [dependencies.header-verifier]
 path = "../header-verifier"
 
+[dependencies.token-handler]
+path = "../token-handler"
+
 [dependencies.multiversx-sc]
 version = "=0.52.3"
 
