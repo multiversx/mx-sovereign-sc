@@ -5,8 +5,6 @@ edition = "2018"
 publish = false
 authors = ["you"]
 
-[dev-dependencies]
-
 [dependencies.chain-config]
 path = ".."
 
