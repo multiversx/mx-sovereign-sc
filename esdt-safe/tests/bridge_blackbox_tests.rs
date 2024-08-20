@@ -270,6 +270,7 @@ impl BridgeTestState {
             .to(BRIDGE_ADDRESS)
             .typed(esdt_safe_proxy::EsdtSafeProxy)
             .execute_operations(hash_of_hashes, operation)
+            .returns(ExpectError(4, "Operation is not registered"))
             .run();
     }
 
