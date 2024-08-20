@@ -59,6 +59,7 @@ pub trait FactoryModule {
         contracts_map: MultiValueEncoded<Self::Api, ContractMapArgs<Self::Api>>,
     ) {
         require!(!contracts_map.is_empty(), "Given contracts map is empty");
+
         let mapped_array: ManagedVec<ManagedBuffer> = SC_ARRAY
             .into_iter()
             .map(|sc| ManagedBuffer::from(*sc))
