@@ -112,6 +112,19 @@ where
             .original_result()
     }
 
+    pub fn add_contracts_to_map<
+        Arg0: ProxyArg<MultiValueEncoded<Env::Api, ContractMapArgs<Env::Api>>>,
+    >(
+        self,
+        contracts_map: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("addContractsToMap")
+            .argument(&contracts_map)
+            .original_result()
+    }
+
     pub fn blacklist_sovereign_chain_sc<
         Arg0: ProxyArg<ManagedAddress<Env::Api>>,
     >(
@@ -122,6 +135,19 @@ where
             .payment(NotPayable)
             .raw_call("blacklistSovereignChainSc")
             .argument(&sc_address)
+            .original_result()
+    }
+
+    pub fn contracts_map<
+        Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
+    >(
+        self,
+        contract_name: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ManagedAddress<Env::Api>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getContractsMap")
+            .argument(&contract_name)
             .original_result()
     }
 
@@ -201,4 +227,14 @@ where
             .argument(&signers)
             .original_result()
     }
+}
+
+#[type_abi]
+#[derive(TopEncode, TopDecode)]
+pub struct ContractMapArgs<Api>
+where
+    Api: ManagedTypeApi,
+{
+    pub name: ManagedBuffer<Api>,
+    pub address: ManagedAddress<Api>,
 }
