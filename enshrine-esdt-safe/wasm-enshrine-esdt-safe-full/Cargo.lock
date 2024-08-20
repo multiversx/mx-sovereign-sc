@@ -29,6 +29,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "chain-config"
+version = "0.0.0"
+dependencies = [
+ "multiversx-sc",
+ "multiversx-sc-modules",
+]
+
+[[package]]
+name = "chain-factory"
+version = "0.0.0"
+dependencies = [
+ "bls-signature",
+ "chain-config",
+ "multiversx-sc",
+ "utils",
+]
+
+[[package]]
 name = "endian-type"
 version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -45,6 +63,7 @@ dependencies = [
  "multiversx-sc",
  "multiversx-sc-modules",
  "setup-phase",
+ "token-handler",
  "token-whitelist",
  "transaction",
  "tx-batch-module",
@@ -65,8 +84,6 @@ version = "0.0.0"
 dependencies = [
  "bls-signature",
  "multiversx-sc",
- "pair-mock",
- "router-mock",
  "transaction",
  "utils",
 ]
@@ -186,13 +203,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "pair-mock"
-version = "0.0.0"
-dependencies = [
- "multiversx-sc",
-]
-
-[[package]]
 name = "proc-macro2"
 version = "1.0.86"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -221,13 +231,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "router-mock"
-version = "0.0.0"
-dependencies = [
- "multiversx-sc",
-]
-
-[[package]]
 name = "setup-phase"
 version = "0.0.0"
 dependencies = [
@@ -249,6 +252,16 @@ dependencies = [
  "proc-macro2",
  "quote",
  "unicode-ident",
+]
+
+[[package]]
+name = "token-handler"
+version = "0.0.0"
+dependencies = [
+ "chain-factory",
+ "header-verifier",
+ "multiversx-sc",
+ "transaction",
 ]
 
 [[package]]

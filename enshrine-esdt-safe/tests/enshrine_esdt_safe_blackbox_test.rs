@@ -3,16 +3,15 @@ use enshrine_esdt_safe::enshrine_esdt_safe_proxy;
 use header_verifier::header_verifier_proxy;
 use multiversx_sc::codec::TopEncode;
 use multiversx_sc::types::{
-    Address, BigUint, EsdtTokenPayment, ManagedBuffer, ManagedByteArray, ManagedVec,
+    Address, BigUint, EsdtTokenData, EsdtTokenPayment, ManagedBuffer, ManagedByteArray, ManagedVec,
     MultiValueEncoded, TestAddress, TestSCAddress, TestTokenIdentifier, TokenIdentifier,
 };
 use multiversx_sc_scenario::api::StaticApi;
 use multiversx_sc_scenario::multiversx_chain_vm::crypto_functions::sha256;
 use multiversx_sc_scenario::{imports::MxscPath, ScenarioWorld};
 use multiversx_sc_scenario::{managed_address, ExpectError, ScenarioTxRun};
-use transaction::{
-    Operation, OperationData, OperationEsdtPayment, StolenFromFrameworkEsdtTokenData,
-};
+use token_handler::token_handler_proxy;
+use transaction::{Operation, OperationData, OperationEsdtPayment};
 
 const ENSHRINE_ESDT_ADDRESS: TestSCAddress = TestSCAddress::new("enshrine-esdt");
 const ENSHRINE_ESDT_CODE_PATH: MxscPath = MxscPath::new("output/enshrine-esdt-safe.mxsc-json");
@@ -25,6 +24,10 @@ const DEFAULT_ISSUE_COST: u64 = 50_000_000_000_000_000;
 const HEADER_VERIFIER_ADDRESS: TestSCAddress = TestSCAddress::new("header_verifier");
 const HEADER_VERIFIER_CODE_PATH: MxscPath =
     MxscPath::new("../header-verifier/output/header-verifier.mxsc.json");
+
+const TOKEN_HANDLER_ADDRESS: TestSCAddress = TestSCAddress::new("token_handler");
+const TOKEN_HANDLER_CODE_PATH: MxscPath =
+    MxscPath::new("../token-handler/output/token-handler.mxsc.json");
 
 const USER_ADDRESS: TestAddress = TestAddress::new("user");
 const INSUFFICIENT_WEGLD_ADDRESS: TestAddress = TestAddress::new("insufficient_wegld");
@@ -49,6 +52,7 @@ fn world() -> ScenarioWorld {
 
     blockchain.register_contract(ENSHRINE_ESDT_CODE_PATH, enshrine_esdt_safe::ContractBuilder);
     blockchain.register_contract(HEADER_VERIFIER_CODE_PATH, header_verifier::ContractBuilder);
+    blockchain.register_contract(TOKEN_HANDLER_CODE_PATH, token_handler::ContractBuilder);
 
     blockchain
 }
@@ -122,7 +126,12 @@ impl EnshrineTestState {
             .tx()
             .from(ENSHRINE_ESDT_OWNER_ADDRESS)
             .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
-            .init(is_sovereign_chain, wegld_identifier, sovereign_token_prefix)
+            .init(
+                is_sovereign_chain,
+                TOKEN_HANDLER_ADDRESS,
+                wegld_identifier,
+                sovereign_token_prefix,
+            )
             .code(ENSHRINE_ESDT_CODE_PATH)
             .new_address(ENSHRINE_ESDT_ADDRESS)
             .run();
@@ -149,6 +158,19 @@ impl EnshrineTestState {
         self
     }
 
+    fn deploy_token_handler_contract(&mut self) -> &mut Self {
+        self.world
+            .tx()
+            .from(ENSHRINE_ESDT_OWNER_ADDRESS)
+            .typed(token_handler_proxy::TokenHandlerProxy)
+            .init()
+            .code(TOKEN_HANDLER_CODE_PATH)
+            .new_address(TOKEN_HANDLER_ADDRESS)
+            .run();
+
+        self
+    }
+
     fn propose_setup_contracts(&mut self, is_sovereign_chain: bool) -> &mut Self {
         self.deploy_enshrine_esdt_contract(
             is_sovereign_chain,
@@ -156,6 +178,7 @@ impl EnshrineTestState {
             Some(SOVEREIGN_TOKEN_PREFIX.into()),
         );
         self.deploy_header_verifier_contract();
+        self.deploy_token_handler_contract();
         self.propose_set_header_verifier_address();
 
         self
@@ -168,7 +191,7 @@ impl EnshrineTestState {
     ) {
         let (tokens, data) = self.setup_payments(tokens);
         let to = managed_address!(&Address::from(&RECEIVER_ADDRESS.eval_to_array()));
-        let operation = Operation { to, tokens, data };
+        let operation = Operation::new(to, tokens, data);
         let operation_hash = self.get_operation_hash(&operation);
         let hash_of_hashes: ManagedBuffer<StaticApi> =
             ManagedBuffer::from(&sha256(&operation_hash.to_vec()));
@@ -200,7 +223,7 @@ impl EnshrineTestState {
     fn propose_register_operation(&mut self, tokens: &Vec<TestTokenIdentifier>) {
         let (tokens, data) = self.setup_payments(tokens);
         let to = managed_address!(&Address::from(RECEIVER_ADDRESS.eval_to_array()));
-        let operation = Operation { to, tokens, data };
+        let operation = Operation::new(to, tokens, data);
         let operation_hash = self.get_operation_hash(&operation);
         let mut operations_hashes = MultiValueEncoded::new();
 
@@ -280,21 +303,14 @@ impl EnshrineTestState {
         let mut tokens: ManagedVec<StaticApi, OperationEsdtPayment<StaticApi>> = ManagedVec::new();
 
         for token_id in token_ids {
-            let payment: OperationEsdtPayment<StaticApi> = OperationEsdtPayment {
-                token_identifier: token_id.clone().into(),
-                token_nonce: 1,
-                token_data: StolenFromFrameworkEsdtTokenData::default(),
-            };
+            let payment: OperationEsdtPayment<StaticApi> =
+                OperationEsdtPayment::new(token_id.clone().into(), 1, EsdtTokenData::default());
 
             tokens.push(payment);
         }
 
         let op_sender = managed_address!(&Address::from(&USER_ADDRESS.eval_to_array()));
-        let data: OperationData<StaticApi> = OperationData {
-            op_nonce: 1,
-            op_sender,
-            opt_transfer_data: Option::None,
-        };
+        let data: OperationData<StaticApi> = OperationData::new(1, op_sender, Option::None);
 
         (tokens, data)
     }
@@ -319,20 +335,28 @@ fn test_deploy() {
 fn test_sovereign_prefix_no_prefix() {
     let mut state = EnshrineTestState::new();
     let token_vec = Vec::from([NFT_TOKEN_ID, CROWD_TOKEN_ID]);
+    let error_status = Option::Some(ErrorStatus {
+        code: 4,
+        error_message: "Operation is not registered",
+    });
 
     state.propose_setup_contracts(false);
     state.propose_register_operation(&token_vec);
-    state.propose_execute_operation(None, &token_vec);
+    state.propose_execute_operation(error_status, &token_vec);
 }
 
 #[test]
 fn test_sovereign_prefix_has_prefix() {
     let mut state = EnshrineTestState::new();
     let token_vec = Vec::from([PREFIX_NFT_TOKEN_ID, CROWD_TOKEN_ID]);
+    let error_status = Option::Some(ErrorStatus {
+        code: 4,
+        error_message: "Operation is not registered",
+    });
 
     state.propose_setup_contracts(false);
     state.propose_register_operation(&token_vec);
-    state.propose_execute_operation(None, &token_vec);
+    state.propose_execute_operation(error_status, &token_vec);
 }
 
 #[test]

@@ -45,18 +45,21 @@ where
 {
     pub fn init<
         Arg0: ProxyArg<bool>,
-        Arg1: ProxyArg<Option<TokenIdentifier<Env::Api>>>,
-        Arg2: ProxyArg<Option<ManagedBuffer<Env::Api>>>,
+        Arg1: ProxyArg<ManagedAddress<Env::Api>>,
+        Arg2: ProxyArg<Option<TokenIdentifier<Env::Api>>>,
+        Arg3: ProxyArg<Option<ManagedBuffer<Env::Api>>>,
     >(
         self,
         is_sovereign_chain: Arg0,
-        opt_wegld_identifier: Arg1,
-        opt_sov_token_prefix: Arg2,
+        token_handler_address: Arg1,
+        opt_wegld_identifier: Arg2,
+        opt_sov_token_prefix: Arg3,
     ) -> TxTypedDeploy<Env, From, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_deploy()
             .argument(&is_sovereign_chain)
+            .argument(&token_handler_address)
             .argument(&opt_wegld_identifier)
             .argument(&opt_sov_token_prefix)
             .original_result()
@@ -227,7 +230,7 @@ where
 
     pub fn get_current_tx_batch(
         self,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, OptionalValue<MultiValue2<u64, MultiValueEncoded<Env::Api, MultiValue7<u64, u64, ManagedAddress<Env::Api>, ManagedAddress<Env::Api>, ManagedVec<Env::Api, EsdtTokenPayment<Env::Api>>, ManagedVec<Env::Api, transaction::StolenFromFrameworkEsdtTokenData<Env::Api>>, Option<transaction::TransferData<Env::Api>>>>>>> {
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, OptionalValue<MultiValue2<u64, MultiValueEncoded<Env::Api, MultiValue7<u64, u64, ManagedAddress<Env::Api>, ManagedAddress<Env::Api>, ManagedVec<Env::Api, EsdtTokenPayment<Env::Api>>, ManagedVec<Env::Api, EsdtTokenData<Env::Api>>, Option<transaction::TransferData<Env::Api>>>>>>> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("getCurrentTxBatch")
@@ -236,7 +239,7 @@ where
 
     pub fn get_first_batch_any_status(
         self,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, OptionalValue<MultiValue2<u64, MultiValueEncoded<Env::Api, MultiValue7<u64, u64, ManagedAddress<Env::Api>, ManagedAddress<Env::Api>, ManagedVec<Env::Api, EsdtTokenPayment<Env::Api>>, ManagedVec<Env::Api, transaction::StolenFromFrameworkEsdtTokenData<Env::Api>>, Option<transaction::TransferData<Env::Api>>>>>>> {
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, OptionalValue<MultiValue2<u64, MultiValueEncoded<Env::Api, MultiValue7<u64, u64, ManagedAddress<Env::Api>, ManagedAddress<Env::Api>, ManagedVec<Env::Api, EsdtTokenPayment<Env::Api>>, ManagedVec<Env::Api, EsdtTokenData<Env::Api>>, Option<transaction::TransferData<Env::Api>>>>>>> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("getFirstBatchAnyStatus")
@@ -248,7 +251,7 @@ where
     >(
         self,
         batch_id: Arg0,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, OptionalValue<MultiValue2<u64, MultiValueEncoded<Env::Api, MultiValue7<u64, u64, ManagedAddress<Env::Api>, ManagedAddress<Env::Api>, ManagedVec<Env::Api, EsdtTokenPayment<Env::Api>>, ManagedVec<Env::Api, transaction::StolenFromFrameworkEsdtTokenData<Env::Api>>, Option<transaction::TransferData<Env::Api>>>>>>> {
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, OptionalValue<MultiValue2<u64, MultiValueEncoded<Env::Api, MultiValue7<u64, u64, ManagedAddress<Env::Api>, ManagedAddress<Env::Api>, ManagedVec<Env::Api, EsdtTokenPayment<Env::Api>>, ManagedVec<Env::Api, EsdtTokenData<Env::Api>>, Option<transaction::TransferData<Env::Api>>>>>>> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("getBatch")
@@ -327,66 +330,54 @@ where
 
     /// Tokens in the whitelist can be transferred without fees 
     pub fn add_tokens_to_whitelist<
-        Arg0: ProxyArg<Option<ManagedByteArray<Env::Api, 48usize>>>,
-        Arg1: ProxyArg<MultiValueEncoded<Env::Api, TokenIdentifier<Env::Api>>>,
+        Arg0: ProxyArg<MultiValueEncoded<Env::Api, TokenIdentifier<Env::Api>>>,
     >(
         self,
-        opt_signature: Arg0,
-        tokens: Arg1,
+        tokens: Arg0,
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("addTokensToWhitelist")
-            .argument(&opt_signature)
             .argument(&tokens)
             .original_result()
     }
 
     pub fn remove_tokens_from_whitelist<
-        Arg0: ProxyArg<Option<ManagedByteArray<Env::Api, 48usize>>>,
-        Arg1: ProxyArg<MultiValueEncoded<Env::Api, TokenIdentifier<Env::Api>>>,
+        Arg0: ProxyArg<MultiValueEncoded<Env::Api, TokenIdentifier<Env::Api>>>,
     >(
         self,
-        opt_signature: Arg0,
-        tokens: Arg1,
+        tokens: Arg0,
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("removeTokensFromWhitelist")
-            .argument(&opt_signature)
             .argument(&tokens)
             .original_result()
     }
 
     /// Tokens in blacklist cannot be transferred 
     pub fn add_tokens_to_blacklist<
-        Arg0: ProxyArg<Option<ManagedByteArray<Env::Api, 48usize>>>,
-        Arg1: ProxyArg<MultiValueEncoded<Env::Api, TokenIdentifier<Env::Api>>>,
+        Arg0: ProxyArg<MultiValueEncoded<Env::Api, TokenIdentifier<Env::Api>>>,
     >(
         self,
-        opt_signature: Arg0,
-        tokens: Arg1,
+        tokens: Arg0,
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("addTokensToBlacklist")
-            .argument(&opt_signature)
             .argument(&tokens)
             .original_result()
     }
 
     pub fn remove_tokens_from_blacklist<
-        Arg0: ProxyArg<Option<ManagedByteArray<Env::Api, 48usize>>>,
-        Arg1: ProxyArg<MultiValueEncoded<Env::Api, TokenIdentifier<Env::Api>>>,
+        Arg0: ProxyArg<MultiValueEncoded<Env::Api, TokenIdentifier<Env::Api>>>,
     >(
         self,
-        opt_signature: Arg0,
-        tokens: Arg1,
+        tokens: Arg0,
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("removeTokensFromBlacklist")
-            .argument(&opt_signature)
             .argument(&tokens)
             .original_result()
     }
