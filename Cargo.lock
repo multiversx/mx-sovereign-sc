@@ -341,6 +341,7 @@ dependencies = [
  "num-bigint",
  "num-traits",
  "setup-phase",
+ "token-handler",
  "token-whitelist",
  "transaction",
  "tx-batch-module",
@@ -398,8 +399,6 @@ dependencies = [
  "multiversx-sc",
  "multiversx-sc-scenario",
  "num-bigint",
- "pair-mock",
- "router-mock",
  "transaction",
  "utils",
 ]
@@ -602,9 +601,9 @@ checksum = "b59072fa0624b55ae5ae3fa6bfa91515bbeb4ac440214bc4a509e2c8806d6e9f"
 
 [[package]]
 name = "multiversx-sc"
-version = "0.52.2"
+version = "0.52.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "290e945d3d268d2b0b7cc68f3c74844d35eaa06c1b7861a18ded3726bc6e6587"
+checksum = "526760b1d6236c011285b264a70a0a9dd3b3dbc53c3b5f76932f4bcfd3a8910c"
 dependencies = [
  "bitflags",
  "hex-literal",
@@ -640,9 +639,9 @@ dependencies = [
 
 [[package]]
 name = "multiversx-sc-derive"
-version = "0.52.2"
+version = "0.52.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f6363ecf098fa4687ca532d621af1222890ffe97ed333e19b6b206d621c3f9d4"
+checksum = "3557f2f12640a8a07fa6af66cc2a13b188c5b61bed72db22fe631fb3a60c3e96"
 dependencies = [
  "hex",
  "proc-macro2",
@@ -653,9 +652,9 @@ dependencies = [
 
 [[package]]
 name = "multiversx-sc-meta-lib"
-version = "0.52.2"
+version = "0.52.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e16b278a68a3ce17064e2eda0f08391b898a9af96c244e214b34e7a7351e65cc"
+checksum = "b8deccfcc760b8fd281e2603268fa1a453ed65e4caac7a51a2d71c40cec37ae3"
 dependencies = [
  "clap",
  "colored",
@@ -674,18 +673,18 @@ dependencies = [
 
 [[package]]
 name = "multiversx-sc-modules"
-version = "0.52.2"
+version = "0.52.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "795f323df153249e27a84b13234625cb76122188e024d320e8882bef469ab51b"
+checksum = "61f5c29c6044f3dc9e866858feee625d7fae5604a68ac7bd66dec683eee97563"
 dependencies = [
  "multiversx-sc",
 ]
 
 [[package]]
 name = "multiversx-sc-scenario"
-version = "0.52.2"
+version = "0.52.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c3ac0a22a23f65c07e43a10c1165f2553dc87bce6cbff06ef4f65dad05cdfc4a"
+checksum = "5d3024d52e2cb7d455f5a560218be8968e446eabc7c31dc9fc479c329f45e05e"
 dependencies = [
  "base64",
  "bech32",
@@ -755,23 +754,6 @@ name = "opaque-debug"
 version = "0.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c08d65885ee38876c4f86fa503fb49d7b507c2b62552df7c70b2fce627e06381"
-
-[[package]]
-name = "pair-mock"
-version = "0.0.0"
-dependencies = [
- "multiversx-sc",
- "multiversx-sc-scenario",
- "num-bigint",
-]
-
-[[package]]
-name = "pair-mock-meta"
-version = "0.0.0"
-dependencies = [
- "multiversx-sc-meta-lib",
- "pair-mock",
-]
 
 [[package]]
 name = "pathdiff"
@@ -891,23 +873,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cf2890aaef0aa82719a50e808de264f9484b74b442e1a3a0e5ee38243ac40bdb"
 dependencies = [
  "rand_core 0.6.4",
-]
-
-[[package]]
-name = "router-mock"
-version = "0.0.0"
-dependencies = [
- "multiversx-sc",
- "multiversx-sc-scenario",
- "num-bigint",
-]
-
-[[package]]
-name = "router-mock-meta"
-version = "0.0.0"
-dependencies = [
- "multiversx-sc-meta-lib",
- "router-mock",
 ]
 
 [[package]]
@@ -1055,6 +1020,26 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "06794f8f6c5c898b3275aebefa6b8a1cb24cd2c6c79397ab15774837a0bc5755"
 dependencies = [
  "winapi-util",
+]
+
+[[package]]
+name = "token-handler"
+version = "0.0.0"
+dependencies = [
+ "chain-factory",
+ "header-verifier",
+ "multiversx-sc",
+ "multiversx-sc-scenario",
+ "num-bigint",
+ "transaction",
+]
+
+[[package]]
+name = "token-handler-meta"
+version = "0.0.0"
+dependencies = [
+ "multiversx-sc-meta-lib",
+ "token-handler",
 ]
 
 [[package]]

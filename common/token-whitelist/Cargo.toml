@@ -14,7 +14,7 @@ path = "../setup-phase"
 path = "../utils"
 
 [dependencies.multiversx-sc]
-version = "=0.52.2"
+version = "=0.52.3"
 
 [dev-dependencies.multiversx-sc-scenario]
-version = "=0.52.2"
+version = "=0.52.3"

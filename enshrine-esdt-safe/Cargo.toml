@@ -35,11 +35,14 @@ path = "../fee-market"
 [dependencies.header-verifier]
 path = "../header-verifier"
 
+[dependencies.token-handler]
+path = "../token-handler"
+
 [dependencies.multiversx-sc]
-version = "=0.52.2"
+version = "=0.52.3"
 
 [dependencies.multiversx-sc-modules]
-version = "=0.52.2"
+version = "=0.52.3"
 
 [dev-dependencies]
 num-bigint = "0.4.2"
@@ -47,4 +50,4 @@ num-traits = "0.2"
 hex = "0.4"
 
 [dev-dependencies.multiversx-sc-scenario]
-version = "=0.52.2"
+version = "=0.52.3"
