@@ -101,9 +101,6 @@ pub trait FactoryModule {
         let _ = self.all_deployed_contracts().swap_remove(&sc_address);
     }
 
-    #[proxy]
-    fn chain_config_proxy(&self) -> chain_config::Proxy<Self::Api>;
-
     #[view(getContractsMap)]
     #[storage_mapper("contractsMap")]
     fn contracts_map(&self, contract_name: ManagedBuffer) -> SingleValueMapper<ManagedAddress>;
