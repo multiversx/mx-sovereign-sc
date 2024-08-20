@@ -58,23 +58,6 @@ pub trait FactoryModule {
         let _ = self.all_deployed_contracts().insert(sc_address);
     }
 
-    fn get_deploy_chain_config_args(
-        &self,
-        min_validators: &usize,
-        max_validators: &usize,
-        min_stake: &BigUint,
-        additional_stake_required: &MultiValueEncoded<StakeMultiArg<Self::Api>>,
-    ) -> ManagedArgBuffer<Self::Api> {
-        let mut args = ManagedArgBuffer::new();
-
-        args.push_arg(min_validators);
-        args.push_arg(max_validators);
-        args.push_arg(min_stake);
-        args.push_multi_arg(additional_stake_required);
-
-        args
-    }
-
     #[only_owner]
     #[endpoint(addContractsToMap)]
     fn add_contracts_to_map(
@@ -93,6 +76,23 @@ pub trait FactoryModule {
                     .set(contract_info.address);
             }
         }
+    }
+
+    fn get_deploy_chain_config_args(
+        &self,
+        min_validators: &usize,
+        max_validators: &usize,
+        min_stake: &BigUint,
+        additional_stake_required: &MultiValueEncoded<StakeMultiArg<Self::Api>>,
+    ) -> ManagedArgBuffer<Self::Api> {
+        let mut args = ManagedArgBuffer::new();
+
+        args.push_arg(min_validators);
+        args.push_arg(max_validators);
+        args.push_arg(min_stake);
+        args.push_multi_arg(additional_stake_required);
+
+        args
     }
 
     #[only_owner]
