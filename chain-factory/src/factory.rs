@@ -28,28 +28,51 @@ pub trait FactoryModule {
         max_validators: usize,
         min_stake: BigUint,
         additional_stake_required: MultiValueEncoded<StakeMultiArg<Self::Api>>,
+        // sovereign_chain_name
+        // preferred_chain_id
     ) {
         let payment_amount = self.call_value().egld_value().clone_value();
         let deploy_cost = self.deploy_cost().get();
         require!(payment_amount == deploy_cost, "Invalid payment amount");
 
-        let caller = self.blockchain().get_caller();
         let source_address = self.chain_config_template().get();
         let metadata =
             CodeMetadata::PAYABLE_BY_SC | CodeMetadata::UPGRADEABLE | CodeMetadata::READABLE;
+        let args = self.get_deploy_chain_config_args(
+            &min_validators,
+            &max_validators,
+            &min_stake,
+            &additional_stake_required,
+        );
 
-        let (sc_address, _) = self
-            .chain_config_proxy()
-            .init(
-                min_validators,
-                max_validators,
-                min_stake,
-                caller,
-                additional_stake_required,
-            )
-            .deploy_from_source::<IgnoreValue>(&source_address, metadata);
+        let sc_address = self
+            .tx()
+            .raw_deploy()
+            .gas(self.blockchain().get_gas_left())
+            .from_source(source_address)
+            .code_metadata(metadata)
+            .arguments_raw(args)
+            .returns(ReturnsNewManagedAddress)
+            .sync_call();
 
         let _ = self.all_deployed_contracts().insert(sc_address);
+    }
+
+    fn get_deploy_chain_config_args(
+        &self,
+        min_validators: &usize,
+        max_validators: &usize,
+        min_stake: &BigUint,
+        additional_stake_required: &MultiValueEncoded<StakeMultiArg<Self::Api>>,
+    ) -> ManagedArgBuffer<Self::Api> {
+        let mut args = ManagedArgBuffer::new();
+
+        args.push_arg(min_validators);
+        args.push_arg(max_validators);
+        args.push_arg(min_stake);
+        args.push_multi_arg(additional_stake_required);
+
+        args
     }
 
     #[only_owner]
