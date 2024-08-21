@@ -290,7 +290,7 @@ pub trait TransferTokensModule:
         operation: Operation<Self::Api>,
     ) -> (ManagedBuffer, bool) {
         let mut serialized_data = ManagedBuffer::new();
-        let mut storage_key = StorageKey::from("pending_hashes");
+        let mut storage_key = StorageKey::from("pendingHashes");
         storage_key.append_item(&hash_of_hashes);
 
         let pending_operations_mapper =
@@ -310,9 +310,9 @@ pub trait TransferTokensModule:
         }
     }
 
-    #[storage_mapper("pending_hashes")]
+    #[storage_mapper("pendingHashes")]
     fn pending_hashes(&self, hash_of_hashes: &ManagedBuffer) -> UnorderedSetMapper<ManagedBuffer>;
 
-    #[storage_mapper("header_verifier_address")]
+    #[storage_mapper("headerVerifierAddress")]
     fn header_verifier_address(&self) -> SingleValueMapper<ManagedAddress>;
 }

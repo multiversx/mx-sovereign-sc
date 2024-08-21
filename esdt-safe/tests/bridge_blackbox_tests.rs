@@ -98,19 +98,11 @@ impl BridgeTestState {
     }
 
     fn deploy_fee_market_contract(&mut self) -> &mut Self {
-        let usdc_token_id = TestTokenIdentifier::new("USDC");
-        let wegld_token_id = TestTokenIdentifier::new("WEGLD");
-
         self.world
             .tx()
             .from(BRIDGE_OWNER_ADDRESS)
             .typed(fee_market_proxy::FeeMarketProxy)
-            .init(
-                BRIDGE_ADDRESS,
-                PRICE_AGGREGATOR_ADDRESS,
-                usdc_token_id,
-                wegld_token_id,
-            )
+            .init(BRIDGE_ADDRESS, PRICE_AGGREGATOR_ADDRESS)
             .code(FEE_MARKET_CODE_PATH)
             .new_address(FEE_MARKET_ADDRESS)
             .run();
