@@ -51,14 +51,7 @@ impl<M: ManagedTypeApi> Operation<M> {
         let mut tuples = MultiValueEncoded::new();
 
         for token in &self.tokens {
-            tuples.push(
-                (
-                    token.token_identifier,
-                    token.token_nonce,
-                    token.token_data.into(),
-                )
-                    .into(),
-            );
+            tuples.push((token.token_identifier, token.token_nonce, token.token_data).into());
         }
 
         tuples
@@ -126,13 +119,6 @@ impl<M: ManagedTypeApi> OperationEsdtPayment<M> {
             token_nonce,
             token_data,
         }
-    }
-}
-
-impl<M: ManagedTypeApi> From<EsdtTokenPayment<M>> for OperationEsdtPayment<M> {
-    #[inline]
-    fn from(payment: EsdtTokenPayment<M>) -> Self {
-        payment.into()
     }
 }
 
