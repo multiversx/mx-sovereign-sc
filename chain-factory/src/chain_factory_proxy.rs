@@ -139,7 +139,7 @@ where
     }
 
     pub fn contracts_map<
-        Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
+        Arg0: ProxyArg<ScArray>,
     >(
         self,
         contract_name: Arg0,
@@ -235,6 +235,18 @@ pub struct ContractMapArgs<Api>
 where
     Api: ManagedTypeApi,
 {
-    pub name: ManagedBuffer<Api>,
+    pub name: ScArray,
     pub address: ManagedAddress<Api>,
+}
+
+#[type_abi]
+#[derive(TopEncode, TopDecode)]
+pub enum ScArray {
+    None,
+    ChainFactory,
+    Controller,
+    SovereignHeaderVerifier,
+    SovereignCrossChainOperation,
+    ChainConfig,
+    Slashing,
 }
