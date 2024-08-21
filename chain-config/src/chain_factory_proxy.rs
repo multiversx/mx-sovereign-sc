@@ -242,7 +242,6 @@ where
 #[type_abi]
 #[derive(TopEncode, TopDecode)]
 pub enum ScArray {
-    None,
     ChainFactory,
     Controller,
     SovereignHeaderVerifier,
