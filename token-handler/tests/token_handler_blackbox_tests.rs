@@ -158,7 +158,7 @@ impl TokenHandlerTestState {
 
         for token_id in token_ids {
             let payment: OperationEsdtPayment<StaticApi> = OperationEsdtPayment {
-                token_identifier: token_id.clone().into(),
+                token_identifier: (*token_id).into(),
                 token_nonce: 1,
                 token_data: EsdtTokenData::default(),
             };

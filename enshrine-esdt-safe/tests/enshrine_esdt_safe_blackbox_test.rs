@@ -263,7 +263,7 @@ impl EnshrineTestState {
             Some(status) => self
                 .world
                 .tx()
-                .from(sender.clone())
+                .from(*sender)
                 .to(ENSHRINE_ESDT_ADDRESS)
                 .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
                 .register_new_token_id(managed_token_ids)
@@ -273,7 +273,7 @@ impl EnshrineTestState {
             None => self
                 .world
                 .tx()
-                .from(sender.clone())
+                .from(*sender)
                 .to(ENSHRINE_ESDT_ADDRESS)
                 .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
                 .register_new_token_id(managed_token_ids)
@@ -304,7 +304,7 @@ impl EnshrineTestState {
 
         for token_id in token_ids {
             let payment: OperationEsdtPayment<StaticApi> =
-                OperationEsdtPayment::new(token_id.clone().into(), 1, EsdtTokenData::default());
+                OperationEsdtPayment::new((*token_id).into(), 1, EsdtTokenData::default());
 
             tokens.push(payment);
         }
