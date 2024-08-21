@@ -5,7 +5,7 @@ multiversx_sc::imports!();
 
 #[derive(TypeAbi, TopEncode, TopDecode, NestedEncode, NestedDecode, ManagedVecItem)]
 struct ContractMapArgs<M: ManagedTypeApi> {
-    name: ScArray,
+    id: ScArray,
     address: ManagedAddress<M>,
 }
 
@@ -65,12 +65,9 @@ pub trait FactoryModule {
         require!(!contracts_map.is_empty(), "Given contracts map is empty");
 
         for contract in contracts_map {
-            require!(
-                contract.name != ScArray::None,
-                "Contract name cannot be None"
-            );
+            require!(contract.id != ScArray::None, "Contract name cannot be None");
 
-            self.contracts_map(contract.name).set(contract.address);
+            self.contracts_map(contract.id).set(contract.address);
         }
     }
 

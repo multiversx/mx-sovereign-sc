@@ -235,7 +235,7 @@ pub struct ContractMapArgs<Api>
 where
     Api: ManagedTypeApi,
 {
-    pub name: ScArray,
+    pub id: ScArray,
     pub address: ManagedAddress<Api>,
 }
 
