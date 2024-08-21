@@ -13,7 +13,6 @@ struct ContractMapArgs<M: ManagedTypeApi> {
     TypeAbi, TopEncode, TopDecode, NestedEncode, NestedDecode, Clone, ManagedVecItem, PartialEq,
 )]
 pub enum ScArray {
-    None,
     ChainFactory,
     Controller,
     SovereignHeaderVerifier,
@@ -62,11 +61,7 @@ pub trait FactoryModule {
         &self,
         contracts_map: MultiValueEncoded<Self::Api, ContractMapArgs<Self::Api>>,
     ) {
-        require!(!contracts_map.is_empty(), "Given contracts map is empty");
-
         for contract in contracts_map {
-            require!(contract.id != ScArray::None, "Contract name cannot be None");
-
             self.contracts_map(contract.id).set(contract.address);
         }
     }
