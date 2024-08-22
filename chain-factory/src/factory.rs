@@ -3,20 +3,23 @@ use chain_config::StakeMultiArg;
 multiversx_sc::derive_imports!();
 multiversx_sc::imports!();
 
-#[derive(TopEncode, TopDecode, TypeAbi, Clone, ManagedVecItem)]
+#[derive(TypeAbi, TopEncode, TopDecode, NestedEncode, NestedDecode, ManagedVecItem)]
 struct ContractMapArgs<M: ManagedTypeApi> {
-    name: ManagedBuffer<M>,
+    id: ScArray,
     address: ManagedAddress<M>,
 }
 
-const SC_ARRAY: &[&[u8]] = &[
-    b"chainFactory",
-    b"controller",
-    b"sovereignHeaderVerifier",
-    b"sovereignCrossChainOperation",
-    b"chainConfig",
-    b"slashing",
-];
+#[derive(
+    TypeAbi, TopEncode, TopDecode, NestedEncode, NestedDecode, Clone, ManagedVecItem, PartialEq,
+)]
+pub enum ScArray {
+    ChainFactory,
+    Controller,
+    SovereignHeaderVerifier,
+    SovereignCrossChainOperation,
+    ChainConfig,
+    Slashing,
+}
 
 #[multiversx_sc::module]
 pub trait FactoryModule {
@@ -64,17 +67,8 @@ pub trait FactoryModule {
         &self,
         contracts_map: MultiValueEncoded<Self::Api, ContractMapArgs<Self::Api>>,
     ) {
-        require!(!contracts_map.is_empty(), "Given contracts map is empty");
-        let mapped_array: ManagedVec<ManagedBuffer> = SC_ARRAY
-            .into_iter()
-            .map(|sc| ManagedBuffer::from(*sc))
-            .collect();
-
-        for contract_info in contracts_map {
-            if mapped_array.contains(&contract_info.name) {
-                self.contracts_map(contract_info.name)
-                    .set(contract_info.address);
-            }
+        for contract in contracts_map {
+            self.contracts_map(contract.id).set(contract.address);
         }
     }
 
@@ -103,7 +97,7 @@ pub trait FactoryModule {
 
     #[view(getContractsMap)]
     #[storage_mapper("contractsMap")]
-    fn contracts_map(&self, contract_name: ManagedBuffer) -> SingleValueMapper<ManagedAddress>;
+    fn contracts_map(&self, contract_name: ScArray) -> SingleValueMapper<ManagedAddress>;
 
     #[view(getDeployCost)]
     #[storage_mapper("deployCost")]
