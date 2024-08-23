@@ -38,7 +38,6 @@ pub trait CreateTxModule:
         let mut event_payments = MultiValueEncoded::new();
         let mut refundable_payments = ManagedVec::<Self::Api, _>::new();
 
-        let opt_transfer_data = self.process_transfer_data(opt_transfer_data);
         let own_sc_address = self.blockchain().get_sc_address();
         let is_sov_chain = self.is_sovereign_chain().get();
 
@@ -81,7 +80,12 @@ pub trait CreateTxModule:
             );
         }
 
-        self.match_fee_payment(total_tokens_for_fees, &fees_payment, &opt_transfer_data);
+        let option_transfer_data = TransferData::optional_value_to_option(opt_transfer_data);
+        self.match_fee_payment(
+            total_tokens_for_fees,
+            &fees_payment,
+            &(option_transfer_data),
+        );
 
         // refund refundable_tokens
         let caller = self.blockchain().get_caller();
@@ -96,7 +100,7 @@ pub trait CreateTxModule:
             OperationData {
                 op_nonce: tx_nonce,
                 op_sender: caller,
-                opt_transfer_data,
+                opt_transfer_data: option_transfer_data,
             },
         );
     }
