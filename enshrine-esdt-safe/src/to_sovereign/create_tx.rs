@@ -81,11 +81,7 @@ pub trait CreateTxModule:
         }
 
         let option_transfer_data = TransferData::optional_value_to_option(opt_transfer_data);
-        self.match_fee_payment(
-            total_tokens_for_fees,
-            &fees_payment,
-            &(option_transfer_data),
-        );
+        self.match_fee_payment(total_tokens_for_fees, &fees_payment, &option_transfer_data);
 
         // refund refundable_tokens
         let caller = self.blockchain().get_caller();
@@ -97,11 +93,7 @@ pub trait CreateTxModule:
         self.deposit_event(
             &to,
             &event_payments,
-            OperationData {
-                op_nonce: tx_nonce,
-                op_sender: caller,
-                opt_transfer_data: option_transfer_data,
-            },
+            OperationData::new(tx_nonce, caller, option_transfer_data),
         );
     }
 
