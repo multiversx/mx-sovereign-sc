@@ -90,9 +90,7 @@ pub trait CreateTxModule:
 
         // refund refundable_tokens
         let caller = self.blockchain().get_caller();
-        for payment in &refundable_payments {
-            self.send().direct_non_zero_esdt_payment(&caller, &payment);
-        }
+        self.refund_tokens(&caller, &refundable_payments);
 
         let tx_nonce = self.get_and_save_next_tx_id();
         self.deposit_event(
@@ -119,6 +117,16 @@ pub trait CreateTxModule:
         };
 
         MultiValue2::from((opt_transfer_data, payments))
+    }
+
+    fn refund_tokens(
+        &self,
+        caller: &ManagedAddress,
+        refundable_payments: &ManagedVec<EsdtTokenPayment>,
+    ) {
+        for payment in refundable_payments {
+            self.send().direct_non_zero_esdt_payment(caller, &payment);
+        }
     }
 
     fn match_fee_payment(
