@@ -72,9 +72,9 @@ pub trait CreateTxModule:
 
             event_payments.push(
                 (
-                    payment.token_identifier.clone(),
+                    payment.token_identifier,
                     payment.token_nonce,
-                    current_token_data.clone(),
+                    current_token_data,
                 )
                     .into(),
             );
