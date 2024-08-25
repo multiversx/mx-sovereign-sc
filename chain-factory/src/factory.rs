@@ -91,6 +91,18 @@ pub trait FactoryModule {
             .insert(header_verifier_address);
     }
 
+    // NOTE: Is this the Enrhsine Esdt?
+    // #[only_owner]
+    // #[endpoint(deployCrossChainOperation)]
+    // fn deploy_cross_chain_operation(
+    //     &self,
+    //     is_sovereign_chain: bool,
+    //     token_handler_address: ManagedAddress,
+    //     opt_wegld_identifier: Option<TokenIdentifier>,
+    //     opt_sov_token_prefix: Option<ManagedBuffer>,
+    // ) {
+    // }
+
     #[only_owner]
     #[endpoint(addContractsToMap)]
     fn add_contracts_to_map(
