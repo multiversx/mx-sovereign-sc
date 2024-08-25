@@ -68,6 +68,30 @@ pub trait FactoryModule {
     }
 
     #[only_owner]
+    #[endpoint(deployHeaderVerifier)]
+    fn deploy_header_verifier(&self, bls_pub_keys: MultiValueEncoded<ManagedBuffer>) {
+        let source_address = self.header_verifier_template().get();
+        let metadata =
+            CodeMetadata::PAYABLE_BY_SC | CodeMetadata::UPGRADEABLE | CodeMetadata::READABLE;
+
+        let mut args = ManagedArgBuffer::new();
+        args.push_multi_arg(&bls_pub_keys);
+
+        let header_verifier_address = self
+            .tx()
+            .raw_deploy()
+            .gas(self.blockchain().get_gas_left())
+            .from_source(source_address)
+            .code_metadata(metadata)
+            .arguments_raw(args)
+            .returns(ReturnsNewManagedAddress)
+            .sync_call();
+
+        self.all_deployed_contracts()
+            .insert(header_verifier_address);
+    }
+
+    #[only_owner]
     #[endpoint(addContractsToMap)]
     fn add_contracts_to_map(
         &self,
@@ -112,9 +136,13 @@ pub trait FactoryModule {
     #[storage_mapper("chainConfigTemplate")]
     fn chain_config_template(&self) -> SingleValueMapper<ManagedAddress>;
 
+    #[storage_mapper("headerVerifierTemplate")]
+    fn header_verifier_template(&self) -> SingleValueMapper<ManagedAddress>;
+
     #[storage_mapper("allDeployedContracts")]
     fn all_deployed_contracts(&self) -> UnorderedSetMapper<ManagedAddress>;
 
+    // NOTE: Will there be a single chain factory contract ?
     #[view(getCurrentChainInfo)]
     #[storage_mapper("currentChainInfo")]
     fn chain_info(&self) -> SingleValueMapper<ChainInfo<Self::Api>>;
