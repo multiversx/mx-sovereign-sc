@@ -9,6 +9,12 @@ struct ContractMapArgs<M: ManagedTypeApi> {
     address: ManagedAddress<M>,
 }
 
+#[derive(TypeAbi, TopEncode, TopDecode, NestedEncode, NestedDecode, ManagedVecItem)]
+struct SovereignChainTuple<M: ManagedTypeApi> {
+    name: ManagedBuffer<M>,
+    chain_id: ManagedBuffer<M>,
+}
+
 #[derive(
     TypeAbi, TopEncode, TopDecode, NestedEncode, NestedDecode, Clone, ManagedVecItem, PartialEq,
 )]
@@ -30,9 +36,8 @@ pub trait FactoryModule {
         min_validators: usize,
         max_validators: usize,
         min_stake: BigUint,
+        chain_info: SovereignChainTuple<Self::Api>,
         additional_stake_required: MultiValueEncoded<StakeMultiArg<Self::Api>>,
-        // sovereign_chain_name
-        // preferred_chain_id
     ) {
         let payment_amount = self.call_value().egld_value().clone_value();
         let deploy_cost = self.deploy_cost().get();
@@ -58,7 +63,8 @@ pub trait FactoryModule {
             .returns(ReturnsNewManagedAddress)
             .sync_call();
 
-        let _ = self.all_deployed_contracts().insert(sc_address);
+        self.all_deployed_contracts().insert(sc_address);
+        self.chain_info().set(chain_info);
     }
 
     #[only_owner]
@@ -108,4 +114,8 @@ pub trait FactoryModule {
 
     #[storage_mapper("allDeployedContracts")]
     fn all_deployed_contracts(&self) -> UnorderedSetMapper<ManagedAddress>;
+
+    #[view(getCurrentChainInfo)]
+    #[storage_mapper("currentChainInfo")]
+    fn chain_info(&self) -> SingleValueMapper<SovereignChainTuple<Self::Api>>;
 }
