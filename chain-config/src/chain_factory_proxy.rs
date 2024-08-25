@@ -95,20 +95,36 @@ where
         Arg0: ProxyArg<usize>,
         Arg1: ProxyArg<usize>,
         Arg2: ProxyArg<BigUint<Env::Api>>,
-        Arg3: ProxyArg<MultiValueEncoded<Env::Api, MultiValue2<TokenIdentifier<Env::Api>, BigUint<Env::Api>>>>,
+        Arg3: ProxyArg<ChainInfo<Env::Api>>,
+        Arg4: ProxyArg<MultiValueEncoded<Env::Api, MultiValue2<TokenIdentifier<Env::Api>, BigUint<Env::Api>>>>,
     >(
         self,
         min_validators: Arg0,
         max_validators: Arg1,
         min_stake: Arg2,
-        additional_stake_required: Arg3,
+        chain_info: Arg3,
+        additional_stake_required: Arg4,
     ) -> TxTypedCall<Env, From, To, (), Gas, ()> {
         self.wrapped_tx
             .raw_call("deploySovereignChainConfigContract")
             .argument(&min_validators)
             .argument(&max_validators)
             .argument(&min_stake)
+            .argument(&chain_info)
             .argument(&additional_stake_required)
+            .original_result()
+    }
+
+    pub fn deploy_header_verifier<
+        Arg0: ProxyArg<MultiValueEncoded<Env::Api, ManagedBuffer<Env::Api>>>,
+    >(
+        self,
+        bls_pub_keys: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("deployHeaderVerifier")
+            .argument(&bls_pub_keys)
             .original_result()
     }
 
@@ -157,6 +173,15 @@ where
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("getDeployCost")
+            .original_result()
+    }
+
+    pub fn chain_info(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ChainInfo<Env::Api>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getCurrentChainInfo")
             .original_result()
     }
 
@@ -227,6 +252,16 @@ where
             .argument(&signers)
             .original_result()
     }
+}
+
+#[type_abi]
+#[derive(TopEncode, TopDecode)]
+pub struct ChainInfo<Api>
+where
+    Api: ManagedTypeApi,
+{
+    pub name: ManagedBuffer<Api>,
+    pub chain_id: ManagedBuffer<Api>,
 }
 
 #[type_abi]
