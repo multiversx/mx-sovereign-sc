@@ -10,7 +10,7 @@ struct ContractMapArgs<M: ManagedTypeApi> {
 }
 
 #[derive(TypeAbi, TopEncode, TopDecode, NestedEncode, NestedDecode, ManagedVecItem)]
-struct SovereignChainTuple<M: ManagedTypeApi> {
+struct ChainInfo<M: ManagedTypeApi> {
     name: ManagedBuffer<M>,
     chain_id: ManagedBuffer<M>,
 }
@@ -36,7 +36,7 @@ pub trait FactoryModule {
         min_validators: usize,
         max_validators: usize,
         min_stake: BigUint,
-        chain_info: SovereignChainTuple<Self::Api>,
+        chain_info: ChainInfo<Self::Api>,
         additional_stake_required: MultiValueEncoded<StakeMultiArg<Self::Api>>,
     ) {
         let payment_amount = self.call_value().egld_value().clone_value();
@@ -117,5 +117,5 @@ pub trait FactoryModule {
 
     #[view(getCurrentChainInfo)]
     #[storage_mapper("currentChainInfo")]
-    fn chain_info(&self) -> SingleValueMapper<SovereignChainTuple<Self::Api>>;
+    fn chain_info(&self) -> SingleValueMapper<ChainInfo<Self::Api>>;
 }
