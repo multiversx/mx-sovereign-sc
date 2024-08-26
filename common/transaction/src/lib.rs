@@ -79,7 +79,7 @@ impl<M: ManagedTypeApi> TransferData<M> {
         }
     }
 
-    pub fn optional_value_to_option(
+    pub fn from_optional_value(
         opt_value_transfer_data: OptionalValue<
             MultiValue3<GasLimit, ManagedBuffer<M>, ManagedVec<M, ManagedBuffer<M>>>,
         >,

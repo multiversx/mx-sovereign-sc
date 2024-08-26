@@ -80,7 +80,7 @@ pub trait CreateTxModule:
             );
         }
 
-        let option_transfer_data = TransferData::optional_value_to_option(opt_transfer_data);
+        let option_transfer_data = TransferData::from_optional_value(opt_transfer_data);
 
         if let Some(transfer_data) = option_transfer_data.as_ref() {
             self.require_gas_limit_under_limit(transfer_data.gas_limit);
