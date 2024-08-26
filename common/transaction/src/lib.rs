@@ -79,7 +79,6 @@ impl<M: ManagedTypeApi> TransferData<M> {
         }
     }
 
-    // TODO: Should use a reference
     pub fn optional_value_to_option(
         opt_value_transfer_data: OptionalValue<
             MultiValue3<GasLimit, ManagedBuffer<M>, ManagedVec<M, ManagedBuffer<M>>>,
