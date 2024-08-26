@@ -54,7 +54,7 @@ pub trait ChainConfigContract:
         let header_verifier_address = self.header_verifier_address().get();
 
         require!(
-            caller != header_verifier_address,
+            self.admins().contains(&header_verifier_address),
             "The Header Verifier SC is already the admin"
         );
 
