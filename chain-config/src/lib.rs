@@ -1,7 +1,5 @@
 #![no_std]
 
-use __wasm__endpoints__::header_verifier_address;
-use multiversx_sc_modules::only_admin;
 use validator_rules::TokenIdAmountPair;
 
 multiversx_sc::imports!();
