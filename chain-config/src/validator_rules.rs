@@ -63,4 +63,8 @@ pub trait ValidatorRulesModule {
     #[view(getNativeTokenId)]
     #[storage_mapper("nativeTokenId")]
     fn native_token_id(&self) -> SingleValueMapper<TokenIdentifier<Self::Api>>;
+
+    #[view(getHeaderVerifierAddress)]
+    #[storage_mapper("headerVerifierAddress")]
+    fn header_verifier_address(&self) -> SingleValueMapper<ManagedAddress<Self::Api>>;
 }
