@@ -12,6 +12,14 @@ pub struct TokenIdAmountPair<M: ManagedTypeApi> {
 
 #[multiversx_sc::module]
 pub trait ValidatorRulesModule {
+    #[view(getMinBlsKeys)]
+    #[storage_mapper("minBlsKeys")]
+    fn min_bls_keys(&self) -> SingleValueMapper<usize>;
+
+    #[view(getMaxBlsKeys)]
+    #[storage_mapper("maxBlsKeys")]
+    fn max_bls_keys(&self) -> SingleValueMapper<usize>;
+
     #[view(getMinValidators)]
     #[storage_mapper("minValidators")]
     fn min_validators(&self) -> SingleValueMapper<usize>;
