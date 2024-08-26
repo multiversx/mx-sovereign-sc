@@ -59,4 +59,8 @@ pub trait ValidatorRulesModule {
     #[view(getBlsBlacklist)]
     #[storage_mapper("blsBlacklist")]
     fn bls_blacklist(&self) -> UnorderedSetMapper<ManagedAddress<Self::Api>>;
+
+    #[view(getNativeTokenId)]
+    #[storage_mapper("nativeTokenId")]
+    fn native_token_id(&self) -> SingleValueMapper<TokenIdentifier<Self::Api>>;
 }
