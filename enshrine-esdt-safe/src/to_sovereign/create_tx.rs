@@ -83,7 +83,7 @@ pub trait CreateTxModule:
         let option_transfer_data = TransferData::optional_value_to_option(opt_transfer_data);
 
         if let Some(transfer_data) = option_transfer_data.as_ref() {
-            self.require_gas_limit_under_limit(&transfer_data.gas_limit);
+            self.require_gas_limit_under_limit(transfer_data.gas_limit);
             self.require_endpoint_not_banned(&transfer_data.function);
         }
         self.match_fee_payment(total_tokens_for_fees, &fees_payment, &option_transfer_data);
@@ -157,9 +157,9 @@ pub trait CreateTxModule:
         };
     }
 
-    fn require_gas_limit_under_limit(&self, gas_limit: &GasLimit) {
+    fn require_gas_limit_under_limit(&self, gas_limit: GasLimit) {
         let max_gas_limit = self.max_user_tx_gas_limit().get();
-        require!(gas_limit <= &max_gas_limit, "Gas limit too high");
+        require!(gas_limit <= max_gas_limit, "Gas limit too high");
     }
 
     fn require_endpoint_not_banned(&self, function: &ManagedBuffer) {
