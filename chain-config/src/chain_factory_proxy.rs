@@ -128,6 +128,28 @@ where
             .original_result()
     }
 
+    pub fn deploy_cross_chain_operation<
+        Arg0: ProxyArg<bool>,
+        Arg1: ProxyArg<ManagedAddress<Env::Api>>,
+        Arg2: ProxyArg<Option<TokenIdentifier<Env::Api>>>,
+        Arg3: ProxyArg<Option<ManagedBuffer<Env::Api>>>,
+    >(
+        self,
+        is_sovereign_chain: Arg0,
+        token_handler_address: Arg1,
+        opt_wegld_identifier: Arg2,
+        opt_sov_token_prefix: Arg3,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("deployCrossChainOperation")
+            .argument(&is_sovereign_chain)
+            .argument(&token_handler_address)
+            .argument(&opt_wegld_identifier)
+            .argument(&opt_sov_token_prefix)
+            .original_result()
+    }
+
     pub fn add_contracts_to_map<
         Arg0: ProxyArg<MultiValueEncoded<Env::Api, ContractMapArgs<Env::Api>>>,
     >(

@@ -6,9 +6,9 @@
 
 // Init:                                 1
 // Upgrade:                              1
-// Endpoints:                           12
+// Endpoints:                           13
 // Async Callback (empty):               1
-// Total number of exported functions:  15
+// Total number of exported functions:  16
 
 #![no_std]
 
@@ -22,6 +22,7 @@ multiversx_sc_wasm_adapter::endpoints! {
         upgrade => upgrade
         deploySovereignChainConfigContract => deploy_sovereign_chain_config_contract
         deployHeaderVerifier => deploy_header_verifier
+        deployCrossChainOperation => deploy_cross_chain_operation
         addContractsToMap => add_contracts_to_map
         blacklistSovereignChainSc => blacklist_sovereign_chain_sc
         getContractsMap => contracts_map
