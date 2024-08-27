@@ -63,13 +63,18 @@ pub trait FactoryModule {
             .returns(ReturnsNewManagedAddress)
             .sync_call();
 
-        self.all_deployed_contracts().insert(sc_address);
+        self.all_deployed_contracts(ManagedBuffer::new())
+            .insert(sc_address);
         self.chain_info().set(chain_info);
     }
 
     #[only_owner]
     #[endpoint(deployHeaderVerifier)]
-    fn deploy_header_verifier(&self, bls_pub_keys: MultiValueEncoded<ManagedBuffer>) {
+    fn deploy_header_verifier(
+        &self,
+        chain_id: ManagedBuffer,
+        bls_pub_keys: MultiValueEncoded<ManagedBuffer>,
+    ) {
         let source_address = self.header_verifier_template().get();
         let metadata =
             CodeMetadata::PAYABLE_BY_SC | CodeMetadata::UPGRADEABLE | CodeMetadata::READABLE;
@@ -87,7 +92,7 @@ pub trait FactoryModule {
             .returns(ReturnsNewManagedAddress)
             .sync_call();
 
-        self.all_deployed_contracts()
+        self.all_deployed_contracts(chain_id)
             .insert(header_verifier_address);
     }
 
@@ -95,6 +100,7 @@ pub trait FactoryModule {
     #[endpoint(deployCrossChainOperation)]
     fn deploy_cross_chain_operation(
         &self,
+        chain_id: ManagedBuffer,
         is_sovereign_chain: bool,
         token_handler_address: ManagedAddress,
         opt_wegld_identifier: Option<TokenIdentifier>,
@@ -121,7 +127,7 @@ pub trait FactoryModule {
             .returns(ReturnsNewManagedAddress)
             .sync_call();
 
-        self.all_deployed_contracts()
+        self.all_deployed_contracts(chain_id)
             .insert(cross_chain_operations_address);
     }
 
@@ -155,9 +161,18 @@ pub trait FactoryModule {
 
     #[only_owner]
     #[endpoint(blacklistSovereignChainSc)]
-    fn blacklist_sovereign_chain_sc(&self, sc_address: ManagedAddress) {
-        let _ = self.all_deployed_contracts().swap_remove(&sc_address);
+    fn blacklist_sovereign_chain_sc(&self, chain_id: ManagedBuffer, sc_address: ManagedAddress) {
+        let _ = self
+            .all_deployed_contracts(chain_id)
+            .swap_remove(&sc_address);
     }
+    //
+    // fn generate_chain_id(&self) -> ManagedBuffer {
+    //     let chain_id = ManagedBuffer::new();
+    //     let charset: &[u8] = b"0123456789abcdefghijklmnopqrstuvwxyz";
+    //     for _ in 0..2 {}
+    //     chain_id
+    // }
 
     #[view(getContractsMap)]
     #[storage_mapper("contractsMap")]
@@ -177,7 +192,8 @@ pub trait FactoryModule {
     fn cross_chain_operations_template(&self) -> SingleValueMapper<ManagedAddress>;
 
     #[storage_mapper("allDeployedContracts")]
-    fn all_deployed_contracts(&self) -> UnorderedSetMapper<ManagedAddress>;
+    fn all_deployed_contracts(&self, chain_id: ManagedBuffer)
+        -> UnorderedSetMapper<ManagedAddress>;
 
     #[view(getCurrentChainInfo)]
     #[storage_mapper("currentChainInfo")]
