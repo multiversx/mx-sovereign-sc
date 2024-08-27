@@ -116,33 +116,39 @@ where
     }
 
     pub fn deploy_header_verifier<
-        Arg0: ProxyArg<MultiValueEncoded<Env::Api, ManagedBuffer<Env::Api>>>,
+        Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
+        Arg1: ProxyArg<MultiValueEncoded<Env::Api, ManagedBuffer<Env::Api>>>,
     >(
         self,
-        bls_pub_keys: Arg0,
+        chain_id: Arg0,
+        bls_pub_keys: Arg1,
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("deployHeaderVerifier")
+            .argument(&chain_id)
             .argument(&bls_pub_keys)
             .original_result()
     }
 
     pub fn deploy_cross_chain_operation<
-        Arg0: ProxyArg<bool>,
-        Arg1: ProxyArg<ManagedAddress<Env::Api>>,
-        Arg2: ProxyArg<Option<TokenIdentifier<Env::Api>>>,
-        Arg3: ProxyArg<Option<ManagedBuffer<Env::Api>>>,
+        Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
+        Arg1: ProxyArg<bool>,
+        Arg2: ProxyArg<ManagedAddress<Env::Api>>,
+        Arg3: ProxyArg<Option<TokenIdentifier<Env::Api>>>,
+        Arg4: ProxyArg<Option<ManagedBuffer<Env::Api>>>,
     >(
         self,
-        is_sovereign_chain: Arg0,
-        token_handler_address: Arg1,
-        opt_wegld_identifier: Arg2,
-        opt_sov_token_prefix: Arg3,
+        chain_id: Arg0,
+        is_sovereign_chain: Arg1,
+        token_handler_address: Arg2,
+        opt_wegld_identifier: Arg3,
+        opt_sov_token_prefix: Arg4,
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("deployCrossChainOperation")
+            .argument(&chain_id)
             .argument(&is_sovereign_chain)
             .argument(&token_handler_address)
             .argument(&opt_wegld_identifier)
@@ -164,14 +170,17 @@ where
     }
 
     pub fn blacklist_sovereign_chain_sc<
-        Arg0: ProxyArg<ManagedAddress<Env::Api>>,
+        Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
+        Arg1: ProxyArg<ManagedAddress<Env::Api>>,
     >(
         self,
-        sc_address: Arg0,
+        chain_id: Arg0,
+        sc_address: Arg1,
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("blacklistSovereignChainSc")
+            .argument(&chain_id)
             .argument(&sc_address)
             .original_result()
     }
@@ -208,30 +217,36 @@ where
     }
 
     pub fn slash<
-        Arg0: ProxyArg<ManagedAddress<Env::Api>>,
-        Arg1: ProxyArg<BigUint<Env::Api>>,
+        Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
+        Arg1: ProxyArg<ManagedAddress<Env::Api>>,
+        Arg2: ProxyArg<BigUint<Env::Api>>,
     >(
         self,
-        validator_address: Arg0,
-        value: Arg1,
+        chain_id: Arg0,
+        validator_address: Arg1,
+        value: Arg2,
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("slash")
+            .argument(&chain_id)
             .argument(&validator_address)
             .argument(&value)
             .original_result()
     }
 
     pub fn distribute_slashed<
-        Arg0: ProxyArg<MultiValueEncoded<Env::Api, MultiValue2<ManagedAddress<Env::Api>, BigUint<Env::Api>>>>,
+        Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
+        Arg1: ProxyArg<MultiValueEncoded<Env::Api, MultiValue2<ManagedAddress<Env::Api>, BigUint<Env::Api>>>>,
     >(
         self,
-        dest_amount_pairs: Arg0,
+        chain_id: Arg0,
+        dest_amount_pairs: Arg1,
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("distributeSlashed")
+            .argument(&chain_id)
             .argument(&dest_amount_pairs)
             .original_result()
     }
