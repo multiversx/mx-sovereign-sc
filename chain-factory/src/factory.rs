@@ -91,17 +91,39 @@ pub trait FactoryModule {
             .insert(header_verifier_address);
     }
 
-    // NOTE: Is this the Enrhsine Esdt?
-    // #[only_owner]
-    // #[endpoint(deployCrossChainOperation)]
-    // fn deploy_cross_chain_operation(
-    //     &self,
-    //     is_sovereign_chain: bool,
-    //     token_handler_address: ManagedAddress,
-    //     opt_wegld_identifier: Option<TokenIdentifier>,
-    //     opt_sov_token_prefix: Option<ManagedBuffer>,
-    // ) {
-    // }
+    #[only_owner]
+    #[endpoint(deployCrossChainOperation)]
+    fn deploy_cross_chain_operation(
+        &self,
+        is_sovereign_chain: bool,
+        token_handler_address: ManagedAddress,
+        opt_wegld_identifier: Option<TokenIdentifier>,
+        opt_sov_token_prefix: Option<ManagedBuffer>,
+    ) {
+        let source_address = self.cross_chain_operations_template().get();
+
+        let metadata =
+            CodeMetadata::PAYABLE_BY_SC | CodeMetadata::UPGRADEABLE | CodeMetadata::READABLE;
+
+        let mut args = ManagedArgBuffer::new();
+        args.push_arg(is_sovereign_chain);
+        args.push_arg(token_handler_address);
+        args.push_arg(opt_wegld_identifier);
+        args.push_arg(opt_sov_token_prefix);
+
+        let cross_chain_operations_address = self
+            .tx()
+            .raw_deploy()
+            .gas(self.blockchain().get_gas_left())
+            .from_source(source_address)
+            .code_metadata(metadata)
+            .arguments_raw(args)
+            .returns(ReturnsNewManagedAddress)
+            .sync_call();
+
+        self.all_deployed_contracts()
+            .insert(cross_chain_operations_address);
+    }
 
     #[only_owner]
     #[endpoint(addContractsToMap)]
@@ -151,10 +173,12 @@ pub trait FactoryModule {
     #[storage_mapper("headerVerifierTemplate")]
     fn header_verifier_template(&self) -> SingleValueMapper<ManagedAddress>;
 
+    #[storage_mapper("crossChainOperationsTemplate")]
+    fn cross_chain_operations_template(&self) -> SingleValueMapper<ManagedAddress>;
+
     #[storage_mapper("allDeployedContracts")]
     fn all_deployed_contracts(&self) -> UnorderedSetMapper<ManagedAddress>;
 
-    // NOTE: Will there be a single chain factory contract ?
     #[view(getCurrentChainInfo)]
     #[storage_mapper("currentChainInfo")]
     fn chain_info(&self) -> SingleValueMapper<ChainInfo<Self::Api>>;
