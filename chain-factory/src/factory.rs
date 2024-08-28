@@ -56,21 +56,22 @@ pub trait FactoryModule {
         let sc_address = self
             .tx()
             .raw_deploy()
-            .gas(self.blockchain().get_gas_left())
             .from_source(source_address)
             .code_metadata(metadata)
             .arguments_raw(args)
             .returns(ReturnsNewManagedAddress)
             .sync_call();
 
-        self.all_deployed_contracts(ManagedBuffer::new())
+        let chain_id = self.generate_chain_id();
+
+        self.all_deployed_contracts(chain_id.clone())
             .insert(sc_address);
 
-        let chain_id = self.generate_chain_id();
         let chain_info = ChainInfo {
             name: chain_name,
             chain_id,
         };
+
         self.chain_info().set(chain_info);
     }
 
@@ -91,7 +92,6 @@ pub trait FactoryModule {
         let header_verifier_address = self
             .tx()
             .raw_deploy()
-            .gas(self.blockchain().get_gas_left())
             .from_source(source_address)
             .code_metadata(metadata)
             .arguments_raw(args)
@@ -126,7 +126,6 @@ pub trait FactoryModule {
         let cross_chain_operations_address = self
             .tx()
             .raw_deploy()
-            .gas(self.blockchain().get_gas_left())
             .from_source(source_address)
             .code_metadata(metadata)
             .arguments_raw(args)
