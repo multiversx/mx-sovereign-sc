@@ -95,14 +95,14 @@ where
         Arg0: ProxyArg<usize>,
         Arg1: ProxyArg<usize>,
         Arg2: ProxyArg<BigUint<Env::Api>>,
-        Arg3: ProxyArg<ChainInfo<Env::Api>>,
+        Arg3: ProxyArg<ManagedBuffer<Env::Api>>,
         Arg4: ProxyArg<MultiValueEncoded<Env::Api, MultiValue2<TokenIdentifier<Env::Api>, BigUint<Env::Api>>>>,
     >(
         self,
         min_validators: Arg0,
         max_validators: Arg1,
         min_stake: Arg2,
-        chain_info: Arg3,
+        chain_name: Arg3,
         additional_stake_required: Arg4,
     ) -> TxTypedCall<Env, From, To, (), Gas, ()> {
         self.wrapped_tx
@@ -110,7 +110,7 @@ where
             .argument(&min_validators)
             .argument(&max_validators)
             .argument(&min_stake)
-            .argument(&chain_info)
+            .argument(&chain_name)
             .argument(&additional_stake_required)
             .original_result()
     }
@@ -293,16 +293,6 @@ where
 
 #[type_abi]
 #[derive(TopEncode, TopDecode)]
-pub struct ChainInfo<Api>
-where
-    Api: ManagedTypeApi,
-{
-    pub name: ManagedBuffer<Api>,
-    pub chain_id: ManagedBuffer<Api>,
-}
-
-#[type_abi]
-#[derive(TopEncode, TopDecode)]
 pub struct ContractMapArgs<Api>
 where
     Api: ManagedTypeApi,
@@ -320,4 +310,14 @@ pub enum ScArray {
     SovereignCrossChainOperation,
     ChainConfig,
     Slashing,
+}
+
+#[type_abi]
+#[derive(TopEncode, TopDecode)]
+pub struct ChainInfo<Api>
+where
+    Api: ManagedTypeApi,
+{
+    pub name: ManagedBuffer<Api>,
+    pub chain_id: ManagedBuffer<Api>,
 }
