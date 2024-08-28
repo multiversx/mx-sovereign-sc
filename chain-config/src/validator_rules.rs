@@ -12,6 +12,14 @@ pub struct TokenIdAmountPair<M: ManagedTypeApi> {
 
 #[multiversx_sc::module]
 pub trait ValidatorRulesModule {
+    #[view(getMinBlsKeys)]
+    #[storage_mapper("minBlsKeys")]
+    fn min_bls_keys(&self) -> SingleValueMapper<usize>;
+
+    #[view(getMaxBlsKeys)]
+    #[storage_mapper("maxBlsKeys")]
+    fn max_bls_keys(&self) -> SingleValueMapper<usize>;
+
     #[view(getMinValidators)]
     #[storage_mapper("minValidators")]
     fn min_validators(&self) -> SingleValueMapper<usize>;
@@ -35,4 +43,28 @@ pub trait ValidatorRulesModule {
     #[view(wasPreviouslySlashed)]
     #[storage_mapper("wasPreviouslySlashed")]
     fn was_previously_slashed(&self, validator: &ManagedAddress) -> SingleValueMapper<bool>;
+
+    #[view(getAddressWhitelist)]
+    #[storage_mapper("addressWhitelist")]
+    fn address_whitelist(&self) -> UnorderedSetMapper<ManagedAddress<Self::Api>>;
+
+    #[view(getAddressBlacklist)]
+    #[storage_mapper("addressBlacklist")]
+    fn address_blacklist(&self) -> UnorderedSetMapper<ManagedAddress<Self::Api>>;
+
+    #[view(getBlsWhitelist)]
+    #[storage_mapper("blsWhitelist")]
+    fn bls_whitelist(&self) -> UnorderedSetMapper<ManagedAddress<Self::Api>>;
+
+    #[view(getBlsBlacklist)]
+    #[storage_mapper("blsBlacklist")]
+    fn bls_blacklist(&self) -> UnorderedSetMapper<ManagedAddress<Self::Api>>;
+
+    #[view(getNativeTokenId)]
+    #[storage_mapper("nativeTokenId")]
+    fn native_token_id(&self) -> SingleValueMapper<TokenIdentifier<Self::Api>>;
+
+    #[view(getHeaderVerifierAddress)]
+    #[storage_mapper("headerVerifierAddress")]
+    fn header_verifier_address(&self) -> SingleValueMapper<ManagedAddress<Self::Api>>;
 }
