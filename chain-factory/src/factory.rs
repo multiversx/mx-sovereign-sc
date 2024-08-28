@@ -36,7 +36,7 @@ pub trait FactoryModule {
         min_validators: usize,
         max_validators: usize,
         min_stake: BigUint,
-        chain_info: ChainInfo<Self::Api>,
+        chain_name: ManagedBuffer,
         additional_stake_required: MultiValueEncoded<StakeMultiArg<Self::Api>>,
     ) {
         let payment_amount = self.call_value().egld_value().clone_value();
@@ -65,6 +65,12 @@ pub trait FactoryModule {
 
         self.all_deployed_contracts(ManagedBuffer::new())
             .insert(sc_address);
+
+        let chain_id = self.generate_chain_id();
+        let chain_info = ChainInfo {
+            name: chain_name,
+            chain_id,
+        };
         self.chain_info().set(chain_info);
     }
 
