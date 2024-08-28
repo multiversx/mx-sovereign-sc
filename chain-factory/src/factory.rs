@@ -166,13 +166,19 @@ pub trait FactoryModule {
             .all_deployed_contracts(chain_id)
             .swap_remove(&sc_address);
     }
-    //
-    // fn generate_chain_id(&self) -> ManagedBuffer {
-    //     let chain_id = ManagedBuffer::new();
-    //     let charset: &[u8] = b"0123456789abcdefghijklmnopqrstuvwxyz";
-    //     for _ in 0..2 {}
-    //     chain_id
-    // }
+
+    fn generate_chain_id(&self) -> ManagedBuffer {
+        let mut byte_array: [u8; 2] = [0; 2];
+        let charset: &[u8] = b"0123456789abcdefghijklmnopqrstuvwxyz";
+        let mut rand = RandomnessSource::new();
+
+        for i in 0..2 {
+            let rand_index = rand.next_u8_in_range(0, charset.len() as u8) as usize;
+            byte_array[i] = charset[rand_index];
+        }
+
+        ManagedBuffer::new_from_bytes(&byte_array)
+    }
 
     #[view(getContractsMap)]
     #[storage_mapper("contractsMap")]
