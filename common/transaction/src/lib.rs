@@ -27,6 +27,8 @@ pub type TxAsMultiValue<M> = MultiValue7<
 >;
 pub type PaymentsVec<M> = ManagedVec<M, EsdtTokenPayment<M>>;
 pub type TxBatchSplitInFields<M> = MultiValue2<BatchId, MultiValueEncoded<M, TxAsMultiValue<M>>>;
+pub type OptionalValueTransferDataTuple<M> =
+    OptionalValue<MultiValue3<GasLimit, ManagedBuffer<M>, ManagedVec<M, ManagedBuffer<M>>>>;
 
 #[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, TypeAbi, ManagedVecItem, Clone)]
 pub struct Operation<M: ManagedTypeApi> {
@@ -80,15 +82,13 @@ impl<M: ManagedTypeApi> TransferData<M> {
     }
 
     pub fn from_optional_value(
-        opt_value_transfer_data: OptionalValue<
-            MultiValue3<GasLimit, ManagedBuffer<M>, ManagedVec<M, ManagedBuffer<M>>>,
-        >,
+        opt_value_transfer_data: OptionalValueTransferDataTuple<M>,
     ) -> Option<Self> {
         match opt_value_transfer_data {
             OptionalValue::Some(multi_value_transfer_data) => {
-                return Option::Some(multi_value_transfer_data.into())
+                Option::Some(multi_value_transfer_data.into())
             }
-            OptionalValue::None => return Option::None,
+            OptionalValue::None => Option::None,
         }
     }
 }
