@@ -38,7 +38,6 @@ pub trait CreateTxModule:
         let mut event_payments = MultiValueEncoded::new();
         let mut refundable_payments = ManagedVec::<Self::Api, _>::new();
 
-        let opt_transfer_data = self.process_transfer_data(opt_transfer_data);
         let own_sc_address = self.blockchain().get_sc_address();
         let is_sov_chain = self.is_sovereign_chain().get();
 
@@ -73,31 +72,31 @@ pub trait CreateTxModule:
 
             event_payments.push(
                 (
-                    payment.token_identifier.clone(),
+                    payment.token_identifier,
                     payment.token_nonce,
-                    current_token_data.clone(),
+                    current_token_data,
                 )
                     .into(),
             );
         }
 
-        self.match_fee_payment(total_tokens_for_fees, &fees_payment, &opt_transfer_data);
+        let option_transfer_data = TransferData::from_optional_value(opt_transfer_data);
+
+        if let Some(transfer_data) = option_transfer_data.as_ref() {
+            self.require_gas_limit_under_limit(transfer_data.gas_limit);
+            self.require_endpoint_not_banned(&transfer_data.function);
+        }
+        self.match_fee_payment(total_tokens_for_fees, &fees_payment, &option_transfer_data);
 
         // refund refundable_tokens
         let caller = self.blockchain().get_caller();
-        for payment in &refundable_payments {
-            self.send().direct_non_zero_esdt_payment(&caller, &payment);
-        }
+        self.refund_tokens(&caller, &refundable_payments);
 
         let tx_nonce = self.get_and_save_next_tx_id();
         self.deposit_event(
             &to,
             &event_payments,
-            OperationData {
-                op_nonce: tx_nonce,
-                op_sender: caller,
-                opt_transfer_data,
-            },
+            OperationData::new(tx_nonce, caller, option_transfer_data),
         );
     }
 
@@ -120,31 +119,13 @@ pub trait CreateTxModule:
         MultiValue2::from((opt_transfer_data, payments))
     }
 
-    fn process_transfer_data(
+    fn refund_tokens(
         &self,
-        opt_transfer_data: OptionalValue<
-            MultiValue3<GasLimit, ManagedBuffer, ManagedVec<ManagedBuffer>>,
-        >,
-    ) -> Option<TransferData<Self::Api>> {
-        match &opt_transfer_data {
-            OptionalValue::Some(transfer_data) => {
-                let (gas_limit, function, args) = transfer_data.clone().into_tuple();
-                let max_gas_limit = self.max_user_tx_gas_limit().get();
-
-                require!(gas_limit <= max_gas_limit, "Gas limit too high");
-
-                require!(
-                    !self.banned_endpoint_names().contains(&function),
-                    "Banned endpoint name"
-                );
-
-                Some(TransferData {
-                    gas_limit,
-                    function,
-                    args,
-                })
-            }
-            OptionalValue::None => None,
+        caller: &ManagedAddress,
+        refundable_payments: &ManagedVec<EsdtTokenPayment>,
+    ) {
+        for payment in refundable_payments {
+            self.send().direct_non_zero_esdt_payment(caller, &payment);
         }
     }
 
@@ -174,6 +155,18 @@ pub trait CreateTxModule:
             }
             OptionalValue::None => (),
         };
+    }
+
+    fn require_gas_limit_under_limit(&self, gas_limit: GasLimit) {
+        let max_gas_limit = self.max_user_tx_gas_limit().get();
+        require!(gas_limit <= max_gas_limit, "Gas limit too high");
+    }
+
+    fn require_endpoint_not_banned(&self, function: &ManagedBuffer) {
+        require!(
+            !self.banned_endpoint_names().contains(function),
+            "Banned endpoint name"
+        );
     }
 
     #[storage_mapper("feeMarketAddress")]

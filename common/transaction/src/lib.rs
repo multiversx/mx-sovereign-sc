@@ -65,6 +65,34 @@ pub struct TransferData<M: ManagedTypeApi> {
     pub args: ManagedVec<M, ManagedBuffer<M>>,
 }
 
+impl<M: ManagedTypeApi> TransferData<M> {
+    #[inline]
+    pub fn new(
+        gas_limit: GasLimit,
+        function: ManagedBuffer<M>,
+        args: ManagedVec<M, ManagedBuffer<M>>,
+    ) -> Self {
+        TransferData {
+            gas_limit,
+            function,
+            args,
+        }
+    }
+
+    pub fn from_optional_value(
+        opt_value_transfer_data: OptionalValue<
+            MultiValue3<GasLimit, ManagedBuffer<M>, ManagedVec<M, ManagedBuffer<M>>>,
+        >,
+    ) -> Option<Self> {
+        match opt_value_transfer_data {
+            OptionalValue::Some(multi_value_transfer_data) => {
+                return Option::Some(multi_value_transfer_data.into())
+            }
+            OptionalValue::None => return Option::None,
+        }
+    }
+}
+
 #[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, TypeAbi, ManagedVecItem, Clone)]
 pub struct OperationData<M: ManagedTypeApi> {
     pub op_nonce: TxId,
@@ -84,6 +112,18 @@ impl<M: ManagedTypeApi> OperationData<M> {
             op_sender,
             opt_transfer_data,
         }
+    }
+}
+
+impl<M: ManagedTypeApi>
+    From<MultiValue3<GasLimit, ManagedBuffer<M>, ManagedVec<M, ManagedBuffer<M>>>>
+    for TransferData<M>
+{
+    fn from(
+        value: MultiValue3<GasLimit, ManagedBuffer<M>, ManagedVec<M, ManagedBuffer<M>>>,
+    ) -> Self {
+        let (gas_limit, function, vec) = value.into_tuple();
+        TransferData::new(gas_limit, function, vec)
     }
 }
 
