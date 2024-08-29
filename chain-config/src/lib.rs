@@ -4,6 +4,7 @@ use validator_rules::TokenIdAmountPair;
 
 multiversx_sc::imports!();
 
+pub mod bls_keys;
 pub mod bridge;
 pub mod validator_rules;
 
