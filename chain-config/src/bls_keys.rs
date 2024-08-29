@@ -11,11 +11,10 @@ pub trait BlsKeysModule: validator_rules::ValidatorRulesModule {
         pub_bls_keys: MultiValueEncoded<ManagedBuffer>,
         egld_stake_value: StakeMultiArg<Self::Api>,
     ) {
-        self.require_bls_keys_length_limits(&pub_bls_keys.len());
+        self.require_bls_keys_length_limits(pub_bls_keys.len());
 
         let (_, stake_amount) = egld_stake_value.into_tuple();
-
-        self.require_min_stake(&stake_amount);
+        self.require_min_stake(stake_amount);
 
         // TODO: query Validator SC about the validator
         for bls_key in pub_bls_keys {

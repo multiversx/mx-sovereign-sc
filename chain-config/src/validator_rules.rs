@@ -81,22 +81,22 @@ pub trait ValidatorRulesModule {
     }
 
     #[inline]
-    fn require_bls_keys_length_limits(&self, length: &usize) {
+    fn require_bls_keys_length_limits(&self, length: usize) {
         let min_bls_keys = self.min_bls_keys().get();
         let max_bls_keys = self.max_bls_keys().get();
         require!(
-            length > &min_bls_keys,
+            length > min_bls_keys,
             "There are fewer BLS public keys than expected"
         );
         require!(
-            length < &max_bls_keys,
+            length < max_bls_keys,
             "There are fewer BLS public keys than expected"
         );
     }
 
     #[inline]
-    fn require_min_stake(&self, amount: &BigUint) {
+    fn require_min_stake(&self, amount: BigUint) {
         let min_amount = self.min_stake().get();
-        require!(amount > &min_amount, "Minimum stake amount not met");
+        require!(amount > min_amount, "Minimum stake amount not met");
     }
 }
