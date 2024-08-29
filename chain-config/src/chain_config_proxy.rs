@@ -143,6 +143,33 @@ where
             .original_result()
     }
 
+    pub fn bls_whitelist(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, MultiValueEncoded<Env::Api, ManagedBuffer<Env::Api>>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getBlsWhitelist")
+            .original_result()
+    }
+
+    pub fn bls_blacklist(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, MultiValueEncoded<Env::Api, ManagedBuffer<Env::Api>>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getBlsBlacklist")
+            .original_result()
+    }
+
+    pub fn bls_keys(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, MultiValueEncoded<Env::Api, ManagedBuffer<Env::Api>>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getBlsKeys")
+            .original_result()
+    }
+
     pub fn min_validators(
         self,
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, usize> {
@@ -207,24 +234,6 @@ where
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("getAddressBlacklist")
-            .original_result()
-    }
-
-    pub fn bls_whitelist(
-        self,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, MultiValueEncoded<Env::Api, ManagedAddress<Env::Api>>> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("getBlsWhitelist")
-            .original_result()
-    }
-
-    pub fn bls_blacklist(
-        self,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, MultiValueEncoded<Env::Api, ManagedAddress<Env::Api>>> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("getBlsBlacklist")
             .original_result()
     }
 
