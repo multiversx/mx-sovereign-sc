@@ -77,7 +77,7 @@ pub trait EnshrineEsdtSafe:
     }
 
     #[only_owner]
-    #[endpoint(setHeaderVerifierAddress)]
+    #[endpoint(setMaxTxGasLimit)]
     fn set_max_user_tx_gas_limit(&self, max_user_tx_gas_limit: GasLimit) {
         self.max_user_tx_gas_limit().set(&max_user_tx_gas_limit);
     }
