@@ -555,6 +555,31 @@ fn test_deposit_nothing_to_transfer() {
 }
 
 #[test]
+fn test_deposit_max_transfers_exceeded() {
+    let mut state = EnshrineTestState::new();
+    let amount = BigUint::from(10000u64);
+    let wegld_payment = EsdtTokenPayment::new(WEGLD_IDENTIFIER.into(), 0, amount.clone());
+    let mut payments = PaymentsVec::new();
+    let error_status = ErrorStatus {
+        code: 4,
+        error_message: "Too many tokens",
+    };
+
+    payments.extend(std::iter::repeat(wegld_payment).take(11));
+
+    state.propose_setup_contracts(false);
+    state.deploy_fee_market_contract();
+    state.propose_register_fee_market_address(FEE_MARKET_ADDRESS);
+    state.propose_deposit(
+        ENSHRINE_ESDT_OWNER_ADDRESS,
+        USER_ADDRESS,
+        payments,
+        OptionalValue::None,
+        Some(error_status),
+    );
+}
+
+#[test]
 fn test_deposit() {
     let mut state = EnshrineTestState::new();
     let amount = BigUint::from(10000u64);
