@@ -1,6 +1,7 @@
 #![no_std]
 
 use multiversx_sc::imports::*;
+use transaction::GasLimit;
 
 pub mod common;
 pub mod enshrine_esdt_safe_proxy;
@@ -73,6 +74,12 @@ pub trait EnshrineEsdtSafe:
         self.require_sc_address(&header_verifier_address);
 
         self.header_verifier_address().set(&header_verifier_address);
+    }
+
+    #[only_owner]
+    #[endpoint(setHeaderVerifierAddress)]
+    fn set_max_user_tx_gas_limit(&self, max_user_tx_gas_limit: GasLimit) {
+        self.max_user_tx_gas_limit().set(&max_user_tx_gas_limit);
     }
 
     #[upgrade]
