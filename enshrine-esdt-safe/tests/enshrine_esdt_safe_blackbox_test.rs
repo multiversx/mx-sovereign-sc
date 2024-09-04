@@ -194,7 +194,11 @@ impl EnshrineTestState {
         self
     }
 
-    fn propose_setup_contracts(&mut self, is_sovereign_chain: bool) -> &mut Self {
+    fn propose_setup_contracts(
+        &mut self,
+        is_sovereign_chain: bool,
+        is_fee_enabled: bool,
+    ) -> &mut Self {
         self.deploy_enshrine_esdt_contract(
             is_sovereign_chain,
             Some(TokenIdentifier::from(WEGLD_IDENTIFIER)),
@@ -203,8 +207,19 @@ impl EnshrineTestState {
         self.deploy_header_verifier_contract();
         self.deploy_token_handler_contract();
         self.deploy_fee_market_contract();
+
         self.propose_set_header_verifier_address();
         self.propose_register_fee_market_address();
+
+        if !is_fee_enabled {
+            self.world
+                .tx()
+                .from(ENSHRINE_ESDT_OWNER_ADDRESS)
+                .to(FEE_MARKET_ADDRESS)
+                .typed(fee_market_proxy::FeeMarketProxy)
+                .disable_fee()
+                .run();
+        }
 
         self
     }
@@ -423,7 +438,7 @@ impl EnshrineTestState {
 fn test_deploy() {
     let mut state = EnshrineTestState::new();
 
-    state.propose_setup_contracts(false);
+    state.propose_setup_contracts(false, false);
 }
 
 #[test]
@@ -435,7 +450,7 @@ fn test_sovereign_prefix_no_prefix() {
         error_message: "Operation is not registered",
     });
 
-    state.propose_setup_contracts(false);
+    state.propose_setup_contracts(false, false);
     state.propose_register_operation(&token_vec);
     state.propose_execute_operation(error_status, &token_vec);
 }
@@ -449,7 +464,7 @@ fn test_sovereign_prefix_has_prefix() {
         error_message: "Operation is not registered",
     });
 
-    state.propose_setup_contracts(false);
+    state.propose_setup_contracts(false, false);
     state.propose_register_operation(&token_vec);
     state.propose_execute_operation(error_status, &token_vec);
 }
@@ -463,7 +478,7 @@ fn test_register_tokens_insufficient_funds() {
     let payment_amount = BigUint::from(DEFAULT_ISSUE_COST * token_vec.len() as u64);
     let payment = EsdtTokenPayment::new(WEGLD_IDENTIFIER.into(), 0, payment_amount);
 
-    state.propose_setup_contracts(false);
+    state.propose_setup_contracts(false, false);
     state.propose_register_tokens(
         &USER_ADDRESS,
         payment,
@@ -484,7 +499,7 @@ fn test_register_tokens_wrong_token_as_fee() {
     let payment_amount = BigUint::from(DEFAULT_ISSUE_COST * token_vec.len() as u64);
     let payment = EsdtTokenPayment::new(CROWD_TOKEN_ID.into(), 0, payment_amount);
 
-    state.propose_setup_contracts(false);
+    state.propose_setup_contracts(false, false);
     state.propose_register_tokens(
         &ENSHRINE_ESDT_OWNER_ADDRESS,
         payment,
@@ -503,7 +518,7 @@ fn test_register_tokens() {
     let payment_amount = BigUint::from(DEFAULT_ISSUE_COST * token_vec.len() as u64);
     let payment = EsdtTokenPayment::new(WEGLD_IDENTIFIER.into(), 0, payment_amount);
 
-    state.propose_setup_contracts(false);
+    state.propose_setup_contracts(false, false);
     state.propose_register_tokens(&ENSHRINE_ESDT_OWNER_ADDRESS, payment, token_vec, None);
     state
         .world
@@ -525,7 +540,7 @@ fn test_register_tokens_insufficient_wegld() {
     let payment_amount = BigUint::from(DEFAULT_ISSUE_COST + token_vec.len() as u64);
     let payment = EsdtTokenPayment::new(WEGLD_IDENTIFIER.into(), 0, payment_amount);
 
-    state.propose_setup_contracts(false);
+    state.propose_setup_contracts(false, false);
     state.propose_register_tokens(
         &ENSHRINE_ESDT_OWNER_ADDRESS,
         payment,
@@ -535,29 +550,6 @@ fn test_register_tokens_insufficient_wegld() {
             error_message,
         }),
     );
-}
-
-#[test]
-fn test_deposit_fee_market_address_not_set() {
-    let mut state = EnshrineTestState::new();
-    let payment = PaymentsVec::from(EsdtTokenPayment::new(
-        WEGLD_IDENTIFIER.into(),
-        0,
-        BigUint::from(10000u64),
-    ));
-    let error_status = ErrorStatus {
-        code: 4,
-        error_message: "Fee market address is not set",
-    };
-
-    state.propose_setup_contracts(false);
-    state.propose_deposit(
-        ENSHRINE_ESDT_OWNER_ADDRESS,
-        USER_ADDRESS,
-        payment,
-        OptionalValue::None,
-        Some(error_status),
-    )
 }
 
 #[test]
@@ -573,7 +565,7 @@ fn test_deposit_nothing_to_transfer() {
 
     payments.push(wegld_payment);
 
-    state.propose_setup_contracts(false);
+    state.propose_setup_contracts(false, true);
     state.propose_deposit(
         ENSHRINE_ESDT_OWNER_ADDRESS,
         USER_ADDRESS,
@@ -596,7 +588,7 @@ fn test_deposit_max_transfers_exceeded() {
 
     payments.extend(std::iter::repeat(wegld_payment).take(11));
 
-    state.propose_setup_contracts(false);
+    state.propose_setup_contracts(false, false);
     state.propose_deposit(
         ENSHRINE_ESDT_OWNER_ADDRESS,
         USER_ADDRESS,
@@ -617,7 +609,7 @@ fn test_deposit_no_transfer_data() {
     payments.push(wegld_payment);
     payments.push(crowd_payment);
 
-    state.propose_setup_contracts(false);
+    state.propose_setup_contracts(false, false);
     state.propose_deposit(
         ENSHRINE_ESDT_OWNER_ADDRESS,
         USER_ADDRESS,
@@ -662,7 +654,7 @@ fn test_deposit_with_transfer_data_gas_limit_too_high() {
         error_message: "Gas limit too high",
     };
 
-    state.propose_setup_contracts(false);
+    state.propose_setup_contracts(false, false);
     state.propose_deposit(
         ENSHRINE_ESDT_OWNER_ADDRESS,
         USER_ADDRESS,
@@ -695,7 +687,7 @@ fn test_deposit_with_transfer_data_banned_endpoint() {
         error_message: "Banned endpoint name",
     };
 
-    state.propose_setup_contracts(false);
+    state.propose_setup_contracts(false, false);
     state.propose_set_max_user_tx_gas_limit(gas_limit);
     state.propose_set_banned_endpoint(function);
     state.propose_deposit(
@@ -725,7 +717,7 @@ fn test_deposit_with_transfer_data() {
     payments.push(wegld_payment);
     payments.push(crowd_payment);
 
-    state.propose_setup_contracts(false);
+    state.propose_setup_contracts(false, false);
     state.propose_set_max_user_tx_gas_limit(gas_limit);
     state.propose_deposit(
         ENSHRINE_ESDT_OWNER_ADDRESS,
