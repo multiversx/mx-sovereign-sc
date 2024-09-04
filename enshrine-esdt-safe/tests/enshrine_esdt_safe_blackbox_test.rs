@@ -202,7 +202,9 @@ impl EnshrineTestState {
         );
         self.deploy_header_verifier_contract();
         self.deploy_token_handler_contract();
+        self.deploy_fee_market_contract();
         self.propose_set_header_verifier_address();
+        self.propose_register_fee_market_address();
 
         self
     }
@@ -268,13 +270,13 @@ impl EnshrineTestState {
             .run();
     }
 
-    fn propose_register_fee_market_address(&mut self, fee_market_address: TestSCAddress) {
+    fn propose_register_fee_market_address(&mut self) {
         self.world
             .tx()
             .from(ENSHRINE_ESDT_OWNER_ADDRESS)
             .to(ENSHRINE_ESDT_ADDRESS)
             .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
-            .set_fee_market_address(fee_market_address)
+            .set_fee_market_address(FEE_MARKET_ADDRESS)
             .run();
     }
 
@@ -572,8 +574,6 @@ fn test_deposit_nothing_to_transfer() {
     payments.push(wegld_payment);
 
     state.propose_setup_contracts(false);
-    state.deploy_fee_market_contract();
-    state.propose_register_fee_market_address(FEE_MARKET_ADDRESS);
     state.propose_deposit(
         ENSHRINE_ESDT_OWNER_ADDRESS,
         USER_ADDRESS,
@@ -597,8 +597,6 @@ fn test_deposit_max_transfers_exceeded() {
     payments.extend(std::iter::repeat(wegld_payment).take(11));
 
     state.propose_setup_contracts(false);
-    state.deploy_fee_market_contract();
-    state.propose_register_fee_market_address(FEE_MARKET_ADDRESS);
     state.propose_deposit(
         ENSHRINE_ESDT_OWNER_ADDRESS,
         USER_ADDRESS,
@@ -620,8 +618,6 @@ fn test_deposit_no_transfer_data() {
     payments.push(crowd_payment);
 
     state.propose_setup_contracts(false);
-    state.deploy_fee_market_contract();
-    state.propose_register_fee_market_address(FEE_MARKET_ADDRESS);
     state.propose_deposit(
         ENSHRINE_ESDT_OWNER_ADDRESS,
         USER_ADDRESS,
@@ -667,8 +663,6 @@ fn test_deposit_with_transfer_data_gas_limit_too_high() {
     };
 
     state.propose_setup_contracts(false);
-    state.deploy_fee_market_contract();
-    state.propose_register_fee_market_address(FEE_MARKET_ADDRESS);
     state.propose_deposit(
         ENSHRINE_ESDT_OWNER_ADDRESS,
         USER_ADDRESS,
@@ -702,8 +696,6 @@ fn test_deposit_with_transfer_data_banned_endpoint() {
     };
 
     state.propose_setup_contracts(false);
-    state.deploy_fee_market_contract();
-    state.propose_register_fee_market_address(FEE_MARKET_ADDRESS);
     state.propose_set_max_user_tx_gas_limit(gas_limit);
     state.propose_set_banned_endpoint(function);
     state.propose_deposit(
@@ -734,8 +726,6 @@ fn test_deposit_with_transfer_data() {
     payments.push(crowd_payment);
 
     state.propose_setup_contracts(false);
-    state.deploy_fee_market_contract();
-    state.propose_register_fee_market_address(FEE_MARKET_ADDRESS);
     state.propose_set_max_user_tx_gas_limit(gas_limit);
     state.propose_deposit(
         ENSHRINE_ESDT_OWNER_ADDRESS,
