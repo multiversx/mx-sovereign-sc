@@ -31,6 +31,9 @@ const TOKEN_HANDLER_ADDRESS: TestSCAddress = TestSCAddress::new("token_handler")
 const TOKEN_HANDLER_CODE_PATH: MxscPath =
     MxscPath::new("../token-handler/output/token-handler.mxsc.json");
 
+const FEE_MARKET_ADDRESS: TestSCAddress = TestSCAddress::new("fee-market");
+const FEE_MARKET_CODE_PATH: MxscPath = MxscPath::new("../fee-market/output/fee-market.mxsc.json");
+
 const USER_ADDRESS: TestAddress = TestAddress::new("user");
 const INSUFFICIENT_WEGLD_ADDRESS: TestAddress = TestAddress::new("insufficient_wegld");
 const RECEIVER_ADDRESS: TestAddress = TestAddress::new("receiver");
@@ -58,6 +61,7 @@ fn world() -> ScenarioWorld {
     blockchain.register_contract(ENSHRINE_ESDT_CODE_PATH, enshrine_esdt_safe::ContractBuilder);
     blockchain.register_contract(HEADER_VERIFIER_CODE_PATH, header_verifier::ContractBuilder);
     blockchain.register_contract(TOKEN_HANDLER_CODE_PATH, token_handler::ContractBuilder);
+    blockchain.register_contract(FEE_MARKET_CODE_PATH, fee_market::ContractBuilder);
 
     blockchain
 }
@@ -142,6 +146,19 @@ impl EnshrineTestState {
             .run();
 
         self.propose_set_unpaused();
+
+        self
+    }
+
+    fn deploy_fee_market_contract(&mut self) -> &mut Self {
+        self.world
+            .tx()
+            .from(ENSHRINE_ESDT_OWNER_ADDRESS)
+            .typed(fee_market_proxy::FeeMarketProxy)
+            .init(ENSHRINE_ESDT_ADDRESS, ENSHRINE_ESDT_ADDRESS)
+            .code(FEE_MARKET_CODE_PATH)
+            .new_address(FEE_MARKET_ADDRESS)
+            .run();
 
         self
     }
@@ -498,6 +515,27 @@ fn test_deposit_fee_market_address_not_set() {
     };
 
     state.propose_setup_contracts(false);
+    state.propose_deposit(
+        ENSHRINE_ESDT_OWNER_ADDRESS,
+        USER_ADDRESS,
+        payment,
+        OptionalValue::None,
+        Some(error_status),
+    )
+}
+
+#[test]
+fn test_deposit_fee_enabled_nothing_to_transfer() {
+    let mut state = EnshrineTestState::new();
+    let payment = EsdtTokenPayment::new(WEGLD_IDENTIFIER.into(), 0, BigUint::from(10000u64));
+    let error_status = ErrorStatus {
+        code: 4,
+        error_message: "Nothing to transfer",
+    };
+
+    state.propose_setup_contracts(false);
+    state.propose_register_fee_market_address(FEE_MARKET_ADDRESS);
+    state.deploy_fee_market_contract();
     state.propose_deposit(
         ENSHRINE_ESDT_OWNER_ADDRESS,
         USER_ADDRESS,
