@@ -108,6 +108,11 @@ pub trait CreateTxModule:
         require!(!payments.is_empty(), "Nothing to transfer");
         require!(payments.len() <= MAX_TRANSFERS_PER_TX, "Too many tokens");
 
+        require!(
+            !self.fee_market_address().is_empty(),
+            "Fee market address is not set"
+        );
+
         let fee_market_address = self.fee_market_address().get();
         let fee_enabled = self.external_fee_enabled(fee_market_address).get();
         let opt_transfer_data = if fee_enabled {
