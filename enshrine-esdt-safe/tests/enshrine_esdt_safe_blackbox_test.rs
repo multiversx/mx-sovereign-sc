@@ -346,6 +346,16 @@ impl EnshrineTestState {
         }
     }
 
+    fn propose_set_max_user_tx_gas_limit(&mut self, max_gas_limit: GasLimit) {
+        self.world
+            .tx()
+            .from(ENSHRINE_ESDT_OWNER_ADDRESS)
+            .to(ENSHRINE_ESDT_ADDRESS)
+            .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
+            .set_max_user_tx_gas_limit(max_gas_limit)
+            .run();
+    }
+
     fn mock_bls_signature(
         &mut self,
         operation_hash: &ManagedBuffer<StaticApi>,
@@ -620,7 +630,7 @@ fn test_deposit_no_transfer_data() {
     state
         .world
         .check_account(ENSHRINE_ESDT_OWNER_ADDRESS)
-        .esdt_balance(WEGLD_IDENTIFIER, &expected_wegld_amount);
+        .esdt_balance(CROWD_TOKEN_ID, &expected_wegld_amount);
 }
 
 #[test]
@@ -656,4 +666,47 @@ fn test_deposit_with_transfer_data_gas_limit_too_high() {
         transfer_data,
         Some(error_status),
     );
+}
+
+#[test]
+fn test_deposit_with_transfer_data() {
+    let mut state = EnshrineTestState::new();
+    let amount = BigUint::from(10000u64);
+    let wegld_payment = EsdtTokenPayment::new(WEGLD_IDENTIFIER.into(), 0, amount.clone());
+    let crowd_payment = EsdtTokenPayment::new(CROWD_TOKEN_ID.into(), 0, amount);
+    let mut payments = PaymentsVec::new();
+    let gas_limit = 1000000000 as u64;
+    let function = ManagedBuffer::from("some_function");
+    let arg = ManagedBuffer::from("arg");
+    let mut args = ManagedVec::new();
+    args.push(arg);
+
+    let transfer_data = state.setup_transfer_data(gas_limit, function, args);
+
+    payments.push(wegld_payment);
+    payments.push(crowd_payment);
+
+    state.propose_setup_contracts(false);
+    state.deploy_fee_market_contract();
+    state.propose_register_fee_market_address(FEE_MARKET_ADDRESS);
+    state.propose_set_max_user_tx_gas_limit(gas_limit);
+    state.propose_deposit(
+        ENSHRINE_ESDT_OWNER_ADDRESS,
+        USER_ADDRESS,
+        payments,
+        transfer_data,
+        None,
+    );
+
+    let expected_wegld_amount = BigUint::from(WEGLD_BALANCE) - BigUint::from(10000u64);
+
+    state
+        .world
+        .check_account(ENSHRINE_ESDT_OWNER_ADDRESS)
+        .esdt_balance(WEGLD_IDENTIFIER, &expected_wegld_amount);
+
+    state
+        .world
+        .check_account(ENSHRINE_ESDT_OWNER_ADDRESS)
+        .esdt_balance(CROWD_TOKEN_ID, &expected_wegld_amount);
 }
