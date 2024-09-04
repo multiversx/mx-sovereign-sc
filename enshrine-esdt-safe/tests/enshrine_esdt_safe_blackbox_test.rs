@@ -268,6 +268,16 @@ impl EnshrineTestState {
             .run();
     }
 
+    fn propose_register_fee_market_address(&mut self, fee_market_address: TestSCAddress) {
+        self.world
+            .tx()
+            .from(ENSHRINE_ESDT_OWNER_ADDRESS)
+            .to(ENSHRINE_ESDT_ADDRESS)
+            .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
+            .set_fee_market_address(fee_market_address)
+            .run();
+    }
+
     fn propose_register_tokens(
         &mut self,
         sender: &TestAddress,
@@ -369,22 +379,21 @@ impl EnshrineTestState {
         (tokens, data)
     }
 
+    fn setup_transfer_data(
+        &mut self,
+        gas_limit: GasLimit,
+        function: ManagedBuffer<StaticApi>,
+        args: ManagedVec<StaticApi, ManagedBuffer<StaticApi>>,
+    ) -> OptionalTransferData<StaticApi> {
+        OptionalValue::Some((gas_limit, function, args).into())
+    }
+
     fn get_operation_hash(&mut self, operation: &Operation<StaticApi>) -> ManagedBuffer<StaticApi> {
         let mut serialized_operation: ManagedBuffer<StaticApi> = ManagedBuffer::new();
         let _ = operation.top_encode(&mut serialized_operation);
         let sha256 = sha256(&serialized_operation.to_vec());
 
         ManagedBuffer::new_from_bytes(&sha256)
-    }
-
-    fn propose_register_fee_market_address(&mut self, fee_market_address: TestSCAddress) {
-        self.world
-            .tx()
-            .from(ENSHRINE_ESDT_OWNER_ADDRESS)
-            .to(ENSHRINE_ESDT_ADDRESS)
-            .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
-            .set_fee_market_address(fee_market_address)
-            .run();
     }
 }
 
@@ -580,7 +589,7 @@ fn test_deposit_max_transfers_exceeded() {
 }
 
 #[test]
-fn test_deposit() {
+fn test_deposit_no_transfer_data() {
     let mut state = EnshrineTestState::new();
     let amount = BigUint::from(10000u64);
     let wegld_payment = EsdtTokenPayment::new(WEGLD_IDENTIFIER.into(), 0, amount.clone());
@@ -612,4 +621,39 @@ fn test_deposit() {
         .world
         .check_account(ENSHRINE_ESDT_OWNER_ADDRESS)
         .esdt_balance(WEGLD_IDENTIFIER, &expected_wegld_amount);
+}
+
+#[test]
+fn test_deposit_with_transfer_data_gas_limit_too_high() {
+    let mut state = EnshrineTestState::new();
+    let amount = BigUint::from(10000u64);
+    let wegld_payment = EsdtTokenPayment::new(WEGLD_IDENTIFIER.into(), 0, amount.clone());
+    let crowd_payment = EsdtTokenPayment::new(CROWD_TOKEN_ID.into(), 0, amount);
+    let mut payments = PaymentsVec::new();
+    let gas_limit = 1000000000000000000 as u64;
+    let function = ManagedBuffer::from("some_function");
+    let arg = ManagedBuffer::from("arg");
+    let mut args = ManagedVec::new();
+    args.push(arg);
+
+    let transfer_data = state.setup_transfer_data(gas_limit, function, args);
+
+    payments.push(wegld_payment);
+    payments.push(crowd_payment);
+
+    let error_status = ErrorStatus {
+        code: 4,
+        error_message: "Gas limit too high",
+    };
+
+    state.propose_setup_contracts(false);
+    state.deploy_fee_market_contract();
+    state.propose_register_fee_market_address(FEE_MARKET_ADDRESS);
+    state.propose_deposit(
+        ENSHRINE_ESDT_OWNER_ADDRESS,
+        USER_ADDRESS,
+        payments,
+        transfer_data,
+        Some(error_status),
+    );
 }
