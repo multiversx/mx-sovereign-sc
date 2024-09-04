@@ -1,6 +1,6 @@
 use bls_signature::BlsSignature;
 use enshrine_esdt_safe::enshrine_esdt_safe_proxy;
-use fee_market::fee_market_proxy;
+use fee_market::fee_market_proxy::{self};
 use header_verifier::header_verifier_proxy;
 use multiversx_sc::codec::TopEncode;
 use multiversx_sc::imports::{MultiValue3, OptionalValue};
@@ -14,6 +14,7 @@ use multiversx_sc_scenario::{imports::MxscPath, ScenarioWorld};
 use multiversx_sc_scenario::{managed_address, ExpectError, ScenarioTxRun};
 use token_handler::token_handler_proxy;
 use transaction::{GasLimit, Operation, OperationData, OperationEsdtPayment};
+use utils::PaymentsVec;
 
 const ENSHRINE_ESDT_ADDRESS: TestSCAddress = TestSCAddress::new("enshrine-esdt");
 const ENSHRINE_ESDT_CODE_PATH: MxscPath = MxscPath::new("output/enshrine-esdt-safe.mxsc-json");
@@ -308,7 +309,7 @@ impl EnshrineTestState {
         &mut self,
         from: TestAddress,
         to: TestAddress,
-        payment: EsdtTokenPayment<StaticApi>,
+        payment: PaymentsVec<StaticApi>,
         deposit_args: OptionalTransferData<StaticApi>,
         error_status: Option<ErrorStatus>,
     ) {
@@ -320,7 +321,7 @@ impl EnshrineTestState {
                 .to(ENSHRINE_ESDT_ADDRESS)
                 .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
                 .deposit(to, deposit_args)
-                .esdt(payment)
+                .payment(payment)
                 .returns(ExpectError(status.code, status.error_message))
                 .run(),
             None => self
@@ -330,7 +331,7 @@ impl EnshrineTestState {
                 .to(ENSHRINE_ESDT_ADDRESS)
                 .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
                 .deposit(to, deposit_args)
-                .esdt(payment)
+                .payment(payment)
                 .run(),
         }
     }
@@ -508,7 +509,11 @@ fn test_register_tokens_insufficient_wegld() {
 #[test]
 fn test_deposit_fee_market_address_not_set() {
     let mut state = EnshrineTestState::new();
-    let payment = EsdtTokenPayment::new(WEGLD_IDENTIFIER.into(), 0, BigUint::from(10000u64));
+    let payment = PaymentsVec::from(EsdtTokenPayment::new(
+        WEGLD_IDENTIFIER.into(),
+        0,
+        BigUint::from(10000u64),
+    ));
     let error_status = ErrorStatus {
         code: 4,
         error_message: "Fee market address is not set",
@@ -525,22 +530,36 @@ fn test_deposit_fee_market_address_not_set() {
 }
 
 #[test]
-fn test_deposit_fee_enabled_nothing_to_transfer() {
+fn test_deposit() {
     let mut state = EnshrineTestState::new();
-    let payment = EsdtTokenPayment::new(WEGLD_IDENTIFIER.into(), 0, BigUint::from(10000u64));
-    let error_status = ErrorStatus {
-        code: 4,
-        error_message: "Nothing to transfer",
-    };
+    let amount = BigUint::from(10000u64);
+    let wegld_payment = EsdtTokenPayment::new(WEGLD_IDENTIFIER.into(), 0, amount.clone());
+    let crowd_payment = EsdtTokenPayment::new(CROWD_TOKEN_ID.into(), 0, amount);
+    let mut payments = PaymentsVec::new();
+
+    payments.push(wegld_payment);
+    payments.push(crowd_payment);
 
     state.propose_setup_contracts(false);
-    state.propose_register_fee_market_address(FEE_MARKET_ADDRESS);
     state.deploy_fee_market_contract();
+    state.propose_register_fee_market_address(FEE_MARKET_ADDRESS);
     state.propose_deposit(
         ENSHRINE_ESDT_OWNER_ADDRESS,
         USER_ADDRESS,
-        payment,
+        payments,
         OptionalValue::None,
-        Some(error_status),
-    )
+        None,
+    );
+
+    let expected_wegld_amount = BigUint::from(WEGLD_BALANCE) - BigUint::from(10000u64);
+
+    state
+        .world
+        .check_account(ENSHRINE_ESDT_OWNER_ADDRESS)
+        .esdt_balance(WEGLD_IDENTIFIER, &expected_wegld_amount);
+
+    state
+        .world
+        .check_account(ENSHRINE_ESDT_OWNER_ADDRESS)
+        .esdt_balance(WEGLD_IDENTIFIER, &expected_wegld_amount);
 }
