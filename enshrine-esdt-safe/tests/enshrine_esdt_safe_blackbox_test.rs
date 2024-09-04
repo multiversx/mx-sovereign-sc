@@ -356,6 +356,16 @@ impl EnshrineTestState {
             .run();
     }
 
+    fn propose_set_banned_endpoint(&mut self, endpoint_name: ManagedBuffer<StaticApi>) {
+        self.world
+            .tx()
+            .from(ENSHRINE_ESDT_OWNER_ADDRESS)
+            .to(ENSHRINE_ESDT_ADDRESS)
+            .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
+            .set_banned_endpoint(endpoint_name)
+            .run();
+    }
+
     fn mock_bls_signature(
         &mut self,
         operation_hash: &ManagedBuffer<StaticApi>,
@@ -659,6 +669,43 @@ fn test_deposit_with_transfer_data_gas_limit_too_high() {
     state.propose_setup_contracts(false);
     state.deploy_fee_market_contract();
     state.propose_register_fee_market_address(FEE_MARKET_ADDRESS);
+    state.propose_deposit(
+        ENSHRINE_ESDT_OWNER_ADDRESS,
+        USER_ADDRESS,
+        payments,
+        transfer_data,
+        Some(error_status),
+    );
+}
+
+#[test]
+fn test_deposit_with_transfer_data_banned_endpoint() {
+    let mut state = EnshrineTestState::new();
+    let amount = BigUint::from(10000u64);
+    let wegld_payment = EsdtTokenPayment::new(WEGLD_IDENTIFIER.into(), 0, amount.clone());
+    let crowd_payment = EsdtTokenPayment::new(CROWD_TOKEN_ID.into(), 0, amount);
+    let mut payments = PaymentsVec::new();
+    let gas_limit = 1000000000 as u64;
+    let function = ManagedBuffer::from("some_function");
+    let arg = ManagedBuffer::from("arg");
+    let mut args = ManagedVec::new();
+    args.push(arg);
+
+    let transfer_data = state.setup_transfer_data(gas_limit, function.clone(), args);
+
+    payments.push(wegld_payment);
+    payments.push(crowd_payment);
+
+    let error_status = ErrorStatus {
+        code: 4,
+        error_message: "Banned endpoint name",
+    };
+
+    state.propose_setup_contracts(false);
+    state.deploy_fee_market_contract();
+    state.propose_register_fee_market_address(FEE_MARKET_ADDRESS);
+    state.propose_set_max_user_tx_gas_limit(gas_limit);
+    state.propose_set_banned_endpoint(function);
     state.propose_deposit(
         ENSHRINE_ESDT_OWNER_ADDRESS,
         USER_ADDRESS,
