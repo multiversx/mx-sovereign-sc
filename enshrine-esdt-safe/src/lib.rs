@@ -82,6 +82,12 @@ pub trait EnshrineEsdtSafe:
         self.max_user_tx_gas_limit().set(&max_user_tx_gas_limit);
     }
 
+    #[only_owner]
+    #[endpoint(setBannedEndpoint)]
+    fn set_banned_endpoint(&self, endpoint_name: ManagedBuffer) {
+        self.banned_endpoint_names().insert(endpoint_name);
+    }
+
     #[upgrade]
     fn upgrade(&self) {}
 }
