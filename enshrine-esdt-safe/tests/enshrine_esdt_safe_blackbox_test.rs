@@ -586,7 +586,7 @@ fn test_deposit_nothing_to_transfer() {
 
     payments.push(wegld_payment);
 
-    state.propose_setup_contracts(false, false, None, None);
+    state.propose_setup_contracts(false, true, None, None);
     state.propose_deposit(
         ENSHRINE_ESDT_OWNER_ADDRESS,
         USER_ADDRESS,
