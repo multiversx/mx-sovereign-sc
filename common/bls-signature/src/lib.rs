@@ -58,14 +58,12 @@ pub trait BlsSignatureModule {
 
         let mut total_valid_signatures = 0;
         for signer in all_signers.iter() {
-            let is_valid = self.crypto().verify_bls(
+            self.crypto().verify_bls(
                 signer.as_managed_buffer(),
                 signature_data,
                 signature.as_managed_buffer(),
             );
-            if is_valid {
-                total_valid_signatures += 1;
-            }
+            total_valid_signatures += 1;
         }
 
         let min_valid_signers = self.min_valid_signers().get();
