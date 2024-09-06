@@ -169,6 +169,25 @@ where
             .original_result()
     }
 
+    pub fn deploy_fee_market<
+        Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
+        Arg1: ProxyArg<ManagedAddress<Env::Api>>,
+        Arg2: ProxyArg<ManagedAddress<Env::Api>>,
+    >(
+        self,
+        chain_id: Arg0,
+        esdt_safe_address: Arg1,
+        price_aggregator_address: Arg2,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("deployFeeMarket")
+            .argument(&chain_id)
+            .argument(&esdt_safe_address)
+            .argument(&price_aggregator_address)
+            .original_result()
+    }
+
     pub fn contracts_map<
         Arg0: ProxyArg<ScArray>,
     >(
