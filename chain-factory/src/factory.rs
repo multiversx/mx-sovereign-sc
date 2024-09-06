@@ -75,7 +75,9 @@ pub trait FactoryModule {
             chain_id,
         };
 
-        self.chain_info().set(chain_info);
+        if self.chain_info().is_empty() {
+            self.chain_info().set(chain_info);
+        }
     }
 
     #[only_owner]
@@ -152,6 +154,11 @@ pub trait FactoryModule {
         contracts_map: MultiValueEncoded<Self::Api, ContractMapArgs<Self::Api>>,
     ) {
         for contract in contracts_map {
+            require!(
+                self.contracts_map(contract.id.clone()).is_empty(),
+                "There is already a SC address registered for that contract ID"
+            );
+
             self.contracts_map(contract.id).set(contract.address);
         }
     }
