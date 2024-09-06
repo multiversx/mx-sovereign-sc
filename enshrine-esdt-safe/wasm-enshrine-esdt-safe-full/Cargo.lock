@@ -43,6 +43,7 @@ dependencies = [
  "bls-signature",
  "chain-config",
  "multiversx-sc",
+ "multiversx-sc-modules",
  "utils",
 ]
 

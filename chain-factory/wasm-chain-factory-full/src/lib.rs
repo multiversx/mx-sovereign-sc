@@ -6,9 +6,9 @@
 
 // Init:                                 1
 // Upgrade:                              1
-// Endpoints:                           13
+// Endpoints:                           17
 // Async Callback (empty):               1
-// Total number of exported functions:  16
+// Total number of exported functions:  20
 
 #![no_std]
 
@@ -33,6 +33,10 @@ multiversx_sc_wasm_adapter::endpoints! {
         setMinValidSigners => set_min_valid_signers
         addSigners => add_signers
         removeSigners => remove_signers
+        isAdmin => is_admin
+        addAdmin => add_admin
+        removeAdmin => remove_admin
+        getAdmins => admins
     )
 }
 

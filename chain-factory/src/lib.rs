@@ -1,5 +1,7 @@
 #![no_std]
 
+use multiversx_sc_modules::only_admin;
+
 multiversx_sc::imports!();
 
 pub mod factory;
@@ -7,7 +9,11 @@ pub mod slash;
 
 #[multiversx_sc::contract]
 pub trait ChainFactoryContract:
-    factory::FactoryModule + slash::SlashModule + utils::UtilsModule + bls_signature::BlsSignatureModule
+    factory::FactoryModule
+    + slash::SlashModule
+    + utils::UtilsModule
+    + bls_signature::BlsSignatureModule
+    + only_admin::OnlyAdminModule
 {
     #[init]
     fn init(

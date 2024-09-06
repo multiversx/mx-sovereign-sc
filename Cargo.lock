@@ -153,6 +153,7 @@ dependencies = [
  "bls-signature",
  "chain-config",
  "multiversx-sc",
+ "multiversx-sc-modules",
  "multiversx-sc-scenario",
  "num-bigint",
  "utils",

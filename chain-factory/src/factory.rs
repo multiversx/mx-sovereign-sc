@@ -1,7 +1,8 @@
 use chain_config::StakeMultiArg;
 
+use multiversx_sc::imports::*;
+use multiversx_sc_modules::only_admin;
 multiversx_sc::derive_imports!();
-multiversx_sc::imports!();
 
 #[derive(TypeAbi, TopEncode, TopDecode, NestedEncode, NestedDecode, ManagedVecItem)]
 pub struct ContractMapArgs<M: ManagedTypeApi> {
@@ -28,7 +29,7 @@ pub enum ScArray {
 }
 
 #[multiversx_sc::module]
-pub trait FactoryModule {
+pub trait FactoryModule: only_admin::OnlyAdminModule {
     #[payable("EGLD")]
     #[endpoint(deploySovereignChainConfigContract)]
     fn deploy_sovereign_chain_config_contract(
@@ -60,6 +61,16 @@ pub trait FactoryModule {
             .code_metadata(metadata)
             .arguments_raw(args)
             .returns(ReturnsNewManagedAddress)
+            .sync_call();
+
+        let caller = self.blockchain().get_caller();
+        let mut set_admin_args = ManagedArgBuffer::new();
+        set_admin_args.push_arg(caller);
+
+        self.tx()
+            .to(&sc_address)
+            .raw_call("add_admin")
+            .arguments_raw(set_admin_args)
             .sync_call();
 
         let chain_id = self.generate_chain_id();
