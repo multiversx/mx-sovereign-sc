@@ -30,6 +30,7 @@ pub enum ScArray {
 
 #[multiversx_sc::module]
 pub trait FactoryModule: only_admin::OnlyAdminModule {
+    // TODO: Check if contract was already deployed
     #[payable("EGLD")]
     #[endpoint(deploySovereignChainConfigContract)]
     fn deploy_sovereign_chain_config_contract(
@@ -189,16 +190,6 @@ pub trait FactoryModule: only_admin::OnlyAdminModule {
         args.push_multi_arg(additional_stake_required);
 
         args
-    }
-
-    #[only_owner]
-    #[endpoint(blacklistSovereignChainSc)]
-    fn blacklist_sovereign_chain_sc(
-        &self,
-        chain_id: ManagedBuffer,
-        sc: ContractMapArgs<Self::Api>,
-    ) {
-        self.all_deployed_contracts(chain_id).swap_remove(&sc);
     }
 
     fn generate_chain_id(&self) -> ManagedBuffer {
