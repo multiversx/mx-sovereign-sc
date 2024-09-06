@@ -187,8 +187,7 @@ pub trait FactoryModule: only_admin::OnlyAdminModule {
         source_address: ManagedAddress,
         args: ManagedArgBuffer<Self::Api>,
     ) -> ManagedAddress {
-        let metadata =
-            CodeMetadata::PAYABLE_BY_SC | CodeMetadata::UPGRADEABLE | CodeMetadata::READABLE;
+        let metadata = self.blockchain().get_code_metadata(&source_address);
 
         self.tx()
             .raw_deploy()
