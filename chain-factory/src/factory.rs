@@ -49,8 +49,6 @@ pub trait FactoryModule: only_admin::OnlyAdminModule {
         require!(payment_amount == deploy_cost, "Invalid payment amount");
 
         let source_address = self.chain_config_template().get();
-        let metadata =
-            CodeMetadata::PAYABLE_BY_SC | CodeMetadata::UPGRADEABLE | CodeMetadata::READABLE;
         let args = self.get_deploy_chain_config_args(
             &min_validators,
             &max_validators,
@@ -58,32 +56,24 @@ pub trait FactoryModule: only_admin::OnlyAdminModule {
             &additional_stake_required,
         );
 
-        let sc_address = self
-            .tx()
-            .raw_deploy()
-            .from_source(source_address)
-            .code_metadata(metadata)
-            .arguments_raw(args)
-            .returns(ReturnsNewManagedAddress)
-            .sync_call();
+        let chain_config_address = self.deploy_contract(source_address, args);
 
         let caller = self.blockchain().get_caller();
         let mut set_admin_args = ManagedArgBuffer::new();
         set_admin_args.push_arg(&caller);
 
         self.tx()
-            .to(&sc_address)
+            .to(&chain_config_address)
             .raw_call("add_admin")
             .arguments_raw(set_admin_args)
             .sync_call();
 
         let chain_id = self.generate_chain_id();
-
-        self.all_deployed_contracts(chain_id.clone())
-            .insert(ContractMapArgs {
-                id: ScArray::ChainConfig,
-                address: sc_address,
-            });
+        self.set_deployed_contract_to_storage(
+            chain_id.clone(),
+            ScArray::ChainConfig,
+            chain_config_address,
+        );
 
         let chain_info = ChainInfo {
             name: chain_name,
@@ -121,26 +111,16 @@ pub trait FactoryModule: only_admin::OnlyAdminModule {
         bls_pub_keys: MultiValueEncoded<ManagedBuffer>,
     ) {
         let source_address = self.header_verifier_template().get();
-        let metadata =
-            CodeMetadata::PAYABLE_BY_SC | CodeMetadata::UPGRADEABLE | CodeMetadata::READABLE;
 
         let mut args = ManagedArgBuffer::new();
         args.push_multi_arg(&bls_pub_keys);
 
-        let header_verifier_address = self
-            .tx()
-            .raw_deploy()
-            .from_source(source_address)
-            .code_metadata(metadata)
-            .arguments_raw(args)
-            .returns(ReturnsNewManagedAddress)
-            .sync_call();
-
-        self.all_deployed_contracts(chain_id)
-            .insert(ContractMapArgs {
-                id: ScArray::SovereignHeaderVerifier,
-                address: header_verifier_address,
-            });
+        let header_verifier_address = self.deploy_contract(source_address, args);
+        self.set_deployed_contract_to_storage(
+            chain_id,
+            ScArray::SovereignHeaderVerifier,
+            header_verifier_address,
+        );
     }
 
     #[only_admin]
@@ -155,29 +135,18 @@ pub trait FactoryModule: only_admin::OnlyAdminModule {
         let source_address = self.cross_chain_operations_template().get();
         let token_handler_address = self.token_handler_template().get();
 
-        let metadata =
-            CodeMetadata::PAYABLE_BY_SC | CodeMetadata::UPGRADEABLE | CodeMetadata::READABLE;
-
         let mut args = ManagedArgBuffer::new();
         args.push_arg(is_sovereign_chain);
         args.push_arg(token_handler_address);
         args.push_arg(opt_wegld_identifier);
         args.push_arg(opt_sov_token_prefix);
 
-        let cross_chain_operations_address = self
-            .tx()
-            .raw_deploy()
-            .from_source(source_address)
-            .code_metadata(metadata)
-            .arguments_raw(args)
-            .returns(ReturnsNewManagedAddress)
-            .sync_call();
-
-        self.all_deployed_contracts(chain_id)
-            .insert(ContractMapArgs {
-                id: ScArray::SovereignCrossChainOperation,
-                address: cross_chain_operations_address,
-            });
+        let cross_chain_operations_address = self.deploy_contract(source_address, args);
+        self.set_deployed_contract_to_storage(
+            chain_id,
+            ScArray::SovereignCrossChainOperation,
+            cross_chain_operations_address,
+        );
     }
 
     #[only_admin]
@@ -190,51 +159,59 @@ pub trait FactoryModule: only_admin::OnlyAdminModule {
     ) {
         let source_address = self.fee_market_template().get();
 
-        let metadata =
-            CodeMetadata::PAYABLE_BY_SC | CodeMetadata::UPGRADEABLE | CodeMetadata::READABLE;
-
         let mut args = ManagedArgBuffer::new();
         args.push_arg(esdt_safe_address);
         args.push_arg(price_aggregator_address);
 
-        let fee_market_address = self
-            .tx()
-            .raw_deploy()
-            .from_source(source_address)
-            .code_metadata(metadata)
-            .arguments_raw(args)
-            .returns(ReturnsNewManagedAddress)
-            .sync_call();
-
-        self.all_deployed_contracts(chain_id)
-            .insert(ContractMapArgs {
-                id: ScArray::FeeMarket,
-                address: fee_market_address,
-            });
+        let fee_market_address = self.deploy_contract(source_address, args);
+        self.set_deployed_contract_to_storage(chain_id, ScArray::FeeMarket, fee_market_address);
     }
 
     #[only_admin]
     #[endpoint(deployTokenHandler)]
     fn deploy_token_handler(&self, chain_id: ManagedBuffer) {
         let source_address = self.fee_market_template().get();
+        let args = ManagedArgBuffer::new();
 
+        let token_handler_address = self.deploy_contract(source_address, args);
+
+        self.set_deployed_contract_to_storage(
+            chain_id,
+            ScArray::TokenHandler,
+            token_handler_address,
+        )
+    }
+
+    fn deploy_contract(
+        &self,
+        source_address: ManagedAddress,
+        args: ManagedArgBuffer<Self::Api>,
+    ) -> ManagedAddress {
         let metadata =
             CodeMetadata::PAYABLE_BY_SC | CodeMetadata::UPGRADEABLE | CodeMetadata::READABLE;
 
-        let fee_market_address = self
-            .tx()
+        self.tx()
             .raw_deploy()
             .from_source(source_address)
             .code_metadata(metadata)
+            .arguments_raw(args)
             .returns(ReturnsNewManagedAddress)
-            .sync_call();
+            .sync_call()
+    }
 
+    fn set_deployed_contract_to_storage(
+        &self,
+        chain_id: ManagedBuffer,
+        contract_id: ScArray,
+        contract_address: ManagedAddress,
+    ) {
         self.all_deployed_contracts(chain_id)
             .insert(ContractMapArgs {
-                id: ScArray::TokenHandler,
-                address: fee_market_address,
+                id: contract_id,
+                address: contract_address,
             });
     }
+
     fn get_deploy_chain_config_args(
         &self,
         min_validators: &usize,
