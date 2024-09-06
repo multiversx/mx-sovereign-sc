@@ -16,6 +16,7 @@ struct ChainInfo<M: ManagedTypeApi> {
     chain_id: ManagedBuffer<M>,
 }
 
+// TODO: Is fee market needed here?
 #[derive(
     TypeAbi, TopEncode, TopDecode, NestedEncode, NestedDecode, Clone, ManagedVecItem, PartialEq,
 )]
@@ -24,6 +25,7 @@ pub enum ScArray {
     Controller,
     SovereignHeaderVerifier,
     SovereignCrossChainOperation,
+    FeeMarket,
     ChainConfig,
     Slashing,
 }
@@ -205,7 +207,7 @@ pub trait FactoryModule: only_admin::OnlyAdminModule {
 
         self.all_deployed_contracts(chain_id)
             .insert(ContractMapArgs {
-                id: ScArray::SovereignCrossChainOperation,
+                id: ScArray::FeeMarket,
                 address: fee_market_address,
             });
     }
