@@ -17,9 +17,8 @@ struct ChainInfo<M: ManagedTypeApi> {
 }
 
 // TODO: Is fee market needed here?
-#[derive(
-    TypeAbi, TopEncode, TopDecode, NestedEncode, NestedDecode, Clone, ManagedVecItem, PartialEq,
-)]
+#[type_abi]
+#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, Clone, ManagedVecItem, PartialEq)]
 pub enum ScArray {
     ChainFactory,
     Controller,
