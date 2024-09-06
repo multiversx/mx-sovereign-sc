@@ -159,23 +159,20 @@ where
     pub fn deploy_cross_chain_operation<
         Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
         Arg1: ProxyArg<bool>,
-        Arg2: ProxyArg<ManagedAddress<Env::Api>>,
-        Arg3: ProxyArg<Option<TokenIdentifier<Env::Api>>>,
-        Arg4: ProxyArg<Option<ManagedBuffer<Env::Api>>>,
+        Arg2: ProxyArg<Option<TokenIdentifier<Env::Api>>>,
+        Arg3: ProxyArg<Option<ManagedBuffer<Env::Api>>>,
     >(
         self,
         chain_id: Arg0,
         is_sovereign_chain: Arg1,
-        token_handler_address: Arg2,
-        opt_wegld_identifier: Arg3,
-        opt_sov_token_prefix: Arg4,
+        opt_wegld_identifier: Arg2,
+        opt_sov_token_prefix: Arg3,
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("deployCrossChainOperation")
             .argument(&chain_id)
             .argument(&is_sovereign_chain)
-            .argument(&token_handler_address)
             .argument(&opt_wegld_identifier)
             .argument(&opt_sov_token_prefix)
             .original_result()

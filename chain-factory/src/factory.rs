@@ -149,11 +149,11 @@ pub trait FactoryModule: only_admin::OnlyAdminModule {
         &self,
         chain_id: ManagedBuffer,
         is_sovereign_chain: bool,
-        token_handler_address: ManagedAddress,
         opt_wegld_identifier: Option<TokenIdentifier>,
         opt_sov_token_prefix: Option<ManagedBuffer>,
     ) {
         let source_address = self.cross_chain_operations_template().get();
+        let token_handler_address = self.token_handler_template().get();
 
         let metadata =
             CodeMetadata::PAYABLE_BY_SC | CodeMetadata::UPGRADEABLE | CodeMetadata::READABLE;
