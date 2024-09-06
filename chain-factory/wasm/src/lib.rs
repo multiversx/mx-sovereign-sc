@@ -24,10 +24,10 @@ multiversx_sc_wasm_adapter::endpoints! {
         deployHeaderVerifier => deploy_header_verifier
         deployCrossChainOperation => deploy_cross_chain_operation
         addContractsToMap => add_contracts_to_map
-        blacklistSovereignChainSc => blacklist_sovereign_chain_sc
         getContractsMap => contracts_map
         getDeployCost => deploy_cost
         getCurrentChainInfo => chain_info
+        getAllChainIds => chain_ids
         slash => slash
         distributeSlashed => distribute_slashed
         setMinValidSigners => set_min_valid_signers

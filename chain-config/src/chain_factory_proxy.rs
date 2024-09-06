@@ -169,22 +169,6 @@ where
             .original_result()
     }
 
-    pub fn blacklist_sovereign_chain_sc<
-        Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
-        Arg1: ProxyArg<ContractMapArgs<Env::Api>>,
-    >(
-        self,
-        chain_id: Arg0,
-        sc: Arg1,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("blacklistSovereignChainSc")
-            .argument(&chain_id)
-            .argument(&sc)
-            .original_result()
-    }
-
     pub fn contracts_map<
         Arg0: ProxyArg<ScArray>,
     >(
@@ -213,6 +197,15 @@ where
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("getCurrentChainInfo")
+            .original_result()
+    }
+
+    pub fn chain_ids(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, MultiValueEncoded<Env::Api, ManagedBuffer<Env::Api>>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getAllChainIds")
             .original_result()
     }
 
