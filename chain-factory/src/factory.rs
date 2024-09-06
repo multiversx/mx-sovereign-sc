@@ -4,7 +4,7 @@ multiversx_sc::derive_imports!();
 multiversx_sc::imports!();
 
 #[derive(TypeAbi, TopEncode, TopDecode, NestedEncode, NestedDecode, ManagedVecItem)]
-struct ContractMapArgs<M: ManagedTypeApi> {
+pub struct ContractMapArgs<M: ManagedTypeApi> {
     id: ScArray,
     address: ManagedAddress<M>,
 }
