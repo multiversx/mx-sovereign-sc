@@ -58,6 +58,9 @@ pub trait EnshrineEsdtSafe:
             Some(prefix) => self.sovereign_tokens_prefix().set(prefix),
             None => sc_panic!("Sovereign Token Prefix must be set in Mainchain"),
         }
+
+        let caller = self.blockchain().get_caller();
+        self.initiator_address().set(caller);
     }
 
     #[only_owner]

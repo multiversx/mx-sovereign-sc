@@ -44,10 +44,10 @@ pub trait CreateTxModule:
         for payment in &payments {
             self.require_below_max_amount(&payment.token_identifier, &payment.amount);
             self.require_token_not_blacklisted(&payment.token_identifier);
+            let is_token_whitelist_empty = self.token_whitelist().is_empty();
+            let is_token_whitelisted = self.token_whitelist().contains(&payment.token_identifier);
 
-            if !self.token_whitelist().is_empty()
-                && !self.token_whitelist().contains(&payment.token_identifier)
-            {
+            if !is_token_whitelist_empty && !is_token_whitelisted {
                 refundable_payments.push(payment.clone());
 
                 continue;

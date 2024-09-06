@@ -302,6 +302,19 @@ impl EnshrineTestState {
             .run();
     }
 
+    fn propose_add_token_to_whitelist(
+        &mut self,
+        tokens: MultiValueEncoded<StaticApi, TokenIdentifier<StaticApi>>,
+    ) {
+        self.world
+            .tx()
+            .from(ENSHRINE_ESDT_OWNER_ADDRESS)
+            .to(ENSHRINE_ESDT_ADDRESS)
+            .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
+            .add_tokens_to_whitelist(tokens)
+            .run();
+    }
+
     fn propose_register_tokens(
         &mut self,
         sender: &TestAddress,
@@ -626,6 +639,8 @@ fn test_deposit_no_transfer_data() {
     let wegld_payment = EsdtTokenPayment::new(WEGLD_IDENTIFIER.into(), 0, amount.clone());
     let crowd_payment = EsdtTokenPayment::new(CROWD_TOKEN_ID.into(), 0, amount);
     let mut payments = PaymentsVec::new();
+    let mut tokens_whitelist = MultiValueEncoded::new();
+    tokens_whitelist.push(WEGLD_IDENTIFIER.into());
 
     payments.push(wegld_payment);
     payments.push(crowd_payment);
@@ -637,6 +652,7 @@ fn test_deposit_no_transfer_data() {
     };
 
     state.propose_setup_contracts(false, true, Some(WEGLD_IDENTIFIER), Some(fee_type));
+    state.propose_add_token_to_whitelist(tokens_whitelist);
     state.propose_deposit(
         ENSHRINE_ESDT_OWNER_ADDRESS,
         USER_ADDRESS,
@@ -655,7 +671,7 @@ fn test_deposit_no_transfer_data() {
     state
         .world
         .check_account(ENSHRINE_ESDT_OWNER_ADDRESS)
-        .esdt_balance(CROWD_TOKEN_ID, &expected_wegld_amount);
+        .esdt_balance(CROWD_TOKEN_ID, &BigUint::from(WEGLD_BALANCE));
 }
 
 #[test]
