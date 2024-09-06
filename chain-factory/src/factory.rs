@@ -26,6 +26,7 @@ pub enum ScArray {
     SovereignHeaderVerifier,
     SovereignCrossChainOperation,
     FeeMarket,
+    TokenHandler,
     ChainConfig,
     Slashing,
 }
@@ -212,6 +213,28 @@ pub trait FactoryModule: only_admin::OnlyAdminModule {
             });
     }
 
+    #[only_admin]
+    #[endpoint(deployTokenHandler)]
+    fn deploy_token_handler(&self, chain_id: ManagedBuffer) {
+        let source_address = self.fee_market_template().get();
+
+        let metadata =
+            CodeMetadata::PAYABLE_BY_SC | CodeMetadata::UPGRADEABLE | CodeMetadata::READABLE;
+
+        let fee_market_address = self
+            .tx()
+            .raw_deploy()
+            .from_source(source_address)
+            .code_metadata(metadata)
+            .returns(ReturnsNewManagedAddress)
+            .sync_call();
+
+        self.all_deployed_contracts(chain_id)
+            .insert(ContractMapArgs {
+                id: ScArray::TokenHandler,
+                address: fee_market_address,
+            });
+    }
     fn get_deploy_chain_config_args(
         &self,
         min_validators: &usize,
@@ -272,6 +295,9 @@ pub trait FactoryModule: only_admin::OnlyAdminModule {
 
     #[storage_mapper("feeMarketTemplate")]
     fn fee_market_template(&self) -> SingleValueMapper<ManagedAddress>;
+
+    #[storage_mapper("tokenHandlerTemplate")]
+    fn token_handler_template(&self) -> SingleValueMapper<ManagedAddress>;
 
     #[storage_mapper("allDeployedContracts")]
     fn all_deployed_contracts(

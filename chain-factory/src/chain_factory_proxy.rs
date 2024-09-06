@@ -46,18 +46,30 @@ where
     pub fn init<
         Arg0: ProxyArg<ManagedAddress<Env::Api>>,
         Arg1: ProxyArg<ManagedAddress<Env::Api>>,
-        Arg2: ProxyArg<BigUint<Env::Api>>,
+        Arg2: ProxyArg<ManagedAddress<Env::Api>>,
+        Arg3: ProxyArg<ManagedAddress<Env::Api>>,
+        Arg4: ProxyArg<ManagedAddress<Env::Api>>,
+        Arg5: ProxyArg<ManagedAddress<Env::Api>>,
+        Arg6: ProxyArg<BigUint<Env::Api>>,
     >(
         self,
         validators_contract_address: Arg0,
         chain_config_template: Arg1,
-        deploy_cost: Arg2,
+        header_verifier_template: Arg2,
+        cross_chain_operation_template: Arg3,
+        fee_market_template: Arg4,
+        token_handler_template: Arg5,
+        deploy_cost: Arg6,
     ) -> TxTypedDeploy<Env, From, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_deploy()
             .argument(&validators_contract_address)
             .argument(&chain_config_template)
+            .argument(&header_verifier_template)
+            .argument(&cross_chain_operation_template)
+            .argument(&fee_market_template)
+            .argument(&token_handler_template)
             .argument(&deploy_cost)
             .original_result()
     }
@@ -185,6 +197,19 @@ where
             .argument(&chain_id)
             .argument(&esdt_safe_address)
             .argument(&price_aggregator_address)
+            .original_result()
+    }
+
+    pub fn deploy_token_handler<
+        Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
+    >(
+        self,
+        chain_id: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("deployTokenHandler")
+            .argument(&chain_id)
             .original_result()
     }
 
@@ -368,6 +393,8 @@ pub enum ScArray {
     Controller,
     SovereignHeaderVerifier,
     SovereignCrossChainOperation,
+    FeeMarket,
+    TokenHandler,
     ChainConfig,
     Slashing,
 }
