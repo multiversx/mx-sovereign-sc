@@ -21,9 +21,9 @@ multiversx_sc_wasm_adapter::endpoints! {
         init => init
         upgrade => upgrade
         deploySovereignChainConfigContract => deploy_sovereign_chain_config_contract
+        addContractsToMap => add_contracts_to_map
         deployHeaderVerifier => deploy_header_verifier
         deployCrossChainOperation => deploy_cross_chain_operation
-        addContractsToMap => add_contracts_to_map
         getContractsMap => contracts_map
         getDeployCost => deploy_cost
         getCurrentChainInfo => current_chain_info

@@ -115,6 +115,19 @@ where
             .original_result()
     }
 
+    pub fn add_contracts_to_map<
+        Arg0: ProxyArg<MultiValueEncoded<Env::Api, ContractMapArgs<Env::Api>>>,
+    >(
+        self,
+        contracts_map: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("addContractsToMap")
+            .argument(&contracts_map)
+            .original_result()
+    }
+
     pub fn deploy_header_verifier<
         Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
         Arg1: ProxyArg<MultiValueEncoded<Env::Api, ManagedBuffer<Env::Api>>>,
@@ -153,19 +166,6 @@ where
             .argument(&token_handler_address)
             .argument(&opt_wegld_identifier)
             .argument(&opt_sov_token_prefix)
-            .original_result()
-    }
-
-    pub fn add_contracts_to_map<
-        Arg0: ProxyArg<MultiValueEncoded<Env::Api, ContractMapArgs<Env::Api>>>,
-    >(
-        self,
-        contracts_map: Arg0,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("addContractsToMap")
-            .argument(&contracts_map)
             .original_result()
     }
 

@@ -66,7 +66,7 @@ pub trait FactoryModule: only_admin::OnlyAdminModule {
 
         let caller = self.blockchain().get_caller();
         let mut set_admin_args = ManagedArgBuffer::new();
-        set_admin_args.push_arg(caller);
+        set_admin_args.push_arg(&caller);
 
         self.tx()
             .to(&sc_address)
@@ -90,9 +90,27 @@ pub trait FactoryModule: only_admin::OnlyAdminModule {
         if self.current_chain_info().is_empty() {
             self.current_chain_info().set(chain_info);
         }
+
+        self.add_admin(caller);
     }
 
     #[only_owner]
+    #[endpoint(addContractsToMap)]
+    fn add_contracts_to_map(
+        &self,
+        contracts_map: MultiValueEncoded<Self::Api, ContractMapArgs<Self::Api>>,
+    ) {
+        for contract in contracts_map {
+            require!(
+                self.contracts_map(contract.id.clone()).is_empty(),
+                "There is already a SC address registered for that contract ID"
+            );
+
+            self.contracts_map(contract.id).set(contract.address);
+        }
+    }
+
+    #[only_admin]
     #[endpoint(deployHeaderVerifier)]
     fn deploy_header_verifier(
         &self,
@@ -122,7 +140,7 @@ pub trait FactoryModule: only_admin::OnlyAdminModule {
             });
     }
 
-    #[only_owner]
+    #[only_admin]
     #[endpoint(deployCrossChainOperation)]
     fn deploy_cross_chain_operation(
         &self,
@@ -157,22 +175,6 @@ pub trait FactoryModule: only_admin::OnlyAdminModule {
                 id: ScArray::SovereignCrossChainOperation,
                 address: cross_chain_operations_address,
             });
-    }
-
-    #[only_owner]
-    #[endpoint(addContractsToMap)]
-    fn add_contracts_to_map(
-        &self,
-        contracts_map: MultiValueEncoded<Self::Api, ContractMapArgs<Self::Api>>,
-    ) {
-        for contract in contracts_map {
-            require!(
-                self.contracts_map(contract.id.clone()).is_empty(),
-                "There is already a SC address registered for that contract ID"
-            );
-
-            self.contracts_map(contract.id).set(contract.address);
-        }
     }
 
     fn get_deploy_chain_config_args(
