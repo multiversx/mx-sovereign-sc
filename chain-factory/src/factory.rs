@@ -193,6 +193,17 @@ pub trait FactoryModule: only_admin::OnlyAdminModule {
     }
 
     fn generate_chain_id(&self) -> ManagedBuffer {
+        loop {
+            let new_chain_id = self.generated_random_2_char_string();
+            if !self.chain_ids().contains(&new_chain_id) {
+                self.chain_ids().insert(new_chain_id.clone());
+
+                return new_chain_id;
+            }
+        }
+    }
+
+    fn generated_random_2_char_string(&self) -> ManagedBuffer {
         let mut byte_array: [u8; 2] = [0; 2];
         let charset: &[u8] = b"0123456789abcdefghijklmnopqrstuvwxyz";
         let mut rand = RandomnessSource::new();
@@ -231,4 +242,8 @@ pub trait FactoryModule: only_admin::OnlyAdminModule {
     #[view(getCurrentChainInfo)]
     #[storage_mapper("currentChainInfo")]
     fn chain_info(&self) -> SingleValueMapper<ChainInfo<Self::Api>>;
+
+    #[view(getAllChainIds)]
+    #[storage_mapper("allChainIds")]
+    fn chain_ids(&self) -> UnorderedSetMapper<ManagedBuffer>;
 }
