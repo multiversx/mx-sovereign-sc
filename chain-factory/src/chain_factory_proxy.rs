@@ -191,7 +191,7 @@ where
             .original_result()
     }
 
-    pub fn chain_info(
+    pub fn current_chain_info(
         self,
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ChainInfo<Env::Api>> {
         self.wrapped_tx

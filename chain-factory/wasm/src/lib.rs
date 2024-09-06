@@ -26,7 +26,7 @@ multiversx_sc_wasm_adapter::endpoints! {
         addContractsToMap => add_contracts_to_map
         getContractsMap => contracts_map
         getDeployCost => deploy_cost
-        getCurrentChainInfo => chain_info
+        getCurrentChainInfo => current_chain_info
         getAllChainIds => chain_ids
         slash => slash
         distributeSlashed => distribute_slashed

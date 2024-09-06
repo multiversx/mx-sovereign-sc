@@ -87,8 +87,8 @@ pub trait FactoryModule: only_admin::OnlyAdminModule {
             chain_id,
         };
 
-        if self.chain_info().is_empty() {
-            self.chain_info().set(chain_info);
+        if self.current_chain_info().is_empty() {
+            self.current_chain_info().set(chain_info);
         }
     }
 
@@ -241,7 +241,7 @@ pub trait FactoryModule: only_admin::OnlyAdminModule {
 
     #[view(getCurrentChainInfo)]
     #[storage_mapper("currentChainInfo")]
-    fn chain_info(&self) -> SingleValueMapper<ChainInfo<Self::Api>>;
+    fn current_chain_info(&self) -> SingleValueMapper<ChainInfo<Self::Api>>;
 
     #[view(getAllChainIds)]
     #[storage_mapper("allChainIds")]
