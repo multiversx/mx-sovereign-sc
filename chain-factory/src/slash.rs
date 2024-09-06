@@ -1,7 +1,10 @@
+use multiversx_sc_modules::only_admin;
+
 multiversx_sc::imports!();
 
 pub type DestAmountPairs<M> = MultiValueEncoded<M, MultiValue2<ManagedAddress<M>, BigUint<M>>>;
 
+//TODO: Remove old proxy
 mod validators_contract_proxy {
     use super::DestAmountPairs;
 
@@ -18,11 +21,11 @@ mod validators_contract_proxy {
 }
 
 #[multiversx_sc::module]
-pub trait SlashModule: crate::factory::FactoryModule {
+pub trait SlashModule: crate::factory::FactoryModule + only_admin::OnlyAdminModule {
     #[endpoint]
-    fn slash(&self, validator_address: ManagedAddress, value: BigUint) {
-        let caller = self.blockchain().get_caller();
-        self.require_deployed_sc(&caller);
+    fn slash(&self, _chain_id: ManagedBuffer, validator_address: ManagedAddress, value: BigUint) {
+        // let caller = self.blockchain().get_caller();
+        // self.require_deployed_sc(chain_id, &caller);
 
         let validators_contract_address = self.validators_contract_address().get();
         let _: IgnoreValue = self
@@ -32,9 +35,13 @@ pub trait SlashModule: crate::factory::FactoryModule {
     }
 
     #[endpoint(distributeSlashed)]
-    fn distribute_slashed(&self, dest_amount_pairs: DestAmountPairs<Self::Api>) {
-        let caller = self.blockchain().get_caller();
-        self.require_deployed_sc(&caller);
+    fn distribute_slashed(
+        &self,
+        _chain_id: ManagedBuffer,
+        dest_amount_pairs: DestAmountPairs<Self::Api>,
+    ) {
+        // let caller = self.blockchain().get_caller();
+        // self.require_deployed_sc(chain_id, &caller);
 
         let validators_contract_address = self.validators_contract_address().get();
         let _: IgnoreValue = self
@@ -43,12 +50,12 @@ pub trait SlashModule: crate::factory::FactoryModule {
             .execute_on_dest_context();
     }
 
-    fn require_deployed_sc(&self, address: &ManagedAddress) {
-        require!(
-            self.all_deployed_contracts().contains(address),
-            "Only deployed contracts may call this endpoint"
-        );
-    }
+    // fn require_deployed_sc(&self, chain_id: ManagedBuffer, sc: ContractMapArgs<Self::Api>) {
+    //     require!(
+    //         self.all_deployed_contracts(chain_id).contains(&sc),
+    //         "Only deployed contracts may call this endpoint"
+    //     );
+    // }
 
     #[proxy]
     fn validator_proxy(
