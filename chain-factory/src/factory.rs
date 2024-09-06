@@ -65,7 +65,10 @@ pub trait FactoryModule {
         let chain_id = self.generate_chain_id();
 
         self.all_deployed_contracts(chain_id.clone())
-            .insert(sc_address);
+            .insert(ContractMapArgs {
+                id: ScArray::ChainConfig,
+                address: sc_address,
+            });
 
         let chain_info = ChainInfo {
             name: chain_name,
@@ -99,7 +102,10 @@ pub trait FactoryModule {
             .sync_call();
 
         self.all_deployed_contracts(chain_id)
-            .insert(header_verifier_address);
+            .insert(ContractMapArgs {
+                id: ScArray::SovereignHeaderVerifier,
+                address: header_verifier_address,
+            });
     }
 
     #[only_owner]
@@ -133,7 +139,10 @@ pub trait FactoryModule {
             .sync_call();
 
         self.all_deployed_contracts(chain_id)
-            .insert(cross_chain_operations_address);
+            .insert(ContractMapArgs {
+                id: ScArray::SovereignCrossChainOperation,
+                address: cross_chain_operations_address,
+            });
     }
 
     #[only_owner]
@@ -166,10 +175,12 @@ pub trait FactoryModule {
 
     #[only_owner]
     #[endpoint(blacklistSovereignChainSc)]
-    fn blacklist_sovereign_chain_sc(&self, chain_id: ManagedBuffer, sc_address: ManagedAddress) {
-        let _ = self
-            .all_deployed_contracts(chain_id)
-            .swap_remove(&sc_address);
+    fn blacklist_sovereign_chain_sc(
+        &self,
+        chain_id: ManagedBuffer,
+        sc: ContractMapArgs<Self::Api>,
+    ) {
+        self.all_deployed_contracts(chain_id).swap_remove(&sc);
     }
 
     fn generate_chain_id(&self) -> ManagedBuffer {
@@ -203,8 +214,10 @@ pub trait FactoryModule {
     fn cross_chain_operations_template(&self) -> SingleValueMapper<ManagedAddress>;
 
     #[storage_mapper("allDeployedContracts")]
-    fn all_deployed_contracts(&self, chain_id: ManagedBuffer)
-        -> UnorderedSetMapper<ManagedAddress>;
+    fn all_deployed_contracts(
+        &self,
+        chain_id: ManagedBuffer,
+    ) -> UnorderedSetMapper<ContractMapArgs<Self::Api>>;
 
     #[view(getCurrentChainInfo)]
     #[storage_mapper("currentChainInfo")]
