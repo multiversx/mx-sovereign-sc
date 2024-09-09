@@ -60,7 +60,7 @@ impl HeaderVerifierTestState {
         self.world.sc_deploy(
             ScDeployStep::new()
                 .from(OWNER_ADDRESS_EXPR)
-                .code(header_verifier_code), 
+                .code(header_verifier_code),
         );
 
         self

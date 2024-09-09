@@ -1,7 +1,5 @@
 #![no_std]
 
-use bls_signature::BlsSignature;
-
 multiversx_sc::imports!();
 
 #[multiversx_sc::module]
@@ -12,7 +10,7 @@ pub trait TokenWhitelistModule:
     #[endpoint(addTokensToWhitelist)]
     fn add_tokens_to_whitelist(
         &self,
-        opt_signature: Option<BlsSignature<Self::Api>>,
+        // opt_signature: Option<BlsSignature<Self::Api>>,
         tokens: MultiValueEncoded<TokenIdentifier>,
     ) {
         if !self.is_setup_phase_complete() {
@@ -22,14 +20,14 @@ pub trait TokenWhitelistModule:
             return;
         }
 
-        let token_list = self.verify_items_signature(opt_signature, tokens);
-        self.token_whitelist().extend(&token_list);
+        // let token_list = self.verify_items_signature(opt_signature, tokens);
+        self.token_whitelist().extend(tokens);
     }
 
     #[endpoint(removeTokensFromWhitelist)]
     fn remove_tokens_from_whitelist(
         &self,
-        opt_signature: Option<BlsSignature<Self::Api>>,
+        // opt_signature: Option<BlsSignature<Self::Api>>,
         tokens: MultiValueEncoded<TokenIdentifier>,
     ) {
         if !self.is_setup_phase_complete() {
@@ -39,8 +37,8 @@ pub trait TokenWhitelistModule:
             return;
         }
 
-        let token_list = self.verify_items_signature(opt_signature, tokens);
-        self.remove_items(&mut self.token_whitelist(), &token_list);
+        // let token_list = self.verify_items_signature(opt_signature, tokens);
+        self.remove_items(&mut self.token_whitelist(), tokens);
     }
 
     fn require_token_not_blacklisted(&self, token_id: &TokenIdentifier) {
@@ -54,7 +52,7 @@ pub trait TokenWhitelistModule:
     #[endpoint(addTokensToBlacklist)]
     fn add_tokens_to_blacklist(
         &self,
-        opt_signature: Option<BlsSignature<Self::Api>>,
+        // opt_signature: Option<BlsSignature<Self::Api>>,
         tokens: MultiValueEncoded<TokenIdentifier>,
     ) {
         if !self.is_setup_phase_complete() {
@@ -64,16 +62,12 @@ pub trait TokenWhitelistModule:
             return;
         }
 
-        let token_list = self.verify_items_signature(opt_signature, tokens);
-        self.token_blacklist().extend(&token_list);
+        // let token_list = self.verify_items_signature(opt_signature, tokens);
+        self.token_blacklist().extend(tokens);
     }
 
     #[endpoint(removeTokensFromBlacklist)]
-    fn remove_tokens_from_blacklist(
-        &self,
-        opt_signature: Option<BlsSignature<Self::Api>>,
-        tokens: MultiValueEncoded<TokenIdentifier>,
-    ) {
+    fn remove_tokens_from_blacklist(&self, tokens: MultiValueEncoded<TokenIdentifier>) {
         if !self.is_setup_phase_complete() {
             self.require_caller_initiator();
             self.remove_items(&mut self.token_blacklist(), tokens);
@@ -81,8 +75,7 @@ pub trait TokenWhitelistModule:
             return;
         }
 
-        let token_list = self.verify_items_signature(opt_signature, tokens);
-        self.remove_items(&mut self.token_blacklist(), &token_list);
+        self.remove_items(&mut self.token_blacklist(), tokens);
     }
 
     #[view(getTokenWhitelist)]

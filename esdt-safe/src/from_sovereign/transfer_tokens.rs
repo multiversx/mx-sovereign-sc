@@ -1,5 +1,6 @@
+use builtin_func_names::ESDT_MULTI_TRANSFER_FUNC_NAME;
 use header_verifier::header_verifier_proxy;
-use multiversx_sc::{api::ESDT_MULTI_TRANSFER_FUNC_NAME, storage::StorageKey};
+use multiversx_sc::storage::StorageKey;
 use transaction::{GasLimit, Operation, OperationData, OperationEsdtPayment, OperationTuple};
 
 use crate::to_sovereign;
@@ -218,6 +219,7 @@ pub trait TransferTokensModule:
         }
 
         let header_verifier_address = self.header_verifier_address().get();
+
         self.tx()
             .to(header_verifier_address)
             .typed(header_verifier_proxy::HeaderverifierProxy)
@@ -270,7 +272,9 @@ pub trait TransferTokensModule:
 
         self.deposit_event(
             &operation_tuple.operation.data.op_sender,
-            &operation_tuple.operation.get_tokens_as_tuple_arr(),
+            &operation_tuple
+                .operation
+                .get_tokens_as_multi_value_encoded(),
             OperationData {
                 op_nonce: tx_nonce,
                 op_sender: sc_address.clone(),
