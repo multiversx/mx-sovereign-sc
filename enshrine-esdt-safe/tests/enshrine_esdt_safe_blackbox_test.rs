@@ -747,11 +747,12 @@ fn test_deposit_with_transfer_data_banned_endpoint() {
 }
 
 #[test]
-fn test_deposit_with_transfer_data() {
+fn test_deposit_with_transfer_data_enough_for_fee() {
     let mut state = EnshrineTestState::new();
-    let amount = BigUint::from(10000u64);
+    let amount = BigUint::from(1000000000000000u128);
     let wegld_payment = EsdtTokenPayment::new(WEGLD_IDENTIFIER.into(), 0, amount.clone());
-    let crowd_payment = EsdtTokenPayment::new(CROWD_TOKEN_ID.into(), 0, amount);
+    let fungible_payment = EsdtTokenPayment::new(FUNGIBLE_TOKEN_ID.into(), 0, amount.clone());
+    let crowd_payment = EsdtTokenPayment::new(CROWD_TOKEN_ID.into(), 0, amount.clone());
     let mut payments = PaymentsVec::new();
     let gas_limit = 1000000000 as u64;
     let function = ManagedBuffer::from("some_function");
@@ -762,9 +763,16 @@ fn test_deposit_with_transfer_data() {
     let transfer_data = state.setup_transfer_data(gas_limit, function, args);
 
     payments.push(wegld_payment);
+    payments.push(fungible_payment);
     payments.push(crowd_payment);
 
-    state.propose_setup_contracts(false, false, None, None);
+    let fee_type = FeeType::Fixed {
+        token: WEGLD_IDENTIFIER.into(),
+        per_transfer: BigUint::from(100u32),
+        per_gas: BigUint::from(100u32),
+    };
+
+    state.propose_setup_contracts(false, true, Some(WEGLD_IDENTIFIER), Some(fee_type));
     state.propose_set_max_user_tx_gas_limit(gas_limit);
     state.propose_deposit(
         ENSHRINE_ESDT_OWNER_ADDRESS,
@@ -774,7 +782,8 @@ fn test_deposit_with_transfer_data() {
         None,
     );
 
-    let expected_wegld_amount = BigUint::from(WEGLD_BALANCE) - BigUint::from(10000u64);
+    let expected_wegld_amount = BigUint::from(WEGLD_BALANCE) - BigUint::from(100000000200u64);
+    let expected_crowd_amount = BigUint::from(WEGLD_BALANCE) - amount;
 
     state
         .world
@@ -784,5 +793,47 @@ fn test_deposit_with_transfer_data() {
     state
         .world
         .check_account(ENSHRINE_ESDT_OWNER_ADDRESS)
-        .esdt_balance(CROWD_TOKEN_ID, &expected_wegld_amount);
+        .esdt_balance(CROWD_TOKEN_ID, &expected_crowd_amount);
+}
+
+#[test]
+fn test_deposit_with_transfer_data_not_enough_for_fee() {
+    let mut state = EnshrineTestState::new();
+    let amount = BigUint::from(100000000000000000u128);
+    let wegld_payment = EsdtTokenPayment::new(WEGLD_IDENTIFIER.into(), 0, amount.clone());
+    let fungible_payment = EsdtTokenPayment::new(FUNGIBLE_TOKEN_ID.into(), 0, amount.clone());
+    let crowd_payment = EsdtTokenPayment::new(CROWD_TOKEN_ID.into(), 0, amount.clone());
+    let mut payments = PaymentsVec::new();
+    let gas_limit = 1000000000000000 as u64;
+    let function = ManagedBuffer::from("some_function");
+    let arg = ManagedBuffer::from("arg");
+    let mut args = ManagedVec::new();
+    args.push(arg);
+
+    let error_status = ErrorStatus {
+        code: 4,
+        error_message: "Payment does not cover fee",
+    };
+
+    let transfer_data = state.setup_transfer_data(gas_limit, function, args);
+
+    payments.push(wegld_payment);
+    payments.push(fungible_payment);
+    payments.push(crowd_payment);
+
+    let fee_type = FeeType::Fixed {
+        token: WEGLD_IDENTIFIER.into(),
+        per_transfer: BigUint::from(100u32),
+        per_gas: BigUint::from(100u32),
+    };
+
+    state.propose_setup_contracts(false, true, Some(WEGLD_IDENTIFIER), Some(fee_type));
+    state.propose_set_max_user_tx_gas_limit(gas_limit);
+    state.propose_deposit(
+        ENSHRINE_ESDT_OWNER_ADDRESS,
+        USER_ADDRESS,
+        payments,
+        transfer_data,
+        Some(error_status),
+    );
 }
