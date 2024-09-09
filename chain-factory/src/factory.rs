@@ -1,6 +1,25 @@
 use chain_config::StakeMultiArg;
 
+multiversx_sc::derive_imports!();
 multiversx_sc::imports!();
+
+#[derive(TypeAbi, TopEncode, TopDecode, NestedEncode, NestedDecode, ManagedVecItem)]
+struct ContractMapArgs<M: ManagedTypeApi> {
+    id: ScArray,
+    address: ManagedAddress<M>,
+}
+
+#[derive(
+    TypeAbi, TopEncode, TopDecode, NestedEncode, NestedDecode, Clone, ManagedVecItem, PartialEq,
+)]
+pub enum ScArray {
+    ChainFactory,
+    Controller,
+    SovereignHeaderVerifier,
+    SovereignCrossChainOperation,
+    ChainConfig,
+    Slashing,
+}
 
 #[multiversx_sc::module]
 pub trait FactoryModule {
@@ -37,6 +56,17 @@ pub trait FactoryModule {
     }
 
     #[only_owner]
+    #[endpoint(addContractsToMap)]
+    fn add_contracts_to_map(
+        &self,
+        contracts_map: MultiValueEncoded<Self::Api, ContractMapArgs<Self::Api>>,
+    ) {
+        for contract in contracts_map {
+            self.contracts_map(contract.id).set(contract.address);
+        }
+    }
+
+    #[only_owner]
     #[endpoint(blacklistSovereignChainSc)]
     fn blacklist_sovereign_chain_sc(&self, sc_address: ManagedAddress) {
         let _ = self.all_deployed_contracts().swap_remove(&sc_address);
@@ -44,6 +74,10 @@ pub trait FactoryModule {
 
     #[proxy]
     fn chain_config_proxy(&self) -> chain_config::Proxy<Self::Api>;
+
+    #[view(getContractsMap)]
+    #[storage_mapper("contractsMap")]
+    fn contracts_map(&self, contract_name: ScArray) -> SingleValueMapper<ManagedAddress>;
 
     #[view(getDeployCost)]
     #[storage_mapper("deployCost")]
