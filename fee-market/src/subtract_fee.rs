@@ -130,7 +130,7 @@ pub trait SubtractFeeModule:
             .update(|amt| *amt += &final_payment.fee.amount);
 
         self.send()
-            .direct_non_zero_esdt_payment(&caller, &final_payment.remaining_tokens);
+            .direct_non_zero_esdt_payment(&original_caller, &final_payment.remaining_tokens);
 
         final_payment
     }
