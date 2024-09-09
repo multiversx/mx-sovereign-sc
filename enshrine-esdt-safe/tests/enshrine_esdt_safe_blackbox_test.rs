@@ -637,18 +637,21 @@ fn test_deposit_no_transfer_data() {
     let mut state = EnshrineTestState::new();
     let amount = BigUint::from(10000u64);
     let wegld_payment = EsdtTokenPayment::new(WEGLD_IDENTIFIER.into(), 0, amount.clone());
+    let fungible_payment = EsdtTokenPayment::new(FUNGIBLE_TOKEN_ID.into(), 0, amount.clone());
     let crowd_payment = EsdtTokenPayment::new(CROWD_TOKEN_ID.into(), 0, amount);
     let mut payments = PaymentsVec::new();
     let mut tokens_whitelist = MultiValueEncoded::new();
     tokens_whitelist.push(WEGLD_IDENTIFIER.into());
+    tokens_whitelist.push(CROWD_TOKEN_ID.into());
 
     payments.push(wegld_payment);
+    payments.push(fungible_payment);
     payments.push(crowd_payment);
 
     let fee_type = FeeType::Fixed {
         token: WEGLD_IDENTIFIER.into(),
-        per_transfer: BigUint::from(1u32),
-        per_gas: BigUint::from(1u32),
+        per_transfer: BigUint::from(100u32),
+        per_gas: BigUint::from(100u32),
     };
 
     state.propose_setup_contracts(false, true, Some(WEGLD_IDENTIFIER), Some(fee_type));
@@ -661,7 +664,8 @@ fn test_deposit_no_transfer_data() {
         None,
     );
 
-    let expected_wegld_amount = BigUint::from(WEGLD_BALANCE) - BigUint::from(10000u64);
+    let expected_wegld_amount = BigUint::from(WEGLD_BALANCE) - BigUint::from(100u64);
+    let expected_crowd_amount = BigUint::from(WEGLD_BALANCE) - BigUint::from(10000u64);
 
     state
         .world
@@ -671,7 +675,7 @@ fn test_deposit_no_transfer_data() {
     state
         .world
         .check_account(ENSHRINE_ESDT_OWNER_ADDRESS)
-        .esdt_balance(CROWD_TOKEN_ID, &BigUint::from(WEGLD_BALANCE));
+        .esdt_balance(CROWD_TOKEN_ID, &expected_crowd_amount);
 }
 
 #[test]
