@@ -638,7 +638,7 @@ fn test_deposit_no_transfer_data() {
     let amount = BigUint::from(10000u64);
     let wegld_payment = EsdtTokenPayment::new(WEGLD_IDENTIFIER.into(), 0, amount.clone());
     let fungible_payment = EsdtTokenPayment::new(FUNGIBLE_TOKEN_ID.into(), 0, amount.clone());
-    let crowd_payment = EsdtTokenPayment::new(CROWD_TOKEN_ID.into(), 0, amount);
+    let crowd_payment = EsdtTokenPayment::new(CROWD_TOKEN_ID.into(), 0, amount.clone());
     let mut payments = PaymentsVec::new();
     let mut tokens_whitelist = MultiValueEncoded::new();
     tokens_whitelist.push(WEGLD_IDENTIFIER.into());
@@ -648,10 +648,13 @@ fn test_deposit_no_transfer_data() {
     payments.push(fungible_payment);
     payments.push(crowd_payment);
 
+    let fee_amount_per_transfer = BigUint::from(100u32);
+    let fee_amount_per_gas = BigUint::from(100u32);
+
     let fee_type = FeeType::Fixed {
         token: WEGLD_IDENTIFIER.into(),
-        per_transfer: BigUint::from(100u32),
-        per_gas: BigUint::from(100u32),
+        per_transfer: fee_amount_per_transfer.clone(),
+        per_gas: fee_amount_per_gas,
     };
 
     state.propose_setup_contracts(false, true, Some(WEGLD_IDENTIFIER), Some(fee_type));
@@ -664,8 +667,8 @@ fn test_deposit_no_transfer_data() {
         None,
     );
 
-    let expected_wegld_amount = BigUint::from(WEGLD_BALANCE) - BigUint::from(100u64);
-    let expected_crowd_amount = BigUint::from(WEGLD_BALANCE) - BigUint::from(10000u64);
+    let expected_wegld_amount = BigUint::from(WEGLD_BALANCE) - fee_amount_per_transfer;
+    let expected_crowd_amount = BigUint::from(WEGLD_BALANCE) - amount;
 
     state
         .world
@@ -766,10 +769,13 @@ fn test_deposit_with_transfer_data_enough_for_fee() {
     payments.push(fungible_payment);
     payments.push(crowd_payment);
 
+    let fee_amount_per_transfer = BigUint::from(100u32);
+    let fee_amount_per_gas = BigUint::from(100u32);
+
     let fee_type = FeeType::Fixed {
         token: WEGLD_IDENTIFIER.into(),
-        per_transfer: BigUint::from(100u32),
-        per_gas: BigUint::from(100u32),
+        per_transfer: fee_amount_per_transfer.clone(),
+        per_gas: fee_amount_per_gas,
     };
 
     state.propose_setup_contracts(false, true, Some(WEGLD_IDENTIFIER), Some(fee_type));
@@ -821,10 +827,13 @@ fn test_deposit_with_transfer_data_not_enough_for_fee() {
     payments.push(fungible_payment);
     payments.push(crowd_payment);
 
+    let fee_amount_per_transfer = BigUint::from(100u32);
+    let fee_amount_per_gas = BigUint::from(100u32);
+
     let fee_type = FeeType::Fixed {
         token: WEGLD_IDENTIFIER.into(),
-        per_transfer: BigUint::from(100u32),
-        per_gas: BigUint::from(100u32),
+        per_transfer: fee_amount_per_transfer.clone(),
+        per_gas: fee_amount_per_gas,
     };
 
     state.propose_setup_contracts(false, true, Some(WEGLD_IDENTIFIER), Some(fee_type));
