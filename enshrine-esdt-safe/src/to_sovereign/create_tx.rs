@@ -1,6 +1,5 @@
 use crate::common;
 use fee_market::fee_market_proxy;
-use multiversx_sc_scenario::multiversx_chain_vm::tx_execution::ESDT_SYSTEM_SC_ADDRESS_ARRAY;
 use transaction::{GasLimit, OperationData, TransferData};
 
 use multiversx_sc::imports::*;
