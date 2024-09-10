@@ -645,7 +645,7 @@ fn test_deposit_nothing_to_transfer() {
 }
 
 #[test]
-fn test_deposit_invalid_fee_type_jeg_de_test() {
+fn test_deposit_invalid_fee_type() {
     let mut state = EnshrineTestState::new();
     let amount = BigUint::from(10000u64);
     let wegld_payment = EsdtTokenPayment::new(WEGLD_IDENTIFIER.into(), 0, amount.clone());
