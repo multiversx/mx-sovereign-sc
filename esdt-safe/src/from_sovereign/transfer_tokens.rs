@@ -74,8 +74,11 @@ pub trait TransferTokensModule:
             };
 
             if operation_token.token_nonce == 0 {
-                self.send()
-                    .esdt_local_mint(&mx_token_id, 0, &operation_token.token_data.amount);
+                self.tx()
+                    .to(ToSelf)
+                    .typed(system_proxy::UserBuiltinProxy)
+                    .esdt_local_mint(&mx_token_id, 0, &operation_token.token_data.amount)
+                    .transfer_execute();
 
                 output_payments.push(OperationEsdtPayment {
                     token_identifier: mx_token_id,
@@ -258,11 +261,15 @@ pub trait TransferTokensModule:
                     self.multiversx_esdt_token_info_mapper(&mx_token_id, &mx_token_nonce);
                 }
 
-                self.send().esdt_local_burn(
-                    &mx_token_id,
-                    mx_token_nonce,
-                    &operation_token.token_data.amount,
-                );
+                self.tx()
+                    .to(ToSelf)
+                    .typed(system_proxy::UserBuiltinProxy)
+                    .esdt_local_burn(
+                        &mx_token_id,
+                        mx_token_nonce,
+                        &operation_token.token_data.amount,
+                    )
+                    .transfer_execute();
             }
         }
 
