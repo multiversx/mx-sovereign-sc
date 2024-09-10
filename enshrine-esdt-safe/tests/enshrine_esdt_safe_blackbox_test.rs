@@ -645,10 +645,11 @@ fn test_deposit_nothing_to_transfer() {
 }
 
 #[test]
-fn test_deposit_invalid_fee_type() {
+fn test_deposit_token_not_acctepted_as_fee() {
     let mut state = EnshrineTestState::new();
     let amount = BigUint::from(10000u64);
     let wegld_payment = EsdtTokenPayment::new(WEGLD_IDENTIFIER.into(), 0, amount.clone());
+    let crowd_payment = EsdtTokenPayment::new(CROWD_TOKEN_ID.into(), 0, amount.clone());
     let mut payments = PaymentsVec::new();
     let fee_market_error_status = ErrorStatus {
         code: 4,
@@ -656,11 +657,13 @@ fn test_deposit_invalid_fee_type() {
     };
     let deposit_error_status = ErrorStatus {
         code: 4,
-        error_message: "Nothing to transfer",
+        error_message: "Token not accepted as fee",
     };
+
     let fee_type = FeeType::None;
 
     payments.push(wegld_payment);
+    payments.push(crowd_payment);
 
     state.propose_setup_contracts(
         false,
