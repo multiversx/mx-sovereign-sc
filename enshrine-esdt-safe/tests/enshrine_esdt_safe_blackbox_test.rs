@@ -772,12 +772,17 @@ fn test_deposit_no_transfer_data() {
     );
 
     let expected_wegld_amount = BigUint::from(WEGLD_BALANCE) - fee_amount_per_transfer;
-    let expected_crowd_amount = BigUint::from(WEGLD_BALANCE) - amount;
+    let expected_crowd_amount = BigUint::from(WEGLD_BALANCE) - &amount;
 
     state
         .world
         .check_account(ENSHRINE_ESDT_OWNER_ADDRESS)
         .esdt_balance(WEGLD_IDENTIFIER, &expected_wegld_amount);
+
+    state
+        .world
+        .check_account(ENSHRINE_ESDT_OWNER_ADDRESS)
+        .esdt_balance(FUNGIBLE_TOKEN_ID, BigUint::from(WEGLD_BALANCE));
 
     state
         .world
@@ -869,6 +874,7 @@ fn test_deposit_with_transfer_data_enough_for_fee() {
 
     let transfer_data = state.setup_transfer_data(gas_limit, function, args);
 
+    let expected_fungible_amount = BigUint::from(WEGLD_BALANCE) - &fungible_payment.amount;
     payments.push(wegld_payment);
     payments.push(fungible_payment);
     payments.push(crowd_payment);
@@ -879,7 +885,7 @@ fn test_deposit_with_transfer_data_enough_for_fee() {
     let fee_type = FeeType::Fixed {
         token: WEGLD_IDENTIFIER.into(),
         per_transfer: fee_amount_per_transfer.clone(),
-        per_gas: fee_amount_per_gas,
+        per_gas: fee_amount_per_gas.clone(),
     };
 
     state.propose_setup_contracts(false, true, Some(WEGLD_IDENTIFIER), Some(fee_type), None);
@@ -892,13 +898,20 @@ fn test_deposit_with_transfer_data_enough_for_fee() {
         None,
     );
 
-    let expected_wegld_amount = BigUint::from(WEGLD_BALANCE) - BigUint::from(100000000200u64);
+    let fee = fee_amount_per_transfer * BigUint::from(2u32)
+        + BigUint::from(gas_limit) * fee_amount_per_gas;
+    let expected_wegld_amount = BigUint::from(WEGLD_BALANCE) - fee;
     let expected_crowd_amount = BigUint::from(WEGLD_BALANCE) - amount;
 
     state
         .world
         .check_account(ENSHRINE_ESDT_OWNER_ADDRESS)
         .esdt_balance(WEGLD_IDENTIFIER, &expected_wegld_amount);
+
+    state
+        .world
+        .check_account(ENSHRINE_ESDT_OWNER_ADDRESS)
+        .esdt_balance(FUNGIBLE_TOKEN_ID, &expected_fungible_amount);
 
     state
         .world
