@@ -1,7 +1,6 @@
 use bls_signature::BlsSignature;
 use enshrine_esdt_safe::enshrine_esdt_safe_proxy;
-use fee_market::fee_market_proxy::{self};
-use fee_market::fee_type::{FeeType, FeeTypeModule};
+use fee_market::fee_market_proxy::{self, FeeType};
 use header_verifier::header_verifier_proxy;
 use multiversx_sc::codec::TopEncode;
 use multiversx_sc::imports::{MultiValue3, OptionalValue};
@@ -12,7 +11,7 @@ use multiversx_sc::types::{
 use multiversx_sc_scenario::api::StaticApi;
 use multiversx_sc_scenario::multiversx_chain_vm::crypto_functions::sha256;
 use multiversx_sc_scenario::{imports::MxscPath, ScenarioWorld};
-use multiversx_sc_scenario::{managed_address, ExpectError, ScenarioTxRun, ScenarioTxWhitebox};
+use multiversx_sc_scenario::{managed_address, ExpectError, ScenarioTxRun};
 use token_handler::token_handler_proxy;
 use transaction::{GasLimit, Operation, OperationData, OperationEsdtPayment};
 use utils::PaymentsVec;
@@ -201,6 +200,7 @@ impl EnshrineTestState {
         is_fee_enabled: bool,
         fee_token_id: Option<TestTokenIdentifier>,
         fee_type: Option<FeeType<StaticApi>>,
+        fee_market_error_status: Option<ErrorStatus>,
     ) -> &mut Self {
         self.deploy_enshrine_esdt_contract(
             is_sovereign_chain,
@@ -214,6 +214,23 @@ impl EnshrineTestState {
         self.propose_set_header_verifier_address();
         self.propose_register_fee_market_address();
 
+        self.propose_check_is_fee_enabled(
+            is_fee_enabled,
+            fee_token_id,
+            fee_type,
+            fee_market_error_status,
+        );
+
+        self
+    }
+
+    fn propose_check_is_fee_enabled(
+        &mut self,
+        is_fee_enabled: bool,
+        fee_token_id: Option<TestTokenIdentifier>,
+        fee_type: Option<FeeType<StaticApi>>,
+        error_status: Option<ErrorStatus>,
+    ) -> &mut Self {
         if !is_fee_enabled {
             self.world
                 .tx()
@@ -222,27 +239,15 @@ impl EnshrineTestState {
                 .typed(fee_market_proxy::FeeMarketProxy)
                 .disable_fee()
                 .run();
-        } else {
-            match (fee_token_id, fee_type) {
-                (Some(token_id), Some(fee_type)) => {
-                    self.world.query().to(FEE_MARKET_ADDRESS).whitebox(
-                        fee_market::contract_obj,
-                        |sc| {
-                            let token_fee = sc.token_fee(&token_id.into()).get();
 
-                            if let FeeType::None = token_fee {
-                                let error_status = ErrorStatus {
-                                    code: 4,
-                                    error_message: "Invalid fee type",
-                                };
+            return self;
+        }
 
-                                self.propose_add_fee_token(token_id, fee_type, Some(error_status))
-                            }
-                        },
-                    );
-                }
-                _ => (),
+        match (fee_token_id, fee_type) {
+            (Some(token_id), Some(fee_type)) => {
+                self.propose_add_fee_token(token_id, fee_type, error_status)
             }
+            _ => (),
         }
 
         self
@@ -502,7 +507,7 @@ impl EnshrineTestState {
 fn test_deploy() {
     let mut state = EnshrineTestState::new();
 
-    state.propose_setup_contracts(false, false, None, None);
+    state.propose_setup_contracts(false, false, None, None, None);
 }
 
 #[test]
@@ -514,7 +519,7 @@ fn test_sovereign_prefix_no_prefix() {
         error_message: "Operation is not registered",
     });
 
-    state.propose_setup_contracts(false, false, None, None);
+    state.propose_setup_contracts(false, false, None, None, None);
     state.propose_register_operation(&token_vec);
     state.propose_execute_operation(error_status, &token_vec);
 }
@@ -528,7 +533,7 @@ fn test_sovereign_prefix_has_prefix() {
         error_message: "Operation is not registered",
     });
 
-    state.propose_setup_contracts(false, false, None, None);
+    state.propose_setup_contracts(false, false, None, None, None);
     state.propose_register_operation(&token_vec);
     state.propose_execute_operation(error_status, &token_vec);
 }
@@ -542,7 +547,7 @@ fn test_register_tokens_insufficient_funds() {
     let payment_amount = BigUint::from(DEFAULT_ISSUE_COST * token_vec.len() as u64);
     let payment = EsdtTokenPayment::new(WEGLD_IDENTIFIER.into(), 0, payment_amount);
 
-    state.propose_setup_contracts(false, false, None, None);
+    state.propose_setup_contracts(false, false, None, None, None);
     state.propose_register_tokens(
         &USER_ADDRESS,
         payment,
@@ -563,7 +568,7 @@ fn test_register_tokens_wrong_token_as_fee() {
     let payment_amount = BigUint::from(DEFAULT_ISSUE_COST * token_vec.len() as u64);
     let payment = EsdtTokenPayment::new(CROWD_TOKEN_ID.into(), 0, payment_amount);
 
-    state.propose_setup_contracts(false, false, None, None);
+    state.propose_setup_contracts(false, false, None, None, None);
     state.propose_register_tokens(
         &ENSHRINE_ESDT_OWNER_ADDRESS,
         payment,
@@ -582,7 +587,7 @@ fn test_register_tokens() {
     let payment_amount = BigUint::from(DEFAULT_ISSUE_COST * token_vec.len() as u64);
     let payment = EsdtTokenPayment::new(WEGLD_IDENTIFIER.into(), 0, payment_amount);
 
-    state.propose_setup_contracts(false, false, None, None);
+    state.propose_setup_contracts(false, false, None, None, None);
     state.propose_register_tokens(&ENSHRINE_ESDT_OWNER_ADDRESS, payment, token_vec, None);
     state
         .world
@@ -604,7 +609,7 @@ fn test_register_tokens_insufficient_wegld() {
     let payment_amount = BigUint::from(DEFAULT_ISSUE_COST + token_vec.len() as u64);
     let payment = EsdtTokenPayment::new(WEGLD_IDENTIFIER.into(), 0, payment_amount);
 
-    state.propose_setup_contracts(false, false, None, None);
+    state.propose_setup_contracts(false, false, None, None, None);
     state.propose_register_tokens(
         &ENSHRINE_ESDT_OWNER_ADDRESS,
         payment,
@@ -629,7 +634,7 @@ fn test_deposit_nothing_to_transfer() {
 
     payments.push(wegld_payment);
 
-    state.propose_setup_contracts(false, true, None, None);
+    state.propose_setup_contracts(false, true, None, None, None);
     state.propose_deposit(
         ENSHRINE_ESDT_OWNER_ADDRESS,
         USER_ADDRESS,
@@ -645,21 +650,31 @@ fn test_deposit_invalid_fee_type_jeg_de_test() {
     let amount = BigUint::from(10000u64);
     let wegld_payment = EsdtTokenPayment::new(WEGLD_IDENTIFIER.into(), 0, amount.clone());
     let mut payments = PaymentsVec::new();
-    let error_status = ErrorStatus {
+    let fee_market_error_status = ErrorStatus {
         code: 4,
         error_message: "Invalid fee type",
+    };
+    let deposit_error_status = ErrorStatus {
+        code: 4,
+        error_message: "Nothing to transfer",
     };
     let fee_type = FeeType::None;
 
     payments.push(wegld_payment);
 
-    state.propose_setup_contracts(false, true, Some(WEGLD_IDENTIFIER), Some(fee_type));
+    state.propose_setup_contracts(
+        false,
+        true,
+        Some(WEGLD_IDENTIFIER),
+        Some(fee_type),
+        Some(fee_market_error_status),
+    );
     state.propose_deposit(
         ENSHRINE_ESDT_OWNER_ADDRESS,
         USER_ADDRESS,
         payments,
         OptionalValue::None,
-        None,
+        Some(deposit_error_status),
     );
 }
 
@@ -685,7 +700,7 @@ fn test_deposit_token_not_accepted_as_fee() {
 
     payments.push(wegld_payment);
 
-    state.propose_setup_contracts(false, true, Some(WEGLD_IDENTIFIER), Some(fee_type));
+    state.propose_setup_contracts(false, true, Some(WEGLD_IDENTIFIER), Some(fee_type), None);
     state.propose_deposit(
         ENSHRINE_ESDT_OWNER_ADDRESS,
         USER_ADDRESS,
@@ -708,7 +723,7 @@ fn test_deposit_max_transfers_exceeded() {
 
     payments.extend(std::iter::repeat(wegld_payment).take(11));
 
-    state.propose_setup_contracts(false, false, None, None);
+    state.propose_setup_contracts(false, false, None, None, None);
     state.propose_deposit(
         ENSHRINE_ESDT_OWNER_ADDRESS,
         USER_ADDRESS,
@@ -743,7 +758,7 @@ fn test_deposit_no_transfer_data() {
         per_gas: fee_amount_per_gas,
     };
 
-    state.propose_setup_contracts(false, true, Some(WEGLD_IDENTIFIER), Some(fee_type));
+    state.propose_setup_contracts(false, true, Some(WEGLD_IDENTIFIER), Some(fee_type), None);
     state.propose_add_token_to_whitelist(tokens_whitelist);
     state.propose_deposit(
         ENSHRINE_ESDT_OWNER_ADDRESS,
@@ -790,7 +805,7 @@ fn test_deposit_with_transfer_data_gas_limit_too_high() {
         error_message: "Gas limit too high",
     };
 
-    state.propose_setup_contracts(false, false, None, None);
+    state.propose_setup_contracts(false, false, None, None, None);
     state.propose_deposit(
         ENSHRINE_ESDT_OWNER_ADDRESS,
         USER_ADDRESS,
@@ -823,7 +838,7 @@ fn test_deposit_with_transfer_data_banned_endpoint() {
         error_message: "Banned endpoint name",
     };
 
-    state.propose_setup_contracts(false, false, None, None);
+    state.propose_setup_contracts(false, false, None, None, None);
     state.propose_set_max_user_tx_gas_limit(gas_limit);
     state.propose_set_banned_endpoint(function);
     state.propose_deposit(
@@ -864,7 +879,7 @@ fn test_deposit_with_transfer_data_enough_for_fee() {
         per_gas: fee_amount_per_gas,
     };
 
-    state.propose_setup_contracts(false, true, Some(WEGLD_IDENTIFIER), Some(fee_type));
+    state.propose_setup_contracts(false, true, Some(WEGLD_IDENTIFIER), Some(fee_type), None);
     state.propose_set_max_user_tx_gas_limit(gas_limit);
     state.propose_deposit(
         ENSHRINE_ESDT_OWNER_ADDRESS,
@@ -922,7 +937,7 @@ fn test_deposit_with_transfer_data_not_enough_for_fee() {
         per_gas: fee_amount_per_gas,
     };
 
-    state.propose_setup_contracts(false, true, Some(WEGLD_IDENTIFIER), Some(fee_type));
+    state.propose_setup_contracts(false, true, Some(WEGLD_IDENTIFIER), Some(fee_type), None);
     state.propose_set_max_user_tx_gas_limit(gas_limit);
     state.propose_deposit(
         ENSHRINE_ESDT_OWNER_ADDRESS,
