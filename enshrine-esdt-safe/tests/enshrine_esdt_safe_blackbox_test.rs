@@ -1,6 +1,7 @@
 use bls_signature::BlsSignature;
 use enshrine_esdt_safe::enshrine_esdt_safe_proxy;
-use fee_market::fee_market_proxy::{self, FeeType};
+use fee_market::fee_market_proxy::{self};
+use fee_market::fee_type::{FeeType, FeeTypeModule};
 use header_verifier::header_verifier_proxy;
 use multiversx_sc::codec::TopEncode;
 use multiversx_sc::imports::{MultiValue3, OptionalValue};
@@ -11,7 +12,7 @@ use multiversx_sc::types::{
 use multiversx_sc_scenario::api::StaticApi;
 use multiversx_sc_scenario::multiversx_chain_vm::crypto_functions::sha256;
 use multiversx_sc_scenario::{imports::MxscPath, ScenarioWorld};
-use multiversx_sc_scenario::{managed_address, ExpectError, ScenarioTxRun};
+use multiversx_sc_scenario::{managed_address, ExpectError, ScenarioTxRun, ScenarioTxWhitebox};
 use token_handler::token_handler_proxy;
 use transaction::{GasLimit, Operation, OperationData, OperationEsdtPayment};
 use utils::PaymentsVec;
@@ -223,7 +224,23 @@ impl EnshrineTestState {
                 .run();
         } else {
             match (fee_token_id, fee_type) {
-                (Some(token_id), Some(fee_type)) => self.propose_add_fee_token(token_id, fee_type),
+                (Some(token_id), Some(fee_type)) => {
+                    self.world.query().to(FEE_MARKET_ADDRESS).whitebox(
+                        fee_market::contract_obj,
+                        |sc| {
+                            let token_fee = sc.token_fee(&token_id.into()).get();
+
+                            if let FeeType::None = token_fee {
+                                let error_status = ErrorStatus {
+                                    code: 4,
+                                    error_message: "Invalid fee type",
+                                };
+
+                                self.propose_add_fee_token(token_id, fee_type, Some(error_status))
+                            }
+                        },
+                    );
+                }
                 _ => (),
             }
         }
@@ -387,14 +404,27 @@ impl EnshrineTestState {
         &mut self,
         token_id: TestTokenIdentifier,
         fee_type: FeeType<StaticApi>,
+        error_status: Option<ErrorStatus>,
     ) {
-        self.world
-            .tx()
-            .from(ENSHRINE_ESDT_OWNER_ADDRESS)
-            .to(FEE_MARKET_ADDRESS)
-            .typed(fee_market_proxy::FeeMarketProxy)
-            .add_fee(token_id, fee_type)
-            .run();
+        match error_status {
+            Some(error) => self
+                .world
+                .tx()
+                .from(ENSHRINE_ESDT_OWNER_ADDRESS)
+                .to(FEE_MARKET_ADDRESS)
+                .typed(fee_market_proxy::FeeMarketProxy)
+                .add_fee(token_id, fee_type)
+                .returns(ExpectError(error.code, error.error_message))
+                .run(),
+            None => self
+                .world
+                .tx()
+                .from(ENSHRINE_ESDT_OWNER_ADDRESS)
+                .to(FEE_MARKET_ADDRESS)
+                .typed(fee_market_proxy::FeeMarketProxy)
+                .add_fee(token_id, fee_type)
+                .run(),
+        }
     }
 
     fn propose_set_max_user_tx_gas_limit(&mut self, max_gas_limit: GasLimit) {
@@ -600,6 +630,62 @@ fn test_deposit_nothing_to_transfer() {
     payments.push(wegld_payment);
 
     state.propose_setup_contracts(false, true, None, None);
+    state.propose_deposit(
+        ENSHRINE_ESDT_OWNER_ADDRESS,
+        USER_ADDRESS,
+        payments,
+        OptionalValue::None,
+        Some(error_status),
+    );
+}
+
+#[test]
+fn test_deposit_invalid_fee_type_jeg_de_test() {
+    let mut state = EnshrineTestState::new();
+    let amount = BigUint::from(10000u64);
+    let wegld_payment = EsdtTokenPayment::new(WEGLD_IDENTIFIER.into(), 0, amount.clone());
+    let mut payments = PaymentsVec::new();
+    let error_status = ErrorStatus {
+        code: 4,
+        error_message: "Invalid fee type",
+    };
+    let fee_type = FeeType::None;
+
+    payments.push(wegld_payment);
+
+    state.propose_setup_contracts(false, true, Some(WEGLD_IDENTIFIER), Some(fee_type));
+    state.propose_deposit(
+        ENSHRINE_ESDT_OWNER_ADDRESS,
+        USER_ADDRESS,
+        payments,
+        OptionalValue::None,
+        None,
+    );
+}
+
+#[test]
+fn test_deposit_token_not_accepted_as_fee() {
+    let mut state = EnshrineTestState::new();
+    let amount = BigUint::from(10000u64);
+    let wegld_payment = EsdtTokenPayment::new(WEGLD_IDENTIFIER.into(), 0, amount.clone());
+    let mut payments = PaymentsVec::new();
+    let error_status = ErrorStatus {
+        code: 4,
+        error_message: "Nothing to transfer",
+    };
+
+    let fee_amount_per_transfer = BigUint::from(100u32);
+    let fee_amount_per_gas = BigUint::from(100u32);
+
+    let fee_type = FeeType::Fixed {
+        token: WEGLD_IDENTIFIER.into(),
+        per_transfer: fee_amount_per_transfer,
+        per_gas: fee_amount_per_gas,
+    };
+
+    payments.push(wegld_payment);
+
+    state.propose_setup_contracts(false, true, Some(WEGLD_IDENTIFIER), Some(fee_type));
     state.propose_deposit(
         ENSHRINE_ESDT_OWNER_ADDRESS,
         USER_ADDRESS,
