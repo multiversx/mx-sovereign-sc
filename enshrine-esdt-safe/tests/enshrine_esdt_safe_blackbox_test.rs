@@ -862,7 +862,9 @@ fn test_deposit_with_transfer_data_enough_for_fee() {
 
     let transfer_data = state.setup_transfer_data(gas_limit, function, args);
 
+    let expected_crowd_amount = BigUint::from(WEGLD_BALANCE) - &wegld_payment.amount;
     let expected_fungible_amount = BigUint::from(WEGLD_BALANCE) - &fungible_payment.amount;
+
     payments.push(wegld_payment);
     payments.push(fungible_payment);
     payments.push(crowd_payment);
@@ -890,7 +892,6 @@ fn test_deposit_with_transfer_data_enough_for_fee() {
     let fee = fee_amount_per_transfer * BigUint::from(2u32)
         + BigUint::from(gas_limit) * fee_amount_per_gas;
     let expected_wegld_amount = BigUint::from(WEGLD_BALANCE) - fee;
-    let expected_crowd_amount = BigUint::from(WEGLD_BALANCE) - amount;
 
     state
         .world
