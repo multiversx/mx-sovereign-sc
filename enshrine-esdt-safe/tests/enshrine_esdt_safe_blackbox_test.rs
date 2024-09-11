@@ -631,7 +631,7 @@ fn test_deposit_nothing_to_transfer() {
 }
 
 #[test]
-fn test_deposit_token_not_accepted_as_fee_wtf() {
+fn test_deposit_token_not_accepted_as_fee() {
     let mut state = EnshrineTestState::new();
     let amount = BigUint::from(10000u64);
     let wegld_payment = EsdtTokenPayment::new(WEGLD_IDENTIFIER.into(), 0, amount.clone());
@@ -668,7 +668,7 @@ fn test_deposit_token_not_accepted_as_fee_wtf() {
 }
 
 #[test]
-fn test_deposit_token_not_accepted_as_fee() {
+fn test_deposit_token_nothing_to_transfer() {
     let mut state = EnshrineTestState::new();
     let amount = BigUint::from(10000u64);
     let wegld_payment = EsdtTokenPayment::new(WEGLD_IDENTIFIER.into(), 0, amount.clone());
