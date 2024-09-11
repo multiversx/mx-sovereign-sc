@@ -668,7 +668,7 @@ fn test_deposit_token_not_accepted_as_fee() {
 }
 
 #[test]
-fn test_deposit_token_nothing_to_transfer() {
+fn test_deposit_token_nothing_to_transfer_fee_enabled() {
     let mut state = EnshrineTestState::new();
     let amount = BigUint::from(10000u64);
     let wegld_payment = EsdtTokenPayment::new(WEGLD_IDENTIFIER.into(), 0, amount.clone());
