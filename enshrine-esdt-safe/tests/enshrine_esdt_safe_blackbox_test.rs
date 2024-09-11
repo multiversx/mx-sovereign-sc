@@ -954,3 +954,90 @@ fn test_deposit_with_transfer_data_not_enough_for_fee() {
         Some(error_status),
     );
 }
+
+#[test]
+fn test_deposit_refund_non_whitelisted_tokens_fee_disabled() {
+    let mut state = EnshrineTestState::new();
+    let mut payments = PaymentsVec::new();
+    let amount = BigUint::from(100000000000000000u128);
+    let wegld_payment = EsdtTokenPayment::new(WEGLD_IDENTIFIER.into(), 0, amount.clone());
+    let fungible_payment = EsdtTokenPayment::new(FUNGIBLE_TOKEN_ID.into(), 0, amount.clone());
+    let crowd_payment = EsdtTokenPayment::new(CROWD_TOKEN_ID.into(), 0, amount.clone());
+    let mut token_whitelist = MultiValueEncoded::new();
+    token_whitelist.push(NFT_TOKEN_ID.into());
+
+    payments.push(wegld_payment);
+    payments.push(fungible_payment);
+    payments.push(crowd_payment);
+
+    state.propose_setup_contracts(false);
+    state.propose_set_fee(false, None, None, None);
+    state.propose_add_token_to_whitelist(token_whitelist);
+    state.propose_deposit(
+        ENSHRINE_ESDT_OWNER_ADDRESS,
+        USER_ADDRESS,
+        payments,
+        OptionalValue::None,
+        None,
+    );
+
+    let expected_amount = BigUint::from(WEGLD_BALANCE);
+
+    state
+        .world
+        .check_account(ENSHRINE_ESDT_OWNER_ADDRESS)
+        .esdt_balance(FUNGIBLE_TOKEN_ID, &expected_amount);
+
+    state
+        .world
+        .check_account(ENSHRINE_ESDT_OWNER_ADDRESS)
+        .esdt_balance(CROWD_TOKEN_ID, &expected_amount);
+}
+
+#[test]
+fn test_deposit_refund_non_whitelisted_tokens_fee_enabled() {
+    let mut state = EnshrineTestState::new();
+    let mut payments = PaymentsVec::new();
+    let amount = BigUint::from(100000000000000000u128);
+    let wegld_payment = EsdtTokenPayment::new(WEGLD_IDENTIFIER.into(), 0, amount.clone());
+    let fungible_payment = EsdtTokenPayment::new(FUNGIBLE_TOKEN_ID.into(), 0, amount.clone());
+    let crowd_payment = EsdtTokenPayment::new(CROWD_TOKEN_ID.into(), 0, amount.clone());
+    let mut token_whitelist = MultiValueEncoded::new();
+    token_whitelist.push(NFT_TOKEN_ID.into());
+
+    payments.push(wegld_payment);
+    payments.push(fungible_payment);
+    payments.push(crowd_payment);
+
+    let fee_amount_per_transfer = BigUint::from(100u32);
+    let fee_amount_per_gas = BigUint::from(100u32);
+
+    let fee_type = FeeType::Fixed {
+        token: WEGLD_IDENTIFIER.into(),
+        per_transfer: fee_amount_per_transfer,
+        per_gas: fee_amount_per_gas,
+    };
+
+    state.propose_setup_contracts(false);
+    state.propose_set_fee(true, Some(WEGLD_IDENTIFIER), Some(fee_type), None);
+    state.propose_add_token_to_whitelist(token_whitelist);
+    state.propose_deposit(
+        ENSHRINE_ESDT_OWNER_ADDRESS,
+        USER_ADDRESS,
+        payments,
+        OptionalValue::None,
+        None,
+    );
+
+    let expected_amount = BigUint::from(WEGLD_BALANCE);
+
+    state
+        .world
+        .check_account(ENSHRINE_ESDT_OWNER_ADDRESS)
+        .esdt_balance(FUNGIBLE_TOKEN_ID, &expected_amount);
+
+    state
+        .world
+        .check_account(ENSHRINE_ESDT_OWNER_ADDRESS)
+        .esdt_balance(CROWD_TOKEN_ID, &expected_amount);
+}
