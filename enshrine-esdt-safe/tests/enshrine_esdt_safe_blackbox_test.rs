@@ -210,7 +210,7 @@ impl EnshrineTestState {
         self
     }
 
-    fn propose_check_is_fee_enabled(
+    fn propose_set_fee(
         &mut self,
         is_fee_enabled: bool,
         fee_token_id: Option<TestTokenIdentifier>,
@@ -652,7 +652,7 @@ fn test_deposit_token_not_accepted_as_fee_wtf() {
     payments.push(crowd_payment);
 
     state.propose_setup_contracts(false);
-    state.propose_check_is_fee_enabled(
+    state.propose_set_fee(
         true,
         Some(WEGLD_IDENTIFIER),
         Some(fee_type),
@@ -690,7 +690,7 @@ fn test_deposit_token_not_accepted_as_fee() {
     payments.push(wegld_payment);
 
     state.propose_setup_contracts(false);
-    state.propose_check_is_fee_enabled(true, Some(WEGLD_IDENTIFIER), Some(fee_type), None);
+    state.propose_set_fee(true, Some(WEGLD_IDENTIFIER), Some(fee_type), None);
     state.propose_deposit(
         ENSHRINE_ESDT_OWNER_ADDRESS,
         USER_ADDRESS,
@@ -750,7 +750,7 @@ fn test_deposit_no_transfer_data() {
 
     state.propose_setup_contracts(false);
     state.propose_add_token_to_whitelist(tokens_whitelist);
-    state.propose_check_is_fee_enabled(true, Some(WEGLD_IDENTIFIER), Some(fee_type), None);
+    state.propose_set_fee(true, Some(WEGLD_IDENTIFIER), Some(fee_type), None);
     state.propose_deposit(
         ENSHRINE_ESDT_OWNER_ADDRESS,
         USER_ADDRESS,
@@ -878,7 +878,7 @@ fn test_deposit_with_transfer_data_enough_for_fee() {
 
     state.propose_setup_contracts(false);
     state.propose_set_max_user_tx_gas_limit(gas_limit);
-    state.propose_check_is_fee_enabled(true, Some(WEGLD_IDENTIFIER), Some(fee_type), None);
+    state.propose_set_fee(true, Some(WEGLD_IDENTIFIER), Some(fee_type), None);
     state.propose_deposit(
         ENSHRINE_ESDT_OWNER_ADDRESS,
         USER_ADDRESS,
@@ -944,7 +944,7 @@ fn test_deposit_with_transfer_data_not_enough_for_fee() {
 
     state.propose_setup_contracts(false);
     state.propose_set_max_user_tx_gas_limit(gas_limit);
-    state.propose_check_is_fee_enabled(true, Some(WEGLD_IDENTIFIER), Some(fee_type), None);
+    state.propose_set_fee(true, Some(WEGLD_IDENTIFIER), Some(fee_type), None);
     state.propose_deposit(
         ENSHRINE_ESDT_OWNER_ADDRESS,
         USER_ADDRESS,
