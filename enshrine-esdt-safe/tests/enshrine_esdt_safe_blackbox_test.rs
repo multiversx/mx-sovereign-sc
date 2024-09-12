@@ -210,10 +210,23 @@ impl EnshrineTestState {
 
         self.propose_set_header_verifier_address();
         self.propose_register_fee_market_address();
+        self.propose_disable_fee();
 
-        if !is_fee_enabled {
-            self.propose_disable_fee();
+        if is_fee_enabled {
+            self.propose_enable_fee();
         }
+
+        self
+    }
+
+    fn propose_enable_fee(&mut self) -> &mut Self {
+        self.world
+            .tx()
+            .from(ENSHRINE_ESDT_OWNER_ADDRESS)
+            .to(FEE_MARKET_ADDRESS)
+            .typed(fee_market_proxy::FeeMarketProxy)
+            .enable_fee()
+            .run();
 
         self
     }
