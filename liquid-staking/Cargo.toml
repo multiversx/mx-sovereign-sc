@@ -6,7 +6,7 @@ edition = "2021"
 publish = false
 
 [lib]
-path = "src/liquid_staking.rs"
+path = "src/lib.rs"
 
 [dependencies.multiversx-sc]
 version = "0.52.3"
