@@ -11,5 +11,7 @@ members = [
   "header-verifier",
   "header-verifier/meta", 
   "enshrine-esdt-safe",
-  "enshrine-esdt-safe/meta"
+  "enshrine-esdt-safe/meta",
+  "liquid-staking",
+  "liquid-staking/meta",
 ]
