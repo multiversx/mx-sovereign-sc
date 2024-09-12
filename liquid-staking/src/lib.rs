@@ -2,10 +2,16 @@
 
 use multiversx_sc::imports::*;
 
+pub mod common;
+pub mod delegation;
 pub mod liquidity_pools;
 
 #[multiversx_sc::contract]
-pub trait LiquidStaking: liquidity_pools::LiquidityPoolModule {
+pub trait LiquidStaking:
+    liquidity_pools::LiquidityPoolModule
+    + delegation::DelegationModule
+    + common::storage::CommonStorageModule
+{
     #[init]
     fn init(&self, delegation_address: ManagedAddress) {
         require!(
