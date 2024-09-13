@@ -91,7 +91,7 @@ where
     To: TxTo<Env>,
     Gas: TxGas<Env>,
 {
-    pub fn add_fee<
+    pub fn set_fee<
         Arg0: ProxyArg<TokenIdentifier<Env::Api>>,
         Arg1: ProxyArg<FeeType<Env::Api>>,
     >(
@@ -107,7 +107,7 @@ where
             .original_result()
     }
 
-    pub fn remove_fee<
+    pub fn disable_fee<
         Arg0: ProxyArg<TokenIdentifier<Env::Api>>,
     >(
         self,
@@ -241,7 +241,7 @@ where
 }
 
 #[type_abi]
-#[derive(NestedDecode)]
+#[derive(NestedEncode, NestedDecode)]
 pub struct FeeStruct<Api>
 where
     Api: ManagedTypeApi,
@@ -252,7 +252,7 @@ where
 
 #[rustfmt::skip]
 #[type_abi]
-#[derive(TopEncode, TopDecode, NestedDecode)]
+#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode)]
 pub enum FeeType<Api>
 where
     Api: ManagedTypeApi,

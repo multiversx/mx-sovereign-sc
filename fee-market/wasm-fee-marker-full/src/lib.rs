@@ -20,8 +20,8 @@ multiversx_sc_wasm_adapter::endpoints! {
     (
         init => init
         upgrade => upgrade
-        addFee => add_fee
-        removeFee => remove_fee
+        addFee => set_fee
+        removeFee => disable_fee
         getTokenFee => token_fee
         addUsersToWhitelist => add_users_to_whitelist
         removeUsersFromWhitelist => remove_users_from_whitelist

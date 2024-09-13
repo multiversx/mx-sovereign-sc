@@ -1,7 +1,8 @@
 multiversx_sc::imports!();
 multiversx_sc::derive_imports!();
 
-#[derive(TypeAbi, TopEncode, TopDecode, NestedDecode)]
+#[type_abi]
+#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode)]
 pub enum FeeType<M: ManagedTypeApi> {
     None,
     Fixed {
@@ -17,7 +18,7 @@ pub enum FeeType<M: ManagedTypeApi> {
 }
 
 #[type_abi]
-#[derive(NestedDecode)]
+#[derive(NestedEncode, NestedDecode)]
 pub struct FeeStruct<M: ManagedTypeApi> {
     pub base_token: TokenIdentifier<M>,
     pub fee_type: FeeType<M>,
@@ -27,7 +28,7 @@ pub struct FeeStruct<M: ManagedTypeApi> {
 pub trait FeeTypeModule: utils::UtilsModule + bls_signature::BlsSignatureModule {
     #[only_owner]
     #[endpoint(addFee)]
-    fn add_fee(&self, base_token: TokenIdentifier, fee_type: FeeType<Self::Api>) {
+    fn set_fee(&self, base_token: TokenIdentifier, fee_type: FeeType<Self::Api>) {
         self.require_valid_token_id(&base_token);
 
         let token = match &fee_type {
@@ -59,8 +60,9 @@ pub trait FeeTypeModule: utils::UtilsModule + bls_signature::BlsSignatureModule 
 
     #[only_owner]
     #[endpoint(removeFee)]
-    fn remove_fee(&self, base_token: TokenIdentifier) {
+    fn disable_fee(&self, base_token: TokenIdentifier) {
         self.token_fee(&base_token).clear();
+        self.fee_enabled().set(false);
     }
 
     #[view(getTokenFee)]
