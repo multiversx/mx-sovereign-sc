@@ -49,7 +49,7 @@ pub trait FeeTypeModule: utils::UtilsModule + bls_signature::BlsSignatureModule 
         };
 
         self.require_valid_token_id(token);
-        self.is_fee_enabled().set(true);
+        self.fee_enabled().set(true);
         self.token_fee(&base_token).set(fee_type);
     }
 
