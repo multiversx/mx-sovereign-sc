@@ -1,5 +1,7 @@
 use multiversx_sc::imports::*;
 pub const UNBOND_PERIOD: u64 = 10;
+pub const DELEGATE_ENDPOINT: &str = "delegate";
+pub const UNDELEGATE_ENDPOINT: &str = "unDelegate";
 
 use crate::common::{self, storage::Epoch};
 
@@ -11,11 +13,10 @@ pub trait DelegationModule: common::storage::CommonStorageModule {
         let caller = self.blockchain().get_caller();
         let egld_amount = self.call_value().egld_value().clone_value();
         let delegation_contract_address = self.delegation_addresses(&contract_name).get();
-        let delegation_endpoint = ManagedBuffer::from("delegate");
 
         self.tx()
             .to(delegation_contract_address)
-            .raw_call(delegation_endpoint)
+            .raw_call(ManagedBuffer::from(DELEGATE_ENDPOINT))
             .egld(&egld_amount)
             .with_callback(DelegationModule::callbacks(self).stake_callback(&caller, &egld_amount))
             .call_and_exit();
@@ -44,7 +45,6 @@ pub trait DelegationModule: common::storage::CommonStorageModule {
         let current_epoch = self.blockchain().get_block_epoch();
         let total_egld_deposit = self.delegated_value(caller.clone()).get();
         let delegation_contract_address = self.delegation_addresses(&contract_name).get();
-        let undelegate_endpoint = ManagedBuffer::from("unDelegate");
 
         let mut args: ManagedArgBuffer<Self::Api> = ManagedArgBuffer::new();
         args.push_arg(&egld_amount_to_unstake);
@@ -56,7 +56,7 @@ pub trait DelegationModule: common::storage::CommonStorageModule {
 
         self.tx()
             .to(delegation_contract_address)
-            .raw_call(undelegate_endpoint)
+            .raw_call(ManagedBuffer::from(UNDELEGATE_ENDPOINT))
             .argument(&args)
             .with_callback(DelegationModule::callbacks(self).unstake_callback(
                 &caller,
