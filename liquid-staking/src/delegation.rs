@@ -21,6 +21,23 @@ pub trait DelegationModule: common::storage::CommonStorageModule {
             .call_and_exit();
     }
 
+    #[callback]
+    fn stake_callback(
+        &self,
+        caller: &ManagedAddress,
+        egld_amount: &BigUint,
+        #[call_result] result: ManagedAsyncCallResult<()>,
+    ) {
+        match result {
+            ManagedAsyncCallResult::Ok(()) => {
+                self.delegated_value(caller.clone()).set(egld_amount);
+                self.egld_token_supply()
+                    .update(|value| *value += egld_amount)
+            }
+            _ => sc_panic!("There was an error at delegating"),
+        }
+    }
+
     #[endpoint(unStake)]
     fn unstake(&self, contract_name: ManagedBuffer, egld_amount_to_unstake: BigUint) {
         let caller = self.blockchain().get_caller();
@@ -49,26 +66,6 @@ pub trait DelegationModule: common::storage::CommonStorageModule {
             .call_and_exit();
     }
 
-    // TODO: Could use a Enum for each endpoint name
-    // fn call_delegation_contract_endpoint(&self, endpoint_name: ManagedBuffer)
-
-    #[callback]
-    fn stake_callback(
-        &self,
-        caller: &ManagedAddress,
-        egld_amount: &BigUint,
-        #[call_result] result: ManagedAsyncCallResult<()>,
-    ) {
-        match result {
-            ManagedAsyncCallResult::Ok(()) => {
-                self.delegated_value(caller.clone()).set(egld_amount);
-                self.egld_token_supply()
-                    .update(|value| *value += egld_amount)
-            }
-            _ => sc_panic!("There was an error at delegating"),
-        }
-    }
-
     #[callback]
     fn unstake_callback(
         &self,
@@ -87,4 +84,7 @@ pub trait DelegationModule: common::storage::CommonStorageModule {
             _ => sc_panic!("There was an error at delegating"),
         }
     }
+
+    // TODO: Could use a Enum for each endpoint name
+    // fn call_delegation_contract_endpoint(&self, endpoint_name: ManagedBuffer)
 }
