@@ -5,7 +5,7 @@ pub type Epoch = u64;
 pub trait CommonStorageModule {
     #[view(getDelegationAddress)]
     #[storage_mapper("delegationAddress")]
-    fn delegation_address(&self) -> SingleValueMapper<ManagedAddress>;
+    fn delegation_addresses(&self) -> UnorderedSetMapper<ManagedAddress>;
 
     #[view(getDelegatedValue)]
     #[storage_mapper("delegatedValue")]

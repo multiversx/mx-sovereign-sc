@@ -13,13 +13,21 @@ pub trait LiquidStaking:
     + common::storage::CommonStorageModule
 {
     #[init]
-    fn init(&self, delegation_address: ManagedAddress) {
+    fn init(&self) {}
+
+    #[endpoint(registerDelegationContractAddress)]
+    fn register_delegation_address(&self, delegation_address: ManagedAddress) {
         require!(
             self.blockchain().is_smart_contract(&delegation_address),
             "Provided address is not a valid Smart Contract address"
         );
 
-        self.delegation_address().set(delegation_address);
+        require!(
+            self.delegation_addresses().contains(&delegation_address),
+            "This address is already in the contract's storage"
+        );
+
+        self.delegation_addresses().insert(delegation_address);
     }
 
     #[upgrade]
