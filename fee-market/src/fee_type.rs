@@ -1,7 +1,7 @@
 multiversx_sc::imports!();
 multiversx_sc::derive_imports!();
 
-#[derive(TypeAbi, TopEncode, TopDecode)]
+#[derive(TypeAbi, TopEncode, TopDecode, NestedDecode)]
 pub enum FeeType<M: ManagedTypeApi> {
     None,
     Fixed {
@@ -14,6 +14,13 @@ pub enum FeeType<M: ManagedTypeApi> {
         per_transfer: BigUint<M>,
         per_gas: BigUint<M>,
     },
+}
+
+#[type_abi]
+#[derive(NestedDecode)]
+pub struct FeeStruct<M: ManagedTypeApi> {
+    pub base_token: TokenIdentifier<M>,
+    pub fee_type: FeeType<M>,
 }
 
 #[multiversx_sc::module]
@@ -42,8 +49,12 @@ pub trait FeeTypeModule: utils::UtilsModule + bls_signature::BlsSignatureModule 
         };
 
         self.require_valid_token_id(token);
-
+        self.is_fee_enabled().set(true);
         self.token_fee(&base_token).set(fee_type);
+    }
+
+    fn is_fee_enabled(&self) -> bool {
+        self.fee_enabled().get()
     }
 
     #[only_owner]
@@ -55,4 +66,7 @@ pub trait FeeTypeModule: utils::UtilsModule + bls_signature::BlsSignatureModule 
     #[view(getTokenFee)]
     #[storage_mapper("tokenFee")]
     fn token_fee(&self, token_id: &TokenIdentifier) -> SingleValueMapper<FeeType<Self::Api>>;
+
+    #[storage_mapper("feeEnabledFlag")]
+    fn fee_enabled(&self) -> SingleValueMapper<bool>;
 }
