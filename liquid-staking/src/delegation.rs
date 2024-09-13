@@ -1,4 +1,4 @@
-use multiversx_sc::imports::*;
+use multiversx_sc::{api::const_handles::BIG_INT_CONST_ZERO, imports::*};
 pub const UNBOND_PERIOD: u64 = 10;
 pub const DELEGATE_ENDPOINT: &str = "delegate";
 pub const UNDELEGATE_ENDPOINT: &str = "unDelegate";
@@ -42,8 +42,13 @@ pub trait DelegationModule: common::storage::CommonStorageModule {
     #[endpoint(unStake)]
     fn unstake(&self, contract_name: ManagedBuffer, egld_amount_to_unstake: BigUint) {
         let caller = self.blockchain().get_caller();
-        let current_epoch = self.blockchain().get_block_epoch();
         let total_egld_deposit = self.delegated_value(caller.clone()).get();
+        require!(
+            total_egld_deposit > BIG_INT_CONST_ZERO,
+            "The user has not deposited any EGLD"
+        );
+
+        let current_epoch = self.blockchain().get_block_epoch();
         let delegation_contract_address = self.delegation_addresses(&contract_name).get();
 
         let mut args: ManagedArgBuffer<Self::Api> = ManagedArgBuffer::new();
