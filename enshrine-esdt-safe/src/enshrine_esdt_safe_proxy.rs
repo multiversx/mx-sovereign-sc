@@ -120,6 +120,32 @@ where
             .original_result()
     }
 
+    pub fn set_max_user_tx_gas_limit<
+        Arg0: ProxyArg<u64>,
+    >(
+        self,
+        max_user_tx_gas_limit: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("setMaxTxGasLimit")
+            .argument(&max_user_tx_gas_limit)
+            .original_result()
+    }
+
+    pub fn set_banned_endpoint<
+        Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
+    >(
+        self,
+        endpoint_name: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("setBannedEndpoint")
+            .argument(&endpoint_name)
+            .original_result()
+    }
+
     pub fn deposit<
         Arg0: ProxyArg<ManagedAddress<Env::Api>>,
         Arg1: ProxyArg<OptionalValue<MultiValue3<u64, ManagedBuffer<Env::Api>, ManagedVec<Env::Api, ManagedBuffer<Env::Api>>>>>,

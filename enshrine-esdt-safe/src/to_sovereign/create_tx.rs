@@ -44,10 +44,10 @@ pub trait CreateTxModule:
         for payment in &payments {
             self.require_below_max_amount(&payment.token_identifier, &payment.amount);
             self.require_token_not_blacklisted(&payment.token_identifier);
+            let is_token_whitelist_empty = self.token_whitelist().is_empty();
+            let is_token_whitelisted = self.token_whitelist().contains(&payment.token_identifier);
 
-            if !self.token_whitelist().is_empty()
-                && !self.token_whitelist().contains(&payment.token_identifier)
-            {
+            if !is_token_whitelist_empty && !is_token_whitelisted {
                 refundable_payments.push(payment.clone());
 
                 continue;
@@ -108,6 +108,11 @@ pub trait CreateTxModule:
         require!(!payments.is_empty(), "Nothing to transfer");
         require!(payments.len() <= MAX_TRANSFERS_PER_TX, "Too many tokens");
 
+        require!(
+            !self.fee_market_address().is_empty(),
+            "Fee market address is not set"
+        );
+
         let fee_market_address = self.fee_market_address().get();
         let fee_enabled = self.external_fee_enabled(fee_market_address).get();
         let opt_transfer_data = if fee_enabled {
@@ -151,7 +156,7 @@ pub trait CreateTxModule:
                     .typed(fee_market_proxy::FeeMarketProxy)
                     .subtract_fee(caller, total_tokens_for_fees, OptionalValue::Some(gas))
                     .payment(fee.clone())
-                    .async_call_and_exit();
+                    .sync_call();
             }
             OptionalValue::None => (),
         };
