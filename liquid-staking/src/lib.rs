@@ -16,18 +16,23 @@ pub trait LiquidStaking:
     fn init(&self) {}
 
     #[endpoint(registerDelegationContractAddress)]
-    fn register_delegation_address(&self, delegation_address: ManagedAddress) {
+    fn register_delegation_address(
+        &self,
+        contract_name: ManagedBuffer,
+        delegation_address: ManagedAddress,
+    ) {
         require!(
             self.blockchain().is_smart_contract(&delegation_address),
             "Provided address is not a valid Smart Contract address"
         );
 
         require!(
-            self.delegation_addresses().contains(&delegation_address),
-            "This address is already in the contract's storage"
+            self.delegation_addresses(&contract_name).is_empty(),
+            "This contract is already registered"
         );
 
-        self.delegation_addresses().insert(delegation_address);
+        self.delegation_addresses(&contract_name)
+            .set(delegation_address);
     }
 
     #[upgrade]
