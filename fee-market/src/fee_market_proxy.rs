@@ -252,7 +252,7 @@ where
 
 #[rustfmt::skip]
 #[type_abi]
-#[derive(TopEncode, TopDecode)]
+#[derive(TopEncode, TopDecode, NestedDecode)]
 pub enum FeeType<Api>
 where
     Api: ManagedTypeApi,
