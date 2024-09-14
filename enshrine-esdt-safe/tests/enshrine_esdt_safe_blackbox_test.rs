@@ -1,7 +1,6 @@
 use bls_signature::BlsSignature;
 use enshrine_esdt_safe::enshrine_esdt_safe_proxy;
 use fee_market::fee_market_proxy::{self, FeeStruct, FeeType};
-use fee_market::fee_type;
 use header_verifier::header_verifier_proxy;
 use multiversx_sc::codec::TopEncode;
 use multiversx_sc::imports::{MultiValue3, OptionalValue};
@@ -154,16 +153,30 @@ impl EnshrineTestState {
 
     fn deploy_fee_market_contract(
         &mut self,
+        fee_market_error_status: Option<&ErrorStatus>,
         fee_struct: Option<FeeStruct<StaticApi>>,
     ) -> &mut Self {
-        self.world
-            .tx()
-            .from(ENSHRINE_ESDT_OWNER_ADDRESS)
-            .typed(fee_market_proxy::FeeMarketProxy)
-            .init(ENSHRINE_ESDT_ADDRESS, ENSHRINE_ESDT_ADDRESS, fee_struct)
-            .code(FEE_MARKET_CODE_PATH)
-            .new_address(FEE_MARKET_ADDRESS)
-            .run();
+        match fee_market_error_status {
+            Some(error_status) => self
+                .world
+                .tx()
+                .from(ENSHRINE_ESDT_OWNER_ADDRESS)
+                .typed(fee_market_proxy::FeeMarketProxy)
+                .init(ENSHRINE_ESDT_ADDRESS, ENSHRINE_ESDT_ADDRESS, fee_struct)
+                .code(FEE_MARKET_CODE_PATH)
+                .new_address(FEE_MARKET_ADDRESS)
+                .returns(ExpectError(error_status.code, error_status.error_message))
+                .run(),
+            None => self
+                .world
+                .tx()
+                .from(ENSHRINE_ESDT_OWNER_ADDRESS)
+                .typed(fee_market_proxy::FeeMarketProxy)
+                .init(ENSHRINE_ESDT_ADDRESS, ENSHRINE_ESDT_ADDRESS, fee_struct)
+                .code(FEE_MARKET_CODE_PATH)
+                .new_address(FEE_MARKET_ADDRESS)
+                .run(),
+        }
 
         self
     }
@@ -210,7 +223,7 @@ impl EnshrineTestState {
         );
         self.deploy_header_verifier_contract();
         self.deploy_token_handler_contract();
-        self.deploy_fee_market_contract(fee_struct.cloned());
+        self.deploy_fee_market_contract(None, fee_struct.cloned());
 
         self.propose_set_header_verifier_address();
         self.propose_register_fee_market_address();
@@ -218,6 +231,26 @@ impl EnshrineTestState {
         self
     }
 
+    fn propose_setup_contracts_with_fee_market_error(
+        &mut self,
+        is_sovereign_chain: bool,
+        fee_market_error_status: &ErrorStatus,
+        fee_struct: Option<&FeeStruct<StaticApi>>,
+    ) -> &mut Self {
+        self.deploy_enshrine_esdt_contract(
+            is_sovereign_chain,
+            Some(TokenIdentifier::from(WEGLD_IDENTIFIER)),
+            Some(SOVEREIGN_TOKEN_PREFIX.into()),
+        );
+        self.deploy_header_verifier_contract();
+        self.deploy_token_handler_contract();
+        self.deploy_fee_market_contract(Some(fee_market_error_status), fee_struct.cloned());
+
+        self.propose_set_header_verifier_address();
+        self.propose_register_fee_market_address();
+
+        self
+    }
     fn propose_set_fee(
         &mut self,
         fee_struct: Option<&FeeStruct<StaticApi>>,
@@ -618,15 +651,11 @@ fn test_register_tokens_insufficient_wegld() {
 }
 
 #[test]
-fn test_deposit_nothing_to_transfer() {
+fn test_deposit_no_fee() {
     let mut state = EnshrineTestState::new();
     let amount = BigUint::from(10000u64);
     let wegld_payment = EsdtTokenPayment::new(WEGLD_IDENTIFIER.into(), 0, amount.clone());
     let mut payments = PaymentsVec::new();
-    let error_status = ErrorStatus {
-        code: 4,
-        error_message: "Nothing to transfer",
-    };
 
     payments.push(wegld_payment);
 
@@ -637,12 +666,12 @@ fn test_deposit_nothing_to_transfer() {
         USER_ADDRESS,
         payments,
         OptionalValue::None,
-        Some(error_status),
+        None,
     );
 }
 
 #[test]
-fn test_deposit_token_not_accepted_as_fee() {
+fn test_deposit_invalid_fee_type() {
     let mut state = EnshrineTestState::new();
     let amount = BigUint::from(10000u64);
     let wegld_payment = EsdtTokenPayment::new(WEGLD_IDENTIFIER.into(), 0, amount.clone());
@@ -651,10 +680,6 @@ fn test_deposit_token_not_accepted_as_fee() {
     let fee_market_error_status = ErrorStatus {
         code: 4,
         error_message: "Invalid fee type",
-    };
-    let deposit_error_status = ErrorStatus {
-        code: 4,
-        error_message: "Token not accepted as fee",
     };
 
     let fee_type = FeeType::None;
@@ -667,14 +692,18 @@ fn test_deposit_token_not_accepted_as_fee() {
         fee_type,
     };
 
-    state.propose_setup_contracts(false, Some(&fee_struct));
+    state.propose_setup_contracts_with_fee_market_error(
+        false,
+        &fee_market_error_status,
+        Some(&fee_struct),
+    );
     state.propose_set_fee(Some(&fee_struct), Some(fee_market_error_status));
     state.propose_deposit(
         ENSHRINE_ESDT_OWNER_ADDRESS,
         USER_ADDRESS,
         payments,
         OptionalValue::None,
-        Some(deposit_error_status),
+        None,
     );
 }
 
