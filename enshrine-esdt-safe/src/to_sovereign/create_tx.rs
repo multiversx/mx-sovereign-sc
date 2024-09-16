@@ -63,11 +63,11 @@ pub trait CreateTxModule:
             current_token_data.amount = payment.amount.clone();
 
             if is_sov_chain || self.has_prefix(&payment.token_identifier) {
-                self.send().esdt_local_burn(
-                    &payment.token_identifier,
-                    payment.token_nonce,
-                    &payment.amount,
-                );
+                self.tx()
+                    .to(ToSelf)
+                    .typed(ESDTSystemSCProxy)
+                    .burn(&payment.token_identifier, &payment.amount)
+                    .transfer_execute();
             }
 
             event_payments.push(
@@ -130,7 +130,9 @@ pub trait CreateTxModule:
         refundable_payments: &ManagedVec<EsdtTokenPayment>,
     ) {
         for payment in refundable_payments {
-            self.send().direct_non_zero_esdt_payment(caller, &payment);
+            if payment.amount > 0 {
+                self.tx().to(caller).payment(&payment).transfer();
+            }
         }
     }
 
