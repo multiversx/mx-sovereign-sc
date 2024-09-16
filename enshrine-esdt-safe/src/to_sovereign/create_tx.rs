@@ -64,7 +64,7 @@ pub trait CreateTxModule:
 
             if is_sov_chain || self.has_prefix(&payment.token_identifier) {
                 self.tx()
-                    .to(ToCaller)
+                    .to(ToSelf)
                     .typed(ESDTSystemSCProxy)
                     .burn(&payment.token_identifier, &payment.amount)
                     .transfer_execute();

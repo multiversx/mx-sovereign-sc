@@ -71,7 +71,7 @@ pub trait CreateTxModule:
 
             if self.is_sovereign_chain().get() {
                 self.tx()
-                    .to(ToCaller)
+                    .to(ToSelf)
                     .typed(ESDTSystemSCProxy)
                     .burn(&payment.token_identifier, &payment.amount)
                     .transfer_execute();
