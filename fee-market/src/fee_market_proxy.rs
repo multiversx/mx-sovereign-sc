@@ -46,16 +46,19 @@ where
     pub fn init<
         Arg0: ProxyArg<ManagedAddress<Env::Api>>,
         Arg1: ProxyArg<ManagedAddress<Env::Api>>,
+        Arg2: ProxyArg<Option<FeeStruct<Env::Api>>>,
     >(
         self,
         esdt_safe_address: Arg0,
         price_aggregator_address: Arg1,
+        fee: Arg2,
     ) -> TxTypedDeploy<Env, From, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_deploy()
             .argument(&esdt_safe_address)
             .argument(&price_aggregator_address)
+            .argument(&fee)
             .original_result()
     }
 }
@@ -88,25 +91,7 @@ where
     To: TxTo<Env>,
     Gas: TxGas<Env>,
 {
-    pub fn enable_fee(
-        self,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("enableFee")
-            .original_result()
-    }
-
-    pub fn disable_fee(
-        self,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("disableFee")
-            .original_result()
-    }
-
-    pub fn add_fee<
+    pub fn set_fee<
         Arg0: ProxyArg<TokenIdentifier<Env::Api>>,
         Arg1: ProxyArg<FeeType<Env::Api>>,
     >(
@@ -122,7 +107,7 @@ where
             .original_result()
     }
 
-    pub fn remove_fee<
+    pub fn disable_fee<
         Arg0: ProxyArg<TokenIdentifier<Env::Api>>,
     >(
         self,
@@ -255,9 +240,19 @@ where
     }
 }
 
+#[type_abi]
+#[derive(NestedEncode, NestedDecode)]
+pub struct FeeStruct<Api>
+where
+    Api: ManagedTypeApi,
+{
+    pub base_token: TokenIdentifier<Api>,
+    pub fee_type: FeeType<Api>,
+}
+
 #[rustfmt::skip]
 #[type_abi]
-#[derive(TopEncode, TopDecode)]
+#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode)]
 pub enum FeeType<Api>
 where
     Api: ManagedTypeApi,

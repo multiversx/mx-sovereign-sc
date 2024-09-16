@@ -30,8 +30,7 @@ pub struct SubtractPaymentArguments<M: ManagedTypeApi> {
 
 #[multiversx_sc::module]
 pub trait SubtractFeeModule:
-    crate::enable_fee::EnableFeeModule
-    + crate::fee_type::FeeTypeModule
+    crate::fee_type::FeeTypeModule
     + crate::fee_common::CommonFeeModule
     + crate::price_aggregator::PriceAggregatorModule
     + utils::UtilsModule
