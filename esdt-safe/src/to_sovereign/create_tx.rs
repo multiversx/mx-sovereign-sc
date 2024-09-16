@@ -112,7 +112,9 @@ pub trait CreateTxModule:
 
         // refund refundable_tokens
         for payment in &refundable_payments {
-            self.tx().to(&caller).payment(payment).transfer();
+            if payment.amount > 0 {
+                self.tx().to(&caller).payment(payment).transfer();
+            }
         }
 
         let tx_nonce = self.get_and_save_next_tx_id();

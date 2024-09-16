@@ -130,14 +130,12 @@ pub trait SubtractFeeModule:
         self.accumulated_fees(&final_payment.fee.token_identifier)
             .update(|amt| *amt += &final_payment.fee.amount);
 
-        require!(
-            final_payment.remaining_tokens.amount > BigUint::from(0u32),
-            "Refundable payment is zero"
-        );
-        self.tx()
-            .to(&original_caller)
-            .payment(&final_payment.remaining_tokens)
-            .transfer();
+        if final_payment.remaining_tokens.amount > 0 {
+            self.tx()
+                .to(&original_caller)
+                .payment(&final_payment.remaining_tokens)
+                .transfer();
+        }
 
         final_payment
     }

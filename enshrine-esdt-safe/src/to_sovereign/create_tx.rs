@@ -130,11 +130,9 @@ pub trait CreateTxModule:
         refundable_payments: &ManagedVec<EsdtTokenPayment>,
     ) {
         for payment in refundable_payments {
-            require!(
-                payment.amount > BigUint::from(0u32),
-                "Refundable payment is zero"
-            );
-            self.tx().to(caller).payment(&payment).transfer();
+            if payment.amount > 0 {
+                self.tx().to(caller).payment(&payment).transfer();
+            }
         }
     }
 
