@@ -153,30 +153,16 @@ impl EnshrineTestState {
 
     fn deploy_fee_market_contract(
         &mut self,
-        fee_market_error_status: Option<&ErrorStatus>,
         fee_struct: Option<FeeStruct<StaticApi>>,
     ) -> &mut Self {
-        match fee_market_error_status {
-            Some(error_status) => self
-                .world
-                .tx()
-                .from(ENSHRINE_ESDT_OWNER_ADDRESS)
-                .typed(fee_market_proxy::FeeMarketProxy)
-                .init(ENSHRINE_ESDT_ADDRESS, ENSHRINE_ESDT_ADDRESS, fee_struct)
-                .code(FEE_MARKET_CODE_PATH)
-                .new_address(FEE_MARKET_ADDRESS)
-                .returns(ExpectError(error_status.code, error_status.error_message))
-                .run(),
-            None => self
-                .world
-                .tx()
-                .from(ENSHRINE_ESDT_OWNER_ADDRESS)
-                .typed(fee_market_proxy::FeeMarketProxy)
-                .init(ENSHRINE_ESDT_ADDRESS, ENSHRINE_ESDT_ADDRESS, fee_struct)
-                .code(FEE_MARKET_CODE_PATH)
-                .new_address(FEE_MARKET_ADDRESS)
-                .run(),
-        }
+        self.world
+            .tx()
+            .from(ENSHRINE_ESDT_OWNER_ADDRESS)
+            .typed(fee_market_proxy::FeeMarketProxy)
+            .init(ENSHRINE_ESDT_ADDRESS, ENSHRINE_ESDT_ADDRESS, fee_struct)
+            .code(FEE_MARKET_CODE_PATH)
+            .new_address(FEE_MARKET_ADDRESS)
+            .run();
 
         self
     }
@@ -223,7 +209,7 @@ impl EnshrineTestState {
         );
         self.deploy_header_verifier_contract();
         self.deploy_token_handler_contract();
-        self.deploy_fee_market_contract(None, fee_struct.cloned());
+        self.deploy_fee_market_contract(fee_struct.cloned());
 
         self.propose_set_header_verifier_address();
         self.propose_register_fee_market_address();
