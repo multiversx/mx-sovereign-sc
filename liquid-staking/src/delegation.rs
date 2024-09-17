@@ -7,7 +7,7 @@ use crate::common::{self, storage::Epoch};
 
 #[multiversx_sc::module]
 pub trait DelegationModule: common::storage::CommonStorageModule {
-    #[payable("ELGD")]
+    #[payable("EGLD")]
     #[endpoint(stake)]
     fn stake(&self, contract_name: ManagedBuffer) {
         let caller = self.blockchain().get_caller();
