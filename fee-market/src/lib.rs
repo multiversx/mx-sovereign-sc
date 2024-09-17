@@ -34,7 +34,7 @@ pub trait FeeMarket:
             .set(price_aggregator_address);
 
         match fee {
-            Option::Some(fee_struct) => self.set_fee(fee_struct.base_token, fee_struct.fee_type),
+            Some(fee_struct) => self.set_fee(fee_struct),
             _ => self.fee_enabled().set(false),
         }
     }

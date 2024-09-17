@@ -92,18 +92,15 @@ where
     Gas: TxGas<Env>,
 {
     pub fn set_fee<
-        Arg0: ProxyArg<TokenIdentifier<Env::Api>>,
-        Arg1: ProxyArg<FeeType<Env::Api>>,
+        Arg0: ProxyArg<FeeStruct<Env::Api>>,
     >(
         self,
-        base_token: Arg0,
-        fee_type: Arg1,
+        fee_struct: Arg0,
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("addFee")
-            .argument(&base_token)
-            .argument(&fee_type)
+            .argument(&fee_struct)
             .original_result()
     }
 
@@ -241,7 +238,7 @@ where
 }
 
 #[type_abi]
-#[derive(NestedEncode, NestedDecode)]
+#[derive(TopDecode, TopEncode, NestedEncode, NestedDecode, Clone)]
 pub struct FeeStruct<Api>
 where
     Api: ManagedTypeApi,
@@ -252,7 +249,7 @@ where
 
 #[rustfmt::skip]
 #[type_abi]
-#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode)]
+#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, Clone)]
 pub enum FeeType<Api>
 where
     Api: ManagedTypeApi,
