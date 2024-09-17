@@ -231,6 +231,19 @@ impl EnshrineTestState {
         self
     }
 
+    fn propose_set_fee(
+        &mut self,
+        fee_struct: Option<&FeeStruct<StaticApi>>,
+        error_status: Option<ErrorStatus>,
+    ) -> &mut Self {
+        match fee_struct {
+            Some(fee) => self.propose_add_fee_token(fee, error_status),
+            _ => (),
+        }
+
+        self
+    }
+
     fn propose_execute_operation(
         &mut self,
         error_status: Option<ErrorStatus>,
