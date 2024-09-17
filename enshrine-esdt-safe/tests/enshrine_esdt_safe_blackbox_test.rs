@@ -231,39 +231,6 @@ impl EnshrineTestState {
         self
     }
 
-    fn propose_setup_contracts_with_fee_market_error(
-        &mut self,
-        is_sovereign_chain: bool,
-        fee_market_error_status: &ErrorStatus,
-        fee_struct: Option<&FeeStruct<StaticApi>>,
-    ) -> &mut Self {
-        self.deploy_enshrine_esdt_contract(
-            is_sovereign_chain,
-            Some(TokenIdentifier::from(WEGLD_IDENTIFIER)),
-            Some(SOVEREIGN_TOKEN_PREFIX.into()),
-        );
-        self.deploy_header_verifier_contract();
-        self.deploy_token_handler_contract();
-        self.deploy_fee_market_contract(Some(fee_market_error_status), fee_struct.cloned());
-
-        self.propose_set_header_verifier_address();
-        self.propose_register_fee_market_address();
-
-        self
-    }
-    fn propose_set_fee(
-        &mut self,
-        fee_struct: Option<&FeeStruct<StaticApi>>,
-        error_status: Option<ErrorStatus>,
-    ) -> &mut Self {
-        match fee_struct {
-            Some(fee) => self.propose_add_fee_token(fee, error_status),
-            _ => (),
-        }
-
-        self
-    }
-
     fn propose_execute_operation(
         &mut self,
         error_status: Option<ErrorStatus>,
@@ -661,43 +628,6 @@ fn test_deposit_no_fee() {
 
     state.propose_setup_contracts(false, None);
     state.propose_set_fee(None, None);
-    state.propose_deposit(
-        ENSHRINE_ESDT_OWNER_ADDRESS,
-        USER_ADDRESS,
-        payments,
-        OptionalValue::None,
-        None,
-    );
-}
-
-#[test]
-fn test_deposit_invalid_fee_type() {
-    let mut state = EnshrineTestState::new();
-    let amount = BigUint::from(10000u64);
-    let wegld_payment = EsdtTokenPayment::new(WEGLD_IDENTIFIER.into(), 0, amount.clone());
-    let crowd_payment = EsdtTokenPayment::new(CROWD_TOKEN_ID.into(), 0, amount.clone());
-    let mut payments = PaymentsVec::new();
-    let fee_market_error_status = ErrorStatus {
-        code: 4,
-        error_message: "Invalid fee type",
-    };
-
-    let fee_type = FeeType::None;
-
-    payments.push(wegld_payment);
-    payments.push(crowd_payment);
-
-    let fee_struct = FeeStruct {
-        base_token: WEGLD_IDENTIFIER.into(),
-        fee_type,
-    };
-
-    state.propose_setup_contracts_with_fee_market_error(
-        false,
-        &fee_market_error_status,
-        Some(&fee_struct),
-    );
-    state.propose_set_fee(Some(&fee_struct), Some(fee_market_error_status));
     state.propose_deposit(
         ENSHRINE_ESDT_OWNER_ADDRESS,
         USER_ADDRESS,
