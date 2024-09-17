@@ -1,6 +1,6 @@
 use bls_signature::BlsSignature;
 use esdt_safe::esdt_safe_proxy::{self};
-use fee_market::fee_market_proxy::{self, FeeType};
+use fee_market::fee_market_proxy::{self, FeeStruct, FeeType};
 use header_verifier::header_verifier_proxy;
 use multiversx_sc::codec::TopEncode;
 use multiversx_sc::types::{
@@ -98,11 +98,13 @@ impl BridgeTestState {
     }
 
     fn deploy_fee_market_contract(&mut self) -> &mut Self {
+        let fee_struct: Option<FeeStruct<StaticApi>> = None;
+
         self.world
             .tx()
             .from(BRIDGE_OWNER_ADDRESS)
             .typed(fee_market_proxy::FeeMarketProxy)
-            .init(BRIDGE_ADDRESS, PRICE_AGGREGATOR_ADDRESS)
+            .init(BRIDGE_ADDRESS, PRICE_AGGREGATOR_ADDRESS, fee_struct)
             .code(FEE_MARKET_CODE_PATH)
             .new_address(FEE_MARKET_ADDRESS)
             .run();
@@ -176,12 +178,17 @@ impl BridgeTestState {
         let fee_token_identifier: TokenIdentifier<StaticApi> =
             TokenIdentifier::from(token_identifier);
 
+        let fee_struct = FeeStruct {
+            base_token: fee_token_identifier,
+            fee_type,
+        };
+
         self.world
             .tx()
             .from(BRIDGE_OWNER_ADDRESS)
             .to(FEE_MARKET_ADDRESS)
             .typed(fee_market_proxy::FeeMarketProxy)
-            .add_fee(fee_token_identifier, fee_type)
+            .set_fee(fee_struct)
             .run();
     }
 
