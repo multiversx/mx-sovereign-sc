@@ -90,9 +90,22 @@ impl LiquidStakingTestState {
         self
     }
 
-    // fn propose_stake(&mut self) -> &mut Self {
-    //     let contract_name =
-    // }
+    fn propose_stake(
+        &mut self,
+        contract_name: &ManagedBuffer<StaticApi>,
+        payment: &BigUint<StaticApi>,
+    ) -> &mut Self {
+        self.world
+            .tx()
+            .from(LIQUID_STACKING_OWNER)
+            .to(LIQUID_STAKING_ADDRESS)
+            .typed(liquid_staking_proxy::LiquidStakingProxy)
+            .stake(contract_name)
+            .egld(payment)
+            .run();
+
+        self
+    }
 }
 
 #[test]
@@ -121,6 +134,7 @@ fn test_register_delegation_contract() {
             assert_eq!(DELEGATION_ADDRESS, registered_address);
         });
 }
+
 #[test]
 fn test_register_delegation_contract_contract_already_registered() {
     let mut state = LiquidStakingTestState::new();
@@ -136,4 +150,20 @@ fn test_register_delegation_contract_contract_already_registered() {
         DELEGATION_ADDRESS,
         Some(error_status),
     );
+}
+
+#[test]
+fn test_stake() {
+    let mut state = LiquidStakingTestState::new();
+    let contract_name = ManagedBuffer::from("delegation");
+    let payment = BigUint::from(100_000u64);
+
+    state.deploy_liquid_staking();
+    state.propose_register_delegation_address(&contract_name, DELEGATION_ADDRESS, None);
+    state.propose_stake(&contract_name, &payment);
+
+    state
+        .world
+        .check_account(LIQUID_STAKING_ADDRESS)
+        .balance(BigUint::from(WEGLD_BALANCE) - payment);
 }
