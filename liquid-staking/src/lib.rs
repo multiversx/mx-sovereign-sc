@@ -4,6 +4,7 @@ use multiversx_sc::imports::*;
 
 pub mod common;
 pub mod delegation;
+pub mod liquid_staking_proxy;
 pub mod liquidity_pools;
 
 #[multiversx_sc::contract]
