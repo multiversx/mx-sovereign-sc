@@ -8,7 +8,6 @@
 #![allow(clippy::all)]
 
 use multiversx_sc::proxy_imports::*;
-use multiversx_sc_snippets::sdk::data::transaction;
 
 pub struct TokenHandlerProxy;
 

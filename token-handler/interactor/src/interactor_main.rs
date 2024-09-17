@@ -5,6 +5,8 @@ mod proxy;
 use multiversx_sc_snippets::imports::*;
 use multiversx_sc_snippets::sdk;
 use serde::{Deserialize, Serialize};
+use transaction::OperationEsdtPayment;
+use transaction::TransferData;
 use std::{
     io::{Read, Write},
     path::Path,
