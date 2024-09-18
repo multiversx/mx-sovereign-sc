@@ -245,7 +245,11 @@ impl ContractInteract {
     }
 
     async fn distribute_fees(&mut self) {
-        let address_percentage_pairs = MultiValueVec::from(vec![MultiValue2::<ManagedAddress<StaticApi>, u32>::from((bech32::decode(""), 0u32))]);
+        let mut address_percentage_pairs: MultiValueEncoded<
+            StaticApi,
+            MultiValue2<ManagedAddress<StaticApi>, usize>,
+        > = MultiValueEncoded::new();
+        address_percentage_pairs.push(MultiValue2((ManagedAddress::zero(), 0usize)));
 
         let response = self
             .interactor
@@ -360,5 +364,4 @@ impl ContractInteract {
 
         println!("Result: {response:?}");
     }
-
 }
