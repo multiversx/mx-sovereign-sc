@@ -37,6 +37,30 @@ pub trait LiquidStaking:
             .set(delegation_address);
     }
 
+    #[only_owner]
+    #[endpoint(registerHeaderVerifierAddress)]
+    fn register_header_verifier_address(&self, header_verifier_address: ManagedAddress) {
+        self.header_verifier_address().set(header_verifier_address);
+    }
+
+    #[endpoint(registerBlsKeys)]
+    fn register_bls_keys(&self, bls_keys: MultiValueEncoded<ManagedBuffer>) {
+        let caller = self.blockchain().get_caller();
+        self.require_caller_to_be_header_verifier(&caller);
+
+        self.registered_bls_keys().extend(bls_keys);
+    }
+
+    #[endpoint(registerBlsKeys)]
+    fn unregister_bls_keys(&self, bls_keys: MultiValueEncoded<ManagedBuffer>) {
+        let caller = self.blockchain().get_caller();
+        self.require_caller_to_be_header_verifier(&caller);
+
+        for bls_key in bls_keys {
+            self.registered_bls_keys().swap_remove(&bls_key);
+        }
+    }
+
     #[upgrade]
     fn upgrade(&self) {}
 }
