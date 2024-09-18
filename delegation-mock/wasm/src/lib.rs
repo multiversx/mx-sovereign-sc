@@ -5,10 +5,9 @@
 ////////////////////////////////////////////////////
 
 // Init:                                 1
-// Upgrade:                              1
-// Endpoints:                            0
+// Endpoints:                            5
 // Async Callback (empty):               1
-// Total number of exported functions:   3
+// Total number of exported functions:   7
 
 #![no_std]
 
@@ -19,7 +18,11 @@ multiversx_sc_wasm_adapter::endpoints! {
     delegation_mock
     (
         init => init
-        upgrade => upgrade
+        depositEGLD => deposit_egld
+        delegate => delegate
+        unDelegate => undelegate
+        withdraw => withdraw
+        claimRewards => claim_rewards
     )
 }
 
