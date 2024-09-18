@@ -6,7 +6,7 @@ edition = "2021"
 authors = ["you"]
 
 [lib]
-path = "src/delegation_mock.rs"
+path = "src/lib.rs"
 
 [dependencies.multiversx-sc]
 version = "0.53.0"
