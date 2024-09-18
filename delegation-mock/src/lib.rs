@@ -8,6 +8,8 @@ pub const APY: u64 = 10_000; //10%
 pub const EPOCHS_IN_YEAR: u64 = 365;
 pub const UNBOND_PERIOD: u64 = 10;
 
+pub mod delegation_proxy;
+
 #[multiversx_sc::contract]
 pub trait DelegationMock {
     #[init]
