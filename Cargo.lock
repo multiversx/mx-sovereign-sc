@@ -284,6 +284,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "delegation-mock"
+version = "0.0.0"
+dependencies = [
+ "multiversx-sc",
+ "multiversx-sc-scenario",
+ "num-bigint",
+]
+
+[[package]]
+name = "delegation-mock-meta"
+version = "0.0.0"
+dependencies = [
+ "delegation-mock",
+ "multiversx-sc-meta-lib",
+]
+
+[[package]]
 name = "der"
 version = "0.7.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
