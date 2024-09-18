@@ -16,7 +16,7 @@ pub trait DelegationModule: common::storage::CommonStorageModule {
 
         self.tx()
             .to(delegation_contract_address)
-            .raw_call(ManagedBuffer::from(DELEGATE_ENDPOINT))
+            .raw_call(DELEGATE_ENDPOINT)
             .egld(&egld_amount)
             .callback(DelegationModule::callbacks(self).stake_callback(&caller, &egld_amount))
             .async_call_and_exit();
