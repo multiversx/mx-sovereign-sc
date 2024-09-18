@@ -9,6 +9,8 @@ const LIQUID_STAKING_CODE_PATH: MxscPath = MxscPath::new("output/liquid-stacking
 const LIQUID_STAKING_ADDRESS: TestSCAddress = TestSCAddress::new("liquid-staking");
 const LIQUID_STACKING_OWNER: TestAddress = TestAddress::new("owner");
 
+const DELEGATION_CODE_PATH: MxscPath =
+    MxscPath::new("../delegation-mock/output/delegation-mock.mxsc-json");
 const DELEGATION_ADDRESS: TestSCAddress = TestSCAddress::new("delegation");
 
 const VALIDATOR_ADDRESS: TestAddress = TestAddress::new("validator");
@@ -19,6 +21,7 @@ fn world() -> ScenarioWorld {
     let mut blockchain = ScenarioWorld::new();
 
     blockchain.register_contract(LIQUID_STAKING_CODE_PATH, liquid_staking::ContractBuilder);
+    blockchain.register_contract(DELEGATION_CODE_PATH, liquid_staking::ContractBuilder);
 
     blockchain
 }
@@ -50,6 +53,19 @@ impl LiquidStakingTestState {
     }
 
     fn deploy_liquid_staking(&mut self) -> &mut Self {
+        self.world
+            .tx()
+            .from(LIQUID_STACKING_OWNER)
+            .typed(liquid_staking_proxy::LiquidStakingProxy)
+            .init()
+            .code(LIQUID_STAKING_CODE_PATH)
+            .new_address(LIQUID_STAKING_ADDRESS)
+            .run();
+
+        self
+    }
+
+    fn deploy_mock_delegation(&mut self) -> &mut Self {
         self.world
             .tx()
             .from(LIQUID_STACKING_OWNER)
