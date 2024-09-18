@@ -71,8 +71,8 @@ impl LiquidStakingTestState {
             .from(LIQUID_STACKING_OWNER)
             .typed(liquid_staking_proxy::LiquidStakingProxy)
             .init()
-            .code(LIQUID_STAKING_CODE_PATH)
-            .new_address(LIQUID_STAKING_ADDRESS)
+            .code(DELEGATION_CODE_PATH)
+            .new_address(DELEGATION_ADDRESS)
             .run();
 
         self
@@ -129,6 +129,7 @@ fn test_deploy() {
     let mut state = LiquidStakingTestState::new();
 
     state.deploy_liquid_staking();
+    state.deploy_mock_delegation();
 }
 
 #[test]
