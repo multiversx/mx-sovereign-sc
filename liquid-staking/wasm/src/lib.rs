@@ -6,9 +6,9 @@
 
 // Init:                                 1
 // Upgrade:                              1
-// Endpoints:                            7
+// Endpoints:                           11
 // Async Callback:                       1
-// Total number of exported functions:  10
+// Total number of exported functions:  14
 
 #![no_std]
 
@@ -21,12 +21,16 @@ multiversx_sc_wasm_adapter::endpoints! {
         init => init
         upgrade => upgrade
         registerDelegationContractAddress => register_delegation_address
+        registerHeaderVerifierAddress => register_header_verifier_address
+        registerBlsKeys => register_bls_keys
         stake => stake
         unStake => unstake
         getDelegationAddress => delegation_addresses
         getDelegatedValue => delegated_value
         unDelegateEpoch => undelegate_epoch
         getTotalEgldSupply => egld_token_supply
+        getHeaderVerifierAddress => header_verifier_address
+        getRegisteredBlsKeys => registered_bls_keys
     )
 }
 

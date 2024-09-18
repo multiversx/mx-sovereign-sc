@@ -97,6 +97,32 @@ where
             .original_result()
     }
 
+    pub fn register_header_verifier_address<
+        Arg0: ProxyArg<ManagedAddress<Env::Api>>,
+    >(
+        self,
+        header_verifier_address: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("registerHeaderVerifierAddress")
+            .argument(&header_verifier_address)
+            .original_result()
+    }
+
+    pub fn register_bls_keys<
+        Arg0: ProxyArg<MultiValueEncoded<Env::Api, ManagedBuffer<Env::Api>>>,
+    >(
+        self,
+        bls_keys: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("registerBlsKeys")
+            .argument(&bls_keys)
+            .original_result()
+    }
+
     pub fn stake<
         Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
     >(
@@ -170,6 +196,24 @@ where
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("getTotalEgldSupply")
+            .original_result()
+    }
+
+    pub fn header_verifier_address(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ManagedAddress<Env::Api>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getHeaderVerifierAddress")
+            .original_result()
+    }
+
+    pub fn registered_bls_keys(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, MultiValueEncoded<Env::Api, ManagedBuffer<Env::Api>>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getRegisteredBlsKeys")
             .original_result()
     }
 }
