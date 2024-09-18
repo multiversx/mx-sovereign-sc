@@ -49,6 +49,12 @@ impl LiquidStakingTestState {
             .balance(BigUint::from(WEGLD_BALANCE))
             .nonce(1);
 
+        world
+            .account(DELEGATION_ADDRESS)
+            .code(DELEGATION_CODE_PATH)
+            .balance(BigUint::from(WEGLD_BALANCE))
+            .nonce(1);
+
         Self { world }
     }
 
@@ -60,19 +66,6 @@ impl LiquidStakingTestState {
             .init()
             .code(LIQUID_STAKING_CODE_PATH)
             .new_address(LIQUID_STAKING_ADDRESS)
-            .run();
-
-        self
-    }
-
-    fn deploy_mock_delegation(&mut self) -> &mut Self {
-        self.world
-            .tx()
-            .from(LIQUID_STACKING_OWNER)
-            .typed(liquid_staking_proxy::LiquidStakingProxy)
-            .init()
-            .code(DELEGATION_CODE_PATH)
-            .new_address(DELEGATION_ADDRESS)
             .run();
 
         self
@@ -129,7 +122,6 @@ fn test_deploy() {
     let mut state = LiquidStakingTestState::new();
 
     state.deploy_liquid_staking();
-    state.deploy_mock_delegation();
 }
 
 #[test]
