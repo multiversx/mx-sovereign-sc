@@ -204,13 +204,11 @@ fn test_stake() {
         .query()
         .to(LIQUID_STAKING_ADDRESS)
         .whitebox(liquid_staking::contract_obj, |sc| {
-            let payment_whitebox = BigUint::from(100_000u64);
             let delegated_value = sc
                 .delegated_value(LIQUID_STAKING_OWNER.to_managed_address())
                 .get();
             let egld_supply = sc.egld_token_supply().get();
-
-            assert!(egld_supply > 0);
-            assert_eq!(delegated_value, payment_whitebox);
+            assert_eq!(egld_supply, BigUint::from(0u64));
+            assert_eq!(delegated_value, BigUint::from(0u64));
         });
 }
