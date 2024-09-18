@@ -173,6 +173,6 @@ fn test_stake() {
 
     state
         .world
-        .check_account(LIQUID_STAKING_ADDRESS)
+        .check_account(LIQUID_STACKING_OWNER)
         .balance(BigUint::from(WEGLD_BALANCE) - payment);
 }
