@@ -231,7 +231,7 @@ fn test_stake() {
         .to(LIQUID_STAKING_ADDRESS)
         .whitebox(liquid_staking::contract_obj, |sc| {
             let payment_whitebox = BigUint::from(100_000u64);
-            let delegated_value = sc.delegated_value(OWNER.to_managed_address()).get();
+            let delegated_value = sc.delegated_value(&OWNER.to_managed_address()).get();
             let egld_supply = sc.egld_token_supply().get();
 
             assert!(egld_supply > 0);
@@ -246,7 +246,7 @@ fn test_unstake_user_no_deposit() {
     let payment = BigUint::from(100_000u64);
     let error_status = ErrorStatus {
         code: 4,
-        error_message: "The user has not deposited any EGLD",
+        error_message: "Caller has 0 delegated value",
     };
 
     state.propose_setup_contracts();
