@@ -7,9 +7,9 @@ use multiversx_sc_scenario::{
     ScenarioWorld,
 };
 
-const LIQUID_STAKING_CODE_PATH: MxscPath = MxscPath::new("output/liquid-stacking.mxsc-json");
+const LIQUID_STAKING_CODE_PATH: MxscPath = MxscPath::new("output/liquid-stacking.mxsc.json");
 const LIQUID_STAKING_ADDRESS: TestSCAddress = TestSCAddress::new("liquid-staking");
-const LIQUID_STAKING_OWNER: TestAddress = TestAddress::new("owner");
+const OWNER: TestAddress = TestAddress::new("owner");
 
 const DELEGATION_CODE_PATH: MxscPath =
     MxscPath::new("../delegation-mock/output/delegation-mock.mxsc.json");
@@ -42,7 +42,7 @@ impl LiquidStakingTestState {
         let mut world = world();
 
         world
-            .account(LIQUID_STAKING_OWNER)
+            .account(OWNER)
             .balance(BigUint::from(WEGLD_BALANCE))
             .nonce(1);
 
@@ -51,19 +51,13 @@ impl LiquidStakingTestState {
             .balance(BigUint::from(WEGLD_BALANCE))
             .nonce(1);
 
-        // world
-        //     .account(DELEGATION_ADDRESS)
-        //     .code(DELEGATION_CODE_PATH)
-        //     .balance(BigUint::from(WEGLD_BALANCE))
-        //     .nonce(1);
-
         Self { world }
     }
 
     fn deploy_liquid_staking(&mut self) -> &mut Self {
         self.world
             .tx()
-            .from(LIQUID_STAKING_OWNER)
+            .from(OWNER)
             .typed(liquid_staking_proxy::LiquidStakingProxy)
             .init()
             .code(LIQUID_STAKING_CODE_PATH)
@@ -76,7 +70,7 @@ impl LiquidStakingTestState {
     fn deploy_delegation(&mut self) -> &mut Self {
         self.world
             .tx()
-            .from(LIQUID_STAKING_OWNER)
+            .from(OWNER)
             .typed(delegation_proxy::DelegationMockProxy)
             .init()
             .code(DELEGATION_CODE_PATH)
@@ -104,7 +98,7 @@ impl LiquidStakingTestState {
             Some(error) => self
                 .world
                 .tx()
-                .from(LIQUID_STAKING_OWNER)
+                .from(OWNER)
                 .to(LIQUID_STAKING_ADDRESS)
                 .typed(liquid_staking_proxy::LiquidStakingProxy)
                 .register_delegation_address(contract_name, managed_delegation_address)
@@ -113,7 +107,7 @@ impl LiquidStakingTestState {
             None => self
                 .world
                 .tx()
-                .from(LIQUID_STAKING_OWNER)
+                .from(OWNER)
                 .to(LIQUID_STAKING_ADDRESS)
                 .typed(liquid_staking_proxy::LiquidStakingProxy)
                 .register_delegation_address(contract_name, managed_delegation_address)
@@ -129,7 +123,7 @@ impl LiquidStakingTestState {
     ) -> &mut Self {
         self.world
             .tx()
-            .from(LIQUID_STAKING_OWNER)
+            .from(OWNER)
             .to(LIQUID_STAKING_ADDRESS)
             .typed(liquid_staking_proxy::LiquidStakingProxy)
             .stake(contract_name)
@@ -146,13 +140,25 @@ impl LiquidStakingTestState {
     ) -> &mut Self {
         self.world
             .tx()
-            .from(LIQUID_STAKING_OWNER)
+            .from(OWNER)
             .to(LIQUID_STAKING_ADDRESS)
             .typed(liquid_staking_proxy::LiquidStakingProxy)
             .unstake(contract_name, amount_to_unstake)
             .run();
 
         self
+    }
+
+    fn propose_check_is_contract_registered(&mut self, contract_name: &ManagedBuffer<StaticApi>) {
+        self.world.query().to(LIQUID_STAKING_ADDRESS).whitebox(
+            liquid_staking::contract_obj,
+            |sc| {
+                let contract_name_debug_api: ManagedBuffer<DebugApi> =
+                    ManagedBuffer::from(contract_name.to_vec());
+                let registered_address = sc.delegation_addresses(&contract_name_debug_api).get();
+                assert_eq!(DELEGATION_ADDRESS, registered_address);
+            },
+        );
     }
 }
 
@@ -170,17 +176,7 @@ fn test_register_delegation_contract() {
 
     state.propose_setup_contracts();
     state.propose_register_delegation_address(&contract_name, DELEGATION_ADDRESS, None);
-
-    state
-        .world
-        .query()
-        .to(LIQUID_STAKING_ADDRESS)
-        .whitebox(liquid_staking::contract_obj, |sc| {
-            let contract_name_debug_api: ManagedBuffer<DebugApi> =
-                ManagedBuffer::from("delegation");
-            let registered_address = sc.delegation_addresses(&contract_name_debug_api).get();
-            assert_eq!(DELEGATION_ADDRESS, registered_address);
-        });
+    state.propose_check_is_contract_registered(&contract_name);
 }
 
 #[test]
@@ -203,16 +199,17 @@ fn test_register_delegation_contract_contract_already_registered() {
 #[test]
 fn test_stake() {
     let mut state = LiquidStakingTestState::new();
-    let contract_name = ManagedBuffer::from("delegation");
+    let contract_name = ManagedBuffer::from("delegation_sc");
     let payment = BigUint::from(100_000u64);
 
     state.propose_setup_contracts();
     state.propose_register_delegation_address(&contract_name, DELEGATION_ADDRESS, None);
+    state.propose_check_is_contract_registered(&contract_name);
     state.propose_stake(&contract_name, &payment);
 
     state
         .world
-        .check_account(LIQUID_STAKING_OWNER)
+        .check_account(OWNER)
         .balance(BigUint::from(WEGLD_BALANCE) - payment);
 
     state
@@ -221,9 +218,7 @@ fn test_stake() {
         .to(LIQUID_STAKING_ADDRESS)
         .whitebox(liquid_staking::contract_obj, |sc| {
             let payment_whitebox = BigUint::from(100_000u64);
-            let delegated_value = sc
-                .delegated_value(LIQUID_STAKING_OWNER.to_managed_address())
-                .get();
+            let delegated_value = sc.delegated_value(OWNER.to_managed_address()).get();
             let egld_supply = sc.egld_token_supply().get();
 
             assert!(egld_supply > 0);
@@ -239,10 +234,11 @@ fn test_unstake() {
 
     state.propose_setup_contracts();
     state.propose_register_delegation_address(&contract_name, DELEGATION_ADDRESS, None);
+    state.propose_check_is_contract_registered(&contract_name);
     state.propose_unstake(&contract_name, &payment);
 
     state
         .world
-        .check_account(LIQUID_STAKING_OWNER)
+        .check_account(OWNER)
         .balance(BigUint::from(WEGLD_BALANCE) - payment);
 }
