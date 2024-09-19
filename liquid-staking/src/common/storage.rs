@@ -12,7 +12,7 @@ pub trait CommonStorageModule {
 
     #[view(getDelegatedValue)]
     #[storage_mapper("delegatedValue")]
-    fn delegated_value(&self, validator: ManagedAddress) -> SingleValueMapper<BigUint<Self::Api>>;
+    fn delegated_value(&self, validator: &ManagedAddress) -> SingleValueMapper<BigUint<Self::Api>>;
 
     #[view(unDelegateEpoch)]
     #[storage_mapper("unDelegateEpoch")]
@@ -37,5 +37,11 @@ pub trait CommonStorageModule {
             caller == &header_verifier_address,
             "Caller is not Header Verifier contract"
         );
+    }
+
+    fn require_caller_has_stake(&self, caller: &ManagedAddress) {
+        let total_egld_deposit = self.delegated_value(caller).get();
+
+        require!(total_egld_deposit > 0, "Caller has 0 delegated value");
     }
 }

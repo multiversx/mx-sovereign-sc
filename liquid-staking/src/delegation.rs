@@ -32,7 +32,7 @@ pub trait DelegationModule: common::storage::CommonStorageModule {
     ) {
         match result {
             ManagedAsyncCallResult::Ok(()) => {
-                self.delegated_value(caller.clone()).set(egld_amount);
+                self.delegated_value(caller).set(egld_amount);
                 self.egld_token_supply()
                     .update(|value| *value += egld_amount)
             }
@@ -43,14 +43,11 @@ pub trait DelegationModule: common::storage::CommonStorageModule {
     #[endpoint(unStake)]
     fn unstake(&self, contract_name: ManagedBuffer, egld_amount_to_unstake: BigUint) {
         let caller = self.blockchain().get_caller();
-        let total_egld_deposit = self.delegated_value(caller.clone()).get();
-        require!(
-            total_egld_deposit > 0,
-            "The user has not deposited any EGLD"
-        );
+        self.require_caller_has_stake(&caller);
 
         let current_epoch = self.blockchain().get_block_epoch();
         let delegation_contract_address = self.delegation_addresses(&contract_name).get();
+        let total_egld_deposit = self.delegated_value(&caller).get();
 
         require!(
             egld_amount_to_unstake <= total_egld_deposit,
@@ -79,7 +76,7 @@ pub trait DelegationModule: common::storage::CommonStorageModule {
     ) {
         match result {
             ManagedAsyncCallResult::Ok(()) => {
-                self.delegated_value(caller.clone())
+                self.delegated_value(&caller)
                     .update(|value| *value -= egld_amount_to_unstake);
                 self.undelegate_epoch(caller)
                     .set(current_epoch + UNBOND_PERIOD);
@@ -90,6 +87,9 @@ pub trait DelegationModule: common::storage::CommonStorageModule {
 
     #[endpoint(claimRewardsFromDelegation)]
     fn claim_rewards_from_delegation(&self, contracts: MultiValueEncoded<ManagedBuffer>) {
+        let caller = self.blockchain().get_caller();
+        self.require_caller_has_stake(&caller);
+
         for delegation_contract in contracts {
             let delegation_mapper = self.delegation_addresses(&delegation_contract);
             if !delegation_mapper.is_empty() {
