@@ -1,7 +1,8 @@
+use delegation_mock::{APY, EPOCHS_IN_YEAR, MAX_PERCENTAGE};
 use liquid_staking::{
     common::storage::CommonStorageModule, delegation_proxy, liquid_staking_proxy,
 };
-use multiversx_sc::types::{BigUint, ManagedBuffer, TestAddress, TestSCAddress};
+use multiversx_sc::types::{BigUint, ManagedBuffer, MultiValueEncoded, TestAddress, TestSCAddress};
 use multiversx_sc_scenario::{
     api::StaticApi, imports::MxscPath, DebugApi, ExpectError, ScenarioTxRun, ScenarioTxWhitebox,
     ScenarioWorld,
@@ -162,6 +163,21 @@ impl LiquidStakingTestState {
         self
     }
 
+    fn propose_claim_rewards_from_delegation(
+        &mut self,
+        contracts: &MultiValueEncoded<StaticApi, ManagedBuffer<StaticApi>>,
+    ) -> &mut Self {
+        self.world
+            .tx()
+            .from(OWNER)
+            .to(LIQUID_STAKING_ADDRESS)
+            .typed(liquid_staking_proxy::LiquidStakingProxy)
+            .claim_rewards_from_delegation(contracts)
+            .run();
+
+        self
+    }
+
     fn propose_check_is_contract_registered(&mut self, contract_name: &ManagedBuffer<StaticApi>) {
         self.world.query().to(LIQUID_STAKING_ADDRESS).whitebox(
             liquid_staking::contract_obj,
@@ -172,6 +188,18 @@ impl LiquidStakingTestState {
                 assert_eq!(DELEGATION_ADDRESS, registered_address);
             },
         );
+    }
+
+    fn get_expected_rewards(
+        &mut self,
+        staked_amount: &BigUint<StaticApi>,
+        current_epoch: u64,
+        last_claim_epoch: u64,
+    ) -> BigUint<StaticApi> {
+        let rewards = (staked_amount * APY / MAX_PERCENTAGE) * (current_epoch - last_claim_epoch)
+            / EPOCHS_IN_YEAR;
+
+        rewards
     }
 }
 
@@ -272,4 +300,34 @@ fn test_unstake() {
         .world
         .check_account(OWNER)
         .balance(BigUint::from(WEGLD_BALANCE) - payment);
+}
+
+#[test]
+fn test_claim_rewards_from_delegation_contract() {
+    let mut state = LiquidStakingTestState::new();
+    let contract_name = ManagedBuffer::from("delegation");
+    let payment = BigUint::from(100_000u64);
+    let mut contracts_to_claim_from: MultiValueEncoded<StaticApi, ManagedBuffer<StaticApi>> =
+        MultiValueEncoded::new();
+    let claim_rewards_epoch = 20;
+
+    state.propose_setup_contracts();
+    state.propose_register_delegation_address(&contract_name, DELEGATION_ADDRESS, None);
+    state.propose_check_is_contract_registered(&contract_name);
+    state.propose_stake(&contract_name, &payment);
+
+    contracts_to_claim_from.push(contract_name);
+
+    state.world.current_block().block_epoch(claim_rewards_epoch);
+
+    state.propose_claim_rewards_from_delegation(&contracts_to_claim_from);
+    state.world.current_block().block_epoch(claim_rewards_epoch);
+    state.propose_claim_rewards_from_delegation(&contracts_to_claim_from);
+
+    let expected_rewards = state.get_expected_rewards(&payment, claim_rewards_epoch, 0);
+
+    state
+        .world
+        .check_account(LIQUID_STAKING_ADDRESS)
+        .balance(expected_rewards);
 }
