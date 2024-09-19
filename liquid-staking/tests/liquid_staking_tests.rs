@@ -23,7 +23,7 @@ fn world() -> ScenarioWorld {
     let mut blockchain = ScenarioWorld::new();
 
     blockchain.register_contract(LIQUID_STAKING_CODE_PATH, liquid_staking::ContractBuilder);
-    blockchain.register_contract(DELEGATION_CODE_PATH, liquid_staking::ContractBuilder);
+    blockchain.register_contract(DELEGATION_CODE_PATH, delegation_mock::ContractBuilder);
 
     blockchain
 }
