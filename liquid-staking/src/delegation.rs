@@ -1,4 +1,4 @@
-use multiversx_sc::{api::const_handles::BIG_INT_CONST_ZERO, imports::*};
+use multiversx_sc::imports::*;
 pub const UNBOND_PERIOD: u64 = 10;
 pub const DELEGATE_ENDPOINT: &str = "delegate";
 pub const UNDELEGATE_ENDPOINT: &str = "unDelegate";
