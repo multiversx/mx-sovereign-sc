@@ -16,7 +16,7 @@ pub trait DelegationModule: common::storage::CommonStorageModule {
 
         self.tx()
             .to(delegation_contract_address)
-            .raw_call(DELEGATE_ENDPOINT)
+            .raw_call(ManagedBuffer::from(DELEGATE_ENDPOINT))
             .egld(&egld_amount)
             .callback(DelegationModule::callbacks(self).stake_callback(&caller, &egld_amount))
             .async_call_and_exit();
@@ -44,7 +44,7 @@ pub trait DelegationModule: common::storage::CommonStorageModule {
         let caller = self.blockchain().get_caller();
         let total_egld_deposit = self.delegated_value(caller.clone()).get();
         require!(
-            total_egld_deposit > BIG_INT_CONST_ZERO,
+            total_egld_deposit > 0,
             "The user has not deposited any EGLD"
         );
 
@@ -89,7 +89,4 @@ pub trait DelegationModule: common::storage::CommonStorageModule {
             _ => sc_panic!("There was an error at delegating"),
         }
     }
-
-    // TODO: Could use a Enum for each endpoint name
-    // fn call_delegation_contract_endpoint(&self, endpoint_name: ManagedBuffer)
 }
