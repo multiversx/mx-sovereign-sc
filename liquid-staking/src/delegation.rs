@@ -51,18 +51,15 @@ pub trait DelegationModule: common::storage::CommonStorageModule {
         let current_epoch = self.blockchain().get_block_epoch();
         let delegation_contract_address = self.delegation_addresses(&contract_name).get();
 
-        let mut args: ManagedArgBuffer<Self::Api> = ManagedArgBuffer::new();
-        args.push_arg(&egld_amount_to_unstake);
-
         require!(
-            egld_amount_to_unstake < total_egld_deposit,
+            egld_amount_to_unstake <= total_egld_deposit,
             "The value to unstake is greater than the deposited amount"
         );
 
         self.tx()
             .to(delegation_contract_address)
             .raw_call(ManagedBuffer::from(UNDELEGATE_ENDPOINT))
-            .argument(&args)
+            .argument(&egld_amount_to_unstake)
             .callback(DelegationModule::callbacks(self).unstake_callback(
                 &caller,
                 &egld_amount_to_unstake,
