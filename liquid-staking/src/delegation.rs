@@ -2,6 +2,7 @@ use multiversx_sc::imports::*;
 pub const UNBOND_PERIOD: u64 = 10;
 pub const DELEGATE_ENDPOINT: &str = "delegate";
 pub const UNDELEGATE_ENDPOINT: &str = "unDelegate";
+pub const CLAIM_REWARDS_ENDPOINT: &str = "claimRewards";
 
 use crate::common::{self, storage::Epoch};
 
@@ -84,6 +85,33 @@ pub trait DelegationModule: common::storage::CommonStorageModule {
                     .set(current_epoch + UNBOND_PERIOD);
             }
             _ => sc_panic!("There was an error at delegating"),
+        }
+    }
+
+    #[endpoint(claimRewardsFromDelegation)]
+    fn claim_rewards_from_delegation(&self, contracts: MultiValueEncoded<ManagedBuffer>) {
+        for delegation_contract in contracts {
+            let delegation_mapper = self.delegation_addresses(&delegation_contract);
+            if !delegation_mapper.is_empty() {
+                let delegation_address = delegation_mapper.get();
+                self.tx()
+                    .to(delegation_address)
+                    .raw_call(CLAIM_REWARDS_ENDPOINT)
+                    .callback(DelegationModule::callbacks(self).claim_rewards_from_delegation_cb())
+                    .async_call_and_exit();
+            }
+        }
+    }
+
+    #[callback]
+    fn claim_rewards_from_delegation_cb(
+        &self,
+        // egld_amount: &BigUint,
+        #[call_result] result: ManagedAsyncCallResult<()>,
+    ) {
+        match result {
+            ManagedAsyncCallResult::Ok(()) => {}
+            _ => sc_panic!("There was an error at claiming rewards from the delegation contract"),
         }
     }
 }
