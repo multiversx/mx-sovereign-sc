@@ -137,14 +137,27 @@ impl LiquidStakingTestState {
         &mut self,
         contract_name: &ManagedBuffer<StaticApi>,
         amount_to_unstake: &BigUint<StaticApi>,
+        error_status: Option<ErrorStatus>,
     ) -> &mut Self {
-        self.world
-            .tx()
-            .from(OWNER)
-            .to(LIQUID_STAKING_ADDRESS)
-            .typed(liquid_staking_proxy::LiquidStakingProxy)
-            .unstake(contract_name, amount_to_unstake)
-            .run();
+        match error_status {
+            Some(error) => self
+                .world
+                .tx()
+                .from(OWNER)
+                .to(LIQUID_STAKING_ADDRESS)
+                .typed(liquid_staking_proxy::LiquidStakingProxy)
+                .unstake(contract_name, amount_to_unstake)
+                .returns(ExpectError(error.code, error.error_message))
+                .run(),
+            None => self
+                .world
+                .tx()
+                .from(OWNER)
+                .to(LIQUID_STAKING_ADDRESS)
+                .typed(liquid_staking_proxy::LiquidStakingProxy)
+                .unstake(contract_name, amount_to_unstake)
+                .run(),
+        }
 
         self
     }
@@ -227,15 +240,33 @@ fn test_stake() {
 }
 
 #[test]
-fn test_unstake() {
+fn test_unstake_user_no_deposit() {
     let mut state = LiquidStakingTestState::new();
     let contract_name = ManagedBuffer::from("delegation");
     let payment = BigUint::from(100_000u64);
+    let error_status = ErrorStatus {
+        code: 4,
+        error_message: "The user has not deposited any EGLD",
+    };
 
     state.propose_setup_contracts();
     state.propose_register_delegation_address(&contract_name, DELEGATION_ADDRESS, None);
     state.propose_check_is_contract_registered(&contract_name);
-    state.propose_unstake(&contract_name, &payment);
+    state.propose_unstake(&contract_name, &payment, Some(error_status));
+}
+
+#[test]
+fn test_unstake() {
+    let mut state = LiquidStakingTestState::new();
+    let contract_name = ManagedBuffer::from("delegation");
+    let payment = BigUint::from(100_000u64);
+    let amount_to_unstake = BigUint::from(10_000u64);
+
+    state.propose_setup_contracts();
+    state.propose_register_delegation_address(&contract_name, DELEGATION_ADDRESS, None);
+    state.propose_check_is_contract_registered(&contract_name);
+    state.propose_stake(&contract_name, &payment);
+    state.propose_unstake(&contract_name, &amount_to_unstake, None);
 
     state
         .world
