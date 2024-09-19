@@ -151,6 +151,19 @@ where
             .original_result()
     }
 
+    pub fn claim_rewards_from_delegation<
+        Arg0: ProxyArg<MultiValueEncoded<Env::Api, ManagedBuffer<Env::Api>>>,
+    >(
+        self,
+        contracts: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("claimRewardsFromDelegation")
+            .argument(&contracts)
+            .original_result()
+    }
+
     pub fn delegation_addresses<
         Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
     >(
