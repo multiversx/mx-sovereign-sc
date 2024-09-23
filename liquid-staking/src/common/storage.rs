@@ -45,6 +45,11 @@ pub trait CommonStorageModule {
     }
 
     fn require_caller_to_be_header_verifier(&self, caller: &ManagedAddress) {
+        require!(
+            !self.header_verifier_address().is_empty(),
+            "There is no address registered as the Header Verifier"
+        );
+
         let header_verifier_address = self.header_verifier_address().get();
 
         require!(
