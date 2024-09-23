@@ -300,6 +300,17 @@ fn test_unstake() {
         .world
         .check_account(OWNER)
         .balance(BigUint::from(WEGLD_BALANCE) - payment);
+
+    state
+        .world
+        .query()
+        .to(LIQUID_STAKING_ADDRESS)
+        .whitebox(liquid_staking::contract_obj, |sc| {
+            let expected_amount = BigUint::from(90_000u64);
+            let delegated_value = sc.delegated_value(&OWNER.to_managed_address()).get();
+
+            assert_eq!(delegated_value, expected_amount);
+        })
 }
 
 #[test]
