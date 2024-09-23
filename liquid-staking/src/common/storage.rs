@@ -30,6 +30,20 @@ pub trait CommonStorageModule {
     #[storage_mapper("registeredBlsKeys")]
     fn registered_bls_keys(&self) -> UnorderedSetMapper<ManagedBuffer>;
 
+    #[view(validatorBlsKeyMap)]
+    #[storage_mapper("validatorBlsKeyMap")]
+    fn validator_bls_key_address_map(
+        &self,
+        address: &ManagedBuffer,
+    ) -> SingleValueMapper<ManagedAddress>;
+
+    fn require_bls_key_to_be_registered(&self, bls_key: &ManagedBuffer) {
+        require!(
+            self.registered_bls_keys().contains(bls_key),
+            "The given bls key is not registered"
+        );
+    }
+
     fn require_caller_to_be_header_verifier(&self, caller: &ManagedAddress) {
         let header_verifier_address = self.header_verifier_address().get();
 

@@ -164,6 +164,22 @@ where
             .original_result()
     }
 
+    pub fn slash_validator<
+        Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
+        Arg1: ProxyArg<BigUint<Env::Api>>,
+    >(
+        self,
+        bls_key: Arg0,
+        value_to_slash: Arg1,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("slashValidator")
+            .argument(&bls_key)
+            .argument(&value_to_slash)
+            .original_result()
+    }
+
     pub fn delegation_addresses<
         Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
     >(
@@ -227,6 +243,19 @@ where
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("getRegisteredBlsKeys")
+            .original_result()
+    }
+
+    pub fn validator_bls_key_address_map<
+        Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
+    >(
+        self,
+        address: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ManagedAddress<Env::Api>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("validatorBlsKeyMap")
+            .argument(&address)
             .original_result()
     }
 }
