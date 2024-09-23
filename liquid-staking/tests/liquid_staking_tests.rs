@@ -16,6 +16,11 @@ const DELEGATION_CODE_PATH: MxscPath =
     MxscPath::new("../delegation-mock/output/delegation-mock.mxsc.json");
 const DELEGATION_ADDRESS: TestSCAddress = TestSCAddress::new("delegation");
 
+const MOCK_CODE_PATH: MxscPath =
+    MxscPath::new("../header-verifier/output/header-verifier.mxsc.json");
+
+const HEADER_VERIFIER_ADDRESS: TestSCAddress = TestSCAddress::new("header_verifier");
+
 const VALIDATOR_ADDRESS: TestAddress = TestAddress::new("validator");
 
 const WEGLD_BALANCE: u128 = 100_000_000_000_000_000;
@@ -25,6 +30,7 @@ fn world() -> ScenarioWorld {
 
     blockchain.register_contract(LIQUID_STAKING_CODE_PATH, liquid_staking::ContractBuilder);
     blockchain.register_contract(DELEGATION_CODE_PATH, delegation_mock::ContractBuilder);
+    blockchain.register_contract(MOCK_CODE_PATH, delegation_mock::ContractBuilder);
 
     blockchain
 }
@@ -81,9 +87,23 @@ impl LiquidStakingTestState {
         self
     }
 
+    fn deploy_mock_header_verifier(&mut self) -> &mut Self {
+        self.world
+            .tx()
+            .from(OWNER)
+            .typed(delegation_proxy::DelegationMockProxy)
+            .init()
+            .code(MOCK_CODE_PATH)
+            .new_address(HEADER_VERIFIER_ADDRESS)
+            .run();
+
+        self
+    }
+
     fn propose_setup_contracts(&mut self) -> &mut Self {
         self.deploy_liquid_staking();
         self.deploy_delegation();
+        self.deploy_mock_header_verifier();
 
         self
     }
@@ -178,6 +198,61 @@ impl LiquidStakingTestState {
         self
     }
 
+    fn propose_register_bls_keys(
+        &mut self,
+        bls_keys: MultiValueEncoded<StaticApi, ManagedBuffer<StaticApi>>,
+        error_status: Option<ErrorStatus>,
+    ) {
+        match error_status {
+            Some(error) => self
+                .world
+                .tx()
+                .from(OWNER)
+                .to(LIQUID_STAKING_ADDRESS)
+                .typed(liquid_staking_proxy::LiquidStakingProxy)
+                .register_bls_keys(bls_keys)
+                .returns(ExpectError(error.code, error.error_message))
+                .run(),
+            None => self
+                .world
+                .tx()
+                .from(HEADER_VERIFIER_ADDRESS)
+                .to(LIQUID_STAKING_ADDRESS)
+                .typed(liquid_staking_proxy::LiquidStakingProxy)
+                .register_bls_keys(bls_keys)
+                .run(),
+        }
+    }
+
+    fn propose_register_header_verifier(
+        &mut self,
+        header_verifier_address: TestSCAddress,
+    ) -> &mut Self {
+        self.world
+            .tx()
+            .from(OWNER)
+            .to(LIQUID_STAKING_ADDRESS)
+            .typed(liquid_staking_proxy::LiquidStakingProxy)
+            .register_header_verifier_address(header_verifier_address)
+            .run();
+
+        self
+    }
+
+    fn propose_slash_validator(
+        &mut self,
+        bls_key: &ManagedBuffer<StaticApi>,
+        value_to_slash: BigUint<StaticApi>,
+    ) {
+        self.world
+            .tx()
+            .from(OWNER)
+            .to(LIQUID_STAKING_ADDRESS)
+            .typed(liquid_staking_proxy::LiquidStakingProxy)
+            .slash_validator(bls_key, value_to_slash)
+            .run();
+    }
+
     fn propose_check_is_contract_registered(&mut self, contract_name: &ManagedBuffer<StaticApi>) {
         self.world.query().to(LIQUID_STAKING_ADDRESS).whitebox(
             liquid_staking::contract_obj,
@@ -200,6 +275,16 @@ impl LiquidStakingTestState {
             / EPOCHS_IN_YEAR;
 
         rewards
+    }
+
+    fn setup_bls_keys(
+        &mut self,
+        bls_keys: Vec<ManagedBuffer<StaticApi>>,
+    ) -> MultiValueEncoded<StaticApi, ManagedBuffer<StaticApi>> {
+        let managed_bls_keys: MultiValueEncoded<StaticApi, ManagedBuffer<StaticApi>> =
+            bls_keys.iter().map(|bls_key| bls_key.clone()).collect();
+
+        managed_bls_keys
     }
 }
 
@@ -341,4 +426,57 @@ fn test_claim_rewards_from_delegation_contract() {
         .world
         .check_account(LIQUID_STAKING_ADDRESS)
         .balance(expected_rewards);
+}
+
+#[test]
+fn test_slash_validator() {
+    let mut state = LiquidStakingTestState::new();
+    let contract_name = ManagedBuffer::from("delegation");
+    let payment = BigUint::from(100_000u64);
+    // let validator_1_bls_key = ManagedBuffer::from("validator1");
+    // let validator_2_bls_key = ManagedBuffer::from("validator2");
+
+    state.propose_setup_contracts();
+    state.propose_register_delegation_address(&contract_name, DELEGATION_ADDRESS, None);
+    state.propose_check_is_contract_registered(&contract_name);
+    state.propose_stake(&contract_name, &payment);
+    // state.propose_slash_validator(bls_key, value_to_slash);
+}
+
+#[test]
+fn test_register_bls_keys_caller_not_header_verifier() {
+    let mut state = LiquidStakingTestState::new();
+    let contract_name = ManagedBuffer::from("delegation");
+    let bls_keys = state.setup_bls_keys(vec![ManagedBuffer::from("bls_key")]);
+    let error_status = ErrorStatus {
+        code: 4,
+        error_message: "There is no address registered as the Header Verifier",
+    };
+
+    state.propose_setup_contracts();
+    state.propose_register_delegation_address(&contract_name, DELEGATION_ADDRESS, None);
+    state.propose_check_is_contract_registered(&contract_name);
+    state.propose_register_bls_keys(bls_keys, Some(error_status));
+}
+
+#[test]
+fn register_bls_keys() {
+    let mut state = LiquidStakingTestState::new();
+    let contract_name = ManagedBuffer::from("delegation");
+    let validator_1_bls_key = ManagedBuffer::from("bls_key_1");
+    let validator_2_bls_key = ManagedBuffer::from("bls_key_2");
+    let bls_keys = state.setup_bls_keys(vec![validator_1_bls_key, validator_2_bls_key]);
+
+    state.propose_setup_contracts();
+    state.propose_register_delegation_address(&contract_name, DELEGATION_ADDRESS, None);
+    state.propose_register_header_verifier(HEADER_VERIFIER_ADDRESS);
+    state.propose_register_bls_keys(bls_keys, None);
+
+    state
+        .world
+        .query()
+        .to(LIQUID_STAKING_ADDRESS)
+        .whitebox(liquid_staking::contract_obj, |sc| {
+            assert!(!sc.registered_bls_keys().is_empty());
+        })
 }
