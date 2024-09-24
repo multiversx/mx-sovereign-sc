@@ -246,14 +246,27 @@ impl LiquidStakingTestState {
         &mut self,
         bls_key: &ManagedBuffer<StaticApi>,
         value_to_slash: BigUint<StaticApi>,
+        error_status: Option<ErrorStatus>,
     ) {
-        self.world
-            .tx()
-            .from(HEADER_VERIFIER_ADDRESS)
-            .to(LIQUID_STAKING_ADDRESS)
-            .typed(liquid_staking_proxy::LiquidStakingProxy)
-            .slash_validator(bls_key, value_to_slash)
-            .run();
+        match error_status {
+            Some(error) => self
+                .world
+                .tx()
+                .from(HEADER_VERIFIER_ADDRESS)
+                .to(LIQUID_STAKING_ADDRESS)
+                .typed(liquid_staking_proxy::LiquidStakingProxy)
+                .slash_validator(bls_key, value_to_slash)
+                .returns(ExpectError(error.code, error.error_message))
+                .run(),
+            None => self
+                .world
+                .tx()
+                .from(HEADER_VERIFIER_ADDRESS)
+                .to(LIQUID_STAKING_ADDRESS)
+                .typed(liquid_staking_proxy::LiquidStakingProxy)
+                .slash_validator(bls_key, value_to_slash)
+                .run(),
+        }
     }
 
     fn propose_check_is_contract_registered(&mut self, contract_name: &ManagedBuffer<StaticApi>) {
@@ -266,20 +279,6 @@ impl LiquidStakingTestState {
                 assert_eq!(DELEGATION_ADDRESS, registered_address);
             },
         );
-    }
-
-    fn propose_map_bls_to_address(
-        &mut self,
-        bls_key: &ManagedBuffer<StaticApi>,
-        address: &TestAddress,
-    ) {
-        self.world
-            .tx()
-            .from(HEADER_VERIFIER_ADDRESS)
-            .to(LIQUID_STAKING_ADDRESS)
-            .typed(liquid_staking_proxy::LiquidStakingProxy)
-            .map_bls_key_to_address(bls_key, address.to_managed_address())
-            .run();
     }
 
     fn get_expected_rewards(
@@ -532,6 +531,28 @@ fn register_bls_keys() {
 }
 
 #[test]
+fn slash_no_delegated_value() {
+    let mut state = LiquidStakingTestState::new();
+    let contract_name = ManagedBuffer::from("delegation");
+    let validator_1_bls_key = ManagedBuffer::from("bls_key_1");
+    let validator_2_bls_key = ManagedBuffer::from("bls_key_2");
+    let bls_keys =
+        state.map_bls_key_vec_to_multi_value(vec![&validator_1_bls_key, &validator_2_bls_key]);
+    let value_to_slash = BigUint::from(10_000u64);
+    let error_status = ErrorStatus {
+        code: 4,
+        error_message: "Caller has 0 delegated value",
+    };
+
+    state.propose_setup_contracts();
+    state.propose_register_delegation_address(&contract_name, DELEGATION_ADDRESS, None);
+    state.propose_register_header_verifier(HEADER_VERIFIER_ADDRESS);
+    state.propose_register_bls_keys(bls_keys, None);
+    state.whitebox_map_bls_to_address("bls_key_1", &VALIDATOR_ADDRESS);
+    state.propose_slash_validator(&validator_1_bls_key, value_to_slash, Some(error_status));
+}
+
+#[test]
 fn slash_validator() {
     let mut state = LiquidStakingTestState::new();
     let contract_name = ManagedBuffer::from("delegation");
@@ -548,7 +569,7 @@ fn slash_validator() {
     state.propose_register_bls_keys(bls_keys, None);
     state.propose_stake(&VALIDATOR_ADDRESS, &contract_name, &payment);
     state.whitebox_map_bls_to_address("bls_key_1", &VALIDATOR_ADDRESS);
-    state.propose_slash_validator(&validator_1_bls_key, value_to_slash);
+    state.propose_slash_validator(&validator_1_bls_key, value_to_slash, None);
 
     state
         .world
