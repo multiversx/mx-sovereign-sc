@@ -553,6 +553,30 @@ fn slash_no_delegated_value() {
 }
 
 #[test]
+fn slash_zero_value() {
+    let mut state = LiquidStakingTestState::new();
+    let contract_name = ManagedBuffer::from("delegation");
+    let validator_1_bls_key = ManagedBuffer::from("bls_key_1");
+    let validator_2_bls_key = ManagedBuffer::from("bls_key_2");
+    let payment = BigUint::from(100_000u64);
+    let bls_keys =
+        state.map_bls_key_vec_to_multi_value(vec![&validator_1_bls_key, &validator_2_bls_key]);
+    let value_to_slash = BigUint::from(0u64);
+    let error_status = ErrorStatus {
+        code: 4,
+        error_message: "You can't slash a value of 0 eGLD",
+    };
+
+    state.propose_setup_contracts();
+    state.propose_register_delegation_address(&contract_name, DELEGATION_ADDRESS, None);
+    state.propose_register_header_verifier(HEADER_VERIFIER_ADDRESS);
+    state.propose_register_bls_keys(bls_keys, None);
+    state.propose_stake(&VALIDATOR_ADDRESS, &contract_name, &payment);
+    state.whitebox_map_bls_to_address("bls_key_1", &VALIDATOR_ADDRESS);
+    state.propose_slash_validator(&validator_1_bls_key, value_to_slash, Some(error_status));
+}
+
+#[test]
 fn slash_validator() {
     let mut state = LiquidStakingTestState::new();
     let contract_name = ManagedBuffer::from("delegation");
