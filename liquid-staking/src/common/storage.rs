@@ -34,7 +34,7 @@ pub trait CommonStorageModule {
     #[storage_mapper("validatorBlsKeyMap")]
     fn validator_bls_key_address_map(
         &self,
-        address: &ManagedBuffer,
+        bls_key: &ManagedBuffer,
     ) -> SingleValueMapper<ManagedAddress>;
 
     fn require_bls_key_to_be_registered(&self, bls_key: &ManagedBuffer) {

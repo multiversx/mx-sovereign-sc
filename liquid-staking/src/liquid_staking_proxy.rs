@@ -250,12 +250,12 @@ where
         Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
     >(
         self,
-        address: Arg0,
+        bls_key: Arg0,
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ManagedAddress<Env::Api>> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("validatorBlsKeyMap")
-            .argument(&address)
+            .argument(&bls_key)
             .original_result()
     }
 }

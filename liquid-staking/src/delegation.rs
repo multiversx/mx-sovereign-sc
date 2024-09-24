@@ -122,7 +122,7 @@ pub trait DelegationModule: common::storage::CommonStorageModule {
         self.require_bls_key_to_be_registered(&bls_key);
 
         require!(
-            self.validator_bls_key_address_map(&bls_key).is_empty(),
+            !self.validator_bls_key_address_map(&bls_key).is_empty(),
             "There is no associated address to the given BLS key"
         );
 

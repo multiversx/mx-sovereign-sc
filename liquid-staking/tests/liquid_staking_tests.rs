@@ -268,6 +268,20 @@ impl LiquidStakingTestState {
         );
     }
 
+    fn propose_map_bls_to_address(
+        &mut self,
+        bls_key: &ManagedBuffer<StaticApi>,
+        address: &TestAddress,
+    ) {
+        self.world
+            .tx()
+            .from(HEADER_VERIFIER_ADDRESS)
+            .to(LIQUID_STAKING_ADDRESS)
+            .typed(liquid_staking_proxy::LiquidStakingProxy)
+            .map_bls_key_to_address(bls_key, address.to_managed_address())
+            .run();
+    }
+
     fn get_expected_rewards(
         &mut self,
         staked_amount: &BigUint<StaticApi>,
@@ -290,7 +304,7 @@ impl LiquidStakingTestState {
         managed_bls_keys
     }
 
-    fn map_bls_key_to_address(&mut self, bls_key: &str, address: &TestAddress) -> &mut Self {
+    fn whitebox_map_bls_to_address(&mut self, bls_key: &str, address: &TestAddress) -> &mut Self {
         self.world
             .tx()
             .from(OWNER)
@@ -533,8 +547,7 @@ fn slash_validator() {
     state.propose_register_header_verifier(HEADER_VERIFIER_ADDRESS);
     state.propose_register_bls_keys(bls_keys, None);
     state.propose_stake(&VALIDATOR_ADDRESS, &contract_name, &payment);
-    state.map_bls_key_to_address("bls_key_1", &VALIDATOR_ADDRESS);
-
+    state.whitebox_map_bls_to_address("bls_key_1", &VALIDATOR_ADDRESS);
     state.propose_slash_validator(&validator_1_bls_key, value_to_slash);
 
     state
