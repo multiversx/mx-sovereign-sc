@@ -37,6 +37,11 @@ pub trait CommonStorageModule {
         bls_key: &ManagedBuffer,
     ) -> SingleValueMapper<ManagedAddress>;
 
+    // NOTE: Number of nodes where ?
+    #[view(lockedSupply)]
+    #[storage_mapper("lockerSupply")]
+    fn locked_supply(&self, chain_id: ManagedBuffer) -> SingleValueMapper<BigUint<Self::Api>>;
+
     fn require_bls_key_to_be_registered(&self, bls_key: &ManagedBuffer) {
         require!(
             self.registered_bls_keys().contains(bls_key),

@@ -6,9 +6,9 @@
 
 // Init:                                 1
 // Upgrade:                              1
-// Endpoints:                           14
+// Endpoints:                           17
 // Async Callback:                       1
-// Total number of exported functions:  17
+// Total number of exported functions:  20
 
 #![no_std]
 
@@ -27,6 +27,8 @@ multiversx_sc_wasm_adapter::endpoints! {
         unStake => unstake
         claimRewardsFromDelegation => claim_rewards_from_delegation
         slashValidator => slash_validator
+        lockForSovereignChain => lock_for_sovereign_chain
+        claimRewards => claim_rewards
         getDelegationAddress => delegation_addresses
         getDelegatedValue => delegated_value
         unDelegateEpoch => undelegate_epoch
@@ -34,6 +36,7 @@ multiversx_sc_wasm_adapter::endpoints! {
         getHeaderVerifierAddress => header_verifier_address
         getRegisteredBlsKeys => registered_bls_keys
         validatorBlsKeyMap => validator_bls_key_address_map
+        lockedSupply => locked_supply
     )
 }
 

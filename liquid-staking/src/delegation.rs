@@ -145,4 +145,19 @@ pub trait DelegationModule: common::storage::CommonStorageModule {
         self.delegated_value(&validator_address)
             .update(|value| *value -= &value_to_slash);
     }
+
+    #[payable("EGLD")]
+    #[endpoint(lockForSovereignChain)]
+    fn lock_for_sovereign_chain(&self, chain_id: ManagedBuffer) {
+        let call_value = self.call_value().egld_value().clone_value();
+
+        require!(call_value > 0, "No value send to lock");
+        self.locked_supply(chain_id)
+            .update(|supply| *supply += call_value);
+
+        // lock amount with ChainConfigSC
+    }
+
+    #[endpoint(claimRewards)]
+    fn claim_rewards(&self) {}
 }

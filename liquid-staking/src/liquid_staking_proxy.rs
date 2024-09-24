@@ -183,6 +183,27 @@ where
             .original_result()
     }
 
+    pub fn lock_for_sovereign_chain<
+        Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
+    >(
+        self,
+        chain_id: Arg0,
+    ) -> TxTypedCall<Env, From, To, (), Gas, ()> {
+        self.wrapped_tx
+            .raw_call("lockForSovereignChain")
+            .argument(&chain_id)
+            .original_result()
+    }
+
+    pub fn claim_rewards(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("claimRewards")
+            .original_result()
+    }
+
     pub fn delegation_addresses<
         Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
     >(
@@ -259,6 +280,19 @@ where
             .payment(NotPayable)
             .raw_call("validatorBlsKeyMap")
             .argument(&bls_key)
+            .original_result()
+    }
+
+    pub fn locked_supply<
+        Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
+    >(
+        self,
+        chain_id: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, BigUint<Env::Api>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("lockedSupply")
+            .argument(&chain_id)
             .original_result()
     }
 }
