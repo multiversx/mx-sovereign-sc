@@ -244,6 +244,7 @@ impl LiquidStakingTestState {
 
     fn propose_slash_validator(
         &mut self,
+        validator_address: &TestAddress,
         bls_key: &ManagedBuffer<StaticApi>,
         value_to_slash: BigUint<StaticApi>,
         error_status: Option<ErrorStatus>,
@@ -255,7 +256,11 @@ impl LiquidStakingTestState {
                 .from(HEADER_VERIFIER_ADDRESS)
                 .to(LIQUID_STAKING_ADDRESS)
                 .typed(liquid_staking_proxy::LiquidStakingProxy)
-                .slash_validator(bls_key, value_to_slash)
+                .slash_validator(
+                    validator_address.to_managed_address(),
+                    bls_key,
+                    value_to_slash,
+                )
                 .returns(ExpectError(error.code, error.error_message))
                 .run(),
             None => self
@@ -264,7 +269,11 @@ impl LiquidStakingTestState {
                 .from(HEADER_VERIFIER_ADDRESS)
                 .to(LIQUID_STAKING_ADDRESS)
                 .typed(liquid_staking_proxy::LiquidStakingProxy)
-                .slash_validator(bls_key, value_to_slash)
+                .slash_validator(
+                    validator_address.to_managed_address(),
+                    bls_key,
+                    value_to_slash,
+                )
                 .run(),
         }
     }
@@ -534,10 +543,10 @@ fn register_bls_keys() {
 fn slash_no_delegated_value() {
     let mut state = LiquidStakingTestState::new();
     let contract_name = ManagedBuffer::from("delegation");
-    let validator_1_bls_key = ManagedBuffer::from("bls_key_1");
-    let validator_2_bls_key = ManagedBuffer::from("bls_key_2");
+    let validator_bls_key_1 = ManagedBuffer::from("bls_key_1");
+    let validator_bls_key_2 = ManagedBuffer::from("bls_key_2");
     let bls_keys =
-        state.map_bls_key_vec_to_multi_value(vec![&validator_1_bls_key, &validator_2_bls_key]);
+        state.map_bls_key_vec_to_multi_value(vec![&validator_bls_key_1, &validator_bls_key_2]);
     let value_to_slash = BigUint::from(10_000u64);
     let error_status = ErrorStatus {
         code: 4,
@@ -549,18 +558,23 @@ fn slash_no_delegated_value() {
     state.propose_register_header_verifier(HEADER_VERIFIER_ADDRESS);
     state.propose_register_bls_keys(bls_keys, None);
     state.whitebox_map_bls_to_address("bls_key_1", &VALIDATOR_ADDRESS);
-    state.propose_slash_validator(&validator_1_bls_key, value_to_slash, Some(error_status));
+    state.propose_slash_validator(
+        &VALIDATOR_ADDRESS,
+        &validator_bls_key_1,
+        value_to_slash,
+        Some(error_status),
+    );
 }
 
 #[test]
 fn slash_zero_value() {
     let mut state = LiquidStakingTestState::new();
     let contract_name = ManagedBuffer::from("delegation");
-    let validator_1_bls_key = ManagedBuffer::from("bls_key_1");
-    let validator_2_bls_key = ManagedBuffer::from("bls_key_2");
+    let validator_bls_key_1 = ManagedBuffer::from("bls_key_1");
+    let validator_bls_key_2 = ManagedBuffer::from("bls_key_2");
     let payment = BigUint::from(100_000u64);
     let bls_keys =
-        state.map_bls_key_vec_to_multi_value(vec![&validator_1_bls_key, &validator_2_bls_key]);
+        state.map_bls_key_vec_to_multi_value(vec![&validator_bls_key_1, &validator_bls_key_2]);
     let value_to_slash = BigUint::from(0u64);
     let error_status = ErrorStatus {
         code: 4,
@@ -573,18 +587,23 @@ fn slash_zero_value() {
     state.propose_register_bls_keys(bls_keys, None);
     state.propose_stake(&VALIDATOR_ADDRESS, &contract_name, &payment);
     state.whitebox_map_bls_to_address("bls_key_1", &VALIDATOR_ADDRESS);
-    state.propose_slash_validator(&validator_1_bls_key, value_to_slash, Some(error_status));
+    state.propose_slash_validator(
+        &VALIDATOR_ADDRESS,
+        &validator_bls_key_1,
+        value_to_slash,
+        Some(error_status),
+    );
 }
 
 #[test]
 fn slash_more_than_delegated_value() {
     let mut state = LiquidStakingTestState::new();
     let contract_name = ManagedBuffer::from("delegation");
-    let validator_1_bls_key = ManagedBuffer::from("bls_key_1");
-    let validator_2_bls_key = ManagedBuffer::from("bls_key_2");
+    let validator_bls_key_1 = ManagedBuffer::from("bls_key_1");
+    let validator_bls_key_2 = ManagedBuffer::from("bls_key_2");
     let payment = BigUint::from(100_000u64);
     let bls_keys =
-        state.map_bls_key_vec_to_multi_value(vec![&validator_1_bls_key, &validator_2_bls_key]);
+        state.map_bls_key_vec_to_multi_value(vec![&validator_bls_key_1, &validator_bls_key_2]);
     let value_to_slash = BigUint::from(100_100u64);
     let error_status = ErrorStatus {
         code: 4,
@@ -597,7 +616,12 @@ fn slash_more_than_delegated_value() {
     state.propose_register_bls_keys(bls_keys, None);
     state.propose_stake(&VALIDATOR_ADDRESS, &contract_name, &payment);
     state.whitebox_map_bls_to_address("bls_key_1", &VALIDATOR_ADDRESS);
-    state.propose_slash_validator(&validator_1_bls_key, value_to_slash, Some(error_status));
+    state.propose_slash_validator(
+        &VALIDATOR_ADDRESS,
+        &validator_bls_key_1,
+        value_to_slash,
+        Some(error_status),
+    );
 }
 
 #[test]
@@ -617,7 +641,12 @@ fn slash_validator() {
     state.propose_register_bls_keys(bls_keys, None);
     state.propose_stake(&VALIDATOR_ADDRESS, &contract_name, &payment);
     state.whitebox_map_bls_to_address("bls_key_1", &VALIDATOR_ADDRESS);
-    state.propose_slash_validator(&validator_1_bls_key, value_to_slash, None);
+    state.propose_slash_validator(
+        &VALIDATOR_ADDRESS,
+        &validator_1_bls_key,
+        value_to_slash,
+        None,
+    );
 
     state
         .world

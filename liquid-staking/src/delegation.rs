@@ -115,8 +115,14 @@ pub trait DelegationModule: common::storage::CommonStorageModule {
         }
     }
 
+    // NOTE: Should this also add to the map ?
     #[endpoint(slashValidator)]
-    fn slash_validator(&self, bls_key: ManagedBuffer, value_to_slash: BigUint) {
+    fn slash_validator(
+        &self,
+        validator_address: ManagedAddress,
+        bls_key: ManagedBuffer,
+        value_to_slash: BigUint,
+    ) {
         let caller = self.blockchain().get_caller();
         self.require_caller_to_be_header_verifier(&caller);
         self.require_bls_key_to_be_registered(&bls_key);
@@ -126,7 +132,6 @@ pub trait DelegationModule: common::storage::CommonStorageModule {
             "There is no associated address to the given BLS key"
         );
 
-        let validator_address = self.validator_bls_key_address_map(&bls_key).get();
         self.require_caller_has_stake(&validator_address);
 
         require!(value_to_slash > 0, "You can't slash a value of 0 eGLD");

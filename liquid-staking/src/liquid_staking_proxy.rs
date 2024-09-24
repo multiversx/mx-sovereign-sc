@@ -165,16 +165,19 @@ where
     }
 
     pub fn slash_validator<
-        Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
-        Arg1: ProxyArg<BigUint<Env::Api>>,
+        Arg0: ProxyArg<ManagedAddress<Env::Api>>,
+        Arg1: ProxyArg<ManagedBuffer<Env::Api>>,
+        Arg2: ProxyArg<BigUint<Env::Api>>,
     >(
         self,
-        bls_key: Arg0,
-        value_to_slash: Arg1,
+        validator_address: Arg0,
+        bls_key: Arg1,
+        value_to_slash: Arg2,
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("slashValidator")
+            .argument(&validator_address)
             .argument(&bls_key)
             .argument(&value_to_slash)
             .original_result()
