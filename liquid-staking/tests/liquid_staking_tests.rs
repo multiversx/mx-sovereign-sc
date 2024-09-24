@@ -280,7 +280,7 @@ impl LiquidStakingTestState {
         rewards
     }
 
-    fn setup_bls_keys(
+    fn map_bls_key_vec_to_multi_value(
         &mut self,
         bls_keys: Vec<&ManagedBuffer<StaticApi>>,
     ) -> MultiValueEncoded<StaticApi, ManagedBuffer<StaticApi>> {
@@ -465,7 +465,7 @@ fn test_slash_validator() {
 fn test_register_bls_keys_no_header_verifier_address() {
     let mut state = LiquidStakingTestState::new();
     let contract_name = ManagedBuffer::from("delegation");
-    let bls_keys = state.setup_bls_keys(vec![&ManagedBuffer::from("bls_key")]);
+    let bls_keys = state.map_bls_key_vec_to_multi_value(vec![&ManagedBuffer::from("bls_key")]);
     let error_status = ErrorStatus {
         code: 4,
         error_message: "There is no address registered as the Header Verifier",
@@ -481,7 +481,7 @@ fn test_register_bls_keys_no_header_verifier_address() {
 fn test_register_bls_keys_caller_not_header_verifier() {
     let mut state = LiquidStakingTestState::new();
     let contract_name = ManagedBuffer::from("delegation");
-    let bls_keys = state.setup_bls_keys(vec![&ManagedBuffer::from("bls_key")]);
+    let bls_keys = state.map_bls_key_vec_to_multi_value(vec![&ManagedBuffer::from("bls_key")]);
     let error_status = ErrorStatus {
         code: 4,
         error_message: "Caller is not Header Verifier contract",
@@ -500,7 +500,8 @@ fn register_bls_keys() {
     let contract_name = ManagedBuffer::from("delegation");
     let validator_1_bls_key = ManagedBuffer::from("bls_key_1");
     let validator_2_bls_key = ManagedBuffer::from("bls_key_2");
-    let bls_keys = state.setup_bls_keys(vec![&validator_1_bls_key, &validator_2_bls_key]);
+    let bls_keys =
+        state.map_bls_key_vec_to_multi_value(vec![&validator_1_bls_key, &validator_2_bls_key]);
 
     state.propose_setup_contracts();
     state.propose_register_delegation_address(&contract_name, DELEGATION_ADDRESS, None);
@@ -522,7 +523,8 @@ fn slash_validator() {
     let contract_name = ManagedBuffer::from("delegation");
     let validator_1_bls_key = ManagedBuffer::from("bls_key_1");
     let validator_2_bls_key = ManagedBuffer::from("bls_key_2");
-    let bls_keys = state.setup_bls_keys(vec![&validator_1_bls_key, &validator_2_bls_key]);
+    let bls_keys =
+        state.map_bls_key_vec_to_multi_value(vec![&validator_1_bls_key, &validator_2_bls_key]);
     let payment = BigUint::from(100_000u64);
     let value_to_slash = BigUint::from(10_000u64);
 
