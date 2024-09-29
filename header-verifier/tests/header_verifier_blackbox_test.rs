@@ -1,15 +1,6 @@
-use bls_signature::BlsSignature;
 use header_verifier::header_verifier_proxy;
-use multiversx_sc::types::{
-    BigUint, ManagedBuffer, ManagedByteArray, ManagedVec, MultiValueEncoded, TestAddress,
-    TestSCAddress,
-};
-use multiversx_sc_scenario::{
-    api::StaticApi,
-    imports::MxscPath,
-    scenario_model::{ScCallStep, ScDeployStep, TxExpect},
-    ContractInfo, ScenarioTxRun, ScenarioWorld,
-};
+use multiversx_sc::types::{BigUint, ManagedBuffer, MultiValueEncoded, TestAddress, TestSCAddress};
+use multiversx_sc_scenario::{api::StaticApi, imports::MxscPath, ScenarioTxRun, ScenarioWorld};
 
 const HEADER_VERIFIER_CODE_PATH: MxscPath = MxscPath::new("ouput/header-verifier.mxsc-json");
 const HEADER_VERIFIER_ADDRESS: TestSCAddress = TestSCAddress::new("header-verifier");
@@ -18,7 +9,6 @@ const LEADER: TestAddress = TestAddress::new("leader");
 const VALIDATOR: TestAddress = TestAddress::new("validator");
 const WEGLD_BALANCE: u128 = 100_000_000_000_000_000;
 
-type HeaderVerifierContract = ContractInfo<header_verifier::Proxy<StaticApi>>;
 type BlsKeys = MultiValueEncoded<StaticApi, ManagedBuffer<StaticApi>>;
 
 fn world() -> ScenarioWorld {
