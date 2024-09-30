@@ -7,8 +7,8 @@ use multiversx_sc::{
     },
 };
 use multiversx_sc_scenario::{
-    api::StaticApi, imports::MxscPath, multiversx_chain_vm::crypto_functions::sha256, ExpectError,
-    ScenarioTxRun, ScenarioTxWhitebox, ScenarioWorld,
+    api::StaticApi, imports::MxscPath, multiversx_chain_vm::crypto_functions::sha256, DebugApi,
+    ExpectError, ScenarioTxRun, ScenarioTxWhitebox, ScenarioWorld,
 };
 
 const HEADER_VERIFIER_CODE_PATH: MxscPath = MxscPath::new("ouput/header-verifier.mxsc-json");
@@ -75,6 +75,19 @@ impl HeaderVerifierTestState {
         self
     }
 
+    fn deploy_enshrine_esdt_contract(&mut self, bls_keys: &BlsKeys) -> &mut Self {
+        self.world
+            .tx()
+            .from(OWNER)
+            .typed(header_verifier_proxy::HeaderverifierProxy)
+            .init(bls_keys)
+            .code(HEADER_VERIFIER_CODE_PATH)
+            .new_address(ENSHRINE_ADDRESS)
+            .run();
+
+        self
+    }
+
     fn propose_register_esdt_address(&mut self, esdt_address: TestSCAddress) {
         self.world
             .tx()
@@ -101,7 +114,7 @@ impl HeaderVerifierTestState {
 
     fn propose_remove_execute_hash(
         &mut self,
-        hash_of_hashes: ManagedBuffer<StaticApi>,
+        hash_of_hashes: &ManagedBuffer<StaticApi>,
         operation_hash: ManagedBuffer<StaticApi>,
         error_status: Option<ErrorStatus>,
     ) {
@@ -118,7 +131,7 @@ impl HeaderVerifierTestState {
             None => self
                 .world
                 .tx()
-                .from(OWNER)
+                .from(ENSHRINE_ADDRESS)
                 .to(HEADER_VERIFIER_ADDRESS)
                 .typed(header_verifier_proxy::HeaderverifierProxy)
                 .remove_executed_hash(hash_of_hashes, operation_hash)
@@ -219,7 +232,7 @@ fn test_register_bridge_operation() {
         .to(HEADER_VERIFIER_ADDRESS)
         .whitebox(header_verifier::contract_obj, |sc| {
             assert!(!sc.hash_of_hashes_history().is_empty());
-        })
+        });
 }
 
 #[test]
@@ -242,7 +255,7 @@ fn test_remove_executed_hash_caller_not_esdt_address() {
     state.propose_register_operations(operation.clone());
     state.propose_register_esdt_address(ENSHRINE_ADDRESS);
     state.propose_remove_execute_hash(
-        operation.bridge_operation_hash,
+        &operation.bridge_operation_hash,
         operation_1,
         Some(error_status),
     );
@@ -267,8 +280,36 @@ fn test_remove_executed_hash_no_esdt_address_registered() {
 
     state.propose_register_operations(operation.clone());
     state.propose_remove_execute_hash(
-        operation.bridge_operation_hash,
+        &operation.bridge_operation_hash,
         operation_1,
         Some(error_status),
     );
+}
+
+#[test]
+fn test_remove_executed_hash() {
+    let mut state = HeaderVerifierTestState::new();
+    let bls_key_1 = ManagedBuffer::from("bls_key_1");
+    let managed_bls_keys = state.get_bls_keys(vec![bls_key_1]);
+
+    state.deploy_enshrine_esdt_contract(&managed_bls_keys);
+    state.deploy_header_verifier_contract(managed_bls_keys);
+
+    let operation_1 = ManagedBuffer::from("operation_1");
+    let operation_2 = ManagedBuffer::from("operation_2");
+    let operation = state.get_mock_operation(vec![&operation_1, &operation_2]);
+
+    state.propose_register_operations(operation.clone());
+    state.propose_register_esdt_address(ENSHRINE_ADDRESS);
+    state.propose_remove_execute_hash(&operation.bridge_operation_hash, operation_1, None);
+
+    state
+        .world
+        .query()
+        .to(HEADER_VERIFIER_ADDRESS)
+        .whitebox(header_verifier::contract_obj, |sc| {
+            let hash_of_hashes: ManagedBuffer<DebugApi> =
+                ManagedBuffer::from(operation.bridge_operation_hash.to_vec());
+            sc.pending_hashes(&hash_of_hashes).is_empty();
+        });
 }
