@@ -7,7 +7,7 @@ use multiversx_sc::{
     },
 };
 use multiversx_sc_scenario::{
-    api::StaticApi, imports::MxscPath, multiversx_chain_vm::crypto_functions::sha256,
+    api::StaticApi, imports::MxscPath, multiversx_chain_vm::crypto_functions::sha256, ExpectError,
     ScenarioTxRun, ScenarioTxWhitebox, ScenarioWorld,
 };
 
@@ -26,6 +26,12 @@ const WEGLD_BALANCE: u128 = 100_000_000_000_000_000;
 
 type BlsKeys = MultiValueEncoded<StaticApi, ManagedBuffer<StaticApi>>;
 
+pub struct ErrorStatus<'a> {
+    code: u64,
+    error_message: &'a str,
+}
+
+#[derive(Clone)]
 pub struct BridgeOperation<M: ManagedTypeApi> {
     signature: BlsSignature<M>,
     bridge_operation_hash: ManagedBuffer<M>,
@@ -93,31 +99,58 @@ impl HeaderVerifierTestState {
             .run();
     }
 
+    fn propose_remove_execute_hash(
+        &mut self,
+        hash_of_hashes: ManagedBuffer<StaticApi>,
+        operation_hash: ManagedBuffer<StaticApi>,
+        error_status: Option<ErrorStatus>,
+    ) {
+        match error_status {
+            Some(error) => self
+                .world
+                .tx()
+                .from(OWNER)
+                .to(HEADER_VERIFIER_ADDRESS)
+                .typed(header_verifier_proxy::HeaderverifierProxy)
+                .remove_executed_hash(hash_of_hashes, operation_hash)
+                .returns(ExpectError(error.code, error.error_message))
+                .run(),
+            None => self
+                .world
+                .tx()
+                .from(OWNER)
+                .to(HEADER_VERIFIER_ADDRESS)
+                .typed(header_verifier_proxy::HeaderverifierProxy)
+                .remove_executed_hash(hash_of_hashes, operation_hash)
+                .run(),
+        }
+    }
+
     fn get_bls_keys(&mut self, bls_keys_vec: Vec<ManagedBuffer<StaticApi>>) -> BlsKeys {
         let bls_keys = bls_keys_vec.iter().map(|key| key.clone().into()).collect();
 
         bls_keys
     }
 
-    fn get_mock_operation(&mut self) -> BridgeOperation<StaticApi> {
+    fn get_mock_operation(
+        &mut self,
+        operations: Vec<&ManagedBuffer<StaticApi>>,
+    ) -> BridgeOperation<StaticApi> {
         let mock_signature: BlsSignature<StaticApi> = ManagedByteArray::new_from_bytes(
             b"EIZ2\x05\xf7q\xc7G\x96\x1f\xba0\xe2\xd1\xf5pE\x14\xd7?\xac\xff\x8d\x1a\x0c\x11\x900f5\xfb\xff4\x94\xb8@\xc5^\xc2,exn0\xe3\xf0\n"
         );
 
-        let first_operation = ManagedBuffer::from("first_operation");
-        let first_operation_hash = self.get_operation_hash(first_operation);
-        let second_operation = ManagedBuffer::from("second_operation");
-        let second_operation_hash = self.get_operation_hash(second_operation);
-
         let mut bridge_operations: MultiValueEncoded<StaticApi, ManagedBuffer<StaticApi>> =
             MultiValueEncoded::new();
-        bridge_operations.push(first_operation_hash.clone());
-        bridge_operations.push(second_operation_hash.clone());
+        let mut bridge_operation_appended_hashes = ManagedBuffer::new();
 
-        let mut bridge_operation = first_operation_hash;
-        bridge_operation.append(&second_operation_hash);
+        for operation in operations {
+            let operation_hash = self.get_operation_hash(operation);
+            bridge_operation_appended_hashes.append(&operation_hash);
+            bridge_operations.push(operation_hash);
+        }
 
-        let bridge_operations_hash = self.get_operation_hash(bridge_operation);
+        let bridge_operations_hash = self.get_operation_hash(&bridge_operation_appended_hashes);
 
         BridgeOperation {
             signature: mock_signature,
@@ -128,7 +161,7 @@ impl HeaderVerifierTestState {
 
     fn get_operation_hash(
         &mut self,
-        operation: ManagedBuffer<StaticApi>,
+        operation: &ManagedBuffer<StaticApi>,
     ) -> ManagedBuffer<StaticApi> {
         let array: &mut [u8; 64] = &mut [0u8; 64];
         operation.load_to_byte_array(array);
@@ -174,7 +207,10 @@ fn test_register_bridge_operation() {
 
     state.deploy_header_verifier_contract(managed_bls_keys);
 
-    let operation = state.get_mock_operation();
+    let operation_1 = ManagedBuffer::from("operation_1");
+    let operation_2 = ManagedBuffer::from("operation_2");
+    let operation = state.get_mock_operation(vec![&operation_1, &operation_2]);
+
     state.propose_register_operations(operation);
 
     state
@@ -184,4 +220,55 @@ fn test_register_bridge_operation() {
         .whitebox(header_verifier::contract_obj, |sc| {
             assert!(!sc.hash_of_hashes_history().is_empty());
         })
+}
+
+#[test]
+fn test_remove_executed_hash_caller_not_esdt_address() {
+    let mut state = HeaderVerifierTestState::new();
+    let bls_key_1 = ManagedBuffer::from("bls_key_1");
+    let managed_bls_keys = state.get_bls_keys(vec![bls_key_1]);
+
+    state.deploy_header_verifier_contract(managed_bls_keys);
+
+    let operation_1 = ManagedBuffer::from("operation_1");
+    let operation_2 = ManagedBuffer::from("operation_2");
+    let operation = state.get_mock_operation(vec![&operation_1, &operation_2]);
+
+    let error_status = ErrorStatus {
+        code: 4,
+        error_message: "Only ESDT Safe contract can call this endpoint",
+    };
+
+    state.propose_register_operations(operation.clone());
+    state.propose_register_esdt_address(ENSHRINE_ADDRESS);
+    state.propose_remove_execute_hash(
+        operation.bridge_operation_hash,
+        operation_1,
+        Some(error_status),
+    );
+}
+
+#[test]
+fn test_remove_executed_hash_no_esdt_address_registered() {
+    let mut state = HeaderVerifierTestState::new();
+    let bls_key_1 = ManagedBuffer::from("bls_key_1");
+    let managed_bls_keys = state.get_bls_keys(vec![bls_key_1]);
+
+    state.deploy_header_verifier_contract(managed_bls_keys);
+
+    let operation_1 = ManagedBuffer::from("operation_1");
+    let operation_2 = ManagedBuffer::from("operation_2");
+    let operation = state.get_mock_operation(vec![&operation_1, &operation_2]);
+
+    let error_status = ErrorStatus {
+        code: 4,
+        error_message: "There is no registered ESDT address",
+    };
+
+    state.propose_register_operations(operation.clone());
+    state.propose_remove_execute_hash(
+        operation.bridge_operation_hash,
+        operation_1,
+        Some(error_status),
+    );
 }
