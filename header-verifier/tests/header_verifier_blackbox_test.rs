@@ -20,8 +20,6 @@ const ENSHRINE_CODE_PATH: MxscPath =
 const ENSHRINE_ADDRESS: TestSCAddress = TestSCAddress::new("enshrine");
 
 const OWNER: TestAddress = TestAddress::new("owner");
-const LEADER: TestAddress = TestAddress::new("leader");
-const VALIDATOR: TestAddress = TestAddress::new("validator");
 const WEGLD_BALANCE: u128 = 100_000_000_000_000_000;
 
 type BlsKeys = MultiValueEncoded<StaticApi, ManagedBuffer<StaticApi>>;
