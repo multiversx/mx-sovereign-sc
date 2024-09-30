@@ -56,6 +56,11 @@ pub trait Headerverifier: bls_signature::BlsSignatureModule {
 
     #[endpoint(removeExecutedHash)]
     fn remove_executed_hash(&self, hash_of_hashes: &ManagedBuffer, operation_hash: &ManagedBuffer) {
+        require!(
+            !self.esdt_safe_address().is_empty(),
+            "There is no registered ESDT address"
+        );
+
         let caller = self.blockchain().get_caller();
         require!(
             caller == self.esdt_safe_address().get(),
