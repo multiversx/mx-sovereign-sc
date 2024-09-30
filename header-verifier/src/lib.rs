@@ -78,6 +78,7 @@ pub trait Headerverifier: bls_signature::BlsSignatureModule {
 
         let hash_of_hashes_sha256 = self.crypto().sha256(&transfers_hashes);
         let hash_of_hashes = hash_of_hashes_sha256.as_managed_buffer();
+
         require!(
             transfers_hash.eq(hash_of_hashes),
             "Hash of all operations doesn't match the hash of transfer data"
