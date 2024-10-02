@@ -147,9 +147,7 @@ impl HeaderVerifierTestState {
         &mut self,
         operations: Vec<&ManagedBuffer<StaticApi>>,
     ) -> BridgeOperation<StaticApi> {
-        let mock_signature: BlsSignature<StaticApi> = ManagedByteArray::new_from_bytes(
-            b"EIZ2\x05\xf7q\xc7G\x96\x1f\xba0\xe2\xd1\xf5pE\x14\xd7?\xac\xff\x8d\x1a\x0c\x11\x900f5\xfb\xff4\x94\xb8@\xc5^\xc2,exn0\xe3\xf0\n"
-        );
+        let mock_signature: BlsSignature<StaticApi> = ManagedByteArray::new_from_bytes(&[0; 48]);
 
         let mut bridge_operations: MultiValueEncoded<StaticApi, ManagedBuffer<StaticApi>> =
             MultiValueEncoded::new();
