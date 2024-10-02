@@ -222,9 +222,8 @@ impl EnshrineTestState {
         fee_struct: Option<&FeeStruct<StaticApi>>,
         error_status: Option<ErrorStatus>,
     ) -> &mut Self {
-        match fee_struct {
-            Some(fee) => self.propose_add_fee_token(fee, error_status),
-            _ => (),
+        if let Some(fee) = fee_struct {
+            self.propose_add_fee_token(fee, error_status);
         }
 
         self
@@ -754,7 +753,7 @@ fn test_deposit_with_transfer_data_gas_limit_too_high() {
     let wegld_payment = EsdtTokenPayment::new(WEGLD_IDENTIFIER.into(), 0, amount.clone());
     let crowd_payment = EsdtTokenPayment::new(CROWD_TOKEN_ID.into(), 0, amount);
     let mut payments = PaymentsVec::new();
-    let gas_limit = 1000000000000000000 as u64;
+    let gas_limit = 1000000000000000000;
     let function = ManagedBuffer::from("some_function");
     let arg = ManagedBuffer::from("arg");
     let mut args = ManagedVec::new();
@@ -787,7 +786,7 @@ fn test_deposit_with_transfer_data_banned_endpoint() {
     let wegld_payment = EsdtTokenPayment::new(WEGLD_IDENTIFIER.into(), 0, amount.clone());
     let crowd_payment = EsdtTokenPayment::new(CROWD_TOKEN_ID.into(), 0, amount);
     let mut payments = PaymentsVec::new();
-    let gas_limit = 1000000000 as u64;
+    let gas_limit = 1000000000;
     let function = ManagedBuffer::from("some_function");
     let arg = ManagedBuffer::from("arg");
     let mut args = ManagedVec::new();
@@ -824,7 +823,7 @@ fn test_deposit_with_transfer_data_enough_for_fee() {
     let fungible_payment = EsdtTokenPayment::new(FUNGIBLE_TOKEN_ID.into(), 0, amount.clone());
     let crowd_payment = EsdtTokenPayment::new(CROWD_TOKEN_ID.into(), 0, amount.clone());
     let mut payments = PaymentsVec::new();
-    let gas_limit = 1000000000 as u64;
+    let gas_limit = 1000000000;
     let function = ManagedBuffer::from("some_function");
     let arg = ManagedBuffer::from("arg");
     let mut args = ManagedVec::new();
@@ -887,7 +886,7 @@ fn test_deposit_with_transfer_data_not_enough_for_fee() {
     let fungible_payment = EsdtTokenPayment::new(FUNGIBLE_TOKEN_ID.into(), 0, amount.clone());
     let crowd_payment = EsdtTokenPayment::new(CROWD_TOKEN_ID.into(), 0, amount.clone());
     let mut payments = PaymentsVec::new();
-    let gas_limit = 1000000000000000 as u64;
+    let gas_limit = 1000000000000000;
     let function = ManagedBuffer::from("some_function");
     let arg = ManagedBuffer::from("arg");
     let mut args = ManagedVec::new();
