@@ -222,14 +222,22 @@ fn test_register_bridge_operation() {
     let operation_2 = ManagedBuffer::from("operation_2");
     let operation = state.get_mock_operation(vec![&operation_1, &operation_2]);
 
-    state.propose_register_operations(operation);
+    state.propose_register_operations(operation.clone());
 
     state
         .world
         .query()
         .to(HEADER_VERIFIER_ADDRESS)
         .whitebox(header_verifier::contract_obj, |sc| {
+            let hash_of_hashes: ManagedBuffer<DebugApi> =
+                ManagedBuffer::from(operation.bridge_operation_hash.to_vec());
+
             assert!(!sc.hash_of_hashes_history().is_empty());
+            assert!(!sc.pending_hashes(&hash_of_hashes).is_empty());
+
+            for pending_hash in sc.pending_hashes(&hash_of_hashes).iter() {
+                assert!(!pending_hash.is_empty());
+            }
         });
 }
 
