@@ -67,8 +67,14 @@ pub trait Headerverifier: bls_signature::BlsSignatureModule {
             "Only ESDT Safe contract can call this endpoint"
         );
 
-        self.pending_hashes(hash_of_hashes)
+        let was_hash_removed = self
+            .pending_hashes(hash_of_hashes)
             .swap_remove(operation_hash);
+
+        require!(
+            was_hash_removed,
+            "The specified hash was not removed from the storage mapper"
+        );
     }
 
     fn calculate_and_check_transfers_hashes(
