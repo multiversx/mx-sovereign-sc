@@ -28,6 +28,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "delegation-mock-wasm"
+version = "0.0.0"
+dependencies = [
+ "delegation-mock",
+ "multiversx-sc-wasm-adapter",
+]
+
+[[package]]
 name = "endian-type"
 version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -44,22 +52,6 @@ name = "hex-literal"
 version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6fe2267d4ed49bc07b63801559be28c718ea06c4738b7a03c94df7386d2cde46"
-
-[[package]]
-name = "liquid-staking"
-version = "0.0.0"
-dependencies = [
- "delegation-mock",
- "multiversx-sc",
-]
-
-[[package]]
-name = "liquid-staking-wasm"
-version = "0.0.0"
-dependencies = [
- "liquid-staking",
- "multiversx-sc-wasm-adapter",
-]
 
 [[package]]
 name = "multiversx-sc"

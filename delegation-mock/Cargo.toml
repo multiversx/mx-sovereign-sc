@@ -1,9 +1,9 @@
 [package]
-name = "liquid-staking"
+name = "delegation-mock"
 version = "0.0.0"
-authors = ["you"]
-edition = "2021"
 publish = false
+edition = "2021"
+authors = ["you"]
 
 [lib]
 path = "src/lib.rs"
@@ -16,6 +16,3 @@ num-bigint = "0.4"
 
 [dev-dependencies.multiversx-sc-scenario]
 version = "0.53.0"
-
-[dependencies.delegation-mock]
-path = "../delegation-mock"

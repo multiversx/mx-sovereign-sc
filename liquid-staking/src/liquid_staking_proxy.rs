@@ -97,6 +97,32 @@ where
             .original_result()
     }
 
+    pub fn register_header_verifier_address<
+        Arg0: ProxyArg<ManagedAddress<Env::Api>>,
+    >(
+        self,
+        header_verifier_address: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("registerHeaderVerifierAddress")
+            .argument(&header_verifier_address)
+            .original_result()
+    }
+
+    pub fn register_bls_keys<
+        Arg0: ProxyArg<MultiValueEncoded<Env::Api, ManagedBuffer<Env::Api>>>,
+    >(
+        self,
+        bls_keys: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("registerBlsKeys")
+            .argument(&bls_keys)
+            .original_result()
+    }
+
     pub fn stake<
         Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
     >(
@@ -122,6 +148,59 @@ where
             .raw_call("unStake")
             .argument(&contract_name)
             .argument(&egld_amount_to_unstake)
+            .original_result()
+    }
+
+    pub fn claim_rewards_from_delegation<
+        Arg0: ProxyArg<MultiValueEncoded<Env::Api, ManagedBuffer<Env::Api>>>,
+    >(
+        self,
+        contracts: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("claimRewardsFromDelegation")
+            .argument(&contracts)
+            .original_result()
+    }
+
+    pub fn slash_validator<
+        Arg0: ProxyArg<ManagedAddress<Env::Api>>,
+        Arg1: ProxyArg<ManagedBuffer<Env::Api>>,
+        Arg2: ProxyArg<BigUint<Env::Api>>,
+    >(
+        self,
+        validator_address: Arg0,
+        bls_key: Arg1,
+        value_to_slash: Arg2,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("slashValidator")
+            .argument(&validator_address)
+            .argument(&bls_key)
+            .argument(&value_to_slash)
+            .original_result()
+    }
+
+    pub fn lock_for_sovereign_chain<
+        Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
+    >(
+        self,
+        chain_id: Arg0,
+    ) -> TxTypedCall<Env, From, To, (), Gas, ()> {
+        self.wrapped_tx
+            .raw_call("lockForSovereignChain")
+            .argument(&chain_id)
+            .original_result()
+    }
+
+    pub fn claim_rewards(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("claimRewards")
             .original_result()
     }
 
@@ -170,6 +249,50 @@ where
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("getTotalEgldSupply")
+            .original_result()
+    }
+
+    pub fn header_verifier_address(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ManagedAddress<Env::Api>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getHeaderVerifierAddress")
+            .original_result()
+    }
+
+    pub fn registered_bls_keys(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, MultiValueEncoded<Env::Api, ManagedBuffer<Env::Api>>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getRegisteredBlsKeys")
+            .original_result()
+    }
+
+    pub fn validator_bls_key_address_map<
+        Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
+    >(
+        self,
+        bls_key: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ManagedAddress<Env::Api>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("validatorBlsKeyMap")
+            .argument(&bls_key)
+            .original_result()
+    }
+
+    pub fn locked_supply<
+        Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
+    >(
+        self,
+        chain_id: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, BigUint<Env::Api>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("lockedSupply")
+            .argument(&chain_id)
             .original_result()
     }
 }
