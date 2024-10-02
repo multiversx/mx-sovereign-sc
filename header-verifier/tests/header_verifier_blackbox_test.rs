@@ -151,7 +151,7 @@ impl HeaderVerifierTestState {
         }
     }
     fn get_bls_keys(&mut self, bls_keys_vec: Vec<ManagedBuffer<StaticApi>>) -> BlsKeys {
-        let bls_keys = bls_keys_vec.iter().map(|key| key.clone().into()).collect();
+        let bls_keys = bls_keys_vec.iter().map(|key| key.clone()).collect();
 
         bls_keys
     }
