@@ -224,6 +224,9 @@ fn test_register_bridge_operation() {
 
     state.propose_register_operations(operation.clone());
 
+    let expected_hash_1 = state.get_operation_hash(&operation_1);
+    let expected_hash_2 = state.get_operation_hash(&operation_2);
+
     state
         .world
         .query()
@@ -235,9 +238,16 @@ fn test_register_bridge_operation() {
             assert!(!sc.hash_of_hashes_history().is_empty());
             assert!(!sc.pending_hashes(&hash_of_hashes).is_empty());
 
-            for pending_hash in sc.pending_hashes(&hash_of_hashes).iter() {
-                assert!(!pending_hash.is_empty());
-            }
+            let pending_hash_1 = sc.pending_hashes(&hash_of_hashes).get_by_index(1);
+            let pending_hash_2 = sc.pending_hashes(&hash_of_hashes).get_by_index(2);
+
+            let expected_hash_1_debug_api: ManagedBuffer<DebugApi> =
+                ManagedBuffer::from(expected_hash_1.to_vec());
+            let expected_hash_2_debug_api: ManagedBuffer<DebugApi> =
+                ManagedBuffer::from(expected_hash_2.to_vec());
+
+            assert_eq!(pending_hash_1, expected_hash_1_debug_api);
+            assert_eq!(pending_hash_2, expected_hash_2_debug_api);
         });
 }
 
