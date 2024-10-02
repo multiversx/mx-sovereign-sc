@@ -76,7 +76,7 @@ pub trait DelegationModule: common::storage::CommonStorageModule {
     ) {
         match result {
             ManagedAsyncCallResult::Ok(()) => {
-                self.delegated_value(&caller)
+                self.delegated_value(caller)
                     .update(|value| *value -= egld_amount_to_unstake);
                 self.undelegate_epoch(caller)
                     .set(current_epoch + UNBOND_PERIOD);
