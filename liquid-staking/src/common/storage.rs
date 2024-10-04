@@ -1,5 +1,6 @@
 use multiversx_sc::imports::*;
 pub type Epoch = u64;
+pub type BlsKey<M> = ManagedBuffer<M>;
 
 #[multiversx_sc::module]
 pub trait CommonStorageModule {
@@ -28,13 +29,13 @@ pub trait CommonStorageModule {
 
     #[view(getRegisteredBlsKeys)]
     #[storage_mapper("registeredBlsKeys")]
-    fn registered_bls_keys(&self) -> UnorderedSetMapper<ManagedBuffer>;
+    fn registered_bls_keys(&self) -> UnorderedSetMapper<BlsKey<Self::Api>>;
 
     #[view(validatorBlsKeyMap)]
     #[storage_mapper("validatorBlsKeyMap")]
     fn validator_bls_key_address_map(
         &self,
-        bls_key: &ManagedBuffer,
+        bls_key: &BlsKey<Self::Api>,
     ) -> SingleValueMapper<ManagedAddress>;
 
     // NOTE: Number of nodes where ?
@@ -42,7 +43,7 @@ pub trait CommonStorageModule {
     #[storage_mapper("lockerSupply")]
     fn locked_supply(&self, chain_id: ManagedBuffer) -> SingleValueMapper<BigUint>;
 
-    fn require_bls_key_to_be_registered(&self, bls_key: &ManagedBuffer) {
+    fn require_bls_key_to_be_registered(&self, bls_key: &BlsKey<Self::Api>) {
         require!(
             self.registered_bls_keys().contains(bls_key),
             "The given bls key is not registered"
