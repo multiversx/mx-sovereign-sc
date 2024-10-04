@@ -12,6 +12,7 @@ pub trait CommonStorageModule {
         contract_name: &ManagedBuffer,
     ) -> SingleValueMapper<ManagedAddress>;
 
+    // TODO: use AddressToIdMapper for lower gas usage
     #[view(getDelegatedValue)]
     #[storage_mapper("delegatedValue")]
     fn delegated_value(&self, validator: &ManagedAddress) -> SingleValueMapper<BigUint>;
