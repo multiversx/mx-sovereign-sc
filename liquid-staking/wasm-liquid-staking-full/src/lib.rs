@@ -25,8 +25,8 @@ multiversx_sc_wasm_adapter::endpoints! {
         registerBlsKeys => register_bls_keys
         stake => stake
         unStake => unstake
-        claim_rewards_from_delegation => claim_rewards_from_delegation
-        slash_validator => slash_validator
+        claimRewardsFromDelegation => claim_rewards_from_delegation
+        slashValidator => slash_validator
         lockForSovereignChain => lock_for_sovereign_chain
         claim_rewards => claim_rewards
         getDelegationAddress => delegation_addresses

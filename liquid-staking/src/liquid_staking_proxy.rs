@@ -159,7 +159,7 @@ where
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
-            .raw_call("claim_rewards_from_delegation")
+            .raw_call("claimRewardsFromDelegation")
             .argument(&contracts)
             .original_result()
     }
@@ -176,7 +176,7 @@ where
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
-            .raw_call("slash_validator")
+            .raw_call("slashValidator")
             .argument(&validator_address)
             .argument(&bls_key)
             .argument(&value_to_slash)
