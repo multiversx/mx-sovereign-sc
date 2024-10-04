@@ -82,7 +82,7 @@ pub trait DelegationModule: common::storage::CommonStorageModule {
         }
     }
 
-    #[endpoint]
+    #[endpoint(claimRewardsFromDelegation)]
     fn claim_rewards_from_delegation(&self, contracts: MultiValueEncoded<ManagedBuffer>) {
         let caller = self.blockchain().get_caller();
         self.require_address_has_stake(&caller);
@@ -117,7 +117,7 @@ pub trait DelegationModule: common::storage::CommonStorageModule {
     }
 
     // NOTE: Should this also add to the map ?
-    #[endpoint]
+    #[endpoint(slashValidator)]
     fn slash_validator(
         &self,
         validator_address: ManagedAddress,
