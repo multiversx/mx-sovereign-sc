@@ -98,8 +98,9 @@ pub trait DelegationModule: common::storage::CommonStorageModule {
             self.tx()
                 .to(delegation_address)
                 .raw_call(CLAIM_REWARDS_ENDPOINT)
+                .gas(self.blockchain().get_gas_left())
                 .callback(DelegationModule::callbacks(self).claim_rewards_from_delegation_cb())
-                .async_call_and_exit();
+                .register_promise();
         }
     }
 
