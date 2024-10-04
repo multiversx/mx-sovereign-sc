@@ -307,7 +307,7 @@ fn test_remove_executed_hash_no_esdt_address_registered() {
 }
 
 #[test]
-fn test_remove_executed_hash_hash_not_removed() {
+fn test_remove_executed_hash_hash_not_found_in_storage() {
     let mut state = HeaderVerifierTestState::new();
     let bls_key_1 = ManagedBuffer::from("bls_key_1");
     let managed_bls_keys = state.get_bls_keys(vec![bls_key_1]);
@@ -317,6 +317,7 @@ fn test_remove_executed_hash_hash_not_removed() {
 
     let operation_1 = ManagedBuffer::from("operation_1");
     let operation_2 = ManagedBuffer::from("operation_2");
+    let operation_3 = ManagedBuffer::from("operation_3");
     let operation = state.generate_bridge_operation_struct(vec![&operation_1, &operation_2]);
 
     state.propose_register_operations(operation.clone());
@@ -324,13 +325,13 @@ fn test_remove_executed_hash_hash_not_removed() {
 
     let error_status = ErrorStatus {
         code: 4,
-        error_message: "The specified hash was not removed from the storage mapper",
+        error_message: "The operation hash does not exist in the storage",
     };
 
     state.propose_remove_execute_hash(
         ENSHRINE_ADDRESS,
         &operation.bridge_operation_hash,
-        operation_1,
+        operation_3,
         Some(error_status),
     );
 }
