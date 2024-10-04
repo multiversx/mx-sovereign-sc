@@ -128,7 +128,7 @@ impl HeaderVerifierTestState {
             .run()
     }
 
-    fn propose_remove_execute_hash(
+    fn propose_remove_executed_hash(
         &mut self,
         caller: TestSCAddress,
         hash_of_hashes: &ManagedBuffer<StaticApi>,
@@ -247,7 +247,9 @@ fn test_register_bridge_operation() {
                 ManagedBuffer::from(operation.bridge_operation_hash.to_vec());
 
             assert!(!sc.hash_of_hashes_history().is_empty());
+            assert!(sc.hash_of_hashes_history().contains(&hash_of_hashes));
             assert!(!sc.pending_hashes(&hash_of_hashes).is_empty());
+            assert!(sc.pending_hashes(&hash_of_hashes).len() == 1);
 
             let pending_hash_1 = sc.pending_hashes(&hash_of_hashes).get_by_index(1);
             let pending_hash_2 = sc.pending_hashes(&hash_of_hashes).get_by_index(2);
@@ -298,7 +300,7 @@ fn test_remove_executed_hash_no_esdt_address_registered() {
     };
 
     state.propose_register_operations(operation.clone());
-    state.propose_remove_execute_hash(
+    state.propose_remove_executed_hash(
         ENSHRINE_ADDRESS,
         &operation.bridge_operation_hash,
         operation_1,
@@ -328,7 +330,7 @@ fn test_remove_executed_hash_hash_not_found_in_storage() {
         error_message: "The operation hash does not exist in the storage",
     };
 
-    state.propose_remove_execute_hash(
+    state.propose_remove_executed_hash(
         ENSHRINE_ADDRESS,
         &operation.bridge_operation_hash,
         operation_3,
@@ -353,7 +355,7 @@ fn test_remove_one_executed_hash() {
     state.propose_register_esdt_address(ENSHRINE_ADDRESS);
 
     let operation_1_hash = state.get_operation_hash(&operation_1);
-    state.propose_remove_execute_hash(
+    state.propose_remove_executed_hash(
         ENSHRINE_ADDRESS,
         &operation.bridge_operation_hash,
         operation_1_hash,
@@ -369,6 +371,7 @@ fn test_remove_one_executed_hash() {
             let hash_of_hashes: ManagedBuffer<DebugApi> =
                 ManagedBuffer::from(operation.bridge_operation_hash.to_vec());
             assert!(!sc.pending_hashes(&hash_of_hashes).is_empty());
+            assert!(sc.pending_hashes(&hash_of_hashes).len() == 1);
 
             let pending_hash_2 = sc.pending_hashes(&hash_of_hashes).get_by_index(1);
             let expected_hash_2_debug_api: ManagedBuffer<DebugApi> =
@@ -395,7 +398,7 @@ fn test_remove_all_executed_hashes() {
     state.propose_register_esdt_address(ENSHRINE_ADDRESS);
 
     let operation_1_hash = state.get_operation_hash(&operation_1);
-    state.propose_remove_execute_hash(
+    state.propose_remove_executed_hash(
         ENSHRINE_ADDRESS,
         &operation.bridge_operation_hash,
         operation_1_hash,
@@ -403,7 +406,7 @@ fn test_remove_all_executed_hashes() {
     );
 
     let operation_2_hash = state.get_operation_hash(&operation_2);
-    state.propose_remove_execute_hash(
+    state.propose_remove_executed_hash(
         ENSHRINE_ADDRESS,
         &operation.bridge_operation_hash,
         operation_2_hash,
