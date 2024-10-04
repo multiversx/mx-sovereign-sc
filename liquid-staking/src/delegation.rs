@@ -60,11 +60,10 @@ pub trait DelegationModule: common::storage::CommonStorageModule {
             .to(delegation_contract_address)
             .raw_call(ManagedBuffer::from(UNDELEGATE_ENDPOINT))
             .argument(&egld_amount_to_unstake)
-            .callback(DelegationModule::callbacks(self).unstake_callback(
-                &caller,
-                &egld_amount_to_unstake,
-                current_epoch,
-            ))
+            .callback(
+                DelegationModule::callbacks(self)
+                    .unstake_callback(&caller, &egld_amount_to_unstake),
+            )
             .async_call_and_exit();
     }
 
@@ -73,7 +72,6 @@ pub trait DelegationModule: common::storage::CommonStorageModule {
         &self,
         caller: &ManagedAddress,
         egld_amount_to_unstake: &BigUint,
-        current_epoch: Epoch,
         #[call_result] result: ManagedAsyncCallResult<()>,
     ) {
         match result {
