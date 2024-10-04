@@ -1,6 +1,7 @@
 use multiversx_sc::imports::*;
 pub type Epoch = u64;
 pub type BlsKey<M> = ManagedBuffer<M>;
+pub type ChainId<M> = ManagedBuffer<M>;
 
 #[multiversx_sc::module]
 pub trait CommonStorageModule {
@@ -41,7 +42,7 @@ pub trait CommonStorageModule {
     // NOTE: Number of nodes where ?
     #[view(lockedSupply)]
     #[storage_mapper("lockerSupply")]
-    fn locked_supply(&self, chain_id: ManagedBuffer) -> SingleValueMapper<BigUint>;
+    fn locked_supply(&self, chain_id: ChainId<Self::Api>) -> SingleValueMapper<BigUint>;
 
     fn require_bls_key_to_be_registered(&self, bls_key: &BlsKey<Self::Api>) {
         require!(

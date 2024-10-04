@@ -4,7 +4,10 @@ pub const DELEGATE_ENDPOINT: &str = "delegate";
 pub const UNDELEGATE_ENDPOINT: &str = "unDelegate";
 pub const CLAIM_REWARDS_ENDPOINT: &str = "claimRewards";
 
-use crate::common::{self, storage::Epoch};
+use crate::common::{
+    self,
+    storage::{BlsKey, ChainId, Epoch},
+};
 
 #[multiversx_sc::module]
 pub trait DelegationModule: common::storage::CommonStorageModule {
@@ -120,7 +123,7 @@ pub trait DelegationModule: common::storage::CommonStorageModule {
     fn slash_validator(
         &self,
         validator_address: ManagedAddress,
-        bls_key: ManagedBuffer,
+        bls_key: BlsKey<Self::Api>,
         value_to_slash: BigUint,
     ) {
         let caller = self.blockchain().get_caller();
@@ -148,7 +151,7 @@ pub trait DelegationModule: common::storage::CommonStorageModule {
 
     #[payable("EGLD")]
     #[endpoint(lockForSovereignChain)]
-    fn lock_for_sovereign_chain(&self, chain_id: ManagedBuffer) {
+    fn lock_for_sovereign_chain(&self, chain_id: ChainId<Self::Api>) {
         let call_value = self.call_value().egld_value().clone_value();
 
         require!(call_value > 0, "No value send to lock");
