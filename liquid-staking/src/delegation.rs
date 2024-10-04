@@ -6,7 +6,7 @@ pub const CLAIM_REWARDS_ENDPOINT: &[u8] = b"claimRewards";
 
 use crate::common::{
     self,
-    storage::{BlsKey, ChainId, Epoch},
+    storage::{BlsKey, ChainId},
 };
 
 #[multiversx_sc::module]
