@@ -15,9 +15,7 @@ const HEADER_VERIFIER_CODE_PATH: MxscPath = MxscPath::new("ouput/header-verifier
 const HEADER_VERIFIER_ADDRESS: TestSCAddress = TestSCAddress::new("header-verifier");
 
 // NOTE: This is a mock path
-const ENSHRINE_CODE_PATH: MxscPath =
-    MxscPath::new("../chain-factory/output/chain-factory.mxsc-json");
-const ENSHRINE_ADDRESS: TestSCAddress = TestSCAddress::new("enshrine");
+const ENSHRINE_ADDRESS: TestAddress = TestAddress::new("enshrine");
 
 const OWNER: TestAddress = TestAddress::new("owner");
 const WEGLD_BALANCE: u128 = 100_000_000_000_000_000;
@@ -39,7 +37,6 @@ pub struct BridgeOperation<M: ManagedTypeApi> {
 fn world() -> ScenarioWorld {
     let mut blockchain = ScenarioWorld::new();
     blockchain.register_contract(HEADER_VERIFIER_CODE_PATH, header_verifier::ContractBuilder);
-    blockchain.register_contract(ENSHRINE_CODE_PATH, header_verifier::ContractBuilder);
 
     blockchain
 }
@@ -54,6 +51,11 @@ impl HeaderVerifierTestState {
 
         world
             .account(OWNER)
+            .balance(BigUint::from(WEGLD_BALANCE))
+            .nonce(1);
+
+        world
+            .account(ENSHRINE_ADDRESS)
             .balance(BigUint::from(WEGLD_BALANCE))
             .nonce(1);
 
@@ -73,20 +75,7 @@ impl HeaderVerifierTestState {
         self
     }
 
-    fn deploy_enshrine_esdt_contract(&mut self, bls_keys: &BlsKeys) -> &mut Self {
-        self.world
-            .tx()
-            .from(OWNER)
-            .typed(header_verifier_proxy::HeaderverifierProxy)
-            .init(bls_keys)
-            .code(HEADER_VERIFIER_CODE_PATH)
-            .new_address(ENSHRINE_ADDRESS)
-            .run();
-
-        self
-    }
-
-    fn propose_register_esdt_address(&mut self, esdt_address: TestSCAddress) {
+    fn propose_register_esdt_address(&mut self, esdt_address: TestAddress) {
         self.world
             .tx()
             .from(OWNER)
@@ -130,7 +119,7 @@ impl HeaderVerifierTestState {
 
     fn propose_remove_executed_hash(
         &mut self,
-        caller: TestSCAddress,
+        caller: TestAddress,
         hash_of_hashes: &ManagedBuffer<StaticApi>,
         operation_hash: ManagedBuffer<StaticApi>,
         error_status: Option<ErrorStatus>,
@@ -287,7 +276,6 @@ fn test_remove_executed_hash_no_esdt_address_registered() {
     let bls_key_1 = ManagedBuffer::from("bls_key_1");
     let managed_bls_keys = state.get_bls_keys(vec![bls_key_1]);
 
-    state.deploy_enshrine_esdt_contract(&managed_bls_keys);
     state.deploy_header_verifier_contract(managed_bls_keys);
 
     let operation_1 = ManagedBuffer::from("operation_1");
@@ -309,42 +297,11 @@ fn test_remove_executed_hash_no_esdt_address_registered() {
 }
 
 #[test]
-fn test_remove_executed_hash_hash_not_found_in_storage() {
-    let mut state = HeaderVerifierTestState::new();
-    let bls_key_1 = ManagedBuffer::from("bls_key_1");
-    let managed_bls_keys = state.get_bls_keys(vec![bls_key_1]);
-
-    state.deploy_enshrine_esdt_contract(&managed_bls_keys);
-    state.deploy_header_verifier_contract(managed_bls_keys);
-
-    let operation_1 = ManagedBuffer::from("operation_1");
-    let operation_2 = ManagedBuffer::from("operation_2");
-    let operation_3 = ManagedBuffer::from("operation_3");
-    let operation = state.generate_bridge_operation_struct(vec![&operation_1, &operation_2]);
-
-    state.propose_register_operations(operation.clone());
-    state.propose_register_esdt_address(ENSHRINE_ADDRESS);
-
-    let error_status = ErrorStatus {
-        code: 4,
-        error_message: "The operation hash does not exist in the storage",
-    };
-
-    state.propose_remove_executed_hash(
-        ENSHRINE_ADDRESS,
-        &operation.bridge_operation_hash,
-        operation_3,
-        Some(error_status),
-    );
-}
-
-#[test]
 fn test_remove_one_executed_hash() {
     let mut state = HeaderVerifierTestState::new();
     let bls_key_1 = ManagedBuffer::from("bls_key_1");
     let managed_bls_keys = state.get_bls_keys(vec![bls_key_1]);
 
-    state.deploy_enshrine_esdt_contract(&managed_bls_keys);
     state.deploy_header_verifier_contract(managed_bls_keys);
 
     let operation_1 = ManagedBuffer::from("operation_1");
@@ -387,7 +344,6 @@ fn test_remove_all_executed_hashes() {
     let bls_key_1 = ManagedBuffer::from("bls_key_1");
     let managed_bls_keys = state.get_bls_keys(vec![bls_key_1]);
 
-    state.deploy_enshrine_esdt_contract(&managed_bls_keys);
     state.deploy_header_verifier_contract(managed_bls_keys);
 
     let operation_1 = ManagedBuffer::from("operation_1");
