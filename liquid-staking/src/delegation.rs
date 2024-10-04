@@ -29,18 +29,20 @@ pub trait DelegationModule: common::storage::CommonStorageModule {
     #[callback]
     fn stake_callback(
         &self,
-        caller: &ManagedAddress,
+        validator_address: &ManagedAddress,
         egld_amount: &BigUint,
         #[call_result] result: ManagedAsyncCallResult<()>,
     ) {
         match result {
             ManagedAsyncCallResult::Ok(()) => {
-                self.delegated_value(caller)
+                let validator_id = self.validator_ids().get_id_or_insert(validator_address);
+
+                self.delegated_value(&validator_id)
                     .update(|value| *value += egld_amount);
                 self.egld_token_supply()
                     .update(|value| *value += egld_amount)
             }
-            _ => self.tx().egld(egld_amount).to(caller).transfer(),
+            _ => self.tx().egld(egld_amount).to(validator_address).transfer(),
         }
     }
 
@@ -48,7 +50,8 @@ pub trait DelegationModule: common::storage::CommonStorageModule {
     fn unstake(&self, contract_name: ManagedBuffer, egld_amount_to_unstake: BigUint) {
         let caller = self.blockchain().get_caller();
         let delegation_contract_address = self.delegation_addresses(&contract_name).get();
-        let total_egld_deposit = self.delegated_value(&caller).get();
+        let validator_id = self.validator_ids().get_id_or_insert(&caller);
+        let total_egld_deposit = self.delegated_value(&validator_id).get();
 
         require!(
             egld_amount_to_unstake <= total_egld_deposit,
@@ -69,13 +72,15 @@ pub trait DelegationModule: common::storage::CommonStorageModule {
     #[callback]
     fn unstake_callback(
         &self,
-        caller: &ManagedAddress,
+        validator_address: &ManagedAddress,
         egld_amount_to_unstake: &BigUint,
         #[call_result] result: ManagedAsyncCallResult<()>,
     ) {
         match result {
             ManagedAsyncCallResult::Ok(()) => {
-                self.delegated_value(caller)
+                let validator_id = self.validator_ids().get_id_or_insert(validator_address);
+
+                self.delegated_value(&validator_id)
                     .update(|value| *value -= egld_amount_to_unstake);
             }
             _ => sc_panic!("There was an error at delegating"),
@@ -137,7 +142,8 @@ pub trait DelegationModule: common::storage::CommonStorageModule {
 
         require!(value_to_slash > 0, "You can't slash a value of 0 eGLD");
 
-        let delegation_mapper = self.delegated_value(&validator_address);
+        let validator_id = self.validator_ids().get_id_or_insert(&validator_address);
+        let delegation_mapper = self.delegated_value(&validator_id);
         let delegated_value = delegation_mapper.get();
         require!(
             delegated_value >= value_to_slash,

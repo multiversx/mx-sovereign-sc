@@ -13,9 +13,13 @@ pub trait CommonStorageModule {
     ) -> SingleValueMapper<ManagedAddress>;
 
     // TODO: use AddressToIdMapper for lower gas usage
+    //
+    #[storage_mapper("userIds")]
+    fn validator_ids(&self) -> AddressToIdMapper<Self::Api>;
+
     #[view(getDelegatedValue)]
     #[storage_mapper("delegatedValue")]
-    fn delegated_value(&self, validator: &ManagedAddress) -> SingleValueMapper<BigUint>;
+    fn delegated_value(&self, validator: &AddressId) -> SingleValueMapper<BigUint>;
 
     #[view(unDelegateEpoch)]
     #[storage_mapper("unDelegateEpoch")]
@@ -66,8 +70,9 @@ pub trait CommonStorageModule {
         );
     }
 
-    fn require_address_has_stake(&self, caller: &ManagedAddress) {
-        let total_egld_deposit = self.delegated_value(caller).get();
+    fn require_address_has_stake(&self, validator_address: &ManagedAddress) {
+        let validator_id = self.validator_ids().get_id_or_insert(validator_address);
+        let total_egld_deposit = self.delegated_value(&validator_id).get();
 
         require!(total_egld_deposit > 0, "Caller has 0 delegated value");
     }

@@ -218,7 +218,7 @@ where
     }
 
     pub fn delegated_value<
-        Arg0: ProxyArg<ManagedAddress<Env::Api>>,
+        Arg0: ProxyArg<u64>,
     >(
         self,
         validator: Arg0,
