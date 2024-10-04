@@ -89,14 +89,17 @@ pub trait DelegationModule: common::storage::CommonStorageModule {
 
         for delegation_contract in contracts {
             let delegation_mapper = self.delegation_addresses(&delegation_contract);
-            if !delegation_mapper.is_empty() {
-                let delegation_address = delegation_mapper.get();
-                self.tx()
-                    .to(delegation_address)
-                    .raw_call(CLAIM_REWARDS_ENDPOINT)
-                    .callback(DelegationModule::callbacks(self).claim_rewards_from_delegation_cb())
-                    .async_call_and_exit();
+
+            if delegation_mapper.is_empty() {
+                continue;
             }
+
+            let delegation_address = delegation_mapper.get();
+            self.tx()
+                .to(delegation_address)
+                .raw_call(CLAIM_REWARDS_ENDPOINT)
+                .callback(DelegationModule::callbacks(self).claim_rewards_from_delegation_cb())
+                .async_call_and_exit();
         }
     }
 
