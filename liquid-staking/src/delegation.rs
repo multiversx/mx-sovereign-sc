@@ -47,8 +47,6 @@ pub trait DelegationModule: common::storage::CommonStorageModule {
     #[endpoint(unStake)]
     fn unstake(&self, contract_name: ManagedBuffer, egld_amount_to_unstake: BigUint) {
         let caller = self.blockchain().get_caller();
-        self.require_caller_has_stake(&caller);
-
         let current_epoch = self.blockchain().get_block_epoch();
         let delegation_contract_address = self.delegation_addresses(&contract_name).get();
         let total_egld_deposit = self.delegated_value(&caller).get();
