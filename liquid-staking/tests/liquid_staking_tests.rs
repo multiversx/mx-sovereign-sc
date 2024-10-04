@@ -399,7 +399,7 @@ fn test_unstake_user_no_deposit() {
     let payment = BigUint::from(100_000u64);
     let error_status = ErrorStatus {
         code: 4,
-        error_message: "Caller has 0 delegated value",
+        error_message: "The value to unstake is greater than the deposited amount",
     };
 
     state.propose_setup_contracts();
