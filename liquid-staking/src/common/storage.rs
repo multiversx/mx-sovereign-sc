@@ -44,14 +44,14 @@ pub trait CommonStorageModule {
     #[storage_mapper("lockerSupply")]
     fn locked_supply(&self, chain_id: ChainId<Self::Api>) -> SingleValueMapper<BigUint>;
 
-    fn require_bls_key_to_be_registered(&self, bls_key: &BlsKey<Self::Api>) {
+    fn require_bls_key_registered(&self, bls_key: &BlsKey<Self::Api>) {
         require!(
             self.registered_bls_keys().contains(bls_key),
             "The given bls key is not registered"
         );
     }
 
-    fn require_caller_to_be_header_verifier(&self, caller: &ManagedAddress) {
+    fn require_caller_header_verifier(&self, address: &ManagedAddress) {
         require!(
             !self.header_verifier_address().is_empty(),
             "There is no address registered as the Header Verifier"
@@ -60,12 +60,12 @@ pub trait CommonStorageModule {
         let header_verifier_address = self.header_verifier_address().get();
 
         require!(
-            caller == &header_verifier_address,
+            address == &header_verifier_address,
             "Caller is not Header Verifier contract"
         );
     }
 
-    fn require_caller_has_stake(&self, caller: &ManagedAddress) {
+    fn require_address_has_stake(&self, caller: &ManagedAddress) {
         let total_egld_deposit = self.delegated_value(caller).get();
 
         require!(total_egld_deposit > 0, "Caller has 0 delegated value");

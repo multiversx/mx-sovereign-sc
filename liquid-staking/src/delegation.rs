@@ -85,7 +85,7 @@ pub trait DelegationModule: common::storage::CommonStorageModule {
     #[endpoint]
     fn claim_rewards_from_delegation(&self, contracts: MultiValueEncoded<ManagedBuffer>) {
         let caller = self.blockchain().get_caller();
-        self.require_caller_has_stake(&caller);
+        self.require_address_has_stake(&caller);
 
         for delegation_contract in contracts {
             let delegation_mapper = self.delegation_addresses(&delegation_contract);
@@ -125,15 +125,15 @@ pub trait DelegationModule: common::storage::CommonStorageModule {
         value_to_slash: BigUint,
     ) {
         let caller = self.blockchain().get_caller();
-        self.require_caller_to_be_header_verifier(&caller);
-        self.require_bls_key_to_be_registered(&bls_key);
+        self.require_caller_header_verifier(&caller);
+        self.require_bls_key_registered(&bls_key);
 
         require!(
             !self.validator_bls_key_address_map(&bls_key).is_empty(),
             "There is no associated address to the given BLS key"
         );
 
-        self.require_caller_has_stake(&validator_address);
+        self.require_address_has_stake(&validator_address);
 
         require!(value_to_slash > 0, "You can't slash a value of 0 eGLD");
 
