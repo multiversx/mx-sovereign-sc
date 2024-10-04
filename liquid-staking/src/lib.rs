@@ -17,6 +17,9 @@ pub trait LiquidStaking:
     #[init]
     fn init(&self) {}
 
+    #[upgrade]
+    fn upgrade(&self) {}
+
     #[endpoint(registerDelegationContractAddress)]
     fn register_delegation_address(
         &self,
@@ -62,7 +65,4 @@ pub trait LiquidStaking:
             bls_keys_mapper.swap_remove(&bls_key);
         }
     }
-
-    #[upgrade]
-    fn upgrade(&self) {}
 }
