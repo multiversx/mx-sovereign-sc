@@ -309,6 +309,20 @@ impl LiquidStakingTestState {
         managed_bls_keys
     }
 
+    fn get_validator_id(&mut self, validator: &TestAddress) -> u64 {
+        let mut validator_id = 0;
+        self.world.query().to(LIQUID_STAKING_ADDRESS).whitebox(
+            liquid_staking::contract_obj,
+            |sc| {
+                validator_id = sc
+                    .validator_ids()
+                    .get_id_or_insert(&validator.to_managed_address());
+            },
+        );
+
+        validator_id
+    }
+
     fn whitebox_map_bls_to_address(&mut self, bls_key: &str, address: &TestAddress) -> &mut Self {
         self.world
             .tx()
@@ -375,13 +389,15 @@ fn test_stake() {
         .check_account(OWNER)
         .balance(BigUint::from(WEGLD_BALANCE) - payment);
 
+    let validator_id = state.get_validator_id(&OWNER);
+
     state
         .world
         .query()
         .to(LIQUID_STAKING_ADDRESS)
         .whitebox(liquid_staking::contract_obj, |sc| {
             let payment_whitebox = BigUint::from(100_000u64);
-            let delegated_value = sc.delegated_value(&OWNER.to_managed_address()).get();
+            let delegated_value = sc.delegated_value(&validator_id).get();
             let egld_supply = sc.egld_token_supply().get();
 
             assert!(egld_supply > 0);
@@ -423,13 +439,15 @@ fn test_unstake() {
         .check_account(OWNER)
         .balance(BigUint::from(WEGLD_BALANCE) - payment);
 
+    let validator_id = state.get_validator_id(&OWNER);
+
     state
         .world
         .query()
         .to(LIQUID_STAKING_ADDRESS)
         .whitebox(liquid_staking::contract_obj, |sc| {
             let expected_amount = BigUint::from(90_000u64);
-            let delegated_value = sc.delegated_value(&OWNER.to_managed_address()).get();
+            let delegated_value = sc.delegated_value(&validator_id).get();
 
             assert_eq!(delegated_value, expected_amount);
         })
@@ -645,15 +663,15 @@ fn slash_validator() {
         None,
     );
 
+    let validator_id = state.get_validator_id(&VALIDATOR_ADDRESS);
+
     state
         .world
         .query()
         .to(LIQUID_STAKING_ADDRESS)
         .whitebox(liquid_staking::contract_obj, |sc| {
             let expected_value = BigUint::from(90_000u64);
-            let validator_delegated_value = sc
-                .delegated_value(&VALIDATOR_ADDRESS.to_managed_address())
-                .get();
+            let validator_delegated_value = sc.delegated_value(&validator_id).get();
 
             assert_eq!(validator_delegated_value, expected_value);
         })
