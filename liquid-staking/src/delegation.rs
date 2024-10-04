@@ -40,7 +40,7 @@ pub trait DelegationModule: common::storage::CommonStorageModule {
                 self.egld_token_supply()
                     .update(|value| *value += egld_amount)
             }
-            _ => sc_panic!("There was an error at delegating"),
+            _ => self.tx().egld(egld_amount).to(caller).transfer(),
         }
     }
 
