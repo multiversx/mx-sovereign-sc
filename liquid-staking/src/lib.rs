@@ -56,8 +56,10 @@ pub trait LiquidStaking:
         let caller = self.blockchain().get_caller();
         self.require_caller_header_verifier(&caller);
 
+        let mut bls_keys_mapper = self.registered_bls_keys();
+
         for bls_key in bls_keys {
-            self.registered_bls_keys().swap_remove(&bls_key);
+            bls_keys_mapper.swap_remove(&bls_key);
         }
     }
 
