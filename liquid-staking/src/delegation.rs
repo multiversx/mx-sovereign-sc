@@ -35,7 +35,8 @@ pub trait DelegationModule: common::storage::CommonStorageModule {
     ) {
         match result {
             ManagedAsyncCallResult::Ok(()) => {
-                self.delegated_value(caller).set(egld_amount);
+                self.delegated_value(caller)
+                    .update(|value| *value += egld_amount);
                 self.egld_token_supply()
                     .update(|value| *value += egld_amount)
             }
