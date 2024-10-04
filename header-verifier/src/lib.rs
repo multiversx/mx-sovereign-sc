@@ -67,11 +67,6 @@ pub trait Headerverifier: bls_signature::BlsSignatureModule {
             "Only ESDT Safe contract can call this endpoint"
         );
 
-        require!(
-            self.pending_hashes(hash_of_hashes).contains(operation_hash),
-            "The operation hash does not exist in the storage"
-        );
-
         self.pending_hashes(hash_of_hashes)
             .swap_remove(operation_hash);
     }
