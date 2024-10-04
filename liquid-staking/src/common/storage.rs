@@ -12,7 +12,7 @@ pub trait CommonStorageModule {
 
     #[view(getDelegatedValue)]
     #[storage_mapper("delegatedValue")]
-    fn delegated_value(&self, validator: &ManagedAddress) -> SingleValueMapper<BigUint<Self::Api>>;
+    fn delegated_value(&self, validator: &ManagedAddress) -> SingleValueMapper<BigUint>;
 
     #[view(unDelegateEpoch)]
     #[storage_mapper("unDelegateEpoch")]
@@ -40,7 +40,7 @@ pub trait CommonStorageModule {
     // NOTE: Number of nodes where ?
     #[view(lockedSupply)]
     #[storage_mapper("lockerSupply")]
-    fn locked_supply(&self, chain_id: ManagedBuffer) -> SingleValueMapper<BigUint<Self::Api>>;
+    fn locked_supply(&self, chain_id: ManagedBuffer) -> SingleValueMapper<BigUint>;
 
     fn require_bls_key_to_be_registered(&self, bls_key: &ManagedBuffer) {
         require!(
