@@ -247,9 +247,9 @@ fn test_register_bridge_operation() {
                 ManagedBuffer::from(operation.bridge_operation_hash.to_vec());
 
             assert!(!sc.hash_of_hashes_history().is_empty());
+            assert!(sc.hash_of_hashes_history().len() == 1);
             assert!(sc.hash_of_hashes_history().contains(&hash_of_hashes));
             assert!(!sc.pending_hashes(&hash_of_hashes).is_empty());
-            assert!(sc.pending_hashes(&hash_of_hashes).len() == 1);
 
             let pending_hash_1 = sc.pending_hashes(&hash_of_hashes).get_by_index(1);
             let pending_hash_2 = sc.pending_hashes(&hash_of_hashes).get_by_index(2);
