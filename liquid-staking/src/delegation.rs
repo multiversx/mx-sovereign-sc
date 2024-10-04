@@ -80,8 +80,6 @@ pub trait DelegationModule: common::storage::CommonStorageModule {
             ManagedAsyncCallResult::Ok(()) => {
                 self.delegated_value(caller)
                     .update(|value| *value -= egld_amount_to_unstake);
-                self.undelegate_epoch(caller)
-                    .set(current_epoch + UNBOND_PERIOD);
             }
             _ => sc_panic!("There was an error at delegating"),
         }
