@@ -9,7 +9,7 @@ use crate::common::{self, storage::Epoch};
 #[multiversx_sc::module]
 pub trait DelegationModule: common::storage::CommonStorageModule {
     #[payable("EGLD")]
-    #[endpoint(stake)]
+    #[endpoint]
     fn stake(&self, contract_name: ManagedBuffer) {
         let caller = self.blockchain().get_caller();
         let egld_amount = self.call_value().egld_value().clone_value();
@@ -85,7 +85,7 @@ pub trait DelegationModule: common::storage::CommonStorageModule {
         }
     }
 
-    #[endpoint(claimRewardsFromDelegation)]
+    #[endpoint]
     fn claim_rewards_from_delegation(&self, contracts: MultiValueEncoded<ManagedBuffer>) {
         let caller = self.blockchain().get_caller();
         self.require_caller_has_stake(&caller);
@@ -116,7 +116,7 @@ pub trait DelegationModule: common::storage::CommonStorageModule {
     }
 
     // NOTE: Should this also add to the map ?
-    #[endpoint(slashValidator)]
+    #[endpoint]
     fn slash_validator(
         &self,
         validator_address: ManagedAddress,
@@ -158,6 +158,6 @@ pub trait DelegationModule: common::storage::CommonStorageModule {
         // lock amount with ChainConfigSC
     }
 
-    #[endpoint(claimRewards)]
+    #[endpoint]
     fn claim_rewards(&self) {}
 }
