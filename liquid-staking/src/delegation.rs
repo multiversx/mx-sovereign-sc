@@ -137,14 +137,14 @@ pub trait DelegationModule: common::storage::CommonStorageModule {
 
         require!(value_to_slash > 0, "You can't slash a value of 0 eGLD");
 
-        let delegated_value = self.delegated_value(&validator_address).get();
+        let delegation_mapper = self.delegated_value(&validator_address);
+        let delegated_value = delegation_mapper.get();
         require!(
             delegated_value >= value_to_slash,
             "The slash value can't be greater than the total delegated amount"
         );
 
-        self.delegated_value(&validator_address)
-            .update(|value| *value -= &value_to_slash);
+        delegation_mapper.update(|value| *value -= &value_to_slash);
     }
 
     #[payable("EGLD")]
