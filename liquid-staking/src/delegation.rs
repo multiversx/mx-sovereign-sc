@@ -110,10 +110,10 @@ pub trait DelegationModule: common::storage::CommonStorageModule {
         // egld_amount: &BigUint,
         #[call_result] result: ManagedAsyncCallResult<()>,
     ) {
-        match result {
-            ManagedAsyncCallResult::Ok(()) => {}
-            _ => sc_panic!("There was an error at claiming rewards from the delegation contract"),
-        }
+        require!(
+            result.is_ok(),
+            "There was an error at claiming rewards from the delegation contract"
+        );
     }
 
     // NOTE: Should this also add to the map ?
