@@ -4,9 +4,12 @@ pub const DELEGATE_ENDPOINT: &[u8] = b"delegate";
 pub const UNDELEGATE_ENDPOINT: &[u8] = b"unDelegate";
 pub const CLAIM_REWARDS_ENDPOINT: &[u8] = b"claimRewards";
 
-use crate::common::{
-    self,
-    storage::{BlsKey, ChainId},
+use crate::{
+    common::{
+        self,
+        storage::{BlsKey, ChainId},
+    },
+    delegation_proxy,
 };
 
 #[multiversx_sc::module]
@@ -20,7 +23,8 @@ pub trait DelegationModule: common::storage::CommonStorageModule {
 
         self.tx()
             .to(delegation_contract_address)
-            .raw_call(ManagedBuffer::from(DELEGATE_ENDPOINT))
+            .typed(delegation_proxy::DelegationMockProxy)
+            .delegate()
             .egld(&egld_amount)
             .callback(DelegationModule::callbacks(self).stake_callback(&caller, &egld_amount))
             .async_call_and_exit();
