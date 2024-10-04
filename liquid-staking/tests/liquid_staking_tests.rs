@@ -296,10 +296,7 @@ impl LiquidStakingTestState {
         current_epoch: u64,
         last_claim_epoch: u64,
     ) -> BigUint<StaticApi> {
-        let rewards = (staked_amount * APY / MAX_PERCENTAGE) * (current_epoch - last_claim_epoch)
-            / EPOCHS_IN_YEAR;
-
-        rewards
+        (staked_amount * APY / MAX_PERCENTAGE) * (current_epoch - last_claim_epoch) / EPOCHS_IN_YEAR
     }
 
     fn map_bls_key_vec_to_multi_value(
