@@ -64,8 +64,8 @@ pub trait DelegationModule: common::storage::CommonStorageModule {
 
         self.tx()
             .to(delegation_contract_address)
-            .raw_call(ManagedBuffer::from(UNDELEGATE_ENDPOINT))
-            .argument(&egld_amount_to_unstake)
+            .typed(delegation_proxy::DelegationMockProxy)
+            .undelegate(&egld_amount_to_unstake)
             .callback(
                 DelegationModule::callbacks(self)
                     .unstake_callback(&caller, &egld_amount_to_unstake),
@@ -106,7 +106,8 @@ pub trait DelegationModule: common::storage::CommonStorageModule {
             let delegation_address = delegation_mapper.get();
             self.tx()
                 .to(delegation_address)
-                .raw_call(CLAIM_REWARDS_ENDPOINT)
+                .typed(delegation_proxy::DelegationMockProxy)
+                .claim_rewards()
                 .gas(self.blockchain().get_gas_left())
                 .callback(DelegationModule::callbacks(self).claim_rewards_from_delegation_cb())
                 .register_promise();
