@@ -1,8 +1,8 @@
 use multiversx_sc::imports::*;
 pub const UNBOND_PERIOD: u64 = 10;
-pub const DELEGATE_ENDPOINT: &str = "delegate";
-pub const UNDELEGATE_ENDPOINT: &str = "unDelegate";
-pub const CLAIM_REWARDS_ENDPOINT: &str = "claimRewards";
+pub const DELEGATE_ENDPOINT: &[u8] = b"delegate";
+pub const UNDELEGATE_ENDPOINT: &[u8] = b"unDelegate";
+pub const CLAIM_REWARDS_ENDPOINT: &[u8] = b"claimRewards";
 
 use crate::common::{
     self,
