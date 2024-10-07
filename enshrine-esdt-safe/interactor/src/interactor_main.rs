@@ -923,3 +923,124 @@ async fn test_deploy() {
     let mut interact = ContractInteract::new().await;
     interact.deploy(false).await;
 }
+
+#[tokio::test]
+async fn test_deposit_paused() {
+    let mut interact = ContractInteract::new().await;
+    interact.deploy(false).await;
+    interact.deposit(OptionalTransferData::None, Option::Some(ExpectError(4, "Cannot create transaction while paused"))).await;
+}
+
+#[tokio::test]
+async fn test_deposit_no_payment() {
+    let mut interact = ContractInteract::new().await;
+    let to = interact.bob_address.clone();
+    let from = interact.wallet_address.clone();
+    let to_contract = interact.state.current_address().clone();
+    let transfer_data = OptionalTransferData::None;
+    
+    interact.deploy(false).await;
+    interact.unpause_endpoint().await;
+    tokio::time::sleep(std::time::Duration::from_secs(10)).await;
+    interact
+        .interactor
+        .tx()
+        .from(from)
+        .to(to_contract)
+        .gas(30_000_000u64)
+        .typed(proxy::EnshrineEsdtSafeProxy)
+        .deposit(to, transfer_data)
+        .returns(ExpectError(4, "Nothing to transfer"))
+        .prepare_async()
+        .run()
+        .await;
+}
+
+#[tokio::test]
+async fn test_deposit_too_many_payments() {
+    let mut interact = ContractInteract::new().await;
+    let to = interact.bob_address.clone();
+    let from = interact.wallet_address.clone();
+    let to_contract = interact.state.current_address().clone();
+    let transfer_data = OptionalTransferData::None;
+    let payments = ManagedVec::from(vec![
+        (TokenIdentifier::from_esdt_bytes(TOKEN_ID), 0u64, BigUint::from(10u64)),
+        (TokenIdentifier::from_esdt_bytes(TOKEN_ID), 0u64, BigUint::from(10u64)),
+        (TokenIdentifier::from_esdt_bytes(TOKEN_ID), 0u64, BigUint::from(10u64)),
+        (TokenIdentifier::from_esdt_bytes(TOKEN_ID), 0u64, BigUint::from(10u64)),
+        (TokenIdentifier::from_esdt_bytes(TOKEN_ID), 0u64, BigUint::from(10u64)),
+        (TokenIdentifier::from_esdt_bytes(TOKEN_ID), 0u64, BigUint::from(10u64)),
+        (TokenIdentifier::from_esdt_bytes(TOKEN_ID), 0u64, BigUint::from(10u64)),
+        (TokenIdentifier::from_esdt_bytes(TOKEN_ID), 0u64, BigUint::from(10u64)),
+        (TokenIdentifier::from_esdt_bytes(TOKEN_ID), 0u64, BigUint::from(10u64)),
+        (TokenIdentifier::from_esdt_bytes(TOKEN_ID), 0u64, BigUint::from(10u64)),
+        (TokenIdentifier::from_esdt_bytes(TOKEN_ID), 0u64, BigUint::from(10u64))
+    ]);
+
+    interact.deploy(false).await;
+    interact.unpause_endpoint().await;
+    tokio::time::sleep(std::time::Duration::from_secs(10)).await;
+    interact
+        .interactor
+        .tx()
+        .from(from)
+        .to(to_contract)
+        .gas(30_000_000u64)
+        .typed(proxy::EnshrineEsdtSafeProxy)
+        .deposit(to, transfer_data)
+        .payment(payments)
+        .returns(ExpectError(4, "Too many tokens"))
+        .prepare_async()
+        .run()
+        .await;
+}
+
+#[tokio::test]
+async fn test_deposit_not_whitelisted() {
+    let mut interact = ContractInteract::new().await;
+    interact.deploy(false).await;
+    interact.unpause_endpoint().await;
+    tokio::time::sleep(std::time::Duration::from_secs(10)).await;
+    interact.add_tokens_to_whitelist(WHITELIST_TOKEN_ID).await;
+    interact.set_fee_market_address().await;
+    interact.deposit(OptionalTransferData::None, Option::None).await;
+}
+
+#[tokio::test]
+async fn test_deposit_happy_path() {
+    let mut interact = ContractInteract::new().await;
+    interact.deploy(false).await;
+    interact.unpause_endpoint().await;
+    tokio::time::sleep(std::time::Duration::from_secs(10)).await;
+    interact.add_tokens_to_whitelist(TOKEN_ID).await;
+    interact.set_fee_market_address().await;
+    interact.deposit(OptionalTransferData::None, Option::None).await;
+}
+
+// FAILS => Waiting for fixes
+#[tokio::test]
+async fn test_deposit_sov_chain() {
+    let mut interact = ContractInteract::new().await;
+    let transfer_data = OptionalTransferData::None;
+    let mut payments = PaymentsVec::new();
+    payments.push(EsdtTokenPayment::new(TokenIdentifier::from(TOKEN_ID), 0, BigUint::from(10u64)));
+    payments.push(EsdtTokenPayment::new(TokenIdentifier::from(TOKEN_ID), 0, BigUint::from(30u64)));
+    interact.deploy_all(true).await;
+    interact.unpause_endpoint().await;
+    tokio::time::sleep(std::time::Duration::from_secs(10)).await;
+    interact.add_tokens_to_whitelist(TOKEN_ID).await;
+    interact.set_fee_market_address().await;
+    interact
+        .interactor
+        .tx()
+        .from(interact.wallet_address)
+        .to(interact.state.current_address())
+        .gas(30_000_000u64)
+        .typed(proxy::EnshrineEsdtSafeProxy)
+        .deposit(interact.state.current_address(), transfer_data)
+        .payment(payments)
+        .returns(ReturnsResultUnmanaged)
+        .prepare_async()
+        .run()
+        .await;
+}
