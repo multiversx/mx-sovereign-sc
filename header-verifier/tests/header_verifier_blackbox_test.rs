@@ -139,6 +139,7 @@ impl HeaderVerifierTestState {
             None => transaction.run(),
         }
     }
+
     fn get_bls_keys(&mut self, bls_keys_vec: Vec<ManagedBuffer<StaticApi>>) -> BlsKeys {
         let bls_keys = bls_keys_vec.iter().map(|key| key.clone()).collect();
 
@@ -147,25 +148,24 @@ impl HeaderVerifierTestState {
 
     fn generate_bridge_operation_struct(
         &mut self,
-        operations: Vec<&ManagedBuffer<StaticApi>>,
+        operation_hashes: Vec<&ManagedBuffer<StaticApi>>,
     ) -> BridgeOperation<StaticApi> {
         let mock_signature: BlsSignature<StaticApi> = ManagedByteArray::new_from_bytes(&[0; 48]);
 
         let mut bridge_operations: MultiValueEncoded<StaticApi, ManagedBuffer<StaticApi>> =
             MultiValueEncoded::new();
-        let mut bridge_operation_appended_hashes = ManagedBuffer::new();
+        let mut appended_hashes = ManagedBuffer::new();
 
-        for operation in operations {
-            let operation_hash = self.get_operation_hash(operation);
-            bridge_operation_appended_hashes.append(&operation_hash);
-            bridge_operations.push(operation_hash);
+        for operation_hash in operation_hashes {
+            appended_hashes.append(&operation_hash);
+            bridge_operations.push(operation_hash.clone());
         }
 
-        let bridge_operations_hash = self.get_operation_hash(&bridge_operation_appended_hashes);
+        let hash_of_hashes = self.get_operation_hash(&appended_hashes);
 
         BridgeOperation {
             signature: mock_signature,
-            bridge_operation_hash: bridge_operations_hash,
+            bridge_operation_hash: hash_of_hashes,
             operations_hashes: bridge_operations,
         }
     }
@@ -224,9 +224,6 @@ fn test_register_bridge_operation() {
 
     state.propose_register_operations(operation.clone());
 
-    let expected_hash_1 = state.get_operation_hash(&operation_1);
-    let expected_hash_2 = state.get_operation_hash(&operation_2);
-
     state
         .world
         .query()
@@ -244,9 +241,9 @@ fn test_register_bridge_operation() {
             let pending_hash_2 = sc.pending_hashes(&hash_of_hashes).get_by_index(2);
 
             let expected_hash_1_debug_api: ManagedBuffer<DebugApi> =
-                ManagedBuffer::from(expected_hash_1.to_vec());
+                ManagedBuffer::from(operation_1.to_vec());
             let expected_hash_2_debug_api: ManagedBuffer<DebugApi> =
-                ManagedBuffer::from(expected_hash_2.to_vec());
+                ManagedBuffer::from(operation_2.to_vec());
 
             assert_eq!(pending_hash_1, expected_hash_1_debug_api);
             assert_eq!(pending_hash_2, expected_hash_2_debug_api);
@@ -353,19 +350,17 @@ fn test_remove_all_executed_hashes() {
     state.propose_register_operations(operation.clone());
     state.propose_register_esdt_address(ENSHRINE_ADDRESS);
 
-    let operation_1_hash = state.get_operation_hash(&operation_1);
     state.propose_remove_executed_hash(
         ENSHRINE_ADDRESS,
         &operation.bridge_operation_hash,
-        operation_1_hash,
+        operation_1,
         None,
     );
 
-    let operation_2_hash = state.get_operation_hash(&operation_2);
     state.propose_remove_executed_hash(
         ENSHRINE_ADDRESS,
         &operation.bridge_operation_hash,
-        operation_2_hash,
+        operation_2,
         None,
     );
     state
