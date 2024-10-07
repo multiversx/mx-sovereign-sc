@@ -1,0 +1,57 @@
+[package]
+name = "interact-enshrine-esdt-safe"
+version = "0.0.0"
+authors = ["you"]
+edition = "2021"
+publish = false
+
+[[bin]]
+name = "interact-enshrine-esdt-safe"
+path = "src/interactor_main.rs"
+
+[dependencies.enshrine-esdt-safe]
+path = ".."
+
+[dependencies.transaction]
+path = "../../common/transaction"
+
+[dependencies.tx-batch-module]
+path = "../../common/tx-batch-module"
+
+[dependencies.max-bridged-amount-module]
+path = "../../common/max-bridged-amount-module"
+
+[dependencies.bls-signature]
+path = "../../common/bls-signature"
+
+[dependencies.setup-phase]
+path = "../../common/setup-phase"
+
+[dependencies.token-whitelist]
+path = "../../common/token-whitelist"
+
+[dependencies.utils]
+path = "../../common/utils"
+
+[dependencies.fee-market]
+path = "../../fee-market"
+
+[dependencies.header-verifier]
+path = "../../header-verifier"
+
+[dependencies.token-handler]
+path = "../../token-handler"
+
+[dependencies.multiversx-sc-snippets]
+version = "0.53.0"
+
+[dependencies.multiversx-sc]
+version = "0.53.0"
+
+[dependencies]
+clap = { version = "4.4.7", features = ["derive"] }
+serde = { version = "1.0", features = ["derive"] }
+toml = "0.8.6"
+
+# [workspace]
+
