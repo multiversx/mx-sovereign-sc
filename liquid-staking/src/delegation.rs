@@ -26,8 +26,9 @@ pub trait DelegationModule: common::storage::CommonStorageModule {
             .typed(delegation_proxy::DelegationMockProxy)
             .delegate()
             .egld(&egld_amount)
+            .gas(self.blockchain().get_gas_left())
             .callback(DelegationModule::callbacks(self).stake_callback(&caller, &egld_amount))
-            .async_call_and_exit();
+            .register_promise();
     }
 
     #[callback]
@@ -66,11 +67,12 @@ pub trait DelegationModule: common::storage::CommonStorageModule {
             .to(delegation_contract_address)
             .typed(delegation_proxy::DelegationMockProxy)
             .undelegate(&egld_amount_to_unstake)
+            .gas(self.blockchain().get_gas_left())
             .callback(
                 DelegationModule::callbacks(self)
                     .unstake_callback(&caller, &egld_amount_to_unstake),
             )
-            .async_call_and_exit();
+            .register_promise();
     }
 
     #[callback]
