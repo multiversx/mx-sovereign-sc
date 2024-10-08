@@ -928,7 +928,7 @@ async fn test_deploy() {
 async fn test_deposit_paused() {
     let mut interact = ContractInteract::new().await;
     interact.deploy(false).await;
-    interact.deposit(OptionalTransferData::None, Option::Some(ExpectError(4, "Cannot create transaction while paused"))).await;
+    interact.deposit(OptionalTransferData::None, Some(ExpectError(4, "Cannot create transaction while paused"))).await;
 }
 
 #[tokio::test]
@@ -1003,7 +1003,7 @@ async fn test_deposit_not_whitelisted() {
     tokio::time::sleep(std::time::Duration::from_secs(10)).await;
     interact.add_tokens_to_whitelist(WHITELIST_TOKEN_ID).await;
     interact.set_fee_market_address().await;
-    interact.deposit(OptionalTransferData::None, Option::None).await;
+    interact.deposit(OptionalTransferData::None, None).await;
 }
 
 #[tokio::test]
@@ -1014,7 +1014,7 @@ async fn test_deposit_happy_path() {
     tokio::time::sleep(std::time::Duration::from_secs(10)).await;
     interact.add_tokens_to_whitelist(TOKEN_ID).await;
     interact.set_fee_market_address().await;
-    interact.deposit(OptionalTransferData::None, Option::None).await;
+    interact.deposit(OptionalTransferData::None, None).await;
 }
 
 // FAILS => Waiting for fixes
