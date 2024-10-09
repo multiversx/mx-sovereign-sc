@@ -27,9 +27,7 @@ struct NonFungibleTokenArgs<M: ManagedTypeApi> {
 }
 
 #[multiversx_sc::module]
-pub trait TokenMappingModule:
-    multiversx_sc_modules::default_issue_callbacks::DefaultIssueCallbacksModule
-{
+pub trait TokenMappingModule {
     #[payable("EGLD")]
     #[endpoint(registerToken)]
     fn register_token(

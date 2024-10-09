@@ -20,7 +20,6 @@ pub trait CreateTxModule:
     + utils::UtilsModule
     + multiversx_sc_modules::pause::PauseModule
     + token_mapping::TokenMappingModule
-    + multiversx_sc_modules::default_issue_callbacks::DefaultIssueCallbacksModule
 {
     #[payable("*")]
     #[endpoint]

@@ -47,7 +47,7 @@ impl<M: ManagedTypeApi> Operation<M> {
         Operation { to, tokens, data }
     }
 
-    pub fn get_tokens_as_multi_value_encoded(
+    pub fn map_tokens_to_multi_value_encoded(
         &self,
     ) -> MultiValueEncoded<M, MultiValue3<TokenIdentifier<M>, u64, EsdtTokenData<M>>> {
         let mut tuples = MultiValueEncoded::new();

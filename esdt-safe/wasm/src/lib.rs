@@ -7,7 +7,7 @@
 // Init:                                 1
 // Upgrade:                              1
 // Endpoints:                           28
-// Async Callback:                       1
+// Async Callback (empty):               1
 // Promise callbacks:                    1
 // Total number of exported functions:  32
 
@@ -49,8 +49,8 @@ multiversx_sc_wasm_adapter::endpoints! {
         pause => pause_endpoint
         unpause => unpause_endpoint
         isPaused => paused_status
-        execute => execute
+        distribute_payments_callback => distribute_payments_callback
     )
 }
 
-multiversx_sc_wasm_adapter::async_callback! { esdt_safe }
+multiversx_sc_wasm_adapter::async_callback_empty! {}

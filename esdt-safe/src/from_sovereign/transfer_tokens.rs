@@ -22,7 +22,6 @@ pub trait TransferTokensModule:
     + tx_batch_module::TxBatchModule
     + max_bridged_amount_module::MaxBridgedAmountModule
     + multiversx_sc_modules::pause::PauseModule
-    + multiversx_sc_modules::default_issue_callbacks::DefaultIssueCallbacksModule
     + utils::UtilsModule
     + to_sovereign::events::EventsModule
 {
@@ -159,8 +158,8 @@ pub trait TransferTokensModule:
                     .multi_esdt(mapped_tokens.clone())
                     .gas(transfer_data.gas_limit)
                     .callback(
-                        <Self as TransferTokensModule>::callbacks(self)
-                            .execute(&hash_of_hashes, &operation_tuple),
+                        self.callbacks()
+                            .distribute_payments_callback(&hash_of_hashes, &operation_tuple),
                     )
                     .gas_for_callback(CALLBACK_GAS)
                     .register_promise();
@@ -176,8 +175,8 @@ pub trait TransferTokensModule:
                     .arguments_raw(args)
                     .gas(TRANSACTION_GAS)
                     .callback(
-                        <Self as TransferTokensModule>::callbacks(self)
-                            .execute(&hash_of_hashes, &operation_tuple),
+                        self.callbacks()
+                            .distribute_payments_callback(&hash_of_hashes, &operation_tuple),
                     )
                     .register_promise();
             }
@@ -203,7 +202,7 @@ pub trait TransferTokensModule:
     }
 
     #[promises_callback]
-    fn execute(
+    fn distribute_payments_callback(
         &self,
         hash_of_hashes: &ManagedBuffer,
         operation_tuple: &OperationTuple<Self::Api>,
@@ -281,7 +280,7 @@ pub trait TransferTokensModule:
             &operation_tuple.operation.data.op_sender,
             &operation_tuple
                 .operation
-                .get_tokens_as_multi_value_encoded(),
+                .map_tokens_to_multi_value_encoded(),
             OperationData {
                 op_nonce: tx_nonce,
                 op_sender: sc_address.clone(),
