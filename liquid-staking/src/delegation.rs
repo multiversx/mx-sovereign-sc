@@ -69,7 +69,7 @@ pub trait DelegationModule: common::storage::CommonStorageModule {
             .undelegate(&egld_amount_to_unstake)
             .gas(self.blockchain().get_gas_left())
             .callback(
-                DelegationModule::callbacks(self)
+                self.callbacks()
                     .unstake_callback(&caller, &egld_amount_to_unstake),
             )
             .register_promise();
