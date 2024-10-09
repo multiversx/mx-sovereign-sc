@@ -1,0 +1,22 @@
+[settings]
+main = "main"
+
+[contracts.main]
+name = "delegation-mock"
+
+[contracts.full]
+name = "delegation-mock-full"
+add-unlabelled = true
+add-labels = ["delegation-mock-external-view"]
+
+[contracts.view]
+name = "delegation-mock-view"
+external-view = true
+add-unlabelled = false
+add-labels = ["delegation-mock-external-view"]
+
+[[proxy]]
+path = "src/delegation_proxy.rs"
+
+[[proxy]]
+path = "../liquid-staking/src/delegation_proxy.rs"

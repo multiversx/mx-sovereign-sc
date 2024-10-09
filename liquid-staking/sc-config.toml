@@ -1,0 +1,19 @@
+[settings]
+main = "main"
+
+[contracts.main]
+name = "liquid-staking"
+
+[contracts.full]
+name = "liquid-staking-full"
+add-unlabelled = true
+add-labels = ["liquid-staking-external-view"]
+
+[contracts.view]
+name = "liquid-staking-view"
+external-view = true
+add-unlabelled = false
+add-labels = ["liquid-staking-external-view"]
+
+[[proxy]]
+path = "src/liquid_staking_proxy.rs"
