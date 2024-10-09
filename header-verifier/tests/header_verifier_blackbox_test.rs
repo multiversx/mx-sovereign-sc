@@ -155,10 +155,17 @@ impl HeaderVerifierTestState {
         &mut self,
         operation: &ManagedBuffer<StaticApi>,
     ) -> ManagedBuffer<StaticApi> {
-        let array: &mut [u8; 22] = &mut [0u8; 22];
-        operation.load_to_byte_array(array);
+        let mut array = [0; 1024];
 
-        ManagedBuffer::from(&sha256(array))
+        let len = {
+            let byte_array = operation.load_to_byte_array(&mut array);
+            byte_array.len()
+        };
+
+        let trimmed_slice = &array[..len];
+        let hash = sha256(trimmed_slice);
+
+        ManagedBuffer::from(&hash)
     }
 }
 
