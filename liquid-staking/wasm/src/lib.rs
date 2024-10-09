@@ -28,7 +28,7 @@ multiversx_sc_wasm_adapter::endpoints! {
         claimRewardsFromDelegation => claim_rewards_from_delegation
         slashValidator => slash_validator
         lockForSovereignChain => lock_for_sovereign_chain
-        claimRewards => claim_rewards
+        claim_rewards => claim_rewards
         getDelegationAddress => delegation_addresses
         getDelegatedValue => delegated_value
         unDelegateEpoch => undelegate_epoch

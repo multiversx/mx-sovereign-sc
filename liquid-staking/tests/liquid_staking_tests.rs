@@ -296,10 +296,7 @@ impl LiquidStakingTestState {
         current_epoch: u64,
         last_claim_epoch: u64,
     ) -> BigUint<StaticApi> {
-        let rewards = (staked_amount * APY / MAX_PERCENTAGE) * (current_epoch - last_claim_epoch)
-            / EPOCHS_IN_YEAR;
-
-        rewards
+        (staked_amount * APY / MAX_PERCENTAGE) * (current_epoch - last_claim_epoch) / EPOCHS_IN_YEAR
     }
 
     fn map_bls_key_vec_to_multi_value(
@@ -310,6 +307,20 @@ impl LiquidStakingTestState {
             bls_keys.iter().map(|bls_key| (*bls_key).clone()).collect();
 
         managed_bls_keys
+    }
+
+    fn get_validator_id(&mut self, validator: &TestAddress) -> u64 {
+        let mut validator_id = 0;
+        self.world.query().to(LIQUID_STAKING_ADDRESS).whitebox(
+            liquid_staking::contract_obj,
+            |sc| {
+                validator_id = sc
+                    .validator_ids()
+                    .get_id_or_insert(&validator.to_managed_address());
+            },
+        );
+
+        validator_id
     }
 
     fn whitebox_map_bls_to_address(&mut self, bls_key: &str, address: &TestAddress) -> &mut Self {
@@ -378,13 +389,15 @@ fn test_stake() {
         .check_account(OWNER)
         .balance(BigUint::from(WEGLD_BALANCE) - payment);
 
+    let validator_id = state.get_validator_id(&OWNER);
+
     state
         .world
         .query()
         .to(LIQUID_STAKING_ADDRESS)
         .whitebox(liquid_staking::contract_obj, |sc| {
             let payment_whitebox = BigUint::from(100_000u64);
-            let delegated_value = sc.delegated_value(&OWNER.to_managed_address()).get();
+            let delegated_value = sc.delegated_value(&validator_id).get();
             let egld_supply = sc.egld_token_supply().get();
 
             assert!(egld_supply > 0);
@@ -399,7 +412,7 @@ fn test_unstake_user_no_deposit() {
     let payment = BigUint::from(100_000u64);
     let error_status = ErrorStatus {
         code: 4,
-        error_message: "Caller has 0 delegated value",
+        error_message: "The value to unstake is greater than the deposited amount",
     };
 
     state.propose_setup_contracts();
@@ -426,13 +439,15 @@ fn test_unstake() {
         .check_account(OWNER)
         .balance(BigUint::from(WEGLD_BALANCE) - payment);
 
+    let validator_id = state.get_validator_id(&OWNER);
+
     state
         .world
         .query()
         .to(LIQUID_STAKING_ADDRESS)
         .whitebox(liquid_staking::contract_obj, |sc| {
             let expected_amount = BigUint::from(90_000u64);
-            let delegated_value = sc.delegated_value(&OWNER.to_managed_address()).get();
+            let delegated_value = sc.delegated_value(&validator_id).get();
 
             assert_eq!(delegated_value, expected_amount);
         })
@@ -648,15 +663,15 @@ fn slash_validator() {
         None,
     );
 
+    let validator_id = state.get_validator_id(&VALIDATOR_ADDRESS);
+
     state
         .world
         .query()
         .to(LIQUID_STAKING_ADDRESS)
         .whitebox(liquid_staking::contract_obj, |sc| {
             let expected_value = BigUint::from(90_000u64);
-            let validator_delegated_value = sc
-                .delegated_value(&VALIDATOR_ADDRESS.to_managed_address())
-                .get();
+            let validator_delegated_value = sc.delegated_value(&validator_id).get();
 
             assert_eq!(validator_delegated_value, expected_value);
         })

@@ -1,5 +1,7 @@
 use multiversx_sc::imports::*;
 pub type Epoch = u64;
+pub type BlsKey<M> = ManagedBuffer<M>;
+pub type ChainId<M> = ManagedBuffer<M>;
 
 #[multiversx_sc::module]
 pub trait CommonStorageModule {
@@ -10,9 +12,14 @@ pub trait CommonStorageModule {
         contract_name: &ManagedBuffer,
     ) -> SingleValueMapper<ManagedAddress>;
 
+    // TODO: use AddressToIdMapper for lower gas usage
+    //
+    #[storage_mapper("userIds")]
+    fn validator_ids(&self) -> AddressToIdMapper<Self::Api>;
+
     #[view(getDelegatedValue)]
     #[storage_mapper("delegatedValue")]
-    fn delegated_value(&self, validator: &ManagedAddress) -> SingleValueMapper<BigUint<Self::Api>>;
+    fn delegated_value(&self, validator: &AddressId) -> SingleValueMapper<BigUint>;
 
     #[view(unDelegateEpoch)]
     #[storage_mapper("unDelegateEpoch")]
@@ -28,28 +35,28 @@ pub trait CommonStorageModule {
 
     #[view(getRegisteredBlsKeys)]
     #[storage_mapper("registeredBlsKeys")]
-    fn registered_bls_keys(&self) -> UnorderedSetMapper<ManagedBuffer>;
+    fn registered_bls_keys(&self) -> UnorderedSetMapper<BlsKey<Self::Api>>;
 
     #[view(validatorBlsKeyMap)]
     #[storage_mapper("validatorBlsKeyMap")]
     fn validator_bls_key_address_map(
         &self,
-        bls_key: &ManagedBuffer,
+        bls_key: &BlsKey<Self::Api>,
     ) -> SingleValueMapper<ManagedAddress>;
 
     // NOTE: Number of nodes where ?
     #[view(lockedSupply)]
     #[storage_mapper("lockerSupply")]
-    fn locked_supply(&self, chain_id: ManagedBuffer) -> SingleValueMapper<BigUint<Self::Api>>;
+    fn locked_supply(&self, chain_id: ChainId<Self::Api>) -> SingleValueMapper<BigUint>;
 
-    fn require_bls_key_to_be_registered(&self, bls_key: &ManagedBuffer) {
+    fn require_bls_key_registered(&self, bls_key: &BlsKey<Self::Api>) {
         require!(
             self.registered_bls_keys().contains(bls_key),
             "The given bls key is not registered"
         );
     }
 
-    fn require_caller_to_be_header_verifier(&self, caller: &ManagedAddress) {
+    fn require_caller_header_verifier(&self, address: &ManagedAddress) {
         require!(
             !self.header_verifier_address().is_empty(),
             "There is no address registered as the Header Verifier"
@@ -58,13 +65,14 @@ pub trait CommonStorageModule {
         let header_verifier_address = self.header_verifier_address().get();
 
         require!(
-            caller == &header_verifier_address,
+            address == &header_verifier_address,
             "Caller is not Header Verifier contract"
         );
     }
 
-    fn require_caller_has_stake(&self, caller: &ManagedAddress) {
-        let total_egld_deposit = self.delegated_value(caller).get();
+    fn require_address_has_stake(&self, validator_address: &ManagedAddress) {
+        let validator_id = self.validator_ids().get_id_or_insert(validator_address);
+        let total_egld_deposit = self.delegated_value(&validator_id).get();
 
         require!(total_egld_deposit > 0, "Caller has 0 delegated value");
     }

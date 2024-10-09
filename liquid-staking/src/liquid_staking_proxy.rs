@@ -200,7 +200,7 @@ where
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
-            .raw_call("claimRewards")
+            .raw_call("claim_rewards")
             .original_result()
     }
 
@@ -218,7 +218,7 @@ where
     }
 
     pub fn delegated_value<
-        Arg0: ProxyArg<ManagedAddress<Env::Api>>,
+        Arg0: ProxyArg<u64>,
     >(
         self,
         validator: Arg0,
