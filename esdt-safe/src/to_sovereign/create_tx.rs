@@ -2,7 +2,8 @@ use crate::from_sovereign::token_mapping;
 use fee_market::fee_market_proxy;
 use multiversx_sc::{hex_literal::hex, storage::StorageKey};
 use transaction::{
-    ExtractedFeeResult, GasLimit, OperationData, OptionalValueTransferDataTuple, TransferData,
+    ExtractedFeeResult, GasLimit, OperationData, OptionalValueTransferDataTuple, PaymentTuple,
+    TransferData,
 };
 
 multiversx_sc::imports!();
@@ -40,11 +41,8 @@ pub trait CreateTxModule:
         let opt_transfer_data = self.process_transfer_data(opt_transfer_data);
         let own_sc_address = self.blockchain().get_sc_address();
         let mut total_tokens_for_fees = 0usize;
-        let mut event_payments: MultiValueEncoded<
-            MultiValue3<TokenIdentifier, u64, EsdtTokenData>,
-        > = MultiValueEncoded::new();
-        let mut refundable_payments: ManagedVec<Self::Api, EsdtTokenPayment<Self::Api>> =
-            ManagedVec::new();
+        let mut event_payments = MultiValueEncoded::<Self::Api, PaymentTuple<Self::Api>>::new();
+        let mut refundable_payments = ManagedVec::<Self::Api, EsdtTokenPayment<Self::Api>>::new();
 
         for payment in &payments {
             self.require_below_max_amount(&payment.token_identifier, &payment.amount);
