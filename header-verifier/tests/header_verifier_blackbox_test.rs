@@ -138,7 +138,7 @@ impl HeaderVerifierTestState {
         let mut appended_hashes = ManagedBuffer::new();
 
         for operation_hash in operation_hashes {
-            appended_hashes.append(&operation_hash);
+            appended_hashes.append(operation_hash);
             bridge_operations.push(operation_hash.clone());
         }
 
