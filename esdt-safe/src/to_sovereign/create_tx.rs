@@ -1,7 +1,7 @@
 use crate::from_sovereign::token_mapping;
 use fee_market::fee_market_proxy;
 use multiversx_sc::{hex_literal::hex, storage::StorageKey};
-use transaction::{GasLimit, OperationData, TransferData};
+use transaction::{GasLimit, OperationData, OptionalValueTransferDataTuple, TransferData};
 
 multiversx_sc::imports!();
 
@@ -26,9 +26,7 @@ pub trait CreateTxModule:
     fn deposit(
         &self,
         to: ManagedAddress,
-        opt_transfer_data: OptionalValue<
-            MultiValue3<GasLimit, ManagedBuffer, ManagedVec<ManagedBuffer>>,
-        >,
+        opt_transfer_data: OptionalValueTransferDataTuple<Self::Api>,
     ) {
         require!(self.not_paused(), "Cannot create transaction while paused");
 
