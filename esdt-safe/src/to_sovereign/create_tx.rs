@@ -1,7 +1,9 @@
 use crate::from_sovereign::token_mapping;
 use fee_market::fee_market_proxy;
 use multiversx_sc::{hex_literal::hex, storage::StorageKey};
-use transaction::{GasLimit, OperationData, OptionalValueTransferDataTuple, TransferData};
+use transaction::{
+    ExtractedFeeResult, GasLimit, OperationData, OptionalValueTransferDataTuple, TransferData,
+};
 
 multiversx_sc::imports!();
 
@@ -127,9 +129,7 @@ pub trait CreateTxModule:
         );
     }
 
-    fn check_and_extract_fee(
-        &self,
-    ) -> MultiValue2<OptionalValue<EsdtTokenPayment>, ManagedVec<EsdtTokenPayment>> {
+    fn check_and_extract_fee(&self) -> ExtractedFeeResult<Self::Api> {
         let mut payments = self.call_value().all_esdt_transfers().clone_value();
 
         require!(!payments.is_empty(), "Nothing to transfer");
