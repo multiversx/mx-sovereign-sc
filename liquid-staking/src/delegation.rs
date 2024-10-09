@@ -27,11 +27,11 @@ pub trait DelegationModule: common::storage::CommonStorageModule {
             .delegate()
             .egld(&egld_amount)
             .gas(self.blockchain().get_gas_left())
-            .callback(DelegationModule::callbacks(self).stake_callback(&caller, &egld_amount))
+            .callback(self.callbacks().stake_callback(&caller, &egld_amount))
             .register_promise();
     }
 
-    #[callback]
+    #[promises_callback]
     fn stake_callback(
         &self,
         validator_address: &ManagedAddress,
@@ -75,7 +75,7 @@ pub trait DelegationModule: common::storage::CommonStorageModule {
             .register_promise();
     }
 
-    #[callback]
+    #[promises_callback]
     fn unstake_callback(
         &self,
         validator_address: &ManagedAddress,
@@ -111,12 +111,12 @@ pub trait DelegationModule: common::storage::CommonStorageModule {
                 .typed(delegation_proxy::DelegationMockProxy)
                 .claim_rewards()
                 .gas(self.blockchain().get_gas_left())
-                .callback(DelegationModule::callbacks(self).claim_rewards_from_delegation_cb())
+                .callback(self.callbacks().claim_rewards_from_delegation_cb())
                 .register_promise();
         }
     }
 
-    #[callback]
+    #[promises_callback]
     fn claim_rewards_from_delegation_cb(
         &self,
         // egld_amount: &BigUint,
