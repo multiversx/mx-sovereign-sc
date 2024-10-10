@@ -86,6 +86,18 @@ pub trait CreateTxModule:
                     .multiversx_to_sovereign_token_id(&payment.token_identifier)
                     .get();
 
+                if !sov_token_id.is_valid_esdt_identifier() {
+                    let event_payment: EventPaymentTuple<Self::Api> = MultiValue3((
+                        payment.token_identifier.clone(),
+                        payment.token_nonce,
+                        current_token_data.clone(),
+                    ));
+
+                    event_payments.push(event_payment);
+
+                    continue;
+                }
+
                 let sov_token_nonce = self.burn_mainchain_token(payment, &sov_token_id);
 
                 let event_payment: EventPaymentTuple<Self::Api> =
