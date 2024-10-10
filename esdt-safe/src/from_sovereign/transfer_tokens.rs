@@ -140,6 +140,7 @@ pub trait TransferTokensModule:
         nft_nonce
     }
 
+    // TODO: create a callback module
     fn distribute_payments(
         &self,
         hash_of_hashes: &ManagedBuffer,
