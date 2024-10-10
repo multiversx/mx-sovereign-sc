@@ -1,7 +1,15 @@
 use fee_market::fee_market_proxy::{self, FeeStruct, FeeType};
 
-use multiversx_sc::{imports::OptionalValue, types::{BigUint, EsdtTokenPayment, ManagedVec, MultiValueEncoded, ReturnsResultUnmanaged, TestAddress, TestSCAddress, TestTokenIdentifier, TokenIdentifier}};
-use multiversx_sc_scenario::{imports::MxscPath, ExpectError, ScenarioTxRun, ScenarioWorld};
+use multiversx_sc::{
+    imports::OptionalValue,
+    types::{
+        BigUint, EsdtTokenPayment, ManagedVec, MultiValueEncoded, ReturnsResultUnmanaged,
+        TestAddress, TestSCAddress, TestTokenIdentifier,
+    },
+};
+use multiversx_sc_scenario::{
+    api::StaticApi, imports::MxscPath, ExpectError, ScenarioTxRun, ScenarioWorld,
+};
 
 const FEE_MARKET_CODE_PATH: MxscPath = MxscPath::new("output/fee-market.mxsc.json");
 const FEE_MARKET_ADDRESS: TestSCAddress = TestSCAddress::new("fee-market");
@@ -17,7 +25,6 @@ const TOKEN_ID: TestTokenIdentifier = TestTokenIdentifier::new("TDK-123456");
 const DIFFERENT_TOKEN_ID: TestTokenIdentifier = TestTokenIdentifier::new("WRONG-123456");
 const ANOTHER_TOKEN_ID: TestTokenIdentifier = TestTokenIdentifier::new("ANOTHER-123456");
 const WRONG_TOKEN_ID: TestTokenIdentifier = TestTokenIdentifier::new("WRONG-TOKEN");
-
 
 fn world() -> ScenarioWorld {
     let mut blockchain = ScenarioWorld::new();
@@ -56,11 +63,14 @@ impl FeeMarketTestState {
         Self { world }
     }
 
-    fn deploy_fee_market(&mut self) -> &mut Self{
-
+    fn deploy_fee_market(&mut self) -> &mut Self {
         let fee = FeeStruct {
             base_token: TOKEN_ID.to_token_identifier(),
-            fee_type: FeeType::Fixed { token: TOKEN_ID.to_token_identifier(), per_transfer: BigUint::from(100u64), per_gas: BigUint::from(0u64) },
+            fee_type: FeeType::Fixed {
+                token: TOKEN_ID.to_token_identifier(),
+                per_transfer: BigUint::from(100u64),
+                per_gas: BigUint::from(0u64),
+            },
         };
 
         self.world
@@ -71,30 +81,32 @@ impl FeeMarketTestState {
             .code(FEE_MARKET_CODE_PATH)
             .new_address(FEE_MARKET_ADDRESS)
             .run();
-        
+
         self
     }
 
     fn substract_fee(&mut self, payment_wanted: &str, error_status: Option<ExpectError>) {
-        let payment;
-        
-        match payment_wanted {
+        let payment: EsdtTokenPayment<StaticApi> = match payment_wanted {
             "Correct" => {
-                payment = EsdtTokenPayment::new(TOKEN_ID.to_token_identifier(), 0u64, BigUint::from(200u64));
+                EsdtTokenPayment::new(TOKEN_ID.to_token_identifier(), 0u64, BigUint::from(200u64))
             }
-            "InvalidToken" => {
-                payment = EsdtTokenPayment::new(DIFFERENT_TOKEN_ID.to_token_identifier(), 0u64, BigUint::from(10u64));
-            }
-            "AnyToken" => {
-                payment = EsdtTokenPayment::new(ANOTHER_TOKEN_ID.to_token_identifier(), 0u64, BigUint::from(10u64));
-            }
+            "InvalidToken" => EsdtTokenPayment::new(
+                DIFFERENT_TOKEN_ID.to_token_identifier::<StaticApi>(),
+                0u64,
+                BigUint::from(10u64),
+            ),
+            "AnyToken" => EsdtTokenPayment::new(
+                ANOTHER_TOKEN_ID.to_token_identifier(),
+                0u64,
+                BigUint::from(10u64),
+            ),
             "Less than fee" => {
-                payment = EsdtTokenPayment::new(TOKEN_ID.to_token_identifier(), 0u64, BigUint::from(0u64));
+                EsdtTokenPayment::new(TOKEN_ID.to_token_identifier(), 0u64, BigUint::from(0u64))
             }
             _ => {
                 panic!("Invalid payment wanted");
             }
-        }
+        };
 
         match error_status {
             Some(error) => {
@@ -132,17 +144,19 @@ impl FeeMarketTestState {
             .run();
     }
 
-    fn add_fee(&mut self, token_id: TestTokenIdentifier, fee_type: &str, error_status: Option<ExpectError>) {
-
-        let fee_struct;
-
-        match fee_type {
+    fn add_fee(
+        &mut self,
+        token_id: TestTokenIdentifier,
+        fee_type: &str,
+        error_status: Option<ExpectError>,
+    ) {
+        let fee_struct: FeeStruct<StaticApi> = match fee_type {
             "None" => {
                 let fee_type = FeeType::None;
-                fee_struct = FeeStruct {
+                FeeStruct {
                     base_token: token_id.to_token_identifier(),
                     fee_type,
-                };
+                }
             }
             "Fixed" => {
                 let fee_type = FeeType::Fixed {
@@ -150,10 +164,10 @@ impl FeeMarketTestState {
                     per_transfer: BigUint::from(10u8),
                     per_gas: BigUint::from(10u8),
                 };
-                fee_struct = FeeStruct {
+                FeeStruct {
                     base_token: token_id.to_token_identifier(),
                     fee_type,
-                };
+                }
             }
             "AnyToken" => {
                 let fee_type = FeeType::AnyToken {
@@ -161,10 +175,10 @@ impl FeeMarketTestState {
                     per_transfer: BigUint::from(10u8),
                     per_gas: BigUint::from(10u8),
                 };
-                fee_struct = FeeStruct {
+                FeeStruct {
                     base_token: token_id.to_token_identifier(),
                     fee_type,
-                };
+                }
             }
             "AnyTokenWrong" => {
                 let fee_type = FeeType::AnyToken {
@@ -172,15 +186,15 @@ impl FeeMarketTestState {
                     per_transfer: BigUint::from(10u8),
                     per_gas: BigUint::from(10u8),
                 };
-                fee_struct = FeeStruct {
+                FeeStruct {
                     base_token: token_id.to_token_identifier(),
                     fee_type,
-                };
+                }
             }
             _ => {
                 panic!("Invalid fee type");
             }
-        }
+        };
 
         match error_status {
             Some(error) => {
@@ -229,7 +243,6 @@ impl FeeMarketTestState {
             .check_account(address)
             .esdt_balance(TOKEN_ID, expected_balance);
     }
-
 }
 
 #[test]
@@ -245,14 +258,25 @@ fn test_add_fee_wrong_params() {
 
     state.deploy_fee_market();
 
-    state.add_fee(WRONG_TOKEN_ID, "Fixed", Some(ExpectError(4, "Invalid token ID")));
+    state.add_fee(
+        WRONG_TOKEN_ID,
+        "Fixed",
+        Some(ExpectError(4, "Invalid token ID")),
+    );
 
     state.add_fee(TOKEN_ID, "None", Some(ExpectError(4, "Invalid fee type")));
 
-    state.add_fee(DIFFERENT_TOKEN_ID, "Fixed", Some(ExpectError(4, "Invalid fee")));
+    state.add_fee(
+        DIFFERENT_TOKEN_ID,
+        "Fixed",
+        Some(ExpectError(4, "Invalid fee")),
+    );
 
-    state.add_fee(TOKEN_ID, "AnyTokenWrong", Some(ExpectError(4, "Invalid token ID")));
-
+    state.add_fee(
+        TOKEN_ID,
+        "AnyTokenWrong",
+        Some(ExpectError(4, "Invalid token ID")),
+    );
 }
 
 #[test]
@@ -266,7 +290,6 @@ fn test_substract_fee_no_fee() {
 
     state.check_balance_sc(ESDT_SAFE_ADDRESS, 1000);
     state.check_account(USER_ADDRESS, 1000);
-      
 }
 
 #[test]
@@ -288,16 +311,18 @@ fn test_substract_fee_invalid_payment_token() {
 
     state.deploy_fee_market();
 
-    state.substract_fee("InvalidToken", Some(ExpectError(4, "Token not accepted as fee")));
+    state.substract_fee(
+        "InvalidToken",
+        Some(ExpectError(4, "Token not accepted as fee")),
+    );
 
     state.check_balance_sc(ESDT_SAFE_ADDRESS, 1000);
     state.check_account(USER_ADDRESS, 1000);
-
 }
 
 // FAILS => get_safe_price should be mocked here in order to make this test work
 // #[test]
-// fn test_substract_fee_any_token() { 
+// fn test_substract_fee_any_token() {
 //     let mut state = FeeMarketTestState::new();
 
 //     state.deploy_fee_market();
@@ -312,8 +337,11 @@ fn test_substract_fixed_fee_payment_not_covered() {
     let mut state = FeeMarketTestState::new();
 
     state.deploy_fee_market();
-    
-    state.substract_fee("Less than fee", Some(ExpectError(4, "Payment does not cover fee")));
+
+    state.substract_fee(
+        "Less than fee",
+        Some(ExpectError(4, "Payment does not cover fee")),
+    );
 
     state.check_balance_sc(ESDT_SAFE_ADDRESS, 1000);
     state.check_account(USER_ADDRESS, 1000);
