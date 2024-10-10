@@ -61,7 +61,7 @@ pub trait TokenMappingModule {
             }),
             EsdtTokenType::NonFungible => {
                 self.handle_nonfungible_token_type(NonFungibleTokenArgs {
-                    sov_token_id: sov_token_id.clone(),
+                    sov_token_id,
                     token_type,
                     issue_cost,
                     token_display_name,
