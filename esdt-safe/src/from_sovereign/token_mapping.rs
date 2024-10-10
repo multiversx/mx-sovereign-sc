@@ -38,8 +38,9 @@ pub trait TokenMappingModule {
         token_ticker: ManagedBuffer,
         num_decimals: usize,
     ) {
+        let is_sovereign_chain = self.is_sovereign_chain().get();
         require!(
-            !self.is_sovereign_chain().get(),
+            !is_sovereign_chain,
             "Invalid method to call in current chain"
         );
 
