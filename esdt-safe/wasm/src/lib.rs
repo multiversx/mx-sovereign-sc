@@ -49,7 +49,7 @@ multiversx_sc_wasm_adapter::endpoints! {
         pause => pause_endpoint
         unpause => unpause_endpoint
         isPaused => paused_status
-        distribute_payments_callback => distribute_payments_callback
+        execute => execute
     )
 }
 
