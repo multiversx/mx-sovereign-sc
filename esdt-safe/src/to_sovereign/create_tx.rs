@@ -66,40 +66,45 @@ pub trait CreateTxModule:
 
             current_token_data.amount = payment.amount.clone();
 
-            if self.is_sovereign_chain().get() {
+            let is_sovereign_chain = self.is_sovereign_chain().get();
+
+            if is_sovereign_chain {
                 self.tx()
                     .to(ToSelf)
                     .typed(ESDTSystemSCProxy)
                     .burn(&payment.token_identifier, &payment.amount)
                     .transfer_execute();
 
-                event_payments.push(MultiValue3((
+                let event_payment: PaymentTuple<Self::Api> = MultiValue3((
                     payment.token_identifier.clone(),
                     payment.token_nonce,
                     current_token_data.clone(),
-                )));
+                ));
+
+                event_payments.push(event_payment);
             } else {
                 let sov_token_id = self
                     .multiversx_to_sovereign_token_id(&payment.token_identifier)
                     .get();
 
                 if !sov_token_id.is_valid_esdt_identifier() {
-                    event_payments.push(MultiValue3((
-                        payment.token_identifier,
+                    let event_payment: PaymentTuple<Self::Api> = MultiValue3((
+                        payment.token_identifier.clone(),
                         payment.token_nonce,
                         current_token_data.clone(),
-                    )));
+                    ));
+
+                    event_payments.push(event_payment);
 
                     continue;
                 }
 
                 let sov_token_nonce = self.remove_sovereign_token(payment, &sov_token_id);
 
-                event_payments.push(MultiValue3((
-                    sov_token_id,
-                    sov_token_nonce,
-                    current_token_data.clone(),
-                )));
+                let event_payment: PaymentTuple<Self::Api> =
+                    MultiValue3((sov_token_id, sov_token_nonce, current_token_data.clone()));
+
+                event_payments.push(event_payment);
             }
         }
 
@@ -151,9 +156,7 @@ pub trait CreateTxModule:
 
     fn process_transfer_data(
         &self,
-        opt_transfer_data: OptionalValue<
-            MultiValue3<GasLimit, ManagedBuffer, ManagedVec<ManagedBuffer>>,
-        >,
+        opt_transfer_data: OptionalValueTransferDataTuple<Self::Api>,
     ) -> Option<TransferData<Self::Api>> {
         match &opt_transfer_data {
             OptionalValue::Some(transfer_data) => {
@@ -206,7 +209,7 @@ pub trait CreateTxModule:
         &self,
         total_tokens_for_fees: usize,
         fees_payment: &OptionalValue<EsdtTokenPayment<Self::Api>>,
-        opt_transfer_data: &Option<TransferData<<Self as ContractBase>::Api>>,
+        opt_transfer_data: &Option<TransferData<Self::Api>>,
     ) {
         match fees_payment {
             OptionalValue::Some(fee) => {
