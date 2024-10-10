@@ -160,7 +160,7 @@ pub trait TransferTokensModule:
                     .multi_esdt(mapped_tokens.clone())
                     .gas(transfer_data.gas_limit)
                     .callback(
-                        self.callbacks()
+                        <Self as TransferTokensModule>::callbacks(self)
                             .distribute_payments_callback(hash_of_hashes, operation_tuple),
                     )
                     .gas_for_callback(CALLBACK_GAS)
@@ -177,7 +177,7 @@ pub trait TransferTokensModule:
                     .arguments_raw(args)
                     .gas(TRANSACTION_GAS)
                     .callback(
-                        self.callbacks()
+                        <Self as TransferTokensModule>::callbacks(self)
                             .distribute_payments_callback(hash_of_hashes, operation_tuple),
                     )
                     .register_promise();
