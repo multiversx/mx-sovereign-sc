@@ -81,32 +81,75 @@ pub trait TokenMappingModule {
     }
 
     fn handle_fungible_token_type(&self, args: FungibleTokenArgs<Self::Api>) {
-        self.multiversx_to_sovereign_token_id(&args.sov_token_id)
-            .set(args.sov_token_id.clone());
-
-        self.fungible_token(&args.sov_token_id)
+        self.tx()
+            .to(ToCaller)
+            .typed(ESDTSystemSCProxy)
             .issue_and_set_all_roles(
                 args.issue_cost,
                 args.token_display_name,
                 args.token_ticker,
+                EsdtTokenType::Fungible,
                 args.num_decimals,
-                None,
-            );
+            )
+            .gas(self.blockchain().get_gas_left())
+            .callback(
+                <Self as TokenMappingModule>::callbacks(self)
+                    .fungible_issue_callback(&args.sov_token_id),
+            )
+            .register_promise();
+    }
+
+    #[promises_callback]
+    fn fungible_issue_callback(
+        &self,
+        sov_token_id: &TokenIdentifier,
+        #[call_result] result: ManagedAsyncCallResult<TokenIdentifier<Self::Api>>,
+    ) {
+        match result {
+            ManagedAsyncCallResult::Ok(mainchain_id) => {
+                self.sovereign_to_multiversx_token_id(sov_token_id)
+                    .set(TokenMapperState::Token(mainchain_id));
+            }
+            ManagedAsyncCallResult::Err(_) => {
+                sc_panic!("");
+            }
+        }
     }
 
     fn handle_nonfungible_token_type(&self, args: NonFungibleTokenArgs<Self::Api>) {
-        self.multiversx_to_sovereign_token_id(&args.sov_token_id)
-            .set(args.sov_token_id.clone());
-
-        self.non_fungible_token(&args.sov_token_id)
+        self.tx()
+            .to(ToCaller)
+            .typed(ESDTSystemSCProxy)
             .issue_and_set_all_roles(
-                args.token_type,
                 args.issue_cost,
                 args.token_display_name,
                 args.token_ticker,
+                EsdtTokenType::NonFungible,
                 args.num_decimals,
-                None,
-            );
+            )
+            .gas(self.blockchain().get_gas_left())
+            .callback(
+                <Self as TokenMappingModule>::callbacks(self)
+                    .fungible_issue_callback(&args.sov_token_id),
+            )
+            .register_promise();
+    }
+
+    #[promises_callback]
+    fn nonfungible_issue_callback(
+        &self,
+        sov_token_id: &TokenIdentifier,
+        #[call_result] result: ManagedAsyncCallResult<TokenIdentifier<Self::Api>>,
+    ) {
+        match result {
+            ManagedAsyncCallResult::Ok(mainchain_id) => {
+                self.sovereign_to_multiversx_token_id(sov_token_id)
+                    .set(TokenMapperState::Token(mainchain_id));
+            }
+            ManagedAsyncCallResult::Err(_) => {
+                sc_panic!("");
+            }
+        }
     }
 
     #[storage_mapper("sovToMxTokenId")]
