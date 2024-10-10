@@ -66,7 +66,6 @@ pub trait CreateTxModule:
             current_token_data.amount = payment.amount.clone();
 
             let is_sovereign_chain = self.is_sovereign_chain().get();
-
             if is_sovereign_chain {
                 self.tx()
                     .to(ToSelf)
@@ -79,12 +78,22 @@ pub trait CreateTxModule:
                     payment.token_nonce,
                     current_token_data.clone(),
                 ));
-
                 event_payments.push(event_payment);
             } else {
                 let sov_token_id = self
                     .multiversx_to_sovereign_token_id(&payment.token_identifier)
                     .get();
+
+                if !sov_token_id.is_valid_esdt_identifier() {
+                    let event_payment: EventPaymentTuple<Self::Api> = MultiValue3((
+                        payment.token_identifier.clone(),
+                        payment.token_nonce,
+                        current_token_data.clone(),
+                    ));
+                    event_payments.push(event_payment);
+
+                    continue;
+                }
 
                 let sov_token_nonce = self.burn_mainchain_token(payment, &sov_token_id);
 

@@ -162,7 +162,7 @@ pub trait TransferTokensModule:
                     .gas(transfer_data.gas_limit)
                     .callback(
                         <Self as TransferTokensModule>::callbacks(self)
-                            .distribute_payments_callback(hash_of_hashes, operation_tuple),
+                            .execute(hash_of_hashes, operation_tuple),
                     )
                     .gas_for_callback(CALLBACK_GAS)
                     .register_promise();
@@ -179,7 +179,7 @@ pub trait TransferTokensModule:
                     .gas(TRANSACTION_GAS)
                     .callback(
                         <Self as TransferTokensModule>::callbacks(self)
-                            .distribute_payments_callback(hash_of_hashes, operation_tuple),
+                            .execute(hash_of_hashes, operation_tuple),
                     )
                     .register_promise();
             }
@@ -201,7 +201,7 @@ pub trait TransferTokensModule:
     }
 
     #[promises_callback]
-    fn distribute_payments_callback(
+    fn execute(
         &self,
         hash_of_hashes: &ManagedBuffer,
         operation_tuple: &OperationTuple<Self::Api>,
