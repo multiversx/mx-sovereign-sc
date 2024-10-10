@@ -66,7 +66,6 @@ pub trait CreateTxModule:
             current_token_data.amount = payment.amount.clone();
 
             let is_sovereign_chain = self.is_sovereign_chain().get();
-
             if is_sovereign_chain {
                 self.tx()
                     .to(ToSelf)
@@ -79,7 +78,6 @@ pub trait CreateTxModule:
                     payment.token_nonce,
                     current_token_data.clone(),
                 ));
-
                 event_payments.push(event_payment);
             } else {
                 let sov_token_id = self
@@ -92,7 +90,6 @@ pub trait CreateTxModule:
                         payment.token_nonce,
                         current_token_data.clone(),
                     ));
-
                     event_payments.push(event_payment);
 
                     continue;
