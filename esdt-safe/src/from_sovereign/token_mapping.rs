@@ -59,14 +59,17 @@ pub trait TokenMappingModule {
                 token_ticker,
                 num_decimals,
             }),
-            _ => self.handle_nonfungible_token_type(NonFungibleTokenArgs {
-                sov_token_id: sov_token_id.clone(),
-                token_type,
-                issue_cost,
-                token_display_name,
-                token_ticker,
-                num_decimals,
-            }),
+            EsdtTokenType::NonFungible => {
+                self.handle_nonfungible_token_type(NonFungibleTokenArgs {
+                    sov_token_id: sov_token_id.clone(),
+                    token_type,
+                    issue_cost,
+                    token_display_name,
+                    token_ticker,
+                    num_decimals,
+                })
+            }
+            _ => {}
         }
     }
 
@@ -96,7 +99,7 @@ pub trait TokenMappingModule {
                 args.issue_cost,
                 args.token_display_name,
                 args.token_ticker,
-                EsdtTokenType::NonFungible,
+                args.token_type,
                 args.num_decimals,
             )
             .gas(self.blockchain().get_gas_left())
