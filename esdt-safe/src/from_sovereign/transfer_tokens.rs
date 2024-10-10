@@ -12,8 +12,6 @@ multiversx_sc::imports!();
 const CALLBACK_GAS: GasLimit = 10_000_000; // Increase if not enough
 const TRANSACTION_GAS: GasLimit = 30_000_000;
 
-pub type MultiOperationEsdtPayment<Api> = ManagedVec<Api, OperationEsdtPayment<Api>>;
-
 #[multiversx_sc::module]
 pub trait TransferTokensModule:
     bls_signature::BlsSignatureModule
