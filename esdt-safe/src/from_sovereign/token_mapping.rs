@@ -27,9 +27,7 @@ struct NonFungibleTokenArgs<M: ManagedTypeApi> {
 }
 
 #[multiversx_sc::module]
-pub trait TokenMappingModule:
-    multiversx_sc_modules::default_issue_callbacks::DefaultIssueCallbacksModule
-{
+pub trait TokenMappingModule {
     #[payable("EGLD")]
     #[endpoint(registerToken)]
     fn register_token(
@@ -40,8 +38,9 @@ pub trait TokenMappingModule:
         token_ticker: ManagedBuffer,
         num_decimals: usize,
     ) {
+        let is_sovereign_chain = self.is_sovereign_chain().get();
         require!(
-            !self.is_sovereign_chain().get(),
+            !is_sovereign_chain,
             "Invalid method to call in current chain"
         );
 
