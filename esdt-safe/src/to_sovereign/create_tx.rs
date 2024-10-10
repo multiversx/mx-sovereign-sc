@@ -70,11 +70,11 @@ pub trait CreateTxModule:
             current_token_data.amount = payment.amount.clone();
 
             if self.is_sovereign_chain().get() {
-                self.send().esdt_local_burn(
-                    &payment.token_identifier,
-                    payment.token_nonce,
-                    &payment.amount,
-                );
+                self.tx()
+                    .to(ToSelf)
+                    .typed(ESDTSystemSCProxy)
+                    .burn(&payment.token_identifier, &payment.amount)
+                    .transfer_execute();
 
                 event_payments.push(MultiValue3((
                     payment.token_identifier.clone(),
@@ -112,7 +112,9 @@ pub trait CreateTxModule:
 
         // refund refundable_tokens
         for payment in &refundable_payments {
-            self.tx().to(&caller).payment(payment).transfer();
+            if payment.amount > 0 {
+                self.tx().to(&caller).payment(payment).transfer();
+            }
         }
 
         let tx_nonce = self.get_and_save_next_tx_id();

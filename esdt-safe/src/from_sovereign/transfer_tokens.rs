@@ -1,5 +1,6 @@
+use builtin_func_names::ESDT_MULTI_TRANSFER_FUNC_NAME;
 use header_verifier::header_verifier_proxy;
-use multiversx_sc::{api::ESDT_MULTI_TRANSFER_FUNC_NAME, storage::StorageKey};
+use multiversx_sc::storage::StorageKey;
 use transaction::{GasLimit, Operation, OperationData, OperationEsdtPayment, OperationTuple};
 
 use crate::to_sovereign;
@@ -73,8 +74,11 @@ pub trait TransferTokensModule:
             };
 
             if operation_token.token_nonce == 0 {
-                self.send()
-                    .esdt_local_mint(&mx_token_id, 0, &operation_token.token_data.amount);
+                self.tx()
+                    .to(ToSelf)
+                    .typed(system_proxy::UserBuiltinProxy)
+                    .esdt_local_mint(&mx_token_id, 0, &operation_token.token_data.amount)
+                    .transfer_execute();
 
                 output_payments.push(OperationEsdtPayment {
                     token_identifier: mx_token_id,
@@ -218,6 +222,7 @@ pub trait TransferTokensModule:
         }
 
         let header_verifier_address = self.header_verifier_address().get();
+
         self.tx()
             .to(header_verifier_address)
             .typed(header_verifier_proxy::HeaderverifierProxy)
@@ -256,11 +261,15 @@ pub trait TransferTokensModule:
                     self.multiversx_esdt_token_info_mapper(&mx_token_id, &mx_token_nonce);
                 }
 
-                self.send().esdt_local_burn(
-                    &mx_token_id,
-                    mx_token_nonce,
-                    &operation_token.token_data.amount,
-                );
+                self.tx()
+                    .to(ToSelf)
+                    .typed(system_proxy::UserBuiltinProxy)
+                    .esdt_local_burn(
+                        &mx_token_id,
+                        mx_token_nonce,
+                        &operation_token.token_data.amount,
+                    )
+                    .transfer_execute();
             }
         }
 
@@ -270,7 +279,9 @@ pub trait TransferTokensModule:
 
         self.deposit_event(
             &operation_tuple.operation.data.op_sender,
-            &operation_tuple.operation.get_tokens_as_tuple_arr(),
+            &operation_tuple
+                .operation
+                .get_tokens_as_multi_value_encoded(),
             OperationData {
                 op_nonce: tx_nonce,
                 op_sender: sc_address.clone(),
@@ -286,7 +297,7 @@ pub trait TransferTokensModule:
         operation: Operation<Self::Api>,
     ) -> (ManagedBuffer, bool) {
         let mut serialized_data = ManagedBuffer::new();
-        let mut storage_key = StorageKey::from("pending_hashes");
+        let mut storage_key = StorageKey::from("pendingHashes");
         storage_key.append_item(&hash_of_hashes);
 
         let pending_operations_mapper =
@@ -306,9 +317,9 @@ pub trait TransferTokensModule:
         }
     }
 
-    #[storage_mapper("pending_hashes")]
+    #[storage_mapper("pendingHashes")]
     fn pending_hashes(&self, hash_of_hashes: &ManagedBuffer) -> UnorderedSetMapper<ManagedBuffer>;
 
-    #[storage_mapper("header_verifier_address")]
+    #[storage_mapper("headerVerifierAddress")]
     fn header_verifier_address(&self) -> SingleValueMapper<ManagedAddress>;
 }

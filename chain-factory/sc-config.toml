@@ -1,0 +1,22 @@
+[settings]
+main = "main"
+
+[contracts.main]
+name = "chain-factory"
+
+[contracts.full]
+name = "chain-factory-full"
+add-unlabelled = true
+add-labels = ["chain-factory-external-view"]
+
+[contracts.view]
+name = "chain-factory-view"
+external-view = true
+add-unlabelled = false
+add-labels = ["chain-factory-external-view"]
+
+[[proxy]]
+path = "src/chain_factory_proxy.rs"
+
+[[proxy]]
+path = "../token-handler/src/chain_factory_proxy.rs"

@@ -1,0 +1,22 @@
+[settings]
+main = "main"
+
+[contracts.main]
+name = "token-handler"
+
+[contracts.full]
+name = "token-handler-full"
+add-unlabelled = true
+add-labels = ["token-handler-external-view"]
+
+[contracts.view]
+name = "token-handler-view"
+external-view = true
+add-unlabelled = false
+add-labels = ["token-handler-external-view"]
+
+[[proxy]]
+path = "src/token_handler_proxy.rs"
+
+[[proxy]]
+path = "../enshrine-esdt-safe/src/token_handler_proxy.rs"
