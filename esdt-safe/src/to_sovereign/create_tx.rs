@@ -63,10 +63,7 @@ pub trait CreateTxModule:
             );
             current_token_data.amount = payment.amount.clone();
 
-            let mvx_to_sov_token_id_mapper =
-                self.multiversx_to_sovereign_token_id_mapper(&payment.token_identifier);
-
-            if is_sov_chain || mvx_to_sov_token_id_mapper.is_empty() {
+            if is_sov_chain {
                 self.tx()
                     .to(ToSelf)
                     .typed(ESDTSystemSCProxy)
@@ -78,15 +75,25 @@ pub trait CreateTxModule:
                     payment.token_nonce,
                     current_token_data,
                 );
-
                 event_payments.push(event_payment);
             } else {
-                let sov_token_id = mvx_to_sov_token_id_mapper.get();
-                let sov_token_nonce = self.burn_mainchain_token(payment, &sov_token_id);
+                let mvx_to_sov_token_id_mapper =
+                    self.multiversx_to_sovereign_token_id_mapper(&payment.token_identifier);
+                if !mvx_to_sov_token_id_mapper.is_empty() {
+                    let sov_token_id = mvx_to_sov_token_id_mapper.get();
+                    let sov_token_nonce = self.burn_mainchain_token(payment, &sov_token_id);
 
-                let event_payment =
-                    EventPayment::new(sov_token_id, sov_token_nonce, current_token_data);
-                event_payments.push(event_payment);
+                    let event_payment =
+                        EventPayment::new(sov_token_id, sov_token_nonce, current_token_data);
+                    event_payments.push(event_payment);
+                } else {
+                    let event_payment = EventPayment::new(
+                        payment.token_identifier,
+                        payment.token_nonce,
+                        current_token_data,
+                    );
+                    event_payments.push(event_payment);
+                }
             }
         }
 
