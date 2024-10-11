@@ -84,7 +84,7 @@ pub trait TransferTokensModule:
                 continue;
             }
 
-            let nft_nonce = self.mint_and_save_token(&mvx_token_id, &operation_token);
+            let nft_nonce = self.esdt_create_and_update_mapper(&mvx_token_id, &operation_token);
 
             output_payments.push(OperationEsdtPayment {
                 token_identifier: mvx_token_id,
@@ -96,9 +96,9 @@ pub trait TransferTokensModule:
         output_payments
     }
 
-    fn mint_and_save_token(
+    fn esdt_create_and_update_mapper(
         self,
-        mx_token_id: &TokenIdentifier<Self::Api>,
+        mvx_token_id: &TokenIdentifier<Self::Api>,
         operation_token: &OperationEsdtPayment<Self::Api>,
     ) -> u64 {
         // mint NFT
@@ -107,7 +107,7 @@ pub trait TransferTokensModule:
             .to(ToSelf)
             .typed(system_proxy::UserBuiltinProxy)
             .esdt_nft_create(
-                mx_token_id,
+                mvx_token_id,
                 &operation_token.token_data.amount,
                 &operation_token.token_data.name,
                 &operation_token.token_data.royalties,
@@ -119,22 +119,34 @@ pub trait TransferTokensModule:
             .sync_call();
 
         // save token id and nonce
-        self.sovereign_to_multiversx_esdt_info_mapper(
+        self.update_esdt_info_mappers(
             &operation_token.token_identifier,
-            &operation_token.token_nonce,
-        )
-        .set(EsdtInfo {
-            token_identifier: mx_token_id.clone(),
-            token_nonce: nft_nonce,
-        });
-
-        self.multiversx_to_sovereign_esdt_info_mapper(mx_token_id, &nft_nonce)
-            .set(EsdtInfo {
-                token_identifier: operation_token.token_identifier.clone(),
-                token_nonce: operation_token.token_nonce,
-            });
+            operation_token.token_nonce,
+            mvx_token_id,
+            nft_nonce,
+        );
 
         nft_nonce
+    }
+
+    fn update_esdt_info_mappers(
+        &self,
+        sov_id: &TokenIdentifier,
+        sov_nonce: u64,
+        mvx_id: &TokenIdentifier,
+        new_nft_nonce: u64,
+    ) {
+        self.sovereign_to_multiversx_esdt_info_mapper(sov_id, sov_nonce)
+            .set(EsdtInfo {
+                token_identifier: mvx_id.clone(),
+                token_nonce: new_nft_nonce,
+            });
+
+        self.multiversx_to_sovereign_esdt_info_mapper(mvx_id, new_nft_nonce)
+            .set(EsdtInfo {
+                token_identifier: sov_id.clone(),
+                token_nonce: sov_nonce,
+            });
     }
 
     // TODO: create a callback module
@@ -242,12 +254,12 @@ pub trait TransferTokensModule:
                     mx_token_nonce = self
                         .sovereign_to_multiversx_esdt_info_mapper(
                             &operation_token.token_identifier,
-                            &operation_token.token_nonce,
+                            operation_token.token_nonce,
                         )
                         .take()
                         .token_nonce;
 
-                    self.multiversx_to_sovereign_esdt_info_mapper(&mvx_token_id, &mx_token_nonce)
+                    self.multiversx_to_sovereign_esdt_info_mapper(&mvx_token_id, mx_token_nonce)
                         .take();
                 }
 

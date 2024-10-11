@@ -119,14 +119,14 @@ pub trait TokenMappingModule: utils::UtilsModule {
     fn sovereign_to_multiversx_esdt_info_mapper(
         &self,
         token_identifier: &TokenIdentifier,
-        nonce: &u64,
+        nonce: u64,
     ) -> SingleValueMapper<EsdtInfo<Self::Api>>;
 
     #[storage_mapper("mxEsdtTokenInfoMapper")]
     fn multiversx_to_sovereign_esdt_info_mapper(
         &self,
         token_identifier: &TokenIdentifier,
-        nonce: &u64,
+        nonce: u64,
     ) -> SingleValueMapper<EsdtInfo<Self::Api>>;
 
     #[storage_mapper("isSovereignChain")]
