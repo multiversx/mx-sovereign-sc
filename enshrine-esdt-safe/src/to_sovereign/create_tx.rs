@@ -1,6 +1,8 @@
 use crate::common;
 use fee_market::fee_market_proxy;
-use transaction::{GasLimit, OperationData, OptionalValueTransferDataTuple, TransferData};
+use transaction::{
+    EventPayment, GasLimit, OperationData, OptionalValueTransferDataTuple, TransferData,
+};
 
 use multiversx_sc::imports::*;
 
@@ -68,14 +70,13 @@ pub trait CreateTxModule:
                     .transfer_execute();
             }
 
-            event_payments.push(
-                (
-                    payment.token_identifier,
-                    payment.token_nonce,
-                    current_token_data,
-                )
-                    .into(),
+            let event_payment = EventPayment::new(
+                payment.token_identifier,
+                payment.token_nonce,
+                current_token_data,
             );
+
+            event_payments.push(event_payment);
         }
 
         let option_transfer_data = TransferData::from_optional_value(optional_transfer_data);
@@ -93,7 +94,7 @@ pub trait CreateTxModule:
         let tx_nonce = self.get_and_save_next_tx_id();
         self.deposit_event(
             &to,
-            &event_payments,
+            &EventPayment::map_to_tuple_multi_value(event_payments),
             OperationData::new(tx_nonce, caller, option_transfer_data),
         );
     }

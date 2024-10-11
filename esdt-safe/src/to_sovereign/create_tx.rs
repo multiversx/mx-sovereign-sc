@@ -2,7 +2,8 @@ use crate::from_sovereign::token_mapping;
 use fee_market::fee_market_proxy;
 use multiversx_sc::storage::StorageKey;
 use transaction::{
-    ExtractedFeeResult, GasLimit, OperationData, OptionalValueTransferDataTuple, TransferData,
+    EventPayment, ExtractedFeeResult, GasLimit, OperationData, OptionalValueTransferDataTuple,
+    TransferData,
 };
 
 multiversx_sc::imports!();
@@ -72,19 +73,20 @@ pub trait CreateTxModule:
                     .burn(&payment.token_identifier, &payment.amount)
                     .transfer_execute();
 
-                event_payments.push(
-                    (
-                        payment.token_identifier,
-                        payment.token_nonce,
-                        current_token_data,
-                    )
-                        .into(),
+                let event_payment = EventPayment::new(
+                    payment.token_identifier,
+                    payment.token_nonce,
+                    current_token_data,
                 );
+
+                event_payments.push(event_payment);
             } else {
                 let sov_token_id = mvx_to_sov_token_id_mapper.get();
                 let sov_token_nonce = self.burn_mainchain_token(payment, &sov_token_id);
 
-                event_payments.push((sov_token_id, sov_token_nonce, current_token_data).into());
+                let event_payment =
+                    EventPayment::new(sov_token_id, sov_token_nonce, current_token_data);
+                event_payments.push(event_payment);
             }
         }
 
@@ -103,7 +105,7 @@ pub trait CreateTxModule:
         let tx_nonce = self.get_and_save_next_tx_id();
         self.deposit_event(
             &to,
-            &event_payments,
+            &EventPayment::map_to_tuple_multi_value(event_payments),
             OperationData::new(tx_nonce, caller, option_transfer_data),
         );
     }
