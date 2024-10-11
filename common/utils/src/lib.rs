@@ -47,25 +47,6 @@ pub trait UtilsModule {
         first_payment
     }
 
-    // fn verify_items_signature<T: TopDecode + NestedEncode + ManagedVecItem>(
-    //     &self,
-    //     opt_signature: Option<BlsSignature<Self::Api>>,
-    //     items: MultiValueEncoded<T>,
-    // ) -> ManagedVec<T> {
-    //     require!(opt_signature.is_some(), "Must provide signature");
-    //
-    //     let list = items.to_vec();
-    //     let signature = unsafe { opt_signature.unwrap_unchecked() };
-    //     let mut signature_data = ManagedBuffer::new();
-    //     for token in &list {
-    //         let _ = token.dep_encode(&mut signature_data);
-    //     }
-    //
-    //     self.multi_verify_signature(&signature_data, &signature);
-    //
-    //     list
-    // }
-
     fn has_prefix(&self, token_id: &TokenIdentifier) -> bool {
         let buffer = token_id.as_managed_buffer();
         let mut array_buffer = [0u8; MAX_TOKEN_ID_LEN];
@@ -80,6 +61,7 @@ pub trait UtilsModule {
         false
     }
 
+    #[inline]
     fn require_token_has_prefix(&self, token_id: &TokenIdentifier) {
         require!(self.has_prefix(token_id), "Token Id does not have prefix");
     }

@@ -174,11 +174,14 @@ pub trait CreateTxModule:
 
         if payment.token_nonce > 0 {
             sov_token_nonce = self
-                .multiversx_esdt_token_esdt_mapper(&payment.token_identifier, &payment.token_nonce)
+                .multiversx_to_sovereign_esdt_info_mapper(
+                    &payment.token_identifier,
+                    &payment.token_nonce,
+                )
                 .take()
                 .token_nonce;
 
-            self.sovereign_esdt_token_esdt_mapper(sov_token_id, &sov_token_nonce)
+            self.sovereign_to_multiversx_esdt_info_mapper(sov_token_id, &sov_token_nonce)
                 .take();
         }
 

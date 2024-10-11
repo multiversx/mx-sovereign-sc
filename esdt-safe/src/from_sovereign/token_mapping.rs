@@ -2,6 +2,7 @@ multiversx_sc::imports!();
 multiversx_sc::derive_imports!();
 
 const DEFAULT_ISSUE_COST: u64 = 50_000_000_000_000_000; // 0.05 EGLD
+const REGISTER_GAS: u64 = 60_000_000;
 
 #[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, TypeAbi, ManagedVecItem, Clone)]
 pub struct EsdtInfo<M: ManagedTypeApi> {
@@ -30,12 +31,12 @@ pub trait TokenMappingModule: utils::UtilsModule {
         token_ticker: ManagedBuffer,
         num_decimals: usize,
     ) {
-        self.require_token_has_prefix(&sov_token_id);
         let is_sovereign_chain = self.is_sovereign_chain().get();
         require!(
             !is_sovereign_chain,
             "Invalid method to call in current chain"
         );
+        self.require_token_has_prefix(&sov_token_id);
 
         let issue_cost = self.call_value().egld_value().clone_value();
         require!(
@@ -67,7 +68,7 @@ pub trait TokenMappingModule: utils::UtilsModule {
                 args.token_type,
                 args.num_decimals,
             )
-            .gas(self.blockchain().get_gas_left())
+            .gas(REGISTER_GAS)
             .callback(
                 <Self as TokenMappingModule>::callbacks(self).issue_callback(&args.sov_token_id),
             )
@@ -115,14 +116,14 @@ pub trait TokenMappingModule: utils::UtilsModule {
     ) -> SingleValueMapper<TokenIdentifier>;
 
     #[storage_mapper("sovEsdtTokenInfoMapper")]
-    fn sovereign_esdt_token_esdt_mapper(
+    fn sovereign_to_multiversx_esdt_info_mapper(
         &self,
         token_identifier: &TokenIdentifier,
         nonce: &u64,
     ) -> SingleValueMapper<EsdtInfo<Self::Api>>;
 
     #[storage_mapper("mxEsdtTokenInfoMapper")]
-    fn multiversx_esdt_token_esdt_mapper(
+    fn multiversx_to_sovereign_esdt_info_mapper(
         &self,
         token_identifier: &TokenIdentifier,
         nonce: &u64,
