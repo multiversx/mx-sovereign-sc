@@ -21,7 +21,6 @@ pub trait EsdtSafe:
     + token_whitelist::TokenWhitelistModule
     + utils::UtilsModule
     + multiversx_sc_modules::pause::PauseModule
-    + multiversx_sc_modules::default_issue_callbacks::DefaultIssueCallbacksModule
 {
     #[init]
     fn init(&self, is_sovereign_chain: bool) {

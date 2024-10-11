@@ -154,7 +154,7 @@ pub trait TransferTokensModule:
             &operation_tuple.operation.data.op_sender,
             &operation_tuple
                 .operation
-                .get_tokens_as_multi_value_encoded(),
+                .map_tokens_to_multi_value_encoded(),
             OperationData::new(tx_nonce, sc_address.clone(), None),
         );
     }
