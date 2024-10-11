@@ -103,6 +103,26 @@ pub trait TokenMappingModule: utils::UtilsModule {
             .set(sov_token_id);
     }
 
+    fn update_esdt_info_mappers(
+        &self,
+        sov_id: &TokenIdentifier,
+        sov_nonce: u64,
+        mvx_id: &TokenIdentifier,
+        new_nft_nonce: u64,
+    ) {
+        self.sovereign_to_multiversx_esdt_info_mapper(sov_id, sov_nonce)
+            .set(EsdtInfo {
+                token_identifier: mvx_id.clone(),
+                token_nonce: new_nft_nonce,
+            });
+
+        self.multiversx_to_sovereign_esdt_info_mapper(mvx_id, new_nft_nonce)
+            .set(EsdtInfo {
+                token_identifier: sov_id.clone(),
+                token_nonce: sov_nonce,
+            });
+    }
+
     #[storage_mapper("sovToMxTokenId")]
     fn sovereign_to_multiversx_token_id_mapper(
         &self,
