@@ -1,5 +1,3 @@
-use utils::UtilsModule;
-
 multiversx_sc::imports!();
 multiversx_sc::derive_imports!();
 
@@ -11,15 +9,7 @@ pub struct EsdtTokenInfo<M: ManagedTypeApi> {
     pub token_nonce: u64,
 }
 
-struct FungibleTokenArgs<M: ManagedTypeApi> {
-    sov_token_id: TokenIdentifier<M>,
-    issue_cost: BigUint<M>,
-    token_display_name: ManagedBuffer<M>,
-    token_ticker: ManagedBuffer<M>,
-    num_decimals: usize,
-}
-
-struct NonFungibleTokenArgs<M: ManagedTypeApi> {
+struct IssueEsdtArgs<M: ManagedTypeApi> {
     sov_token_id: TokenIdentifier<M>,
     token_type: EsdtTokenType,
     issue_cost: BigUint<M>,
@@ -55,46 +45,18 @@ pub trait TokenMappingModule: utils::UtilsModule {
 
         match token_type {
             EsdtTokenType::Invalid => sc_panic!("Invalid type"),
-            EsdtTokenType::Fungible => self.handle_fungible_token_type(FungibleTokenArgs {
+            _ => self.handle_token_issue(IssueEsdtArgs {
                 sov_token_id: sov_token_id.clone(),
                 issue_cost,
                 token_display_name,
                 token_ticker,
+                token_type,
                 num_decimals,
             }),
-            EsdtTokenType::NonFungible => {
-                self.handle_nonfungible_token_type(NonFungibleTokenArgs {
-                    sov_token_id,
-                    token_type,
-                    issue_cost,
-                    token_display_name,
-                    token_ticker,
-                    num_decimals,
-                })
-            }
-            _ => {}
         }
     }
 
-    fn handle_fungible_token_type(&self, args: FungibleTokenArgs<Self::Api>) {
-        self.tx()
-            .to(ToCaller)
-            .typed(ESDTSystemSCProxy)
-            .issue_and_set_all_roles(
-                args.issue_cost,
-                args.token_display_name,
-                args.token_ticker,
-                EsdtTokenType::Fungible,
-                args.num_decimals,
-            )
-            .gas(self.blockchain().get_gas_left())
-            .callback(
-                <Self as TokenMappingModule>::callbacks(self).issue_callback(&args.sov_token_id),
-            )
-            .register_promise();
-    }
-
-    fn handle_nonfungible_token_type(&self, args: NonFungibleTokenArgs<Self::Api>) {
+    fn handle_token_issue(&self, args: IssueEsdtArgs<Self::Api>) {
         self.tx()
             .to(ToCaller)
             .typed(ESDTSystemSCProxy)
@@ -151,12 +113,6 @@ pub trait TokenMappingModule: utils::UtilsModule {
         &self,
         mx_token_id: &TokenIdentifier,
     ) -> SingleValueMapper<TokenIdentifier>;
-
-    #[storage_mapper("sovToMxTokenId")]
-    fn fungible_token(&self, sov_token_id: &TokenIdentifier) -> FungibleTokenMapper;
-
-    #[storage_mapper("sovToMxTokenId")]
-    fn non_fungible_token(&self, sov_token_id: &TokenIdentifier) -> NonFungibleTokenMapper;
 
     #[storage_mapper("sovEsdtTokenInfoMapper")]
     fn sovereign_esdt_token_info_mapper(
