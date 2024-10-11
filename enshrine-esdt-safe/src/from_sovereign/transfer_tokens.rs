@@ -207,7 +207,7 @@ pub trait TransferTokensModule:
     #[storage_mapper("paidIssuedTokens")]
     fn paid_issued_tokens(&self) -> UnorderedSetMapper<TokenIdentifier<Self::Api>>;
 
-    #[storage_mapper_from_address("pending_hashes")]
+    #[storage_mapper_from_address("pendingHashes")]
     fn external_pending_hashes(
         &self,
         sc_address: ManagedAddress,

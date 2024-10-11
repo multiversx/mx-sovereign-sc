@@ -310,7 +310,7 @@ pub trait TransferTokensModule:
     #[storage_mapper("headerVerifierAddress")]
     fn header_verifier_address(&self) -> SingleValueMapper<ManagedAddress>;
 
-    #[storage_mapper_from_address("pending_hashes")]
+    #[storage_mapper_from_address("pendingHashes")]
     fn external_pending_hashes(
         &self,
         sc_address: ManagedAddress,
