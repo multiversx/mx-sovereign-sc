@@ -58,7 +58,7 @@ pub trait TokenMappingModule: utils::UtilsModule {
 
     fn handle_token_issue(&self, args: IssueEsdtArgs<Self::Api>) {
         self.tx()
-            .to(ToCaller)
+            .to(ESDTSystemSCAddress)
             .typed(ESDTSystemSCProxy)
             .issue_and_set_all_roles(
                 args.issue_cost,
