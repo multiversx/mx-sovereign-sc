@@ -1,3 +1,5 @@
+use utils::UtilsModule;
+
 multiversx_sc::imports!();
 multiversx_sc::derive_imports!();
 
@@ -27,7 +29,7 @@ struct NonFungibleTokenArgs<M: ManagedTypeApi> {
 }
 
 #[multiversx_sc::module]
-pub trait TokenMappingModule {
+pub trait TokenMappingModule: utils::UtilsModule {
     #[payable("EGLD")]
     #[endpoint(registerToken)]
     fn register_token(
@@ -38,6 +40,7 @@ pub trait TokenMappingModule {
         token_ticker: ManagedBuffer,
         num_decimals: usize,
     ) {
+        self.require_token_has_prefix(&sov_token_id);
         let is_sovereign_chain = self.is_sovereign_chain().get();
         require!(
             !is_sovereign_chain,

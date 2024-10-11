@@ -80,6 +80,10 @@ pub trait UtilsModule {
         false
     }
 
+    fn require_token_has_prefix(&self, token_id: &TokenIdentifier) {
+        require!(self.has_prefix(token_id), "Token Id does not have prefix");
+    }
+
     fn has_sov_prefix(&self, token_id: &TokenIdentifier, chain_prefix: &ManagedBuffer) -> bool {
         if !self.has_prefix(token_id) {
             return false;
