@@ -49,7 +49,6 @@ multiversx_sc_wasm_adapter::endpoints! {
         pause => pause_endpoint
         unpause => unpause_endpoint
         isPaused => paused_status
-        issue_callback => issue_callback
         execute => execute
     )
 }
