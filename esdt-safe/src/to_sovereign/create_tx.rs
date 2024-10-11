@@ -61,6 +61,7 @@ pub trait CreateTxModule:
                 payment.token_nonce,
             );
             current_token_data.amount = payment.amount.clone();
+
             let mvx_to_sov_token_id_mapper =
                 self.multiversx_to_sovereign_token_id_mapper(&payment.token_identifier);
 
@@ -138,32 +139,6 @@ pub trait CreateTxModule:
             if payment.amount > 0 {
                 self.tx().to(caller).payment(&payment).transfer();
             }
-        }
-    }
-
-    fn process_transfer_data(
-        &self,
-        opt_transfer_data: OptionalValueTransferDataTuple<Self::Api>,
-    ) -> Option<TransferData<Self::Api>> {
-        match &opt_transfer_data {
-            OptionalValue::Some(transfer_data) => {
-                let (gas_limit, function, args) = transfer_data.clone().into_tuple();
-                let max_gas_limit = self.max_user_tx_gas_limit().get();
-
-                require!(gas_limit <= max_gas_limit, "Gas limit too high");
-
-                require!(
-                    !self.banned_endpoint_names().contains(&function),
-                    "Banned endpoint name"
-                );
-
-                Some(TransferData {
-                    gas_limit,
-                    function,
-                    args,
-                })
-            }
-            OptionalValue::None => None,
         }
     }
 
