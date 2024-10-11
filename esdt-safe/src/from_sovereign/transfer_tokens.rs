@@ -287,11 +287,9 @@ pub trait TransferTokensModule:
         operation: &Operation<Self::Api>,
     ) -> (ManagedBuffer, bool) {
         let mut serialized_data = ManagedBuffer::new();
-        let mut storage_key = StorageKey::from("pendingHashes");
-        storage_key.append_item(&hash_of_hashes);
-
+        let header_verifier_address = self.header_verifier_address().get();
         let pending_operations_mapper =
-            UnorderedSetMapper::new_from_address(self.header_verifier_address().get(), storage_key);
+            self.external_pending_hashes(header_verifier_address, hash_of_hashes);
 
         if let core::result::Result::Err(err) = operation.top_encode(&mut serialized_data) {
             sc_panic!("Transfer data encode error: {}", err.message_bytes());
@@ -299,7 +297,6 @@ pub trait TransferTokensModule:
 
         let sha256 = self.crypto().sha256(&serialized_data);
         let hash = sha256.as_managed_buffer().clone();
-
         if pending_operations_mapper.contains(&hash) {
             (hash, true)
         } else {
@@ -312,4 +309,11 @@ pub trait TransferTokensModule:
 
     #[storage_mapper("headerVerifierAddress")]
     fn header_verifier_address(&self) -> SingleValueMapper<ManagedAddress>;
+
+    #[storage_mapper_from_address("pending_hashes")]
+    fn external_pending_hashes(
+        &self,
+        sc_address: ManagedAddress,
+        hash_of_hashes: &ManagedBuffer,
+    ) -> UnorderedSetMapper<ManagedBuffer, ManagedAddress>;
 }
