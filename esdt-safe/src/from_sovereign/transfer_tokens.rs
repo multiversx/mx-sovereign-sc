@@ -247,7 +247,8 @@ pub trait TransferTokensModule:
                         .take()
                         .token_nonce;
 
-                    self.multiversx_to_sovereign_esdt_info_mapper(&mvx_token_id, &mx_token_nonce);
+                    self.multiversx_to_sovereign_esdt_info_mapper(&mvx_token_id, &mx_token_nonce)
+                        .take();
                 }
 
                 self.tx()
