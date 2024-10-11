@@ -5,7 +5,7 @@ use transaction::{GasLimit, Operation, OperationData, OperationEsdtPayment, Oper
 
 use crate::to_sovereign;
 
-use super::token_mapping::EsdtTokenInfo;
+use super::token_mapping::EsdtInfo;
 
 multiversx_sc::imports!();
 
@@ -56,30 +56,28 @@ pub trait TransferTokensModule:
         let mut output_payments = ManagedVec::new();
 
         for operation_token in operation_tokens.iter() {
-            let mx_token_id_state = self
-                .sovereign_to_multiversx_token_id(&operation_token.token_identifier)
-                .get();
+            let sov_to_mvx_token_id_mapper =
+                self.sovereign_to_multiversx_token_id_mapper(&operation_token.token_identifier);
 
-            let mx_token_id = match mx_token_id_state {
-                // token is from sovereign -> continue and mint
-                TokenMapperState::Token(token_id) => token_id,
-                // token is from mainchain -> push token
-                _ => {
-                    output_payments.push(operation_token.clone());
+            // token is from mainchain -> push token
+            if sov_to_mvx_token_id_mapper.is_empty() {
+                output_payments.push(operation_token.clone());
 
-                    continue;
-                }
-            };
+                continue;
+            }
+
+            // token is from sovereign -> continue and mint
+            let mvx_token_id = sov_to_mvx_token_id_mapper.get();
 
             if operation_token.token_nonce == 0 {
                 self.tx()
                     .to(ToSelf)
                     .typed(system_proxy::UserBuiltinProxy)
-                    .esdt_local_mint(&mx_token_id, 0, &operation_token.token_data.amount)
+                    .esdt_local_mint(&mvx_token_id, 0, &operation_token.token_data.amount)
                     .transfer_execute();
 
                 output_payments.push(OperationEsdtPayment {
-                    token_identifier: mx_token_id,
+                    token_identifier: mvx_token_id,
                     token_nonce: 0,
                     token_data: operation_token.token_data,
                 });
@@ -87,10 +85,10 @@ pub trait TransferTokensModule:
                 continue;
             }
 
-            let nft_nonce = self.mint_and_save_token(&mx_token_id, &operation_token);
+            let nft_nonce = self.mint_and_save_token(&mvx_token_id, &operation_token);
 
             output_payments.push(OperationEsdtPayment {
-                token_identifier: mx_token_id,
+                token_identifier: mvx_token_id,
                 token_nonce: nft_nonce,
                 token_data: operation_token.token_data,
             });
@@ -122,17 +120,17 @@ pub trait TransferTokensModule:
             .sync_call();
 
         // save token id and nonce
-        self.sovereign_esdt_token_info_mapper(
+        self.sovereign_esdt_token_esdt_mapper(
             &operation_token.token_identifier,
             &operation_token.token_nonce,
         )
-        .set(EsdtTokenInfo {
+        .set(EsdtInfo {
             token_identifier: mx_token_id.clone(),
             token_nonce: nft_nonce,
         });
 
-        self.multiversx_esdt_token_info_mapper(mx_token_id, &nft_nonce)
-            .set(EsdtTokenInfo {
+        self.multiversx_esdt_token_esdt_mapper(mx_token_id, &nft_nonce)
+            .set(EsdtInfo {
                 token_identifier: operation_token.token_identifier.clone(),
                 token_nonce: operation_token.token_nonce,
             });
@@ -234,30 +232,30 @@ pub trait TransferTokensModule:
         self.execute_bridge_operation_event(hash_of_hashes, &operation_tuple.op_hash);
 
         for operation_token in &operation_tuple.operation.tokens {
-            let mx_token_id_state = self
-                .sovereign_to_multiversx_token_id(&operation_token.token_identifier)
-                .get();
+            let sov_to_mvx_token_id_mapper =
+                self.sovereign_to_multiversx_token_id_mapper(&operation_token.token_identifier);
 
-            if let TokenMapperState::Token(mx_token_id) = mx_token_id_state {
+            if !sov_to_mvx_token_id_mapper.is_empty() {
+                let mvx_token_id = sov_to_mvx_token_id_mapper.get();
                 let mut mx_token_nonce = 0;
 
                 if operation_token.token_nonce > 0 {
                     mx_token_nonce = self
-                        .sovereign_esdt_token_info_mapper(
+                        .sovereign_esdt_token_esdt_mapper(
                             &operation_token.token_identifier,
                             &operation_token.token_nonce,
                         )
                         .take()
                         .token_nonce;
 
-                    self.multiversx_esdt_token_info_mapper(&mx_token_id, &mx_token_nonce);
+                    self.multiversx_esdt_token_esdt_mapper(&mvx_token_id, &mx_token_nonce);
                 }
 
                 self.tx()
                     .to(ToSelf)
                     .typed(system_proxy::UserBuiltinProxy)
                     .esdt_local_burn(
-                        &mx_token_id,
+                        &mvx_token_id,
                         mx_token_nonce,
                         &operation_token.token_data.amount,
                     )

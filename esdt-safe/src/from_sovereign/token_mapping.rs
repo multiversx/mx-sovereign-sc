@@ -4,7 +4,7 @@ multiversx_sc::derive_imports!();
 const DEFAULT_ISSUE_COST: u64 = 50_000_000_000_000_000; // 0.05 EGLD
 
 #[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, TypeAbi, ManagedVecItem, Clone)]
-pub struct EsdtTokenInfo<M: ManagedTypeApi> {
+pub struct EsdtInfo<M: ManagedTypeApi> {
     pub token_identifier: TokenIdentifier<M>,
     pub token_nonce: u64,
 }
@@ -95,38 +95,38 @@ pub trait TokenMappingModule: utils::UtilsModule {
         sov_token_id: &TokenIdentifier,
         mvx_token_id: &TokenIdentifier,
     ) {
-        self.sovereign_to_multiversx_token_id(sov_token_id)
-            .set(TokenMapperState::Token(mvx_token_id.clone()));
+        self.sovereign_to_multiversx_token_id_mapper(sov_token_id)
+            .set(mvx_token_id);
 
-        self.multiversx_to_sovereign_token_id(mvx_token_id)
+        self.multiversx_to_sovereign_token_id_mapper(mvx_token_id)
             .set(sov_token_id);
     }
 
     #[storage_mapper("sovToMxTokenId")]
-    fn sovereign_to_multiversx_token_id(
+    fn sovereign_to_multiversx_token_id_mapper(
         &self,
         sov_token_id: &TokenIdentifier,
-    ) -> SingleValueMapper<TokenMapperState<Self::Api>>;
+    ) -> SingleValueMapper<TokenIdentifier>;
 
     #[storage_mapper("mxToSovTokenId")]
-    fn multiversx_to_sovereign_token_id(
+    fn multiversx_to_sovereign_token_id_mapper(
         &self,
         mx_token_id: &TokenIdentifier,
     ) -> SingleValueMapper<TokenIdentifier>;
 
     #[storage_mapper("sovEsdtTokenInfoMapper")]
-    fn sovereign_esdt_token_info_mapper(
+    fn sovereign_esdt_token_esdt_mapper(
         &self,
         token_identifier: &TokenIdentifier,
         nonce: &u64,
-    ) -> SingleValueMapper<EsdtTokenInfo<Self::Api>>;
+    ) -> SingleValueMapper<EsdtInfo<Self::Api>>;
 
     #[storage_mapper("mxEsdtTokenInfoMapper")]
-    fn multiversx_esdt_token_info_mapper(
+    fn multiversx_esdt_token_esdt_mapper(
         &self,
         token_identifier: &TokenIdentifier,
         nonce: &u64,
-    ) -> SingleValueMapper<EsdtTokenInfo<Self::Api>>;
+    ) -> SingleValueMapper<EsdtInfo<Self::Api>>;
 
     #[storage_mapper("isSovereignChain")]
     fn is_sovereign_chain(&self) -> SingleValueMapper<bool>;

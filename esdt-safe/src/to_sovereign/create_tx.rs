@@ -81,7 +81,7 @@ pub trait CreateTxModule:
                 event_payments.push(event_payment);
             } else {
                 let sov_token_id = self
-                    .multiversx_to_sovereign_token_id(&payment.token_identifier)
+                    .multiversx_to_sovereign_token_id_mapper(&payment.token_identifier)
                     .get();
 
                 if !sov_token_id.is_valid_esdt_identifier() {
@@ -190,11 +190,11 @@ pub trait CreateTxModule:
 
         if payment.token_nonce > 0 {
             sov_token_nonce = self
-                .multiversx_esdt_token_info_mapper(&payment.token_identifier, &payment.token_nonce)
+                .multiversx_esdt_token_esdt_mapper(&payment.token_identifier, &payment.token_nonce)
                 .take()
                 .token_nonce;
 
-            self.sovereign_esdt_token_info_mapper(sov_token_id, &sov_token_nonce)
+            self.sovereign_esdt_token_esdt_mapper(sov_token_id, &sov_token_nonce)
                 .take();
         }
 
