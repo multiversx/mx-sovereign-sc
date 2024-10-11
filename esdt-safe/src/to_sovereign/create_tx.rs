@@ -61,23 +61,30 @@ pub trait CreateTxModule:
                 payment.token_nonce,
             );
             current_token_data.amount = payment.amount.clone();
+            let mvx_to_sov_token_id_mapper =
+                self.multiversx_to_sovereign_token_id_mapper(&payment.token_identifier);
 
-            if is_sov_chain || self.has_prefix(&payment.token_identifier) {
+            if is_sov_chain || mvx_to_sov_token_id_mapper.is_empty() {
                 self.tx()
                     .to(ToSelf)
                     .typed(ESDTSystemSCProxy)
                     .burn(&payment.token_identifier, &payment.amount)
                     .transfer_execute();
-            }
 
-            event_payments.push(
-                (
-                    payment.token_identifier,
-                    payment.token_nonce,
-                    current_token_data,
-                )
-                    .into(),
-            );
+                event_payments.push(
+                    (
+                        payment.token_identifier,
+                        payment.token_nonce,
+                        current_token_data,
+                    )
+                        .into(),
+                );
+            } else {
+                let sov_token_id = mvx_to_sov_token_id_mapper.get();
+                let sov_token_nonce = self.burn_mainchain_token(payment, &sov_token_id);
+
+                event_payments.push((sov_token_id, sov_token_nonce, current_token_data).into());
+            }
         }
 
         let option_transfer_data = TransferData::from_optional_value(optional_transfer_data);
