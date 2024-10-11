@@ -1,6 +1,6 @@
 use crate::common;
 use fee_market::fee_market_proxy;
-use transaction::{GasLimit, OperationData, TransferData};
+use transaction::{GasLimit, OperationData, OptionalValueTransferDataTuple, TransferData};
 
 use multiversx_sc::imports::*;
 
@@ -24,9 +24,7 @@ pub trait CreateTxModule:
     fn deposit(
         &self,
         to: ManagedAddress,
-        opt_transfer_data: OptionalValue<
-            MultiValue3<GasLimit, ManagedBuffer, ManagedVec<ManagedBuffer>>,
-        >,
+        optional_transfer_data: OptionalValueTransferDataTuple<Self::Api>,
     ) {
         require!(self.not_paused(), "Cannot create transaction while paused");
 
@@ -80,7 +78,7 @@ pub trait CreateTxModule:
             );
         }
 
-        let option_transfer_data = TransferData::from_optional_value(opt_transfer_data);
+        let option_transfer_data = TransferData::from_optional_value(optional_transfer_data);
 
         if let Some(transfer_data) = option_transfer_data.as_ref() {
             self.require_gas_limit_under_limit(transfer_data.gas_limit);
