@@ -36,6 +36,7 @@ pub trait TokenMappingModule: utils::UtilsModule {
             !is_sovereign_chain,
             "Invalid method to call in current chain"
         );
+
         self.require_token_has_prefix(&sov_token_id);
 
         let issue_cost = self.call_value().egld_value().clone_value();
