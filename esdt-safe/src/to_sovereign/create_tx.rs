@@ -80,11 +80,10 @@ pub trait CreateTxModule:
                 ));
                 event_payments.push(event_payment);
             } else {
-                let sov_token_id = self
-                    .multiversx_to_sovereign_token_id_mapper(&payment.token_identifier)
-                    .get();
+                let mvx_to_sov_token_id_mapper =
+                    self.multiversx_to_sovereign_token_id_mapper(&payment.token_identifier);
 
-                if !sov_token_id.is_valid_esdt_identifier() {
+                if mvx_to_sov_token_id_mapper.is_empty() {
                     let event_payment: EventPaymentTuple<Self::Api> = MultiValue3((
                         payment.token_identifier.clone(),
                         payment.token_nonce,
@@ -94,6 +93,8 @@ pub trait CreateTxModule:
 
                     continue;
                 }
+
+                let sov_token_id = mvx_to_sov_token_id_mapper.get();
 
                 let sov_token_nonce = self.burn_mainchain_token(payment, &sov_token_id);
 
