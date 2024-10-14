@@ -1,12 +1,13 @@
 use crate::from_sovereign::token_mapping;
 use fee_market::fee_market_proxy;
-use multiversx_sc::{hex_literal::hex, storage::StorageKey};
-use transaction::{GasLimit, OperationData, TransferData};
+use multiversx_sc::storage::StorageKey;
+use transaction::{
+    EventPaymentTuple, ExtractedFeeResult, GasLimit, OperationData, OptionalValueTransferDataTuple,
+    TransferData,
+};
 
 multiversx_sc::imports!();
 
-pub const ESDT_SYSTEM_SC_ADDRESS: [u8; 32] =
-    hex!("000000000000000000010000000000000000000000000000000000000002ffff");
 const MAX_TRANSFERS_PER_TX: usize = 10;
 
 #[multiversx_sc::module]
@@ -20,16 +21,13 @@ pub trait CreateTxModule:
     + utils::UtilsModule
     + multiversx_sc_modules::pause::PauseModule
     + token_mapping::TokenMappingModule
-    + multiversx_sc_modules::default_issue_callbacks::DefaultIssueCallbacksModule
 {
     #[payable("*")]
     #[endpoint]
     fn deposit(
         &self,
         to: ManagedAddress,
-        opt_transfer_data: OptionalValue<
-            MultiValue3<GasLimit, ManagedBuffer, ManagedVec<ManagedBuffer>>,
-        >,
+        optional_transfer_data: OptionalValueTransferDataTuple<Self::Api>,
     ) {
         require!(self.not_paused(), "Cannot create transaction while paused");
 
@@ -38,14 +36,12 @@ pub trait CreateTxModule:
         require!(!payments.is_empty(), "Nothing to transfer");
         require!(payments.len() <= MAX_TRANSFERS_PER_TX, "Too many tokens");
 
-        let opt_transfer_data = self.process_transfer_data(opt_transfer_data);
+        let opt_transfer_data = self.process_transfer_data(optional_transfer_data);
         let own_sc_address = self.blockchain().get_sc_address();
         let mut total_tokens_for_fees = 0usize;
-        let mut event_payments: MultiValueEncoded<
-            MultiValue3<TokenIdentifier, u64, EsdtTokenData>,
-        > = MultiValueEncoded::new();
-        let mut refundable_payments: ManagedVec<Self::Api, EsdtTokenPayment<Self::Api>> =
-            ManagedVec::new();
+        let mut event_payments =
+            MultiValueEncoded::<Self::Api, EventPaymentTuple<Self::Api>>::new();
+        let mut refundable_payments = ManagedVec::<Self::Api, EsdtTokenPayment<Self::Api>>::new();
 
         for payment in &payments {
             self.require_below_max_amount(&payment.token_identifier, &payment.amount);
@@ -69,40 +65,30 @@ pub trait CreateTxModule:
 
             current_token_data.amount = payment.amount.clone();
 
-            if self.is_sovereign_chain().get() {
+            let is_sovereign_chain = self.is_sovereign_chain().get();
+            if is_sovereign_chain {
                 self.tx()
                     .to(ToSelf)
                     .typed(ESDTSystemSCProxy)
                     .burn(&payment.token_identifier, &payment.amount)
                     .transfer_execute();
 
-                event_payments.push(MultiValue3((
+                let event_payment: EventPaymentTuple<Self::Api> = MultiValue3((
                     payment.token_identifier.clone(),
                     payment.token_nonce,
                     current_token_data.clone(),
-                )));
+                ));
+                event_payments.push(event_payment);
             } else {
                 let sov_token_id = self
                     .multiversx_to_sovereign_token_id(&payment.token_identifier)
                     .get();
 
-                if !sov_token_id.is_valid_esdt_identifier() {
-                    event_payments.push(MultiValue3((
-                        payment.token_identifier,
-                        payment.token_nonce,
-                        current_token_data.clone(),
-                    )));
+                let sov_token_nonce = self.burn_mainchain_token(payment, &sov_token_id);
 
-                    continue;
-                }
-
-                let sov_token_nonce = self.remove_sovereign_token(payment, &sov_token_id);
-
-                event_payments.push(MultiValue3((
-                    sov_token_id,
-                    sov_token_nonce,
-                    current_token_data.clone(),
-                )));
+                let event_payment: EventPaymentTuple<Self::Api> =
+                    MultiValue3((sov_token_id, sov_token_nonce, current_token_data.clone()));
+                event_payments.push(event_payment);
             }
         }
 
@@ -130,9 +116,7 @@ pub trait CreateTxModule:
         );
     }
 
-    fn check_and_extract_fee(
-        &self,
-    ) -> MultiValue2<OptionalValue<EsdtTokenPayment>, ManagedVec<EsdtTokenPayment>> {
+    fn check_and_extract_fee(&self) -> ExtractedFeeResult<Self::Api> {
         let mut payments = self.call_value().all_esdt_transfers().clone_value();
 
         require!(!payments.is_empty(), "Nothing to transfer");
@@ -156,9 +140,7 @@ pub trait CreateTxModule:
 
     fn process_transfer_data(
         &self,
-        opt_transfer_data: OptionalValue<
-            MultiValue3<GasLimit, ManagedBuffer, ManagedVec<ManagedBuffer>>,
-        >,
+        opt_transfer_data: OptionalValueTransferDataTuple<Self::Api>,
     ) -> Option<TransferData<Self::Api>> {
         match &opt_transfer_data {
             OptionalValue::Some(transfer_data) => {
@@ -182,7 +164,7 @@ pub trait CreateTxModule:
         }
     }
 
-    fn remove_sovereign_token(
+    fn burn_mainchain_token(
         &self,
         payment: EsdtTokenPayment<Self::Api>,
         sov_token_id: &TokenIdentifier<Self::Api>,
@@ -211,7 +193,7 @@ pub trait CreateTxModule:
         &self,
         total_tokens_for_fees: usize,
         fees_payment: &OptionalValue<EsdtTokenPayment<Self::Api>>,
-        opt_transfer_data: &Option<TransferData<<Self as ContractBase>::Api>>,
+        opt_transfer_data: &Option<TransferData<Self::Api>>,
     ) {
         match fees_payment {
             OptionalValue::Some(fee) => {
