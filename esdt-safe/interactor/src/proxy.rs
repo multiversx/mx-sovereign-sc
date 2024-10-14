@@ -117,12 +117,12 @@ where
     >(
         self,
         to: Arg0,
-        opt_transfer_data: Arg1,
+        optional_transfer_data: Arg1,
     ) -> TxTypedCall<Env, From, To, (), Gas, ()> {
         self.wrapped_tx
             .raw_call("deposit")
             .argument(&to)
-            .argument(&opt_transfer_data)
+            .argument(&optional_transfer_data)
             .original_result()
     }
 
