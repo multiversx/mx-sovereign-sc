@@ -12,8 +12,6 @@ multiversx_sc::imports!();
 const CALLBACK_GAS: GasLimit = 10_000_000; // Increase if not enough
 const TRANSACTION_GAS: GasLimit = 30_000_000;
 
-pub type MultiOperationEsdtPayment<Api> = ManagedVec<Api, OperationEsdtPayment<Api>>;
-
 #[multiversx_sc::module]
 pub trait TransferTokensModule:
     bls_signature::BlsSignatureModule
@@ -22,21 +20,21 @@ pub trait TransferTokensModule:
     + tx_batch_module::TxBatchModule
     + max_bridged_amount_module::MaxBridgedAmountModule
     + multiversx_sc_modules::pause::PauseModule
-    + multiversx_sc_modules::default_issue_callbacks::DefaultIssueCallbacksModule
     + utils::UtilsModule
     + to_sovereign::events::EventsModule
 {
     #[endpoint(executeBridgeOps)]
     fn execute_operations(&self, hash_of_hashes: ManagedBuffer, operation: Operation<Self::Api>) {
+        let is_sovereign_chain = self.is_sovereign_chain().get();
         require!(
-            !self.is_sovereign_chain().get(),
+            !is_sovereign_chain,
             "Invalid method to call in current chain"
         );
 
         require!(self.not_paused(), "Cannot transfer while paused");
 
         let (operation_hash, is_registered) =
-            self.calculate_operation_hash(hash_of_hashes.clone(), operation.clone());
+            self.calculate_operation_hash(&hash_of_hashes, &operation);
 
         if !is_registered {
             sc_panic!("Operation is not registered");
@@ -48,7 +46,7 @@ pub trait TransferTokensModule:
             operation,
         };
 
-        self.distribute_payments(hash_of_hashes, operation_tuple, minted_operation_tokens);
+        self.distribute_payments(&hash_of_hashes, &operation_tuple, &minted_operation_tokens);
     }
 
     fn mint_tokens(
@@ -107,15 +105,21 @@ pub trait TransferTokensModule:
         operation_token: &OperationEsdtPayment<Self::Api>,
     ) -> u64 {
         // mint NFT
-        let nft_nonce = self.send().esdt_nft_create(
-            mx_token_id,
-            &operation_token.token_data.amount,
-            &operation_token.token_data.name,
-            &operation_token.token_data.royalties,
-            &operation_token.token_data.hash,
-            &operation_token.token_data.attributes,
-            &operation_token.token_data.uris,
-        );
+        let nft_nonce = self
+            .tx()
+            .to(ToSelf)
+            .typed(system_proxy::UserBuiltinProxy)
+            .esdt_nft_create(
+                mx_token_id,
+                &operation_token.token_data.amount,
+                &operation_token.token_data.name,
+                &operation_token.token_data.royalties,
+                &operation_token.token_data.hash,
+                &operation_token.token_data.attributes,
+                &operation_token.token_data.uris,
+            )
+            .returns(ReturnsResult)
+            .sync_call();
 
         // save token id and nonce
         self.sovereign_esdt_token_info_mapper(
@@ -136,31 +140,29 @@ pub trait TransferTokensModule:
         nft_nonce
     }
 
+    // TODO: create a callback module
     fn distribute_payments(
         &self,
-        hash_of_hashes: ManagedBuffer,
-        operation_tuple: OperationTuple<Self::Api>,
-        tokens_list: ManagedVec<OperationEsdtPayment<Self::Api>>,
+        hash_of_hashes: &ManagedBuffer,
+        operation_tuple: &OperationTuple<Self::Api>,
+        tokens_list: &ManagedVec<OperationEsdtPayment<Self::Api>>,
     ) {
         let mapped_tokens: ManagedVec<Self::Api, EsdtTokenPayment<Self::Api>> =
             tokens_list.iter().map(|token| token.into()).collect();
 
         match &operation_tuple.operation.data.opt_transfer_data {
             Some(transfer_data) => {
-                let mut args = ManagedArgBuffer::new();
-                for arg in &transfer_data.args {
-                    args.push_arg(arg);
-                }
+                let args = ManagedArgBuffer::from(transfer_data.args.clone());
 
                 self.tx()
                     .to(&operation_tuple.operation.to)
                     .raw_call(transfer_data.function.clone())
-                    .arguments_raw(args.clone())
+                    .arguments_raw(args)
                     .multi_esdt(mapped_tokens.clone())
                     .gas(transfer_data.gas_limit)
                     .callback(
                         <Self as TransferTokensModule>::callbacks(self)
-                            .execute(&hash_of_hashes, &operation_tuple),
+                            .execute(hash_of_hashes, operation_tuple),
                     )
                     .gas_for_callback(CALLBACK_GAS)
                     .register_promise();
@@ -177,7 +179,7 @@ pub trait TransferTokensModule:
                     .gas(TRANSACTION_GAS)
                     .callback(
                         <Self as TransferTokensModule>::callbacks(self)
-                            .execute(&hash_of_hashes, &operation_tuple),
+                            .execute(hash_of_hashes, operation_tuple),
                     )
                     .register_promise();
             }
@@ -193,11 +195,7 @@ pub trait TransferTokensModule:
         args.push_arg(to);
         args.push_arg(mapped_tokens.len());
 
-        for token in &mapped_tokens {
-            args.push_arg(token.token_identifier);
-            args.push_arg(token.token_nonce);
-            args.push_arg(token.amount);
-        }
+        args.push_multi_arg(&mapped_tokens);
 
         args
     }
@@ -211,10 +209,7 @@ pub trait TransferTokensModule:
     ) {
         match result {
             ManagedAsyncCallResult::Ok(_) => {
-                self.execute_bridge_operation_event(
-                    hash_of_hashes.clone(),
-                    operation_tuple.op_hash.clone(),
-                );
+                self.execute_bridge_operation_event(hash_of_hashes, &operation_tuple.op_hash);
             }
             ManagedAsyncCallResult::Err(_) => {
                 self.emit_transfer_failed_events(hash_of_hashes, operation_tuple);
@@ -236,10 +231,7 @@ pub trait TransferTokensModule:
         operation_tuple: &OperationTuple<Self::Api>,
     ) {
         // confirmation event
-        self.execute_bridge_operation_event(
-            hash_of_hashes.clone(),
-            operation_tuple.op_hash.clone(),
-        );
+        self.execute_bridge_operation_event(hash_of_hashes, &operation_tuple.op_hash);
 
         for operation_token in &operation_tuple.operation.tokens {
             let mx_token_id_state = self
@@ -281,7 +273,7 @@ pub trait TransferTokensModule:
             &operation_tuple.operation.data.op_sender,
             &operation_tuple
                 .operation
-                .get_tokens_as_multi_value_encoded(),
+                .map_tokens_to_multi_value_encoded(),
             OperationData {
                 op_nonce: tx_nonce,
                 op_sender: sc_address.clone(),
@@ -293,8 +285,8 @@ pub trait TransferTokensModule:
     // use pending_operations as param
     fn calculate_operation_hash(
         &self,
-        hash_of_hashes: ManagedBuffer,
-        operation: Operation<Self::Api>,
+        hash_of_hashes: &ManagedBuffer,
+        operation: &Operation<Self::Api>,
     ) -> (ManagedBuffer, bool) {
         let mut serialized_data = ManagedBuffer::new();
         let mut storage_key = StorageKey::from("pendingHashes");
