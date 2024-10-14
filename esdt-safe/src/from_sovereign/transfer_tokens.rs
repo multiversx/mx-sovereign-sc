@@ -65,8 +65,9 @@ pub trait TransferTokensModule:
 
             // token is from sovereign -> continue and mint
             let mvx_token_id = sov_to_mvx_token_id_mapper.get();
+            let current_token_type_ref = &operation_token.token_data.token_type;
 
-            if operation_token.token_nonce == 0 {
+            if self.is_fungible(current_token_type_ref) {
                 self.tx()
                     .to(ToSelf)
                     .typed(system_proxy::UserBuiltinProxy)
@@ -99,32 +100,59 @@ pub trait TransferTokensModule:
         mvx_token_id: &TokenIdentifier<Self::Api>,
         operation_token: &OperationEsdtPayment<Self::Api>,
     ) -> u64 {
+        let mut nonce = 0;
+
+        let current_token_type_ref = &operation_token.token_data.token_type;
+
+        // if doesn't exist in mapper nonce will be 0 and we need to create the SFT/MetaESDT, otherwise mint
+        if self.is_sft_or_meta(current_token_type_ref) {
+            nonce = self.get_mvx_nonce_from_mapper(mvx_token_id, operation_token.token_nonce)
+        }
+
         // mint NFT
-        let nft_nonce = self
-            .tx()
+        if nonce == 0 {
+            // if NFT/DyNFT => esdt_nft_create
+            nonce = self.mint_nft_tx(mvx_token_id, &operation_token.token_data);
+
+            // save token id and nonce
+            self.update_esdt_info_mappers(
+                &operation_token.token_identifier,
+                operation_token.token_nonce,
+                mvx_token_id,
+                nonce,
+            );
+        } else {
+            // if SFT/DySFT/Meta/DyMeta => esdt_local_mint (add quantity)
+            self.tx()
+                .to(ToSelf)
+                .typed(system_proxy::UserBuiltinProxy)
+                .esdt_local_mint(mvx_token_id, nonce, &operation_token.token_data.amount)
+                .sync_call();
+        }
+
+        nonce
+    }
+
+    #[inline]
+    fn mint_nft_tx(
+        &self,
+        mvx_token_id: &TokenIdentifier,
+        token_data: &EsdtTokenData<Self::Api>,
+    ) -> u64 {
+        self.tx()
             .to(ToSelf)
             .typed(system_proxy::UserBuiltinProxy)
             .esdt_nft_create(
                 mvx_token_id,
-                &operation_token.token_data.amount,
-                &operation_token.token_data.name,
-                &operation_token.token_data.royalties,
-                &operation_token.token_data.hash,
-                &operation_token.token_data.attributes,
-                &operation_token.token_data.uris,
+                &token_data.amount,
+                &token_data.name,
+                &token_data.royalties,
+                &token_data.hash,
+                &token_data.attributes,
+                &token_data.uris,
             )
             .returns(ReturnsResult)
-            .sync_call();
-
-        // save token id and nonce
-        self.update_esdt_info_mappers(
-            &operation_token.token_identifier,
-            operation_token.token_nonce,
-            mvx_token_id,
-            nft_nonce,
-        );
-
-        nft_nonce
+            .sync_call()
     }
 
     // TODO: create a callback module
@@ -292,6 +320,23 @@ pub trait TransferTokensModule:
         } else {
             (hash, false)
         }
+    }
+
+    #[inline]
+    fn is_fungible(self, token_type: &EsdtTokenType) -> bool {
+        *token_type == EsdtTokenType::Fungible
+    }
+
+    #[inline]
+    fn is_sft_or_meta(self, token_type: &EsdtTokenType) -> bool {
+        *token_type == EsdtTokenType::SemiFungible || *token_type == EsdtTokenType::Meta
+    }
+
+    #[inline]
+    fn get_mvx_nonce_from_mapper(self, token_id: &TokenIdentifier, nonce: u64) -> u64 {
+        self.sovereign_to_multiversx_esdt_info_mapper(token_id, nonce)
+            .get()
+            .token_nonce
     }
 
     #[storage_mapper("pendingHashes")]
