@@ -2,7 +2,7 @@ use crate::from_sovereign::token_mapping;
 use fee_market::fee_market_proxy;
 use multiversx_sc::storage::StorageKey;
 use transaction::{
-    EventPayment, ExtractedFeeResult, GasLimit, OperationData, OptionalValueTransferDataTuple,
+    EventPaymentTuple, ExtractedFeeResult, GasLimit, OperationData, OptionalValueTransferDataTuple,
     TransferData,
 };
 
@@ -36,7 +36,8 @@ pub trait CreateTxModule:
         require!(payments.len() <= MAX_TRANSFERS_PER_TX, "Too many tokens");
 
         let mut total_tokens_for_fees = 0usize;
-        let mut event_payments = MultiValueEncoded::new();
+        let mut event_payments =
+            MultiValueEncoded::<Self::Api, EventPaymentTuple<Self::Api>>::new();
         let mut refundable_payments = ManagedVec::<Self::Api, _>::new();
 
         let own_sc_address = self.blockchain().get_sc_address();
@@ -70,12 +71,11 @@ pub trait CreateTxModule:
                     .burn(&payment.token_identifier, &payment.amount)
                     .transfer_execute();
 
-                let event_payment = EventPayment::new(
+                event_payments.push(MultiValue3::from((
                     payment.token_identifier,
                     payment.token_nonce,
                     current_token_data,
-                );
-                event_payments.push(event_payment);
+                )));
             } else {
                 let mvx_to_sov_token_id_mapper =
                     self.multiversx_to_sovereign_token_id_mapper(&payment.token_identifier);
@@ -83,16 +83,17 @@ pub trait CreateTxModule:
                     let sov_token_id = mvx_to_sov_token_id_mapper.get();
                     let sov_token_nonce = self.burn_mainchain_token(payment, &sov_token_id);
 
-                    let event_payment =
-                        EventPayment::new(sov_token_id, sov_token_nonce, current_token_data);
-                    event_payments.push(event_payment);
+                    event_payments.push(MultiValue3::from((
+                        sov_token_id,
+                        sov_token_nonce,
+                        current_token_data,
+                    )));
                 } else {
-                    let event_payment = EventPayment::new(
+                    event_payments.push(MultiValue3::from((
                         payment.token_identifier,
                         payment.token_nonce,
                         current_token_data,
-                    );
-                    event_payments.push(event_payment);
+                    )));
                 }
             }
         }
@@ -112,7 +113,7 @@ pub trait CreateTxModule:
         let tx_nonce = self.get_and_save_next_tx_id();
         self.deposit_event(
             &to,
-            &EventPayment::map_to_tuple_multi_value(event_payments),
+            &event_payments,
             OperationData::new(tx_nonce, caller, option_transfer_data),
         );
     }
