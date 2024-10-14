@@ -1,1 +1,3 @@
-contract_address = "erd1qqqqqqqqqqqqqpgqvq86d7xl8p3q74lxh59p3p3ncalrd7kkt7asgf7m7v"
+contract_address = "erd1qqqqqqqqqqqqqpgqr6m9gnreldnk7efzeanchpa5s84rl7cqt7ascj2q4m"
+fee_market_address = "erd1qqqqqqqqqqqqqpgqzh0vtrpuc47dk05ytd7akms950utmljxt7as2k94hu"
+price_aggregator_address = "erd1qqqqqqqqqqqqqpgq4zhxptkn7qmjvq6c2m03wg7wam4vp0ewt7as50a74x"
