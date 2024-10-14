@@ -5,6 +5,7 @@ mod proxy;
 
 use fee_market::fee_market_proxy::FeeMarketProxy;
 use fee_market::fee_market_proxy::{self, FeeStruct, FeeType};
+use multiversx_sc_scenario::multiversx_chain_vm::crypto_functions::sha256;
 use multiversx_sc_snippets::imports::*;
 use multiversx_sc_snippets::sdk;
 use serde::{Deserialize, Serialize};
@@ -12,6 +13,7 @@ use std::{
     io::{Read, Write},
     path::Path,
 };
+use transaction::OperationEsdtPayment;
 use transaction::{GasLimit, Operation, OperationData, PaymentsVec};
 
 const GATEWAY: &str = sdk::gateway::DEVNET_GATEWAY;
@@ -70,6 +72,7 @@ struct State {
     contract_address: Option<Bech32Address>,
     fee_market_address: Option<Bech32Address>,
     price_aggregator_address: Option<Bech32Address>,
+    header_verifier_address: Option<Bech32Address>,
 }
 
 impl State {
@@ -96,6 +99,10 @@ impl State {
 
     pub fn set_price_aggregator_address(&mut self, address: Bech32Address) {
         self.price_aggregator_address = Some(address);
+    }
+
+    pub fn set_header_verifier_address(&mut self, address: Bech32Address) {
+        self.header_verifier_address = Some(address);
     }
 
     /// Returns the contract address
@@ -125,6 +132,7 @@ struct ContractInteract {
     contract_code: BytesValue,
     fee_market_code: BytesValue,
     price_aggregator_code: BytesValue,
+    header_verifier_code: BytesValue,
     state: State,
 }
 
@@ -152,6 +160,11 @@ impl ContractInteract {
             &InterpreterContext::default(),
         );
 
+        let header_verifier_code = BytesValue::interpret_from(
+            "mxsc:contract-codes/header-verifier.mxsc.json",
+            &InterpreterContext::default(),
+        );
+
         ContractInteract {
             interactor,
             wallet_address,
@@ -162,6 +175,7 @@ impl ContractInteract {
             contract_code,
             fee_market_code,
             price_aggregator_code,
+            header_verifier_code,
             state: State::load_state(),
         }
     }
@@ -266,6 +280,28 @@ impl ContractInteract {
         println!("new token_handler_address: {new_address_bech32}");
     }
 
+    async fn deploy_header_verifier_contract(&mut self) {
+        let new_address = self
+            .interactor
+            .tx()
+            .from(&self.wallet_address)
+            .gas(100_000_000u64)
+            .typed(proxy::EsdtSafeProxy)
+            .init(false)
+            .code(&self.header_verifier_code)
+            .returns(ReturnsNewAddress)
+            .prepare_async()
+            .run()
+            .await;
+        let new_address_bech32 = bech32::encode(&new_address);
+        self.state
+            .set_header_verifier_address(Bech32Address::from_bech32_string(
+                new_address_bech32.clone(),
+            ));
+
+        println!("new header_verifier_address: {new_address_bech32}");
+    }
+
     async fn upgrade(&mut self) {
         let response = self
             .interactor
@@ -304,7 +340,7 @@ impl ContractInteract {
     }
 
     async fn set_header_verifier_address(&mut self) {
-        let header_verifier_address = bech32::decode("");
+        let header_verifier_address = self.state.header_verifier_address.clone().unwrap();
 
         let response = self
             .interactor
@@ -461,12 +497,10 @@ impl ContractInteract {
     }
 
     async fn execute_operations(&mut self) {
-        let hash_of_hashes = ManagedBuffer::new_from_bytes(&b""[..]);
-        let operation = Operation::new(
-            ManagedAddress::zero(),
-            ManagedVec::new(),
-            OperationData::new(0, ManagedAddress::zero(), None),
-        );
+        let (tokens, data) = self.setup_payments().await;
+        let to = managed_address!(&self.bob_address);
+        let operation = Operation::new(to, tokens, data);
+        let operation_hash = self.get_operation_hash(&operation).await;
 
         let response = self
             .interactor
@@ -475,8 +509,30 @@ impl ContractInteract {
             .to(self.state.current_address())
             .gas(30_000_000u64)
             .typed(proxy::EsdtSafeProxy)
-            .execute_operations(hash_of_hashes, operation)
+            .execute_operations(operation_hash, operation)
             .returns(ReturnsResultUnmanaged)
+            .prepare_async()
+            .run()
+            .await;
+
+        println!("Result: {response:?}");
+    }
+
+    async fn execute_operations_with_error(&mut self, error_msg: ExpectError<'_>) {
+        let (tokens, data) = self.setup_payments().await;
+        let to = managed_address!(&self.bob_address);
+        let operation = Operation::new(to, tokens, data);
+        let operation_hash = self.get_operation_hash(&operation).await;
+
+        let response = self
+            .interactor
+            .tx()
+            .from(&self.wallet_address)
+            .to(self.state.current_address())
+            .gas(30_000_000u64)
+            .typed(proxy::EsdtSafeProxy)
+            .execute_operations(operation_hash, operation)
+            .returns(error_msg)
             .prepare_async()
             .run()
             .await;
@@ -821,7 +877,7 @@ impl ContractInteract {
             .interactor
             .tx()
             .from(&self.wallet_address)
-            .to(self.state.current_address())
+            .to(self.state.fee_market_address.clone().unwrap().as_address())
             .gas(30_000_000u64)
             .typed(FeeMarketProxy)
             .disable_fee(TOKEN_ID)
@@ -832,6 +888,46 @@ impl ContractInteract {
 
         println!("Result: {response:?}");
     }
+
+    async fn setup_payments(
+        &mut self,
+    ) -> (
+        ManagedVec<StaticApi, OperationEsdtPayment<StaticApi>>,
+        OperationData<StaticApi>,
+    ) {
+        let mut tokens: ManagedVec<StaticApi, OperationEsdtPayment<StaticApi>> = ManagedVec::new();
+        let token_ids = vec![TOKEN_ID];
+
+        for token_id in token_ids {
+            let payment: OperationEsdtPayment<StaticApi> = OperationEsdtPayment {
+                token_identifier: token_id.into(),
+                token_nonce: 1,
+                token_data: EsdtTokenData::default(),
+            };
+
+            tokens.push(payment);
+        }
+
+        let op_sender = managed_address!(&self.wallet_address);
+        let data: OperationData<StaticApi> = OperationData {
+            op_nonce: 1,
+            op_sender,
+            opt_transfer_data: Option::None,
+        };
+
+        (tokens, data)
+    }
+
+    async fn get_operation_hash(
+        &mut self,
+        operation: &Operation<StaticApi>,
+    ) -> ManagedBuffer<StaticApi> {
+        let mut serialized_operation: ManagedBuffer<StaticApi> = ManagedBuffer::new();
+        let _ = operation.top_encode(&mut serialized_operation);
+        let sha256 = sha256(&serialized_operation.to_vec());
+
+        ManagedBuffer::new_from_bytes(&sha256)
+    }
 }
 
 #[tokio::test]
@@ -841,8 +937,11 @@ async fn test_deploy() {
     interact.deploy_price_aggregator().await;
     interact.deploy_fee_market().await;
     interact.set_fee_market_address().await;
-    interact.unpause_endpoint().await;
     interact.disable_fee().await;
+    interact.deploy_header_verifier_contract().await;
+    interact.set_header_verifier_address().await;
+    interact.unpause_endpoint().await;
+    
 }
 
 #[tokio::test]
