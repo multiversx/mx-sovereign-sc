@@ -1,10 +1,9 @@
 use bls_signature::BlsSignature;
 use header_verifier::{header_verifier_proxy, Headerverifier};
+use multiversx_sc::types::ManagedBuffer;
 use multiversx_sc::{
     api::ManagedTypeApi,
-    types::{
-        BigUint, ManagedBuffer, ManagedByteArray, MultiValueEncoded, TestAddress, TestSCAddress,
-    },
+    types::{BigUint, ManagedByteArray, MultiValueEncoded, TestAddress, TestSCAddress},
 };
 use multiversx_sc_scenario::{
     api::StaticApi, imports::MxscPath, multiversx_chain_vm::crypto_functions::sha256, DebugApi,
@@ -15,9 +14,7 @@ const HEADER_VERIFIER_CODE_PATH: MxscPath = MxscPath::new("ouput/header-verifier
 const HEADER_VERIFIER_ADDRESS: TestSCAddress = TestSCAddress::new("header-verifier");
 
 // NOTE: This is a mock path
-const ENSHRINE_CODE_PATH: MxscPath =
-    MxscPath::new("../chain-factory/output/chain-factory.mxsc-json");
-const ENSHRINE_ADDRESS: TestSCAddress = TestSCAddress::new("enshrine");
+const ENSHRINE_ADDRESS: TestAddress = TestAddress::new("enshrine");
 
 const OWNER: TestAddress = TestAddress::new("owner");
 const WEGLD_BALANCE: u128 = 100_000_000_000_000_000;
@@ -39,7 +36,6 @@ pub struct BridgeOperation<M: ManagedTypeApi> {
 fn world() -> ScenarioWorld {
     let mut blockchain = ScenarioWorld::new();
     blockchain.register_contract(HEADER_VERIFIER_CODE_PATH, header_verifier::ContractBuilder);
-    blockchain.register_contract(ENSHRINE_CODE_PATH, header_verifier::ContractBuilder);
 
     blockchain
 }
@@ -54,6 +50,11 @@ impl HeaderVerifierTestState {
 
         world
             .account(OWNER)
+            .balance(BigUint::from(WEGLD_BALANCE))
+            .nonce(1);
+
+        world
+            .account(ENSHRINE_ADDRESS)
             .balance(BigUint::from(WEGLD_BALANCE))
             .nonce(1);
 
@@ -73,20 +74,7 @@ impl HeaderVerifierTestState {
         self
     }
 
-    fn deploy_enshrine_esdt_contract(&mut self, bls_keys: &BlsKeys) -> &mut Self {
-        self.world
-            .tx()
-            .from(OWNER)
-            .typed(header_verifier_proxy::HeaderverifierProxy)
-            .init(bls_keys)
-            .code(HEADER_VERIFIER_CODE_PATH)
-            .new_address(ENSHRINE_ADDRESS)
-            .run();
-
-        self
-    }
-
-    fn propose_register_esdt_address(&mut self, esdt_address: TestSCAddress) {
+    fn propose_register_esdt_address(&mut self, esdt_address: TestAddress) {
         self.world
             .tx()
             .from(OWNER)
@@ -110,62 +98,55 @@ impl HeaderVerifierTestState {
             .run();
     }
 
-    fn propose_remove_execute_hash(
+    fn propose_remove_executed_hash(
         &mut self,
+        caller: TestAddress,
         hash_of_hashes: &ManagedBuffer<StaticApi>,
         operation_hash: ManagedBuffer<StaticApi>,
         error_status: Option<ErrorStatus>,
     ) {
+        let transaction = self
+            .world
+            .tx()
+            .from(caller)
+            .to(HEADER_VERIFIER_ADDRESS)
+            .typed(header_verifier_proxy::HeaderverifierProxy)
+            .remove_executed_hash(hash_of_hashes, operation_hash);
+
         match error_status {
-            Some(error) => self
-                .world
-                .tx()
-                .from(OWNER)
-                .to(HEADER_VERIFIER_ADDRESS)
-                .typed(header_verifier_proxy::HeaderverifierProxy)
-                .remove_executed_hash(hash_of_hashes, operation_hash)
+            Some(error) => transaction
                 .returns(ExpectError(error.code, error.error_message))
                 .run(),
-            None => self
-                .world
-                .tx()
-                .from(ENSHRINE_ADDRESS)
-                .to(HEADER_VERIFIER_ADDRESS)
-                .typed(header_verifier_proxy::HeaderverifierProxy)
-                .remove_executed_hash(hash_of_hashes, operation_hash)
-                .run(),
+            None => transaction.run(),
         }
     }
 
     fn get_bls_keys(&mut self, bls_keys_vec: Vec<ManagedBuffer<StaticApi>>) -> BlsKeys {
-        let bls_keys = bls_keys_vec.iter().map(|key| key.clone().into()).collect();
+        let bls_keys = bls_keys_vec.iter().map(|key| key).cloned().collect();
 
         bls_keys
     }
 
-    fn get_mock_operation(
+    fn generate_bridge_operation_struct(
         &mut self,
-        operations: Vec<&ManagedBuffer<StaticApi>>,
+        operation_hashes: Vec<&ManagedBuffer<StaticApi>>,
     ) -> BridgeOperation<StaticApi> {
-        let mock_signature: BlsSignature<StaticApi> = ManagedByteArray::new_from_bytes(
-            b"EIZ2\x05\xf7q\xc7G\x96\x1f\xba0\xe2\xd1\xf5pE\x14\xd7?\xac\xff\x8d\x1a\x0c\x11\x900f5\xfb\xff4\x94\xb8@\xc5^\xc2,exn0\xe3\xf0\n"
-        );
+        let mock_signature: BlsSignature<StaticApi> = ManagedByteArray::new_from_bytes(&[0; 48]);
 
         let mut bridge_operations: MultiValueEncoded<StaticApi, ManagedBuffer<StaticApi>> =
             MultiValueEncoded::new();
-        let mut bridge_operation_appended_hashes = ManagedBuffer::new();
+        let mut appended_hashes = ManagedBuffer::new();
 
-        for operation in operations {
-            let operation_hash = self.get_operation_hash(operation);
-            bridge_operation_appended_hashes.append(&operation_hash);
-            bridge_operations.push(operation_hash);
+        for operation_hash in operation_hashes {
+            appended_hashes.append(operation_hash);
+            bridge_operations.push(operation_hash.clone());
         }
 
-        let bridge_operations_hash = self.get_operation_hash(&bridge_operation_appended_hashes);
+        let hash_of_hashes = self.get_operation_hash(&appended_hashes);
 
         BridgeOperation {
             signature: mock_signature,
-            bridge_operation_hash: bridge_operations_hash,
+            bridge_operation_hash: hash_of_hashes,
             operations_hashes: bridge_operations,
         }
     }
@@ -174,10 +155,17 @@ impl HeaderVerifierTestState {
         &mut self,
         operation: &ManagedBuffer<StaticApi>,
     ) -> ManagedBuffer<StaticApi> {
-        let array: &mut [u8; 64] = &mut [0u8; 64];
-        operation.load_to_byte_array(array);
+        let mut array = [0; 1024];
 
-        ManagedBuffer::from(&sha256(array))
+        let len = {
+            let byte_array = operation.load_to_byte_array(&mut array);
+            byte_array.len()
+        };
+
+        let trimmed_slice = &array[..len];
+        let hash = sha256(trimmed_slice);
+
+        ManagedBuffer::from(&hash)
     }
 }
 
@@ -220,16 +208,30 @@ fn test_register_bridge_operation() {
 
     let operation_1 = ManagedBuffer::from("operation_1");
     let operation_2 = ManagedBuffer::from("operation_2");
-    let operation = state.get_mock_operation(vec![&operation_1, &operation_2]);
+    let operation = state.generate_bridge_operation_struct(vec![&operation_1, &operation_2]);
 
-    state.propose_register_operations(operation);
+    state.propose_register_operations(operation.clone());
 
     state
         .world
         .query()
         .to(HEADER_VERIFIER_ADDRESS)
         .whitebox(header_verifier::contract_obj, |sc| {
+            let hash_of_hashes: ManagedBuffer<DebugApi> =
+                ManagedBuffer::from(operation.bridge_operation_hash.to_vec());
+
             assert!(!sc.hash_of_hashes_history().is_empty());
+            assert!(sc.hash_of_hashes_history().len() == 1);
+            assert!(sc.hash_of_hashes_history().contains(&hash_of_hashes));
+            assert!(!sc.pending_hashes(&hash_of_hashes).is_empty());
+
+            for (mut i, operation_hash) in operation.operations_hashes.into_iter().enumerate() {
+                i += 1;
+                let pending_hash = sc.pending_hashes(&hash_of_hashes).get_by_index(i);
+                let expected_hash_debug_api: ManagedBuffer<DebugApi> =
+                    ManagedBuffer::from(operation_hash.to_vec());
+                assert_eq!(pending_hash, expected_hash_debug_api);
+            }
         });
 }
 
@@ -243,8 +245,7 @@ fn test_remove_executed_hash_caller_not_esdt_address() {
 
     let operation_1 = ManagedBuffer::from("operation_1");
     let operation_2 = ManagedBuffer::from("operation_2");
-    let operation = state.get_mock_operation(vec![&operation_1, &operation_2]);
-
+    let operation = state.generate_bridge_operation_struct(vec![&operation_1, &operation_2]);
     let error_status = ErrorStatus {
         code: 4,
         error_message: "Only ESDT Safe contract can call this endpoint",
@@ -252,7 +253,8 @@ fn test_remove_executed_hash_caller_not_esdt_address() {
 
     state.propose_register_operations(operation.clone());
     state.propose_register_esdt_address(ENSHRINE_ADDRESS);
-    state.propose_remove_execute_hash(
+    state.propose_remove_executed_hash(
+        OWNER,
         &operation.bridge_operation_hash,
         operation_1,
         Some(error_status),
@@ -269,7 +271,7 @@ fn test_remove_executed_hash_no_esdt_address_registered() {
 
     let operation_1 = ManagedBuffer::from("operation_1");
     let operation_2 = ManagedBuffer::from("operation_2");
-    let operation = state.get_mock_operation(vec![&operation_1, &operation_2]);
+    let operation = state.generate_bridge_operation_struct(vec![&operation_1, &operation_2]);
 
     let error_status = ErrorStatus {
         code: 4,
@@ -277,7 +279,8 @@ fn test_remove_executed_hash_no_esdt_address_registered() {
     };
 
     state.propose_register_operations(operation.clone());
-    state.propose_remove_execute_hash(
+    state.propose_remove_executed_hash(
+        ENSHRINE_ADDRESS,
         &operation.bridge_operation_hash,
         operation_1,
         Some(error_status),
@@ -285,21 +288,27 @@ fn test_remove_executed_hash_no_esdt_address_registered() {
 }
 
 #[test]
-fn test_remove_executed_hash() {
+fn test_remove_one_executed_hash() {
     let mut state = HeaderVerifierTestState::new();
     let bls_key_1 = ManagedBuffer::from("bls_key_1");
     let managed_bls_keys = state.get_bls_keys(vec![bls_key_1]);
 
-    state.deploy_enshrine_esdt_contract(&managed_bls_keys);
     state.deploy_header_verifier_contract(managed_bls_keys);
 
-    let operation_1 = ManagedBuffer::from("operation_1");
-    let operation_2 = ManagedBuffer::from("operation_2");
-    let operation = state.get_mock_operation(vec![&operation_1, &operation_2]);
+    let operation_hash_1 = ManagedBuffer::from("operation_1");
+    let operation_hash_2 = ManagedBuffer::from("operation_2");
+    let operation =
+        state.generate_bridge_operation_struct(vec![&operation_hash_1, &operation_hash_2]);
 
     state.propose_register_operations(operation.clone());
     state.propose_register_esdt_address(ENSHRINE_ADDRESS);
-    state.propose_remove_execute_hash(&operation.bridge_operation_hash, operation_1, None);
+
+    state.propose_remove_executed_hash(
+        ENSHRINE_ADDRESS,
+        &operation.bridge_operation_hash,
+        operation_hash_1,
+        None,
+    );
 
     state
         .world
@@ -308,6 +317,53 @@ fn test_remove_executed_hash() {
         .whitebox(header_verifier::contract_obj, |sc| {
             let hash_of_hashes: ManagedBuffer<DebugApi> =
                 ManagedBuffer::from(operation.bridge_operation_hash.to_vec());
-            sc.pending_hashes(&hash_of_hashes).is_empty();
+            assert!(!sc.pending_hashes(&hash_of_hashes).is_empty());
+            assert!(sc.pending_hashes(&hash_of_hashes).len() == 1);
+
+            let pending_hash_2 = sc.pending_hashes(&hash_of_hashes).get_by_index(1);
+            let expected_hash_2_debug_api: ManagedBuffer<DebugApi> =
+                ManagedBuffer::from(operation_hash_2.to_vec());
+
+            assert_eq!(pending_hash_2, expected_hash_2_debug_api);
+        });
+}
+
+#[test]
+fn test_remove_all_executed_hashes() {
+    let mut state = HeaderVerifierTestState::new();
+    let bls_key_1 = ManagedBuffer::from("bls_key_1");
+    let managed_bls_keys = state.get_bls_keys(vec![bls_key_1]);
+
+    state.deploy_header_verifier_contract(managed_bls_keys);
+
+    let operation_1 = ManagedBuffer::from("operation_1");
+    let operation_2 = ManagedBuffer::from("operation_2");
+    let operation = state.generate_bridge_operation_struct(vec![&operation_1, &operation_2]);
+
+    state.propose_register_operations(operation.clone());
+    state.propose_register_esdt_address(ENSHRINE_ADDRESS);
+
+    state.propose_remove_executed_hash(
+        ENSHRINE_ADDRESS,
+        &operation.bridge_operation_hash,
+        operation_1,
+        None,
+    );
+
+    state.propose_remove_executed_hash(
+        ENSHRINE_ADDRESS,
+        &operation.bridge_operation_hash,
+        operation_2,
+        None,
+    );
+    state
+        .world
+        .query()
+        .to(HEADER_VERIFIER_ADDRESS)
+        .whitebox(header_verifier::contract_obj, |sc| {
+            let hash_of_hashes: ManagedBuffer<DebugApi> =
+                ManagedBuffer::from(operation.bridge_operation_hash.to_vec());
+            assert!(sc.pending_hashes(&hash_of_hashes).is_empty());
+            assert!(sc.hash_of_hashes_history().contains(&hash_of_hashes));
         });
 }

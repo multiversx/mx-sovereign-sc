@@ -18,10 +18,10 @@ path = "../common/transaction"
 path = "../common/bls-signature"
 
 [dependencies.multiversx-sc]
-version = "=0.53.1"
+version = "=0.53.2"
 
 [dev-dependencies]
 num-bigint = "0.4.2"
 
 [dev-dependencies.multiversx-sc-scenario]
-version = "=0.53.1"
+version = "=0.53.2"
