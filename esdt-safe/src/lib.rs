@@ -1,11 +1,15 @@
 #![no_std]
 
+use transaction::GasLimit;
+
 multiversx_sc::imports!();
 multiversx_sc::derive_imports!();
 
 pub mod esdt_safe_proxy;
 pub mod from_sovereign;
 pub mod to_sovereign;
+
+const MAX_USER_TX_GAS_LIMIT: GasLimit = 60_000_000;
 
 #[multiversx_sc::contract]
 pub trait EsdtSafe:
@@ -25,8 +29,12 @@ pub trait EsdtSafe:
     #[init]
     fn init(&self, is_sovereign_chain: bool) {
         self.is_sovereign_chain().set(is_sovereign_chain);
+        self.max_user_tx_gas_limit().set(MAX_USER_TX_GAS_LIMIT);
         self.set_paused(true);
     }
+
+    #[upgrade]
+    fn upgrade(&self) {}
 
     #[only_owner]
     #[endpoint(setFeeMarketAddress)]
@@ -44,6 +52,15 @@ pub trait EsdtSafe:
         self.header_verifier_address().set(&header_verifier_address);
     }
 
-    #[upgrade]
-    fn upgrade(&self) {}
+    #[only_owner]
+    #[endpoint(setMaxTxGasLimit)]
+    fn set_max_user_tx_gas_limit(&self, max_user_tx_gas_limit: GasLimit) {
+        self.max_user_tx_gas_limit().set(max_user_tx_gas_limit);
+    }
+
+    #[only_owner]
+    #[endpoint(setBannedEndpoint)]
+    fn set_banned_endpoint(&self, endpoint_name: ManagedBuffer) {
+        self.banned_endpoint_names().insert(endpoint_name);
+    }
 }

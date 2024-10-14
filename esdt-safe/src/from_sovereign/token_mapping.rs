@@ -45,6 +45,9 @@ pub trait TokenMappingModule: utils::UtilsModule {
             "eGLD value should be 0.05"
         );
 
+        // TODO 
+        // require sov_token_is should not be already registered
+
         match token_type {
             EsdtTokenType::Invalid => sc_panic!("Invalid type"),
             _ => self.handle_token_issue(IssueEsdtArgs {
