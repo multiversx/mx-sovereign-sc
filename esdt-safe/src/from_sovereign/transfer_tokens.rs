@@ -140,7 +140,7 @@ pub trait TransferTokensModule:
         token_data: &EsdtTokenData<Self::Api>,
     ) -> u64 {
         self.tx()
-            .to(ToSelf)
+            .to(ESDTSystemSCAddress)
             .typed(system_proxy::UserBuiltinProxy)
             .esdt_nft_create(
                 mvx_token_id,
@@ -175,7 +175,7 @@ pub trait TransferTokensModule:
                     .to(&operation_tuple.operation.to)
                     .raw_call(transfer_data.function.clone())
                     .arguments_raw(args)
-                    .multi_esdt(mapped_tokens.clone())
+                    .payment(&mapped_tokens)
                     .gas(transfer_data.gas_limit)
                     .callback(
                         <Self as TransferTokensModule>::callbacks(self)
@@ -188,7 +188,7 @@ pub trait TransferTokensModule:
                 self.tx()
                     .to(&operation_tuple.operation.to)
                     .raw_call(ESDT_MULTI_TRANSFER_FUNC_NAME)
-                    .multi_esdt(mapped_tokens)
+                    .payment(&mapped_tokens)
                     .gas(TRANSACTION_GAS)
                     .callback(
                         <Self as TransferTokensModule>::callbacks(self)
@@ -253,7 +253,7 @@ pub trait TransferTokensModule:
                 }
 
                 self.tx()
-                    .to(ToSelf)
+                    .to(ESDTSystemSCAddress)
                     .typed(system_proxy::UserBuiltinProxy)
                     .esdt_local_burn(
                         &mvx_token_id,
