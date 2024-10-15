@@ -30,13 +30,13 @@ pub trait FeeMarket:
         }
     }
 
+    #[upgrade]
+    fn upgrade(&self) {}
+
     #[endpoint(setPriceAggregatorAddress)]
     fn set_price_aggregator_address(&self, price_aggregator_address: ManagedAddress) {
         self.require_sc_address(&price_aggregator_address);
         self.price_aggregator_address()
             .set(price_aggregator_address);
     }
-
-    #[upgrade]
-    fn upgrade(&self) {}
 }
