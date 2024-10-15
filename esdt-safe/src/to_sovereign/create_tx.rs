@@ -175,15 +175,23 @@ pub trait CreateTxModule:
 
         if payment.token_nonce > 0 {
             sov_token_nonce = self
-                .multiversx_to_sovereign_esdt_info_mapper(
+                .sovereign_to_multiversx_esdt_info_mapper(
                     &payment.token_identifier,
                     payment.token_nonce,
                 )
-                .take()
+                .get()
                 .token_nonce;
 
-            self.sovereign_to_multiversx_esdt_info_mapper(sov_token_id, sov_token_nonce)
-                .take();
+            let is_token_nft = self.is_nft(&payment.token_type());
+
+            if is_token_nft {
+                self.clear_sov_to_mvx_esdt_info_mapper(
+                    &payment.token_identifier,
+                    payment.token_nonce,
+                );
+
+                self.clear_mvx_to_sov_esdt_info_mapper(sov_token_id, sov_token_nonce);
+            }
         }
 
         sov_token_nonce
