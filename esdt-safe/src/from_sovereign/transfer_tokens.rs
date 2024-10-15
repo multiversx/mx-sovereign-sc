@@ -173,8 +173,6 @@ pub trait TransferTokensModule:
             Some(transfer_data) => {
                 let args = ManagedArgBuffer::from(transfer_data.args.clone());
 
-                // TODO - this callback is not working for failed operation, is callback not sent if it's failed?
-                // https://testnet-explorer.multiversx.com/transactions/ec547913aab0d499f2af0b4510dc124c95fd52ec547c9e9a5e4138280fe9daf4/logs
                 self.tx()
                     .to(&operation_tuple.operation.to)
                     .raw_call(transfer_data.function.clone())
