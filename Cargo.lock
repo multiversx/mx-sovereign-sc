@@ -1272,9 +1272,9 @@ dependencies = [
 
 [[package]]
 name = "multiversx-sc-snippets"
-version = "0.53.1"
+version = "0.53.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f4ce1b7a02e9d5a500f05fb746f80a4e455d179b06c5f69218cebcc20afdec7c"
+checksum = "ad7edebc3a84f3f08b40e928e44bb0042f13058c33c040510a218746d4bf5476"
 dependencies = [
  "base64",
  "env_logger",
@@ -1701,7 +1701,9 @@ version = "0.0.0"
 dependencies = [
  "clap",
  "esdt-safe",
+ "fee-market",
  "multiversx-sc",
+ "multiversx-sc-scenario",
  "multiversx-sc-snippets",
  "serde",
  "toml",
