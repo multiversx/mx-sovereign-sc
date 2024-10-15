@@ -32,24 +32,24 @@ pub trait CreateTxModule:
         require!(self.not_paused(), "Cannot create transaction while paused");
 
         let (fees_payment, payments) = self.check_and_extract_fee().into_tuple();
-
         require!(!payments.is_empty(), "Nothing to transfer");
         require!(payments.len() <= MAX_TRANSFERS_PER_TX, "Too many tokens");
 
-        let opt_transfer_data = self.process_transfer_data(optional_transfer_data);
-        let own_sc_address = self.blockchain().get_sc_address();
         let mut total_tokens_for_fees = 0usize;
         let mut event_payments =
             MultiValueEncoded::<Self::Api, EventPaymentTuple<Self::Api>>::new();
-        let mut refundable_payments = ManagedVec::<Self::Api, EsdtTokenPayment<Self::Api>>::new();
+        let mut refundable_payments = ManagedVec::<Self::Api, _>::new();
+
+        let own_sc_address = self.blockchain().get_sc_address();
+        let is_sov_chain = self.is_sovereign_chain().get();
 
         for payment in &payments {
             self.require_below_max_amount(&payment.token_identifier, &payment.amount);
             self.require_token_not_blacklisted(&payment.token_identifier);
+            let is_token_whitelist_empty = self.token_whitelist().is_empty();
+            let is_token_whitelisted = self.token_whitelist().contains(&payment.token_identifier);
 
-            if !self.token_whitelist().is_empty()
-                && !self.token_whitelist().contains(&payment.token_identifier)
-            {
+            if !is_token_whitelist_empty && !is_token_whitelisted {
                 refundable_payments.push(payment.clone());
 
                 continue;
@@ -62,57 +62,63 @@ pub trait CreateTxModule:
                 &payment.token_identifier,
                 payment.token_nonce,
             );
-
             current_token_data.amount = payment.amount.clone();
 
-            let is_sovereign_chain = self.is_sovereign_chain().get();
-            if is_sovereign_chain {
+            if is_sov_chain {
                 self.tx()
                     .to(ToSelf)
-                    .typed(ESDTSystemSCProxy)
-                    .burn(&payment.token_identifier, &payment.amount)
-                    .transfer_execute();
+                    .typed(system_proxy::UserBuiltinProxy)
+                    .esdt_local_burn(
+                        &payment.token_identifier,
+                        payment.token_nonce,
+                        &payment.amount,
+                    )
+                    .sync_call();
 
-                let event_payment: EventPaymentTuple<Self::Api> = MultiValue3((
-                    payment.token_identifier.clone(),
+                event_payments.push(MultiValue3::from((
+                    payment.token_identifier,
                     payment.token_nonce,
-                    current_token_data.clone(),
-                ));
-                event_payments.push(event_payment);
+                    current_token_data,
+                )));
             } else {
-                let sov_token_id = self
-                    .multiversx_to_sovereign_token_id(&payment.token_identifier)
-                    .get();
+                let mvx_to_sov_token_id_mapper =
+                    self.multiversx_to_sovereign_token_id_mapper(&payment.token_identifier);
+                if !mvx_to_sov_token_id_mapper.is_empty() {
+                    let sov_token_id = mvx_to_sov_token_id_mapper.get();
+                    let sov_token_nonce = self.burn_mainchain_token(payment, &sov_token_id);
 
-                let sov_token_nonce = self.burn_mainchain_token(payment, &sov_token_id);
-
-                let event_payment: EventPaymentTuple<Self::Api> =
-                    MultiValue3((sov_token_id, sov_token_nonce, current_token_data.clone()));
-                event_payments.push(event_payment);
+                    event_payments.push(MultiValue3::from((
+                        sov_token_id,
+                        sov_token_nonce,
+                        current_token_data,
+                    )));
+                } else {
+                    event_payments.push(MultiValue3::from((
+                        payment.token_identifier,
+                        payment.token_nonce,
+                        current_token_data,
+                    )));
+                }
             }
         }
 
-        let caller = self.blockchain().get_caller();
+        let option_transfer_data = TransferData::from_optional_value(optional_transfer_data);
 
-        self.match_fee_payment(total_tokens_for_fees, &fees_payment, &opt_transfer_data);
+        if let Some(transfer_data) = option_transfer_data.as_ref() {
+            self.require_gas_limit_under_limit(transfer_data.gas_limit);
+            self.require_endpoint_not_banned(&transfer_data.function);
+        }
+        self.match_fee_payment(total_tokens_for_fees, &fees_payment, &option_transfer_data);
 
         // refund refundable_tokens
-        for payment in &refundable_payments {
-            if payment.amount > 0 {
-                self.tx().to(&caller).payment(payment).transfer();
-            }
-        }
+        let caller = self.blockchain().get_caller();
+        self.refund_tokens(&caller, &refundable_payments);
 
         let tx_nonce = self.get_and_save_next_tx_id();
-
         self.deposit_event(
             &to,
             &event_payments,
-            OperationData {
-                op_nonce: tx_nonce,
-                op_sender: caller,
-                opt_transfer_data,
-            },
+            OperationData::new(tx_nonce, caller, option_transfer_data),
         );
     }
 
@@ -138,29 +144,15 @@ pub trait CreateTxModule:
         MultiValue2::from((opt_transfer_data, payments))
     }
 
-    fn process_transfer_data(
+    fn refund_tokens(
         &self,
-        opt_transfer_data: OptionalValueTransferDataTuple<Self::Api>,
-    ) -> Option<TransferData<Self::Api>> {
-        match &opt_transfer_data {
-            OptionalValue::Some(transfer_data) => {
-                let (gas_limit, function, args) = transfer_data.clone().into_tuple();
-                let max_gas_limit = self.max_user_tx_gas_limit().get();
-
-                require!(gas_limit <= max_gas_limit, "Gas limit too high");
-
-                require!(
-                    !self.banned_endpoint_names().contains(&function),
-                    "Banned endpoint name"
-                );
-
-                Some(TransferData {
-                    gas_limit,
-                    function,
-                    args,
-                })
+        caller: &ManagedAddress,
+        refundable_payments: &ManagedVec<EsdtTokenPayment>,
+    ) {
+        for payment in refundable_payments {
+            if payment.amount > 0 {
+                self.tx().to(caller).payment(&payment).transfer();
             }
-            OptionalValue::None => None,
         }
     }
 
@@ -169,21 +161,35 @@ pub trait CreateTxModule:
         payment: EsdtTokenPayment<Self::Api>,
         sov_token_id: &TokenIdentifier<Self::Api>,
     ) -> u64 {
-        let _ = self
-            .send()
-            .esdt_system_sc_proxy()
-            .burn(&payment.token_identifier, &payment.amount);
+        self.tx()
+            .to(ToSelf)
+            .typed(system_proxy::UserBuiltinProxy)
+            .esdt_local_burn(
+                &payment.token_identifier,
+                payment.token_nonce,
+                &payment.amount,
+            )
+            .sync_call();
 
         let mut sov_token_nonce = 0;
 
         if payment.token_nonce > 0 {
             sov_token_nonce = self
-                .multiversx_esdt_token_info_mapper(&payment.token_identifier, &payment.token_nonce)
-                .take()
+                .sovereign_to_multiversx_esdt_info_mapper(
+                    &payment.token_identifier,
+                    payment.token_nonce,
+                )
+                .get()
                 .token_nonce;
 
-            self.sovereign_esdt_token_info_mapper(sov_token_id, &sov_token_nonce)
-                .take();
+            if self.is_nft(&payment.token_type()) {
+                self.clear_sov_to_mvx_esdt_info_mapper(
+                    &payment.token_identifier,
+                    payment.token_nonce,
+                );
+
+                self.clear_mvx_to_sov_esdt_info_mapper(sov_token_id, sov_token_nonce);
+            }
         }
 
         sov_token_nonce
@@ -215,6 +221,18 @@ pub trait CreateTxModule:
             }
             OptionalValue::None => (),
         };
+    }
+
+    fn require_gas_limit_under_limit(&self, gas_limit: GasLimit) {
+        let max_gas_limit = self.max_user_tx_gas_limit().get();
+        require!(gas_limit <= max_gas_limit, "Gas limit too high");
+    }
+
+    fn require_endpoint_not_banned(&self, function: &ManagedBuffer) {
+        require!(
+            !self.banned_endpoint_names().contains(function),
+            "Banned endpoint name"
+        );
     }
 
     #[storage_mapper("feeMarketAddress")]
