@@ -154,6 +154,14 @@ pub trait TokenMappingModule: utils::UtilsModule {
         *token_type == EsdtTokenType::NonFungible
     }
 
+    #[inline]
+    fn require_sov_token_id_not_registered(&self, id: &TokenIdentifier) {
+        require!(
+            self.sovereign_to_multiversx_token_id_mapper(id).is_empty(),
+            "This token was already registered"
+        );
+    }
+
     #[storage_mapper("sovToMxTokenId")]
     fn sovereign_to_multiversx_token_id_mapper(
         &self,

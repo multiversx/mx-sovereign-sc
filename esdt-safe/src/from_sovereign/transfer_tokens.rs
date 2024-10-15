@@ -252,9 +252,7 @@ pub trait TransferTokensModule:
                         .get()
                         .token_nonce;
 
-                    let is_token_nft = self.is_nft(&operation_token.token_data.token_type);
-
-                    if is_token_nft {
+                    if self.is_nft(&operation_token.token_data.token_type) {
                         self.clear_sov_to_mvx_esdt_info_mapper(
                             &operation_token.token_identifier,
                             operation_token.token_nonce,
@@ -265,7 +263,7 @@ pub trait TransferTokensModule:
                 }
 
                 self.tx()
-                    .to(ESDTSystemSCAddress)
+                    .to(ToSelf)
                     .typed(system_proxy::UserBuiltinProxy)
                     .esdt_local_burn(
                         &mvx_token_id,

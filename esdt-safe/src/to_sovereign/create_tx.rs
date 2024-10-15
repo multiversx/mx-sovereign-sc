@@ -182,9 +182,7 @@ pub trait CreateTxModule:
                 .get()
                 .token_nonce;
 
-            let is_token_nft = self.is_nft(&payment.token_type());
-
-            if is_token_nft {
+            if self.is_nft(&payment.token_type()) {
                 self.clear_sov_to_mvx_esdt_info_mapper(
                     &payment.token_identifier,
                     payment.token_nonce,
