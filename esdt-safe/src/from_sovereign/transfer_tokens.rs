@@ -133,18 +133,22 @@ pub trait TransferTokensModule:
         nonce
     }
 
-    #[inline]
     fn mint_nft_tx(
         &self,
         mvx_token_id: &TokenIdentifier,
         token_data: &EsdtTokenData<Self::Api>,
     ) -> u64 {
+        let mut amount = token_data.amount.clone();
+        if self.is_sft_or_meta(&token_data.token_type) {
+            amount += BigUint::from(1u32);
+        }
+
         self.tx()
             .to(ESDTSystemSCAddress)
             .typed(system_proxy::UserBuiltinProxy)
             .esdt_nft_create(
                 mvx_token_id,
-                &token_data.amount,
+                &amount,
                 &token_data.name,
                 &token_data.royalties,
                 &token_data.hash,
