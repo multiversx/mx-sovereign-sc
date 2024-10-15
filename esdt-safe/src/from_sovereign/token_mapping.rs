@@ -45,7 +45,7 @@ pub trait TokenMappingModule: utils::UtilsModule {
             "eGLD value should be 0.05"
         );
 
-        // TODO 
+        // TODO
         // require sov_token_is should not be already registered
 
         match token_type {
@@ -125,6 +125,18 @@ pub trait TokenMappingModule: utils::UtilsModule {
                 token_identifier: sov_id.clone(),
                 token_nonce: sov_nonce,
             });
+    }
+
+    #[inline]
+    fn clear_sov_to_mvx_esdt_info_mapper(&self, id: &TokenIdentifier, nonce: u64) {
+        self.sovereign_to_multiversx_esdt_info_mapper(id, nonce)
+            .take();
+    }
+
+    #[inline]
+    fn clear_mvx_to_sov_esdt_info_mapper(&self, id: &TokenIdentifier, nonce: u64) {
+        self.multiversx_to_sovereign_esdt_info_mapper(id, nonce)
+            .take();
     }
 
     #[storage_mapper("sovToMxTokenId")]

@@ -241,19 +241,27 @@ pub trait TransferTokensModule:
 
             if !sov_to_mvx_token_id_mapper.is_empty() {
                 let mvx_token_id = sov_to_mvx_token_id_mapper.get();
-                let mut mx_token_nonce = 0;
+                let mut mvx_token_nonce = 0;
 
                 if operation_token.token_nonce > 0 {
-                    mx_token_nonce = self
+                    mvx_token_nonce = self
                         .sovereign_to_multiversx_esdt_info_mapper(
                             &operation_token.token_identifier,
                             operation_token.token_nonce,
                         )
-                        .take()
+                        .get()
                         .token_nonce;
 
-                    self.multiversx_to_sovereign_esdt_info_mapper(&mvx_token_id, mx_token_nonce)
-                        .take();
+                    let is_token_nft = self.is_nft(&operation_token.token_data.token_type);
+
+                    if is_token_nft {
+                        self.clear_sov_to_mvx_esdt_info_mapper(
+                            &operation_token.token_identifier,
+                            operation_token.token_nonce,
+                        );
+
+                        self.clear_mvx_to_sov_esdt_info_mapper(&mvx_token_id, mvx_token_nonce);
+                    }
                 }
 
                 self.tx()
@@ -261,7 +269,7 @@ pub trait TransferTokensModule:
                     .typed(system_proxy::UserBuiltinProxy)
                     .esdt_local_burn(
                         &mvx_token_id,
-                        mx_token_nonce,
+                        mvx_token_nonce,
                         &operation_token.token_data.amount,
                     )
                     .transfer_execute();
@@ -313,6 +321,11 @@ pub trait TransferTokensModule:
     #[inline]
     fn is_sft_or_meta(self, token_type: &EsdtTokenType) -> bool {
         *token_type == EsdtTokenType::SemiFungible || *token_type == EsdtTokenType::Meta
+    }
+
+    #[inline]
+    fn is_nft(self, token_type: &EsdtTokenType) -> bool {
+        *token_type == EsdtTokenType::NonFungible
     }
 
     #[inline]
