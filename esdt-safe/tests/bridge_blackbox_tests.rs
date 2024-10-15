@@ -32,8 +32,6 @@ const HEADER_VERIFIER_ADDRESS: TestSCAddress = TestSCAddress::new("header_verifi
 const HEADER_VERIFIER_CODE_PATH: MxscPath =
     MxscPath::new("../header-verifier/output/header-verifier.mxsc.json");
 
-const PRICE_AGGREGATOR_ADDRESS: TestSCAddress = TestSCAddress::new("price_aggregator");
-
 const USER_ADDRESS: TestAddress = TestAddress::new("user");
 const RECEIVER_ADDRESS: TestAddress = TestAddress::new("receiver");
 
@@ -104,7 +102,7 @@ impl BridgeTestState {
             .tx()
             .from(BRIDGE_OWNER_ADDRESS)
             .typed(fee_market_proxy::FeeMarketProxy)
-            .init(BRIDGE_ADDRESS, PRICE_AGGREGATOR_ADDRESS, fee_struct)
+            .init(BRIDGE_ADDRESS, fee_struct)
             .code(FEE_MARKET_CODE_PATH)
             .new_address(FEE_MARKET_ADDRESS)
             .run();
