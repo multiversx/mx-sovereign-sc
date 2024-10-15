@@ -139,6 +139,21 @@ pub trait TokenMappingModule: utils::UtilsModule {
             .take();
     }
 
+    #[inline]
+    fn is_fungible(self, token_type: &EsdtTokenType) -> bool {
+        *token_type == EsdtTokenType::Fungible
+    }
+
+    #[inline]
+    fn is_sft_or_meta(self, token_type: &EsdtTokenType) -> bool {
+        *token_type == EsdtTokenType::SemiFungible || *token_type == EsdtTokenType::Meta
+    }
+
+    #[inline]
+    fn is_nft(self, token_type: &EsdtTokenType) -> bool {
+        *token_type == EsdtTokenType::NonFungible
+    }
+
     #[storage_mapper("sovToMxTokenId")]
     fn sovereign_to_multiversx_token_id_mapper(
         &self,

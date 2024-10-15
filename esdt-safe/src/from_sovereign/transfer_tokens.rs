@@ -314,21 +314,6 @@ pub trait TransferTokensModule:
     }
 
     #[inline]
-    fn is_fungible(self, token_type: &EsdtTokenType) -> bool {
-        *token_type == EsdtTokenType::Fungible
-    }
-
-    #[inline]
-    fn is_sft_or_meta(self, token_type: &EsdtTokenType) -> bool {
-        *token_type == EsdtTokenType::SemiFungible || *token_type == EsdtTokenType::Meta
-    }
-
-    #[inline]
-    fn is_nft(self, token_type: &EsdtTokenType) -> bool {
-        *token_type == EsdtTokenType::NonFungible
-    }
-
-    #[inline]
     fn get_mvx_nonce_from_mapper(self, token_id: &TokenIdentifier, nonce: u64) -> u64 {
         self.sovereign_to_multiversx_esdt_info_mapper(token_id, nonce)
             .get()
