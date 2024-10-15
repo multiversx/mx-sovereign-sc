@@ -1,13 +1,13 @@
 #![allow(non_snake_case)]
 
-mod price_aggregator_proxy;
-mod proxy;
+mod proxies;
 
 use fee_market::fee_market_proxy::FeeMarketProxy;
 use fee_market::fee_market_proxy::{self, FeeStruct, FeeType};
 use multiversx_sc_scenario::multiversx_chain_vm::crypto_functions::sha256;
 use multiversx_sc_snippets::imports::*;
 use multiversx_sc_snippets::sdk;
+use proxies::*;
 use serde::{Deserialize, Serialize};
 use std::{
     io::{Read, Write},
@@ -15,7 +15,6 @@ use std::{
 };
 use transaction::OperationEsdtPayment;
 use transaction::{GasLimit, Operation, OperationData, PaymentsVec};
-
 const GATEWAY: &str = sdk::gateway::DEVNET_GATEWAY;
 const STATE_FILE: &str = "state.toml";
 const TOKEN_ID: &[u8] = b"SVT-805b28";
@@ -939,7 +938,6 @@ async fn test_deploy() {
     interact.set_fee_market_address().await;
     interact.disable_fee().await;
     interact.unpause_endpoint().await;
-    
 }
 
 #[tokio::test]
@@ -954,3 +952,4 @@ async fn test_deploy_sov() {
     interact.set_header_verifier_address().await;
     interact.unpause_endpoint().await;
 }
+
