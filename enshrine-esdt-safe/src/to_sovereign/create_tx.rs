@@ -1,6 +1,8 @@
 use crate::common;
 use fee_market::fee_market_proxy;
-use transaction::{GasLimit, OperationData, TransferData};
+use transaction::{
+    EventPayment, GasLimit, OperationData, OptionalValueTransferDataTuple, TransferData,
+};
 
 use multiversx_sc::imports::*;
 
@@ -24,9 +26,7 @@ pub trait CreateTxModule:
     fn deposit(
         &self,
         to: ManagedAddress,
-        opt_transfer_data: OptionalValue<
-            MultiValue3<GasLimit, ManagedBuffer, ManagedVec<ManagedBuffer>>,
-        >,
+        optional_transfer_data: OptionalValueTransferDataTuple<Self::Api>,
     ) {
         require!(self.not_paused(), "Cannot create transaction while paused");
 
@@ -70,17 +70,16 @@ pub trait CreateTxModule:
                     .transfer_execute();
             }
 
-            event_payments.push(
-                (
-                    payment.token_identifier,
-                    payment.token_nonce,
-                    current_token_data,
-                )
-                    .into(),
+            let event_payment = EventPayment::new(
+                payment.token_identifier,
+                payment.token_nonce,
+                current_token_data,
             );
+
+            event_payments.push(event_payment);
         }
 
-        let option_transfer_data = TransferData::from_optional_value(opt_transfer_data);
+        let option_transfer_data = TransferData::from_optional_value(optional_transfer_data);
 
         if let Some(transfer_data) = option_transfer_data.as_ref() {
             self.require_gas_limit_under_limit(transfer_data.gas_limit);
@@ -95,7 +94,7 @@ pub trait CreateTxModule:
         let tx_nonce = self.get_and_save_next_tx_id();
         self.deposit_event(
             &to,
-            &event_payments,
+            &EventPayment::map_to_tuple_multi_value(event_payments),
             OperationData::new(tx_nonce, caller, option_transfer_data),
         );
     }
