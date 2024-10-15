@@ -938,8 +938,6 @@ async fn test_deploy() {
     interact.deploy_fee_market().await;
     interact.set_fee_market_address().await;
     interact.disable_fee().await;
-    interact.deploy_header_verifier_contract().await;
-    interact.set_header_verifier_address().await;
     interact.unpause_endpoint().await;
     
 }
@@ -951,39 +949,8 @@ async fn test_deploy_sov() {
     interact.deploy_price_aggregator().await;
     interact.deploy_fee_market().await;
     interact.set_fee_market_address().await;
+    interact.disable_fee().await;
+    interact.deploy_header_verifier_contract().await;
+    interact.set_header_verifier_address().await;
     interact.unpause_endpoint().await;
-}
-
-/* Waiting for fix on initiator_address
-#[tokio::test]
-async fn test_deposit_and_refund() {
-    let mut interact = ContractInteract::new().await;
-    interact.unpause_endpoint().await;
-    interact.add_tokens_to_whitelist(WHITELISTED_TOKEN_ID).await;
-    interact.deposit(OptionalTransferData::None, None).await;
-}
-
-#[tokio::test]
-async fn test_whitelist_then_blacklist() {
-    let mut interact = ContractInteract::new().await;
-    interact.unpause_endpoint().await;
-    interact.add_tokens_to_whitelist(TOKEN_ID).await;
-    interact.deposit(OptionalTransferData::None, None).await;
-    interact.add_tokens_to_blacklist(TOKEN_ID).await;
-    interact.deposit(OptionalTransferData::None, Some(ExpectError(4, "Token blacklisted"))).await;
-}
-
-// Waiting for gas fix & requires deploy with is_sov_chain on true
-#[tokio::test]
-async fn test_burn_token_on_sov_chain() {
-    let mut interact = ContractInteract::new().await;
-    interact.deposit(OptionalTransferData::None, None).await;
-}
-*/
-
-#[tokio::test]
-async fn test_register_token_and_deposit() {
-    let mut interact = ContractInteract::new().await;
-    //interact.register_token().await;
-    interact.deposit(OptionalTransferData::None, None).await;
 }
