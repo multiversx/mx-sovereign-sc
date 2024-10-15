@@ -72,7 +72,7 @@ pub trait TransferTokensModule:
                     .to(ToSelf)
                     .typed(system_proxy::UserBuiltinProxy)
                     .esdt_local_mint(&mvx_token_id, 0, &operation_token.token_data.amount)
-                    .transfer_execute();
+                    .sync_call();
 
                 output_payments.push(OperationEsdtPayment {
                     token_identifier: mvx_token_id,
@@ -140,7 +140,7 @@ pub trait TransferTokensModule:
         token_data: &EsdtTokenData<Self::Api>,
     ) -> u64 {
         self.tx()
-            .to(ToSelf)
+            .to(ESDTSystemSCAddress)
             .typed(system_proxy::UserBuiltinProxy)
             .esdt_nft_create(
                 mvx_token_id,
@@ -169,11 +169,13 @@ pub trait TransferTokensModule:
             Some(transfer_data) => {
                 let args = ManagedArgBuffer::from(transfer_data.args.clone());
 
+                // TODO - this callback is not working for failed operation, is callback not sent if it's failed?
+                // https://testnet-explorer.multiversx.com/transactions/ec547913aab0d499f2af0b4510dc124c95fd52ec547c9e9a5e4138280fe9daf4/logs
                 self.tx()
                     .to(&operation_tuple.operation.to)
                     .raw_call(transfer_data.function.clone())
                     .arguments_raw(args)
-                    .multi_esdt(mapped_tokens.clone())
+                    .payment(&mapped_tokens)
                     .gas(transfer_data.gas_limit)
                     .callback(
                         <Self as TransferTokensModule>::callbacks(self)
@@ -183,14 +185,10 @@ pub trait TransferTokensModule:
                     .register_promise();
             }
             None => {
-                let own_address = self.blockchain().get_sc_address();
-                let args =
-                    self.get_contract_call_args(&operation_tuple.operation.to, mapped_tokens);
-
                 self.tx()
-                    .to(own_address)
+                    .to(&operation_tuple.operation.to)
                     .raw_call(ESDT_MULTI_TRANSFER_FUNC_NAME)
-                    .arguments_raw(args)
+                    .payment(&mapped_tokens)
                     .gas(TRANSACTION_GAS)
                     .callback(
                         <Self as TransferTokensModule>::callbacks(self)
@@ -199,20 +197,6 @@ pub trait TransferTokensModule:
                     .register_promise();
             }
         }
-    }
-
-    fn get_contract_call_args(
-        self,
-        to: &ManagedAddress,
-        mapped_tokens: ManagedVec<EsdtTokenPayment<Self::Api>>,
-    ) -> ManagedArgBuffer<Self::Api> {
-        let mut args = ManagedArgBuffer::new();
-        args.push_arg(to);
-        args.push_arg(mapped_tokens.len());
-
-        args.push_multi_arg(&mapped_tokens);
-
-        args
     }
 
     #[promises_callback]
@@ -232,7 +216,6 @@ pub trait TransferTokensModule:
         }
 
         let header_verifier_address = self.header_verifier_address().get();
-
         self.tx()
             .to(header_verifier_address)
             .typed(header_verifier_proxy::HeaderverifierProxy)
@@ -270,7 +253,7 @@ pub trait TransferTokensModule:
                 }
 
                 self.tx()
-                    .to(ToSelf)
+                    .to(ESDTSystemSCAddress)
                     .typed(system_proxy::UserBuiltinProxy)
                     .esdt_local_burn(
                         &mvx_token_id,
@@ -290,11 +273,7 @@ pub trait TransferTokensModule:
             &operation_tuple
                 .operation
                 .map_tokens_to_multi_value_encoded(),
-            OperationData {
-                op_nonce: tx_nonce,
-                op_sender: sc_address.clone(),
-                opt_transfer_data: None,
-            },
+            OperationData::new(tx_nonce, sc_address.clone(), None),
         );
     }
 

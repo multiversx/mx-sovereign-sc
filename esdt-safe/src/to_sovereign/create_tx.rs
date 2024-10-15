@@ -67,9 +67,13 @@ pub trait CreateTxModule:
             if is_sov_chain {
                 self.tx()
                     .to(ToSelf)
-                    .typed(ESDTSystemSCProxy)
-                    .burn(&payment.token_identifier, &payment.amount)
-                    .transfer_execute();
+                    .typed(system_proxy::UserBuiltinProxy)
+                    .esdt_local_burn(
+                        &payment.token_identifier,
+                        payment.token_nonce,
+                        &payment.amount,
+                    )
+                    .sync_call();
 
                 event_payments.push(MultiValue3::from((
                     payment.token_identifier,
@@ -157,10 +161,15 @@ pub trait CreateTxModule:
         payment: EsdtTokenPayment<Self::Api>,
         sov_token_id: &TokenIdentifier<Self::Api>,
     ) -> u64 {
-        let _ = self
-            .send()
-            .esdt_system_sc_proxy()
-            .burn(&payment.token_identifier, &payment.amount);
+        self.tx()
+            .to(ToSelf)
+            .typed(system_proxy::UserBuiltinProxy)
+            .esdt_local_burn(
+                &payment.token_identifier,
+                payment.token_nonce,
+                &payment.amount,
+            )
+            .sync_call();
 
         let mut sov_token_nonce = 0;
 
