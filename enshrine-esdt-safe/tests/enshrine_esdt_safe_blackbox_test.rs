@@ -1,5 +1,5 @@
 use bls_signature::BlsSignature;
-use enshrine_esdt_safe::enshrine_esdt_safe_proxy;
+use enshrine_esdt_safe::{enshrine_esdt_safe_proxy, token_handler_proxy};
 use fee_market::fee_market_proxy::{self, FeeStruct, FeeType};
 use header_verifier::header_verifier_proxy;
 use multiversx_sc::codec::TopEncode;
@@ -12,7 +12,6 @@ use multiversx_sc_scenario::api::StaticApi;
 use multiversx_sc_scenario::multiversx_chain_vm::crypto_functions::sha256;
 use multiversx_sc_scenario::{imports::MxscPath, ScenarioWorld};
 use multiversx_sc_scenario::{managed_address, ExpectError, ScenarioTxRun};
-use token_handler::token_handler_proxy;
 use transaction::{GasLimit, Operation, OperationData, OperationEsdtPayment};
 use utils::PaymentsVec;
 
@@ -427,6 +426,16 @@ impl EnshrineTestState {
             .run();
     }
 
+    fn propose_whitelist_enshrine_esdt(&mut self) {
+        self.world
+            .tx()
+            .from(ENSHRINE_ESDT_OWNER_ADDRESS)
+            .to(TOKEN_HANDLER_ADDRESS)
+            .typed(token_handler_proxy::TokenHandlerProxy)
+            .whitelist_enshrine_esdt(ENSHRINE_ESDT_ADDRESS)
+            .run();
+    }
+
     fn mock_bls_signature(
         &mut self,
         operation_hash: &ManagedBuffer<StaticApi>,
@@ -508,13 +517,14 @@ fn test_deploy() {
 fn test_sovereign_prefix_no_prefix() {
     let mut state = EnshrineTestState::new();
     let token_vec = Vec::from([NFT_TOKEN_ID, CROWD_TOKEN_ID]);
-    let error_status = Option::Some(ErrorStatus {
-        code: 4,
-        error_message: "Operation is not registered",
+    let error_status = Some(ErrorStatus {
+        code: 10,
+        error_message: "action is not allowed",
     });
 
     state.propose_setup_contracts(false, None);
     state.propose_register_operation(&token_vec);
+    state.propose_whitelist_enshrine_esdt();
     state.propose_execute_operation(error_status, &token_vec);
 }
 
@@ -522,14 +532,11 @@ fn test_sovereign_prefix_no_prefix() {
 fn test_sovereign_prefix_has_prefix() {
     let mut state = EnshrineTestState::new();
     let token_vec = Vec::from([PREFIX_NFT_TOKEN_ID, CROWD_TOKEN_ID]);
-    let error_status = Option::Some(ErrorStatus {
-        code: 4,
-        error_message: "Operation is not registered",
-    });
 
     state.propose_setup_contracts(false, None);
     state.propose_register_operation(&token_vec);
-    state.propose_execute_operation(error_status, &token_vec);
+    state.propose_whitelist_enshrine_esdt();
+    state.propose_execute_operation(None, &token_vec);
 }
 
 #[test]
