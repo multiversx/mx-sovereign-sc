@@ -47,11 +47,6 @@ const WEGLD_IDENTIFIER: TestTokenIdentifier = TestTokenIdentifier::new("WEGLD-12
 const WEGLD_BALANCE: u128 = 100_000_000_000_000_000;
 const SOVEREIGN_TOKEN_PREFIX: &str = "sov";
 
-pub struct ErrorStatus<'a> {
-    code: u64,
-    error_message: &'a str,
-}
-
 type OptionalTransferData<M> =
     OptionalValue<MultiValue3<GasLimit, ManagedBuffer<M>, ManagedVec<M, ManagedBuffer<M>>>>;
 
@@ -219,10 +214,10 @@ impl EnshrineTestState {
     fn propose_set_fee(
         &mut self,
         fee_struct: Option<&FeeStruct<StaticApi>>,
-        error_status: Option<ErrorStatus>,
+        expected_result: Option<ExpectError<'_>>,
     ) -> &mut Self {
         if let Some(fee) = fee_struct {
-            self.propose_add_fee_token(fee, error_status);
+            self.propose_add_fee_token(fee, expected_result);
         }
 
         self
@@ -357,26 +352,19 @@ impl EnshrineTestState {
     fn propose_add_fee_token(
         &mut self,
         fee_struct: &FeeStruct<StaticApi>,
-        error_status: Option<ErrorStatus>,
+        expected_result: Option<ExpectError<'_>>,
     ) {
-        match error_status {
-            Some(error) => self
-                .world
-                .tx()
-                .from(ENSHRINE_ESDT_OWNER_ADDRESS)
-                .to(FEE_MARKET_ADDRESS)
-                .typed(fee_market_proxy::FeeMarketProxy)
-                .set_fee(fee_struct)
-                .returns(ExpectError(error.code, error.error_message))
-                .run(),
-            None => self
-                .world
-                .tx()
-                .from(ENSHRINE_ESDT_OWNER_ADDRESS)
-                .to(FEE_MARKET_ADDRESS)
-                .typed(fee_market_proxy::FeeMarketProxy)
-                .set_fee(fee_struct)
-                .run(),
+        let transaction = self
+            .world
+            .tx()
+            .from(ENSHRINE_ESDT_OWNER_ADDRESS)
+            .to(FEE_MARKET_ADDRESS)
+            .typed(fee_market_proxy::FeeMarketProxy)
+            .set_fee(fee_struct);
+
+        match expected_result {
+            Some(error) => transaction.returns(error).run(),
+            None => transaction.run(),
         }
     }
 
