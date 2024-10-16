@@ -355,28 +355,20 @@ impl EnshrineTestState {
         to: TestAddress,
         payment: PaymentsVec<StaticApi>,
         deposit_args: OptionalTransferData<StaticApi>,
-        error_status: Option<ErrorStatus>,
+        expected_result: Option<ExpectError<'_>>,
     ) {
-        match error_status {
-            Some(status) => self
-                .world
-                .tx()
-                .from(from)
-                .to(ENSHRINE_ESDT_ADDRESS)
-                .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
-                .deposit(to, deposit_args)
-                .payment(payment)
-                .returns(ExpectError(status.code, status.error_message))
-                .run(),
-            None => self
-                .world
-                .tx()
-                .from(from)
-                .to(ENSHRINE_ESDT_ADDRESS)
-                .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
-                .deposit(to, deposit_args)
-                .payment(payment)
-                .run(),
+        let transaction = self
+            .world
+            .tx()
+            .from(from)
+            .to(ENSHRINE_ESDT_ADDRESS)
+            .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
+            .deposit(to, deposit_args)
+            .payment(payment);
+
+        match expected_result {
+            Some(error) => transaction.returns(error).run(),
+            None => transaction.run(),
         }
     }
 
@@ -671,7 +663,7 @@ fn test_deposit_token_nothing_to_transfer_fee_enabled() {
         USER_ADDRESS,
         payments,
         OptionalValue::None,
-        Some(error_status),
+        Some(ExpectError(4, "Nothing to transfer")),
     );
 }
 
@@ -681,11 +673,6 @@ fn test_deposit_max_transfers_exceeded() {
     let amount = BigUint::from(10000u64);
     let wegld_payment = EsdtTokenPayment::new(WEGLD_IDENTIFIER.into(), 0, amount.clone());
     let mut payments = PaymentsVec::new();
-    let error_status = ErrorStatus {
-        code: 4,
-        error_message: "Too many tokens",
-    };
-
     payments.extend(std::iter::repeat(wegld_payment).take(11));
 
     state.propose_setup_contracts(false, None);
@@ -694,7 +681,7 @@ fn test_deposit_max_transfers_exceeded() {
         USER_ADDRESS,
         payments,
         OptionalValue::None,
-        Some(error_status),
+        Some(ExpectError(4, "Too many tokens")),
     );
 }
 
@@ -771,18 +758,13 @@ fn test_deposit_with_transfer_data_gas_limit_too_high() {
     payments.push(wegld_payment);
     payments.push(crowd_payment);
 
-    let error_status = ErrorStatus {
-        code: 4,
-        error_message: "Gas limit too high",
-    };
-
     state.propose_setup_contracts(false, None);
     state.propose_deposit(
         ENSHRINE_ESDT_OWNER_ADDRESS,
         USER_ADDRESS,
         payments,
         transfer_data,
-        Some(error_status),
+        Some(ExpectError(4, "Gas limit too high")),
     );
 }
 
@@ -804,12 +786,6 @@ fn test_deposit_with_transfer_data_banned_endpoint() {
     payments.push(wegld_payment);
     payments.push(crowd_payment);
 
-    let error_status = ErrorStatus {
-        code: 4,
-        error_message: "Banned endpoint name",
-    };
-
-    // TODO: idk if it supposed to be None
     state.propose_setup_contracts(false, None);
     state.propose_set_max_user_tx_gas_limit(gas_limit);
     state.propose_set_banned_endpoint(function);
@@ -818,7 +794,7 @@ fn test_deposit_with_transfer_data_banned_endpoint() {
         USER_ADDRESS,
         payments,
         transfer_data,
-        Some(error_status),
+        Some(ExpectError(4, "Banned endpoint name")),
     );
 }
 
@@ -899,11 +875,6 @@ fn test_deposit_with_transfer_data_not_enough_for_fee() {
     let mut args = ManagedVec::new();
     args.push(arg);
 
-    let error_status = ErrorStatus {
-        code: 4,
-        error_message: "Payment does not cover fee",
-    };
-
     let transfer_data = state.setup_transfer_data(gas_limit, function, args);
 
     payments.push(wegld_payment);
@@ -927,7 +898,7 @@ fn test_deposit_with_transfer_data_not_enough_for_fee() {
         USER_ADDRESS,
         payments,
         transfer_data,
-        Some(error_status),
+        Some(ExpectError(4, "Payment does not cover fee")),
     );
 }
 
