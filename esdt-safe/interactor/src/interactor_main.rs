@@ -211,24 +211,13 @@ impl ContractInteract {
             },
         };
 
-        let price_aggregator_address = managed_address!(self
-            .state
-            .price_aggregator_address
-            .clone()
-            .unwrap()
-            .as_address());
-
         let new_address = self
             .interactor
             .tx()
             .from(&self.wallet_address)
             .gas(100_000_000u64)
             .typed(fee_market_proxy::FeeMarketProxy)
-            .init(
-                self.state.current_address(),
-                price_aggregator_address,
-                Option::Some(fee),
-            )
+            .init(self.state.current_address(), Option::Some(fee))
             .code(&self.fee_market_code)
             .returns(ReturnsNewAddress)
             .prepare_async()
@@ -939,7 +928,6 @@ async fn test_deploy() {
     interact.set_fee_market_address().await;
     interact.disable_fee().await;
     interact.unpause_endpoint().await;
-    
 }
 
 #[tokio::test]
@@ -954,3 +942,4 @@ async fn test_deploy_sov() {
     interact.set_header_verifier_address().await;
     interact.unpause_endpoint().await;
 }
+

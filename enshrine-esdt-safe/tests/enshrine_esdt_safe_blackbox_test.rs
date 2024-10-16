@@ -159,7 +159,7 @@ impl EnshrineTestState {
             .tx()
             .from(ENSHRINE_ESDT_OWNER_ADDRESS)
             .typed(fee_market_proxy::FeeMarketProxy)
-            .init(ENSHRINE_ESDT_ADDRESS, ENSHRINE_ESDT_ADDRESS, fee_struct)
+            .init(ENSHRINE_ESDT_ADDRESS, fee_struct)
             .code(FEE_MARKET_CODE_PATH)
             .new_address(FEE_MARKET_ADDRESS)
             .run();
