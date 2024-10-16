@@ -85,24 +85,17 @@ pub trait TransferTokensModule: common_storage::CommonStorage {
                     )
                     .sync_call();
             } else {
-                self.tx()
-                    .to(ToSelf)
-                    .typed(system_proxy::UserBuiltinProxy)
-                    .esdt_nft_create(
-                        &operation_token.token_identifier,
-                        &operation_token.token_data.amount,
-                        &operation_token.token_data.name,
-                        &operation_token.token_data.royalties,
-                        &operation_token.token_data.hash,
-                        &operation_token.token_data.attributes,
-                        &operation_token.token_data.uris,
-                    )
-                    .sync_call();
-                // self.send_raw().call_local_esdt_built_in_function(
-                //     self.blockchain().get_gas_left(),
-                //     &ManagedBuffer::from(ESDT_NFT_CREATE_FUNC_NAME),
-                //     &arg_buffer,
-                // );
+                let arg_buffer = self.get_nft_create_args(
+                    &operation_token.token_identifier,
+                    &operation_token.token_nonce,
+                    &operation_token.token_data,
+                );
+
+                self.send_raw().call_local_esdt_built_in_function(
+                    self.blockchain().get_gas_left(),
+                    &ManagedBuffer::from(ESDT_NFT_CREATE_FUNC_NAME),
+                    &arg_buffer,
+                );
             }
 
             output_payments.push(operation_token.into());
