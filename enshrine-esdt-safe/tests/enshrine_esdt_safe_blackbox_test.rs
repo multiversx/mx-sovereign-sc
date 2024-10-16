@@ -518,8 +518,8 @@ fn test_sovereign_prefix_no_prefix() {
     let mut state = EnshrineTestState::new();
     let token_vec = Vec::from([NFT_TOKEN_ID, CROWD_TOKEN_ID]);
     let error_status = Some(ErrorStatus {
-        code: 4,
-        error_message: "Operation is not registered",
+        code: 10,
+        error_message: "action is not allowed",
     });
 
     state.propose_setup_contracts(false, None);
