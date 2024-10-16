@@ -106,7 +106,10 @@ pub trait TransferTokensModule:
 
         // if doesn't exist in mapper nonce will be 0 and we need to create the SFT/MetaESDT, otherwise mint
         if self.is_sft_or_meta(current_token_type_ref) {
-            nonce = self.get_mvx_nonce_from_mapper(mvx_token_id, operation_token.token_nonce)
+            nonce = self.get_mvx_nonce_from_mapper(
+                &operation_token.token_identifier,
+                operation_token.token_nonce,
+            )
         }
 
         // mint NFT
@@ -144,7 +147,7 @@ pub trait TransferTokensModule:
         }
 
         self.tx()
-            .to(ESDTSystemSCAddress)
+            .to(ToSelf)
             .typed(system_proxy::UserBuiltinProxy)
             .esdt_nft_create(
                 mvx_token_id,
@@ -309,11 +312,14 @@ pub trait TransferTokensModule:
         }
     }
 
-    #[inline]
     fn get_mvx_nonce_from_mapper(self, token_id: &TokenIdentifier, nonce: u64) -> u64 {
-        self.sovereign_to_multiversx_esdt_info_mapper(token_id, nonce)
-            .get()
-            .token_nonce
+        let esdt_info_mapper = self.sovereign_to_multiversx_esdt_info_mapper(token_id, nonce);
+
+        if esdt_info_mapper.is_empty() {
+            return 0;
+        }
+
+        esdt_info_mapper.get().token_nonce
     }
 
     #[storage_mapper("pendingHashes")]
