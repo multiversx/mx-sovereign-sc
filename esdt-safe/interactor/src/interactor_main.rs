@@ -498,10 +498,8 @@ impl ContractInteract {
     }
 
     async fn execute_operations(&mut self) {
-        let (tokens, data) = self.setup_payments().await;
-        let to = managed_address!(&self.bob_address);
-        let operation = Operation::new(to, tokens, data);
-        let operation_hash = self.get_operation_hash(&operation).await;
+        let operation = self.setup_operation().await;
+        let operation_hash = self.get_operation_hash(&operation);
 
         let response = self
             .interactor
@@ -510,7 +508,7 @@ impl ContractInteract {
             .to(self.state.current_address())
             .gas(30_000_000u64)
             .typed(proxy::EsdtSafeProxy)
-            .execute_operations(operation_hash, operation)
+            .execute_operations(&operation_hash, operation)
             .returns(ReturnsResultUnmanaged)
             .prepare_async()
             .run()
@@ -523,7 +521,7 @@ impl ContractInteract {
         let (tokens, data) = self.setup_payments().await;
         let to = managed_address!(&self.bob_address);
         let operation = Operation::new(to, tokens, data);
-        let operation_hash = self.get_operation_hash(&operation).await;
+        let operation_hash = self.get_operation_hash(&operation);
 
         let response = self
             .interactor
@@ -532,7 +530,7 @@ impl ContractInteract {
             .to(self.state.current_address())
             .gas(30_000_000u64)
             .typed(proxy::EsdtSafeProxy)
-            .execute_operations(operation_hash, operation)
+            .execute_operations(&operation_hash, operation)
             .returns(error_msg)
             .prepare_async()
             .run()
@@ -890,9 +888,23 @@ impl ContractInteract {
         println!("Result: {response:?}");
     }
 
-    async fn register_operations(&mut self, operation: &Operation<StaticApi>) {
+    async fn setup_operation(&mut self) -> Operation<StaticApi> {
+        let to = managed_address!(&self
+            .state
+            .price_aggregator_address
+            .clone()
+            .unwrap()
+            .to_address());
+        let payments_tuple = self.setup_payments().await;
+        let (tokens, data) = payments_tuple;
+
+        Operation::new(to, tokens, data)
+    }
+
+    async fn register_operations(&mut self) {
+        let operation = self.setup_operation().await;
         let bls_signature = ManagedByteArray::default();
-        let operation_hash = self.get_operation_hash(operation);
+        let operation_hash = self.get_operation_hash(&operation);
         let hash_of_hashes = sha256(&operation_hash);
 
         let mut managed_operation_hashes =
@@ -974,7 +986,7 @@ impl ContractInteract {
 #[tokio::test]
 async fn test_deploy_sov() {
     let mut interact = ContractInteract::new().await;
-    interact.deploy(true).await;
+    interact.deploy(false).await;
     interact.deploy_price_aggregator().await;
     interact.deploy_fee_market().await;
     interact.set_fee_market_address().await;
@@ -982,6 +994,9 @@ async fn test_deploy_sov() {
     interact.deploy_header_verifier_contract().await;
     interact.set_header_verifier_address().await;
     interact.unpause_endpoint().await;
+
+    interact.register_operations().await;
+    interact.execute_operations().await;
 }
 
 #[tokio::test]
