@@ -4,7 +4,9 @@ mod proxies;
 
 use fee_market::fee_market_proxy::FeeMarketProxy;
 use fee_market::fee_market_proxy::{self, FeeStruct, FeeType};
-use multiversx_sc_scenario::multiversx_chain_vm::crypto_functions::{self, sha256};
+use multiversx_sc_scenario::multiversx_chain_vm::crypto_functions::{
+    self, sha256, SHA256_RESULT_LEN,
+};
 use multiversx_sc_snippets::imports::*;
 use multiversx_sc_snippets::sdk::{self, crypto};
 use proxies::*;
@@ -889,31 +891,34 @@ impl ContractInteract {
     }
 
     async fn register_operations(&mut self, operation: &Operation<StaticApi>) {
-        let header_address = self
-            .state
-            .header_verifier_address
-            .clone()
-            .unwrap()
-            .as_address();
         let bls_signature = ManagedByteArray::default();
         let operation_hash = self.get_operation_hash(operation);
-        let hash_of_hashes = self.get_hash(&operation_hash);
+        let hash_of_hashes = sha256(&operation_hash);
 
-        let mut operation_hashes = MultiValueEncoded::new();
+        let mut managed_operation_hashes =
+            MultiValueEncoded::<StaticApi, ManagedBuffer<StaticApi>>::new();
 
-        operation_hashes.push(operation_hash);
+        let managed_operation_hash = ManagedBuffer::<StaticApi>::from(&operation_hash);
+        let managed_hash_of_hashes = ManagedBuffer::<StaticApi>::from(&hash_of_hashes);
 
-        let response = self
-            .interactor
-            .tx()
-            .from(&self.wallet_address)
-            .to(header_address)
-            .typed(header_verifier_proxy::HeaderverifierProxy)
-            .register_bridge_operations(bls_signature, hash_of_hashes, operation_hash)
-            .returns(ReturnsResult)
-            .prepare_async()
-            .run()
-            .await;
+        managed_operation_hashes.push(managed_operation_hash);
+
+        if let Some(header_verifier_address) = self.state.header_verifier_address.clone() {
+            self.interactor
+                .tx()
+                .from(&self.wallet_address)
+                .to(header_verifier_address)
+                .typed(header_verifier_proxy::HeaderverifierProxy)
+                .register_bridge_operations(
+                    bls_signature,
+                    managed_hash_of_hashes,
+                    managed_operation_hashes,
+                )
+                .returns(ReturnsResult)
+                .prepare_async()
+                .run()
+                .await;
+        }
     }
 
     async fn setup_payments(
@@ -945,12 +950,10 @@ impl ContractInteract {
         (tokens, data)
     }
 
-    fn get_operation_hash(&mut self, operation: &Operation<StaticApi>) -> ManagedBuffer<StaticApi> {
+    fn get_operation_hash(&mut self, operation: &Operation<StaticApi>) -> [u8; SHA256_RESULT_LEN] {
         let mut serialized_operation: ManagedBuffer<StaticApi> = ManagedBuffer::new();
         let _ = operation.top_encode(&mut serialized_operation);
-        let sha256 = sha256(&serialized_operation.to_vec());
-
-        ManagedBuffer::new_from_bytes(&sha256)
+        sha256(&serialized_operation.to_vec())
     }
 
     fn get_hash(&mut self, operation: &ManagedBuffer<StaticApi>) -> ManagedBuffer<StaticApi> {
