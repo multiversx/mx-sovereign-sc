@@ -85,7 +85,11 @@ pub trait CreateTxModule:
                     self.multiversx_to_sovereign_token_id_mapper(&payment.token_identifier);
                 if !mvx_to_sov_token_id_mapper.is_empty() {
                     let sov_token_id = mvx_to_sov_token_id_mapper.get();
-                    let sov_token_nonce = self.burn_mainchain_token(payment, &sov_token_id);
+                    let sov_token_nonce = self.burn_mainchain_token(
+                        payment,
+                        &sov_token_id,
+                        &current_token_data.token_type,
+                    );
 
                     event_payments.push(MultiValue3::from((
                         sov_token_id,
@@ -160,6 +164,7 @@ pub trait CreateTxModule:
         &self,
         payment: EsdtTokenPayment<Self::Api>,
         sov_token_id: &TokenIdentifier<Self::Api>,
+        payment_token_type: &EsdtTokenType,
     ) -> u64 {
         self.tx()
             .to(ToSelf)
@@ -182,7 +187,7 @@ pub trait CreateTxModule:
                 .get()
                 .token_nonce;
 
-            if self.is_nft(&payment.token_type()) {
+            if self.is_nft(payment_token_type) {
                 self.clear_mvx_to_sov_esdt_info_mapper(
                     &payment.token_identifier,
                     payment.token_nonce,
