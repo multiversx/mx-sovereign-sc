@@ -87,8 +87,8 @@ pub trait CreateTxModule:
                     let sov_token_id = mvx_to_sov_token_id_mapper.get();
                     let sov_token_nonce = self.burn_mainchain_token(
                         payment,
-                        &sov_token_id,
                         &current_token_data.token_type,
+                        &sov_token_id,
                     );
 
                     event_payments.push(MultiValue3::from((
@@ -163,8 +163,8 @@ pub trait CreateTxModule:
     fn burn_mainchain_token(
         &self,
         payment: EsdtTokenPayment<Self::Api>,
-        sov_token_id: &TokenIdentifier<Self::Api>,
         payment_token_type: &EsdtTokenType,
+        sov_token_id: &TokenIdentifier<Self::Api>,
     ) -> u64 {
         self.tx()
             .to(ToSelf)

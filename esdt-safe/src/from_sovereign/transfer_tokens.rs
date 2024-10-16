@@ -314,11 +314,9 @@ pub trait TransferTokensModule:
 
     fn get_mvx_nonce_from_mapper(self, token_id: &TokenIdentifier, nonce: u64) -> u64 {
         let esdt_info_mapper = self.sovereign_to_multiversx_esdt_info_mapper(token_id, nonce);
-
         if esdt_info_mapper.is_empty() {
             return 0;
         }
-
         esdt_info_mapper.get().token_nonce
     }
 
