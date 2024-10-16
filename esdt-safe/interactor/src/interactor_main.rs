@@ -1,4 +1,6 @@
 #![allow(non_snake_case)]
+// TODO: Remove this when interactor setup is complete
+#![allow(dead_code)]
 
 mod price_aggregator_proxy;
 mod proxy;
@@ -920,6 +922,7 @@ impl ContractInteract {
 }
 
 #[tokio::test]
+#[ignore]
 async fn test_deploy() {
     let mut interact = ContractInteract::new().await;
     interact.deploy(false).await;
@@ -931,6 +934,7 @@ async fn test_deploy() {
 }
 
 #[tokio::test]
+#[ignore]
 async fn test_deploy_sov() {
     let mut interact = ContractInteract::new().await;
     interact.deploy(true).await;
@@ -942,4 +946,3 @@ async fn test_deploy_sov() {
     interact.set_header_verifier_address().await;
     interact.unpause_endpoint().await;
 }
-
