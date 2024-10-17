@@ -154,7 +154,7 @@ impl ContractInteract {
         );
 
         let fee_market_code = BytesValue::interpret_from(
-            "mxsc:contract-codes/fee-market.mxsc.json",
+            "mxsc:../../fee-market/output/fee-market.mxsc.json",
             &InterpreterContext::default(),
         );
 
@@ -164,7 +164,7 @@ impl ContractInteract {
         );
 
         let header_verifier_code = BytesValue::interpret_from(
-            "mxsc:contract-codes/header-verifier.mxsc.json",
+            "mxsc:../../header-verifier/output/header-verifier.mxsc.json",
             &InterpreterContext::default(),
         );
 
@@ -278,8 +278,8 @@ impl ContractInteract {
             .tx()
             .from(&self.wallet_address)
             .gas(100_000_000u64)
-            .typed(proxy::EsdtSafeProxy)
-            .init(false)
+            .typed(header_verifier_proxy::HeaderverifierProxy)
+            .init(MultiValueEncoded::new())
             .code(&self.header_verifier_code)
             .returns(ReturnsNewAddress)
             .prepare_async()
@@ -975,11 +975,9 @@ impl ContractInteract {
 }
 
 #[tokio::test]
-#[ignore]
 async fn test_deploy_sov() {
     let mut interact = ContractInteract::new().await;
     interact.deploy(false).await;
-    interact.deploy_price_aggregator().await;
     interact.deploy_fee_market().await;
     interact.set_fee_market_address().await;
     interact.disable_fee().await;
@@ -989,9 +987,4 @@ async fn test_deploy_sov() {
 
     interact.register_operations().await;
     interact.execute_operations().await;
-}
-
-#[tokio::test]
-async fn test_register_operation() {
-    let mut interact = ContractInteract::new().await;
 }
