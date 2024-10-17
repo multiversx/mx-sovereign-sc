@@ -21,11 +21,6 @@ const WEGLD_BALANCE: u128 = 100_000_000_000_000_000;
 
 type BlsKeys = MultiValueEncoded<StaticApi, ManagedBuffer<StaticApi>>;
 
-pub struct ErrorStatus<'a> {
-    code: u64,
-    error_message: &'a str,
-}
-
 #[derive(Clone)]
 pub struct BridgeOperation<M: ManagedTypeApi> {
     signature: BlsSignature<M>,
@@ -103,7 +98,7 @@ impl HeaderVerifierTestState {
         caller: TestAddress,
         hash_of_hashes: &ManagedBuffer<StaticApi>,
         operation_hash: ManagedBuffer<StaticApi>,
-        error_status: Option<ErrorStatus>,
+        expected_result: Option<ExpectError<'_>>,
     ) {
         let transaction = self
             .world
@@ -113,10 +108,8 @@ impl HeaderVerifierTestState {
             .typed(header_verifier_proxy::HeaderverifierProxy)
             .remove_executed_hash(hash_of_hashes, operation_hash);
 
-        match error_status {
-            Some(error) => transaction
-                .returns(ExpectError(error.code, error.error_message))
-                .run(),
+        match expected_result {
+            Some(error) => transaction.returns(error).run(),
             None => transaction.run(),
         }
     }
@@ -246,10 +239,6 @@ fn test_remove_executed_hash_caller_not_esdt_address() {
     let operation_1 = ManagedBuffer::from("operation_1");
     let operation_2 = ManagedBuffer::from("operation_2");
     let operation = state.generate_bridge_operation_struct(vec![&operation_1, &operation_2]);
-    let error_status = ErrorStatus {
-        code: 4,
-        error_message: "Only ESDT Safe contract can call this endpoint",
-    };
 
     state.propose_register_operations(operation.clone());
     state.propose_register_esdt_address(ENSHRINE_ADDRESS);
@@ -257,7 +246,10 @@ fn test_remove_executed_hash_caller_not_esdt_address() {
         OWNER,
         &operation.bridge_operation_hash,
         operation_1,
-        Some(error_status),
+        Some(ExpectError(
+            4,
+            "Only ESDT Safe contract can call this endpoint",
+        )),
     );
 }
 
@@ -273,17 +265,12 @@ fn test_remove_executed_hash_no_esdt_address_registered() {
     let operation_2 = ManagedBuffer::from("operation_2");
     let operation = state.generate_bridge_operation_struct(vec![&operation_1, &operation_2]);
 
-    let error_status = ErrorStatus {
-        code: 4,
-        error_message: "There is no registered ESDT address",
-    };
-
     state.propose_register_operations(operation.clone());
     state.propose_remove_executed_hash(
         ENSHRINE_ADDRESS,
         &operation.bridge_operation_hash,
         operation_1,
-        Some(error_status),
+        Some(ExpectError(4, "There is no registered ESDT address")),
     );
 }
 
