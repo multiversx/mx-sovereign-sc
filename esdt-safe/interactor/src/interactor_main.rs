@@ -6,11 +6,9 @@ mod proxies;
 
 use fee_market::fee_market_proxy::FeeMarketProxy;
 use fee_market::fee_market_proxy::{self, FeeStruct, FeeType};
-use multiversx_sc_scenario::multiversx_chain_vm::crypto_functions::{
-    self, sha256, SHA256_RESULT_LEN,
-};
+use multiversx_sc_scenario::multiversx_chain_vm::crypto_functions::{sha256, SHA256_RESULT_LEN};
 use multiversx_sc_snippets::imports::*;
-use multiversx_sc_snippets::sdk::{self, crypto};
+use multiversx_sc_snippets::sdk::{self};
 use proxies::*;
 use serde::{Deserialize, Serialize};
 use std::{
