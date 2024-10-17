@@ -1,5 +1,5 @@
 use bls_signature::BlsSignature;
-use enshrine_esdt_safe::enshrine_esdt_safe_proxy;
+use enshrine_esdt_safe::{enshrine_esdt_safe_proxy, token_handler_proxy};
 use fee_market::fee_market_proxy::{self, FeeStruct, FeeType};
 use header_verifier::header_verifier_proxy;
 use multiversx_sc::codec::TopEncode;
@@ -12,7 +12,6 @@ use multiversx_sc_scenario::api::StaticApi;
 use multiversx_sc_scenario::multiversx_chain_vm::crypto_functions::sha256;
 use multiversx_sc_scenario::{imports::MxscPath, ScenarioWorld};
 use multiversx_sc_scenario::{managed_address, ExpectError, ScenarioTxRun};
-use token_handler::token_handler_proxy;
 use transaction::{GasLimit, Operation, OperationData, OperationEsdtPayment};
 use utils::PaymentsVec;
 
@@ -47,11 +46,6 @@ const PREFIX_NFT_TOKEN_ID: TestTokenIdentifier = TestTokenIdentifier::new("sov-N
 const WEGLD_IDENTIFIER: TestTokenIdentifier = TestTokenIdentifier::new("WEGLD-123456");
 const WEGLD_BALANCE: u128 = 100_000_000_000_000_000;
 const SOVEREIGN_TOKEN_PREFIX: &str = "sov";
-
-pub struct ErrorStatus<'a> {
-    code: u64,
-    error_message: &'a str,
-}
 
 type OptionalTransferData<M> =
     OptionalValue<MultiValue3<GasLimit, ManagedBuffer<M>, ManagedVec<M, ManagedBuffer<M>>>>;
@@ -159,7 +153,7 @@ impl EnshrineTestState {
             .tx()
             .from(ENSHRINE_ESDT_OWNER_ADDRESS)
             .typed(fee_market_proxy::FeeMarketProxy)
-            .init(ENSHRINE_ESDT_ADDRESS, ENSHRINE_ESDT_ADDRESS, fee_struct)
+            .init(ENSHRINE_ESDT_ADDRESS, fee_struct)
             .code(FEE_MARKET_CODE_PATH)
             .new_address(FEE_MARKET_ADDRESS)
             .run();
@@ -220,10 +214,10 @@ impl EnshrineTestState {
     fn propose_set_fee(
         &mut self,
         fee_struct: Option<&FeeStruct<StaticApi>>,
-        error_status: Option<ErrorStatus>,
+        expected_result: Option<ExpectError<'_>>,
     ) -> &mut Self {
         if let Some(fee) = fee_struct {
-            self.propose_add_fee_token(fee, error_status);
+            self.propose_add_fee_token(fee, expected_result);
         }
 
         self
@@ -231,7 +225,7 @@ impl EnshrineTestState {
 
     fn propose_execute_operation(
         &mut self,
-        error_status: Option<ErrorStatus>,
+        expected_result: Option<ExpectError<'_>>,
         tokens: &Vec<TestTokenIdentifier>,
     ) {
         let (tokens, data) = self.setup_payments(tokens);
@@ -241,27 +235,17 @@ impl EnshrineTestState {
         let hash_of_hashes: ManagedBuffer<StaticApi> =
             ManagedBuffer::from(&sha256(&operation_hash.to_vec()));
 
-        match error_status {
-            Some(status) => {
-                self.world
-                    .tx()
-                    .from(USER_ADDRESS)
-                    .to(ENSHRINE_ESDT_ADDRESS)
-                    .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
-                    .execute_operations(hash_of_hashes, operation)
-                    .returns(ExpectError(status.code, status.error_message))
-                    .run();
-            }
+        let transaction = self
+            .world
+            .tx()
+            .from(USER_ADDRESS)
+            .to(ENSHRINE_ESDT_ADDRESS)
+            .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
+            .execute_operations(hash_of_hashes, operation);
 
-            None => {
-                self.world
-                    .tx()
-                    .from(USER_ADDRESS)
-                    .to(ENSHRINE_ESDT_ADDRESS)
-                    .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
-                    .execute_operations(hash_of_hashes, operation)
-                    .run();
-            }
+        match expected_result {
+            Some(error) => transaction.returns(error).run(),
+            None => transaction.run(),
         }
     }
 
@@ -318,7 +302,7 @@ impl EnshrineTestState {
         sender: &TestAddress,
         fee_payment: EsdtTokenPayment<StaticApi>,
         tokens_to_register: Vec<TestTokenIdentifier>,
-        error_status: Option<ErrorStatus>,
+        expected_result: Option<ExpectError<'_>>,
     ) {
         let mut managed_token_ids: MultiValueEncoded<StaticApi, TokenIdentifier<StaticApi>> =
             MultiValueEncoded::new();
@@ -327,26 +311,18 @@ impl EnshrineTestState {
             managed_token_ids.push(TokenIdentifier::from(token_id))
         }
 
-        match error_status {
-            Some(status) => self
-                .world
-                .tx()
-                .from(*sender)
-                .to(ENSHRINE_ESDT_ADDRESS)
-                .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
-                .register_new_token_id(managed_token_ids)
-                .returns(ExpectError(status.code, status.error_message))
-                .esdt(fee_payment)
-                .run(),
-            None => self
-                .world
-                .tx()
-                .from(*sender)
-                .to(ENSHRINE_ESDT_ADDRESS)
-                .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
-                .register_new_token_id(managed_token_ids)
-                .esdt(fee_payment)
-                .run(),
+        let transaction = self
+            .world
+            .tx()
+            .from(*sender)
+            .to(ENSHRINE_ESDT_ADDRESS)
+            .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
+            .register_new_token_id(managed_token_ids)
+            .esdt(fee_payment);
+
+        match expected_result {
+            Some(error) => transaction.returns(error).run(),
+            None => transaction.run(),
         }
     }
 
@@ -356,54 +332,39 @@ impl EnshrineTestState {
         to: TestAddress,
         payment: PaymentsVec<StaticApi>,
         deposit_args: OptionalTransferData<StaticApi>,
-        error_status: Option<ErrorStatus>,
+        expected_result: Option<ExpectError<'_>>,
     ) {
-        match error_status {
-            Some(status) => self
-                .world
-                .tx()
-                .from(from)
-                .to(ENSHRINE_ESDT_ADDRESS)
-                .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
-                .deposit(to, deposit_args)
-                .payment(payment)
-                .returns(ExpectError(status.code, status.error_message))
-                .run(),
-            None => self
-                .world
-                .tx()
-                .from(from)
-                .to(ENSHRINE_ESDT_ADDRESS)
-                .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
-                .deposit(to, deposit_args)
-                .payment(payment)
-                .run(),
+        let transaction = self
+            .world
+            .tx()
+            .from(from)
+            .to(ENSHRINE_ESDT_ADDRESS)
+            .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
+            .deposit(to, deposit_args)
+            .payment(payment);
+
+        match expected_result {
+            Some(error) => transaction.returns(error).run(),
+            None => transaction.run(),
         }
     }
 
     fn propose_add_fee_token(
         &mut self,
         fee_struct: &FeeStruct<StaticApi>,
-        error_status: Option<ErrorStatus>,
+        expected_result: Option<ExpectError<'_>>,
     ) {
-        match error_status {
-            Some(error) => self
-                .world
-                .tx()
-                .from(ENSHRINE_ESDT_OWNER_ADDRESS)
-                .to(FEE_MARKET_ADDRESS)
-                .typed(fee_market_proxy::FeeMarketProxy)
-                .set_fee(fee_struct)
-                .returns(ExpectError(error.code, error.error_message))
-                .run(),
-            None => self
-                .world
-                .tx()
-                .from(ENSHRINE_ESDT_OWNER_ADDRESS)
-                .to(FEE_MARKET_ADDRESS)
-                .typed(fee_market_proxy::FeeMarketProxy)
-                .set_fee(fee_struct)
-                .run(),
+        let transaction = self
+            .world
+            .tx()
+            .from(ENSHRINE_ESDT_OWNER_ADDRESS)
+            .to(FEE_MARKET_ADDRESS)
+            .typed(fee_market_proxy::FeeMarketProxy)
+            .set_fee(fee_struct);
+
+        match expected_result {
+            Some(error) => transaction.returns(error).run(),
+            None => transaction.run(),
         }
     }
 
@@ -424,6 +385,16 @@ impl EnshrineTestState {
             .to(ENSHRINE_ESDT_ADDRESS)
             .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
             .set_banned_endpoint(endpoint_name)
+            .run();
+    }
+
+    fn propose_whitelist_enshrine_esdt(&mut self) {
+        self.world
+            .tx()
+            .from(ENSHRINE_ESDT_OWNER_ADDRESS)
+            .to(TOKEN_HANDLER_ADDRESS)
+            .typed(token_handler_proxy::TokenHandlerProxy)
+            .whitelist_enshrine_esdt(ENSHRINE_ESDT_ADDRESS)
             .run();
     }
 
@@ -508,36 +479,28 @@ fn test_deploy() {
 fn test_sovereign_prefix_no_prefix() {
     let mut state = EnshrineTestState::new();
     let token_vec = Vec::from([NFT_TOKEN_ID, CROWD_TOKEN_ID]);
-    let error_status = Option::Some(ErrorStatus {
-        code: 4,
-        error_message: "Operation is not registered",
-    });
 
     state.propose_setup_contracts(false, None);
     state.propose_register_operation(&token_vec);
-    state.propose_execute_operation(error_status, &token_vec);
+    state.propose_whitelist_enshrine_esdt();
+    state.propose_execute_operation(Some(ExpectError(10, "action is not allowed")), &token_vec);
 }
 
 #[test]
 fn test_sovereign_prefix_has_prefix() {
     let mut state = EnshrineTestState::new();
     let token_vec = Vec::from([PREFIX_NFT_TOKEN_ID, CROWD_TOKEN_ID]);
-    let error_status = Option::Some(ErrorStatus {
-        code: 4,
-        error_message: "Operation is not registered",
-    });
 
     state.propose_setup_contracts(false, None);
     state.propose_register_operation(&token_vec);
-    state.propose_execute_operation(error_status, &token_vec);
+    state.propose_whitelist_enshrine_esdt();
+    state.propose_execute_operation(None, &token_vec);
 }
 
 #[test]
 fn test_register_tokens_insufficient_funds() {
     let mut state = EnshrineTestState::new();
     let token_vec = Vec::from([PREFIX_NFT_TOKEN_ID, CROWD_TOKEN_ID]);
-    let code = 10u64;
-    let error_message = "insufficient funds";
     let payment_amount = BigUint::from(DEFAULT_ISSUE_COST * token_vec.len() as u64);
     let payment = EsdtTokenPayment::new(WEGLD_IDENTIFIER.into(), 0, payment_amount);
 
@@ -546,10 +509,7 @@ fn test_register_tokens_insufficient_funds() {
         &USER_ADDRESS,
         payment,
         token_vec,
-        Some(ErrorStatus {
-            code,
-            error_message,
-        }),
+        Some(ExpectError(10, "insufficient funds")),
     );
 }
 
@@ -557,8 +517,6 @@ fn test_register_tokens_insufficient_funds() {
 fn test_register_tokens_wrong_token_as_fee() {
     let mut state = EnshrineTestState::new();
     let token_vec = Vec::from([PREFIX_NFT_TOKEN_ID, CROWD_TOKEN_ID]);
-    let code = 4u64;
-    let error_message = "WEGLD is the only token accepted as register fee";
     let payment_amount = BigUint::from(DEFAULT_ISSUE_COST * token_vec.len() as u64);
     let payment = EsdtTokenPayment::new(CROWD_TOKEN_ID.into(), 0, payment_amount);
 
@@ -567,10 +525,10 @@ fn test_register_tokens_wrong_token_as_fee() {
         &ENSHRINE_ESDT_OWNER_ADDRESS,
         payment,
         token_vec,
-        Some(ErrorStatus {
-            code,
-            error_message,
-        }),
+        Some(ExpectError(
+            4,
+            "WEGLD is the only token accepted as register fee",
+        )),
     );
 }
 
@@ -598,8 +556,6 @@ fn test_register_tokens_insufficient_wegld() {
         FUNGIBLE_TOKEN_ID,
         CROWD_TOKEN_ID,
     ]);
-    let code = 4u64;
-    let error_message = "WEGLD fee amount is not met";
     let payment_amount = BigUint::from(DEFAULT_ISSUE_COST + token_vec.len() as u64);
     let payment = EsdtTokenPayment::new(WEGLD_IDENTIFIER.into(), 0, payment_amount);
 
@@ -608,10 +564,7 @@ fn test_register_tokens_insufficient_wegld() {
         &ENSHRINE_ESDT_OWNER_ADDRESS,
         payment,
         token_vec,
-        Some(ErrorStatus {
-            code,
-            error_message,
-        }),
+        Some(ExpectError(4, "WEGLD fee amount is not met")),
     );
 }
 
@@ -641,11 +594,6 @@ fn test_deposit_token_nothing_to_transfer_fee_enabled() {
     let amount = BigUint::from(10000u64);
     let wegld_payment = EsdtTokenPayment::new(WEGLD_IDENTIFIER.into(), 0, amount.clone());
     let mut payments = PaymentsVec::new();
-    let error_status = ErrorStatus {
-        code: 4,
-        error_message: "Nothing to transfer",
-    };
-
     let fee_amount_per_transfer = BigUint::from(100u32);
     let fee_amount_per_gas = BigUint::from(100u32);
 
@@ -664,7 +612,7 @@ fn test_deposit_token_nothing_to_transfer_fee_enabled() {
         USER_ADDRESS,
         payments,
         OptionalValue::None,
-        Some(error_status),
+        Some(ExpectError(4, "Nothing to transfer")),
     );
 }
 
@@ -674,11 +622,6 @@ fn test_deposit_max_transfers_exceeded() {
     let amount = BigUint::from(10000u64);
     let wegld_payment = EsdtTokenPayment::new(WEGLD_IDENTIFIER.into(), 0, amount.clone());
     let mut payments = PaymentsVec::new();
-    let error_status = ErrorStatus {
-        code: 4,
-        error_message: "Too many tokens",
-    };
-
     payments.extend(std::iter::repeat(wegld_payment).take(11));
 
     state.propose_setup_contracts(false, None);
@@ -687,7 +630,7 @@ fn test_deposit_max_transfers_exceeded() {
         USER_ADDRESS,
         payments,
         OptionalValue::None,
-        Some(error_status),
+        Some(ExpectError(4, "Too many tokens")),
     );
 }
 
@@ -764,18 +707,13 @@ fn test_deposit_with_transfer_data_gas_limit_too_high() {
     payments.push(wegld_payment);
     payments.push(crowd_payment);
 
-    let error_status = ErrorStatus {
-        code: 4,
-        error_message: "Gas limit too high",
-    };
-
     state.propose_setup_contracts(false, None);
     state.propose_deposit(
         ENSHRINE_ESDT_OWNER_ADDRESS,
         USER_ADDRESS,
         payments,
         transfer_data,
-        Some(error_status),
+        Some(ExpectError(4, "Gas limit too high")),
     );
 }
 
@@ -797,12 +735,6 @@ fn test_deposit_with_transfer_data_banned_endpoint() {
     payments.push(wegld_payment);
     payments.push(crowd_payment);
 
-    let error_status = ErrorStatus {
-        code: 4,
-        error_message: "Banned endpoint name",
-    };
-
-    // TODO: idk if it supposed to be None
     state.propose_setup_contracts(false, None);
     state.propose_set_max_user_tx_gas_limit(gas_limit);
     state.propose_set_banned_endpoint(function);
@@ -811,7 +743,7 @@ fn test_deposit_with_transfer_data_banned_endpoint() {
         USER_ADDRESS,
         payments,
         transfer_data,
-        Some(error_status),
+        Some(ExpectError(4, "Banned endpoint name")),
     );
 }
 
@@ -892,11 +824,6 @@ fn test_deposit_with_transfer_data_not_enough_for_fee() {
     let mut args = ManagedVec::new();
     args.push(arg);
 
-    let error_status = ErrorStatus {
-        code: 4,
-        error_message: "Payment does not cover fee",
-    };
-
     let transfer_data = state.setup_transfer_data(gas_limit, function, args);
 
     payments.push(wegld_payment);
@@ -920,7 +847,7 @@ fn test_deposit_with_transfer_data_not_enough_for_fee() {
         USER_ADDRESS,
         payments,
         transfer_data,
-        Some(error_status),
+        Some(ExpectError(4, "Payment does not cover fee")),
     );
 }
 

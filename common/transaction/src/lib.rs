@@ -26,7 +26,10 @@ pub type TxAsMultiValue<M> = MultiValue7<
     Option<TransferData<M>>,
 >;
 pub type PaymentsVec<M> = ManagedVec<M, EsdtTokenPayment<M>>;
+pub type EventPaymentTuple<M> = MultiValue3<TokenIdentifier<M>, u64, EsdtTokenData<M>>;
 pub type TxBatchSplitInFields<M> = MultiValue2<BatchId, MultiValueEncoded<M, TxAsMultiValue<M>>>;
+pub type ExtractedFeeResult<M> =
+    MultiValue2<OptionalValue<EsdtTokenPayment<M>>, ManagedVec<M, EsdtTokenPayment<M>>>;
 pub type OptionalValueTransferDataTuple<M> =
     OptionalValue<MultiValue3<GasLimit, ManagedBuffer<M>, ManagedVec<M, ManagedBuffer<M>>>>;
 
@@ -47,7 +50,7 @@ impl<M: ManagedTypeApi> Operation<M> {
         Operation { to, tokens, data }
     }
 
-    pub fn get_tokens_as_multi_value_encoded(
+    pub fn map_tokens_to_multi_value_encoded(
         &self,
     ) -> MultiValueEncoded<M, MultiValue3<TokenIdentifier<M>, u64, EsdtTokenData<M>>> {
         let mut tuples = MultiValueEncoded::new();
@@ -124,6 +127,43 @@ impl<M: ManagedTypeApi>
     ) -> Self {
         let (gas_limit, function, vec) = value.into_tuple();
         TransferData::new(gas_limit, function, vec)
+    }
+}
+
+#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, TypeAbi, ManagedVecItem, Clone)]
+pub struct EventPayment<M: ManagedTypeApi> {
+    pub identifier: TokenIdentifier<M>,
+    pub nonce: u64,
+    pub data: EsdtTokenData<M>,
+}
+
+impl<M: ManagedTypeApi> From<EventPaymentTuple<M>> for EventPayment<M> {
+    fn from(value: EventPaymentTuple<M>) -> Self {
+        let (identifier, nonce, data) = value.into_tuple();
+
+        EventPayment::new(identifier, nonce, data)
+    }
+}
+
+impl<M: ManagedTypeApi> From<EventPayment<M>> for EventPaymentTuple<M> {
+    fn from(value: EventPayment<M>) -> EventPaymentTuple<M> {
+        MultiValue3((value.identifier, value.nonce, value.data))
+    }
+}
+
+impl<M: ManagedTypeApi> EventPayment<M> {
+    pub fn new(identifier: TokenIdentifier<M>, nonce: u64, data: EsdtTokenData<M>) -> Self {
+        EventPayment {
+            identifier,
+            nonce,
+            data,
+        }
+    }
+
+    pub fn map_to_tuple_multi_value(
+        array: MultiValueEncoded<M, Self>,
+    ) -> MultiValueEncoded<M, EventPaymentTuple<M>> {
+        array.into_iter().map(|payment| payment.into()).collect()
     }
 }
 
