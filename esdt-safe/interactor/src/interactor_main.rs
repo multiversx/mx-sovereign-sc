@@ -930,10 +930,16 @@ impl ContractInteract {
 
     async fn setup_operation(&mut self, has_transfer_data: bool) -> Operation<StaticApi> {
         let to = managed_address!(&self.state.fee_market_address.clone().unwrap().to_address());
-        let payments_tuple = self.setup_payments().await;
-        let (tokens, data) = payments_tuple;
+        let payments = self.setup_payments().await;
 
-        Operation::new(to, tokens, data)
+        let op_sender = managed_address!(&self.wallet_address);
+        let transfer_data: OperationData<StaticApi> = OperationData {
+            op_nonce: 1,
+            op_sender,
+            opt_transfer_data: Option::None,
+        };
+
+        Operation::new(to, payments, transfer_data)
     }
 
     async fn register_operations(&mut self, operation: &Operation<StaticApi>) {
@@ -970,12 +976,7 @@ impl ContractInteract {
         println!("Result: {response:?}");
     }
 
-    async fn setup_payments(
-        &mut self,
-    ) -> (
-        ManagedVec<StaticApi, OperationEsdtPayment<StaticApi>>,
-        OperationData<StaticApi>,
-    ) {
+    async fn setup_payments(&mut self) -> ManagedVec<StaticApi, OperationEsdtPayment<StaticApi>> {
         let mut tokens: ManagedVec<StaticApi, OperationEsdtPayment<StaticApi>> = ManagedVec::new();
         let token_ids = vec![TOKEN_ID];
 
@@ -989,14 +990,7 @@ impl ContractInteract {
             tokens.push(payment);
         }
 
-        let op_sender = managed_address!(&self.wallet_address);
-        let data: OperationData<StaticApi> = OperationData {
-            op_nonce: 1,
-            op_sender,
-            opt_transfer_data: Option::None,
-        };
-
-        (tokens, data)
+        tokens
     }
 
     fn get_operation_hash(&mut self, operation: &Operation<StaticApi>) -> [u8; SHA256_RESULT_LEN] {
@@ -1032,7 +1026,7 @@ async fn test_execute_operation_no_transfer_data() {
     interact.unpause_endpoint().await;
     interact.header_verifier_set_esdt_address().await;
 
-    let operation = interact.setup_operation().await;
+    let operation = interact.setup_operation(false).await;
     interact.register_operations(&operation).await;
     interact.execute_operations(&operation).await;
 }
