@@ -956,7 +956,7 @@ impl ContractInteract {
             .interactor
             .tx()
             .from(&self.wallet_address)
-            .to(self.state.fee_market_address.clone().unwrap().as_address())
+            .to(self.state.get_fee_market_address())
             .gas(30_000_000u64)
             .typed(FeeMarketProxy)
             .disable_fee(TOKEN_ID)
@@ -973,12 +973,7 @@ impl ContractInteract {
             .interactor
             .tx()
             .from(&self.wallet_address)
-            .to(self
-                .state
-                .header_verifier_address
-                .clone()
-                .unwrap()
-                .as_address())
+            .to(self.state.get_header_verifier_address())
             .gas(30_000_000u64)
             .typed(HeaderverifierProxy)
             .set_esdt_safe_address(self.state.current_address())
