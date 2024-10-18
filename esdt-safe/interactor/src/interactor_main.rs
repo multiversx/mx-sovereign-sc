@@ -541,18 +541,12 @@ impl ContractInteract {
 
     async fn execute_operations(&mut self, operation: &Operation<StaticApi>) {
         let hash_of_hashes = sha256(&self.get_operation_hash(operation));
-        let payment: ManagedVec<StaticApi, EsdtTokenPayment<StaticApi>> = operation
-            .tokens
-            .into_iter()
-            .map(|payment| payment.into())
-            .collect();
 
         let response = self
             .interactor
             .tx()
             .from(&self.wallet_address)
             .to(self.state.current_address())
-            // .payment(payment)
             .gas(50_000_000u64)
             .typed(proxy::EsdtSafeProxy)
             .execute_operations(&hash_of_hashes, operation)
@@ -953,7 +947,7 @@ impl ContractInteract {
     }
 
     async fn setup_operation(&mut self, has_transfer_data: bool) -> Operation<StaticApi> {
-        let to = managed_address!(&self.state.get_fee_market_address());
+        let to = managed_address!(&self.state.get_testing_sc_address());
         let payments = self.setup_payments().await;
 
         let operation_data = self.setup_operation_data(has_transfer_data).await;
@@ -966,11 +960,11 @@ impl ContractInteract {
 
         let transfer_data = if has_transfer_data {
             let mut args = ManagedVec::new();
-            args.push(ManagedBuffer::from("arg1"));
+            args.push(ManagedBuffer::from("1"));
 
             Some(TransferData::new(
                 30_000_000u64,
-                ManagedBuffer::from("some_function"),
+                ManagedBuffer::from("hello"),
                 args,
             ))
         } else {
