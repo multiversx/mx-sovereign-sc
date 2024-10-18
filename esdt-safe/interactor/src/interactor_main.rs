@@ -6,6 +6,7 @@ mod proxies;
 
 use fee_market::fee_market_proxy::FeeMarketProxy;
 use fee_market::fee_market_proxy::{self, FeeStruct, FeeType};
+use header_verifier_proxy::HeaderverifierProxy;
 use multiversx_sc_scenario::multiversx_chain_vm::crypto_functions::{sha256, SHA256_RESULT_LEN};
 use multiversx_sc_snippets::imports::*;
 use multiversx_sc_snippets::sdk::{self};
@@ -898,6 +899,27 @@ impl ContractInteract {
         println!("Result: {response:?}");
     }
 
+    async fn header_verifier_set_esdt_address(&mut self) {
+        let response = self
+            .interactor
+            .tx()
+            .from(&self.wallet_address)
+            .to(self
+                .state
+                .header_verifier_address
+                .clone()
+                .unwrap()
+                .as_address())
+            .gas(30_000_000u64)
+            .typed(HeaderverifierProxy)
+            .set_esdt_safe_address(self.state.current_address())
+            .prepare_async()
+            .run()
+            .await;
+
+        println!("Result: {response:?}");
+    }
+
     async fn setup_operation(&mut self) -> Operation<StaticApi> {
         let to = managed_address!(&self.state.fee_market_address.clone().unwrap().to_address());
         let payments_tuple = self.setup_payments().await;
@@ -1000,6 +1022,7 @@ async fn test_deploy_sov() {
     interact.deploy_header_verifier_contract().await;
     interact.set_header_verifier_address().await;
     interact.unpause_endpoint().await;
+    interact.header_verifier_set_esdt_address().await;
 
     let operation = interact.setup_operation().await;
     interact.register_operations(&operation).await;
