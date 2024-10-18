@@ -11,6 +11,7 @@ use multiversx_sc_snippets::imports::*;
 use multiversx_sc_snippets::sdk::{self};
 use proxies::*;
 use serde::{Deserialize, Serialize};
+use std::env::{self};
 use std::{
     io::{Read, Write},
     path::Path,
@@ -130,10 +131,10 @@ struct ContractInteract {
     alice_address: Address,
     mike_address: Address,
     judy_address: Address,
-    contract_code: BytesValue,
-    fee_market_code: BytesValue,
-    price_aggregator_code: BytesValue,
-    header_verifier_code: BytesValue,
+    esdt_safe_code: String,
+    fee_market_code: String,
+    price_aggregator_code: String,
+    header_verifier_code: String,
     state: State,
 }
 
@@ -146,25 +147,39 @@ impl ContractInteract {
         let mike_address = interactor.register_wallet(test_wallets::mike());
         let judy_address = interactor.register_wallet(test_wallets::judy());
 
-        let contract_code = BytesValue::interpret_from(
-            "mxsc:../output/esdt-safe.mxsc.json",
-            &InterpreterContext::default(),
-        );
+        let current_dir = env::current_dir().expect("Failed to get current directory");
+        println!("Current directory is: {}", current_dir.display());
 
-        let fee_market_code = BytesValue::interpret_from(
-            "mxsc:contract-codes/fee-market.mxsc.json",
-            &InterpreterContext::default(),
-        );
+        let repo_dir = current_dir
+            .parent()
+            .and_then(|p| p.parent())
+            .expect("Failed to go up 2 levels");
+        println!("Repo directory is: {}", repo_dir.display());
 
-        let price_aggregator_code = BytesValue::interpret_from(
-            "mxsc:contract-codes/multiversx-price-aggregator-sc.mxsc.json",
-            &InterpreterContext::default(),
-        );
+        let fee_market_output_path = "fee-market/output/fee-market.mxsc.json";
+        let fee_market_code = repo_dir
+            .join(fee_market_output_path)
+            .to_string_lossy()
+            .to_string();
 
-        let header_verifier_code = BytesValue::interpret_from(
-            "mxsc:contract-codes/header-verifier.mxsc.json",
-            &InterpreterContext::default(),
-        );
+        let header_verifier_output_path = "header-verifier/output/header-verifier.mxsc.json";
+        let header_verifier_code = repo_dir
+            .join(header_verifier_output_path)
+            .to_string_lossy()
+            .to_string();
+
+        let esdt_safe_output_path = "../output/esdt-safe.mxsc.json";
+        let esdt_safe_code = repo_dir
+            .join(esdt_safe_output_path)
+            .to_string_lossy()
+            .to_string();
+
+        let price_aggregator_output_path =
+            "../contract-codes/multiversx-price-aggregator-sc.mxsc.json".to_string();
+        let price_aggregator_code = repo_dir
+            .join(price_aggregator_output_path)
+            .to_string_lossy()
+            .to_string();
 
         ContractInteract {
             interactor,
@@ -173,7 +188,7 @@ impl ContractInteract {
             alice_address,
             mike_address,
             judy_address,
-            contract_code,
+            esdt_safe_code,
             fee_market_code,
             price_aggregator_code,
             header_verifier_code,
@@ -182,6 +197,8 @@ impl ContractInteract {
     }
 
     async fn deploy(&mut self, is_sov_chain: bool) {
+        let code_path = MxscPath::new(&self.esdt_safe_code);
+
         let new_address = self
             .interactor
             .tx()
@@ -189,7 +206,7 @@ impl ContractInteract {
             .gas(110_000_000u64)
             .typed(proxy::EsdtSafeProxy)
             .init(is_sov_chain)
-            .code(&self.contract_code)
+            .code(code_path)
             .returns(ReturnsNewAddress)
             .prepare_async()
             .run()
@@ -212,6 +229,7 @@ impl ContractInteract {
             },
         };
 
+        let fee_market_code_path = MxscPath::new(&self.fee_market_code);
         let new_address = self
             .interactor
             .tx()
@@ -219,7 +237,7 @@ impl ContractInteract {
             .gas(100_000_000u64)
             .typed(fee_market_proxy::FeeMarketProxy)
             .init(self.state.current_address(), Option::Some(fee))
-            .code(&self.fee_market_code)
+            .code(fee_market_code_path)
             .returns(ReturnsNewAddress)
             .prepare_async()
             .run()
@@ -271,6 +289,8 @@ impl ContractInteract {
     // }
 
     async fn deploy_header_verifier_contract(&mut self) {
+        let header_verifier_code_path = MxscPath::new(&self.header_verifier_code);
+
         let new_address = self
             .interactor
             .tx()
@@ -278,7 +298,7 @@ impl ContractInteract {
             .gas(100_000_000u64)
             .typed(header_verifier_proxy::HeaderverifierProxy)
             .init(MultiValueEncoded::new())
-            .code(&self.header_verifier_code)
+            .code(header_verifier_code_path)
             .returns(ReturnsNewAddress)
             .prepare_async()
             .run()
@@ -293,6 +313,8 @@ impl ContractInteract {
     }
 
     async fn upgrade(&mut self) {
+        let code_path = MxscPath::new(&self.esdt_safe_code);
+
         let response = self
             .interactor
             .tx()
@@ -301,7 +323,7 @@ impl ContractInteract {
             .gas(30_000_000u64)
             .typed(proxy::EsdtSafeProxy)
             .upgrade()
-            .code(&self.contract_code)
+            .code(code_path)
             .code_metadata(CodeMetadata::UPGRADEABLE)
             .returns(ReturnsNewAddress)
             .prepare_async()
