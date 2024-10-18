@@ -168,7 +168,7 @@ impl ContractInteract {
             .to_string_lossy()
             .to_string();
 
-        let esdt_safe_output_path = "../output/esdt-safe.mxsc.json";
+        let esdt_safe_output_path = "esdt-safe/output/esdt-safe.mxsc.json";
         let esdt_safe_code = repo_dir
             .join(esdt_safe_output_path)
             .to_string_lossy()
@@ -899,12 +899,7 @@ impl ContractInteract {
     }
 
     async fn setup_operation(&mut self) -> Operation<StaticApi> {
-        let to = managed_address!(&self
-            .state
-            .price_aggregator_address
-            .clone()
-            .unwrap()
-            .to_address());
+        let to = managed_address!(&self.state.fee_market_address.clone().unwrap().to_address());
         let payments_tuple = self.setup_payments().await;
         let (tokens, data) = payments_tuple;
 
