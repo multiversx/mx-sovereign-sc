@@ -3,7 +3,6 @@
 #[allow(unused_imports)]
 use multiversx_sc::imports::*;
 
-/// An empty contract. To be used as a template when starting a new contract from scratch.
 #[multiversx_sc::contract]
 pub trait TestingSc {
     #[init]
@@ -11,4 +10,10 @@ pub trait TestingSc {
 
     #[upgrade]
     fn upgrade(&self) {}
+
+    #[payable("*")]
+    #[endpoint]
+    fn hello(&self, value: BigUint) {
+        require!(value > BigUint::zero(), "Value should be greater than 0")
+    }
 }
