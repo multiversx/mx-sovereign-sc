@@ -929,7 +929,7 @@ impl ContractInteract {
     }
 
     async fn setup_operation(&mut self, has_transfer_data: bool) -> Operation<StaticApi> {
-        let to = managed_address!(&self.state.fee_market_address.clone().unwrap().to_address());
+        let to = managed_address!(&self.state.get_fee_market_address());
         let payments = self.setup_payments().await;
 
         let operation_data = self.setup_operation_data(has_transfer_data).await;
