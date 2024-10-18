@@ -541,12 +541,18 @@ impl ContractInteract {
 
     async fn execute_operations(&mut self, operation: &Operation<StaticApi>) {
         let hash_of_hashes = sha256(&self.get_operation_hash(operation));
+        let payment: ManagedVec<StaticApi, EsdtTokenPayment<StaticApi>> = operation
+            .tokens
+            .into_iter()
+            .map(|payment| payment.into())
+            .collect();
 
         let response = self
             .interactor
             .tx()
             .from(&self.wallet_address)
             .to(self.state.current_address())
+            // .payment(payment)
             .gas(50_000_000u64)
             .typed(proxy::EsdtSafeProxy)
             .execute_operations(&hash_of_hashes, operation)
@@ -1063,6 +1069,7 @@ async fn test_execute_operation_no_transfer_data() {
     interact.set_header_verifier_address().await;
     interact.unpause_endpoint().await;
     interact.header_verifier_set_esdt_address().await;
+    interact.deploy_testing_contract().await;
 
     let operation = interact.setup_operation(false).await;
     interact.register_operations(&operation).await;
