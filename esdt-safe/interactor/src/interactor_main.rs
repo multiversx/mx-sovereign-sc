@@ -43,7 +43,7 @@ async fn main() {
         "addSigners" => interact.add_signers().await,
         "removeSigners" => interact.remove_signers().await,
         "registerToken" => interact.register_token().await,
-        "executeBridgeOps" => interact.execute_operations().await,
+        // "executeBridgeOps" => interact.execute_operations().await,
         "setMaxTxBatchSize" => interact.set_max_tx_batch_size().await,
         "setMaxTxBatchBlockDuration" => interact.set_max_tx_batch_block_duration().await,
         "getCurrentTxBatch" => interact.get_current_tx_batch().await,
@@ -140,8 +140,8 @@ struct ContractInteract {
 impl ContractInteract {
     async fn new() -> Self {
         let mut interactor = Interactor::new(GATEWAY).await;
-        let wallet_address = interactor.register_wallet(test_wallets::frank());
-        let bob_address = interactor.register_wallet(test_wallets::bob());
+        let wallet_address = interactor.register_wallet(test_wallets::bob());
+        let bob_address = interactor.register_wallet(test_wallets::frank());
         let alice_address = interactor.register_wallet(test_wallets::alice());
         let mike_address = interactor.register_wallet(test_wallets::mike());
         let judy_address = interactor.register_wallet(test_wallets::judy());
@@ -152,7 +152,7 @@ impl ContractInteract {
         );
 
         let fee_market_code = BytesValue::interpret_from(
-            "mxsc:../../fee-market/output/fee-market.mxsc.json",
+            "mxsc:contract-codes/fee-market.mxsc.json",
             &InterpreterContext::default(),
         );
 
@@ -162,7 +162,7 @@ impl ContractInteract {
         );
 
         let header_verifier_code = BytesValue::interpret_from(
-            "mxsc:../../header-verifier/output/header-verifier.mxsc.json",
+            "mxsc:contract-codes/header-verifier.mxsc.json",
             &InterpreterContext::default(),
         );
 
@@ -232,43 +232,43 @@ impl ContractInteract {
         println!("new fee_market_address: {new_address_bech32}");
     }
 
-    async fn deploy_price_aggregator(&mut self) {
-        let mut oracles = MultiValueEncoded::new();
-        let first_oracle_adress = managed_address!(&self.bob_address.clone());
-        let second_oracle_adress = managed_address!(&self.alice_address.clone());
-        let third_oracle_adress = managed_address!(&self.mike_address.clone());
-        let forth_oracle_address = managed_address!(&self.judy_address.clone());
-        oracles.push(first_oracle_adress);
-        oracles.push(second_oracle_adress);
-        oracles.push(third_oracle_adress);
-        oracles.push(forth_oracle_address);
-
-        let new_address = self
-            .interactor
-            .tx()
-            .from(&self.wallet_address)
-            .gas(100_000_000u64)
-            .typed(price_aggregator_proxy::PriceAggregatorProxy)
-            .init(
-                TokenIdentifier::from_esdt_bytes(TOKEN_ID),
-                BigUint::from(1u64),
-                BigUint::from(1u64),
-                3u8,
-                3u8,
-                oracles,
-            )
-            .code(&self.price_aggregator_code)
-            .returns(ReturnsNewAddress)
-            .prepare_async()
-            .run()
-            .await;
-        let new_address_bech32 = bech32::encode(&new_address);
-        self.state
-            .set_price_aggregator_address(Bech32Address::from_bech32_string(
-                new_address_bech32.clone(),
-            ));
-        println!("new token_handler_address: {new_address_bech32}");
-    }
+    // async fn deploy_price_aggregator(&mut self) {
+    //     let mut oracles = MultiValueEncoded::new();
+    //     let first_oracle_adress = managed_address!(&self.bob_address.clone());
+    //     let second_oracle_adress = managed_address!(&self.alice_address.clone());
+    //     let third_oracle_adress = managed_address!(&self.mike_address.clone());
+    //     let forth_oracle_address = managed_address!(&self.judy_address.clone());
+    //     oracles.push(first_oracle_adress);
+    //     oracles.push(second_oracle_adress);
+    //     oracles.push(third_oracle_adress);
+    //     oracles.push(forth_oracle_address);
+    //
+    //     let new_address = self
+    //         .interactor
+    //         .tx()
+    //         .from(&self.wallet_address)
+    //         .gas(100_000_000u64)
+    //         .typed(price_aggregator_proxy::PriceAggregatorProxy)
+    //         .init(
+    //             TokenIdentifier::from_esdt_bytes(TOKEN_ID),
+    //             BigUint::from(1u64),
+    //             BigUint::from(1u64),
+    //             3u8,
+    //             3u8,
+    //             oracles,
+    //         )
+    //         .code(&self.price_aggregator_code)
+    //         .returns(ReturnsNewAddress)
+    //         .prepare_async()
+    //         .run()
+    //         .await;
+    //     let new_address_bech32 = bech32::encode(&new_address);
+    //     self.state
+    //         .set_price_aggregator_address(Bech32Address::from_bech32_string(
+    //             new_address_bech32.clone(),
+    //         ));
+    //     println!("new token_handler_address: {new_address_bech32}");
+    // }
 
     async fn deploy_header_verifier_contract(&mut self) {
         let new_address = self
@@ -486,9 +486,8 @@ impl ContractInteract {
         println!("Result: {response:?}");
     }
 
-    async fn execute_operations(&mut self) {
-        let operation = self.setup_operation().await;
-        let operation_hash = self.get_operation_hash(&operation);
+    async fn execute_operations(&mut self, operation: &Operation<StaticApi>) {
+        let operation_hash = self.get_operation_hash(operation);
 
         let response = self
             .interactor
@@ -890,10 +889,9 @@ impl ContractInteract {
         Operation::new(to, tokens, data)
     }
 
-    async fn register_operations(&mut self) {
-        let operation = self.setup_operation().await;
+    async fn register_operations(&mut self, operation: &Operation<StaticApi>) {
         let bls_signature = ManagedByteArray::default();
-        let operation_hash = self.get_operation_hash(&operation);
+        let operation_hash = self.get_operation_hash(operation);
         let hash_of_hashes = sha256(&operation_hash);
 
         let mut managed_operation_hashes =
@@ -905,7 +903,8 @@ impl ContractInteract {
         managed_operation_hashes.push(managed_operation_hash);
 
         if let Some(header_verifier_address) = self.state.header_verifier_address.clone() {
-            self.interactor
+            let response = self
+                .interactor
                 .tx()
                 .from(&self.wallet_address)
                 .to(header_verifier_address)
@@ -919,6 +918,8 @@ impl ContractInteract {
                 .prepare_async()
                 .run()
                 .await;
+
+            println!("Result: {response:?}");
         }
     }
 
@@ -983,6 +984,7 @@ async fn test_deploy_sov() {
     interact.set_header_verifier_address().await;
     interact.unpause_endpoint().await;
 
-    interact.register_operations().await;
-    interact.execute_operations().await;
+    let operation = interact.setup_operation().await;
+    interact.register_operations(&operation).await;
+    interact.execute_operations(&operation).await;
 }
