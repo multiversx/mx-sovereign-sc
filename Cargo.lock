@@ -2080,6 +2080,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "testing-sc"
+version = "0.0.0"
+dependencies = [
+ "multiversx-sc",
+ "multiversx-sc-scenario",
+ "num-bigint",
+]
+
+[[package]]
+name = "testing-sc-meta"
+version = "0.0.0"
+dependencies = [
+ "multiversx-sc-meta-lib",
+ "testing-sc",
+]
+
+[[package]]
 name = "tinyvec"
 version = "1.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
