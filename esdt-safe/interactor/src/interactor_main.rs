@@ -17,8 +17,8 @@ use std::{
     io::{Read, Write},
     path::Path,
 };
-use transaction::OperationEsdtPayment;
 use transaction::{GasLimit, Operation, OperationData, PaymentsVec};
+use transaction::{OperationEsdtPayment, TransferData};
 const GATEWAY: &str = sdk::gateway::DEVNET_GATEWAY;
 const STATE_FILE: &str = "state.toml";
 const TOKEN_ID: &[u8] = b"SVT-805b28";
@@ -932,14 +932,34 @@ impl ContractInteract {
         let to = managed_address!(&self.state.fee_market_address.clone().unwrap().to_address());
         let payments = self.setup_payments().await;
 
+        let operation_data = self.setup_operation_data(has_transfer_data).await;
+
+        Operation::new(to, payments, operation_data)
+    }
+
+    async fn setup_operation_data(&mut self, has_transfer_data: bool) -> OperationData<StaticApi> {
         let op_sender = managed_address!(&self.wallet_address);
+
+        let transfer_data = if has_transfer_data {
+            let mut args = ManagedVec::new();
+            args.push(ManagedBuffer::from("arg1"));
+
+            Some(TransferData::new(
+                30_000_000u64,
+                ManagedBuffer::from("some_function"),
+                args,
+            ))
+        } else {
+            None
+        };
+
         let transfer_data: OperationData<StaticApi> = OperationData {
             op_nonce: 1,
             op_sender,
-            opt_transfer_data: Option::None,
+            opt_transfer_data: transfer_data,
         };
 
-        Operation::new(to, payments, transfer_data)
+        transfer_data
     }
 
     async fn register_operations(&mut self, operation: &Operation<StaticApi>) {
