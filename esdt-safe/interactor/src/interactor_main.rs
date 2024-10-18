@@ -17,6 +17,7 @@ use std::{
     io::{Read, Write},
     path::Path,
 };
+use testing_sc_proxy::TestingScProxy;
 use transaction::{GasLimit, Operation, OperationData, PaymentsVec};
 use transaction::{OperationEsdtPayment, TransferData};
 const GATEWAY: &str = sdk::gateway::DEVNET_GATEWAY;
@@ -76,6 +77,7 @@ struct State {
     fee_market_address: Option<Bech32Address>,
     price_aggregator_address: Option<Bech32Address>,
     header_verifier_address: Option<Bech32Address>,
+    testing_sc_address: Option<Bech32Address>,
 }
 
 impl State {
@@ -106,6 +108,10 @@ impl State {
 
     pub fn set_header_verifier_address(&mut self, address: Bech32Address) {
         self.header_verifier_address = Some(address);
+    }
+
+    pub fn set_testing_sc_address(&mut self, address: Bech32Address) {
+        self.testing_sc_address = Some(address);
     }
 
     /// Returns the contract address
@@ -331,6 +337,27 @@ impl ContractInteract {
 
     async fn deploy_testing_contract(&mut self) {
         let testing_sc_code_path = MxscPath::new(&self.testing_sc_code);
+
+        let new_address = self
+            .interactor
+            .tx()
+            .from(&self.wallet_address)
+            .gas(100_000_000u64)
+            .typed(TestingScProxy)
+            .init()
+            .code(testing_sc_code_path)
+            .returns(ReturnsNewAddress)
+            .prepare_async()
+            .run()
+            .await;
+
+        let new_address_bech32 = bech32::encode(&new_address);
+        self.state
+            .set_testing_sc_address(Bech32Address::from_bech32_string(
+                new_address_bech32.clone(),
+            ));
+
+        println!("new testing_sc_address: {new_address_bech32}");
     }
 
     async fn upgrade(&mut self) {
