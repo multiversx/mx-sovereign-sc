@@ -509,16 +509,16 @@ impl ContractInteract {
     }
 
     async fn execute_operations(&mut self, operation: &Operation<StaticApi>) {
-        let operation_hash = self.get_operation_hash(operation);
+        let hash_of_hashes = sha256(&self.get_operation_hash(operation));
 
         let response = self
             .interactor
             .tx()
             .from(&self.wallet_address)
             .to(self.state.current_address())
-            .gas(30_000_000u64)
+            .gas(50_000_000u64)
             .typed(proxy::EsdtSafeProxy)
-            .execute_operations(&operation_hash, operation)
+            .execute_operations(&hash_of_hashes, operation)
             .returns(ReturnsResultUnmanaged)
             .prepare_async()
             .run()
