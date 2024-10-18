@@ -114,6 +114,14 @@ impl State {
             .as_ref()
             .expect("no known contract, deploy first")
     }
+
+    pub fn get_header_verifier_address(&self) -> Address {
+        self.header_verifier_address.clone().unwrap().to_address()
+    }
+
+    pub fn get_fee_market_address(&self) -> Address {
+        self.fee_market_address.clone().unwrap().to_address()
+    }
 }
 
 impl Drop for State {
@@ -920,7 +928,7 @@ impl ContractInteract {
         println!("Result: {response:?}");
     }
 
-    async fn setup_operation(&mut self) -> Operation<StaticApi> {
+    async fn setup_operation(&mut self, has_transfer_data: bool) -> Operation<StaticApi> {
         let to = managed_address!(&self.state.fee_market_address.clone().unwrap().to_address());
         let payments_tuple = self.setup_payments().await;
         let (tokens, data) = payments_tuple;
@@ -941,25 +949,25 @@ impl ContractInteract {
 
         managed_operation_hashes.push(managed_operation_hash);
 
-        if let Some(header_verifier_address) = self.state.header_verifier_address.clone() {
-            let response = self
-                .interactor
-                .tx()
-                .from(&self.wallet_address)
-                .to(header_verifier_address)
-                .typed(header_verifier_proxy::HeaderverifierProxy)
-                .register_bridge_operations(
-                    bls_signature,
-                    managed_hash_of_hashes,
-                    managed_operation_hashes,
-                )
-                .returns(ReturnsResult)
-                .prepare_async()
-                .run()
-                .await;
+        let header_verifier_address = self.state.get_header_verifier_address();
 
-            println!("Result: {response:?}");
-        }
+        let response = self
+            .interactor
+            .tx()
+            .from(&self.wallet_address)
+            .to(header_verifier_address)
+            .typed(header_verifier_proxy::HeaderverifierProxy)
+            .register_bridge_operations(
+                bls_signature,
+                managed_hash_of_hashes,
+                managed_operation_hashes,
+            )
+            .returns(ReturnsResult)
+            .prepare_async()
+            .run()
+            .await;
+
+        println!("Result: {response:?}");
     }
 
     async fn setup_payments(
