@@ -144,6 +144,7 @@ struct ContractInteract {
     fee_market_code: String,
     price_aggregator_code: String,
     header_verifier_code: String,
+    testing_sc_code: String,
     state: State,
 }
 
@@ -184,9 +185,15 @@ impl ContractInteract {
             .to_string();
 
         let price_aggregator_output_path =
-            "../contract-codes/multiversx-price-aggregator-sc.mxsc.json".to_string();
+            "../contract-codes/multiversx-price-aggregator-sc.mxsc.json";
         let price_aggregator_code = repo_dir
             .join(price_aggregator_output_path)
+            .to_string_lossy()
+            .to_string();
+
+        let testing_sc_output_path = "testing-sc/output/testing-sc.mxsc.json";
+        let testing_sc_code = repo_dir
+            .join(testing_sc_output_path)
             .to_string_lossy()
             .to_string();
 
@@ -201,6 +208,7 @@ impl ContractInteract {
             fee_market_code,
             price_aggregator_code,
             header_verifier_code,
+            testing_sc_code,
             state: State::load_state(),
         }
     }
@@ -319,6 +327,10 @@ impl ContractInteract {
             ));
 
         println!("new header_verifier_address: {new_address_bech32}");
+    }
+
+    async fn deploy_testing_contract(&mut self) {
+        let testing_sc_code_path = MxscPath::new(&self.testing_sc_code);
     }
 
     async fn upgrade(&mut self) {
@@ -537,9 +549,10 @@ impl ContractInteract {
     }
 
     async fn execute_operations_with_error(&mut self, error_msg: ExpectError<'_>) {
-        let (tokens, data) = self.setup_payments().await;
+        let tokens = self.setup_payments().await;
+        let operation_data = self.setup_operation_data(false).await;
         let to = managed_address!(&self.bob_address);
-        let operation = Operation::new(to, tokens, data);
+        let operation = Operation::new(to, tokens, operation_data);
         let operation_hash = self.get_operation_hash(&operation);
 
         let response = self
