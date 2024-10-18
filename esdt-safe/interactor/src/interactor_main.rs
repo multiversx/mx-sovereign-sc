@@ -128,6 +128,10 @@ impl State {
     pub fn get_fee_market_address(&self) -> Address {
         self.fee_market_address.clone().unwrap().to_address()
     }
+
+    pub fn get_testing_sc_address(&self) -> Address {
+        self.testing_sc_address.clone().unwrap().to_address()
+    }
 }
 
 impl Drop for State {
@@ -358,6 +362,23 @@ impl ContractInteract {
             ));
 
         println!("new testing_sc_address: {new_address_bech32}");
+    }
+
+    async fn call_hello_endpoint(&mut self, value: u64) {
+        let response = self
+            .interactor
+            .tx()
+            .from(&self.wallet_address)
+            .to(&self.state.get_testing_sc_address())
+            .gas(50_000_000u64)
+            .typed(TestingScProxy)
+            .hello(value)
+            .returns(ReturnsResultUnmanaged)
+            .prepare_async()
+            .run()
+            .await;
+
+        println!("Result: {response:?}");
     }
 
     async fn upgrade(&mut self) {
