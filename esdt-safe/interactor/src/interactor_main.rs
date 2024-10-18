@@ -1013,7 +1013,7 @@ impl ContractInteract {
 }
 
 #[tokio::test]
-async fn test_deploy_sov() {
+async fn test_execute_operation_no_transfer_data() {
     let mut interact = ContractInteract::new().await;
     interact.deploy(false).await;
     interact.deploy_fee_market().await;
