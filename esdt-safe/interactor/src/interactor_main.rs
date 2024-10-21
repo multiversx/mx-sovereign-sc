@@ -23,6 +23,7 @@ use transaction::{OperationEsdtPayment, TransferData};
 const GATEWAY: &str = sdk::gateway::DEVNET_GATEWAY;
 const STATE_FILE: &str = "state.toml";
 const TOKEN_ID: &[u8] = b"SOV-101252";
+const TOKEN_ID_FOR_EXECUTE: &[u8] = b"x-SOV-101252";
 const WHITELISTED_TOKEN_ID: &[u8] = b"CHOCOLATE-daf625";
 
 type OptionalTransferData<M> =
@@ -510,10 +511,10 @@ impl ContractInteract {
     async fn register_token(&mut self) {
         let egld_amount = BigUint::<StaticApi>::from(50_000_000_000_000_000u64);
 
-        let sov_token_id = TokenIdentifier::from_esdt_bytes(b"SOV");
+        let sov_token_id = TokenIdentifier::from_esdt_bytes(b"x-SOV-101252");
         let token_type = EsdtTokenType::Fungible;
-        let token_display_name = ManagedBuffer::new_from_bytes(&b"SOVEREIGN-TOKEN"[..]);
-        let token_ticker = ManagedBuffer::new_from_bytes(&b"SVCT"[..]);
+        let token_display_name = ManagedBuffer::new_from_bytes(b"TESDT");
+        let token_ticker = ManagedBuffer::new_from_bytes(b"TEST");
         let num_decimals = 18u32;
 
         let response = self
@@ -1016,13 +1017,23 @@ impl ContractInteract {
 
     async fn setup_payments(&mut self) -> ManagedVec<StaticApi, OperationEsdtPayment<StaticApi>> {
         let mut tokens: ManagedVec<StaticApi, OperationEsdtPayment<StaticApi>> = ManagedVec::new();
-        let token_ids = vec![TOKEN_ID];
+        let token_ids = vec![TOKEN_ID_FOR_EXECUTE];
 
         for token_id in token_ids {
             let payment: OperationEsdtPayment<StaticApi> = OperationEsdtPayment {
                 token_identifier: token_id.into(),
                 token_nonce: 0,
-                token_data: EsdtTokenData::default(),
+                token_data: EsdtTokenData {
+                    token_type: EsdtTokenType::Fungible,
+                    amount: BigUint::from(10_000u64),
+                    frozen: false,
+                    hash: ManagedBuffer::new(),
+                    name: ManagedBuffer::from("SovToken"),
+                    attributes: ManagedBuffer::new(),
+                    creator: managed_address!(&self.bob_address),
+                    royalties: BigUint::zero(),
+                    uris: ManagedVec::new(),
+                },
             };
 
             tokens.push(payment);
