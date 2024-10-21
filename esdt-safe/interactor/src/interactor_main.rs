@@ -961,7 +961,8 @@ impl ContractInteract {
 
         let transfer_data = if has_transfer_data {
             let mut args = ManagedVec::new();
-            args.push(ManagedBuffer::from("1"));
+            let value = BigUint::<StaticApi>::from(0u64);
+            args.push(ManagedBuffer::from(value.to_bytes_be()));
 
             Some(TransferData::new(
                 30_000_000u64,
