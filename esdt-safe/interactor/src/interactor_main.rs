@@ -22,7 +22,7 @@ use transaction::{GasLimit, Operation, OperationData, PaymentsVec};
 use transaction::{OperationEsdtPayment, TransferData};
 const GATEWAY: &str = sdk::gateway::DEVNET_GATEWAY;
 const STATE_FILE: &str = "state.toml";
-const TOKEN_ID: &[u8] = b"SVT-805b28";
+const TOKEN_ID: &[u8] = b"SOV-101252";
 const WHITELISTED_TOKEN_ID: &[u8] = b"CHOCOLATE-daf625";
 
 type OptionalTransferData<M> =
@@ -162,7 +162,7 @@ impl ContractInteract {
     async fn new() -> Self {
         let mut interactor = Interactor::new(GATEWAY).await;
         let wallet_address = interactor.register_wallet(test_wallets::bob());
-        let bob_address = interactor.register_wallet(test_wallets::frank());
+        let frank_address = interactor.register_wallet(test_wallets::frank());
         let alice_address = interactor.register_wallet(test_wallets::alice());
         let mike_address = interactor.register_wallet(test_wallets::mike());
         let judy_address = interactor.register_wallet(test_wallets::judy());
@@ -210,7 +210,7 @@ impl ContractInteract {
         ContractInteract {
             interactor,
             wallet_address,
-            bob_address,
+            bob_address: frank_address,
             alice_address,
             mike_address,
             judy_address,
@@ -510,9 +510,9 @@ impl ContractInteract {
     async fn register_token(&mut self) {
         let egld_amount = BigUint::<StaticApi>::from(50_000_000_000_000_000u64);
 
-        let sov_token_id = TokenIdentifier::from_esdt_bytes(&b"SOV"[..]);
+        let sov_token_id = TokenIdentifier::from_esdt_bytes(b"SOV");
         let token_type = EsdtTokenType::Fungible;
-        let token_display_name = ManagedBuffer::new_from_bytes(&b"SOVEREIGN"[..]);
+        let token_display_name = ManagedBuffer::new_from_bytes(&b"SOVEREIGN-TOKEN"[..]);
         let token_ticker = ManagedBuffer::new_from_bytes(&b"SVCT"[..]);
         let num_decimals = 18u32;
 
@@ -547,7 +547,7 @@ impl ContractInteract {
             .tx()
             .from(&self.wallet_address)
             .to(self.state.current_address())
-            .gas(50_000_000u64)
+            .gas(70_000_000u64)
             .typed(proxy::EsdtSafeProxy)
             .execute_operations(&hash_of_hashes, operation)
             .returns(ReturnsResultUnmanaged)
@@ -971,13 +971,13 @@ impl ContractInteract {
             None
         };
 
-        let transfer_data: OperationData<StaticApi> = OperationData {
+        let operation_data: OperationData<StaticApi> = OperationData {
             op_nonce: 1,
             op_sender,
             opt_transfer_data: transfer_data,
         };
 
-        transfer_data
+        operation_data
     }
 
     async fn register_operations(&mut self, operation: &Operation<StaticApi>) {
@@ -1021,7 +1021,7 @@ impl ContractInteract {
         for token_id in token_ids {
             let payment: OperationEsdtPayment<StaticApi> = OperationEsdtPayment {
                 token_identifier: token_id.into(),
-                token_nonce: 1,
+                token_nonce: 0,
                 token_data: EsdtTokenData::default(),
             };
 
@@ -1064,8 +1064,9 @@ async fn test_execute_operation_no_transfer_data() {
     interact.unpause_endpoint().await;
     interact.header_verifier_set_esdt_address().await;
     interact.deploy_testing_contract().await;
+    interact.register_token().await;
 
-    let operation = interact.setup_operation(false).await;
+    let operation = interact.setup_operation(true).await;
     interact.register_operations(&operation).await;
     interact.execute_operations(&operation).await;
 }
