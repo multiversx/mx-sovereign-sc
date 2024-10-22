@@ -25,6 +25,7 @@ const STATE_FILE: &str = "state.toml";
 const TOKEN_ID: &[u8] = b"SOV-101252";
 const TOKEN_ID_FOR_EXECUTE: &[u8] = b"x-SOV-101252";
 const WHITELISTED_TOKEN_ID: &[u8] = b"CHOCOLATE-daf625";
+const INTERACTOR_SCENARIO_TRACE_PATH: &str = "interactor_trace.scen.json";
 
 type OptionalTransferData<M> =
     OptionalValue<MultiValue3<GasLimit, ManagedBuffer<M>, ManagedVec<M, ManagedBuffer<M>>>>;
@@ -161,7 +162,11 @@ struct ContractInteract {
 
 impl ContractInteract {
     async fn new() -> Self {
-        let mut interactor = Interactor::new(GATEWAY).await;
+        let mut interactor = Interactor::new(GATEWAY)
+            .await
+            .with_tracer(INTERACTOR_SCENARIO_TRACE_PATH)
+            .await;
+
         let wallet_address = interactor.register_wallet(test_wallets::bob());
         let frank_address = interactor.register_wallet(test_wallets::frank());
         let alice_address = interactor.register_wallet(test_wallets::alice());
