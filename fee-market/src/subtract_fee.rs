@@ -30,8 +30,7 @@ pub struct SubtractPaymentArguments<M: ManagedTypeApi> {
 
 #[multiversx_sc::module]
 pub trait SubtractFeeModule:
-    crate::enable_fee::EnableFeeModule
-    + crate::fee_type::FeeTypeModule
+    crate::fee_type::FeeTypeModule
     + crate::fee_common::CommonFeeModule
     + crate::price_aggregator::PriceAggregatorModule
     + utils::UtilsModule
@@ -68,6 +67,7 @@ pub trait SubtractFeeModule:
             });
             percentage_sum += percentage as u64;
         }
+
         require!(
             percentage_sum == TOTAL_PERCENTAGE as u64,
             "Invalid percentage sum"
@@ -80,7 +80,6 @@ pub trait SubtractFeeModule:
             }
 
             let mut remaining_fees = accumulated_fees.clone();
-
             for pair in &pairs {
                 let amount_to_send =
                     &(&accumulated_fees * &BigUint::from(pair.percentage)) / &percentage_total;
@@ -88,8 +87,10 @@ pub trait SubtractFeeModule:
                 if amount_to_send > 0 {
                     remaining_fees -= &amount_to_send;
 
-                    self.send()
-                        .direct_esdt(&pair.address, &token_id, 0, &amount_to_send);
+                    self.tx()
+                        .to(&pair.address)
+                        .payment(EsdtTokenPayment::new(token_id.clone(), 0, amount_to_send))
+                        .transfer();
                 }
             }
 
@@ -113,8 +114,7 @@ pub trait SubtractFeeModule:
         let payment = self.call_value().single_esdt();
 
         if !self.is_fee_enabled() || self.users_whitelist().contains(&original_caller) {
-            self.send()
-                .direct_esdt(&caller, &payment.token_identifier, 0, &payment.amount);
+            self.tx().to(&caller).payment(&payment).transfer();
 
             return FinalPayment {
                 fee: EsdtTokenPayment::new(payment.token_identifier.clone(), 0, BigUint::zero()),
@@ -123,14 +123,19 @@ pub trait SubtractFeeModule:
         }
 
         let final_payment = self.subtract_fee_by_type(payment, total_transfers, opt_gas_limit);
-        let _ = self
-            .tokens_for_fees()
+
+        self.tokens_for_fees()
             .insert(final_payment.fee.token_identifier.clone());
+
         self.accumulated_fees(&final_payment.fee.token_identifier)
             .update(|amt| *amt += &final_payment.fee.amount);
 
-        self.send()
-            .direct_non_zero_esdt_payment(&caller, &final_payment.remaining_tokens);
+        if final_payment.remaining_tokens.amount > 0 {
+            self.tx()
+                .to(&original_caller)
+                .payment(&final_payment.remaining_tokens)
+                .transfer();
+        }
 
         final_payment
     }
@@ -197,7 +202,6 @@ pub trait SubtractFeeModule:
         }
 
         let mut payment = args.payment;
-
         require!(total_fee <= payment.amount, "Payment does not cover fee");
 
         payment.amount -= &total_fee;
