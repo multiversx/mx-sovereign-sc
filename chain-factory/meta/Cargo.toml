@@ -10,5 +10,5 @@ authors = ["you"]
 [dependencies.chain-factory]
 path = ".."
 
-[dependencies.multiversx-sc-meta]
-version = "=0.50.4"
+[dependencies.multiversx-sc-meta-lib]
+version = "=0.53.2"
