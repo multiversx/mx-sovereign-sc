@@ -15,7 +15,8 @@ num-bigint = "0.4.2"
 version = "=0.53.2"
 
 [dependencies.multiversx-sc]
-version = "=0.53.2"
+git = "https://github.com/multiversx/mx-sdk-rs"
+rev = "710ecc80fb2e909a3d564c9a586a48df82f53ebb"
 
 [dependencies.utils]
 path = "../common/utils"

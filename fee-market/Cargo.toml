@@ -18,7 +18,8 @@ path = "../common/transaction"
 path = "../common/bls-signature"
 
 [dependencies.multiversx-sc]
-version = "=0.53.2"
+git = "https://github.com/multiversx/mx-sdk-rs"
+rev = "710ecc80fb2e909a3d564c9a586a48df82f53ebb"
 
 [dev-dependencies]
 num-bigint = "0.4.2"

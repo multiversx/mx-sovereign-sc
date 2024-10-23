@@ -5,7 +5,8 @@ authors = ["dorin-iancu <dorin.iancu@multiversx.com>"]
 edition = "2018"
 
 [dependencies.multiversx-sc]
-version = "=0.53.2"
+git = "https://github.com/multiversx/mx-sdk-rs"
+rev = "710ecc80fb2e909a3d564c9a586a48df82f53ebb"
 
 [dev-dependencies.multiversx-sc-scenario]
 version = "=0.53.2"
