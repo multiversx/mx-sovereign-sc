@@ -41,8 +41,11 @@ path = "../token-handler"
 [dependencies.multiversx-sc]
 git = "https://github.com/multiversx/mx-sdk-rs"
 rev = "710ecc80fb2e909a3d564c9a586a48df82f53ebb"
+version = "=0.53.2"
 
 [dependencies.multiversx-sc-modules]
+git = "https://github.com/multiversx/mx-sdk-rs"
+rev = "710ecc80fb2e909a3d564c9a586a48df82f53ebb"
 version = "=0.53.2"
 
 [dev-dependencies]
@@ -51,4 +54,6 @@ num-traits = "0.2"
 hex = "0.4"
 
 [dev-dependencies.multiversx-sc-scenario]
+git = "https://github.com/multiversx/mx-sdk-rs"
+rev = "710ecc80fb2e909a3d564c9a586a48df82f53ebb"
 version = "=0.53.2"
