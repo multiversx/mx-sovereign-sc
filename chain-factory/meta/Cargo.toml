@@ -11,4 +11,6 @@ authors = ["you"]
 path = ".."
 
 [dependencies.multiversx-sc-meta-lib]
+git = "https://github.com/multiversx/mx-sdk-rs"
+rev = "710ecc80fb2e909a3d564c9a586a48df82f53ebb"
 version = "=0.53.2"

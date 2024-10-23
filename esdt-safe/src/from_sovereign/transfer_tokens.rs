@@ -1,5 +1,6 @@
 use builtin_func_names::ESDT_MULTI_TRANSFER_FUNC_NAME;
 use header_verifier::header_verifier_proxy;
+use multiversx_sc::chain_core::builtin_func_names;
 use transaction::{GasLimit, Operation, OperationData, OperationEsdtPayment, OperationTuple};
 
 use crate::to_sovereign;
