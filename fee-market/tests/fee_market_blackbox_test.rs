@@ -133,13 +133,13 @@ impl FeeMarketTestState {
         }
     }
 
-    fn disable_fee(&mut self) {
+    fn remove_fee(&mut self) {
         self.world
             .tx()
             .from(OWNER_ADDRESS)
             .to(FEE_MARKET_ADDRESS)
             .typed(fee_market_proxy::FeeMarketProxy)
-            .disable_fee(TOKEN_ID)
+            .remove_fee(TOKEN_ID)
             .run();
     }
 
@@ -283,7 +283,7 @@ fn test_substract_fee_no_fee() {
     let mut state = FeeMarketTestState::new();
 
     state.deploy_fee_market();
-    state.disable_fee();
+    state.remove_fee();
 
     state.substract_fee("Correct", None);
 

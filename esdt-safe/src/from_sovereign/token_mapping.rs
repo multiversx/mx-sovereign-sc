@@ -88,8 +88,8 @@ pub trait TokenMappingModule: utils::UtilsModule {
             ManagedAsyncCallResult::Ok(mvx_token_id) => {
                 self.set_corresponding_token_ids(sov_token_id, &mvx_token_id);
             }
-            ManagedAsyncCallResult::Err(_) => {
-                sc_panic!("There was an error at issuing nonfungible tokens");
+            ManagedAsyncCallResult::Err(error) => {
+                sc_panic!("There was an error at issuing token: '{}'", error.err_msg);
             }
         }
     }

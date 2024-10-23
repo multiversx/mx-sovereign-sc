@@ -1,5 +1,6 @@
 #![no_std]
 
+use multiversx_sc_modules::only_admin;
 use validator_rules::TokenIdAmountPair;
 
 multiversx_sc::imports!();
@@ -11,9 +12,7 @@ pub type StakeMultiArg<M> = MultiValue2<TokenIdentifier<M>, BigUint<M>>;
 
 #[multiversx_sc::contract]
 pub trait ChainConfigContract:
-    bridge::BridgeModule
-    + validator_rules::ValidatorRulesModule
-    + multiversx_sc_modules::only_admin::OnlyAdminModule
+    bridge::BridgeModule + validator_rules::ValidatorRulesModule + only_admin::OnlyAdminModule
 {
     #[init]
     fn init(
