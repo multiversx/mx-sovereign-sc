@@ -863,7 +863,7 @@ impl ContractInteract {
         println!("Result: {result_value:?}");
     }
 
-    async fn disable_fee(&mut self) {
+    async fn remove_fee(&mut self) {
         let response = self
             .interactor
             .tx()
@@ -871,7 +871,7 @@ impl ContractInteract {
             .to(self.state.fee_market_address.clone().unwrap().as_address())
             .gas(30_000_000u64)
             .typed(FeeMarketProxy)
-            .disable_fee(TOKEN_ID)
+            .remove_fee(TOKEN_ID)
             .returns(ReturnsResultUnmanaged)
             .prepare_async()
             .run()
@@ -929,7 +929,7 @@ async fn test_deploy() {
     interact.deploy_price_aggregator().await;
     interact.deploy_fee_market().await;
     interact.set_fee_market_address().await;
-    interact.disable_fee().await;
+    interact.remove_fee().await;
     interact.unpause_endpoint().await;
 }
 
@@ -941,7 +941,7 @@ async fn test_deploy_sov() {
     interact.deploy_price_aggregator().await;
     interact.deploy_fee_market().await;
     interact.set_fee_market_address().await;
-    interact.disable_fee().await;
+    interact.remove_fee().await;
     interact.deploy_header_verifier_contract().await;
     interact.set_header_verifier_address().await;
     interact.unpause_endpoint().await;
