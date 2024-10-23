@@ -230,10 +230,10 @@ pub trait FactoryModule: only_admin::OnlyAdminModule {
         let charset: &[u8] = b"0123456789abcdefghijklmnopqrstuvwxyz";
         let mut rand = RandomnessSource::new();
 
-        for i in 0..2 {
+        (0..2).for_each(|i| {
             let rand_index = rand.next_u8_in_range(0, charset.len() as u8) as usize;
             byte_array[i] = charset[rand_index];
-        }
+        });
 
         ManagedBuffer::new_from_bytes(&byte_array)
     }
