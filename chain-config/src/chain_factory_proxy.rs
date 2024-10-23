@@ -219,15 +219,6 @@ where
             .original_result()
     }
 
-    pub fn current_chain_info(
-        self,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ChainInfo<Env::Api>> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("getCurrentChainInfo")
-            .original_result()
-    }
-
     pub fn chain_ids(
         self,
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, MultiValueEncoded<Env::Api, ManagedBuffer<Env::Api>>> {
@@ -381,14 +372,4 @@ pub enum ScArray {
     TokenHandler,
     ChainConfig,
     Slashing,
-}
-
-#[type_abi]
-#[derive(TopEncode, TopDecode)]
-pub struct ChainInfo<Api>
-where
-    Api: ManagedTypeApi,
-{
-    pub name: ManagedBuffer<Api>,
-    pub chain_id: ManagedBuffer<Api>,
 }
