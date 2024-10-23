@@ -91,6 +91,7 @@ pub trait TransferTokensModule: common_storage::CommonStorage {
                     &operation_token.token_data,
                 );
 
+                // NOTE: Will use this until the new NFT creation update
                 self.send_raw().call_local_esdt_built_in_function(
                     self.blockchain().get_gas_left(),
                     &ManagedBuffer::from(ESDT_NFT_CREATE_FUNC_NAME),

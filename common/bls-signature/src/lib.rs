@@ -63,6 +63,7 @@ pub trait BlsSignatureModule {
                 signature_data,
                 signature.as_managed_buffer(),
             );
+
             total_valid_signatures += 1;
         }
 
