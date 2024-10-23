@@ -46,4 +46,19 @@ pub trait ChainConfigContract:
 
     #[upgrade]
     fn upgrade(&self) {}
+
+    #[only_admin]
+    #[endpoint(finishSetup)]
+    fn finish_setup(&self) {
+        let caller = self.blockchain().get_caller();
+        let header_verifier_address = self.header_verifier_address().get();
+
+        require!(
+            self.admins().contains(&header_verifier_address),
+            "The Header Verifier SC is already the admin"
+        );
+
+        self.admins().swap_remove(&caller);
+        self.add_admin(header_verifier_address);
+    }
 }
