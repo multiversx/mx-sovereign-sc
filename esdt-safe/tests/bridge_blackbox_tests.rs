@@ -1,6 +1,6 @@
 use bls_signature::BlsSignature;
 use esdt_safe::esdt_safe_proxy::{self};
-use fee_market::fee_market_proxy::{self, FeeType};
+use fee_market::fee_market_proxy::{self, FeeStruct, FeeType};
 use header_verifier::header_verifier_proxy;
 use multiversx_sc::codec::TopEncode;
 use multiversx_sc::types::{
@@ -31,8 +31,6 @@ const FEE_MARKET_CODE_PATH: MxscPath = MxscPath::new("../fee-market/output/fee-m
 const HEADER_VERIFIER_ADDRESS: TestSCAddress = TestSCAddress::new("header_verifier");
 const HEADER_VERIFIER_CODE_PATH: MxscPath =
     MxscPath::new("../header-verifier/output/header-verifier.mxsc.json");
-
-const PRICE_AGGREGATOR_ADDRESS: TestSCAddress = TestSCAddress::new("price_aggregator");
 
 const USER_ADDRESS: TestAddress = TestAddress::new("user");
 const RECEIVER_ADDRESS: TestAddress = TestAddress::new("receiver");
@@ -98,19 +96,13 @@ impl BridgeTestState {
     }
 
     fn deploy_fee_market_contract(&mut self) -> &mut Self {
-        let usdc_token_id = TestTokenIdentifier::new("USDC");
-        let wegld_token_id = TestTokenIdentifier::new("WEGLD");
+        let fee_struct: Option<FeeStruct<StaticApi>> = None;
 
         self.world
             .tx()
             .from(BRIDGE_OWNER_ADDRESS)
             .typed(fee_market_proxy::FeeMarketProxy)
-            .init(
-                BRIDGE_ADDRESS,
-                PRICE_AGGREGATOR_ADDRESS,
-                usdc_token_id,
-                wegld_token_id,
-            )
+            .init(BRIDGE_ADDRESS, fee_struct)
             .code(FEE_MARKET_CODE_PATH)
             .new_address(FEE_MARKET_ADDRESS)
             .run();
@@ -184,12 +176,17 @@ impl BridgeTestState {
         let fee_token_identifier: TokenIdentifier<StaticApi> =
             TokenIdentifier::from(token_identifier);
 
+        let fee_struct = FeeStruct {
+            base_token: fee_token_identifier,
+            fee_type,
+        };
+
         self.world
             .tx()
             .from(BRIDGE_OWNER_ADDRESS)
             .to(FEE_MARKET_ADDRESS)
             .typed(fee_market_proxy::FeeMarketProxy)
-            .add_fee(fee_token_identifier, fee_type)
+            .set_fee(fee_struct)
             .run();
     }
 

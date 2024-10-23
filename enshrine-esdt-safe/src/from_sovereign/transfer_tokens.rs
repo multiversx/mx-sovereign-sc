@@ -154,7 +154,7 @@ pub trait TransferTokensModule:
             &operation_tuple.operation.data.op_sender,
             &operation_tuple
                 .operation
-                .get_tokens_as_multi_value_encoded(),
+                .map_tokens_to_multi_value_encoded(),
             OperationData::new(tx_nonce, sc_address.clone(), None),
         );
     }
@@ -207,7 +207,7 @@ pub trait TransferTokensModule:
     #[storage_mapper("paidIssuedTokens")]
     fn paid_issued_tokens(&self) -> UnorderedSetMapper<TokenIdentifier<Self::Api>>;
 
-    #[storage_mapper_from_address("pending_hashes")]
+    #[storage_mapper_from_address("pendingHashes")]
     fn external_pending_hashes(
         &self,
         sc_address: ManagedAddress,

@@ -1,6 +1,7 @@
 #![no_std]
 
 use multiversx_sc::imports::*;
+use transaction::GasLimit;
 
 pub mod common;
 pub mod enshrine_esdt_safe_proxy;
@@ -57,6 +58,9 @@ pub trait EnshrineEsdtSafe:
             Some(prefix) => self.sovereign_tokens_prefix().set(prefix),
             None => sc_panic!("Sovereign Token Prefix must be set in Mainchain"),
         }
+
+        let caller = self.blockchain().get_caller();
+        self.initiator_address().set(caller);
     }
 
     #[only_owner]
@@ -73,6 +77,18 @@ pub trait EnshrineEsdtSafe:
         self.require_sc_address(&header_verifier_address);
 
         self.header_verifier_address().set(&header_verifier_address);
+    }
+
+    #[only_owner]
+    #[endpoint(setMaxTxGasLimit)]
+    fn set_max_user_tx_gas_limit(&self, max_user_tx_gas_limit: GasLimit) {
+        self.max_user_tx_gas_limit().set(max_user_tx_gas_limit);
+    }
+
+    #[only_owner]
+    #[endpoint(setBannedEndpoint)]
+    fn set_banned_endpoint(&self, endpoint_name: ManagedBuffer) {
+        self.banned_endpoint_names().insert(endpoint_name);
     }
 
     #[upgrade]
