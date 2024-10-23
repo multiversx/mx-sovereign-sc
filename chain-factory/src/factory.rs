@@ -93,12 +93,14 @@ pub trait FactoryModule: only_admin::OnlyAdminModule {
         contracts_map: MultiValueEncoded<Self::Api, ContractMapArgs<Self::Api>>,
     ) {
         for contract in contracts_map {
+            let contracts_mapper = self.contracts_map(contract.id);
+
             require!(
-                self.contracts_map(contract.id.clone()).is_empty(),
+                contracts_mapper.is_empty(),
                 "There is already a SC address registered for that contract ID"
             );
 
-            self.contracts_map(contract.id).set(contract.address);
+            contracts_mapper.set(contract.address);
         }
     }
 
