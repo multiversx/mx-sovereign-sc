@@ -103,8 +103,8 @@ pub trait FactoryModule: only_admin::OnlyAdminModule {
         bls_pub_keys: MultiValueEncoded<ManagedBuffer>,
     ) {
         let source_address = self.header_verifier_template().get();
-
         let mut args = ManagedArgBuffer::new();
+        self.require_bls_keys_in_range(&chain_id, bls_pub_keys.len().into());
         args.push_multi_arg(&bls_pub_keys);
 
         let header_verifier_address = self.deploy_contract(source_address, args);
@@ -250,6 +250,27 @@ pub trait FactoryModule: only_admin::OnlyAdminModule {
         } else {
             return None;
         }
+    }
+
+    fn require_bls_keys_in_range(&self, chain_id: &ManagedBuffer, bls_pub_keys_count: BigUint) {
+        let chain_config_address = self
+            .get_contract_address(chain_id, ScArray::ChainConfig)
+            .unwrap();
+
+        require!(
+            !chain_config_address.is_zero(),
+            "The Chain Config contract was not deployed"
+        );
+
+        let min_validators = self
+            .external_min_validators(chain_config_address.clone())
+            .get();
+        let max_validators = self.external_max_validators(chain_config_address).get();
+
+        require!(
+            min_validators < bls_pub_keys_count && bls_pub_keys_count < max_validators,
+            "The number of validator BLS Keys is not correct"
+        );
     }
 
     #[view(getContractsMap)]
