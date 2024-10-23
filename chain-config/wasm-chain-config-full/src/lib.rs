@@ -16,20 +16,20 @@ multiversx_sc_wasm_adapter::allocator!();
 multiversx_sc_wasm_adapter::panic_handler!();
 
 multiversx_sc_wasm_adapter::endpoints! {
-    chain_factory
+    chain_config
     (
         init => init
         upgrade => upgrade
-        deploySovereignChainConfigContract => deploy_sovereign_chain_config_contract
-        addContractsToMap => add_contracts_to_map
-        blacklistSovereignChainSc => blacklist_sovereign_chain_sc
-        getContractsMap => contracts_map
-        getDeployCost => deploy_cost
-        slash => slash
-        distributeSlashed => distribute_slashed
-        setMinValidSigners => set_min_valid_signers
-        addSigners => add_signers
-        removeSigners => remove_signers
+        deployBridge => deploy_bridge
+        getMinValidators => min_validators
+        getMaxValidators => max_validators
+        getMinStake => min_stake
+        getAdditionalStakeRequired => additional_stake_required
+        wasPreviouslySlashed => was_previously_slashed
+        isAdmin => is_admin
+        addAdmin => add_admin
+        removeAdmin => remove_admin
+        getAdmins => admins
     )
 }
 
