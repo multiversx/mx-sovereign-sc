@@ -6,14 +6,14 @@ multiversx_sc::derive_imports!();
 
 #[derive(TypeAbi, TopEncode, TopDecode, NestedEncode, NestedDecode, ManagedVecItem)]
 pub struct ContractMapArgs<M: ManagedTypeApi> {
-    id: ScArray,
-    address: ManagedAddress<M>,
+    pub id: ScArray,
+    pub address: ManagedAddress<M>,
 }
 
 #[derive(TypeAbi, TopEncode, TopDecode, NestedEncode, NestedDecode, ManagedVecItem)]
 struct ChainInfo<M: ManagedTypeApi> {
-    name: ManagedBuffer<M>,
-    chain_id: ManagedBuffer<M>,
+    pub name: ManagedBuffer<M>,
+    pub chain_id: ManagedBuffer<M>,
 }
 
 // TODO: Is fee market needed here?
@@ -73,15 +73,6 @@ pub trait FactoryModule: only_admin::OnlyAdminModule {
             ScArray::ChainConfig,
             chain_config_address,
         );
-
-        let chain_info = ChainInfo {
-            name: chain_name,
-            chain_id,
-        };
-
-        if self.current_chain_info().is_empty() {
-            self.current_chain_info().set(chain_info);
-        }
 
         self.add_admin(caller);
     }
@@ -238,6 +229,29 @@ pub trait FactoryModule: only_admin::OnlyAdminModule {
         ManagedBuffer::new_from_bytes(&byte_array)
     }
 
+    fn get_contract_address(
+        &self,
+        chain_id: &ManagedBuffer,
+        contract_name: ScArray,
+    ) -> Option<ManagedAddress> {
+        let deployed_contracts_mapper = self.all_deployed_contracts(chain_id.clone());
+
+        require!(
+            !deployed_contracts_mapper.is_empty(),
+            "There are no contracts deployed for this sovereign chain"
+        );
+
+        let contract = deployed_contracts_mapper
+            .iter()
+            .find(|sc| sc.id == contract_name);
+
+        if let Some(contract_address) = contract {
+            return Some(contract_address.address);
+        } else {
+            return None;
+        }
+    }
+
     #[view(getContractsMap)]
     #[storage_mapper("contractsMap")]
     fn contracts_map(&self, contract_name: ScArray) -> SingleValueMapper<ManagedAddress>;
@@ -267,9 +281,17 @@ pub trait FactoryModule: only_admin::OnlyAdminModule {
         chain_id: ManagedBuffer,
     ) -> UnorderedSetMapper<ContractMapArgs<Self::Api>>;
 
-    #[view(getCurrentChainInfo)]
-    #[storage_mapper("currentChainInfo")]
-    fn current_chain_info(&self) -> SingleValueMapper<ChainInfo<Self::Api>>;
+    #[storage_mapper_from_address("minValidators")]
+    fn external_min_validators(
+        &self,
+        sc_address: ManagedAddress,
+    ) -> SingleValueMapper<BigUint<Self::Api>, ManagedAddress>;
+
+    #[storage_mapper_from_address("maxValidators")]
+    fn external_max_validators(
+        &self,
+        sc_address: ManagedAddress,
+    ) -> SingleValueMapper<BigUint<Self::Api>, ManagedAddress>;
 
     #[view(getAllChainIds)]
     #[storage_mapper("allChainIds")]
