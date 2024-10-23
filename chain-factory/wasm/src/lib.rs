@@ -6,9 +6,9 @@
 
 // Init:                                 1
 // Upgrade:                              1
-// Endpoints:                           19
+// Endpoints:                           18
 // Async Callback (empty):               1
-// Total number of exported functions:  22
+// Total number of exported functions:  21
 
 #![no_std]
 
@@ -25,7 +25,6 @@ multiversx_sc_wasm_adapter::endpoints! {
         deployHeaderVerifier => deploy_header_verifier
         deployCrossChainOperation => deploy_cross_chain_operation
         deployFeeMarket => deploy_fee_market
-        deployTokenHandler => deploy_token_handler
         getContractsMap => contracts_map
         getDeployCost => deploy_cost
         getCurrentChainInfo => current_chain_info

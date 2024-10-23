@@ -168,21 +168,6 @@ pub trait FactoryModule: only_admin::OnlyAdminModule {
         self.set_deployed_contract_to_storage(chain_id, ScArray::FeeMarket, fee_market_address);
     }
 
-    #[only_admin]
-    #[endpoint(deployTokenHandler)]
-    fn deploy_token_handler(&self, chain_id: ManagedBuffer) {
-        let source_address = self.fee_market_template().get();
-        let args = ManagedArgBuffer::new();
-
-        let token_handler_address = self.deploy_contract(source_address, args);
-
-        self.set_deployed_contract_to_storage(
-            chain_id,
-            ScArray::TokenHandler,
-            token_handler_address,
-        )
-    }
-
     fn deploy_contract(
         &self,
         source_address: ManagedAddress,

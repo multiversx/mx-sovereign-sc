@@ -197,19 +197,6 @@ where
             .original_result()
     }
 
-    pub fn deploy_token_handler<
-        Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
-    >(
-        self,
-        chain_id: Arg0,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("deployTokenHandler")
-            .argument(&chain_id)
-            .original_result()
-    }
-
     pub fn contracts_map<
         Arg0: ProxyArg<ScArray>,
     >(
