@@ -5,7 +5,7 @@ main = "main"
 name = "fee-market"
 
 [contracts.full]
-name = "fee-marker-full"
+name = "fee-market"
 add-unlabelled = true
 add-labels = ["fee-market-external-view"]
 
