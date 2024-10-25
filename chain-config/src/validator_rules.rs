@@ -20,6 +20,18 @@ pub trait ValidatorRulesModule {
     #[storage_mapper("maxBlsKeys")]
     fn max_bls_keys(&self) -> SingleValueMapper<usize>;
 
+    #[view(getBlsWhitelist)]
+    #[storage_mapper("blsWhitelist")]
+    fn bls_whitelist(&self) -> UnorderedSetMapper<ManagedBuffer>;
+
+    #[view(getBlsBlacklist)]
+    #[storage_mapper("blsBlacklist")]
+    fn bls_blacklist(&self) -> UnorderedSetMapper<ManagedBuffer>;
+
+    #[view(getBlsKeys)]
+    #[storage_mapper("blsKeys")]
+    fn bls_keys(&self) -> UnorderedSetMapper<ManagedBuffer>;
+
     #[view(getMinValidators)]
     #[storage_mapper("minValidators")]
     fn min_validators(&self) -> SingleValueMapper<usize>;
@@ -52,14 +64,6 @@ pub trait ValidatorRulesModule {
     #[storage_mapper("addressBlacklist")]
     fn address_blacklist(&self) -> UnorderedSetMapper<ManagedAddress<Self::Api>>;
 
-    #[view(getBlsWhitelist)]
-    #[storage_mapper("blsWhitelist")]
-    fn bls_whitelist(&self) -> UnorderedSetMapper<ManagedAddress<Self::Api>>;
-
-    #[view(getBlsBlacklist)]
-    #[storage_mapper("blsBlacklist")]
-    fn bls_blacklist(&self) -> UnorderedSetMapper<ManagedAddress<Self::Api>>;
-
     #[view(getNativeTokenId)]
     #[storage_mapper("nativeTokenId")]
     fn native_token_id(&self) -> SingleValueMapper<TokenIdentifier<Self::Api>>;
@@ -67,4 +71,32 @@ pub trait ValidatorRulesModule {
     #[view(getHeaderVerifierAddress)]
     #[storage_mapper("headerVerifierAddress")]
     fn header_verifier_address(&self) -> SingleValueMapper<ManagedAddress<Self::Api>>;
+
+    #[inline]
+    fn require_bls_key_whitelist(&self, bls_key: &ManagedBuffer) {
+        require!(
+            self.bls_whitelist().contains(bls_key),
+            "BLS key is not whitelisted"
+        )
+    }
+
+    #[inline]
+    fn require_bls_keys_length_limits(&self, length: usize) {
+        let min_bls_keys = self.min_bls_keys().get();
+        let max_bls_keys = self.max_bls_keys().get();
+        require!(
+            length > min_bls_keys,
+            "There are fewer BLS public keys than expected"
+        );
+        require!(
+            length < max_bls_keys,
+            "There are fewer BLS public keys than expected"
+        );
+    }
+
+    #[inline]
+    fn require_min_stake(&self, amount: BigUint) {
+        let min_amount = self.min_stake().get();
+        require!(amount > min_amount, "Minimum stake amount not met");
+    }
 }

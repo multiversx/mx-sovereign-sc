@@ -6,9 +6,9 @@
 
 // Init:                                 1
 // Upgrade:                              1
-// Endpoints:                           19
+// Endpoints:                           20
 // Async Callback (empty):               1
-// Total number of exported functions:  22
+// Total number of exported functions:  23
 
 #![no_std]
 
@@ -24,6 +24,9 @@ multiversx_sc_wasm_adapter::endpoints! {
         deployBridge => deploy_bridge
         getMinBlsKeys => min_bls_keys
         getMaxBlsKeys => max_bls_keys
+        getBlsWhitelist => bls_whitelist
+        getBlsBlacklist => bls_blacklist
+        getBlsKeys => bls_keys
         getMinValidators => min_validators
         getMaxValidators => max_validators
         getMinStake => min_stake
@@ -31,8 +34,6 @@ multiversx_sc_wasm_adapter::endpoints! {
         wasPreviouslySlashed => was_previously_slashed
         getAddressWhitelist => address_whitelist
         getAddressBlacklist => address_blacklist
-        getBlsWhitelist => bls_whitelist
-        getBlsBlacklist => bls_blacklist
         getNativeTokenId => native_token_id
         getHeaderVerifierAddress => header_verifier_address
         isAdmin => is_admin
