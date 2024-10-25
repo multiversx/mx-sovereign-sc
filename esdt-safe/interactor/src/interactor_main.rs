@@ -919,7 +919,7 @@ impl ContractInteract {
         println!("Result: {result_value:?}");
     }
 
-    async fn disable_fee(&mut self) {
+    async fn remove_fee(&mut self) {
         let response = self
             .interactor
             .tx()
@@ -927,7 +927,7 @@ impl ContractInteract {
             .to(self.state.get_fee_market_address())
             .gas(30_000_000u64)
             .typed(FeeMarketProxy)
-            .disable_fee(TOKEN_ID)
+            .remove_fee(TOKEN_ID)
             .returns(ReturnsResultUnmanaged)
             .prepare_async()
             .run()
@@ -1073,9 +1073,22 @@ impl ContractInteract {
 async fn test_execute_operation_no_transfer_data() {
     let mut interact = ContractInteract::new().await;
     interact.deploy(false).await;
+    interact.deploy_price_aggregator().await;
     interact.deploy_fee_market().await;
     interact.set_fee_market_address().await;
-    interact.disable_fee().await;
+    interact.remove_fee().await;
+    interact.unpause_endpoint().await;
+}
+
+#[tokio::test]
+#[ignore]
+async fn test_deploy_sov() {
+    let mut interact = ContractInteract::new().await;
+    interact.deploy(true).await;
+    interact.deploy_price_aggregator().await;
+    interact.deploy_fee_market().await;
+    interact.set_fee_market_address().await;
+    interact.remove_fee().await;
     interact.deploy_header_verifier_contract().await;
     interact.set_header_verifier_address().await;
     interact.unpause_endpoint().await;

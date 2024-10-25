@@ -27,7 +27,7 @@ pub struct FeeStruct<M: ManagedTypeApi> {
 #[multiversx_sc::module]
 pub trait FeeTypeModule: utils::UtilsModule + bls_signature::BlsSignatureModule {
     #[only_owner]
-    #[endpoint(addFee)]
+    #[endpoint(setFee)]
     fn set_fee(&self, fee_struct: FeeStruct<Self::Api>) {
         self.require_valid_token_id(&fee_struct.base_token);
 
@@ -61,7 +61,7 @@ pub trait FeeTypeModule: utils::UtilsModule + bls_signature::BlsSignatureModule 
 
     #[only_owner]
     #[endpoint(removeFee)]
-    fn disable_fee(&self, base_token: TokenIdentifier) {
+    fn remove_fee(&self, base_token: TokenIdentifier) {
         self.token_fee(&base_token).clear();
         self.fee_enabled().set(false);
     }

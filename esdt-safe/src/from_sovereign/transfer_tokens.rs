@@ -199,6 +199,7 @@ pub trait TransferTokensModule:
                         <Self as TransferTokensModule>::callbacks(self)
                             .execute(hash_of_hashes, operation_tuple),
                     )
+                    .gas_for_callback(CALLBACK_GAS)
                     .register_promise();
             }
         }
@@ -271,7 +272,7 @@ pub trait TransferTokensModule:
                         mvx_token_nonce,
                         &operation_token.token_data.amount,
                     )
-                    .transfer_execute();
+                    .sync_call();
             }
         }
 
