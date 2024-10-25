@@ -162,7 +162,7 @@ struct ContractInteract {
 
 impl ContractInteract {
     async fn new() -> Self {
-        let mut interactor = Interactor::new(GATEWAY)
+        let mut interactor = Interactor::new(GATEWAY, true)
             .await
             .with_tracer(INTERACTOR_SCENARIO_TRACE_PATH)
             .await;
