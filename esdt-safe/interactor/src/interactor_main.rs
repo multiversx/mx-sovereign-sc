@@ -231,7 +231,7 @@ impl ContractInteract {
     }
 
     async fn deploy(&mut self, is_sov_chain: bool) {
-        let code_path = MxscPath::new(&self.esdt_safe_code);
+        let code_path = MxscPath::new(self.esdt_safe_code.as_ref());
 
         let new_address = self
             .interactor
@@ -1071,22 +1071,9 @@ impl ContractInteract {
 }
 
 #[tokio::test]
-async fn test_execute_operation_no_transfer_data() {
-    let mut interact = ContractInteract::new().await;
-    interact.deploy(false).await;
-    interact.deploy_price_aggregator().await;
-    interact.deploy_fee_market().await;
-    interact.set_fee_market_address().await;
-    interact.remove_fee().await;
-    interact.unpause_endpoint().await;
-}
-
-#[tokio::test]
-#[ignore]
 async fn test_deploy_sov() {
     let mut interact = ContractInteract::new().await;
     interact.deploy(true).await;
-    interact.deploy_price_aggregator().await;
     interact.deploy_fee_market().await;
     interact.set_fee_market_address().await;
     interact.remove_fee().await;
