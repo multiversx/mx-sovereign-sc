@@ -7,6 +7,7 @@ mod proxies;
 use fee_market::fee_market_proxy::FeeMarketProxy;
 use fee_market::fee_market_proxy::{self, FeeStruct, FeeType};
 use header_verifier_proxy::HeaderverifierProxy;
+use multiversx_sc_scenario::meta::tools::find_current_workspace;
 use multiversx_sc_scenario::multiversx_chain_vm::crypto_functions::{sha256, SHA256_RESULT_LEN};
 use multiversx_sc_snippets::imports::*;
 use multiversx_sc_snippets::sdk::{self};
@@ -173,7 +174,7 @@ impl ContractInteract {
         let mike_address = interactor.register_wallet(test_wallets::mike());
         let judy_address = interactor.register_wallet(test_wallets::judy());
 
-        let current_dir = env::current_dir().expect("Failed to get current directory");
+        let current_dir = find_current_workspace().unwrap();
         println!("Current directory is: {}", current_dir.display());
 
         let repo_dir = current_dir
