@@ -25,9 +25,6 @@ multiversx_sc_wasm_adapter::endpoints! {
         deployHeaderVerifier => deploy_header_verifier
         deployCrossChainOperation => deploy_cross_chain_operation
         deployFeeMarket => deploy_fee_market
-        getContractsMap => contracts_map
-        getDeployCost => deploy_cost
-        getAllChainIds => chain_ids
         slash => slash
         distributeSlashed => distribute_slashed
         setMinValidSigners => set_min_valid_signers
@@ -37,6 +34,9 @@ multiversx_sc_wasm_adapter::endpoints! {
         addAdmin => add_admin
         removeAdmin => remove_admin
         getAdmins => admins
+        getContractsMap => contracts_map
+        getDeployCost => deploy_cost
+        getAllChainIds => chain_ids
     )
 }
 
