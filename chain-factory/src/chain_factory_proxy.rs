@@ -114,7 +114,7 @@ where
         min_validators: Arg0,
         max_validators: Arg1,
         min_stake: Arg2,
-        chain_name: Arg3,
+        _chain_name: Arg3,
         additional_stake_required: Arg4,
     ) -> TxTypedCall<Env, From, To, (), Gas, ()> {
         self.wrapped_tx
@@ -122,7 +122,7 @@ where
             .argument(&min_validators)
             .argument(&max_validators)
             .argument(&min_stake)
-            .argument(&chain_name)
+            .argument(&_chain_name)
             .argument(&additional_stake_required)
             .original_result()
     }
