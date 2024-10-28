@@ -16,6 +16,7 @@ pub trait ChainFactoryContract:
     + bls_signature::BlsSignatureModule
     + only_admin::OnlyAdminModule
     + crate::common::storage::CommonStorage
+    + crate::common::utils::UtilsModule
 {
     #[init]
     fn init(
