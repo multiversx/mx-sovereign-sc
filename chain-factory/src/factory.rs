@@ -40,7 +40,7 @@ pub trait FactoryModule: only_admin::OnlyAdminModule {
         min_validators: usize,
         max_validators: usize,
         min_stake: BigUint,
-        chain_name: ManagedBuffer,
+        _chain_name: ManagedBuffer,
         additional_stake_required: MultiValueEncoded<StakeMultiArg<Self::Api>>,
     ) {
         let payment_amount = self.call_value().egld_value().clone_value();

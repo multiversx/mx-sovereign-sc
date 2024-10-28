@@ -45,6 +45,7 @@ pub trait ChainFactoryContract:
         self.deploy_cost().set(deploy_cost);
     }
 
+    // TODO: Has to be voted first
     #[upgrade]
     fn upgrade(&self) {}
 }
