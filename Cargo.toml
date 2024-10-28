@@ -8,10 +8,6 @@ members = [
   "esdt-safe/meta",
   "fee-market",
   "fee-market/meta",
-  "pair-mock",
-  "pair-mock/meta",
-  "router-mock",
-  "router-mock/meta",
   "header-verifier",
   "header-verifier/meta", 
 ]
