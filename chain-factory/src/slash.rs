@@ -21,7 +21,9 @@ mod validators_contract_proxy {
 }
 
 #[multiversx_sc::module]
-pub trait SlashModule: crate::factory::FactoryModule + only_admin::OnlyAdminModule {
+pub trait SlashModule:
+    crate::factory::FactoryModule + only_admin::OnlyAdminModule + crate::common::storage::CommonStorage
+{
     #[endpoint]
     fn slash(&self, _chain_id: ManagedBuffer, validator_address: ManagedAddress, value: BigUint) {
         // let caller = self.blockchain().get_caller();
