@@ -6,10 +6,10 @@
 
 // Init:                                 1
 // Upgrade:                              1
-// Endpoints:                           39
-// Async Callback:                       1
-// Promise callbacks:                    1
-// Total number of exported functions:  43
+// Endpoints:                           30
+// Async Callback (empty):               1
+// Promise callbacks:                    2
+// Total number of exported functions:  35
 
 #![no_std]
 
@@ -23,22 +23,13 @@ multiversx_sc_wasm_adapter::endpoints! {
         upgrade => upgrade
         setFeeMarketAddress => set_fee_market_address
         setHeaderVerifierAddress => set_header_verifier_address
-        setSovereignBridgeAddress => set_sovereign_bridge_address
-        setMaxUserTxGasLimit => set_max_user_tx_gas_limit
-        setBurnAndMint => set_burn_and_mint
-        removeBurnAndMint => remove_burn_and_mint
-        addBannedEndpointNames => add_banned_endpoint_names
-        removeBannedEndpointNames => remove_banned_endpoint_names
-        depositBack => deposit_back
+        setMaxTxGasLimit => set_max_user_tx_gas_limit
+        setBannedEndpoint => set_banned_endpoint
         deposit => deposit
-        claimRefund => claim_refund
-        setTransactionBatchStatus => set_transaction_batch_status
         setMinValidSigners => set_min_valid_signers
         addSigners => add_signers
         removeSigners => remove_signers
         registerToken => register_token
-        clearRegisteredSovereignToken => clear_registered_sovereign_token
-        clearRegisteredMultiversxToken => clear_registered_multiversx_token
         executeBridgeOps => execute_operations
         setMaxTxBatchSize => set_max_tx_batch_size
         setMaxTxBatchBlockDuration => set_max_tx_batch_block_duration
@@ -60,8 +51,9 @@ multiversx_sc_wasm_adapter::endpoints! {
         pause => pause_endpoint
         unpause => unpause_endpoint
         isPaused => paused_status
+        issue_callback => issue_callback
         execute => execute
     )
 }
 
-multiversx_sc_wasm_adapter::async_callback! { esdt_safe }
+multiversx_sc_wasm_adapter::async_callback_empty! {}

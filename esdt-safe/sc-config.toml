@@ -17,3 +17,7 @@ add-labels = ["esdt-safe-external-view"]
 
 [[proxy]]
 path = "src/esdt_safe_proxy.rs"
+
+[[proxy]]
+path = "interactor/src/proxy.rs"
+ 
