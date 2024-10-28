@@ -1,28 +1,38 @@
 use chain_config::StakeMultiArg;
 
+use multiversx_sc::imports::*;
+use multiversx_sc_modules::only_admin;
 multiversx_sc::derive_imports!();
-multiversx_sc::imports!();
 
 #[derive(TypeAbi, TopEncode, TopDecode, NestedEncode, NestedDecode, ManagedVecItem)]
-struct ContractMapArgs<M: ManagedTypeApi> {
-    id: ScArray,
-    address: ManagedAddress<M>,
+pub struct ContractMapArgs<M: ManagedTypeApi> {
+    pub id: ScArray,
+    pub address: ManagedAddress<M>,
 }
 
-#[derive(
-    TypeAbi, TopEncode, TopDecode, NestedEncode, NestedDecode, Clone, ManagedVecItem, PartialEq,
-)]
+#[derive(TypeAbi, TopEncode, TopDecode, NestedEncode, NestedDecode, ManagedVecItem)]
+struct ChainInfo<M: ManagedTypeApi> {
+    pub name: ManagedBuffer<M>,
+    pub chain_id: ManagedBuffer<M>,
+}
+
+// TODO: Is fee market needed here?
+#[type_abi]
+#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, Clone, ManagedVecItem, PartialEq)]
 pub enum ScArray {
     ChainFactory,
     Controller,
     SovereignHeaderVerifier,
     SovereignCrossChainOperation,
+    FeeMarket,
+    TokenHandler,
     ChainConfig,
     Slashing,
 }
 
 #[multiversx_sc::module]
-pub trait FactoryModule {
+pub trait FactoryModule: only_admin::OnlyAdminModule {
+    // TODO: Check if contract was already deployed
     #[payable("EGLD")]
     #[endpoint(deploySovereignChainConfigContract)]
     fn deploy_sovereign_chain_config_contract(
@@ -30,29 +40,41 @@ pub trait FactoryModule {
         min_validators: usize,
         max_validators: usize,
         min_stake: BigUint,
+        _chain_name: ManagedBuffer,
         additional_stake_required: MultiValueEncoded<StakeMultiArg<Self::Api>>,
     ) {
         let payment_amount = self.call_value().egld_value().clone_value();
         let deploy_cost = self.deploy_cost().get();
         require!(payment_amount == deploy_cost, "Invalid payment amount");
 
-        let caller = self.blockchain().get_caller();
         let source_address = self.chain_config_template().get();
-        let metadata =
-            CodeMetadata::PAYABLE_BY_SC | CodeMetadata::UPGRADEABLE | CodeMetadata::READABLE;
+        let args = self.get_deploy_chain_config_args(
+            &min_validators,
+            &max_validators,
+            &min_stake,
+            &additional_stake_required,
+        );
 
-        let (sc_address, _) = self
-            .chain_config_proxy()
-            .init(
-                min_validators,
-                max_validators,
-                min_stake,
-                caller,
-                additional_stake_required,
-            )
-            .deploy_from_source::<IgnoreValue>(&source_address, metadata);
+        let chain_config_address = self.deploy_contract(source_address, args);
 
-        let _ = self.all_deployed_contracts().insert(sc_address);
+        let caller = self.blockchain().get_caller();
+        let mut set_admin_args = ManagedArgBuffer::new();
+        set_admin_args.push_arg(&caller);
+
+        self.tx()
+            .to(&chain_config_address)
+            .raw_call("add_admin")
+            .arguments_raw(set_admin_args)
+            .sync_call();
+
+        let chain_id = self.generate_chain_id();
+        self.set_deployed_contract_to_storage(
+            chain_id.clone(),
+            ScArray::ChainConfig,
+            chain_config_address,
+        );
+
+        self.add_admin(caller);
     }
 
     #[only_owner]
@@ -62,18 +84,194 @@ pub trait FactoryModule {
         contracts_map: MultiValueEncoded<Self::Api, ContractMapArgs<Self::Api>>,
     ) {
         for contract in contracts_map {
-            self.contracts_map(contract.id).set(contract.address);
+            let contracts_mapper = self.contracts_map(contract.id);
+
+            require!(
+                contracts_mapper.is_empty(),
+                "There is already a SC address registered for that contract ID"
+            );
+
+            contracts_mapper.set(contract.address);
         }
     }
 
-    #[only_owner]
-    #[endpoint(blacklistSovereignChainSc)]
-    fn blacklist_sovereign_chain_sc(&self, sc_address: ManagedAddress) {
-        let _ = self.all_deployed_contracts().swap_remove(&sc_address);
+    #[only_admin]
+    #[endpoint(deployHeaderVerifier)]
+    fn deploy_header_verifier(
+        &self,
+        chain_id: ManagedBuffer,
+        bls_pub_keys: MultiValueEncoded<ManagedBuffer>,
+    ) {
+        let source_address = self.header_verifier_template().get();
+        let mut args = ManagedArgBuffer::new();
+        self.require_bls_keys_in_range(&chain_id, bls_pub_keys.len().into());
+        args.push_multi_arg(&bls_pub_keys);
+
+        let header_verifier_address = self.deploy_contract(source_address, args);
+        self.set_deployed_contract_to_storage(
+            chain_id,
+            ScArray::SovereignHeaderVerifier,
+            header_verifier_address,
+        );
     }
 
-    #[proxy]
-    fn chain_config_proxy(&self) -> chain_config::Proxy<Self::Api>;
+    #[only_admin]
+    #[endpoint(deployCrossChainOperation)]
+    fn deploy_cross_chain_operation(
+        &self,
+        chain_id: ManagedBuffer,
+        is_sovereign_chain: bool,
+        opt_wegld_identifier: Option<TokenIdentifier>,
+        opt_sov_token_prefix: Option<ManagedBuffer>,
+    ) {
+        let source_address = self.cross_chain_operations_template().get();
+        let token_handler_address = self.token_handler_template().get();
+
+        let mut args = ManagedArgBuffer::new();
+        args.push_arg(is_sovereign_chain);
+        args.push_arg(token_handler_address);
+        args.push_arg(opt_wegld_identifier);
+        args.push_arg(opt_sov_token_prefix);
+
+        let cross_chain_operations_address = self.deploy_contract(source_address, args);
+        self.set_deployed_contract_to_storage(
+            chain_id,
+            ScArray::SovereignCrossChainOperation,
+            cross_chain_operations_address,
+        );
+    }
+
+    #[only_admin]
+    #[endpoint(deployFeeMarket)]
+    fn deploy_fee_market(
+        &self,
+        chain_id: ManagedBuffer,
+        esdt_safe_address: ManagedAddress,
+        price_aggregator_address: ManagedAddress,
+    ) {
+        let source_address = self.fee_market_template().get();
+
+        let mut args = ManagedArgBuffer::new();
+        args.push_arg(esdt_safe_address);
+        args.push_arg(price_aggregator_address);
+
+        let fee_market_address = self.deploy_contract(source_address, args);
+        self.set_deployed_contract_to_storage(chain_id, ScArray::FeeMarket, fee_market_address);
+    }
+
+    fn deploy_contract(
+        &self,
+        source_address: ManagedAddress,
+        args: ManagedArgBuffer<Self::Api>,
+    ) -> ManagedAddress {
+        let metadata = self.blockchain().get_code_metadata(&source_address);
+
+        self.tx()
+            .raw_deploy()
+            .from_source(source_address)
+            .code_metadata(metadata)
+            .arguments_raw(args)
+            .returns(ReturnsNewManagedAddress)
+            .sync_call()
+    }
+
+    fn set_deployed_contract_to_storage(
+        &self,
+        chain_id: ManagedBuffer,
+        contract_id: ScArray,
+        contract_address: ManagedAddress,
+    ) {
+        self.all_deployed_contracts(chain_id)
+            .insert(ContractMapArgs {
+                id: contract_id,
+                address: contract_address,
+            });
+    }
+
+    fn get_deploy_chain_config_args(
+        &self,
+        min_validators: &usize,
+        max_validators: &usize,
+        min_stake: &BigUint,
+        additional_stake_required: &MultiValueEncoded<StakeMultiArg<Self::Api>>,
+    ) -> ManagedArgBuffer<Self::Api> {
+        let mut args = ManagedArgBuffer::new();
+
+        args.push_arg(min_validators);
+        args.push_arg(max_validators);
+        args.push_arg(min_stake);
+        args.push_multi_arg(additional_stake_required);
+
+        args
+    }
+
+    fn generate_chain_id(&self) -> ManagedBuffer {
+        loop {
+            let new_chain_id = self.generated_random_2_char_string();
+            if !self.chain_ids().contains(&new_chain_id) {
+                self.chain_ids().insert(new_chain_id.clone());
+
+                return new_chain_id;
+            }
+        }
+    }
+
+    fn generated_random_2_char_string(&self) -> ManagedBuffer {
+        let mut byte_array: [u8; 2] = [0; 2];
+        let charset: &[u8] = b"0123456789abcdefghijklmnopqrstuvwxyz";
+        let mut rand = RandomnessSource::new();
+
+        (0..2).for_each(|i| {
+            let rand_index = rand.next_u8_in_range(0, charset.len() as u8) as usize;
+            byte_array[i] = charset[rand_index];
+        });
+
+        ManagedBuffer::new_from_bytes(&byte_array)
+    }
+
+    fn get_contract_address(
+        &self,
+        chain_id: &ManagedBuffer,
+        contract_name: ScArray,
+    ) -> Option<ManagedAddress> {
+        let deployed_contracts_mapper = self.all_deployed_contracts(chain_id.clone());
+
+        require!(
+            !deployed_contracts_mapper.is_empty(),
+            "There are no contracts deployed for this sovereign chain"
+        );
+
+        let contract = deployed_contracts_mapper
+            .iter()
+            .find(|sc| sc.id == contract_name);
+
+        if let Some(contract_address) = contract {
+            return Some(contract_address.address);
+        } else {
+            return None;
+        }
+    }
+
+    fn require_bls_keys_in_range(&self, chain_id: &ManagedBuffer, bls_pub_keys_count: BigUint) {
+        let chain_config_address = self
+            .get_contract_address(chain_id, ScArray::ChainConfig)
+            .unwrap();
+
+        require!(
+            !chain_config_address.is_zero(),
+            "The Chain Config contract was not deployed"
+        );
+
+        let min_validators = self
+            .external_min_validators(chain_config_address.clone())
+            .get();
+        let max_validators = self.external_max_validators(chain_config_address).get();
+
+        require!(
+            min_validators < bls_pub_keys_count && bls_pub_keys_count < max_validators,
+            "The number of validator BLS Keys is not correct"
+        );
+    }
 
     #[view(getContractsMap)]
     #[storage_mapper("contractsMap")]
@@ -86,6 +284,37 @@ pub trait FactoryModule {
     #[storage_mapper("chainConfigTemplate")]
     fn chain_config_template(&self) -> SingleValueMapper<ManagedAddress>;
 
+    #[storage_mapper("headerVerifierTemplate")]
+    fn header_verifier_template(&self) -> SingleValueMapper<ManagedAddress>;
+
+    #[storage_mapper("crossChainOperationsTemplate")]
+    fn cross_chain_operations_template(&self) -> SingleValueMapper<ManagedAddress>;
+
+    #[storage_mapper("feeMarketTemplate")]
+    fn fee_market_template(&self) -> SingleValueMapper<ManagedAddress>;
+
+    #[storage_mapper("tokenHandlerTemplate")]
+    fn token_handler_template(&self) -> SingleValueMapper<ManagedAddress>;
+
     #[storage_mapper("allDeployedContracts")]
-    fn all_deployed_contracts(&self) -> UnorderedSetMapper<ManagedAddress>;
+    fn all_deployed_contracts(
+        &self,
+        chain_id: ManagedBuffer,
+    ) -> UnorderedSetMapper<ContractMapArgs<Self::Api>>;
+
+    #[storage_mapper_from_address("minValidators")]
+    fn external_min_validators(
+        &self,
+        sc_address: ManagedAddress,
+    ) -> SingleValueMapper<BigUint<Self::Api>, ManagedAddress>;
+
+    #[storage_mapper_from_address("maxValidators")]
+    fn external_max_validators(
+        &self,
+        sc_address: ManagedAddress,
+    ) -> SingleValueMapper<BigUint<Self::Api>, ManagedAddress>;
+
+    #[view(getAllChainIds)]
+    #[storage_mapper("allChainIds")]
+    fn chain_ids(&self) -> UnorderedSetMapper<ManagedBuffer>;
 }
