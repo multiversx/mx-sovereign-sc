@@ -40,18 +40,6 @@ pub struct Operation<M: ManagedTypeApi> {
     pub data: OperationData<M>,
 }
 
-#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, TypeAbi, ManagedVecItem, Clone)]
-pub struct PendingHash<M: ManagedTypeApi> {
-    pub hash: ManagedBuffer<M>,
-    pub is_locked: bool,
-}
-
-impl<M: ManagedTypeApi> PendingHash<M> {
-    pub fn new(hash: ManagedBuffer<M>, is_locked: bool) -> Self {
-        PendingHash { hash, is_locked }
-    }
-}
-
 impl<M: ManagedTypeApi> Operation<M> {
     #[inline]
     pub fn new(
