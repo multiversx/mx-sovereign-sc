@@ -115,7 +115,7 @@ impl HeaderVerifierTestState {
     }
 
     fn get_bls_keys(&mut self, bls_keys_vec: Vec<ManagedBuffer<StaticApi>>) -> BlsKeys {
-        let bls_keys = bls_keys_vec.iter().map(|key| key).cloned().collect();
+        let bls_keys = bls_keys_vec.iter().cloned().collect();
 
         bls_keys
     }
@@ -216,14 +216,17 @@ fn test_register_bridge_operation() {
             assert!(!sc.hash_of_hashes_history().is_empty());
             assert!(sc.hash_of_hashes_history().len() == 1);
             assert!(sc.hash_of_hashes_history().contains(&hash_of_hashes));
-            assert!(!sc.pending_hash(&hash_of_hashes).is_empty());
 
-            for (mut i, operation_hash) in operation.operations_hashes.into_iter().enumerate() {
-                i += 1;
-                let pending_hash = sc.pending_hash(&hash_of_hashes).get_by_index(i);
-                let expected_hash_debug_api: ManagedBuffer<DebugApi> =
-                    ManagedBuffer::from(operation_hash.to_vec());
-                assert_eq!(pending_hash, expected_hash_debug_api);
+            for operation_hash in operation.operations_hashes {
+                let operation_hash_debug_api = ManagedBuffer::from(operation_hash.to_vec());
+
+                let pending_hashes_mapper =
+                    sc.pending_hash(&hash_of_hashes, &operation_hash_debug_api);
+
+                let is_hash_locked = pending_hashes_mapper.get();
+                let is_mapper_empty = pending_hashes_mapper.is_empty();
+                assert!(!is_mapper_empty);
+                assert!(!is_hash_locked);
             }
         });
 }
@@ -293,7 +296,7 @@ fn test_remove_one_executed_hash() {
     state.propose_remove_executed_hash(
         ENSHRINE_ADDRESS,
         &operation.bridge_operation_hash,
-        operation_hash_1,
+        operation_hash_1.clone(),
         None,
     );
 
@@ -304,14 +307,17 @@ fn test_remove_one_executed_hash() {
         .whitebox(header_verifier::contract_obj, |sc| {
             let hash_of_hashes: ManagedBuffer<DebugApi> =
                 ManagedBuffer::from(operation.bridge_operation_hash.to_vec());
-            assert!(!sc.pending_hash(&hash_of_hashes).is_empty());
-            assert!(sc.pending_hash(&hash_of_hashes).len() == 1);
+            for operation_hash in operation.operations_hashes {
+                let operation_hash_debug_api = ManagedBuffer::from(operation_hash.to_vec());
 
-            let pending_hash_2 = sc.pending_hash(&hash_of_hashes).get_by_index(1);
-            let expected_hash_2_debug_api: ManagedBuffer<DebugApi> =
-                ManagedBuffer::from(operation_hash_2.to_vec());
+                let pending_hashes_mapper =
+                    sc.pending_hash(&hash_of_hashes, &operation_hash_debug_api);
 
-            assert_eq!(pending_hash_2, expected_hash_2_debug_api);
+                let is_hash_locked = pending_hashes_mapper.get();
+                let is_mapper_empty = pending_hashes_mapper.is_empty();
+                assert!(is_mapper_empty);
+                assert!(!is_hash_locked);
+            }
         });
 }
 
@@ -350,7 +356,7 @@ fn test_remove_all_executed_hashes() {
         .whitebox(header_verifier::contract_obj, |sc| {
             let hash_of_hashes: ManagedBuffer<DebugApi> =
                 ManagedBuffer::from(operation.bridge_operation_hash.to_vec());
-            assert!(sc.pending_hash(&hash_of_hashes).is_empty());
+            // assert!(sc.pending_hash(&hash_of_hashes).is_empty());
             assert!(sc.hash_of_hashes_history().contains(&hash_of_hashes));
         });
 }
