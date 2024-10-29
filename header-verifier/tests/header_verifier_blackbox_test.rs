@@ -97,7 +97,7 @@ impl HeaderVerifierTestState {
         &mut self,
         caller: TestAddress,
         hash_of_hashes: &ManagedBuffer<StaticApi>,
-        operation_hash: ManagedBuffer<StaticApi>,
+        operation_hash: &ManagedBuffer<StaticApi>,
         expected_result: Option<ExpectError<'_>>,
     ) {
         let transaction = self
@@ -107,6 +107,27 @@ impl HeaderVerifierTestState {
             .to(HEADER_VERIFIER_ADDRESS)
             .typed(header_verifier_proxy::HeaderverifierProxy)
             .remove_executed_hash(hash_of_hashes, operation_hash);
+
+        match expected_result {
+            Some(error) => transaction.returns(error).run(),
+            None => transaction.run(),
+        }
+    }
+
+    fn propose_lock_operation_hash(
+        &mut self,
+        caller: TestAddress,
+        hash_of_hashes: &ManagedBuffer<StaticApi>,
+        operation_hash: &ManagedBuffer<StaticApi>,
+        expected_result: Option<ExpectError<'_>>,
+    ) {
+        let transaction = self
+            .world
+            .tx()
+            .from(caller)
+            .to(HEADER_VERIFIER_ADDRESS)
+            .typed(header_verifier_proxy::HeaderverifierProxy)
+            .lock_operation_hash(hash_of_hashes, operation_hash);
 
         match expected_result {
             Some(error) => transaction.returns(error).run(),
@@ -249,7 +270,7 @@ fn test_remove_executed_hash_caller_not_esdt_address() {
     state.propose_remove_executed_hash(
         OWNER,
         &operation.bridge_operation_hash,
-        operation_1,
+        &operation_1,
         Some(ExpectError(
             4,
             "Only ESDT Safe contract can call this endpoint",
@@ -273,7 +294,7 @@ fn test_remove_executed_hash_no_esdt_address_registered() {
     state.propose_remove_executed_hash(
         ENSHRINE_ADDRESS,
         &operation.bridge_operation_hash,
-        operation_1,
+        &operation_1,
         Some(ExpectError(4, "There is no registered ESDT address")),
     );
 }
@@ -297,7 +318,7 @@ fn test_remove_one_executed_hash() {
     state.propose_remove_executed_hash(
         ENSHRINE_ADDRESS,
         &operation.bridge_operation_hash,
-        operation_hash_1.clone(),
+        &operation_hash_1,
         None,
     );
 
@@ -338,14 +359,14 @@ fn test_remove_all_executed_hashes() {
     state.propose_remove_executed_hash(
         ENSHRINE_ADDRESS,
         &operation.bridge_operation_hash,
-        operation_1,
+        &operation_1,
         None,
     );
 
     state.propose_remove_executed_hash(
         ENSHRINE_ADDRESS,
         &operation.bridge_operation_hash,
-        operation_2,
+        &operation_2,
         None,
     );
     state
@@ -358,4 +379,68 @@ fn test_remove_all_executed_hashes() {
             // assert!(sc.pending_hash(&hash_of_hashes).is_empty());
             assert!(sc.hash_of_hashes_history().contains(&hash_of_hashes));
         });
+}
+
+#[test]
+fn test_lock_operation_not_registered() {
+    let mut state = HeaderVerifierTestState::new();
+    let bls_key_1 = ManagedBuffer::from("bls_key_1");
+    let managed_bls_keys = state.get_bls_keys(vec![bls_key_1]);
+
+    state.deploy_header_verifier_contract(managed_bls_keys);
+    state.propose_register_esdt_address(ENSHRINE_ADDRESS);
+
+    let operation_1 = ManagedBuffer::from("operation_1");
+    let operation_2 = ManagedBuffer::from("operation_2");
+    let operation = state.generate_bridge_operation_struct(vec![&operation_1, &operation_2]);
+
+    state.propose_lock_operation_hash(
+        ENSHRINE_ADDRESS,
+        &operation.bridge_operation_hash,
+        &operation_1,
+        Some(ExpectError(4, "The current operation is not registered")),
+    );
+}
+
+#[test]
+fn test_lock_operation() {
+    let mut state = HeaderVerifierTestState::new();
+    let bls_key_1 = ManagedBuffer::from("bls_key_1");
+    let managed_bls_keys = state.get_bls_keys(vec![bls_key_1]);
+
+    state.deploy_header_verifier_contract(managed_bls_keys);
+    state.propose_register_esdt_address(ENSHRINE_ADDRESS);
+
+    let operation_1 = ManagedBuffer::from("operation_1");
+    let operation_2 = ManagedBuffer::from("operation_2");
+    let operation = state.generate_bridge_operation_struct(vec![&operation_1, &operation_2]);
+
+    state.propose_register_operations(operation.clone());
+
+    state.propose_lock_operation_hash(
+        ENSHRINE_ADDRESS,
+        &operation.bridge_operation_hash,
+        &operation_1,
+        None,
+    );
+
+    state
+        .world
+        .query()
+        .to(HEADER_VERIFIER_ADDRESS)
+        .whitebox(header_verifier::contract_obj, |sc| {
+            let hash_of_hashes: ManagedBuffer<DebugApi> =
+                ManagedBuffer::from(operation.bridge_operation_hash.to_vec());
+            let operation_hash_debug_api_1 = ManagedBuffer::from(operation_1.to_vec());
+            let operation_hash_debug_api_2 = ManagedBuffer::from(operation_2.to_vec());
+            let is_hash_1_locked = sc
+                .pending_hash(&hash_of_hashes, &operation_hash_debug_api_1)
+                .get();
+            let is_hash_2_locked = sc
+                .pending_hash(&hash_of_hashes, &operation_hash_debug_api_2)
+                .get();
+
+            assert!(is_hash_1_locked == PendingHash::Locked);
+            assert!(is_hash_2_locked == PendingHash::NotLocked);
+        })
 }
