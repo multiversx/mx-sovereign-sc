@@ -398,6 +398,16 @@ impl EnshrineTestState {
             .run();
     }
 
+    fn propose_register_esdt_in_header_verifier(&mut self) {
+        self.world
+            .tx()
+            .from(ENSHRINE_ESDT_OWNER_ADDRESS)
+            .to(HEADER_VERIFIER_ADDRESS)
+            .typed(header_verifier_proxy::HeaderverifierProxy)
+            .set_esdt_safe_address(ENSHRINE_ESDT_ADDRESS)
+            .run();
+    }
+
     fn mock_bls_signature(
         &mut self,
         operation_hash: &ManagedBuffer<StaticApi>,
@@ -482,6 +492,7 @@ fn test_sovereign_prefix_no_prefix() {
 
     state.propose_setup_contracts(false, None);
     state.propose_register_operation(&token_vec);
+    state.propose_register_esdt_in_header_verifier();
     state.propose_whitelist_enshrine_esdt();
     state.propose_execute_operation(Some(ExpectError(10, "action is not allowed")), &token_vec);
 }
@@ -493,6 +504,7 @@ fn test_sovereign_prefix_has_prefix() {
 
     state.propose_setup_contracts(false, None);
     state.propose_register_operation(&token_vec);
+    state.propose_register_esdt_in_header_verifier();
     state.propose_whitelist_enshrine_esdt();
     state.propose_execute_operation(None, &token_vec);
 }
