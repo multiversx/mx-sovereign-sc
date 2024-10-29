@@ -308,7 +308,7 @@ pub trait TransferTokensModule:
         self.tx()
             .to(header_verifier_address)
             .typed(header_verifier_proxy::HeaderverifierProxy)
-            .lock_hash(hash_of_hashes, operation_hash)
+            .lock_operation_hash(hash_of_hashes, operation_hash)
             .returns(ReturnsResult)
             .sync_call();
     }
