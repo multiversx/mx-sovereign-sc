@@ -1,9 +1,17 @@
 #![no_std]
 
 use bls_signature::BlsSignature;
+use multiversx_sc::codec;
+use multiversx_sc::proxy_imports::{TopDecode, TopEncode};
 pub mod header_verifier_proxy;
 
 multiversx_sc::imports!();
+
+#[derive(TopEncode, TopDecode)]
+pub enum PendingHash {
+    NotLocked = 1,
+    Locked,
+}
 
 #[multiversx_sc::contract]
 pub trait Headerverifier: bls_signature::BlsSignatureModule {
@@ -41,7 +49,7 @@ pub trait Headerverifier: bls_signature::BlsSignatureModule {
 
         for operation_hash in operations_hashes {
             self.pending_hash(&bridge_operations_hash, &operation_hash)
-                .set(false);
+                .set(PendingHash::NotLocked);
         }
 
         self.hash_of_hashes_history().insert(bridge_operations_hash);
@@ -72,12 +80,11 @@ pub trait Headerverifier: bls_signature::BlsSignatureModule {
         );
 
         let is_hash_in_execution = pending_hashes_mapper.get();
-        require!(
-            !is_hash_in_execution,
-            "The current operation is already in execution"
-        );
-
-        pending_hashes_mapper.set(true);
+        match is_hash_in_execution {
+            PendingHash::None => sc_panic!("Invalid enum variant"),
+            PendingHash::NotLocked => pending_hashes_mapper.set(PendingHash::Locked),
+            PendingHash::Locked => sc_panic!("The current operation is already in execution"),
+        }
     }
 
     fn require_caller_esdt_safe(&self) {
@@ -138,7 +145,7 @@ pub trait Headerverifier: bls_signature::BlsSignatureModule {
         &self,
         hash_of_hashes: &ManagedBuffer,
         operation_hash: &ManagedBuffer,
-    ) -> SingleValueMapper<bool>;
+    ) -> SingleValueMapper<PendingHash>;
 
     #[storage_mapper("hashOfHashesHistory")]
     fn hash_of_hashes_history(&self) -> UnorderedSetMapper<ManagedBuffer>;
