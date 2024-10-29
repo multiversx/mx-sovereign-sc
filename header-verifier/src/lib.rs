@@ -7,7 +7,7 @@ pub mod header_verifier_proxy;
 
 multiversx_sc::imports!();
 
-#[derive(TopEncode, TopDecode)]
+#[derive(TopEncode, TopDecode, PartialEq)]
 pub enum PendingHash {
     NotLocked = 1,
     Locked,
@@ -81,7 +81,6 @@ pub trait Headerverifier: bls_signature::BlsSignatureModule {
 
         let is_hash_in_execution = pending_hashes_mapper.get();
         match is_hash_in_execution {
-            PendingHash::None => sc_panic!("Invalid enum variant"),
             PendingHash::NotLocked => pending_hashes_mapper.set(PendingHash::Locked),
             PendingHash::Locked => sc_panic!("The current operation is already in execution"),
         }

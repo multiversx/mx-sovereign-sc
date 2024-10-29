@@ -1,5 +1,5 @@
 use bls_signature::BlsSignature;
-use header_verifier::{header_verifier_proxy, Headerverifier};
+use header_verifier::{header_verifier_proxy, Headerverifier, PendingHash};
 use multiversx_sc::types::ManagedBuffer;
 use multiversx_sc::{
     api::ManagedTypeApi,
@@ -223,10 +223,11 @@ fn test_register_bridge_operation() {
                 let pending_hashes_mapper =
                     sc.pending_hash(&hash_of_hashes, &operation_hash_debug_api);
 
-                let is_hash_locked = pending_hashes_mapper.get();
                 let is_mapper_empty = pending_hashes_mapper.is_empty();
+                let is_operation_hash_locked = pending_hashes_mapper.get();
+
                 assert!(!is_mapper_empty);
-                assert!(!is_hash_locked);
+                assert!(is_operation_hash_locked == PendingHash::NotLocked);
             }
         });
 }
@@ -307,17 +308,15 @@ fn test_remove_one_executed_hash() {
         .whitebox(header_verifier::contract_obj, |sc| {
             let hash_of_hashes: ManagedBuffer<DebugApi> =
                 ManagedBuffer::from(operation.bridge_operation_hash.to_vec());
-            for operation_hash in operation.operations_hashes {
-                let operation_hash_debug_api = ManagedBuffer::from(operation_hash.to_vec());
+            let operation_hash_debug_api = ManagedBuffer::from(operation_hash_2.to_vec());
 
-                let pending_hashes_mapper =
-                    sc.pending_hash(&hash_of_hashes, &operation_hash_debug_api);
+            let pending_hashes_mapper = sc.pending_hash(&hash_of_hashes, &operation_hash_debug_api);
 
-                let is_hash_locked = pending_hashes_mapper.get();
-                let is_mapper_empty = pending_hashes_mapper.is_empty();
-                assert!(is_mapper_empty);
-                assert!(!is_hash_locked);
-            }
+            let is_hash_locked = pending_hashes_mapper.get();
+            let is_mapper_empty = pending_hashes_mapper.is_empty();
+
+            assert!(!is_mapper_empty);
+            assert!(is_hash_locked == PendingHash::NotLocked);
         });
 }
 
