@@ -56,12 +56,14 @@ pub trait Headerverifier: bls_signature::BlsSignatureModule {
     #[endpoint(removeExecutedHash)]
     fn remove_executed_hash(&self, hash_of_hashes: &ManagedBuffer, operation_hash: &ManagedBuffer) {
         self.require_caller_esdt_safe();
+
         self.pending_hash(hash_of_hashes, operation_hash).clear();
     }
 
     #[endpoint(lockOperationHash)]
     fn lock_operation_hash(&self, hash_of_hashes: ManagedBuffer, operation_hash: ManagedBuffer) {
         self.require_caller_esdt_safe();
+
         let pending_hashes_mapper = self.pending_hash(&hash_of_hashes, &operation_hash);
 
         require!(

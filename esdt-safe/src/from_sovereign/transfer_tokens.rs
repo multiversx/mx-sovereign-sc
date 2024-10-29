@@ -286,7 +286,6 @@ pub trait TransferTokensModule:
         );
     }
 
-    // use pending_operations as param
     fn calculate_operation_hash(&self, operation: &Operation<Self::Api>) -> ManagedBuffer {
         let mut serialized_data = ManagedBuffer::new();
 
@@ -307,7 +306,6 @@ pub trait TransferTokensModule:
             .to(header_verifier_address)
             .typed(header_verifier_proxy::HeaderverifierProxy)
             .lock_operation_hash(hash_of_hashes, operation_hash)
-            .returns(ReturnsResult)
             .sync_call();
     }
 
@@ -318,9 +316,6 @@ pub trait TransferTokensModule:
         }
         esdt_info_mapper.get().token_nonce
     }
-
-    #[storage_mapper("pendingFlag")]
-    fn pending_flag(&self, hash_of_hashes: &ManagedBuffer) -> SingleValueMapper<bool>;
 
     #[storage_mapper("headerVerifierAddress")]
     fn header_verifier_address(&self) -> SingleValueMapper<ManagedAddress>;
