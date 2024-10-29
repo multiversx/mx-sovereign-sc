@@ -322,9 +322,6 @@ pub trait TransferTokensModule:
     #[storage_mapper("pendingFlag")]
     fn pending_flag(&self, hash_of_hashes: &ManagedBuffer) -> SingleValueMapper<bool>;
 
-    #[storage_mapper("pendingHashes")]
-    fn pending_hashes(&self, hash_of_hashes: &ManagedBuffer) -> UnorderedSetMapper<ManagedBuffer>;
-
     #[storage_mapper("headerVerifierAddress")]
     fn header_verifier_address(&self) -> SingleValueMapper<ManagedAddress>;
 }
