@@ -1,7 +1,6 @@
 #![no_std]
 
 use bls_signature::BlsSignature;
-
 pub mod header_verifier_proxy;
 
 multiversx_sc::imports!();
@@ -41,8 +40,8 @@ pub trait Headerverifier: bls_signature::BlsSignatureModule {
         );
 
         for operation_hash in operations_hashes {
-            self.pending_hashes(&bridge_operations_hash)
-                .insert(operation_hash);
+            self.pending_hashes(&bridge_operations_hash, &operation_hash)
+                .set(false);
         }
 
         self.hash_of_hashes_history().insert(bridge_operations_hash);
@@ -56,19 +55,35 @@ pub trait Headerverifier: bls_signature::BlsSignatureModule {
 
     #[endpoint(removeExecutedHash)]
     fn remove_executed_hash(&self, hash_of_hashes: &ManagedBuffer, operation_hash: &ManagedBuffer) {
+        self.require_caller_esdt_safe();
+        self.pending_hashes(hash_of_hashes, operation_hash)
+            .set(false);
+    }
+
+    #[endpoint(lockOperationHash)]
+    fn lock_operation_hash(&self, hash_of_hashes: ManagedBuffer, operation_hash: ManagedBuffer) {
+        self.require_caller_esdt_safe();
+        let pending_hashes_mapper = self.pending_hashes(&hash_of_hashes, &operation_hash);
+
         require!(
-            !self.esdt_safe_address().is_empty(),
+            !pending_hashes_mapper.is_empty(),
+            "The current operation is not registered"
+        );
+    }
+
+    fn require_caller_esdt_safe(&self) {
+        let esdt_safe_mapper = self.esdt_safe_address();
+
+        require!(
+            !esdt_safe_mapper.is_empty(),
             "There is no registered ESDT address"
         );
 
         let caller = self.blockchain().get_caller();
         require!(
-            caller == self.esdt_safe_address().get(),
+            caller == esdt_safe_mapper.get(),
             "Only ESDT Safe contract can call this endpoint"
         );
-
-        self.pending_hashes(hash_of_hashes)
-            .swap_remove(operation_hash);
     }
 
     fn calculate_and_check_transfers_hashes(
@@ -110,7 +125,11 @@ pub trait Headerverifier: bls_signature::BlsSignatureModule {
     fn bls_pub_keys(&self) -> SetMapper<ManagedBuffer>;
 
     #[storage_mapper("pendingHashes")]
-    fn pending_hashes(&self, hash_of_hashes: &ManagedBuffer) -> UnorderedSetMapper<ManagedBuffer>;
+    fn pending_hashes(
+        &self,
+        hash_of_hashes: &ManagedBuffer,
+        operation_hash: &ManagedBuffer,
+    ) -> SingleValueMapper<bool>;
 
     #[storage_mapper("hashOfHashesHistory")]
     fn hash_of_hashes_history(&self) -> UnorderedSetMapper<ManagedBuffer>;

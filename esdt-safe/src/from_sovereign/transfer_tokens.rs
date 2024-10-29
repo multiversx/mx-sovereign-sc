@@ -32,12 +32,9 @@ pub trait TransferTokensModule:
 
         require!(self.not_paused(), "Cannot transfer while paused");
 
-        let (operation_hash, is_registered) =
-            self.calculate_operation_hash(&hash_of_hashes, &operation);
+        let operation_hash = self.calculate_operation_hash(&operation);
 
-        if !is_registered {
-            sc_panic!("Operation is not registered");
-        }
+        self.lock_operation_hash(&operation_hash, &hash_of_hashes);
 
         let minted_operation_tokens = self.mint_tokens(&operation.tokens);
         let operation_tuple = OperationTuple {
@@ -292,15 +289,8 @@ pub trait TransferTokensModule:
     }
 
     // use pending_operations as param
-    fn calculate_operation_hash(
-        &self,
-        hash_of_hashes: &ManagedBuffer,
-        operation: &Operation<Self::Api>,
-    ) -> (ManagedBuffer, bool) {
+    fn calculate_operation_hash(&self, operation: &Operation<Self::Api>) -> ManagedBuffer {
         let mut serialized_data = ManagedBuffer::new();
-        let header_verifier_address = self.header_verifier_address().get();
-        let pending_operations_mapper =
-            self.external_pending_hashes(header_verifier_address, hash_of_hashes);
 
         if let core::result::Result::Err(err) = operation.top_encode(&mut serialized_data) {
             sc_panic!("Transfer data encode error: {}", err.message_bytes());
@@ -308,11 +298,19 @@ pub trait TransferTokensModule:
 
         let sha256 = self.crypto().sha256(&serialized_data);
         let hash = sha256.as_managed_buffer().clone();
-        if pending_operations_mapper.contains(&hash) {
-            (hash, true)
-        } else {
-            (hash, false)
-        }
+
+        hash
+    }
+
+    fn lock_operation_hash(&self, operation_hash: &ManagedBuffer, hash_of_hashes: &ManagedBuffer) {
+        let header_verifier_address = self.header_verifier_address().get();
+
+        self.tx()
+            .to(header_verifier_address)
+            .typed(header_verifier_proxy::HeaderverifierProxy)
+            .lock_hash(hash_of_hashes, operation_hash)
+            .returns(ReturnsResult)
+            .sync_call();
     }
 
     fn get_mvx_nonce_from_mapper(self, token_id: &TokenIdentifier, nonce: u64) -> u64 {
@@ -343,11 +341,4 @@ pub trait TransferTokensModule:
 
     #[storage_mapper("headerVerifierAddress")]
     fn header_verifier_address(&self) -> SingleValueMapper<ManagedAddress>;
-
-    #[storage_mapper_from_address("pendingHashes")]
-    fn external_pending_hashes(
-        &self,
-        sc_address: ManagedAddress,
-        hash_of_hashes: &ManagedBuffer,
-    ) -> UnorderedSetMapper<ManagedBuffer, ManagedAddress>;
 }
