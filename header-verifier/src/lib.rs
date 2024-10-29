@@ -56,8 +56,7 @@ pub trait Headerverifier: bls_signature::BlsSignatureModule {
     #[endpoint(removeExecutedHash)]
     fn remove_executed_hash(&self, hash_of_hashes: &ManagedBuffer, operation_hash: &ManagedBuffer) {
         self.require_caller_esdt_safe();
-        self.pending_hashes(hash_of_hashes, operation_hash)
-            .set(false);
+        self.pending_hashes(hash_of_hashes, operation_hash).clear();
     }
 
     #[endpoint(lockOperationHash)]
