@@ -28,11 +28,7 @@ pub trait TransferTokensModule:
             "Invalid method to call in current chain"
         );
 
-        let is_operation_pending = self.pending_flag(&hash_of_hashes).get();
-        require!(
-            !is_operation_pending,
-            "The current operations is being executed"
-        );
+        self.check_and_update_pending_flag(&hash_of_hashes);
 
         require!(self.not_paused(), "Cannot transfer while paused");
 
@@ -325,6 +321,18 @@ pub trait TransferTokensModule:
             return 0;
         }
         esdt_info_mapper.get().token_nonce
+    }
+
+    fn check_and_update_pending_flag(&self, hash_of_hashes: &ManagedBuffer) {
+        let pending_flag_mapper = self.pending_flag(hash_of_hashes);
+        let is_operation_pending = pending_flag_mapper.get();
+
+        require!(
+            !is_operation_pending,
+            "The current operations is being executed"
+        );
+
+        pending_flag_mapper.set(true);
     }
 
     #[storage_mapper("pendingFlag")]
