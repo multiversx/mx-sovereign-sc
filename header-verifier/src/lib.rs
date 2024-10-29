@@ -68,6 +68,12 @@ pub trait Headerverifier: bls_signature::BlsSignatureModule {
             !pending_hashes_mapper.is_empty(),
             "The current operation is not registered"
         );
+
+        let is_hash_in_execution = pending_hashes_mapper.get();
+        require!(
+            !is_hash_in_execution,
+            "The current operation is already in execution"
+        );
     }
 
     fn require_caller_esdt_safe(&self) {
