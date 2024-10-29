@@ -329,7 +329,7 @@ pub trait TransferTokensModule:
 
         require!(
             !is_operation_pending,
-            "The current operations is being executed"
+            "The current operation is being executed"
         );
 
         pending_flag_mapper.set(true);
