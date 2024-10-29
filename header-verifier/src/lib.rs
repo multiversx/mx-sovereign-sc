@@ -40,7 +40,7 @@ pub trait Headerverifier: bls_signature::BlsSignatureModule {
         );
 
         for operation_hash in operations_hashes {
-            self.pending_hashes(&bridge_operations_hash, &operation_hash)
+            self.pending_hash(&bridge_operations_hash, &operation_hash)
                 .set(false);
         }
 
@@ -56,13 +56,13 @@ pub trait Headerverifier: bls_signature::BlsSignatureModule {
     #[endpoint(removeExecutedHash)]
     fn remove_executed_hash(&self, hash_of_hashes: &ManagedBuffer, operation_hash: &ManagedBuffer) {
         self.require_caller_esdt_safe();
-        self.pending_hashes(hash_of_hashes, operation_hash).clear();
+        self.pending_hash(hash_of_hashes, operation_hash).clear();
     }
 
     #[endpoint(lockOperationHash)]
     fn lock_operation_hash(&self, hash_of_hashes: ManagedBuffer, operation_hash: ManagedBuffer) {
         self.require_caller_esdt_safe();
-        let pending_hashes_mapper = self.pending_hashes(&hash_of_hashes, &operation_hash);
+        let pending_hashes_mapper = self.pending_hash(&hash_of_hashes, &operation_hash);
 
         require!(
             !pending_hashes_mapper.is_empty(),
@@ -74,6 +74,8 @@ pub trait Headerverifier: bls_signature::BlsSignatureModule {
             !is_hash_in_execution,
             "The current operation is already in execution"
         );
+
+        pending_hashes_mapper.set(true);
     }
 
     fn require_caller_esdt_safe(&self) {
@@ -130,7 +132,7 @@ pub trait Headerverifier: bls_signature::BlsSignatureModule {
     fn bls_pub_keys(&self) -> SetMapper<ManagedBuffer>;
 
     #[storage_mapper("pendingHashes")]
-    fn pending_hashes(
+    fn pending_hash(
         &self,
         hash_of_hashes: &ManagedBuffer,
         operation_hash: &ManagedBuffer,

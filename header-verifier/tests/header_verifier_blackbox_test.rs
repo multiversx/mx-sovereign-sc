@@ -216,11 +216,11 @@ fn test_register_bridge_operation() {
             assert!(!sc.hash_of_hashes_history().is_empty());
             assert!(sc.hash_of_hashes_history().len() == 1);
             assert!(sc.hash_of_hashes_history().contains(&hash_of_hashes));
-            assert!(!sc.pending_hashes(&hash_of_hashes).is_empty());
+            assert!(!sc.pending_hash(&hash_of_hashes).is_empty());
 
             for (mut i, operation_hash) in operation.operations_hashes.into_iter().enumerate() {
                 i += 1;
-                let pending_hash = sc.pending_hashes(&hash_of_hashes).get_by_index(i);
+                let pending_hash = sc.pending_hash(&hash_of_hashes).get_by_index(i);
                 let expected_hash_debug_api: ManagedBuffer<DebugApi> =
                     ManagedBuffer::from(operation_hash.to_vec());
                 assert_eq!(pending_hash, expected_hash_debug_api);
@@ -304,10 +304,10 @@ fn test_remove_one_executed_hash() {
         .whitebox(header_verifier::contract_obj, |sc| {
             let hash_of_hashes: ManagedBuffer<DebugApi> =
                 ManagedBuffer::from(operation.bridge_operation_hash.to_vec());
-            assert!(!sc.pending_hashes(&hash_of_hashes).is_empty());
-            assert!(sc.pending_hashes(&hash_of_hashes).len() == 1);
+            assert!(!sc.pending_hash(&hash_of_hashes).is_empty());
+            assert!(sc.pending_hash(&hash_of_hashes).len() == 1);
 
-            let pending_hash_2 = sc.pending_hashes(&hash_of_hashes).get_by_index(1);
+            let pending_hash_2 = sc.pending_hash(&hash_of_hashes).get_by_index(1);
             let expected_hash_2_debug_api: ManagedBuffer<DebugApi> =
                 ManagedBuffer::from(operation_hash_2.to_vec());
 
@@ -350,7 +350,7 @@ fn test_remove_all_executed_hashes() {
         .whitebox(header_verifier::contract_obj, |sc| {
             let hash_of_hashes: ManagedBuffer<DebugApi> =
                 ManagedBuffer::from(operation.bridge_operation_hash.to_vec());
-            assert!(sc.pending_hashes(&hash_of_hashes).is_empty());
+            assert!(sc.pending_hash(&hash_of_hashes).is_empty());
             assert!(sc.hash_of_hashes_history().contains(&hash_of_hashes));
         });
 }
