@@ -4,6 +4,7 @@ use multiversx_sc_modules::only_admin;
 
 multiversx_sc::imports!();
 
+pub mod common;
 pub mod factory;
 pub mod slash;
 
@@ -14,6 +15,8 @@ pub trait ChainFactoryContract:
     + utils::UtilsModule
     + bls_signature::BlsSignatureModule
     + only_admin::OnlyAdminModule
+    + crate::common::storage::CommonStorage
+    + crate::common::utils::UtilsModule
 {
     #[init]
     fn init(
