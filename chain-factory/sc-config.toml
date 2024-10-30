@@ -20,3 +20,6 @@ path = "src/chain_factory_proxy.rs"
 
 [[proxy]]
 path = "../chain-config/src/chain_factory_proxy.rs"
+
+[[proxy]]
+path = "../token-handler/src/chain_factory_proxy.rs"
