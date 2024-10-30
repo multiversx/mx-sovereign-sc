@@ -376,7 +376,14 @@ fn test_remove_all_executed_hashes() {
         .whitebox(header_verifier::contract_obj, |sc| {
             let hash_of_hashes: ManagedBuffer<DebugApi> =
                 ManagedBuffer::from(operation.bridge_operation_hash.to_vec());
-            // assert!(sc.pending_hash(&hash_of_hashes).is_empty());
+            let operation_hash_debug_api_1 = ManagedBuffer::from(operation_1.to_vec());
+            let operation_hash_debug_api_2 = ManagedBuffer::from(operation_2.to_vec());
+            assert!(sc
+                .pending_hash(&hash_of_hashes, &operation_hash_debug_api_1)
+                .is_empty());
+            assert!(sc
+                .pending_hash(&hash_of_hashes, &operation_hash_debug_api_2)
+                .is_empty());
             assert!(sc.hash_of_hashes_history().contains(&hash_of_hashes));
         });
 }
