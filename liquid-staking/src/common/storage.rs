@@ -13,7 +13,6 @@ pub trait CommonStorageModule {
     ) -> SingleValueMapper<ManagedAddress>;
 
     // TODO: use AddressToIdMapper for lower gas usage
-    //
     #[storage_mapper("userIds")]
     fn validator_ids(&self) -> AddressToIdMapper<Self::Api>;
 
