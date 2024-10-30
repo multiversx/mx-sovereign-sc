@@ -7,8 +7,9 @@
 // Init:                                 1
 // Upgrade:                              1
 // Endpoints:                           17
-// Async Callback:                       1
-// Total number of exported functions:  20
+// Async Callback (empty):               1
+// Promise callbacks:                    3
+// Total number of exported functions:  23
 
 #![no_std]
 
@@ -37,7 +38,10 @@ multiversx_sc_wasm_adapter::endpoints! {
         getRegisteredBlsKeys => registered_bls_keys
         validatorBlsKeyMap => validator_bls_key_address_map
         lockedSupply => locked_supply
+        stake_callback => stake_callback
+        unstake_callback => unstake_callback
+        claim_rewards_from_delegation_cb => claim_rewards_from_delegation_cb
     )
 }
 
-multiversx_sc_wasm_adapter::async_callback! { liquid_staking }
+multiversx_sc_wasm_adapter::async_callback_empty! {}
