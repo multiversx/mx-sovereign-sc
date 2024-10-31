@@ -7,7 +7,7 @@ use crate::to_sovereign;
 multiversx_sc::imports!();
 
 const CALLBACK_GAS: GasLimit = 10_000_000; // Increase if not enough
-const TRANSACTION_GAS: GasLimit = 30_000_000;
+const ESDT_TRANSACTION_GAS: GasLimit = 5_000_000;
 
 #[multiversx_sc::module]
 pub trait TransferTokensModule:
@@ -191,7 +191,7 @@ pub trait TransferTokensModule:
                     .to(&operation_tuple.operation.to)
                     .raw_call(ESDT_MULTI_TRANSFER_FUNC_NAME)
                     .payment(&mapped_tokens)
-                    .gas(TRANSACTION_GAS)
+                    .gas(ESDT_TRANSACTION_GAS)
                     .callback(
                         <Self as TransferTokensModule>::callbacks(self)
                             .execute(hash_of_hashes, operation_tuple),
