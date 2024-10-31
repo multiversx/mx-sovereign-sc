@@ -71,22 +71,22 @@ pub trait TransferTokensModule:
                     .esdt_local_mint(&mvx_token_id, 0, &operation_token.token_data.amount)
                     .sync_call();
 
-                output_payments.push(OperationEsdtPayment {
-                    token_identifier: mvx_token_id,
-                    token_nonce: 0,
-                    token_data: operation_token.token_data,
-                });
+                output_payments.push(OperationEsdtPayment::new(
+                    mvx_token_id,
+                    0,
+                    operation_token.token_data,
+                ));
 
                 continue;
             }
 
             let nft_nonce = self.esdt_create_and_update_mapper(&mvx_token_id, &operation_token);
 
-            output_payments.push(OperationEsdtPayment {
-                token_identifier: mvx_token_id,
-                token_nonce: nft_nonce,
-                token_data: operation_token.token_data,
-            });
+            output_payments.push(OperationEsdtPayment::new(
+                mvx_token_id,
+                nft_nonce,
+                operation_token.token_data,
+            ));
         }
 
         output_payments
