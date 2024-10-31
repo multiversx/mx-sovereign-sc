@@ -8,7 +8,7 @@ pub mod header_verifier_proxy;
 multiversx_sc::imports!();
 
 #[derive(TopEncode, TopDecode, PartialEq)]
-pub enum PendingHash {
+pub enum OperationHashStatus {
     NotLocked = 1,
     Locked,
 }
@@ -48,8 +48,8 @@ pub trait Headerverifier: bls_signature::BlsSignatureModule {
         );
 
         for operation_hash in operations_hashes {
-            self.pending_hash(&bridge_operations_hash, &operation_hash)
-                .set(PendingHash::NotLocked);
+            self.operation_hash_status(&bridge_operations_hash, &operation_hash)
+                .set(OperationHashStatus::NotLocked);
         }
 
         self.hash_of_hashes_history().insert(bridge_operations_hash);
@@ -65,24 +65,30 @@ pub trait Headerverifier: bls_signature::BlsSignatureModule {
     fn remove_executed_hash(&self, hash_of_hashes: &ManagedBuffer, operation_hash: &ManagedBuffer) {
         self.require_caller_esdt_safe();
 
-        self.pending_hash(hash_of_hashes, operation_hash).clear();
+        self.operation_hash_status(hash_of_hashes, operation_hash)
+            .clear();
     }
 
     #[endpoint(lockOperationHash)]
     fn lock_operation_hash(&self, hash_of_hashes: ManagedBuffer, operation_hash: ManagedBuffer) {
         self.require_caller_esdt_safe();
 
-        let pending_hashes_mapper = self.pending_hash(&hash_of_hashes, &operation_hash);
+        let operation_hash_status_mapper =
+            self.operation_hash_status(&hash_of_hashes, &operation_hash);
 
         require!(
-            !pending_hashes_mapper.is_empty(),
+            !operation_hash_status_mapper.is_empty(),
             "The current operation is not registered"
         );
 
-        let is_hash_in_execution = pending_hashes_mapper.get();
+        let is_hash_in_execution = operation_hash_status_mapper.get();
         match is_hash_in_execution {
-            PendingHash::NotLocked => pending_hashes_mapper.set(PendingHash::Locked),
-            PendingHash::Locked => sc_panic!("The current operation is already in execution"),
+            OperationHashStatus::NotLocked => {
+                operation_hash_status_mapper.set(OperationHashStatus::Locked)
+            }
+            OperationHashStatus::Locked => {
+                sc_panic!("The current operation is already in execution")
+            }
         }
     }
 
@@ -139,12 +145,12 @@ pub trait Headerverifier: bls_signature::BlsSignatureModule {
     #[storage_mapper("blsPubKeys")]
     fn bls_pub_keys(&self) -> SetMapper<ManagedBuffer>;
 
-    #[storage_mapper("pendingHashes")]
-    fn pending_hash(
+    #[storage_mapper("operationHashStatus")]
+    fn operation_hash_status(
         &self,
         hash_of_hashes: &ManagedBuffer,
         operation_hash: &ManagedBuffer,
-    ) -> SingleValueMapper<PendingHash>;
+    ) -> SingleValueMapper<OperationHashStatus>;
 
     #[storage_mapper("hashOfHashesHistory")]
     fn hash_of_hashes_history(&self) -> UnorderedSetMapper<ManagedBuffer>;

@@ -1,5 +1,5 @@
 use bls_signature::BlsSignature;
-use header_verifier::{header_verifier_proxy, Headerverifier, PendingHash};
+use header_verifier::{header_verifier_proxy, Headerverifier, OperationHashStatus};
 use multiversx_sc::types::ManagedBuffer;
 use multiversx_sc::{
     api::ManagedTypeApi,
@@ -242,13 +242,13 @@ fn test_register_bridge_operation() {
                 let operation_hash_debug_api = ManagedBuffer::from(operation_hash.to_vec());
 
                 let pending_hashes_mapper =
-                    sc.pending_hash(&hash_of_hashes, &operation_hash_debug_api);
+                    sc.operation_hash_status(&hash_of_hashes, &operation_hash_debug_api);
 
                 let is_mapper_empty = pending_hashes_mapper.is_empty();
                 let is_operation_hash_locked = pending_hashes_mapper.get();
 
                 assert!(!is_mapper_empty);
-                assert!(is_operation_hash_locked == PendingHash::NotLocked);
+                assert!(is_operation_hash_locked == OperationHashStatus::NotLocked);
             }
         });
 }
@@ -331,13 +331,14 @@ fn test_remove_one_executed_hash() {
                 ManagedBuffer::from(operation.bridge_operation_hash.to_vec());
             let operation_hash_debug_api = ManagedBuffer::from(operation_hash_2.to_vec());
 
-            let pending_hashes_mapper = sc.pending_hash(&hash_of_hashes, &operation_hash_debug_api);
+            let pending_hashes_mapper =
+                sc.operation_hash_status(&hash_of_hashes, &operation_hash_debug_api);
 
             let is_hash_locked = pending_hashes_mapper.get();
             let is_mapper_empty = pending_hashes_mapper.is_empty();
 
             assert!(!is_mapper_empty);
-            assert!(is_hash_locked == PendingHash::NotLocked);
+            assert!(is_hash_locked == OperationHashStatus::NotLocked);
         });
 }
 
@@ -379,10 +380,10 @@ fn test_remove_all_executed_hashes() {
             let operation_hash_debug_api_1 = ManagedBuffer::from(operation_1.to_vec());
             let operation_hash_debug_api_2 = ManagedBuffer::from(operation_2.to_vec());
             assert!(sc
-                .pending_hash(&hash_of_hashes, &operation_hash_debug_api_1)
+                .operation_hash_status(&hash_of_hashes, &operation_hash_debug_api_1)
                 .is_empty());
             assert!(sc
-                .pending_hash(&hash_of_hashes, &operation_hash_debug_api_2)
+                .operation_hash_status(&hash_of_hashes, &operation_hash_debug_api_2)
                 .is_empty());
             assert!(sc.hash_of_hashes_history().contains(&hash_of_hashes));
         });
@@ -441,13 +442,13 @@ fn test_lock_operation() {
             let operation_hash_debug_api_1 = ManagedBuffer::from(operation_1.to_vec());
             let operation_hash_debug_api_2 = ManagedBuffer::from(operation_2.to_vec());
             let is_hash_1_locked = sc
-                .pending_hash(&hash_of_hashes, &operation_hash_debug_api_1)
+                .operation_hash_status(&hash_of_hashes, &operation_hash_debug_api_1)
                 .get();
             let is_hash_2_locked = sc
-                .pending_hash(&hash_of_hashes, &operation_hash_debug_api_2)
+                .operation_hash_status(&hash_of_hashes, &operation_hash_debug_api_2)
                 .get();
 
-            assert!(is_hash_1_locked == PendingHash::Locked);
-            assert!(is_hash_2_locked == PendingHash::NotLocked);
+            assert!(is_hash_1_locked == OperationHashStatus::Locked);
+            assert!(is_hash_2_locked == OperationHashStatus::NotLocked);
         })
 }
