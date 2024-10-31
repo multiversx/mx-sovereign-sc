@@ -32,10 +32,10 @@ pub trait Headerverifier: bls_signature::BlsSignatureModule {
         bridge_operations_hash: ManagedBuffer,
         operations_hashes: MultiValueEncoded<ManagedBuffer>,
     ) {
+        let mut hash_of_hashes_history_mapper = self.hash_of_hashes_history();
+
         require!(
-            !self
-                .hash_of_hashes_history()
-                .contains(&bridge_operations_hash),
+            !hash_of_hashes_history_mapper.contains(&bridge_operations_hash),
             "The OutGoingTxsHash has already been registered"
         );
 
@@ -52,7 +52,7 @@ pub trait Headerverifier: bls_signature::BlsSignatureModule {
                 .set(OperationHashStatus::NotLocked);
         }
 
-        self.hash_of_hashes_history().insert(bridge_operations_hash);
+        hash_of_hashes_history_mapper.insert(bridge_operations_hash);
     }
 
     #[only_owner]
