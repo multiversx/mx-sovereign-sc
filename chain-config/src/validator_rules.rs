@@ -93,7 +93,7 @@ pub trait ValidatorRulesModule {
         )
     }
 
-    fn has_stake_in_validator_sc(&self, bls_key: ManagedBuffer) -> bool {
+    fn has_stake_in_validator_sc(&self, bls_key: &ManagedBuffer) -> bool {
         let liquid_staking_address = self.liquid_staking_address().get();
         let validator_id = self
             .tx()
