@@ -43,6 +43,13 @@ pub trait CommonStorageModule {
         bls_key: &BlsKey<Self::Api>,
     ) -> SingleValueMapper<ManagedAddress>;
 
+    #[view(getValidatorId)]
+    fn get_validator_id(&self, bls_key: &BlsKey<Self::Api>) -> u64 {
+        let validator_address = self.validator_bls_key_address_map(bls_key).get();
+
+        self.validator_ids().get_id(&validator_address)
+    }
+
     // NOTE: Number of nodes where ?
     #[view(lockedSupply)]
     #[storage_mapper("lockerSupply")]

@@ -6,9 +6,9 @@
 
 // Init:                                 1
 // Upgrade:                              1
-// Endpoints:                           20
+// Endpoints:                           21
 // Async Callback (empty):               1
-// Total number of exported functions:  23
+// Total number of exported functions:  24
 
 #![no_std]
 
@@ -36,6 +36,7 @@ multiversx_sc_wasm_adapter::endpoints! {
         getAddressBlacklist => address_blacklist
         getNativeTokenId => native_token_id
         getHeaderVerifierAddress => header_verifier_address
+        getLiquidStakingAddress => liquid_staking_address
         isAdmin => is_admin
         addAdmin => add_admin
         removeAdmin => remove_admin

@@ -6,10 +6,10 @@
 
 // Init:                                 1
 // Upgrade:                              1
-// Endpoints:                           17
+// Endpoints:                           18
 // Async Callback (empty):               1
 // Promise callbacks:                    3
-// Total number of exported functions:  23
+// Total number of exported functions:  24
 
 #![no_std]
 
@@ -37,6 +37,7 @@ multiversx_sc_wasm_adapter::endpoints! {
         getHeaderVerifierAddress => header_verifier_address
         getRegisteredBlsKeys => registered_bls_keys
         validatorBlsKeyMap => validator_bls_key_address_map
+        getValidatorId => get_validator_id
         lockedSupply => locked_supply
         stake_callback => stake_callback
         unstake_callback => unstake_callback

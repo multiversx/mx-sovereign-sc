@@ -6,6 +6,7 @@ multiversx_sc::imports!();
 
 pub mod bls_keys;
 pub mod bridge;
+pub mod liquid_staking_proxy;
 pub mod validator_rules;
 
 pub type StakeMultiArg<M> = MultiValue2<TokenIdentifier<M>, BigUint<M>>;

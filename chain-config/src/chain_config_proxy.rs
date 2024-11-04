@@ -255,6 +255,15 @@ where
             .original_result()
     }
 
+    pub fn liquid_staking_address(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ManagedAddress<Env::Api>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getLiquidStakingAddress")
+            .original_result()
+    }
+
     pub fn is_admin<
         Arg0: ProxyArg<ManagedAddress<Env::Api>>,
     >(
