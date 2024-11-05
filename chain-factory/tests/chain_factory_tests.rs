@@ -1,12 +1,16 @@
 use chain_config::{chain_config_proxy, StakeMultiArg};
-use chain_factory::chain_factory_proxy::{self, ContractMapArgs};
+use chain_factory::{
+    chain_factory_proxy::{self, ContractMapArgs, ScArray},
+    common::storage::CommonStorage,
+    factory::ScArray as ContractScArray,
+};
 use multiversx_sc::types::{
     BigUint, MultiValueEncoded, TestAddress, TestSCAddress, TokenIdentifier,
 };
 use multiversx_sc_scenario::{
-    api::StaticApi, imports::MxscPath, managed_biguint, ScenarioTxRun, ScenarioWorld,
+    api::StaticApi, imports::MxscPath, managed_biguint, ScenarioTxRun, ScenarioTxWhitebox,
+    ScenarioWorld,
 };
-use num_bigint::BigUint;
 
 const FACTORY_ADDRESS: TestSCAddress = TestSCAddress::new("chain-factory");
 const CODE_PATH: MxscPath = MxscPath::new("output/chain-factory.mxsc.json");
@@ -62,7 +66,7 @@ impl ChainFactoryTestState {
         &mut self,
         min_validators: usize,
         max_validators: usize,
-        min_stake: BigUint,
+        min_stake: BigUint<StaticApi>,
         admin: TestAddress,
         additional_stake_required: MultiValueEncoded<StaticApi, StakeMultiArg<StaticApi>>,
     ) {
@@ -104,8 +108,10 @@ fn deploy_test() {
     let min_validators = 1;
     let max_validators = 4;
     let min_stake = BigUint::from(100_000u64);
-    let additional_stake = vec![(TokenIdentifier::from("TEST-TOKEN"), BigUint::from(100u64))];
-    let additional_stake_required = MultiValueEncoded::new();
+    let additional_stake: StakeMultiArg<StaticApi> =
+        (TokenIdentifier::from("TEST-TOKEN"), BigUint::from(100u64)).into();
+    let mut additional_stake_required = MultiValueEncoded::new();
+    additional_stake_required.push(additional_stake);
 
     state.deploy_chain_config(
         min_validators,
@@ -120,4 +126,21 @@ fn deploy_test() {
 fn add_contracts_to_map_test() {
     let mut state = ChainFactoryTestState::new();
     state.deploy_chain_factory();
+
+    let config_map_arg: ContractMapArgs<StaticApi> = ContractMapArgs {
+        id: ScArray::ChainConfig,
+        address: CONFIG_ADDRESS.to_managed_address(),
+    };
+    let mut contracts_map = MultiValueEncoded::new();
+    contracts_map.push(config_map_arg);
+
+    state.propose_add_contracts_to_map(contracts_map);
+
+    state
+        .world
+        .query()
+        .to(FACTORY_ADDRESS)
+        .whitebox(chain_factory::contract_obj, |sc| {
+            assert!(!sc.contracts_map(ContractScArray::ChainConfig).is_empty());
+        })
 }

@@ -215,7 +215,7 @@ where
 }
 
 #[type_abi]
-#[derive(TopEncode, TopDecode)]
+#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, ManagedVecItem)]
 pub struct TokenIdAmountPair<Api>
 where
     Api: ManagedTypeApi,
