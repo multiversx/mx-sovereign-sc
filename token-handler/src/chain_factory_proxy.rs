@@ -197,37 +197,6 @@ where
             .original_result()
     }
 
-    pub fn contracts_map<
-        Arg0: ProxyArg<ScArray>,
-    >(
-        self,
-        contract_name: Arg0,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ManagedAddress<Env::Api>> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("getContractsMap")
-            .argument(&contract_name)
-            .original_result()
-    }
-
-    pub fn deploy_cost(
-        self,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, BigUint<Env::Api>> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("getDeployCost")
-            .original_result()
-    }
-
-    pub fn chain_ids(
-        self,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, MultiValueEncoded<Env::Api, ManagedBuffer<Env::Api>>> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("getAllChainIds")
-            .original_result()
-    }
-
     pub fn slash<
         Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
         Arg1: ProxyArg<ManagedAddress<Env::Api>>,
@@ -347,6 +316,37 @@ where
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("getAdmins")
+            .original_result()
+    }
+
+    pub fn contracts_map<
+        Arg0: ProxyArg<ScArray>,
+    >(
+        self,
+        contract_name: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ManagedAddress<Env::Api>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getContractsMap")
+            .argument(&contract_name)
+            .original_result()
+    }
+
+    pub fn deploy_cost(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, BigUint<Env::Api>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getDeployCost")
+            .original_result()
+    }
+
+    pub fn chain_ids(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, MultiValueEncoded<Env::Api, ManagedBuffer<Env::Api>>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getAllChainIds")
             .original_result()
     }
 }
