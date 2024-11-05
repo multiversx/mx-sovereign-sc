@@ -93,6 +93,18 @@ pub trait ValidatorRulesModule {
         )
     }
 
+    fn get_delegated_value(&self, validator_id: u64) -> BigUint<Self::Api> {
+        let liquid_staking_address = self.liquid_staking_address().get();
+
+        self.tx()
+            .to(liquid_staking_address)
+            .typed(liquid_staking_proxy::LiquidStakingProxy)
+            .delegated_value(validator_id)
+            .returns(ReturnsResultUnmanaged)
+            .sync_call()
+            .into()
+    }
+
     fn has_stake_in_validator_sc(&self, bls_key: &ManagedBuffer) -> bool {
         let liquid_staking_address = self.liquid_staking_address().get();
         let validator_id = self

@@ -17,7 +17,10 @@ pub trait BlsKeysModule: validator_rules::ValidatorRulesModule {
         self.require_min_stake(stake_amount);
 
         for bls_key in pub_bls_keys {
-            require!(self.has_stake_in_validator_sc(&bls_key), "The validator with the {} BLS key does not have any stake in the SovereignValidatorSC", bls_key);
+            let has_stake = self.has_stake_in_validator_sc(&bls_key);
+            require!(has_stake, "The validator with the {} BLS key does not have any stake in the SovereignValidatorSC", bls_key);
+
+            // let delegated_value = self.get_delegated_value(validator_id)
 
             self.require_bls_key_whitelist(&bls_key);
 
