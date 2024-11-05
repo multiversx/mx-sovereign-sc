@@ -39,39 +39,46 @@ pub trait FactoryModule:
         max_validators: usize,
         min_stake: BigUint,
         additional_stake_required: MultiValueEncoded<StakeMultiArg<Self::Api>>,
-    ) {
+    ) -> ManagedAddress {
         let payment_amount = self.call_value().egld_value().clone_value();
         let deploy_cost = self.deploy_cost().get();
         require!(payment_amount == deploy_cost, "Invalid payment amount");
+        let caller = self.blockchain().get_caller();
 
         let source_address = self.chain_config_template().get();
         let args = self.get_deploy_chain_config_args(
             &min_validators,
             &max_validators,
             &min_stake,
+            &caller,
             &additional_stake_required,
         );
 
         let chain_config_address = self.deploy_contract(source_address, args);
 
-        let caller = self.blockchain().get_caller();
-        let mut set_admin_args = ManagedArgBuffer::new();
-        set_admin_args.push_arg(&caller);
-
-        self.tx()
-            .to(&chain_config_address)
-            .raw_call("add_admin")
-            .arguments_raw(set_admin_args)
-            .sync_call();
+        self.raw_call_add_admin(&chain_config_address, &caller);
 
         let chain_id = self.generate_chain_id();
         self.set_deployed_contract_to_storage(
             chain_id.clone(),
             ScArray::ChainConfig,
-            chain_config_address,
+            &chain_config_address,
         );
 
         self.add_admin(caller);
+
+        chain_config_address
+    }
+
+    fn raw_call_add_admin(&self, to: &ManagedAddress, caller: &ManagedAddress) {
+        let mut set_admin_args = ManagedArgBuffer::new();
+        set_admin_args.push_arg(caller);
+
+        self.tx()
+            .to(to)
+            .raw_call("add_admin")
+            .arguments_raw(set_admin_args)
+            .sync_call();
     }
 
     #[only_owner]
@@ -108,7 +115,7 @@ pub trait FactoryModule:
         self.set_deployed_contract_to_storage(
             chain_id,
             ScArray::SovereignHeaderVerifier,
-            header_verifier_address,
+            &header_verifier_address,
         );
     }
 
@@ -134,7 +141,7 @@ pub trait FactoryModule:
         self.set_deployed_contract_to_storage(
             chain_id,
             ScArray::SovereignCrossChainOperation,
-            cross_chain_operations_address,
+            &cross_chain_operations_address,
         );
     }
 
@@ -153,7 +160,7 @@ pub trait FactoryModule:
         args.push_arg(price_aggregator_address);
 
         let fee_market_address = self.deploy_contract(source_address, args);
-        self.set_deployed_contract_to_storage(chain_id, ScArray::FeeMarket, fee_market_address);
+        self.set_deployed_contract_to_storage(chain_id, ScArray::FeeMarket, &fee_market_address);
     }
 
     fn deploy_contract(
@@ -176,12 +183,12 @@ pub trait FactoryModule:
         &self,
         chain_id: ManagedBuffer,
         contract_id: ScArray,
-        contract_address: ManagedAddress,
+        contract_address: &ManagedAddress,
     ) {
         self.all_deployed_contracts(chain_id)
             .insert(ContractMapArgs {
                 id: contract_id,
-                address: contract_address,
+                address: contract_address.clone(),
             });
     }
 
@@ -190,6 +197,7 @@ pub trait FactoryModule:
         min_validators: &usize,
         max_validators: &usize,
         min_stake: &BigUint,
+        admin: &ManagedAddress,
         additional_stake_required: &MultiValueEncoded<StakeMultiArg<Self::Api>>,
     ) -> ManagedArgBuffer<Self::Api> {
         let mut args = ManagedArgBuffer::new();
@@ -197,6 +205,7 @@ pub trait FactoryModule:
         args.push_arg(min_validators);
         args.push_arg(max_validators);
         args.push_arg(min_stake);
+        args.push_arg(admin);
         args.push_multi_arg(additional_stake_required);
 
         args
