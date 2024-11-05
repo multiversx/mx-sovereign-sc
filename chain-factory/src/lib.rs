@@ -4,6 +4,7 @@ use multiversx_sc_modules::only_admin;
 
 multiversx_sc::imports!();
 
+pub mod chain_factory_proxy;
 pub mod common;
 pub mod factory;
 pub mod slash;
