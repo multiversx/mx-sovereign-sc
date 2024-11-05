@@ -10,12 +10,6 @@ pub struct ContractMapArgs<M: ManagedTypeApi> {
     pub address: ManagedAddress<M>,
 }
 
-#[derive(TypeAbi, TopEncode, TopDecode, NestedEncode, NestedDecode, ManagedVecItem)]
-struct ChainInfo<M: ManagedTypeApi> {
-    pub name: ManagedBuffer<M>,
-    pub chain_id: ManagedBuffer<M>,
-}
-
 // TODO: Is fee market needed here?
 #[type_abi]
 #[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, Clone, ManagedVecItem, PartialEq)]
