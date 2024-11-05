@@ -56,8 +56,6 @@ pub trait FactoryModule:
 
         let chain_config_address = self.deploy_contract(source_address, args);
 
-        self.raw_call_add_admin(&chain_config_address, &caller);
-
         let chain_id = self.generate_chain_id();
         self.set_deployed_contract_to_storage(
             chain_id.clone(),
@@ -68,17 +66,6 @@ pub trait FactoryModule:
         self.add_admin(caller);
 
         chain_config_address
-    }
-
-    fn raw_call_add_admin(&self, to: &ManagedAddress, caller: &ManagedAddress) {
-        let mut set_admin_args = ManagedArgBuffer::new();
-        set_admin_args.push_arg(caller);
-
-        self.tx()
-            .to(to)
-            .raw_call("add_admin")
-            .arguments_raw(set_admin_args)
-            .sync_call();
     }
 
     #[only_owner]
