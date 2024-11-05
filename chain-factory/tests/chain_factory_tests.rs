@@ -8,8 +8,8 @@ use multiversx_sc::types::{
     BigUint, MultiValueEncoded, TestAddress, TestSCAddress, TokenIdentifier,
 };
 use multiversx_sc_scenario::{
-    api::StaticApi, imports::MxscPath, managed_biguint, ScenarioTxRun, ScenarioTxWhitebox,
-    ScenarioWorld,
+    api::StaticApi, imports::MxscPath, managed_biguint, ExpectError, ScenarioTxRun,
+    ScenarioTxWhitebox, ScenarioWorld,
 };
 
 const FACTORY_ADDRESS: TestSCAddress = TestSCAddress::new("chain-factory");
@@ -19,7 +19,8 @@ const CONFIG_ADDRESS: TestSCAddress = TestSCAddress::new("chain-config");
 const CONFIG_CODE_PATH: MxscPath = MxscPath::new("../chain-config/output/chain-factory.mxsc.json");
 
 const OWNER: TestAddress = TestAddress::new("owner");
-const DEPLOY_COST: u64 = 100_000_000_000;
+const OWNER_BALANCE: u64 = 100_000_000_000;
+const DEPLOY_COST: u64 = 10_000_000_000;
 
 fn world() -> ScenarioWorld {
     let mut blockchain = ScenarioWorld::new();
@@ -38,7 +39,7 @@ impl ChainFactoryTestState {
     fn new() -> Self {
         let mut world = world();
 
-        world.account(OWNER).balance(100_000).nonce(1);
+        world.account(OWNER).balance(OWNER_BALANCE).nonce(1);
 
         Self { world }
     }
@@ -66,9 +67,9 @@ impl ChainFactoryTestState {
         &mut self,
         min_validators: usize,
         max_validators: usize,
-        min_stake: BigUint<StaticApi>,
+        min_stake: &BigUint<StaticApi>,
         admin: TestAddress,
-        additional_stake_required: MultiValueEncoded<StaticApi, StakeMultiArg<StaticApi>>,
+        additional_stake_required: &MultiValueEncoded<StaticApi, StakeMultiArg<StaticApi>>,
     ) {
         self.world
             .tx()
@@ -98,6 +99,35 @@ impl ChainFactoryTestState {
             .add_contracts_to_map(contracts_map)
             .run();
     }
+
+    fn propose_deploy_chain_config(
+        &mut self,
+        payment: BigUint<StaticApi>,
+        min_validators: usize,
+        max_validators: usize,
+        min_stake: BigUint<StaticApi>,
+        additional_stake_required: MultiValueEncoded<StaticApi, StakeMultiArg<StaticApi>>,
+        expected_result: Option<ExpectError<'_>>,
+    ) {
+        let transaction = self
+            .world
+            .tx()
+            .from(OWNER)
+            .to(FACTORY_ADDRESS)
+            .typed(chain_factory_proxy::ChainFactoryContractProxy)
+            .deploy_sovereign_chain_config_contract(
+                min_validators,
+                max_validators,
+                min_stake,
+                additional_stake_required,
+            )
+            .egld(payment);
+
+        match expected_result {
+            Some(error) => transaction.returns(error).run(),
+            None => transaction.run(),
+        }
+    }
 }
 
 #[test]
@@ -116,9 +146,9 @@ fn deploy_test() {
     state.deploy_chain_config(
         min_validators,
         max_validators,
-        min_stake,
+        &min_stake,
         OWNER,
-        additional_stake_required,
+        &additional_stake_required,
     );
 }
 
@@ -143,4 +173,35 @@ fn add_contracts_to_map_test() {
         .whitebox(chain_factory::contract_obj, |sc| {
             assert!(!sc.contracts_map(ContractScArray::ChainConfig).is_empty());
         })
+}
+
+#[test]
+fn deploy_chain_config_from_factory_test() {
+    let mut state = ChainFactoryTestState::new();
+    state.deploy_chain_factory();
+
+    let min_validators = 1;
+    let max_validators = 4;
+    let min_stake = BigUint::from(100_000u64);
+    let additional_stake: StakeMultiArg<StaticApi> =
+        (TokenIdentifier::from("TEST-TOKEN"), BigUint::from(100u64)).into();
+    let mut additional_stake_required = MultiValueEncoded::new();
+    additional_stake_required.push(additional_stake);
+
+    state.deploy_chain_config(
+        min_validators,
+        max_validators,
+        &min_stake,
+        OWNER,
+        &additional_stake_required,
+    );
+
+    state.propose_deploy_chain_config(
+        DEPLOY_COST.into(),
+        min_validators,
+        max_validators,
+        min_stake,
+        additional_stake_required,
+        None,
+    );
 }

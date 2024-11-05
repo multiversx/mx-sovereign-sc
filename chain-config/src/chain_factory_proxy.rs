@@ -107,22 +107,19 @@ where
         Arg0: ProxyArg<usize>,
         Arg1: ProxyArg<usize>,
         Arg2: ProxyArg<BigUint<Env::Api>>,
-        Arg3: ProxyArg<ManagedBuffer<Env::Api>>,
-        Arg4: ProxyArg<MultiValueEncoded<Env::Api, MultiValue2<TokenIdentifier<Env::Api>, BigUint<Env::Api>>>>,
+        Arg3: ProxyArg<MultiValueEncoded<Env::Api, MultiValue2<TokenIdentifier<Env::Api>, BigUint<Env::Api>>>>,
     >(
         self,
         min_validators: Arg0,
         max_validators: Arg1,
         min_stake: Arg2,
-        _chain_name: Arg3,
-        additional_stake_required: Arg4,
+        additional_stake_required: Arg3,
     ) -> TxTypedCall<Env, From, To, (), Gas, ()> {
         self.wrapped_tx
             .raw_call("deploySovereignChainConfigContract")
             .argument(&min_validators)
             .argument(&max_validators)
             .argument(&min_stake)
-            .argument(&_chain_name)
             .argument(&additional_stake_required)
             .original_result()
     }
