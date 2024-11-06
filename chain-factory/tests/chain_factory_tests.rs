@@ -128,7 +128,7 @@ impl ChainFactoryTestState {
 }
 
 #[test]
-fn deploy_test() {
+fn deploy() {
     let additional_stake: StakeMultiArg<StaticApi> =
         (TokenIdentifier::from("TEST-TOKEN"), BigUint::from(100u64)).into();
     let mut additional_stake_required = MultiValueEncoded::new();
@@ -167,7 +167,7 @@ fn add_contracts_to_map_test() {
 }
 
 #[test]
-fn deploy_chain_config_from_factory_deploy_cost_to_low() {
+fn deploy_chain_config_from_factory_deploy_cost_too_low() {
     let additional_stake: StakeMultiArg<StaticApi> =
         (TokenIdentifier::from("TEST-TOKEN"), BigUint::from(100u64)).into();
     let mut additional_stake_required = MultiValueEncoded::new();
@@ -192,7 +192,7 @@ fn deploy_chain_config_from_factory_deploy_cost_to_low() {
 }
 
 #[test]
-fn deploy_chain_config_from_factory_test() {
+fn deploy_chain_config_from_factory() {
     let additional_stake: StakeMultiArg<StaticApi> =
         (TokenIdentifier::from("TEST-TOKEN"), BigUint::from(100u64)).into();
     let mut additional_stake_required = MultiValueEncoded::new();
