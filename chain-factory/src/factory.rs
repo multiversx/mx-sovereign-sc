@@ -64,8 +64,6 @@ pub trait FactoryModule:
         );
 
         self.add_admin(caller);
-
-        // chain_config_address
     }
 
     #[only_owner]
