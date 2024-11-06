@@ -66,24 +66,6 @@ pub trait FactoryModule:
         self.add_admin(caller);
     }
 
-    #[only_owner]
-    #[endpoint(addContractsToMap)]
-    fn add_contracts_to_map(
-        &self,
-        contracts_map: MultiValueEncoded<Self::Api, ContractMapArgs<Self::Api>>,
-    ) {
-        for contract in contracts_map {
-            let contracts_mapper = self.contracts_map(contract.id);
-
-            require!(
-                contracts_mapper.is_empty(),
-                "There is already a SC address registered for that contract ID"
-            );
-
-            contracts_mapper.set(contract.address);
-        }
-    }
-
     #[only_admin]
     #[endpoint(deployHeaderVerifier)]
     fn deploy_header_verifier(
@@ -146,6 +128,24 @@ pub trait FactoryModule:
 
         let fee_market_address = self.deploy_contract(source_address, args);
         self.set_deployed_contract_to_storage(chain_id, ScArray::FeeMarket, &fee_market_address);
+    }
+
+    #[only_owner]
+    #[endpoint(addContractsToMap)]
+    fn add_contracts_to_map(
+        &self,
+        contracts_map: MultiValueEncoded<Self::Api, ContractMapArgs<Self::Api>>,
+    ) {
+        for contract in contracts_map {
+            let contracts_mapper = self.contracts_map(contract.id);
+
+            require!(
+                contracts_mapper.is_empty(),
+                "There is already a SC address registered for that contract ID"
+            );
+
+            contracts_mapper.set(contract.address);
+        }
     }
 
     fn deploy_contract(
