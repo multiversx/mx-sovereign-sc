@@ -221,6 +221,12 @@ fn deploy_chain_config_from_factory() {
         .to(FACTORY_ADDRESS)
         .whitebox(chain_factory::contract_obj, |sc| {
             let chain_id = sc.chain_ids().get_by_index(1);
-            assert!(!sc.all_deployed_contracts(chain_id).is_empty());
+            assert!(!sc.all_deployed_contracts(chain_id.clone()).is_empty());
+            assert!(!sc
+                .all_deployed_contracts(chain_id)
+                .iter()
+                .filter(|sc_map| sc_map.id == ContractScArray::ChainConfig)
+                .collect::<Vec<_>>()
+                .is_empty())
         })
 }
