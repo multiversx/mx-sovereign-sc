@@ -42,6 +42,8 @@ impl ChainFactoryTestState {
         let mut world = world();
 
         world.account(OWNER).balance(OWNER_BALANCE).nonce(1);
+
+        // deploy chain-config
         world
             .tx()
             .from(OWNER.to_managed_address())
@@ -77,30 +79,6 @@ impl ChainFactoryTestState {
             )
             .code(CODE_PATH)
             .new_address(FACTORY_ADDRESS)
-            .run();
-    }
-
-    fn deploy_chain_config(
-        &mut self,
-        min_validators: usize,
-        max_validators: usize,
-        min_stake: &BigUint<StaticApi>,
-        admin: TestAddress,
-        additional_stake_required: &MultiValueEncoded<StaticApi, StakeMultiArg<StaticApi>>,
-    ) {
-        self.world
-            .tx()
-            .from(OWNER)
-            .typed(chain_config_proxy::ChainConfigContractProxy)
-            .init(
-                min_validators,
-                max_validators,
-                min_stake,
-                admin,
-                additional_stake_required,
-            )
-            .code(CONFIG_CODE_PATH)
-            .new_address(CONFIG_ADDRESS)
             .run();
     }
 
