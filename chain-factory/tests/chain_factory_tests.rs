@@ -167,6 +167,31 @@ fn add_contracts_to_map_test() {
 }
 
 #[test]
+fn deploy_chain_config_from_factory_deploy_cost_to_low() {
+    let additional_stake: StakeMultiArg<StaticApi> =
+        (TokenIdentifier::from("TEST-TOKEN"), BigUint::from(100u64)).into();
+    let mut additional_stake_required = MultiValueEncoded::new();
+    additional_stake_required.push(additional_stake);
+
+    let mut state = ChainFactoryTestState::new(&additional_stake_required);
+
+    let min_validators = 1;
+    let max_validators = 4;
+    let min_stake = BigUint::from(100_000u64);
+
+    state.deploy_chain_factory();
+
+    state.propose_deploy_chain_config_from_factory(
+        BigUint::from(100u64),
+        min_validators,
+        max_validators,
+        min_stake,
+        additional_stake_required,
+        Some(ExpectError(4, "Invalid payment amount")),
+    );
+}
+
+#[test]
 fn deploy_chain_config_from_factory_test() {
     let additional_stake: StakeMultiArg<StaticApi> =
         (TokenIdentifier::from("TEST-TOKEN"), BigUint::from(100u64)).into();
