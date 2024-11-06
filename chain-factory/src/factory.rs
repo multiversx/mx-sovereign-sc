@@ -39,7 +39,7 @@ pub trait FactoryModule:
         max_validators: usize,
         min_stake: BigUint,
         additional_stake_required: MultiValueEncoded<StakeMultiArg<Self::Api>>,
-    ) -> ManagedAddress {
+    ) {
         let payment_amount = self.call_value().egld_value().clone_value();
         let deploy_cost = self.deploy_cost().get();
         require!(payment_amount == deploy_cost, "Invalid payment amount");
@@ -65,7 +65,7 @@ pub trait FactoryModule:
 
         self.add_admin(caller);
 
-        chain_config_address
+        // chain_config_address
     }
 
     #[only_owner]
