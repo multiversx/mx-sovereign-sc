@@ -1,9 +1,9 @@
-use crate::{validator_rules, StakeMultiArg};
+use crate::{events, validator_rules, StakeMultiArg};
 
 multiversx_sc::imports!();
 
 #[multiversx_sc::module]
-pub trait BlsKeysModule: validator_rules::ValidatorRulesModule {
+pub trait BlsKeysModule: validator_rules::ValidatorRulesModule + events::EventsModule {
     #[payable("*")]
     #[endpoint(register)]
     fn register(
@@ -16,7 +16,7 @@ pub trait BlsKeysModule: validator_rules::ValidatorRulesModule {
         let (_, stake_amount) = egld_stake_value.into_tuple();
         self.require_min_stake(stake_amount);
 
-        for bls_key in pub_bls_keys {
+        for bls_key in pub_bls_keys.clone() {
             let has_stake = self.has_stake_in_validator_sc(&bls_key);
             require!(has_stake, "The validator with the {} BLS key does not have any stake in the SovereignValidatorSC", bls_key);
 
@@ -26,5 +26,8 @@ pub trait BlsKeysModule: validator_rules::ValidatorRulesModule {
 
             self.bls_keys().insert(bls_key);
         }
+
+        let current_sc_address = self.blockchain().get_sc_address();
+        self.register_event(&current_sc_address, &pub_bls_keys);
     }
 }
