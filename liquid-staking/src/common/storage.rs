@@ -13,7 +13,6 @@ pub trait CommonStorageModule {
     ) -> SingleValueMapper<ManagedAddress>;
 
     // TODO: use AddressToIdMapper for lower gas usage
-    //
     #[storage_mapper("userIds")]
     fn validator_ids(&self) -> AddressToIdMapper<Self::Api>;
 
@@ -43,6 +42,13 @@ pub trait CommonStorageModule {
         &self,
         bls_key: &BlsKey<Self::Api>,
     ) -> SingleValueMapper<ManagedAddress>;
+
+    #[view(getValidatorId)]
+    fn get_validator_id(&self, bls_key: &BlsKey<Self::Api>) -> u64 {
+        let validator_address = self.validator_bls_key_address_map(bls_key).get();
+
+        self.validator_ids().get_id(&validator_address)
+    }
 
     // NOTE: Number of nodes where ?
     #[view(lockedSupply)]

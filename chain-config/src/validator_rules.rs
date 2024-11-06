@@ -1,3 +1,5 @@
+use crate::liquid_staking_proxy;
+
 multiversx_sc::imports!();
 multiversx_sc::derive_imports!();
 
@@ -72,6 +74,17 @@ pub trait ValidatorRulesModule {
     #[storage_mapper("headerVerifierAddress")]
     fn header_verifier_address(&self) -> SingleValueMapper<ManagedAddress<Self::Api>>;
 
+    #[view(getLiquidStakingAddress)]
+    #[storage_mapper("liquidStakingAddress")]
+    fn liquid_staking_address(&self) -> SingleValueMapper<ManagedAddress<Self::Api>>;
+
+    // TODO: use AddressToId Mapper when fix is here
+    // #[storage_mapper_from_address("userIds")]
+    // fn external_validator_ids(
+    //     &self,
+    //     sc_address: ManagedAddress,
+    // ) -> AddressToIdMapper<Self::Api, ManagedAddress>;
+
     #[inline]
     fn require_bls_key_whitelist(&self, bls_key: &ManagedBuffer) {
         require!(
@@ -80,10 +93,39 @@ pub trait ValidatorRulesModule {
         )
     }
 
-    #[inline]
+    fn get_delegated_value(&self, validator_id: u64) -> BigUint<Self::Api> {
+        let liquid_staking_address = self.liquid_staking_address().get();
+
+        self.tx()
+            .to(liquid_staking_address)
+            .typed(liquid_staking_proxy::LiquidStakingProxy)
+            .delegated_value(validator_id)
+            .returns(ReturnsResultUnmanaged)
+            .sync_call()
+            .into()
+    }
+
+    fn has_stake_in_validator_sc(&self, bls_key: &ManagedBuffer) -> bool {
+        let liquid_staking_address = self.liquid_staking_address().get();
+        let validator_id = self
+            .tx()
+            .to(liquid_staking_address)
+            .typed(liquid_staking_proxy::LiquidStakingProxy)
+            .get_validator_id(bls_key)
+            .returns(ReturnsResultUnmanaged)
+            .sync_call();
+
+        if validator_id != 0 {
+            return true;
+        }
+
+        false
+    }
+
     fn require_bls_keys_length_limits(&self, length: usize) {
         let min_bls_keys = self.min_bls_keys().get();
         let max_bls_keys = self.max_bls_keys().get();
+
         require!(
             length > min_bls_keys,
             "There are fewer BLS public keys than expected"

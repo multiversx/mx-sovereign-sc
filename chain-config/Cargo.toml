@@ -19,3 +19,6 @@ version = "=0.53.2"
 
 [dependencies.multiversx-sc-modules]
 version = "=0.53.2"
+#
+# [dependencies.liquid-staking]
+# path = "../liquid-staking"
