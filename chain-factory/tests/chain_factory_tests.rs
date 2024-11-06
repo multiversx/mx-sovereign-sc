@@ -214,4 +214,13 @@ fn deploy_chain_config_from_factory() {
         additional_stake_required,
         None,
     );
+
+    state
+        .world
+        .query()
+        .to(FACTORY_ADDRESS)
+        .whitebox(chain_factory::contract_obj, |sc| {
+            let chain_id = sc.chain_ids().get_by_index(1);
+            assert!(!sc.all_deployed_contracts(chain_id).is_empty());
+        })
 }
