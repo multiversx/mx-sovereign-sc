@@ -5,7 +5,7 @@ use chain_factory::{
     factory::ScArray as ContractScArray,
 };
 use multiversx_sc::types::{
-    BigUint, MultiValueEncoded, TestAddress, TestSCAddress, TokenIdentifier,
+    BigUint, CodeMetadata, MultiValueEncoded, TestAddress, TestSCAddress, TokenIdentifier,
 };
 use multiversx_sc_scenario::{
     api::StaticApi, imports::MxscPath, managed_biguint, ExpectError, ScenarioTxRun,
@@ -36,10 +36,27 @@ struct ChainFactoryTestState {
 }
 
 impl ChainFactoryTestState {
-    fn new() -> Self {
+    fn new(
+        additional_stake_required: &MultiValueEncoded<StaticApi, StakeMultiArg<StaticApi>>,
+    ) -> Self {
         let mut world = world();
 
         world.account(OWNER).balance(OWNER_BALANCE).nonce(1);
+        world
+            .tx()
+            .from(OWNER.to_managed_address())
+            .typed(chain_config_proxy::ChainConfigContractProxy)
+            .init(
+                1usize,
+                2usize,
+                managed_biguint!(10),
+                OWNER.to_managed_address(),
+                additional_stake_required,
+            )
+            .code(CONFIG_CODE_PATH)
+            .new_address(CONFIG_ADDRESS)
+            .code_metadata(CodeMetadata::UPGRADEABLE)
+            .run();
 
         Self { world }
     }
@@ -100,7 +117,7 @@ impl ChainFactoryTestState {
             .run();
     }
 
-    fn propose_deploy_chain_config(
+    fn propose_deploy_chain_config_from_factory(
         &mut self,
         payment: BigUint<StaticApi>,
         min_validators: usize,
@@ -124,7 +141,9 @@ impl ChainFactoryTestState {
             .egld(payment);
 
         match expected_result {
-            Some(error) => transaction.returns(error).run(),
+            Some(error) => {
+                transaction.returns(error).run();
+            }
             None => transaction.run(),
         }
     }
@@ -132,29 +151,23 @@ impl ChainFactoryTestState {
 
 #[test]
 fn deploy_test() {
-    let mut state = ChainFactoryTestState::new();
-    state.deploy_chain_factory();
-
-    let min_validators = 1;
-    let max_validators = 4;
-    let min_stake = BigUint::from(100_000u64);
     let additional_stake: StakeMultiArg<StaticApi> =
         (TokenIdentifier::from("TEST-TOKEN"), BigUint::from(100u64)).into();
     let mut additional_stake_required = MultiValueEncoded::new();
     additional_stake_required.push(additional_stake);
 
-    state.deploy_chain_config(
-        min_validators,
-        max_validators,
-        &min_stake,
-        OWNER,
-        &additional_stake_required,
-    );
+    let mut state = ChainFactoryTestState::new(&additional_stake_required);
+    state.deploy_chain_factory();
 }
 
 #[test]
 fn add_contracts_to_map_test() {
-    let mut state = ChainFactoryTestState::new();
+    let additional_stake: StakeMultiArg<StaticApi> =
+        (TokenIdentifier::from("TEST-TOKEN"), BigUint::from(100u64)).into();
+    let mut additional_stake_required = MultiValueEncoded::new();
+    additional_stake_required.push(additional_stake);
+
+    let mut state = ChainFactoryTestState::new(&additional_stake_required);
     state.deploy_chain_factory();
 
     let config_map_arg: ContractMapArgs<StaticApi> = ContractMapArgs {
@@ -177,26 +190,20 @@ fn add_contracts_to_map_test() {
 
 #[test]
 fn deploy_chain_config_from_factory_test() {
-    let mut state = ChainFactoryTestState::new();
-    state.deploy_chain_factory();
-
-    let min_validators = 1;
-    let max_validators = 4;
-    let min_stake = BigUint::from(100_000u64);
     let additional_stake: StakeMultiArg<StaticApi> =
         (TokenIdentifier::from("TEST-TOKEN"), BigUint::from(100u64)).into();
     let mut additional_stake_required = MultiValueEncoded::new();
     additional_stake_required.push(additional_stake);
 
-    state.deploy_chain_config(
-        min_validators,
-        max_validators,
-        &min_stake,
-        OWNER,
-        &additional_stake_required,
-    );
+    let mut state = ChainFactoryTestState::new(&additional_stake_required);
 
-    state.propose_deploy_chain_config(
+    let min_validators = 1;
+    let max_validators = 4;
+    let min_stake = BigUint::from(100_000u64);
+
+    state.deploy_chain_factory();
+
+    state.propose_deploy_chain_config_from_factory(
         DEPLOY_COST.into(),
         min_validators,
         max_validators,
