@@ -85,8 +85,10 @@ pub trait UtilsModule: storage::CommonStorage {
     fn generate_chain_id(&self) -> ManagedBuffer {
         loop {
             let new_chain_id = self.generated_random_4_char_string();
-            if !self.chain_ids().contains(&new_chain_id) {
-                self.chain_ids().insert(new_chain_id.clone());
+            let mut chain_id_history = self.chain_ids();
+
+            if !chain_id_history.contains(&new_chain_id) {
+                chain_id_history.insert(new_chain_id.clone());
 
                 return new_chain_id;
             }
