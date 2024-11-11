@@ -11,15 +11,21 @@ pub trait UtilsModule: storage::CommonStorage {
         chain_id: &ManagedBuffer,
         contract_id: &ScArray,
     ) -> bool {
-        let all_registered_contracts = self.all_deployed_contracts(caller).get();
+        let all_registered_contracts_mapper = self.all_deployed_contracts(caller);
+
+        if all_registered_contracts_mapper.is_empty() {
+            return false;
+        }
+
+        let all_contracts_info = all_registered_contracts_mapper.get();
 
         require!(
-            *chain_id == all_registered_contracts.chain_id,
+            *chain_id == all_contracts_info.chain_id,
             "There are no registered contracts by the caller it the {} chain",
             chain_id
         );
 
-        all_registered_contracts
+        all_contracts_info
             .contracts_info
             .iter()
             .any(|sc_info| &sc_info.id == contract_id)
