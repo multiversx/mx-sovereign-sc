@@ -182,15 +182,18 @@ where
     }
 
     pub fn add_contracts_to_map<
-        Arg0: ProxyArg<MultiValueEncoded<Env::Api, ContractMapArgs<Env::Api>>>,
+        Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
+        Arg1: ProxyArg<MultiValueEncoded<Env::Api, ContractInfo<Env::Api>>>,
     >(
         self,
-        contracts_map: Arg0,
+        chain_id: Arg0,
+        contracts_info: Arg1,
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("addContractsToMap")
-            .argument(&contracts_map)
+            .argument(&chain_id)
+            .argument(&contracts_info)
             .original_result()
     }
 
@@ -337,11 +340,10 @@ where
 
 #[type_abi]
 #[derive(TopEncode, TopDecode)]
-pub struct ContractMapArgs<Api>
+pub struct ContractInfo<Api>
 where
     Api: ManagedTypeApi,
 {
-    pub chain_id: ManagedBuffer<Api>,
     pub id: ScArray,
     pub address: ManagedAddress<Api>,
 }

@@ -5,10 +5,15 @@ use multiversx_sc_modules::only_admin;
 multiversx_sc::derive_imports!();
 
 #[derive(TypeAbi, TopEncode, TopDecode, NestedEncode, NestedDecode, ManagedVecItem)]
-pub struct ContractMapArgs<M: ManagedTypeApi> {
-    pub chain_id: ManagedBuffer<M>,
+pub struct ContractInfo<M: ManagedTypeApi> {
     pub id: ScArray,
     pub address: ManagedAddress<M>,
+}
+
+#[derive(TypeAbi, TopEncode, TopDecode, NestedEncode, NestedDecode, ManagedVecItem)]
+pub struct ChainContractsMap<M: ManagedTypeApi> {
+    pub chain_id: ManagedBuffer<M>,
+    pub contracts_info: ManagedVec<M, ContractInfo<M>>,
 }
 
 // TODO: Is fee market needed here?
@@ -64,8 +69,6 @@ pub trait FactoryModule:
             ScArray::ChainConfig,
             &chain_config_address,
         );
-
-        self.add_admin(caller);
     }
 
     #[only_admin]
@@ -78,7 +81,7 @@ pub trait FactoryModule:
         let source_address = self.header_verifier_template().get();
         let mut args = ManagedArgBuffer::new();
         let caller = self.blockchain().get_caller();
-        self.require_bls_keys_in_range(&caller, bls_pub_keys.len().into());
+        self.require_bls_keys_in_range(&caller, &chain_id, bls_pub_keys.len().into());
         args.push_multi_arg(&bls_pub_keys);
 
         let header_verifier_address = self.deploy_contract(source_address, args);
@@ -149,19 +152,27 @@ pub trait FactoryModule:
     #[endpoint(addContractsToMap)]
     fn add_contracts_to_map(
         &self,
-        contracts_map: MultiValueEncoded<Self::Api, ContractMapArgs<Self::Api>>,
+        chain_id: ManagedBuffer,
+        contracts_info: MultiValueEncoded<Self::Api, ContractInfo<Self::Api>>,
     ) {
         let caller = self.blockchain().get_caller();
-        for contract in contracts_map {
-            let contracts_mapper = self.all_deployed_contracts(&caller);
+        let contracts_mapper = self.all_deployed_contracts(&caller);
+        let mut contracts_info_for_registration = ManagedVec::new();
 
-            require!(
-                contracts_mapper.is_empty(),
-                "There is already a SC address registered for that contract ID"
-            );
+        for contract_info in contracts_info {
+            let is_contract_registered =
+                self.is_contract_registered(&caller, &chain_id, &contract_info.id);
 
-            contracts_mapper.set(contract);
+            if is_contract_registered {
+                continue;
+            }
+            contracts_info_for_registration.push(contract_info);
         }
+
+        contracts_mapper.set(ChainContractsMap {
+            chain_id,
+            contracts_info: contracts_info_for_registration,
+        });
     }
 
     fn deploy_contract(
@@ -187,10 +198,17 @@ pub trait FactoryModule:
         contract_id: ScArray,
         contract_address: &ManagedAddress,
     ) {
-        self.all_deployed_contracts(caller).set(ContractMapArgs {
-            chain_id,
+        let contract_info = ContractInfo {
             id: contract_id,
             address: contract_address.clone(),
+        };
+
+        let mut contracts_info = ManagedVec::new();
+        contracts_info.push(contract_info);
+
+        self.all_deployed_contracts(caller).set(ChainContractsMap {
+            chain_id,
+            contracts_info,
         });
     }
 

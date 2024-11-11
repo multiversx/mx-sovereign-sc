@@ -1,9 +1,15 @@
 use multiversx_sc::imports::*;
 
-use crate::factory::{ContractMapArgs, ScArray};
+use crate::factory::ChainContractsMap;
 
 #[multiversx_sc::module]
 pub trait CommonStorage {
+    #[storage_mapper("allDeployedContracts")]
+    fn all_deployed_contracts(
+        &self,
+        caller: &ManagedAddress,
+    ) -> SingleValueMapper<ChainContractsMap<Self::Api>>;
+
     #[view(getDeployCost)]
     #[storage_mapper("deployCost")]
     fn deploy_cost(&self) -> SingleValueMapper<BigUint>;
@@ -22,12 +28,6 @@ pub trait CommonStorage {
 
     #[storage_mapper("tokenHandlerTemplate")]
     fn token_handler_template(&self) -> SingleValueMapper<ManagedAddress>;
-
-    #[storage_mapper("allDeployedContracts")]
-    fn all_deployed_contracts(
-        &self,
-        caller: &ManagedAddress,
-    ) -> SingleValueMapper<ContractMapArgs<Self::Api>>;
 
     #[storage_mapper_from_address("minValidators")]
     fn external_min_validators(

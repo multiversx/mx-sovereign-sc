@@ -1,10 +1,38 @@
+use crate::factory::ScArray;
+
 use super::storage;
 use multiversx_sc::imports::*;
 
 #[multiversx_sc::module]
 pub trait UtilsModule: storage::CommonStorage {
-    fn require_bls_keys_in_range(&self, caller: &ManagedAddress, bls_pub_keys_count: BigUint) {
-        let chain_config_address = self.all_deployed_contracts(caller).get().address;
+    fn is_contract_registered(
+        &self,
+        caller: &ManagedAddress,
+        chain_id: &ManagedBuffer,
+        contract_id: &ScArray,
+    ) -> bool {
+        let all_registered_contracts = self.all_deployed_contracts(caller).get();
+
+        require!(
+            *chain_id == all_registered_contracts.chain_id,
+            "There are no registered contracts by the caller it the {} chain",
+            chain_id
+        );
+
+        all_registered_contracts
+            .contracts_info
+            .iter()
+            .any(|sc_info| &sc_info.id == contract_id)
+    }
+
+    fn require_bls_keys_in_range(
+        &self,
+        caller: &ManagedAddress,
+        chain_id: &ManagedBuffer,
+        bls_pub_keys_count: BigUint,
+    ) {
+        let chain_config_address =
+            self.get_contract_address(caller, chain_id, &ScArray::ChainConfig);
 
         require!(
             !chain_config_address.is_zero(),
@@ -20,6 +48,32 @@ pub trait UtilsModule: storage::CommonStorage {
             min_validators < bls_pub_keys_count && bls_pub_keys_count < max_validators,
             "The number of validator BLS Keys is not correct"
         );
+    }
+
+    fn get_contract_address(
+        &self,
+        caller: &ManagedAddress,
+        chain_id: &ManagedBuffer,
+        contract_id: &ScArray,
+    ) -> ManagedAddress {
+        let all_deployed_contracts_mapper = self.all_deployed_contracts(caller);
+
+        require!(
+            !all_deployed_contracts_mapper.is_empty(),
+            "There are no registered contracts in the {} chain",
+            chain_id
+        );
+
+        all_deployed_contracts_mapper
+            .get()
+            .contracts_info
+            .iter()
+            .find(|sc_info| &sc_info.id == contract_id)
+            .unwrap_or_else(|| {
+                let contract_id_u32 = contract_id.clone() as u32;
+                sc_panic!("The contract with {} id was not deployed", contract_id_u32);
+            })
+            .address
     }
 
     fn generate_chain_id(&self) -> ManagedBuffer {
