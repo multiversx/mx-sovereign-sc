@@ -195,7 +195,7 @@ impl ContractInteract {
             .to_string();
 
         let esdt_safe_output_path = "esdt-safe/output/esdt-safe.mxsc.json";
-        let esdt_safe_code = repo_dir
+        let esdt_safe_code = current_dir
             .join(esdt_safe_output_path)
             .to_string_lossy()
             .to_string();
