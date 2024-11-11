@@ -6,6 +6,7 @@ multiversx_sc::derive_imports!();
 
 #[derive(TypeAbi, TopEncode, TopDecode, NestedEncode, NestedDecode, ManagedVecItem)]
 pub struct ContractMapArgs<M: ManagedTypeApi> {
+    pub chain_id: ManagedBuffer<M>,
     pub id: ScArray,
     pub address: ManagedAddress<M>,
 }
@@ -58,7 +59,8 @@ pub trait FactoryModule:
 
         let chain_id = self.generate_chain_id();
         self.set_deployed_contract_to_storage(
-            chain_id.clone(),
+            &caller,
+            chain_id,
             ScArray::ChainConfig,
             &chain_config_address,
         );
@@ -75,11 +77,14 @@ pub trait FactoryModule:
     ) {
         let source_address = self.header_verifier_template().get();
         let mut args = ManagedArgBuffer::new();
-        self.require_bls_keys_in_range(&chain_id, bls_pub_keys.len().into());
+        let caller = self.blockchain().get_caller();
+        self.require_bls_keys_in_range(&caller, bls_pub_keys.len().into());
         args.push_multi_arg(&bls_pub_keys);
 
         let header_verifier_address = self.deploy_contract(source_address, args);
+
         self.set_deployed_contract_to_storage(
+            &caller,
             chain_id,
             ScArray::SovereignHeaderVerifier,
             &header_verifier_address,
@@ -105,7 +110,10 @@ pub trait FactoryModule:
         args.push_arg(opt_sov_token_prefix);
 
         let cross_chain_operations_address = self.deploy_contract(source_address, args);
+
+        let caller = self.blockchain().get_caller();
         self.set_deployed_contract_to_storage(
+            &caller,
             chain_id,
             ScArray::SovereignCrossChainOperation,
             &cross_chain_operations_address,
@@ -127,7 +135,14 @@ pub trait FactoryModule:
         args.push_arg(price_aggregator_address);
 
         let fee_market_address = self.deploy_contract(source_address, args);
-        self.set_deployed_contract_to_storage(chain_id, ScArray::FeeMarket, &fee_market_address);
+
+        let caller = self.blockchain().get_caller();
+        self.set_deployed_contract_to_storage(
+            &caller,
+            chain_id,
+            ScArray::FeeMarket,
+            &fee_market_address,
+        );
     }
 
     #[only_owner]
@@ -136,15 +151,16 @@ pub trait FactoryModule:
         &self,
         contracts_map: MultiValueEncoded<Self::Api, ContractMapArgs<Self::Api>>,
     ) {
+        let caller = self.blockchain().get_caller();
         for contract in contracts_map {
-            let contracts_mapper = self.contracts_map(contract.id);
+            let contracts_mapper = self.all_deployed_contracts(&caller);
 
             require!(
                 contracts_mapper.is_empty(),
                 "There is already a SC address registered for that contract ID"
             );
 
-            contracts_mapper.set(contract.address);
+            contracts_mapper.set(contract);
         }
     }
 
@@ -166,15 +182,16 @@ pub trait FactoryModule:
 
     fn set_deployed_contract_to_storage(
         &self,
+        caller: &ManagedAddress,
         chain_id: ManagedBuffer,
         contract_id: ScArray,
         contract_address: &ManagedAddress,
     ) {
-        self.all_deployed_contracts(chain_id)
-            .insert(ContractMapArgs {
-                id: contract_id,
-                address: contract_address.clone(),
-            });
+        self.all_deployed_contracts(caller).set(ContractMapArgs {
+            chain_id,
+            id: contract_id,
+            address: contract_address.clone(),
+        });
     }
 
     fn get_deploy_chain_config_args(

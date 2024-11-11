@@ -2,10 +2,10 @@ use chain_config::{chain_config_proxy, StakeMultiArg};
 use chain_factory::{
     chain_factory_proxy::{self, ContractMapArgs, ScArray},
     common::storage::CommonStorage,
-    factory::ScArray as ContractScArray,
 };
 use multiversx_sc::types::{
-    BigUint, CodeMetadata, MultiValueEncoded, TestAddress, TestSCAddress, TokenIdentifier,
+    BigUint, CodeMetadata, ManagedBuffer, MultiValueEncoded, TestAddress, TestSCAddress,
+    TokenIdentifier,
 };
 use multiversx_sc_scenario::{
     api::StaticApi, imports::MxscPath, managed_biguint, ExpectError, ScenarioTxRun,
@@ -149,6 +149,7 @@ fn add_contracts_to_map_test() {
     state.deploy_chain_factory();
 
     let config_map_arg: ContractMapArgs<StaticApi> = ContractMapArgs {
+        chain_id: ManagedBuffer::from("chain-id"),
         id: ScArray::ChainConfig,
         address: CONFIG_ADDRESS.to_managed_address(),
     };
@@ -162,7 +163,9 @@ fn add_contracts_to_map_test() {
         .query()
         .to(FACTORY_ADDRESS)
         .whitebox(chain_factory::contract_obj, |sc| {
-            assert!(!sc.contracts_map(ContractScArray::ChainConfig).is_empty());
+            assert!(!sc
+                .all_deployed_contracts(&OWNER.to_managed_address())
+                .is_empty());
         })
 }
 
@@ -220,13 +223,8 @@ fn deploy_chain_config_from_factory() {
         .query()
         .to(FACTORY_ADDRESS)
         .whitebox(chain_factory::contract_obj, |sc| {
-            let chain_id = sc.chain_ids().get_by_index(1);
-            assert!(!sc.all_deployed_contracts(chain_id.clone()).is_empty());
             assert!(!sc
-                .all_deployed_contracts(chain_id)
-                .iter()
-                .filter(|sc_map| sc_map.id == ContractScArray::ChainConfig)
-                .collect::<Vec<_>>()
-                .is_empty())
+                .all_deployed_contracts(&OWNER.to_managed_address())
+                .is_empty());
         })
 }

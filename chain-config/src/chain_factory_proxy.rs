@@ -316,19 +316,6 @@ where
             .original_result()
     }
 
-    pub fn contracts_map<
-        Arg0: ProxyArg<ScArray>,
-    >(
-        self,
-        contract_name: Arg0,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ManagedAddress<Env::Api>> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("getContractsMap")
-            .argument(&contract_name)
-            .original_result()
-    }
-
     pub fn deploy_cost(
         self,
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, BigUint<Env::Api>> {
@@ -354,6 +341,7 @@ pub struct ContractMapArgs<Api>
 where
     Api: ManagedTypeApi,
 {
+    pub chain_id: ManagedBuffer<Api>,
     pub id: ScArray,
     pub address: ManagedAddress<Api>,
 }

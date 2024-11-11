@@ -4,10 +4,6 @@ use crate::factory::{ContractMapArgs, ScArray};
 
 #[multiversx_sc::module]
 pub trait CommonStorage {
-    #[view(getContractsMap)]
-    #[storage_mapper("contractsMap")]
-    fn contracts_map(&self, contract_name: ScArray) -> SingleValueMapper<ManagedAddress>;
-
     #[view(getDeployCost)]
     #[storage_mapper("deployCost")]
     fn deploy_cost(&self) -> SingleValueMapper<BigUint>;
@@ -30,8 +26,8 @@ pub trait CommonStorage {
     #[storage_mapper("allDeployedContracts")]
     fn all_deployed_contracts(
         &self,
-        chain_id: ManagedBuffer,
-    ) -> UnorderedSetMapper<ContractMapArgs<Self::Api>>;
+        caller: &ManagedAddress,
+    ) -> SingleValueMapper<ContractMapArgs<Self::Api>>;
 
     #[storage_mapper_from_address("minValidators")]
     fn external_min_validators(

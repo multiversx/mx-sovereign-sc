@@ -1,37 +1,10 @@
-use crate::factory::ScArray;
-
 use super::storage;
 use multiversx_sc::imports::*;
 
 #[multiversx_sc::module]
 pub trait UtilsModule: storage::CommonStorage {
-    fn get_contract_address(
-        &self,
-        chain_id: &ManagedBuffer,
-        contract_name: ScArray,
-    ) -> Option<ManagedAddress> {
-        let deployed_contracts_mapper = self.all_deployed_contracts(chain_id.clone());
-
-        require!(
-            !deployed_contracts_mapper.is_empty(),
-            "There are no contracts deployed for this sovereign chain"
-        );
-
-        let contract = deployed_contracts_mapper
-            .iter()
-            .find(|sc| sc.id == contract_name);
-
-        if let Some(contract_address) = contract {
-            return Some(contract_address.address);
-        } else {
-            return None;
-        }
-    }
-
-    fn require_bls_keys_in_range(&self, chain_id: &ManagedBuffer, bls_pub_keys_count: BigUint) {
-        let chain_config_address = self
-            .get_contract_address(chain_id, ScArray::ChainConfig)
-            .unwrap();
+    fn require_bls_keys_in_range(&self, caller: &ManagedAddress, bls_pub_keys_count: BigUint) {
+        let chain_config_address = self.all_deployed_contracts(caller).get().address;
 
         require!(
             !chain_config_address.is_zero(),
