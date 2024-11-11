@@ -358,7 +358,6 @@ impl ContractInteract {
             .init()
             .code(testing_sc_code_path)
             .returns(ReturnsNewAddress)
-            .prepare_async()
             .run()
             .await;
 
@@ -381,7 +380,6 @@ impl ContractInteract {
             .typed(TestingScProxy)
             .hello(value)
             .returns(ReturnsResultUnmanaged)
-            .prepare_async()
             .run()
             .await;
 
@@ -952,7 +950,6 @@ impl ContractInteract {
             .gas(30_000_000u64)
             .typed(HeaderverifierProxy)
             .set_esdt_safe_address(self.state.current_address())
-            .prepare_async()
             .run()
             .await;
 
@@ -1021,7 +1018,6 @@ impl ContractInteract {
                 managed_operation_hashes,
             )
             .returns(ReturnsResult)
-            .prepare_async()
             .run()
             .await;
 
