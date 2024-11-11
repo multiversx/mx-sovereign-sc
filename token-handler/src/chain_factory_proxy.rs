@@ -125,37 +125,31 @@ where
     }
 
     pub fn deploy_header_verifier<
-        Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
-        Arg1: ProxyArg<MultiValueEncoded<Env::Api, ManagedBuffer<Env::Api>>>,
+        Arg0: ProxyArg<MultiValueEncoded<Env::Api, ManagedBuffer<Env::Api>>>,
     >(
         self,
-        chain_id: Arg0,
-        bls_pub_keys: Arg1,
+        bls_pub_keys: Arg0,
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("deployHeaderVerifier")
-            .argument(&chain_id)
             .argument(&bls_pub_keys)
             .original_result()
     }
 
     pub fn deploy_cross_chain_operation<
-        Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
-        Arg1: ProxyArg<bool>,
-        Arg2: ProxyArg<Option<TokenIdentifier<Env::Api>>>,
-        Arg3: ProxyArg<Option<ManagedBuffer<Env::Api>>>,
+        Arg0: ProxyArg<bool>,
+        Arg1: ProxyArg<Option<TokenIdentifier<Env::Api>>>,
+        Arg2: ProxyArg<Option<ManagedBuffer<Env::Api>>>,
     >(
         self,
-        chain_id: Arg0,
-        is_sovereign_chain: Arg1,
-        opt_wegld_identifier: Arg2,
-        opt_sov_token_prefix: Arg3,
+        is_sovereign_chain: Arg0,
+        opt_wegld_identifier: Arg1,
+        opt_sov_token_prefix: Arg2,
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("deployCrossChainOperation")
-            .argument(&chain_id)
             .argument(&is_sovereign_chain)
             .argument(&opt_wegld_identifier)
             .argument(&opt_sov_token_prefix)
@@ -163,19 +157,16 @@ where
     }
 
     pub fn deploy_fee_market<
-        Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
+        Arg0: ProxyArg<ManagedAddress<Env::Api>>,
         Arg1: ProxyArg<ManagedAddress<Env::Api>>,
-        Arg2: ProxyArg<ManagedAddress<Env::Api>>,
     >(
         self,
-        chain_id: Arg0,
-        esdt_safe_address: Arg1,
-        price_aggregator_address: Arg2,
+        esdt_safe_address: Arg0,
+        price_aggregator_address: Arg1,
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("deployFeeMarket")
-            .argument(&chain_id)
             .argument(&esdt_safe_address)
             .argument(&price_aggregator_address)
             .original_result()

@@ -5,6 +5,12 @@ use multiversx_sc::imports::*;
 
 #[multiversx_sc::module]
 pub trait UtilsModule: storage::CommonStorage {
+    fn is_chain_deployed(&self, caller: &ManagedAddress) -> bool {
+        let all_registered_contracts_mapper = self.all_deployed_contracts(caller);
+
+        !all_registered_contracts_mapper.is_empty()
+    }
+
     fn is_contract_registered(
         &self,
         caller: &ManagedAddress,

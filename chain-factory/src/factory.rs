@@ -73,14 +73,18 @@ pub trait FactoryModule:
 
     #[only_admin]
     #[endpoint(deployHeaderVerifier)]
-    fn deploy_header_verifier(
-        &self,
-        chain_id: ManagedBuffer,
-        bls_pub_keys: MultiValueEncoded<ManagedBuffer>,
-    ) {
+    fn deploy_header_verifier(&self, bls_pub_keys: MultiValueEncoded<ManagedBuffer>) {
+        let caller = self.blockchain().get_caller();
+
+        require!(
+            self.is_chain_deployed(&caller),
+            "The current caller has not deployed and Sovereign Chain"
+        );
+
+        let chain_id = self.all_deployed_contracts(&caller).get().chain_id;
         let source_address = self.header_verifier_template().get();
         let mut args = ManagedArgBuffer::new();
-        let caller = self.blockchain().get_caller();
+
         self.require_bls_keys_in_range(&caller, &chain_id, bls_pub_keys.len().into());
         args.push_multi_arg(&bls_pub_keys);
 
@@ -98,11 +102,17 @@ pub trait FactoryModule:
     #[endpoint(deployCrossChainOperation)]
     fn deploy_cross_chain_operation(
         &self,
-        chain_id: ManagedBuffer,
         is_sovereign_chain: bool,
         opt_wegld_identifier: Option<TokenIdentifier>,
         opt_sov_token_prefix: Option<ManagedBuffer>,
     ) {
+        let caller = self.blockchain().get_caller();
+        require!(
+            self.is_chain_deployed(&caller),
+            "The current caller has not deployed and Sovereign Chain"
+        );
+
+        let chain_id = self.all_deployed_contracts(&caller).get().chain_id;
         let source_address = self.cross_chain_operations_template().get();
         let token_handler_address = self.token_handler_template().get();
 
@@ -114,7 +124,6 @@ pub trait FactoryModule:
 
         let cross_chain_operations_address = self.deploy_contract(source_address, args);
 
-        let caller = self.blockchain().get_caller();
         self.set_deployed_contract_to_storage(
             &caller,
             chain_id,
@@ -127,10 +136,16 @@ pub trait FactoryModule:
     #[endpoint(deployFeeMarket)]
     fn deploy_fee_market(
         &self,
-        chain_id: ManagedBuffer,
         esdt_safe_address: ManagedAddress,
         price_aggregator_address: ManagedAddress,
     ) {
+        let caller = self.blockchain().get_caller();
+        require!(
+            self.is_chain_deployed(&caller),
+            "The current caller has not deployed and Sovereign Chain"
+        );
+
+        let chain_id = self.all_deployed_contracts(&caller).get().chain_id;
         let source_address = self.fee_market_template().get();
 
         let mut args = ManagedArgBuffer::new();
@@ -139,7 +154,6 @@ pub trait FactoryModule:
 
         let fee_market_address = self.deploy_contract(source_address, args);
 
-        let caller = self.blockchain().get_caller();
         self.set_deployed_contract_to_storage(
             &caller,
             chain_id,
