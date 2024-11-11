@@ -1,6 +1,6 @@
 use chain_config::{chain_config_proxy, StakeMultiArg};
 use chain_factory::{
-    chain_factory_proxy::{self, ContractMapArgs, ScArray},
+    chain_factory_proxy::{self, ContractInfo, ScArray},
     common::storage::CommonStorage,
 };
 use multiversx_sc::types::{
@@ -14,6 +14,7 @@ use multiversx_sc_scenario::{
 
 const FACTORY_ADDRESS: TestSCAddress = TestSCAddress::new("chain-factory");
 const CODE_PATH: MxscPath = MxscPath::new("output/chain-factory.mxsc.json");
+const CHAIN_ID: &str = "CHAIN-ID";
 
 const CONFIG_ADDRESS: TestSCAddress = TestSCAddress::new("chain-config");
 const CONFIG_CODE_PATH: MxscPath = MxscPath::new("../chain-config/output/chain-factory.mxsc.json");
@@ -84,14 +85,15 @@ impl ChainFactoryTestState {
 
     fn propose_add_contracts_to_map(
         &mut self,
-        contracts_map: MultiValueEncoded<StaticApi, ContractMapArgs<StaticApi>>,
+        chain_id: ManagedBuffer<StaticApi>,
+        contracts_info: MultiValueEncoded<StaticApi, ContractInfo<StaticApi>>,
     ) {
         self.world
             .tx()
             .from(OWNER)
             .to(FACTORY_ADDRESS)
             .typed(chain_factory_proxy::ChainFactoryContractProxy)
-            .add_contracts_to_map(contracts_map)
+            .add_contracts_to_map(chain_id, contracts_info)
             .run();
     }
 
@@ -139,7 +141,7 @@ fn deploy() {
 }
 
 #[test]
-fn add_contracts_to_map_test() {
+fn add_contracts_to_map() {
     let additional_stake: StakeMultiArg<StaticApi> =
         (TokenIdentifier::from("TEST-TOKEN"), BigUint::from(100u64)).into();
     let mut additional_stake_required = MultiValueEncoded::new();
@@ -148,15 +150,14 @@ fn add_contracts_to_map_test() {
     let mut state = ChainFactoryTestState::new(&additional_stake_required);
     state.deploy_chain_factory();
 
-    let config_map_arg: ContractMapArgs<StaticApi> = ContractMapArgs {
-        chain_id: ManagedBuffer::from("chain-id"),
+    let contract_info: ContractInfo<StaticApi> = ContractInfo {
         id: ScArray::ChainConfig,
         address: CONFIG_ADDRESS.to_managed_address(),
     };
     let mut contracts_map = MultiValueEncoded::new();
-    contracts_map.push(config_map_arg);
+    contracts_map.push(contract_info);
 
-    state.propose_add_contracts_to_map(contracts_map);
+    state.propose_add_contracts_to_map(ManagedBuffer::from(CHAIN_ID), contracts_map);
 
     state
         .world
