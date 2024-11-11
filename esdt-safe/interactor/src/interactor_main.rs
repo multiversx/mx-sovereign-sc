@@ -13,7 +13,6 @@ use multiversx_sc_snippets::imports::*;
 use multiversx_sc_snippets::sdk::{self};
 use proxies::*;
 use serde::{Deserialize, Serialize};
-use std::env::{self};
 use std::{
     io::{Read, Write},
     path::Path,
@@ -163,16 +162,16 @@ struct ContractInteract {
 
 impl ContractInteract {
     async fn new() -> Self {
-        let mut interactor = Interactor::new(GATEWAY)
+        let mut interactor = Interactor::new(GATEWAY, false)
             .await
             .with_tracer(INTERACTOR_SCENARIO_TRACE_PATH)
             .await;
 
-        let wallet_address = interactor.register_wallet(test_wallets::bob());
-        let frank_address = interactor.register_wallet(test_wallets::frank());
-        let alice_address = interactor.register_wallet(test_wallets::alice());
-        let mike_address = interactor.register_wallet(test_wallets::mike());
-        let judy_address = interactor.register_wallet(test_wallets::judy());
+        let wallet_address = interactor.register_wallet(test_wallets::bob()).await;
+        let frank_address = interactor.register_wallet(test_wallets::frank()).await;
+        let alice_address = interactor.register_wallet(test_wallets::alice()).await;
+        let mike_address = interactor.register_wallet(test_wallets::mike()).await;
+        let judy_address = interactor.register_wallet(test_wallets::judy()).await;
 
         let current_dir = find_current_workspace().unwrap();
         println!("Current directory is: {}", current_dir.display());
@@ -285,6 +284,7 @@ impl ContractInteract {
     }
 
     async fn deploy_price_aggregator(&mut self) {
+        let price_agggregator_code_path = MxscPath::new(&self.price_aggregator_code);
         let mut oracles = MultiValueEncoded::new();
         let first_oracle_adress = managed_address!(&self.bob_address.clone());
         let second_oracle_adress = managed_address!(&self.alice_address.clone());
@@ -309,7 +309,7 @@ impl ContractInteract {
                 3u8,
                 oracles,
             )
-            .code(&self.price_aggregator_code)
+            .code(price_agggregator_code_path)
             .returns(ReturnsNewAddress)
             .run()
             .await;
