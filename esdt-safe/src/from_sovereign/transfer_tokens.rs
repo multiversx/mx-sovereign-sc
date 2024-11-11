@@ -1,5 +1,5 @@
-use builtin_func_names::ESDT_MULTI_TRANSFER_FUNC_NAME;
 use header_verifier::header_verifier_proxy;
+use multiversx_sc::api::ESDT_MULTI_TRANSFER_FUNC_NAME;
 use transaction::{GasLimit, Operation, OperationData, OperationEsdtPayment, OperationTuple};
 
 use crate::to_sovereign;
@@ -7,7 +7,7 @@ use crate::to_sovereign;
 multiversx_sc::imports!();
 
 const CALLBACK_GAS: GasLimit = 10_000_000; // Increase if not enough
-const TRANSACTION_GAS: GasLimit = 30_000_000;
+const ESDT_TRANSACTION_GAS: GasLimit = 5_000_000;
 
 #[multiversx_sc::module]
 pub trait TransferTokensModule:
@@ -30,12 +30,9 @@ pub trait TransferTokensModule:
 
         require!(self.not_paused(), "Cannot transfer while paused");
 
-        let (operation_hash, is_registered) =
-            self.calculate_operation_hash(&hash_of_hashes, &operation);
+        let operation_hash = self.calculate_operation_hash(&operation);
 
-        if !is_registered {
-            sc_panic!("Operation is not registered");
-        }
+        self.lock_operation_hash(&operation_hash, &hash_of_hashes);
 
         let minted_operation_tokens = self.mint_tokens(&operation.tokens);
         let operation_tuple = OperationTuple {
@@ -74,22 +71,22 @@ pub trait TransferTokensModule:
                     .esdt_local_mint(&mvx_token_id, 0, &operation_token.token_data.amount)
                     .sync_call();
 
-                output_payments.push(OperationEsdtPayment {
-                    token_identifier: mvx_token_id,
-                    token_nonce: 0,
-                    token_data: operation_token.token_data,
-                });
+                output_payments.push(OperationEsdtPayment::new(
+                    mvx_token_id,
+                    0,
+                    operation_token.token_data,
+                ));
 
                 continue;
             }
 
             let nft_nonce = self.esdt_create_and_update_mapper(&mvx_token_id, &operation_token);
 
-            output_payments.push(OperationEsdtPayment {
-                token_identifier: mvx_token_id,
-                token_nonce: nft_nonce,
-                token_data: operation_token.token_data,
-            });
+            output_payments.push(OperationEsdtPayment::new(
+                mvx_token_id,
+                nft_nonce,
+                operation_token.token_data,
+            ));
         }
 
         output_payments
@@ -194,7 +191,7 @@ pub trait TransferTokensModule:
                     .to(&operation_tuple.operation.to)
                     .raw_call(ESDT_MULTI_TRANSFER_FUNC_NAME)
                     .payment(&mapped_tokens)
-                    .gas(TRANSACTION_GAS)
+                    .gas(ESDT_TRANSACTION_GAS)
                     .callback(
                         <Self as TransferTokensModule>::callbacks(self)
                             .execute(hash_of_hashes, operation_tuple),
@@ -289,16 +286,8 @@ pub trait TransferTokensModule:
         );
     }
 
-    // use pending_operations as param
-    fn calculate_operation_hash(
-        &self,
-        hash_of_hashes: &ManagedBuffer,
-        operation: &Operation<Self::Api>,
-    ) -> (ManagedBuffer, bool) {
+    fn calculate_operation_hash(&self, operation: &Operation<Self::Api>) -> ManagedBuffer {
         let mut serialized_data = ManagedBuffer::new();
-        let header_verifier_address = self.header_verifier_address().get();
-        let pending_operations_mapper =
-            self.external_pending_hashes(header_verifier_address, hash_of_hashes);
 
         if let core::result::Result::Err(err) = operation.top_encode(&mut serialized_data) {
             sc_panic!("Transfer data encode error: {}", err.message_bytes());
@@ -306,11 +295,18 @@ pub trait TransferTokensModule:
 
         let sha256 = self.crypto().sha256(&serialized_data);
         let hash = sha256.as_managed_buffer().clone();
-        if pending_operations_mapper.contains(&hash) {
-            (hash, true)
-        } else {
-            (hash, false)
-        }
+
+        hash
+    }
+
+    fn lock_operation_hash(&self, operation_hash: &ManagedBuffer, hash_of_hashes: &ManagedBuffer) {
+        let header_verifier_address = self.header_verifier_address().get();
+
+        self.tx()
+            .to(header_verifier_address)
+            .typed(header_verifier_proxy::HeaderverifierProxy)
+            .lock_operation_hash(hash_of_hashes, operation_hash)
+            .sync_call();
     }
 
     fn get_mvx_nonce_from_mapper(self, token_id: &TokenIdentifier, nonce: u64) -> u64 {
@@ -321,16 +317,6 @@ pub trait TransferTokensModule:
         esdt_info_mapper.get().token_nonce
     }
 
-    #[storage_mapper("pendingHashes")]
-    fn pending_hashes(&self, hash_of_hashes: &ManagedBuffer) -> UnorderedSetMapper<ManagedBuffer>;
-
     #[storage_mapper("headerVerifierAddress")]
     fn header_verifier_address(&self) -> SingleValueMapper<ManagedAddress>;
-
-    #[storage_mapper_from_address("pendingHashes")]
-    fn external_pending_hashes(
-        &self,
-        sc_address: ManagedAddress,
-        hash_of_hashes: &ManagedBuffer,
-    ) -> UnorderedSetMapper<ManagedBuffer, ManagedAddress>;
 }

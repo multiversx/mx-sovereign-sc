@@ -9,10 +9,7 @@ use multiversx_sc::types::{
 };
 use multiversx_sc::{
     imports::{MultiValue3, OptionalValue},
-    types::{
-        BigUint, EsdtTokenPayment, ManagedBuffer, ManagedVec, ReturnsResult, TestAddress,
-        TestSCAddress,
-    },
+    types::{BigUint, EsdtTokenPayment, ManagedBuffer, ManagedVec, TestAddress, TestSCAddress},
 };
 use multiversx_sc_scenario::managed_address;
 use multiversx_sc_scenario::multiversx_chain_vm::crypto_functions::sha256;
@@ -285,7 +282,16 @@ impl BridgeTestState {
             .to(BRIDGE_ADDRESS)
             .typed(esdt_safe_proxy::EsdtSafeProxy)
             .unpause_endpoint()
-            .returns(ReturnsResult)
+            .run();
+    }
+
+    fn propose_set_esdt_safe_address(&mut self) {
+        self.world
+            .tx()
+            .from(BRIDGE_OWNER_ADDRESS)
+            .to(HEADER_VERIFIER_ADDRESS)
+            .typed(header_verifier_proxy::HeaderverifierProxy)
+            .set_esdt_safe_address(BRIDGE_ADDRESS)
             .run();
     }
 
@@ -392,13 +398,15 @@ fn test_main_to_sov_deposit_ok() {
 #[test]
 fn test_execute_operation_not_registered() {
     let mut state = BridgeTestState::new();
-    let err_message = "Operation is not registered";
+    let err_message = "The current operation is not registered";
 
     state.deploy_bridge_contract(false);
 
     state.deploy_header_verifier_contract();
 
     state.propose_set_header_verifier_address();
+
+    state.propose_set_esdt_safe_address();
 
     state.propose_execute_operation_and_expect_err(err_message);
 }
@@ -425,6 +433,8 @@ fn test_execute_operation() {
     state.deploy_header_verifier_contract();
 
     state.propose_set_header_verifier_address();
+
+    state.propose_set_esdt_safe_address();
 
     state.propose_register_operation();
 

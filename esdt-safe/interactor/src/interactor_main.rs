@@ -242,9 +242,9 @@ impl ContractInteract {
             .init(is_sov_chain)
             .code(code_path)
             .returns(ReturnsNewAddress)
-            .prepare_async()
             .run()
             .await;
+
         let new_address_bech32 = bech32::encode(&new_address);
         self.state.set_address(Bech32Address::from_bech32_string(
             new_address_bech32.clone(),
@@ -273,15 +273,53 @@ impl ContractInteract {
             .init(self.state.current_address(), Option::Some(fee))
             .code(fee_market_code_path)
             .returns(ReturnsNewAddress)
-            .prepare_async()
             .run()
             .await;
+
         let new_address_bech32 = bech32::encode(&new_address);
         self.state
             .set_fee_market_address(Bech32Address::from_bech32_string(
                 new_address_bech32.clone(),
             ));
         println!("new fee_market_address: {new_address_bech32}");
+    }
+
+    async fn deploy_price_aggregator(&mut self) {
+        let mut oracles = MultiValueEncoded::new();
+        let first_oracle_adress = managed_address!(&self.bob_address.clone());
+        let second_oracle_adress = managed_address!(&self.alice_address.clone());
+        let third_oracle_adress = managed_address!(&self.mike_address.clone());
+        let forth_oracle_address = managed_address!(&self.judy_address.clone());
+        oracles.push(first_oracle_adress);
+        oracles.push(second_oracle_adress);
+        oracles.push(third_oracle_adress);
+        oracles.push(forth_oracle_address);
+
+        let new_address = self
+            .interactor
+            .tx()
+            .from(&self.wallet_address)
+            .gas(100_000_000u64)
+            .typed(price_aggregator_proxy::PriceAggregatorProxy)
+            .init(
+                TokenIdentifier::from_esdt_bytes(TOKEN_ID),
+                BigUint::from(1u64),
+                BigUint::from(1u64),
+                3u8,
+                3u8,
+                oracles,
+            )
+            .code(&self.price_aggregator_code)
+            .returns(ReturnsNewAddress)
+            .run()
+            .await;
+
+        let new_address_bech32 = bech32::encode(&new_address);
+        self.state
+            .set_price_aggregator_address(Bech32Address::from_bech32_string(
+                new_address_bech32.clone(),
+            ));
+        println!("new token_handler_address: {new_address_bech32}");
     }
 
     async fn deploy_header_verifier_contract(&mut self) {
@@ -296,9 +334,9 @@ impl ContractInteract {
             .init(MultiValueEncoded::new())
             .code(header_verifier_code_path)
             .returns(ReturnsNewAddress)
-            .prepare_async()
             .run()
             .await;
+
         let new_address_bech32 = bech32::encode(&new_address);
         self.state
             .set_header_verifier_address(Bech32Address::from_bech32_string(
@@ -364,7 +402,6 @@ impl ContractInteract {
             .code(code_path)
             .code_metadata(CodeMetadata::UPGRADEABLE)
             .returns(ReturnsNewAddress)
-            .prepare_async()
             .run()
             .await;
 
@@ -382,7 +419,6 @@ impl ContractInteract {
             .typed(proxy::EsdtSafeProxy)
             .set_fee_market_address(fee_market_address)
             .returns(ReturnsResultUnmanaged)
-            .prepare_async()
             .run()
             .await;
 
@@ -401,7 +437,6 @@ impl ContractInteract {
             .typed(proxy::EsdtSafeProxy)
             .set_header_verifier_address(header_verifier_address)
             .returns(ReturnsResultUnmanaged)
-            .prepare_async()
             .run()
             .await;
 
@@ -436,7 +471,6 @@ impl ContractInteract {
                     .deposit(to, transfer_data)
                     .payment(payments)
                     .returns(error)
-                    .prepare_async()
                     .run()
                     .await;
             }
@@ -450,7 +484,6 @@ impl ContractInteract {
                     .deposit(to, transfer_data)
                     .payment(payments)
                     .returns(ReturnsResultUnmanaged)
-                    .prepare_async()
                     .run()
                     .await;
             }
@@ -469,7 +502,6 @@ impl ContractInteract {
             .typed(proxy::EsdtSafeProxy)
             .set_min_valid_signers(new_value)
             .returns(ReturnsResultUnmanaged)
-            .prepare_async()
             .run()
             .await;
 
@@ -488,7 +520,6 @@ impl ContractInteract {
             .typed(proxy::EsdtSafeProxy)
             .add_signers(signers)
             .returns(ReturnsResultUnmanaged)
-            .prepare_async()
             .run()
             .await;
 
@@ -507,7 +538,6 @@ impl ContractInteract {
             .typed(proxy::EsdtSafeProxy)
             .remove_signers(signers)
             .returns(ReturnsResultUnmanaged)
-            .prepare_async()
             .run()
             .await;
 
@@ -539,7 +569,6 @@ impl ContractInteract {
             )
             .egld(egld_amount)
             .returns(ReturnsResultUnmanaged)
-            .prepare_async()
             .run()
             .await;
 
@@ -558,7 +587,6 @@ impl ContractInteract {
             .typed(proxy::EsdtSafeProxy)
             .execute_operations(&hash_of_hashes, operation)
             .returns(ReturnsResultUnmanaged)
-            .prepare_async()
             .run()
             .await;
 
@@ -581,7 +609,6 @@ impl ContractInteract {
             .typed(proxy::EsdtSafeProxy)
             .execute_operations(&operation_hash, operation)
             .returns(error_msg)
-            .prepare_async()
             .run()
             .await;
 
@@ -600,7 +627,6 @@ impl ContractInteract {
             .typed(proxy::EsdtSafeProxy)
             .set_max_tx_batch_size(new_max_tx_batch_size)
             .returns(ReturnsResultUnmanaged)
-            .prepare_async()
             .run()
             .await;
 
@@ -619,7 +645,6 @@ impl ContractInteract {
             .typed(proxy::EsdtSafeProxy)
             .set_max_tx_batch_block_duration(new_max_tx_batch_block_duration)
             .returns(ReturnsResultUnmanaged)
-            .prepare_async()
             .run()
             .await;
 
@@ -634,7 +659,6 @@ impl ContractInteract {
             .typed(proxy::EsdtSafeProxy)
             .get_current_tx_batch()
             .returns(ReturnsResultUnmanaged)
-            .prepare_async()
             .run()
             .await;
     }
@@ -647,7 +671,6 @@ impl ContractInteract {
             .typed(proxy::EsdtSafeProxy)
             .get_first_batch_any_status()
             .returns(ReturnsResultUnmanaged)
-            .prepare_async()
             .run()
             .await;
     }
@@ -662,7 +685,6 @@ impl ContractInteract {
             .typed(proxy::EsdtSafeProxy)
             .get_batch(batch_id)
             .returns(ReturnsResultUnmanaged)
-            .prepare_async()
             .run()
             .await;
     }
@@ -676,7 +698,6 @@ impl ContractInteract {
             .typed(proxy::EsdtSafeProxy)
             .get_batch_status(batch_id)
             .returns(ReturnsResultUnmanaged)
-            .prepare_async()
             .run()
             .await;
     }
@@ -689,7 +710,6 @@ impl ContractInteract {
             .typed(proxy::EsdtSafeProxy)
             .first_batch_id()
             .returns(ReturnsResultUnmanaged)
-            .prepare_async()
             .run()
             .await;
 
@@ -704,7 +724,6 @@ impl ContractInteract {
             .typed(proxy::EsdtSafeProxy)
             .last_batch_id()
             .returns(ReturnsResultUnmanaged)
-            .prepare_async()
             .run()
             .await;
 
@@ -724,7 +743,6 @@ impl ContractInteract {
             .typed(proxy::EsdtSafeProxy)
             .set_max_bridged_amount(token_id, max_amount)
             .returns(ReturnsResultUnmanaged)
-            .prepare_async()
             .run()
             .await;
 
@@ -741,7 +759,6 @@ impl ContractInteract {
             .typed(proxy::EsdtSafeProxy)
             .max_bridged_amount(token_id)
             .returns(ReturnsResultUnmanaged)
-            .prepare_async()
             .run()
             .await;
 
@@ -758,7 +775,6 @@ impl ContractInteract {
             .typed(proxy::EsdtSafeProxy)
             .end_setup_phase()
             .returns(ReturnsResultUnmanaged)
-            .prepare_async()
             .run()
             .await;
 
@@ -777,7 +793,6 @@ impl ContractInteract {
             .typed(proxy::EsdtSafeProxy)
             .add_tokens_to_whitelist(tokens)
             .returns(ReturnsResultUnmanaged)
-            .prepare_async()
             .run()
             .await;
 
@@ -796,7 +811,6 @@ impl ContractInteract {
             .typed(proxy::EsdtSafeProxy)
             .remove_tokens_from_whitelist(tokens)
             .returns(ReturnsResultUnmanaged)
-            .prepare_async()
             .run()
             .await;
 
@@ -815,7 +829,6 @@ impl ContractInteract {
             .typed(proxy::EsdtSafeProxy)
             .add_tokens_to_blacklist(tokens)
             .returns(ReturnsResultUnmanaged)
-            .prepare_async()
             .run()
             .await;
 
@@ -834,7 +847,6 @@ impl ContractInteract {
             .typed(proxy::EsdtSafeProxy)
             .remove_tokens_from_blacklist(tokens)
             .returns(ReturnsResultUnmanaged)
-            .prepare_async()
             .run()
             .await;
 
@@ -849,7 +861,6 @@ impl ContractInteract {
             .typed(proxy::EsdtSafeProxy)
             .token_whitelist()
             .returns(ReturnsResultUnmanaged)
-            .prepare_async()
             .run()
             .await;
 
@@ -864,7 +875,6 @@ impl ContractInteract {
             .typed(proxy::EsdtSafeProxy)
             .token_blacklist()
             .returns(ReturnsResultUnmanaged)
-            .prepare_async()
             .run()
             .await;
 
@@ -881,7 +891,6 @@ impl ContractInteract {
             .typed(proxy::EsdtSafeProxy)
             .pause_endpoint()
             .returns(ReturnsResultUnmanaged)
-            .prepare_async()
             .run()
             .await;
 
@@ -898,7 +907,6 @@ impl ContractInteract {
             .typed(proxy::EsdtSafeProxy)
             .unpause_endpoint()
             .returns(ReturnsResultUnmanaged)
-            .prepare_async()
             .run()
             .await;
 
@@ -913,7 +921,6 @@ impl ContractInteract {
             .typed(proxy::EsdtSafeProxy)
             .paused_status()
             .returns(ReturnsResultUnmanaged)
-            .prepare_async()
             .run()
             .await;
 
@@ -930,7 +937,6 @@ impl ContractInteract {
             .typed(FeeMarketProxy)
             .remove_fee(TOKEN_ID)
             .returns(ReturnsResultUnmanaged)
-            .prepare_async()
             .run()
             .await;
 
