@@ -582,6 +582,7 @@ dependencies = [
  "multiversx-sc-scenario",
  "num-bigint",
  "num-traits",
+ "proxies",
  "setup-phase",
  "token-whitelist",
  "transaction",
