@@ -1,7 +1,8 @@
-use chain_config::{chain_config_proxy, StakeMultiArg};
+use chain_config::StakeMultiArg;
 
 use multiversx_sc::imports::*;
 use multiversx_sc_modules::only_admin;
+use proxies::ChainConfigContractProxy;
 multiversx_sc::derive_imports!();
 
 #[derive(TypeAbi, TopEncode, TopDecode, NestedEncode, NestedDecode, ManagedVecItem)]
@@ -56,7 +57,7 @@ pub trait FactoryModule:
         let metadata = self.blockchain().get_code_metadata(&source_address);
         let chain_config_address = self
             .tx()
-            .typed(chain_config_proxy::ChainConfigContractProxy)
+            .typed(ChainConfigContractProxy)
             .init(
                 min_validators,
                 max_validators,
