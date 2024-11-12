@@ -612,6 +612,7 @@ dependencies = [
  "multiversx-sc",
  "multiversx-sc-scenario",
  "num-bigint",
+ "proxies",
  "transaction",
  "utils",
 ]
@@ -813,6 +814,7 @@ dependencies = [
  "multiversx-sc",
  "multiversx-sc-scenario",
  "num-bigint",
+ "proxies",
  "transaction",
 ]
 
