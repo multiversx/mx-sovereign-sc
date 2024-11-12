@@ -44,6 +44,7 @@ dependencies = [
  "chain-config",
  "multiversx-sc",
  "multiversx-sc-modules",
+ "proxies",
  "utils",
 ]
 
@@ -210,6 +211,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5e719e8df665df0d1c8fbfd238015744736151d4445ec0836b8e628aae103b77"
 dependencies = [
  "unicode-ident",
+]
+
+[[package]]
+name = "proxies"
+version = "0.1.0"
+dependencies = [
+ "multiversx-sc",
+ "transaction",
+ "tx-batch-module",
 ]
 
 [[package]]

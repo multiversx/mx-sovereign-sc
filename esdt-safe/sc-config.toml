@@ -20,4 +20,6 @@ path = "src/esdt_safe_proxy.rs"
 
 [[proxy]]
 path = "interactor/src/proxy.rs"
- 
+
+[[proxy]]
+path = "../common/proxies/src/esdt_safe_proxy.rs"

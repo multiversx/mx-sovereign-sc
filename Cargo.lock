@@ -1547,7 +1547,8 @@ name = "proxies"
 version = "0.1.0"
 dependencies = [
  "multiversx-sc",
- "multiversx-sc-modules",
+ "transaction",
+ "tx-batch-module",
 ]
 
 [[package]]
