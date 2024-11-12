@@ -149,7 +149,7 @@ impl Drop for State {
 struct ContractInteract {
     interactor: Interactor,
     wallet_address: Address,
-    bob_address: Address,
+    frank_address: Address,
     alice_address: Address,
     mike_address: Address,
     judy_address: Address,
@@ -197,7 +197,7 @@ impl ContractInteract {
         ContractInteract {
             interactor,
             wallet_address,
-            bob_address: frank_address,
+            frank_address,
             alice_address,
             mike_address,
             judy_address,
@@ -267,7 +267,7 @@ impl ContractInteract {
     async fn deploy_price_aggregator(&mut self) {
         let price_agggregator_code_path = MxscPath::new(&self.price_aggregator_code);
         let mut oracles = MultiValueEncoded::new();
-        let first_oracle_adress = managed_address!(&self.bob_address.clone());
+        let first_oracle_adress = managed_address!(&self.frank_address.clone());
         let second_oracle_adress = managed_address!(&self.alice_address.clone());
         let third_oracle_adress = managed_address!(&self.mike_address.clone());
         let forth_oracle_address = managed_address!(&self.judy_address.clone());
@@ -431,7 +431,7 @@ impl ContractInteract {
         let token_nonce = 0u64;
         let token_amount = BigUint::<StaticApi>::from(20u64);
 
-        let to = &self.bob_address;
+        let to = &self.frank_address;
         let mut payments = PaymentsVec::new();
         payments.push(EsdtTokenPayment::new(
             TokenIdentifier::from(token_id),
@@ -581,7 +581,7 @@ impl ContractInteract {
     async fn execute_operations_with_error(&mut self, error_msg: ExpectError<'_>) {
         let tokens = self.setup_payments().await;
         let operation_data = self.setup_operation_data(false).await;
-        let to = managed_address!(&self.bob_address);
+        let to = managed_address!(&self.frank_address);
         let operation = Operation::new(to, tokens, operation_data);
         let operation_hash = self.get_operation_hash(&operation);
 
@@ -1026,7 +1026,7 @@ impl ContractInteract {
                     hash: ManagedBuffer::new(),
                     name: ManagedBuffer::from("SovToken"),
                     attributes: ManagedBuffer::new(),
-                    creator: managed_address!(&self.bob_address),
+                    creator: managed_address!(&self.frank_address),
                     royalties: BigUint::zero(),
                     uris: ManagedVec::new(),
                 },
