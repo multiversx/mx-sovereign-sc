@@ -1,4 +1,4 @@
-use chain_config::StakeMultiArg;
+use chain_config::{chain_config_proxy, StakeMultiArg};
 
 use multiversx_sc::imports::*;
 use multiversx_sc_modules::only_admin;
@@ -52,15 +52,23 @@ pub trait FactoryModule:
         let caller = self.blockchain().get_caller();
 
         let source_address = self.chain_config_template().get();
-        let args = self.get_deploy_chain_config_args(
-            &min_validators,
-            &max_validators,
-            &min_stake,
-            &caller,
-            &additional_stake_required,
-        );
 
-        let chain_config_address = self.deploy_contract(source_address, args);
+        let metadata = self.blockchain().get_code_metadata(&source_address);
+        let chain_config_address = self
+            .tx()
+            .typed(chain_config_proxy::ChainConfigContractProxy)
+            .init(
+                min_validators,
+                max_validators,
+                min_stake,
+                &caller,
+                additional_stake_required,
+            )
+            .gas(60_000_000)
+            .from_source(source_address)
+            .code_metadata(metadata)
+            .returns(ReturnsNewManagedAddress)
+            .sync_call();
 
         let chain_id = self.generate_chain_id();
         self.set_deployed_contract_to_storage(

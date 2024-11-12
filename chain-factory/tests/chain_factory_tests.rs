@@ -1,3 +1,5 @@
+use std::env::current_dir;
+
 use chain_config::{chain_config_proxy, StakeMultiArg};
 use chain_factory::{
     chain_factory_proxy::{self, ContractInfo, ScArray},
@@ -209,6 +211,8 @@ fn deploy_chain_config_from_factory() {
     let min_stake = BigUint::from(100_000u64);
 
     state.deploy_chain_factory();
+
+    println!("{}", current_dir().unwrap().to_str().unwrap());
 
     state.propose_deploy_chain_config_from_factory(
         DEPLOY_COST.into(),
