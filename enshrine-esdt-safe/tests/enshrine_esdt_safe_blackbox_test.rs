@@ -449,7 +449,6 @@ impl EnshrineTestState {
         ManagedBuffer::new_from_bytes(&sha256)
     }
 
-    // TODO: add match for fee type
     fn setup_fee_struct(
         &mut self,
         base_token: TestTokenIdentifier,
