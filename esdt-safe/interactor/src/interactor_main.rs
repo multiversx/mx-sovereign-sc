@@ -5,11 +5,12 @@
 mod price_aggregator_proxy;
 mod proxy;
 
-use fee_market::fee_market_proxy::FeeMarketProxy;
-use fee_market::fee_market_proxy::{self, FeeStruct, FeeType};
 use multiversx_sc_scenario::multiversx_chain_vm::crypto_functions::sha256;
 use multiversx_sc_snippets::imports::*;
 use multiversx_sc_snippets::sdk;
+use proxies::fee_market_proxy::FeeMarketProxy;
+use proxies::fee_market_proxy::FeeStruct;
+use proxies::fee_market_proxy::FeeType;
 use serde::{Deserialize, Serialize};
 use std::{
     io::{Read, Write},
@@ -218,7 +219,7 @@ impl ContractInteract {
             .tx()
             .from(&self.wallet_address)
             .gas(100_000_000u64)
-            .typed(fee_market_proxy::FeeMarketProxy)
+            .typed(FeeMarketProxy)
             .init(self.state.current_address(), Option::Some(fee))
             .code(&self.fee_market_code)
             .returns(ReturnsNewAddress)
