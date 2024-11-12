@@ -1,6 +1,4 @@
 use bls_signature::BlsSignature;
-use enshrine_esdt_safe::{enshrine_esdt_safe_proxy, token_handler_proxy};
-use fee_market::fee_market_proxy::{self, FeeStruct, FeeType};
 use header_verifier::header_verifier_proxy;
 use multiversx_sc::codec::TopEncode;
 use multiversx_sc::imports::{MultiValue3, OptionalValue};
@@ -12,6 +10,9 @@ use multiversx_sc_scenario::api::StaticApi;
 use multiversx_sc_scenario::multiversx_chain_vm::crypto_functions::sha256;
 use multiversx_sc_scenario::{imports::MxscPath, ScenarioWorld};
 use multiversx_sc_scenario::{managed_address, ExpectError, ScenarioTxRun};
+use proxies::enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy;
+use proxies::fee_market_proxy::{FeeMarketProxy, FeeStruct, FeeType};
+use proxies::token_handler_proxy::TokenHandlerProxy;
 use transaction::{GasLimit, Operation, OperationData, OperationEsdtPayment};
 use utils::PaymentsVec;
 
@@ -105,7 +106,7 @@ impl EnshrineTestState {
             .tx()
             .from(ENSHRINE_ESDT_OWNER_ADDRESS)
             .to(ENSHRINE_ESDT_ADDRESS)
-            .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
+            .typed(EnshrineEsdtSafeProxy)
             .unpause_endpoint()
             .run();
     }
@@ -115,7 +116,7 @@ impl EnshrineTestState {
             .tx()
             .from(ENSHRINE_ESDT_OWNER_ADDRESS)
             .to(ENSHRINE_ESDT_ADDRESS)
-            .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
+            .typed(EnshrineEsdtSafeProxy)
             .set_header_verifier_address(HEADER_VERIFIER_ADDRESS)
             .run();
     }
@@ -129,7 +130,7 @@ impl EnshrineTestState {
         self.world
             .tx()
             .from(ENSHRINE_ESDT_OWNER_ADDRESS)
-            .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
+            .typed(EnshrineEsdtSafeProxy)
             .init(
                 is_sovereign_chain,
                 TOKEN_HANDLER_ADDRESS,
@@ -152,7 +153,7 @@ impl EnshrineTestState {
         self.world
             .tx()
             .from(ENSHRINE_ESDT_OWNER_ADDRESS)
-            .typed(fee_market_proxy::FeeMarketProxy)
+            .typed(FeeMarketProxy)
             .init(ENSHRINE_ESDT_ADDRESS, fee_struct)
             .code(FEE_MARKET_CODE_PATH)
             .new_address(FEE_MARKET_ADDRESS)
@@ -182,7 +183,7 @@ impl EnshrineTestState {
         self.world
             .tx()
             .from(ENSHRINE_ESDT_OWNER_ADDRESS)
-            .typed(token_handler_proxy::TokenHandlerProxy)
+            .typed(TokenHandlerProxy)
             .init()
             .code(TOKEN_HANDLER_CODE_PATH)
             .new_address(TOKEN_HANDLER_ADDRESS)
@@ -240,7 +241,7 @@ impl EnshrineTestState {
             .tx()
             .from(USER_ADDRESS)
             .to(ENSHRINE_ESDT_ADDRESS)
-            .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
+            .typed(EnshrineEsdtSafeProxy)
             .execute_operations(hash_of_hashes, operation);
 
         match expected_result {
@@ -279,7 +280,7 @@ impl EnshrineTestState {
             .tx()
             .from(ENSHRINE_ESDT_OWNER_ADDRESS)
             .to(ENSHRINE_ESDT_ADDRESS)
-            .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
+            .typed(EnshrineEsdtSafeProxy)
             .set_fee_market_address(FEE_MARKET_ADDRESS)
             .run();
     }
@@ -292,7 +293,7 @@ impl EnshrineTestState {
             .tx()
             .from(ENSHRINE_ESDT_OWNER_ADDRESS)
             .to(ENSHRINE_ESDT_ADDRESS)
-            .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
+            .typed(EnshrineEsdtSafeProxy)
             .add_tokens_to_whitelist(tokens)
             .run();
     }
@@ -316,7 +317,7 @@ impl EnshrineTestState {
             .tx()
             .from(*sender)
             .to(ENSHRINE_ESDT_ADDRESS)
-            .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
+            .typed(EnshrineEsdtSafeProxy)
             .register_new_token_id(managed_token_ids)
             .esdt(fee_payment);
 
@@ -339,7 +340,7 @@ impl EnshrineTestState {
             .tx()
             .from(from)
             .to(ENSHRINE_ESDT_ADDRESS)
-            .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
+            .typed(EnshrineEsdtSafeProxy)
             .deposit(to, deposit_args)
             .payment(payment);
 
@@ -359,7 +360,7 @@ impl EnshrineTestState {
             .tx()
             .from(ENSHRINE_ESDT_OWNER_ADDRESS)
             .to(FEE_MARKET_ADDRESS)
-            .typed(fee_market_proxy::FeeMarketProxy)
+            .typed(FeeMarketProxy)
             .set_fee(fee_struct);
 
         match expected_result {
@@ -373,7 +374,7 @@ impl EnshrineTestState {
             .tx()
             .from(ENSHRINE_ESDT_OWNER_ADDRESS)
             .to(ENSHRINE_ESDT_ADDRESS)
-            .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
+            .typed(EnshrineEsdtSafeProxy)
             .set_max_user_tx_gas_limit(max_gas_limit)
             .run();
     }
@@ -383,7 +384,7 @@ impl EnshrineTestState {
             .tx()
             .from(ENSHRINE_ESDT_OWNER_ADDRESS)
             .to(ENSHRINE_ESDT_ADDRESS)
-            .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
+            .typed(EnshrineEsdtSafeProxy)
             .set_banned_endpoint(endpoint_name)
             .run();
     }
@@ -393,7 +394,7 @@ impl EnshrineTestState {
             .tx()
             .from(ENSHRINE_ESDT_OWNER_ADDRESS)
             .to(TOKEN_HANDLER_ADDRESS)
-            .typed(token_handler_proxy::TokenHandlerProxy)
+            .typed(TokenHandlerProxy)
             .whitelist_enshrine_esdt(ENSHRINE_ESDT_ADDRESS)
             .run();
     }

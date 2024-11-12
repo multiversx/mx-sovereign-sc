@@ -29,6 +29,9 @@ path = "../common/token-whitelist"
 [dependencies.utils]
 path = "../common/utils"
 
+[dependencies.proxies]
+path = "../common/proxies"
+
 [dependencies.fee-market]
 path = "../fee-market"
 

@@ -1,5 +1,5 @@
 use crate::common;
-use fee_market::fee_market_proxy;
+use proxies::fee_market_proxy::FeeMarketProxy;
 use transaction::{
     EventPayment, GasLimit, OperationData, OptionalValueTransferDataTuple, TransferData,
 };
@@ -154,7 +154,7 @@ pub trait CreateTxModule:
 
                 self.tx()
                     .to(fee_market_address)
-                    .typed(fee_market_proxy::FeeMarketProxy)
+                    .typed(FeeMarketProxy)
                     .subtract_fee(caller, total_tokens_for_fees, OptionalValue::Some(gas))
                     .payment(fee.clone())
                     .sync_call();

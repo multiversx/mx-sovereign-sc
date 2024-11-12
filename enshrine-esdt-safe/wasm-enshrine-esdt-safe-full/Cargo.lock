@@ -64,6 +64,7 @@ dependencies = [
  "max-bridged-amount-module",
  "multiversx-sc",
  "multiversx-sc-modules",
+ "proxies",
  "setup-phase",
  "token-handler",
  "token-whitelist",
