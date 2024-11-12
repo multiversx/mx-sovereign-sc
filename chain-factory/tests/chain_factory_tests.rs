@@ -1,10 +1,7 @@
 use std::env::current_dir;
 
-use chain_config::{chain_config_proxy, StakeMultiArg};
-use chain_factory::{
-    chain_factory_proxy::{self, ContractInfo, ScArray},
-    common::storage::CommonStorage,
-};
+use chain_config::StakeMultiArg;
+use chain_factory::common::storage::CommonStorage;
 use multiversx_sc::types::{
     BigUint, CodeMetadata, ManagedBuffer, MultiValueEncoded, TestAddress, TestSCAddress,
     TokenIdentifier,
@@ -12,6 +9,10 @@ use multiversx_sc::types::{
 use multiversx_sc_scenario::{
     api::StaticApi, imports::MxscPath, managed_biguint, ExpectError, ScenarioTxRun,
     ScenarioTxWhitebox, ScenarioWorld,
+};
+use proxies::{
+    chain_config_proxy::ChainConfigContractProxy,
+    chain_factory_proxy::{ChainFactoryContractProxy, ContractInfo, ScArray},
 };
 
 const FACTORY_ADDRESS: TestSCAddress = TestSCAddress::new("chain-factory");
@@ -50,7 +51,7 @@ impl ChainFactoryTestState {
         world
             .tx()
             .from(OWNER.to_managed_address())
-            .typed(chain_config_proxy::ChainConfigContractProxy)
+            .typed(ChainConfigContractProxy)
             .init(
                 1usize,
                 2usize,
@@ -70,7 +71,7 @@ impl ChainFactoryTestState {
         self.world
             .tx()
             .from(OWNER)
-            .typed(chain_factory_proxy::ChainFactoryContractProxy)
+            .typed(ChainFactoryContractProxy)
             .init(
                 FACTORY_ADDRESS,
                 CONFIG_ADDRESS,
@@ -94,7 +95,7 @@ impl ChainFactoryTestState {
             .tx()
             .from(OWNER)
             .to(FACTORY_ADDRESS)
-            .typed(chain_factory_proxy::ChainFactoryContractProxy)
+            .typed(ChainFactoryContractProxy)
             .add_contracts_to_map(chain_id, contracts_info)
             .run();
     }
@@ -113,7 +114,7 @@ impl ChainFactoryTestState {
             .tx()
             .from(OWNER)
             .to(FACTORY_ADDRESS)
-            .typed(chain_factory_proxy::ChainFactoryContractProxy)
+            .typed(ChainFactoryContractProxy)
             .deploy_sovereign_chain_config_contract(
                 min_validators,
                 max_validators,
