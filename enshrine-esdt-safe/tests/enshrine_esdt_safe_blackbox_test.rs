@@ -1,5 +1,4 @@
 use bls_signature::BlsSignature;
-use header_verifier::header_verifier_proxy;
 use multiversx_sc::codec::TopEncode;
 use multiversx_sc::imports::{MultiValue3, OptionalValue};
 use multiversx_sc::types::{
@@ -12,6 +11,7 @@ use multiversx_sc_scenario::{imports::MxscPath, ScenarioWorld};
 use multiversx_sc_scenario::{managed_address, ExpectError, ScenarioTxRun};
 use proxies::enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy;
 use proxies::fee_market_proxy::{FeeMarketProxy, FeeStruct, FeeType};
+use proxies::header_verifier_proxy::HeaderverifierProxy;
 use proxies::token_handler_proxy::TokenHandlerProxy;
 use transaction::{GasLimit, Operation, OperationData, OperationEsdtPayment};
 use utils::PaymentsVec;
@@ -170,7 +170,7 @@ impl EnshrineTestState {
         self.world
             .tx()
             .from(ENSHRINE_ESDT_OWNER_ADDRESS)
-            .typed(header_verifier_proxy::HeaderverifierProxy)
+            .typed(HeaderverifierProxy)
             .init(bls_pub_keys)
             .code(HEADER_VERIFIER_CODE_PATH)
             .new_address(HEADER_VERIFIER_ADDRESS)
@@ -266,7 +266,7 @@ impl EnshrineTestState {
             .tx()
             .from(ENSHRINE_ESDT_OWNER_ADDRESS)
             .to(HEADER_VERIFIER_ADDRESS)
-            .typed(header_verifier_proxy::HeaderverifierProxy)
+            .typed(HeaderverifierProxy)
             .register_bridge_operations(
                 mock_signature,
                 hash_of_hashes.clone(),
