@@ -20,3 +20,6 @@ path = "src/token_handler_proxy.rs"
 
 [[proxy]]
 path = "../enshrine-esdt-safe/src/token_handler_proxy.rs"
+
+[[proxy]]
+path = "../common/proxies/src/token_handler_proxy.rs"
