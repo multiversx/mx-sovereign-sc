@@ -1,5 +1,6 @@
 use chain_config::{chain_config_proxy, StakeMultiArg};
 
+use header_verifier::header_verifier_proxy;
 use multiversx_sc::imports::*;
 use multiversx_sc_modules::only_admin;
 multiversx_sc::derive_imports!();
@@ -91,12 +92,19 @@ pub trait FactoryModule:
 
         let chain_id = self.all_deployed_contracts(&caller).get().chain_id;
         let source_address = self.header_verifier_template().get();
-        let mut args = ManagedArgBuffer::new();
 
         self.require_bls_keys_in_range(&caller, &chain_id, bls_pub_keys.len().into());
-        args.push_multi_arg(&bls_pub_keys);
 
-        let header_verifier_address = self.deploy_contract(source_address, args);
+        let metadata = self.blockchain().get_code_metadata(&source_address);
+        let header_verifier_address = self
+            .tx()
+            .typed(header_verifier_proxy::HeaderverifierProxy)
+            .init(bls_pub_keys)
+            .gas(60_000_000)
+            .from_source(source_address)
+            .code_metadata(metadata)
+            .returns(ReturnsNewManagedAddress)
+            .sync_call();
 
         self.set_deployed_contract_to_storage(
             &caller,

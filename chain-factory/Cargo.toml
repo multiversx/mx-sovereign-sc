@@ -28,3 +28,6 @@ path = "../chain-config"
 
 [dependencies.bls-signature]
 path = "../common/bls-signature"
+
+[dependencies.header-verifier]
+path = "../header-verifier"
