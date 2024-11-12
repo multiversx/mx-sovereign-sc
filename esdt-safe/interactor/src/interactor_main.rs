@@ -9,6 +9,7 @@ use fee_market::fee_market_proxy::{self, FeeStruct, FeeType};
 use header_verifier_proxy::HeaderverifierProxy;
 use multiversx_sc_scenario::meta::tools::find_current_workspace;
 use multiversx_sc_scenario::multiversx_chain_vm::crypto_functions::{sha256, SHA256_RESULT_LEN};
+use multiversx_sc_scenario::scenario_model::TxResponseStatus;
 use multiversx_sc_snippets::imports::*;
 use multiversx_sc_snippets::sdk::{self};
 use proxies::*;
@@ -553,7 +554,11 @@ impl ContractInteract {
         println!("Result: {response:?}");
     }
 
-    async fn execute_operations(&mut self, operation: &Operation<StaticApi>) {
+    async fn execute_operations(
+        &mut self,
+        operation: &Operation<StaticApi>,
+        expect_error: Option<TxResponseStatus>,
+    ) {
         let hash_of_hashes = sha256(&self.get_operation_hash(operation));
 
         let response = self
@@ -564,11 +569,13 @@ impl ContractInteract {
             .gas(70_000_000u64)
             .typed(proxy::EsdtSafeProxy)
             .execute_operations(&hash_of_hashes, operation)
-            .returns(ReturnsResultUnmanaged)
+            .returns(ReturnsHandledOrError::new().returns(ReturnsResultUnmanaged))
             .run()
             .await;
 
-        println!("Result: {response:?}");
+        if let Err(err) = response {
+            assert!(err == expect_error.unwrap());
+        }
     }
 
     async fn execute_operations_with_error(&mut self, error_msg: ExpectError<'_>) {
@@ -1055,7 +1062,7 @@ impl ContractInteract {
 #[tokio::test]
 async fn test_deploy_sov() {
     let mut interact = ContractInteract::new().await;
-    interact.deploy(true).await;
+    interact.deploy(false).await;
     interact.deploy_fee_market().await;
     interact.set_fee_market_address().await;
     interact.remove_fee().await;
@@ -1068,5 +1075,13 @@ async fn test_deploy_sov() {
 
     let operation = interact.setup_operation(true).await;
     interact.register_operations(&operation).await;
-    interact.execute_operations(&operation).await;
+    interact
+        .execute_operations(
+            &operation,
+            Some(TxResponseStatus::new(
+                ReturnCode::UserError,
+                "Value should be greater than 0",
+            )),
+        )
+        .await;
 }
