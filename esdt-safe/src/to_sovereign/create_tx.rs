@@ -1,6 +1,6 @@
 use crate::from_sovereign::token_mapping;
-use fee_market::fee_market_proxy;
 use multiversx_sc::storage::StorageKey;
+use proxies::fee_market_proxy::FeeMarketProxy;
 use transaction::{
     EventPaymentTuple, ExtractedFeeResult, GasLimit, OperationData, OptionalValueTransferDataTuple,
     TransferData,
@@ -219,7 +219,7 @@ pub trait CreateTxModule:
 
                 self.tx()
                     .to(fee_market_address)
-                    .typed(fee_market_proxy::FeeMarketProxy)
+                    .typed(FeeMarketProxy)
                     .subtract_fee(caller, total_tokens_for_fees, OptionalValue::Some(gas))
                     .payment(fee)
                     .async_call_and_exit();

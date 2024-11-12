@@ -1,5 +1,5 @@
 use builtin_func_names::ESDT_MULTI_TRANSFER_FUNC_NAME;
-use header_verifier::header_verifier_proxy;
+use proxies::header_verifier_proxy::HeaderverifierProxy;
 use transaction::{GasLimit, Operation, OperationData, OperationEsdtPayment, OperationTuple};
 
 use crate::to_sovereign;
@@ -223,7 +223,7 @@ pub trait TransferTokensModule:
         let header_verifier_address = self.header_verifier_address().get();
         self.tx()
             .to(header_verifier_address)
-            .typed(header_verifier_proxy::HeaderverifierProxy)
+            .typed(HeaderverifierProxy)
             .remove_executed_hash(hash_of_hashes, &operation_tuple.op_hash)
             .sync_call();
     }
