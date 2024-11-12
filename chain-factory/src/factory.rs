@@ -2,7 +2,7 @@ use chain_config::StakeMultiArg;
 
 use multiversx_sc::imports::*;
 use multiversx_sc_modules::only_admin;
-use proxies::ChainConfigContractProxy;
+use proxies::chain_config_proxy::ChainConfigContractProxy;
 multiversx_sc::derive_imports!();
 
 #[derive(TypeAbi, TopEncode, TopDecode, NestedEncode, NestedDecode, ManagedVecItem)]
