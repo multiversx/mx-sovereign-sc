@@ -162,10 +162,9 @@ struct ContractInteract {
 
 impl ContractInteract {
     async fn new() -> Self {
-        let mut interactor = Interactor::new(GATEWAY, false)
-            .await
-            .with_tracer(INTERACTOR_SCENARIO_TRACE_PATH)
-            .await;
+        let mut interactor = Interactor::new(GATEWAY, false).await;
+
+        interactor.set_current_dir_from_workspace("esdt-safe/interactor");
 
         let wallet_address = interactor.register_wallet(test_wallets::bob()).await;
         let frank_address = interactor.register_wallet(test_wallets::frank()).await;
@@ -177,41 +176,22 @@ impl ContractInteract {
         println!("Current directory is: {}", current_dir.display());
 
         let repo_dir = current_dir
-            .parent()
-            .and_then(|p| p.parent())
+            .ancestors()
+            .nth(2)
             .expect("Failed to go up 2 levels");
         println!("Repo directory is: {}", repo_dir.display());
 
-        let fee_market_output_path = "fee-market/output/fee-market.mxsc.json";
-        let fee_market_code = repo_dir
-            .join(fee_market_output_path)
-            .to_string_lossy()
-            .to_string();
+        let fee_market_code = "../../fee-market/output/fee-market.mxsc.json".to_owned();
 
-        let header_verifier_output_path = "header-verifier/output/header-verifier.mxsc.json";
-        let header_verifier_code = repo_dir
-            .join(header_verifier_output_path)
-            .to_string_lossy()
-            .to_string();
+        let header_verifier_code =
+            "../../header-verifier/output/header-verifier.mxsc.json".to_owned();
 
-        let esdt_safe_output_path = "esdt-safe/output/esdt-safe.mxsc.json";
-        let esdt_safe_code = current_dir
-            .join(esdt_safe_output_path)
-            .to_string_lossy()
-            .to_string();
+        let esdt_safe_code = "../output/esdt-safe.mxsc.json".to_owned();
 
-        let price_aggregator_output_path =
-            "../contract-codes/multiversx-price-aggregator-sc.mxsc.json";
-        let price_aggregator_code = repo_dir
-            .join(price_aggregator_output_path)
-            .to_string_lossy()
-            .to_string();
+        let price_aggregator_code =
+            "contract-codes/multiversx-price-aggregator-sc.mxsc.json".to_owned();
 
-        let testing_sc_output_path = "testing-sc/output/testing-sc.mxsc.json";
-        let testing_sc_code = repo_dir
-            .join(testing_sc_output_path)
-            .to_string_lossy()
-            .to_string();
+        let testing_sc_code = "../../testing-sc/output/testing-sc.mxsc.json".to_owned();
 
         ContractInteract {
             interactor,
