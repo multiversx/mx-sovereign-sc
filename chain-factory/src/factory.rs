@@ -11,10 +11,7 @@ use proxies::{
 multiversx_sc::derive_imports!();
 
 #[multiversx_sc::module]
-pub trait FactoryModule:
-    only_admin::OnlyAdminModule + crate::common::storage::CommonStorage
-{
-    // TODO: Check if contract was already deployed
+pub trait FactoryModule: only_admin::OnlyAdminModule {
     #[payable("EGLD")]
     #[endpoint(deploySovereignChainConfigContract)]
     fn deploy_sovereign_chain_config_contract(
@@ -64,15 +61,15 @@ pub trait FactoryModule:
     }
 
     #[only_admin]
-    #[endpoint(deployCrossChainOperation)]
-    fn deploy_cross_chain_operation(
+    #[endpoint(deployEnshrineEsdtSafe)]
+    fn deploy_enshrine_esdt_safe(
         &self,
         is_sovereign_chain: bool,
+        token_handler_address: ManagedAddress,
         opt_wegld_identifier: Option<TokenIdentifier>,
         opt_sov_token_prefix: Option<ManagedBuffer>,
     ) -> ManagedAddress {
-        let source_address = self.cross_chain_operations_template().get();
-        let token_handler_address = self.token_handler_template().get();
+        let source_address = self.enshrine_esdt_safe_template().get();
         let metadata = self.blockchain().get_code_metadata(&source_address);
 
         self.tx()
@@ -109,4 +106,16 @@ pub trait FactoryModule:
             .returns(ReturnsNewManagedAddress)
             .sync_call()
     }
+
+    #[storage_mapper("chainConfigTemplate")]
+    fn chain_config_template(&self) -> SingleValueMapper<ManagedAddress>;
+
+    #[storage_mapper("headerVerifierTemplate")]
+    fn header_verifier_template(&self) -> SingleValueMapper<ManagedAddress>;
+
+    #[storage_mapper("crossChainOperationsTemplate")]
+    fn enshrine_esdt_safe_template(&self) -> SingleValueMapper<ManagedAddress>;
+
+    #[storage_mapper("feeMarketTemplate")]
+    fn fee_market_template(&self) -> SingleValueMapper<ManagedAddress>;
 }
