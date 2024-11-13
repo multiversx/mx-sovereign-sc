@@ -17,3 +17,7 @@ add-labels = ["chain-factory-external-view"]
 
 [[proxy]]
 path = "../common/proxies/src/chain_factory_proxy.rs"
+
+[[proxy.path-rename]]
+from = "proxies::fee_market_proxy::FeeStruct<Env::Api>"
+to = "super::fee_market_proxy::FeeStruct<Env::Api>"

@@ -26,8 +26,5 @@ path = "../common/utils"
 [dependencies.chain-config]
 path = "../chain-config"
 
-[dependencies.bls-signature]
-path = "../common/bls-signature"
-
 [dependencies.proxies]
 path = "../common/proxies"

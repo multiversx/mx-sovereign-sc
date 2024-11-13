@@ -46,6 +46,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "fee-market-full-wasm"
+version = "0.0.0"
+dependencies = [
+ "fee-market",
+ "multiversx-sc-wasm-adapter",
+]
+
+[[package]]
 name = "hex"
 version = "0.4.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -56,14 +64,6 @@ name = "hex-literal"
 version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6fe2267d4ed49bc07b63801559be28c718ea06c4738b7a03c94df7386d2cde46"
-
-[[package]]
-name = "multisig-view-wasm"
-version = "0.0.0"
-dependencies = [
- "fee-market",
- "multiversx-sc-wasm-adapter",
-]
 
 [[package]]
 name = "multiversx-sc"

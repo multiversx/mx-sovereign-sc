@@ -262,7 +262,6 @@ dependencies = [
 name = "chain-factory"
 version = "0.0.0"
 dependencies = [
- "bls-signature",
  "chain-config",
  "multiversx-sc",
  "multiversx-sc-modules",
