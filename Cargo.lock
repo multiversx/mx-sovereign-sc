@@ -264,11 +264,11 @@ version = "0.0.0"
 dependencies = [
  "bls-signature",
  "chain-config",
- "header-verifier",
  "multiversx-sc",
  "multiversx-sc-modules",
  "multiversx-sc-scenario",
  "num-bigint",
+ "proxies",
  "utils",
 ]
 
@@ -512,6 +512,7 @@ dependencies = [
  "multiversx-sc-scenario",
  "num-bigint",
  "num-traits",
+ "proxies",
  "setup-phase",
  "token-handler",
  "token-whitelist",
@@ -581,6 +582,7 @@ dependencies = [
  "multiversx-sc-scenario",
  "num-bigint",
  "num-traits",
+ "proxies",
  "setup-phase",
  "token-whitelist",
  "transaction",
@@ -610,6 +612,7 @@ dependencies = [
  "multiversx-sc",
  "multiversx-sc-scenario",
  "num-bigint",
+ "proxies",
  "transaction",
  "utils",
 ]
@@ -811,6 +814,7 @@ dependencies = [
  "multiversx-sc",
  "multiversx-sc-scenario",
  "num-bigint",
+ "proxies",
  "transaction",
 ]
 
@@ -1543,6 +1547,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "proxies"
+version = "0.1.0"
+dependencies = [
+ "multiversx-sc",
+ "transaction",
+ "tx-batch-module",
+]
+
+[[package]]
 name = "quote"
 version = "1.0.37"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1707,6 +1720,7 @@ dependencies = [
  "multiversx-sc",
  "multiversx-sc-scenario",
  "multiversx-sc-snippets",
+ "proxies",
  "serde",
  "toml",
  "transaction",
@@ -2101,10 +2115,10 @@ name = "token-handler"
 version = "0.0.0"
 dependencies = [
  "chain-factory",
- "header-verifier",
  "multiversx-sc",
  "multiversx-sc-scenario",
  "num-bigint",
+ "proxies",
  "transaction",
 ]
 

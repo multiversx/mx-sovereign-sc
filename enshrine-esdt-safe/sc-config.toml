@@ -16,4 +16,4 @@ add-unlabelled = false
 add-labels = ["enshrine-esdt-safe-external-view"]
 
 [[proxy]]
-path = "src/enshrine_esdt_safe_proxy.rs"
+path = "../common/proxies/src/enshrine_esdt_safe_proxy.rs"

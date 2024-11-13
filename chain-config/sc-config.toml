@@ -16,7 +16,4 @@ add-unlabelled = false
 add-labels = ["chain-config-external-view"]
 
 [[proxy]]
-path = "src/chain_config_proxy.rs"
-
-[[proxy]]
-path = "../chain-factory/src/chain_config_proxy.rs"
+path = "../common/proxies/src/chain_config_proxy.rs"

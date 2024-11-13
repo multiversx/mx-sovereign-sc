@@ -1,6 +1,6 @@
-use crate::{common, to_sovereign, token_handler_proxy};
-use header_verifier::header_verifier_proxy;
+use crate::{common, to_sovereign};
 use multiversx_sc::imports::*;
+use proxies::{header_verifier_proxy::HeaderverifierProxy, token_handler_proxy::TokenHandlerProxy};
 use transaction::{Operation, OperationData, OperationEsdtPayment, OperationTuple};
 
 const DEFAULT_ISSUE_COST: u64 = 50_000_000_000_000_000; // 0.05 * 10^18
@@ -64,7 +64,7 @@ pub trait TransferTokensModule:
 
         self.tx()
             .to(token_handler_address)
-            .typed(token_handler_proxy::TokenHandlerProxy)
+            .typed(TokenHandlerProxy)
             .transfer_tokens(
                 operation.data.opt_transfer_data,
                 operation.to,
@@ -131,7 +131,7 @@ pub trait TransferTokensModule:
         let header_verifier_address = self.header_verifier_address().get();
         self.tx()
             .to(header_verifier_address)
-            .typed(header_verifier_proxy::HeaderverifierProxy)
+            .typed(HeaderverifierProxy)
             .remove_executed_hash(hash_of_hashes, op_hash)
             .sync_call();
     }

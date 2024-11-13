@@ -5,7 +5,6 @@ use fee_type::FeeStruct;
 multiversx_sc::imports!();
 
 pub mod fee_common;
-pub mod fee_market_proxy;
 pub mod fee_type;
 pub mod price_aggregator;
 pub mod subtract_fee;

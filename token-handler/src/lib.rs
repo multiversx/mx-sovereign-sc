@@ -3,10 +3,7 @@
 #[allow(unused_imports)]
 use multiversx_sc::imports::*;
 
-pub mod chain_factory_proxy;
 pub mod common_storage;
-pub mod dummy_enshrine_proxy;
-pub mod token_handler_proxy;
 pub mod transfer_tokens;
 
 #[multiversx_sc::contract]

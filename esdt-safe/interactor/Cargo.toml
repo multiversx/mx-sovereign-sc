@@ -15,6 +15,9 @@ path = ".."
 [dependencies.transaction]
 path = "../../common/transaction"
 
+[dependencies.proxies]
+path = "../../common/proxies"
+
 [dependencies.tx-batch-module]
 path = "../../common/tx-batch-module"
 

@@ -1,8 +1,10 @@
-use chain_config::{chain_config_proxy, StakeMultiArg};
+use chain_config::StakeMultiArg;
 
-use header_verifier::header_verifier_proxy;
 use multiversx_sc::imports::*;
 use multiversx_sc_modules::only_admin;
+use proxies::{
+    chain_config_proxy::ChainConfigContractProxy, header_verifier_proxy::HeaderverifierProxy,
+};
 multiversx_sc::derive_imports!();
 
 #[derive(TypeAbi, TopEncode, TopDecode, NestedEncode, NestedDecode, ManagedVecItem)]
@@ -57,7 +59,7 @@ pub trait FactoryModule:
         let metadata = self.blockchain().get_code_metadata(&source_address);
         let chain_config_address = self
             .tx()
-            .typed(chain_config_proxy::ChainConfigContractProxy)
+            .typed(ChainConfigContractProxy)
             .init(
                 min_validators,
                 max_validators,
@@ -98,7 +100,7 @@ pub trait FactoryModule:
         let metadata = self.blockchain().get_code_metadata(&source_address);
         let header_verifier_address = self
             .tx()
-            .typed(header_verifier_proxy::HeaderverifierProxy)
+            .typed(HeaderverifierProxy)
             .init(bls_pub_keys)
             .gas(60_000_000)
             .from_source(source_address)
