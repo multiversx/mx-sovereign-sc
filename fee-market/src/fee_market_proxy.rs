@@ -114,7 +114,7 @@ where
             .original_result()
     }
 
-    pub fn disable_fee<
+    pub fn remove_fee<
         Arg0: ProxyArg<TokenIdentifier<Env::Api>>,
     >(
         self,
