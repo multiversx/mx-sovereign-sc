@@ -66,8 +66,8 @@ pub trait FactoryModule {
         &self,
         is_sovereign_chain: bool,
         token_handler_address: ManagedAddress,
-        opt_wegld_identifier: Option<TokenIdentifier>,
-        opt_sov_token_prefix: Option<ManagedBuffer>,
+        wegld_identifier: TokenIdentifier,
+        sov_token_prefix: ManagedBuffer,
     ) -> ManagedAddress {
         let source_address = self.enshrine_esdt_safe_template().get();
         let metadata = self.blockchain().get_code_metadata(&source_address);
@@ -77,8 +77,8 @@ pub trait FactoryModule {
             .init(
                 is_sovereign_chain,
                 token_handler_address,
-                opt_wegld_identifier,
-                opt_sov_token_prefix,
+                Some(wegld_identifier),
+                Some(sov_token_prefix),
             )
             .gas(60_000_000)
             .from_source(source_address)
