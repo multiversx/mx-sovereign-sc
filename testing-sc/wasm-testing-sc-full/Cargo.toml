@@ -5,7 +5,7 @@
 # ##########################################
 
 [package]
-name = "fee-marker-full-wasm"
+name = "testing-sc-full-wasm"
 version = "0.0.0"
 edition = "2021"
 publish = false
@@ -24,11 +24,11 @@ overflow-checks = false
 [profile.dev]
 panic = "abort"
 
-[dependencies.fee-market]
+[dependencies.testing-sc]
 path = ".."
 
 [dependencies.multiversx-sc-wasm-adapter]
-version = "=0.54.0"
+version = "0.54.0"
 
 [workspace]
 members = ["."]
