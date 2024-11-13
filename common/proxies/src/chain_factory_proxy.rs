@@ -7,6 +7,7 @@
 #![allow(dead_code)]
 #![allow(clippy::all)]
 
+use crate::fee_market_proxy;
 use multiversx_sc::proxy_imports::*;
 
 pub struct ChainFactoryContractProxy;
@@ -152,7 +153,7 @@ where
 
     pub fn deploy_fee_market<
         Arg0: ProxyArg<ManagedAddress<Env::Api>>,
-        Arg1: ProxyArg<Option<proxies::fee_market_proxy::FeeStruct<Env::Api>>>,
+        Arg1: ProxyArg<Option<fee_market_proxy::FeeStruct<Env::Api>>>,
     >(
         self,
         esdt_safe_address: Arg0,
