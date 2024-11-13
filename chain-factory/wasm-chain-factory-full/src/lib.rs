@@ -6,9 +6,9 @@
 
 // Init:                                 1
 // Upgrade:                              1
-// Endpoints:                           12
+// Endpoints:                            5
 // Async Callback (empty):               1
-// Total number of exported functions:  15
+// Total number of exported functions:   8
 
 #![no_std]
 
@@ -25,13 +25,6 @@ multiversx_sc_wasm_adapter::endpoints! {
         deployEnshrineEsdtSafe => deploy_enshrine_esdt_safe
         deployFeeMarket => deploy_fee_market
         completeSetupPhase => complete_setup_phase
-        setMinValidSigners => set_min_valid_signers
-        addSigners => add_signers
-        removeSigners => remove_signers
-        isAdmin => is_admin
-        addAdmin => add_admin
-        removeAdmin => remove_admin
-        getAdmins => admins
     )
 }
 

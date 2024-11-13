@@ -1,18 +1,11 @@
 #![no_std]
 
-use multiversx_sc_modules::only_admin;
-
 multiversx_sc::imports!();
 
 pub mod factory;
 
 #[multiversx_sc::contract]
-pub trait ChainFactoryContract:
-    factory::FactoryModule
-    + utils::UtilsModule
-    + bls_signature::BlsSignatureModule
-    + only_admin::OnlyAdminModule
-{
+pub trait ChainFactoryContract: factory::FactoryModule + utils::UtilsModule {
     #[init]
     fn init(
         &self,
