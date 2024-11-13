@@ -17,3 +17,6 @@ add-labels = ["fee-market-external-view"]
 
 [[proxy]]
 path = "src/fee_market_proxy.rs"
+
+[[proxy]]
+path = "../esdt-safe/interactor/src/proxies/fee_market_proxy.rs"
