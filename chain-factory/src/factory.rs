@@ -108,6 +108,12 @@ pub trait FactoryModule: only_admin::OnlyAdminModule {
             .sync_call()
     }
 
+    #[only_owner]
+    #[endpoint(completeSetupPhase)]
+    fn complete_setup_phase(&self, _contract_address: ManagedAddress) {
+        // TODO: will have to call each contract's endpoint to finish setup phase
+    }
+
     #[storage_mapper("chainConfigTemplate")]
     fn chain_config_template(&self) -> SingleValueMapper<ManagedAddress>;
 
