@@ -13,6 +13,7 @@ multiversx_sc::derive_imports!();
 #[multiversx_sc::module]
 pub trait FactoryModule: only_admin::OnlyAdminModule {
     #[payable("EGLD")]
+    #[only_owner]
     #[endpoint(deploySovereignChainConfigContract)]
     fn deploy_sovereign_chain_config_contract(
         &self,
@@ -41,7 +42,7 @@ pub trait FactoryModule: only_admin::OnlyAdminModule {
             .sync_call()
     }
 
-    #[only_admin]
+    #[only_owner]
     #[endpoint(deployHeaderVerifier)]
     fn deploy_header_verifier(
         &self,
@@ -60,7 +61,7 @@ pub trait FactoryModule: only_admin::OnlyAdminModule {
             .sync_call()
     }
 
-    #[only_admin]
+    #[only_owner]
     #[endpoint(deployEnshrineEsdtSafe)]
     fn deploy_enshrine_esdt_safe(
         &self,
@@ -87,7 +88,7 @@ pub trait FactoryModule: only_admin::OnlyAdminModule {
             .sync_call()
     }
 
-    #[only_admin]
+    #[only_owner]
     #[endpoint(deployFeeMarket)]
     fn deploy_fee_market(
         &self,
