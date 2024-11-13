@@ -11,7 +11,6 @@ multiversx_sc::derive_imports!();
 
 #[multiversx_sc::module]
 pub trait FactoryModule {
-    #[payable("EGLD")]
     #[only_owner]
     #[endpoint(deploySovereignChainConfigContract)]
     fn deploy_sovereign_chain_config_contract(
