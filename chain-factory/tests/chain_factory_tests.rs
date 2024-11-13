@@ -19,7 +19,6 @@ const CONFIG_CODE_PATH: MxscPath = MxscPath::new("../chain-config/output/chain-f
 
 const OWNER: TestAddress = TestAddress::new("owner");
 const OWNER_BALANCE: u64 = 100_000_000_000;
-const DEPLOY_COST: u64 = 10_000_000_000;
 
 fn world() -> ScenarioWorld {
     let mut blockchain = ScenarioWorld::new();
@@ -80,7 +79,6 @@ impl ChainFactoryTestState {
 
     fn propose_deploy_chain_config_from_factory(
         &mut self,
-        payment: BigUint<StaticApi>,
         min_validators: usize,
         max_validators: usize,
         min_stake: BigUint<StaticApi>,
@@ -98,8 +96,7 @@ impl ChainFactoryTestState {
                 max_validators,
                 min_stake,
                 additional_stake_required,
-            )
-            .egld(payment);
+            );
 
         match expected_result {
             Some(error) => {
@@ -139,7 +136,6 @@ fn deploy_chain_config_from_factory() {
     println!("{}", current_dir().unwrap().to_str().unwrap());
 
     state.propose_deploy_chain_config_from_factory(
-        DEPLOY_COST.into(),
         min_validators,
         max_validators,
         min_stake,
