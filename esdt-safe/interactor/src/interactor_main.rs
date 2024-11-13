@@ -2,7 +2,7 @@
 // TODO: Remove this when interactor setup is complete
 #![allow(dead_code)]
 
-mod proxies;
+pub mod proxies;
 
 use fee_market_proxy::{FeeStruct, FeeType};
 use header_verifier_proxy::HeaderverifierProxy;
@@ -253,11 +253,7 @@ impl ContractInteract {
             .from(&self.wallet_address)
             .gas(100_000_000u64)
             .typed(fee_market_proxy::FeeMarketProxy)
-            .init(
-                self.state.current_address(),
-                self.state.get_price_aggregator_address(),
-                Option::Some(fee),
-            )
+            .init(self.state.current_address(), Option::Some(fee))
             .code(fee_market_code_path)
             .returns(ReturnsNewAddress)
             .run()
@@ -927,7 +923,7 @@ impl ContractInteract {
             .to(self.state.get_fee_market_address())
             .gas(30_000_000u64)
             .typed(fee_market_proxy::FeeMarketProxy)
-            .disable_fee(TOKEN_ID)
+            .remove_fee(TOKEN_ID)
             .returns(ReturnsResultUnmanaged)
             .run()
             .await;
