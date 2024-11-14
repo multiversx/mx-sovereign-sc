@@ -1,5 +1,6 @@
 [workspace]
 resolver = "2"
+
 members = [
   "chain-config",
   "chain-config/meta",
@@ -8,10 +9,15 @@ members = [
   "esdt-safe",
   "esdt-safe/interactor",
   "esdt-safe/meta",
+  "esdt-safe/interactor",
   "fee-market",
   "fee-market/meta",
   "header-verifier",
   "header-verifier/meta", 
   "enshrine-esdt-safe",
-  "enshrine-esdt-safe/meta"
+  "enshrine-esdt-safe/meta",
+  "token-handler",
+  "token-handler/meta",
+  "testing-sc",
+  "testing-sc/meta",
 ]
