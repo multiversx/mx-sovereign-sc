@@ -50,7 +50,7 @@ pub trait CreateTxModule:
     #[endpoint(setBurnAndMint)]
     fn set_burn_and_mint(
         &self,
-        opt_signature: Option<BlsSignature<Self::Api>>,
+        _opt_signature: Option<BlsSignature<Self::Api>>,
         tokens: MultiValueEncoded<TokenIdentifier>,
     ) {
         if !self.is_setup_phase_complete() {
@@ -60,14 +60,14 @@ pub trait CreateTxModule:
             return;
         }
 
-        let all_tokens = self.verify_items_signature(opt_signature, tokens);
-        self.burn_tokens().extend(&all_tokens);
+        // let all_tokens = self.verify_bls_signature(opt_signature, tokens);
+        // self.burn_tokens().extend(&all_tokens);
     }
 
     #[endpoint(removeBurnAndMint)]
     fn remove_burn_and_mint(
         &self,
-        opt_signature: Option<BlsSignature<Self::Api>>,
+        _opt_signature: Option<BlsSignature<Self::Api>>,
         tokens: MultiValueEncoded<TokenIdentifier>,
     ) {
         if !self.is_setup_phase_complete() {
@@ -77,14 +77,14 @@ pub trait CreateTxModule:
             return;
         }
 
-        let all_tokens = self.verify_items_signature(opt_signature, tokens);
-        self.remove_items(&mut self.burn_tokens(), &all_tokens);
+        // let all_tokens = self.verify_items_signature(opt_signature, tokens);
+        // self.remove_items(&mut self.burn_tokens(), &all_tokens);
     }
 
     #[endpoint(addBannedEndpointNames)]
     fn add_banned_endpoint_names(
         &self,
-        opt_signature: Option<BlsSignature<Self::Api>>,
+        _opt_signature: Option<BlsSignature<Self::Api>>,
         names: MultiValueEncoded<ManagedBuffer>,
     ) {
         if !self.is_setup_phase_complete() {
@@ -94,14 +94,14 @@ pub trait CreateTxModule:
             return;
         }
 
-        let all_names = self.verify_items_signature(opt_signature, names);
-        self.banned_endpoint_names().extend(&all_names);
+        // let all_names = self.verify_items_signature(opt_signature, names);
+        // self.banned_endpoint_names().extend(&all_names);
     }
 
     #[endpoint(removeBannedEndpointNames)]
     fn remove_banned_endpoint_names(
         &self,
-        opt_signature: Option<BlsSignature<Self::Api>>,
+        _opt_signature: Option<BlsSignature<Self::Api>>,
         names: MultiValueEncoded<ManagedBuffer>,
     ) {
         if !self.is_setup_phase_complete() {
@@ -111,8 +111,8 @@ pub trait CreateTxModule:
             return;
         }
 
-        let all_names = self.verify_items_signature(opt_signature, names);
-        self.remove_items(&mut self.banned_endpoint_names(), &all_names);
+        // let all_names = self.verify_bls_signature(opt_signature, names);
+        // self.remove_items(&mut self.banned_endpoint_names(), &all_names);
     }
 
     #[payable("*")]

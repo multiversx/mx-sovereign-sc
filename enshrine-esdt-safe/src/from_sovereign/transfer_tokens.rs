@@ -1,7 +1,5 @@
 use multiversx_sc::{api::ESDT_MULTI_TRANSFER_FUNC_NAME, storage::StorageKey};
-use transaction::{
-    BatchId, GasLimit, Operation, OperationData, OperationEsdtPayment, OperationTuple,
-};
+use transaction::{BatchId, GasLimit, Operation, OperationEsdtPayment, OperationTuple};
 
 use crate::to_sovereign;
 
@@ -287,18 +285,18 @@ pub trait TransferTokensModule:
         }
 
         // deposit back mainchain tokens into user account
-        let sc_address = self.blockchain().get_sc_address();
-        let tx_nonce = self.get_and_save_next_tx_id();
+        let _sc_address = self.blockchain().get_sc_address();
+        let _tx_nonce = self.get_and_save_next_tx_id();
 
-        self.deposit_event(
-            &operation_tuple.operation.data.op_sender,
-            &operation_tuple.operation.get_tokens_as_tuple_arr(),
-            OperationData {
-                op_nonce: tx_nonce,
-                op_sender: sc_address.clone(),
-                opt_transfer_data: None,
-            },
-        );
+        // self.deposit_event(
+        //     &operation_tuple.operation.data.op_sender,
+        //     &operation_tuple.operation.get_tokens_as_tuple_arr(),
+        //     OperationData {
+        //         op_nonce: tx_nonce,
+        //         op_sender: sc_address.clone(),
+        //         opt_transfer_data: None,
+        //     },
+        // );
     }
 
     // use pending_operations as param

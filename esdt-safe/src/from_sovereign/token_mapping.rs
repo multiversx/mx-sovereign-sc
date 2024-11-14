@@ -1,6 +1,5 @@
 multiversx_sc::imports!();
 multiversx_sc::derive_imports!();
-const DEFAULT_ISSUE_COST: u64 = 50000000000000000;
 
 const DEFAULT_ISSUE_COST: u64 = 50_000_000_000_000_000; // 0.05 EGLD
 const REGISTER_GAS: u64 = 60_000_000;
