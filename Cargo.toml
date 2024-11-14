@@ -1,10 +1,12 @@
 [workspace]
+resolver = "2"
 members = [
   "chain-config",
   "chain-config/meta",
   "chain-factory",
   "chain-factory/meta",
   "esdt-safe",
+  "esdt-safe/interactor",
   "esdt-safe/meta",
   "fee-market",
   "fee-market/meta",

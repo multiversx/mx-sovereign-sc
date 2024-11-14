@@ -1,15 +1,15 @@
 #![no_std]
 
-use bls_signature::BlsSignature;
-
 multiversx_sc::imports!();
 
 pub type PaymentsVec<M> = ManagedVec<M, EsdtTokenPayment<M>>;
 
 static ERR_EMPTY_PAYMENTS: &[u8] = b"No payments";
+const DASH: u8 = b'-';
+const MAX_TOKEN_ID_LEN: usize = 32;
 
 #[multiversx_sc::module]
-pub trait UtilsModule: bls_signature::BlsSignatureModule {
+pub trait UtilsModule {
     fn require_sc_address(&self, address: &ManagedAddress) {
         require!(
             !address.is_zero() && self.blockchain().is_smart_contract(address),
@@ -47,23 +47,43 @@ pub trait UtilsModule: bls_signature::BlsSignatureModule {
         first_payment
     }
 
-    fn verify_items_signature<T: TopDecode + NestedEncode + ManagedVecItem>(
-        &self,
-        opt_signature: Option<BlsSignature<Self::Api>>,
-        items: MultiValueEncoded<T>,
-    ) -> ManagedVec<T> {
-        require!(opt_signature.is_some(), "Must provide signature");
+    fn has_prefix(&self, token_id: &TokenIdentifier) -> bool {
+        let buffer = token_id.as_managed_buffer();
+        let mut array_buffer = [0u8; MAX_TOKEN_ID_LEN];
+        let slice = buffer.load_to_byte_array(&mut array_buffer);
 
-        let list = items.to_vec();
-        let signature = unsafe { opt_signature.unwrap_unchecked() };
-        let mut signature_data = ManagedBuffer::new();
-        for token in &list {
-            let _ = token.dep_encode(&mut signature_data);
+        let counter = slice.iter().filter(|&&c| c == DASH).count();
+
+        if counter == 2 {
+            return true;
         }
 
-        self.multi_verify_signature(&signature_data, &signature);
+        false
+    }
 
-        list
+    #[inline]
+    fn require_token_has_prefix(&self, token_id: &TokenIdentifier) {
+        require!(self.has_prefix(token_id), "Token Id does not have prefix");
+    }
+
+    fn has_sov_prefix(&self, token_id: &TokenIdentifier, chain_prefix: &ManagedBuffer) -> bool {
+        if !self.has_prefix(token_id) {
+            return false;
+        }
+
+        let buffer = token_id.as_managed_buffer();
+        let mut array_buffer = [0u8; MAX_TOKEN_ID_LEN];
+        let slice = buffer.load_to_byte_array(&mut array_buffer);
+
+        if let Some(index) = slice.iter().position(|&b| b == DASH) {
+            let prefix = ManagedBuffer::from(&slice[..index]);
+
+            if prefix == chain_prefix.clone() {
+                return true;
+            }
+        }
+
+        false
     }
 
     fn has_sov_token_prefix(&self, token_id: &TokenIdentifier) -> bool {
