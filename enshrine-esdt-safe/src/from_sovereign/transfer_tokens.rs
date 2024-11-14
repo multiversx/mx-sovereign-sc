@@ -77,34 +77,6 @@ pub trait TransferTokensModule:
                     &operation_token.token_data.attributes,
                     &operation_token.token_data.uris,
                 );
-
-                // let token_data = operation_token.token_data.clone();
-                // let mut arg_buffer = ManagedArgBuffer::new();
-                // arg_buffer.push_arg(&operation_token.token_identifier);
-                // arg_buffer.push_arg(token_data.amount);
-                // arg_buffer.push_arg(token_data.name);
-                // arg_buffer.push_arg(token_data.royalties);
-                // arg_buffer.push_arg(token_data.hash);
-                // arg_buffer.push_arg(token_data.attributes);
-                // let uris = token_data.uris.clone();
-
-                // if uris.is_empty() {
-                //     // at least one URI is required, so we push an empty one
-                //     arg_buffer.push_arg(codec::Empty);
-                // } else {
-                //     // The API function has the last argument as variadic,
-                //     // so we top-encode each and send as separate argument
-                //     for uri in &uris {
-                //         arg_buffer.push_arg(uri);
-                //     }
-                // }
-                // arg_buffer.push_arg(operation_token.token_nonce);
-
-                // self.send_raw().call_local_esdt_built_in_function(
-                //     self.blockchain().get_gas_left(),
-                //     &ManagedBuffer::from(ESDT_NFT_CREATE_FUNC_NAME),
-                //     &arg_buffer,
-                // );
             }
 
             output_payments.push(OperationEsdtPayment {
@@ -283,20 +255,6 @@ pub trait TransferTokensModule:
                 );
             }
         }
-
-        // deposit back mainchain tokens into user account
-        let _sc_address = self.blockchain().get_sc_address();
-        let _tx_nonce = self.get_and_save_next_tx_id();
-
-        // self.deposit_event(
-        //     &operation_tuple.operation.data.op_sender,
-        //     &operation_tuple.operation.get_tokens_as_tuple_arr(),
-        //     OperationData {
-        //         op_nonce: tx_nonce,
-        //         op_sender: sc_address.clone(),
-        //         opt_transfer_data: None,
-        //     },
-        // );
     }
 
     // use pending_operations as param
