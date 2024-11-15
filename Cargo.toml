@@ -7,6 +7,7 @@ members = [
   "chain-factory",
   "chain-factory/meta",
   "esdt-safe",
+  "esdt-safe/interactor",
   "esdt-safe/meta",
   "esdt-safe/interactor",
   "fee-market",

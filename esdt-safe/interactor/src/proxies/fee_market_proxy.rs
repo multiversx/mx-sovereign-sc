@@ -45,19 +45,16 @@ where
 {
     pub fn init<
         Arg0: ProxyArg<ManagedAddress<Env::Api>>,
-        Arg1: ProxyArg<ManagedAddress<Env::Api>>,
-        Arg2: ProxyArg<Option<FeeStruct<Env::Api>>>,
+        Arg1: ProxyArg<Option<FeeStruct<Env::Api>>>,
     >(
         self,
         esdt_safe_address: Arg0,
-        price_aggregator_address: Arg1,
-        fee: Arg2,
+        fee: Arg1,
     ) -> TxTypedDeploy<Env, From, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_deploy()
             .argument(&esdt_safe_address)
-            .argument(&price_aggregator_address)
             .argument(&fee)
             .original_result()
     }
@@ -91,6 +88,19 @@ where
     To: TxTo<Env>,
     Gas: TxGas<Env>,
 {
+    pub fn set_price_aggregator_address<
+        Arg0: ProxyArg<ManagedAddress<Env::Api>>,
+    >(
+        self,
+        price_aggregator_address: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("setPriceAggregatorAddress")
+            .argument(&price_aggregator_address)
+            .original_result()
+    }
+
     pub fn set_fee<
         Arg0: ProxyArg<FeeStruct<Env::Api>>,
     >(
@@ -99,12 +109,12 @@ where
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
-            .raw_call("addFee")
+            .raw_call("setFee")
             .argument(&fee_struct)
             .original_result()
     }
 
-    pub fn disable_fee<
+    pub fn remove_fee<
         Arg0: ProxyArg<TokenIdentifier<Env::Api>>,
     >(
         self,
