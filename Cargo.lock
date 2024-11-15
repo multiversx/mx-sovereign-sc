@@ -1889,6 +1889,28 @@ dependencies = [
 ]
 
 [[package]]
+name = "rust-interact-esdt-safe"
+version = "0.0.0"
+dependencies = [
+ "bls-signature",
+ "clap",
+ "enshrine-esdt-safe",
+ "fee-market",
+ "header-verifier",
+ "max-bridged-amount-module",
+ "multiversx-sc 0.54.1",
+ "multiversx-sc-snippets",
+ "serde",
+ "setup-phase",
+ "token-handler",
+ "token-whitelist",
+ "toml",
+ "transaction",
+ "tx-batch-module",
+ "utils",
+]
+
+[[package]]
 name = "rustc-demangle"
 version = "0.1.24"
 source = "registry+https://github.com/rust-lang/crates.io-index"
