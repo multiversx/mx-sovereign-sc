@@ -109,7 +109,7 @@ where
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
-            .raw_call("addFee")
+            .raw_call("setFee")
             .argument(&fee_struct)
             .original_result()
     }

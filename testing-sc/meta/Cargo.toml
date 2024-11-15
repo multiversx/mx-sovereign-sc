@@ -1,0 +1,12 @@
+[package]
+name = "testing-sc-meta"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[dependencies.testing-sc]
+path = ".."
+
+[dependencies.multiversx-sc-meta-lib]
+version = "0.54.1"
+default-features = false

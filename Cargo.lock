@@ -508,6 +508,7 @@ dependencies = [
  "num-bigint",
  "num-traits",
  "setup-phase",
+ "token-handler",
  "token-whitelist",
  "transaction",
  "tx-batch-module",
@@ -2175,6 +2176,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "testing-sc"
+version = "0.0.0"
+dependencies = [
+ "multiversx-sc",
+ "multiversx-sc-scenario",
+ "num-bigint",
+]
+
+[[package]]
+name = "testing-sc-meta"
+version = "0.0.0"
+dependencies = [
+ "multiversx-sc-meta-lib",
+ "testing-sc",
+]
+
+[[package]]
 name = "tinystr"
 version = "0.7.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2198,6 +2216,26 @@ name = "tinyvec_macros"
 version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1f3ccbac311fea05f86f61904b462b55fb3df8837a366dfc601a0161d0532f20"
+
+[[package]]
+name = "token-handler"
+version = "0.0.0"
+dependencies = [
+ "chain-factory",
+ "header-verifier",
+ "multiversx-sc",
+ "multiversx-sc-scenario",
+ "num-bigint",
+ "transaction",
+]
+
+[[package]]
+name = "token-handler-meta"
+version = "0.0.0"
+dependencies = [
+ "multiversx-sc-meta-lib",
+ "token-handler",
+]
 
 [[package]]
 name = "token-whitelist"

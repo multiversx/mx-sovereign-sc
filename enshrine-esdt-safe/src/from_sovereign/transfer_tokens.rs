@@ -1,220 +1,138 @@
-use multiversx_sc::{api::ESDT_MULTI_TRANSFER_FUNC_NAME, storage::StorageKey};
-use transaction::{BatchId, GasLimit, Operation, OperationEsdtPayment, OperationTuple};
+use crate::{common, to_sovereign, token_handler_proxy};
+use header_verifier::header_verifier_proxy;
+use multiversx_sc::imports::*;
+use transaction::{Operation, OperationData, OperationEsdtPayment, OperationTuple};
 
-use crate::to_sovereign;
+const DEFAULT_ISSUE_COST: u64 = 50_000_000_000_000_000; // 0.05 * 10^18
 
-use super::token_mapping::EsdtTokenInfo;
+struct SplitResult<M: ManagedTypeApi> {
+    sov_tokens: ManagedVec<M, EsdtTokenPayment<M>>,
+    non_sov_tokens: ManagedVec<M, OperationEsdtPayment<M>>,
+    are_tokens_registered: bool,
+}
 
-multiversx_sc::imports!();
-
-const CALLBACK_GAS: GasLimit = 10_000_000; // Increase if not enough
-const TRANSACTION_GAS: GasLimit = 30_000_000;
+impl<M: ManagedTypeApi> Default for SplitResult<M> {
+    #[inline]
+    fn default() -> Self {
+        Self {
+            sov_tokens: ManagedVec::new(),
+            non_sov_tokens: ManagedVec::new(),
+            are_tokens_registered: false,
+        }
+    }
+}
 
 #[multiversx_sc::module]
 pub trait TransferTokensModule:
     bls_signature::BlsSignatureModule
     + super::events::EventsModule
-    + super::refund::RefundModule
-    + super::token_mapping::TokenMappingModule
     + tx_batch_module::TxBatchModule
     + max_bridged_amount_module::MaxBridgedAmountModule
     + multiversx_sc_modules::pause::PauseModule
     + multiversx_sc_modules::default_issue_callbacks::DefaultIssueCallbacksModule
     + utils::UtilsModule
     + to_sovereign::events::EventsModule
+    + common::storage::CommonStorage
 {
     #[endpoint(executeBridgeOps)]
     fn execute_operations(&self, hash_of_hashes: ManagedBuffer, operation: Operation<Self::Api>) {
+        let is_sovereign_chain = self.is_sovereign_chain().get();
         require!(
-            !self.is_sovereign_chain().get(),
+            !is_sovereign_chain,
             "Invalid method to call in current chain"
         );
-
         require!(self.not_paused(), "Cannot transfer while paused");
 
-        let (operation_hash, is_registered) =
-            self.calculate_operation_hash(hash_of_hashes.clone(), operation.clone());
+        let op_hash = self.calculate_operation_hash(&operation);
 
-        if !is_registered {
-            sc_panic!("Operation is not registered");
+        self.lock_operation_hash(&op_hash, &hash_of_hashes);
+
+        let split_result = self.split_payments_for_prefix_and_fee(&operation.tokens);
+        if !split_result.are_tokens_registered {
+            self.emit_transfer_failed_events(
+                &hash_of_hashes,
+                &OperationTuple::new(op_hash, operation),
+            );
+
+            return;
         }
 
-        let minted_operation_tokens = self.mint_tokens(&operation.tokens);
-        let operation_tuple = OperationTuple {
-            op_hash: operation_hash,
-            operation,
-        };
+        let token_handler_address = self.token_handler_address().get();
+        let multi_value_tokens: MultiValueEncoded<OperationEsdtPayment<Self::Api>> =
+            split_result.non_sov_tokens.into();
 
-        self.distribute_payments(hash_of_hashes, operation_tuple, minted_operation_tokens);
+        self.tx()
+            .to(token_handler_address)
+            .typed(token_handler_proxy::TokenHandlerProxy)
+            .transfer_tokens(
+                operation.data.opt_transfer_data,
+                operation.to,
+                // operation.data.opt_sender
+                multi_value_tokens,
+            )
+            .multi_esdt(split_result.sov_tokens)
+            .sync_call();
+
+        self.remove_executed_hash(&hash_of_hashes, &op_hash);
+        self.execute_bridge_operation_event(hash_of_hashes, op_hash);
     }
 
-    fn mint_tokens(
-        &self,
-        operation_tokens: &ManagedVec<OperationEsdtPayment<Self::Api>>,
-    ) -> ManagedVec<OperationEsdtPayment<Self::Api>> {
-        let mut output_payments = ManagedVec::new();
+    #[endpoint(registerNewTokenID)]
+    #[payable("*")]
+    fn register_new_token_id(&self, tokens: MultiValueEncoded<TokenIdentifier>) {
+        let call_payment = self.call_value().single_esdt().clone();
+        let wegld_identifier = self.wegld_identifier().get();
+        require!(
+            call_payment.token_identifier == wegld_identifier,
+            "WEGLD is the only token accepted as register fee"
+        );
+        require!(
+            call_payment.amount == DEFAULT_ISSUE_COST * tokens.len() as u64,
+            "WEGLD fee amount is not met"
+        );
 
-        for operation_token in operation_tokens.iter() {
-            if !self.has_sov_token_prefix(&operation_token.token_identifier) {
-                output_payments.push(operation_token.clone());
+        for token_id in tokens {
+            self.register_token(token_id);
+        }
+    }
+
+    fn split_payments_for_prefix_and_fee(
+        &self,
+        tokens: &ManagedVec<OperationEsdtPayment<Self::Api>>,
+    ) -> SplitResult<Self::Api> {
+        let sov_prefix = self.get_sovereign_prefix();
+        let mut sov_tokens: ManagedVec<Self::Api, EsdtTokenPayment<Self::Api>> = ManagedVec::new();
+        let mut non_sov_tokens: ManagedVec<Self::Api, OperationEsdtPayment<Self::Api>> =
+            ManagedVec::new();
+
+        for token in tokens.iter() {
+            if !self.has_sov_prefix(&token.token_identifier, &sov_prefix) {
+                non_sov_tokens.push(token);
+
                 continue;
             }
 
-            let mut nonce = operation_token.token_nonce;
-            if nonce == 0 {
-                self.send().esdt_local_mint(
-                    &operation_token.token_identifier,
-                    operation_token.token_nonce,
-                    &operation_token.token_data.amount,
-                );
-            } else {
-                nonce = self.send().esdt_nft_create(
-                    &operation_token.token_identifier,
-                    &operation_token.token_data.amount,
-                    &operation_token.token_data.name,
-                    &operation_token.token_data.royalties,
-                    &operation_token.token_data.hash,
-                    &operation_token.token_data.attributes,
-                    &operation_token.token_data.uris,
-                );
+            if !self.paid_issued_tokens().contains(&token.token_identifier) {
+                return SplitResult::default();
             }
 
-            output_payments.push(OperationEsdtPayment {
-                token_identifier: operation_token.token_identifier,
-                token_nonce: nonce,
-                token_data: operation_token.token_data,
-            });
+            sov_tokens.push(token.into());
         }
 
-        output_payments
-    }
-
-    fn mint_and_save_token(
-        self,
-        mx_token_id: &TokenIdentifier<Self::Api>,
-        operation_token: &OperationEsdtPayment<Self::Api>,
-    ) -> u64 {
-        // mint NFT
-        let nft_nonce = self.send().esdt_nft_create(
-            mx_token_id,
-            &operation_token.token_data.amount,
-            &operation_token.token_data.name,
-            &operation_token.token_data.royalties,
-            &operation_token.token_data.hash,
-            &operation_token.token_data.attributes,
-            &operation_token.token_data.uris,
-        );
-
-        // save token id and nonce
-        self.sovereign_esdt_token_info_mapper(
-            &operation_token.token_identifier,
-            &operation_token.token_nonce,
-        )
-        .set(EsdtTokenInfo {
-            token_identifier: mx_token_id.clone(),
-            token_nonce: nft_nonce,
-        });
-
-        self.multiversx_esdt_token_info_mapper(mx_token_id, &nft_nonce)
-            .set(EsdtTokenInfo {
-                token_identifier: operation_token.token_identifier.clone(),
-                token_nonce: operation_token.token_nonce,
-            });
-
-        nft_nonce
-    }
-
-    fn distribute_payments(
-        &self,
-        hash_of_hashes: ManagedBuffer,
-        operation_tuple: OperationTuple<Self::Api>,
-        tokens_list: ManagedVec<OperationEsdtPayment<Self::Api>>,
-    ) {
-        let mapped_tokens = tokens_list.iter().map(|token| token.into()).collect();
-
-        match &operation_tuple.operation.data.opt_transfer_data {
-            Some(transfer_data) => {
-                let mut args = ManagedArgBuffer::new();
-                for arg in &transfer_data.args {
-                    args.push_arg(arg);
-                }
-
-                self.send()
-                    .contract_call::<()>(
-                        operation_tuple.operation.to.clone(),
-                        transfer_data.function.clone(),
-                    )
-                    .with_raw_arguments(args)
-                    .with_multi_token_transfer(mapped_tokens)
-                    .with_gas_limit(transfer_data.gas_limit)
-                    .async_call_promise()
-                    .with_extra_gas_for_callback(CALLBACK_GAS)
-                    .with_callback(
-                        <Self as TransferTokensModule>::callbacks(self)
-                            .execute(&hash_of_hashes, &operation_tuple),
-                    )
-                    .register_promise();
-            }
-            None => {
-                let own_address = self.blockchain().get_sc_address();
-
-                self.send()
-                    .contract_call::<()>(own_address, ESDT_MULTI_TRANSFER_FUNC_NAME)
-                    .with_raw_arguments(
-                        self.get_contract_call_args(&operation_tuple.operation.to, mapped_tokens),
-                    )
-                    .with_gas_limit(TRANSACTION_GAS)
-                    .async_call_promise()
-                    .with_callback(
-                        <Self as TransferTokensModule>::callbacks(self)
-                            .execute(&hash_of_hashes, &operation_tuple),
-                    )
-                    .register_promise();
-            }
+        SplitResult {
+            sov_tokens,
+            non_sov_tokens,
+            are_tokens_registered: true,
         }
     }
 
-    fn get_contract_call_args(
-        self,
-        to: &ManagedAddress,
-        mapped_tokens: ManagedVec<EsdtTokenPayment<Self::Api>>,
-    ) -> ManagedArgBuffer<Self::Api> {
-        let mut args = ManagedArgBuffer::new();
-        args.push_arg(to);
-        args.push_arg(mapped_tokens.len());
-
-        for token in &mapped_tokens {
-            args.push_arg(token.token_identifier);
-            args.push_arg(token.token_nonce);
-            args.push_arg(token.amount);
-        }
-
-        args
-    }
-
-    #[promises_callback]
-    fn execute(
-        &self,
-        hash_of_hashes: &ManagedBuffer,
-        operation_tuple: &OperationTuple<Self::Api>,
-        #[call_result] result: ManagedAsyncCallResult<IgnoreValue>,
-    ) {
-        match result {
-            ManagedAsyncCallResult::Ok(_) => {
-                self.execute_bridge_operation_event(
-                    hash_of_hashes.clone(),
-                    operation_tuple.op_hash.clone(),
-                );
-            }
-            ManagedAsyncCallResult::Err(_) => {
-                self.emit_transfer_failed_events(hash_of_hashes, operation_tuple);
-            }
-        }
-
-        let _: () = self
-            .header_verifier_proxy(self.header_verifier_address().get())
-            .remove_executed_hash(hash_of_hashes, &operation_tuple.op_hash)
-            .execute_on_dest_context();
+    fn remove_executed_hash(&self, hash_of_hashes: &ManagedBuffer, op_hash: &ManagedBuffer) {
+        let header_verifier_address = self.header_verifier_address().get();
+        self.tx()
+            .to(header_verifier_address)
+            .typed(header_verifier_proxy::HeaderverifierProxy)
+            .remove_executed_hash(hash_of_hashes, op_hash)
+            .sync_call();
     }
 
     fn emit_transfer_failed_events(
@@ -222,53 +140,26 @@ pub trait TransferTokensModule:
         hash_of_hashes: &ManagedBuffer,
         operation_tuple: &OperationTuple<Self::Api>,
     ) {
-        // confirmation event
         self.execute_bridge_operation_event(
             hash_of_hashes.clone(),
             operation_tuple.op_hash.clone(),
         );
 
-        for operation_token in &operation_tuple.operation.tokens {
-            let mx_token_id_state = self
-                .sovereign_to_multiversx_token_id(&operation_token.token_identifier)
-                .get();
+        // deposit back mainchain tokens into user account
+        let sc_address = self.blockchain().get_sc_address();
+        let tx_nonce = self.get_and_save_next_tx_id();
 
-            if let TokenMapperState::Token(mx_token_id) = mx_token_id_state {
-                let mut mx_token_nonce = 0;
-
-                if operation_token.token_nonce > 0 {
-                    mx_token_nonce = self
-                        .sovereign_esdt_token_info_mapper(
-                            &operation_token.token_identifier,
-                            &operation_token.token_nonce,
-                        )
-                        .take()
-                        .token_nonce;
-
-                    self.multiversx_esdt_token_info_mapper(&mx_token_id, &mx_token_nonce);
-                }
-
-                self.send().esdt_local_burn(
-                    &mx_token_id,
-                    mx_token_nonce,
-                    &operation_token.token_data.amount,
-                );
-            }
-        }
+        self.deposit_event(
+            &operation_tuple.operation.data.op_sender,
+            &operation_tuple
+                .operation
+                .map_tokens_to_multi_value_encoded(),
+            OperationData::new(tx_nonce, sc_address.clone(), None),
+        );
     }
 
-    // use pending_operations as param
-    fn calculate_operation_hash(
-        &self,
-        hash_of_hashes: ManagedBuffer,
-        operation: Operation<Self::Api>,
-    ) -> (ManagedBuffer, bool) {
+    fn calculate_operation_hash(&self, operation: &Operation<Self::Api>) -> ManagedBuffer {
         let mut serialized_data = ManagedBuffer::new();
-        let mut storage_key = StorageKey::from("pending_hashes");
-        storage_key.append_item(&hash_of_hashes);
-
-        let pending_operations_mapper =
-            UnorderedSetMapper::new_from_address(self.header_verifier_address().get(), storage_key);
 
         if let core::result::Result::Err(err) = operation.top_encode(&mut serialized_data) {
             sc_panic!("Transfer data encode error: {}", err.message_bytes());
@@ -277,28 +168,37 @@ pub trait TransferTokensModule:
         let sha256 = self.crypto().sha256(&serialized_data);
         let hash = sha256.as_managed_buffer().clone();
 
-        if pending_operations_mapper.contains(&hash) {
-            (hash, true)
-        } else {
-            (hash, false)
-        }
+        hash
     }
 
-    #[proxy]
-    fn header_verifier_proxy(
-        &self,
-        header_verifier_address: ManagedAddress,
-    ) -> header_verifier::Proxy<Self::Api>;
+    fn lock_operation_hash(&self, operation_hash: &ManagedBuffer, hash_of_hashes: &ManagedBuffer) {
+        let header_verifier_address = self.header_verifier_address().get();
 
-    #[storage_mapper("nextBatchId")]
-    fn next_batch_id(&self) -> SingleValueMapper<BatchId>;
+        self.tx()
+            .to(header_verifier_address)
+            .typed(header_verifier_proxy::HeaderverifierProxy)
+            .lock_operation_hash(hash_of_hashes, operation_hash)
+            .sync_call();
+    }
 
-    #[storage_mapper("pending_hashes")]
-    fn pending_hashes(&self, hash_of_hashes: &ManagedBuffer) -> UnorderedSetMapper<ManagedBuffer>;
+    #[inline]
+    fn get_sovereign_prefix(&self) -> ManagedBuffer {
+        self.sovereign_tokens_prefix().get()
+    }
 
-    #[storage_mapper("header_verifier_address")]
+    #[inline]
+    fn register_token(&self, token_id: TokenIdentifier<Self::Api>) {
+        self.paid_issued_tokens().insert(token_id);
+    }
+
+    #[inline]
+    fn is_wegld(&self, token_id: &TokenIdentifier<Self::Api>) -> bool {
+        token_id.eq(&self.wegld_identifier().get())
+    }
+
+    #[storage_mapper("headerVerifierAddress")]
     fn header_verifier_address(&self) -> SingleValueMapper<ManagedAddress>;
 
-    #[storage_mapper("sovereign_bridge_address")]
-    fn sovereign_bridge_address(&self) -> SingleValueMapper<ManagedAddress>;
+    #[storage_mapper("paidIssuedTokens")]
+    fn paid_issued_tokens(&self) -> UnorderedSetMapper<TokenIdentifier<Self::Api>>;
 }

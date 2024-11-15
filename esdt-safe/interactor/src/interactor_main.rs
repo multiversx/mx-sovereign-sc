@@ -2,9 +2,10 @@
 // TODO: Remove this when interactor setup is complete
 #![allow(dead_code)]
 
-pub mod proxies;
+mod proxies;
 
-use fee_market_proxy::{FeeStruct, FeeType};
+use fee_market::fee_market_proxy::FeeMarketProxy;
+use fee_market::fee_market_proxy::{self, FeeStruct, FeeType};
 use header_verifier_proxy::HeaderverifierProxy;
 use multiversx_sc_scenario::meta::tools::find_current_workspace;
 use multiversx_sc_scenario::multiversx_chain_vm::crypto_functions::{sha256, SHA256_RESULT_LEN};
@@ -133,10 +134,6 @@ impl State {
 
     pub fn get_testing_sc_address(&self) -> Address {
         self.testing_sc_address.clone().unwrap().to_address()
-    }
-
-    pub fn get_price_aggregator_address(&self) -> Address {
-        self.price_aggregator_address.clone().unwrap().to_address()
     }
 }
 
@@ -922,7 +919,7 @@ impl ContractInteract {
             .from(&self.wallet_address)
             .to(self.state.get_fee_market_address())
             .gas(30_000_000u64)
-            .typed(fee_market_proxy::FeeMarketProxy)
+            .typed(FeeMarketProxy)
             .remove_fee(TOKEN_ID)
             .returns(ReturnsResultUnmanaged)
             .run()
@@ -1062,9 +1059,6 @@ impl ContractInteract {
     }
 }
 
-// NOTE:
-// All interactor tests should only be ignored when pushed to Github
-// Those System Tests are intended to run locally since they won't work on Github Actions
 #[tokio::test]
 #[ignore]
 async fn test_deploy_sov() {
