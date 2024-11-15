@@ -21,10 +21,10 @@ path = "../common/bls-signature"
 path = "../common/proxies"
 
 [dependencies.multiversx-sc]
-version = "=0.53.2"
+version = "=0.54.1"
 
 [dev-dependencies]
 num-bigint = "0.4.2"
 
 [dev-dependencies.multiversx-sc-scenario]
-version = "=0.53.2"
+version = "=0.54.1"

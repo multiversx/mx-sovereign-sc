@@ -2,27 +2,31 @@
 // TODO: Remove this when interactor setup is complete
 #![allow(dead_code)]
 
-mod price_aggregator_proxy;
-mod proxy;
+mod proxies;
 
-use multiversx_sc_scenario::multiversx_chain_vm::crypto_functions::sha256;
+use fee_market::fee_market_proxy::FeeMarketProxy;
+use fee_market::fee_market_proxy::{self, FeeStruct, FeeType};
+use header_verifier_proxy::HeaderverifierProxy;
+use multiversx_sc_scenario::meta::tools::find_current_workspace;
+use multiversx_sc_scenario::multiversx_chain_vm::crypto_functions::{sha256, SHA256_RESULT_LEN};
+use multiversx_sc_scenario::scenario_model::TxResponseStatus;
 use multiversx_sc_snippets::imports::*;
-use multiversx_sc_snippets::sdk;
-use proxies::fee_market_proxy::FeeMarketProxy;
-use proxies::fee_market_proxy::FeeStruct;
-use proxies::fee_market_proxy::FeeType;
+use multiversx_sc_snippets::sdk::{self};
+use proxies::*;
 use serde::{Deserialize, Serialize};
 use std::{
     io::{Read, Write},
     path::Path,
 };
-use transaction::OperationEsdtPayment;
+use testing_sc_proxy::TestingScProxy;
 use transaction::{GasLimit, Operation, OperationData, PaymentsVec};
-
+use transaction::{OperationEsdtPayment, TransferData};
 const GATEWAY: &str = sdk::gateway::DEVNET_GATEWAY;
 const STATE_FILE: &str = "state.toml";
-const TOKEN_ID: &[u8] = b"SVT-805b28";
+const TOKEN_ID: &[u8] = b"SOV-101252";
+const TOKEN_ID_FOR_EXECUTE: &[u8] = b"x-SOV-101252";
 const WHITELISTED_TOKEN_ID: &[u8] = b"CHOCOLATE-daf625";
+const INTERACTOR_SCENARIO_TRACE_PATH: &str = "interactor_trace.scen.json";
 
 type OptionalTransferData<M> =
     OptionalValue<MultiValue3<GasLimit, ManagedBuffer<M>, ManagedVec<M, ManagedBuffer<M>>>>;
@@ -45,7 +49,7 @@ async fn main() {
         "addSigners" => interact.add_signers().await,
         "removeSigners" => interact.remove_signers().await,
         "registerToken" => interact.register_token().await,
-        "executeBridgeOps" => interact.execute_operations().await,
+        // "executeBridgeOps" => interact.execute_operations().await,
         "setMaxTxBatchSize" => interact.set_max_tx_batch_size().await,
         "setMaxTxBatchBlockDuration" => interact.set_max_tx_batch_block_duration().await,
         "getCurrentTxBatch" => interact.get_current_tx_batch().await,
@@ -76,6 +80,7 @@ struct State {
     fee_market_address: Option<Bech32Address>,
     price_aggregator_address: Option<Bech32Address>,
     header_verifier_address: Option<Bech32Address>,
+    testing_sc_address: Option<Bech32Address>,
 }
 
 impl State {
@@ -108,11 +113,27 @@ impl State {
         self.header_verifier_address = Some(address);
     }
 
+    pub fn set_testing_sc_address(&mut self, address: Bech32Address) {
+        self.testing_sc_address = Some(address);
+    }
+
     /// Returns the contract address
     pub fn current_address(&self) -> &Bech32Address {
         self.contract_address
             .as_ref()
             .expect("no known contract, deploy first")
+    }
+
+    pub fn get_header_verifier_address(&self) -> Address {
+        self.header_verifier_address.clone().unwrap().to_address()
+    }
+
+    pub fn get_fee_market_address(&self) -> Address {
+        self.fee_market_address.clone().unwrap().to_address()
+    }
+
+    pub fn get_testing_sc_address(&self) -> Address {
+        self.testing_sc_address.clone().unwrap().to_address()
     }
 }
 
@@ -128,62 +149,70 @@ impl Drop for State {
 struct ContractInteract {
     interactor: Interactor,
     wallet_address: Address,
-    bob_address: Address,
+    frank_address: Address,
     alice_address: Address,
     mike_address: Address,
     judy_address: Address,
-    contract_code: BytesValue,
-    fee_market_code: BytesValue,
-    price_aggregator_code: BytesValue,
-    header_verifier_code: BytesValue,
+    esdt_safe_code: String,
+    fee_market_code: String,
+    price_aggregator_code: String,
+    header_verifier_code: String,
+    testing_sc_code: String,
     state: State,
 }
 
 impl ContractInteract {
     async fn new() -> Self {
         let mut interactor = Interactor::new(GATEWAY).await;
-        let wallet_address = interactor.register_wallet(test_wallets::frank());
-        let bob_address = interactor.register_wallet(test_wallets::bob());
-        let alice_address = interactor.register_wallet(test_wallets::alice());
-        let mike_address = interactor.register_wallet(test_wallets::mike());
-        let judy_address = interactor.register_wallet(test_wallets::judy());
 
-        let contract_code = BytesValue::interpret_from(
-            "mxsc:../output/esdt-safe.mxsc.json",
-            &InterpreterContext::default(),
-        );
+        interactor.set_current_dir_from_workspace("esdt-safe/interactor");
 
-        let fee_market_code = BytesValue::interpret_from(
-            "mxsc:contract-codes/fee-market.mxsc.json",
-            &InterpreterContext::default(),
-        );
+        let wallet_address = interactor.register_wallet(test_wallets::bob()).await;
+        let frank_address = interactor.register_wallet(test_wallets::frank()).await;
+        let alice_address = interactor.register_wallet(test_wallets::alice()).await;
+        let mike_address = interactor.register_wallet(test_wallets::mike()).await;
+        let judy_address = interactor.register_wallet(test_wallets::judy()).await;
 
-        let price_aggregator_code = BytesValue::interpret_from(
-            "mxsc:contract-codes/multiversx-price-aggregator-sc.mxsc.json",
-            &InterpreterContext::default(),
-        );
+        let current_dir = find_current_workspace().unwrap();
+        println!("Current directory is: {}", current_dir.display());
 
-        let header_verifier_code = BytesValue::interpret_from(
-            "mxsc:contract-codes/header-verifier.mxsc.json",
-            &InterpreterContext::default(),
-        );
+        let repo_dir = current_dir
+            .ancestors()
+            .nth(2)
+            .expect("Failed to go up 2 levels");
+        println!("Repo directory is: {}", repo_dir.display());
+
+        let fee_market_code = "../../fee-market/output/fee-market.mxsc.json".to_owned();
+
+        let header_verifier_code =
+            "../../header-verifier/output/header-verifier.mxsc.json".to_owned();
+
+        let esdt_safe_code = "../output/esdt-safe.mxsc.json".to_owned();
+
+        let price_aggregator_code =
+            "contract-codes/multiversx-price-aggregator-sc.mxsc.json".to_owned();
+
+        let testing_sc_code = "../../testing-sc/output/testing-sc.mxsc.json".to_owned();
 
         ContractInteract {
             interactor,
             wallet_address,
-            bob_address,
+            frank_address,
             alice_address,
             mike_address,
             judy_address,
-            contract_code,
+            esdt_safe_code,
             fee_market_code,
             price_aggregator_code,
             header_verifier_code,
+            testing_sc_code,
             state: State::load_state(),
         }
     }
 
     async fn deploy(&mut self, is_sov_chain: bool) {
+        let code_path = MxscPath::new(self.esdt_safe_code.as_ref());
+
         let new_address = self
             .interactor
             .tx()
@@ -191,11 +220,11 @@ impl ContractInteract {
             .gas(110_000_000u64)
             .typed(proxy::EsdtSafeProxy)
             .init(is_sov_chain)
-            .code(&self.contract_code)
+            .code(code_path)
             .returns(ReturnsNewAddress)
-            .prepare_async()
             .run()
             .await;
+
         let new_address_bech32 = bech32::encode(&new_address);
         self.state.set_address(Bech32Address::from_bech32_string(
             new_address_bech32.clone(),
@@ -214,6 +243,7 @@ impl ContractInteract {
             },
         };
 
+        let fee_market_code_path = MxscPath::new(&self.fee_market_code);
         let new_address = self
             .interactor
             .tx()
@@ -221,11 +251,11 @@ impl ContractInteract {
             .gas(100_000_000u64)
             .typed(FeeMarketProxy)
             .init(self.state.current_address(), Option::Some(fee))
-            .code(&self.fee_market_code)
+            .code(fee_market_code_path)
             .returns(ReturnsNewAddress)
-            .prepare_async()
             .run()
             .await;
+
         let new_address_bech32 = bech32::encode(&new_address);
         self.state
             .set_fee_market_address(Bech32Address::from_bech32_string(
@@ -235,8 +265,9 @@ impl ContractInteract {
     }
 
     async fn deploy_price_aggregator(&mut self) {
+        let price_agggregator_code_path = MxscPath::new(&self.price_aggregator_code);
         let mut oracles = MultiValueEncoded::new();
-        let first_oracle_adress = managed_address!(&self.bob_address.clone());
+        let first_oracle_adress = managed_address!(&self.frank_address.clone());
         let second_oracle_adress = managed_address!(&self.alice_address.clone());
         let third_oracle_adress = managed_address!(&self.mike_address.clone());
         let forth_oracle_address = managed_address!(&self.judy_address.clone());
@@ -259,11 +290,11 @@ impl ContractInteract {
                 3u8,
                 oracles,
             )
-            .code(&self.price_aggregator_code)
+            .code(price_agggregator_code_path)
             .returns(ReturnsNewAddress)
-            .prepare_async()
             .run()
             .await;
+
         let new_address_bech32 = bech32::encode(&new_address);
         self.state
             .set_price_aggregator_address(Bech32Address::from_bech32_string(
@@ -273,18 +304,20 @@ impl ContractInteract {
     }
 
     async fn deploy_header_verifier_contract(&mut self) {
+        let header_verifier_code_path = MxscPath::new(&self.header_verifier_code);
+
         let new_address = self
             .interactor
             .tx()
             .from(&self.wallet_address)
             .gas(100_000_000u64)
-            .typed(proxy::EsdtSafeProxy)
-            .init(false)
-            .code(&self.header_verifier_code)
+            .typed(header_verifier_proxy::HeaderverifierProxy)
+            .init(MultiValueEncoded::new())
+            .code(header_verifier_code_path)
             .returns(ReturnsNewAddress)
-            .prepare_async()
             .run()
             .await;
+
         let new_address_bech32 = bech32::encode(&new_address);
         self.state
             .set_header_verifier_address(Bech32Address::from_bech32_string(
@@ -294,7 +327,49 @@ impl ContractInteract {
         println!("new header_verifier_address: {new_address_bech32}");
     }
 
+    async fn deploy_testing_contract(&mut self) {
+        let testing_sc_code_path = MxscPath::new(&self.testing_sc_code);
+
+        let new_address = self
+            .interactor
+            .tx()
+            .from(&self.wallet_address)
+            .gas(100_000_000u64)
+            .typed(TestingScProxy)
+            .init()
+            .code(testing_sc_code_path)
+            .returns(ReturnsNewAddress)
+            .run()
+            .await;
+
+        let new_address_bech32 = bech32::encode(&new_address);
+        self.state
+            .set_testing_sc_address(Bech32Address::from_bech32_string(
+                new_address_bech32.clone(),
+            ));
+
+        println!("new testing_sc_address: {new_address_bech32}");
+    }
+
+    async fn call_hello_endpoint(&mut self, value: u64) {
+        let response = self
+            .interactor
+            .tx()
+            .from(&self.wallet_address)
+            .to(&self.state.get_testing_sc_address())
+            .gas(50_000_000u64)
+            .typed(TestingScProxy)
+            .hello(value)
+            .returns(ReturnsResultUnmanaged)
+            .run()
+            .await;
+
+        println!("Result: {response:?}");
+    }
+
     async fn upgrade(&mut self) {
+        let code_path = MxscPath::new(&self.esdt_safe_code);
+
         let response = self
             .interactor
             .tx()
@@ -303,10 +378,9 @@ impl ContractInteract {
             .gas(30_000_000u64)
             .typed(proxy::EsdtSafeProxy)
             .upgrade()
-            .code(&self.contract_code)
+            .code(code_path)
             .code_metadata(CodeMetadata::UPGRADEABLE)
             .returns(ReturnsNewAddress)
-            .prepare_async()
             .run()
             .await;
 
@@ -324,7 +398,6 @@ impl ContractInteract {
             .typed(proxy::EsdtSafeProxy)
             .set_fee_market_address(fee_market_address)
             .returns(ReturnsResultUnmanaged)
-            .prepare_async()
             .run()
             .await;
 
@@ -343,7 +416,6 @@ impl ContractInteract {
             .typed(proxy::EsdtSafeProxy)
             .set_header_verifier_address(header_verifier_address)
             .returns(ReturnsResultUnmanaged)
-            .prepare_async()
             .run()
             .await;
 
@@ -359,7 +431,7 @@ impl ContractInteract {
         let token_nonce = 0u64;
         let token_amount = BigUint::<StaticApi>::from(20u64);
 
-        let to = &self.bob_address;
+        let to = &self.frank_address;
         let mut payments = PaymentsVec::new();
         payments.push(EsdtTokenPayment::new(
             TokenIdentifier::from(token_id),
@@ -378,7 +450,6 @@ impl ContractInteract {
                     .deposit(to, transfer_data)
                     .payment(payments)
                     .returns(error)
-                    .prepare_async()
                     .run()
                     .await;
             }
@@ -392,7 +463,6 @@ impl ContractInteract {
                     .deposit(to, transfer_data)
                     .payment(payments)
                     .returns(ReturnsResultUnmanaged)
-                    .prepare_async()
                     .run()
                     .await;
             }
@@ -411,7 +481,6 @@ impl ContractInteract {
             .typed(proxy::EsdtSafeProxy)
             .set_min_valid_signers(new_value)
             .returns(ReturnsResultUnmanaged)
-            .prepare_async()
             .run()
             .await;
 
@@ -430,7 +499,6 @@ impl ContractInteract {
             .typed(proxy::EsdtSafeProxy)
             .add_signers(signers)
             .returns(ReturnsResultUnmanaged)
-            .prepare_async()
             .run()
             .await;
 
@@ -449,7 +517,6 @@ impl ContractInteract {
             .typed(proxy::EsdtSafeProxy)
             .remove_signers(signers)
             .returns(ReturnsResultUnmanaged)
-            .prepare_async()
             .run()
             .await;
 
@@ -459,10 +526,10 @@ impl ContractInteract {
     async fn register_token(&mut self) {
         let egld_amount = BigUint::<StaticApi>::from(50_000_000_000_000_000u64);
 
-        let sov_token_id = TokenIdentifier::from_esdt_bytes(&b"SOV"[..]);
+        let sov_token_id = TokenIdentifier::from_esdt_bytes(b"x-SOV-101252");
         let token_type = EsdtTokenType::Fungible;
-        let token_display_name = ManagedBuffer::new_from_bytes(&b"SOVEREIGN"[..]);
-        let token_ticker = ManagedBuffer::new_from_bytes(&b"SVCT"[..]);
+        let token_display_name = ManagedBuffer::new_from_bytes(b"TESDT");
+        let token_ticker = ManagedBuffer::new_from_bytes(b"TEST");
         let num_decimals = 18u32;
 
         let response = self
@@ -481,40 +548,42 @@ impl ContractInteract {
             )
             .egld(egld_amount)
             .returns(ReturnsResultUnmanaged)
-            .prepare_async()
             .run()
             .await;
 
         println!("Result: {response:?}");
     }
 
-    async fn execute_operations(&mut self) {
-        let (tokens, data) = self.setup_payments().await;
-        let to = managed_address!(&self.bob_address);
-        let operation = Operation::new(to, tokens, data);
-        let operation_hash = self.get_operation_hash(&operation).await;
+    async fn execute_operations(
+        &mut self,
+        operation: &Operation<StaticApi>,
+        expect_error: Option<TxResponseStatus>,
+    ) {
+        let hash_of_hashes = sha256(&self.get_operation_hash(operation));
 
         let response = self
             .interactor
             .tx()
             .from(&self.wallet_address)
             .to(self.state.current_address())
-            .gas(30_000_000u64)
+            .gas(70_000_000u64)
             .typed(proxy::EsdtSafeProxy)
-            .execute_operations(operation_hash, operation)
-            .returns(ReturnsResultUnmanaged)
-            .prepare_async()
+            .execute_operations(&hash_of_hashes, operation)
+            .returns(ReturnsHandledOrError::new().returns(ReturnsResultUnmanaged))
             .run()
             .await;
 
-        println!("Result: {response:?}");
+        if let Err(err) = response {
+            assert!(err == expect_error.unwrap());
+        }
     }
 
     async fn execute_operations_with_error(&mut self, error_msg: ExpectError<'_>) {
-        let (tokens, data) = self.setup_payments().await;
-        let to = managed_address!(&self.bob_address);
-        let operation = Operation::new(to, tokens, data);
-        let operation_hash = self.get_operation_hash(&operation).await;
+        let tokens = self.setup_payments().await;
+        let operation_data = self.setup_operation_data(false).await;
+        let to = managed_address!(&self.frank_address);
+        let operation = Operation::new(to, tokens, operation_data);
+        let operation_hash = self.get_operation_hash(&operation);
 
         let response = self
             .interactor
@@ -523,9 +592,8 @@ impl ContractInteract {
             .to(self.state.current_address())
             .gas(30_000_000u64)
             .typed(proxy::EsdtSafeProxy)
-            .execute_operations(operation_hash, operation)
+            .execute_operations(&operation_hash, operation)
             .returns(error_msg)
-            .prepare_async()
             .run()
             .await;
 
@@ -544,7 +612,6 @@ impl ContractInteract {
             .typed(proxy::EsdtSafeProxy)
             .set_max_tx_batch_size(new_max_tx_batch_size)
             .returns(ReturnsResultUnmanaged)
-            .prepare_async()
             .run()
             .await;
 
@@ -563,7 +630,6 @@ impl ContractInteract {
             .typed(proxy::EsdtSafeProxy)
             .set_max_tx_batch_block_duration(new_max_tx_batch_block_duration)
             .returns(ReturnsResultUnmanaged)
-            .prepare_async()
             .run()
             .await;
 
@@ -578,7 +644,6 @@ impl ContractInteract {
             .typed(proxy::EsdtSafeProxy)
             .get_current_tx_batch()
             .returns(ReturnsResultUnmanaged)
-            .prepare_async()
             .run()
             .await;
     }
@@ -591,7 +656,6 @@ impl ContractInteract {
             .typed(proxy::EsdtSafeProxy)
             .get_first_batch_any_status()
             .returns(ReturnsResultUnmanaged)
-            .prepare_async()
             .run()
             .await;
     }
@@ -606,7 +670,6 @@ impl ContractInteract {
             .typed(proxy::EsdtSafeProxy)
             .get_batch(batch_id)
             .returns(ReturnsResultUnmanaged)
-            .prepare_async()
             .run()
             .await;
     }
@@ -620,7 +683,6 @@ impl ContractInteract {
             .typed(proxy::EsdtSafeProxy)
             .get_batch_status(batch_id)
             .returns(ReturnsResultUnmanaged)
-            .prepare_async()
             .run()
             .await;
     }
@@ -633,7 +695,6 @@ impl ContractInteract {
             .typed(proxy::EsdtSafeProxy)
             .first_batch_id()
             .returns(ReturnsResultUnmanaged)
-            .prepare_async()
             .run()
             .await;
 
@@ -648,7 +709,6 @@ impl ContractInteract {
             .typed(proxy::EsdtSafeProxy)
             .last_batch_id()
             .returns(ReturnsResultUnmanaged)
-            .prepare_async()
             .run()
             .await;
 
@@ -668,7 +728,6 @@ impl ContractInteract {
             .typed(proxy::EsdtSafeProxy)
             .set_max_bridged_amount(token_id, max_amount)
             .returns(ReturnsResultUnmanaged)
-            .prepare_async()
             .run()
             .await;
 
@@ -685,7 +744,6 @@ impl ContractInteract {
             .typed(proxy::EsdtSafeProxy)
             .max_bridged_amount(token_id)
             .returns(ReturnsResultUnmanaged)
-            .prepare_async()
             .run()
             .await;
 
@@ -702,7 +760,6 @@ impl ContractInteract {
             .typed(proxy::EsdtSafeProxy)
             .end_setup_phase()
             .returns(ReturnsResultUnmanaged)
-            .prepare_async()
             .run()
             .await;
 
@@ -721,7 +778,6 @@ impl ContractInteract {
             .typed(proxy::EsdtSafeProxy)
             .add_tokens_to_whitelist(tokens)
             .returns(ReturnsResultUnmanaged)
-            .prepare_async()
             .run()
             .await;
 
@@ -740,7 +796,6 @@ impl ContractInteract {
             .typed(proxy::EsdtSafeProxy)
             .remove_tokens_from_whitelist(tokens)
             .returns(ReturnsResultUnmanaged)
-            .prepare_async()
             .run()
             .await;
 
@@ -759,7 +814,6 @@ impl ContractInteract {
             .typed(proxy::EsdtSafeProxy)
             .add_tokens_to_blacklist(tokens)
             .returns(ReturnsResultUnmanaged)
-            .prepare_async()
             .run()
             .await;
 
@@ -778,7 +832,6 @@ impl ContractInteract {
             .typed(proxy::EsdtSafeProxy)
             .remove_tokens_from_blacklist(tokens)
             .returns(ReturnsResultUnmanaged)
-            .prepare_async()
             .run()
             .await;
 
@@ -793,7 +846,6 @@ impl ContractInteract {
             .typed(proxy::EsdtSafeProxy)
             .token_whitelist()
             .returns(ReturnsResultUnmanaged)
-            .prepare_async()
             .run()
             .await;
 
@@ -808,7 +860,6 @@ impl ContractInteract {
             .typed(proxy::EsdtSafeProxy)
             .token_blacklist()
             .returns(ReturnsResultUnmanaged)
-            .prepare_async()
             .run()
             .await;
 
@@ -825,7 +876,6 @@ impl ContractInteract {
             .typed(proxy::EsdtSafeProxy)
             .pause_endpoint()
             .returns(ReturnsResultUnmanaged)
-            .prepare_async()
             .run()
             .await;
 
@@ -842,7 +892,6 @@ impl ContractInteract {
             .typed(proxy::EsdtSafeProxy)
             .unpause_endpoint()
             .returns(ReturnsResultUnmanaged)
-            .prepare_async()
             .run()
             .await;
 
@@ -857,7 +906,6 @@ impl ContractInteract {
             .typed(proxy::EsdtSafeProxy)
             .paused_status()
             .returns(ReturnsResultUnmanaged)
-            .prepare_async()
             .run()
             .await;
 
@@ -869,81 +917,172 @@ impl ContractInteract {
             .interactor
             .tx()
             .from(&self.wallet_address)
-            .to(self.state.fee_market_address.clone().unwrap().as_address())
+            .to(self.state.get_fee_market_address())
             .gas(30_000_000u64)
             .typed(FeeMarketProxy)
             .remove_fee(TOKEN_ID)
             .returns(ReturnsResultUnmanaged)
-            .prepare_async()
             .run()
             .await;
 
         println!("Result: {response:?}");
     }
 
-    async fn setup_payments(
-        &mut self,
-    ) -> (
-        ManagedVec<StaticApi, OperationEsdtPayment<StaticApi>>,
-        OperationData<StaticApi>,
-    ) {
+    async fn header_verifier_set_esdt_address(&mut self) {
+        let response = self
+            .interactor
+            .tx()
+            .from(&self.wallet_address)
+            .to(self.state.get_header_verifier_address())
+            .gas(30_000_000u64)
+            .typed(HeaderverifierProxy)
+            .set_esdt_safe_address(self.state.current_address())
+            .run()
+            .await;
+
+        println!("Result: {response:?}");
+    }
+
+    async fn setup_operation(&mut self, has_transfer_data: bool) -> Operation<StaticApi> {
+        let to = managed_address!(&self.state.get_testing_sc_address());
+        let payments = self.setup_payments().await;
+
+        let operation_data = self.setup_operation_data(has_transfer_data).await;
+
+        Operation::new(to, payments, operation_data)
+    }
+
+    async fn setup_operation_data(&mut self, has_transfer_data: bool) -> OperationData<StaticApi> {
+        let op_sender = managed_address!(&self.wallet_address);
+
+        let transfer_data = if has_transfer_data {
+            let mut args = ManagedVec::new();
+            let value = BigUint::<StaticApi>::from(0u64);
+            args.push(ManagedBuffer::from(value.to_bytes_be()));
+
+            Some(TransferData::new(
+                30_000_000u64,
+                ManagedBuffer::from("hello"),
+                args,
+            ))
+        } else {
+            None
+        };
+
+        let operation_data: OperationData<StaticApi> = OperationData {
+            op_nonce: 1,
+            op_sender,
+            opt_transfer_data: transfer_data,
+        };
+
+        operation_data
+    }
+
+    async fn register_operations(&mut self, operation: &Operation<StaticApi>) {
+        let bls_signature = ManagedByteArray::default();
+        let operation_hash = self.get_operation_hash(operation);
+        let hash_of_hashes = sha256(&operation_hash);
+
+        let mut managed_operation_hashes =
+            MultiValueEncoded::<StaticApi, ManagedBuffer<StaticApi>>::new();
+
+        let managed_operation_hash = ManagedBuffer::<StaticApi>::from(&operation_hash);
+        let managed_hash_of_hashes = ManagedBuffer::<StaticApi>::from(&hash_of_hashes);
+
+        managed_operation_hashes.push(managed_operation_hash);
+
+        let header_verifier_address = self.state.get_header_verifier_address();
+
+        let response = self
+            .interactor
+            .tx()
+            .from(&self.wallet_address)
+            .to(header_verifier_address)
+            .typed(header_verifier_proxy::HeaderverifierProxy)
+            .register_bridge_operations(
+                bls_signature,
+                managed_hash_of_hashes,
+                managed_operation_hashes,
+            )
+            .returns(ReturnsResult)
+            .run()
+            .await;
+
+        println!("Result: {response:?}");
+    }
+
+    async fn setup_payments(&mut self) -> ManagedVec<StaticApi, OperationEsdtPayment<StaticApi>> {
         let mut tokens: ManagedVec<StaticApi, OperationEsdtPayment<StaticApi>> = ManagedVec::new();
-        let token_ids = vec![TOKEN_ID];
+        let token_ids = vec![TOKEN_ID_FOR_EXECUTE];
 
         for token_id in token_ids {
             let payment: OperationEsdtPayment<StaticApi> = OperationEsdtPayment {
                 token_identifier: token_id.into(),
-                token_nonce: 1,
-                token_data: EsdtTokenData::default(),
+                token_nonce: 0,
+                token_data: EsdtTokenData {
+                    token_type: EsdtTokenType::Fungible,
+                    amount: BigUint::from(10_000u64),
+                    frozen: false,
+                    hash: ManagedBuffer::new(),
+                    name: ManagedBuffer::from("SovToken"),
+                    attributes: ManagedBuffer::new(),
+                    creator: managed_address!(&self.frank_address),
+                    royalties: BigUint::zero(),
+                    uris: ManagedVec::new(),
+                },
             };
 
             tokens.push(payment);
         }
 
-        let op_sender = managed_address!(&self.wallet_address);
-        let data: OperationData<StaticApi> = OperationData {
-            op_nonce: 1,
-            op_sender,
-            opt_transfer_data: Option::None,
-        };
-
-        (tokens, data)
+        tokens
     }
 
-    async fn get_operation_hash(
-        &mut self,
-        operation: &Operation<StaticApi>,
-    ) -> ManagedBuffer<StaticApi> {
+    fn get_operation_hash(&mut self, operation: &Operation<StaticApi>) -> [u8; SHA256_RESULT_LEN] {
         let mut serialized_operation: ManagedBuffer<StaticApi> = ManagedBuffer::new();
         let _ = operation.top_encode(&mut serialized_operation);
-        let sha256 = sha256(&serialized_operation.to_vec());
-
-        ManagedBuffer::new_from_bytes(&sha256)
+        sha256(&serialized_operation.to_vec())
     }
-}
 
-#[tokio::test]
-#[ignore]
-async fn test_deploy() {
-    let mut interact = ContractInteract::new().await;
-    interact.deploy(false).await;
-    interact.deploy_price_aggregator().await;
-    interact.deploy_fee_market().await;
-    interact.set_fee_market_address().await;
-    interact.remove_fee().await;
-    interact.unpause_endpoint().await;
+    fn get_hash(&mut self, operation: &ManagedBuffer<StaticApi>) -> ManagedBuffer<StaticApi> {
+        let mut array = [0; 1024];
+
+        let len = {
+            let byte_array = operation.load_to_byte_array(&mut array);
+            byte_array.len()
+        };
+
+        let trimmed_slice = &array[..len];
+        let hash = sha256(trimmed_slice);
+
+        ManagedBuffer::from(&hash)
+    }
 }
 
 #[tokio::test]
 #[ignore]
 async fn test_deploy_sov() {
     let mut interact = ContractInteract::new().await;
-    interact.deploy(true).await;
-    interact.deploy_price_aggregator().await;
+    interact.deploy(false).await;
     interact.deploy_fee_market().await;
     interact.set_fee_market_address().await;
     interact.remove_fee().await;
     interact.deploy_header_verifier_contract().await;
     interact.set_header_verifier_address().await;
     interact.unpause_endpoint().await;
+    interact.header_verifier_set_esdt_address().await;
+    interact.deploy_testing_contract().await;
+    interact.register_token().await;
+
+    let operation = interact.setup_operation(true).await;
+    interact.register_operations(&operation).await;
+    interact
+        .execute_operations(
+            &operation,
+            Some(TxResponseStatus::new(
+                ReturnCode::UserError,
+                "Value should be greater than 0",
+            )),
+        )
+        .await;
 }

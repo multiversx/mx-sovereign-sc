@@ -222,7 +222,7 @@ pub trait CreateTxModule:
                     .typed(FeeMarketProxy)
                     .subtract_fee(caller, total_tokens_for_fees, OptionalValue::Some(gas))
                     .payment(fee)
-                    .async_call_and_exit();
+                    .sync_call();
             }
             OptionalValue::None => (),
         };
