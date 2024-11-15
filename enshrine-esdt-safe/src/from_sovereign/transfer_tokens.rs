@@ -176,7 +176,7 @@ pub trait TransferTokensModule:
 
         self.tx()
             .to(header_verifier_address)
-            .typed(header_verifier_proxy::HeaderverifierProxy)
+            .typed(HeaderverifierProxy)
             .lock_operation_hash(hash_of_hashes, operation_hash)
             .sync_call();
     }

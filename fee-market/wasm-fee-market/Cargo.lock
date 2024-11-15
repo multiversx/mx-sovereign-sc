@@ -46,11 +46,7 @@ dependencies = [
 ]
 
 [[package]]
-<<<<<<<< HEAD:fee-market/wasm-fee-market-view/Cargo.lock
-name = "fee-market-view-wasm"
-========
 name = "fee-market-wasm"
->>>>>>>> feat/beta:fee-market/wasm-fee-market/Cargo.lock
 version = "0.0.0"
 dependencies = [
  "fee-market",

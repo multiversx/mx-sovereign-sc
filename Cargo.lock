@@ -197,7 +197,7 @@ dependencies = [
 name = "bls-signature"
 version = "0.0.0"
 dependencies = [
- "multiversx-sc",
+ "multiversx-sc 0.54.1",
  "multiversx-sc-scenario",
  "transaction",
 ]
@@ -239,8 +239,8 @@ checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 name = "chain-config"
 version = "0.0.0"
 dependencies = [
- "multiversx-sc",
- "multiversx-sc-modules",
+ "multiversx-sc 0.54.1",
+ "multiversx-sc-modules 0.54.1",
  "multiversx-sc-scenario",
  "num-bigint",
 ]
@@ -258,8 +258,8 @@ name = "chain-factory"
 version = "0.0.0"
 dependencies = [
  "chain-config",
- "multiversx-sc",
- "multiversx-sc-modules",
+ "multiversx-sc 0.54.1",
+ "multiversx-sc-modules 0.53.2",
  "multiversx-sc-scenario",
  "num-bigint",
  "proxies",
@@ -503,8 +503,8 @@ dependencies = [
  "header-verifier",
  "hex",
  "max-bridged-amount-module",
- "multiversx-sc",
- "multiversx-sc-modules",
+ "multiversx-sc 0.54.1",
+ "multiversx-sc-modules 0.54.1",
  "multiversx-sc-scenario",
  "num-bigint",
  "num-traits",
@@ -573,8 +573,8 @@ dependencies = [
  "header-verifier",
  "hex",
  "max-bridged-amount-module",
- "multiversx-sc",
- "multiversx-sc-modules",
+ "multiversx-sc 0.54.1",
+ "multiversx-sc-modules 0.54.1",
  "multiversx-sc-scenario",
  "num-bigint",
  "num-traits",
@@ -605,7 +605,7 @@ name = "fee-market"
 version = "0.0.0"
 dependencies = [
  "bls-signature",
- "multiversx-sc",
+ "multiversx-sc 0.54.1",
  "multiversx-sc-scenario",
  "num-bigint",
  "proxies",
@@ -794,7 +794,7 @@ name = "header-verifier"
 version = "0.0.0"
 dependencies = [
  "bls-signature",
- "multiversx-sc",
+ "multiversx-sc 0.54.1",
  "multiversx-sc-scenario",
  "num-bigint",
  "proxies",
@@ -1202,7 +1202,7 @@ checksum = "a7a70ba024b9dc04c27ea2f0c0548feb474ec5c54bba33a7f72f873a39d07b24"
 name = "max-bridged-amount-module"
 version = "0.0.0"
 dependencies = [
- "multiversx-sc",
+ "multiversx-sc 0.54.1",
  "multiversx-sc-scenario",
 ]
 
@@ -1294,6 +1294,20 @@ checksum = "b59072fa0624b55ae5ae3fa6bfa91515bbeb4ac440214bc4a509e2c8806d6e9f"
 
 [[package]]
 name = "multiversx-sc"
+version = "0.53.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "75ea89a26f0aacda21437a8ae5ccfbefab99d8191942b3d2eddbcbf84f9866d7"
+dependencies = [
+ "bitflags",
+ "hex-literal",
+ "multiversx-sc-codec",
+ "multiversx-sc-derive 0.53.2",
+ "num-traits",
+ "unwrap-infallible",
+]
+
+[[package]]
+name = "multiversx-sc"
 version = "0.54.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c4abf60eb027d0b005a1778dc9d670a473065ab8e5bea22eeb6ace7f118dc36f"
@@ -1302,7 +1316,7 @@ dependencies = [
  "hex-literal",
  "multiversx-chain-core",
  "multiversx-sc-codec",
- "multiversx-sc-derive",
+ "multiversx-sc-derive 0.54.1",
  "num-traits",
  "unwrap-infallible",
 ]
@@ -1333,6 +1347,19 @@ dependencies = [
 
 [[package]]
 name = "multiversx-sc-derive"
+version = "0.53.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4c17fdf90fafca2f19085ae67b0502d9f71bf8ab1be3c83808eb88e02a8c18b9"
+dependencies = [
+ "hex",
+ "proc-macro2",
+ "quote",
+ "radix_trie",
+ "syn",
+]
+
+[[package]]
+name = "multiversx-sc-derive"
 version = "0.54.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3caeda89d90190c4002f7482e934e3981968d6853f70f865d23c8d2938bd907b"
@@ -1355,7 +1382,7 @@ dependencies = [
  "convert_case",
  "hex",
  "lazy_static",
- "multiversx-sc",
+ "multiversx-sc 0.54.1",
  "rustc_version",
  "semver",
  "serde",
@@ -1368,11 +1395,20 @@ dependencies = [
 
 [[package]]
 name = "multiversx-sc-modules"
+version = "0.53.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "daeb48acbd39255868a3241798df2f85050f0ae8d82d6417bd2cd0e30a241855"
+dependencies = [
+ "multiversx-sc 0.53.2",
+]
+
+[[package]]
+name = "multiversx-sc-modules"
 version = "0.54.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "624f7a758e2d5dc3e87fd095cb76d47f3cf4b0cee41b5415aa95b8e323ffe162"
 dependencies = [
- "multiversx-sc",
+ "multiversx-sc 0.54.1",
 ]
 
 [[package]]
@@ -1390,7 +1426,7 @@ dependencies = [
  "multiversx-chain-scenario-format",
  "multiversx-chain-vm",
  "multiversx-chain-vm-executor",
- "multiversx-sc",
+ "multiversx-sc 0.54.1",
  "multiversx-sc-meta-lib",
  "num-bigint",
  "num-traits",
@@ -1694,7 +1730,7 @@ dependencies = [
 name = "proxies"
 version = "0.1.0"
 dependencies = [
- "multiversx-sc",
+ "multiversx-sc 0.54.1",
  "transaction",
  "tx-batch-module",
 ]
@@ -1842,7 +1878,7 @@ dependencies = [
  "clap",
  "esdt-safe",
  "fee-market",
- "multiversx-sc",
+ "multiversx-sc 0.54.1",
  "multiversx-sc-scenario",
  "multiversx-sc-snippets",
  "proxies",
@@ -2035,7 +2071,7 @@ dependencies = [
 name = "setup-phase"
 version = "0.0.0"
 dependencies = [
- "multiversx-sc",
+ "multiversx-sc 0.54.1",
  "multiversx-sc-scenario",
 ]
 
@@ -2194,7 +2230,7 @@ dependencies = [
 name = "testing-sc"
 version = "0.0.0"
 dependencies = [
- "multiversx-sc",
+ "multiversx-sc 0.54.1",
  "multiversx-sc-scenario",
  "num-bigint",
 ]
@@ -2237,7 +2273,7 @@ name = "token-handler"
 version = "0.0.0"
 dependencies = [
  "chain-factory",
- "multiversx-sc",
+ "multiversx-sc 0.54.1",
  "multiversx-sc-scenario",
  "num-bigint",
  "proxies",
@@ -2257,7 +2293,7 @@ name = "token-whitelist"
 version = "0.0.0"
 dependencies = [
  "bls-signature",
- "multiversx-sc",
+ "multiversx-sc 0.54.1",
  "multiversx-sc-scenario",
  "setup-phase",
  "utils",
@@ -2366,7 +2402,7 @@ dependencies = [
 name = "transaction"
 version = "0.0.0"
 dependencies = [
- "multiversx-sc",
+ "multiversx-sc 0.54.1",
 ]
 
 [[package]]
@@ -2379,7 +2415,7 @@ checksum = "e421abadd41a4225275504ea4d6566923418b7f05506fbc9c0fe86ba7396114b"
 name = "tx-batch-module"
 version = "0.0.0"
 dependencies = [
- "multiversx-sc",
+ "multiversx-sc 0.54.1",
  "multiversx-sc-scenario",
  "transaction",
 ]
@@ -2457,7 +2493,7 @@ name = "utils"
 version = "0.0.0"
 dependencies = [
  "bls-signature",
- "multiversx-sc",
+ "multiversx-sc 0.54.1",
 ]
 
 [[package]]

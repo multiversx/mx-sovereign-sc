@@ -5,11 +5,7 @@
 # ##########################################
 
 [package]
-<<<<<<<< HEAD:fee-market/wasm-fee-market-view/Cargo.toml
 name = "fee-market-view-wasm"
-========
-name = "fee-market-wasm"
->>>>>>>> feat/beta:fee-market/wasm-fee-market/Cargo.toml
 version = "0.0.0"
 edition = "2021"
 publish = false
