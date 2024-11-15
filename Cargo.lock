@@ -1900,6 +1900,7 @@ dependencies = [
  "max-bridged-amount-module",
  "multiversx-sc 0.54.1",
  "multiversx-sc-snippets",
+ "proxies",
  "serde",
  "setup-phase",
  "token-handler",

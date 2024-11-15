@@ -42,6 +42,9 @@ path = "../../header-verifier"
 [dependencies.token-handler]
 path = "../../token-handler"
 
+[dependencies.proxies]
+path = "../../common/proxies"
+
 [dependencies.multiversx-sc-snippets]
 version = "0.54.1"
 

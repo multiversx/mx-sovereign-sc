@@ -3,7 +3,6 @@
 #![allow(dead_code)]
 
 mod config;
-mod proxies;
 
 use config::Config;
 use fee_market_proxy::*;
@@ -19,6 +18,10 @@ use transaction::*;
 const STATE_FILE: &str = "state.toml";
 const TOKEN_ID: &[u8] = b"SVT-805b28";
 const WHITELIST_TOKEN_ID: &[u8] = b"CHOCOLATE-daf625";
+const FEE_MARKET_CODE_PATH: &str = "../fee-market/output/fee-market.mxsc.json";
+const HEADER_VERIFIER_CODE_PATH: &str = "../header-verifier/output/header-verifier.mxsc.json";
+const ENSHRINE_ESDT_SAFE_CODE_PATH: &str = "output/enshrine-esdt-safe.mxsc.json";
+const TOKEN_HANDLER_CODE_PATH: &str = "../token-handler/output/token-handler.mxsc.json";
 
 type OptionalTransferData<M> =
     OptionalValue<MultiValue3<GasLimit, ManagedBuffer<M>, ManagedVec<M, ManagedBuffer<M>>>>;
@@ -78,7 +81,6 @@ struct State {
     header_verifier_address: Option<Bech32Address>,
     fee_market_address: Option<Bech32Address>,
     token_handler_address: Option<Bech32Address>,
-    price_aggregator_address: Option<Bech32Address>,
 }
 
 impl State {
@@ -111,10 +113,6 @@ impl State {
         self.token_handler_address = Some(address);
     }
 
-    pub fn set_price_aggregator_address(&mut self, address: Bech32Address) {
-        self.price_aggregator_address = Some(address);
-    }
-
     /// Returns the contract address
     pub fn current_address(&self) -> &Bech32Address {
         self.contract_address
@@ -139,11 +137,10 @@ struct ContractInteract {
     alice_address: Address,
     mike_address: Address,
     judy_address: Address,
-    contract_code: BytesValue,
-    token_handler_code: BytesValue,
-    fee_market_code: BytesValue,
-    header_verifier_code: BytesValue,
-    price_aggregator_code: BytesValue,
+    enshrine_esdt_safe_code: String,
+    token_handler_code: String,
+    fee_market_code: String,
+    header_verifier_code: String,
     state: State,
 }
 
@@ -159,31 +156,6 @@ impl ContractInteract {
         let mike_address = interactor.register_wallet(test_wallets::mike()).await;
         let judy_address = interactor.register_wallet(test_wallets::judy()).await;
 
-        let contract_code = BytesValue::interpret_from(
-            "mxsc:../output/enshrine-esdt-safe.mxsc.json",
-            &InterpreterContext::default(),
-        );
-
-        let token_handler_code = BytesValue::interpret_from(
-            "mxsc:contract-codes/token-handler.mxsc.json",
-            &InterpreterContext::default(),
-        );
-
-        let fee_market_code = BytesValue::interpret_from(
-            "mxsc:contract-codes/fee-market.mxsc.json",
-            &InterpreterContext::default(),
-        );
-
-        let header_verifier_code = BytesValue::interpret_from(
-            "mxsc:contract-codes/header-verifier.mxsc.json",
-            &InterpreterContext::default(),
-        );
-
-        let price_aggregator_code = BytesValue::interpret_from(
-            "mxsc:contract-codes/multiversx-price-aggregator-sc.mxsc.json",
-            &InterpreterContext::default(),
-        );
-
         ContractInteract {
             interactor,
             wallet_address,
@@ -191,11 +163,10 @@ impl ContractInteract {
             alice_address,
             mike_address,
             judy_address,
-            contract_code,
-            token_handler_code,
-            fee_market_code,
-            header_verifier_code,
-            price_aggregator_code,
+            enshrine_esdt_safe_code: ENSHRINE_ESDT_SAFE_CODE_PATH.to_string(),
+            token_handler_code: TOKEN_HANDLER_CODE_PATH.to_string(),
+            fee_market_code: FEE_MARKET_CODE_PATH.to_string(),
+            header_verifier_code: HEADER_VERIFIER_CODE_PATH.to_string(),
             state: State::load_state(),
         }
     }
@@ -211,19 +182,20 @@ impl ContractInteract {
             .unwrap()
             .as_address());
 
+        let code_path = MxscPath::new(self.enshrine_esdt_safe_code.as_ref());
         let new_address = self
             .interactor
             .tx()
             .from(&self.wallet_address)
             .gas(100_000_000u64)
-            .typed(proxy::EnshrineEsdtSafeProxy)
+            .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
             .init(
                 is_sovereign_chain,
                 token_handler_address,
                 opt_wegld_identifier,
                 opt_sov_token_prefix,
             )
-            .code(&self.contract_code)
+            .code(code_path)
             .returns(ReturnsNewAddress)
             .run()
             .await;
@@ -239,6 +211,7 @@ impl ContractInteract {
         let bls_pub_key: ManagedBuffer<StaticApi> = ManagedBuffer::new();
         let mut bls_pub_keys = MultiValueEncoded::new();
         bls_pub_keys.push(bls_pub_key);
+        let header_verifier_code_path = MxscPath::new(&self.header_verifier_code);
 
         let new_address = self
             .interactor
@@ -247,7 +220,7 @@ impl ContractInteract {
             .gas(100_000_000u64)
             .typed(header_verifier_proxy::HeaderverifierProxy)
             .init(bls_pub_keys)
-            .code(&self.header_verifier_code)
+            .code(header_verifier_code_path)
             .returns(ReturnsNewAddress)
             .run()
             .await;
@@ -269,6 +242,8 @@ impl ContractInteract {
             },
         };
 
+        let fee_market_code_path = MxscPath::new(&self.fee_market_code);
+
         let new_address = self
             .interactor
             .tx()
@@ -276,7 +251,7 @@ impl ContractInteract {
             .gas(100_000_000u64)
             .typed(fee_market_proxy::FeeMarketProxy)
             .init(self.state.current_address(), Option::Some(fee))
-            .code(&self.fee_market_code)
+            .code(fee_market_code_path)
             .returns(ReturnsNewAddress)
             .run()
             .await;
@@ -289,6 +264,8 @@ impl ContractInteract {
     }
 
     async fn deploy_token_handler(&mut self) {
+        let token_handler_code_path = MxscPath::new(&self.token_handler_code);
+
         let new_address = self
             .interactor
             .tx()
@@ -296,7 +273,7 @@ impl ContractInteract {
             .gas(100_000_000u64)
             .typed(token_handler_proxy::TokenHandlerProxy)
             .init()
-            .code(&self.token_handler_code)
+            .code(token_handler_code_path)
             .returns(ReturnsNewAddress)
             .run()
             .await;
@@ -308,48 +285,10 @@ impl ContractInteract {
         println!("new token_handler_address: {new_address_bech32}");
     }
 
-    async fn deploy_price_aggregator(&mut self) {
-        let mut oracles = MultiValueEncoded::new();
-        let first_oracle_adress = managed_address!(&self.bob_address.clone());
-        let second_oracle_adress = managed_address!(&self.alice_address.clone());
-        let third_oracle_adress = managed_address!(&self.mike_address.clone());
-        let forth_oracle_address = managed_address!(&self.judy_address.clone());
-        oracles.push(first_oracle_adress);
-        oracles.push(second_oracle_adress);
-        oracles.push(third_oracle_adress);
-        oracles.push(forth_oracle_address);
-
-        let new_address = self
-            .interactor
-            .tx()
-            .from(&self.wallet_address)
-            .gas(100_000_000u64)
-            .typed(price_aggregator_proxy::PriceAggregatorProxy)
-            .init(
-                TokenIdentifier::from_esdt_bytes(TOKEN_ID),
-                BigUint::from(1u64),
-                BigUint::from(1u64),
-                3u8,
-                3u8,
-                oracles,
-            )
-            .code(&self.price_aggregator_code)
-            .returns(ReturnsNewAddress)
-            .run()
-            .await;
-        let new_address_bech32 = bech32::encode(&new_address);
-        self.state
-            .set_price_aggregator_address(Bech32Address::from_bech32_string(
-                new_address_bech32.clone(),
-            ));
-        println!("new price_aggregator_address: {new_address_bech32}");
-    }
-
     async fn deploy_all(&mut self, is_sov_chain: bool) {
         self.deploy_token_handler().await;
         self.deploy(is_sov_chain).await;
         self.deploy_header_verifier().await;
-        self.deploy_price_aggregator().await;
         self.deploy_fee_market().await;
         self.unpause_endpoint().await;
     }
@@ -361,15 +300,16 @@ impl ContractInteract {
     }
 
     async fn upgrade(&mut self) {
+        let code_path = MxscPath::new(&self.enshrine_esdt_safe_code);
         let response = self
             .interactor
             .tx()
             .to(self.state.current_address())
             .from(&self.wallet_address)
             .gas(30_000_000u64)
-            .typed(proxy::EnshrineEsdtSafeProxy)
+            .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
             .upgrade()
-            .code(&self.contract_code)
+            .code(code_path)
             .code_metadata(CodeMetadata::UPGRADEABLE)
             .returns(ReturnsNewAddress)
             .run()
@@ -387,7 +327,7 @@ impl ContractInteract {
             .from(&self.wallet_address)
             .to(self.state.current_address())
             .gas(30_000_000u64)
-            .typed(proxy::EnshrineEsdtSafeProxy)
+            .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
             .set_fee_market_address(fee_market_address)
             .returns(ReturnsResultUnmanaged)
             .run()
@@ -405,7 +345,7 @@ impl ContractInteract {
             .from(&self.wallet_address)
             .to(self.state.current_address())
             .gas(30_000_000u64)
-            .typed(proxy::EnshrineEsdtSafeProxy)
+            .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
             .set_header_verifier_address(header_verifier_address)
             .returns(ReturnsResultUnmanaged)
             .run()
@@ -423,7 +363,7 @@ impl ContractInteract {
             .from(&self.wallet_address)
             .to(self.state.current_address())
             .gas(30_000_000u64)
-            .typed(proxy::EnshrineEsdtSafeProxy)
+            .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
             .set_max_user_tx_gas_limit(max_user_tx_gas_limit)
             .returns(ReturnsResultUnmanaged)
             .run()
@@ -441,7 +381,7 @@ impl ContractInteract {
             .from(&self.wallet_address)
             .to(self.state.current_address())
             .gas(30_000_000u64)
-            .typed(proxy::EnshrineEsdtSafeProxy)
+            .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
             .set_banned_endpoint(endpoint_name)
             .returns(ReturnsResultUnmanaged)
             .run()
@@ -478,7 +418,7 @@ impl ContractInteract {
                     .from(&self.wallet_address)
                     .to(self.state.current_address())
                     .gas(30_000_000u64)
-                    .typed(proxy::EnshrineEsdtSafeProxy)
+                    .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
                     .deposit(to, transfer_data)
                     .payment(payments)
                     .returns(error)
@@ -491,7 +431,7 @@ impl ContractInteract {
                     .from(&self.wallet_address)
                     .to(self.state.current_address())
                     .gas(30_000_000u64)
-                    .typed(proxy::EnshrineEsdtSafeProxy)
+                    .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
                     .deposit(to, transfer_data)
                     .payment(payments)
                     .returns(ReturnsResultUnmanaged)
@@ -510,7 +450,7 @@ impl ContractInteract {
             .from(&self.wallet_address)
             .to(self.state.current_address())
             .gas(30_000_000u64)
-            .typed(proxy::EnshrineEsdtSafeProxy)
+            .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
             .set_min_valid_signers(new_value)
             .returns(ReturnsResultUnmanaged)
             .run()
@@ -528,7 +468,7 @@ impl ContractInteract {
             .from(&self.wallet_address)
             .to(self.state.current_address())
             .gas(30_000_000u64)
-            .typed(proxy::EnshrineEsdtSafeProxy)
+            .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
             .add_signers(signers)
             .returns(ReturnsResultUnmanaged)
             .run()
@@ -546,7 +486,7 @@ impl ContractInteract {
             .from(&self.wallet_address)
             .to(self.state.current_address())
             .gas(30_000_000u64)
-            .typed(proxy::EnshrineEsdtSafeProxy)
+            .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
             .remove_signers(signers)
             .returns(ReturnsResultUnmanaged)
             .run()
@@ -569,7 +509,7 @@ impl ContractInteract {
             .from(&self.wallet_address)
             .to(self.state.current_address())
             .gas(30_000_000u64)
-            .typed(proxy::EnshrineEsdtSafeProxy)
+            .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
             .execute_operations(hash_of_hashes, operation)
             .returns(ReturnsResultUnmanaged)
             .run()
@@ -591,7 +531,7 @@ impl ContractInteract {
             .from(&self.wallet_address)
             .to(self.state.current_address())
             .gas(30_000_000u64)
-            .typed(proxy::EnshrineEsdtSafeProxy)
+            .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
             .register_new_token_id(tokens)
             .payment((
                 TokenIdentifier::from(token_id.as_str()),
@@ -614,7 +554,7 @@ impl ContractInteract {
             .from(&self.wallet_address)
             .to(self.state.current_address())
             .gas(30_000_000u64)
-            .typed(proxy::EnshrineEsdtSafeProxy)
+            .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
             .set_max_tx_batch_size(new_max_tx_batch_size)
             .returns(ReturnsResultUnmanaged)
             .run()
@@ -632,7 +572,7 @@ impl ContractInteract {
             .from(&self.wallet_address)
             .to(self.state.current_address())
             .gas(30_000_000u64)
-            .typed(proxy::EnshrineEsdtSafeProxy)
+            .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
             .set_max_tx_batch_block_duration(new_max_tx_batch_block_duration)
             .returns(ReturnsResultUnmanaged)
             .run()
@@ -646,7 +586,7 @@ impl ContractInteract {
             .interactor
             .query()
             .to(self.state.current_address())
-            .typed(proxy::EnshrineEsdtSafeProxy)
+            .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
             .get_current_tx_batch()
             .returns(ReturnsResultUnmanaged)
             .run()
@@ -658,7 +598,7 @@ impl ContractInteract {
             .interactor
             .query()
             .to(self.state.current_address())
-            .typed(proxy::EnshrineEsdtSafeProxy)
+            .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
             .get_first_batch_any_status()
             .returns(ReturnsResultUnmanaged)
             .run()
@@ -672,7 +612,7 @@ impl ContractInteract {
             .interactor
             .query()
             .to(self.state.current_address())
-            .typed(proxy::EnshrineEsdtSafeProxy)
+            .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
             .get_batch(batch_id)
             .returns(ReturnsResultUnmanaged)
             .run()
@@ -685,7 +625,7 @@ impl ContractInteract {
         self.interactor
             .query()
             .to(self.state.current_address())
-            .typed(proxy::EnshrineEsdtSafeProxy)
+            .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
             .get_batch_status(batch_id)
             .returns(ReturnsResultUnmanaged)
             .run()
@@ -697,7 +637,7 @@ impl ContractInteract {
             .interactor
             .query()
             .to(self.state.current_address())
-            .typed(proxy::EnshrineEsdtSafeProxy)
+            .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
             .first_batch_id()
             .returns(ReturnsResultUnmanaged)
             .run()
@@ -711,7 +651,7 @@ impl ContractInteract {
             .interactor
             .query()
             .to(self.state.current_address())
-            .typed(proxy::EnshrineEsdtSafeProxy)
+            .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
             .last_batch_id()
             .returns(ReturnsResultUnmanaged)
             .run()
@@ -730,7 +670,7 @@ impl ContractInteract {
             .from(&self.wallet_address)
             .to(self.state.current_address())
             .gas(30_000_000u64)
-            .typed(proxy::EnshrineEsdtSafeProxy)
+            .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
             .set_max_bridged_amount(token_id, max_amount)
             .returns(ReturnsResultUnmanaged)
             .run()
@@ -746,7 +686,7 @@ impl ContractInteract {
             .interactor
             .query()
             .to(self.state.current_address())
-            .typed(proxy::EnshrineEsdtSafeProxy)
+            .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
             .max_bridged_amount(token_id)
             .returns(ReturnsResultUnmanaged)
             .run()
@@ -762,7 +702,7 @@ impl ContractInteract {
             .from(&self.wallet_address)
             .to(self.state.current_address())
             .gas(30_000_000u64)
-            .typed(proxy::EnshrineEsdtSafeProxy)
+            .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
             .end_setup_phase()
             .returns(ReturnsResultUnmanaged)
             .run()
@@ -794,7 +734,7 @@ impl ContractInteract {
             .from(&self.wallet_address)
             .to(self.state.current_address())
             .gas(30_000_000u64)
-            .typed(proxy::EnshrineEsdtSafeProxy)
+            .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
             .add_tokens_to_whitelist(tokens)
             .returns(ReturnsResultUnmanaged)
             .run()
@@ -812,7 +752,7 @@ impl ContractInteract {
             .from(&self.wallet_address)
             .to(self.state.current_address())
             .gas(30_000_000u64)
-            .typed(proxy::EnshrineEsdtSafeProxy)
+            .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
             .remove_tokens_from_whitelist(tokens)
             .returns(ReturnsResultUnmanaged)
             .run()
@@ -830,7 +770,7 @@ impl ContractInteract {
             .from(&self.wallet_address)
             .to(self.state.current_address())
             .gas(30_000_000u64)
-            .typed(proxy::EnshrineEsdtSafeProxy)
+            .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
             .add_tokens_to_blacklist(tokens)
             .returns(ReturnsResultUnmanaged)
             .run()
@@ -848,7 +788,7 @@ impl ContractInteract {
             .from(&self.wallet_address)
             .to(self.state.current_address())
             .gas(30_000_000u64)
-            .typed(proxy::EnshrineEsdtSafeProxy)
+            .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
             .remove_tokens_from_blacklist(tokens)
             .returns(ReturnsResultUnmanaged)
             .run()
@@ -862,7 +802,7 @@ impl ContractInteract {
             .interactor
             .query()
             .to(self.state.current_address())
-            .typed(proxy::EnshrineEsdtSafeProxy)
+            .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
             .token_whitelist()
             .returns(ReturnsResultUnmanaged)
             .run()
@@ -876,7 +816,7 @@ impl ContractInteract {
             .interactor
             .query()
             .to(self.state.current_address())
-            .typed(proxy::EnshrineEsdtSafeProxy)
+            .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
             .token_blacklist()
             .returns(ReturnsResultUnmanaged)
             .run()
@@ -892,7 +832,7 @@ impl ContractInteract {
             .from(&self.wallet_address)
             .to(self.state.current_address())
             .gas(30_000_000u64)
-            .typed(proxy::EnshrineEsdtSafeProxy)
+            .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
             .pause_endpoint()
             .returns(ReturnsResultUnmanaged)
             .run()
@@ -908,7 +848,7 @@ impl ContractInteract {
             .from(&self.wallet_address)
             .to(self.state.current_address())
             .gas(30_000_000u64)
-            .typed(proxy::EnshrineEsdtSafeProxy)
+            .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
             .unpause_endpoint()
             .returns(ReturnsResultUnmanaged)
             .run()
@@ -922,7 +862,7 @@ impl ContractInteract {
             .interactor
             .query()
             .to(self.state.current_address())
-            .typed(proxy::EnshrineEsdtSafeProxy)
+            .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
             .paused_status()
             .returns(ReturnsResultUnmanaged)
             .run()
@@ -970,7 +910,7 @@ async fn test_deposit_no_payment() {
         .from(from)
         .to(to_contract)
         .gas(30_000_000u64)
-        .typed(proxy::EnshrineEsdtSafeProxy)
+        .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
         .deposit(to, transfer_data)
         .returns(ExpectError(4, "Nothing to transfer"))
         .run()
@@ -1051,7 +991,7 @@ async fn test_deposit_too_many_payments() {
         .from(from)
         .to(to_contract)
         .gas(30_000_000u64)
-        .typed(proxy::EnshrineEsdtSafeProxy)
+        .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
         .deposit(to, transfer_data)
         .payment(payments)
         .returns(ExpectError(4, "Too many tokens"))
@@ -1107,7 +1047,7 @@ async fn test_deposit_sov_chain() {
         .from(interact.wallet_address)
         .to(interact.state.current_address())
         .gas(30_000_000u64)
-        .typed(proxy::EnshrineEsdtSafeProxy)
+        .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
         .deposit(interact.state.current_address(), transfer_data)
         .payment(payments)
         .returns(ReturnsResultUnmanaged)
