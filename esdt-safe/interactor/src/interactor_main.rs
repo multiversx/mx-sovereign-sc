@@ -80,7 +80,6 @@ async fn main() {
 struct State {
     contract_address: Option<Bech32Address>,
     fee_market_address: Option<Bech32Address>,
-    price_aggregator_address: Option<Bech32Address>,
     header_verifier_address: Option<Bech32Address>,
     testing_sc_address: Option<Bech32Address>,
 }
@@ -105,10 +104,6 @@ impl State {
 
     pub fn set_fee_market_address(&mut self, address: Bech32Address) {
         self.fee_market_address = Some(address);
-    }
-
-    pub fn set_price_aggregator_address(&mut self, address: Bech32Address) {
-        self.price_aggregator_address = Some(address);
     }
 
     pub fn set_header_verifier_address(&mut self, address: Bech32Address) {
