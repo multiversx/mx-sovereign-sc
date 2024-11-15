@@ -7,6 +7,7 @@ members = [
   "chain-factory",
   "chain-factory/meta",
   "esdt-safe",
+  "esdt-safe/interactor",
   "esdt-safe/meta",
   "esdt-safe/interactor",
   "fee-market",
@@ -16,5 +17,7 @@ members = [
   "enshrine-esdt-safe",
   "enshrine-esdt-safe/meta",
   "token-handler",
-  "token-handler/meta"
+  "token-handler/meta",
+  "testing-sc",
+  "testing-sc/meta",
 ]
