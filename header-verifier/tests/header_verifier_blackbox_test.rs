@@ -1,5 +1,5 @@
 use bls_signature::BlsSignature;
-use header_verifier::{header_verifier_proxy, Headerverifier, OperationHashStatus};
+use header_verifier::{Headerverifier, OperationHashStatus};
 use multiversx_sc::types::ManagedBuffer;
 use multiversx_sc::{
     api::ManagedTypeApi,
@@ -127,7 +127,7 @@ impl HeaderVerifierTestState {
             .tx()
             .from(caller)
             .to(HEADER_VERIFIER_ADDRESS)
-            .typed(header_verifier_proxy::HeaderverifierProxy)
+            .typed(HeaderverifierProxy)
             .lock_operation_hash(hash_of_hashes, operation_hash);
 
         match expected_result {

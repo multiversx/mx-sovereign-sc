@@ -89,9 +89,6 @@ impl TokenHandlerTestState {
                 FACTORY_ADDRESS,
                 FACTORY_ADDRESS,
                 FACTORY_ADDRESS,
-                FACTORY_ADDRESS,
-                FACTORY_ADDRESS,
-                BigUint::from(10u32),
             )
             .code(FACTORY_CODE_PATH)
             .new_address(FACTORY_ADDRESS)

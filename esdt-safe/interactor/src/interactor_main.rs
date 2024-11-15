@@ -4,8 +4,7 @@
 
 mod proxies;
 
-use fee_market::fee_market_proxy::FeeMarketProxy;
-use fee_market::fee_market_proxy::{self, FeeStruct, FeeType};
+use ::proxies::fee_market_proxy::{FeeMarketProxy, FeeStruct, FeeType};
 use header_verifier_proxy::HeaderverifierProxy;
 use multiversx_sc_scenario::meta::tools::find_current_workspace;
 use multiversx_sc_scenario::multiversx_chain_vm::crypto_functions::{sha256, SHA256_RESULT_LEN};
