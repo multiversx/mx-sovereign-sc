@@ -1,5 +1,5 @@
 use bls_signature::BlsSignature;
-use header_verifier::{header_verifier_proxy, Headerverifier, OperationHashStatus};
+use header_verifier::{Headerverifier, OperationHashStatus};
 use multiversx_sc::types::ManagedBuffer;
 use multiversx_sc::{
     api::ManagedTypeApi,
@@ -9,6 +9,7 @@ use multiversx_sc_scenario::{
     api::StaticApi, imports::MxscPath, multiversx_chain_vm::crypto_functions::sha256, DebugApi,
     ExpectError, ScenarioTxRun, ScenarioTxWhitebox, ScenarioWorld,
 };
+use proxies::header_verifier_proxy::HeaderverifierProxy;
 
 const HEADER_VERIFIER_CODE_PATH: MxscPath = MxscPath::new("ouput/header-verifier.mxsc-json");
 const HEADER_VERIFIER_ADDRESS: TestSCAddress = TestSCAddress::new("header-verifier");
@@ -60,7 +61,7 @@ impl HeaderVerifierTestState {
         self.world
             .tx()
             .from(OWNER)
-            .typed(header_verifier_proxy::HeaderverifierProxy)
+            .typed(HeaderverifierProxy)
             .init(bls_keys)
             .code(HEADER_VERIFIER_CODE_PATH)
             .new_address(HEADER_VERIFIER_ADDRESS)
@@ -74,7 +75,7 @@ impl HeaderVerifierTestState {
             .tx()
             .from(OWNER)
             .to(HEADER_VERIFIER_ADDRESS)
-            .typed(header_verifier_proxy::HeaderverifierProxy)
+            .typed(HeaderverifierProxy)
             .set_esdt_safe_address(esdt_address)
             .run();
     }
@@ -84,7 +85,7 @@ impl HeaderVerifierTestState {
             .tx()
             .from(OWNER)
             .to(HEADER_VERIFIER_ADDRESS)
-            .typed(header_verifier_proxy::HeaderverifierProxy)
+            .typed(HeaderverifierProxy)
             .register_bridge_operations(
                 operation.signature,
                 operation.bridge_operation_hash,
@@ -105,7 +106,7 @@ impl HeaderVerifierTestState {
             .tx()
             .from(caller)
             .to(HEADER_VERIFIER_ADDRESS)
-            .typed(header_verifier_proxy::HeaderverifierProxy)
+            .typed(HeaderverifierProxy)
             .remove_executed_hash(hash_of_hashes, operation_hash);
 
         match expected_result {
@@ -126,7 +127,7 @@ impl HeaderVerifierTestState {
             .tx()
             .from(caller)
             .to(HEADER_VERIFIER_ADDRESS)
-            .typed(header_verifier_proxy::HeaderverifierProxy)
+            .typed(HeaderverifierProxy)
             .lock_operation_hash(hash_of_hashes, operation_hash);
 
         match expected_result {

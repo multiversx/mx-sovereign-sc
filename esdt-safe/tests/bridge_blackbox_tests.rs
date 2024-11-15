@@ -1,7 +1,4 @@
 use bls_signature::BlsSignature;
-use esdt_safe::esdt_safe_proxy::{self};
-use fee_market::fee_market_proxy::{self, FeeStruct, FeeType};
-use header_verifier::header_verifier_proxy;
 use multiversx_sc::codec::TopEncode;
 use multiversx_sc::types::{
     Address, EsdtTokenData, ManagedByteArray, MultiValueEncoded, TestTokenIdentifier,
@@ -16,6 +13,9 @@ use multiversx_sc_scenario::multiversx_chain_vm::crypto_functions::sha256;
 use multiversx_sc_scenario::{
     api::StaticApi, imports::MxscPath, ExpectError, ScenarioTxRun, ScenarioWorld,
 };
+use proxies::esdt_safe_proxy::EsdtSafeProxy;
+use proxies::fee_market_proxy::{FeeMarketProxy, FeeStruct, FeeType};
+use proxies::header_verifier_proxy::HeaderverifierProxy;
 use transaction::{Operation, OperationData, OperationEsdtPayment};
 
 const BRIDGE_ADDRESS: TestSCAddress = TestSCAddress::new("bridge");
@@ -79,7 +79,7 @@ impl BridgeTestState {
         self.world
             .tx()
             .from(BRIDGE_OWNER_ADDRESS)
-            .typed(esdt_safe_proxy::EsdtSafeProxy)
+            .typed(EsdtSafeProxy)
             .init(is_sovereign_chain)
             .code(BRIDGE_CODE_PATH)
             .new_address(BRIDGE_ADDRESS)
@@ -98,7 +98,7 @@ impl BridgeTestState {
         self.world
             .tx()
             .from(BRIDGE_OWNER_ADDRESS)
-            .typed(fee_market_proxy::FeeMarketProxy)
+            .typed(FeeMarketProxy)
             .init(BRIDGE_ADDRESS, fee_struct)
             .code(FEE_MARKET_CODE_PATH)
             .new_address(FEE_MARKET_ADDRESS)
@@ -115,7 +115,7 @@ impl BridgeTestState {
         self.world
             .tx()
             .from(BRIDGE_OWNER_ADDRESS)
-            .typed(header_verifier_proxy::HeaderverifierProxy)
+            .typed(HeaderverifierProxy)
             .init(bls_pub_keys)
             .code(HEADER_VERIFIER_CODE_PATH)
             .new_address(HEADER_VERIFIER_ADDRESS)
@@ -129,7 +129,7 @@ impl BridgeTestState {
             .tx()
             .from(BRIDGE_OWNER_ADDRESS)
             .to(BRIDGE_ADDRESS)
-            .typed(esdt_safe_proxy::EsdtSafeProxy)
+            .typed(EsdtSafeProxy)
             .set_fee_market_address(FEE_MARKET_ADDRESS)
             .run();
     }
@@ -139,7 +139,7 @@ impl BridgeTestState {
             .tx()
             .from(BRIDGE_OWNER_ADDRESS)
             .to(BRIDGE_ADDRESS)
-            .typed(esdt_safe_proxy::EsdtSafeProxy)
+            .typed(EsdtSafeProxy)
             .set_header_verifier_address(HEADER_VERIFIER_ADDRESS)
             .run();
     }
@@ -157,7 +157,7 @@ impl BridgeTestState {
             .tx()
             .from(USER_ADDRESS)
             .to(BRIDGE_ADDRESS)
-            .typed(esdt_safe_proxy::EsdtSafeProxy)
+            .typed(EsdtSafeProxy)
             .deposit(RECEIVER_ADDRESS, transfer_data)
             .egld(10)
             .with_result(ExpectError(4, err_message))
@@ -182,7 +182,7 @@ impl BridgeTestState {
             .tx()
             .from(BRIDGE_OWNER_ADDRESS)
             .to(FEE_MARKET_ADDRESS)
-            .typed(fee_market_proxy::FeeMarketProxy)
+            .typed(FeeMarketProxy)
             .set_fee(fee_struct)
             .run();
     }
@@ -208,7 +208,7 @@ impl BridgeTestState {
             .tx()
             .from(USER_ADDRESS)
             .to(BRIDGE_ADDRESS)
-            .typed(esdt_safe_proxy::EsdtSafeProxy)
+            .typed(EsdtSafeProxy)
             .deposit(RECEIVER_ADDRESS, transfer_data)
             .payment(payments)
             .returns(ExpectError(4, err_message))
@@ -236,7 +236,7 @@ impl BridgeTestState {
             .tx()
             .from(USER_ADDRESS)
             .to(BRIDGE_ADDRESS)
-            .typed(esdt_safe_proxy::EsdtSafeProxy)
+            .typed(EsdtSafeProxy)
             .deposit(RECEIVER_ADDRESS, transfer_data)
             .payment(payments)
             .run();
@@ -252,7 +252,7 @@ impl BridgeTestState {
             .tx()
             .from(USER_ADDRESS)
             .to(BRIDGE_ADDRESS)
-            .typed(esdt_safe_proxy::EsdtSafeProxy)
+            .typed(EsdtSafeProxy)
             .execute_operations(operation_hash, operation)
             .returns(ExpectError(4, err_message))
             .run();
@@ -270,7 +270,7 @@ impl BridgeTestState {
             .tx()
             .from(USER_ADDRESS)
             .to(BRIDGE_ADDRESS)
-            .typed(esdt_safe_proxy::EsdtSafeProxy)
+            .typed(EsdtSafeProxy)
             .execute_operations(hash_of_hashes, operation)
             .run();
     }
@@ -280,7 +280,7 @@ impl BridgeTestState {
             .tx()
             .from(BRIDGE_OWNER_ADDRESS)
             .to(BRIDGE_ADDRESS)
-            .typed(esdt_safe_proxy::EsdtSafeProxy)
+            .typed(EsdtSafeProxy)
             .unpause_endpoint()
             .run();
     }
@@ -290,7 +290,7 @@ impl BridgeTestState {
             .tx()
             .from(BRIDGE_OWNER_ADDRESS)
             .to(HEADER_VERIFIER_ADDRESS)
-            .typed(header_verifier_proxy::HeaderverifierProxy)
+            .typed(HeaderverifierProxy)
             .set_esdt_safe_address(BRIDGE_ADDRESS)
             .run();
     }
@@ -311,7 +311,7 @@ impl BridgeTestState {
             .tx()
             .from(BRIDGE_OWNER_ADDRESS)
             .to(HEADER_VERIFIER_ADDRESS)
-            .typed(header_verifier_proxy::HeaderverifierProxy)
+            .typed(HeaderverifierProxy)
             .register_bridge_operations(
                 mock_signature,
                 hash_of_hashes.clone(),

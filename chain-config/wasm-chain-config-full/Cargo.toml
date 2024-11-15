@@ -5,9 +5,9 @@
 # ##########################################
 
 [package]
-name = "multisig-view-wasm"
+name = "chain-config-full-wasm"
 version = "0.0.0"
-edition = "2021"
+edition = "2018"
 publish = false
 
 [lib]
@@ -24,7 +24,7 @@ overflow-checks = false
 [profile.dev]
 panic = "abort"
 
-[dependencies.fee-market]
+[dependencies.chain-config]
 path = ".."
 
 [dependencies.multiversx-sc-wasm-adapter]

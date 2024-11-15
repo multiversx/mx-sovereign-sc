@@ -17,11 +17,14 @@ version = "=0.54.1"
 [dependencies.multiversx-sc]
 version = "=0.54.1"
 
+[dependencies.multiversx-sc-modules]
+version = "=0.53.2"
+
 [dependencies.utils]
 path = "../common/utils"
 
 [dependencies.chain-config]
 path = "../chain-config"
 
-[dependencies.bls-signature]
-path = "../common/bls-signature"
+[dependencies.proxies]
+path = "../common/proxies"

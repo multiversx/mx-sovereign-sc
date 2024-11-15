@@ -17,6 +17,9 @@ path = "../common/bls-signature"
 [dependencies.transaction]
 path = "../common/transaction"
 
+[dependencies.proxies]
+path = "../common/proxies"
+
 [dev-dependencies]
 num-bigint = "0.4.2"
 

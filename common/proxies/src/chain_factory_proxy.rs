@@ -46,19 +46,22 @@ where
     pub fn init<
         Arg0: ProxyArg<ManagedAddress<Env::Api>>,
         Arg1: ProxyArg<ManagedAddress<Env::Api>>,
-        Arg2: ProxyArg<BigUint<Env::Api>>,
+        Arg2: ProxyArg<ManagedAddress<Env::Api>>,
+        Arg3: ProxyArg<ManagedAddress<Env::Api>>,
     >(
         self,
-        validators_contract_address: Arg0,
-        chain_config_template: Arg1,
-        deploy_cost: Arg2,
+        chain_config_template: Arg0,
+        header_verifier_template: Arg1,
+        cross_chain_operation_template: Arg2,
+        fee_market_template: Arg3,
     ) -> TxTypedDeploy<Env, From, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_deploy()
-            .argument(&validators_contract_address)
             .argument(&chain_config_template)
-            .argument(&deploy_cost)
+            .argument(&header_verifier_template)
+            .argument(&cross_chain_operation_template)
+            .argument(&fee_market_template)
             .original_result()
     }
 }
@@ -102,8 +105,9 @@ where
         max_validators: Arg1,
         min_stake: Arg2,
         additional_stake_required: Arg3,
-    ) -> TxTypedCall<Env, From, To, (), Gas, ()> {
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ManagedAddress<Env::Api>> {
         self.wrapped_tx
+            .payment(NotPayable)
             .raw_call("deploySovereignChainConfigContract")
             .argument(&min_validators)
             .argument(&max_validators)
@@ -112,93 +116,67 @@ where
             .original_result()
     }
 
-    pub fn blacklist_sovereign_chain_sc<
+    pub fn deploy_header_verifier<
+        Arg0: ProxyArg<MultiValueEncoded<Env::Api, ManagedBuffer<Env::Api>>>,
+    >(
+        self,
+        bls_pub_keys: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ManagedAddress<Env::Api>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("deployHeaderVerifier")
+            .argument(&bls_pub_keys)
+            .original_result()
+    }
+
+    pub fn deploy_enshrine_esdt_safe<
+        Arg0: ProxyArg<bool>,
+        Arg1: ProxyArg<ManagedAddress<Env::Api>>,
+        Arg2: ProxyArg<TokenIdentifier<Env::Api>>,
+        Arg3: ProxyArg<ManagedBuffer<Env::Api>>,
+    >(
+        self,
+        is_sovereign_chain: Arg0,
+        token_handler_address: Arg1,
+        wegld_identifier: Arg2,
+        sov_token_prefix: Arg3,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ManagedAddress<Env::Api>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("deployEnshrineEsdtSafe")
+            .argument(&is_sovereign_chain)
+            .argument(&token_handler_address)
+            .argument(&wegld_identifier)
+            .argument(&sov_token_prefix)
+            .original_result()
+    }
+
+    pub fn deploy_fee_market<
+        Arg0: ProxyArg<ManagedAddress<Env::Api>>,
+        Arg1: ProxyArg<Option<super::fee_market_proxy::FeeStruct<Env::Api>>>,
+    >(
+        self,
+        esdt_safe_address: Arg0,
+        fee: Arg1,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ManagedAddress<Env::Api>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("deployFeeMarket")
+            .argument(&esdt_safe_address)
+            .argument(&fee)
+            .original_result()
+    }
+
+    pub fn complete_setup_phase<
         Arg0: ProxyArg<ManagedAddress<Env::Api>>,
     >(
         self,
-        sc_address: Arg0,
+        _contract_address: Arg0,
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
-            .raw_call("blacklistSovereignChainSc")
-            .argument(&sc_address)
-            .original_result()
-    }
-
-    pub fn deploy_cost(
-        self,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, BigUint<Env::Api>> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("getDeployCost")
-            .original_result()
-    }
-
-    pub fn slash<
-        Arg0: ProxyArg<ManagedAddress<Env::Api>>,
-        Arg1: ProxyArg<BigUint<Env::Api>>,
-    >(
-        self,
-        validator_address: Arg0,
-        value: Arg1,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("slash")
-            .argument(&validator_address)
-            .argument(&value)
-            .original_result()
-    }
-
-    pub fn distribute_slashed<
-        Arg0: ProxyArg<MultiValueEncoded<Env::Api, MultiValue2<ManagedAddress<Env::Api>, BigUint<Env::Api>>>>,
-    >(
-        self,
-        dest_amount_pairs: Arg0,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("distributeSlashed")
-            .argument(&dest_amount_pairs)
-            .original_result()
-    }
-
-    pub fn set_min_valid_signers<
-        Arg0: ProxyArg<u32>,
-    >(
-        self,
-        new_value: Arg0,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("setMinValidSigners")
-            .argument(&new_value)
-            .original_result()
-    }
-
-    pub fn add_signers<
-        Arg0: ProxyArg<MultiValueEncoded<Env::Api, ManagedAddress<Env::Api>>>,
-    >(
-        self,
-        signers: Arg0,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("addSigners")
-            .argument(&signers)
-            .original_result()
-    }
-
-    pub fn remove_signers<
-        Arg0: ProxyArg<MultiValueEncoded<Env::Api, ManagedAddress<Env::Api>>>,
-    >(
-        self,
-        signers: Arg0,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("removeSigners")
-            .argument(&signers)
+            .raw_call("completeSetupPhase")
+            .argument(&_contract_address)
             .original_result()
     }
 }

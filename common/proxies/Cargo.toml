@@ -1,0 +1,13 @@
+[package]
+name = "proxies"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies.multiversx-sc]
+version = "=0.54.1"
+
+[dependencies.transaction]
+path = "../transaction"
+
+[dependencies.tx-batch-module]
+path = "../tx-batch-module"

@@ -6,9 +6,9 @@
 
 // Init:                                 1
 // Upgrade:                              1
-// Endpoints:                            5
+// Endpoints:                           10
 // Async Callback (empty):               1
-// Total number of exported functions:   8
+// Total number of exported functions:  13
 
 #![no_std]
 
@@ -16,15 +16,20 @@ multiversx_sc_wasm_adapter::allocator!();
 multiversx_sc_wasm_adapter::panic_handler!();
 
 multiversx_sc_wasm_adapter::endpoints! {
-    chain_factory
+    chain_config
     (
         init => init
         upgrade => upgrade
-        deploySovereignChainConfigContract => deploy_sovereign_chain_config_contract
-        deployHeaderVerifier => deploy_header_verifier
-        deployEnshrineEsdtSafe => deploy_enshrine_esdt_safe
-        deployFeeMarket => deploy_fee_market
-        completeSetupPhase => complete_setup_phase
+        deployBridge => deploy_bridge
+        getMinValidators => min_validators
+        getMaxValidators => max_validators
+        getMinStake => min_stake
+        getAdditionalStakeRequired => additional_stake_required
+        wasPreviouslySlashed => was_previously_slashed
+        isAdmin => is_admin
+        addAdmin => add_admin
+        removeAdmin => remove_admin
+        getAdmins => admins
     )
 }
 

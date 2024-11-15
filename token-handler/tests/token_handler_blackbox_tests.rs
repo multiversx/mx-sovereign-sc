@@ -4,7 +4,8 @@ use multiversx_sc::types::{
 };
 use multiversx_sc_scenario::{api::StaticApi, imports::MxscPath, ScenarioWorld};
 use multiversx_sc_scenario::{ExpectError, ScenarioTxRun};
-use token_handler::{chain_factory_proxy, token_handler_proxy};
+use proxies::chain_factory_proxy::ChainFactoryContractProxy;
+use proxies::token_handler_proxy::TokenHandlerProxy;
 use transaction::{OperationEsdtPayment, TransferData};
 
 const TOKEN_HANDLER_ADDRESS: TestSCAddress = TestSCAddress::new("token-handler");
@@ -69,7 +70,7 @@ impl TokenHandlerTestState {
         self.world
             .tx()
             .from(OWNER_ADDRESS)
-            .typed(token_handler_proxy::TokenHandlerProxy)
+            .typed(TokenHandlerProxy)
             .init()
             .code(TOKEN_HANDLER_CODE_PATH)
             .new_address(TOKEN_HANDLER_ADDRESS)
@@ -82,8 +83,13 @@ impl TokenHandlerTestState {
         self.world
             .tx()
             .from(OWNER_ADDRESS)
-            .typed(chain_factory_proxy::ChainFactoryContractProxy)
-            .init(FACTORY_ADDRESS, FACTORY_ADDRESS, BigUint::from(10u32))
+            .typed(ChainFactoryContractProxy)
+            .init(
+                FACTORY_ADDRESS,
+                FACTORY_ADDRESS,
+                FACTORY_ADDRESS,
+                FACTORY_ADDRESS,
+            )
             .code(FACTORY_CODE_PATH)
             .new_address(FACTORY_ADDRESS)
             .run();
@@ -105,7 +111,7 @@ impl TokenHandlerTestState {
                 .tx()
                 .from(caller)
                 .to(TOKEN_HANDLER_ADDRESS)
-                .typed(token_handler_proxy::TokenHandlerProxy)
+                .typed(TokenHandlerProxy)
                 .transfer_tokens(opt_transfer_data, to, tokens)
                 .multi_esdt(payment)
                 .returns(ExpectError(10, "action is not allowed"))
@@ -115,7 +121,7 @@ impl TokenHandlerTestState {
                 .tx()
                 .from(caller)
                 .to(TOKEN_HANDLER_ADDRESS)
-                .typed(token_handler_proxy::TokenHandlerProxy)
+                .typed(TokenHandlerProxy)
                 .transfer_tokens(opt_transfer_data, to, tokens)
                 .returns(ExpectError(10, "action is not allowed"))
                 .run(),
@@ -134,7 +140,7 @@ impl TokenHandlerTestState {
                 .tx()
                 .to(TOKEN_HANDLER_ADDRESS)
                 .from(caller)
-                .typed(token_handler_proxy::TokenHandlerProxy)
+                .typed(TokenHandlerProxy)
                 .whitelist_enshrine_esdt(enshrine_address)
                 .run(),
             Some(error_status) => self
@@ -142,7 +148,7 @@ impl TokenHandlerTestState {
                 .tx()
                 .to(TOKEN_HANDLER_ADDRESS)
                 .from(caller)
-                .typed(token_handler_proxy::TokenHandlerProxy)
+                .typed(TokenHandlerProxy)
                 .whitelist_enshrine_esdt(enshrine_address)
                 .returns(ExpectError(error_status.code, error_status.message))
                 .run(),
