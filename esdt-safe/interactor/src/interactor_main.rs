@@ -6,7 +6,6 @@ mod proxies;
 
 use ::proxies::fee_market_proxy::{FeeMarketProxy, FeeStruct, FeeType};
 use header_verifier_proxy::HeaderverifierProxy;
-use multiversx_sc_scenario::meta::tools::find_current_workspace;
 use multiversx_sc_scenario::multiversx_chain_vm::crypto_functions::{sha256, SHA256_RESULT_LEN};
 use multiversx_sc_scenario::scenario_model::TxResponseStatus;
 use multiversx_sc_snippets::imports::*;
@@ -26,6 +25,10 @@ const TOKEN_ID: &[u8] = b"SOV-101252";
 const TOKEN_ID_FOR_EXECUTE: &[u8] = b"x-SOV-101252";
 const WHITELISTED_TOKEN_ID: &[u8] = b"CHOCOLATE-daf625";
 const INTERACTOR_SCENARIO_TRACE_PATH: &str = "interactor_trace.scen.json";
+const FEE_MARKET_CODE_PATH: &str = "../../fee-market/output/fee-market.mxsc.json";
+const HEADER_VERIFIER_CODE_PATH: &str = "../../header-verifier/output/header-verifier.mxsc.json";
+const ESDT_SAFE_CODE_PATH: &str = "../output/esdt-safe.mxsc.json";
+const TESTING_SC_CODE_PATH: &str = "../../testing-sc/output/testing-sc.mxsc.json";
 
 type OptionalTransferData<M> =
     OptionalValue<MultiValue3<GasLimit, ManagedBuffer<M>, ManagedVec<M, ManagedBuffer<M>>>>;
@@ -77,7 +80,6 @@ async fn main() {
 struct State {
     contract_address: Option<Bech32Address>,
     fee_market_address: Option<Bech32Address>,
-    price_aggregator_address: Option<Bech32Address>,
     header_verifier_address: Option<Bech32Address>,
     testing_sc_address: Option<Bech32Address>,
 }
@@ -102,10 +104,6 @@ impl State {
 
     pub fn set_fee_market_address(&mut self, address: Bech32Address) {
         self.fee_market_address = Some(address);
-    }
-
-    pub fn set_price_aggregator_address(&mut self, address: Bech32Address) {
-        self.price_aggregator_address = Some(address);
     }
 
     pub fn set_header_verifier_address(&mut self, address: Bech32Address) {
@@ -154,7 +152,6 @@ struct ContractInteract {
     judy_address: Address,
     esdt_safe_code: String,
     fee_market_code: String,
-    price_aggregator_code: String,
     header_verifier_code: String,
     testing_sc_code: String,
     state: State,
@@ -172,27 +169,6 @@ impl ContractInteract {
         let mike_address = interactor.register_wallet(test_wallets::mike()).await;
         let judy_address = interactor.register_wallet(test_wallets::judy()).await;
 
-        let current_dir = find_current_workspace().unwrap();
-        println!("Current directory is: {}", current_dir.display());
-
-        let repo_dir = current_dir
-            .ancestors()
-            .nth(2)
-            .expect("Failed to go up 2 levels");
-        println!("Repo directory is: {}", repo_dir.display());
-
-        let fee_market_code = "../../fee-market/output/fee-market.mxsc.json".to_owned();
-
-        let header_verifier_code =
-            "../../header-verifier/output/header-verifier.mxsc.json".to_owned();
-
-        let esdt_safe_code = "../output/esdt-safe.mxsc.json".to_owned();
-
-        let price_aggregator_code =
-            "contract-codes/multiversx-price-aggregator-sc.mxsc.json".to_owned();
-
-        let testing_sc_code = "../../testing-sc/output/testing-sc.mxsc.json".to_owned();
-
         ContractInteract {
             interactor,
             wallet_address,
@@ -200,11 +176,10 @@ impl ContractInteract {
             alice_address,
             mike_address,
             judy_address,
-            esdt_safe_code,
-            fee_market_code,
-            price_aggregator_code,
-            header_verifier_code,
-            testing_sc_code,
+            esdt_safe_code: ESDT_SAFE_CODE_PATH.to_string(),
+            header_verifier_code: HEADER_VERIFIER_CODE_PATH.to_string(),
+            fee_market_code: FEE_MARKET_CODE_PATH.to_string(),
+            testing_sc_code: TESTING_SC_CODE_PATH.to_string(),
             state: State::load_state(),
         }
     }
@@ -261,45 +236,6 @@ impl ContractInteract {
                 new_address_bech32.clone(),
             ));
         println!("new fee_market_address: {new_address_bech32}");
-    }
-
-    async fn deploy_price_aggregator(&mut self) {
-        let price_agggregator_code_path = MxscPath::new(&self.price_aggregator_code);
-        let mut oracles = MultiValueEncoded::new();
-        let first_oracle_adress = managed_address!(&self.frank_address.clone());
-        let second_oracle_adress = managed_address!(&self.alice_address.clone());
-        let third_oracle_adress = managed_address!(&self.mike_address.clone());
-        let forth_oracle_address = managed_address!(&self.judy_address.clone());
-        oracles.push(first_oracle_adress);
-        oracles.push(second_oracle_adress);
-        oracles.push(third_oracle_adress);
-        oracles.push(forth_oracle_address);
-
-        let new_address = self
-            .interactor
-            .tx()
-            .from(&self.wallet_address)
-            .gas(100_000_000u64)
-            .typed(price_aggregator_proxy::PriceAggregatorProxy)
-            .init(
-                TokenIdentifier::from_esdt_bytes(TOKEN_ID),
-                BigUint::from(1u64),
-                BigUint::from(1u64),
-                3u8,
-                3u8,
-                oracles,
-            )
-            .code(price_agggregator_code_path)
-            .returns(ReturnsNewAddress)
-            .run()
-            .await;
-
-        let new_address_bech32 = bech32::encode(&new_address);
-        self.state
-            .set_price_aggregator_address(Bech32Address::from_bech32_string(
-                new_address_bech32.clone(),
-            ));
-        println!("new token_handler_address: {new_address_bech32}");
     }
 
     async fn deploy_header_verifier_contract(&mut self) {
