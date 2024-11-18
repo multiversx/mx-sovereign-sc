@@ -9,7 +9,7 @@ publish = false
 path = "src/lib.rs"
 
 [dependencies.multiversx-sc]
-version = "0.54.1"
+version = "=0.54.2"
 
 [dependencies.bls-signature]
 path = "../common/bls-signature"
@@ -24,4 +24,4 @@ path = "../common/proxies"
 num-bigint = "0.4.2"
 
 [dev-dependencies.multiversx-sc-scenario]
-version = "0.54.1"
+version = "=0.54.2"
