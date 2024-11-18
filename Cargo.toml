@@ -20,4 +20,6 @@ members = [
   "token-handler/meta",
   "testing-sc",
   "testing-sc/meta",
+  "sovereign-forge",
+  "sovereign-forge/meta",
 ]
