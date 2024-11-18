@@ -2133,6 +2133,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "sovereign-forge"
+version = "0.0.0"
+dependencies = [
+ "multiversx-sc",
+ "multiversx-sc-modules",
+ "multiversx-sc-scenario",
+ "num-bigint",
+]
+
+[[package]]
+name = "sovereign-forge-meta"
+version = "0.0.0"
+dependencies = [
+ "multiversx-sc-meta-lib",
+ "sovereign-forge",
+]
+
+[[package]]
 name = "spki"
 version = "0.7.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
