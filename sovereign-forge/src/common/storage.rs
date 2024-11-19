@@ -10,6 +10,12 @@ pub trait StorageModule {
         sovereign_creator: &ManagedAddress,
     ) -> SingleValueMapper<ChainContractsMap<Self::Api>>;
 
+    #[storage_mapper("chainFactories")]
+    fn chain_factories(&self, shard_id: u32) -> SingleValueMapper<ManagedAddress>;
+
+    #[storage_mapper("tokenHadlersFactories")]
+    fn token_handlers(&self, shard_id: u32) -> SingleValueMapper<ManagedAddress>;
+
     #[view(getDeployCost)]
     #[storage_mapper("deployCost")]
     fn deploy_cost(&self) -> SingleValueMapper<BigUint>;
