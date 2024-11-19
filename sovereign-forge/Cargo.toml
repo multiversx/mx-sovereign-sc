@@ -19,3 +19,6 @@ version = "0.54.2"
 
 [dependencies.multiversx-sc-modules]
 version = "0.54.2"
+
+[dependencies.proxies]
+path = "../common/proxies"
