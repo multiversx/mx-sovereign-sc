@@ -1,5 +1,3 @@
-use chain_config::StakeMultiArg;
-
 use multiversx_sc::imports::*;
 use proxies::{
     chain_config_proxy::ChainConfigContractProxy,
@@ -7,6 +5,7 @@ use proxies::{
     fee_market_proxy::{FeeMarketProxy, FeeStruct},
     header_verifier_proxy::HeaderverifierProxy,
 };
+use transaction::StakeMultiArg;
 multiversx_sc::derive_imports!();
 
 #[multiversx_sc::module]

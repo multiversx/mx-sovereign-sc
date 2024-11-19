@@ -32,6 +32,7 @@ pub type ExtractedFeeResult<M> =
     MultiValue2<OptionalValue<EsdtTokenPayment<M>>, ManagedVec<M, EsdtTokenPayment<M>>>;
 pub type OptionalValueTransferDataTuple<M> =
     OptionalValue<MultiValue3<GasLimit, ManagedBuffer<M>, ManagedVec<M, ManagedBuffer<M>>>>;
+pub type StakeMultiArg<M> = MultiValue2<TokenIdentifier<M>, BigUint<M>>;
 
 #[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, TypeAbi, ManagedVecItem, Clone)]
 pub struct Operation<M: ManagedTypeApi> {

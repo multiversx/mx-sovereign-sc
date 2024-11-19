@@ -1,14 +1,13 @@
 #![no_std]
 
 use multiversx_sc_modules::only_admin;
+use transaction::StakeMultiArg;
 use validator_rules::TokenIdAmountPair;
 
 multiversx_sc::imports!();
 
 pub mod bridge;
 pub mod validator_rules;
-
-pub type StakeMultiArg<M> = MultiValue2<TokenIdentifier<M>, BigUint<M>>;
 
 #[multiversx_sc::contract]
 pub trait ChainConfigContract:

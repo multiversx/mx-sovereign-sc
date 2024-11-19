@@ -28,3 +28,6 @@ path = "../chain-config"
 
 [dependencies.proxies]
 path = "../common/proxies"
+
+[dependencies.transaction]
+path = "../common/transaction"
