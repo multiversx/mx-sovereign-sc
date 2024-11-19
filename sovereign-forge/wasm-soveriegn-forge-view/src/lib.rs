@@ -5,26 +5,20 @@
 ////////////////////////////////////////////////////
 
 // Init:                                 1
-// Upgrade:                              1
-// Endpoints:                            5
+// Endpoints:                            0
 // Async Callback (empty):               1
-// Total number of exported functions:   8
+// Total number of exported functions:   2
 
 #![no_std]
 
 multiversx_sc_wasm_adapter::allocator!();
 multiversx_sc_wasm_adapter::panic_handler!();
 
-multiversx_sc_wasm_adapter::endpoints! {
+multiversx_sc_wasm_adapter::external_view_init! {}
+
+multiversx_sc_wasm_adapter::external_view_endpoints! {
     sovereign_forge
     (
-        init => init
-        upgrade => upgrade
-        registerTokenHandler => register_token_handler
-        registerChainFactory => register_chain_factory
-        deployPhaseOne => deploy_phase_one
-        getDeployCost => deploy_cost
-        getAllChainIds => chain_ids
     )
 }
 

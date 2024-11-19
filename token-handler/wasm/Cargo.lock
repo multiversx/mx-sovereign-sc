@@ -34,6 +34,7 @@ version = "0.0.0"
 dependencies = [
  "multiversx-sc",
  "multiversx-sc-modules",
+ "transaction",
 ]
 
 [[package]]
@@ -44,6 +45,7 @@ dependencies = [
  "multiversx-sc",
  "multiversx-sc-modules",
  "proxies",
+ "transaction",
  "utils",
 ]
 

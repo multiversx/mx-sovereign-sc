@@ -21,87 +21,10 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b048fb63fd8b5923fc5aa7b340d8e156aec7ec02f0c78fa8a6ddc2613f6f71de"
 
 [[package]]
-name = "bls-signature"
-version = "0.0.0"
-dependencies = [
- "multiversx-sc",
- "transaction",
-]
-
-[[package]]
-name = "chain-config"
-version = "0.0.0"
-dependencies = [
- "multiversx-sc",
- "multiversx-sc-modules",
- "transaction",
-]
-
-[[package]]
-name = "chain-factory"
-version = "0.0.0"
-dependencies = [
- "chain-config",
- "multiversx-sc",
- "multiversx-sc-modules",
- "proxies",
- "transaction",
- "utils",
-]
-
-[[package]]
 name = "endian-type"
 version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c34f04666d835ff5d62e058c3995147c06f42fe86ff053337632bca83e42702d"
-
-[[package]]
-name = "enshrine-esdt-safe"
-version = "0.0.0"
-dependencies = [
- "bls-signature",
- "fee-market",
- "header-verifier",
- "max-bridged-amount-module",
- "multiversx-sc",
- "multiversx-sc-modules",
- "proxies",
- "setup-phase",
- "token-handler",
- "token-whitelist",
- "transaction",
- "tx-batch-module",
- "utils",
-]
-
-[[package]]
-name = "enshrine-esdt-safe-wasm"
-version = "0.0.0"
-dependencies = [
- "enshrine-esdt-safe",
- "multiversx-sc-wasm-adapter",
-]
-
-[[package]]
-name = "fee-market"
-version = "0.0.0"
-dependencies = [
- "bls-signature",
- "multiversx-sc",
- "proxies",
- "transaction",
- "utils",
-]
-
-[[package]]
-name = "header-verifier"
-version = "0.0.0"
-dependencies = [
- "bls-signature",
- "multiversx-sc",
- "proxies",
- "transaction",
-]
 
 [[package]]
 name = "hex"
@@ -114,13 +37,6 @@ name = "hex-literal"
 version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6fe2267d4ed49bc07b63801559be28c718ea06c4738b7a03c94df7386d2cde46"
-
-[[package]]
-name = "max-bridged-amount-module"
-version = "0.0.0"
-dependencies = [
- "multiversx-sc",
-]
 
 [[package]]
 name = "multiversx-chain-core"
@@ -257,17 +173,28 @@ dependencies = [
 ]
 
 [[package]]
-name = "setup-phase"
-version = "0.0.0"
-dependencies = [
- "multiversx-sc",
-]
-
-[[package]]
 name = "smallvec"
 version = "1.13.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3c5e1a9a646d36c3599cd173a41282daf47c44583ad367b8e6837255952e5c67"
+
+[[package]]
+name = "sovereign-forge"
+version = "0.0.0"
+dependencies = [
+ "multiversx-sc",
+ "multiversx-sc-modules",
+ "proxies",
+ "transaction",
+]
+
+[[package]]
+name = "soveriegn-forge-view-wasm"
+version = "0.0.0"
+dependencies = [
+ "multiversx-sc-wasm-adapter",
+ "sovereign-forge",
+]
 
 [[package]]
 name = "syn"
@@ -278,26 +205,6 @@ dependencies = [
  "proc-macro2",
  "quote",
  "unicode-ident",
-]
-
-[[package]]
-name = "token-handler"
-version = "0.0.0"
-dependencies = [
- "chain-factory",
- "multiversx-sc",
- "proxies",
- "transaction",
-]
-
-[[package]]
-name = "token-whitelist"
-version = "0.0.0"
-dependencies = [
- "bls-signature",
- "multiversx-sc",
- "setup-phase",
- "utils",
 ]
 
 [[package]]
@@ -326,11 +233,3 @@ name = "unwrap-infallible"
 version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "151ac09978d3c2862c4e39b557f4eceee2cc72150bc4cb4f16abf061b6e381fb"
-
-[[package]]
-name = "utils"
-version = "0.0.0"
-dependencies = [
- "bls-signature",
- "multiversx-sc",
-]
