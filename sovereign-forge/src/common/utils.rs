@@ -15,10 +15,25 @@ pub struct ContractInfo<M: ManagedTypeApi> {
     pub address: ManagedAddress<M>,
 }
 
+impl<M: ManagedTypeApi> ContractInfo<M> {
+    pub fn new(id: ScArray, address: ManagedAddress<M>) -> Self {
+        ContractInfo { id, address }
+    }
+}
+
 #[derive(TypeAbi, TopEncode, TopDecode, NestedEncode, NestedDecode, ManagedVecItem)]
 pub struct ChainContractsMap<M: ManagedTypeApi> {
     pub chain_id: ManagedBuffer<M>,
     pub contracts_info: ManagedVec<M, ContractInfo<M>>,
+}
+
+impl<M: ManagedTypeApi> ChainContractsMap<M> {
+    pub fn new(chain_id: ManagedBuffer<M>, contracts_info: ManagedVec<M, ContractInfo<M>>) -> Self {
+        ChainContractsMap {
+            chain_id,
+            contracts_info,
+        }
+    }
 }
 
 #[type_abi]
