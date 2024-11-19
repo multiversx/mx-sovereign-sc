@@ -22,3 +22,6 @@ version = "0.54.2"
 
 [dependencies.proxies]
 path = "../common/proxies"
+
+[dependencies.transaction]
+path = "../common/transaction"
