@@ -46,12 +46,8 @@ pub trait PhasesModule: common::utils::UtilsModule + common::storage::StorageMod
 
         let sovereigns_mapper = self.sovereigns_mapper(&caller);
         require!(
-            !sovereigns_mapper
-                .get()
-                .contracts_info
-                .iter()
-                .any(|ci| ci.id == ScArray::ChainConfig),
-            "There is already a registered ChainConfig SC for this chain"
+            sovereigns_mapper.is_empty(),
+            "There is already a deployed Sovereign Chain for this user"
         );
 
         let chain_factory_contract_info =
