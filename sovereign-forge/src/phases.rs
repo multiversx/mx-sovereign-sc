@@ -34,7 +34,14 @@ pub trait PhasesModule: common::utils::UtilsModule + common::storage::StorageMod
         let caller_shard_id = blockchain_api.get_shard_of_address(&caller);
 
         let chain_id = self.generate_chain_id();
-        let chain_factory_address = self.chain_factories(caller_shard_id).get();
+
+        let chain_factories_mapper = self.chain_factories(caller_shard_id);
+        require!(
+            !chain_factories_mapper.is_empty(),
+            "There is no Chain-Factory address registered"
+        );
+
+        let chain_factory_address = chain_factories_mapper.get();
 
         let chain_config_address = self.deploy_chain_config(
             chain_factory_address,
