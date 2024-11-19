@@ -7,7 +7,7 @@ mod phases;
 mod storage;
 
 #[multiversx_sc::contract]
-pub trait SovereignForge {
+pub trait SovereignForge: phases::PhasesModule + storage::StorageModule {
     #[init]
     fn init(&self) {}
 
