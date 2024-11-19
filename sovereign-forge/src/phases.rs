@@ -56,8 +56,10 @@ pub trait PhasesModule: common::utils::UtilsModule + common::storage::StorageMod
 
         let chain_factory_contract_info =
             ContractInfo::new(ScArray::ChainConfig, chain_config_address);
+
         let mut contracts_info = ManagedVec::new();
         contracts_info.push(chain_factory_contract_info);
+
         let chain_contracts_map = ChainContractsMap::new(chain_id, contracts_info);
 
         sovereigns_mapper.set(chain_contracts_map);
