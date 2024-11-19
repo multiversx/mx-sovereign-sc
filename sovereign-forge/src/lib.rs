@@ -23,10 +23,12 @@ pub trait SovereignForge:
             "The given address is not a valid SC address"
         );
 
-        let caller = self.blockchain().get_caller();
-        let caller_shard = self.blockchain().get_shard_of_address(&caller);
+        let blockchain_api = self.blockchain();
+        let caller = blockchain_api.get_caller();
+        let caller_shard_id = blockchain_api.get_shard_of_address(&caller);
 
-        self.token_handlers(caller_shard).set(token_handler_address);
+        self.token_handlers(caller_shard_id)
+            .set(token_handler_address);
     }
 
     #[endpoint(registerChainFactory)]
@@ -37,9 +39,10 @@ pub trait SovereignForge:
         );
 
         let caller = self.blockchain().get_caller();
-        let caller_shard = self.blockchain().get_shard_of_address(&caller);
+        let caller_shard_id = self.blockchain().get_shard_of_address(&caller);
 
-        self.token_handlers(caller_shard).set(chain_factory_address);
+        self.token_handlers(caller_shard_id)
+            .set(chain_factory_address);
     }
 
     #[upgrade]
