@@ -44,8 +44,8 @@ where
     Gas: TxGas<Env>,
 {
     pub fn init<
-        Arg0: ProxyArg<usize>,
-        Arg1: ProxyArg<usize>,
+        Arg0: ProxyArg<u64>,
+        Arg1: ProxyArg<u64>,
         Arg2: ProxyArg<BigUint<Env::Api>>,
         Arg3: ProxyArg<ManagedAddress<Env::Api>>,
         Arg4: ProxyArg<MultiValueEncoded<Env::Api, MultiValue2<TokenIdentifier<Env::Api>, BigUint<Env::Api>>>>,
@@ -118,7 +118,7 @@ where
 
     pub fn min_validators(
         self,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, usize> {
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, u64> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("getMinValidators")
@@ -127,7 +127,7 @@ where
 
     pub fn max_validators(
         self,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, usize> {
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, u64> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("getMaxValidators")

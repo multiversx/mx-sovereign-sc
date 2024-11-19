@@ -14,8 +14,8 @@ pub trait FactoryModule {
     #[endpoint(deploySovereignChainConfigContract)]
     fn deploy_sovereign_chain_config_contract(
         &self,
-        min_validators: usize,
-        max_validators: usize,
+        min_validators: u64,
+        max_validators: u64,
         min_stake: BigUint,
         additional_stake_required: MultiValueEncoded<StakeMultiArg<Self::Api>>,
     ) -> ManagedAddress {

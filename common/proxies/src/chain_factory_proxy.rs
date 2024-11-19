@@ -95,8 +95,8 @@ where
     Gas: TxGas<Env>,
 {
     pub fn deploy_sovereign_chain_config_contract<
-        Arg0: ProxyArg<usize>,
-        Arg1: ProxyArg<usize>,
+        Arg0: ProxyArg<u64>,
+        Arg1: ProxyArg<u64>,
         Arg2: ProxyArg<BigUint<Env::Api>>,
         Arg3: ProxyArg<MultiValueEncoded<Env::Api, MultiValue2<TokenIdentifier<Env::Api>, BigUint<Env::Api>>>>,
     >(
