@@ -38,7 +38,8 @@ pub trait PhasesModule: common::utils::UtilsModule + common::storage::StorageMod
         let chain_factories_mapper = self.chain_factories(caller_shard_id);
         require!(
             !chain_factories_mapper.is_empty(),
-            "There is no Chain-Factory address registered"
+            "There is no Chain-Factory address registered in the {} chain",
+            chain_id
         );
 
         let chain_factory_address = chain_factories_mapper.get();
