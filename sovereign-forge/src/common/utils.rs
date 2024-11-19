@@ -7,6 +7,8 @@ use multiversx_sc::{
     types::{ManagedAddress, ManagedBuffer, ManagedVec},
 };
 
+const CHARSET: &[u8] = b"0123456789abcdefghijklmnopqrstuvwxyz";
+
 use crate::err_msg;
 
 #[derive(TypeAbi, TopEncode, TopDecode, NestedEncode, NestedDecode, ManagedVecItem)]
@@ -64,11 +66,10 @@ pub trait UtilsModule: super::storage::StorageModule {
 
     fn generated_random_4_char_string(&self) -> ManagedBuffer {
         let mut byte_array: [u8; 4] = [0; 4];
-        let charset: &[u8] = b"0123456789abcdefghijklmnopqrstuvwxyz";
         let mut rand = RandomnessSource::new();
         (0..4).for_each(|i| {
-            let rand_index = rand.next_u8_in_range(0, charset.len() as u8) as usize;
-            byte_array[i] = charset[rand_index];
+            let rand_index = rand.next_u8_in_range(0, CHARSET.len() as u8) as usize;
+            byte_array[i] = CHARSET[rand_index];
         });
         ManagedBuffer::new_from_bytes(&byte_array)
     }
