@@ -6,9 +6,9 @@
 
 // Init:                                 1
 // Upgrade:                              1
-// Endpoints:                           30
+// Endpoints:                           27
 // Async Callback:                       1
-// Total number of exported functions:  33
+// Total number of exported functions:  30
 
 #![no_std]
 
@@ -25,9 +25,6 @@ multiversx_sc_wasm_adapter::endpoints! {
         setMaxTxGasLimit => set_max_user_tx_gas_limit
         setBannedEndpoint => set_banned_endpoint
         deposit => deposit
-        setMinValidSigners => set_min_valid_signers
-        addSigners => add_signers
-        removeSigners => remove_signers
         executeBridgeOps => execute_operations
         registerNewTokenID => register_new_token_id
         setMaxTxBatchSize => set_max_tx_batch_size

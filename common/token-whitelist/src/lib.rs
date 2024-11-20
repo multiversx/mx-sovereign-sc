@@ -3,9 +3,7 @@
 multiversx_sc::imports!();
 
 #[multiversx_sc::module]
-pub trait TokenWhitelistModule:
-    bls_signature::BlsSignatureModule + setup_phase::SetupPhaseModule + utils::UtilsModule
-{
+pub trait TokenWhitelistModule: setup_phase::SetupPhaseModule + utils::UtilsModule {
     /// Tokens in the whitelist can be transferred without fees
     #[endpoint(addTokensToWhitelist)]
     fn add_tokens_to_whitelist(

@@ -11,9 +11,6 @@ path = "src/lib.rs"
 [dependencies.multiversx-sc]
 version = "=0.54.3"
 
-[dependencies.bls-signature]
-path = "../common/bls-signature"
-
 [dependencies.transaction]
 path = "../common/transaction"
 
