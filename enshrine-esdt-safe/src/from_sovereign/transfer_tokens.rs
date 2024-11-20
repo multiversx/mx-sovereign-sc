@@ -24,8 +24,7 @@ impl<M: ManagedTypeApi> Default for SplitResult<M> {
 
 #[multiversx_sc::module]
 pub trait TransferTokensModule:
-    bls_signature::BlsSignatureModule
-    + super::events::EventsModule
+    super::events::EventsModule
     + tx_batch_module::TxBatchModule
     + max_bridged_amount_module::MaxBridgedAmountModule
     + multiversx_sc_modules::pause::PauseModule

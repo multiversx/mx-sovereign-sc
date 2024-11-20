@@ -14,7 +14,6 @@ const MAX_USER_TX_GAS_LIMIT: GasLimit = 60_000_000;
 pub trait EsdtSafe:
     to_sovereign::create_tx::CreateTxModule
     + to_sovereign::events::EventsModule
-    + bls_signature::BlsSignatureModule
     + from_sovereign::events::EventsModule
     + from_sovereign::token_mapping::TokenMappingModule
     + from_sovereign::transfer_tokens::TransferTokensModule

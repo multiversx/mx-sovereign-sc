@@ -14,9 +14,6 @@ path = "../common/utils"
 [dependencies.transaction]
 path = "../common/transaction"
 
-[dependencies.bls-signature]
-path = "../common/bls-signature"
-
 [dependencies.proxies]
 path = "../common/proxies"
 

@@ -86,7 +86,7 @@ where
     Gas: TxGas<Env>,
 {
     pub fn register_bridge_operations<
-        Arg0: ProxyArg<ManagedByteArray<Env::Api, 48usize>>,
+        Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
         Arg1: ProxyArg<ManagedBuffer<Env::Api>>,
         Arg2: ProxyArg<MultiValueEncoded<Env::Api, ManagedBuffer<Env::Api>>>,
     >(
@@ -146,45 +146,6 @@ where
             .raw_call("lockOperationHash")
             .argument(&hash_of_hashes)
             .argument(&operation_hash)
-            .original_result()
-    }
-
-    pub fn set_min_valid_signers<
-        Arg0: ProxyArg<u32>,
-    >(
-        self,
-        new_value: Arg0,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("setMinValidSigners")
-            .argument(&new_value)
-            .original_result()
-    }
-
-    pub fn add_signers<
-        Arg0: ProxyArg<MultiValueEncoded<Env::Api, ManagedAddress<Env::Api>>>,
-    >(
-        self,
-        signers: Arg0,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("addSigners")
-            .argument(&signers)
-            .original_result()
-    }
-
-    pub fn remove_signers<
-        Arg0: ProxyArg<MultiValueEncoded<Env::Api, ManagedAddress<Env::Api>>>,
-    >(
-        self,
-        signers: Arg0,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("removeSigners")
-            .argument(&signers)
             .original_result()
     }
 }

@@ -7,9 +7,6 @@ edition = "2021"
 [lib]
 path = "src/lib.rs"
 
-[dependencies.bls-signature]
-path = "../bls-signature"
-
 [dependencies.multiversx-sc]
 version = "=0.54.3"
 features = ["esdt-token-payment-legacy-decode"]

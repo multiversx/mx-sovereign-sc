@@ -2,21 +2,19 @@
 // TODO: Remove this when interactor setup is complete
 #![allow(dead_code)]
 
-mod proxies;
-
-use ::proxies::fee_market_proxy::{FeeMarketProxy, FeeStruct, FeeType};
-use header_verifier_proxy::HeaderverifierProxy;
 use multiversx_sc_scenario::multiversx_chain_vm::crypto_functions::{sha256, SHA256_RESULT_LEN};
 use multiversx_sc_scenario::scenario_model::TxResponseStatus;
 use multiversx_sc_snippets::imports::*;
 use multiversx_sc_snippets::sdk::{self};
-use proxies::*;
+use proxies::esdt_safe_proxy::EsdtSafeProxy;
+use proxies::fee_market_proxy::{FeeMarketProxy, FeeStruct, FeeType};
+use proxies::header_verifier_proxy::HeaderverifierProxy;
+use proxies::testing_sc_proxy::TestingScProxy;
 use serde::{Deserialize, Serialize};
 use std::{
     io::{Read, Write},
     path::Path,
 };
-use testing_sc_proxy::TestingScProxy;
 use transaction::{GasLimit, Operation, OperationData, PaymentsVec};
 use transaction::{OperationEsdtPayment, TransferData};
 const GATEWAY: &str = sdk::gateway::DEVNET_GATEWAY;
@@ -47,19 +45,7 @@ async fn main() {
         "setFeeMarketAddress" => interact.set_fee_market_address().await,
         "setHeaderVerifierAddress" => interact.set_header_verifier_address().await,
         "deposit" => interact.deposit(OptionalTransferData::None, None).await,
-        "setMinValidSigners" => interact.set_min_valid_signers().await,
-        "addSigners" => interact.add_signers().await,
-        "removeSigners" => interact.remove_signers().await,
         "registerToken" => interact.register_token().await,
-        // "executeBridgeOps" => interact.execute_operations().await,
-        "setMaxTxBatchSize" => interact.set_max_tx_batch_size().await,
-        "setMaxTxBatchBlockDuration" => interact.set_max_tx_batch_block_duration().await,
-        "getCurrentTxBatch" => interact.get_current_tx_batch().await,
-        "getFirstBatchAnyStatus" => interact.get_first_batch_any_status().await,
-        "getBatch" => interact.get_batch().await,
-        "getBatchStatus" => interact.get_batch_status().await,
-        "getFirstBatchId" => interact.first_batch_id().await,
-        "getLastBatchId" => interact.last_batch_id().await,
         "setMaxBridgedAmount" => interact.set_max_bridged_amount().await,
         "getMaxBridgedAmount" => interact.max_bridged_amount().await,
         "endSetupPhase" => interact.end_setup_phase().await,
@@ -192,7 +178,7 @@ impl ContractInteract {
             .tx()
             .from(&self.wallet_address)
             .gas(110_000_000u64)
-            .typed(proxy::EsdtSafeProxy)
+            .typed(EsdtSafeProxy)
             .init(is_sov_chain)
             .code(code_path)
             .returns(ReturnsNewAddress)
@@ -246,7 +232,7 @@ impl ContractInteract {
             .tx()
             .from(&self.wallet_address)
             .gas(100_000_000u64)
-            .typed(header_verifier_proxy::HeaderverifierProxy)
+            .typed(HeaderverifierProxy)
             .init(MultiValueEncoded::new())
             .code(header_verifier_code_path)
             .returns(ReturnsNewAddress)
@@ -311,7 +297,7 @@ impl ContractInteract {
             .to(self.state.current_address())
             .from(&self.wallet_address)
             .gas(30_000_000u64)
-            .typed(proxy::EsdtSafeProxy)
+            .typed(EsdtSafeProxy)
             .upgrade()
             .code(code_path)
             .code_metadata(CodeMetadata::UPGRADEABLE)
@@ -330,7 +316,7 @@ impl ContractInteract {
             .from(&self.wallet_address)
             .to(self.state.current_address())
             .gas(30_000_000u64)
-            .typed(proxy::EsdtSafeProxy)
+            .typed(EsdtSafeProxy)
             .set_fee_market_address(fee_market_address)
             .returns(ReturnsResultUnmanaged)
             .run()
@@ -348,7 +334,7 @@ impl ContractInteract {
             .from(&self.wallet_address)
             .to(self.state.current_address())
             .gas(30_000_000u64)
-            .typed(proxy::EsdtSafeProxy)
+            .typed(EsdtSafeProxy)
             .set_header_verifier_address(header_verifier_address)
             .returns(ReturnsResultUnmanaged)
             .run()
@@ -381,7 +367,7 @@ impl ContractInteract {
                     .from(&self.wallet_address)
                     .to(self.state.current_address())
                     .gas(90_000_000u64)
-                    .typed(proxy::EsdtSafeProxy)
+                    .typed(EsdtSafeProxy)
                     .deposit(to, transfer_data)
                     .payment(payments)
                     .returns(error)
@@ -394,7 +380,7 @@ impl ContractInteract {
                     .from(&self.wallet_address)
                     .to(self.state.current_address())
                     .gas(90_000_000u64)
-                    .typed(proxy::EsdtSafeProxy)
+                    .typed(EsdtSafeProxy)
                     .deposit(to, transfer_data)
                     .payment(payments)
                     .returns(ReturnsResultUnmanaged)
@@ -402,60 +388,6 @@ impl ContractInteract {
                     .await;
             }
         }
-    }
-
-    async fn set_min_valid_signers(&mut self) {
-        let new_value = 0u32;
-
-        let response = self
-            .interactor
-            .tx()
-            .from(&self.wallet_address)
-            .to(self.state.current_address())
-            .gas(30_000_000u64)
-            .typed(proxy::EsdtSafeProxy)
-            .set_min_valid_signers(new_value)
-            .returns(ReturnsResultUnmanaged)
-            .run()
-            .await;
-
-        println!("Result: {response:?}");
-    }
-
-    async fn add_signers(&mut self) {
-        let signers = MultiValueVec::from(vec![bech32::decode("")]);
-
-        let response = self
-            .interactor
-            .tx()
-            .from(&self.wallet_address)
-            .to(self.state.current_address())
-            .gas(30_000_000u64)
-            .typed(proxy::EsdtSafeProxy)
-            .add_signers(signers)
-            .returns(ReturnsResultUnmanaged)
-            .run()
-            .await;
-
-        println!("Result: {response:?}");
-    }
-
-    async fn remove_signers(&mut self) {
-        let signers = MultiValueVec::from(vec![bech32::decode("")]);
-
-        let response = self
-            .interactor
-            .tx()
-            .from(&self.wallet_address)
-            .to(self.state.current_address())
-            .gas(30_000_000u64)
-            .typed(proxy::EsdtSafeProxy)
-            .remove_signers(signers)
-            .returns(ReturnsResultUnmanaged)
-            .run()
-            .await;
-
-        println!("Result: {response:?}");
     }
 
     async fn register_token(&mut self) {
@@ -473,7 +405,7 @@ impl ContractInteract {
             .from(&self.wallet_address)
             .to(self.state.current_address())
             .gas(90_000_000u64)
-            .typed(proxy::EsdtSafeProxy)
+            .typed(EsdtSafeProxy)
             .register_token(
                 sov_token_id,
                 token_type,
@@ -502,7 +434,7 @@ impl ContractInteract {
             .from(&self.wallet_address)
             .to(self.state.current_address())
             .gas(70_000_000u64)
-            .typed(proxy::EsdtSafeProxy)
+            .typed(EsdtSafeProxy)
             .execute_operations(&hash_of_hashes, operation)
             .returns(ReturnsHandledOrError::new().returns(ReturnsResultUnmanaged))
             .run()
@@ -526,128 +458,13 @@ impl ContractInteract {
             .from(&self.wallet_address)
             .to(self.state.current_address())
             .gas(30_000_000u64)
-            .typed(proxy::EsdtSafeProxy)
+            .typed(EsdtSafeProxy)
             .execute_operations(&operation_hash, operation)
             .returns(error_msg)
             .run()
             .await;
 
         println!("Result: {response:?}");
-    }
-
-    async fn set_max_tx_batch_size(&mut self) {
-        let new_max_tx_batch_size = 0u32;
-
-        let response = self
-            .interactor
-            .tx()
-            .from(&self.wallet_address)
-            .to(self.state.current_address())
-            .gas(30_000_000u64)
-            .typed(proxy::EsdtSafeProxy)
-            .set_max_tx_batch_size(new_max_tx_batch_size)
-            .returns(ReturnsResultUnmanaged)
-            .run()
-            .await;
-
-        println!("Result: {response:?}");
-    }
-
-    async fn set_max_tx_batch_block_duration(&mut self) {
-        let new_max_tx_batch_block_duration = 0u64;
-
-        let response = self
-            .interactor
-            .tx()
-            .from(&self.wallet_address)
-            .to(self.state.current_address())
-            .gas(30_000_000u64)
-            .typed(proxy::EsdtSafeProxy)
-            .set_max_tx_batch_block_duration(new_max_tx_batch_block_duration)
-            .returns(ReturnsResultUnmanaged)
-            .run()
-            .await;
-
-        println!("Result: {response:?}");
-    }
-
-    async fn get_current_tx_batch(&mut self) {
-        let _ = self
-            .interactor
-            .query()
-            .to(self.state.current_address())
-            .typed(proxy::EsdtSafeProxy)
-            .get_current_tx_batch()
-            .returns(ReturnsResultUnmanaged)
-            .run()
-            .await;
-    }
-
-    async fn get_first_batch_any_status(&mut self) {
-        let _ = self
-            .interactor
-            .query()
-            .to(self.state.current_address())
-            .typed(proxy::EsdtSafeProxy)
-            .get_first_batch_any_status()
-            .returns(ReturnsResultUnmanaged)
-            .run()
-            .await;
-    }
-
-    async fn get_batch(&mut self) {
-        let batch_id = 0u64;
-
-        let _ = self
-            .interactor
-            .query()
-            .to(self.state.current_address())
-            .typed(proxy::EsdtSafeProxy)
-            .get_batch(batch_id)
-            .returns(ReturnsResultUnmanaged)
-            .run()
-            .await;
-    }
-
-    async fn get_batch_status(&mut self) {
-        let batch_id = 0u64;
-
-        self.interactor
-            .query()
-            .to(self.state.current_address())
-            .typed(proxy::EsdtSafeProxy)
-            .get_batch_status(batch_id)
-            .returns(ReturnsResultUnmanaged)
-            .run()
-            .await;
-    }
-
-    async fn first_batch_id(&mut self) {
-        let result_value = self
-            .interactor
-            .query()
-            .to(self.state.current_address())
-            .typed(proxy::EsdtSafeProxy)
-            .first_batch_id()
-            .returns(ReturnsResultUnmanaged)
-            .run()
-            .await;
-
-        println!("Result: {result_value:?}");
-    }
-
-    async fn last_batch_id(&mut self) {
-        let result_value = self
-            .interactor
-            .query()
-            .to(self.state.current_address())
-            .typed(proxy::EsdtSafeProxy)
-            .last_batch_id()
-            .returns(ReturnsResultUnmanaged)
-            .run()
-            .await;
-
-        println!("Result: {result_value:?}");
     }
 
     async fn set_max_bridged_amount(&mut self) {
@@ -660,7 +477,7 @@ impl ContractInteract {
             .from(&self.wallet_address)
             .to(self.state.current_address())
             .gas(30_000_000u64)
-            .typed(proxy::EsdtSafeProxy)
+            .typed(EsdtSafeProxy)
             .set_max_bridged_amount(token_id, max_amount)
             .returns(ReturnsResultUnmanaged)
             .run()
@@ -676,7 +493,7 @@ impl ContractInteract {
             .interactor
             .query()
             .to(self.state.current_address())
-            .typed(proxy::EsdtSafeProxy)
+            .typed(EsdtSafeProxy)
             .max_bridged_amount(token_id)
             .returns(ReturnsResultUnmanaged)
             .run()
@@ -692,7 +509,7 @@ impl ContractInteract {
             .from(&self.wallet_address)
             .to(self.state.current_address())
             .gas(30_000_000u64)
-            .typed(proxy::EsdtSafeProxy)
+            .typed(EsdtSafeProxy)
             .end_setup_phase()
             .returns(ReturnsResultUnmanaged)
             .run()
@@ -710,7 +527,7 @@ impl ContractInteract {
             .from(&self.wallet_address)
             .to(self.state.current_address())
             .gas(30_000_000u64)
-            .typed(proxy::EsdtSafeProxy)
+            .typed(EsdtSafeProxy)
             .add_tokens_to_whitelist(tokens)
             .returns(ReturnsResultUnmanaged)
             .run()
@@ -728,7 +545,7 @@ impl ContractInteract {
             .from(&self.wallet_address)
             .to(self.state.current_address())
             .gas(30_000_000u64)
-            .typed(proxy::EsdtSafeProxy)
+            .typed(EsdtSafeProxy)
             .remove_tokens_from_whitelist(tokens)
             .returns(ReturnsResultUnmanaged)
             .run()
@@ -746,7 +563,7 @@ impl ContractInteract {
             .from(&self.wallet_address)
             .to(self.state.current_address())
             .gas(30_000_000u64)
-            .typed(proxy::EsdtSafeProxy)
+            .typed(EsdtSafeProxy)
             .add_tokens_to_blacklist(tokens)
             .returns(ReturnsResultUnmanaged)
             .run()
@@ -764,7 +581,7 @@ impl ContractInteract {
             .from(&self.wallet_address)
             .to(self.state.current_address())
             .gas(30_000_000u64)
-            .typed(proxy::EsdtSafeProxy)
+            .typed(EsdtSafeProxy)
             .remove_tokens_from_blacklist(tokens)
             .returns(ReturnsResultUnmanaged)
             .run()
@@ -778,7 +595,7 @@ impl ContractInteract {
             .interactor
             .query()
             .to(self.state.current_address())
-            .typed(proxy::EsdtSafeProxy)
+            .typed(EsdtSafeProxy)
             .token_whitelist()
             .returns(ReturnsResultUnmanaged)
             .run()
@@ -792,7 +609,7 @@ impl ContractInteract {
             .interactor
             .query()
             .to(self.state.current_address())
-            .typed(proxy::EsdtSafeProxy)
+            .typed(EsdtSafeProxy)
             .token_blacklist()
             .returns(ReturnsResultUnmanaged)
             .run()
@@ -808,7 +625,7 @@ impl ContractInteract {
             .from(&self.wallet_address)
             .to(self.state.current_address())
             .gas(30_000_000u64)
-            .typed(proxy::EsdtSafeProxy)
+            .typed(EsdtSafeProxy)
             .pause_endpoint()
             .returns(ReturnsResultUnmanaged)
             .run()
@@ -824,7 +641,7 @@ impl ContractInteract {
             .from(&self.wallet_address)
             .to(self.state.current_address())
             .gas(30_000_000u64)
-            .typed(proxy::EsdtSafeProxy)
+            .typed(EsdtSafeProxy)
             .unpause_endpoint()
             .returns(ReturnsResultUnmanaged)
             .run()
@@ -838,7 +655,7 @@ impl ContractInteract {
             .interactor
             .query()
             .to(self.state.current_address())
-            .typed(proxy::EsdtSafeProxy)
+            .typed(EsdtSafeProxy)
             .paused_status()
             .returns(ReturnsResultUnmanaged)
             .run()
@@ -914,7 +731,7 @@ impl ContractInteract {
     }
 
     async fn register_operations(&mut self, operation: &Operation<StaticApi>) {
-        let bls_signature = ManagedByteArray::default();
+        let bls_signature = ManagedBuffer::new();
         let operation_hash = self.get_operation_hash(operation);
         let hash_of_hashes = sha256(&operation_hash);
 
@@ -933,7 +750,7 @@ impl ContractInteract {
             .tx()
             .from(&self.wallet_address)
             .to(header_verifier_address)
-            .typed(header_verifier_proxy::HeaderverifierProxy)
+            .typed(HeaderverifierProxy)
             .register_bridge_operations(
                 bls_signature,
                 managed_hash_of_hashes,

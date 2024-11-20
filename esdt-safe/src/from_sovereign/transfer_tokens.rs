@@ -11,8 +11,7 @@ const ESDT_TRANSACTION_GAS: GasLimit = 5_000_000;
 
 #[multiversx_sc::module]
 pub trait TransferTokensModule:
-    bls_signature::BlsSignatureModule
-    + super::events::EventsModule
+    super::events::EventsModule
     + super::token_mapping::TokenMappingModule
     + tx_batch_module::TxBatchModule
     + max_bridged_amount_module::MaxBridgedAmountModule
