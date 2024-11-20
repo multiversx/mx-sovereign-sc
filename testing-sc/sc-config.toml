@@ -16,4 +16,4 @@ add-unlabelled = false
 add-labels = ["testing-sc-external-view"]
 
 [[proxy]]
-path = "../esdt-safe/interactor/src/proxies/testing_sc_proxy.rs"
+path = "../common/proxies/src/testing_sc_proxy.rs"

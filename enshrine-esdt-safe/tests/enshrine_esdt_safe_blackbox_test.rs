@@ -1,4 +1,3 @@
-use bls_signature::BlsSignature;
 use multiversx_sc::codec::TopEncode;
 use multiversx_sc::imports::{MultiValue3, OptionalValue};
 use multiversx_sc::types::{
@@ -259,7 +258,7 @@ impl EnshrineTestState {
 
         operations_hashes.push(operation_hash.clone());
 
-        let mock_signature = self.mock_bls_signature(&operation_hash);
+        let mock_signature = ManagedBuffer::new();
         let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&operation_hash.to_vec()));
 
         self.world
@@ -407,17 +406,6 @@ impl EnshrineTestState {
             .typed(HeaderverifierProxy)
             .set_esdt_safe_address(ENSHRINE_ESDT_ADDRESS)
             .run();
-    }
-
-    fn mock_bls_signature(
-        &mut self,
-        operation_hash: &ManagedBuffer<StaticApi>,
-    ) -> BlsSignature<StaticApi> {
-        let byte_arr: &mut [u8; 48] = &mut [0; 48];
-        operation_hash.load_to_byte_array(byte_arr);
-        let mock_signature: BlsSignature<StaticApi> = ManagedByteArray::new_from_bytes(byte_arr);
-
-        mock_signature
     }
 
     fn setup_payments(

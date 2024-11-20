@@ -1,8 +1,6 @@
-use bls_signature::BlsSignature;
 use multiversx_sc::codec::TopEncode;
 use multiversx_sc::types::{
-    Address, EsdtTokenData, ManagedByteArray, MultiValueEncoded, TestTokenIdentifier,
-    TokenIdentifier,
+    Address, EsdtTokenData, MultiValueEncoded, TestTokenIdentifier, TokenIdentifier,
 };
 use multiversx_sc::{
     imports::{MultiValue3, OptionalValue},
@@ -304,7 +302,7 @@ impl BridgeTestState {
 
         operations_hashes.push(operation_hash.clone());
 
-        let mock_signature = self.mock_bls_signature(&operation_hash);
+        let mock_signature = ManagedBuffer::new();
         let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&operation_hash.to_vec()));
 
         self.world
@@ -355,17 +353,6 @@ impl BridgeTestState {
         let sha256 = sha256(&serialized_operation.to_vec());
 
         ManagedBuffer::new_from_bytes(&sha256)
-    }
-
-    fn mock_bls_signature(
-        &mut self,
-        operation_hash: &ManagedBuffer<StaticApi>,
-    ) -> BlsSignature<StaticApi> {
-        let byte_arr: &mut [u8; 48] = &mut [0; 48];
-        operation_hash.load_to_byte_array(byte_arr);
-        let mock_signature: BlsSignature<StaticApi> = ManagedByteArray::new_from_bytes(byte_arr);
-
-        mock_signature
     }
 }
 
