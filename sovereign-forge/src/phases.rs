@@ -15,32 +15,30 @@ use crate::{
     err_msg,
 };
 
+const NUMBER_OF_SHARDS: u32 = 3;
+
 #[multiversx_sc::module]
 pub trait PhasesModule: common::utils::UtilsModule + common::storage::StorageModule {
     #[endpoint(completeSetupPhase)]
     fn complete_setup_phase(&self) {
-        let blockchain_api = self.blockchain();
-        let caller = blockchain_api.get_caller();
-        let caller_shard_id = blockchain_api.get_shard_of_address(&caller);
+        let is_setup_complete_mapper = self.is_setup_complete();
 
-        let is_setup_complete_mapper = self.is_setup_complte(caller_shard_id);
+        if !is_setup_complete_mapper.is_empty() {
+            return;
+        }
 
-        require!(
-            !is_setup_complete_mapper.get(),
-            "The setup is already completed in shard {}",
-            caller_shard_id
-        );
-
-        require!(
-            !self.chain_factories(caller_shard_id).is_empty(),
-            "There is no Chain-Factory contract deployed in shard {}",
-            caller_shard_id
-        );
-        require!(
-            !self.token_handlers(caller_shard_id).is_empty(),
-            "There is no Token-Handler contract deployed in shard {}",
-            caller_shard_id
-        );
+        for shard_id in 1..=NUMBER_OF_SHARDS {
+            require!(
+                !self.chain_factories(shard_id).is_empty(),
+                "There is no Chain-Factory contract assigned for shard {}",
+                shard_id
+            );
+            require!(
+                !self.token_handlers(shard_id).is_empty(),
+                "There is no Token-Handler contract assigned for shard {}",
+                shard_id
+            );
+        }
 
         is_setup_complete_mapper.set(true);
     }
@@ -59,7 +57,7 @@ pub trait PhasesModule: common::utils::UtilsModule + common::storage::StorageMod
         let caller_shard_id = blockchain_api.get_shard_of_address(&caller);
 
         require!(
-            self.is_setup_complte(caller_shard_id).get(),
+            self.is_setup_complete().get(),
             "The setup is not completed in shard {}",
             caller_shard_id
         );
