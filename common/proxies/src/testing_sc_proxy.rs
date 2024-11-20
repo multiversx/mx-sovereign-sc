@@ -9,23 +9,23 @@
 
 use multiversx_sc::proxy_imports::*;
 
-pub struct FeeMarketProxy;
+pub struct TestingScProxy;
 
-impl<Env, From, To, Gas> TxProxyTrait<Env, From, To, Gas> for FeeMarketProxy
+impl<Env, From, To, Gas> TxProxyTrait<Env, From, To, Gas> for TestingScProxy
 where
     Env: TxEnv,
     From: TxFrom<Env>,
     To: TxTo<Env>,
     Gas: TxGas<Env>,
 {
-    type TxProxyMethods = FeeMarketProxyMethods<Env, From, To, Gas>;
+    type TxProxyMethods = TestingScProxyMethods<Env, From, To, Gas>;
 
     fn proxy_methods(self, tx: Tx<Env, From, To, (), Gas, (), ()>) -> Self::TxProxyMethods {
-        FeeMarketProxyMethods { wrapped_tx: tx }
+        TestingScProxyMethods { wrapped_tx: tx }
     }
 }
 
-pub struct FeeMarketProxyMethods<Env, From, To, Gas>
+pub struct TestingScProxyMethods<Env, From, To, Gas>
 where
     Env: TxEnv,
     From: TxFrom<Env>,
@@ -36,32 +36,25 @@ where
 }
 
 #[rustfmt::skip]
-impl<Env, From, Gas> FeeMarketProxyMethods<Env, From, (), Gas>
+impl<Env, From, Gas> TestingScProxyMethods<Env, From, (), Gas>
 where
     Env: TxEnv,
     Env::Api: VMApi,
     From: TxFrom<Env>,
     Gas: TxGas<Env>,
 {
-    pub fn init<
-        Arg0: ProxyArg<ManagedAddress<Env::Api>>,
-        Arg1: ProxyArg<Option<FeeStruct<Env::Api>>>,
-    >(
+    pub fn init(
         self,
-        esdt_safe_address: Arg0,
-        fee: Arg1,
     ) -> TxTypedDeploy<Env, From, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_deploy()
-            .argument(&esdt_safe_address)
-            .argument(&fee)
             .original_result()
     }
 }
 
 #[rustfmt::skip]
-impl<Env, From, To, Gas> FeeMarketProxyMethods<Env, From, To, Gas>
+impl<Env, From, To, Gas> TestingScProxyMethods<Env, From, To, Gas>
 where
     Env: TxEnv,
     Env::Api: VMApi,
@@ -80,7 +73,7 @@ where
 }
 
 #[rustfmt::skip]
-impl<Env, From, To, Gas> FeeMarketProxyMethods<Env, From, To, Gas>
+impl<Env, From, To, Gas> TestingScProxyMethods<Env, From, To, Gas>
 where
     Env: TxEnv,
     Env::Api: VMApi,
@@ -88,162 +81,15 @@ where
     To: TxTo<Env>,
     Gas: TxGas<Env>,
 {
-    pub fn set_price_aggregator_address<
-        Arg0: ProxyArg<ManagedAddress<Env::Api>>,
+    pub fn hello<
+        Arg0: ProxyArg<BigUint<Env::Api>>,
     >(
         self,
-        price_aggregator_address: Arg0,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        value: Arg0,
+    ) -> TxTypedCall<Env, From, To, (), Gas, ()> {
         self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("setPriceAggregatorAddress")
-            .argument(&price_aggregator_address)
+            .raw_call("hello")
+            .argument(&value)
             .original_result()
     }
-
-    pub fn set_fee<
-        Arg0: ProxyArg<FeeStruct<Env::Api>>,
-    >(
-        self,
-        fee_struct: Arg0,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("setFee")
-            .argument(&fee_struct)
-            .original_result()
-    }
-
-    pub fn remove_fee<
-        Arg0: ProxyArg<TokenIdentifier<Env::Api>>,
-    >(
-        self,
-        base_token: Arg0,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("removeFee")
-            .argument(&base_token)
-            .original_result()
-    }
-
-    pub fn token_fee<
-        Arg0: ProxyArg<TokenIdentifier<Env::Api>>,
-    >(
-        self,
-        token_id: Arg0,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, FeeType<Env::Api>> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("getTokenFee")
-            .argument(&token_id)
-            .original_result()
-    }
-
-    pub fn add_users_to_whitelist<
-        Arg0: ProxyArg<MultiValueEncoded<Env::Api, ManagedAddress<Env::Api>>>,
-    >(
-        self,
-        users: Arg0,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("addUsersToWhitelist")
-            .argument(&users)
-            .original_result()
-    }
-
-    pub fn remove_users_from_whitelist<
-        Arg0: ProxyArg<MultiValueEncoded<Env::Api, ManagedAddress<Env::Api>>>,
-    >(
-        self,
-        users: Arg0,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("removeUsersFromWhitelist")
-            .argument(&users)
-            .original_result()
-    }
-
-    /// Percentages have to be between 0 and 10_000, and must all add up to 100% (i.e. 10_000) 
-    pub fn distribute_fees<
-        Arg0: ProxyArg<MultiValueEncoded<Env::Api, MultiValue2<ManagedAddress<Env::Api>, usize>>>,
-    >(
-        self,
-        address_percentage_pairs: Arg0,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("distributeFees")
-            .argument(&address_percentage_pairs)
-            .original_result()
-    }
-
-    pub fn subtract_fee<
-        Arg0: ProxyArg<ManagedAddress<Env::Api>>,
-        Arg1: ProxyArg<usize>,
-        Arg2: ProxyArg<OptionalValue<u64>>,
-    >(
-        self,
-        original_caller: Arg0,
-        total_transfers: Arg1,
-        opt_gas_limit: Arg2,
-    ) -> TxTypedCall<Env, From, To, (), Gas, FinalPayment<Env::Api>> {
-        self.wrapped_tx
-            .raw_call("subtractFee")
-            .argument(&original_caller)
-            .argument(&total_transfers)
-            .argument(&opt_gas_limit)
-            .original_result()
-    }
-
-    pub fn users_whitelist(
-        self,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, MultiValueEncoded<Env::Api, ManagedAddress<Env::Api>>> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("getUsersWhitelist")
-            .original_result()
-    }
-}
-
-#[type_abi]
-#[derive(TopDecode, TopEncode, NestedEncode, NestedDecode, Clone)]
-pub struct FeeStruct<Api>
-where
-    Api: ManagedTypeApi,
-{
-    pub base_token: TokenIdentifier<Api>,
-    pub fee_type: FeeType<Api>,
-}
-
-#[rustfmt::skip]
-#[type_abi]
-#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, Clone)]
-pub enum FeeType<Api>
-where
-    Api: ManagedTypeApi,
-{
-    None,
-    Fixed {
-        token: TokenIdentifier<Api>,
-        per_transfer: BigUint<Api>,
-        per_gas: BigUint<Api>,
-    },
-    AnyToken {
-        base_fee_token: TokenIdentifier<Api>,
-        per_transfer: BigUint<Api>,
-        per_gas: BigUint<Api>,
-    },
-}
-
-#[type_abi]
-#[derive(TopEncode, TopDecode)]
-pub struct FinalPayment<Api>
-where
-    Api: ManagedTypeApi,
-{
-    pub fee: EsdtTokenPayment<Api>,
-    pub remaining_tokens: EsdtTokenPayment<Api>,
 }
