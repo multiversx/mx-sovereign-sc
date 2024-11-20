@@ -28,13 +28,13 @@ path = "../../common/tx-batch-module"
 path = "../../fee-market"
 
 [dependencies.multiversx-sc-snippets]
-version = "=0.54.2"
+version = "=0.54.3"
 
 [dependencies.multiversx-sc]
-version = "=0.54.2"
+version = "=0.54.3"
 
 [dependencies.multiversx-sc-scenario]
-version = "=0.54.2"
+version = "=0.54.3"
 
 [dependencies.clap]
 version = "4.4.7"
