@@ -54,12 +54,18 @@ pub trait PhasesModule: common::utils::UtilsModule + common::storage::StorageMod
         min_stake: BigUint,
         additional_stake_required: MultiValueEncoded<StakeMultiArg<Self::Api>>,
     ) {
-        let call_value = self.call_value().egld_value();
-        self.require_correct_deploy_cost(call_value.deref());
-
         let blockchain_api = self.blockchain();
         let caller = blockchain_api.get_caller();
         let caller_shard_id = blockchain_api.get_shard_of_address(&caller);
+
+        require!(
+            self.is_setup_complte(caller_shard_id).get(),
+            "The setup is not completed in shard {}",
+            caller_shard_id
+        );
+
+        let call_value = self.call_value().egld_value();
+        self.require_correct_deploy_cost(call_value.deref());
 
         let chain_id = self.generate_chain_id();
 
