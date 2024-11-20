@@ -1,9 +1,8 @@
-use bls_signature::BlsSignature;
 use header_verifier::{Headerverifier, OperationHashStatus};
 use multiversx_sc::types::ManagedBuffer;
 use multiversx_sc::{
     api::ManagedTypeApi,
-    types::{BigUint, ManagedByteArray, MultiValueEncoded, TestAddress, TestSCAddress},
+    types::{BigUint, MultiValueEncoded, TestAddress, TestSCAddress},
 };
 use multiversx_sc_scenario::{
     api::StaticApi, imports::MxscPath, multiversx_chain_vm::crypto_functions::sha256, DebugApi,
@@ -24,7 +23,7 @@ type BlsKeys = MultiValueEncoded<StaticApi, ManagedBuffer<StaticApi>>;
 
 #[derive(Clone)]
 pub struct BridgeOperation<M: ManagedTypeApi> {
-    signature: BlsSignature<M>,
+    signature: ManagedBuffer<M>,
     bridge_operation_hash: ManagedBuffer<M>,
     operations_hashes: MultiValueEncoded<M, ManagedBuffer<M>>,
 }
@@ -146,7 +145,7 @@ impl HeaderVerifierTestState {
         &mut self,
         operation_hashes: Vec<&ManagedBuffer<StaticApi>>,
     ) -> BridgeOperation<StaticApi> {
-        let mock_signature: BlsSignature<StaticApi> = ManagedByteArray::new_from_bytes(&[0; 48]);
+        let mock_signature = ManagedBuffer::new();
 
         let mut bridge_operations: MultiValueEncoded<StaticApi, ManagedBuffer<StaticApi>> =
             MultiValueEncoded::new();

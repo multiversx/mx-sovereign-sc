@@ -14,7 +14,6 @@ pub trait CreateTxModule:
     + tx_batch_module::TxBatchModule
     + max_bridged_amount_module::MaxBridgedAmountModule
     + token_whitelist::TokenWhitelistModule
-    + bls_signature::BlsSignatureModule
     + setup_phase::SetupPhaseModule
     + utils::UtilsModule
     + multiversx_sc_modules::pause::PauseModule

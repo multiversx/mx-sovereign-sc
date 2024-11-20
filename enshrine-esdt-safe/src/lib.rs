@@ -11,7 +11,6 @@ pub mod to_sovereign;
 pub trait EnshrineEsdtSafe:
     to_sovereign::create_tx::CreateTxModule
     + to_sovereign::events::EventsModule
-    + bls_signature::BlsSignatureModule
     + from_sovereign::events::EventsModule
     + from_sovereign::transfer_tokens::TransferTokensModule
     + tx_batch_module::TxBatchModule

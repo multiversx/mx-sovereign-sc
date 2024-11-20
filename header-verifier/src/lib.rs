@@ -1,6 +1,5 @@
 #![no_std]
 
-use bls_signature::BlsSignature;
 use multiversx_sc::codec;
 use multiversx_sc::proxy_imports::{TopDecode, TopEncode};
 
@@ -13,7 +12,7 @@ pub enum OperationHashStatus {
 }
 
 #[multiversx_sc::contract]
-pub trait Headerverifier: bls_signature::BlsSignatureModule {
+pub trait Headerverifier {
     #[init]
     fn init(&self, bls_pub_keys: MultiValueEncoded<ManagedBuffer>) {
         for pub_key in bls_pub_keys {
@@ -27,7 +26,7 @@ pub trait Headerverifier: bls_signature::BlsSignatureModule {
     #[endpoint(registerBridgeOps)]
     fn register_bridge_operations(
         &self,
-        signature: BlsSignature<Self::Api>,
+        signature: ManagedBuffer,
         bridge_operations_hash: ManagedBuffer,
         operations_hashes: MultiValueEncoded<ManagedBuffer>,
     ) {
@@ -128,7 +127,7 @@ pub trait Headerverifier: bls_signature::BlsSignatureModule {
     // TODO
     fn verify_bls(
         &self,
-        _signature: &BlsSignature<Self::Api>,
+        _signature: &ManagedBuffer,
         _bridge_operations_hash: &ManagedBuffer,
     ) -> bool {
         true
