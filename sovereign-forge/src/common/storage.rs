@@ -4,6 +4,9 @@ use super::utils::ChainContractsMap;
 
 #[multiversx_sc::module]
 pub trait StorageModule {
+    #[storage_mapper("isSetupComplete")]
+    fn is_setup_complte(&self, shard_id: u32) -> SingleValueMapper<bool>;
+
     #[storage_mapper("sovereignsMapper")]
     fn sovereigns_mapper(
         &self,

@@ -25,6 +25,7 @@ pub trait SovereignForge:
         );
 
         self.token_handlers(shard_id).set(token_handler_address);
+        self.is_setup_complte(shard_id).set(false);
     }
 
     #[only_owner]
@@ -36,6 +37,7 @@ pub trait SovereignForge:
         );
 
         self.token_handlers(shard_id).set(chain_factory_address);
+        self.is_setup_complte(shard_id).set(false);
     }
 
     #[upgrade]
