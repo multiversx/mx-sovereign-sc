@@ -1,7 +1,7 @@
 use multiversx_sc::codec::TopEncode;
 use multiversx_sc::imports::{MultiValue3, OptionalValue};
 use multiversx_sc::types::{
-    Address, BigUint, EsdtTokenData, EsdtTokenPayment, ManagedBuffer, ManagedByteArray, ManagedVec,
+    Address, BigUint, EsdtTokenData, EsdtTokenPayment, ManagedBuffer, ManagedVec,
     MultiValueEncoded, TestAddress, TestSCAddress, TestTokenIdentifier, TokenIdentifier,
 };
 use multiversx_sc_scenario::api::StaticApi;
