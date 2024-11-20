@@ -1,14 +1,13 @@
 #![no_std]
 
 use multiversx_sc_modules::only_admin;
+use transaction::StakeMultiArg;
 use validator_rules::TokenIdAmountPair;
 
 multiversx_sc::imports!();
 
 pub mod bridge;
 pub mod validator_rules;
-
-pub type StakeMultiArg<M> = MultiValue2<TokenIdentifier<M>, BigUint<M>>;
 
 #[multiversx_sc::contract]
 pub trait ChainConfigContract:
@@ -17,8 +16,8 @@ pub trait ChainConfigContract:
     #[init]
     fn init(
         &self,
-        min_validators: usize,
-        max_validators: usize,
+        min_validators: u64,
+        max_validators: u64,
         min_stake: BigUint,
         admin: ManagedAddress,
         additional_stake_required: MultiValueEncoded<StakeMultiArg<Self::Api>>,

@@ -11,5 +11,5 @@ path = "src/lib.rs"
 path = "../bls-signature"
 
 [dependencies.multiversx-sc]
-version = "=0.54.2"
+version = "=0.54.3"
 features = ["esdt-token-payment-legacy-decode"]

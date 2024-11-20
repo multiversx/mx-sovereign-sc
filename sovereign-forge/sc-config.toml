@@ -1,0 +1,19 @@
+[settings]
+main = "main"
+
+[contracts.main]
+name = "sovereign-forge"
+
+[contracts.full]
+name = "sovereign-forge-full"
+add-unlabelled = true
+add-labels = ["sovereign-forge-external-view"]
+
+[contracts.view]
+name = "soveriegn-forge-view"
+external-view = true
+add-unlabelled = false
+add-labels = ["sovereign-forge-external-view"]
+
+[[proxy]]
+path = "../common/proxies/src/sovereign_forge_proxy.rs"

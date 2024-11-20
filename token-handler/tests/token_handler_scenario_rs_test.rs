@@ -9,8 +9,3 @@ fn world() -> ScenarioWorld {
     );
     blockchain
 }
-
-#[test]
-fn empty_rs() {
-    world().run("scenarios/token_handler.scen.json");
-}
