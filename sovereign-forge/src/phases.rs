@@ -53,16 +53,15 @@ pub trait PhasesModule:
         min_stake: BigUint,
         additional_stake_required: MultiValueEncoded<StakeMultiArg<Self::Api>>,
     ) {
-        let blockchain_api = self.blockchain();
-        let caller = blockchain_api.get_caller();
-        let caller_shard_id = blockchain_api.get_shard_of_address(&caller);
-
         self.require_setup_complete();
 
         let call_value = self.call_value().egld_value();
         self.require_correct_deploy_cost(call_value.deref());
 
         let chain_id = self.generate_chain_id();
+        let blockchain_api = self.blockchain();
+        let caller = blockchain_api.get_caller();
+        let caller_shard_id = blockchain_api.get_shard_of_address(&caller);
 
         let chain_factories_mapper = self.chain_factories(caller_shard_id);
         require!(
