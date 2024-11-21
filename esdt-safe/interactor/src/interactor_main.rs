@@ -48,7 +48,6 @@ async fn main() {
         "registerToken" => interact.register_token().await,
         "setMaxBridgedAmount" => interact.set_max_bridged_amount().await,
         "getMaxBridgedAmount" => interact.max_bridged_amount().await,
-        "endSetupPhase" => interact.end_setup_phase().await,
         "addTokensToWhitelist" => interact.add_tokens_to_whitelist(b"").await,
         "removeTokensFromWhitelist" => interact.remove_tokens_from_whitelist().await,
         "addTokensToBlacklist" => interact.add_tokens_to_blacklist(b"").await,
@@ -500,22 +499,6 @@ impl ContractInteract {
             .await;
 
         println!("Result: {result_value:?}");
-    }
-
-    async fn end_setup_phase(&mut self) {
-        let response = self
-            .interactor
-            .tx()
-            .from(&self.wallet_address)
-            .to(self.state.current_address())
-            .gas(30_000_000u64)
-            .typed(EsdtSafeProxy)
-            .end_setup_phase()
-            .returns(ReturnsResultUnmanaged)
-            .run()
-            .await;
-
-        println!("Result: {response:?}");
     }
 
     async fn add_tokens_to_whitelist(&mut self, token_id: &[u8]) {
