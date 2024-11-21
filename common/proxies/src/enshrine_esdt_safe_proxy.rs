@@ -161,45 +161,6 @@ where
             .original_result()
     }
 
-    pub fn set_min_valid_signers<
-        Arg0: ProxyArg<u32>,
-    >(
-        self,
-        new_value: Arg0,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("setMinValidSigners")
-            .argument(&new_value)
-            .original_result()
-    }
-
-    pub fn add_signers<
-        Arg0: ProxyArg<MultiValueEncoded<Env::Api, ManagedAddress<Env::Api>>>,
-    >(
-        self,
-        signers: Arg0,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("addSigners")
-            .argument(&signers)
-            .original_result()
-    }
-
-    pub fn remove_signers<
-        Arg0: ProxyArg<MultiValueEncoded<Env::Api, ManagedAddress<Env::Api>>>,
-    >(
-        self,
-        signers: Arg0,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("removeSigners")
-            .argument(&signers)
-            .original_result()
-    }
-
     pub fn execute_operations<
         Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
         Arg1: ProxyArg<transaction::Operation<Env::Api>>,
@@ -225,94 +186,6 @@ where
         self.wrapped_tx
             .raw_call("registerNewTokenID")
             .argument(&tokens)
-            .original_result()
-    }
-
-    pub fn set_max_tx_batch_size<
-        Arg0: ProxyArg<usize>,
-    >(
-        self,
-        new_max_tx_batch_size: Arg0,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("setMaxTxBatchSize")
-            .argument(&new_max_tx_batch_size)
-            .original_result()
-    }
-
-    pub fn set_max_tx_batch_block_duration<
-        Arg0: ProxyArg<u64>,
-    >(
-        self,
-        new_max_tx_batch_block_duration: Arg0,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("setMaxTxBatchBlockDuration")
-            .argument(&new_max_tx_batch_block_duration)
-            .original_result()
-    }
-
-    pub fn get_current_tx_batch(
-        self,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, OptionalValue<MultiValue2<u64, MultiValueEncoded<Env::Api, MultiValue7<u64, u64, ManagedAddress<Env::Api>, ManagedAddress<Env::Api>, ManagedVec<Env::Api, EsdtTokenPayment<Env::Api>>, ManagedVec<Env::Api, EsdtTokenData<Env::Api>>, Option<transaction::TransferData<Env::Api>>>>>>> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("getCurrentTxBatch")
-            .original_result()
-    }
-
-    pub fn get_first_batch_any_status(
-        self,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, OptionalValue<MultiValue2<u64, MultiValueEncoded<Env::Api, MultiValue7<u64, u64, ManagedAddress<Env::Api>, ManagedAddress<Env::Api>, ManagedVec<Env::Api, EsdtTokenPayment<Env::Api>>, ManagedVec<Env::Api, EsdtTokenData<Env::Api>>, Option<transaction::TransferData<Env::Api>>>>>>> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("getFirstBatchAnyStatus")
-            .original_result()
-    }
-
-    pub fn get_batch<
-        Arg0: ProxyArg<u64>,
-    >(
-        self,
-        batch_id: Arg0,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, OptionalValue<MultiValue2<u64, MultiValueEncoded<Env::Api, MultiValue7<u64, u64, ManagedAddress<Env::Api>, ManagedAddress<Env::Api>, ManagedVec<Env::Api, EsdtTokenPayment<Env::Api>>, ManagedVec<Env::Api, EsdtTokenData<Env::Api>>, Option<transaction::TransferData<Env::Api>>>>>>> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("getBatch")
-            .argument(&batch_id)
-            .original_result()
-    }
-
-    pub fn get_batch_status<
-        Arg0: ProxyArg<u64>,
-    >(
-        self,
-        batch_id: Arg0,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, tx_batch_module::batch_status::BatchStatus<Env::Api>> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("getBatchStatus")
-            .argument(&batch_id)
-            .original_result()
-    }
-
-    pub fn first_batch_id(
-        self,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, u64> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("getFirstBatchId")
-            .original_result()
-    }
-
-    pub fn last_batch_id(
-        self,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, u64> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("getLastBatchId")
             .original_result()
     }
 
@@ -342,15 +215,6 @@ where
             .payment(NotPayable)
             .raw_call("getMaxBridgedAmount")
             .argument(&token_id)
-            .original_result()
-    }
-
-    pub fn end_setup_phase(
-        self,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("endSetupPhase")
             .original_result()
     }
 

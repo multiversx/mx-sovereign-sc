@@ -1,5 +1,3 @@
-use chain_config::StakeMultiArg;
-
 use multiversx_sc::imports::*;
 use proxies::{
     chain_config_proxy::ChainConfigContractProxy,
@@ -7,6 +5,7 @@ use proxies::{
     fee_market_proxy::{FeeMarketProxy, FeeStruct},
     header_verifier_proxy::HeaderverifierProxy,
 };
+use transaction::StakeMultiArg;
 multiversx_sc::derive_imports!();
 
 #[multiversx_sc::module]
@@ -15,8 +14,8 @@ pub trait FactoryModule {
     #[endpoint(deploySovereignChainConfigContract)]
     fn deploy_sovereign_chain_config_contract(
         &self,
-        min_validators: usize,
-        max_validators: usize,
+        min_validators: u64,
+        max_validators: u64,
         min_stake: BigUint,
         additional_stake_required: MultiValueEncoded<StakeMultiArg<Self::Api>>,
     ) -> ManagedAddress {

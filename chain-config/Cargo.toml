@@ -19,3 +19,6 @@ version = "=0.54.3"
 
 [dependencies.multiversx-sc-modules]
 version = "=0.54.3"
+
+[dependencies.transaction]
+path = "../common/transaction"

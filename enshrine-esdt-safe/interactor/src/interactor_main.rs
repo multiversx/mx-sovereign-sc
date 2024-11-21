@@ -46,22 +46,10 @@ async fn main() {
                 .deposit(OptionalTransferData::None, Option::None)
                 .await
         }
-        "setMinValidSigners" => interact.set_min_valid_signers().await,
-        "addSigners" => interact.add_signers().await,
-        "removeSigners" => interact.remove_signers().await,
         "executeBridgeOps" => interact.execute_operations().await,
         "registerNewTokenID" => interact.register_new_token_id().await,
-        "setMaxTxBatchSize" => interact.set_max_tx_batch_size().await,
-        "setMaxTxBatchBlockDuration" => interact.set_max_tx_batch_block_duration().await,
-        "getCurrentTxBatch" => interact.get_current_tx_batch().await,
-        "getFirstBatchAnyStatus" => interact.get_first_batch_any_status().await,
-        "getBatch" => interact.get_batch().await,
-        "getBatchStatus" => interact.get_batch_status().await,
-        "getFirstBatchId" => interact.first_batch_id().await,
-        "getLastBatchId" => interact.last_batch_id().await,
         "setMaxBridgedAmount" => interact.set_max_bridged_amount().await,
         "getMaxBridgedAmount" => interact.max_bridged_amount().await,
-        "endSetupPhase" => interact.end_setup_phase().await,
         "addTokensToWhitelist" => interact.add_tokens_to_whitelist(TOKEN_ID).await,
         "removeTokensFromWhitelist" => interact.remove_tokens_from_whitelist().await,
         "addTokensToBlacklist" => interact.add_tokens_to_blacklist().await,
@@ -440,61 +428,6 @@ impl ContractInteract {
             }
         }
     }
-
-    async fn set_min_valid_signers(&mut self) {
-        let new_value = 0u32;
-
-        let response = self
-            .interactor
-            .tx()
-            .from(&self.wallet_address)
-            .to(self.state.current_address())
-            .gas(30_000_000u64)
-            .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
-            .set_min_valid_signers(new_value)
-            .returns(ReturnsResultUnmanaged)
-            .run()
-            .await;
-
-        println!("Result: {response:?}");
-    }
-
-    async fn add_signers(&mut self) {
-        let signers = MultiValueVec::from(vec![bech32::decode("")]);
-
-        let response = self
-            .interactor
-            .tx()
-            .from(&self.wallet_address)
-            .to(self.state.current_address())
-            .gas(30_000_000u64)
-            .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
-            .add_signers(signers)
-            .returns(ReturnsResultUnmanaged)
-            .run()
-            .await;
-
-        println!("Result: {response:?}");
-    }
-
-    async fn remove_signers(&mut self) {
-        let signers = MultiValueVec::from(vec![bech32::decode("")]);
-
-        let response = self
-            .interactor
-            .tx()
-            .from(&self.wallet_address)
-            .to(self.state.current_address())
-            .gas(30_000_000u64)
-            .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
-            .remove_signers(signers)
-            .returns(ReturnsResultUnmanaged)
-            .run()
-            .await;
-
-        println!("Result: {response:?}");
-    }
-
     async fn execute_operations(&mut self) {
         let hash_of_hashes = ManagedBuffer::new_from_bytes(&b""[..]);
         let operation = Operation::new(
@@ -545,121 +478,6 @@ impl ContractInteract {
         println!("Result: {response:?}");
     }
 
-    async fn set_max_tx_batch_size(&mut self) {
-        let new_max_tx_batch_size = 0u32;
-
-        let response = self
-            .interactor
-            .tx()
-            .from(&self.wallet_address)
-            .to(self.state.current_address())
-            .gas(30_000_000u64)
-            .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
-            .set_max_tx_batch_size(new_max_tx_batch_size)
-            .returns(ReturnsResultUnmanaged)
-            .run()
-            .await;
-
-        println!("Result: {response:?}");
-    }
-
-    async fn set_max_tx_batch_block_duration(&mut self) {
-        let new_max_tx_batch_block_duration = 0u64;
-
-        let response = self
-            .interactor
-            .tx()
-            .from(&self.wallet_address)
-            .to(self.state.current_address())
-            .gas(30_000_000u64)
-            .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
-            .set_max_tx_batch_block_duration(new_max_tx_batch_block_duration)
-            .returns(ReturnsResultUnmanaged)
-            .run()
-            .await;
-
-        println!("Result: {response:?}");
-    }
-
-    async fn get_current_tx_batch(&mut self) {
-        let _ = self
-            .interactor
-            .query()
-            .to(self.state.current_address())
-            .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
-            .get_current_tx_batch()
-            .returns(ReturnsResultUnmanaged)
-            .run()
-            .await;
-    }
-
-    async fn get_first_batch_any_status(&mut self) {
-        let _ = self
-            .interactor
-            .query()
-            .to(self.state.current_address())
-            .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
-            .get_first_batch_any_status()
-            .returns(ReturnsResultUnmanaged)
-            .run()
-            .await;
-    }
-
-    async fn get_batch(&mut self) {
-        let batch_id = 0u64;
-
-        let _ = self
-            .interactor
-            .query()
-            .to(self.state.current_address())
-            .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
-            .get_batch(batch_id)
-            .returns(ReturnsResultUnmanaged)
-            .run()
-            .await;
-    }
-
-    async fn get_batch_status(&mut self) {
-        let batch_id = 0u64;
-
-        self.interactor
-            .query()
-            .to(self.state.current_address())
-            .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
-            .get_batch_status(batch_id)
-            .returns(ReturnsResultUnmanaged)
-            .run()
-            .await;
-    }
-
-    async fn first_batch_id(&mut self) {
-        let result_value = self
-            .interactor
-            .query()
-            .to(self.state.current_address())
-            .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
-            .first_batch_id()
-            .returns(ReturnsResultUnmanaged)
-            .run()
-            .await;
-
-        println!("Result: {result_value:?}");
-    }
-
-    async fn last_batch_id(&mut self) {
-        let result_value = self
-            .interactor
-            .query()
-            .to(self.state.current_address())
-            .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
-            .last_batch_id()
-            .returns(ReturnsResultUnmanaged)
-            .run()
-            .await;
-
-        println!("Result: {result_value:?}");
-    }
-
     async fn set_max_bridged_amount(&mut self) {
         let token_id = TokenIdentifier::from_esdt_bytes(&b""[..]);
         let max_amount = BigUint::<StaticApi>::from(0u128);
@@ -693,22 +511,6 @@ impl ContractInteract {
             .await;
 
         println!("Result: {result_value:?}");
-    }
-
-    async fn end_setup_phase(&mut self) {
-        let response = self
-            .interactor
-            .tx()
-            .from(&self.wallet_address)
-            .to(self.state.current_address())
-            .gas(30_000_000u64)
-            .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
-            .end_setup_phase()
-            .returns(ReturnsResultUnmanaged)
-            .run()
-            .await;
-
-        println!("Result: {response:?}");
     }
 
     async fn add_tokens_to_whitelist(&mut self, token_id: &[u8]) {

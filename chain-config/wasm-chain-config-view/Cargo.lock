@@ -26,6 +26,7 @@ version = "0.0.0"
 dependencies = [
  "multiversx-sc",
  "multiversx-sc-modules",
+ "transaction",
 ]
 
 [[package]]
@@ -194,6 +195,13 @@ dependencies = [
  "proc-macro2",
  "quote",
  "unicode-ident",
+]
+
+[[package]]
+name = "transaction"
+version = "0.0.0"
+dependencies = [
+ "multiversx-sc",
 ]
 
 [[package]]

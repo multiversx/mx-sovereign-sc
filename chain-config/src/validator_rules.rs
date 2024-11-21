@@ -15,11 +15,11 @@ pub struct TokenIdAmountPair<M: ManagedTypeApi> {
 pub trait ValidatorRulesModule {
     #[view(getMinValidators)]
     #[storage_mapper("minValidators")]
-    fn min_validators(&self) -> SingleValueMapper<usize>;
+    fn min_validators(&self) -> SingleValueMapper<u64>;
 
     #[view(getMaxValidators)]
     #[storage_mapper("maxValidators")]
-    fn max_validators(&self) -> SingleValueMapper<usize>;
+    fn max_validators(&self) -> SingleValueMapper<u64>;
 
     // TODO: Read user stake and verify
     #[view(getMinStake)]
