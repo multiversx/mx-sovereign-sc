@@ -173,6 +173,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "setup-phase"
+version = "0.0.0"
+dependencies = [
+ "multiversx-sc",
+]
+
+[[package]]
 name = "smallvec"
 version = "1.13.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -185,6 +192,7 @@ dependencies = [
  "multiversx-sc",
  "multiversx-sc-modules",
  "proxies",
+ "setup-phase",
  "transaction",
 ]
 

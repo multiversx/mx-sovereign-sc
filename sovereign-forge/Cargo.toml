@@ -25,3 +25,6 @@ path = "../common/proxies"
 
 [dependencies.transaction]
 path = "../common/transaction"
+
+[dependencies.setup-phase]
+path = "../common/setup-phase"

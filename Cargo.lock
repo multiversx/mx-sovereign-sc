@@ -2129,6 +2129,7 @@ dependencies = [
  "multiversx-sc-scenario",
  "num-bigint",
  "proxies",
+ "setup-phase",
  "transaction",
 ]
 

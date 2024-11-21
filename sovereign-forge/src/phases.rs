@@ -18,10 +18,12 @@ use crate::{
 const NUMBER_OF_SHARDS: u32 = 3;
 
 #[multiversx_sc::module]
-pub trait PhasesModule: common::utils::UtilsModule + common::storage::StorageModule {
+pub trait PhasesModule:
+    common::utils::UtilsModule + common::storage::StorageModule + setup_phase::SetupPhaseModule
+{
     #[endpoint(completeSetupPhase)]
     fn complete_setup_phase(&self) {
-        let is_setup_complete_mapper = self.is_setup_complete();
+        let is_setup_complete_mapper = self.setup_phase_complete();
 
         if !is_setup_complete_mapper.is_empty() {
             return;
@@ -56,11 +58,7 @@ pub trait PhasesModule: common::utils::UtilsModule + common::storage::StorageMod
         let caller = blockchain_api.get_caller();
         let caller_shard_id = blockchain_api.get_shard_of_address(&caller);
 
-        require!(
-            self.is_setup_complete().get(),
-            "The setup is not completed in shard {}",
-            caller_shard_id
-        );
+        self.require_setup_complete(caller_shard_id);
 
         let call_value = self.call_value().egld_value();
         self.require_correct_deploy_cost(call_value.deref());

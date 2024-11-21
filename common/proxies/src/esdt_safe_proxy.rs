@@ -221,15 +221,6 @@ where
             .original_result()
     }
 
-    pub fn end_setup_phase(
-        self,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("endSetupPhase")
-            .original_result()
-    }
-
     /// Tokens in the whitelist can be transferred without fees 
     pub fn add_tokens_to_whitelist<
         Arg0: ProxyArg<MultiValueEncoded<Env::Api, TokenIdentifier<Env::Api>>>,
