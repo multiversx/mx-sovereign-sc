@@ -21,6 +21,7 @@ const NUMBER_OF_SHARDS: u32 = 3;
 pub trait PhasesModule:
     common::utils::UtilsModule + common::storage::StorageModule + setup_phase::SetupPhaseModule
 {
+    #[only_owner]
     #[endpoint(completeSetupPhase)]
     fn complete_setup_phase(&self) {
         if !self.is_setup_phase_complete() {
@@ -56,7 +57,7 @@ pub trait PhasesModule:
         let caller = blockchain_api.get_caller();
         let caller_shard_id = blockchain_api.get_shard_of_address(&caller);
 
-        self.require_setup_complete(caller_shard_id);
+        self.require_setup_complete();
 
         let call_value = self.call_value().egld_value();
         self.require_correct_deploy_cost(call_value.deref());

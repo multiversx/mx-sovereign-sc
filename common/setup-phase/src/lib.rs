@@ -4,19 +4,16 @@ multiversx_sc::imports!();
 
 #[multiversx_sc::module]
 pub trait SetupPhaseModule {
-    fn require_setup_complete(&self, caller_shard_id: u32) {
-        require!(
-            self.is_setup_phase_complete(),
-            "The setup is not completed in shard {}",
-            caller_shard_id
-        );
-    }
-
     fn require_caller_initiator(&self) {
         let caller = self.blockchain().get_caller();
         let initiator = self.initiator_address().get();
 
         require!(caller == initiator, "Invalid caller");
+    }
+
+    #[inline]
+    fn require_setup_complete(&self) {
+        require!(self.is_setup_phase_complete(), "The setup is not completed");
     }
 
     #[inline]
