@@ -23,8 +23,6 @@ pub trait PhasesModule:
 {
     #[endpoint(completeSetupPhase)]
     fn complete_setup_phase(&self) {
-        let is_setup_complete_mapper = self.setup_phase_complete();
-
         if !self.is_setup_phase_complete() {
             return;
         }
@@ -42,7 +40,7 @@ pub trait PhasesModule:
             );
         }
 
-        is_setup_complete_mapper.set(true);
+        self.setup_phase_complete().set(true);
     }
 
     #[payable("EGLD")]
