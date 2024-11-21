@@ -8,7 +8,10 @@ mod phases;
 
 #[multiversx_sc::contract]
 pub trait SovereignForge:
-    phases::PhasesModule + common::storage::StorageModule + common::utils::UtilsModule
+    phases::PhasesModule
+    + common::storage::StorageModule
+    + common::utils::UtilsModule
+    + setup_phase::SetupPhaseModule
 {
     #[init]
     fn init(&self, deploy_cost: BigUint) {

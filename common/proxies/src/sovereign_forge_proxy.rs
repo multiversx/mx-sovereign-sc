@@ -117,6 +117,15 @@ where
             .original_result()
     }
 
+    pub fn complete_setup_phase(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("completeSetupPhase")
+            .original_result()
+    }
+
     pub fn deploy_phase_one<
         Arg0: ProxyArg<u64>,
         Arg1: ProxyArg<u64>,
