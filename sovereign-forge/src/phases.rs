@@ -25,7 +25,7 @@ pub trait PhasesModule:
     fn complete_setup_phase(&self) {
         let is_setup_complete_mapper = self.setup_phase_complete();
 
-        if !is_setup_complete_mapper.is_empty() {
+        if !self.is_setup_phase_complete() {
             return;
         }
 
