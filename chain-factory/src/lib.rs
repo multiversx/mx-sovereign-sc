@@ -2,10 +2,13 @@
 
 multiversx_sc::imports!();
 
+pub mod complete_phases;
 pub mod factory;
 
 #[multiversx_sc::contract]
-pub trait ChainFactoryContract: factory::FactoryModule + utils::UtilsModule {
+pub trait ChainFactoryContract:
+    factory::FactoryModule + complete_phases::CompletePhasesModule + utils::UtilsModule
+{
     #[init]
     fn init(
         &self,
