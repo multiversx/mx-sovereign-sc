@@ -6,12 +6,11 @@ use validator_rules::TokenIdAmountPair;
 
 multiversx_sc::imports!();
 
-pub mod bridge;
 pub mod validator_rules;
 
 #[multiversx_sc::contract]
 pub trait ChainConfigContract:
-    bridge::BridgeModule + validator_rules::ValidatorRulesModule + only_admin::OnlyAdminModule
+    validator_rules::ValidatorRulesModule + only_admin::OnlyAdminModule
 {
     #[init]
     fn init(
