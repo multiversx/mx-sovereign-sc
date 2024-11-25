@@ -22,3 +22,6 @@ version = "=0.54.4"
 
 [dependencies.transaction]
 path = "../common/transaction"
+
+[dependencies.setup-phase]
+path = "../common/setup-phase"

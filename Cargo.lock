@@ -234,6 +234,7 @@ dependencies = [
  "multiversx-sc-modules",
  "multiversx-sc-scenario",
  "num-bigint",
+ "setup-phase",
  "transaction",
 ]
 

@@ -10,7 +10,7 @@ pub mod validator_rules;
 
 #[multiversx_sc::contract]
 pub trait ChainConfigContract:
-    validator_rules::ValidatorRulesModule + only_admin::OnlyAdminModule
+    validator_rules::ValidatorRulesModule + only_admin::OnlyAdminModule + setup_phase::SetupPhaseModule
 {
     #[init]
     fn init(
@@ -68,6 +68,15 @@ pub trait ChainConfigContract:
             }
             self.additional_stake_required().set(additional_stake_vec);
         }
+    }
+
+    #[only_owner]
+    fn complete_setup_phase(&self) {
+        self.require_setup_not_complete();
+        self.require_config_set();
+        // validator set in header verifier
+        // change ownership to header-verifier
+        // update setup_phase_complete
     }
 
     #[upgrade]
