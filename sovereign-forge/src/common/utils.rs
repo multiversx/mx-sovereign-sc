@@ -1,7 +1,7 @@
 use multiversx_sc::{
     api::ManagedTypeApi,
     codec,
-    derive::{type_abi, ManagedVecItem, TypeAbi},
+    derive::{type_abi, ManagedVecItem},
     proxy_imports::{NestedDecode, NestedEncode, TopDecode, TopEncode},
     require,
     types::{ManagedAddress, ManagedBuffer, ManagedVec},
@@ -11,7 +11,8 @@ const CHARSET: &[u8] = b"0123456789abcdefghijklmnopqrstuvwxyz";
 
 use crate::err_msg;
 
-#[derive(TypeAbi, TopEncode, TopDecode, NestedEncode, NestedDecode, ManagedVecItem)]
+#[type_abi]
+#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, ManagedVecItem)]
 pub struct ContractInfo<M: ManagedTypeApi> {
     pub id: ScArray,
     pub address: ManagedAddress<M>,
@@ -23,7 +24,8 @@ impl<M: ManagedTypeApi> ContractInfo<M> {
     }
 }
 
-#[derive(TypeAbi, TopEncode, TopDecode, NestedEncode, NestedDecode, ManagedVecItem)]
+#[type_abi]
+#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, ManagedVecItem)]
 pub struct ChainContractsMap<M: ManagedTypeApi> {
     pub chain_id: ManagedBuffer<M>,
     pub contracts_info: ManagedVec<M, ContractInfo<M>>,
