@@ -26,6 +26,7 @@ pub trait ValidatorRulesModule {
     #[storage_mapper("minStake")]
     fn min_stake(&self) -> SingleValueMapper<BigUint>;
 
+    // NOTE: ManagedVec or MultiValueEncoded ?
     // TODO: Read user stake and verify
     #[view(getAdditionalStakeRequired)]
     #[storage_mapper("additionalStakeRequired")]

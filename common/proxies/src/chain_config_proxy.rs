@@ -97,25 +97,6 @@ where
     To: TxTo<Env>,
     Gas: TxGas<Env>,
 {
-    pub fn deploy_bridge<
-        Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
-        Arg1: ProxyArg<u32>,
-        Arg2: ProxyArg<MultiValueEncoded<Env::Api, ManagedAddress<Env::Api>>>,
-    >(
-        self,
-        code: Arg0,
-        min_valid_signers: Arg1,
-        signers: Arg2,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("deployBridge")
-            .argument(&code)
-            .argument(&min_valid_signers)
-            .argument(&signers)
-            .original_result()
-    }
-
     pub fn min_validators(
         self,
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, u64> {
