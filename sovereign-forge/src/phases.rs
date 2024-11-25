@@ -117,4 +117,30 @@ pub trait PhasesModule:
             .returns(ReturnsResult)
             .sync_call()
     }
+
+    fn deploy_header_verifier(
+        &self,
+        chain_factory_address: ManagedAddress,
+        bls_keys: MultiValueEncoded<ManagedBuffer>,
+    ) -> ManagedAddress {
+        self.tx()
+            .to(chain_factory_address)
+            .typed(ChainFactoryContractProxy)
+            .deploy_header_verifier(bls_keys)
+            .returns(ReturnsResult)
+            .sync_call()
+    }
+
+    fn deploy_esdt_safe(
+        &self,
+        chain_factory_address: ManagedAddress,
+        is_sovereign_chain: bool,
+    ) -> ManagedAddress {
+        self.tx()
+            .to(chain_factory_address)
+            .typed(ChainFactoryContractProxy)
+            .deploy_esdt_safe(is_sovereign_chain)
+            .returns(ReturnsResult)
+            .sync_call()
+    }
 }
