@@ -38,7 +38,7 @@ pub trait SovereignForge:
             "The given address is not a valid SC address"
         );
 
-        self.token_handlers(shard_id).set(chain_factory_address);
+        self.chain_factories(shard_id).set(chain_factory_address);
     }
 
     #[upgrade]
