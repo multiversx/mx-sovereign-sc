@@ -147,6 +147,15 @@ where
             .original_result()
     }
 
+    pub fn deploy_phase_two(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("deployPhaseTwo")
+            .original_result()
+    }
+
     pub fn deploy_cost(
         self,
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, BigUint<Env::Api>> {
