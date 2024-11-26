@@ -97,6 +97,13 @@ pub trait PhasesModule:
         sovereigns_mapper.set(chain_contracts_map);
     }
 
+    #[endpoint(deployPhaseTwo)]
+    fn deploy_phase_two(&self) {
+        // check chain config was deployed && header was not
+        // deploy header
+        // update mapper
+    }
+
     fn deploy_chain_config(
         &self,
         chain_factory_address: ManagedAddress,
