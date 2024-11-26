@@ -3,8 +3,8 @@
 use crate::err_msg;
 use multiversx_sc::imports::*;
 
-mod common;
-mod phases;
+pub mod common;
+pub mod phases;
 
 #[multiversx_sc::contract]
 pub trait SovereignForge:

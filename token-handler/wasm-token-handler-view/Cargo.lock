@@ -26,6 +26,7 @@ version = "0.0.0"
 dependencies = [
  "multiversx-sc",
  "multiversx-sc-modules",
+ "setup-phase",
  "transaction",
 ]
 
@@ -191,6 +192,13 @@ checksum = "c069c179fcdc6a2fe24d8d18305cf085fdbd4f922c041943e203685d6a1c58fd"
 dependencies = [
  "endian-type",
  "nibble_vec",
+]
+
+[[package]]
+name = "setup-phase"
+version = "0.0.0"
+dependencies = [
+ "multiversx-sc",
 ]
 
 [[package]]

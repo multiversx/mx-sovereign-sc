@@ -156,6 +156,32 @@ where
             .original_result()
     }
 
+    pub fn chain_factories<
+        Arg0: ProxyArg<u32>,
+    >(
+        self,
+        shard_id: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ManagedAddress<Env::Api>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getChainFactoryAddress")
+            .argument(&shard_id)
+            .original_result()
+    }
+
+    pub fn token_handlers<
+        Arg0: ProxyArg<u32>,
+    >(
+        self,
+        shard_id: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ManagedAddress<Env::Api>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getTokenHandlerAddress")
+            .argument(&shard_id)
+            .original_result()
+    }
+
     pub fn deploy_cost(
         self,
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, BigUint<Env::Api>> {

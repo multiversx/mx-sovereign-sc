@@ -21,6 +21,28 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b048fb63fd8b5923fc5aa7b340d8e156aec7ec02f0c78fa8a6ddc2613f6f71de"
 
 [[package]]
+name = "chain-config"
+version = "0.0.0"
+dependencies = [
+ "multiversx-sc",
+ "multiversx-sc-modules",
+ "setup-phase",
+ "transaction",
+]
+
+[[package]]
+name = "chain-factory"
+version = "0.0.0"
+dependencies = [
+ "chain-config",
+ "multiversx-sc",
+ "multiversx-sc-modules",
+ "proxies",
+ "transaction",
+ "utils",
+]
+
+[[package]]
 name = "endian-type"
 version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -189,6 +211,7 @@ checksum = "3c5e1a9a646d36c3599cd173a41282daf47c44583ad367b8e6837255952e5c67"
 name = "sovereign-forge"
 version = "0.0.0"
 dependencies = [
+ "chain-factory",
  "multiversx-sc",
  "multiversx-sc-modules",
  "proxies",
@@ -241,3 +264,10 @@ name = "unwrap-infallible"
 version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "151ac09978d3c2862c4e39b557f4eceee2cc72150bc4cb4f16abf061b6e381fb"
+
+[[package]]
+name = "utils"
+version = "0.0.0"
+dependencies = [
+ "multiversx-sc",
+]
