@@ -24,7 +24,7 @@ pub trait PhasesModule:
     #[only_owner]
     #[endpoint(completeSetupPhase)]
     fn complete_setup_phase(&self) {
-        if !self.is_setup_phase_complete() {
+        if self.is_setup_phase_complete() {
             return;
         }
 
