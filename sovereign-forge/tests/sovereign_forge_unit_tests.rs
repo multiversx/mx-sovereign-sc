@@ -1,12 +1,14 @@
-use multiversx_sc::types::{BigUint, TestAddress, TestSCAddress};
+use multiversx_sc::types::{BigUint, MultiValueEncoded, TestAddress, TestSCAddress};
 use multiversx_sc_scenario::{
-    imports::MxscPath, ExpectError, ScenarioTxRun, ScenarioTxWhitebox, ScenarioWorld,
+    api::StaticApi, imports::MxscPath, ExpectError, ScenarioTxRun, ScenarioTxWhitebox,
+    ScenarioWorld,
 };
 use proxies::{
     chain_factory_proxy::ChainFactoryContractProxy, sovereign_forge_proxy::SovereignForgeProxy,
 };
 use setup_phase::SetupPhaseModule;
 use sovereign_forge::common::storage::StorageModule;
+use transaction::StakeMultiArg;
 
 const FORGE_ADDRESS: TestSCAddress = TestSCAddress::new("sovereign-forge");
 const FORGE_CODE_PATH: MxscPath = MxscPath::new("output/sovereign-forge.mxsc.json");
@@ -49,7 +51,7 @@ impl SovereignForgeTestState {
     fn deploy_chain_factory(&mut self) -> &mut Self {
         self.world
             .tx()
-            .from(OWNER_ADDRESS)
+            .from(FORGE_ADDRESS)
             .typed(ChainFactoryContractProxy)
             .init(
                 FACTORY_ADDRESS,
@@ -134,17 +136,52 @@ impl SovereignForgeTestState {
             transaction.run();
         }
     }
+
+    fn deploy_phase_one(
+        &mut self,
+        payment: BigUint<StaticApi>,
+        min_validators: u64,
+        max_validators: u64,
+        min_stake: BigUint<StaticApi>,
+        additional_stake_required: MultiValueEncoded<StaticApi, StakeMultiArg<StaticApi>>,
+        expected_result: Option<ExpectError>,
+    ) {
+        let transaction = self
+            .world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .to(FORGE_ADDRESS)
+            .typed(SovereignForgeProxy)
+            .deploy_phase_one(
+                min_validators,
+                max_validators,
+                min_stake,
+                additional_stake_required,
+            )
+            .egld(payment);
+
+        if let Some(error) = expected_result {
+            transaction.returns(error).run();
+        } else {
+            transaction.run();
+        }
+    }
+
+    fn finish_setup(&mut self) {
+        self.register_chain_factory(1, FACTORY_ADDRESS, None);
+        self.register_chain_factory(2, FACTORY_ADDRESS, None);
+        self.register_chain_factory(3, FACTORY_ADDRESS, None);
+        self.register_token_handler(1, TOKEN_HANDLER_ADDRESS, None);
+        self.register_token_handler(2, TOKEN_HANDLER_ADDRESS, None);
+        self.register_token_handler(3, TOKEN_HANDLER_ADDRESS, None);
+        self.complete_setup_phase(None);
+    }
 }
 
 #[test]
-fn test_deploy_forge() {
+fn test_deploy_contracts() {
     let mut state = SovereignForgeTestState::new();
     state.deploy_sovereign_forge();
-}
-
-#[test]
-fn test_chain_factory() {
-    let mut state = SovereignForgeTestState::new();
     state.deploy_chain_factory();
 }
 
@@ -207,14 +244,8 @@ fn complete_setup_phase_no_token_handler_registered() {
 fn complete_setup_phase() {
     let mut state = SovereignForgeTestState::new();
     state.deploy_sovereign_forge();
-    state.register_chain_factory(1, FACTORY_ADDRESS, None);
-    state.register_chain_factory(2, FACTORY_ADDRESS, None);
-    state.register_chain_factory(3, FACTORY_ADDRESS, None);
-    state.register_token_handler(1, TOKEN_HANDLER_ADDRESS, None);
-    state.register_token_handler(2, TOKEN_HANDLER_ADDRESS, None);
-    state.register_token_handler(3, TOKEN_HANDLER_ADDRESS, None);
 
-    state.complete_setup_phase(None);
+    state.finish_setup();
 
     state
         .world
@@ -223,4 +254,44 @@ fn complete_setup_phase() {
         .whitebox(sovereign_forge::contract_obj, |sc| {
             assert!(sc.is_setup_phase_complete());
         });
+}
+
+#[test]
+fn deploy_phase_one_deploy_cost_too_low() {
+    let mut state = SovereignForgeTestState::new();
+    state.deploy_sovereign_forge();
+    state.finish_setup();
+
+    let deploy_cost = BigUint::from(1u32);
+
+    state.deploy_phase_one(
+        deploy_cost,
+        1,
+        2,
+        BigUint::from(2u32),
+        MultiValueEncoded::new(),
+        Some(ExpectError(
+            4,
+            "The given deploy cost is not equal to the standard amount",
+        )),
+    );
+}
+
+#[test]
+fn deploy_phase_one_chain_config_missing() {
+    let mut state = SovereignForgeTestState::new();
+    state.deploy_sovereign_forge();
+    state.deploy_chain_factory();
+    state.finish_setup();
+
+    let deploy_cost = BigUint::from(100_000u32);
+
+    state.deploy_phase_one(
+        deploy_cost,
+        1,
+        2,
+        BigUint::from(2u32),
+        MultiValueEncoded::new(),
+        Some(ExpectError(10, "error signalled by smartcontract")),
+    );
 }
