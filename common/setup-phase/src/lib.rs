@@ -17,14 +17,6 @@ pub trait SetupPhaseModule {
     }
 
     #[inline]
-    fn require_setup_not_complete(&self) {
-        require!(
-            !self.is_setup_phase_complete(),
-            "The setup phase is already completed"
-        );
-    }
-
-    #[inline]
     fn is_setup_phase_complete(&self) -> bool {
         self.setup_phase_complete().get()
     }

@@ -72,11 +72,14 @@ pub trait ChainConfigContract:
 
     #[only_owner]
     fn complete_setup_phase(&self) {
-        self.require_setup_not_complete();
+        if self.is_setup_phase_complete() {
+            return;
+        }
+
         self.require_config_set();
         // validator set in header verifier
         // change ownership to header-verifier
-        // update setup_phase_complete
+        self.setup_phase_complete().set(true);
     }
 
     #[upgrade]
