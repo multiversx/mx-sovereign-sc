@@ -2,6 +2,7 @@ use multiversx_sc::imports::*;
 use proxies::{
     chain_config_proxy::ChainConfigContractProxy,
     enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy,
+    esdt_safe_proxy::EsdtSafeProxy,
     fee_market_proxy::{FeeMarketProxy, FeeStruct},
     header_verifier_proxy::HeaderverifierProxy,
 };
@@ -51,6 +52,22 @@ pub trait FactoryModule {
         self.tx()
             .typed(HeaderverifierProxy)
             .init(bls_pub_keys)
+            .gas(60_000_000)
+            .from_source(source_address)
+            .code_metadata(metadata)
+            .returns(ReturnsNewManagedAddress)
+            .sync_call()
+    }
+
+    #[only_owner]
+    #[endpoint(deployEsdtSafe)]
+    fn deploy_esdt_safe(&self, is_sovereign_chain: bool) -> ManagedAddress {
+        let source_address = self.enshrine_esdt_safe_template().get();
+        let metadata = self.blockchain().get_code_metadata(&source_address);
+
+        self.tx()
+            .typed(EsdtSafeProxy)
+            .init(is_sovereign_chain)
             .gas(60_000_000)
             .from_source(source_address)
             .code_metadata(metadata)

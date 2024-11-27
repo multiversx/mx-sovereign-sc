@@ -129,6 +129,19 @@ where
             .original_result()
     }
 
+    pub fn deploy_esdt_safe<
+        Arg0: ProxyArg<bool>,
+    >(
+        self,
+        is_sovereign_chain: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ManagedAddress<Env::Api>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("deployEsdtSafe")
+            .argument(&is_sovereign_chain)
+            .original_result()
+    }
+
     pub fn deploy_enshrine_esdt_safe<
         Arg0: ProxyArg<bool>,
         Arg1: ProxyArg<ManagedAddress<Env::Api>>,
@@ -177,6 +190,42 @@ where
             .payment(NotPayable)
             .raw_call("completeSetupPhase")
             .argument(&_contract_address)
+            .original_result()
+    }
+
+    pub fn complete_chain_config_setup(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("completeChainConfigSetup")
+            .original_result()
+    }
+
+    pub fn complete_header_verifier_setup(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("completeHeaderVerifierSetup")
+            .original_result()
+    }
+
+    pub fn complete_fee_market_setup(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("completeFeeMarketSetup")
+            .original_result()
+    }
+
+    pub fn complete_esdt_safe_setup(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("completeEsdtSafeSetup")
             .original_result()
     }
 }

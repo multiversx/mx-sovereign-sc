@@ -20,6 +20,9 @@ version = "=0.54.4"
 [dependencies.multiversx-sc-modules]
 version = "=0.54.4"
 
+[dependencies.chain-factory]
+path = "../chain-factory"
+
 [dependencies.proxies]
 path = "../common/proxies"
 
