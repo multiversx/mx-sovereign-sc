@@ -1,6 +1,6 @@
 use multiversx_sc::imports::{SingleValueMapper, UnorderedSetMapper};
 
-use super::utils::ChainContractsMap;
+use super::utils::ContractInfo;
 
 #[multiversx_sc::module]
 pub trait StorageModule {
@@ -8,7 +8,13 @@ pub trait StorageModule {
     fn sovereigns_mapper(
         &self,
         sovereign_creator: &ManagedAddress,
-    ) -> SingleValueMapper<ChainContractsMap<Self::Api>>;
+    ) -> SingleValueMapper<ManagedBuffer>;
+
+    #[storage_mapper("sovereignDeployedContracts")]
+    fn sovereign_deployed_contracts(
+        &self,
+        chain_id: &ManagedBuffer,
+    ) -> UnorderedSetMapper<ContractInfo<Self::Api>>;
 
     #[view(getChainFactoryAddress)]
     #[storage_mapper("chainFactories")]

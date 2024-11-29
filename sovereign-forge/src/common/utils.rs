@@ -4,7 +4,7 @@ use multiversx_sc::{
     derive::{type_abi, ManagedVecItem},
     proxy_imports::{NestedDecode, NestedEncode, TopDecode, TopEncode},
     require,
-    types::{ManagedAddress, ManagedBuffer, ManagedVec},
+    types::ManagedAddress,
 };
 
 const CHARSET: &[u8] = b"0123456789abcdefghijklmnopqrstuvwxyz";
@@ -21,22 +21,6 @@ pub struct ContractInfo<M: ManagedTypeApi> {
 impl<M: ManagedTypeApi> ContractInfo<M> {
     pub fn new(id: ScArray, address: ManagedAddress<M>) -> Self {
         ContractInfo { id, address }
-    }
-}
-
-#[type_abi]
-#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, ManagedVecItem)]
-pub struct ChainContractsMap<M: ManagedTypeApi> {
-    pub chain_id: ManagedBuffer<M>,
-    pub contracts_info: ManagedVec<M, ContractInfo<M>>,
-}
-
-impl<M: ManagedTypeApi> ChainContractsMap<M> {
-    pub fn new(chain_id: ManagedBuffer<M>, contracts_info: ManagedVec<M, ContractInfo<M>>) -> Self {
-        ChainContractsMap {
-            chain_id,
-            contracts_info,
-        }
     }
 }
 
