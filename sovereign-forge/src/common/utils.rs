@@ -52,7 +52,7 @@ pub trait UtilsModule: super::storage::StorageModule {
         let chain_id = sovereigns_mapper.get();
         let deployed_contracts = self.sovereign_deployed_contracts(&chain_id);
 
-        require!(deployed_contracts.iter().any(|sc| sc.id == ScArray::ChainConfig), "The last deployed contract is not Chain-Config, please be attentive to the order of deployment!");
+        require!(deployed_contracts.iter().any(|sc| sc.id == sc_id), "The last deployed contract is not Chain-Config, please be attentive to the order of deployment!");
     }
 
     fn generate_chain_id(&self) -> ManagedBuffer {
