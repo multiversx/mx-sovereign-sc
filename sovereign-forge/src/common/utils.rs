@@ -31,8 +31,8 @@ impl<M: ManagedTypeApi> ContractInfo<M> {
 pub enum ScArray {
     ChainFactory,
     Controller,
-    SovereignHeaderVerifier,
-    SovereignCrossChainOperation,
+    HeaderVerifier,
+    ESDTSafe,
     FeeMarket,
     TokenHandler,
     ChainConfig,
