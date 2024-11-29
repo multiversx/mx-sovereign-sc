@@ -1,18 +1,16 @@
+use crate::err_msg;
 use core::ops::Deref;
 use proxies::chain_factory_proxy::ChainFactoryContractProxy;
 use transaction::StakeMultiArg;
 
 use multiversx_sc::{
     require,
-    types::{ManagedVec, MultiValueEncoded, ReturnsResult},
+    types::{MultiValueEncoded, ReturnsResult},
 };
 
-use crate::{
-    common::{
-        self,
-        utils::{ChainContractsMap, ContractInfo, ScArray},
-    },
-    err_msg,
+use crate::common::{
+    self,
+    utils::{ContractInfo, ScArray},
 };
 
 const NUMBER_OF_SHARDS: u32 = 3;
@@ -89,12 +87,9 @@ pub trait PhasesModule:
         let chain_factory_contract_info =
             ContractInfo::new(ScArray::ChainConfig, chain_config_address);
 
-        let mut contracts_info = ManagedVec::new();
-        contracts_info.push(chain_factory_contract_info);
-
-        let chain_contracts_map = ChainContractsMap::new(chain_id, contracts_info);
-
-        sovereigns_mapper.set(chain_contracts_map);
+        self.sovereign_deployed_contracts(&chain_id)
+            .insert(chain_factory_contract_info);
+        sovereigns_mapper.set(chain_id);
     }
 
     #[endpoint(deployPhaseTwo)]
