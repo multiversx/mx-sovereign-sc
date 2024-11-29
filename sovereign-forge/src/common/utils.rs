@@ -11,6 +11,8 @@ const CHARSET: &[u8] = b"0123456789abcdefghijklmnopqrstuvwxyz";
 
 use crate::err_msg;
 
+use super::storage::ChainId;
+
 #[type_abi]
 #[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, ManagedVecItem)]
 pub struct ContractInfo<M: ManagedTypeApi> {
@@ -79,5 +81,15 @@ pub trait UtilsModule: super::storage::StorageModule {
             call_value == &self.deploy_cost().get(),
             "The given deploy cost is not equal to the standard amount"
         );
+    }
+
+    fn get_sovereign_chain_id(&self, sovereign_creator: &ManagedAddress) -> ChainId<Self::Api> {
+        let sovereign_mapper = self.sovereigns_mapper(sovereign_creator);
+        require!(
+            !sovereign_mapper.is_empty(),
+            "There is no sovereign created by this address"
+        );
+
+        sovereign_mapper.get()
     }
 }
