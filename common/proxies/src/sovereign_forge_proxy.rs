@@ -147,12 +147,16 @@ where
             .original_result()
     }
 
-    pub fn deploy_phase_two(
+    pub fn deploy_phase_two<
+        Arg0: ProxyArg<MultiValueEncoded<Env::Api, ManagedBuffer<Env::Api>>>,
+    >(
         self,
+        bls_keys: Arg0,
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("deployPhaseTwo")
+            .argument(&bls_keys)
             .original_result()
     }
 
