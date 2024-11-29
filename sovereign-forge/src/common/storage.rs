@@ -4,6 +4,7 @@ use super::utils::ChainContractsMap;
 
 #[multiversx_sc::module]
 pub trait StorageModule {
+    // TODO: This has to be easily modifiable
     #[storage_mapper("sovereignsMapper")]
     fn sovereigns_mapper(
         &self,

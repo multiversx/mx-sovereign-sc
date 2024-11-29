@@ -98,10 +98,18 @@ pub trait PhasesModule:
     }
 
     #[endpoint(deployPhaseTwo)]
-    fn deploy_phase_two(&self) {
-        // check chain config was deployed && header was not
-        // deploy header
-        // update mapper
+    fn deploy_phase_two(&self, bls_keys: MultiValueEncoded<ManagedBuffer>) {
+        let blockchain_api = self.blockchain();
+        let caller = blockchain_api.get_caller();
+        let caller_shard_id = blockchain_api.get_shard_of_address(&caller);
+
+        self.check_phase_one_completed(&caller);
+
+        let chain_factories_mapper = self.chain_factories(caller_shard_id);
+        let chain_factory_address = chain_factories_mapper.get();
+        let header_verifier_address = self.deploy_header_verifier(chain_factory_address, bls_keys);
+
+        // self.sovereigns_mapper(caller).
     }
 
     fn deploy_chain_config(

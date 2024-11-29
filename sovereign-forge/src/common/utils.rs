@@ -55,6 +55,25 @@ pub enum ScArray {
 
 #[multiversx_sc::module]
 pub trait UtilsModule: super::storage::StorageModule {
+    fn check_phase_one_completed(&self, sovereign_creator: &ManagedAddress) {
+        let sovereigns_mapper = self.sovereigns_mapper(sovereign_creator);
+
+        require!(
+            !sovereigns_mapper.is_empty(),
+            "There are no contracts deployed for this Sovereign"
+        );
+
+        let last_deployed_contract = sovereigns_mapper
+            .get()
+            .contracts_info
+            .iter()
+            .last()
+            .unwrap()
+            .id;
+
+        require!(last_deployed_contract == ScArray::ChainConfig, "The last deployed contract is not Chain-Config, please be attentive to the order of deployment!");
+    }
+
     fn generate_chain_id(&self) -> ManagedBuffer {
         loop {
             let new_chain_id = self.generated_random_4_char_string();

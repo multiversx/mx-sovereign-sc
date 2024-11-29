@@ -3,25 +3,22 @@
 use serde::Deserialize;
 use std::io::Read;
 
-
 /// Config file
 const CONFIG_FILE: &str = "config.toml";
-
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum ChainType {
     Real,
     Simulator,
-    }
+}
 
 /// Contract Interact configuration
 #[derive(Debug, Deserialize)]
 pub struct Config {
     pub gateway_uri: String,
     pub chain_type: ChainType,
-    }
-
+}
 
 impl Config {
     // Deserializes config from file
@@ -36,7 +33,7 @@ impl Config {
         Config {
             gateway_uri: "http://localhost:8085".to_owned(),
             chain_type: ChainType::Simulator,
-    }
+        }
     }
 
     // Returns the gateway URI
@@ -49,8 +46,6 @@ impl Config {
         match self.chain_type {
             ChainType::Real => false,
             ChainType::Simulator => true,
+        }
     }
-    }
-    }
-
-
+}
