@@ -12,7 +12,7 @@ pub enum OperationHashStatus {
 }
 
 #[multiversx_sc::contract]
-pub trait Headerverifier {
+pub trait Headerverifier: setup_phase::SetupPhaseModule {
     #[init]
     fn init(&self, bls_pub_keys: MultiValueEncoded<ManagedBuffer>) {
         for pub_key in bls_pub_keys {
@@ -90,6 +90,33 @@ pub trait Headerverifier {
         }
     }
 
+    #[only_owner]
+    #[endpoint(completeSetupPhase)]
+    fn complete_setup_phase(&self) {
+        if self.is_setup_phase_complete() {
+            return;
+        }
+
+        let chain_config_mapper = self.chain_config_address();
+        require!(
+            !chain_config_mapper.is_empty(),
+            "The Chain-Config address is not set"
+        );
+
+        let chain_config_address = chain_config_mapper.get();
+        let min_validators = self.min_validators(chain_config_address).get();
+        let number_of_validators = self.bls_pub_keys().len() as u32;
+
+        require!(
+            number_of_validators > min_validators,
+            "There should be at least {} more validators so the setup phase can be completed",
+            (number_of_validators - min_validators)
+        );
+
+        // change ownership
+        self.setup_phase_complete().set(true);
+    }
+
     fn require_caller_esdt_safe(&self) {
         let esdt_safe_mapper = self.esdt_safe_address();
 
@@ -155,4 +182,10 @@ pub trait Headerverifier {
 
     #[storage_mapper("esdtSafeAddress")]
     fn esdt_safe_address(&self) -> SingleValueMapper<ManagedAddress>;
+
+    #[storage_mapper("chainConfigAddress")]
+    fn chain_config_address(&self) -> SingleValueMapper<ManagedAddress>;
+
+    #[storage_mapper_from_address("minValidators")]
+    fn min_validators(&self, sc_address: ManagedAddress) -> SingleValueMapper<u32, ManagedAddress>;
 }
