@@ -98,13 +98,19 @@ pub trait PhasesModule:
         let caller = blockchain_api.get_caller();
         let caller_shard_id = blockchain_api.get_shard_of_address(&caller);
 
-        self.check_phase_one_completed(&caller);
+        self.check_if_contract_deployed(&caller, ScArray::ChainConfig);
 
         let chain_factories_mapper = self.chain_factories(caller_shard_id);
         let chain_factory_address = chain_factories_mapper.get();
         let header_verifier_address = self.deploy_header_verifier(chain_factory_address, bls_keys);
 
-        // self.sovereigns_mapper(caller).
+        let chain_factory_contract_info =
+            ContractInfo::new(ScArray::HeaderVerifier, header_verifier_address);
+
+        let chain_id = self.get_sovereign_chain_id(&caller);
+
+        self.sovereign_deployed_contracts(&chain_id)
+            .insert(chain_factory_contract_info);
     }
 
     fn deploy_chain_config(
