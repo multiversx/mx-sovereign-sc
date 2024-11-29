@@ -5,7 +5,7 @@ use multiversx_sc::{
 
 use super::utils::ContractInfo;
 
-type ChainId<M> = ManagedBuffer<M>;
+pub type ChainId<M> = ManagedBuffer<M>;
 
 #[multiversx_sc::module]
 pub trait StorageModule {
