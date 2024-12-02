@@ -1,13 +1,16 @@
 [[bin]]
-name = "rust-interact-esdt-safe"
-path = "src/interactor_main.rs"
+name = "enshrine_esdt_safe_interactor"
+path = "src/enshrine_esdt_safe_interactor_main.rs"
 
 [package]
-name = "rust-interact-esdt-safe"
+name = "enshrine_esdt_safe_interactor"
 version = "0.0.0"
 authors = ["you"]
 edition = "2021"
 publish = false
+
+[lib]
+path = "src/enshrine_esdt_safe_interactor.rs"
 
 [dependencies]
 toml = "0.8.6"
@@ -29,6 +32,9 @@ path = "../../common/setup-phase"
 
 [dependencies.token-whitelist]
 path = "../../common/token-whitelist"
+
+[dependencies.interactor]
+path = "../../common/interactor"
 
 [dependencies.utils]
 path = "../../common/utils"
@@ -58,3 +64,6 @@ features = ["derive"]
 [dependencies.serde]
 version = "1.0"
 features = ["derive"]
+
+[features]
+chain-simulator-tests = []
