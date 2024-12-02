@@ -2,6 +2,7 @@ use multiversx_sc::{
     api::ManagedTypeApi,
     codec,
     derive::{type_abi, ManagedVecItem},
+    formatter::SCDisplay,
     proxy_imports::{NestedDecode, NestedEncode, TopDecode, TopEncode},
     require,
     types::ManagedAddress,
@@ -27,7 +28,9 @@ impl<M: ManagedTypeApi> ContractInfo<M> {
 }
 
 #[type_abi]
-#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, Clone, ManagedVecItem, PartialEq)]
+#[derive(
+    TopEncode, TopDecode, NestedEncode, NestedDecode, Clone, ManagedVecItem, PartialEq, SCDisplay,
+)]
 pub enum ScArray {
     ChainFactory,
     Controller,
@@ -50,9 +53,16 @@ pub trait UtilsModule: super::storage::StorageModule {
         );
 
         let chain_id = sovereigns_mapper.get();
-        let deployed_contracts = self.sovereign_deployed_contracts(&chain_id);
+        let deployed_contracts_mapper = self.sovereign_deployed_contracts(&chain_id);
 
-        require!(deployed_contracts.iter().any(|sc| sc.id == sc_id), "The last deployed contract is not Chain-Config, please be attentive to the order of deployment!");
+        let is_contract_deployed = deployed_contracts_mapper.iter().any(|sc| sc.id == sc_id);
+        let sc_id_as_u32 = sc_id as u32;
+
+        require!(
+            is_contract_deployed,
+            "The {} SC is not deployed inside this Sovereign Chain",
+            sc_id_as_u32
+        );
     }
 
     fn generate_chain_id(&self) -> ManagedBuffer {
