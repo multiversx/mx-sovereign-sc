@@ -374,7 +374,7 @@ impl ContractInteract {
     pub async fn execute_operations_with_error(&mut self, error_msg: ExpectError<'_>) {
         let tokens = self.setup_payments().await;
         let operation_data = self.setup_operation_data(false).await;
-        let to = managed_address!(&self.bob_address);
+        let to = managed_address!(&self.bob_address); //TO DO: make the "to" address a parameter
         let operation = Operation::new(to, tokens, operation_data);
         let operation_hash = self.get_operation_hash(&operation);
 

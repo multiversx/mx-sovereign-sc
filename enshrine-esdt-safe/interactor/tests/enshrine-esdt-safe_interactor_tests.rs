@@ -1,3 +1,5 @@
+use std::vec;
+
 use enshrine_esdt_safe_interactor::ContractInteract;
 use interactor::constants::{TOKEN_ID, WHITELIST_TOKEN_ID};
 use interactor::interactor_config::Config;
@@ -54,63 +56,12 @@ async fn test_deposit_too_many_payments() {
     let from = interact.wallet_address.clone();
     let to_contract = interact.state.current_address().clone();
     let transfer_data = OptionalTransferData::None;
-    let payments = ManagedVec::from(vec![
-        (
-            TokenIdentifier::from_esdt_bytes(TOKEN_ID),
-            0u64,
-            BigUint::from(10u64),
-        ),
-        (
-            TokenIdentifier::from_esdt_bytes(TOKEN_ID),
-            0u64,
-            BigUint::from(10u64),
-        ),
-        (
-            TokenIdentifier::from_esdt_bytes(TOKEN_ID),
-            0u64,
-            BigUint::from(10u64),
-        ),
-        (
-            TokenIdentifier::from_esdt_bytes(TOKEN_ID),
-            0u64,
-            BigUint::from(10u64),
-        ),
-        (
-            TokenIdentifier::from_esdt_bytes(TOKEN_ID),
-            0u64,
-            BigUint::from(10u64),
-        ),
-        (
-            TokenIdentifier::from_esdt_bytes(TOKEN_ID),
-            0u64,
-            BigUint::from(10u64),
-        ),
-        (
-            TokenIdentifier::from_esdt_bytes(TOKEN_ID),
-            0u64,
-            BigUint::from(10u64),
-        ),
-        (
-            TokenIdentifier::from_esdt_bytes(TOKEN_ID),
-            0u64,
-            BigUint::from(10u64),
-        ),
-        (
-            TokenIdentifier::from_esdt_bytes(TOKEN_ID),
-            0u64,
-            BigUint::from(10u64),
-        ),
-        (
-            TokenIdentifier::from_esdt_bytes(TOKEN_ID),
-            0u64,
-            BigUint::from(10u64),
-        ),
-        (
-            TokenIdentifier::from_esdt_bytes(TOKEN_ID),
-            0u64,
-            BigUint::from(10u64),
-        ),
-    ]);
+    let payment = EsdtTokenPayment::new(
+        TokenIdentifier::from_esdt_bytes(TOKEN_ID),
+        0u64,
+        BigUint::from(10u64),
+    );
+    let payments = ManagedVec::from(vec![payment; 11]);
 
     interact.deploy_setup().await;
 
