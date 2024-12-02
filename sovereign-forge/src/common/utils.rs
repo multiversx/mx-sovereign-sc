@@ -2,7 +2,6 @@ use multiversx_sc::{
     api::ManagedTypeApi,
     codec,
     derive::{type_abi, ManagedVecItem},
-    formatter::SCDisplay,
     proxy_imports::{NestedDecode, NestedEncode, TopDecode, TopEncode},
     require,
     types::ManagedAddress,
