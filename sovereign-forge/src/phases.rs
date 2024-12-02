@@ -100,17 +100,15 @@ pub trait PhasesModule:
 
         self.check_if_contract_deployed(&caller, ScArray::ChainConfig);
 
-        let chain_factories_mapper = self.chain_factories(caller_shard_id);
-        let chain_factory_address = chain_factories_mapper.get();
-        let header_verifier_address = self.deploy_header_verifier(chain_factory_address, bls_keys);
+        let header_verifier_address =
+            self.deploy_header_verifier(self.chain_factories(caller_shard_id).get(), bls_keys);
 
-        let chain_factory_contract_info =
+        let header_verifier_contract_info =
             ContractInfo::new(ScArray::HeaderVerifier, header_verifier_address);
-
         let chain_id = self.get_sovereign_chain_id(&caller);
 
         self.sovereign_deployed_contracts(&chain_id)
-            .insert(chain_factory_contract_info);
+            .insert(header_verifier_contract_info);
     }
 
     fn deploy_chain_config(
