@@ -41,7 +41,12 @@ pub enum ScArray {
 
 #[multiversx_sc::module]
 pub trait UtilsModule: super::storage::StorageModule {
-    fn check_if_contract_deployed(&self, sovereign_creator: &ManagedAddress, sc_id: ScArray) {
+    fn check_if_contract_deployed(
+        &self,
+        sovereign_creator: &ManagedAddress,
+        sc_id: ScArray,
+        sc_name: &[u8],
+    ) {
         let sovereigns_mapper = self.sovereigns_mapper(sovereign_creator);
 
         require!(
@@ -53,12 +58,12 @@ pub trait UtilsModule: super::storage::StorageModule {
         let deployed_contracts_mapper = self.sovereign_deployed_contracts(&chain_id);
 
         let is_contract_deployed = deployed_contracts_mapper.iter().any(|sc| sc.id == sc_id);
-        let sc_id_as_u32 = sc_id as u32;
+        let sc_name_buffer = ManagedBuffer::from(sc_name);
 
         require!(
             is_contract_deployed,
             "The {} SC is not deployed inside this Sovereign Chain",
-            sc_id_as_u32
+            sc_name_buffer
         );
     }
 

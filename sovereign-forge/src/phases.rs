@@ -93,7 +93,7 @@ pub trait PhasesModule:
         let blockchain_api = self.blockchain();
         let caller = blockchain_api.get_caller();
 
-        self.check_if_contract_deployed(&caller, ScArray::ChainConfig);
+        self.check_if_contract_deployed(&caller, ScArray::ChainConfig, b"ChainConfig");
 
         let header_verifier_address = self.deploy_header_verifier(bls_keys);
 
