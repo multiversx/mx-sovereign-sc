@@ -1,12 +1,8 @@
 use crate::err_msg;
 use core::ops::Deref;
-use proxies::chain_factory_proxy::ChainFactoryContractProxy;
 use transaction::StakeMultiArg;
 
-use multiversx_sc::{
-    require,
-    types::{MultiValueEncoded, ReturnsResult},
-};
+use multiversx_sc::{require, types::MultiValueEncoded};
 
 use crate::common::{
     self,
@@ -17,7 +13,10 @@ const NUMBER_OF_SHARDS: u32 = 3;
 
 #[multiversx_sc::module]
 pub trait PhasesModule:
-    common::utils::UtilsModule + common::storage::StorageModule + setup_phase::SetupPhaseModule
+    common::utils::UtilsModule
+    + common::storage::StorageModule
+    + setup_phase::SetupPhaseModule
+    + common::sc_deploy::ScDeployModule
 {
     #[only_owner]
     #[endpoint(completeSetupPhase)]
@@ -104,49 +103,5 @@ pub trait PhasesModule:
 
         self.sovereign_deployed_contracts(&chain_id)
             .insert(header_verifier_contract_info);
-    }
-
-    fn deploy_chain_config(
-        &self,
-        min_validators: u64,
-        max_validators: u64,
-        min_stake: BigUint,
-        additional_stake_required: MultiValueEncoded<StakeMultiArg<Self::Api>>,
-    ) -> ManagedAddress {
-        let chain_factory_address = self.get_caller_shard_id();
-
-        self.tx()
-            .to(chain_factory_address)
-            .typed(ChainFactoryContractProxy)
-            .deploy_sovereign_chain_config_contract(
-                min_validators,
-                max_validators,
-                min_stake,
-                additional_stake_required,
-            )
-            .returns(ReturnsResult)
-            .sync_call()
-    }
-
-    fn deploy_header_verifier(&self, bls_keys: MultiValueEncoded<ManagedBuffer>) -> ManagedAddress {
-        let chain_factory_address = self.get_caller_shard_id();
-
-        self.tx()
-            .to(chain_factory_address)
-            .typed(ChainFactoryContractProxy)
-            .deploy_header_verifier(bls_keys)
-            .returns(ReturnsResult)
-            .sync_call()
-    }
-
-    fn deploy_esdt_safe(&self, is_sovereign_chain: bool) -> ManagedAddress {
-        let chain_factory_address = self.get_caller_shard_id();
-
-        self.tx()
-            .to(chain_factory_address)
-            .typed(ChainFactoryContractProxy)
-            .deploy_esdt_safe(is_sovereign_chain)
-            .returns(ReturnsResult)
-            .sync_call()
     }
 }

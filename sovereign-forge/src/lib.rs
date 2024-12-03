@@ -11,6 +11,7 @@ pub trait SovereignForge:
     phases::PhasesModule
     + common::storage::StorageModule
     + common::utils::UtilsModule
+    + common::sc_deploy::ScDeployModule
     + setup_phase::SetupPhaseModule
 {
     #[init]
