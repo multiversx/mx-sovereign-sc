@@ -39,6 +39,10 @@ pub enum ScArray {
 
 #[multiversx_sc::module]
 pub trait UtilsModule: super::storage::StorageModule {
+    fn require_phase_two_completed(&self, caller: &ManagedAddress) {
+        self.check_if_contract_deployed(caller, ScArray::HeaderVerifier, b"HeaderVerifier");
+    }
+
     fn require_phase_1_completed(&self, caller: &ManagedAddress) {
         require!(
             self.sovereigns_mapper(caller).is_empty(),

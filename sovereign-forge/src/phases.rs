@@ -103,4 +103,11 @@ pub trait PhasesModule:
         self.sovereign_deployed_contracts(&self.sovereigns_mapper(&caller).get())
             .insert(header_verifier_contract_info);
     }
+
+    #[endpoint(deployPhaseThree)]
+    fn deploy_phase_three(&self) {
+        let caller = self.blockchain().get_caller();
+
+        self.require_phase_two_completed(&caller);
+    }
 }
