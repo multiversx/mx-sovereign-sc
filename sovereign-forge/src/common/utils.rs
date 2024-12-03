@@ -44,7 +44,7 @@ pub trait UtilsModule: super::storage::StorageModule {
             self.sovereigns_mapper(caller).is_empty(),
             "The current caller has not deployed any Sovereign Chain"
         );
-        self.check_if_contract_deployed(&caller, ScArray::ChainConfig, b"ChainConfig");
+        self.check_if_contract_deployed(caller, ScArray::ChainConfig, b"ChainConfig");
     }
 
     fn check_if_contract_deployed(
