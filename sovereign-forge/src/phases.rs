@@ -67,16 +67,16 @@ pub trait PhasesModule:
             caller_shard_id
         );
 
+        require!(
+            !self.is_contract_deployed(&caller, ScArray::ChainConfig),
+            "The Chain-Factory Contract is already deployed"
+        );
+
         let chain_config_address = self.deploy_chain_config(
             min_validators,
             max_validators,
             min_stake,
             additional_stake_required,
-        );
-
-        require!(
-            !self.is_contract_deployed(&caller, ScArray::ChainConfig),
-            "The Chain-Factory Contract is already deployed"
         );
 
         let chain_factory_contract_info =
