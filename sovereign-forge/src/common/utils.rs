@@ -90,6 +90,13 @@ pub trait UtilsModule: super::storage::StorageModule {
         );
     }
 
+    fn get_caller_shard_id(&self) -> ManagedAddress {
+        let caller = self.blockchain().get_caller();
+        let shard_id = self.blockchain().get_shard_of_address(&caller);
+
+        self.chain_factories(shard_id).get()
+    }
+
     fn get_sovereign_chain_id(&self, sovereign_creator: &ManagedAddress) -> ChainId<Self::Api> {
         let sovereign_mapper = self.sovereigns_mapper(sovereign_creator);
         require!(

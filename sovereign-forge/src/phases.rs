@@ -68,10 +68,7 @@ pub trait PhasesModule:
             caller_shard_id
         );
 
-        let chain_factory_address = chain_factories_mapper.get();
-
         let chain_config_address = self.deploy_chain_config(
-            chain_factory_address,
             min_validators,
             max_validators,
             min_stake,
@@ -96,12 +93,10 @@ pub trait PhasesModule:
     fn deploy_phase_two(&self, bls_keys: MultiValueEncoded<ManagedBuffer>) {
         let blockchain_api = self.blockchain();
         let caller = blockchain_api.get_caller();
-        let caller_shard_id = blockchain_api.get_shard_of_address(&caller);
 
         self.check_if_contract_deployed(&caller, ScArray::ChainConfig);
 
-        let header_verifier_address =
-            self.deploy_header_verifier(self.chain_factories(caller_shard_id).get(), bls_keys);
+        let header_verifier_address = self.deploy_header_verifier(bls_keys);
 
         let header_verifier_contract_info =
             ContractInfo::new(ScArray::HeaderVerifier, header_verifier_address);
@@ -113,12 +108,13 @@ pub trait PhasesModule:
 
     fn deploy_chain_config(
         &self,
-        chain_factory_address: ManagedAddress,
         min_validators: u64,
         max_validators: u64,
         min_stake: BigUint,
         additional_stake_required: MultiValueEncoded<StakeMultiArg<Self::Api>>,
     ) -> ManagedAddress {
+        let chain_factory_address = self.get_caller_shard_id();
+
         self.tx()
             .to(chain_factory_address)
             .typed(ChainFactoryContractProxy)
@@ -132,11 +128,9 @@ pub trait PhasesModule:
             .sync_call()
     }
 
-    fn deploy_header_verifier(
-        &self,
-        chain_factory_address: ManagedAddress,
-        bls_keys: MultiValueEncoded<ManagedBuffer>,
-    ) -> ManagedAddress {
+    fn deploy_header_verifier(&self, bls_keys: MultiValueEncoded<ManagedBuffer>) -> ManagedAddress {
+        let chain_factory_address = self.get_caller_shard_id();
+
         self.tx()
             .to(chain_factory_address)
             .typed(ChainFactoryContractProxy)
@@ -145,11 +139,9 @@ pub trait PhasesModule:
             .sync_call()
     }
 
-    fn deploy_esdt_safe(
-        &self,
-        chain_factory_address: ManagedAddress,
-        is_sovereign_chain: bool,
-    ) -> ManagedAddress {
+    fn deploy_esdt_safe(&self, is_sovereign_chain: bool) -> ManagedAddress {
+        let chain_factory_address = self.get_caller_shard_id();
+
         self.tx()
             .to(chain_factory_address)
             .typed(ChainFactoryContractProxy)

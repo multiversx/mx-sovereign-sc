@@ -9,7 +9,6 @@ pub type ChainId<M> = ManagedBuffer<M>;
 
 #[multiversx_sc::module]
 pub trait StorageModule {
-    // TODO: This has to be easily modifiable
     #[storage_mapper("sovereignsMapper")]
     fn sovereigns_mapper(
         &self,
@@ -19,7 +18,7 @@ pub trait StorageModule {
     #[storage_mapper("sovereignDeployedContracts")]
     fn sovereign_deployed_contracts(
         &self,
-        chain_id: &ManagedBuffer,
+        chain_id: &ChainId<Self::Api>,
     ) -> UnorderedSetMapper<ContractInfo<Self::Api>>;
 
     #[view(getChainFactoryAddress)]
