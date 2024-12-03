@@ -11,8 +11,6 @@ const CHARSET: &[u8] = b"0123456789abcdefghijklmnopqrstuvwxyz";
 
 use crate::err_msg;
 
-use super::storage::ChainId;
-
 #[type_abi]
 #[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, ManagedVecItem)]
 pub struct ContractInfo<M: ManagedTypeApi> {
@@ -41,6 +39,14 @@ pub enum ScArray {
 
 #[multiversx_sc::module]
 pub trait UtilsModule: super::storage::StorageModule {
+    fn require_phase_1_completed(&self, caller: &ManagedAddress) {
+        require!(
+            self.sovereigns_mapper(caller).is_empty(),
+            "The current caller has not deployed any Sovereign Chain"
+        );
+        self.check_if_contract_deployed(&caller, ScArray::ChainConfig, b"ChainConfig");
+    }
+
     fn check_if_contract_deployed(
         &self,
         sovereign_creator: &ManagedAddress,
@@ -100,15 +106,5 @@ pub trait UtilsModule: super::storage::StorageModule {
         let shard_id = self.blockchain().get_shard_of_address(&caller);
 
         self.chain_factories(shard_id).get()
-    }
-
-    fn get_sovereign_chain_id(&self, sovereign_creator: &ManagedAddress) -> ChainId<Self::Api> {
-        let sovereign_mapper = self.sovereigns_mapper(sovereign_creator);
-        require!(
-            !sovereign_mapper.is_empty(),
-            "There is no sovereign created by this address"
-        );
-
-        sovereign_mapper.get()
     }
 }
