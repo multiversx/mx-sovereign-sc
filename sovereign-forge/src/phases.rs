@@ -74,10 +74,9 @@ pub trait PhasesModule:
             additional_stake_required,
         );
 
-        let sovereigns_mapper = self.sovereigns_mapper(&caller);
         require!(
-            sovereigns_mapper.is_empty(),
-            "There is already a deployed Sovereign Chain for this user"
+            !self.is_contract_deployed(&caller, ScArray::ChainConfig),
+            "The Chain-Factory Contract is already deployed"
         );
 
         let chain_factory_contract_info =
@@ -85,7 +84,7 @@ pub trait PhasesModule:
 
         self.sovereign_deployed_contracts(&chain_id)
             .insert(chain_factory_contract_info);
-        sovereigns_mapper.set(chain_id);
+        self.sovereigns_mapper(&caller).set(chain_id);
     }
 
     #[endpoint(deployPhaseTwo)]
