@@ -122,9 +122,10 @@ impl ContractInteract {
             .run()
             .await;
         let new_address_bech32 = bech32::encode(&new_address);
-        self.state.set_address(Bech32Address::from_bech32_string(
-            new_address_bech32.clone(),
-        ));
+        self.state
+            .set_esdt_safe_address(Bech32Address::from_bech32_string(
+                new_address_bech32.clone(),
+            ));
 
         println!("new address: {new_address_bech32}");
     }
@@ -172,7 +173,7 @@ impl ContractInteract {
             .from(&self.wallet_address)
             .gas(100_000_000u64)
             .typed(fee_market_proxy::FeeMarketProxy)
-            .init(self.state.current_address(), Option::Some(fee))
+            .init(self.state.esdt_safe_address(), Option::Some(fee))
             .code(fee_market_code_path)
             .returns(ReturnsNewAddress)
             .run()
@@ -226,7 +227,7 @@ impl ContractInteract {
         let response = self
             .interactor
             .tx()
-            .to(self.state.current_address())
+            .to(self.state.esdt_safe_address())
             .from(&self.wallet_address)
             .gas(30_000_000u64)
             .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
@@ -247,7 +248,7 @@ impl ContractInteract {
             .interactor
             .tx()
             .from(&self.wallet_address)
-            .to(self.state.current_address())
+            .to(self.state.esdt_safe_address())
             .gas(30_000_000u64)
             .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
             .set_fee_market_address(fee_market_address)
@@ -265,7 +266,7 @@ impl ContractInteract {
             .interactor
             .tx()
             .from(&self.wallet_address)
-            .to(self.state.current_address())
+            .to(self.state.esdt_safe_address())
             .gas(30_000_000u64)
             .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
             .set_header_verifier_address(header_verifier_address)
@@ -283,7 +284,7 @@ impl ContractInteract {
             .interactor
             .tx()
             .from(&self.wallet_address)
-            .to(self.state.current_address())
+            .to(self.state.esdt_safe_address())
             .gas(30_000_000u64)
             .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
             .set_max_user_tx_gas_limit(max_user_tx_gas_limit)
@@ -301,7 +302,7 @@ impl ContractInteract {
             .interactor
             .tx()
             .from(&self.wallet_address)
-            .to(self.state.current_address())
+            .to(self.state.esdt_safe_address())
             .gas(30_000_000u64)
             .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
             .set_banned_endpoint(endpoint_name)
@@ -338,7 +339,7 @@ impl ContractInteract {
                 self.interactor
                     .tx()
                     .from(&self.wallet_address)
-                    .to(self.state.current_address())
+                    .to(self.state.esdt_safe_address())
                     .gas(30_000_000u64)
                     .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
                     .deposit(to, transfer_data)
@@ -351,7 +352,7 @@ impl ContractInteract {
                 self.interactor
                     .tx()
                     .from(&self.wallet_address)
-                    .to(self.state.current_address())
+                    .to(self.state.esdt_safe_address())
                     .gas(30_000_000u64)
                     .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
                     .deposit(to, transfer_data)
@@ -374,7 +375,7 @@ impl ContractInteract {
             .interactor
             .tx()
             .from(&self.wallet_address)
-            .to(self.state.current_address())
+            .to(self.state.esdt_safe_address())
             .gas(30_000_000u64)
             .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
             .execute_operations(hash_of_hashes, operation)
@@ -396,7 +397,7 @@ impl ContractInteract {
             .interactor
             .tx()
             .from(&self.wallet_address)
-            .to(self.state.current_address())
+            .to(self.state.esdt_safe_address())
             .gas(30_000_000u64)
             .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
             .register_new_token_id(tokens)
@@ -420,7 +421,7 @@ impl ContractInteract {
             .interactor
             .tx()
             .from(&self.wallet_address)
-            .to(self.state.current_address())
+            .to(self.state.esdt_safe_address())
             .gas(30_000_000u64)
             .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
             .set_max_bridged_amount(token_id, max_amount)
@@ -437,7 +438,7 @@ impl ContractInteract {
         let result_value = self
             .interactor
             .query()
-            .to(self.state.current_address())
+            .to(self.state.esdt_safe_address())
             .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
             .max_bridged_amount(token_id)
             .returns(ReturnsResultUnmanaged)
@@ -468,7 +469,7 @@ impl ContractInteract {
             .interactor
             .tx()
             .from(&self.wallet_address)
-            .to(self.state.current_address())
+            .to(self.state.esdt_safe_address())
             .gas(30_000_000u64)
             .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
             .add_tokens_to_whitelist(tokens)
@@ -486,7 +487,7 @@ impl ContractInteract {
             .interactor
             .tx()
             .from(&self.wallet_address)
-            .to(self.state.current_address())
+            .to(self.state.esdt_safe_address())
             .gas(30_000_000u64)
             .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
             .remove_tokens_from_whitelist(tokens)
@@ -504,7 +505,7 @@ impl ContractInteract {
             .interactor
             .tx()
             .from(&self.wallet_address)
-            .to(self.state.current_address())
+            .to(self.state.esdt_safe_address())
             .gas(30_000_000u64)
             .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
             .add_tokens_to_blacklist(tokens)
@@ -522,7 +523,7 @@ impl ContractInteract {
             .interactor
             .tx()
             .from(&self.wallet_address)
-            .to(self.state.current_address())
+            .to(self.state.esdt_safe_address())
             .gas(30_000_000u64)
             .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
             .remove_tokens_from_blacklist(tokens)
@@ -537,7 +538,7 @@ impl ContractInteract {
         let result_value = self
             .interactor
             .query()
-            .to(self.state.current_address())
+            .to(self.state.esdt_safe_address())
             .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
             .token_whitelist()
             .returns(ReturnsResultUnmanaged)
@@ -551,7 +552,7 @@ impl ContractInteract {
         let result_value = self
             .interactor
             .query()
-            .to(self.state.current_address())
+            .to(self.state.esdt_safe_address())
             .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
             .token_blacklist()
             .returns(ReturnsResultUnmanaged)
@@ -566,7 +567,7 @@ impl ContractInteract {
             .interactor
             .tx()
             .from(&self.wallet_address)
-            .to(self.state.current_address())
+            .to(self.state.esdt_safe_address())
             .gas(30_000_000u64)
             .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
             .pause_endpoint()
@@ -582,7 +583,7 @@ impl ContractInteract {
             .interactor
             .tx()
             .from(&self.wallet_address)
-            .to(self.state.current_address())
+            .to(self.state.esdt_safe_address())
             .gas(30_000_000u64)
             .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
             .unpause_endpoint()
@@ -597,7 +598,7 @@ impl ContractInteract {
         let result_value = self
             .interactor
             .query()
-            .to(self.state.current_address())
+            .to(self.state.esdt_safe_address())
             .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
             .paused_status()
             .returns(ReturnsResultUnmanaged)

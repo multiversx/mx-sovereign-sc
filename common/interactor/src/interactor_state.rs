@@ -9,7 +9,7 @@ const STATE_FILE: &str = "state.toml";
 
 #[derive(Debug, Default, Serialize, Deserialize)]
 pub struct State {
-    contract_address: Option<Bech32Address>,
+    esdt_safe_address: Option<Bech32Address>,
     header_verifier_address: Option<Bech32Address>,
     fee_market_address: Option<Bech32Address>,
     token_handler_address: Option<Bech32Address>,
@@ -30,8 +30,8 @@ impl State {
     }
 
     /// Sets the contract address
-    pub fn set_address(&mut self, address: Bech32Address) {
-        self.contract_address = Some(address);
+    pub fn set_esdt_safe_address(&mut self, address: Bech32Address) {
+        self.esdt_safe_address = Some(address);
     }
 
     pub fn set_header_verifier_address(&mut self, address: Bech32Address) {
@@ -51,10 +51,10 @@ impl State {
     }
 
     /// Returns the contract address
-    pub fn current_address(&self) -> &Bech32Address {
-        self.contract_address
+    pub fn esdt_safe_address(&self) -> &Bech32Address {
+        self.esdt_safe_address
             .as_ref()
-            .expect("no known contract, deploy first")
+            .expect("no known esdt_safe contract, deploy first")
     }
 
     pub fn get_header_verifier_address(&self) -> &Bech32Address {

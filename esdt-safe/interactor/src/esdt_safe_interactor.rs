@@ -112,7 +112,7 @@ impl ContractInteract {
             .await;
 
         let new_address_bech32 = bech32::encode(&new_address);
-        self.state.set_address(Bech32Address::from_bech32_string(
+        self.state.set_esdt_safe_address(Bech32Address::from_bech32_string(
             new_address_bech32.clone(),
         ));
 
@@ -136,7 +136,7 @@ impl ContractInteract {
             .from(&self.wallet_address)
             .gas(100_000_000u64)
             .typed(FeeMarketProxy)
-            .init(self.state.current_address(), Option::Some(fee))
+            .init(self.state.esdt_safe_address(), Option::Some(fee))
             .code(fee_market_code_path)
             .returns(ReturnsNewAddress)
             .run()
@@ -220,7 +220,7 @@ impl ContractInteract {
         let response = self
             .interactor
             .tx()
-            .to(self.state.current_address())
+            .to(self.state.esdt_safe_address())
             .from(&self.wallet_address)
             .gas(30_000_000u64)
             .typed(EsdtSafeProxy)
@@ -240,7 +240,7 @@ impl ContractInteract {
             .interactor
             .tx()
             .from(&self.wallet_address)
-            .to(self.state.current_address())
+            .to(self.state.esdt_safe_address())
             .gas(30_000_000u64)
             .typed(EsdtSafeProxy)
             .set_fee_market_address(fee_market_address)
@@ -258,7 +258,7 @@ impl ContractInteract {
             .interactor
             .tx()
             .from(&self.wallet_address)
-            .to(self.state.current_address())
+            .to(self.state.esdt_safe_address())
             .gas(30_000_000u64)
             .typed(EsdtSafeProxy)
             .set_header_verifier_address(header_verifier_address)
@@ -291,7 +291,7 @@ impl ContractInteract {
                 self.interactor
                     .tx()
                     .from(&self.wallet_address)
-                    .to(self.state.current_address())
+                    .to(self.state.esdt_safe_address())
                     .gas(90_000_000u64)
                     .typed(EsdtSafeProxy)
                     .deposit(to, transfer_data)
@@ -304,7 +304,7 @@ impl ContractInteract {
                 self.interactor
                     .tx()
                     .from(&self.wallet_address)
-                    .to(self.state.current_address())
+                    .to(self.state.esdt_safe_address())
                     .gas(90_000_000u64)
                     .typed(EsdtSafeProxy)
                     .deposit(to, transfer_data)
@@ -329,7 +329,7 @@ impl ContractInteract {
             .interactor
             .tx()
             .from(&self.wallet_address)
-            .to(self.state.current_address())
+            .to(self.state.esdt_safe_address())
             .gas(90_000_000u64)
             .typed(EsdtSafeProxy)
             .register_token(
@@ -358,7 +358,7 @@ impl ContractInteract {
             .interactor
             .tx()
             .from(&self.wallet_address)
-            .to(self.state.current_address())
+            .to(self.state.esdt_safe_address())
             .gas(70_000_000u64)
             .typed(EsdtSafeProxy)
             .execute_operations(&hash_of_hashes, operation)
@@ -382,7 +382,7 @@ impl ContractInteract {
             .interactor
             .tx()
             .from(&self.wallet_address)
-            .to(self.state.current_address())
+            .to(self.state.esdt_safe_address())
             .gas(30_000_000u64)
             .typed(EsdtSafeProxy)
             .execute_operations(&operation_hash, operation)
@@ -401,7 +401,7 @@ impl ContractInteract {
             .interactor
             .tx()
             .from(&self.wallet_address)
-            .to(self.state.current_address())
+            .to(self.state.esdt_safe_address())
             .gas(30_000_000u64)
             .typed(EsdtSafeProxy)
             .set_max_bridged_amount(token_id, max_amount)
@@ -418,7 +418,7 @@ impl ContractInteract {
         let result_value = self
             .interactor
             .query()
-            .to(self.state.current_address())
+            .to(self.state.esdt_safe_address())
             .typed(EsdtSafeProxy)
             .max_bridged_amount(token_id)
             .returns(ReturnsResultUnmanaged)
@@ -435,7 +435,7 @@ impl ContractInteract {
             .interactor
             .tx()
             .from(&self.wallet_address)
-            .to(self.state.current_address())
+            .to(self.state.esdt_safe_address())
             .gas(30_000_000u64)
             .typed(EsdtSafeProxy)
             .add_tokens_to_whitelist(tokens)
@@ -453,7 +453,7 @@ impl ContractInteract {
             .interactor
             .tx()
             .from(&self.wallet_address)
-            .to(self.state.current_address())
+            .to(self.state.esdt_safe_address())
             .gas(30_000_000u64)
             .typed(EsdtSafeProxy)
             .remove_tokens_from_whitelist(tokens)
@@ -471,7 +471,7 @@ impl ContractInteract {
             .interactor
             .tx()
             .from(&self.wallet_address)
-            .to(self.state.current_address())
+            .to(self.state.esdt_safe_address())
             .gas(30_000_000u64)
             .typed(EsdtSafeProxy)
             .add_tokens_to_blacklist(tokens)
@@ -489,7 +489,7 @@ impl ContractInteract {
             .interactor
             .tx()
             .from(&self.wallet_address)
-            .to(self.state.current_address())
+            .to(self.state.esdt_safe_address())
             .gas(30_000_000u64)
             .typed(EsdtSafeProxy)
             .remove_tokens_from_blacklist(tokens)
@@ -504,7 +504,7 @@ impl ContractInteract {
         let result_value = self
             .interactor
             .query()
-            .to(self.state.current_address())
+            .to(self.state.esdt_safe_address())
             .typed(EsdtSafeProxy)
             .token_whitelist()
             .returns(ReturnsResultUnmanaged)
@@ -518,7 +518,7 @@ impl ContractInteract {
         let result_value = self
             .interactor
             .query()
-            .to(self.state.current_address())
+            .to(self.state.esdt_safe_address())
             .typed(EsdtSafeProxy)
             .token_blacklist()
             .returns(ReturnsResultUnmanaged)
@@ -533,7 +533,7 @@ impl ContractInteract {
             .interactor
             .tx()
             .from(&self.wallet_address)
-            .to(self.state.current_address())
+            .to(self.state.esdt_safe_address())
             .gas(30_000_000u64)
             .typed(EsdtSafeProxy)
             .pause_endpoint()
@@ -549,7 +549,7 @@ impl ContractInteract {
             .interactor
             .tx()
             .from(&self.wallet_address)
-            .to(self.state.current_address())
+            .to(self.state.esdt_safe_address())
             .gas(30_000_000u64)
             .typed(EsdtSafeProxy)
             .unpause_endpoint()
@@ -564,7 +564,7 @@ impl ContractInteract {
         let result_value = self
             .interactor
             .query()
-            .to(self.state.current_address())
+            .to(self.state.esdt_safe_address())
             .typed(EsdtSafeProxy)
             .paused_status()
             .returns(ReturnsResultUnmanaged)
@@ -598,7 +598,7 @@ impl ContractInteract {
             .to(self.state.get_header_verifier_address())
             .gas(30_000_000u64)
             .typed(HeaderverifierProxy)
-            .set_esdt_safe_address(self.state.current_address())
+            .set_esdt_safe_address(self.state.esdt_safe_address())
             .run()
             .await;
 

@@ -30,7 +30,7 @@ async fn test_deposit_no_payment() {
     let mut interact = ContractInteract::new(Config::load_config()).await;
     let to = interact.bob_address.clone();
     let from = interact.wallet_address.clone();
-    let to_contract = interact.state.current_address().clone();
+    let to_contract = interact.state.esdt_safe_address().clone();
     let transfer_data = OptionalTransferData::None;
 
     interact.deploy_setup().await;
@@ -54,7 +54,7 @@ async fn test_deposit_too_many_payments() {
     let mut interact = ContractInteract::new(Config::load_config()).await;
     let to = interact.bob_address.clone();
     let from = interact.wallet_address.clone();
-    let to_contract = interact.state.current_address().clone();
+    let to_contract = interact.state.esdt_safe_address().clone();
     let transfer_data = OptionalTransferData::None;
     let payment = EsdtTokenPayment::new(
         TokenIdentifier::from_esdt_bytes(TOKEN_ID),
@@ -125,10 +125,10 @@ async fn test_deposit_sov_chain() {
         .interactor
         .tx()
         .from(interact.wallet_address)
-        .to(interact.state.current_address())
+        .to(interact.state.esdt_safe_address())
         .gas(30_000_000u64)
         .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
-        .deposit(interact.state.current_address(), transfer_data)
+        .deposit(interact.state.esdt_safe_address(), transfer_data)
         .payment(payments)
         .returns(ReturnsResultUnmanaged)
         .run()
