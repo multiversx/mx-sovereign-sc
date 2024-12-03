@@ -312,7 +312,10 @@ fn deploy_phase_one_chain_config_missing() {
         2,
         BigUint::from(2u32),
         MultiValueEncoded::new(),
-        Some(ExpectError(10, "error signalled by smartcontract")),
+        Some(ExpectError(
+            4,
+            "There are no contracts deployed for this Sovereign",
+        )),
     );
 }
 
