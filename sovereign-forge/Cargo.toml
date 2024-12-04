@@ -23,6 +23,12 @@ version = "=0.54.4"
 [dependencies.chain-factory]
 path = "../chain-factory"
 
+[dependencies.chain-config]
+path = "../chain-config"
+
+[dependencies.header-verifier]
+path = "../header-verifier"
+
 [dependencies.proxies]
 path = "../common/proxies"
 
