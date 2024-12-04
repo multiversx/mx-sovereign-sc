@@ -1,4 +1,4 @@
-use multiversx_sc::types::{BigUint, MultiValueEncoded, TestAddress, TestSCAddress};
+use multiversx_sc::types::{BigUint, ManagedBuffer, MultiValueEncoded, TestAddress, TestSCAddress};
 use multiversx_sc_scenario::{
     api::StaticApi, imports::MxscPath, ExpectError, ScenarioTxRun, ScenarioTxWhitebox,
     ScenarioWorld,
@@ -167,6 +167,26 @@ impl SovereignForgeTestState {
         }
     }
 
+    fn deploy_phase_two(
+        &mut self,
+        expected_result: Option<ExpectError>,
+        bls_keys: MultiValueEncoded<StaticApi, ManagedBuffer<StaticApi>>,
+    ) {
+        let transaction = self
+            .world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .to(FORGE_ADDRESS)
+            .typed(SovereignForgeProxy)
+            .deploy_phase_two(bls_keys);
+
+        if let Some(error) = expected_result {
+            transaction.returns(error).run();
+        } else {
+            transaction.run();
+        }
+    }
+
     fn finish_setup(&mut self) {
         self.register_chain_factory(1, FACTORY_ADDRESS, None);
         self.register_chain_factory(2, FACTORY_ADDRESS, None);
@@ -292,6 +312,27 @@ fn deploy_phase_one_chain_config_missing() {
         2,
         BigUint::from(2u32),
         MultiValueEncoded::new(),
-        Some(ExpectError(10, "error signalled by smartcontract")),
+        Some(ExpectError(
+            4,
+            "There are no contracts deployed for this Sovereign",
+        )),
+    );
+}
+
+#[test]
+fn deploy_phase_two_without_first_phase() {
+    let mut state = SovereignForgeTestState::new();
+    state.deploy_sovereign_forge();
+    state.deploy_chain_factory();
+    state.finish_setup();
+
+    let bls_keys = MultiValueEncoded::<StaticApi, ManagedBuffer<StaticApi>>::new();
+
+    state.deploy_phase_two(
+        Some(ExpectError(
+            4,
+            "There are no contracts deployed for this Sovereign",
+        )),
+        bls_keys,
     );
 }

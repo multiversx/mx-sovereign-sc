@@ -1,12 +1,8 @@
 use crate::err_msg;
 use core::ops::Deref;
-use proxies::chain_factory_proxy::ChainFactoryContractProxy;
 use transaction::StakeMultiArg;
 
-use multiversx_sc::{
-    require,
-    types::{MultiValueEncoded, ReturnsResult},
-};
+use multiversx_sc::{require, types::MultiValueEncoded};
 
 use crate::common::{
     self,
@@ -17,7 +13,10 @@ const NUMBER_OF_SHARDS: u32 = 3;
 
 #[multiversx_sc::module]
 pub trait PhasesModule:
-    common::utils::UtilsModule + common::storage::StorageModule + setup_phase::SetupPhaseModule
+    common::utils::UtilsModule
+    + common::storage::StorageModule
+    + setup_phase::SetupPhaseModule
+    + common::sc_deploy::ScDeployModule
 {
     #[only_owner]
     #[endpoint(completeSetupPhase)]
@@ -68,20 +67,16 @@ pub trait PhasesModule:
             caller_shard_id
         );
 
-        let chain_factory_address = chain_factories_mapper.get();
+        require!(
+            !self.is_contract_deployed(&caller, ScArray::ChainConfig),
+            "The Chain-Factory Contract is already deployed"
+        );
 
         let chain_config_address = self.deploy_chain_config(
-            chain_factory_address,
             min_validators,
             max_validators,
             min_stake,
             additional_stake_required,
-        );
-
-        let sovereigns_mapper = self.sovereigns_mapper(&caller);
-        require!(
-            sovereigns_mapper.is_empty(),
-            "There is already a deployed Sovereign Chain for this user"
         );
 
         let chain_factory_contract_info =
@@ -89,60 +84,22 @@ pub trait PhasesModule:
 
         self.sovereign_deployed_contracts(&chain_id)
             .insert(chain_factory_contract_info);
-        sovereigns_mapper.set(chain_id);
+        self.sovereigns_mapper(&caller).set(chain_id);
     }
 
     #[endpoint(deployPhaseTwo)]
-    fn deploy_phase_two(&self) {
-        // check chain config was deployed && header was not
-        // deploy header
-        // update mapper
-    }
+    fn deploy_phase_two(&self, bls_keys: MultiValueEncoded<ManagedBuffer>) {
+        let blockchain_api = self.blockchain();
+        let caller = blockchain_api.get_caller();
 
-    fn deploy_chain_config(
-        &self,
-        chain_factory_address: ManagedAddress,
-        min_validators: u64,
-        max_validators: u64,
-        min_stake: BigUint,
-        additional_stake_required: MultiValueEncoded<StakeMultiArg<Self::Api>>,
-    ) -> ManagedAddress {
-        self.tx()
-            .to(chain_factory_address)
-            .typed(ChainFactoryContractProxy)
-            .deploy_sovereign_chain_config_contract(
-                min_validators,
-                max_validators,
-                min_stake,
-                additional_stake_required,
-            )
-            .returns(ReturnsResult)
-            .sync_call()
-    }
+        self.require_phase_1_completed(&caller);
 
-    fn deploy_header_verifier(
-        &self,
-        chain_factory_address: ManagedAddress,
-        bls_keys: MultiValueEncoded<ManagedBuffer>,
-    ) -> ManagedAddress {
-        self.tx()
-            .to(chain_factory_address)
-            .typed(ChainFactoryContractProxy)
-            .deploy_header_verifier(bls_keys)
-            .returns(ReturnsResult)
-            .sync_call()
-    }
+        let header_verifier_address = self.deploy_header_verifier(bls_keys);
 
-    fn deploy_esdt_safe(
-        &self,
-        chain_factory_address: ManagedAddress,
-        is_sovereign_chain: bool,
-    ) -> ManagedAddress {
-        self.tx()
-            .to(chain_factory_address)
-            .typed(ChainFactoryContractProxy)
-            .deploy_esdt_safe(is_sovereign_chain)
-            .returns(ReturnsResult)
-            .sync_call()
+        let header_verifier_contract_info =
+            ContractInfo::new(ScArray::HeaderVerifier, header_verifier_address);
+
+        self.sovereign_deployed_contracts(&self.sovereigns_mapper(&caller).get())
+            .insert(header_verifier_contract_info);
     }
 }
