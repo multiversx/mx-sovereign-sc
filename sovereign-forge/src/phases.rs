@@ -69,7 +69,7 @@ pub trait PhasesModule:
 
         require!(
             !self.is_contract_deployed(&caller, ScArray::ChainConfig),
-            "The Chain-Factory Contract is already deployed"
+            "The Chain-Config Contract is already deployed"
         );
 
         let chain_config_address = self.deploy_chain_config(
