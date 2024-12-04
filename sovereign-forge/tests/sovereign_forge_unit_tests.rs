@@ -8,7 +8,10 @@ use proxies::{
     header_verifier_proxy::HeaderverifierProxy, sovereign_forge_proxy::SovereignForgeProxy,
 };
 use setup_phase::SetupPhaseModule;
-use sovereign_forge::common::{storage::StorageModule, utils::ScArray};
+use sovereign_forge::common::{
+    storage::StorageModule,
+    utils::{ScArray, UtilsModule},
+};
 use transaction::StakeMultiArg;
 
 const FORGE_ADDRESS: TestSCAddress = TestSCAddress::new("sovereign-forge");
@@ -185,7 +188,7 @@ impl SovereignForgeTestState {
 
     fn deploy_phase_one(
         &mut self,
-        payment: BigUint<StaticApi>,
+        payment: &BigUint<StaticApi>,
         min_validators: u64,
         max_validators: u64,
         min_stake: BigUint<StaticApi>,
@@ -216,7 +219,7 @@ impl SovereignForgeTestState {
     fn deploy_phase_two(
         &mut self,
         expected_result: Option<ExpectError>,
-        bls_keys: MultiValueEncoded<StaticApi, ManagedBuffer<StaticApi>>,
+        bls_keys: &MultiValueEncoded<StaticApi, ManagedBuffer<StaticApi>>,
     ) {
         let transaction = self
             .world
@@ -245,14 +248,14 @@ impl SovereignForgeTestState {
 }
 
 #[test]
-fn test_deploy_contracts() {
+fn deploy_contracts() {
     let mut state = SovereignForgeTestState::new();
     state.deploy_sovereign_forge();
     state.deploy_chain_factory();
 }
 
 #[test]
-fn test_register_token_handler() {
+fn register_token_handler() {
     let mut state = SovereignForgeTestState::new();
     state.deploy_sovereign_forge();
 
@@ -268,7 +271,7 @@ fn test_register_token_handler() {
 }
 
 #[test]
-fn test_register_chain_factory() {
+fn register_chain_factory() {
     let mut state = SovereignForgeTestState::new();
     state.deploy_sovereign_forge();
 
@@ -331,7 +334,7 @@ fn deploy_phase_one_deploy_cost_too_low() {
     let deploy_cost = BigUint::from(1u32);
 
     state.deploy_phase_one(
-        deploy_cost,
+        &deploy_cost,
         1,
         2,
         BigUint::from(2u32),
@@ -354,7 +357,7 @@ fn deploy_phase_one_chain_config_already_deployed() {
     let deploy_cost = BigUint::from(100_000u32);
 
     state.deploy_phase_one(
-        deploy_cost.clone(),
+        &deploy_cost,
         1,
         2,
         BigUint::from(2u32),
@@ -363,7 +366,7 @@ fn deploy_phase_one_chain_config_already_deployed() {
     );
 
     state.deploy_phase_one(
-        deploy_cost,
+        &deploy_cost,
         1,
         2,
         BigUint::from(2u32),
@@ -386,7 +389,7 @@ fn deploy_phase_one() {
     let deploy_cost = BigUint::from(100_000u32);
 
     state.deploy_phase_one(
-        deploy_cost,
+        &deploy_cost,
         1,
         2,
         BigUint::from(2u32),
@@ -399,16 +402,12 @@ fn deploy_phase_one() {
         .query()
         .to(FORGE_ADDRESS)
         .whitebox(sovereign_forge::contract_obj, |sc| {
-            let sovereign_mapper = sc.sovereigns_mapper(&OWNER_ADDRESS.to_managed_address());
+            assert!(!sc
+                .sovereigns_mapper(&OWNER_ADDRESS.to_managed_address())
+                .is_empty());
 
-            assert!(!sovereign_mapper.is_empty());
-
-            let chain_id = sovereign_mapper.get();
-
-            let is_chain_config_deployed = sc
-                .sovereign_deployed_contracts(&chain_id)
-                .iter()
-                .any(|sc_info| sc_info.id == ScArray::ChainConfig);
+            let is_chain_config_deployed =
+                sc.is_contract_deployed(&OWNER_ADDRESS.to_managed_address(), ScArray::ChainConfig);
             assert!(is_chain_config_deployed);
         })
 }
@@ -427,7 +426,7 @@ fn deploy_phase_two_without_first_phase() {
             4,
             "The current caller has not deployed any Sovereign Chain",
         )),
-        bls_keys,
+        &bls_keys,
     );
 }
 
@@ -442,7 +441,7 @@ fn deploy_phase_two() {
     let deploy_cost = BigUint::from(100_000u32);
 
     state.deploy_phase_one(
-        deploy_cost,
+        &deploy_cost,
         1,
         2,
         BigUint::from(2u32),
@@ -456,5 +455,46 @@ fn deploy_phase_two() {
     bls_keys.push(ManagedBuffer::from("bls1"));
     bls_keys.push(ManagedBuffer::from("bls2"));
 
-    state.deploy_phase_two(None, bls_keys);
+    state.deploy_phase_two(None, &bls_keys);
+
+    state
+        .world
+        .query()
+        .to(FORGE_ADDRESS)
+        .whitebox(sovereign_forge::contract_obj, |sc| {
+            let is_header_verifier_deployed = sc
+                .is_contract_deployed(&OWNER_ADDRESS.to_managed_address(), ScArray::HeaderVerifier);
+
+            assert!(is_header_verifier_deployed);
+        })
+}
+
+#[test]
+fn deploy_phase_two_header_already_deployed() {
+    let mut state = SovereignForgeTestState::new();
+    state.deploy_sovereign_forge();
+    state.deploy_chain_factory();
+    state.deploy_chain_config_template();
+    state.finish_setup();
+
+    let deploy_cost = BigUint::from(100_000u32);
+
+    state.deploy_phase_one(
+        &deploy_cost,
+        1,
+        2,
+        BigUint::from(2u32),
+        MultiValueEncoded::new(),
+        None,
+    );
+
+    state.deploy_header_verifier_template();
+
+    let bls_keys = MultiValueEncoded::new();
+
+    state.deploy_phase_two(None, &bls_keys);
+    state.deploy_phase_two(
+        Some(ExpectError(4, "The Header-Verifier SC is already deployed")),
+        &bls_keys,
+    );
 }
