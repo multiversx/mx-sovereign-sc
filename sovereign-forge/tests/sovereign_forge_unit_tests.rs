@@ -65,7 +65,7 @@ impl SovereignForgeTestState {
             .typed(ChainFactoryContractProxy)
             .init(
                 CONFIG_ADDRESS,
-                FACTORY_ADDRESS,
+                HEADER_VERIFIER_ADDRESS,
                 FACTORY_ADDRESS,
                 FACTORY_ADDRESS,
             )
@@ -90,6 +90,8 @@ impl SovereignForgeTestState {
     }
 
     fn deploy_chain_config_template(&mut self) -> &mut Self {
+        let additional_stake_required = MultiValueEncoded::new();
+
         self.world
             .tx()
             .from(OWNER_ADDRESS)
@@ -99,7 +101,7 @@ impl SovereignForgeTestState {
                 2u64,
                 BigUint::from(1u32),
                 OWNER_ADDRESS,
-                MultiValueEncoded::<StaticApi, StakeMultiArg<StaticApi>>::new(),
+                additional_stake_required,
             )
             .code(CONFIG_CODE_PATH)
             .new_address(CONFIG_ADDRESS)
@@ -109,15 +111,13 @@ impl SovereignForgeTestState {
     }
 
     fn deploy_header_verifier_template(&mut self) -> &mut Self {
-        let mut bls_keys = MultiValueEncoded::new();
-        bls_keys.push(ManagedBuffer::from("bls1"));
-        bls_keys.push(ManagedBuffer::from("bls2"));
+        let bls_pub_keys = MultiValueEncoded::new();
 
         self.world
             .tx()
             .from(OWNER_ADDRESS)
             .typed(HeaderverifierProxy)
-            .init(bls_keys)
+            .init(bls_pub_keys)
             .code(HEADER_VERIFIER_CODE_PATH)
             .new_address(HEADER_VERIFIER_ADDRESS)
             .run();
