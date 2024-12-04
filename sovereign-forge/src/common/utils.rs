@@ -41,7 +41,7 @@ pub enum ScArray {
 pub trait UtilsModule: super::storage::StorageModule {
     fn require_phase_1_completed(&self, caller: &ManagedAddress) {
         require!(
-            self.sovereigns_mapper(caller).is_empty(),
+            !self.sovereigns_mapper(caller).is_empty(),
             "The current caller has not deployed any Sovereign Chain"
         );
 
@@ -57,17 +57,10 @@ pub trait UtilsModule: super::storage::StorageModule {
     }
 
     fn is_contract_deployed(&self, sovereign_creator: &ManagedAddress, sc_id: ScArray) -> bool {
-        let sovereigns_mapper = self.sovereigns_mapper(sovereign_creator);
-
-        require!(
-            !sovereigns_mapper.is_empty(),
-            "There are no contracts deployed for this Sovereign"
-        );
-
-        let chain_id = sovereigns_mapper.get();
-        let deployed_contracts_mapper = self.sovereign_deployed_contracts(&chain_id);
-
-        deployed_contracts_mapper.iter().any(|sc| sc.id == sc_id)
+        let chain_id = self.sovereigns_mapper(sovereign_creator).get();
+        self.sovereign_deployed_contracts(&chain_id)
+            .iter()
+            .any(|sc| sc.id == sc_id)
     }
 
     fn generate_chain_id(&self) -> ManagedBuffer {
