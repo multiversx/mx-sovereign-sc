@@ -61,18 +61,31 @@ pub trait FactoryModule {
 
     #[only_owner]
     #[endpoint(deployEsdtSafe)]
-    fn deploy_esdt_safe(&self, is_sovereign_chain: bool) -> ManagedAddress {
+    fn deploy_esdt_safe(
+        &self,
+        is_sovereign_chain: bool,
+        header_verifier_address: ManagedAddress,
+    ) -> ManagedAddress {
         let source_address = self.enshrine_esdt_safe_template().get();
         let metadata = self.blockchain().get_code_metadata(&source_address);
 
-        self.tx()
+        let esdt_safe_address = self
+            .tx()
             .typed(EsdtSafeProxy)
             .init(is_sovereign_chain)
             .gas(60_000_000)
             .from_source(source_address)
             .code_metadata(metadata)
             .returns(ReturnsNewManagedAddress)
-            .sync_call()
+            .sync_call();
+
+        self.tx()
+            .to(header_verifier_address)
+            .typed(HeaderverifierProxy)
+            .set_esdt_safe_address(esdt_safe_address.clone())
+            .sync_call();
+
+        esdt_safe_address
     }
 
     #[only_owner]
