@@ -160,6 +160,19 @@ where
             .original_result()
     }
 
+    pub fn deploy_phase_three<
+        Arg0: ProxyArg<bool>,
+    >(
+        self,
+        is_sovereign_chain: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("deployPhaseThree")
+            .argument(&is_sovereign_chain)
+            .original_result()
+    }
+
     pub fn chain_factories<
         Arg0: ProxyArg<u32>,
     >(
