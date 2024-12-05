@@ -45,36 +45,26 @@ pub trait UtilsModule: super::storage::StorageModule {
 
     fn require_phase_1_completed(&self, caller: &ManagedAddress) {
         require!(
-            self.sovereigns_mapper(caller).is_empty(),
+            !self.sovereigns_mapper(caller).is_empty(),
             "The current caller has not deployed any Sovereign Chain"
         );
-        self.check_if_contract_deployed(caller, ScArray::ChainConfig, b"ChainConfig");
+
+        require!(
+            self.is_contract_deployed(caller, ScArray::ChainConfig),
+            "The Chain-Config SC is not deployed"
+        );
+
+        require!(
+            !self.is_contract_deployed(caller, ScArray::HeaderVerifier),
+            "The Header-Verifier SC is already deployed"
+        );
     }
 
-    fn check_if_contract_deployed(
-        &self,
-        sovereign_creator: &ManagedAddress,
-        sc_id: ScArray,
-        sc_name: &[u8],
-    ) {
-        let sovereigns_mapper = self.sovereigns_mapper(sovereign_creator);
-
-        require!(
-            !sovereigns_mapper.is_empty(),
-            "There are no contracts deployed for this Sovereign"
-        );
-
-        let chain_id = sovereigns_mapper.get();
-        let deployed_contracts_mapper = self.sovereign_deployed_contracts(&chain_id);
-
-        let is_contract_deployed = deployed_contracts_mapper.iter().any(|sc| sc.id == sc_id);
-        let sc_name_buffer = ManagedBuffer::from(sc_name);
-
-        require!(
-            is_contract_deployed,
-            "The {} SC is not deployed inside this Sovereign Chain",
-            sc_name_buffer
-        );
+    fn is_contract_deployed(&self, sovereign_creator: &ManagedAddress, sc_id: ScArray) -> bool {
+        let chain_id = self.sovereigns_mapper(sovereign_creator).get();
+        self.sovereign_deployed_contracts(&chain_id)
+            .iter()
+            .any(|sc| sc.id == sc_id)
     }
 
     fn generate_chain_id(&self) -> ManagedBuffer {

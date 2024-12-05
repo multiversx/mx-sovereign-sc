@@ -9,19 +9,19 @@ authors = ["you"]
 path = "src/lib.rs"
 
 [dependencies.multiversx-sc]
-version = "=0.54.4"
-
-[dev-dependencies]
-num-bigint = "0.4"
-
-[dev-dependencies.multiversx-sc-scenario]
-version = "=0.54.4"
+version = "=0.54.5"
 
 [dependencies.multiversx-sc-modules]
-version = "=0.54.4"
+version = "=0.54.5"
 
 [dependencies.chain-factory]
 path = "../chain-factory"
+
+[dependencies.chain-config]
+path = "../chain-config"
+
+[dependencies.header-verifier]
+path = "../header-verifier"
 
 [dependencies.proxies]
 path = "../common/proxies"
@@ -31,3 +31,9 @@ path = "../common/transaction"
 
 [dependencies.setup-phase]
 path = "../common/setup-phase"
+
+[dev-dependencies]
+num-bigint = "0.4"
+
+[dev-dependencies.multiversx-sc-scenario]
+version = "=0.54.5"
