@@ -1,5 +1,6 @@
 use crate::err_msg;
 use core::ops::Deref;
+use proxies::header_verifier_proxy::HeaderverifierProxy;
 use transaction::StakeMultiArg;
 
 use multiversx_sc::{require, types::MultiValueEncoded};
@@ -94,7 +95,7 @@ pub trait PhasesModule:
 
         self.require_phase_1_completed(&caller);
         require!(
-            self.is_contract_deployed(&caller, ScArray::HeaderVerifier),
+            !self.is_contract_deployed(&caller, ScArray::HeaderVerifier),
             "The Header-Verifier contract is already deployed"
         );
 
@@ -117,14 +118,36 @@ pub trait PhasesModule:
 
         self.require_phase_two_completed(&caller);
         require!(
-            self.is_contract_deployed(&caller, ScArray::ESDTSafe),
+            !self.is_contract_deployed(&caller, ScArray::ESDTSafe),
             "The ESDT-Safe contract is already deployed"
         );
 
-        let esdt_safe_address = self.deploy_esdt_safe(is_sovereign_chain, header_verifier_address);
-        let esdt_safe_contract_info = ContractInfo::new(ScArray::ESDTSafe, esdt_safe_address);
+        let esdt_safe_address =
+            self.deploy_esdt_safe(is_sovereign_chain, header_verifier_address.clone());
+
+        let esdt_safe_contract_info =
+            ContractInfo::new(ScArray::ESDTSafe, esdt_safe_address.clone());
 
         self.sovereign_deployed_contracts(&self.sovereigns_mapper(&caller).get())
             .insert(esdt_safe_contract_info);
+
+        self.tx()
+            .to(header_verifier_address)
+            .typed(HeaderverifierProxy)
+            .set_esdt_safe_address(esdt_safe_address.clone())
+            .sync_call();
+    }
+
+    #[endpoint(setAddress)]
+    fn set_address(
+        &self,
+        esdt_safe_address: ManagedAddress,
+        header_verifier_address: ManagedAddress,
+    ) {
+        self.tx()
+            .to(header_verifier_address)
+            .typed(HeaderverifierProxy)
+            .set_esdt_safe_address(esdt_safe_address)
+            .sync_call();
     }
 }

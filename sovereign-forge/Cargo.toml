@@ -23,6 +23,9 @@ path = "../chain-config"
 [dependencies.header-verifier]
 path = "../header-verifier"
 
+[dependencies.esdt-safe]
+path = "../esdt-safe"
+
 [dependencies.proxies]
 path = "../common/proxies"
 

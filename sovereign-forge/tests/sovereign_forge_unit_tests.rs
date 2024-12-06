@@ -5,7 +5,8 @@ use multiversx_sc_scenario::{
 };
 use proxies::{
     chain_config_proxy::ChainConfigContractProxy, chain_factory_proxy::ChainFactoryContractProxy,
-    header_verifier_proxy::HeaderverifierProxy, sovereign_forge_proxy::SovereignForgeProxy,
+    esdt_safe_proxy::EsdtSafeProxy, header_verifier_proxy::HeaderverifierProxy,
+    sovereign_forge_proxy::SovereignForgeProxy,
 };
 use setup_phase::SetupPhaseModule;
 use sovereign_forge::common::{
@@ -29,6 +30,9 @@ const HEADER_VERIFIER_ADDRESS: TestSCAddress = TestSCAddress::new("header-verifi
 const HEADER_VERIFIER_CODE_PATH: MxscPath =
     MxscPath::new("../header-verifier/output/header-verifier.mxsc.json");
 
+const ESDT_SAFE_ADDRESS: TestSCAddress = TestSCAddress::new("esdt-safe");
+const ESDT_SAFE_CODE_PATH: MxscPath = MxscPath::new("../esdt-safe/output/esdt-safe.mxsc.json");
+
 const TOKEN_HANDLER_ADDRESS: TestSCAddress = TestSCAddress::new("token-handler");
 
 const BALANCE: u128 = 100_000_000_000_000_000;
@@ -41,6 +45,7 @@ fn world() -> ScenarioWorld {
     blockchain.register_contract(FACTORY_CODE_PATH, chain_factory::ContractBuilder);
     blockchain.register_contract(CONFIG_CODE_PATH, chain_config::ContractBuilder);
     blockchain.register_contract(HEADER_VERIFIER_CODE_PATH, header_verifier::ContractBuilder);
+    blockchain.register_contract(ESDT_SAFE_CODE_PATH, esdt_safe::ContractBuilder);
 
     blockchain
 }
@@ -69,7 +74,7 @@ impl SovereignForgeTestState {
             .init(
                 CONFIG_ADDRESS,
                 HEADER_VERIFIER_ADDRESS,
-                FACTORY_ADDRESS,
+                ESDT_SAFE_ADDRESS,
                 FACTORY_ADDRESS,
             )
             .code(FACTORY_CODE_PATH)
@@ -123,6 +128,21 @@ impl SovereignForgeTestState {
             .init(bls_pub_keys)
             .code(HEADER_VERIFIER_CODE_PATH)
             .new_address(HEADER_VERIFIER_ADDRESS)
+            .run();
+
+        self
+    }
+
+    fn deploy_esdt_safe_template(&mut self) -> &mut Self {
+        let is_sovereign_chain = false;
+
+        self.world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .typed(EsdtSafeProxy)
+            .init(is_sovereign_chain)
+            .code(ESDT_SAFE_CODE_PATH)
+            .new_address(ESDT_SAFE_ADDRESS)
             .run();
 
         self
@@ -186,6 +206,16 @@ impl SovereignForgeTestState {
         }
     }
 
+    fn finish_setup(&mut self) {
+        self.register_chain_factory(1, FACTORY_ADDRESS, None);
+        self.register_chain_factory(2, FACTORY_ADDRESS, None);
+        self.register_chain_factory(3, FACTORY_ADDRESS, None);
+        self.register_token_handler(1, TOKEN_HANDLER_ADDRESS, None);
+        self.register_token_handler(2, TOKEN_HANDLER_ADDRESS, None);
+        self.register_token_handler(3, TOKEN_HANDLER_ADDRESS, None);
+        self.complete_setup_phase(None);
+    }
+
     fn deploy_phase_one(
         &mut self,
         payment: &BigUint<StaticApi>,
@@ -236,14 +266,28 @@ impl SovereignForgeTestState {
         }
     }
 
-    fn finish_setup(&mut self) {
-        self.register_chain_factory(1, FACTORY_ADDRESS, None);
-        self.register_chain_factory(2, FACTORY_ADDRESS, None);
-        self.register_chain_factory(3, FACTORY_ADDRESS, None);
-        self.register_token_handler(1, TOKEN_HANDLER_ADDRESS, None);
-        self.register_token_handler(2, TOKEN_HANDLER_ADDRESS, None);
-        self.register_token_handler(3, TOKEN_HANDLER_ADDRESS, None);
-        self.complete_setup_phase(None);
+    fn deploy_phase_three(
+        &mut self,
+        is_sovereign_chain: bool,
+        header_verifier_address: &TestSCAddress,
+        expect_error: Option<ExpectError>,
+    ) {
+        let transaction = self
+            .world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .to(FORGE_ADDRESS)
+            .typed(SovereignForgeProxy)
+            .deploy_phase_three(
+                is_sovereign_chain,
+                header_verifier_address.to_managed_address(),
+            );
+
+        if let Some(error) = expect_error {
+            transaction.returns(error).run();
+        } else {
+            transaction.run();
+        }
     }
 }
 
@@ -497,4 +541,34 @@ fn deploy_phase_two_header_already_deployed() {
         Some(ExpectError(4, "The Header-Verifier SC is already deployed")),
         &bls_keys,
     );
+}
+
+#[test]
+fn deploy_phase_three_without_phase_two() {
+    let mut state = SovereignForgeTestState::new();
+    state.deploy_sovereign_forge();
+    state.deploy_chain_factory();
+    state.deploy_chain_config_template();
+    state.finish_setup();
+
+    let deploy_cost = BigUint::from(100_000u32);
+
+    state.deploy_phase_one(
+        &deploy_cost,
+        1,
+        2,
+        BigUint::from(2u32),
+        MultiValueEncoded::new(),
+        None,
+    );
+
+    state.deploy_header_verifier_template();
+    state.deploy_esdt_safe_template();
+
+    let mut bls_keys = MultiValueEncoded::new();
+    bls_keys.push(ManagedBuffer::from("bls1"));
+    bls_keys.push(ManagedBuffer::from("bls2"));
+
+    state.deploy_phase_two(None, &bls_keys);
+    state.deploy_phase_three(false, &HEADER_VERIFIER_ADDRESS, None);
 }
