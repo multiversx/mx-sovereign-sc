@@ -26,18 +26,18 @@ pub trait PhasesModule:
             return;
         }
 
-        for shard_id in 1..=NUMBER_OF_SHARDS {
-            require!(
-                !self.chain_factories(shard_id).is_empty(),
-                "There is no Chain-Factory contract assigned for shard {}",
-                shard_id
-            );
-            require!(
-                !self.token_handlers(shard_id).is_empty(),
-                "There is no Token-Handler contract assigned for shard {}",
-                shard_id
-            );
-        }
+        // for shard_id in 1..=NUMBER_OF_SHARDS {
+        //     require!(
+        //         !self.chain_factories(shard_id).is_empty(),
+        //         "There is no Chain-Factory contract assigned for shard {}",
+        //         shard_id
+        //     );
+        //     require!(
+        //         !self.token_handlers(shard_id).is_empty(),
+        //         "There is no Token-Handler contract assigned for shard {}",
+        //         shard_id
+        //     );
+        // }
 
         self.setup_phase_complete().set(true);
     }

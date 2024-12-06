@@ -1,1 +1,3 @@
-contract_address = "erd1qqqqqqqqqqqqqpgqkgnuqzpdwhu4kju6ldnargywgtcumswad8sslg3vv0"
+contract_address = "erd1qqqqqqqqqqqqqpgqcyn80qhgs926gtl2l7s6x6rneyksuxyvd8ssje4jl2"
+config_address = "erd1qqqqqqqqqqqqqpgqg3rhq4rucjhnnxk6zhantd3yuh8v9m5cd8ssp73zh7"
+header_verifier_address = "erd1qqqqqqqqqqqqqpgq59k00lhu335g6h0q894pz38uuk3ddmjwd8ssxtd8wr"

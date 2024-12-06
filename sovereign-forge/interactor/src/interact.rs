@@ -110,7 +110,7 @@ impl ContractInteract {
             .await
             .use_chain_simulator(config.use_chain_simulator());
 
-        interactor.set_current_dir_from_workspace("sovereign_forge");
+        interactor.set_current_dir_from_workspace("sovereign_forge/interactor");
         let wallet_address = interactor.register_wallet(test_wallets::alice()).await;
 
         // Useful in the chain simulator setting
@@ -137,7 +137,7 @@ impl ContractInteract {
             .interactor
             .tx()
             .from(&self.wallet_address)
-            .gas(30_000_000u64)
+            .gas(50_000_000u64)
             .typed(SovereignForgeProxy)
             .init(deploy_cost)
             .code(&self.contract_code)
@@ -149,7 +149,7 @@ impl ContractInteract {
             new_address_bech32.clone(),
         ));
 
-        println!("new address: {new_address_bech32}");
+        println!("new Forge address: {new_address_bech32}");
     }
 
     pub async fn deploy_chain_factory(&mut self) {
@@ -161,7 +161,7 @@ impl ContractInteract {
             .interactor
             .tx()
             .from(&self.wallet_address)
-            .gas(30_000_000u64)
+            .gas(50_000_000u64)
             .typed(ChainFactoryContractProxy)
             .init(
                 ManagedAddress::from(&self.state.config_address.as_ref().unwrap().to_address()),
@@ -179,7 +179,7 @@ impl ContractInteract {
             new_address_bech32.clone(),
         ));
 
-        println!("new address: {new_address_bech32}");
+        println!("new Chain-Factory address: {new_address_bech32}");
     }
 
     pub async fn deploy_header_verifier(&mut self) {
@@ -187,6 +187,7 @@ impl ContractInteract {
             .interactor
             .tx()
             .from(&self.wallet_address)
+            .gas(50_000_000u64)
             .typed(HeaderverifierProxy)
             .init(MultiValueEncoded::new())
             .returns(ReturnsNewAddress)
@@ -199,6 +200,8 @@ impl ContractInteract {
             .set_header_verifier_address(Bech32Address::from_bech32_string(
                 new_address_bech32.clone(),
             ));
+
+        println!("new Header-Verifier address: {new_address_bech32}");
     }
 
     pub async fn deploy_chain_config(&mut self) {
@@ -206,6 +209,7 @@ impl ContractInteract {
             .interactor
             .tx()
             .from(&self.wallet_address)
+            .gas(50_000_000u64)
             .typed(ChainConfigContractProxy)
             .init(
                 1u64,
@@ -224,6 +228,8 @@ impl ContractInteract {
             .set_config_template(Bech32Address::from_bech32_string(
                 new_address_bech32.clone(),
             ));
+
+        println!("new Chain-Config address: {new_address_bech32}");
     }
 
     pub async fn upgrade(&mut self) {
@@ -232,7 +238,7 @@ impl ContractInteract {
             .tx()
             .to(self.state.current_address())
             .from(&self.wallet_address)
-            .gas(30_000_000u64)
+            .gas(50_000_000u64)
             .typed(SovereignForgeProxy)
             .upgrade()
             .code(&self.contract_code)

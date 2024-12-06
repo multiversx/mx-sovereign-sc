@@ -14,6 +14,15 @@ async fn deploy_test_sovereign_forge_cs() {
     interactor.deploy().await;
     interactor.deploy_chain_config().await;
     interactor.deploy_header_verifier().await;
+    interactor.complete_setup_phase().await;
+
+    interactor.register_token_handler().await;
+    interactor.register_token_handler().await;
+    interactor.register_token_handler().await;
+
+    interactor.register_chain_factory().await;
+    interactor.register_chain_factory().await;
+    interactor.register_chain_factory().await;
 
     interactor.deploy_phase_one().await;
     interactor.deploy_phase_two().await;
