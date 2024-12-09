@@ -88,6 +88,22 @@ pub trait FactoryModule: only_admin::OnlyAdminModule {
     }
 
     #[only_admin]
+    #[endpoint(deployEsdtSafe)]
+    fn deploy_esdt_safe(&self, is_sovereign_chain: bool) -> ManagedAddress {
+        let source_address = self.enshrine_esdt_safe_template().get();
+        let metadata = self.blockchain().get_code_metadata(&source_address);
+
+        self.tx()
+            .typed(EsdtSafeProxy)
+            .init(is_sovereign_chain)
+            .gas(60_000_000)
+            .from_source(source_address)
+            .code_metadata(metadata)
+            .returns(ReturnsNewManagedAddress)
+            .sync_call()
+    }
+
+    #[only_admin]
     #[endpoint(deployFeeMarket)]
     fn deploy_fee_market(
         &self,

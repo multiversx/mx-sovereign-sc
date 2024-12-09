@@ -132,19 +132,6 @@ where
             .original_result()
     }
 
-    pub fn deploy_esdt_safe<
-        Arg0: ProxyArg<bool>,
-    >(
-        self,
-        is_sovereign_chain: Arg0,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ManagedAddress<Env::Api>> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("deployEsdtSafe")
-            .argument(&is_sovereign_chain)
-            .original_result()
-    }
-
     pub fn deploy_enshrine_esdt_safe<
         Arg0: ProxyArg<bool>,
         Arg1: ProxyArg<ManagedAddress<Env::Api>>,
@@ -164,6 +151,19 @@ where
             .argument(&token_handler_address)
             .argument(&wegld_identifier)
             .argument(&sov_token_prefix)
+            .original_result()
+    }
+
+    pub fn deploy_esdt_safe<
+        Arg0: ProxyArg<bool>,
+    >(
+        self,
+        is_sovereign_chain: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ManagedAddress<Env::Api>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("deployEsdtSafe")
+            .argument(&is_sovereign_chain)
             .original_result()
     }
 
