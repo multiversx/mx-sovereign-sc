@@ -1,4 +1,5 @@
 use multiversx_sc::imports::*;
+use multiversx_sc_modules::only_admin;
 use proxies::{
     chain_config_proxy::ChainConfigContractProxy,
     enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy,
@@ -9,8 +10,8 @@ use transaction::StakeMultiArg;
 multiversx_sc::derive_imports!();
 
 #[multiversx_sc::module]
-pub trait FactoryModule {
-    #[only_owner]
+pub trait FactoryModule: only_admin::OnlyAdminModule {
+    #[only_admin]
     #[endpoint(deploySovereignChainConfigContract)]
     fn deploy_sovereign_chain_config_contract(
         &self,
@@ -39,7 +40,7 @@ pub trait FactoryModule {
             .sync_call()
     }
 
-    #[only_owner]
+    #[only_admin]
     #[endpoint(deployHeaderVerifier)]
     fn deploy_header_verifier(
         &self,
@@ -58,7 +59,7 @@ pub trait FactoryModule {
             .sync_call()
     }
 
-    #[only_owner]
+    #[only_admin]
     #[endpoint(deployEnshrineEsdtSafe)]
     fn deploy_enshrine_esdt_safe(
         &self,
@@ -85,7 +86,7 @@ pub trait FactoryModule {
             .sync_call()
     }
 
-    #[only_owner]
+    #[only_admin]
     #[endpoint(deployFeeMarket)]
     fn deploy_fee_market(
         &self,
@@ -105,7 +106,7 @@ pub trait FactoryModule {
             .sync_call()
     }
 
-    #[only_owner]
+    #[only_admin]
     #[endpoint(completeSetupPhase)]
     fn complete_setup_phase(&self, _contract_address: ManagedAddress) {
         // TODO: will have to call each contract's endpoint to finish setup phase
