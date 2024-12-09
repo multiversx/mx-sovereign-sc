@@ -89,6 +89,7 @@ impl TokenHandlerTestState {
                 FACTORY_ADDRESS,
                 FACTORY_ADDRESS,
                 FACTORY_ADDRESS,
+                FACTORY_ADDRESS,
             )
             .code(FACTORY_CODE_PATH)
             .new_address(FACTORY_ADDRESS)
