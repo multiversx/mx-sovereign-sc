@@ -1,4 +1,5 @@
 use multiversx_sc::imports::*;
+use multiversx_sc_modules::only_admin;
 use proxies::{
     chain_config_proxy::ChainConfigContractProxy,
     enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy,
@@ -10,8 +11,8 @@ use transaction::StakeMultiArg;
 multiversx_sc::derive_imports!();
 
 #[multiversx_sc::module]
-pub trait FactoryModule {
-    #[only_owner]
+pub trait FactoryModule: only_admin::OnlyAdminModule {
+    #[only_admin]
     #[endpoint(deploySovereignChainConfigContract)]
     fn deploy_sovereign_chain_config_contract(
         &self,
@@ -40,7 +41,7 @@ pub trait FactoryModule {
             .sync_call()
     }
 
-    #[only_owner]
+    #[only_admin]
     #[endpoint(deployHeaderVerifier)]
     fn deploy_header_verifier(
         &self,
@@ -59,23 +60,7 @@ pub trait FactoryModule {
             .sync_call()
     }
 
-    #[only_owner]
-    #[endpoint(deployEsdtSafe)]
-    fn deploy_esdt_safe(&self, is_sovereign_chain: bool) -> ManagedAddress {
-        let source_address = self.enshrine_esdt_safe_template().get();
-        let metadata = self.blockchain().get_code_metadata(&source_address);
-
-        self.tx()
-            .typed(EsdtSafeProxy)
-            .init(is_sovereign_chain)
-            .gas(60_000_000)
-            .from_source(source_address)
-            .code_metadata(metadata)
-            .returns(ReturnsNewManagedAddress)
-            .sync_call()
-    }
-
-    #[only_owner]
+    #[only_admin]
     #[endpoint(deployEnshrineEsdtSafe)]
     fn deploy_enshrine_esdt_safe(
         &self,
@@ -102,7 +87,23 @@ pub trait FactoryModule {
             .sync_call()
     }
 
-    #[only_owner]
+    #[only_admin]
+    #[endpoint(deployEsdtSafe)]
+    fn deploy_esdt_safe(&self, is_sovereign_chain: bool) -> ManagedAddress {
+        let source_address = self.enshrine_esdt_safe_template().get();
+        let metadata = self.blockchain().get_code_metadata(&source_address);
+
+        self.tx()
+            .typed(EsdtSafeProxy)
+            .init(is_sovereign_chain)
+            .gas(60_000_000)
+            .from_source(source_address)
+            .code_metadata(metadata)
+            .returns(ReturnsNewManagedAddress)
+            .sync_call()
+    }
+
+    #[only_admin]
     #[endpoint(deployFeeMarket)]
     fn deploy_fee_market(
         &self,
@@ -122,7 +123,7 @@ pub trait FactoryModule {
             .sync_call()
     }
 
-    #[only_owner]
+    #[only_admin]
     #[endpoint(completeSetupPhase)]
     fn complete_setup_phase(&self, _contract_address: ManagedAddress) {
         // TODO: will have to call each contract's endpoint to finish setup phase

@@ -1,5 +1,0 @@
-contract_address = "erd1qqqqqqqqqqqqqpgq3hmludfct68ucec93vdlw0ajdwrlyeetrruqaagvw9"
-fee_market_address = "erd1qqqqqqqqqqqqqpgqna3dvxa8tz2556lr9jhsznpf6wf4la92rruqc6lgk4"
-price_aggregator_address = "erd1qqqqqqqqqqqqqpgq4sshr5wx4ch5gd8847dsavahytt732kut7as6z3mv6"
-header_verifier_address = "erd1qqqqqqqqqqqqqpgqe9lhyncklzx2lnruz8t4gdukpujn75w4rruqk0jdwr"
-testing_sc_address = "erd1qqqqqqqqqqqqqpgq023jpszns80u0n5a5nuz09u7z87s4yx3rruqp2qryk"
