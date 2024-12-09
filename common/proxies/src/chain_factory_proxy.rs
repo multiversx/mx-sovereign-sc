@@ -48,16 +48,19 @@ where
         Arg1: ProxyArg<ManagedAddress<Env::Api>>,
         Arg2: ProxyArg<ManagedAddress<Env::Api>>,
         Arg3: ProxyArg<ManagedAddress<Env::Api>>,
+        Arg4: ProxyArg<ManagedAddress<Env::Api>>,
     >(
         self,
-        chain_config_template: Arg0,
-        header_verifier_template: Arg1,
-        cross_chain_operation_template: Arg2,
-        fee_market_template: Arg3,
+        sovereign_forge_address: Arg0,
+        chain_config_template: Arg1,
+        header_verifier_template: Arg2,
+        cross_chain_operation_template: Arg3,
+        fee_market_template: Arg4,
     ) -> TxTypedDeploy<Env, From, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_deploy()
+            .argument(&sovereign_forge_address)
             .argument(&chain_config_template)
             .argument(&header_verifier_template)
             .argument(&cross_chain_operation_template)
@@ -193,39 +196,51 @@ where
             .original_result()
     }
 
-    pub fn complete_chain_config_setup(
+    pub fn is_admin<
+        Arg0: ProxyArg<ManagedAddress<Env::Api>>,
+    >(
         self,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        address: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, bool> {
         self.wrapped_tx
             .payment(NotPayable)
-            .raw_call("completeChainConfigSetup")
+            .raw_call("isAdmin")
+            .argument(&address)
             .original_result()
     }
 
-    pub fn complete_header_verifier_setup(
+    pub fn add_admin<
+        Arg0: ProxyArg<ManagedAddress<Env::Api>>,
+    >(
         self,
+        address: Arg0,
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
-            .raw_call("completeHeaderVerifierSetup")
+            .raw_call("addAdmin")
+            .argument(&address)
             .original_result()
     }
 
-    pub fn complete_fee_market_setup(
+    pub fn remove_admin<
+        Arg0: ProxyArg<ManagedAddress<Env::Api>>,
+    >(
         self,
+        address: Arg0,
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
-            .raw_call("completeFeeMarketSetup")
+            .raw_call("removeAdmin")
+            .argument(&address)
             .original_result()
     }
 
-    pub fn complete_esdt_safe_setup(
+    pub fn admins(
         self,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, MultiValueEncoded<Env::Api, ManagedAddress<Env::Api>>> {
         self.wrapped_tx
             .payment(NotPayable)
-            .raw_call("completeEsdtSafeSetup")
+            .raw_call("getAdmins")
             .original_result()
     }
 }

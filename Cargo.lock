@@ -519,6 +519,29 @@ dependencies = [
 ]
 
 [[package]]
+name = "enshrine_esdt_safe_interactor"
+version = "0.0.0"
+dependencies = [
+ "clap",
+ "enshrine-esdt-safe",
+ "fee-market",
+ "header-verifier",
+ "interactor",
+ "max-bridged-amount-module",
+ "multiversx-sc",
+ "multiversx-sc-snippets",
+ "proxies",
+ "serde",
+ "setup-phase",
+ "token-handler",
+ "token-whitelist",
+ "toml",
+ "transaction",
+ "tx-batch-module",
+ "utils",
+]
+
+[[package]]
 name = "env_filter"
 version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -576,6 +599,24 @@ dependencies = [
  "transaction",
  "tx-batch-module",
  "utils",
+]
+
+[[package]]
+name = "esdt-safe-interactor"
+version = "0.0.0"
+dependencies = [
+ "clap",
+ "esdt-safe",
+ "fee-market",
+ "interactor",
+ "multiversx-sc",
+ "multiversx-sc-scenario",
+ "multiversx-sc-snippets",
+ "proxies",
+ "serde",
+ "toml",
+ "transaction",
+ "tx-batch-module",
 ]
 
 [[package]]
@@ -1096,6 +1137,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a0c10553d664a4d0bcff9f4215d0aac67a639cc68ef660840afe309b807bc9f5"
 dependencies = [
  "generic-array",
+]
+
+[[package]]
+name = "interactor"
+version = "0.1.0"
+dependencies = [
+ "multiversx-sc",
+ "multiversx-sc-snippets",
+ "serde",
+ "toml",
 ]
 
 [[package]]
@@ -1824,45 +1875,6 @@ dependencies = [
  "wasm-bindgen-futures",
  "web-sys",
  "windows-registry",
-]
-
-[[package]]
-name = "rust-interact"
-version = "0.0.0"
-dependencies = [
- "clap",
- "esdt-safe",
- "fee-market",
- "multiversx-sc",
- "multiversx-sc-scenario",
- "multiversx-sc-snippets",
- "proxies",
- "serde",
- "toml",
- "transaction",
- "tx-batch-module",
-]
-
-[[package]]
-name = "rust-interact-esdt-safe"
-version = "0.0.0"
-dependencies = [
- "clap",
- "enshrine-esdt-safe",
- "fee-market",
- "header-verifier",
- "max-bridged-amount-module",
- "multiversx-sc",
- "multiversx-sc-snippets",
- "proxies",
- "serde",
- "setup-phase",
- "token-handler",
- "token-whitelist",
- "toml",
- "transaction",
- "tx-batch-module",
- "utils",
 ]
 
 [[package]]
