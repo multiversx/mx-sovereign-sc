@@ -1,7 +1,6 @@
 #![allow(non_snake_case)]
 
 mod config;
-mod proxy;
 
 use config::Config;
 use multiversx_sc_snippets::{imports::*, sdk::bech32};
@@ -17,6 +16,7 @@ use std::{
 
 const STATE_FILE: &str = "state.toml";
 const CHAIN_CONFIG_CODE_PATH: &str = "../../chain-config/output/chain-config.mxsc.json";
+const CHAIN_FACTORY_CODE_PATH: &str = "../../chain-factory/output/chain-factory.mxsc.json";
 const HEADER_VERIFIER_CODE_PATH: &str = "../../header-verifier/output/header-verifier.mxsc.json";
 
 pub async fn sovereign_forge_cli() {
@@ -29,8 +29,6 @@ pub async fn sovereign_forge_cli() {
     match cmd.as_str() {
         "deploy" => interact.deploy().await,
         "upgrade" => interact.upgrade().await,
-        "registerTokenHandler" => interact.register_token_handler().await,
-        "registerChainFactory" => interact.register_chain_factory().await,
         "completeSetupPhase" => interact.complete_setup_phase().await,
         "deployPhaseOne" => interact.deploy_phase_one().await,
         "deployPhaseTwo" => interact.deploy_phase_two().await,
@@ -48,6 +46,7 @@ pub async fn sovereign_forge_cli() {
 pub struct State {
     contract_address: Option<Bech32Address>,
     config_address: Option<Bech32Address>,
+    factory_address: Option<Bech32Address>,
     header_verifier_address: Option<Bech32Address>,
 }
 
@@ -72,6 +71,11 @@ impl State {
     /// Sets the contract address
     pub fn set_config_template(&mut self, address: Bech32Address) {
         self.config_address = Some(address);
+    }
+
+    /// Sets the contract address
+    pub fn set_factory_template(&mut self, address: Bech32Address) {
+        self.factory_address = Some(address);
     }
 
     /// Sets the contract address
@@ -144,6 +148,7 @@ impl ContractInteract {
             .returns(ReturnsNewAddress)
             .run()
             .await;
+
         let new_address_bech32 = bech32::encode(&new_address);
         self.state.set_address(Bech32Address::from_bech32_string(
             new_address_bech32.clone(),
@@ -169,42 +174,21 @@ impl ContractInteract {
                 header_verifier_managed_address.clone(),
                 header_verifier_managed_address,
             )
-            .code(&self.contract_code)
+            .code(MxscPath::new(CHAIN_FACTORY_CODE_PATH))
             .returns(ReturnsNewAddress)
-            .run()
-            .await;
-
-        let new_address_bech32 = bech32::encode(&new_address);
-        self.state.set_address(Bech32Address::from_bech32_string(
-            new_address_bech32.clone(),
-        ));
-
-        println!("new Chain-Factory address: {new_address_bech32}");
-    }
-
-    pub async fn deploy_header_verifier(&mut self) {
-        let new_address = self
-            .interactor
-            .tx()
-            .from(&self.wallet_address)
-            .gas(50_000_000u64)
-            .typed(HeaderverifierProxy)
-            .init(MultiValueEncoded::new())
-            .returns(ReturnsNewAddress)
-            .code(MxscPath::new(HEADER_VERIFIER_CODE_PATH))
             .run()
             .await;
 
         let new_address_bech32 = bech32::encode(&new_address);
         self.state
-            .set_header_verifier_address(Bech32Address::from_bech32_string(
+            .set_factory_template(Bech32Address::from_bech32_string(
                 new_address_bech32.clone(),
             ));
 
-        println!("new Header-Verifier address: {new_address_bech32}");
+        println!("new Chain-Factory address: {new_address_bech32}");
     }
 
-    pub async fn deploy_chain_config(&mut self) {
+    pub async fn deploy_chain_config_template(&mut self) {
         let new_address = self
             .interactor
             .tx()
@@ -232,6 +216,28 @@ impl ContractInteract {
         println!("new Chain-Config address: {new_address_bech32}");
     }
 
+    pub async fn deploy_header_verifier_template(&mut self) {
+        let new_address = self
+            .interactor
+            .tx()
+            .from(&self.wallet_address)
+            .gas(50_000_000u64)
+            .typed(HeaderverifierProxy)
+            .init(MultiValueEncoded::new())
+            .returns(ReturnsNewAddress)
+            .code(MxscPath::new(HEADER_VERIFIER_CODE_PATH))
+            .run()
+            .await;
+
+        let new_address_bech32 = bech32::encode(&new_address);
+        self.state
+            .set_header_verifier_address(Bech32Address::from_bech32_string(
+                new_address_bech32.clone(),
+            ));
+
+        println!("new Header-Verifier address: {new_address_bech32}");
+    }
+
     pub async fn upgrade(&mut self) {
         let response = self
             .interactor
@@ -250,9 +256,10 @@ impl ContractInteract {
         println!("Result: {response:?}");
     }
 
-    pub async fn register_token_handler(&mut self) {
-        let shard_id = 0u32;
-        let token_handler_address = bech32::decode("");
+    pub async fn register_token_handler(&mut self, shard_id: u32) {
+        let bech32 = &self.state.header_verifier_address.as_ref().unwrap();
+        let address = bech32.to_address();
+        let token_handler_address = ManagedAddress::from(address);
 
         let response = self
             .interactor
@@ -269,9 +276,10 @@ impl ContractInteract {
         println!("Result: {response:?}");
     }
 
-    pub async fn register_chain_factory(&mut self) {
-        let shard_id = 0u32;
-        let chain_factory_address = bech32::decode("");
+    pub async fn register_chain_factory(&mut self, shard_id: u32) {
+        let bech32 = &self.state.factory_address.as_ref().unwrap();
+        let address = bech32.to_address();
+        let chain_factory_address = ManagedAddress::from(address);
 
         let response = self
             .interactor
@@ -295,7 +303,7 @@ impl ContractInteract {
             .from(&self.wallet_address)
             .to(self.state.current_address())
             .gas(30_000_000u64)
-            .typed(proxy::SovereignForgeProxy)
+            .typed(SovereignForgeProxy)
             .complete_setup_phase()
             .returns(ReturnsResultUnmanaged)
             .run()
@@ -307,8 +315,8 @@ impl ContractInteract {
     pub async fn deploy_phase_one(&mut self) {
         let egld_amount = BigUint::<StaticApi>::from(100u128);
 
-        let min_validators = 0u64;
-        let max_validators = 0u64;
+        let min_validators = 1u64;
+        let max_validators = 3u64;
         let min_stake = BigUint::<StaticApi>::from(0u128);
         let additional_stake_required = MultiValueVec::from(vec![MultiValue2::<
             TokenIdentifier<StaticApi>,
@@ -323,8 +331,8 @@ impl ContractInteract {
             .tx()
             .from(&self.wallet_address)
             .to(self.state.current_address())
-            .gas(30_000_000u64)
-            .typed(proxy::SovereignForgeProxy)
+            .gas(100_000_000u64)
+            .typed(SovereignForgeProxy)
             .deploy_phase_one(
                 min_validators,
                 max_validators,
@@ -367,7 +375,7 @@ impl ContractInteract {
             .from(&self.wallet_address)
             .to(self.state.current_address())
             .gas(30_000_000u64)
-            .typed(proxy::SovereignForgeProxy)
+            .typed(SovereignForgeProxy)
             .deploy_phase_three(is_sovereign_chain, header_verifier_address)
             .returns(ReturnsResultUnmanaged)
             .run()
@@ -402,7 +410,7 @@ impl ContractInteract {
             .interactor
             .query()
             .to(self.state.current_address())
-            .typed(proxy::SovereignForgeProxy)
+            .typed(SovereignForgeProxy)
             .chain_factories(shard_id)
             .returns(ReturnsResultUnmanaged)
             .run()
@@ -432,7 +440,7 @@ impl ContractInteract {
             .interactor
             .query()
             .to(self.state.current_address())
-            .typed(proxy::SovereignForgeProxy)
+            .typed(SovereignForgeProxy)
             .deploy_cost()
             .returns(ReturnsResultUnmanaged)
             .run()
