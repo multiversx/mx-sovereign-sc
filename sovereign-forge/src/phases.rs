@@ -1,6 +1,5 @@
 use crate::err_msg;
 use core::ops::Deref;
-use proxies::header_verifier_proxy::HeaderverifierProxy;
 use transaction::StakeMultiArg;
 
 use multiversx_sc::{require, types::MultiValueEncoded};
