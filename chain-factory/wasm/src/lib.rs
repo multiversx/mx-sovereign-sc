@@ -22,14 +22,14 @@ multiversx_sc_wasm_adapter::endpoints! {
         upgrade => upgrade
         deploySovereignChainConfigContract => deploy_sovereign_chain_config_contract
         deployHeaderVerifier => deploy_header_verifier
-        deployEsdtSafe => deploy_esdt_safe
         deployEnshrineEsdtSafe => deploy_enshrine_esdt_safe
+        deployEsdtSafe => deploy_esdt_safe
         deployFeeMarket => deploy_fee_market
         completeSetupPhase => complete_setup_phase
-        completeChainConfigSetup => complete_chain_config_setup
-        completeHeaderVerifierSetup => complete_header_verifier_setup
-        completeFeeMarketSetup => complete_fee_market_setup
-        completeEsdtSafeSetup => complete_esdt_safe_setup
+        isAdmin => is_admin
+        addAdmin => add_admin
+        removeAdmin => remove_admin
+        getAdmins => admins
     )
 }
 
