@@ -39,6 +39,13 @@ pub enum ScArray {
 
 #[multiversx_sc::module]
 pub trait UtilsModule: super::storage::StorageModule {
+    fn require_phase_two_completed(&self, caller: &ManagedAddress) {
+        require!(
+            self.is_contract_deployed(caller, ScArray::HeaderVerifier),
+            "The Header-Verifier SC is not deployed, you skipped the second phase"
+        );
+    }
+
     fn require_phase_1_completed(&self, caller: &ManagedAddress) {
         require!(
             !self.sovereigns_mapper(caller).is_empty(),
@@ -61,6 +68,16 @@ pub trait UtilsModule: super::storage::StorageModule {
         self.sovereign_deployed_contracts(&chain_id)
             .iter()
             .any(|sc| sc.id == sc_id)
+    }
+
+    fn get_contract_address(&self, caller: &ManagedAddress, sc_id: ScArray) -> ManagedAddress {
+        let chain_id = self.sovereigns_mapper(caller).get();
+
+        self.sovereign_deployed_contracts(&chain_id)
+            .iter()
+            .find(|sc| sc.id == sc_id)
+            .unwrap()
+            .address
     }
 
     fn generate_chain_id(&self) -> ManagedBuffer {

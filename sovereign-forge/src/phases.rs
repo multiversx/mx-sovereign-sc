@@ -93,6 +93,10 @@ pub trait PhasesModule:
         let caller = blockchain_api.get_caller();
 
         self.require_phase_1_completed(&caller);
+        require!(
+            !self.is_contract_deployed(&caller, ScArray::HeaderVerifier),
+            "The Header-Verifier contract is already deployed"
+        );
 
         let header_verifier_address = self.deploy_header_verifier(bls_keys);
 
@@ -101,5 +105,26 @@ pub trait PhasesModule:
 
         self.sovereign_deployed_contracts(&self.sovereigns_mapper(&caller).get())
             .insert(header_verifier_contract_info);
+    }
+
+    #[endpoint(deployPhaseThree)]
+    fn deploy_phase_three(&self, is_sovereign_chain: bool) {
+        let caller = self.blockchain().get_caller();
+
+        self.require_phase_two_completed(&caller);
+        require!(
+            !self.is_contract_deployed(&caller, ScArray::ESDTSafe),
+            "The ESDT-Safe SC is already deployed"
+        );
+
+        let header_verifier_address = self.get_contract_address(&caller, ScArray::HeaderVerifier);
+
+        let esdt_safe_address = self.deploy_esdt_safe(is_sovereign_chain, &header_verifier_address);
+
+        let esdt_safe_contract_info =
+            ContractInfo::new(ScArray::ESDTSafe, esdt_safe_address.clone());
+
+        self.sovereign_deployed_contracts(&self.sovereigns_mapper(&caller).get())
+            .insert(esdt_safe_contract_info);
     }
 }

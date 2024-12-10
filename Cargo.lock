@@ -2140,6 +2140,7 @@ version = "0.0.0"
 dependencies = [
  "chain-config",
  "chain-factory",
+ "esdt-safe",
  "header-verifier",
  "multiversx-sc",
  "multiversx-sc-modules",

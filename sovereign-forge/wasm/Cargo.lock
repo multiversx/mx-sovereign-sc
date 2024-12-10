@@ -49,6 +49,33 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c34f04666d835ff5d62e058c3995147c06f42fe86ff053337632bca83e42702d"
 
 [[package]]
+name = "esdt-safe"
+version = "0.0.0"
+dependencies = [
+ "fee-market",
+ "header-verifier",
+ "max-bridged-amount-module",
+ "multiversx-sc",
+ "multiversx-sc-modules",
+ "proxies",
+ "setup-phase",
+ "token-whitelist",
+ "transaction",
+ "tx-batch-module",
+ "utils",
+]
+
+[[package]]
+name = "fee-market"
+version = "0.0.0"
+dependencies = [
+ "multiversx-sc",
+ "proxies",
+ "transaction",
+ "utils",
+]
+
+[[package]]
 name = "header-verifier"
 version = "0.0.0"
 dependencies = [
@@ -69,6 +96,13 @@ name = "hex-literal"
 version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6fe2267d4ed49bc07b63801559be28c718ea06c4738b7a03c94df7386d2cde46"
+
+[[package]]
+name = "max-bridged-amount-module"
+version = "0.0.0"
+dependencies = [
+ "multiversx-sc",
+]
 
 [[package]]
 name = "multiversx-chain-core"
@@ -223,6 +257,7 @@ version = "0.0.0"
 dependencies = [
  "chain-config",
  "chain-factory",
+ "esdt-safe",
  "header-verifier",
  "multiversx-sc",
  "multiversx-sc-modules",
@@ -248,6 +283,15 @@ dependencies = [
  "proc-macro2",
  "quote",
  "unicode-ident",
+]
+
+[[package]]
+name = "token-whitelist"
+version = "0.0.0"
+dependencies = [
+ "multiversx-sc",
+ "setup-phase",
+ "utils",
 ]
 
 [[package]]
