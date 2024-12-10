@@ -33,7 +33,6 @@ pub async fn sovereign_forge_cli() {
         "deployPhaseOne" => interact.deploy_phase_one().await,
         "deployPhaseTwo" => interact.deploy_phase_two().await,
         "deployPhaseThree" => interact.deploy_phase_three().await,
-        "setAddress" => interact.set_address().await,
         "getChainFactoryAddress" => interact.chain_factories().await,
         "getTokenHandlerAddress" => interact.token_handlers().await,
         "getDeployCost" => interact.deploy_cost().await,
@@ -161,7 +160,7 @@ impl ContractInteract {
         let header_verifier_managed_address =
             self.convert_address_to_managed(self.state.header_verifier_address.clone());
         let forge_managed_address =
-            self.convert_address_to_managed(self.state.config_address.clone());
+            self.convert_address_to_managed(self.state.contract_address.clone());
 
         let new_address = self
             .interactor
@@ -378,7 +377,6 @@ impl ContractInteract {
 
     pub async fn deploy_phase_three(&mut self) {
         let is_sovereign_chain = false;
-        let header_verifier_address = bech32::decode("");
 
         let response = self
             .interactor
@@ -387,26 +385,7 @@ impl ContractInteract {
             .to(self.state.current_address())
             .gas(30_000_000u64)
             .typed(SovereignForgeProxy)
-            .deploy_phase_three(is_sovereign_chain, header_verifier_address)
-            .returns(ReturnsResultUnmanaged)
-            .run()
-            .await;
-
-        println!("Result: {response:?}");
-    }
-
-    pub async fn set_address(&mut self) {
-        let esdt_safe_address = bech32::decode("");
-        let header_verifier_address = bech32::decode("");
-
-        let response = self
-            .interactor
-            .tx()
-            .from(&self.wallet_address)
-            .to(self.state.current_address())
-            .gas(30_000_000u64)
-            .typed(SovereignForgeProxy)
-            .set_address(esdt_safe_address, header_verifier_address)
+            .deploy_phase_three(is_sovereign_chain)
             .returns(ReturnsResultUnmanaged)
             .run()
             .await;
