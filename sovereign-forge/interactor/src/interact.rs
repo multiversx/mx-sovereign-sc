@@ -158,9 +158,10 @@ impl ContractInteract {
     }
 
     pub async fn deploy_chain_factory(&mut self) {
-        let header_verifier_bech32 = &self.state.header_verifier_address.as_ref().unwrap();
-        let header_verifier_address = header_verifier_bech32.to_address();
-        let header_verifier_managed_address = ManagedAddress::from(header_verifier_address);
+        let header_verifier_managed_address =
+            self.convert_address_to_managed(self.state.header_verifier_address.clone());
+        let forge_managed_address =
+            self.convert_address_to_managed(self.state.config_address.clone());
 
         let new_address = self
             .interactor
@@ -169,7 +170,8 @@ impl ContractInteract {
             .gas(50_000_000u64)
             .typed(ChainFactoryContractProxy)
             .init(
-                ManagedAddress::from(&self.state.config_address.as_ref().unwrap().to_address()),
+                forge_managed_address,
+                header_verifier_managed_address.clone(),
                 header_verifier_managed_address.clone(),
                 header_verifier_managed_address.clone(),
                 header_verifier_managed_address,
@@ -186,6 +188,15 @@ impl ContractInteract {
             ));
 
         println!("new Chain-Factory address: {new_address_bech32}");
+    }
+
+    pub fn convert_address_to_managed(
+        &mut self,
+        address: Option<Bech32Address>,
+    ) -> ManagedAddress<StaticApi> {
+        let address_bech32 = address.as_ref().unwrap();
+
+        ManagedAddress::from(address_bech32.to_address())
     }
 
     pub async fn deploy_chain_config_template(&mut self) {
