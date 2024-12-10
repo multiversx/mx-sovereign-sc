@@ -1,13 +1,16 @@
 [[bin]]
-name = "rust-interact"
-path = "src/interactor_main.rs"
+name = "esdt-safe-interactor"
+path = "src/esdt_safe_interactor_main.rs"
 
 [package]
-name = "rust-interact"
+name = "esdt-safe-interactor"
 version = "0.0.0"
 authors = ["you"]
 edition = "2021"
 publish = false
+
+[lib]
+path = "src/esdt_safe_interactor.rs"
 
 [dependencies]
 toml = "0.8.6"
@@ -23,6 +26,9 @@ path = "../../common/proxies"
 
 [dependencies.tx-batch-module]
 path = "../../common/tx-batch-module"
+
+[dependencies.interactor]
+path = "../../common/interactor"
 
 [dependencies.fee-market]
 path = "../../fee-market"

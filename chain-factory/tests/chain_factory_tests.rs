@@ -17,6 +17,10 @@ const CODE_PATH: MxscPath = MxscPath::new("output/chain-factory.mxsc.json");
 const CONFIG_ADDRESS: TestSCAddress = TestSCAddress::new("chain-config");
 const CONFIG_CODE_PATH: MxscPath = MxscPath::new("../chain-config/output/chain-factory.mxsc.json");
 
+const HEADER_ADDRESS: TestSCAddress = TestSCAddress::new("header-verifier");
+const ESDT_SAFE_ADDRESS: TestSCAddress = TestSCAddress::new("esdt-safe");
+const FEE_MARKET_ADDRESS: TestSCAddress = TestSCAddress::new("esdt-safe");
+
 const OWNER: TestAddress = TestAddress::new("owner");
 const OWNER_BALANCE: u64 = 100_000_000_000;
 
@@ -68,9 +72,10 @@ impl ChainFactoryTestState {
             .typed(ChainFactoryContractProxy)
             .init(
                 CONFIG_ADDRESS,
-                FACTORY_ADDRESS,
-                FACTORY_ADDRESS,
-                FACTORY_ADDRESS,
+                CONFIG_ADDRESS,
+                HEADER_ADDRESS,
+                ESDT_SAFE_ADDRESS,
+                FEE_MARKET_ADDRESS,
             )
             .code(CODE_PATH)
             .new_address(FACTORY_ADDRESS)
@@ -88,7 +93,7 @@ impl ChainFactoryTestState {
         let transaction = self
             .world
             .tx()
-            .from(OWNER)
+            .from(CONFIG_ADDRESS)
             .to(FACTORY_ADDRESS)
             .typed(ChainFactoryContractProxy)
             .deploy_sovereign_chain_config_contract(

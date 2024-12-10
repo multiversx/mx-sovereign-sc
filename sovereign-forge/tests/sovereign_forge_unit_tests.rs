@@ -72,6 +72,7 @@ impl SovereignForgeTestState {
             .from(FORGE_ADDRESS)
             .typed(ChainFactoryContractProxy)
             .init(
+                FORGE_ADDRESS,
                 CONFIG_ADDRESS,
                 HEADER_VERIFIER_ADDRESS,
                 ESDT_SAFE_ADDRESS,
