@@ -267,22 +267,14 @@ impl SovereignForgeTestState {
         }
     }
 
-    fn deploy_phase_three(
-        &mut self,
-        is_sovereign_chain: bool,
-        header_verifier_address: &TestSCAddress,
-        expect_error: Option<ExpectError>,
-    ) {
+    fn deploy_phase_three(&mut self, is_sovereign_chain: bool, expect_error: Option<ExpectError>) {
         let transaction = self
             .world
             .tx()
             .from(OWNER_ADDRESS)
             .to(FORGE_ADDRESS)
             .typed(SovereignForgeProxy)
-            .deploy_phase_three(
-                is_sovereign_chain,
-                header_verifier_address.to_managed_address(),
-            );
+            .deploy_phase_three(is_sovereign_chain);
 
         if let Some(error) = expect_error {
             transaction.returns(error).run();
@@ -545,7 +537,7 @@ fn deploy_phase_two_header_already_deployed() {
 }
 
 #[test]
-fn deploy_phase_three_without_phase_two() {
+fn deploy_phase_three() {
     let mut state = SovereignForgeTestState::new();
     state.deploy_sovereign_forge();
     state.deploy_chain_factory();
@@ -571,5 +563,87 @@ fn deploy_phase_three_without_phase_two() {
     bls_keys.push(ManagedBuffer::from("bls2"));
 
     state.deploy_phase_two(None, &bls_keys);
-    state.deploy_phase_three(false, &HEADER_VERIFIER_ADDRESS, None);
+    state.deploy_phase_three(false, None);
+}
+
+#[test]
+fn deploy_phase_three_without_phase_one() {
+    let mut state = SovereignForgeTestState::new();
+    state.deploy_sovereign_forge();
+    state.deploy_chain_factory();
+    state.deploy_chain_config_template();
+    state.finish_setup();
+
+    state.deploy_phase_three(
+        false,
+        Some(ExpectError(
+            4,
+            "The Header-Verifier SC is not deployed, you skipped the second phase",
+        )),
+    );
+}
+
+#[test]
+fn deploy_phase_three_without_phase_two() {
+    let mut state = SovereignForgeTestState::new();
+    state.deploy_sovereign_forge();
+    state.deploy_chain_factory();
+    state.deploy_chain_config_template();
+    state.finish_setup();
+
+    let deploy_cost = BigUint::from(100_000u32);
+
+    state.deploy_phase_one(
+        &deploy_cost,
+        1,
+        2,
+        BigUint::from(2u32),
+        MultiValueEncoded::new(),
+        None,
+    );
+
+    state.deploy_header_verifier_template();
+    state.deploy_esdt_safe_template();
+
+    state.deploy_phase_three(
+        false,
+        Some(ExpectError(
+            4,
+            "The Header-Verifier SC is not deployed, you skipped the second phase",
+        )),
+    );
+}
+
+#[test]
+fn deploy_phase_three_already_deployed() {
+    let mut state = SovereignForgeTestState::new();
+    state.deploy_sovereign_forge();
+    state.deploy_chain_factory();
+    state.deploy_chain_config_template();
+    state.finish_setup();
+
+    let deploy_cost = BigUint::from(100_000u32);
+
+    state.deploy_phase_one(
+        &deploy_cost,
+        1,
+        2,
+        BigUint::from(2u32),
+        MultiValueEncoded::new(),
+        None,
+    );
+
+    state.deploy_header_verifier_template();
+    state.deploy_esdt_safe_template();
+
+    let mut bls_keys = MultiValueEncoded::new();
+    bls_keys.push(ManagedBuffer::from("bls1"));
+    bls_keys.push(ManagedBuffer::from("bls2"));
+
+    state.deploy_phase_two(None, &bls_keys);
+    state.deploy_phase_three(false, None);
+    state.deploy_phase_three(
+        false,
+        Some(ExpectError(4, "The ESDT-Safe SC is already deployed")),
+    );
 }

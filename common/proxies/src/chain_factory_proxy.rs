@@ -156,14 +156,17 @@ where
 
     pub fn deploy_esdt_safe<
         Arg0: ProxyArg<bool>,
+        Arg1: ProxyArg<ManagedAddress<Env::Api>>,
     >(
         self,
         is_sovereign_chain: Arg0,
+        header_verifier_address: Arg1,
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ManagedAddress<Env::Api>> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("deployEsdtSafe")
             .argument(&is_sovereign_chain)
+            .argument(&header_verifier_address)
             .original_result()
     }
 
