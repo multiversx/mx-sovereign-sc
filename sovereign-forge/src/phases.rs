@@ -120,26 +120,12 @@ pub trait PhasesModule:
 
         let header_verifier_address = self.get_contract_address(&caller, ScArray::HeaderVerifier);
 
-        let esdt_safe_address =
-            self.deploy_esdt_safe(is_sovereign_chain, header_verifier_address.clone());
+        let esdt_safe_address = self.deploy_esdt_safe(is_sovereign_chain, &header_verifier_address);
 
         let esdt_safe_contract_info =
             ContractInfo::new(ScArray::ESDTSafe, esdt_safe_address.clone());
 
         self.sovereign_deployed_contracts(&self.sovereigns_mapper(&caller).get())
             .insert(esdt_safe_contract_info);
-    }
-
-    #[endpoint(setAddress)]
-    fn set_address(
-        &self,
-        esdt_safe_address: ManagedAddress,
-        header_verifier_address: ManagedAddress,
-    ) {
-        self.tx()
-            .to(header_verifier_address)
-            .typed(HeaderverifierProxy)
-            .set_esdt_safe_address(esdt_safe_address)
-            .sync_call();
     }
 }
