@@ -173,22 +173,6 @@ where
             .original_result()
     }
 
-    pub fn set_address<
-        Arg0: ProxyArg<ManagedAddress<Env::Api>>,
-        Arg1: ProxyArg<ManagedAddress<Env::Api>>,
-    >(
-        self,
-        esdt_safe_address: Arg0,
-        header_verifier_address: Arg1,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("setAddress")
-            .argument(&esdt_safe_address)
-            .argument(&header_verifier_address)
-            .original_result()
-    }
-
     pub fn chain_factories<
         Arg0: ProxyArg<u32>,
     >(
