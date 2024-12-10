@@ -17,7 +17,3 @@ add-labels = ["sovereign-forge-external-view"]
 
 [[proxy]]
 path = "../common/proxies/src/sovereign_forge_proxy.rs"
-
-[[proxy]]
-path = "interactor/src/proxy.rs"
- 
