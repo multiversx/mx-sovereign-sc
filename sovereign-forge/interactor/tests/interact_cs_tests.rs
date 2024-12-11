@@ -10,6 +10,7 @@ async fn deploy_test_sovereign_forge_cs() {
     interactor.deploy_header_verifier_template().await;
     interactor.deploy_chain_config_template().await;
     interactor.deploy_esdt_safe_template().await;
+    interactor.deploy_fee_market_template().await;
     interactor.deploy_chain_factory().await;
 
     interactor.register_token_handler(1).await;
@@ -24,4 +25,5 @@ async fn deploy_test_sovereign_forge_cs() {
     interactor.deploy_phase_one().await;
     interactor.deploy_phase_two().await;
     interactor.deploy_phase_three().await;
+    interactor.deploy_phase_four().await;
 }
