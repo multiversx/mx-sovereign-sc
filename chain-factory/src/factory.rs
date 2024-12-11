@@ -126,14 +126,23 @@ pub trait FactoryModule: only_admin::OnlyAdminModule {
         let source_address = self.fee_market_template().get();
         let metadata = self.blockchain().get_code_metadata(&source_address);
 
-        self.tx()
+        let fee_market_address = self
+            .tx()
             .typed(FeeMarketProxy)
-            .init(esdt_safe_address, fee)
+            .init(&esdt_safe_address, fee)
             .gas(60_000_000)
             .from_source(source_address)
             .code_metadata(metadata)
             .returns(ReturnsNewManagedAddress)
-            .sync_call()
+            .sync_call();
+
+        self.tx()
+            .to(&esdt_safe_address)
+            .typed(EsdtSafeProxy)
+            .set_fee_market_address(&fee_market_address)
+            .sync_call();
+
+        fee_market_address
     }
 
     #[only_admin]
