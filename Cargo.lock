@@ -2154,6 +2154,7 @@ dependencies = [
  "chain-config",
  "chain-factory",
  "esdt-safe",
+ "fee-market",
  "header-verifier",
  "multiversx-sc",
  "multiversx-sc-modules",

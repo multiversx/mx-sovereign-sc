@@ -23,6 +23,9 @@ path = "../chain-config"
 [dependencies.header-verifier]
 path = "../header-verifier"
 
+[dependencies.fee-market]
+path = "../fee-market"
+
 [dependencies.esdt-safe]
 path = "../esdt-safe"
 

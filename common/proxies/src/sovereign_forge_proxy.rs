@@ -173,6 +173,19 @@ where
             .original_result()
     }
 
+    pub fn deploy_phase_four<
+        Arg0: ProxyArg<Option<super::fee_market_proxy::FeeStruct<Env::Api>>>,
+    >(
+        self,
+        fee: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("deployPhaseFour")
+            .argument(&fee)
+            .original_result()
+    }
+
     pub fn chain_factories<
         Arg0: ProxyArg<u32>,
     >(

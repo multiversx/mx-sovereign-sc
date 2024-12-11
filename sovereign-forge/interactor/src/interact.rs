@@ -5,8 +5,11 @@ mod config;
 use config::Config;
 use multiversx_sc_snippets::{imports::*, sdk::bech32};
 use proxies::{
-    chain_config_proxy::ChainConfigContractProxy, chain_factory_proxy::ChainFactoryContractProxy,
-    esdt_safe_proxy::EsdtSafeProxy, header_verifier_proxy::HeaderverifierProxy,
+    chain_config_proxy::ChainConfigContractProxy,
+    chain_factory_proxy::ChainFactoryContractProxy,
+    esdt_safe_proxy::EsdtSafeProxy,
+    fee_market_proxy::{FeeMarketProxy, FeeStruct},
+    header_verifier_proxy::HeaderverifierProxy,
     sovereign_forge_proxy::SovereignForgeProxy,
 };
 use serde::{Deserialize, Serialize};
@@ -20,6 +23,7 @@ const CHAIN_CONFIG_CODE_PATH: &str = "../../chain-config/output/chain-config.mxs
 const CHAIN_FACTORY_CODE_PATH: &str = "../../chain-factory/output/chain-factory.mxsc.json";
 const HEADER_VERIFIER_CODE_PATH: &str = "../../header-verifier/output/header-verifier.mxsc.json";
 const ESDT_SAFE_CODE_PATH: &str = "../../esdt-safe/output/esdt-safe.mxsc.json";
+const FEE_MARKET_CODE_PATH: &str = "../../fee-market/output/fee-market.mxsc.json";
 
 pub async fn sovereign_forge_cli() {
     env_logger::init();
@@ -50,6 +54,7 @@ pub struct State {
     factory_address: Option<Bech32Address>,
     header_verifier_address: Option<Bech32Address>,
     esdt_safe_address: Option<Bech32Address>,
+    fee_market_address: Option<Bech32Address>,
 }
 
 impl State {
@@ -65,28 +70,34 @@ impl State {
         }
     }
 
-    /// Sets the contract address
+    /// Sets the Sovereign-Forge contract address
     pub fn set_address(&mut self, address: Bech32Address) {
         self.contract_address = Some(address);
     }
 
-    /// Sets the contract address
+    /// Sets the Chain-Config contract address
     pub fn set_config_template(&mut self, address: Bech32Address) {
         self.config_address = Some(address);
     }
 
-    /// Sets the contract address
+    /// Sets the Chain-Factory contract address
     pub fn set_factory_template(&mut self, address: Bech32Address) {
         self.factory_address = Some(address);
     }
 
-    /// Sets the contract address
+    /// Sets the Header-Verifier contract address
     pub fn set_header_verifier_address(&mut self, address: Bech32Address) {
         self.header_verifier_address = Some(address);
     }
 
+    /// Sets the Esdt-Safe contract address
     pub fn set_esdt_safe_address(&mut self, address: Bech32Address) {
         self.esdt_safe_address = Some(address);
+    }
+
+    /// Sets the Fee-Market contract address
+    pub fn set_fee_market_address(&mut self, address: Bech32Address) {
+        self.fee_market_address = Some(address);
     }
 
     /// Returns the contract address
@@ -172,6 +183,8 @@ impl ContractInteract {
             self.convert_address_to_managed(self.state.config_address.clone());
         let esdt_safe_managed_address =
             self.convert_address_to_managed(self.state.esdt_safe_address.clone());
+        let fee_market_mananged_address =
+            self.convert_address_to_managed(self.state.fee_market_address.clone());
 
         let new_address = self
             .interactor
@@ -184,7 +197,7 @@ impl ContractInteract {
                 config_managed_address,
                 header_verifier_managed_address,
                 esdt_safe_managed_address,
-                forge_managed_address, // USE ACTUAL FEE-MARKET TEMPLATE
+                fee_market_mananged_address,
             )
             .code(MxscPath::new(CHAIN_FACTORY_CODE_PATH))
             .returns(ReturnsNewAddress)
@@ -278,8 +291,35 @@ impl ContractInteract {
                 new_address_bech32.clone(),
             ));
 
-        println!("new Header-Verifier address: {new_address_bech32}");
+        println!("new ESDT-Safe address: {new_address_bech32}");
     }
+
+    pub async fn deploy_fee_market_template(&mut self) {
+        let esdt_safe_managed_address =
+            self.convert_address_to_managed(self.state.esdt_safe_address.clone());
+        let fee: Option<FeeStruct<StaticApi>> = None;
+
+        let new_address = self
+            .interactor
+            .tx()
+            .from(&self.wallet_address)
+            .gas(80_000_000u64)
+            .typed(FeeMarketProxy)
+            .init(esdt_safe_managed_address, fee)
+            .returns(ReturnsNewAddress)
+            .code(MxscPath::new(FEE_MARKET_CODE_PATH))
+            .run()
+            .await;
+
+        let new_address_bech32 = bech32::encode(&new_address);
+        self.state
+            .set_fee_market_address(Bech32Address::from_bech32_string(
+                new_address_bech32.clone(),
+            ));
+
+        println!("new Fee-Market address: {new_address_bech32}");
+    }
+
     pub async fn upgrade(&mut self) {
         let response = self
             .interactor
@@ -425,6 +465,23 @@ impl ContractInteract {
         println!("Result: {response:?}");
     }
 
+    pub async fn deploy_phase_four(&mut self) {
+        let fee: Option<FeeStruct<StaticApi>> = None;
+
+        let response = self
+            .interactor
+            .tx()
+            .from(&self.wallet_address)
+            .to(self.state.current_address())
+            .gas(80_000_000u64)
+            .typed(SovereignForgeProxy)
+            .deploy_phase_four(fee)
+            .returns(ReturnsResultUnmanaged)
+            .run()
+            .await;
+
+        println!("Result: {response:?}");
+    }
     pub async fn chain_factories(&mut self) {
         let shard_id = 0u32;
 

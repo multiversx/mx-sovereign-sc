@@ -1,5 +1,6 @@
 use crate::err_msg;
 use core::ops::Deref;
+use proxies::fee_market_proxy::FeeStruct;
 use transaction::StakeMultiArg;
 
 use multiversx_sc::{require, types::MultiValueEncoded};
@@ -126,5 +127,25 @@ pub trait PhasesModule:
 
         self.sovereign_deployed_contracts(&self.sovereigns_mapper(&caller).get())
             .insert(esdt_safe_contract_info);
+    }
+
+    #[endpoint(deployPhaseFour)]
+    fn deploy_phase_four(&self, fee: Option<FeeStruct<Self::Api>>) {
+        let caller = self.blockchain().get_caller();
+
+        self.require_phase_three_completed(&caller);
+        require!(
+            !self.is_contract_deployed(&caller, ScArray::FeeMarket),
+            "The Fee-Market SC is already deployed"
+        );
+
+        let esdt_safe_address = self.get_contract_address(&caller, ScArray::ESDTSafe);
+
+        let fee_market_address = self.deploy_fee_market(&esdt_safe_address, fee);
+
+        let fee_market_contract_info = ContractInfo::new(ScArray::FeeMarket, fee_market_address);
+
+        self.sovereign_deployed_contracts(&self.sovereigns_mapper(&caller).get())
+            .insert(fee_market_contract_info);
     }
 }
