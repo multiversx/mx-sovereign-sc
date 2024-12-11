@@ -12,9 +12,10 @@ async fn deploy_test_sovereign_forge_cs() {
     let mut interactor = ContractInteract::new().await;
     interactor.deploy().await;
 
-    interactor.deploy_chain_factory().await;
-    interactor.deploy_chain_config_template().await;
     interactor.deploy_header_verifier_template().await;
+    interactor.deploy_chain_config_template().await;
+    interactor.deploy_esdt_safe_template().await;
+    interactor.deploy_chain_factory().await;
 
     interactor.register_token_handler(1).await;
     interactor.register_token_handler(2).await;

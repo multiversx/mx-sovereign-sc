@@ -6,7 +6,8 @@ use config::Config;
 use multiversx_sc_snippets::{imports::*, sdk::bech32};
 use proxies::{
     chain_config_proxy::ChainConfigContractProxy, chain_factory_proxy::ChainFactoryContractProxy,
-    header_verifier_proxy::HeaderverifierProxy, sovereign_forge_proxy::SovereignForgeProxy,
+    esdt_safe_proxy::EsdtSafeProxy, header_verifier_proxy::HeaderverifierProxy,
+    sovereign_forge_proxy::SovereignForgeProxy,
 };
 use serde::{Deserialize, Serialize};
 use std::{
@@ -18,6 +19,7 @@ const STATE_FILE: &str = "state.toml";
 const CHAIN_CONFIG_CODE_PATH: &str = "../../chain-config/output/chain-config.mxsc.json";
 const CHAIN_FACTORY_CODE_PATH: &str = "../../chain-factory/output/chain-factory.mxsc.json";
 const HEADER_VERIFIER_CODE_PATH: &str = "../../header-verifier/output/header-verifier.mxsc.json";
+const ESDT_SAFE_CODE_PATH: &str = "../../esdt-safe/output/esdt-safe.mxsc.json";
 
 pub async fn sovereign_forge_cli() {
     env_logger::init();
@@ -47,6 +49,7 @@ pub struct State {
     config_address: Option<Bech32Address>,
     factory_address: Option<Bech32Address>,
     header_verifier_address: Option<Bech32Address>,
+    esdt_safe_address: Option<Bech32Address>,
 }
 
 impl State {
@@ -80,6 +83,10 @@ impl State {
     /// Sets the contract address
     pub fn set_header_verifier_address(&mut self, address: Bech32Address) {
         self.header_verifier_address = Some(address);
+    }
+
+    pub fn set_esdt_safe_address(&mut self, address: Bech32Address) {
+        self.esdt_safe_address = Some(address);
     }
 
     /// Returns the contract address
@@ -161,6 +168,10 @@ impl ContractInteract {
             self.convert_address_to_managed(self.state.header_verifier_address.clone());
         let forge_managed_address =
             self.convert_address_to_managed(self.state.contract_address.clone());
+        let config_managed_address =
+            self.convert_address_to_managed(self.state.config_address.clone());
+        let esdt_safe_managed_address =
+            self.convert_address_to_managed(self.state.esdt_safe_address.clone());
 
         let new_address = self
             .interactor
@@ -169,11 +180,11 @@ impl ContractInteract {
             .gas(50_000_000u64)
             .typed(ChainFactoryContractProxy)
             .init(
-                forge_managed_address,
-                header_verifier_managed_address.clone(),
-                header_verifier_managed_address.clone(),
-                header_verifier_managed_address.clone(),
+                forge_managed_address.clone(),
+                config_managed_address,
                 header_verifier_managed_address,
+                esdt_safe_managed_address,
+                forge_managed_address, // USE ACTUAL FEE-MARKET TEMPLATE
             )
             .code(MxscPath::new(CHAIN_FACTORY_CODE_PATH))
             .returns(ReturnsNewAddress)
@@ -248,6 +259,27 @@ impl ContractInteract {
         println!("new Header-Verifier address: {new_address_bech32}");
     }
 
+    pub async fn deploy_esdt_safe_template(&mut self) {
+        let new_address = self
+            .interactor
+            .tx()
+            .from(&self.wallet_address)
+            .gas(80_000_000u64)
+            .typed(EsdtSafeProxy)
+            .init(false)
+            .returns(ReturnsNewAddress)
+            .code(MxscPath::new(ESDT_SAFE_CODE_PATH))
+            .run()
+            .await;
+
+        let new_address_bech32 = bech32::encode(&new_address);
+        self.state
+            .set_esdt_safe_address(Bech32Address::from_bech32_string(
+                new_address_bech32.clone(),
+            ));
+
+        println!("new Header-Verifier address: {new_address_bech32}");
+    }
     pub async fn upgrade(&mut self) {
         let response = self
             .interactor
@@ -267,7 +299,7 @@ impl ContractInteract {
     }
 
     pub async fn register_token_handler(&mut self, shard_id: u32) {
-        let bech32 = &self.state.header_verifier_address.as_ref().unwrap();
+        let bech32 = &self.state.contract_address.as_ref().unwrap();
         let address = bech32.to_address();
         let token_handler_address = ManagedAddress::from(address);
 
@@ -383,7 +415,7 @@ impl ContractInteract {
             .tx()
             .from(&self.wallet_address)
             .to(self.state.current_address())
-            .gas(30_000_000u64)
+            .gas(80_000_000u64)
             .typed(SovereignForgeProxy)
             .deploy_phase_three(is_sovereign_chain)
             .returns(ReturnsResultUnmanaged)
