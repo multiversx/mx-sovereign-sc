@@ -42,7 +42,7 @@ pub trait UtilsModule: super::storage::StorageModule {
     fn require_phase_three_completed(&self, caller: &ManagedAddress) {
         require!(
             self.is_contract_deployed(caller, ScArray::ESDTSafe),
-            "The Header-Verifier SC is not deployed, you skipped the second phase"
+            "The ESDT-Safe SC is not deployed, you skipped the third phase"
         );
     }
 
