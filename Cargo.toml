@@ -21,5 +21,6 @@ members = [
   "testing-sc",
   "testing-sc/meta",
   "sovereign-forge",
+  "sovereign-forge/interactor",
   "sovereign-forge/meta",
 ]
