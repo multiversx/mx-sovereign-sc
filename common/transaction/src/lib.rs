@@ -36,6 +36,22 @@ pub type StakeMultiArg<M> = MultiValue2<TokenIdentifier<M>, BigUint<M>>;
 
 #[type_abi]
 #[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, ManagedVecItem, Clone)]
+pub struct StakeArgs<M: ManagedTypeApi> {
+    pub token_id: TokenIdentifier<M>,
+    pub amount: BigUint<M>,
+}
+
+#[type_abi]
+#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, ManagedVecItem, Clone)]
+pub struct SovereignConfig<M: ManagedTypeApi> {
+    pub opt_min_validators: Option<u64>,
+    pub opt_max_validators: Option<u64>,
+    pub opt_min_stake: Option<BigUint<M>>,
+    pub opt_additional_stake_required: Option<ManagedVec<M, StakeArgs<M>>>,
+}
+
+#[type_abi]
+#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, ManagedVecItem, Clone)]
 pub struct Operation<M: ManagedTypeApi> {
     pub to: ManagedAddress<M>,
     pub tokens: ManagedVec<M, OperationEsdtPayment<M>>,
