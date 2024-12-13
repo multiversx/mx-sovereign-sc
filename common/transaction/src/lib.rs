@@ -45,7 +45,7 @@ impl<M: ManagedTypeApi> StakeArgs<M> {
         StakeArgs { token_id, amount }
     }
 
-    pub fn default() -> Self {
+    pub fn get_default() -> Self {
         StakeArgs {
             token_id: TokenIdentifier::from(""),
             amount: BigUint::default(),

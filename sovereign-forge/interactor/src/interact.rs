@@ -401,7 +401,7 @@ impl ContractInteract {
         let min_validators = 1u64;
         let max_validators = 3u64;
         let min_stake = BigUint::<StaticApi>::from(0u128);
-        let additional_stake_required = MultiValueVec::from(vec![StakeArgs::default()]);
+        let additional_stake_required = MultiValueVec::from(vec![StakeArgs::get_default()]);
 
         let response = self
             .interactor
