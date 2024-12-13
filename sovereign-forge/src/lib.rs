@@ -3,14 +3,15 @@
 use crate::err_msg;
 use multiversx_sc::imports::*;
 
-mod common;
-mod phases;
+pub mod common;
+pub mod phases;
 
 #[multiversx_sc::contract]
 pub trait SovereignForge:
     phases::PhasesModule
     + common::storage::StorageModule
     + common::utils::UtilsModule
+    + common::sc_deploy::ScDeployModule
     + setup_phase::SetupPhaseModule
 {
     #[init]
@@ -38,7 +39,7 @@ pub trait SovereignForge:
             "The given address is not a valid SC address"
         );
 
-        self.token_handlers(shard_id).set(chain_factory_address);
+        self.chain_factories(shard_id).set(chain_factory_address);
     }
 
     #[upgrade]

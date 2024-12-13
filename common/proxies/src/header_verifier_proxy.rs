@@ -148,4 +148,13 @@ where
             .argument(&operation_hash)
             .original_result()
     }
+
+    pub fn complete_setup_phase(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("completeSetupPhase")
+            .original_result()
+    }
 }

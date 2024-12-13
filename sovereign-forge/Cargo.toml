@@ -14,6 +14,21 @@ version = "=0.54.5"
 [dependencies.multiversx-sc-modules]
 version = "=0.54.5"
 
+[dependencies.chain-factory]
+path = "../chain-factory"
+
+[dependencies.chain-config]
+path = "../chain-config"
+
+[dependencies.header-verifier]
+path = "../header-verifier"
+
+[dependencies.fee-market]
+path = "../fee-market"
+
+[dependencies.esdt-safe]
+path = "../esdt-safe"
+
 [dependencies.proxies]
 path = "../common/proxies"
 

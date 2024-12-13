@@ -4,6 +4,7 @@ use multiversx_sc_modules::only_admin;
 
 multiversx_sc::imports!();
 
+pub mod complete_phases;
 pub mod factory;
 
 #[multiversx_sc::contract]

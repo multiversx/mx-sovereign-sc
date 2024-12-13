@@ -3,6 +3,7 @@ use multiversx_sc_modules::only_admin;
 use proxies::{
     chain_config_proxy::ChainConfigContractProxy,
     enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy,
+    esdt_safe_proxy::EsdtSafeProxy,
     fee_market_proxy::{FeeMarketProxy, FeeStruct},
     header_verifier_proxy::HeaderverifierProxy,
 };
@@ -87,6 +88,35 @@ pub trait FactoryModule: only_admin::OnlyAdminModule {
     }
 
     #[only_admin]
+    #[endpoint(deployEsdtSafe)]
+    fn deploy_esdt_safe(
+        &self,
+        is_sovereign_chain: bool,
+        header_verifier_address: ManagedAddress,
+    ) -> ManagedAddress {
+        let source_address = self.enshrine_esdt_safe_template().get();
+        let metadata = self.blockchain().get_code_metadata(&source_address);
+
+        let esdt_safe_address = self
+            .tx()
+            .typed(EsdtSafeProxy)
+            .init(is_sovereign_chain)
+            .gas(60_000_000)
+            .from_source(source_address)
+            .code_metadata(metadata)
+            .returns(ReturnsNewManagedAddress)
+            .sync_call();
+
+        self.tx()
+            .to(header_verifier_address)
+            .typed(HeaderverifierProxy)
+            .set_esdt_safe_address(&esdt_safe_address)
+            .sync_call();
+
+        esdt_safe_address
+    }
+
+    #[only_admin]
     #[endpoint(deployFeeMarket)]
     fn deploy_fee_market(
         &self,
@@ -96,14 +126,23 @@ pub trait FactoryModule: only_admin::OnlyAdminModule {
         let source_address = self.fee_market_template().get();
         let metadata = self.blockchain().get_code_metadata(&source_address);
 
-        self.tx()
+        let fee_market_address = self
+            .tx()
             .typed(FeeMarketProxy)
-            .init(esdt_safe_address, fee)
+            .init(&esdt_safe_address, fee)
             .gas(60_000_000)
             .from_source(source_address)
             .code_metadata(metadata)
             .returns(ReturnsNewManagedAddress)
-            .sync_call()
+            .sync_call();
+
+        self.tx()
+            .to(&esdt_safe_address)
+            .typed(EsdtSafeProxy)
+            .set_fee_market_address(&fee_market_address)
+            .sync_call();
+
+        fee_market_address
     }
 
     #[only_admin]

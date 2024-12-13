@@ -17,6 +17,9 @@ path = "../common/transaction"
 [dependencies.proxies]
 path = "../common/proxies"
 
+[dependencies.setup-phase]
+path = "../common/setup-phase"
+
 [dev-dependencies]
 num-bigint = "0.4.2"
 

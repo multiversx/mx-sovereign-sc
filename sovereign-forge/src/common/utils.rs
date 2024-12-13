@@ -4,7 +4,7 @@ use multiversx_sc::{
     derive::{type_abi, ManagedVecItem},
     proxy_imports::{NestedDecode, NestedEncode, TopDecode, TopEncode},
     require,
-    types::{ManagedAddress, ManagedBuffer, ManagedVec},
+    types::ManagedAddress,
 };
 
 const CHARSET: &[u8] = b"0123456789abcdefghijklmnopqrstuvwxyz";
@@ -25,28 +25,12 @@ impl<M: ManagedTypeApi> ContractInfo<M> {
 }
 
 #[type_abi]
-#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, ManagedVecItem)]
-pub struct ChainContractsMap<M: ManagedTypeApi> {
-    pub chain_id: ManagedBuffer<M>,
-    pub contracts_info: ManagedVec<M, ContractInfo<M>>,
-}
-
-impl<M: ManagedTypeApi> ChainContractsMap<M> {
-    pub fn new(chain_id: ManagedBuffer<M>, contracts_info: ManagedVec<M, ContractInfo<M>>) -> Self {
-        ChainContractsMap {
-            chain_id,
-            contracts_info,
-        }
-    }
-}
-
-#[type_abi]
 #[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, Clone, ManagedVecItem, PartialEq)]
 pub enum ScArray {
     ChainFactory,
     Controller,
-    SovereignHeaderVerifier,
-    SovereignCrossChainOperation,
+    HeaderVerifier,
+    ESDTSafe,
     FeeMarket,
     TokenHandler,
     ChainConfig,
@@ -55,6 +39,54 @@ pub enum ScArray {
 
 #[multiversx_sc::module]
 pub trait UtilsModule: super::storage::StorageModule {
+    fn require_phase_three_completed(&self, caller: &ManagedAddress) {
+        require!(
+            self.is_contract_deployed(caller, ScArray::ESDTSafe),
+            "The ESDT-Safe SC is not deployed, you skipped the third phase"
+        );
+    }
+
+    fn require_phase_two_completed(&self, caller: &ManagedAddress) {
+        require!(
+            self.is_contract_deployed(caller, ScArray::HeaderVerifier),
+            "The Header-Verifier SC is not deployed, you skipped the second phase"
+        );
+    }
+
+    fn require_phase_1_completed(&self, caller: &ManagedAddress) {
+        require!(
+            !self.sovereigns_mapper(caller).is_empty(),
+            "The current caller has not deployed any Sovereign Chain"
+        );
+
+        require!(
+            self.is_contract_deployed(caller, ScArray::ChainConfig),
+            "The Chain-Config SC is not deployed"
+        );
+
+        require!(
+            !self.is_contract_deployed(caller, ScArray::HeaderVerifier),
+            "The Header-Verifier SC is already deployed"
+        );
+    }
+
+    fn is_contract_deployed(&self, sovereign_creator: &ManagedAddress, sc_id: ScArray) -> bool {
+        let chain_id = self.sovereigns_mapper(sovereign_creator).get();
+        self.sovereign_deployed_contracts(&chain_id)
+            .iter()
+            .any(|sc| sc.id == sc_id)
+    }
+
+    fn get_contract_address(&self, caller: &ManagedAddress, sc_id: ScArray) -> ManagedAddress {
+        let chain_id = self.sovereigns_mapper(caller).get();
+
+        self.sovereign_deployed_contracts(&chain_id)
+            .iter()
+            .find(|sc| sc.id == sc_id)
+            .unwrap()
+            .address
+    }
+
     fn generate_chain_id(&self) -> ManagedBuffer {
         loop {
             let new_chain_id = self.generated_random_4_char_string();
@@ -81,5 +113,12 @@ pub trait UtilsModule: super::storage::StorageModule {
             call_value == &self.deploy_cost().get(),
             "The given deploy cost is not equal to the standard amount"
         );
+    }
+
+    fn get_chain_factory_address(&self) -> ManagedAddress {
+        let caller = self.blockchain().get_caller();
+        let shard_id = self.blockchain().get_shard_of_address(&caller);
+
+        self.chain_factories(shard_id).get()
     }
 }
