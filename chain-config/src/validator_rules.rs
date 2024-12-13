@@ -1,3 +1,5 @@
+use transaction::StakeArgs;
+
 multiversx_sc::imports!();
 multiversx_sc::derive_imports!();
 
@@ -49,9 +51,7 @@ pub trait ValidatorRulesModule {
     // TODO: Read user stake and verify
     #[view(getAdditionalStakeRequired)]
     #[storage_mapper("additionalStakeRequired")]
-    fn additional_stake_required(
-        &self,
-    ) -> SingleValueMapper<ManagedVec<TokenIdAmountPair<Self::Api>>>;
+    fn additional_stake_required(&self) -> UnorderedSetMapper<StakeArgs<Self::Api>>;
 
     #[view(wasPreviouslySlashed)]
     #[storage_mapper("wasPreviouslySlashed")]
