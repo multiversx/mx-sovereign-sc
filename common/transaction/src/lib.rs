@@ -32,13 +32,25 @@ pub type ExtractedFeeResult<M> =
     MultiValue2<OptionalValue<EsdtTokenPayment<M>>, ManagedVec<M, EsdtTokenPayment<M>>>;
 pub type OptionalValueTransferDataTuple<M> =
     OptionalValue<MultiValue3<GasLimit, ManagedBuffer<M>, ManagedVec<M, ManagedBuffer<M>>>>;
-pub type StakeMultiArg<M> = MultiValue2<TokenIdentifier<M>, BigUint<M>>;
 
 #[type_abi]
 #[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, ManagedVecItem, Clone)]
 pub struct StakeArgs<M: ManagedTypeApi> {
     pub token_id: TokenIdentifier<M>,
     pub amount: BigUint<M>,
+}
+
+impl<M: ManagedTypeApi> StakeArgs<M> {
+    pub fn new(token_id: TokenIdentifier<M>, amount: BigUint<M>) -> Self {
+        StakeArgs { token_id, amount }
+    }
+
+    pub fn default() -> Self {
+        StakeArgs {
+            token_id: TokenIdentifier::from(""),
+            amount: BigUint::default(),
+        }
+    }
 }
 
 #[type_abi]

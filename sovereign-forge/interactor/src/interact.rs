@@ -17,6 +17,7 @@ use std::{
     io::{Read, Write},
     path::Path,
 };
+use transaction::StakeArgs;
 
 const STATE_FILE: &str = "state.toml";
 const CHAIN_CONFIG_CODE_PATH: &str = "../../chain-config/output/chain-config.mxsc.json";
@@ -400,13 +401,7 @@ impl ContractInteract {
         let min_validators = 1u64;
         let max_validators = 3u64;
         let min_stake = BigUint::<StaticApi>::from(0u128);
-        let additional_stake_required = MultiValueVec::from(vec![MultiValue2::<
-            TokenIdentifier<StaticApi>,
-            BigUint<StaticApi>,
-        >::from((
-            TokenIdentifier::from_esdt_bytes(&b""[..]),
-            BigUint::<StaticApi>::from(0u128),
-        ))]);
+        let additional_stake_required = MultiValueVec::from(vec![StakeArgs::default()]);
 
         let response = self
             .interactor

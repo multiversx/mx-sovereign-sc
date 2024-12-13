@@ -1,9 +1,9 @@
 use crate::err_msg;
 use core::ops::Deref;
 use proxies::fee_market_proxy::FeeStruct;
-use transaction::StakeMultiArg;
 
 use multiversx_sc::{require, types::MultiValueEncoded};
+use transaction::StakeArgs;
 
 use crate::common::{
     self,
@@ -49,7 +49,7 @@ pub trait PhasesModule:
         min_validators: u64,
         max_validators: u64,
         min_stake: BigUint,
-        additional_stake_required: MultiValueEncoded<StakeMultiArg<Self::Api>>,
+        additional_stake_required: MultiValueEncoded<StakeArgs<Self::Api>>,
     ) {
         self.require_setup_complete();
 

@@ -7,7 +7,7 @@ use proxies::{
     fee_market_proxy::{FeeMarketProxy, FeeStruct},
     header_verifier_proxy::HeaderverifierProxy,
 };
-use transaction::StakeMultiArg;
+use transaction::StakeArgs;
 multiversx_sc::derive_imports!();
 
 #[multiversx_sc::module]
@@ -19,7 +19,7 @@ pub trait FactoryModule: only_admin::OnlyAdminModule {
         min_validators: u64,
         max_validators: u64,
         min_stake: BigUint,
-        additional_stake_required: MultiValueEncoded<StakeMultiArg<Self::Api>>,
+        additional_stake_required: MultiValueEncoded<StakeArgs<Self::Api>>,
     ) -> ManagedAddress {
         let caller = self.blockchain().get_caller();
         let source_address = self.chain_config_template().get();

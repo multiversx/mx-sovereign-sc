@@ -101,7 +101,7 @@ where
         Arg0: ProxyArg<u64>,
         Arg1: ProxyArg<u64>,
         Arg2: ProxyArg<BigUint<Env::Api>>,
-        Arg3: ProxyArg<MultiValueEncoded<Env::Api, MultiValue2<TokenIdentifier<Env::Api>, BigUint<Env::Api>>>>,
+        Arg3: ProxyArg<MultiValueEncoded<Env::Api, transaction::StakeArgs<Env::Api>>>,
     >(
         self,
         min_validators: Arg0,

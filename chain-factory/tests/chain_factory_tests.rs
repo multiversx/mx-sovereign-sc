@@ -9,7 +9,7 @@ use multiversx_sc_scenario::{
 use proxies::{
     chain_config_proxy::ChainConfigContractProxy, chain_factory_proxy::ChainFactoryContractProxy,
 };
-use transaction::StakeMultiArg;
+use transaction::StakeArgs;
 
 const FACTORY_ADDRESS: TestSCAddress = TestSCAddress::new("chain-factory");
 const CODE_PATH: MxscPath = MxscPath::new("output/chain-factory.mxsc.json");
@@ -38,9 +38,7 @@ struct ChainFactoryTestState {
 }
 
 impl ChainFactoryTestState {
-    fn new(
-        additional_stake_required: &MultiValueEncoded<StaticApi, StakeMultiArg<StaticApi>>,
-    ) -> Self {
+    fn new(additional_stake_required: &MultiValueEncoded<StaticApi, StakeArgs<StaticApi>>) -> Self {
         let mut world = world();
 
         world.account(OWNER).balance(OWNER_BALANCE).nonce(1);
@@ -87,7 +85,7 @@ impl ChainFactoryTestState {
         min_validators: usize,
         max_validators: usize,
         min_stake: BigUint<StaticApi>,
-        additional_stake_required: MultiValueEncoded<StaticApi, StakeMultiArg<StaticApi>>,
+        additional_stake_required: MultiValueEncoded<StaticApi, StakeArgs<StaticApi>>,
         expected_result: Option<ExpectError<'_>>,
     ) {
         let transaction = self
@@ -114,8 +112,8 @@ impl ChainFactoryTestState {
 
 #[test]
 fn deploy() {
-    let additional_stake: StakeMultiArg<StaticApi> =
-        (TokenIdentifier::from("TEST-TOKEN"), BigUint::from(100u64)).into();
+    let additional_stake =
+        StakeArgs::new(TokenIdentifier::from("TEST-TOKEN"), BigUint::from(100u64));
     let mut additional_stake_required = MultiValueEncoded::new();
     additional_stake_required.push(additional_stake);
 
@@ -125,8 +123,8 @@ fn deploy() {
 
 #[test]
 fn deploy_chain_config_from_factory() {
-    let additional_stake: StakeMultiArg<StaticApi> =
-        (TokenIdentifier::from("TEST-TOKEN"), BigUint::from(100u64)).into();
+    let additional_stake =
+        StakeArgs::new(TokenIdentifier::from("TEST-TOKEN"), BigUint::from(100u64));
     let mut additional_stake_required = MultiValueEncoded::new();
     additional_stake_required.push(additional_stake);
 

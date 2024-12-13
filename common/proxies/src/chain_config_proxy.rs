@@ -48,7 +48,7 @@ where
         Arg1: ProxyArg<u64>,
         Arg2: ProxyArg<BigUint<Env::Api>>,
         Arg3: ProxyArg<ManagedAddress<Env::Api>>,
-        Arg4: ProxyArg<MultiValueEncoded<Env::Api, MultiValue2<TokenIdentifier<Env::Api>, BigUint<Env::Api>>>>,
+        Arg4: ProxyArg<MultiValueEncoded<Env::Api, transaction::StakeArgs<Env::Api>>>,
     >(
         self,
         min_validators: Arg0,
@@ -126,7 +126,7 @@ where
 
     pub fn additional_stake_required(
         self,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ManagedVec<Env::Api, TokenIdAmountPair<Env::Api>>> {
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, MultiValueEncoded<Env::Api, transaction::StakeArgs<Env::Api>>> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("getAdditionalStakeRequired")
@@ -193,14 +193,4 @@ where
             .raw_call("getAdmins")
             .original_result()
     }
-}
-
-#[type_abi]
-#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, ManagedVecItem)]
-pub struct TokenIdAmountPair<Api>
-where
-    Api: ManagedTypeApi,
-{
-    pub token_id: TokenIdentifier<Api>,
-    pub amount: BigUint<Api>,
 }

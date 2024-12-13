@@ -691,6 +691,7 @@ dependencies = [
  "serde",
  "sovereign-forge",
  "toml",
+ "transaction",
 ]
 
 [[package]]

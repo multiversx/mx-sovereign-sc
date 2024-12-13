@@ -1,7 +1,7 @@
 use crate::err_msg;
 use multiversx_sc::types::{MultiValueEncoded, ReturnsResult};
 use proxies::{chain_factory_proxy::ChainFactoryContractProxy, fee_market_proxy::FeeStruct};
-use transaction::StakeMultiArg;
+use transaction::StakeArgs;
 
 #[multiversx_sc::module]
 pub trait ScDeployModule: super::utils::UtilsModule + super::storage::StorageModule {
@@ -11,7 +11,7 @@ pub trait ScDeployModule: super::utils::UtilsModule + super::storage::StorageMod
         min_validators: u64,
         max_validators: u64,
         min_stake: BigUint,
-        additional_stake_required: MultiValueEncoded<StakeMultiArg<Self::Api>>,
+        additional_stake_required: MultiValueEncoded<StakeArgs<Self::Api>>,
     ) -> ManagedAddress {
         self.tx()
             .to(self.get_chain_factory_address())

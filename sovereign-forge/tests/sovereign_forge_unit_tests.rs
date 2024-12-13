@@ -16,7 +16,7 @@ use sovereign_forge::common::{
     storage::StorageModule,
     utils::{ScArray, UtilsModule},
 };
-use transaction::StakeMultiArg;
+use transaction::StakeArgs;
 
 const FORGE_ADDRESS: TestSCAddress = TestSCAddress::new("sovereign-forge");
 const FORGE_CODE_PATH: MxscPath = MxscPath::new("output/sovereign-forge.mxsc.json");
@@ -244,7 +244,7 @@ impl SovereignForgeTestState {
         min_validators: u64,
         max_validators: u64,
         min_stake: BigUint<StaticApi>,
-        additional_stake_required: MultiValueEncoded<StaticApi, StakeMultiArg<StaticApi>>,
+        additional_stake_required: MultiValueEncoded<StaticApi, StakeArgs<StaticApi>>,
         expected_result: Option<ExpectError>,
     ) {
         let transaction = self
