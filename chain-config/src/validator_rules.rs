@@ -28,10 +28,21 @@ pub trait ValidatorRulesModule {
             !self.min_stake().is_empty(),
             "The mininum number of stake is not set"
         );
-        require!(
-            !self.additional_stake_required().is_empty(),
-            "The additional stake criteria is not set"
-        );
+    }
+
+    #[inline]
+    fn is_new_min_validators_value(&self, new_min_validatrs: u64) -> bool {
+        self.min_validators().get() == new_min_validatrs
+    }
+
+    #[inline]
+    fn is_new_max_validators_value(&self, new_max_validatrs: u64) -> bool {
+        self.max_validators().get() == new_max_validatrs
+    }
+
+    #[inline]
+    fn is_new_min_stake_value(&self, min_stake: &BigUint) -> bool {
+        self.min_stake().get() == *min_stake
     }
 
     #[view(getMinValidators)]
