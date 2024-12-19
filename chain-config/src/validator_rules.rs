@@ -1,4 +1,4 @@
-use transaction::{SovereignConfig, StakeArgs};
+use transaction::SovereignConfig;
 
 multiversx_sc::imports!();
 multiversx_sc::derive_imports!();
