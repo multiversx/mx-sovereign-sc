@@ -88,6 +88,32 @@ where
     To: TxTo<Env>,
     Gas: TxGas<Env>,
 {
+    pub fn update_config<
+        Arg0: ProxyArg<transaction::SovereignConfig<Env::Api>>,
+    >(
+        self,
+        new_config: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("updateConfig")
+            .argument(&new_config)
+            .original_result()
+    }
+
+    pub fn complete_setup_phase<
+        Arg0: ProxyArg<ManagedAddress<Env::Api>>,
+    >(
+        self,
+        header_verifier_address: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("completeSetupPhase")
+            .argument(&header_verifier_address)
+            .original_result()
+    }
+
     pub fn min_validators(
         self,
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, u64> {
