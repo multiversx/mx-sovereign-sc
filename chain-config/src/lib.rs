@@ -30,6 +30,7 @@ pub trait ChainConfigContract:
     }
 
     #[only_admin]
+    #[endpoint(updateConfig)]
     fn update_config(&self, new_config: SovereignConfig<Self::Api>) {
         if !self.is_new_min_validators_value(new_config.min_validators) {
             self.min_validators().set(new_config.min_validators);
@@ -50,6 +51,7 @@ pub trait ChainConfigContract:
     }
 
     #[only_owner]
+    #[endpoint(completeSetupPhase)]
     fn complete_setup_phase(&self, header_verifier_address: ManagedAddress) {
         if self.is_setup_phase_complete() {
             return;
