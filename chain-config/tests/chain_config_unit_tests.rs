@@ -83,3 +83,18 @@ fn update_config() {
 
     state.update_chain_config(new_config, None);
 }
+
+#[test]
+fn update_config_wrong_validators_array() {
+    let mut state = ChainConfigTestState::new();
+
+    let config = SovereignConfig::new(0, 1, BigUint::default(), None);
+    state.deploy_chain_config(config, OWNER);
+
+    let new_config = SovereignConfig::new(2, 1, BigUint::default(), None);
+
+    state.update_chain_config(
+        new_config,
+        Some(ExpectError(4, "Invalid min/max validator numbers")),
+    );
+}
