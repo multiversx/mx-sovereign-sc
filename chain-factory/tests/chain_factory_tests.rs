@@ -4,12 +4,12 @@ use multiversx_sc::types::{
     BigUint, CodeMetadata, MultiValueEncoded, TestAddress, TestSCAddress, TokenIdentifier,
 };
 use multiversx_sc_scenario::{
-    api::StaticApi, imports::MxscPath, managed_biguint, ExpectError, ScenarioTxRun, ScenarioWorld,
+    api::StaticApi, imports::MxscPath, ExpectError, ScenarioTxRun, ScenarioWorld,
 };
 use proxies::{
     chain_config_proxy::ChainConfigContractProxy, chain_factory_proxy::ChainFactoryContractProxy,
 };
-use transaction::StakeArgs;
+use transaction::{SovereignConfig, StakeArgs};
 
 const FACTORY_ADDRESS: TestSCAddress = TestSCAddress::new("chain-factory");
 const CODE_PATH: MxscPath = MxscPath::new("output/chain-factory.mxsc.json");
@@ -38,28 +38,12 @@ struct ChainFactoryTestState {
 }
 
 impl ChainFactoryTestState {
-    fn new(additional_stake_required: &MultiValueEncoded<StaticApi, StakeArgs<StaticApi>>) -> Self {
+    fn new() -> Self {
         let mut world = world();
 
         world.account(OWNER).balance(OWNER_BALANCE).nonce(1);
 
         // deploy chain-config
-        world
-            .tx()
-            .from(OWNER.to_managed_address())
-            .typed(ChainConfigContractProxy)
-            .init(
-                1usize,
-                2usize,
-                managed_biguint!(10),
-                OWNER.to_managed_address(),
-                additional_stake_required,
-            )
-            .code(CONFIG_CODE_PATH)
-            .new_address(CONFIG_ADDRESS)
-            .code_metadata(CodeMetadata::UPGRADEABLE)
-            .run();
-
         Self { world }
     }
 
@@ -82,10 +66,7 @@ impl ChainFactoryTestState {
 
     fn propose_deploy_chain_config_from_factory(
         &mut self,
-        min_validators: usize,
-        max_validators: usize,
-        min_stake: BigUint<StaticApi>,
-        additional_stake_required: MultiValueEncoded<StaticApi, StakeArgs<StaticApi>>,
+        config: SovereignConfig<StaticApi>,
         expected_result: Option<ExpectError<'_>>,
     ) {
         let transaction = self
@@ -94,12 +75,7 @@ impl ChainFactoryTestState {
             .from(CONFIG_ADDRESS)
             .to(FACTORY_ADDRESS)
             .typed(ChainFactoryContractProxy)
-            .deploy_sovereign_chain_config_contract(
-                min_validators,
-                max_validators,
-                min_stake,
-                additional_stake_required,
-            );
+            .deploy_sovereign_chain_config_contract(config);
 
         match expected_result {
             Some(error) => {
@@ -108,41 +84,37 @@ impl ChainFactoryTestState {
             None => transaction.run(),
         }
     }
+
+    fn deploy_chain_config(&mut self) {
+        let config = SovereignConfig::new(0, 1, BigUint::default(), None);
+
+        self.world
+            .tx()
+            .from(OWNER.to_managed_address())
+            .typed(ChainConfigContractProxy)
+            .init(config, OWNER.to_managed_address())
+            .code(CONFIG_CODE_PATH)
+            .new_address(CONFIG_ADDRESS)
+            .code_metadata(CodeMetadata::UPGRADEABLE)
+            .run();
+    }
 }
 
 #[test]
 fn deploy() {
-    let additional_stake =
-        StakeArgs::new(TokenIdentifier::from("TEST-TOKEN"), BigUint::from(100u64));
-    let mut additional_stake_required = MultiValueEncoded::new();
-    additional_stake_required.push(additional_stake);
-
-    let mut state = ChainFactoryTestState::new(&additional_stake_required);
+    let mut state = ChainFactoryTestState::new();
     state.deploy_chain_factory();
 }
 
 #[test]
 fn deploy_chain_config_from_factory() {
-    let additional_stake =
-        StakeArgs::new(TokenIdentifier::from("TEST-TOKEN"), BigUint::from(100u64));
-    let mut additional_stake_required = MultiValueEncoded::new();
-    additional_stake_required.push(additional_stake);
-
-    let mut state = ChainFactoryTestState::new(&additional_stake_required);
-
-    let min_validators = 1;
-    let max_validators = 4;
-    let min_stake = BigUint::from(100_000u64);
-
+    let mut state = ChainFactoryTestState::new();
     state.deploy_chain_factory();
+    state.deploy_chain_config();
 
     println!("{}", current_dir().unwrap().to_str().unwrap());
 
-    state.propose_deploy_chain_config_from_factory(
-        min_validators,
-        max_validators,
-        min_stake,
-        additional_stake_required,
-        None,
-    );
+    let config = SovereignConfig::new(0, 1, BigUint::default(), None);
+
+    state.propose_deploy_chain_config_from_factory(config, None);
 }
