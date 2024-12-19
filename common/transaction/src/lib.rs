@@ -62,6 +62,22 @@ pub struct SovereignConfig<M: ManagedTypeApi> {
     pub opt_additional_stake_required: Option<ManagedVec<M, StakeArgs<M>>>,
 }
 
+impl<M: ManagedTypeApi> SovereignConfig<M> {
+    pub fn new(
+        min_validators: u64,
+        max_validators: u64,
+        min_stake: BigUint<M>,
+        opt_additional_stake_required: Option<ManagedVec<M, StakeArgs<M>>>,
+    ) -> Self {
+        SovereignConfig {
+            min_validators,
+            max_validators,
+            min_stake,
+            opt_additional_stake_required,
+        }
+    }
+}
+
 #[type_abi]
 #[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, ManagedVecItem, Clone)]
 pub struct Operation<M: ManagedTypeApi> {
