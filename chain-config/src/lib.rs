@@ -50,14 +50,18 @@ pub trait ChainConfigContract:
     }
 
     #[only_owner]
-    fn complete_setup_phase(&self) {
+    fn complete_setup_phase(&self, header_verifier_address: ManagedAddress) {
         if self.is_setup_phase_complete() {
             return;
         }
 
         self.require_config_set();
         // validator set in header verifier
-        // self.owner
+        self.tx()
+            .to(ESDTSystemSCAddress)
+            .typed(UserBuiltinProxy)
+            .change_owner_address(&header_verifier_address)
+            .sync_call();
         self.setup_phase_complete().set(true);
     }
 
