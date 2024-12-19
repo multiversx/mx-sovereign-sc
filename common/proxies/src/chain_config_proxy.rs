@@ -44,27 +44,18 @@ where
     Gas: TxGas<Env>,
 {
     pub fn init<
-        Arg0: ProxyArg<u64>,
-        Arg1: ProxyArg<u64>,
-        Arg2: ProxyArg<BigUint<Env::Api>>,
-        Arg3: ProxyArg<ManagedAddress<Env::Api>>,
-        Arg4: ProxyArg<MultiValueEncoded<Env::Api, MultiValue2<TokenIdentifier<Env::Api>, BigUint<Env::Api>>>>,
+        Arg0: ProxyArg<transaction::SovereignConfig<Env::Api>>,
+        Arg1: ProxyArg<ManagedAddress<Env::Api>>,
     >(
         self,
-        min_validators: Arg0,
-        max_validators: Arg1,
-        min_stake: Arg2,
-        admin: Arg3,
-        additional_stake_required: Arg4,
+        config: Arg0,
+        admin: Arg1,
     ) -> TxTypedDeploy<Env, From, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_deploy()
-            .argument(&min_validators)
-            .argument(&max_validators)
-            .argument(&min_stake)
+            .argument(&config)
             .argument(&admin)
-            .argument(&additional_stake_required)
             .original_result()
     }
 }
@@ -97,39 +88,38 @@ where
     To: TxTo<Env>,
     Gas: TxGas<Env>,
 {
-    pub fn min_validators(
+    pub fn update_config<
+        Arg0: ProxyArg<transaction::SovereignConfig<Env::Api>>,
+    >(
         self,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, u64> {
+        new_config: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
-            .raw_call("getMinValidators")
+            .raw_call("updateConfig")
+            .argument(&new_config)
             .original_result()
     }
 
-    pub fn max_validators(
+    pub fn complete_setup_phase<
+        Arg0: ProxyArg<ManagedAddress<Env::Api>>,
+    >(
         self,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, u64> {
+        header_verifier_address: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
-            .raw_call("getMaxValidators")
+            .raw_call("completeSetupPhase")
+            .argument(&header_verifier_address)
             .original_result()
     }
 
-    pub fn min_stake(
+    pub fn sovereign_config(
         self,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, BigUint<Env::Api>> {
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, transaction::SovereignConfig<Env::Api>> {
         self.wrapped_tx
             .payment(NotPayable)
-            .raw_call("getMinStake")
-            .original_result()
-    }
-
-    pub fn additional_stake_required(
-        self,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ManagedVec<Env::Api, TokenIdAmountPair<Env::Api>>> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("getAdditionalStakeRequired")
+            .raw_call("sovereignConfig")
             .original_result()
     }
 
@@ -193,14 +183,4 @@ where
             .raw_call("getAdmins")
             .original_result()
     }
-}
-
-#[type_abi]
-#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, ManagedVecItem)]
-pub struct TokenIdAmountPair<Api>
-where
-    Api: ManagedTypeApi,
-{
-    pub token_id: TokenIdentifier<Api>,
-    pub amount: BigUint<Api>,
 }

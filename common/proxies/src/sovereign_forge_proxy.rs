@@ -127,23 +127,14 @@ where
     }
 
     pub fn deploy_phase_one<
-        Arg0: ProxyArg<u64>,
-        Arg1: ProxyArg<u64>,
-        Arg2: ProxyArg<BigUint<Env::Api>>,
-        Arg3: ProxyArg<MultiValueEncoded<Env::Api, MultiValue2<TokenIdentifier<Env::Api>, BigUint<Env::Api>>>>,
+        Arg0: ProxyArg<transaction::SovereignConfig<Env::Api>>,
     >(
         self,
-        min_validators: Arg0,
-        max_validators: Arg1,
-        min_stake: Arg2,
-        additional_stake_required: Arg3,
+        config: Arg0,
     ) -> TxTypedCall<Env, From, To, (), Gas, ()> {
         self.wrapped_tx
             .raw_call("deployPhaseOne")
-            .argument(&min_validators)
-            .argument(&max_validators)
-            .argument(&min_stake)
-            .argument(&additional_stake_required)
+            .argument(&config)
             .original_result()
     }
 

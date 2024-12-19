@@ -234,6 +234,7 @@ dependencies = [
  "multiversx-sc-modules",
  "multiversx-sc-scenario",
  "num-bigint",
+ "proxies",
  "setup-phase",
  "transaction",
 ]
@@ -691,6 +692,7 @@ dependencies = [
  "serde",
  "sovereign-forge",
  "toml",
+ "transaction",
 ]
 
 [[package]]
