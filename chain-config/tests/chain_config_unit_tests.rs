@@ -1,7 +1,7 @@
 use multiversx_sc::types::{BigUint, MultiValueEncoded, TestAddress, TestSCAddress};
 use multiversx_sc_scenario::{api::StaticApi, imports::MxscPath, ScenarioTxRun, ScenarioWorld};
 use proxies::chain_config_proxy::ChainConfigContractProxy;
-use transaction::StakeArgs;
+use transaction::{SovereignConfig, StakeArgs};
 
 const CONFIG_ADDRESS: TestSCAddress = TestSCAddress::new("config-address");
 const CONFIG_CODE_PATH: MxscPath = MxscPath::new("output/chain-config.mxsc.json");
@@ -30,25 +30,12 @@ impl ChainConfigTestState {
         Self { world }
     }
 
-    fn deploy_chain_config(
-        &mut self,
-        min_validators: u64,
-        max_validators: u64,
-        min_stake: BigUint<StaticApi>,
-        admin: TestAddress,
-        additional_stake_required: MultiValueEncoded<StaticApi, StakeArgs<StaticApi>>,
-    ) {
+    fn deploy_chain_config(&mut self, config: SovereignConfig<StaticApi>, admin: TestAddress) {
         self.world
             .tx()
             .from(OWNER)
             .typed(ChainConfigContractProxy)
-            .init(
-                min_validators,
-                max_validators,
-                min_stake,
-                admin,
-                additional_stake_required,
-            )
+            .init(config, admin)
             .code(CONFIG_CODE_PATH)
             .new_address(CONFIG_ADDRESS)
             .run();
@@ -59,5 +46,6 @@ impl ChainConfigTestState {
 fn deploy_chain_config() {
     let mut state = ChainConfigTestState::new();
 
-    state.deploy_chain_config(0, 1, BigUint::default(), OWNER, MultiValueEncoded::new());
+    let config = SovereignConfig::new(0, 1, BigUint::default(), None);
+    state.deploy_chain_config(config, OWNER);
 }
