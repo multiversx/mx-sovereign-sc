@@ -4,7 +4,7 @@ use multiversx_sc::types::{
     BigUint, CodeMetadata, MultiValueEncoded, TestAddress, TestSCAddress, TokenIdentifier,
 };
 use multiversx_sc_scenario::{
-    api::StaticApi, imports::MxscPath, managed_biguint, ExpectError, ScenarioTxRun, ScenarioWorld,
+    api::StaticApi, imports::MxscPath, ExpectError, ScenarioTxRun, ScenarioWorld,
 };
 use proxies::{
     chain_config_proxy::ChainConfigContractProxy, chain_factory_proxy::ChainFactoryContractProxy,
@@ -38,7 +38,7 @@ struct ChainFactoryTestState {
 }
 
 impl ChainFactoryTestState {
-    fn new(additional_stake_required: &MultiValueEncoded<StaticApi, StakeArgs<StaticApi>>) -> Self {
+    fn new() -> Self {
         let mut world = world();
 
         world.account(OWNER).balance(OWNER_BALANCE).nonce(1);
@@ -102,23 +102,13 @@ impl ChainFactoryTestState {
 
 #[test]
 fn deploy() {
-    let additional_stake =
-        StakeArgs::new(TokenIdentifier::from("TEST-TOKEN"), BigUint::from(100u64));
-    let mut additional_stake_required = MultiValueEncoded::new();
-    additional_stake_required.push(additional_stake);
-
-    let mut state = ChainFactoryTestState::new(&additional_stake_required);
+    let mut state = ChainFactoryTestState::new();
     state.deploy_chain_factory();
 }
 
 #[test]
 fn deploy_chain_config_from_factory() {
-    let additional_stake =
-        StakeArgs::new(TokenIdentifier::from("TEST-TOKEN"), BigUint::from(100u64));
-    let mut additional_stake_required = MultiValueEncoded::new();
-    additional_stake_required.push(additional_stake);
-
-    let mut state = ChainFactoryTestState::new(&additional_stake_required);
+    let mut state = ChainFactoryTestState::new();
     state.deploy_chain_factory();
     state.deploy_chain_config();
 
