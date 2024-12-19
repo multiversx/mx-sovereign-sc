@@ -41,7 +41,6 @@ impl ChainFactoryTestState {
 
         world.account(OWNER).balance(OWNER_BALANCE).nonce(1);
 
-        // deploy chain-config
         Self { world }
     }
 
