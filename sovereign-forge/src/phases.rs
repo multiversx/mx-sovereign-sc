@@ -3,7 +3,7 @@ use core::ops::Deref;
 use proxies::fee_market_proxy::FeeStruct;
 
 use multiversx_sc::{require, types::MultiValueEncoded};
-use transaction::StakeArgs;
+use transaction::SovereignConfig;
 
 use crate::common::{
     self,
@@ -44,13 +44,7 @@ pub trait PhasesModule:
 
     #[payable("EGLD")]
     #[endpoint(deployPhaseOne)]
-    fn deploy_phase_one(
-        &self,
-        min_validators: u64,
-        max_validators: u64,
-        min_stake: BigUint,
-        additional_stake_required: MultiValueEncoded<StakeArgs<Self::Api>>,
-    ) {
+    fn deploy_phase_one(&self, config: SovereignConfig<Self::Api>) {
         self.require_setup_complete();
 
         let call_value = self.call_value().egld_value();
@@ -73,12 +67,7 @@ pub trait PhasesModule:
             "The Chain-Config contract is already deployed"
         );
 
-        let chain_config_address = self.deploy_chain_config(
-            min_validators,
-            max_validators,
-            min_stake,
-            additional_stake_required,
-        );
+        let chain_config_address = self.deploy_chain_config(config);
 
         let chain_factory_contract_info =
             ContractInfo::new(ScArray::ChainConfig, chain_config_address);

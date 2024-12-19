@@ -17,7 +17,7 @@ use std::{
     io::{Read, Write},
     path::Path,
 };
-use transaction::StakeArgs;
+use transaction::SovereignConfig;
 
 const STATE_FILE: &str = "state.toml";
 const CHAIN_CONFIG_CODE_PATH: &str = "../../chain-config/output/chain-config.mxsc.json";
@@ -224,19 +224,14 @@ impl ContractInteract {
     }
 
     pub async fn deploy_chain_config_template(&mut self) {
+        let config = SovereignConfig::new(0, 1, BigUint::default(), None);
         let new_address = self
             .interactor
             .tx()
             .from(&self.wallet_address)
             .gas(50_000_000u64)
             .typed(ChainConfigContractProxy)
-            .init(
-                1u64,
-                2u64,
-                BigUint::from(100u64),
-                &self.wallet_address,
-                MultiValueEncoded::new(),
-            )
+            .init(config, &self.wallet_address)
             .returns(ReturnsNewAddress)
             .code(MxscPath::new(CHAIN_CONFIG_CODE_PATH))
             .run()
@@ -398,10 +393,7 @@ impl ContractInteract {
     pub async fn deploy_phase_one(&mut self) {
         let egld_amount = BigUint::<StaticApi>::from(100u128);
 
-        let min_validators = 1u64;
-        let max_validators = 3u64;
-        let min_stake = BigUint::<StaticApi>::from(0u128);
-        let additional_stake_required = MultiValueVec::from(vec![StakeArgs::get_default()]);
+        let config = SovereignConfig::new(0, 1, BigUint::default(), None);
 
         let response = self
             .interactor
@@ -410,12 +402,7 @@ impl ContractInteract {
             .to(self.state.current_address())
             .gas(100_000_000u64)
             .typed(SovereignForgeProxy)
-            .deploy_phase_one(
-                min_validators,
-                max_validators,
-                min_stake,
-                additional_stake_required,
-            )
+            .deploy_phase_one(config)
             .egld(egld_amount)
             .returns(ReturnsResultUnmanaged)
             .run()
