@@ -1,4 +1,4 @@
-use transaction::StakeArgs;
+use transaction::{SovereignConfig, StakeArgs};
 
 multiversx_sc::imports!();
 multiversx_sc::derive_imports!();
@@ -17,52 +17,21 @@ pub struct TokenIdAmountPair<M: ManagedTypeApi> {
 pub trait ValidatorRulesModule {
     fn require_config_set(&self) {
         require!(
-            !self.min_validators().is_empty(),
-            "The minimum number of validators is not set"
+            !self.sovereign_config().is_empty(),
+            "The Sovereign Config is not set"
         );
+    }
+
+    fn require_validator_range(&self, min_validators: u64, max_validators: u64) {
         require!(
-            !self.max_validators().is_empty(),
-            "The maximum number of validators is not set"
-        );
-        require!(
-            !self.min_stake().is_empty(),
-            "The mininum number of stake is not set"
+            min_validators <= max_validators,
+            "Invalid min/max validator numbers"
         );
     }
 
-    #[inline]
-    fn is_new_min_validators_value(&self, new_min_validatrs: u64) -> bool {
-        self.min_validators().get() == new_min_validatrs
-    }
-
-    #[inline]
-    fn is_new_max_validators_value(&self, new_max_validatrs: u64) -> bool {
-        self.max_validators().get() == new_max_validatrs
-    }
-
-    #[inline]
-    fn is_new_min_stake_value(&self, min_stake: &BigUint) -> bool {
-        self.min_stake().get() == *min_stake
-    }
-
-    #[view(getMinValidators)]
-    #[storage_mapper("minValidators")]
-    fn min_validators(&self) -> SingleValueMapper<u64>;
-
-    #[view(getMaxValidators)]
-    #[storage_mapper("maxValidators")]
-    fn max_validators(&self) -> SingleValueMapper<u64>;
-
-    // TODO: Read user stake and verify
-    #[view(getMinStake)]
-    #[storage_mapper("minStake")]
-    fn min_stake(&self) -> SingleValueMapper<BigUint>;
-
-    // NOTE: ManagedVec or MultiValueEncoded ?
-    // TODO: Read user stake and verify
-    #[view(getAdditionalStakeRequired)]
-    #[storage_mapper("additionalStakeRequired")]
-    fn additional_stake_required(&self) -> UnorderedSetMapper<StakeArgs<Self::Api>>;
+    #[view(sovereignConfig)]
+    #[storage_mapper("sovereignConfig")]
+    fn sovereign_config(&self) -> SingleValueMapper<SovereignConfig<Self::Api>>;
 
     #[view(wasPreviouslySlashed)]
     #[storage_mapper("wasPreviouslySlashed")]

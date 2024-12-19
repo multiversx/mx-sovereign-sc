@@ -6,9 +6,9 @@
 
 // Init:                                 1
 // Upgrade:                              1
-// Endpoints:                           11
+// Endpoints:                            8
 // Async Callback (empty):               1
-// Total number of exported functions:  14
+// Total number of exported functions:  11
 
 #![no_std]
 
@@ -22,10 +22,7 @@ multiversx_sc_wasm_adapter::endpoints! {
         upgrade => upgrade
         updateConfig => update_config
         completeSetupPhase => complete_setup_phase
-        getMinValidators => min_validators
-        getMaxValidators => max_validators
-        getMinStake => min_stake
-        getAdditionalStakeRequired => additional_stake_required
+        sovereignConfig => sovereign_config
         wasPreviouslySlashed => was_previously_slashed
         isAdmin => is_admin
         addAdmin => add_admin

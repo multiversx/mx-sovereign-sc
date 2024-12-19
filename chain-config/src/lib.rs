@@ -13,41 +13,18 @@ pub trait ChainConfigContract:
 {
     #[init]
     fn init(&self, config: SovereignConfig<Self::Api>, admin: ManagedAddress) {
-        require!(
-            config.min_validators <= config.max_validators,
-            "Invalid min/max validator numbers"
-        );
-
-        self.min_validators().set(config.min_validators);
-        self.max_validators().set(config.max_validators);
-        self.min_stake().set(config.min_stake);
+        self.require_validator_range(config.min_validators, config.max_validators);
+        self.sovereign_config().set(config);
         self.add_admin(admin);
-
-        if let Some(additional_stake_required) = config.opt_additional_stake_required {
-            self.additional_stake_required()
-                .extend(&additional_stake_required);
-        }
     }
 
     #[only_admin]
     #[endpoint(updateConfig)]
     fn update_config(&self, new_config: SovereignConfig<Self::Api>) {
-        if !self.is_new_min_validators_value(new_config.min_validators) {
-            self.min_validators().set(new_config.min_validators);
-        }
+        self.require_config_set();
+        self.require_validator_range(new_config.min_validators, new_config.max_validators);
 
-        if !self.is_new_max_validators_value(new_config.max_validators) {
-            self.max_validators().set(new_config.max_validators);
-        }
-
-        if !self.is_new_min_stake_value(&new_config.min_stake) {
-            self.min_stake().set(new_config.min_stake);
-        }
-
-        if let Some(additional_stake_required) = new_config.opt_additional_stake_required {
-            self.additional_stake_required()
-                .extend(&additional_stake_required);
-        }
+        self.sovereign_config().set(new_config);
     }
 
     #[only_owner]

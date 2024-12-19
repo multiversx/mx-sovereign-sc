@@ -114,39 +114,12 @@ where
             .original_result()
     }
 
-    pub fn min_validators(
+    pub fn sovereign_config(
         self,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, u64> {
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, transaction::SovereignConfig<Env::Api>> {
         self.wrapped_tx
             .payment(NotPayable)
-            .raw_call("getMinValidators")
-            .original_result()
-    }
-
-    pub fn max_validators(
-        self,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, u64> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("getMaxValidators")
-            .original_result()
-    }
-
-    pub fn min_stake(
-        self,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, BigUint<Env::Api>> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("getMinStake")
-            .original_result()
-    }
-
-    pub fn additional_stake_required(
-        self,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, MultiValueEncoded<Env::Api, transaction::StakeArgs<Env::Api>>> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("getAdditionalStakeRequired")
+            .raw_call("sovereignConfig")
             .original_result()
     }
 
