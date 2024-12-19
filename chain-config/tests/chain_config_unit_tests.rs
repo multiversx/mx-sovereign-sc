@@ -1,5 +1,7 @@
 use multiversx_sc::types::{BigUint, TestAddress, TestSCAddress};
-use multiversx_sc_scenario::{api::StaticApi, imports::MxscPath, ScenarioTxRun, ScenarioWorld};
+use multiversx_sc_scenario::{
+    api::StaticApi, imports::MxscPath, ExpectError, ScenarioTxRun, ScenarioWorld,
+};
 use proxies::chain_config_proxy::ChainConfigContractProxy;
 use transaction::SovereignConfig;
 
@@ -41,15 +43,24 @@ impl ChainConfigTestState {
             .run();
     }
 
-    fn update_chain_config(&mut self, config: SovereignConfig<StaticApi>) {
-        self.world
+    fn update_chain_config(
+        &mut self,
+        config: SovereignConfig<StaticApi>,
+        expect_error: Option<ExpectError>,
+    ) {
+        let transaction = self
+            .world
             .tx()
             .from(OWNER)
+            .to(CONFIG_ADDRESS)
             .typed(ChainConfigContractProxy)
-            .update_config(config)
-            .code(CONFIG_CODE_PATH)
-            .new_address(CONFIG_ADDRESS)
-            .run();
+            .update_config(config);
+
+        if let Some(error) = expect_error {
+            transaction.returns(error).run();
+        } else {
+            transaction.run();
+        }
     }
 }
 
@@ -59,4 +70,16 @@ fn deploy_chain_config() {
 
     let config = SovereignConfig::new(0, 1, BigUint::default(), None);
     state.deploy_chain_config(config, OWNER);
+}
+
+#[test]
+fn update_config() {
+    let mut state = ChainConfigTestState::new();
+
+    let config = SovereignConfig::new(0, 1, BigUint::default(), None);
+    state.deploy_chain_config(config, OWNER);
+
+    let new_config = SovereignConfig::new(2, 4, BigUint::default(), None);
+
+    state.update_chain_config(new_config, None);
 }
