@@ -44,27 +44,18 @@ where
     Gas: TxGas<Env>,
 {
     pub fn init<
-        Arg0: ProxyArg<u64>,
-        Arg1: ProxyArg<u64>,
-        Arg2: ProxyArg<BigUint<Env::Api>>,
-        Arg3: ProxyArg<ManagedAddress<Env::Api>>,
-        Arg4: ProxyArg<MultiValueEncoded<Env::Api, transaction::StakeArgs<Env::Api>>>,
+        Arg0: ProxyArg<transaction::SovereignConfig<Env::Api>>,
+        Arg1: ProxyArg<ManagedAddress<Env::Api>>,
     >(
         self,
-        min_validators: Arg0,
-        max_validators: Arg1,
-        min_stake: Arg2,
-        admin: Arg3,
-        additional_stake_required: Arg4,
+        config: Arg0,
+        admin: Arg1,
     ) -> TxTypedDeploy<Env, From, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_deploy()
-            .argument(&min_validators)
-            .argument(&max_validators)
-            .argument(&min_stake)
+            .argument(&config)
             .argument(&admin)
-            .argument(&additional_stake_required)
             .original_result()
     }
 }

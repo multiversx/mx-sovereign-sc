@@ -56,9 +56,9 @@ impl<M: ManagedTypeApi> StakeArgs<M> {
 #[type_abi]
 #[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, ManagedVecItem, Clone)]
 pub struct SovereignConfig<M: ManagedTypeApi> {
-    pub opt_min_validators: Option<u64>,
-    pub opt_max_validators: Option<u64>,
-    pub opt_min_stake: Option<BigUint<M>>,
+    pub min_validators: u64,
+    pub max_validators: u64,
+    pub min_stake: BigUint<M>,
     pub opt_additional_stake_required: Option<ManagedVec<M, StakeArgs<M>>>,
 }
 
