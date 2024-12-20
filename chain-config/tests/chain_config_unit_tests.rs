@@ -8,6 +8,8 @@ use transaction::SovereignConfig;
 const CONFIG_ADDRESS: TestSCAddress = TestSCAddress::new("config-address");
 const CONFIG_CODE_PATH: MxscPath = MxscPath::new("output/chain-config.mxsc.json");
 
+const HEADER_VERIFIER_ADDRESS: TestSCAddress = TestSCAddress::new("header-verifier");
+
 const OWNER: TestAddress = TestAddress::new("owner");
 const OWNER_BALANCE: u64 = 100_000_000_000;
 
@@ -62,6 +64,22 @@ impl ChainConfigTestState {
             transaction.run();
         }
     }
+
+    fn complete_setup_phase(&mut self, expect_error: Option<ExpectError>) {
+        let transaction = self
+            .world
+            .tx()
+            .from(OWNER)
+            .to(CONFIG_ADDRESS)
+            .typed(ChainConfigContractProxy)
+            .complete_setup_phase(HEADER_VERIFIER_ADDRESS);
+
+        if let Some(error) = expect_error {
+            transaction.returns(error).run();
+        } else {
+            transaction.run();
+        }
+    }
 }
 
 #[test]
@@ -97,4 +115,14 @@ fn update_config_wrong_validators_array() {
         new_config,
         Some(ExpectError(4, "Invalid min/max validator numbers")),
     );
+}
+
+#[test]
+fn complete_setup_phase() {
+    let mut state = ChainConfigTestState::new();
+
+    let config = SovereignConfig::new(0, 1, BigUint::default(), None);
+    state.deploy_chain_config(config, OWNER);
+
+    state.complete_setup_phase(None);
 }
