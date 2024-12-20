@@ -20,6 +20,9 @@ version = "=0.54.5"
 [dependencies.multiversx-sc-modules]
 version = "=0.54.5"
 
+[dependencies.header-verifier]
+path = "../header-verifier"
+
 [dependencies.transaction]
 path = "../common/transaction"
 

@@ -1,8 +1,10 @@
-use multiversx_sc::types::{BigUint, TestAddress, TestSCAddress};
+use multiversx_sc::types::{BigUint, MultiValueEncoded, TestAddress, TestSCAddress};
 use multiversx_sc_scenario::{
     api::StaticApi, imports::MxscPath, ExpectError, ScenarioTxRun, ScenarioWorld,
 };
-use proxies::chain_config_proxy::ChainConfigContractProxy;
+use proxies::{
+    chain_config_proxy::ChainConfigContractProxy, header_verifier_proxy::HeaderverifierProxy,
+};
 use transaction::SovereignConfig;
 
 const CONFIG_ADDRESS: TestSCAddress = TestSCAddress::new("config-address");

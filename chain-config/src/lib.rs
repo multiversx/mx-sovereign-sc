@@ -37,7 +37,7 @@ pub trait ChainConfigContract:
         self.require_config_set();
         // validator set in header verifier
         self.tx()
-            .to(ESDTSystemSCAddress)
+            .to(ToSelf)
             .typed(UserBuiltinProxy)
             .change_owner_address(&header_verifier_address)
             .sync_call();
