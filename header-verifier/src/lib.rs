@@ -14,7 +14,7 @@ pub enum OperationHashStatus {
 }
 
 #[multiversx_sc::contract]
-pub trait Headerverifier: setup_phase::SetupPhaseModule {
+pub trait Headerverifier: setup_phase::SetupPhaseModule + utils::UtilsModule {
     #[init]
     fn init(
         &self,

@@ -842,11 +842,13 @@ name = "header-verifier"
 version = "0.0.0"
 dependencies = [
  "multiversx-sc",
+ "multiversx-sc-modules",
  "multiversx-sc-scenario",
  "num-bigint",
  "proxies",
  "setup-phase",
  "transaction",
+ "utils",
 ]
 
 [[package]]
