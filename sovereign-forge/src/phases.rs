@@ -78,7 +78,11 @@ pub trait PhasesModule:
     }
 
     #[endpoint(deployPhaseTwo)]
-    fn deploy_phase_two(&self, bls_keys: MultiValueEncoded<ManagedBuffer>) {
+    fn deploy_phase_two(
+        &self,
+        chain_config_address: ManagedAddress,
+        bls_keys: MultiValueEncoded<ManagedBuffer>,
+    ) {
         let blockchain_api = self.blockchain();
         let caller = blockchain_api.get_caller();
 
@@ -88,7 +92,7 @@ pub trait PhasesModule:
             "The Header-Verifier contract is already deployed"
         );
 
-        let header_verifier_address = self.deploy_header_verifier(bls_keys);
+        let header_verifier_address = self.deploy_header_verifier(chain_config_address, bls_keys);
 
         let header_verifier_contract_info =
             ContractInfo::new(ScArray::HeaderVerifier, header_verifier_address);

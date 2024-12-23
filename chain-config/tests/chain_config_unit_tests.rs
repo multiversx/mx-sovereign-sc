@@ -1,14 +1,18 @@
-use multiversx_sc::types::{BigUint, TestAddress, TestSCAddress};
+use multiversx_sc::types::{BigUint, MultiValueEncoded, TestAddress, TestSCAddress};
 use multiversx_sc_scenario::{
     api::StaticApi, imports::MxscPath, ExpectError, ScenarioTxRun, ScenarioWorld,
 };
-use proxies::chain_config_proxy::ChainConfigContractProxy;
+use proxies::{
+    chain_config_proxy::ChainConfigContractProxy, header_verifier_proxy::HeaderverifierProxy,
+};
 use transaction::SovereignConfig;
 
 const CONFIG_ADDRESS: TestSCAddress = TestSCAddress::new("config-address");
 const CONFIG_CODE_PATH: MxscPath = MxscPath::new("output/chain-config.mxsc.json");
 
 const HEADER_VERIFIER_ADDRESS: TestSCAddress = TestSCAddress::new("header-verifier");
+const HEADER_VERIFIER_CODE_PATH: MxscPath =
+    MxscPath::new("../header-verifier/output/header-verifier.mxsc.json");
 
 const OWNER: TestAddress = TestAddress::new("owner");
 const OWNER_BALANCE: u64 = 100_000_000_000;
@@ -17,6 +21,7 @@ fn world() -> ScenarioWorld {
     let mut blockchain = ScenarioWorld::new();
 
     blockchain.register_contract(CONFIG_CODE_PATH, chain_config::ContractBuilder);
+    blockchain.register_contract(HEADER_VERIFIER_CODE_PATH, header_verifier::ContractBuilder);
 
     blockchain
 }
@@ -42,6 +47,17 @@ impl ChainConfigTestState {
             .init(config, admin)
             .code(CONFIG_CODE_PATH)
             .new_address(CONFIG_ADDRESS)
+            .run();
+    }
+
+    fn deploy_header_verifier(&mut self) {
+        self.world
+            .tx()
+            .from(OWNER)
+            .typed(HeaderverifierProxy)
+            .init(CONFIG_ADDRESS, MultiValueEncoded::new())
+            .code(HEADER_VERIFIER_CODE_PATH)
+            .new_address(HEADER_VERIFIER_ADDRESS)
             .run();
     }
 
@@ -123,6 +139,7 @@ fn complete_setup_phase() {
 
     let config = SovereignConfig::new(0, 1, BigUint::default(), None);
     state.deploy_chain_config(config, OWNER);
+    state.deploy_header_verifier();
 
     state.complete_setup_phase(None);
 }

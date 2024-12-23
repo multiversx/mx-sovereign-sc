@@ -247,13 +247,15 @@ impl ContractInteract {
     }
 
     pub async fn deploy_header_verifier_template(&mut self) {
+        let chain_config_address = Bech32Address::from_bech32_string("chain_config".to_string());
+
         let new_address = self
             .interactor
             .tx()
             .from(&self.wallet_address)
             .gas(50_000_000u64)
             .typed(HeaderverifierProxy)
-            .init(MultiValueEncoded::new())
+            .init(chain_config_address, MultiValueEncoded::new())
             .returns(ReturnsNewAddress)
             .code(MxscPath::new(HEADER_VERIFIER_CODE_PATH))
             .run()
@@ -413,6 +415,7 @@ impl ContractInteract {
 
     pub async fn deploy_phase_two(&mut self) {
         let bls_keys = MultiValueVec::from(vec![ManagedBuffer::new_from_bytes(&b""[..])]);
+        let chain_config_address = Bech32Address::from_bech32_string("chain_config".to_string());
 
         let response = self
             .interactor
@@ -421,7 +424,7 @@ impl ContractInteract {
             .to(self.state.current_address())
             .gas(30_000_000u64)
             .typed(SovereignForgeProxy)
-            .deploy_phase_two(bls_keys)
+            .deploy_phase_two(chain_config_address, bls_keys)
             .returns(ReturnsResultUnmanaged)
             .run()
             .await;

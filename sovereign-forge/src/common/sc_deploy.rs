@@ -16,11 +16,15 @@ pub trait ScDeployModule: super::utils::UtilsModule + super::storage::StorageMod
     }
 
     #[inline]
-    fn deploy_header_verifier(&self, bls_keys: MultiValueEncoded<ManagedBuffer>) -> ManagedAddress {
+    fn deploy_header_verifier(
+        &self,
+        chain_config_address: ManagedAddress,
+        bls_keys: MultiValueEncoded<ManagedBuffer>,
+    ) -> ManagedAddress {
         self.tx()
             .to(self.get_chain_factory_address())
             .typed(ChainFactoryContractProxy)
-            .deploy_header_verifier(bls_keys)
+            .deploy_header_verifier(chain_config_address, bls_keys)
             .returns(ReturnsResult)
             .sync_call()
     }

@@ -139,14 +139,17 @@ where
     }
 
     pub fn deploy_phase_two<
-        Arg0: ProxyArg<MultiValueEncoded<Env::Api, ManagedBuffer<Env::Api>>>,
+        Arg0: ProxyArg<ManagedAddress<Env::Api>>,
+        Arg1: ProxyArg<MultiValueEncoded<Env::Api, ManagedBuffer<Env::Api>>>,
     >(
         self,
-        bls_keys: Arg0,
+        chain_config_address: Arg0,
+        bls_keys: Arg1,
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("deployPhaseTwo")
+            .argument(&chain_config_address)
             .argument(&bls_keys)
             .original_result()
     }

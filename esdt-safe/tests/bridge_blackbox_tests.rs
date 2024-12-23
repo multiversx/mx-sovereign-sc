@@ -27,6 +27,7 @@ const HEADER_VERIFIER_ADDRESS: TestSCAddress = TestSCAddress::new("header_verifi
 const HEADER_VERIFIER_CODE_PATH: MxscPath =
     MxscPath::new("../header-verifier/output/header-verifier.mxsc.json");
 
+const CHAIN_CONFIG_ADDRESS: TestSCAddress = TestSCAddress::new("chain-config");
 const USER_ADDRESS: TestAddress = TestAddress::new("user");
 const RECEIVER_ADDRESS: TestAddress = TestAddress::new("receiver");
 
@@ -114,7 +115,7 @@ impl BridgeTestState {
             .tx()
             .from(BRIDGE_OWNER_ADDRESS)
             .typed(HeaderverifierProxy)
-            .init(bls_pub_keys)
+            .init(CHAIN_CONFIG_ADDRESS, bls_pub_keys)
             .code(HEADER_VERIFIER_CODE_PATH)
             .new_address(HEADER_VERIFIER_ADDRESS)
             .run();

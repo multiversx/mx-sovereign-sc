@@ -62,7 +62,7 @@ pub trait Headerverifier: setup_phase::SetupPhaseModule + utils::UtilsModule {
     }
 
     #[endpoint(updateConfig)]
-    fn update_config(&self, new_config: SovereignConfig<Self::Api>, signature: ManagedBuffer) {
+    fn update_config(&self, new_config: SovereignConfig<Self::Api>, _signature: ManagedBuffer) {
         // self.verify_bls(signature, bridge_operations_hash)
         self.tx()
             .to(self.chain_config_address().get())
@@ -75,7 +75,7 @@ pub trait Headerverifier: setup_phase::SetupPhaseModule + utils::UtilsModule {
     #[endpoint(changeValidatorSet)]
     fn change_validator_set(
         &self,
-        signature: ManagedBuffer,
+        _signature: ManagedBuffer,
         bls_pub_keys: MultiValueEncoded<ManagedBuffer>,
     ) {
         // self.verify_bls(signature, bridge_operations_hash)

@@ -15,6 +15,7 @@ const HEADER_VERIFIER_ADDRESS: TestSCAddress = TestSCAddress::new("header-verifi
 
 // NOTE: This is a mock path
 const ENSHRINE_ADDRESS: TestAddress = TestAddress::new("enshrine");
+const CHAIN_CONFIG_ADDRESS: TestSCAddress = TestSCAddress::new("chain-config");
 
 const OWNER: TestAddress = TestAddress::new("owner");
 const WEGLD_BALANCE: u128 = 100_000_000_000_000_000;
@@ -61,7 +62,7 @@ impl HeaderVerifierTestState {
             .tx()
             .from(OWNER)
             .typed(HeaderverifierProxy)
-            .init(bls_keys)
+            .init(CHAIN_CONFIG_ADDRESS, bls_keys)
             .code(HEADER_VERIFIER_CODE_PATH)
             .new_address(HEADER_VERIFIER_ADDRESS)
             .run();

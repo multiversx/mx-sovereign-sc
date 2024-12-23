@@ -33,9 +33,10 @@ pub trait ChainConfigContract:
         }
 
         let registered_bls_keys = self
-            .registered_bls_keys(header_verifier_address)
+            .registered_bls_keys(header_verifier_address.clone())
             .iter()
             .count();
+
         let min_validators = self.sovereign_config().get().min_validators;
 
         require!(
