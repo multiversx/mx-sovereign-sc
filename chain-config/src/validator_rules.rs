@@ -15,11 +15,13 @@ pub struct TokenIdAmountPair<M: ManagedTypeApi> {
 
 #[multiversx_sc::module]
 pub trait ValidatorRulesModule {
-    fn require_config_set(&self) {
+    fn require_valid_config(&self, config: &SovereignConfig<Self::Api>) {
         require!(
             !self.sovereign_config().is_empty(),
             "The Sovereign Config is not set"
         );
+
+        self.require_validator_range(config.min_validators, config.max_validators);
     }
 
     fn require_validator_range(&self, min_validators: u64, max_validators: u64) {

@@ -13,17 +13,15 @@ pub trait ChainConfigContract:
 {
     #[init]
     fn init(&self, config: SovereignConfig<Self::Api>, admin: ManagedAddress) {
-        self.require_validator_range(config.min_validators, config.max_validators);
-        self.sovereign_config().set(config);
+        self.sovereign_config().set(config.clone());
+        self.require_valid_config(&config);
         self.add_admin(admin);
     }
 
     #[only_admin]
     #[endpoint(updateConfig)]
     fn update_config(&self, new_config: SovereignConfig<Self::Api>) {
-        self.require_config_set();
-        self.require_validator_range(new_config.min_validators, new_config.max_validators);
-
+        self.require_valid_config(&new_config);
         self.sovereign_config().set(new_config);
     }
 
@@ -34,7 +32,6 @@ pub trait ChainConfigContract:
             return;
         }
 
-        self.require_config_set();
         // validator set in header verifier
         self.tx()
             .to(ToSelf)
