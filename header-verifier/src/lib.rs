@@ -2,6 +2,7 @@
 
 use multiversx_sc::codec;
 use multiversx_sc::proxy_imports::{TopDecode, TopEncode};
+use proxies::chain_config_proxy::ChainConfigContractProxy;
 use transaction::SovereignConfig;
 
 multiversx_sc::imports!();
@@ -62,18 +63,23 @@ pub trait Headerverifier: setup_phase::SetupPhaseModule {
 
     #[endpoint(updateConfig)]
     fn update_config(&self, new_config: SovereignConfig<Self::Api>, signature: ManagedBuffer) {
-        // check bls
-        // tx to config
+        // self.verify_bls(signature, bridge_operations_hash)
+        self.tx()
+            .to(self.chain_config_address().get())
+            .typed(ChainConfigContractProxy)
+            .update_config(new_config)
+            .sync_call();
     }
 
+    #[only_owner]
     #[endpoint(changeValidatorSet)]
     fn change_validator_set(
         &self,
         signature: ManagedBuffer,
         bls_pub_keys: MultiValueEncoded<ManagedBuffer>,
     ) {
-        // check bls
-        // update bls_pub_keys
+        // self.verify_bls(signature, bridge_operations_hash)
+        self.bls_pub_keys().extend(bls_pub_keys);
     }
 
     #[only_owner]
