@@ -32,7 +32,14 @@ pub trait ChainConfigContract:
             return;
         }
 
-        // validator set in header verifier
+        let registered_bls_keys = self.registered_bls_keys(&header_verifier_address).get();
+        let min_validators = self.min_validators().get();
+
+        require!(
+            registered_bls_keys >= min_validators,
+            "There are not enough registered validators in the current Sovereign Chain"
+        );
+
         self.tx()
             .to(ToSelf)
             .typed(UserBuiltinProxy)

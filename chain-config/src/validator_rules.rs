@@ -38,4 +38,10 @@ pub trait ValidatorRulesModule {
     #[view(wasPreviouslySlashed)]
     #[storage_mapper("wasPreviouslySlashed")]
     fn was_previously_slashed(&self, validator: &ManagedAddress) -> SingleValueMapper<bool>;
+
+    #[storage_mapper_from_address("blsKeysFromHeaderVerifier")]
+    fn registered_bls_keys(
+        &self,
+        sc_address: ManagedAddress,
+    ) -> SetMapper<ManagedBuffer, ManagedAddress>;
 }
