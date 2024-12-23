@@ -2,6 +2,7 @@
 
 use multiversx_sc::codec;
 use multiversx_sc::proxy_imports::{TopDecode, TopEncode};
+use transaction::SovereignConfig;
 
 multiversx_sc::imports!();
 
@@ -14,7 +15,13 @@ pub enum OperationHashStatus {
 #[multiversx_sc::contract]
 pub trait Headerverifier: setup_phase::SetupPhaseModule {
     #[init]
-    fn init(&self, bls_pub_keys: MultiValueEncoded<ManagedBuffer>) {
+    fn init(
+        &self,
+        chain_config_address: ManagedAddress,
+        bls_pub_keys: MultiValueEncoded<ManagedBuffer>,
+    ) {
+        self.require_sc_address(&chain_config_address);
+        self.chain_config_address().set(chain_config_address);
         for pub_key in bls_pub_keys {
             self.bls_pub_keys().insert(pub_key);
         }
@@ -51,6 +58,22 @@ pub trait Headerverifier: setup_phase::SetupPhaseModule {
         }
 
         hash_of_hashes_history_mapper.insert(bridge_operations_hash);
+    }
+
+    #[endpoint(updateConfig)]
+    fn update_config(&self, new_config: SovereignConfig<Self::Api>, signature: ManagedBuffer) {
+        // check bls
+        // tx to config
+    }
+
+    #[endpoint(changeValidatorSet)]
+    fn change_validator_set(
+        &self,
+        signature: ManagedBuffer,
+        bls_pub_keys: MultiValueEncoded<ManagedBuffer>,
+    ) {
+        // check bls
+        // update bls_pub_keys
     }
 
     #[only_owner]
