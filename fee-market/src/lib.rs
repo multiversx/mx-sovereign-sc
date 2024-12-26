@@ -16,6 +16,7 @@ pub trait FeeMarket:
     + subtract_fee::SubtractFeeModule
     + price_aggregator::PriceAggregatorModule
     + utils::UtilsModule
+    + setup_phase::SetupPhaseModule
 {
     #[init]
     fn init(&self, esdt_safe_address: ManagedAddress, fee: Option<FeeStruct<Self::Api>>) {
@@ -40,9 +41,21 @@ pub trait FeeMarket:
 
     #[only_owner]
     fn complete_setup_phase(&self, header_verifier_address: ManagedAddress) {
+        if self.is_setup_phase_complete() {
+            return;
+        }
+
         require!(
             !self.esdt_safe_address().is_empty(),
             "The ESDT-Safe address is not set"
         );
+
+        self.tx()
+            .to(ESDTSystemSCAddress)
+            .typed(UserBuiltinProxy)
+            .change_owner_address(&header_verifier_address)
+            .sync_call();
+
+        self.setup_phase_complete().set(true);
     }
 }
