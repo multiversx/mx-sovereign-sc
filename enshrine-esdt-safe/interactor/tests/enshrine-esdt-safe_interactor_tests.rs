@@ -1,5 +1,6 @@
 use std::vec;
 
+use aliases::{GasLimit, PaymentsVec};
 use enshrine_esdt_safe_interactor::ContractInteract;
 use interactor::constants::{TOKEN_ID, WHITELIST_TOKEN_ID};
 use interactor::interactor_config::Config;

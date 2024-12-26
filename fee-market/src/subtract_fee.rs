@@ -1,4 +1,4 @@
-use transaction::GasLimit;
+use transaction::aliases::GasLimit;
 
 use crate::fee_type::FeeType;
 

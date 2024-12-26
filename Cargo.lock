@@ -2520,6 +2520,7 @@ name = "utils"
 version = "0.0.0"
 dependencies = [
  "multiversx-sc",
+ "transaction",
 ]
 
 [[package]]

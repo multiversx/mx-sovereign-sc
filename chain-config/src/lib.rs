@@ -1,7 +1,7 @@
 #![no_std]
 
 use multiversx_sc_modules::only_admin;
-use transaction::StakeMultiArg;
+use transaction::aliases::StakeMultiArg;
 use validator_rules::TokenIdAmountPair;
 
 multiversx_sc::imports!();

@@ -1,6 +1,6 @@
 #![no_std]
 
-use transaction::GasLimit;
+use transaction::aliases::GasLimit;
 
 multiversx_sc::imports!();
 multiversx_sc::derive_imports!();

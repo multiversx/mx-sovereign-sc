@@ -1,15 +1,11 @@
 #![no_std]
 
-use aliases::{
-    BlockNonce, EventPaymentTuple, GasLimit, OptionalValueTransferDataTuple, TxAsMultiValue, TxId,
-    TxNonce,
-};
+use aliases::{EventPaymentTuple, GasLimit, OptionalValueTransferDataTuple, TxId};
 
 multiversx_sc::imports!();
 multiversx_sc::derive_imports!();
 
 pub mod aliases;
-pub mod transaction_status;
 
 // revert protection
 pub const MIN_BLOCKS_FOR_FINALITY: u64 = 10;
@@ -207,51 +203,5 @@ impl<M: ManagedTypeApi> Default for OperationEsdtPayment<M> {
             token_nonce: 0,
             token_data: EsdtTokenData::default(),
         }
-    }
-}
-
-#[type_abi]
-#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, ManagedVecItem, Clone)]
-pub struct Transaction<M: ManagedTypeApi> {
-    pub block_nonce: BlockNonce,
-    pub nonce: TxNonce,
-    pub from: ManagedAddress<M>,
-    pub to: ManagedAddress<M>,
-    pub tokens: ManagedVec<M, EsdtTokenPayment<M>>,
-    pub token_data: ManagedVec<M, EsdtTokenData<M>>,
-    pub opt_transfer_data: Option<TransferData<M>>,
-    pub is_refund_tx: bool,
-}
-
-impl<M: ManagedTypeApi> From<TxAsMultiValue<M>> for Transaction<M> {
-    fn from(tx_as_multiresult: TxAsMultiValue<M>) -> Self {
-        let (block_nonce, nonce, from, to, tokens, token_data, opt_transfer_data) =
-            tx_as_multiresult.into_tuple();
-
-        Transaction {
-            block_nonce,
-            nonce,
-            from,
-            to,
-            tokens,
-            token_data,
-            opt_transfer_data,
-            is_refund_tx: false,
-        }
-    }
-}
-
-impl<M: ManagedTypeApi> Transaction<M> {
-    pub fn into_multiresult(self) -> TxAsMultiValue<M> {
-        (
-            self.block_nonce,
-            self.nonce,
-            self.from,
-            self.to,
-            self.tokens,
-            self.token_data,
-            self.opt_transfer_data,
-        )
-            .into()
     }
 }

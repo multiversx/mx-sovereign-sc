@@ -1,7 +1,7 @@
 #![no_std]
 
 use multiversx_sc::imports::*;
-use transaction::GasLimit;
+use transaction::aliases::GasLimit;
 
 pub mod common;
 pub mod from_sovereign;

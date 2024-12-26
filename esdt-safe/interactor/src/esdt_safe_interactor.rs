@@ -12,16 +12,14 @@ use proxies::esdt_safe_proxy::EsdtSafeProxy;
 use proxies::fee_market_proxy::{FeeMarketProxy, FeeStruct, FeeType};
 use proxies::header_verifier_proxy::HeaderverifierProxy;
 use proxies::testing_sc_proxy::TestingScProxy;
-use transaction::{GasLimit, Operation, OperationData, PaymentsVec};
+use transaction::aliases::{OptionalTransferData, PaymentsVec};
+use transaction::{Operation, OperationData};
 use transaction::{OperationEsdtPayment, TransferData};
 
 const FEE_MARKET_CODE_PATH: &str = "../../fee-market/output/fee-market.mxsc.json";
 const HEADER_VERIFIER_CODE_PATH: &str = "../../header-verifier/output/header-verifier.mxsc.json";
 const ESDT_SAFE_CODE_PATH: &str = "../output/esdt-safe.mxsc.json";
 const TESTING_SC_CODE_PATH: &str = "../../testing-sc/output/testing-sc.mxsc.json";
-
-type OptionalTransferData<M> =
-    OptionalValue<MultiValue3<GasLimit, ManagedBuffer<M>, ManagedVec<M, ManagedBuffer<M>>>>;
 
 pub async fn esdt_safe_cli() {
     env_logger::init();
@@ -36,7 +34,7 @@ pub async fn esdt_safe_cli() {
         "upgrade" => interact.upgrade().await,
         "setFeeMarketAddress" => interact.set_fee_market_address().await,
         "setHeaderVerifierAddress" => interact.set_header_verifier_address().await,
-        "deposit" => interact.deposit(OptionalTransferData::None, None).await,
+        "deposit" => interact.deposit(None.into(), None).await,
         "registerToken" => interact.register_token().await,
         "setMaxBridgedAmount" => interact.set_max_bridged_amount().await,
         "getMaxBridgedAmount" => interact.max_bridged_amount().await,
@@ -112,9 +110,10 @@ impl ContractInteract {
             .await;
 
         let new_address_bech32 = bech32::encode(&new_address);
-        self.state.set_esdt_safe_address(Bech32Address::from_bech32_string(
-            new_address_bech32.clone(),
-        ));
+        self.state
+            .set_esdt_safe_address(Bech32Address::from_bech32_string(
+                new_address_bech32.clone(),
+            ));
 
         println!("new address: {new_address_bech32}");
     }

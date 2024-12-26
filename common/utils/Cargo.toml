@@ -7,6 +7,9 @@ edition = "2021"
 [lib]
 path = "src/lib.rs"
 
+[dependencies.transaction]
+path = "../transaction"
+
 [dependencies.multiversx-sc]
 version = "=0.54.5"
 features = ["esdt-token-payment-legacy-decode"]
