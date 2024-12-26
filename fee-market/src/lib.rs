@@ -37,4 +37,12 @@ pub trait FeeMarket:
         self.price_aggregator_address()
             .set(price_aggregator_address);
     }
+
+    #[only_owner]
+    fn complete_setup_phase(&self, header_verifier_address: ManagedAddress) {
+        require!(
+            !self.esdt_safe_address().is_empty(),
+            "The ESDT-Safe address is not set"
+        );
+    }
 }
