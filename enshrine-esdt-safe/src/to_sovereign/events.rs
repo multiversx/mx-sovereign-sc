@@ -1,4 +1,4 @@
-use transaction::OperationData;
+use operation::OperationData;
 
 multiversx_sc::imports!();
 multiversx_sc::derive_imports!();

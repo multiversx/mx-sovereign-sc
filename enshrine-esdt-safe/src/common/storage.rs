@@ -1,5 +1,5 @@
 use multiversx_sc::imports::*;
-use transaction::OperationEsdtPayment;
+use operation::OperationEsdtPayment;
 
 #[multiversx_sc::module]
 pub trait CommonStorage {

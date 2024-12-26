@@ -20,8 +20,8 @@ version = "=0.54.5"
 [dependencies.multiversx-sc-modules]
 version = "=0.54.5"
 
-[dependencies.transaction]
-path = "../common/transaction"
+[dependencies.operation]
+path = "../common/operation"
 
 [dependencies.setup-phase]
 path = "../common/setup-phase"

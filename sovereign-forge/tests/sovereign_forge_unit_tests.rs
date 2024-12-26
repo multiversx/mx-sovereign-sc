@@ -16,7 +16,7 @@ use sovereign_forge::common::{
     storage::StorageModule,
     utils::{ScArray, UtilsModule},
 };
-use transaction::aliases::StakeMultiArg;
+use operation::aliases::StakeMultiArg;
 
 const FORGE_ADDRESS: TestSCAddress = TestSCAddress::new("sovereign-forge");
 const FORGE_CODE_PATH: MxscPath = MxscPath::new("output/sovereign-forge.mxsc.json");

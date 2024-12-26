@@ -8,7 +8,7 @@ use interactor::interactor_config::Config;
 use interactor::interactor_state::State;
 use multiversx_sc_snippets::imports::*;
 use proxies::*;
-use transaction::*;
+use operation::*;
 
 const FEE_MARKET_CODE_PATH: &str = "../fee-market/output/fee-market.mxsc.json";
 const HEADER_VERIFIER_CODE_PATH: &str = "../header-verifier/output/header-verifier.mxsc.json";

@@ -11,8 +11,8 @@ path = "src/lib.rs"
 [dependencies.multiversx-sc]
 version = "=0.54.5"
 
-[dependencies.transaction]
-path = "../common/transaction"
+[dependencies.operation]
+path = "../common/operation"
 
 [dependencies.proxies]
 path = "../common/proxies"

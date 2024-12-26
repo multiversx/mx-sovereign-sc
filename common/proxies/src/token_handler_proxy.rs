@@ -95,9 +95,9 @@ where
     }
 
     pub fn transfer_tokens<
-        Arg0: ProxyArg<Option<transaction::TransferData<Env::Api>>>,
+        Arg0: ProxyArg<Option<operation::TransferData<Env::Api>>>,
         Arg1: ProxyArg<ManagedAddress<Env::Api>>,
-        Arg2: ProxyArg<MultiValueEncoded<Env::Api, transaction::OperationEsdtPayment<Env::Api>>>,
+        Arg2: ProxyArg<MultiValueEncoded<Env::Api, operation::OperationEsdtPayment<Env::Api>>>,
     >(
         self,
         opt_transfer_data: Arg0,

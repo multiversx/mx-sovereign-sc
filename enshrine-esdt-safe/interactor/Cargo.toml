@@ -18,8 +18,8 @@ toml = "0.8.6"
 [dependencies.enshrine-esdt-safe]
 path = ".."
 
-[dependencies.transaction]
-path = "../../common/transaction"
+[dependencies.operation]
+path = "../../common/operation"
 
 [dependencies.tx-batch-module]
 path = "../../common/tx-batch-module"

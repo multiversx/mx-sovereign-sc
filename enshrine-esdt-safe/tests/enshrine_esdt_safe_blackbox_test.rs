@@ -12,8 +12,8 @@ use proxies::enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy;
 use proxies::fee_market_proxy::{FeeMarketProxy, FeeStruct, FeeType};
 use proxies::header_verifier_proxy::HeaderverifierProxy;
 use proxies::token_handler_proxy::TokenHandlerProxy;
-use transaction::aliases::{GasLimit, OptionalTransferData, PaymentsVec};
-use transaction::{Operation, OperationData, OperationEsdtPayment};
+use operation::aliases::{GasLimit, OptionalTransferData, PaymentsVec};
+use operation::{Operation, OperationData, OperationEsdtPayment};
 
 const ENSHRINE_ESDT_ADDRESS: TestSCAddress = TestSCAddress::new("enshrine-esdt");
 const ENSHRINE_ESDT_CODE_PATH: MxscPath = MxscPath::new("output/enshrine-esdt-safe.mxsc-json");

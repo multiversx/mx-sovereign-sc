@@ -1,6 +1,6 @@
 use crate::common;
 use proxies::fee_market_proxy::FeeMarketProxy;
-use transaction::{
+use operation::{
     aliases::{GasLimit, OptionalValueTransferDataTuple},
     EventPayment, OperationData, TransferData,
 };

@@ -1,6 +1,6 @@
 use multiversx_sc::api::ESDT_MULTI_TRANSFER_FUNC_NAME;
 use proxies::header_verifier_proxy::HeaderverifierProxy;
-use transaction::{
+use operation::{
     aliases::GasLimit, Operation, OperationData, OperationEsdtPayment, OperationTuple,
 };
 

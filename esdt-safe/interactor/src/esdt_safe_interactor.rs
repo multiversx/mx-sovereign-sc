@@ -12,9 +12,9 @@ use proxies::esdt_safe_proxy::EsdtSafeProxy;
 use proxies::fee_market_proxy::{FeeMarketProxy, FeeStruct, FeeType};
 use proxies::header_verifier_proxy::HeaderverifierProxy;
 use proxies::testing_sc_proxy::TestingScProxy;
-use transaction::aliases::{OptionalTransferData, PaymentsVec};
-use transaction::{Operation, OperationData};
-use transaction::{OperationEsdtPayment, TransferData};
+use operation::aliases::{OptionalTransferData, PaymentsVec};
+use operation::{Operation, OperationData};
+use operation::{OperationEsdtPayment, TransferData};
 
 const FEE_MARKET_CODE_PATH: &str = "../../fee-market/output/fee-market.mxsc.json";
 const HEADER_VERIFIER_CODE_PATH: &str = "../../header-verifier/output/header-verifier.mxsc.json";

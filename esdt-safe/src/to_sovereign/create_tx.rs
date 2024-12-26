@@ -1,7 +1,7 @@
 use crate::from_sovereign::token_mapping;
 use multiversx_sc::storage::StorageKey;
 use proxies::fee_market_proxy::FeeMarketProxy;
-use transaction::{
+use operation::{
     aliases::{EventPaymentTuple, ExtractedFeeResult, GasLimit, OptionalValueTransferDataTuple},
     OperationData, TransferData,
 };

@@ -6,7 +6,7 @@ use interactor::constants::{TOKEN_ID, WHITELIST_TOKEN_ID};
 use interactor::interactor_config::Config;
 use multiversx_sc_snippets::imports::*;
 use proxies::*;
-use transaction::*;
+use operation::*;
 
 type OptionalTransferData<M> =
     OptionalValue<MultiValue3<GasLimit, ManagedBuffer<M>, ManagedVec<M, ManagedBuffer<M>>>>;

@@ -8,8 +8,8 @@ publish = false
 [lib]
 path = "src/lib.rs"
 
-[dependencies.transaction]
-path = "../common/transaction"
+[dependencies.operation]
+path = "../common/operation"
 
 [dependencies.tx-batch-module]
 path = "../common/tx-batch-module"

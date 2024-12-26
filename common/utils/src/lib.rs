@@ -1,6 +1,6 @@
 #![no_std]
 
-use transaction::aliases::PaymentsVec;
+use operation::aliases::PaymentsVec;
 
 multiversx_sc::imports!();
 

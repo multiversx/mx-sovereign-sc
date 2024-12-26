@@ -3,7 +3,7 @@ use core::ops::Deref;
 use proxies::fee_market_proxy::FeeStruct;
 
 use multiversx_sc::{require, types::MultiValueEncoded};
-use transaction::aliases::StakeMultiArg;
+use operation::aliases::StakeMultiArg;
 
 use crate::common::{
     self,
