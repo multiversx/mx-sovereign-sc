@@ -34,13 +34,13 @@ path = "../../common/interactor"
 path = "../../fee-market"
 
 [dependencies.multiversx-sc-snippets]
-version = "=0.54.5"
+version = "=0.54.6"
 
 [dependencies.multiversx-sc]
-version = "=0.54.5"
+version = "=0.54.6"
 
 [dependencies.multiversx-sc-scenario]
-version = "=0.54.5"
+version = "=0.54.6"
 
 [dependencies.clap]
 version = "4.4.7"
