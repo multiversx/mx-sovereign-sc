@@ -9,7 +9,7 @@ publish = false
 path = "src/lib.rs"
 
 [dependencies.multiversx-sc]
-version = "=0.54.5"
+version = "=0.54.6"
 
 [dependencies.transaction]
 path = "../common/transaction"
@@ -24,4 +24,4 @@ path = "../common/setup-phase"
 num-bigint = "0.4.2"
 
 [dev-dependencies.multiversx-sc-scenario]
-version = "=0.54.5"
+version = "=0.54.6"

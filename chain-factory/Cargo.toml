@@ -12,13 +12,13 @@ path = "src/lib.rs"
 num-bigint = "0.4.2"
 
 [dev-dependencies.multiversx-sc-scenario]
-version = "=0.54.5"
+version = "=0.54.6"
 
 [dependencies.multiversx-sc]
-version = "=0.54.5"
+version = "=0.54.6"
 
 [dependencies.multiversx-sc-modules]
-version = "=0.54.5"
+version = "=0.54.6"
 
 [dependencies.utils]
 path = "../common/utils"

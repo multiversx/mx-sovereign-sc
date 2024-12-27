@@ -1349,9 +1349,9 @@ checksum = "b59072fa0624b55ae5ae3fa6bfa91515bbeb4ac440214bc4a509e2c8806d6e9f"
 
 [[package]]
 name = "multiversx-sc"
-version = "0.54.5"
+version = "0.54.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "64fe45538f796de9bc77df3ca2565c33efc4587c8a5825fd3add60c9fce95d31"
+checksum = "7884cd30870fc66d3ba7c8c0c0eac92a54283a87b9514d790ccc6038e51de704"
 dependencies = [
  "bitflags",
  "hex-literal",
@@ -1388,9 +1388,9 @@ dependencies = [
 
 [[package]]
 name = "multiversx-sc-derive"
-version = "0.54.5"
+version = "0.54.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "70840a5c8ea248bdebabbce2379ca31e5e551a6eac94ce9ca12927e811ac4136"
+checksum = "b5e26214e1f9105a32c296bee6d70055533741fb0a6d00a24b1236c78622fa69"
 dependencies = [
  "hex",
  "proc-macro2",
@@ -1401,9 +1401,9 @@ dependencies = [
 
 [[package]]
 name = "multiversx-sc-meta-lib"
-version = "0.54.5"
+version = "0.54.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "94ae85f4a3351e66b605ac087f5d5978eba353f5c62e33594355e67b3fd2d754"
+checksum = "3d57ef0d09a32d98b7305e1a385bdd588926f40444a663bb4fde327168181271"
 dependencies = [
  "clap",
  "colored",
@@ -1423,18 +1423,18 @@ dependencies = [
 
 [[package]]
 name = "multiversx-sc-modules"
-version = "0.54.5"
+version = "0.54.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "31def164a74b9cfaf12600788e90978c2e39a43be6cfe9dea04e8ecb6e25198c"
+checksum = "e67bf42a5cd6319a619e7d9915e0ae6837f693696bc55f3d1ac6b09b01cb48c4"
 dependencies = [
  "multiversx-sc",
 ]
 
 [[package]]
 name = "multiversx-sc-scenario"
-version = "0.54.5"
+version = "0.54.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "54b09133906be22a851f2b96c6ce07d3ed2b340c84b8d0e397b6c39995b88139"
+checksum = "9a8187f3c37fcc5dbceadcebf99e256e7194f0aa1ba8a5e2e595ecac64b3b639"
 dependencies = [
  "base64",
  "bech32",
@@ -1458,9 +1458,9 @@ dependencies = [
 
 [[package]]
 name = "multiversx-sc-snippets"
-version = "0.54.5"
+version = "0.54.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "720163e20c44e21086440af49c118c4f4808199c485b7272012ee08d5cdf8f18"
+checksum = "fb06482c7bfb286fbebb1b03c67aa87348db1a773e4eb8b2f41df5bcc3db5500"
 dependencies = [
  "anyhow",
  "base64",
