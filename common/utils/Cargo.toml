@@ -11,5 +11,5 @@ path = "src/lib.rs"
 path = "../operation"
 
 [dependencies.multiversx-sc]
-version = "=0.54.5"
+version = "=0.54.6"
 features = ["esdt-token-payment-legacy-decode"]
