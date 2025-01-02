@@ -36,6 +36,27 @@ pub type StakeMultiArg<M> = MultiValue2<TokenIdentifier<M>, BigUint<M>>;
 
 #[type_abi]
 #[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, ManagedVecItem, Clone)]
+pub struct BridgeConfig<M: ManagedTypeApi> {
+    pub token_whitelist: ManagedVec<M, TokenIdentifier<M>>,
+    pub token_blacklist: ManagedVec<M, TokenIdentifier<M>>,
+    pub max_tx_gas_limit: GasLimit,
+    pub banned_endpoints: ManagedVec<M, ManagedBuffer<M>>,
+}
+
+impl<M: ManagedTypeApi> BridgeConfig<M> {
+    #[inline]
+    pub fn default() -> Self {
+        BridgeConfig {
+            token_whitelist: ManagedVec::new(),
+            token_blacklist: ManagedVec::new(),
+            max_tx_gas_limit: 0,
+            banned_endpoints: ManagedVec::new(),
+        }
+    }
+}
+
+#[type_abi]
+#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, ManagedVecItem, Clone)]
 pub struct Operation<M: ManagedTypeApi> {
     pub to: ManagedAddress<M>,
     pub tokens: ManagedVec<M, OperationEsdtPayment<M>>,

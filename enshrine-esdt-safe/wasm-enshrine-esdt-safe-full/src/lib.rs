@@ -6,9 +6,9 @@
 
 // Init:                                 1
 // Upgrade:                              1
-// Endpoints:                           18
+// Endpoints:                           19
 // Async Callback:                       1
-// Total number of exported functions:  21
+// Total number of exported functions:  22
 
 #![no_std]
 
@@ -20,6 +20,7 @@ multiversx_sc_wasm_adapter::endpoints! {
     (
         init => init
         upgrade => upgrade
+        updateConfiguration => update_configuration
         setFeeMarketAddress => set_fee_market_address
         setHeaderVerifierAddress => set_header_verifier_address
         setMaxTxGasLimit => set_max_user_tx_gas_limit

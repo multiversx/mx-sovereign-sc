@@ -1,7 +1,7 @@
 #![no_std]
 
 use multiversx_sc::imports::*;
-use transaction::GasLimit;
+use transaction::{BridgeConfig, GasLimit};
 
 pub mod common;
 pub mod from_sovereign;
@@ -29,6 +29,7 @@ pub trait EnshrineEsdtSafe:
         token_handler_address: ManagedAddress,
         opt_wegld_identifier: Option<TokenIdentifier>,
         opt_sov_token_prefix: Option<ManagedBuffer>,
+        config: BridgeConfig<Self::Api>,
     ) {
         self.is_sovereign_chain().set(is_sovereign_chain);
         self.set_paused(true);
@@ -58,6 +59,20 @@ pub trait EnshrineEsdtSafe:
 
         let caller = self.blockchain().get_caller();
         self.initiator_address().set(caller);
+
+        self.config().set(config);
+    }
+
+    #[only_owner]
+    #[endpoint(updateConfiguration)]
+    fn update_configuration(&self, new_config: BridgeConfig<Self::Api>) {
+        let config_mapper = self.config();
+        require!(
+            config_mapper.is_empty(),
+            "There is no configuration set in this contract"
+        );
+
+        config_mapper.set(new_config);
     }
 
     #[only_owner]
