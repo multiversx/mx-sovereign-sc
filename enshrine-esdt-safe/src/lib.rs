@@ -68,7 +68,7 @@ pub trait EnshrineEsdtSafe:
     fn update_configuration(&self, new_config: BridgeConfig<Self::Api>) {
         let config_mapper = self.config();
         require!(
-            config_mapper.is_empty(),
+            !config_mapper.is_empty(),
             "There is no configuration set in this contract"
         );
 
