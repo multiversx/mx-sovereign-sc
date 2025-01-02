@@ -1,8 +1,7 @@
 use crate::common;
 use proxies::fee_market_proxy::FeeMarketProxy;
 use transaction::{
-    BridgeConfig, EventPayment, GasLimit, OperationData, OptionalValueTransferDataTuple,
-    TransferData,
+    EventPayment, GasLimit, OperationData, OptionalValueTransferDataTuple, TransferData,
 };
 
 use multiversx_sc::imports::*;
@@ -174,25 +173,4 @@ pub trait CreateTxModule:
             "Banned endpoint name"
         );
     }
-
-    #[storage_mapper("feeMarketAddress")]
-    fn fee_market_address(&self) -> SingleValueMapper<ManagedAddress>;
-
-    #[storage_mapper("maxUserTxGasLimit")]
-    fn max_user_tx_gas_limit(&self) -> SingleValueMapper<GasLimit>;
-
-    #[storage_mapper("burnTokens")]
-    fn burn_tokens(&self) -> UnorderedSetMapper<TokenIdentifier>;
-
-    #[storage_mapper("bannedEndpointNames")]
-    fn banned_endpoint_names(&self) -> UnorderedSetMapper<ManagedBuffer>;
-
-    #[storage_mapper("config")]
-    fn config(&self) -> SingleValueMapper<BridgeConfig<Self::Api>>;
-
-    #[storage_mapper_from_address("feeEnabledFlag")]
-    fn external_fee_enabled(
-        &self,
-        sc_address: ManagedAddress,
-    ) -> SingleValueMapper<bool, ManagedAddress>;
 }
