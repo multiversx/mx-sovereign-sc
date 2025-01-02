@@ -137,12 +137,14 @@ where
         Arg1: ProxyArg<ManagedAddress<Env::Api>>,
         Arg2: ProxyArg<TokenIdentifier<Env::Api>>,
         Arg3: ProxyArg<ManagedBuffer<Env::Api>>,
+        Arg4: ProxyArg<transaction::BridgeConfig<Env::Api>>,
     >(
         self,
         is_sovereign_chain: Arg0,
         token_handler_address: Arg1,
         wegld_identifier: Arg2,
         sov_token_prefix: Arg3,
+        config: Arg4,
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ManagedAddress<Env::Api>> {
         self.wrapped_tx
             .payment(NotPayable)
@@ -151,6 +153,7 @@ where
             .argument(&token_handler_address)
             .argument(&wegld_identifier)
             .argument(&sov_token_prefix)
+            .argument(&config)
             .original_result()
     }
 

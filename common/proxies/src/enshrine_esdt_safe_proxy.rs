@@ -48,12 +48,14 @@ where
         Arg1: ProxyArg<ManagedAddress<Env::Api>>,
         Arg2: ProxyArg<Option<TokenIdentifier<Env::Api>>>,
         Arg3: ProxyArg<Option<ManagedBuffer<Env::Api>>>,
+        Arg4: ProxyArg<transaction::BridgeConfig<Env::Api>>,
     >(
         self,
         is_sovereign_chain: Arg0,
         token_handler_address: Arg1,
         opt_wegld_identifier: Arg2,
         opt_sov_token_prefix: Arg3,
+        config: Arg4,
     ) -> TxTypedDeploy<Env, From, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
@@ -62,6 +64,7 @@ where
             .argument(&token_handler_address)
             .argument(&opt_wegld_identifier)
             .argument(&opt_sov_token_prefix)
+            .argument(&config)
             .original_result()
     }
 }
@@ -94,6 +97,19 @@ where
     To: TxTo<Env>,
     Gas: TxGas<Env>,
 {
+    pub fn update_configuration<
+        Arg0: ProxyArg<transaction::BridgeConfig<Env::Api>>,
+    >(
+        self,
+        new_config: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("updateConfiguration")
+            .argument(&new_config)
+            .original_result()
+    }
+
     pub fn set_fee_market_address<
         Arg0: ProxyArg<ManagedAddress<Env::Api>>,
     >(
