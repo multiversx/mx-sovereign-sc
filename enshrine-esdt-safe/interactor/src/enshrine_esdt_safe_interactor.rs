@@ -27,7 +27,7 @@ pub async fn enshrine_esdt_safe_cli() {
     let config = Config::load_config();
     let mut interact = ContractInteract::new(config).await;
     match cmd.as_str() {
-        "deploy" => interact.deploy(false, BridgeConfig::default()).await,
+        "deploy" => interact.deploy(false, BridgeConfig::empty_config()).await,
         "upgrade" => interact.upgrade().await,
         "setFeeMarketAddress" => interact.set_fee_market_address().await,
         "setHeaderVerifierAddress" => interact.set_header_verifier_address().await,

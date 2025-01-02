@@ -45,7 +45,7 @@ pub struct BridgeConfig<M: ManagedTypeApi> {
 
 impl<M: ManagedTypeApi> BridgeConfig<M> {
     #[inline]
-    pub fn default() -> Self {
+    pub fn empty_config() -> Self {
         BridgeConfig {
             token_whitelist: ManagedVec::new(),
             token_blacklist: ManagedVec::new(),

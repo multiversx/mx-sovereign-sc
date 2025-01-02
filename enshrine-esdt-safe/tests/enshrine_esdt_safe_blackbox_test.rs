@@ -202,7 +202,7 @@ impl EnshrineTestState {
             is_sovereign_chain,
             Some(TokenIdentifier::from(WEGLD_IDENTIFIER)),
             Some(SOVEREIGN_TOKEN_PREFIX.into()),
-            BridgeConfig::default(),
+            BridgeConfig::empty_config(),
         );
         self.deploy_header_verifier_contract();
         self.deploy_token_handler_contract();
