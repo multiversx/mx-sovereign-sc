@@ -27,7 +27,7 @@ pub async fn enshrine_esdt_safe_cli() {
     let config = Config::load_config();
     let mut interact = ContractInteract::new(config).await;
     match cmd.as_str() {
-        "deploy" => interact.deploy(false).await,
+        "deploy" => interact.deploy(false, BridgeConfig::default()).await,
         "upgrade" => interact.upgrade().await,
         "setFeeMarketAddress" => interact.set_fee_market_address().await,
         "setHeaderVerifierAddress" => interact.set_header_verifier_address().await,
@@ -97,7 +97,7 @@ impl ContractInteract {
         }
     }
 
-    pub async fn deploy(&mut self, is_sovereign_chain: bool) {
+    pub async fn deploy(&mut self, is_sovereign_chain: bool, config: BridgeConfig<StaticApi>) {
         let opt_wegld_identifier =
             Option::Some(TokenIdentifier::from_esdt_bytes(WHITELIST_TOKEN_ID));
         let opt_sov_token_prefix = Option::Some(ManagedBuffer::new_from_bytes(&b"sov"[..]));
@@ -116,6 +116,7 @@ impl ContractInteract {
                 token_handler_address,
                 opt_wegld_identifier,
                 opt_sov_token_prefix,
+                config,
             )
             .code(code_path)
             .returns(ReturnsNewAddress)
@@ -208,17 +209,17 @@ impl ContractInteract {
         println!("new token_handler_address: {new_address_bech32}");
     }
 
-    pub async fn deploy_all(&mut self, is_sov_chain: bool) {
+    pub async fn deploy_all(&mut self, is_sov_chain: bool, config: BridgeConfig<StaticApi>) {
         self.deploy_token_handler().await;
-        self.deploy(is_sov_chain).await;
+        self.deploy(is_sov_chain, config).await;
         self.deploy_header_verifier().await;
         self.deploy_fee_market().await;
         self.unpause_endpoint().await;
     }
 
-    pub async fn deploy_setup(&mut self) {
+    pub async fn deploy_setup(&mut self, config: BridgeConfig<StaticApi>) {
         self.deploy_token_handler().await;
-        self.deploy(false).await;
+        self.deploy(false, config).await;
         self.unpause_endpoint().await;
     }
 

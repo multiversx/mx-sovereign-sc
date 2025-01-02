@@ -12,7 +12,7 @@ use proxies::enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy;
 use proxies::fee_market_proxy::{FeeMarketProxy, FeeStruct, FeeType};
 use proxies::header_verifier_proxy::HeaderverifierProxy;
 use proxies::token_handler_proxy::TokenHandlerProxy;
-use transaction::{GasLimit, Operation, OperationData, OperationEsdtPayment};
+use transaction::{BridgeConfig, GasLimit, Operation, OperationData, OperationEsdtPayment};
 use utils::PaymentsVec;
 
 const ENSHRINE_ESDT_ADDRESS: TestSCAddress = TestSCAddress::new("enshrine-esdt");
@@ -125,6 +125,7 @@ impl EnshrineTestState {
         is_sovereign_chain: bool,
         wegld_identifier: Option<TokenIdentifier<StaticApi>>,
         sovereign_token_prefix: Option<ManagedBuffer<StaticApi>>,
+        config: BridgeConfig<StaticApi>,
     ) -> &mut Self {
         self.world
             .tx()
@@ -135,6 +136,7 @@ impl EnshrineTestState {
                 TOKEN_HANDLER_ADDRESS,
                 wegld_identifier,
                 sovereign_token_prefix,
+                config,
             )
             .code(ENSHRINE_ESDT_CODE_PATH)
             .new_address(ENSHRINE_ESDT_ADDRESS)
@@ -200,6 +202,7 @@ impl EnshrineTestState {
             is_sovereign_chain,
             Some(TokenIdentifier::from(WEGLD_IDENTIFIER)),
             Some(SOVEREIGN_TOKEN_PREFIX.into()),
+            BridgeConfig::default(),
         );
         self.deploy_header_verifier_contract();
         self.deploy_token_handler_contract();
