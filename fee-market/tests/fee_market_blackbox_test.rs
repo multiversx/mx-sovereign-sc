@@ -6,8 +6,7 @@ use multiversx_sc::{
     },
 };
 use multiversx_sc_scenario::{
-    api::StaticApi, imports::MxscPath, ExpectError, ReturnsHandledOrError, ScenarioTxRun,
-    ScenarioWorld,
+    api::StaticApi, imports::MxscPath, ReturnsHandledOrError, ScenarioTxRun, ScenarioWorld,
 };
 use proxies::fee_market_proxy::{FeeMarketProxy, FeeStruct, FeeType};
 
@@ -137,7 +136,7 @@ impl FeeMarketTestState {
         &mut self,
         token_id: TestTokenIdentifier,
         fee_type: &str,
-        error_status: Option<ExpectError>,
+        error_message: Option<&str>,
     ) {
         let fee_struct: FeeStruct<StaticApi> = match fee_type {
             "None" => {
@@ -185,26 +184,18 @@ impl FeeMarketTestState {
             }
         };
 
-        match error_status {
-            Some(error) => {
-                self.world
-                    .tx()
-                    .from(OWNER_ADDRESS)
-                    .to(FEE_MARKET_ADDRESS)
-                    .typed(FeeMarketProxy)
-                    .set_fee(fee_struct)
-                    .returns(error)
-                    .run();
-            }
-            None => {
-                self.world
-                    .tx()
-                    .from(OWNER_ADDRESS)
-                    .to(FEE_MARKET_ADDRESS)
-                    .typed(FeeMarketProxy)
-                    .set_fee(fee_struct)
-                    .run();
-            }
+        let response = self
+            .world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .to(FEE_MARKET_ADDRESS)
+            .typed(FeeMarketProxy)
+            .set_fee(fee_struct)
+            .returns(ReturnsHandledOrError::new())
+            .run();
+
+        if let Err(error) = response {
+            assert_eq!(error_message, Some(error.message.as_str()))
         }
     }
 
@@ -247,25 +238,13 @@ fn test_add_fee_wrong_params() {
 
     state.deploy_fee_market();
 
-    state.add_fee(
-        WRONG_TOKEN_ID,
-        "Fixed",
-        Some(ExpectError(4, "Invalid token ID")),
-    );
+    state.add_fee(WRONG_TOKEN_ID, "Fixed", Some("Invalid token ID"));
 
-    state.add_fee(TOKEN_ID, "None", Some(ExpectError(4, "Invalid fee type")));
+    state.add_fee(TOKEN_ID, "None", Some("Invalid fee type"));
 
-    state.add_fee(
-        DIFFERENT_TOKEN_ID,
-        "Fixed",
-        Some(ExpectError(4, "Invalid fee")),
-    );
+    state.add_fee(DIFFERENT_TOKEN_ID, "Fixed", Some("Invalid fee"));
 
-    state.add_fee(
-        TOKEN_ID,
-        "AnyTokenWrong",
-        Some(ExpectError(4, "Invalid token ID")),
-    );
+    state.add_fee(TOKEN_ID, "AnyTokenWrong", Some("Invalid token ID"));
 }
 
 #[test]

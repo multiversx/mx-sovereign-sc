@@ -1,7 +1,7 @@
 use multiversx_sc::types::{BigUint, ManagedBuffer, MultiValueEncoded, TestAddress, TestSCAddress};
 use multiversx_sc_scenario::{
-    api::StaticApi, imports::MxscPath, ExpectError, ReturnsHandledOrError, ScenarioTxRun,
-    ScenarioTxWhitebox, ScenarioWorld,
+    api::StaticApi, imports::MxscPath, ReturnsHandledOrError, ScenarioTxRun, ScenarioTxWhitebox,
+    ScenarioWorld,
 };
 use proxies::{
     chain_config_proxy::ChainConfigContractProxy,
@@ -213,19 +213,19 @@ impl SovereignForgeTestState {
         }
     }
 
-    fn complete_setup_phase(&mut self, expected_result: Option<ExpectError>) {
-        let transaction = self
+    fn complete_setup_phase(&mut self, error_message: Option<&str>) {
+        let response = self
             .world
             .tx()
             .from(OWNER_ADDRESS)
             .to(FORGE_ADDRESS)
             .typed(SovereignForgeProxy)
-            .complete_setup_phase();
+            .complete_setup_phase()
+            .returns(ReturnsHandledOrError::new())
+            .run();
 
-        if let Some(error) = expected_result {
-            transaction.returns(error).run();
-        } else {
-            transaction.run();
+        if let Err(error) = response {
+            assert_eq!(error_message, Some(error.message.as_str()))
         }
     }
 
@@ -370,10 +370,9 @@ fn complete_setup_phase_no_chain_config_registered() {
     let mut state = SovereignForgeTestState::new();
     state.deploy_sovereign_forge();
 
-    state.complete_setup_phase(Some(ExpectError(
-        4,
+    state.complete_setup_phase(Some(
         "There is no Chain-Factory contract assigned for shard 1",
-    )));
+    ));
 }
 
 #[test]
@@ -382,10 +381,9 @@ fn complete_setup_phase_no_token_handler_registered() {
     state.deploy_sovereign_forge();
     state.register_chain_factory(1, FACTORY_ADDRESS, None);
 
-    state.complete_setup_phase(Some(ExpectError(
-        4,
+    state.complete_setup_phase(Some(
         "There is no Token-Handler contract assigned for shard 1",
-    )));
+    ));
 }
 
 #[test]
