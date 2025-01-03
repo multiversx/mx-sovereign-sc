@@ -7,7 +7,7 @@ use multiversx_sc::types::{
 use multiversx_sc_scenario::api::StaticApi;
 use multiversx_sc_scenario::multiversx_chain_vm::crypto_functions::sha256;
 use multiversx_sc_scenario::{imports::MxscPath, ScenarioWorld};
-use multiversx_sc_scenario::{managed_address, ExpectError, ScenarioTxRun};
+use multiversx_sc_scenario::{managed_address, ExpectError, ReturnsHandledOrError, ScenarioTxRun};
 use proxies::enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy;
 use proxies::fee_market_proxy::{FeeMarketProxy, FeeStruct, FeeType};
 use proxies::header_verifier_proxy::HeaderverifierProxy;
@@ -225,7 +225,7 @@ impl EnshrineTestState {
 
     fn propose_execute_operation(
         &mut self,
-        expected_result: Option<ExpectError<'_>>,
+        error_message: Option<&str>,
         tokens: &Vec<TestTokenIdentifier>,
     ) {
         let (tokens, data) = self.setup_payments(tokens);
@@ -235,17 +235,18 @@ impl EnshrineTestState {
         let hash_of_hashes: ManagedBuffer<StaticApi> =
             ManagedBuffer::from(&sha256(&operation_hash.to_vec()));
 
-        let transaction = self
+        let response = self
             .world
             .tx()
             .from(USER_ADDRESS)
             .to(ENSHRINE_ESDT_ADDRESS)
             .typed(EnshrineEsdtSafeProxy)
-            .execute_operations(hash_of_hashes, operation);
+            .execute_operations(hash_of_hashes, operation)
+            .returns(ReturnsHandledOrError::new())
+            .run();
 
-        match expected_result {
-            Some(error) => transaction.returns(error).run(),
-            None => transaction.run(),
+        if let Err(error) = response {
+            assert_eq!(error_message, Some(error.message.as_str()))
         }
     }
 
@@ -482,7 +483,7 @@ fn test_sovereign_prefix_no_prefix() {
     state.propose_register_operation(&token_vec);
     state.propose_register_esdt_in_header_verifier();
     state.propose_whitelist_enshrine_esdt();
-    state.propose_execute_operation(Some(ExpectError(10, "action is not allowed")), &token_vec);
+    state.propose_execute_operation(Some("action is not allowed"), &token_vec);
 }
 
 #[test]
