@@ -1,7 +1,7 @@
 use multiversx_sc::types::{BigUint, ManagedBuffer, MultiValueEncoded, TestAddress, TestSCAddress};
 use multiversx_sc_scenario::{
-    api::StaticApi, imports::MxscPath, ExpectError, ScenarioTxRun, ScenarioTxWhitebox,
-    ScenarioWorld,
+    api::StaticApi, imports::MxscPath, ExpectError, ReturnsHandledOrError, ScenarioTxRun,
+    ScenarioTxWhitebox, ScenarioWorld,
 };
 use proxies::{
     chain_config_proxy::ChainConfigContractProxy,
@@ -170,24 +170,25 @@ impl SovereignForgeTestState {
 
         self
     }
+
     fn register_token_handler(
         &mut self,
         shard_id: u32,
         token_handler_address: TestSCAddress,
-        expected_result: Option<ExpectError>,
+        error_message: Option<&str>,
     ) {
-        let transaction = self
+        let response = self
             .world
             .tx()
             .from(OWNER_ADDRESS)
             .to(FORGE_ADDRESS)
             .typed(SovereignForgeProxy)
-            .register_token_handler(shard_id, token_handler_address);
+            .register_token_handler(shard_id, token_handler_address)
+            .returns(ReturnsHandledOrError::new())
+            .run();
 
-        if let Some(error) = expected_result {
-            transaction.returns(error).run();
-        } else {
-            transaction.run();
+        if let Err(error) = response {
+            assert_eq!(error_message, Some(error.message.as_str()))
         }
     }
 
@@ -270,21 +271,21 @@ impl SovereignForgeTestState {
 
     fn deploy_phase_two(
         &mut self,
-        expected_result: Option<ExpectError>,
+        error_message: Option<&str>,
         bls_keys: &MultiValueEncoded<StaticApi, ManagedBuffer<StaticApi>>,
     ) {
-        let transaction = self
+        let response = self
             .world
             .tx()
             .from(OWNER_ADDRESS)
             .to(FORGE_ADDRESS)
             .typed(SovereignForgeProxy)
-            .deploy_phase_two(bls_keys);
+            .deploy_phase_two(bls_keys)
+            .returns(ReturnsHandledOrError::new())
+            .run();
 
-        if let Some(error) = expected_result {
-            transaction.returns(error).run();
-        } else {
-            transaction.run();
+        if let Err(error) = response {
+            assert_eq!(error_message, Some(error.message.as_str()))
         }
     }
 
@@ -500,10 +501,7 @@ fn deploy_phase_two_without_first_phase() {
     let bls_keys = MultiValueEncoded::<StaticApi, ManagedBuffer<StaticApi>>::new();
 
     state.deploy_phase_two(
-        Some(ExpectError(
-            4,
-            "The current caller has not deployed any Sovereign Chain",
-        )),
+        Some("The current caller has not deployed any Sovereign Chain"),
         &bls_keys,
     );
 }
@@ -572,7 +570,7 @@ fn deploy_phase_two_header_already_deployed() {
 
     state.deploy_phase_two(None, &bls_keys);
     state.deploy_phase_two(
-        Some(ExpectError(4, "The Header-Verifier SC is already deployed")),
+        Some("The Header-Verifier SC is already deployed"),
         &bls_keys,
     );
 }
