@@ -3,7 +3,7 @@ use multiversx_sc::types::{
     MultiValueEncoded, TestAddress, TestSCAddress, TestTokenIdentifier,
 };
 use multiversx_sc_scenario::{api::StaticApi, imports::MxscPath, ScenarioWorld};
-use multiversx_sc_scenario::{ExpectError, ScenarioTxRun};
+use multiversx_sc_scenario::{ExpectError, ReturnsHandledOrError, ScenarioTxRun};
 use proxies::chain_factory_proxy::ChainFactoryContractProxy;
 use proxies::token_handler_proxy::TokenHandlerProxy;
 use transaction::{OperationEsdtPayment, TransferData};
@@ -127,20 +127,23 @@ impl TokenHandlerTestState {
     fn propose_whitelist_caller(
         &mut self,
         enshrine_address: TestSCAddress,
-        error: Option<ExpectError>,
+        error_message: Option<&str>,
     ) {
-        let transaction = self
+        let response = self
             .world
             .tx()
             .to(TOKEN_HANDLER_ADDRESS)
             .from(enshrine_address)
             .typed(TokenHandlerProxy)
-            .whitelist_enshrine_esdt(enshrine_address);
+            .whitelist_enshrine_esdt(enshrine_address)
+            .returns(ReturnsHandledOrError::new())
+            .run();
 
-        if let Some(error) = error {
-            transaction.returns(error).run();
-        } else {
-            transaction.run();
+        if let Some(message) = error_message {
+            match response {
+                Err(error) => assert_eq!(message, error.message),
+                _ => {}
+            }
         }
     }
 
@@ -176,11 +179,11 @@ fn test_deploy() {
 #[test]
 fn test_whitelist_enshrine_esdt_caller_not_admin() {
     let mut state = TokenHandlerTestState::new();
-    let error = ExpectError(4, "Endpoint can only be called by admins");
+    let error_message = "Endpoint can only be called by admins";
 
     state.propose_deploy_token_handler();
     state.propose_deploy_factory_sc();
-    state.propose_whitelist_caller(TOKEN_HANDLER_ADDRESS, Some(error));
+    state.propose_whitelist_caller(TOKEN_HANDLER_ADDRESS, Some(error_message));
 }
 
 #[test]
