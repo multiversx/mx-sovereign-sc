@@ -289,19 +289,19 @@ impl SovereignForgeTestState {
         }
     }
 
-    fn deploy_phase_three(&mut self, is_sovereign_chain: bool, expect_error: Option<ExpectError>) {
-        let transaction = self
+    fn deploy_phase_three(&mut self, is_sovereign_chain: bool, error_message: Option<&str>) {
+        let response = self
             .world
             .tx()
             .from(OWNER_ADDRESS)
             .to(FORGE_ADDRESS)
             .typed(SovereignForgeProxy)
-            .deploy_phase_three(is_sovereign_chain);
+            .deploy_phase_three(is_sovereign_chain)
+            .returns(ReturnsHandledOrError::new())
+            .run();
 
-        if let Some(error) = expect_error {
-            transaction.returns(error).run();
-        } else {
-            transaction.run();
+        if let Err(error) = response {
+            assert_eq!(error_message, Some(error.message.as_str()))
         }
     }
 
@@ -418,10 +418,7 @@ fn deploy_phase_one_deploy_cost_too_low() {
         2,
         BigUint::from(2u32),
         MultiValueEncoded::new(),
-        Some(ExpectError(
-            4,
-            "The given deploy cost is not equal to the standard amount",
-        )),
+        Some("The given deploy cost is not equal to the standard amount"),
     );
 }
 
@@ -450,10 +447,7 @@ fn deploy_phase_one_chain_config_already_deployed() {
         2,
         BigUint::from(2u32),
         MultiValueEncoded::new(),
-        Some(ExpectError(
-            4,
-            "The Chain-Config contract is already deployed",
-        )),
+        Some("The Chain-Config contract is already deployed"),
     );
 }
 
@@ -626,10 +620,7 @@ fn deploy_phase_three_without_phase_one() {
 
     state.deploy_phase_three(
         false,
-        Some(ExpectError(
-            4,
-            "The Header-Verifier SC is not deployed, you skipped the second phase",
-        )),
+        Some("The Header-Verifier SC is not deployed, you skipped the second phase"),
     );
 }
 
@@ -657,10 +648,7 @@ fn deploy_phase_three_without_phase_two() {
 
     state.deploy_phase_three(
         false,
-        Some(ExpectError(
-            4,
-            "The Header-Verifier SC is not deployed, you skipped the second phase",
-        )),
+        Some("The Header-Verifier SC is not deployed, you skipped the second phase"),
     );
 }
 
@@ -692,10 +680,7 @@ fn deploy_phase_three_already_deployed() {
 
     state.deploy_phase_two(None, &bls_keys);
     state.deploy_phase_three(false, None);
-    state.deploy_phase_three(
-        false,
-        Some(ExpectError(4, "The ESDT-Safe SC is already deployed")),
-    );
+    state.deploy_phase_three(false, Some("The ESDT-Safe SC is already deployed"));
 }
 
 #[test]
@@ -771,10 +756,7 @@ fn deploy_phase_four_without_previous_phase() {
     state.deploy_phase_two(None, &bls_keys);
     state.deploy_phase_four(
         None,
-        Some(ExpectError(
-            4,
-            "The ESDT-Safe SC is not deployed, you skipped the third phase",
-        )),
+        Some("The ESDT-Safe SC is not deployed, you skipped the third phase"),
     );
 }
 
@@ -808,8 +790,5 @@ fn deploy_phase_four_fee_market_already_deployed() {
     state.deploy_phase_two(None, &bls_keys);
     state.deploy_phase_three(false, None);
     state.deploy_phase_four(None, None);
-    state.deploy_phase_four(
-        None,
-        Some(ExpectError(4, "The Fee-Market SC is already deployed")),
-    );
+    state.deploy_phase_four(None, Some("The Fee-Market SC is already deployed"));
 }
