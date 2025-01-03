@@ -2302,6 +2302,7 @@ version = "0.0.0"
 dependencies = [
  "chain-factory",
  "multiversx-sc",
+ "multiversx-sc-modules",
  "multiversx-sc-scenario",
  "num-bigint",
  "proxies",

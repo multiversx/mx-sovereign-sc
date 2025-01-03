@@ -25,11 +25,6 @@ const _PREFIX_NFT_TOKEN_ID: TestTokenIdentifier = TestTokenIdentifier::new("sov-
 
 const WEGLD_BALANCE: u128 = 100_000_000_000_000_000;
 
-pub struct ErrorStatus<'a> {
-    code: u64,
-    message: &'a str,
-}
-
 fn world() -> ScenarioWorld {
     let mut blockchain = ScenarioWorld::new();
 
@@ -71,7 +66,7 @@ impl TokenHandlerTestState {
             .tx()
             .from(OWNER_ADDRESS)
             .typed(TokenHandlerProxy)
-            .init()
+            .init(FACTORY_ADDRESS)
             .code(TOKEN_HANDLER_CODE_PATH)
             .new_address(TOKEN_HANDLER_ADDRESS)
             .run();
@@ -131,28 +126,21 @@ impl TokenHandlerTestState {
 
     fn propose_whitelist_caller(
         &mut self,
-        caller: TestAddress,
         enshrine_address: TestSCAddress,
-        error: Option<ErrorStatus>,
+        error: Option<ExpectError>,
     ) {
-        match error {
-            None => self
-                .world
-                .tx()
-                .to(TOKEN_HANDLER_ADDRESS)
-                .from(caller)
-                .typed(TokenHandlerProxy)
-                .whitelist_enshrine_esdt(enshrine_address)
-                .run(),
-            Some(error_status) => self
-                .world
-                .tx()
-                .to(TOKEN_HANDLER_ADDRESS)
-                .from(caller)
-                .typed(TokenHandlerProxy)
-                .whitelist_enshrine_esdt(enshrine_address)
-                .returns(ExpectError(error_status.code, error_status.message))
-                .run(),
+        let transaction = self
+            .world
+            .tx()
+            .to(TOKEN_HANDLER_ADDRESS)
+            .from(enshrine_address)
+            .typed(TokenHandlerProxy)
+            .whitelist_enshrine_esdt(enshrine_address);
+
+        if let Some(error) = error {
+            transaction.returns(error).run();
+        } else {
+            transaction.run();
         }
     }
 
@@ -186,23 +174,22 @@ fn test_deploy() {
 }
 
 #[test]
-fn test_whitelist_ensrhine_esdt_caller_not_owner() {
+fn test_whitelist_enshrine_esdt_caller_not_admin() {
     let mut state = TokenHandlerTestState::new();
-    let error = ErrorStatus {
-        code: 4,
-        message: "Endpoint can only be called by owner",
-    };
+    let error = ExpectError(4, "Endpoint can only be called by admins");
 
     state.propose_deploy_token_handler();
-    state.propose_whitelist_caller(USER_ADDRESS, FACTORY_ADDRESS, Some(error));
+    state.propose_deploy_factory_sc();
+    state.propose_whitelist_caller(TOKEN_HANDLER_ADDRESS, Some(error));
 }
 
 #[test]
-fn test_whitelist_ensrhine() {
+fn test_whitelist_enshrine() {
     let mut state = TokenHandlerTestState::new();
 
     state.propose_deploy_token_handler();
-    state.propose_whitelist_caller(OWNER_ADDRESS, FACTORY_ADDRESS, None);
+    state.propose_deploy_factory_sc();
+    state.propose_whitelist_caller(FACTORY_ADDRESS, None);
 }
 
 // NOTE:
@@ -226,7 +213,7 @@ fn test_transfer_tokens_no_payment() {
         .world
         .set_esdt_balance(FACTORY_ADDRESS, b"FUNGIBLE_TOKEN_ID", 100);
 
-    state.propose_whitelist_caller(OWNER_ADDRESS, FACTORY_ADDRESS, None);
+    state.propose_whitelist_caller(FACTORY_ADDRESS, None);
 
     state.world.set_esdt_local_roles(
         TOKEN_HANDLER_ADDRESS,
