@@ -196,20 +196,20 @@ impl SovereignForgeTestState {
         &mut self,
         shard_id: u32,
         chain_factory_address: TestSCAddress,
-        expected_result: Option<ExpectError>,
+        error_message: Option<&str>,
     ) {
-        let transaction = self
+        let response = self
             .world
             .tx()
             .from(OWNER_ADDRESS)
             .to(FORGE_ADDRESS)
             .typed(SovereignForgeProxy)
-            .register_chain_factory(shard_id, chain_factory_address);
+            .register_chain_factory(shard_id, chain_factory_address)
+            .returns(ReturnsHandledOrError::new())
+            .run();
 
-        if let Some(error) = expected_result {
-            transaction.returns(error).run();
-        } else {
-            transaction.run();
+        if let Err(error) = response {
+            assert_eq!(error_message, Some(error.message.as_str()))
         }
     }
 
@@ -246,9 +246,9 @@ impl SovereignForgeTestState {
         max_validators: u64,
         min_stake: BigUint<StaticApi>,
         additional_stake_required: MultiValueEncoded<StaticApi, StakeMultiArg<StaticApi>>,
-        expected_result: Option<ExpectError>,
+        error_message: Option<&str>,
     ) {
-        let transaction = self
+        let response = self
             .world
             .tx()
             .from(OWNER_ADDRESS)
@@ -260,12 +260,12 @@ impl SovereignForgeTestState {
                 min_stake,
                 additional_stake_required,
             )
-            .egld(payment);
+            .egld(payment)
+            .returns(ReturnsHandledOrError::new())
+            .run();
 
-        if let Some(error) = expected_result {
-            transaction.returns(error).run();
-        } else {
-            transaction.run();
+        if let Err(error) = response {
+            assert_eq!(error_message, Some(error.message.as_str()))
         }
     }
 
@@ -308,20 +308,20 @@ impl SovereignForgeTestState {
     fn deploy_phase_four(
         &mut self,
         fee: Option<FeeStruct<StaticApi>>,
-        expect_error: Option<ExpectError>,
+        error_message: Option<&str>,
     ) {
-        let transaction = self
+        let response = self
             .world
             .tx()
             .from(OWNER_ADDRESS)
             .to(FORGE_ADDRESS)
             .typed(SovereignForgeProxy)
-            .deploy_phase_four(fee);
+            .deploy_phase_four(fee)
+            .returns(ReturnsHandledOrError::new())
+            .run();
 
-        if let Some(error) = expect_error {
-            transaction.returns(error).run();
-        } else {
-            transaction.run();
+        if let Err(error) = response {
+            assert_eq!(error_message, Some(error.message.as_str()))
         }
     }
 }
