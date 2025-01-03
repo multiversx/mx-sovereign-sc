@@ -183,7 +183,7 @@ impl EnshrineTestState {
             .tx()
             .from(ENSHRINE_ESDT_OWNER_ADDRESS)
             .typed(TokenHandlerProxy)
-            .init()
+            .init(ENSHRINE_ESDT_ADDRESS)
             .code(TOKEN_HANDLER_CODE_PATH)
             .new_address(TOKEN_HANDLER_ADDRESS)
             .run();
@@ -391,7 +391,7 @@ impl EnshrineTestState {
     fn propose_whitelist_enshrine_esdt(&mut self) {
         self.world
             .tx()
-            .from(ENSHRINE_ESDT_OWNER_ADDRESS)
+            .from(ENSHRINE_ESDT_ADDRESS)
             .to(TOKEN_HANDLER_ADDRESS)
             .typed(TokenHandlerProxy)
             .whitelist_enshrine_esdt(ENSHRINE_ESDT_ADDRESS)

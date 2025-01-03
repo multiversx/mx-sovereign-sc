@@ -6,9 +6,9 @@
 
 // Init:                                 1
 // Upgrade:                              1
-// Endpoints:                            2
+// Endpoints:                            6
 // Async Callback (empty):               1
-// Total number of exported functions:   5
+// Total number of exported functions:   9
 
 #![no_std]
 
@@ -22,6 +22,10 @@ multiversx_sc_wasm_adapter::endpoints! {
         upgrade => upgrade
         whitelistEnshrineEsdt => whitelist_enshrine_esdt
         transferTokens => transfer_tokens
+        isAdmin => is_admin
+        addAdmin => add_admin
+        removeAdmin => remove_admin
+        getAdmins => admins
     )
 }
 
