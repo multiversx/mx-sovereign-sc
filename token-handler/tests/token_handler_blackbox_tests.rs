@@ -139,10 +139,8 @@ impl TokenHandlerTestState {
             .returns(ReturnsHandledOrError::new())
             .run();
 
-        if let Some(message) = error_message {
-            if let Err(error) = response {
-                assert_eq!(message, error.message)
-            }
+        if let Err(error) = response {
+            assert_eq!(error_message, Some(error.message.as_str()))
         }
     }
 
