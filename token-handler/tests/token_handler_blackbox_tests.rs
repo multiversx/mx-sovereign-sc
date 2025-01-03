@@ -140,9 +140,8 @@ impl TokenHandlerTestState {
             .run();
 
         if let Some(message) = error_message {
-            match response {
-                Err(error) => assert_eq!(message, error.message),
-                _ => {}
+            if let Err(error) = response {
+                assert_eq!(message, error.message)
             }
         }
     }
