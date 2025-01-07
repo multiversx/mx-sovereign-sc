@@ -7,7 +7,7 @@ use multiversx_sc::types::{
 use multiversx_sc_scenario::api::StaticApi;
 use multiversx_sc_scenario::multiversx_chain_vm::crypto_functions::sha256;
 use multiversx_sc_scenario::{imports::MxscPath, ScenarioWorld};
-use multiversx_sc_scenario::{managed_address, ExpectError, ScenarioTxRun};
+use multiversx_sc_scenario::{managed_address, ReturnsHandledOrError, ScenarioTxRun};
 use proxies::enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy;
 use proxies::fee_market_proxy::{FeeMarketProxy, FeeStruct, FeeType};
 use proxies::header_verifier_proxy::HeaderverifierProxy;
@@ -214,10 +214,10 @@ impl EnshrineTestState {
     fn propose_set_fee(
         &mut self,
         fee_struct: Option<&FeeStruct<StaticApi>>,
-        expected_result: Option<ExpectError<'_>>,
+        error_message: Option<&str>,
     ) -> &mut Self {
         if let Some(fee) = fee_struct {
-            self.propose_add_fee_token(fee, expected_result);
+            self.propose_add_fee_token(fee, error_message);
         }
 
         self
@@ -225,7 +225,7 @@ impl EnshrineTestState {
 
     fn propose_execute_operation(
         &mut self,
-        expected_result: Option<ExpectError<'_>>,
+        error_message: Option<&str>,
         tokens: &Vec<TestTokenIdentifier>,
     ) {
         let (tokens, data) = self.setup_payments(tokens);
@@ -235,17 +235,18 @@ impl EnshrineTestState {
         let hash_of_hashes: ManagedBuffer<StaticApi> =
             ManagedBuffer::from(&sha256(&operation_hash.to_vec()));
 
-        let transaction = self
+        let response = self
             .world
             .tx()
             .from(USER_ADDRESS)
             .to(ENSHRINE_ESDT_ADDRESS)
             .typed(EnshrineEsdtSafeProxy)
-            .execute_operations(hash_of_hashes, operation);
+            .execute_operations(hash_of_hashes, operation)
+            .returns(ReturnsHandledOrError::new())
+            .run();
 
-        match expected_result {
-            Some(error) => transaction.returns(error).run(),
-            None => transaction.run(),
+        if let Err(error) = response {
+            assert_eq!(error_message, Some(error.message.as_str()))
         }
     }
 
@@ -302,7 +303,7 @@ impl EnshrineTestState {
         sender: &TestAddress,
         fee_payment: EsdtTokenPayment<StaticApi>,
         tokens_to_register: Vec<TestTokenIdentifier>,
-        expected_result: Option<ExpectError<'_>>,
+        error_message: Option<&str>,
     ) {
         let mut managed_token_ids: MultiValueEncoded<StaticApi, TokenIdentifier<StaticApi>> =
             MultiValueEncoded::new();
@@ -311,18 +312,19 @@ impl EnshrineTestState {
             managed_token_ids.push(TokenIdentifier::from(token_id))
         }
 
-        let transaction = self
+        let response = self
             .world
             .tx()
             .from(*sender)
             .to(ENSHRINE_ESDT_ADDRESS)
             .typed(EnshrineEsdtSafeProxy)
             .register_new_token_id(managed_token_ids)
-            .esdt(fee_payment);
+            .esdt(fee_payment)
+            .returns(ReturnsHandledOrError::new())
+            .run();
 
-        match expected_result {
-            Some(error) => transaction.returns(error).run(),
-            None => transaction.run(),
+        if let Err(error) = response {
+            assert_eq!(error_message, Some(error.message.as_str()))
         }
     }
 
@@ -332,39 +334,41 @@ impl EnshrineTestState {
         to: TestAddress,
         payment: PaymentsVec<StaticApi>,
         deposit_args: OptionalTransferData<StaticApi>,
-        expected_result: Option<ExpectError<'_>>,
+        error_message: Option<&str>,
     ) {
-        let transaction = self
+        let response = self
             .world
             .tx()
             .from(from)
             .to(ENSHRINE_ESDT_ADDRESS)
             .typed(EnshrineEsdtSafeProxy)
             .deposit(to, deposit_args)
-            .payment(payment);
+            .payment(payment)
+            .returns(ReturnsHandledOrError::new())
+            .run();
 
-        match expected_result {
-            Some(error) => transaction.returns(error).run(),
-            None => transaction.run(),
+        if let Err(error) = response {
+            assert_eq!(error_message, Some(error.message.as_str()))
         }
     }
 
     fn propose_add_fee_token(
         &mut self,
         fee_struct: &FeeStruct<StaticApi>,
-        expected_result: Option<ExpectError<'_>>,
+        error_message: Option<&str>,
     ) {
-        let transaction = self
+        let response = self
             .world
             .tx()
             .from(ENSHRINE_ESDT_OWNER_ADDRESS)
             .to(FEE_MARKET_ADDRESS)
             .typed(FeeMarketProxy)
-            .set_fee(fee_struct);
+            .set_fee(fee_struct)
+            .returns(ReturnsHandledOrError::new())
+            .run();
 
-        match expected_result {
-            Some(error) => transaction.returns(error).run(),
-            None => transaction.run(),
+        if let Err(error) = response {
+            assert_eq!(error_message, Some(error.message.as_str()))
         }
     }
 
@@ -482,7 +486,7 @@ fn test_sovereign_prefix_no_prefix() {
     state.propose_register_operation(&token_vec);
     state.propose_register_esdt_in_header_verifier();
     state.propose_whitelist_enshrine_esdt();
-    state.propose_execute_operation(Some(ExpectError(10, "action is not allowed")), &token_vec);
+    state.propose_execute_operation(Some("action is not allowed"), &token_vec);
 }
 
 #[test]
@@ -509,7 +513,7 @@ fn test_register_tokens_insufficient_funds() {
         &USER_ADDRESS,
         payment,
         token_vec,
-        Some(ExpectError(10, "insufficient funds")),
+        Some("insufficient funds"),
     );
 }
 
@@ -525,10 +529,7 @@ fn test_register_tokens_wrong_token_as_fee() {
         &ENSHRINE_ESDT_OWNER_ADDRESS,
         payment,
         token_vec,
-        Some(ExpectError(
-            4,
-            "WEGLD is the only token accepted as register fee",
-        )),
+        Some("WEGLD is the only token accepted as register fee"),
     );
 }
 
@@ -564,7 +565,7 @@ fn test_register_tokens_insufficient_wegld() {
         &ENSHRINE_ESDT_OWNER_ADDRESS,
         payment,
         token_vec,
-        Some(ExpectError(4, "WEGLD fee amount is not met")),
+        Some("WEGLD fee amount is not met"),
     );
 }
 
@@ -612,7 +613,7 @@ fn test_deposit_token_nothing_to_transfer_fee_enabled() {
         USER_ADDRESS,
         payments,
         OptionalValue::None,
-        Some(ExpectError(4, "Nothing to transfer")),
+        Some("Nothing to transfer"),
     );
 }
 
@@ -630,7 +631,7 @@ fn test_deposit_max_transfers_exceeded() {
         USER_ADDRESS,
         payments,
         OptionalValue::None,
-        Some(ExpectError(4, "Too many tokens")),
+        Some("Too many tokens"),
     );
 }
 
@@ -713,7 +714,7 @@ fn test_deposit_with_transfer_data_gas_limit_too_high() {
         USER_ADDRESS,
         payments,
         transfer_data,
-        Some(ExpectError(4, "Gas limit too high")),
+        Some("Gas limit too high"),
     );
 }
 
@@ -743,7 +744,7 @@ fn test_deposit_with_transfer_data_banned_endpoint() {
         USER_ADDRESS,
         payments,
         transfer_data,
-        Some(ExpectError(4, "Banned endpoint name")),
+        Some("Banned endpoint name"),
     );
 }
 
@@ -847,7 +848,7 @@ fn test_deposit_with_transfer_data_not_enough_for_fee() {
         USER_ADDRESS,
         payments,
         transfer_data,
-        Some(ExpectError(4, "Payment does not cover fee")),
+        Some("Payment does not cover fee"),
     );
 }
 
