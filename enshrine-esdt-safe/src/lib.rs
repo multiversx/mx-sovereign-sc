@@ -67,13 +67,7 @@ pub trait EnshrineEsdtSafe:
     #[only_owner]
     #[endpoint(updateConfiguration)]
     fn update_configuration(&self, new_config: BridgeConfig<Self::Api>) {
-        let config_mapper = self.config();
-        require!(
-            !config_mapper.is_empty(),
-            "There is no configuration set in this contract"
-        );
-
-        config_mapper.set(new_config);
+        self.config().set(new_config);
     }
 
     #[only_owner]
