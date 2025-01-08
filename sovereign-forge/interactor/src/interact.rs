@@ -224,14 +224,13 @@ impl ContractInteract {
     }
 
     pub async fn deploy_chain_config_template(&mut self) {
-        let config = SovereignConfig::new(0, 1, BigUint::default(), None);
         let new_address = self
             .interactor
             .tx()
             .from(&self.wallet_address)
             .gas(50_000_000u64)
             .typed(ChainConfigContractProxy)
-            .init(config, &self.wallet_address)
+            .init(SovereignConfig::default_config(), &self.wallet_address)
             .returns(ReturnsNewAddress)
             .code(MxscPath::new(CHAIN_CONFIG_CODE_PATH))
             .run()

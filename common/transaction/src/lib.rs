@@ -44,13 +44,6 @@ impl<M: ManagedTypeApi> StakeArgs<M> {
     pub fn new(token_id: TokenIdentifier<M>, amount: BigUint<M>) -> Self {
         StakeArgs { token_id, amount }
     }
-
-    pub fn get_default() -> Self {
-        StakeArgs {
-            token_id: TokenIdentifier::from(""),
-            amount: BigUint::default(),
-        }
-    }
 }
 
 #[type_abi]
@@ -75,6 +68,10 @@ impl<M: ManagedTypeApi> SovereignConfig<M> {
             min_stake,
             opt_additional_stake_required,
         }
+    }
+
+    pub fn default_config() -> Self {
+        SovereignConfig::new(0, 1, BigUint::default(), None)
     }
 }
 

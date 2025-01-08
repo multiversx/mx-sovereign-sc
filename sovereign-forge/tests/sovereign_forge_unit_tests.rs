@@ -73,6 +73,16 @@ impl SovereignForgeTestState {
         Self { world }
     }
 
+    fn finish_setup(&mut self) {
+        self.register_chain_factory(1, FACTORY_ADDRESS, None);
+        self.register_chain_factory(2, FACTORY_ADDRESS, None);
+        self.register_chain_factory(3, FACTORY_ADDRESS, None);
+        self.register_token_handler(1, TOKEN_HANDLER_ADDRESS, None);
+        self.register_token_handler(2, TOKEN_HANDLER_ADDRESS, None);
+        self.register_token_handler(3, TOKEN_HANDLER_ADDRESS, None);
+        self.complete_setup_phase(None);
+    }
+
     fn deploy_chain_factory(&mut self) -> &mut Self {
         self.world
             .tx()
@@ -106,13 +116,11 @@ impl SovereignForgeTestState {
     }
 
     fn deploy_chain_config_template(&mut self) -> &mut Self {
-        let config = SovereignConfig::new(0, 1, BigUint::default(), None);
-
         self.world
             .tx()
             .from(OWNER_ADDRESS)
             .typed(ChainConfigContractProxy)
-            .init(config, OWNER_ADDRESS)
+            .init(SovereignConfig::default_config(), OWNER_ADDRESS)
             .code(CONFIG_CODE_PATH)
             .new_address(CONFIG_ADDRESS)
             .run();
@@ -220,16 +228,6 @@ impl SovereignForgeTestState {
         } else {
             transaction.run();
         }
-    }
-
-    fn finish_setup(&mut self) {
-        self.register_chain_factory(1, FACTORY_ADDRESS, None);
-        self.register_chain_factory(2, FACTORY_ADDRESS, None);
-        self.register_chain_factory(3, FACTORY_ADDRESS, None);
-        self.register_token_handler(1, TOKEN_HANDLER_ADDRESS, None);
-        self.register_token_handler(2, TOKEN_HANDLER_ADDRESS, None);
-        self.register_token_handler(3, TOKEN_HANDLER_ADDRESS, None);
-        self.complete_setup_phase(None);
     }
 
     fn deploy_phase_one(
@@ -439,9 +437,8 @@ fn deploy_phase_one() {
     state.finish_setup();
 
     let deploy_cost = BigUint::from(100_000u32);
-    let config = SovereignConfig::new(0, 1, BigUint::default(), None);
 
-    state.deploy_phase_one(&deploy_cost, &config, None);
+    state.deploy_phase_one(&deploy_cost, &SovereignConfig::default_config(), None);
 
     state
         .world
@@ -485,9 +482,8 @@ fn deploy_phase_two() {
     state.finish_setup();
 
     let deploy_cost = BigUint::from(100_000u32);
-    let config = SovereignConfig::new(0, 1, BigUint::default(), None);
 
-    state.deploy_phase_one(&deploy_cost, &config, None);
+    state.deploy_phase_one(&deploy_cost, &SovereignConfig::default_config(), None);
     state.deploy_header_verifier_template();
 
     let mut bls_keys = MultiValueEncoded::new();
@@ -517,9 +513,8 @@ fn deploy_phase_two_header_already_deployed() {
     state.finish_setup();
 
     let deploy_cost = BigUint::from(100_000u32);
-    let config = SovereignConfig::new(0, 1, BigUint::default(), None);
 
-    state.deploy_phase_one(&deploy_cost, &config, None);
+    state.deploy_phase_one(&deploy_cost, &SovereignConfig::default_config(), None);
     state.deploy_header_verifier_template();
 
     let bls_keys = MultiValueEncoded::new();
@@ -540,9 +535,8 @@ fn deploy_phase_three() {
     state.finish_setup();
 
     let deploy_cost = BigUint::from(100_000u32);
-    let config = SovereignConfig::new(0, 1, BigUint::default(), None);
 
-    state.deploy_phase_one(&deploy_cost, &config, None);
+    state.deploy_phase_one(&deploy_cost, &SovereignConfig::default_config(), None);
     state.deploy_header_verifier_template();
     state.deploy_esdt_safe_template();
 
@@ -591,8 +585,7 @@ fn deploy_phase_three_without_phase_two() {
     state.finish_setup();
 
     let deploy_cost = BigUint::from(100_000u32);
-    let config = SovereignConfig::new(0, 1, BigUint::default(), None);
-    state.deploy_phase_one(&deploy_cost, &config, None);
+    state.deploy_phase_one(&deploy_cost, &SovereignConfig::default_config(), None);
 
     state.deploy_header_verifier_template();
     state.deploy_esdt_safe_template();
@@ -615,8 +608,7 @@ fn deploy_phase_three_already_deployed() {
     state.finish_setup();
 
     let deploy_cost = BigUint::from(100_000u32);
-    let config = SovereignConfig::new(0, 1, BigUint::default(), None);
-    state.deploy_phase_one(&deploy_cost, &config, None);
+    state.deploy_phase_one(&deploy_cost, &SovereignConfig::default_config(), None);
 
     state.deploy_header_verifier_template();
     state.deploy_esdt_safe_template();
@@ -643,8 +635,7 @@ fn deploy_phase_four() {
     state.finish_setup();
 
     let deploy_cost = BigUint::from(100_000u32);
-    let config = SovereignConfig::new(0, 1, BigUint::default(), None);
-    state.deploy_phase_one(&deploy_cost, &config, None);
+    state.deploy_phase_one(&deploy_cost, &SovereignConfig::default_config(), None);
 
     state.deploy_header_verifier_template();
     state.deploy_esdt_safe_template();
@@ -679,8 +670,7 @@ fn deploy_phase_four_without_previous_phase() {
     state.finish_setup();
 
     let deploy_cost = BigUint::from(100_000u32);
-    let config = SovereignConfig::new(0, 1, BigUint::default(), None);
-    state.deploy_phase_one(&deploy_cost, &config, None);
+    state.deploy_phase_one(&deploy_cost, &SovereignConfig::default_config(), None);
 
     state.deploy_header_verifier_template();
     state.deploy_esdt_safe_template();
@@ -709,8 +699,7 @@ fn deploy_phase_four_fee_market_already_deployed() {
     state.finish_setup();
 
     let deploy_cost = BigUint::from(100_000u32);
-    let config = SovereignConfig::new(0, 1, BigUint::default(), None);
-    state.deploy_phase_one(&deploy_cost, &config, None);
+    state.deploy_phase_one(&deploy_cost, &SovereignConfig::default_config(), None);
 
     state.deploy_header_verifier_template();
     state.deploy_esdt_safe_template();

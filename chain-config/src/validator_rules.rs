@@ -16,11 +16,7 @@ pub struct TokenIdAmountPair<M: ManagedTypeApi> {
 #[multiversx_sc::module]
 pub trait ValidatorRulesModule {
     fn require_valid_config(&self, config: &SovereignConfig<Self::Api>) {
-        require!(
-            !self.sovereign_config().is_empty(),
-            "The Sovereign Config is not set"
-        );
-
+        // TODO: determine a range value
         self.require_validator_range(config.min_validators, config.max_validators);
     }
 

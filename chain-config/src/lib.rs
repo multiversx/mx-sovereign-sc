@@ -13,8 +13,8 @@ pub trait ChainConfigContract:
 {
     #[init]
     fn init(&self, config: SovereignConfig<Self::Api>, admin: ManagedAddress) {
-        self.sovereign_config().set(config.clone());
         self.require_valid_config(&config);
+        self.sovereign_config().set(config.clone());
         self.add_admin(admin);
     }
 
