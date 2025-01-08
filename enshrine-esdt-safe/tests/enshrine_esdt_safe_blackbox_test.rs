@@ -122,7 +122,7 @@ impl EnshrineTestState {
         is_sovereign_chain: bool,
         wegld_identifier: Option<TokenIdentifier<StaticApi>>,
         sovereign_token_prefix: Option<ManagedBuffer<StaticApi>>,
-        config: BridgeConfig<StaticApi>,
+        opt_config: Option<BridgeConfig<StaticApi>>,
     ) -> &mut Self {
         self.world
             .tx()
@@ -133,7 +133,7 @@ impl EnshrineTestState {
                 TOKEN_HANDLER_ADDRESS,
                 wegld_identifier,
                 sovereign_token_prefix,
-                config,
+                opt_config,
             )
             .code(ENSHRINE_ESDT_CODE_PATH)
             .new_address(ENSHRINE_ESDT_ADDRESS)
@@ -194,12 +194,13 @@ impl EnshrineTestState {
         &mut self,
         is_sovereign_chain: bool,
         fee_struct: Option<&FeeStruct<StaticApi>>,
+        opt_config: Option<BridgeConfig<StaticApi>>,
     ) -> &mut Self {
         self.deploy_enshrine_esdt_contract(
             is_sovereign_chain,
             Some(TokenIdentifier::from(WEGLD_IDENTIFIER)),
             Some(SOVEREIGN_TOKEN_PREFIX.into()),
-            BridgeConfig::default_config(),
+            opt_config,
         );
         self.deploy_header_verifier_contract();
         self.deploy_token_handler_contract();
@@ -372,26 +373,6 @@ impl EnshrineTestState {
         }
     }
 
-    fn propose_set_max_user_tx_gas_limit(&mut self, max_gas_limit: GasLimit) {
-        self.world
-            .tx()
-            .from(ENSHRINE_ESDT_OWNER_ADDRESS)
-            .to(ENSHRINE_ESDT_ADDRESS)
-            .typed(EnshrineEsdtSafeProxy)
-            .set_max_user_tx_gas_limit(max_gas_limit)
-            .run();
-    }
-
-    fn propose_set_banned_endpoint(&mut self, endpoint_name: ManagedBuffer<StaticApi>) {
-        self.world
-            .tx()
-            .from(ENSHRINE_ESDT_OWNER_ADDRESS)
-            .to(ENSHRINE_ESDT_ADDRESS)
-            .typed(EnshrineEsdtSafeProxy)
-            .set_banned_endpoint(endpoint_name)
-            .run();
-    }
-
     fn propose_whitelist_enshrine_esdt(&mut self) {
         self.world
             .tx()
@@ -474,7 +455,7 @@ impl EnshrineTestState {
 fn test_deploy() {
     let mut state = EnshrineTestState::new();
 
-    state.propose_setup_contracts(false, None);
+    state.propose_setup_contracts(false, None, None);
 }
 
 #[test]
@@ -482,7 +463,7 @@ fn test_sovereign_prefix_no_prefix() {
     let mut state = EnshrineTestState::new();
     let token_vec = Vec::from([NFT_TOKEN_ID, CROWD_TOKEN_ID]);
 
-    state.propose_setup_contracts(false, None);
+    state.propose_setup_contracts(false, None, None);
     state.propose_register_operation(&token_vec);
     state.propose_register_esdt_in_header_verifier();
     state.propose_whitelist_enshrine_esdt();
@@ -494,7 +475,7 @@ fn test_sovereign_prefix_has_prefix() {
     let mut state = EnshrineTestState::new();
     let token_vec = Vec::from([PREFIX_NFT_TOKEN_ID, CROWD_TOKEN_ID]);
 
-    state.propose_setup_contracts(false, None);
+    state.propose_setup_contracts(false, None, None);
     state.propose_register_operation(&token_vec);
     state.propose_register_esdt_in_header_verifier();
     state.propose_whitelist_enshrine_esdt();
@@ -508,7 +489,7 @@ fn test_register_tokens_insufficient_funds() {
     let payment_amount = BigUint::from(DEFAULT_ISSUE_COST * token_vec.len() as u64);
     let payment = EsdtTokenPayment::new(WEGLD_IDENTIFIER.into(), 0, payment_amount);
 
-    state.propose_setup_contracts(false, None);
+    state.propose_setup_contracts(false, None, None);
     state.propose_register_tokens(
         &USER_ADDRESS,
         payment,
@@ -524,7 +505,7 @@ fn test_register_tokens_wrong_token_as_fee() {
     let payment_amount = BigUint::from(DEFAULT_ISSUE_COST * token_vec.len() as u64);
     let payment = EsdtTokenPayment::new(CROWD_TOKEN_ID.into(), 0, payment_amount);
 
-    state.propose_setup_contracts(false, None);
+    state.propose_setup_contracts(false, None, None);
     state.propose_register_tokens(
         &ENSHRINE_ESDT_OWNER_ADDRESS,
         payment,
@@ -540,7 +521,7 @@ fn test_register_tokens() {
     let payment_amount = BigUint::from(DEFAULT_ISSUE_COST * token_vec.len() as u64);
     let payment = EsdtTokenPayment::new(WEGLD_IDENTIFIER.into(), 0, payment_amount);
 
-    state.propose_setup_contracts(false, None);
+    state.propose_setup_contracts(false, None, None);
     state.propose_register_tokens(&ENSHRINE_ESDT_OWNER_ADDRESS, payment, token_vec, None);
     state
         .world
@@ -560,7 +541,7 @@ fn test_register_tokens_insufficient_wegld() {
     let payment_amount = BigUint::from(DEFAULT_ISSUE_COST + token_vec.len() as u64);
     let payment = EsdtTokenPayment::new(WEGLD_IDENTIFIER.into(), 0, payment_amount);
 
-    state.propose_setup_contracts(false, None);
+    state.propose_setup_contracts(false, None, None);
     state.propose_register_tokens(
         &ENSHRINE_ESDT_OWNER_ADDRESS,
         payment,
@@ -578,7 +559,7 @@ fn test_deposit_no_fee() {
 
     payments.push(wegld_payment);
 
-    state.propose_setup_contracts(false, None);
+    state.propose_setup_contracts(false, None, None);
     state.propose_set_fee(None, None);
     state.propose_deposit(
         ENSHRINE_ESDT_OWNER_ADDRESS,
@@ -606,7 +587,7 @@ fn test_deposit_token_nothing_to_transfer_fee_enabled() {
 
     payments.push(wegld_payment);
 
-    state.propose_setup_contracts(false, Some(&fee_struct));
+    state.propose_setup_contracts(false, Some(&fee_struct), None);
     state.propose_set_fee(Some(&fee_struct), None);
     state.propose_deposit(
         ENSHRINE_ESDT_OWNER_ADDRESS,
@@ -625,7 +606,7 @@ fn test_deposit_max_transfers_exceeded() {
     let mut payments = PaymentsVec::new();
     payments.extend(std::iter::repeat(wegld_payment).take(11));
 
-    state.propose_setup_contracts(false, None);
+    state.propose_setup_contracts(false, None, None);
     state.propose_deposit(
         ENSHRINE_ESDT_OWNER_ADDRESS,
         USER_ADDRESS,
@@ -660,7 +641,7 @@ fn test_deposit_no_transfer_data() {
         &fee_amount_per_gas,
     );
 
-    state.propose_setup_contracts(false, Some(&fee_struct));
+    state.propose_setup_contracts(false, Some(&fee_struct), None);
     state.propose_add_token_to_whitelist(tokens_whitelist);
     state.propose_set_fee(Some(&fee_struct), None);
     state.propose_deposit(
@@ -708,7 +689,7 @@ fn test_deposit_with_transfer_data_gas_limit_too_high() {
     payments.push(wegld_payment);
     payments.push(crowd_payment);
 
-    state.propose_setup_contracts(false, None);
+    state.propose_setup_contracts(false, None, None);
     state.propose_deposit(
         ENSHRINE_ESDT_OWNER_ADDRESS,
         USER_ADDRESS,
@@ -726,19 +707,27 @@ fn test_deposit_with_transfer_data_banned_endpoint() {
     let crowd_payment = EsdtTokenPayment::new(CROWD_TOKEN_ID.into(), 0, amount);
     let mut payments = PaymentsVec::new();
     let gas_limit = 1000000000;
-    let function = ManagedBuffer::from("some_function");
+    let banned_endpoint = ManagedBuffer::from("some_function");
     let arg = ManagedBuffer::from("arg");
     let mut args = ManagedVec::new();
     args.push(arg);
 
-    let transfer_data = state.setup_transfer_data(gas_limit, function.clone(), args);
+    let transfer_data = state.setup_transfer_data(gas_limit, banned_endpoint.clone(), args);
 
     payments.push(wegld_payment);
     payments.push(crowd_payment);
 
-    state.propose_setup_contracts(false, None);
-    state.propose_set_max_user_tx_gas_limit(gas_limit);
-    state.propose_set_banned_endpoint(function);
+    state.propose_setup_contracts(
+        false,
+        None,
+        Some(BridgeConfig::new(
+            ManagedVec::new(),
+            ManagedVec::new(),
+            300_000_000_000,
+            ManagedVec::from(vec![banned_endpoint]),
+        )),
+    );
+
     state.propose_deposit(
         ENSHRINE_ESDT_OWNER_ADDRESS,
         USER_ADDRESS,
@@ -756,7 +745,7 @@ fn test_deposit_with_transfer_data_enough_for_fee() {
     let fungible_payment = EsdtTokenPayment::new(FUNGIBLE_TOKEN_ID.into(), 0, amount.clone());
     let crowd_payment = EsdtTokenPayment::new(CROWD_TOKEN_ID.into(), 0, amount.clone());
     let mut payments = PaymentsVec::new();
-    let gas_limit = 1000000000;
+    let gas_limit = 10000000;
     let function = ManagedBuffer::from("some_function");
     let arg = ManagedBuffer::from("arg");
     let mut args = ManagedVec::new();
@@ -780,8 +769,8 @@ fn test_deposit_with_transfer_data_enough_for_fee() {
         &fee_amount_per_gas,
     );
 
-    state.propose_setup_contracts(false, Some(&fee_struct));
-    state.propose_set_max_user_tx_gas_limit(gas_limit);
+    state.propose_setup_contracts(false, Some(&fee_struct), None);
+    // state.propose_set_max_user_tx_gas_limit(gas_limit);
     state.propose_set_fee(Some(&fee_struct), None);
     state.propose_deposit(
         ENSHRINE_ESDT_OWNER_ADDRESS,
@@ -819,7 +808,7 @@ fn test_deposit_with_transfer_data_not_enough_for_fee() {
     let fungible_payment = EsdtTokenPayment::new(FUNGIBLE_TOKEN_ID.into(), 0, amount.clone());
     let crowd_payment = EsdtTokenPayment::new(CROWD_TOKEN_ID.into(), 0, amount.clone());
     let mut payments = PaymentsVec::new();
-    let gas_limit = 1000000000000000;
+    let gas_limit = 10000000;
     let function = ManagedBuffer::from("some_function");
     let arg = ManagedBuffer::from("arg");
     let mut args = ManagedVec::new();
@@ -840,8 +829,8 @@ fn test_deposit_with_transfer_data_not_enough_for_fee() {
         &fee_amount_per_gas,
     );
 
-    state.propose_setup_contracts(false, Some(&fee_struct));
-    state.propose_set_max_user_tx_gas_limit(gas_limit);
+    state.propose_setup_contracts(false, Some(&fee_struct), None);
+    // state.propose_set_max_user_tx_gas_limit(gas_limit);
     state.propose_set_fee(Some(&fee_struct), None);
     state.propose_deposit(
         ENSHRINE_ESDT_OWNER_ADDRESS,
@@ -867,7 +856,7 @@ fn test_deposit_refund_non_whitelisted_tokens_fee_disabled() {
     payments.push(fungible_payment);
     payments.push(crowd_payment);
 
-    state.propose_setup_contracts(false, None);
+    state.propose_setup_contracts(false, None, None);
     state.propose_add_token_to_whitelist(token_whitelist);
     state.propose_deposit(
         ENSHRINE_ESDT_OWNER_ADDRESS,
@@ -914,7 +903,7 @@ fn test_deposit_refund_non_whitelisted_tokens_fee_enabled() {
         &fee_amount_per_gas,
     );
 
-    state.propose_setup_contracts(false, Some(&fee_struct));
+    state.propose_setup_contracts(false, Some(&fee_struct), None);
     state.propose_add_token_to_whitelist(token_whitelist);
     state.propose_set_fee(Some(&fee_struct), None);
     state.propose_deposit(

@@ -25,12 +25,10 @@ pub async fn enshrine_esdt_safe_cli() {
     let config = Config::load_config();
     let mut interact = ContractInteract::new(config).await;
     match cmd.as_str() {
-        "deploy" => interact.deploy(false, BridgeConfig::default_config()).await,
+        "deploy" => interact.deploy(false, None).await,
         "upgrade" => interact.upgrade().await,
         "setFeeMarketAddress" => interact.set_fee_market_address().await,
         "setHeaderVerifierAddress" => interact.set_header_verifier_address().await,
-        "setMaxTxGasLimit" => interact.set_max_user_tx_gas_limit().await,
-        "setBannedEndpoint" => interact.set_banned_endpoint().await,
         "deposit" => interact.deposit(None.into(), Option::None).await,
         "executeBridgeOps" => interact.execute_operations().await,
         "registerNewTokenID" => interact.register_new_token_id().await,
@@ -91,7 +89,11 @@ impl ContractInteract {
         }
     }
 
-    pub async fn deploy(&mut self, is_sovereign_chain: bool, config: BridgeConfig<StaticApi>) {
+    pub async fn deploy(
+        &mut self,
+        is_sovereign_chain: bool,
+        opt_config: Option<BridgeConfig<StaticApi>>,
+    ) {
         let opt_wegld_identifier =
             Option::Some(TokenIdentifier::from_esdt_bytes(WHITELIST_TOKEN_ID));
         let opt_sov_token_prefix = Option::Some(ManagedBuffer::new_from_bytes(&b"sov"[..]));
@@ -110,7 +112,7 @@ impl ContractInteract {
                 token_handler_address,
                 opt_wegld_identifier,
                 opt_sov_token_prefix,
-                config,
+                opt_config,
             )
             .code(code_path)
             .returns(ReturnsNewAddress)
@@ -204,17 +206,21 @@ impl ContractInteract {
         println!("new token_handler_address: {new_address_bech32}");
     }
 
-    pub async fn deploy_all(&mut self, is_sov_chain: bool, config: BridgeConfig<StaticApi>) {
+    pub async fn deploy_all(
+        &mut self,
+        is_sov_chain: bool,
+        opt_config: Option<BridgeConfig<StaticApi>>,
+    ) {
         self.deploy_token_handler().await;
-        self.deploy(is_sov_chain, config).await;
+        self.deploy(is_sov_chain, opt_config).await;
         self.deploy_header_verifier().await;
         self.deploy_fee_market().await;
         self.unpause_endpoint().await;
     }
 
-    pub async fn deploy_setup(&mut self, config: BridgeConfig<StaticApi>) {
+    pub async fn deploy_setup(&mut self, opt_config: Option<BridgeConfig<StaticApi>>) {
         self.deploy_token_handler().await;
-        self.deploy(false, config).await;
+        self.deploy(false, opt_config).await;
         self.unpause_endpoint().await;
     }
 
@@ -266,42 +272,6 @@ impl ContractInteract {
             .gas(30_000_000u64)
             .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
             .set_header_verifier_address(header_verifier_address)
-            .returns(ReturnsResultUnmanaged)
-            .run()
-            .await;
-
-        println!("Result: {response:?}");
-    }
-
-    pub async fn set_max_user_tx_gas_limit(&mut self) {
-        let max_user_tx_gas_limit = 0u64;
-
-        let response = self
-            .interactor
-            .tx()
-            .from(&self.wallet_address)
-            .to(self.state.esdt_safe_address())
-            .gas(30_000_000u64)
-            .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
-            .set_max_user_tx_gas_limit(max_user_tx_gas_limit)
-            .returns(ReturnsResultUnmanaged)
-            .run()
-            .await;
-
-        println!("Result: {response:?}");
-    }
-
-    pub async fn set_banned_endpoint(&mut self) {
-        let endpoint_name = ManagedBuffer::new_from_bytes(&b""[..]);
-
-        let response = self
-            .interactor
-            .tx()
-            .from(&self.wallet_address)
-            .to(self.state.esdt_safe_address())
-            .gas(30_000_000u64)
-            .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
-            .set_banned_endpoint(endpoint_name)
             .returns(ReturnsResultUnmanaged)
             .run()
             .await;
