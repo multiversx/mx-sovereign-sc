@@ -58,6 +58,8 @@ dependencies = [
  "multiversx-sc",
  "operation",
  "proxies",
+ "setup-phase",
+ "transaction",
  "utils",
 ]
 
