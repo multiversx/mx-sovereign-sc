@@ -1,5 +1,5 @@
 use multiversx_sc::imports::*;
-use operation::{aliases::GasLimit, BridgeConfig};
+use operation::BridgeConfig;
 
 #[multiversx_sc::module]
 pub trait CommonStorage {
@@ -17,12 +17,6 @@ pub trait CommonStorage {
 
     #[storage_mapper("feeMarketAddress")]
     fn fee_market_address(&self) -> SingleValueMapper<ManagedAddress>;
-
-    #[storage_mapper("maxUserTxGasLimit")]
-    fn max_user_tx_gas_limit(&self) -> SingleValueMapper<GasLimit>;
-
-    #[storage_mapper("bannedEndpointNames")]
-    fn banned_endpoint_names(&self) -> UnorderedSetMapper<ManagedBuffer>;
 
     #[storage_mapper("config")]
     fn config(&self) -> SingleValueMapper<BridgeConfig<Self::Api>>;
