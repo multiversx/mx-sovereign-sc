@@ -30,6 +30,20 @@ impl<M: ManagedTypeApi> BridgeConfig<M> {
             banned_endpoints: ManagedVec::new(),
         }
     }
+
+    pub fn new(
+        token_whitelist: ManagedVec<M, TokenIdentifier<M>>,
+        token_blacklist: ManagedVec<M, TokenIdentifier<M>>,
+        max_tx_gas_limit: GasLimit,
+        banned_endpoints: ManagedVec<M, ManagedBuffer<M>>,
+    ) -> Self {
+        BridgeConfig {
+            token_whitelist,
+            token_blacklist,
+            max_tx_gas_limit,
+            banned_endpoints,
+        }
+    }
 }
 
 #[type_abi]
