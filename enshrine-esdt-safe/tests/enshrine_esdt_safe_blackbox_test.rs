@@ -8,12 +8,12 @@ use multiversx_sc_scenario::api::StaticApi;
 use multiversx_sc_scenario::multiversx_chain_vm::crypto_functions::sha256;
 use multiversx_sc_scenario::{imports::MxscPath, ScenarioWorld};
 use multiversx_sc_scenario::{managed_address, ReturnsHandledOrError, ScenarioTxRun};
+use operation::aliases::{GasLimit, OptionalTransferData, PaymentsVec};
+use operation::{BridgeConfig, Operation, OperationData, OperationEsdtPayment};
 use proxies::enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy;
 use proxies::fee_market_proxy::{FeeMarketProxy, FeeStruct, FeeType};
 use proxies::header_verifier_proxy::HeaderverifierProxy;
 use proxies::token_handler_proxy::TokenHandlerProxy;
-use transaction::{BridgeConfig, GasLimit, Operation, OperationData, OperationEsdtPayment};
-use utils::PaymentsVec;
 
 const ENSHRINE_ESDT_ADDRESS: TestSCAddress = TestSCAddress::new("enshrine-esdt");
 const ENSHRINE_ESDT_CODE_PATH: MxscPath = MxscPath::new("output/enshrine-esdt-safe.mxsc-json");

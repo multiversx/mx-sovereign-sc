@@ -1,5 +1,5 @@
 use multiversx_sc::imports::*;
-use transaction::{BridgeConfig, GasLimit};
+use operation::{aliases::GasLimit, BridgeConfig};
 
 #[multiversx_sc::module]
 pub trait CommonStorage {

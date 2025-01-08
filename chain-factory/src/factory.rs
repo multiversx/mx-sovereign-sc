@@ -1,5 +1,6 @@
 use multiversx_sc::imports::*;
 use multiversx_sc_modules::only_admin;
+use operation::{aliases::StakeMultiArg, BridgeConfig};
 use proxies::{
     chain_config_proxy::ChainConfigContractProxy,
     enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy,
@@ -7,7 +8,6 @@ use proxies::{
     fee_market_proxy::{FeeMarketProxy, FeeStruct},
     header_verifier_proxy::HeaderverifierProxy,
 };
-use transaction::{BridgeConfig, StakeMultiArg};
 multiversx_sc::derive_imports!();
 
 #[multiversx_sc::module]
