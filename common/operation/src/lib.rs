@@ -9,6 +9,7 @@ pub mod aliases;
 
 // revert protection
 pub const MIN_BLOCKS_FOR_FINALITY: u64 = 10;
+const DEFAULT_MAX_TX_GAS_LIMIT: u64 = 300_000_000;
 
 #[type_abi]
 #[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, ManagedVecItem, Clone)]
@@ -21,11 +22,11 @@ pub struct BridgeConfig<M: ManagedTypeApi> {
 
 impl<M: ManagedTypeApi> BridgeConfig<M> {
     #[inline]
-    pub fn empty_config() -> Self {
+    pub fn default_config() -> Self {
         BridgeConfig {
             token_whitelist: ManagedVec::new(),
             token_blacklist: ManagedVec::new(),
-            max_tx_gas_limit: 0,
+            max_tx_gas_limit: DEFAULT_MAX_TX_GAS_LIMIT,
             banned_endpoints: ManagedVec::new(),
         }
     }

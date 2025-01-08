@@ -7,8 +7,8 @@ use interactor::constants::{TOKEN_ID, WHITELIST_TOKEN_ID};
 use interactor::interactor_config::Config;
 use interactor::interactor_state::State;
 use multiversx_sc_snippets::imports::*;
-use proxies::*;
 use operation::*;
+use proxies::*;
 
 const FEE_MARKET_CODE_PATH: &str = "../fee-market/output/fee-market.mxsc.json";
 const HEADER_VERIFIER_CODE_PATH: &str = "../header-verifier/output/header-verifier.mxsc.json";
@@ -25,7 +25,7 @@ pub async fn enshrine_esdt_safe_cli() {
     let config = Config::load_config();
     let mut interact = ContractInteract::new(config).await;
     match cmd.as_str() {
-        "deploy" => interact.deploy(false, BridgeConfig::empty_config()).await,
+        "deploy" => interact.deploy(false, BridgeConfig::default_config()).await,
         "upgrade" => interact.upgrade().await,
         "setFeeMarketAddress" => interact.set_fee_market_address().await,
         "setHeaderVerifierAddress" => interact.set_header_verifier_address().await,
