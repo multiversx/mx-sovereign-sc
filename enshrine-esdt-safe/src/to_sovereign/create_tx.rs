@@ -1,9 +1,9 @@
 use crate::common;
-use proxies::fee_market_proxy::FeeMarketProxy;
 use operation::{
     aliases::{GasLimit, OptionalValueTransferDataTuple},
     EventPayment, OperationData, TransferData,
 };
+use proxies::fee_market_proxy::FeeMarketProxy;
 
 use multiversx_sc::imports::*;
 
@@ -164,13 +164,13 @@ pub trait CreateTxModule:
     }
 
     fn require_gas_limit_under_limit(&self, gas_limit: GasLimit) {
-        let max_gas_limit = self.max_user_tx_gas_limit().get();
-        require!(gas_limit <= max_gas_limit, "Gas limit too high");
+        let config = self.config().get();
+        require!(gas_limit <= config.max_tx_gas_limit, "Gas limit too high");
     }
 
     fn require_endpoint_not_banned(&self, function: &ManagedBuffer) {
         require!(
-            !self.banned_endpoint_names().contains(function),
+            !self.config().get().banned_endpoints.contains(function),
             "Banned endpoint name"
         );
     }
