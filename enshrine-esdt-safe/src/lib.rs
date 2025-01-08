@@ -61,7 +61,7 @@ pub trait EnshrineEsdtSafe:
         self.initiator_address().set(caller);
 
         self.config()
-            .set(opt_config.unwrap_or_else(|| BridgeConfig::default_config()));
+            .set(opt_config.unwrap_or_else(BridgeConfig::default_config));
     }
 
     #[only_owner]
