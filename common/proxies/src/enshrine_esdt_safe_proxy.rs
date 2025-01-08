@@ -163,7 +163,7 @@ where
 
     pub fn execute_operations<
         Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
-        Arg1: ProxyArg<transaction::Operation<Env::Api>>,
+        Arg1: ProxyArg<operation::Operation<Env::Api>>,
     >(
         self,
         hash_of_hashes: Arg0,

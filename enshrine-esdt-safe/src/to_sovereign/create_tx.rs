@@ -1,7 +1,8 @@
 use crate::common;
 use proxies::fee_market_proxy::FeeMarketProxy;
-use transaction::{
-    EventPayment, GasLimit, OperationData, OptionalValueTransferDataTuple, TransferData,
+use operation::{
+    aliases::{GasLimit, OptionalValueTransferDataTuple},
+    EventPayment, OperationData, TransferData,
 };
 
 use multiversx_sc::imports::*;

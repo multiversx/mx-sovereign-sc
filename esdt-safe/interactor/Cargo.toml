@@ -18,8 +18,8 @@ toml = "0.8.6"
 [dependencies.esdt-safe]
 path = ".."
 
-[dependencies.transaction]
-path = "../../common/transaction"
+[dependencies.operation]
+path = "../../common/operation"
 
 [dependencies.proxies]
 path = "../../common/proxies"

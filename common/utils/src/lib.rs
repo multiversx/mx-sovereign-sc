@@ -1,8 +1,8 @@
 #![no_std]
 
-multiversx_sc::imports!();
+use operation::aliases::PaymentsVec;
 
-pub type PaymentsVec<M> = ManagedVec<M, EsdtTokenPayment<M>>;
+multiversx_sc::imports!();
 
 static ERR_EMPTY_PAYMENTS: &[u8] = b"No payments";
 const DASH: u8 = b'-';

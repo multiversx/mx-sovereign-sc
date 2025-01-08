@@ -31,9 +31,9 @@ name = "fee-market"
 version = "0.0.0"
 dependencies = [
  "multiversx-sc",
+ "operation",
  "proxies",
  "setup-phase",
- "transaction",
  "utils",
 ]
 
@@ -146,6 +146,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "operation"
+version = "0.0.0"
+dependencies = [
+ "multiversx-sc",
+]
+
+[[package]]
 name = "proc-macro2"
 version = "1.0.86"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -159,7 +166,7 @@ name = "proxies"
 version = "0.1.0"
 dependencies = [
  "multiversx-sc",
- "transaction",
+ "operation",
  "tx-batch-module",
 ]
 
@@ -207,18 +214,11 @@ dependencies = [
 ]
 
 [[package]]
-name = "transaction"
-version = "0.0.0"
-dependencies = [
- "multiversx-sc",
-]
-
-[[package]]
 name = "tx-batch-module"
 version = "0.0.0"
 dependencies = [
  "multiversx-sc",
- "transaction",
+ "operation",
 ]
 
 [[package]]
@@ -238,4 +238,5 @@ name = "utils"
 version = "0.0.0"
 dependencies = [
  "multiversx-sc",
+ "operation",
 ]

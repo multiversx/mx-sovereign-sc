@@ -7,7 +7,7 @@ use proxies::{
     fee_market_proxy::{FeeMarketProxy, FeeStruct},
     header_verifier_proxy::HeaderverifierProxy,
 };
-use transaction::StakeMultiArg;
+use operation::aliases::StakeMultiArg;
 multiversx_sc::derive_imports!();
 
 #[multiversx_sc::module]

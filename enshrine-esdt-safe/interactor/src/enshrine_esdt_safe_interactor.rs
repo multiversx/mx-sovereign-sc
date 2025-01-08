@@ -1,21 +1,19 @@
 #![allow(non_snake_case)]
 #![allow(unused)]
 
+use aliases::{OptionalTransferData, PaymentsVec};
 use fee_market_proxy::*;
 use interactor::constants::{TOKEN_ID, WHITELIST_TOKEN_ID};
 use interactor::interactor_config::Config;
 use interactor::interactor_state::State;
 use multiversx_sc_snippets::imports::*;
 use proxies::*;
-use transaction::*;
+use operation::*;
 
 const FEE_MARKET_CODE_PATH: &str = "../fee-market/output/fee-market.mxsc.json";
 const HEADER_VERIFIER_CODE_PATH: &str = "../header-verifier/output/header-verifier.mxsc.json";
 const ENSHRINE_ESDT_SAFE_CODE_PATH: &str = "output/enshrine-esdt-safe.mxsc.json";
 const TOKEN_HANDLER_CODE_PATH: &str = "../token-handler/output/token-handler.mxsc.json";
-
-type OptionalTransferData<M> =
-    OptionalValue<MultiValue3<GasLimit, ManagedBuffer<M>, ManagedVec<M, ManagedBuffer<M>>>>;
 
 pub async fn enshrine_esdt_safe_cli() {
     env_logger::init();
@@ -33,11 +31,7 @@ pub async fn enshrine_esdt_safe_cli() {
         "setHeaderVerifierAddress" => interact.set_header_verifier_address().await,
         "setMaxTxGasLimit" => interact.set_max_user_tx_gas_limit().await,
         "setBannedEndpoint" => interact.set_banned_endpoint().await,
-        "deposit" => {
-            interact
-                .deposit(OptionalTransferData::None, Option::None)
-                .await
-        }
+        "deposit" => interact.deposit(None.into(), Option::None).await,
         "executeBridgeOps" => interact.execute_operations().await,
         "registerNewTokenID" => interact.register_new_token_id().await,
         "setMaxBridgedAmount" => interact.set_max_bridged_amount().await,
