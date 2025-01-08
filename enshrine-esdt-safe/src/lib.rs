@@ -29,7 +29,7 @@ pub trait EnshrineEsdtSafe:
         token_handler_address: ManagedAddress,
         opt_wegld_identifier: Option<TokenIdentifier>,
         opt_sov_token_prefix: Option<ManagedBuffer>,
-        config: BridgeConfig<Self::Api>,
+        opt_config: Option<BridgeConfig<Self::Api>>,
     ) {
         self.is_sovereign_chain().set(is_sovereign_chain);
         self.set_paused(true);
@@ -60,7 +60,8 @@ pub trait EnshrineEsdtSafe:
         let caller = self.blockchain().get_caller();
         self.initiator_address().set(caller);
 
-        self.config().set(config);
+        self.config()
+            .set(opt_config.unwrap_or_else(|| BridgeConfig::default_config()));
     }
 
     #[only_owner]
