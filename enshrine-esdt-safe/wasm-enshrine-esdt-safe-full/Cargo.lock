@@ -80,6 +80,7 @@ version = "0.0.0"
 dependencies = [
  "multiversx-sc",
  "proxies",
+ "setup-phase",
  "transaction",
  "utils",
 ]
