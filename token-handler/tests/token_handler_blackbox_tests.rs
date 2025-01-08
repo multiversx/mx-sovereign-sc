@@ -6,7 +6,7 @@ use multiversx_sc_scenario::{api::StaticApi, imports::MxscPath, ScenarioWorld};
 use multiversx_sc_scenario::{ExpectError, ReturnsHandledOrError, ScenarioTxRun};
 use proxies::chain_factory_proxy::ChainFactoryContractProxy;
 use proxies::token_handler_proxy::TokenHandlerProxy;
-use transaction::{OperationEsdtPayment, TransferData};
+use operation::{OperationEsdtPayment, TransferData};
 
 const TOKEN_HANDLER_ADDRESS: TestSCAddress = TestSCAddress::new("token-handler");
 const TOKEN_HANDLER_CODE_PATH: MxscPath = MxscPath::new("output/token-handler.mxsc.json");

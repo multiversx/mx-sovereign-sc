@@ -32,8 +32,8 @@ path = "../esdt-safe"
 [dependencies.proxies]
 path = "../common/proxies"
 
-[dependencies.transaction]
-path = "../common/transaction"
+[dependencies.operation]
+path = "../common/operation"
 
 [dependencies.setup-phase]
 path = "../common/setup-phase"

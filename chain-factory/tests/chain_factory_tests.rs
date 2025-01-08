@@ -10,7 +10,7 @@ use multiversx_sc_scenario::{
 use proxies::{
     chain_config_proxy::ChainConfigContractProxy, chain_factory_proxy::ChainFactoryContractProxy,
 };
-use transaction::StakeMultiArg;
+use operation::aliases::StakeMultiArg;
 
 const FACTORY_ADDRESS: TestSCAddress = TestSCAddress::new("chain-factory");
 const CODE_PATH: MxscPath = MxscPath::new("output/chain-factory.mxsc.json");

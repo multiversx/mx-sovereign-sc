@@ -1,5 +1,5 @@
 use multiversx_sc::codec::TopEncode;
-use multiversx_sc::imports::{MultiValue3, OptionalValue};
+use multiversx_sc::imports::OptionalValue;
 use multiversx_sc::types::{
     Address, BigUint, EsdtTokenData, EsdtTokenPayment, ManagedBuffer, ManagedVec,
     MultiValueEncoded, TestAddress, TestSCAddress, TestTokenIdentifier, TokenIdentifier,
@@ -46,9 +46,6 @@ const PREFIX_NFT_TOKEN_ID: TestTokenIdentifier = TestTokenIdentifier::new("sov-N
 const WEGLD_IDENTIFIER: TestTokenIdentifier = TestTokenIdentifier::new("WEGLD-123456");
 const WEGLD_BALANCE: u128 = 100_000_000_000_000_000;
 const SOVEREIGN_TOKEN_PREFIX: &str = "sov";
-
-type OptionalTransferData<M> =
-    OptionalValue<MultiValue3<GasLimit, ManagedBuffer<M>, ManagedVec<M, ManagedBuffer<M>>>>;
 
 fn world() -> ScenarioWorld {
     let mut blockchain = ScenarioWorld::new();

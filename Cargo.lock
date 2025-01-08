@@ -234,8 +234,8 @@ dependencies = [
  "multiversx-sc-modules",
  "multiversx-sc-scenario",
  "num-bigint",
+ "operation",
  "setup-phase",
- "transaction",
 ]
 
 [[package]]
@@ -255,8 +255,8 @@ dependencies = [
  "multiversx-sc-modules",
  "multiversx-sc-scenario",
  "num-bigint",
+ "operation",
  "proxies",
- "transaction",
  "utils",
 ]
 
@@ -501,11 +501,11 @@ dependencies = [
  "multiversx-sc-scenario",
  "num-bigint",
  "num-traits",
+ "operation",
  "proxies",
  "setup-phase",
  "token-handler",
  "token-whitelist",
- "transaction",
  "tx-batch-module",
  "utils",
 ]
@@ -530,13 +530,13 @@ dependencies = [
  "max-bridged-amount-module",
  "multiversx-sc",
  "multiversx-sc-snippets",
+ "operation",
  "proxies",
  "serde",
  "setup-phase",
  "token-handler",
  "token-whitelist",
  "toml",
- "transaction",
  "tx-batch-module",
  "utils",
 ]
@@ -593,10 +593,10 @@ dependencies = [
  "multiversx-sc-scenario",
  "num-bigint",
  "num-traits",
+ "operation",
  "proxies",
  "setup-phase",
  "token-whitelist",
- "transaction",
  "tx-batch-module",
  "utils",
 ]
@@ -612,10 +612,10 @@ dependencies = [
  "multiversx-sc",
  "multiversx-sc-scenario",
  "multiversx-sc-snippets",
+ "operation",
  "proxies",
  "serde",
  "toml",
- "transaction",
  "tx-batch-module",
 ]
 
@@ -640,9 +640,9 @@ dependencies = [
  "multiversx-sc",
  "multiversx-sc-scenario",
  "num-bigint",
+ "operation",
  "proxies",
  "setup-phase",
- "transaction",
  "utils",
 ]
 
@@ -842,9 +842,9 @@ dependencies = [
  "multiversx-sc",
  "multiversx-sc-scenario",
  "num-bigint",
+ "operation",
  "proxies",
  "setup-phase",
- "transaction",
 ]
 
 [[package]]
@@ -1635,6 +1635,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "operation"
+version = "0.0.0"
+dependencies = [
+ "multiversx-sc",
+]
+
+[[package]]
 name = "parking_lot"
 version = "0.12.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1751,7 +1758,7 @@ name = "proxies"
 version = "0.1.0"
 dependencies = [
  "multiversx-sc",
- "transaction",
+ "operation",
  "tx-batch-module",
 ]
 
@@ -2161,9 +2168,9 @@ dependencies = [
  "multiversx-sc-modules",
  "multiversx-sc-scenario",
  "num-bigint",
+ "operation",
  "proxies",
  "setup-phase",
- "transaction",
 ]
 
 [[package]]
@@ -2306,8 +2313,8 @@ dependencies = [
  "multiversx-sc-modules",
  "multiversx-sc-scenario",
  "num-bigint",
+ "operation",
  "proxies",
- "transaction",
 ]
 
 [[package]]
@@ -2428,13 +2435,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "transaction"
-version = "0.0.0"
-dependencies = [
- "multiversx-sc",
-]
-
-[[package]]
 name = "try-lock"
 version = "0.2.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2446,7 +2446,7 @@ version = "0.0.0"
 dependencies = [
  "multiversx-sc",
  "multiversx-sc-scenario",
- "transaction",
+ "operation",
 ]
 
 [[package]]
@@ -2522,6 +2522,7 @@ name = "utils"
 version = "0.0.0"
 dependencies = [
  "multiversx-sc",
+ "operation",
 ]
 
 [[package]]

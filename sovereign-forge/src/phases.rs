@@ -1,9 +1,9 @@
 use crate::err_msg;
 use core::ops::Deref;
 use proxies::fee_market_proxy::FeeStruct;
-use transaction::StakeMultiArg;
 
 use multiversx_sc::{require, types::MultiValueEncoded};
+use operation::aliases::StakeMultiArg;
 
 use crate::common::{
     self,

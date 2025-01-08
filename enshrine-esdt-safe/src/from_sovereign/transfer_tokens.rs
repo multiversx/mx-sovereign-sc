@@ -1,7 +1,7 @@
 use crate::{common, to_sovereign};
 use multiversx_sc::imports::*;
 use proxies::{header_verifier_proxy::HeaderverifierProxy, token_handler_proxy::TokenHandlerProxy};
-use transaction::{Operation, OperationData, OperationEsdtPayment, OperationTuple};
+use operation::{Operation, OperationData, OperationEsdtPayment, OperationTuple};
 
 const DEFAULT_ISSUE_COST: u64 = 50_000_000_000_000_000; // 0.05 * 10^18
 
