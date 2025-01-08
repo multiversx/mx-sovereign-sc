@@ -4,7 +4,8 @@ use multiversx_sc::types::{
     BigUint, CodeMetadata, MultiValueEncoded, TestAddress, TestSCAddress, TokenIdentifier,
 };
 use multiversx_sc_scenario::{
-    api::StaticApi, imports::MxscPath, managed_biguint, ExpectError, ScenarioTxRun, ScenarioWorld,
+    api::StaticApi, imports::MxscPath, managed_biguint, ReturnsHandledOrError, ScenarioTxRun,
+    ScenarioWorld,
 };
 use proxies::{
     chain_config_proxy::ChainConfigContractProxy, chain_factory_proxy::ChainFactoryContractProxy,
@@ -88,9 +89,9 @@ impl ChainFactoryTestState {
         max_validators: usize,
         min_stake: BigUint<StaticApi>,
         additional_stake_required: MultiValueEncoded<StaticApi, StakeMultiArg<StaticApi>>,
-        expected_result: Option<ExpectError<'_>>,
+        error_message: Option<&str>,
     ) {
-        let transaction = self
+        let response = self
             .world
             .tx()
             .from(CONFIG_ADDRESS)
@@ -101,13 +102,12 @@ impl ChainFactoryTestState {
                 max_validators,
                 min_stake,
                 additional_stake_required,
-            );
+            )
+            .returns(ReturnsHandledOrError::new())
+            .run();
 
-        match expected_result {
-            Some(error) => {
-                transaction.returns(error).run();
-            }
-            None => transaction.run(),
+        if let Err(error) = response {
+            assert_eq!(error_message, Some(error.message.as_str()))
         }
     }
 }

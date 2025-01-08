@@ -1,6 +1,6 @@
 use multiversx_sc::types::{BigUint, ManagedBuffer, MultiValueEncoded, TestAddress, TestSCAddress};
 use multiversx_sc_scenario::{
-    api::StaticApi, imports::MxscPath, ExpectError, ScenarioTxRun, ScenarioTxWhitebox,
+    api::StaticApi, imports::MxscPath, ReturnsHandledOrError, ScenarioTxRun, ScenarioTxWhitebox,
     ScenarioWorld,
 };
 use proxies::{
@@ -170,24 +170,25 @@ impl SovereignForgeTestState {
 
         self
     }
+
     fn register_token_handler(
         &mut self,
         shard_id: u32,
         token_handler_address: TestSCAddress,
-        expected_result: Option<ExpectError>,
+        error_message: Option<&str>,
     ) {
-        let transaction = self
+        let response = self
             .world
             .tx()
             .from(OWNER_ADDRESS)
             .to(FORGE_ADDRESS)
             .typed(SovereignForgeProxy)
-            .register_token_handler(shard_id, token_handler_address);
+            .register_token_handler(shard_id, token_handler_address)
+            .returns(ReturnsHandledOrError::new())
+            .run();
 
-        if let Some(error) = expected_result {
-            transaction.returns(error).run();
-        } else {
-            transaction.run();
+        if let Err(error) = response {
+            assert_eq!(error_message, Some(error.message.as_str()))
         }
     }
 
@@ -195,36 +196,36 @@ impl SovereignForgeTestState {
         &mut self,
         shard_id: u32,
         chain_factory_address: TestSCAddress,
-        expected_result: Option<ExpectError>,
+        error_message: Option<&str>,
     ) {
-        let transaction = self
+        let response = self
             .world
             .tx()
             .from(OWNER_ADDRESS)
             .to(FORGE_ADDRESS)
             .typed(SovereignForgeProxy)
-            .register_chain_factory(shard_id, chain_factory_address);
+            .register_chain_factory(shard_id, chain_factory_address)
+            .returns(ReturnsHandledOrError::new())
+            .run();
 
-        if let Some(error) = expected_result {
-            transaction.returns(error).run();
-        } else {
-            transaction.run();
+        if let Err(error) = response {
+            assert_eq!(error_message, Some(error.message.as_str()))
         }
     }
 
-    fn complete_setup_phase(&mut self, expected_result: Option<ExpectError>) {
-        let transaction = self
+    fn complete_setup_phase(&mut self, error_message: Option<&str>) {
+        let response = self
             .world
             .tx()
             .from(OWNER_ADDRESS)
             .to(FORGE_ADDRESS)
             .typed(SovereignForgeProxy)
-            .complete_setup_phase();
+            .complete_setup_phase()
+            .returns(ReturnsHandledOrError::new())
+            .run();
 
-        if let Some(error) = expected_result {
-            transaction.returns(error).run();
-        } else {
-            transaction.run();
+        if let Err(error) = response {
+            assert_eq!(error_message, Some(error.message.as_str()))
         }
     }
 
@@ -245,9 +246,9 @@ impl SovereignForgeTestState {
         max_validators: u64,
         min_stake: BigUint<StaticApi>,
         additional_stake_required: MultiValueEncoded<StaticApi, StakeMultiArg<StaticApi>>,
-        expected_result: Option<ExpectError>,
+        error_message: Option<&str>,
     ) {
-        let transaction = self
+        let response = self
             .world
             .tx()
             .from(OWNER_ADDRESS)
@@ -259,68 +260,68 @@ impl SovereignForgeTestState {
                 min_stake,
                 additional_stake_required,
             )
-            .egld(payment);
+            .egld(payment)
+            .returns(ReturnsHandledOrError::new())
+            .run();
 
-        if let Some(error) = expected_result {
-            transaction.returns(error).run();
-        } else {
-            transaction.run();
+        if let Err(error) = response {
+            assert_eq!(error_message, Some(error.message.as_str()))
         }
     }
 
     fn deploy_phase_two(
         &mut self,
-        expected_result: Option<ExpectError>,
+        error_message: Option<&str>,
         bls_keys: &MultiValueEncoded<StaticApi, ManagedBuffer<StaticApi>>,
     ) {
-        let transaction = self
+        let response = self
             .world
             .tx()
             .from(OWNER_ADDRESS)
             .to(FORGE_ADDRESS)
             .typed(SovereignForgeProxy)
-            .deploy_phase_two(bls_keys);
+            .deploy_phase_two(bls_keys)
+            .returns(ReturnsHandledOrError::new())
+            .run();
 
-        if let Some(error) = expected_result {
-            transaction.returns(error).run();
-        } else {
-            transaction.run();
+        if let Err(error) = response {
+            assert_eq!(error_message, Some(error.message.as_str()))
         }
     }
 
-    fn deploy_phase_three(&mut self, is_sovereign_chain: bool, expect_error: Option<ExpectError>) {
-        let transaction = self
+    fn deploy_phase_three(&mut self, is_sovereign_chain: bool, error_message: Option<&str>) {
+        let response = self
             .world
             .tx()
             .from(OWNER_ADDRESS)
             .to(FORGE_ADDRESS)
             .typed(SovereignForgeProxy)
-            .deploy_phase_three(is_sovereign_chain);
+            .deploy_phase_three(is_sovereign_chain)
+            .returns(ReturnsHandledOrError::new())
+            .run();
 
-        if let Some(error) = expect_error {
-            transaction.returns(error).run();
-        } else {
-            transaction.run();
+        if let Err(error) = response {
+            assert_eq!(error_message, Some(error.message.as_str()))
         }
     }
 
     fn deploy_phase_four(
         &mut self,
         fee: Option<FeeStruct<StaticApi>>,
-        expect_error: Option<ExpectError>,
+        error_message: Option<&str>,
     ) {
-        let transaction = self
+        let response = self
             .world
             .tx()
             .from(OWNER_ADDRESS)
             .to(FORGE_ADDRESS)
             .typed(SovereignForgeProxy)
-            .deploy_phase_four(fee);
+            .deploy_phase_four(fee)
+            .returns(ReturnsHandledOrError::new())
+            .run();
 
-        if let Some(error) = expect_error {
-            transaction.returns(error).run();
-        } else {
-            transaction.run();
+        if let Err(error) = response {
+            assert_eq!(error_message, Some(error.message.as_str()))
         }
     }
 }
@@ -369,10 +370,9 @@ fn complete_setup_phase_no_chain_config_registered() {
     let mut state = SovereignForgeTestState::new();
     state.deploy_sovereign_forge();
 
-    state.complete_setup_phase(Some(ExpectError(
-        4,
+    state.complete_setup_phase(Some(
         "There is no Chain-Factory contract assigned for shard 1",
-    )));
+    ));
 }
 
 #[test]
@@ -381,10 +381,9 @@ fn complete_setup_phase_no_token_handler_registered() {
     state.deploy_sovereign_forge();
     state.register_chain_factory(1, FACTORY_ADDRESS, None);
 
-    state.complete_setup_phase(Some(ExpectError(
-        4,
+    state.complete_setup_phase(Some(
         "There is no Token-Handler contract assigned for shard 1",
-    )));
+    ));
 }
 
 #[test]
@@ -417,10 +416,7 @@ fn deploy_phase_one_deploy_cost_too_low() {
         2,
         BigUint::from(2u32),
         MultiValueEncoded::new(),
-        Some(ExpectError(
-            4,
-            "The given deploy cost is not equal to the standard amount",
-        )),
+        Some("The given deploy cost is not equal to the standard amount"),
     );
 }
 
@@ -449,10 +445,7 @@ fn deploy_phase_one_chain_config_already_deployed() {
         2,
         BigUint::from(2u32),
         MultiValueEncoded::new(),
-        Some(ExpectError(
-            4,
-            "The Chain-Config contract is already deployed",
-        )),
+        Some("The Chain-Config contract is already deployed"),
     );
 }
 
@@ -500,10 +493,7 @@ fn deploy_phase_two_without_first_phase() {
     let bls_keys = MultiValueEncoded::<StaticApi, ManagedBuffer<StaticApi>>::new();
 
     state.deploy_phase_two(
-        Some(ExpectError(
-            4,
-            "The current caller has not deployed any Sovereign Chain",
-        )),
+        Some("The current caller has not deployed any Sovereign Chain"),
         &bls_keys,
     );
 }
@@ -572,7 +562,7 @@ fn deploy_phase_two_header_already_deployed() {
 
     state.deploy_phase_two(None, &bls_keys);
     state.deploy_phase_two(
-        Some(ExpectError(4, "The Header-Verifier SC is already deployed")),
+        Some("The Header-Verifier SC is already deployed"),
         &bls_keys,
     );
 }
@@ -628,10 +618,7 @@ fn deploy_phase_three_without_phase_one() {
 
     state.deploy_phase_three(
         false,
-        Some(ExpectError(
-            4,
-            "The Header-Verifier SC is not deployed, you skipped the second phase",
-        )),
+        Some("The Header-Verifier SC is not deployed, you skipped the second phase"),
     );
 }
 
@@ -659,10 +646,7 @@ fn deploy_phase_three_without_phase_two() {
 
     state.deploy_phase_three(
         false,
-        Some(ExpectError(
-            4,
-            "The Header-Verifier SC is not deployed, you skipped the second phase",
-        )),
+        Some("The Header-Verifier SC is not deployed, you skipped the second phase"),
     );
 }
 
@@ -694,10 +678,7 @@ fn deploy_phase_three_already_deployed() {
 
     state.deploy_phase_two(None, &bls_keys);
     state.deploy_phase_three(false, None);
-    state.deploy_phase_three(
-        false,
-        Some(ExpectError(4, "The ESDT-Safe SC is already deployed")),
-    );
+    state.deploy_phase_three(false, Some("The ESDT-Safe SC is already deployed"));
 }
 
 #[test]
@@ -773,10 +754,7 @@ fn deploy_phase_four_without_previous_phase() {
     state.deploy_phase_two(None, &bls_keys);
     state.deploy_phase_four(
         None,
-        Some(ExpectError(
-            4,
-            "The ESDT-Safe SC is not deployed, you skipped the third phase",
-        )),
+        Some("The ESDT-Safe SC is not deployed, you skipped the third phase"),
     );
 }
 
@@ -810,8 +788,5 @@ fn deploy_phase_four_fee_market_already_deployed() {
     state.deploy_phase_two(None, &bls_keys);
     state.deploy_phase_three(false, None);
     state.deploy_phase_four(None, None);
-    state.deploy_phase_four(
-        None,
-        Some(ExpectError(4, "The Fee-Market SC is already deployed")),
-    );
+    state.deploy_phase_four(None, Some("The Fee-Market SC is already deployed"));
 }

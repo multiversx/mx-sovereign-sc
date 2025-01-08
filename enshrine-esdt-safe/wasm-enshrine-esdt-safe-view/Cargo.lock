@@ -285,6 +285,7 @@ dependencies = [
  "chain-factory",
  "multiversx-sc",
  "operation",
+ "multiversx-sc-modules",
  "proxies",
 ]
 

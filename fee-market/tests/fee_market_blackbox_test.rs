@@ -1,12 +1,12 @@
 use multiversx_sc::{
     imports::OptionalValue,
     types::{
-        BigUint, EsdtTokenPayment, ManagedVec, MultiValueEncoded, ReturnsResultUnmanaged,
-        TestAddress, TestSCAddress, TestTokenIdentifier,
+        BigUint, EsdtTokenPayment, ManagedVec, MultiValueEncoded, TestAddress, TestSCAddress,
+        TestTokenIdentifier,
     },
 };
 use multiversx_sc_scenario::{
-    api::StaticApi, imports::MxscPath, ExpectError, ScenarioTxRun, ScenarioWorld,
+    api::StaticApi, imports::MxscPath, ReturnsHandledOrError, ScenarioTxRun, ScenarioWorld,
 };
 use proxies::fee_market_proxy::{FeeMarketProxy, FeeStruct, FeeType};
 
@@ -83,7 +83,7 @@ impl FeeMarketTestState {
         self
     }
 
-    fn substract_fee(&mut self, payment_wanted: &str, error_status: Option<ExpectError>) {
+    fn substract_fee(&mut self, payment_wanted: &str, error_message: Option<&str>) {
         let payment: EsdtTokenPayment<StaticApi> = match payment_wanted {
             "Correct" => {
                 EsdtTokenPayment::new(TOKEN_ID.to_token_identifier(), 0u64, BigUint::from(200u64))
@@ -106,29 +106,19 @@ impl FeeMarketTestState {
             }
         };
 
-        match error_status {
-            Some(error) => {
-                self.world
-                    .tx()
-                    .from(ESDT_SAFE_ADDRESS)
-                    .to(FEE_MARKET_ADDRESS)
-                    .typed(FeeMarketProxy)
-                    .subtract_fee(USER_ADDRESS, 1u8, OptionalValue::Some(30u64))
-                    .payment(payment)
-                    .returns(error)
-                    .run();
-            }
-            None => {
-                self.world
-                    .tx()
-                    .from(ESDT_SAFE_ADDRESS)
-                    .to(FEE_MARKET_ADDRESS)
-                    .typed(FeeMarketProxy)
-                    .subtract_fee(USER_ADDRESS, 1u8, OptionalValue::Some(30u64))
-                    .payment(payment)
-                    .returns(ReturnsResultUnmanaged)
-                    .run();
-            }
+        let response = self
+            .world
+            .tx()
+            .from(ESDT_SAFE_ADDRESS)
+            .to(FEE_MARKET_ADDRESS)
+            .typed(FeeMarketProxy)
+            .subtract_fee(USER_ADDRESS, 1u8, OptionalValue::Some(30u64))
+            .payment(payment)
+            .returns(ReturnsHandledOrError::new())
+            .run();
+
+        if let Err(error) = response {
+            assert_eq!(error_message, Some(error.message.as_str()))
         }
     }
 
@@ -146,7 +136,7 @@ impl FeeMarketTestState {
         &mut self,
         token_id: TestTokenIdentifier,
         fee_type: &str,
-        error_status: Option<ExpectError>,
+        error_message: Option<&str>,
     ) {
         let fee_struct: FeeStruct<StaticApi> = match fee_type {
             "None" => {
@@ -194,26 +184,18 @@ impl FeeMarketTestState {
             }
         };
 
-        match error_status {
-            Some(error) => {
-                self.world
-                    .tx()
-                    .from(OWNER_ADDRESS)
-                    .to(FEE_MARKET_ADDRESS)
-                    .typed(FeeMarketProxy)
-                    .set_fee(fee_struct)
-                    .returns(error)
-                    .run();
-            }
-            None => {
-                self.world
-                    .tx()
-                    .from(OWNER_ADDRESS)
-                    .to(FEE_MARKET_ADDRESS)
-                    .typed(FeeMarketProxy)
-                    .set_fee(fee_struct)
-                    .run();
-            }
+        let response = self
+            .world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .to(FEE_MARKET_ADDRESS)
+            .typed(FeeMarketProxy)
+            .set_fee(fee_struct)
+            .returns(ReturnsHandledOrError::new())
+            .run();
+
+        if let Err(error) = response {
+            assert_eq!(error_message, Some(error.message.as_str()))
         }
     }
 
@@ -256,25 +238,13 @@ fn test_add_fee_wrong_params() {
 
     state.deploy_fee_market();
 
-    state.add_fee(
-        WRONG_TOKEN_ID,
-        "Fixed",
-        Some(ExpectError(4, "Invalid token ID")),
-    );
+    state.add_fee(WRONG_TOKEN_ID, "Fixed", Some("Invalid token ID"));
 
-    state.add_fee(TOKEN_ID, "None", Some(ExpectError(4, "Invalid fee type")));
+    state.add_fee(TOKEN_ID, "None", Some("Invalid fee type"));
 
-    state.add_fee(
-        DIFFERENT_TOKEN_ID,
-        "Fixed",
-        Some(ExpectError(4, "Invalid fee")),
-    );
+    state.add_fee(DIFFERENT_TOKEN_ID, "Fixed", Some("Invalid fee"));
 
-    state.add_fee(
-        TOKEN_ID,
-        "AnyTokenWrong",
-        Some(ExpectError(4, "Invalid token ID")),
-    );
+    state.add_fee(TOKEN_ID, "AnyTokenWrong", Some("Invalid token ID"));
 }
 
 #[test]
@@ -309,10 +279,7 @@ fn test_substract_fee_invalid_payment_token() {
 
     state.deploy_fee_market();
 
-    state.substract_fee(
-        "InvalidToken",
-        Some(ExpectError(4, "Token not accepted as fee")),
-    );
+    state.substract_fee("InvalidToken", Some("Token not accepted as fee"));
 
     state.check_balance_sc(ESDT_SAFE_ADDRESS, 1000);
     state.check_account(USER_ADDRESS, 1000);
@@ -336,10 +303,7 @@ fn test_substract_fixed_fee_payment_not_covered() {
 
     state.deploy_fee_market();
 
-    state.substract_fee(
-        "Less than fee",
-        Some(ExpectError(4, "Payment does not cover fee")),
-    );
+    state.substract_fee("Less than fee", Some("Payment does not cover fee"));
 
     state.check_balance_sc(ESDT_SAFE_ADDRESS, 1000);
     state.check_account(USER_ADDRESS, 1000);

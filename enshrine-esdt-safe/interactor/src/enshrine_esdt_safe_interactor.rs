@@ -182,6 +182,7 @@ impl ContractInteract {
 
     pub async fn deploy_token_handler(&mut self) {
         let token_handler_code_path = MxscPath::new(&self.token_handler_code);
+        let chain_factory_address = Bech32Address::from_bech32_string("chain_factory".to_string());
 
         let new_address = self
             .interactor
@@ -189,7 +190,7 @@ impl ContractInteract {
             .from(&self.wallet_address)
             .gas(100_000_000u64)
             .typed(token_handler_proxy::TokenHandlerProxy)
-            .init()
+            .init(chain_factory_address)
             .code(token_handler_code_path)
             .returns(ReturnsNewAddress)
             .run()

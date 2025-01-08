@@ -4,9 +4,10 @@ use multiversx_sc::{
     api::ManagedTypeApi,
     types::{BigUint, MultiValueEncoded, TestAddress, TestSCAddress},
 };
+use multiversx_sc_scenario::ReturnsHandledOrError;
 use multiversx_sc_scenario::{
     api::StaticApi, imports::MxscPath, multiversx_chain_vm::crypto_functions::sha256, DebugApi,
-    ExpectError, ScenarioTxRun, ScenarioTxWhitebox, ScenarioWorld,
+    ScenarioTxRun, ScenarioTxWhitebox, ScenarioWorld,
 };
 use proxies::header_verifier_proxy::HeaderverifierProxy;
 
@@ -98,19 +99,20 @@ impl HeaderVerifierTestState {
         caller: TestAddress,
         hash_of_hashes: &ManagedBuffer<StaticApi>,
         operation_hash: &ManagedBuffer<StaticApi>,
-        expected_result: Option<ExpectError<'_>>,
+        error_message: Option<&str>,
     ) {
-        let transaction = self
+        let response = self
             .world
             .tx()
             .from(caller)
             .to(HEADER_VERIFIER_ADDRESS)
             .typed(HeaderverifierProxy)
-            .remove_executed_hash(hash_of_hashes, operation_hash);
+            .remove_executed_hash(hash_of_hashes, operation_hash)
+            .returns(ReturnsHandledOrError::new())
+            .run();
 
-        match expected_result {
-            Some(error) => transaction.returns(error).run(),
-            None => transaction.run(),
+        if let Err(error) = response {
+            assert_eq!(error_message, Some(error.message.as_str()))
         }
     }
 
@@ -119,19 +121,20 @@ impl HeaderVerifierTestState {
         caller: TestAddress,
         hash_of_hashes: &ManagedBuffer<StaticApi>,
         operation_hash: &ManagedBuffer<StaticApi>,
-        expected_result: Option<ExpectError<'_>>,
+        error_message: Option<&str>,
     ) {
-        let transaction = self
+        let response = self
             .world
             .tx()
             .from(caller)
             .to(HEADER_VERIFIER_ADDRESS)
             .typed(HeaderverifierProxy)
-            .lock_operation_hash(hash_of_hashes, operation_hash);
+            .lock_operation_hash(hash_of_hashes, operation_hash)
+            .returns(ReturnsHandledOrError::new())
+            .run();
 
-        match expected_result {
-            Some(error) => transaction.returns(error).run(),
-            None => transaction.run(),
+        if let Err(error) = response {
+            assert_eq!(error_message, Some(error.message.as_str()))
         }
     }
 
@@ -271,10 +274,7 @@ fn test_remove_executed_hash_caller_not_esdt_address() {
         OWNER,
         &operation.bridge_operation_hash,
         &operation_1,
-        Some(ExpectError(
-            4,
-            "Only ESDT Safe contract can call this endpoint",
-        )),
+        Some("Only ESDT Safe contract can call this endpoint"),
     );
 }
 
@@ -295,7 +295,7 @@ fn test_remove_executed_hash_no_esdt_address_registered() {
         ENSHRINE_ADDRESS,
         &operation.bridge_operation_hash,
         &operation_1,
-        Some(ExpectError(4, "There is no registered ESDT address")),
+        Some("There is no registered ESDT address"),
     );
 }
 
@@ -406,7 +406,7 @@ fn test_lock_operation_not_registered() {
         ENSHRINE_ADDRESS,
         &operation.bridge_operation_hash,
         &operation_1,
-        Some(ExpectError(4, "The current operation is not registered")),
+        Some("The current operation is not registered"),
     );
 }
 
