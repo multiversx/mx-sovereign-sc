@@ -80,6 +80,7 @@ version = "0.0.0"
 dependencies = [
  "multiversx-sc",
  "proxies",
+ "setup-phase",
  "transaction",
  "utils",
 ]
@@ -277,6 +278,7 @@ version = "0.0.0"
 dependencies = [
  "chain-factory",
  "multiversx-sc",
+ "multiversx-sc-modules",
  "proxies",
  "transaction",
 ]
