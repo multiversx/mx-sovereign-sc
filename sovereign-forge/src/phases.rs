@@ -53,7 +53,7 @@ pub trait PhasesModule:
     ) {
         self.require_setup_complete();
 
-        let call_value = self.call_value().egld_value();
+        let call_value = self.call_value().egld();
         self.require_correct_deploy_cost(call_value.deref());
 
         let chain_id = self.generate_chain_id();

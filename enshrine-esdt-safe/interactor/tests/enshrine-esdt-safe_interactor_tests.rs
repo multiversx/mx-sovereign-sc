@@ -5,8 +5,8 @@ use enshrine_esdt_safe_interactor::ContractInteract;
 use interactor::constants::{TOKEN_ID, WHITELIST_TOKEN_ID};
 use interactor::interactor_config::Config;
 use multiversx_sc_snippets::imports::*;
-use proxies::*;
 use operation::*;
+use proxies::*;
 
 type OptionalTransferData<M> =
     OptionalValue<MultiValue3<GasLimit, ManagedBuffer<M>, ManagedVec<M, ManagedBuffer<M>>>>;
@@ -57,12 +57,13 @@ async fn test_deposit_too_many_payments() {
     let from = interact.wallet_address.clone();
     let to_contract = interact.state.esdt_safe_address().clone();
     let transfer_data = OptionalTransferData::None;
-    let payment = EsdtTokenPayment::new(
+    let payment: EsdtTokenPayment<StaticApi> = EsdtTokenPayment::new(
         TokenIdentifier::from_esdt_bytes(TOKEN_ID),
         0u64,
         BigUint::from(10u64),
     );
-    let payments = ManagedVec::from(vec![payment; 11]);
+    let payments: ManagedVec<StaticApi, EsdtTokenPayment<StaticApi>> =
+        ManagedVec::from(vec![payment; 11]);
 
     interact.deploy_setup().await;
 

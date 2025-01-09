@@ -1,10 +1,10 @@
 use crate::from_sovereign::token_mapping;
 use multiversx_sc::storage::StorageKey;
-use proxies::fee_market_proxy::FeeMarketProxy;
 use operation::{
     aliases::{EventPaymentTuple, ExtractedFeeResult, GasLimit, OptionalValueTransferDataTuple},
     OperationData, TransferData,
 };
+use proxies::fee_market_proxy::FeeMarketProxy;
 
 multiversx_sc::imports!();
 
@@ -75,7 +75,7 @@ pub trait CreateTxModule:
                     .sync_call();
 
                 event_payments.push(MultiValue3::from((
-                    payment.token_identifier,
+                    payment.token_identifier.clone(),
                     payment.token_nonce,
                     current_token_data,
                 )));
@@ -85,7 +85,7 @@ pub trait CreateTxModule:
                 if !mvx_to_sov_token_id_mapper.is_empty() {
                     let sov_token_id = mvx_to_sov_token_id_mapper.get();
                     let sov_token_nonce = self.burn_mainchain_token(
-                        payment,
+                        payment.clone(),
                         &current_token_data.token_type,
                         &sov_token_id,
                     );
@@ -97,7 +97,7 @@ pub trait CreateTxModule:
                     )));
                 } else {
                     event_payments.push(MultiValue3::from((
-                        payment.token_identifier,
+                        payment.token_identifier.clone(),
                         payment.token_nonce,
                         current_token_data,
                     )));
@@ -115,7 +115,7 @@ pub trait CreateTxModule:
 
         // refund refundable_tokens
         let caller = self.blockchain().get_caller();
-        self.refund_tokens(&caller, &refundable_payments);
+        self.refund_tokens(&caller, refundable_payments);
 
         let tx_nonce = self.get_and_save_next_tx_id();
         self.deposit_event(
@@ -126,7 +126,7 @@ pub trait CreateTxModule:
     }
 
     fn check_and_extract_fee(&self) -> ExtractedFeeResult<Self::Api> {
-        let mut payments = self.call_value().all_esdt_transfers().clone_value();
+        let payments = self.call_value().all_esdt_transfers().clone();
 
         require!(!payments.is_empty(), "Nothing to transfer");
         require!(payments.len() <= MAX_TRANSFERS_PER_TX, "Too many tokens");
@@ -139,7 +139,7 @@ pub trait CreateTxModule:
         .get();
 
         let opt_transfer_data = if fee_enabled_mapper {
-            OptionalValue::Some(self.pop_first_payment(&mut payments))
+            OptionalValue::Some(self.pop_first_payment(payments.clone()).0)
         } else {
             OptionalValue::None
         };
@@ -150,11 +150,11 @@ pub trait CreateTxModule:
     fn refund_tokens(
         &self,
         caller: &ManagedAddress,
-        refundable_payments: &ManagedVec<EsdtTokenPayment>,
+        refundable_payments: ManagedVec<EsdtTokenPayment>,
     ) {
         for payment in refundable_payments {
             if payment.amount > 0 {
-                self.tx().to(caller).payment(&payment).transfer();
+                self.tx().to(caller).payment(payment).transfer();
             }
         }
     }

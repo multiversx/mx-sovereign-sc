@@ -34,7 +34,14 @@ impl<M: ManagedTypeApi> Operation<M> {
         let mut tuples = MultiValueEncoded::new();
 
         for token in &self.tokens {
-            tuples.push((token.token_identifier, token.token_nonce, token.token_data).into());
+            tuples.push(
+                (
+                    token.token_identifier.clone(),
+                    token.token_nonce,
+                    token.token_data.clone(),
+                )
+                    .into(),
+            );
         }
 
         tuples

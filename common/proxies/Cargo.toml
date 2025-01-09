@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies.multiversx-sc]
-version = "=0.54.6"
+version = "=0.55.0"
 
 [dependencies.operation]
 path = "../operation"

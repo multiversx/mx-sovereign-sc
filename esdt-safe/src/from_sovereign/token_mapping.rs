@@ -40,7 +40,7 @@ pub trait TokenMappingModule: utils::UtilsModule {
 
         self.require_token_has_prefix(&sov_token_id);
 
-        let issue_cost = self.call_value().egld_value().clone_value();
+        let issue_cost = self.call_value().egld().clone_value();
         require!(
             issue_cost == DEFAULT_ISSUE_COST,
             "eGLD value should be 0.05"
