@@ -394,11 +394,10 @@ fn deploy_phase_one_deploy_cost_too_low() {
     state.finish_setup();
 
     let deploy_cost = BigUint::from(1u32);
-    let config = SovereignConfig::new(0, 1, BigUint::default(), None);
 
     state.deploy_phase_one(
         &deploy_cost,
-        &config,
+        &SovereignConfig::default_config(),
         Some(ExpectError(
             4,
             "The given deploy cost is not equal to the standard amount",
@@ -415,7 +414,7 @@ fn deploy_phase_one_chain_config_already_deployed() {
     state.finish_setup();
 
     let deploy_cost = BigUint::from(100_000u32);
-    let config = SovereignConfig::new(0, 1, BigUint::default(), None);
+    let config = SovereignConfig::default_config();
 
     state.deploy_phase_one(&deploy_cost, &config, None);
     state.deploy_phase_one(
