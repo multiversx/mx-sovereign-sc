@@ -32,7 +32,48 @@ pub type ExtractedFeeResult<M> =
     MultiValue2<OptionalValue<EsdtTokenPayment<M>>, ManagedVec<M, EsdtTokenPayment<M>>>;
 pub type OptionalValueTransferDataTuple<M> =
     OptionalValue<MultiValue3<GasLimit, ManagedBuffer<M>, ManagedVec<M, ManagedBuffer<M>>>>;
-pub type StakeMultiArg<M> = MultiValue2<TokenIdentifier<M>, BigUint<M>>;
+
+#[type_abi]
+#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, ManagedVecItem, Clone)]
+pub struct StakeArgs<M: ManagedTypeApi> {
+    pub token_id: TokenIdentifier<M>,
+    pub amount: BigUint<M>,
+}
+
+impl<M: ManagedTypeApi> StakeArgs<M> {
+    pub fn new(token_id: TokenIdentifier<M>, amount: BigUint<M>) -> Self {
+        StakeArgs { token_id, amount }
+    }
+}
+
+#[type_abi]
+#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, ManagedVecItem, Clone)]
+pub struct SovereignConfig<M: ManagedTypeApi> {
+    pub min_validators: u64,
+    pub max_validators: u64,
+    pub min_stake: BigUint<M>,
+    pub opt_additional_stake_required: Option<ManagedVec<M, StakeArgs<M>>>,
+}
+
+impl<M: ManagedTypeApi> SovereignConfig<M> {
+    pub fn new(
+        min_validators: u64,
+        max_validators: u64,
+        min_stake: BigUint<M>,
+        opt_additional_stake_required: Option<ManagedVec<M, StakeArgs<M>>>,
+    ) -> Self {
+        SovereignConfig {
+            min_validators,
+            max_validators,
+            min_stake,
+            opt_additional_stake_required,
+        }
+    }
+
+    pub fn default_config() -> Self {
+        SovereignConfig::new(0, 1, BigUint::default(), None)
+    }
+}
 
 #[type_abi]
 #[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, ManagedVecItem, Clone)]

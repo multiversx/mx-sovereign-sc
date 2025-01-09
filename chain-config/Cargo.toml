@@ -20,8 +20,14 @@ version = "=0.54.6"
 [dependencies.multiversx-sc-modules]
 version = "=0.54.6"
 
+[dependencies.header-verifier]
+path = "../header-verifier"
+
 [dependencies.transaction]
 path = "../common/transaction"
+
+[dependencies.proxies]
+path = "../common/proxies"
 
 [dependencies.setup-phase]
 path = "../common/setup-phase"

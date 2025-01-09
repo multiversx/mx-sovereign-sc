@@ -24,6 +24,9 @@ version = "0.54.6"
 [dependencies.multiversx-sc]
 version = "0.54.6"
 
+[dependencies.transaction]
+path = "../../common/transaction"
+
 [dependencies.proxies]
 path = "../../common/proxies"
 

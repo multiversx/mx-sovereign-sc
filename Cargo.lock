@@ -230,10 +230,12 @@ checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 name = "chain-config"
 version = "0.0.0"
 dependencies = [
+ "header-verifier",
  "multiversx-sc",
  "multiversx-sc-modules",
  "multiversx-sc-scenario",
  "num-bigint",
+ "proxies",
  "setup-phase",
  "transaction",
 ]
@@ -691,6 +693,7 @@ dependencies = [
  "serde",
  "sovereign-forge",
  "toml",
+ "transaction",
 ]
 
 [[package]]
