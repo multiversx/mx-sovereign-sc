@@ -18,13 +18,13 @@ path = "../common/proxies"
 path = "../chain-factory"
 
 [dependencies.multiversx-sc]
-version = "=0.54.6"
+version = "=0.55.0"
 
 [dependencies.multiversx-sc-modules]
-version = "=0.54.6"
+version = "=0.55.0"
 
 [dev-dependencies]
 num-bigint = "0.4"
 
 [dev-dependencies.multiversx-sc-scenario]
-version = "=0.54.6"
+version = "=0.55.0"
