@@ -194,10 +194,4 @@ pub trait TransferTokensModule:
     fn is_wegld(&self, token_id: &TokenIdentifier<Self::Api>) -> bool {
         token_id.eq(&self.wegld_identifier().get())
     }
-
-    #[storage_mapper("headerVerifierAddress")]
-    fn header_verifier_address(&self) -> SingleValueMapper<ManagedAddress>;
-
-    #[storage_mapper("paidIssuedTokens")]
-    fn paid_issued_tokens(&self) -> UnorderedSetMapper<TokenIdentifier<Self::Api>>;
 }

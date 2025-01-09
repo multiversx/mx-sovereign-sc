@@ -164,32 +164,14 @@ pub trait CreateTxModule:
     }
 
     fn require_gas_limit_under_limit(&self, gas_limit: GasLimit) {
-        let max_gas_limit = self.max_user_tx_gas_limit().get();
-        require!(gas_limit <= max_gas_limit, "Gas limit too high");
+        let config = self.config().get();
+        require!(gas_limit <= config.max_tx_gas_limit, "Gas limit too high");
     }
 
     fn require_endpoint_not_banned(&self, function: &ManagedBuffer) {
         require!(
-            !self.banned_endpoint_names().contains(function),
+            !self.config().get().banned_endpoints.contains(function),
             "Banned endpoint name"
         );
     }
-
-    #[storage_mapper("feeMarketAddress")]
-    fn fee_market_address(&self) -> SingleValueMapper<ManagedAddress>;
-
-    #[storage_mapper("maxUserTxGasLimit")]
-    fn max_user_tx_gas_limit(&self) -> SingleValueMapper<GasLimit>;
-
-    #[storage_mapper("burnTokens")]
-    fn burn_tokens(&self) -> UnorderedSetMapper<TokenIdentifier>;
-
-    #[storage_mapper("bannedEndpointNames")]
-    fn banned_endpoint_names(&self) -> UnorderedSetMapper<ManagedBuffer>;
-
-    #[storage_mapper_from_address("feeEnabledFlag")]
-    fn external_fee_enabled(
-        &self,
-        sc_address: ManagedAddress,
-    ) -> SingleValueMapper<bool, ManagedAddress>;
 }

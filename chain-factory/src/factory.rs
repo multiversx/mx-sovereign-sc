@@ -1,5 +1,6 @@
 use multiversx_sc::imports::*;
 use multiversx_sc_modules::only_admin;
+use operation::{aliases::StakeMultiArg, BridgeConfig};
 use proxies::{
     chain_config_proxy::ChainConfigContractProxy,
     enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy,
@@ -7,7 +8,6 @@ use proxies::{
     fee_market_proxy::{FeeMarketProxy, FeeStruct},
     header_verifier_proxy::HeaderverifierProxy,
 };
-use operation::aliases::StakeMultiArg;
 multiversx_sc::derive_imports!();
 
 #[multiversx_sc::module]
@@ -68,6 +68,7 @@ pub trait FactoryModule: only_admin::OnlyAdminModule {
         token_handler_address: ManagedAddress,
         wegld_identifier: TokenIdentifier,
         sov_token_prefix: ManagedBuffer,
+        opt_config: Option<BridgeConfig<Self::Api>>,
     ) -> ManagedAddress {
         let source_address = self.enshrine_esdt_safe_template().get();
         let metadata = self.blockchain().get_code_metadata(&source_address);
@@ -79,6 +80,7 @@ pub trait FactoryModule: only_admin::OnlyAdminModule {
                 token_handler_address,
                 Some(wegld_identifier),
                 Some(sov_token_prefix),
+                opt_config,
             )
             .gas(60_000_000)
             .from_source(source_address)

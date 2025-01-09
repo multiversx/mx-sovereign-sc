@@ -16,7 +16,7 @@ type OptionalTransferData<M> =
 async fn test_deposit_paused() {
     let mut interact = ContractInteract::new(Config::load_config()).await;
     interact.deploy_token_handler().await;
-    interact.deploy(false).await;
+    interact.deploy(false, None).await;
     interact
         .deposit(
             OptionalTransferData::None,
@@ -34,7 +34,7 @@ async fn test_deposit_no_payment() {
     let to_contract = interact.state.esdt_safe_address().clone();
     let transfer_data = OptionalTransferData::None;
 
-    interact.deploy_setup().await;
+    interact.deploy_setup(None).await;
 
     interact
         .interactor
@@ -65,7 +65,7 @@ async fn test_deposit_too_many_payments() {
     let payments: ManagedVec<StaticApi, EsdtTokenPayment<StaticApi>> =
         ManagedVec::from(vec![payment; 11]);
 
-    interact.deploy_setup().await;
+    interact.deploy_setup(None).await;
 
     interact
         .interactor
@@ -85,7 +85,7 @@ async fn test_deposit_too_many_payments() {
 #[ignore]
 async fn test_deposit_not_whitelisted() {
     let mut interact = ContractInteract::new(Config::load_config()).await;
-    interact.deploy_setup().await;
+    interact.deploy_setup(None).await;
     interact.deploy_fee_market().await;
     interact.add_tokens_to_whitelist(WHITELIST_TOKEN_ID).await;
     interact.set_fee_market_address().await;
@@ -96,7 +96,7 @@ async fn test_deposit_not_whitelisted() {
 #[ignore]
 async fn test_deposit_happy_path() {
     let mut interact = ContractInteract::new(Config::load_config()).await;
-    interact.deploy_setup().await;
+    interact.deploy_setup(None).await;
     interact.deploy_fee_market().await;
     interact.add_tokens_to_whitelist(TOKEN_ID).await;
     interact.set_fee_market_address().await;
@@ -120,7 +120,7 @@ async fn test_deposit_sov_chain() {
         0,
         BigUint::from(30u64),
     ));
-    interact.deploy_all(true).await;
+    interact.deploy_all(true, None).await;
     interact.add_tokens_to_whitelist(TOKEN_ID).await;
     interact.set_fee_market_address().await;
     interact
