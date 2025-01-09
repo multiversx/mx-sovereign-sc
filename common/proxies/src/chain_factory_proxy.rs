@@ -98,7 +98,7 @@ where
     Gas: TxGas<Env>,
 {
     pub fn deploy_sovereign_chain_config_contract<
-        Arg0: ProxyArg<transaction::SovereignConfig<Env::Api>>,
+        Arg0: ProxyArg<operation::SovereignConfig<Env::Api>>,
     >(
         self,
         config: Arg0,
@@ -128,12 +128,14 @@ where
         Arg1: ProxyArg<ManagedAddress<Env::Api>>,
         Arg2: ProxyArg<TokenIdentifier<Env::Api>>,
         Arg3: ProxyArg<ManagedBuffer<Env::Api>>,
+        Arg4: ProxyArg<Option<operation::BridgeConfig<Env::Api>>>,
     >(
         self,
         is_sovereign_chain: Arg0,
         token_handler_address: Arg1,
         wegld_identifier: Arg2,
         sov_token_prefix: Arg3,
+        opt_config: Arg4,
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ManagedAddress<Env::Api>> {
         self.wrapped_tx
             .payment(NotPayable)
@@ -142,6 +144,7 @@ where
             .argument(&token_handler_address)
             .argument(&wegld_identifier)
             .argument(&sov_token_prefix)
+            .argument(&opt_config)
             .original_result()
     }
 

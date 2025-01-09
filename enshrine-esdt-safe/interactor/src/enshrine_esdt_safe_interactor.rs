@@ -1,21 +1,19 @@
 #![allow(non_snake_case)]
 #![allow(unused)]
 
+use aliases::{OptionalTransferData, PaymentsVec};
 use fee_market_proxy::*;
 use interactor::constants::{TOKEN_ID, WHITELIST_TOKEN_ID};
 use interactor::interactor_config::Config;
 use interactor::interactor_state::State;
 use multiversx_sc_snippets::imports::*;
+use operation::*;
 use proxies::*;
-use transaction::*;
 
 const FEE_MARKET_CODE_PATH: &str = "../fee-market/output/fee-market.mxsc.json";
 const HEADER_VERIFIER_CODE_PATH: &str = "../header-verifier/output/header-verifier.mxsc.json";
 const ENSHRINE_ESDT_SAFE_CODE_PATH: &str = "output/enshrine-esdt-safe.mxsc.json";
 const TOKEN_HANDLER_CODE_PATH: &str = "../token-handler/output/token-handler.mxsc.json";
-
-type OptionalTransferData<M> =
-    OptionalValue<MultiValue3<GasLimit, ManagedBuffer<M>, ManagedVec<M, ManagedBuffer<M>>>>;
 
 pub async fn enshrine_esdt_safe_cli() {
     env_logger::init();
@@ -27,17 +25,11 @@ pub async fn enshrine_esdt_safe_cli() {
     let config = Config::load_config();
     let mut interact = ContractInteract::new(config).await;
     match cmd.as_str() {
-        "deploy" => interact.deploy(false).await,
+        "deploy" => interact.deploy(false, None).await,
         "upgrade" => interact.upgrade().await,
         "setFeeMarketAddress" => interact.set_fee_market_address().await,
         "setHeaderVerifierAddress" => interact.set_header_verifier_address().await,
-        "setMaxTxGasLimit" => interact.set_max_user_tx_gas_limit().await,
-        "setBannedEndpoint" => interact.set_banned_endpoint().await,
-        "deposit" => {
-            interact
-                .deposit(OptionalTransferData::None, Option::None)
-                .await
-        }
+        "deposit" => interact.deposit(None.into(), Option::None).await,
         "executeBridgeOps" => interact.execute_operations().await,
         "registerNewTokenID" => interact.register_new_token_id().await,
         "setMaxBridgedAmount" => interact.set_max_bridged_amount().await,
@@ -97,7 +89,11 @@ impl ContractInteract {
         }
     }
 
-    pub async fn deploy(&mut self, is_sovereign_chain: bool) {
+    pub async fn deploy(
+        &mut self,
+        is_sovereign_chain: bool,
+        opt_config: Option<BridgeConfig<StaticApi>>,
+    ) {
         let opt_wegld_identifier =
             Option::Some(TokenIdentifier::from_esdt_bytes(WHITELIST_TOKEN_ID));
         let opt_sov_token_prefix = Option::Some(ManagedBuffer::new_from_bytes(&b"sov"[..]));
@@ -116,6 +112,7 @@ impl ContractInteract {
                 token_handler_address,
                 opt_wegld_identifier,
                 opt_sov_token_prefix,
+                opt_config,
             )
             .code(code_path)
             .returns(ReturnsNewAddress)
@@ -188,6 +185,7 @@ impl ContractInteract {
 
     pub async fn deploy_token_handler(&mut self) {
         let token_handler_code_path = MxscPath::new(&self.token_handler_code);
+        let chain_factory_address = Bech32Address::from_bech32_string("chain_factory".to_string());
 
         let new_address = self
             .interactor
@@ -195,7 +193,7 @@ impl ContractInteract {
             .from(&self.wallet_address)
             .gas(100_000_000u64)
             .typed(token_handler_proxy::TokenHandlerProxy)
-            .init()
+            .init(chain_factory_address)
             .code(token_handler_code_path)
             .returns(ReturnsNewAddress)
             .run()
@@ -208,17 +206,21 @@ impl ContractInteract {
         println!("new token_handler_address: {new_address_bech32}");
     }
 
-    pub async fn deploy_all(&mut self, is_sov_chain: bool) {
+    pub async fn deploy_all(
+        &mut self,
+        is_sov_chain: bool,
+        opt_config: Option<BridgeConfig<StaticApi>>,
+    ) {
         self.deploy_token_handler().await;
-        self.deploy(is_sov_chain).await;
+        self.deploy(is_sov_chain, opt_config).await;
         self.deploy_header_verifier().await;
         self.deploy_fee_market().await;
         self.unpause_endpoint().await;
     }
 
-    pub async fn deploy_setup(&mut self) {
+    pub async fn deploy_setup(&mut self, opt_config: Option<BridgeConfig<StaticApi>>) {
         self.deploy_token_handler().await;
-        self.deploy(false).await;
+        self.deploy(false, opt_config).await;
         self.unpause_endpoint().await;
     }
 
@@ -270,42 +272,6 @@ impl ContractInteract {
             .gas(30_000_000u64)
             .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
             .set_header_verifier_address(header_verifier_address)
-            .returns(ReturnsResultUnmanaged)
-            .run()
-            .await;
-
-        println!("Result: {response:?}");
-    }
-
-    pub async fn set_max_user_tx_gas_limit(&mut self) {
-        let max_user_tx_gas_limit = 0u64;
-
-        let response = self
-            .interactor
-            .tx()
-            .from(&self.wallet_address)
-            .to(self.state.esdt_safe_address())
-            .gas(30_000_000u64)
-            .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
-            .set_max_user_tx_gas_limit(max_user_tx_gas_limit)
-            .returns(ReturnsResultUnmanaged)
-            .run()
-            .await;
-
-        println!("Result: {response:?}");
-    }
-
-    pub async fn set_banned_endpoint(&mut self) {
-        let endpoint_name = ManagedBuffer::new_from_bytes(&b""[..]);
-
-        let response = self
-            .interactor
-            .tx()
-            .from(&self.wallet_address)
-            .to(self.state.esdt_safe_address())
-            .gas(30_000_000u64)
-            .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
-            .set_banned_endpoint(endpoint_name)
             .returns(ReturnsResultUnmanaged)
             .run()
             .await;

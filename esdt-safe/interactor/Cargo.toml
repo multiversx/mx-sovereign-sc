@@ -18,8 +18,8 @@ toml = "0.8.6"
 [dependencies.esdt-safe]
 path = ".."
 
-[dependencies.transaction]
-path = "../../common/transaction"
+[dependencies.operation]
+path = "../../common/operation"
 
 [dependencies.proxies]
 path = "../../common/proxies"
@@ -34,13 +34,13 @@ path = "../../common/interactor"
 path = "../../fee-market"
 
 [dependencies.multiversx-sc-snippets]
-version = "=0.54.6"
+version = "=0.55.0"
 
 [dependencies.multiversx-sc]
-version = "=0.54.6"
+version = "=0.55.0"
 
 [dependencies.multiversx-sc-scenario]
-version = "=0.54.6"
+version = "=0.55.0"
 
 [dependencies.clap]
 version = "4.4.7"

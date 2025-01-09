@@ -1,4 +1,4 @@
-use transaction::GasLimit;
+use operation::aliases::GasLimit;
 
 use crate::fee_type::FeeType;
 
@@ -111,10 +111,10 @@ pub trait SubtractFeeModule:
         self.require_caller_esdt_safe();
 
         let caller = self.blockchain().get_caller();
-        let payment = self.call_value().single_esdt();
+        let payment = self.call_value().single_esdt().clone();
 
         if !self.is_fee_enabled() || self.users_whitelist().contains(&original_caller) {
-            self.tx().to(&caller).payment(&payment).transfer();
+            self.tx().to(&caller).payment(payment.clone()).transfer();
 
             return FinalPayment {
                 fee: EsdtTokenPayment::new(payment.token_identifier.clone(), 0, BigUint::zero()),

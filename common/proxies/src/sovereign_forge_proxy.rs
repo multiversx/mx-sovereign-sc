@@ -127,7 +127,7 @@ where
     }
 
     pub fn deploy_phase_one<
-        Arg0: ProxyArg<transaction::SovereignConfig<Env::Api>>,
+        Arg0: ProxyArg<operation::SovereignConfig<Env::Api>>,
     >(
         self,
         config: Arg0,

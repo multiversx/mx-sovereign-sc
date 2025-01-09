@@ -1,7 +1,7 @@
 use crate::{common, to_sovereign};
 use multiversx_sc::imports::*;
+use operation::{Operation, OperationData, OperationEsdtPayment, OperationTuple};
 use proxies::{header_verifier_proxy::HeaderverifierProxy, token_handler_proxy::TokenHandlerProxy};
-use transaction::{Operation, OperationData, OperationEsdtPayment, OperationTuple};
 
 const DEFAULT_ISSUE_COST: u64 = 50_000_000_000_000_000; // 0.05 * 10^18
 
@@ -106,7 +106,7 @@ pub trait TransferTokensModule:
 
         for token in tokens.iter() {
             if !self.has_sov_prefix(&token.token_identifier, &sov_prefix) {
-                non_sov_tokens.push(token);
+                non_sov_tokens.push(token.clone());
 
                 continue;
             }
@@ -115,7 +115,7 @@ pub trait TransferTokensModule:
                 return SplitResult::default();
             }
 
-            sov_tokens.push(token.into());
+            sov_tokens.push(token.clone().into());
         }
 
         SplitResult {
@@ -194,10 +194,4 @@ pub trait TransferTokensModule:
     fn is_wegld(&self, token_id: &TokenIdentifier<Self::Api>) -> bool {
         token_id.eq(&self.wegld_identifier().get())
     }
-
-    #[storage_mapper("headerVerifierAddress")]
-    fn header_verifier_address(&self) -> SingleValueMapper<ManagedAddress>;
-
-    #[storage_mapper("paidIssuedTokens")]
-    fn paid_issued_tokens(&self) -> UnorderedSetMapper<TokenIdentifier<Self::Api>>;
 }

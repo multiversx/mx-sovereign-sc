@@ -17,7 +17,7 @@ use std::{
     io::{Read, Write},
     path::Path,
 };
-use transaction::SovereignConfig;
+use operation::SovereignConfig;
 
 const STATE_FILE: &str = "state.toml";
 const CHAIN_CONFIG_CODE_PATH: &str = "../../chain-config/output/chain-config.mxsc.json";

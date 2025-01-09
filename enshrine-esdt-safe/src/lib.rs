@@ -1,7 +1,7 @@
 #![no_std]
 
 use multiversx_sc::imports::*;
-use transaction::GasLimit;
+use operation::BridgeConfig;
 
 pub mod common;
 pub mod from_sovereign;
@@ -29,6 +29,7 @@ pub trait EnshrineEsdtSafe:
         token_handler_address: ManagedAddress,
         opt_wegld_identifier: Option<TokenIdentifier>,
         opt_sov_token_prefix: Option<ManagedBuffer>,
+        opt_config: Option<BridgeConfig<Self::Api>>,
     ) {
         self.is_sovereign_chain().set(is_sovereign_chain);
         self.set_paused(true);
@@ -58,6 +59,15 @@ pub trait EnshrineEsdtSafe:
 
         let caller = self.blockchain().get_caller();
         self.initiator_address().set(caller);
+
+        self.config()
+            .set(opt_config.unwrap_or_else(BridgeConfig::default_config));
+    }
+
+    #[only_owner]
+    #[endpoint(updateConfiguration)]
+    fn update_configuration(&self, new_config: BridgeConfig<Self::Api>) {
+        self.config().set(new_config);
     }
 
     #[only_owner]
@@ -74,18 +84,6 @@ pub trait EnshrineEsdtSafe:
         self.require_sc_address(&header_verifier_address);
 
         self.header_verifier_address().set(&header_verifier_address);
-    }
-
-    #[only_owner]
-    #[endpoint(setMaxTxGasLimit)]
-    fn set_max_user_tx_gas_limit(&self, max_user_tx_gas_limit: GasLimit) {
-        self.max_user_tx_gas_limit().set(max_user_tx_gas_limit);
-    }
-
-    #[only_owner]
-    #[endpoint(setBannedEndpoint)]
-    fn set_banned_endpoint(&self, endpoint_name: ManagedBuffer) {
-        self.banned_endpoint_names().insert(endpoint_name);
     }
 
     #[upgrade]

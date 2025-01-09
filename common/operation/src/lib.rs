@@ -1,37 +1,15 @@
 #![no_std]
 
+use aliases::{EventPaymentTuple, GasLimit, OptionalValueTransferDataTuple, TxId};
+
 multiversx_sc::imports!();
 multiversx_sc::derive_imports!();
 
-pub mod transaction_status;
+pub mod aliases;
 
 // revert protection
 pub const MIN_BLOCKS_FOR_FINALITY: u64 = 10;
-
-pub type BatchId = u64;
-pub type TxId = u64;
-pub type GasLimit = u64;
-pub type TxNonce = u64;
-
-pub type BlockNonce = u64;
-pub type SenderAddress<M> = ManagedAddress<M>;
-pub type ReceiverAddress<M> = ManagedAddress<M>;
-pub type TxAsMultiValue<M> = MultiValue7<
-    BlockNonce,
-    TxNonce,
-    SenderAddress<M>,
-    ReceiverAddress<M>,
-    ManagedVec<M, EsdtTokenPayment<M>>,
-    ManagedVec<M, EsdtTokenData<M>>,
-    Option<TransferData<M>>,
->;
-pub type PaymentsVec<M> = ManagedVec<M, EsdtTokenPayment<M>>;
-pub type EventPaymentTuple<M> = MultiValue3<TokenIdentifier<M>, u64, EsdtTokenData<M>>;
-pub type TxBatchSplitInFields<M> = MultiValue2<BatchId, MultiValueEncoded<M, TxAsMultiValue<M>>>;
-pub type ExtractedFeeResult<M> =
-    MultiValue2<OptionalValue<EsdtTokenPayment<M>>, ManagedVec<M, EsdtTokenPayment<M>>>;
-pub type OptionalValueTransferDataTuple<M> =
-    OptionalValue<MultiValue3<GasLimit, ManagedBuffer<M>, ManagedVec<M, ManagedBuffer<M>>>>;
+const DEFAULT_MAX_TX_GAS_LIMIT: u64 = 300_000_000;
 
 #[type_abi]
 #[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, ManagedVecItem, Clone)]
@@ -77,6 +55,41 @@ impl<M: ManagedTypeApi> SovereignConfig<M> {
 
 #[type_abi]
 #[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, ManagedVecItem, Clone)]
+pub struct BridgeConfig<M: ManagedTypeApi> {
+    pub token_whitelist: ManagedVec<M, TokenIdentifier<M>>,
+    pub token_blacklist: ManagedVec<M, TokenIdentifier<M>>,
+    pub max_tx_gas_limit: GasLimit,
+    pub banned_endpoints: ManagedVec<M, ManagedBuffer<M>>,
+}
+
+impl<M: ManagedTypeApi> BridgeConfig<M> {
+    #[inline]
+    pub fn default_config() -> Self {
+        BridgeConfig {
+            token_whitelist: ManagedVec::new(),
+            token_blacklist: ManagedVec::new(),
+            max_tx_gas_limit: DEFAULT_MAX_TX_GAS_LIMIT,
+            banned_endpoints: ManagedVec::new(),
+        }
+    }
+
+    pub fn new(
+        token_whitelist: ManagedVec<M, TokenIdentifier<M>>,
+        token_blacklist: ManagedVec<M, TokenIdentifier<M>>,
+        max_tx_gas_limit: GasLimit,
+        banned_endpoints: ManagedVec<M, ManagedBuffer<M>>,
+    ) -> Self {
+        BridgeConfig {
+            token_whitelist,
+            token_blacklist,
+            max_tx_gas_limit,
+            banned_endpoints,
+        }
+    }
+}
+
+#[type_abi]
+#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, ManagedVecItem, Clone)]
 pub struct Operation<M: ManagedTypeApi> {
     pub to: ManagedAddress<M>,
     pub tokens: ManagedVec<M, OperationEsdtPayment<M>>,
@@ -99,7 +112,14 @@ impl<M: ManagedTypeApi> Operation<M> {
         let mut tuples = MultiValueEncoded::new();
 
         for token in &self.tokens {
-            tuples.push((token.token_identifier, token.token_nonce, token.token_data).into());
+            tuples.push(
+                (
+                    token.token_identifier.clone(),
+                    token.token_nonce,
+                    token.token_data.clone(),
+                )
+                    .into(),
+            );
         }
 
         tuples
@@ -268,51 +288,5 @@ impl<M: ManagedTypeApi> Default for OperationEsdtPayment<M> {
             token_nonce: 0,
             token_data: EsdtTokenData::default(),
         }
-    }
-}
-
-#[type_abi]
-#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, ManagedVecItem, Clone)]
-pub struct Transaction<M: ManagedTypeApi> {
-    pub block_nonce: BlockNonce,
-    pub nonce: TxNonce,
-    pub from: ManagedAddress<M>,
-    pub to: ManagedAddress<M>,
-    pub tokens: ManagedVec<M, EsdtTokenPayment<M>>,
-    pub token_data: ManagedVec<M, EsdtTokenData<M>>,
-    pub opt_transfer_data: Option<TransferData<M>>,
-    pub is_refund_tx: bool,
-}
-
-impl<M: ManagedTypeApi> From<TxAsMultiValue<M>> for Transaction<M> {
-    fn from(tx_as_multiresult: TxAsMultiValue<M>) -> Self {
-        let (block_nonce, nonce, from, to, tokens, token_data, opt_transfer_data) =
-            tx_as_multiresult.into_tuple();
-
-        Transaction {
-            block_nonce,
-            nonce,
-            from,
-            to,
-            tokens,
-            token_data,
-            opt_transfer_data,
-            is_refund_tx: false,
-        }
-    }
-}
-
-impl<M: ManagedTypeApi> Transaction<M> {
-    pub fn into_multiresult(self) -> TxAsMultiValue<M> {
-        (
-            self.block_nonce,
-            self.nonce,
-            self.from,
-            self.to,
-            self.tokens,
-            self.token_data,
-            self.opt_transfer_data,
-        )
-            .into()
     }
 }

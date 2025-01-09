@@ -2,12 +2,12 @@ use std::env::current_dir;
 
 use multiversx_sc::types::{BigUint, CodeMetadata, TestAddress, TestSCAddress};
 use multiversx_sc_scenario::{
-    api::StaticApi, imports::MxscPath, ExpectError, ScenarioTxRun, ScenarioWorld,
+    api::StaticApi, imports::MxscPath, ReturnsHandledOrError, ScenarioTxRun, ScenarioWorld,
 };
+use operation::SovereignConfig;
 use proxies::{
     chain_config_proxy::ChainConfigContractProxy, chain_factory_proxy::ChainFactoryContractProxy,
 };
-use transaction::SovereignConfig;
 
 const FACTORY_ADDRESS: TestSCAddress = TestSCAddress::new("chain-factory");
 const CODE_PATH: MxscPath = MxscPath::new("output/chain-factory.mxsc.json");
@@ -64,21 +64,20 @@ impl ChainFactoryTestState {
     fn propose_deploy_chain_config_from_factory(
         &mut self,
         config: SovereignConfig<StaticApi>,
-        expected_result: Option<ExpectError<'_>>,
+        error_message: Option<&str>,
     ) {
-        let transaction = self
+        let response = self
             .world
             .tx()
             .from(CONFIG_ADDRESS)
             .to(FACTORY_ADDRESS)
             .typed(ChainFactoryContractProxy)
-            .deploy_sovereign_chain_config_contract(config);
+            .deploy_sovereign_chain_config_contract(config)
+            .returns(ReturnsHandledOrError::new())
+            .run();
 
-        match expected_result {
-            Some(error) => {
-                transaction.returns(error).run();
-            }
-            None => transaction.run(),
+        if let Err(error) = response {
+            assert_eq!(error_message, Some(error.message.as_str()))
         }
     }
 

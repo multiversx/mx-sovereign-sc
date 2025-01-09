@@ -12,19 +12,16 @@ path = "src/lib.rs"
 num-bigint = "0.4.2"
 
 [dev-dependencies.multiversx-sc-scenario]
-version = "=0.54.6"
+version = "=0.55.0"
 
 [dependencies.multiversx-sc]
-version = "=0.54.6"
+version = "=0.55.0"
 
 [dependencies.multiversx-sc-modules]
-version = "=0.54.6"
+version = "=0.55.0"
 
-[dependencies.header-verifier]
-path = "../header-verifier"
-
-[dependencies.transaction]
-path = "../common/transaction"
+[dependencies.operation]
+path = "../common/operation"
 
 [dependencies.proxies]
 path = "../common/proxies"
