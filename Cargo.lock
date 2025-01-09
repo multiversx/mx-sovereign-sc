@@ -223,6 +223,7 @@ dependencies = [
  "multiversx-sc-scenario",
  "num-bigint",
  "operation",
+ "proxies",
  "setup-phase",
 ]
 
@@ -682,6 +683,7 @@ dependencies = [
  "clap",
  "multiversx-sc",
  "multiversx-sc-snippets",
+ "operation",
  "proxies",
  "serde",
  "sovereign-forge",

@@ -27,6 +27,7 @@ dependencies = [
  "multiversx-sc",
  "multiversx-sc-modules",
  "operation",
+ "proxies",
  "setup-phase",
 ]
 

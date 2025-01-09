@@ -23,5 +23,8 @@ version = "=0.55.0"
 [dependencies.operation]
 path = "../common/operation"
 
+[dependencies.proxies]
+path = "../common/proxies"
+
 [dependencies.setup-phase]
 path = "../common/setup-phase"

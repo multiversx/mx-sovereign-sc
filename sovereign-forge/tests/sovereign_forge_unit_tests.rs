@@ -3,6 +3,7 @@ use multiversx_sc_scenario::{
     api::StaticApi, imports::MxscPath, ReturnsHandledOrError, ScenarioTxRun, ScenarioTxWhitebox,
     ScenarioWorld,
 };
+use operation::SovereignConfig;
 use proxies::{
     chain_config_proxy::ChainConfigContractProxy,
     chain_factory_proxy::ChainFactoryContractProxy,
@@ -16,7 +17,6 @@ use sovereign_forge::common::{
     storage::StorageModule,
     utils::{ScArray, UtilsModule},
 };
-use operation::aliases::StakeMultiArg;
 
 const FORGE_ADDRESS: TestSCAddress = TestSCAddress::new("sovereign-forge");
 const FORGE_CODE_PATH: MxscPath = MxscPath::new("output/sovereign-forge.mxsc.json");
@@ -73,6 +73,16 @@ impl SovereignForgeTestState {
         Self { world }
     }
 
+    fn finish_setup(&mut self) {
+        self.register_chain_factory(1, FACTORY_ADDRESS, None);
+        self.register_chain_factory(2, FACTORY_ADDRESS, None);
+        self.register_chain_factory(3, FACTORY_ADDRESS, None);
+        self.register_token_handler(1, TOKEN_HANDLER_ADDRESS, None);
+        self.register_token_handler(2, TOKEN_HANDLER_ADDRESS, None);
+        self.register_token_handler(3, TOKEN_HANDLER_ADDRESS, None);
+        self.complete_setup_phase(None);
+    }
+
     fn deploy_chain_factory(&mut self) -> &mut Self {
         self.world
             .tx()
@@ -106,19 +116,11 @@ impl SovereignForgeTestState {
     }
 
     fn deploy_chain_config_template(&mut self) -> &mut Self {
-        let additional_stake_required = MultiValueEncoded::new();
-
         self.world
             .tx()
             .from(OWNER_ADDRESS)
             .typed(ChainConfigContractProxy)
-            .init(
-                1u64,
-                2u64,
-                BigUint::from(1u32),
-                OWNER_ADDRESS,
-                additional_stake_required,
-            )
+            .init(SovereignConfig::default_config(), OWNER_ADDRESS)
             .code(CONFIG_CODE_PATH)
             .new_address(CONFIG_ADDRESS)
             .run();
@@ -229,23 +231,10 @@ impl SovereignForgeTestState {
         }
     }
 
-    fn finish_setup(&mut self) {
-        self.register_chain_factory(1, FACTORY_ADDRESS, None);
-        self.register_chain_factory(2, FACTORY_ADDRESS, None);
-        self.register_chain_factory(3, FACTORY_ADDRESS, None);
-        self.register_token_handler(1, TOKEN_HANDLER_ADDRESS, None);
-        self.register_token_handler(2, TOKEN_HANDLER_ADDRESS, None);
-        self.register_token_handler(3, TOKEN_HANDLER_ADDRESS, None);
-        self.complete_setup_phase(None);
-    }
-
     fn deploy_phase_one(
         &mut self,
         payment: &BigUint<StaticApi>,
-        min_validators: u64,
-        max_validators: u64,
-        min_stake: BigUint<StaticApi>,
-        additional_stake_required: MultiValueEncoded<StaticApi, StakeMultiArg<StaticApi>>,
+        config: &SovereignConfig<StaticApi>,
         error_message: Option<&str>,
     ) {
         let response = self
@@ -254,12 +243,7 @@ impl SovereignForgeTestState {
             .from(OWNER_ADDRESS)
             .to(FORGE_ADDRESS)
             .typed(SovereignForgeProxy)
-            .deploy_phase_one(
-                min_validators,
-                max_validators,
-                min_stake,
-                additional_stake_required,
-            )
+            .deploy_phase_one(config)
             .egld(payment)
             .returns(ReturnsHandledOrError::new())
             .run();
@@ -412,10 +396,7 @@ fn deploy_phase_one_deploy_cost_too_low() {
 
     state.deploy_phase_one(
         &deploy_cost,
-        1,
-        2,
-        BigUint::from(2u32),
-        MultiValueEncoded::new(),
+        &SovereignConfig::default_config(),
         Some("The given deploy cost is not equal to the standard amount"),
     );
 }
@@ -429,22 +410,12 @@ fn deploy_phase_one_chain_config_already_deployed() {
     state.finish_setup();
 
     let deploy_cost = BigUint::from(100_000u32);
+    let config = SovereignConfig::default_config();
 
+    state.deploy_phase_one(&deploy_cost, &config, None);
     state.deploy_phase_one(
         &deploy_cost,
-        1,
-        2,
-        BigUint::from(2u32),
-        MultiValueEncoded::new(),
-        None,
-    );
-
-    state.deploy_phase_one(
-        &deploy_cost,
-        1,
-        2,
-        BigUint::from(2u32),
-        MultiValueEncoded::new(),
+        &config,
         Some("The Chain-Config contract is already deployed"),
     );
 }
@@ -459,14 +430,7 @@ fn deploy_phase_one() {
 
     let deploy_cost = BigUint::from(100_000u32);
 
-    state.deploy_phase_one(
-        &deploy_cost,
-        1,
-        2,
-        BigUint::from(2u32),
-        MultiValueEncoded::new(),
-        None,
-    );
+    state.deploy_phase_one(&deploy_cost, &SovereignConfig::default_config(), None);
 
     state
         .world
@@ -508,15 +472,7 @@ fn deploy_phase_two() {
 
     let deploy_cost = BigUint::from(100_000u32);
 
-    state.deploy_phase_one(
-        &deploy_cost,
-        1,
-        2,
-        BigUint::from(2u32),
-        MultiValueEncoded::new(),
-        None,
-    );
-
+    state.deploy_phase_one(&deploy_cost, &SovereignConfig::default_config(), None);
     state.deploy_header_verifier_template();
 
     let mut bls_keys = MultiValueEncoded::new();
@@ -547,15 +503,7 @@ fn deploy_phase_two_header_already_deployed() {
 
     let deploy_cost = BigUint::from(100_000u32);
 
-    state.deploy_phase_one(
-        &deploy_cost,
-        1,
-        2,
-        BigUint::from(2u32),
-        MultiValueEncoded::new(),
-        None,
-    );
-
+    state.deploy_phase_one(&deploy_cost, &SovereignConfig::default_config(), None);
     state.deploy_header_verifier_template();
 
     let bls_keys = MultiValueEncoded::new();
@@ -577,15 +525,7 @@ fn deploy_phase_three() {
 
     let deploy_cost = BigUint::from(100_000u32);
 
-    state.deploy_phase_one(
-        &deploy_cost,
-        1,
-        2,
-        BigUint::from(2u32),
-        MultiValueEncoded::new(),
-        None,
-    );
-
+    state.deploy_phase_one(&deploy_cost, &SovereignConfig::default_config(), None);
     state.deploy_header_verifier_template();
     state.deploy_esdt_safe_template();
 
@@ -631,15 +571,7 @@ fn deploy_phase_three_without_phase_two() {
     state.finish_setup();
 
     let deploy_cost = BigUint::from(100_000u32);
-
-    state.deploy_phase_one(
-        &deploy_cost,
-        1,
-        2,
-        BigUint::from(2u32),
-        MultiValueEncoded::new(),
-        None,
-    );
+    state.deploy_phase_one(&deploy_cost, &SovereignConfig::default_config(), None);
 
     state.deploy_header_verifier_template();
     state.deploy_esdt_safe_template();
@@ -659,15 +591,7 @@ fn deploy_phase_three_already_deployed() {
     state.finish_setup();
 
     let deploy_cost = BigUint::from(100_000u32);
-
-    state.deploy_phase_one(
-        &deploy_cost,
-        1,
-        2,
-        BigUint::from(2u32),
-        MultiValueEncoded::new(),
-        None,
-    );
+    state.deploy_phase_one(&deploy_cost, &SovereignConfig::default_config(), None);
 
     state.deploy_header_verifier_template();
     state.deploy_esdt_safe_template();
@@ -691,15 +615,7 @@ fn deploy_phase_four() {
     state.finish_setup();
 
     let deploy_cost = BigUint::from(100_000u32);
-
-    state.deploy_phase_one(
-        &deploy_cost,
-        1,
-        2,
-        BigUint::from(2u32),
-        MultiValueEncoded::new(),
-        None,
-    );
+    state.deploy_phase_one(&deploy_cost, &SovereignConfig::default_config(), None);
 
     state.deploy_header_verifier_template();
     state.deploy_esdt_safe_template();
@@ -734,15 +650,7 @@ fn deploy_phase_four_without_previous_phase() {
     state.finish_setup();
 
     let deploy_cost = BigUint::from(100_000u32);
-
-    state.deploy_phase_one(
-        &deploy_cost,
-        1,
-        2,
-        BigUint::from(2u32),
-        MultiValueEncoded::new(),
-        None,
-    );
+    state.deploy_phase_one(&deploy_cost, &SovereignConfig::default_config(), None);
 
     state.deploy_header_verifier_template();
     state.deploy_esdt_safe_template();
@@ -768,15 +676,7 @@ fn deploy_phase_four_fee_market_already_deployed() {
     state.finish_setup();
 
     let deploy_cost = BigUint::from(100_000u32);
-
-    state.deploy_phase_one(
-        &deploy_cost,
-        1,
-        2,
-        BigUint::from(2u32),
-        MultiValueEncoded::new(),
-        None,
-    );
+    state.deploy_phase_one(&deploy_cost, &SovereignConfig::default_config(), None);
 
     state.deploy_header_verifier_template();
     state.deploy_esdt_safe_template();

@@ -1,27 +1,16 @@
 use crate::err_msg;
 use multiversx_sc::types::{MultiValueEncoded, ReturnsResult};
+use operation::SovereignConfig;
 use proxies::{chain_factory_proxy::ChainFactoryContractProxy, fee_market_proxy::FeeStruct};
-use operation::aliases::StakeMultiArg;
 
 #[multiversx_sc::module]
 pub trait ScDeployModule: super::utils::UtilsModule + super::storage::StorageModule {
     #[inline]
-    fn deploy_chain_config(
-        &self,
-        min_validators: u64,
-        max_validators: u64,
-        min_stake: BigUint,
-        additional_stake_required: MultiValueEncoded<StakeMultiArg<Self::Api>>,
-    ) -> ManagedAddress {
+    fn deploy_chain_config(&self, config: SovereignConfig<Self::Api>) -> ManagedAddress {
         self.tx()
             .to(self.get_chain_factory_address())
             .typed(ChainFactoryContractProxy)
-            .deploy_sovereign_chain_config_contract(
-                min_validators,
-                max_validators,
-                min_stake,
-                additional_stake_required,
-            )
+            .deploy_sovereign_chain_config_contract(config)
             .returns(ReturnsResult)
             .sync_call()
     }

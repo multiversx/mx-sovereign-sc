@@ -1,6 +1,7 @@
 use multiversx_sc::imports::*;
 use multiversx_sc_modules::only_admin;
-use operation::{aliases::StakeMultiArg, BridgeConfig};
+use operation::BridgeConfig;
+use operation::SovereignConfig;
 use proxies::{
     chain_config_proxy::ChainConfigContractProxy,
     enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy,
@@ -16,10 +17,7 @@ pub trait FactoryModule: only_admin::OnlyAdminModule {
     #[endpoint(deploySovereignChainConfigContract)]
     fn deploy_sovereign_chain_config_contract(
         &self,
-        min_validators: u64,
-        max_validators: u64,
-        min_stake: BigUint,
-        additional_stake_required: MultiValueEncoded<StakeMultiArg<Self::Api>>,
+        config: SovereignConfig<Self::Api>,
     ) -> ManagedAddress {
         let caller = self.blockchain().get_caller();
         let source_address = self.chain_config_template().get();
@@ -27,13 +25,7 @@ pub trait FactoryModule: only_admin::OnlyAdminModule {
 
         self.tx()
             .typed(ChainConfigContractProxy)
-            .init(
-                min_validators,
-                max_validators,
-                min_stake,
-                &caller,
-                additional_stake_required,
-            )
+            .init(config, &caller)
             .gas(60_000_000)
             .from_source(source_address)
             .code_metadata(metadata)
