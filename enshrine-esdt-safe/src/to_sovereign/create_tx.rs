@@ -114,13 +114,13 @@ pub trait CreateTxModule:
 
         let fee_market_address = self.fee_market_address().get();
         let fee_enabled = self.external_fee_enabled(fee_market_address).get();
-        let opt_transfer_data = if fee_enabled {
-            OptionalValue::Some(self.pop_first_payment(payments.clone()).0)
-        } else {
-            OptionalValue::None
-        };
 
-        MultiValue2::from((opt_transfer_data, payments))
+        if !fee_enabled {
+            return MultiValue2::from((OptionalValue::None, payments));
+        } else {
+            let (fee_payment, no_fee_payments) = self.pop_first_payment(payments.clone());
+            return MultiValue2::from((OptionalValue::Some(fee_payment), no_fee_payments));
+        }
     }
 
     fn refund_tokens(
