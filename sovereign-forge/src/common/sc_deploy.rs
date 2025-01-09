@@ -1,7 +1,7 @@
 use crate::err_msg;
 use multiversx_sc::types::{MultiValueEncoded, ReturnsResult};
+use operation::SovereignConfig;
 use proxies::{chain_factory_proxy::ChainFactoryContractProxy, fee_market_proxy::FeeStruct};
-use transaction::SovereignConfig;
 
 #[multiversx_sc::module]
 pub trait ScDeployModule: super::utils::UtilsModule + super::storage::StorageModule {

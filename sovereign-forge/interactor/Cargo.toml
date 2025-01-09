@@ -19,13 +19,13 @@ toml = "0.8.6"
 path = ".."
 
 [dependencies.multiversx-sc-snippets]
-version = "0.54.6"
+version = "0.55.0"
 
 [dependencies.multiversx-sc]
-version = "0.54.6"
+version = "0.55.0"
 
-[dependencies.transaction]
-path = "../../common/transaction"
+[dependencies.operation]
+path = "../../common/operation"
 
 [dependencies.proxies]
 path = "../../common/proxies"

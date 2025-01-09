@@ -1,7 +1,7 @@
 #![no_std]
 
 use multiversx_sc_modules::only_admin;
-use transaction::SovereignConfig;
+use operation::SovereignConfig;
 
 multiversx_sc::imports!();
 

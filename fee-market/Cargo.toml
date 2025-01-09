@@ -11,17 +11,20 @@ path = "src/lib.rs"
 [dependencies.utils]
 path = "../common/utils"
 
-[dependencies.transaction]
-path = "../common/transaction"
+[dependencies.operation]
+path = "../common/operation"
 
 [dependencies.proxies]
 path = "../common/proxies"
 
+[dependencies.setup-phase]
+path = "../common/setup-phase"
+
 [dependencies.multiversx-sc]
-version = "=0.54.6"
+version = "=0.55.0"
 
 [dev-dependencies]
 num-bigint = "0.4.2"
 
 [dev-dependencies.multiversx-sc-scenario]
-version = "=0.54.6"
+version = "=0.55.0"

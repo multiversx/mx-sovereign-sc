@@ -3,7 +3,7 @@ use core::ops::Deref;
 use proxies::fee_market_proxy::FeeStruct;
 
 use multiversx_sc::{require, types::MultiValueEncoded};
-use transaction::SovereignConfig;
+use operation::SovereignConfig;
 
 use crate::common::{
     self,
@@ -47,7 +47,7 @@ pub trait PhasesModule:
     fn deploy_phase_one(&self, config: SovereignConfig<Self::Api>) {
         self.require_setup_complete();
 
-        let call_value = self.call_value().egld_value();
+        let call_value = self.call_value().egld();
         self.require_correct_deploy_cost(call_value.deref());
 
         let chain_id = self.generate_chain_id();

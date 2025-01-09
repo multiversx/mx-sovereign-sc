@@ -1,8 +1,8 @@
 #![no_std]
 
-multiversx_sc::imports!();
+use operation::aliases::PaymentsVec;
 
-pub type PaymentsVec<M> = ManagedVec<M, EsdtTokenPayment<M>>;
+multiversx_sc::imports!();
 
 static ERR_EMPTY_PAYMENTS: &[u8] = b"No payments";
 const DASH: u8 = b'-';
@@ -37,14 +37,16 @@ pub trait UtilsModule {
 
     fn pop_first_payment(
         &self,
-        payments: &mut PaymentsVec<Self::Api>,
-    ) -> EsdtTokenPayment<Self::Api> {
+        payments: PaymentsVec<Self::Api>,
+    ) -> (EsdtTokenPayment<Self::Api>, PaymentsVec<Self::Api>) {
         require!(!payments.is_empty(), ERR_EMPTY_PAYMENTS);
 
-        let first_payment = payments.get(0);
-        payments.remove(0);
+        let mut new_payments = payments;
 
-        first_payment
+        let first_payment = new_payments.get(0).clone();
+        new_payments.remove(0);
+
+        (first_payment.clone(), new_payments)
     }
 
     fn has_prefix(&self, token_id: &TokenIdentifier) -> bool {
