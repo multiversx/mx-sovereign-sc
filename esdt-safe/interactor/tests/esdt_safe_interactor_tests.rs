@@ -1,11 +1,10 @@
 use esdt_safe_interactor::ContractInteract;
 use interactor::interactor_config::Config;
 use multiversx_sc_scenario::imports::*;
-use multiversx_sc_scenario::scenario_model::TxResponseStatus;
 use multiversx_sc_snippets::imports::*;
 
 #[tokio::test]
-#[ignore]
+#[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn test_deploy_sov() {
     let mut interact = ContractInteract::new(Config::load_config()).await;
     interact.deploy(false).await;
@@ -17,17 +16,12 @@ async fn test_deploy_sov() {
     interact.unpause_endpoint().await;
     interact.header_verifier_set_esdt_address().await;
     interact.deploy_testing_contract().await;
-    interact.register_token().await;
+    interact.register_token(EsdtTokenType::DynamicNFT).await;
 
-    let operation = interact.setup_operation(true).await;
-    interact.register_operations(&operation).await;
-    interact
-        .execute_operations(
-            &operation,
-            Some(TxResponseStatus::new(
-                ReturnCode::UserError,
-                "Value should be greater than 0",
-            )),
-        )
+    let operation = interact
+        .setup_operation(true, EsdtTokenType::DynamicNFT)
         .await;
+
+    interact.register_operations(&operation).await;
+    interact.execute_operations(&operation, None).await;
 }

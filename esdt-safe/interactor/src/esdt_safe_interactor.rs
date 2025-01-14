@@ -8,13 +8,13 @@ use multiversx_sc_scenario::multiversx_chain_vm::crypto_functions::{sha256, SHA2
 use multiversx_sc_scenario::scenario_model::TxResponseStatus;
 use multiversx_sc_snippets::imports::*;
 use multiversx_sc_snippets::sdk::{self};
+use operation::aliases::{OptionalTransferData, PaymentsVec};
+use operation::{Operation, OperationData};
+use operation::{OperationEsdtPayment, TransferData};
 use proxies::esdt_safe_proxy::EsdtSafeProxy;
 use proxies::fee_market_proxy::{FeeMarketProxy, FeeStruct, FeeType};
 use proxies::header_verifier_proxy::HeaderverifierProxy;
 use proxies::testing_sc_proxy::TestingScProxy;
-use operation::aliases::{OptionalTransferData, PaymentsVec};
-use operation::{Operation, OperationData};
-use operation::{OperationEsdtPayment, TransferData};
 
 const FEE_MARKET_CODE_PATH: &str = "../../fee-market/output/fee-market.mxsc.json";
 const HEADER_VERIFIER_CODE_PATH: &str = "../../header-verifier/output/header-verifier.mxsc.json";
@@ -35,7 +35,7 @@ pub async fn esdt_safe_cli() {
         "setFeeMarketAddress" => interact.set_fee_market_address().await,
         "setHeaderVerifierAddress" => interact.set_header_verifier_address().await,
         "deposit" => interact.deposit(None.into(), None).await,
-        "registerToken" => interact.register_token().await,
+        // "registerToken" => interact.register_token().await,
         "setMaxBridgedAmount" => interact.set_max_bridged_amount().await,
         "getMaxBridgedAmount" => interact.max_bridged_amount().await,
         "addTokensToWhitelist" => interact.add_tokens_to_whitelist(b"").await,
@@ -315,11 +315,10 @@ impl ContractInteract {
         }
     }
 
-    pub async fn register_token(&mut self) {
+    pub async fn register_token(&mut self, token_type: EsdtTokenType) {
         let egld_amount = BigUint::<StaticApi>::from(50_000_000_000_000_000u64);
 
         let sov_token_id = TokenIdentifier::from_esdt_bytes(b"x-SOV-101252");
-        let token_type = EsdtTokenType::Fungible;
         let token_display_name = ManagedBuffer::new_from_bytes(b"TESDT");
         let token_ticker = ManagedBuffer::new_from_bytes(b"TEST");
         let num_decimals = 18u32;
@@ -343,13 +342,13 @@ impl ContractInteract {
             .run()
             .await;
 
-        println!("Result: {response:?}");
+        println!("Register Token Result: {response:?}");
     }
 
     pub async fn execute_operations(
         &mut self,
         operation: &Operation<StaticApi>,
-        expect_error: Option<TxResponseStatus>,
+        error_message: Option<&str>,
     ) {
         let hash_of_hashes = sha256(&self.get_operation_hash(operation));
 
@@ -361,17 +360,22 @@ impl ContractInteract {
             .gas(70_000_000u64)
             .typed(EsdtSafeProxy)
             .execute_operations(&hash_of_hashes, operation)
-            .returns(ReturnsHandledOrError::new().returns(ReturnsResultUnmanaged))
+            .returns(ReturnsHandledOrError::new())
             .run()
             .await;
 
         if let Err(err) = response {
-            assert!(err == expect_error.unwrap());
+            println!("Error status is: {}", err.message);
+            assert!(Some(err.message.as_str()) == error_message);
         }
     }
 
-    pub async fn execute_operations_with_error(&mut self, error_msg: ExpectError<'_>) {
-        let tokens = self.setup_payments().await;
+    pub async fn execute_operations_with_error(
+        &mut self,
+        token_type: EsdtTokenType,
+        error_msg: ExpectError<'_>,
+    ) {
+        let tokens = self.setup_payments(token_type).await;
         let operation_data = self.setup_operation_data(false).await;
         let to = managed_address!(&self.bob_address); //TO DO: make the "to" address a parameter
         let operation = Operation::new(to, tokens, operation_data);
@@ -604,9 +608,13 @@ impl ContractInteract {
         println!("Result: {response:?}");
     }
 
-    pub async fn setup_operation(&mut self, has_transfer_data: bool) -> Operation<StaticApi> {
+    pub async fn setup_operation(
+        &mut self,
+        has_transfer_data: bool,
+        token_type: EsdtTokenType,
+    ) -> Operation<StaticApi> {
         let to = managed_address!(&self.state.get_testing_sc_address());
-        let payments = self.setup_payments().await;
+        let payments = self.setup_payments(token_type).await;
 
         let operation_data = self.setup_operation_data(has_transfer_data).await;
 
@@ -677,6 +685,7 @@ impl ContractInteract {
 
     pub async fn setup_payments(
         &mut self,
+        token_type: EsdtTokenType,
     ) -> ManagedVec<StaticApi, OperationEsdtPayment<StaticApi>> {
         let mut tokens: ManagedVec<StaticApi, OperationEsdtPayment<StaticApi>> = ManagedVec::new();
         let token_ids = vec![TOKEN_ID_FOR_EXECUTE];
@@ -686,7 +695,7 @@ impl ContractInteract {
                 token_identifier: token_id.into(),
                 token_nonce: 0,
                 token_data: EsdtTokenData {
-                    token_type: EsdtTokenType::Fungible,
+                    token_type,
                     amount: BigUint::from(10_000u64),
                     frozen: false,
                     hash: ManagedBuffer::new(),
