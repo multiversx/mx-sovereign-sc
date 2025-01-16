@@ -103,9 +103,33 @@ pub trait Headerverifier: setup_phase::SetupPhaseModule {
         }
     }
 
+    #[only_owner]
+    #[endpoint(changeValidatorSet)]
+    fn change_validator_set(&self, bls_pub_keys: MultiValueEncoded<ManagedBuffer>) {
+        // TODO: verify signature
+
+        let sovereign_config_mapper = self.sovereign_config(self.chain_config_address().get());
+
+        require!(
+            !sovereign_config_mapper.is_empty(),
+            "There is no config set"
+        );
+
+        let sovereign_config = sovereign_config_mapper.get();
+
+        require!(
+            sovereign_config.min_validators <= bls_pub_keys.len() as u64
+                && bls_pub_keys.len() as u64 <= sovereign_config.max_validators,
+            "The current validator set lenght doesn't meet the Sovereign's requirements"
+        );
+
+        self.bls_pub_keys().clear();
+        self.bls_pub_keys().extend(bls_pub_keys);
+    }
+
     #[endpoint(updateConfig)]
     fn update_config(&self, new_config: SovereignConfig<Self::Api>) {
-        //TODO: verify signature
+        // TODO: verify signature
 
         require!(
             new_config.min_validators <= new_config.max_validators,
@@ -133,16 +157,22 @@ pub trait Headerverifier: setup_phase::SetupPhaseModule {
         );
 
         let chain_config_address = chain_config_mapper.get();
-        let min_validators = self.min_validators(chain_config_address).get();
-        let number_of_validators = self.bls_pub_keys().len() as u32;
+        let sovereign_config = self.sovereign_config(chain_config_address).get();
+        let number_of_validators = self.bls_pub_keys().len() as u64;
 
         require!(
-            number_of_validators > min_validators,
+            number_of_validators > sovereign_config.min_validators,
             "There should be at least {} more validators so the setup phase can be completed",
-            (number_of_validators - min_validators)
+            (number_of_validators - sovereign_config.min_validators)
         );
 
-        // change ownership
+        // TODO:
+        // self.tx()
+        //     .to(ToSelf)
+        //     .typed(UserBuiltinProxy)
+        //     .change_owner_address()
+        //     .sync_call();
+
         self.setup_phase_complete().set(true);
     }
 
@@ -215,6 +245,9 @@ pub trait Headerverifier: setup_phase::SetupPhaseModule {
     #[storage_mapper("chainConfigAddress")]
     fn chain_config_address(&self) -> SingleValueMapper<ManagedAddress>;
 
-    #[storage_mapper_from_address("minValidators")]
-    fn min_validators(&self, sc_address: ManagedAddress) -> SingleValueMapper<u32, ManagedAddress>;
+    #[storage_mapper_from_address("sovereignConfig")]
+    fn sovereign_config(
+        &self,
+        sc_address: ManagedAddress,
+    ) -> SingleValueMapper<SovereignConfig<Self::Api>, ManagedAddress>;
 }
