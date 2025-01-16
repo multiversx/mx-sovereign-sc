@@ -2,6 +2,8 @@
 
 use multiversx_sc::codec;
 use multiversx_sc::proxy_imports::{TopDecode, TopEncode};
+use operation::SovereignConfig;
+use proxies::chain_config_proxy::ChainConfigContractProxy;
 
 multiversx_sc::imports!();
 
@@ -99,6 +101,22 @@ pub trait Headerverifier: setup_phase::SetupPhaseModule {
                 sc_panic!("The current operation is already in execution")
             }
         }
+    }
+
+    #[endpoint(updateConfig)]
+    fn update_config(&self, new_config: SovereignConfig<Self::Api>) {
+        //TODO: verify signature
+
+        require!(
+            new_config.min_validators <= new_config.max_validators,
+            "The min_validators number should lower or equal to the number of max_validators"
+        );
+
+        self.tx()
+            .to(self.chain_config_address().get())
+            .typed(ChainConfigContractProxy)
+            .update_config(new_config)
+            .sync_call();
     }
 
     #[only_owner]
