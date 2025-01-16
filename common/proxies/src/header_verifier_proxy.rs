@@ -44,14 +44,17 @@ where
     Gas: TxGas<Env>,
 {
     pub fn init<
-        Arg0: ProxyArg<MultiValueEncoded<Env::Api, ManagedBuffer<Env::Api>>>,
+        Arg0: ProxyArg<ManagedAddress<Env::Api>>,
+        Arg1: ProxyArg<MultiValueEncoded<Env::Api, ManagedBuffer<Env::Api>>>,
     >(
         self,
-        bls_pub_keys: Arg0,
+        chain_config_address: Arg0,
+        bls_pub_keys: Arg1,
     ) -> TxTypedDeploy<Env, From, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_deploy()
+            .argument(&chain_config_address)
             .argument(&bls_pub_keys)
             .original_result()
     }
@@ -146,6 +149,32 @@ where
             .raw_call("lockOperationHash")
             .argument(&hash_of_hashes)
             .argument(&operation_hash)
+            .original_result()
+    }
+
+    pub fn change_validator_set<
+        Arg0: ProxyArg<MultiValueEncoded<Env::Api, ManagedBuffer<Env::Api>>>,
+    >(
+        self,
+        bls_pub_keys: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("changeValidatorSet")
+            .argument(&bls_pub_keys)
+            .original_result()
+    }
+
+    pub fn update_config<
+        Arg0: ProxyArg<operation::SovereignConfig<Env::Api>>,
+    >(
+        self,
+        new_config: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("updateConfig")
+            .argument(&new_config)
             .original_result()
     }
 

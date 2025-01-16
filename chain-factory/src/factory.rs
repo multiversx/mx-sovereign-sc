@@ -37,6 +37,7 @@ pub trait FactoryModule: only_admin::OnlyAdminModule {
     #[endpoint(deployHeaderVerifier)]
     fn deploy_header_verifier(
         &self,
+        chain_config_address: ManagedAddress,
         bls_pub_keys: MultiValueEncoded<ManagedBuffer>,
     ) -> ManagedAddress {
         let source_address = self.header_verifier_template().get();
@@ -44,7 +45,7 @@ pub trait FactoryModule: only_admin::OnlyAdminModule {
 
         self.tx()
             .typed(HeaderverifierProxy)
-            .init(bls_pub_keys)
+            .init(chain_config_address, bls_pub_keys)
             .gas(60_000_000)
             .from_source(source_address)
             .code_metadata(metadata)

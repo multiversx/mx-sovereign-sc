@@ -41,6 +41,8 @@ const FEE_MARKET_CODE_PATH: MxscPath = MxscPath::new("../fee-market/output/fee-m
 
 const TOKEN_HANDLER_ADDRESS: TestSCAddress = TestSCAddress::new("token-handler");
 
+const CHAIN_CONFIG_ADDRESS: TestSCAddress = TestSCAddress::new("chain-config");
+
 const BALANCE: u128 = 100_000_000_000_000_000;
 const DEPLOY_COST: u64 = 100_000;
 
@@ -135,7 +137,7 @@ impl SovereignForgeTestState {
             .tx()
             .from(OWNER_ADDRESS)
             .typed(HeaderverifierProxy)
-            .init(bls_pub_keys)
+            .init(CHAIN_CONFIG_ADDRESS, bls_pub_keys)
             .code(HEADER_VERIFIER_CODE_PATH)
             .new_address(HEADER_VERIFIER_ADDRESS)
             .run();
