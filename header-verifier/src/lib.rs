@@ -103,7 +103,6 @@ pub trait Headerverifier: setup_phase::SetupPhaseModule {
         }
     }
 
-    #[only_owner]
     #[endpoint(changeValidatorSet)]
     fn change_validator_set(&self, bls_pub_keys: MultiValueEncoded<ManagedBuffer>) {
         // TODO: verify signature
@@ -113,23 +112,19 @@ pub trait Headerverifier: setup_phase::SetupPhaseModule {
             .get();
 
         require!(
-            sovereign_config.min_validators <= bls_pub_keys.len() as u64
+            bls_pub_keys.len() as u64 >= sovereign_config.min_validators
                 && bls_pub_keys.len() as u64 <= sovereign_config.max_validators,
             "The current validator set lenght doesn't meet the Sovereign's requirements"
         );
 
         self.bls_pub_keys().clear();
         self.bls_pub_keys().extend(bls_pub_keys);
+        // TODO: add event
     }
 
     #[endpoint(updateConfig)]
     fn update_config(&self, new_config: SovereignConfig<Self::Api>) {
         // TODO: verify signature
-
-        require!(
-            new_config.min_validators <= new_config.max_validators,
-            "The min_validators number should lower or equal to the number of max_validators"
-        );
 
         self.tx()
             .to(self.chain_config_address().get())
