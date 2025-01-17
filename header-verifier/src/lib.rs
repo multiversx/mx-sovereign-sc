@@ -107,15 +107,7 @@ pub trait Headerverifier: setup_phase::SetupPhaseModule {
     fn change_validator_set(&self, bls_pub_keys: MultiValueEncoded<ManagedBuffer>) {
         // TODO: verify signature
 
-        let sovereign_config = self
-            .sovereign_config(self.chain_config_address().get())
-            .get();
-
-        require!(
-            bls_pub_keys.len() as u64 >= sovereign_config.min_validators
-                && bls_pub_keys.len() as u64 <= sovereign_config.max_validators,
-            "The current validator set lenght doesn't meet the Sovereign's requirements"
-        );
+        self.check_validator_range(bls_pub_keys.len() as u64, self.chain_config_address().get());
 
         self.bls_pub_keys().clear();
         self.bls_pub_keys().extend(bls_pub_keys);
@@ -146,15 +138,7 @@ pub trait Headerverifier: setup_phase::SetupPhaseModule {
             "The Chain-Config address is not set"
         );
 
-        let chain_config_address = chain_config_mapper.get();
-        let sovereign_config = self.sovereign_config(chain_config_address).get();
-        let number_of_validators = self.bls_pub_keys().len() as u64;
-
-        require!(
-            number_of_validators > sovereign_config.min_validators,
-            "There should be at least {} more validators so the setup phase can be completed",
-            (number_of_validators - sovereign_config.min_validators)
-        );
+        self.check_validator_range(self.bls_pub_keys().len() as u64, chain_config_mapper.get());
 
         // TODO:
         // self.tx()
@@ -197,6 +181,20 @@ pub trait Headerverifier: setup_phase::SetupPhaseModule {
         require!(
             transfers_hash.eq(hash_of_hashes),
             "Hash of all operations doesn't match the hash of transfer data"
+        );
+    }
+
+    fn check_validator_range(
+        &self,
+        number_of_validators: u64,
+        chain_config_address: ManagedAddress,
+    ) {
+        let sovereign_config = self.sovereign_config(chain_config_address).get();
+
+        require!(
+            number_of_validators >= sovereign_config.min_validators
+                && number_of_validators <= sovereign_config.max_validators,
+            "The current validator set lenght doesn't meet the Sovereign's requirements"
         );
     }
 
