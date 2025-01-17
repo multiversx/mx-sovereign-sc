@@ -90,6 +90,7 @@ dependencies = [
 name = "header-verifier"
 version = "0.0.0"
 dependencies = [
+ "chain-config",
  "multiversx-sc",
  "operation",
  "proxies",
