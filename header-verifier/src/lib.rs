@@ -108,14 +108,9 @@ pub trait Headerverifier: setup_phase::SetupPhaseModule {
     fn change_validator_set(&self, bls_pub_keys: MultiValueEncoded<ManagedBuffer>) {
         // TODO: verify signature
 
-        let sovereign_config_mapper = self.sovereign_config(self.chain_config_address().get());
-
-        require!(
-            !sovereign_config_mapper.is_empty(),
-            "There is no config set"
-        );
-
-        let sovereign_config = sovereign_config_mapper.get();
+        let sovereign_config = self
+            .sovereign_config(self.chain_config_address().get())
+            .get();
 
         require!(
             sovereign_config.min_validators <= bls_pub_keys.len() as u64
