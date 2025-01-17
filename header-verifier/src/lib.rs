@@ -184,12 +184,10 @@ pub trait Headerverifier: setup_phase::SetupPhaseModule {
         );
     }
 
-    fn check_validator_range(
-        &self,
-        number_of_validators: u64,
-        chain_config_address: ManagedAddress,
-    ) {
-        let sovereign_config = self.sovereign_config(chain_config_address).get();
+    fn check_validator_range(&self, number_of_validators: u64) {
+        let sovereign_config = self
+            .sovereign_config(self.chain_config_address().get())
+            .get();
 
         require!(
             number_of_validators >= sovereign_config.min_validators
