@@ -189,6 +189,22 @@ impl HeaderVerifierTestState {
         }
     }
 
+    fn change_validator_set(&mut self, bls_keys: BlsKeys, error_message: Option<&str>) {
+        let response = self
+            .world
+            .tx()
+            .from(OWNER)
+            .to(HEADER_VERIFIER_ADDRESS)
+            .typed(HeaderverifierProxy)
+            .change_validator_set(bls_keys)
+            .returns(ReturnsHandledOrError::new())
+            .run();
+
+        if let Err(error) = response {
+            assert_eq!(error_message, Some(error.message.as_str()))
+        }
+    }
+
     fn get_bls_keys(&mut self, bls_keys_vec: Vec<ManagedBuffer<StaticApi>>) -> BlsKeys {
         let bls_keys = bls_keys_vec.iter().cloned().collect();
 
@@ -568,5 +584,57 @@ fn update_config() {
             let stored_sovereign_config = sovereign_config_mapper.get();
 
             assert!(sovereign_config == stored_sovereign_config);
+        })
+}
+
+#[test]
+fn change_validator_set_incorect_length() {
+    let mut state = HeaderVerifierTestState::new();
+    let bls_key_1 = ManagedBuffer::from("bls_key_1");
+    let managed_bls_keys = state.get_bls_keys(vec![bls_key_1]);
+
+    state.deploy_header_verifier_contract(CHAIN_CONFIG_ADDRESS, managed_bls_keys);
+
+    let sovereign_config = SovereignConfig::new(0, 0, BigUint::default(), None);
+
+    state.deploy_chain_config(&sovereign_config, HEADER_VERIFIER_ADDRESS);
+
+    let new_validator_set = state.get_bls_keys(vec![ManagedBuffer::from("some_other_bls_key")]);
+    state.change_validator_set(
+        new_validator_set,
+        Some("The current validator set lenght doesn't meet the Sovereign's requirements"),
+    );
+}
+
+#[test]
+fn change_validator_set() {
+    let mut state = HeaderVerifierTestState::new();
+    let bls_key_1 = ManagedBuffer::from("bls_key_1");
+    let managed_bls_keys = state.get_bls_keys(vec![bls_key_1]);
+
+    state.deploy_header_verifier_contract(CHAIN_CONFIG_ADDRESS, managed_bls_keys);
+
+    let sovereign_config = SovereignConfig::new(1, 2, BigUint::default(), None);
+
+    state.deploy_chain_config(&sovereign_config, HEADER_VERIFIER_ADDRESS);
+
+    let new_validator_set = state.get_bls_keys(vec![
+        ManagedBuffer::from("new_key_1"),
+        ManagedBuffer::from("new_key_2"),
+    ]);
+    state.change_validator_set(new_validator_set, None);
+
+    state
+        .world
+        .query()
+        .to(HEADER_VERIFIER_ADDRESS)
+        .whitebox(header_verifier::contract_obj, |sc| {
+            assert!(!sc.bls_pub_keys().is_empty());
+
+            let bls_key_1 = ManagedBuffer::from("new_key_1");
+            let bls_key_2 = ManagedBuffer::from("new_key_2");
+
+            assert!(sc.bls_pub_keys().contains(&bls_key_1));
+            assert!(sc.bls_pub_keys().contains(&bls_key_2));
         })
 }
