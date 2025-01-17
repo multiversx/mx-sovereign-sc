@@ -548,13 +548,10 @@ fn update_config_wrong_validator_range() {
 
     let sovereign_config = SovereignConfig::new(0, 0, BigUint::default(), None);
 
-    state.deploy_chain_config(&sovereign_config, DUMMY_SC_ADDRESS);
+    state.deploy_chain_config(&sovereign_config, HEADER_VERIFIER_ADDRESS);
 
     let new_config = SovereignConfig::new(1, 0, BigUint::default(), None);
-    state.update_config(
-        new_config,
-        Some("The min_validators number should lower or equal to the number of max_validators"),
-    );
+    state.update_config(new_config, Some("Invalid min/max validator numbers"));
 }
 
 #[test]
