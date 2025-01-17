@@ -2,6 +2,8 @@
 
 use multiversx_sc::codec;
 use multiversx_sc::proxy_imports::{TopDecode, TopEncode};
+use operation::SovereignConfig;
+use proxies::chain_config_proxy::ChainConfigContractProxy;
 
 multiversx_sc::imports!();
 
@@ -14,7 +16,18 @@ pub enum OperationHashStatus {
 #[multiversx_sc::contract]
 pub trait Headerverifier: setup_phase::SetupPhaseModule {
     #[init]
-    fn init(&self, bls_pub_keys: MultiValueEncoded<ManagedBuffer>) {
+    fn init(
+        &self,
+        chain_config_address: ManagedAddress,
+        bls_pub_keys: MultiValueEncoded<ManagedBuffer>,
+    ) {
+        require!(
+            self.blockchain().is_smart_contract(&chain_config_address),
+            "The given address is not a Smart Contract address"
+        );
+
+        self.chain_config_address().set(chain_config_address);
+
         for pub_key in bls_pub_keys {
             self.bls_pub_keys().insert(pub_key);
         }
@@ -90,6 +103,28 @@ pub trait Headerverifier: setup_phase::SetupPhaseModule {
         }
     }
 
+    #[endpoint(changeValidatorSet)]
+    fn change_validator_set(&self, bls_pub_keys: MultiValueEncoded<ManagedBuffer>) {
+        // TODO: verify signature
+
+        self.check_validator_range(bls_pub_keys.len() as u64);
+
+        self.bls_pub_keys().clear();
+        self.bls_pub_keys().extend(bls_pub_keys);
+        // TODO: add event
+    }
+
+    #[endpoint(updateConfig)]
+    fn update_config(&self, new_config: SovereignConfig<Self::Api>) {
+        // TODO: verify signature
+
+        self.tx()
+            .to(self.chain_config_address().get())
+            .typed(ChainConfigContractProxy)
+            .update_config(new_config)
+            .sync_call();
+    }
+
     #[only_owner]
     #[endpoint(completeSetupPhase)]
     fn complete_setup_phase(&self) {
@@ -97,23 +132,20 @@ pub trait Headerverifier: setup_phase::SetupPhaseModule {
             return;
         }
 
-        let chain_config_mapper = self.chain_config_address();
         require!(
-            !chain_config_mapper.is_empty(),
+            !self.chain_config_address().is_empty(),
             "The Chain-Config address is not set"
         );
 
-        let chain_config_address = chain_config_mapper.get();
-        let min_validators = self.min_validators(chain_config_address).get();
-        let number_of_validators = self.bls_pub_keys().len() as u32;
+        self.check_validator_range(self.bls_pub_keys().len() as u64);
 
-        require!(
-            number_of_validators > min_validators,
-            "There should be at least {} more validators so the setup phase can be completed",
-            (number_of_validators - min_validators)
-        );
+        // TODO:
+        // self.tx()
+        //     .to(ToSelf)
+        //     .typed(UserBuiltinProxy)
+        //     .change_owner_address()
+        //     .sync_call();
 
-        // change ownership
         self.setup_phase_complete().set(true);
     }
 
@@ -148,6 +180,18 @@ pub trait Headerverifier: setup_phase::SetupPhaseModule {
         require!(
             transfers_hash.eq(hash_of_hashes),
             "Hash of all operations doesn't match the hash of transfer data"
+        );
+    }
+
+    fn check_validator_range(&self, number_of_validators: u64) {
+        let sovereign_config = self
+            .sovereign_config(self.chain_config_address().get())
+            .get();
+
+        require!(
+            number_of_validators >= sovereign_config.min_validators
+                && number_of_validators <= sovereign_config.max_validators,
+            "The current validator set lenght doesn't meet the Sovereign's requirements"
         );
     }
 
@@ -186,6 +230,9 @@ pub trait Headerverifier: setup_phase::SetupPhaseModule {
     #[storage_mapper("chainConfigAddress")]
     fn chain_config_address(&self) -> SingleValueMapper<ManagedAddress>;
 
-    #[storage_mapper_from_address("minValidators")]
-    fn min_validators(&self, sc_address: ManagedAddress) -> SingleValueMapper<u32, ManagedAddress>;
+    #[storage_mapper_from_address("sovereignConfig")]
+    fn sovereign_config(
+        &self,
+        sc_address: ManagedAddress,
+    ) -> SingleValueMapper<SovereignConfig<Self::Api>, ManagedAddress>;
 }

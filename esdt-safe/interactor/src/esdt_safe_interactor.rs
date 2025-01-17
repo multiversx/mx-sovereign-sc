@@ -8,13 +8,13 @@ use multiversx_sc_scenario::multiversx_chain_vm::crypto_functions::{sha256, SHA2
 use multiversx_sc_scenario::scenario_model::TxResponseStatus;
 use multiversx_sc_snippets::imports::*;
 use multiversx_sc_snippets::sdk::{self};
+use operation::aliases::{OptionalTransferData, PaymentsVec};
+use operation::{Operation, OperationData};
+use operation::{OperationEsdtPayment, TransferData};
 use proxies::esdt_safe_proxy::EsdtSafeProxy;
 use proxies::fee_market_proxy::{FeeMarketProxy, FeeStruct, FeeType};
 use proxies::header_verifier_proxy::HeaderverifierProxy;
 use proxies::testing_sc_proxy::TestingScProxy;
-use operation::aliases::{OptionalTransferData, PaymentsVec};
-use operation::{Operation, OperationData};
-use operation::{OperationEsdtPayment, TransferData};
 
 const FEE_MARKET_CODE_PATH: &str = "../../fee-market/output/fee-market.mxsc.json";
 const HEADER_VERIFIER_CODE_PATH: &str = "../../header-verifier/output/header-verifier.mxsc.json";
@@ -151,6 +151,7 @@ impl ContractInteract {
 
     pub async fn deploy_header_verifier_contract(&mut self) {
         let header_verifier_code_path = MxscPath::new(&self.header_verifier_code);
+        let chain_config_address = Bech32Address::from_bech32_string("chain_config".to_string());
 
         let new_address = self
             .interactor
@@ -158,7 +159,7 @@ impl ContractInteract {
             .from(&self.wallet_address)
             .gas(100_000_000u64)
             .typed(HeaderverifierProxy)
-            .init(MultiValueEncoded::new())
+            .init(chain_config_address, MultiValueEncoded::new())
             .code(header_verifier_code_path)
             .returns(ReturnsNewAddress)
             .run()

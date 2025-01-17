@@ -11,10 +11,10 @@ use multiversx_sc_scenario::multiversx_chain_vm::crypto_functions::sha256;
 use multiversx_sc_scenario::{
     api::StaticApi, imports::MxscPath, ExpectError, ScenarioTxRun, ScenarioWorld,
 };
+use operation::{Operation, OperationData, OperationEsdtPayment};
 use proxies::esdt_safe_proxy::EsdtSafeProxy;
 use proxies::fee_market_proxy::{FeeMarketProxy, FeeStruct, FeeType};
 use proxies::header_verifier_proxy::HeaderverifierProxy;
-use operation::{Operation, OperationData, OperationEsdtPayment};
 
 const BRIDGE_ADDRESS: TestSCAddress = TestSCAddress::new("bridge");
 const BRIDGE_CODE_PATH: MxscPath = MxscPath::new("output/esdt-safe.mxsc.json");
@@ -26,6 +26,8 @@ const FEE_MARKET_CODE_PATH: MxscPath = MxscPath::new("../fee-market/output/fee-m
 const HEADER_VERIFIER_ADDRESS: TestSCAddress = TestSCAddress::new("header_verifier");
 const HEADER_VERIFIER_CODE_PATH: MxscPath =
     MxscPath::new("../header-verifier/output/header-verifier.mxsc.json");
+
+const CHAIN_CONFIG_ADDRESS: TestSCAddress = TestSCAddress::new("chain-config");
 
 const USER_ADDRESS: TestAddress = TestAddress::new("user");
 const RECEIVER_ADDRESS: TestAddress = TestAddress::new("receiver");
@@ -114,7 +116,7 @@ impl BridgeTestState {
             .tx()
             .from(BRIDGE_OWNER_ADDRESS)
             .typed(HeaderverifierProxy)
-            .init(bls_pub_keys)
+            .init(CHAIN_CONFIG_ADDRESS, bls_pub_keys)
             .code(HEADER_VERIFIER_CODE_PATH)
             .new_address(HEADER_VERIFIER_ADDRESS)
             .run();

@@ -12,7 +12,9 @@ pub const MIN_BLOCKS_FOR_FINALITY: u64 = 10;
 const DEFAULT_MAX_TX_GAS_LIMIT: u64 = 300_000_000;
 
 #[type_abi]
-#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, ManagedVecItem, Clone)]
+#[derive(
+    TopEncode, TopDecode, NestedEncode, NestedDecode, ManagedVecItem, Clone, Debug, PartialEq,
+)]
 pub struct StakeArgs<M: ManagedTypeApi> {
     pub token_id: TokenIdentifier<M>,
     pub amount: BigUint<M>,
@@ -25,7 +27,9 @@ impl<M: ManagedTypeApi> StakeArgs<M> {
 }
 
 #[type_abi]
-#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, ManagedVecItem, Clone)]
+#[derive(
+    TopEncode, TopDecode, NestedEncode, NestedDecode, ManagedVecItem, Clone, Debug, PartialEq,
+)]
 pub struct SovereignConfig<M: ManagedTypeApi> {
     pub min_validators: u64,
     pub max_validators: u64,

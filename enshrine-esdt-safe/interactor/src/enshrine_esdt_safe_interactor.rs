@@ -132,6 +132,7 @@ impl ContractInteract {
         let mut bls_pub_keys = MultiValueEncoded::new();
         bls_pub_keys.push(bls_pub_key);
         let header_verifier_code_path = MxscPath::new(&self.header_verifier_code);
+        let chain_config_address = Bech32Address::from_bech32_string("chain_config".to_string());
 
         let new_address = self
             .interactor
@@ -139,7 +140,7 @@ impl ContractInteract {
             .from(&self.wallet_address)
             .gas(100_000_000u64)
             .typed(header_verifier_proxy::HeaderverifierProxy)
-            .init(bls_pub_keys)
+            .init(chain_config_address, bls_pub_keys)
             .code(header_verifier_code_path)
             .returns(ReturnsNewAddress)
             .run()

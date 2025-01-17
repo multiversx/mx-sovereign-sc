@@ -6,9 +6,9 @@
 
 // Init:                                 1
 // Upgrade:                              1
-// Endpoints:                            5
+// Endpoints:                            7
 // Async Callback (empty):               1
-// Total number of exported functions:   8
+// Total number of exported functions:  10
 
 #![no_std]
 
@@ -24,6 +24,8 @@ multiversx_sc_wasm_adapter::endpoints! {
         setEsdtSafeAddress => set_esdt_safe_address
         removeExecutedHash => remove_executed_hash
         lockOperationHash => lock_operation_hash
+        changeValidatorSet => change_validator_set
+        updateConfig => update_config
         completeSetupPhase => complete_setup_phase
     )
 }

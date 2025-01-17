@@ -4,6 +4,7 @@ mod config;
 
 use config::Config;
 use multiversx_sc_snippets::{imports::*, sdk::bech32};
+use operation::SovereignConfig;
 use proxies::{
     chain_config_proxy::ChainConfigContractProxy,
     chain_factory_proxy::ChainFactoryContractProxy,
@@ -17,7 +18,6 @@ use std::{
     io::{Read, Write},
     path::Path,
 };
-use operation::SovereignConfig;
 
 const STATE_FILE: &str = "state.toml";
 const CHAIN_CONFIG_CODE_PATH: &str = "../../chain-config/output/chain-config.mxsc.json";
@@ -246,13 +246,15 @@ impl ContractInteract {
     }
 
     pub async fn deploy_header_verifier_template(&mut self) {
+        let chain_config_address = Bech32Address::from_bech32_string("chain_config".to_string());
+
         let new_address = self
             .interactor
             .tx()
             .from(&self.wallet_address)
             .gas(50_000_000u64)
             .typed(HeaderverifierProxy)
-            .init(MultiValueEncoded::new())
+            .init(chain_config_address, MultiValueEncoded::new())
             .returns(ReturnsNewAddress)
             .code(MxscPath::new(HEADER_VERIFIER_CODE_PATH))
             .run()
