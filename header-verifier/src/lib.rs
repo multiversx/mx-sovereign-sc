@@ -107,7 +107,7 @@ pub trait Headerverifier: setup_phase::SetupPhaseModule {
     fn change_validator_set(&self, bls_pub_keys: MultiValueEncoded<ManagedBuffer>) {
         // TODO: verify signature
 
-        self.check_validator_range(bls_pub_keys.len() as u64, self.chain_config_address().get());
+        self.check_validator_range(bls_pub_keys.len() as u64);
 
         self.bls_pub_keys().clear();
         self.bls_pub_keys().extend(bls_pub_keys);
@@ -132,13 +132,12 @@ pub trait Headerverifier: setup_phase::SetupPhaseModule {
             return;
         }
 
-        let chain_config_mapper = self.chain_config_address();
         require!(
-            !chain_config_mapper.is_empty(),
+            !self.chain_config_address().is_empty(),
             "The Chain-Config address is not set"
         );
 
-        self.check_validator_range(self.bls_pub_keys().len() as u64, chain_config_mapper.get());
+        self.check_validator_range(self.bls_pub_keys().len() as u64);
 
         // TODO:
         // self.tx()
