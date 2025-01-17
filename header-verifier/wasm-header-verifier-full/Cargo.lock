@@ -21,6 +21,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b048fb63fd8b5923fc5aa7b340d8e156aec7ec02f0c78fa8a6ddc2613f6f71de"
 
 [[package]]
+name = "chain-config"
+version = "0.0.0"
+dependencies = [
+ "multiversx-sc",
+ "multiversx-sc-modules",
+ "operation",
+ "proxies",
+ "setup-phase",
+]
+
+[[package]]
 name = "endian-type"
 version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -30,6 +41,7 @@ checksum = "c34f04666d835ff5d62e058c3995147c06f42fe86ff053337632bca83e42702d"
 name = "header-verifier"
 version = "0.0.0"
 dependencies = [
+ "chain-config",
  "multiversx-sc",
  "operation",
  "proxies",
@@ -115,6 +127,15 @@ dependencies = [
  "quote",
  "radix_trie",
  "syn",
+]
+
+[[package]]
+name = "multiversx-sc-modules"
+version = "0.55.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "efa55a68bd4eb79f38bb8d526fb0fb6e9146b0a7195a92efd030fefa4341dad7"
+dependencies = [
+ "multiversx-sc",
 ]
 
 [[package]]
