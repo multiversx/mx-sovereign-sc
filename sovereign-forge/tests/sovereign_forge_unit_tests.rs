@@ -1,4 +1,4 @@
-use multiversx_sc::types::{BigUint, ManagedBuffer, MultiValueEncoded, TestAddress, TestSCAddress};
+use multiversx_sc::types::{BigUint, TestAddress, TestSCAddress};
 use multiversx_sc_scenario::{
     api::StaticApi, imports::MxscPath, ReturnsHandledOrError, ScenarioTxRun, ScenarioTxWhitebox,
     ScenarioWorld,
@@ -131,13 +131,11 @@ impl SovereignForgeTestState {
     }
 
     fn deploy_header_verifier_template(&mut self) -> &mut Self {
-        let bls_pub_keys = MultiValueEncoded::new();
-
         self.world
             .tx()
             .from(OWNER_ADDRESS)
             .typed(HeaderverifierProxy)
-            .init(CHAIN_CONFIG_ADDRESS, bls_pub_keys)
+            .init(CHAIN_CONFIG_ADDRESS)
             .code(HEADER_VERIFIER_CODE_PATH)
             .new_address(HEADER_VERIFIER_ADDRESS)
             .run();
@@ -255,18 +253,14 @@ impl SovereignForgeTestState {
         }
     }
 
-    fn deploy_phase_two(
-        &mut self,
-        error_message: Option<&str>,
-        bls_keys: &MultiValueEncoded<StaticApi, ManagedBuffer<StaticApi>>,
-    ) {
+    fn deploy_phase_two(&mut self, error_message: Option<&str>) {
         let response = self
             .world
             .tx()
             .from(OWNER_ADDRESS)
             .to(FORGE_ADDRESS)
             .typed(SovereignForgeProxy)
-            .deploy_phase_two(bls_keys)
+            .deploy_phase_two()
             .returns(ReturnsHandledOrError::new())
             .run();
 
@@ -456,12 +450,9 @@ fn deploy_phase_two_without_first_phase() {
     state.deploy_chain_factory();
     state.finish_setup();
 
-    let bls_keys = MultiValueEncoded::<StaticApi, ManagedBuffer<StaticApi>>::new();
-
-    state.deploy_phase_two(
-        Some("The current caller has not deployed any Sovereign Chain"),
-        &bls_keys,
-    );
+    state.deploy_phase_two(Some(
+        "The current caller has not deployed any Sovereign Chain",
+    ));
 }
 
 #[test]
@@ -477,11 +468,7 @@ fn deploy_phase_two() {
     state.deploy_phase_one(&deploy_cost, &SovereignConfig::default_config(), None);
     state.deploy_header_verifier_template();
 
-    let mut bls_keys = MultiValueEncoded::new();
-    bls_keys.push(ManagedBuffer::from("bls1"));
-    bls_keys.push(ManagedBuffer::from("bls2"));
-
-    state.deploy_phase_two(None, &bls_keys);
+    state.deploy_phase_two(None);
 
     state
         .world
@@ -508,13 +495,8 @@ fn deploy_phase_two_header_already_deployed() {
     state.deploy_phase_one(&deploy_cost, &SovereignConfig::default_config(), None);
     state.deploy_header_verifier_template();
 
-    let bls_keys = MultiValueEncoded::new();
-
-    state.deploy_phase_two(None, &bls_keys);
-    state.deploy_phase_two(
-        Some("The Header-Verifier SC is already deployed"),
-        &bls_keys,
-    );
+    state.deploy_phase_two(None);
+    state.deploy_phase_two(Some("The Header-Verifier SC is already deployed"));
 }
 
 #[test]
@@ -531,11 +513,7 @@ fn deploy_phase_three() {
     state.deploy_header_verifier_template();
     state.deploy_esdt_safe_template();
 
-    let mut bls_keys = MultiValueEncoded::new();
-    bls_keys.push(ManagedBuffer::from("bls1"));
-    bls_keys.push(ManagedBuffer::from("bls2"));
-
-    state.deploy_phase_two(None, &bls_keys);
+    state.deploy_phase_two(None);
     state.deploy_phase_three(false, None);
 
     state
@@ -598,11 +576,7 @@ fn deploy_phase_three_already_deployed() {
     state.deploy_header_verifier_template();
     state.deploy_esdt_safe_template();
 
-    let mut bls_keys = MultiValueEncoded::new();
-    bls_keys.push(ManagedBuffer::from("bls1"));
-    bls_keys.push(ManagedBuffer::from("bls2"));
-
-    state.deploy_phase_two(None, &bls_keys);
+    state.deploy_phase_two(None);
     state.deploy_phase_three(false, None);
     state.deploy_phase_three(false, Some("The ESDT-Safe SC is already deployed"));
 }
@@ -622,11 +596,7 @@ fn deploy_phase_four() {
     state.deploy_header_verifier_template();
     state.deploy_esdt_safe_template();
 
-    let mut bls_keys = MultiValueEncoded::new();
-    bls_keys.push(ManagedBuffer::from("bls1"));
-    bls_keys.push(ManagedBuffer::from("bls2"));
-
-    state.deploy_phase_two(None, &bls_keys);
+    state.deploy_phase_two(None);
     state.deploy_phase_three(false, None);
     state.deploy_phase_four(None, None);
 
@@ -657,11 +627,7 @@ fn deploy_phase_four_without_previous_phase() {
     state.deploy_header_verifier_template();
     state.deploy_esdt_safe_template();
 
-    let mut bls_keys = MultiValueEncoded::new();
-    bls_keys.push(ManagedBuffer::from("bls1"));
-    bls_keys.push(ManagedBuffer::from("bls2"));
-
-    state.deploy_phase_two(None, &bls_keys);
+    state.deploy_phase_two(None);
     state.deploy_phase_four(
         None,
         Some("The ESDT-Safe SC is not deployed, you skipped the third phase"),
@@ -683,11 +649,7 @@ fn deploy_phase_four_fee_market_already_deployed() {
     state.deploy_header_verifier_template();
     state.deploy_esdt_safe_template();
 
-    let mut bls_keys = MultiValueEncoded::new();
-    bls_keys.push(ManagedBuffer::from("bls1"));
-    bls_keys.push(ManagedBuffer::from("bls2"));
-
-    state.deploy_phase_two(None, &bls_keys);
+    state.deploy_phase_two(None);
     state.deploy_phase_three(false, None);
     state.deploy_phase_four(None, None);
     state.deploy_phase_four(None, Some("The Fee-Market SC is already deployed"));

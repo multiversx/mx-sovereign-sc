@@ -112,17 +112,14 @@ where
 
     pub fn deploy_header_verifier<
         Arg0: ProxyArg<ManagedAddress<Env::Api>>,
-        Arg1: ProxyArg<MultiValueEncoded<Env::Api, ManagedBuffer<Env::Api>>>,
     >(
         self,
         chain_config_address: Arg0,
-        bls_pub_keys: Arg1,
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ManagedAddress<Env::Api>> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("deployHeaderVerifier")
             .argument(&chain_config_address)
-            .argument(&bls_pub_keys)
             .original_result()
     }
 

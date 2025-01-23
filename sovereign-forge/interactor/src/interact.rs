@@ -254,7 +254,7 @@ impl ContractInteract {
             .from(&self.wallet_address)
             .gas(50_000_000u64)
             .typed(HeaderverifierProxy)
-            .init(chain_config_address, MultiValueEncoded::new())
+            .init(chain_config_address)
             .returns(ReturnsNewAddress)
             .code(MxscPath::new(HEADER_VERIFIER_CODE_PATH))
             .run()
@@ -413,8 +413,6 @@ impl ContractInteract {
     }
 
     pub async fn deploy_phase_two(&mut self) {
-        let bls_keys = MultiValueVec::from(vec![ManagedBuffer::new_from_bytes(&b""[..])]);
-
         let response = self
             .interactor
             .tx()
@@ -422,7 +420,7 @@ impl ContractInteract {
             .to(self.state.current_address())
             .gas(30_000_000u64)
             .typed(SovereignForgeProxy)
-            .deploy_phase_two(bls_keys)
+            .deploy_phase_two()
             .returns(ReturnsResultUnmanaged)
             .run()
             .await;

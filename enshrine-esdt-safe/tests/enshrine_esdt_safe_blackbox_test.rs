@@ -163,15 +163,11 @@ impl EnshrineTestState {
     }
 
     fn deploy_header_verifier_contract(&mut self) -> &mut Self {
-        let bls_pub_key: ManagedBuffer<StaticApi> = ManagedBuffer::new();
-        let mut bls_pub_keys = MultiValueEncoded::new();
-        bls_pub_keys.push(bls_pub_key);
-
         self.world
             .tx()
             .from(ENSHRINE_ESDT_OWNER_ADDRESS)
             .typed(HeaderverifierProxy)
-            .init(CHAIN_CONFIG_ADDRESS, bls_pub_keys)
+            .init(CHAIN_CONFIG_ADDRESS)
             .code(HEADER_VERIFIER_CODE_PATH)
             .new_address(HEADER_VERIFIER_ADDRESS)
             .run();

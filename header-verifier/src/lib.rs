@@ -16,21 +16,13 @@ pub enum OperationHashStatus {
 #[multiversx_sc::contract]
 pub trait Headerverifier: setup_phase::SetupPhaseModule {
     #[init]
-    fn init(
-        &self,
-        chain_config_address: ManagedAddress,
-        bls_pub_keys: MultiValueEncoded<ManagedBuffer>,
-    ) {
+    fn init(&self, chain_config_address: ManagedAddress) {
         require!(
             self.blockchain().is_smart_contract(&chain_config_address),
             "The given address is not a Smart Contract address"
         );
 
         self.chain_config_address().set(chain_config_address);
-
-        for pub_key in bls_pub_keys {
-            self.bls_pub_keys().insert(pub_key);
-        }
     }
 
     #[upgrade]

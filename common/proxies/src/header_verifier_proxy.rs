@@ -45,17 +45,14 @@ where
 {
     pub fn init<
         Arg0: ProxyArg<ManagedAddress<Env::Api>>,
-        Arg1: ProxyArg<MultiValueEncoded<Env::Api, ManagedBuffer<Env::Api>>>,
     >(
         self,
         chain_config_address: Arg0,
-        bls_pub_keys: Arg1,
     ) -> TxTypedDeploy<Env, From, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_deploy()
             .argument(&chain_config_address)
-            .argument(&bls_pub_keys)
             .original_result()
     }
 }
