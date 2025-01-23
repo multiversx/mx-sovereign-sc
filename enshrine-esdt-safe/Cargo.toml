@@ -39,10 +39,10 @@ path = "../header-verifier"
 path = "../token-handler"
 
 [dependencies.multiversx-sc]
-version = "=0.55.0"
+version = "=0.56.0"
 
 [dependencies.multiversx-sc-modules]
-version = "=0.55.0"
+version = "=0.56.0"
 
 [dev-dependencies]
 num-bigint = "0.4.2"
@@ -50,4 +50,4 @@ num-traits = "0.2"
 hex = "0.4"
 
 [dev-dependencies.multiversx-sc-scenario]
-version = "=0.55.0"
+version = "=0.56.0"
