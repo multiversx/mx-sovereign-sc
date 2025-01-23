@@ -52,10 +52,10 @@ path = "../../token-handler"
 path = "../../common/proxies"
 
 [dependencies.multiversx-sc-snippets]
-version = "=0.55.0"
+version = "=0.56.0"
 
 [dependencies.multiversx-sc]
-version = "=0.55.0"
+version = "=0.56.0"
 
 [dependencies.clap]
 version = "4.4.7"
