@@ -2,7 +2,7 @@ use crate::err_msg;
 use core::ops::Deref;
 use proxies::{
     chain_factory_proxy::ChainFactoryContractProxy, fee_market_proxy::FeeStruct,
-    token_handler_proxy::TokenHandlerProxy,
+    header_verifier_proxy::HeaderverifierProxy, token_handler_proxy::TokenHandlerProxy,
 };
 
 use multiversx_sc::require;
@@ -143,6 +143,12 @@ pub trait PhasesModule:
 
         let esdt_safe_contract_info =
             ContractInfo::new(ScArray::ESDTSafe, esdt_safe_address.clone());
+
+        self.tx()
+            .to(header_verifier_address)
+            .typed(HeaderverifierProxy)
+            .set_esdt_safe_address(esdt_safe_address)
+            .sync_call();
 
         self.sovereign_deployed_contracts(&self.sovereigns_mapper(&caller).get())
             .insert(esdt_safe_contract_info);
