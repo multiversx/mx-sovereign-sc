@@ -420,7 +420,7 @@ fn deploy_phase_one_chain_config_already_deployed() {
 }
 
 #[test]
-fn deploy_phase_one() {
+fn deploy_phase_one_no_preferred_chain_id() {
     let mut state = SovereignForgeTestState::new();
     state.deploy_sovereign_forge();
     state.deploy_chain_factory();
@@ -439,6 +439,40 @@ fn deploy_phase_one() {
             assert!(!sc
                 .sovereigns_mapper(&OWNER_ADDRESS.to_managed_address())
                 .is_empty());
+
+            let is_chain_config_deployed =
+                sc.is_contract_deployed(&OWNER_ADDRESS.to_managed_address(), ScArray::ChainConfig);
+            assert!(is_chain_config_deployed);
+        })
+}
+
+#[test]
+fn deploy_phase_one_preferred_chain_id() {
+    let mut state = SovereignForgeTestState::new();
+    state.deploy_sovereign_forge();
+    state.deploy_chain_factory();
+    state.deploy_chain_config_template();
+    state.finish_setup();
+
+    let deploy_cost = BigUint::from(100_000u32);
+
+    state.deploy_phase_one(
+        &deploy_cost,
+        Some(ManagedBuffer::from("SVCH")),
+        &SovereignConfig::default_config(),
+        None,
+    );
+
+    state
+        .world
+        .query()
+        .to(FORGE_ADDRESS)
+        .whitebox(sovereign_forge::contract_obj, |sc| {
+            assert!(!sc
+                .sovereigns_mapper(&OWNER_ADDRESS.to_managed_address())
+                .is_empty());
+
+            assert!(sc.chain_ids().contains(&ManagedBuffer::from("SVCH")));
 
             let is_chain_config_deployed =
                 sc.is_contract_deployed(&OWNER_ADDRESS.to_managed_address(), ScArray::ChainConfig);
