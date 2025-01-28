@@ -2,7 +2,7 @@ use crate::err_msg;
 use core::ops::Deref;
 use proxies::fee_market_proxy::FeeStruct;
 
-use multiversx_sc::{require, types::MultiValueEncoded};
+use multiversx_sc::require;
 use operation::SovereignConfig;
 
 use crate::common::{
@@ -78,7 +78,7 @@ pub trait PhasesModule:
     }
 
     #[endpoint(deployPhaseTwo)]
-    fn deploy_phase_two(&self, bls_keys: MultiValueEncoded<ManagedBuffer>) {
+    fn deploy_phase_two(&self) {
         let blockchain_api = self.blockchain();
         let caller = blockchain_api.get_caller();
 
@@ -89,7 +89,7 @@ pub trait PhasesModule:
         );
 
         let chain_config_address = self.get_contract_address(&caller, ScArray::ChainConfig);
-        let header_verifier_address = self.deploy_header_verifier(chain_config_address, bls_keys);
+        let header_verifier_address = self.deploy_header_verifier(chain_config_address);
 
         let header_verifier_contract_info =
             ContractInfo::new(ScArray::HeaderVerifier, header_verifier_address);

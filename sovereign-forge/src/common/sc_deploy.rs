@@ -1,5 +1,5 @@
 use crate::err_msg;
-use multiversx_sc::types::{MultiValueEncoded, ReturnsResult};
+use multiversx_sc::types::ReturnsResult;
 use operation::SovereignConfig;
 use proxies::{chain_factory_proxy::ChainFactoryContractProxy, fee_market_proxy::FeeStruct};
 
@@ -16,15 +16,11 @@ pub trait ScDeployModule: super::utils::UtilsModule + super::storage::StorageMod
     }
 
     #[inline]
-    fn deploy_header_verifier(
-        &self,
-        chain_config_address: ManagedAddress,
-        bls_keys: MultiValueEncoded<ManagedBuffer>,
-    ) -> ManagedAddress {
+    fn deploy_header_verifier(&self, chain_config_address: ManagedAddress) -> ManagedAddress {
         self.tx()
             .to(self.get_chain_factory_address())
             .typed(ChainFactoryContractProxy)
-            .deploy_header_verifier(chain_config_address, bls_keys)
+            .deploy_header_verifier(chain_config_address)
             .returns(ReturnsResult)
             .sync_call()
     }

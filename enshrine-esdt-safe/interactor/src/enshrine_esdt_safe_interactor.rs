@@ -128,9 +128,6 @@ impl ContractInteract {
     }
 
     pub async fn deploy_header_verifier(&mut self) {
-        let bls_pub_key: ManagedBuffer<StaticApi> = ManagedBuffer::new();
-        let mut bls_pub_keys = MultiValueEncoded::new();
-        bls_pub_keys.push(bls_pub_key);
         let header_verifier_code_path = MxscPath::new(&self.header_verifier_code);
         let chain_config_address = Bech32Address::from_bech32_string("chain_config".to_string());
 
@@ -140,7 +137,7 @@ impl ContractInteract {
             .from(&self.wallet_address)
             .gas(100_000_000u64)
             .typed(header_verifier_proxy::HeaderverifierProxy)
-            .init(chain_config_address, bls_pub_keys)
+            .init(chain_config_address)
             .code(header_verifier_code_path)
             .returns(ReturnsNewAddress)
             .run()

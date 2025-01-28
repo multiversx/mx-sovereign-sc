@@ -159,7 +159,7 @@ impl ContractInteract {
             .from(&self.wallet_address)
             .gas(100_000_000u64)
             .typed(HeaderverifierProxy)
-            .init(chain_config_address, MultiValueEncoded::new())
+            .init(chain_config_address)
             .code(header_verifier_code_path)
             .returns(ReturnsNewAddress)
             .run()

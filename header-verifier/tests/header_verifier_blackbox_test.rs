@@ -70,13 +70,12 @@ impl HeaderVerifierTestState {
     fn deploy_header_verifier_contract(
         &mut self,
         chain_config_address: TestSCAddress,
-        bls_keys: BlsKeys,
     ) -> &mut Self {
         self.world
             .tx()
             .from(OWNER)
             .typed(HeaderverifierProxy)
-            .init(chain_config_address, bls_keys)
+            .init(chain_config_address)
             .code(HEADER_VERIFIER_CODE_PATH)
             .new_address(HEADER_VERIFIER_ADDRESS)
             .run();
@@ -256,19 +255,15 @@ impl HeaderVerifierTestState {
 #[test]
 fn test_deploy() {
     let mut state = HeaderVerifierTestState::new();
-    let bls_key_1 = ManagedBuffer::from("bls_key_1");
-    let managed_bls_keys = state.get_bls_keys(vec![bls_key_1]);
 
-    state.deploy_header_verifier_contract(CHAIN_CONFIG_ADDRESS, managed_bls_keys);
+    state.deploy_header_verifier_contract(CHAIN_CONFIG_ADDRESS);
 }
 
 #[test]
 fn test_register_esdt_address() {
     let mut state = HeaderVerifierTestState::new();
-    let bls_key_1 = ManagedBuffer::from("bls_key_1");
-    let managed_bls_keys = state.get_bls_keys(vec![bls_key_1]);
 
-    state.deploy_header_verifier_contract(CHAIN_CONFIG_ADDRESS, managed_bls_keys);
+    state.deploy_header_verifier_contract(CHAIN_CONFIG_ADDRESS);
 
     state.propose_register_esdt_address(ENSHRINE_ADDRESS);
 
@@ -286,10 +281,8 @@ fn test_register_esdt_address() {
 #[test]
 fn test_register_bridge_operation() {
     let mut state = HeaderVerifierTestState::new();
-    let bls_key_1 = ManagedBuffer::from("bls_key_1");
-    let managed_bls_keys = state.get_bls_keys(vec![bls_key_1]);
 
-    state.deploy_header_verifier_contract(CHAIN_CONFIG_ADDRESS, managed_bls_keys);
+    state.deploy_header_verifier_contract(CHAIN_CONFIG_ADDRESS);
 
     let operation_1 = ManagedBuffer::from("operation_1");
     let operation_2 = ManagedBuffer::from("operation_2");
@@ -327,10 +320,8 @@ fn test_register_bridge_operation() {
 #[test]
 fn test_remove_executed_hash_caller_not_esdt_address() {
     let mut state = HeaderVerifierTestState::new();
-    let bls_key_1 = ManagedBuffer::from("bls_key_1");
-    let managed_bls_keys = state.get_bls_keys(vec![bls_key_1]);
 
-    state.deploy_header_verifier_contract(CHAIN_CONFIG_ADDRESS, managed_bls_keys);
+    state.deploy_header_verifier_contract(CHAIN_CONFIG_ADDRESS);
 
     let operation_1 = ManagedBuffer::from("operation_1");
     let operation_2 = ManagedBuffer::from("operation_2");
@@ -349,10 +340,8 @@ fn test_remove_executed_hash_caller_not_esdt_address() {
 #[test]
 fn test_remove_executed_hash_no_esdt_address_registered() {
     let mut state = HeaderVerifierTestState::new();
-    let bls_key_1 = ManagedBuffer::from("bls_key_1");
-    let managed_bls_keys = state.get_bls_keys(vec![bls_key_1]);
 
-    state.deploy_header_verifier_contract(CHAIN_CONFIG_ADDRESS, managed_bls_keys);
+    state.deploy_header_verifier_contract(CHAIN_CONFIG_ADDRESS);
 
     let operation_1 = ManagedBuffer::from("operation_1");
     let operation_2 = ManagedBuffer::from("operation_2");
@@ -370,10 +359,8 @@ fn test_remove_executed_hash_no_esdt_address_registered() {
 #[test]
 fn test_remove_one_executed_hash() {
     let mut state = HeaderVerifierTestState::new();
-    let bls_key_1 = ManagedBuffer::from("bls_key_1");
-    let managed_bls_keys = state.get_bls_keys(vec![bls_key_1]);
 
-    state.deploy_header_verifier_contract(CHAIN_CONFIG_ADDRESS, managed_bls_keys);
+    state.deploy_header_verifier_contract(CHAIN_CONFIG_ADDRESS);
 
     let operation_hash_1 = ManagedBuffer::from("operation_1");
     let operation_hash_2 = ManagedBuffer::from("operation_2");
@@ -413,10 +400,8 @@ fn test_remove_one_executed_hash() {
 #[test]
 fn test_remove_all_executed_hashes() {
     let mut state = HeaderVerifierTestState::new();
-    let bls_key_1 = ManagedBuffer::from("bls_key_1");
-    let managed_bls_keys = state.get_bls_keys(vec![bls_key_1]);
 
-    state.deploy_header_verifier_contract(CHAIN_CONFIG_ADDRESS, managed_bls_keys);
+    state.deploy_header_verifier_contract(CHAIN_CONFIG_ADDRESS);
 
     let operation_1 = ManagedBuffer::from("operation_1");
     let operation_2 = ManagedBuffer::from("operation_2");
@@ -460,10 +445,8 @@ fn test_remove_all_executed_hashes() {
 #[test]
 fn test_lock_operation_not_registered() {
     let mut state = HeaderVerifierTestState::new();
-    let bls_key_1 = ManagedBuffer::from("bls_key_1");
-    let managed_bls_keys = state.get_bls_keys(vec![bls_key_1]);
 
-    state.deploy_header_verifier_contract(CHAIN_CONFIG_ADDRESS, managed_bls_keys);
+    state.deploy_header_verifier_contract(CHAIN_CONFIG_ADDRESS);
     state.propose_register_esdt_address(ENSHRINE_ADDRESS);
 
     let operation_1 = ManagedBuffer::from("operation_1");
@@ -481,10 +464,8 @@ fn test_lock_operation_not_registered() {
 #[test]
 fn test_lock_operation() {
     let mut state = HeaderVerifierTestState::new();
-    let bls_key_1 = ManagedBuffer::from("bls_key_1");
-    let managed_bls_keys = state.get_bls_keys(vec![bls_key_1]);
 
-    state.deploy_header_verifier_contract(CHAIN_CONFIG_ADDRESS, managed_bls_keys);
+    state.deploy_header_verifier_contract(CHAIN_CONFIG_ADDRESS);
     state.propose_register_esdt_address(ENSHRINE_ADDRESS);
 
     let operation_1 = ManagedBuffer::from("operation_1");
@@ -524,10 +505,8 @@ fn test_lock_operation() {
 #[test]
 fn update_config_can_only_be_called_by_chain_config_admin() {
     let mut state = HeaderVerifierTestState::new();
-    let bls_key_1 = ManagedBuffer::from("bls_key_1");
-    let managed_bls_keys = state.get_bls_keys(vec![bls_key_1]);
 
-    state.deploy_header_verifier_contract(CHAIN_CONFIG_ADDRESS, managed_bls_keys);
+    state.deploy_header_verifier_contract(CHAIN_CONFIG_ADDRESS);
 
     let sovereign_config = SovereignConfig::new(0, 0, BigUint::default(), None);
 
@@ -541,10 +520,8 @@ fn update_config_can_only_be_called_by_chain_config_admin() {
 #[test]
 fn update_config_wrong_validator_range() {
     let mut state = HeaderVerifierTestState::new();
-    let bls_key_1 = ManagedBuffer::from("bls_key_1");
-    let managed_bls_keys = state.get_bls_keys(vec![bls_key_1]);
 
-    state.deploy_header_verifier_contract(CHAIN_CONFIG_ADDRESS, managed_bls_keys);
+    state.deploy_header_verifier_contract(CHAIN_CONFIG_ADDRESS);
 
     let sovereign_config = SovereignConfig::new(0, 0, BigUint::default(), None);
 
@@ -557,10 +534,8 @@ fn update_config_wrong_validator_range() {
 #[test]
 fn update_config() {
     let mut state = HeaderVerifierTestState::new();
-    let bls_key_1 = ManagedBuffer::from("bls_key_1");
-    let managed_bls_keys = state.get_bls_keys(vec![bls_key_1]);
 
-    state.deploy_header_verifier_contract(CHAIN_CONFIG_ADDRESS, managed_bls_keys);
+    state.deploy_header_verifier_contract(CHAIN_CONFIG_ADDRESS);
 
     let sovereign_config = SovereignConfig::new(0, 0, BigUint::default(), None);
 
@@ -587,10 +562,8 @@ fn update_config() {
 #[test]
 fn change_validator_set_incorect_length() {
     let mut state = HeaderVerifierTestState::new();
-    let bls_key_1 = ManagedBuffer::from("bls_key_1");
-    let managed_bls_keys = state.get_bls_keys(vec![bls_key_1]);
 
-    state.deploy_header_verifier_contract(CHAIN_CONFIG_ADDRESS, managed_bls_keys);
+    state.deploy_header_verifier_contract(CHAIN_CONFIG_ADDRESS);
 
     let sovereign_config = SovereignConfig::new(0, 0, BigUint::default(), None);
 
@@ -606,10 +579,8 @@ fn change_validator_set_incorect_length() {
 #[test]
 fn change_validator_set() {
     let mut state = HeaderVerifierTestState::new();
-    let bls_key_1 = ManagedBuffer::from("bls_key_1");
-    let managed_bls_keys = state.get_bls_keys(vec![bls_key_1]);
 
-    state.deploy_header_verifier_contract(CHAIN_CONFIG_ADDRESS, managed_bls_keys);
+    state.deploy_header_verifier_contract(CHAIN_CONFIG_ADDRESS);
 
     let sovereign_config = SovereignConfig::new(1, 2, BigUint::default(), None);
 
