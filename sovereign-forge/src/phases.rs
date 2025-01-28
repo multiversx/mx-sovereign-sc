@@ -1,6 +1,9 @@
 use crate::err_msg;
 use core::ops::Deref;
-use proxies::{chain_factory_proxy::ChainFactoryContractProxy, fee_market_proxy::FeeStruct};
+use proxies::{
+    chain_factory_proxy::ChainFactoryContractProxy, fee_market_proxy::FeeStruct,
+    token_handler_proxy::TokenHandlerProxy,
+};
 
 use multiversx_sc::require;
 use operation::SovereignConfig;
@@ -49,6 +52,15 @@ pub trait PhasesModule:
             .to(chain_factory_address)
             .typed(ChainFactoryContractProxy)
             .complete_setup_phase()
+            .sync_call();
+
+        let token_handler_address = self.token_handlers(caller_shard_id).get();
+        let enshrine_esdt_address = self.get_contract_address(&caller, ScArray::EnshrineESDTSafe);
+
+        self.tx()
+            .to(token_handler_address)
+            .typed(TokenHandlerProxy)
+            .whitelist_enshrine_esdt(enshrine_esdt_address)
             .sync_call();
 
         self.setup_phase_complete().set(true);
