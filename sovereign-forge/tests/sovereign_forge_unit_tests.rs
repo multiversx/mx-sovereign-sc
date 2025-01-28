@@ -371,6 +371,7 @@ fn complete_setup_phase_no_token_handler_registered() {
 fn complete_setup_phase() {
     let mut state = SovereignForgeTestState::new();
     state.deploy_sovereign_forge();
+    state.deploy_chain_factory();
 
     state.finish_setup();
 
@@ -387,6 +388,7 @@ fn complete_setup_phase() {
 fn deploy_phase_one_deploy_cost_too_low() {
     let mut state = SovereignForgeTestState::new();
     state.deploy_sovereign_forge();
+    state.deploy_chain_factory();
     state.finish_setup();
 
     let deploy_cost = BigUint::from(1u32);

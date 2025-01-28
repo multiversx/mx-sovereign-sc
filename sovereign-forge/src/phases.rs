@@ -54,15 +54,6 @@ pub trait PhasesModule:
             .complete_setup_phase()
             .sync_call();
 
-        let token_handler_address = self.token_handlers(caller_shard_id).get();
-        let enshrine_esdt_address = self.get_contract_address(&caller, ScArray::EnshrineESDTSafe);
-
-        self.tx()
-            .to(token_handler_address)
-            .typed(TokenHandlerProxy)
-            .whitelist_enshrine_esdt(enshrine_esdt_address)
-            .sync_call();
-
         self.setup_phase_complete().set(true);
     }
 
@@ -144,10 +135,16 @@ pub trait PhasesModule:
         let esdt_safe_contract_info =
             ContractInfo::new(ScArray::ESDTSafe, esdt_safe_address.clone());
 
+        let blockchain_api = self.blockchain();
+        let caller = blockchain_api.get_caller();
+        let caller_shard_id = blockchain_api.get_shard_of_address(&caller);
+
+        let chain_factory_address = self.chain_factories(caller_shard_id).get();
+
         self.tx()
-            .to(header_verifier_address)
-            .typed(HeaderverifierProxy)
-            .set_esdt_safe_address(esdt_safe_address)
+            .to(chain_factory_address)
+            .typed(ChainFactoryContractProxy)
+            .set_esdt_safe_address_in_header_verifier(header_verifier_address, esdt_safe_address)
             .sync_call();
 
         self.sovereign_deployed_contracts(&self.sovereigns_mapper(&caller).get())
