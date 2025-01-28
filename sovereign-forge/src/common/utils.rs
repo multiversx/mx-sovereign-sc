@@ -53,7 +53,7 @@ pub trait UtilsModule: super::storage::StorageModule {
         );
     }
 
-    fn require_phase_1_completed(&self, caller: &ManagedAddress) {
+    fn require_phase_one_completed(&self, caller: &ManagedAddress) {
         require!(
             !self.sovereigns_mapper(caller).is_empty(),
             "The current caller has not deployed any Sovereign Chain"
@@ -62,11 +62,6 @@ pub trait UtilsModule: super::storage::StorageModule {
         require!(
             self.is_contract_deployed(caller, ScArray::ChainConfig),
             "The Chain-Config SC is not deployed"
-        );
-
-        require!(
-            !self.is_contract_deployed(caller, ScArray::HeaderVerifier),
-            "The Header-Verifier SC is already deployed"
         );
     }
 
