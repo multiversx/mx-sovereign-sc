@@ -403,7 +403,7 @@ impl ContractInteract {
             .to(self.state.current_address())
             .gas(100_000_000u64)
             .typed(SovereignForgeProxy)
-            .deploy_phase_one(config)
+            .deploy_phase_one(None::<ManagedBuffer<StaticApi>>, config)
             .egld(egld_amount)
             .returns(ReturnsResultUnmanaged)
             .run()
