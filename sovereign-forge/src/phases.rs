@@ -1,6 +1,6 @@
 use crate::err_msg;
 use core::ops::Deref;
-use proxies::fee_market_proxy::FeeStruct;
+use proxies::{chain_factory_proxy::ChainFactoryContractProxy, fee_market_proxy::FeeStruct};
 
 use multiversx_sc::require;
 use operation::SovereignConfig;
@@ -38,6 +38,18 @@ pub trait PhasesModule:
                 shard_id
             );
         }
+
+        let blockchain_api = self.blockchain();
+        let caller = blockchain_api.get_caller();
+        let caller_shard_id = blockchain_api.get_shard_of_address(&caller);
+
+        let chain_factory_address = self.chain_factories(caller_shard_id).get();
+
+        self.tx()
+            .to(chain_factory_address)
+            .typed(ChainFactoryContractProxy)
+            .complete_setup_phase()
+            .sync_call();
 
         self.setup_phase_complete().set(true);
     }

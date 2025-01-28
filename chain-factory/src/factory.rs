@@ -136,9 +136,10 @@ pub trait FactoryModule: only_admin::OnlyAdminModule {
         fee_market_address
     }
 
+    // TODO:
     #[only_admin]
     #[endpoint(completeSetupPhase)]
-    fn complete_setup_phase(&self, _contract_address: ManagedAddress) {
+    fn complete_setup_phase(&self) {
         // TODO: will have to call each contract's endpoint to finish setup phase
     }
 

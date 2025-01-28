@@ -180,16 +180,12 @@ where
             .original_result()
     }
 
-    pub fn complete_setup_phase<
-        Arg0: ProxyArg<ManagedAddress<Env::Api>>,
-    >(
+    pub fn complete_setup_phase(
         self,
-        _contract_address: Arg0,
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("completeSetupPhase")
-            .argument(&_contract_address)
             .original_result()
     }
 
