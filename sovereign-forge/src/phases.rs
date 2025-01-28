@@ -44,13 +44,18 @@ pub trait PhasesModule:
 
     #[payable("EGLD")]
     #[endpoint(deployPhaseOne)]
-    fn deploy_phase_one(&self, config: SovereignConfig<Self::Api>) {
+    fn deploy_phase_one(
+        &self,
+        opt_preferred_chain_id: Option<ManagedBuffer>,
+        config: SovereignConfig<Self::Api>,
+    ) {
         self.require_setup_complete();
 
         let call_value = self.call_value().egld();
         self.require_correct_deploy_cost(call_value.deref());
 
-        let chain_id = self.generate_chain_id();
+        let chain_id = self.generate_chain_id(opt_preferred_chain_id);
+
         let blockchain_api = self.blockchain();
         let caller = blockchain_api.get_caller();
         let caller_shard_id = blockchain_api.get_shard_of_address(&caller);
@@ -82,7 +87,7 @@ pub trait PhasesModule:
         let blockchain_api = self.blockchain();
         let caller = blockchain_api.get_caller();
 
-        self.require_phase_1_completed(&caller);
+        self.require_phase_one_completed(&caller);
         require!(
             !self.is_contract_deployed(&caller, ScArray::HeaderVerifier),
             "The Header-Verifier contract is already deployed"
