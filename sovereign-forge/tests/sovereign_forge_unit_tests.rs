@@ -447,6 +447,30 @@ fn deploy_phase_one() {
 }
 
 #[test]
+fn deploy_phase_one_with_chain_id_used() {
+    let mut state = SovereignForgeTestState::new();
+    state.deploy_sovereign_forge();
+    state.deploy_chain_factory();
+    state.deploy_chain_config_template();
+    state.finish_setup();
+
+    let deploy_cost = BigUint::from(100_000u32);
+
+    state.deploy_phase_one(
+        &deploy_cost,
+        Some(ManagedBuffer::from("SVCH")),
+        &SovereignConfig::default_config(),
+        None,
+    );
+
+    state.deploy_phase_one(
+        &deploy_cost,
+        Some(ManagedBuffer::from("SVCH")),
+        &SovereignConfig::default_config(),
+        Some("This chain ID is already used"),
+    );
+}
+#[test]
 fn deploy_phase_two_without_first_phase() {
     let mut state = SovereignForgeTestState::new();
     state.deploy_sovereign_forge();
