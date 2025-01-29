@@ -364,6 +364,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "cross-chain"
+version = "0.1.0"
+dependencies = [
+ "multiversx-sc",
+ "multiversx-sc-snippets",
+ "operation",
+ "serde",
+ "toml",
+ "utils",
+]
+
+[[package]]
 name = "crypto-common"
 version = "0.1.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -703,9 +715,12 @@ dependencies = [
 name = "from-sovereign"
 version = "0.0.0"
 dependencies = [
+ "cross-chain",
  "multiversx-sc",
  "multiversx-sc-scenario",
  "num-bigint",
+ "operation",
+ "utils",
 ]
 
 [[package]]

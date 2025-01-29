@@ -16,3 +16,12 @@ num-bigint = "0.4"
 
 [dev-dependencies.multiversx-sc-scenario]
 version = "0.56.0"
+
+[dependencies.utils]
+path = "../common/utils"
+
+[dependencies.operation]
+path = "../common/operation"
+
+[dependencies.cross-chain]
+path = "../common/cross-chain"
