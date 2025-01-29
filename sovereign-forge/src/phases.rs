@@ -39,9 +39,7 @@ pub trait PhasesModule:
             );
         }
 
-        let blockchain_api = self.blockchain();
-        let caller = blockchain_api.get_caller();
-        let caller_shard_id = blockchain_api.get_shard_of_address(&caller);
+        let (caller_shard_id, _) = self.get_caller_and_shard_id();
 
         let chain_factory_address = self.chain_factories(caller_shard_id).get();
 
@@ -68,9 +66,7 @@ pub trait PhasesModule:
 
         let chain_id = self.generate_chain_id(opt_preferred_chain_id);
 
-        let blockchain_api = self.blockchain();
-        let caller = blockchain_api.get_caller();
-        let caller_shard_id = blockchain_api.get_shard_of_address(&caller);
+        let (caller_shard_id, caller) = self.get_caller_and_shard_id();
 
         let chain_factories_mapper = self.chain_factories(caller_shard_id);
         require!(
@@ -132,10 +128,7 @@ pub trait PhasesModule:
         let esdt_safe_contract_info =
             ContractInfo::new(ScArray::ESDTSafe, esdt_safe_address.clone());
 
-        let blockchain_api = self.blockchain();
-        let caller = blockchain_api.get_caller();
-        let caller_shard_id = blockchain_api.get_shard_of_address(&caller);
-
+        let (caller_shard_id, _) = self.get_caller_and_shard_id();
         let chain_factory_address = self.chain_factories(caller_shard_id).get();
 
         self.tx()

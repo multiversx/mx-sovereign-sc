@@ -66,6 +66,12 @@ pub trait UtilsModule: super::storage::StorageModule {
         );
     }
 
+    fn get_caller_and_shard_id(&self) -> (u32, ManagedAddress) {
+        let blockchain_api = self.blockchain();
+        let caller = blockchain_api.get_caller();
+        (blockchain_api.get_shard_of_address(&caller), caller)
+    }
+
     fn is_contract_deployed(&self, sovereign_creator: &ManagedAddress, sc_id: ScArray) -> bool {
         let chain_id = self.sovereigns_mapper(sovereign_creator).get();
         self.sovereign_deployed_contracts(&chain_id)
