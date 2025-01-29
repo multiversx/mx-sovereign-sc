@@ -23,4 +23,6 @@ members = [
   "sovereign-forge",
   "sovereign-forge/interactor",
   "sovereign-forge/meta",
+  "from-sovereign",
+  "from-sovereign/meta",
 ]

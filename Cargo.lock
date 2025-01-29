@@ -700,6 +700,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "from-sovereign"
+version = "0.0.0"
+dependencies = [
+ "multiversx-sc",
+ "multiversx-sc-scenario",
+ "num-bigint",
+]
+
+[[package]]
+name = "from-sovereign-meta"
+version = "0.0.0"
+dependencies = [
+ "from-sovereign",
+ "multiversx-sc-meta-lib",
+]
+
+[[package]]
 name = "futures"
 version = "0.3.31"
 source = "registry+https://github.com/rust-lang/crates.io-index"
