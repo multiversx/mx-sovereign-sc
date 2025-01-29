@@ -11,7 +11,8 @@ use multiversx_sc_scenario::multiversx_chain_vm::crypto_functions::sha256;
 use multiversx_sc_scenario::{
     api::StaticApi, imports::MxscPath, ExpectError, ScenarioTxRun, ScenarioWorld,
 };
-use operation::{Operation, OperationData, OperationEsdtPayment};
+use operation::{Operation, OperationData, OperationEsdtPayment, SovereignConfig};
+use proxies::chain_config_proxy::ChainConfigContractProxy;
 use proxies::esdt_safe_proxy::EsdtSafeProxy;
 use proxies::fee_market_proxy::{FeeMarketProxy, FeeStruct, FeeType};
 use proxies::header_verifier_proxy::HeaderverifierProxy;
@@ -28,6 +29,8 @@ const HEADER_VERIFIER_CODE_PATH: MxscPath =
     MxscPath::new("../header-verifier/output/header-verifier.mxsc.json");
 
 const CHAIN_CONFIG_ADDRESS: TestSCAddress = TestSCAddress::new("chain-config");
+const CHAIN_CONFIG_CODE_PATH: MxscPath =
+    MxscPath::new("../chain-config/output/chain-config.mxsc.json");
 
 const USER_ADDRESS: TestAddress = TestAddress::new("user");
 const RECEIVER_ADDRESS: TestAddress = TestAddress::new("receiver");
@@ -44,6 +47,7 @@ fn world() -> ScenarioWorld {
     blockchain.register_contract(BRIDGE_CODE_PATH, esdt_safe::ContractBuilder);
     blockchain.register_contract(FEE_MARKET_CODE_PATH, fee_market::ContractBuilder);
     blockchain.register_contract(HEADER_VERIFIER_CODE_PATH, header_verifier::ContractBuilder);
+    blockchain.register_contract(CHAIN_CONFIG_CODE_PATH, chain_config::ContractBuilder);
 
     blockchain
 }
@@ -105,6 +109,32 @@ impl BridgeTestState {
             .run();
 
         self
+    }
+
+    fn deploy_chain_config(&mut self) -> &mut Self {
+        self.world
+            .tx()
+            .from(BRIDGE_OWNER_ADDRESS)
+            .typed(ChainConfigContractProxy)
+            .init(
+                SovereignConfig::new(0, 2, BigUint::default(), None),
+                HEADER_VERIFIER_ADDRESS,
+            )
+            .code(CHAIN_CONFIG_CODE_PATH)
+            .new_address(CHAIN_CONFIG_ADDRESS)
+            .run();
+
+        self
+    }
+
+    fn complete_header_verifier_setup_phase(&mut self) {
+        self.world
+            .tx()
+            .from(BRIDGE_OWNER_ADDRESS)
+            .to(HEADER_VERIFIER_ADDRESS)
+            .typed(HeaderverifierProxy)
+            .complete_setup_phase()
+            .run();
     }
 
     fn deploy_header_verifier_contract(&mut self) -> &mut Self {
@@ -401,11 +431,10 @@ fn test_register_operation() {
     let mut state = BridgeTestState::new();
 
     state.deploy_bridge_contract(false);
-
+    state.deploy_chain_config();
     state.deploy_header_verifier_contract();
-
+    state.complete_header_verifier_setup_phase();
     state.propose_set_header_verifier_address();
-
     state.propose_register_operation();
 }
 
@@ -414,14 +443,11 @@ fn test_execute_operation() {
     let mut state = BridgeTestState::new();
 
     state.deploy_bridge_contract(false);
-
+    state.deploy_chain_config();
     state.deploy_header_verifier_contract();
-
+    state.complete_header_verifier_setup_phase();
     state.propose_set_header_verifier_address();
-
     state.propose_set_esdt_safe_address();
-
     state.propose_register_operation();
-
     state.propose_execute_operation();
 }
