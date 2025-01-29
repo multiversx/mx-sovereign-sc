@@ -125,8 +125,9 @@ pub trait UtilsModule: super::storage::StorageModule {
     }
 
     fn get_chain_factory_address(&self) -> ManagedAddress {
-        let caller = self.blockchain().get_caller();
-        let shard_id = self.blockchain().get_shard_of_address(&caller);
+        let blockchain_api = self.blockchain();
+        let caller = blockchain_api.get_caller();
+        let shard_id = blockchain_api.get_shard_of_address(&caller);
 
         self.chain_factories(shard_id).get()
     }
