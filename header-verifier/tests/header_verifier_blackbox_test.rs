@@ -110,8 +110,13 @@ impl HeaderVerifierTestState {
             .run();
     }
 
-    fn propose_register_operations(&mut self, operation: BridgeOperation<StaticApi>) {
-        self.world
+    fn propose_register_operations(
+        &mut self,
+        operation: BridgeOperation<StaticApi>,
+        error_message: Option<&str>,
+    ) {
+        let response = self
+            .world
             .tx()
             .from(OWNER)
             .to(HEADER_VERIFIER_ADDRESS)
@@ -121,7 +126,12 @@ impl HeaderVerifierTestState {
                 operation.bridge_operation_hash,
                 operation.operations_hashes,
             )
+            .returns(ReturnsHandledOrError::new())
             .run();
+
+        if let Err(error) = response {
+            assert_eq!(error_message, Some(error.message.as_str()))
+        }
     }
 
     fn propose_remove_executed_hash(
@@ -311,6 +321,24 @@ fn test_register_esdt_address() {
 }
 
 #[test]
+fn register_bridge_operation_setup_not_completed() {
+    let mut state = HeaderVerifierTestState::new();
+
+    state.deploy_header_verifier_contract(CHAIN_CONFIG_ADDRESS);
+    state.deploy_chain_config(
+        &SovereignConfig::new(0, 2, BigUint::default(), None),
+        HEADER_VERIFIER_ADDRESS,
+    );
+    state.propose_register_esdt_address(ENSHRINE_ADDRESS);
+
+    let operation_1 = ManagedBuffer::from("operation_1");
+    let operation_2 = ManagedBuffer::from("operation_2");
+    let operation = state.generate_bridge_operation_struct(vec![&operation_1, &operation_2]);
+
+    state.propose_register_operations(operation.clone(), Some("The setup phase must be completed"));
+}
+
+#[test]
 fn test_register_bridge_operation() {
     let mut state = HeaderVerifierTestState::new();
 
@@ -326,7 +354,7 @@ fn test_register_bridge_operation() {
     let operation_2 = ManagedBuffer::from("operation_2");
     let operation = state.generate_bridge_operation_struct(vec![&operation_1, &operation_2]);
 
-    state.propose_register_operations(operation.clone());
+    state.propose_register_operations(operation.clone(), None);
 
     state
         .world
@@ -371,7 +399,7 @@ fn test_remove_executed_hash_caller_not_esdt_address() {
     let operation_2 = ManagedBuffer::from("operation_2");
     let operation = state.generate_bridge_operation_struct(vec![&operation_1, &operation_2]);
 
-    state.propose_register_operations(operation.clone());
+    state.propose_register_operations(operation.clone(), None);
     state.propose_remove_executed_hash(
         OWNER,
         &operation.bridge_operation_hash,
@@ -396,7 +424,7 @@ fn test_remove_executed_hash_no_esdt_address_registered() {
     let operation_2 = ManagedBuffer::from("operation_2");
     let operation = state.generate_bridge_operation_struct(vec![&operation_1, &operation_2]);
 
-    state.propose_register_operations(operation.clone());
+    state.propose_register_operations(operation.clone(), None);
     state.propose_remove_executed_hash(
         ENSHRINE_ADDRESS,
         &operation.bridge_operation_hash,
@@ -422,7 +450,7 @@ fn test_remove_one_executed_hash() {
     let operation =
         state.generate_bridge_operation_struct(vec![&operation_hash_1, &operation_hash_2]);
 
-    state.propose_register_operations(operation.clone());
+    state.propose_register_operations(operation.clone(), None);
     state.propose_remove_executed_hash(
         ENSHRINE_ADDRESS,
         &operation.bridge_operation_hash,
@@ -466,7 +494,7 @@ fn test_remove_all_executed_hashes() {
     let operation_2 = ManagedBuffer::from("operation_2");
     let operation = state.generate_bridge_operation_struct(vec![&operation_1, &operation_2]);
 
-    state.propose_register_operations(operation.clone());
+    state.propose_register_operations(operation.clone(), None);
 
     state.propose_remove_executed_hash(
         ENSHRINE_ADDRESS,
@@ -540,7 +568,7 @@ fn test_lock_operation() {
     let operation_2 = ManagedBuffer::from("operation_2");
     let operation = state.generate_bridge_operation_struct(vec![&operation_1, &operation_2]);
 
-    state.propose_register_operations(operation.clone());
+    state.propose_register_operations(operation.clone(), None);
 
     state.propose_lock_operation_hash(
         ENSHRINE_ADDRESS,
