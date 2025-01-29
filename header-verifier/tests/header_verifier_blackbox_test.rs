@@ -28,7 +28,7 @@ const DUMMY_SC_ADDRESS: TestSCAddress = TestSCAddress::new("dummy-sc");
 const OWNER: TestAddress = TestAddress::new("owner");
 const WEGLD_BALANCE: u128 = 100_000_000_000_000_000;
 
-type BlsKeys = MultiValueEncoded<StaticApi, ManagedBuffer<StaticApi>>;
+type BlsKeys = Vec<ManagedBuffer<StaticApi>>;
 
 #[derive(Clone)]
 pub struct BridgeOperation<M: ManagedTypeApi> {
@@ -188,6 +188,22 @@ impl HeaderVerifierTestState {
         }
     }
 
+    fn complete_setup_phase(&mut self, error_message: Option<&str>) {
+        let response = self
+            .world
+            .tx()
+            .from(OWNER)
+            .to(HEADER_VERIFIER_ADDRESS)
+            .typed(HeaderverifierProxy)
+            .complete_setup_phase()
+            .returns(ReturnsHandledOrError::new())
+            .run();
+
+        if let Err(error) = response {
+            assert_eq!(error_message, Some(error.message.as_str()))
+        }
+    }
+
     fn change_validator_set(&mut self, bls_keys: BlsKeys, error_message: Option<&str>) {
         let response = self
             .world
@@ -195,7 +211,7 @@ impl HeaderVerifierTestState {
             .from(OWNER)
             .to(HEADER_VERIFIER_ADDRESS)
             .typed(HeaderverifierProxy)
-            .change_validator_set(bls_keys)
+            .change_validator_set(MultiValueEncoded::from_iter(bls_keys))
             .returns(ReturnsHandledOrError::new())
             .run();
 
@@ -258,14 +274,27 @@ fn test_deploy() {
 
     state.deploy_header_verifier_contract(CHAIN_CONFIG_ADDRESS);
 }
+//
+// #[test]
+// fn test_setup_phase() {
+//     let mut state = HeaderVerifierTestState::new();
+//
+//     state.deploy_header_verifier_contract(CHAIN_CONFIG_ADDRESS);
+//     state.complete_setup_phase(None);
+// }
 
 #[test]
 fn test_register_esdt_address() {
     let mut state = HeaderVerifierTestState::new();
 
     state.deploy_header_verifier_contract(CHAIN_CONFIG_ADDRESS);
-
+    state.deploy_chain_config(
+        &SovereignConfig::new(0, 2, BigUint::default(), None),
+        HEADER_VERIFIER_ADDRESS,
+    );
+    state.change_validator_set(vec![ManagedBuffer::from("bls_1")], None);
     state.propose_register_esdt_address(ENSHRINE_ADDRESS);
+    state.complete_setup_phase(None);
 
     state
         .world
@@ -283,6 +312,13 @@ fn test_register_bridge_operation() {
     let mut state = HeaderVerifierTestState::new();
 
     state.deploy_header_verifier_contract(CHAIN_CONFIG_ADDRESS);
+    state.deploy_chain_config(
+        &SovereignConfig::new(0, 2, BigUint::default(), None),
+        HEADER_VERIFIER_ADDRESS,
+    );
+    state.change_validator_set(vec![ManagedBuffer::from("bls_1")], None);
+    state.propose_register_esdt_address(ENSHRINE_ADDRESS);
+    state.complete_setup_phase(None);
 
     let operation_1 = ManagedBuffer::from("operation_1");
     let operation_2 = ManagedBuffer::from("operation_2");
@@ -322,13 +358,19 @@ fn test_remove_executed_hash_caller_not_esdt_address() {
     let mut state = HeaderVerifierTestState::new();
 
     state.deploy_header_verifier_contract(CHAIN_CONFIG_ADDRESS);
+    state.deploy_chain_config(
+        &SovereignConfig::new(0, 2, BigUint::default(), None),
+        HEADER_VERIFIER_ADDRESS,
+    );
+    state.change_validator_set(vec![ManagedBuffer::from("bls_1")], None);
+    state.propose_register_esdt_address(ENSHRINE_ADDRESS);
+    state.complete_setup_phase(None);
 
     let operation_1 = ManagedBuffer::from("operation_1");
     let operation_2 = ManagedBuffer::from("operation_2");
     let operation = state.generate_bridge_operation_struct(vec![&operation_1, &operation_2]);
 
     state.propose_register_operations(operation.clone());
-    state.propose_register_esdt_address(ENSHRINE_ADDRESS);
     state.propose_remove_executed_hash(
         OWNER,
         &operation.bridge_operation_hash,
@@ -342,6 +384,13 @@ fn test_remove_executed_hash_no_esdt_address_registered() {
     let mut state = HeaderVerifierTestState::new();
 
     state.deploy_header_verifier_contract(CHAIN_CONFIG_ADDRESS);
+    state.deploy_chain_config(
+        &SovereignConfig::new(0, 2, BigUint::default(), None),
+        HEADER_VERIFIER_ADDRESS,
+    );
+    state.change_validator_set(vec![ManagedBuffer::from("bls_1")], None);
+    state.propose_register_esdt_address(ENSHRINE_ADDRESS);
+    state.complete_setup_phase(None);
 
     let operation_1 = ManagedBuffer::from("operation_1");
     let operation_2 = ManagedBuffer::from("operation_2");
@@ -361,6 +410,13 @@ fn test_remove_one_executed_hash() {
     let mut state = HeaderVerifierTestState::new();
 
     state.deploy_header_verifier_contract(CHAIN_CONFIG_ADDRESS);
+    state.deploy_chain_config(
+        &SovereignConfig::new(0, 2, BigUint::default(), None),
+        HEADER_VERIFIER_ADDRESS,
+    );
+    state.change_validator_set(vec![ManagedBuffer::from("bls_1")], None);
+    state.propose_register_esdt_address(ENSHRINE_ADDRESS);
+    state.complete_setup_phase(None);
 
     let operation_hash_1 = ManagedBuffer::from("operation_1");
     let operation_hash_2 = ManagedBuffer::from("operation_2");
@@ -368,8 +424,6 @@ fn test_remove_one_executed_hash() {
         state.generate_bridge_operation_struct(vec![&operation_hash_1, &operation_hash_2]);
 
     state.propose_register_operations(operation.clone());
-    state.propose_register_esdt_address(ENSHRINE_ADDRESS);
-
     state.propose_remove_executed_hash(
         ENSHRINE_ADDRESS,
         &operation.bridge_operation_hash,
@@ -402,13 +456,19 @@ fn test_remove_all_executed_hashes() {
     let mut state = HeaderVerifierTestState::new();
 
     state.deploy_header_verifier_contract(CHAIN_CONFIG_ADDRESS);
+    state.deploy_chain_config(
+        &SovereignConfig::new(0, 2, BigUint::default(), None),
+        HEADER_VERIFIER_ADDRESS,
+    );
+    state.change_validator_set(vec![ManagedBuffer::from("bls_1")], None);
+    state.propose_register_esdt_address(ENSHRINE_ADDRESS);
+    state.complete_setup_phase(None);
 
     let operation_1 = ManagedBuffer::from("operation_1");
     let operation_2 = ManagedBuffer::from("operation_2");
     let operation = state.generate_bridge_operation_struct(vec![&operation_1, &operation_2]);
 
     state.propose_register_operations(operation.clone());
-    state.propose_register_esdt_address(ENSHRINE_ADDRESS);
 
     state.propose_remove_executed_hash(
         ENSHRINE_ADDRESS,
@@ -447,7 +507,13 @@ fn test_lock_operation_not_registered() {
     let mut state = HeaderVerifierTestState::new();
 
     state.deploy_header_verifier_contract(CHAIN_CONFIG_ADDRESS);
+    state.deploy_chain_config(
+        &SovereignConfig::new(0, 2, BigUint::default(), None),
+        HEADER_VERIFIER_ADDRESS,
+    );
+    state.change_validator_set(vec![ManagedBuffer::from("bls_1")], None);
     state.propose_register_esdt_address(ENSHRINE_ADDRESS);
+    state.complete_setup_phase(None);
 
     let operation_1 = ManagedBuffer::from("operation_1");
     let operation_2 = ManagedBuffer::from("operation_2");
@@ -466,7 +532,13 @@ fn test_lock_operation() {
     let mut state = HeaderVerifierTestState::new();
 
     state.deploy_header_verifier_contract(CHAIN_CONFIG_ADDRESS);
+    state.deploy_chain_config(
+        &SovereignConfig::new(0, 2, BigUint::default(), None),
+        HEADER_VERIFIER_ADDRESS,
+    );
+    state.change_validator_set(vec![ManagedBuffer::from("bls_1")], None);
     state.propose_register_esdt_address(ENSHRINE_ADDRESS);
+    state.complete_setup_phase(None);
 
     let operation_1 = ManagedBuffer::from("operation_1");
     let operation_2 = ManagedBuffer::from("operation_2");
