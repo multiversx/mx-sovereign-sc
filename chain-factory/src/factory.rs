@@ -50,6 +50,20 @@ pub trait FactoryModule: only_admin::OnlyAdminModule {
     }
 
     #[only_admin]
+    #[endpoint(setEsdtSafeAddressInHeaderVerifier)]
+    fn set_esdt_safe_address_in_header_verifier(
+        &self,
+        header_verifier: ManagedAddress,
+        esdt_safe_address: ManagedAddress,
+    ) {
+        self.tx()
+            .to(header_verifier)
+            .typed(HeaderverifierProxy)
+            .set_esdt_safe_address(esdt_safe_address)
+            .sync_call();
+    }
+
+    #[only_admin]
     #[endpoint(deployEnshrineEsdtSafe)]
     fn deploy_enshrine_esdt_safe(
         &self,
@@ -136,9 +150,10 @@ pub trait FactoryModule: only_admin::OnlyAdminModule {
         fee_market_address
     }
 
+    // TODO:
     #[only_admin]
     #[endpoint(completeSetupPhase)]
-    fn complete_setup_phase(&self, _contract_address: ManagedAddress) {
+    fn complete_setup_phase(&self) {
         // TODO: will have to call each contract's endpoint to finish setup phase
     }
 

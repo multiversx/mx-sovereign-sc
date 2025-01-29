@@ -127,13 +127,16 @@ where
     }
 
     pub fn deploy_phase_one<
-        Arg0: ProxyArg<operation::SovereignConfig<Env::Api>>,
+        Arg0: ProxyArg<Option<ManagedBuffer<Env::Api>>>,
+        Arg1: ProxyArg<operation::SovereignConfig<Env::Api>>,
     >(
         self,
-        config: Arg0,
+        opt_preferred_chain_id: Arg0,
+        config: Arg1,
     ) -> TxTypedCall<Env, From, To, (), Gas, ()> {
         self.wrapped_tx
             .raw_call("deployPhaseOne")
+            .argument(&opt_preferred_chain_id)
             .argument(&config)
             .original_result()
     }

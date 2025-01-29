@@ -275,6 +275,7 @@ dependencies = [
  "operation",
  "proxies",
  "setup-phase",
+ "token-handler",
 ]
 
 [[package]]
@@ -294,6 +295,17 @@ dependencies = [
  "proc-macro2",
  "quote",
  "unicode-ident",
+]
+
+[[package]]
+name = "token-handler"
+version = "0.0.0"
+dependencies = [
+ "chain-factory",
+ "multiversx-sc",
+ "multiversx-sc-modules",
+ "operation",
+ "proxies",
 ]
 
 [[package]]
