@@ -129,11 +129,6 @@ pub trait Headerverifier: setup_phase::SetupPhaseModule {
             return;
         }
 
-        require!(
-            !self.chain_config_address().is_empty(),
-            "The Chain-Config address is not set"
-        );
-
         self.check_validator_range(self.bls_pub_keys().len() as u64);
 
         // TODO:
