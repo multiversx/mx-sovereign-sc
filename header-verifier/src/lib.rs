@@ -37,7 +37,7 @@ pub trait Headerverifier: setup_phase::SetupPhaseModule {
     ) {
         require!(
             self.is_setup_phase_complete(),
-            "The setup phase must completed"
+            "The setup phase must be completed"
         );
 
         let mut hash_of_hashes_history_mapper = self.hash_of_hashes_history();
