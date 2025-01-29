@@ -274,14 +274,18 @@ fn test_deploy() {
 
     state.deploy_header_verifier_contract(CHAIN_CONFIG_ADDRESS);
 }
-//
-// #[test]
-// fn test_setup_phase() {
-//     let mut state = HeaderVerifierTestState::new();
-//
-//     state.deploy_header_verifier_contract(CHAIN_CONFIG_ADDRESS);
-//     state.complete_setup_phase(None);
-// }
+
+#[test]
+fn test_setup_phase() {
+    let mut state = HeaderVerifierTestState::new();
+
+    state.deploy_header_verifier_contract(CHAIN_CONFIG_ADDRESS);
+    state.deploy_chain_config(
+        &SovereignConfig::new(0, 2, BigUint::default(), None),
+        HEADER_VERIFIER_ADDRESS,
+    );
+    state.complete_setup_phase(None);
+}
 
 #[test]
 fn test_register_esdt_address() {
@@ -292,7 +296,6 @@ fn test_register_esdt_address() {
         &SovereignConfig::new(0, 2, BigUint::default(), None),
         HEADER_VERIFIER_ADDRESS,
     );
-    state.change_validator_set(vec![ManagedBuffer::from("bls_1")], None);
     state.propose_register_esdt_address(ENSHRINE_ADDRESS);
     state.complete_setup_phase(None);
 
@@ -316,7 +319,6 @@ fn test_register_bridge_operation() {
         &SovereignConfig::new(0, 2, BigUint::default(), None),
         HEADER_VERIFIER_ADDRESS,
     );
-    state.change_validator_set(vec![ManagedBuffer::from("bls_1")], None);
     state.propose_register_esdt_address(ENSHRINE_ADDRESS);
     state.complete_setup_phase(None);
 
@@ -362,7 +364,6 @@ fn test_remove_executed_hash_caller_not_esdt_address() {
         &SovereignConfig::new(0, 2, BigUint::default(), None),
         HEADER_VERIFIER_ADDRESS,
     );
-    state.change_validator_set(vec![ManagedBuffer::from("bls_1")], None);
     state.propose_register_esdt_address(ENSHRINE_ADDRESS);
     state.complete_setup_phase(None);
 
@@ -388,7 +389,6 @@ fn test_remove_executed_hash_no_esdt_address_registered() {
         &SovereignConfig::new(0, 2, BigUint::default(), None),
         HEADER_VERIFIER_ADDRESS,
     );
-    state.change_validator_set(vec![ManagedBuffer::from("bls_1")], None);
     state.propose_register_esdt_address(ENSHRINE_ADDRESS);
     state.complete_setup_phase(None);
 
@@ -414,7 +414,6 @@ fn test_remove_one_executed_hash() {
         &SovereignConfig::new(0, 2, BigUint::default(), None),
         HEADER_VERIFIER_ADDRESS,
     );
-    state.change_validator_set(vec![ManagedBuffer::from("bls_1")], None);
     state.propose_register_esdt_address(ENSHRINE_ADDRESS);
     state.complete_setup_phase(None);
 
@@ -460,7 +459,6 @@ fn test_remove_all_executed_hashes() {
         &SovereignConfig::new(0, 2, BigUint::default(), None),
         HEADER_VERIFIER_ADDRESS,
     );
-    state.change_validator_set(vec![ManagedBuffer::from("bls_1")], None);
     state.propose_register_esdt_address(ENSHRINE_ADDRESS);
     state.complete_setup_phase(None);
 
@@ -511,7 +509,6 @@ fn test_lock_operation_not_registered() {
         &SovereignConfig::new(0, 2, BigUint::default(), None),
         HEADER_VERIFIER_ADDRESS,
     );
-    state.change_validator_set(vec![ManagedBuffer::from("bls_1")], None);
     state.propose_register_esdt_address(ENSHRINE_ADDRESS);
     state.complete_setup_phase(None);
 
@@ -536,7 +533,6 @@ fn test_lock_operation() {
         &SovereignConfig::new(0, 2, BigUint::default(), None),
         HEADER_VERIFIER_ADDRESS,
     );
-    state.change_validator_set(vec![ManagedBuffer::from("bls_1")], None);
     state.propose_register_esdt_address(ENSHRINE_ADDRESS);
     state.complete_setup_phase(None);
 
