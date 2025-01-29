@@ -397,7 +397,6 @@ fn test_main_to_sov_egld_deposit_nothing_to_transfer() {
     let err_message = "Nothing to transfer";
 
     state.deploy_bridge_contract(false);
-
     state.propose_egld_deposit_and_expect_err(err_message);
 }
 
@@ -406,7 +405,6 @@ fn test_main_to_sov_deposit_ok() {
     let mut state = BridgeTestState::new();
 
     state.deploy_bridge_contract(false);
-
     state.propose_esdt_deposit();
 }
 
@@ -416,13 +414,9 @@ fn test_execute_operation_not_registered() {
     let err_message = "The current operation is not registered";
 
     state.deploy_bridge_contract(false);
-
     state.deploy_header_verifier_contract();
-
     state.propose_set_header_verifier_address();
-
     state.propose_set_esdt_safe_address();
-
     state.propose_execute_operation_and_expect_err(err_message);
 }
 
