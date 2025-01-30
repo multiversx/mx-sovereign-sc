@@ -712,11 +712,13 @@ name = "from-sovereign"
 version = "0.0.0"
 dependencies = [
  "cross-chain",
+ "max-bridged-amount-module",
  "multiversx-sc",
  "multiversx-sc-modules",
  "multiversx-sc-scenario",
  "num-bigint",
  "operation",
+ "proxies",
  "setup-phase",
  "utils",
 ]
