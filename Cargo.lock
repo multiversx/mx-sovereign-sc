@@ -365,14 +365,10 @@ dependencies = [
 
 [[package]]
 name = "cross-chain"
-version = "0.1.0"
+version = "0.0.0"
 dependencies = [
  "multiversx-sc",
- "multiversx-sc-snippets",
  "operation",
- "serde",
- "toml",
- "utils",
 ]
 
 [[package]]
@@ -717,9 +713,11 @@ version = "0.0.0"
 dependencies = [
  "cross-chain",
  "multiversx-sc",
+ "multiversx-sc-modules",
  "multiversx-sc-scenario",
  "num-bigint",
  "operation",
+ "setup-phase",
  "utils",
 ]
 

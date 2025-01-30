@@ -12,4 +12,3 @@ path = "../operation"
 
 [dependencies.multiversx-sc]
 version = "=0.56.0"
-features = ["esdt-token-payment-legacy-decode"]

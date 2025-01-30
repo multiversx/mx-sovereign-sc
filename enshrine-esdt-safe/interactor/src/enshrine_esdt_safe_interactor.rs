@@ -92,7 +92,7 @@ impl ContractInteract {
     pub async fn deploy(
         &mut self,
         is_sovereign_chain: bool,
-        opt_config: Option<BridgeConfig<StaticApi>>,
+        opt_config: Option<CrossChainConfig<StaticApi>>,
     ) {
         let opt_wegld_identifier =
             Option::Some(TokenIdentifier::from_esdt_bytes(WHITELIST_TOKEN_ID));
@@ -207,7 +207,7 @@ impl ContractInteract {
     pub async fn deploy_all(
         &mut self,
         is_sov_chain: bool,
-        opt_config: Option<BridgeConfig<StaticApi>>,
+        opt_config: Option<CrossChainConfig<StaticApi>>,
     ) {
         self.deploy_token_handler().await;
         self.deploy(is_sov_chain, opt_config).await;
@@ -216,7 +216,7 @@ impl ContractInteract {
         self.unpause_endpoint().await;
     }
 
-    pub async fn deploy_setup(&mut self, opt_config: Option<BridgeConfig<StaticApi>>) {
+    pub async fn deploy_setup(&mut self, opt_config: Option<CrossChainConfig<StaticApi>>) {
         self.deploy_token_handler().await;
         self.deploy(false, opt_config).await;
         self.unpause_endpoint().await;

@@ -1,16 +1,20 @@
 #![no_std]
 
-#[allow(unused_imports)]
 use multiversx_sc::imports::*;
-use operation::SovereignConfig;
+use operation::CrossChainConfig;
 
 pub mod deposit;
 
 #[multiversx_sc::contract]
-pub trait FromSovereign: deposit::DepositModule + cross_chain::CrossChainCommon {
+pub trait FromSovereign:
+    deposit::DepositModule
+    + cross_chain::CrossChainCommon
+    + multiversx_sc_modules::pause::PauseModule
+    + utils::UtilsModule
+{
     #[init]
-    fn init(&self, sovereign_config: SovereignConfig<Self::Api>) {
-        self.sovereign_config().set(sovereign_config);
+    fn init(&self, cross_chain_config: CrossChainConfig<Self::Api>) {
+        self.cross_chain_config().set(cross_chain_config);
     }
 
     #[upgrade]

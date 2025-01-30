@@ -59,17 +59,17 @@ impl<M: ManagedTypeApi> SovereignConfig<M> {
 
 #[type_abi]
 #[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, ManagedVecItem, Clone)]
-pub struct BridgeConfig<M: ManagedTypeApi> {
+pub struct CrossChainConfig<M: ManagedTypeApi> {
     pub token_whitelist: ManagedVec<M, TokenIdentifier<M>>,
     pub token_blacklist: ManagedVec<M, TokenIdentifier<M>>,
     pub max_tx_gas_limit: GasLimit,
     pub banned_endpoints: ManagedVec<M, ManagedBuffer<M>>,
 }
 
-impl<M: ManagedTypeApi> BridgeConfig<M> {
+impl<M: ManagedTypeApi> CrossChainConfig<M> {
     #[inline]
     pub fn default_config() -> Self {
-        BridgeConfig {
+        CrossChainConfig {
             token_whitelist: ManagedVec::new(),
             token_blacklist: ManagedVec::new(),
             max_tx_gas_limit: DEFAULT_MAX_TX_GAS_LIMIT,
@@ -83,7 +83,7 @@ impl<M: ManagedTypeApi> BridgeConfig<M> {
         max_tx_gas_limit: GasLimit,
         banned_endpoints: ManagedVec<M, ManagedBuffer<M>>,
     ) -> Self {
-        BridgeConfig {
+        CrossChainConfig {
             token_whitelist,
             token_blacklist,
             max_tx_gas_limit,

@@ -48,7 +48,7 @@ where
         Arg1: ProxyArg<ManagedAddress<Env::Api>>,
         Arg2: ProxyArg<Option<TokenIdentifier<Env::Api>>>,
         Arg3: ProxyArg<Option<ManagedBuffer<Env::Api>>>,
-        Arg4: ProxyArg<Option<operation::BridgeConfig<Env::Api>>>,
+        Arg4: ProxyArg<Option<operation::CrossChainConfig<Env::Api>>>,
     >(
         self,
         is_sovereign_chain: Arg0,
@@ -98,7 +98,7 @@ where
     Gas: TxGas<Env>,
 {
     pub fn update_configuration<
-        Arg0: ProxyArg<operation::BridgeConfig<Env::Api>>,
+        Arg0: ProxyArg<operation::CrossChainConfig<Env::Api>>,
     >(
         self,
         new_config: Arg0,
