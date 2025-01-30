@@ -1,15 +1,14 @@
 #![no_std]
 
-use operation::{
-    aliases::{GasLimit, TxNonce},
-    CrossChainConfig,
-};
+use operation::aliases::{GasLimit, TxNonce};
 
 pub mod events;
+pub mod storage;
 
 multiversx_sc::imports!();
+
 #[multiversx_sc::module]
-pub trait CrossChainCommon {
+pub trait CrossChainCommon: crate::storage::CrossChainStorage {
     fn require_token_not_on_blacklist(&self, token_id: &TokenIdentifier) {
         require!(
             self.cross_chain_config()
@@ -55,13 +54,4 @@ pub trait CrossChainCommon {
             *last_tx_nonce
         })
     }
-
-    #[storage_mapper("lastTxNonce")]
-    fn last_tx_nonce(&self) -> SingleValueMapper<TxNonce>;
-
-    #[storage_mapper("crossChainConfig")]
-    fn cross_chain_config(&self) -> SingleValueMapper<CrossChainConfig<Self::Api>>;
-
-    #[storage_mapper("feeMarketAddress")]
-    fn fee_market_address(&self) -> SingleValueMapper<ManagedAddress>;
 }
