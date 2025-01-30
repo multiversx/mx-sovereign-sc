@@ -13,8 +13,9 @@ pub trait DepositModule:
     multiversx_sc_modules::pause::PauseModule
     + utils::UtilsModule
     + cross_chain::CrossChainCommon
-    + max_bridged_amount_module::MaxBridgedAmountModule
+    + cross_chain::storage::CrossChainStorage
     + cross_chain::events::EventsModule
+    + max_bridged_amount_module::MaxBridgedAmountModule
 {
     #[payable]
     #[endpoint]

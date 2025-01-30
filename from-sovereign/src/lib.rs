@@ -13,6 +13,7 @@ pub trait FromSovereign:
     + max_bridged_amount_module::MaxBridgedAmountModule
     + utils::UtilsModule
     + cross_chain::events::EventsModule
+    + cross_chain::storage::CrossChainStorage
 {
     #[init]
     fn init(&self, cross_chain_config: CrossChainConfig<Self::Api>) {
