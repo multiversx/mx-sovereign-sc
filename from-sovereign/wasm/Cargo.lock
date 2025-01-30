@@ -25,6 +25,7 @@ name = "cross-chain"
 version = "0.0.0"
 dependencies = [
  "multiversx-sc",
+ "operation",
 ]
 
 [[package]]
@@ -38,9 +39,12 @@ name = "from-sovereign"
 version = "0.0.0"
 dependencies = [
  "cross-chain",
+ "max-bridged-amount-module",
  "multiversx-sc",
  "multiversx-sc-modules",
  "operation",
+ "proxies",
+ "setup-phase",
  "utils",
 ]
 
@@ -63,6 +67,13 @@ name = "hex-literal"
 version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6fe2267d4ed49bc07b63801559be28c718ea06c4738b7a03c94df7386d2cde46"
+
+[[package]]
+name = "max-bridged-amount-module"
+version = "0.0.0"
+dependencies = [
+ "multiversx-sc",
+]
 
 [[package]]
 name = "multiversx-chain-core"
@@ -178,6 +189,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "proxies"
+version = "0.1.0"
+dependencies = [
+ "multiversx-sc",
+ "operation",
+ "tx-batch-module",
+]
+
+[[package]]
 name = "quote"
 version = "1.0.38"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -197,6 +217,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "setup-phase"
+version = "0.0.0"
+dependencies = [
+ "multiversx-sc",
+]
+
+[[package]]
 name = "smallvec"
 version = "1.13.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -211,6 +238,14 @@ dependencies = [
  "proc-macro2",
  "quote",
  "unicode-ident",
+]
+
+[[package]]
+name = "tx-batch-module"
+version = "0.0.0"
+dependencies = [
+ "multiversx-sc",
+ "operation",
 ]
 
 [[package]]
