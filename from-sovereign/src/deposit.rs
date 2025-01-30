@@ -39,8 +39,6 @@ pub trait DepositModule:
         for payment in &payments {
             self.require_below_max_amount(&payment.token_identifier, &payment.amount);
             self.require_token_not_on_blacklist(&payment.token_identifier);
-            // let is_token_whitelist_empty = self.token_whitelist().is_empty();
-            // let is_token_whitelisted = self.token_whitelist().contains(&payment.token_identifier);
 
             if !self.is_token_whitelist_empty()
                 && !self.is_token_whitelisted(&payment.token_identifier)
