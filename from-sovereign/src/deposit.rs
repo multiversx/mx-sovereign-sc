@@ -82,9 +82,12 @@ pub trait DepositModule:
         }
         self.match_fee_payment(total_tokens_for_fees, &fees_payment, &option_transfer_data);
 
-        // refund refundable_tokens
+        // refund tokens
         let caller = self.blockchain().get_caller();
-        self.refund_tokens(&caller, refundable_payments);
+        self.tx()
+            .to(&caller)
+            .multi_esdt(refundable_payments)
+            .transfer();
 
         let tx_nonce = self.get_and_save_next_tx_id();
         self.deposit_event(
@@ -92,18 +95,6 @@ pub trait DepositModule:
             &event_payments,
             OperationData::new(tx_nonce, caller, option_transfer_data),
         );
-    }
-
-    fn refund_tokens(
-        &self,
-        caller: &ManagedAddress,
-        refundable_payments: ManagedVec<EsdtTokenPayment>,
-    ) {
-        for payment in refundable_payments {
-            if payment.amount > 0 {
-                self.tx().to(caller).payment(payment).transfer();
-            }
-        }
     }
 
     fn match_fee_payment(
