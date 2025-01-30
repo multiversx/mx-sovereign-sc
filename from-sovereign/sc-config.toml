@@ -1,0 +1,19 @@
+[settings]
+main = "main"
+
+[contracts.main]
+name = "from-sovereign"
+
+[contracts.full]
+name = "from-sovereign-full"
+add-unlabelled = true
+add-labels = ["from-sovereign-external-view"]
+
+[contracts.view]
+name = "from-sovereign-view"
+external-view = true
+add-unlabelled = false
+add-labels = ["from-sovereign-external-view"]
+
+[[proxy]]
+path = "../common/proxies/src/from_sovereign_proxy.rs"
