@@ -31,6 +31,7 @@ pub enum ScArray {
     Controller,
     HeaderVerifier,
     ESDTSafe,
+    EnshrineESDTSafe,
     FeeMarket,
     TokenHandler,
     ChainConfig,
@@ -53,7 +54,7 @@ pub trait UtilsModule: super::storage::StorageModule {
         );
     }
 
-    fn require_phase_1_completed(&self, caller: &ManagedAddress) {
+    fn require_phase_one_completed(&self, caller: &ManagedAddress) {
         require!(
             !self.sovereigns_mapper(caller).is_empty(),
             "The current caller has not deployed any Sovereign Chain"
@@ -62,11 +63,6 @@ pub trait UtilsModule: super::storage::StorageModule {
         require!(
             self.is_contract_deployed(caller, ScArray::ChainConfig),
             "The Chain-Config SC is not deployed"
-        );
-
-        require!(
-            !self.is_contract_deployed(caller, ScArray::HeaderVerifier),
-            "The Header-Verifier SC is already deployed"
         );
     }
 
@@ -87,18 +83,31 @@ pub trait UtilsModule: super::storage::StorageModule {
             .address
     }
 
-    fn generate_chain_id(&self) -> ManagedBuffer {
-        loop {
-            let new_chain_id = self.generated_random_4_char_string();
-            let mut chain_id_history_mapper = self.chain_ids();
-            if !chain_id_history_mapper.contains(&new_chain_id) {
-                chain_id_history_mapper.insert(new_chain_id.clone());
-                return new_chain_id;
+    fn generate_chain_id(&self, opt_preferred_chain_id: Option<ManagedBuffer>) -> ManagedBuffer {
+        let mut chain_id_history_mapper = self.chain_ids();
+
+        match opt_preferred_chain_id {
+            Some(preferred_chain_id) => {
+                require!(
+                    !chain_id_history_mapper.contains(&preferred_chain_id),
+                    "This chain ID is already used"
+                );
+
+                chain_id_history_mapper.insert(preferred_chain_id.clone());
+
+                preferred_chain_id
             }
+            None => loop {
+                let new_chain_id = self.generated_random_four_char_string();
+                if !chain_id_history_mapper.contains(&new_chain_id) {
+                    chain_id_history_mapper.insert(new_chain_id.clone());
+                    break new_chain_id;
+                }
+            },
         }
     }
 
-    fn generated_random_4_char_string(&self) -> ManagedBuffer {
+    fn generated_random_four_char_string(&self) -> ManagedBuffer {
         let mut byte_array: [u8; 4] = [0; 4];
         let mut rand = RandomnessSource::new();
         (0..4).for_each(|i| {
@@ -116,8 +125,9 @@ pub trait UtilsModule: super::storage::StorageModule {
     }
 
     fn get_chain_factory_address(&self) -> ManagedAddress {
-        let caller = self.blockchain().get_caller();
-        let shard_id = self.blockchain().get_shard_of_address(&caller);
+        let blockchain_api = self.blockchain();
+        let caller = blockchain_api.get_caller();
+        let shard_id = blockchain_api.get_shard_of_address(&caller);
 
         self.chain_factories(shard_id).get()
     }

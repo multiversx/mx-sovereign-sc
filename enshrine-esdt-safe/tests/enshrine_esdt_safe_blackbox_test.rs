@@ -9,7 +9,8 @@ use multiversx_sc_scenario::multiversx_chain_vm::crypto_functions::sha256;
 use multiversx_sc_scenario::{imports::MxscPath, ScenarioWorld};
 use multiversx_sc_scenario::{managed_address, ReturnsHandledOrError, ScenarioTxRun};
 use operation::aliases::{GasLimit, OptionalTransferData, PaymentsVec};
-use operation::{CrossChainConfig, Operation, OperationData, OperationEsdtPayment};
+use operation::{BridgeConfig, Operation, OperationData, OperationEsdtPayment, SovereignConfig};
+use proxies::chain_config_proxy::ChainConfigContractProxy;
 use proxies::enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy;
 use proxies::fee_market_proxy::{FeeMarketProxy, FeeStruct, FeeType};
 use proxies::header_verifier_proxy::HeaderverifierProxy;
@@ -35,6 +36,8 @@ const FEE_MARKET_ADDRESS: TestSCAddress = TestSCAddress::new("fee-market");
 const FEE_MARKET_CODE_PATH: MxscPath = MxscPath::new("../fee-market/output/fee-market.mxsc.json");
 
 const CHAIN_CONFIG_ADDRESS: TestSCAddress = TestSCAddress::new("chain-config");
+const CHAIN_CONFIG_CODE_PATH: MxscPath =
+    MxscPath::new("../chain-config/output/chain-config.mxsc.json");
 
 const USER_ADDRESS: TestAddress = TestAddress::new("user");
 const INSUFFICIENT_WEGLD_ADDRESS: TestAddress = TestAddress::new("insufficient_wegld");
@@ -56,6 +59,7 @@ fn world() -> ScenarioWorld {
     blockchain.register_contract(HEADER_VERIFIER_CODE_PATH, header_verifier::ContractBuilder);
     blockchain.register_contract(TOKEN_HANDLER_CODE_PATH, token_handler::ContractBuilder);
     blockchain.register_contract(FEE_MARKET_CODE_PATH, fee_market::ContractBuilder);
+    blockchain.register_contract(CHAIN_CONFIG_CODE_PATH, chain_config::ContractBuilder);
 
     blockchain
 }
@@ -188,6 +192,32 @@ impl EnshrineTestState {
         self
     }
 
+    fn deploy_chain_config(&mut self) -> &mut Self {
+        self.world
+            .tx()
+            .from(ENSHRINE_ESDT_OWNER_ADDRESS)
+            .typed(ChainConfigContractProxy)
+            .init(
+                SovereignConfig::new(0, 2, BigUint::default(), None),
+                HEADER_VERIFIER_ADDRESS,
+            )
+            .code(CHAIN_CONFIG_CODE_PATH)
+            .new_address(CHAIN_CONFIG_ADDRESS)
+            .run();
+
+        self
+    }
+
+    fn complete_header_verifier_setup_phase(&mut self) {
+        self.world
+            .tx()
+            .from(ENSHRINE_ESDT_OWNER_ADDRESS)
+            .to(HEADER_VERIFIER_ADDRESS)
+            .typed(HeaderverifierProxy)
+            .complete_setup_phase()
+            .run();
+    }
+
     fn propose_setup_contracts(
         &mut self,
         is_sovereign_chain: bool,
@@ -201,6 +231,8 @@ impl EnshrineTestState {
             opt_config,
         );
         self.deploy_header_verifier_contract();
+        self.deploy_chain_config();
+        self.complete_header_verifier_setup_phase();
         self.deploy_token_handler_contract();
         self.deploy_fee_market_contract(fee_struct.cloned());
 

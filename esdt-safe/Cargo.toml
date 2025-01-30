@@ -35,6 +35,9 @@ path = "../fee-market"
 [dependencies.header-verifier]
 path = "../header-verifier"
 
+[dependencies.chain-config]
+path = "../chain-config"
+
 [dependencies.multiversx-sc]
 version = "=0.56.0"
 

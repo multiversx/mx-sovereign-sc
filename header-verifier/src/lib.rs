@@ -35,6 +35,11 @@ pub trait Headerverifier: setup_phase::SetupPhaseModule {
         bridge_operations_hash: ManagedBuffer,
         operations_hashes: MultiValueEncoded<ManagedBuffer>,
     ) {
+        require!(
+            self.is_setup_phase_complete(),
+            "The setup phase must be completed"
+        );
+
         let mut hash_of_hashes_history_mapper = self.hash_of_hashes_history();
 
         require!(
@@ -123,11 +128,6 @@ pub trait Headerverifier: setup_phase::SetupPhaseModule {
         if self.is_setup_phase_complete() {
             return;
         }
-
-        require!(
-            !self.chain_config_address().is_empty(),
-            "The Chain-Config address is not set"
-        );
 
         self.check_validator_range(self.bls_pub_keys().len() as u64);
 

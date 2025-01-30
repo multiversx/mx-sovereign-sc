@@ -38,6 +38,9 @@ path = "../header-verifier"
 [dependencies.token-handler]
 path = "../token-handler"
 
+[dependencies.chain-config]
+path = "../chain-config"
+
 [dependencies.multiversx-sc]
 version = "=0.56.0"
 
