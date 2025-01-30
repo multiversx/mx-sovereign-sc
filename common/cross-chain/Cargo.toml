@@ -12,3 +12,9 @@ version = "=0.56.0"
 
 [dependencies.operation]
 path = "../operation"
+
+[dependencies.proxies]
+path = "../proxies"
+
+[dependencies.utils]
+path = "../utils"
