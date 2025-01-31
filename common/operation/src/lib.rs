@@ -59,6 +59,22 @@ impl<M: ManagedTypeApi> SovereignConfig<M> {
 
 #[type_abi]
 #[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, ManagedVecItem, Clone)]
+pub struct EsdtInfo<M: ManagedTypeApi> {
+    pub token_identifier: TokenIdentifier<M>,
+    pub token_nonce: u64,
+}
+
+pub struct IssueEsdtArgs<M: ManagedTypeApi> {
+    pub sov_token_id: TokenIdentifier<M>,
+    pub token_type: EsdtTokenType,
+    pub issue_cost: BigUint<M>,
+    pub token_display_name: ManagedBuffer<M>,
+    pub token_ticker: ManagedBuffer<M>,
+    pub num_decimals: usize,
+}
+
+#[type_abi]
+#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, ManagedVecItem, Clone)]
 pub struct CrossChainConfig<M: ManagedTypeApi> {
     pub token_whitelist: ManagedVec<M, TokenIdentifier<M>>,
     pub token_blacklist: ManagedVec<M, TokenIdentifier<M>>,
