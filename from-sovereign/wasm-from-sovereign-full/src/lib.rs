@@ -6,9 +6,10 @@
 
 // Init:                                 1
 // Upgrade:                              1
-// Endpoints:                            6
+// Endpoints:                            7
 // Async Callback (empty):               1
-// Total number of exported functions:   9
+// Promise callbacks:                    1
+// Total number of exported functions:  11
 
 #![no_std]
 
@@ -21,11 +22,13 @@ multiversx_sc_wasm_adapter::endpoints! {
         init => init
         upgrade => upgrade
         deposit => deposit
+        registerToken => register_token
         pause => pause_endpoint
         unpause => unpause_endpoint
         isPaused => paused_status
         setMaxBridgedAmount => set_max_bridged_amount
         getMaxBridgedAmount => max_bridged_amount
+        issue_callback => issue_callback
     )
 }
 

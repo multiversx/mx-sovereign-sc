@@ -26,6 +26,8 @@ version = "0.0.0"
 dependencies = [
  "multiversx-sc",
  "operation",
+ "proxies",
+ "utils",
 ]
 
 [[package]]
