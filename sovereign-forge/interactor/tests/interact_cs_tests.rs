@@ -7,8 +7,8 @@ async fn deploy_test_sovereign_forge_cs() {
     let mut interactor = ContractInteract::new().await;
     interactor.deploy().await;
 
-    interactor.deploy_header_verifier_template().await;
     interactor.deploy_chain_config_template().await;
+    interactor.deploy_header_verifier_template().await;
     interactor.deploy_esdt_safe_template().await;
     interactor.deploy_fee_market_template().await;
     interactor.deploy_chain_factory().await;
