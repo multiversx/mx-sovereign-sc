@@ -22,6 +22,16 @@ pub trait FromSovereign:
         self.cross_chain_config().set(cross_chain_config);
     }
 
+    #[endpoint(setFeeMarketAddress)]
+    fn set_fee_market_address(&self, fee_market_address: ManagedAddress) {
+        require!(
+            self.blockchain().is_smart_contract(&fee_market_address),
+            "The address is not a valid SC address"
+        );
+
+        self.fee_market_address().set(fee_market_address);
+    }
+
     #[upgrade]
     fn upgrade(&self) {}
 }
