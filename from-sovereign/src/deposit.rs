@@ -54,12 +54,6 @@ pub trait DepositModule:
             self.tx()
                 .to(ToSelf)
                 .typed(ESDTSystemSCProxy)
-                .update_token(&payment.token_identifier)
-                .sync_call();
-
-            self.tx()
-                .to(ToSelf)
-                .typed(ESDTSystemSCProxy)
                 .burn(&payment.token_identifier, &payment.amount)
                 .sync_call();
 
