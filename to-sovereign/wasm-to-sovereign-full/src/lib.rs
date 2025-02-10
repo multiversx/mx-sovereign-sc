@@ -16,7 +16,7 @@ multiversx_sc_wasm_adapter::allocator!();
 multiversx_sc_wasm_adapter::panic_handler!();
 
 multiversx_sc_wasm_adapter::endpoints! {
-    from_sovereign
+    to_sovereign
     (
         init => init
         upgrade => upgrade

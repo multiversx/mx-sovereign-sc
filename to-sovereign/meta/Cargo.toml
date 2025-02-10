@@ -1,10 +1,10 @@
 [package]
-name = "from-sovereign-meta"
+name = "to-sovereign-meta"
 version = "0.0.0"
 edition = "2021"
 publish = false
 
-[dependencies.from-sovereign]
+[dependencies.to-sovereign]
 path = ".."
 
 [dependencies.multiversx-sc-meta-lib]

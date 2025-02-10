@@ -22,7 +22,7 @@
             "id": "deploy",
             "tx": {
                 "from": "address:owner",
-                "contractCode": "mxsc:../output/from-sovereign.mxsc.json",
+                "contractCode": "mxsc:../output/to-sovereign.mxsc.json",
                 "arguments": [],
                 "gasLimit": "5,000,000",
                 "gasPrice": "0"

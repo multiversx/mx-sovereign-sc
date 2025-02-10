@@ -2,18 +2,18 @@
 main = "main"
 
 [contracts.main]
-name = "from-sovereign"
+name = "to-sovereign"
 
 [contracts.full]
-name = "from-sovereign-full"
+name = "to-sovereign-full"
 add-unlabelled = true
-add-labels = ["from-sovereign-external-view"]
+add-labels = ["to-sovereign-external-view"]
 
 [contracts.view]
-name = "from-sovereign-view"
+name = "to-sovereign-view"
 external-view = true
 add-unlabelled = false
-add-labels = ["from-sovereign-external-view"]
+add-labels = ["to-sovereign-external-view"]
 
 [[proxy]]
 path = "../common/proxies/src/from_sovereign_proxy.rs"

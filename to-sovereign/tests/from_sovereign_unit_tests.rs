@@ -18,7 +18,7 @@ use proxies::{
 };
 
 const CONTRACT_ADDRESS: TestSCAddress = TestSCAddress::new("sc");
-const CONTRACT_CODE_PATH: MxscPath = MxscPath::new("output/from-sovereign.mxsc.json");
+const CONTRACT_CODE_PATH: MxscPath = MxscPath::new("output/to-sovereign.mxsc.json");
 
 const FEE_MARKET_ADDRESS: TestSCAddress = TestSCAddress::new("fee-market");
 const FEE_MARKET_CODE_PATH: MxscPath = MxscPath::new("../fee-market/output/fee-market.mxsc.json");
@@ -34,7 +34,7 @@ const OWNER_BALANCE: u128 = 100_000_000_000_000_000_000_000;
 fn world() -> ScenarioWorld {
     let mut blockchain = ScenarioWorld::new();
 
-    blockchain.register_contract(CONTRACT_CODE_PATH, from_sovereign::ContractBuilder);
+    blockchain.register_contract(CONTRACT_CODE_PATH, to_sovereign::ContractBuilder);
     blockchain.register_contract(FEE_MARKET_CODE_PATH, fee_market::ContractBuilder);
 
     blockchain
@@ -220,7 +220,7 @@ fn register_token_fungible_token() {
         .world
         .query()
         .to(CONTRACT_ADDRESS)
-        .whitebox(from_sovereign::contract_obj, |sc| {
+        .whitebox(to_sovereign::contract_obj, |sc| {
             let sov_token_id_whitebox = &TestTokenIdentifier::new("test-token").into();
 
             assert!(!sc
@@ -272,7 +272,7 @@ fn register_token_nonfungible_token() {
         .world
         .query()
         .to(CONTRACT_ADDRESS)
-        .whitebox(from_sovereign::contract_obj, |sc| {
+        .whitebox(to_sovereign::contract_obj, |sc| {
             let sov_token_id_whitebox = &TestTokenIdentifier::new(TEST_TOKEN_ONE).into();
 
             assert!(!sc

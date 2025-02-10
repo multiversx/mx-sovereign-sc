@@ -7,7 +7,7 @@ pub mod deposit;
 pub mod token_mapping;
 
 #[multiversx_sc::contract]
-pub trait FromSovereign:
+pub trait ToSovereign:
     deposit::DepositModule
     + token_mapping::TokenMappingModule
     + cross_chain::CrossChainCommon
