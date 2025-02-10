@@ -68,6 +68,58 @@ pub trait CrossChainCommon: crate::storage::CrossChainStorage + utils::UtilsModu
         MultiValue2::from((opt_transfer_data, payments))
     }
 
+    fn burn_mainchain_token(
+        &self,
+        payment: EsdtTokenPayment<Self::Api>,
+        payment_token_type: &EsdtTokenType,
+        sov_token_id: &TokenIdentifier<Self::Api>,
+    ) -> u64 {
+        self.tx()
+            .to(ToSelf)
+            .typed(system_proxy::UserBuiltinProxy)
+            .esdt_local_burn(
+                &payment.token_identifier,
+                payment.token_nonce,
+                &payment.amount,
+            )
+            .sync_call();
+
+        let mut sov_token_nonce = 0;
+
+        if payment.token_nonce > 0 {
+            sov_token_nonce = self
+                .multiversx_to_sovereign_esdt_info_mapper(
+                    &payment.token_identifier,
+                    payment.token_nonce,
+                )
+                .get()
+                .token_nonce;
+
+            if self.is_nft(payment_token_type) {
+                self.clear_mvx_to_sov_esdt_info_mapper(
+                    &payment.token_identifier,
+                    payment.token_nonce,
+                );
+
+                self.clear_sov_to_mvx_esdt_info_mapper(sov_token_id, sov_token_nonce);
+            }
+        }
+
+        sov_token_nonce
+    }
+
+    #[inline]
+    fn clear_mvx_to_sov_esdt_info_mapper(&self, id: &TokenIdentifier, nonce: u64) {
+        self.multiversx_to_sovereign_esdt_info_mapper(id, nonce)
+            .take();
+    }
+
+    #[inline]
+    fn clear_sov_to_mvx_esdt_info_mapper(&self, id: &TokenIdentifier, nonce: u64) {
+        self.sovereign_to_multiversx_esdt_info_mapper(id, nonce)
+            .take();
+    }
+
     #[inline]
     fn require_token_not_on_blacklist(&self, token_id: &TokenIdentifier) {
         require!(
@@ -119,5 +171,10 @@ pub trait CrossChainCommon: crate::storage::CrossChainStorage + utils::UtilsModu
             *last_tx_nonce += 1;
             *last_tx_nonce
         })
+    }
+
+    #[inline]
+    fn is_nft(self, token_type: &EsdtTokenType) -> bool {
+        *token_type == EsdtTokenType::NonFungible
     }
 }
