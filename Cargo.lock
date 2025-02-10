@@ -716,6 +716,7 @@ name = "from-sovereign"
 version = "0.0.0"
 dependencies = [
  "cross-chain",
+ "fee-market",
  "max-bridged-amount-module",
  "multiversx-sc",
  "multiversx-sc-modules",

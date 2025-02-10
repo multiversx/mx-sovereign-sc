@@ -17,6 +17,9 @@ version = "=0.56.1"
 [dependencies.utils]
 path = "../common/utils"
 
+[dependencies.fee-market]
+path = "../fee-market"
+
 [dependencies.operation]
 path = "../common/operation"
 
