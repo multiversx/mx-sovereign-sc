@@ -190,4 +190,32 @@ fn register_token_nonfungible_token() {
         num_decimals,
         None,
     );
+
+    state
+        .world
+        .query()
+        .to(CONTRACT_ADDRESS)
+        .whitebox(from_sovereign::contract_obj, |sc| {
+            let sov_token_id_whitebox = &TestTokenIdentifier::new("test-token").into();
+
+            assert!(!sc
+                .sovereign_to_multiversx_token_id_mapper(sov_token_id_whitebox)
+                .is_empty());
+
+            let mvx_token_id = sc
+                .sovereign_to_multiversx_token_id_mapper(sov_token_id_whitebox)
+                .get();
+
+            assert!(
+                sc.multiversx_to_sovereign_token_id_mapper(&mvx_token_id)
+                    .get()
+                    == *sov_token_id_whitebox
+            );
+
+            assert!(
+                sc.sovereign_to_multiversx_token_id_mapper(&sov_token_id_whitebox)
+                    .get()
+                    == mvx_token_id
+            );
+        })
 }
