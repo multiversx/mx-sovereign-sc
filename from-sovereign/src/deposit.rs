@@ -53,12 +53,14 @@ pub trait DepositModule:
 
             self.tx()
                 .to(ToSelf)
-                .typed(system_proxy::UserBuiltinProxy)
-                .esdt_local_burn(
-                    &payment.token_identifier,
-                    payment.token_nonce,
-                    &payment.amount,
-                )
+                .typed(ESDTSystemSCProxy)
+                .update_token(&payment.token_identifier)
+                .sync_call();
+
+            self.tx()
+                .to(ToSelf)
+                .typed(ESDTSystemSCProxy)
+                .burn(&payment.token_identifier, &payment.amount)
                 .sync_call();
 
             event_payments.push(MultiValue3::from((

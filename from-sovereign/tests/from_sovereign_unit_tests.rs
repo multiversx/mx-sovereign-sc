@@ -12,12 +12,22 @@ use multiversx_sc_scenario::{
     ScenarioWorld,
 };
 use operation::{aliases::OptionalValueTransferDataTuple, CrossChainConfig};
-use proxies::from_sovereign_proxy::FromSovereignProxy;
+use proxies::{
+    fee_market_proxy::{FeeMarketProxy, FeeStruct},
+    from_sovereign_proxy::FromSovereignProxy,
+};
 
 const CONTRACT_ADDRESS: TestSCAddress = TestSCAddress::new("sc");
 const CONTRACT_CODE_PATH: MxscPath = MxscPath::new("output/from-sovereign.mxsc.json");
+
+const FEE_MARKET_ADDRESS: TestSCAddress = TestSCAddress::new("fee-market");
+const FEE_MARKET_CODE_PATH: MxscPath = MxscPath::new("../fee-market/output/fee-market.mxsc.json");
+
 const OWNER_ADDRESS: TestAddress = TestAddress::new("owner");
 const USER: TestAddress = TestAddress::new("user");
+
+const TEST_TOKEN_ONE: &str = "test-token-one";
+const TEST_TOKEN_TWO: &str = "test-token-two";
 
 const OWNER_BALANCE: u128 = 100_000_000_000_000_000_000_000;
 
@@ -25,6 +35,7 @@ fn world() -> ScenarioWorld {
     let mut blockchain = ScenarioWorld::new();
 
     blockchain.register_contract(CONTRACT_CODE_PATH, from_sovereign::ContractBuilder);
+    blockchain.register_contract(FEE_MARKET_CODE_PATH, fee_market::ContractBuilder);
 
     blockchain
 }
@@ -35,12 +46,17 @@ struct FromSovereignTestState {
 impl FromSovereignTestState {
     fn new() -> Self {
         let mut world = world();
+        // let roles = vec!["ESDTRoleNFTCreate".to_string(), "ESDTRoleBurn".to_string()];
 
         world
             .account(OWNER_ADDRESS)
-            .nonce(1)
+            .nonce(3)
             .esdt_balance(
-                TokenIdentifier::from("test-token"),
+                TokenIdentifier::from(TEST_TOKEN_ONE),
+                BigUint::from(100_000_000u64),
+            )
+            .esdt_balance(
+                TokenIdentifier::from(TEST_TOKEN_TWO),
                 BigUint::from(100_000_000u64),
             )
             .balance(BigUint::from(OWNER_BALANCE));
@@ -59,6 +75,29 @@ impl FromSovereignTestState {
             .run();
 
         self
+    }
+
+    fn deploy_fee_market(&mut self, fee: Option<FeeStruct<StaticApi>>) -> &mut Self {
+        self.world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .typed(FeeMarketProxy)
+            .init(CONTRACT_ADDRESS, fee)
+            .code(FEE_MARKET_CODE_PATH)
+            .new_address(FEE_MARKET_ADDRESS)
+            .run();
+
+        self
+    }
+
+    fn set_fee_market_address(&mut self, fee_market_address: TestSCAddress) {
+        self.world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .to(CONTRACT_ADDRESS)
+            .typed(FromSovereignProxy)
+            .set_fee_market_address(fee_market_address)
+            .run();
     }
 
     fn register_token(
@@ -213,7 +252,7 @@ fn register_token_nonfungible_token() {
     state.deploy_contract(CrossChainConfig::default_config());
 
     let egld_amount = DEFAULT_ISSUE_COST;
-    let sov_token_id = TestTokenIdentifier::new("test-token");
+    let sov_token_id = TestTokenIdentifier::new(TEST_TOKEN_ONE);
     let token_type = EsdtTokenType::NonFungible;
     let token_display_name = ManagedBuffer::from("TTK");
     let token_ticker = ManagedBuffer::from("TTK");
@@ -234,7 +273,7 @@ fn register_token_nonfungible_token() {
         .query()
         .to(CONTRACT_ADDRESS)
         .whitebox(from_sovereign::contract_obj, |sc| {
-            let sov_token_id_whitebox = &TestTokenIdentifier::new("test-token").into();
+            let sov_token_id_whitebox = &TestTokenIdentifier::new(TEST_TOKEN_ONE).into();
 
             assert!(!sc
                 .sovereign_to_multiversx_token_id_mapper(sov_token_id_whitebox)
@@ -278,7 +317,7 @@ fn deposit_too_many_tokens() {
     state.deploy_contract(CrossChainConfig::default_config());
 
     let esdt_token_payment = EsdtTokenPayment::<StaticApi>::new(
-        TokenIdentifier::from("test-token"),
+        TokenIdentifier::from(TEST_TOKEN_ONE),
         0,
         BigUint::default(),
     );
@@ -290,5 +329,35 @@ fn deposit_too_many_tokens() {
         OptionalValue::None,
         Some(payments_vec),
         Some("Too many tokens"),
+    );
+}
+
+#[test]
+fn deposit() {
+    let mut state = FromSovereignTestState::new();
+
+    state.deploy_contract(CrossChainConfig::default_config());
+    state.deploy_fee_market(None);
+    state.set_fee_market_address(FEE_MARKET_ADDRESS);
+
+    let esdt_token_payment_one = EsdtTokenPayment::<StaticApi>::new(
+        TokenIdentifier::from(TEST_TOKEN_ONE),
+        0,
+        BigUint::from(100u64),
+    );
+
+    let esdt_token_payment_two = EsdtTokenPayment::<StaticApi>::new(
+        TokenIdentifier::from(TEST_TOKEN_TWO),
+        0,
+        BigUint::from(100u64),
+    );
+
+    let payments_vec = PaymentsVec::from(vec![esdt_token_payment_one, esdt_token_payment_two]);
+
+    state.deposit(
+        USER.to_managed_address(),
+        OptionalValue::None,
+        Some(payments_vec),
+        None,
     );
 }
