@@ -40,7 +40,9 @@ pub trait TokenMappingModule:
     }
 
     fn handle_token_issue(&self, args: IssueEsdtArgs<Self::Api>) {
-        self.tx()
+        // NOTE: The address will be different for each specific Sovereign
+        let mvx_token_id = self
+            .tx()
             .to(ESDTSystemSCAddress)
             .typed(ESDTSystemSCProxy)
             .issue_and_set_all_roles(
@@ -51,26 +53,10 @@ pub trait TokenMappingModule:
                 args.num_decimals,
             )
             .gas(REGISTER_GAS)
-            .callback(
-                <Self as TokenMappingModule>::callbacks(self).issue_callback(&args.sov_token_id),
-            )
-            .register_promise();
-    }
+            .returns(ReturnsResultUnmanaged)
+            .sync_call();
 
-    #[promises_callback]
-    fn issue_callback(
-        &self,
-        sov_token_id: &TokenIdentifier,
-        #[call_result] result: ManagedAsyncCallResult<TokenIdentifier<Self::Api>>,
-    ) {
-        match result {
-            ManagedAsyncCallResult::Ok(mvx_token_id) => {
-                self.set_corresponding_token_ids(sov_token_id, &mvx_token_id);
-            }
-            ManagedAsyncCallResult::Err(error) => {
-                sc_panic!("There was an error at issuing token: '{}'", error.err_msg);
-            }
-        }
+        self.set_corresponding_token_ids(&args.sov_token_id, &mvx_token_id);
     }
 
     fn set_corresponding_token_ids(
