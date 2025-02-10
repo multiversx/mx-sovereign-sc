@@ -9,7 +9,9 @@ use multiversx_sc_scenario::multiversx_chain_vm::crypto_functions::sha256;
 use multiversx_sc_scenario::{imports::MxscPath, ScenarioWorld};
 use multiversx_sc_scenario::{managed_address, ReturnsHandledOrError, ScenarioTxRun};
 use operation::aliases::{GasLimit, OptionalTransferData, PaymentsVec};
-use operation::{BridgeConfig, Operation, OperationData, OperationEsdtPayment, SovereignConfig};
+use operation::{
+    CrossChainConfig, Operation, OperationData, OperationEsdtPayment, SovereignConfig,
+};
 use proxies::chain_config_proxy::ChainConfigContractProxy;
 use proxies::enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy;
 use proxies::fee_market_proxy::{FeeMarketProxy, FeeStruct, FeeType};
