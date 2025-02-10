@@ -8,8 +8,7 @@
 // Upgrade:                              1
 // Endpoints:                            7
 // Async Callback (empty):               1
-// Promise callbacks:                    1
-// Total number of exported functions:  11
+// Total number of exported functions:  10
 
 #![no_std]
 
@@ -28,7 +27,6 @@ multiversx_sc_wasm_adapter::endpoints! {
         isPaused => paused_status
         setMaxBridgedAmount => set_max_bridged_amount
         getMaxBridgedAmount => max_bridged_amount
-        issue_callback => issue_callback
     )
 }
 
