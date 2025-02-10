@@ -21,7 +21,7 @@ pub trait TokenMappingModule:
         let issue_cost = self.call_value().egld().clone_value();
         require!(
             issue_cost == DEFAULT_ISSUE_COST,
-            "eGLD value should be 0.05"
+            "EGLD value should be 0.05"
         );
 
         self.require_sov_token_id_not_registered(&sov_token_id);
