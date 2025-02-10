@@ -1,9 +1,10 @@
 use cross_chain::{storage::CrossChainStorage, DEFAULT_ISSUE_COST};
 use multiversx_sc::{
-    imports::OptionalValue,
+    imports::{ESDTSystemSCProxy, OptionalValue},
     types::{
-        BigUint, EsdtTokenPayment, EsdtTokenType, ManagedAddress, ManagedBuffer, TestAddress,
-        TestSCAddress, TestTokenIdentifier, TokenIdentifier,
+        BigUint, ESDTSystemSCAddress, EsdtLocalRole, EsdtTokenPayment, EsdtTokenType,
+        ManagedAddress, ManagedBuffer, TestAddress, TestSCAddress, TestTokenIdentifier,
+        TokenIdentifier,
     },
 };
 use multiversx_sc_modules::transfer_role_proxy::PaymentsVec;
@@ -14,7 +15,7 @@ use multiversx_sc_scenario::{
 use operation::{aliases::OptionalValueTransferDataTuple, CrossChainConfig};
 use proxies::{
     fee_market_proxy::{FeeMarketProxy, FeeStruct},
-    from_sovereign_proxy::FromSovereignProxy,
+    to_sovereign_proxy::ToSovereignProxy,
 };
 
 const CONTRACT_ADDRESS: TestSCAddress = TestSCAddress::new("sc");
@@ -68,7 +69,7 @@ impl FromSovereignTestState {
         self.world
             .tx()
             .from(OWNER_ADDRESS)
-            .typed(FromSovereignProxy)
+            .typed(ToSovereignProxy)
             .init(config)
             .code(CONTRACT_CODE_PATH)
             .new_address(CONTRACT_ADDRESS)
@@ -95,7 +96,7 @@ impl FromSovereignTestState {
             .tx()
             .from(OWNER_ADDRESS)
             .to(CONTRACT_ADDRESS)
-            .typed(FromSovereignProxy)
+            .typed(ToSovereignProxy)
             .set_fee_market_address(fee_market_address)
             .run();
     }
@@ -115,7 +116,7 @@ impl FromSovereignTestState {
             .tx()
             .from(OWNER_ADDRESS)
             .to(CONTRACT_ADDRESS)
-            .typed(FromSovereignProxy)
+            .typed(ToSovereignProxy)
             .register_token(
                 sov_token_id,
                 token_type,
@@ -144,7 +145,7 @@ impl FromSovereignTestState {
             .tx()
             .from(OWNER_ADDRESS)
             .to(CONTRACT_ADDRESS)
-            .typed(FromSovereignProxy)
+            .typed(ToSovereignProxy)
             .deposit(to, opt_transfer_data);
 
         let response = if let Some(payment) = opt_payment {
@@ -360,4 +361,14 @@ fn deposit() {
         Some(payments_vec),
         None,
     );
+
+    state
+        .world
+        .query()
+        .to(CONTRACT_ADDRESS)
+        .whitebox(to_sovereign::contract_obj, |sc| {
+            assert!(sc
+                .multiversx_to_sovereign_token_id_mapper(&TokenIdentifier::from(TEST_TOKEN_ONE))
+                .is_empty());
+        })
 }
