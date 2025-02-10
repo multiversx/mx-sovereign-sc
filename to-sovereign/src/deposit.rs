@@ -51,17 +51,28 @@ pub trait DepositModule:
             );
             current_token_data.amount = payment.amount.clone();
 
-            self.tx()
-                .to(ToSelf)
-                .typed(ESDTSystemSCProxy)
-                .burn(&payment.token_identifier, &payment.amount)
-                .sync_call();
+            let mvx_to_sov_token_id_mapper =
+                self.multiversx_to_sovereign_token_id_mapper(&payment.token_identifier);
+            if !mvx_to_sov_token_id_mapper.is_empty() {
+                let sov_token_id = mvx_to_sov_token_id_mapper.get();
+                let sov_token_nonce = self.burn_mainchain_token(
+                    payment.clone(),
+                    &current_token_data.token_type,
+                    &sov_token_id,
+                );
 
-            event_payments.push(MultiValue3::from((
-                payment.token_identifier.clone(),
-                payment.token_nonce,
-                current_token_data,
-            )));
+                event_payments.push(MultiValue3::from((
+                    sov_token_id,
+                    sov_token_nonce,
+                    current_token_data,
+                )));
+            } else {
+                event_payments.push(MultiValue3::from((
+                    payment.token_identifier.clone(),
+                    payment.token_nonce,
+                    current_token_data,
+                )));
+            }
         }
 
         let option_transfer_data = TransferData::from_optional_value(opt_transfer_data);
