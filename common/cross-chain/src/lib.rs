@@ -71,7 +71,8 @@ pub trait CrossChainCommon: crate::storage::CrossChainStorage + utils::UtilsModu
     #[inline]
     fn require_token_not_on_blacklist(&self, token_id: &TokenIdentifier) {
         require!(
-            self.cross_chain_config()
+            !self
+                .cross_chain_config()
                 .get()
                 .token_blacklist
                 .contains(token_id),
