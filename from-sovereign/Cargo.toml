@@ -9,16 +9,10 @@ authors = ["you"]
 path = "src/lib.rs"
 
 [dependencies.multiversx-sc]
-version = "=0.56.0"
+version = "=0.56.1"
 
 [dependencies.multiversx-sc-modules]
-version = "=0.56.0"
-
-[dev-dependencies]
-num-bigint = "0.4"
-
-[dev-dependencies.multiversx-sc-scenario]
-version = "0.56.0"
+version = "=0.56.1"
 
 [dependencies.utils]
 path = "../common/utils"
@@ -37,3 +31,9 @@ path = "../common/proxies"
 
 [dependencies.max-bridged-amount-module]
 path = "../common/max-bridged-amount-module"
+
+[dev-dependencies]
+num-bigint = "0.4"
+
+[dev-dependencies.multiversx-sc-scenario]
+version = "0.56.1"
