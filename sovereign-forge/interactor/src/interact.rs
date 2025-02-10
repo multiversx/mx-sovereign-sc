@@ -246,15 +246,13 @@ impl ContractInteract {
     }
 
     pub async fn deploy_header_verifier_template(&mut self) {
-        let chain_config_address = Bech32Address::from_bech32_string("chain_config".to_string());
-
         let new_address = self
             .interactor
             .tx()
             .from(&self.wallet_address)
             .gas(50_000_000u64)
             .typed(HeaderverifierProxy)
-            .init(chain_config_address)
+            .init(self.state.config_address.clone().unwrap())
             .returns(ReturnsNewAddress)
             .code(MxscPath::new(HEADER_VERIFIER_CODE_PATH))
             .run()
@@ -274,7 +272,7 @@ impl ContractInteract {
             .interactor
             .tx()
             .from(&self.wallet_address)
-            .gas(80_000_000u64)
+            .gas(100_000_000u64)
             .typed(EsdtSafeProxy)
             .init(false)
             .returns(ReturnsNewAddress)
