@@ -54,13 +54,22 @@ impl ToSovereignTestState {
 
         world
             .account(OWNER_ADDRESS)
-            .nonce(3)
+            .nonce(1)
             .esdt_balance(
                 TokenIdentifier::from(TEST_TOKEN_ONE),
                 BigUint::from(100_000_000u64),
             )
             .esdt_balance(
                 TokenIdentifier::from(TEST_TOKEN_TWO),
+                BigUint::from(100_000_000u64),
+            )
+            .balance(BigUint::from(OWNER_BALANCE));
+
+        world
+            .account(USER)
+            .nonce(1)
+            .esdt_balance(
+                TokenIdentifier::from(TEST_TOKEN_ONE),
                 BigUint::from(100_000_000u64),
             )
             .balance(BigUint::from(OWNER_BALANCE));
@@ -363,6 +372,137 @@ fn deposit_fee_enabled() {
         USER.to_managed_address(),
         OptionalValue::Some(transfer_data),
         Some(payments_vec),
-        Some("Banned endpoint name"),
+        None,
+    );
+
+    let expected_amount_token_one = BigUint::from(99_999_996u64);
+
+    state.world.check_account(OWNER_ADDRESS).esdt_balance(
+        TokenIdentifier::from(TEST_TOKEN_ONE),
+        expected_amount_token_one,
+    );
+
+    let expected_amount_token_two = BigUint::from(99_999_900u64);
+
+    state.world.check_account(OWNER_ADDRESS).esdt_balance(
+        TokenIdentifier::from(TEST_TOKEN_TWO),
+        expected_amount_token_two,
+    );
+}
+
+#[test]
+fn deposit_payment_doesnt_cover_fee() {
+    let mut state = ToSovereignTestState::new();
+
+    let config = CrossChainConfig::new(
+        ManagedVec::new(),
+        ManagedVec::new(),
+        50_000_000,
+        ManagedVec::new(),
+    );
+
+    state.deploy_contract(config);
+
+    let fee = FeeStruct {
+        base_token: TokenIdentifier::from(TEST_TOKEN_ONE),
+        fee_type: FeeType::Fixed {
+            token: TokenIdentifier::from(TEST_TOKEN_ONE),
+            per_transfer: BigUint::from(1u64),
+            per_gas: BigUint::from(1u64),
+        },
+    };
+
+    state.deploy_fee_market(Some(fee));
+    state.deploy_testing_sc();
+    state.set_fee_market_address(FEE_MARKET_ADDRESS);
+
+    let esdt_token_payment_one = EsdtTokenPayment::<StaticApi>::new(
+        TokenIdentifier::from(TEST_TOKEN_ONE),
+        0,
+        BigUint::from(100u64),
+    );
+
+    let esdt_token_payment_two = EsdtTokenPayment::<StaticApi>::new(
+        TokenIdentifier::from(TEST_TOKEN_TWO),
+        0,
+        BigUint::from(100u64),
+    );
+
+    let payments_vec = PaymentsVec::from(vec![esdt_token_payment_one, esdt_token_payment_two]);
+
+    let gas_limit = 10_000;
+    let function = ManagedBuffer::<StaticApi>::from("hello");
+    let args =
+        ManagedVec::<StaticApi, ManagedBuffer<StaticApi>>::from(vec![ManagedBuffer::from("1")]);
+
+    let transfer_data = MultiValue3::from((gas_limit, function, args));
+
+    state.deposit(
+        USER.to_managed_address(),
+        OptionalValue::Some(transfer_data),
+        Some(payments_vec),
+        Some("Payment does not cover fee"),
+    );
+}
+
+#[test]
+fn deposit_refund() {
+    let mut state = ToSovereignTestState::new();
+
+    let config = CrossChainConfig::new(
+        ManagedVec::from(vec![TokenIdentifier::from(TEST_TOKEN_ONE)]),
+        ManagedVec::new(),
+        50_000_000,
+        ManagedVec::new(),
+    );
+
+    state.deploy_contract(config);
+
+    let fee = FeeStruct {
+        base_token: TokenIdentifier::from(TEST_TOKEN_ONE),
+        fee_type: FeeType::Fixed {
+            token: TokenIdentifier::from(TEST_TOKEN_ONE),
+            per_transfer: BigUint::from(1u64),
+            per_gas: BigUint::from(1u64),
+        },
+    };
+
+    state.deploy_fee_market(Some(fee));
+    state.deploy_testing_sc();
+    state.set_fee_market_address(FEE_MARKET_ADDRESS);
+
+    let esdt_token_payment_one = EsdtTokenPayment::<StaticApi>::new(
+        TokenIdentifier::from(TEST_TOKEN_ONE),
+        0,
+        BigUint::from(100u64),
+    );
+
+    let esdt_token_payment_two = EsdtTokenPayment::<StaticApi>::new(
+        TokenIdentifier::from(TEST_TOKEN_TWO),
+        0,
+        BigUint::from(100u64),
+    );
+
+    let payments_vec = PaymentsVec::from(vec![esdt_token_payment_one, esdt_token_payment_two]);
+
+    let gas_limit = 2;
+    let function = ManagedBuffer::<StaticApi>::from("hello");
+    let args =
+        ManagedVec::<StaticApi, ManagedBuffer<StaticApi>>::from(vec![ManagedBuffer::from("1")]);
+
+    let transfer_data = MultiValue3::from((gas_limit, function, args));
+
+    state.deposit(
+        USER.to_managed_address(),
+        OptionalValue::Some(transfer_data),
+        Some(payments_vec),
+        Some("ceva"),
+    );
+
+    let expected_amount_token_one = BigUint::from(99_999_997u64);
+
+    state.world.check_account(OWNER_ADDRESS).esdt_balance(
+        TokenIdentifier::from(TEST_TOKEN_ONE),
+        expected_amount_token_one,
     );
 }
