@@ -1,9 +1,9 @@
-use cross_chain::{storage::CrossChainStorage, DEFAULT_ISSUE_COST};
+use cross_chain::storage::CrossChainStorage;
 use multiversx_sc::{
     imports::{MultiValue3, OptionalValue},
     types::{
-        BigUint, EsdtTokenPayment, EsdtTokenType, ManagedAddress, ManagedBuffer, ManagedVec,
-        TestAddress, TestSCAddress, TestTokenIdentifier, TokenIdentifier,
+        BigUint, EsdtTokenPayment, ManagedAddress, ManagedBuffer, ManagedVec, TestAddress,
+        TestSCAddress, TokenIdentifier,
     },
 };
 use multiversx_sc_modules::transfer_role_proxy::PaymentsVec;
@@ -117,38 +117,6 @@ impl ToSovereignTestState {
             .run();
     }
 
-    fn register_token(
-        &mut self,
-        egld_amount: u64,
-        sov_token_id: TestTokenIdentifier,
-        token_type: EsdtTokenType,
-        token_display_name: ManagedBuffer<StaticApi>,
-        token_ticker: ManagedBuffer<StaticApi>,
-        num_decimals: usize,
-        error_message: Option<&str>,
-    ) {
-        let response = self
-            .world
-            .tx()
-            .from(OWNER_ADDRESS)
-            .to(CONTRACT_ADDRESS)
-            .typed(ToSovereignProxy)
-            .register_token(
-                sov_token_id,
-                token_type,
-                token_display_name,
-                token_ticker,
-                num_decimals,
-            )
-            .egld(egld_amount)
-            .returns(ReturnsHandledOrError::new())
-            .run();
-
-        if let Err(error) = response {
-            assert_eq!(error_message, Some(error.message.as_str()))
-        }
-    }
-
     fn deposit(
         &mut self,
         to: ManagedAddress<StaticApi>,
@@ -183,135 +151,6 @@ fn deploy() {
     let mut state = ToSovereignTestState::new();
 
     state.deploy_contract(CrossChainConfig::default_config());
-}
-
-#[test]
-fn register_token_not_enough_egld() {
-    let mut state = ToSovereignTestState::new();
-
-    state.deploy_contract(CrossChainConfig::default_config());
-
-    let egld_amount = 5_000_000_000;
-    let sov_token_id = TestTokenIdentifier::new("test-token");
-    let token_type = EsdtTokenType::Fungible;
-    let token_display_name = ManagedBuffer::from("TTK");
-    let token_ticker = ManagedBuffer::from("TTK");
-    let num_decimals = 0 as usize;
-    let error_message = Some("EGLD value should be 0.05");
-
-    state.register_token(
-        egld_amount,
-        sov_token_id,
-        token_type,
-        token_display_name,
-        token_ticker,
-        num_decimals,
-        error_message,
-    );
-}
-
-#[test]
-fn register_token_fungible_token() {
-    let mut state = ToSovereignTestState::new();
-
-    state.deploy_contract(CrossChainConfig::default_config());
-
-    let egld_amount = DEFAULT_ISSUE_COST;
-    let sov_token_id = TestTokenIdentifier::new("test-token");
-    let token_type = EsdtTokenType::Fungible;
-    let token_display_name = ManagedBuffer::from("TTK");
-    let token_ticker = ManagedBuffer::from("TTK");
-    let num_decimals = 0 as usize;
-
-    state.register_token(
-        egld_amount.into(),
-        sov_token_id,
-        token_type,
-        token_display_name,
-        token_ticker,
-        num_decimals,
-        None,
-    );
-
-    state
-        .world
-        .query()
-        .to(CONTRACT_ADDRESS)
-        .whitebox(to_sovereign::contract_obj, |sc| {
-            let sov_token_id_whitebox = &TestTokenIdentifier::new("test-token").into();
-
-            assert!(!sc
-                .sovereign_to_multiversx_token_id_mapper(sov_token_id_whitebox)
-                .is_empty());
-
-            let mvx_token_id = sc
-                .sovereign_to_multiversx_token_id_mapper(sov_token_id_whitebox)
-                .get();
-
-            assert!(
-                sc.multiversx_to_sovereign_token_id_mapper(&mvx_token_id)
-                    .get()
-                    == *sov_token_id_whitebox
-            );
-
-            assert!(
-                sc.sovereign_to_multiversx_token_id_mapper(&sov_token_id_whitebox)
-                    .get()
-                    == mvx_token_id
-            );
-        })
-}
-
-#[test]
-fn register_token_nonfungible_token() {
-    let mut state = ToSovereignTestState::new();
-
-    state.deploy_contract(CrossChainConfig::default_config());
-
-    let egld_amount = DEFAULT_ISSUE_COST;
-    let sov_token_id = TestTokenIdentifier::new(TEST_TOKEN_ONE);
-    let token_type = EsdtTokenType::NonFungible;
-    let token_display_name = ManagedBuffer::from("TTK");
-    let token_ticker = ManagedBuffer::from("TTK");
-    let num_decimals = 0 as usize;
-
-    state.register_token(
-        egld_amount.into(),
-        sov_token_id,
-        token_type,
-        token_display_name,
-        token_ticker,
-        num_decimals,
-        None,
-    );
-
-    state
-        .world
-        .query()
-        .to(CONTRACT_ADDRESS)
-        .whitebox(to_sovereign::contract_obj, |sc| {
-            let sov_token_id_whitebox = &TestTokenIdentifier::new(TEST_TOKEN_ONE).into();
-
-            assert!(!sc
-                .sovereign_to_multiversx_token_id_mapper(sov_token_id_whitebox)
-                .is_empty());
-
-            let mvx_token_id = sc
-                .sovereign_to_multiversx_token_id_mapper(sov_token_id_whitebox)
-                .get();
-
-            assert!(
-                sc.multiversx_to_sovereign_token_id_mapper(&mvx_token_id)
-                    .get()
-                    == *sov_token_id_whitebox
-            );
-
-            assert!(
-                sc.sovereign_to_multiversx_token_id_mapper(&sov_token_id_whitebox)
-                    .get()
-                    == mvx_token_id
-            );
-        })
 }
 
 #[test]

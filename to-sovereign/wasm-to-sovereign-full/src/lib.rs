@@ -6,9 +6,9 @@
 
 // Init:                                 1
 // Upgrade:                              1
-// Endpoints:                            8
+// Endpoints:                            7
 // Async Callback (empty):               1
-// Total number of exported functions:  11
+// Total number of exported functions:  10
 
 #![no_std]
 
@@ -22,7 +22,6 @@ multiversx_sc_wasm_adapter::endpoints! {
         upgrade => upgrade
         setFeeMarketAddress => set_fee_market_address
         deposit => deposit
-        registerToken => register_token
         pause => pause_endpoint
         unpause => unpause_endpoint
         isPaused => paused_status
