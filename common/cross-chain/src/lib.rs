@@ -59,13 +59,13 @@ pub trait CrossChainCommon: crate::storage::CrossChainStorage + utils::UtilsModu
         )
         .get();
 
-        let opt_transfer_data = if fee_enabled_mapper {
+        let fee_payment = if fee_enabled_mapper {
             OptionalValue::Some(self.pop_first_payment(payments.clone()).0)
         } else {
             OptionalValue::None
         };
 
-        MultiValue2::from((opt_transfer_data, payments))
+        MultiValue2::from((fee_payment, payments))
     }
 
     fn burn_mainchain_token(
