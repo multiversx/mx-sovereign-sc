@@ -8,8 +8,8 @@ use multiversx_sc::{
 };
 use multiversx_sc_modules::transfer_role_proxy::PaymentsVec;
 use multiversx_sc_scenario::{
-    api::StaticApi, imports::MxscPath, ReturnsHandledOrError, ScenarioTxRun, ScenarioTxWhitebox,
-    ScenarioWorld,
+    api::StaticApi, imports::MxscPath, scenario_model::Log, ReturnsHandledOrError, ReturnsLogs,
+    ScenarioTxRun, ScenarioTxWhitebox, ScenarioWorld,
 };
 use operation::{aliases::OptionalValueTransferDataTuple, CrossChainConfig};
 use proxies::{
@@ -159,6 +159,23 @@ impl ToSovereignTestState {
         if let Err(error) = response {
             assert_eq!(error_message, Some(error.message.as_str()))
         }
+    }
+
+    fn deposit_with_logs(
+        &mut self,
+        to: ManagedAddress<StaticApi>,
+        opt_transfer_data: OptionalValueTransferDataTuple<StaticApi>,
+        payment: PaymentsVec<StaticApi>,
+    ) -> Vec<Log> {
+        self.world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .to(CONTRACT_ADDRESS)
+            .typed(ToSovereignProxy)
+            .deposit(to, opt_transfer_data)
+            .payment(payment)
+            .returns(ReturnsLogs)
+            .run()
     }
 }
 
@@ -534,12 +551,15 @@ fn deposit_refund() {
 
     let transfer_data = MultiValue3::from((gas_limit, function, args));
 
-    state.deposit(
+    let logs = state.deposit_with_logs(
         USER.to_managed_address(),
         OptionalValue::Some(transfer_data),
-        Some(payments_vec.clone()),
-        Some("ceva"),
+        payments_vec.clone(),
     );
+
+    for log in logs {
+        assert!(!log.data.is_empty());
+    }
 
     let expected_amount_token_one =
         BigUint::from(ONE_HUNDRED_MILLION) - &esdt_token_payment_one.amount;
