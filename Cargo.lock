@@ -2323,6 +2323,7 @@ dependencies = [
  "operation",
  "proxies",
  "setup-phase",
+ "testing-sc",
  "utils",
 ]
 

@@ -1,10 +1,9 @@
 use cross_chain::{storage::CrossChainStorage, DEFAULT_ISSUE_COST};
 use multiversx_sc::{
-    imports::{ESDTSystemSCProxy, OptionalValue},
+    imports::{MultiValue3, OptionalValue},
     types::{
-        BigUint, ESDTSystemSCAddress, EsdtLocalRole, EsdtTokenPayment, EsdtTokenType,
-        ManagedAddress, ManagedBuffer, TestAddress, TestSCAddress, TestTokenIdentifier,
-        TokenIdentifier,
+        BigUint, EsdtTokenPayment, EsdtTokenType, ManagedAddress, ManagedBuffer, ManagedVec,
+        TestAddress, TestSCAddress, TestTokenIdentifier, TokenIdentifier,
     },
 };
 use multiversx_sc_modules::transfer_role_proxy::PaymentsVec;
@@ -14,7 +13,8 @@ use multiversx_sc_scenario::{
 };
 use operation::{aliases::OptionalValueTransferDataTuple, CrossChainConfig};
 use proxies::{
-    fee_market_proxy::{FeeMarketProxy, FeeStruct},
+    fee_market_proxy::{FeeMarketProxy, FeeStruct, FeeType},
+    testing_sc_proxy::TestingScProxy,
     to_sovereign_proxy::ToSovereignProxy,
 };
 
@@ -23,6 +23,9 @@ const CONTRACT_CODE_PATH: MxscPath = MxscPath::new("output/to-sovereign.mxsc.jso
 
 const FEE_MARKET_ADDRESS: TestSCAddress = TestSCAddress::new("fee-market");
 const FEE_MARKET_CODE_PATH: MxscPath = MxscPath::new("../fee-market/output/fee-market.mxsc.json");
+
+const TESTING_SC_ADDRESS: TestSCAddress = TestSCAddress::new("testing-sc");
+const TESTING_SC_CODE_PATH: MxscPath = MxscPath::new("../testing-sc/output/testing-sc.mxsc.json");
 
 const OWNER_ADDRESS: TestAddress = TestAddress::new("owner");
 const USER: TestAddress = TestAddress::new("user");
@@ -37,17 +40,17 @@ fn world() -> ScenarioWorld {
 
     blockchain.register_contract(CONTRACT_CODE_PATH, to_sovereign::ContractBuilder);
     blockchain.register_contract(FEE_MARKET_CODE_PATH, fee_market::ContractBuilder);
+    blockchain.register_contract(TESTING_SC_CODE_PATH, testing_sc::ContractBuilder);
 
     blockchain
 }
-struct FromSovereignTestState {
+struct ToSovereignTestState {
     world: ScenarioWorld,
 }
 
-impl FromSovereignTestState {
+impl ToSovereignTestState {
     fn new() -> Self {
         let mut world = world();
-        // let roles = vec!["ESDTRoleNFTCreate".to_string(), "ESDTRoleBurn".to_string()];
 
         world
             .account(OWNER_ADDRESS)
@@ -86,6 +89,19 @@ impl FromSovereignTestState {
             .init(CONTRACT_ADDRESS, fee)
             .code(FEE_MARKET_CODE_PATH)
             .new_address(FEE_MARKET_ADDRESS)
+            .run();
+
+        self
+    }
+
+    fn deploy_testing_sc(&mut self) -> &mut Self {
+        self.world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .typed(TestingScProxy)
+            .init()
+            .code(TESTING_SC_CODE_PATH)
+            .new_address(TESTING_SC_ADDRESS)
             .run();
 
         self
@@ -164,14 +180,14 @@ impl FromSovereignTestState {
 
 #[test]
 fn deploy() {
-    let mut state = FromSovereignTestState::new();
+    let mut state = ToSovereignTestState::new();
 
     state.deploy_contract(CrossChainConfig::default_config());
 }
 
 #[test]
 fn register_token_not_enough_egld() {
-    let mut state = FromSovereignTestState::new();
+    let mut state = ToSovereignTestState::new();
 
     state.deploy_contract(CrossChainConfig::default_config());
 
@@ -196,7 +212,7 @@ fn register_token_not_enough_egld() {
 
 #[test]
 fn register_token_fungible_token() {
-    let mut state = FromSovereignTestState::new();
+    let mut state = ToSovereignTestState::new();
 
     state.deploy_contract(CrossChainConfig::default_config());
 
@@ -248,7 +264,7 @@ fn register_token_fungible_token() {
 
 #[test]
 fn register_token_nonfungible_token() {
-    let mut state = FromSovereignTestState::new();
+    let mut state = ToSovereignTestState::new();
 
     state.deploy_contract(CrossChainConfig::default_config());
 
@@ -300,7 +316,7 @@ fn register_token_nonfungible_token() {
 
 #[test]
 fn deposit_nothing_to_transfer() {
-    let mut state = FromSovereignTestState::new();
+    let mut state = ToSovereignTestState::new();
 
     state.deploy_contract(CrossChainConfig::default_config());
     state.deposit(
@@ -313,7 +329,7 @@ fn deposit_nothing_to_transfer() {
 
 #[test]
 fn deposit_too_many_tokens() {
-    let mut state = FromSovereignTestState::new();
+    let mut state = ToSovereignTestState::new();
 
     state.deploy_contract(CrossChainConfig::default_config());
 
@@ -334,8 +350,8 @@ fn deposit_too_many_tokens() {
 }
 
 #[test]
-fn deposit() {
-    let mut state = FromSovereignTestState::new();
+fn deposit_no_transfer_data() {
+    let mut state = ToSovereignTestState::new();
 
     state.deploy_contract(CrossChainConfig::default_config());
     state.deploy_fee_market(None);
@@ -370,5 +386,144 @@ fn deposit() {
             assert!(sc
                 .multiversx_to_sovereign_token_id_mapper(&TokenIdentifier::from(TEST_TOKEN_ONE))
                 .is_empty());
-        })
+        });
+}
+
+#[test]
+fn deposit_gas_limit_too_high() {
+    let mut state = ToSovereignTestState::new();
+
+    let config = CrossChainConfig::new(ManagedVec::new(), ManagedVec::new(), 1, ManagedVec::new());
+    state.deploy_contract(config);
+    state.deploy_fee_market(None);
+    state.deploy_testing_sc();
+    state.set_fee_market_address(FEE_MARKET_ADDRESS);
+
+    let esdt_token_payment_one = EsdtTokenPayment::<StaticApi>::new(
+        TokenIdentifier::from(TEST_TOKEN_ONE),
+        0,
+        BigUint::from(100u64),
+    );
+
+    let esdt_token_payment_two = EsdtTokenPayment::<StaticApi>::new(
+        TokenIdentifier::from(TEST_TOKEN_TWO),
+        0,
+        BigUint::from(100u64),
+    );
+
+    let payments_vec = PaymentsVec::from(vec![esdt_token_payment_one, esdt_token_payment_two]);
+
+    let gas_limit = 2;
+    let function = ManagedBuffer::<StaticApi>::from("hello");
+    let args =
+        ManagedVec::<StaticApi, ManagedBuffer<StaticApi>>::from(vec![ManagedBuffer::from("1")]);
+
+    let transfer_data = MultiValue3::from((gas_limit, function, args));
+
+    state.deposit(
+        USER.to_managed_address(),
+        OptionalValue::Some(transfer_data),
+        Some(payments_vec),
+        Some("Gas limit too high"),
+    );
+}
+
+#[test]
+fn deposit_endpoint_banned() {
+    let mut state = ToSovereignTestState::new();
+
+    let config = CrossChainConfig::new(
+        ManagedVec::new(),
+        ManagedVec::new(),
+        50_000_000,
+        ManagedVec::from(vec![ManagedBuffer::from("hello")]),
+    );
+
+    state.deploy_contract(config);
+    state.deploy_fee_market(None);
+    state.deploy_testing_sc();
+    state.set_fee_market_address(FEE_MARKET_ADDRESS);
+
+    let esdt_token_payment_one = EsdtTokenPayment::<StaticApi>::new(
+        TokenIdentifier::from(TEST_TOKEN_ONE),
+        0,
+        BigUint::from(100u64),
+    );
+
+    let esdt_token_payment_two = EsdtTokenPayment::<StaticApi>::new(
+        TokenIdentifier::from(TEST_TOKEN_TWO),
+        0,
+        BigUint::from(100u64),
+    );
+
+    let payments_vec = PaymentsVec::from(vec![esdt_token_payment_one, esdt_token_payment_two]);
+
+    let gas_limit = 2;
+    let function = ManagedBuffer::<StaticApi>::from("hello");
+    let args =
+        ManagedVec::<StaticApi, ManagedBuffer<StaticApi>>::from(vec![ManagedBuffer::from("1")]);
+
+    let transfer_data = MultiValue3::from((gas_limit, function, args));
+
+    state.deposit(
+        USER.to_managed_address(),
+        OptionalValue::Some(transfer_data),
+        Some(payments_vec),
+        Some("Banned endpoint name"),
+    );
+}
+
+#[test]
+fn deposit_fee_enabled() {
+    let mut state = ToSovereignTestState::new();
+
+    let config = CrossChainConfig::new(
+        ManagedVec::new(),
+        ManagedVec::new(),
+        50_000_000,
+        ManagedVec::new(),
+    );
+
+    state.deploy_contract(config);
+
+    let fee = FeeStruct {
+        base_token: TokenIdentifier::from(TEST_TOKEN_ONE),
+        fee_type: FeeType::Fixed {
+            token: TokenIdentifier::from(TEST_TOKEN_ONE),
+            per_transfer: BigUint::from(1u64),
+            per_gas: BigUint::from(1u64),
+        },
+    };
+
+    state.deploy_fee_market(Some(fee));
+    state.deploy_testing_sc();
+    state.set_fee_market_address(FEE_MARKET_ADDRESS);
+
+    let esdt_token_payment_one = EsdtTokenPayment::<StaticApi>::new(
+        TokenIdentifier::from(TEST_TOKEN_ONE),
+        0,
+        BigUint::from(100u64),
+    );
+
+    let esdt_token_payment_two = EsdtTokenPayment::<StaticApi>::new(
+        TokenIdentifier::from(TEST_TOKEN_TWO),
+        0,
+        BigUint::from(100u64),
+    );
+
+    let payments_vec = PaymentsVec::from(vec![esdt_token_payment_one, esdt_token_payment_two]);
+
+    let gas_limit = 2;
+    let function = ManagedBuffer::<StaticApi>::from("hello");
+    let args =
+        ManagedVec::<StaticApi, ManagedBuffer<StaticApi>>::from(vec![ManagedBuffer::from("1")]);
+
+    let transfer_data = MultiValue3::from((gas_limit, function, args));
+
+    state.deposit(
+        USER.to_managed_address(),
+        OptionalValue::Some(transfer_data),
+        Some(payments_vec),
+        Some("Banned endpoint name"),
+    );
 }
