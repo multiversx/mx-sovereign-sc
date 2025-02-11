@@ -30,8 +30,8 @@ const TESTING_SC_CODE_PATH: MxscPath = MxscPath::new("../testing-sc/output/testi
 const OWNER_ADDRESS: TestAddress = TestAddress::new("owner");
 const USER: TestAddress = TestAddress::new("user");
 
-const TEST_TOKEN_ONE: &str = "test-token-one";
-const TEST_TOKEN_TWO: &str = "test-token-two";
+const TEST_TOKEN_ONE: &str = "TONE-123456";
+const TEST_TOKEN_TWO: &str = "TTWO-987654";
 
 const OWNER_BALANCE: u128 = 100_000_000_000_000_000_000_000;
 
