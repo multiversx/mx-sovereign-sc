@@ -341,18 +341,26 @@ fn deposit_fee_enabled() {
 
     state.deploy_contract(config);
 
+    let per_transfer = BigUint::from(100u64);
+    let per_gas = BigUint::from(1u64);
+
     let fee = FeeStruct {
-        base_token: TokenIdentifier::from(TEST_TOKEN_ONE),
+        base_token: TokenIdentifier::from(FEE_TOKEN),
         fee_type: FeeType::Fixed {
-            token: TokenIdentifier::from(TEST_TOKEN_ONE),
-            per_transfer: BigUint::from(1u64),
-            per_gas: BigUint::from(1u64),
+            token: TokenIdentifier::from(FEE_TOKEN),
+            per_transfer: per_transfer.clone(),
+            per_gas: per_gas.clone(),
         },
     };
 
     state.deploy_fee_market(Some(fee));
     state.deploy_testing_sc();
     state.set_fee_market_address(FEE_MARKET_ADDRESS);
+
+    let fee_amount = BigUint::from(ONE_HUNDRED_THOUSAND);
+
+    let fee_payment =
+        EsdtTokenPayment::<StaticApi>::new(TokenIdentifier::from(FEE_TOKEN), 0, fee_amount.clone());
 
     let esdt_token_payment_one = EsdtTokenPayment::<StaticApi>::new(
         TokenIdentifier::from(TEST_TOKEN_ONE),
@@ -366,7 +374,11 @@ fn deposit_fee_enabled() {
         BigUint::from(100u64),
     );
 
-    let payments_vec = PaymentsVec::from(vec![esdt_token_payment_one, esdt_token_payment_two]);
+    let payments_vec = PaymentsVec::from(vec![
+        fee_payment,
+        esdt_token_payment_one.clone(),
+        esdt_token_payment_two.clone(),
+    ]);
 
     let gas_limit = 2;
     let function = ManagedBuffer::<StaticApi>::from("hello");
@@ -378,23 +390,34 @@ fn deposit_fee_enabled() {
     state.deposit(
         USER.to_managed_address(),
         OptionalValue::Some(transfer_data),
-        Some(payments_vec),
+        Some(payments_vec.clone()),
         None,
     );
 
-    let expected_amount_token_one = BigUint::from(99_999_996u64);
+    let expected_amount_token_one =
+        BigUint::from(ONE_HUNDRED_MILLION) - &esdt_token_payment_one.amount;
 
     state.world.check_account(OWNER_ADDRESS).esdt_balance(
         TokenIdentifier::from(TEST_TOKEN_ONE),
         expected_amount_token_one,
     );
 
-    let expected_amount_token_two = BigUint::from(99_999_900u64);
+    let expected_amount_token_two =
+        BigUint::from(ONE_HUNDRED_MILLION) - &esdt_token_payment_two.amount;
 
     state.world.check_account(OWNER_ADDRESS).esdt_balance(
         TokenIdentifier::from(TEST_TOKEN_TWO),
         expected_amount_token_two,
     );
+
+    let expected_amount_token_fee = BigUint::from(ONE_HUNDRED_MILLION)
+        - BigUint::from(payments_vec.len()) * per_transfer
+        - BigUint::from(gas_limit) * per_gas;
+
+    state
+        .world
+        .check_account(OWNER_ADDRESS)
+        .esdt_balance(TokenIdentifier::from(FEE_TOKEN), expected_amount_token_fee);
 }
 
 #[test]
@@ -464,6 +487,7 @@ fn deposit_refund() {
     );
 
     state.deploy_contract(config);
+
     let per_transfer = BigUint::from(100u64);
     let per_gas = BigUint::from(1u64);
 
