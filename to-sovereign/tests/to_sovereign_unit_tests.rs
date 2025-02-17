@@ -697,7 +697,7 @@ fn register_token_fungible_token() {
     let token_type = EsdtTokenType::Fungible;
     let token_display_name = "TokenOne";
     let token_ticker = TEST_TOKEN_ONE;
-    let num_decimals = 3;
+    let num_decimals = 0;
     let egld_payment = BigUint::from(DEFAULT_ISSUE_COST);
 
     let register_token_args = RegisterTokenArgs {
