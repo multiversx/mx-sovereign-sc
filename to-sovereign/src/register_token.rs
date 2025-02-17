@@ -40,7 +40,6 @@ pub trait RegisterTokenModule:
     }
 
     fn handle_token_issue(&self, args: IssueEsdtArgs<Self::Api>) {
-        // NOTE: The address will be different for each specific Sovereign
         let mvx_token_id = self
             .tx()
             .to(ESDTSystemSCAddress)
