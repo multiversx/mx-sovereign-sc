@@ -4,10 +4,12 @@ use multiversx_sc::imports::*;
 use operation::EsdtSafeConfig;
 
 pub mod deposit;
+pub mod execute;
 
 #[multiversx_sc::contract]
 pub trait ToSovereign:
     deposit::DepositModule
+    + execute::ExecuteModule
     + cross_chain::CrossChainCommon
     + multiversx_sc_modules::pause::PauseModule
     + max_bridged_amount_module::MaxBridgedAmountModule
