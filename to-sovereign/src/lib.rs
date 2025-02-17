@@ -20,6 +20,7 @@ pub trait ToSovereign:
         self.esdt_safe_config().set(esdt_safe_config);
     }
 
+    #[only_owner]
     #[endpoint(setFeeMarketAddress)]
     fn set_fee_market_address(&self, fee_market_address: ManagedAddress) {
         self.require_sc_address(&fee_market_address);
