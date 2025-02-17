@@ -1,5 +1,5 @@
 use multiversx_sc::imports::*;
-use operation::BridgeConfig;
+use operation::EsdtSafeConfig;
 
 #[multiversx_sc::module]
 pub trait CommonStorage {
@@ -19,7 +19,7 @@ pub trait CommonStorage {
     fn fee_market_address(&self) -> SingleValueMapper<ManagedAddress>;
 
     #[storage_mapper("config")]
-    fn config(&self) -> SingleValueMapper<BridgeConfig<Self::Api>>;
+    fn config(&self) -> SingleValueMapper<EsdtSafeConfig<Self::Api>>;
 
     #[storage_mapper("headerVerifierAddress")]
     fn header_verifier_address(&self) -> SingleValueMapper<ManagedAddress>;

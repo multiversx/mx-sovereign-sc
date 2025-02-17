@@ -31,8 +31,6 @@ pub trait CreateTxModule:
         require!(self.not_paused(), "Cannot create transaction while paused");
 
         let (fees_payment, payments) = self.check_and_extract_fee().into_tuple();
-        require!(!payments.is_empty(), "Nothing to transfer");
-        require!(payments.len() <= MAX_TRANSFERS_PER_TX, "Too many tokens");
 
         let mut total_tokens_for_fees = 0usize;
         let mut event_payments =

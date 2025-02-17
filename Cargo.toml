@@ -23,4 +23,6 @@ members = [
   "sovereign-forge",
   "sovereign-forge/interactor",
   "sovereign-forge/meta",
+  "to-sovereign",
+  "to-sovereign/meta", "common/cross-chain",
 ]

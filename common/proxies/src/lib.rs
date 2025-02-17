@@ -7,4 +7,5 @@ pub mod fee_market_proxy;
 pub mod header_verifier_proxy;
 pub mod sovereign_forge_proxy;
 pub mod testing_sc_proxy;
+pub mod to_sovereign_proxy;
 pub mod token_handler_proxy;
