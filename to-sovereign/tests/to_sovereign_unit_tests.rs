@@ -38,6 +38,14 @@ const ONE_HUNDRED_MILLION: u32 = 100_000_000;
 const ONE_HUNDRED_THOUSAND: u32 = 100_000;
 const OWNER_BALANCE: u128 = 100_000_000_000_000_000_000_000;
 
+struct RegisterTokenArgs<'a> {
+    sov_token_id: TestTokenIdentifier<'a>,
+    token_type: EsdtTokenType,
+    token_display_name: &'a str,
+    token_ticker: &'a str,
+    num_decimals: usize,
+}
+
 fn world() -> ScenarioWorld {
     let mut blockchain = ScenarioWorld::new();
 
@@ -178,14 +186,9 @@ impl ToSovereignTestState {
             .run()
     }
 
-    #[warn(clippy::too_many_arguments)]
     fn register_token(
         &mut self,
-        sov_token_id: TestTokenIdentifier,
-        token_type: EsdtTokenType,
-        token_display_name: &str,
-        token_ticker: &str,
-        num_decimals: usize,
+        register_token_args: RegisterTokenArgs,
         payment: BigUint<StaticApi>,
         error_message: Option<&str>,
     ) {
@@ -196,11 +199,11 @@ impl ToSovereignTestState {
             .to(CONTRACT_ADDRESS)
             .typed(ToSovereignProxy)
             .register_token(
-                sov_token_id,
-                token_type,
-                ManagedBuffer::from(token_display_name),
-                ManagedBuffer::from(token_ticker),
-                num_decimals,
+                register_token_args.sov_token_id,
+                register_token_args.token_type,
+                ManagedBuffer::from(register_token_args.token_display_name),
+                ManagedBuffer::from(register_token_args.token_ticker),
+                register_token_args.num_decimals,
             )
             .egld(payment)
             .returns(ReturnsHandledOrError::new())
@@ -626,17 +629,23 @@ fn register_token_not_enough_egld() {
     let config = EsdtSafeConfig::default_config();
     state.deploy_contract(config);
 
+    let sov_token_id = TestTokenIdentifier::new(TEST_TOKEN_ONE);
     let token_type = EsdtTokenType::Fungible;
     let token_display_name = "TokenOne";
     let num_decimals = 3;
-    let egld_payment = BigUint::from(1u8);
+    let token_ticker = TEST_TOKEN_ONE;
+    let egld_payment = BigUint::from(DEFAULT_ISSUE_COST);
 
-    state.register_token(
-        TestTokenIdentifier::new(TEST_TOKEN_ONE),
+    let register_token_args = RegisterTokenArgs {
+        sov_token_id,
         token_type,
         token_display_name,
-        TEST_TOKEN_ONE,
+        token_ticker,
         num_decimals,
+    };
+
+    state.register_token(
+        register_token_args,
         egld_payment,
         Some("EGLD value should be 0.05"),
     );
@@ -648,20 +657,22 @@ fn register_token_invalid_type() {
     let config = EsdtSafeConfig::default_config();
     state.deploy_contract(config);
 
+    let sov_token_id = TestTokenIdentifier::new(TEST_TOKEN_ONE);
     let token_type = EsdtTokenType::Invalid;
     let token_display_name = "TokenOne";
     let num_decimals = 3;
+    let token_ticker = TEST_TOKEN_ONE;
     let egld_payment = BigUint::from(DEFAULT_ISSUE_COST);
 
-    state.register_token(
-        TestTokenIdentifier::new(TEST_TOKEN_ONE),
+    let register_token_args = RegisterTokenArgs {
+        sov_token_id,
         token_type,
         token_display_name,
-        TEST_TOKEN_ONE,
+        token_ticker,
         num_decimals,
-        egld_payment,
-        Some("Invalid type"),
-    );
+    };
+
+    state.register_token(register_token_args, egld_payment, Some("Invalid type"));
 }
 
 #[test]
@@ -673,18 +684,19 @@ fn register_token_fungible_token() {
     let sov_token_id = TestTokenIdentifier::new(TEST_TOKEN_ONE);
     let token_type = EsdtTokenType::Fungible;
     let token_display_name = "TokenOne";
+    let token_ticker = TEST_TOKEN_ONE;
     let num_decimals = 3;
     let egld_payment = BigUint::from(DEFAULT_ISSUE_COST);
 
-    state.register_token(
+    let register_token_args = RegisterTokenArgs {
         sov_token_id,
         token_type,
         token_display_name,
-        TEST_TOKEN_ONE,
+        token_ticker,
         num_decimals,
-        egld_payment,
-        None,
-    );
+    };
+
+    state.register_token(register_token_args, egld_payment, None);
 
     state
         .world
@@ -709,17 +721,18 @@ fn register_token_nonfungible_token() {
     let token_type = EsdtTokenType::NonFungible;
     let token_display_name = "TokenOne";
     let num_decimals = 3;
+    let token_ticker = TEST_TOKEN_ONE;
     let egld_payment = BigUint::from(DEFAULT_ISSUE_COST);
 
-    state.register_token(
+    let register_token_args = RegisterTokenArgs {
         sov_token_id,
         token_type,
         token_display_name,
-        TEST_TOKEN_ONE,
+        token_ticker,
         num_decimals,
-        egld_payment,
-        None,
-    );
+    };
+
+    state.register_token(register_token_args, egld_payment, None);
 
     state
         .world
