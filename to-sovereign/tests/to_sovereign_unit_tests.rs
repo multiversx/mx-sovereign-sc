@@ -1,9 +1,9 @@
-use cross_chain::storage::CrossChainStorage;
+use cross_chain::{storage::CrossChainStorage, DEFAULT_ISSUE_COST};
 use multiversx_sc::{
     imports::{MultiValue3, OptionalValue},
     types::{
-        BigUint, EsdtTokenPayment, ManagedAddress, ManagedBuffer, ManagedVec, TestAddress,
-        TestSCAddress, TokenIdentifier,
+        BigUint, EsdtTokenPayment, EsdtTokenType, ManagedAddress, ManagedBuffer, ManagedVec,
+        TestAddress, TestSCAddress, TestTokenIdentifier, TokenIdentifier,
     },
 };
 use multiversx_sc_modules::transfer_role_proxy::PaymentsVec;
@@ -176,6 +176,38 @@ impl ToSovereignTestState {
             .payment(payment)
             .returns(ReturnsLogs)
             .run()
+    }
+
+    fn register_token(
+        &mut self,
+        sov_token_id: TestTokenIdentifier,
+        token_type: EsdtTokenType,
+        token_display_name: &str,
+        token_ticker: &str,
+        num_decimals: usize,
+        payment: BigUint<StaticApi>,
+        error_message: Option<&str>,
+    ) {
+        let respone = self
+            .world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .to(CONTRACT_ADDRESS)
+            .typed(ToSovereignProxy)
+            .register_token(
+                sov_token_id,
+                token_type,
+                ManagedBuffer::from(token_display_name),
+                ManagedBuffer::from(token_ticker),
+                num_decimals,
+            )
+            .egld(payment)
+            .returns(ReturnsHandledOrError::new())
+            .run();
+
+        if let Err(error) = respone {
+            assert_eq!(error_message, Some(error.message.as_str()))
+        }
     }
 }
 
@@ -585,4 +617,118 @@ fn deposit_refund() {
         .world
         .check_account(OWNER_ADDRESS)
         .esdt_balance(TokenIdentifier::from(FEE_TOKEN), expected_amount_token_fee);
+}
+
+#[test]
+fn register_token_not_enough_egld() {
+    let mut state = ToSovereignTestState::new();
+    let config = EsdtSafeConfig::default_config();
+    state.deploy_contract(config);
+
+    let token_type = EsdtTokenType::Fungible;
+    let token_display_name = "TokenOne";
+    let num_decimals = 3 as usize;
+    let egld_payment = BigUint::from(1u8);
+
+    state.register_token(
+        TestTokenIdentifier::new(TEST_TOKEN_ONE),
+        token_type,
+        token_display_name,
+        TEST_TOKEN_ONE,
+        num_decimals,
+        egld_payment,
+        Some("EGLD value should be 0.05"),
+    );
+}
+
+#[test]
+fn register_token_invalid_type() {
+    let mut state = ToSovereignTestState::new();
+    let config = EsdtSafeConfig::default_config();
+    state.deploy_contract(config);
+
+    let token_type = EsdtTokenType::Invalid;
+    let token_display_name = "TokenOne";
+    let num_decimals = 3 as usize;
+    let egld_payment = BigUint::from(DEFAULT_ISSUE_COST);
+
+    state.register_token(
+        TestTokenIdentifier::new(TEST_TOKEN_ONE),
+        token_type,
+        token_display_name,
+        TEST_TOKEN_ONE,
+        num_decimals,
+        egld_payment,
+        Some("Invalid type"),
+    );
+}
+
+#[test]
+fn register_token_fungible_token() {
+    let mut state = ToSovereignTestState::new();
+    let config = EsdtSafeConfig::default_config();
+    state.deploy_contract(config);
+
+    let sov_token_id = TestTokenIdentifier::new(TEST_TOKEN_ONE);
+    let token_type = EsdtTokenType::Fungible;
+    let token_display_name = "TokenOne";
+    let num_decimals = 3 as usize;
+    let egld_payment = BigUint::from(DEFAULT_ISSUE_COST);
+
+    state.register_token(
+        sov_token_id,
+        token_type,
+        token_display_name,
+        TEST_TOKEN_ONE,
+        num_decimals,
+        egld_payment,
+        None,
+    );
+
+    state
+        .world
+        .query()
+        .to(CONTRACT_ADDRESS)
+        .whitebox(to_sovereign::contract_obj, |sc| {
+            assert!(!sc
+                .sovereign_to_multiversx_token_id_mapper(
+                    &TestTokenIdentifier::new(TEST_TOKEN_ONE).into()
+                )
+                .is_empty());
+        })
+}
+
+#[test]
+fn register_token_nonfungible_token() {
+    let mut state = ToSovereignTestState::new();
+    let config = EsdtSafeConfig::default_config();
+    state.deploy_contract(config);
+
+    let sov_token_id = TestTokenIdentifier::new(TEST_TOKEN_ONE);
+    let token_type = EsdtTokenType::NonFungible;
+    let token_display_name = "TokenOne";
+    let num_decimals = 3 as usize;
+    let egld_payment = BigUint::from(DEFAULT_ISSUE_COST);
+
+    state.register_token(
+        sov_token_id,
+        token_type,
+        token_display_name,
+        TEST_TOKEN_ONE,
+        num_decimals,
+        egld_payment,
+        None,
+    );
+
+    state
+        .world
+        .query()
+        .to(CONTRACT_ADDRESS)
+        .whitebox(to_sovereign::contract_obj, |sc| {
+            assert!(!sc
+                .sovereign_to_multiversx_token_id_mapper(
+                    &TestTokenIdentifier::new(TEST_TOKEN_ONE).into()
+                )
+                .is_empty());
+        })
 }
