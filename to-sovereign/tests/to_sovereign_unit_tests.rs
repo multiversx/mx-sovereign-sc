@@ -644,7 +644,7 @@ fn register_token_not_enough_egld() {
     let sov_token_id = TestTokenIdentifier::new(TEST_TOKEN_ONE);
     let token_type = EsdtTokenType::Fungible;
     let token_display_name = "TokenOne";
-    let num_decimals = 0;
+    let num_decimals = 3;
     let token_ticker = TEST_TOKEN_ONE;
     let egld_payment = BigUint::from(1u64);
 
@@ -672,7 +672,7 @@ fn register_token_invalid_type() {
     let sov_token_id = TestTokenIdentifier::new(TEST_TOKEN_ONE);
     let token_type = EsdtTokenType::Invalid;
     let token_display_name = "TokenOne";
-    let num_decimals = 0;
+    let num_decimals = 3;
     let token_ticker = TEST_TOKEN_ONE;
     let egld_payment = BigUint::from(DEFAULT_ISSUE_COST);
 
@@ -697,7 +697,7 @@ fn register_token_fungible_token() {
     let token_type = EsdtTokenType::Fungible;
     let token_display_name = "TokenOne";
     let token_ticker = TEST_TOKEN_ONE;
-    let num_decimals = 0;
+    let num_decimals = 3;
     let egld_payment = BigUint::from(DEFAULT_ISSUE_COST);
 
     let register_token_args = RegisterTokenArgs {
