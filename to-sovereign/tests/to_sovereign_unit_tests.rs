@@ -146,7 +146,7 @@ impl ToSovereignTestState {
         to: ManagedAddress<StaticApi>,
         opt_transfer_data: OptionalValueTransferDataTuple<StaticApi>,
         opt_payment: Option<PaymentsVec<StaticApi>>,
-        error_message: Option<&str>,
+        expected_error_message: Option<&str>,
     ) {
         let tx = self
             .world
@@ -164,8 +164,14 @@ impl ToSovereignTestState {
             tx.returns(ReturnsHandledOrError::new()).run()
         };
 
-        if let Err(error) = response {
-            assert_eq!(error_message, Some(error.message.as_str()))
+        match response {
+            Ok(_) => assert!(
+                expected_error_message.is_none(),
+                "Transaction was successful, but expected error"
+            ),
+            Err(error) => {
+                assert_eq!(expected_error_message, Some(error.message.as_str()))
+            }
         }
     }
 
@@ -190,9 +196,9 @@ impl ToSovereignTestState {
         &mut self,
         register_token_args: RegisterTokenArgs,
         payment: BigUint<StaticApi>,
-        error_message: Option<&str>,
+        expected_error_message: Option<&str>,
     ) {
-        let respone = self
+        let response = self
             .world
             .tx()
             .from(OWNER_ADDRESS)
@@ -209,8 +215,14 @@ impl ToSovereignTestState {
             .returns(ReturnsHandledOrError::new())
             .run();
 
-        if let Err(error) = respone {
-            assert_eq!(error_message, Some(error.message.as_str()))
+        match response {
+            Ok(_) => assert!(
+                expected_error_message.is_none(),
+                "Transaction was successful, but expected error"
+            ),
+            Err(error) => {
+                assert_eq!(expected_error_message, Some(error.message.as_str()))
+            }
         }
     }
 }
@@ -634,7 +646,7 @@ fn register_token_not_enough_egld() {
     let token_display_name = "TokenOne";
     let num_decimals = 3;
     let token_ticker = TEST_TOKEN_ONE;
-    let egld_payment = BigUint::from(DEFAULT_ISSUE_COST);
+    let egld_payment = BigUint::from(1u64);
 
     let register_token_args = RegisterTokenArgs {
         sov_token_id,
