@@ -178,6 +178,7 @@ impl ToSovereignTestState {
             .run()
     }
 
+    #[warn(clippy::too_many_arguments)]
     fn register_token(
         &mut self,
         sov_token_id: TestTokenIdentifier,
@@ -627,7 +628,7 @@ fn register_token_not_enough_egld() {
 
     let token_type = EsdtTokenType::Fungible;
     let token_display_name = "TokenOne";
-    let num_decimals = 3 as usize;
+    let num_decimals = 3;
     let egld_payment = BigUint::from(1u8);
 
     state.register_token(
@@ -649,7 +650,7 @@ fn register_token_invalid_type() {
 
     let token_type = EsdtTokenType::Invalid;
     let token_display_name = "TokenOne";
-    let num_decimals = 3 as usize;
+    let num_decimals = 3;
     let egld_payment = BigUint::from(DEFAULT_ISSUE_COST);
 
     state.register_token(
@@ -672,7 +673,7 @@ fn register_token_fungible_token() {
     let sov_token_id = TestTokenIdentifier::new(TEST_TOKEN_ONE);
     let token_type = EsdtTokenType::Fungible;
     let token_display_name = "TokenOne";
-    let num_decimals = 3 as usize;
+    let num_decimals = 3;
     let egld_payment = BigUint::from(DEFAULT_ISSUE_COST);
 
     state.register_token(
@@ -707,7 +708,7 @@ fn register_token_nonfungible_token() {
     let sov_token_id = TestTokenIdentifier::new(TEST_TOKEN_ONE);
     let token_type = EsdtTokenType::NonFungible;
     let token_display_name = "TokenOne";
-    let num_decimals = 3 as usize;
+    let num_decimals = 3;
     let egld_payment = BigUint::from(DEFAULT_ISSUE_COST);
 
     state.register_token(
