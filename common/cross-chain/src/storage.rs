@@ -1,4 +1,4 @@
-use operation::{aliases::TxNonce, CrossChainConfig, EsdtInfo};
+use operation::{aliases::TxNonce, EsdtInfo, EsdtSafeConfig};
 
 multiversx_sc::imports!();
 
@@ -8,7 +8,7 @@ pub trait CrossChainStorage {
     fn last_tx_nonce(&self) -> SingleValueMapper<TxNonce>;
 
     #[storage_mapper("crossChainConfig")]
-    fn cross_chain_config(&self) -> SingleValueMapper<CrossChainConfig<Self::Api>>;
+    fn esdt_safe_config(&self) -> SingleValueMapper<EsdtSafeConfig<Self::Api>>;
 
     #[storage_mapper("feeMarketAddress")]
     fn fee_market_address(&self) -> SingleValueMapper<ManagedAddress>;

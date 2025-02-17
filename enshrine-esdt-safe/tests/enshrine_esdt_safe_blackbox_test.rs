@@ -9,9 +9,7 @@ use multiversx_sc_scenario::multiversx_chain_vm::crypto_functions::sha256;
 use multiversx_sc_scenario::{imports::MxscPath, ScenarioWorld};
 use multiversx_sc_scenario::{managed_address, ReturnsHandledOrError, ScenarioTxRun};
 use operation::aliases::{GasLimit, OptionalTransferData, PaymentsVec};
-use operation::{
-    CrossChainConfig, Operation, OperationData, OperationEsdtPayment, SovereignConfig,
-};
+use operation::{EsdtSafeConfig, Operation, OperationData, OperationEsdtPayment, SovereignConfig};
 use proxies::chain_config_proxy::ChainConfigContractProxy;
 use proxies::enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy;
 use proxies::fee_market_proxy::{FeeMarketProxy, FeeStruct, FeeType};
@@ -130,7 +128,7 @@ impl EnshrineTestState {
         is_sovereign_chain: bool,
         wegld_identifier: Option<TokenIdentifier<StaticApi>>,
         sovereign_token_prefix: Option<ManagedBuffer<StaticApi>>,
-        opt_config: Option<CrossChainConfig<StaticApi>>,
+        opt_config: Option<EsdtSafeConfig<StaticApi>>,
     ) -> &mut Self {
         self.world
             .tx()
@@ -224,7 +222,7 @@ impl EnshrineTestState {
         &mut self,
         is_sovereign_chain: bool,
         fee_struct: Option<&FeeStruct<StaticApi>>,
-        opt_config: Option<CrossChainConfig<StaticApi>>,
+        opt_config: Option<EsdtSafeConfig<StaticApi>>,
     ) -> &mut Self {
         self.deploy_enshrine_esdt_contract(
             is_sovereign_chain,
@@ -752,7 +750,7 @@ fn test_deposit_with_transfer_data_banned_endpoint() {
     state.propose_setup_contracts(
         false,
         None,
-        Some(CrossChainConfig::new(
+        Some(EsdtSafeConfig::new(
             ManagedVec::new(),
             ManagedVec::new(),
             300_000_000_000,

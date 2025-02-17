@@ -1,7 +1,7 @@
 #![no_std]
 
 use multiversx_sc::imports::*;
-use operation::CrossChainConfig;
+use operation::EsdtSafeConfig;
 
 pub mod common;
 pub mod from_sovereign;
@@ -29,7 +29,7 @@ pub trait EnshrineEsdtSafe:
         token_handler_address: ManagedAddress,
         opt_wegld_identifier: Option<TokenIdentifier>,
         opt_sov_token_prefix: Option<ManagedBuffer>,
-        opt_config: Option<CrossChainConfig<Self::Api>>,
+        opt_config: Option<EsdtSafeConfig<Self::Api>>,
     ) {
         self.is_sovereign_chain().set(is_sovereign_chain);
         self.set_paused(true);
@@ -61,12 +61,12 @@ pub trait EnshrineEsdtSafe:
         self.initiator_address().set(caller);
 
         self.config()
-            .set(opt_config.unwrap_or_else(CrossChainConfig::default_config));
+            .set(opt_config.unwrap_or_else(EsdtSafeConfig::default_config));
     }
 
     #[only_owner]
     #[endpoint(updateConfiguration)]
-    fn update_configuration(&self, new_config: CrossChainConfig<Self::Api>) {
+    fn update_configuration(&self, new_config: EsdtSafeConfig<Self::Api>) {
         self.config().set(new_config);
     }
 

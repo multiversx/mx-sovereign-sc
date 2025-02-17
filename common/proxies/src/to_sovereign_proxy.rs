@@ -44,7 +44,7 @@ where
     Gas: TxGas<Env>,
 {
     pub fn init<
-        Arg0: ProxyArg<operation::CrossChainConfig<Env::Api>>,
+        Arg0: ProxyArg<operation::EsdtSafeConfig<Env::Api>>,
     >(
         self,
         cross_chain_config: Arg0,

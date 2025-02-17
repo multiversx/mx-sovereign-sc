@@ -11,7 +11,7 @@ use multiversx_sc_scenario::{
     api::StaticApi, imports::MxscPath, scenario_model::Log, ReturnsHandledOrError, ReturnsLogs,
     ScenarioTxRun, ScenarioTxWhitebox, ScenarioWorld,
 };
-use operation::{aliases::OptionalValueTransferDataTuple, CrossChainConfig};
+use operation::{aliases::OptionalValueTransferDataTuple, EsdtSafeConfig};
 use proxies::{
     fee_market_proxy::{FeeMarketProxy, FeeStruct, FeeType},
     testing_sc_proxy::TestingScProxy,
@@ -84,7 +84,7 @@ impl ToSovereignTestState {
         Self { world }
     }
 
-    fn deploy_contract(&mut self, config: CrossChainConfig<StaticApi>) -> &mut Self {
+    fn deploy_contract(&mut self, config: EsdtSafeConfig<StaticApi>) -> &mut Self {
         self.world
             .tx()
             .from(OWNER_ADDRESS)
@@ -183,14 +183,14 @@ impl ToSovereignTestState {
 fn deploy() {
     let mut state = ToSovereignTestState::new();
 
-    state.deploy_contract(CrossChainConfig::default_config());
+    state.deploy_contract(EsdtSafeConfig::default_config());
 }
 
 #[test]
 fn deposit_nothing_to_transfer() {
     let mut state = ToSovereignTestState::new();
 
-    state.deploy_contract(CrossChainConfig::default_config());
+    state.deploy_contract(EsdtSafeConfig::default_config());
     state.deposit(
         USER.to_managed_address(),
         OptionalValue::None,
@@ -203,7 +203,7 @@ fn deposit_nothing_to_transfer() {
 fn deposit_too_many_tokens() {
     let mut state = ToSovereignTestState::new();
 
-    state.deploy_contract(CrossChainConfig::default_config());
+    state.deploy_contract(EsdtSafeConfig::default_config());
 
     let esdt_token_payment = EsdtTokenPayment::<StaticApi>::new(
         TokenIdentifier::from(TEST_TOKEN_ONE),
@@ -225,7 +225,7 @@ fn deposit_too_many_tokens() {
 fn deposit_no_transfer_data() {
     let mut state = ToSovereignTestState::new();
 
-    state.deploy_contract(CrossChainConfig::default_config());
+    state.deploy_contract(EsdtSafeConfig::default_config());
     state.deploy_fee_market(None);
     state.set_fee_market_address(FEE_MARKET_ADDRESS);
 
@@ -265,7 +265,7 @@ fn deposit_no_transfer_data() {
 fn deposit_gas_limit_too_high() {
     let mut state = ToSovereignTestState::new();
 
-    let config = CrossChainConfig::new(ManagedVec::new(), ManagedVec::new(), 1, ManagedVec::new());
+    let config = EsdtSafeConfig::new(ManagedVec::new(), ManagedVec::new(), 1, ManagedVec::new());
     state.deploy_contract(config);
     state.deploy_fee_market(None);
     state.deploy_testing_sc();
@@ -304,7 +304,7 @@ fn deposit_gas_limit_too_high() {
 fn deposit_endpoint_banned() {
     let mut state = ToSovereignTestState::new();
 
-    let config = CrossChainConfig::new(
+    let config = EsdtSafeConfig::new(
         ManagedVec::new(),
         ManagedVec::new(),
         50_000_000,
@@ -349,7 +349,7 @@ fn deposit_endpoint_banned() {
 fn deposit_fee_enabled() {
     let mut state = ToSovereignTestState::new();
 
-    let config = CrossChainConfig::new(
+    let config = EsdtSafeConfig::new(
         ManagedVec::new(),
         ManagedVec::new(),
         50_000_000,
@@ -441,7 +441,7 @@ fn deposit_fee_enabled() {
 fn deposit_payment_doesnt_cover_fee() {
     let mut state = ToSovereignTestState::new();
 
-    let config = CrossChainConfig::new(
+    let config = EsdtSafeConfig::new(
         ManagedVec::new(),
         ManagedVec::new(),
         50_000_000,
@@ -496,7 +496,7 @@ fn deposit_payment_doesnt_cover_fee() {
 fn deposit_refund() {
     let mut state = ToSovereignTestState::new();
 
-    let config = CrossChainConfig::new(
+    let config = EsdtSafeConfig::new(
         ManagedVec::new(),
         ManagedVec::new(),
         50_000_000,

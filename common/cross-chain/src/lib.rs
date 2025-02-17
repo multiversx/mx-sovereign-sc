@@ -124,7 +124,7 @@ pub trait CrossChainCommon: crate::storage::CrossChainStorage + utils::UtilsModu
     fn require_token_not_on_blacklist(&self, token_id: &TokenIdentifier) {
         require!(
             !self
-                .cross_chain_config()
+                .esdt_safe_config()
                 .get()
                 .token_blacklist
                 .contains(token_id),
@@ -134,12 +134,12 @@ pub trait CrossChainCommon: crate::storage::CrossChainStorage + utils::UtilsModu
 
     #[inline]
     fn is_token_whitelist_empty(&self) -> bool {
-        self.cross_chain_config().get().token_whitelist.is_empty()
+        self.esdt_safe_config().get().token_whitelist.is_empty()
     }
 
     #[inline]
     fn is_token_whitelisted(&self, token_id: &TokenIdentifier) -> bool {
-        self.cross_chain_config()
+        self.esdt_safe_config()
             .get()
             .token_whitelist
             .contains(token_id)
@@ -148,7 +148,7 @@ pub trait CrossChainCommon: crate::storage::CrossChainStorage + utils::UtilsModu
     #[inline]
     fn require_gas_limit_under_limit(&self, gas_limit: GasLimit) {
         require!(
-            gas_limit <= self.cross_chain_config().get().max_tx_gas_limit,
+            gas_limit <= self.esdt_safe_config().get().max_tx_gas_limit,
             "Gas limit too high"
         );
     }
@@ -157,7 +157,7 @@ pub trait CrossChainCommon: crate::storage::CrossChainStorage + utils::UtilsModu
     fn require_endpoint_not_banned(&self, function: &ManagedBuffer) {
         require!(
             !self
-                .cross_chain_config()
+                .esdt_safe_config()
                 .get()
                 .banned_endpoints
                 .contains(function),

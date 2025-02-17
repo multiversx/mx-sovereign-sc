@@ -1,7 +1,7 @@
 #![no_std]
 
 use multiversx_sc::imports::*;
-use operation::CrossChainConfig;
+use operation::EsdtSafeConfig;
 
 pub mod deposit;
 
@@ -16,8 +16,8 @@ pub trait ToSovereign:
     + cross_chain::storage::CrossChainStorage
 {
     #[init]
-    fn init(&self, cross_chain_config: CrossChainConfig<Self::Api>) {
-        self.cross_chain_config().set(cross_chain_config);
+    fn init(&self, esdt_safe_config: EsdtSafeConfig<Self::Api>) {
+        self.esdt_safe_config().set(esdt_safe_config);
     }
 
     #[endpoint(setFeeMarketAddress)]

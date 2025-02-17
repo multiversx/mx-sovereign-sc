@@ -1,6 +1,6 @@
 use multiversx_sc::imports::*;
 use multiversx_sc_modules::only_admin;
-use operation::CrossChainConfig;
+use operation::EsdtSafeConfig;
 use operation::SovereignConfig;
 use proxies::{
     chain_config_proxy::ChainConfigContractProxy,
@@ -71,7 +71,7 @@ pub trait FactoryModule: only_admin::OnlyAdminModule {
         token_handler_address: ManagedAddress,
         wegld_identifier: TokenIdentifier,
         sov_token_prefix: ManagedBuffer,
-        opt_config: Option<CrossChainConfig<Self::Api>>,
+        opt_config: Option<EsdtSafeConfig<Self::Api>>,
     ) -> ManagedAddress {
         let source_address = self.enshrine_esdt_safe_template().get();
         let metadata = self.blockchain().get_code_metadata(&source_address);
