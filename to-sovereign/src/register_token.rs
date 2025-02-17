@@ -91,6 +91,8 @@ pub trait RegisterTokenModule:
             });
     }
 
+    // TODO: will clean those functions when the execute module will be introduced
+
     #[inline]
     fn clear_sov_to_mvx_esdt_info_mapper(&self, id: &TokenIdentifier, nonce: u64) {
         self.sovereign_to_multiversx_esdt_info_mapper(id, nonce)
