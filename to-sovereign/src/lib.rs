@@ -22,11 +22,7 @@ pub trait ToSovereign:
 
     #[endpoint(setFeeMarketAddress)]
     fn set_fee_market_address(&self, fee_market_address: ManagedAddress) {
-        require!(
-            self.blockchain().is_smart_contract(&fee_market_address),
-            "The address is not a valid SC address"
-        );
-
+        self.require_sc_address(&fee_market_address);
         self.fee_market_address().set(fee_market_address);
     }
 

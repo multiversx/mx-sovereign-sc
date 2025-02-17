@@ -1,5 +1,4 @@
 multiversx_sc::imports!();
-use cross_chain::MAX_TRANSFERS_PER_TX;
 use operation::{aliases::OptionalValueTransferDataTuple, OperationData, TransferData};
 
 #[multiversx_sc::module]
@@ -21,8 +20,6 @@ pub trait DepositModule:
         require!(self.not_paused(), "Cannot create transaction while paused");
 
         let (fees_payment, payments) = self.check_and_extract_fee().into_tuple();
-        require!(!payments.is_empty(), "Nothing to transfer");
-        require!(payments.len() <= MAX_TRANSFERS_PER_TX, "Too many tokens");
 
         let mut total_tokens_for_fees = 0usize;
         let mut event_payments = MultiValueEncoded::new();
