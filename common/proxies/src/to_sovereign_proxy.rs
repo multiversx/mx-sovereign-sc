@@ -47,12 +47,12 @@ where
         Arg0: ProxyArg<operation::EsdtSafeConfig<Env::Api>>,
     >(
         self,
-        cross_chain_config: Arg0,
+        esdt_safe_config: Arg0,
     ) -> TxTypedDeploy<Env, From, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_deploy()
-            .argument(&cross_chain_config)
+            .argument(&esdt_safe_config)
             .original_result()
     }
 }
