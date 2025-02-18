@@ -6,7 +6,10 @@ multiversx_sc::derive_imports!();
 
 #[multiversx_sc::module]
 pub trait RegisterTokenModule:
-    utils::UtilsModule + cross_chain::CrossChainCommon + cross_chain::storage::CrossChainStorage
+    utils::UtilsModule
+    + cross_chain::CrossChainCommon
+    + cross_chain::storage::CrossChainStorage
+    + cross_chain::deposit_common::DepositCommonModule
 {
     #[payable("EGLD")]
     #[endpoint(registerToken)]
@@ -88,42 +91,5 @@ pub trait RegisterTokenModule:
                 token_identifier: sov_id.clone(),
                 token_nonce: sov_nonce,
             });
-    }
-
-    // TODO: will clean those functions when the execute module will be introduced
-
-    #[inline]
-    fn clear_sov_to_mvx_esdt_info_mapper(&self, id: &TokenIdentifier, nonce: u64) {
-        self.sovereign_to_multiversx_esdt_info_mapper(id, nonce)
-            .take();
-    }
-
-    #[inline]
-    fn clear_mvx_to_sov_esdt_info_mapper(&self, id: &TokenIdentifier, nonce: u64) {
-        self.multiversx_to_sovereign_esdt_info_mapper(id, nonce)
-            .take();
-    }
-
-    #[inline]
-    fn is_fungible(self, token_type: &EsdtTokenType) -> bool {
-        *token_type == EsdtTokenType::Fungible
-    }
-
-    #[inline]
-    fn is_sft_or_meta(self, token_type: &EsdtTokenType) -> bool {
-        *token_type == EsdtTokenType::SemiFungible || *token_type == EsdtTokenType::Meta
-    }
-
-    #[inline]
-    fn is_nft(self, token_type: &EsdtTokenType) -> bool {
-        *token_type == EsdtTokenType::NonFungible
-    }
-
-    #[inline]
-    fn require_sov_token_id_not_registered(&self, id: &TokenIdentifier) {
-        require!(
-            self.sovereign_to_multiversx_token_id_mapper(id).is_empty(),
-            "This token was already registered"
-        );
     }
 }
