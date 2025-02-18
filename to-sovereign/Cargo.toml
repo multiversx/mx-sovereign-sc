@@ -38,6 +38,12 @@ path = "../common/proxies"
 [dependencies.max-bridged-amount-module]
 path = "../common/max-bridged-amount-module"
 
+[dependencies.header-verifier]
+path = "../header-verifier"
+
+[dependencies.chain-config]
+path = "../chain-config"
+
 [dev-dependencies]
 num-bigint = "0.4"
 
