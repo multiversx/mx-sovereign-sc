@@ -977,7 +977,7 @@ fn execute_operation_setup_phase_not_completed() {
         OperationData::new(1, OWNER_ADDRESS.to_managed_address(), Some(transfer_data));
 
     let operation = Operation::new(
-        USER.to_managed_address(),
+        TESTING_SC_ADDRESS.to_managed_address(),
         vec![payment].into(),
         operation_data,
     );
