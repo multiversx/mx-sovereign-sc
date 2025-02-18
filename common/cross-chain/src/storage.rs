@@ -13,6 +13,9 @@ pub trait CrossChainStorage {
     #[storage_mapper("feeMarketAddress")]
     fn fee_market_address(&self) -> SingleValueMapper<ManagedAddress>;
 
+    #[storage_mapper("headerVerifierAddress")]
+    fn header_verifier_address(&self) -> SingleValueMapper<ManagedAddress>;
+
     #[storage_mapper("sovToMxTokenId")]
     fn sovereign_to_multiversx_token_id_mapper(
         &self,

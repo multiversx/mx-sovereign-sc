@@ -18,6 +18,7 @@ pub trait ToSovereign:
     + utils::UtilsModule
     + cross_chain::events::EventsModule
     + cross_chain::storage::CrossChainStorage
+    + cross_chain::execute_common::ExecuteCommonModule
 {
     #[init]
     fn init(&self, esdt_safe_config: EsdtSafeConfig<Self::Api>) {
