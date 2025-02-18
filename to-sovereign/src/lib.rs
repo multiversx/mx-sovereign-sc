@@ -14,12 +14,12 @@ pub trait ToSovereign:
     + register_token::RegisterTokenModule
     + cross_chain::CrossChainCommon
     + cross_chain::deposit_common::DepositCommonModule
-    + multiversx_sc_modules::pause::PauseModule
-    + max_bridged_amount_module::MaxBridgedAmountModule
-    + utils::UtilsModule
     + cross_chain::events::EventsModule
     + cross_chain::storage::CrossChainStorage
     + cross_chain::execute_common::ExecuteCommonModule
+    + multiversx_sc_modules::pause::PauseModule
+    + max_bridged_amount_module::MaxBridgedAmountModule
+    + utils::UtilsModule
 {
     #[init]
     fn init(&self, esdt_safe_config: EsdtSafeConfig<Self::Api>) {

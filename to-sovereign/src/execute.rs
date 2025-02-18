@@ -2,7 +2,6 @@ use multiversx_sc::api::ESDT_MULTI_TRANSFER_FUNC_NAME;
 use operation::{
     aliases::GasLimit, Operation, OperationData, OperationEsdtPayment, OperationTuple,
 };
-use proxies::header_verifier_proxy::HeaderverifierProxy;
 
 multiversx_sc::imports!();
 const CALLBACK_GAS: GasLimit = 10_000_000; // Increase if not enough
@@ -12,17 +11,15 @@ const ESDT_TRANSACTION_GAS: GasLimit = 5_000_000;
 pub trait ExecuteModule:
     cross_chain::execute_common::ExecuteCommonModule
     + cross_chain::CrossChainCommon
-    + multiversx_sc_modules::pause::PauseModule
     + cross_chain::events::EventsModule
+    + cross_chain::storage::CrossChainStorage
+    + cross_chain::deposit_common::DepositCommonModule
+    + crate::register_token::RegisterTokenModule
+    + multiversx_sc_modules::pause::PauseModule
+    + utils::UtilsModule
 {
     #[endpoint(executeBridgeOps)]
     fn execute_operations(&self, hash_of_hashes: ManagedBuffer, operation: Operation<Self::Api>) {
-        let is_sovereign_chain = self.is_sovereign_chain().get();
-        require!(
-            !is_sovereign_chain,
-            "Invalid method to call in current chain"
-        );
-
         require!(self.not_paused(), "Cannot transfer while paused");
 
         let operation_hash = self.calculate_operation_hash(&operation);
@@ -177,7 +174,7 @@ pub trait ExecuteModule:
                     .payment(&mapped_tokens)
                     .gas(transfer_data.gas_limit)
                     .callback(
-                        <Self as TransferTokensModule>::callbacks(self)
+                        <Self as ExecuteModule>::callbacks(self)
                             .execute(hash_of_hashes, operation_tuple),
                     )
                     .gas_for_callback(CALLBACK_GAS)
@@ -190,7 +187,7 @@ pub trait ExecuteModule:
                     .payment(&mapped_tokens)
                     .gas(ESDT_TRANSACTION_GAS)
                     .callback(
-                        <Self as TransferTokensModule>::callbacks(self)
+                        <Self as ExecuteModule>::callbacks(self)
                             .execute(hash_of_hashes, operation_tuple),
                     )
                     .gas_for_callback(CALLBACK_GAS)
@@ -215,12 +212,7 @@ pub trait ExecuteModule:
             }
         }
 
-        let header_verifier_address = self.header_verifier_address().get();
-        self.tx()
-            .to(header_verifier_address)
-            .typed(HeaderverifierProxy)
-            .remove_executed_hash(hash_of_hashes, &operation_tuple.op_hash)
-            .sync_call();
+        self.remove_executed_hash(&hash_of_hashes, &operation_tuple.op_hash);
     }
 
     fn emit_transfer_failed_events(
@@ -290,7 +282,4 @@ pub trait ExecuteModule:
         }
         esdt_info_mapper.get().token_nonce
     }
-
-    #[storage_mapper("headerVerifierAddress")]
-    fn header_verifier_address(&self) -> SingleValueMapper<ManagedAddress>;
 }

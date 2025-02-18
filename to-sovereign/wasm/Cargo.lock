@@ -25,6 +25,7 @@ name = "cross-chain"
 version = "0.0.0"
 dependencies = [
  "multiversx-sc",
+ "multiversx-sc-modules",
  "operation",
  "proxies",
  "utils",
