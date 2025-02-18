@@ -1,19 +1,28 @@
 use cross_chain::{storage::CrossChainStorage, DEFAULT_ISSUE_COST};
+use header_verifier::{Headerverifier, OperationHashStatus};
 use multiversx_sc::{
+    codec::TopEncode,
     imports::{MultiValue3, OptionalValue},
     types::{
-        BigUint, EsdtTokenPayment, EsdtTokenType, ManagedAddress, ManagedBuffer, ManagedVec,
-        TestAddress, TestSCAddress, TestTokenIdentifier, TokenIdentifier,
+        BigUint, EsdtTokenData, EsdtTokenPayment, EsdtTokenType, ManagedAddress, ManagedBuffer,
+        ManagedVec, MultiValueEncoded, TestAddress, TestSCAddress, TestTokenIdentifier,
+        TokenIdentifier,
     },
 };
 use multiversx_sc_modules::transfer_role_proxy::PaymentsVec;
 use multiversx_sc_scenario::{
-    api::StaticApi, imports::MxscPath, scenario_model::Log, ReturnsHandledOrError, ReturnsLogs,
-    ScenarioTxRun, ScenarioTxWhitebox, ScenarioWorld,
+    api::StaticApi, imports::MxscPath, multiversx_chain_vm::crypto_functions::sha256,
+    scenario_model::Log, ReturnsHandledOrError, ReturnsLogs, ScenarioTxRun, ScenarioTxWhitebox,
+    ScenarioWorld,
 };
-use operation::{aliases::OptionalValueTransferDataTuple, EsdtSafeConfig};
+use operation::{
+    aliases::OptionalValueTransferDataTuple, EsdtSafeConfig, Operation, OperationData,
+    OperationEsdtPayment, SovereignConfig, TransferData,
+};
 use proxies::{
+    chain_config_proxy::ChainConfigContractProxy,
     fee_market_proxy::{FeeMarketProxy, FeeStruct, FeeType},
+    header_verifier_proxy::HeaderverifierProxy,
     testing_sc_proxy::TestingScProxy,
     to_sovereign_proxy::ToSovereignProxy,
 };
@@ -23,6 +32,14 @@ const CONTRACT_CODE_PATH: MxscPath = MxscPath::new("output/to-sovereign.mxsc.jso
 
 const FEE_MARKET_ADDRESS: TestSCAddress = TestSCAddress::new("fee-market");
 const FEE_MARKET_CODE_PATH: MxscPath = MxscPath::new("../fee-market/output/fee-market.mxsc.json");
+
+const HEADER_VERIFIER_ADDRESS: TestSCAddress = TestSCAddress::new("header-verifier");
+const HEADER_VERIFIER_CODE_PATH: MxscPath =
+    MxscPath::new("../header-verifier/output/header-verifier.mxsc.json");
+
+const CHAIN_CONFIG_ADDRESS: TestSCAddress = TestSCAddress::new("chain-config");
+const CHAIN_CONFIG_CODE_PATH: MxscPath =
+    MxscPath::new("../chain-config/output/chain-config.mxsc.json");
 
 const TESTING_SC_ADDRESS: TestSCAddress = TestSCAddress::new("testing-sc");
 const TESTING_SC_CODE_PATH: MxscPath = MxscPath::new("../testing-sc/output/testing-sc.mxsc.json");
@@ -51,6 +68,8 @@ fn world() -> ScenarioWorld {
 
     blockchain.register_contract(CONTRACT_CODE_PATH, to_sovereign::ContractBuilder);
     blockchain.register_contract(FEE_MARKET_CODE_PATH, fee_market::ContractBuilder);
+    blockchain.register_contract(HEADER_VERIFIER_CODE_PATH, header_verifier::ContractBuilder);
+    blockchain.register_contract(CHAIN_CONFIG_CODE_PATH, chain_config::ContractBuilder);
     blockchain.register_contract(TESTING_SC_CODE_PATH, testing_sc::ContractBuilder);
 
     blockchain
@@ -126,6 +145,32 @@ impl ToSovereignTestState {
             .init()
             .code(TESTING_SC_CODE_PATH)
             .new_address(TESTING_SC_ADDRESS)
+            .run();
+
+        self
+    }
+
+    fn deploy_header_verifier(&mut self, chain_config_address: TestSCAddress) -> &mut Self {
+        self.world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .typed(HeaderverifierProxy)
+            .init(chain_config_address)
+            .code(HEADER_VERIFIER_CODE_PATH)
+            .new_address(HEADER_VERIFIER_ADDRESS)
+            .run();
+
+        self
+    }
+
+    fn deploy_chain_config(&mut self, config: SovereignConfig<StaticApi>) -> &mut Self {
+        self.world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .typed(ChainConfigContractProxy)
+            .init(config, OWNER_ADDRESS)
+            .code(CHAIN_CONFIG_CODE_PATH)
+            .new_address(CHAIN_CONFIG_ADDRESS)
             .run();
 
         self
@@ -224,6 +269,96 @@ impl ToSovereignTestState {
                 assert_eq!(expected_error_message, Some(error.message.as_str()))
             }
         }
+    }
+
+    fn execute_operation(
+        &mut self,
+        hash_of_hashes: ManagedBuffer<StaticApi>,
+        operation: Operation<StaticApi>,
+        expected_error_message: Option<&str>,
+    ) {
+        let response = self
+            .world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .to(CONTRACT_ADDRESS)
+            .typed(ToSovereignProxy)
+            .execute_operations(hash_of_hashes, operation)
+            .returns(ReturnsHandledOrError::new())
+            .run();
+
+        match response {
+            Ok(_) => assert!(
+                expected_error_message.is_none(),
+                "Transaction was successful, but expected error"
+            ),
+            Err(error) => {
+                assert_eq!(expected_error_message, Some(error.message.as_str()))
+            }
+        }
+    }
+
+    fn set_header_verifier_address(&mut self, header_verifier_address: TestSCAddress) {
+        self.world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .to(CONTRACT_ADDRESS)
+            .typed(ToSovereignProxy)
+            .set_header_verifier_address(header_verifier_address)
+            .run();
+    }
+
+    fn set_esdt_safe_address_in_header_verifier(&mut self, esdt_safe_address: TestSCAddress) {
+        self.world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .to(HEADER_VERIFIER_ADDRESS)
+            .typed(HeaderverifierProxy)
+            .set_esdt_safe_address(esdt_safe_address)
+            .run();
+    }
+
+    fn register_operation(
+        &mut self,
+        signature: ManagedBuffer<StaticApi>,
+        hash_of_hashes: &ManagedBuffer<StaticApi>,
+        operations_hashes: MultiValueEncoded<StaticApi, ManagedBuffer<StaticApi>>,
+    ) {
+        self.world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .to(HEADER_VERIFIER_ADDRESS)
+            .typed(HeaderverifierProxy)
+            .register_bridge_operations(signature, hash_of_hashes, operations_hashes)
+            .run();
+    }
+
+    fn complete_setup_phase(&mut self) {
+        self.world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .to(HEADER_VERIFIER_ADDRESS)
+            .typed(HeaderverifierProxy)
+            .complete_setup_phase()
+            .run();
+    }
+
+    fn change_validator_set(&mut self, validator_set: Vec<ManagedBuffer<StaticApi>>) {
+        self.world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .to(HEADER_VERIFIER_ADDRESS)
+            .typed(HeaderverifierProxy)
+            .change_validator_set(MultiValueEncoded::from(ManagedVec::from(validator_set)))
+            .run()
+    }
+
+    fn get_operation_hash(&mut self, operation: &Operation<StaticApi>) -> ManagedBuffer<StaticApi> {
+        let mut serialized_operation: ManagedBuffer<StaticApi> = ManagedBuffer::new();
+        let _ = operation.top_encode(&mut serialized_operation);
+        let sha256 = sha256(&serialized_operation.to_vec());
+
+        ManagedBuffer::new_from_bytes(&sha256)
     }
 }
 
@@ -756,5 +891,126 @@ fn register_token_nonfungible_token() {
                     &TestTokenIdentifier::new(TEST_TOKEN_ONE).into()
                 )
                 .is_empty());
+        })
+}
+
+#[test]
+fn execute_operation_no_header_verifier_address_registered() {
+    let mut state = ToSovereignTestState::new();
+    let config = EsdtSafeConfig::default_config();
+    state.deploy_contract(config);
+
+    let payment = OperationEsdtPayment::new(
+        TokenIdentifier::from(TEST_TOKEN_ONE),
+        0,
+        EsdtTokenData::default(),
+    );
+
+    let operation_data = OperationData::new(1, OWNER_ADDRESS.to_managed_address(), None);
+
+    let operation = Operation::new(
+        TESTING_SC_ADDRESS.to_managed_address(),
+        vec![payment].into(),
+        operation_data,
+    );
+
+    let hash_of_hashes = state.get_operation_hash(&operation);
+
+    state.execute_operation(
+        hash_of_hashes,
+        operation,
+        Some("There is no registered Header-Verifier address"),
+    );
+}
+
+#[test]
+fn execute_operation_no_esdt_safe_registered() {
+    let mut state = ToSovereignTestState::new();
+    let config = EsdtSafeConfig::default_config();
+    state.deploy_contract(config);
+
+    let payment = OperationEsdtPayment::new(
+        TokenIdentifier::from(TEST_TOKEN_ONE),
+        0,
+        EsdtTokenData::default(),
+    );
+
+    let operation_data = OperationData::new(1, OWNER_ADDRESS.to_managed_address(), None);
+
+    let operation = Operation::new(
+        TESTING_SC_ADDRESS.to_managed_address(),
+        vec![payment].into(),
+        operation_data,
+    );
+
+    let hash_of_hashes = state.get_operation_hash(&operation);
+
+    state.deploy_header_verifier(CHAIN_CONFIG_ADDRESS);
+    state.set_header_verifier_address(HEADER_VERIFIER_ADDRESS);
+
+    state.execute_operation(
+        hash_of_hashes,
+        operation,
+        Some("There is no registered ESDT address"),
+    );
+}
+
+#[test]
+fn execute_operation_setup_phase_not_completed() {
+    let mut state = ToSovereignTestState::new();
+    let config = EsdtSafeConfig::default_config();
+    state.deploy_contract(config);
+
+    let mut token_data = EsdtTokenData::default();
+    token_data.amount = BigUint::from(100u64);
+
+    let payment = OperationEsdtPayment::new(TokenIdentifier::from(TEST_TOKEN_ONE), 0, token_data);
+
+    let gas_limit = 1;
+    let function = ManagedBuffer::<StaticApi>::from("hello");
+    let args =
+        ManagedVec::<StaticApi, ManagedBuffer<StaticApi>>::from(vec![ManagedBuffer::from("1")]);
+
+    let transfer_data = TransferData::new(gas_limit, function, args);
+
+    let operation_data =
+        OperationData::new(1, OWNER_ADDRESS.to_managed_address(), Some(transfer_data));
+
+    let operation = Operation::new(
+        USER.to_managed_address(),
+        vec![payment].into(),
+        operation_data,
+    );
+
+    let operation_hash = state.get_operation_hash(&operation);
+    let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&operation_hash.to_vec()));
+
+    state.deploy_header_verifier(CHAIN_CONFIG_ADDRESS);
+    state.deploy_testing_sc();
+    state.set_header_verifier_address(HEADER_VERIFIER_ADDRESS);
+    state.set_esdt_safe_address_in_header_verifier(CONTRACT_ADDRESS);
+
+    let operations_hashes = MultiValueEncoded::from(ManagedVec::from(vec![operation_hash.clone()]));
+
+    state.deploy_chain_config(SovereignConfig::default_config());
+    state.change_validator_set(vec![ManagedBuffer::from("bls_1")]);
+    state.complete_setup_phase();
+    state.register_operation(ManagedBuffer::new(), &hash_of_hashes, operations_hashes);
+    state.execute_operation(hash_of_hashes, operation.clone(), None);
+
+    state
+        .world
+        .query()
+        .to(HEADER_VERIFIER_ADDRESS)
+        .whitebox(header_verifier::contract_obj, |sc| {
+            let operation_hash_whitebox = ManagedBuffer::new_from_bytes(&operation_hash.to_vec());
+            let hash_of_hashes =
+                ManagedBuffer::new_from_bytes(&sha256(&operation_hash_whitebox.to_vec()));
+
+            assert!(
+                sc.operation_hash_status(&hash_of_hashes, &operation_hash_whitebox)
+                    .get()
+                    == OperationHashStatus::NotLocked
+            );
         })
 }
