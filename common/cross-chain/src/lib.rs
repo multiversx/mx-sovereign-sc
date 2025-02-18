@@ -1,12 +1,8 @@
 #![no_std]
 
-use multiversx_sc::storage::StorageKey;
-use operation::{
-    aliases::{ExtractedFeeResult, GasLimit, TxNonce},
-    TransferData,
-};
-use proxies::fee_market_proxy::FeeMarketProxy;
+use operation::aliases::GasLimit;
 
+pub mod deposit_common;
 pub mod events;
 pub mod storage;
 
@@ -18,108 +14,6 @@ multiversx_sc::imports!();
 
 #[multiversx_sc::module]
 pub trait CrossChainCommon: crate::storage::CrossChainStorage + utils::UtilsModule {
-    fn match_fee_payment(
-        &self,
-        total_tokens_for_fees: usize,
-        fees_payment: &OptionalValue<EsdtTokenPayment<Self::Api>>,
-        opt_transfer_data: &Option<TransferData<<Self as ContractBase>::Api>>,
-    ) {
-        match fees_payment {
-            OptionalValue::Some(fee) => {
-                let mut gas: GasLimit = 0;
-
-                if let Some(transfer_data) = opt_transfer_data {
-                    gas = transfer_data.gas_limit;
-                }
-
-                let fee_market_address = self.fee_market_address().get();
-                let caller = self.blockchain().get_caller();
-
-                self.tx()
-                    .to(fee_market_address)
-                    .typed(FeeMarketProxy)
-                    .subtract_fee(caller, total_tokens_for_fees, OptionalValue::Some(gas))
-                    .payment(fee.clone())
-                    .sync_call();
-            }
-            OptionalValue::None => (),
-        };
-    }
-
-    fn check_and_extract_fee(&self) -> ExtractedFeeResult<Self::Api> {
-        let payments = self.call_value().all_esdt_transfers().clone();
-
-        require!(!payments.is_empty(), "Nothing to transfer");
-        require!(payments.len() <= MAX_TRANSFERS_PER_TX, "Too many tokens");
-
-        let fee_market_address = self.fee_market_address().get();
-        let fee_enabled_mapper = SingleValueMapper::new_from_address(
-            fee_market_address.clone(),
-            StorageKey::from("feeEnabledFlag"),
-        )
-        .get();
-
-        let fee_payment = if fee_enabled_mapper {
-            OptionalValue::Some(self.pop_first_payment(payments.clone()).0)
-        } else {
-            OptionalValue::None
-        };
-
-        MultiValue2::from((fee_payment, payments))
-    }
-
-    fn burn_mainchain_token(
-        &self,
-        payment: EsdtTokenPayment<Self::Api>,
-        payment_token_type: &EsdtTokenType,
-        sov_token_id: &TokenIdentifier<Self::Api>,
-    ) -> u64 {
-        self.tx()
-            .to(ToSelf)
-            .typed(system_proxy::UserBuiltinProxy)
-            .esdt_local_burn(
-                &payment.token_identifier,
-                payment.token_nonce,
-                &payment.amount,
-            )
-            .sync_call();
-
-        let mut sov_token_nonce = 0;
-
-        if payment.token_nonce > 0 {
-            sov_token_nonce = self
-                .multiversx_to_sovereign_esdt_info_mapper(
-                    &payment.token_identifier,
-                    payment.token_nonce,
-                )
-                .get()
-                .token_nonce;
-
-            if self.is_nft(payment_token_type) {
-                self.clear_mvx_to_sov_esdt_info_mapper(
-                    &payment.token_identifier,
-                    payment.token_nonce,
-                );
-
-                self.clear_sov_to_mvx_esdt_info_mapper(sov_token_id, sov_token_nonce);
-            }
-        }
-
-        sov_token_nonce
-    }
-
-    #[inline]
-    fn clear_mvx_to_sov_esdt_info_mapper(&self, id: &TokenIdentifier, nonce: u64) {
-        self.multiversx_to_sovereign_esdt_info_mapper(id, nonce)
-            .take();
-    }
-
-    #[inline]
-    fn clear_sov_to_mvx_esdt_info_mapper(&self, id: &TokenIdentifier, nonce: u64) {
-        self.sovereign_to_multiversx_esdt_info_mapper(id, nonce)
-            .take();
-    }
-
     #[inline]
     fn require_token_not_on_blacklist(&self, token_id: &TokenIdentifier) {
         require!(
@@ -166,11 +60,13 @@ pub trait CrossChainCommon: crate::storage::CrossChainStorage + utils::UtilsModu
     }
 
     #[inline]
-    fn get_and_save_next_tx_id(&self) -> TxNonce {
-        self.last_tx_nonce().update(|last_tx_nonce| {
-            *last_tx_nonce += 1;
-            *last_tx_nonce
-        })
+    fn is_fungible(self, token_type: &EsdtTokenType) -> bool {
+        *token_type == EsdtTokenType::Fungible
+    }
+
+    #[inline]
+    fn is_sft_or_meta(self, token_type: &EsdtTokenType) -> bool {
+        *token_type == EsdtTokenType::SemiFungible || *token_type == EsdtTokenType::Meta
     }
 
     #[inline]
