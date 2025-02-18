@@ -11,6 +11,7 @@ pub trait ToSovereign:
     deposit::DepositModule
     + register_token::RegisterTokenModule
     + cross_chain::CrossChainCommon
+    + cross_chain::deposit_common::DepositCommonModule
     + multiversx_sc_modules::pause::PauseModule
     + max_bridged_amount_module::MaxBridgedAmountModule
     + utils::UtilsModule
