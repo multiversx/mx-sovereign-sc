@@ -961,8 +961,10 @@ fn execute_operation_setup_phase_not_completed() {
     let config = EsdtSafeConfig::default_config();
     state.deploy_contract(config);
 
-    let mut token_data = EsdtTokenData::default();
-    token_data.amount = BigUint::from(100u64);
+    let token_data = EsdtTokenData {
+        amount: BigUint::from(100u64),
+        ..Default::default()
+    };
 
     let payment = OperationEsdtPayment::new(TokenIdentifier::from(TEST_TOKEN_ONE), 0, token_data);
 

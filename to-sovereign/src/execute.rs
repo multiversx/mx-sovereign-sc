@@ -212,7 +212,7 @@ pub trait ExecuteModule:
             }
         }
 
-        self.remove_executed_hash(&hash_of_hashes, &operation_tuple.op_hash);
+        self.remove_executed_hash(hash_of_hashes, &operation_tuple.op_hash);
     }
 
     fn emit_transfer_failed_events(
