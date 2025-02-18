@@ -39,7 +39,7 @@ pub trait ExecuteCommonModule: crate::storage::CrossChainStorage {
 
         require!(
             !header_verifier_address_mapper.is_empty(),
-            "There is no Header-Verifier address registered"
+            "There is no registered Header-Verifier address"
         );
 
         header_verifier_address_mapper.get()
