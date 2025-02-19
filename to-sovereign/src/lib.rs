@@ -10,9 +10,7 @@ pub mod register_token;
 #[multiversx_sc::contract]
 pub trait ToSovereign:
     deposit::DepositModule
-    + execute::ExecuteModule
     + register_token::RegisterTokenModule
-    + cross_chain::CrossChainCommon
     + cross_chain::deposit_common::DepositCommonModule
     + cross_chain::events::EventsModule
     + cross_chain::storage::CrossChainStorage
