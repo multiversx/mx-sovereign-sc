@@ -4,6 +4,7 @@ use operation::aliases::GasLimit;
 
 pub mod deposit_common;
 pub mod events;
+pub mod execute_common;
 pub mod storage;
 
 pub const MAX_TRANSFERS_PER_TX: usize = 10;

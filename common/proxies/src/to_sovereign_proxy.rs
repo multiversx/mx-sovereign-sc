@@ -98,6 +98,19 @@ where
             .original_result()
     }
 
+    pub fn set_header_verifier_address<
+        Arg0: ProxyArg<ManagedAddress<Env::Api>>,
+    >(
+        self,
+        header_verifier_address: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("setHeaderVerifierAddress")
+            .argument(&header_verifier_address)
+            .original_result()
+    }
+
     pub fn deposit<
         Arg0: ProxyArg<ManagedAddress<Env::Api>>,
         Arg1: ProxyArg<OptionalValue<MultiValue3<u64, ManagedBuffer<Env::Api>, ManagedVec<Env::Api, ManagedBuffer<Env::Api>>>>>,
@@ -110,6 +123,22 @@ where
             .raw_call("deposit")
             .argument(&to)
             .argument(&opt_transfer_data)
+            .original_result()
+    }
+
+    pub fn execute_operations<
+        Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
+        Arg1: ProxyArg<operation::Operation<Env::Api>>,
+    >(
+        self,
+        hash_of_hashes: Arg0,
+        operation: Arg1,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("executeBridgeOps")
+            .argument(&hash_of_hashes)
+            .argument(&operation)
             .original_result()
     }
 
