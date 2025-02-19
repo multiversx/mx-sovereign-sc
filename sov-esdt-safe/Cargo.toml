@@ -1,0 +1,51 @@
+[package]
+name = "sov-esdt-safe"
+version = "0.0.0"
+edition = "2021"
+publish = false
+authors = ["you"]
+
+[lib]
+path = "src/lib.rs"
+
+[dependencies.multiversx-sc]
+version = "0.56.1"
+
+[dependencies.multiversx-sc-modules]
+version = "=0.56.1"
+
+[dependencies.testing-sc]
+path = "../testing-sc"
+
+[dependencies.utils]
+path = "../common/utils"
+
+[dependencies.fee-market]
+path = "../fee-market"
+
+[dependencies.operation]
+path = "../common/operation"
+
+[dependencies.cross-chain]
+path = "../common/cross-chain"
+
+[dependencies.setup-phase]
+path = "../common/setup-phase"
+
+[dependencies.proxies]
+path = "../common/proxies"
+
+[dependencies.max-bridged-amount-module]
+path = "../common/max-bridged-amount-module"
+
+[dependencies.header-verifier]
+path = "../header-verifier"
+
+[dependencies.chain-config]
+path = "../chain-config"
+
+[dev-dependencies]
+num-bigint = "0.4"
+
+[dev-dependencies.multiversx-sc-scenario]
+version = "0.56.1"
