@@ -956,7 +956,7 @@ fn execute_operation_no_esdt_safe_registered() {
 }
 
 #[test]
-fn execute_operation_setup_phase_not_completed() {
+fn execute_operation_success() {
     let mut state = ToSovereignTestState::new();
     let config = EsdtSafeConfig::default_config();
     state.deploy_contract(config);
@@ -998,7 +998,6 @@ fn execute_operation_setup_phase_not_completed() {
     state.change_validator_set(vec![ManagedBuffer::from("bls_1")]);
     state.complete_setup_phase();
     state.register_operation(ManagedBuffer::new(), &hash_of_hashes, operations_hashes);
-    state.execute_operation(hash_of_hashes, operation.clone(), None);
 
     state
         .world
@@ -1014,5 +1013,21 @@ fn execute_operation_setup_phase_not_completed() {
                     .get()
                     == OperationHashStatus::NotLocked
             );
+        });
+
+    state.execute_operation(hash_of_hashes, operation.clone(), None);
+
+    state
+        .world
+        .query()
+        .to(HEADER_VERIFIER_ADDRESS)
+        .whitebox(header_verifier::contract_obj, |sc| {
+            let operation_hash_whitebox = ManagedBuffer::new_from_bytes(&operation_hash.to_vec());
+            let hash_of_hashes =
+                ManagedBuffer::new_from_bytes(&sha256(&operation_hash_whitebox.to_vec()));
+
+            assert!(sc
+                .operation_hash_status(&hash_of_hashes, &operation_hash_whitebox)
+                .is_empty());
         })
 }
