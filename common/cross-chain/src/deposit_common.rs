@@ -11,7 +11,7 @@ multiversx_sc::imports!();
 
 #[multiversx_sc::module]
 pub trait DepositCommonModule:
-    crate::storage::CrossChainStorage + utils::UtilsModule + crate::CrossChainCommon
+    crate::storage::CrossChainStorage + crate::execute_common::ExecuteCommonModule + utils::UtilsModule
 {
     fn match_fee_payment(
         &self,
@@ -128,6 +128,51 @@ pub trait DepositCommonModule:
         require!(
             self.sovereign_to_multiversx_token_id_mapper(id).is_empty(),
             "This token was already registered"
+        );
+    }
+
+    #[inline]
+    fn require_token_not_on_blacklist(&self, token_id: &TokenIdentifier) {
+        require!(
+            !self
+                .esdt_safe_config()
+                .get()
+                .token_blacklist
+                .contains(token_id),
+            "Token blacklisted"
+        );
+    }
+
+    #[inline]
+    fn is_token_whitelist_empty(&self) -> bool {
+        self.esdt_safe_config().get().token_whitelist.is_empty()
+    }
+
+    #[inline]
+    fn require_endpoint_not_banned(&self, function: &ManagedBuffer) {
+        require!(
+            !self
+                .esdt_safe_config()
+                .get()
+                .banned_endpoints
+                .contains(function),
+            "Banned endpoint name"
+        );
+    }
+
+    #[inline]
+    fn is_token_whitelisted(&self, token_id: &TokenIdentifier) -> bool {
+        self.esdt_safe_config()
+            .get()
+            .token_whitelist
+            .contains(token_id)
+    }
+
+    #[inline]
+    fn require_gas_limit_under_limit(&self, gas_limit: GasLimit) {
+        require!(
+            gas_limit <= self.esdt_safe_config().get().max_tx_gas_limit,
+            "Gas limit too high"
         );
     }
 }

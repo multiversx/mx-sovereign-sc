@@ -9,11 +9,10 @@ const ESDT_TRANSACTION_GAS: GasLimit = 5_000_000;
 
 #[multiversx_sc::module]
 pub trait ExecuteModule:
-    cross_chain::execute_common::ExecuteCommonModule
-    + cross_chain::CrossChainCommon
-    + cross_chain::events::EventsModule
+    cross_chain::events::EventsModule
     + cross_chain::storage::CrossChainStorage
     + cross_chain::deposit_common::DepositCommonModule
+    + cross_chain::execute_common::ExecuteCommonModule
     + crate::register_token::RegisterTokenModule
     + multiversx_sc_modules::pause::PauseModule
     + utils::UtilsModule

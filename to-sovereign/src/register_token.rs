@@ -7,9 +7,9 @@ multiversx_sc::derive_imports!();
 #[multiversx_sc::module]
 pub trait RegisterTokenModule:
     utils::UtilsModule
-    + cross_chain::CrossChainCommon
     + cross_chain::storage::CrossChainStorage
     + cross_chain::deposit_common::DepositCommonModule
+    + cross_chain::execute_common::ExecuteCommonModule
 {
     #[payable("EGLD")]
     #[endpoint(registerToken)]

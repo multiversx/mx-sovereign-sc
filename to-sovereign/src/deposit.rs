@@ -5,8 +5,8 @@ use operation::{aliases::OptionalValueTransferDataTuple, OperationData, Transfer
 pub trait DepositModule:
     multiversx_sc_modules::pause::PauseModule
     + utils::UtilsModule
-    + cross_chain::CrossChainCommon
     + cross_chain::deposit_common::DepositCommonModule
+    + cross_chain::execute_common::ExecuteCommonModule
     + cross_chain::storage::CrossChainStorage
     + cross_chain::events::EventsModule
     + max_bridged_amount_module::MaxBridgedAmountModule
