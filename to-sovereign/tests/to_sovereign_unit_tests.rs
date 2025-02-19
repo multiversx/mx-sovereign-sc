@@ -111,12 +111,16 @@ impl ToSovereignTestState {
         Self { world }
     }
 
-    fn deploy_contract(&mut self, config: EsdtSafeConfig<StaticApi>) -> &mut Self {
+    fn deploy_contract(
+        &mut self,
+        header_verifier_address: TestSCAddress,
+        config: EsdtSafeConfig<StaticApi>,
+    ) -> &mut Self {
         self.world
             .tx()
             .from(OWNER_ADDRESS)
             .typed(ToSovereignProxy)
-            .init(config)
+            .init(header_verifier_address, config)
             .code(CONTRACT_CODE_PATH)
             .new_address(CONTRACT_ADDRESS)
             .run();
@@ -298,16 +302,6 @@ impl ToSovereignTestState {
         }
     }
 
-    fn set_header_verifier_address(&mut self, header_verifier_address: TestSCAddress) {
-        self.world
-            .tx()
-            .from(OWNER_ADDRESS)
-            .to(CONTRACT_ADDRESS)
-            .typed(ToSovereignProxy)
-            .set_header_verifier_address(header_verifier_address)
-            .run();
-    }
-
     fn set_esdt_safe_address_in_header_verifier(&mut self, esdt_safe_address: TestSCAddress) {
         self.world
             .tx()
@@ -366,14 +360,14 @@ impl ToSovereignTestState {
 fn deploy() {
     let mut state = ToSovereignTestState::new();
 
-    state.deploy_contract(EsdtSafeConfig::default_config());
+    state.deploy_contract(HEADER_VERIFIER_ADDRESS, EsdtSafeConfig::default_config());
 }
 
 #[test]
 fn deposit_nothing_to_transfer() {
     let mut state = ToSovereignTestState::new();
 
-    state.deploy_contract(EsdtSafeConfig::default_config());
+    state.deploy_contract(HEADER_VERIFIER_ADDRESS, EsdtSafeConfig::default_config());
     state.deposit(
         USER.to_managed_address(),
         OptionalValue::None,
@@ -386,7 +380,7 @@ fn deposit_nothing_to_transfer() {
 fn deposit_too_many_tokens() {
     let mut state = ToSovereignTestState::new();
 
-    state.deploy_contract(EsdtSafeConfig::default_config());
+    state.deploy_contract(HEADER_VERIFIER_ADDRESS, EsdtSafeConfig::default_config());
 
     let esdt_token_payment = EsdtTokenPayment::<StaticApi>::new(
         TokenIdentifier::from(TEST_TOKEN_ONE),
@@ -408,7 +402,7 @@ fn deposit_too_many_tokens() {
 fn deposit_no_transfer_data() {
     let mut state = ToSovereignTestState::new();
 
-    state.deploy_contract(EsdtSafeConfig::default_config());
+    state.deploy_contract(HEADER_VERIFIER_ADDRESS, EsdtSafeConfig::default_config());
     state.deploy_fee_market(None);
     state.set_fee_market_address(FEE_MARKET_ADDRESS);
 
@@ -449,7 +443,7 @@ fn deposit_gas_limit_too_high() {
     let mut state = ToSovereignTestState::new();
 
     let config = EsdtSafeConfig::new(ManagedVec::new(), ManagedVec::new(), 1, ManagedVec::new());
-    state.deploy_contract(config);
+    state.deploy_contract(HEADER_VERIFIER_ADDRESS, config);
     state.deploy_fee_market(None);
     state.deploy_testing_sc();
     state.set_fee_market_address(FEE_MARKET_ADDRESS);
@@ -494,7 +488,7 @@ fn deposit_endpoint_banned() {
         ManagedVec::from(vec![ManagedBuffer::from("hello")]),
     );
 
-    state.deploy_contract(config);
+    state.deploy_contract(HEADER_VERIFIER_ADDRESS, config);
     state.deploy_fee_market(None);
     state.deploy_testing_sc();
     state.set_fee_market_address(FEE_MARKET_ADDRESS);
@@ -539,7 +533,7 @@ fn deposit_fee_enabled() {
         ManagedVec::new(),
     );
 
-    state.deploy_contract(config);
+    state.deploy_contract(HEADER_VERIFIER_ADDRESS, config);
 
     let per_transfer = BigUint::from(100u64);
     let per_gas = BigUint::from(1u64);
@@ -631,7 +625,7 @@ fn deposit_payment_doesnt_cover_fee() {
         ManagedVec::new(),
     );
 
-    state.deploy_contract(config);
+    state.deploy_contract(HEADER_VERIFIER_ADDRESS, config);
 
     let fee = FeeStruct {
         base_token: TokenIdentifier::from(TEST_TOKEN_ONE),
@@ -686,7 +680,7 @@ fn deposit_refund() {
         ManagedVec::new(),
     );
 
-    state.deploy_contract(config);
+    state.deploy_contract(HEADER_VERIFIER_ADDRESS, config);
 
     let per_transfer = BigUint::from(100u64);
     let per_gas = BigUint::from(1u64);
@@ -774,7 +768,7 @@ fn deposit_refund() {
 fn register_token_not_enough_egld() {
     let mut state = ToSovereignTestState::new();
     let config = EsdtSafeConfig::default_config();
-    state.deploy_contract(config);
+    state.deploy_contract(HEADER_VERIFIER_ADDRESS, config);
 
     let sov_token_id = TestTokenIdentifier::new(TEST_TOKEN_ONE);
     let token_type = EsdtTokenType::Fungible;
@@ -802,7 +796,7 @@ fn register_token_not_enough_egld() {
 fn register_token_invalid_type() {
     let mut state = ToSovereignTestState::new();
     let config = EsdtSafeConfig::default_config();
-    state.deploy_contract(config);
+    state.deploy_contract(HEADER_VERIFIER_ADDRESS, config);
 
     let sov_token_id = TestTokenIdentifier::new(TEST_TOKEN_ONE);
     let token_type = EsdtTokenType::Invalid;
@@ -826,7 +820,7 @@ fn register_token_invalid_type() {
 fn register_token_fungible_token() {
     let mut state = ToSovereignTestState::new();
     let config = EsdtSafeConfig::default_config();
-    state.deploy_contract(config);
+    state.deploy_contract(HEADER_VERIFIER_ADDRESS, config);
 
     let sov_token_id = TestTokenIdentifier::new(TEST_TOKEN_ONE);
     let token_type = EsdtTokenType::Fungible;
@@ -862,7 +856,7 @@ fn register_token_fungible_token() {
 fn register_token_nonfungible_token() {
     let mut state = ToSovereignTestState::new();
     let config = EsdtSafeConfig::default_config();
-    state.deploy_contract(config);
+    state.deploy_contract(HEADER_VERIFIER_ADDRESS, config);
 
     let sov_token_id = TestTokenIdentifier::new(TEST_TOKEN_ONE);
     let token_type = EsdtTokenType::NonFungible;
@@ -895,39 +889,10 @@ fn register_token_nonfungible_token() {
 }
 
 #[test]
-fn execute_operation_no_header_verifier_address_registered() {
-    let mut state = ToSovereignTestState::new();
-    let config = EsdtSafeConfig::default_config();
-    state.deploy_contract(config);
-
-    let payment = OperationEsdtPayment::new(
-        TokenIdentifier::from(TEST_TOKEN_ONE),
-        0,
-        EsdtTokenData::default(),
-    );
-
-    let operation_data = OperationData::new(1, OWNER_ADDRESS.to_managed_address(), None);
-
-    let operation = Operation::new(
-        TESTING_SC_ADDRESS.to_managed_address(),
-        vec![payment].into(),
-        operation_data,
-    );
-
-    let hash_of_hashes = state.get_operation_hash(&operation);
-
-    state.execute_operation(
-        hash_of_hashes,
-        operation,
-        Some("There is no registered Header-Verifier address"),
-    );
-}
-
-#[test]
 fn execute_operation_no_esdt_safe_registered() {
     let mut state = ToSovereignTestState::new();
     let config = EsdtSafeConfig::default_config();
-    state.deploy_contract(config);
+    state.deploy_contract(HEADER_VERIFIER_ADDRESS, config);
 
     let payment = OperationEsdtPayment::new(
         TokenIdentifier::from(TEST_TOKEN_ONE),
@@ -946,7 +911,6 @@ fn execute_operation_no_esdt_safe_registered() {
     let hash_of_hashes = state.get_operation_hash(&operation);
 
     state.deploy_header_verifier(CHAIN_CONFIG_ADDRESS);
-    state.set_header_verifier_address(HEADER_VERIFIER_ADDRESS);
 
     state.execute_operation(
         hash_of_hashes,
@@ -959,7 +923,7 @@ fn execute_operation_no_esdt_safe_registered() {
 fn execute_operation_success() {
     let mut state = ToSovereignTestState::new();
     let config = EsdtSafeConfig::default_config();
-    state.deploy_contract(config);
+    state.deploy_contract(HEADER_VERIFIER_ADDRESS, config);
 
     let token_data = EsdtTokenData {
         amount: BigUint::from(100u64),
@@ -989,7 +953,6 @@ fn execute_operation_success() {
 
     state.deploy_header_verifier(CHAIN_CONFIG_ADDRESS);
     state.deploy_testing_sc();
-    state.set_header_verifier_address(HEADER_VERIFIER_ADDRESS);
     state.set_esdt_safe_address_in_header_verifier(CONTRACT_ADDRESS);
 
     let operations_hashes = MultiValueEncoded::from(ManagedVec::from(vec![operation_hash.clone()]));
