@@ -44,14 +44,17 @@ where
     Gas: TxGas<Env>,
 {
     pub fn init<
-        Arg0: ProxyArg<operation::EsdtSafeConfig<Env::Api>>,
+        Arg0: ProxyArg<ManagedAddress<Env::Api>>,
+        Arg1: ProxyArg<operation::EsdtSafeConfig<Env::Api>>,
     >(
         self,
-        esdt_safe_config: Arg0,
+        header_verifier_address: Arg0,
+        esdt_safe_config: Arg1,
     ) -> TxTypedDeploy<Env, From, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_deploy()
+            .argument(&header_verifier_address)
             .argument(&esdt_safe_config)
             .original_result()
     }
@@ -95,19 +98,6 @@ where
             .payment(NotPayable)
             .raw_call("setFeeMarketAddress")
             .argument(&fee_market_address)
-            .original_result()
-    }
-
-    pub fn set_header_verifier_address<
-        Arg0: ProxyArg<ManagedAddress<Env::Api>>,
-    >(
-        self,
-        header_verifier_address: Arg0,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("setHeaderVerifierAddress")
-            .argument(&header_verifier_address)
             .original_result()
     }
 
