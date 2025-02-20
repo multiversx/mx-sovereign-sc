@@ -59,11 +59,9 @@ pub trait DepositModule:
                     &sov_token_id,
                 );
 
-                event_payments.push(MultiValue3::from((
-                    sov_token_id,
-                    sov_token_nonce,
-                    current_token_data,
-                )));
+                event_payments.push(
+                    MultiValue3::from((sov_token_id, sov_token_nonce, current_token_data)).into(),
+                );
             } else {
                 event_payments.push(MultiValue3::from((
                     payment.token_identifier.clone(),
