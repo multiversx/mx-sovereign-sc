@@ -4,6 +4,7 @@ use multiversx_sc::{
     types::{BigUint, ManagedBuffer, ManagedVec, TokenIdentifier},
 };
 use multiversx_sc_scenario::api::StaticApi;
+use multiversx_sc_scenario::ScenarioTxWhitebox;
 use operation::{aliases::PaymentsVec, EsdtSafeConfig};
 use proxies::fee_market_proxy::{FeeStruct, FeeType};
 use setup::{
@@ -11,6 +12,7 @@ use setup::{
     HEADER_VERIFIER_ADDRESS, ONE_HUNDRED_MILLION, ONE_HUNDRED_THOUSAND, OWNER_ADDRESS,
     TEST_TOKEN_ONE, TEST_TOKEN_TWO, USER,
 };
+use sov_esdt_safe::SovEsdtSafe;
 
 mod setup;
 
@@ -25,12 +27,12 @@ fn deploy() {
 fn deposit() {
     let mut state = SovEsdtSafeTestState::new();
 
-    let config = EsdtSafeConfig::new(
-        ManagedVec::new(),
-        ManagedVec::new(),
-        50_000_000,
-        ManagedVec::new(),
-    );
+    // let config = EsdtSafeConfig::new(
+    //     ManagedVec::new(),
+    //     ManagedVec::new(),
+    //     50_000_000,
+    //     ManagedVec::new(),
+    // );
 
     state
         .world
@@ -41,10 +43,21 @@ fn deposit() {
         .esdt_roles(
             TokenIdentifier::from(TEST_TOKEN_ONE),
             vec!["ESDTLocalBurn".to_string(), "ESDTNftBurn".to_string()],
-        )
-        .whitebox(init());
+        );
 
-    state.deploy_contract(HEADER_VERIFIER_ADDRESS, config);
+    state
+        .world
+        .tx()
+        .from(OWNER_ADDRESS)
+        .to(CONTRACT_ADDRESS)
+        .whitebox(sov_esdt_safe::contract_obj, |sc| {
+            sc.init(
+                HEADER_VERIFIER_ADDRESS.to_managed_address(),
+                EsdtSafeConfig::default_config(),
+            );
+        });
+    //
+    // state.deploy_contract(HEADER_VERIFIER_ADDRESS, config);
 
     let per_transfer = BigUint::from(100u64);
     let per_gas = BigUint::from(1u64);
