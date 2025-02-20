@@ -8,10 +8,14 @@ pub mod deposit;
 
 #[multiversx_sc::contract]
 pub trait SovEsdtSafe:
-    cross_chain::deposit_common::DepositCommonModule
+    deposit::DepositModule
+    + cross_chain::deposit_common::DepositCommonModule
     + cross_chain::execute_common::ExecuteCommonModule
     + cross_chain::storage::CrossChainStorage
+    + cross_chain::events::EventsModule
     + utils::UtilsModule
+    + max_bridged_amount_module::MaxBridgedAmountModule
+    + multiversx_sc_modules::pause::PauseModule
 {
     #[init]
     fn init(&self, header_verifier_address: ManagedAddress, config: EsdtSafeConfig<Self::Api>) {
