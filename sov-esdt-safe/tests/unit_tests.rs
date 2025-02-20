@@ -27,13 +27,6 @@ fn deploy() {
 fn deposit() {
     let mut state = SovEsdtSafeTestState::new();
 
-    let config = EsdtSafeConfig::new(
-        ManagedVec::new(),
-        ManagedVec::new(),
-        50_000_000,
-        ManagedVec::new(),
-    );
-
     state
         .world
         .account(CONTRACT_ADDRESS)
@@ -68,6 +61,13 @@ fn deposit() {
         .from(OWNER_ADDRESS)
         .to(CONTRACT_ADDRESS)
         .whitebox(sov_esdt_safe::contract_obj, |sc| {
+            let config = EsdtSafeConfig::new(
+                ManagedVec::new(),
+                ManagedVec::new(),
+                50_000_000,
+                ManagedVec::new(),
+            );
+
             sc.init(HEADER_VERIFIER_ADDRESS.to_managed_address(), config);
         });
 
