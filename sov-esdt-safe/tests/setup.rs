@@ -115,25 +115,6 @@ impl SovEsdtSafeTestState {
         self
     }
 
-    // pub fn deploy_contract_with_esdt_roles(
-    //     &mut self,
-    //     header_verifier_address: TestSCAddress,
-    //     config: EsdtSafeConfig<StaticApi>,
-    // ) -> &mut Self {
-    //     self.world
-    //         .account(CONTRACT_ADDRESS)
-    //         .nonce(1)
-    //         .code(CONTRACT_CODE_PATH)
-    //         .owner(OWNER_ADDRESS)
-    //         .esdt_roles(
-    //             TokenIdentifier::from(TEST_TOKEN_ONE),
-    //             vec!["ESDTLocalBurn".to_string(), "ESDTNftBurn".to_string()],
-    //         )
-    //         .whitebox(init());
-    //
-    //     self
-    // }
-
     pub fn deposit(
         &mut self,
         to: ManagedAddress<StaticApi>,
