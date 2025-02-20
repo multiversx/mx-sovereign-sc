@@ -1,7 +1,7 @@
 use multiversx_sc::storage::StorageKey;
 use operation::{
     aliases::{ExtractedFeeResult, GasLimit, TxNonce},
-    TransferData,
+    EventPayment, TransferData,
 };
 use proxies::fee_market_proxy::FeeMarketProxy;
 
@@ -61,6 +61,48 @@ pub trait DepositCommonModule:
         };
 
         MultiValue2::from((fee_payment, payments))
+    }
+
+    fn burn_sovereign_token(&self, payment: &EsdtTokenPayment<Self::Api>) {
+        self.tx()
+            .to(ToSelf)
+            .typed(system_proxy::UserBuiltinProxy)
+            .esdt_local_burn(
+                &payment.token_identifier,
+                payment.token_nonce,
+                &payment.amount,
+            )
+            .sync_call();
+    }
+
+    fn get_event_payment(&self, payment: &EsdtTokenPayment<Self::Api>) -> EventPayment<Self::Api> {
+        let own_sc_address = self.blockchain().get_sc_address();
+
+        let mut current_token_data = self.blockchain().get_esdt_token_data(
+            &own_sc_address,
+            &payment.token_identifier,
+            payment.token_nonce,
+        );
+        current_token_data.amount = payment.amount.clone();
+
+        MultiValue3::from((
+            payment.token_identifier.clone(),
+            payment.token_nonce,
+            current_token_data,
+        ))
+        .into()
+    }
+
+    #[inline]
+    fn refund_tokens(
+        &self,
+        caller: &ManagedAddress,
+        refundable_payments: ManagedVec<EsdtTokenPayment<Self::Api>>,
+    ) {
+        self.tx()
+            .to(caller)
+            .multi_esdt(refundable_payments)
+            .transfer();
     }
 
     fn burn_mainchain_token(

@@ -26,8 +26,6 @@ pub trait DepositModule:
         let mut event_payments = MultiValueEncoded::new();
         let mut refundable_payments = ManagedVec::<Self::Api, _>::new();
 
-        let own_sc_address = self.blockchain().get_sc_address();
-
         for payment in &payments {
             self.require_below_max_amount(&payment.token_identifier, &payment.amount);
             self.require_token_not_on_blacklist(&payment.token_identifier);
@@ -42,28 +40,9 @@ pub trait DepositModule:
                 total_tokens_for_fees += 1;
             }
 
-            let mut current_token_data = self.blockchain().get_esdt_token_data(
-                &own_sc_address,
-                &payment.token_identifier,
-                payment.token_nonce,
-            );
-            current_token_data.amount = payment.amount.clone();
+            self.burn_sovereign_token(&payment);
 
-            self.tx()
-                .to(ToSelf)
-                .typed(system_proxy::UserBuiltinProxy)
-                .esdt_local_burn(
-                    &payment.token_identifier,
-                    payment.token_nonce,
-                    &payment.amount,
-                )
-                .sync_call();
-
-            event_payments.push(MultiValue3::from((
-                payment.token_identifier.clone(),
-                payment.token_nonce,
-                current_token_data,
-            )));
+            event_payments.push(self.get_event_payment(&payment));
         }
 
         let option_transfer_data = TransferData::from_optional_value(opt_transfer_data);
@@ -76,10 +55,8 @@ pub trait DepositModule:
 
         // refund tokens
         let caller = self.blockchain().get_caller();
-        self.tx()
-            .to(&caller)
-            .multi_esdt(refundable_payments)
-            .transfer();
+
+        self.refund_tokens(&caller, refundable_payments);
 
         let tx_nonce = self.get_and_save_next_tx_id();
         self.deposit_event(
