@@ -1,4 +1,4 @@
-use multiversx_sc::types::EsdtTokenPayment;
+use multiversx_sc::types::{EsdtLocalRole, EsdtTokenPayment};
 use multiversx_sc::{
     imports::{MultiValue3, OptionalValue},
     types::{BigUint, ManagedBuffer, ManagedVec, TokenIdentifier},
@@ -27,12 +27,12 @@ fn deploy() {
 fn deposit() {
     let mut state = SovEsdtSafeTestState::new();
 
-    // let config = EsdtSafeConfig::new(
-    //     ManagedVec::new(),
-    //     ManagedVec::new(),
-    //     50_000_000,
-    //     ManagedVec::new(),
-    // );
+    let config = EsdtSafeConfig::new(
+        ManagedVec::new(),
+        ManagedVec::new(),
+        50_000_000,
+        ManagedVec::new(),
+    );
 
     state
         .world
@@ -42,7 +42,24 @@ fn deposit() {
         .owner(OWNER_ADDRESS)
         .esdt_roles(
             TokenIdentifier::from(TEST_TOKEN_ONE),
-            vec!["ESDTLocalBurn".to_string(), "ESDTNftBurn".to_string()],
+            vec![
+                EsdtLocalRole::Burn.name().to_string(),
+                EsdtLocalRole::NftBurn.name().to_string(),
+            ],
+        )
+        .esdt_roles(
+            TokenIdentifier::from(TEST_TOKEN_TWO),
+            vec![
+                EsdtLocalRole::Burn.name().to_string(),
+                EsdtLocalRole::NftBurn.name().to_string(),
+            ],
+        )
+        .esdt_roles(
+            TokenIdentifier::from(FEE_TOKEN),
+            vec![
+                EsdtLocalRole::Burn.name().to_string(),
+                EsdtLocalRole::NftBurn.name().to_string(),
+            ],
         );
 
     state
@@ -51,13 +68,8 @@ fn deposit() {
         .from(OWNER_ADDRESS)
         .to(CONTRACT_ADDRESS)
         .whitebox(sov_esdt_safe::contract_obj, |sc| {
-            sc.init(
-                HEADER_VERIFIER_ADDRESS.to_managed_address(),
-                EsdtSafeConfig::default_config(),
-            );
+            sc.init(HEADER_VERIFIER_ADDRESS.to_managed_address(), config);
         });
-    //
-    // state.deploy_contract(HEADER_VERIFIER_ADDRESS, config);
 
     let per_transfer = BigUint::from(100u64);
     let per_gas = BigUint::from(1u64);
@@ -74,17 +86,6 @@ fn deposit() {
     state.deploy_fee_market(Some(fee));
     state.deploy_testing_sc();
     state.set_fee_market_address(FEE_MARKET_ADDRESS);
-
-    state
-        .world
-        .account(CONTRACT_ADDRESS)
-        .nonce(1)
-        .code(CONTRACT_CODE_PATH)
-        .owner(OWNER_ADDRESS)
-        .esdt_roles(
-            TokenIdentifier::from(TEST_TOKEN_ONE),
-            vec!["ESDTLocalBurn".to_string(), "ESDTNftBurn".to_string()],
-        );
 
     let fee_amount = BigUint::from(ONE_HUNDRED_THOUSAND);
 
