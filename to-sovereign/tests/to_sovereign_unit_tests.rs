@@ -74,6 +74,7 @@ fn world() -> ScenarioWorld {
 
     blockchain
 }
+
 struct ToSovereignTestState {
     world: ScenarioWorld,
 }
