@@ -32,7 +32,7 @@ const HEADER_VERIFIER_CODE_PATH: MxscPath =
 const USER_ADDRESS: TestAddress = TestAddress::new("user");
 const RECEIVER_ADDRESS: TestAddress = TestAddress::new("receiver");
 
-const BRIDGE_OWNER_BALANCE: u64 = 100_000_000_000_000_000;
+const BRIDGE_OWNER_BALANCE: u64 = 100_000_000_000_000_000; // 1 EGLD
 const USER_EGLD_BALANCE: u64 = 100_000_000;
 
 const NFT_TOKEN_ID: TestTokenIdentifier = TestTokenIdentifier::new("NFT-123456");
