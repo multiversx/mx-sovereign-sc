@@ -1,7 +1,6 @@
 multiversx_sc::imports!();
 multiversx_sc::derive_imports!();
 
-const DEFAULT_ISSUE_COST: u64 = 50_000_000_000_000_000; // 0.05 EGLD
 const REGISTER_GAS: u64 = 60_000_000;
 
 #[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, TypeAbi, ManagedVecItem, Clone)]
@@ -40,10 +39,6 @@ pub trait TokenMappingModule: utils::UtilsModule {
         self.require_token_has_prefix(&sov_token_id);
 
         let issue_cost = self.call_value().egld_value().clone_value();
-        require!(
-            issue_cost > DEFAULT_ISSUE_COST,
-            "eGLD value should be more than 0.05"
-        );
 
         self.require_sov_token_id_not_registered(&sov_token_id);
 
