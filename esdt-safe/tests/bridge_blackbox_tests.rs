@@ -1,6 +1,5 @@
 use bls_signature::BlsSignature;
 use esdt_safe::esdt_safe_proxy::{self, EsdtSafeProxy};
-use esdt_safe::from_sovereign::token_mapping::TokenMappingModule;
 use fee_market::fee_market_proxy::{self, FeeStruct, FeeType};
 use header_verifier::header_verifier_proxy;
 use multiversx_sc::codec::TopEncode;
@@ -16,7 +15,7 @@ use multiversx_sc_scenario::multiversx_chain_vm::crypto_functions::sha256;
 use multiversx_sc_scenario::{
     api::StaticApi, imports::MxscPath, ExpectError, ScenarioTxRun, ScenarioWorld,
 };
-use multiversx_sc_scenario::{managed_address, ReturnsHandledOrError, ScenarioTxWhitebox};
+use multiversx_sc_scenario::{managed_address, ReturnsHandledOrError};
 use transaction::{Operation, OperationData, OperationEsdtPayment};
 
 const BRIDGE_ADDRESS: TestSCAddress = TestSCAddress::new("bridge");
