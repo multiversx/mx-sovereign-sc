@@ -1066,7 +1066,7 @@ impl ContractInteract {
 // All interactor tests should only be ignored when pushed to Github
 // Those System Tests are intended to run locally since they won't work on Github Actions
 #[tokio::test]
-#[ignore]
+#[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn test_deploy_sov() {
     let mut interact = ContractInteract::new().await;
     interact.deploy(false).await;
