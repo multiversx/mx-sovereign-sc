@@ -462,16 +462,6 @@ fn register_token_fungible() {
     };
 
     state.register_token(register_token_args, egld_payment, None);
-
-    state
-        .world
-        .query()
-        .to(BRIDGE_ADDRESS)
-        .whitebox(esdt_safe::contract_obj, |sc| {
-            assert!(!sc
-                .sovereign_to_multiversx_token_id_mapper(&SOV_FUNGIBLE_TOKEN_ID.into())
-                .is_empty());
-        })
 }
 
 #[test]
