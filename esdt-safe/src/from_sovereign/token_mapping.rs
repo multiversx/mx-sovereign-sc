@@ -41,8 +41,8 @@ pub trait TokenMappingModule: utils::UtilsModule {
 
         let issue_cost = self.call_value().egld_value().clone_value();
         require!(
-            issue_cost == DEFAULT_ISSUE_COST,
-            "eGLD value should be 0.05"
+            issue_cost > DEFAULT_ISSUE_COST,
+            "eGLD value should be more than 0.05"
         );
 
         self.require_sov_token_id_not_registered(&sov_token_id);

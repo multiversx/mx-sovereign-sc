@@ -1,21 +1,21 @@
 use bls_signature::BlsSignature;
-use esdt_safe::esdt_safe_proxy::{self};
+use esdt_safe::esdt_safe_proxy::{self, EsdtSafeProxy};
 use fee_market::fee_market_proxy::{self, FeeStruct, FeeType};
 use header_verifier::header_verifier_proxy;
 use multiversx_sc::codec::TopEncode;
 use multiversx_sc::types::{
-    Address, EsdtTokenData, ManagedByteArray, MultiValueEncoded, TestTokenIdentifier,
-    TokenIdentifier,
+    Address, EsdtTokenData, EsdtTokenType, ManagedByteArray, MultiValueEncoded,
+    TestTokenIdentifier, TokenIdentifier,
 };
 use multiversx_sc::{
     imports::{MultiValue3, OptionalValue},
     types::{BigUint, EsdtTokenPayment, ManagedBuffer, ManagedVec, TestAddress, TestSCAddress},
 };
-use multiversx_sc_scenario::managed_address;
 use multiversx_sc_scenario::multiversx_chain_vm::crypto_functions::sha256;
 use multiversx_sc_scenario::{
     api::StaticApi, imports::MxscPath, ExpectError, ScenarioTxRun, ScenarioWorld,
 };
+use multiversx_sc_scenario::{managed_address, ReturnsHandledOrError};
 use transaction::{Operation, OperationData, OperationEsdtPayment};
 
 const BRIDGE_ADDRESS: TestSCAddress = TestSCAddress::new("bridge");
@@ -32,11 +32,21 @@ const HEADER_VERIFIER_CODE_PATH: MxscPath =
 const USER_ADDRESS: TestAddress = TestAddress::new("user");
 const RECEIVER_ADDRESS: TestAddress = TestAddress::new("receiver");
 
-const BRIDGE_OWNER_BALANCE: u64 = 100_000_000;
+const BRIDGE_OWNER_BALANCE: u64 = 100_000_000_000_000_000; // 1 EGLD
 const USER_EGLD_BALANCE: u64 = 100_000_000;
 
 const NFT_TOKEN_ID: TestTokenIdentifier = TestTokenIdentifier::new("NFT-123456");
 const FUNGIBLE_TOKEN_ID: TestTokenIdentifier = TestTokenIdentifier::new("CROWD-123456");
+const SOV_FUNGIBLE_TOKEN_ID: TestTokenIdentifier = TestTokenIdentifier::new("SOV-CROWD-123456");
+const DEFAULT_ISSUE_COST: u64 = 50_000_000_000_000_000; // 0.05 EGLD
+
+struct RegisterTokenArgs<'a> {
+    sov_token_id: TestTokenIdentifier<'a>,
+    token_type: EsdtTokenType,
+    token_display_name: &'a str,
+    token_ticker: TestTokenIdentifier<'a>,
+    num_decimals: usize,
+}
 
 fn world() -> ScenarioWorld {
     let mut blockchain = ScenarioWorld::new();
@@ -320,6 +330,40 @@ impl BridgeTestState {
             .run();
     }
 
+    fn register_token(
+        &mut self,
+        register_token_args: RegisterTokenArgs,
+        payment: BigUint<StaticApi>,
+        expected_error_message: Option<&str>,
+    ) {
+        let response = self
+            .world
+            .tx()
+            .from(BRIDGE_OWNER_ADDRESS)
+            .to(BRIDGE_ADDRESS)
+            .typed(EsdtSafeProxy)
+            .register_token(
+                register_token_args.sov_token_id,
+                register_token_args.token_type,
+                ManagedBuffer::from(register_token_args.token_display_name),
+                ManagedBuffer::from(register_token_args.token_ticker.as_str()),
+                register_token_args.num_decimals,
+            )
+            .egld(payment)
+            .returns(ReturnsHandledOrError::new())
+            .run();
+
+        match response {
+            Ok(_) => assert!(
+                expected_error_message.is_none(),
+                "Transaction was successful, but expected error"
+            ),
+            Err(error) => {
+                assert_eq!(expected_error_message, Some(error.message.as_str()))
+            }
+        }
+    }
+
     fn setup_payments(
         &mut self,
         token_ids: Vec<TestTokenIdentifier>,
@@ -393,6 +437,58 @@ fn test_main_to_sov_deposit_ok() {
     state.deploy_bridge_contract(false);
 
     state.propose_esdt_deposit();
+}
+
+#[test]
+fn register_token_fungible() {
+    let mut state = BridgeTestState::new();
+
+    state.deploy_bridge_contract(false);
+
+    let sov_token_id = SOV_FUNGIBLE_TOKEN_ID;
+    let token_type = EsdtTokenType::Fungible;
+    let token_display_name = "TokenOne";
+    let token_ticker = SOV_FUNGIBLE_TOKEN_ID;
+    let num_decimals = 3;
+    let egld_payment = BigUint::from(DEFAULT_ISSUE_COST + 1);
+
+    let register_token_args = RegisterTokenArgs {
+        sov_token_id,
+        token_type,
+        token_display_name,
+        token_ticker,
+        num_decimals,
+    };
+
+    state.register_token(register_token_args, egld_payment, None);
+}
+
+#[test]
+fn register_token_not_enough_egld() {
+    let mut state = BridgeTestState::new();
+
+    state.deploy_bridge_contract(false);
+
+    let sov_token_id = SOV_FUNGIBLE_TOKEN_ID;
+    let token_type = EsdtTokenType::Fungible;
+    let token_display_name = "TokenOne";
+    let token_ticker = SOV_FUNGIBLE_TOKEN_ID;
+    let num_decimals = 3;
+    let egld_payment = BigUint::from(DEFAULT_ISSUE_COST);
+
+    let register_token_args = RegisterTokenArgs {
+        sov_token_id,
+        token_type,
+        token_display_name,
+        token_ticker,
+        num_decimals,
+    };
+
+    state.register_token(
+        register_token_args,
+        egld_payment,
+        Some("eGLD value should be more than 0.05"),
+    );
 }
 
 #[test]
