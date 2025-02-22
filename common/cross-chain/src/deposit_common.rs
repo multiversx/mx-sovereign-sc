@@ -1,7 +1,6 @@
-use multiversx_sc::storage::StorageKey;
 use operation::{
     aliases::{ExtractedFeeResult, GasLimit, TxNonce},
-    EventPayment, TransferData,
+    TransferData,
 };
 use proxies::fee_market_proxy::FeeMarketProxy;
 
