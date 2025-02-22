@@ -46,21 +46,23 @@ pub trait DepositCommonModule:
 
         require!(!payments.is_empty(), "Nothing to transfer");
         require!(payments.len() <= MAX_TRANSFERS_PER_TX, "Too many tokens");
+        let is_fee_enabled = self
+            .external_fee_enabled(self.fee_market_address().get())
+            .get();
 
-        let fee_market_address = self.fee_market_address().get();
-        let fee_enabled_mapper = SingleValueMapper::new_from_address(
-            fee_market_address.clone(),
-            StorageKey::from("feeEnabledFlag"),
-        )
-        .get();
-
-        let fee_payment = if fee_enabled_mapper {
-            OptionalValue::Some(self.pop_first_payment(payments.clone()).0)
-        } else {
-            OptionalValue::None
+        if !is_fee_enabled {
+            return MultiValue2::from((OptionalValue::None, payments));
         };
 
-        MultiValue2::from((fee_payment, payments))
+        let (fee_payment, popped_payments) = self.pop_first_payment(payments.clone());
+
+        MultiValue2::from((OptionalValue::Some(fee_payment), popped_payments))
+    }
+
+    fn is_fee_token(&self, token_id: &TokenIdentifier) -> bool {
+        !self
+            .external_token_fee(self.fee_market_address().get(), token_id)
+            .is_empty()
     }
 
     fn burn_sovereign_token(&self, payment: &EsdtTokenPayment<Self::Api>) {
