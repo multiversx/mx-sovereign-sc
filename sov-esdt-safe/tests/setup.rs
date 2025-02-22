@@ -1,22 +1,14 @@
-use multiversx_sc::{
-    codec::TopEncode,
-    types::{
-        BigUint, ManagedAddress, ManagedBuffer, ManagedVec, MultiValueEncoded, TestAddress,
-        TestSCAddress, TokenIdentifier,
-    },
-};
+use multiversx_sc::types::{BigUint, ManagedAddress, TestAddress, TestSCAddress, TokenIdentifier};
 use multiversx_sc_scenario::{
-    api::StaticApi, imports::MxscPath, multiversx_chain_vm::crypto_functions::sha256,
-    scenario_model::Log, ReturnsHandledOrError, ReturnsLogs, ScenarioTxRun, ScenarioWorld,
+    api::StaticApi, imports::MxscPath, scenario_model::Log, ReturnsHandledOrError, ReturnsLogs,
+    ScenarioTxRun, ScenarioWorld,
 };
 use operation::{
     aliases::{OptionalValueTransferDataTuple, PaymentsVec},
-    EsdtSafeConfig, Operation, SovereignConfig,
+    EsdtSafeConfig,
 };
 use proxies::{
-    chain_config_proxy::ChainConfigContractProxy,
     fee_market_proxy::{FeeMarketProxy, FeeStruct},
-    header_verifier_proxy::HeaderverifierProxy,
     sov_esdt_safe_proxy::SovEsdtSafeProxy,
     testing_sc_proxy::TestingScProxy,
 };
@@ -31,9 +23,9 @@ pub const HEADER_VERIFIER_ADDRESS: TestSCAddress = TestSCAddress::new("header-ve
 const HEADER_VERIFIER_CODE_PATH: MxscPath =
     MxscPath::new("../header-verifier/output/header-verifier.mxsc.json");
 
-pub const CHAIN_CONFIG_ADDRESS: TestSCAddress = TestSCAddress::new("chain-config");
-const CHAIN_CONFIG_CODE_PATH: MxscPath =
-    MxscPath::new("../chain-config/output/chain-config.mxsc.json");
+// pub const CHAIN_CONFIG_ADDRESS: TestSCAddress = TestSCAddress::new("chain-config");
+// const CHAIN_CONFIG_CODE_PATH: MxscPath =
+//     MxscPath::new("../chain-config/output/chain-config.mxsc.json");
 
 pub const TESTING_SC_ADDRESS: TestSCAddress = TestSCAddress::new("testing-sc");
 const TESTING_SC_CODE_PATH: MxscPath = MxscPath::new("../testing-sc/output/testing-sc.mxsc.json");
@@ -55,7 +47,7 @@ fn world() -> ScenarioWorld {
     blockchain.register_contract(CONTRACT_CODE_PATH, sov_esdt_safe::ContractBuilder);
     blockchain.register_contract(FEE_MARKET_CODE_PATH, fee_market::ContractBuilder);
     blockchain.register_contract(HEADER_VERIFIER_CODE_PATH, header_verifier::ContractBuilder);
-    blockchain.register_contract(CHAIN_CONFIG_CODE_PATH, chain_config::ContractBuilder);
+    // blockchain.register_contract(CHAIN_CONFIG_CODE_PATH, chain_config::ContractBuilder);
     blockchain.register_contract(TESTING_SC_CODE_PATH, testing_sc::ContractBuilder);
 
     blockchain

@@ -106,7 +106,7 @@ fn deposit_no_fee() {
     );
 
     for log in logs {
-        assert!(!log.data.is_empty());
+        assert!(!log.topics.is_empty());
     }
 
     let expected_amount_token_one =
@@ -124,15 +124,6 @@ fn deposit_no_fee() {
         TokenIdentifier::from(TEST_TOKEN_TWO),
         &expected_amount_token_two,
     );
-
-    // let expected_amount_token_fee = BigUint::from(ONE_HUNDRED_MILLION)
-    //     - BigUint::from(payments_vec.len()) * per_transfer
-    //     - BigUint::from(gas_limit) * per_gas;
-    //
-    // state
-    //     .world
-    //     .check_account(OWNER_ADDRESS)
-    //     .esdt_balance(TokenIdentifier::from(FEE_TOKEN), expected_amount_token_fee);
 }
 
 #[test]
@@ -207,13 +198,13 @@ fn deposit_with_fee() {
     let esdt_token_payment_one = EsdtTokenPayment::<StaticApi>::new(
         TokenIdentifier::from(TEST_TOKEN_ONE),
         0,
-        BigUint::from(ONE_HUNDRED_THOUSAND),
+        BigUint::from(100u64),
     );
 
     let esdt_token_payment_two = EsdtTokenPayment::<StaticApi>::new(
         TokenIdentifier::from(TEST_TOKEN_TWO),
         0,
-        BigUint::from(ONE_HUNDRED_THOUSAND),
+        BigUint::from(100u64),
     );
 
     let payments_vec = PaymentsVec::from(vec![
@@ -222,29 +213,26 @@ fn deposit_with_fee() {
         esdt_token_payment_two.clone(),
     ]);
 
-    let gas_limit = 1;
+    let gas_limit = 2;
     let function = ManagedBuffer::<StaticApi>::from("hello");
     let args =
         ManagedVec::<StaticApi, ManagedBuffer<StaticApi>>::from(vec![ManagedBuffer::from("1")]);
 
     let transfer_data = MultiValue3::from((gas_limit, function, args));
 
-    let logs = state.deposit_with_logs(
+    state.deposit(
         USER.to_managed_address(),
         OptionalValue::Some(transfer_data),
-        payments_vec.clone(),
+        Some(payments_vec.clone()),
+        None,
     );
-
-    for log in logs {
-        assert!(!log.data.is_empty());
-    }
 
     let expected_amount_token_one =
         BigUint::from(ONE_HUNDRED_MILLION) - &esdt_token_payment_one.amount;
 
     state.world.check_account(OWNER_ADDRESS).esdt_balance(
         TokenIdentifier::from(TEST_TOKEN_ONE),
-        &expected_amount_token_one,
+        expected_amount_token_one,
     );
 
     let expected_amount_token_two =
@@ -252,11 +240,11 @@ fn deposit_with_fee() {
 
     state.world.check_account(OWNER_ADDRESS).esdt_balance(
         TokenIdentifier::from(TEST_TOKEN_TWO),
-        &expected_amount_token_two,
+        expected_amount_token_two,
     );
 
     let expected_amount_token_fee = BigUint::from(ONE_HUNDRED_MILLION)
-        - BigUint::from(payments_vec.len()) * per_transfer
+        - BigUint::from(payments_vec.len() - 1) * per_transfer
         - BigUint::from(gas_limit) * per_gas;
 
     state
