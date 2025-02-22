@@ -77,7 +77,10 @@ pub trait DepositCommonModule:
             .sync_call();
     }
 
-    fn get_event_payment(&self, payment: &EsdtTokenPayment<Self::Api>) -> EventPayment<Self::Api> {
+    fn get_event_payment(
+        &self,
+        payment: &EsdtTokenPayment<Self::Api>,
+    ) -> MultiValue3<TokenIdentifier, u64, EsdtTokenData> {
         let own_sc_address = self.blockchain().get_sc_address();
 
         let mut current_token_data = self.blockchain().get_esdt_token_data(
