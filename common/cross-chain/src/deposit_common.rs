@@ -94,7 +94,6 @@ pub trait DepositCommonModule:
             payment.token_nonce,
             current_token_data,
         ))
-        .into()
     }
 
     #[inline]
