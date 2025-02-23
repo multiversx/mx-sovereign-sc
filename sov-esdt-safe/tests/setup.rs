@@ -58,10 +58,7 @@ pub struct SovEsdtSafeTestState {
 }
 
 impl SovEsdtSafeTestState {
-    fn _default() -> Self {
-        Self::new()
-    }
-
+    #[allow(clippy::new_without_default)]
     pub fn new() -> Self {
         let mut world = world();
 
