@@ -283,6 +283,7 @@ fn deposit_with_fee_with_transfer_data() {
         None,
     );
 
+    // TODO:
     // state
     //     .world
     //     .check_account(CONTRACT_ADDRESS)
