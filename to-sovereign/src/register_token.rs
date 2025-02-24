@@ -31,7 +31,7 @@ pub trait RegisterTokenModule:
 
         match token_type {
             EsdtTokenType::Invalid => sc_panic!("Invalid type"),
-            _ => self.handle_token_issue(IssueEsdtArgs {
+            _ => self.handle_token_issue_async(IssueEsdtArgs {
                 sov_token_id: sov_token_id.clone(),
                 issue_cost,
                 token_display_name,
@@ -39,6 +39,38 @@ pub trait RegisterTokenModule:
                 token_type,
                 num_decimals,
             }),
+        }
+    }
+
+    fn handle_token_issue_async(&self, args: IssueEsdtArgs<Self::Api>) {
+        self.tx()
+            .to(ESDTSystemSCAddress)
+            .typed(ESDTSystemSCProxy)
+            .issue_and_set_all_roles(
+                args.issue_cost,
+                args.token_display_name,
+                args.token_ticker,
+                args.token_type,
+                args.num_decimals,
+            )
+            .gas(REGISTER_GAS)
+            .callback(self.callbacks().issue_callback(&args.sov_token_id))
+            .register_promise();
+    }
+
+    #[promises_callback]
+    fn issue_callback(
+        &self,
+        sov_token_id: &TokenIdentifier,
+        #[call_result] result: ManagedAsyncCallResult<TokenIdentifier<Self::Api>>,
+    ) {
+        match result {
+            ManagedAsyncCallResult::Ok(mvx_token_id) => {
+                self.set_corresponding_token_ids(sov_token_id, &mvx_token_id);
+            }
+            ManagedAsyncCallResult::Err(error) => {
+                sc_panic!("There was an error at issuing token: '{}'", error.err_msg);
+            }
         }
     }
 

@@ -823,10 +823,10 @@ fn register_token_fungible_token() {
     let config = EsdtSafeConfig::default_config();
     state.deploy_contract(HEADER_VERIFIER_ADDRESS, config);
 
-    let sov_token_id = TestTokenIdentifier::new(TEST_TOKEN_ONE);
-    let token_type = EsdtTokenType::Fungible;
+    let sov_token_id = TestTokenIdentifier::new("TONE-12345");
+    let token_type = EsdtTokenType::NonFungible;
     let token_display_name = "TokenOne";
-    let token_ticker = TEST_TOKEN_ONE;
+    let token_ticker = "TONE123456";
     let num_decimals = 3;
     let egld_payment = BigUint::from(DEFAULT_ISSUE_COST);
 
@@ -847,7 +847,7 @@ fn register_token_fungible_token() {
         .whitebox(to_sovereign::contract_obj, |sc| {
             assert!(!sc
                 .sovereign_to_multiversx_token_id_mapper(
-                    &TestTokenIdentifier::new(TEST_TOKEN_ONE).into()
+                    &TestTokenIdentifier::new("TONE-12345").into()
                 )
                 .is_empty());
         })
