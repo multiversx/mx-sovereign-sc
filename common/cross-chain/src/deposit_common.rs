@@ -76,7 +76,7 @@ pub trait DepositCommonModule:
         payment: &EsdtTokenPayment<Self::Api>,
     ) -> MultiValue3<TokenIdentifier, u64, EsdtTokenData> {
         let mut current_token_data = self.blockchain().get_esdt_token_data(
-            &current_sc_address,
+            current_sc_address,
             &payment.token_identifier,
             payment.token_nonce,
         );
