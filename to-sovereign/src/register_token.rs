@@ -43,8 +43,7 @@ pub trait RegisterTokenModule:
     }
 
     fn handle_token_issue(&self, args: IssueEsdtArgs<Self::Api>) {
-        let mvx_token_id = self
-            .tx()
+        self.tx()
             .to(ESDTSystemSCAddress)
             .typed(ESDTSystemSCProxy)
             .issue_and_set_all_roles(
@@ -55,10 +54,24 @@ pub trait RegisterTokenModule:
                 args.num_decimals,
             )
             .gas(REGISTER_GAS)
-            .returns(ReturnsResultUnmanaged)
-            .sync_call();
+            .callback(self.callbacks().issue_callback(&args.sov_token_id))
+            .register_promise();
+    }
 
-        self.set_corresponding_token_ids(&args.sov_token_id, &mvx_token_id);
+    #[promises_callback]
+    fn issue_callback(
+        &self,
+        sov_token_id: &TokenIdentifier,
+        #[call_result] result: ManagedAsyncCallResult<TokenIdentifier<Self::Api>>,
+    ) {
+        match result {
+            ManagedAsyncCallResult::Ok(mvx_token_id) => {
+                self.set_corresponding_token_ids(sov_token_id, &mvx_token_id);
+            }
+            ManagedAsyncCallResult::Err(error) => {
+                sc_panic!("There was an error at issuing token: '{}'", error.err_msg);
+            }
+        }
     }
 
     fn set_corresponding_token_ids(
