@@ -5,7 +5,7 @@ use multiversx_sc::{
     },
 };
 use multiversx_sc_scenario::api::StaticApi;
-use operation::{aliases::PaymentsVec, EsdtSafeConfig};
+use operation::{aliases::PaymentsVec, EsdtSafeConfig, SovereignConfig};
 use proxies::fee_market_proxy::{FeeStruct, FeeType};
 use setup::{
     SovEsdtSafeTestState, FEE_MARKET_ADDRESS, FEE_TOKEN, ONE_HUNDRED_MILLION, ONE_HUNDRED_THOUSAND,
@@ -25,7 +25,7 @@ fn deploy() {
 fn deposit_no_fee_no_transfer_data() {
     let mut state = SovEsdtSafeTestState::new();
 
-    state.deploy_contract_with_roles();
+    state.deploy_contract_with_roles(EsdtSafeConfig::default_config());
 
     state.deploy_fee_market(None);
     state.deploy_testing_sc();
@@ -82,7 +82,7 @@ fn deposit_no_fee_no_transfer_data() {
 fn deposit_with_fee_no_transfer_data() {
     let mut state = SovEsdtSafeTestState::new();
 
-    state.deploy_contract_with_roles();
+    state.deploy_contract_with_roles(EsdtSafeConfig::default_config());
 
     let per_transfer = BigUint::from(100u64);
     let per_gas = BigUint::from(1u64);
@@ -162,7 +162,7 @@ fn deposit_with_fee_no_transfer_data() {
 fn deposit_no_fee_with_transfer_data() {
     let mut state = SovEsdtSafeTestState::new();
 
-    state.deploy_contract_with_roles();
+    state.deploy_contract_with_roles(EsdtSafeConfig::default_config());
 
     state.deploy_fee_market(None);
     state.deploy_testing_sc();
@@ -225,7 +225,7 @@ fn deposit_no_fee_with_transfer_data() {
 fn deposit_with_fee_with_transfer_data() {
     let mut state = SovEsdtSafeTestState::new();
 
-    state.deploy_contract_with_roles();
+    state.deploy_contract_with_roles(EsdtSafeConfig::default_config());
 
     let per_transfer = BigUint::from(100u64);
     let per_gas = BigUint::from(1u64);

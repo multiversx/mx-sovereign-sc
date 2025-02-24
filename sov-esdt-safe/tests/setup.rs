@@ -1,6 +1,9 @@
-use multiversx_sc::types::{
-    BigUint, EsdtLocalRole, ManagedAddress, ManagedVec, TestAddress, TestSCAddress,
-    TestTokenIdentifier, TokenIdentifier,
+use multiversx_sc::{
+    imports::ESDTSystemSCProxy,
+    types::{
+        BigUint, CodeMetadata, ESDTSystemSCAddress, EsdtLocalRole, ManagedAddress, ManagedVec,
+        ReturnsResultUnmanaged, TestAddress, TestSCAddress, TestTokenIdentifier, TokenIdentifier,
+    },
 };
 use multiversx_sc_scenario::{
     api::StaticApi, imports::MxscPath, scenario_model::Log, ReturnsHandledOrError, ReturnsLogs,
@@ -8,7 +11,7 @@ use multiversx_sc_scenario::{
 };
 use operation::{
     aliases::{OptionalValueTransferDataTuple, PaymentsVec},
-    EsdtSafeConfig,
+    EsdtSafeConfig, SovereignConfig,
 };
 use proxies::{
     fee_market_proxy::{FeeMarketProxy, FeeStruct},
@@ -95,55 +98,110 @@ impl SovEsdtSafeTestState {
             .new_address(CONTRACT_ADDRESS)
             .run();
 
+        self.world
+            .tx()
+            .to(CONTRACT_ADDRESS)
+            .from(OWNER_ADDRESS)
+            .typed(SovEsdtSafeProxy)
+            .upgrade()
+            .code(SOV_ESDT_SAFE_CODE_PATH)
+            .code_metadata(CodeMetadata::PAYABLE)
+            .run();
+
         self
     }
 
-    pub fn deploy_contract_with_roles(&mut self) -> &mut Self {
-        self.world
-            .account(CONTRACT_ADDRESS)
-            .nonce(1)
-            .code(SOV_ESDT_SAFE_CODE_PATH)
-            .owner(OWNER_ADDRESS)
-            // .esdt_balance(
-            //     TestTokenIdentifier::new(TEST_TOKEN_ONE),
-            //     BigUint::from(1u64),
-            // )
-            .esdt_roles(
-                TokenIdentifier::from(TEST_TOKEN_ONE),
-                vec![
-                    EsdtLocalRole::Burn.name().to_string(),
-                    EsdtLocalRole::NftBurn.name().to_string(),
-                ],
-            )
-            .esdt_roles(
-                TokenIdentifier::from(TEST_TOKEN_TWO),
-                vec![
-                    EsdtLocalRole::Burn.name().to_string(),
-                    EsdtLocalRole::NftBurn.name().to_string(),
-                ],
-            )
-            .esdt_roles(
-                TokenIdentifier::from(FEE_TOKEN),
-                vec![
-                    EsdtLocalRole::Burn.name().to_string(),
-                    EsdtLocalRole::NftBurn.name().to_string(),
-                ],
-            );
+    pub fn deploy_contract_with_roles(&mut self, config: EsdtSafeConfig<StaticApi>) -> &mut Self {
+        // self.world
+        //     .account(CONTRACT_ADDRESS)
+        //     .nonce(1)
+        //     .code(SOV_ESDT_SAFE_CODE_PATH)
+        //     .owner(OWNER_ADDRESS)
+        //     // .esdt_balance(
+        //     //     TestTokenIdentifier::new(TEST_TOKEN_ONE),
+        //     //     BigUint::from(1u64),
+        //     // )
+        //     .esdt_roles(
+        //         TokenIdentifier::from(TEST_TOKEN_ONE),
+        //         vec![
+        //             EsdtLocalRole::Burn.name().to_string(),
+        //             EsdtLocalRole::NftBurn.name().to_string(),
+        //         ],
+        //     )
+        //     .esdt_roles(
+        //         TokenIdentifier::from(TEST_TOKEN_TWO),
+        //         vec![
+        //             EsdtLocalRole::Burn.name().to_string(),
+        //             EsdtLocalRole::NftBurn.name().to_string(),
+        //         ],
+        //     )
+        //     .esdt_roles(
+        //         TokenIdentifier::from(FEE_TOKEN),
+        //         vec![
+        //             EsdtLocalRole::Burn.name().to_string(),
+        //             EsdtLocalRole::NftBurn.name().to_string(),
+        //         ],
+        //     );
 
         self.world
             .tx()
             .from(OWNER_ADDRESS)
-            .to(CONTRACT_ADDRESS)
-            .whitebox(sov_esdt_safe::contract_obj, |sc| {
-                let config = EsdtSafeConfig::new(
-                    ManagedVec::new(),
-                    ManagedVec::new(),
-                    50_000_000,
-                    ManagedVec::new(),
-                );
+            .typed(SovEsdtSafeProxy)
+            .init(config)
+            .code(SOV_ESDT_SAFE_CODE_PATH)
+            .code_metadata(CodeMetadata::all())
+            .new_address(CONTRACT_ADDRESS)
+            .run();
 
-                sc.init(config);
-            });
+        self.world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .to(ESDTSystemSCAddress)
+            .typed(ESDTSystemSCProxy)
+            .set_special_roles(
+                CONTRACT_ADDRESS,
+                TokenIdentifier::from(TEST_TOKEN_ONE),
+                vec![EsdtLocalRole::Burn, EsdtLocalRole::NftBurn].into_iter(),
+            )
+            .run();
+
+        self.world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .to(ESDTSystemSCAddress)
+            .typed(ESDTSystemSCProxy)
+            .set_special_roles(
+                CONTRACT_ADDRESS,
+                TokenIdentifier::from(TEST_TOKEN_TWO),
+                vec![EsdtLocalRole::Burn, EsdtLocalRole::NftBurn].into_iter(),
+            )
+            .run();
+
+        self.world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .to(ESDTSystemSCAddress)
+            .typed(ESDTSystemSCProxy)
+            .set_special_roles(
+                CONTRACT_ADDRESS,
+                TokenIdentifier::from(FEE_TOKEN),
+                vec![EsdtLocalRole::Burn, EsdtLocalRole::NftBurn].into_iter(),
+            )
+            .run();
+        // self.world
+        //     .tx()
+        //     .from(OWNER_ADDRESS)
+        //     .to(CONTRACT_ADDRESS)
+        //     .whitebox(sov_esdt_safe::contract_obj, |sc| {
+        //         let config = EsdtSafeConfig::new(
+        //             ManagedVec::new(),
+        //             ManagedVec::new(),
+        //             50_000_000,
+        //             ManagedVec::new(),
+        //         );
+        //
+        //         sc.init(config);
+        //     });
 
         self
     }
