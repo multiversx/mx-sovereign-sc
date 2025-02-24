@@ -1,6 +1,5 @@
 use multiversx_sc::types::{
-    BigUint, EsdtLocalRole, ManagedAddress, ManagedVec, TestAddress, TestSCAddress,
-    TestTokenIdentifier, TokenIdentifier,
+    BigUint, EsdtLocalRole, ManagedAddress, ManagedVec, TestAddress, TestSCAddress, TokenIdentifier,
 };
 use multiversx_sc_scenario::{
     api::StaticApi, imports::MxscPath, scenario_model::Log, ReturnsHandledOrError, ReturnsLogs,
