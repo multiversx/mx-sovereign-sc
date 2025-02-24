@@ -81,6 +81,25 @@ pub trait TokenMappingModule: utils::UtilsModule {
             .register_promise();
     }
 
+    fn handle_token_issue_sync(&self, args: IssueEsdtArgs<Self::Api>) {
+        let mvx_token_id = self
+            .tx()
+            .to(ESDTSystemSCAddress)
+            .typed(ESDTSystemSCProxy)
+            .issue_and_set_all_roles(
+                args.issue_cost,
+                args.token_display_name,
+                args.token_ticker,
+                args.token_type,
+                args.num_decimals,
+            )
+            .gas(REGISTER_GAS)
+            .returns(ReturnsResultUnmanaged)
+            .sync_call();
+
+        self.set_corresponding_token_ids(&args.sov_token_id, &mvx_token_id);
+    }
+
     #[promises_callback]
     fn issue_callback(
         &self,
