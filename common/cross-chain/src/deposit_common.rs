@@ -58,12 +58,6 @@ pub trait DepositCommonModule:
         MultiValue2::from((OptionalValue::Some(fee_payment), popped_payments))
     }
 
-    fn is_fee_token(&self, token_id: &TokenIdentifier) -> bool {
-        !self
-            .external_token_fee(self.fee_market_address().get(), token_id)
-            .is_empty()
-    }
-
     fn burn_sovereign_token(&self, payment: &EsdtTokenPayment<Self::Api>) {
         self.tx()
             .to(ToSelf)
@@ -76,14 +70,13 @@ pub trait DepositCommonModule:
             .sync_call();
     }
 
-    fn get_event_payment(
+    fn get_event_payment_token_data(
         &self,
+        current_sc_address: &ManagedAddress,
         payment: &EsdtTokenPayment<Self::Api>,
     ) -> MultiValue3<TokenIdentifier, u64, EsdtTokenData> {
-        let own_sc_address = self.blockchain().get_sc_address();
-
         let mut current_token_data = self.blockchain().get_esdt_token_data(
-            &own_sc_address,
+            &current_sc_address,
             &payment.token_identifier,
             payment.token_nonce,
         );

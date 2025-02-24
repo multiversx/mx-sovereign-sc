@@ -1,7 +1,10 @@
-use multiversx_sc::types::{BigUint, ManagedAddress, TestAddress, TestSCAddress, TokenIdentifier};
+use multiversx_sc::types::{
+    BigUint, EsdtLocalRole, ManagedAddress, ManagedVec, TestAddress, TestSCAddress,
+    TestTokenIdentifier, TokenIdentifier,
+};
 use multiversx_sc_scenario::{
     api::StaticApi, imports::MxscPath, scenario_model::Log, ReturnsHandledOrError, ReturnsLogs,
-    ScenarioTxRun, ScenarioWorld,
+    ScenarioTxRun, ScenarioTxWhitebox, ScenarioWorld,
 };
 use operation::{
     aliases::{OptionalValueTransferDataTuple, PaymentsVec},
@@ -12,20 +15,13 @@ use proxies::{
     sov_esdt_safe_proxy::SovEsdtSafeProxy,
     testing_sc_proxy::TestingScProxy,
 };
+use sov_esdt_safe::SovEsdtSafe;
 
 pub const CONTRACT_ADDRESS: TestSCAddress = TestSCAddress::new("sc");
-pub const CONTRACT_CODE_PATH: MxscPath = MxscPath::new("output/to-sovereign.mxsc.json");
+pub const SOV_ESDT_SAFE_CODE_PATH: MxscPath = MxscPath::new("output/to-sovereign.mxsc.json");
 
 pub const FEE_MARKET_ADDRESS: TestSCAddress = TestSCAddress::new("fee-market");
 const FEE_MARKET_CODE_PATH: MxscPath = MxscPath::new("../fee-market/output/fee-market.mxsc.json");
-
-pub const HEADER_VERIFIER_ADDRESS: TestSCAddress = TestSCAddress::new("header-verifier");
-const HEADER_VERIFIER_CODE_PATH: MxscPath =
-    MxscPath::new("../header-verifier/output/header-verifier.mxsc.json");
-
-// pub const CHAIN_CONFIG_ADDRESS: TestSCAddress = TestSCAddress::new("chain-config");
-// const CHAIN_CONFIG_CODE_PATH: MxscPath =
-//     MxscPath::new("../chain-config/output/chain-config.mxsc.json");
 
 pub const TESTING_SC_ADDRESS: TestSCAddress = TestSCAddress::new("testing-sc");
 const TESTING_SC_CODE_PATH: MxscPath = MxscPath::new("../testing-sc/output/testing-sc.mxsc.json");
@@ -44,10 +40,8 @@ const OWNER_BALANCE: u128 = 100_000_000_000_000_000_000_000;
 fn world() -> ScenarioWorld {
     let mut blockchain = ScenarioWorld::new();
 
-    blockchain.register_contract(CONTRACT_CODE_PATH, sov_esdt_safe::ContractBuilder);
+    blockchain.register_contract(SOV_ESDT_SAFE_CODE_PATH, sov_esdt_safe::ContractBuilder);
     blockchain.register_contract(FEE_MARKET_CODE_PATH, fee_market::ContractBuilder);
-    blockchain.register_contract(HEADER_VERIFIER_CODE_PATH, header_verifier::ContractBuilder);
-    // blockchain.register_contract(CHAIN_CONFIG_CODE_PATH, chain_config::ContractBuilder);
     blockchain.register_contract(TESTING_SC_CODE_PATH, testing_sc::ContractBuilder);
 
     blockchain
@@ -91,23 +85,68 @@ impl SovEsdtSafeTestState {
         Self { world }
     }
 
-    pub fn deploy_contract(
-        &mut self,
-        header_verifier_address: TestSCAddress,
-        config: EsdtSafeConfig<StaticApi>,
-    ) -> &mut Self {
+    pub fn deploy_contract(&mut self, config: EsdtSafeConfig<StaticApi>) -> &mut Self {
         self.world
             .tx()
             .from(OWNER_ADDRESS)
             .typed(SovEsdtSafeProxy)
-            .init(header_verifier_address, config)
-            .code(CONTRACT_CODE_PATH)
+            .init(config)
+            .code(SOV_ESDT_SAFE_CODE_PATH)
             .new_address(CONTRACT_ADDRESS)
             .run();
 
         self
     }
 
+    pub fn deploy_contract_with_roles(&mut self) -> &mut Self {
+        self.world
+            .account(CONTRACT_ADDRESS)
+            .nonce(1)
+            .code(SOV_ESDT_SAFE_CODE_PATH)
+            .owner(OWNER_ADDRESS)
+            // .esdt_balance(
+            //     TestTokenIdentifier::new(TEST_TOKEN_ONE),
+            //     BigUint::from(1u64),
+            // )
+            .esdt_roles(
+                TokenIdentifier::from(TEST_TOKEN_ONE),
+                vec![
+                    EsdtLocalRole::Burn.name().to_string(),
+                    EsdtLocalRole::NftBurn.name().to_string(),
+                ],
+            )
+            .esdt_roles(
+                TokenIdentifier::from(TEST_TOKEN_TWO),
+                vec![
+                    EsdtLocalRole::Burn.name().to_string(),
+                    EsdtLocalRole::NftBurn.name().to_string(),
+                ],
+            )
+            .esdt_roles(
+                TokenIdentifier::from(FEE_TOKEN),
+                vec![
+                    EsdtLocalRole::Burn.name().to_string(),
+                    EsdtLocalRole::NftBurn.name().to_string(),
+                ],
+            );
+
+        self.world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .to(CONTRACT_ADDRESS)
+            .whitebox(sov_esdt_safe::contract_obj, |sc| {
+                let config = EsdtSafeConfig::new(
+                    ManagedVec::new(),
+                    ManagedVec::new(),
+                    50_000_000,
+                    ManagedVec::new(),
+                );
+
+                sc.init(config);
+            });
+
+        self
+    }
     pub fn deposit(
         &mut self,
         to: ManagedAddress<StaticApi>,

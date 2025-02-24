@@ -25,6 +25,7 @@ pub trait DepositModule:
         let mut total_tokens_for_fees = 0usize;
         let mut event_payments = MultiValueEncoded::new();
         let mut refundable_payments = ManagedVec::<Self::Api, _>::new();
+        let current_sc_address = self.blockchain().get_sc_address();
 
         for payment in &payments {
             self.require_below_max_amount(&payment.token_identifier, &payment.amount);
@@ -42,7 +43,7 @@ pub trait DepositModule:
 
             self.burn_sovereign_token(&payment);
 
-            event_payments.push(self.get_event_payment(&payment));
+            event_payments.push(self.get_event_payment_token_data(&current_sc_address, &payment));
         }
 
         let option_transfer_data = TransferData::from_optional_value(opt_transfer_data);

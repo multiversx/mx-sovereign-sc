@@ -18,9 +18,7 @@ pub trait SovEsdtSafe:
     + multiversx_sc_modules::pause::PauseModule
 {
     #[init]
-    fn init(&self, header_verifier_address: ManagedAddress, config: EsdtSafeConfig<Self::Api>) {
-        self.require_sc_address(&header_verifier_address);
-        self.header_verifier_address().set(&header_verifier_address);
+    fn init(&self, config: EsdtSafeConfig<Self::Api>) {
         self.esdt_safe_config().set(config);
     }
 

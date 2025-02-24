@@ -2164,10 +2164,8 @@ dependencies = [
 name = "sov-esdt-safe"
 version = "0.0.0"
 dependencies = [
- "chain-config",
  "cross-chain",
  "fee-market",
- "header-verifier",
  "max-bridged-amount-module",
  "multiversx-sc",
  "multiversx-sc-modules",

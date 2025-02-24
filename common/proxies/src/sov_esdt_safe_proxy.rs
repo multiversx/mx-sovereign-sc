@@ -44,17 +44,14 @@ where
     Gas: TxGas<Env>,
 {
     pub fn init<
-        Arg0: ProxyArg<ManagedAddress<Env::Api>>,
-        Arg1: ProxyArg<operation::EsdtSafeConfig<Env::Api>>,
+        Arg0: ProxyArg<operation::EsdtSafeConfig<Env::Api>>,
     >(
         self,
-        header_verifier_address: Arg0,
-        config: Arg1,
+        config: Arg0,
     ) -> TxTypedDeploy<Env, From, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_deploy()
-            .argument(&header_verifier_address)
             .argument(&config)
             .original_result()
     }
