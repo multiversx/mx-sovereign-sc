@@ -74,6 +74,7 @@ fn world() -> ScenarioWorld {
 
     blockchain
 }
+
 struct ToSovereignTestState {
     world: ScenarioWorld,
 }
@@ -605,7 +606,7 @@ fn deposit_fee_enabled() {
     );
 
     let expected_amount_token_fee = BigUint::from(ONE_HUNDRED_MILLION)
-        - BigUint::from(payments_vec.len()) * per_transfer
+        - BigUint::from(payments_vec.len() - 1) * per_transfer
         - BigUint::from(gas_limit) * per_gas;
 
     state
@@ -755,7 +756,7 @@ fn deposit_refund() {
     );
 
     let expected_amount_token_fee = BigUint::from(ONE_HUNDRED_MILLION)
-        - BigUint::from(payments_vec.len()) * per_transfer
+        - BigUint::from(payments_vec.len() - 1) * per_transfer
         - BigUint::from(gas_limit) * per_gas;
 
     state

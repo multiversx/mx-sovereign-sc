@@ -1,4 +1,5 @@
 use operation::{aliases::TxNonce, EsdtInfo, EsdtSafeConfig};
+use proxies::fee_market_proxy::FeeType;
 
 multiversx_sc::imports!();
 
@@ -44,4 +45,17 @@ pub trait CrossChainStorage {
 
     #[storage_mapper("isSovereignChain")]
     fn is_sovereign_chain(&self) -> SingleValueMapper<bool>;
+
+    #[storage_mapper_from_address("feeEnabledFlag")]
+    fn external_fee_enabled(
+        &self,
+        sc_address: ManagedAddress,
+    ) -> SingleValueMapper<bool, ManagedAddress>;
+
+    #[storage_mapper_from_address("tokenFee")]
+    fn external_token_fee(
+        &self,
+        sc_address: ManagedAddress,
+        token_id: &TokenIdentifier,
+    ) -> SingleValueMapper<FeeType<Self::Api>, ManagedAddress>;
 }

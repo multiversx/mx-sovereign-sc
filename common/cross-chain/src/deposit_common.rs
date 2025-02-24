@@ -1,4 +1,3 @@
-use multiversx_sc::storage::StorageKey;
 use operation::{
     aliases::{ExtractedFeeResult, GasLimit, TxNonce},
     TransferData,
@@ -46,21 +45,60 @@ pub trait DepositCommonModule:
 
         require!(!payments.is_empty(), "Nothing to transfer");
         require!(payments.len() <= MAX_TRANSFERS_PER_TX, "Too many tokens");
+        let is_fee_enabled = self
+            .external_fee_enabled(self.fee_market_address().get())
+            .get();
 
-        let fee_market_address = self.fee_market_address().get();
-        let fee_enabled_mapper = SingleValueMapper::new_from_address(
-            fee_market_address.clone(),
-            StorageKey::from("feeEnabledFlag"),
-        )
-        .get();
-
-        let fee_payment = if fee_enabled_mapper {
-            OptionalValue::Some(self.pop_first_payment(payments.clone()).0)
-        } else {
-            OptionalValue::None
+        if !is_fee_enabled {
+            return MultiValue2::from((OptionalValue::None, payments));
         };
 
-        MultiValue2::from((fee_payment, payments))
+        let (fee_payment, popped_payments) = self.pop_first_payment(payments.clone());
+
+        MultiValue2::from((OptionalValue::Some(fee_payment), popped_payments))
+    }
+
+    fn burn_sovereign_token(&self, payment: &EsdtTokenPayment<Self::Api>) {
+        self.tx()
+            .to(ToSelf)
+            .typed(system_proxy::UserBuiltinProxy)
+            .esdt_local_burn(
+                &payment.token_identifier,
+                payment.token_nonce,
+                &payment.amount,
+            )
+            .sync_call();
+    }
+
+    fn get_event_payment_token_data(
+        &self,
+        current_sc_address: &ManagedAddress,
+        payment: &EsdtTokenPayment<Self::Api>,
+    ) -> MultiValue3<TokenIdentifier, u64, EsdtTokenData> {
+        let mut current_token_data = self.blockchain().get_esdt_token_data(
+            current_sc_address,
+            &payment.token_identifier,
+            payment.token_nonce,
+        );
+        current_token_data.amount = payment.amount.clone();
+
+        MultiValue3::from((
+            payment.token_identifier.clone(),
+            payment.token_nonce,
+            current_token_data,
+        ))
+    }
+
+    #[inline]
+    fn refund_tokens(
+        &self,
+        caller: &ManagedAddress,
+        refundable_payments: ManagedVec<EsdtTokenPayment<Self::Api>>,
+    ) {
+        self.tx()
+            .to(caller)
+            .multi_esdt(refundable_payments)
+            .transfer();
     }
 
     fn burn_mainchain_token(

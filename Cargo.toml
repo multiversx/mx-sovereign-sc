@@ -24,5 +24,8 @@ members = [
   "sovereign-forge/interactor",
   "sovereign-forge/meta",
   "to-sovereign",
-  "to-sovereign/meta", "common/cross-chain",
+  "to-sovereign/meta",
+  "sov-esdt-safe",
+  "sov-esdt-safe/meta",
+  "common/cross-chain",
 ]

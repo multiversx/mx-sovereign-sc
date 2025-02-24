@@ -2161,6 +2161,32 @@ dependencies = [
 ]
 
 [[package]]
+name = "sov-esdt-safe"
+version = "0.0.0"
+dependencies = [
+ "cross-chain",
+ "fee-market",
+ "max-bridged-amount-module",
+ "multiversx-sc",
+ "multiversx-sc-modules",
+ "multiversx-sc-scenario",
+ "num-bigint",
+ "operation",
+ "proxies",
+ "setup-phase",
+ "testing-sc",
+ "utils",
+]
+
+[[package]]
+name = "sov-esdt-safe-meta"
+version = "0.0.0"
+dependencies = [
+ "multiversx-sc-meta-lib",
+ "sov-esdt-safe",
+]
+
+[[package]]
 name = "sovereign-forge"
 version = "0.0.0"
 dependencies = [
