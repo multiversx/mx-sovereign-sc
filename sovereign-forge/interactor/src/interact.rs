@@ -25,6 +25,9 @@ const CHAIN_FACTORY_CODE_PATH: &str = "../../chain-factory/output/chain-factory.
 const HEADER_VERIFIER_CODE_PATH: &str = "../../header-verifier/output/header-verifier.mxsc.json";
 const ESDT_SAFE_CODE_PATH: &str = "../../esdt-safe/output/esdt-safe.mxsc.json";
 const FEE_MARKET_CODE_PATH: &str = "../../fee-market/output/fee-market.mxsc.json";
+const TEST_TOKEN_ONE: &str = "TONE-12345";
+const TEST_TOKEN_ONE_TICKER: &str = "TONE12345";
+pub const DEFAULT_ISSUE_COST: u64 = 50_000_000_000_000_000; // 0.05 EGLD
 
 pub async fn sovereign_forge_cli() {
     env_logger::init();
@@ -133,7 +136,7 @@ impl ContractInteract {
             .use_chain_simulator(config.use_chain_simulator());
 
         interactor.set_current_dir_from_workspace("sovereign_forge/interactor");
-        let wallet_address = interactor.register_wallet(test_wallets::alice()).await;
+        let wallet_address = interactor.register_wallet(test_wallets::bob()).await;
 
         // Useful in the chain simulator setting
         // generate blocks until ESDTSystemSCAddress is enabled
@@ -265,6 +268,38 @@ impl ContractInteract {
             ));
 
         println!("new Header-Verifier address: {new_address_bech32}");
+    }
+
+    pub async fn register_token(&mut self) {
+        let sov_token_id = TestTokenIdentifier::new(TEST_TOKEN_ONE);
+        let token_type = EsdtTokenType::NonFungible;
+        let token_display_name = "TokenOne";
+        let num_decimals = 0u32;
+        let token_ticker = TEST_TOKEN_ONE_TICKER;
+        let egld_payment = BigUint::from(DEFAULT_ISSUE_COST);
+
+        let esdt_address = self.state.esdt_safe_address.clone().unwrap();
+
+        let response = self
+            .interactor
+            .tx()
+            .from(&self.wallet_address)
+            .to(esdt_address)
+            .gas(80_000_000u64)
+            .typed(EsdtSafeProxy)
+            .register_token(
+                sov_token_id,
+                token_type,
+                token_display_name,
+                token_ticker,
+                num_decimals,
+            )
+            .egld(egld_payment)
+            .returns(ReturnsResultUnmanaged)
+            .run()
+            .await;
+
+        println!("Issue response is: {:?}", response);
     }
 
     pub async fn deploy_esdt_safe_template(&mut self) {

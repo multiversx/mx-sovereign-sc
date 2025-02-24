@@ -32,13 +32,15 @@ pub trait TokenMappingModule: utils::UtilsModule {
         token_ticker: ManagedBuffer,
         num_decimals: usize,
     ) {
+        sov_token_id.is_valid_esdt_identifier();
+
         let is_sovereign_chain = self.is_sovereign_chain().get();
         require!(
             !is_sovereign_chain,
             "Invalid method to call in current chain"
         );
 
-        self.require_token_has_prefix(&sov_token_id);
+        // self.require_token_has_prefix(&sov_token_id);
 
         let issue_cost = self.call_value().egld().clone_value();
         require!(
