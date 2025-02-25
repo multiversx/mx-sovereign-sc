@@ -50,7 +50,7 @@ pub trait DepositModule:
             current_token_data.amount = payment.amount.clone();
 
             let mvx_to_sov_token_id_mapper =
-                self.multiversx_to_sovereign_token_id_mapper(&payment.token_identifier);
+                self.multiversx_main_esdt_safe_token_id_mapper(&payment.token_identifier);
             if !mvx_to_sov_token_id_mapper.is_empty() {
                 let sov_token_id = mvx_to_sov_token_id_mapper.get();
                 let sov_token_nonce = self.burn_mainchain_token(

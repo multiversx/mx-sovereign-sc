@@ -24,7 +24,7 @@ use proxies::{
     fee_market_proxy::{FeeMarketProxy, FeeStruct, FeeType},
     header_verifier_proxy::HeaderverifierProxy,
     testing_sc_proxy::TestingScProxy,
-    to_sovereign_proxy::ToSovereignProxy,
+    main_esdt_safe_proxy::ToSovereignProxy,
 };
 
 const CONTRACT_ADDRESS: TestSCAddress = TestSCAddress::new("sc");
@@ -66,7 +66,7 @@ struct RegisterTokenArgs<'a> {
 fn world() -> ScenarioWorld {
     let mut blockchain = ScenarioWorld::new();
 
-    blockchain.register_contract(CONTRACT_CODE_PATH, to_sovereign::ContractBuilder);
+    blockchain.register_contract(CONTRACT_CODE_PATH, main_esdt_safe::ContractBuilder);
     blockchain.register_contract(FEE_MARKET_CODE_PATH, fee_market::ContractBuilder);
     blockchain.register_contract(HEADER_VERIFIER_CODE_PATH, header_verifier::ContractBuilder);
     blockchain.register_contract(CHAIN_CONFIG_CODE_PATH, chain_config::ContractBuilder);
@@ -432,9 +432,9 @@ fn deposit_no_transfer_data() {
         .world
         .query()
         .to(CONTRACT_ADDRESS)
-        .whitebox(to_sovereign::contract_obj, |sc| {
+        .whitebox(main_esdt_safe::contract_obj, |sc| {
             assert!(sc
-                .multiversx_to_sovereign_token_id_mapper(&TokenIdentifier::from(TEST_TOKEN_ONE))
+                .multiversx_main_esdt_safe_token_id_mapper(&TokenIdentifier::from(TEST_TOKEN_ONE))
                 .is_empty());
         });
 }
@@ -845,7 +845,7 @@ fn register_token_fungible_token() {
     //     .world
     //     .query()
     //     .to(CONTRACT_ADDRESS)
-    //     .whitebox(to_sovereign::contract_obj, |sc| {
+    //     .whitebox(main_esdt_safe::contract_obj, |sc| {
     //         assert!(!sc
     //             .sovereign_to_multiversx_token_id_mapper(
     //                 &TestTokenIdentifier::new(TEST_TOKEN_ONE).into()
@@ -882,7 +882,7 @@ fn register_token_nonfungible_token() {
     //     .world
     //     .query()
     //     .to(CONTRACT_ADDRESS)
-    //     .whitebox(to_sovereign::contract_obj, |sc| {
+    //     .whitebox(main_esdt_safe::contract_obj, |sc| {
     //         assert!(!sc
     //             .sovereign_to_multiversx_token_id_mapper(
     //                 &TestTokenIdentifier::new(TEST_TOKEN_ONE).into()

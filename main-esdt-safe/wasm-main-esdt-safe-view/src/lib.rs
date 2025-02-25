@@ -17,7 +17,7 @@ multiversx_sc_wasm_adapter::panic_handler!();
 multiversx_sc_wasm_adapter::external_view_init! {}
 
 multiversx_sc_wasm_adapter::external_view_endpoints! {
-    to_sovereign
+    main_esdt_safe
     (
     )
 }
