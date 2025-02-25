@@ -1,0 +1,19 @@
+[settings]
+main = "main"
+
+[contracts.main]
+name = "sov-enshrine-esdt-safe"
+
+[contracts.full]
+name = "sov-enshrine-esdt-safe-full"
+add-unlabelled = true
+add-labels = ["sov-enshrine-esdt-safe-external-view"]
+
+[contracts.view]
+name = "sov-enshrine-esdt-safe-view"
+external-view = true
+add-unlabelled = false
+add-labels = ["sov-enshrine-esdt-safe-external-view"]
+
+[[proxy]]
+path = "../common/proxies/src/sov_enshrine_esdt_safe_proxy.rs"

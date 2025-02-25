@@ -27,5 +27,7 @@ members = [
   "to-sovereign/meta",
   "sov-esdt-safe",
   "sov-esdt-safe/meta",
+  "sov-enshrine-esdt-safe",
+  "sov-enshrine-esdt-safe/meta",
   "common/cross-chain",
 ]

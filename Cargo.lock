@@ -2161,6 +2161,36 @@ dependencies = [
 ]
 
 [[package]]
+name = "sov-enshrine-esdt-safe"
+version = "0.0.0"
+dependencies = [
+ "chain-config",
+ "cross-chain",
+ "fee-market",
+ "header-verifier",
+ "max-bridged-amount-module",
+ "multiversx-sc",
+ "multiversx-sc-modules",
+ "multiversx-sc-scenario",
+ "num-bigint",
+ "operation",
+ "proxies",
+ "setup-phase",
+ "token-handler",
+ "token-whitelist",
+ "tx-batch-module",
+ "utils",
+]
+
+[[package]]
+name = "sov-enshrine-esdt-safe-meta"
+version = "0.0.0"
+dependencies = [
+ "multiversx-sc-meta-lib",
+ "sov-enshrine-esdt-safe",
+]
+
+[[package]]
 name = "sov-esdt-safe"
 version = "0.0.0"
 dependencies = [
