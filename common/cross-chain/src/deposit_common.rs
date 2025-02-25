@@ -89,6 +89,22 @@ pub trait DepositCommonModule:
         ))
     }
 
+    fn token_refundable(
+        &self,
+        payment: &EsdtTokenPayment<Self::Api>,
+        refundable_payments: &mut ManagedVec<EsdtTokenPayment<Self::Api>>,
+        total_tokens_for_fees: &mut usize,
+    ) -> bool {
+        if !self.is_token_whitelist_empty() && !self.is_token_whitelisted(&payment.token_identifier)
+        {
+            refundable_payments.push(payment.clone());
+            true
+        } else {
+            *total_tokens_for_fees += 1;
+            false
+        }
+    }
+
     #[inline]
     fn refund_tokens(
         &self,
