@@ -1259,6 +1259,34 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a7a70ba024b9dc04c27ea2f0c0548feb474ec5c54bba33a7f72f873a39d07b24"
 
 [[package]]
+name = "main-esdt-safe"
+version = "0.0.0"
+dependencies = [
+ "chain-config",
+ "cross-chain",
+ "fee-market",
+ "header-verifier",
+ "max-bridged-amount-module",
+ "multiversx-sc",
+ "multiversx-sc-modules",
+ "multiversx-sc-scenario",
+ "num-bigint",
+ "operation",
+ "proxies",
+ "setup-phase",
+ "testing-sc",
+ "utils",
+]
+
+[[package]]
+name = "main-esdt-safe-meta"
+version = "0.0.0"
+dependencies = [
+ "main-esdt-safe",
+ "multiversx-sc-meta-lib",
+]
+
+[[package]]
 name = "max-bridged-amount-module"
 version = "0.0.0"
 dependencies = [
@@ -2335,34 +2363,6 @@ name = "tinyvec_macros"
 version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1f3ccbac311fea05f86f61904b462b55fb3df8837a366dfc601a0161d0532f20"
-
-[[package]]
-name = "to-sovereign"
-version = "0.0.0"
-dependencies = [
- "chain-config",
- "cross-chain",
- "fee-market",
- "header-verifier",
- "max-bridged-amount-module",
- "multiversx-sc",
- "multiversx-sc-modules",
- "multiversx-sc-scenario",
- "num-bigint",
- "operation",
- "proxies",
- "setup-phase",
- "testing-sc",
- "utils",
-]
-
-[[package]]
-name = "to-sovereign-meta"
-version = "0.0.0"
-dependencies = [
- "multiversx-sc-meta-lib",
- "to-sovereign",
-]
 
 [[package]]
 name = "token-handler"

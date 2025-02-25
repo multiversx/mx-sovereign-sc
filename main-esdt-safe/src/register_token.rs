@@ -82,7 +82,7 @@ pub trait RegisterTokenModule:
         self.sovereign_to_multiversx_token_id_mapper(sov_token_id)
             .set(mvx_token_id);
 
-        self.multiversx_main_esdt_safe_token_id_mapper(mvx_token_id)
+        self.multiversx_to_sovereign_token_id_mapper(mvx_token_id)
             .set(sov_token_id);
     }
 
@@ -99,7 +99,7 @@ pub trait RegisterTokenModule:
                 token_nonce: new_nft_nonce,
             });
 
-        self.multiversx_main_esdt_safe_esdt_info_mapper(mvx_id, new_nft_nonce)
+        self.multiversx_to_sovereign_esdt_info_mapper(mvx_id, new_nft_nonce)
             .set(EsdtInfo {
                 token_identifier: sov_id.clone(),
                 token_nonce: sov_nonce,

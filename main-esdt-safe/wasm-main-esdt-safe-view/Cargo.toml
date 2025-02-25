@@ -5,7 +5,7 @@
 # ##########################################
 
 [package]
-name = "to-sovereign-view-wasm"
+name = "main-esdt-safe-view-wasm"
 version = "0.0.0"
 edition = "2021"
 publish = false
@@ -24,7 +24,7 @@ overflow-checks = false
 [profile.dev]
 panic = "abort"
 
-[dependencies.to-sovereign]
+[dependencies.main-esdt-safe]
 path = ".."
 
 [dependencies.multiversx-sc-wasm-adapter]

@@ -23,12 +23,12 @@ use proxies::{
     chain_config_proxy::ChainConfigContractProxy,
     fee_market_proxy::{FeeMarketProxy, FeeStruct, FeeType},
     header_verifier_proxy::HeaderverifierProxy,
+    main_esdt_safe_proxy::MainEsdtSafeProxy,
     testing_sc_proxy::TestingScProxy,
-    main_esdt_safe_proxy::ToSovereignProxy,
 };
 
 const CONTRACT_ADDRESS: TestSCAddress = TestSCAddress::new("sc");
-const CONTRACT_CODE_PATH: MxscPath = MxscPath::new("output/to-sovereign.mxsc.json");
+const CONTRACT_CODE_PATH: MxscPath = MxscPath::new("output/main-esdt-safe.mxsc.json");
 
 const FEE_MARKET_ADDRESS: TestSCAddress = TestSCAddress::new("fee-market");
 const FEE_MARKET_CODE_PATH: MxscPath = MxscPath::new("../fee-market/output/fee-market.mxsc.json");
@@ -75,11 +75,11 @@ fn world() -> ScenarioWorld {
     blockchain
 }
 
-struct ToSovereignTestState {
+struct MainEsdtSafeTestState {
     world: ScenarioWorld,
 }
 
-impl ToSovereignTestState {
+impl MainEsdtSafeTestState {
     fn new() -> Self {
         let mut world = world();
 
@@ -120,7 +120,7 @@ impl ToSovereignTestState {
         self.world
             .tx()
             .from(OWNER_ADDRESS)
-            .typed(ToSovereignProxy)
+            .typed(MainEsdtSafeProxy)
             .init(header_verifier_address, config)
             .code(CONTRACT_CODE_PATH)
             .new_address(CONTRACT_ADDRESS)
@@ -186,7 +186,7 @@ impl ToSovereignTestState {
             .tx()
             .from(OWNER_ADDRESS)
             .to(CONTRACT_ADDRESS)
-            .typed(ToSovereignProxy)
+            .typed(MainEsdtSafeProxy)
             .set_fee_market_address(fee_market_address)
             .run();
     }
@@ -203,7 +203,7 @@ impl ToSovereignTestState {
             .tx()
             .from(OWNER_ADDRESS)
             .to(CONTRACT_ADDRESS)
-            .typed(ToSovereignProxy)
+            .typed(MainEsdtSafeProxy)
             .deposit(to, opt_transfer_data);
 
         let response = if let Some(payment) = opt_payment {
@@ -235,7 +235,7 @@ impl ToSovereignTestState {
             .tx()
             .from(OWNER_ADDRESS)
             .to(CONTRACT_ADDRESS)
-            .typed(ToSovereignProxy)
+            .typed(MainEsdtSafeProxy)
             .deposit(to, opt_transfer_data)
             .payment(payment)
             .returns(ReturnsLogs)
@@ -253,7 +253,7 @@ impl ToSovereignTestState {
             .tx()
             .from(OWNER_ADDRESS)
             .to(CONTRACT_ADDRESS)
-            .typed(ToSovereignProxy)
+            .typed(MainEsdtSafeProxy)
             .register_token(
                 register_token_args.sov_token_id,
                 register_token_args.token_type,
@@ -287,7 +287,7 @@ impl ToSovereignTestState {
             .tx()
             .from(OWNER_ADDRESS)
             .to(CONTRACT_ADDRESS)
-            .typed(ToSovereignProxy)
+            .typed(MainEsdtSafeProxy)
             .execute_operations(hash_of_hashes, operation)
             .returns(ReturnsHandledOrError::new())
             .run();
@@ -359,14 +359,14 @@ impl ToSovereignTestState {
 
 #[test]
 fn deploy() {
-    let mut state = ToSovereignTestState::new();
+    let mut state = MainEsdtSafeTestState::new();
 
     state.deploy_contract(HEADER_VERIFIER_ADDRESS, EsdtSafeConfig::default_config());
 }
 
 #[test]
 fn deposit_nothing_to_transfer() {
-    let mut state = ToSovereignTestState::new();
+    let mut state = MainEsdtSafeTestState::new();
 
     state.deploy_contract(HEADER_VERIFIER_ADDRESS, EsdtSafeConfig::default_config());
     state.deposit(
@@ -379,7 +379,7 @@ fn deposit_nothing_to_transfer() {
 
 #[test]
 fn deposit_too_many_tokens() {
-    let mut state = ToSovereignTestState::new();
+    let mut state = MainEsdtSafeTestState::new();
 
     state.deploy_contract(HEADER_VERIFIER_ADDRESS, EsdtSafeConfig::default_config());
 
@@ -401,7 +401,7 @@ fn deposit_too_many_tokens() {
 
 #[test]
 fn deposit_no_transfer_data() {
-    let mut state = ToSovereignTestState::new();
+    let mut state = MainEsdtSafeTestState::new();
 
     state.deploy_contract(HEADER_VERIFIER_ADDRESS, EsdtSafeConfig::default_config());
     state.deploy_fee_market(None);
@@ -434,14 +434,14 @@ fn deposit_no_transfer_data() {
         .to(CONTRACT_ADDRESS)
         .whitebox(main_esdt_safe::contract_obj, |sc| {
             assert!(sc
-                .multiversx_main_esdt_safe_token_id_mapper(&TokenIdentifier::from(TEST_TOKEN_ONE))
+                .multiversx_to_sovereign_token_id_mapper(&TokenIdentifier::from(TEST_TOKEN_ONE))
                 .is_empty());
         });
 }
 
 #[test]
 fn deposit_gas_limit_too_high() {
-    let mut state = ToSovereignTestState::new();
+    let mut state = MainEsdtSafeTestState::new();
 
     let config = EsdtSafeConfig::new(ManagedVec::new(), ManagedVec::new(), 1, ManagedVec::new());
     state.deploy_contract(HEADER_VERIFIER_ADDRESS, config);
@@ -480,7 +480,7 @@ fn deposit_gas_limit_too_high() {
 
 #[test]
 fn deposit_endpoint_banned() {
-    let mut state = ToSovereignTestState::new();
+    let mut state = MainEsdtSafeTestState::new();
 
     let config = EsdtSafeConfig::new(
         ManagedVec::new(),
@@ -525,7 +525,7 @@ fn deposit_endpoint_banned() {
 
 #[test]
 fn deposit_fee_enabled() {
-    let mut state = ToSovereignTestState::new();
+    let mut state = MainEsdtSafeTestState::new();
 
     let config = EsdtSafeConfig::new(
         ManagedVec::new(),
@@ -617,7 +617,7 @@ fn deposit_fee_enabled() {
 
 #[test]
 fn deposit_payment_doesnt_cover_fee() {
-    let mut state = ToSovereignTestState::new();
+    let mut state = MainEsdtSafeTestState::new();
 
     let config = EsdtSafeConfig::new(
         ManagedVec::new(),
@@ -672,7 +672,7 @@ fn deposit_payment_doesnt_cover_fee() {
 
 #[test]
 fn deposit_refund() {
-    let mut state = ToSovereignTestState::new();
+    let mut state = MainEsdtSafeTestState::new();
 
     let config = EsdtSafeConfig::new(
         ManagedVec::new(),
@@ -767,7 +767,7 @@ fn deposit_refund() {
 
 #[test]
 fn register_token_not_enough_egld() {
-    let mut state = ToSovereignTestState::new();
+    let mut state = MainEsdtSafeTestState::new();
     let config = EsdtSafeConfig::default_config();
     state.deploy_contract(HEADER_VERIFIER_ADDRESS, config);
 
@@ -795,7 +795,7 @@ fn register_token_not_enough_egld() {
 
 #[test]
 fn register_token_invalid_type() {
-    let mut state = ToSovereignTestState::new();
+    let mut state = MainEsdtSafeTestState::new();
     let config = EsdtSafeConfig::default_config();
     state.deploy_contract(HEADER_VERIFIER_ADDRESS, config);
 
@@ -819,7 +819,7 @@ fn register_token_invalid_type() {
 
 #[test]
 fn register_token_fungible_token() {
-    let mut state = ToSovereignTestState::new();
+    let mut state = MainEsdtSafeTestState::new();
     let config = EsdtSafeConfig::default_config();
     state.deploy_contract(HEADER_VERIFIER_ADDRESS, config);
 
@@ -856,7 +856,7 @@ fn register_token_fungible_token() {
 
 #[test]
 fn register_token_nonfungible_token() {
-    let mut state = ToSovereignTestState::new();
+    let mut state = MainEsdtSafeTestState::new();
     let config = EsdtSafeConfig::default_config();
     state.deploy_contract(HEADER_VERIFIER_ADDRESS, config);
 
@@ -893,7 +893,7 @@ fn register_token_nonfungible_token() {
 
 #[test]
 fn execute_operation_no_esdt_safe_registered() {
-    let mut state = ToSovereignTestState::new();
+    let mut state = MainEsdtSafeTestState::new();
     let config = EsdtSafeConfig::default_config();
     state.deploy_contract(HEADER_VERIFIER_ADDRESS, config);
 
@@ -924,7 +924,7 @@ fn execute_operation_no_esdt_safe_registered() {
 
 #[test]
 fn execute_operation_success() {
-    let mut state = ToSovereignTestState::new();
+    let mut state = MainEsdtSafeTestState::new();
     let config = EsdtSafeConfig::default_config();
     state.deploy_contract(HEADER_VERIFIER_ADDRESS, config);
 
