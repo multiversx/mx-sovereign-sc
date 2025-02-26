@@ -55,3 +55,6 @@ path = "../token-handler"
 
 [dependencies.chain-config]
 path = "../chain-config"
+
+[dependencies.testing-sc]
+path = "../testing-sc"

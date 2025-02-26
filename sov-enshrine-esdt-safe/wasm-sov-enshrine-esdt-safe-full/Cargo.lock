@@ -277,7 +277,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "sov-enshrine-esdt-safe-wasm"
+name = "sov-enshrine-esdt-safe-full-wasm"
 version = "0.0.0"
 dependencies = [
  "multiversx-sc-wasm-adapter",

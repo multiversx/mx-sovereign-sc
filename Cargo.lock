@@ -2204,6 +2204,7 @@ dependencies = [
  "operation",
  "proxies",
  "setup-phase",
+ "testing-sc",
  "token-handler",
  "token-whitelist",
  "tx-batch-module",
