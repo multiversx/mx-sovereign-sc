@@ -159,6 +159,7 @@ fn deposit_with_fee_no_transfer_data() {
         .check_account(OWNER_ADDRESS)
         .esdt_balance(fee_token_identifier, expected_amount_token_fee);
 }
+
 #[test]
 fn deposit_no_fee_with_transfer_data() {
     let mut state = SovEsdtSafeTestState::new();
