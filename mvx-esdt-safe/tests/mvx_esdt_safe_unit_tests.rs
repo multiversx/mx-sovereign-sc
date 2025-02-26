@@ -12,7 +12,7 @@ use multiversx_sc_scenario::{
     api::StaticApi, multiversx_chain_vm::crypto_functions::sha256, ScenarioTxWhitebox,
 };
 use mvx_esdt_safe_setup::{
-    MvxEsdtSafeTestState, RegisterTokenArgs, CHAIN_CONFIG_ADDRESS, CONTRACT_ADDRESS,
+    MvxEsdtSafeTestState, RegisterTokenArgs, CHAIN_CONFIG_ADDRESS, ESDT_SAFE_ADDRESS,
     FEE_MARKET_ADDRESS, FEE_TOKEN, HEADER_VERIFIER_ADDRESS, ONE_HUNDRED_MILLION,
     ONE_HUNDRED_THOUSAND, OWNER_ADDRESS, TESTING_SC_ADDRESS, TEST_TOKEN_ONE, TEST_TOKEN_TWO, USER,
 };
@@ -97,7 +97,7 @@ fn deposit_no_transfer_data() {
     state
         .world
         .query()
-        .to(CONTRACT_ADDRESS)
+        .to(ESDT_SAFE_ADDRESS)
         .whitebox(mvx_esdt_safe::contract_obj, |sc| {
             assert!(sc
                 .multiversx_to_sovereign_token_id_mapper(&TokenIdentifier::from(TEST_TOKEN_ONE))
@@ -622,7 +622,7 @@ fn execute_operation_success() {
 
     state.deploy_header_verifier(CHAIN_CONFIG_ADDRESS);
     state.deploy_testing_sc();
-    state.set_esdt_safe_address_in_header_verifier(CONTRACT_ADDRESS);
+    state.set_esdt_safe_address_in_header_verifier(ESDT_SAFE_ADDRESS);
 
     let operations_hashes = MultiValueEncoded::from(ManagedVec::from(vec![operation_hash.clone()]));
 

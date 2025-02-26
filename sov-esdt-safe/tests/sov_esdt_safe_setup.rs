@@ -16,7 +16,7 @@ use proxies::{
 };
 use sov_esdt_safe::SovEsdtSafe;
 
-pub const CONTRACT_ADDRESS: TestSCAddress = TestSCAddress::new("sc");
+pub const ESDT_SAFE_ADDRESS: TestSCAddress = TestSCAddress::new("sc");
 pub const SOV_ESDT_SAFE_CODE_PATH: MxscPath = MxscPath::new("output/to-sovereign.mxsc.json");
 
 pub const FEE_MARKET_ADDRESS: TestSCAddress = TestSCAddress::new("fee-market");
@@ -91,7 +91,7 @@ impl SovEsdtSafeTestState {
             .typed(SovEsdtSafeProxy)
             .init(config)
             .code(SOV_ESDT_SAFE_CODE_PATH)
-            .new_address(CONTRACT_ADDRESS)
+            .new_address(ESDT_SAFE_ADDRESS)
             .run();
 
         self
@@ -99,7 +99,7 @@ impl SovEsdtSafeTestState {
 
     pub fn deploy_contract_with_roles(&mut self) -> &mut Self {
         self.world
-            .account(CONTRACT_ADDRESS)
+            .account(ESDT_SAFE_ADDRESS)
             .nonce(1)
             .code(SOV_ESDT_SAFE_CODE_PATH)
             .owner(OWNER_ADDRESS)
@@ -132,7 +132,7 @@ impl SovEsdtSafeTestState {
         self.world
             .tx()
             .from(OWNER_ADDRESS)
-            .to(CONTRACT_ADDRESS)
+            .to(ESDT_SAFE_ADDRESS)
             .whitebox(sov_esdt_safe::contract_obj, |sc| {
                 let config = EsdtSafeConfig::new(
                     ManagedVec::new(),
@@ -157,7 +157,7 @@ impl SovEsdtSafeTestState {
             .world
             .tx()
             .from(OWNER_ADDRESS)
-            .to(CONTRACT_ADDRESS)
+            .to(ESDT_SAFE_ADDRESS)
             .typed(SovEsdtSafeProxy)
             .deposit(to, opt_transfer_data);
 
@@ -183,7 +183,7 @@ impl SovEsdtSafeTestState {
             .tx()
             .from(OWNER_ADDRESS)
             .typed(FeeMarketProxy)
-            .init(CONTRACT_ADDRESS, fee)
+            .init(ESDT_SAFE_ADDRESS, fee)
             .code(FEE_MARKET_CODE_PATH)
             .new_address(FEE_MARKET_ADDRESS)
             .run();
@@ -208,7 +208,7 @@ impl SovEsdtSafeTestState {
         self.world
             .tx()
             .from(OWNER_ADDRESS)
-            .to(CONTRACT_ADDRESS)
+            .to(ESDT_SAFE_ADDRESS)
             .typed(SovEsdtSafeProxy)
             .set_fee_market_address(fee_market_address)
             .run();
@@ -223,7 +223,7 @@ impl SovEsdtSafeTestState {
         self.world
             .tx()
             .from(OWNER_ADDRESS)
-            .to(CONTRACT_ADDRESS)
+            .to(ESDT_SAFE_ADDRESS)
             .typed(SovEsdtSafeProxy)
             .deposit(to, opt_transfer_data)
             .payment(payment)

@@ -21,7 +21,7 @@ use proxies::{
     testing_sc_proxy::TestingScProxy,
 };
 
-pub const CONTRACT_ADDRESS: TestSCAddress = TestSCAddress::new("sc");
+pub const ESDT_SAFE_ADDRESS: TestSCAddress = TestSCAddress::new("sc");
 const CONTRACT_CODE_PATH: MxscPath = MxscPath::new("output/mvx-esdt-safe.mxsc.json");
 
 pub const FEE_MARKET_ADDRESS: TestSCAddress = TestSCAddress::new("fee-market");
@@ -118,7 +118,7 @@ impl MvxEsdtSafeTestState {
             .typed(MvxEsdtSafeProxy)
             .init(header_verifier_address, config)
             .code(CONTRACT_CODE_PATH)
-            .new_address(CONTRACT_ADDRESS)
+            .new_address(ESDT_SAFE_ADDRESS)
             .run();
 
         self
@@ -129,7 +129,7 @@ impl MvxEsdtSafeTestState {
             .tx()
             .from(OWNER_ADDRESS)
             .typed(FeeMarketProxy)
-            .init(CONTRACT_ADDRESS, fee)
+            .init(ESDT_SAFE_ADDRESS, fee)
             .code(FEE_MARKET_CODE_PATH)
             .new_address(FEE_MARKET_ADDRESS)
             .run();
@@ -180,7 +180,7 @@ impl MvxEsdtSafeTestState {
         self.world
             .tx()
             .from(OWNER_ADDRESS)
-            .to(CONTRACT_ADDRESS)
+            .to(ESDT_SAFE_ADDRESS)
             .typed(MvxEsdtSafeProxy)
             .set_fee_market_address(fee_market_address)
             .run();
@@ -197,7 +197,7 @@ impl MvxEsdtSafeTestState {
             .world
             .tx()
             .from(OWNER_ADDRESS)
-            .to(CONTRACT_ADDRESS)
+            .to(ESDT_SAFE_ADDRESS)
             .typed(MvxEsdtSafeProxy)
             .deposit(to, opt_transfer_data);
 
@@ -229,7 +229,7 @@ impl MvxEsdtSafeTestState {
         self.world
             .tx()
             .from(OWNER_ADDRESS)
-            .to(CONTRACT_ADDRESS)
+            .to(ESDT_SAFE_ADDRESS)
             .typed(MvxEsdtSafeProxy)
             .deposit(to, opt_transfer_data)
             .payment(payment)
@@ -247,7 +247,7 @@ impl MvxEsdtSafeTestState {
             .world
             .tx()
             .from(OWNER_ADDRESS)
-            .to(CONTRACT_ADDRESS)
+            .to(ESDT_SAFE_ADDRESS)
             .typed(MvxEsdtSafeProxy)
             .register_token(
                 register_token_args.sov_token_id,
@@ -281,7 +281,7 @@ impl MvxEsdtSafeTestState {
             .world
             .tx()
             .from(OWNER_ADDRESS)
-            .to(CONTRACT_ADDRESS)
+            .to(ESDT_SAFE_ADDRESS)
             .typed(MvxEsdtSafeProxy)
             .execute_operations(hash_of_hashes, operation)
             .returns(ReturnsHandledOrError::new())
