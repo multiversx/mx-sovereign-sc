@@ -1,8 +1,6 @@
 use cross_chain::MAX_TRANSFERS_PER_TX;
 use multiversx_sc::imports::*;
-use operation::{
-    aliases::OptionalValueTransferDataTuple, EventPayment, OperationData, TransferData,
-};
+use operation::{aliases::OptionalValueTransferDataTuple, OperationData, TransferData};
 
 #[multiversx_sc::module]
 pub trait DepositModule:
