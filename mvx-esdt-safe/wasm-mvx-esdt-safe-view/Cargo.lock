@@ -83,32 +83,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6fe2267d4ed49bc07b63801559be28c718ea06c4738b7a03c94df7386d2cde46"
 
 [[package]]
-name = "main-esdt-safe"
-version = "0.0.0"
-dependencies = [
- "chain-config",
- "cross-chain",
- "fee-market",
- "header-verifier",
- "max-bridged-amount-module",
- "multiversx-sc",
- "multiversx-sc-modules",
- "operation",
- "proxies",
- "setup-phase",
- "testing-sc",
- "utils",
-]
-
-[[package]]
-name = "main-esdt-safe-wasm"
-version = "0.0.0"
-dependencies = [
- "main-esdt-safe",
- "multiversx-sc-wasm-adapter",
-]
-
-[[package]]
 name = "max-bridged-amount-module"
 version = "0.0.0"
 dependencies = [
@@ -192,6 +166,32 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6759212b5f6bc78b692bcc0b6627207d60eeaed75e28d9b4228fe8d3a119840b"
 dependencies = [
  "multiversx-sc",
+]
+
+[[package]]
+name = "mvx-esdt-safe"
+version = "0.0.0"
+dependencies = [
+ "chain-config",
+ "cross-chain",
+ "fee-market",
+ "header-verifier",
+ "max-bridged-amount-module",
+ "multiversx-sc",
+ "multiversx-sc-modules",
+ "operation",
+ "proxies",
+ "setup-phase",
+ "testing-sc",
+ "utils",
+]
+
+[[package]]
+name = "mvx-esdt-safe-view-wasm"
+version = "0.0.0"
+dependencies = [
+ "multiversx-sc-wasm-adapter",
+ "mvx-esdt-safe",
 ]
 
 [[package]]

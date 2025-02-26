@@ -1,10 +1,10 @@
 [package]
-name = "main-esdt-safe-meta"
+name = "mvx-esdt-safe-meta"
 version = "0.0.0"
 edition = "2021"
 publish = false
 
-[dependencies.main-esdt-safe]
+[dependencies.mvx-esdt-safe]
 path = ".."
 
 [dependencies.multiversx-sc-meta-lib]

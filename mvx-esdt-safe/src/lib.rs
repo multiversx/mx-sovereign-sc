@@ -8,7 +8,7 @@ pub mod execute;
 pub mod register_token;
 
 #[multiversx_sc::contract]
-pub trait MainEsdtSafe:
+pub trait MvxEsdtSafe:
     deposit::DepositModule
     + execute::ExecuteModule
     + register_token::RegisterTokenModule

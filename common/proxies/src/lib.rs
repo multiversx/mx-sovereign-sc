@@ -5,7 +5,7 @@ pub mod enshrine_esdt_safe_proxy;
 pub mod esdt_safe_proxy;
 pub mod fee_market_proxy;
 pub mod header_verifier_proxy;
-pub mod main_esdt_safe_proxy;
+pub mod mvx_esdt_safe_proxy;
 pub mod sov_esdt_safe_proxy;
 pub mod sovereign_forge_proxy;
 pub mod testing_sc_proxy;

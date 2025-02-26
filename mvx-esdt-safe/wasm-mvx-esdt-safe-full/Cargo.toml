@@ -5,7 +5,7 @@
 # ##########################################
 
 [package]
-name = "main-esdt-safe-full-wasm"
+name = "mvx-esdt-safe-full-wasm"
 version = "0.0.0"
 edition = "2021"
 publish = false
@@ -24,7 +24,7 @@ overflow-checks = false
 [profile.dev]
 panic = "abort"
 
-[dependencies.main-esdt-safe]
+[dependencies.mvx-esdt-safe]
 path = ".."
 
 [dependencies.multiversx-sc-wasm-adapter]

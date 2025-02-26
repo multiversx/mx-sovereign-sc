@@ -9,23 +9,23 @@
 
 use multiversx_sc::proxy_imports::*;
 
-pub struct MainEsdtSafeProxy;
+pub struct MvxEsdtSafeProxy;
 
-impl<Env, From, To, Gas> TxProxyTrait<Env, From, To, Gas> for MainEsdtSafeProxy
+impl<Env, From, To, Gas> TxProxyTrait<Env, From, To, Gas> for MvxEsdtSafeProxy
 where
     Env: TxEnv,
     From: TxFrom<Env>,
     To: TxTo<Env>,
     Gas: TxGas<Env>,
 {
-    type TxProxyMethods = MainEsdtSafeProxyMethods<Env, From, To, Gas>;
+    type TxProxyMethods = MvxEsdtSafeProxyMethods<Env, From, To, Gas>;
 
     fn proxy_methods(self, tx: Tx<Env, From, To, (), Gas, (), ()>) -> Self::TxProxyMethods {
-        MainEsdtSafeProxyMethods { wrapped_tx: tx }
+        MvxEsdtSafeProxyMethods { wrapped_tx: tx }
     }
 }
 
-pub struct MainEsdtSafeProxyMethods<Env, From, To, Gas>
+pub struct MvxEsdtSafeProxyMethods<Env, From, To, Gas>
 where
     Env: TxEnv,
     From: TxFrom<Env>,
@@ -36,7 +36,7 @@ where
 }
 
 #[rustfmt::skip]
-impl<Env, From, Gas> MainEsdtSafeProxyMethods<Env, From, (), Gas>
+impl<Env, From, Gas> MvxEsdtSafeProxyMethods<Env, From, (), Gas>
 where
     Env: TxEnv,
     Env::Api: VMApi,
@@ -61,7 +61,7 @@ where
 }
 
 #[rustfmt::skip]
-impl<Env, From, To, Gas> MainEsdtSafeProxyMethods<Env, From, To, Gas>
+impl<Env, From, To, Gas> MvxEsdtSafeProxyMethods<Env, From, To, Gas>
 where
     Env: TxEnv,
     Env::Api: VMApi,
@@ -80,7 +80,7 @@ where
 }
 
 #[rustfmt::skip]
-impl<Env, From, To, Gas> MainEsdtSafeProxyMethods<Env, From, To, Gas>
+impl<Env, From, To, Gas> MvxEsdtSafeProxyMethods<Env, From, To, Gas>
 where
     Env: TxEnv,
     Env::Api: VMApi,
