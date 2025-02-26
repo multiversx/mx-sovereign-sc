@@ -247,6 +247,7 @@ fn deposit_with_fee_with_transfer_data() {
     state.set_fee_market_address(FEE_MARKET_ADDRESS);
 
     let test_token_one_identifier = TestTokenIdentifier::new(TEST_TOKEN_ONE);
+    let test_token_two_identifier = TestTokenIdentifier::new(TEST_TOKEN_ONE);
 
     let fee_amount = BigUint::from(ONE_HUNDRED_THOUSAND);
 
@@ -260,7 +261,7 @@ fn deposit_with_fee_with_transfer_data() {
     );
 
     let esdt_token_payment_two = EsdtTokenPayment::<StaticApi>::new(
-        TokenIdentifier::from(TEST_TOKEN_TWO),
+        test_token_two_identifier.into(),
         0,
         BigUint::from(100u64),
     );
@@ -302,10 +303,10 @@ fn deposit_with_fee_with_transfer_data() {
     let expected_amount_token_two =
         BigUint::from(ONE_HUNDRED_MILLION) - &esdt_token_payment_two.amount;
 
-    state.world.check_account(OWNER_ADDRESS).esdt_balance(
-        TokenIdentifier::from(TEST_TOKEN_TWO),
-        expected_amount_token_two,
-    );
+    state
+        .world
+        .check_account(OWNER_ADDRESS)
+        .esdt_balance(test_token_two_identifier, expected_amount_token_two);
 
     let expected_amount_token_fee = BigUint::from(ONE_HUNDRED_MILLION)
         - BigUint::from(payments_vec.len() - 1) * per_transfer
