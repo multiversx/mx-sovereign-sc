@@ -1,6 +1,7 @@
 #![no_std]
 
 pub mod deposit_common;
+pub mod deposit_unit_tests_setup;
 pub mod events;
 pub mod execute_common;
 pub mod storage;
