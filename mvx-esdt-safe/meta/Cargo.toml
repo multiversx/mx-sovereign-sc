@@ -1,10 +1,10 @@
 [package]
-name = "to-sovereign-meta"
+name = "mvx-esdt-safe-meta"
 version = "0.0.0"
 edition = "2021"
 publish = false
 
-[dependencies.to-sovereign]
+[dependencies.mvx-esdt-safe]
 path = ".."
 
 [dependencies.multiversx-sc-meta-lib]

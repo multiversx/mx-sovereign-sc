@@ -1,5 +1,5 @@
 [package]
-name = "to-sovereign"
+name = "mvx-esdt-safe"
 version = "0.0.0"
 publish = false
 edition = "2021"
