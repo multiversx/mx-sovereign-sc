@@ -1,18 +1,22 @@
 use cross_chain::deposit_unit_tests_setup::{
-    CONTRACT_ADDRESS, FEE_MARKET_ADDRESS, FEE_TOKEN, ONE_HUNDRED_MILLION, OWNER_ADDRESS,
-    OWNER_BALANCE, TESTING_SC_ADDRESS, TEST_TOKEN_ONE, TEST_TOKEN_TWO, TOKEN_HANDLER_ADDRESS, USER,
+    CHAIN_CONFIG_ADDRESS, CONTRACT_ADDRESS, FEE_MARKET_ADDRESS, FEE_TOKEN, ONE_HUNDRED_MILLION,
+    OWNER_ADDRESS, OWNER_BALANCE, TESTING_SC_ADDRESS, TEST_TOKEN_ONE, TEST_TOKEN_TWO,
+    TOKEN_HANDLER_ADDRESS, USER,
 };
-use multiversx_sc::{
-    require,
-    types::{BigUint, EsdtLocalRole, ManagedAddress, TestSCAddress, TokenIdentifier},
+use multiversx_sc::types::{
+    BigUint, EsdtLocalRole, ManagedAddress, TestAddress, TestSCAddress, TokenIdentifier,
 };
 use multiversx_sc_modules::pause::PauseModule;
 use multiversx_sc_scenario::{
     api::StaticApi, imports::MxscPath, scenario_model::Log, ReturnsHandledOrError, ReturnsLogs,
     ScenarioTxRun, ScenarioTxWhitebox, ScenarioWorld,
 };
-use operation::aliases::{OptionalValueTransferDataTuple, PaymentsVec};
+use operation::{
+    aliases::{OptionalValueTransferDataTuple, PaymentsVec},
+    EsdtSafeConfig, SovereignConfig,
+};
 use proxies::{
+    chain_config_proxy::ChainConfigContractProxy,
     fee_market_proxy::{FeeMarketProxy, FeeStruct},
     sov_enshrine_esdt_safe_proxy::SovEnshrineEsdtSafeProxy,
     testing_sc_proxy::TestingScProxy,
@@ -23,6 +27,8 @@ pub const SOV_ENSHRINE_ESDT_SAFE_CODE_PATH: MxscPath =
     MxscPath::new("output/sov-enshrine-esdt-safe.mxsc.json");
 const FEE_MARKET_CODE_PATH: MxscPath = MxscPath::new("../fee-market/output/fee-market.mxsc.json");
 const TESTING_SC_CODE_PATH: MxscPath = MxscPath::new("../testing-sc/output/testing-sc.mxsc.json");
+const CHAIN_CONFIG_CODE_PATH: MxscPath =
+    MxscPath::new("../chain-config/output/chain-config.mxsc.json");
 
 fn world() -> ScenarioWorld {
     let mut blockchain = ScenarioWorld::new();
@@ -33,6 +39,7 @@ fn world() -> ScenarioWorld {
     );
     blockchain.register_contract(FEE_MARKET_CODE_PATH, fee_market::ContractBuilder);
     blockchain.register_contract(TESTING_SC_CODE_PATH, testing_sc::ContractBuilder);
+    blockchain.register_contract(CHAIN_CONFIG_CODE_PATH, chain_config::ContractBuilder);
 
     blockchain
 }
@@ -75,12 +82,16 @@ impl SovEnshrineEsdtSafeTestState {
         Self { world }
     }
 
-    pub fn deploy_contract(&mut self, token_handler_address: TestSCAddress) -> &mut Self {
+    pub fn deploy_contract(
+        &mut self,
+        token_handler_address: TestSCAddress,
+        opt_config: Option<EsdtSafeConfig<StaticApi>>,
+    ) -> &mut Self {
         self.world
             .tx()
             .from(OWNER_ADDRESS)
             .typed(SovEnshrineEsdtSafeProxy)
-            .init(token_handler_address)
+            .init(token_handler_address, opt_config)
             .code(SOV_ENSHRINE_ESDT_SAFE_CODE_PATH)
             .new_address(CONTRACT_ADDRESS)
             .run();
@@ -121,10 +132,34 @@ impl SovEnshrineEsdtSafeTestState {
             .from(OWNER_ADDRESS)
             .to(CONTRACT_ADDRESS)
             .whitebox(sov_enshrine_esdt_safe::contract_obj, |sc| {
-                sc.init(TOKEN_HANDLER_ADDRESS.to_managed_address());
+                sc.init(
+                    TOKEN_HANDLER_ADDRESS.to_managed_address(),
+                    Some(EsdtSafeConfig::default_config()),
+                );
             });
 
         self
+    }
+
+    pub fn unpause_contract(&mut self) {
+        self.world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .to(CONTRACT_ADDRESS)
+            .whitebox(sov_enshrine_esdt_safe::contract_obj, |sc| {
+                sc.set_paused(false);
+            });
+    }
+
+    pub fn deploy_chain_config(&mut self, config: SovereignConfig<StaticApi>, admin: TestAddress) {
+        self.world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .typed(ChainConfigContractProxy)
+            .init(config, admin)
+            .code(CHAIN_CONFIG_CODE_PATH)
+            .new_address(CHAIN_CONFIG_ADDRESS)
+            .run();
     }
 
     pub fn set_fee_market_address(&mut self, fee_market_address: TestSCAddress) {
