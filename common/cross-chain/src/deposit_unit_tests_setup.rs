@@ -1,8 +1,10 @@
 multiversx_sc::imports!();
 
+pub const CONTRACT_ADDRESS: TestSCAddress = TestSCAddress::new("sc");
 pub const TESTING_SC_ADDRESS: TestSCAddress = TestSCAddress::new("testing-sc");
 pub const FEE_MARKET_ADDRESS: TestSCAddress = TestSCAddress::new("fee-market");
-pub const CONTRACT_ADDRESS: TestSCAddress = TestSCAddress::new("sc");
+pub const TOKEN_HANDLER_ADDRESS: TestSCAddress = TestSCAddress::new("token-handler");
+pub const CHAIN_CONFIG_ADDRESS: TestSCAddress = TestSCAddress::new("chain-config");
 
 pub const OWNER_ADDRESS: TestAddress = TestAddress::new("owner");
 pub const USER: TestAddress = TestAddress::new("user");
