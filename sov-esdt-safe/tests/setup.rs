@@ -1,5 +1,9 @@
+use cross_chain::deposit_unit_tests_setup::{
+    CONTRACT_ADDRESS, FEE_MARKET_ADDRESS, FEE_TOKEN, ONE_HUNDRED_MILLION, OWNER_ADDRESS,
+    OWNER_BALANCE, TESTING_SC_ADDRESS, TEST_TOKEN_ONE, TEST_TOKEN_TWO, USER,
+};
 use multiversx_sc::types::{
-    BigUint, EsdtLocalRole, ManagedAddress, ManagedVec, TestAddress, TestSCAddress, TokenIdentifier,
+    BigUint, EsdtLocalRole, ManagedAddress, ManagedVec, TestSCAddress, TokenIdentifier,
 };
 use multiversx_sc_scenario::{
     api::StaticApi, imports::MxscPath, scenario_model::Log, ReturnsHandledOrError, ReturnsLogs,
@@ -16,25 +20,9 @@ use proxies::{
 };
 use sov_esdt_safe::SovEsdtSafe;
 
-pub const CONTRACT_ADDRESS: TestSCAddress = TestSCAddress::new("sc");
 pub const SOV_ESDT_SAFE_CODE_PATH: MxscPath = MxscPath::new("output/to-sovereign.mxsc.json");
-
-pub const FEE_MARKET_ADDRESS: TestSCAddress = TestSCAddress::new("fee-market");
 const FEE_MARKET_CODE_PATH: MxscPath = MxscPath::new("../fee-market/output/fee-market.mxsc.json");
-
-pub const TESTING_SC_ADDRESS: TestSCAddress = TestSCAddress::new("testing-sc");
 const TESTING_SC_CODE_PATH: MxscPath = MxscPath::new("../testing-sc/output/testing-sc.mxsc.json");
-
-pub const OWNER_ADDRESS: TestAddress = TestAddress::new("owner");
-pub const USER: TestAddress = TestAddress::new("user");
-
-pub const TEST_TOKEN_ONE: &str = "TONE-123456";
-pub const TEST_TOKEN_TWO: &str = "TTWO-123456";
-pub const FEE_TOKEN: &str = "FEE-123456";
-
-pub const ONE_HUNDRED_MILLION: u32 = 100_000_000;
-pub const ONE_HUNDRED_THOUSAND: u32 = 100_000;
-const OWNER_BALANCE: u128 = 100_000_000_000_000_000_000_000;
 
 fn world() -> ScenarioWorld {
     let mut blockchain = ScenarioWorld::new();

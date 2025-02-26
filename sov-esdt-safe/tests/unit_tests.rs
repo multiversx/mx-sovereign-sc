@@ -1,3 +1,7 @@
+use cross_chain::deposit_unit_tests_setup::{
+    FEE_MARKET_ADDRESS, FEE_TOKEN, ONE_HUNDRED_MILLION, ONE_HUNDRED_THOUSAND, OWNER_ADDRESS,
+    TEST_TOKEN_ONE, TEST_TOKEN_TWO, USER,
+};
 use multiversx_sc::{
     imports::{MultiValue3, OptionalValue},
     types::{
@@ -7,10 +11,7 @@ use multiversx_sc::{
 use multiversx_sc_scenario::api::StaticApi;
 use operation::{aliases::PaymentsVec, EsdtSafeConfig};
 use proxies::fee_market_proxy::{FeeStruct, FeeType};
-use setup::{
-    SovEsdtSafeTestState, FEE_MARKET_ADDRESS, FEE_TOKEN, ONE_HUNDRED_MILLION, ONE_HUNDRED_THOUSAND,
-    OWNER_ADDRESS, TEST_TOKEN_ONE, TEST_TOKEN_TWO, USER,
-};
+use setup::SovEsdtSafeTestState;
 
 mod setup;
 
