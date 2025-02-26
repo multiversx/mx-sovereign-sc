@@ -4,9 +4,7 @@ use cross_chain::deposit_unit_tests_setup::{
 };
 use multiversx_sc::{
     imports::{MultiValue3, OptionalValue},
-    types::{
-        BigUint, EsdtTokenPayment, ManagedBuffer, ManagedVec, TestTokenIdentifier, TokenIdentifier,
-    },
+    types::{BigUint, EsdtTokenPayment, ManagedBuffer, ManagedVec, TestTokenIdentifier},
 };
 use multiversx_sc_scenario::api::StaticApi;
 use operation::{aliases::PaymentsVec, EsdtSafeConfig, SovereignConfig};
@@ -42,10 +40,10 @@ fn depost_contract_paused() {
 
     let payments_vec = PaymentsVec::from(vec![esdt_token_payment_one.clone()]);
 
-    state.deposit_with(
+    state.deposit(
         USER.to_managed_address(),
         OptionalValue::None,
-        payments_vec.clone(),
+        Some(payments_vec.clone()),
         Some("Cannot create transaction while paused"),
         false,
     );
@@ -83,10 +81,10 @@ fn deposit_no_transfer_data_no_fee() {
         esdt_token_payment_two.clone(),
     ]);
 
-    state.deposit_with(
+    state.deposit(
         USER.to_managed_address(),
         OptionalValue::None,
-        payments_vec.clone(),
+        Some(payments_vec.clone()),
         None,
         false,
     );
@@ -159,10 +157,10 @@ fn deposit_with_fee_no_transfer_data() {
         esdt_token_payment_two.clone(),
     ]);
 
-    state.deposit_with(
+    state.deposit(
         USER.to_managed_address(),
         OptionalValue::None,
-        payments_vec.clone(),
+        Some(payments_vec.clone()),
         None,
         false,
     );
@@ -217,7 +215,7 @@ fn deposit_with_fee_with_transfer_data() {
     state.set_fee_market_address(FEE_MARKET_ADDRESS);
 
     let test_token_one_identifier = TestTokenIdentifier::new(TEST_TOKEN_ONE);
-    let test_token_two_identifier = TestTokenIdentifier::new(TEST_TOKEN_ONE);
+    let test_token_two_identifier = TestTokenIdentifier::new(TEST_TOKEN_TWO);
 
     let fee_amount = BigUint::from(ONE_HUNDRED_THOUSAND);
 
@@ -254,6 +252,7 @@ fn deposit_with_fee_with_transfer_data() {
         OptionalValue::Some(transfer_data),
         Some(payments_vec.clone()),
         None,
+        false,
     );
 
     // TODO:

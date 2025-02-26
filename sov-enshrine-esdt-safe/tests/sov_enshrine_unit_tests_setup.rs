@@ -8,8 +8,8 @@ use multiversx_sc::types::{
 };
 use multiversx_sc_modules::pause::PauseModule;
 use multiversx_sc_scenario::{
-    api::StaticApi, imports::MxscPath, scenario_model::Log, ReturnsHandledOrError, ReturnsLogs,
-    ScenarioTxRun, ScenarioTxWhitebox, ScenarioWorld,
+    api::StaticApi, imports::MxscPath, ReturnsHandledOrError, ReturnsLogs, ScenarioTxRun,
+    ScenarioTxWhitebox, ScenarioWorld,
 };
 use operation::{
     aliases::{OptionalValueTransferDataTuple, PaymentsVec},
@@ -172,38 +172,6 @@ impl SovEnshrineEsdtSafeTestState {
             .run();
     }
 
-    pub fn deposit(
-        &mut self,
-        to: ManagedAddress<StaticApi>,
-        opt_transfer_data: OptionalValueTransferDataTuple<StaticApi>,
-        opt_payment: Option<PaymentsVec<StaticApi>>,
-        expected_error_message: Option<&str>,
-    ) {
-        let tx = self
-            .world
-            .tx()
-            .from(OWNER_ADDRESS)
-            .to(CONTRACT_ADDRESS)
-            .typed(SovEnshrineEsdtSafeProxy)
-            .deposit(to, opt_transfer_data);
-
-        let response = if let Some(payment) = opt_payment {
-            tx.payment(payment)
-                .returns(ReturnsHandledOrError::new())
-                .run()
-        } else {
-            tx.returns(ReturnsHandledOrError::new()).run()
-        };
-
-        match response {
-            Ok(_) => assert!(
-                expected_error_message.is_none(),
-                "Transaction was successful, but expected error"
-            ),
-            Err(error) => assert_eq!(expected_error_message, Some(error.message.as_str())),
-        }
-    }
-
     pub fn deploy_fee_market(&mut self, fee: Option<FeeStruct<StaticApi>>) -> &mut Self {
         self.world
             .tx()
@@ -230,11 +198,11 @@ impl SovEnshrineEsdtSafeTestState {
         self
     }
 
-    pub fn deposit_with(
+    pub fn deposit(
         &mut self,
         to: ManagedAddress<StaticApi>,
         opt_transfer_data: OptionalValueTransferDataTuple<StaticApi>,
-        payment: PaymentsVec<StaticApi>,
+        payment: Option<PaymentsVec<StaticApi>>,
         expected_error_message: Option<&str>,
         should_return_logs: bool,
     ) {
@@ -245,7 +213,7 @@ impl SovEnshrineEsdtSafeTestState {
             .to(CONTRACT_ADDRESS)
             .typed(SovEnshrineEsdtSafeProxy)
             .deposit(to, opt_transfer_data)
-            .payment(payment)
+            .payment(payment.unwrap())
             .returns(ReturnsHandledOrError::new())
             .returns(ReturnsLogs)
             .run();
@@ -265,22 +233,5 @@ impl SovEnshrineEsdtSafeTestState {
             ),
             Err(error) => assert_eq!(expected_error_message, Some(error.message.as_str())),
         }
-    }
-
-    pub fn deposit_with_logs(
-        &mut self,
-        to: ManagedAddress<StaticApi>,
-        opt_transfer_data: OptionalValueTransferDataTuple<StaticApi>,
-        payment: PaymentsVec<StaticApi>,
-    ) -> Vec<Log> {
-        self.world
-            .tx()
-            .from(OWNER_ADDRESS)
-            .to(CONTRACT_ADDRESS)
-            .typed(SovEnshrineEsdtSafeProxy)
-            .deposit(to, opt_transfer_data)
-            .payment(payment)
-            .returns(ReturnsLogs)
-            .run()
     }
 }
