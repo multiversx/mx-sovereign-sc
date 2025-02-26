@@ -247,7 +247,7 @@ fn deposit_with_fee_with_transfer_data() {
     state.set_fee_market_address(FEE_MARKET_ADDRESS);
 
     let test_token_one_identifier = TestTokenIdentifier::new(TEST_TOKEN_ONE);
-    let test_token_two_identifier = TestTokenIdentifier::new(TEST_TOKEN_ONE);
+    let test_token_two_identifier = TestTokenIdentifier::new(TEST_TOKEN_TWO);
 
     let fee_amount = BigUint::from(ONE_HUNDRED_THOUSAND);
 
