@@ -1,9 +1,9 @@
 use header_verifier::{Headerverifier, OperationHashStatus};
-use header_verifier_setup::*;
+use header_verifier_blackbox_setup::*;
 use multiversx_sc::types::ManagedBuffer;
 use multiversx_sc_scenario::{DebugApi, ScenarioTxWhitebox};
 
-mod header_verifier_setup;
+mod header_verifier_blackbox_setup;
 
 #[test]
 fn test_deploy() {
@@ -90,7 +90,7 @@ fn test_remove_executed_hash_caller_not_esdt_address() {
     state.propose_register_operations(operation.clone());
     state.propose_register_esdt_address(ENSHRINE_ADDRESS);
     state.propose_remove_executed_hash(
-        OWNER,
+        OWNER_ADDRESS,
         &operation.bridge_operation_hash,
         &operation_1,
         Some("Only ESDT Safe contract can call this endpoint"),

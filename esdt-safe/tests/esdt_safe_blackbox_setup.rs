@@ -15,9 +15,9 @@ use multiversx_sc_scenario::{api::StaticApi, imports::MxscPath, ScenarioTxRun, S
 use multiversx_sc_scenario::{managed_address, ReturnsHandledOrError};
 use transaction::{Operation, OperationData, OperationEsdtPayment};
 
-const BRIDGE_ADDRESS: TestSCAddress = TestSCAddress::new("bridge");
-const BRIDGE_CODE_PATH: MxscPath = MxscPath::new("output/esdt-safe.mxsc.json");
-const BRIDGE_OWNER_ADDRESS: TestAddress = TestAddress::new("bridge_owner");
+const ESDT_SAFE_ADDRESS: TestSCAddress = TestSCAddress::new("esdt-safe");
+const ESDT_SAFE_CODE_PATH: MxscPath = MxscPath::new("output/esdt-safe.mxsc.json");
+const OWNER_ADDRESS: TestAddress = TestAddress::new("owner");
 
 const FEE_MARKET_ADDRESS: TestSCAddress = TestSCAddress::new("fee_market");
 const FEE_MARKET_CODE_PATH: MxscPath = MxscPath::new("../fee-market/output/fee-market.mxsc.json");
@@ -39,24 +39,24 @@ pub const FUNGIBLE_TOKEN_ID: TestTokenIdentifier = TestTokenIdentifier::new("CRO
 fn world() -> ScenarioWorld {
     let mut blockchain = ScenarioWorld::new();
 
-    blockchain.register_contract(BRIDGE_CODE_PATH, esdt_safe::ContractBuilder);
+    blockchain.register_contract(ESDT_SAFE_CODE_PATH, esdt_safe::ContractBuilder);
     blockchain.register_contract(FEE_MARKET_CODE_PATH, fee_market::ContractBuilder);
     blockchain.register_contract(HEADER_VERIFIER_CODE_PATH, header_verifier::ContractBuilder);
 
     blockchain
 }
 
-pub struct BridgeTestState {
+pub struct EsdtSafeTestState {
     pub world: ScenarioWorld,
 }
 
-impl BridgeTestState {
+impl EsdtSafeTestState {
     #[allow(clippy::new_without_default)]
     pub fn new() -> Self {
         let mut world = world();
 
         world
-            .account(BRIDGE_OWNER_ADDRESS)
+            .account(OWNER_ADDRESS)
             .esdt_nft_balance(NFT_TOKEN_ID, 1, TOKEN_BALANCE, ManagedBuffer::new())
             .esdt_balance(FUNGIBLE_TOKEN_ID, TOKEN_BALANCE)
             .nonce(1)
@@ -74,14 +74,14 @@ impl BridgeTestState {
         Self { world }
     }
 
-    pub fn deploy_bridge_contract(&mut self, is_sovereign_chain: bool) -> &mut Self {
+    pub fn deploy_esdt_safe_contract(&mut self, is_sovereign_chain: bool) -> &mut Self {
         self.world
             .tx()
-            .from(BRIDGE_OWNER_ADDRESS)
+            .from(OWNER_ADDRESS)
             .typed(esdt_safe_proxy::EsdtSafeProxy)
             .init(is_sovereign_chain)
-            .code(BRIDGE_CODE_PATH)
-            .new_address(BRIDGE_ADDRESS)
+            .code(ESDT_SAFE_CODE_PATH)
+            .new_address(ESDT_SAFE_ADDRESS)
             .run();
 
         self.deploy_fee_market_contract();
@@ -96,9 +96,9 @@ impl BridgeTestState {
 
         self.world
             .tx()
-            .from(BRIDGE_OWNER_ADDRESS)
+            .from(OWNER_ADDRESS)
             .typed(fee_market_proxy::FeeMarketProxy)
-            .init(BRIDGE_ADDRESS, fee_struct)
+            .init(ESDT_SAFE_ADDRESS, fee_struct)
             .code(FEE_MARKET_CODE_PATH)
             .new_address(FEE_MARKET_ADDRESS)
             .run();
@@ -113,7 +113,7 @@ impl BridgeTestState {
 
         self.world
             .tx()
-            .from(BRIDGE_OWNER_ADDRESS)
+            .from(OWNER_ADDRESS)
             .typed(header_verifier_proxy::HeaderverifierProxy)
             .init(bls_pub_keys)
             .code(HEADER_VERIFIER_CODE_PATH)
@@ -126,8 +126,8 @@ impl BridgeTestState {
     pub fn propose_set_fee_market_address(&mut self) {
         self.world
             .tx()
-            .from(BRIDGE_OWNER_ADDRESS)
-            .to(BRIDGE_ADDRESS)
+            .from(OWNER_ADDRESS)
+            .to(ESDT_SAFE_ADDRESS)
             .typed(esdt_safe_proxy::EsdtSafeProxy)
             .set_fee_market_address(FEE_MARKET_ADDRESS)
             .run();
@@ -136,8 +136,8 @@ impl BridgeTestState {
     pub fn propose_set_header_verifier_address(&mut self) {
         self.world
             .tx()
-            .from(BRIDGE_OWNER_ADDRESS)
-            .to(BRIDGE_ADDRESS)
+            .from(OWNER_ADDRESS)
+            .to(ESDT_SAFE_ADDRESS)
             .typed(esdt_safe_proxy::EsdtSafeProxy)
             .set_header_verifier_address(HEADER_VERIFIER_ADDRESS)
             .run();
@@ -156,7 +156,7 @@ impl BridgeTestState {
             .world
             .tx()
             .from(USER_ADDRESS)
-            .to(BRIDGE_ADDRESS)
+            .to(ESDT_SAFE_ADDRESS)
             .typed(esdt_safe_proxy::EsdtSafeProxy)
             .deposit(RECEIVER_ADDRESS, transfer_data)
             .egld(EGLD_DEPOSIT)
@@ -192,7 +192,7 @@ impl BridgeTestState {
         self.world
             .tx()
             .from(USER_ADDRESS)
-            .to(BRIDGE_ADDRESS)
+            .to(ESDT_SAFE_ADDRESS)
             .typed(esdt_safe_proxy::EsdtSafeProxy)
             .deposit(RECEIVER_ADDRESS, transfer_data)
             .payment(payments)
@@ -209,7 +209,7 @@ impl BridgeTestState {
             .world
             .tx()
             .from(USER_ADDRESS)
-            .to(BRIDGE_ADDRESS)
+            .to(ESDT_SAFE_ADDRESS)
             .typed(esdt_safe_proxy::EsdtSafeProxy)
             .execute_operations(operation_hash, operation)
             .returns(ReturnsHandledOrError::new())
@@ -235,7 +235,7 @@ impl BridgeTestState {
         self.world
             .tx()
             .from(USER_ADDRESS)
-            .to(BRIDGE_ADDRESS)
+            .to(ESDT_SAFE_ADDRESS)
             .typed(esdt_safe_proxy::EsdtSafeProxy)
             .execute_operations(hash_of_hashes, operation)
             .run();
@@ -244,8 +244,8 @@ impl BridgeTestState {
     pub fn propose_set_unpaused(&mut self) {
         self.world
             .tx()
-            .from(BRIDGE_OWNER_ADDRESS)
-            .to(BRIDGE_ADDRESS)
+            .from(OWNER_ADDRESS)
+            .to(ESDT_SAFE_ADDRESS)
             .typed(esdt_safe_proxy::EsdtSafeProxy)
             .unpause_endpoint()
             .run();
@@ -254,10 +254,10 @@ impl BridgeTestState {
     pub fn propose_set_esdt_safe_address(&mut self) {
         self.world
             .tx()
-            .from(BRIDGE_OWNER_ADDRESS)
+            .from(OWNER_ADDRESS)
             .to(HEADER_VERIFIER_ADDRESS)
             .typed(header_verifier_proxy::HeaderverifierProxy)
-            .set_esdt_safe_address(BRIDGE_ADDRESS)
+            .set_esdt_safe_address(ESDT_SAFE_ADDRESS)
             .run();
     }
 
@@ -275,7 +275,7 @@ impl BridgeTestState {
 
         self.world
             .tx()
-            .from(BRIDGE_OWNER_ADDRESS)
+            .from(OWNER_ADDRESS)
             .to(HEADER_VERIFIER_ADDRESS)
             .typed(header_verifier_proxy::HeaderverifierProxy)
             .register_bridge_operations(

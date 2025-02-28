@@ -1,6 +1,6 @@
-use fee_market_setup::*;
+use fee_market_blackbox_setup::*;
 
-mod fee_market_setup;
+mod fee_market_blackbox_setup;
 
 #[test]
 fn test_deploy_fee_market() {

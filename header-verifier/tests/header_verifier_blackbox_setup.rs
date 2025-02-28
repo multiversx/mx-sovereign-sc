@@ -17,7 +17,7 @@ pub const HEADER_VERIFIER_ADDRESS: TestSCAddress = TestSCAddress::new("header-ve
 // NOTE: This is a mock path
 pub const ENSHRINE_ADDRESS: TestAddress = TestAddress::new("enshrine");
 
-pub const OWNER: TestAddress = TestAddress::new("owner");
+pub const OWNER_ADDRESS: TestAddress = TestAddress::new("owner");
 const WEGLD_BALANCE: u128 = 100_000_000_000_000_000; // 0.1 WEGLD
 
 type BlsKeys = MultiValueEncoded<StaticApi, ManagedBuffer<StaticApi>>;
@@ -46,7 +46,7 @@ impl HeaderVerifierTestState {
         let mut world = world();
 
         world
-            .account(OWNER)
+            .account(OWNER_ADDRESS)
             .balance(BigUint::from(WEGLD_BALANCE))
             .nonce(1);
 
@@ -61,7 +61,7 @@ impl HeaderVerifierTestState {
     pub fn deploy_header_verifier_contract(&mut self, bls_keys: BlsKeys) -> &mut Self {
         self.world
             .tx()
-            .from(OWNER)
+            .from(OWNER_ADDRESS)
             .typed(header_verifier_proxy::HeaderverifierProxy)
             .init(bls_keys)
             .code(HEADER_VERIFIER_CODE_PATH)
@@ -74,7 +74,7 @@ impl HeaderVerifierTestState {
     pub fn propose_register_esdt_address(&mut self, esdt_address: TestAddress) {
         self.world
             .tx()
-            .from(OWNER)
+            .from(OWNER_ADDRESS)
             .to(HEADER_VERIFIER_ADDRESS)
             .typed(header_verifier_proxy::HeaderverifierProxy)
             .set_esdt_safe_address(esdt_address)
@@ -84,7 +84,7 @@ impl HeaderVerifierTestState {
     pub fn propose_register_operations(&mut self, operation: BridgeOperation<StaticApi>) {
         self.world
             .tx()
-            .from(OWNER)
+            .from(OWNER_ADDRESS)
             .to(HEADER_VERIFIER_ADDRESS)
             .typed(header_verifier_proxy::HeaderverifierProxy)
             .register_bridge_operations(
