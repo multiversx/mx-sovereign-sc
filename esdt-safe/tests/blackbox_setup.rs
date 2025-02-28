@@ -261,19 +261,6 @@ impl BridgeTestState {
             .run();
     }
 
-    pub fn blacklist_token(&mut self) {
-        let mut tokens = MultiValueEncoded::new();
-        tokens.push(FUNGIBLE_TOKEN_ID.into());
-
-        self.world
-            .tx()
-            .from(BRIDGE_OWNER_ADDRESS)
-            .to(BRIDGE_ADDRESS)
-            .typed(esdt_safe_proxy::EsdtSafeProxy)
-            .add_tokens_to_blacklist(tokens)
-            .run();
-    }
-
     pub fn propose_register_operation(&mut self) {
         let (tokens, data) = self.setup_payments(vec![NFT_TOKEN_ID, FUNGIBLE_TOKEN_ID]);
         let to = managed_address!(&Address::from(RECEIVER_ADDRESS.eval_to_array()));

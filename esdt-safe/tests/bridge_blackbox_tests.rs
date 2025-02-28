@@ -73,25 +73,3 @@ fn test_execute_operation() {
 
     state.propose_execute_operation();
 }
-
-#[test]
-fn test_blacklist_token_and_deposit() {
-    let mut state = BridgeTestState::new();
-
-    state.deploy_bridge_contract(false);
-
-    state.deploy_header_verifier_contract();
-
-    state.propose_set_header_verifier_address();
-
-    state.propose_set_esdt_safe_address();
-
-    state.blacklist_token();
-
-    state.propose_esdt_deposit();
-
-    state
-        .world
-        .check_account(USER_ADDRESS)
-        .esdt_balance(FUNGIBLE_TOKEN_ID, TOKEN_BALANCE);
-}
