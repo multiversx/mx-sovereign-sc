@@ -45,17 +45,17 @@ where
 {
     pub fn init<
         Arg0: ProxyArg<ManagedAddress<Env::Api>>,
-        Arg1: ProxyArg<operation::EsdtSafeConfig<Env::Api>>,
+        Arg1: ProxyArg<OptionalValue<operation::EsdtSafeConfig<Env::Api>>>,
     >(
         self,
         header_verifier_address: Arg0,
-        esdt_safe_config: Arg1,
+        opt_config: Arg1,
     ) -> TxTypedDeploy<Env, From, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_deploy()
             .argument(&header_verifier_address)
-            .argument(&esdt_safe_config)
+            .argument(&opt_config)
             .original_result()
     }
 }
@@ -88,6 +88,19 @@ where
     To: TxTo<Env>,
     Gas: TxGas<Env>,
 {
+    pub fn update_configuration<
+        Arg0: ProxyArg<operation::EsdtSafeConfig<Env::Api>>,
+    >(
+        self,
+        new_config: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("updateConfiguration")
+            .argument(&new_config)
+            .original_result()
+    }
+
     pub fn set_fee_market_address<
         Arg0: ProxyArg<ManagedAddress<Env::Api>>,
     >(

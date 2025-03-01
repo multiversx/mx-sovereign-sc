@@ -1,5 +1,6 @@
 use multiversx_sc::{
     codec::TopEncode,
+    imports::OptionalValue,
     types::{
         BigUint, EsdtTokenType, ManagedAddress, ManagedBuffer, ManagedVec, MultiValueEncoded,
         TestAddress, TestSCAddress, TestTokenIdentifier, TokenIdentifier,
@@ -110,13 +111,13 @@ impl MvxEsdtSafeTestState {
     pub fn deploy_contract(
         &mut self,
         header_verifier_address: TestSCAddress,
-        config: EsdtSafeConfig<StaticApi>,
+        opt_config: OptionalValue<EsdtSafeConfig<StaticApi>>,
     ) -> &mut Self {
         self.world
             .tx()
             .from(OWNER_ADDRESS)
             .typed(MvxEsdtSafeProxy)
-            .init(header_verifier_address, config)
+            .init(header_verifier_address, opt_config)
             .code(CONTRACT_CODE_PATH)
             .new_address(ESDT_SAFE_ADDRESS)
             .run();
