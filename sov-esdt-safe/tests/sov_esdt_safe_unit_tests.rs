@@ -18,7 +18,10 @@ mod sov_esdt_safe_setup;
 fn deploy() {
     let mut state = SovEsdtSafeTestState::new();
 
-    state.deploy_contract(EsdtSafeConfig::default_config());
+    state.deploy_contract(
+        FEE_MARKET_ADDRESS,
+        OptionalValue::Some(EsdtSafeConfig::default_config()),
+    );
 }
 
 #[test]
