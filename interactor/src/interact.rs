@@ -1,10 +1,12 @@
 #![allow(non_snake_case)]
 
 pub mod config;
-mod proxy;
+pub mod mvx_esdt_safe;
 
 use config::Config;
 use multiversx_sc_snippets::imports::*;
+use operation::EsdtSafeConfig;
+use proxies::mvx_esdt_safe_proxy::MvxEsdtSafeProxy;
 use serde::{Deserialize, Serialize};
 use std::{
     io::{Read, Write},
@@ -26,9 +28,6 @@ pub async fn mvx_esdt_safe_cli() {
         "upgrade" => interact.upgrade().await,
         "updateConfiguration" => interact.update_configuration().await,
         "setFeeMarketAddress" => interact.set_fee_market_address().await,
-        "deposit" => interact.deposit().await,
-        "executeBridgeOps" => interact.execute_operations().await,
-        "registerToken" => interact.register_token().await,
         "pause" => interact.pause_endpoint().await,
         "unpause" => interact.unpause_endpoint().await,
         "isPaused" => interact.paused_status().await,
@@ -40,49 +39,49 @@ pub async fn mvx_esdt_safe_cli() {
 
 #[derive(Debug, Default, Serialize, Deserialize)]
 pub struct State {
-    contract_address: Option<Bech32Address>
+    contract_address: Option<Bech32Address>,
 }
 
 impl State {
-        // Deserializes state from file
-        pub fn load_state() -> Self {
-            if Path::new(STATE_FILE).exists() {
-                let mut file = std::fs::File::open(STATE_FILE).unwrap();
-                let mut content = String::new();
-                file.read_to_string(&mut content).unwrap();
-                toml::from_str(&content).unwrap()
-            } else {
-                Self::default()
-            }
-        }
-    
-        /// Sets the contract address
-        pub fn set_address(&mut self, address: Bech32Address) {
-            self.contract_address = Some(address);
-        }
-    
-        /// Returns the contract address
-        pub fn current_address(&self) -> &Bech32Address {
-            self.contract_address
-                .as_ref()
-                .expect("no known contract, deploy first")
+    // Deserializes state from file
+    pub fn load_state() -> Self {
+        if Path::new(STATE_FILE).exists() {
+            let mut file = std::fs::File::open(STATE_FILE).unwrap();
+            let mut content = String::new();
+            file.read_to_string(&mut content).unwrap();
+            toml::from_str(&content).unwrap()
+        } else {
+            Self::default()
         }
     }
-    
-    impl Drop for State {
-        // Serializes state to file
-        fn drop(&mut self) {
-            let mut file = std::fs::File::create(STATE_FILE).unwrap();
-            file.write_all(toml::to_string(self).unwrap().as_bytes())
-                .unwrap();
-        }
+
+    /// Sets the contract address
+    pub fn set_address(&mut self, address: Bech32Address) {
+        self.contract_address = Some(address);
     }
+
+    /// Returns the contract address
+    pub fn current_address(&self) -> &Bech32Address {
+        self.contract_address
+            .as_ref()
+            .expect("no known contract, deploy first")
+    }
+}
+
+impl Drop for State {
+    // Serializes state to file
+    fn drop(&mut self) {
+        let mut file = std::fs::File::create(STATE_FILE).unwrap();
+        file.write_all(toml::to_string(self).unwrap().as_bytes())
+            .unwrap();
+    }
+}
 
 pub struct ContractInteract {
     interactor: Interactor,
     wallet_address: Address,
     contract_code: BytesValue,
-    state: State
+    state: State,
 }
 
 impl ContractInteract {
@@ -97,7 +96,7 @@ impl ContractInteract {
         // Useful in the chain simulator setting
         // generate blocks until ESDTSystemSCAddress is enabled
         interactor.generate_blocks_until_epoch(1).await.unwrap();
-        
+
         let contract_code = BytesValue::interpret_from(
             "mxsc:../output/mvx-esdt-safe.mxsc.json",
             &InterpreterContext::default(),
@@ -107,28 +106,29 @@ impl ContractInteract {
             interactor,
             wallet_address,
             contract_code,
-            state: State::load_state()
+            state: State::load_state(),
         }
     }
 
     pub async fn deploy(&mut self) {
         let header_verifier_address = bech32::decode("");
-        let opt_config = OptionalValue::Some(EsdtSafeConfig::<StaticApi>::default());
+        let opt_config = OptionalValue::Some(EsdtSafeConfig::<StaticApi>::default_config());
 
         let new_address = self
             .interactor
             .tx()
             .from(&self.wallet_address)
             .gas(30_000_000u64)
-            .typed(proxy::MvxEsdtSafeProxy)
+            .typed(MvxEsdtSafeProxy)
             .init(header_verifier_address, opt_config)
             .code(&self.contract_code)
             .returns(ReturnsNewAddress)
             .run()
             .await;
         let new_address_bech32 = bech32::encode(&new_address);
-        self.state
-            .set_address(Bech32Address::from_bech32_string(new_address_bech32.clone()));
+        self.state.set_address(Bech32Address::from_bech32_string(
+            new_address_bech32.clone(),
+        ));
 
         println!("new address: {new_address_bech32}");
     }
@@ -140,7 +140,7 @@ impl ContractInteract {
             .to(self.state.current_address())
             .from(&self.wallet_address)
             .gas(30_000_000u64)
-            .typed(proxy::MvxEsdtSafeProxy)
+            .typed(MvxEsdtSafeProxy)
             .upgrade()
             .code(&self.contract_code)
             .code_metadata(CodeMetadata::UPGRADEABLE)
@@ -152,7 +152,7 @@ impl ContractInteract {
     }
 
     pub async fn update_configuration(&mut self) {
-        let new_config = EsdtSafeConfig::<StaticApi>::default();
+        let new_config = EsdtSafeConfig::<StaticApi>::default_config();
 
         let response = self
             .interactor
@@ -160,7 +160,7 @@ impl ContractInteract {
             .from(&self.wallet_address)
             .to(self.state.current_address())
             .gas(30_000_000u64)
-            .typed(proxy::MvxEsdtSafeProxy)
+            .typed(MvxEsdtSafeProxy)
             .update_configuration(new_config)
             .returns(ReturnsResultUnmanaged)
             .run()
@@ -178,7 +178,7 @@ impl ContractInteract {
             .from(&self.wallet_address)
             .to(self.state.current_address())
             .gas(30_000_000u64)
-            .typed(proxy::MvxEsdtSafeProxy)
+            .typed(MvxEsdtSafeProxy)
             .set_fee_market_address(fee_market_address)
             .returns(ReturnsResultUnmanaged)
             .run()
@@ -187,73 +187,82 @@ impl ContractInteract {
         println!("Result: {response:?}");
     }
 
-    pub async fn deposit(&mut self) {
-        let token_id = String::new();
-        let token_nonce = 0u64;
-        let token_amount = BigUint::<StaticApi>::from(0u128);
+    // pub async fn deposit(&mut self) {
+    //     let token_id = String::new();
+    //     let token_nonce = 0u64;
+    //     let token_amount = BigUint::<StaticApi>::from(0u128);
+    //
+    //     let to = bech32::decode("");
+    //
+    //     let response = self
+    //         .interactor
+    //         .tx()
+    //         .from(&self.wallet_address)
+    //         .to(self.state.current_address())
+    //         .gas(30_000_000u64)
+    //         .typed(MvxEsdtSafeProxy)
+    //         .deposit(to, OptionalValue::None)
+    //         .payment((
+    //             TokenIdentifier::from(token_id.as_str()),
+    //             token_nonce,
+    //             token_amount,
+    //         ))
+    //         .returns(ReturnsResultUnmanaged)
+    //         .run()
+    //         .await;
+    //
+    //     println!("Result: {response:?}");
+    // }
 
-        let to = bech32::decode("");
-        let opt_transfer_data = MultiValue3::<u64, ManagedBuffer<StaticApi>, ManagedVec<StaticApi, ManagedBuffer<StaticApi>>>::from((0u64, ManagedBuffer::new_from_bytes(&b""[..]), ManagedVec::from_single_item(ManagedBuffer::new_from_bytes(&b""[..])))));
+    // pub async fn execute_operations(&mut self) {
+    //     let hash_of_hashes = ManagedBuffer::new_from_bytes(&b""[..]);
+    //     let operation = Operation::<StaticApi>::new();
+    //
+    //     let response = self
+    //         .interactor
+    //         .tx()
+    //         .from(&self.wallet_address)
+    //         .to(self.state.current_address())
+    //         .gas(30_000_000u64)
+    //         .typed(MvxEsdtSafeProxy)
+    //         .execute_operations(hash_of_hashes, operation)
+    //         .returns(ReturnsResultUnmanaged)
+    //         .run()
+    //         .await;
+    //
+    //     println!("Result: {response:?}");
+    // }
 
-        let response = self
-            .interactor
-            .tx()
-            .from(&self.wallet_address)
-            .to(self.state.current_address())
-            .gas(30_000_000u64)
-            .typed(proxy::MvxEsdtSafeProxy)
-            .deposit(to, opt_transfer_data)
-            .payment((TokenIdentifier::from(token_id.as_str()), token_nonce, token_amount))
-            .returns(ReturnsResultUnmanaged)
-            .run()
-            .await;
-
-        println!("Result: {response:?}");
-    }
-
-    pub async fn execute_operations(&mut self) {
-        let hash_of_hashes = ManagedBuffer::new_from_bytes(&b""[..]);
-        let operation = Operation::<StaticApi>::default();
-
-        let response = self
-            .interactor
-            .tx()
-            .from(&self.wallet_address)
-            .to(self.state.current_address())
-            .gas(30_000_000u64)
-            .typed(proxy::MvxEsdtSafeProxy)
-            .execute_operations(hash_of_hashes, operation)
-            .returns(ReturnsResultUnmanaged)
-            .run()
-            .await;
-
-        println!("Result: {response:?}");
-    }
-
-    pub async fn register_token(&mut self) {
-        let egld_amount = BigUint::<StaticApi>::from(0u128);
-
-        let sov_token_id = TokenIdentifier::from_esdt_bytes(&b""[..]);
-        let token_type = EsdtTokenType::<StaticApi>::default();
-        let token_display_name = ManagedBuffer::new_from_bytes(&b""[..]);
-        let token_ticker = ManagedBuffer::new_from_bytes(&b""[..]);
-        let num_decimals = 0u32;
-
-        let response = self
-            .interactor
-            .tx()
-            .from(&self.wallet_address)
-            .to(self.state.current_address())
-            .gas(30_000_000u64)
-            .typed(proxy::MvxEsdtSafeProxy)
-            .register_token(sov_token_id, token_type, token_display_name, token_ticker, num_decimals)
-            .egld(egld_amount)
-            .returns(ReturnsResultUnmanaged)
-            .run()
-            .await;
-
-        println!("Result: {response:?}");
-    }
+    // pub async fn register_token(&mut self) {
+    //     let egld_amount = BigUint::<StaticApi>::from(0u128);
+    //
+    //     let sov_token_id = TokenIdentifier::from_esdt_bytes(&b""[..]);
+    //     let token_type = EsdtTokenType::<StaticApi>::default();
+    //     let token_display_name = ManagedBuffer::new_from_bytes(&b""[..]);
+    //     let token_ticker = ManagedBuffer::new_from_bytes(&b""[..]);
+    //     let num_decimals = 0u32;
+    //
+    //     let response = self
+    //         .interactor
+    //         .tx()
+    //         .from(&self.wallet_address)
+    //         .to(self.state.current_address())
+    //         .gas(30_000_000u64)
+    //         .typed(MvxEsdtSafeProxy)
+    //         .register_token(
+    //             sov_token_id,
+    //             token_type,
+    //             token_display_name,
+    //             token_ticker,
+    //             num_decimals,
+    //         )
+    //         .egld(egld_amount)
+    //         .returns(ReturnsResultUnmanaged)
+    //         .run()
+    //         .await;
+    //
+    //     println!("Result: {response:?}");
+    // }
 
     pub async fn pause_endpoint(&mut self) {
         let response = self
@@ -262,7 +271,7 @@ impl ContractInteract {
             .from(&self.wallet_address)
             .to(self.state.current_address())
             .gas(30_000_000u64)
-            .typed(proxy::MvxEsdtSafeProxy)
+            .typed(MvxEsdtSafeProxy)
             .pause_endpoint()
             .returns(ReturnsResultUnmanaged)
             .run()
@@ -278,7 +287,7 @@ impl ContractInteract {
             .from(&self.wallet_address)
             .to(self.state.current_address())
             .gas(30_000_000u64)
-            .typed(proxy::MvxEsdtSafeProxy)
+            .typed(MvxEsdtSafeProxy)
             .unpause_endpoint()
             .returns(ReturnsResultUnmanaged)
             .run()
@@ -292,7 +301,7 @@ impl ContractInteract {
             .interactor
             .query()
             .to(self.state.current_address())
-            .typed(proxy::MvxEsdtSafeProxy)
+            .typed(MvxEsdtSafeProxy)
             .paused_status()
             .returns(ReturnsResultUnmanaged)
             .run()
@@ -311,7 +320,7 @@ impl ContractInteract {
             .from(&self.wallet_address)
             .to(self.state.current_address())
             .gas(30_000_000u64)
-            .typed(proxy::MvxEsdtSafeProxy)
+            .typed(MvxEsdtSafeProxy)
             .set_max_bridged_amount(token_id, max_amount)
             .returns(ReturnsResultUnmanaged)
             .run()
@@ -327,7 +336,7 @@ impl ContractInteract {
             .interactor
             .query()
             .to(self.state.current_address())
-            .typed(proxy::MvxEsdtSafeProxy)
+            .typed(MvxEsdtSafeProxy)
             .max_bridged_amount(token_id)
             .returns(ReturnsResultUnmanaged)
             .run()
@@ -335,5 +344,4 @@ impl ContractInteract {
 
         println!("Result: {result_value:?}");
     }
-
 }

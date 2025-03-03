@@ -13,7 +13,13 @@ path = "src/interactor_main.rs"
 path = "src/interact.rs"
 
 [dependencies.mvx-esdt-safe]
-path = ".."
+path = "../mvx-esdt-safe"
+
+[dependencies.proxies]
+path = "../common/proxies"
+
+[dependencies.operation]
+path = "../common/operation"
 
 [dependencies.multiversx-sc-snippets]
 version = "0.56.1"
