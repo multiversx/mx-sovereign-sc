@@ -591,7 +591,7 @@ fn execute_operation_no_esdt_safe_registered() {
 
     let hash_of_hashes = state.get_operation_hash(&operation);
 
-    state.deploy_header_verifier(CHAIN_CONFIG_ADDRESS);
+    state.deploy_header_verifier(ManagedVec::new());
 
     state.execute_operation(
         hash_of_hashes,
@@ -632,15 +632,13 @@ fn execute_operation_success() {
     let operation_hash = state.get_operation_hash(&operation);
     let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&operation_hash.to_vec()));
 
-    state.deploy_header_verifier(CHAIN_CONFIG_ADDRESS);
+    state.deploy_header_verifier(ManagedVec::new());
     state.deploy_testing_sc();
     state.set_esdt_safe_address_in_header_verifier(ESDT_SAFE_ADDRESS);
 
     let operations_hashes = MultiValueEncoded::from(ManagedVec::from(vec![operation_hash.clone()]));
 
     state.deploy_chain_config(SovereignConfig::default_config());
-    state.change_validator_set(vec![ManagedBuffer::from("bls_1")]);
-    state.complete_setup_phase();
     state.register_operation(ManagedBuffer::new(), &hash_of_hashes, operations_hashes);
 
     state

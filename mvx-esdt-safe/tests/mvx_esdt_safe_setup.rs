@@ -1,12 +1,14 @@
+use std::usize;
+
 use multiversx_sc::{
     codec::TopEncode,
-    imports::OptionalValue,
+    imports::{MultiValue2, OptionalValue},
     types::{
         BigUint, EsdtTokenType, ManagedAddress, ManagedBuffer, ManagedVec, MultiValueEncoded,
         TestAddress, TestSCAddress, TestTokenIdentifier, TokenIdentifier,
     },
 };
-use multiversx_sc_modules::transfer_role_proxy::PaymentsVec;
+use multiversx_sc_modules::{transfer_role_proxy::PaymentsVec, users};
 use multiversx_sc_scenario::{
     api::StaticApi, imports::MxscPath, multiversx_chain_vm::crypto_functions::sha256,
     scenario_model::Log, ReturnsHandledOrError, ReturnsLogs, ScenarioTxRun, ScenarioWorld,
@@ -151,12 +153,15 @@ impl MvxEsdtSafeTestState {
         self
     }
 
-    pub fn deploy_header_verifier(&mut self, chain_config_address: TestSCAddress) -> &mut Self {
+    pub fn deploy_header_verifier(
+        &mut self,
+        bls_pub_keys: ManagedVec<StaticApi, ManagedBuffer<StaticApi>>,
+    ) -> &mut Self {
         self.world
             .tx()
             .from(OWNER_ADDRESS)
             .typed(HeaderverifierProxy)
-            .init(chain_config_address)
+            .init(MultiValueEncoded::from(bls_pub_keys))
             .code(HEADER_VERIFIER_CODE_PATH)
             .new_address(HEADER_VERIFIER_ADDRESS)
             .run();
@@ -165,11 +170,24 @@ impl MvxEsdtSafeTestState {
     }
 
     pub fn deploy_chain_config(&mut self, config: SovereignConfig<StaticApi>) -> &mut Self {
+        let mut additional_stake_as_tuple = MultiValueEncoded::new();
+        if let Some(additional_stake) = config.opt_additional_stake_required {
+            for stake in additional_stake {
+                additional_stake_as_tuple.push(MultiValue2::from((stake.token_id, stake.amount)));
+            }
+        }
+
         self.world
             .tx()
             .from(OWNER_ADDRESS)
             .typed(ChainConfigContractProxy)
-            .init(config, OWNER_ADDRESS)
+            .init(
+                config.min_validators as usize,
+                config.max_validators as usize,
+                config.min_stake,
+                OWNER_ADDRESS,
+                additional_stake_as_tuple,
+            )
             .code(CHAIN_CONFIG_CODE_PATH)
             .new_address(CHAIN_CONFIG_ADDRESS)
             .run();
@@ -322,26 +340,6 @@ impl MvxEsdtSafeTestState {
             .typed(HeaderverifierProxy)
             .register_bridge_operations(signature, hash_of_hashes, operations_hashes)
             .run();
-    }
-
-    pub fn complete_setup_phase(&mut self) {
-        self.world
-            .tx()
-            .from(OWNER_ADDRESS)
-            .to(HEADER_VERIFIER_ADDRESS)
-            .typed(HeaderverifierProxy)
-            .complete_setup_phase()
-            .run();
-    }
-
-    pub fn change_validator_set(&mut self, validator_set: Vec<ManagedBuffer<StaticApi>>) {
-        self.world
-            .tx()
-            .from(OWNER_ADDRESS)
-            .to(HEADER_VERIFIER_ADDRESS)
-            .typed(HeaderverifierProxy)
-            .change_validator_set(MultiValueEncoded::from(ManagedVec::from(validator_set)))
-            .run()
     }
 
     pub fn get_operation_hash(
