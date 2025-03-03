@@ -26,6 +26,9 @@ path = "../common/setup-phase"
 [dependencies.token-whitelist]
 path = "../common/token-whitelist"
 
+[dependencies.proxies]
+path = "../common/proxies"
+
 [dependencies.utils]
 path = "../common/utils"
 
