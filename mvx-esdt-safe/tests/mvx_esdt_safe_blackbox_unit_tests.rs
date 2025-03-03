@@ -11,7 +11,7 @@ use multiversx_sc_modules::transfer_role_proxy::PaymentsVec;
 use multiversx_sc_scenario::{
     api::StaticApi, multiversx_chain_vm::crypto_functions::sha256, ScenarioTxWhitebox,
 };
-use mvx_esdt_safe_setup::{
+use mvx_esdt_safe_blackbox_setup::{
     MvxEsdtSafeTestState, RegisterTokenArgs, ESDT_SAFE_ADDRESS, FEE_MARKET_ADDRESS, FEE_TOKEN,
     HEADER_VERIFIER_ADDRESS, ONE_HUNDRED_MILLION, ONE_HUNDRED_THOUSAND, OWNER_ADDRESS,
     TESTING_SC_ADDRESS, TEST_TOKEN_ONE, TEST_TOKEN_TWO, USER,
@@ -21,7 +21,7 @@ use operation::{
 };
 use proxies::fee_market_proxy::{FeeStruct, FeeType};
 
-mod mvx_esdt_safe_setup;
+mod mvx_esdt_safe_blackbox_setup;
 
 #[test]
 fn deploy() {
