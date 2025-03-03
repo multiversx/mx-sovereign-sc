@@ -8,7 +8,7 @@ use multiversx_sc::{
         TestAddress, TestSCAddress, TestTokenIdentifier, TokenIdentifier,
     },
 };
-use multiversx_sc_modules::{transfer_role_proxy::PaymentsVec, users};
+use multiversx_sc_modules::transfer_role_proxy::PaymentsVec;
 use multiversx_sc_scenario::{
     api::StaticApi, imports::MxscPath, multiversx_chain_vm::crypto_functions::sha256,
     scenario_model::Log, ReturnsHandledOrError, ReturnsLogs, ScenarioTxRun, ScenarioWorld,

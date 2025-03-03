@@ -12,9 +12,9 @@ use multiversx_sc_scenario::{
     api::StaticApi, multiversx_chain_vm::crypto_functions::sha256, ScenarioTxWhitebox,
 };
 use mvx_esdt_safe_setup::{
-    MvxEsdtSafeTestState, RegisterTokenArgs, CHAIN_CONFIG_ADDRESS, ESDT_SAFE_ADDRESS,
-    FEE_MARKET_ADDRESS, FEE_TOKEN, HEADER_VERIFIER_ADDRESS, ONE_HUNDRED_MILLION,
-    ONE_HUNDRED_THOUSAND, OWNER_ADDRESS, TESTING_SC_ADDRESS, TEST_TOKEN_ONE, TEST_TOKEN_TWO, USER,
+    MvxEsdtSafeTestState, RegisterTokenArgs, ESDT_SAFE_ADDRESS, FEE_MARKET_ADDRESS, FEE_TOKEN,
+    HEADER_VERIFIER_ADDRESS, ONE_HUNDRED_MILLION, ONE_HUNDRED_THOUSAND, OWNER_ADDRESS,
+    TESTING_SC_ADDRESS, TEST_TOKEN_ONE, TEST_TOKEN_TWO, USER,
 };
 use operation::{
     EsdtSafeConfig, Operation, OperationData, OperationEsdtPayment, SovereignConfig, TransferData,
