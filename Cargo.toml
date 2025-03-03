@@ -4,8 +4,6 @@ members = [
   "chain-config/meta",
   "chain-factory",
   "chain-factory/meta",
-  "esdt-safe",
-  "esdt-safe/meta",
   "fee-market",
   "fee-market/meta",
   "header-verifier",
