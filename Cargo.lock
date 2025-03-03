@@ -451,7 +451,8 @@ dependencies = [
  "multiversx-sc",
  "multiversx-sc-scenario",
  "num-bigint",
- "transaction",
+ "operation",
+ "proxies",
 ]
 
 [[package]]
