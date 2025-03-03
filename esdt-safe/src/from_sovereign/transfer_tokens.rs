@@ -74,7 +74,7 @@ pub trait TransferTokensModule:
                 output_payments.push(OperationEsdtPayment::new(
                     mvx_token_id,
                     0,
-                    operation_token.token_data,
+                    operation_token.token_data.clone(),
                 ));
 
                 continue;
@@ -85,7 +85,7 @@ pub trait TransferTokensModule:
             output_payments.push(OperationEsdtPayment::new(
                 mvx_token_id,
                 nft_nonce,
-                operation_token.token_data,
+                operation_token.token_data.clone(),
             ));
         }
 
@@ -166,8 +166,10 @@ pub trait TransferTokensModule:
         operation_tuple: &OperationTuple<Self::Api>,
         tokens_list: &ManagedVec<OperationEsdtPayment<Self::Api>>,
     ) {
-        let mapped_tokens: ManagedVec<Self::Api, EsdtTokenPayment<Self::Api>> =
-            tokens_list.iter().map(|token| token.into()).collect();
+        let mapped_tokens: ManagedVec<Self::Api, EsdtTokenPayment<Self::Api>> = tokens_list
+            .iter()
+            .map(|token| token.clone().into())
+            .collect();
 
         match &operation_tuple.operation.data.opt_transfer_data {
             Some(transfer_data) => {

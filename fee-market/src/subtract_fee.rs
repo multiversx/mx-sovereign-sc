@@ -7,7 +7,8 @@ multiversx_sc::derive_imports!();
 
 const TOTAL_PERCENTAGE: usize = 10_000;
 
-#[derive(TypeAbi, TopEncode, TopDecode)]
+#[type_abi]
+#[derive(TopEncode, TopDecode)]
 pub struct FinalPayment<M: ManagedTypeApi> {
     pub fee: EsdtTokenPayment<M>,
     pub remaining_tokens: EsdtTokenPayment<M>,
@@ -111,7 +112,7 @@ pub trait SubtractFeeModule:
         self.require_caller_esdt_safe();
 
         let caller = self.blockchain().get_caller();
-        let payment = self.call_value().single_esdt();
+        let payment = self.call_value().single_esdt().clone();
 
         if !self.is_fee_enabled() || self.users_whitelist().contains(&original_caller) {
             self.tx().to(&caller).payment(&payment).transfer();
