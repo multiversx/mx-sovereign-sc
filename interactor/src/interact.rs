@@ -2,6 +2,7 @@
 
 pub mod config;
 pub mod mvx_esdt_safe;
+pub mod sov_esdt_safe;
 
 use config::Config;
 use multiversx_sc_snippets::imports::*;

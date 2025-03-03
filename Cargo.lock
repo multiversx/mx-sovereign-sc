@@ -1808,6 +1808,7 @@ dependencies = [
  "operation",
  "proxies",
  "serde",
+ "sov-esdt-safe",
  "toml",
 ]
 

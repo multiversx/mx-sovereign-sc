@@ -15,6 +15,9 @@ path = "src/interact.rs"
 [dependencies.mvx-esdt-safe]
 path = "../mvx-esdt-safe"
 
+[dependencies.sov-esdt-safe]
+path = "../sov-esdt-safe"
+
 [dependencies.proxies]
 path = "../common/proxies"
 
