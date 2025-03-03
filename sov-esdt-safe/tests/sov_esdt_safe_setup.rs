@@ -1,5 +1,9 @@
-use multiversx_sc::types::{
-    BigUint, EsdtLocalRole, ManagedAddress, ManagedVec, TestAddress, TestSCAddress, TokenIdentifier,
+use multiversx_sc::{
+    imports::OptionalValue,
+    types::{
+        BigUint, EsdtLocalRole, ManagedAddress, ManagedVec, TestAddress, TestSCAddress,
+        TokenIdentifier,
+    },
 };
 use multiversx_sc_scenario::{
     api::StaticApi, imports::MxscPath, scenario_model::Log, ReturnsHandledOrError, ReturnsLogs,
@@ -84,12 +88,16 @@ impl SovEsdtSafeTestState {
         Self { world }
     }
 
-    pub fn deploy_contract(&mut self, config: EsdtSafeConfig<StaticApi>) -> &mut Self {
+    pub fn deploy_contract(
+        &mut self,
+        fee_market_address: TestSCAddress,
+        opt_config: OptionalValue<EsdtSafeConfig<StaticApi>>,
+    ) -> &mut Self {
         self.world
             .tx()
             .from(OWNER_ADDRESS)
             .typed(SovEsdtSafeProxy)
-            .init(config)
+            .init(fee_market_address, opt_config)
             .code(SOV_ESDT_SAFE_CODE_PATH)
             .new_address(ESDT_SAFE_ADDRESS)
             .run();
@@ -141,7 +149,10 @@ impl SovEsdtSafeTestState {
                     ManagedVec::new(),
                 );
 
-                sc.init(config);
+                sc.init(
+                    FEE_MARKET_ADDRESS.to_managed_address(),
+                    OptionalValue::Some(config),
+                );
             });
 
         self
