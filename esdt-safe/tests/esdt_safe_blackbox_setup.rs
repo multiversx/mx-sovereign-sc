@@ -1,11 +1,6 @@
-use bls_signature::BlsSignature;
-use esdt_safe::esdt_safe_proxy::{self};
 use fee_market::fee_market_proxy::{self, FeeStruct};
-use header_verifier::header_verifier_proxy;
 use multiversx_sc::codec::TopEncode;
-use multiversx_sc::types::{
-    Address, EsdtTokenData, ManagedByteArray, MultiValueEncoded, TestTokenIdentifier,
-};
+use multiversx_sc::types::{Address, EsdtTokenData, MultiValueEncoded, TestTokenIdentifier};
 use multiversx_sc::{
     imports::{MultiValue3, OptionalValue},
     types::{BigUint, EsdtTokenPayment, ManagedBuffer, ManagedVec, TestAddress, TestSCAddress},
@@ -13,7 +8,9 @@ use multiversx_sc::{
 use multiversx_sc_scenario::multiversx_chain_vm::crypto_functions::sha256;
 use multiversx_sc_scenario::{api::StaticApi, imports::MxscPath, ScenarioTxRun, ScenarioWorld};
 use multiversx_sc_scenario::{managed_address, ReturnsHandledOrError};
-use transaction::{Operation, OperationData, OperationEsdtPayment};
+use operation::{Operation, OperationData, OperationEsdtPayment};
+use proxies::esdt_safe_proxy::EsdtSafeProxy;
+use proxies::header_verifier_proxy::HeaderverifierProxy;
 
 const ESDT_SAFE_ADDRESS: TestSCAddress = TestSCAddress::new("esdt-safe");
 const ESDT_SAFE_CODE_PATH: MxscPath = MxscPath::new("output/esdt-safe.mxsc.json");
@@ -78,7 +75,7 @@ impl EsdtSafeTestState {
         self.world
             .tx()
             .from(OWNER_ADDRESS)
-            .typed(esdt_safe_proxy::EsdtSafeProxy)
+            .typed(EsdtSafeProxy)
             .init(is_sovereign_chain)
             .code(ESDT_SAFE_CODE_PATH)
             .new_address(ESDT_SAFE_ADDRESS)
@@ -114,7 +111,7 @@ impl EsdtSafeTestState {
         self.world
             .tx()
             .from(OWNER_ADDRESS)
-            .typed(header_verifier_proxy::HeaderverifierProxy)
+            .typed(HeaderverifierProxy)
             .init(bls_pub_keys)
             .code(HEADER_VERIFIER_CODE_PATH)
             .new_address(HEADER_VERIFIER_ADDRESS)
@@ -128,7 +125,7 @@ impl EsdtSafeTestState {
             .tx()
             .from(OWNER_ADDRESS)
             .to(ESDT_SAFE_ADDRESS)
-            .typed(esdt_safe_proxy::EsdtSafeProxy)
+            .typed(EsdtSafeProxy)
             .set_fee_market_address(FEE_MARKET_ADDRESS)
             .run();
     }
@@ -138,7 +135,7 @@ impl EsdtSafeTestState {
             .tx()
             .from(OWNER_ADDRESS)
             .to(ESDT_SAFE_ADDRESS)
-            .typed(esdt_safe_proxy::EsdtSafeProxy)
+            .typed(EsdtSafeProxy)
             .set_header_verifier_address(HEADER_VERIFIER_ADDRESS)
             .run();
     }
@@ -157,7 +154,7 @@ impl EsdtSafeTestState {
             .tx()
             .from(USER_ADDRESS)
             .to(ESDT_SAFE_ADDRESS)
-            .typed(esdt_safe_proxy::EsdtSafeProxy)
+            .typed(EsdtSafeProxy)
             .deposit(RECEIVER_ADDRESS, transfer_data)
             .egld(EGLD_DEPOSIT)
             .returns(ReturnsHandledOrError::new())
@@ -193,7 +190,7 @@ impl EsdtSafeTestState {
             .tx()
             .from(USER_ADDRESS)
             .to(ESDT_SAFE_ADDRESS)
-            .typed(esdt_safe_proxy::EsdtSafeProxy)
+            .typed(EsdtSafeProxy)
             .deposit(RECEIVER_ADDRESS, transfer_data)
             .payment(payments)
             .run();
@@ -210,7 +207,7 @@ impl EsdtSafeTestState {
             .tx()
             .from(USER_ADDRESS)
             .to(ESDT_SAFE_ADDRESS)
-            .typed(esdt_safe_proxy::EsdtSafeProxy)
+            .typed(EsdtSafeProxy)
             .execute_operations(operation_hash, operation)
             .returns(ReturnsHandledOrError::new())
             .run();
@@ -236,7 +233,7 @@ impl EsdtSafeTestState {
             .tx()
             .from(USER_ADDRESS)
             .to(ESDT_SAFE_ADDRESS)
-            .typed(esdt_safe_proxy::EsdtSafeProxy)
+            .typed(EsdtSafeProxy)
             .execute_operations(hash_of_hashes, operation)
             .run();
     }
@@ -246,7 +243,7 @@ impl EsdtSafeTestState {
             .tx()
             .from(OWNER_ADDRESS)
             .to(ESDT_SAFE_ADDRESS)
-            .typed(esdt_safe_proxy::EsdtSafeProxy)
+            .typed(EsdtSafeProxy)
             .unpause_endpoint()
             .run();
     }
@@ -256,7 +253,7 @@ impl EsdtSafeTestState {
             .tx()
             .from(OWNER_ADDRESS)
             .to(HEADER_VERIFIER_ADDRESS)
-            .typed(header_verifier_proxy::HeaderverifierProxy)
+            .typed(HeaderverifierProxy)
             .set_esdt_safe_address(ESDT_SAFE_ADDRESS)
             .run();
     }
@@ -270,16 +267,15 @@ impl EsdtSafeTestState {
 
         operations_hashes.push(operation_hash.clone());
 
-        let mock_signature = self.mock_bls_signature(&operation_hash);
         let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&operation_hash.to_vec()));
 
         self.world
             .tx()
             .from(OWNER_ADDRESS)
             .to(HEADER_VERIFIER_ADDRESS)
-            .typed(header_verifier_proxy::HeaderverifierProxy)
+            .typed(HeaderverifierProxy)
             .register_bridge_operations(
-                mock_signature,
+                ManagedBuffer::new(),
                 hash_of_hashes.clone(),
                 operations_hashes.clone(),
             )
@@ -321,16 +317,5 @@ impl EsdtSafeTestState {
         let sha256 = sha256(&serialized_operation.to_vec());
 
         ManagedBuffer::new_from_bytes(&sha256)
-    }
-
-    fn mock_bls_signature(
-        &mut self,
-        operation_hash: &ManagedBuffer<StaticApi>,
-    ) -> BlsSignature<StaticApi> {
-        let byte_arr: &mut [u8; 48] = &mut [0; 48];
-        operation_hash.load_to_byte_array(byte_arr);
-        let mock_signature: BlsSignature<StaticApi> = ManagedByteArray::new_from_bytes(byte_arr);
-
-        mock_signature
     }
 }
