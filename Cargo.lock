@@ -365,6 +365,7 @@ dependencies = [
  "num-bigint",
  "num-traits",
  "operation",
+ "proxies",
  "setup-phase",
  "token-whitelist",
  "tx-batch-module",
