@@ -44,9 +44,9 @@ dependencies = [
  "max-bridged-amount-module",
  "multiversx-sc",
  "multiversx-sc-modules",
+ "operation",
  "setup-phase",
  "token-whitelist",
- "transaction",
  "tx-batch-module",
  "utils",
 ]

@@ -215,22 +215,6 @@ where
             .original_result()
     }
 
-    pub fn execute_operations<
-        Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
-        Arg1: ProxyArg<transaction::Operation<Env::Api>>,
-    >(
-        self,
-        hash_of_hashes: Arg0,
-        operation: Arg1,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("executeBridgeOps")
-            .argument(&hash_of_hashes)
-            .argument(&operation)
-            .original_result()
-    }
-
     pub fn set_max_bridged_amount<
         Arg0: ProxyArg<TokenIdentifier<Env::Api>>,
         Arg1: ProxyArg<BigUint<Env::Api>>,

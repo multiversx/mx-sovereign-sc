@@ -1,11 +1,10 @@
 use crate::from_sovereign::token_mapping;
 use fee_market::fee_market_proxy;
 use multiversx_sc::storage::StorageKey;
-use transaction::{
-    EventPaymentTuple, ExtractedFeeResult, GasLimit, OperationData, OptionalValueTransferDataTuple,
-    TransferData,
+use operation::{
+    aliases::{EventPaymentTuple, ExtractedFeeResult, GasLimit, OptionalValueTransferDataTuple},
+    OperationData, TransferData,
 };
-
 multiversx_sc::imports!();
 
 const MAX_TRANSFERS_PER_TX: usize = 10;
