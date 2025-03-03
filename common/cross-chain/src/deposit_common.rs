@@ -98,7 +98,7 @@ pub trait DepositCommonModule:
         self.tx()
             .to(caller)
             .multi_esdt(refundable_payments)
-            .transfer();
+            .transfer_if_not_empty();
     }
 
     fn burn_mainchain_token(

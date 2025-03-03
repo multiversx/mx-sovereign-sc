@@ -83,10 +83,7 @@ pub trait DepositModule:
 
         // refund tokens
         let caller = self.blockchain().get_caller();
-        self.tx()
-            .to(&caller)
-            .multi_esdt(refundable_payments)
-            .transfer();
+        self.refund_tokens(&caller, refundable_payments);
 
         let tx_nonce = self.get_and_save_next_tx_id();
         self.deposit_event(
