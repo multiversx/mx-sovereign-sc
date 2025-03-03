@@ -2,7 +2,6 @@
 
 use multiversx_sc::codec;
 use multiversx_sc::proxy_imports::{TopDecode, TopEncode};
-pub mod header_verifier_proxy;
 
 multiversx_sc::imports!();
 
