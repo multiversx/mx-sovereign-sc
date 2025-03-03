@@ -1520,6 +1520,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "operation"
+version = "0.0.0"
+dependencies = [
+ "multiversx-sc",
+]
+
+[[package]]
 name = "parking_lot"
 version = "0.12.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2143,7 +2150,6 @@ checksum = "1f3ccbac311fea05f86f61904b462b55fb3df8837a366dfc601a0161d0532f20"
 name = "token-whitelist"
 version = "0.0.0"
 dependencies = [
- "bls-signature",
  "multiversx-sc",
  "multiversx-sc-scenario",
  "setup-phase",
@@ -2268,7 +2274,7 @@ version = "0.0.0"
 dependencies = [
  "multiversx-sc",
  "multiversx-sc-scenario",
- "transaction",
+ "operation",
 ]
 
 [[package]]
@@ -2343,8 +2349,8 @@ checksum = "711b9620af191e0cdc7468a8d14e709c3dcdb115b36f838e601583af800a370a"
 name = "utils"
 version = "0.0.0"
 dependencies = [
- "bls-signature",
  "multiversx-sc",
+ "operation",
 ]
 
 [[package]]

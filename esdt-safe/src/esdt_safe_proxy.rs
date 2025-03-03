@@ -288,19 +288,6 @@ where
             .original_result()
     }
 
-    pub fn get_batch_status<
-        Arg0: ProxyArg<u64>,
-    >(
-        self,
-        batch_id: Arg0,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, tx_batch_module::batch_status::BatchStatus<Env::Api>> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("getBatchStatus")
-            .argument(&batch_id)
-            .original_result()
-    }
-
     pub fn first_batch_id(
         self,
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, u64> {

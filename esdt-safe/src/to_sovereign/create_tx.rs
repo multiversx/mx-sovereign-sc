@@ -127,25 +127,25 @@ pub trait CreateTxModule:
     }
 
     fn check_and_extract_fee(&self) -> ExtractedFeeResult<Self::Api> {
-        let mut payments = self.call_value().all_esdt_transfers().clone_value();
+        let payments = self.call_value().all_esdt_transfers().clone_value();
 
         require!(!payments.is_empty(), "Nothing to transfer");
         require!(payments.len() <= MAX_TRANSFERS_PER_TX, "Too many tokens");
 
         let fee_market_address = self.fee_market_address().get();
-        let fee_enabled_mapper = SingleValueMapper::new_from_address(
-            fee_market_address.clone(),
-            StorageKey::from("feeEnabledFlag"),
-        )
-        .get();
+        let is_fee_enabled: SingleValueMapper<Self::Api, bool, ManagedAddress<Self::Api>> =
+            SingleValueMapper::new_from_address(
+                fee_market_address.clone(),
+                StorageKey::from("feeEnabledFlag"),
+            );
 
-        let opt_transfer_data = if fee_enabled_mapper {
-            OptionalValue::Some(self.pop_first_payment(&mut payments))
-        } else {
-            OptionalValue::None
+        if !is_fee_enabled.get() {
+            return MultiValue2::from((OptionalValue::None, payments));
         };
 
-        MultiValue2::from((opt_transfer_data, payments))
+        let (fee_payment, popped_payments) = self.pop_first_payment(payments.clone());
+
+        MultiValue2::from((OptionalValue::Some(fee_payment), popped_payments))
     }
 
     fn refund_tokens(

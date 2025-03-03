@@ -4,9 +4,6 @@ version = "0.0.0"
 authors = ["dorin-iancu <dorin.iancu@multiversx.com>"]
 edition = "2018"
 
-[dependencies.bls-signature]
-path = "../bls-signature"
-
 [dependencies.setup-phase]
 path = "../setup-phase"
 

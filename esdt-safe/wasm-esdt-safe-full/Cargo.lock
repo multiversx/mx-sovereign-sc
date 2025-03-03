@@ -195,6 +195,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "operation"
+version = "0.0.0"
+dependencies = [
+ "multiversx-sc",
+]
+
+[[package]]
 name = "proc-macro2"
 version = "1.0.92"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -250,7 +257,6 @@ dependencies = [
 name = "token-whitelist"
 version = "0.0.0"
 dependencies = [
- "bls-signature",
  "multiversx-sc",
  "setup-phase",
  "utils",
@@ -268,7 +274,7 @@ name = "tx-batch-module"
 version = "0.0.0"
 dependencies = [
  "multiversx-sc",
- "transaction",
+ "operation",
 ]
 
 [[package]]
@@ -287,6 +293,6 @@ checksum = "151ac09978d3c2862c4e39b557f4eceee2cc72150bc4cb4f16abf061b6e381fb"
 name = "utils"
 version = "0.0.0"
 dependencies = [
- "bls-signature",
  "multiversx-sc",
+ "operation",
 ]

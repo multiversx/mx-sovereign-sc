@@ -11,4 +11,8 @@ members = [
   "fee-market/meta",
   "header-verifier",
   "header-verifier/meta", 
+  "sov-esdt-safe",
+  "sov-esdt-safe/meta",
+  "mvx-esdt-safe",
+  "mvx-esdt-safe/meta",
 ]
