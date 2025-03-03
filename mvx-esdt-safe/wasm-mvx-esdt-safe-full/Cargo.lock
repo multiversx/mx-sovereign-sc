@@ -69,7 +69,8 @@ version = "0.0.0"
 dependencies = [
  "bls-signature",
  "multiversx-sc",
- "transaction",
+ "operation",
+ "proxies",
 ]
 
 [[package]]
