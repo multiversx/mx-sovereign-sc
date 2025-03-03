@@ -1,0 +1,6 @@
+contract_address = "erd1qqqqqqqqqqqqqpgqa9cg2rpcfqy7wvshardhs8vt7sshxcjrd8ssldnmsy"
+config_address = "erd1qqqqqqqqqqqqqpgqkvmpfppal372zsxtdew4ftldrw8g0kagd8sswq6jfn"
+factory_address = "erd1qqqqqqqqqqqqqpgquvqccd9ny5pde4zfzdd9e9qc2z6uvr2rd8ssg7uuyn"
+header_verifier_address = "erd1qqqqqqqqqqqqqpgqwap090983sk5w4fk4e9um2n7ntfs8w47d8sswmfumd"
+esdt_safe_address = "erd1qqqqqqqqqqqqqpgq5rn2twfaw9th5l64ngh57xpadpjy8nwxrruq0xacka"
+fee_market_address = "erd1qqqqqqqqqqqqqpgquphmdtfq3phmuc4jaldpezwfwsel9rfhd8ssvym94t"

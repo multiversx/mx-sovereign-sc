@@ -166,7 +166,7 @@ struct ContractInteract {
 
 impl ContractInteract {
     async fn new() -> Self {
-        let mut interactor = Interactor::new(GATEWAY, false).await;
+        let mut interactor = Interactor::new(GATEWAY).await;
 
         interactor.set_current_dir_from_workspace("esdt-safe/interactor");
 

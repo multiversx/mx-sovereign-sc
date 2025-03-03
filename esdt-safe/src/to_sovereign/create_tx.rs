@@ -76,7 +76,7 @@ pub trait CreateTxModule:
                     .sync_call();
 
                 event_payments.push(MultiValue3::from((
-                    payment.token_identifier,
+                    payment.token_identifier.clone(),
                     payment.token_nonce,
                     current_token_data,
                 )));
@@ -86,7 +86,7 @@ pub trait CreateTxModule:
                 if !mvx_to_sov_token_id_mapper.is_empty() {
                     let sov_token_id = mvx_to_sov_token_id_mapper.get();
                     let sov_token_nonce = self.burn_mainchain_token(
-                        payment,
+                        payment.clone(),
                         &current_token_data.token_type,
                         &sov_token_id,
                     );
@@ -98,7 +98,7 @@ pub trait CreateTxModule:
                     )));
                 } else {
                     event_payments.push(MultiValue3::from((
-                        payment.token_identifier,
+                        payment.token_identifier.clone(),
                         payment.token_nonce,
                         current_token_data,
                     )));
@@ -155,7 +155,7 @@ pub trait CreateTxModule:
     ) {
         for payment in refundable_payments {
             if payment.amount > 0 {
-                self.tx().to(caller).payment(&payment).transfer();
+                self.tx().to(caller).payment(payment.clone()).transfer();
             }
         }
     }

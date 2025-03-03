@@ -33,7 +33,8 @@ pub type ExtractedFeeResult<M> =
 pub type OptionalValueTransferDataTuple<M> =
     OptionalValue<MultiValue3<GasLimit, ManagedBuffer<M>, ManagedVec<M, ManagedBuffer<M>>>>;
 
-#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, TypeAbi, ManagedVecItem, Clone)]
+#[type_abi]
+#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, ManagedVecItem, Clone)]
 pub struct Operation<M: ManagedTypeApi> {
     pub to: ManagedAddress<M>,
     pub tokens: ManagedVec<M, OperationEsdtPayment<M>>,
@@ -56,14 +57,22 @@ impl<M: ManagedTypeApi> Operation<M> {
         let mut tuples = MultiValueEncoded::new();
 
         for token in &self.tokens {
-            tuples.push((token.token_identifier, token.token_nonce, token.token_data).into());
+            tuples.push(
+                (
+                    token.token_identifier.clone(),
+                    token.token_nonce,
+                    token.token_data.clone(),
+                )
+                    .into(),
+            );
         }
 
         tuples
     }
 }
 
-#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, TypeAbi, ManagedVecItem, Clone)]
+#[type_abi]
+#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, ManagedVecItem, Clone)]
 pub struct TransferData<M: ManagedTypeApi> {
     pub gas_limit: GasLimit,
     pub function: ManagedBuffer<M>,
@@ -96,7 +105,8 @@ impl<M: ManagedTypeApi> TransferData<M> {
     }
 }
 
-#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, TypeAbi, ManagedVecItem, Clone)]
+#[type_abi]
+#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, ManagedVecItem, Clone)]
 pub struct OperationData<M: ManagedTypeApi> {
     pub op_nonce: TxId,
     pub op_sender: ManagedAddress<M>,
@@ -130,7 +140,8 @@ impl<M: ManagedTypeApi>
     }
 }
 
-#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, TypeAbi, ManagedVecItem, Clone)]
+#[type_abi]
+#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, ManagedVecItem, Clone)]
 pub struct EventPayment<M: ManagedTypeApi> {
     pub identifier: TokenIdentifier<M>,
     pub nonce: u64,
@@ -167,7 +178,8 @@ impl<M: ManagedTypeApi> EventPayment<M> {
     }
 }
 
-#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, TypeAbi, ManagedVecItem, Clone)]
+#[type_abi]
+#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, ManagedVecItem, Clone)]
 pub struct OperationTuple<M: ManagedTypeApi> {
     pub op_hash: ManagedBuffer<M>,
     pub operation: Operation<M>,
@@ -180,7 +192,8 @@ impl<M: ManagedTypeApi> OperationTuple<M> {
     }
 }
 
-#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, TypeAbi, ManagedVecItem, Clone)]
+#[type_abi]
+#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, ManagedVecItem, Clone)]
 pub struct OperationEsdtPayment<M: ManagedTypeApi> {
     pub token_identifier: TokenIdentifier<M>,
     pub token_nonce: u64,
@@ -223,7 +236,8 @@ impl<M: ManagedTypeApi> Default for OperationEsdtPayment<M> {
     }
 }
 
-#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, TypeAbi, ManagedVecItem, Clone)]
+#[type_abi]
+#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, ManagedVecItem, Clone)]
 pub struct Transaction<M: ManagedTypeApi> {
     pub block_nonce: BlockNonce,
     pub nonce: TxNonce,

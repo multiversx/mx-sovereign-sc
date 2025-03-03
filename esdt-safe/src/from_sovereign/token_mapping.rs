@@ -3,7 +3,8 @@ multiversx_sc::derive_imports!();
 
 const REGISTER_GAS: u64 = 60_000_000;
 
-#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, TypeAbi, ManagedVecItem, Clone)]
+#[type_abi]
+#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, ManagedVecItem, Clone)]
 pub struct EsdtInfo<M: ManagedTypeApi> {
     pub token_identifier: TokenIdentifier<M>,
     pub token_nonce: u64,
@@ -38,7 +39,7 @@ pub trait TokenMappingModule: utils::UtilsModule {
 
         self.require_token_has_prefix(&sov_token_id);
 
-        let issue_cost = self.call_value().egld_value().clone_value();
+        let issue_cost = self.call_value().egld().clone_value();
 
         self.require_sov_token_id_not_registered(&sov_token_id);
 
