@@ -5,7 +5,6 @@ use operation::aliases::GasLimit;
 multiversx_sc::imports!();
 multiversx_sc::derive_imports!();
 
-pub mod esdt_safe_proxy;
 pub mod from_sovereign;
 pub mod to_sovereign;
 
