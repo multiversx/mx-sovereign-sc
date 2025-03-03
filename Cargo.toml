@@ -15,4 +15,6 @@ members = [
   "sov-esdt-safe/meta",
   "mvx-esdt-safe",
   "mvx-esdt-safe/meta",
+  "testing-sc",
+  "testing-sc/meta",
 ]

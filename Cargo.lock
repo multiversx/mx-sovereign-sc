@@ -361,6 +361,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "cross-chain"
+version = "0.0.0"
+dependencies = [
+ "multiversx-sc",
+ "multiversx-sc-modules",
+ "operation",
+ "proxies",
+ "utils",
+]
+
+[[package]]
 name = "crypto-common"
 version = "0.1.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1407,6 +1418,34 @@ dependencies = [
 ]
 
 [[package]]
+name = "mvx-esdt-safe"
+version = "0.0.0"
+dependencies = [
+ "chain-config",
+ "cross-chain",
+ "fee-market",
+ "header-verifier",
+ "max-bridged-amount-module",
+ "multiversx-sc",
+ "multiversx-sc-modules",
+ "multiversx-sc-scenario",
+ "num-bigint",
+ "operation",
+ "proxies",
+ "setup-phase",
+ "testing-sc",
+ "utils",
+]
+
+[[package]]
+name = "mvx-esdt-safe-meta"
+version = "0.0.0"
+dependencies = [
+ "multiversx-sc-meta-lib",
+ "mvx-esdt-safe",
+]
+
+[[package]]
 name = "native-tls"
 version = "0.2.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1633,6 +1672,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "37d3544b3f2748c54e147655edb5025752e2303145b5aefb3c3ea2c78b973bb0"
 dependencies = [
  "unicode-ident",
+]
+
+[[package]]
+name = "proxies"
+version = "0.1.0"
+dependencies = [
+ "multiversx-sc",
+ "operation",
+ "tx-batch-module",
 ]
 
 [[package]]
@@ -2044,6 +2092,32 @@ dependencies = [
 ]
 
 [[package]]
+name = "sov-esdt-safe"
+version = "0.0.0"
+dependencies = [
+ "cross-chain",
+ "fee-market",
+ "max-bridged-amount-module",
+ "multiversx-sc",
+ "multiversx-sc-modules",
+ "multiversx-sc-scenario",
+ "num-bigint",
+ "operation",
+ "proxies",
+ "setup-phase",
+ "testing-sc",
+ "utils",
+]
+
+[[package]]
+name = "sov-esdt-safe-meta"
+version = "0.0.0"
+dependencies = [
+ "multiversx-sc-meta-lib",
+ "sov-esdt-safe",
+]
+
+[[package]]
 name = "spki"
 version = "0.7.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2119,6 +2193,23 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "06794f8f6c5c898b3275aebefa6b8a1cb24cd2c6c79397ab15774837a0bc5755"
 dependencies = [
  "winapi-util",
+]
+
+[[package]]
+name = "testing-sc"
+version = "0.0.0"
+dependencies = [
+ "multiversx-sc",
+ "multiversx-sc-scenario",
+ "num-bigint",
+]
+
+[[package]]
+name = "testing-sc-meta"
+version = "0.0.0"
+dependencies = [
+ "multiversx-sc-meta-lib",
+ "testing-sc",
 ]
 
 [[package]]
