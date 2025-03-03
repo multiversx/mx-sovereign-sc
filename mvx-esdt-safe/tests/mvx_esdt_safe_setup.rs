@@ -1,5 +1,3 @@
-use std::usize;
-
 use multiversx_sc::{
     codec::TopEncode,
     imports::{MultiValue2, OptionalValue},
