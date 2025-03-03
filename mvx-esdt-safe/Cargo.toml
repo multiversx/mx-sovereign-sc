@@ -49,3 +49,6 @@ num-bigint = "0.4"
 
 [dev-dependencies.multiversx-sc-scenario]
 version = "0.56.1"
+
+[features]
+chain-simulator-tests = []
