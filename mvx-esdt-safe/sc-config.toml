@@ -17,3 +17,4 @@ add-labels = ["mvx-esdt-safe-external-view"]
 
 [[proxy]]
 path = "../common/proxies/src/mvx_esdt_safe_proxy.rs"
+
