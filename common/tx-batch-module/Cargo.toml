@@ -7,8 +7,8 @@ edition = "2018"
 [dependencies.multiversx-sc]
 version = "=0.56.1"
 
-[dependencies.transaction]
-path = "../transaction"
+[dependencies.operation]
+path = "../operation"
 
 [dev-dependencies.multiversx-sc-scenario]
 version = "=0.56.1"

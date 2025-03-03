@@ -14,8 +14,11 @@ version = "0.56.1"
 [dependencies.bls-signature]
 path = "../common/bls-signature"
 
-[dependencies.transaction]
-path = "../common/transaction"
+[dependencies.operation]
+path = "../common/operation"
+
+[dependencies.proxies]
+path = "../common/proxies"
 
 [dev-dependencies]
 num-bigint = "0.4.2"

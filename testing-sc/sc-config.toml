@@ -1,0 +1,19 @@
+[settings]
+main = "main"
+
+[contracts.main]
+name = "testing-sc"
+
+[contracts.full]
+name = "testing-sc-full"
+add-unlabelled = true
+add-labels = ["testing-sc-external-view"]
+
+[contracts.view]
+name = "testing-view"
+external-view = true
+add-unlabelled = false
+add-labels = ["testing-sc-external-view"]
+
+[[proxy]]
+path = "../common/proxies/src/testing_sc_proxy.rs"
