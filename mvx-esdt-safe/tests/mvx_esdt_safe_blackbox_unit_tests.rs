@@ -1,4 +1,4 @@
-use cross_chain::{storage::CrossChainStorage, DEFAULT_ISSUE_COST};
+use cross_chain::{storage::CrossChainStorage, DEFAULT_ISSUE_COST, MAX_GAS_PER_TRANSACTION};
 use header_verifier::{Headerverifier, OperationHashStatus};
 use multiversx_sc::{
     imports::{MultiValue3, OptionalValue},
@@ -49,6 +49,28 @@ fn deploy_no_config() {
             "str:headerVerifierAddress",
             "0x000000000000000005006865616465722d76657269666965725f5f5f5f5f5f5f", // HEADER_VERIFIER_ADDRESS hex encoded, required for the check_storage to work
         );
+}
+
+#[test]
+fn deploy_invalid_config() {
+    let mut state = MvxEsdtSafeTestState::new();
+
+    state.deploy_contract(
+        HEADER_VERIFIER_ADDRESS,
+        OptionalValue::Some(EsdtSafeConfig::default_config()),
+    );
+
+    let config = EsdtSafeConfig::new(
+        ManagedVec::new(),
+        ManagedVec::new(),
+        MAX_GAS_PER_TRANSACTION + 1,
+        ManagedVec::new(),
+    );
+
+    state.update_configuration(
+        config,
+        Some("The gas limit exceeds the maximum gas per transaction limit"),
+    );
 }
 
 #[test]
