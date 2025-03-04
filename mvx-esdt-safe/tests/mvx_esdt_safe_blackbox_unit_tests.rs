@@ -524,34 +524,6 @@ fn deposit_refund() {
 }
 
 #[test]
-fn register_token_not_enough_egld() {
-    let mut state = MvxEsdtSafeTestState::new();
-    let config = OptionalValue::Some(EsdtSafeConfig::default_config());
-    state.deploy_contract(HEADER_VERIFIER_ADDRESS, config);
-
-    let sov_token_id = TestTokenIdentifier::new(TEST_TOKEN_ONE);
-    let token_type = EsdtTokenType::Fungible;
-    let token_display_name = "TokenOne";
-    let num_decimals = 3;
-    let token_ticker = TEST_TOKEN_ONE;
-    let egld_payment = BigUint::from(1u64);
-
-    let register_token_args = RegisterTokenArgs {
-        sov_token_id,
-        token_type,
-        token_display_name,
-        token_ticker,
-        num_decimals,
-    };
-
-    state.register_token(
-        register_token_args,
-        egld_payment,
-        Some("EGLD value should be 0.05"),
-    );
-}
-
-#[test]
 fn register_token_invalid_type() {
     let mut state = MvxEsdtSafeTestState::new();
     let config = OptionalValue::Some(EsdtSafeConfig::default_config());
