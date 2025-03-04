@@ -24,10 +24,7 @@ pub async fn mvx_esdt_safe_cli() {
     let config = Config::new();
     let mut interact = MvxEsdtSafeInteract::new(config).await;
     match cmd.as_str() {
-        "deploy" => interact.deploy().await,
         "upgrade" => interact.upgrade().await,
-        "updateConfiguration" => interact.update_configuration().await,
-        "setFeeMarketAddress" => interact.set_fee_market_address().await,
         "pause" => interact.pause_endpoint().await,
         "unpause" => interact.unpause_endpoint().await,
         "isPaused" => interact.paused_status().await,

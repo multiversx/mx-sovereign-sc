@@ -1,5 +1,8 @@
 use multiversx_sc_snippets::imports::*;
-use operation::EsdtSafeConfig;
+use operation::{
+    aliases::{OptionalValueTransferDataTuple, PaymentsVec},
+    EsdtSafeConfig,
+};
 use proxies::sov_esdt_safe_proxy::SovEsdtSafeProxy;
 
 use crate::{config::Config, State};
@@ -37,10 +40,11 @@ impl SovEsdtSafeInteract {
         }
     }
 
-    pub async fn deploy(&mut self) {
-        let fee_market_address = bech32::decode("");
-        let opt_config = OptionalValue::Some(EsdtSafeConfig::<StaticApi>::default_config());
-
+    pub async fn deploy(
+        &mut self,
+        fee_market_address: Address,
+        opt_config: OptionalValue<EsdtSafeConfig<StaticApi>>,
+    ) {
         let new_address = self
             .interactor
             .tx()
@@ -78,9 +82,7 @@ impl SovEsdtSafeInteract {
         println!("Result: {response:?}");
     }
 
-    pub async fn update_configuration(&mut self) {
-        let new_config = EsdtSafeConfig::<StaticApi>::default_config();
-
+    pub async fn update_configuration(&mut self, new_config: EsdtSafeConfig<StaticApi>) {
         let response = self
             .interactor
             .tx()
@@ -96,9 +98,7 @@ impl SovEsdtSafeInteract {
         println!("Result: {response:?}");
     }
 
-    pub async fn set_fee_market_address(&mut self) {
-        let fee_market_address = bech32::decode("");
-
+    pub async fn set_fee_market_address(&mut self, fee_market_address: Address) {
         let response = self
             .interactor
             .tx()
@@ -114,29 +114,27 @@ impl SovEsdtSafeInteract {
         println!("Result: {response:?}");
     }
 
-    // pub async fn deposit(&mut self) {
-    //     let token_id = String::new();
-    //     let token_nonce = 0u64;
-    //     let token_amount = BigUint::<StaticApi>::from(0u128);
-    //
-    //     let to = bech32::decode("");
-    //     let opt_transfer_data = MultiValue3::<u64, ManagedBuffer<StaticApi>, ManagedVec<StaticApi, ManagedBuffer<StaticApi>>>::from((0u64, ManagedBuffer::new_from_bytes(&b""[..]), ManagedVec::from_single_item(ManagedBuffer::new_from_bytes(&b""[..])))));
-    //
-    //     let response = self
-    //         .interactor
-    //         .tx()
-    //         .from(&self.wallet_address)
-    //         .to(self.state.current_address())
-    //         .gas(30_000_000u64)
-    //         .typed(SovEsdtSafeProxy)
-    //         .deposit(to, opt_transfer_data)
-    //         .payment((TokenIdentifier::from(token_id.as_str()), token_nonce, token_amount))
-    //         .returns(ReturnsResultUnmanaged)
-    //         .run()
-    //         .await;
-    //
-    //     println!("Result: {response:?}");
-    // }
+    pub async fn deposit(
+        &mut self,
+        to: Address,
+        opt_transfer_data: OptionalValueTransferDataTuple<StaticApi>,
+        payments: PaymentsVec<StaticApi>,
+    ) {
+        let response = self
+            .interactor
+            .tx()
+            .from(&self.wallet_address)
+            .to(self.state.current_address())
+            .gas(30_000_000u64)
+            .typed(SovEsdtSafeProxy)
+            .deposit(to, opt_transfer_data)
+            .payment(payments)
+            .returns(ReturnsResultUnmanaged)
+            .run()
+            .await;
+
+        println!("Result: {response:?}");
+    }
 
     pub async fn set_max_bridged_amount(&mut self) {
         let token_id = TokenIdentifier::from_esdt_bytes(&b""[..]);
