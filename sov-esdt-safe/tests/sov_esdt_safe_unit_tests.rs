@@ -1,8 +1,7 @@
 use multiversx_sc::{
     imports::{MultiValue3, OptionalValue},
     types::{
-        BigUint, EsdtTokenPayment, ManagedBuffer, ManagedVec,
-        TestTokenIdentifier, TokenIdentifier,
+        BigUint, EsdtTokenPayment, ManagedBuffer, ManagedVec, TestTokenIdentifier, TokenIdentifier,
     },
 };
 
@@ -69,7 +68,7 @@ fn deploy_and_update_config() {
         banned_endpoints: ManagedVec::from_single_item(ManagedBuffer::from("endpoint")),
     };
 
-    state.update_configuration(new_config);
+    state.update_configuration(new_config, None);
 
     state
         .world
@@ -124,10 +123,13 @@ fn deposit_no_fee_no_transfer_data() {
         assert!(!log.topics.is_empty());
     }
 
-    state.check_esdt_balance(vec![
-        MultiValue3::from((test_token_one_identifier, 0u64, 0u64)),
-        MultiValue3::from((test_token_two_identifier, 0u64, 0u64)),
-    ]);
+    state.check_sc_esdt_balance(
+        vec![
+            MultiValue3::from((test_token_one_identifier, 0u64, 0u64)),
+            MultiValue3::from((test_token_two_identifier, 0u64, 0u64)),
+        ],
+        ESDT_SAFE_ADDRESS.to_managed_address(),
+    );
 
     let expected_amount_token_one =
         BigUint::from(ONE_HUNDRED_MILLION) - &esdt_token_payment_one.amount;
@@ -213,10 +215,13 @@ fn deposit_with_fee_no_transfer_data() {
     let expected_amount_token_two =
         BigUint::from(ONE_HUNDRED_MILLION) - &esdt_token_payment_two.amount;
 
-    state.check_esdt_balance(vec![
-        MultiValue3::from((test_token_one_identifier, 0u64, 0u64)),
-        MultiValue3::from((test_token_two_identifier, 0u64, 0u64)),
-    ]);
+    state.check_sc_esdt_balance(
+        vec![
+            MultiValue3::from((test_token_one_identifier, 0u64, 0u64)),
+            MultiValue3::from((test_token_two_identifier, 0u64, 0u64)),
+        ],
+        ESDT_SAFE_ADDRESS.to_managed_address(),
+    );
 
     state
         .world
@@ -282,10 +287,13 @@ fn deposit_no_fee_with_transfer_data() {
     let expected_amount_token_one =
         BigUint::from(ONE_HUNDRED_MILLION) - &esdt_token_payment_one.amount;
 
-    state.check_esdt_balance(vec![
-        MultiValue3::from((test_token_one_identifier, 0u64, 0u64)),
-        MultiValue3::from((test_token_two_identifier, 0u64, 0u64)),
-    ]);
+    state.check_sc_esdt_balance(
+        vec![
+            MultiValue3::from((test_token_one_identifier, 0u64, 0u64)),
+            MultiValue3::from((test_token_two_identifier, 0u64, 0u64)),
+        ],
+        ESDT_SAFE_ADDRESS.to_managed_address(),
+    );
 
     state
         .world
@@ -375,10 +383,13 @@ fn deposit_with_fee_with_transfer_data() {
     let expected_amount_token_two =
         BigUint::from(ONE_HUNDRED_MILLION) - &esdt_token_payment_two.amount;
 
-    state.check_esdt_balance(vec![
-        MultiValue3::from((test_token_one_identifier, 0u64, 0u64)),
-        MultiValue3::from((test_token_two_identifier, 0u64, 0u64)),
-    ]);
+    state.check_sc_esdt_balance(
+        vec![
+            MultiValue3::from((test_token_one_identifier, 0u64, 0u64)),
+            MultiValue3::from((test_token_two_identifier, 0u64, 0u64)),
+        ],
+        ESDT_SAFE_ADDRESS.to_managed_address(),
+    );
 
     state.world.check_account(OWNER_ADDRESS).esdt_balance(
         TokenIdentifier::from(TEST_TOKEN_TWO),

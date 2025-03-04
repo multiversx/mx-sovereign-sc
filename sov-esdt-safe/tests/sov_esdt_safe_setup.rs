@@ -107,14 +107,28 @@ impl SovEsdtSafeTestState {
         self
     }
 
-    pub fn update_configuration(&mut self, new_config: EsdtSafeConfig<StaticApi>) {
-        self.world
+    pub fn update_configuration(
+        &mut self,
+        new_config: EsdtSafeConfig<StaticApi>,
+        err_message: Option<&str>,
+    ) {
+        let response = self
+            .world
             .tx()
             .from(OWNER_ADDRESS)
             .to(ESDT_SAFE_ADDRESS)
             .typed(SovEsdtSafeProxy)
             .update_configuration(new_config)
+            .returns(ReturnsHandledOrError::new())
             .run();
+
+        match response {
+            Ok(_) => assert!(
+                err_message.is_none(),
+                "Transaction was successful, but expected error"
+            ),
+            Err(error) => assert_eq!(err_message, Some(error.message.as_str())),
+        };
     }
 
     pub fn deploy_contract_with_roles(&mut self) -> &mut Self {
@@ -251,11 +265,15 @@ impl SovEsdtSafeTestState {
             .run()
     }
 
-    pub fn check_esdt_balance(&mut self, tokens: Vec<MultiValue3<TestTokenIdentifier, u64, u64>>) {
+    pub fn check_sc_esdt_balance(
+        &mut self,
+        tokens: Vec<MultiValue3<TestTokenIdentifier, u64, u64>>,
+        contract_address: ManagedAddress<StaticApi>,
+    ) {
         self.world
             .tx()
             .from(OWNER_ADDRESS)
-            .to(ESDT_SAFE_ADDRESS)
+            .to(contract_address)
             .whitebox(sov_esdt_safe::contract_obj, |sc| {
                 for token in tokens {
                     let (token_id, nonce, amount) = token.into_tuple();

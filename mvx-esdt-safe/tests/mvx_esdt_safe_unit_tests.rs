@@ -76,7 +76,7 @@ fn deploy_and_update_config() {
         banned_endpoints: ManagedVec::from_single_item(ManagedBuffer::from("endpoint")),
     };
 
-    state.update_configuration(new_config);
+    state.update_configuration(new_config, None);
 
     state
         .world
