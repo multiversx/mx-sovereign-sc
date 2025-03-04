@@ -2,7 +2,7 @@ use multiversx_sc::{
     imports::OptionalValue,
     types::{
         BigUint, EsdtLocalRole, ManagedAddress, ManagedVec, TestAddress, TestSCAddress,
-        TokenIdentifier,
+        TestTokenIdentifier, TokenIdentifier,
     },
 };
 use multiversx_sc_scenario::{
@@ -105,16 +105,23 @@ impl SovEsdtSafeTestState {
         self
     }
 
+    pub fn update_configuration(&mut self, new_config: EsdtSafeConfig<StaticApi>) {
+        self.world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .to(ESDT_SAFE_ADDRESS)
+            .typed(SovEsdtSafeProxy)
+            .update_configuration(new_config)
+            .run();
+    }
+
     pub fn deploy_contract_with_roles(&mut self) -> &mut Self {
         self.world
             .account(ESDT_SAFE_ADDRESS)
             .nonce(1)
             .code(SOV_ESDT_SAFE_CODE_PATH)
             .owner(OWNER_ADDRESS)
-            // .esdt_balance(
-            //     TestTokenIdentifier::new(TEST_TOKEN_ONE),
-            //     BigUint::from(1u64),
-            // )
+            .esdt_balance(TestTokenIdentifier::new(TEST_TOKEN_TWO), 10000)
             .esdt_roles(
                 TokenIdentifier::from(TEST_TOKEN_ONE),
                 vec![
@@ -157,6 +164,7 @@ impl SovEsdtSafeTestState {
 
         self
     }
+
     pub fn deposit(
         &mut self,
         to: ManagedAddress<StaticApi>,

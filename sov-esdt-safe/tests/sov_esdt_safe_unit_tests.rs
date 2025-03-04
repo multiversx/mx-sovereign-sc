@@ -1,15 +1,18 @@
 use multiversx_sc::{
     imports::{MultiValue3, OptionalValue},
     types::{
-        BigUint, EsdtTokenPayment, ManagedBuffer, ManagedVec, TestTokenIdentifier, TokenIdentifier,
+        BigUint, EgldOrEsdtTokenIdentifier, EsdtTokenPayment, ManagedBuffer, ManagedVec,
+        TestTokenIdentifier, TokenIdentifier,
     },
 };
-use multiversx_sc_scenario::api::StaticApi;
+
+use multiversx_sc::contract_base::ContractBase;
+use multiversx_sc_scenario::{api::StaticApi, ScenarioTxWhitebox};
 use operation::{aliases::PaymentsVec, EsdtSafeConfig};
 use proxies::fee_market_proxy::{FeeStruct, FeeType};
 use sov_esdt_safe_setup::{
-    SovEsdtSafeTestState, FEE_MARKET_ADDRESS, FEE_TOKEN, ONE_HUNDRED_MILLION, ONE_HUNDRED_THOUSAND,
-    OWNER_ADDRESS, TEST_TOKEN_ONE, TEST_TOKEN_TWO, USER,
+    SovEsdtSafeTestState, ESDT_SAFE_ADDRESS, FEE_MARKET_ADDRESS, FEE_TOKEN, ONE_HUNDRED_MILLION,
+    ONE_HUNDRED_THOUSAND, OWNER_ADDRESS, TEST_TOKEN_ONE, TEST_TOKEN_TWO, USER,
 };
 
 mod sov_esdt_safe_setup;
@@ -22,6 +25,64 @@ fn deploy() {
         FEE_MARKET_ADDRESS,
         OptionalValue::Some(EsdtSafeConfig::default_config()),
     );
+}
+
+#[test]
+fn deploy_no_config() {
+    let mut state = SovEsdtSafeTestState::new();
+
+    state.deploy_contract(FEE_MARKET_ADDRESS, OptionalValue::None);
+    state
+        .world
+        .check_account(ESDT_SAFE_ADDRESS)
+        .check_storage(
+            "str:crossChainConfig",
+            "0x00000000000000000000000011e1a30000000000", // default EsdtSafeConfig hex encoded
+        )
+        .check_storage(
+            "str:feeMarketAddress",
+            "0x000000000000000005006665652d6d61726b65745f5f5f5f5f5f5f5f5f5f5f5f", // FEE_MARKET_ADDRESS hex encoded, required for the check_storage to work
+        );
+}
+
+#[test]
+fn deploy_and_update_config() {
+    let mut state = SovEsdtSafeTestState::new();
+
+    state.deploy_contract(FEE_MARKET_ADDRESS, OptionalValue::None);
+
+    state
+        .world
+        .check_account(ESDT_SAFE_ADDRESS)
+        .check_storage(
+            "str:crossChainConfig",
+            "0x00000000000000000000000011e1a30000000000", // default EsdtSafeConfig hex encoded
+        )
+        .check_storage(
+            "str:feeMarketAddress",
+            "0x000000000000000005006665652d6d61726b65745f5f5f5f5f5f5f5f5f5f5f5f", // FEE_MARKET_ADDRESS hex encoded, required for the check_storage to work
+        );
+
+    let new_config = EsdtSafeConfig {
+        token_whitelist: ManagedVec::from_single_item(TokenIdentifier::from(TEST_TOKEN_ONE)),
+        token_blacklist: ManagedVec::from_single_item(TokenIdentifier::from(TEST_TOKEN_TWO)),
+        max_tx_gas_limit: 30_000,
+        banned_endpoints: ManagedVec::from_single_item(ManagedBuffer::from("endpoint")),
+    };
+
+    state.update_configuration(new_config);
+
+    state
+        .world
+        .check_account(ESDT_SAFE_ADDRESS)
+        .check_storage(
+            "str:crossChainConfig",
+            "0x000000010000000b544f4e452d313233343536000000010000000b5454574f2d31323334353600000000000075300000000100000008656e64706f696e74", // updated EsdtSafeConfig hex encoded
+        )
+        .check_storage(
+            "str:feeMarketAddress",
+            "0x000000000000000005006665652d6d61726b65745f5f5f5f5f5f5f5f5f5f5f5f", // FEE_MARKET_ADDRESS hex encoded, required for the check_storage to work
+        );
 }
 
 #[test]
@@ -63,6 +124,32 @@ fn deposit_no_fee_no_transfer_data() {
     for log in logs {
         assert!(!log.topics.is_empty());
     }
+
+    state
+        .world
+        .tx()
+        .from(OWNER_ADDRESS)
+        .to(ESDT_SAFE_ADDRESS)
+        .whitebox(sov_esdt_safe::contract_obj, |sc| {
+            let balance = sc.blockchain().get_sc_balance(
+                &EgldOrEsdtTokenIdentifier::esdt(test_token_one_identifier),
+                0,
+            );
+            assert_eq!(balance, BigUint::from(0u64));
+        });
+
+    state
+        .world
+        .tx()
+        .from(OWNER_ADDRESS)
+        .to(ESDT_SAFE_ADDRESS)
+        .whitebox(sov_esdt_safe::contract_obj, |sc| {
+            let balance = sc.blockchain().get_sc_balance(
+                &EgldOrEsdtTokenIdentifier::esdt(test_token_two_identifier),
+                0,
+            );
+            assert_eq!(balance, BigUint::from(10000u64));
+        });
 
     let expected_amount_token_one =
         BigUint::from(ONE_HUNDRED_MILLION) - &esdt_token_payment_one.amount;
@@ -150,6 +237,32 @@ fn deposit_with_fee_no_transfer_data() {
 
     state
         .world
+        .tx()
+        .from(OWNER_ADDRESS)
+        .to(ESDT_SAFE_ADDRESS)
+        .whitebox(sov_esdt_safe::contract_obj, |sc| {
+            let balance = sc.blockchain().get_sc_balance(
+                &EgldOrEsdtTokenIdentifier::esdt(test_token_one_identifier),
+                0,
+            );
+            assert_eq!(balance, BigUint::from(0u64));
+        });
+
+    state
+        .world
+        .tx()
+        .from(OWNER_ADDRESS)
+        .to(ESDT_SAFE_ADDRESS)
+        .whitebox(sov_esdt_safe::contract_obj, |sc| {
+            let balance = sc.blockchain().get_sc_balance(
+                &EgldOrEsdtTokenIdentifier::esdt(test_token_two_identifier),
+                0,
+            );
+            assert_eq!(balance, BigUint::from(10000u64));
+        });
+
+    state
+        .world
         .check_account(OWNER_ADDRESS)
         .esdt_balance(test_token_two_identifier, expected_amount_token_two);
 
@@ -172,6 +285,7 @@ fn deposit_no_fee_with_transfer_data() {
     state.set_fee_market_address(FEE_MARKET_ADDRESS);
 
     let test_token_one_identifier = TestTokenIdentifier::new(TEST_TOKEN_ONE);
+    let test_token_two_identifier = TestTokenIdentifier::new(TEST_TOKEN_TWO);
 
     let esdt_token_payment_one = EsdtTokenPayment::<StaticApi>::new(
         test_token_one_identifier.into(),
@@ -180,7 +294,7 @@ fn deposit_no_fee_with_transfer_data() {
     );
 
     let esdt_token_payment_two = EsdtTokenPayment::<StaticApi>::new(
-        TokenIdentifier::from(TEST_TOKEN_TWO),
+        test_token_two_identifier.into(),
         0,
         BigUint::from(ONE_HUNDRED_THOUSAND),
     );
@@ -209,6 +323,32 @@ fn deposit_no_fee_with_transfer_data() {
 
     let expected_amount_token_one =
         BigUint::from(ONE_HUNDRED_MILLION) - &esdt_token_payment_one.amount;
+
+    state
+        .world
+        .tx()
+        .from(OWNER_ADDRESS)
+        .to(ESDT_SAFE_ADDRESS)
+        .whitebox(sov_esdt_safe::contract_obj, |sc| {
+            let balance = sc.blockchain().get_sc_balance(
+                &EgldOrEsdtTokenIdentifier::esdt(test_token_one_identifier),
+                0,
+            );
+            assert_eq!(balance, BigUint::from(0u64));
+        });
+
+    state
+        .world
+        .tx()
+        .from(OWNER_ADDRESS)
+        .to(ESDT_SAFE_ADDRESS)
+        .whitebox(sov_esdt_safe::contract_obj, |sc| {
+            let balance = sc.blockchain().get_sc_balance(
+                &EgldOrEsdtTokenIdentifier::esdt(test_token_two_identifier),
+                0,
+            );
+            assert_eq!(balance, BigUint::from(10000u64));
+        });
 
     state
         .world
@@ -248,6 +388,7 @@ fn deposit_with_fee_with_transfer_data() {
     state.set_fee_market_address(FEE_MARKET_ADDRESS);
 
     let test_token_one_identifier = TestTokenIdentifier::new(TEST_TOKEN_ONE);
+    let test_token_two_identifier = TestTokenIdentifier::new(TEST_TOKEN_TWO);
 
     let fee_amount = BigUint::from(ONE_HUNDRED_THOUSAND);
 
@@ -261,7 +402,7 @@ fn deposit_with_fee_with_transfer_data() {
     );
 
     let esdt_token_payment_two = EsdtTokenPayment::<StaticApi>::new(
-        TokenIdentifier::from(TEST_TOKEN_TWO),
+        test_token_two_identifier.into(),
         0,
         BigUint::from(100u64),
     );
@@ -286,12 +427,6 @@ fn deposit_with_fee_with_transfer_data() {
         None,
     );
 
-    // TODO:
-    // state
-    //     .world
-    //     .check_account(CONTRACT_ADDRESS)
-    //     .esdt_balance(test_token_one_identifier, BigUint::from(0u64));
-
     let expected_amount_token_one =
         BigUint::from(ONE_HUNDRED_MILLION) - &esdt_token_payment_one.amount;
 
@@ -302,6 +437,32 @@ fn deposit_with_fee_with_transfer_data() {
 
     let expected_amount_token_two =
         BigUint::from(ONE_HUNDRED_MILLION) - &esdt_token_payment_two.amount;
+
+    state
+        .world
+        .tx()
+        .from(OWNER_ADDRESS)
+        .to(ESDT_SAFE_ADDRESS)
+        .whitebox(sov_esdt_safe::contract_obj, |sc| {
+            let balance = sc.blockchain().get_sc_balance(
+                &EgldOrEsdtTokenIdentifier::esdt(test_token_one_identifier),
+                0,
+            );
+            assert_eq!(balance, BigUint::from(0u64));
+        });
+
+    state
+        .world
+        .tx()
+        .from(OWNER_ADDRESS)
+        .to(ESDT_SAFE_ADDRESS)
+        .whitebox(sov_esdt_safe::contract_obj, |sc| {
+            let balance = sc.blockchain().get_sc_balance(
+                &EgldOrEsdtTokenIdentifier::esdt(test_token_two_identifier),
+                0,
+            );
+            assert_eq!(balance, BigUint::from(10000u64));
+        });
 
     state.world.check_account(OWNER_ADDRESS).esdt_balance(
         TokenIdentifier::from(TEST_TOKEN_TWO),

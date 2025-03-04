@@ -125,6 +125,16 @@ impl MvxEsdtSafeTestState {
         self
     }
 
+    pub fn update_configuration(&mut self, new_config: EsdtSafeConfig<StaticApi>) {
+        self.world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .to(ESDT_SAFE_ADDRESS)
+            .typed(MvxEsdtSafeProxy)
+            .update_configuration(new_config)
+            .run();
+    }
+
     pub fn deploy_fee_market(&mut self, fee: Option<FeeStruct<StaticApi>>) -> &mut Self {
         self.world
             .tx()
