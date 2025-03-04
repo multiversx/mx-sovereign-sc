@@ -9,6 +9,7 @@ pub mod deposit;
 #[multiversx_sc::contract]
 pub trait SovEsdtSafe:
     deposit::DepositModule
+    + cross_chain::LibCommon
     + cross_chain::deposit_common::DepositCommonModule
     + cross_chain::execute_common::ExecuteCommonModule
     + cross_chain::storage::CrossChainStorage
@@ -29,6 +30,7 @@ pub trait SovEsdtSafe:
         self.esdt_safe_config().set(
             opt_config
                 .into_option()
+                .inspect(|config| self.require_esdt_config_valid(config))
                 .unwrap_or_else(EsdtSafeConfig::default_config),
         );
     }
@@ -36,6 +38,7 @@ pub trait SovEsdtSafe:
     #[only_owner]
     #[endpoint(updateConfiguration)]
     fn update_configuration(&self, new_config: EsdtSafeConfig<Self::Api>) {
+        self.require_esdt_config_valid(&new_config);
         self.esdt_safe_config().set(new_config);
     }
 
