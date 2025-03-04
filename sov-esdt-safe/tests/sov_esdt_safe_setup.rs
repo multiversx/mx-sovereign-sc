@@ -1,10 +1,12 @@
 use multiversx_sc::{
-    imports::OptionalValue,
+    imports::{MultiValue3, OptionalValue},
     types::{
-        BigUint, EsdtLocalRole, ManagedAddress, ManagedVec, TestAddress, TestSCAddress,
-        TokenIdentifier,
+        BigUint, EgldOrEsdtTokenIdentifier, EsdtLocalRole, ManagedAddress, ManagedVec, TestAddress,
+        TestSCAddress, TestTokenIdentifier, TokenIdentifier,
     },
 };
+
+use multiversx_sc::contract_base::ContractBase;
 use multiversx_sc_scenario::{
     api::StaticApi, imports::MxscPath, scenario_model::Log, ReturnsHandledOrError, ReturnsLogs,
     ScenarioTxRun, ScenarioTxWhitebox, ScenarioWorld,
@@ -105,16 +107,36 @@ impl SovEsdtSafeTestState {
         self
     }
 
+    pub fn update_configuration(
+        &mut self,
+        new_config: EsdtSafeConfig<StaticApi>,
+        err_message: Option<&str>,
+    ) {
+        let response = self
+            .world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .to(ESDT_SAFE_ADDRESS)
+            .typed(SovEsdtSafeProxy)
+            .update_configuration(new_config)
+            .returns(ReturnsHandledOrError::new())
+            .run();
+
+        match response {
+            Ok(_) => assert!(
+                err_message.is_none(),
+                "Transaction was successful, but expected error"
+            ),
+            Err(error) => assert_eq!(err_message, Some(error.message.as_str())),
+        };
+    }
+
     pub fn deploy_contract_with_roles(&mut self) -> &mut Self {
         self.world
             .account(ESDT_SAFE_ADDRESS)
             .nonce(1)
             .code(SOV_ESDT_SAFE_CODE_PATH)
             .owner(OWNER_ADDRESS)
-            // .esdt_balance(
-            //     TestTokenIdentifier::new(TEST_TOKEN_ONE),
-            //     BigUint::from(1u64),
-            // )
             .esdt_roles(
                 TokenIdentifier::from(TEST_TOKEN_ONE),
                 vec![
@@ -157,6 +179,7 @@ impl SovEsdtSafeTestState {
 
         self
     }
+
     pub fn deposit(
         &mut self,
         to: ManagedAddress<StaticApi>,
@@ -240,5 +263,25 @@ impl SovEsdtSafeTestState {
             .payment(payment)
             .returns(ReturnsLogs)
             .run()
+    }
+
+    pub fn check_sc_esdt_balance(
+        &mut self,
+        tokens: Vec<MultiValue3<TestTokenIdentifier, u64, u64>>,
+        contract_address: ManagedAddress<StaticApi>,
+    ) {
+        self.world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .to(contract_address)
+            .whitebox(sov_esdt_safe::contract_obj, |sc| {
+                for token in tokens {
+                    let (token_id, nonce, amount) = token.into_tuple();
+                    let balance = sc
+                        .blockchain()
+                        .get_sc_balance(&EgldOrEsdtTokenIdentifier::esdt(token_id), nonce);
+                    assert_eq!(balance, amount);
+                }
+            });
     }
 }
