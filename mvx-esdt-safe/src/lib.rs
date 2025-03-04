@@ -33,7 +33,7 @@ pub trait MvxEsdtSafe:
         self.esdt_safe_config().set(
             opt_config
                 .into_option()
-                .inspect(|config| self.require_esdt_config_valid(&config))
+                .inspect(|config| self.require_esdt_config_valid(config))
                 .unwrap_or_else(EsdtSafeConfig::default_config),
         );
     }
