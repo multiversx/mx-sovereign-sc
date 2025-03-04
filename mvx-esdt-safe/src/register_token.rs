@@ -1,5 +1,5 @@
-use cross_chain::{DEFAULT_ISSUE_COST, REGISTER_GAS};
-use multiversx_sc::{require, types::EsdtTokenType};
+use cross_chain::REGISTER_GAS;
+use multiversx_sc::types::EsdtTokenType;
 use operation::{EsdtInfo, IssueEsdtArgs};
 multiversx_sc::imports!();
 multiversx_sc::derive_imports!();
@@ -21,13 +21,9 @@ pub trait RegisterTokenModule:
         token_ticker: ManagedBuffer,
         num_decimals: usize,
     ) {
-        let issue_cost = self.call_value().egld().clone_value();
-        require!(
-            issue_cost == DEFAULT_ISSUE_COST,
-            "EGLD value should be 0.05"
-        );
-
         self.require_sov_token_id_not_registered(&sov_token_id);
+
+        let issue_cost = self.call_value().egld().clone_value();
 
         match token_type {
             EsdtTokenType::Invalid => sc_panic!("Invalid type"),
