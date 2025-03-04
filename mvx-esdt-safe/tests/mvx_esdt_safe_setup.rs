@@ -125,6 +125,30 @@ impl MvxEsdtSafeTestState {
         self
     }
 
+    pub fn update_configuration(
+        &mut self,
+        new_config: EsdtSafeConfig<StaticApi>,
+        err_message: Option<&str>,
+    ) {
+        let response = self
+            .world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .to(ESDT_SAFE_ADDRESS)
+            .typed(MvxEsdtSafeProxy)
+            .update_configuration(new_config)
+            .returns(ReturnsHandledOrError::new())
+            .run();
+
+        match response {
+            Ok(_) => assert!(
+                err_message.is_none(),
+                "Transaction was successful, but expected error"
+            ),
+            Err(error) => assert_eq!(err_message, Some(error.message.as_str())),
+        };
+    }
+
     pub fn deploy_fee_market(&mut self, fee: Option<FeeStruct<StaticApi>>) -> &mut Self {
         self.world
             .tx()
