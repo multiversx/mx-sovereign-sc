@@ -123,7 +123,6 @@ impl SovEsdtSafeTestState {
             .nonce(1)
             .code(SOV_ESDT_SAFE_CODE_PATH)
             .owner(OWNER_ADDRESS)
-            .esdt_balance(TestTokenIdentifier::new(TEST_TOKEN_TWO), 10000)
             .esdt_roles(
                 TokenIdentifier::from(TEST_TOKEN_ONE),
                 vec![
