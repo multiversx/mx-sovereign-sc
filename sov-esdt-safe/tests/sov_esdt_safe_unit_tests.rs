@@ -1,13 +1,12 @@
 use multiversx_sc::{
     imports::{MultiValue3, OptionalValue},
     types::{
-        BigUint, EgldOrEsdtTokenIdentifier, EsdtTokenPayment, ManagedBuffer, ManagedVec,
+        BigUint, EsdtTokenPayment, ManagedBuffer, ManagedVec,
         TestTokenIdentifier, TokenIdentifier,
     },
 };
 
-use multiversx_sc::contract_base::ContractBase;
-use multiversx_sc_scenario::{api::StaticApi, ScenarioTxWhitebox};
+use multiversx_sc_scenario::api::StaticApi;
 use operation::{aliases::PaymentsVec, EsdtSafeConfig};
 use proxies::fee_market_proxy::{FeeStruct, FeeType};
 use sov_esdt_safe_setup::{
@@ -125,31 +124,10 @@ fn deposit_no_fee_no_transfer_data() {
         assert!(!log.topics.is_empty());
     }
 
-    state
-        .world
-        .tx()
-        .from(OWNER_ADDRESS)
-        .to(ESDT_SAFE_ADDRESS)
-        .whitebox(sov_esdt_safe::contract_obj, |sc| {
-            let balance = sc.blockchain().get_sc_balance(
-                &EgldOrEsdtTokenIdentifier::esdt(test_token_one_identifier),
-                0,
-            );
-            assert_eq!(balance, BigUint::from(0u64));
-        });
-
-    state
-        .world
-        .tx()
-        .from(OWNER_ADDRESS)
-        .to(ESDT_SAFE_ADDRESS)
-        .whitebox(sov_esdt_safe::contract_obj, |sc| {
-            let balance = sc.blockchain().get_sc_balance(
-                &EgldOrEsdtTokenIdentifier::esdt(test_token_two_identifier),
-                0,
-            );
-            assert_eq!(balance, BigUint::from(10000u64));
-        });
+    state.check_esdt_balance(vec![
+        MultiValue3::from((test_token_one_identifier, 0u64, 0u64)),
+        MultiValue3::from((test_token_two_identifier, 0u64, 0u64)),
+    ]);
 
     let expected_amount_token_one =
         BigUint::from(ONE_HUNDRED_MILLION) - &esdt_token_payment_one.amount;
@@ -235,31 +213,10 @@ fn deposit_with_fee_no_transfer_data() {
     let expected_amount_token_two =
         BigUint::from(ONE_HUNDRED_MILLION) - &esdt_token_payment_two.amount;
 
-    state
-        .world
-        .tx()
-        .from(OWNER_ADDRESS)
-        .to(ESDT_SAFE_ADDRESS)
-        .whitebox(sov_esdt_safe::contract_obj, |sc| {
-            let balance = sc.blockchain().get_sc_balance(
-                &EgldOrEsdtTokenIdentifier::esdt(test_token_one_identifier),
-                0,
-            );
-            assert_eq!(balance, BigUint::from(0u64));
-        });
-
-    state
-        .world
-        .tx()
-        .from(OWNER_ADDRESS)
-        .to(ESDT_SAFE_ADDRESS)
-        .whitebox(sov_esdt_safe::contract_obj, |sc| {
-            let balance = sc.blockchain().get_sc_balance(
-                &EgldOrEsdtTokenIdentifier::esdt(test_token_two_identifier),
-                0,
-            );
-            assert_eq!(balance, BigUint::from(10000u64));
-        });
+    state.check_esdt_balance(vec![
+        MultiValue3::from((test_token_one_identifier, 0u64, 0u64)),
+        MultiValue3::from((test_token_two_identifier, 0u64, 0u64)),
+    ]);
 
     state
         .world
@@ -274,6 +231,7 @@ fn deposit_with_fee_no_transfer_data() {
         .check_account(OWNER_ADDRESS)
         .esdt_balance(fee_token_identifier, expected_amount_token_fee);
 }
+
 #[test]
 fn deposit_no_fee_with_transfer_data() {
     let mut state = SovEsdtSafeTestState::new();
@@ -324,31 +282,10 @@ fn deposit_no_fee_with_transfer_data() {
     let expected_amount_token_one =
         BigUint::from(ONE_HUNDRED_MILLION) - &esdt_token_payment_one.amount;
 
-    state
-        .world
-        .tx()
-        .from(OWNER_ADDRESS)
-        .to(ESDT_SAFE_ADDRESS)
-        .whitebox(sov_esdt_safe::contract_obj, |sc| {
-            let balance = sc.blockchain().get_sc_balance(
-                &EgldOrEsdtTokenIdentifier::esdt(test_token_one_identifier),
-                0,
-            );
-            assert_eq!(balance, BigUint::from(0u64));
-        });
-
-    state
-        .world
-        .tx()
-        .from(OWNER_ADDRESS)
-        .to(ESDT_SAFE_ADDRESS)
-        .whitebox(sov_esdt_safe::contract_obj, |sc| {
-            let balance = sc.blockchain().get_sc_balance(
-                &EgldOrEsdtTokenIdentifier::esdt(test_token_two_identifier),
-                0,
-            );
-            assert_eq!(balance, BigUint::from(10000u64));
-        });
+    state.check_esdt_balance(vec![
+        MultiValue3::from((test_token_one_identifier, 0u64, 0u64)),
+        MultiValue3::from((test_token_two_identifier, 0u64, 0u64)),
+    ]);
 
     state
         .world
@@ -438,31 +375,10 @@ fn deposit_with_fee_with_transfer_data() {
     let expected_amount_token_two =
         BigUint::from(ONE_HUNDRED_MILLION) - &esdt_token_payment_two.amount;
 
-    state
-        .world
-        .tx()
-        .from(OWNER_ADDRESS)
-        .to(ESDT_SAFE_ADDRESS)
-        .whitebox(sov_esdt_safe::contract_obj, |sc| {
-            let balance = sc.blockchain().get_sc_balance(
-                &EgldOrEsdtTokenIdentifier::esdt(test_token_one_identifier),
-                0,
-            );
-            assert_eq!(balance, BigUint::from(0u64));
-        });
-
-    state
-        .world
-        .tx()
-        .from(OWNER_ADDRESS)
-        .to(ESDT_SAFE_ADDRESS)
-        .whitebox(sov_esdt_safe::contract_obj, |sc| {
-            let balance = sc.blockchain().get_sc_balance(
-                &EgldOrEsdtTokenIdentifier::esdt(test_token_two_identifier),
-                0,
-            );
-            assert_eq!(balance, BigUint::from(10000u64));
-        });
+    state.check_esdt_balance(vec![
+        MultiValue3::from((test_token_one_identifier, 0u64, 0u64)),
+        MultiValue3::from((test_token_two_identifier, 0u64, 0u64)),
+    ]);
 
     state.world.check_account(OWNER_ADDRESS).esdt_balance(
         TokenIdentifier::from(TEST_TOKEN_TWO),
