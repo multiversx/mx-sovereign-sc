@@ -2,7 +2,7 @@
 
 #[allow(unused_imports)]
 use multiversx_sc::imports::*;
-use operation::EsdtSafeConfig;
+use structs::configs::EsdtSafeConfig;
 
 pub mod deposit;
 

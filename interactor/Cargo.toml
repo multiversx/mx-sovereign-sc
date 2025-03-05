@@ -21,8 +21,8 @@ path = "../sov-esdt-safe"
 [dependencies.proxies]
 path = "../common/proxies"
 
-[dependencies.operation]
-path = "../common/operation"
+[dependencies.structs]
+path = "../common/structs"
 
 [dependencies.multiversx-sc-snippets]
 version = "0.56.1"

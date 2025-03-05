@@ -7,8 +7,8 @@ edition = "2021"
 [lib]
 path = "src/lib.rs"
 
-[dependencies.operation]
-path = "../operation"
+[dependencies.structs]
+path = "../structs"
 
 [dependencies.multiversx-sc]
 version = "=0.56.1"

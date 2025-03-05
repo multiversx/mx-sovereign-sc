@@ -3,7 +3,7 @@
 multiversx_sc::imports!();
 multiversx_sc::derive_imports!();
 
-use operation::aliases::TxNonce;
+use structs::aliases::TxNonce;
 
 #[multiversx_sc::module]
 pub trait TxBatchModule {

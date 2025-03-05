@@ -1,5 +1,8 @@
 multiversx_sc::imports!();
-use operation::{aliases::OptionalValueTransferDataTuple, OperationData, TransferData};
+use structs::{
+    aliases::OptionalValueTransferDataTuple,
+    operation::{OperationData, TransferData},
+};
 
 #[multiversx_sc::module]
 pub trait DepositModule:

@@ -1,8 +1,8 @@
-use operation::{
-    aliases::{ExtractedFeeResult, GasLimit, TxNonce},
-    TransferData,
-};
 use proxies::fee_market_proxy::FeeMarketProxy;
+use structs::{
+    aliases::{ExtractedFeeResult, GasLimit, TxNonce},
+    operation::TransferData,
+};
 
 use crate::MAX_TRANSFERS_PER_TX;
 

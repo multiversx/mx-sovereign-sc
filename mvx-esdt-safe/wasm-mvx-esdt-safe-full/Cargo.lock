@@ -42,8 +42,8 @@ version = "0.0.0"
 dependencies = [
  "multiversx-sc",
  "multiversx-sc-modules",
- "operation",
  "proxies",
+ "structs",
  "utils",
 ]
 
@@ -69,8 +69,8 @@ version = "0.0.0"
 dependencies = [
  "bls-signature",
  "multiversx-sc",
- "operation",
  "proxies",
+ "structs",
 ]
 
 [[package]]
@@ -182,9 +182,9 @@ dependencies = [
  "max-bridged-amount-module",
  "multiversx-sc",
  "multiversx-sc-modules",
- "operation",
  "proxies",
  "setup-phase",
+ "structs",
  "testing-sc",
  "utils",
 ]
@@ -216,13 +216,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "operation"
-version = "0.0.0"
-dependencies = [
- "multiversx-sc",
-]
-
-[[package]]
 name = "proc-macro2"
 version = "1.0.92"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -236,7 +229,7 @@ name = "proxies"
 version = "0.1.0"
 dependencies = [
  "multiversx-sc",
- "operation",
+ "structs",
  "tx-batch-module",
 ]
 
@@ -273,6 +266,13 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7fcf8323ef1faaee30a44a340193b1ac6814fd9b7b4e88e9d4519a3e4abe1cfd"
 
 [[package]]
+name = "structs"
+version = "0.0.0"
+dependencies = [
+ "multiversx-sc",
+]
+
+[[package]]
 name = "syn"
 version = "2.0.95"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -302,7 +302,7 @@ name = "tx-batch-module"
 version = "0.0.0"
 dependencies = [
  "multiversx-sc",
- "operation",
+ "structs",
 ]
 
 [[package]]
@@ -322,5 +322,5 @@ name = "utils"
 version = "0.0.0"
 dependencies = [
  "multiversx-sc",
- "operation",
+ "structs",
 ]

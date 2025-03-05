@@ -366,8 +366,8 @@ version = "0.0.0"
 dependencies = [
  "multiversx-sc",
  "multiversx-sc-modules",
- "operation",
  "proxies",
+ "structs",
  "utils",
 ]
 
@@ -738,8 +738,8 @@ dependencies = [
  "multiversx-sc",
  "multiversx-sc-scenario",
  "num-bigint",
- "operation",
  "proxies",
+ "structs",
 ]
 
 [[package]]
@@ -1408,9 +1408,9 @@ dependencies = [
  "multiversx-sc-modules",
  "multiversx-sc-scenario",
  "num-bigint",
- "operation",
  "proxies",
  "setup-phase",
+ "structs",
  "testing-sc",
  "utils",
 ]
@@ -1537,13 +1537,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "operation"
-version = "0.0.0"
-dependencies = [
- "multiversx-sc",
-]
-
-[[package]]
 name = "parking_lot"
 version = "0.12.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1657,7 +1650,7 @@ name = "proxies"
 version = "0.1.0"
 dependencies = [
  "multiversx-sc",
- "operation",
+ "structs",
  "tx-batch-module",
 ]
 
@@ -1805,10 +1798,10 @@ dependencies = [
  "multiversx-sc",
  "multiversx-sc-snippets",
  "mvx-esdt-safe",
- "operation",
  "proxies",
  "serde",
  "sov-esdt-safe",
+ "structs",
  "toml",
 ]
 
@@ -2085,9 +2078,9 @@ dependencies = [
  "multiversx-sc-modules",
  "multiversx-sc-scenario",
  "num-bigint",
- "operation",
  "proxies",
  "setup-phase",
+ "structs",
  "testing-sc",
  "utils",
 ]
@@ -2121,6 +2114,13 @@ name = "strsim"
 version = "0.11.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7da8b5736845d9f2fcb837ea5d9e2628564b3b043a70948a3f0b778838c5fb4f"
+
+[[package]]
+name = "structs"
+version = "0.0.0"
+dependencies = [
+ "multiversx-sc",
+]
 
 [[package]]
 name = "subtle"
@@ -2339,7 +2339,7 @@ version = "0.0.0"
 dependencies = [
  "multiversx-sc",
  "multiversx-sc-scenario",
- "operation",
+ "structs",
 ]
 
 [[package]]
@@ -2415,7 +2415,7 @@ name = "utils"
 version = "0.0.0"
 dependencies = [
  "multiversx-sc",
- "operation",
+ "structs",
 ]
 
 [[package]]

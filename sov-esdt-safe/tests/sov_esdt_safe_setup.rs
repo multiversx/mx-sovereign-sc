@@ -11,16 +11,16 @@ use multiversx_sc_scenario::{
     api::StaticApi, imports::MxscPath, scenario_model::Log, ReturnsHandledOrError, ReturnsLogs,
     ScenarioTxRun, ScenarioTxWhitebox, ScenarioWorld,
 };
-use operation::{
-    aliases::{OptionalValueTransferDataTuple, PaymentsVec},
-    EsdtSafeConfig,
-};
 use proxies::{
     fee_market_proxy::{FeeMarketProxy, FeeStruct},
     sov_esdt_safe_proxy::SovEsdtSafeProxy,
     testing_sc_proxy::TestingScProxy,
 };
 use sov_esdt_safe::SovEsdtSafe;
+use structs::{
+    aliases::{OptionalValueTransferDataTuple, PaymentsVec},
+    configs::EsdtSafeConfig,
+};
 
 pub const ESDT_SAFE_ADDRESS: TestSCAddress = TestSCAddress::new("sc");
 pub const SOV_ESDT_SAFE_CODE_PATH: MxscPath = MxscPath::new("output/to-sovereign.mxsc.json");
