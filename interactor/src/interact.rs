@@ -36,7 +36,12 @@ pub async fn mvx_esdt_safe_cli() {
 
 #[derive(Debug, Default, Serialize, Deserialize)]
 pub struct State {
-    contract_address: Option<Bech32Address>,
+    pub mvx_esdt_safe_address: Option<Bech32Address>,
+    pub sov_esdt_safe_address: Option<Bech32Address>,
+    pub header_verfier_address: Option<Bech32Address>,
+    pub fee_market_address: Option<Bech32Address>,
+    pub testing_sc_address: Option<Bech32Address>,
+    pub chain_config_sc_address: Option<Bech32Address>,
 }
 
 impl State {
@@ -52,16 +57,66 @@ impl State {
         }
     }
 
-    /// Sets the contract address
-    pub fn set_address(&mut self, address: Bech32Address) {
-        self.contract_address = Some(address);
+    /// Sets the contract addresses
+    pub fn set_mvx_esdt_safe_contract_address(&mut self, address: Bech32Address) {
+        self.mvx_esdt_safe_address = Some(address);
     }
 
-    /// Returns the contract address
-    pub fn current_address(&self) -> &Bech32Address {
-        self.contract_address
+    pub fn set_sov_esdt_safe_contract_address(&mut self, address: Bech32Address) {
+        self.sov_esdt_safe_address = Some(address);
+    }
+
+    pub fn set_header_verifier_address(&mut self, address: Bech32Address) {
+        self.header_verfier_address = Some(address);
+    }
+
+    pub fn set_fee_market_address(&mut self, address: Bech32Address) {
+        self.fee_market_address = Some(address);
+    }
+
+    pub fn set_testing_sc_address(&mut self, address: Bech32Address) {
+        self.testing_sc_address = Some(address);
+    }
+
+    pub fn set_chain_config_sc_address(&mut self, address: Bech32Address) {
+        self.chain_config_sc_address = Some(address);
+    }
+
+    /// Returns the contract addresses
+    pub fn current_mvx_esdt_safe_contract_address(&self) -> &Bech32Address {
+        self.mvx_esdt_safe_address
             .as_ref()
             .expect("no known contract, deploy first")
+    }
+
+    pub fn current_sov_esdt_safe_contract_address(&self) -> &Bech32Address {
+        self.sov_esdt_safe_address
+            .as_ref()
+            .expect("no known contract, deploy first")
+    }
+
+    pub fn current_header_verifier_address(&self) -> &Bech32Address {
+        self.header_verfier_address
+            .as_ref()
+            .expect("no known header verifier contract, deploy first")
+    }
+
+    pub fn current_fee_market_address(&self) -> &Bech32Address {
+        self.fee_market_address
+            .as_ref()
+            .expect("no known fee market contract, deploy first")
+    }
+
+    pub fn current_testing_sc_address(&self) -> &Bech32Address {
+        self.testing_sc_address
+            .as_ref()
+            .expect("no known testing SC contract, deploy first")
+    }
+
+    pub fn current_chain_config_sc_address(&self) -> &Bech32Address {
+        self.chain_config_sc_address
+            .as_ref()
+            .expect("no known chain config SC contract, deploy first")
     }
 }
 

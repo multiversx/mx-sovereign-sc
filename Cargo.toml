@@ -7,12 +7,12 @@ members = [
   "fee-market",
   "fee-market/meta",
   "header-verifier",
-  "header-verifier/meta", 
+  "header-verifier/meta",
   "sov-esdt-safe",
   "sov-esdt-safe/meta",
   "mvx-esdt-safe",
   "mvx-esdt-safe/meta",
   "testing-sc",
   "testing-sc/meta",
-  "interactor"
+  "interactor",
 ]
