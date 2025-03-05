@@ -14,8 +14,8 @@ version = "0.56.1"
 [dependencies.bls-signature]
 path = "../common/bls-signature"
 
-[dependencies.operation]
-path = "../common/operation"
+[dependencies.structs]
+path = "../common/structs"
 
 [dependencies.proxies]
 path = "../common/proxies"

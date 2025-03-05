@@ -16,7 +16,7 @@ use mvx_esdt_safe_blackbox_setup::{
     HEADER_VERIFIER_ADDRESS, ONE_HUNDRED_MILLION, ONE_HUNDRED_THOUSAND, OWNER_ADDRESS,
     TESTING_SC_ADDRESS, TEST_TOKEN_ONE, TEST_TOKEN_TWO, USER,
 };
-use operation::{
+use structs::{
     EsdtSafeConfig, Operation, OperationData, OperationEsdtPayment, SovereignConfig, TransferData,
 };
 use proxies::fee_market_proxy::{FeeStruct, FeeType};

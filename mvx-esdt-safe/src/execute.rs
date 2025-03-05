@@ -1,5 +1,5 @@
 use multiversx_sc::api::ESDT_MULTI_TRANSFER_FUNC_NAME;
-use operation::{
+use structs::{
     aliases::GasLimit, Operation, OperationData, OperationEsdtPayment, OperationTuple,
 };
 

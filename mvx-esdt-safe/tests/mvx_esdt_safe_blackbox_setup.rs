@@ -11,7 +11,7 @@ use multiversx_sc_scenario::{
     api::StaticApi, imports::MxscPath, multiversx_chain_vm::crypto_functions::sha256,
     scenario_model::Log, ReturnsHandledOrError, ReturnsLogs, ScenarioTxRun, ScenarioWorld,
 };
-use operation::{
+use structs::{
     aliases::OptionalValueTransferDataTuple, EsdtSafeConfig, Operation, SovereignConfig,
 };
 use proxies::{

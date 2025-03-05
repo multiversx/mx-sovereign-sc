@@ -1,5 +1,5 @@
 use multiversx_sc_snippets::imports::*;
-use operation::{
+use structs::{
     aliases::{OptionalValueTransferDataTuple, PaymentsVec},
     EsdtSafeConfig, Operation,
 };

@@ -6,7 +6,7 @@ use multiversx_sc::{
 };
 
 use multiversx_sc_scenario::api::StaticApi;
-use operation::{aliases::PaymentsVec, EsdtSafeConfig};
+use structs::{aliases::PaymentsVec, EsdtSafeConfig};
 use proxies::fee_market_proxy::{FeeStruct, FeeType};
 use sov_esdt_safe_setup::{
     SovEsdtSafeTestState, ESDT_SAFE_ADDRESS, FEE_MARKET_ADDRESS, FEE_TOKEN, ONE_HUNDRED_MILLION,

@@ -1,4 +1,4 @@
-use operation::OperationData;
+use structs::OperationData;
 
 multiversx_sc::imports!();
 multiversx_sc::derive_imports!();

@@ -11,7 +11,7 @@ use multiversx_sc_scenario::{
     api::StaticApi, imports::MxscPath, scenario_model::Log, ReturnsHandledOrError, ReturnsLogs,
     ScenarioTxRun, ScenarioTxWhitebox, ScenarioWorld,
 };
-use operation::{
+use structs::{
     aliases::{OptionalValueTransferDataTuple, PaymentsVec},
     EsdtSafeConfig,
 };

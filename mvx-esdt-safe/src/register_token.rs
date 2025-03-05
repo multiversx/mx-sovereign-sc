@@ -1,6 +1,6 @@
 use cross_chain::REGISTER_GAS;
 use multiversx_sc::types::EsdtTokenType;
-use operation::{EsdtInfo, IssueEsdtArgs};
+use structs::{EsdtInfo, IssueEsdtArgs};
 multiversx_sc::imports!();
 multiversx_sc::derive_imports!();
 

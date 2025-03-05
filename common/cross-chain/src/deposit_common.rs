@@ -1,4 +1,4 @@
-use operation::{
+use structs::{
     aliases::{ExtractedFeeResult, GasLimit, TxNonce},
     TransferData,
 };

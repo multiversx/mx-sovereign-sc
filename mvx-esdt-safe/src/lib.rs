@@ -1,7 +1,7 @@
 #![no_std]
 
 use multiversx_sc::imports::*;
-use operation::EsdtSafeConfig;
+use structs::EsdtSafeConfig;
 
 pub mod deposit;
 pub mod execute;

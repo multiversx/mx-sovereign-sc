@@ -13,8 +13,8 @@ version = "=0.56.1"
 [dependencies.multiversx-sc-modules]
 version = "=0.56.1"
 
-[dependencies.operation]
-path = "../operation"
+[dependencies.structs]
+path = "../structs"
 
 [dependencies.proxies]
 path = "../proxies"

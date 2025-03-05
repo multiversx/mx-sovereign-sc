@@ -1,5 +1,5 @@
 [package]
-name = "operation"
+name = "structs"
 version = "0.0.0"
 authors = ["dorin-iancu <dorin.iancu@multiversx.com>"]
 edition = "2018"

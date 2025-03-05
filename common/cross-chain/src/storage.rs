@@ -1,4 +1,4 @@
-use operation::{aliases::TxNonce, EsdtInfo, EsdtSafeConfig};
+use structs::{aliases::TxNonce, EsdtInfo, EsdtSafeConfig};
 use proxies::fee_market_proxy::FeeType;
 
 multiversx_sc::imports!();

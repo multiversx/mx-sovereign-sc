@@ -1,4 +1,4 @@
-use operation::Operation;
+use structs::Operation;
 use proxies::header_verifier_proxy::HeaderverifierProxy;
 
 multiversx_sc::imports!();
