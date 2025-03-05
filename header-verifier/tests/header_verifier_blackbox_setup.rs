@@ -19,8 +19,6 @@ pub const ENSHRINE_ADDRESS: TestAddress = TestAddress::new("enshrine");
 pub const OWNER_ADDRESS: TestAddress = TestAddress::new("owner");
 const WEGLD_BALANCE: u128 = 100_000_000_000_000_000; // 0.1 WEGLD
 
-type BlsKeys = MultiValueEncoded<StaticApi, ManagedBuffer<StaticApi>>;
-
 #[derive(Clone)]
 pub struct BridgeOperation<M: ManagedTypeApi> {
     pub signature: ManagedBuffer<M>,
@@ -57,12 +55,12 @@ impl HeaderVerifierTestState {
         Self { world }
     }
 
-    pub fn deploy_header_verifier_contract(&mut self, bls_keys: BlsKeys) -> &mut Self {
+    pub fn deploy(&mut self) -> &mut Self {
         self.world
             .tx()
             .from(OWNER_ADDRESS)
             .typed(HeaderverifierProxy)
-            .init(bls_keys)
+            .init()
             .code(HEADER_VERIFIER_CODE_PATH)
             .new_address(HEADER_VERIFIER_ADDRESS)
             .run();
@@ -144,12 +142,6 @@ impl HeaderVerifierTestState {
             ),
             Err(error) => assert_eq!(expected_result, Some(error.message.as_str())),
         };
-    }
-
-    pub fn get_bls_keys(&mut self, bls_keys_vec: Vec<ManagedBuffer<StaticApi>>) -> BlsKeys {
-        let bls_keys = bls_keys_vec.iter().cloned().collect();
-
-        bls_keys
     }
 
     pub fn generate_bridge_operation_struct(

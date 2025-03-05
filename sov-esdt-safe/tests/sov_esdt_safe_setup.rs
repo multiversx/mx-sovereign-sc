@@ -104,6 +104,14 @@ impl SovEsdtSafeTestState {
             .new_address(ESDT_SAFE_ADDRESS)
             .run();
 
+        self.world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .to(ESDT_SAFE_ADDRESS)
+            .typed(SovEsdtSafeProxy)
+            .unpause_endpoint()
+            .run();
+
         self
     }
 
@@ -176,6 +184,14 @@ impl SovEsdtSafeTestState {
                     OptionalValue::Some(config),
                 );
             });
+
+        self.world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .to(ESDT_SAFE_ADDRESS)
+            .typed(SovEsdtSafeProxy)
+            .unpause_endpoint()
+            .run();
 
         self
     }

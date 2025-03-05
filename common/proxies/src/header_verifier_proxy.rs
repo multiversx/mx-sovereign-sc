@@ -43,16 +43,12 @@ where
     From: TxFrom<Env>,
     Gas: TxGas<Env>,
 {
-    pub fn init<
-        Arg0: ProxyArg<MultiValueEncoded<Env::Api, ManagedBuffer<Env::Api>>>,
-    >(
+    pub fn init(
         self,
-        bls_pub_keys: Arg0,
     ) -> TxTypedDeploy<Env, From, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_deploy()
-            .argument(&bls_pub_keys)
             .original_result()
     }
 }
@@ -85,6 +81,19 @@ where
     To: TxTo<Env>,
     Gas: TxGas<Env>,
 {
+    pub fn register_bls_pub_keys<
+        Arg0: ProxyArg<MultiValueEncoded<Env::Api, ManagedBuffer<Env::Api>>>,
+    >(
+        self,
+        bls_pub_keys: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("registerBlsPubKeys")
+            .argument(&bls_pub_keys)
+            .original_result()
+    }
+
     pub fn register_bridge_operations<
         Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
         Arg1: ProxyArg<ManagedBuffer<Env::Api>>,
