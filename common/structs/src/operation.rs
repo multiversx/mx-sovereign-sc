@@ -1,6 +1,6 @@
 use aliases::{GasLimit, OptionalValueTransferDataTuple, TxId};
 
-use crate::aliases;
+use crate::aliases::{self, EventPaymentTuple, TransferDataTuple};
 
 multiversx_sc::imports!();
 multiversx_sc::derive_imports!();
@@ -23,9 +23,7 @@ impl<M: ManagedTypeApi> Operation<M> {
         Operation { to, tokens, data }
     }
 
-    pub fn map_tokens_to_multi_value_encoded(
-        &self,
-    ) -> MultiValueEncoded<M, MultiValue3<TokenIdentifier<M>, u64, EsdtTokenData<M>>> {
+    pub fn map_tokens_to_multi_value_encoded(&self) -> MultiValueEncoded<M, EventPaymentTuple<M>> {
         let mut tuples = MultiValueEncoded::new();
 
         for token in &self.tokens {
@@ -77,13 +75,8 @@ impl<M: ManagedTypeApi> TransferData<M> {
     }
 }
 
-impl<M: ManagedTypeApi>
-    From<MultiValue3<GasLimit, ManagedBuffer<M>, ManagedVec<M, ManagedBuffer<M>>>>
-    for TransferData<M>
-{
-    fn from(
-        value: MultiValue3<GasLimit, ManagedBuffer<M>, ManagedVec<M, ManagedBuffer<M>>>,
-    ) -> Self {
+impl<M: ManagedTypeApi> From<TransferDataTuple<M>> for TransferData<M> {
+    fn from(value: TransferDataTuple<M>) -> Self {
         let (gas_limit, function, vec) = value.into_tuple();
         TransferData::new(gas_limit, function, vec)
     }

@@ -1,4 +1,4 @@
-use structs::operation::OperationData;
+use structs::{aliases::EventPaymentTuple, operation::OperationData};
 
 multiversx_sc::imports!();
 multiversx_sc::derive_imports!();
@@ -9,7 +9,7 @@ pub trait EventsModule {
     fn deposit_event(
         &self,
         #[indexed] dest_address: &ManagedAddress,
-        #[indexed] tokens: &MultiValueEncoded<MultiValue3<TokenIdentifier, u64, EsdtTokenData>>,
+        #[indexed] tokens: &MultiValueEncoded<EventPaymentTuple<Self::Api>>,
         event_data: OperationData<Self::Api>,
     );
 
