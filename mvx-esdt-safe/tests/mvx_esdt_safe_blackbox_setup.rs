@@ -2,8 +2,8 @@ use multiversx_sc::{
     codec::TopEncode,
     imports::{MultiValue2, OptionalValue},
     types::{
-        BigUint, EsdtTokenType, ManagedAddress, ManagedBuffer, ManagedVec, MultiValueEncoded,
-        TestAddress, TestSCAddress, TestTokenIdentifier, TokenIdentifier,
+        BigUint, EsdtTokenType, ManagedAddress, ManagedBuffer, MultiValueEncoded, TestAddress,
+        TestSCAddress, TestTokenIdentifier, TokenIdentifier,
     },
 };
 use multiversx_sc_modules::transfer_role_proxy::PaymentsVec;
@@ -124,6 +124,14 @@ impl MvxEsdtSafeTestState {
             .new_address(ESDT_SAFE_ADDRESS)
             .run();
 
+        self.world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .to(ESDT_SAFE_ADDRESS)
+            .typed(MvxEsdtSafeProxy)
+            .unpause_endpoint()
+            .run();
+
         self
     }
 
@@ -177,15 +185,12 @@ impl MvxEsdtSafeTestState {
         self
     }
 
-    pub fn deploy_header_verifier(
-        &mut self,
-        bls_pub_keys: ManagedVec<StaticApi, ManagedBuffer<StaticApi>>,
-    ) -> &mut Self {
+    pub fn deploy_header_verifier(&mut self) -> &mut Self {
         self.world
             .tx()
             .from(OWNER_ADDRESS)
             .typed(HeaderverifierProxy)
-            .init(MultiValueEncoded::from(bls_pub_keys))
+            .init()
             .code(HEADER_VERIFIER_CODE_PATH)
             .new_address(HEADER_VERIFIER_ADDRESS)
             .run();

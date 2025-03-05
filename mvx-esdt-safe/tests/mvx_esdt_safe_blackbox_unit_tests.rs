@@ -644,7 +644,7 @@ fn execute_operation_no_esdt_safe_registered() {
 
     let hash_of_hashes = state.get_operation_hash(&operation);
 
-    state.deploy_header_verifier(ManagedVec::new());
+    state.deploy_header_verifier();
 
     state.execute_operation(
         hash_of_hashes,
@@ -685,7 +685,7 @@ fn execute_operation_success() {
     let operation_hash = state.get_operation_hash(&operation);
     let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&operation_hash.to_vec()));
 
-    state.deploy_header_verifier(ManagedVec::new());
+    state.deploy_header_verifier();
     state.deploy_testing_sc();
     state.set_esdt_safe_address_in_header_verifier(ESDT_SAFE_ADDRESS);
 
