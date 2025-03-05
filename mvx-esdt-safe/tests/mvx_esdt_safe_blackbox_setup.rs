@@ -11,15 +11,17 @@ use multiversx_sc_scenario::{
     api::StaticApi, imports::MxscPath, multiversx_chain_vm::crypto_functions::sha256,
     scenario_model::Log, ReturnsHandledOrError, ReturnsLogs, ScenarioTxRun, ScenarioWorld,
 };
-use structs::{
-    aliases::OptionalValueTransferDataTuple, EsdtSafeConfig, Operation, SovereignConfig,
-};
 use proxies::{
     chain_config_proxy::ChainConfigContractProxy,
     fee_market_proxy::{FeeMarketProxy, FeeStruct},
     header_verifier_proxy::HeaderverifierProxy,
     mvx_esdt_safe_proxy::MvxEsdtSafeProxy,
     testing_sc_proxy::TestingScProxy,
+};
+use structs::{
+    aliases::OptionalValueTransferDataTuple,
+    configs::{EsdtSafeConfig, SovereignConfig},
+    operation::Operation,
 };
 
 pub const ESDT_SAFE_ADDRESS: TestSCAddress = TestSCAddress::new("sc");

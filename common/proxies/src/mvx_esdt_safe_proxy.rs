@@ -45,7 +45,7 @@ where
 {
     pub fn init<
         Arg0: ProxyArg<ManagedAddress<Env::Api>>,
-        Arg1: ProxyArg<OptionalValue<operation::EsdtSafeConfig<Env::Api>>>,
+        Arg1: ProxyArg<OptionalValue<structs::configs::EsdtSafeConfig<Env::Api>>>,
     >(
         self,
         header_verifier_address: Arg0,
@@ -89,7 +89,7 @@ where
     Gas: TxGas<Env>,
 {
     pub fn update_configuration<
-        Arg0: ProxyArg<operation::EsdtSafeConfig<Env::Api>>,
+        Arg0: ProxyArg<structs::configs::EsdtSafeConfig<Env::Api>>,
     >(
         self,
         new_config: Arg0,
@@ -131,7 +131,7 @@ where
 
     pub fn execute_operations<
         Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
-        Arg1: ProxyArg<operation::Operation<Env::Api>>,
+        Arg1: ProxyArg<structs::operation::Operation<Env::Api>>,
     >(
         self,
         hash_of_hashes: Arg0,

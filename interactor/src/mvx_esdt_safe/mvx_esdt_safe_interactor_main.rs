@@ -1,9 +1,10 @@
 use multiversx_sc_snippets::imports::*;
+use proxies::mvx_esdt_safe_proxy::MvxEsdtSafeProxy;
 use structs::{
     aliases::{OptionalValueTransferDataTuple, PaymentsVec},
-    EsdtSafeConfig, Operation,
+    configs::EsdtSafeConfig,
+    operation::Operation,
 };
-use proxies::mvx_esdt_safe_proxy::MvxEsdtSafeProxy;
 
 use crate::{config::Config, State};
 

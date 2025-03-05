@@ -1,6 +1,6 @@
 #![no_std]
 
-use structs::EsdtSafeConfig;
+use structs::configs::EsdtSafeConfig;
 multiversx_sc::imports!();
 
 pub mod deposit_common;

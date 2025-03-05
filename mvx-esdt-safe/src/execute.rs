@@ -1,6 +1,7 @@
 use multiversx_sc::api::ESDT_MULTI_TRANSFER_FUNC_NAME;
 use structs::{
-    aliases::GasLimit, Operation, OperationData, OperationEsdtPayment, OperationTuple,
+    aliases::GasLimit,
+    operation::{Operation, OperationData, OperationEsdtPayment, OperationTuple},
 };
 
 multiversx_sc::imports!();
