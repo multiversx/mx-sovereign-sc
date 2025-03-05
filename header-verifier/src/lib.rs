@@ -14,10 +14,13 @@ pub enum OperationHashStatus {
 #[multiversx_sc::contract]
 pub trait Headerverifier {
     #[init]
-    fn init(&self, bls_pub_keys: MultiValueEncoded<ManagedBuffer>) {
-        for pub_key in bls_pub_keys {
-            self.bls_pub_keys().insert(pub_key);
-        }
+    fn init(&self) {}
+
+    #[only_owner]
+    #[endpoint(registerBlsPubKeys)]
+    fn register_bls_pub_keys(&self, bls_pub_keys: MultiValueEncoded<ManagedBuffer>) {
+        self.bls_pub_keys().clear();
+        self.bls_pub_keys().extend(bls_pub_keys);
     }
 
     #[upgrade]
