@@ -57,9 +57,10 @@ impl SovEsdtSafeInteract {
             .run()
             .await;
         let new_address_bech32 = bech32::encode(&new_address);
-        self.state.set_address(Bech32Address::from_bech32_string(
-            new_address_bech32.clone(),
-        ));
+        self.state
+            .set_sov_esdt_safe_contract_address(Bech32Address::from_bech32_string(
+                new_address_bech32.clone(),
+            ));
 
         println!("new address: {new_address_bech32}");
     }
@@ -68,7 +69,7 @@ impl SovEsdtSafeInteract {
         let response = self
             .interactor
             .tx()
-            .to(self.state.current_address())
+            .to(self.state.current_sov_esdt_safe_contract_address())
             .from(&self.wallet_address)
             .gas(30_000_000u64)
             .typed(SovEsdtSafeProxy)
@@ -87,7 +88,7 @@ impl SovEsdtSafeInteract {
             .interactor
             .tx()
             .from(&self.wallet_address)
-            .to(self.state.current_address())
+            .to(self.state.current_sov_esdt_safe_contract_address())
             .gas(30_000_000u64)
             .typed(SovEsdtSafeProxy)
             .update_configuration(new_config)
@@ -103,7 +104,7 @@ impl SovEsdtSafeInteract {
             .interactor
             .tx()
             .from(&self.wallet_address)
-            .to(self.state.current_address())
+            .to(self.state.current_sov_esdt_safe_contract_address())
             .gas(30_000_000u64)
             .typed(SovEsdtSafeProxy)
             .set_fee_market_address(fee_market_address)
@@ -124,7 +125,7 @@ impl SovEsdtSafeInteract {
             .interactor
             .tx()
             .from(&self.wallet_address)
-            .to(self.state.current_address())
+            .to(self.state.current_sov_esdt_safe_contract_address())
             .gas(30_000_000u64)
             .typed(SovEsdtSafeProxy)
             .deposit(to, opt_transfer_data)
@@ -144,7 +145,7 @@ impl SovEsdtSafeInteract {
             .interactor
             .tx()
             .from(&self.wallet_address)
-            .to(self.state.current_address())
+            .to(self.state.current_sov_esdt_safe_contract_address())
             .gas(30_000_000u64)
             .typed(SovEsdtSafeProxy)
             .set_max_bridged_amount(token_id, max_amount)
@@ -161,7 +162,7 @@ impl SovEsdtSafeInteract {
         let result_value = self
             .interactor
             .query()
-            .to(self.state.current_address())
+            .to(self.state.current_sov_esdt_safe_contract_address())
             .typed(SovEsdtSafeProxy)
             .max_bridged_amount(token_id)
             .returns(ReturnsResultUnmanaged)
@@ -176,7 +177,7 @@ impl SovEsdtSafeInteract {
             .interactor
             .tx()
             .from(&self.wallet_address)
-            .to(self.state.current_address())
+            .to(self.state.current_sov_esdt_safe_contract_address())
             .gas(30_000_000u64)
             .typed(SovEsdtSafeProxy)
             .pause_endpoint()
@@ -192,7 +193,7 @@ impl SovEsdtSafeInteract {
             .interactor
             .tx()
             .from(&self.wallet_address)
-            .to(self.state.current_address())
+            .to(self.state.current_sov_esdt_safe_contract_address())
             .gas(30_000_000u64)
             .typed(SovEsdtSafeProxy)
             .unpause_endpoint()
@@ -207,7 +208,7 @@ impl SovEsdtSafeInteract {
         let result_value = self
             .interactor
             .query()
-            .to(self.state.current_address())
+            .to(self.state.current_sov_esdt_safe_contract_address())
             .typed(SovEsdtSafeProxy)
             .paused_status()
             .returns(ReturnsResultUnmanaged)
