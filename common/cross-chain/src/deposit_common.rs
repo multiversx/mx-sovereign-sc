@@ -1,6 +1,6 @@
 use proxies::fee_market_proxy::FeeMarketProxy;
 use structs::{
-    aliases::{ExtractedFeeResult, GasLimit, TxNonce},
+    aliases::{EventPaymentTuple, ExtractedFeeResult, GasLimit, TxNonce},
     operation::TransferData,
 };
 
@@ -74,7 +74,7 @@ pub trait DepositCommonModule:
         &self,
         current_sc_address: &ManagedAddress,
         payment: &EsdtTokenPayment<Self::Api>,
-    ) -> MultiValue3<TokenIdentifier, u64, EsdtTokenData> {
+    ) -> EventPaymentTuple<Self::Api> {
         let mut current_token_data = self.blockchain().get_esdt_token_data(
             current_sc_address,
             &payment.token_identifier,
