@@ -35,6 +35,10 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c34f04666d835ff5d62e058c3995147c06f42fe86ff053337632bca83e42702d"
 
 [[package]]
+name = "error-messages"
+version = "0.0.0"
+
+[[package]]
 name = "fee-marker-full-wasm"
 version = "0.0.0"
 dependencies = [
@@ -47,6 +51,7 @@ name = "fee-market"
 version = "0.0.0"
 dependencies = [
  "bls-signature",
+ "error-messages",
  "multiversx-sc",
  "proxies",
  "transaction",

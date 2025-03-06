@@ -1,3 +1,5 @@
+use error_messages::INVALID_FEE;
+
 multiversx_sc::imports!();
 multiversx_sc::derive_imports!();
 
@@ -38,7 +40,7 @@ pub trait FeeTypeModule: utils::UtilsModule + bls_signature::BlsSignatureModule 
                 per_transfer: _,
                 per_gas: _,
             } => {
-                require!(&fee_struct.base_token == token, "Invalid fee");
+                require!(&fee_struct.base_token == token, INVALID_FEE);
 
                 token
             }

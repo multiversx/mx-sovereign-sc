@@ -1,3 +1,6 @@
+use error_messages::{
+    INVALID_PERCENTAGE_SUM, INVALID_TOKEN_PROVIDED_FOR_FEE, PAYMENT_DOES_NOT_COVER_FEE,
+};
 use transaction::GasLimit;
 
 use crate::fee_type::FeeType;
@@ -71,7 +74,7 @@ pub trait SubtractFeeModule:
 
         require!(
             percentage_sum == TOTAL_PERCENTAGE as u64,
-            "Invalid percentage sum"
+            INVALID_PERCENTAGE_SUM
         );
 
         for token_id in self.tokens_for_fees().iter() {
@@ -194,7 +197,7 @@ pub trait SubtractFeeModule:
     ) -> FinalPayment<Self::Api> {
         require!(
             args.payment.token_identifier == args.fee_token,
-            "Invalid token provided for fee"
+            INVALID_TOKEN_PROVIDED_FOR_FEE
         );
 
         let mut total_fee = args.per_transfer * args.total_transfers as u32;
@@ -203,7 +206,7 @@ pub trait SubtractFeeModule:
         }
 
         let mut payment = args.payment;
-        require!(total_fee <= payment.amount, "Payment does not cover fee");
+        require!(total_fee <= payment.amount, PAYMENT_DOES_NOT_COVER_FEE);
 
         payment.amount -= &total_fee;
 
