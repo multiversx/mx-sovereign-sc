@@ -20,6 +20,9 @@ path = "../common/structs"
 [dependencies.proxies]
 path = "../common/proxies"
 
+[dependencies.error-messages]
+path = "../common/error-messages"
+
 [dev-dependencies]
 num-bigint = "0.4.2"
 

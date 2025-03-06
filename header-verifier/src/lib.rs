@@ -1,5 +1,11 @@
 #![no_std]
 
+use bls_signature::BLS_SIGNATURE_LEN;
+use error_messages::{
+    BLS_SIGNATURE_NOT_VALID, CURRENT_OPERATION_ALREADY_IN_EXECUTION,
+    CURRENT_OPERATION_NOT_REGISTERED, HASH_OF_HASHES_DOES_NOT_MATCH_HASH_OF_TRANSFER_DATA,
+    NO_ESDT_SAFE_ADDRESS, ONLY_ESDT_SAFE_CALLER, OUTGOING_TX_HASH_ALREADY_REGISTERED,
+};
 use multiversx_sc::codec;
 use multiversx_sc::proxy_imports::{TopDecode, TopEncode};
 
@@ -37,11 +43,11 @@ pub trait Headerverifier {
 
         require!(
             !hash_of_hashes_history_mapper.contains(&bridge_operations_hash),
-            "The OutGoingTxsHash has already been registered"
+            OUTGOING_TX_HASH_ALREADY_REGISTERED
         );
 
         let is_bls_valid = self.verify_bls(&signature, &bridge_operations_hash);
-        require!(is_bls_valid, "BLS signature is not valid");
+        require!(is_bls_valid, BLS_SIGNATURE_NOT_VALID);
 
         self.calculate_and_check_transfers_hashes(
             &bridge_operations_hash,
@@ -79,7 +85,7 @@ pub trait Headerverifier {
 
         require!(
             !operation_hash_status_mapper.is_empty(),
-            "The current operation is not registered"
+            CURRENT_OPERATION_NOT_REGISTERED
         );
 
         let is_hash_in_execution = operation_hash_status_mapper.get();
@@ -88,7 +94,7 @@ pub trait Headerverifier {
                 operation_hash_status_mapper.set(OperationHashStatus::Locked)
             }
             OperationHashStatus::Locked => {
-                sc_panic!("The current operation is already in execution")
+                sc_panic!(CURRENT_OPERATION_ALREADY_IN_EXECUTION)
             }
         }
     }
@@ -96,16 +102,10 @@ pub trait Headerverifier {
     fn require_caller_esdt_safe(&self) {
         let esdt_safe_mapper = self.esdt_safe_address();
 
-        require!(
-            !esdt_safe_mapper.is_empty(),
-            "There is no registered ESDT address"
-        );
+        require!(!esdt_safe_mapper.is_empty(), NO_ESDT_SAFE_ADDRESS);
 
         let caller = self.blockchain().get_caller();
-        require!(
-            caller == esdt_safe_mapper.get(),
-            "Only ESDT Safe contract can call this endpoint"
-        );
+        require!(caller == esdt_safe_mapper.get(), ONLY_ESDT_SAFE_CALLER);
     }
 
     fn calculate_and_check_transfers_hashes(
@@ -123,7 +123,7 @@ pub trait Headerverifier {
 
         require!(
             transfers_hash.eq(hash_of_hashes),
-            "Hash of all operations doesn't match the hash of transfer data"
+            HASH_OF_HASHES_DOES_NOT_MATCH_HASH_OF_TRANSFER_DATA
         );
     }
 
