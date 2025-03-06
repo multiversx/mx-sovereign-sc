@@ -11,14 +11,6 @@ use structs::aliases::PaymentsVec;
 use structs::configs::EsdtSafeConfig;
 use structs::operation::{Operation, OperationData, OperationEsdtPayment, TransferData};
 
-// NOTE: This must be run before any other tests and only once per chain simulator session, otherwise transactions tend to stay in pending undefinetly
-#[tokio::test]
-#[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
-async fn setup_account_state() {
-    let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
-    chain_interactor.load_account_state().await;
-}
-
 #[tokio::test]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn deposit_nothing_to_transfer() {
