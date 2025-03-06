@@ -40,6 +40,7 @@ version = "0.0.0"
 dependencies = [
  "bls-signature",
  "multiversx-sc",
+ "proxies",
  "transaction",
  "utils",
 ]
@@ -162,6 +163,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "proxies"
+version = "0.1.0"
+dependencies = [
+ "multiversx-sc",
+ "structs",
+ "tx-batch-module",
+]
+
+[[package]]
 name = "quote"
 version = "1.0.38"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -209,6 +219,14 @@ name = "transaction"
 version = "0.0.0"
 dependencies = [
  "multiversx-sc",
+]
+
+[[package]]
+name = "tx-batch-module"
+version = "0.0.0"
+dependencies = [
+ "multiversx-sc",
+ "structs",
 ]
 
 [[package]]
