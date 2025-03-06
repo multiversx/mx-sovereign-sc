@@ -11,6 +11,9 @@ path = "src/lib.rs"
 [dependencies.utils]
 path = "../common/utils"
 
+[dependencies.proxies]
+path = "../common/proxies"
+
 [dependencies.transaction]
 path = "../common/transaction"
 
