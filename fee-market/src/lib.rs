@@ -7,7 +7,6 @@ multiversx_sc::imports!();
 pub mod fee_common;
 pub mod fee_type;
 pub mod price_aggregator;
-mod safe_price_query;
 pub mod subtract_fee;
 
 #[multiversx_sc::contract]

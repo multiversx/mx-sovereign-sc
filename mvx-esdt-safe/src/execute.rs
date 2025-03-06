@@ -1,4 +1,4 @@
-use error_messages::ESDT_SAFE_NOT_PAUSED;
+use error_messages::ESDT_SAFE_STILL_PAUSED;
 use multiversx_sc::api::ESDT_MULTI_TRANSFER_FUNC_NAME;
 use structs::{
     aliases::GasLimit,
@@ -21,7 +21,7 @@ pub trait ExecuteModule:
 {
     #[endpoint(executeBridgeOps)]
     fn execute_operations(&self, hash_of_hashes: ManagedBuffer, operation: Operation<Self::Api>) {
-        require!(self.not_paused(), ESDT_SAFE_NOT_PAUSED);
+        require!(self.not_paused(), ESDT_SAFE_STILL_PAUSED);
 
         let operation_hash = self.calculate_operation_hash(&operation);
 

@@ -220,6 +220,7 @@ checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 name = "chain-config"
 version = "0.0.0"
 dependencies = [
+ "error-messages",
  "multiversx-sc",
  "multiversx-sc-modules",
  "multiversx-sc-scenario",
@@ -240,6 +241,7 @@ version = "0.0.0"
 dependencies = [
  "bls-signature",
  "chain-config",
+ "error-messages",
  "multiversx-sc",
  "multiversx-sc-scenario",
  "num-bigint",
@@ -364,6 +366,7 @@ dependencies = [
 name = "cross-chain"
 version = "0.0.0"
 dependencies = [
+ "error-messages",
  "multiversx-sc",
  "multiversx-sc-modules",
  "proxies",
@@ -525,6 +528,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "error-messages"
+version = "0.0.0"
+
+[[package]]
 name = "fastrand"
 version = "2.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -535,6 +542,7 @@ name = "fee-market"
 version = "0.0.0"
 dependencies = [
  "bls-signature",
+ "error-messages",
  "multiversx-sc",
  "multiversx-sc-scenario",
  "num-bigint",
@@ -736,6 +744,7 @@ name = "header-verifier"
 version = "0.0.0"
 dependencies = [
  "bls-signature",
+ "error-messages",
  "multiversx-sc",
  "multiversx-sc-scenario",
  "num-bigint",
@@ -1133,6 +1142,7 @@ checksum = "90ed8c1e510134f979dbc4f070f87d4313098b704861a105fe34231c70a3901c"
 name = "max-bridged-amount-module"
 version = "0.0.0"
 dependencies = [
+ "error-messages",
  "multiversx-sc",
  "multiversx-sc-scenario",
 ]
@@ -1402,6 +1412,7 @@ version = "0.0.0"
 dependencies = [
  "chain-config",
  "cross-chain",
+ "error-messages",
  "fee-market",
  "header-verifier",
  "max-bridged-amount-module",
@@ -1994,6 +2005,7 @@ dependencies = [
 name = "setup-phase"
 version = "0.0.0"
 dependencies = [
+ "error-messages",
  "multiversx-sc",
  "multiversx-sc-scenario",
 ]
@@ -2073,6 +2085,7 @@ name = "sov-esdt-safe"
 version = "0.0.0"
 dependencies = [
  "cross-chain",
+ "error-messages",
  "fee-market",
  "max-bridged-amount-module",
  "multiversx-sc",

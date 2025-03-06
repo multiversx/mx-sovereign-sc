@@ -76,6 +76,7 @@ name = "header-verifier"
 version = "0.0.0"
 dependencies = [
  "bls-signature",
+ "error-messages",
  "multiversx-sc",
  "proxies",
  "structs",
@@ -186,6 +187,7 @@ version = "0.0.0"
 dependencies = [
  "chain-config",
  "cross-chain",
+ "error-messages",
  "fee-market",
  "header-verifier",
  "max-bridged-amount-module",
