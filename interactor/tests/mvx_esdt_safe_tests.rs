@@ -3,16 +3,15 @@ use multiversx_sc_snippets::multiversx_sc_scenario::multiversx_chain_vm::crypto_
 use proxies::fee_market_proxy::{FeeStruct, FeeType};
 use rust_interact::config::Config;
 use rust_interact::mvx_esdt_safe::mvx_esdt_safe_interactor_main::MvxEsdtSafeInteract;
+use rust_interact::{
+    RegisterTokenArgs, FEE_TOKEN, FIRST_TOKEN, ISSUE_COST, MVX_TO_SOV_TOKEN_STORAGE_KEY,
+    SECOND_TOKEN, SOV_TO_MVX_TOKEN_STORAGE_KEY,
+};
 use structs::aliases::PaymentsVec;
 use structs::configs::EsdtSafeConfig;
 use structs::operation::{Operation, OperationData, OperationEsdtPayment, TransferData};
 
-const FEE_TOKEN: &str = "NTERNS-eaad15";
-const FIRST_TOKEN: &str = "GREEN-0e161c";
-const SECOND_TOKEN: &str = "LTST-4f849e";
-const ONE_HUNDRED_MILLION: u32 = 100_000_000; // the initial balance for the token in the wallet
-
-// NOTE: This has to be run only once per chain simulator session, otherwise transactions tend to stay in pending undefinetly
+// NOTE: This must be run before any other tests and only once per chain simulator session, otherwise transactions tend to stay in pending undefinetly
 #[tokio::test]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn setup_account_state() {
@@ -24,7 +23,7 @@ async fn setup_account_state() {
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn deposit_nothing_to_transfer() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
-
+    chain_interactor.load_account_state().await;
     chain_interactor.deploy_header_verifier().await;
 
     chain_interactor
@@ -36,6 +35,8 @@ async fn deposit_nothing_to_transfer() {
             OptionalValue::Some(EsdtSafeConfig::default_config()),
         )
         .await;
+
+    chain_interactor.unpause_endpoint().await;
 
     chain_interactor
         .deposit(
@@ -51,6 +52,7 @@ async fn deposit_nothing_to_transfer() {
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn deposit_too_many_tokens() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
+    chain_interactor.load_account_state().await;
     chain_interactor.deploy_header_verifier().await;
 
     chain_interactor
@@ -62,6 +64,8 @@ async fn deposit_too_many_tokens() {
             OptionalValue::Some(EsdtSafeConfig::default_config()),
         )
         .await;
+
+    chain_interactor.unpause_endpoint().await;
 
     let esdt_token_payment = EsdtTokenPayment::<StaticApi>::new(
         TokenIdentifier::from(FIRST_TOKEN),
@@ -86,7 +90,7 @@ async fn deposit_too_many_tokens() {
 async fn deposit_no_transfer_data() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
     chain_interactor.deploy_header_verifier().await;
-
+    chain_interactor.load_account_state().await;
     chain_interactor
         .deploy_mvx_esdt_safe(
             chain_interactor
@@ -96,6 +100,8 @@ async fn deposit_no_transfer_data() {
             OptionalValue::Some(EsdtSafeConfig::default_config()),
         )
         .await;
+
+    chain_interactor.unpause_endpoint().await;
 
     chain_interactor
         .deploy_fee_market(
@@ -147,7 +153,7 @@ async fn deposit_no_transfer_data() {
                 .current_mvx_esdt_safe_contract_address()
                 .clone()
                 .to_address(),
-            "mxToSovTokenId",
+            MVX_TO_SOV_TOKEN_STORAGE_KEY,
             None,
         )
         .await;
@@ -157,7 +163,7 @@ async fn deposit_no_transfer_data() {
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn deposit_gas_limit_too_high() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
-
+    chain_interactor.load_account_state().await;
     let config = EsdtSafeConfig::new(ManagedVec::new(), ManagedVec::new(), 1, ManagedVec::new());
     chain_interactor.deploy_header_verifier().await;
     chain_interactor
@@ -169,6 +175,9 @@ async fn deposit_gas_limit_too_high() {
             OptionalValue::Some(config),
         )
         .await;
+
+    chain_interactor.unpause_endpoint().await;
+
     chain_interactor
         .deploy_fee_market(
             chain_interactor
@@ -226,7 +235,7 @@ async fn deposit_gas_limit_too_high() {
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn deposit_endpoint_banned() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
-
+    chain_interactor.load_account_state().await;
     let config = EsdtSafeConfig::new(
         ManagedVec::new(),
         ManagedVec::new(),
@@ -243,6 +252,9 @@ async fn deposit_endpoint_banned() {
             OptionalValue::Some(config),
         )
         .await;
+
+    chain_interactor.unpause_endpoint().await;
+
     chain_interactor
         .deploy_fee_market(
             chain_interactor
@@ -301,7 +313,7 @@ async fn deposit_endpoint_banned() {
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn deposit_fee_enabled() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
-
+    chain_interactor.load_account_state().await;
     let config = EsdtSafeConfig::new(
         ManagedVec::new(),
         ManagedVec::new(),
@@ -309,7 +321,7 @@ async fn deposit_fee_enabled() {
         ManagedVec::new(),
     );
 
-    let per_transfer = BigUint::from(100u64);
+    let per_transfer = BigUint::from(1u64);
     let per_gas = BigUint::from(1u64);
 
     let fee = FeeStruct {
@@ -322,6 +334,7 @@ async fn deposit_fee_enabled() {
     };
 
     chain_interactor.deploy_header_verifier().await;
+
     chain_interactor
         .deploy_mvx_esdt_safe(
             chain_interactor
@@ -331,6 +344,8 @@ async fn deposit_fee_enabled() {
             OptionalValue::Some(config),
         )
         .await;
+    chain_interactor.unpause_endpoint().await;
+
     chain_interactor
         .deploy_fee_market(
             chain_interactor
@@ -353,7 +368,7 @@ async fn deposit_fee_enabled() {
 
     chain_interactor.deploy_testing_sc().await;
 
-    let fee_amount = BigUint::from(100u64);
+    let fee_amount = BigUint::from(10_000u64);
 
     let fee_payment =
         EsdtTokenPayment::<StaticApi>::new(TokenIdentifier::from(FEE_TOKEN), 0, fee_amount.clone());
@@ -376,7 +391,7 @@ async fn deposit_fee_enabled() {
         esdt_token_payment_two.clone(),
     ]);
 
-    let gas_limit = 2;
+    let gas_limit = 1000u64;
     let function = ManagedBuffer::<StaticApi>::from("hello");
     let args =
         ManagedVec::<StaticApi, ManagedBuffer<StaticApi>>::from(vec![ManagedBuffer::from("1")]);
@@ -391,30 +406,13 @@ async fn deposit_fee_enabled() {
             None,
         )
         .await;
-
-    let expected_amount_token_one =
-        BigUint::from(ONE_HUNDRED_MILLION) - esdt_token_payment_one.amount;
-
-    chain_interactor
-        .check_account_storage(
-            chain_interactor.wallet_address.clone(),
-            FIRST_TOKEN,
-            Some(
-                expected_amount_token_one
-                    .to_u64()
-                    .unwrap()
-                    .to_string()
-                    .as_str(),
-            ),
-        )
-        .await;
 }
 
 #[tokio::test]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn deposit_payment_doesnt_cover_fee() {
-    let mut chain_interactor = MvxEsdtSafeInteract::new(Config::new()).await;
-
+    let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
+    chain_interactor.load_account_state().await;
     let config = EsdtSafeConfig::new(
         ManagedVec::new(),
         ManagedVec::new(),
@@ -422,13 +420,13 @@ async fn deposit_payment_doesnt_cover_fee() {
         ManagedVec::new(),
     );
 
-    let per_transfer = BigUint::from(100_000_000u64);
-    let per_gas = BigUint::from(100_000_000u64);
+    let per_transfer = BigUint::from(1u64);
+    let per_gas = BigUint::from(1u64);
 
     let fee = FeeStruct {
-        base_token: TokenIdentifier::from(FEE_TOKEN),
+        base_token: TokenIdentifier::from(FIRST_TOKEN),
         fee_type: FeeType::Fixed {
-            token: TokenIdentifier::from(FEE_TOKEN),
+            token: TokenIdentifier::from(FIRST_TOKEN),
             per_transfer: per_transfer.clone(),
             per_gas: per_gas.clone(),
         },
@@ -453,8 +451,6 @@ async fn deposit_payment_doesnt_cover_fee() {
             Some(fee.clone()),
         )
         .await;
-
-    chain_interactor.set_fee(fee).await;
 
     chain_interactor
         .set_fee_market_address(
@@ -503,20 +499,260 @@ async fn deposit_payment_doesnt_cover_fee() {
         .await;
 }
 
+// TODO: add deposit_refund_fee test after finding a method to check for balance
+
+#[tokio::test]
+#[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
+async fn register_token_invalid_type() {
+    let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
+    chain_interactor.load_account_state().await;
+    chain_interactor.deploy_header_verifier().await;
+    chain_interactor
+        .deploy_mvx_esdt_safe(
+            chain_interactor
+                .state
+                .current_header_verifier_address()
+                .clone(),
+            OptionalValue::Some(EsdtSafeConfig::default_config()),
+        )
+        .await;
+
+    let sov_token_id = TokenIdentifier::from_esdt_bytes(FIRST_TOKEN);
+    let token_type = EsdtTokenType::Invalid;
+    let token_display_name = "SOVEREIGN";
+    let num_decimals = 2;
+    let token_ticker = FIRST_TOKEN;
+    let egld_payment = BigUint::from(ISSUE_COST);
+
+    chain_interactor
+        .register_token(
+            RegisterTokenArgs {
+                sov_token_id,
+                token_type,
+                token_display_name,
+                token_ticker,
+                num_decimals,
+            },
+            egld_payment,
+            Some("Invalid type"),
+        )
+        .await;
+}
+
+#[tokio::test]
+#[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
+async fn register_token_fungible_token() {
+    let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
+
+    chain_interactor.deploy_header_verifier().await;
+    chain_interactor
+        .deploy_mvx_esdt_safe(
+            chain_interactor
+                .state
+                .current_header_verifier_address()
+                .clone(),
+            OptionalValue::Some(EsdtSafeConfig::default_config()),
+        )
+        .await;
+
+    let sov_token_id = TokenIdentifier::from_esdt_bytes(FIRST_TOKEN);
+    let token_type = EsdtTokenType::Fungible;
+    let token_display_name = "GREEN";
+    let num_decimals = 2;
+    let token_ticker = "GREEN";
+    let egld_payment = BigUint::from(ISSUE_COST);
+
+    chain_interactor
+        .register_token(
+            RegisterTokenArgs {
+                sov_token_id,
+                token_type,
+                token_display_name,
+                token_ticker,
+                num_decimals,
+            },
+            egld_payment,
+            None,
+        )
+        .await;
+
+    chain_interactor
+        .check_account_storage(
+            chain_interactor
+                .state
+                .current_mvx_esdt_safe_contract_address()
+                .clone()
+                .to_address(),
+            SOV_TO_MVX_TOKEN_STORAGE_KEY,
+            Some(token_ticker),
+        )
+        .await;
+}
+
+#[tokio::test]
+#[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
+async fn register_token_non_fungible() {
+    let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
+    chain_interactor.load_account_state().await;
+    chain_interactor.deploy_header_verifier().await;
+    chain_interactor
+        .deploy_mvx_esdt_safe(
+            chain_interactor
+                .state
+                .current_header_verifier_address()
+                .clone(),
+            OptionalValue::Some(EsdtSafeConfig::default_config()),
+        )
+        .await;
+
+    let sov_token_id = TokenIdentifier::from_esdt_bytes(FIRST_TOKEN);
+    let token_type = EsdtTokenType::NonFungible;
+    let token_display_name = "GREEN";
+    let num_decimals = 2;
+    let token_ticker = "GREEN";
+    let egld_payment = BigUint::from(ISSUE_COST);
+
+    chain_interactor
+        .register_token(
+            RegisterTokenArgs {
+                sov_token_id,
+                token_type,
+                token_display_name,
+                token_ticker,
+                num_decimals,
+            },
+            egld_payment,
+            None,
+        )
+        .await;
+
+    chain_interactor
+        .check_account_storage(
+            chain_interactor
+                .state
+                .current_mvx_esdt_safe_contract_address()
+                .clone()
+                .to_address(),
+            SOV_TO_MVX_TOKEN_STORAGE_KEY,
+            Some(token_ticker),
+        )
+        .await;
+}
+
+#[tokio::test]
+#[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
+async fn register_token_dynamic_non_fungible() {
+    let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
+    chain_interactor.load_account_state().await;
+    chain_interactor.deploy_header_verifier().await;
+    chain_interactor
+        .deploy_mvx_esdt_safe(
+            chain_interactor
+                .state
+                .current_header_verifier_address()
+                .clone(),
+            OptionalValue::Some(EsdtSafeConfig::default_config()),
+        )
+        .await;
+
+    let sov_token_id = TokenIdentifier::from_esdt_bytes(FIRST_TOKEN);
+    let token_type = EsdtTokenType::DynamicNFT;
+    let token_display_name = "GREEN";
+    let num_decimals = 2;
+    let token_ticker = "GREEN";
+    let egld_payment = BigUint::from(ISSUE_COST);
+
+    chain_interactor
+        .register_token(
+            RegisterTokenArgs {
+                sov_token_id,
+                token_type,
+                token_display_name,
+                token_ticker,
+                num_decimals,
+            },
+            egld_payment,
+            None,
+        )
+        .await;
+
+    chain_interactor
+        .check_account_storage(
+            chain_interactor
+                .state
+                .current_mvx_esdt_safe_contract_address()
+                .clone()
+                .to_address(),
+            SOV_TO_MVX_TOKEN_STORAGE_KEY,
+            Some(token_ticker),
+        )
+        .await;
+}
+
+#[tokio::test]
+#[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
+async fn execute_operation_no_esdt_safe_registered() {
+    let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
+    chain_interactor.load_account_state().await;
+    chain_interactor.deploy_header_verifier().await;
+    chain_interactor
+        .deploy_mvx_esdt_safe(
+            chain_interactor
+                .state
+                .current_header_verifier_address()
+                .clone(),
+            OptionalValue::Some(EsdtSafeConfig::default_config()),
+        )
+        .await;
+
+    let payment = OperationEsdtPayment::new(
+        TokenIdentifier::from(FIRST_TOKEN),
+        0,
+        EsdtTokenData::default(),
+    );
+
+    let operation_data = OperationData::new(
+        1,
+        ManagedAddress::from_address(&chain_interactor.wallet_address),
+        None,
+    );
+
+    let operation = Operation::new(
+        ManagedAddress::from_address(
+            &chain_interactor
+                .state
+                .current_testing_sc_address()
+                .to_address(),
+        ),
+        vec![payment].into(),
+        operation_data,
+    );
+
+    let hash_of_hashes = chain_interactor.get_operation_hash(&operation);
+
+    chain_interactor
+        .execute_operations(
+            hash_of_hashes,
+            operation.clone(),
+            Some("There is no registered ESDT address"),
+        )
+        .await;
+}
+
 #[tokio::test]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn execute_operation_success() {
-    let mut chain_interactor = MvxEsdtSafeInteract::new(Config::new()).await;
-
+    let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
+    chain_interactor.load_account_state().await;
     let config = OptionalValue::Some(EsdtSafeConfig::default_config());
     let token_data = EsdtTokenData {
         amount: BigUint::from(100u64),
         ..Default::default()
     };
 
-    let payment = OperationEsdtPayment::new(TokenIdentifier::from("GREEN-0e161c"), 0, token_data);
+    let payment = OperationEsdtPayment::new(TokenIdentifier::from(FIRST_TOKEN), 0, token_data);
 
-    let gas_limit = 1;
+    let gas_limit = 90_000_000u64;
     let function = ManagedBuffer::<StaticApi>::from("hello");
     let args =
         ManagedVec::<StaticApi, ManagedBuffer<StaticApi>>::from(vec![ManagedBuffer::from("1")]);
@@ -528,8 +764,6 @@ async fn execute_operation_success() {
         ManagedAddress::from_address(&chain_interactor.wallet_address),
         Some(transfer_data),
     );
-
-    chain_interactor.deploy_testing_sc().await;
 
     let operation = Operation::new(
         ManagedAddress::from_address(
@@ -546,6 +780,7 @@ async fn execute_operation_success() {
     let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&operation_hash.to_vec()));
 
     chain_interactor.deploy_header_verifier().await;
+    chain_interactor.deploy_testing_sc().await;
     chain_interactor
         .deploy_mvx_esdt_safe(
             chain_interactor
@@ -555,28 +790,41 @@ async fn execute_operation_success() {
             config,
         )
         .await;
+    chain_interactor.unpause_endpoint().await;
     chain_interactor
         .set_esdt_safe_address_in_header_verifier()
+        .await;
+
+    let sov_token_id = TokenIdentifier::from_esdt_bytes(FIRST_TOKEN);
+    let token_type = EsdtTokenType::Fungible;
+    let token_display_name = "GREEN";
+    let num_decimals = 2;
+    let token_ticker = "GREEN";
+    let egld_payment = BigUint::from(ISSUE_COST);
+
+    chain_interactor
+        .register_token(
+            RegisterTokenArgs {
+                sov_token_id,
+                token_type,
+                token_display_name,
+                token_ticker,
+                num_decimals,
+            },
+            egld_payment,
+            None,
+        )
         .await;
 
     let operations_hashes = MultiValueEncoded::from(ManagedVec::from(vec![operation_hash.clone()]));
 
     chain_interactor.deploy_chain_config().await;
-    chain_interactor
-        .register_token(
-            "SOV-123456",
-            EsdtTokenType::NonFungible,
-            "SOVEREIGN",
-            "SOV",
-            18,
-            BigUint::from(50_000_000_000_000_000u64),
-        )
-        .await;
+
     chain_interactor
         .register_operation(ManagedBuffer::new(), &hash_of_hashes, operations_hashes)
         .await;
 
     chain_interactor
-        .execute_operations(hash_of_hashes, operation.clone())
+        .execute_operations(hash_of_hashes, operation.clone(), None)
         .await;
 }

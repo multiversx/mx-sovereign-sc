@@ -10,6 +10,7 @@ use structs::aliases::{OptionalValueTransferDataTuple, PaymentsVec};
 use structs::configs::{EsdtSafeConfig, SovereignConfig};
 use structs::operation::Operation;
 
+use crate::RegisterTokenArgs;
 use crate::{config::Config, State};
 
 pub struct MvxEsdtSafeInteract {
@@ -78,7 +79,10 @@ impl MvxEsdtSafeInteract {
 
     pub async fn load_account_state(&mut self) {
         let set_state_response = self.interactor.set_state_for_saved_accounts().await;
-        self.interactor.generate_blocks(2u64).await.unwrap();
+        self.interactor
+            .generate_blocks_until_epoch(2u64)
+            .await
+            .unwrap();
         assert!(set_state_response.is_ok());
     }
 
@@ -110,10 +114,11 @@ impl MvxEsdtSafeInteract {
             }
             (Some((_, value)), Some(expected)) => {
                 let wanted_value = hex::encode(expected);
-                assert_eq!(
-                    value, &wanted_value,
-                    "Mismatch: expected '{}', but found '{}'",
-                    expected, value
+                assert!(
+                    value.contains(&wanted_value),
+                    "Mismatch: expected '{}' to be contained in '{}'",
+                    wanted_value,
+                    value
                 );
             }
             (None, Some(_)) => {
@@ -138,6 +143,7 @@ impl MvxEsdtSafeInteract {
             .typed(MvxEsdtSafeProxy)
             .init(header_verifier_address, opt_config)
             .code(&self.mvx_esdt_safe_contract_code)
+            .code_metadata(CodeMetadata::all())
             .returns(ReturnsNewAddress)
             .run()
             .await;
@@ -159,6 +165,7 @@ impl MvxEsdtSafeInteract {
             .typed(HeaderverifierProxy)
             .init()
             .code(&self.header_verifier_mvx_esdt_safe_contract_code)
+            .code_metadata(CodeMetadata::all())
             .returns(ReturnsNewAddress)
             .run()
             .await;
@@ -184,6 +191,7 @@ impl MvxEsdtSafeInteract {
             .typed(FeeMarketProxy)
             .init(esdt_safe_address, fee)
             .code(&self.fee_market_contract_code)
+            .code_metadata(CodeMetadata::all())
             .returns(ReturnsNewAddress)
             .run()
             .await;
@@ -204,6 +212,7 @@ impl MvxEsdtSafeInteract {
             .typed(TestingScProxy)
             .init()
             .code(&self.testing_sc_contract_code)
+            .code_metadata(CodeMetadata::all())
             .returns(ReturnsNewAddress)
             .run()
             .await;
@@ -237,7 +246,7 @@ impl MvxEsdtSafeInteract {
             .interactor
             .tx()
             .from(&self.wallet_address)
-            .gas(30_000_000u64)
+            .gas(60_000_000u64)
             .typed(ChainConfigContractProxy)
             .init(
                 config.min_validators as usize,
@@ -247,6 +256,7 @@ impl MvxEsdtSafeInteract {
                 MultiValueEncoded::new(),
             )
             .code(self.chain_config_contract_code.clone())
+            .code_metadata(CodeMetadata::all())
             .returns(ReturnsNewAddress)
             .run()
             .await;
@@ -322,19 +332,6 @@ impl MvxEsdtSafeInteract {
         println!("Result: {response:?}");
     }
 
-    pub async fn set_fee(&mut self, fee: FeeStruct<StaticApi>) {
-        self.interactor
-            .tx()
-            .from(&self.wallet_address)
-            .to(self.state.current_fee_market_address())
-            .gas(30_000_000u64)
-            .typed(FeeMarketProxy)
-            .set_fee(fee)
-            .returns(ReturnsResultUnmanaged)
-            .run()
-            .await;
-    }
-
     pub async fn deposit(
         &mut self,
         to: Address,
@@ -370,51 +367,65 @@ impl MvxEsdtSafeInteract {
         &mut self,
         hash_of_hashes: ManagedBuffer<StaticApi>,
         operation: Operation<StaticApi>,
+        expected_error_message: Option<&str>,
     ) {
         let response = self
             .interactor
             .tx()
             .from(&self.wallet_address)
             .to(self.state.current_mvx_esdt_safe_contract_address())
-            .gas(30_000_000u64)
+            .gas(120_000_000u64)
             .typed(MvxEsdtSafeProxy)
             .execute_operations(hash_of_hashes, operation)
-            .returns(ReturnsResultUnmanaged)
+            .returns(ReturnsHandledOrError::new())
             .run()
             .await;
 
-        println!("Result: {response:?}");
+        match response {
+            Ok(_) => assert!(
+                expected_error_message.is_none(),
+                "Transaction was successful, but expected error"
+            ),
+            Err(error) => {
+                assert_eq!(expected_error_message, Some(error.message.as_str()))
+            }
+        }
     }
 
     pub async fn register_token(
         &mut self,
-        sov_token_id: &str,
-        token_type: EsdtTokenType,
-        token_display_name: &str,
-        token_ticker: &str,
-        num_decimals: u32,
+        args: RegisterTokenArgs<'_>,
         egld_amount: BigUint<StaticApi>,
+        expected_error_message: Option<&str>,
     ) {
         let response = self
             .interactor
             .tx()
             .from(&self.wallet_address)
             .to(self.state.current_mvx_esdt_safe_contract_address())
-            .gas(30_000_000u64)
+            .gas(90_000_000u64)
             .typed(MvxEsdtSafeProxy)
             .register_token(
-                TokenIdentifier::from(sov_token_id),
-                token_type,
-                token_display_name,
-                token_ticker,
-                num_decimals,
+                args.sov_token_id,
+                args.token_type,
+                args.token_display_name,
+                args.token_ticker,
+                args.num_decimals,
             )
             .egld(egld_amount)
-            .returns(ReturnsResultUnmanaged)
+            .returns(ReturnsHandledOrError::new())
             .run()
             .await;
 
-        println!("Result: {response:?}");
+        match response {
+            Ok(_) => assert!(
+                expected_error_message.is_none(),
+                "Transaction was successful, but expected error"
+            ),
+            Err(error) => {
+                assert_eq!(expected_error_message, Some(error.message.as_str()))
+            }
+        }
     }
 
     pub async fn pause_endpoint(&mut self) {

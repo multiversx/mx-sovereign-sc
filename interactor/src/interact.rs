@@ -14,6 +14,21 @@ use std::{
 };
 
 const STATE_FILE: &str = "state.toml";
+pub const FEE_TOKEN: &str = "INTERNS-eaad15";
+pub const FIRST_TOKEN: &str = "GREEN-0e161c";
+pub const SECOND_TOKEN: &str = "LTST-4f849e";
+pub const ISSUE_COST: u64 = 50_000_000_000_000_000; // 0.05 EGLD
+pub const ONE_HUNDRED_MILLION: u32 = 100_000_000; // the initial balance for the token in the wallet
+pub const SOV_TO_MVX_TOKEN_STORAGE_KEY: &str = "sovToMxTokenId";
+pub const MVX_TO_SOV_TOKEN_STORAGE_KEY: &str = "mxToSovTokenId";
+
+pub struct RegisterTokenArgs<'a> {
+    pub sov_token_id: TokenIdentifier<StaticApi>,
+    pub token_type: EsdtTokenType,
+    pub token_display_name: &'a str,
+    pub token_ticker: &'a str,
+    pub num_decimals: usize,
+}
 
 pub async fn mvx_esdt_safe_cli() {
     env_logger::init();
