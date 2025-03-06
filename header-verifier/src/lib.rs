@@ -3,8 +3,8 @@
 use bls_signature::BLS_SIGNATURE_LEN;
 use error_messages::{
     BLS_SIGNATURE_NOT_VALID, CURRENT_OPERATION_ALREADY_IN_EXECUTION,
-    CURRENT_OPERATION_NOT_REGISTERED, HASH_OF_HASHES_DOES_NOT_MATCH_HASH_OF_TRANSFER_DATA,
-    NO_ESDT_SAFE_ADDRESS, ONLY_ESDT_SAFE_CALLER, OUTGOING_TX_HASH_ALREADY_REGISTERED,
+    CURRENT_OPERATION_NOT_REGISTERED, HASH_OF_HASHES_DOES_NOT_MATCH, NO_ESDT_SAFE_ADDRESS,
+    ONLY_ESDT_SAFE_CALLER, OUTGOING_TX_HASH_ALREADY_REGISTERED,
 };
 use multiversx_sc::codec;
 use multiversx_sc::proxy_imports::{TopDecode, TopEncode};
@@ -123,7 +123,7 @@ pub trait Headerverifier {
 
         require!(
             transfers_hash.eq(hash_of_hashes),
-            HASH_OF_HASHES_DOES_NOT_MATCH_HASH_OF_TRANSFER_DATA
+            HASH_OF_HASHES_DOES_NOT_MATCH
         );
     }
 
