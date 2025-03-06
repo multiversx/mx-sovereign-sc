@@ -36,3 +36,4 @@ pub const NO_ESDT_SAFE_ADDRESS: &str = "There is no registered ESDT address";
 pub const HASH_OF_HASHES_DOES_NOT_MATCH: &str =
     "Hash of all operations doesn't match the hash of transfer data";
 pub const ESDT_SAFE_STILL_PAUSED: &str = "Cannot create transaction while paused";
+pub const INVALID_TYPE: &str = "Invalid type";
