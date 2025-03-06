@@ -1,4 +1,8 @@
 use cross_chain::{storage::CrossChainStorage, DEFAULT_ISSUE_COST, MAX_GAS_PER_TRANSACTION};
+use error_messages::{
+    BANNED_ENDPOINT_NAME, GAS_LIMIT_TOO_HIGH, INVALID_TYPE, MAX_GAS_LIMIT_PER_TX_EXCEEDED,
+    NO_ESDT_SAFE_ADDRESS, PAYMENT_DOES_NOT_COVER_FEE, TOO_MANY_TOKENS,
+};
 use header_verifier::{Headerverifier, OperationHashStatus};
 use multiversx_sc::{
     imports::{MultiValue3, OptionalValue},
@@ -68,10 +72,7 @@ fn deploy_invalid_config() {
         ManagedVec::new(),
     );
 
-    state.update_configuration(
-        config,
-        Some("The gas limit exceeds the maximum gas per transaction limit"),
-    );
+    state.update_configuration(config, Some(MAX_GAS_LIMIT_PER_TX_EXCEEDED));
 }
 
 #[test]
@@ -151,7 +152,7 @@ fn deposit_too_many_tokens() {
         USER.to_managed_address(),
         OptionalValue::None,
         Some(payments_vec),
-        Some("Too many tokens"),
+        Some(TOO_MANY_TOKENS),
     );
 }
 
@@ -233,7 +234,7 @@ fn deposit_gas_limit_too_high() {
         USER.to_managed_address(),
         OptionalValue::Some(transfer_data),
         Some(payments_vec),
-        Some("Gas limit too high"),
+        Some(GAS_LIMIT_TOO_HIGH),
     );
 }
 
@@ -278,7 +279,7 @@ fn deposit_endpoint_banned() {
         USER.to_managed_address(),
         OptionalValue::Some(transfer_data),
         Some(payments_vec),
-        Some("Banned endpoint name"),
+        Some(BANNED_ENDPOINT_NAME),
     );
 }
 
@@ -425,7 +426,7 @@ fn deposit_payment_doesnt_cover_fee() {
         USER.to_managed_address(),
         OptionalValue::Some(transfer_data),
         Some(payments_vec),
-        Some("Payment does not cover fee"),
+        Some(PAYMENT_DOES_NOT_COVER_FEE),
     );
 }
 
@@ -545,7 +546,7 @@ fn register_token_invalid_type() {
         num_decimals,
     };
 
-    state.register_token(register_token_args, egld_payment, Some("Invalid type"));
+    state.register_token(register_token_args, egld_payment, Some(INVALID_TYPE));
 }
 
 #[test]
@@ -646,11 +647,7 @@ fn execute_operation_no_esdt_safe_registered() {
 
     state.deploy_header_verifier();
 
-    state.execute_operation(
-        hash_of_hashes,
-        operation,
-        Some("There is no registered ESDT address"),
-    );
+    state.execute_operation(hash_of_hashes, operation, Some(NO_ESDT_SAFE_ADDRESS));
 }
 
 #[test]
