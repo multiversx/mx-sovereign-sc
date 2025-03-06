@@ -21,7 +21,7 @@ multiversx_sc_wasm_adapter::endpoints! {
         init => init
         upgrade => upgrade
         setPriceAggregatorAddress => set_price_aggregator_address
-        addFee => set_fee
+        setFee => set_fee
         removeFee => remove_fee
         getTokenFee => token_fee
         addUsersToWhitelist => add_users_to_whitelist
