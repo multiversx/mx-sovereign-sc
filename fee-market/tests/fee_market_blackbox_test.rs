@@ -10,18 +10,18 @@ fn test_deploy_fee_market() {
 }
 
 #[test]
-fn test_add_fee_wrong_params() {
+fn test_set_fee_wrong_params() {
     let mut state = FeeMarketTestState::new();
 
     state.deploy_fee_market();
 
-    state.add_fee(WRONG_TOKEN_ID, "Fixed", Some("Invalid token ID"));
+    state.set_fee(WRONG_TOKEN_ID, "Fixed", Some("Invalid token ID"));
 
-    state.add_fee(TOKEN_ID, "None", Some("Invalid fee type"));
+    state.set_fee(TOKEN_ID, "None", Some("Invalid fee type"));
 
-    state.add_fee(DIFFERENT_TOKEN_ID, "Fixed", Some("Invalid fee"));
+    state.set_fee(DIFFERENT_TOKEN_ID, "Fixed", Some("Invalid fee"));
 
-    state.add_fee(TOKEN_ID, "AnyTokenWrong", Some("Invalid token ID"));
+    state.set_fee(TOKEN_ID, "AnyTokenWrong", Some("Invalid token ID"));
 }
 
 #[test]
@@ -68,10 +68,7 @@ fn test_substract_fixed_fee_payment_not_covered() {
 
     state.deploy_fee_market();
 
-    state.substract_fee(
-        "Less than fee",
-        Some("Payment does not cover fee"),
-    );
+    state.substract_fee("Less than fee", Some("Payment does not cover fee"));
 
     state.check_balance_sc(ESDT_SAFE_ADDRESS, 1000);
     state.check_account(USER_ADDRESS, 1000);
