@@ -1,4 +1,5 @@
 multiversx_sc::imports!();
+use error_messages::ESDT_SAFE_NOT_PAUSED;
 use structs::{
     aliases::OptionalValueTransferDataTuple,
     operation::{OperationData, TransferData},
@@ -21,7 +22,7 @@ pub trait DepositModule:
         to: ManagedAddress,
         opt_transfer_data: OptionalValueTransferDataTuple<Self::Api>,
     ) {
-        require!(self.not_paused(), "Cannot create transaction while paused");
+        require!(self.not_paused(), ESDT_SAFE_NOT_PAUSED);
 
         let (fees_payment, payments) = self.check_and_extract_fee().into_tuple();
 
