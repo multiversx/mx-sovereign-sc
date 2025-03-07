@@ -1,8 +1,7 @@
 #![no_std]
 
-pub const CANNOT_CREATE_TX_WHILE_PAUSE: &str = "Cannot create transaction while paused";
 pub const BRIDGE_ALREADY_DEPLOYED: &str = "Bridge already deployed";
-pub const INVALID_MIN_MAX_VALIDATOR_NUMBER: &str = "Invalid min/max validator numbers";
+pub const INVALID_MIN_MAX_VALIDATOR_NUMBERS: &str = "Invalid min/max validator numbers";
 pub const INVALID_PAYMENT_AMOUNT: &str = "Invalid payment amount";
 pub const ONLY_DEPLOYED_CONTRACTS_CAN_CALL_ENDPOINT: &str =
     "Only deployed contracts may call this endpoint";
@@ -18,7 +17,7 @@ pub const MAX_GAS_LIMIT_PER_TX_EXCEEDED: &str =
 pub const DEPOSIT_OVER_MAX_AMOUNT: &str = "Deposit over max amount";
 pub const INVALID_CALLER: &str = "Invalid caller";
 pub const SETUP_PHASE_NOT_COMPLETED: &str = "The setup is not completed";
-pub const ONLY_ESDT_SAFE_CALLER: &str = "Only ESDT Safe call this endpoint";
+pub const ONLY_ESDT_SAFE_CALLER: &str = "Only ESDT Safe can call this endpoint";
 pub const INVALID_FEE: &str = "Invalid fee";
 pub const INVALID_ESDT_IDENTIFIER: &str = "Invalid ESDT identifier";
 pub const INVALID_WEGLD_USDC_PAIR_ADDRESS: &str = "Invalid WEGLD-USDC pair address from router";

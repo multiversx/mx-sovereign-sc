@@ -1,6 +1,6 @@
 #![no_std]
 
-use error_messages::INVALID_MIN_MAX_VALIDATOR_NUMBER;
+use error_messages::INVALID_MIN_MAX_VALIDATOR_NUMBERS;
 use validator_rules::TokenIdAmountPair;
 
 multiversx_sc::imports!();
@@ -27,7 +27,7 @@ pub trait ChainConfigContract:
     ) {
         require!(
             min_validators <= max_validators,
-            INVALID_MIN_MAX_VALIDATOR_NUMBER
+            INVALID_MIN_MAX_VALIDATOR_NUMBERS
         );
 
         let mut additional_stake_vec = ManagedVec::new();
