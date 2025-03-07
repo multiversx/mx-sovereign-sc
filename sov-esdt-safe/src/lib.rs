@@ -15,7 +15,6 @@ pub trait SovEsdtSafe:
     + cross_chain::storage::CrossChainStorage
     + cross_chain::events::EventsModule
     + utils::UtilsModule
-    + max_bridged_amount_module::MaxBridgedAmountModule
     + multiversx_sc_modules::pause::PauseModule
 {
     #[init]
@@ -49,6 +48,12 @@ pub trait SovEsdtSafe:
     fn set_fee_market_address(&self, fee_market_address: ManagedAddress) {
         self.require_sc_address(&fee_market_address);
         self.fee_market_address().set(fee_market_address);
+    }
+
+    #[only_owner]
+    #[endpoint(setMaxBridgedAmount)]
+    fn set_max_bridged_amount(&self, token_id: TokenIdentifier, max_amount: BigUint) {
+        self.max_bridged_amount(&token_id).set(&max_amount);
     }
 
     #[upgrade]

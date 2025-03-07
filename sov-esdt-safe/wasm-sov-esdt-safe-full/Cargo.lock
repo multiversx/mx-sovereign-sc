@@ -21,14 +21,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8f68f53c83ab957f72c32642f3868eec03eb974d1fb82e453128456482613d36"
 
 [[package]]
-name = "bls-signature"
-version = "0.0.0"
-dependencies = [
- "multiversx-sc",
- "transaction",
-]
-
-[[package]]
 name = "cross-chain"
 version = "0.0.0"
 dependencies = [
@@ -54,11 +46,10 @@ version = "0.0.0"
 name = "fee-market"
 version = "0.0.0"
 dependencies = [
- "bls-signature",
  "error-messages",
  "multiversx-sc",
  "proxies",
- "transaction",
+ "structs",
  "utils",
 ]
 
@@ -73,14 +64,6 @@ name = "hex-literal"
 version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6fe2267d4ed49bc07b63801559be28c718ea06c4738b7a03c94df7386d2cde46"
-
-[[package]]
-name = "max-bridged-amount-module"
-version = "0.0.0"
-dependencies = [
- "error-messages",
- "multiversx-sc",
-]
 
 [[package]]
 name = "multiversx-chain-core"
@@ -194,7 +177,6 @@ version = "0.1.0"
 dependencies = [
  "multiversx-sc",
  "structs",
- "tx-batch-module",
 ]
 
 [[package]]
@@ -237,7 +219,6 @@ dependencies = [
  "cross-chain",
  "error-messages",
  "fee-market",
- "max-bridged-amount-module",
  "multiversx-sc",
  "multiversx-sc-modules",
  "proxies",
@@ -278,21 +259,6 @@ name = "testing-sc"
 version = "0.0.0"
 dependencies = [
  "multiversx-sc",
-]
-
-[[package]]
-name = "transaction"
-version = "0.0.0"
-dependencies = [
- "multiversx-sc",
-]
-
-[[package]]
-name = "tx-batch-module"
-version = "0.0.0"
-dependencies = [
- "multiversx-sc",
- "structs",
 ]
 
 [[package]]

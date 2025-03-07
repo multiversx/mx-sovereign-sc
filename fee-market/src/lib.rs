@@ -16,7 +16,6 @@ pub trait FeeMarket:
     + subtract_fee::SubtractFeeModule
     + price_aggregator::PriceAggregatorModule
     + utils::UtilsModule
-    + bls_signature::BlsSignatureModule
 {
     #[init]
     fn init(&self, esdt_safe_address: ManagedAddress, fee: Option<FeeStruct<Self::Api>>) {

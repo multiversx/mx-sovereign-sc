@@ -23,14 +23,14 @@ multiversx_sc_wasm_adapter::endpoints! {
         upgrade => upgrade
         updateConfiguration => update_configuration
         setFeeMarketAddress => set_fee_market_address
+        setMaxBridgedAmount => set_max_bridged_amount
         deposit => deposit
         executeBridgeOps => execute_operations
         registerToken => register_token
+        getMaxBridgedAmount => max_bridged_amount
         pause => pause_endpoint
         unpause => unpause_endpoint
         isPaused => paused_status
-        setMaxBridgedAmount => set_max_bridged_amount
-        getMaxBridgedAmount => max_bridged_amount
         execute => execute
         issue_callback => issue_callback
     )

@@ -1,6 +1,6 @@
 use error_messages::{
-    BANNED_ENDPOINT_NAME, GAS_LIMIT_TOO_HIGH, NOTHING_TO_TRANSFER, TOKEN_ALREADY_REGISTERED,
-    TOKEN_BLACKLISTED, TOO_MANY_TOKENS,
+    BANNED_ENDPOINT_NAME, DEPOSIT_OVER_MAX_AMOUNT, GAS_LIMIT_TOO_HIGH, NOTHING_TO_TRANSFER,
+    TOKEN_ALREADY_REGISTERED, TOKEN_BLACKLISTED, TOO_MANY_TOKENS,
 };
 use proxies::fee_market_proxy::FeeMarketProxy;
 use structs::{
@@ -91,6 +91,22 @@ pub trait DepositCommonModule:
             payment.token_nonce,
             current_token_data,
         ))
+    }
+
+    fn is_above_max_amount(&self, token_id: &TokenIdentifier, amount: &BigUint) -> bool {
+        let max_amount = self.max_bridged_amount(token_id).get();
+        if max_amount > 0 {
+            amount > &max_amount
+        } else {
+            false
+        }
+    }
+
+    fn require_below_max_amount(&self, token_id: &TokenIdentifier, amount: &BigUint) {
+        require!(
+            !self.is_above_max_amount(token_id, amount),
+            DEPOSIT_OVER_MAX_AMOUNT
+        );
     }
 
     #[inline]

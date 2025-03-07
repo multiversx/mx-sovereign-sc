@@ -27,7 +27,7 @@ pub struct FeeStruct<M: ManagedTypeApi> {
 }
 
 #[multiversx_sc::module]
-pub trait FeeTypeModule: utils::UtilsModule + bls_signature::BlsSignatureModule {
+pub trait FeeTypeModule: utils::UtilsModule {
     #[only_owner]
     #[endpoint(setFee)]
     fn set_fee(&self, fee_struct: FeeStruct<Self::Api>) {

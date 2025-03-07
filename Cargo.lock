@@ -181,15 +181,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "bls-signature"
-version = "0.0.0"
-dependencies = [
- "multiversx-sc",
- "multiversx-sc-scenario",
- "transaction",
-]
-
-[[package]]
 name = "bumpalo"
 version = "3.16.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -239,7 +230,6 @@ dependencies = [
 name = "chain-factory"
 version = "0.0.0"
 dependencies = [
- "bls-signature",
  "chain-config",
  "error-messages",
  "multiversx-sc",
@@ -541,13 +531,12 @@ checksum = "37909eebbb50d72f9059c3b6d82c0463f2ff062c9e95845c43a6c9c0355411be"
 name = "fee-market"
 version = "0.0.0"
 dependencies = [
- "bls-signature",
  "error-messages",
  "multiversx-sc",
  "multiversx-sc-scenario",
  "num-bigint",
  "proxies",
- "transaction",
+ "structs",
  "utils",
 ]
 
@@ -743,7 +732,6 @@ dependencies = [
 name = "header-verifier"
 version = "0.0.0"
 dependencies = [
- "bls-signature",
  "error-messages",
  "multiversx-sc",
  "multiversx-sc-scenario",
@@ -1139,15 +1127,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "90ed8c1e510134f979dbc4f070f87d4313098b704861a105fe34231c70a3901c"
 
 [[package]]
-name = "max-bridged-amount-module"
-version = "0.0.0"
-dependencies = [
- "error-messages",
- "multiversx-sc",
- "multiversx-sc-scenario",
-]
-
-[[package]]
 name = "memchr"
 version = "2.7.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1415,7 +1394,6 @@ dependencies = [
  "error-messages",
  "fee-market",
  "header-verifier",
- "max-bridged-amount-module",
  "multiversx-sc",
  "multiversx-sc-modules",
  "multiversx-sc-scenario",
@@ -1663,7 +1641,6 @@ version = "0.1.0"
 dependencies = [
  "multiversx-sc",
  "structs",
- "tx-batch-module",
 ]
 
 [[package]]
@@ -2087,7 +2064,6 @@ dependencies = [
  "cross-chain",
  "error-messages",
  "fee-market",
- "max-bridged-amount-module",
  "multiversx-sc",
  "multiversx-sc-modules",
  "multiversx-sc-scenario",
@@ -2335,26 +2311,10 @@ dependencies = [
 ]
 
 [[package]]
-name = "transaction"
-version = "0.0.0"
-dependencies = [
- "multiversx-sc",
-]
-
-[[package]]
 name = "try-lock"
 version = "0.2.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e421abadd41a4225275504ea4d6566923418b7f05506fbc9c0fe86ba7396114b"
-
-[[package]]
-name = "tx-batch-module"
-version = "0.0.0"
-dependencies = [
- "multiversx-sc",
- "multiversx-sc-scenario",
- "structs",
-]
 
 [[package]]
 name = "typenum"
