@@ -1,5 +1,6 @@
 use error_messages::{
     INVALID_PERCENTAGE_SUM, INVALID_TOKEN_PROVIDED_FOR_FEE, PAYMENT_DOES_NOT_COVER_FEE,
+    TOKEN_NOT_ACCEPTED_AS_FEE,
 };
 use transaction::GasLimit;
 
@@ -152,7 +153,7 @@ pub trait SubtractFeeModule:
     ) -> FinalPayment<Self::Api> {
         let fee_type = self.token_fee(&payment.token_identifier).get();
         match fee_type {
-            FeeType::None => sc_panic!("Token not accepted as fee"),
+            FeeType::None => sc_panic!(TOKEN_NOT_ACCEPTED_AS_FEE),
             FeeType::Fixed {
                 token,
                 per_transfer,

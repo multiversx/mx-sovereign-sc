@@ -1,4 +1,4 @@
-use error_messages::INVALID_FEE;
+use error_messages::{INVALID_FEE, INVALID_FEE_TYPE};
 
 multiversx_sc::imports!();
 multiversx_sc::derive_imports!();
@@ -34,7 +34,7 @@ pub trait FeeTypeModule: utils::UtilsModule + bls_signature::BlsSignatureModule 
         self.require_valid_token_id(&fee_struct.base_token);
 
         let token = match &fee_struct.fee_type {
-            FeeType::None => sc_panic!("Invalid fee type"),
+            FeeType::None => sc_panic!(INVALID_FEE_TYPE),
             FeeType::Fixed {
                 token,
                 per_transfer: _,
