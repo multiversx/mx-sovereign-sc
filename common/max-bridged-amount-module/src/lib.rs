@@ -1,5 +1,7 @@
 #![no_std]
 
+use error_messages::DEPOSIT_OVER_MAX_AMOUNT;
+
 multiversx_sc::imports!();
 
 #[multiversx_sc::module]
@@ -22,7 +24,7 @@ pub trait MaxBridgedAmountModule {
     fn require_below_max_amount(&self, token_id: &TokenIdentifier, amount: &BigUint) {
         require!(
             !self.is_above_max_amount(token_id, amount),
-            "Deposit over max amount"
+            DEPOSIT_OVER_MAX_AMOUNT
         );
     }
 

@@ -1,4 +1,5 @@
 use cross_chain::REGISTER_GAS;
+use error_messages::INVALID_TYPE;
 use multiversx_sc::types::EsdtTokenType;
 use structs::{EsdtInfo, IssueEsdtArgs};
 multiversx_sc::imports!();
@@ -26,7 +27,7 @@ pub trait RegisterTokenModule:
         let issue_cost = self.call_value().egld().clone_value();
 
         match token_type {
-            EsdtTokenType::Invalid => sc_panic!("Invalid type"),
+            EsdtTokenType::Invalid => sc_panic!(INVALID_TYPE),
             _ => self.handle_token_issue(IssueEsdtArgs {
                 sov_token_id: sov_token_id.clone(),
                 issue_cost,

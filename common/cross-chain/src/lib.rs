@@ -1,5 +1,6 @@
 #![no_std]
 
+use error_messages::MAX_GAS_LIMIT_PER_TX_EXCEEDED;
 use structs::configs::EsdtSafeConfig;
 multiversx_sc::imports!();
 
@@ -18,7 +19,7 @@ pub trait LibCommon: crate::storage::CrossChainStorage {
     fn require_esdt_config_valid(&self, config: &EsdtSafeConfig<Self::Api>) {
         require!(
             config.max_tx_gas_limit < MAX_GAS_PER_TRANSACTION,
-            "The gas limit exceeds the maximum gas per transaction limit"
+            MAX_GAS_LIMIT_PER_TX_EXCEEDED
         );
     }
 }

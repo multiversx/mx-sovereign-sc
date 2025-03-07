@@ -44,6 +44,9 @@ path = "../header-verifier"
 [dependencies.chain-config]
 path = "../chain-config"
 
+[dependencies.error-messages]
+path = "../common/error-messages"
+
 [dev-dependencies]
 num-bigint = "0.4"
 
