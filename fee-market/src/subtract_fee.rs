@@ -2,7 +2,7 @@ use error_messages::{
     INVALID_PERCENTAGE_SUM, INVALID_TOKEN_PROVIDED_FOR_FEE, PAYMENT_DOES_NOT_COVER_FEE,
     TOKEN_NOT_ACCEPTED_AS_FEE,
 };
-use transaction::GasLimit;
+use structs::aliases::GasLimit;
 
 use crate::fee_type::FeeType;
 

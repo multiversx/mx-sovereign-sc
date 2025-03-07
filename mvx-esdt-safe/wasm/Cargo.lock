@@ -58,7 +58,7 @@ dependencies = [
  "error-messages",
  "multiversx-sc",
  "proxies",
- "transaction",
+ "structs",
  "utils",
 ]
 
@@ -278,13 +278,6 @@ dependencies = [
 
 [[package]]
 name = "testing-sc"
-version = "0.0.0"
-dependencies = [
- "multiversx-sc",
-]
-
-[[package]]
-name = "transaction"
 version = "0.0.0"
 dependencies = [
  "multiversx-sc",

@@ -14,8 +14,8 @@ path = "../common/utils"
 [dependencies.proxies]
 path = "../common/proxies"
 
-[dependencies.transaction]
-path = "../common/transaction"
+[dependencies.structs]
+path = "../common/structs"
 
 [dependencies.multiversx-sc]
 version = "=0.56.1"
