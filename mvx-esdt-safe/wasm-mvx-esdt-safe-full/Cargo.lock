@@ -222,7 +222,6 @@ version = "0.1.0"
 dependencies = [
  "multiversx-sc",
  "structs",
- "tx-batch-module",
 ]
 
 [[package]]
@@ -281,14 +280,6 @@ name = "testing-sc"
 version = "0.0.0"
 dependencies = [
  "multiversx-sc",
-]
-
-[[package]]
-name = "tx-batch-module"
-version = "0.0.0"
-dependencies = [
- "multiversx-sc",
- "structs",
 ]
 
 [[package]]
