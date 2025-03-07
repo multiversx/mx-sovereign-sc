@@ -21,14 +21,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8f68f53c83ab957f72c32642f3868eec03eb974d1fb82e453128456482613d36"
 
 [[package]]
-name = "bls-signature"
-version = "0.0.0"
-dependencies = [
- "multiversx-sc",
- "transaction",
-]
-
-[[package]]
 name = "endian-type"
 version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -42,7 +34,6 @@ version = "0.0.0"
 name = "header-verifier"
 version = "0.0.0"
 dependencies = [
- "bls-signature",
  "error-messages",
  "multiversx-sc",
  "proxies",
@@ -216,13 +207,6 @@ dependencies = [
  "proc-macro2",
  "quote",
  "unicode-ident",
-]
-
-[[package]]
-name = "transaction"
-version = "0.0.0"
-dependencies = [
- "multiversx-sc",
 ]
 
 [[package]]

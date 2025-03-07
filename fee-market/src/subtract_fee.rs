@@ -39,7 +39,6 @@ pub trait SubtractFeeModule:
     + crate::fee_common::CommonFeeModule
     + crate::price_aggregator::PriceAggregatorModule
     + utils::UtilsModule
-    + bls_signature::BlsSignatureModule
 {
     #[only_owner]
     #[endpoint(addUsersToWhitelist)]

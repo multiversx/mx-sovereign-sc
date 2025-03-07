@@ -181,15 +181,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "bls-signature"
-version = "0.0.0"
-dependencies = [
- "multiversx-sc",
- "multiversx-sc-scenario",
- "transaction",
-]
-
-[[package]]
 name = "bumpalo"
 version = "3.16.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -239,7 +230,6 @@ dependencies = [
 name = "chain-factory"
 version = "0.0.0"
 dependencies = [
- "bls-signature",
  "chain-config",
  "error-messages",
  "multiversx-sc",
@@ -541,7 +531,6 @@ checksum = "37909eebbb50d72f9059c3b6d82c0463f2ff062c9e95845c43a6c9c0355411be"
 name = "fee-market"
 version = "0.0.0"
 dependencies = [
- "bls-signature",
  "error-messages",
  "multiversx-sc",
  "multiversx-sc-scenario",
@@ -743,7 +732,6 @@ dependencies = [
 name = "header-verifier"
 version = "0.0.0"
 dependencies = [
- "bls-signature",
  "error-messages",
  "multiversx-sc",
  "multiversx-sc-scenario",

@@ -21,14 +21,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8f68f53c83ab957f72c32642f3868eec03eb974d1fb82e453128456482613d36"
 
 [[package]]
-name = "bls-signature"
-version = "0.0.0"
-dependencies = [
- "multiversx-sc",
- "transaction",
-]
-
-[[package]]
 name = "cross-chain"
 version = "0.0.0"
 dependencies = [
@@ -54,7 +46,6 @@ version = "0.0.0"
 name = "fee-market"
 version = "0.0.0"
 dependencies = [
- "bls-signature",
  "error-messages",
  "multiversx-sc",
  "proxies",
