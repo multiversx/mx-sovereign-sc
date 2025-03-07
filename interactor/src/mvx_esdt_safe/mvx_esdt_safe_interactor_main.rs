@@ -37,7 +37,11 @@ impl MvxEsdtSafeInteract {
 
         // Useful in the chain simulator setting
         // generate blocks until ESDTSystemSCAddress is enabled
-        interactor.generate_blocks_until_epoch(1).await.unwrap();
+        interactor.generate_blocks(30u64).await.unwrap();
+
+        let set_state_response = interactor.set_state_for_saved_accounts().await;
+        interactor.generate_blocks(2u64).await.unwrap();
+        assert!(set_state_response.is_ok());
 
         let mvx_esdt_safe_contract_code = BytesValue::interpret_from(
             "mxsc:../../../mvx-esdt-safe/output/mvx-esdt-safe.mxsc.json",
@@ -75,15 +79,6 @@ impl MvxEsdtSafeInteract {
             chain_config_contract_code,
             state: State::load_state(),
         }
-    }
-
-    pub async fn load_account_state(&mut self) {
-        let set_state_response = self.interactor.set_state_for_saved_accounts().await;
-        self.interactor
-            .generate_blocks_until_epoch(2u64)
-            .await
-            .unwrap();
-        assert!(set_state_response.is_ok());
     }
 
     // Arguments should be in plain text, they will be converted to hex

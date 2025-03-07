@@ -7,17 +7,22 @@ use rust_interact::{
     RegisterTokenArgs, FEE_TOKEN, FIRST_TOKEN, ISSUE_COST, MVX_TO_SOV_TOKEN_STORAGE_KEY,
     SECOND_TOKEN, SOV_TO_MVX_TOKEN_STORAGE_KEY,
 };
+use serial_test::serial;
 use structs::aliases::PaymentsVec;
 use structs::configs::EsdtSafeConfig;
 use structs::operation::{Operation, OperationData, OperationEsdtPayment, TransferData};
 
 #[tokio::test]
+#[serial]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn deposit_nothing_to_transfer() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
-    chain_interactor.load_account_state().await;
     chain_interactor.deploy_header_verifier().await;
-
+    chain_interactor
+        .interactor
+        .generate_blocks(2u64)
+        .await
+        .unwrap();
     chain_interactor
         .deploy_mvx_esdt_safe(
             chain_interactor
@@ -28,7 +33,19 @@ async fn deposit_nothing_to_transfer() {
         )
         .await;
 
+    chain_interactor
+        .interactor
+        .generate_blocks(2u64)
+        .await
+        .unwrap();
+
     chain_interactor.unpause_endpoint().await;
+
+    chain_interactor
+        .interactor
+        .generate_blocks(2u64)
+        .await
+        .unwrap();
 
     chain_interactor
         .deposit(
@@ -38,15 +55,26 @@ async fn deposit_nothing_to_transfer() {
             Some("Nothing to transfer"),
         )
         .await;
+
+    chain_interactor
+        .interactor
+        .generate_blocks(2u64)
+        .await
+        .unwrap();
 }
 
 #[tokio::test]
+#[serial]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn deposit_too_many_tokens() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
-    chain_interactor.load_account_state().await;
     chain_interactor.deploy_header_verifier().await;
 
+    chain_interactor
+        .interactor
+        .generate_blocks(2u64)
+        .await
+        .unwrap();
     chain_interactor
         .deploy_mvx_esdt_safe(
             chain_interactor
@@ -57,7 +85,19 @@ async fn deposit_too_many_tokens() {
         )
         .await;
 
+    chain_interactor
+        .interactor
+        .generate_blocks(2u64)
+        .await
+        .unwrap();
+
     chain_interactor.unpause_endpoint().await;
+
+    chain_interactor
+        .interactor
+        .generate_blocks(2u64)
+        .await
+        .unwrap();
 
     let esdt_token_payment = EsdtTokenPayment::<StaticApi>::new(
         TokenIdentifier::from(FIRST_TOKEN),
@@ -75,14 +115,27 @@ async fn deposit_too_many_tokens() {
             Some("Too many tokens"),
         )
         .await;
+
+    chain_interactor
+        .interactor
+        .generate_blocks(2u64)
+        .await
+        .unwrap();
 }
 
 #[tokio::test]
+#[serial]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn deposit_no_transfer_data() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
     chain_interactor.deploy_header_verifier().await;
-    chain_interactor.load_account_state().await;
+
+    chain_interactor
+        .interactor
+        .generate_blocks(2u64)
+        .await
+        .unwrap();
+
     chain_interactor
         .deploy_mvx_esdt_safe(
             chain_interactor
@@ -93,7 +146,19 @@ async fn deposit_no_transfer_data() {
         )
         .await;
 
+    chain_interactor
+        .interactor
+        .generate_blocks(2u64)
+        .await
+        .unwrap();
+
     chain_interactor.unpause_endpoint().await;
+
+    chain_interactor
+        .interactor
+        .generate_blocks(2u64)
+        .await
+        .unwrap();
 
     chain_interactor
         .deploy_fee_market(
@@ -106,6 +171,12 @@ async fn deposit_no_transfer_data() {
         .await;
 
     chain_interactor
+        .interactor
+        .generate_blocks(2u64)
+        .await
+        .unwrap();
+
+    chain_interactor
         .set_fee_market_address(
             chain_interactor
                 .state
@@ -114,6 +185,12 @@ async fn deposit_no_transfer_data() {
                 .to_address(),
         )
         .await;
+
+    chain_interactor
+        .interactor
+        .generate_blocks(2u64)
+        .await
+        .unwrap();
 
     let esdt_token_payment_one = EsdtTokenPayment::<StaticApi>::new(
         TokenIdentifier::from(FIRST_TOKEN),
@@ -139,6 +216,12 @@ async fn deposit_no_transfer_data() {
         .await;
 
     chain_interactor
+        .interactor
+        .generate_blocks(2u64)
+        .await
+        .unwrap();
+
+    chain_interactor
         .check_account_storage(
             chain_interactor
                 .state
@@ -149,15 +232,28 @@ async fn deposit_no_transfer_data() {
             None,
         )
         .await;
+
+    chain_interactor
+        .interactor
+        .generate_blocks(2u64)
+        .await
+        .unwrap();
 }
 
 #[tokio::test]
+#[serial]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn deposit_gas_limit_too_high() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
-    chain_interactor.load_account_state().await;
     let config = EsdtSafeConfig::new(ManagedVec::new(), ManagedVec::new(), 1, ManagedVec::new());
     chain_interactor.deploy_header_verifier().await;
+
+    chain_interactor
+        .interactor
+        .generate_blocks(2u64)
+        .await
+        .unwrap();
+
     chain_interactor
         .deploy_mvx_esdt_safe(
             chain_interactor
@@ -168,7 +264,19 @@ async fn deposit_gas_limit_too_high() {
         )
         .await;
 
+    chain_interactor
+        .interactor
+        .generate_blocks(2u64)
+        .await
+        .unwrap();
+
     chain_interactor.unpause_endpoint().await;
+
+    chain_interactor
+        .interactor
+        .generate_blocks(2u64)
+        .await
+        .unwrap();
 
     chain_interactor
         .deploy_fee_market(
@@ -181,6 +289,12 @@ async fn deposit_gas_limit_too_high() {
         .await;
 
     chain_interactor
+        .interactor
+        .generate_blocks(2u64)
+        .await
+        .unwrap();
+
+    chain_interactor
         .set_fee_market_address(
             chain_interactor
                 .state
@@ -190,7 +304,19 @@ async fn deposit_gas_limit_too_high() {
         )
         .await;
 
+    chain_interactor
+        .interactor
+        .generate_blocks(2u64)
+        .await
+        .unwrap();
+
     chain_interactor.deploy_testing_sc().await;
+
+    chain_interactor
+        .interactor
+        .generate_blocks(2u64)
+        .await
+        .unwrap();
 
     let esdt_token_payment_one = EsdtTokenPayment::<StaticApi>::new(
         TokenIdentifier::from(FIRST_TOKEN),
@@ -221,13 +347,19 @@ async fn deposit_gas_limit_too_high() {
             Some("Gas limit too high"),
         )
         .await;
+
+    chain_interactor
+        .interactor
+        .generate_blocks(2u64)
+        .await
+        .unwrap();
 }
 
 #[tokio::test]
+#[serial]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn deposit_endpoint_banned() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
-    chain_interactor.load_account_state().await;
     let config = EsdtSafeConfig::new(
         ManagedVec::new(),
         ManagedVec::new(),
@@ -235,6 +367,13 @@ async fn deposit_endpoint_banned() {
         ManagedVec::from(vec![ManagedBuffer::from("hello")]),
     );
     chain_interactor.deploy_header_verifier().await;
+
+    chain_interactor
+        .interactor
+        .generate_blocks(2u64)
+        .await
+        .unwrap();
+
     chain_interactor
         .deploy_mvx_esdt_safe(
             chain_interactor
@@ -245,7 +384,19 @@ async fn deposit_endpoint_banned() {
         )
         .await;
 
+    chain_interactor
+        .interactor
+        .generate_blocks(2u64)
+        .await
+        .unwrap();
+
     chain_interactor.unpause_endpoint().await;
+
+    chain_interactor
+        .interactor
+        .generate_blocks(2u64)
+        .await
+        .unwrap();
 
     chain_interactor
         .deploy_fee_market(
@@ -258,6 +409,12 @@ async fn deposit_endpoint_banned() {
         .await;
 
     chain_interactor
+        .interactor
+        .generate_blocks(2u64)
+        .await
+        .unwrap();
+
+    chain_interactor
         .set_fee_market_address(
             chain_interactor
                 .state
@@ -267,7 +424,19 @@ async fn deposit_endpoint_banned() {
         )
         .await;
 
+    chain_interactor
+        .interactor
+        .generate_blocks(2u64)
+        .await
+        .unwrap();
+
     chain_interactor.deploy_testing_sc().await;
+
+    chain_interactor
+        .interactor
+        .generate_blocks(2u64)
+        .await
+        .unwrap();
 
     let esdt_token_payment_one = EsdtTokenPayment::<StaticApi>::new(
         TokenIdentifier::from(FIRST_TOKEN),
@@ -298,14 +467,20 @@ async fn deposit_endpoint_banned() {
             Some("Banned endpoint name"),
         )
         .await;
+
+    chain_interactor
+        .interactor
+        .generate_blocks(2u64)
+        .await
+        .unwrap();
 }
 
 // NOTE: Add checks for account storage after finding out how to encode values in state
 #[tokio::test]
+#[serial]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn deposit_fee_enabled() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
-    chain_interactor.load_account_state().await;
     let config = EsdtSafeConfig::new(
         ManagedVec::new(),
         ManagedVec::new(),
@@ -328,6 +503,12 @@ async fn deposit_fee_enabled() {
     chain_interactor.deploy_header_verifier().await;
 
     chain_interactor
+        .interactor
+        .generate_blocks(2u64)
+        .await
+        .unwrap();
+
+    chain_interactor
         .deploy_mvx_esdt_safe(
             chain_interactor
                 .state
@@ -336,7 +517,20 @@ async fn deposit_fee_enabled() {
             OptionalValue::Some(config),
         )
         .await;
+
+    chain_interactor
+        .interactor
+        .generate_blocks(2u64)
+        .await
+        .unwrap();
+
     chain_interactor.unpause_endpoint().await;
+
+    chain_interactor
+        .interactor
+        .generate_blocks(2u64)
+        .await
+        .unwrap();
 
     chain_interactor
         .deploy_fee_market(
@@ -349,6 +543,12 @@ async fn deposit_fee_enabled() {
         .await;
 
     chain_interactor
+        .interactor
+        .generate_blocks(2u64)
+        .await
+        .unwrap();
+
+    chain_interactor
         .set_fee_market_address(
             chain_interactor
                 .state
@@ -358,7 +558,19 @@ async fn deposit_fee_enabled() {
         )
         .await;
 
+    chain_interactor
+        .interactor
+        .generate_blocks(2u64)
+        .await
+        .unwrap();
+
     chain_interactor.deploy_testing_sc().await;
+
+    chain_interactor
+        .interactor
+        .generate_blocks(2u64)
+        .await
+        .unwrap();
 
     let fee_amount = BigUint::from(10_000u64);
 
@@ -398,13 +610,19 @@ async fn deposit_fee_enabled() {
             None,
         )
         .await;
+
+    chain_interactor
+        .interactor
+        .generate_blocks(2u64)
+        .await
+        .unwrap();
 }
 
 #[tokio::test]
+#[serial]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn deposit_payment_doesnt_cover_fee() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
-    chain_interactor.load_account_state().await;
     let config = EsdtSafeConfig::new(
         ManagedVec::new(),
         ManagedVec::new(),
@@ -425,6 +643,13 @@ async fn deposit_payment_doesnt_cover_fee() {
     };
 
     chain_interactor.deploy_header_verifier().await;
+
+    chain_interactor
+        .interactor
+        .generate_blocks(2u64)
+        .await
+        .unwrap();
+
     chain_interactor
         .deploy_mvx_esdt_safe(
             chain_interactor
@@ -434,6 +659,13 @@ async fn deposit_payment_doesnt_cover_fee() {
             OptionalValue::Some(config),
         )
         .await;
+
+    chain_interactor
+        .interactor
+        .generate_blocks(2u64)
+        .await
+        .unwrap();
+
     chain_interactor
         .deploy_fee_market(
             chain_interactor
@@ -445,6 +677,12 @@ async fn deposit_payment_doesnt_cover_fee() {
         .await;
 
     chain_interactor
+        .interactor
+        .generate_blocks(2u64)
+        .await
+        .unwrap();
+
+    chain_interactor
         .set_fee_market_address(
             chain_interactor
                 .state
@@ -454,8 +692,27 @@ async fn deposit_payment_doesnt_cover_fee() {
         )
         .await;
 
+    chain_interactor
+        .interactor
+        .generate_blocks(2u64)
+        .await
+        .unwrap();
+
     chain_interactor.deploy_testing_sc().await;
+
+    chain_interactor
+        .interactor
+        .generate_blocks(2u64)
+        .await
+        .unwrap();
+
     chain_interactor.unpause_endpoint().await;
+
+    chain_interactor
+        .interactor
+        .generate_blocks(2u64)
+        .await
+        .unwrap();
 
     let esdt_token_payment_one = EsdtTokenPayment::<StaticApi>::new(
         TokenIdentifier::from(FIRST_TOKEN),
@@ -489,16 +746,29 @@ async fn deposit_payment_doesnt_cover_fee() {
             Some("Payment does not cover fee"),
         )
         .await;
+
+    chain_interactor
+        .interactor
+        .generate_blocks(2u64)
+        .await
+        .unwrap();
 }
 
 // TODO: add deposit_refund_fee test after finding a method to check for balance
 
 #[tokio::test]
+#[serial]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn register_token_invalid_type() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
-    chain_interactor.load_account_state().await;
     chain_interactor.deploy_header_verifier().await;
+
+    chain_interactor
+        .interactor
+        .generate_blocks(2u64)
+        .await
+        .unwrap();
+
     chain_interactor
         .deploy_mvx_esdt_safe(
             chain_interactor
@@ -508,6 +778,12 @@ async fn register_token_invalid_type() {
             OptionalValue::Some(EsdtSafeConfig::default_config()),
         )
         .await;
+
+    chain_interactor
+        .interactor
+        .generate_blocks(2u64)
+        .await
+        .unwrap();
 
     let sov_token_id = TokenIdentifier::from_esdt_bytes(FIRST_TOKEN);
     let token_type = EsdtTokenType::Invalid;
@@ -529,14 +805,27 @@ async fn register_token_invalid_type() {
             Some("Invalid type"),
         )
         .await;
+
+    chain_interactor
+        .interactor
+        .generate_blocks(2u64)
+        .await
+        .unwrap();
 }
 
 #[tokio::test]
+#[serial]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn register_token_fungible_token() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
-
     chain_interactor.deploy_header_verifier().await;
+
+    chain_interactor
+        .interactor
+        .generate_blocks(2u64)
+        .await
+        .unwrap();
+
     chain_interactor
         .deploy_mvx_esdt_safe(
             chain_interactor
@@ -546,6 +835,12 @@ async fn register_token_fungible_token() {
             OptionalValue::Some(EsdtSafeConfig::default_config()),
         )
         .await;
+
+    chain_interactor
+        .interactor
+        .generate_blocks(2u64)
+        .await
+        .unwrap();
 
     let sov_token_id = TokenIdentifier::from_esdt_bytes(FIRST_TOKEN);
     let token_type = EsdtTokenType::Fungible;
@@ -569,6 +864,12 @@ async fn register_token_fungible_token() {
         .await;
 
     chain_interactor
+        .interactor
+        .generate_blocks(2u64)
+        .await
+        .unwrap();
+
+    chain_interactor
         .check_account_storage(
             chain_interactor
                 .state
@@ -579,14 +880,27 @@ async fn register_token_fungible_token() {
             Some(token_ticker),
         )
         .await;
+
+    chain_interactor
+        .interactor
+        .generate_blocks(2u64)
+        .await
+        .unwrap();
 }
 
 #[tokio::test]
+#[serial]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn register_token_non_fungible() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
-    chain_interactor.load_account_state().await;
     chain_interactor.deploy_header_verifier().await;
+
+    chain_interactor
+        .interactor
+        .generate_blocks(2u64)
+        .await
+        .unwrap();
+
     chain_interactor
         .deploy_mvx_esdt_safe(
             chain_interactor
@@ -596,6 +910,12 @@ async fn register_token_non_fungible() {
             OptionalValue::Some(EsdtSafeConfig::default_config()),
         )
         .await;
+
+    chain_interactor
+        .interactor
+        .generate_blocks(2u64)
+        .await
+        .unwrap();
 
     let sov_token_id = TokenIdentifier::from_esdt_bytes(FIRST_TOKEN);
     let token_type = EsdtTokenType::NonFungible;
@@ -619,6 +939,12 @@ async fn register_token_non_fungible() {
         .await;
 
     chain_interactor
+        .interactor
+        .generate_blocks(2u64)
+        .await
+        .unwrap();
+
+    chain_interactor
         .check_account_storage(
             chain_interactor
                 .state
@@ -629,14 +955,27 @@ async fn register_token_non_fungible() {
             Some(token_ticker),
         )
         .await;
+
+    chain_interactor
+        .interactor
+        .generate_blocks(2u64)
+        .await
+        .unwrap();
 }
 
 #[tokio::test]
+#[serial]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn register_token_dynamic_non_fungible() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
-    chain_interactor.load_account_state().await;
     chain_interactor.deploy_header_verifier().await;
+
+    chain_interactor
+        .interactor
+        .generate_blocks(2u64)
+        .await
+        .unwrap();
+
     chain_interactor
         .deploy_mvx_esdt_safe(
             chain_interactor
@@ -646,6 +985,12 @@ async fn register_token_dynamic_non_fungible() {
             OptionalValue::Some(EsdtSafeConfig::default_config()),
         )
         .await;
+
+    chain_interactor
+        .interactor
+        .generate_blocks(2u64)
+        .await
+        .unwrap();
 
     let sov_token_id = TokenIdentifier::from_esdt_bytes(FIRST_TOKEN);
     let token_type = EsdtTokenType::DynamicNFT;
@@ -669,6 +1014,12 @@ async fn register_token_dynamic_non_fungible() {
         .await;
 
     chain_interactor
+        .interactor
+        .generate_blocks(2u64)
+        .await
+        .unwrap();
+
+    chain_interactor
         .check_account_storage(
             chain_interactor
                 .state
@@ -679,14 +1030,27 @@ async fn register_token_dynamic_non_fungible() {
             Some(token_ticker),
         )
         .await;
+
+    chain_interactor
+        .interactor
+        .generate_blocks(2u64)
+        .await
+        .unwrap();
 }
 
 #[tokio::test]
+#[serial]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn execute_operation_no_esdt_safe_registered() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
-    chain_interactor.load_account_state().await;
     chain_interactor.deploy_header_verifier().await;
+
+    chain_interactor
+        .interactor
+        .generate_blocks(2u64)
+        .await
+        .unwrap();
+
     chain_interactor
         .deploy_mvx_esdt_safe(
             chain_interactor
@@ -696,6 +1060,14 @@ async fn execute_operation_no_esdt_safe_registered() {
             OptionalValue::Some(EsdtSafeConfig::default_config()),
         )
         .await;
+
+    chain_interactor.unpause_endpoint().await;
+
+    chain_interactor
+        .interactor
+        .generate_blocks(2u64)
+        .await
+        .unwrap();
 
     let payment = OperationEsdtPayment::new(
         TokenIdentifier::from(FIRST_TOKEN),
@@ -729,13 +1101,19 @@ async fn execute_operation_no_esdt_safe_registered() {
             Some("There is no registered ESDT address"),
         )
         .await;
+
+    chain_interactor
+        .interactor
+        .generate_blocks(2u64)
+        .await
+        .unwrap();
 }
 
 #[tokio::test]
+#[serial]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn execute_operation_success() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
-    chain_interactor.load_account_state().await;
     let config = OptionalValue::Some(EsdtSafeConfig::default_config());
     let token_data = EsdtTokenData {
         amount: BigUint::from(100u64),
@@ -772,7 +1150,21 @@ async fn execute_operation_success() {
     let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&operation_hash.to_vec()));
 
     chain_interactor.deploy_header_verifier().await;
+
+    chain_interactor
+        .interactor
+        .generate_blocks(2u64)
+        .await
+        .unwrap();
+
     chain_interactor.deploy_testing_sc().await;
+
+    chain_interactor
+        .interactor
+        .generate_blocks(2u64)
+        .await
+        .unwrap();
+
     chain_interactor
         .deploy_mvx_esdt_safe(
             chain_interactor
@@ -782,10 +1174,30 @@ async fn execute_operation_success() {
             config,
         )
         .await;
+
+    chain_interactor
+        .interactor
+        .generate_blocks(2u64)
+        .await
+        .unwrap();
+
     chain_interactor.unpause_endpoint().await;
+
+    chain_interactor
+        .interactor
+        .generate_blocks(2u64)
+        .await
+        .unwrap();
+
     chain_interactor
         .set_esdt_safe_address_in_header_verifier()
         .await;
+
+    chain_interactor
+        .interactor
+        .generate_blocks(2u64)
+        .await
+        .unwrap();
 
     let sov_token_id = TokenIdentifier::from_esdt_bytes(FIRST_TOKEN);
     let token_type = EsdtTokenType::Fungible;
@@ -808,15 +1220,39 @@ async fn execute_operation_success() {
         )
         .await;
 
+    chain_interactor
+        .interactor
+        .generate_blocks(2u64)
+        .await
+        .unwrap();
+
     let operations_hashes = MultiValueEncoded::from(ManagedVec::from(vec![operation_hash.clone()]));
 
     chain_interactor.deploy_chain_config().await;
+
+    chain_interactor
+        .interactor
+        .generate_blocks(2u64)
+        .await
+        .unwrap();
 
     chain_interactor
         .register_operation(ManagedBuffer::new(), &hash_of_hashes, operations_hashes)
         .await;
 
     chain_interactor
+        .interactor
+        .generate_blocks(2u64)
+        .await
+        .unwrap();
+
+    chain_interactor
         .execute_operations(hash_of_hashes, operation.clone(), None)
         .await;
+
+    chain_interactor
+        .interactor
+        .generate_blocks(2u64)
+        .await
+        .unwrap();
 }
