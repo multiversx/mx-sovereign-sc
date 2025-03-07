@@ -1,3 +1,6 @@
+use error_messages::{
+    CURRENT_OPERATION_NOT_REGISTERED, NO_ESDT_SAFE_ADDRESS, ONLY_ESDT_SAFE_CALLER,
+};
 use header_verifier::{Headerverifier, OperationHashStatus};
 use header_verifier_blackbox_setup::*;
 use multiversx_sc::types::ManagedBuffer;
@@ -85,7 +88,7 @@ fn test_remove_executed_hash_caller_not_esdt_address() {
         OWNER_ADDRESS,
         &operation.bridge_operation_hash,
         &operation_1,
-        Some("Only ESDT Safe contract can call this endpoint"),
+        Some(ONLY_ESDT_SAFE_CALLER),
     );
 }
 
@@ -104,7 +107,7 @@ fn test_remove_executed_hash_no_esdt_address_registered() {
         ENSHRINE_ADDRESS,
         &operation.bridge_operation_hash,
         &operation_1,
-        Some("There is no registered ESDT address"),
+        Some(NO_ESDT_SAFE_ADDRESS),
     );
 }
 
@@ -209,7 +212,7 @@ fn test_lock_operation_not_registered() {
         ENSHRINE_ADDRESS,
         &operation.bridge_operation_hash,
         &operation_1,
-        Some("The current operation is not registered"),
+        Some(CURRENT_OPERATION_NOT_REGISTERED),
     );
 }
 
