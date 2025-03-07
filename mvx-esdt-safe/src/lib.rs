@@ -54,6 +54,12 @@ pub trait MvxEsdtSafe:
         self.fee_market_address().set(fee_market_address);
     }
 
+    #[only_owner]
+    #[endpoint(setMaxBridgedAmount)]
+    fn set_max_bridged_amount(&self, token_id: TokenIdentifier, max_amount: BigUint) {
+        self.max_bridged_amount(&token_id).set(&max_amount);
+    }
+
     #[upgrade]
     fn upgrade(&self) {}
 }
