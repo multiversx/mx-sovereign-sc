@@ -35,9 +35,6 @@ path = "../common/setup-phase"
 [dependencies.proxies]
 path = "../common/proxies"
 
-[dependencies.max-bridged-amount-module]
-path = "../common/max-bridged-amount-module"
-
 [dependencies.header-verifier]
 path = "../header-verifier"
 

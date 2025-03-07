@@ -15,7 +15,6 @@ pub trait SovEsdtSafe:
     + cross_chain::storage::CrossChainStorage
     + cross_chain::events::EventsModule
     + utils::UtilsModule
-    + max_bridged_amount_module::MaxBridgedAmountModule
     + multiversx_sc_modules::pause::PauseModule
 {
     #[init]

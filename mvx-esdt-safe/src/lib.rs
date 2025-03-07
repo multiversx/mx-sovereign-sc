@@ -18,7 +18,6 @@ pub trait MvxEsdtSafe:
     + cross_chain::storage::CrossChainStorage
     + cross_chain::execute_common::ExecuteCommonModule
     + multiversx_sc_modules::pause::PauseModule
-    + max_bridged_amount_module::MaxBridgedAmountModule
     + utils::UtilsModule
 {
     #[init]

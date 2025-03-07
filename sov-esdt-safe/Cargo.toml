@@ -38,9 +38,6 @@ path = "../common/proxies"
 [dependencies.error-messages]
 path = "../common/error-messages"
 
-[dependencies.max-bridged-amount-module]
-path = "../common/max-bridged-amount-module"
-
 [dev-dependencies]
 num-bigint = "0.4"
 

@@ -13,7 +13,6 @@ pub trait DepositModule:
     + cross_chain::execute_common::ExecuteCommonModule
     + cross_chain::storage::CrossChainStorage
     + cross_chain::events::EventsModule
-    + max_bridged_amount_module::MaxBridgedAmountModule
 {
     #[payable]
     #[endpoint]
