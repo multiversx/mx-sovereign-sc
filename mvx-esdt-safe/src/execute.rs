@@ -11,13 +11,15 @@ const ESDT_TRANSACTION_GAS: GasLimit = 5_000_000;
 
 #[multiversx_sc::module]
 pub trait ExecuteModule:
-    cross_chain::events::EventsModule
+    crate::briding_mechanism::BridgingMechanism
+    + crate::register_token::RegisterTokenModule
+    + utils::UtilsModule
+    + cross_chain::events::EventsModule
     + cross_chain::storage::CrossChainStorage
     + cross_chain::deposit_common::DepositCommonModule
     + cross_chain::execute_common::ExecuteCommonModule
-    + crate::register_token::RegisterTokenModule
     + multiversx_sc_modules::pause::PauseModule
-    + utils::UtilsModule
+    + multiversx_sc_modules::only_admin::OnlyAdminModule
 {
     #[endpoint(executeBridgeOps)]
     fn execute_operations(&self, hash_of_hashes: ManagedBuffer, operation: Operation<Self::Api>) {
@@ -27,7 +29,8 @@ pub trait ExecuteModule:
 
         self.lock_operation_hash(&operation_hash, &hash_of_hashes);
 
-        let minted_operation_tokens = self.mint_tokens(&operation.tokens);
+        let minted_operation_tokens =
+            self.mint_tokens(&hash_of_hashes, &operation_hash, &operation.tokens);
         let operation_tuple = OperationTuple {
             op_hash: operation_hash,
             operation,
@@ -38,6 +41,8 @@ pub trait ExecuteModule:
 
     fn mint_tokens(
         &self,
+        hash_of_hashes: &ManagedBuffer,
+        operation_hash: &ManagedBuffer,
         operation_tokens: &ManagedVec<OperationEsdtPayment<Self::Api>>,
     ) -> ManagedVec<OperationEsdtPayment<Self::Api>> {
         let mut output_payments = ManagedVec::new();
@@ -57,10 +62,26 @@ pub trait ExecuteModule:
             let mvx_token_id = sov_to_mvx_token_id_mapper.get();
             let current_token_type_ref = &operation_token.token_data.token_type;
 
-            if self.is_fungible(current_token_type_ref) {
+            if self.is_fungible(current_token_type_ref)
+                && self
+                    .burn_mechanism_tokens()
+                    .contains(&operation_token.token_identifier)
+            {
+                let deposited_amount = self
+                    .deposited_tokens_amount(&operation_token.token_identifier)
+                    .get();
+
+                if deposited_amount - operation_token.token_data.amount.clone() < 0 {
+                    self.execute_bridge_operation_event(hash_of_hashes, operation_hash);
+                    self.remove_executed_hash(hash_of_hashes, operation_hash);
+                }
+
+                self.deposited_tokens_amount(&operation_token.token_identifier)
+                    .update(|amount| *amount -= operation_token.token_data.amount.clone());
+
                 self.tx()
                     .to(ToSelf)
-                    .typed(system_proxy::UserBuiltinProxy)
+                    .typed(UserBuiltinProxy)
                     .esdt_local_mint(&mvx_token_id, 0, &operation_token.token_data.amount)
                     .sync_call();
 
