@@ -3,11 +3,10 @@
 use multiversx_sc::imports::*;
 use structs::configs::EsdtSafeConfig;
 
+pub mod briding_mechanism;
 pub mod deposit;
 pub mod execute;
 pub mod register_token;
-
-const TRUSTED_TOKEN_IDS: [&str; 1] = ["WELGD"];
 
 #[multiversx_sc::contract]
 pub trait MvxEsdtSafe:
@@ -15,6 +14,7 @@ pub trait MvxEsdtSafe:
     + cross_chain::LibCommon
     + execute::ExecuteModule
     + register_token::RegisterTokenModule
+    + briding_mechanism::BridgingMechanism
     + cross_chain::deposit_common::DepositCommonModule
     + cross_chain::events::EventsModule
     + cross_chain::storage::CrossChainStorage
