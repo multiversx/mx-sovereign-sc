@@ -15,6 +15,7 @@ use multiversx_sc_modules::transfer_role_proxy::PaymentsVec;
 use multiversx_sc_scenario::{
     api::StaticApi, multiversx_chain_vm::crypto_functions::sha256, ScenarioTxWhitebox,
 };
+use mvx_esdt_safe::briding_mechanism::{BridgingMechanism, TRUSTED_TOKEN_IDS};
 use mvx_esdt_safe_blackbox_setup::{
     MvxEsdtSafeTestState, RegisterTokenArgs, ESDT_SAFE_ADDRESS, FEE_MARKET_ADDRESS, FEE_TOKEN,
     HEADER_VERIFIER_ADDRESS, ONE_HUNDRED_MILLION, ONE_HUNDRED_THOUSAND, OWNER_ADDRESS,
@@ -133,6 +134,64 @@ fn deploy_and_update_config() {
             "str:headerVerifierAddress",
             "0x000000000000000005006865616465722d76657269666965725f5f5f5f5f5f5f", // HEADER_VERIFIER_ADDRESS hex encoded, required for the check_storage to work
         );
+}
+
+#[test]
+fn set_token_burn_mechanism_no_roles() {
+    let mut state = MvxEsdtSafeTestState::new();
+    state.deploy_contract(
+        HEADER_VERIFIER_ADDRESS,
+        OWNER_ADDRESS,
+        OptionalValue::Some(EsdtSafeConfig::default_config()),
+    );
+
+    state.set_token_burn_mechanism(
+        "WEGLD",
+        Some("This token does not have Mint and Burn roles"),
+    );
+}
+
+#[test]
+fn set_token_burn_mechanism_token_not_trusted() {
+    let mut state = MvxEsdtSafeTestState::new();
+    state.deploy_contract_with_roles();
+
+    state.set_token_burn_mechanism(TEST_TOKEN_ONE, Some("Token is not trusted"));
+}
+
+#[test]
+fn set_token_burn_mechanism() {
+    let mut state = MvxEsdtSafeTestState::new();
+    state.deploy_contract_with_roles();
+
+    state.set_token_burn_mechanism(TRUSTED_TOKEN_IDS[0], None);
+
+    state
+        .world
+        .query()
+        .to(ESDT_SAFE_ADDRESS)
+        .whitebox(mvx_esdt_safe::contract_obj, |sc| {
+            assert!(sc
+                .burn_mechanism_tokens()
+                .contains(&TokenIdentifier::from(TRUSTED_TOKEN_IDS[0])))
+        })
+}
+
+#[test]
+fn set_token_lock_mechanism() {
+    let mut state = MvxEsdtSafeTestState::new();
+    state.deploy_contract_with_roles();
+
+    state.set_token_burn_mechanism(TRUSTED_TOKEN_IDS[0], None);
+    state.set_token_lock_mechanism(TRUSTED_TOKEN_IDS[0], None);
+
+    state
+        .world
+        .query()
+        .to(ESDT_SAFE_ADDRESS)
+        .whitebox(mvx_esdt_safe::contract_obj, |sc| {
+            assert!(sc.burn_mechanism_tokens().is_empty())
+        })
 }
 
 #[test]
