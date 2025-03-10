@@ -34,6 +34,7 @@ fn deploy() {
 
     state.deploy_contract(
         HEADER_VERIFIER_ADDRESS,
+        OWNER_ADDRESS,
         OptionalValue::Some(EsdtSafeConfig::default_config()),
     );
 }
@@ -42,13 +43,19 @@ fn deploy() {
 fn deploy_no_config() {
     let mut state = MvxEsdtSafeTestState::new();
 
-    state.deploy_contract(HEADER_VERIFIER_ADDRESS, OptionalValue::None);
+    state.deploy_contract(HEADER_VERIFIER_ADDRESS, OWNER_ADDRESS, OptionalValue::None);
     state
         .world
         .check_account(ESDT_SAFE_ADDRESS)
         .check_storage(
             "str:crossChainConfig",
             "0x00000000000000000000000011e1a30000000000", // default EsdtSafeConfig hex encoded
+        )
+        .check_storage("str:only_admin_module:admins.len", "0x01")
+        .check_storage("0x6f6e6c795f61646d696e5f6d6f64756c653a61646d696e732e6974656d00000001", "0x6f776e65725f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f")
+        .check_storage(
+            "0x6f6e6c795f61646d696e5f6d6f64756c653a61646d696e732e696e6465786f776e65725f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f",
+            "0x01",
         )
         .check_storage(
             "str:headerVerifierAddress",
@@ -62,6 +69,7 @@ fn deploy_invalid_config() {
 
     state.deploy_contract(
         HEADER_VERIFIER_ADDRESS,
+        OWNER_ADDRESS,
         OptionalValue::Some(EsdtSafeConfig::default_config()),
     );
 
@@ -79,7 +87,7 @@ fn deploy_invalid_config() {
 fn deploy_and_update_config() {
     let mut state = MvxEsdtSafeTestState::new();
 
-    state.deploy_contract(HEADER_VERIFIER_ADDRESS, OptionalValue::None);
+    state.deploy_contract(HEADER_VERIFIER_ADDRESS, OWNER_ADDRESS, OptionalValue::None);
 
     state
         .world
@@ -87,6 +95,12 @@ fn deploy_and_update_config() {
         .check_storage(
             "str:crossChainConfig",
             "0x00000000000000000000000011e1a30000000000", // default EsdtSafeConfig hex encoded
+        )
+        .check_storage("str:only_admin_module:admins.len", "0x01")
+        .check_storage("0x6f6e6c795f61646d696e5f6d6f64756c653a61646d696e732e6974656d00000001", "0x6f776e65725f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f")
+        .check_storage(
+            "0x6f6e6c795f61646d696e5f6d6f64756c653a61646d696e732e696e6465786f776e65725f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f",
+            "0x01",
         )
         .check_storage(
             "str:headerVerifierAddress",
@@ -109,6 +123,12 @@ fn deploy_and_update_config() {
             "str:crossChainConfig",
             "0x000000010000000b544f4e452d313233343536000000010000000b5454574f2d31323334353600000000000075300000000100000008656e64706f696e74", // updated EsdtSafeConfig hex encoded
         )
+        .check_storage("str:only_admin_module:admins.len", "0x01")
+        .check_storage("0x6f6e6c795f61646d696e5f6d6f64756c653a61646d696e732e6974656d00000001", "0x6f776e65725f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f")
+        .check_storage(
+            "0x6f6e6c795f61646d696e5f6d6f64756c653a61646d696e732e696e6465786f776e65725f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f",
+            "0x01",
+        )
         .check_storage(
             "str:headerVerifierAddress",
             "0x000000000000000005006865616465722d76657269666965725f5f5f5f5f5f5f", // HEADER_VERIFIER_ADDRESS hex encoded, required for the check_storage to work
@@ -121,6 +141,7 @@ fn deposit_nothing_to_transfer() {
 
     state.deploy_contract(
         HEADER_VERIFIER_ADDRESS,
+        OWNER_ADDRESS,
         OptionalValue::Some(EsdtSafeConfig::default_config()),
     );
     state.deposit(
@@ -137,6 +158,7 @@ fn deposit_too_many_tokens() {
 
     state.deploy_contract(
         HEADER_VERIFIER_ADDRESS,
+        OWNER_ADDRESS,
         OptionalValue::Some(EsdtSafeConfig::default_config()),
     );
 
@@ -162,6 +184,7 @@ fn deposit_no_transfer_data() {
 
     state.deploy_contract(
         HEADER_VERIFIER_ADDRESS,
+        OWNER_ADDRESS,
         OptionalValue::Some(EsdtSafeConfig::default_config()),
     );
     state.deploy_fee_market(None);
@@ -204,7 +227,11 @@ fn deposit_gas_limit_too_high() {
     let mut state = MvxEsdtSafeTestState::new();
 
     let config = EsdtSafeConfig::new(ManagedVec::new(), ManagedVec::new(), 1, ManagedVec::new());
-    state.deploy_contract(HEADER_VERIFIER_ADDRESS, OptionalValue::Some(config));
+    state.deploy_contract(
+        HEADER_VERIFIER_ADDRESS,
+        OWNER_ADDRESS,
+        OptionalValue::Some(config),
+    );
     state.deploy_fee_market(None);
     state.deploy_testing_sc();
     state.set_fee_market_address(FEE_MARKET_ADDRESS);
@@ -249,7 +276,11 @@ fn deposit_endpoint_banned() {
         ManagedVec::from(vec![ManagedBuffer::from("hello")]),
     );
 
-    state.deploy_contract(HEADER_VERIFIER_ADDRESS, OptionalValue::Some(config));
+    state.deploy_contract(
+        HEADER_VERIFIER_ADDRESS,
+        OWNER_ADDRESS,
+        OptionalValue::Some(config),
+    );
     state.deploy_fee_market(None);
     state.deploy_testing_sc();
     state.set_fee_market_address(FEE_MARKET_ADDRESS);
@@ -294,7 +325,11 @@ fn deposit_fee_enabled() {
         ManagedVec::new(),
     );
 
-    state.deploy_contract(HEADER_VERIFIER_ADDRESS, OptionalValue::Some(config));
+    state.deploy_contract(
+        HEADER_VERIFIER_ADDRESS,
+        OWNER_ADDRESS,
+        OptionalValue::Some(config),
+    );
 
     let per_transfer = BigUint::from(100u64);
     let per_gas = BigUint::from(1u64);
@@ -386,7 +421,11 @@ fn deposit_payment_doesnt_cover_fee() {
         ManagedVec::new(),
     );
 
-    state.deploy_contract(HEADER_VERIFIER_ADDRESS, OptionalValue::Some(config));
+    state.deploy_contract(
+        HEADER_VERIFIER_ADDRESS,
+        OWNER_ADDRESS,
+        OptionalValue::Some(config),
+    );
 
     let fee = FeeStruct {
         base_token: TokenIdentifier::from(TEST_TOKEN_ONE),
@@ -441,7 +480,11 @@ fn deposit_refund() {
         ManagedVec::new(),
     );
 
-    state.deploy_contract(HEADER_VERIFIER_ADDRESS, OptionalValue::Some(config));
+    state.deploy_contract(
+        HEADER_VERIFIER_ADDRESS,
+        OWNER_ADDRESS,
+        OptionalValue::Some(config),
+    );
 
     let per_transfer = BigUint::from(100u64);
     let per_gas = BigUint::from(1u64);
@@ -529,7 +572,7 @@ fn deposit_refund() {
 fn register_token_invalid_type() {
     let mut state = MvxEsdtSafeTestState::new();
     let config = OptionalValue::Some(EsdtSafeConfig::default_config());
-    state.deploy_contract(HEADER_VERIFIER_ADDRESS, config);
+    state.deploy_contract(HEADER_VERIFIER_ADDRESS, OWNER_ADDRESS, config);
 
     let sov_token_id = TestTokenIdentifier::new(TEST_TOKEN_ONE);
     let token_type = EsdtTokenType::Invalid;
@@ -553,7 +596,7 @@ fn register_token_invalid_type() {
 fn register_token_fungible_token() {
     let mut state = MvxEsdtSafeTestState::new();
     let config = OptionalValue::Some(EsdtSafeConfig::default_config());
-    state.deploy_contract(HEADER_VERIFIER_ADDRESS, config);
+    state.deploy_contract(HEADER_VERIFIER_ADDRESS, OWNER_ADDRESS, config);
 
     let sov_token_id = TestTokenIdentifier::new(TEST_TOKEN_ONE);
     let token_type = EsdtTokenType::Fungible;
@@ -590,7 +633,7 @@ fn register_token_fungible_token() {
 fn register_token_nonfungible_token() {
     let mut state = MvxEsdtSafeTestState::new();
     let config = OptionalValue::Some(EsdtSafeConfig::default_config());
-    state.deploy_contract(HEADER_VERIFIER_ADDRESS, config);
+    state.deploy_contract(HEADER_VERIFIER_ADDRESS, OWNER_ADDRESS, config);
 
     let sov_token_id = TestTokenIdentifier::new(TEST_TOKEN_ONE);
     let token_type = EsdtTokenType::NonFungible;
@@ -627,7 +670,7 @@ fn register_token_nonfungible_token() {
 fn execute_operation_no_esdt_safe_registered() {
     let mut state = MvxEsdtSafeTestState::new();
     let config = OptionalValue::Some(EsdtSafeConfig::default_config());
-    state.deploy_contract(HEADER_VERIFIER_ADDRESS, config);
+    state.deploy_contract(HEADER_VERIFIER_ADDRESS, OWNER_ADDRESS, config);
 
     let payment = OperationEsdtPayment::new(
         TokenIdentifier::from(TEST_TOKEN_ONE),
@@ -654,7 +697,7 @@ fn execute_operation_no_esdt_safe_registered() {
 fn execute_operation_success() {
     let mut state = MvxEsdtSafeTestState::new();
     let config = OptionalValue::Some(EsdtSafeConfig::default_config());
-    state.deploy_contract(HEADER_VERIFIER_ADDRESS, config);
+    state.deploy_contract(HEADER_VERIFIER_ADDRESS, OWNER_ADDRESS, config);
 
     let token_data = EsdtTokenData {
         amount: BigUint::from(100u64),
