@@ -44,6 +44,9 @@ path = "../chain-config"
 [dependencies.error-messages]
 path = "../common/error-messages"
 
+[dependencies.common-blackbox-setup]
+path = "../common/blackbox-setup"
+
 [dev-dependencies]
 num-bigint = "0.4"
 

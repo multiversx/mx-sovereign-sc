@@ -1,16 +1,16 @@
+use common_blackbox_setup::{
+    ESDT_SAFE_ADDRESS, FEE_MARKET_ADDRESS, FEE_TOKEN, ONE_HUNDRED_MILLION, ONE_HUNDRED_THOUSAND,
+    OWNER_ADDRESS, TEST_TOKEN_ONE, TEST_TOKEN_TWO, USER,
+};
 use multiversx_sc::{
     imports::{MultiValue3, OptionalValue},
     types::{
         BigUint, EsdtTokenPayment, ManagedBuffer, ManagedVec, TestTokenIdentifier, TokenIdentifier,
     },
 };
-
 use multiversx_sc_scenario::api::StaticApi;
 use proxies::fee_market_proxy::{FeeStruct, FeeType};
-use sov_esdt_safe_setup::{
-    SovEsdtSafeTestState, ESDT_SAFE_ADDRESS, FEE_MARKET_ADDRESS, FEE_TOKEN, ONE_HUNDRED_MILLION,
-    ONE_HUNDRED_THOUSAND, OWNER_ADDRESS, TEST_TOKEN_ONE, TEST_TOKEN_TWO, USER,
-};
+use sov_esdt_safe_setup::SovEsdtSafeTestState;
 use structs::{aliases::PaymentsVec, configs::EsdtSafeConfig};
 
 mod sov_esdt_safe_setup;
@@ -31,6 +31,7 @@ fn deploy_no_config() {
 
     state.deploy_contract(FEE_MARKET_ADDRESS, OptionalValue::None);
     state
+        .common_setup
         .world
         .check_account(ESDT_SAFE_ADDRESS)
         .check_storage(
@@ -50,6 +51,7 @@ fn deploy_and_update_config() {
     state.deploy_contract(FEE_MARKET_ADDRESS, OptionalValue::None);
 
     state
+        .common_setup
         .world
         .check_account(ESDT_SAFE_ADDRESS)
         .check_storage(
@@ -70,7 +72,7 @@ fn deploy_and_update_config() {
 
     state.update_configuration(new_config, None);
 
-    state
+    state.common_setup
         .world
         .check_account(ESDT_SAFE_ADDRESS)
         .check_storage(
@@ -89,8 +91,8 @@ fn deposit_no_fee_no_transfer_data() {
 
     state.deploy_contract_with_roles();
 
-    state.deploy_fee_market(None);
-    state.deploy_testing_sc();
+    state.common_setup.deploy_fee_market(None);
+    state.common_setup.deploy_testing_sc();
     state.set_fee_market_address(FEE_MARKET_ADDRESS);
 
     let test_token_one_identifier = TestTokenIdentifier::new(TEST_TOKEN_ONE);
@@ -135,6 +137,7 @@ fn deposit_no_fee_no_transfer_data() {
         BigUint::from(ONE_HUNDRED_MILLION) - &esdt_token_payment_one.amount;
 
     state
+        .common_setup
         .world
         .check_account(OWNER_ADDRESS)
         .esdt_balance(test_token_one_identifier, &expected_amount_token_one);
@@ -143,6 +146,7 @@ fn deposit_no_fee_no_transfer_data() {
         BigUint::from(ONE_HUNDRED_MILLION) - &esdt_token_payment_two.amount;
 
     state
+        .common_setup
         .world
         .check_account(OWNER_ADDRESS)
         .esdt_balance(test_token_two_identifier, &expected_amount_token_two);
@@ -167,8 +171,8 @@ fn deposit_with_fee_no_transfer_data() {
         },
     };
 
-    state.deploy_fee_market(Some(fee));
-    state.deploy_testing_sc();
+    state.common_setup.deploy_fee_market(Some(fee));
+    state.common_setup.deploy_testing_sc();
     state.set_fee_market_address(FEE_MARKET_ADDRESS);
 
     let test_token_one_identifier = TestTokenIdentifier::new(TEST_TOKEN_ONE);
@@ -208,6 +212,7 @@ fn deposit_with_fee_no_transfer_data() {
         BigUint::from(ONE_HUNDRED_MILLION) - &esdt_token_payment_one.amount;
 
     state
+        .common_setup
         .world
         .check_account(OWNER_ADDRESS)
         .esdt_balance(test_token_one_identifier, expected_amount_token_one);
@@ -224,6 +229,7 @@ fn deposit_with_fee_no_transfer_data() {
     );
 
     state
+        .common_setup
         .world
         .check_account(OWNER_ADDRESS)
         .esdt_balance(test_token_two_identifier, expected_amount_token_two);
@@ -232,6 +238,7 @@ fn deposit_with_fee_no_transfer_data() {
         BigUint::from(ONE_HUNDRED_MILLION) - BigUint::from(payments_vec.len() - 1) * per_transfer;
 
     state
+        .common_setup
         .world
         .check_account(OWNER_ADDRESS)
         .esdt_balance(fee_token_identifier, expected_amount_token_fee);
@@ -243,8 +250,8 @@ fn deposit_no_fee_with_transfer_data() {
 
     state.deploy_contract_with_roles();
 
-    state.deploy_fee_market(None);
-    state.deploy_testing_sc();
+    state.common_setup.deploy_fee_market(None);
+    state.common_setup.deploy_testing_sc();
     state.set_fee_market_address(FEE_MARKET_ADDRESS);
 
     let test_token_one_identifier = TestTokenIdentifier::new(TEST_TOKEN_ONE);
@@ -296,6 +303,7 @@ fn deposit_no_fee_with_transfer_data() {
     );
 
     state
+        .common_setup
         .world
         .check_account(OWNER_ADDRESS)
         .esdt_balance(test_token_one_identifier, &expected_amount_token_one);
@@ -303,10 +311,14 @@ fn deposit_no_fee_with_transfer_data() {
     let expected_amount_token_two =
         BigUint::from(ONE_HUNDRED_MILLION) - &esdt_token_payment_two.amount;
 
-    state.world.check_account(OWNER_ADDRESS).esdt_balance(
-        TokenIdentifier::from(TEST_TOKEN_TWO),
-        &expected_amount_token_two,
-    );
+    state
+        .common_setup
+        .world
+        .check_account(OWNER_ADDRESS)
+        .esdt_balance(
+            TokenIdentifier::from(TEST_TOKEN_TWO),
+            &expected_amount_token_two,
+        );
 }
 
 #[test]
@@ -328,8 +340,8 @@ fn deposit_with_fee_with_transfer_data() {
         },
     };
 
-    state.deploy_fee_market(Some(fee));
-    state.deploy_testing_sc();
+    state.common_setup.deploy_fee_market(Some(fee));
+    state.common_setup.deploy_testing_sc();
     state.set_fee_market_address(FEE_MARKET_ADDRESS);
 
     let test_token_one_identifier = TestTokenIdentifier::new(TEST_TOKEN_ONE);
@@ -376,6 +388,7 @@ fn deposit_with_fee_with_transfer_data() {
         BigUint::from(ONE_HUNDRED_MILLION) - &esdt_token_payment_one.amount;
 
     state
+        .common_setup
         .world
         .check_account(OWNER_ADDRESS)
         .esdt_balance(test_token_one_identifier, expected_amount_token_one);
@@ -391,16 +404,21 @@ fn deposit_with_fee_with_transfer_data() {
         ESDT_SAFE_ADDRESS.to_managed_address(),
     );
 
-    state.world.check_account(OWNER_ADDRESS).esdt_balance(
-        TokenIdentifier::from(TEST_TOKEN_TWO),
-        expected_amount_token_two,
-    );
+    state
+        .common_setup
+        .world
+        .check_account(OWNER_ADDRESS)
+        .esdt_balance(
+            TokenIdentifier::from(TEST_TOKEN_TWO),
+            expected_amount_token_two,
+        );
 
     let expected_amount_token_fee = BigUint::from(ONE_HUNDRED_MILLION)
         - BigUint::from(payments_vec.len() - 1) * per_transfer
         - BigUint::from(gas_limit) * per_gas;
 
     state
+        .common_setup
         .world
         .check_account(OWNER_ADDRESS)
         .esdt_balance(fee_token_identifier, expected_amount_token_fee);

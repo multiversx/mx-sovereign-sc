@@ -313,6 +313,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "common-blackbox-setup"
+version = "0.1.0"
+dependencies = [
+ "chain-config",
+ "fee-market",
+ "header-verifier",
+ "multiversx-sc",
+ "multiversx-sc-modules",
+ "multiversx-sc-scenario",
+ "proxies",
+ "structs",
+ "testing-sc",
+]
+
+[[package]]
 name = "const-oid"
 version = "0.9.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1390,6 +1405,7 @@ name = "mvx-esdt-safe"
 version = "0.0.0"
 dependencies = [
  "chain-config",
+ "common-blackbox-setup",
  "cross-chain",
  "error-messages",
  "fee-market",
@@ -2061,6 +2077,7 @@ dependencies = [
 name = "sov-esdt-safe"
 version = "0.0.0"
 dependencies = [
+ "common-blackbox-setup",
  "cross-chain",
  "error-messages",
  "fee-market",
