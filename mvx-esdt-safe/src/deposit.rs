@@ -8,11 +8,13 @@ use structs::{
 #[multiversx_sc::module]
 pub trait DepositModule:
     multiversx_sc_modules::pause::PauseModule
+    + crate::briding_mechanism::BridgingMechanism
     + utils::UtilsModule
     + cross_chain::deposit_common::DepositCommonModule
     + cross_chain::execute_common::ExecuteCommonModule
     + cross_chain::storage::CrossChainStorage
     + cross_chain::events::EventsModule
+    + multiversx_sc_modules::only_admin::OnlyAdminModule
 {
     #[payable]
     #[endpoint]
@@ -68,6 +70,25 @@ pub trait DepositModule:
                     current_token_data,
                 )));
             } else {
+                if self.is_fungible(&current_token_data.token_type)
+                    && self
+                        .burn_mechanism_tokens()
+                        .contains(&payment.token_identifier)
+                {
+                    self.tx()
+                        .to(ToSelf)
+                        .typed(UserBuiltinProxy)
+                        .esdt_local_burn(
+                            payment.token_identifier.clone(),
+                            payment.token_nonce,
+                            payment.amount.clone(),
+                        )
+                        .sync_call();
+
+                    self.deposited_tokens_amount(&payment.token_identifier)
+                        .update(|amount| *amount += payment.amount.clone());
+                }
+
                 event_payments.push(MultiValue3::from((
                     payment.token_identifier.clone(),
                     payment.token_nonce,

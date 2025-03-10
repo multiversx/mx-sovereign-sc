@@ -51,4 +51,10 @@ pub trait BridgingMechanism:
 
     #[storage_mapper("burnMechanismTokens")]
     fn burn_mechanism_tokens(&self) -> UnorderedSetMapper<TokenIdentifier>;
+
+    #[storage_mapper("depositedTokensAmount")]
+    fn deposited_tokens_amount(
+        &self,
+        token_identifier: &TokenIdentifier,
+    ) -> SingleValueMapper<BigUint>;
 }
