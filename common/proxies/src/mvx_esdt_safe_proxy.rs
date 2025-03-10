@@ -45,16 +45,19 @@ where
 {
     pub fn init<
         Arg0: ProxyArg<ManagedAddress<Env::Api>>,
-        Arg1: ProxyArg<OptionalValue<structs::configs::EsdtSafeConfig<Env::Api>>>,
+        Arg1: ProxyArg<ManagedAddress<Env::Api>>,
+        Arg2: ProxyArg<OptionalValue<structs::configs::EsdtSafeConfig<Env::Api>>>,
     >(
         self,
         header_verifier_address: Arg0,
-        opt_config: Arg1,
+        sovereign_owner: Arg1,
+        opt_config: Arg2,
     ) -> TxTypedDeploy<Env, From, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_deploy()
             .argument(&header_verifier_address)
+            .argument(&sovereign_owner)
             .argument(&opt_config)
             .original_result()
     }
@@ -222,6 +225,54 @@ where
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("isPaused")
+            .original_result()
+    }
+
+    pub fn is_admin<
+        Arg0: ProxyArg<ManagedAddress<Env::Api>>,
+    >(
+        self,
+        address: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, bool> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("isAdmin")
+            .argument(&address)
+            .original_result()
+    }
+
+    pub fn add_admin<
+        Arg0: ProxyArg<ManagedAddress<Env::Api>>,
+    >(
+        self,
+        address: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("addAdmin")
+            .argument(&address)
+            .original_result()
+    }
+
+    pub fn remove_admin<
+        Arg0: ProxyArg<ManagedAddress<Env::Api>>,
+    >(
+        self,
+        address: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("removeAdmin")
+            .argument(&address)
+            .original_result()
+    }
+
+    pub fn admins(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, MultiValueEncoded<Env::Api, ManagedAddress<Env::Api>>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getAdmins")
             .original_result()
     }
 }
