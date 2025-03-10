@@ -10,15 +10,18 @@ use structs::aliases::{OptionalValueTransferDataTuple, PaymentsVec};
 use structs::configs::{EsdtSafeConfig, SovereignConfig};
 use structs::operation::Operation;
 
-use crate::RegisterTokenArgs;
 use crate::{config::Config, State};
+use crate::{
+    RegisterTokenArgs, CHAIN_CONFIG_SC_CONTRACT_CODE, FEE_MARKET_CONTRACT_CODE,
+    HEADER_VERIFIER_CONTRACT_CODE, MVX_ESDT_SAFE_CONTRACT_CODE, TESTING_SC_CONTRACT_CODE,
+};
 
 pub struct MvxEsdtSafeInteract {
     pub interactor: Interactor,
     pub wallet_address: Address,
     pub bob_address: Address,
     mvx_esdt_safe_contract_code: BytesValue,
-    header_verifier_mvx_esdt_safe_contract_code: BytesValue,
+    header_verifier_contract_code: BytesValue,
     testing_sc_contract_code: BytesValue,
     fee_market_contract_code: BytesValue,
     chain_config_contract_code: BytesValue,
@@ -31,7 +34,7 @@ impl MvxEsdtSafeInteract {
             .await
             .use_chain_simulator(config.use_chain_simulator());
 
-        interactor.set_current_dir_from_workspace("mvx-esdt-safe");
+        interactor.set_current_dir_from_workspace("interactor");
         let wallet_address = interactor.register_wallet(test_wallets::mike()).await;
         let bob_address = interactor.register_wallet(test_wallets::bob()).await;
 
@@ -43,28 +46,22 @@ impl MvxEsdtSafeInteract {
         interactor.generate_blocks(2u64).await.unwrap();
         assert!(set_state_response.is_ok());
 
-        let mvx_esdt_safe_contract_code = BytesValue::interpret_from(
-            "mxsc:../../../mvx-esdt-safe/output/mvx-esdt-safe.mxsc.json",
+        let mvx_esdt_safe_contract_code =
+            BytesValue::interpret_from(MVX_ESDT_SAFE_CONTRACT_CODE, &InterpreterContext::default());
+
+        let header_verifier_contract_code = BytesValue::interpret_from(
+            HEADER_VERIFIER_CONTRACT_CODE,
             &InterpreterContext::default(),
         );
 
-        let header_verifier_mvx_esdt_safe_contract_code = BytesValue::interpret_from(
-            "mxsc:../../../header-verifier/output/header-verifier.mxsc.json",
-            &InterpreterContext::default(),
-        );
+        let fee_market_contract_code =
+            BytesValue::interpret_from(FEE_MARKET_CONTRACT_CODE, &InterpreterContext::default());
 
-        let fee_market_contract_code = BytesValue::interpret_from(
-            "mxsc:../../../fee-market/output/fee-market.mxsc.json",
-            &InterpreterContext::default(),
-        );
-
-        let testing_sc_contract_code = BytesValue::interpret_from(
-            "mxsc:../../../testing-sc/output/testing-sc.mxsc.json",
-            &InterpreterContext::default(),
-        );
+        let testing_sc_contract_code =
+            BytesValue::interpret_from(TESTING_SC_CONTRACT_CODE, &InterpreterContext::default());
 
         let chain_config_contract_code = BytesValue::interpret_from(
-            "mxsc:../../../chain-config/output/chain-config.mxsc.json",
+            CHAIN_CONFIG_SC_CONTRACT_CODE,
             &InterpreterContext::default(),
         );
 
@@ -73,7 +70,7 @@ impl MvxEsdtSafeInteract {
             wallet_address,
             bob_address,
             mvx_esdt_safe_contract_code,
-            header_verifier_mvx_esdt_safe_contract_code,
+            header_verifier_contract_code,
             testing_sc_contract_code,
             fee_market_contract_code,
             chain_config_contract_code,
@@ -159,7 +156,7 @@ impl MvxEsdtSafeInteract {
             .gas(30_000_000u64)
             .typed(HeaderverifierProxy)
             .init()
-            .code(&self.header_verifier_mvx_esdt_safe_contract_code)
+            .code(&self.header_verifier_contract_code)
             .code_metadata(CodeMetadata::all())
             .returns(ReturnsNewAddress)
             .run()

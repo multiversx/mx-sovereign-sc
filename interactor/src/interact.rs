@@ -19,6 +19,14 @@ pub const SECOND_TOKEN: &str = "LTST-4f849e";
 pub const ISSUE_COST: u64 = 50_000_000_000_000_000; // 0.05 EGLD
 pub const SOV_TO_MVX_TOKEN_STORAGE_KEY: &str = "sovToMxTokenId";
 pub const MVX_TO_SOV_TOKEN_STORAGE_KEY: &str = "mxToSovTokenId";
+pub const MVX_ESDT_SAFE_CONTRACT_CODE: &str =
+    "mxsc:../../../mvx-esdt-safe/output/mvx-esdt-safe.mxsc.json";
+pub const HEADER_VERIFIER_CONTRACT_CODE: &str =
+    "mxsc:../../../header-verifier/output/header-verifier.mxsc.json";
+pub const FEE_MARKET_CONTRACT_CODE: &str = "mxsc:../../../fee-market/output/fee-market.mxsc.json";
+pub const TESTING_SC_CONTRACT_CODE: &str = "mxsc:../../../testing-sc/output/testing-sc.mxsc.json";
+pub const CHAIN_CONFIG_SC_CONTRACT_CODE: &str =
+    "mxsc:../../../chain-config/output/chain-config.mxsc.json";
 
 pub struct RegisterTokenArgs<'a> {
     pub sov_token_id: TokenIdentifier<StaticApi>,
