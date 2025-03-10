@@ -3,7 +3,7 @@ use error_messages::{
 };
 use multiversx_sc::imports::*;
 
-const TRUSTED_TOKEN_IDS: [&str; 1] = ["WELGD"];
+pub const TRUSTED_TOKEN_IDS: [&str; 1] = ["USDC-c76f1f"];
 
 #[multiversx_sc::module]
 pub trait BridgingMechanism:
@@ -12,21 +12,18 @@ pub trait BridgingMechanism:
     #[only_admin]
     #[endpoint(setTokenBurnMechanism)]
     fn set_token_burn_mechanism(&self, token_id: TokenIdentifier) {
+        let token_esdt_roles = self.blockchain().get_esdt_local_roles(&token_id);
+
         require!(
-            self.blockchain()
-                .get_esdt_local_roles(&token_id)
-                .into_iter()
-                .any(|role| role == EsdtLocalRoleFlags::MINT && role == EsdtLocalRoleFlags::BURN),
+            token_esdt_roles.contains(EsdtLocalRoleFlags::MINT)
+                && token_esdt_roles.contains(EsdtLocalRoleFlags::BURN),
             MINT_AND_BURN_ROLES_NOT_FOUND
         );
 
         require!(
             TRUSTED_TOKEN_IDS
                 .iter()
-                .any(
-                    |trusted_token_id| ManagedBuffer::from(*trusted_token_id)
-                        == token_id.ticker()
-                ),
+                .any(|trusted_token_id| TokenIdentifier::from(*trusted_token_id) == token_id),
             TOKEN_ID_IS_NOT_TRUSTED
         );
 
