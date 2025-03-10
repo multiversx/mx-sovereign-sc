@@ -9,3 +9,6 @@ version = "=0.56.1"
 
 [dev-dependencies.multiversx-sc-scenario]
 version = "=0.56.1"
+
+[dependencies.error-messages]
+path = "../error-messages"

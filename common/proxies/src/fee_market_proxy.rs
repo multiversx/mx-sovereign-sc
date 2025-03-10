@@ -109,7 +109,7 @@ where
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
-            .raw_call("addFee")
+            .raw_call("setFee")
             .argument(&fee_struct)
             .original_result()
     }
@@ -204,45 +204,6 @@ where
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("getUsersWhitelist")
-            .original_result()
-    }
-
-    pub fn set_min_valid_signers<
-        Arg0: ProxyArg<u32>,
-    >(
-        self,
-        new_value: Arg0,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("setMinValidSigners")
-            .argument(&new_value)
-            .original_result()
-    }
-
-    pub fn add_signers<
-        Arg0: ProxyArg<MultiValueEncoded<Env::Api, ManagedAddress<Env::Api>>>,
-    >(
-        self,
-        signers: Arg0,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("addSigners")
-            .argument(&signers)
-            .original_result()
-    }
-
-    pub fn remove_signers<
-        Arg0: ProxyArg<MultiValueEncoded<Env::Api, ManagedAddress<Env::Api>>>,
-    >(
-        self,
-        signers: Arg0,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("removeSigners")
-            .argument(&signers)
             .original_result()
     }
 }

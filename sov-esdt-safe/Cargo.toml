@@ -35,8 +35,8 @@ path = "../common/setup-phase"
 [dependencies.proxies]
 path = "../common/proxies"
 
-[dependencies.max-bridged-amount-module]
-path = "../common/max-bridged-amount-module"
+[dependencies.error-messages]
+path = "../common/error-messages"
 
 [dev-dependencies]
 num-bigint = "0.4"

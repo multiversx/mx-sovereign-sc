@@ -21,3 +21,6 @@ path = "../proxies"
 
 [dependencies.utils]
 path = "../utils"
+
+[dependencies.error-messages]
+path = "../error-messages"

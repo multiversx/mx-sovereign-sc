@@ -1,4 +1,8 @@
-use transaction::GasLimit;
+use error_messages::{
+    INVALID_PERCENTAGE_SUM, INVALID_TOKEN_PROVIDED_FOR_FEE, PAYMENT_DOES_NOT_COVER_FEE,
+    TOKEN_NOT_ACCEPTED_AS_FEE,
+};
+use structs::aliases::GasLimit;
 
 use crate::fee_type::FeeType;
 
@@ -35,7 +39,6 @@ pub trait SubtractFeeModule:
     + crate::fee_common::CommonFeeModule
     + crate::price_aggregator::PriceAggregatorModule
     + utils::UtilsModule
-    + bls_signature::BlsSignatureModule
 {
     #[only_owner]
     #[endpoint(addUsersToWhitelist)]
@@ -71,7 +74,7 @@ pub trait SubtractFeeModule:
 
         require!(
             percentage_sum == TOTAL_PERCENTAGE as u64,
-            "Invalid percentage sum"
+            INVALID_PERCENTAGE_SUM
         );
 
         for token_id in self.tokens_for_fees().iter() {
@@ -149,7 +152,7 @@ pub trait SubtractFeeModule:
     ) -> FinalPayment<Self::Api> {
         let fee_type = self.token_fee(&payment.token_identifier).get();
         match fee_type {
-            FeeType::None => sc_panic!("Token not accepted as fee"),
+            FeeType::None => sc_panic!(TOKEN_NOT_ACCEPTED_AS_FEE),
             FeeType::Fixed {
                 token,
                 per_transfer,
@@ -194,7 +197,7 @@ pub trait SubtractFeeModule:
     ) -> FinalPayment<Self::Api> {
         require!(
             args.payment.token_identifier == args.fee_token,
-            "Invalid token provided for fee"
+            INVALID_TOKEN_PROVIDED_FOR_FEE
         );
 
         let mut total_fee = args.per_transfer * args.total_transfers as u32;
@@ -203,7 +206,7 @@ pub trait SubtractFeeModule:
         }
 
         let mut payment = args.payment;
-        require!(total_fee <= payment.amount, "Payment does not cover fee");
+        require!(total_fee <= payment.amount, PAYMENT_DOES_NOT_COVER_FEE);
 
         payment.amount -= &total_fee;
 

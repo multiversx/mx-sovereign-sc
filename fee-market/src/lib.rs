@@ -5,7 +5,6 @@ use fee_type::FeeStruct;
 multiversx_sc::imports!();
 
 pub mod fee_common;
-pub mod fee_market_proxy;
 pub mod fee_type;
 pub mod price_aggregator;
 pub mod subtract_fee;
@@ -17,7 +16,6 @@ pub trait FeeMarket:
     + subtract_fee::SubtractFeeModule
     + price_aggregator::PriceAggregatorModule
     + utils::UtilsModule
-    + bls_signature::BlsSignatureModule
 {
     #[init]
     fn init(&self, esdt_safe_address: ManagedAddress, fee: Option<FeeStruct<Self::Api>>) {

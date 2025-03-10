@@ -1,3 +1,4 @@
+use error_messages::NO_HEADER_VERIFIER_ADDRESS;
 use proxies::header_verifier_proxy::HeaderverifierProxy;
 use structs::operation::Operation;
 
@@ -39,7 +40,7 @@ pub trait ExecuteCommonModule: crate::storage::CrossChainStorage {
 
         require!(
             !header_verifier_address_mapper.is_empty(),
-            "There is no registered Header-Verifier address"
+            NO_HEADER_VERIFIER_ADDRESS
         );
 
         header_verifier_address_mapper.get()

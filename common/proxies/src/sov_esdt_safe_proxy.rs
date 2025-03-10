@@ -114,21 +114,6 @@ where
             .original_result()
     }
 
-    pub fn deposit<
-        Arg0: ProxyArg<ManagedAddress<Env::Api>>,
-        Arg1: ProxyArg<OptionalValue<MultiValue3<u64, ManagedBuffer<Env::Api>, ManagedVec<Env::Api, ManagedBuffer<Env::Api>>>>>,
-    >(
-        self,
-        to: Arg0,
-        opt_transfer_data: Arg1,
-    ) -> TxTypedCall<Env, From, To, (), Gas, ()> {
-        self.wrapped_tx
-            .raw_call("deposit")
-            .argument(&to)
-            .argument(&opt_transfer_data)
-            .original_result()
-    }
-
     pub fn set_max_bridged_amount<
         Arg0: ProxyArg<TokenIdentifier<Env::Api>>,
         Arg1: ProxyArg<BigUint<Env::Api>>,
@@ -142,6 +127,21 @@ where
             .raw_call("setMaxBridgedAmount")
             .argument(&token_id)
             .argument(&max_amount)
+            .original_result()
+    }
+
+    pub fn deposit<
+        Arg0: ProxyArg<ManagedAddress<Env::Api>>,
+        Arg1: ProxyArg<OptionalValue<MultiValue3<u64, ManagedBuffer<Env::Api>, ManagedVec<Env::Api, ManagedBuffer<Env::Api>>>>>,
+    >(
+        self,
+        to: Arg0,
+        opt_transfer_data: Arg1,
+    ) -> TxTypedCall<Env, From, To, (), Gas, ()> {
+        self.wrapped_tx
+            .raw_call("deposit")
+            .argument(&to)
+            .argument(&opt_transfer_data)
             .original_result()
     }
 

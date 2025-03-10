@@ -21,17 +21,10 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8f68f53c83ab957f72c32642f3868eec03eb974d1fb82e453128456482613d36"
 
 [[package]]
-name = "bls-signature"
-version = "0.0.0"
-dependencies = [
- "multiversx-sc",
- "transaction",
-]
-
-[[package]]
 name = "chain-config"
 version = "0.0.0"
 dependencies = [
+ "error-messages",
  "multiversx-sc",
  "multiversx-sc-modules",
 ]
@@ -40,8 +33,8 @@ dependencies = [
 name = "chain-factory"
 version = "0.0.0"
 dependencies = [
- "bls-signature",
  "chain-config",
+ "error-messages",
  "multiversx-sc",
  "utils",
 ]
@@ -59,6 +52,10 @@ name = "endian-type"
 version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c34f04666d835ff5d62e058c3995147c06f42fe86ff053337632bca83e42702d"
+
+[[package]]
+name = "error-messages"
+version = "0.0.0"
 
 [[package]]
 name = "hex"
@@ -222,13 +219,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "transaction"
-version = "0.0.0"
-dependencies = [
- "multiversx-sc",
-]
-
-[[package]]
 name = "unicode-ident"
 version = "1.0.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -244,6 +234,7 @@ checksum = "151ac09978d3c2862c4e39b557f4eceee2cc72150bc4cb4f16abf061b6e381fb"
 name = "utils"
 version = "0.0.0"
 dependencies = [
+ "error-messages",
  "multiversx-sc",
  "structs",
 ]

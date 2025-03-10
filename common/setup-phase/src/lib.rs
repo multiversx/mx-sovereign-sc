@@ -1,5 +1,7 @@
 #![no_std]
 
+use error_messages::{INVALID_CALLER, SETUP_PHASE_NOT_COMPLETED};
+
 multiversx_sc::imports!();
 
 #[multiversx_sc::module]
@@ -8,12 +10,12 @@ pub trait SetupPhaseModule {
         let caller = self.blockchain().get_caller();
         let initiator = self.initiator_address().get();
 
-        require!(caller == initiator, "Invalid caller");
+        require!(caller == initiator, INVALID_CALLER);
     }
 
     #[inline]
     fn require_setup_complete(&self) {
-        require!(self.is_setup_phase_complete(), "The setup is not completed");
+        require!(self.is_setup_phase_complete(), SETUP_PHASE_NOT_COMPLETED);
     }
 
     #[inline]

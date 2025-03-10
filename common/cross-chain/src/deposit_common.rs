@@ -1,3 +1,7 @@
+use error_messages::{
+    BANNED_ENDPOINT_NAME, DEPOSIT_OVER_MAX_AMOUNT, GAS_LIMIT_TOO_HIGH, NOTHING_TO_TRANSFER,
+    TOKEN_ALREADY_REGISTERED, TOKEN_BLACKLISTED, TOO_MANY_TOKENS,
+};
 use proxies::fee_market_proxy::FeeMarketProxy;
 use structs::{
     aliases::{EventPaymentTuple, ExtractedFeeResult, GasLimit, TxNonce},
@@ -43,8 +47,8 @@ pub trait DepositCommonModule:
     fn check_and_extract_fee(&self) -> ExtractedFeeResult<Self::Api> {
         let payments = self.call_value().all_esdt_transfers().clone();
 
-        require!(!payments.is_empty(), "Nothing to transfer");
-        require!(payments.len() <= MAX_TRANSFERS_PER_TX, "Too many tokens");
+        require!(!payments.is_empty(), NOTHING_TO_TRANSFER);
+        require!(payments.len() <= MAX_TRANSFERS_PER_TX, TOO_MANY_TOKENS);
         let is_fee_enabled = self
             .external_fee_enabled(self.fee_market_address().get())
             .get();
@@ -87,6 +91,22 @@ pub trait DepositCommonModule:
             payment.token_nonce,
             current_token_data,
         ))
+    }
+
+    fn is_above_max_amount(&self, token_id: &TokenIdentifier, amount: &BigUint) -> bool {
+        let max_amount = self.max_bridged_amount(token_id).get();
+        if max_amount > 0 {
+            amount > &max_amount
+        } else {
+            false
+        }
+    }
+
+    fn require_below_max_amount(&self, token_id: &TokenIdentifier, amount: &BigUint) {
+        require!(
+            !self.is_above_max_amount(token_id, amount),
+            DEPOSIT_OVER_MAX_AMOUNT
+        );
     }
 
     #[inline]
@@ -165,7 +185,7 @@ pub trait DepositCommonModule:
     fn require_sov_token_id_not_registered(&self, id: &TokenIdentifier) {
         require!(
             self.sovereign_to_multiversx_token_id_mapper(id).is_empty(),
-            "This token was already registered"
+            TOKEN_ALREADY_REGISTERED
         );
     }
 
@@ -177,7 +197,7 @@ pub trait DepositCommonModule:
                 .get()
                 .token_blacklist
                 .contains(token_id),
-            "Token blacklisted"
+            TOKEN_BLACKLISTED
         );
     }
 
@@ -194,7 +214,7 @@ pub trait DepositCommonModule:
                 .get()
                 .banned_endpoints
                 .contains(function),
-            "Banned endpoint name"
+            BANNED_ENDPOINT_NAME
         );
     }
 
@@ -210,7 +230,7 @@ pub trait DepositCommonModule:
     fn require_gas_limit_under_limit(&self, gas_limit: GasLimit) {
         require!(
             gas_limit <= self.esdt_safe_config().get().max_tx_gas_limit,
-            "Gas limit too high"
+            GAS_LIMIT_TOO_HIGH
         );
     }
 }

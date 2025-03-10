@@ -1,5 +1,3 @@
-use fee_market::fee_market_proxy::{self, FeeStruct, FeeType};
-
 use multiversx_sc::{
     imports::OptionalValue,
     types::{
@@ -10,6 +8,7 @@ use multiversx_sc::{
 use multiversx_sc_scenario::{
     api::StaticApi, imports::MxscPath, ReturnsHandledOrError, ScenarioTxRun, ScenarioWorld,
 };
+use proxies::fee_market_proxy::{FeeMarketProxy, FeeStruct, FeeType};
 
 const FEE_MARKET_CODE_PATH: MxscPath = MxscPath::new("output/fee-market.mxsc.json");
 const FEE_MARKET_ADDRESS: TestSCAddress = TestSCAddress::new("fee-market");
@@ -76,7 +75,7 @@ impl FeeMarketTestState {
         self.world
             .tx()
             .from(OWNER_ADDRESS)
-            .typed(fee_market_proxy::FeeMarketProxy)
+            .typed(FeeMarketProxy)
             .init(ESDT_SAFE_ADDRESS, Option::Some(fee))
             .code(FEE_MARKET_CODE_PATH)
             .new_address(FEE_MARKET_ADDRESS)
@@ -113,7 +112,7 @@ impl FeeMarketTestState {
             .tx()
             .from(ESDT_SAFE_ADDRESS)
             .to(FEE_MARKET_ADDRESS)
-            .typed(fee_market_proxy::FeeMarketProxy)
+            .typed(FeeMarketProxy)
             .subtract_fee(USER_ADDRESS, 1u8, OptionalValue::Some(30u64))
             .payment(payment)
             .returns(ReturnsHandledOrError::new())
@@ -133,12 +132,12 @@ impl FeeMarketTestState {
             .tx()
             .from(OWNER_ADDRESS)
             .to(FEE_MARKET_ADDRESS)
-            .typed(fee_market_proxy::FeeMarketProxy)
+            .typed(FeeMarketProxy)
             .remove_fee(TOKEN_ID)
             .run();
     }
 
-    pub fn add_fee(
+    pub fn set_fee(
         &mut self,
         token_id: TestTokenIdentifier,
         fee_type: &str,
@@ -195,7 +194,7 @@ impl FeeMarketTestState {
             .tx()
             .from(OWNER_ADDRESS)
             .to(FEE_MARKET_ADDRESS)
-            .typed(fee_market_proxy::FeeMarketProxy)
+            .typed(FeeMarketProxy)
             .set_fee(fee_struct)
             .returns(ReturnsHandledOrError::new())
             .run();
@@ -217,7 +216,7 @@ impl FeeMarketTestState {
             .tx()
             .from(OWNER_ADDRESS)
             .to(FEE_MARKET_ADDRESS)
-            .typed(fee_market_proxy::FeeMarketProxy)
+            .typed(FeeMarketProxy)
             .add_users_to_whitelist(users)
             .run();
     }
