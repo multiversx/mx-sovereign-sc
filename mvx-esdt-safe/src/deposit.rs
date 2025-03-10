@@ -7,14 +7,14 @@ use structs::{
 
 #[multiversx_sc::module]
 pub trait DepositModule:
-    multiversx_sc_modules::pause::PauseModule
-    + crate::briding_mechanism::BridgingMechanism
+    crate::briding_mechanism::BridgingMechanism
     + utils::UtilsModule
     + cross_chain::deposit_common::DepositCommonModule
     + cross_chain::execute_common::ExecuteCommonModule
     + cross_chain::storage::CrossChainStorage
     + cross_chain::events::EventsModule
     + multiversx_sc_modules::only_admin::OnlyAdminModule
+    + multiversx_sc_modules::pause::PauseModule
 {
     #[payable]
     #[endpoint]
