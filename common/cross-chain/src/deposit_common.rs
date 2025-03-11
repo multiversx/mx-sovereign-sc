@@ -44,6 +44,21 @@ pub trait DepositCommonModule:
         };
     }
 
+    fn prepare_token_data(
+        &self,
+        own_sc_address: &ManagedAddress,
+        payment: &EsdtTokenPayment,
+    ) -> EsdtTokenData {
+        let mut current_token_data = self.blockchain().get_esdt_token_data(
+            &own_sc_address,
+            &payment.token_identifier,
+            payment.token_nonce,
+        );
+        current_token_data.amount = payment.amount.clone();
+
+        current_token_data
+    }
+
     fn check_and_extract_fee(&self) -> ExtractedFeeResult<Self::Api> {
         let payments = self.call_value().all_esdt_transfers().clone();
 

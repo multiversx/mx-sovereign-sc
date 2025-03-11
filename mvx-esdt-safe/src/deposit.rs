@@ -47,12 +47,7 @@ pub trait DepositModule:
                 total_tokens_for_fees += 1;
             }
 
-            let mut current_token_data = self.blockchain().get_esdt_token_data(
-                &own_sc_address,
-                &payment.token_identifier,
-                payment.token_nonce,
-            );
-            current_token_data.amount = payment.amount.clone();
+            let current_token_data = self.prepare_token_data(&own_sc_address, &payment);
 
             let mvx_to_sov_token_id_mapper =
                 self.multiversx_to_sovereign_token_id_mapper(&payment.token_identifier);
