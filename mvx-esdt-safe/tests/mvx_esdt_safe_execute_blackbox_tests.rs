@@ -11,7 +11,7 @@ use multiversx_sc_scenario::{
     api::StaticApi, multiversx_chain_vm::crypto_functions::sha256, ScenarioTxWhitebox,
 };
 use mvx_esdt_safe::briding_mechanism::TRUSTED_TOKEN_IDS;
-use mvx_esdt_safe_blackbox_setup::{
+use setup::{
     MvxEsdtSafeTestState, ESDT_SAFE_ADDRESS, FEE_MARKET_ADDRESS, HEADER_VERIFIER_ADDRESS,
     OWNER_ADDRESS, TESTING_SC_ADDRESS, TEST_TOKEN_ONE, USER,
 };
@@ -19,7 +19,8 @@ use structs::{
     configs::{EsdtSafeConfig, SovereignConfig},
     operation::{Operation, OperationData, OperationEsdtPayment, TransferData},
 };
-mod mvx_esdt_safe_blackbox_setup;
+
+mod setup;
 
 #[test]
 fn execute_operation_no_esdt_safe_registered() {

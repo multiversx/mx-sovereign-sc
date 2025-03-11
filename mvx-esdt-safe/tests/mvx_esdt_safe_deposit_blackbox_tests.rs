@@ -9,15 +9,15 @@ use multiversx_sc::{
 use multiversx_sc_modules::transfer_role_proxy::PaymentsVec;
 use multiversx_sc_scenario::{api::StaticApi, ScenarioTxWhitebox};
 use mvx_esdt_safe::briding_mechanism::{BridgingMechanism, TRUSTED_TOKEN_IDS};
-use mvx_esdt_safe_blackbox_setup::{
+use proxies::fee_market_proxy::{FeeStruct, FeeType};
+use setup::{
     MvxEsdtSafeTestState, ESDT_SAFE_ADDRESS, FEE_MARKET_ADDRESS, FEE_TOKEN,
     HEADER_VERIFIER_ADDRESS, ONE_HUNDRED_MILLION, ONE_HUNDRED_THOUSAND, OWNER_ADDRESS,
     TEST_TOKEN_ONE, TEST_TOKEN_TWO, USER,
 };
-use proxies::fee_market_proxy::{FeeStruct, FeeType};
 use structs::configs::EsdtSafeConfig;
 
-mod mvx_esdt_safe_blackbox_setup;
+mod setup;
 
 #[test]
 fn deposit_nothing_to_transfer() {

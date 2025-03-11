@@ -8,13 +8,13 @@ use multiversx_sc::{
 };
 use multiversx_sc_scenario::ScenarioTxWhitebox;
 use mvx_esdt_safe::briding_mechanism::{BridgingMechanism, TRUSTED_TOKEN_IDS};
-use mvx_esdt_safe_blackbox_setup::{
+use setup::{
     MvxEsdtSafeTestState, RegisterTokenArgs, ESDT_SAFE_ADDRESS, HEADER_VERIFIER_ADDRESS,
     OWNER_ADDRESS, TEST_TOKEN_ONE, TEST_TOKEN_TWO,
 };
 use structs::configs::EsdtSafeConfig;
 
-mod mvx_esdt_safe_blackbox_setup;
+mod setup;
 
 #[test]
 fn deploy() {
