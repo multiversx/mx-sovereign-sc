@@ -1,19 +1,16 @@
 [package]
 name = "common-blackbox-setup"
 version = "0.1.0"
-edition = "2021"
+edition = "2024"
 
 [lib]
 path = "src/lib.rs"
 
 [dependencies.multiversx-sc]
-version = "=0.56.1"
-
-[dependencies.multiversx-sc-modules]
-version = "=0.56.1"
+version = "=0.57.0"
 
 [dependencies.multiversx-sc-scenario]
-version = "0.56.1"
+version = "=0.57.0"
 
 [dependencies.proxies]
 path = "../proxies"

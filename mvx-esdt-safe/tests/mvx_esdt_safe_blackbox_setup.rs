@@ -86,13 +86,8 @@ impl MvxEsdtSafeTestState {
             .returns(ReturnsHandledOrError::new())
             .run();
 
-        match response {
-            Ok(_) => assert!(
-                err_message.is_none(),
-                "Transaction was successful, but expected error"
-            ),
-            Err(error) => assert_eq!(err_message, Some(error.message.as_str())),
-        };
+        self.common_setup
+            .assert_expected_error_message(response, err_message);
     }
 
     pub fn set_fee_market_address(&mut self, fee_market_address: TestSCAddress) {
@@ -130,15 +125,8 @@ impl MvxEsdtSafeTestState {
             tx.returns(ReturnsHandledOrError::new()).run()
         };
 
-        match response {
-            Ok(_) => assert!(
-                expected_error_message.is_none(),
-                "Transaction was successful, but expected error"
-            ),
-            Err(error) => {
-                assert_eq!(expected_error_message, Some(error.message.as_str()))
-            }
-        }
+        self.common_setup
+            .assert_expected_error_message(response, expected_error_message);
     }
 
     pub fn deposit_with_logs(
@@ -183,15 +171,8 @@ impl MvxEsdtSafeTestState {
             .returns(ReturnsHandledOrError::new())
             .run();
 
-        match response {
-            Ok(_) => assert!(
-                expected_error_message.is_none(),
-                "Transaction was successful, but expected error"
-            ),
-            Err(error) => {
-                assert_eq!(expected_error_message, Some(error.message.as_str()))
-            }
-        }
+        self.common_setup
+            .assert_expected_error_message(response, expected_error_message);
     }
 
     pub fn execute_operation(
@@ -211,15 +192,8 @@ impl MvxEsdtSafeTestState {
             .returns(ReturnsHandledOrError::new())
             .run();
 
-        match response {
-            Ok(_) => assert!(
-                expected_error_message.is_none(),
-                "Transaction was successful, but expected error"
-            ),
-            Err(error) => {
-                assert_eq!(expected_error_message, Some(error.message.as_str()))
-            }
-        }
+        self.common_setup
+            .assert_expected_error_message(response, expected_error_message);
     }
 
     pub fn set_esdt_safe_address_in_header_verifier(&mut self, esdt_safe_address: TestSCAddress) {

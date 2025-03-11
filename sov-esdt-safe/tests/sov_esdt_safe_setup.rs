@@ -1,8 +1,8 @@
 use multiversx_sc::{
     imports::{MultiValue3, OptionalValue},
     types::{
-        EgldOrEsdtTokenIdentifier, EsdtLocalRole, ManagedAddress, ManagedVec,
-        TestSCAddress, TestTokenIdentifier, TokenIdentifier,
+        EgldOrEsdtTokenIdentifier, EsdtLocalRole, ManagedAddress, ManagedVec, TestSCAddress,
+        TestTokenIdentifier, TokenIdentifier,
     },
 };
 
@@ -13,7 +13,8 @@ use multiversx_sc_scenario::{
 };
 
 use common_blackbox_setup::{
-    BaseSetup, ESDT_SAFE_ADDRESS, FEE_MARKET_ADDRESS, FEE_TOKEN, OWNER_ADDRESS, TEST_TOKEN_ONE, TEST_TOKEN_TWO,
+    BaseSetup, ESDT_SAFE_ADDRESS, FEE_MARKET_ADDRESS, FEE_TOKEN, OWNER_ADDRESS, TEST_TOKEN_ONE,
+    TEST_TOKEN_TWO,
 };
 use proxies::sov_esdt_safe_proxy::SovEsdtSafeProxy;
 use sov_esdt_safe::SovEsdtSafe;
@@ -82,13 +83,8 @@ impl SovEsdtSafeTestState {
             .returns(ReturnsHandledOrError::new())
             .run();
 
-        match response {
-            Ok(_) => assert!(
-                err_message.is_none(),
-                "Transaction was successful, but expected error"
-            ),
-            Err(error) => assert_eq!(err_message, Some(error.message.as_str())),
-        };
+        self.common_setup
+            .assert_expected_error_message(response, err_message);
     }
 
     pub fn deploy_contract_with_roles(&mut self) -> &mut Self {
@@ -175,13 +171,8 @@ impl SovEsdtSafeTestState {
             tx.returns(ReturnsHandledOrError::new()).run()
         };
 
-        match response {
-            Ok(_) => assert!(
-                expected_error_message.is_none(),
-                "Transaction was successful, but expected error"
-            ),
-            Err(error) => assert_eq!(expected_error_message, Some(error.message.as_str())),
-        }
+        self.common_setup
+            .assert_expected_error_message(response, expected_error_message);
     }
 
     pub fn set_fee_market_address(&mut self, fee_market_address: TestSCAddress) {

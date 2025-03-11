@@ -1,8 +1,13 @@
+#![no_std]
+
 use multiversx_sc::{
     imports::MultiValue2,
     types::{BigUint, MultiValueEncoded, TestAddress, TestSCAddress, TokenIdentifier},
 };
-use multiversx_sc_scenario::{api::StaticApi, imports::MxscPath, ScenarioTxRun, ScenarioWorld};
+use multiversx_sc_scenario::{
+    ScenarioTxRun, ScenarioWorld, api::StaticApi, imports::MxscPath,
+    scenario_model::TxResponseStatus,
+};
 use proxies::{
     chain_config_proxy::ChainConfigContractProxy,
     fee_market_proxy::{FeeMarketProxy, FeeStruct},
@@ -11,7 +16,7 @@ use proxies::{
 };
 use structs::configs::SovereignConfig;
 
-pub const ESDT_SAFE_ADDRESS: TestSCAddress = TestSCAddress::new("sc");
+pub const ESDT_SAFE_ADDRESS: TestSCAddress = TestSCAddress::new("esdt-safe");
 
 pub const FEE_MARKET_ADDRESS: TestSCAddress = TestSCAddress::new("fee-market");
 const FEE_MARKET_CODE_PATH: MxscPath = MxscPath::new("../fee-market/output/fee-market.mxsc.json");
@@ -150,4 +155,22 @@ impl BaseSetup {
 
         self
     }
+
+    pub fn assert_expected_error_message(
+        &mut self,
+        response: Result<(), TxResponseStatus>,
+        expected_error_message: Option<&str>,
+    ) {
+        match response {
+            Ok(_) => assert!(
+                expected_error_message.is_none(),
+                "Transaction was successful, but expected error"
+            ),
+            Err(error) => {
+                assert_eq!(expected_error_message, Some(error.message.as_str()))
+            }
+        }
+    }
+
+    // TODO: Add a check balance for esdt function after check storage is fixed
 }
