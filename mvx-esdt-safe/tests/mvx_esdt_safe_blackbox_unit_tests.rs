@@ -770,8 +770,10 @@ fn deposit_success_burn_mechanism() {
                 ))
                 .is_empty());
 
+            let expected_deposited_tokens_amount = BigUint::from(100u64);
+
             assert!(
-                BigUint::from(100u64)
+                expected_deposited_tokens_amount
                     == sc
                         .deposited_tokens_amount(&TokenIdentifier::from(TRUSTED_TOKEN_IDS[0]))
                         .get()

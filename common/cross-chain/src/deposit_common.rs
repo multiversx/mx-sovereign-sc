@@ -50,7 +50,7 @@ pub trait DepositCommonModule:
         payment: &EsdtTokenPayment,
     ) -> EsdtTokenData {
         let mut current_token_data = self.blockchain().get_esdt_token_data(
-            &own_sc_address,
+            own_sc_address,
             &payment.token_identifier,
             payment.token_nonce,
         );

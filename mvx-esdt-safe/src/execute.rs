@@ -82,7 +82,7 @@ pub trait ExecuteModule:
                         )
                         .sync_call();
 
-                    self.remove_executed_hash(hash_of_hashes, &operation_hash);
+                    self.remove_executed_hash(hash_of_hashes, operation_hash);
                     self.execute_bridge_operation_event(hash_of_hashes, operation_hash);
                 }
 
