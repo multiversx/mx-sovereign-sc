@@ -14,5 +14,6 @@ members = [
   "mvx-esdt-safe/meta",
   "testing-sc",
   "testing-sc/meta",
-  "interactor"
+  "interactor",
+  "common/token-whitelist"
 ]

@@ -9,10 +9,10 @@ authors = ["you"]
 path = "src/lib.rs"
 
 [dependencies.multiversx-sc]
-version = "=0.56.1"
+version = "=0.57.0"
 
 [dependencies.multiversx-sc-modules]
-version = "=0.56.1"
+version = "=0.57.0"
 
 [dependencies.testing-sc]
 path = "../testing-sc"
@@ -48,7 +48,7 @@ path = "../common/error-messages"
 num-bigint = "0.4"
 
 [dev-dependencies.multiversx-sc-scenario]
-version = "0.56.1"
+version = "0.57.0"
 
 [features]
 chain-simulator-tests = []

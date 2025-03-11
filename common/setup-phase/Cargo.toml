@@ -5,10 +5,10 @@ authors = ["dorin-iancu <dorin.iancu@multiversx.com>"]
 edition = "2018"
 
 [dependencies.multiversx-sc]
-version = "=0.56.1"
-
-[dev-dependencies.multiversx-sc-scenario]
-version = "=0.56.1"
+version = "=0.57.0"
 
 [dependencies.error-messages]
 path = "../error-messages"
+
+[dev-dependencies.multiversx-sc-scenario]
+version = "=0.57.0"

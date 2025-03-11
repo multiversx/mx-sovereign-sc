@@ -1,5 +1,7 @@
 #![no_std]
 
+use error_messages::TOKEN_BLACKLISTED;
+
 multiversx_sc::imports!();
 
 #[multiversx_sc::module]
