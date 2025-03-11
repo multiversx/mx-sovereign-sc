@@ -1,12 +1,15 @@
 #![no_std]
 
 use multiversx_sc::{
-    imports::MultiValue2,
-    types::{BigUint, MultiValueEncoded, TestAddress, TestSCAddress, TokenIdentifier},
+    imports::{ContractBase, MultiValue2, MultiValue3},
+    types::{
+        BigUint, EgldOrEsdtTokenIdentifier, ManagedAddress, MultiValueEncoded, TestAddress,
+        TestSCAddress, TestTokenIdentifier, TokenIdentifier, Vec,
+    },
 };
 use multiversx_sc_scenario::{
-    ScenarioTxRun, ScenarioWorld, api::StaticApi, imports::MxscPath,
-    scenario_model::TxResponseStatus,
+    api::StaticApi, imports::MxscPath, scenario_model::TxResponseStatus, DebugApi, ScenarioTxRun,
+    ScenarioTxWhitebox, ScenarioWorld,
 };
 use proxies::{
     chain_config_proxy::ChainConfigContractProxy,
@@ -172,5 +175,27 @@ impl BaseSetup {
         }
     }
 
-    // TODO: Add a check balance for esdt function after check storage is fixed
+    // TODO: Add a better check balance for esdt function after check storage is fixed
+    pub fn check_sc_esdt_balance<ContractObj>(
+        &mut self,
+        tokens: Vec<MultiValue3<TestTokenIdentifier, u64, u64>>,
+        contract_address: ManagedAddress<StaticApi>,
+        contract: fn() -> ContractObj,
+    ) where
+        ContractObj: ContractBase<Api = DebugApi> + 'static,
+    {
+        self.world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .to(contract_address)
+            .whitebox(contract, |sc: ContractObj| {
+                for token in tokens {
+                    let (token_id, nonce, amount) = token.into_tuple();
+                    let balance = sc
+                        .blockchain()
+                        .get_sc_balance(&EgldOrEsdtTokenIdentifier::esdt(token_id), nonce);
+                    assert_eq!(balance, amount);
+                }
+            });
+    }
 }

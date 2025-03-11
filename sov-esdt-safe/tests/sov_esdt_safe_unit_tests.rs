@@ -125,12 +125,13 @@ fn deposit_no_fee_no_transfer_data() {
         assert!(!log.topics.is_empty());
     }
 
-    state.check_sc_esdt_balance(
+    state.common_setup.check_sc_esdt_balance(
         vec![
             MultiValue3::from((test_token_one_identifier, 0u64, 0u64)),
             MultiValue3::from((test_token_two_identifier, 0u64, 0u64)),
         ],
         ESDT_SAFE_ADDRESS.to_managed_address(),
+        sov_esdt_safe::contract_obj,
     );
 
     let expected_amount_token_one =
@@ -220,12 +221,13 @@ fn deposit_with_fee_no_transfer_data() {
     let expected_amount_token_two =
         BigUint::from(ONE_HUNDRED_MILLION) - &esdt_token_payment_two.amount;
 
-    state.check_sc_esdt_balance(
+    state.common_setup.check_sc_esdt_balance(
         vec![
             MultiValue3::from((test_token_one_identifier, 0u64, 0u64)),
             MultiValue3::from((test_token_two_identifier, 0u64, 0u64)),
         ],
         ESDT_SAFE_ADDRESS.to_managed_address(),
+        sov_esdt_safe::contract_obj,
     );
 
     state
@@ -294,12 +296,13 @@ fn deposit_no_fee_with_transfer_data() {
     let expected_amount_token_one =
         BigUint::from(ONE_HUNDRED_MILLION) - &esdt_token_payment_one.amount;
 
-    state.check_sc_esdt_balance(
+    state.common_setup.check_sc_esdt_balance(
         vec![
             MultiValue3::from((test_token_one_identifier, 0u64, 0u64)),
             MultiValue3::from((test_token_two_identifier, 0u64, 0u64)),
         ],
         ESDT_SAFE_ADDRESS.to_managed_address(),
+        sov_esdt_safe::contract_obj,
     );
 
     state
@@ -396,12 +399,13 @@ fn deposit_with_fee_with_transfer_data() {
     let expected_amount_token_two =
         BigUint::from(ONE_HUNDRED_MILLION) - &esdt_token_payment_two.amount;
 
-    state.check_sc_esdt_balance(
+    state.common_setup.check_sc_esdt_balance(
         vec![
             MultiValue3::from((test_token_one_identifier, 0u64, 0u64)),
             MultiValue3::from((test_token_two_identifier, 0u64, 0u64)),
         ],
         ESDT_SAFE_ADDRESS.to_managed_address(),
+        sov_esdt_safe::contract_obj,
     );
 
     state

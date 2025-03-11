@@ -1,12 +1,11 @@
 use multiversx_sc::{
-    imports::{MultiValue3, OptionalValue},
+    imports::OptionalValue,
     types::{
-        EgldOrEsdtTokenIdentifier, EsdtLocalRole, ManagedAddress, ManagedVec, TestSCAddress,
-        TestTokenIdentifier, TokenIdentifier,
+        EsdtLocalRole, ManagedAddress, ManagedVec, TestSCAddress,
+        TokenIdentifier,
     },
 };
 
-use multiversx_sc::contract_base::ContractBase;
 use multiversx_sc_scenario::{
     api::StaticApi, imports::MxscPath, scenario_model::Log, ReturnsHandledOrError, ReturnsLogs,
     ScenarioTxRun, ScenarioTxWhitebox,
@@ -202,26 +201,5 @@ impl SovEsdtSafeTestState {
             .payment(payment)
             .returns(ReturnsLogs)
             .run()
-    }
-
-    pub fn check_sc_esdt_balance(
-        &mut self,
-        tokens: Vec<MultiValue3<TestTokenIdentifier, u64, u64>>,
-        contract_address: ManagedAddress<StaticApi>,
-    ) {
-        self.common_setup
-            .world
-            .tx()
-            .from(OWNER_ADDRESS)
-            .to(contract_address)
-            .whitebox(sov_esdt_safe::contract_obj, |sc| {
-                for token in tokens {
-                    let (token_id, nonce, amount) = token.into_tuple();
-                    let balance = sc
-                        .blockchain()
-                        .get_sc_balance(&EgldOrEsdtTokenIdentifier::esdt(token_id), nonce);
-                    assert_eq!(balance, amount);
-                }
-            });
     }
 }
