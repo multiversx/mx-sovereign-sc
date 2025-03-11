@@ -1,10 +1,9 @@
 use multiversx_sc::{
     codec::TopEncode,
-    imports::{MultiValue2, OptionalValue, UserBuiltinProxy},
+    imports::{MultiValue2, OptionalValue},
     types::{
-        BigUint, EsdtLocalRole, EsdtLocalRoleFlags, EsdtTokenType, ManagedAddress, ManagedBuffer,
-        ManagedVec, MultiValueEncoded, TestAddress, TestSCAddress, TestTokenIdentifier,
-        TokenIdentifier,
+        BigUint, EsdtLocalRole, EsdtTokenType, ManagedAddress, ManagedBuffer, ManagedVec,
+        MultiValueEncoded, TestAddress, TestSCAddress, TestTokenIdentifier, TokenIdentifier,
     },
 };
 use multiversx_sc_modules::transfer_role_proxy::PaymentsVec;
