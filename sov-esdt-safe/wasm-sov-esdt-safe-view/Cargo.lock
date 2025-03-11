@@ -21,10 +21,37 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5c8214115b7bf84099f1309324e63141d4c5d7cc26862f97a0a857dbefe165bd"
 
 [[package]]
+name = "cross-chain"
+version = "0.1.0"
+dependencies = [
+ "error-messages",
+ "multiversx-sc",
+ "multiversx-sc-modules",
+ "proxies",
+ "structs",
+ "utils",
+]
+
+[[package]]
 name = "endian-type"
 version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c34f04666d835ff5d62e058c3995147c06f42fe86ff053337632bca83e42702d"
+
+[[package]]
+name = "error-messages"
+version = "0.1.0"
+
+[[package]]
+name = "fee-market"
+version = "0.1.0"
+dependencies = [
+ "error-messages",
+ "multiversx-sc",
+ "proxies",
+ "structs",
+ "utils",
+]
 
 [[package]]
 name = "generic-array"
@@ -111,6 +138,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "multiversx-sc-modules"
+version = "0.57.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f219eac47f858a854c0e878104f2922e1b89c3a46ba277a8200be54dd0abadae"
+dependencies = [
+ "multiversx-sc",
+]
+
+[[package]]
 name = "multiversx-sc-wasm-adapter"
 version = "0.57.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -147,6 +183,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "proxies"
+version = "0.1.0"
+dependencies = [
+ "multiversx-sc",
+ "structs",
+]
+
+[[package]]
 name = "quote"
 version = "1.0.39"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -166,10 +210,49 @@ dependencies = [
 ]
 
 [[package]]
+name = "setup-phase"
+version = "0.1.0"
+dependencies = [
+ "error-messages",
+ "multiversx-sc",
+]
+
+[[package]]
 name = "smallvec"
 version = "1.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7fcf8323ef1faaee30a44a340193b1ac6814fd9b7b4e88e9d4519a3e4abe1cfd"
+
+[[package]]
+name = "sov-esdt-safe"
+version = "0.1.0"
+dependencies = [
+ "cross-chain",
+ "error-messages",
+ "fee-market",
+ "multiversx-sc",
+ "multiversx-sc-modules",
+ "proxies",
+ "setup-phase",
+ "structs",
+ "testing-sc",
+ "utils",
+]
+
+[[package]]
+name = "sov-esdt-safe-view-wasm"
+version = "0.0.0"
+dependencies = [
+ "multiversx-sc-wasm-adapter",
+ "sov-esdt-safe",
+]
+
+[[package]]
+name = "structs"
+version = "0.1.0"
+dependencies = [
+ "multiversx-sc",
+]
 
 [[package]]
 name = "syn"
@@ -190,14 +273,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "testing-sc-wasm"
-version = "0.0.0"
-dependencies = [
- "multiversx-sc-wasm-adapter",
- "testing-sc",
-]
-
-[[package]]
 name = "typenum"
 version = "1.18.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -214,3 +289,12 @@ name = "unwrap-infallible"
 version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "151ac09978d3c2862c4e39b557f4eceee2cc72150bc4cb4f16abf061b6e381fb"
+
+[[package]]
+name = "utils"
+version = "0.1.0"
+dependencies = [
+ "error-messages",
+ "multiversx-sc",
+ "structs",
+]

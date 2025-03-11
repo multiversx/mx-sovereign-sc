@@ -44,7 +44,7 @@ path = "../chain-config"
 [dependencies.error-messages]
 path = "../common/error-messages"
 
-[dependencies.common-blackbox-setup]
+[dev-dependencies.common-blackbox-setup]
 path = "../common/common-blackbox-setup"
 
 [dev-dependencies.multiversx-sc-scenario]
