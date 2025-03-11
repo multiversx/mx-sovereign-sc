@@ -1,4 +1,4 @@
-use error_messages::ESDT_SAFE_STILL_PAUSED;
+use error_messages::{DEPOSIT_AMOUNT_SMALLER_THAN_PAYMENT_AMOUNT, ESDT_SAFE_STILL_PAUSED};
 use multiversx_sc::api::ESDT_MULTI_TRANSFER_FUNC_NAME;
 use structs::{
     aliases::GasLimit,
@@ -30,12 +30,12 @@ pub trait ExecuteModule:
         self.lock_operation_hash(&operation_hash, &hash_of_hashes);
 
         let operation_tuple = OperationTuple {
-            op_hash: operation_hash,
+            op_hash: operation_hash.clone(),
             operation: operation.clone(),
         };
 
         let minted_operation_tokens =
-            self.mint_tokens(&hash_of_hashes, &operation_tuple, &operation.tokens);
+            self.mint_tokens(&hash_of_hashes, &operation_hash, &operation.tokens);
 
         self.distribute_payments(&hash_of_hashes, &operation_tuple, &minted_operation_tokens);
     }
@@ -43,7 +43,7 @@ pub trait ExecuteModule:
     fn mint_tokens(
         &self,
         hash_of_hashes: &ManagedBuffer,
-        operation_tuple: &OperationTuple<Self::Api>,
+        operation_hash: &ManagedBuffer,
         operation_tokens: &ManagedVec<OperationEsdtPayment<Self::Api>>,
     ) -> ManagedVec<OperationEsdtPayment<Self::Api>> {
         let mut output_payments = ManagedVec::new();
@@ -63,10 +63,11 @@ pub trait ExecuteModule:
                         self.deposited_tokens_amount(&operation_token.token_identifier);
 
                     let deposited_amount = deposited_token_amount_mapper.get();
-                    if deposited_amount < operation_token.token_data.amount.clone() {
-                        self.emit_transfer_failed_events(hash_of_hashes, operation_tuple);
-                        self.remove_executed_hash(hash_of_hashes, &operation_tuple.op_hash);
-                    }
+
+                    require!(
+                        deposited_amount <= operation_token.token_data.amount.clone(),
+                        DEPOSIT_AMOUNT_SMALLER_THAN_PAYMENT_AMOUNT
+                    );
 
                     deposited_token_amount_mapper
                         .update(|amount| *amount -= operation_token.token_data.amount.clone());
@@ -80,6 +81,9 @@ pub trait ExecuteModule:
                             &operation_token.token_data.amount,
                         )
                         .sync_call();
+
+                    self.remove_executed_hash(hash_of_hashes, &operation_hash);
+                    self.execute_bridge_operation_event(hash_of_hashes, operation_hash);
                 }
 
                 output_payments.push(operation_token.clone());
