@@ -6,7 +6,7 @@
 
 [package]
 name = "mvx-esdt-safe-full-wasm"
-version = "0.0.0"
+version = "0.1.0"
 edition = "2021"
 publish = false
 
@@ -28,7 +28,7 @@ panic = "abort"
 path = ".."
 
 [dependencies.multiversx-sc-wasm-adapter]
-version = "=0.57.0"
+version = "0.57.0"
 
 [workspace]
 members = ["."]

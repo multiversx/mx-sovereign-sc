@@ -1,15 +1,14 @@
 #![no_std]
 
-use multiversx_sc::{
-    imports::{ContractBase, MultiValue2, MultiValue3},
-    types::{
-        BigUint, EgldOrEsdtTokenIdentifier, ManagedAddress, MultiValueEncoded, TestAddress,
-        TestSCAddress, TestTokenIdentifier, TokenIdentifier, Vec,
-    },
-};
 use multiversx_sc_scenario::{
-    api::StaticApi, imports::MxscPath, scenario_model::TxResponseStatus, DebugApi, ScenarioTxRun,
-    ScenarioTxWhitebox, ScenarioWorld,
+    api::StaticApi,
+    imports::{
+        BigUint, ContractBase, EgldOrEsdtTokenIdentifier, ManagedAddress, MultiValue2, MultiValue3,
+        MultiValueEncoded, MxscPath, TestAddress, TestSCAddress, TestTokenIdentifier,
+        TokenIdentifier, Vec,
+    },
+    scenario_model::TxResponseStatus,
+    DebugApi, ScenarioTxRun, ScenarioTxWhitebox, ScenarioWorld,
 };
 use proxies::{
     chain_config_proxy::ChainConfigContractProxy,

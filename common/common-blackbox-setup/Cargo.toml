@@ -6,11 +6,8 @@ edition = "2021"
 [lib]
 path = "src/lib.rs"
 
-[dependencies.multiversx-sc]
-version = "=0.57.0"
-
 [dependencies.multiversx-sc-scenario]
-version = "=0.57.0"
+version = "0.57.0"
 
 [dependencies.proxies]
 path = "../proxies"
@@ -19,6 +16,9 @@ path = "../proxies"
 path = "../structs"
 
 [dependencies]
+getrandom = { version = "0.2.15", features = [
+    "js",
+] } # js feature overrides import from sdk
 fee-market = { path = "../../fee-market" }
 header-verifier = { path = "../../header-verifier" }
 chain-config = { path = "../../chain-config" }

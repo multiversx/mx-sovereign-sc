@@ -211,18 +211,16 @@ checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 
 [[package]]
 name = "chain-config"
-version = "0.0.0"
+version = "0.1.0"
 dependencies = [
  "error-messages",
  "multiversx-sc",
  "multiversx-sc-modules",
- "multiversx-sc-scenario",
- "num-bigint",
 ]
 
 [[package]]
 name = "chain-config-meta"
-version = "0.0.0"
+version = "0.1.0"
 dependencies = [
  "chain-config",
  "multiversx-sc-meta-lib",
@@ -230,19 +228,17 @@ dependencies = [
 
 [[package]]
 name = "chain-factory"
-version = "0.0.0"
+version = "0.1.0"
 dependencies = [
  "chain-config",
  "error-messages",
  "multiversx-sc",
- "multiversx-sc-scenario",
- "num-bigint",
  "utils",
 ]
 
 [[package]]
 name = "chain-factory-meta"
-version = "0.0.0"
+version = "0.1.0"
 dependencies = [
  "chain-factory",
  "multiversx-sc-meta-lib",
@@ -319,8 +315,8 @@ version = "0.1.0"
 dependencies = [
  "chain-config",
  "fee-market",
+ "getrandom 0.2.15",
  "header-verifier",
- "multiversx-sc",
  "multiversx-sc-scenario",
  "proxies",
  "structs",
@@ -369,7 +365,7 @@ dependencies = [
 
 [[package]]
 name = "cross-chain"
-version = "0.0.0"
+version = "0.1.0"
 dependencies = [
  "error-messages",
  "multiversx-sc",
@@ -534,7 +530,7 @@ dependencies = [
 
 [[package]]
 name = "error-messages"
-version = "0.0.0"
+version = "0.1.0"
 
 [[package]]
 name = "fastrand"
@@ -544,12 +540,11 @@ checksum = "37909eebbb50d72f9059c3b6d82c0463f2ff062c9e95845c43a6c9c0355411be"
 
 [[package]]
 name = "fee-market"
-version = "0.0.0"
+version = "0.1.0"
 dependencies = [
  "error-messages",
  "multiversx-sc",
  "multiversx-sc-scenario",
- "num-bigint",
  "proxies",
  "structs",
  "utils",
@@ -557,7 +552,7 @@ dependencies = [
 
 [[package]]
 name = "fee-market-meta"
-version = "0.0.0"
+version = "0.1.0"
 dependencies = [
  "fee-market",
  "multiversx-sc-meta-lib",
@@ -720,8 +715,10 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c4567c8db10ae91089c99af84c68c38da3ec2f087c3f82960bcdbf3656b6f4d7"
 dependencies = [
  "cfg-if",
+ "js-sys",
  "libc",
  "wasi 0.11.0+wasi-snapshot-preview1",
+ "wasm-bindgen",
 ]
 
 [[package]]
@@ -754,19 +751,18 @@ dependencies = [
 
 [[package]]
 name = "header-verifier"
-version = "0.0.0"
+version = "0.1.0"
 dependencies = [
  "error-messages",
  "multiversx-sc",
  "multiversx-sc-scenario",
- "num-bigint",
  "proxies",
  "structs",
 ]
 
 [[package]]
 name = "header-verifier-meta"
-version = "0.0.0"
+version = "0.1.0"
 dependencies = [
  "header-verifier",
  "multiversx-sc-meta-lib",
@@ -1437,7 +1433,7 @@ dependencies = [
 
 [[package]]
 name = "mvx-esdt-safe"
-version = "0.0.0"
+version = "0.1.0"
 dependencies = [
  "chain-config",
  "common-blackbox-setup",
@@ -1448,7 +1444,6 @@ dependencies = [
  "multiversx-sc",
  "multiversx-sc-modules",
  "multiversx-sc-scenario",
- "num-bigint",
  "proxies",
  "setup-phase",
  "structs",
@@ -1458,7 +1453,7 @@ dependencies = [
 
 [[package]]
 name = "mvx-esdt-safe-meta"
-version = "0.0.0"
+version = "0.1.0"
 dependencies = [
  "multiversx-sc-meta-lib",
  "mvx-esdt-safe",
@@ -1851,7 +1846,7 @@ dependencies = [
 
 [[package]]
 name = "rust-interact"
-version = "0.0.0"
+version = "0.1.0"
 dependencies = [
  "clap",
  "multiversx-sc",
@@ -2051,7 +2046,7 @@ dependencies = [
 
 [[package]]
 name = "setup-phase"
-version = "0.0.0"
+version = "0.1.0"
 dependencies = [
  "error-messages",
  "multiversx-sc",
@@ -2130,16 +2125,14 @@ dependencies = [
 
 [[package]]
 name = "sov-esdt-safe"
-version = "0.0.0"
+version = "0.1.0"
 dependencies = [
- "common-blackbox-setup",
  "cross-chain",
  "error-messages",
  "fee-market",
  "multiversx-sc",
  "multiversx-sc-modules",
  "multiversx-sc-scenario",
- "num-bigint",
  "proxies",
  "setup-phase",
  "structs",
@@ -2149,7 +2142,7 @@ dependencies = [
 
 [[package]]
 name = "sov-esdt-safe-meta"
-version = "0.0.0"
+version = "0.1.0"
 dependencies = [
  "multiversx-sc-meta-lib",
  "sov-esdt-safe",
@@ -2179,7 +2172,7 @@ checksum = "7da8b5736845d9f2fcb837ea5d9e2628564b3b043a70948a3f0b778838c5fb4f"
 
 [[package]]
 name = "structs"
-version = "0.0.0"
+version = "0.1.0"
 dependencies = [
  "multiversx-sc",
 ]
@@ -2246,16 +2239,14 @@ dependencies = [
 
 [[package]]
 name = "testing-sc"
-version = "0.0.0"
+version = "0.1.0"
 dependencies = [
  "multiversx-sc",
- "multiversx-sc-scenario",
- "num-bigint",
 ]
 
 [[package]]
 name = "testing-sc-meta"
-version = "0.0.0"
+version = "0.1.0"
 dependencies = [
  "multiversx-sc-meta-lib",
  "testing-sc",
@@ -2482,7 +2473,7 @@ checksum = "06abde3611657adf66d383f00b093d7faecc7fa57071cce2578660c9f1010821"
 
 [[package]]
 name = "utils"
-version = "0.0.0"
+version = "0.1.0"
 dependencies = [
  "error-messages",
  "multiversx-sc",
