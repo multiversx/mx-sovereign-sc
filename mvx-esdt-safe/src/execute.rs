@@ -35,7 +35,7 @@ pub trait ExecuteModule:
         };
 
         let minted_operation_tokens =
-            self.mint_tokens(&hash_of_hashes, &operation_hash, &operation.tokens);
+            self.mint_tokens(&hash_of_hashes, &operation_tuple, &operation.tokens);
 
         self.distribute_payments(&hash_of_hashes, &operation_tuple, &minted_operation_tokens);
     }
@@ -43,7 +43,7 @@ pub trait ExecuteModule:
     fn mint_tokens(
         &self,
         hash_of_hashes: &ManagedBuffer,
-        operation_hash: &ManagedBuffer,
+        operation_tuple: &OperationTuple<Self::Api>,
         operation_tokens: &ManagedVec<OperationEsdtPayment<Self::Api>>,
     ) -> ManagedVec<OperationEsdtPayment<Self::Api>> {
         let mut output_payments = ManagedVec::new();
@@ -64,10 +64,12 @@ pub trait ExecuteModule:
 
                     let deposited_amount = deposited_token_amount_mapper.get();
 
-                    require!(
-                        deposited_amount <= operation_token.token_data.amount.clone(),
-                        DEPOSIT_AMOUNT_SMALLER_THAN_PAYMENT_AMOUNT
-                    );
+                    if deposited_amount < operation_token.token_data.amount {
+                        self.emit_transfer_failed_events(hash_of_hashes, operation_tuple);
+                        self.remove_executed_hash(hash_of_hashes, &operation_tuple.op_hash);
+
+                        break;
+                    }
 
                     deposited_token_amount_mapper
                         .update(|amount| *amount -= operation_token.token_data.amount.clone());
@@ -81,9 +83,6 @@ pub trait ExecuteModule:
                             &operation_token.token_data.amount,
                         )
                         .sync_call();
-
-                    self.remove_executed_hash(hash_of_hashes, operation_hash);
-                    self.execute_bridge_operation_event(hash_of_hashes, operation_hash);
                 }
 
                 output_payments.push(operation_token.clone());
