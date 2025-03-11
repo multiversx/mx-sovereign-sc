@@ -29,12 +29,13 @@ pub trait ExecuteModule:
 
         self.lock_operation_hash(&operation_hash, &hash_of_hashes);
 
-        let minted_operation_tokens =
-            self.mint_tokens(&hash_of_hashes, &operation_hash, &operation.tokens);
         let operation_tuple = OperationTuple {
             op_hash: operation_hash,
-            operation,
+            operation: operation.clone(),
         };
+
+        let minted_operation_tokens =
+            self.mint_tokens(&hash_of_hashes, &operation_tuple, &operation.tokens);
 
         self.distribute_payments(&hash_of_hashes, &operation_tuple, &minted_operation_tokens);
     }
@@ -42,7 +43,7 @@ pub trait ExecuteModule:
     fn mint_tokens(
         &self,
         hash_of_hashes: &ManagedBuffer,
-        operation_hash: &ManagedBuffer,
+        operation_tuple: &OperationTuple<Self::Api>,
         operation_tokens: &ManagedVec<OperationEsdtPayment<Self::Api>>,
     ) -> ManagedVec<OperationEsdtPayment<Self::Api>> {
         let mut output_payments = ManagedVec::new();
@@ -53,6 +54,34 @@ pub trait ExecuteModule:
 
             // token is from mainchain -> push token
             if sov_to_mvx_token_id_mapper.is_empty() {
+                if self.is_fungible(&operation_token.token_data.token_type)
+                    && self
+                        .burn_mechanism_tokens()
+                        .contains(&operation_token.token_identifier)
+                {
+                    let deposited_token_amount_mapper =
+                        self.deposited_tokens_amount(&operation_token.token_identifier);
+
+                    let deposited_amount = deposited_token_amount_mapper.get();
+                    if deposited_amount - operation_token.token_data.amount.clone() < 0 {
+                        self.emit_transfer_failed_events(hash_of_hashes, operation_tuple);
+                        self.remove_executed_hash(hash_of_hashes, &operation_tuple.op_hash);
+                    }
+
+                    deposited_token_amount_mapper
+                        .update(|amount| *amount -= operation_token.token_data.amount.clone());
+
+                    self.tx()
+                        .to(ToSelf)
+                        .typed(UserBuiltinProxy)
+                        .esdt_local_mint(
+                            &operation_token.token_identifier,
+                            0,
+                            &operation_token.token_data.amount,
+                        )
+                        .sync_call();
+                }
+
                 output_payments.push(operation_token.clone());
 
                 continue;
@@ -62,26 +91,10 @@ pub trait ExecuteModule:
             let mvx_token_id = sov_to_mvx_token_id_mapper.get();
             let current_token_type_ref = &operation_token.token_data.token_type;
 
-            if self.is_fungible(current_token_type_ref)
-                && self
-                    .burn_mechanism_tokens()
-                    .contains(&operation_token.token_identifier)
-            {
-                let deposited_amount = self
-                    .deposited_tokens_amount(&operation_token.token_identifier)
-                    .get();
-
-                if deposited_amount - operation_token.token_data.amount.clone() < 0 {
-                    self.execute_bridge_operation_event(hash_of_hashes, operation_hash);
-                    self.remove_executed_hash(hash_of_hashes, operation_hash);
-                }
-
-                self.deposited_tokens_amount(&operation_token.token_identifier)
-                    .update(|amount| *amount -= operation_token.token_data.amount.clone());
-
+            if self.is_fungible(current_token_type_ref) {
                 self.tx()
                     .to(ToSelf)
-                    .typed(UserBuiltinProxy)
+                    .typed(system_proxy::UserBuiltinProxy)
                     .esdt_local_mint(&mvx_token_id, 0, &operation_token.token_data.amount)
                     .sync_call();
 
