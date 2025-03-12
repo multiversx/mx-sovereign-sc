@@ -1,4 +1,6 @@
 [workspace]
+resolver = "2"
+
 members = [
   "chain-config",
   "chain-config/meta",
@@ -14,5 +16,6 @@ members = [
   "mvx-esdt-safe/meta",
   "testing-sc",
   "testing-sc/meta",
-  "interactor"
+  "interactor",
+  "common/token-whitelist"
 ]
