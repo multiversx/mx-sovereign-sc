@@ -196,7 +196,7 @@ pub trait ExecuteModule:
         operation_tuple: &OperationTuple<Self::Api>,
         tokens_list: &ManagedVec<OperationEsdtPayment<Self::Api>>,
     ) {
-        if tokens_list.len() == 0 {
+        if tokens_list.is_empty() {
             return;
         }
 
