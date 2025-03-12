@@ -37,6 +37,10 @@ pub trait ExecuteModule:
         let minted_operation_tokens =
             self.mint_tokens(&hash_of_hashes, &operation_tuple, &operation.tokens);
 
+        if minted_operation_tokens.len() == 0 {
+            return;
+        }
+
         self.distribute_payments(&hash_of_hashes, &operation_tuple, &minted_operation_tokens);
     }
 
@@ -68,7 +72,7 @@ pub trait ExecuteModule:
                         self.remove_executed_hash(hash_of_hashes, &operation_tuple.op_hash);
                         self.emit_transfer_failed_events(hash_of_hashes, operation_tuple);
 
-                        break;
+                        return ManagedVec::new();
                     }
 
                     deposited_token_amount_mapper
