@@ -1,5 +1,6 @@
 [workspace]
 resolver = "2"
+
 members = [
   "chain-config",
   "chain-config/meta",
@@ -16,4 +17,5 @@ members = [
   "testing-sc",
   "testing-sc/meta",
   "interactor",
+  "common/token-whitelist"
 ]
