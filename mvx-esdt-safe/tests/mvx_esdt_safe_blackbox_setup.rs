@@ -2,15 +2,17 @@ use multiversx_sc::{
     codec::TopEncode,
     imports::{MultiValue2, OptionalValue},
     types::{
-        BigUint, EsdtTokenType, ManagedAddress, ManagedBuffer, MultiValueEncoded, TestAddress,
-        TestSCAddress, TestTokenIdentifier, TokenIdentifier,
+        BigUint, EsdtLocalRole, EsdtTokenType, ManagedAddress, ManagedBuffer, ManagedVec,
+        MultiValueEncoded, TestAddress, TestSCAddress, TestTokenIdentifier, TokenIdentifier,
     },
 };
 use multiversx_sc_modules::transfer_role_proxy::PaymentsVec;
 use multiversx_sc_scenario::{
     api::StaticApi, imports::MxscPath, multiversx_chain_vm::crypto_functions::sha256,
-    scenario_model::Log, ReturnsHandledOrError, ReturnsLogs, ScenarioTxRun, ScenarioWorld,
+    scenario_model::Log, ReturnsHandledOrError, ReturnsLogs, ScenarioTxRun, ScenarioTxWhitebox,
+    ScenarioWorld,
 };
+use mvx_esdt_safe::{bridging_mechanism::TRUSTED_TOKEN_IDS, MvxEsdtSafe};
 use proxies::{
     chain_config_proxy::ChainConfigContractProxy,
     fee_market_proxy::{FeeMarketProxy, FeeStruct},
@@ -96,6 +98,10 @@ impl MvxEsdtSafeTestState {
                 TokenIdentifier::from(TEST_TOKEN_TWO),
                 BigUint::from(ONE_HUNDRED_MILLION),
             )
+            .esdt_balance(
+                TokenIdentifier::from(TRUSTED_TOKEN_IDS[0]),
+                BigUint::from(ONE_HUNDRED_MILLION),
+            )
             .balance(BigUint::from(OWNER_BALANCE));
 
         world
@@ -113,16 +119,84 @@ impl MvxEsdtSafeTestState {
     pub fn deploy_contract(
         &mut self,
         header_verifier_address: TestSCAddress,
+        sovereign_owner: TestAddress,
         opt_config: OptionalValue<EsdtSafeConfig<StaticApi>>,
     ) -> &mut Self {
         self.world
             .tx()
             .from(OWNER_ADDRESS)
             .typed(MvxEsdtSafeProxy)
-            .init(header_verifier_address, opt_config)
+            .init(header_verifier_address, sovereign_owner, opt_config)
             .code(CONTRACT_CODE_PATH)
             .new_address(ESDT_SAFE_ADDRESS)
             .run();
+
+        self.world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .to(ESDT_SAFE_ADDRESS)
+            .typed(MvxEsdtSafeProxy)
+            .unpause_endpoint()
+            .run();
+
+        self
+    }
+
+    pub fn deploy_contract_with_roles(&mut self) -> &mut Self {
+        self.world
+            .account(ESDT_SAFE_ADDRESS)
+            .nonce(1)
+            .code(CONTRACT_CODE_PATH)
+            .owner(OWNER_ADDRESS)
+            .esdt_roles(
+                TokenIdentifier::from(TEST_TOKEN_ONE),
+                vec![
+                    EsdtLocalRole::Burn.name().to_string(),
+                    EsdtLocalRole::NftBurn.name().to_string(),
+                    EsdtLocalRole::Mint.name().to_string(),
+                ],
+            )
+            .esdt_roles(
+                TokenIdentifier::from(TRUSTED_TOKEN_IDS[0]),
+                vec![
+                    EsdtLocalRole::Burn.name().to_string(),
+                    EsdtLocalRole::NftBurn.name().to_string(),
+                    EsdtLocalRole::Mint.name().to_string(),
+                ],
+            )
+            .esdt_roles(
+                TokenIdentifier::from(TEST_TOKEN_TWO),
+                vec![
+                    EsdtLocalRole::Burn.name().to_string(),
+                    EsdtLocalRole::NftBurn.name().to_string(),
+                ],
+            )
+            .esdt_roles(
+                TokenIdentifier::from(FEE_TOKEN),
+                vec![
+                    EsdtLocalRole::Burn.name().to_string(),
+                    EsdtLocalRole::NftBurn.name().to_string(),
+                ],
+            );
+
+        self.world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .to(ESDT_SAFE_ADDRESS)
+            .whitebox(mvx_esdt_safe::contract_obj, |sc| {
+                let config = EsdtSafeConfig::new(
+                    ManagedVec::new(),
+                    ManagedVec::new(),
+                    50_000_000,
+                    ManagedVec::new(),
+                );
+
+                sc.init(
+                    HEADER_VERIFIER_ADDRESS.to_managed_address(),
+                    OWNER_ADDRESS.to_managed_address(),
+                    OptionalValue::Some(config),
+                );
+            });
 
         self.world
             .tx()
@@ -220,6 +294,62 @@ impl MvxEsdtSafeTestState {
             .code(CHAIN_CONFIG_CODE_PATH)
             .new_address(CHAIN_CONFIG_ADDRESS)
             .run();
+
+        self
+    }
+
+    pub fn set_token_burn_mechanism(
+        &mut self,
+        token_id: &str,
+        expected_error_message: Option<&str>,
+    ) -> &mut Self {
+        let response = self
+            .world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .to(ESDT_SAFE_ADDRESS)
+            .typed(MvxEsdtSafeProxy)
+            .set_token_burn_mechanism(TokenIdentifier::from(token_id))
+            .returns(ReturnsHandledOrError::new())
+            .run();
+
+        match response {
+            Ok(_) => assert!(
+                expected_error_message.is_none(),
+                "Transaction was successful, but expected error"
+            ),
+            Err(error) => {
+                assert_eq!(expected_error_message, Some(error.message.as_str()))
+            }
+        }
+
+        self
+    }
+
+    pub fn set_token_lock_mechanism(
+        &mut self,
+        token_id: &str,
+        expected_error_message: Option<&str>,
+    ) -> &mut Self {
+        let response = self
+            .world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .to(ESDT_SAFE_ADDRESS)
+            .typed(MvxEsdtSafeProxy)
+            .set_token_lock_mechanism(TokenIdentifier::from(token_id))
+            .returns(ReturnsHandledOrError::new())
+            .run();
+
+        match response {
+            Ok(_) => assert!(
+                expected_error_message.is_none(),
+                "Transaction was successful, but expected error"
+            ),
+            Err(error) => {
+                assert_eq!(expected_error_message, Some(error.message.as_str()))
+            }
+        }
 
         self
     }
