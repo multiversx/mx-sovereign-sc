@@ -44,13 +44,9 @@ pub trait DepositCommonModule:
         };
     }
 
-    fn prepare_token_data(
-        &self,
-        own_sc_address: &ManagedAddress,
-        payment: &EsdtTokenPayment,
-    ) -> EsdtTokenData {
+    fn prepare_token_data(&self, payment: &EsdtTokenPayment) -> EsdtTokenData {
         let mut current_token_data = self.blockchain().get_esdt_token_data(
-            own_sc_address,
+            &self.blockchain().get_sc_address(),
             &payment.token_identifier,
             payment.token_nonce,
         );

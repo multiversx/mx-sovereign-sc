@@ -27,14 +27,12 @@ pub trait BridgingMechanism:
             TOKEN_ID_IS_NOT_TRUSTED
         );
 
-        if !self
+        if self
             .multiversx_to_sovereign_token_id_mapper(&token_id)
             .is_empty()
         {
-            return;
+            self.burn_mechanism_tokens().insert(token_id);
         }
-
-        self.burn_mechanism_tokens().insert(token_id);
     }
 
     #[only_admin]

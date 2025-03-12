@@ -11,7 +11,7 @@ const ESDT_TRANSACTION_GAS: GasLimit = 5_000_000;
 
 #[multiversx_sc::module]
 pub trait ExecuteModule:
-    crate::briding_mechanism::BridgingMechanism
+    crate::bridging_mechanism::BridgingMechanism
     + crate::register_token::RegisterTokenModule
     + utils::UtilsModule
     + cross_chain::events::EventsModule
@@ -30,7 +30,7 @@ pub trait ExecuteModule:
         self.lock_operation_hash(&operation_hash, &hash_of_hashes);
 
         let operation_tuple = OperationTuple {
-            op_hash: operation_hash.clone(),
+            op_hash: operation_hash,
             operation: operation.clone(),
         };
 

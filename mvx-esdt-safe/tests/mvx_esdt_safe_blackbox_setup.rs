@@ -12,7 +12,7 @@ use multiversx_sc_scenario::{
     scenario_model::Log, ReturnsHandledOrError, ReturnsLogs, ScenarioTxRun, ScenarioTxWhitebox,
     ScenarioWorld,
 };
-use mvx_esdt_safe::{briding_mechanism::TRUSTED_TOKEN_IDS, MvxEsdtSafe};
+use mvx_esdt_safe::{bridging_mechanism::TRUSTED_TOKEN_IDS, MvxEsdtSafe};
 use proxies::{
     chain_config_proxy::ChainConfigContractProxy,
     fee_market_proxy::{FeeMarketProxy, FeeStruct},

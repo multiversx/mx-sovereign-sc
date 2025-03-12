@@ -7,7 +7,7 @@ use structs::{
 
 #[multiversx_sc::module]
 pub trait DepositModule:
-    crate::briding_mechanism::BridgingMechanism
+    crate::bridging_mechanism::BridgingMechanism
     + utils::UtilsModule
     + cross_chain::deposit_common::DepositCommonModule
     + cross_chain::execute_common::ExecuteCommonModule
@@ -31,8 +31,6 @@ pub trait DepositModule:
         let mut event_payments = MultiValueEncoded::new();
         let mut refundable_payments = ManagedVec::<Self::Api, _>::new();
 
-        let own_sc_address = self.blockchain().get_sc_address();
-
         for payment in &payments {
             self.require_below_max_amount(&payment.token_identifier, &payment.amount);
             self.require_token_not_on_blacklist(&payment.token_identifier);
@@ -47,7 +45,7 @@ pub trait DepositModule:
                 total_tokens_for_fees += 1;
             }
 
-            let current_token_data = self.prepare_token_data(&own_sc_address, &payment);
+            let current_token_data = self.prepare_token_data(&payment);
 
             let mvx_to_sov_token_id_mapper =
                 self.multiversx_to_sovereign_token_id_mapper(&payment.token_identifier);
