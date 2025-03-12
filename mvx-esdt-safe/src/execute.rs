@@ -37,10 +37,6 @@ pub trait ExecuteModule:
         let minted_operation_tokens =
             self.mint_tokens(&hash_of_hashes, &operation_tuple, &operation.tokens);
 
-        if minted_operation_tokens.len() == 0 {
-            return;
-        }
-
         self.distribute_payments(&hash_of_hashes, &operation_tuple, &minted_operation_tokens);
     }
 
@@ -200,6 +196,10 @@ pub trait ExecuteModule:
         operation_tuple: &OperationTuple<Self::Api>,
         tokens_list: &ManagedVec<OperationEsdtPayment<Self::Api>>,
     ) {
+        if tokens_list.len() == 0 {
+            return;
+        }
+
         let mapped_tokens: ManagedVec<Self::Api, EsdtTokenPayment<Self::Api>> = tokens_list
             .iter()
             .map(|token| token.clone().into())
