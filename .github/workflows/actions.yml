@@ -5,7 +5,6 @@ on:
   push:
     branches: [ main, feat/* ]
   pull_request:
-    branches: [ main, feat/* ]
   workflow_dispatch:
 
 permissions:
@@ -23,7 +22,7 @@ jobs:
     name: Contracts
     uses: multiversx/mx-sc-actions/.github/workflows/contracts.yml@v4.2.2
     with:
-      rust-toolchain: 1.85
+      rust-toolchain: stable
       coverage-args: --ignore-filename-regex='/.cargo/git' --output ./coverage.md
       enable-interactor-tests: true
     secrets:
