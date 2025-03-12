@@ -1,3 +1,7 @@
+use common_blackbox_setup::{
+    ESDT_SAFE_ADDRESS, FEE_MARKET_ADDRESS, FEE_TOKEN, HEADER_VERIFIER_ADDRESS, ONE_HUNDRED_MILLION,
+    ONE_HUNDRED_THOUSAND, OWNER_ADDRESS, TESTING_SC_ADDRESS, TEST_TOKEN_ONE, TEST_TOKEN_TWO, USER,
+};
 use cross_chain::{storage::CrossChainStorage, DEFAULT_ISSUE_COST, MAX_GAS_PER_TRANSACTION};
 use error_messages::{
     BANNED_ENDPOINT_NAME, GAS_LIMIT_TOO_HIGH, INVALID_TYPE, MAX_GAS_LIMIT_PER_TX_EXCEEDED,
@@ -15,11 +19,7 @@ use multiversx_sc_modules::transfer_role_proxy::PaymentsVec;
 use multiversx_sc_scenario::{
     api::StaticApi, multiversx_chain_vm::crypto_functions::sha256, ScenarioTxWhitebox,
 };
-use mvx_esdt_safe_blackbox_setup::{
-    MvxEsdtSafeTestState, RegisterTokenArgs, ESDT_SAFE_ADDRESS, FEE_MARKET_ADDRESS, FEE_TOKEN,
-    HEADER_VERIFIER_ADDRESS, ONE_HUNDRED_MILLION, ONE_HUNDRED_THOUSAND, OWNER_ADDRESS,
-    TESTING_SC_ADDRESS, TEST_TOKEN_ONE, TEST_TOKEN_TWO, USER,
-};
+use mvx_esdt_safe_blackbox_setup::{MvxEsdtSafeTestState, RegisterTokenArgs};
 use proxies::fee_market_proxy::{FeeStruct, FeeType};
 use structs::{
     configs::{EsdtSafeConfig, SovereignConfig},
@@ -44,6 +44,7 @@ fn deploy_no_config() {
 
     state.deploy_contract(HEADER_VERIFIER_ADDRESS, OptionalValue::None);
     state
+        .common_setup
         .world
         .check_account(ESDT_SAFE_ADDRESS)
         .check_storage(
@@ -82,6 +83,7 @@ fn deploy_and_update_config() {
     state.deploy_contract(HEADER_VERIFIER_ADDRESS, OptionalValue::None);
 
     state
+        .common_setup
         .world
         .check_account(ESDT_SAFE_ADDRESS)
         .check_storage(
@@ -102,7 +104,7 @@ fn deploy_and_update_config() {
 
     state.update_configuration(new_config, None);
 
-    state
+    state.common_setup
         .world
         .check_account(ESDT_SAFE_ADDRESS)
         .check_storage(
@@ -164,7 +166,7 @@ fn deposit_no_transfer_data() {
         HEADER_VERIFIER_ADDRESS,
         OptionalValue::Some(EsdtSafeConfig::default_config()),
     );
-    state.deploy_fee_market(None);
+    state.common_setup.deploy_fee_market(None);
     state.set_fee_market_address(FEE_MARKET_ADDRESS);
 
     let esdt_token_payment_one = EsdtTokenPayment::<StaticApi>::new(
@@ -189,6 +191,7 @@ fn deposit_no_transfer_data() {
     );
 
     state
+        .common_setup
         .world
         .query()
         .to(ESDT_SAFE_ADDRESS)
@@ -205,8 +208,8 @@ fn deposit_gas_limit_too_high() {
 
     let config = EsdtSafeConfig::new(ManagedVec::new(), ManagedVec::new(), 1, ManagedVec::new());
     state.deploy_contract(HEADER_VERIFIER_ADDRESS, OptionalValue::Some(config));
-    state.deploy_fee_market(None);
-    state.deploy_testing_sc();
+    state.common_setup.deploy_fee_market(None);
+    state.common_setup.deploy_testing_sc();
     state.set_fee_market_address(FEE_MARKET_ADDRESS);
 
     let esdt_token_payment_one = EsdtTokenPayment::<StaticApi>::new(
@@ -250,8 +253,8 @@ fn deposit_endpoint_banned() {
     );
 
     state.deploy_contract(HEADER_VERIFIER_ADDRESS, OptionalValue::Some(config));
-    state.deploy_fee_market(None);
-    state.deploy_testing_sc();
+    state.common_setup.deploy_fee_market(None);
+    state.common_setup.deploy_testing_sc();
     state.set_fee_market_address(FEE_MARKET_ADDRESS);
 
     let esdt_token_payment_one = EsdtTokenPayment::<StaticApi>::new(
@@ -308,8 +311,8 @@ fn deposit_fee_enabled() {
         },
     };
 
-    state.deploy_fee_market(Some(fee));
-    state.deploy_testing_sc();
+    state.common_setup.deploy_fee_market(Some(fee));
+    state.common_setup.deploy_testing_sc();
     state.set_fee_market_address(FEE_MARKET_ADDRESS);
 
     let fee_amount = BigUint::from(ONE_HUNDRED_THOUSAND);
@@ -352,24 +355,33 @@ fn deposit_fee_enabled() {
     let expected_amount_token_one =
         BigUint::from(ONE_HUNDRED_MILLION) - &esdt_token_payment_one.amount;
 
-    state.world.check_account(OWNER_ADDRESS).esdt_balance(
-        TokenIdentifier::from(TEST_TOKEN_ONE),
-        expected_amount_token_one,
-    );
+    state
+        .common_setup
+        .world
+        .check_account(OWNER_ADDRESS)
+        .esdt_balance(
+            TokenIdentifier::from(TEST_TOKEN_ONE),
+            expected_amount_token_one,
+        );
 
     let expected_amount_token_two =
         BigUint::from(ONE_HUNDRED_MILLION) - &esdt_token_payment_two.amount;
 
-    state.world.check_account(OWNER_ADDRESS).esdt_balance(
-        TokenIdentifier::from(TEST_TOKEN_TWO),
-        expected_amount_token_two,
-    );
+    state
+        .common_setup
+        .world
+        .check_account(OWNER_ADDRESS)
+        .esdt_balance(
+            TokenIdentifier::from(TEST_TOKEN_TWO),
+            expected_amount_token_two,
+        );
 
     let expected_amount_token_fee = BigUint::from(ONE_HUNDRED_MILLION)
         - BigUint::from(payments_vec.len() - 1) * per_transfer
         - BigUint::from(gas_limit) * per_gas;
 
     state
+        .common_setup
         .world
         .check_account(OWNER_ADDRESS)
         .esdt_balance(TokenIdentifier::from(FEE_TOKEN), expected_amount_token_fee);
@@ -397,8 +409,8 @@ fn deposit_payment_doesnt_cover_fee() {
         },
     };
 
-    state.deploy_fee_market(Some(fee));
-    state.deploy_testing_sc();
+    state.common_setup.deploy_fee_market(Some(fee));
+    state.common_setup.deploy_testing_sc();
     state.set_fee_market_address(FEE_MARKET_ADDRESS);
 
     let esdt_token_payment_one = EsdtTokenPayment::<StaticApi>::new(
@@ -455,8 +467,8 @@ fn deposit_refund() {
         },
     };
 
-    state.deploy_fee_market(Some(fee));
-    state.deploy_testing_sc();
+    state.common_setup.deploy_fee_market(Some(fee));
+    state.common_setup.deploy_testing_sc();
     state.set_fee_market_address(FEE_MARKET_ADDRESS);
 
     let fee_amount = BigUint::from(ONE_HUNDRED_THOUSAND);
@@ -502,24 +514,33 @@ fn deposit_refund() {
     let expected_amount_token_one =
         BigUint::from(ONE_HUNDRED_MILLION) - &esdt_token_payment_one.amount;
 
-    state.world.check_account(OWNER_ADDRESS).esdt_balance(
-        TokenIdentifier::from(TEST_TOKEN_ONE),
-        &expected_amount_token_one,
-    );
+    state
+        .common_setup
+        .world
+        .check_account(OWNER_ADDRESS)
+        .esdt_balance(
+            TokenIdentifier::from(TEST_TOKEN_ONE),
+            &expected_amount_token_one,
+        );
 
     let expected_amount_token_two =
         BigUint::from(ONE_HUNDRED_MILLION) - &esdt_token_payment_two.amount;
 
-    state.world.check_account(OWNER_ADDRESS).esdt_balance(
-        TokenIdentifier::from(TEST_TOKEN_TWO),
-        &expected_amount_token_two,
-    );
+    state
+        .common_setup
+        .world
+        .check_account(OWNER_ADDRESS)
+        .esdt_balance(
+            TokenIdentifier::from(TEST_TOKEN_TWO),
+            &expected_amount_token_two,
+        );
 
     let expected_amount_token_fee = BigUint::from(ONE_HUNDRED_MILLION)
         - BigUint::from(payments_vec.len() - 1) * per_transfer
         - BigUint::from(gas_limit) * per_gas;
 
     state
+        .common_setup
         .world
         .check_account(OWNER_ADDRESS)
         .esdt_balance(TokenIdentifier::from(FEE_TOKEN), expected_amount_token_fee);
@@ -645,7 +666,7 @@ fn execute_operation_no_esdt_safe_registered() {
 
     let hash_of_hashes = state.get_operation_hash(&operation);
 
-    state.deploy_header_verifier();
+    state.common_setup.deploy_header_verifier();
 
     state.execute_operation(hash_of_hashes, operation, Some(NO_ESDT_SAFE_ADDRESS));
 }
@@ -682,16 +703,19 @@ fn execute_operation_success() {
     let operation_hash = state.get_operation_hash(&operation);
     let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&operation_hash.to_vec()));
 
-    state.deploy_header_verifier();
-    state.deploy_testing_sc();
+    state.common_setup.deploy_header_verifier();
+    state.common_setup.deploy_testing_sc();
     state.set_esdt_safe_address_in_header_verifier(ESDT_SAFE_ADDRESS);
 
     let operations_hashes = MultiValueEncoded::from(ManagedVec::from(vec![operation_hash.clone()]));
 
-    state.deploy_chain_config(SovereignConfig::default_config());
+    state
+        .common_setup
+        .deploy_chain_config(SovereignConfig::default_config());
     state.register_operation(ManagedBuffer::new(), &hash_of_hashes, operations_hashes);
 
     state
+        .common_setup
         .world
         .query()
         .to(HEADER_VERIFIER_ADDRESS)
@@ -710,6 +734,7 @@ fn execute_operation_success() {
     state.execute_operation(hash_of_hashes, operation.clone(), None);
 
     state
+        .common_setup
         .world
         .query()
         .to(HEADER_VERIFIER_ADDRESS)

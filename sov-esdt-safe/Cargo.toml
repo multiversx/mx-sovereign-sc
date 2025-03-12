@@ -1,6 +1,6 @@
 [package]
 name = "sov-esdt-safe"
-version = "0.0.0"
+version = "0.1.0"
 edition = "2021"
 publish = false
 authors = ["you"]
@@ -38,8 +38,8 @@ path = "../common/proxies"
 [dependencies.error-messages]
 path = "../common/error-messages"
 
-[dev-dependencies]
-num-bigint = "0.4"
+[dev-dependencies.common-blackbox-setup]
+path = "../common/common-blackbox-setup"
 
 [dev-dependencies.multiversx-sc-scenario]
 version = "0.57.0"

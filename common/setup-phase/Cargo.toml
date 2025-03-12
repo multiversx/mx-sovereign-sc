@@ -1,8 +1,8 @@
 [package]
 name = "setup-phase"
-version = "0.0.0"
+version = "0.1.0"
 authors = ["dorin-iancu <dorin.iancu@multiversx.com>"]
-edition = "2018"
+edition = "2021"
 
 [dependencies.multiversx-sc]
 version = "=0.57.0"

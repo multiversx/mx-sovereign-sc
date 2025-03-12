@@ -4,7 +4,7 @@ path = "src/interactor_main.rs"
 
 [package]
 name = "rust-interact"
-version = "0.0.0"
+version = "0.1.0"
 authors = ["you"]
 edition = "2021"
 publish = false
