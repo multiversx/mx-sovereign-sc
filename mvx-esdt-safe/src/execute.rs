@@ -1,4 +1,4 @@
-use error_messages::{DEPOSIT_AMOUNT_SMALLER_THAN_PAYMENT_AMOUNT, ESDT_SAFE_STILL_PAUSED};
+use error_messages::ESDT_SAFE_STILL_PAUSED;
 use multiversx_sc::api::ESDT_MULTI_TRANSFER_FUNC_NAME;
 use structs::{
     aliases::GasLimit,

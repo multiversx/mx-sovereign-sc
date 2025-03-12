@@ -949,11 +949,7 @@ fn execute_operation_burn_mechanism_without_deposit() {
 
     state.set_token_burn_mechanism(TRUSTED_TOKEN_IDS[0], None);
 
-    state.execute_operation(
-        hash_of_hashes,
-        operation.clone(),
-        Some("cannot subtract because result would be negative"),
-    );
+    state.execute_operation(hash_of_hashes, operation.clone(), None);
 }
 
 #[test]
