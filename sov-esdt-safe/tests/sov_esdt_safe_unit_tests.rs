@@ -7,13 +7,13 @@ use multiversx_sc::{
 
 use multiversx_sc_scenario::api::StaticApi;
 use proxies::fee_market_proxy::{FeeStruct, FeeType};
-use sov_esdt_safe_setup::{
+use sov_esdt_safe_setup_test::{
     SovEsdtSafeTestState, ESDT_SAFE_ADDRESS, FEE_MARKET_ADDRESS, FEE_TOKEN, ONE_HUNDRED_MILLION,
     ONE_HUNDRED_THOUSAND, OWNER_ADDRESS, TEST_TOKEN_ONE, TEST_TOKEN_TWO, USER,
 };
 use structs::{aliases::PaymentsVec, configs::EsdtSafeConfig};
 
-mod sov_esdt_safe_setup;
+mod sov_esdt_safe_setup_test;
 
 #[test]
 fn deploy() {
