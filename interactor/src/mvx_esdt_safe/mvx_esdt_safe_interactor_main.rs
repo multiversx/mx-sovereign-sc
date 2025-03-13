@@ -1,4 +1,5 @@
 use multiversx_sc_snippets::multiversx_sc_scenario::multiversx_chain_vm::crypto_functions::sha256;
+use multiversx_sc_snippets::sdk::gateway::SetStateAccount;
 use multiversx_sc_snippets::{hex, imports::*};
 use proxies::chain_config_proxy::ChainConfigContractProxy;
 use proxies::fee_market_proxy::{FeeMarketProxy, FeeStruct};
@@ -76,6 +77,27 @@ impl MvxEsdtSafeInteract {
             chain_config_contract_code,
             state: State::load_state(),
         }
+    }
+
+    pub fn reset_state_common_vec(&mut self) -> Vec<SetStateAccount> {
+        vec![
+            SetStateAccount::from_address(
+                Bech32Address::from(self.wallet_address.clone()).to_bech32_string(),
+            ),
+            SetStateAccount::from_address(
+                Bech32Address::from(self.bob_address.clone()).to_bech32_string(),
+            ),
+            SetStateAccount::from_address(
+                self.state
+                    .current_mvx_esdt_safe_contract_address()
+                    .to_bech32_string(),
+            ),
+            SetStateAccount::from_address(
+                self.state
+                    .current_header_verifier_address()
+                    .to_bech32_string(),
+            ),
+        ]
     }
 
     // Arguments should be in plain text, they will be converted to hex

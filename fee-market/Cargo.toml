@@ -18,13 +18,15 @@ path = "../common/proxies"
 path = "../common/structs"
 
 [dependencies.multiversx-sc]
-version = "=0.56.1"
+git = "https://github.com/multiversx/mx-sdk-rs"
+rev = "c1724cb"
+
+[dependencies.error-messages]
+path = "../common/error-messages"
 
 [dev-dependencies]
 num-bigint = "0.4.2"
 
 [dev-dependencies.multiversx-sc-scenario]
-version = "=0.56.1"
-
-[dependencies.error-messages]
-path = "../common/error-messages"
+git = "https://github.com/multiversx/mx-sdk-rs"
+rev = "c1724cb"

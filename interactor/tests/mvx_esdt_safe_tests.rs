@@ -1,5 +1,6 @@
 use multiversx_sc_snippets::imports::*;
 use multiversx_sc_snippets::multiversx_sc_scenario::multiversx_chain_vm::crypto_functions::sha256;
+use multiversx_sc_snippets::sdk::gateway::SetStateAccount;
 use proxies::fee_market_proxy::{FeeStruct, FeeType};
 use rust_interact::config::Config;
 use rust_interact::mvx_esdt_safe::mvx_esdt_safe_interactor_main::MvxEsdtSafeInteract;
@@ -38,6 +39,13 @@ async fn deposit_nothing_to_transfer() {
             Some("Nothing to transfer"),
         )
         .await;
+
+    let state_vec = chain_interactor.reset_state_common_vec();
+    let response = chain_interactor
+        .interactor
+        .set_state_overwrite(state_vec)
+        .await;
+    assert!(response.is_ok());
 }
 
 #[tokio::test]
@@ -75,10 +83,13 @@ async fn deposit_too_many_tokens() {
             Some("Too many tokens"),
         )
         .await;
-    chain_interactor
+
+    let state_vec = chain_interactor.reset_state_common_vec();
+    let response = chain_interactor
         .interactor
-        .register_wallet(test_wallets::mike())
+        .set_state_overwrite(state_vec)
         .await;
+    assert!(response.is_ok());
 }
 
 #[tokio::test]
@@ -154,10 +165,19 @@ async fn deposit_no_transfer_data() {
             None,
         )
         .await;
-    chain_interactor
+
+    let mut state_vec = chain_interactor.reset_state_common_vec();
+    state_vec.push(SetStateAccount::from_address(
+        chain_interactor
+            .state
+            .current_fee_market_address()
+            .to_bech32_string(),
+    ));
+    let response = chain_interactor
         .interactor
-        .register_wallet(test_wallets::mike())
+        .set_state_overwrite(state_vec)
         .await;
+    assert!(response.is_ok());
 }
 
 #[tokio::test]
@@ -231,10 +251,19 @@ async fn deposit_gas_limit_too_high() {
             Some("Gas limit too high"),
         )
         .await;
-    chain_interactor
+
+    let mut state_vec = chain_interactor.reset_state_common_vec();
+    state_vec.push(SetStateAccount::from_address(
+        chain_interactor
+            .state
+            .current_fee_market_address()
+            .to_bech32_string(),
+    ));
+    let response = chain_interactor
         .interactor
-        .register_wallet(test_wallets::mike())
+        .set_state_overwrite(state_vec)
         .await;
+    assert!(response.is_ok());
 }
 
 #[tokio::test]
@@ -313,6 +342,25 @@ async fn deposit_endpoint_banned() {
             Some("Banned endpoint name"),
         )
         .await;
+
+    let mut state_vec = chain_interactor.reset_state_common_vec();
+    state_vec.push(SetStateAccount::from_address(
+        chain_interactor
+            .state
+            .current_fee_market_address()
+            .to_bech32_string(),
+    ));
+    state_vec.push(SetStateAccount::from_address(
+        chain_interactor
+            .state
+            .current_testing_sc_address()
+            .to_bech32_string(),
+    ));
+    let response = chain_interactor
+        .interactor
+        .set_state_overwrite(state_vec)
+        .await;
+    assert!(response.is_ok());
 }
 
 // NOTE: Add checks for account storage after finding out how to encode values in state
@@ -414,6 +462,25 @@ async fn deposit_fee_enabled() {
             None,
         )
         .await;
+
+    let mut state_vec = chain_interactor.reset_state_common_vec();
+    state_vec.push(SetStateAccount::from_address(
+        chain_interactor
+            .state
+            .current_fee_market_address()
+            .to_bech32_string(),
+    ));
+    state_vec.push(SetStateAccount::from_address(
+        chain_interactor
+            .state
+            .current_testing_sc_address()
+            .to_bech32_string(),
+    ));
+    let response = chain_interactor
+        .interactor
+        .set_state_overwrite(state_vec)
+        .await;
+    assert!(response.is_ok());
 }
 
 #[tokio::test]
@@ -508,6 +575,25 @@ async fn deposit_payment_doesnt_cover_fee() {
             Some("Payment does not cover fee"),
         )
         .await;
+
+    let mut state_vec = chain_interactor.reset_state_common_vec();
+    state_vec.push(SetStateAccount::from_address(
+        chain_interactor
+            .state
+            .current_fee_market_address()
+            .to_bech32_string(),
+    ));
+    state_vec.push(SetStateAccount::from_address(
+        chain_interactor
+            .state
+            .current_testing_sc_address()
+            .to_bech32_string(),
+    ));
+    let response = chain_interactor
+        .interactor
+        .set_state_overwrite(state_vec)
+        .await;
+    assert!(response.is_ok());
 }
 
 // TODO: add deposit_refund_fee test after finding a method to check for balance
@@ -549,6 +635,13 @@ async fn register_token_invalid_type() {
             Some("Invalid type"),
         )
         .await;
+
+    let state_vec = chain_interactor.reset_state_common_vec();
+    let response = chain_interactor
+        .interactor
+        .set_state_overwrite(state_vec)
+        .await;
+    assert!(response.is_ok());
 }
 
 #[tokio::test]
@@ -571,8 +664,8 @@ async fn register_token_fungible_token() {
     let sov_token_id = TokenIdentifier::from_esdt_bytes(FIRST_TOKEN);
     let token_type = EsdtTokenType::Fungible;
     let token_display_name = "GREEN";
-    let num_decimals = 2;
-    let token_ticker = "GREEN";
+    let num_decimals = 18;
+    let token_ticker = "GRN";
     let egld_payment = BigUint::from(ISSUE_COST);
 
     chain_interactor
@@ -600,6 +693,13 @@ async fn register_token_fungible_token() {
             Some(token_ticker),
         )
         .await;
+
+    let state_vec = chain_interactor.reset_state_common_vec();
+    let response = chain_interactor
+        .interactor
+        .set_state_overwrite(state_vec)
+        .await;
+    assert!(response.is_ok());
 }
 
 #[tokio::test]
@@ -621,9 +721,9 @@ async fn register_token_non_fungible() {
 
     let sov_token_id = TokenIdentifier::from_esdt_bytes(FIRST_TOKEN);
     let token_type = EsdtTokenType::NonFungible;
-    let token_display_name = "GREEN";
-    let num_decimals = 2;
-    let token_ticker = "GREEN";
+    let token_display_name = "SOVEREIGN";
+    let num_decimals = 18;
+    let token_ticker = FIRST_TOKEN;
     let egld_payment = BigUint::from(ISSUE_COST);
 
     chain_interactor
@@ -651,6 +751,13 @@ async fn register_token_non_fungible() {
             Some(token_ticker),
         )
         .await;
+
+    let state_vec = chain_interactor.reset_state_common_vec();
+    let response = chain_interactor
+        .interactor
+        .set_state_overwrite(state_vec)
+        .await;
+    assert!(response.is_ok());
 }
 
 #[tokio::test]
@@ -672,9 +779,9 @@ async fn register_token_dynamic_non_fungible() {
 
     let sov_token_id = TokenIdentifier::from_esdt_bytes(FIRST_TOKEN);
     let token_type = EsdtTokenType::DynamicNFT;
-    let token_display_name = "GREEN";
-    let num_decimals = 2;
-    let token_ticker = "GREEN";
+    let token_display_name = "SOVEREIGN";
+    let num_decimals = 18;
+    let token_ticker = FIRST_TOKEN;
     let egld_payment = BigUint::from(ISSUE_COST);
 
     chain_interactor
@@ -702,6 +809,13 @@ async fn register_token_dynamic_non_fungible() {
             Some(token_ticker),
         )
         .await;
+
+    let state_vec = chain_interactor.reset_state_common_vec();
+    let response = chain_interactor
+        .interactor
+        .set_state_overwrite(state_vec)
+        .await;
+    assert!(response.is_ok());
 }
 
 #[tokio::test]
@@ -722,6 +836,8 @@ async fn execute_operation_no_esdt_safe_registered() {
         .await;
 
     chain_interactor.unpause_endpoint().await;
+
+    chain_interactor.deploy_testing_sc().await;
 
     let payment = OperationEsdtPayment::new(
         TokenIdentifier::from(FIRST_TOKEN),
@@ -755,6 +871,19 @@ async fn execute_operation_no_esdt_safe_registered() {
             Some("There is no registered ESDT address"),
         )
         .await;
+
+    let mut state_vec = chain_interactor.reset_state_common_vec();
+    state_vec.push(SetStateAccount::from_address(
+        chain_interactor
+            .state
+            .current_testing_sc_address()
+            .to_bech32_string(),
+    ));
+    let response = chain_interactor
+        .interactor
+        .set_state_overwrite(state_vec)
+        .await;
+    assert!(response.is_ok());
 }
 
 #[tokio::test]
@@ -783,6 +912,10 @@ async fn execute_operation_success() {
         Some(transfer_data),
     );
 
+    chain_interactor.deploy_header_verifier().await;
+
+    chain_interactor.deploy_testing_sc().await;
+
     let operation = Operation::new(
         ManagedAddress::from_address(
             &chain_interactor
@@ -796,10 +929,6 @@ async fn execute_operation_success() {
 
     let operation_hash = chain_interactor.get_operation_hash(&operation);
     let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&operation_hash.to_vec()));
-
-    chain_interactor.deploy_header_verifier().await;
-
-    chain_interactor.deploy_testing_sc().await;
 
     chain_interactor
         .deploy_mvx_esdt_safe(
@@ -849,4 +978,26 @@ async fn execute_operation_success() {
     chain_interactor
         .execute_operations(hash_of_hashes, operation.clone(), None)
         .await;
+
+    let mut state_vec = chain_interactor.reset_state_common_vec();
+
+    state_vec.push(SetStateAccount::from_address(
+        chain_interactor
+            .state
+            .current_testing_sc_address()
+            .to_bech32_string(),
+    ));
+
+    state_vec.push(SetStateAccount::from_address(
+        chain_interactor
+            .state
+            .current_chain_config_sc_address()
+            .to_bech32_string(),
+    ));
+
+    let response = chain_interactor
+        .interactor
+        .set_state_overwrite(state_vec)
+        .await;
+    assert!(response.is_ok());
 }

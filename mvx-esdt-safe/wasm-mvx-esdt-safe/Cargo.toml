@@ -5,7 +5,7 @@
 # ##########################################
 
 [package]
-name = "testing-sc-wasm"
+name = "mvx-esdt-safe-wasm"
 version = "0.0.0"
 edition = "2021"
 publish = false
@@ -24,11 +24,12 @@ overflow-checks = false
 [profile.dev]
 panic = "abort"
 
-[dependencies.testing-sc]
+[dependencies.mvx-esdt-safe]
 path = ".."
 
 [dependencies.multiversx-sc-wasm-adapter]
-version = "=0.56.1"
+git = "https://github.com/multiversx/mx-sdk-rs"
+rev = "c1724cb"
 
 [workspace]
 members = ["."]

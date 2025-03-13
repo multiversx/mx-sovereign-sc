@@ -10,8 +10,13 @@ path = "../setup-phase"
 [dependencies.utils]
 path = "../utils"
 
+[dependencies.error-messages]
+path = "../error-messages"
+
 [dependencies.multiversx-sc]
-version = "=0.56.1"
+git = "https://github.com/multiversx/mx-sdk-rs"
+rev = "c1724cb"
 
 [dev-dependencies.multiversx-sc-scenario]
-version = "=0.56.1"
+git = "https://github.com/multiversx/mx-sdk-rs"
+rev = "c1724cb"

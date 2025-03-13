@@ -9,10 +9,12 @@ authors = ["you"]
 path = "src/lib.rs"
 
 [dependencies.multiversx-sc]
-version = "=0.56.1"
+git = "https://github.com/multiversx/mx-sdk-rs"
+rev = "c1724cb"
 
 [dependencies.multiversx-sc-modules]
-version = "=0.56.1"
+git = "https://github.com/multiversx/mx-sdk-rs"
+rev = "c1724cb"
 
 [dependencies.testing-sc]
 path = "../testing-sc"
@@ -48,7 +50,8 @@ path = "../common/error-messages"
 num-bigint = "0.4"
 
 [dev-dependencies.multiversx-sc-scenario]
-version = "0.56.1"
+git = "https://github.com/multiversx/mx-sdk-rs"
+rev = "c1724cb"
 
 [features]
 chain-simulator-tests = []

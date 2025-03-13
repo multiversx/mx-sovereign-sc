@@ -14,5 +14,6 @@ path = "../structs"
 path = "../error-messages"
 
 [dependencies.multiversx-sc]
-version = "=0.56.1"
+git = "https://github.com/multiversx/mx-sdk-rs"
+rev = "c1724cb"
 features = ["esdt-token-payment-legacy-decode"]
