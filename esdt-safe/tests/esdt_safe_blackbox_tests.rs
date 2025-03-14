@@ -62,11 +62,8 @@ fn test_register_operation() {
 fn test_register_token_no_prefix() {
     let mut state = EsdtSafeTestState::new();
 
-    state.deploy_esdt_safe_contract(
-        false,
-        OptionalValue::Some(ManagedBuffer::from("USDC-123456")),
-    );
-    state.register_token("WEGLD-12345", Some("Token Id does not have prefix"));
+    state.deploy_esdt_safe_contract(false, OptionalValue::None);
+    state.register_token("USDC-123456", Some("Token Id does not have prefix"));
 }
 
 #[test]
@@ -77,10 +74,7 @@ fn test_register_token_not_native() {
         false,
         OptionalValue::Some(ManagedBuffer::from("USDC-123456")),
     );
-    state.register_token(
-        "sov-WEGLD-12345",
-        Some("The current token is not the native one"),
-    );
+    state.register_token("WEGLD-123456", Some("Cannot register token"));
 }
 
 #[test]
@@ -91,10 +85,7 @@ fn test_register_token() {
         false,
         OptionalValue::Some(ManagedBuffer::from("USDC-123456")),
     );
-    state.register_token(
-        "sov-USDC-12345",
-        Some("The current token is not the native one"),
-    );
+    state.register_token("USDC-123456", None);
 }
 
 #[test]

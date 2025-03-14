@@ -97,7 +97,7 @@ impl EsdtSafeTestState {
     }
 
     pub fn register_token(&mut self, sov_token_id: &str, expected_error_message: Option<&str>) {
-        let token_type = EsdtTokenType::Invalid;
+        let token_type = EsdtTokenType::Fungible;
         let token_display_name = "USDC";
         let num_decimals = 3;
         let token_ticker = "USDC";
