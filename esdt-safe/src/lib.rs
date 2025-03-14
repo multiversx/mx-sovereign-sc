@@ -27,9 +27,18 @@ pub trait EsdtSafe:
     + multiversx_sc_modules::pause::PauseModule
 {
     #[init]
-    fn init(&self, is_sovereign_chain: bool) {
+    fn init(&self, is_sovereign_chain: bool, opt_native_token: OptionalValue<ManagedBuffer>) {
         self.is_sovereign_chain().set(is_sovereign_chain);
         self.max_user_tx_gas_limit().set(MAX_USER_TX_GAS_LIMIT);
+
+        if let OptionalValue::Some(native_token) = opt_native_token {
+            require!(
+                TokenIdentifier::from(native_token.clone()).is_valid_esdt_identifier(),
+                "Native token is not a valid token identifier"
+            );
+            self.native_token().set(native_token);
+        }
+
         self.set_paused(true);
     }
 

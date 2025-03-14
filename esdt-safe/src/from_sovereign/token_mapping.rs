@@ -36,7 +36,10 @@ pub trait TokenMappingModule: utils::UtilsModule {
             "Invalid method to call in current chain"
         );
 
-        self.require_token_has_prefix(&sov_token_id);
+        require!(
+            self.has_prefix(&sov_token_id) || self.is_native_token(&sov_token_id),
+            "Cannot register token"
+        );
 
         let issue_cost = self.call_value().egld_value().clone_value();
 
@@ -71,6 +74,10 @@ pub trait TokenMappingModule: utils::UtilsModule {
                 <Self as TokenMappingModule>::callbacks(self).issue_callback(&args.sov_token_id),
             )
             .register_promise();
+    }
+
+    fn is_native_token(&self, token_identifier: &TokenIdentifier) -> bool {
+        token_identifier == &TokenIdentifier::from(self.native_token().get())
     }
 
     #[promises_callback]
@@ -184,4 +191,7 @@ pub trait TokenMappingModule: utils::UtilsModule {
 
     #[storage_mapper("isSovereignChain")]
     fn is_sovereign_chain(&self) -> SingleValueMapper<bool>;
+
+    #[storage_mapper("nativeToken")]
+    fn native_token(&self) -> SingleValueMapper<ManagedBuffer>;
 }

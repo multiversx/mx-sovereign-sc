@@ -1,10 +1,11 @@
 use bls_signature::BlsSignature;
-use esdt_safe::esdt_safe_proxy::{self};
+use esdt_safe::esdt_safe_proxy::{self, EsdtSafeProxy};
 use fee_market::fee_market_proxy::{self, FeeStruct};
 use header_verifier::header_verifier_proxy;
 use multiversx_sc::codec::TopEncode;
 use multiversx_sc::types::{
-    Address, EsdtTokenData, ManagedByteArray, MultiValueEncoded, TestTokenIdentifier,
+    Address, EsdtTokenData, EsdtTokenType, ManagedByteArray, MultiValueEncoded,
+    TestTokenIdentifier, TokenIdentifier,
 };
 use multiversx_sc::{
     imports::{MultiValue3, OptionalValue},
@@ -74,12 +75,16 @@ impl EsdtSafeTestState {
         Self { world }
     }
 
-    pub fn deploy_esdt_safe_contract(&mut self, is_sovereign_chain: bool) -> &mut Self {
+    pub fn deploy_esdt_safe_contract(
+        &mut self,
+        is_sovereign_chain: bool,
+        opt_native_token: OptionalValue<ManagedBuffer<StaticApi>>,
+    ) -> &mut Self {
         self.world
             .tx()
             .from(OWNER_ADDRESS)
             .typed(esdt_safe_proxy::EsdtSafeProxy)
-            .init(is_sovereign_chain)
+            .init(is_sovereign_chain, opt_native_token)
             .code(ESDT_SAFE_CODE_PATH)
             .new_address(ESDT_SAFE_ADDRESS)
             .run();
@@ -89,6 +94,39 @@ impl EsdtSafeTestState {
         self.propose_set_unpaused();
 
         self
+    }
+
+    pub fn register_token(&mut self, sov_token_id: &str, expected_error_message: Option<&str>) {
+        let token_type = EsdtTokenType::Fungible;
+        let token_display_name = "USDC";
+        let num_decimals = 3;
+        let token_ticker = "USDC";
+
+        let response = self
+            .world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .to(ESDT_SAFE_ADDRESS)
+            .typed(EsdtSafeProxy)
+            .register_token(
+                TokenIdentifier::from(sov_token_id),
+                token_type,
+                token_display_name,
+                token_ticker,
+                num_decimals as usize,
+            )
+            .returns(ReturnsHandledOrError::new())
+            .run();
+
+        match response {
+            Ok(_) => assert!(
+                expected_error_message.is_none(),
+                "Transaction was successful, but expected error"
+            ),
+            Err(error) => {
+                assert_eq!(expected_error_message, Some(error.message.as_str()))
+            }
+        }
     }
 
     pub fn deploy_fee_market_contract(&mut self) -> &mut Self {
