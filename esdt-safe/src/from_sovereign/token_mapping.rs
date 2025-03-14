@@ -36,14 +36,10 @@ pub trait TokenMappingModule: utils::UtilsModule {
             "Invalid method to call in current chain"
         );
 
-        if !self.native_token().is_empty() {
-            require!(
-                self.has_prefix(&sov_token_id) || self.is_native_token(&sov_token_id),
-                "Cannot register token"
-            );
-        } else {
-            self.require_token_has_prefix(&sov_token_id);
-        }
+        require!(
+            self.has_prefix(&sov_token_id) || self.is_native_token(&sov_token_id),
+            "Cannot register token"
+        );
 
         let issue_cost = self.call_value().egld_value().clone_value();
 
