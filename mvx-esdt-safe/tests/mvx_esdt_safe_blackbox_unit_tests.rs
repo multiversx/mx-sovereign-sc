@@ -782,6 +782,11 @@ fn deposit_success_burn_mechanism() {
         &expected_amount_trusted_token,
     );
 
+    state.world.check_account(ESDT_SAFE_ADDRESS).esdt_balance(
+        TokenIdentifier::from(TRUSTED_TOKEN_IDS[0]),
+        BigUint::default(),
+    );
+
     let expected_amount_token_two =
         BigUint::from(ONE_HUNDRED_MILLION) - &esdt_token_payment_two.amount;
 
