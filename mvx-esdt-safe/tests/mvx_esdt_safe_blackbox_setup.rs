@@ -119,14 +119,13 @@ impl MvxEsdtSafeTestState {
     pub fn deploy_contract(
         &mut self,
         header_verifier_address: TestSCAddress,
-        sovereign_owner: TestAddress,
         opt_config: OptionalValue<EsdtSafeConfig<StaticApi>>,
     ) -> &mut Self {
         self.world
             .tx()
             .from(OWNER_ADDRESS)
             .typed(MvxEsdtSafeProxy)
-            .init(header_verifier_address, sovereign_owner, opt_config)
+            .init(header_verifier_address, opt_config)
             .code(CONTRACT_CODE_PATH)
             .new_address(ESDT_SAFE_ADDRESS)
             .run();
@@ -193,7 +192,6 @@ impl MvxEsdtSafeTestState {
 
                 sc.init(
                     HEADER_VERIFIER_ADDRESS.to_managed_address(),
-                    OWNER_ADDRESS.to_managed_address(),
                     OptionalValue::Some(config),
                 );
             });
