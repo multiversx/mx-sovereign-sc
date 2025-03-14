@@ -27,12 +27,11 @@ pub trait MvxEsdtSafe:
     fn init(
         &self,
         header_verifier_address: ManagedAddress,
-        sovereign_owner: ManagedAddress,
         opt_config: OptionalValue<EsdtSafeConfig<Self::Api>>,
     ) {
         self.require_sc_address(&header_verifier_address);
         self.header_verifier_address().set(&header_verifier_address);
-        self.admins().insert(sovereign_owner);
+        self.admins().insert(self.blockchain().get_caller());
 
         self.esdt_safe_config().set(
             opt_config
