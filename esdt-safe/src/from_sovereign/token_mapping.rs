@@ -36,12 +36,9 @@ pub trait TokenMappingModule: utils::UtilsModule {
             "Invalid method to call in current chain"
         );
 
-        let native_token_mapper = self.native_token();
-
-        if !native_token_mapper.is_empty() {
+        if !self.native_token().is_empty() {
             require!(
-                self.has_prefix(&sov_token_id)
-                    || sov_token_id == TokenIdentifier::from(native_token_mapper.get()),
+                self.has_prefix(&sov_token_id) || self.is_native_token(&sov_token_id),
                 "Cannot register token"
             );
         } else {
@@ -83,15 +80,8 @@ pub trait TokenMappingModule: utils::UtilsModule {
             .register_promise();
     }
 
-    fn check_for_native_token(&self, token_identifier: &TokenIdentifier) {
-        let native_token_mapper = self.native_token();
-
-        if !native_token_mapper.is_empty() {
-            require!(
-                token_identifier == &TokenIdentifier::from(native_token_mapper.get()),
-                "The current token is not the native one"
-            )
-        }
+    fn is_native_token(&self, token_identifier: &TokenIdentifier) -> bool {
+        token_identifier == &TokenIdentifier::from(self.native_token().get())
     }
 
     #[promises_callback]
