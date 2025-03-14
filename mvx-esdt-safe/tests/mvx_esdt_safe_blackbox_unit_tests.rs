@@ -1,7 +1,8 @@
 use cross_chain::{storage::CrossChainStorage, DEFAULT_ISSUE_COST, MAX_GAS_PER_TRANSACTION};
 use error_messages::{
     BANNED_ENDPOINT_NAME, GAS_LIMIT_TOO_HIGH, INVALID_TYPE, MAX_GAS_LIMIT_PER_TX_EXCEEDED,
-    NO_ESDT_SAFE_ADDRESS, PAYMENT_DOES_NOT_COVER_FEE, TOO_MANY_TOKENS,
+    MINT_AND_BURN_ROLES_NOT_FOUND, NO_ESDT_SAFE_ADDRESS, PAYMENT_DOES_NOT_COVER_FEE,
+    TOKEN_ID_IS_NOT_TRUSTED, TOO_MANY_TOKENS,
 };
 use header_verifier::{Headerverifier, OperationHashStatus};
 use multiversx_sc::{
@@ -145,10 +146,7 @@ fn set_token_burn_mechanism_no_roles() {
         OptionalValue::Some(EsdtSafeConfig::default_config()),
     );
 
-    state.set_token_burn_mechanism(
-        "WEGLD",
-        Some("This token does not have Mint and Burn roles"),
-    );
+    state.set_token_burn_mechanism("WEGLD", Some(MINT_AND_BURN_ROLES_NOT_FOUND));
 }
 
 #[test]
@@ -156,7 +154,7 @@ fn set_token_burn_mechanism_token_not_trusted() {
     let mut state = MvxEsdtSafeTestState::new();
     state.deploy_contract_with_roles();
 
-    state.set_token_burn_mechanism(TEST_TOKEN_ONE, Some("Token is not trusted"));
+    state.set_token_burn_mechanism(TEST_TOKEN_ONE, Some(TOKEN_ID_IS_NOT_TRUSTED));
 }
 
 #[test]
