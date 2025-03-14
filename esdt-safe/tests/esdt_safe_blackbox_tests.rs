@@ -1,8 +1,5 @@
 use esdt_safe_blackbox_setup::*;
-use multiversx_sc::{
-    imports::OptionalValue,
-    types::{ManagedBuffer, TokenIdentifier},
-};
+use multiversx_sc::{imports::OptionalValue, types::ManagedBuffer};
 
 mod esdt_safe_blackbox_setup;
 
@@ -67,7 +64,7 @@ fn test_register_token_no_prefix() {
 
     state.deploy_esdt_safe_contract(
         false,
-        OptionalValue::Some(ManagedBuffer::from("USDC-12345")),
+        OptionalValue::Some(ManagedBuffer::from("USDC-123456")),
     );
     state.register_token("WEGLD-12345", Some("Token Id does not have prefix"));
 }
@@ -78,7 +75,7 @@ fn test_register_token_not_native() {
 
     state.deploy_esdt_safe_contract(
         false,
-        OptionalValue::Some(ManagedBuffer::from("USDC-12345")),
+        OptionalValue::Some(ManagedBuffer::from("USDC-123456")),
     );
     state.register_token(
         "sov-WEGLD-12345",
@@ -92,7 +89,7 @@ fn test_register_token() {
 
     state.deploy_esdt_safe_contract(
         false,
-        OptionalValue::Some(ManagedBuffer::from("USDC-12345")),
+        OptionalValue::Some(ManagedBuffer::from("USDC-123456")),
     );
     state.register_token(
         "sov-USDC-12345",
