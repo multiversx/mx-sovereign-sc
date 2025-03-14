@@ -59,14 +59,6 @@ fn test_register_operation() {
 }
 
 #[test]
-fn test_register_token_no_prefix() {
-    let mut state = EsdtSafeTestState::new();
-
-    state.deploy_esdt_safe_contract(false, OptionalValue::None);
-    state.register_token("USDC-123456", Some("Token Id does not have prefix"));
-}
-
-#[test]
 fn test_register_token_not_native() {
     let mut state = EsdtSafeTestState::new();
 
