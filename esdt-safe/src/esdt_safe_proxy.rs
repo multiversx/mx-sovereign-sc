@@ -45,14 +45,17 @@ where
 {
     pub fn init<
         Arg0: ProxyArg<bool>,
+        Arg1: ProxyArg<OptionalValue<ManagedBuffer<Env::Api>>>,
     >(
         self,
         is_sovereign_chain: Arg0,
+        opt_native_token: Arg1,
     ) -> TxTypedDeploy<Env, From, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_deploy()
             .argument(&is_sovereign_chain)
+            .argument(&opt_native_token)
             .original_result()
     }
 }

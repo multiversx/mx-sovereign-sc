@@ -37,6 +37,7 @@ pub trait TokenMappingModule: utils::UtilsModule {
         );
 
         self.require_token_has_prefix(&sov_token_id);
+        self.check_for_native_token(&sov_token_id);
 
         let issue_cost = self.call_value().egld_value().clone_value();
 
@@ -71,6 +72,17 @@ pub trait TokenMappingModule: utils::UtilsModule {
                 <Self as TokenMappingModule>::callbacks(self).issue_callback(&args.sov_token_id),
             )
             .register_promise();
+    }
+
+    fn check_for_native_token(&self, token_identifier: &TokenIdentifier) {
+        let native_token_mapper = self.native_token();
+
+        if !native_token_mapper.is_empty() {
+            require!(
+                token_identifier == &TokenIdentifier::from(native_token_mapper.get()),
+                "The current token is not the native one"
+            )
+        }
     }
 
     #[promises_callback]
@@ -184,4 +196,7 @@ pub trait TokenMappingModule: utils::UtilsModule {
 
     #[storage_mapper("isSovereignChain")]
     fn is_sovereign_chain(&self) -> SingleValueMapper<bool>;
+
+    #[storage_mapper("nativeToken")]
+    fn native_token(&self) -> SingleValueMapper<ManagedBuffer>;
 }
