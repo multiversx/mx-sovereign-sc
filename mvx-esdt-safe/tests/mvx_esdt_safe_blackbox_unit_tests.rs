@@ -876,6 +876,10 @@ fn execute_operation_burn_mechanism_without_deposit_cannot_subtract() {
     state.deploy_chain_config(SovereignConfig::default_config());
     state.register_operation(ManagedBuffer::new(), &hash_of_hashes, operations_hashes);
 
+    state.set_token_burn_mechanism(TRUSTED_TOKEN_IDS[0], None);
+
+    state.execute_operation(hash_of_hashes, operation.clone(), None);
+
     state
         .world
         .query()
@@ -885,16 +889,10 @@ fn execute_operation_burn_mechanism_without_deposit_cannot_subtract() {
             let hash_of_hashes =
                 ManagedBuffer::new_from_bytes(&sha256(&operation_hash_whitebox.to_vec()));
 
-            assert!(
-                sc.operation_hash_status(&hash_of_hashes, &operation_hash_whitebox)
-                    .get()
-                    == OperationHashStatus::NotLocked
-            );
+            assert!(sc
+                .operation_hash_status(&hash_of_hashes, &operation_hash_whitebox)
+                .is_empty());
         });
-
-    state.set_token_burn_mechanism(TRUSTED_TOKEN_IDS[0], None);
-
-    state.execute_operation(hash_of_hashes, operation.clone(), None);
 
     state
         .world
@@ -911,7 +909,22 @@ fn execute_operation_burn_mechanism_without_deposit_cannot_subtract() {
                 .get_sc_balance(&EgldOrEsdtTokenIdentifier::esdt(token_id), 0);
 
             assert!(sc_balance == BigUint::default());
-        })
+        });
+
+    state
+        .world
+        .tx()
+        .from(OWNER_ADDRESS)
+        .to(TESTING_SC_ADDRESS)
+        .whitebox(testing_sc::contract_obj, |sc| {
+            let token_id = TokenIdentifier::from(TRUSTED_TOKEN_IDS[0]);
+
+            let sc_balance = sc
+                .blockchain()
+                .get_sc_balance(&EgldOrEsdtTokenIdentifier::esdt(token_id), 0);
+
+            assert!(sc_balance == BigUint::zero());
+        });
 }
 
 #[test]
@@ -984,6 +997,13 @@ fn execute_operation_success_burn_mechanism() {
 
     state.execute_operation(hash_of_hashes, operation.clone(), None);
 
+    let expected_amount_trusted_token = BigUint::from(ONE_HUNDRED_MILLION) - &token_data.amount;
+
+    state.world.check_account(OWNER_ADDRESS).esdt_balance(
+        TokenIdentifier::from(TRUSTED_TOKEN_IDS[0]),
+        &expected_amount_trusted_token,
+    );
+
     state
         .world
         .tx()
@@ -1015,13 +1035,6 @@ fn execute_operation_success_burn_mechanism() {
 
             assert!(sc_balance == BigUint::zero());
         });
-
-    let expected_amount_trusted_token = BigUint::from(ONE_HUNDRED_MILLION) - &token_data.amount;
-
-    state.world.check_account(OWNER_ADDRESS).esdt_balance(
-        TokenIdentifier::from(TRUSTED_TOKEN_IDS[0]),
-        &expected_amount_trusted_token,
-    );
 
     state
         .world
