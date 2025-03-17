@@ -52,11 +52,7 @@ impl MvxEsdtSafeInteract {
             .from(&self.wallet_address)
             .gas(30_000_000u64)
             .typed(MvxEsdtSafeProxy)
-            .init(
-                Bech32Address::from(&self.wallet_address),
-                header_verifier_address,
-                opt_config,
-            )
+            .init(header_verifier_address, opt_config)
             .code(&self.contract_code)
             .returns(ReturnsNewAddress)
             .run()
