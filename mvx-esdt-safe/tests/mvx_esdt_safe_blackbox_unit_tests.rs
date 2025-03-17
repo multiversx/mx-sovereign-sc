@@ -783,6 +783,9 @@ fn deposit_success_burn_mechanism() {
         .to(ESDT_SAFE_ADDRESS)
         .whitebox(mvx_esdt_safe::contract_obj, |sc| {
             let token_id = TokenIdentifier::from(TRUSTED_TOKEN_IDS[0]);
+
+            assert!(!sc.deposited_tokens_amount(&token_id).is_empty());
+
             let sc_balance = sc
                 .blockchain()
                 .get_sc_balance(&EgldOrEsdtTokenIdentifier::esdt(token_id), 0);
@@ -959,7 +962,24 @@ fn execute_operation_burn_mechanism_without_deposit_cannot_subtract() {
 
     state.set_token_burn_mechanism(TRUSTED_TOKEN_IDS[0], None);
 
-    state.execute_operation(hash_of_hashes, operation.clone(), Some(CANNOT_SUBTRACT));
+    state.execute_operation(hash_of_hashes, operation.clone(), None);
+
+    state
+        .world
+        .tx()
+        .from(OWNER_ADDRESS)
+        .to(ESDT_SAFE_ADDRESS)
+        .whitebox(mvx_esdt_safe::contract_obj, |sc| {
+            let token_id = TokenIdentifier::from(TRUSTED_TOKEN_IDS[0]);
+
+            assert!(sc.deposited_tokens_amount(&token_id).is_empty());
+
+            let sc_balance = sc
+                .blockchain()
+                .get_sc_balance(&EgldOrEsdtTokenIdentifier::esdt(token_id), 0);
+
+            assert!(sc_balance == BigUint::default());
+        })
 }
 
 #[test]
@@ -972,8 +992,11 @@ fn execute_operation_success_burn_mechanism() {
         ..Default::default()
     };
 
-    let payment =
-        OperationEsdtPayment::new(TokenIdentifier::from(TRUSTED_TOKEN_IDS[0]), 0, token_data);
+    let payment = OperationEsdtPayment::new(
+        TokenIdentifier::from(TRUSTED_TOKEN_IDS[0]),
+        0,
+        token_data.clone(),
+    );
 
     let operation_data = OperationData::new(1, OWNER_ADDRESS.to_managed_address(), None);
 
@@ -1036,10 +1059,36 @@ fn execute_operation_success_burn_mechanism() {
         .to(ESDT_SAFE_ADDRESS)
         .whitebox(mvx_esdt_safe::contract_obj, |sc| {
             let token_id = TokenIdentifier::from(TRUSTED_TOKEN_IDS[0]);
+
+            assert!(sc.deposited_tokens_amount(&token_id).is_empty());
+
             let sc_balance = sc
                 .blockchain()
                 .get_sc_balance(&EgldOrEsdtTokenIdentifier::esdt(token_id), 0);
 
             assert!(sc_balance == BigUint::from(100u64));
-        })
+        });
+
+    let expected_amount_trusted_token = BigUint::from(ONE_HUNDRED_MILLION) - &token_data.amount;
+
+    state.world.check_account(OWNER_ADDRESS).esdt_balance(
+        TokenIdentifier::from(TRUSTED_TOKEN_IDS[0]),
+        &expected_amount_trusted_token,
+    );
+
+    state
+        .world
+        .query()
+        .to(HEADER_VERIFIER_ADDRESS)
+        .whitebox(header_verifier::contract_obj, |sc| {
+            let operation_hash_whitebox = ManagedBuffer::new_from_bytes(&operation_hash.to_vec());
+            let hash_of_hashes =
+                ManagedBuffer::new_from_bytes(&sha256(&operation_hash_whitebox.to_vec()));
+
+            assert!(
+                sc.operation_hash_status(&hash_of_hashes, &operation_hash_whitebox)
+                    .get()
+                    == OperationHashStatus::NotLocked
+            );
+        });
 }
