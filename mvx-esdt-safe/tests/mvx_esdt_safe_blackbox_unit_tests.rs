@@ -706,15 +706,23 @@ fn deposit_success_burn_mechanism() {
         .from(OWNER_ADDRESS)
         .to(ESDT_SAFE_ADDRESS)
         .whitebox(mvx_esdt_safe::contract_obj, |sc| {
-            let token_id = TokenIdentifier::from(TRUSTED_TOKEN_IDS[0]);
+            let trusted_token_id = TokenIdentifier::from(TRUSTED_TOKEN_IDS[0]);
 
-            assert!(!sc.deposited_tokens_amount(&token_id).is_empty());
+            assert!(!sc.deposited_tokens_amount(&trusted_token_id).is_empty());
 
-            let sc_balance = sc
+            let trusted_token_sc_balance = sc
                 .blockchain()
-                .get_sc_balance(&EgldOrEsdtTokenIdentifier::esdt(token_id), 0);
+                .get_sc_balance(&EgldOrEsdtTokenIdentifier::esdt(trusted_token_id), 0);
 
-            assert!(sc_balance == BigUint::zero());
+            assert!(trusted_token_sc_balance == BigUint::zero());
+
+            let second_token_sc_balance = TokenIdentifier::from(TEST_TOKEN_TWO);
+
+            let second_token_sc_balance = sc
+                .blockchain()
+                .get_sc_balance(&EgldOrEsdtTokenIdentifier::esdt(second_token_sc_balance), 0);
+
+            assert!(second_token_sc_balance == BigUint::from(100u64));
         });
 
     let expected_amount_trusted_token =
@@ -993,6 +1001,21 @@ fn execute_operation_success_burn_mechanism() {
             assert!(sc_balance == 100u64);
         });
 
+    state
+        .world
+        .tx()
+        .from(OWNER_ADDRESS)
+        .to(TESTING_SC_ADDRESS)
+        .whitebox(testing_sc::contract_obj, |sc| {
+            let token_id = TokenIdentifier::from(TRUSTED_TOKEN_IDS[0]);
+
+            let sc_balance = sc
+                .blockchain()
+                .get_sc_balance(&EgldOrEsdtTokenIdentifier::esdt(token_id), 0);
+
+            assert!(sc_balance == BigUint::zero());
+        });
+
     let expected_amount_trusted_token = BigUint::from(ONE_HUNDRED_MILLION) - &token_data.amount;
 
     state.world.check_account(OWNER_ADDRESS).esdt_balance(
@@ -1009,10 +1032,8 @@ fn execute_operation_success_burn_mechanism() {
             let hash_of_hashes =
                 ManagedBuffer::new_from_bytes(&sha256(&operation_hash_whitebox.to_vec()));
 
-            assert!(
-                sc.operation_hash_status(&hash_of_hashes, &operation_hash_whitebox)
-                    .get()
-                    == OperationHashStatus::NotLocked
-            );
+            assert!(sc
+                .operation_hash_status(&hash_of_hashes, &operation_hash_whitebox)
+                .is_empty());
         });
 }
