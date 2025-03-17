@@ -111,6 +111,16 @@ impl MvxEsdtSafeTestState {
                 TokenIdentifier::from(TEST_TOKEN_ONE),
                 BigUint::from(ONE_HUNDRED_MILLION),
             )
+            .balance(BigUint::from(OWNER_BALANCE))
+            .esdt_balance(
+                TokenIdentifier::from(TEST_TOKEN_TWO),
+                BigUint::from(ONE_HUNDRED_MILLION),
+            )
+            .balance(BigUint::from(OWNER_BALANCE))
+            .esdt_balance(
+                TokenIdentifier::from(TRUSTED_TOKEN_IDS[0]),
+                BigUint::default(),
+            )
             .balance(BigUint::from(OWNER_BALANCE));
 
         Self { world }
