@@ -1066,7 +1066,7 @@ fn execute_operation_success_burn_mechanism() {
                 .blockchain()
                 .get_sc_balance(&EgldOrEsdtTokenIdentifier::esdt(token_id), 0);
 
-            assert!(sc_balance == BigUint::from(100u64));
+            assert!(sc_balance == 100u64);
         });
 
     let expected_amount_trusted_token = BigUint::from(ONE_HUNDRED_MILLION) - &token_data.amount;
