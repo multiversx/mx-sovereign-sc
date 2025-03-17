@@ -64,7 +64,7 @@ pub trait ExecuteModule:
 
                     let deposited_amount = deposited_token_amount_mapper.get();
 
-                    if deposited_amount - &operation_token.token_data.amount < 0 {
+                    if operation_token.token_data.amount > deposited_amount {
                         self.emit_transfer_failed_events(hash_of_hashes, operation_tuple);
                         self.remove_executed_hash(hash_of_hashes, &operation_tuple.op_hash);
 
