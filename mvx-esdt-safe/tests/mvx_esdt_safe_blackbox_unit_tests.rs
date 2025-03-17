@@ -722,7 +722,7 @@ fn deposit_success_burn_mechanism() {
                 .blockchain()
                 .get_sc_balance(&EgldOrEsdtTokenIdentifier::esdt(second_token_sc_balance), 0);
 
-            assert!(second_token_sc_balance == BigUint::from(100u64));
+            assert!(second_token_sc_balance == 100u64);
         });
 
     let expected_amount_trusted_token =
