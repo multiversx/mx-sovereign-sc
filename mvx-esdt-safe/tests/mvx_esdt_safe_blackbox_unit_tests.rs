@@ -698,14 +698,7 @@ fn deposit_success_burn_mechanism() {
                         .deposited_tokens_amount(&TokenIdentifier::from(TRUSTED_TOKEN_IDS[0]))
                         .get()
             );
-        });
 
-    state
-        .world
-        .tx()
-        .from(OWNER_ADDRESS)
-        .to(ESDT_SAFE_ADDRESS)
-        .whitebox(mvx_esdt_safe::contract_obj, |sc| {
             let trusted_token_id = TokenIdentifier::from(TRUSTED_TOKEN_IDS[0]);
 
             assert!(!sc.deposited_tokens_amount(&trusted_token_id).is_empty());
@@ -840,7 +833,22 @@ fn execute_operation_success() {
             assert!(sc
                 .operation_hash_status(&hash_of_hashes, &operation_hash_whitebox)
                 .is_empty());
-        })
+        });
+
+    state
+        .world
+        .tx()
+        .from(OWNER_ADDRESS)
+        .to(TESTING_SC_ADDRESS)
+        .whitebox(testing_sc::contract_obj, |sc| {
+            let token_id = TokenIdentifier::from(TRUSTED_TOKEN_IDS[0]);
+
+            let sc_balance = sc
+                .blockchain()
+                .get_sc_balance(&EgldOrEsdtTokenIdentifier::esdt(token_id), 0);
+
+            assert!(sc_balance == BigUint::zero());
+        });
 }
 
 #[test]
@@ -909,6 +917,21 @@ fn execute_operation_burn_mechanism_without_deposit_cannot_subtract() {
                 .get_sc_balance(&EgldOrEsdtTokenIdentifier::esdt(token_id), 0);
 
             assert!(sc_balance == BigUint::default());
+        });
+
+    state
+        .world
+        .tx()
+        .from(OWNER_ADDRESS)
+        .to(TESTING_SC_ADDRESS)
+        .whitebox(testing_sc::contract_obj, |sc| {
+            let token_id = TokenIdentifier::from(TRUSTED_TOKEN_IDS[0]);
+
+            let sc_balance = sc
+                .blockchain()
+                .get_sc_balance(&EgldOrEsdtTokenIdentifier::esdt(token_id), 0);
+
+            assert!(sc_balance == BigUint::zero());
         });
 
     state
