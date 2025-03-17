@@ -1,10 +1,12 @@
 use cross_chain::{storage::CrossChainStorage, DEFAULT_ISSUE_COST, MAX_GAS_PER_TRANSACTION};
 use error_messages::{
-    BANNED_ENDPOINT_NAME, GAS_LIMIT_TOO_HIGH, INVALID_TYPE, MAX_GAS_LIMIT_PER_TX_EXCEEDED,
-    MINT_AND_BURN_ROLES_NOT_FOUND, NO_ESDT_SAFE_ADDRESS, PAYMENT_DOES_NOT_COVER_FEE,
-    TOKEN_ID_IS_NOT_TRUSTED, TOKEN_IS_FROM_SOVEREIGN, TOO_MANY_TOKENS,
+    BANNED_ENDPOINT_NAME, CANNOT_SUBTRACT, GAS_LIMIT_TOO_HIGH, INVALID_TYPE,
+    MAX_GAS_LIMIT_PER_TX_EXCEEDED, MINT_AND_BURN_ROLES_NOT_FOUND, NO_ESDT_SAFE_ADDRESS,
+    PAYMENT_DOES_NOT_COVER_FEE, TOKEN_ID_IS_NOT_TRUSTED, TOKEN_IS_FROM_SOVEREIGN, TOO_MANY_TOKENS,
 };
 use header_verifier::{Headerverifier, OperationHashStatus};
+use multiversx_sc::contract_base::ContractBase;
+use multiversx_sc::types::EgldOrEsdtTokenIdentifier;
 use multiversx_sc::{
     imports::{MultiValue3, OptionalValue},
     types::{
@@ -774,17 +776,26 @@ fn deposit_success_burn_mechanism() {
             );
         });
 
+    state
+        .world
+        .tx()
+        .from(OWNER_ADDRESS)
+        .to(ESDT_SAFE_ADDRESS)
+        .whitebox(mvx_esdt_safe::contract_obj, |sc| {
+            let token_id = TokenIdentifier::from(TRUSTED_TOKEN_IDS[0]);
+            let sc_balance = sc
+                .blockchain()
+                .get_sc_balance(&EgldOrEsdtTokenIdentifier::esdt(token_id), 0);
+
+            assert!(sc_balance == BigUint::zero());
+        });
+
     let expected_amount_trusted_token =
         BigUint::from(ONE_HUNDRED_MILLION) - &esdt_token_payment_trusted_token.amount;
 
     state.world.check_account(OWNER_ADDRESS).esdt_balance(
         TokenIdentifier::from(TRUSTED_TOKEN_IDS[0]),
         &expected_amount_trusted_token,
-    );
-
-    state.world.check_account(ESDT_SAFE_ADDRESS).esdt_balance(
-        TokenIdentifier::from(TRUSTED_TOKEN_IDS[0]),
-        BigUint::default(),
     );
 
     let expected_amount_token_two =
@@ -898,7 +909,7 @@ fn execute_operation_success() {
 }
 
 #[test]
-fn execute_operation_burn_mechanism_without_deposit() {
+fn execute_operation_burn_mechanism_without_deposit_cannot_subtract() {
     let mut state = MvxEsdtSafeTestState::new();
     state.deploy_contract_with_roles();
 
@@ -948,7 +959,7 @@ fn execute_operation_burn_mechanism_without_deposit() {
 
     state.set_token_burn_mechanism(TRUSTED_TOKEN_IDS[0], None);
 
-    state.execute_operation(hash_of_hashes, operation.clone(), None);
+    state.execute_operation(hash_of_hashes, operation.clone(), Some(CANNOT_SUBTRACT));
 }
 
 #[test]
@@ -1017,4 +1028,18 @@ fn execute_operation_success_burn_mechanism() {
     state.set_token_burn_mechanism(TRUSTED_TOKEN_IDS[0], None);
 
     state.execute_operation(hash_of_hashes, operation.clone(), None);
+
+    state
+        .world
+        .tx()
+        .from(OWNER_ADDRESS)
+        .to(ESDT_SAFE_ADDRESS)
+        .whitebox(mvx_esdt_safe::contract_obj, |sc| {
+            let token_id = TokenIdentifier::from(TRUSTED_TOKEN_IDS[0]);
+            let sc_balance = sc
+                .blockchain()
+                .get_sc_balance(&EgldOrEsdtTokenIdentifier::esdt(token_id), 0);
+
+            assert!(sc_balance == BigUint::from(100u64));
+        })
 }
