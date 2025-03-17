@@ -11,13 +11,15 @@ const ESDT_TRANSACTION_GAS: GasLimit = 5_000_000;
 
 #[multiversx_sc::module]
 pub trait ExecuteModule:
-    cross_chain::events::EventsModule
+    crate::bridging_mechanism::BridgingMechanism
+    + crate::register_token::RegisterTokenModule
+    + utils::UtilsModule
+    + cross_chain::events::EventsModule
     + cross_chain::storage::CrossChainStorage
     + cross_chain::deposit_common::DepositCommonModule
     + cross_chain::execute_common::ExecuteCommonModule
-    + crate::register_token::RegisterTokenModule
     + multiversx_sc_modules::pause::PauseModule
-    + utils::UtilsModule
+    + multiversx_sc_modules::only_admin::OnlyAdminModule
 {
     #[endpoint(executeBridgeOps)]
     fn execute_operations(&self, hash_of_hashes: ManagedBuffer, operation: Operation<Self::Api>) {
@@ -27,17 +29,21 @@ pub trait ExecuteModule:
 
         self.lock_operation_hash(&operation_hash, &hash_of_hashes);
 
-        let minted_operation_tokens = self.mint_tokens(&operation.tokens);
         let operation_tuple = OperationTuple {
             op_hash: operation_hash,
-            operation,
+            operation: operation.clone(),
         };
+
+        let minted_operation_tokens =
+            self.mint_tokens(&hash_of_hashes, &operation_tuple, &operation.tokens);
 
         self.distribute_payments(&hash_of_hashes, &operation_tuple, &minted_operation_tokens);
     }
 
     fn mint_tokens(
         &self,
+        hash_of_hashes: &ManagedBuffer,
+        operation_tuple: &OperationTuple<Self::Api>,
         operation_tokens: &ManagedVec<OperationEsdtPayment<Self::Api>>,
     ) -> ManagedVec<OperationEsdtPayment<Self::Api>> {
         let mut output_payments = ManagedVec::new();
@@ -48,6 +54,37 @@ pub trait ExecuteModule:
 
             // token is from mainchain -> push token
             if sov_to_mvx_token_id_mapper.is_empty() {
+                if self.is_fungible(&operation_token.token_data.token_type)
+                    && self
+                        .burn_mechanism_tokens()
+                        .contains(&operation_token.token_identifier)
+                {
+                    let deposited_token_amount_mapper =
+                        self.deposited_tokens_amount(&operation_token.token_identifier);
+
+                    let deposited_amount = deposited_token_amount_mapper.get();
+
+                    if operation_token.token_data.amount > deposited_amount {
+                        self.emit_transfer_failed_events(hash_of_hashes, operation_tuple);
+                        self.remove_executed_hash(hash_of_hashes, &operation_tuple.op_hash);
+
+                        return ManagedVec::new();
+                    }
+
+                    deposited_token_amount_mapper
+                        .update(|amount| *amount -= operation_token.token_data.amount.clone());
+
+                    self.tx()
+                        .to(ToSelf)
+                        .typed(UserBuiltinProxy)
+                        .esdt_local_mint(
+                            &operation_token.token_identifier,
+                            0,
+                            &operation_token.token_data.amount,
+                        )
+                        .sync_call();
+                }
+
                 output_payments.push(operation_token.clone());
 
                 continue;
@@ -159,6 +196,10 @@ pub trait ExecuteModule:
         operation_tuple: &OperationTuple<Self::Api>,
         tokens_list: &ManagedVec<OperationEsdtPayment<Self::Api>>,
     ) {
+        if tokens_list.is_empty() {
+            return;
+        }
+
         let mapped_tokens: ManagedVec<Self::Api, EsdtTokenPayment<Self::Api>> = tokens_list
             .iter()
             .map(|token| token.clone().into())
