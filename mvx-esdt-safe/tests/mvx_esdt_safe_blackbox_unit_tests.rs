@@ -76,6 +76,7 @@ fn deploy_invalid_config() {
     );
 
     let config = EsdtSafeConfig::new(
+        None,
         ManagedVec::new(),
         ManagedVec::new(),
         MAX_GAS_PER_TRANSACTION + 1,
@@ -110,6 +111,7 @@ fn deploy_and_update_config() {
         );
 
     let new_config = EsdtSafeConfig {
+        opt_native_token: None,
         token_whitelist: ManagedVec::from_single_item(TokenIdentifier::from(TEST_TOKEN_ONE)),
         token_blacklist: ManagedVec::from_single_item(TokenIdentifier::from(TEST_TOKEN_TWO)),
         max_tx_gas_limit: 30_000,
@@ -400,6 +402,7 @@ fn deposit_endpoint_banned() {
     let mut state = MvxEsdtSafeTestState::new();
 
     let config = EsdtSafeConfig::new(
+        None,
         ManagedVec::new(),
         ManagedVec::new(),
         50_000_000,
@@ -445,6 +448,7 @@ fn deposit_fee_enabled() {
     let mut state = MvxEsdtSafeTestState::new();
 
     let config = EsdtSafeConfig::new(
+        None,
         ManagedVec::new(),
         ManagedVec::new(),
         50_000_000,
@@ -537,6 +541,7 @@ fn deposit_payment_doesnt_cover_fee() {
     let mut state = MvxEsdtSafeTestState::new();
 
     let config = EsdtSafeConfig::new(
+        None,
         ManagedVec::new(),
         ManagedVec::new(),
         50_000_000,
@@ -592,6 +597,7 @@ fn deposit_refund() {
     let mut state = MvxEsdtSafeTestState::new();
 
     let config = EsdtSafeConfig::new(
+        None,
         ManagedVec::new(),
         ManagedVec::new(),
         50_000_000,
@@ -686,7 +692,13 @@ fn deposit_refund() {
 fn deposit_gas_limit_too_high() {
     let mut state = MvxEsdtSafeTestState::new();
 
-    let config = EsdtSafeConfig::new(ManagedVec::new(), ManagedVec::new(), 1, ManagedVec::new());
+    let config = EsdtSafeConfig::new(
+        None,
+        ManagedVec::new(),
+        ManagedVec::new(),
+        1,
+        ManagedVec::new(),
+    );
     state.deploy_contract(HEADER_VERIFIER_ADDRESS, OptionalValue::Some(config));
     state.deploy_fee_market(None);
     state.deploy_testing_sc();

@@ -9,8 +9,8 @@ use multiversx_sc::{
 use multiversx_sc_modules::transfer_role_proxy::PaymentsVec;
 use multiversx_sc_scenario::{
     api::StaticApi, imports::MxscPath, multiversx_chain_vm::crypto_functions::sha256,
-    scenario_model::Log, ReturnsHandledOrError, ReturnsLogs, ScenarioTxRun, ScenarioTxWhitebox,
-    ScenarioWorld,
+    scenario_model::Log, DebugApi, ReturnsHandledOrError, ReturnsLogs, ScenarioTxRun,
+    ScenarioTxWhitebox, ScenarioWorld,
 };
 use mvx_esdt_safe::{bridging_mechanism::TRUSTED_TOKEN_IDS, MvxEsdtSafe};
 use proxies::{
@@ -194,6 +194,7 @@ impl MvxEsdtSafeTestState {
             .to(ESDT_SAFE_ADDRESS)
             .whitebox(mvx_esdt_safe::contract_obj, |sc| {
                 let config = EsdtSafeConfig::new(
+                    None,
                     ManagedVec::new(),
                     ManagedVec::new(),
                     50_000_000,
