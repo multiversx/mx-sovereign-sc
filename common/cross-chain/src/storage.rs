@@ -43,9 +43,6 @@ pub trait CrossChainStorage {
         nonce: u64,
     ) -> SingleValueMapper<EsdtInfo<Self::Api>>;
 
-    #[storage_mapper("isSovereignChain")]
-    fn is_sovereign_chain(&self) -> SingleValueMapper<bool>;
-
     #[view(getMaxBridgedAmount)]
     #[storage_mapper("maxBridgedAmount")]
     fn max_bridged_amount(&self, token_id: &TokenIdentifier) -> SingleValueMapper<BigUint>;

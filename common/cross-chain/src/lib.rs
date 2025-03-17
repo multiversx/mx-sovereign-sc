@@ -1,6 +1,6 @@
 #![no_std]
 
-use error_messages::MAX_GAS_LIMIT_PER_TX_EXCEEDED;
+use error_messages::{INVALID_TOKEN_IDENTIFIER_FOR_NATIVE_TOKEN, MAX_GAS_LIMIT_PER_TX_EXCEEDED};
 use structs::configs::EsdtSafeConfig;
 multiversx_sc::imports!();
 
@@ -21,5 +21,12 @@ pub trait LibCommon: crate::storage::CrossChainStorage {
             config.max_tx_gas_limit < MAX_GAS_PER_TRANSACTION,
             MAX_GAS_LIMIT_PER_TX_EXCEEDED
         );
+
+        if let Some(native_token) = config.opt_native_token.clone() {
+            require!(
+                TokenIdentifier::from(native_token).is_valid_esdt_identifier(),
+                INVALID_TOKEN_IDENTIFIER_FOR_NATIVE_TOKEN
+            );
+        }
     }
 }
