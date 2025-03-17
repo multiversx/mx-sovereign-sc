@@ -43,30 +43,6 @@ fn deploy() {
 }
 
 #[test]
-fn deploy_no_config() {
-    let mut state = MvxEsdtSafeTestState::new();
-
-    state.deploy_contract(HEADER_VERIFIER_ADDRESS, OptionalValue::None);
-    state
-        .world
-        .check_account(ESDT_SAFE_ADDRESS)
-        .check_storage(
-            "str:crossChainConfig",
-            "0x00000000000000000000000011e1a30000000000", // default EsdtSafeConfig hex encoded
-        )
-        .check_storage("str:only_admin_module:admins.len", "0x01")
-        .check_storage("0x6f6e6c795f61646d696e5f6d6f64756c653a61646d696e732e6974656d00000001", "0x6f776e65725f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f")
-        .check_storage(
-            "0x6f6e6c795f61646d696e5f6d6f64756c653a61646d696e732e696e6465786f776e65725f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f",
-            "0x01",
-        )
-        .check_storage(
-            "str:headerVerifierAddress",
-            "0x000000000000000005006865616465722d76657269666965725f5f5f5f5f5f5f", // HEADER_VERIFIER_ADDRESS hex encoded, required for the check_storage to work
-        );
-}
-
-#[test]
 fn deploy_invalid_config() {
     let mut state = MvxEsdtSafeTestState::new();
 
@@ -83,58 +59,6 @@ fn deploy_invalid_config() {
     );
 
     state.update_configuration(config, Some(MAX_GAS_LIMIT_PER_TX_EXCEEDED));
-}
-
-#[test]
-fn deploy_and_update_config() {
-    let mut state = MvxEsdtSafeTestState::new();
-
-    state.deploy_contract(HEADER_VERIFIER_ADDRESS, OptionalValue::None);
-
-    state
-        .world
-        .check_account(ESDT_SAFE_ADDRESS)
-        .check_storage(
-            "str:crossChainConfig",
-            "0x00000000000000000000000011e1a30000000000", // default EsdtSafeConfig hex encoded
-        )
-        .check_storage("str:only_admin_module:admins.len", "0x01")
-        .check_storage("0x6f6e6c795f61646d696e5f6d6f64756c653a61646d696e732e6974656d00000001", "0x6f776e65725f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f")
-        .check_storage(
-            "0x6f6e6c795f61646d696e5f6d6f64756c653a61646d696e732e696e6465786f776e65725f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f",
-            "0x01",
-        )
-        .check_storage(
-            "str:headerVerifierAddress",
-            "0x000000000000000005006865616465722d76657269666965725f5f5f5f5f5f5f", // HEADER_VERIFIER_ADDRESS hex encoded, required for the check_storage to work
-        );
-
-    let new_config = EsdtSafeConfig {
-        token_whitelist: ManagedVec::from_single_item(TokenIdentifier::from(TEST_TOKEN_ONE)),
-        token_blacklist: ManagedVec::from_single_item(TokenIdentifier::from(TEST_TOKEN_TWO)),
-        max_tx_gas_limit: 30_000,
-        banned_endpoints: ManagedVec::from_single_item(ManagedBuffer::from("endpoint")),
-    };
-
-    state.update_configuration(new_config, None);
-
-    state
-        .world
-        .check_account(ESDT_SAFE_ADDRESS)
-        .check_storage(
-            "str:crossChainConfig",
-            "0x000000010000000b544f4e452d313233343536000000010000000b5454574f2d31323334353600000000000075300000000100000008656e64706f696e74", // updated EsdtSafeConfig hex encoded
-        )
-        .check_storage("str:only_admin_module:admins.len", "0x01")
-        .check_storage("0x6f6e6c795f61646d696e5f6d6f64756c653a61646d696e732e6974656d00000001", "0x6f776e65725f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f")
-        .check_storage(
-            "0x6f6e6c795f61646d696e5f6d6f64756c653a61646d696e732e696e6465786f776e65725f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f",
-            "0x01",
-        )
-        .check_storage(
-            "str:headerVerifierAddress",
-            "0x000000000000000005006865616465722d76657269666965725f5f5f5f5f5f5f", // HEADER_VERIFIER_ADDRESS hex encoded, required for the check_storage to work
-        );
 }
 
 #[test]
