@@ -740,3 +740,101 @@ fn execute_operation_success() {
                 .is_empty());
         })
 }
+
+#[test]
+fn execute_operation_with_native_token_success() {
+    let mut state = MvxEsdtSafeTestState::new();
+    let config = EsdtSafeConfig {
+        opt_native_token: Some(ManagedBuffer::from(TEST_TOKEN_ONE)),
+        ..EsdtSafeConfig::default_config()
+    };
+    state.deploy_contract(HEADER_VERIFIER_ADDRESS, OptionalValue::Some(config));
+
+    let sov_token_id = TestTokenIdentifier::new(TEST_TOKEN_ONE);
+    let token_type = EsdtTokenType::Fungible;
+    let token_display_name = "TokenOne";
+    let token_ticker = TEST_TOKEN_ONE;
+    let num_decimals = 3;
+    let egld_payment = BigUint::from(DEFAULT_ISSUE_COST);
+
+    let register_token_args = RegisterTokenArgs {
+        sov_token_id,
+        token_type,
+        token_display_name,
+        token_ticker,
+        num_decimals,
+    };
+
+    state.register_token(register_token_args, egld_payment, None);
+
+    let token_data = EsdtTokenData {
+        amount: BigUint::from(100u64),
+        ..Default::default()
+    };
+
+    let payment = OperationEsdtPayment::new(TokenIdentifier::from(TEST_TOKEN_ONE), 0, token_data);
+
+    let gas_limit = 1;
+    let function = ManagedBuffer::<StaticApi>::from("hello");
+    let args =
+        ManagedVec::<StaticApi, ManagedBuffer<StaticApi>>::from(vec![ManagedBuffer::from("1")]);
+
+    let transfer_data = TransferData::new(gas_limit, function, args);
+
+    let operation_data =
+        OperationData::new(1, OWNER_ADDRESS.to_managed_address(), Some(transfer_data));
+
+    let operation = Operation::new(
+        TESTING_SC_ADDRESS.to_managed_address(),
+        vec![payment].into(),
+        operation_data,
+    );
+
+    let operation_hash = state.get_operation_hash(&operation);
+    let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&operation_hash.to_vec()));
+
+    state.common_setup.deploy_header_verifier();
+    state.common_setup.deploy_testing_sc();
+    state.set_esdt_safe_address_in_header_verifier(ESDT_SAFE_ADDRESS);
+
+    let operations_hashes = MultiValueEncoded::from(ManagedVec::from(vec![operation_hash.clone()]));
+
+    state
+        .common_setup
+        .deploy_chain_config(SovereignConfig::default_config());
+    state.register_operation(ManagedBuffer::new(), &hash_of_hashes, operations_hashes);
+
+    state
+        .common_setup
+        .world
+        .query()
+        .to(HEADER_VERIFIER_ADDRESS)
+        .whitebox(header_verifier::contract_obj, |sc| {
+            let operation_hash_whitebox = ManagedBuffer::new_from_bytes(&operation_hash.to_vec());
+            let hash_of_hashes =
+                ManagedBuffer::new_from_bytes(&sha256(&operation_hash_whitebox.to_vec()));
+
+            assert!(
+                sc.operation_hash_status(&hash_of_hashes, &operation_hash_whitebox)
+                    .get()
+                    == OperationHashStatus::NotLocked
+            );
+        });
+
+    state.execute_operation(hash_of_hashes, operation.clone(), None);
+
+    state
+        .common_setup
+        .world
+        .query()
+        .to(HEADER_VERIFIER_ADDRESS)
+        .whitebox(header_verifier::contract_obj, |sc| {
+            let operation_hash_whitebox = ManagedBuffer::new_from_bytes(&operation_hash.to_vec());
+            let hash_of_hashes =
+                ManagedBuffer::new_from_bytes(&sha256(&operation_hash_whitebox.to_vec()));
+
+            assert!(sc
+                .operation_hash_status(&hash_of_hashes, &operation_hash_whitebox)
+                .is_empty());
+        })
+}
