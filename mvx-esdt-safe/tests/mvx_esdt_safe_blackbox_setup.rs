@@ -1,58 +1,27 @@
+use common_blackbox_setup::{
+    BaseSetup, ESDT_SAFE_ADDRESS, FEE_TOKEN, HEADER_VERIFIER_ADDRESS, ONE_HUNDRED_MILLION,
+    OWNER_ADDRESS, TEST_TOKEN_ONE, TEST_TOKEN_TWO,
+};
 use multiversx_sc::{
     codec::TopEncode,
-    imports::{MultiValue2, OptionalValue},
+    imports::OptionalValue,
     types::{
         BigUint, EsdtLocalRole, EsdtTokenType, ManagedAddress, ManagedBuffer, ManagedVec,
-        MultiValueEncoded, TestAddress, TestSCAddress, TestTokenIdentifier, TokenIdentifier,
+        MultiValueEncoded, TestSCAddress, TestTokenIdentifier, TokenIdentifier,
     },
 };
 use multiversx_sc_modules::transfer_role_proxy::PaymentsVec;
 use multiversx_sc_scenario::{
     api::StaticApi, imports::MxscPath, multiversx_chain_vm::crypto_functions::sha256,
     scenario_model::Log, ReturnsHandledOrError, ReturnsLogs, ScenarioTxRun, ScenarioTxWhitebox,
-    ScenarioWorld,
 };
 use mvx_esdt_safe::{bridging_mechanism::TRUSTED_TOKEN_IDS, MvxEsdtSafe};
-use proxies::{
-    chain_config_proxy::ChainConfigContractProxy,
-    fee_market_proxy::{FeeMarketProxy, FeeStruct},
-    header_verifier_proxy::HeaderverifierProxy,
-    mvx_esdt_safe_proxy::MvxEsdtSafeProxy,
-    testing_sc_proxy::TestingScProxy,
-};
+use proxies::{header_verifier_proxy::HeaderverifierProxy, mvx_esdt_safe_proxy::MvxEsdtSafeProxy};
 use structs::{
-    aliases::OptionalValueTransferDataTuple,
-    configs::{EsdtSafeConfig, SovereignConfig},
-    operation::Operation,
+    aliases::OptionalValueTransferDataTuple, configs::EsdtSafeConfig, operation::Operation,
 };
 
-pub const ESDT_SAFE_ADDRESS: TestSCAddress = TestSCAddress::new("sc");
 const CONTRACT_CODE_PATH: MxscPath = MxscPath::new("output/mvx-esdt-safe.mxsc.json");
-
-pub const FEE_MARKET_ADDRESS: TestSCAddress = TestSCAddress::new("fee-market");
-const FEE_MARKET_CODE_PATH: MxscPath = MxscPath::new("../fee-market/output/fee-market.mxsc.json");
-
-pub const HEADER_VERIFIER_ADDRESS: TestSCAddress = TestSCAddress::new("header-verifier");
-const HEADER_VERIFIER_CODE_PATH: MxscPath =
-    MxscPath::new("../header-verifier/output/header-verifier.mxsc.json");
-
-pub const CHAIN_CONFIG_ADDRESS: TestSCAddress = TestSCAddress::new("chain-config");
-const CHAIN_CONFIG_CODE_PATH: MxscPath =
-    MxscPath::new("../chain-config/output/chain-config.mxsc.json");
-
-pub const TESTING_SC_ADDRESS: TestSCAddress = TestSCAddress::new("testing-sc");
-const TESTING_SC_CODE_PATH: MxscPath = MxscPath::new("../testing-sc/output/testing-sc.mxsc.json");
-
-pub const OWNER_ADDRESS: TestAddress = TestAddress::new("owner");
-pub const USER: TestAddress = TestAddress::new("user");
-
-pub const TEST_TOKEN_ONE: &str = "TONE-123456";
-pub const TEST_TOKEN_TWO: &str = "TTWO-123456";
-pub const FEE_TOKEN: &str = "FEE-123456";
-
-pub const ONE_HUNDRED_MILLION: u32 = 100_000_000;
-pub const ONE_HUNDRED_THOUSAND: u32 = 100_000;
-const OWNER_BALANCE: u128 = 100_000_000_000_000_000_000_000;
 
 pub struct RegisterTokenArgs<'a> {
     pub sov_token_id: TestTokenIdentifier<'a>,
@@ -62,68 +31,25 @@ pub struct RegisterTokenArgs<'a> {
     pub num_decimals: usize,
 }
 
-fn world() -> ScenarioWorld {
-    let mut blockchain = ScenarioWorld::new();
-
-    blockchain.register_contract(CONTRACT_CODE_PATH, mvx_esdt_safe::ContractBuilder);
-    blockchain.register_contract(FEE_MARKET_CODE_PATH, fee_market::ContractBuilder);
-    blockchain.register_contract(HEADER_VERIFIER_CODE_PATH, header_verifier::ContractBuilder);
-    blockchain.register_contract(CHAIN_CONFIG_CODE_PATH, chain_config::ContractBuilder);
-    blockchain.register_contract(TESTING_SC_CODE_PATH, testing_sc::ContractBuilder);
-
-    blockchain
-}
-
 pub struct MvxEsdtSafeTestState {
-    pub world: ScenarioWorld,
+    pub common_setup: BaseSetup,
 }
 
 impl MvxEsdtSafeTestState {
     #[allow(clippy::new_without_default)]
     pub fn new() -> Self {
-        let mut world = world();
+        let mut common_setup = BaseSetup::new();
 
-        world
-            .account(OWNER_ADDRESS)
-            .nonce(1)
-            .esdt_balance(
-                TokenIdentifier::from(FEE_TOKEN),
-                BigUint::from(ONE_HUNDRED_MILLION),
-            )
-            .esdt_balance(
-                TokenIdentifier::from(TEST_TOKEN_ONE),
-                BigUint::from(ONE_HUNDRED_MILLION),
-            )
-            .esdt_balance(
-                TokenIdentifier::from(TEST_TOKEN_TWO),
-                BigUint::from(ONE_HUNDRED_MILLION),
-            )
-            .esdt_balance(
-                TokenIdentifier::from(TRUSTED_TOKEN_IDS[0]),
-                BigUint::from(ONE_HUNDRED_MILLION),
-            )
-            .balance(BigUint::from(OWNER_BALANCE));
+        common_setup
+            .world
+            .register_contract(CONTRACT_CODE_PATH, mvx_esdt_safe::ContractBuilder);
+        common_setup.world.set_esdt_balance(
+            OWNER_ADDRESS,
+            TRUSTED_TOKEN_IDS[0].as_bytes(),
+            BigUint::from(ONE_HUNDRED_MILLION),
+        );
 
-        world
-            .account(USER)
-            .nonce(1)
-            .esdt_balance(
-                TokenIdentifier::from(TEST_TOKEN_ONE),
-                BigUint::from(ONE_HUNDRED_MILLION),
-            )
-            .balance(BigUint::from(OWNER_BALANCE))
-            .esdt_balance(
-                TokenIdentifier::from(TEST_TOKEN_TWO),
-                BigUint::from(ONE_HUNDRED_MILLION),
-            )
-            .balance(BigUint::from(OWNER_BALANCE))
-            .esdt_balance(
-                TokenIdentifier::from(TRUSTED_TOKEN_IDS[0]),
-                BigUint::default(),
-            )
-            .balance(BigUint::from(OWNER_BALANCE));
-
-        Self { world }
+        Self { common_setup }
     }
 
     pub fn deploy_contract(
@@ -131,7 +57,8 @@ impl MvxEsdtSafeTestState {
         header_verifier_address: TestSCAddress,
         opt_config: OptionalValue<EsdtSafeConfig<StaticApi>>,
     ) -> &mut Self {
-        self.world
+        self.common_setup
+            .world
             .tx()
             .from(OWNER_ADDRESS)
             .typed(MvxEsdtSafeProxy)
@@ -140,7 +67,8 @@ impl MvxEsdtSafeTestState {
             .new_address(ESDT_SAFE_ADDRESS)
             .run();
 
-        self.world
+        self.common_setup
+            .world
             .tx()
             .from(OWNER_ADDRESS)
             .to(ESDT_SAFE_ADDRESS)
@@ -152,7 +80,8 @@ impl MvxEsdtSafeTestState {
     }
 
     pub fn deploy_contract_with_roles(&mut self) -> &mut Self {
-        self.world
+        self.common_setup
+            .world
             .account(ESDT_SAFE_ADDRESS)
             .nonce(1)
             .code(CONTRACT_CODE_PATH)
@@ -188,12 +117,14 @@ impl MvxEsdtSafeTestState {
                 ],
             );
 
-        self.world
+        self.common_setup
+            .world
             .tx()
             .from(OWNER_ADDRESS)
             .to(ESDT_SAFE_ADDRESS)
             .whitebox(mvx_esdt_safe::contract_obj, |sc| {
                 let config = EsdtSafeConfig::new(
+                    None,
                     ManagedVec::new(),
                     ManagedVec::new(),
                     50_000_000,
@@ -206,7 +137,8 @@ impl MvxEsdtSafeTestState {
                 );
             });
 
-        self.world
+        self.common_setup
+            .world
             .tx()
             .from(OWNER_ADDRESS)
             .to(ESDT_SAFE_ADDRESS)
@@ -223,6 +155,7 @@ impl MvxEsdtSafeTestState {
         err_message: Option<&str>,
     ) {
         let response = self
+            .common_setup
             .world
             .tx()
             .from(OWNER_ADDRESS)
@@ -232,78 +165,8 @@ impl MvxEsdtSafeTestState {
             .returns(ReturnsHandledOrError::new())
             .run();
 
-        match response {
-            Ok(_) => assert!(
-                err_message.is_none(),
-                "Transaction was successful, but expected error"
-            ),
-            Err(error) => assert_eq!(err_message, Some(error.message.as_str())),
-        };
-    }
-
-    pub fn deploy_fee_market(&mut self, fee: Option<FeeStruct<StaticApi>>) -> &mut Self {
-        self.world
-            .tx()
-            .from(OWNER_ADDRESS)
-            .typed(FeeMarketProxy)
-            .init(ESDT_SAFE_ADDRESS, fee)
-            .code(FEE_MARKET_CODE_PATH)
-            .new_address(FEE_MARKET_ADDRESS)
-            .run();
-
-        self
-    }
-
-    pub fn deploy_testing_sc(&mut self) -> &mut Self {
-        self.world
-            .tx()
-            .from(OWNER_ADDRESS)
-            .typed(TestingScProxy)
-            .init()
-            .code(TESTING_SC_CODE_PATH)
-            .new_address(TESTING_SC_ADDRESS)
-            .run();
-
-        self
-    }
-
-    pub fn deploy_header_verifier(&mut self) -> &mut Self {
-        self.world
-            .tx()
-            .from(OWNER_ADDRESS)
-            .typed(HeaderverifierProxy)
-            .init()
-            .code(HEADER_VERIFIER_CODE_PATH)
-            .new_address(HEADER_VERIFIER_ADDRESS)
-            .run();
-
-        self
-    }
-
-    pub fn deploy_chain_config(&mut self, config: SovereignConfig<StaticApi>) -> &mut Self {
-        let mut additional_stake_as_tuple = MultiValueEncoded::new();
-        if let Some(additional_stake) = config.opt_additional_stake_required {
-            for stake in additional_stake {
-                additional_stake_as_tuple.push(MultiValue2::from((stake.token_id, stake.amount)));
-            }
-        }
-
-        self.world
-            .tx()
-            .from(OWNER_ADDRESS)
-            .typed(ChainConfigContractProxy)
-            .init(
-                config.min_validators as usize,
-                config.max_validators as usize,
-                config.min_stake,
-                OWNER_ADDRESS,
-                additional_stake_as_tuple,
-            )
-            .code(CHAIN_CONFIG_CODE_PATH)
-            .new_address(CHAIN_CONFIG_ADDRESS)
-            .run();
-
-        self
+        self.common_setup
+            .assert_expected_error_message(response, err_message);
     }
 
     pub fn set_token_burn_mechanism(
@@ -312,6 +175,7 @@ impl MvxEsdtSafeTestState {
         expected_error_message: Option<&str>,
     ) -> &mut Self {
         let response = self
+            .common_setup
             .world
             .tx()
             .from(OWNER_ADDRESS)
@@ -340,6 +204,7 @@ impl MvxEsdtSafeTestState {
         expected_error_message: Option<&str>,
     ) -> &mut Self {
         let response = self
+            .common_setup
             .world
             .tx()
             .from(OWNER_ADDRESS)
@@ -363,7 +228,8 @@ impl MvxEsdtSafeTestState {
     }
 
     pub fn set_fee_market_address(&mut self, fee_market_address: TestSCAddress) {
-        self.world
+        self.common_setup
+            .world
             .tx()
             .from(OWNER_ADDRESS)
             .to(ESDT_SAFE_ADDRESS)
@@ -380,6 +246,7 @@ impl MvxEsdtSafeTestState {
         expected_error_message: Option<&str>,
     ) {
         let tx = self
+            .common_setup
             .world
             .tx()
             .from(OWNER_ADDRESS)
@@ -395,15 +262,8 @@ impl MvxEsdtSafeTestState {
             tx.returns(ReturnsHandledOrError::new()).run()
         };
 
-        match response {
-            Ok(_) => assert!(
-                expected_error_message.is_none(),
-                "Transaction was successful, but expected error"
-            ),
-            Err(error) => {
-                assert_eq!(expected_error_message, Some(error.message.as_str()))
-            }
-        }
+        self.common_setup
+            .assert_expected_error_message(response, expected_error_message);
     }
 
     pub fn deposit_with_logs(
@@ -412,7 +272,8 @@ impl MvxEsdtSafeTestState {
         opt_transfer_data: OptionalValueTransferDataTuple<StaticApi>,
         payment: PaymentsVec<StaticApi>,
     ) -> Vec<Log> {
-        self.world
+        self.common_setup
+            .world
             .tx()
             .from(OWNER_ADDRESS)
             .to(ESDT_SAFE_ADDRESS)
@@ -430,6 +291,7 @@ impl MvxEsdtSafeTestState {
         expected_error_message: Option<&str>,
     ) {
         let response = self
+            .common_setup
             .world
             .tx()
             .from(OWNER_ADDRESS)
@@ -446,15 +308,8 @@ impl MvxEsdtSafeTestState {
             .returns(ReturnsHandledOrError::new())
             .run();
 
-        match response {
-            Ok(_) => assert!(
-                expected_error_message.is_none(),
-                "Transaction was successful, but expected error"
-            ),
-            Err(error) => {
-                assert_eq!(expected_error_message, Some(error.message.as_str()))
-            }
-        }
+        self.common_setup
+            .assert_expected_error_message(response, expected_error_message);
     }
 
     pub fn execute_operation(
@@ -464,6 +319,7 @@ impl MvxEsdtSafeTestState {
         expected_error_message: Option<&str>,
     ) {
         let response = self
+            .common_setup
             .world
             .tx()
             .from(OWNER_ADDRESS)
@@ -473,19 +329,13 @@ impl MvxEsdtSafeTestState {
             .returns(ReturnsHandledOrError::new())
             .run();
 
-        match response {
-            Ok(_) => assert!(
-                expected_error_message.is_none(),
-                "Transaction was successful, but expected error"
-            ),
-            Err(error) => {
-                assert_eq!(expected_error_message, Some(error.message.as_str()))
-            }
-        }
+        self.common_setup
+            .assert_expected_error_message(response, expected_error_message);
     }
 
     pub fn set_esdt_safe_address_in_header_verifier(&mut self, esdt_safe_address: TestSCAddress) {
-        self.world
+        self.common_setup
+            .world
             .tx()
             .from(OWNER_ADDRESS)
             .to(HEADER_VERIFIER_ADDRESS)
@@ -500,7 +350,8 @@ impl MvxEsdtSafeTestState {
         hash_of_hashes: &ManagedBuffer<StaticApi>,
         operations_hashes: MultiValueEncoded<StaticApi, ManagedBuffer<StaticApi>>,
     ) {
-        self.world
+        self.common_setup
+            .world
             .tx()
             .from(OWNER_ADDRESS)
             .to(HEADER_VERIFIER_ADDRESS)

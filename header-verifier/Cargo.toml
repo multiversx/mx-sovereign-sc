@@ -1,6 +1,6 @@
 [package]
 name = "header-verifier"
-version = "0.0.0"
+version = "0.1.0"
 authors = ["you"]
 edition = "2021"
 publish = false
@@ -9,7 +9,7 @@ publish = false
 path = "src/lib.rs"
 
 [dependencies.multiversx-sc]
-version = "0.56.1"
+version = "0.57.0"
 
 [dependencies.structs]
 path = "../common/structs"
@@ -20,8 +20,5 @@ path = "../common/proxies"
 [dependencies.error-messages]
 path = "../common/error-messages"
 
-[dev-dependencies]
-num-bigint = "0.4.2"
-
 [dev-dependencies.multiversx-sc-scenario]
-version = "0.56.1"
+version = "0.57.0"
