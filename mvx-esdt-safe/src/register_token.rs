@@ -1,5 +1,5 @@
 use cross_chain::REGISTER_GAS;
-use error_messages::INVALID_TYPE;
+use error_messages::{CANNOT_REGISTER_TOKEN, INVALID_TYPE};
 use multiversx_sc::types::EsdtTokenType;
 use structs::{EsdtInfo, IssueEsdtArgs};
 multiversx_sc::imports!();
@@ -24,6 +24,11 @@ pub trait RegisterTokenModule:
     ) {
         self.require_sov_token_id_not_registered(&sov_token_id);
 
+        require!(
+            self.has_prefix(&sov_token_id)
+                || (self.is_native_token(&sov_token_id) && token_type == EsdtTokenType::Fungible),
+            CANNOT_REGISTER_TOKEN
+        );
         let issue_cost = self.call_value().egld().clone_value();
 
         match token_type {
