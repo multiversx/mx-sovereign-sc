@@ -499,15 +499,12 @@ fn deposit_refund() {
 }
 
 #[test]
-fn register_token_invalid_type() {
+fn register_token_invalid_type_with_prefix() {
     let mut state = MvxEsdtSafeTestState::new();
-    let config = EsdtSafeConfig {
-        opt_native_token: Some(ManagedBuffer::from(TEST_TOKEN_ONE)),
-        ..EsdtSafeConfig::default_config()
-    };
+    let config = EsdtSafeConfig::default_config();
     state.deploy_contract(HEADER_VERIFIER_ADDRESS, OptionalValue::Some(config));
 
-    let sov_token_id = TestTokenIdentifier::new(TEST_TOKEN_ONE);
+    let sov_token_id = TestTokenIdentifier::new("sov-TONE-123456");
     let token_type = EsdtTokenType::Invalid;
     let token_display_name = "TokenOne";
     let num_decimals = 3;
@@ -620,20 +617,11 @@ fn register_token_nonfungible_token() {
         num_decimals,
     };
 
-    state.register_token(register_token_args, egld_payment, None);
-
-    // NOTE: Will use assert after framework fixes
-    // state
-    //     .world
-    //     .query()
-    //     .to(CONTRACT_ADDRESS)
-    //     .whitebox(mvx_esdt_safe::contract_obj, |sc| {
-    //         assert!(!sc
-    //             .sovereign_to_multiversx_token_id_mapper(
-    //                 &TestTokenIdentifier::new(TEST_TOKEN_ONE).into()
-    //             )
-    //             .is_empty());
-    //     })
+    state.register_token(
+        register_token_args,
+        egld_payment,
+        Some(CANNOT_REGISTER_TOKEN),
+    );
 }
 
 #[test]

@@ -25,7 +25,8 @@ pub trait RegisterTokenModule:
         self.require_sov_token_id_not_registered(&sov_token_id);
 
         require!(
-            self.has_prefix(&sov_token_id) || self.is_native_token(&sov_token_id),
+            self.has_prefix(&sov_token_id)
+                || (self.is_native_token(&sov_token_id) && token_type == EsdtTokenType::Fungible),
             CANNOT_REGISTER_TOKEN
         );
         let issue_cost = self.call_value().egld().clone_value();
