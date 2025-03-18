@@ -1,6 +1,6 @@
 use common_blackbox_setup::{
-    BaseSetup, ESDT_SAFE_ADDRESS, FEE_TOKEN, HEADER_VERIFIER_ADDRESS, OWNER_ADDRESS,
-    TEST_TOKEN_ONE, TEST_TOKEN_TWO,
+    BaseSetup, ESDT_SAFE_ADDRESS, FEE_TOKEN, HEADER_VERIFIER_ADDRESS, ONE_HUNDRED_MILLION,
+    OWNER_ADDRESS, TEST_TOKEN_ONE, TEST_TOKEN_TWO,
 };
 use multiversx_sc::{
     codec::TopEncode,
@@ -43,6 +43,11 @@ impl MvxEsdtSafeTestState {
         common_setup
             .world
             .register_contract(CONTRACT_CODE_PATH, mvx_esdt_safe::ContractBuilder);
+        common_setup.world.set_esdt_balance(
+            OWNER_ADDRESS,
+            TRUSTED_TOKEN_IDS[0].as_bytes(),
+            BigUint::from(ONE_HUNDRED_MILLION),
+        );
 
         Self { common_setup }
     }

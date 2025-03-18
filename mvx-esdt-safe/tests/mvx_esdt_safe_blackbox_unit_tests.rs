@@ -29,7 +29,7 @@ use structs::{
     configs::{EsdtSafeConfig, SovereignConfig},
     operation::{Operation, OperationData, OperationEsdtPayment, TransferData},
 };
-
+// deposit_success_burn_mechanism
 mod mvx_esdt_safe_blackbox_setup;
 
 #[test]
@@ -141,43 +141,6 @@ fn set_token_lock_mechanism_token_from_sovereign() {
     state.set_token_lock_mechanism(TRUSTED_TOKEN_IDS[0], Some(TOKEN_IS_FROM_SOVEREIGN));
 }
 
-// #[test]
-// fn set_token_burn_mechanism() {
-//     let mut state = MvxEsdtSafeTestState::new();
-//     state.deploy_contract_with_roles();
-//
-//     state.set_token_burn_mechanism(TRUSTED_TOKEN_IDS[0], None);
-//
-//     state
-//         .common_setup
-//         .world
-//         .query()
-//         .to(ESDT_SAFE_ADDRESS)
-//         .whitebox(mvx_esdt_safe::contract_obj, |sc| {
-//             assert!(sc
-//                 .burn_mechanism_tokens()
-//                 .contains(&TokenIdentifier::from(TRUSTED_TOKEN_IDS[0])))
-//         })
-// }
-
-// #[test]
-// fn set_token_lock_mechanism() {
-//     let mut state = MvxEsdtSafeTestState::new();
-//     state.deploy_contract_with_roles();
-//
-//     state.set_token_burn_mechanism(TRUSTED_TOKEN_IDS[0], None);
-//     state.set_token_lock_mechanism(TRUSTED_TOKEN_IDS[0], None);
-//
-//     state
-//         .common_setup
-//         .world
-//         .query()
-//         .to(ESDT_SAFE_ADDRESS)
-//         .whitebox(mvx_esdt_safe::contract_obj, |sc| {
-//             assert!(sc.burn_mechanism_tokens().is_empty())
-//         })
-// }
-
 #[test]
 fn register_token_invalid_type() {
     let mut state = MvxEsdtSafeTestState::new();
@@ -199,14 +162,79 @@ fn register_token_invalid_type() {
         num_decimals,
     };
 
+    state.register_token(
+        register_token_args,
+        egld_payment,
+        Some(CANNOT_REGISTER_TOKEN),
+    );
+}
+
+#[test]
+fn register_token_invalid_type_with_prefix() {
+    let mut state = MvxEsdtSafeTestState::new();
+    let config = EsdtSafeConfig {
+        opt_native_token: Some(ManagedBuffer::from(TEST_TOKEN_ONE)),
+        ..EsdtSafeConfig::default_config()
+    };
+    state.deploy_contract(HEADER_VERIFIER_ADDRESS, OptionalValue::Some(config));
+
+    let sov_token_id = TestTokenIdentifier::new("sov-TONE-123456");
+    let token_type = EsdtTokenType::Invalid;
+    let token_display_name = "TokenOne";
+    let num_decimals = 3;
+    let token_ticker = TEST_TOKEN_ONE;
+    let egld_payment = BigUint::from(DEFAULT_ISSUE_COST);
+
+    let register_token_args = RegisterTokenArgs {
+        sov_token_id,
+        token_type,
+        token_display_name,
+        token_ticker,
+        num_decimals,
+    };
+
     state.register_token(register_token_args, egld_payment, Some(INVALID_TYPE));
+}
+
+#[test]
+fn register_token_not_native() {
+    let mut state = MvxEsdtSafeTestState::new();
+    let config = EsdtSafeConfig {
+        opt_native_token: Some(ManagedBuffer::from(TEST_TOKEN_ONE)),
+        ..EsdtSafeConfig::default_config()
+    };
+    state.deploy_contract(HEADER_VERIFIER_ADDRESS, OptionalValue::Some(config));
+
+    let sov_token_id = TestTokenIdentifier::new(TEST_TOKEN_TWO);
+    let token_type = EsdtTokenType::Fungible;
+    let token_display_name = "TokenOne";
+    let num_decimals = 3;
+    let token_ticker = TEST_TOKEN_ONE;
+    let egld_payment = BigUint::from(DEFAULT_ISSUE_COST);
+
+    let register_token_args = RegisterTokenArgs {
+        sov_token_id,
+        token_type,
+        token_display_name,
+        token_ticker,
+        num_decimals,
+    };
+
+    state.register_token(
+        register_token_args,
+        egld_payment,
+        Some(CANNOT_REGISTER_TOKEN),
+    );
 }
 
 #[test]
 fn register_token_fungible_token() {
     let mut state = MvxEsdtSafeTestState::new();
-    let config = OptionalValue::Some(EsdtSafeConfig::default_config());
-    state.deploy_contract(HEADER_VERIFIER_ADDRESS, config);
+    let config = EsdtSafeConfig {
+        opt_native_token: Some(ManagedBuffer::from(TEST_TOKEN_ONE)),
+        ..EsdtSafeConfig::default_config()
+    };
+    state.deploy_contract(HEADER_VERIFIER_ADDRESS, OptionalValue::Some(config));
 
     let sov_token_id = TestTokenIdentifier::new(TEST_TOKEN_ONE);
     let token_type = EsdtTokenType::Fungible;
@@ -224,26 +252,16 @@ fn register_token_fungible_token() {
     };
 
     state.register_token(register_token_args, egld_payment, None);
-
-    // NOTE: Will use assert after framework fixes
-    // state
-    //     .world
-    //     .query()
-    //     .to(CONTRACT_ADDRESS)
-    //     .whitebox(mvx_esdt_safe::contract_obj, |sc| {
-    //         assert!(!sc
-    //             .sovereign_to_multiversx_token_id_mapper(
-    //                 &TestTokenIdentifier::new(TEST_TOKEN_ONE).into()
-    //             )
-    //             .is_empty());
-    //     })
 }
 
 #[test]
 fn register_token_nonfungible_token() {
     let mut state = MvxEsdtSafeTestState::new();
-    let config = OptionalValue::Some(EsdtSafeConfig::default_config());
-    state.deploy_contract(HEADER_VERIFIER_ADDRESS, config);
+    let config = EsdtSafeConfig {
+        opt_native_token: Some(ManagedBuffer::from(TEST_TOKEN_ONE)),
+        ..EsdtSafeConfig::default_config()
+    };
+    state.deploy_contract(HEADER_VERIFIER_ADDRESS, OptionalValue::Some(config));
 
     let sov_token_id = TestTokenIdentifier::new(TEST_TOKEN_ONE);
     let token_type = EsdtTokenType::NonFungible;
@@ -260,20 +278,11 @@ fn register_token_nonfungible_token() {
         num_decimals,
     };
 
-    state.register_token(register_token_args, egld_payment, None);
-
-    // NOTE: Will use assert after framework fixes
-    // state
-    //     .world
-    //     .query()
-    //     .to(CONTRACT_ADDRESS)
-    //     .whitebox(mvx_esdt_safe::contract_obj, |sc| {
-    //         assert!(!sc
-    //             .sovereign_to_multiversx_token_id_mapper(
-    //                 &TestTokenIdentifier::new(TEST_TOKEN_ONE).into()
-    //             )
-    //             .is_empty());
-    //     })
+    state.register_token(
+        register_token_args,
+        egld_payment,
+        Some(CANNOT_REGISTER_TOKEN),
+    );
 }
 
 #[test]
@@ -716,93 +725,103 @@ fn deposit_refund() {
 }
 
 #[test]
-fn register_token_not_native() {
+fn deposit_success_burn_mechanism() {
     let mut state = MvxEsdtSafeTestState::new();
-    let config = EsdtSafeConfig {
-        opt_native_token: Some(ManagedBuffer::from(TEST_TOKEN_ONE)),
-        ..EsdtSafeConfig::default_config()
-    };
-    state.deploy_contract(HEADER_VERIFIER_ADDRESS, OptionalValue::Some(config));
 
-    let sov_token_id = TestTokenIdentifier::new(TEST_TOKEN_TWO);
-    let token_type = EsdtTokenType::Fungible;
-    let token_display_name = "TokenOne";
-    let num_decimals = 3;
-    let token_ticker = TEST_TOKEN_ONE;
-    let egld_payment = BigUint::from(DEFAULT_ISSUE_COST);
+    state.deploy_contract_with_roles();
+    state.common_setup.deploy_fee_market(None);
+    state.set_fee_market_address(FEE_MARKET_ADDRESS);
 
-    let register_token_args = RegisterTokenArgs {
-        sov_token_id,
-        token_type,
-        token_display_name,
-        token_ticker,
-        num_decimals,
-    };
+    state.set_token_burn_mechanism(TRUSTED_TOKEN_IDS[0], None);
 
-    state.register_token(
-        register_token_args,
-        egld_payment,
-        Some(CANNOT_REGISTER_TOKEN),
+    let esdt_token_payment_trusted_token = EsdtTokenPayment::<StaticApi>::new(
+        TokenIdentifier::from(TRUSTED_TOKEN_IDS[0]),
+        0,
+        BigUint::from(100u64),
     );
+
+    let esdt_token_payment_two = EsdtTokenPayment::<StaticApi>::new(
+        TokenIdentifier::from(TEST_TOKEN_TWO),
+        0,
+        BigUint::from(100u64),
+    );
+
+    let payments_vec = PaymentsVec::from(vec![
+        esdt_token_payment_trusted_token.clone(),
+        esdt_token_payment_two.clone(),
+    ]);
+
+    let logs =
+        state.deposit_with_logs(USER.to_managed_address(), OptionalValue::None, payments_vec);
+
+    for log in logs {
+        assert!(!log.topics.is_empty());
+    }
+
+    state
+        .common_setup
+        .world
+        .query()
+        .to(ESDT_SAFE_ADDRESS)
+        .whitebox(mvx_esdt_safe::contract_obj, |sc| {
+            assert!(sc
+                .multiversx_to_sovereign_token_id_mapper(&TokenIdentifier::from(
+                    TRUSTED_TOKEN_IDS[0]
+                ))
+                .is_empty());
+
+            let expected_deposited_tokens_amount = BigUint::from(100u64);
+
+            assert!(
+                expected_deposited_tokens_amount
+                    == sc
+                        .deposited_tokens_amount(&TokenIdentifier::from(TRUSTED_TOKEN_IDS[0]))
+                        .get()
+            );
+
+            let trusted_token_id = TokenIdentifier::from(TRUSTED_TOKEN_IDS[0]);
+
+            assert!(!sc.deposited_tokens_amount(&trusted_token_id).is_empty());
+
+            let trusted_token_sc_balance = sc
+                .blockchain()
+                .get_sc_balance(&EgldOrEsdtTokenIdentifier::esdt(trusted_token_id), 0);
+
+            assert!(trusted_token_sc_balance == BigUint::zero());
+
+            let second_token_sc_balance = TokenIdentifier::from(TEST_TOKEN_TWO);
+
+            let second_token_sc_balance = sc
+                .blockchain()
+                .get_sc_balance(&EgldOrEsdtTokenIdentifier::esdt(second_token_sc_balance), 0);
+
+            assert!(second_token_sc_balance == 100u64);
+        });
+
+    let expected_amount_trusted_token =
+        BigUint::from(ONE_HUNDRED_MILLION) - &esdt_token_payment_trusted_token.amount;
+
+    state
+        .common_setup
+        .world
+        .check_account(OWNER_ADDRESS)
+        .esdt_balance(
+            TokenIdentifier::from(TRUSTED_TOKEN_IDS[0]),
+            &expected_amount_trusted_token,
+        );
+
+    let expected_amount_token_two =
+        BigUint::from(ONE_HUNDRED_MILLION) - &esdt_token_payment_two.amount;
+
+    state
+        .common_setup
+        .world
+        .check_account(OWNER_ADDRESS)
+        .esdt_balance(
+            TokenIdentifier::from(TEST_TOKEN_TWO),
+            &expected_amount_token_two,
+        );
 }
-
-// #[test]
-// fn register_token_fungible_token() {
-//     let mut state = MvxEsdtSafeTestState::new();
-//     let config = EsdtSafeConfig {
-//         opt_native_token: Some(ManagedBuffer::from(TEST_TOKEN_ONE)),
-//         ..EsdtSafeConfig::default_config()
-//     };
-//     state.deploy_contract(HEADER_VERIFIER_ADDRESS, OptionalValue::Some(config));
-//
-//     let sov_token_id = TestTokenIdentifier::new(TEST_TOKEN_ONE);
-//     let token_type = EsdtTokenType::Fungible;
-//     let token_display_name = "TokenOne";
-//     let token_ticker = TEST_TOKEN_ONE;
-//     let num_decimals = 3;
-//     let egld_payment = BigUint::from(DEFAULT_ISSUE_COST);
-//
-//     let register_token_args = RegisterTokenArgs {
-//         sov_token_id,
-//         token_type,
-//         token_display_name,
-//         token_ticker,
-//         num_decimals,
-//     };
-//
-//     state.register_token(register_token_args, egld_payment, None);
-// }
-
-// #[test]
-// fn register_token_nonfungible_token() {
-//     let mut state = MvxEsdtSafeTestState::new();
-//     let config = EsdtSafeConfig {
-//         opt_native_token: Some(ManagedBuffer::from(TEST_TOKEN_ONE)),
-//         ..EsdtSafeConfig::default_config()
-//     };
-//     state.deploy_contract(HEADER_VERIFIER_ADDRESS, OptionalValue::Some(config));
-//
-//     let sov_token_id = TestTokenIdentifier::new(TEST_TOKEN_ONE);
-//     let token_type = EsdtTokenType::NonFungible;
-//     let token_display_name = "TokenOne";
-//     let num_decimals = 0;
-//     let token_ticker = TEST_TOKEN_ONE;
-//     let egld_payment = BigUint::from(DEFAULT_ISSUE_COST);
-//
-//     let register_token_args = RegisterTokenArgs {
-//         sov_token_id,
-//         token_type,
-//         token_display_name,
-//         token_ticker,
-//         num_decimals,
-//     };
-//
-//     state.register_token(
-//         register_token_args,
-//         egld_payment,
-//         Some(CANNOT_REGISTER_TOKEN),
-//     );
-// }
 
 #[test]
 fn execute_operation_no_esdt_safe_registered() {
