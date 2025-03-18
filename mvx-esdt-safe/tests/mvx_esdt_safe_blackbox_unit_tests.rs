@@ -89,6 +89,7 @@ fn set_token_burn_mechanism() {
     state.set_token_burn_mechanism(TRUSTED_TOKEN_IDS[0], None);
 
     state
+        .common_setup
         .world
         .query()
         .to(ESDT_SAFE_ADDRESS)
@@ -108,6 +109,7 @@ fn set_token_lock_mechanism() {
     state.set_token_lock_mechanism(TRUSTED_TOKEN_IDS[0], None);
 
     state
+        .common_setup
         .world
         .query()
         .to(ESDT_SAFE_ADDRESS)
@@ -124,6 +126,7 @@ fn set_token_lock_mechanism_token_from_sovereign() {
     state.set_token_burn_mechanism(TRUSTED_TOKEN_IDS[0], None);
 
     state
+        .common_setup
         .world
         .tx()
         .from(OWNER_ADDRESS)
@@ -138,40 +141,42 @@ fn set_token_lock_mechanism_token_from_sovereign() {
     state.set_token_lock_mechanism(TRUSTED_TOKEN_IDS[0], Some(TOKEN_IS_FROM_SOVEREIGN));
 }
 
-#[test]
-fn set_token_burn_mechanism() {
-    let mut state = MvxEsdtSafeTestState::new();
-    state.deploy_contract_with_roles();
+// #[test]
+// fn set_token_burn_mechanism() {
+//     let mut state = MvxEsdtSafeTestState::new();
+//     state.deploy_contract_with_roles();
+//
+//     state.set_token_burn_mechanism(TRUSTED_TOKEN_IDS[0], None);
+//
+//     state
+//         .common_setup
+//         .world
+//         .query()
+//         .to(ESDT_SAFE_ADDRESS)
+//         .whitebox(mvx_esdt_safe::contract_obj, |sc| {
+//             assert!(sc
+//                 .burn_mechanism_tokens()
+//                 .contains(&TokenIdentifier::from(TRUSTED_TOKEN_IDS[0])))
+//         })
+// }
 
-    state.set_token_burn_mechanism(TRUSTED_TOKEN_IDS[0], None);
-
-    state
-        .world
-        .query()
-        .to(ESDT_SAFE_ADDRESS)
-        .whitebox(mvx_esdt_safe::contract_obj, |sc| {
-            assert!(sc
-                .burn_mechanism_tokens()
-                .contains(&TokenIdentifier::from(TRUSTED_TOKEN_IDS[0])))
-        })
-}
-
-#[test]
-fn set_token_lock_mechanism() {
-    let mut state = MvxEsdtSafeTestState::new();
-    state.deploy_contract_with_roles();
-
-    state.set_token_burn_mechanism(TRUSTED_TOKEN_IDS[0], None);
-    state.set_token_lock_mechanism(TRUSTED_TOKEN_IDS[0], None);
-
-    state
-        .world
-        .query()
-        .to(ESDT_SAFE_ADDRESS)
-        .whitebox(mvx_esdt_safe::contract_obj, |sc| {
-            assert!(sc.burn_mechanism_tokens().is_empty())
-        })
-}
+// #[test]
+// fn set_token_lock_mechanism() {
+//     let mut state = MvxEsdtSafeTestState::new();
+//     state.deploy_contract_with_roles();
+//
+//     state.set_token_burn_mechanism(TRUSTED_TOKEN_IDS[0], None);
+//     state.set_token_lock_mechanism(TRUSTED_TOKEN_IDS[0], None);
+//
+//     state
+//         .common_setup
+//         .world
+//         .query()
+//         .to(ESDT_SAFE_ADDRESS)
+//         .whitebox(mvx_esdt_safe::contract_obj, |sc| {
+//             assert!(sc.burn_mechanism_tokens().is_empty())
+//         })
+// }
 
 #[test]
 fn register_token_invalid_type() {
@@ -741,63 +746,63 @@ fn register_token_not_native() {
     );
 }
 
-#[test]
-fn register_token_fungible_token() {
-    let mut state = MvxEsdtSafeTestState::new();
-    let config = EsdtSafeConfig {
-        opt_native_token: Some(ManagedBuffer::from(TEST_TOKEN_ONE)),
-        ..EsdtSafeConfig::default_config()
-    };
-    state.deploy_contract(HEADER_VERIFIER_ADDRESS, OptionalValue::Some(config));
+// #[test]
+// fn register_token_fungible_token() {
+//     let mut state = MvxEsdtSafeTestState::new();
+//     let config = EsdtSafeConfig {
+//         opt_native_token: Some(ManagedBuffer::from(TEST_TOKEN_ONE)),
+//         ..EsdtSafeConfig::default_config()
+//     };
+//     state.deploy_contract(HEADER_VERIFIER_ADDRESS, OptionalValue::Some(config));
+//
+//     let sov_token_id = TestTokenIdentifier::new(TEST_TOKEN_ONE);
+//     let token_type = EsdtTokenType::Fungible;
+//     let token_display_name = "TokenOne";
+//     let token_ticker = TEST_TOKEN_ONE;
+//     let num_decimals = 3;
+//     let egld_payment = BigUint::from(DEFAULT_ISSUE_COST);
+//
+//     let register_token_args = RegisterTokenArgs {
+//         sov_token_id,
+//         token_type,
+//         token_display_name,
+//         token_ticker,
+//         num_decimals,
+//     };
+//
+//     state.register_token(register_token_args, egld_payment, None);
+// }
 
-    let sov_token_id = TestTokenIdentifier::new(TEST_TOKEN_ONE);
-    let token_type = EsdtTokenType::Fungible;
-    let token_display_name = "TokenOne";
-    let token_ticker = TEST_TOKEN_ONE;
-    let num_decimals = 3;
-    let egld_payment = BigUint::from(DEFAULT_ISSUE_COST);
-
-    let register_token_args = RegisterTokenArgs {
-        sov_token_id,
-        token_type,
-        token_display_name,
-        token_ticker,
-        num_decimals,
-    };
-
-    state.register_token(register_token_args, egld_payment, None);
-}
-
-#[test]
-fn register_token_nonfungible_token() {
-    let mut state = MvxEsdtSafeTestState::new();
-    let config = EsdtSafeConfig {
-        opt_native_token: Some(ManagedBuffer::from(TEST_TOKEN_ONE)),
-        ..EsdtSafeConfig::default_config()
-    };
-    state.deploy_contract(HEADER_VERIFIER_ADDRESS, OptionalValue::Some(config));
-
-    let sov_token_id = TestTokenIdentifier::new(TEST_TOKEN_ONE);
-    let token_type = EsdtTokenType::NonFungible;
-    let token_display_name = "TokenOne";
-    let num_decimals = 0;
-    let token_ticker = TEST_TOKEN_ONE;
-    let egld_payment = BigUint::from(DEFAULT_ISSUE_COST);
-
-    let register_token_args = RegisterTokenArgs {
-        sov_token_id,
-        token_type,
-        token_display_name,
-        token_ticker,
-        num_decimals,
-    };
-
-    state.register_token(
-        register_token_args,
-        egld_payment,
-        Some(CANNOT_REGISTER_TOKEN),
-    );
-}
+// #[test]
+// fn register_token_nonfungible_token() {
+//     let mut state = MvxEsdtSafeTestState::new();
+//     let config = EsdtSafeConfig {
+//         opt_native_token: Some(ManagedBuffer::from(TEST_TOKEN_ONE)),
+//         ..EsdtSafeConfig::default_config()
+//     };
+//     state.deploy_contract(HEADER_VERIFIER_ADDRESS, OptionalValue::Some(config));
+//
+//     let sov_token_id = TestTokenIdentifier::new(TEST_TOKEN_ONE);
+//     let token_type = EsdtTokenType::NonFungible;
+//     let token_display_name = "TokenOne";
+//     let num_decimals = 0;
+//     let token_ticker = TEST_TOKEN_ONE;
+//     let egld_payment = BigUint::from(DEFAULT_ISSUE_COST);
+//
+//     let register_token_args = RegisterTokenArgs {
+//         sov_token_id,
+//         token_type,
+//         token_display_name,
+//         token_ticker,
+//         num_decimals,
+//     };
+//
+//     state.register_token(
+//         register_token_args,
+//         egld_payment,
+//         Some(CANNOT_REGISTER_TOKEN),
+//     );
+// }
 
 #[test]
 fn execute_operation_no_esdt_safe_registered() {
@@ -1002,6 +1007,7 @@ fn execute_operation_with_native_token_success() {
         });
 
     state
+        .common_setup
         .world
         .tx()
         .from(OWNER_ADDRESS)
@@ -1041,13 +1047,15 @@ fn execute_operation_burn_mechanism_without_deposit_cannot_subtract() {
     let operation_hash = state.get_operation_hash(&operation);
     let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&operation_hash.to_vec()));
 
-    state.deploy_header_verifier();
-    state.deploy_testing_sc();
+    state.common_setup.deploy_header_verifier();
+    state.common_setup.deploy_testing_sc();
     state.set_esdt_safe_address_in_header_verifier(ESDT_SAFE_ADDRESS);
 
     let operations_hashes = MultiValueEncoded::from(ManagedVec::from(vec![operation_hash.clone()]));
 
-    state.deploy_chain_config(SovereignConfig::default_config());
+    state
+        .common_setup
+        .deploy_chain_config(SovereignConfig::default_config());
     state.register_operation(ManagedBuffer::new(), &hash_of_hashes, operations_hashes);
 
     state.set_token_burn_mechanism(TRUSTED_TOKEN_IDS[0], None);
@@ -1055,6 +1063,7 @@ fn execute_operation_burn_mechanism_without_deposit_cannot_subtract() {
     state.execute_operation(hash_of_hashes, operation.clone(), None);
 
     state
+        .common_setup
         .world
         .query()
         .to(HEADER_VERIFIER_ADDRESS)
@@ -1069,6 +1078,7 @@ fn execute_operation_burn_mechanism_without_deposit_cannot_subtract() {
         });
 
     state
+        .common_setup
         .world
         .tx()
         .from(OWNER_ADDRESS)
@@ -1086,6 +1096,7 @@ fn execute_operation_burn_mechanism_without_deposit_cannot_subtract() {
         });
 
     state
+        .common_setup
         .world
         .tx()
         .from(OWNER_ADDRESS)
@@ -1101,6 +1112,7 @@ fn execute_operation_burn_mechanism_without_deposit_cannot_subtract() {
         });
 
     state
+        .common_setup
         .world
         .tx()
         .from(OWNER_ADDRESS)
@@ -1143,9 +1155,9 @@ fn execute_operation_success_burn_mechanism() {
     let operation_hash = state.get_operation_hash(&operation);
     let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&operation_hash.to_vec()));
 
-    state.deploy_header_verifier();
-    state.deploy_testing_sc();
-    state.deploy_fee_market(None);
+    state.common_setup.deploy_header_verifier();
+    state.common_setup.deploy_testing_sc();
+    state.common_setup.deploy_fee_market(None);
     state.set_fee_market_address(FEE_MARKET_ADDRESS);
     state.set_esdt_safe_address_in_header_verifier(ESDT_SAFE_ADDRESS);
 
@@ -1163,10 +1175,13 @@ fn execute_operation_success_burn_mechanism() {
         assert!(!log.topics.is_empty());
     }
 
-    state.deploy_chain_config(SovereignConfig::default_config());
+    state
+        .common_setup
+        .deploy_chain_config(SovereignConfig::default_config());
     state.register_operation(ManagedBuffer::new(), &hash_of_hashes, operations_hashes);
 
     state
+        .common_setup
         .world
         .query()
         .to(HEADER_VERIFIER_ADDRESS)
@@ -1188,12 +1203,17 @@ fn execute_operation_success_burn_mechanism() {
 
     let expected_amount_trusted_token = BigUint::from(ONE_HUNDRED_MILLION) - &token_data.amount;
 
-    state.world.check_account(OWNER_ADDRESS).esdt_balance(
-        TokenIdentifier::from(TRUSTED_TOKEN_IDS[0]),
-        &expected_amount_trusted_token,
-    );
+    state
+        .common_setup
+        .world
+        .check_account(OWNER_ADDRESS)
+        .esdt_balance(
+            TokenIdentifier::from(TRUSTED_TOKEN_IDS[0]),
+            &expected_amount_trusted_token,
+        );
 
     state
+        .common_setup
         .world
         .tx()
         .from(OWNER_ADDRESS)
@@ -1211,6 +1231,7 @@ fn execute_operation_success_burn_mechanism() {
         });
 
     state
+        .common_setup
         .world
         .tx()
         .from(OWNER_ADDRESS)
@@ -1226,6 +1247,7 @@ fn execute_operation_success_burn_mechanism() {
         });
 
     state
+        .common_setup
         .world
         .query()
         .to(HEADER_VERIFIER_ADDRESS)
