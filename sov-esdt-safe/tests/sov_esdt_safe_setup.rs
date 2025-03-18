@@ -63,26 +63,6 @@ impl SovEsdtSafeTestState {
         self
     }
 
-    pub fn update_configuration(
-        &mut self,
-        new_config: EsdtSafeConfig<StaticApi>,
-        err_message: Option<&str>,
-    ) {
-        let response = self
-            .common_setup
-            .world
-            .tx()
-            .from(OWNER_ADDRESS)
-            .to(ESDT_SAFE_ADDRESS)
-            .typed(SovEsdtSafeProxy)
-            .update_configuration(new_config)
-            .returns(ReturnsHandledOrError::new())
-            .run();
-
-        self.common_setup
-            .assert_expected_error_message(response, err_message);
-    }
-
     pub fn deploy_contract_with_roles(&mut self) -> &mut Self {
         self.common_setup
             .world
