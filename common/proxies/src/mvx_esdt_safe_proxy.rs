@@ -185,6 +185,32 @@ where
             .original_result()
     }
 
+    pub fn set_token_burn_mechanism<
+        Arg0: ProxyArg<TokenIdentifier<Env::Api>>,
+    >(
+        self,
+        token_id: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("setTokenBurnMechanism")
+            .argument(&token_id)
+            .original_result()
+    }
+
+    pub fn set_token_lock_mechanism<
+        Arg0: ProxyArg<TokenIdentifier<Env::Api>>,
+    >(
+        self,
+        token_id: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("setTokenLockMechanism")
+            .argument(&token_id)
+            .original_result()
+    }
+
     pub fn max_bridged_amount<
         Arg0: ProxyArg<TokenIdentifier<Env::Api>>,
     >(
@@ -222,6 +248,54 @@ where
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("isPaused")
+            .original_result()
+    }
+
+    pub fn is_admin<
+        Arg0: ProxyArg<ManagedAddress<Env::Api>>,
+    >(
+        self,
+        address: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, bool> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("isAdmin")
+            .argument(&address)
+            .original_result()
+    }
+
+    pub fn add_admin<
+        Arg0: ProxyArg<ManagedAddress<Env::Api>>,
+    >(
+        self,
+        address: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("addAdmin")
+            .argument(&address)
+            .original_result()
+    }
+
+    pub fn remove_admin<
+        Arg0: ProxyArg<ManagedAddress<Env::Api>>,
+    >(
+        self,
+        address: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("removeAdmin")
+            .argument(&address)
+            .original_result()
+    }
+
+    pub fn admins(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, MultiValueEncoded<Env::Api, ManagedAddress<Env::Api>>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getAdmins")
             .original_result()
     }
 }
