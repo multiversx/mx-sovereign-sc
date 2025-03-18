@@ -7,12 +7,14 @@ use structs::{
 
 #[multiversx_sc::module]
 pub trait DepositModule:
-    multiversx_sc_modules::pause::PauseModule
+    crate::bridging_mechanism::BridgingMechanism
     + utils::UtilsModule
     + cross_chain::deposit_common::DepositCommonModule
     + cross_chain::execute_common::ExecuteCommonModule
     + cross_chain::storage::CrossChainStorage
     + cross_chain::events::EventsModule
+    + multiversx_sc_modules::only_admin::OnlyAdminModule
+    + multiversx_sc_modules::pause::PauseModule
 {
     #[payable]
     #[endpoint]
@@ -29,8 +31,6 @@ pub trait DepositModule:
         let mut event_payments = MultiValueEncoded::new();
         let mut refundable_payments = ManagedVec::<Self::Api, _>::new();
 
-        let own_sc_address = self.blockchain().get_sc_address();
-
         for payment in &payments {
             self.require_below_max_amount(&payment.token_identifier, &payment.amount);
             self.require_token_not_on_blacklist(&payment.token_identifier);
@@ -45,12 +45,7 @@ pub trait DepositModule:
                 total_tokens_for_fees += 1;
             }
 
-            let mut current_token_data = self.blockchain().get_esdt_token_data(
-                &own_sc_address,
-                &payment.token_identifier,
-                payment.token_nonce,
-            );
-            current_token_data.amount = payment.amount.clone();
+            let current_token_data = self.prepare_token_data(&payment);
 
             let mvx_to_sov_token_id_mapper =
                 self.multiversx_to_sovereign_token_id_mapper(&payment.token_identifier);
@@ -68,6 +63,25 @@ pub trait DepositModule:
                     current_token_data,
                 )));
             } else {
+                if self.is_fungible(&current_token_data.token_type)
+                    && self
+                        .burn_mechanism_tokens()
+                        .contains(&payment.token_identifier)
+                {
+                    self.tx()
+                        .to(ToSelf)
+                        .typed(UserBuiltinProxy)
+                        .esdt_local_burn(
+                            payment.token_identifier.clone(),
+                            payment.token_nonce,
+                            payment.amount.clone(),
+                        )
+                        .sync_call();
+
+                    self.deposited_tokens_amount(&payment.token_identifier)
+                        .update(|amount| *amount += payment.amount.clone());
+                }
+
                 event_payments.push(MultiValue3::from((
                     payment.token_identifier.clone(),
                     payment.token_nonce,
