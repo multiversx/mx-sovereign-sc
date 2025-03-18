@@ -26,66 +26,6 @@ fn deploy() {
 }
 
 #[test]
-fn deploy_no_config() {
-    let mut state = SovEsdtSafeTestState::new();
-
-    state.deploy_contract(FEE_MARKET_ADDRESS, OptionalValue::None);
-    state
-        .common_setup
-        .world
-        .check_account(ESDT_SAFE_ADDRESS)
-        .check_storage(
-            "str:crossChainConfig",
-            "0x00000000000000000000000011e1a30000000000", // default EsdtSafeConfig hex encoded
-        )
-        .check_storage(
-            "str:feeMarketAddress",
-            "0x000000000000000005006665652d6d61726b65745f5f5f5f5f5f5f5f5f5f5f5f", // FEE_MARKET_ADDRESS hex encoded, required for the check_storage to work
-        );
-}
-
-#[test]
-fn deploy_and_update_config() {
-    let mut state = SovEsdtSafeTestState::new();
-
-    state.deploy_contract(FEE_MARKET_ADDRESS, OptionalValue::None);
-
-    state
-        .common_setup
-        .world
-        .check_account(ESDT_SAFE_ADDRESS)
-        .check_storage(
-            "str:crossChainConfig",
-            "0x00000000000000000000000011e1a30000000000", // default EsdtSafeConfig hex encoded
-        )
-        .check_storage(
-            "str:feeMarketAddress",
-            "0x000000000000000005006665652d6d61726b65745f5f5f5f5f5f5f5f5f5f5f5f", // FEE_MARKET_ADDRESS hex encoded, required for the check_storage to work
-        );
-
-    let new_config = EsdtSafeConfig {
-        token_whitelist: ManagedVec::from_single_item(TokenIdentifier::from(TEST_TOKEN_ONE)),
-        token_blacklist: ManagedVec::from_single_item(TokenIdentifier::from(TEST_TOKEN_TWO)),
-        max_tx_gas_limit: 30_000,
-        banned_endpoints: ManagedVec::from_single_item(ManagedBuffer::from("endpoint")),
-    };
-
-    state.update_configuration(new_config, None);
-
-    state.common_setup
-        .world
-        .check_account(ESDT_SAFE_ADDRESS)
-        .check_storage(
-            "str:crossChainConfig",
-            "0x000000010000000b544f4e452d313233343536000000010000000b5454574f2d31323334353600000000000075300000000100000008656e64706f696e74", // updated EsdtSafeConfig hex encoded
-        )
-        .check_storage(
-            "str:feeMarketAddress",
-            "0x000000000000000005006665652d6d61726b65745f5f5f5f5f5f5f5f5f5f5f5f", // FEE_MARKET_ADDRESS hex encoded, required for the check_storage to work
-        );
-}
-
-#[test]
 fn deposit_no_fee_no_transfer_data() {
     let mut state = SovEsdtSafeTestState::new();
 

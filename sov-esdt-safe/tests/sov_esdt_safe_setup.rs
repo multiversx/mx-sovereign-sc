@@ -1,9 +1,6 @@
 use multiversx_sc::{
     imports::OptionalValue,
-    types::{
-        EsdtLocalRole, ManagedAddress, ManagedVec, TestSCAddress,
-        TokenIdentifier,
-    },
+    types::{EsdtLocalRole, ManagedAddress, ManagedVec, TestSCAddress, TokenIdentifier},
 };
 
 use multiversx_sc_scenario::{
@@ -122,6 +119,7 @@ impl SovEsdtSafeTestState {
             .to(ESDT_SAFE_ADDRESS)
             .whitebox(sov_esdt_safe::contract_obj, |sc| {
                 let config = EsdtSafeConfig::new(
+                    None,
                     ManagedVec::new(),
                     ManagedVec::new(),
                     50_000_000,
