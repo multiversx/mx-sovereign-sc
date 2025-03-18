@@ -500,8 +500,11 @@ fn deposit_refund() {
 #[test]
 fn register_token_invalid_type() {
     let mut state = MvxEsdtSafeTestState::new();
-    let config = OptionalValue::Some(EsdtSafeConfig::default_config());
-    state.deploy_contract(HEADER_VERIFIER_ADDRESS, config);
+    let config = EsdtSafeConfig {
+        opt_native_token: Some(ManagedBuffer::from(TEST_TOKEN_ONE)),
+        ..EsdtSafeConfig::default_config()
+    };
+    state.deploy_contract(HEADER_VERIFIER_ADDRESS, OptionalValue::Some(config));
 
     let sov_token_id = TestTokenIdentifier::new(TEST_TOKEN_ONE);
     let token_type = EsdtTokenType::Invalid;
@@ -524,8 +527,11 @@ fn register_token_invalid_type() {
 #[test]
 fn register_token_fungible_token() {
     let mut state = MvxEsdtSafeTestState::new();
-    let config = OptionalValue::Some(EsdtSafeConfig::default_config());
-    state.deploy_contract(HEADER_VERIFIER_ADDRESS, config);
+    let config = EsdtSafeConfig {
+        opt_native_token: Some(ManagedBuffer::from(TEST_TOKEN_ONE)),
+        ..EsdtSafeConfig::default_config()
+    };
+    state.deploy_contract(HEADER_VERIFIER_ADDRESS, OptionalValue::Some(config));
 
     let sov_token_id = TestTokenIdentifier::new(TEST_TOKEN_ONE);
     let token_type = EsdtTokenType::Fungible;
@@ -561,8 +567,11 @@ fn register_token_fungible_token() {
 #[test]
 fn register_token_nonfungible_token() {
     let mut state = MvxEsdtSafeTestState::new();
-    let config = OptionalValue::Some(EsdtSafeConfig::default_config());
-    state.deploy_contract(HEADER_VERIFIER_ADDRESS, config);
+    let config = EsdtSafeConfig {
+        opt_native_token: Some(ManagedBuffer::from(TEST_TOKEN_ONE)),
+        ..EsdtSafeConfig::default_config()
+    };
+    state.deploy_contract(HEADER_VERIFIER_ADDRESS, OptionalValue::Some(config));
 
     let sov_token_id = TestTokenIdentifier::new(TEST_TOKEN_ONE);
     let token_type = EsdtTokenType::NonFungible;
