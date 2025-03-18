@@ -4,8 +4,9 @@ use common_blackbox_setup::{
 };
 use cross_chain::{storage::CrossChainStorage, DEFAULT_ISSUE_COST, MAX_GAS_PER_TRANSACTION};
 use error_messages::{
-    BANNED_ENDPOINT_NAME, GAS_LIMIT_TOO_HIGH, INVALID_TYPE, MAX_GAS_LIMIT_PER_TX_EXCEEDED,
-    NO_ESDT_SAFE_ADDRESS, PAYMENT_DOES_NOT_COVER_FEE, TOO_MANY_TOKENS,
+    BANNED_ENDPOINT_NAME, CANNOT_REGISTER_TOKEN, GAS_LIMIT_TOO_HIGH, INVALID_TYPE,
+    MAX_GAS_LIMIT_PER_TX_EXCEEDED, NO_ESDT_SAFE_ADDRESS, PAYMENT_DOES_NOT_COVER_FEE,
+    TOO_MANY_TOKENS,
 };
 use header_verifier::{Headerverifier, OperationHashStatus};
 use multiversx_sc::{
@@ -522,6 +523,37 @@ fn register_token_invalid_type() {
     };
 
     state.register_token(register_token_args, egld_payment, Some(INVALID_TYPE));
+}
+
+#[test]
+fn register_token_not_native() {
+    let mut state = MvxEsdtSafeTestState::new();
+    let config = EsdtSafeConfig {
+        opt_native_token: Some(ManagedBuffer::from(TEST_TOKEN_ONE)),
+        ..EsdtSafeConfig::default_config()
+    };
+    state.deploy_contract(HEADER_VERIFIER_ADDRESS, OptionalValue::Some(config));
+
+    let sov_token_id = TestTokenIdentifier::new(TEST_TOKEN_TWO);
+    let token_type = EsdtTokenType::Fungible;
+    let token_display_name = "TokenOne";
+    let num_decimals = 3;
+    let token_ticker = TEST_TOKEN_ONE;
+    let egld_payment = BigUint::from(DEFAULT_ISSUE_COST);
+
+    let register_token_args = RegisterTokenArgs {
+        sov_token_id,
+        token_type,
+        token_display_name,
+        token_ticker,
+        num_decimals,
+    };
+
+    state.register_token(
+        register_token_args,
+        egld_payment,
+        Some(CANNOT_REGISTER_TOKEN),
+    );
 }
 
 #[test]
