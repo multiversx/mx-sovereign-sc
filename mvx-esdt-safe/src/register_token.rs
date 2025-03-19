@@ -1,4 +1,4 @@
-use cross_chain::REGISTER_GAS;
+use cross_chain::{__endpoints_0__::native_token, REGISTER_GAS};
 use error_messages::{CANNOT_REGISTER_TOKEN, INVALID_TYPE};
 use multiversx_sc::types::EsdtTokenType;
 use structs::{EsdtInfo, IssueEsdtArgs};
@@ -44,6 +44,24 @@ pub trait RegisterTokenModule:
         }
     }
 
+    #[payable("EGLD")]
+    #[endpoint(registerNativeToken)]
+    fn register_native_token(&self, ticker: ManagedBuffer, name: ManagedBuffer) {
+        self.tx()
+            .to(ESDTSystemSCAddress)
+            .typed(ESDTSystemSCProxy)
+            .issue_and_set_all_roles(
+                self.call_value().egld().clone_value(),
+                name,
+                &ticker,
+                EsdtTokenType::Fungible,
+                18 as usize,
+            )
+            .gas(REGISTER_GAS)
+            .callback(self.callbacks().native_token_issue_callback())
+            .register_promise();
+    }
+
     fn handle_token_issue(&self, args: IssueEsdtArgs<Self::Api>) {
         self.tx()
             .to(ESDTSystemSCAddress)
@@ -76,6 +94,23 @@ pub trait RegisterTokenModule:
         }
     }
 
+    #[promises_callback]
+    fn native_token_issue_callback(
+        &self,
+        #[call_result] result: ManagedAsyncCallResult<TokenIdentifier<Self::Api>>,
+    ) {
+        match result {
+            ManagedAsyncCallResult::Ok(native_token_id) => {
+                self.native_token().set(native_token_id);
+            }
+            ManagedAsyncCallResult::Err(error) => {
+                sc_panic!(
+                    "There was an error at issuing native token: '{}'",
+                    error.err_msg
+                );
+            }
+        }
+    }
     fn set_corresponding_token_ids(
         &self,
         sov_token_id: &TokenIdentifier,
