@@ -1,4 +1,4 @@
-use cross_chain::{__endpoints_0__::native_token, REGISTER_GAS};
+use cross_chain::REGISTER_GAS;
 use error_messages::{CANNOT_REGISTER_TOKEN, INVALID_TYPE};
 use multiversx_sc::types::EsdtTokenType;
 use structs::{EsdtInfo, IssueEsdtArgs};
