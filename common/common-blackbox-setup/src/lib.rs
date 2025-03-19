@@ -38,6 +38,7 @@ pub const OWNER_ADDRESS: TestAddress = TestAddress::new("owner");
 pub const USER: TestAddress = TestAddress::new("user");
 
 pub const TEST_TOKEN_ONE: &str = "TONE-123456";
+pub const TEST_TOKEN_ONE_WITH_PREFIX: &str = "sov-TONE-123456";
 pub const TEST_TOKEN_TWO: &str = "TTWO-123456";
 pub const FEE_TOKEN: &str = "FEE-123456";
 

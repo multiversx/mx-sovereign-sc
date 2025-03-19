@@ -175,6 +175,32 @@ impl MvxEsdtSafeTestState {
             .assert_expected_error_message(response, expected_error_message);
     }
 
+    pub fn register_native_token(
+        &mut self,
+        token_ticker: &str,
+        token_name: &str,
+        payment: BigUint<StaticApi>,
+        expected_error_message: Option<&str>,
+    ) {
+        let response = self
+            .common_setup
+            .world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .to(ESDT_SAFE_ADDRESS)
+            .typed(MvxEsdtSafeProxy)
+            .register_native_token(
+                ManagedBuffer::from(token_ticker),
+                ManagedBuffer::from(token_name),
+            )
+            .egld(payment)
+            .returns(ReturnsHandledOrError::new())
+            .run();
+
+        self.common_setup
+            .assert_expected_error_message(response, expected_error_message);
+    }
+
     pub fn execute_operation(
         &mut self,
         hash_of_hashes: ManagedBuffer<StaticApi>,
