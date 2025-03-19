@@ -1,6 +1,3 @@
-[settings]
-main = "main"
-
 [contracts.main]
 name = "header-verifier"
 
@@ -16,4 +13,4 @@ add-unlabelled = false
 add-labels = ["header-verifier-external-view"]
 
 [[proxy]]
-path = "src/header_verifier_proxy.rs"
+path = "../common/proxies/src/header_verifier_proxy.rs"
