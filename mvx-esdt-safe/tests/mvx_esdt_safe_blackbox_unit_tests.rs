@@ -1,6 +1,7 @@
 use common_blackbox_setup::{
     ESDT_SAFE_ADDRESS, FEE_MARKET_ADDRESS, FEE_TOKEN, HEADER_VERIFIER_ADDRESS, ONE_HUNDRED_MILLION,
-    ONE_HUNDRED_THOUSAND, OWNER_ADDRESS, TESTING_SC_ADDRESS, TEST_TOKEN_ONE, TEST_TOKEN_TWO, USER,
+    ONE_HUNDRED_THOUSAND, OWNER_ADDRESS, TESTING_SC_ADDRESS, TEST_TOKEN_ONE,
+    TEST_TOKEN_ONE_WITH_PREFIX, TEST_TOKEN_TWO, USER,
 };
 use cross_chain::{storage::CrossChainStorage, DEFAULT_ISSUE_COST, MAX_GAS_PER_TRANSACTION};
 use error_messages::{
@@ -493,7 +494,7 @@ fn register_token_invalid_type_with_prefix() {
     let config = EsdtSafeConfig::default_config();
     state.deploy_contract(HEADER_VERIFIER_ADDRESS, OptionalValue::Some(config));
 
-    let sov_token_id = TestTokenIdentifier::new("sov-TONE-123456");
+    let sov_token_id = TestTokenIdentifier::new(TEST_TOKEN_ONE_WITH_PREFIX);
     let token_type = EsdtTokenType::Invalid;
     let token_display_name = "TokenOne";
     let num_decimals = 3;
@@ -517,7 +518,7 @@ fn register_token_fungible_token_with_prefix() {
     let config = EsdtSafeConfig::default_config();
     state.deploy_contract(HEADER_VERIFIER_ADDRESS, OptionalValue::Some(config));
 
-    let sov_token_id = TestTokenIdentifier::new("sov-TONE-123456");
+    let sov_token_id = TestTokenIdentifier::new(TEST_TOKEN_ONE_WITH_PREFIX);
     let token_type = EsdtTokenType::Fungible;
     let token_display_name = "TokenOne";
     let token_ticker = TEST_TOKEN_ONE;
@@ -536,16 +537,16 @@ fn register_token_fungible_token_with_prefix() {
 }
 
 #[test]
-fn register_token_nonfungible_token() {
+fn register_token_fungible_token_no_prefix() {
     let mut state = MvxEsdtSafeTestState::new();
     let config = EsdtSafeConfig::default_config();
     state.deploy_contract(HEADER_VERIFIER_ADDRESS, OptionalValue::Some(config));
 
     let sov_token_id = TestTokenIdentifier::new(TEST_TOKEN_ONE);
-    let token_type = EsdtTokenType::NonFungible;
+    let token_type = EsdtTokenType::Fungible;
     let token_display_name = "TokenOne";
-    let num_decimals = 0;
     let token_ticker = TEST_TOKEN_ONE;
+    let num_decimals = 3;
     let egld_payment = BigUint::from(DEFAULT_ISSUE_COST);
 
     let register_token_args = RegisterTokenArgs {
@@ -561,6 +562,30 @@ fn register_token_nonfungible_token() {
         egld_payment,
         Some(CANNOT_REGISTER_TOKEN),
     );
+}
+
+#[test]
+fn register_token_nonfungible_token() {
+    let mut state = MvxEsdtSafeTestState::new();
+    let config = EsdtSafeConfig::default_config();
+    state.deploy_contract(HEADER_VERIFIER_ADDRESS, OptionalValue::Some(config));
+
+    let sov_token_id = TestTokenIdentifier::new(TEST_TOKEN_ONE_WITH_PREFIX);
+    let token_type = EsdtTokenType::NonFungible;
+    let token_display_name = "TokenOne";
+    let num_decimals = 0;
+    let token_ticker = TEST_TOKEN_ONE;
+    let egld_payment = BigUint::from(DEFAULT_ISSUE_COST);
+
+    let register_token_args = RegisterTokenArgs {
+        sov_token_id,
+        token_type,
+        token_display_name,
+        token_ticker,
+        num_decimals,
+    };
+
+    state.register_token(register_token_args, egld_payment, None);
 }
 
 #[test]
