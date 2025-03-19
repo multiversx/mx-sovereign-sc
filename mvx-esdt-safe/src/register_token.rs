@@ -57,7 +57,7 @@ pub trait RegisterTokenModule:
                 token_name,
                 &token_ticker,
                 EsdtTokenType::Fungible,
-                18 as usize,
+                18,
             )
             .gas(REGISTER_GAS)
             .callback(self.callbacks().native_token_issue_callback())
