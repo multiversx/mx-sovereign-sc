@@ -47,14 +47,18 @@ pub trait ExecuteModule:
                 self.sovereign_to_multiversx_token_id_mapper(&operation_token.token_identifier);
 
             // token is from mainchain -> push token
-            if sov_to_mvx_token_id_mapper.is_empty() {
-                output_payments.push(operation_token.clone());
-
-                continue;
-            }
+            let mvx_token_id = if sov_to_mvx_token_id_mapper.is_empty() {
+                if self.is_native_token(&operation_token.token_identifier) {
+                    operation_token.token_identifier.clone()
+                } else {
+                    output_payments.push(operation_token.clone());
+                    continue;
+                }
+            } else {
+                sov_to_mvx_token_id_mapper.get()
+            };
 
             // token is from sovereign -> continue and mint
-            let mvx_token_id = sov_to_mvx_token_id_mapper.get();
             let current_token_type_ref = &operation_token.token_data.token_type;
 
             if self.is_fungible(current_token_type_ref) {

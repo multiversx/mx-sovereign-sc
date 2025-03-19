@@ -1,5 +1,5 @@
 use cross_chain::REGISTER_GAS;
-use error_messages::{CANNOT_REGISTER_TOKEN, INVALID_TYPE};
+use error_messages::{CANNOT_REGISTER_TOKEN, INVALID_TYPE, NATIVE_TOKEN_ALREADY_REGISTERED};
 use multiversx_sc::types::EsdtTokenType;
 use structs::{EsdtInfo, IssueEsdtArgs};
 multiversx_sc::imports!();
@@ -25,8 +25,7 @@ pub trait RegisterTokenModule:
         self.require_sov_token_id_not_registered(&sov_token_id);
 
         require!(
-            self.has_prefix(&sov_token_id)
-                || (self.is_native_token(&sov_token_id) && token_type == EsdtTokenType::Fungible),
+            self.has_prefix(&sov_token_id) && !self.is_native_token(&sov_token_id),
             CANNOT_REGISTER_TOKEN
         );
         let issue_cost = self.call_value().egld().clone_value();
@@ -46,14 +45,19 @@ pub trait RegisterTokenModule:
 
     #[payable("EGLD")]
     #[endpoint(registerNativeToken)]
-    fn register_native_token(&self, ticker: ManagedBuffer, name: ManagedBuffer) {
+    fn register_native_token(&self, token_ticker: ManagedBuffer, token_name: ManagedBuffer) {
+        require!(
+            self.native_token().is_empty(),
+            NATIVE_TOKEN_ALREADY_REGISTERED
+        );
+
         self.tx()
             .to(ESDTSystemSCAddress)
             .typed(ESDTSystemSCProxy)
             .issue_and_set_all_roles(
                 self.call_value().egld().clone_value(),
-                name,
-                &ticker,
+                token_name,
+                &token_ticker,
                 EsdtTokenType::Fungible,
                 18 as usize,
             )
