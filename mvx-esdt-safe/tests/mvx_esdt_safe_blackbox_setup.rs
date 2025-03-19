@@ -1,4 +1,6 @@
 use common_blackbox_setup::{BaseSetup, ESDT_SAFE_ADDRESS, HEADER_VERIFIER_ADDRESS, OWNER_ADDRESS};
+use cross_chain::storage::CrossChainStorage;
+use header_verifier::{Headerverifier, OperationHashStatus};
 use multiversx_sc::{
     codec::TopEncode,
     imports::OptionalValue,
@@ -10,11 +12,13 @@ use multiversx_sc::{
 use multiversx_sc_modules::transfer_role_proxy::PaymentsVec;
 use multiversx_sc_scenario::{
     api::StaticApi, imports::MxscPath, multiversx_chain_vm::crypto_functions::sha256,
-    scenario_model::Log, ReturnsHandledOrError, ReturnsLogs, ScenarioTxRun,
+    scenario_model::Log, ReturnsHandledOrError, ReturnsLogs, ScenarioTxRun, ScenarioTxWhitebox,
 };
 use proxies::{header_verifier_proxy::HeaderverifierProxy, mvx_esdt_safe_proxy::MvxEsdtSafeProxy};
 use structs::{
-    aliases::OptionalValueTransferDataTuple, configs::EsdtSafeConfig, operation::Operation,
+    aliases::OptionalValueTransferDataTuple,
+    configs::EsdtSafeConfig,
+    operation::Operation,
 };
 
 const CONTRACT_CODE_PATH: MxscPath = MxscPath::new("output/mvx-esdt-safe.mxsc.json");
@@ -258,5 +262,62 @@ impl MvxEsdtSafeTestState {
         let sha256 = sha256(&serialized_operation.to_vec());
 
         ManagedBuffer::new_from_bytes(&sha256)
+    }
+
+    pub fn check_multiversx_to_sovereign_token_id_mapper_is_empty(&mut self, token_name: &str) {
+        self.common_setup
+            .world
+            .query()
+            .to(ESDT_SAFE_ADDRESS)
+            .whitebox(mvx_esdt_safe::contract_obj, |sc| {
+                assert!(sc
+                    .multiversx_to_sovereign_token_id_mapper(
+                        &TestTokenIdentifier::new(token_name).into()
+                    )
+                    .is_empty());
+            })
+    }
+
+    pub fn check_operation_hash_status_is_empty(
+        &mut self,
+        operation_hash: &ManagedBuffer<StaticApi>,
+    ) {
+        self.common_setup
+            .world
+            .query()
+            .to(HEADER_VERIFIER_ADDRESS)
+            .whitebox(header_verifier::contract_obj, |sc| {
+                let operation_hash_whitebox =
+                    ManagedBuffer::new_from_bytes(&operation_hash.to_vec());
+                let hash_of_hashes =
+                    ManagedBuffer::new_from_bytes(&sha256(&operation_hash_whitebox.to_vec()));
+
+                assert!(sc
+                    .operation_hash_status(&hash_of_hashes, &operation_hash_whitebox)
+                    .is_empty());
+            })
+    }
+
+    pub fn check_operation_hash_status(
+        &mut self,
+        operation_hash: &ManagedBuffer<StaticApi>,
+        status: OperationHashStatus,
+    ) {
+        self.common_setup
+            .world
+            .query()
+            .to(HEADER_VERIFIER_ADDRESS)
+            .whitebox(header_verifier::contract_obj, |sc| {
+                let operation_hash_whitebox =
+                    ManagedBuffer::new_from_bytes(&operation_hash.to_vec());
+                let hash_of_hashes =
+                    ManagedBuffer::new_from_bytes(&sha256(&operation_hash_whitebox.to_vec()));
+
+                assert!(
+                    sc.operation_hash_status(&hash_of_hashes, &operation_hash_whitebox)
+                        .get()
+                        == status
+                );
+            })
     }
 }
