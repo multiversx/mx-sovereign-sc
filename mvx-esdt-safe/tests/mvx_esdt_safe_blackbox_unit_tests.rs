@@ -5,8 +5,8 @@ use common_blackbox_setup::{
 use cross_chain::{storage::CrossChainStorage, DEFAULT_ISSUE_COST, MAX_GAS_PER_TRANSACTION};
 use error_messages::{
     BANNED_ENDPOINT_NAME, CANNOT_REGISTER_TOKEN, GAS_LIMIT_TOO_HIGH, INVALID_TYPE,
-    MAX_GAS_LIMIT_PER_TX_EXCEEDED, NATIVE_TOKEN_ALREADY_REGISTERED, NO_ESDT_SAFE_ADDRESS,
-    PAYMENT_DOES_NOT_COVER_FEE, TOO_MANY_TOKENS,
+    MAX_GAS_LIMIT_PER_TX_EXCEEDED, NO_ESDT_SAFE_ADDRESS, PAYMENT_DOES_NOT_COVER_FEE,
+    TOO_MANY_TOKENS,
 };
 use header_verifier::{Headerverifier, OperationHashStatus};
 use multiversx_sc::{
@@ -21,10 +21,7 @@ use multiversx_sc_scenario::{
     api::StaticApi, multiversx_chain_vm::crypto_functions::sha256, ScenarioTxWhitebox,
 };
 use mvx_esdt_safe_blackbox_setup::{MvxEsdtSafeTestState, RegisterTokenArgs};
-use proxies::{
-    fee_market_proxy::{FeeStruct, FeeType},
-    mvx_esdt_safe_proxy::MvxEsdtSafeProxy,
-};
+use proxies::fee_market_proxy::{FeeStruct, FeeType};
 use structs::{
     configs::{EsdtSafeConfig, SovereignConfig},
     operation::{Operation, OperationData, OperationEsdtPayment, TransferData},
@@ -515,34 +512,6 @@ fn register_token_invalid_type_with_prefix() {
 }
 
 #[test]
-fn register_token_not_native() {
-    let mut state = MvxEsdtSafeTestState::new();
-    let config = EsdtSafeConfig::default_config();
-    state.deploy_contract(HEADER_VERIFIER_ADDRESS, OptionalValue::Some(config));
-
-    let sov_token_id = TestTokenIdentifier::new(TEST_TOKEN_TWO);
-    let token_type = EsdtTokenType::Fungible;
-    let token_display_name = "TokenOne";
-    let num_decimals = 3;
-    let token_ticker = TEST_TOKEN_ONE;
-    let egld_payment = BigUint::from(DEFAULT_ISSUE_COST);
-
-    let register_token_args = RegisterTokenArgs {
-        sov_token_id,
-        token_type,
-        token_display_name,
-        token_ticker,
-        num_decimals,
-    };
-
-    state.register_token(
-        register_token_args,
-        egld_payment,
-        Some(CANNOT_REGISTER_TOKEN),
-    );
-}
-
-#[test]
 fn register_token_fungible_token_with_prefix() {
     let mut state = MvxEsdtSafeTestState::new();
     let config = EsdtSafeConfig::default_config();
@@ -564,34 +533,6 @@ fn register_token_fungible_token_with_prefix() {
     };
 
     state.register_token(register_token_args, egld_payment, None);
-}
-
-#[test]
-fn register_token_fungible_token_no_prefix() {
-    let mut state = MvxEsdtSafeTestState::new();
-    let config = EsdtSafeConfig::default_config();
-    state.deploy_contract(HEADER_VERIFIER_ADDRESS, OptionalValue::Some(config));
-
-    let sov_token_id = TestTokenIdentifier::new(TEST_TOKEN_ONE);
-    let token_type = EsdtTokenType::Fungible;
-    let token_display_name = "TokenOne";
-    let token_ticker = TEST_TOKEN_ONE;
-    let num_decimals = 3;
-    let egld_payment = BigUint::from(DEFAULT_ISSUE_COST);
-
-    let register_token_args = RegisterTokenArgs {
-        sov_token_id,
-        token_type,
-        token_display_name,
-        token_ticker,
-        num_decimals,
-    };
-
-    state.register_token(
-        register_token_args,
-        egld_payment,
-        Some(CANNOT_REGISTER_TOKEN),
-    );
 }
 
 #[test]

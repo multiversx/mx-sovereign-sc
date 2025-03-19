@@ -99,7 +99,6 @@ impl SovEsdtSafeTestState {
             .to(ESDT_SAFE_ADDRESS)
             .whitebox(sov_esdt_safe::contract_obj, |sc| {
                 let config = EsdtSafeConfig::new(
-                    None,
                     ManagedVec::new(),
                     ManagedVec::new(),
                     50_000_000,

@@ -24,10 +24,7 @@ pub trait RegisterTokenModule:
     ) {
         self.require_sov_token_id_not_registered(&sov_token_id);
 
-        require!(
-            self.has_prefix(&sov_token_id) && !self.is_native_token(&sov_token_id),
-            CANNOT_REGISTER_TOKEN
-        );
+        require!(self.has_prefix(&sov_token_id), CANNOT_REGISTER_TOKEN);
         let issue_cost = self.call_value().egld().clone_value();
 
         match token_type {
@@ -44,6 +41,7 @@ pub trait RegisterTokenModule:
     }
 
     #[payable("EGLD")]
+    #[only_owner]
     #[endpoint(registerNativeToken)]
     fn register_native_token(&self, token_ticker: ManagedBuffer, token_name: ManagedBuffer) {
         require!(
