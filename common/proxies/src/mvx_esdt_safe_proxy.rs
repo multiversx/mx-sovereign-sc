@@ -185,6 +185,21 @@ where
             .original_result()
     }
 
+    pub fn register_native_token<
+        Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
+        Arg1: ProxyArg<ManagedBuffer<Env::Api>>,
+    >(
+        self,
+        token_ticker: Arg0,
+        token_name: Arg1,
+    ) -> TxTypedCall<Env, From, To, (), Gas, ()> {
+        self.wrapped_tx
+            .raw_call("registerNativeToken")
+            .argument(&token_ticker)
+            .argument(&token_name)
+            .original_result()
+    }
+
     pub fn set_token_burn_mechanism<
         Arg0: ProxyArg<TokenIdentifier<Env::Api>>,
     >(
@@ -208,6 +223,15 @@ where
             .payment(NotPayable)
             .raw_call("setTokenLockMechanism")
             .argument(&token_id)
+            .original_result()
+    }
+
+    pub fn native_token(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, TokenIdentifier<Env::Api>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getNativeToken")
             .original_result()
     }
 

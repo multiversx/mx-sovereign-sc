@@ -1,5 +1,5 @@
 use cross_chain::REGISTER_GAS;
-use error_messages::{CANNOT_REGISTER_TOKEN, INVALID_TYPE};
+use error_messages::{CANNOT_REGISTER_TOKEN, INVALID_TYPE, NATIVE_TOKEN_ALREADY_REGISTERED};
 use multiversx_sc::types::EsdtTokenType;
 use structs::{EsdtInfo, IssueEsdtArgs};
 multiversx_sc::imports!();
@@ -24,11 +24,7 @@ pub trait RegisterTokenModule:
     ) {
         self.require_sov_token_id_not_registered(&sov_token_id);
 
-        require!(
-            self.has_prefix(&sov_token_id)
-                || (self.is_native_token(&sov_token_id) && token_type == EsdtTokenType::Fungible),
-            CANNOT_REGISTER_TOKEN
-        );
+        require!(self.has_prefix(&sov_token_id), CANNOT_REGISTER_TOKEN);
         let issue_cost = self.call_value().egld().clone_value();
 
         match token_type {
@@ -42,6 +38,30 @@ pub trait RegisterTokenModule:
                 num_decimals,
             }),
         }
+    }
+
+    #[payable("EGLD")]
+    #[only_owner]
+    #[endpoint(registerNativeToken)]
+    fn register_native_token(&self, token_ticker: ManagedBuffer, token_name: ManagedBuffer) {
+        require!(
+            self.native_token().is_empty(),
+            NATIVE_TOKEN_ALREADY_REGISTERED
+        );
+
+        self.tx()
+            .to(ESDTSystemSCAddress)
+            .typed(ESDTSystemSCProxy)
+            .issue_and_set_all_roles(
+                self.call_value().egld().clone_value(),
+                token_name,
+                &token_ticker,
+                EsdtTokenType::Fungible,
+                18,
+            )
+            .gas(REGISTER_GAS)
+            .callback(self.callbacks().native_token_issue_callback())
+            .register_promise();
     }
 
     fn handle_token_issue(&self, args: IssueEsdtArgs<Self::Api>) {
@@ -76,6 +96,23 @@ pub trait RegisterTokenModule:
         }
     }
 
+    #[promises_callback]
+    fn native_token_issue_callback(
+        &self,
+        #[call_result] result: ManagedAsyncCallResult<TokenIdentifier<Self::Api>>,
+    ) {
+        match result {
+            ManagedAsyncCallResult::Ok(native_token_id) => {
+                self.native_token().set(native_token_id);
+            }
+            ManagedAsyncCallResult::Err(error) => {
+                sc_panic!(
+                    "There was an error at issuing native token: '{}'",
+                    error.err_msg
+                );
+            }
+        }
+    }
     fn set_corresponding_token_ids(
         &self,
         sov_token_id: &TokenIdentifier,

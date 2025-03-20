@@ -124,7 +124,6 @@ impl MvxEsdtSafeTestState {
             .to(ESDT_SAFE_ADDRESS)
             .whitebox(mvx_esdt_safe::contract_obj, |sc| {
                 let config = EsdtSafeConfig::new(
-                    None,
                     ManagedVec::new(),
                     ManagedVec::new(),
                     50_000_000,
@@ -303,6 +302,32 @@ impl MvxEsdtSafeTestState {
                 ManagedBuffer::from(register_token_args.token_display_name),
                 ManagedBuffer::from(register_token_args.token_ticker),
                 register_token_args.num_decimals,
+            )
+            .egld(payment)
+            .returns(ReturnsHandledOrError::new())
+            .run();
+
+        self.common_setup
+            .assert_expected_error_message(response, expected_error_message);
+    }
+
+    pub fn register_native_token(
+        &mut self,
+        token_ticker: &str,
+        token_name: &str,
+        payment: BigUint<StaticApi>,
+        expected_error_message: Option<&str>,
+    ) {
+        let response = self
+            .common_setup
+            .world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .to(ESDT_SAFE_ADDRESS)
+            .typed(MvxEsdtSafeProxy)
+            .register_native_token(
+                ManagedBuffer::from(token_ticker),
+                ManagedBuffer::from(token_name),
             )
             .egld(payment)
             .returns(ReturnsHandledOrError::new())
