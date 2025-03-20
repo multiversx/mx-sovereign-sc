@@ -14,7 +14,9 @@ use multiversx_sc_scenario::{
 };
 use proxies::{header_verifier_proxy::HeaderverifierProxy, mvx_esdt_safe_proxy::MvxEsdtSafeProxy};
 use structs::{
-    aliases::OptionalValueTransferDataTuple, configs::EsdtSafeConfig, operation::Operation,
+    aliases::OptionalValueTransferDataTuple,
+    configs::EsdtSafeConfig,
+    operation::Operation,
 };
 
 const CONTRACT_CODE_PATH: MxscPath = MxscPath::new("output/mvx-esdt-safe.mxsc.json");

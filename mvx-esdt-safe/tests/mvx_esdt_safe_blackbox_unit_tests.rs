@@ -3,13 +3,13 @@ use common_blackbox_setup::{
     ONE_HUNDRED_THOUSAND, OWNER_ADDRESS, TESTING_SC_ADDRESS, TEST_TOKEN_ONE,
     TEST_TOKEN_ONE_WITH_PREFIX, TEST_TOKEN_TWO, USER,
 };
-use cross_chain::{storage::CrossChainStorage, DEFAULT_ISSUE_COST, MAX_GAS_PER_TRANSACTION};
+use cross_chain::{DEFAULT_ISSUE_COST, MAX_GAS_PER_TRANSACTION};
 use error_messages::{
     BANNED_ENDPOINT_NAME, CANNOT_REGISTER_TOKEN, GAS_LIMIT_TOO_HIGH, INVALID_TYPE,
     MAX_GAS_LIMIT_PER_TX_EXCEEDED, NO_ESDT_SAFE_ADDRESS, PAYMENT_DOES_NOT_COVER_FEE,
     TOO_MANY_TOKENS,
 };
-use header_verifier::{Headerverifier, OperationHashStatus};
+use header_verifier::OperationHashStatus;
 use multiversx_sc::{
     imports::{MultiValue3, OptionalValue},
     types::{
@@ -18,9 +18,7 @@ use multiversx_sc::{
     },
 };
 use multiversx_sc_modules::transfer_role_proxy::PaymentsVec;
-use multiversx_sc_scenario::{
-    api::StaticApi, multiversx_chain_vm::crypto_functions::sha256, ScenarioTxWhitebox,
-};
+use multiversx_sc_scenario::{api::StaticApi, multiversx_chain_vm::crypto_functions::sha256};
 use mvx_esdt_safe_blackbox_setup::{MvxEsdtSafeTestState, RegisterTokenArgs};
 use proxies::fee_market_proxy::{FeeStruct, FeeType};
 use structs::{
@@ -73,6 +71,10 @@ fn deposit_nothing_to_transfer() {
         None,
         Some("Nothing to transfer"),
     );
+
+    state
+        .common_setup
+        .check_multiversx_to_sovereign_token_id_mapper_is_empty(TEST_TOKEN_ONE);
 }
 
 #[test]
@@ -98,6 +100,10 @@ fn deposit_too_many_tokens() {
         Some(payments_vec),
         Some(TOO_MANY_TOKENS),
     );
+
+    state
+        .common_setup
+        .check_multiversx_to_sovereign_token_id_mapper_is_empty(TEST_TOKEN_ONE);
 }
 
 #[test]
@@ -134,14 +140,7 @@ fn deposit_no_transfer_data() {
 
     state
         .common_setup
-        .world
-        .query()
-        .to(ESDT_SAFE_ADDRESS)
-        .whitebox(mvx_esdt_safe::contract_obj, |sc| {
-            assert!(sc
-                .multiversx_to_sovereign_token_id_mapper(&TokenIdentifier::from(TEST_TOKEN_ONE))
-                .is_empty());
-        });
+        .check_multiversx_to_sovereign_token_id_mapper_is_empty(TEST_TOKEN_ONE);
 }
 
 #[test]
@@ -181,6 +180,10 @@ fn deposit_gas_limit_too_high() {
         Some(payments_vec),
         Some(GAS_LIMIT_TOO_HIGH),
     );
+
+    state
+        .common_setup
+        .check_multiversx_to_sovereign_token_id_mapper_is_empty(TEST_TOKEN_ONE);
 }
 
 #[test]
@@ -226,6 +229,10 @@ fn deposit_endpoint_banned() {
         Some(payments_vec),
         Some(BANNED_ENDPOINT_NAME),
     );
+
+    state
+        .common_setup
+        .check_multiversx_to_sovereign_token_id_mapper_is_empty(TEST_TOKEN_ONE);
 }
 
 #[test]
@@ -382,6 +389,13 @@ fn deposit_payment_doesnt_cover_fee() {
         Some(payments_vec),
         Some(PAYMENT_DOES_NOT_COVER_FEE),
     );
+
+    state
+        .common_setup
+        .check_multiversx_to_sovereign_token_id_mapper_is_empty(TEST_TOKEN_ONE);
+    state
+        .common_setup
+        .check_multiversx_to_sovereign_token_id_mapper_is_empty(TEST_TOKEN_TWO);
 }
 
 #[test]
@@ -510,6 +524,9 @@ fn register_token_invalid_type_with_prefix() {
     };
 
     state.register_token(register_token_args, egld_payment, Some(INVALID_TYPE));
+    state
+        .common_setup
+        .check_multiversx_to_sovereign_token_id_mapper_is_empty(TEST_TOKEN_ONE);
 }
 
 #[test]
@@ -534,6 +551,8 @@ fn register_token_fungible_token_with_prefix() {
     };
 
     state.register_token(register_token_args, egld_payment, None);
+
+    // TODO: Add check for storage after callback issue is fixed
 }
 
 #[test]
@@ -562,6 +581,8 @@ fn register_token_fungible_token_no_prefix() {
         egld_payment,
         Some(CANNOT_REGISTER_TOKEN),
     );
+
+    // TODO: Add check for storage after callback issue is fixed
 }
 
 #[test]
@@ -586,6 +607,8 @@ fn register_token_nonfungible_token() {
     };
 
     state.register_token(register_token_args, egld_payment, None);
+
+    // TODO: Add check for storage after callback issue is fixed
 }
 
 #[test]
@@ -603,6 +626,9 @@ fn register_native_token_already_registered() {
         egld_payment.clone(),
         None,
     );
+
+    // TODO: Add check for storage after callback issue is fixed
+
     state.register_native_token(
         TEST_TOKEN_ONE,
         token_display_name,
@@ -655,7 +681,15 @@ fn execute_operation_no_esdt_safe_registered() {
 
     state.common_setup.deploy_header_verifier();
 
-    state.execute_operation(hash_of_hashes, operation, Some(NO_ESDT_SAFE_ADDRESS));
+    state.execute_operation(
+        hash_of_hashes.clone(),
+        operation,
+        Some(NO_ESDT_SAFE_ADDRESS),
+    );
+
+    state
+        .common_setup
+        .check_operation_hash_status_is_empty(&hash_of_hashes);
 }
 
 #[test]
@@ -703,37 +737,13 @@ fn execute_operation_success() {
 
     state
         .common_setup
-        .world
-        .query()
-        .to(HEADER_VERIFIER_ADDRESS)
-        .whitebox(header_verifier::contract_obj, |sc| {
-            let operation_hash_whitebox = ManagedBuffer::new_from_bytes(&operation_hash.to_vec());
-            let hash_of_hashes =
-                ManagedBuffer::new_from_bytes(&sha256(&operation_hash_whitebox.to_vec()));
-
-            assert!(
-                sc.operation_hash_status(&hash_of_hashes, &operation_hash_whitebox)
-                    .get()
-                    == OperationHashStatus::NotLocked
-            );
-        });
+        .check_operation_hash_status(&operation_hash, OperationHashStatus::NotLocked);
 
     state.execute_operation(hash_of_hashes, operation.clone(), None);
 
     state
         .common_setup
-        .world
-        .query()
-        .to(HEADER_VERIFIER_ADDRESS)
-        .whitebox(header_verifier::contract_obj, |sc| {
-            let operation_hash_whitebox = ManagedBuffer::new_from_bytes(&operation_hash.to_vec());
-            let hash_of_hashes =
-                ManagedBuffer::new_from_bytes(&sha256(&operation_hash_whitebox.to_vec()));
-
-            assert!(sc
-                .operation_hash_status(&hash_of_hashes, &operation_hash_whitebox)
-                .is_empty());
-        })
+        .check_operation_hash_status_is_empty(&operation_hash);
 }
 
 #[test]
@@ -786,35 +796,11 @@ fn execute_operation_with_native_token_success() {
 
     state
         .common_setup
-        .world
-        .query()
-        .to(HEADER_VERIFIER_ADDRESS)
-        .whitebox(header_verifier::contract_obj, |sc| {
-            let operation_hash_whitebox = ManagedBuffer::new_from_bytes(&operation_hash.to_vec());
-            let hash_of_hashes =
-                ManagedBuffer::new_from_bytes(&sha256(&operation_hash_whitebox.to_vec()));
-
-            assert!(
-                sc.operation_hash_status(&hash_of_hashes, &operation_hash_whitebox)
-                    .get()
-                    == OperationHashStatus::NotLocked
-            );
-        });
+        .check_operation_hash_status(&operation_hash, OperationHashStatus::NotLocked);
 
     state.execute_operation(hash_of_hashes, operation.clone(), None);
 
     state
         .common_setup
-        .world
-        .query()
-        .to(HEADER_VERIFIER_ADDRESS)
-        .whitebox(header_verifier::contract_obj, |sc| {
-            let operation_hash_whitebox = ManagedBuffer::new_from_bytes(&operation_hash.to_vec());
-            let hash_of_hashes =
-                ManagedBuffer::new_from_bytes(&sha256(&operation_hash_whitebox.to_vec()));
-
-            assert!(sc
-                .operation_hash_status(&hash_of_hashes, &operation_hash_whitebox)
-                .is_empty());
-        })
+        .check_operation_hash_status_is_empty(&operation_hash);
 }
