@@ -18,9 +18,7 @@ use multiversx_sc::{
     },
 };
 use multiversx_sc_modules::transfer_role_proxy::PaymentsVec;
-use multiversx_sc_scenario::{
-    api::StaticApi, multiversx_chain_vm::crypto_functions::sha256,
-};
+use multiversx_sc_scenario::{api::StaticApi, multiversx_chain_vm::crypto_functions::sha256};
 use mvx_esdt_safe_blackbox_setup::{MvxEsdtSafeTestState, RegisterTokenArgs};
 use proxies::fee_market_proxy::{FeeStruct, FeeType};
 use structs::{
@@ -74,7 +72,9 @@ fn deposit_nothing_to_transfer() {
         Some("Nothing to transfer"),
     );
 
-    state.check_multiversx_to_sovereign_token_id_mapper_is_empty(TEST_TOKEN_ONE);
+    state
+        .common_setup
+        .check_multiversx_to_sovereign_token_id_mapper_is_empty(TEST_TOKEN_ONE);
 }
 
 #[test]
@@ -101,7 +101,9 @@ fn deposit_too_many_tokens() {
         Some(TOO_MANY_TOKENS),
     );
 
-    state.check_multiversx_to_sovereign_token_id_mapper_is_empty(TEST_TOKEN_ONE);
+    state
+        .common_setup
+        .check_multiversx_to_sovereign_token_id_mapper_is_empty(TEST_TOKEN_ONE);
 }
 
 #[test]
@@ -136,7 +138,9 @@ fn deposit_no_transfer_data() {
         None,
     );
 
-    state.check_multiversx_to_sovereign_token_id_mapper_is_empty(TEST_TOKEN_ONE);
+    state
+        .common_setup
+        .check_multiversx_to_sovereign_token_id_mapper_is_empty(TEST_TOKEN_ONE);
 }
 
 #[test]
@@ -177,7 +181,9 @@ fn deposit_gas_limit_too_high() {
         Some(GAS_LIMIT_TOO_HIGH),
     );
 
-    state.check_multiversx_to_sovereign_token_id_mapper_is_empty(TEST_TOKEN_ONE);
+    state
+        .common_setup
+        .check_multiversx_to_sovereign_token_id_mapper_is_empty(TEST_TOKEN_ONE);
 }
 
 #[test]
@@ -224,7 +230,9 @@ fn deposit_endpoint_banned() {
         Some(BANNED_ENDPOINT_NAME),
     );
 
-    state.check_multiversx_to_sovereign_token_id_mapper_is_empty(TEST_TOKEN_ONE);
+    state
+        .common_setup
+        .check_multiversx_to_sovereign_token_id_mapper_is_empty(TEST_TOKEN_ONE);
 }
 
 #[test]
@@ -382,8 +390,12 @@ fn deposit_payment_doesnt_cover_fee() {
         Some(PAYMENT_DOES_NOT_COVER_FEE),
     );
 
-    state.check_multiversx_to_sovereign_token_id_mapper_is_empty(TEST_TOKEN_ONE);
-    state.check_multiversx_to_sovereign_token_id_mapper_is_empty(TEST_TOKEN_TWO);
+    state
+        .common_setup
+        .check_multiversx_to_sovereign_token_id_mapper_is_empty(TEST_TOKEN_ONE);
+    state
+        .common_setup
+        .check_multiversx_to_sovereign_token_id_mapper_is_empty(TEST_TOKEN_TWO);
 }
 
 #[test]
@@ -512,7 +524,9 @@ fn register_token_invalid_type_with_prefix() {
     };
 
     state.register_token(register_token_args, egld_payment, Some(INVALID_TYPE));
-    state.check_multiversx_to_sovereign_token_id_mapper_is_empty(TEST_TOKEN_ONE);
+    state
+        .common_setup
+        .check_multiversx_to_sovereign_token_id_mapper_is_empty(TEST_TOKEN_ONE);
 }
 
 #[test]
@@ -673,7 +687,9 @@ fn execute_operation_no_esdt_safe_registered() {
         Some(NO_ESDT_SAFE_ADDRESS),
     );
 
-    state.check_operation_hash_status_is_empty(&hash_of_hashes);
+    state
+        .common_setup
+        .check_operation_hash_status_is_empty(&hash_of_hashes);
 }
 
 #[test]
@@ -719,11 +735,15 @@ fn execute_operation_success() {
         .deploy_chain_config(SovereignConfig::default_config());
     state.register_operation(ManagedBuffer::new(), &hash_of_hashes, operations_hashes);
 
-    state.check_operation_hash_status(&operation_hash, OperationHashStatus::NotLocked);
+    state
+        .common_setup
+        .check_operation_hash_status(&operation_hash, OperationHashStatus::NotLocked);
 
     state.execute_operation(hash_of_hashes, operation.clone(), None);
 
-    state.check_operation_hash_status_is_empty(&operation_hash);
+    state
+        .common_setup
+        .check_operation_hash_status_is_empty(&operation_hash);
 }
 
 #[test]
@@ -774,9 +794,13 @@ fn execute_operation_with_native_token_success() {
         .deploy_chain_config(SovereignConfig::default_config());
     state.register_operation(ManagedBuffer::new(), &hash_of_hashes, operations_hashes);
 
-    state.check_operation_hash_status(&operation_hash, OperationHashStatus::NotLocked);
+    state
+        .common_setup
+        .check_operation_hash_status(&operation_hash, OperationHashStatus::NotLocked);
 
     state.execute_operation(hash_of_hashes, operation.clone(), None);
 
-    state.check_operation_hash_status_is_empty(&operation_hash);
+    state
+        .common_setup
+        .check_operation_hash_status_is_empty(&operation_hash);
 }
