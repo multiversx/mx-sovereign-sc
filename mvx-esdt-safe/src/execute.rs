@@ -81,14 +81,14 @@ pub trait ExecuteModule:
         let sov_to_mvx_mapper =
             self.sovereign_to_multiversx_token_id_mapper(&operation_token.token_identifier);
 
-        if sov_to_mvx_mapper.is_empty() {
-            if self.is_native_token(&operation_token.token_identifier) {
-                Some(operation_token.token_identifier.clone())
-            } else {
-                None
-            }
+        if !sov_to_mvx_mapper.is_empty() {
+            return Some(sov_to_mvx_mapper.get());
+        }
+
+        if self.is_native_token(&operation_token.token_identifier) {
+            Some(operation_token.token_identifier.clone())
         } else {
-            Some(sov_to_mvx_mapper.get())
+            None
         }
     }
 
