@@ -1,15 +1,14 @@
-use bls_signature::BlsSignature;
-use header_verifier::header_verifier_proxy;
 use multiversx_sc::types::ManagedBuffer;
 use multiversx_sc::{
     api::ManagedTypeApi,
-    types::{BigUint, ManagedByteArray, MultiValueEncoded, TestAddress, TestSCAddress},
+    types::{BigUint, MultiValueEncoded, TestAddress, TestSCAddress},
 };
 use multiversx_sc_scenario::ReturnsHandledOrError;
 use multiversx_sc_scenario::{
     api::StaticApi, imports::MxscPath, multiversx_chain_vm::crypto_functions::sha256,
     ScenarioTxRun, ScenarioWorld,
 };
+use proxies::header_verifier_proxy::HeaderverifierProxy;
 
 const HEADER_VERIFIER_CODE_PATH: MxscPath = MxscPath::new("ouput/header-verifier.mxsc-json");
 pub const HEADER_VERIFIER_ADDRESS: TestSCAddress = TestSCAddress::new("header-verifier");
@@ -20,11 +19,9 @@ pub const ENSHRINE_ADDRESS: TestAddress = TestAddress::new("enshrine");
 pub const OWNER_ADDRESS: TestAddress = TestAddress::new("owner");
 const WEGLD_BALANCE: u128 = 100_000_000_000_000_000; // 0.1 WEGLD
 
-type BlsKeys = MultiValueEncoded<StaticApi, ManagedBuffer<StaticApi>>;
-
 #[derive(Clone)]
 pub struct BridgeOperation<M: ManagedTypeApi> {
-    pub signature: BlsSignature<M>,
+    pub signature: ManagedBuffer<M>,
     pub bridge_operation_hash: ManagedBuffer<M>,
     pub operations_hashes: MultiValueEncoded<M, ManagedBuffer<M>>,
 }
@@ -58,12 +55,12 @@ impl HeaderVerifierTestState {
         Self { world }
     }
 
-    pub fn deploy_header_verifier_contract(&mut self, bls_keys: BlsKeys) -> &mut Self {
+    pub fn deploy(&mut self) -> &mut Self {
         self.world
             .tx()
             .from(OWNER_ADDRESS)
-            .typed(header_verifier_proxy::HeaderverifierProxy)
-            .init(bls_keys)
+            .typed(HeaderverifierProxy)
+            .init()
             .code(HEADER_VERIFIER_CODE_PATH)
             .new_address(HEADER_VERIFIER_ADDRESS)
             .run();
@@ -76,7 +73,7 @@ impl HeaderVerifierTestState {
             .tx()
             .from(OWNER_ADDRESS)
             .to(HEADER_VERIFIER_ADDRESS)
-            .typed(header_verifier_proxy::HeaderverifierProxy)
+            .typed(HeaderverifierProxy)
             .set_esdt_safe_address(esdt_address)
             .run();
     }
@@ -86,7 +83,7 @@ impl HeaderVerifierTestState {
             .tx()
             .from(OWNER_ADDRESS)
             .to(HEADER_VERIFIER_ADDRESS)
-            .typed(header_verifier_proxy::HeaderverifierProxy)
+            .typed(HeaderverifierProxy)
             .register_bridge_operations(
                 operation.signature,
                 operation.bridge_operation_hash,
@@ -107,7 +104,7 @@ impl HeaderVerifierTestState {
             .tx()
             .from(caller)
             .to(HEADER_VERIFIER_ADDRESS)
-            .typed(header_verifier_proxy::HeaderverifierProxy)
+            .typed(HeaderverifierProxy)
             .remove_executed_hash(hash_of_hashes, operation_hash)
             .returns(ReturnsHandledOrError::new())
             .run();
@@ -133,7 +130,7 @@ impl HeaderVerifierTestState {
             .tx()
             .from(caller)
             .to(HEADER_VERIFIER_ADDRESS)
-            .typed(header_verifier_proxy::HeaderverifierProxy)
+            .typed(HeaderverifierProxy)
             .lock_operation_hash(hash_of_hashes, operation_hash)
             .returns(ReturnsHandledOrError::new())
             .run();
@@ -147,18 +144,10 @@ impl HeaderVerifierTestState {
         };
     }
 
-    pub fn get_bls_keys(&mut self, bls_keys_vec: Vec<ManagedBuffer<StaticApi>>) -> BlsKeys {
-        let bls_keys = bls_keys_vec.iter().cloned().collect();
-
-        bls_keys
-    }
-
     pub fn generate_bridge_operation_struct(
         &mut self,
         operation_hashes: Vec<&ManagedBuffer<StaticApi>>,
     ) -> BridgeOperation<StaticApi> {
-        let mock_signature: BlsSignature<StaticApi> = ManagedByteArray::new_from_bytes(&[0; 48]);
-
         let mut bridge_operations: MultiValueEncoded<StaticApi, ManagedBuffer<StaticApi>> =
             MultiValueEncoded::new();
         let mut appended_hashes = ManagedBuffer::new();
@@ -171,7 +160,7 @@ impl HeaderVerifierTestState {
         let hash_of_hashes = self.get_operation_hash(&appended_hashes);
 
         BridgeOperation {
-            signature: mock_signature,
+            signature: ManagedBuffer::new(),
             bridge_operation_hash: hash_of_hashes,
             operations_hashes: bridge_operations,
         }

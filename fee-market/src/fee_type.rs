@@ -1,3 +1,5 @@
+use error_messages::{INVALID_FEE, INVALID_FEE_TYPE};
+
 multiversx_sc::imports!();
 multiversx_sc::derive_imports!();
 
@@ -25,20 +27,20 @@ pub struct FeeStruct<M: ManagedTypeApi> {
 }
 
 #[multiversx_sc::module]
-pub trait FeeTypeModule: utils::UtilsModule + bls_signature::BlsSignatureModule {
+pub trait FeeTypeModule: utils::UtilsModule {
     #[only_owner]
-    #[endpoint(addFee)]
+    #[endpoint(setFee)]
     fn set_fee(&self, fee_struct: FeeStruct<Self::Api>) {
         self.require_valid_token_id(&fee_struct.base_token);
 
         let token = match &fee_struct.fee_type {
-            FeeType::None => sc_panic!("Invalid fee type"),
+            FeeType::None => sc_panic!(INVALID_FEE_TYPE),
             FeeType::Fixed {
                 token,
                 per_transfer: _,
                 per_gas: _,
             } => {
-                require!(&fee_struct.base_token == token, "Invalid fee");
+                require!(&fee_struct.base_token == token, INVALID_FEE);
 
                 token
             }

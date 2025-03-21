@@ -1,0 +1,26 @@
+[package]
+name = "cross-chain"
+version = "0.1.0"
+authors = ["you"]
+edition = "2021"
+
+[lib]
+path = "src/lib.rs"
+
+[dependencies.multiversx-sc]
+version = "=0.57.0"
+
+[dependencies.multiversx-sc-modules]
+version = "=0.57.0"
+
+[dependencies.structs]
+path = "../structs"
+
+[dependencies.proxies]
+path = "../proxies"
+
+[dependencies.utils]
+path = "../utils"
+
+[dependencies.error-messages]
+path = "../error-messages"

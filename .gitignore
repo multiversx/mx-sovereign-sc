@@ -8,3 +8,7 @@
 
 # VSCode specific files
 .vscode/*
+
+# Cargo.lock files
+**/Cargo.lock
+!**/wasm*/Cargo.lock

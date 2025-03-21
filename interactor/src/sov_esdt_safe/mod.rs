@@ -1,0 +1,1 @@
+pub mod sov_esdt_safe_interactor_main;
