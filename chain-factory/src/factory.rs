@@ -1,4 +1,5 @@
 use chain_config::StakeMultiArg;
+use error_messages::INVALID_PAYMENT_AMOUNT;
 
 multiversx_sc::imports!();
 
@@ -13,9 +14,9 @@ pub trait FactoryModule {
         min_stake: BigUint,
         additional_stake_required: MultiValueEncoded<StakeMultiArg<Self::Api>>,
     ) {
-        let payment_amount = self.call_value().egld_value().clone_value();
+        let payment_amount = self.call_value().egld().clone_value();
         let deploy_cost = self.deploy_cost().get();
-        require!(payment_amount == deploy_cost, "Invalid payment amount");
+        require!(payment_amount == deploy_cost, INVALID_PAYMENT_AMOUNT);
 
         let caller = self.blockchain().get_caller();
         let source_address = self.chain_config_template().get();

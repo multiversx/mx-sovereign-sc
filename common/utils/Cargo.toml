@@ -1,15 +1,18 @@
 [package]
 name = "utils"
-version = "0.0.0"
+version = "0.1.0"
 authors = ["Dorin Iancu <dorin.iancu@multiversx.com>"]
 edition = "2021"
 
 [lib]
 path = "src/lib.rs"
 
-[dependencies.bls-signature]
-path = "../bls-signature"
+[dependencies.structs]
+path = "../structs"
+
+[dependencies.error-messages]
+path = "../error-messages"
 
 [dependencies.multiversx-sc]
-version = "=0.54.0"
+version = "=0.57.0"
 features = ["esdt-token-payment-legacy-decode"]

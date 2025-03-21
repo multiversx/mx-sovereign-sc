@@ -1,3 +1,5 @@
+use error_messages::ONLY_DEPLOYED_CONTRACTS_CAN_CALL_ENDPOINT;
+
 multiversx_sc::imports!();
 
 pub type DestAmountPairs<M> = MultiValueEncoded<M, MultiValue2<ManagedAddress<M>, BigUint<M>>>;
@@ -46,7 +48,7 @@ pub trait SlashModule: crate::factory::FactoryModule {
     fn require_deployed_sc(&self, address: &ManagedAddress) {
         require!(
             self.all_deployed_contracts().contains(address),
-            "Only deployed contracts may call this endpoint"
+            ONLY_DEPLOYED_CONTRACTS_CAN_CALL_ENDPOINT
         );
     }
 

@@ -1,0 +1,26 @@
+[package]
+name = "common-blackbox-setup"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+path = "src/lib.rs"
+
+[dependencies.multiversx-sc-scenario]
+version = "0.57.0"
+
+[dependencies.proxies]
+path = "../proxies"
+
+[dependencies.structs]
+path = "../structs"
+
+[dependencies.cross-chain]
+path = "../cross-chain"
+
+[dependencies]
+fee-market = { path = "../../fee-market" }
+header-verifier = { path = "../../header-verifier" }
+chain-config = { path = "../../chain-config" }
+testing-sc = { path = "../../testing-sc" }
+mvx-esdt-safe = { path = "../../mvx-esdt-safe" }

@@ -1,0 +1,54 @@
+[package]
+name = "mvx-esdt-safe"
+version = "0.1.0"
+publish = false
+edition = "2021"
+authors = ["you"]
+
+[lib]
+path = "src/lib.rs"
+
+[dependencies.multiversx-sc]
+version = "=0.57.0"
+
+[dependencies.multiversx-sc-modules]
+version = "=0.57.0"
+
+[dependencies.testing-sc]
+path = "../testing-sc"
+
+[dependencies.utils]
+path = "../common/utils"
+
+[dependencies.fee-market]
+path = "../fee-market"
+
+[dependencies.structs]
+path = "../common/structs"
+
+[dependencies.cross-chain]
+path = "../common/cross-chain"
+
+[dependencies.setup-phase]
+path = "../common/setup-phase"
+
+[dependencies.proxies]
+path = "../common/proxies"
+
+[dependencies.header-verifier]
+path = "../header-verifier"
+
+[dependencies.chain-config]
+path = "../chain-config"
+
+[dependencies.error-messages]
+path = "../common/error-messages"
+
+[dev-dependencies.common-blackbox-setup]
+path = "../common/common-blackbox-setup"
+
+[dev-dependencies.multiversx-sc-scenario]
+version = "0.57.0"
+
+[features]
+chain-simulator-tests = []

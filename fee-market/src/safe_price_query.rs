@@ -1,3 +1,5 @@
+use error_messages::{INVALID_TOKEN_USDC_PAIR_ADDRESS, INVALID_WEGLD_USDC_PAIR_ADDRESS};
+
 use crate::price_aggregator;
 
 multiversx_sc::imports!();
@@ -61,7 +63,7 @@ pub trait SafePriceQueryModule: price_aggregator::PriceAggregatorModule {
             let wegld_to_usdc_pair = self.call_get_pair(&wegld_token_id, &usdc_token_id);
             require!(
                 !wegld_to_usdc_pair.is_zero(),
-                "Invalid WEGLD-USDC pair address from router"
+                INVALID_WEGLD_USDC_PAIR_ADDRESS
             );
 
             return PairQueryResponse::WegldIntermediary {
@@ -74,7 +76,7 @@ pub trait SafePriceQueryModule: price_aggregator::PriceAggregatorModule {
 
         require!(
             !token_to_usdc_pair.is_zero(),
-            "Invalid TOKEN-USDC pair address from router"
+            INVALID_TOKEN_USDC_PAIR_ADDRESS
         );
 
         PairQueryResponse::TokenToUsdc(token_to_usdc_pair)

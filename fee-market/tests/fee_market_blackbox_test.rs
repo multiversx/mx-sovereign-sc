@@ -1,3 +1,7 @@
+use error_messages::{
+    INVALID_FEE, INVALID_FEE_TYPE, INVALID_TOKEN_ID, PAYMENT_DOES_NOT_COVER_FEE,
+    TOKEN_NOT_ACCEPTED_AS_FEE,
+};
 use fee_market_blackbox_setup::*;
 
 mod fee_market_blackbox_setup;
@@ -10,18 +14,18 @@ fn test_deploy_fee_market() {
 }
 
 #[test]
-fn test_add_fee_wrong_params() {
+fn test_set_fee_wrong_params() {
     let mut state = FeeMarketTestState::new();
 
     state.deploy_fee_market();
 
-    state.add_fee(WRONG_TOKEN_ID, "Fixed", Some("Invalid token ID"));
+    state.set_fee(WRONG_TOKEN_ID, "Fixed", Some(INVALID_TOKEN_ID));
 
-    state.add_fee(TOKEN_ID, "None", Some("Invalid fee type"));
+    state.set_fee(TOKEN_ID, "None", Some(INVALID_FEE_TYPE));
 
-    state.add_fee(DIFFERENT_TOKEN_ID, "Fixed", Some("Invalid fee"));
+    state.set_fee(DIFFERENT_TOKEN_ID, "Fixed", Some(INVALID_FEE));
 
-    state.add_fee(TOKEN_ID, "AnyTokenWrong", Some("Invalid token ID"));
+    state.set_fee(TOKEN_ID, "AnyTokenWrong", Some(INVALID_TOKEN_ID));
 }
 
 #[test]
@@ -56,7 +60,7 @@ fn test_substract_fee_invalid_payment_token() {
 
     state.deploy_fee_market();
 
-    state.substract_fee("InvalidToken", Some("Token not accepted as fee"));
+    state.substract_fee("InvalidToken", Some(TOKEN_NOT_ACCEPTED_AS_FEE));
 
     state.check_balance_sc(ESDT_SAFE_ADDRESS, 1000);
     state.check_account(USER_ADDRESS, 1000);
@@ -68,10 +72,7 @@ fn test_substract_fixed_fee_payment_not_covered() {
 
     state.deploy_fee_market();
 
-    state.substract_fee(
-        "Less than fee",
-        Some("Payment does not cover fee"),
-    );
+    state.substract_fee("Less than fee", Some(PAYMENT_DOES_NOT_COVER_FEE));
 
     state.check_balance_sc(ESDT_SAFE_ADDRESS, 1000);
     state.check_account(USER_ADDRESS, 1000);

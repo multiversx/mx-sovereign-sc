@@ -1,3 +1,5 @@
+use error_messages::INVALID_ESDT_IDENTIFIER;
+
 multiversx_sc::imports!();
 
 pub type AggregatorOutputType<M> =
@@ -72,10 +74,7 @@ pub trait PriceAggregatorModule {
     }
 
     fn get_token_ticker(&self, token_id: &TokenIdentifier) -> ManagedBuffer {
-        require!(
-            token_id.is_valid_esdt_identifier(),
-            "Invalid ESDT identifier"
-        );
+        require!(token_id.is_valid_esdt_identifier(), INVALID_ESDT_IDENTIFIER);
 
         let buffer = token_id.as_managed_buffer();
         let ticker = buffer.copy_slice(0, buffer.len() - DASH_TICKER_LEN);

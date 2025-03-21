@@ -4,7 +4,8 @@ multiversx_sc::derive_imports!();
 // TODO: What to fill here?
 pub enum SlashableOffenses {}
 
-#[derive(TypeAbi, TopEncode, TopDecode, NestedEncode, NestedDecode, ManagedVecItem)]
+#[type_abi]
+#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, ManagedVecItem)]
 pub struct TokenIdAmountPair<M: ManagedTypeApi> {
     pub token_id: TokenIdentifier<M>,
     pub amount: BigUint<M>,
