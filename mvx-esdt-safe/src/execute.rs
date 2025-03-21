@@ -50,18 +50,35 @@ pub trait ExecuteModule:
 
         for operation_token in operation_tokens.iter() {
             if let Some(mvx_token_id) = self.resolve_mvx_token_id(&operation_token) {
-                if self.is_fungible(&operation_token.token_data.token_type) {
+                if self.is_fungible(&operation_token.token_data.token_type)
+                    && self
+                        .burn_mechanism_tokens()
+                        .contains(&operation_token.token_identifier)
+                {
+                    let deposited_token_amount_mapper =
+                        self.deposited_tokens_amount(&operation_token.token_identifier);
+
+                    let deposited_amount = deposited_token_amount_mapper.get();
+
+                    if operation_token.token_data.amount > deposited_amount {
+                        self.emit_transfer_failed_events(hash_of_hashes, operation_tuple);
+                        self.remove_executed_hash(hash_of_hashes, &operation_tuple.op_hash);
+
+                        return ManagedVec::new();
+                    }
+
+                    deposited_token_amount_mapper
+                        .update(|amount| *amount -= operation_token.token_data.amount.clone());
+
                     self.tx()
                         .to(ToSelf)
-                        .typed(system_proxy::UserBuiltinProxy)
-                        .esdt_local_mint(&mvx_token_id, 0, &operation_token.token_data.amount)
+                        .typed(UserBuiltinProxy)
+                        .esdt_local_mint(
+                            &operation_token.token_identifier,
+                            0,
+                            &operation_token.token_data.amount,
+                        )
                         .sync_call();
-
-                    output_payments.push(OperationEsdtPayment::new(
-                        mvx_token_id,
-                        0,
-                        operation_token.token_data.clone(),
-                    ));
                 } else {
                     let nft_nonce =
                         self.esdt_create_and_update_mapper(&mvx_token_id, &operation_token);
