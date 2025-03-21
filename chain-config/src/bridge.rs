@@ -1,3 +1,5 @@
+use error_messages::BRIDGE_ALREADY_DEPLOYED;
+
 multiversx_sc::imports!();
 
 mod bridge_proxy {
@@ -20,7 +22,7 @@ pub trait BridgeModule {
         min_valid_signers: u32,
         signers: MultiValueEncoded<ManagedAddress>,
     ) {
-        require!(self.bridge_address().is_empty(), "Bridge already deployed");
+        require!(self.bridge_address().is_empty(), BRIDGE_ALREADY_DEPLOYED);
 
         let metadata =
             CodeMetadata::PAYABLE_BY_SC | CodeMetadata::UPGRADEABLE | CodeMetadata::READABLE;
