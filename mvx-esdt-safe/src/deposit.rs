@@ -47,10 +47,12 @@ pub trait DepositModule:
         }
 
         let option_transfer_data = TransferData::from_optional_value(opt_transfer_data);
+
         if let Some(transfer_data) = option_transfer_data.as_ref() {
             self.require_gas_limit_under_limit(transfer_data.gas_limit);
             self.require_endpoint_not_banned(&transfer_data.function);
         }
+
         self.match_fee_payment(total_tokens_for_fees, &fees_payment, &option_transfer_data);
 
         let caller = self.blockchain().get_caller();
