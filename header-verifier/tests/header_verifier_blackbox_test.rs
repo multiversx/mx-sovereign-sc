@@ -1,3 +1,6 @@
+use error_messages::{
+    CURRENT_OPERATION_NOT_REGISTERED, NO_ESDT_SAFE_ADDRESS, ONLY_ESDT_SAFE_CALLER,
+};
 use header_verifier::{Headerverifier, OperationHashStatus};
 use header_verifier_blackbox_setup::*;
 use multiversx_sc::types::ManagedBuffer;
@@ -8,19 +11,15 @@ mod header_verifier_blackbox_setup;
 #[test]
 fn test_deploy() {
     let mut state = HeaderVerifierTestState::new();
-    let bls_key_1 = ManagedBuffer::from("bls_key_1");
-    let managed_bls_keys = state.get_bls_keys(vec![bls_key_1]);
 
-    state.deploy_header_verifier_contract(managed_bls_keys);
+    state.deploy();
 }
 
 #[test]
 fn test_register_esdt_address() {
     let mut state = HeaderVerifierTestState::new();
-    let bls_key_1 = ManagedBuffer::from("bls_key_1");
-    let managed_bls_keys = state.get_bls_keys(vec![bls_key_1]);
 
-    state.deploy_header_verifier_contract(managed_bls_keys);
+    state.deploy();
     state.propose_register_esdt_address(ENSHRINE_ADDRESS);
 
     state
@@ -37,10 +36,8 @@ fn test_register_esdt_address() {
 #[test]
 fn test_register_bridge_operation() {
     let mut state = HeaderVerifierTestState::new();
-    let bls_key_1 = ManagedBuffer::from("bls_key_1");
-    let managed_bls_keys = state.get_bls_keys(vec![bls_key_1]);
 
-    state.deploy_header_verifier_contract(managed_bls_keys);
+    state.deploy();
 
     let operation_1 = ManagedBuffer::from("operation_1");
     let operation_2 = ManagedBuffer::from("operation_2");
@@ -78,10 +75,8 @@ fn test_register_bridge_operation() {
 #[test]
 fn test_remove_executed_hash_caller_not_esdt_address() {
     let mut state = HeaderVerifierTestState::new();
-    let bls_key_1 = ManagedBuffer::from("bls_key_1");
-    let managed_bls_keys = state.get_bls_keys(vec![bls_key_1]);
 
-    state.deploy_header_verifier_contract(managed_bls_keys);
+    state.deploy();
 
     let operation_1 = ManagedBuffer::from("operation_1");
     let operation_2 = ManagedBuffer::from("operation_2");
@@ -93,17 +88,15 @@ fn test_remove_executed_hash_caller_not_esdt_address() {
         OWNER_ADDRESS,
         &operation.bridge_operation_hash,
         &operation_1,
-        Some("Only ESDT Safe contract can call this endpoint"),
+        Some(ONLY_ESDT_SAFE_CALLER),
     );
 }
 
 #[test]
 fn test_remove_executed_hash_no_esdt_address_registered() {
     let mut state = HeaderVerifierTestState::new();
-    let bls_key_1 = ManagedBuffer::from("bls_key_1");
-    let managed_bls_keys = state.get_bls_keys(vec![bls_key_1]);
 
-    state.deploy_header_verifier_contract(managed_bls_keys);
+    state.deploy();
 
     let operation_1 = ManagedBuffer::from("operation_1");
     let operation_2 = ManagedBuffer::from("operation_2");
@@ -114,17 +107,15 @@ fn test_remove_executed_hash_no_esdt_address_registered() {
         ENSHRINE_ADDRESS,
         &operation.bridge_operation_hash,
         &operation_1,
-        Some("There is no registered ESDT address"),
+        Some(NO_ESDT_SAFE_ADDRESS),
     );
 }
 
 #[test]
 fn test_remove_one_executed_hash() {
     let mut state = HeaderVerifierTestState::new();
-    let bls_key_1 = ManagedBuffer::from("bls_key_1");
-    let managed_bls_keys = state.get_bls_keys(vec![bls_key_1]);
 
-    state.deploy_header_verifier_contract(managed_bls_keys);
+    state.deploy();
 
     let operation_hash_1 = ManagedBuffer::from("operation_1");
     let operation_hash_2 = ManagedBuffer::from("operation_2");
@@ -164,10 +155,8 @@ fn test_remove_one_executed_hash() {
 #[test]
 fn test_remove_all_executed_hashes() {
     let mut state = HeaderVerifierTestState::new();
-    let bls_key_1 = ManagedBuffer::from("bls_key_1");
-    let managed_bls_keys = state.get_bls_keys(vec![bls_key_1]);
 
-    state.deploy_header_verifier_contract(managed_bls_keys);
+    state.deploy();
 
     let operation_1 = ManagedBuffer::from("operation_1");
     let operation_2 = ManagedBuffer::from("operation_2");
@@ -211,10 +200,8 @@ fn test_remove_all_executed_hashes() {
 #[test]
 fn test_lock_operation_not_registered() {
     let mut state = HeaderVerifierTestState::new();
-    let bls_key_1 = ManagedBuffer::from("bls_key_1");
-    let managed_bls_keys = state.get_bls_keys(vec![bls_key_1]);
 
-    state.deploy_header_verifier_contract(managed_bls_keys);
+    state.deploy();
     state.propose_register_esdt_address(ENSHRINE_ADDRESS);
 
     let operation_1 = ManagedBuffer::from("operation_1");
@@ -225,17 +212,15 @@ fn test_lock_operation_not_registered() {
         ENSHRINE_ADDRESS,
         &operation.bridge_operation_hash,
         &operation_1,
-        Some("The current operation is not registered"),
+        Some(CURRENT_OPERATION_NOT_REGISTERED),
     );
 }
 
 #[test]
 fn test_lock_operation() {
     let mut state = HeaderVerifierTestState::new();
-    let bls_key_1 = ManagedBuffer::from("bls_key_1");
-    let managed_bls_keys = state.get_bls_keys(vec![bls_key_1]);
 
-    state.deploy_header_verifier_contract(managed_bls_keys);
+    state.deploy();
     state.propose_register_esdt_address(ENSHRINE_ADDRESS);
 
     let operation_1 = ManagedBuffer::from("operation_1");

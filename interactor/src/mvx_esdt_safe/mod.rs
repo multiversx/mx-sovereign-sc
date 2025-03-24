@@ -1,0 +1,1 @@
+pub mod mvx_esdt_safe_interactor_main;
