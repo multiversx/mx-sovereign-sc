@@ -7,7 +7,7 @@ add-unlabelled = true
 add-labels = ["fee-market-external-view"]
 
 [contracts.view]
-name = "multisig-view"
+name = "fee-market-view"
 external-view = true
 add-unlabelled = false
 add-labels = ["fee-market-external-view"]
