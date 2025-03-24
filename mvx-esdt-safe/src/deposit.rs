@@ -79,17 +79,42 @@ pub trait DepositModule:
         token_data.amount = payment.amount.clone();
 
         let token_mapper = self.multiversx_to_sovereign_token_id_mapper(&payment.token_identifier);
+
         if !token_mapper.is_empty() || self.is_native_token(&payment.token_identifier) {
             let sov_token_id = token_mapper.get();
             let sov_token_nonce =
                 self.burn_mainchain_token(payment.clone(), &token_data.token_type, &sov_token_id);
-            MultiValue3::from((sov_token_id, sov_token_nonce, token_data))
-        } else {
-            MultiValue3::from((
-                payment.token_identifier.clone(),
-                payment.token_nonce,
-                token_data,
-            ))
+
+            return MultiValue3::from((sov_token_id, sov_token_nonce, token_data));
+        };
+
+        self.check_payment_for_burn_mechanism(&payment);
+
+        MultiValue3::from((
+            payment.token_identifier.clone(),
+            payment.token_nonce,
+            token_data,
+        ))
+    }
+
+    fn check_payment_for_burn_mechanism(&self, payment: &EsdtTokenPayment<Self::Api>) {
+        if self.is_fungible(&payment.token_type())
+            && self
+                .burn_mechanism_tokens()
+                .contains(&payment.token_identifier)
+        {
+            self.tx()
+                .to(ToSelf)
+                .typed(UserBuiltinProxy)
+                .esdt_local_burn(
+                    payment.token_identifier.clone(),
+                    payment.token_nonce,
+                    payment.amount.clone(),
+                )
+                .sync_call();
+
+            self.deposited_tokens_amount(&payment.token_identifier)
+                .update(|amount| *amount += payment.amount.clone());
         }
     }
 }
