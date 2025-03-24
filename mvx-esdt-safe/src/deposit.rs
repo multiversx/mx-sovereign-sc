@@ -88,7 +88,7 @@ pub trait DepositModule:
             return MultiValue3::from((sov_token_id, sov_token_nonce, token_data));
         };
 
-        self.check_payment_for_burn_mechanism(&payment);
+        self.check_deposit_payment_for_burn_mechanism(payment);
 
         MultiValue3::from((
             payment.token_identifier.clone(),
@@ -97,7 +97,7 @@ pub trait DepositModule:
         ))
     }
 
-    fn check_payment_for_burn_mechanism(&self, payment: &EsdtTokenPayment<Self::Api>) {
+    fn check_deposit_payment_for_burn_mechanism(&self, payment: &EsdtTokenPayment<Self::Api>) {
         if self.is_fungible(&payment.token_type())
             && self
                 .burn_mechanism_tokens()
