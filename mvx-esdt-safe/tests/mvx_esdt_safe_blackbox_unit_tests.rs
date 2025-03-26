@@ -1062,3 +1062,111 @@ fn execute_operation_with_native_token_success() {
         .common_setup
         .check_operation_hash_status_is_empty(&operation_hash);
 }
+
+#[test]
+fn execute_operation_success_burn_mechanism() {
+    let mut state = MvxEsdtSafeTestState::new();
+    state.deploy_contract_with_roles();
+
+    let token_data = EsdtTokenData {
+        amount: BigUint::from(100u64),
+        ..Default::default()
+    };
+
+    let payment = OperationEsdtPayment::new(
+        TokenIdentifier::from(TRUSTED_TOKEN_IDS[0]),
+        0,
+        token_data.clone(),
+    );
+
+    let operation_data = OperationData::new(1, OWNER_ADDRESS.to_managed_address(), None);
+
+    let operation = Operation::new(
+        TESTING_SC_ADDRESS.to_managed_address(),
+        vec![payment.clone()].into(),
+        operation_data,
+    );
+
+    let operation_hash = state.get_operation_hash(&operation);
+    let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&operation_hash.to_vec()));
+
+    state.common_setup.deploy_header_verifier();
+    state.common_setup.deploy_testing_sc();
+    state.common_setup.deploy_fee_market(None);
+    state.set_fee_market_address(FEE_MARKET_ADDRESS);
+    state.set_esdt_safe_address_in_header_verifier(ESDT_SAFE_ADDRESS);
+
+    let operations_hashes = MultiValueEncoded::from(ManagedVec::from(vec![operation_hash.clone()]));
+
+    let logs = state.deposit_with_logs(
+        USER.to_managed_address(),
+        OptionalValue::None,
+        PaymentsVec::from(vec![payment]),
+    );
+
+    for log in logs {
+        assert!(!log.topics.is_empty());
+    }
+
+    state
+        .common_setup
+        .deploy_chain_config(SovereignConfig::default_config());
+    state.register_operation(ManagedBuffer::new(), &hash_of_hashes, operations_hashes);
+
+    state
+        .common_setup
+        .check_operation_hash_status(&operation_hash, OperationHashStatus::NotLocked);
+
+    state.set_token_burn_mechanism(TRUSTED_TOKEN_IDS[0], None);
+
+    state.execute_operation(hash_of_hashes, operation.clone(), None);
+
+    let expected_amount_trusted_token = BigUint::from(ONE_HUNDRED_MILLION) - &token_data.amount;
+
+    state
+        .common_setup
+        .world
+        .check_account(OWNER_ADDRESS)
+        .esdt_balance(
+            TokenIdentifier::from(TRUSTED_TOKEN_IDS[0]),
+            &expected_amount_trusted_token,
+        );
+
+    state
+        .common_setup
+        .world
+        .tx()
+        .from(OWNER_ADDRESS)
+        .to(ESDT_SAFE_ADDRESS)
+        .whitebox(mvx_esdt_safe::contract_obj, |sc| {
+            let token_id = TokenIdentifier::from(TRUSTED_TOKEN_IDS[0]);
+
+            assert!(sc.deposited_tokens_amount(&token_id).is_empty());
+
+            let sc_balance = sc
+                .blockchain()
+                .get_sc_balance(&EgldOrEsdtTokenIdentifier::esdt(token_id), 0);
+
+            assert!(sc_balance == 100u64);
+        });
+
+    state
+        .common_setup
+        .world
+        .tx()
+        .from(OWNER_ADDRESS)
+        .to(TESTING_SC_ADDRESS)
+        .whitebox(testing_sc::contract_obj, |sc| {
+            let token_id = TokenIdentifier::from(TRUSTED_TOKEN_IDS[0]);
+
+            let sc_balance = sc
+                .blockchain()
+                .get_sc_balance(&EgldOrEsdtTokenIdentifier::esdt(token_id), 0);
+
+            assert!(sc_balance == BigUint::zero());
+        });
+
+    state
+        .common_setup
+        .check_operation_hash_status_is_empty(&operation_hash);
+}

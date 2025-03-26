@@ -30,7 +30,6 @@ pub trait DepositModule:
         let mut total_tokens_for_fees = 0usize;
         let mut event_payments = MultiValueEncoded::new();
         let mut refundable_payments = ManagedVec::<Self::Api, _>::new();
-        let own_sc_address = self.blockchain().get_sc_address(); //remove
 
         for payment in &payments {
             self.require_below_max_amount(&payment.token_identifier, &payment.amount);
@@ -44,7 +43,7 @@ pub trait DepositModule:
             }
             total_tokens_for_fees += 1;
 
-            let processed_payment = self.process_payment(&payment, &own_sc_address);
+            let processed_payment = self.process_payment(&payment);
             event_payments.push(processed_payment);
         }
 
@@ -69,15 +68,8 @@ pub trait DepositModule:
     fn process_payment(
         &self,
         payment: &EsdtTokenPayment<Self::Api>,
-        own_sc_address: &ManagedAddress,
     ) -> EventPaymentTuple<Self::Api> {
-        let mut token_data = self.blockchain().get_esdt_token_data(
-            own_sc_address,
-            &payment.token_identifier,
-            payment.token_nonce,
-        );
-        token_data.amount = payment.amount.clone();
-
+        let token_data = self.prepare_token_data(payment);
         let token_mapper = self.multiversx_to_sovereign_token_id_mapper(&payment.token_identifier);
 
         if !token_mapper.is_empty() || self.is_native_token(&payment.token_identifier) {

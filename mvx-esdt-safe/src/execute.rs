@@ -89,12 +89,14 @@ pub trait ExecuteModule:
 
             let deposited_amount = deposited_token_amount_mapper.get();
 
-            self.validate_execute_burn_payment_amount(
-                &deposited_amount,
-                &payment.token_data.amount,
-                hash_of_hashes,
-                operation_tuple,
-            );
+            if !self
+                .is_execute_burn_payment_amount_valid(&deposited_amount, &payment.token_data.amount)
+            {
+                self.emit_transfer_failed_events(hash_of_hashes, operation_tuple);
+                self.remove_executed_hash(hash_of_hashes, &operation_tuple.op_hash);
+
+                return false;
+            }
 
             deposited_token_amount_mapper
                 .update(|amount| *amount -= payment.token_data.amount.clone());
@@ -109,17 +111,12 @@ pub trait ExecuteModule:
         true
     }
 
-    fn validate_execute_burn_payment_amount(
+    fn is_execute_burn_payment_amount_valid(
         &self,
         deposited_amount: &BigUint<Self::Api>,
         payment_amount: &BigUint<Self::Api>,
-        hash_of_hashes: &ManagedBuffer,
-        operation_tuple: &OperationTuple<Self::Api>,
     ) -> bool {
         if payment_amount > deposited_amount {
-            self.emit_transfer_failed_events(hash_of_hashes, operation_tuple);
-            self.remove_executed_hash(hash_of_hashes, &operation_tuple.op_hash);
-
             return false;
         }
 
