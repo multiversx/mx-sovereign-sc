@@ -67,10 +67,20 @@ pub trait ExecuteModule:
                 continue;
             }
 
-            if !sov_to_mvx_token_id_mapper.is_empty()
-                || self.is_native_token(&operation_token.token_identifier)
-            {
+            if !sov_to_mvx_token_id_mapper.is_empty() {
                 output_payments.push(operation_token.clone());
+                continue;
+            } else if self.is_native_token(&operation_token.token_identifier) {
+                self.tx()
+                    .to(ToSelf)
+                    .typed(UserBuiltinProxy)
+                    .esdt_local_mint(
+                        &operation_token.token_identifier,
+                        0,
+                        &operation_token.token_data.amount,
+                    )
+                    .sync_call();
+
                 continue;
             }
 
