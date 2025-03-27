@@ -47,13 +47,13 @@ pub trait ExecuteCommonModule: crate::storage::CrossChainStorage {
     }
 
     fn is_native_token(&self, token_identifier: &TokenIdentifier) -> bool {
-        let esdt_safe_native_token = self.esdt_safe_config().get().opt_native_token;
+        let esdt_safe_native_token_mapper = self.native_token();
 
-        if esdt_safe_native_token.is_none() {
+        if esdt_safe_native_token_mapper.is_empty() {
             return false;
         }
 
-        token_identifier == &TokenIdentifier::from(esdt_safe_native_token.unwrap())
+        token_identifier == &esdt_safe_native_token_mapper.get()
     }
 
     #[inline]

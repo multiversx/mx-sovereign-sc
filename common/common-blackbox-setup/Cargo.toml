@@ -15,8 +15,12 @@ path = "../proxies"
 [dependencies.structs]
 path = "../structs"
 
+[dependencies.cross-chain]
+path = "../cross-chain"
+
 [dependencies]
 fee-market = { path = "../../fee-market" }
 header-verifier = { path = "../../header-verifier" }
 chain-config = { path = "../../chain-config" }
 testing-sc = { path = "../../testing-sc" }
+mvx-esdt-safe = { path = "../../mvx-esdt-safe" }
