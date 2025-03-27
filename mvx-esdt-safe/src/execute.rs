@@ -49,74 +49,63 @@ pub trait ExecuteModule:
         let mut output_payments = ManagedVec::new();
 
         for operation_token in operation_tokens.iter() {
-            let sov_to_mvx_token_id_mapper =
-                self.sovereign_to_multiversx_token_id_mapper(&operation_token.token_identifier);
+            if let Some(mvx_token_id) = self.resolve_mvx_token_id(&operation_token) {
+                if self.is_fungible(&operation_token.token_data.token_type) {
+                    self.tx()
+                        .to(ToSelf)
+                        .typed(system_proxy::UserBuiltinProxy)
+                        .esdt_local_mint(&mvx_token_id, 0, &operation_token.token_data.amount)
+                        .sync_call();
 
-            if !self.is_fungible(&operation_token.token_data.token_type) {
-                let nft_nonce = self.esdt_create_and_update_mapper(
-                    &operation_token.token_identifier,
-                    &operation_token,
-                );
-
-                output_payments.push(OperationEsdtPayment::new(
-                    operation_token.token_identifier.clone(),
-                    nft_nonce,
-                    operation_token.token_data.clone(),
-                ));
-
-                continue;
-            }
-
-            if !sov_to_mvx_token_id_mapper.is_empty() {
-                output_payments.push(operation_token.clone());
-
-                continue;
-            } else if self.is_native_token(&operation_token.token_identifier) {
-                self.tx()
-                    .to(ToSelf)
-                    .typed(UserBuiltinProxy)
-                    .esdt_local_mint(
-                        &operation_token.token_identifier,
+                    output_payments.push(OperationEsdtPayment::new(
+                        mvx_token_id,
                         0,
-                        &operation_token.token_data.amount,
-                    )
-                    .sync_call();
+                        operation_token.token_data.clone(),
+                    ));
+                } else {
+                    let nft_nonce =
+                        self.esdt_create_and_update_mapper(&mvx_token_id, &operation_token);
 
-                output_payments.push(operation_token.clone());
-                continue;
-            }
+                    output_payments.push(OperationEsdtPayment::new(
+                        mvx_token_id,
+                        nft_nonce,
+                        operation_token.token_data.clone(),
+                    ));
+                }
+            } else {
+                if self.is_fungible(&operation_token.token_data.token_type)
+                    && self
+                        .burn_mechanism_tokens()
+                        .contains(&operation_token.token_identifier)
+                {
+                    let deposited_token_amount_mapper =
+                        self.deposited_tokens_amount(&operation_token.token_identifier);
 
-            if self
-                .burn_mechanism_tokens()
-                .contains(&operation_token.token_identifier)
-            {
-                let deposited_token_amount_mapper =
-                    self.deposited_tokens_amount(&operation_token.token_identifier);
+                    let deposited_amount = deposited_token_amount_mapper.get();
 
-                let deposited_amount = deposited_token_amount_mapper.get();
+                    if operation_token.token_data.amount > deposited_amount {
+                        self.emit_transfer_failed_events(hash_of_hashes, operation_tuple);
+                        self.remove_executed_hash(hash_of_hashes, &operation_tuple.op_hash);
 
-                if operation_token.token_data.amount > deposited_amount {
-                    self.emit_transfer_failed_events(hash_of_hashes, operation_tuple);
-                    self.remove_executed_hash(hash_of_hashes, &operation_tuple.op_hash);
+                        return ManagedVec::new();
+                    }
 
-                    return ManagedVec::new();
+                    deposited_token_amount_mapper
+                        .update(|amount| *amount -= operation_token.token_data.amount.clone());
+
+                    self.tx()
+                        .to(ToSelf)
+                        .typed(UserBuiltinProxy)
+                        .esdt_local_mint(
+                            &operation_token.token_identifier,
+                            0,
+                            &operation_token.token_data.amount,
+                        )
+                        .sync_call();
                 }
 
-                deposited_token_amount_mapper
-                    .update(|amount| *amount -= operation_token.token_data.amount.clone());
-
-                self.tx()
-                    .to(ToSelf)
-                    .typed(UserBuiltinProxy)
-                    .esdt_local_mint(
-                        &operation_token.token_identifier,
-                        0,
-                        &operation_token.token_data.amount,
-                    )
-                    .sync_call();
+                output_payments.push(operation_token.clone());
             }
-
-            output_payments.push(operation_token.clone());
         }
 
         output_payments
@@ -311,6 +300,24 @@ pub trait ExecuteModule:
                 &operation_token.token_data.amount,
             )
             .sync_call();
+    }
+
+    fn resolve_mvx_token_id(
+        &self,
+        operation_token: &OperationEsdtPayment<Self::Api>,
+    ) -> Option<TokenIdentifier<Self::Api>> {
+        let sov_to_mvx_mapper =
+            self.sovereign_to_multiversx_token_id_mapper(&operation_token.token_identifier);
+
+        if !sov_to_mvx_mapper.is_empty() {
+            return Some(sov_to_mvx_mapper.get());
+        }
+
+        if self.is_native_token(&operation_token.token_identifier) {
+            Some(operation_token.token_identifier.clone())
+        } else {
+            None
+        }
     }
 
     fn get_mvx_nonce_from_mapper(self, token_id: &TokenIdentifier, nonce: u64) -> u64 {
