@@ -69,6 +69,7 @@ pub trait ExecuteModule:
 
             if !sov_to_mvx_token_id_mapper.is_empty() {
                 output_payments.push(operation_token.clone());
+
                 continue;
             } else if self.is_native_token(&operation_token.token_identifier) {
                 self.tx()
@@ -81,6 +82,7 @@ pub trait ExecuteModule:
                     )
                     .sync_call();
 
+                output_payments.push(operation_token.clone());
                 continue;
             }
 
