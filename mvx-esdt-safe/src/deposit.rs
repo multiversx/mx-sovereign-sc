@@ -43,49 +43,9 @@ pub trait DepositModule:
             }
             total_tokens_for_fees += 1;
 
-            let current_token_data = self.prepare_token_data(&payment);
+            let processed_payment = self.process_payment(&payment);
 
-            let mvx_to_sov_token_id_mapper =
-                self.multiversx_to_sovereign_token_id_mapper(&payment.token_identifier);
-            if !mvx_to_sov_token_id_mapper.is_empty() {
-                let sov_token_id = mvx_to_sov_token_id_mapper.get();
-                let sov_token_nonce = self.burn_mainchain_token(
-                    payment.clone(),
-                    &current_token_data.token_type,
-                    &sov_token_id,
-                );
-
-                event_payments.push(MultiValue3::from((
-                    sov_token_id,
-                    sov_token_nonce,
-                    current_token_data,
-                )));
-            } else {
-                if self.is_fungible(&current_token_data.token_type)
-                    && self
-                        .burn_mechanism_tokens()
-                        .contains(&payment.token_identifier)
-                {
-                    self.tx()
-                        .to(ToSelf)
-                        .typed(UserBuiltinProxy)
-                        .esdt_local_burn(
-                            payment.token_identifier.clone(),
-                            payment.token_nonce,
-                            payment.amount.clone(),
-                        )
-                        .sync_call();
-
-                    self.deposited_tokens_amount(&payment.token_identifier)
-                        .update(|amount| *amount += payment.amount.clone());
-                }
-
-                event_payments.push(MultiValue3::from((
-                    payment.token_identifier.clone(),
-                    payment.token_nonce,
-                    current_token_data,
-                )));
-            }
+            event_payments.push(processed_payment);
         }
 
         let option_transfer_data = TransferData::from_optional_value(opt_transfer_data);
@@ -111,10 +71,9 @@ pub trait DepositModule:
     fn process_payment(
         &self,
         payment: &EsdtTokenPayment<Self::Api>,
-        own_sc_address: &ManagedAddress,
     ) -> EventPaymentTuple<Self::Api> {
         let mut token_data = self.blockchain().get_esdt_token_data(
-            own_sc_address,
+            &self.blockchain().get_sc_address(),
             &payment.token_identifier,
             payment.token_nonce,
         );
@@ -127,6 +86,25 @@ pub trait DepositModule:
                 self.burn_mainchain_token(payment.clone(), &token_data.token_type, &sov_token_id);
             MultiValue3::from((sov_token_id, sov_token_nonce, token_data))
         } else {
+            if self.is_fungible(&token_data.token_type)
+                && self
+                    .burn_mechanism_tokens()
+                    .contains(&payment.token_identifier)
+            {
+                self.tx()
+                    .to(ToSelf)
+                    .typed(UserBuiltinProxy)
+                    .esdt_local_burn(
+                        payment.token_identifier.clone(),
+                        payment.token_nonce,
+                        payment.amount.clone(),
+                    )
+                    .sync_call();
+
+                self.deposited_tokens_amount(&payment.token_identifier)
+                    .update(|amount| *amount += payment.amount.clone());
+            }
+
             MultiValue3::from((
                 payment.token_identifier.clone(),
                 payment.token_nonce,
