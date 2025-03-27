@@ -52,61 +52,62 @@ pub trait ExecuteModule:
             let sov_to_mvx_token_id_mapper =
                 self.sovereign_to_multiversx_token_id_mapper(&operation_token.token_identifier);
 
-            if sov_to_mvx_token_id_mapper.is_empty() {
-                if self.is_fungible(&operation_token.token_data.token_type)
-                    && self
-                        .burn_mechanism_tokens()
-                        .contains(&operation_token.token_identifier)
-                {
-                    let deposited_token_amount_mapper =
-                        self.deposited_tokens_amount(&operation_token.token_identifier);
+            if !self.is_fungible(&operation_token.token_data.token_type) {
+                let nft_nonce = self.esdt_create_and_update_mapper(
+                    &operation_token.token_identifier,
+                    &operation_token,
+                );
 
-                    let deposited_amount = deposited_token_amount_mapper.get();
+                output_payments.push(OperationEsdtPayment::new(
+                    operation_token.token_identifier.clone(),
+                    nft_nonce,
+                    operation_token.token_data.clone(),
+                ));
 
-                    if operation_token.token_data.amount > deposited_amount {
-                        self.emit_transfer_failed_events(hash_of_hashes, operation_tuple);
-                        self.remove_executed_hash(hash_of_hashes, &operation_tuple.op_hash);
+                continue;
+            }
 
-                        return ManagedVec::new();
-                    }
+            if !sov_to_mvx_token_id_mapper.is_empty()
+                || self.is_native_token(&operation_token.token_identifier)
+            {
+                output_payments.push(operation_token.clone());
+                continue;
+            }
 
-                    deposited_token_amount_mapper
-                        .update(|amount| *amount -= operation_token.token_data.amount.clone());
+            if self
+                .burn_mechanism_tokens()
+                .contains(&operation_token.token_identifier)
+            {
+                let deposited_token_amount_mapper =
+                    self.deposited_tokens_amount(&operation_token.token_identifier);
 
-                    self.tx()
-                        .to(ToSelf)
-                        .typed(UserBuiltinProxy)
-                        .esdt_local_mint(
-                            &operation_token.token_identifier,
-                            0,
-                            &operation_token.token_data.amount,
-                        )
-                        .sync_call();
+                let deposited_amount = deposited_token_amount_mapper.get();
+
+                if operation_token.token_data.amount > deposited_amount {
+                    self.emit_transfer_failed_events(hash_of_hashes, operation_tuple);
+                    self.remove_executed_hash(hash_of_hashes, &operation_tuple.op_hash);
+
+                    return ManagedVec::new();
                 }
 
-                output_payments.push(operation_token.clone());
+                deposited_token_amount_mapper
+                    .update(|amount| *amount -= operation_token.token_data.amount.clone());
+
+                self.tx()
+                    .to(ToSelf)
+                    .typed(UserBuiltinProxy)
+                    .esdt_local_mint(
+                        &operation_token.token_identifier,
+                        0,
+                        &operation_token.token_data.amount,
+                    )
+                    .sync_call();
             }
+
+            output_payments.push(operation_token.clone());
         }
 
         output_payments
-    }
-
-    fn resolve_mvx_token_id(
-        &self,
-        operation_token: &OperationEsdtPayment<Self::Api>,
-    ) -> Option<TokenIdentifier<Self::Api>> {
-        let sov_to_mvx_mapper =
-            self.sovereign_to_multiversx_token_id_mapper(&operation_token.token_identifier);
-
-        if !sov_to_mvx_mapper.is_empty() {
-            return Some(sov_to_mvx_mapper.get());
-        }
-
-        if self.is_native_token(&operation_token.token_identifier) {
-            Some(operation_token.token_identifier.clone())
-        } else {
-            None
-        }
     }
 
     fn esdt_create_and_update_mapper(
@@ -171,7 +172,6 @@ pub trait ExecuteModule:
             .sync_call()
     }
 
-    // TODO: create a callback module
     fn distribute_payments(
         &self,
         hash_of_hashes: &ManagedBuffer,
