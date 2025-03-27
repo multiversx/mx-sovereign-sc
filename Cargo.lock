@@ -318,9 +318,11 @@ name = "common-blackbox-setup"
 version = "0.1.0"
 dependencies = [
  "chain-config",
+ "cross-chain",
  "fee-market",
  "header-verifier",
  "multiversx-sc-scenario",
+ "mvx-esdt-safe",
  "proxies",
  "structs",
  "testing-sc",

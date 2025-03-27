@@ -124,7 +124,6 @@ impl MvxEsdtSafeTestState {
             .to(ESDT_SAFE_ADDRESS)
             .whitebox(mvx_esdt_safe::contract_obj, |sc| {
                 let config = EsdtSafeConfig::new(
-                    None,
                     ManagedVec::new(),
                     ManagedVec::new(),
                     50_000_000,
@@ -312,6 +311,32 @@ impl MvxEsdtSafeTestState {
             .assert_expected_error_message(response, expected_error_message);
     }
 
+    pub fn _register_native_token(
+        &mut self,
+        token_ticker: &str,
+        token_name: &str,
+        payment: BigUint<StaticApi>,
+        expected_error_message: Option<&str>,
+    ) {
+        let response = self
+            .common_setup
+            .world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .to(ESDT_SAFE_ADDRESS)
+            .typed(MvxEsdtSafeProxy)
+            .register_native_token(
+                ManagedBuffer::from(token_ticker),
+                ManagedBuffer::from(token_name),
+            )
+            .egld(payment)
+            .returns(ReturnsHandledOrError::new())
+            .run();
+
+        self.common_setup
+            .assert_expected_error_message(response, expected_error_message);
+    }
+
     pub fn execute_operation(
         &mut self,
         hash_of_hashes: ManagedBuffer<StaticApi>,
@@ -333,7 +358,7 @@ impl MvxEsdtSafeTestState {
             .assert_expected_error_message(response, expected_error_message);
     }
 
-    pub fn set_esdt_safe_address_in_header_verifier(&mut self, esdt_safe_address: TestSCAddress) {
+    pub fn _set_esdt_safe_address_in_header_verifier(&mut self, esdt_safe_address: TestSCAddress) {
         self.common_setup
             .world
             .tx()
@@ -344,7 +369,7 @@ impl MvxEsdtSafeTestState {
             .run();
     }
 
-    pub fn register_operation(
+    pub fn _register_operation(
         &mut self,
         signature: ManagedBuffer<StaticApi>,
         hash_of_hashes: &ManagedBuffer<StaticApi>,

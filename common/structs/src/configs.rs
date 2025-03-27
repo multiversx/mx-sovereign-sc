@@ -52,7 +52,6 @@ impl<M: ManagedTypeApi> StakeArgs<M> {
 #[type_abi]
 #[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, ManagedVecItem, Clone)]
 pub struct EsdtSafeConfig<M: ManagedTypeApi> {
-    pub opt_native_token: Option<ManagedBuffer<M>>,
     pub token_whitelist: ManagedVec<M, TokenIdentifier<M>>,
     pub token_blacklist: ManagedVec<M, TokenIdentifier<M>>,
     pub max_tx_gas_limit: GasLimit,
@@ -63,7 +62,6 @@ impl<M: ManagedTypeApi> EsdtSafeConfig<M> {
     #[inline]
     pub fn default_config() -> Self {
         EsdtSafeConfig {
-            opt_native_token: None,
             token_whitelist: ManagedVec::new(),
             token_blacklist: ManagedVec::new(),
             max_tx_gas_limit: DEFAULT_MAX_TX_GAS_LIMIT,
@@ -72,14 +70,12 @@ impl<M: ManagedTypeApi> EsdtSafeConfig<M> {
     }
 
     pub fn new(
-        opt_native_token: Option<ManagedBuffer<M>>,
         token_whitelist: ManagedVec<M, TokenIdentifier<M>>,
         token_blacklist: ManagedVec<M, TokenIdentifier<M>>,
         max_tx_gas_limit: GasLimit,
         banned_endpoints: ManagedVec<M, ManagedBuffer<M>>,
     ) -> Self {
         EsdtSafeConfig {
-            opt_native_token,
             token_whitelist,
             token_blacklist,
             max_tx_gas_limit,
