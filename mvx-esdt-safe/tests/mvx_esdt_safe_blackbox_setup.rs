@@ -311,7 +311,7 @@ impl MvxEsdtSafeTestState {
             .assert_expected_error_message(response, expected_error_message);
     }
 
-    pub fn _register_native_token(
+    pub fn register_native_token(
         &mut self,
         token_ticker: &str,
         token_name: &str,
@@ -358,7 +358,7 @@ impl MvxEsdtSafeTestState {
             .assert_expected_error_message(response, expected_error_message);
     }
 
-    pub fn _set_esdt_safe_address_in_header_verifier(&mut self, esdt_safe_address: TestSCAddress) {
+    pub fn set_esdt_safe_address_in_header_verifier(&mut self, esdt_safe_address: TestSCAddress) {
         self.common_setup
             .world
             .tx()
@@ -369,7 +369,7 @@ impl MvxEsdtSafeTestState {
             .run();
     }
 
-    pub fn _register_operation(
+    pub fn register_operation(
         &mut self,
         signature: ManagedBuffer<StaticApi>,
         hash_of_hashes: &ManagedBuffer<StaticApi>,
