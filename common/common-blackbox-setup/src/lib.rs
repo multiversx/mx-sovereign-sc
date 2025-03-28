@@ -204,14 +204,15 @@ impl BaseSetup {
             });
     }
 
-    pub fn check_deposited_tokens_amount_is_empty(&mut self, tokens: Vec<TestTokenIdentifier>) {
+    pub fn check_deposited_tokens_amount(&mut self, tokens: Vec<(TestTokenIdentifier, u64)>) {
         self.world
             .tx()
             .from(OWNER_ADDRESS)
             .to(ESDT_SAFE_ADDRESS)
             .whitebox(mvx_esdt_safe::contract_obj, |sc| {
-                for token_id in tokens {
-                    assert!(sc.deposited_tokens_amount(&token_id.into()).is_empty());
+                for token in tokens {
+                    let (token_id, amount) = token;
+                    assert!(sc.deposited_tokens_amount(&token_id.into()).get() == amount);
                 }
             });
     }

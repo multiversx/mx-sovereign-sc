@@ -10,9 +10,8 @@ use error_messages::{
     MAX_GAS_LIMIT_PER_TX_EXCEEDED, MINT_AND_BURN_ROLES_NOT_FOUND, NO_ESDT_SAFE_ADDRESS,
     PAYMENT_DOES_NOT_COVER_FEE, TOKEN_ID_IS_NOT_TRUSTED, TOKEN_IS_FROM_SOVEREIGN, TOO_MANY_TOKENS,
 };
-use header_verifier::{Headerverifier, OperationHashStatus};
-use multiversx_sc::contract_base::ContractBase;
-use multiversx_sc::types::{EgldOrEsdtTokenIdentifier, MultiValueEncoded};
+use header_verifier::OperationHashStatus;
+use multiversx_sc::types::MultiValueEncoded;
 use multiversx_sc::{
     imports::{MultiValue3, OptionalValue},
     types::{
@@ -32,7 +31,6 @@ use structs::{
     configs::EsdtSafeConfig,
     operation::{Operation, OperationData, OperationEsdtPayment},
 };
-// deposit_success_burn_mechanism
 mod mvx_esdt_safe_blackbox_setup;
 
 #[test]
@@ -760,43 +758,16 @@ fn deposit_success_burn_mechanism() {
 
     state
         .common_setup
-        .world
-        .query()
-        .to(ESDT_SAFE_ADDRESS)
-        .whitebox(mvx_esdt_safe::contract_obj, |sc| {
-            assert!(sc
-                .multiversx_to_sovereign_token_id_mapper(&TokenIdentifier::from(
-                    TRUSTED_TOKEN_IDS[0]
-                ))
-                .is_empty());
+        .check_multiversx_to_sovereign_token_id_mapper_is_empty(TRUSTED_TOKEN_IDS[0]);
 
-            let expected_deposited_tokens_amount = BigUint::from(100u64);
-
-            assert!(
-                expected_deposited_tokens_amount
-                    == sc
-                        .deposited_tokens_amount(&TokenIdentifier::from(TRUSTED_TOKEN_IDS[0]))
-                        .get()
-            );
-
-            let trusted_token_id = TokenIdentifier::from(TRUSTED_TOKEN_IDS[0]);
-
-            assert!(!sc.deposited_tokens_amount(&trusted_token_id).is_empty());
-
-            let trusted_token_sc_balance = sc
-                .blockchain()
-                .get_sc_balance(&EgldOrEsdtTokenIdentifier::esdt(trusted_token_id), 0);
-
-            assert!(trusted_token_sc_balance == BigUint::zero());
-
-            let second_token_sc_balance = TokenIdentifier::from(TEST_TOKEN_TWO);
-
-            let second_token_sc_balance = sc
-                .blockchain()
-                .get_sc_balance(&EgldOrEsdtTokenIdentifier::esdt(second_token_sc_balance), 0);
-
-            assert!(second_token_sc_balance == 100u64);
-        });
+    state.common_setup.check_sc_esdt_balance(
+        vec![
+            MultiValue3::from((TestTokenIdentifier::new(TRUSTED_TOKEN_IDS[0]), 0u64, 0u64)),
+            MultiValue3::from((TestTokenIdentifier::new(TEST_TOKEN_TWO), 100, 0)),
+        ],
+        ESDT_SAFE_ADDRESS.to_managed_address(),
+        mvx_esdt_safe::contract_obj,
+    );
 
     let expected_amount_trusted_token =
         BigUint::from(ONE_HUNDRED_MILLION) - &esdt_token_payment_trusted_token.amount;
@@ -1130,9 +1101,7 @@ fn execute_operation_success_burn_mechanism() {
 
     state
         .common_setup
-        .check_deposited_tokens_amount_is_empty(vec![TestTokenIdentifier::new(
-            TRUSTED_TOKEN_IDS[0],
-        )]);
+        .check_deposited_tokens_amount(vec![(TestTokenIdentifier::new(TRUSTED_TOKEN_IDS[0]), 0)]);
 
     state.common_setup.check_sc_esdt_balance(
         vec![MultiValue3::from((
