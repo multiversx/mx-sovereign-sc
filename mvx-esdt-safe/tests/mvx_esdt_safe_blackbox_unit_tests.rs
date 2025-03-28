@@ -1,6 +1,7 @@
 use common_blackbox_setup::{
     ESDT_SAFE_ADDRESS, FEE_MARKET_ADDRESS, FEE_TOKEN, HEADER_VERIFIER_ADDRESS, ONE_HUNDRED_MILLION,
-    ONE_HUNDRED_THOUSAND, OWNER_ADDRESS, TESTING_SC_ADDRESS, TEST_TOKEN_ONE, TEST_TOKEN_TWO, USER,
+    ONE_HUNDRED_THOUSAND, OWNER_ADDRESS, TESTING_SC_ADDRESS, TEST_TOKEN_ONE,
+    TEST_TOKEN_ONE_WITH_PREFIX, TEST_TOKEN_TWO, USER,
 };
 use cross_chain::storage::CrossChainStorage;
 use cross_chain::{DEFAULT_ISSUE_COST, MAX_GAS_PER_TRANSACTION};
@@ -9,9 +10,8 @@ use error_messages::{
     MAX_GAS_LIMIT_PER_TX_EXCEEDED, MINT_AND_BURN_ROLES_NOT_FOUND, NO_ESDT_SAFE_ADDRESS,
     PAYMENT_DOES_NOT_COVER_FEE, TOKEN_ID_IS_NOT_TRUSTED, TOKEN_IS_FROM_SOVEREIGN, TOO_MANY_TOKENS,
 };
-use header_verifier::{Headerverifier, OperationHashStatus};
-use multiversx_sc::contract_base::ContractBase;
-use multiversx_sc::types::{EgldOrEsdtTokenIdentifier, MultiValueEncoded};
+use header_verifier::OperationHashStatus;
+use multiversx_sc::types::MultiValueEncoded;
 use multiversx_sc::{
     imports::{MultiValue3, OptionalValue},
     types::{
@@ -31,7 +31,6 @@ use structs::{
     configs::EsdtSafeConfig,
     operation::{Operation, OperationData, OperationEsdtPayment},
 };
-// deposit_success_burn_mechanism
 mod mvx_esdt_safe_blackbox_setup;
 
 #[test]
@@ -176,7 +175,7 @@ fn register_token_invalid_type_with_prefix() {
     let config = EsdtSafeConfig::default_config();
     state.deploy_contract(HEADER_VERIFIER_ADDRESS, OptionalValue::Some(config));
 
-    let sov_token_id = TestTokenIdentifier::new("sov-TONE-123456");
+    let sov_token_id = TestTokenIdentifier::new(TEST_TOKEN_ONE_WITH_PREFIX);
     let token_type = EsdtTokenType::Invalid;
     let token_display_name = "TokenOne";
     let num_decimals = 3;
@@ -192,6 +191,10 @@ fn register_token_invalid_type_with_prefix() {
     };
 
     state.register_token(register_token_args, egld_payment, Some(INVALID_TYPE));
+
+    state
+        .common_setup
+        .check_multiversx_to_sovereign_token_id_mapper_is_empty(TEST_TOKEN_ONE);
 }
 
 #[test]
@@ -221,30 +224,30 @@ fn register_token_not_native() {
         Some(CANNOT_REGISTER_TOKEN),
     );
 }
-//
-// #[test]
-// fn register_token_fungible_token() {
-//     let mut state = MvxEsdtSafeTestState::new();
-//     let config = EsdtSafeConfig::default_config();
-//     state.deploy_contract(HEADER_VERIFIER_ADDRESS, OptionalValue::Some(config));
-//
-//     let sov_token_id = TestTokenIdentifier::new(TEST_TOKEN_ONE);
-//     let token_type = EsdtTokenType::Fungible;
-//     let token_display_name = "TokenOne";
-//     let token_ticker = TEST_TOKEN_ONE;
-//     let num_decimals = 3;
-//     let egld_payment = BigUint::from(DEFAULT_ISSUE_COST);
-//
-//     let register_token_args = RegisterTokenArgs {
-//         sov_token_id,
-//         token_type,
-//         token_display_name,
-//         token_ticker,
-//         num_decimals,
-//     };
-//
-//     state.register_token(register_token_args, egld_payment, None);
-// }
+
+#[test]
+fn register_token_fungible_token() {
+    let mut state = MvxEsdtSafeTestState::new();
+    let config = EsdtSafeConfig::default_config();
+    state.deploy_contract(HEADER_VERIFIER_ADDRESS, OptionalValue::Some(config));
+
+    let sov_token_id = TestTokenIdentifier::new(TEST_TOKEN_ONE_WITH_PREFIX);
+    let token_type = EsdtTokenType::Fungible;
+    let token_display_name = "TokenOne";
+    let token_ticker = TEST_TOKEN_ONE;
+    let num_decimals = 3;
+    let egld_payment = BigUint::from(DEFAULT_ISSUE_COST);
+
+    let register_token_args = RegisterTokenArgs {
+        sov_token_id,
+        token_type,
+        token_display_name,
+        token_ticker,
+        num_decimals,
+    };
+
+    state.register_token(register_token_args, egld_payment, None);
+}
 
 #[test]
 fn register_token_nonfungible_token() {
@@ -755,43 +758,16 @@ fn deposit_success_burn_mechanism() {
 
     state
         .common_setup
-        .world
-        .query()
-        .to(ESDT_SAFE_ADDRESS)
-        .whitebox(mvx_esdt_safe::contract_obj, |sc| {
-            assert!(sc
-                .multiversx_to_sovereign_token_id_mapper(&TokenIdentifier::from(
-                    TRUSTED_TOKEN_IDS[0]
-                ))
-                .is_empty());
+        .check_multiversx_to_sovereign_token_id_mapper_is_empty(TRUSTED_TOKEN_IDS[0]);
 
-            let expected_deposited_tokens_amount = BigUint::from(100u64);
-
-            assert!(
-                expected_deposited_tokens_amount
-                    == sc
-                        .deposited_tokens_amount(&TokenIdentifier::from(TRUSTED_TOKEN_IDS[0]))
-                        .get()
-            );
-
-            let trusted_token_id = TokenIdentifier::from(TRUSTED_TOKEN_IDS[0]);
-
-            assert!(!sc.deposited_tokens_amount(&trusted_token_id).is_empty());
-
-            let trusted_token_sc_balance = sc
-                .blockchain()
-                .get_sc_balance(&EgldOrEsdtTokenIdentifier::esdt(trusted_token_id), 0);
-
-            assert!(trusted_token_sc_balance == BigUint::zero());
-
-            let second_token_sc_balance = TokenIdentifier::from(TEST_TOKEN_TWO);
-
-            let second_token_sc_balance = sc
-                .blockchain()
-                .get_sc_balance(&EgldOrEsdtTokenIdentifier::esdt(second_token_sc_balance), 0);
-
-            assert!(second_token_sc_balance == 100u64);
-        });
+    state.common_setup.check_sc_esdt_balance(
+        vec![
+            MultiValue3::from((TestTokenIdentifier::new(TRUSTED_TOKEN_IDS[0]), 0u64, 0u64)),
+            MultiValue3::from((TestTokenIdentifier::new(TEST_TOKEN_TWO), 100, 0)),
+        ],
+        ESDT_SAFE_ADDRESS.to_managed_address(),
+        mvx_esdt_safe::contract_obj,
+    );
 
     let expected_amount_trusted_token =
         BigUint::from(ONE_HUNDRED_MILLION) - &esdt_token_payment_trusted_token.amount;
@@ -963,34 +939,17 @@ fn execute_operation_with_native_token_success() {
 
     state
         .common_setup
-        .world
-        .query()
-        .to(HEADER_VERIFIER_ADDRESS)
-        .whitebox(header_verifier::contract_obj, |sc| {
-            let operation_hash_whitebox = ManagedBuffer::new_from_bytes(&operation_hash.to_vec());
-            let hash_of_hashes =
-                ManagedBuffer::new_from_bytes(&sha256(&operation_hash_whitebox.to_vec()));
+        .check_operation_hash_status_is_empty(&operation_hash);
 
-            assert!(sc
-                .operation_hash_status(&hash_of_hashes, &operation_hash_whitebox)
-                .is_empty());
-        });
-
-    state
-        .common_setup
-        .world
-        .tx()
-        .from(OWNER_ADDRESS)
-        .to(TESTING_SC_ADDRESS)
-        .whitebox(testing_sc::contract_obj, |sc| {
-            let token_id = TokenIdentifier::from(TRUSTED_TOKEN_IDS[0]);
-
-            let sc_balance = sc
-                .blockchain()
-                .get_sc_balance(&EgldOrEsdtTokenIdentifier::esdt(token_id), 0);
-
-            assert!(sc_balance == BigUint::zero());
-        });
+    state.common_setup.check_sc_esdt_balance(
+        vec![MultiValue3::from((
+            TestTokenIdentifier::new(TRUSTED_TOKEN_IDS[0]),
+            0u64,
+            0u64,
+        ))],
+        TESTING_SC_ADDRESS.to_managed_address(),
+        testing_sc::contract_obj,
+    );
 }
 
 #[test]
@@ -1038,68 +997,27 @@ fn execute_operation_burn_mechanism_without_deposit_cannot_subtract() {
 
     state
         .common_setup
-        .world
-        .query()
-        .to(HEADER_VERIFIER_ADDRESS)
-        .whitebox(header_verifier::contract_obj, |sc| {
-            let operation_hash_whitebox = ManagedBuffer::new_from_bytes(&operation_hash.to_vec());
-            let hash_of_hashes =
-                ManagedBuffer::new_from_bytes(&sha256(&operation_hash_whitebox.to_vec()));
+        .check_operation_hash_status_is_empty(&operation_hash);
 
-            assert!(sc
-                .operation_hash_status(&hash_of_hashes, &operation_hash_whitebox)
-                .is_empty());
-        });
+    state.common_setup.check_sc_esdt_balance(
+        vec![MultiValue3::from((
+            TestTokenIdentifier::new(TRUSTED_TOKEN_IDS[0]),
+            0u64,
+            0u64,
+        ))],
+        ESDT_SAFE_ADDRESS.to_managed_address(),
+        mvx_esdt_safe::contract_obj,
+    );
 
-    state
-        .common_setup
-        .world
-        .tx()
-        .from(OWNER_ADDRESS)
-        .to(ESDT_SAFE_ADDRESS)
-        .whitebox(mvx_esdt_safe::contract_obj, |sc| {
-            let token_id = TokenIdentifier::from(TRUSTED_TOKEN_IDS[0]);
-
-            assert!(sc.deposited_tokens_amount(&token_id).is_empty());
-
-            let sc_balance = sc
-                .blockchain()
-                .get_sc_balance(&EgldOrEsdtTokenIdentifier::esdt(token_id), 0);
-
-            assert!(sc_balance == BigUint::default());
-        });
-
-    state
-        .common_setup
-        .world
-        .tx()
-        .from(OWNER_ADDRESS)
-        .to(TESTING_SC_ADDRESS)
-        .whitebox(testing_sc::contract_obj, |sc| {
-            let token_id = TokenIdentifier::from(TRUSTED_TOKEN_IDS[0]);
-
-            let sc_balance = sc
-                .blockchain()
-                .get_sc_balance(&EgldOrEsdtTokenIdentifier::esdt(token_id), 0);
-
-            assert!(sc_balance == BigUint::zero());
-        });
-
-    state
-        .common_setup
-        .world
-        .tx()
-        .from(OWNER_ADDRESS)
-        .to(TESTING_SC_ADDRESS)
-        .whitebox(testing_sc::contract_obj, |sc| {
-            let token_id = TokenIdentifier::from(TRUSTED_TOKEN_IDS[0]);
-
-            let sc_balance = sc
-                .blockchain()
-                .get_sc_balance(&EgldOrEsdtTokenIdentifier::esdt(token_id), 0);
-
-            assert!(sc_balance == BigUint::zero());
-        });
+    state.common_setup.check_sc_esdt_balance(
+        vec![MultiValue3::from((
+            TestTokenIdentifier::new(TRUSTED_TOKEN_IDS[0]),
+            0u64,
+            0u64,
+        ))],
+        TESTING_SC_ADDRESS.to_managed_address(),
+        testing_sc::contract_obj,
+    );
 }
 
 #[test]
@@ -1154,20 +1072,7 @@ fn execute_operation_success_burn_mechanism() {
 
     state
         .common_setup
-        .world
-        .query()
-        .to(HEADER_VERIFIER_ADDRESS)
-        .whitebox(header_verifier::contract_obj, |sc| {
-            let operation_hash_whitebox = ManagedBuffer::new_from_bytes(&operation_hash.to_vec());
-            let hash_of_hashes =
-                ManagedBuffer::new_from_bytes(&sha256(&operation_hash_whitebox.to_vec()));
-
-            assert!(
-                sc.operation_hash_status(&hash_of_hashes, &operation_hash_whitebox)
-                    .get()
-                    == OperationHashStatus::NotLocked
-            );
-        });
+        .check_operation_hash_status(&operation_hash, OperationHashStatus::NotLocked);
 
     state.set_token_burn_mechanism(TRUSTED_TOKEN_IDS[0], None);
 
@@ -1184,52 +1089,31 @@ fn execute_operation_success_burn_mechanism() {
             &expected_amount_trusted_token,
         );
 
-    state
-        .common_setup
-        .world
-        .tx()
-        .from(OWNER_ADDRESS)
-        .to(ESDT_SAFE_ADDRESS)
-        .whitebox(mvx_esdt_safe::contract_obj, |sc| {
-            let token_id = TokenIdentifier::from(TRUSTED_TOKEN_IDS[0]);
-
-            assert!(sc.deposited_tokens_amount(&token_id).is_empty());
-
-            let sc_balance = sc
-                .blockchain()
-                .get_sc_balance(&EgldOrEsdtTokenIdentifier::esdt(token_id), 0);
-
-            assert!(sc_balance == 100u64);
-        });
+    state.common_setup.check_sc_esdt_balance(
+        vec![MultiValue3::from((
+            TestTokenIdentifier::new(TRUSTED_TOKEN_IDS[0]),
+            100u64,
+            0u64,
+        ))],
+        ESDT_SAFE_ADDRESS.to_managed_address(),
+        mvx_esdt_safe::contract_obj,
+    );
 
     state
         .common_setup
-        .world
-        .tx()
-        .from(OWNER_ADDRESS)
-        .to(TESTING_SC_ADDRESS)
-        .whitebox(testing_sc::contract_obj, |sc| {
-            let token_id = TokenIdentifier::from(TRUSTED_TOKEN_IDS[0]);
+        .check_deposited_tokens_amount(vec![(TestTokenIdentifier::new(TRUSTED_TOKEN_IDS[0]), 0)]);
 
-            let sc_balance = sc
-                .blockchain()
-                .get_sc_balance(&EgldOrEsdtTokenIdentifier::esdt(token_id), 0);
-
-            assert!(sc_balance == BigUint::zero());
-        });
+    state.common_setup.check_sc_esdt_balance(
+        vec![MultiValue3::from((
+            TestTokenIdentifier::new(TRUSTED_TOKEN_IDS[0]),
+            0u64,
+            0u64,
+        ))],
+        TESTING_SC_ADDRESS.to_managed_address(),
+        testing_sc::contract_obj,
+    );
 
     state
         .common_setup
-        .world
-        .query()
-        .to(HEADER_VERIFIER_ADDRESS)
-        .whitebox(header_verifier::contract_obj, |sc| {
-            let operation_hash_whitebox = ManagedBuffer::new_from_bytes(&operation_hash.to_vec());
-            let hash_of_hashes =
-                ManagedBuffer::new_from_bytes(&sha256(&operation_hash_whitebox.to_vec()));
-
-            assert!(sc
-                .operation_hash_status(&hash_of_hashes, &operation_hash_whitebox)
-                .is_empty());
-        });
+        .check_operation_hash_status_is_empty(&operation_hash);
 }
