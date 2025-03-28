@@ -12,6 +12,7 @@ use multiversx_sc_scenario::{
     scenario_model::TxResponseStatus,
     DebugApi, ScenarioTxRun, ScenarioTxWhitebox, ScenarioWorld,
 };
+use mvx_esdt_safe::bridging_mechanism::BridgingMechanism;
 use proxies::{
     chain_config_proxy::ChainConfigContractProxy,
     fee_market_proxy::{FeeMarketProxy, FeeStruct},
@@ -199,6 +200,18 @@ impl BaseSetup {
                         .blockchain()
                         .get_sc_balance(&EgldOrEsdtTokenIdentifier::esdt(token_id), nonce);
                     assert_eq!(balance, amount);
+                }
+            });
+    }
+
+    pub fn check_deposited_tokens_amount_is_empty(&mut self, tokens: Vec<TestTokenIdentifier>) {
+        self.world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .to(ESDT_SAFE_ADDRESS)
+            .whitebox(mvx_esdt_safe::contract_obj, |sc| {
+                for token_id in tokens {
+                    assert!(sc.deposited_tokens_amount(&token_id.into()).is_empty());
                 }
             });
     }
