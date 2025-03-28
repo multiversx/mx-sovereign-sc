@@ -49,66 +49,83 @@ pub trait ExecuteModule:
         let mut output_payments = ManagedVec::new();
 
         for operation_token in operation_tokens.iter() {
-            if let Some(mvx_token_id) = self.resolve_mvx_token_id(&operation_token) {
-                if self.is_fungible(&operation_token.token_data.token_type) {
-                    self.tx()
-                        .to(ToSelf)
-                        .typed(system_proxy::UserBuiltinProxy)
-                        .esdt_local_mint(&mvx_token_id, 0, &operation_token.token_data.amount)
-                        .sync_call();
-
-                    output_payments.push(OperationEsdtPayment::new(
-                        mvx_token_id,
-                        0,
-                        operation_token.token_data.clone(),
-                    ));
-                } else {
-                    let nft_nonce =
-                        self.esdt_create_and_update_mapper(&mvx_token_id, &operation_token);
-
-                    output_payments.push(OperationEsdtPayment::new(
-                        mvx_token_id,
-                        nft_nonce,
-                        operation_token.token_data.clone(),
-                    ));
+            match self.get_mvx_token_id(&operation_token) {
+                Some(mvx_token_id) => {
+                    let payment = self.process_resolved_token(&mvx_token_id, &operation_token);
+                    output_payments.push(payment);
                 }
-            } else {
-                if self.is_fungible(&operation_token.token_data.token_type)
-                    && self
-                        .burn_mechanism_tokens()
-                        .contains(&operation_token.token_identifier)
-                {
-                    let deposited_token_amount_mapper =
-                        self.deposited_tokens_amount(&operation_token.token_identifier);
-
-                    let deposited_amount = deposited_token_amount_mapper.get();
-
-                    if operation_token.token_data.amount > deposited_amount {
-                        self.emit_transfer_failed_events(hash_of_hashes, operation_tuple);
-                        self.remove_executed_hash(hash_of_hashes, &operation_tuple.op_hash);
-
+                None => {
+                    if let Some(payment) = self.process_unresolved_token(
+                        hash_of_hashes,
+                        operation_tuple,
+                        &operation_token,
+                    ) {
+                        output_payments.push(payment);
+                    } else {
                         return ManagedVec::new();
                     }
-
-                    deposited_token_amount_mapper
-                        .update(|amount| *amount -= operation_token.token_data.amount.clone());
-
-                    self.tx()
-                        .to(ToSelf)
-                        .typed(UserBuiltinProxy)
-                        .esdt_local_mint(
-                            &operation_token.token_identifier,
-                            0,
-                            &operation_token.token_data.amount,
-                        )
-                        .sync_call();
                 }
-
-                output_payments.push(operation_token.clone());
             }
         }
 
         output_payments
+    }
+
+    fn process_resolved_token(
+        &self,
+        mvx_token_id: &TokenIdentifier,
+        operation_token: &OperationEsdtPayment<Self::Api>,
+    ) -> OperationEsdtPayment<Self::Api> {
+        if self.is_fungible(&operation_token.token_data.token_type) {
+            self.mint_fungible_token(mvx_token_id, &operation_token.token_data.amount);
+            OperationEsdtPayment::new(mvx_token_id.clone(), 0, operation_token.token_data.clone())
+        } else {
+            let nft_nonce = self.esdt_create_and_update_mapper(mvx_token_id, operation_token);
+            OperationEsdtPayment::new(
+                mvx_token_id.clone(),
+                nft_nonce,
+                operation_token.token_data.clone(),
+            )
+        }
+    }
+
+    fn process_unresolved_token(
+        &self,
+        hash_of_hashes: &ManagedBuffer,
+        operation_tuple: &OperationTuple<Self::Api>,
+        operation_token: &OperationEsdtPayment<Self::Api>,
+    ) -> Option<OperationEsdtPayment<Self::Api>> {
+        if self.is_fungible(&operation_token.token_data.token_type)
+            && self
+                .burn_mechanism_tokens()
+                .contains(&operation_token.token_identifier)
+        {
+            let deposited_mapper = self.deposited_tokens_amount(&operation_token.token_identifier);
+            let deposited_amount = deposited_mapper.get();
+
+            if operation_token.token_data.amount > deposited_amount {
+                self.emit_transfer_failed_events(hash_of_hashes, operation_tuple);
+                self.remove_executed_hash(hash_of_hashes, &operation_tuple.op_hash);
+
+                return None;
+            }
+
+            deposited_mapper.update(|amount| *amount -= operation_token.token_data.amount.clone());
+            self.mint_fungible_token(
+                &operation_token.token_identifier,
+                &operation_token.token_data.amount,
+            );
+        }
+
+        Some(operation_token.clone())
+    }
+
+    fn mint_fungible_token(&self, token_id: &TokenIdentifier, amount: &BigUint) {
+        self.tx()
+            .to(ToSelf)
+            .typed(system_proxy::UserBuiltinProxy)
+            .esdt_local_mint(token_id, 0, amount)
+            .sync_call();
     }
 
     fn esdt_create_and_update_mapper(
@@ -302,7 +319,7 @@ pub trait ExecuteModule:
             .sync_call();
     }
 
-    fn resolve_mvx_token_id(
+    fn get_mvx_token_id(
         &self,
         operation_token: &OperationEsdtPayment<Self::Api>,
     ) -> Option<TokenIdentifier<Self::Api>> {
