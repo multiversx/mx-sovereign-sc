@@ -47,7 +47,7 @@ pub trait DepositModule:
         let (fees_payment, payments) = self.check_and_extract_fee().into_tuple();
         let mut total_tokens_for_fees = 0usize;
         let mut event_payments = MultiValueEncoded::new();
-        let mut refundable_payments = ManagedVec::<Self::Api, _>::new();
+        let mut refundable_payments = ManagedVec::new();
         let own_sc_address = self.blockchain().get_sc_address();
 
         for payment in &payments {
