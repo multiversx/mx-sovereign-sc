@@ -47,7 +47,7 @@ pub trait DepositModule:
 
         let mut total_tokens_for_fees = 0usize;
         let mut event_payments = MultiValueEncoded::new();
-        let mut refundable_payments = ManagedVec::<Self::Api, _>::new();
+        let mut refundable_payments = ManagedVec::new();
         let current_sc_address = self.blockchain().get_sc_address();
 
         for payment in &payments {
