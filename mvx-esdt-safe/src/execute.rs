@@ -187,7 +187,6 @@ pub trait ExecuteModule:
             .register_promise();
     }
 
-    // TODO: create a callback module
     fn distribute_payments(
         &self,
         hash_of_hashes: &ManagedBuffer,
