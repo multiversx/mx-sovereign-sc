@@ -33,7 +33,13 @@ pub trait ExecuteModule:
             operation,
         };
 
-        self.distribute_payments(&hash_of_hashes, &operation_tuple, &minted_operation_tokens);
+        if operation_tuple.operation.tokens.is_empty()
+            && operation_tuple.operation.data.opt_transfer_data.is_some()
+        {
+            self.execute_smart_contract_call(&hash_of_hashes, &operation_tuple);
+        } else {
+            self.distribute_payments(&hash_of_hashes, &operation_tuple, &minted_operation_tokens);
+        }
     }
 
     fn mint_tokens(
@@ -154,6 +160,33 @@ pub trait ExecuteModule:
             .sync_call()
     }
 
+    fn execute_smart_contract_call(
+        &self,
+        hash_of_hashes: &ManagedBuffer,
+        operation_tuple: &OperationTuple<Self::Api>,
+    ) {
+        let transfer_data = operation_tuple
+            .operation
+            .data
+            .opt_transfer_data
+            .clone()
+            .unwrap();
+
+        let args = ManagedArgBuffer::from(transfer_data.args.clone());
+
+        self.tx()
+            .to(&operation_tuple.operation.to)
+            .raw_call(transfer_data.function.clone())
+            .arguments_raw(args)
+            .gas(transfer_data.gas_limit)
+            .callback(
+                <Self as ExecuteModule>::callbacks(self)
+                    .execute_callback(hash_of_hashes, operation_tuple),
+            )
+            .gas_for_callback(CALLBACK_GAS)
+            .register_promise();
+    }
+
     // TODO: create a callback module
     fn distribute_payments(
         &self,
@@ -178,7 +211,7 @@ pub trait ExecuteModule:
                     .gas(transfer_data.gas_limit)
                     .callback(
                         <Self as ExecuteModule>::callbacks(self)
-                            .execute(hash_of_hashes, operation_tuple),
+                            .execute_callback(hash_of_hashes, operation_tuple),
                     )
                     .gas_for_callback(CALLBACK_GAS)
                     .register_promise();
@@ -191,7 +224,7 @@ pub trait ExecuteModule:
                     .gas(ESDT_TRANSACTION_GAS)
                     .callback(
                         <Self as ExecuteModule>::callbacks(self)
-                            .execute(hash_of_hashes, operation_tuple),
+                            .execute_callback(hash_of_hashes, operation_tuple),
                     )
                     .gas_for_callback(CALLBACK_GAS)
                     .register_promise();
@@ -200,7 +233,7 @@ pub trait ExecuteModule:
     }
 
     #[promises_callback]
-    fn execute(
+    fn execute_callback(
         &self,
         hash_of_hashes: &ManagedBuffer,
         operation_tuple: &OperationTuple<Self::Api>,

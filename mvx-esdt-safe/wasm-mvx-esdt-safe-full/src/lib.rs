@@ -33,7 +33,7 @@ multiversx_sc_wasm_adapter::endpoints! {
         pause => pause_endpoint
         unpause => unpause_endpoint
         isPaused => paused_status
-        execute => execute
+        execute_callback => execute_callback
         issue_callback => issue_callback
         native_token_issue_callback => native_token_issue_callback
     )
