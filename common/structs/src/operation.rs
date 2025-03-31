@@ -64,11 +64,11 @@ impl<M: ManagedTypeApi> TransferData<M> {
     }
 
     pub fn from_optional_value(
-        opt_value_transfer_data: OptionalValueTransferDataTuple<M>,
+        opt_value_transfer_data: &OptionalValueTransferDataTuple<M>,
     ) -> Option<Self> {
         match opt_value_transfer_data {
             OptionalValue::Some(multi_value_transfer_data) => {
-                Option::Some(multi_value_transfer_data.into())
+                Option::Some(multi_value_transfer_data.clone().into())
             }
             OptionalValue::None => Option::None,
         }
