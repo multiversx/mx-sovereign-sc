@@ -51,7 +51,6 @@ pub trait DepositModule:
         let current_sc_address = self.blockchain().get_sc_address();
 
         for payment in &payments {
-            // Process each payment and update the vectors accordingly.
             if let Some(event_payment) =
                 self.process_payment(&current_sc_address, &payment, &mut refundable_payments)
             {
@@ -68,7 +67,6 @@ pub trait DepositModule:
 
         self.match_fee_payment(total_tokens_for_fees, &fees_payment, &option_transfer_data);
 
-        // Refund tokens
         let caller = self.blockchain().get_caller();
         self.refund_tokens(&caller, refundable_payments);
 
