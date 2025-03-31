@@ -60,15 +60,13 @@ pub trait BridgingMechanism:
 
         self.burn_mechanism_tokens().swap_remove(&token_id);
 
-        let sc_balance = self
-            .blockchain()
-            .get_sc_balance(&EgldOrEsdtTokenIdentifier::esdt(token_id.clone()), 0);
+        let deposited_amount = self.deposited_tokens_amount(&token_id).get();
 
-        if sc_balance != 0 {
+        if deposited_amount != 0 {
             self.tx()
                 .to(ToSelf)
                 .typed(UserBuiltinProxy)
-                .esdt_local_mint(&token_id, 0, &sc_balance)
+                .esdt_local_mint(&token_id, 0, &deposited_amount)
                 .sync_call();
 
             self.deposited_tokens_amount(&token_id).set(BigUint::zero());
