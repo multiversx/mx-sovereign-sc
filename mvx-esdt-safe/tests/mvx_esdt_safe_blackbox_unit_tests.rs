@@ -236,6 +236,41 @@ fn deposit_endpoint_banned() {
 }
 
 #[test]
+fn deposit_transfer_data_only() {
+    let mut state = MvxEsdtSafeTestState::new();
+
+    let config = EsdtSafeConfig::new(
+        ManagedVec::new(),
+        ManagedVec::new(),
+        50_000_000,
+        ManagedVec::new(),
+    );
+
+    state.deploy_contract(HEADER_VERIFIER_ADDRESS, OptionalValue::Some(config));
+    state.common_setup.deploy_fee_market(None);
+    state.common_setup.deploy_testing_sc();
+    state.set_fee_market_address(FEE_MARKET_ADDRESS);
+
+    let gas_limit = 2;
+    let function = ManagedBuffer::<StaticApi>::from("hello");
+    let args =
+        ManagedVec::<StaticApi, ManagedBuffer<StaticApi>>::from(vec![ManagedBuffer::from("1")]);
+
+    let transfer_data = MultiValue3::from((gas_limit, function, args));
+
+    let logs = state.deposit_with_logs(
+        USER.to_managed_address(),
+        OptionalValue::Some(transfer_data),
+        PaymentsVec::new(),
+    );
+
+    for log in logs {
+        assert!(!log.data.is_empty());
+        assert!(!log.topics.is_empty());
+    }
+}
+
+#[test]
 fn deposit_fee_enabled() {
     let mut state = MvxEsdtSafeTestState::new();
 
