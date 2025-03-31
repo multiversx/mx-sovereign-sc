@@ -367,3 +367,31 @@ fn deposit_with_fee_with_transfer_data() {
         .check_account(OWNER_ADDRESS)
         .esdt_balance(fee_token_identifier, expected_amount_token_fee);
 }
+
+#[test]
+fn deposit_transfer_data_only() {
+    let mut state = SovEsdtSafeTestState::new();
+
+    state.deploy_contract_with_roles();
+    state.common_setup.deploy_fee_market(None);
+    state.common_setup.deploy_testing_sc();
+    state.set_fee_market_address(FEE_MARKET_ADDRESS);
+
+    let gas_limit = 2;
+    let function = ManagedBuffer::<StaticApi>::from("hello");
+    let args =
+        ManagedVec::<StaticApi, ManagedBuffer<StaticApi>>::from(vec![ManagedBuffer::from("1")]);
+
+    let transfer_data = MultiValue3::from((gas_limit, function, args));
+
+    let logs = state.deposit_with_logs(
+        USER.to_managed_address(),
+        OptionalValue::Some(transfer_data),
+        PaymentsVec::new(),
+    );
+
+    for log in logs {
+        assert!(!log.data.is_empty());
+        assert!(!log.topics.is_empty());
+    }
+}
