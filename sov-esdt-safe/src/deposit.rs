@@ -22,62 +22,62 @@ pub trait DepositModule:
         opt_transfer_data: OptionalValueTransferDataTuple<Self::Api>,
     ) {
         require!(self.not_paused(), ESDT_SAFE_STILL_PAUSED);
-        let is_deposit_with_no_transfer = self.call_value().all_esdt_transfers().clone().is_empty()
-            && opt_transfer_data.is_some();
+        let option_transfer_data = TransferData::from_optional_value(&opt_transfer_data);
 
-        if is_deposit_with_no_transfer {
-            let option_transfer_data = TransferData::from_optional_value(&opt_transfer_data);
+        if let Some(transfer_data) = &option_transfer_data {
+            self.require_gas_limit_under_limit(transfer_data.gas_limit);
+            self.require_endpoint_not_banned(&transfer_data.function);
+        }
 
-            if let Some(transfer_data) = option_transfer_data.as_ref() {
-                self.require_gas_limit_under_limit(transfer_data.gas_limit);
-                self.require_endpoint_not_banned(&transfer_data.function);
-            }
+        let has_no_esdt_transfers = self.call_value().all_esdt_transfers().clone().is_empty();
+        let deposit_without_transfers = has_no_esdt_transfers && opt_transfer_data.is_some();
 
+        if deposit_without_transfers {
             let caller = self.blockchain().get_caller();
-
             let tx_nonce = self.get_and_save_next_tx_id();
             self.deposit_event(
                 &to,
                 &MultiValueEncoded::new(),
                 OperationData::new(tx_nonce, caller, option_transfer_data),
             );
-        } else {
-            let (fees_payment, payments) = self.check_and_extract_fee().into_tuple();
-
-            let mut total_tokens_for_fees = 0usize;
-            let mut event_payments = MultiValueEncoded::new();
-            let mut refundable_payments = ManagedVec::<Self::Api, _>::new();
-            let current_sc_address = self.blockchain().get_sc_address();
-
-            for payment in &payments {
-                // Process each payment and update the vectors accordingly.
-                if let Some(event_payment) =
-                    self.process_payment(&current_sc_address, &payment, &mut refundable_payments)
-                {
-                    total_tokens_for_fees += 1;
-                    event_payments.push(event_payment);
-                }
-            }
-
-            let option_transfer_data = TransferData::from_optional_value(&opt_transfer_data);
-            if let Some(transfer_data) = option_transfer_data.as_ref() {
-                self.require_gas_limit_under_limit(transfer_data.gas_limit);
-                self.require_endpoint_not_banned(&transfer_data.function);
-            }
-
-            self.match_fee_payment(total_tokens_for_fees, &fees_payment, &option_transfer_data);
-
-            // Refund tokens
-            let caller = self.blockchain().get_caller();
-            self.refund_tokens(&caller, refundable_payments);
-
-            let tx_nonce = self.get_and_save_next_tx_id();
-            self.deposit_event(
-                &to,
-                &event_payments,
-                OperationData::new(tx_nonce, caller, option_transfer_data),
-            );
+            return;
         }
+
+        let (fees_payment, payments) = self.check_and_extract_fee().into_tuple();
+
+        let mut total_tokens_for_fees = 0usize;
+        let mut event_payments = MultiValueEncoded::new();
+        let mut refundable_payments = ManagedVec::<Self::Api, _>::new();
+        let current_sc_address = self.blockchain().get_sc_address();
+
+        for payment in &payments {
+            // Process each payment and update the vectors accordingly.
+            if let Some(event_payment) =
+                self.process_payment(&current_sc_address, &payment, &mut refundable_payments)
+            {
+                total_tokens_for_fees += 1;
+                event_payments.push(event_payment);
+            }
+        }
+
+        let option_transfer_data = TransferData::from_optional_value(&opt_transfer_data);
+        if let Some(transfer_data) = option_transfer_data.as_ref() {
+            self.require_gas_limit_under_limit(transfer_data.gas_limit);
+            self.require_endpoint_not_banned(&transfer_data.function);
+        }
+
+        self.match_fee_payment(total_tokens_for_fees, &fees_payment, &option_transfer_data);
+
+        // Refund tokens
+        let caller = self.blockchain().get_caller();
+        self.refund_tokens(&caller, refundable_payments);
+
+        let tx_nonce = self.get_and_save_next_tx_id();
+        self.deposit_event(
+            &to,
+            &event_payments,
+            OperationData::new(tx_nonce, caller, option_transfer_data),
+        );
     }
 
     fn process_payment(
