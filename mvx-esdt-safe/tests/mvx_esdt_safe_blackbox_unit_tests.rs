@@ -97,7 +97,17 @@ fn set_token_burn_mechanism() {
             assert!(sc
                 .burn_mechanism_tokens()
                 .contains(&TokenIdentifier::from(TRUSTED_TOKEN_IDS[0])))
-        })
+        });
+
+    state.common_setup.check_sc_esdt_balance(
+        vec![MultiValue3::from((
+            TestTokenIdentifier::new(TRUSTED_TOKEN_IDS[0]),
+            0,
+            0,
+        ))],
+        ESDT_SAFE_ADDRESS.to_managed_address(),
+        mvx_esdt_safe::contract_obj,
+    );
 }
 
 #[test]
@@ -115,7 +125,17 @@ fn set_token_lock_mechanism() {
         .to(ESDT_SAFE_ADDRESS)
         .whitebox(mvx_esdt_safe::contract_obj, |sc| {
             assert!(sc.burn_mechanism_tokens().is_empty())
-        })
+        });
+
+    state.common_setup.check_sc_esdt_balance(
+        vec![MultiValue3::from((
+            TestTokenIdentifier::new(TRUSTED_TOKEN_IDS[0]),
+            100,
+            0,
+        ))],
+        ESDT_SAFE_ADDRESS.to_managed_address(),
+        mvx_esdt_safe::contract_obj,
+    );
 }
 
 #[test]
