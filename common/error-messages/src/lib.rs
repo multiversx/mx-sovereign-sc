@@ -44,3 +44,4 @@ pub const TOKEN_ID_NO_PREFIX: &str = "Token Id does not have prefix";
 pub const TOKEN_NOT_ACCEPTED_AS_FEE: &str = "Token not accepted as fee";
 pub const CANNOT_REGISTER_TOKEN: &str = "Cannot register token";
 pub const NATIVE_TOKEN_ALREADY_REGISTERED: &str = "Native token was already registered";
+pub const ERR_EMPTY_PAYMENTS: &str = "No payments";
