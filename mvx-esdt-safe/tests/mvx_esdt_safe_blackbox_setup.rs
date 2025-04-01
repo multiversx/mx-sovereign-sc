@@ -14,9 +14,7 @@ use multiversx_sc_scenario::{
 };
 use proxies::{header_verifier_proxy::HeaderverifierProxy, mvx_esdt_safe_proxy::MvxEsdtSafeProxy};
 use structs::{
-    aliases::OptionalValueTransferDataTuple,
-    configs::EsdtSafeConfig,
-    operation::Operation,
+    aliases::OptionalValueTransferDataTuple, configs::EsdtSafeConfig, operation::Operation,
 };
 
 const CONTRACT_CODE_PATH: MxscPath = MxscPath::new("output/mvx-esdt-safe.mxsc.json");
@@ -201,6 +199,22 @@ impl MvxEsdtSafeTestState {
 
         self.common_setup
             .assert_expected_error_message(response, expected_error_message);
+    }
+
+    pub fn execute_operation_with_logs(
+        &mut self,
+        hash_of_hashes: ManagedBuffer<StaticApi>,
+        operation: Operation<StaticApi>,
+    ) -> Vec<Log> {
+        self.common_setup
+            .world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .to(ESDT_SAFE_ADDRESS)
+            .typed(MvxEsdtSafeProxy)
+            .execute_operations(hash_of_hashes, operation)
+            .returns(ReturnsLogs)
+            .run()
     }
 
     pub fn execute_operation(
