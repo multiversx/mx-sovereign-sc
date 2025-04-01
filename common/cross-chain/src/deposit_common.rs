@@ -44,22 +44,25 @@ pub trait DepositCommonModule:
         };
     }
 
-    fn check_and_extract_fee(&self) -> ExtractedFeeResult<Self::Api> {
+    fn check_and_extract_fee(&self, has_transfer_data: bool) -> ExtractedFeeResult<Self::Api> {
         let payments = self.call_value().all_esdt_transfers().clone();
-
-        require!(!payments.is_empty(), NOTHING_TO_TRANSFER);
         require!(payments.len() <= MAX_TRANSFERS_PER_TX, TOO_MANY_TOKENS);
-        let is_fee_enabled = self
+
+        let fee_enabled = self
             .external_fee_enabled(self.fee_market_address().get())
             .get();
 
-        if !is_fee_enabled {
-            return MultiValue2::from((OptionalValue::None, payments));
-        };
+        if fee_enabled {
+            require!(!payments.is_empty(), NOTHING_TO_TRANSFER);
+            let (fee_payment, remaining_payments) = self.pop_first_payment(payments);
+            MultiValue2::from((OptionalValue::Some(fee_payment), remaining_payments))
+        } else {
+            if payments.is_empty() {
+                require!(has_transfer_data, NOTHING_TO_TRANSFER);
+            }
 
-        let (fee_payment, popped_payments) = self.pop_first_payment(payments.clone());
-
-        MultiValue2::from((OptionalValue::Some(fee_payment), popped_payments))
+            MultiValue2::from((OptionalValue::None, payments))
+        }
     }
 
     fn burn_sovereign_token(&self, payment: &EsdtTokenPayment<Self::Api>) {

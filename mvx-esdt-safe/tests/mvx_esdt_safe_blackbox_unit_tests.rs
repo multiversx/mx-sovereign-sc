@@ -6,8 +6,8 @@ use common_blackbox_setup::{
 use cross_chain::{DEFAULT_ISSUE_COST, MAX_GAS_PER_TRANSACTION};
 use error_messages::{
     BANNED_ENDPOINT_NAME, CANNOT_REGISTER_TOKEN, GAS_LIMIT_TOO_HIGH, INVALID_TYPE,
-    MAX_GAS_LIMIT_PER_TX_EXCEEDED, NO_ESDT_SAFE_ADDRESS, PAYMENT_DOES_NOT_COVER_FEE,
-    TOO_MANY_TOKENS,
+    MAX_GAS_LIMIT_PER_TX_EXCEEDED, NOTHING_TO_TRANSFER, NO_ESDT_SAFE_ADDRESS,
+    PAYMENT_DOES_NOT_COVER_FEE, TOO_MANY_TOKENS,
 };
 use header_verifier::OperationHashStatus;
 use multiversx_sc::{
@@ -65,6 +65,8 @@ fn deposit_nothing_to_transfer() {
         HEADER_VERIFIER_ADDRESS,
         OptionalValue::Some(EsdtSafeConfig::default_config()),
     );
+    state.common_setup.deploy_fee_market(None);
+    state.set_fee_market_address(FEE_MARKET_ADDRESS);
     state.deposit(
         USER.to_managed_address(),
         OptionalValue::None,
@@ -85,7 +87,8 @@ fn deposit_too_many_tokens() {
         HEADER_VERIFIER_ADDRESS,
         OptionalValue::Some(EsdtSafeConfig::default_config()),
     );
-
+    state.common_setup.deploy_fee_market(None);
+    state.set_fee_market_address(FEE_MARKET_ADDRESS);
     let esdt_token_payment = EsdtTokenPayment::<StaticApi>::new(
         TokenIdentifier::from(TEST_TOKEN_ONE),
         0,
@@ -150,8 +153,8 @@ fn deposit_gas_limit_too_high() {
     let config = EsdtSafeConfig::new(ManagedVec::new(), ManagedVec::new(), 1, ManagedVec::new());
     state.deploy_contract(HEADER_VERIFIER_ADDRESS, OptionalValue::Some(config));
     state.common_setup.deploy_fee_market(None);
-    state.common_setup.deploy_testing_sc();
     state.set_fee_market_address(FEE_MARKET_ADDRESS);
+    state.common_setup.deploy_testing_sc();
 
     let esdt_token_payment_one = EsdtTokenPayment::<StaticApi>::new(
         TokenIdentifier::from(TEST_TOKEN_ONE),
@@ -233,6 +236,151 @@ fn deposit_endpoint_banned() {
     state
         .common_setup
         .check_multiversx_to_sovereign_token_id_mapper_is_empty(TEST_TOKEN_ONE);
+}
+
+#[test]
+fn deposit_no_transfer_data_no_fee() {
+    let mut state = MvxEsdtSafeTestState::new();
+
+    state.deploy_contract(
+        HEADER_VERIFIER_ADDRESS,
+        OptionalValue::Some(EsdtSafeConfig::default_config()),
+    );
+
+    state.common_setup.deploy_fee_market(None);
+    state.common_setup.deploy_testing_sc();
+    state.set_fee_market_address(FEE_MARKET_ADDRESS);
+
+    state.deposit(
+        USER.to_managed_address(),
+        OptionalValue::None,
+        None,
+        Some(NOTHING_TO_TRANSFER),
+    );
+}
+
+#[test]
+fn deposit_transfer_data_only_no_fee() {
+    let mut state = MvxEsdtSafeTestState::new();
+
+    state.deploy_contract(
+        HEADER_VERIFIER_ADDRESS,
+        OptionalValue::Some(EsdtSafeConfig::default_config()),
+    );
+
+    state.common_setup.deploy_fee_market(None);
+    state.common_setup.deploy_testing_sc();
+    state.set_fee_market_address(FEE_MARKET_ADDRESS);
+
+    let gas_limit = 2;
+    let function = ManagedBuffer::<StaticApi>::from("hello");
+    let args =
+        ManagedVec::<StaticApi, ManagedBuffer<StaticApi>>::from(vec![ManagedBuffer::from("1")]);
+
+    let transfer_data = MultiValue3::from((gas_limit, function, args));
+
+    let logs = state.deposit_with_logs(
+        USER.to_managed_address(),
+        OptionalValue::Some(transfer_data),
+        PaymentsVec::new(),
+    );
+
+    for log in logs {
+        assert!(!log.data.is_empty());
+        assert!(!log.topics.is_empty());
+    }
+}
+
+#[test]
+fn deposit_transfer_data_only_with_fee_nothing_to_transfer() {
+    let mut state = MvxEsdtSafeTestState::new();
+
+    state.deploy_contract(
+        HEADER_VERIFIER_ADDRESS,
+        OptionalValue::Some(EsdtSafeConfig::default_config()),
+    );
+
+    let per_transfer = BigUint::from(100u64);
+    let per_gas = BigUint::from(1u64);
+
+    let fee = FeeStruct {
+        base_token: TokenIdentifier::from(FEE_TOKEN),
+        fee_type: FeeType::Fixed {
+            token: TokenIdentifier::from(FEE_TOKEN),
+            per_transfer: per_transfer.clone(),
+            per_gas: per_gas.clone(),
+        },
+    };
+
+    state.common_setup.deploy_fee_market(Some(fee));
+    state.common_setup.deploy_testing_sc();
+    state.set_fee_market_address(FEE_MARKET_ADDRESS);
+
+    let gas_limit = 2;
+    let function = ManagedBuffer::<StaticApi>::from("hello");
+    let args =
+        ManagedVec::<StaticApi, ManagedBuffer<StaticApi>>::from(vec![ManagedBuffer::from("1")]);
+
+    let transfer_data = MultiValue3::from((gas_limit, function, args));
+
+    state.deposit(
+        USER.to_managed_address(),
+        OptionalValue::Some(transfer_data),
+        None,
+        Some(NOTHING_TO_TRANSFER),
+    );
+}
+
+#[test]
+fn deposit_transfer_data_only_with_fee() {
+    let mut state = MvxEsdtSafeTestState::new();
+
+    state.deploy_contract(
+        HEADER_VERIFIER_ADDRESS,
+        OptionalValue::Some(EsdtSafeConfig::default_config()),
+    );
+
+    let per_transfer = BigUint::from(100u64);
+    let per_gas = BigUint::from(1u64);
+
+    let fee = FeeStruct {
+        base_token: TokenIdentifier::from(FEE_TOKEN),
+        fee_type: FeeType::Fixed {
+            token: TokenIdentifier::from(FEE_TOKEN),
+            per_transfer: per_transfer.clone(),
+            per_gas: per_gas.clone(),
+        },
+    };
+
+    let fee_amount = BigUint::from(ONE_HUNDRED_THOUSAND);
+
+    EsdtTokenPayment::<StaticApi>::new(TokenIdentifier::from(FEE_TOKEN), 0, fee_amount.clone());
+    let fee_payment =
+        EsdtTokenPayment::<StaticApi>::new(TokenIdentifier::from(FEE_TOKEN), 0, fee_amount.clone());
+
+    let payments_vec = PaymentsVec::from(fee_payment);
+
+    state.common_setup.deploy_fee_market(Some(fee));
+    state.common_setup.deploy_testing_sc();
+    state.set_fee_market_address(FEE_MARKET_ADDRESS);
+
+    let gas_limit = 2;
+    let function = ManagedBuffer::<StaticApi>::from("hello");
+    let args =
+        ManagedVec::<StaticApi, ManagedBuffer<StaticApi>>::from(vec![ManagedBuffer::from("1")]);
+
+    let transfer_data = MultiValue3::from((gas_limit, function, args));
+
+    let logs = state.deposit_with_logs(
+        USER.to_managed_address(),
+        OptionalValue::Some(transfer_data),
+        payments_vec,
+    );
+
+    for log in logs {
+        assert!(!log.data.is_empty());
+        assert!(!log.topics.is_empty());
+    }
 }
 
 #[test]
