@@ -53,7 +53,6 @@ pub trait DepositCommonModule:
             .get();
 
         if fee_enabled {
-            require!(!payments.is_empty(), NOTHING_TO_TRANSFER);
             return self.pop_first_payment(payments);
         } else {
             if payments.is_empty() {

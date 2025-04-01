@@ -1,11 +1,12 @@
 #![no_std]
 
-use error_messages::{INVALID_SC_ADDRESS, INVALID_TOKEN_ID, ITEM_NOT_IN_LIST, TOKEN_ID_NO_PREFIX};
+use error_messages::{
+    ERR_EMPTY_PAYMENTS, INVALID_SC_ADDRESS, INVALID_TOKEN_ID, ITEM_NOT_IN_LIST, TOKEN_ID_NO_PREFIX,
+};
 use structs::aliases::PaymentsVec;
 
 multiversx_sc::imports!();
 
-static ERR_EMPTY_PAYMENTS: &[u8] = b"No payments";
 const DASH: u8 = b'-';
 const MAX_TOKEN_ID_LEN: usize = 32;
 

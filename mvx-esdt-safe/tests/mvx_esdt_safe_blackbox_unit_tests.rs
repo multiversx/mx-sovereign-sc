@@ -5,8 +5,8 @@ use common_blackbox_setup::{
 };
 use cross_chain::{DEFAULT_ISSUE_COST, MAX_GAS_PER_TRANSACTION};
 use error_messages::{
-    BANNED_ENDPOINT_NAME, CANNOT_REGISTER_TOKEN, GAS_LIMIT_TOO_HIGH, INVALID_TYPE,
-    MAX_GAS_LIMIT_PER_TX_EXCEEDED, NOTHING_TO_TRANSFER, NO_ESDT_SAFE_ADDRESS,
+    BANNED_ENDPOINT_NAME, CANNOT_REGISTER_TOKEN, ERR_EMPTY_PAYMENTS, GAS_LIMIT_TOO_HIGH,
+    INVALID_TYPE, MAX_GAS_LIMIT_PER_TX_EXCEEDED, NOTHING_TO_TRANSFER, NO_ESDT_SAFE_ADDRESS,
     PAYMENT_DOES_NOT_COVER_FEE, TOO_MANY_TOKENS,
 };
 use header_verifier::OperationHashStatus;
@@ -327,7 +327,7 @@ fn deposit_transfer_data_only_with_fee_nothing_to_transfer() {
         USER.to_managed_address(),
         OptionalValue::Some(transfer_data),
         None,
-        Some(NOTHING_TO_TRANSFER),
+        Some(ERR_EMPTY_PAYMENTS),
     );
 }
 
