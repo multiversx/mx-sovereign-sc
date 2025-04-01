@@ -54,8 +54,7 @@ pub trait DepositCommonModule:
 
         if fee_enabled {
             require!(!payments.is_empty(), NOTHING_TO_TRANSFER);
-            let (fee_payment, remaining_payments) = self.pop_first_payment(payments);
-            MultiValue2::from((OptionalValue::Some(fee_payment), remaining_payments))
+            return self.pop_first_payment(payments);
         } else {
             if payments.is_empty() {
                 require!(has_transfer_data, NOTHING_TO_TRANSFER);

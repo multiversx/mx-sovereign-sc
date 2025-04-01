@@ -39,7 +39,7 @@ pub trait UtilsModule {
     fn pop_first_payment(
         &self,
         payments: PaymentsVec<Self::Api>,
-    ) -> (EsdtTokenPayment<Self::Api>, PaymentsVec<Self::Api>) {
+    ) -> MultiValue2<OptionalValue<EsdtTokenPayment<Self::Api>>, PaymentsVec<Self::Api>> {
         require!(!payments.is_empty(), ERR_EMPTY_PAYMENTS);
 
         let mut new_payments = payments;
@@ -47,7 +47,7 @@ pub trait UtilsModule {
         let first_payment = new_payments.get(0).clone();
         new_payments.remove(0);
 
-        (first_payment.clone(), new_payments)
+        MultiValue2::from((OptionalValue::Some(first_payment.clone()), new_payments))
     }
 
     fn has_prefix(&self, token_id: &TokenIdentifier) -> bool {
