@@ -25,6 +25,17 @@ fn deploy() {
     );
 }
 
+/// Test the deposit function without fee and without transfer data.
+/// Steps:
+/// 1. Deploy the contract with roles.
+/// 2. Deploy the fee market.
+/// 3. Deploy the testing smart contract.
+/// 4. Set the fee market address.
+/// 5. Create two ESDT token payments.
+/// 6. Create a payments vector with the two ESDT token payments.
+/// 7. Call the deposit function with the payments vector.
+/// 8. Check the logs for the deposit function.
+/// 9. Check the ESDT balance of the addresses
 #[test]
 fn deposit_no_fee_no_transfer_data() {
     let mut state = SovEsdtSafeTestState::new();
@@ -93,6 +104,17 @@ fn deposit_no_fee_no_transfer_data() {
         .esdt_balance(test_token_two_identifier, &expected_amount_token_two);
 }
 
+/// Test the deposit function with fee and without transfer data.
+/// Steps:
+/// 1. Deploy the contract with roles.
+/// 2. Deploy the fee market.
+/// 3. Deploy the testing smart contract.
+/// 4. Set the fee market address.
+/// 5. Create a fee payment.
+/// 6. Create two ESDT token payments.
+/// 7. Create a payments vector with the fee payment and the two ESDT token payments.
+/// 8. Call the deposit function with the payments vector.
+/// 9. Check the ESDT balances of the addresses 
 #[test]
 fn deposit_with_fee_no_transfer_data() {
     let mut state = SovEsdtSafeTestState::new();
@@ -186,6 +208,17 @@ fn deposit_with_fee_no_transfer_data() {
         .esdt_balance(fee_token_identifier, expected_amount_token_fee);
 }
 
+/// Test the deposit function without fee and with transfer data.
+/// Steps:
+/// 1. Deploy the contract with roles.
+/// 2. Deploy the fee market.
+/// 3. Deploy the testing smart contract.
+/// 4. Set the fee market address.
+/// 5. Create two ESDT token payments.
+/// 6. Create a payments vector with the two ESDT token payments.
+/// 7. Call the deposit function with the payments vector.
+/// 8. Check the logs for the deposit function.
+/// 9. Check the ESDT balance of the addresses
 #[test]
 fn deposit_no_fee_with_transfer_data() {
     let mut state = SovEsdtSafeTestState::new();
@@ -264,6 +297,17 @@ fn deposit_no_fee_with_transfer_data() {
         );
 }
 
+/// Test the deposit function with fee and with transfer data.
+/// Steps:
+/// 1. Deploy the contract with roles.
+/// 2. Deploy the fee market.
+/// 3. Deploy the testing smart contract.
+/// 4. Set the fee market address.
+/// 5. Create a fee payment.
+/// 6. Create two ESDT token payments.
+/// 7. Create a payments vector with the fee payment and the two ESDT token payments.
+/// 8. Call the deposit function with the payments vector.
+/// 9. Check the ESDT balances of the addresses
 #[test]
 fn deposit_with_fee_with_transfer_data() {
     let mut state = SovEsdtSafeTestState::new();

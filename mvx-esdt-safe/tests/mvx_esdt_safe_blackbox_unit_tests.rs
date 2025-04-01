@@ -38,6 +38,7 @@ fn deploy() {
     );
 }
 
+/// Test that deploy fails when the gas limit in the config is too high
 #[test]
 fn deploy_invalid_config() {
     let mut state = MvxEsdtSafeTestState::new();
@@ -57,6 +58,7 @@ fn deploy_invalid_config() {
     state.update_configuration(config, Some(MAX_GAS_LIMIT_PER_TX_EXCEEDED));
 }
 
+/// Test that deposit fails when there is no payment for transfer
 #[test]
 fn deposit_nothing_to_transfer() {
     let mut state = MvxEsdtSafeTestState::new();
@@ -77,6 +79,7 @@ fn deposit_nothing_to_transfer() {
         .check_multiversx_to_sovereign_token_id_mapper_is_empty(TEST_TOKEN_ONE);
 }
 
+/// Test that deposit fails when there are too many tokens in the payment (limit being the MAX_TRANSFERS_PER_TX)
 #[test]
 fn deposit_too_many_tokens() {
     let mut state = MvxEsdtSafeTestState::new();
@@ -106,6 +109,7 @@ fn deposit_too_many_tokens() {
         .check_multiversx_to_sovereign_token_id_mapper_is_empty(TEST_TOKEN_ONE);
 }
 
+/// Test that deposit fails when there is no transfer data
 #[test]
 fn deposit_no_transfer_data() {
     let mut state = MvxEsdtSafeTestState::new();
@@ -143,6 +147,7 @@ fn deposit_no_transfer_data() {
         .check_multiversx_to_sovereign_token_id_mapper_is_empty(TEST_TOKEN_ONE);
 }
 
+/// Test that deposit fails when the gas limit is too high
 #[test]
 fn deposit_gas_limit_too_high() {
     let mut state = MvxEsdtSafeTestState::new();
@@ -186,6 +191,7 @@ fn deposit_gas_limit_too_high() {
         .check_multiversx_to_sovereign_token_id_mapper_is_empty(TEST_TOKEN_ONE);
 }
 
+/// Test that deposit fails when the endpoint is banned
 #[test]
 fn deposit_endpoint_banned() {
     let mut state = MvxEsdtSafeTestState::new();
@@ -235,6 +241,18 @@ fn deposit_endpoint_banned() {
         .check_multiversx_to_sovereign_token_id_mapper_is_empty(TEST_TOKEN_ONE);
 }
 
+/// Test that deposit succeeds when the fee is enabled
+/// Steps:
+/// 1. Deploy the contract
+/// 2. Deploy the fee market
+/// 3. Deploy the testing smart contract
+/// 4. Set the fee market address
+/// 5. Create the fee payment
+/// 6. Create the esdt token payments
+/// 7. Create the payments vector
+/// 8. Create the transfer data
+/// 9. Call the deposit function
+/// 10. Check the balances of the accounts
 #[test]
 fn deposit_fee_enabled() {
     let mut state = MvxEsdtSafeTestState::new();
@@ -336,6 +354,18 @@ fn deposit_fee_enabled() {
         .esdt_balance(TokenIdentifier::from(FEE_TOKEN), expected_amount_token_fee);
 }
 
+/// Test that deposit fails when the payment does not cover the fee
+/// Steps:
+/// 1. Deploy the contract
+/// 2. Deploy the fee market
+/// 3. Deploy the testing smart contract
+/// 4. Set the fee market address
+/// 5. Create the fee payment
+/// 6. Create the esdt token payments
+/// 7. Create the payments vector
+/// 8. Create the transfer data
+/// 9. Call the deposit function
+/// 10. Check the balances of the accounts
 #[test]
 fn deposit_payment_doesnt_cover_fee() {
     let mut state = MvxEsdtSafeTestState::new();
@@ -398,6 +428,19 @@ fn deposit_payment_doesnt_cover_fee() {
         .check_multiversx_to_sovereign_token_id_mapper_is_empty(TEST_TOKEN_TWO);
 }
 
+/// Test that after deposit fails the tokens are refunded
+/// Steps:
+/// 1. Deploy the contract
+/// 2. Deploy the fee market
+/// 3. Deploy the testing smart contract
+/// 4. Set the fee market address
+/// 5. Create the fee payment
+/// 6. Create the esdt token payments
+/// 7. Create the payments vector
+/// 8. Create the transfer data
+/// 9. Call the deposit function
+/// 10. Check the logs
+/// 11. Check the balances of the accounts
 #[test]
 fn deposit_refund() {
     let mut state = MvxEsdtSafeTestState::new();
@@ -502,6 +545,7 @@ fn deposit_refund() {
         .esdt_balance(TokenIdentifier::from(FEE_TOKEN), expected_amount_token_fee);
 }
 
+/// Test that register token fails when the token has invalid prefix
 #[test]
 fn register_token_invalid_type_with_prefix() {
     let mut state = MvxEsdtSafeTestState::new();
@@ -529,6 +573,7 @@ fn register_token_invalid_type_with_prefix() {
         .check_multiversx_to_sovereign_token_id_mapper_is_empty(TEST_TOKEN_ONE);
 }
 
+/// Test that register token works with a valid prefix
 #[test]
 fn register_token_fungible_token_with_prefix() {
     let mut state = MvxEsdtSafeTestState::new();
@@ -555,6 +600,7 @@ fn register_token_fungible_token_with_prefix() {
     // TODO: Add check for storage after callback issue is fixed
 }
 
+/// Test that register token fails with no prefix
 #[test]
 fn register_token_fungible_token_no_prefix() {
     let mut state = MvxEsdtSafeTestState::new();
@@ -585,6 +631,7 @@ fn register_token_fungible_token_no_prefix() {
     // TODO: Add check for storage after callback issue is fixed
 }
 
+/// Test that register token works with a non-fungible token
 #[test]
 fn register_token_nonfungible_token() {
     let mut state = MvxEsdtSafeTestState::new();
@@ -611,6 +658,7 @@ fn register_token_nonfungible_token() {
     // TODO: Add check for storage after callback issue is fixed
 }
 
+/// Test that register token fails if the token is already registered
 #[test]
 fn register_native_token_already_registered() {
     let mut state = MvxEsdtSafeTestState::new();
@@ -638,6 +686,7 @@ fn register_native_token_already_registered() {
     );
 }
 
+/// Test that register native works in the happy flow
 #[test]
 fn register_native_token() {
     let mut state = MvxEsdtSafeTestState::new();
@@ -657,6 +706,14 @@ fn register_native_token() {
     // TODO: Check storage
 }
 
+/// Test that execute operation fails when the ESDT Safe address is not set
+/// Steps:
+/// 1. Deploy the contract
+/// 2. Create the operation
+/// 3. Create the hash of hashes
+/// 4. Deploy header verifier
+/// 5. Call the execute operation function
+/// 6. Check the operation hash status
 #[test]
 fn execute_operation_no_esdt_safe_registered() {
     let mut state = MvxEsdtSafeTestState::new();
@@ -692,6 +749,17 @@ fn execute_operation_no_esdt_safe_registered() {
         .check_operation_hash_status_is_empty(&hash_of_hashes);
 }
 
+/// Test that execute operation works in the happy flow
+/// Steps:
+/// 1. Deploy the contract
+/// 2. Create the operation
+/// 3. Create the hash of hashes
+/// 4. Deploy header verifier
+/// 5. Deploy testing sc
+/// 6. Set esdt safe address in testing sc
+/// 7. Call the register operation function
+/// 8. Call the execute operation function
+/// 9. Check the operation hash status
 #[test]
 fn execute_operation_success() {
     let mut state = MvxEsdtSafeTestState::new();
@@ -746,6 +814,18 @@ fn execute_operation_success() {
         .check_operation_hash_status_is_empty(&operation_hash);
 }
 
+/// Test execute operation with native token happy flow
+/// Steps:
+/// 1. Deploy the contract
+/// 2. Register the native token
+/// 3. Create the operation
+/// 4. Create the hash of hashes
+/// 5. Deploy header verifier
+/// 6. Deploy testing sc
+/// 7. Set esdt safe address in testing sc
+/// 8. Call the register operation function
+/// 9. Call the execute operation function
+/// 10. Check the operation hash status
 #[test]
 fn execute_operation_with_native_token_success() {
     let mut state = MvxEsdtSafeTestState::new();
