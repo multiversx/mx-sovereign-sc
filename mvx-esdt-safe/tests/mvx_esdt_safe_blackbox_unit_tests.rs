@@ -838,11 +838,7 @@ fn execute_operation_no_esdt_safe_registered() {
 
     state.common_setup.deploy_header_verifier();
 
-    state.execute_operation(
-        hash_of_hashes.clone(),
-        operation,
-        Some(NO_ESDT_SAFE_ADDRESS),
-    );
+    state.execute_operation(&hash_of_hashes, operation, Some(NO_ESDT_SAFE_ADDRESS));
 
     state
         .common_setup
@@ -896,7 +892,7 @@ fn execute_operation_success() {
         .common_setup
         .check_operation_hash_status(&operation_hash, OperationHashStatus::NotLocked);
 
-    state.execute_operation(hash_of_hashes, operation.clone(), None);
+    state.execute_operation(&hash_of_hashes, operation.clone(), None);
 
     state
         .common_setup
@@ -955,7 +951,7 @@ fn execute_operation_with_native_token_success() {
         .common_setup
         .check_operation_hash_status(&operation_hash, OperationHashStatus::NotLocked);
 
-    state.execute_operation(hash_of_hashes, operation.clone(), None);
+    state.execute_operation(&hash_of_hashes, operation.clone(), None);
 
     state
         .common_setup
@@ -1013,7 +1009,7 @@ fn execute_operation_burn_mechanism_without_deposit_cannot_subtract() {
     state.register_native_token(TRUSTED_TOKEN_IDS[0], token_display_name, egld_payment, None);
     state.set_token_burn_mechanism(TRUSTED_TOKEN_IDS[0], None);
 
-    state.execute_operation(hash_of_hashes, operation.clone(), None);
+    state.execute_operation(&hash_of_hashes, operation.clone(), None);
 
     state
         .common_setup
@@ -1096,7 +1092,7 @@ fn execute_operation_success_burn_mechanism() {
 
     state.set_token_burn_mechanism(TRUSTED_TOKEN_IDS[0], None);
 
-    state.execute_operation(hash_of_hashes, operation.clone(), None);
+    state.execute_operation(&hash_of_hashes, operation.clone(), None);
 
     let expected_amount_trusted_token = BigUint::from(ONE_HUNDRED_MILLION) - &token_data.amount;
 
@@ -1136,4 +1132,172 @@ fn execute_operation_success_burn_mechanism() {
     state
         .common_setup
         .check_operation_hash_status_is_empty(&operation_hash);
+}
+
+#[test]
+fn test() {
+    let mut state = MvxEsdtSafeTestState::new();
+    state.deploy_contract_with_roles();
+
+    let trusted_token_id = TRUSTED_TOKEN_IDS[0];
+
+    state.common_setup.deploy_header_verifier();
+    state.common_setup.deploy_testing_sc();
+    state.common_setup.deploy_fee_market(None);
+    state.set_fee_market_address(FEE_MARKET_ADDRESS);
+    state.set_esdt_safe_address_in_header_verifier(ESDT_SAFE_ADDRESS);
+
+    // NOTE: DEPOSIT LOCKED TOKENS
+    let deposited_trusted_token_payment_amount = 1000u64;
+    let deposit_trusted_token_payment_token_data = EsdtTokenData {
+        amount: BigUint::from(deposited_trusted_token_payment_amount),
+        ..Default::default()
+    };
+    let deposit_trusted_token_payment = OperationEsdtPayment::new(
+        TokenIdentifier::from(trusted_token_id),
+        0,
+        deposit_trusted_token_payment_token_data,
+    );
+
+    let logs = state.deposit_with_logs(
+        USER.to_managed_address(),
+        OptionalValue::None,
+        PaymentsVec::from(vec![deposit_trusted_token_payment.clone()]),
+    );
+
+    for log in logs {
+        assert!(!log.data.is_empty());
+        assert!(!log.topics.is_empty());
+    }
+
+    // NOTE: SET BURN MECHANISM -- CHECKED
+    state.set_token_burn_mechanism(trusted_token_id, None);
+
+    state.common_setup.check_deposited_tokens_amount(vec![(
+        TestTokenIdentifier::new(trusted_token_id),
+        deposited_trusted_token_payment_amount,
+    )]);
+
+    // NOTE: EXECUTE LOCKED TOKENS -- CHECKED
+    let execute_trusted_token_payment_amount = 500u64;
+    let execute_trusted_token_payment_token_data = EsdtTokenData {
+        amount: BigUint::from(execute_trusted_token_payment_amount),
+        ..Default::default()
+    };
+    let execute_trusted_token_payment = OperationEsdtPayment::new(
+        TokenIdentifier::from(trusted_token_id),
+        0,
+        execute_trusted_token_payment_token_data,
+    );
+    let operation_one_data = OperationData::new(1, OWNER_ADDRESS.to_managed_address(), None);
+    let operation_one = Operation::new(
+        TESTING_SC_ADDRESS.to_managed_address(),
+        vec![execute_trusted_token_payment.clone()].into(),
+        operation_one_data,
+    );
+    let operation_one_hash = state.get_operation_hash(&operation_one);
+    let hash_of_hashes_one = ManagedBuffer::new_from_bytes(&sha256(&operation_one_hash.to_vec()));
+    let operations_hashes_one =
+        MultiValueEncoded::from(ManagedVec::from(vec![operation_one_hash.clone()]));
+
+    state.register_operation(
+        ManagedBuffer::new(),
+        &hash_of_hashes_one,
+        operations_hashes_one,
+    );
+    state.execute_operation(&hash_of_hashes_one, operation_one, None);
+
+    // NOTE: 1000 - 500
+    let expected_deposited_trusted_token_amount_after_deposit_and_execute =
+        deposited_trusted_token_payment_amount - execute_trusted_token_payment_amount;
+
+    state.common_setup.check_deposited_tokens_amount(vec![(
+        TestTokenIdentifier::new(trusted_token_id),
+        expected_deposited_trusted_token_amount_after_deposit_and_execute,
+    )]);
+
+    // NOTE: 2nd DEPOSIT -- CHECKED
+    let second_logs = state.deposit_with_logs(
+        USER.to_managed_address(),
+        OptionalValue::None,
+        PaymentsVec::from(vec![deposit_trusted_token_payment]),
+    );
+    for log in second_logs {
+        // assert!(!log.data.is_empty());
+        assert!(!log.topics.is_empty());
+    }
+
+    // NOTE: (1000 - 500) + 500
+    let expected_deposited_trusted_token_amount_after_deposit_and_execute_and_deposit =
+        expected_deposited_trusted_token_amount_after_deposit_and_execute
+            + deposited_trusted_token_payment_amount;
+
+    state.common_setup.check_deposited_tokens_amount(vec![(
+        TestTokenIdentifier::new(trusted_token_id),
+        expected_deposited_trusted_token_amount_after_deposit_and_execute_and_deposit,
+    )]);
+
+    // NOTE: CHANGE TO LOCK MECHANISM -- CHECKED
+    state.set_token_lock_mechanism(trusted_token_id, None);
+
+    state
+        .common_setup
+        .check_deposited_tokens_amount(vec![(TestTokenIdentifier::new(trusted_token_id), 0)]);
+
+    state.common_setup.check_sc_esdt_balance(
+        vec![MultiValue3::from((
+            TestTokenIdentifier::new(trusted_token_id),
+            0,
+            expected_deposited_trusted_token_amount_after_deposit_and_execute_and_deposit,
+        ))],
+        ESDT_SAFE_ADDRESS.to_managed_address(),
+        mvx_esdt_safe::contract_obj,
+    );
+
+    // NOTE: 2nd EXECUTE LOCKED TOKENS -- CHECKED
+    let operation_two_data = OperationData::new(2, OWNER_ADDRESS.to_managed_address(), None);
+    let operation_two = Operation::new(
+        TESTING_SC_ADDRESS.to_managed_address(),
+        vec![execute_trusted_token_payment.clone()].into(),
+        operation_two_data,
+    );
+    let operation_two_hash = state.get_operation_hash(&operation_two);
+    let hash_of_hashes_two = ManagedBuffer::new_from_bytes(&sha256(&operation_two_hash.to_vec()));
+    let operations_hashes_two =
+        MultiValueEncoded::from(ManagedVec::from(vec![operation_two_hash.clone()]));
+
+    state.register_operation(
+        ManagedBuffer::new(),
+        &hash_of_hashes_two,
+        operations_hashes_two,
+    );
+    state.execute_operation(&hash_of_hashes_two, operation_two, None);
+
+    state
+        .common_setup
+        .check_deposited_tokens_amount(vec![(TestTokenIdentifier::new(trusted_token_id), 0)]);
+
+    let expected_deposited_trusted_token_amount_after_deposit_and_execute_and_deposit_and_execute =
+        expected_deposited_trusted_token_amount_after_deposit_and_execute_and_deposit
+            - execute_trusted_token_payment_amount;
+
+    state.common_setup.check_sc_esdt_balance(
+        vec![MultiValue3::from((
+            TestTokenIdentifier::new(trusted_token_id),
+            expected_deposited_trusted_token_amount_after_deposit_and_execute_and_deposit_and_execute,
+            0,
+        ))],
+        ESDT_SAFE_ADDRESS.to_managed_address(),
+        mvx_esdt_safe::contract_obj,
+    );
+
+    state.common_setup.check_sc_esdt_balance(
+        vec![MultiValue3::from((
+            TestTokenIdentifier::new(trusted_token_id),
+            500,
+            0,
+        ))],
+        TESTING_SC_ADDRESS.to_managed_address(),
+        testing_sc::contract_obj,
+    );
 }
