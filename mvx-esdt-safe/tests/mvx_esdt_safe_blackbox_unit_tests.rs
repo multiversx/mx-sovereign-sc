@@ -1134,6 +1134,29 @@ fn execute_operation_success_burn_mechanism() {
         .check_operation_hash_status_is_empty(&operation_hash);
 }
 
+/// This test checks the flow of multiple deposit and executes along side bridging mechanism
+/// Steps for this test:
+/// 1. Deploy the Mvx-ESDT-Safe SC with roles for the trusted token
+/// 2. Deploy the needed smart contract (Header-Verifier, Fee-Market with no fee and Testing SC)
+/// 3. Set the Fee-Market address in Mvx-ESDT-Safe and Header-Verifier
+/// 4. Deposit the `deposit_payment` to the `USER`
+/// 5. Check for logs and esdt balance
+/// 6. Switch the bridging mechanism to Burn&Mint for the trusted token
+/// 7. Check for `deposited_tokens_amount` mapper and esdt balance
+/// 8. Create the first `operation`
+/// 9. Register the `operation`
+/// 10. Execute the `operation`
+/// 11. Check for `deposited_tokens_amount` mapper and esdt balance
+/// 12. Second deposit of `deposit_payment` to the `USER`
+/// 13. Check for logs, `deposited_tokens_amount` mapper and esdt balance
+/// 14. Set bridging mechanism back to Lock&Send
+/// 15. Check `deposited_tokens_amount` mapper and esdt balance
+/// 16. Create the second `operation`
+/// 17. Register the `operation`
+/// 18. Execute the `operation`
+/// 19. Check for `deposited_tokens_amount` mapper and esdt balance
+/// 12. Third deposit of `deposit_payment` to the `USER`
+/// 19. Check for logs, `deposited_tokens_amount` mapper and esdt balance
 #[test]
 fn deposit_execute_switch_mechanism() {
     let mut state = MvxEsdtSafeTestState::new();
@@ -1147,7 +1170,6 @@ fn deposit_execute_switch_mechanism() {
     state.set_fee_market_address(FEE_MARKET_ADDRESS);
     state.set_esdt_safe_address_in_header_verifier(ESDT_SAFE_ADDRESS);
 
-    // NOTE: DEPOSIT LOCKED TOKENS
     let deposited_trusted_token_payment_amount = 1000u64;
     let deposit_trusted_token_payment_token_data = EsdtTokenData {
         amount: BigUint::from(deposited_trusted_token_payment_amount),
@@ -1176,7 +1198,6 @@ fn deposit_execute_switch_mechanism() {
         .check_account(ESDT_SAFE_ADDRESS)
         .esdt_balance(TestTokenIdentifier::new(trusted_token_id), 1000);
 
-    // NOTE: SET BURN MECHANISM -- CHECKED
     state.set_token_burn_mechanism(trusted_token_id, None);
 
     state.common_setup.check_deposited_tokens_amount(vec![(
@@ -1194,7 +1215,6 @@ fn deposit_execute_switch_mechanism() {
         mvx_esdt_safe::contract_obj,
     );
 
-    // NOTE: EXECUTE LOCKED TOKENS -- CHECKED
     let execute_trusted_token_payment_amount = 500u64;
     let execute_trusted_token_payment_token_data = EsdtTokenData {
         amount: BigUint::from(execute_trusted_token_payment_amount),
@@ -1223,7 +1243,6 @@ fn deposit_execute_switch_mechanism() {
     );
     state.execute_operation(&hash_of_hashes_one, operation_one, None);
 
-    // NOTE: 1000 - 500
     let expected_deposited_trusted_token_amount_after_deposit_and_execute =
         deposited_trusted_token_payment_amount - execute_trusted_token_payment_amount;
 
@@ -1232,7 +1251,6 @@ fn deposit_execute_switch_mechanism() {
         expected_deposited_trusted_token_amount_after_deposit_and_execute,
     )]);
 
-    // NOTE: 2nd DEPOSIT -- CHECKED
     let second_logs = state.deposit_with_logs(
         USER.to_managed_address(),
         OptionalValue::None,
@@ -1243,7 +1261,6 @@ fn deposit_execute_switch_mechanism() {
         assert!(!log.topics.is_empty());
     }
 
-    // NOTE: (1000 - 500) + 1000
     let expected_deposited_trusted_token_amount_after_deposit_and_execute_and_deposit =
         expected_deposited_trusted_token_amount_after_deposit_and_execute
             + deposited_trusted_token_payment_amount;
@@ -1263,7 +1280,6 @@ fn deposit_execute_switch_mechanism() {
         mvx_esdt_safe::contract_obj,
     );
 
-    // NOTE: CHANGE TO LOCK MECHANISM -- CHECKED
     state.set_token_lock_mechanism(trusted_token_id, None);
 
     state
@@ -1280,7 +1296,6 @@ fn deposit_execute_switch_mechanism() {
         mvx_esdt_safe::contract_obj,
     );
 
-    // NOTE: 2nd EXECUTE LOCKED TOKENS -- CHECKED
     let operation_two_data = OperationData::new(2, OWNER_ADDRESS.to_managed_address(), None);
     let operation_two = Operation::new(
         TESTING_SC_ADDRESS.to_managed_address(),
@@ -1327,7 +1342,6 @@ fn deposit_execute_switch_mechanism() {
         testing_sc::contract_obj,
     );
 
-    // NOTE: 3rd DEPOSIT -- CHECKED
     let third_logs = state.deposit_with_logs(
         USER.to_managed_address(),
         OptionalValue::None,
