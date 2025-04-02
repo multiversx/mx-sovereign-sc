@@ -1108,8 +1108,8 @@ fn execute_operation_success_burn_mechanism() {
     state.common_setup.check_sc_esdt_balance(
         vec![MultiValue3::from((
             TestTokenIdentifier::new(TRUSTED_TOKEN_IDS[0]),
-            100u64,
             0u64,
+            100u64,
         ))],
         ESDT_SAFE_ADDRESS.to_managed_address(),
         mvx_esdt_safe::contract_obj,
@@ -1220,7 +1220,7 @@ fn test() {
     let second_logs = state.deposit_with_logs(
         USER.to_managed_address(),
         OptionalValue::None,
-        PaymentsVec::from(vec![deposit_trusted_token_payment]),
+        PaymentsVec::from(vec![deposit_trusted_token_payment.clone()]),
     );
     for log in second_logs {
         // assert!(!log.data.is_empty());
@@ -1284,8 +1284,8 @@ fn test() {
     state.common_setup.check_sc_esdt_balance(
         vec![MultiValue3::from((
             TestTokenIdentifier::new(trusted_token_id),
-            expected_deposited_trusted_token_amount_after_deposit_and_execute_and_deposit_and_execute,
             0,
+            expected_deposited_trusted_token_amount_after_deposit_and_execute_and_deposit_and_execute,
         ))],
         ESDT_SAFE_ADDRESS.to_managed_address(),
         mvx_esdt_safe::contract_obj,
@@ -1294,8 +1294,37 @@ fn test() {
     state.common_setup.check_sc_esdt_balance(
         vec![MultiValue3::from((
             TestTokenIdentifier::new(trusted_token_id),
-            500,
             0,
+            execute_trusted_token_payment_amount,
+        ))],
+        TESTING_SC_ADDRESS.to_managed_address(),
+        testing_sc::contract_obj,
+    );
+
+    // NOTE: 3nd DEPOSIT -- CHECKED
+    let third_logs = state.deposit_with_logs(
+        USER.to_managed_address(),
+        OptionalValue::None,
+        PaymentsVec::from(vec![deposit_trusted_token_payment]),
+    );
+    for log in third_logs {
+        // assert!(!log.data.is_empty());
+        assert!(!log.topics.is_empty());
+    }
+
+    let expected_deposited_trusted_token_amount_after_deposit_and_execute_and_deposit_and_execute_and_deposit =
+        expected_deposited_trusted_token_amount_after_deposit_and_execute_and_deposit_and_execute
+            + deposited_trusted_token_payment_amount;
+
+    state
+        .common_setup
+        .check_deposited_tokens_amount(vec![(TestTokenIdentifier::new(trusted_token_id), 0)]);
+
+    state.common_setup.check_sc_esdt_balance(
+        vec![MultiValue3::from((
+            TestTokenIdentifier::new(trusted_token_id),
+            0,
+            expected_deposited_trusted_token_amount_after_deposit_and_execute_and_deposit_and_execute_and_deposit
         ))],
         TESTING_SC_ADDRESS.to_managed_address(),
         testing_sc::contract_obj,
