@@ -199,7 +199,7 @@ impl BaseSetup {
                     let balance = sc
                         .blockchain()
                         .get_sc_balance(&EgldOrEsdtTokenIdentifier::esdt(token_id), nonce);
-                    assert_eq!(balance, amount);
+                    assert_eq!(balance, BigUint::from(amount));
                 }
             });
     }
