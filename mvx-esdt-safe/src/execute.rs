@@ -123,7 +123,7 @@ pub trait ExecuteModule:
     fn mint_fungible_token(&self, token_id: &TokenIdentifier, amount: &BigUint) {
         self.tx()
             .to(ToSelf)
-            .typed(system_proxy::UserBuiltinProxy)
+            .typed(UserBuiltinProxy)
             .esdt_local_mint(token_id, 0, amount)
             .sync_call();
     }
@@ -225,8 +225,7 @@ pub trait ExecuteModule:
             None => {
                 self.tx()
                     .to(&operation_tuple.operation.to)
-                    .raw_call(ESDT_MULTI_TRANSFER_FUNC_NAME)
-                    .payment(&mapped_tokens)
+                    .multi_esdt(mapped_tokens)
                     .gas(ESDT_TRANSACTION_GAS)
                     .callback(
                         <Self as ExecuteModule>::callbacks(self)
