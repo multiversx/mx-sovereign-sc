@@ -1109,7 +1109,7 @@ fn execute_operation_success_burn_mechanism() {
         vec![MultiValue3::from((
             TestTokenIdentifier::new(TRUSTED_TOKEN_IDS[0]),
             0u64,
-            100u64,
+            0u64,
         ))],
         ESDT_SAFE_ADDRESS.to_managed_address(),
         mvx_esdt_safe::contract_obj,
@@ -1123,7 +1123,7 @@ fn execute_operation_success_burn_mechanism() {
         vec![MultiValue3::from((
             TestTokenIdentifier::new(TRUSTED_TOKEN_IDS[0]),
             0u64,
-            0u64,
+            100u64,
         ))],
         TESTING_SC_ADDRESS.to_managed_address(),
         testing_sc::contract_obj,
