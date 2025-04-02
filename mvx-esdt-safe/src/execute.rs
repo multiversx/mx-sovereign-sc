@@ -1,5 +1,4 @@
 use error_messages::ESDT_SAFE_STILL_PAUSED;
-use multiversx_sc::api::ESDT_MULTI_TRANSFER_FUNC_NAME;
 use structs::{
     aliases::GasLimit,
     operation::{Operation, OperationData, OperationEsdtPayment, OperationTuple},
