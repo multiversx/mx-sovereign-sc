@@ -339,7 +339,7 @@ impl MvxEsdtSafeTestState {
 
     pub fn execute_operation(
         &mut self,
-        hash_of_hashes: ManagedBuffer<StaticApi>,
+        hash_of_hashes: &ManagedBuffer<StaticApi>,
         operation: Operation<StaticApi>,
         expected_error_message: Option<&str>,
     ) {
