@@ -243,12 +243,12 @@ fn deposit_endpoint_banned() {
 
 /// Test that deposit succeeds when the fee is enabled
 /// Steps:
-/// 1. Deploy the contract
-/// 2. Deploy the fee market
-/// 3. Deploy the testing smart contract
-/// 4. Set the fee market address
+/// 1. Deploy the Mvx-ESDT-Safe smart contract
+/// 2. Deploy the Fee-Market smart contract
+/// 3. Deploy the Testing smart contract
+/// 4. Set the Fee-Market address
 /// 5. Create the fee payment
-/// 6. Create the esdt token payments
+/// 6. Create the ESDT token payments
 /// 7. Create the payments vector
 /// 8. Create the transfer data
 /// 9. Call the deposit function
@@ -356,12 +356,12 @@ fn deposit_fee_enabled() {
 
 /// Test that deposit fails when the payment does not cover the fee
 /// Steps:
-/// 1. Deploy the contract
-/// 2. Deploy the fee market
-/// 3. Deploy the testing smart contract
-/// 4. Set the fee market address
+/// 1. Deploy the Mvx-ESDT-Safe smart contract
+/// 2. Deploy the Fee-Market smart contract
+/// 3. Deploy the Testing smart contract
+/// 4. Set the Fee-Market address
 /// 5. Create the fee payment
-/// 6. Create the esdt token payments
+/// 6. Create the ESDT token payments
 /// 7. Create the payments vector
 /// 8. Create the transfer data
 /// 9. Call the deposit function
@@ -430,12 +430,12 @@ fn deposit_payment_doesnt_cover_fee() {
 
 /// Test that after deposit fails the tokens are refunded
 /// Steps:
-/// 1. Deploy the contract
-/// 2. Deploy the fee market
-/// 3. Deploy the testing smart contract
-/// 4. Set the fee market address
+/// 1. Deploy the Mvx-ESDT-Safe smart contract
+/// 2. Deploy the Fee-Market smart contract
+/// 3. Deploy the Testing smart contract
+/// 4. Set the Fee-Market address
 /// 5. Create the fee payment
-/// 6. Create the esdt token payments
+/// 6. Create the ESDT token payments
 /// 7. Create the payments vector
 /// 8. Create the transfer data
 /// 9. Call the deposit function
@@ -706,12 +706,12 @@ fn register_native_token() {
     // TODO: Check storage
 }
 
-/// Test that execute operation fails when the ESDT Safe address is not set
+/// Test that execute operation fails when the Mvx-ESDT-Safe address is not set
 /// Steps:
-/// 1. Deploy the contract
+/// 1. Deploy the Mvx-ESDT-Safe smart contract
 /// 2. Create the operation
 /// 3. Create the hash of hashes
-/// 4. Deploy header verifier
+/// 4. Deploy the Header-Verifier smart contract
 /// 5. Call the execute operation function
 /// 6. Check the operation hash status
 #[test]
@@ -751,12 +751,12 @@ fn execute_operation_no_esdt_safe_registered() {
 
 /// Test that execute operation works in the happy flow
 /// Steps:
-/// 1. Deploy the contract
+/// 1. Deploy the Mvx-ESDT-Safe smart contract
 /// 2. Create the operation
 /// 3. Create the hash of hashes
-/// 4. Deploy header verifier
-/// 5. Deploy testing sc
-/// 6. Set esdt safe address in testing sc
+/// 4. Deploy the Header-Verifier smart contract
+/// 5. Deploy the Testing smart contract
+/// 6. Set the Mvx-ESDT-Safe address in the Header-Verifier smart contract
 /// 7. Call the register operation function
 /// 8. Call the execute operation function
 /// 9. Check the operation hash status
@@ -816,13 +816,13 @@ fn execute_operation_success() {
 
 /// Test execute operation with native token happy flow
 /// Steps:
-/// 1. Deploy the contract
+/// 1. Deploy the Mvx-ESDT-Safe smart contract
 /// 2. Register the native token
 /// 3. Create the operation
 /// 4. Create the hash of hashes
-/// 5. Deploy header verifier
-/// 6. Deploy testing sc
-/// 7. Set esdt safe address in testing sc
+/// 5. Deploy the Header-Verifier smart contract
+/// 6. Deploy the Testing smart contract
+/// 7. Set the Mvx-ESDT-Safe address in the Header-Verifier smart contract
 /// 8. Call the register operation function
 /// 9. Call the execute operation function
 /// 10. Check the operation hash status

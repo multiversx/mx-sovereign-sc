@@ -27,10 +27,10 @@ fn deploy() {
 
 /// Test the deposit function without fee and without transfer data.
 /// Steps:
-/// 1. Deploy the contract with roles.
-/// 2. Deploy the fee market.
-/// 3. Deploy the testing smart contract.
-/// 4. Set the fee market address.
+/// 1. Deploy the Sov-ESDT-Safe smart contract with roles.
+/// 2. Deploy the Fee-Market smart contract.
+/// 3. Deploy the Testing smart contract.
+/// 4. Set the Fee-Market address.
 /// 5. Create two ESDT token payments.
 /// 6. Create a payments vector with the two ESDT token payments.
 /// 7. Call the deposit function with the payments vector.
@@ -106,10 +106,10 @@ fn deposit_no_fee_no_transfer_data() {
 
 /// Test the deposit function with fee and without transfer data.
 /// Steps:
-/// 1. Deploy the contract with roles.
-/// 2. Deploy the fee market.
-/// 3. Deploy the testing smart contract.
-/// 4. Set the fee market address.
+/// 1. Deploy the Sov-ESDT-Safe smart contract with roles.
+/// 2. Deploy the Fee-Market smart contract.
+/// 3. Deploy the Testing smart contract.
+/// 4. Set the Fee-Market address.
 /// 5. Create a fee payment.
 /// 6. Create two ESDT token payments.
 /// 7. Create a payments vector with the fee payment and the two ESDT token payments.
@@ -210,10 +210,10 @@ fn deposit_with_fee_no_transfer_data() {
 
 /// Test the deposit function without fee and with transfer data.
 /// Steps:
-/// 1. Deploy the contract with roles.
-/// 2. Deploy the fee market.
-/// 3. Deploy the testing smart contract.
-/// 4. Set the fee market address.
+/// 1. Deploy the Sov-ESDT-Safe smart contract with roles.
+/// 2. Deploy the Fee-Market smart contract.
+/// 3. Deploy the Testing smart contract.
+/// 4. Set the Fee-Market address.
 /// 5. Create two ESDT token payments.
 /// 6. Create a payments vector with the two ESDT token payments.
 /// 7. Call the deposit function with the payments vector.
@@ -299,10 +299,10 @@ fn deposit_no_fee_with_transfer_data() {
 
 /// Test the deposit function with fee and with transfer data.
 /// Steps:
-/// 1. Deploy the contract with roles.
-/// 2. Deploy the fee market.
-/// 3. Deploy the testing smart contract.
-/// 4. Set the fee market address.
+/// 1. Deploy the Sov-ESDT-Safe smart contract with roles.
+/// 2. Deploy the Fee-Market smart contract.
+/// 3. Deploy the Testing smart contract.
+/// 4. Set the Fee-Market address.
 /// 5. Create a fee payment.
 /// 6. Create two ESDT token payments.
 /// 7. Create a payments vector with the fee payment and the two ESDT token payments.
