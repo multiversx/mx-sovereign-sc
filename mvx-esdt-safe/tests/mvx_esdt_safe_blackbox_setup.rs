@@ -284,12 +284,9 @@ impl MvxEsdtSafeTestState {
             .iter()
             .find(|log| {
                 {
-                    log.topics
-                        .iter()
-                        .find(|topic| {
-                            **topic == ManagedBuffer::<StaticApi>::from("deposit").to_vec()
-                        })
-                        .is_some()
+                    log.topics.iter().any(|topic| {
+                        **topic == ManagedBuffer::<StaticApi>::from("deposit").to_vec()
+                    })
                 }
             })
             .unwrap()
