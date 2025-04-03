@@ -697,15 +697,13 @@ fn deposit_refund() {
 
     let transfer_data = MultiValue3::from((gas_limit, function, args));
 
-    let logs = state.deposit_with_logs(
+    let deposit_log = state.deposit_with_logs(
         USER.to_managed_address(),
         OptionalValue::Some(transfer_data),
         payments_vec.clone(),
     );
 
-    for log in logs {
-        assert!(!log.data.is_empty());
-    }
+    assert!(!deposit_log.data.is_empty());
 
     let expected_amount_token_one =
         BigUint::from(ONE_HUNDRED_MILLION) - &esdt_token_payment_one.amount;
@@ -769,12 +767,10 @@ fn deposit_success_burn_mechanism() {
         esdt_token_payment_two.clone(),
     ]);
 
-    let logs =
+    let deposit_log =
         state.deposit_with_logs(USER.to_managed_address(), OptionalValue::None, payments_vec);
 
-    for log in logs {
-        assert!(!log.topics.is_empty());
-    }
+    assert!(!deposit_log.topics.is_empty());
 
     state
         .common_setup
@@ -1071,15 +1067,13 @@ fn execute_operation_success_burn_mechanism() {
 
     let operations_hashes = MultiValueEncoded::from(ManagedVec::from(vec![operation_hash.clone()]));
 
-    let logs = state.deposit_with_logs(
+    let deposit_log = state.deposit_with_logs(
         USER.to_managed_address(),
         OptionalValue::None,
         PaymentsVec::from(vec![payment]),
     );
 
-    for log in logs {
-        assert!(!log.topics.is_empty());
-    }
+    assert!(!deposit_log.topics.is_empty());
 
     state
         .common_setup
@@ -1181,16 +1175,14 @@ fn deposit_execute_switch_mechanism() {
         deposit_trusted_token_payment_token_data,
     );
 
-    let logs = state.deposit_with_logs(
+    let deposit_log = state.deposit_with_logs(
         USER.to_managed_address(),
         OptionalValue::None,
         PaymentsVec::from(vec![deposit_trusted_token_payment.clone()]),
     );
 
-    for log in logs {
-        assert!(!log.data.is_empty());
-        assert!(!log.topics.is_empty());
-    }
+    assert!(!deposit_log.data.is_empty());
+    assert!(!deposit_log.topics.is_empty());
 
     state
         .common_setup
@@ -1263,15 +1255,13 @@ fn deposit_execute_switch_mechanism() {
         mvx_esdt_safe::contract_obj,
     );
 
-    let second_logs = state.deposit_with_logs(
+    let second_deposit_log = state.deposit_with_logs(
         USER.to_managed_address(),
         OptionalValue::None,
         PaymentsVec::from(vec![deposit_trusted_token_payment.clone()]),
     );
-    for log in second_logs {
-        // assert!(!log.data.is_empty());
-        assert!(!log.topics.is_empty());
-    }
+    assert!(!second_deposit_log.data.is_empty());
+    assert!(!second_deposit_log.topics.is_empty());
 
     expected_deposited_amount += deposited_trusted_token_payment_amount;
 
@@ -1351,15 +1341,13 @@ fn deposit_execute_switch_mechanism() {
         testing_sc::contract_obj,
     );
 
-    let third_logs = state.deposit_with_logs(
+    let third_deposit_log = state.deposit_with_logs(
         USER.to_managed_address(),
         OptionalValue::None,
         PaymentsVec::from(vec![deposit_trusted_token_payment]),
     );
-    for log in third_logs {
-        // assert!(!log.data.is_empty());
-        assert!(!log.topics.is_empty());
-    }
+    assert!(!third_deposit_log.data.is_empty());
+    assert!(!third_deposit_log.topics.is_empty());
 
     state
         .common_setup
