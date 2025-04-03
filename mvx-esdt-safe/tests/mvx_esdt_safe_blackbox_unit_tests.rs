@@ -109,7 +109,7 @@ fn deposit_too_many_tokens() {
         .check_multiversx_to_sovereign_token_id_mapper_is_empty(TEST_TOKEN_ONE);
 }
 
-/// Test that deposit fails when there is no transfer data
+/// Test that deposit with no transfer data succeeds
 #[test]
 fn deposit_no_transfer_data() {
     let mut state = MvxEsdtSafeTestState::new();
@@ -545,7 +545,7 @@ fn deposit_refund() {
         .esdt_balance(TokenIdentifier::from(FEE_TOKEN), expected_amount_token_fee);
 }
 
-/// Test that register token fails when the token has invalid prefix
+/// Test that register token fails when the token has invalid type
 #[test]
 fn register_token_invalid_type_with_prefix() {
     let mut state = MvxEsdtSafeTestState::new();
@@ -600,7 +600,7 @@ fn register_token_fungible_token_with_prefix() {
     // TODO: Add check for storage after callback issue is fixed
 }
 
-/// Test that register token fails with no prefix
+/// Test that register token fails when token has no prefix
 #[test]
 fn register_token_fungible_token_no_prefix() {
     let mut state = MvxEsdtSafeTestState::new();
@@ -631,7 +631,7 @@ fn register_token_fungible_token_no_prefix() {
     // TODO: Add check for storage after callback issue is fixed
 }
 
-/// Test that register token works with a non-fungible token
+/// Test that register token works with a non-fungible token type
 #[test]
 fn register_token_nonfungible_token() {
     let mut state = MvxEsdtSafeTestState::new();
@@ -706,7 +706,7 @@ fn register_native_token() {
     // TODO: Check storage
 }
 
-/// Test that execute operation fails when the Mvx-ESDT-Safe address is not set
+/// Test that execute operation fails when the Mvx-ESDT-Safe address is not set in Header-Verifier contract
 /// Steps:
 /// 1. Deploy the Mvx-ESDT-Safe smart contract
 /// 2. Create the operation
