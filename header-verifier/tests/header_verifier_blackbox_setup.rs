@@ -88,6 +88,8 @@ impl HeaderVerifierTestState {
             .register_bridge_operations(
                 operation.signature,
                 operation.bridge_operation_hash,
+                ManagedBuffer::new(),
+                ManagedBuffer::new(),
                 operation.operations_hashes,
             )
             .run();
@@ -162,6 +164,8 @@ impl HeaderVerifierTestState {
                 signature,
                 hash_of_hashes,
                 operation_hash,
+                ManagedBuffer::new(),
+                ManagedBuffer::new(),
                 MultiValueEncoded::new(),
             )
             .returns(ReturnsLogs)

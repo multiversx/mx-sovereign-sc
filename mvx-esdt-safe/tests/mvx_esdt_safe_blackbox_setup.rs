@@ -261,7 +261,13 @@ impl MvxEsdtSafeTestState {
             .from(OWNER_ADDRESS)
             .to(HEADER_VERIFIER_ADDRESS)
             .typed(HeaderverifierProxy)
-            .register_bridge_operations(signature, hash_of_hashes, operations_hashes)
+            .register_bridge_operations(
+                signature,
+                hash_of_hashes,
+                ManagedBuffer::new(),
+                ManagedBuffer::new(),
+                operations_hashes,
+            )
             .run();
     }
 

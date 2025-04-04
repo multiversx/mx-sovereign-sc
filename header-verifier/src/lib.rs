@@ -36,6 +36,8 @@ pub trait Headerverifier: cross_chain::events::EventsModule {
         &self,
         signature: ManagedBuffer,
         bridge_operations_hash: ManagedBuffer,
+        _pub_keys_bitmap: ManagedBuffer,
+        _epoch: ManagedBuffer,
         operations_hashes: MultiValueEncoded<ManagedBuffer>,
     ) {
         let mut hash_of_hashes_history_mapper = self.hash_of_hashes_history();
@@ -67,6 +69,8 @@ pub trait Headerverifier: cross_chain::events::EventsModule {
         signature: ManagedBuffer,
         bridge_operations_hash: ManagedBuffer,
         operation_hash: ManagedBuffer,
+        _pub_keys_bitmap: ManagedBuffer,
+        _epoch: ManagedBuffer,
         _pub_keys_id: MultiValueEncoded<ManagedBuffer>,
     ) {
         let mut hash_of_hashes_history_mapper = self.hash_of_hashes_history();
