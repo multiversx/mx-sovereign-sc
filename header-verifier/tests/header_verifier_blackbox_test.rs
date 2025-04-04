@@ -1,5 +1,6 @@
 use error_messages::{
     CURRENT_OPERATION_NOT_REGISTERED, NO_ESDT_SAFE_ADDRESS, ONLY_ESDT_SAFE_CALLER,
+    OUTGOING_TX_HASH_ALREADY_REGISTERED,
 };
 use header_verifier::{Headerverifier, OperationHashStatus};
 use header_verifier_blackbox_setup::*;
@@ -255,4 +256,44 @@ fn test_lock_operation() {
             assert!(is_hash_1_locked == OperationHashStatus::Locked);
             assert!(is_hash_2_locked == OperationHashStatus::NotLocked);
         })
+}
+
+#[test]
+fn test_change_validator_set() {
+    let mut state = HeaderVerifierTestState::new();
+
+    state.deploy();
+
+    let operation_hash = ManagedBuffer::from("operation_1");
+    let hash_of_hashes = state.get_operation_hash(&operation_hash);
+
+    if let Some(change_validator_set_log) = state.change_validator_set(
+        &ManagedBuffer::new(),
+        &hash_of_hashes,
+        &operation_hash,
+        None,
+    ) {
+        assert!(!change_validator_set_log.data.is_empty());
+        assert!(!change_validator_set_log.topics.is_empty());
+    }
+}
+
+#[test]
+fn test_change_validator_set_operation_already_registered() {
+    let mut state = HeaderVerifierTestState::new();
+
+    state.deploy();
+
+    let operation_1 = ManagedBuffer::from("operation_1");
+    let operation_2 = ManagedBuffer::from("operation_2");
+    let operation = state.generate_bridge_operation_struct(vec![&operation_1, &operation_2]);
+
+    state.propose_register_operations(operation.clone());
+
+    state.change_validator_set(
+        &ManagedBuffer::new(),
+        &operation.bridge_operation_hash,
+        &operation.operations_hashes.to_vec().get(0),
+        Some(OUTGOING_TX_HASH_ALREADY_REGISTERED),
+    );
 }
