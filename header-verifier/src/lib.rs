@@ -7,6 +7,7 @@ use error_messages::{
 };
 use multiversx_sc::codec;
 use multiversx_sc::proxy_imports::{TopDecode, TopEncode};
+use structs::operation;
 
 multiversx_sc::imports!();
 
@@ -61,13 +62,33 @@ pub trait Headerverifier: cross_chain::events::EventsModule {
         hash_of_hashes_history_mapper.insert(bridge_operations_hash);
     }
 
-    #[only_owner]
     #[endpoint(changeValidatorSet)]
     fn change_validator_set(
         &self,
+        signature: ManagedBuffer,
         bridge_operations_hash: ManagedBuffer,
         operation_hash: ManagedBuffer,
     ) {
+        let mut hash_of_hashes_history_mapper = self.hash_of_hashes_history();
+
+        require!(
+            !hash_of_hashes_history_mapper.contains(&bridge_operations_hash),
+            OUTGOING_TX_HASH_ALREADY_REGISTERED
+        );
+
+        let is_bls_valid = self.verify_bls(&signature, &bridge_operations_hash);
+        require!(is_bls_valid, BLS_SIGNATURE_NOT_VALID);
+
+        let mut operations_hashes = MultiValueEncoded::new();
+        operations_hashes.push(operation_hash.clone());
+        self.calculate_and_check_transfers_hashes(
+            &bridge_operations_hash,
+            operations_hashes.clone(),
+        );
+
+        // TODO change validators set
+
+        hash_of_hashes_history_mapper.insert(bridge_operations_hash.clone());
         self.execute_bridge_operation_event(&bridge_operations_hash, &operation_hash);
     }
 
