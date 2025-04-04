@@ -259,7 +259,7 @@ fn test_lock_operation() {
 }
 
 #[test]
-fn change_validator_set() {
+fn test_change_validator_set() {
     let mut state = HeaderVerifierTestState::new();
 
     state.deploy();
@@ -279,7 +279,7 @@ fn change_validator_set() {
 }
 
 #[test]
-fn change_validator_set_operation_already_registered() {
+fn test_change_validator_set_operation_already_registered() {
     let mut state = HeaderVerifierTestState::new();
 
     state.deploy();
