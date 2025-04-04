@@ -270,7 +270,7 @@ impl MvxEsdtSafeTestState {
         to: ManagedAddress<StaticApi>,
         opt_transfer_data: OptionalValueTransferDataTuple<StaticApi>,
         payment: PaymentsVec<StaticApi>,
-    ) -> Vec<Log> {
+    ) -> Log {
         self.common_setup
             .world
             .tx()
@@ -281,6 +281,16 @@ impl MvxEsdtSafeTestState {
             .payment(payment)
             .returns(ReturnsLogs)
             .run()
+            .iter()
+            .find(|log| {
+                {
+                    log.topics.iter().any(|topic| {
+                        **topic == ManagedBuffer::<StaticApi>::from("deposit").to_vec()
+                    })
+                }
+            })
+            .unwrap()
+            .clone()
     }
 
     pub fn register_token(
@@ -339,7 +349,7 @@ impl MvxEsdtSafeTestState {
 
     pub fn execute_operation(
         &mut self,
-        hash_of_hashes: ManagedBuffer<StaticApi>,
+        hash_of_hashes: &ManagedBuffer<StaticApi>,
         operation: Operation<StaticApi>,
         expected_error_message: Option<&str>,
     ) {

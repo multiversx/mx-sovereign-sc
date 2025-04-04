@@ -31,7 +31,21 @@ pub trait BridgingMechanism:
             .multiversx_to_sovereign_token_id_mapper(&token_id)
             .is_empty()
         {
-            self.burn_mechanism_tokens().insert(token_id);
+            self.burn_mechanism_tokens().insert(token_id.clone());
+        }
+
+        let sc_balance = self
+            .blockchain()
+            .get_sc_balance(&EgldOrEsdtTokenIdentifier::esdt(token_id.clone()), 0);
+
+        if sc_balance != 0 {
+            self.tx()
+                .to(ToSelf)
+                .typed(UserBuiltinProxy)
+                .esdt_local_burn(&token_id, 0, &sc_balance)
+                .sync_call();
+
+            self.deposited_tokens_amount(&token_id).set(sc_balance);
         }
     }
 
@@ -45,6 +59,18 @@ pub trait BridgingMechanism:
         );
 
         self.burn_mechanism_tokens().swap_remove(&token_id);
+
+        let deposited_amount = self.deposited_tokens_amount(&token_id).get();
+
+        if deposited_amount != 0 {
+            self.tx()
+                .to(ToSelf)
+                .typed(UserBuiltinProxy)
+                .esdt_local_mint(&token_id, 0, &deposited_amount)
+                .sync_call();
+
+            self.deposited_tokens_amount(&token_id).set(BigUint::zero());
+        }
     }
 
     #[storage_mapper("burnMechanismTokens")]
