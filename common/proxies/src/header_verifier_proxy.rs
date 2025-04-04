@@ -117,11 +117,13 @@ where
         Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
         Arg1: ProxyArg<ManagedBuffer<Env::Api>>,
         Arg2: ProxyArg<ManagedBuffer<Env::Api>>,
+        Arg3: ProxyArg<MultiValueEncoded<Env::Api, ManagedBuffer<Env::Api>>>,
     >(
         self,
         signature: Arg0,
         bridge_operations_hash: Arg1,
         operation_hash: Arg2,
+        _pub_keys_id: Arg3,
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
@@ -129,6 +131,7 @@ where
             .argument(&signature)
             .argument(&bridge_operations_hash)
             .argument(&operation_hash)
+            .argument(&_pub_keys_id)
             .original_result()
     }
 
