@@ -17,7 +17,7 @@ pub enum OperationHashStatus {
 }
 
 #[multiversx_sc::contract]
-pub trait Headerverifier {
+pub trait Headerverifier: cross_chain::events::EventsModule {
     #[init]
     fn init(&self) {}
 
@@ -59,6 +59,16 @@ pub trait Headerverifier {
         }
 
         hash_of_hashes_history_mapper.insert(bridge_operations_hash);
+    }
+
+    #[only_owner]
+    #[endpoint(changeValidatorSet)]
+    fn change_validator_set(
+        &self,
+        bridge_operations_hash: ManagedBuffer,
+        operation_hash: ManagedBuffer,
+    ) {
+        self.execute_bridge_operation_event(&bridge_operations_hash, &operation_hash);
     }
 
     #[only_owner]

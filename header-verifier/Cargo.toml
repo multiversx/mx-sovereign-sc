@@ -20,5 +20,8 @@ path = "../common/proxies"
 [dependencies.error-messages]
 path = "../common/error-messages"
 
+[dependencies.cross-chain]
+path = "../common/cross-chain"
+
 [dev-dependencies.multiversx-sc-scenario]
 version = "0.57.0"

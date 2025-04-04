@@ -3,11 +3,12 @@ use multiversx_sc::{
     api::ManagedTypeApi,
     types::{BigUint, MultiValueEncoded, TestAddress, TestSCAddress},
 };
-use multiversx_sc_scenario::ReturnsHandledOrError;
+use multiversx_sc_scenario::scenario_model::Log;
 use multiversx_sc_scenario::{
     api::StaticApi, imports::MxscPath, multiversx_chain_vm::crypto_functions::sha256,
     ScenarioTxRun, ScenarioWorld,
 };
+use multiversx_sc_scenario::{ReturnsHandledOrError, ReturnsLogs};
 use proxies::header_verifier_proxy::HeaderverifierProxy;
 
 const HEADER_VERIFIER_CODE_PATH: MxscPath = MxscPath::new("ouput/header-verifier.mxsc-json");
@@ -144,6 +145,31 @@ impl HeaderVerifierTestState {
         };
     }
 
+    pub fn change_validator_set(
+        &mut self,
+        hash_of_hashes: &ManagedBuffer<StaticApi>,
+        operation_hash: &ManagedBuffer<StaticApi>,
+    ) -> Log {
+        self.world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .to(HEADER_VERIFIER_ADDRESS)
+            .typed(HeaderverifierProxy)
+            .change_validator_set(hash_of_hashes, operation_hash)
+            .returns(ReturnsLogs)
+            .run()
+            .iter()
+            .find(|log| {
+                {
+                    log.topics.iter().any(|topic| {
+                        **topic == ManagedBuffer::<StaticApi>::from("executedBridgeOp").to_vec()
+                    })
+                }
+            })
+            .unwrap()
+            .clone()
+    }
+
     pub fn generate_bridge_operation_struct(
         &mut self,
         operation_hashes: Vec<&ManagedBuffer<StaticApi>>,
@@ -166,7 +192,7 @@ impl HeaderVerifierTestState {
         }
     }
 
-    fn get_operation_hash(
+    pub fn get_operation_hash(
         &mut self,
         operation: &ManagedBuffer<StaticApi>,
     ) -> ManagedBuffer<StaticApi> {

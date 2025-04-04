@@ -256,3 +256,18 @@ fn test_lock_operation() {
             assert!(is_hash_2_locked == OperationHashStatus::NotLocked);
         })
 }
+
+#[test]
+fn change_validator_set() {
+    let mut state = HeaderVerifierTestState::new();
+
+    state.deploy();
+
+    let operation_hash = ManagedBuffer::from("operation_1");
+    let hash_of_hashes = state.get_operation_hash(&operation_hash);
+
+    let change_validator_set_log = state.change_validator_set(&hash_of_hashes, &operation_hash);
+
+    assert!(!change_validator_set_log.data.is_empty());
+    assert!(!change_validator_set_log.topics.is_empty());
+}
