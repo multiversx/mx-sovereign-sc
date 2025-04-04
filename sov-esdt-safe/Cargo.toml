@@ -9,10 +9,10 @@ authors = ["you"]
 path = "src/lib.rs"
 
 [dependencies.multiversx-sc]
-version = "0.57.0"
+version = "0.57.1"
 
 [dependencies.multiversx-sc-modules]
-version = "=0.57.0"
+version = "=0.57.1"
 
 [dependencies.testing-sc]
 path = "../testing-sc"
@@ -42,4 +42,4 @@ path = "../common/error-messages"
 path = "../common/common-blackbox-setup"
 
 [dev-dependencies.multiversx-sc-scenario]
-version = "0.57.0"
+version = "0.57.1"

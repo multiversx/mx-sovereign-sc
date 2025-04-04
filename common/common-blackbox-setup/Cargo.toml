@@ -7,7 +7,7 @@ edition = "2021"
 path = "src/lib.rs"
 
 [dependencies.multiversx-sc-scenario]
-version = "0.57.0"
+version = "0.57.1"
 
 [dependencies.proxies]
 path = "../proxies"
@@ -18,9 +18,17 @@ path = "../structs"
 [dependencies.cross-chain]
 path = "../cross-chain"
 
-[dependencies]
-fee-market = { path = "../../fee-market" }
-header-verifier = { path = "../../header-verifier" }
-chain-config = { path = "../../chain-config" }
-testing-sc = { path = "../../testing-sc" }
-mvx-esdt-safe = { path = "../../mvx-esdt-safe" }
+[dependencies.fee-market]
+path = "../../fee-market"
+
+[dependencies.header-verifier]
+path = "../../header-verifier"
+
+[dependencies.chain-config]
+path = "../../chain-config"
+
+[dependencies.testing-sc]
+path = "../../testing-sc"
+
+[dependencies.mvx-esdt-safe]
+path = "../../mvx-esdt-safe"
