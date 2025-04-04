@@ -1349,9 +1349,21 @@ fn deposit_execute_switch_mechanism() {
     assert!(!third_deposit_log.data.is_empty());
     assert!(!third_deposit_log.topics.is_empty());
 
+    expected_deposited_amount += deposited_trusted_token_payment_amount;
+
     state
         .common_setup
         .check_deposited_tokens_amount(vec![(TestTokenIdentifier::new(trusted_token_id), 0)]);
+
+    state.common_setup.check_sc_esdt_balance(
+        vec![MultiValue3::from((
+            TestTokenIdentifier::new(trusted_token_id),
+            0,
+            expected_deposited_amount,
+        ))],
+        ESDT_SAFE_ADDRESS.to_managed_address(),
+        testing_sc::contract_obj,
+    );
 
     state.common_setup.check_sc_esdt_balance(
         vec![MultiValue3::from((
