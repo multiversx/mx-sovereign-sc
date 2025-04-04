@@ -147,27 +147,48 @@ impl HeaderVerifierTestState {
 
     pub fn change_validator_set(
         &mut self,
+        signature: &ManagedBuffer<StaticApi>,
         hash_of_hashes: &ManagedBuffer<StaticApi>,
         operation_hash: &ManagedBuffer<StaticApi>,
-    ) -> Log {
-        self.world
+        expected_result: Option<&str>,
+    ) -> Option<Log> {
+        let (logs, response) = self
+            .world
             .tx()
             .from(OWNER_ADDRESS)
             .to(HEADER_VERIFIER_ADDRESS)
             .typed(HeaderverifierProxy)
-            .change_validator_set(hash_of_hashes, operation_hash)
+            .change_validator_set(signature, hash_of_hashes, operation_hash)
             .returns(ReturnsLogs)
-            .run()
-            .iter()
-            .find(|log| {
-                {
-                    log.topics.iter().any(|topic| {
-                        **topic == ManagedBuffer::<StaticApi>::from("executedBridgeOp").to_vec()
+            .returns(ReturnsHandledOrError::new())
+            .run();
+
+        match response {
+            Ok(_) => {
+                assert!(
+                    expected_result.is_none(),
+                    "Transaction was successful, but expected error"
+                );
+
+                let cloned_logs = logs.clone();
+
+                cloned_logs
+                    .iter()
+                    .find(|log| {
+                        {
+                            log.topics.iter().any(|topic| {
+                                *topic
+                                    == ManagedBuffer::<StaticApi>::from("executedBridgeOp").to_vec()
+                            })
+                        }
                     })
-                }
-            })
-            .unwrap()
-            .clone()
+                    .cloned()
+            }
+            Err(error) => {
+                assert_eq!(expected_result, Some(error.message.as_str()));
+                None
+            }
+        }
     }
 
     pub fn generate_bridge_operation_struct(
