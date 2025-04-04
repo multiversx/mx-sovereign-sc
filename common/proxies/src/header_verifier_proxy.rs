@@ -116,14 +116,17 @@ where
     pub fn change_validator_set<
         Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
         Arg1: ProxyArg<ManagedBuffer<Env::Api>>,
+        Arg2: ProxyArg<ManagedBuffer<Env::Api>>,
     >(
         self,
-        bridge_operations_hash: Arg0,
-        operation_hash: Arg1,
+        signature: Arg0,
+        bridge_operations_hash: Arg1,
+        operation_hash: Arg2,
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("changeValidatorSet")
+            .argument(&signature)
             .argument(&bridge_operations_hash)
             .argument(&operation_hash)
             .original_result()
