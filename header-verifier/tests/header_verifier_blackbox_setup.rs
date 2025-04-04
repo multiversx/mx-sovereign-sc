@@ -158,7 +158,12 @@ impl HeaderVerifierTestState {
             .from(OWNER_ADDRESS)
             .to(HEADER_VERIFIER_ADDRESS)
             .typed(HeaderverifierProxy)
-            .change_validator_set(signature, hash_of_hashes, operation_hash)
+            .change_validator_set(
+                signature,
+                hash_of_hashes,
+                operation_hash,
+                MultiValueEncoded::new(),
+            )
             .returns(ReturnsLogs)
             .returns(ReturnsHandledOrError::new())
             .run();
