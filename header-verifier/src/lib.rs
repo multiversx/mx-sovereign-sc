@@ -7,7 +7,6 @@ use error_messages::{
 };
 use multiversx_sc::codec;
 use multiversx_sc::proxy_imports::{TopDecode, TopEncode};
-use structs::operation;
 
 multiversx_sc::imports!();
 
