@@ -1089,3 +1089,60 @@ fn execute_operation_no_payments() {
         .common_setup
         .check_operation_hash_status_is_empty(&operation_hash);
 }
+
+#[test]
+fn execute_operation_no_payments_failed_event() {
+    let mut state = MvxEsdtSafeTestState::new();
+    let config = EsdtSafeConfig::default_config();
+    state.deploy_contract(HEADER_VERIFIER_ADDRESS, OptionalValue::Some(config));
+
+    let token_display_name = "TokenOne";
+    let egld_payment = BigUint::from(DEFAULT_ISSUE_COST);
+
+    state.register_native_token(TEST_TOKEN_ONE, token_display_name, egld_payment, None);
+
+    let gas_limit = 1;
+    let function = ManagedBuffer::<StaticApi>::from("WRONG_ENDPOINT");
+    let args =
+        ManagedVec::<StaticApi, ManagedBuffer<StaticApi>>::from(vec![ManagedBuffer::from("1")]);
+
+    let transfer_data = TransferData::new(gas_limit, function, args);
+
+    let operation_data =
+        OperationData::new(1, OWNER_ADDRESS.to_managed_address(), Some(transfer_data));
+
+    let operation = Operation::new(
+        TESTING_SC_ADDRESS.to_managed_address(),
+        ManagedVec::new(),
+        operation_data,
+    );
+
+    let operation_hash = state.get_operation_hash(&operation);
+    let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&operation_hash.to_vec()));
+
+    state.common_setup.deploy_header_verifier();
+    state.common_setup.deploy_testing_sc();
+    state.set_esdt_safe_address_in_header_verifier(ESDT_SAFE_ADDRESS);
+
+    let operations_hashes = MultiValueEncoded::from(ManagedVec::from(vec![operation_hash.clone()]));
+
+    state
+        .common_setup
+        .deploy_chain_config(SovereignConfig::default_config());
+    state.register_operation(ManagedBuffer::new(), &hash_of_hashes, operations_hashes);
+
+    state
+        .common_setup
+        .check_operation_hash_status(&operation_hash, OperationHashStatus::NotLocked);
+
+    let logs = state.execute_operation_with_logs(hash_of_hashes, operation.clone());
+
+    for log in logs {
+        assert!(!log.data.is_empty());
+        assert!(!log.topics.is_empty());
+    }
+
+    state
+        .common_setup
+        .check_operation_hash_status_is_empty(&operation_hash);
+}
