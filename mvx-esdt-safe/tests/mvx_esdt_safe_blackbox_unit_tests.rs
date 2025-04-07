@@ -178,7 +178,9 @@ fn deposit_gas_limit_too_high() {
     let gas_limit = 2;
     let function = ManagedBuffer::<StaticApi>::from("hello");
     let args =
-        ManagedVec::<StaticApi, ManagedBuffer<StaticApi>>::from(vec![ManagedBuffer::from("1")]);
+        MultiValueEncoded::<StaticApi, ManagedBuffer<StaticApi>>::from(ManagedVec::from(vec![
+            ManagedBuffer::from("1"),
+        ]));
 
     let transfer_data = MultiValue3::from((gas_limit, function, args));
 
@@ -228,7 +230,9 @@ fn deposit_endpoint_banned() {
     let gas_limit = 2;
     let function = ManagedBuffer::<StaticApi>::from("hello");
     let args =
-        ManagedVec::<StaticApi, ManagedBuffer<StaticApi>>::from(vec![ManagedBuffer::from("1")]);
+        MultiValueEncoded::<StaticApi, ManagedBuffer<StaticApi>>::from(ManagedVec::from(vec![
+            ManagedBuffer::from("1"),
+        ]));
 
     let transfer_data = MultiValue3::from((gas_limit, function, args));
 
@@ -293,7 +297,9 @@ fn deposit_transfer_data_only_no_fee() {
     let gas_limit = 2;
     let function = ManagedBuffer::<StaticApi>::from("hello");
     let args =
-        ManagedVec::<StaticApi, ManagedBuffer<StaticApi>>::from(vec![ManagedBuffer::from("1")]);
+        MultiValueEncoded::<StaticApi, ManagedBuffer<StaticApi>>::from(ManagedVec::from(vec![
+            ManagedBuffer::from("1"),
+        ]));
 
     let transfer_data = MultiValue3::from((gas_limit, function, args));
 
@@ -337,7 +343,9 @@ fn deposit_transfer_data_only_with_fee_nothing_to_transfer() {
     let gas_limit = 2;
     let function = ManagedBuffer::<StaticApi>::from("hello");
     let args =
-        ManagedVec::<StaticApi, ManagedBuffer<StaticApi>>::from(vec![ManagedBuffer::from("1")]);
+        MultiValueEncoded::<StaticApi, ManagedBuffer<StaticApi>>::from(ManagedVec::from(vec![
+            ManagedBuffer::from("1"),
+        ]));
 
     let transfer_data = MultiValue3::from((gas_limit, function, args));
 
@@ -385,7 +393,9 @@ fn deposit_transfer_data_only_with_fee() {
     let gas_limit = 2;
     let function = ManagedBuffer::<StaticApi>::from("hello");
     let args =
-        ManagedVec::<StaticApi, ManagedBuffer<StaticApi>>::from(vec![ManagedBuffer::from("1")]);
+        MultiValueEncoded::<StaticApi, ManagedBuffer<StaticApi>>::from(ManagedVec::from(vec![
+            ManagedBuffer::from("1"),
+        ]));
 
     let transfer_data = MultiValue3::from((gas_limit, function, args));
 
@@ -456,7 +466,9 @@ fn deposit_fee_enabled() {
     let gas_limit = 2;
     let function = ManagedBuffer::<StaticApi>::from("hello");
     let args =
-        ManagedVec::<StaticApi, ManagedBuffer<StaticApi>>::from(vec![ManagedBuffer::from("1")]);
+        MultiValueEncoded::<StaticApi, ManagedBuffer<StaticApi>>::from(ManagedVec::from(vec![
+            ManagedBuffer::from("1"),
+        ]));
 
     let transfer_data = MultiValue3::from((gas_limit, function, args));
 
@@ -557,7 +569,9 @@ fn deposit_payment_doesnt_cover_fee() {
     let gas_limit = 10_000;
     let function = ManagedBuffer::<StaticApi>::from("hello");
     let args =
-        ManagedVec::<StaticApi, ManagedBuffer<StaticApi>>::from(vec![ManagedBuffer::from("1")]);
+        MultiValueEncoded::<StaticApi, ManagedBuffer<StaticApi>>::from(ManagedVec::from(vec![
+            ManagedBuffer::from("1"),
+        ]));
 
     let transfer_data = MultiValue3::from((gas_limit, function, args));
 
@@ -644,7 +658,9 @@ fn deposit_refund() {
     let gas_limit = 1;
     let function = ManagedBuffer::<StaticApi>::from("hello");
     let args =
-        ManagedVec::<StaticApi, ManagedBuffer<StaticApi>>::from(vec![ManagedBuffer::from("1")]);
+        MultiValueEncoded::<StaticApi, ManagedBuffer<StaticApi>>::from(ManagedVec::from(vec![
+            ManagedBuffer::from("1"),
+        ]));
 
     let transfer_data = MultiValue3::from((gas_limit, function, args));
 
