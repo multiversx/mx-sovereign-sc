@@ -5,8 +5,8 @@ use proxies::fee_market_proxy::{FeeStruct, FeeType};
 use rust_interact::config::Config;
 use rust_interact::mvx_esdt_safe::mvx_esdt_safe_interactor_main::MvxEsdtSafeInteract;
 use rust_interact::{
-    RegisterTokenArgs, FEE_TOKEN, FIRST_TOKEN, ISSUE_COST, MVX_TO_SOV_TOKEN_STORAGE_KEY,
-    SECOND_TOKEN, SOV_TO_MVX_TOKEN_STORAGE_KEY,
+    RegisterTokenArgs, FEE_TOKEN, FIRST_TOKEN, ISSUE_COST, SECOND_TOKEN,
+    SOV_TO_MVX_TOKEN_STORAGE_KEY,
 };
 use serial_test::serial;
 use structs::aliases::PaymentsVec;
@@ -307,10 +307,11 @@ async fn deposit_gas_limit_too_high() {
 
     let payments_vec = PaymentsVec::from(vec![esdt_token_payment_one, esdt_token_payment_two]);
 
-    let gas_limit = 2;
+    let gas_limit = 2u64;
     let function = ManagedBuffer::<StaticApi>::from("hello");
-    let args =
-        ManagedVec::<StaticApi, ManagedBuffer<StaticApi>>::from(vec![ManagedBuffer::from("1")]);
+    let args = MultiValueEncoded::from(ManagedVec::<StaticApi, ManagedBuffer<StaticApi>>::from(
+        vec![ManagedBuffer::from("1")],
+    ));
 
     let transfer_data = MultiValue3::from((gas_limit, function, args));
 
@@ -397,10 +398,11 @@ async fn deposit_endpoint_banned() {
 
     let payments_vec = PaymentsVec::from(vec![esdt_token_payment_one, esdt_token_payment_two]);
 
-    let gas_limit = 2;
+    let gas_limit = 2u64;
     let function = ManagedBuffer::<StaticApi>::from("hello");
-    let args =
-        ManagedVec::<StaticApi, ManagedBuffer<StaticApi>>::from(vec![ManagedBuffer::from("1")]);
+    let args = MultiValueEncoded::from(ManagedVec::<StaticApi, ManagedBuffer<StaticApi>>::from(
+        vec![ManagedBuffer::from("1")],
+    ));
 
     let transfer_data = MultiValue3::from((gas_limit, function, args));
 
@@ -518,8 +520,9 @@ async fn deposit_fee_enabled() {
 
     let gas_limit = 1000u64;
     let function = ManagedBuffer::<StaticApi>::from("hello");
-    let args =
-        ManagedVec::<StaticApi, ManagedBuffer<StaticApi>>::from(vec![ManagedBuffer::from("1")]);
+    let args = MultiValueEncoded::from(ManagedVec::<StaticApi, ManagedBuffer<StaticApi>>::from(
+        vec![ManagedBuffer::from("1")],
+    ));
 
     let transfer_data = MultiValue3::from((gas_limit, function, args));
 
@@ -628,10 +631,11 @@ async fn deposit_payment_doesnt_cover_fee() {
         esdt_token_payment_two.clone(),
     ]);
 
-    let gas_limit = 10_000;
+    let gas_limit = 10_000u64;
     let function = ManagedBuffer::<StaticApi>::from("hello");
-    let args =
-        ManagedVec::<StaticApi, ManagedBuffer<StaticApi>>::from(vec![ManagedBuffer::from("1")]);
+    let args = MultiValueEncoded::from(ManagedVec::<StaticApi, ManagedBuffer<StaticApi>>::from(
+        vec![ManagedBuffer::from("1")],
+    ));
 
     let transfer_data = MultiValue3::from((gas_limit, function, args));
 
