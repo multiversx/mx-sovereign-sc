@@ -12,3 +12,6 @@
 # Cargo.lock files
 **/Cargo.lock
 !**/wasm*/Cargo.lock
+
+# MacOS files
+**.DS_STORE
