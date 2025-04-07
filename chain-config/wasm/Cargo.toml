@@ -7,7 +7,7 @@
 [package]
 name = "chain-config-wasm"
 version = "0.0.0"
-edition = "2018"
+edition = "2021"
 publish = false
 
 [lib]
@@ -28,8 +28,7 @@ panic = "abort"
 path = ".."
 
 [dependencies.multiversx-sc-wasm-adapter]
-git = "https://github.com/multiversx/mx-sdk-rs"
-rev = "c1724cb"
+version = "=0.57.1"
 
 [workspace]
 members = ["."]

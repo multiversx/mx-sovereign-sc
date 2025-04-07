@@ -1,7 +1,7 @@
 multiversx_sc::imports!();
 use error_messages::ESDT_SAFE_STILL_PAUSED;
 use structs::{
-    aliases::OptionalValueTransferDataTuple,
+    aliases::{EventPaymentTuple, OptionalValueTransferDataTuple},
     operation::{OperationData, TransferData},
 };
 
@@ -23,12 +23,13 @@ pub trait DepositModule:
     ) {
         require!(self.not_paused(), ESDT_SAFE_STILL_PAUSED);
 
-        let (fees_payment, payments) = self.check_and_extract_fee().into_tuple();
+        let (fees_payment, payments) = self
+            .check_and_extract_fee(opt_transfer_data.is_some())
+            .into_tuple();
 
         let mut total_tokens_for_fees = 0usize;
         let mut event_payments = MultiValueEncoded::new();
         let mut refundable_payments = ManagedVec::<Self::Api, _>::new();
-
         let own_sc_address = self.blockchain().get_sc_address();
 
         for payment in &payments {
@@ -39,41 +40,12 @@ pub trait DepositModule:
                 && !self.is_token_whitelisted(&payment.token_identifier)
             {
                 refundable_payments.push(payment.clone());
-
                 continue;
-            } else {
-                total_tokens_for_fees += 1;
             }
+            total_tokens_for_fees += 1;
 
-            let mut current_token_data = self.blockchain().get_esdt_token_data(
-                &own_sc_address,
-                &payment.token_identifier,
-                payment.token_nonce,
-            );
-            current_token_data.amount = payment.amount.clone();
-
-            let mvx_to_sov_token_id_mapper =
-                self.multiversx_to_sovereign_token_id_mapper(&payment.token_identifier);
-            if !mvx_to_sov_token_id_mapper.is_empty() {
-                let sov_token_id = mvx_to_sov_token_id_mapper.get();
-                let sov_token_nonce = self.burn_mainchain_token(
-                    payment.clone(),
-                    &current_token_data.token_type,
-                    &sov_token_id,
-                );
-
-                event_payments.push(MultiValue3::from((
-                    sov_token_id,
-                    sov_token_nonce,
-                    current_token_data,
-                )));
-            } else {
-                event_payments.push(MultiValue3::from((
-                    payment.token_identifier.clone(),
-                    payment.token_nonce,
-                    current_token_data,
-                )));
-            }
+            let processed_payment = self.process_payment(&payment, &own_sc_address);
+            event_payments.push(processed_payment);
         }
 
         let option_transfer_data = TransferData::from_optional_value(opt_transfer_data);
@@ -82,9 +54,9 @@ pub trait DepositModule:
             self.require_gas_limit_under_limit(transfer_data.gas_limit);
             self.require_endpoint_not_banned(&transfer_data.function);
         }
+
         self.match_fee_payment(total_tokens_for_fees, &fees_payment, &option_transfer_data);
 
-        // refund tokens
         let caller = self.blockchain().get_caller();
         self.refund_tokens(&caller, refundable_payments);
 
@@ -94,5 +66,32 @@ pub trait DepositModule:
             &event_payments,
             OperationData::new(tx_nonce, caller, option_transfer_data),
         );
+    }
+
+    fn process_payment(
+        &self,
+        payment: &EsdtTokenPayment<Self::Api>,
+        own_sc_address: &ManagedAddress,
+    ) -> EventPaymentTuple<Self::Api> {
+        let mut token_data = self.blockchain().get_esdt_token_data(
+            own_sc_address,
+            &payment.token_identifier,
+            payment.token_nonce,
+        );
+        token_data.amount = payment.amount.clone();
+
+        let token_mapper = self.multiversx_to_sovereign_token_id_mapper(&payment.token_identifier);
+        if !token_mapper.is_empty() || self.is_native_token(&payment.token_identifier) {
+            let sov_token_id = token_mapper.get();
+            let sov_token_nonce =
+                self.burn_mainchain_token(payment.clone(), &token_data.token_type, &sov_token_id);
+            MultiValue3::from((sov_token_id, sov_token_nonce, token_data))
+        } else {
+            MultiValue3::from((
+                payment.token_identifier.clone(),
+                payment.token_nonce,
+                token_data,
+            ))
+        }
     }
 }

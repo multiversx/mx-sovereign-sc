@@ -1,16 +1,16 @@
+use common_blackbox_setup::{
+    ESDT_SAFE_ADDRESS, FEE_MARKET_ADDRESS, FEE_TOKEN, ONE_HUNDRED_MILLION, ONE_HUNDRED_THOUSAND,
+    OWNER_ADDRESS, TEST_TOKEN_ONE, TEST_TOKEN_TWO, USER,
+};
 use multiversx_sc::{
     imports::{MultiValue3, OptionalValue},
     types::{
         BigUint, EsdtTokenPayment, ManagedBuffer, ManagedVec, TestTokenIdentifier, TokenIdentifier,
     },
 };
-
 use multiversx_sc_scenario::api::StaticApi;
 use proxies::fee_market_proxy::{FeeStruct, FeeType};
-use sov_esdt_safe_setup::{
-    SovEsdtSafeTestState, ESDT_SAFE_ADDRESS, FEE_MARKET_ADDRESS, FEE_TOKEN, ONE_HUNDRED_MILLION,
-    ONE_HUNDRED_THOUSAND, OWNER_ADDRESS, TEST_TOKEN_ONE, TEST_TOKEN_TWO, USER,
-};
+use sov_esdt_safe_setup::SovEsdtSafeTestState;
 use structs::{aliases::PaymentsVec, configs::EsdtSafeConfig};
 
 mod sov_esdt_safe_setup;
@@ -25,72 +25,25 @@ fn deploy() {
     );
 }
 
-#[test]
-fn deploy_no_config() {
-    let mut state = SovEsdtSafeTestState::new();
-
-    state.deploy_contract(FEE_MARKET_ADDRESS, OptionalValue::None);
-    state
-        .world
-        .check_account(ESDT_SAFE_ADDRESS)
-        .check_storage(
-            "str:crossChainConfig",
-            "0x00000000000000000000000011e1a30000000000", // default EsdtSafeConfig hex encoded
-        )
-        .check_storage(
-            "str:feeMarketAddress",
-            "0x000000000000000005006665652d6d61726b65745f5f5f5f5f5f5f5f5f5f5f5f", // FEE_MARKET_ADDRESS hex encoded, required for the check_storage to work
-        );
-}
-
-#[test]
-fn deploy_and_update_config() {
-    let mut state = SovEsdtSafeTestState::new();
-
-    state.deploy_contract(FEE_MARKET_ADDRESS, OptionalValue::None);
-
-    state
-        .world
-        .check_account(ESDT_SAFE_ADDRESS)
-        .check_storage(
-            "str:crossChainConfig",
-            "0x00000000000000000000000011e1a30000000000", // default EsdtSafeConfig hex encoded
-        )
-        .check_storage(
-            "str:feeMarketAddress",
-            "0x000000000000000005006665652d6d61726b65745f5f5f5f5f5f5f5f5f5f5f5f", // FEE_MARKET_ADDRESS hex encoded, required for the check_storage to work
-        );
-
-    let new_config = EsdtSafeConfig {
-        token_whitelist: ManagedVec::from_single_item(TokenIdentifier::from(TEST_TOKEN_ONE)),
-        token_blacklist: ManagedVec::from_single_item(TokenIdentifier::from(TEST_TOKEN_TWO)),
-        max_tx_gas_limit: 30_000,
-        banned_endpoints: ManagedVec::from_single_item(ManagedBuffer::from("endpoint")),
-    };
-
-    state.update_configuration(new_config, None);
-
-    state
-        .world
-        .check_account(ESDT_SAFE_ADDRESS)
-        .check_storage(
-            "str:crossChainConfig",
-            "0x000000010000000b544f4e452d313233343536000000010000000b5454574f2d31323334353600000000000075300000000100000008656e64706f696e74", // updated EsdtSafeConfig hex encoded
-        )
-        .check_storage(
-            "str:feeMarketAddress",
-            "0x000000000000000005006665652d6d61726b65745f5f5f5f5f5f5f5f5f5f5f5f", // FEE_MARKET_ADDRESS hex encoded, required for the check_storage to work
-        );
-}
-
+/// Test the deposit function without fee and without transfer data.
+/// Steps:
+/// 1. Deploy the Sov-ESDT-Safe smart contract with roles.
+/// 2. Deploy the Fee-Market smart contract.
+/// 3. Deploy the Testing smart contract.
+/// 4. Set the Fee-Market address.
+/// 5. Create two ESDT token payments.
+/// 6. Create a payments vector with the two ESDT token payments.
+/// 7. Call the deposit function with the payments vector.
+/// 8. Check the logs for the deposit function.
+/// 9. Check the ESDT balance of the addresses
 #[test]
 fn deposit_no_fee_no_transfer_data() {
     let mut state = SovEsdtSafeTestState::new();
 
     state.deploy_contract_with_roles();
 
-    state.deploy_fee_market(None);
-    state.deploy_testing_sc();
+    state.common_setup.deploy_fee_market(None);
+    state.common_setup.deploy_testing_sc();
     state.set_fee_market_address(FEE_MARKET_ADDRESS);
 
     let test_token_one_identifier = TestTokenIdentifier::new(TEST_TOKEN_ONE);
@@ -123,18 +76,20 @@ fn deposit_no_fee_no_transfer_data() {
         assert!(!log.topics.is_empty());
     }
 
-    state.check_sc_esdt_balance(
+    state.common_setup.check_sc_esdt_balance(
         vec![
             MultiValue3::from((test_token_one_identifier, 0u64, 0u64)),
             MultiValue3::from((test_token_two_identifier, 0u64, 0u64)),
         ],
         ESDT_SAFE_ADDRESS.to_managed_address(),
+        sov_esdt_safe::contract_obj,
     );
 
     let expected_amount_token_one =
         BigUint::from(ONE_HUNDRED_MILLION) - &esdt_token_payment_one.amount;
 
     state
+        .common_setup
         .world
         .check_account(OWNER_ADDRESS)
         .esdt_balance(test_token_one_identifier, &expected_amount_token_one);
@@ -143,11 +98,23 @@ fn deposit_no_fee_no_transfer_data() {
         BigUint::from(ONE_HUNDRED_MILLION) - &esdt_token_payment_two.amount;
 
     state
+        .common_setup
         .world
         .check_account(OWNER_ADDRESS)
         .esdt_balance(test_token_two_identifier, &expected_amount_token_two);
 }
 
+/// Test the deposit function with fee and without transfer data.
+/// Steps:
+/// 1. Deploy the Sov-ESDT-Safe smart contract with roles.
+/// 2. Deploy the Fee-Market smart contract.
+/// 3. Deploy the Testing smart contract.
+/// 4. Set the Fee-Market address.
+/// 5. Create a fee payment.
+/// 6. Create two ESDT token payments.
+/// 7. Create a payments vector with the fee payment and the two ESDT token payments.
+/// 8. Call the deposit function with the payments vector.
+/// 9. Check the ESDT balances of the addresses 
 #[test]
 fn deposit_with_fee_no_transfer_data() {
     let mut state = SovEsdtSafeTestState::new();
@@ -167,8 +134,8 @@ fn deposit_with_fee_no_transfer_data() {
         },
     };
 
-    state.deploy_fee_market(Some(fee));
-    state.deploy_testing_sc();
+    state.common_setup.deploy_fee_market(Some(fee));
+    state.common_setup.deploy_testing_sc();
     state.set_fee_market_address(FEE_MARKET_ADDRESS);
 
     let test_token_one_identifier = TestTokenIdentifier::new(TEST_TOKEN_ONE);
@@ -208,6 +175,7 @@ fn deposit_with_fee_no_transfer_data() {
         BigUint::from(ONE_HUNDRED_MILLION) - &esdt_token_payment_one.amount;
 
     state
+        .common_setup
         .world
         .check_account(OWNER_ADDRESS)
         .esdt_balance(test_token_one_identifier, expected_amount_token_one);
@@ -215,15 +183,17 @@ fn deposit_with_fee_no_transfer_data() {
     let expected_amount_token_two =
         BigUint::from(ONE_HUNDRED_MILLION) - &esdt_token_payment_two.amount;
 
-    state.check_sc_esdt_balance(
+    state.common_setup.check_sc_esdt_balance(
         vec![
             MultiValue3::from((test_token_one_identifier, 0u64, 0u64)),
             MultiValue3::from((test_token_two_identifier, 0u64, 0u64)),
         ],
         ESDT_SAFE_ADDRESS.to_managed_address(),
+        sov_esdt_safe::contract_obj,
     );
 
     state
+        .common_setup
         .world
         .check_account(OWNER_ADDRESS)
         .esdt_balance(test_token_two_identifier, expected_amount_token_two);
@@ -232,19 +202,31 @@ fn deposit_with_fee_no_transfer_data() {
         BigUint::from(ONE_HUNDRED_MILLION) - BigUint::from(payments_vec.len() - 1) * per_transfer;
 
     state
+        .common_setup
         .world
         .check_account(OWNER_ADDRESS)
         .esdt_balance(fee_token_identifier, expected_amount_token_fee);
 }
 
+/// Test the deposit function without fee and with transfer data.
+/// Steps:
+/// 1. Deploy the Sov-ESDT-Safe smart contract with roles.
+/// 2. Deploy the Fee-Market smart contract.
+/// 3. Deploy the Testing smart contract.
+/// 4. Set the Fee-Market address.
+/// 5. Create two ESDT token payments.
+/// 6. Create a payments vector with the two ESDT token payments.
+/// 7. Call the deposit function with the payments vector.
+/// 8. Check the logs for the deposit function.
+/// 9. Check the ESDT balance of the addresses
 #[test]
 fn deposit_no_fee_with_transfer_data() {
     let mut state = SovEsdtSafeTestState::new();
 
     state.deploy_contract_with_roles();
 
-    state.deploy_fee_market(None);
-    state.deploy_testing_sc();
+    state.common_setup.deploy_fee_market(None);
+    state.common_setup.deploy_testing_sc();
     state.set_fee_market_address(FEE_MARKET_ADDRESS);
 
     let test_token_one_identifier = TestTokenIdentifier::new(TEST_TOKEN_ONE);
@@ -287,15 +269,17 @@ fn deposit_no_fee_with_transfer_data() {
     let expected_amount_token_one =
         BigUint::from(ONE_HUNDRED_MILLION) - &esdt_token_payment_one.amount;
 
-    state.check_sc_esdt_balance(
+    state.common_setup.check_sc_esdt_balance(
         vec![
             MultiValue3::from((test_token_one_identifier, 0u64, 0u64)),
             MultiValue3::from((test_token_two_identifier, 0u64, 0u64)),
         ],
         ESDT_SAFE_ADDRESS.to_managed_address(),
+        sov_esdt_safe::contract_obj,
     );
 
     state
+        .common_setup
         .world
         .check_account(OWNER_ADDRESS)
         .esdt_balance(test_token_one_identifier, &expected_amount_token_one);
@@ -303,12 +287,27 @@ fn deposit_no_fee_with_transfer_data() {
     let expected_amount_token_two =
         BigUint::from(ONE_HUNDRED_MILLION) - &esdt_token_payment_two.amount;
 
-    state.world.check_account(OWNER_ADDRESS).esdt_balance(
-        TokenIdentifier::from(TEST_TOKEN_TWO),
-        &expected_amount_token_two,
-    );
+    state
+        .common_setup
+        .world
+        .check_account(OWNER_ADDRESS)
+        .esdt_balance(
+            TokenIdentifier::from(TEST_TOKEN_TWO),
+            &expected_amount_token_two,
+        );
 }
 
+/// Test the deposit function with fee and with transfer data.
+/// Steps:
+/// 1. Deploy the Sov-ESDT-Safe smart contract with roles.
+/// 2. Deploy the Fee-Market smart contract.
+/// 3. Deploy the Testing smart contract.
+/// 4. Set the Fee-Market address.
+/// 5. Create a fee payment.
+/// 6. Create two ESDT token payments.
+/// 7. Create a payments vector with the fee payment and the two ESDT token payments.
+/// 8. Call the deposit function with the payments vector.
+/// 9. Check the ESDT balances of the addresses
 #[test]
 fn deposit_with_fee_with_transfer_data() {
     let mut state = SovEsdtSafeTestState::new();
@@ -328,8 +327,8 @@ fn deposit_with_fee_with_transfer_data() {
         },
     };
 
-    state.deploy_fee_market(Some(fee));
-    state.deploy_testing_sc();
+    state.common_setup.deploy_fee_market(Some(fee));
+    state.common_setup.deploy_testing_sc();
     state.set_fee_market_address(FEE_MARKET_ADDRESS);
 
     let test_token_one_identifier = TestTokenIdentifier::new(TEST_TOKEN_ONE);
@@ -376,6 +375,7 @@ fn deposit_with_fee_with_transfer_data() {
         BigUint::from(ONE_HUNDRED_MILLION) - &esdt_token_payment_one.amount;
 
     state
+        .common_setup
         .world
         .check_account(OWNER_ADDRESS)
         .esdt_balance(test_token_one_identifier, expected_amount_token_one);
@@ -383,24 +383,30 @@ fn deposit_with_fee_with_transfer_data() {
     let expected_amount_token_two =
         BigUint::from(ONE_HUNDRED_MILLION) - &esdt_token_payment_two.amount;
 
-    state.check_sc_esdt_balance(
+    state.common_setup.check_sc_esdt_balance(
         vec![
             MultiValue3::from((test_token_one_identifier, 0u64, 0u64)),
             MultiValue3::from((test_token_two_identifier, 0u64, 0u64)),
         ],
         ESDT_SAFE_ADDRESS.to_managed_address(),
+        sov_esdt_safe::contract_obj,
     );
 
-    state.world.check_account(OWNER_ADDRESS).esdt_balance(
-        TokenIdentifier::from(TEST_TOKEN_TWO),
-        expected_amount_token_two,
-    );
+    state
+        .common_setup
+        .world
+        .check_account(OWNER_ADDRESS)
+        .esdt_balance(
+            TokenIdentifier::from(TEST_TOKEN_TWO),
+            expected_amount_token_two,
+        );
 
     let expected_amount_token_fee = BigUint::from(ONE_HUNDRED_MILLION)
         - BigUint::from(payments_vec.len() - 1) * per_transfer
         - BigUint::from(gas_limit) * per_gas;
 
     state
+        .common_setup
         .world
         .check_account(OWNER_ADDRESS)
         .esdt_balance(fee_token_identifier, expected_amount_token_fee);

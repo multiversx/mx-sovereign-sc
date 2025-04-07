@@ -46,6 +46,16 @@ pub trait ExecuteCommonModule: crate::storage::CrossChainStorage {
         header_verifier_address_mapper.get()
     }
 
+    fn is_native_token(&self, token_identifier: &TokenIdentifier) -> bool {
+        let esdt_safe_native_token_mapper = self.native_token();
+
+        if esdt_safe_native_token_mapper.is_empty() {
+            return false;
+        }
+
+        token_identifier == &esdt_safe_native_token_mapper.get()
+    }
+
     #[inline]
     fn is_fungible(self, token_type: &EsdtTokenType) -> bool {
         *token_type == EsdtTokenType::Fungible

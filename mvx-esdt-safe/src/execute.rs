@@ -43,46 +43,53 @@ pub trait ExecuteModule:
         let mut output_payments = ManagedVec::new();
 
         for operation_token in operation_tokens.iter() {
-            let sov_to_mvx_token_id_mapper =
-                self.sovereign_to_multiversx_token_id_mapper(&operation_token.token_identifier);
+            if let Some(mvx_token_id) = self.resolve_mvx_token_id(&operation_token) {
+                if self.is_fungible(&operation_token.token_data.token_type) {
+                    self.tx()
+                        .to(ToSelf)
+                        .typed(system_proxy::UserBuiltinProxy)
+                        .esdt_local_mint(&mvx_token_id, 0, &operation_token.token_data.amount)
+                        .sync_call();
 
-            // token is from mainchain -> push token
-            if sov_to_mvx_token_id_mapper.is_empty() {
+                    output_payments.push(OperationEsdtPayment::new(
+                        mvx_token_id,
+                        0,
+                        operation_token.token_data.clone(),
+                    ));
+                } else {
+                    let nft_nonce =
+                        self.esdt_create_and_update_mapper(&mvx_token_id, &operation_token);
+
+                    output_payments.push(OperationEsdtPayment::new(
+                        mvx_token_id,
+                        nft_nonce,
+                        operation_token.token_data.clone(),
+                    ));
+                }
+            } else {
                 output_payments.push(operation_token.clone());
-
-                continue;
             }
-
-            // token is from sovereign -> continue and mint
-            let mvx_token_id = sov_to_mvx_token_id_mapper.get();
-            let current_token_type_ref = &operation_token.token_data.token_type;
-
-            if self.is_fungible(current_token_type_ref) {
-                self.tx()
-                    .to(ToSelf)
-                    .typed(system_proxy::UserBuiltinProxy)
-                    .esdt_local_mint(&mvx_token_id, 0, &operation_token.token_data.amount)
-                    .sync_call();
-
-                output_payments.push(OperationEsdtPayment::new(
-                    mvx_token_id,
-                    0,
-                    operation_token.token_data.clone(),
-                ));
-
-                continue;
-            }
-
-            let nft_nonce = self.esdt_create_and_update_mapper(&mvx_token_id, &operation_token);
-
-            output_payments.push(OperationEsdtPayment::new(
-                mvx_token_id,
-                nft_nonce,
-                operation_token.token_data.clone(),
-            ));
         }
 
         output_payments
+    }
+
+    fn resolve_mvx_token_id(
+        &self,
+        operation_token: &OperationEsdtPayment<Self::Api>,
+    ) -> Option<TokenIdentifier<Self::Api>> {
+        let sov_to_mvx_mapper =
+            self.sovereign_to_multiversx_token_id_mapper(&operation_token.token_identifier);
+
+        if !sov_to_mvx_mapper.is_empty() {
+            return Some(sov_to_mvx_mapper.get());
+        }
+
+        if self.is_native_token(&operation_token.token_identifier) {
+            Some(operation_token.token_identifier.clone())
+        } else {
+            None
+        }
     }
 
     fn esdt_create_and_update_mapper(
@@ -94,7 +101,6 @@ pub trait ExecuteModule:
 
         let current_token_type_ref = &operation_token.token_data.token_type;
 
-        // if doesn't exist in mapper nonce will be 0 and we need to create the SFT/MetaESDT, otherwise mint
         if self.is_sft_or_meta(current_token_type_ref) {
             nonce = self.get_mvx_nonce_from_mapper(
                 &operation_token.token_identifier,
@@ -102,12 +108,9 @@ pub trait ExecuteModule:
             )
         }
 
-        // mint NFT
         if nonce == 0 {
-            // if NFT/DyNFT => esdt_nft_create
             nonce = self.mint_nft_tx(mvx_token_id, &operation_token.token_data);
 
-            // save token id and nonce
             self.update_esdt_info_mappers(
                 &operation_token.token_identifier,
                 operation_token.token_nonce,
@@ -115,7 +118,6 @@ pub trait ExecuteModule:
                 nonce,
             );
         } else {
-            // if SFT/DySFT/Meta/DyMeta => esdt_local_mint (add quantity)
             self.tx()
                 .to(ToSelf)
                 .typed(system_proxy::UserBuiltinProxy)
@@ -221,52 +223,18 @@ pub trait ExecuteModule:
         hash_of_hashes: &ManagedBuffer,
         operation_tuple: &OperationTuple<Self::Api>,
     ) {
-        // confirmation event
         self.execute_bridge_operation_event(hash_of_hashes, &operation_tuple.op_hash);
 
-        for operation_token in &operation_tuple.operation.tokens {
-            let sov_to_mvx_token_id_mapper =
-                self.sovereign_to_multiversx_token_id_mapper(&operation_token.token_identifier);
-
-            if !sov_to_mvx_token_id_mapper.is_empty() {
-                let mvx_token_id = sov_to_mvx_token_id_mapper.get();
-                let mut mvx_token_nonce = 0;
-
-                if operation_token.token_nonce > 0 {
-                    mvx_token_nonce = self
-                        .sovereign_to_multiversx_esdt_info_mapper(
-                            &operation_token.token_identifier,
-                            operation_token.token_nonce,
-                        )
-                        .get()
-                        .token_nonce;
-
-                    if self.is_nft(&operation_token.token_data.token_type) {
-                        self.clear_sov_to_mvx_esdt_info_mapper(
-                            &operation_token.token_identifier,
-                            operation_token.token_nonce,
-                        );
-
-                        self.clear_mvx_to_sov_esdt_info_mapper(&mvx_token_id, mvx_token_nonce);
-                    }
-                }
-
-                self.tx()
-                    .to(ToSelf)
-                    .typed(system_proxy::UserBuiltinProxy)
-                    .esdt_local_burn(
-                        &mvx_token_id,
-                        mvx_token_nonce,
-                        &operation_token.token_data.amount,
-                    )
-                    .sync_call();
-            }
+        if operation_tuple.operation.tokens.is_empty() {
+            return;
         }
 
-        // deposit back mainchain tokens into user account
+        for operation_token in &operation_tuple.operation.tokens {
+            self.burn_failed_transfer_token(&operation_token);
+        }
+
         let sc_address = self.blockchain().get_sc_address();
         let tx_nonce = self.get_and_save_next_tx_id();
-
         self.deposit_event(
             &operation_tuple.operation.data.op_sender,
             &operation_tuple
@@ -274,6 +242,46 @@ pub trait ExecuteModule:
                 .map_tokens_to_multi_value_encoded(),
             OperationData::new(tx_nonce, sc_address.clone(), None),
         );
+    }
+
+    fn burn_failed_transfer_token(&self, operation_token: &OperationEsdtPayment<Self::Api>) {
+        let sov_to_mvx_mapper =
+            self.sovereign_to_multiversx_token_id_mapper(&operation_token.token_identifier);
+
+        if sov_to_mvx_mapper.is_empty() {
+            return;
+        }
+
+        let mvx_token_id = sov_to_mvx_mapper.get();
+        let mut mvx_token_nonce = 0;
+
+        if operation_token.token_nonce > 0 {
+            mvx_token_nonce = self
+                .sovereign_to_multiversx_esdt_info_mapper(
+                    &operation_token.token_identifier,
+                    operation_token.token_nonce,
+                )
+                .get()
+                .token_nonce;
+
+            if self.is_nft(&operation_token.token_data.token_type) {
+                self.clear_sov_to_mvx_esdt_info_mapper(
+                    &operation_token.token_identifier,
+                    operation_token.token_nonce,
+                );
+                self.clear_mvx_to_sov_esdt_info_mapper(&mvx_token_id, mvx_token_nonce);
+            }
+        }
+
+        self.tx()
+            .to(ToSelf)
+            .typed(system_proxy::UserBuiltinProxy)
+            .esdt_local_burn(
+                &mvx_token_id,
+                mvx_token_nonce,
+                &operation_token.token_data.amount,
+            )
+            .sync_call();
     }
 
     fn get_mvx_nonce_from_mapper(self, token_id: &TokenIdentifier, nonce: u64) -> u64 {

@@ -1,7 +1,7 @@
 multiversx_sc::imports!();
 use error_messages::ESDT_SAFE_STILL_PAUSED;
 use structs::{
-    aliases::OptionalValueTransferDataTuple,
+    aliases::{EventPaymentTuple, OptionalValueTransferDataTuple},
     operation::{OperationData, TransferData},
 };
 
@@ -23,7 +23,9 @@ pub trait DepositModule:
     ) {
         require!(self.not_paused(), ESDT_SAFE_STILL_PAUSED);
 
-        let (fees_payment, payments) = self.check_and_extract_fee().into_tuple();
+        let (fees_payment, payments) = self
+            .check_and_extract_fee(opt_transfer_data.is_some())
+            .into_tuple();
 
         let mut total_tokens_for_fees = 0usize;
         let mut event_payments = MultiValueEncoded::new();
@@ -31,35 +33,25 @@ pub trait DepositModule:
         let current_sc_address = self.blockchain().get_sc_address();
 
         for payment in &payments {
-            self.require_below_max_amount(&payment.token_identifier, &payment.amount);
-            self.require_token_not_on_blacklist(&payment.token_identifier);
-
-            if !self.is_token_whitelist_empty()
-                && !self.is_token_whitelisted(&payment.token_identifier)
+            // Process each payment and update the vectors accordingly.
+            if let Some(event_payment) =
+                self.process_payment(&current_sc_address, &payment, &mut refundable_payments)
             {
-                refundable_payments.push(payment.clone());
-
-                continue;
-            } else {
                 total_tokens_for_fees += 1;
+                event_payments.push(event_payment);
             }
-
-            self.burn_sovereign_token(&payment);
-
-            event_payments.push(self.get_event_payment_token_data(&current_sc_address, &payment));
         }
 
         let option_transfer_data = TransferData::from_optional_value(opt_transfer_data);
-
         if let Some(transfer_data) = option_transfer_data.as_ref() {
             self.require_gas_limit_under_limit(transfer_data.gas_limit);
             self.require_endpoint_not_banned(&transfer_data.function);
         }
+
         self.match_fee_payment(total_tokens_for_fees, &fees_payment, &option_transfer_data);
 
-        // refund tokens
+        // Refund tokens
         let caller = self.blockchain().get_caller();
-
         self.refund_tokens(&caller, refundable_payments);
 
         let tx_nonce = self.get_and_save_next_tx_id();
@@ -68,5 +60,31 @@ pub trait DepositModule:
             &event_payments,
             OperationData::new(tx_nonce, caller, option_transfer_data),
         );
+    }
+
+    /// Processes an individual payment.
+    ///
+    /// It validates the payment and, if the token is not whitelisted, adds it to the refundable payments.
+    /// Otherwise, it burns the sovereign token and returns the event payment data.
+    fn process_payment(
+        &self,
+        current_sc_address: &ManagedAddress,
+        payment: &EsdtTokenPayment<Self::Api>,
+        refundable_payments: &mut ManagedVec<Self::Api, EsdtTokenPayment<Self::Api>>,
+    ) -> Option<EventPaymentTuple<Self::Api>> {
+        // Validate payment details.
+        self.require_below_max_amount(&payment.token_identifier, &payment.amount);
+        self.require_token_not_on_blacklist(&payment.token_identifier);
+
+        // If token is not whitelisted, mark it for refund.
+        if !self.is_token_whitelist_empty() && !self.is_token_whitelisted(&payment.token_identifier)
+        {
+            refundable_payments.push(payment.clone());
+            return None;
+        }
+
+        // For valid tokens, burn and get the event token data.
+        self.burn_sovereign_token(payment);
+        Some(self.get_event_payment_token_data(current_sc_address, payment))
     }
 }

@@ -97,6 +97,9 @@ impl MvxEsdtSafeInteract {
                     .current_header_verifier_address()
                     .to_bech32_string(),
             ),
+            SetStateAccount::from_address(
+                self.state.current_fee_market_address().to_bech32_string(),
+            ),
         ]
     }
 
@@ -290,7 +293,13 @@ impl MvxEsdtSafeInteract {
             .to(self.state.current_header_verifier_address())
             .gas(30_000_000u64)
             .typed(HeaderverifierProxy)
-            .register_bridge_operations(signature, hash_of_hashes, operations_hashes)
+            .register_bridge_operations(
+                signature,
+                hash_of_hashes,
+                ManagedBuffer::new(),
+                ManagedBuffer::new(),
+                operations_hashes,
+            )
             .returns(ReturnsResultUnmanaged)
             .run()
             .await;

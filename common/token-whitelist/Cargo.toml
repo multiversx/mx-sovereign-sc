@@ -1,8 +1,8 @@
 [package]
 name = "token-whitelist"
-version = "0.0.0"
+version = "0.1.0"
 authors = ["dorin-iancu <dorin.iancu@multiversx.com>"]
-edition = "2018"
+edition = "2021"
 
 [dependencies.setup-phase]
 path = "../setup-phase"
@@ -14,9 +14,7 @@ path = "../utils"
 path = "../error-messages"
 
 [dependencies.multiversx-sc]
-git = "https://github.com/multiversx/mx-sdk-rs"
-rev = "c1724cb"
+version = "=0.57.1"
 
 [dev-dependencies.multiversx-sc-scenario]
-git = "https://github.com/multiversx/mx-sdk-rs"
-rev = "c1724cb"
+version = "=0.57.1"

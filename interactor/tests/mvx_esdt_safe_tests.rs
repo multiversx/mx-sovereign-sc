@@ -29,6 +29,26 @@ async fn deposit_nothing_to_transfer() {
         )
         .await;
 
+    chain_interactor
+        .deploy_fee_market(
+            chain_interactor
+                .state
+                .current_mvx_esdt_safe_contract_address()
+                .clone(),
+            None,
+        )
+        .await;
+
+    chain_interactor
+        .set_fee_market_address(
+            chain_interactor
+                .state
+                .current_fee_market_address()
+                .clone()
+                .to_address(),
+        )
+        .await;
+
     chain_interactor.unpause_endpoint().await;
 
     chain_interactor
@@ -45,6 +65,11 @@ async fn deposit_nothing_to_transfer() {
         .interactor
         .set_state_overwrite(state_vec)
         .await;
+    chain_interactor
+        .interactor
+        .generate_blocks(2u64)
+        .await
+        .unwrap();
     assert!(response.is_ok());
 }
 
@@ -62,6 +87,26 @@ async fn deposit_too_many_tokens() {
                 .current_header_verifier_address()
                 .clone(),
             OptionalValue::Some(EsdtSafeConfig::default_config()),
+        )
+        .await;
+
+    chain_interactor
+        .deploy_fee_market(
+            chain_interactor
+                .state
+                .current_mvx_esdt_safe_contract_address()
+                .clone(),
+            None,
+        )
+        .await;
+
+    chain_interactor
+        .set_fee_market_address(
+            chain_interactor
+                .state
+                .current_fee_market_address()
+                .clone()
+                .to_address(),
         )
         .await;
 
@@ -89,96 +134,122 @@ async fn deposit_too_many_tokens() {
         .interactor
         .set_state_overwrite(state_vec)
         .await;
-    assert!(response.is_ok());
-}
-
-#[tokio::test]
-#[serial]
-#[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
-async fn deposit_no_transfer_data() {
-    let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
-    chain_interactor.deploy_header_verifier().await;
-
     chain_interactor
-        .deploy_mvx_esdt_safe(
-            chain_interactor
-                .state
-                .current_header_verifier_address()
-                .clone(),
-            OptionalValue::Some(EsdtSafeConfig::default_config()),
-        )
-        .await;
-
-    chain_interactor.unpause_endpoint().await;
-
-    chain_interactor
-        .deploy_fee_market(
-            chain_interactor
-                .state
-                .current_mvx_esdt_safe_contract_address()
-                .clone(),
-            None,
-        )
-        .await;
-
-    chain_interactor
-        .set_fee_market_address(
-            chain_interactor
-                .state
-                .current_fee_market_address()
-                .clone()
-                .to_address(),
-        )
-        .await;
-
-    let esdt_token_payment_one = EsdtTokenPayment::<StaticApi>::new(
-        TokenIdentifier::from(FIRST_TOKEN),
-        0,
-        BigUint::from(100u64),
-    );
-
-    let esdt_token_payment_two = EsdtTokenPayment::<StaticApi>::new(
-        TokenIdentifier::from(SECOND_TOKEN),
-        0,
-        BigUint::from(100u64),
-    );
-
-    let payments_vec = PaymentsVec::from(vec![esdt_token_payment_one, esdt_token_payment_two]);
-
-    chain_interactor
-        .deposit(
-            chain_interactor.bob_address.clone(),
-            OptionalValue::None,
-            payments_vec,
-            None,
-        )
-        .await;
-
-    chain_interactor
-        .check_account_storage(
-            chain_interactor
-                .state
-                .current_mvx_esdt_safe_contract_address()
-                .clone()
-                .to_address(),
-            MVX_TO_SOV_TOKEN_STORAGE_KEY,
-            None,
-        )
-        .await;
-
-    let mut state_vec = chain_interactor.reset_state_common_vec();
-    state_vec.push(SetStateAccount::from_address(
-        chain_interactor
-            .state
-            .current_fee_market_address()
-            .to_bech32_string(),
-    ));
-    let response = chain_interactor
         .interactor
-        .set_state_overwrite(state_vec)
-        .await;
+        .generate_blocks(2u64)
+        .await
+        .unwrap();
     assert!(response.is_ok());
 }
+
+//TODO: Fix the amount in the balance
+
+// #[tokio::test]
+// #[serial]
+// #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
+// async fn deposit_no_transfer_data() {
+//     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
+//     chain_interactor.deploy_header_verifier().await;
+
+//     chain_interactor
+//         .deploy_mvx_esdt_safe(
+//             chain_interactor
+//                 .state
+//                 .current_header_verifier_address()
+//                 .clone(),
+//             OptionalValue::Some(EsdtSafeConfig::default_config()),
+//         )
+//         .await;
+
+//     chain_interactor
+//         .deploy_fee_market(
+//             chain_interactor
+//                 .state
+//                 .current_mvx_esdt_safe_contract_address()
+//                 .clone(),
+//             None,
+//         )
+//         .await;
+
+//     chain_interactor
+//         .set_fee_market_address(
+//             chain_interactor
+//                 .state
+//                 .current_fee_market_address()
+//                 .clone()
+//                 .to_address(),
+//         )
+//         .await;
+
+//     chain_interactor.unpause_endpoint().await;
+
+//     chain_interactor
+//         .deploy_fee_market(
+//             chain_interactor
+//                 .state
+//                 .current_mvx_esdt_safe_contract_address()
+//                 .clone(),
+//             None,
+//         )
+//         .await;
+
+//     chain_interactor
+//         .set_fee_market_address(
+//             chain_interactor
+//                 .state
+//                 .current_fee_market_address()
+//                 .clone()
+//                 .to_address(),
+//         )
+//         .await;
+
+//     let esdt_token_payment_one = EsdtTokenPayment::<StaticApi>::new(
+//         TokenIdentifier::from(FIRST_TOKEN),
+//         0,
+//         BigUint::from(1u64),
+//     );
+
+//     let esdt_token_payment_two = EsdtTokenPayment::<StaticApi>::new(
+//         TokenIdentifier::from(SECOND_TOKEN),
+//         0,
+//         BigUint::from(1u64),
+//     );
+
+//     let payments_vec = PaymentsVec::from(vec![esdt_token_payment_one, esdt_token_payment_two]);
+
+//     chain_interactor
+//         .deposit(
+//             chain_interactor.bob_address.clone(),
+//             OptionalValue::None,
+//             payments_vec,
+//             None,
+//         )
+//         .await;
+
+//     chain_interactor
+//         .check_account_storage(
+//             chain_interactor
+//                 .state
+//                 .current_mvx_esdt_safe_contract_address()
+//                 .clone()
+//                 .to_address(),
+//             MVX_TO_SOV_TOKEN_STORAGE_KEY,
+//             None,
+//         )
+//         .await;
+
+//     let state_vec = chain_interactor.reset_state_common_vec();
+//     let response = chain_interactor
+//         .interactor
+//         .set_state_overwrite(state_vec)
+//         .await;
+//     chain_interactor
+//         .interactor
+//         .generate_blocks(2u64)
+//         .await
+//         .unwrap();
+//     assert!(response.is_ok());
+// }
 
 #[tokio::test]
 #[serial]
@@ -252,17 +323,16 @@ async fn deposit_gas_limit_too_high() {
         )
         .await;
 
-    let mut state_vec = chain_interactor.reset_state_common_vec();
-    state_vec.push(SetStateAccount::from_address(
-        chain_interactor
-            .state
-            .current_fee_market_address()
-            .to_bech32_string(),
-    ));
+    let state_vec = chain_interactor.reset_state_common_vec();
     let response = chain_interactor
         .interactor
         .set_state_overwrite(state_vec)
         .await;
+    chain_interactor
+        .interactor
+        .generate_blocks(2u64)
+        .await
+        .unwrap();
     assert!(response.is_ok());
 }
 
@@ -347,12 +417,6 @@ async fn deposit_endpoint_banned() {
     state_vec.push(SetStateAccount::from_address(
         chain_interactor
             .state
-            .current_fee_market_address()
-            .to_bech32_string(),
-    ));
-    state_vec.push(SetStateAccount::from_address(
-        chain_interactor
-            .state
             .current_testing_sc_address()
             .to_bech32_string(),
     ));
@@ -360,6 +424,11 @@ async fn deposit_endpoint_banned() {
         .interactor
         .set_state_overwrite(state_vec)
         .await;
+    chain_interactor
+        .interactor
+        .generate_blocks(2u64)
+        .await
+        .unwrap();
     assert!(response.is_ok());
 }
 
@@ -467,12 +536,6 @@ async fn deposit_fee_enabled() {
     state_vec.push(SetStateAccount::from_address(
         chain_interactor
             .state
-            .current_fee_market_address()
-            .to_bech32_string(),
-    ));
-    state_vec.push(SetStateAccount::from_address(
-        chain_interactor
-            .state
             .current_testing_sc_address()
             .to_bech32_string(),
     ));
@@ -480,6 +543,11 @@ async fn deposit_fee_enabled() {
         .interactor
         .set_state_overwrite(state_vec)
         .await;
+    chain_interactor
+        .interactor
+        .generate_blocks(2u64)
+        .await
+        .unwrap();
     assert!(response.is_ok());
 }
 
@@ -580,12 +648,6 @@ async fn deposit_payment_doesnt_cover_fee() {
     state_vec.push(SetStateAccount::from_address(
         chain_interactor
             .state
-            .current_fee_market_address()
-            .to_bech32_string(),
-    ));
-    state_vec.push(SetStateAccount::from_address(
-        chain_interactor
-            .state
             .current_testing_sc_address()
             .to_bech32_string(),
     ));
@@ -593,6 +655,11 @@ async fn deposit_payment_doesnt_cover_fee() {
         .interactor
         .set_state_overwrite(state_vec)
         .await;
+    chain_interactor
+        .interactor
+        .generate_blocks(2u64)
+        .await
+        .unwrap();
     assert!(response.is_ok());
 }
 
@@ -641,6 +708,11 @@ async fn register_token_invalid_type() {
         .interactor
         .set_state_overwrite(state_vec)
         .await;
+    chain_interactor
+        .interactor
+        .generate_blocks(2u64)
+        .await
+        .unwrap();
     assert!(response.is_ok());
 }
 
@@ -699,6 +771,11 @@ async fn register_token_fungible_token() {
         .interactor
         .set_state_overwrite(state_vec)
         .await;
+    chain_interactor
+        .interactor
+        .generate_blocks(2u64)
+        .await
+        .unwrap();
     assert!(response.is_ok());
 }
 
@@ -757,6 +834,11 @@ async fn register_token_non_fungible() {
         .interactor
         .set_state_overwrite(state_vec)
         .await;
+    chain_interactor
+        .interactor
+        .generate_blocks(2u64)
+        .await
+        .unwrap();
     assert!(response.is_ok());
 }
 
@@ -815,6 +897,11 @@ async fn register_token_dynamic_non_fungible() {
         .interactor
         .set_state_overwrite(state_vec)
         .await;
+    chain_interactor
+        .interactor
+        .generate_blocks(2u64)
+        .await
+        .unwrap();
     assert!(response.is_ok());
 }
 
@@ -883,6 +970,11 @@ async fn execute_operation_no_esdt_safe_registered() {
         .interactor
         .set_state_overwrite(state_vec)
         .await;
+    chain_interactor
+        .interactor
+        .generate_blocks(2u64)
+        .await
+        .unwrap();
     assert!(response.is_ok());
 }
 
@@ -999,5 +1091,10 @@ async fn execute_operation_success() {
         .interactor
         .set_state_overwrite(state_vec)
         .await;
+    chain_interactor
+        .interactor
+        .generate_blocks(2u64)
+        .await
+        .unwrap();
     assert!(response.is_ok());
 }

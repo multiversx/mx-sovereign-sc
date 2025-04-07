@@ -4,7 +4,7 @@ path = "src/interactor_main.rs"
 
 [package]
 name = "rust-interact"
-version = "0.0.0"
+version = "0.1.0"
 authors = ["you"]
 edition = "2021"
 publish = false
@@ -28,12 +28,10 @@ path = "../common/proxies"
 path = "../common/structs"
 
 [dependencies.multiversx-sc-snippets]
-git = "https://github.com/multiversx/mx-sdk-rs"
-rev = "c1724cb"
+version = "0.57.1"
 
 [dependencies.multiversx-sc]
-git = "https://github.com/multiversx/mx-sdk-rs"
-rev = "c1724cb"
+version = "0.57.1"
 
 [dependencies.clap]
 version = "4.4.7"

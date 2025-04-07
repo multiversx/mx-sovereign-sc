@@ -1,6 +1,6 @@
 [package]
 name = "cross-chain"
-version = "0.0.0"
+version = "0.1.0"
 authors = ["you"]
 edition = "2021"
 
@@ -8,12 +8,10 @@ edition = "2021"
 path = "src/lib.rs"
 
 [dependencies.multiversx-sc]
-git = "https://github.com/multiversx/mx-sdk-rs"
-rev = "c1724cb"
+version = "=0.57.1"
 
 [dependencies.multiversx-sc-modules]
-git = "https://github.com/multiversx/mx-sdk-rs"
-rev = "c1724cb"
+version = "=0.57.1"
 
 [dependencies.structs]
 path = "../structs"
