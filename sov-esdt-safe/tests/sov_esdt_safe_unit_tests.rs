@@ -5,7 +5,8 @@ use common_blackbox_setup::{
 use multiversx_sc::{
     imports::{MultiValue3, OptionalValue},
     types::{
-        BigUint, EsdtTokenPayment, ManagedBuffer, ManagedVec, TestTokenIdentifier, TokenIdentifier,
+        BigUint, EsdtTokenPayment, ManagedBuffer, ManagedVec, MultiValueEncoded,
+        TestTokenIdentifier, TokenIdentifier,
     },
 };
 use multiversx_sc_scenario::api::StaticApi;
@@ -114,7 +115,7 @@ fn deposit_no_fee_no_transfer_data() {
 /// 6. Create two ESDT token payments.
 /// 7. Create a payments vector with the fee payment and the two ESDT token payments.
 /// 8. Call the deposit function with the payments vector.
-/// 9. Check the ESDT balances of the addresses 
+/// 9. Check the ESDT balances of the addresses
 #[test]
 fn deposit_with_fee_no_transfer_data() {
     let mut state = SovEsdtSafeTestState::new();
@@ -252,7 +253,9 @@ fn deposit_no_fee_with_transfer_data() {
     let gas_limit = 1;
     let function = ManagedBuffer::<StaticApi>::from("hello");
     let args =
-        ManagedVec::<StaticApi, ManagedBuffer<StaticApi>>::from(vec![ManagedBuffer::from("1")]);
+        MultiValueEncoded::<StaticApi, ManagedBuffer<StaticApi>>::from(ManagedVec::from(vec![
+            ManagedBuffer::from("1"),
+        ]));
 
     let transfer_data = MultiValue3::from((gas_limit, function, args));
 
@@ -360,7 +363,9 @@ fn deposit_with_fee_with_transfer_data() {
     let gas_limit = 2;
     let function = ManagedBuffer::<StaticApi>::from("hello");
     let args =
-        ManagedVec::<StaticApi, ManagedBuffer<StaticApi>>::from(vec![ManagedBuffer::from("1")]);
+        MultiValueEncoded::<StaticApi, ManagedBuffer<StaticApi>>::from(ManagedVec::from(vec![
+            ManagedBuffer::from("1"),
+        ]));
 
     let transfer_data = MultiValue3::from((gas_limit, function, args));
 
