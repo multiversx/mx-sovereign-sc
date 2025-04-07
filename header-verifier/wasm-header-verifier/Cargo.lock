@@ -147,9 +147,9 @@ dependencies = [
 
 [[package]]
 name = "multiversx-sc-modules"
-version = "0.57.0"
+version = "0.57.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f219eac47f858a854c0e878104f2922e1b89c3a46ba277a8200be54dd0abadae"
+checksum = "502edabc05791315e65bddb415086aaaa0f62821ee076a27ddee4d86334e22c7"
 dependencies = [
  "multiversx-sc",
 ]
