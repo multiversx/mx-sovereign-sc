@@ -1,18 +1,15 @@
+use common_blackbox_setup::{BaseSetup, HEADER_VERIFIER_ADDRESS};
 use multiversx_sc::types::ManagedBuffer;
 use multiversx_sc::{
     api::ManagedTypeApi,
-    types::{BigUint, MultiValueEncoded, TestAddress, TestSCAddress},
+    types::{BigUint, MultiValueEncoded, TestAddress},
 };
 use multiversx_sc_scenario::scenario_model::Log;
 use multiversx_sc_scenario::{
-    api::StaticApi, imports::MxscPath, multiversx_chain_vm::crypto_functions::sha256,
-    ScenarioTxRun, ScenarioWorld,
+    api::StaticApi, multiversx_chain_vm::crypto_functions::sha256, ScenarioTxRun,
 };
 use multiversx_sc_scenario::{ReturnsHandledOrError, ReturnsLogs};
 use proxies::header_verifier_proxy::HeaderverifierProxy;
-
-const HEADER_VERIFIER_CODE_PATH: MxscPath = MxscPath::new("ouput/header-verifier.mxsc-json");
-pub const HEADER_VERIFIER_ADDRESS: TestSCAddress = TestSCAddress::new("header-verifier");
 
 // NOTE: This is a mock path
 pub const ENSHRINE_ADDRESS: TestAddress = TestAddress::new("enshrine");
@@ -27,50 +24,33 @@ pub struct BridgeOperation<M: ManagedTypeApi> {
     pub operations_hashes: MultiValueEncoded<M, ManagedBuffer<M>>,
 }
 
-fn world() -> ScenarioWorld {
-    let mut blockchain = ScenarioWorld::new();
-    blockchain.register_contract(HEADER_VERIFIER_CODE_PATH, header_verifier::ContractBuilder);
-
-    blockchain
-}
-
 pub struct HeaderVerifierTestState {
-    pub world: ScenarioWorld,
+    pub common_setup: BaseSetup,
 }
 
 impl HeaderVerifierTestState {
     #[allow(clippy::new_without_default)]
     pub fn new() -> Self {
-        let mut world = world();
+        let mut common_setup = BaseSetup::new();
 
-        world
+        common_setup
+            .world
             .account(OWNER_ADDRESS)
             .balance(BigUint::from(WEGLD_BALANCE))
             .nonce(1);
 
-        world
+        common_setup
+            .world
             .account(ENSHRINE_ADDRESS)
             .balance(BigUint::from(WEGLD_BALANCE))
             .nonce(1);
 
-        Self { world }
-    }
-
-    pub fn deploy(&mut self) -> &mut Self {
-        self.world
-            .tx()
-            .from(OWNER_ADDRESS)
-            .typed(HeaderverifierProxy)
-            .init()
-            .code(HEADER_VERIFIER_CODE_PATH)
-            .new_address(HEADER_VERIFIER_ADDRESS)
-            .run();
-
-        self
+        Self { common_setup }
     }
 
     pub fn propose_register_esdt_address(&mut self, esdt_address: TestAddress) {
-        self.world
+        self.common_setup
+            .world
             .tx()
             .from(OWNER_ADDRESS)
             .to(HEADER_VERIFIER_ADDRESS)
@@ -80,7 +60,8 @@ impl HeaderVerifierTestState {
     }
 
     pub fn propose_register_operations(&mut self, operation: BridgeOperation<StaticApi>) {
-        self.world
+        self.common_setup
+            .world
             .tx()
             .from(OWNER_ADDRESS)
             .to(HEADER_VERIFIER_ADDRESS)
@@ -103,6 +84,7 @@ impl HeaderVerifierTestState {
         expected_result: Option<&str>,
     ) {
         let response = self
+            .common_setup
             .world
             .tx()
             .from(caller)
@@ -129,6 +111,7 @@ impl HeaderVerifierTestState {
         expected_result: Option<&str>,
     ) {
         let response = self
+            .common_setup
             .world
             .tx()
             .from(caller)
@@ -153,8 +136,10 @@ impl HeaderVerifierTestState {
         hash_of_hashes: &ManagedBuffer<StaticApi>,
         operation_hash: &ManagedBuffer<StaticApi>,
         expected_result: Option<&str>,
+        opt_expected_log: Option<&str>,
     ) -> Option<Log> {
         let (logs, response) = self
+            .common_setup
             .world
             .tx()
             .from(OWNER_ADDRESS)
@@ -184,16 +169,24 @@ impl HeaderVerifierTestState {
                 cloned_logs
                     .iter()
                     .find(|log| {
-                        {
-                            log.topics.iter().any(|topic| {
-                                *topic
-                                    == ManagedBuffer::<StaticApi>::from("executedBridgeOp").to_vec()
-                            })
+                        if let Some(expected_log) = opt_expected_log {
+                            {
+                                log.topics.iter().any(|topic| {
+                                    *topic
+                                        == ManagedBuffer::<StaticApi>::from(expected_log).to_vec()
+                                })
+                            }
+                        } else {
+                            panic!("There was no expected log provided");
                         }
                     })
                     .cloned()
             }
             Err(error) => {
+                assert!(
+                    opt_expected_log.is_none(),
+                    "Transaction was successful, but no expected log was provided"
+                );
                 assert_eq!(expected_result, Some(error.message.as_str()));
                 None
             }

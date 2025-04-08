@@ -29,7 +29,7 @@ pub const FEE_MARKET_ADDRESS: TestSCAddress = TestSCAddress::new("fee-market");
 const FEE_MARKET_CODE_PATH: MxscPath = MxscPath::new("../fee-market/output/fee-market.mxsc.json");
 
 pub const HEADER_VERIFIER_ADDRESS: TestSCAddress = TestSCAddress::new("header-verifier");
-const HEADER_VERIFIER_CODE_PATH: MxscPath =
+pub const HEADER_VERIFIER_CODE_PATH: MxscPath =
     MxscPath::new("../header-verifier/output/header-verifier.mxsc.json");
 
 pub const CHAIN_CONFIG_ADDRESS: TestSCAddress = TestSCAddress::new("chain-config");

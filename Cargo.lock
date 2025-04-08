@@ -757,6 +757,7 @@ dependencies = [
 name = "header-verifier"
 version = "0.1.0"
 dependencies = [
+ "common-blackbox-setup",
  "cross-chain",
  "error-messages",
  "multiversx-sc",

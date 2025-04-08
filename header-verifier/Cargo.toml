@@ -23,5 +23,8 @@ path = "../common/error-messages"
 [dependencies.cross-chain]
 path = "../common/cross-chain"
 
+[dev-dependencies.common-blackbox-setup]
+path = "../common/common-blackbox-setup"
+
 [dev-dependencies.multiversx-sc-scenario]
 version = "0.57.1"
