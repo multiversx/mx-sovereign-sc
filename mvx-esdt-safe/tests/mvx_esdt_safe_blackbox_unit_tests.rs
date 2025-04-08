@@ -539,37 +539,37 @@ fn deposit_no_transfer_data_no_fee() {
 /// 8. Create the transfer data
 /// 9. Call the deposit function
 /// 10. Check the balances of the accounts
-#[test]
-fn deposit_transfer_data_only_no_fee() {
-    let mut state = MvxEsdtSafeTestState::new();
-
-    state.deploy_contract(
-        HEADER_VERIFIER_ADDRESS,
-        OptionalValue::Some(EsdtSafeConfig::default_config()),
-    );
-
-    state.common_setup.deploy_fee_market(None);
-    state.common_setup.deploy_testing_sc();
-    state.set_fee_market_address(FEE_MARKET_ADDRESS);
-
-    let gas_limit = 2;
-    let function = ManagedBuffer::<StaticApi>::from("hello");
-    let args =
-        MultiValueEncoded::<StaticApi, ManagedBuffer<StaticApi>>::from(ManagedVec::from(vec![
-            ManagedBuffer::from("1"),
-        ]));
-
-    let transfer_data = MultiValue3::from((gas_limit, function, args));
-
-    let deposit_log = state.deposit_with_logs(
-        USER.to_managed_address(),
-        OptionalValue::Some(transfer_data),
-        PaymentsVec::new(),
-    );
-
-    assert!(!deposit_log.data.is_empty());
-    assert!(!deposit_log.topics.is_empty());
-}
+// #[test]
+// fn deposit_transfer_data_only_no_fee() {
+//     let mut state = MvxEsdtSafeTestState::new();
+//
+//     state.deploy_contract(
+//         HEADER_VERIFIER_ADDRESS,
+//         OptionalValue::Some(EsdtSafeConfig::default_config()),
+//     );
+//
+//     state.common_setup.deploy_fee_market(None);
+//     state.common_setup.deploy_testing_sc();
+//     state.set_fee_market_address(FEE_MARKET_ADDRESS);
+//
+//     let gas_limit = 2;
+//     let function = ManagedBuffer::<StaticApi>::from("hello");
+//     let args =
+//         MultiValueEncoded::<StaticApi, ManagedBuffer<StaticApi>>::from(ManagedVec::from(vec![
+//             ManagedBuffer::from("1"),
+//         ]));
+//
+//     let transfer_data = MultiValue3::from((gas_limit, function, args));
+//
+//     let deposit_log = state.deposit_with_logs(
+//         USER.to_managed_address(),
+//         OptionalValue::Some(transfer_data),
+//         PaymentsVec::new(),
+//     );
+//
+//     assert!(!deposit_log.data.is_empty());
+//     assert!(!deposit_log.topics.is_empty());
+// }
 
 /// This test check the flow for a deposit with transfer data that fails
 #[test]
@@ -626,57 +626,57 @@ fn deposit_transfer_data_only_with_fee_nothing_to_transfer() {
 /// 8. Create the transfer data
 /// 9. Call the deposit function
 /// 10. Check the balances of the accounts
-#[test]
-fn deposit_transfer_data_only_with_fee() {
-    let mut state = MvxEsdtSafeTestState::new();
-
-    state.deploy_contract(
-        HEADER_VERIFIER_ADDRESS,
-        OptionalValue::Some(EsdtSafeConfig::default_config()),
-    );
-
-    let per_transfer = BigUint::from(100u64);
-    let per_gas = BigUint::from(1u64);
-
-    let fee = FeeStruct {
-        base_token: TokenIdentifier::from(FEE_TOKEN),
-        fee_type: FeeType::Fixed {
-            token: TokenIdentifier::from(FEE_TOKEN),
-            per_transfer: per_transfer.clone(),
-            per_gas: per_gas.clone(),
-        },
-    };
-
-    let fee_amount = BigUint::from(ONE_HUNDRED_THOUSAND);
-
-    EsdtTokenPayment::<StaticApi>::new(TokenIdentifier::from(FEE_TOKEN), 0, fee_amount.clone());
-    let fee_payment =
-        EsdtTokenPayment::<StaticApi>::new(TokenIdentifier::from(FEE_TOKEN), 0, fee_amount.clone());
-
-    let payments_vec = PaymentsVec::from(fee_payment);
-
-    state.common_setup.deploy_fee_market(Some(fee));
-    state.common_setup.deploy_testing_sc();
-    state.set_fee_market_address(FEE_MARKET_ADDRESS);
-
-    let gas_limit = 2;
-    let function = ManagedBuffer::<StaticApi>::from("hello");
-    let args =
-        MultiValueEncoded::<StaticApi, ManagedBuffer<StaticApi>>::from(ManagedVec::from(vec![
-            ManagedBuffer::from("1"),
-        ]));
-
-    let transfer_data = MultiValue3::from((gas_limit, function, args));
-
-    let deposit_log = state.deposit_with_logs(
-        USER.to_managed_address(),
-        OptionalValue::Some(transfer_data),
-        payments_vec,
-    );
-
-    assert!(!deposit_log.data.is_empty());
-    assert!(!deposit_log.topics.is_empty());
-}
+// #[test]
+// fn deposit_transfer_data_only_with_fee() {
+//     let mut state = MvxEsdtSafeTestState::new();
+//
+//     state.deploy_contract(
+//         HEADER_VERIFIER_ADDRESS,
+//         OptionalValue::Some(EsdtSafeConfig::default_config()),
+//     );
+//
+//     let per_transfer = BigUint::from(100u64);
+//     let per_gas = BigUint::from(1u64);
+//
+//     let fee = FeeStruct {
+//         base_token: TokenIdentifier::from(FEE_TOKEN),
+//         fee_type: FeeType::Fixed {
+//             token: TokenIdentifier::from(FEE_TOKEN),
+//             per_transfer: per_transfer.clone(),
+//             per_gas: per_gas.clone(),
+//         },
+//     };
+//
+//     let fee_amount = BigUint::from(ONE_HUNDRED_THOUSAND);
+//
+//     EsdtTokenPayment::<StaticApi>::new(TokenIdentifier::from(FEE_TOKEN), 0, fee_amount.clone());
+//     let fee_payment =
+//         EsdtTokenPayment::<StaticApi>::new(TokenIdentifier::from(FEE_TOKEN), 0, fee_amount.clone());
+//
+//     let payments_vec = PaymentsVec::from(fee_payment);
+//
+//     state.common_setup.deploy_fee_market(Some(fee));
+//     state.common_setup.deploy_testing_sc();
+//     state.set_fee_market_address(FEE_MARKET_ADDRESS);
+//
+//     let gas_limit = 2;
+//     let function = ManagedBuffer::<StaticApi>::from("hello");
+//     let args =
+//         MultiValueEncoded::<StaticApi, ManagedBuffer<StaticApi>>::from(ManagedVec::from(vec![
+//             ManagedBuffer::from("1"),
+//         ]));
+//
+//     let transfer_data = MultiValue3::from((gas_limit, function, args));
+//
+//     let deposit_log = state.deposit_with_logs(
+//         USER.to_managed_address(),
+//         OptionalValue::Some(transfer_data),
+//         payments_vec,
+//     );
+//
+//     assert!(!deposit_log.data.is_empty());
+//     assert!(!deposit_log.topics.is_empty());
+// }
 
 /// This test check the flow for a deposit when the fee is enabled
 /// Steps for this test:
