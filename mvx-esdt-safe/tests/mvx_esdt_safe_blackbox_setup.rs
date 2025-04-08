@@ -277,17 +277,21 @@ impl MvxEsdtSafeTestState {
             .from(OWNER_ADDRESS)
             .to(ESDT_SAFE_ADDRESS)
             .typed(MvxEsdtSafeProxy)
-            .deposit(to, opt_transfer_data)
-            .payment(payment)
+            .deposit(to, opt_transfer_data.clone())
+            .payment(payment.clone())
             .returns(ReturnsLogs)
             .run()
             .iter()
             .find(|log| {
-                {
-                    log.topics.iter().any(|topic| {
-                        **topic == ManagedBuffer::<StaticApi>::from("deposit").to_vec()
-                    })
+                if (payment.is_empty() || payment.len() == 1) && opt_transfer_data.is_some() {
+                    return log.topics.iter().any(|topic| {
+                        **topic == ManagedBuffer::<StaticApi>::from("scCall").to_vec()
+                    });
                 }
+
+                log.topics
+                    .iter()
+                    .any(|topic| **topic == ManagedBuffer::<StaticApi>::from("deposit").to_vec())
             })
             .unwrap()
             .clone()
