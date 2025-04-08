@@ -41,7 +41,7 @@ impl MvxEsdtSafeInteract {
 
         // Useful in the chain simulator setting
         // generate blocks until ESDTSystemSCAddress is enabled
-        interactor.generate_blocks(30u64).await.unwrap();
+        interactor.generate_blocks_until_epoch(2u64).await.unwrap();
 
         let set_state_response = interactor.set_state_for_saved_accounts().await;
         interactor.generate_blocks(2u64).await.unwrap();
@@ -96,9 +96,6 @@ impl MvxEsdtSafeInteract {
                 self.state
                     .current_header_verifier_address()
                     .to_bech32_string(),
-            ),
-            SetStateAccount::from_address(
-                self.state.current_fee_market_address().to_bech32_string(),
             ),
         ]
     }
