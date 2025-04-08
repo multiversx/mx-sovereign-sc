@@ -6,7 +6,7 @@ use multiversx_sc_scenario::{
     imports::{
         BigUint, ContractBase, EgldOrEsdtTokenIdentifier, ManagedAddress, ManagedBuffer,
         MultiValue2, MultiValue3, MultiValueEncoded, MxscPath, TestAddress, TestSCAddress,
-        TestTokenIdentifier, TokenIdentifier, Vec,
+        TestTokenIdentifier, Vec,
     },
     multiversx_chain_vm::crypto_functions::sha256,
     scenario_model::TxResponseStatus,
@@ -55,6 +55,12 @@ pub struct BaseSetup {
     pub world: ScenarioWorld,
 }
 
+pub struct AccountSetup<'a> {
+    pub address: TestAddress<'a>,
+    pub esdt_balances: Option<Vec<(TestTokenIdentifier<'a>, BigUint<StaticApi>)>>,
+    pub egld_balance: Option<BigUint<StaticApi>>,
+}
+
 fn world() -> ScenarioWorld {
     let mut blockchain = ScenarioWorld::new();
 
@@ -68,34 +74,23 @@ fn world() -> ScenarioWorld {
 
 impl BaseSetup {
     #[allow(clippy::new_without_default)]
-    pub fn new() -> Self {
+    pub fn new(account_setups: Vec<AccountSetup>) -> Self {
         let mut world = world();
 
-        world
-            .account(OWNER_ADDRESS)
-            .nonce(1)
-            .esdt_balance(
-                TokenIdentifier::from(FEE_TOKEN),
-                BigUint::from(ONE_HUNDRED_MILLION),
-            )
-            .esdt_balance(
-                TokenIdentifier::from(TEST_TOKEN_ONE),
-                BigUint::from(ONE_HUNDRED_MILLION),
-            )
-            .esdt_balance(
-                TokenIdentifier::from(TEST_TOKEN_TWO),
-                BigUint::from(ONE_HUNDRED_MILLION),
-            )
-            .balance(BigUint::from(OWNER_BALANCE));
+        for acc in account_setups {
+            let mut acc_builder = world.account(acc.address).nonce(1);
 
-        world
-            .account(USER)
-            .nonce(1)
-            .esdt_balance(
-                TokenIdentifier::from(TEST_TOKEN_ONE),
-                BigUint::from(ONE_HUNDRED_MILLION),
-            )
-            .balance(BigUint::from(OWNER_BALANCE));
+            if let Some(esdt_balances) = acc.esdt_balances {
+                for (token_id, amount) in esdt_balances {
+                    acc_builder = acc_builder.esdt_balance(token_id, amount);
+                }
+            }
+
+            if let Some(balance) = acc.egld_balance {
+                acc_builder.balance(balance);
+            }
+        }
+
         Self { world }
     }
 

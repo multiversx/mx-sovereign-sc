@@ -1,8 +1,8 @@
-use common_blackbox_setup::{BaseSetup, HEADER_VERIFIER_ADDRESS};
+use common_blackbox_setup::{AccountSetup, BaseSetup, HEADER_VERIFIER_ADDRESS};
 use multiversx_sc::types::ManagedBuffer;
 use multiversx_sc::{
     api::ManagedTypeApi,
-    types::{BigUint, MultiValueEncoded, TestAddress},
+    types::{MultiValueEncoded, TestAddress},
 };
 use multiversx_sc_scenario::scenario_model::Log;
 use multiversx_sc_scenario::{
@@ -31,19 +31,21 @@ pub struct HeaderVerifierTestState {
 impl HeaderVerifierTestState {
     #[allow(clippy::new_without_default)]
     pub fn new() -> Self {
-        let mut common_setup = BaseSetup::new();
+        let owner_setup = AccountSetup {
+            address: OWNER_ADDRESS,
+            esdt_balances: None,
+            egld_balance: Some(WEGLD_BALANCE.into()),
+        };
 
-        common_setup
-            .world
-            .account(OWNER_ADDRESS)
-            .balance(BigUint::from(WEGLD_BALANCE))
-            .nonce(1);
+        let enshrine_setup = AccountSetup {
+            address: ENSHRINE_ADDRESS,
+            esdt_balances: None,
+            egld_balance: Some(WEGLD_BALANCE.into()),
+        };
 
-        common_setup
-            .world
-            .account(ENSHRINE_ADDRESS)
-            .balance(BigUint::from(WEGLD_BALANCE))
-            .nonce(1);
+        let account_setups = vec![owner_setup, enshrine_setup];
+
+        let common_setup = BaseSetup::new(account_setups);
 
         Self { common_setup }
     }

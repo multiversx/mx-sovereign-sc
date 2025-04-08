@@ -1,6 +1,6 @@
 use common_blackbox_setup::{
-    BaseSetup, ESDT_SAFE_ADDRESS, FEE_TOKEN, HEADER_VERIFIER_ADDRESS, ONE_HUNDRED_MILLION,
-    OWNER_ADDRESS, TEST_TOKEN_ONE, TEST_TOKEN_TWO,
+    AccountSetup, BaseSetup, ESDT_SAFE_ADDRESS, FEE_TOKEN, HEADER_VERIFIER_ADDRESS,
+    ONE_HUNDRED_MILLION, OWNER_ADDRESS, OWNER_BALANCE, TEST_TOKEN_ONE, TEST_TOKEN_TWO, USER,
 };
 use multiversx_sc::{
     codec::TopEncode,
@@ -38,16 +38,45 @@ pub struct MvxEsdtSafeTestState {
 impl MvxEsdtSafeTestState {
     #[allow(clippy::new_without_default)]
     pub fn new() -> Self {
-        let mut common_setup = BaseSetup::new();
+        let owner_account = AccountSetup {
+            address: OWNER_ADDRESS,
+            esdt_balances: Some(vec![
+                (
+                    TestTokenIdentifier::new(TEST_TOKEN_ONE),
+                    ONE_HUNDRED_MILLION.into(),
+                ),
+                (
+                    TestTokenIdentifier::new(TEST_TOKEN_TWO),
+                    ONE_HUNDRED_MILLION.into(),
+                ),
+                (
+                    TestTokenIdentifier::new(FEE_TOKEN),
+                    ONE_HUNDRED_MILLION.into(),
+                ),
+                (
+                    TestTokenIdentifier::new(TRUSTED_TOKEN_IDS[0]),
+                    ONE_HUNDRED_MILLION.into(),
+                ),
+            ]),
+            egld_balance: Some(OWNER_BALANCE.into()),
+        };
+
+        let user_account = AccountSetup {
+            address: USER,
+            esdt_balances: Some(vec![(
+                TestTokenIdentifier::new(TEST_TOKEN_ONE),
+                ONE_HUNDRED_MILLION.into(),
+            )]),
+            egld_balance: Some(OWNER_BALANCE.into()),
+        };
+
+        let account_setups = vec![owner_account, user_account];
+
+        let mut common_setup = BaseSetup::new(account_setups);
 
         common_setup
             .world
             .register_contract(CONTRACT_CODE_PATH, mvx_esdt_safe::ContractBuilder);
-        common_setup.world.set_esdt_balance(
-            OWNER_ADDRESS,
-            TRUSTED_TOKEN_IDS[0].as_bytes(),
-            BigUint::from(ONE_HUNDRED_MILLION),
-        );
 
         Self { common_setup }
     }
