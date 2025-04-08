@@ -137,7 +137,7 @@ impl HeaderVerifierTestState {
         signature: &ManagedBuffer<StaticApi>,
         hash_of_hashes: &ManagedBuffer<StaticApi>,
         operation_hash: &ManagedBuffer<StaticApi>,
-        expected_result: Option<&str>,
+        expected_error_message: Option<&str>,
         opt_expected_log: Option<&str>,
     ) -> Option<Log> {
         let (logs, response) = self
@@ -159,40 +159,12 @@ impl HeaderVerifierTestState {
             .returns(ReturnsHandledOrError::new())
             .run();
 
-        match response {
-            Ok(_) => {
-                assert!(
-                    expected_result.is_none(),
-                    "Transaction was successful, but expected error"
-                );
-
-                let cloned_logs = logs.clone();
-
-                cloned_logs
-                    .iter()
-                    .find(|log| {
-                        if let Some(expected_log) = opt_expected_log {
-                            {
-                                log.topics.iter().any(|topic| {
-                                    *topic
-                                        == ManagedBuffer::<StaticApi>::from(expected_log).to_vec()
-                                })
-                            }
-                        } else {
-                            panic!("There was no expected log provided");
-                        }
-                    })
-                    .cloned()
-            }
-            Err(error) => {
-                assert!(
-                    opt_expected_log.is_none(),
-                    "Transaction was successful, but no expected log was provided"
-                );
-                assert_eq!(expected_result, Some(error.message.as_str()));
-                None
-            }
-        }
+        self.common_setup.handle_endpoint_response_and_logs(
+            response,
+            logs,
+            expected_error_message,
+            opt_expected_log,
+        )
     }
 
     pub fn generate_bridge_operation_struct(
