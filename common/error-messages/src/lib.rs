@@ -49,3 +49,4 @@ pub const TOKEN_IS_FROM_SOVEREIGN: &str = "Token is from a Sovereign Chain, it c
 pub const DEPOSIT_AMOUNT_SMALLER_THAN_PAYMENT_AMOUNT: &str =
     "The deposit amount should not be less than the payment amount";
 pub const NATIVE_TOKEN_ALREADY_REGISTERED: &str = "Native token was already registered";
+pub const ERR_EMPTY_PAYMENTS: &str = "No payments";

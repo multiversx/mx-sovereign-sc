@@ -97,19 +97,53 @@ where
     pub fn register_bridge_operations<
         Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
         Arg1: ProxyArg<ManagedBuffer<Env::Api>>,
-        Arg2: ProxyArg<MultiValueEncoded<Env::Api, ManagedBuffer<Env::Api>>>,
+        Arg2: ProxyArg<ManagedBuffer<Env::Api>>,
+        Arg3: ProxyArg<ManagedBuffer<Env::Api>>,
+        Arg4: ProxyArg<MultiValueEncoded<Env::Api, ManagedBuffer<Env::Api>>>,
     >(
         self,
         signature: Arg0,
         bridge_operations_hash: Arg1,
-        operations_hashes: Arg2,
+        _pub_keys_bitmap: Arg2,
+        _epoch: Arg3,
+        operations_hashes: Arg4,
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("registerBridgeOps")
             .argument(&signature)
             .argument(&bridge_operations_hash)
+            .argument(&_pub_keys_bitmap)
+            .argument(&_epoch)
             .argument(&operations_hashes)
+            .original_result()
+    }
+
+    pub fn change_validator_set<
+        Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
+        Arg1: ProxyArg<ManagedBuffer<Env::Api>>,
+        Arg2: ProxyArg<ManagedBuffer<Env::Api>>,
+        Arg3: ProxyArg<ManagedBuffer<Env::Api>>,
+        Arg4: ProxyArg<ManagedBuffer<Env::Api>>,
+        Arg5: ProxyArg<MultiValueEncoded<Env::Api, ManagedBuffer<Env::Api>>>,
+    >(
+        self,
+        signature: Arg0,
+        bridge_operations_hash: Arg1,
+        operation_hash: Arg2,
+        _pub_keys_bitmap: Arg3,
+        _epoch: Arg4,
+        _pub_keys_id: Arg5,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("changeValidatorSet")
+            .argument(&signature)
+            .argument(&bridge_operations_hash)
+            .argument(&operation_hash)
+            .argument(&_pub_keys_bitmap)
+            .argument(&_epoch)
+            .argument(&_pub_keys_id)
             .original_result()
     }
 

@@ -18,7 +18,7 @@ path = "../common/proxies"
 path = "../common/structs"
 
 [dependencies.multiversx-sc]
-version = "=0.57.0"
+version = "=0.57.1"
 
 [dependencies.error-messages]
 path = "../common/error-messages"
@@ -27,4 +27,4 @@ path = "../common/error-messages"
 num-bigint = "0.4.2"
 
 [dev-dependencies.multiversx-sc-scenario]
-version = "=0.57.0"
+version = "=0.57.1"

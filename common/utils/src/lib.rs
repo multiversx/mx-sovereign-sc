@@ -1,11 +1,12 @@
 #![no_std]
 
-use error_messages::{INVALID_SC_ADDRESS, INVALID_TOKEN_ID, ITEM_NOT_IN_LIST, TOKEN_ID_NO_PREFIX};
+use error_messages::{
+    ERR_EMPTY_PAYMENTS, INVALID_SC_ADDRESS, INVALID_TOKEN_ID, ITEM_NOT_IN_LIST, TOKEN_ID_NO_PREFIX,
+};
 use structs::aliases::PaymentsVec;
 
 multiversx_sc::imports!();
 
-static ERR_EMPTY_PAYMENTS: &[u8] = b"No payments";
 const DASH: u8 = b'-';
 const MAX_TOKEN_ID_LEN: usize = 32;
 
@@ -39,7 +40,7 @@ pub trait UtilsModule {
     fn pop_first_payment(
         &self,
         payments: PaymentsVec<Self::Api>,
-    ) -> (EsdtTokenPayment<Self::Api>, PaymentsVec<Self::Api>) {
+    ) -> MultiValue2<OptionalValue<EsdtTokenPayment<Self::Api>>, PaymentsVec<Self::Api>> {
         require!(!payments.is_empty(), ERR_EMPTY_PAYMENTS);
 
         let mut new_payments = payments;
@@ -47,7 +48,7 @@ pub trait UtilsModule {
         let first_payment = new_payments.get(0).clone();
         new_payments.remove(0);
 
-        (first_payment.clone(), new_payments)
+        MultiValue2::from((OptionalValue::Some(first_payment.clone()), new_payments))
     }
 
     fn has_prefix(&self, token_id: &TokenIdentifier) -> bool {

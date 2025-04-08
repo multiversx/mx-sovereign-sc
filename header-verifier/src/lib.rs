@@ -17,7 +17,7 @@ pub enum OperationHashStatus {
 }
 
 #[multiversx_sc::contract]
-pub trait Headerverifier {
+pub trait Headerverifier: cross_chain::events::EventsModule {
     #[init]
     fn init(&self) {}
 
@@ -36,6 +36,8 @@ pub trait Headerverifier {
         &self,
         signature: ManagedBuffer,
         bridge_operations_hash: ManagedBuffer,
+        _pub_keys_bitmap: ManagedBuffer,
+        _epoch: ManagedBuffer,
         operations_hashes: MultiValueEncoded<ManagedBuffer>,
     ) {
         let mut hash_of_hashes_history_mapper = self.hash_of_hashes_history();
@@ -59,6 +61,39 @@ pub trait Headerverifier {
         }
 
         hash_of_hashes_history_mapper.insert(bridge_operations_hash);
+    }
+
+    #[endpoint(changeValidatorSet)]
+    fn change_validator_set(
+        &self,
+        signature: ManagedBuffer,
+        bridge_operations_hash: ManagedBuffer,
+        operation_hash: ManagedBuffer,
+        _pub_keys_bitmap: ManagedBuffer,
+        _epoch: ManagedBuffer,
+        _pub_keys_id: MultiValueEncoded<ManagedBuffer>,
+    ) {
+        let mut hash_of_hashes_history_mapper = self.hash_of_hashes_history();
+
+        require!(
+            !hash_of_hashes_history_mapper.contains(&bridge_operations_hash),
+            OUTGOING_TX_HASH_ALREADY_REGISTERED
+        );
+
+        let is_bls_valid = self.verify_bls(&signature, &bridge_operations_hash);
+        require!(is_bls_valid, BLS_SIGNATURE_NOT_VALID);
+
+        let mut operations_hashes = MultiValueEncoded::new();
+        operations_hashes.push(operation_hash.clone());
+        self.calculate_and_check_transfers_hashes(
+            &bridge_operations_hash,
+            operations_hashes.clone(),
+        );
+
+        // TODO change validators set
+
+        hash_of_hashes_history_mapper.insert(bridge_operations_hash.clone());
+        self.execute_bridge_operation_event(&bridge_operations_hash, &operation_hash);
     }
 
     #[only_owner]
