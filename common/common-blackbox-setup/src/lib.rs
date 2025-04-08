@@ -9,7 +9,7 @@ use multiversx_sc_scenario::{
         TestTokenIdentifier, Vec,
     },
     multiversx_chain_vm::crypto_functions::sha256,
-    scenario_model::TxResponseStatus,
+    scenario_model::{Log, TxResponseStatus},
     DebugApi, ScenarioTxRun, ScenarioTxWhitebox, ScenarioWorld,
 };
 use mvx_esdt_safe::bridging_mechanism::BridgingMechanism;
@@ -264,5 +264,47 @@ impl BaseSetup {
                 );
             },
         )
+    }
+
+    pub fn handle_endpoint_response_and_logs(
+        &mut self,
+        response: Result<(), TxResponseStatus>,
+        logs: Vec<Log>,
+        expected_error_message: Option<&str>,
+        expected_log: Option<&str>,
+    ) -> Option<Log> {
+        match response {
+            Ok(_) => {
+                assert!(
+                    expected_error_message.is_none(),
+                    "Transaction was successful, but expected error"
+                );
+
+                let cloned_logs = logs.clone();
+
+                cloned_logs
+                    .iter()
+                    .find(|log| {
+                        if let Some(found_log) = expected_log {
+                            {
+                                log.topics.iter().any(|topic| {
+                                    *topic == ManagedBuffer::<StaticApi>::from(found_log).to_vec()
+                                })
+                            }
+                        } else {
+                            panic!("There was no expected log provided");
+                        }
+                    })
+                    .cloned()
+            }
+            Err(error) => {
+                assert!(
+                    expected_log.is_none(),
+                    "Transaction was successful, but no expected log was provided"
+                );
+                assert_eq!(expected_error_message, Some(error.message.as_str()));
+                None
+            }
+        }
     }
 }
