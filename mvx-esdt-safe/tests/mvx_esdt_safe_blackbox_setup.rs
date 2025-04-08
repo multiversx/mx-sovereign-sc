@@ -266,35 +266,35 @@ impl MvxEsdtSafeTestState {
             .run();
     }
 
+    // pub fn deposit(
+    //     &mut self,
+    //     to: ManagedAddress<StaticApi>,
+    //     opt_transfer_data: OptionalValueTransferDataTuple<StaticApi>,
+    //     opt_payment: Option<PaymentsVec<StaticApi>>,
+    //     expected_error_message: Option<&str>,
+    // ) {
+    //     let tx = self
+    //         .common_setup
+    //         .world
+    //         .tx()
+    //         .from(OWNER_ADDRESS)
+    //         .to(ESDT_SAFE_ADDRESS)
+    //         .typed(MvxEsdtSafeProxy)
+    //         .deposit(to, opt_transfer_data);
+    //
+    //     let response = if let Some(payment) = opt_payment {
+    //         tx.payment(payment)
+    //             .returns(ReturnsHandledOrError::new())
+    //             .run()
+    //     } else {
+    //         tx.returns(ReturnsHandledOrError::new()).run()
+    //     };
+    //
+    //     self.common_setup
+    //         .assert_expected_error_message(response, expected_error_message);
+    // }
+
     pub fn deposit(
-        &mut self,
-        to: ManagedAddress<StaticApi>,
-        opt_transfer_data: OptionalValueTransferDataTuple<StaticApi>,
-        opt_payment: Option<PaymentsVec<StaticApi>>,
-        expected_error_message: Option<&str>,
-    ) {
-        let tx = self
-            .common_setup
-            .world
-            .tx()
-            .from(OWNER_ADDRESS)
-            .to(ESDT_SAFE_ADDRESS)
-            .typed(MvxEsdtSafeProxy)
-            .deposit(to, opt_transfer_data);
-
-        let response = if let Some(payment) = opt_payment {
-            tx.payment(payment)
-                .returns(ReturnsHandledOrError::new())
-                .run()
-        } else {
-            tx.returns(ReturnsHandledOrError::new()).run()
-        };
-
-        self.common_setup
-            .assert_expected_error_message(response, expected_error_message);
-    }
-
-    pub fn deposit_with_logs(
         &mut self,
         to: ManagedAddress<StaticApi>,
         opt_transfer_data: OptionalValueTransferDataTuple<StaticApi>,

@@ -318,12 +318,17 @@ fn deposit_nothing_to_transfer() {
     );
     state.common_setup.deploy_fee_market(None);
     state.set_fee_market_address(FEE_MARKET_ADDRESS);
-    state.deposit(
+
+    if let Some(deposit_log) = state.deposit(
         USER.to_managed_address(),
         OptionalValue::None,
+        PaymentsVec::new(),
+        Some(NOTHING_TO_TRANSFER),
         None,
-        Some("Nothing to transfer"),
-    );
+    ) {
+        assert!(!deposit_log.data.is_empty());
+        assert!(!deposit_log.topics.is_empty());
+    }
 
     state
         .common_setup
@@ -349,12 +354,16 @@ fn deposit_too_many_tokens() {
 
     let payments_vec = PaymentsVec::from(vec![esdt_token_payment; 11]);
 
-    state.deposit(
+    if let Some(deposit_log) = state.deposit(
         USER.to_managed_address(),
         OptionalValue::None,
-        Some(payments_vec),
+        payments_vec,
         Some(TOO_MANY_TOKENS),
-    );
+        None,
+    ) {
+        assert!(!deposit_log.data.is_empty());
+        assert!(!deposit_log.topics.is_empty());
+    }
 
     state
         .common_setup
@@ -387,12 +396,16 @@ fn deposit_no_transfer_data() {
 
     let payments_vec = PaymentsVec::from(vec![esdt_token_payment_one, esdt_token_payment_two]);
 
-    state.deposit(
+    if let Some(deposit_log) = state.deposit(
         USER.to_managed_address(),
         OptionalValue::None,
-        Some(payments_vec),
+        payments_vec,
         None,
-    );
+        Some("deposit"),
+    ) {
+        assert!(!deposit_log.data.is_empty());
+        assert!(!deposit_log.topics.is_empty());
+    }
 
     state
         .common_setup
@@ -433,12 +446,16 @@ fn deposit_gas_limit_too_high() {
 
     let transfer_data = MultiValue3::from((gas_limit, function, args));
 
-    state.deposit(
+    if let Some(deposit_log) = state.deposit(
         USER.to_managed_address(),
         OptionalValue::Some(transfer_data),
-        Some(payments_vec),
+        payments_vec,
         Some(GAS_LIMIT_TOO_HIGH),
-    );
+        None,
+    ) {
+        assert!(!deposit_log.data.is_empty());
+        assert!(!deposit_log.topics.is_empty());
+    }
 
     state
         .common_setup
@@ -485,12 +502,16 @@ fn deposit_endpoint_banned() {
 
     let transfer_data = MultiValue3::from((gas_limit, function, args));
 
-    state.deposit(
+    if let Some(deposit_log) = state.deposit(
         USER.to_managed_address(),
         OptionalValue::Some(transfer_data),
-        Some(payments_vec),
+        payments_vec,
         Some(BANNED_ENDPOINT_NAME),
-    );
+        None,
+    ) {
+        assert!(!deposit_log.data.is_empty());
+        assert!(!deposit_log.topics.is_empty());
+    }
 
     state
         .common_setup
@@ -522,12 +543,16 @@ fn deposit_no_transfer_data_no_fee() {
     state.common_setup.deploy_testing_sc();
     state.set_fee_market_address(FEE_MARKET_ADDRESS);
 
-    state.deposit(
+    if let Some(deposit_log) = state.deposit(
         USER.to_managed_address(),
         OptionalValue::None,
-        None,
+        PaymentsVec::new(),
         Some(NOTHING_TO_TRANSFER),
-    );
+        None,
+    ) {
+        assert!(!deposit_log.data.is_empty());
+        assert!(!deposit_log.topics.is_empty());
+    }
 }
 
 /// This test check the flow for a deposit with transfer data only
@@ -561,7 +586,7 @@ fn deposit_transfer_data_only_no_fee() {
 
     let transfer_data = MultiValue3::from((gas_limit, function, args));
 
-    if let Some(deposit_log) = state.deposit_with_logs(
+    if let Some(deposit_log) = state.deposit(
         USER.to_managed_address(),
         OptionalValue::Some(transfer_data),
         PaymentsVec::new(),
@@ -608,12 +633,16 @@ fn deposit_transfer_data_only_with_fee_nothing_to_transfer() {
 
     let transfer_data = MultiValue3::from((gas_limit, function, args));
 
-    state.deposit(
+    if let Some(deposit_log) = state.deposit(
         USER.to_managed_address(),
         OptionalValue::Some(transfer_data),
-        None,
+        PaymentsVec::new(),
         Some(ERR_EMPTY_PAYMENTS),
-    );
+        None,
+    ) {
+        assert!(!deposit_log.data.is_empty());
+        assert!(!deposit_log.topics.is_empty());
+    }
 }
 
 /// This test check the flow for a deposit with transfer data only and the fee is enabled
@@ -670,7 +699,7 @@ fn deposit_transfer_data_only_with_fee() {
 
     let transfer_data = MultiValue3::from((gas_limit, function, args));
 
-    if let Some(deposit_log) = state.deposit_with_logs(
+    if let Some(deposit_log) = state.deposit(
         USER.to_managed_address(),
         OptionalValue::Some(transfer_data),
         payments_vec,
@@ -755,12 +784,16 @@ fn deposit_fee_enabled() {
 
     let transfer_data = MultiValue3::from((gas_limit, function, args));
 
-    state.deposit(
+    if let Some(deposit_log) = state.deposit(
         USER.to_managed_address(),
         OptionalValue::Some(transfer_data),
-        Some(payments_vec.clone()),
+        payments_vec.clone(),
         None,
-    );
+        Some("deposit"),
+    ) {
+        assert!(!deposit_log.data.is_empty());
+        assert!(!deposit_log.topics.is_empty());
+    }
 
     let expected_amount_token_one =
         BigUint::from(ONE_HUNDRED_MILLION) - &esdt_token_payment_one.amount;
@@ -858,12 +891,16 @@ fn deposit_payment_doesnt_cover_fee() {
 
     let transfer_data = MultiValue3::from((gas_limit, function, args));
 
-    state.deposit(
+    if let Some(deposit_log) = state.deposit(
         USER.to_managed_address(),
         OptionalValue::Some(transfer_data),
-        Some(payments_vec),
+        payments_vec,
         Some(PAYMENT_DOES_NOT_COVER_FEE),
-    );
+        None,
+    ) {
+        assert!(!deposit_log.data.is_empty());
+        assert!(!deposit_log.topics.is_empty());
+    }
 
     state
         .common_setup
@@ -947,7 +984,7 @@ fn deposit_refund() {
 
     let transfer_data = MultiValue3::from((gas_limit, function, args));
 
-    if let Some(deposit_log) = state.deposit_with_logs(
+    if let Some(deposit_log) = state.deposit(
         USER.to_managed_address(),
         OptionalValue::Some(transfer_data),
         payments_vec.clone(),
@@ -1021,7 +1058,7 @@ fn deposit_success_burn_mechanism() {
         esdt_token_payment_two.clone(),
     ]);
 
-    if let Some(deposit_log) = state.deposit_with_logs(
+    if let Some(deposit_log) = state.deposit(
         USER.to_managed_address(),
         OptionalValue::None,
         payments_vec,
@@ -1488,7 +1525,7 @@ fn execute_operation_success_burn_mechanism() {
 
     let operations_hashes = MultiValueEncoded::from(ManagedVec::from(vec![operation_hash.clone()]));
 
-    if let Some(deposit_log) = state.deposit_with_logs(
+    if let Some(deposit_log) = state.deposit(
         USER.to_managed_address(),
         OptionalValue::None,
         PaymentsVec::from(vec![payment]),
@@ -1605,7 +1642,7 @@ fn deposit_execute_switch_mechanism() {
         deposit_trusted_token_payment_token_data,
     );
 
-    if let Some(deposit_log) = state.deposit_with_logs(
+    if let Some(deposit_log) = state.deposit(
         USER.to_managed_address(),
         OptionalValue::None,
         PaymentsVec::from(vec![deposit_trusted_token_payment.clone()]),
@@ -1696,7 +1733,7 @@ fn deposit_execute_switch_mechanism() {
         mvx_esdt_safe::contract_obj,
     );
 
-    if let Some(deposit_log) = state.deposit_with_logs(
+    if let Some(deposit_log) = state.deposit(
         USER.to_managed_address(),
         OptionalValue::None,
         PaymentsVec::from(vec![deposit_trusted_token_payment.clone()]),
@@ -1794,7 +1831,7 @@ fn deposit_execute_switch_mechanism() {
         testing_sc::contract_obj,
     );
 
-    if let Some(deposit_log) = state.deposit_with_logs(
+    if let Some(deposit_log) = state.deposit(
         USER.to_managed_address(),
         OptionalValue::None,
         PaymentsVec::from(vec![deposit_trusted_token_payment]),
