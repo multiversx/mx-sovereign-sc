@@ -1845,9 +1845,12 @@ fn execute_operation_no_payments() {
         .common_setup
         .check_operation_hash_status(&operation_hash, OperationHashStatus::NotLocked);
 
-    let logs = state.execute_operation_with_logs(hash_of_hashes, operation.clone());
-
-    for log in logs {
+    if let Some(log) = state.execute_operation_with_logs(
+        hash_of_hashes,
+        operation.clone(),
+        None,
+        Some("executedBridgeOp"),
+    ) {
         assert!(!log.data.is_empty());
         assert!(!log.topics.is_empty());
     }
@@ -1917,9 +1920,12 @@ fn execute_operation_no_payments_failed_event() {
         .common_setup
         .check_operation_hash_status(&operation_hash, OperationHashStatus::NotLocked);
 
-    let logs = state.execute_operation_with_logs(hash_of_hashes, operation.clone());
-
-    for log in logs {
+    if let Some(log) = state.execute_operation_with_logs(
+        hash_of_hashes,
+        operation.clone(),
+        None,
+        Some("executedBridgeOp"),
+    ) {
         assert!(!log.data.is_empty());
         assert!(!log.topics.is_empty());
     }

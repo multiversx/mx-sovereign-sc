@@ -381,8 +381,11 @@ impl MvxEsdtSafeTestState {
         &mut self,
         hash_of_hashes: ManagedBuffer<StaticApi>,
         operation: Operation<StaticApi>,
-    ) -> Vec<Log> {
-        self.common_setup
+        expected_error_message: Option<&str>,
+        expected_log: Option<&str>,
+    ) -> Option<Log> {
+        let (logs, response) = self
+            .common_setup
             .world
             .tx()
             .from(OWNER_ADDRESS)
@@ -390,7 +393,15 @@ impl MvxEsdtSafeTestState {
             .typed(MvxEsdtSafeProxy)
             .execute_operations(hash_of_hashes, operation)
             .returns(ReturnsLogs)
-            .run()
+            .returns(ReturnsHandledOrError::new())
+            .run();
+
+        self.common_setup.handle_endpoint_response_and_logs(
+            response,
+            logs,
+            expected_error_message,
+            expected_log,
+        )
     }
 
     pub fn execute_operation(
