@@ -195,10 +195,6 @@ pub trait ExecuteModule:
         operation_tuple: &OperationTuple<Self::Api>,
         tokens_list: &ManagedVec<OperationEsdtPayment<Self::Api>>,
     ) {
-        if tokens_list.is_empty() {
-            return;
-        }
-
         let mapped_tokens: ManagedVec<Self::Api, EsdtTokenPayment<Self::Api>> = tokens_list
             .iter()
             .map(|token| token.clone().into())
