@@ -346,22 +346,22 @@ impl MvxEsdtSafeTestState {
         self.common_setup
             .assert_expected_error_message(response, expected_error_message);
     }
-    //
-    // pub fn execute_operation_with_logs(
-    //     &mut self,
-    //     hash_of_hashes: ManagedBuffer<StaticApi>,
-    //     operation: Operation<StaticApi>,
-    // ) -> Vec<Log> {
-    //     self.common_setup
-    //         .world
-    //         .tx()
-    //         .from(OWNER_ADDRESS)
-    //         .to(ESDT_SAFE_ADDRESS)
-    //         .typed(MvxEsdtSafeProxy)
-    //         .execute_operations(hash_of_hashes, operation)
-    //         .returns(ReturnsLogs)
-    //         .run()
-    // }
+
+    pub fn execute_operation_with_logs(
+        &mut self,
+        hash_of_hashes: ManagedBuffer<StaticApi>,
+        operation: Operation<StaticApi>,
+    ) -> Vec<Log> {
+        self.common_setup
+            .world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .to(ESDT_SAFE_ADDRESS)
+            .typed(MvxEsdtSafeProxy)
+            .execute_operations(hash_of_hashes, operation)
+            .returns(ReturnsLogs)
+            .run()
+    }
 
     pub fn execute_operation(
         &mut self,
