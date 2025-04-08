@@ -13,6 +13,13 @@ pub trait EventsModule {
         event_data: OperationData<Self::Api>,
     );
 
+    #[event("scCall")]
+    fn sc_call_event(
+        &self,
+        #[indexed] dest_address: &ManagedAddress,
+        event_data: OperationData<Self::Api>,
+    );
+
     #[event("executedBridgeOp")]
     fn execute_bridge_operation_event(
         &self,
