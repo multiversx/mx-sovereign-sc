@@ -1,6 +1,9 @@
 use multiversx_sc::{
     imports::OptionalValue,
-    types::{EsdtLocalRole, ManagedAddress, ManagedVec, TestSCAddress, TokenIdentifier},
+    types::{
+        EsdtLocalRole, ManagedAddress, ManagedVec, TestSCAddress, TestTokenIdentifier,
+        TokenIdentifier,
+    },
 };
 
 use multiversx_sc_scenario::{
@@ -9,8 +12,8 @@ use multiversx_sc_scenario::{
 };
 
 use common_blackbox_setup::{
-    BaseSetup, ESDT_SAFE_ADDRESS, FEE_MARKET_ADDRESS, FEE_TOKEN, OWNER_ADDRESS, TEST_TOKEN_ONE,
-    TEST_TOKEN_TWO,
+    AccountSetup, BaseSetup, ESDT_SAFE_ADDRESS, FEE_MARKET_ADDRESS, FEE_TOKEN, ONE_HUNDRED_MILLION,
+    OWNER_ADDRESS, OWNER_BALANCE, TEST_TOKEN_ONE, TEST_TOKEN_TWO, USER,
 };
 use proxies::sov_esdt_safe_proxy::SovEsdtSafeProxy;
 use sov_esdt_safe::SovEsdtSafe;
@@ -28,7 +31,38 @@ pub struct SovEsdtSafeTestState {
 impl SovEsdtSafeTestState {
     #[allow(clippy::new_without_default)]
     pub fn new() -> Self {
-        let mut common_setup = BaseSetup::new();
+        let owner_account = AccountSetup {
+            address: OWNER_ADDRESS,
+            esdt_balances: Some(vec![
+                (
+                    TestTokenIdentifier::new(TEST_TOKEN_ONE),
+                    ONE_HUNDRED_MILLION.into(),
+                ),
+                (
+                    TestTokenIdentifier::new(TEST_TOKEN_TWO),
+                    ONE_HUNDRED_MILLION.into(),
+                ),
+                (
+                    TestTokenIdentifier::new(FEE_TOKEN),
+                    ONE_HUNDRED_MILLION.into(),
+                ),
+            ]),
+            egld_balance: Some(OWNER_BALANCE.into()),
+        };
+
+        let user_account = AccountSetup {
+            address: USER,
+            esdt_balances: Some(vec![(
+                TestTokenIdentifier::new(TEST_TOKEN_ONE),
+                ONE_HUNDRED_MILLION.into(),
+            )]),
+            egld_balance: Some(OWNER_BALANCE.into()),
+        };
+
+        let account_setups = vec![owner_account, user_account];
+
+        let mut common_setup = BaseSetup::new(account_setups);
+
         common_setup
             .world
             .register_contract(SOV_ESDT_SAFE_CODE_PATH, sov_esdt_safe::ContractBuilder);
