@@ -3,11 +3,12 @@ use multiversx_sc::{
     api::ManagedTypeApi,
     types::{BigUint, MultiValueEncoded, TestAddress, TestSCAddress},
 };
-use multiversx_sc_scenario::ReturnsHandledOrError;
+use multiversx_sc_scenario::scenario_model::Log;
 use multiversx_sc_scenario::{
     api::StaticApi, imports::MxscPath, multiversx_chain_vm::crypto_functions::sha256,
     ScenarioTxRun, ScenarioWorld,
 };
+use multiversx_sc_scenario::{ReturnsHandledOrError, ReturnsLogs};
 use proxies::header_verifier_proxy::HeaderverifierProxy;
 
 const HEADER_VERIFIER_CODE_PATH: MxscPath = MxscPath::new("ouput/header-verifier.mxsc-json");
@@ -87,6 +88,8 @@ impl HeaderVerifierTestState {
             .register_bridge_operations(
                 operation.signature,
                 operation.bridge_operation_hash,
+                ManagedBuffer::new(),
+                ManagedBuffer::new(),
                 operation.operations_hashes,
             )
             .run();
@@ -144,6 +147,59 @@ impl HeaderVerifierTestState {
         };
     }
 
+    pub fn change_validator_set(
+        &mut self,
+        signature: &ManagedBuffer<StaticApi>,
+        hash_of_hashes: &ManagedBuffer<StaticApi>,
+        operation_hash: &ManagedBuffer<StaticApi>,
+        expected_result: Option<&str>,
+    ) -> Option<Log> {
+        let (logs, response) = self
+            .world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .to(HEADER_VERIFIER_ADDRESS)
+            .typed(HeaderverifierProxy)
+            .change_validator_set(
+                signature,
+                hash_of_hashes,
+                operation_hash,
+                ManagedBuffer::new(),
+                ManagedBuffer::new(),
+                MultiValueEncoded::new(),
+            )
+            .returns(ReturnsLogs)
+            .returns(ReturnsHandledOrError::new())
+            .run();
+
+        match response {
+            Ok(_) => {
+                assert!(
+                    expected_result.is_none(),
+                    "Transaction was successful, but expected error"
+                );
+
+                let cloned_logs = logs.clone();
+
+                cloned_logs
+                    .iter()
+                    .find(|log| {
+                        {
+                            log.topics.iter().any(|topic| {
+                                *topic
+                                    == ManagedBuffer::<StaticApi>::from("executedBridgeOp").to_vec()
+                            })
+                        }
+                    })
+                    .cloned()
+            }
+            Err(error) => {
+                assert_eq!(expected_result, Some(error.message.as_str()));
+                None
+            }
+        }
+    }
+
     pub fn generate_bridge_operation_struct(
         &mut self,
         operation_hashes: Vec<&ManagedBuffer<StaticApi>>,
@@ -166,7 +222,7 @@ impl HeaderVerifierTestState {
         }
     }
 
-    fn get_operation_hash(
+    pub fn get_operation_hash(
         &mut self,
         operation: &ManagedBuffer<StaticApi>,
     ) -> ManagedBuffer<StaticApi> {

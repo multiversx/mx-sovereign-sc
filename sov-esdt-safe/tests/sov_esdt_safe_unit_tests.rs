@@ -5,7 +5,8 @@ use common_blackbox_setup::{
 use multiversx_sc::{
     imports::{MultiValue3, OptionalValue},
     types::{
-        BigUint, EsdtTokenPayment, ManagedBuffer, ManagedVec, TestTokenIdentifier, TokenIdentifier,
+        BigUint, EsdtTokenPayment, ManagedBuffer, ManagedVec, MultiValueEncoded,
+        TestTokenIdentifier, TokenIdentifier,
     },
 };
 use multiversx_sc_scenario::api::StaticApi;
@@ -25,6 +26,17 @@ fn deploy() {
     );
 }
 
+/// Test the deposit function without fee and without transfer data.
+/// Steps:
+/// 1. Deploy the Sov-ESDT-Safe smart contract with roles.
+/// 2. Deploy the Fee-Market smart contract.
+/// 3. Deploy the Testing smart contract.
+/// 4. Set the Fee-Market address.
+/// 5. Create two ESDT token payments.
+/// 6. Create a payments vector with the two ESDT token payments.
+/// 7. Call the deposit function with the payments vector.
+/// 8. Check the logs for the deposit function.
+/// 9. Check the ESDT balance of the addresses
 #[test]
 fn deposit_no_fee_no_transfer_data() {
     let mut state = SovEsdtSafeTestState::new();
@@ -93,6 +105,17 @@ fn deposit_no_fee_no_transfer_data() {
         .esdt_balance(test_token_two_identifier, &expected_amount_token_two);
 }
 
+/// Test the deposit function with fee and without transfer data.
+/// Steps:
+/// 1. Deploy the Sov-ESDT-Safe smart contract with roles.
+/// 2. Deploy the Fee-Market smart contract.
+/// 3. Deploy the Testing smart contract.
+/// 4. Set the Fee-Market address.
+/// 5. Create a fee payment.
+/// 6. Create two ESDT token payments.
+/// 7. Create a payments vector with the fee payment and the two ESDT token payments.
+/// 8. Call the deposit function with the payments vector.
+/// 9. Check the ESDT balances of the addresses
 #[test]
 fn deposit_with_fee_no_transfer_data() {
     let mut state = SovEsdtSafeTestState::new();
@@ -186,6 +209,17 @@ fn deposit_with_fee_no_transfer_data() {
         .esdt_balance(fee_token_identifier, expected_amount_token_fee);
 }
 
+/// Test the deposit function without fee and with transfer data.
+/// Steps:
+/// 1. Deploy the Sov-ESDT-Safe smart contract with roles.
+/// 2. Deploy the Fee-Market smart contract.
+/// 3. Deploy the Testing smart contract.
+/// 4. Set the Fee-Market address.
+/// 5. Create two ESDT token payments.
+/// 6. Create a payments vector with the two ESDT token payments.
+/// 7. Call the deposit function with the payments vector.
+/// 8. Check the logs for the deposit function.
+/// 9. Check the ESDT balance of the addresses
 #[test]
 fn deposit_no_fee_with_transfer_data() {
     let mut state = SovEsdtSafeTestState::new();
@@ -219,7 +253,9 @@ fn deposit_no_fee_with_transfer_data() {
     let gas_limit = 1;
     let function = ManagedBuffer::<StaticApi>::from("hello");
     let args =
-        ManagedVec::<StaticApi, ManagedBuffer<StaticApi>>::from(vec![ManagedBuffer::from("1")]);
+        MultiValueEncoded::<StaticApi, ManagedBuffer<StaticApi>>::from(ManagedVec::from(vec![
+            ManagedBuffer::from("1"),
+        ]));
 
     let transfer_data = MultiValue3::from((gas_limit, function, args));
 
@@ -264,6 +300,17 @@ fn deposit_no_fee_with_transfer_data() {
         );
 }
 
+/// Test the deposit function with fee and with transfer data.
+/// Steps:
+/// 1. Deploy the Sov-ESDT-Safe smart contract with roles.
+/// 2. Deploy the Fee-Market smart contract.
+/// 3. Deploy the Testing smart contract.
+/// 4. Set the Fee-Market address.
+/// 5. Create a fee payment.
+/// 6. Create two ESDT token payments.
+/// 7. Create a payments vector with the fee payment and the two ESDT token payments.
+/// 8. Call the deposit function with the payments vector.
+/// 9. Check the ESDT balances of the addresses
 #[test]
 fn deposit_with_fee_with_transfer_data() {
     let mut state = SovEsdtSafeTestState::new();
@@ -316,7 +363,9 @@ fn deposit_with_fee_with_transfer_data() {
     let gas_limit = 2;
     let function = ManagedBuffer::<StaticApi>::from("hello");
     let args =
-        ManagedVec::<StaticApi, ManagedBuffer<StaticApi>>::from(vec![ManagedBuffer::from("1")]);
+        MultiValueEncoded::<StaticApi, ManagedBuffer<StaticApi>>::from(ManagedVec::from(vec![
+            ManagedBuffer::from("1"),
+        ]));
 
     let transfer_data = MultiValue3::from((gas_limit, function, args));
 

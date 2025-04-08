@@ -262,6 +262,10 @@ pub trait ExecuteModule:
     ) {
         self.execute_bridge_operation_event(hash_of_hashes, &operation_tuple.op_hash);
 
+        if operation_tuple.operation.tokens.is_empty() {
+            return;
+        }
+
         for operation_token in &operation_tuple.operation.tokens {
             self.burn_failed_transfer_token(&operation_token);
         }

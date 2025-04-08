@@ -21,6 +21,18 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5c8214115b7bf84099f1309324e63141d4c5d7cc26862f97a0a857dbefe165bd"
 
 [[package]]
+name = "cross-chain"
+version = "0.1.0"
+dependencies = [
+ "error-messages",
+ "multiversx-sc",
+ "multiversx-sc-modules",
+ "proxies",
+ "structs",
+ "utils",
+]
+
+[[package]]
 name = "endian-type"
 version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -43,6 +55,7 @@ dependencies = [
 name = "header-verifier"
 version = "0.1.0"
 dependencies = [
+ "cross-chain",
  "error-messages",
  "multiversx-sc",
  "proxies",
@@ -81,9 +94,9 @@ dependencies = [
 
 [[package]]
 name = "multiversx-sc"
-version = "0.57.0"
+version = "0.57.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e74fed665ae19d5dc7809645bb5feddd858983c7dc1f1f77f7e6f1f43710f155"
+checksum = "20602d4fc336092faadc03b6b445c4bb5e4dbc4c86fb53726e46eca67070813a"
 dependencies = [
  "bitflags",
  "generic-array",
@@ -121,9 +134,9 @@ dependencies = [
 
 [[package]]
 name = "multiversx-sc-derive"
-version = "0.57.0"
+version = "0.57.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e7eef4051f20a38970e79c11c496e891e08464020b2f7f5dadda9b7f6bbe75ac"
+checksum = "0d44d08d3376c199e8c391cc07752d2822cd289693da5319d7905599501e557f"
 dependencies = [
  "hex",
  "proc-macro2",
@@ -133,10 +146,19 @@ dependencies = [
 ]
 
 [[package]]
-name = "multiversx-sc-wasm-adapter"
-version = "0.57.0"
+name = "multiversx-sc-modules"
+version = "0.57.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f42def07cb8d7c21b6aea45c4696a8c0ac5d3d93103887bb7f0c33402e277d56"
+checksum = "502edabc05791315e65bddb415086aaaa0f62821ee076a27ddee4d86334e22c7"
+dependencies = [
+ "multiversx-sc",
+]
+
+[[package]]
+name = "multiversx-sc-wasm-adapter"
+version = "0.57.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ee8253b84600554fbe16ea0a234b009854348dc95ce174ba6eba046dc5918f8f"
 dependencies = [
  "multiversx-sc",
 ]
@@ -197,9 +219,9 @@ dependencies = [
 
 [[package]]
 name = "smallvec"
-version = "1.14.0"
+version = "1.15.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7fcf8323ef1faaee30a44a340193b1ac6814fd9b7b4e88e9d4519a3e4abe1cfd"
+checksum = "8917285742e9f3e1683f0a9c4e6b57960b7314d0b08d30d1ecd426713ee2eee9"
 
 [[package]]
 name = "structs"
@@ -236,3 +258,12 @@ name = "unwrap-infallible"
 version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "151ac09978d3c2862c4e39b557f4eceee2cc72150bc4cb4f16abf061b6e381fb"
+
+[[package]]
+name = "utils"
+version = "0.1.0"
+dependencies = [
+ "error-messages",
+ "multiversx-sc",
+ "structs",
+]

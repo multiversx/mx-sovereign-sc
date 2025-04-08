@@ -78,7 +78,7 @@ impl<M: ManagedTypeApi> TransferData<M> {
 impl<M: ManagedTypeApi> From<TransferDataTuple<M>> for TransferData<M> {
     fn from(value: TransferDataTuple<M>) -> Self {
         let (gas_limit, function, vec) = value.into_tuple();
-        TransferData::new(gas_limit, function, vec)
+        TransferData::new(gas_limit, function, vec.to_vec())
     }
 }
 

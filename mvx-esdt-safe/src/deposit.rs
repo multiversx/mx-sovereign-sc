@@ -25,7 +25,9 @@ pub trait DepositModule:
     ) {
         require!(self.not_paused(), ESDT_SAFE_STILL_PAUSED);
 
-        let (fees_payment, payments) = self.check_and_extract_fee().into_tuple();
+        let (fees_payment, payments) = self
+            .check_and_extract_fee(opt_transfer_data.is_some())
+            .into_tuple();
 
         let mut total_tokens_for_fees = 0usize;
         let mut event_payments = MultiValueEncoded::new();
