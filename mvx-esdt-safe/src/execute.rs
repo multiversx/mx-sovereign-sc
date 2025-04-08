@@ -36,6 +36,10 @@ pub trait ExecuteModule:
         let minted_operation_tokens =
             self.mint_tokens(&hash_of_hashes, &operation_tuple, &operation.tokens);
 
+        if minted_operation_tokens.is_empty() && operation.data.opt_transfer_data.is_none() {
+            return;
+        }
+
         self.distribute_payments(&hash_of_hashes, &operation_tuple, &minted_operation_tokens);
     }
 
