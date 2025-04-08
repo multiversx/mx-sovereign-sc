@@ -1182,7 +1182,15 @@ fn execute_operation_no_esdt_safe_registered() {
 
     state.common_setup.deploy_header_verifier();
 
-    state.execute_operation(&hash_of_hashes, operation, Some(NO_ESDT_SAFE_ADDRESS));
+    if let Some(log) = state.execute_operation(
+        &hash_of_hashes,
+        &operation,
+        Some(NO_ESDT_SAFE_ADDRESS),
+        None,
+    ) {
+        assert!(!log.data.is_empty());
+        assert!(!log.topics.is_empty());
+    }
 
     state
         .common_setup
@@ -1247,7 +1255,12 @@ fn execute_operation_success() {
         .common_setup
         .check_operation_hash_status(&operation_hash, OperationHashStatus::NotLocked);
 
-    state.execute_operation(&hash_of_hashes, operation.clone(), None);
+    if let Some(log) =
+        state.execute_operation(&hash_of_hashes, &operation, None, Some("executedBridgeOp"))
+    {
+        assert!(!log.data.is_empty());
+        assert!(!log.topics.is_empty());
+    }
 
     state
         .common_setup
@@ -1318,7 +1331,12 @@ fn execute_operation_with_native_token_success() {
         .common_setup
         .check_operation_hash_status(&operation_hash, OperationHashStatus::NotLocked);
 
-    state.execute_operation(&hash_of_hashes, operation.clone(), None);
+    if let Some(log) =
+        state.execute_operation(&hash_of_hashes, &operation, None, Some("executedBridgeOp"))
+    {
+        assert!(!log.data.is_empty());
+        assert!(!log.topics.is_empty());
+    }
 
     state
         .common_setup
@@ -1389,7 +1407,12 @@ fn execute_operation_burn_mechanism_without_deposit_cannot_subtract() {
     state.register_native_token(TRUSTED_TOKEN_IDS[0], token_display_name, egld_payment, None);
     state.set_token_burn_mechanism(TRUSTED_TOKEN_IDS[0], None);
 
-    state.execute_operation(&hash_of_hashes, operation.clone(), None);
+    if let Some(log) =
+        state.execute_operation(&hash_of_hashes, &operation, None, Some("executedBridgeOp"))
+    {
+        assert!(!log.data.is_empty());
+        assert!(!log.topics.is_empty());
+    }
 
     state
         .common_setup
@@ -1488,7 +1511,12 @@ fn execute_operation_success_burn_mechanism() {
 
     state.set_token_burn_mechanism(TRUSTED_TOKEN_IDS[0], None);
 
-    state.execute_operation(&hash_of_hashes, operation.clone(), None);
+    if let Some(log) =
+        state.execute_operation(&hash_of_hashes, &operation, None, Some("executedBridgeOp"))
+    {
+        assert!(!log.data.is_empty());
+        assert!(!log.topics.is_empty());
+    }
 
     let expected_amount_trusted_token = BigUint::from(ONE_HUNDRED_MILLION) - &token_data.amount;
 
@@ -1639,7 +1667,16 @@ fn deposit_execute_switch_mechanism() {
         &hash_of_hashes_one,
         operations_hashes_one,
     );
-    state.execute_operation(&hash_of_hashes_one, operation_one, None);
+
+    if let Some(log) = state.execute_operation(
+        &hash_of_hashes_one,
+        &operation_one,
+        None,
+        Some("executedBridgeOp"),
+    ) {
+        assert!(!log.data.is_empty());
+        assert!(!log.topics.is_empty());
+    }
 
     let mut expected_receiver_amount = execute_trusted_token_payment_amount;
     expected_deposited_amount -= execute_trusted_token_payment_amount;
@@ -1719,7 +1756,16 @@ fn deposit_execute_switch_mechanism() {
         &hash_of_hashes_two,
         operations_hashes_two,
     );
-    state.execute_operation(&hash_of_hashes_two, operation_two, None);
+
+    if let Some(log) = state.execute_operation(
+        &hash_of_hashes_two,
+        &operation_two,
+        None,
+        Some("executedBridgeOp"),
+    ) {
+        assert!(!log.data.is_empty());
+        assert!(!log.topics.is_empty());
+    }
 
     state
         .common_setup
@@ -1845,12 +1891,9 @@ fn execute_operation_no_payments() {
         .common_setup
         .check_operation_hash_status(&operation_hash, OperationHashStatus::NotLocked);
 
-    if let Some(log) = state.execute_operation_with_logs(
-        hash_of_hashes,
-        operation.clone(),
-        None,
-        Some("executedBridgeOp"),
-    ) {
+    if let Some(log) =
+        state.execute_operation(&hash_of_hashes, &operation, None, Some("executedBridgeOp"))
+    {
         assert!(!log.data.is_empty());
         assert!(!log.topics.is_empty());
     }
@@ -1920,12 +1963,9 @@ fn execute_operation_no_payments_failed_event() {
         .common_setup
         .check_operation_hash_status(&operation_hash, OperationHashStatus::NotLocked);
 
-    if let Some(log) = state.execute_operation_with_logs(
-        hash_of_hashes,
-        operation.clone(),
-        None,
-        Some("executedBridgeOp"),
-    ) {
+    if let Some(log) =
+        state.execute_operation(&hash_of_hashes, &operation, None, Some("executedBridgeOp"))
+    {
         assert!(!log.data.is_empty());
         assert!(!log.topics.is_empty());
     }

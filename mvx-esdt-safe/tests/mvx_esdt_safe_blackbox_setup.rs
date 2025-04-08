@@ -377,10 +377,10 @@ impl MvxEsdtSafeTestState {
             .assert_expected_error_message(response, expected_error_message);
     }
 
-    pub fn execute_operation_with_logs(
+    pub fn execute_operation(
         &mut self,
-        hash_of_hashes: ManagedBuffer<StaticApi>,
-        operation: Operation<StaticApi>,
+        hash_of_hashes: &ManagedBuffer<StaticApi>,
+        operation: &Operation<StaticApi>,
         expected_error_message: Option<&str>,
         expected_log: Option<&str>,
     ) -> Option<Log> {
@@ -402,27 +402,6 @@ impl MvxEsdtSafeTestState {
             expected_error_message,
             expected_log,
         )
-    }
-
-    pub fn execute_operation(
-        &mut self,
-        hash_of_hashes: &ManagedBuffer<StaticApi>,
-        operation: Operation<StaticApi>,
-        expected_error_message: Option<&str>,
-    ) {
-        let response = self
-            .common_setup
-            .world
-            .tx()
-            .from(OWNER_ADDRESS)
-            .to(ESDT_SAFE_ADDRESS)
-            .typed(MvxEsdtSafeProxy)
-            .execute_operations(hash_of_hashes, operation)
-            .returns(ReturnsHandledOrError::new())
-            .run();
-
-        self.common_setup
-            .assert_expected_error_message(response, expected_error_message);
     }
 
     pub fn set_esdt_safe_address_in_header_verifier(&mut self, esdt_safe_address: TestSCAddress) {
