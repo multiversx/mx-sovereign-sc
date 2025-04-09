@@ -266,6 +266,29 @@ impl BaseSetup {
         )
     }
 
+    pub fn check_expected_logs(
+        &mut self,
+        logs: Vec<Log>,
+        expected_log: Option<&str>,
+    ) -> Option<Log> {
+        let cloned_logs = logs.clone();
+
+        cloned_logs
+            .iter()
+            .find(|log| {
+                if let Some(found_log) = expected_log {
+                    {
+                        log.topics.iter().any(|topic| {
+                            *topic == ManagedBuffer::<StaticApi>::from(found_log).to_vec()
+                        })
+                    }
+                } else {
+                    panic!("There was no expected log provided");
+                }
+            })
+            .cloned()
+    }
+
     pub fn handle_endpoint_response_and_logs(
         &mut self,
         response: Result<(), TxResponseStatus>,
