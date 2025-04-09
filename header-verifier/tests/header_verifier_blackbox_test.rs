@@ -273,16 +273,13 @@ fn test_change_validator_set() {
     let operation_hash = ManagedBuffer::from("operation_1");
     let hash_of_hashes = state.get_operation_hash(&operation_hash);
 
-    if let Some(change_validator_set_log) = state.change_validator_set(
+    state.change_validator_set(
         &ManagedBuffer::new(),
         &hash_of_hashes,
         &operation_hash,
         None,
         Some("executedBridgeOp"),
-    ) {
-        assert!(!change_validator_set_log.data.is_empty());
-        assert!(!change_validator_set_log.topics.is_empty());
-    }
+    );
 }
 
 #[test]

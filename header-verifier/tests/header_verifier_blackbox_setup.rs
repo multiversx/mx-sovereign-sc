@@ -1,10 +1,8 @@
 use common_blackbox_setup::{AccountSetup, BaseSetup, HEADER_VERIFIER_ADDRESS};
-use multiversx_sc::types::ManagedBuffer;
 use multiversx_sc::{
     api::ManagedTypeApi,
-    types::{MultiValueEncoded, TestAddress},
+    types::{ManagedBuffer, MultiValueEncoded, TestAddress},
 };
-use multiversx_sc_scenario::scenario_model::Log;
 use multiversx_sc_scenario::{
     api::StaticApi, multiversx_chain_vm::crypto_functions::sha256, ScenarioTxRun,
 };
@@ -138,8 +136,8 @@ impl HeaderVerifierTestState {
         hash_of_hashes: &ManagedBuffer<StaticApi>,
         operation_hash: &ManagedBuffer<StaticApi>,
         expected_error_message: Option<&str>,
-        opt_expected_log: Option<&str>,
-    ) -> Option<Log> {
+        expected_log: Option<&str>,
+    ) {
         let (logs, response) = self
             .common_setup
             .world
@@ -159,12 +157,12 @@ impl HeaderVerifierTestState {
             .returns(ReturnsHandledOrError::new())
             .run();
 
-        self.common_setup.handle_endpoint_response_and_logs(
-            response,
-            logs,
-            expected_error_message,
-            opt_expected_log,
-        )
+        self.common_setup
+            .assert_expected_error_message(response, expected_error_message);
+
+        if let Some(log) = expected_log {
+            self.common_setup.assert_expected_log(logs, log)
+        };
     }
 
     pub fn generate_bridge_operation_struct(
