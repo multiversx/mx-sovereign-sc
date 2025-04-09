@@ -38,6 +38,7 @@ const CHAIN_CONFIG_CODE_PATH: MxscPath =
 
 pub const TESTING_SC_ADDRESS: TestSCAddress = TestSCAddress::new("testing-sc");
 const TESTING_SC_CODE_PATH: MxscPath = MxscPath::new("../testing-sc/output/testing-sc.mxsc.json");
+pub const ENSHRINE_ADDRESS: TestAddress = TestAddress::new("enshrine");
 
 pub const OWNER_ADDRESS: TestAddress = TestAddress::new("owner");
 pub const USER: TestAddress = TestAddress::new("user");

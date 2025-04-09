@@ -1,4 +1,7 @@
-use common_blackbox_setup::{AccountSetup, BaseSetup, HEADER_VERIFIER_ADDRESS};
+use common_blackbox_setup::{
+    AccountSetup, BaseSetup, ENSHRINE_ADDRESS, HEADER_VERIFIER_ADDRESS, OWNER_ADDRESS,
+    OWNER_BALANCE,
+};
 use multiversx_sc::{
     api::ManagedTypeApi,
     types::{ManagedBuffer, MultiValueEncoded, TestAddress},
@@ -8,12 +11,6 @@ use multiversx_sc_scenario::{
 };
 use multiversx_sc_scenario::{ReturnsHandledOrError, ReturnsLogs};
 use proxies::header_verifier_proxy::HeaderverifierProxy;
-
-// NOTE: This is a mock path
-pub const ENSHRINE_ADDRESS: TestAddress = TestAddress::new("enshrine");
-
-pub const OWNER_ADDRESS: TestAddress = TestAddress::new("owner");
-const WEGLD_BALANCE: u128 = 100_000_000_000_000_000; // 0.1 WEGLD
 
 #[derive(Clone)]
 pub struct BridgeOperation<M: ManagedTypeApi> {
@@ -32,13 +29,13 @@ impl HeaderVerifierTestState {
         let owner_setup = AccountSetup {
             address: OWNER_ADDRESS,
             esdt_balances: None,
-            egld_balance: Some(WEGLD_BALANCE.into()),
+            egld_balance: Some(OWNER_BALANCE.into()),
         };
 
         let enshrine_setup = AccountSetup {
             address: ENSHRINE_ADDRESS,
             esdt_balances: None,
-            egld_balance: Some(WEGLD_BALANCE.into()),
+            egld_balance: Some(OWNER_BALANCE.into()),
         };
 
         let account_setups = vec![owner_setup, enshrine_setup];
