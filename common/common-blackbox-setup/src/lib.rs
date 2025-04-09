@@ -266,68 +266,13 @@ impl BaseSetup {
         )
     }
 
-    pub fn check_expected_logs(
-        &mut self,
-        logs: Vec<Log>,
-        expected_log: Option<&str>,
-    ) -> Option<Log> {
-        let cloned_logs = logs.clone();
+    pub fn assert_expected_log(&mut self, logs: Vec<Log>, expected_log: &str) {
+        let expected_bytes = ManagedBuffer::<StaticApi>::from(expected_log).to_vec();
 
-        cloned_logs
+        let found_log = logs
             .iter()
-            .find(|log| {
-                if let Some(found_log) = expected_log {
-                    {
-                        log.topics.iter().any(|topic| {
-                            *topic == ManagedBuffer::<StaticApi>::from(found_log).to_vec()
-                        })
-                    }
-                } else {
-                    panic!("There was no expected log provided");
-                }
-            })
-            .cloned()
-    }
+            .find(|log| log.topics.iter().any(|topic| *topic == expected_bytes));
 
-    pub fn handle_endpoint_response_and_logs(
-        &mut self,
-        response: Result<(), TxResponseStatus>,
-        logs: Vec<Log>,
-        expected_error_message: Option<&str>,
-        expected_log: Option<&str>,
-    ) -> Option<Log> {
-        match response {
-            Ok(_) => {
-                assert!(
-                    expected_error_message.is_none(),
-                    "Transaction was successful, but expected error"
-                );
-
-                let cloned_logs = logs.clone();
-
-                cloned_logs
-                    .iter()
-                    .find(|log| {
-                        if let Some(found_log) = expected_log {
-                            {
-                                log.topics.iter().any(|topic| {
-                                    *topic == ManagedBuffer::<StaticApi>::from(found_log).to_vec()
-                                })
-                            }
-                        } else {
-                            panic!("There was no expected log provided");
-                        }
-                    })
-                    .cloned()
-            }
-            Err(error) => {
-                assert!(
-                    expected_log.is_none(),
-                    "Transaction was successful, but no expected log was provided"
-                );
-                assert_eq!(expected_error_message, Some(error.message.as_str()));
-                None
-            }
-        }
+        assert!(found_log.is_some(), "Expected log not found");
     }
 }
