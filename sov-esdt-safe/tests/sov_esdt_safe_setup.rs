@@ -7,8 +7,8 @@ use multiversx_sc::{
 };
 
 use multiversx_sc_scenario::{
-    api::StaticApi, imports::MxscPath, scenario_model::Log, ReturnsHandledOrError, ReturnsLogs,
-    ScenarioTxRun, ScenarioTxWhitebox,
+    api::StaticApi, imports::MxscPath, ReturnsHandledOrError, ReturnsLogs, ScenarioTxRun,
+    ScenarioTxWhitebox,
 };
 
 use common_blackbox_setup::{
@@ -201,8 +201,11 @@ impl SovEsdtSafeTestState {
         to: ManagedAddress<StaticApi>,
         opt_transfer_data: OptionalValueTransferDataTuple<StaticApi>,
         payment: PaymentsVec<StaticApi>,
-    ) -> Vec<Log> {
-        self.common_setup
+        expected_error_message: Option<&str>,
+        expected_custom_log: Option<&str>,
+    ) {
+        let (logs, response) = self
+            .common_setup
             .world
             .tx()
             .from(OWNER_ADDRESS)
@@ -211,6 +214,14 @@ impl SovEsdtSafeTestState {
             .deposit(to, opt_transfer_data)
             .payment(payment)
             .returns(ReturnsLogs)
-            .run()
+            .returns(ReturnsHandledOrError::new())
+            .run();
+
+        self.common_setup
+            .assert_expected_error_message(response, expected_error_message);
+
+        if let Some(custom_log) = expected_custom_log {
+            self.common_setup.assert_expected_log(logs, custom_log)
+        };
     }
 }
