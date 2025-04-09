@@ -136,7 +136,7 @@ impl HeaderVerifierTestState {
         hash_of_hashes: &ManagedBuffer<StaticApi>,
         operation_hash: &ManagedBuffer<StaticApi>,
         expected_error_message: Option<&str>,
-        expected_log: Option<&str>,
+        expected_custom_log: Option<&str>,
     ) {
         let (logs, response) = self
             .common_setup
@@ -160,8 +160,8 @@ impl HeaderVerifierTestState {
         self.common_setup
             .assert_expected_error_message(response, expected_error_message);
 
-        if let Some(log) = expected_log {
-            self.common_setup.assert_expected_log(logs, log)
+        if let Some(custom_log) = expected_custom_log {
+            self.common_setup.assert_expected_log(logs, custom_log)
         };
     }
 
