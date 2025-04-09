@@ -256,7 +256,7 @@ impl MvxEsdtSafeInteract {
 
     pub async fn deploy_chain_config(&mut self) {
         let config = SovereignConfig::default_config();
-        let response = self
+        let new_address = self
             .interactor
             .tx()
             .from(&self.wallet_address)
@@ -275,7 +275,12 @@ impl MvxEsdtSafeInteract {
             .run()
             .await;
 
-        println!("Result: {response:?}");
+        let new_address_bech32 = bech32::encode(&new_address);
+        self.state
+            .set_chain_config_sc_address(Bech32Address::from_bech32_string(
+                new_address_bech32.clone(),
+            ));
+        println!("new chain config sc address: {new_address_bech32}");
     }
 
     pub async fn register_operation(

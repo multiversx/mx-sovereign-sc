@@ -248,7 +248,13 @@ async fn deposit_no_transfer_data() {
         )
         .await;
 
-    let state_vec = chain_interactor.reset_state_common_vec();
+    let mut state_vec = chain_interactor.reset_state_common_vec();
+    state_vec.push(SetStateAccount::from_address(
+        chain_interactor
+            .state
+            .current_fee_market_address()
+            .to_bech32_string(),
+    ));
     let response = chain_interactor
         .interactor
         .set_state_overwrite(state_vec)
@@ -1026,7 +1032,7 @@ async fn execute_operation_no_esdt_safe_registered() {
 #[serial]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn execute_operation_success() {
-    let mut chain_interactor = MvxEsdtSafeInteract::new(Config::new()).await;
+    let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
     let config = OptionalValue::Some(EsdtSafeConfig::default_config());
     let token_data = EsdtTokenData {
         amount: BigUint::from(10_000_000_000_000_000_000u128), // 10 Tokens
@@ -1034,6 +1040,12 @@ async fn execute_operation_success() {
     };
 
     let payment = OperationEsdtPayment::new(TokenIdentifier::from(FIRST_TOKEN), 0, token_data);
+    let mut payment_vec = PaymentsVec::new();
+    payment_vec.push(EsdtTokenPayment {
+        token_identifier: TokenIdentifier::from_esdt_bytes(FIRST_TOKEN),
+        token_nonce: 0,
+        amount: BigUint::from(10_000_000_000_000_000_000u128),
+    });
 
     let gas_limit = 90_000_000u64;
     let function = ManagedBuffer::<StaticApi>::from("hello");
@@ -1076,6 +1088,155 @@ async fn execute_operation_success() {
         )
         .await;
 
+    chain_interactor
+        .deploy_fee_market(
+            chain_interactor
+                .state
+                .current_mvx_esdt_safe_contract_address()
+                .clone(),
+            None,
+        )
+        .await;
+
+    chain_interactor
+        .set_fee_market_address(
+            chain_interactor
+                .state
+                .current_fee_market_address()
+                .to_address(),
+        )
+        .await;
+    chain_interactor.unpause_endpoint().await;
+
+    chain_interactor
+        .deposit(
+            chain_interactor
+                .state
+                .current_mvx_esdt_safe_contract_address()
+                .to_address(),
+            OptionalValue::None,
+            payment_vec,
+            None,
+        )
+        .await;
+
+    chain_interactor
+        .set_esdt_safe_address_in_header_verifier()
+        .await;
+
+    let operations_hashes = MultiValueEncoded::from(ManagedVec::from(vec![operation_hash.clone()]));
+
+    chain_interactor.deploy_chain_config().await;
+
+    chain_interactor
+        .register_operation(ManagedBuffer::new(), &hash_of_hashes, operations_hashes)
+        .await;
+
+    chain_interactor
+        .execute_operations(hash_of_hashes, operation.clone(), None)
+        .await;
+
+    let mut state_vec = chain_interactor.reset_state_common_vec();
+
+    state_vec.push(SetStateAccount::from_address(
+        chain_interactor
+            .state
+            .current_fee_market_address()
+            .to_bech32_string(),
+    ));
+
+    state_vec.push(SetStateAccount::from_address(
+        chain_interactor
+            .state
+            .current_testing_sc_address()
+            .to_bech32_string(),
+    ));
+
+    state_vec.push(SetStateAccount::from_address(
+        chain_interactor
+            .state
+            .current_chain_config_sc_address()
+            .to_bech32_string(),
+    ));
+
+    let response = chain_interactor
+        .interactor
+        .set_state_overwrite(state_vec)
+        .await;
+    chain_interactor
+        .interactor
+        .generate_blocks(2u64)
+        .await
+        .unwrap();
+    assert!(response.is_ok());
+}
+
+#[tokio::test]
+#[serial]
+#[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
+async fn execute_operation_only_transfer_data() {
+    let mut chain_interactor = MvxEsdtSafeInteract::new(Config::new()).await;
+    let config = OptionalValue::Some(EsdtSafeConfig::default_config());
+
+    let gas_limit = 90_000_000u64;
+    let function = ManagedBuffer::<StaticApi>::from("hello");
+    let args =
+        ManagedVec::<StaticApi, ManagedBuffer<StaticApi>>::from(vec![ManagedBuffer::from("1")]);
+
+    let transfer_data = TransferData::new(gas_limit, function, args);
+
+    let operation_data = OperationData::new(
+        1,
+        ManagedAddress::from_address(&chain_interactor.wallet_address),
+        Some(transfer_data),
+    );
+
+    chain_interactor.deploy_header_verifier().await;
+
+    chain_interactor.deploy_testing_sc().await;
+
+    let operation = Operation::new(
+        ManagedAddress::from_address(
+            &chain_interactor
+                .state
+                .current_testing_sc_address()
+                .to_address(),
+        ),
+        ManagedVec::new(),
+        operation_data,
+    );
+
+    let operation_hash = chain_interactor.get_operation_hash(&operation);
+    let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&operation_hash.to_vec()));
+
+    chain_interactor
+        .deploy_mvx_esdt_safe(
+            chain_interactor
+                .state
+                .current_header_verifier_address()
+                .clone(),
+            config,
+        )
+        .await;
+
+    chain_interactor
+        .deploy_fee_market(
+            chain_interactor
+                .state
+                .current_mvx_esdt_safe_contract_address()
+                .clone(),
+            None,
+        )
+        .await;
+
+    chain_interactor
+        .set_fee_market_address(
+            chain_interactor
+                .state
+                .current_fee_market_address()
+                .to_address(),
+        )
+        .await;
     chain_interactor.unpause_endpoint().await;
 
     chain_interactor
@@ -1095,6 +1256,13 @@ async fn execute_operation_success() {
         .await;
 
     let mut state_vec = chain_interactor.reset_state_common_vec();
+
+    state_vec.push(SetStateAccount::from_address(
+        chain_interactor
+            .state
+            .current_fee_market_address()
+            .to_bech32_string(),
+    ));
 
     state_vec.push(SetStateAccount::from_address(
         chain_interactor
