@@ -6,10 +6,10 @@ use multiversx_sc_scenario::{
     imports::{
         BigUint, ContractBase, EgldOrEsdtTokenIdentifier, ManagedAddress, ManagedBuffer,
         MultiValue2, MultiValue3, MultiValueEncoded, MxscPath, TestAddress, TestSCAddress,
-        TestTokenIdentifier, TokenIdentifier, Vec,
+        TestTokenIdentifier, Vec,
     },
     multiversx_chain_vm::crypto_functions::sha256,
-    scenario_model::TxResponseStatus,
+    scenario_model::{Log, TxResponseStatus},
     DebugApi, ScenarioTxRun, ScenarioTxWhitebox, ScenarioWorld,
 };
 use mvx_esdt_safe::bridging_mechanism::BridgingMechanism;
@@ -29,7 +29,7 @@ pub const FEE_MARKET_ADDRESS: TestSCAddress = TestSCAddress::new("fee-market");
 const FEE_MARKET_CODE_PATH: MxscPath = MxscPath::new("../fee-market/output/fee-market.mxsc.json");
 
 pub const HEADER_VERIFIER_ADDRESS: TestSCAddress = TestSCAddress::new("header-verifier");
-const HEADER_VERIFIER_CODE_PATH: MxscPath =
+pub const HEADER_VERIFIER_CODE_PATH: MxscPath =
     MxscPath::new("../header-verifier/output/header-verifier.mxsc.json");
 
 pub const CHAIN_CONFIG_ADDRESS: TestSCAddress = TestSCAddress::new("chain-config");
@@ -38,6 +38,7 @@ const CHAIN_CONFIG_CODE_PATH: MxscPath =
 
 pub const TESTING_SC_ADDRESS: TestSCAddress = TestSCAddress::new("testing-sc");
 const TESTING_SC_CODE_PATH: MxscPath = MxscPath::new("../testing-sc/output/testing-sc.mxsc.json");
+pub const ENSHRINE_ADDRESS: TestAddress = TestAddress::new("enshrine");
 
 pub const OWNER_ADDRESS: TestAddress = TestAddress::new("owner");
 pub const USER: TestAddress = TestAddress::new("user");
@@ -55,6 +56,12 @@ pub struct BaseSetup {
     pub world: ScenarioWorld,
 }
 
+pub struct AccountSetup<'a> {
+    pub address: TestAddress<'a>,
+    pub esdt_balances: Option<Vec<(TestTokenIdentifier<'a>, BigUint<StaticApi>)>>,
+    pub egld_balance: Option<BigUint<StaticApi>>,
+}
+
 fn world() -> ScenarioWorld {
     let mut blockchain = ScenarioWorld::new();
 
@@ -68,34 +75,23 @@ fn world() -> ScenarioWorld {
 
 impl BaseSetup {
     #[allow(clippy::new_without_default)]
-    pub fn new() -> Self {
+    pub fn new(account_setups: Vec<AccountSetup>) -> Self {
         let mut world = world();
 
-        world
-            .account(OWNER_ADDRESS)
-            .nonce(1)
-            .esdt_balance(
-                TokenIdentifier::from(FEE_TOKEN),
-                BigUint::from(ONE_HUNDRED_MILLION),
-            )
-            .esdt_balance(
-                TokenIdentifier::from(TEST_TOKEN_ONE),
-                BigUint::from(ONE_HUNDRED_MILLION),
-            )
-            .esdt_balance(
-                TokenIdentifier::from(TEST_TOKEN_TWO),
-                BigUint::from(ONE_HUNDRED_MILLION),
-            )
-            .balance(BigUint::from(OWNER_BALANCE));
+        for acc in account_setups {
+            let mut acc_builder = world.account(acc.address).nonce(1);
 
-        world
-            .account(USER)
-            .nonce(1)
-            .esdt_balance(
-                TokenIdentifier::from(TEST_TOKEN_ONE),
-                BigUint::from(ONE_HUNDRED_MILLION),
-            )
-            .balance(BigUint::from(OWNER_BALANCE));
+            if let Some(esdt_balances) = acc.esdt_balances {
+                for (token_id, amount) in esdt_balances {
+                    acc_builder = acc_builder.esdt_balance(token_id, amount);
+                }
+            }
+
+            if let Some(balance) = acc.egld_balance {
+                acc_builder.balance(balance);
+            }
+        }
+
         Self { world }
     }
 
@@ -269,5 +265,15 @@ impl BaseSetup {
                 );
             },
         )
+    }
+
+    pub fn assert_expected_log(&mut self, logs: Vec<Log>, expected_log: &str) {
+        let expected_bytes = ManagedBuffer::<StaticApi>::from(expected_log).to_vec();
+
+        let found_log = logs
+            .iter()
+            .find(|log| log.topics.iter().any(|topic| *topic == expected_bytes));
+
+        assert!(found_log.is_some(), "Expected log not found");
     }
 }

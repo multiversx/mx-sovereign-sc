@@ -67,15 +67,13 @@ fn deposit_no_fee_no_transfer_data() {
         esdt_token_payment_two.clone(),
     ]);
 
-    let logs = state.deposit_with_logs(
+    state.deposit_with_logs(
         USER.to_managed_address(),
         OptionalValue::None,
         payments_vec.clone(),
+        None,
+        Some("deposit"),
     );
-
-    for log in logs {
-        assert!(!log.topics.is_empty());
-    }
 
     state.common_setup.check_sc_esdt_balance(
         vec![
@@ -259,15 +257,13 @@ fn deposit_no_fee_with_transfer_data() {
 
     let transfer_data = MultiValue3::from((gas_limit, function, args));
 
-    let logs = state.deposit_with_logs(
+    state.deposit_with_logs(
         USER.to_managed_address(),
         OptionalValue::Some(transfer_data),
         payments_vec.clone(),
+        None,
+        Some("deposit"),
     );
-
-    for log in logs {
-        assert!(!log.topics.is_empty());
-    }
 
     let expected_amount_token_one =
         BigUint::from(ONE_HUNDRED_MILLION) - &esdt_token_payment_one.amount;

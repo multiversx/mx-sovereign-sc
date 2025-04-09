@@ -1,6 +1,6 @@
 use common_blackbox_setup::{
-    BaseSetup, ESDT_SAFE_ADDRESS, FEE_TOKEN, HEADER_VERIFIER_ADDRESS, ONE_HUNDRED_MILLION,
-    OWNER_ADDRESS, TEST_TOKEN_ONE, TEST_TOKEN_TWO,
+    AccountSetup, BaseSetup, ESDT_SAFE_ADDRESS, FEE_TOKEN, HEADER_VERIFIER_ADDRESS,
+    ONE_HUNDRED_MILLION, OWNER_ADDRESS, OWNER_BALANCE, TEST_TOKEN_ONE, TEST_TOKEN_TWO, USER,
 };
 use multiversx_sc::{
     codec::TopEncode,
@@ -13,7 +13,7 @@ use multiversx_sc::{
 use multiversx_sc_modules::transfer_role_proxy::PaymentsVec;
 use multiversx_sc_scenario::{
     api::StaticApi, imports::MxscPath, multiversx_chain_vm::crypto_functions::sha256,
-    scenario_model::Log, ReturnsHandledOrError, ReturnsLogs, ScenarioTxRun, ScenarioTxWhitebox,
+    ReturnsHandledOrError, ReturnsLogs, ScenarioTxRun, ScenarioTxWhitebox,
 };
 use mvx_esdt_safe::{bridging_mechanism::TRUSTED_TOKEN_IDS, MvxEsdtSafe};
 use proxies::{header_verifier_proxy::HeaderverifierProxy, mvx_esdt_safe_proxy::MvxEsdtSafeProxy};
@@ -38,16 +38,45 @@ pub struct MvxEsdtSafeTestState {
 impl MvxEsdtSafeTestState {
     #[allow(clippy::new_without_default)]
     pub fn new() -> Self {
-        let mut common_setup = BaseSetup::new();
+        let owner_account = AccountSetup {
+            address: OWNER_ADDRESS,
+            esdt_balances: Some(vec![
+                (
+                    TestTokenIdentifier::new(TEST_TOKEN_ONE),
+                    ONE_HUNDRED_MILLION.into(),
+                ),
+                (
+                    TestTokenIdentifier::new(TEST_TOKEN_TWO),
+                    ONE_HUNDRED_MILLION.into(),
+                ),
+                (
+                    TestTokenIdentifier::new(FEE_TOKEN),
+                    ONE_HUNDRED_MILLION.into(),
+                ),
+                (
+                    TestTokenIdentifier::new(TRUSTED_TOKEN_IDS[0]),
+                    ONE_HUNDRED_MILLION.into(),
+                ),
+            ]),
+            egld_balance: Some(OWNER_BALANCE.into()),
+        };
+
+        let user_account = AccountSetup {
+            address: USER,
+            esdt_balances: Some(vec![(
+                TestTokenIdentifier::new(TEST_TOKEN_ONE),
+                ONE_HUNDRED_MILLION.into(),
+            )]),
+            egld_balance: Some(OWNER_BALANCE.into()),
+        };
+
+        let account_setups = vec![owner_account, user_account];
+
+        let mut common_setup = BaseSetup::new(account_setups);
 
         common_setup
             .world
             .register_contract(CONTRACT_CODE_PATH, mvx_esdt_safe::ContractBuilder);
-        common_setup.world.set_esdt_balance(
-            OWNER_ADDRESS,
-            TRUSTED_TOKEN_IDS[0].as_bytes(),
-            BigUint::from(ONE_HUNDRED_MILLION),
-        );
 
         Self { common_setup }
     }
@@ -241,37 +270,12 @@ impl MvxEsdtSafeTestState {
         &mut self,
         to: ManagedAddress<StaticApi>,
         opt_transfer_data: OptionalValueTransferDataTuple<StaticApi>,
-        opt_payment: Option<PaymentsVec<StaticApi>>,
-        expected_error_message: Option<&str>,
-    ) {
-        let tx = self
-            .common_setup
-            .world
-            .tx()
-            .from(OWNER_ADDRESS)
-            .to(ESDT_SAFE_ADDRESS)
-            .typed(MvxEsdtSafeProxy)
-            .deposit(to, opt_transfer_data);
-
-        let response = if let Some(payment) = opt_payment {
-            tx.payment(payment)
-                .returns(ReturnsHandledOrError::new())
-                .run()
-        } else {
-            tx.returns(ReturnsHandledOrError::new()).run()
-        };
-
-        self.common_setup
-            .assert_expected_error_message(response, expected_error_message);
-    }
-
-    pub fn deposit_with_logs(
-        &mut self,
-        to: ManagedAddress<StaticApi>,
-        opt_transfer_data: OptionalValueTransferDataTuple<StaticApi>,
         payment: PaymentsVec<StaticApi>,
-    ) -> Log {
-        self.common_setup
+        expected_error_message: Option<&str>,
+        expected_custom_log: Option<&str>,
+    ) {
+        let (logs, response) = self
+            .common_setup
             .world
             .tx()
             .from(OWNER_ADDRESS)
@@ -280,21 +284,15 @@ impl MvxEsdtSafeTestState {
             .deposit(to, opt_transfer_data.clone())
             .payment(payment.clone())
             .returns(ReturnsLogs)
-            .run()
-            .iter()
-            .find(|log| {
-                if (payment.is_empty() || payment.len() == 1) && opt_transfer_data.is_some() {
-                    return log.topics.iter().any(|topic| {
-                        **topic == ManagedBuffer::<StaticApi>::from("scCall").to_vec()
-                    });
-                }
+            .returns(ReturnsHandledOrError::new())
+            .run();
 
-                log.topics
-                    .iter()
-                    .any(|topic| **topic == ManagedBuffer::<StaticApi>::from("deposit").to_vec())
-            })
-            .unwrap()
-            .clone()
+        self.common_setup
+            .assert_expected_error_message(response, expected_error_message);
+
+        if let Some(custom_log) = expected_custom_log {
+            self.common_setup.assert_expected_log(logs, custom_log)
+        };
     }
 
     pub fn register_token(
@@ -351,29 +349,14 @@ impl MvxEsdtSafeTestState {
             .assert_expected_error_message(response, expected_error_message);
     }
 
-    pub fn execute_operation_with_logs(
-        &mut self,
-        hash_of_hashes: ManagedBuffer<StaticApi>,
-        operation: Operation<StaticApi>,
-    ) -> Vec<Log> {
-        self.common_setup
-            .world
-            .tx()
-            .from(OWNER_ADDRESS)
-            .to(ESDT_SAFE_ADDRESS)
-            .typed(MvxEsdtSafeProxy)
-            .execute_operations(hash_of_hashes, operation)
-            .returns(ReturnsLogs)
-            .run()
-    }
-
     pub fn execute_operation(
         &mut self,
         hash_of_hashes: &ManagedBuffer<StaticApi>,
-        operation: Operation<StaticApi>,
+        operation: &Operation<StaticApi>,
         expected_error_message: Option<&str>,
+        expected_custom_log: Option<&str>,
     ) {
-        let response = self
+        let (logs, response) = self
             .common_setup
             .world
             .tx()
@@ -381,11 +364,16 @@ impl MvxEsdtSafeTestState {
             .to(ESDT_SAFE_ADDRESS)
             .typed(MvxEsdtSafeProxy)
             .execute_operations(hash_of_hashes, operation)
+            .returns(ReturnsLogs)
             .returns(ReturnsHandledOrError::new())
             .run();
 
         self.common_setup
             .assert_expected_error_message(response, expected_error_message);
+
+        if let Some(custom_log) = expected_custom_log {
+            self.common_setup.assert_expected_log(logs, custom_log)
+        };
     }
 
     pub fn set_esdt_safe_address_in_header_verifier(&mut self, esdt_safe_address: TestSCAddress) {

@@ -1,24 +1,16 @@
-use multiversx_sc::types::ManagedBuffer;
+use common_blackbox_setup::{
+    AccountSetup, BaseSetup, ENSHRINE_ADDRESS, HEADER_VERIFIER_ADDRESS, OWNER_ADDRESS,
+    OWNER_BALANCE,
+};
 use multiversx_sc::{
     api::ManagedTypeApi,
-    types::{BigUint, MultiValueEncoded, TestAddress, TestSCAddress},
+    types::{ManagedBuffer, MultiValueEncoded, TestAddress},
 };
-use multiversx_sc_scenario::scenario_model::Log;
 use multiversx_sc_scenario::{
-    api::StaticApi, imports::MxscPath, multiversx_chain_vm::crypto_functions::sha256,
-    ScenarioTxRun, ScenarioWorld,
+    api::StaticApi, multiversx_chain_vm::crypto_functions::sha256, ScenarioTxRun,
 };
 use multiversx_sc_scenario::{ReturnsHandledOrError, ReturnsLogs};
 use proxies::header_verifier_proxy::HeaderverifierProxy;
-
-const HEADER_VERIFIER_CODE_PATH: MxscPath = MxscPath::new("ouput/header-verifier.mxsc-json");
-pub const HEADER_VERIFIER_ADDRESS: TestSCAddress = TestSCAddress::new("header-verifier");
-
-// NOTE: This is a mock path
-pub const ENSHRINE_ADDRESS: TestAddress = TestAddress::new("enshrine");
-
-pub const OWNER_ADDRESS: TestAddress = TestAddress::new("owner");
-const WEGLD_BALANCE: u128 = 100_000_000_000_000_000; // 0.1 WEGLD
 
 #[derive(Clone)]
 pub struct BridgeOperation<M: ManagedTypeApi> {
@@ -27,50 +19,35 @@ pub struct BridgeOperation<M: ManagedTypeApi> {
     pub operations_hashes: MultiValueEncoded<M, ManagedBuffer<M>>,
 }
 
-fn world() -> ScenarioWorld {
-    let mut blockchain = ScenarioWorld::new();
-    blockchain.register_contract(HEADER_VERIFIER_CODE_PATH, header_verifier::ContractBuilder);
-
-    blockchain
-}
-
 pub struct HeaderVerifierTestState {
-    pub world: ScenarioWorld,
+    pub common_setup: BaseSetup,
 }
 
 impl HeaderVerifierTestState {
     #[allow(clippy::new_without_default)]
     pub fn new() -> Self {
-        let mut world = world();
+        let owner_setup = AccountSetup {
+            address: OWNER_ADDRESS,
+            esdt_balances: None,
+            egld_balance: Some(OWNER_BALANCE.into()),
+        };
 
-        world
-            .account(OWNER_ADDRESS)
-            .balance(BigUint::from(WEGLD_BALANCE))
-            .nonce(1);
+        let enshrine_setup = AccountSetup {
+            address: ENSHRINE_ADDRESS,
+            esdt_balances: None,
+            egld_balance: Some(OWNER_BALANCE.into()),
+        };
 
-        world
-            .account(ENSHRINE_ADDRESS)
-            .balance(BigUint::from(WEGLD_BALANCE))
-            .nonce(1);
+        let account_setups = vec![owner_setup, enshrine_setup];
 
-        Self { world }
-    }
+        let common_setup = BaseSetup::new(account_setups);
 
-    pub fn deploy(&mut self) -> &mut Self {
-        self.world
-            .tx()
-            .from(OWNER_ADDRESS)
-            .typed(HeaderverifierProxy)
-            .init()
-            .code(HEADER_VERIFIER_CODE_PATH)
-            .new_address(HEADER_VERIFIER_ADDRESS)
-            .run();
-
-        self
+        Self { common_setup }
     }
 
     pub fn propose_register_esdt_address(&mut self, esdt_address: TestAddress) {
-        self.world
+        self.common_setup
+            .world
             .tx()
             .from(OWNER_ADDRESS)
             .to(HEADER_VERIFIER_ADDRESS)
@@ -80,7 +57,8 @@ impl HeaderVerifierTestState {
     }
 
     pub fn propose_register_operations(&mut self, operation: BridgeOperation<StaticApi>) {
-        self.world
+        self.common_setup
+            .world
             .tx()
             .from(OWNER_ADDRESS)
             .to(HEADER_VERIFIER_ADDRESS)
@@ -103,6 +81,7 @@ impl HeaderVerifierTestState {
         expected_result: Option<&str>,
     ) {
         let response = self
+            .common_setup
             .world
             .tx()
             .from(caller)
@@ -129,6 +108,7 @@ impl HeaderVerifierTestState {
         expected_result: Option<&str>,
     ) {
         let response = self
+            .common_setup
             .world
             .tx()
             .from(caller)
@@ -152,9 +132,11 @@ impl HeaderVerifierTestState {
         signature: &ManagedBuffer<StaticApi>,
         hash_of_hashes: &ManagedBuffer<StaticApi>,
         operation_hash: &ManagedBuffer<StaticApi>,
-        expected_result: Option<&str>,
-    ) -> Option<Log> {
+        expected_error_message: Option<&str>,
+        expected_custom_log: Option<&str>,
+    ) {
         let (logs, response) = self
+            .common_setup
             .world
             .tx()
             .from(OWNER_ADDRESS)
@@ -172,32 +154,12 @@ impl HeaderVerifierTestState {
             .returns(ReturnsHandledOrError::new())
             .run();
 
-        match response {
-            Ok(_) => {
-                assert!(
-                    expected_result.is_none(),
-                    "Transaction was successful, but expected error"
-                );
+        self.common_setup
+            .assert_expected_error_message(response, expected_error_message);
 
-                let cloned_logs = logs.clone();
-
-                cloned_logs
-                    .iter()
-                    .find(|log| {
-                        {
-                            log.topics.iter().any(|topic| {
-                                *topic
-                                    == ManagedBuffer::<StaticApi>::from("executedBridgeOp").to_vec()
-                            })
-                        }
-                    })
-                    .cloned()
-            }
-            Err(error) => {
-                assert_eq!(expected_result, Some(error.message.as_str()));
-                None
-            }
-        }
+        if let Some(custom_log) = expected_custom_log {
+            self.common_setup.assert_expected_log(logs, custom_log)
+        };
     }
 
     pub fn generate_bridge_operation_struct(

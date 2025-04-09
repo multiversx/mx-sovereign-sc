@@ -318,11 +318,13 @@ fn deposit_nothing_to_transfer() {
     );
     state.common_setup.deploy_fee_market(None);
     state.set_fee_market_address(FEE_MARKET_ADDRESS);
+
     state.deposit(
         USER.to_managed_address(),
         OptionalValue::None,
+        PaymentsVec::new(),
+        Some(NOTHING_TO_TRANSFER),
         None,
-        Some("Nothing to transfer"),
     );
 
     state
@@ -352,8 +354,9 @@ fn deposit_too_many_tokens() {
     state.deposit(
         USER.to_managed_address(),
         OptionalValue::None,
-        Some(payments_vec),
+        payments_vec,
         Some(TOO_MANY_TOKENS),
+        None,
     );
 
     state
@@ -390,8 +393,9 @@ fn deposit_no_transfer_data() {
     state.deposit(
         USER.to_managed_address(),
         OptionalValue::None,
-        Some(payments_vec),
+        payments_vec,
         None,
+        Some("deposit"),
     );
 
     state
@@ -436,8 +440,9 @@ fn deposit_gas_limit_too_high() {
     state.deposit(
         USER.to_managed_address(),
         OptionalValue::Some(transfer_data),
-        Some(payments_vec),
+        payments_vec,
         Some(GAS_LIMIT_TOO_HIGH),
+        None,
     );
 
     state
@@ -488,8 +493,9 @@ fn deposit_endpoint_banned() {
     state.deposit(
         USER.to_managed_address(),
         OptionalValue::Some(transfer_data),
-        Some(payments_vec),
+        payments_vec,
         Some(BANNED_ENDPOINT_NAME),
+        None,
     );
 
     state
@@ -525,8 +531,9 @@ fn deposit_no_transfer_data_no_fee() {
     state.deposit(
         USER.to_managed_address(),
         OptionalValue::None,
-        None,
+        PaymentsVec::new(),
         Some(NOTHING_TO_TRANSFER),
+        None,
     );
 }
 
@@ -561,14 +568,13 @@ fn deposit_transfer_data_only_no_fee() {
 
     let transfer_data = MultiValue3::from((gas_limit, function, args));
 
-    let deposit_log = state.deposit_with_logs(
+    state.deposit(
         USER.to_managed_address(),
         OptionalValue::Some(transfer_data),
         PaymentsVec::new(),
+        None,
+        Some("scCall"),
     );
-
-    assert!(!deposit_log.data.is_empty());
-    assert!(!deposit_log.topics.is_empty());
 }
 
 /// This test check the flow for a deposit with transfer data that fails
@@ -609,8 +615,9 @@ fn deposit_transfer_data_only_with_fee_nothing_to_transfer() {
     state.deposit(
         USER.to_managed_address(),
         OptionalValue::Some(transfer_data),
-        None,
+        PaymentsVec::new(),
         Some(ERR_EMPTY_PAYMENTS),
+        None,
     );
 }
 
@@ -668,14 +675,13 @@ fn deposit_transfer_data_only_with_fee() {
 
     let transfer_data = MultiValue3::from((gas_limit, function, args));
 
-    let deposit_log = state.deposit_with_logs(
+    state.deposit(
         USER.to_managed_address(),
         OptionalValue::Some(transfer_data),
         payments_vec,
+        None,
+        Some("scCall"),
     );
-
-    assert!(!deposit_log.data.is_empty());
-    assert!(!deposit_log.topics.is_empty());
 }
 
 /// This test check the flow for a deposit when the fee is enabled
@@ -754,8 +760,9 @@ fn deposit_fee_enabled() {
     state.deposit(
         USER.to_managed_address(),
         OptionalValue::Some(transfer_data),
-        Some(payments_vec.clone()),
+        payments_vec.clone(),
         None,
+        Some("deposit"),
     );
 
     let expected_amount_token_one =
@@ -857,8 +864,9 @@ fn deposit_payment_doesnt_cover_fee() {
     state.deposit(
         USER.to_managed_address(),
         OptionalValue::Some(transfer_data),
-        Some(payments_vec),
+        payments_vec,
         Some(PAYMENT_DOES_NOT_COVER_FEE),
+        None,
     );
 
     state
@@ -943,13 +951,13 @@ fn deposit_refund() {
 
     let transfer_data = MultiValue3::from((gas_limit, function, args));
 
-    let deposit_log = state.deposit_with_logs(
+    state.deposit(
         USER.to_managed_address(),
         OptionalValue::Some(transfer_data),
         payments_vec.clone(),
+        None,
+        Some("deposit"),
     );
-
-    assert!(!deposit_log.data.is_empty());
 
     let expected_amount_token_one =
         BigUint::from(ONE_HUNDRED_MILLION) - &esdt_token_payment_one.amount;
@@ -1014,10 +1022,13 @@ fn deposit_success_burn_mechanism() {
         esdt_token_payment_two.clone(),
     ]);
 
-    let deposit_log =
-        state.deposit_with_logs(USER.to_managed_address(), OptionalValue::None, payments_vec);
-
-    assert!(!deposit_log.topics.is_empty());
+    state.deposit(
+        USER.to_managed_address(),
+        OptionalValue::None,
+        payments_vec,
+        None,
+        Some("deposit"),
+    );
 
     state
         .common_setup
@@ -1168,8 +1179,12 @@ fn execute_operation_no_esdt_safe_registered() {
     let hash_of_hashes = state.get_operation_hash(&operation);
 
     state.common_setup.deploy_header_verifier();
-
-    state.execute_operation(&hash_of_hashes, operation, Some(NO_ESDT_SAFE_ADDRESS));
+    state.execute_operation(
+        &hash_of_hashes,
+        &operation,
+        Some(NO_ESDT_SAFE_ADDRESS),
+        None,
+    );
 
     state
         .common_setup
@@ -1234,7 +1249,7 @@ fn execute_operation_success() {
         .common_setup
         .check_operation_hash_status(&operation_hash, OperationHashStatus::NotLocked);
 
-    state.execute_operation(&hash_of_hashes, operation.clone(), None);
+    state.execute_operation(&hash_of_hashes, &operation, None, Some("executedBridgeOp"));
 
     state
         .common_setup
@@ -1305,7 +1320,7 @@ fn execute_operation_with_native_token_success() {
         .common_setup
         .check_operation_hash_status(&operation_hash, OperationHashStatus::NotLocked);
 
-    state.execute_operation(&hash_of_hashes, operation.clone(), None);
+    state.execute_operation(&hash_of_hashes, &operation, None, Some("executedBridgeOp"));
 
     state
         .common_setup
@@ -1376,7 +1391,7 @@ fn execute_operation_burn_mechanism_without_deposit_cannot_subtract() {
     state.register_native_token(TRUSTED_TOKEN_IDS[0], token_display_name, egld_payment, None);
     state.set_token_burn_mechanism(TRUSTED_TOKEN_IDS[0], None);
 
-    state.execute_operation(&hash_of_hashes, operation.clone(), None);
+    state.execute_operation(&hash_of_hashes, &operation, None, Some("executedBridgeOp"));
 
     state
         .common_setup
@@ -1452,13 +1467,13 @@ fn execute_operation_success_burn_mechanism() {
 
     let operations_hashes = MultiValueEncoded::from(ManagedVec::from(vec![operation_hash.clone()]));
 
-    let deposit_log = state.deposit_with_logs(
+    state.deposit(
         USER.to_managed_address(),
         OptionalValue::None,
         PaymentsVec::from(vec![payment]),
+        None,
+        Some("deposit"),
     );
-
-    assert!(!deposit_log.topics.is_empty());
 
     state
         .common_setup
@@ -1472,7 +1487,7 @@ fn execute_operation_success_burn_mechanism() {
 
     state.set_token_burn_mechanism(TRUSTED_TOKEN_IDS[0], None);
 
-    state.execute_operation(&hash_of_hashes, operation.clone(), None);
+    state.execute_operation(&hash_of_hashes, &operation, None, Some("executedBridgeOp"));
 
     let expected_amount_trusted_token = BigUint::from(ONE_HUNDRED_MILLION) - &token_data.amount;
 
@@ -1561,14 +1576,13 @@ fn deposit_execute_switch_mechanism() {
         deposit_trusted_token_payment_token_data,
     );
 
-    let deposit_log = state.deposit_with_logs(
+    state.deposit(
         USER.to_managed_address(),
         OptionalValue::None,
         PaymentsVec::from(vec![deposit_trusted_token_payment.clone()]),
+        None,
+        Some("deposit"),
     );
-
-    assert!(!deposit_log.data.is_empty());
-    assert!(!deposit_log.topics.is_empty());
 
     state
         .common_setup
@@ -1621,7 +1635,13 @@ fn deposit_execute_switch_mechanism() {
         &hash_of_hashes_one,
         operations_hashes_one,
     );
-    state.execute_operation(&hash_of_hashes_one, operation_one, None);
+
+    state.execute_operation(
+        &hash_of_hashes_one,
+        &operation_one,
+        None,
+        Some("executedBridgeOp"),
+    );
 
     let mut expected_receiver_amount = execute_trusted_token_payment_amount;
     expected_deposited_amount -= execute_trusted_token_payment_amount;
@@ -1641,13 +1661,13 @@ fn deposit_execute_switch_mechanism() {
         mvx_esdt_safe::contract_obj,
     );
 
-    let second_deposit_log = state.deposit_with_logs(
+    state.deposit(
         USER.to_managed_address(),
         OptionalValue::None,
         PaymentsVec::from(vec![deposit_trusted_token_payment.clone()]),
+        None,
+        Some("deposit"),
     );
-    assert!(!second_deposit_log.data.is_empty());
-    assert!(!second_deposit_log.topics.is_empty());
 
     expected_deposited_amount += deposited_trusted_token_payment_amount;
 
@@ -1698,7 +1718,13 @@ fn deposit_execute_switch_mechanism() {
         &hash_of_hashes_two,
         operations_hashes_two,
     );
-    state.execute_operation(&hash_of_hashes_two, operation_two, None);
+
+    state.execute_operation(
+        &hash_of_hashes_two,
+        &operation_two,
+        None,
+        Some("executedBridgeOp"),
+    );
 
     state
         .common_setup
@@ -1727,13 +1753,13 @@ fn deposit_execute_switch_mechanism() {
         testing_sc::contract_obj,
     );
 
-    let third_deposit_log = state.deposit_with_logs(
+    state.deposit(
         USER.to_managed_address(),
         OptionalValue::None,
         PaymentsVec::from(vec![deposit_trusted_token_payment]),
+        None,
+        Some("deposit"),
     );
-    assert!(!third_deposit_log.data.is_empty());
-    assert!(!third_deposit_log.topics.is_empty());
 
     expected_deposited_amount += deposited_trusted_token_payment_amount;
 
@@ -1821,12 +1847,7 @@ fn execute_operation_no_payments() {
         .common_setup
         .check_operation_hash_status(&operation_hash, OperationHashStatus::NotLocked);
 
-    let logs = state.execute_operation_with_logs(hash_of_hashes, operation.clone());
-
-    for log in logs {
-        assert!(!log.data.is_empty());
-        assert!(!log.topics.is_empty());
-    }
+    state.execute_operation(&hash_of_hashes, &operation, None, Some("executedBridgeOp"));
 
     state
         .common_setup
@@ -1893,12 +1914,7 @@ fn execute_operation_no_payments_failed_event() {
         .common_setup
         .check_operation_hash_status(&operation_hash, OperationHashStatus::NotLocked);
 
-    let logs = state.execute_operation_with_logs(hash_of_hashes, operation.clone());
-
-    for log in logs {
-        assert!(!log.data.is_empty());
-        assert!(!log.topics.is_empty());
-    }
+    state.execute_operation(&hash_of_hashes, &operation, None, Some("executedBridgeOp"));
 
     state
         .common_setup
