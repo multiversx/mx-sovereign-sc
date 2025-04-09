@@ -6,7 +6,7 @@ use rust_interact::config::Config;
 use rust_interact::mvx_esdt_safe::mvx_esdt_safe_interactor_main::MvxEsdtSafeInteract;
 use rust_interact::{
     RegisterTokenArgs, FEE_TOKEN, FIRST_TOKEN, ISSUE_COST, MVX_TO_SOV_TOKEN_STORAGE_KEY,
-    SECOND_TOKEN, SOV_TOKEN, SOV_TO_MVX_TOKEN_STORAGE_KEY,
+    SECOND_TOKEN, SOV_TOKEN, SOV_TO_MVX_TOKEN_STORAGE_KEY, TOKEN_TICKER,
 };
 use serial_test::serial;
 use structs::aliases::PaymentsVec;
@@ -154,13 +154,11 @@ async fn deposit_too_many_tokens() {
     assert!(response.is_ok());
 }
 
-//TODO: Fix the amount in the balance
-
 #[tokio::test]
 #[serial]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn deposit_no_transfer_data() {
-    let mut chain_interactor = MvxEsdtSafeInteract::new(Config::new()).await;
+    let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
     chain_interactor.deploy_header_verifier().await;
 
     chain_interactor
@@ -732,7 +730,7 @@ async fn register_token_invalid_type() {
     let token_type = EsdtTokenType::Invalid;
     let token_display_name = "SOVEREIGN";
     let num_decimals = 18;
-    let token_ticker = FIRST_TOKEN;
+    let token_ticker = TOKEN_TICKER;
     let egld_payment = BigUint::from(ISSUE_COST);
 
     chain_interactor
@@ -783,7 +781,7 @@ async fn register_token_fungible_token() {
     let token_type = EsdtTokenType::Fungible;
     let token_display_name = "GREEN";
     let num_decimals = 18;
-    let token_ticker = "GRN";
+    let token_ticker = TOKEN_TICKER;
     let egld_payment = BigUint::from(ISSUE_COST);
 
     chain_interactor
@@ -846,7 +844,7 @@ async fn register_token_non_fungible() {
     let token_type = EsdtTokenType::NonFungible;
     let token_display_name = "SOVEREIGN";
     let num_decimals = 18;
-    let token_ticker = FIRST_TOKEN;
+    let token_ticker = TOKEN_TICKER;
     let egld_payment = BigUint::from(ISSUE_COST);
 
     chain_interactor
@@ -909,7 +907,7 @@ async fn register_token_dynamic_non_fungible() {
     let token_type = EsdtTokenType::DynamicNFT;
     let token_display_name = "SOVEREIGN";
     let num_decimals = 18;
-    let token_ticker = FIRST_TOKEN;
+    let token_ticker = TOKEN_TICKER;
     let egld_payment = BigUint::from(ISSUE_COST);
 
     chain_interactor
@@ -1028,10 +1026,10 @@ async fn execute_operation_no_esdt_safe_registered() {
 #[serial]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn execute_operation_success() {
-    let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
+    let mut chain_interactor = MvxEsdtSafeInteract::new(Config::new()).await;
     let config = OptionalValue::Some(EsdtSafeConfig::default_config());
     let token_data = EsdtTokenData {
-        amount: BigUint::from(100u64),
+        amount: BigUint::from(10_000_000_000_000_000_000u128), // 10 Tokens
         ..Default::default()
     };
 
@@ -1082,27 +1080,6 @@ async fn execute_operation_success() {
 
     chain_interactor
         .set_esdt_safe_address_in_header_verifier()
-        .await;
-
-    let sov_token_id = TokenIdentifier::from_esdt_bytes(FIRST_TOKEN);
-    let token_type = EsdtTokenType::Fungible;
-    let token_display_name = "GREEN";
-    let num_decimals = 18;
-    let token_ticker = "GREEN";
-    let egld_payment = BigUint::from(ISSUE_COST);
-
-    chain_interactor
-        .register_token(
-            RegisterTokenArgs {
-                sov_token_id,
-                token_type,
-                token_display_name,
-                token_ticker,
-                num_decimals,
-            },
-            egld_payment,
-            None,
-        )
         .await;
 
     let operations_hashes = MultiValueEncoded::from(ManagedVec::from(vec![operation_hash.clone()]));
