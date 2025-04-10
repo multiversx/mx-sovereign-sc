@@ -122,6 +122,12 @@ dependencies = [
 
 [[package]]
 name = "base64"
+version = "0.21.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9d297deb1925b89f2ccc13d7635fa0714f12c87adce1c75356b39ca9b7178567"
+
+[[package]]
+name = "base64"
 version = "0.22.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "72b3254f16251a8381aa12e40e3c4d2f0199f8c6508fbecb9d91f575e0fbb8c6"
@@ -1352,7 +1358,7 @@ version = "0.57.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2a96dfc78030fec0f05928d2fa0334d1eeaaac2df3b819182876e402461e8c7e"
 dependencies = [
- "base64",
+ "base64 0.22.1",
  "bech32",
  "colored",
  "hex",
@@ -1379,7 +1385,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b9ca4f5122f52acf754ce563e847554140be333d1edd5aac64500faaa91384e9"
 dependencies = [
  "anyhow",
- "base64",
+ "base64 0.22.1",
  "env_logger",
  "futures",
  "hex",
@@ -1400,7 +1406,7 @@ checksum = "4be4179fcdc1b1028c900e9a15f97035553da005aac4b92d23f0c6eff4904fd6"
 dependencies = [
  "aes",
  "anyhow",
- "base64",
+ "base64 0.22.1",
  "bech32",
  "bip39",
  "ctr",
@@ -1634,7 +1640,7 @@ version = "3.0.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "38af38e8470ac9dee3ce1bae1af9c1671fffc44ddfd8bd1d0a3445bf349a8ef3"
 dependencies = [
- "base64",
+ "base64 0.22.1",
  "serde",
 ]
 
@@ -1821,7 +1827,7 @@ version = "0.12.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d19c46a6fdd48bc4dab94b6103fccc55d34c67cc0ad04653aad4ea2a07cd7bbb"
 dependencies = [
- "base64",
+ "base64 0.22.1",
  "bytes",
  "futures-channel",
  "futures-core",
@@ -1860,7 +1866,11 @@ dependencies = [
 name = "rust-interact"
 version = "0.1.0"
 dependencies = [
+ "base64 0.21.7",
  "clap",
+ "common-blackbox-setup",
+ "error-messages",
+ "header-verifier",
  "multiversx-sc",
  "multiversx-sc-snippets",
  "mvx-esdt-safe",

@@ -1,22 +1,34 @@
-use multiversx_sc_snippets::imports::*;
+use common_blackbox_setup::{
+    RegisterTokenArgs, ISSUE_COST, OPERATION_HASH_STATUS_STORAGE_KEY, SOV_TO_MVX_TOKEN_STORAGE_KEY,
+};
+use error_messages::{
+    BANNED_ENDPOINT_NAME, GAS_LIMIT_TOO_HIGH, INVALID_TYPE, NOTHING_TO_TRANSFER,
+    NO_ESDT_SAFE_ADDRESS, PAYMENT_DOES_NOT_COVER_FEE, TOO_MANY_TOKENS,
+};
+use header_verifier::OperationHashStatus;
 use multiversx_sc_snippets::multiversx_sc_scenario::multiversx_chain_vm::crypto_functions::sha256;
-use multiversx_sc_snippets::sdk::gateway::SetStateAccount;
+use multiversx_sc_snippets::{hex, imports::*};
 use proxies::fee_market_proxy::{FeeStruct, FeeType};
 use rust_interact::config::Config;
 use rust_interact::mvx_esdt_safe::mvx_esdt_safe_interactor_main::MvxEsdtSafeInteract;
-use rust_interact::{
-    RegisterTokenArgs, FEE_TOKEN, FIRST_TOKEN, ISSUE_COST, MVX_TO_SOV_TOKEN_STORAGE_KEY,
-    SECOND_TOKEN, SOV_TOKEN, SOV_TO_MVX_TOKEN_STORAGE_KEY, TOKEN_TICKER,
-};
+use rust_interact::{FEE_TOKEN, FIRST_TOKEN, SECOND_TOKEN, SOV_TOKEN, TOKEN_TICKER};
 use serial_test::serial;
 use structs::aliases::PaymentsVec;
 use structs::configs::EsdtSafeConfig;
 use structs::operation::{Operation, OperationData, OperationEsdtPayment, TransferData};
 
+// Test that deposit fails when there is nothing to transfer and fee is disabled
+// Steps:
+// 1. Deploy header verifier smart contract
+// 2. Deploy mvx-esdt-safe smart contract
+// 3. Deploy fee-market smart contract
+// 4. Set fee-market address in mvx-esdt-safe smart contract
+// 5. Unpause mvx-esdt-safe smart contract
+// 6. Deposit tokens
 #[tokio::test]
 #[serial]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
-async fn deposit_nothing_to_transfer() {
+async fn deposit_nothing_to_transfer_no_fee() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
     chain_interactor.deploy_header_verifier().await;
     chain_interactor
@@ -56,33 +68,31 @@ async fn deposit_nothing_to_transfer() {
             chain_interactor.bob_address.clone(),
             OptionalValue::None,
             ManagedVec::new(),
-            Some("Nothing to transfer"),
+            Some(NOTHING_TO_TRANSFER),
+            None,
         )
         .await;
 
-    let mut state_vec = chain_interactor.reset_state_common_vec();
-    state_vec.push(SetStateAccount::from_address(
-        chain_interactor
-            .state
-            .current_fee_market_address()
-            .to_bech32_string(),
-    ));
-    let response = chain_interactor
-        .interactor
-        .set_state_overwrite(state_vec)
-        .await;
+    let address_states = vec![chain_interactor.state.current_fee_market_address().clone()];
+
     chain_interactor
-        .interactor
-        .generate_blocks(2u64)
-        .await
-        .unwrap();
-    assert!(response.is_ok());
+        .reset_state_chain_sim(Some(address_states))
+        .await;
 }
 
+// Test that deposit fails when the token limit is exceeded and fee is disabled
+// Steps:
+// 1. Deploy header verifier smart contract
+// 2. Deploy mvx-esdt-safe smart contract
+// 3. Deploy fee-market smart contract
+// 4. Set fee-market address in mvx-esdt-safe smart contract
+// 5. Unpause mvx-esdt-safe smart contract
+// 6. Create a payments vector consisting of 11 EsdtTokenPayments
+// 7. Deposit tokens
 #[tokio::test]
 #[serial]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
-async fn deposit_too_many_tokens() {
+async fn deposit_too_many_tokens_no_fee() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
     chain_interactor.deploy_header_verifier().await;
 
@@ -131,33 +141,31 @@ async fn deposit_too_many_tokens() {
             chain_interactor.bob_address.clone(),
             OptionalValue::None,
             payments_vec,
-            Some("Too many tokens"),
+            Some(TOO_MANY_TOKENS),
+            None,
         )
         .await;
 
-    let mut state_vec = chain_interactor.reset_state_common_vec();
-    state_vec.push(SetStateAccount::from_address(
-        chain_interactor
-            .state
-            .current_fee_market_address()
-            .to_bech32_string(),
-    ));
-    let response = chain_interactor
-        .interactor
-        .set_state_overwrite(state_vec)
-        .await;
+    let address_states = vec![chain_interactor.state.current_fee_market_address().clone()];
+
     chain_interactor
-        .interactor
-        .generate_blocks(2u64)
-        .await
-        .unwrap();
-    assert!(response.is_ok());
+        .reset_state_chain_sim(Some(address_states))
+        .await;
 }
 
+// Test that deposit works when there is no transfer data and fee is disabled
+// Steps:
+// 1. Deploy header verifier smart contract
+// 2. Deploy mvx-esdt-safe smart contract
+// 3. Deploy fee-market smart contract
+// 4. Set fee-market address in mvx-esdt-safe smart contract
+// 5. Unpause mvx-esdt-safe smart contract
+// 6. Create a payments vector
+// 7. Deposit and check logs
 #[tokio::test]
 #[serial]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
-async fn deposit_no_transfer_data() {
+async fn deposit_no_transfer_data_no_fee() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
     chain_interactor.deploy_header_verifier().await;
 
@@ -193,26 +201,6 @@ async fn deposit_no_transfer_data() {
 
     chain_interactor.unpause_endpoint().await;
 
-    chain_interactor
-        .deploy_fee_market(
-            chain_interactor
-                .state
-                .current_mvx_esdt_safe_contract_address()
-                .clone(),
-            None,
-        )
-        .await;
-
-    chain_interactor
-        .set_fee_market_address(
-            chain_interactor
-                .state
-                .current_fee_market_address()
-                .clone()
-                .to_address(),
-        )
-        .await;
-
     let esdt_token_payment_one = EsdtTokenPayment::<StaticApi>::new(
         TokenIdentifier::from(FIRST_TOKEN),
         0,
@@ -233,44 +221,32 @@ async fn deposit_no_transfer_data() {
             OptionalValue::None,
             payments_vec,
             None,
+            Some("deposit"),
         )
         .await;
 
-    chain_interactor
-        .check_account_storage(
-            chain_interactor
-                .state
-                .current_mvx_esdt_safe_contract_address()
-                .clone()
-                .to_address(),
-            MVX_TO_SOV_TOKEN_STORAGE_KEY,
-            None,
-        )
-        .await;
+    let address_states = vec![chain_interactor.state.current_fee_market_address().clone()];
 
-    let mut state_vec = chain_interactor.reset_state_common_vec();
-    state_vec.push(SetStateAccount::from_address(
-        chain_interactor
-            .state
-            .current_fee_market_address()
-            .to_bech32_string(),
-    ));
-    let response = chain_interactor
-        .interactor
-        .set_state_overwrite(state_vec)
-        .await;
     chain_interactor
-        .interactor
-        .generate_blocks(2u64)
-        .await
-        .unwrap();
-    assert!(response.is_ok());
+        .reset_state_chain_sim(Some(address_states))
+        .await;
 }
 
+// Test that deposit fails when the gas limit is too high and fee is disabled
+// Steps:
+// 1. Deploy header verifier smart contract
+// 2. Deploy mvx-esdt-safe smart contract
+// 3. Deploy fee-market smart contract
+// 4. Set fee-market address in mvx-esdt-safe smart contract
+// 5. Unpause mvx-esdt-safe smart contract
+// 6. Deploy testing smart contract
+// 7. Create a payments vector
+// 8. Create transfer data
+// 9. Deposit
 #[tokio::test]
 #[serial]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
-async fn deposit_gas_limit_too_high() {
+async fn deposit_gas_limit_too_high_no_fee() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
     let config = EsdtSafeConfig::new(ManagedVec::new(), ManagedVec::new(), 1, ManagedVec::new());
     chain_interactor.deploy_header_verifier().await;
@@ -284,8 +260,6 @@ async fn deposit_gas_limit_too_high() {
             OptionalValue::Some(config),
         )
         .await;
-
-    chain_interactor.unpause_endpoint().await;
 
     chain_interactor
         .deploy_fee_market(
@@ -306,6 +280,8 @@ async fn deposit_gas_limit_too_high() {
                 .to_address(),
         )
         .await;
+
+    chain_interactor.unpause_endpoint().await;
 
     chain_interactor.deploy_testing_sc().await;
 
@@ -336,39 +312,37 @@ async fn deposit_gas_limit_too_high() {
             chain_interactor.bob_address.clone(),
             OptionalValue::Some(transfer_data),
             payments_vec,
-            Some("Gas limit too high"),
+            Some(GAS_LIMIT_TOO_HIGH),
+            None,
         )
         .await;
 
-    let mut state_vec = chain_interactor.reset_state_common_vec();
-    state_vec.push(SetStateAccount::from_address(
-        chain_interactor
-            .state
-            .current_fee_market_address()
-            .to_bech32_string(),
-    ));
-    state_vec.push(SetStateAccount::from_address(
-        chain_interactor
-            .state
-            .current_testing_sc_address()
-            .to_bech32_string(),
-    ));
-    let response = chain_interactor
-        .interactor
-        .set_state_overwrite(state_vec)
-        .await;
+    let address_states = vec![
+        chain_interactor.state.current_fee_market_address().clone(),
+        chain_interactor.state.current_testing_sc_address().clone(),
+    ];
+
     chain_interactor
-        .interactor
-        .generate_blocks(2u64)
-        .await
-        .unwrap();
-    assert!(response.is_ok());
+        .reset_state_chain_sim(Some(address_states))
+        .await;
 }
 
+// Test that deposit fails when the endpoint is banned and fee is disabled
+// Steps:
+// 1. Create an EsdtSafeConfig with a banned endpoint
+// 2. Deploy header verifier smart contract
+// 3. Deploy mvx-esdt-safe smart contract
+// 4. Deploy fee-market smart contract
+// 5. Set fee-market address in mvx-esdt-safe smart contract
+// 6. Unpause mvx-esdt-safe smart contract
+// 7. Deploy testing smart contract
+// 8. Create a payments vector
+// 9. Create transfer data that contains the banned endpoint name
+// 10. Deposit
 #[tokio::test]
 #[serial]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
-async fn deposit_endpoint_banned() {
+async fn deposit_endpoint_banned_no_fee() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
     let config = EsdtSafeConfig::new(
         ManagedVec::new(),
@@ -388,8 +362,6 @@ async fn deposit_endpoint_banned() {
         )
         .await;
 
-    chain_interactor.unpause_endpoint().await;
-
     chain_interactor
         .deploy_fee_market(
             chain_interactor
@@ -409,6 +381,8 @@ async fn deposit_endpoint_banned() {
                 .to_address(),
         )
         .await;
+
+    chain_interactor.unpause_endpoint().await;
 
     chain_interactor.deploy_testing_sc().await;
 
@@ -439,36 +413,35 @@ async fn deposit_endpoint_banned() {
             chain_interactor.bob_address.clone(),
             OptionalValue::Some(transfer_data),
             payments_vec,
-            Some("Banned endpoint name"),
+            Some(BANNED_ENDPOINT_NAME),
+            None,
         )
         .await;
 
-    let mut state_vec = chain_interactor.reset_state_common_vec();
-    state_vec.push(SetStateAccount::from_address(
-        chain_interactor
-            .state
-            .current_fee_market_address()
-            .to_bech32_string(),
-    ));
-    state_vec.push(SetStateAccount::from_address(
-        chain_interactor
-            .state
-            .current_testing_sc_address()
-            .to_bech32_string(),
-    ));
-    let response = chain_interactor
-        .interactor
-        .set_state_overwrite(state_vec)
-        .await;
+    let address_states = vec![
+        chain_interactor.state.current_fee_market_address().clone(),
+        chain_interactor.state.current_testing_sc_address().clone(),
+    ];
+
     chain_interactor
-        .interactor
-        .generate_blocks(2u64)
-        .await
-        .unwrap();
-    assert!(response.is_ok());
+        .reset_state_chain_sim(Some(address_states))
+        .await;
 }
 
 // NOTE: Add checks for account storage after finding out how to encode values in state
+
+// Test that deposit works when there is transfer data and fee is enabled
+// Steps:
+// 1. Create the FeeStruct
+// 2. Deploy header verifier smart contract
+// 3. Deploy mvx-esdt-safe smart contract
+// 4. Deploy fee-market smart contract
+// 5. Set fee-market address in mvx-esdt-safe smart contract
+// 6. Unpause mvx-esdt-safe smart contract
+// 7. Deploy testing smart contract
+// 8. Create a payments vector containing the fee payment as well
+// 9. Create transfer data
+// 10. Deposit
 #[tokio::test]
 #[serial]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
@@ -505,8 +478,6 @@ async fn deposit_fee_enabled() {
         )
         .await;
 
-    chain_interactor.unpause_endpoint().await;
-
     chain_interactor
         .deploy_fee_market(
             chain_interactor
@@ -526,6 +497,8 @@ async fn deposit_fee_enabled() {
                 .to_address(),
         )
         .await;
+
+    chain_interactor.unpause_endpoint().await;
 
     chain_interactor.deploy_testing_sc().await;
 
@@ -566,38 +539,122 @@ async fn deposit_fee_enabled() {
             OptionalValue::Some(transfer_data),
             payments_vec,
             None,
+            Some("deposit"),
         )
         .await;
 
-    let mut state_vec = chain_interactor.reset_state_common_vec();
-    state_vec.push(SetStateAccount::from_address(
-        chain_interactor
-            .state
-            .current_fee_market_address()
-            .to_bech32_string(),
-    ));
-    state_vec.push(SetStateAccount::from_address(
-        chain_interactor
-            .state
-            .current_testing_sc_address()
-            .to_bech32_string(),
-    ));
-    let response = chain_interactor
-        .interactor
-        .set_state_overwrite(state_vec)
-        .await;
+    let address_states = vec![
+        chain_interactor.state.current_fee_market_address().clone(),
+        chain_interactor.state.current_testing_sc_address().clone(),
+    ];
+
     chain_interactor
-        .interactor
-        .generate_blocks(2u64)
-        .await
-        .unwrap();
-    assert!(response.is_ok());
+        .reset_state_chain_sim(Some(address_states))
+        .await;
 }
 
+// Test that deposit works when there is only transfer data and fee is disabled
+// Steps:
+// 1. Deploy header verifier smart contract
+// 2. Deploy mvx-esdt-safe smart contract
+// 3. Deploy fee-market smart contract
+// 4. Set fee-market address in mvx-esdt-safe smart contract
+// 5. Unpause mvx-esdt-safe smart contract
+// 6. Deploy testing smart contract
+// 7. Create transfer data
+// 8. Deposit and check logs
 #[tokio::test]
 #[serial]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
-async fn deposit_payment_doesnt_cover_fee() {
+async fn deposit_only_transfer_data_no_fee() {
+    let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
+    let config = EsdtSafeConfig::new(
+        ManagedVec::new(),
+        ManagedVec::new(),
+        50_000_000,
+        ManagedVec::new(),
+    );
+
+    chain_interactor.deploy_header_verifier().await;
+
+    chain_interactor
+        .deploy_mvx_esdt_safe(
+            chain_interactor
+                .state
+                .current_header_verifier_address()
+                .clone(),
+            OptionalValue::Some(config),
+        )
+        .await;
+
+    chain_interactor
+        .deploy_fee_market(
+            chain_interactor
+                .state
+                .current_mvx_esdt_safe_contract_address()
+                .clone(),
+            None,
+        )
+        .await;
+
+    chain_interactor
+        .set_fee_market_address(
+            chain_interactor
+                .state
+                .current_fee_market_address()
+                .clone()
+                .to_address(),
+        )
+        .await;
+
+    chain_interactor.unpause_endpoint().await;
+
+    chain_interactor.deploy_testing_sc().await;
+
+    let gas_limit = 1000u64;
+    let function = ManagedBuffer::<StaticApi>::from("hello");
+    let args = MultiValueEncoded::from(ManagedVec::<StaticApi, ManagedBuffer<StaticApi>>::from(
+        vec![ManagedBuffer::from("1")],
+    ));
+
+    let transfer_data = MultiValue3::from((gas_limit, function, args));
+
+    chain_interactor
+        .deposit(
+            chain_interactor.bob_address.clone(),
+            OptionalValue::Some(transfer_data),
+            ManagedVec::new(),
+            None,
+            Some("scCall"),
+        )
+        .await;
+
+    let address_states = vec![
+        chain_interactor.state.current_fee_market_address().clone(),
+        chain_interactor.state.current_testing_sc_address().clone(),
+    ];
+
+    chain_interactor
+        .reset_state_chain_sim(Some(address_states))
+        .await;
+}
+
+// Test that deposit fails when payment does not cover fee
+// Steps:
+// 1. Create the FeeStruct
+// 2. Deploy header verifier smart contract
+// 3. Deploy mvx-esdt-safe smart contract
+// 4. Deploy fee-market smart contract
+// 5. Set fee-market address in mvx-esdt-safe smart contract
+// 6. Unpause mvx-esdt-safe smart contract
+// 7. Deploy testing smart contract
+// 8. Create a payments vector without the fee payment
+// 9. Create transfer data
+// 10. Deposit
+#[tokio::test]
+#[serial]
+#[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
+async fn deposit_payment_does_not_cover_fee() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
     let config = EsdtSafeConfig::new(
         ManagedVec::new(),
@@ -650,9 +707,9 @@ async fn deposit_payment_doesnt_cover_fee() {
         )
         .await;
 
-    chain_interactor.deploy_testing_sc().await;
-
     chain_interactor.unpause_endpoint().await;
+
+    chain_interactor.deploy_testing_sc().await;
 
     let esdt_token_payment_one = EsdtTokenPayment::<StaticApi>::new(
         TokenIdentifier::from(FIRST_TOKEN),
@@ -684,41 +741,33 @@ async fn deposit_payment_doesnt_cover_fee() {
             chain_interactor.bob_address.clone(),
             OptionalValue::Some(transfer_data),
             payments_vec,
-            Some("Payment does not cover fee"),
+            Some(PAYMENT_DOES_NOT_COVER_FEE),
+            None,
         )
         .await;
 
-    let mut state_vec = chain_interactor.reset_state_common_vec();
-    state_vec.push(SetStateAccount::from_address(
-        chain_interactor
-            .state
-            .current_fee_market_address()
-            .to_bech32_string(),
-    ));
-    state_vec.push(SetStateAccount::from_address(
-        chain_interactor
-            .state
-            .current_testing_sc_address()
-            .to_bech32_string(),
-    ));
-    let response = chain_interactor
-        .interactor
-        .set_state_overwrite(state_vec)
-        .await;
+    let address_states = vec![
+        chain_interactor.state.current_fee_market_address().clone(),
+        chain_interactor.state.current_testing_sc_address().clone(),
+    ];
+
     chain_interactor
-        .interactor
-        .generate_blocks(2u64)
-        .await
-        .unwrap();
-    assert!(response.is_ok());
+        .reset_state_chain_sim(Some(address_states))
+        .await;
 }
 
 // TODO: add deposit_refund_fee test after finding a method to check for balance
 
+// Test that register token fails when the token type is invalid
+// Steps:
+// 1. Deploy header verifier smart contract
+// 2. Deploy mvx-esdt-safe smart contract
+// 3. Create the token properties
+// 4. Register the token
 #[tokio::test]
 #[serial]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
-async fn register_token_invalid_type() {
+async fn register_token_invalid_type_token() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
     chain_interactor.deploy_header_verifier().await;
 
@@ -749,23 +798,20 @@ async fn register_token_invalid_type() {
                 num_decimals,
             },
             egld_payment,
-            Some("Invalid type"),
+            Some(INVALID_TYPE),
         )
         .await;
 
-    let state_vec = chain_interactor.reset_state_common_vec();
-    let response = chain_interactor
-        .interactor
-        .set_state_overwrite(state_vec)
-        .await;
-    chain_interactor
-        .interactor
-        .generate_blocks(2u64)
-        .await
-        .unwrap();
-    assert!(response.is_ok());
+    chain_interactor.reset_state_chain_sim(None).await;
 }
 
+// Test that register token works when the token type is fungible
+// Steps:
+// 1. Deploy header verifier smart contract
+// 2. Deploy mvx-esdt-safe smart contract
+// 3. Create the token properties
+// 4. Register the token
+// 5. Check that the token ticker exists in sov-to-mvx-token storage
 #[tokio::test]
 #[serial]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
@@ -804,6 +850,8 @@ async fn register_token_fungible_token() {
         )
         .await;
 
+    let encoded_token_ticker = hex::encode(token_ticker);
+
     chain_interactor
         .check_account_storage(
             chain_interactor
@@ -812,27 +860,24 @@ async fn register_token_fungible_token() {
                 .clone()
                 .to_address(),
             SOV_TO_MVX_TOKEN_STORAGE_KEY,
-            Some(token_ticker),
+            Some(&encoded_token_ticker),
         )
         .await;
 
-    let state_vec = chain_interactor.reset_state_common_vec();
-    let response = chain_interactor
-        .interactor
-        .set_state_overwrite(state_vec)
-        .await;
-    chain_interactor
-        .interactor
-        .generate_blocks(2u64)
-        .await
-        .unwrap();
-    assert!(response.is_ok());
+    chain_interactor.reset_state_chain_sim(None).await;
 }
 
+// Test that register token works when the token type is non-fungible
+// Steps:
+// 1. Deploy header verifier smart contract
+// 2. Deploy mvx-esdt-safe smart contract
+// 3. Create the token properties
+// 4. Register the token
+// 5. Check that the token ticker exists in sov-to-mvx-token storage
 #[tokio::test]
 #[serial]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
-async fn register_token_non_fungible() {
+async fn register_token_non_fungible_token() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
     chain_interactor.deploy_header_verifier().await;
 
@@ -867,6 +912,8 @@ async fn register_token_non_fungible() {
         )
         .await;
 
+    let encoded_token_ticker = hex::encode(token_ticker);
+
     chain_interactor
         .check_account_storage(
             chain_interactor
@@ -875,27 +922,24 @@ async fn register_token_non_fungible() {
                 .clone()
                 .to_address(),
             SOV_TO_MVX_TOKEN_STORAGE_KEY,
-            Some(token_ticker),
+            Some(&encoded_token_ticker),
         )
         .await;
 
-    let state_vec = chain_interactor.reset_state_common_vec();
-    let response = chain_interactor
-        .interactor
-        .set_state_overwrite(state_vec)
-        .await;
-    chain_interactor
-        .interactor
-        .generate_blocks(2u64)
-        .await
-        .unwrap();
-    assert!(response.is_ok());
+    chain_interactor.reset_state_chain_sim(None).await;
 }
 
+// Test that register token works when the token type is dynamic non-fungible
+// Steps:
+// 1. Deploy header verifier smart contract
+// 2. Deploy mvx-esdt-safe smart contract
+// 3. Create the token properties
+// 4. Register the token
+// 5. Check that the token ticker exists in sov-to-mvx-token storage
 #[tokio::test]
 #[serial]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
-async fn register_token_dynamic_non_fungible() {
+async fn register_token_dynamic_non_fungible_token() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
     chain_interactor.deploy_header_verifier().await;
 
@@ -930,6 +974,8 @@ async fn register_token_dynamic_non_fungible() {
         )
         .await;
 
+    let encoded_token_ticker = hex::encode(token_ticker);
+
     chain_interactor
         .check_account_storage(
             chain_interactor
@@ -938,23 +984,22 @@ async fn register_token_dynamic_non_fungible() {
                 .clone()
                 .to_address(),
             SOV_TO_MVX_TOKEN_STORAGE_KEY,
-            Some(token_ticker),
+            Some(&encoded_token_ticker),
         )
         .await;
 
-    let state_vec = chain_interactor.reset_state_common_vec();
-    let response = chain_interactor
-        .interactor
-        .set_state_overwrite(state_vec)
-        .await;
-    chain_interactor
-        .interactor
-        .generate_blocks(2u64)
-        .await
-        .unwrap();
-    assert!(response.is_ok());
+    chain_interactor.reset_state_chain_sim(None).await;
 }
 
+// Test that execute operation fails when the esdt safe address is not registered
+// Steps:
+// 1. Deploy header verifier smart contract
+// 2. Deploy mvx-esdt-safe smart contract
+// 3. Unpause mvx-esdt-safe smart contract
+// 4. Create a payment for the operation
+// 5. Create operation and hash of hashes
+// 6. Execute operation
+// 7. Check that operation-hash-status storage is empty
 #[tokio::test]
 #[serial]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
@@ -1005,33 +1050,52 @@ async fn execute_operation_no_esdt_safe_registered() {
         .execute_operations(
             hash_of_hashes,
             operation.clone(),
-            Some("There is no registered ESDT address"),
+            Some(NO_ESDT_SAFE_ADDRESS),
+            None,
         )
         .await;
 
-    let mut state_vec = chain_interactor.reset_state_common_vec();
-    state_vec.push(SetStateAccount::from_address(
-        chain_interactor
-            .state
-            .current_testing_sc_address()
-            .to_bech32_string(),
-    ));
-    let response = chain_interactor
-        .interactor
-        .set_state_overwrite(state_vec)
-        .await;
     chain_interactor
-        .interactor
-        .generate_blocks(2u64)
-        .await
-        .unwrap();
-    assert!(response.is_ok());
+        .check_account_storage(
+            chain_interactor
+                .state
+                .current_header_verifier_address()
+                .to_address(),
+            OPERATION_HASH_STATUS_STORAGE_KEY,
+            None,
+        )
+        .await;
+
+    let address_states = vec![chain_interactor.state.current_testing_sc_address().clone()];
+
+    chain_interactor
+        .reset_state_chain_sim(Some(address_states))
+        .await;
 }
 
+// Test that execute operation works in the happy flow
+// Steps:
+// 1. Create payment vector
+// 2. Create transfer data
+// 3. Deploy header verifier smart contract
+// 4. Deploy testing smart contract
+// 5. Create operation
+// 6. Deploy mvx-esdt-safe smart contract
+// 7. Deploy fee-market smart contract
+// 8. Set fee-market address in mvx-esdt-safe smart contract
+// 9. Unpause mvx-esdt-safe smart contract
+// 10. Deposit and check logs
+// 11. Set mvx-esdt-safe address in header verifier smart contract
+// 12. Create operation hashes
+// 13. Deploy chain config smart contract
+// 14. Register operation
+// 15. Check that operation-hash-status storage has value OperationHashStatus::NotLocked
+// 16. Execute operation and check logs
+// 17. Check that operation-hash-status storage is empty
 #[tokio::test]
 #[serial]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
-async fn execute_operation_success() {
+async fn execute_operation_success_no_fee() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
     let config = OptionalValue::Some(EsdtSafeConfig::default_config());
     let token_data = EsdtTokenData {
@@ -1117,6 +1181,7 @@ async fn execute_operation_success() {
             OptionalValue::None,
             payment_vec,
             None,
+            Some("deposit"),
         )
         .await;
 
@@ -1132,50 +1197,76 @@ async fn execute_operation_success() {
         .register_operation(ManagedBuffer::new(), &hash_of_hashes, operations_hashes)
         .await;
 
+    let operation_status = OperationHashStatus::NotLocked as u8;
+    let expected_operation_hash_status = format!("{:02x}", operation_status);
+
     chain_interactor
-        .execute_operations(hash_of_hashes, operation.clone(), None)
+        .check_account_storage(
+            chain_interactor
+                .state
+                .current_header_verifier_address()
+                .to_address(),
+            OPERATION_HASH_STATUS_STORAGE_KEY,
+            Some(&expected_operation_hash_status),
+        )
         .await;
 
-    let mut state_vec = chain_interactor.reset_state_common_vec();
+    chain_interactor
+        .execute_operations(
+            hash_of_hashes,
+            operation.clone(),
+            None,
+            Some("executedBridgeOp"),
+        )
+        .await;
 
-    state_vec.push(SetStateAccount::from_address(
-        chain_interactor
-            .state
-            .current_fee_market_address()
-            .to_bech32_string(),
-    ));
+    chain_interactor
+        .check_account_storage(
+            chain_interactor
+                .state
+                .current_header_verifier_address()
+                .to_address(),
+            OPERATION_HASH_STATUS_STORAGE_KEY,
+            None,
+        )
+        .await;
 
-    state_vec.push(SetStateAccount::from_address(
-        chain_interactor
-            .state
-            .current_testing_sc_address()
-            .to_bech32_string(),
-    ));
-
-    state_vec.push(SetStateAccount::from_address(
+    let address_states = vec![
+        chain_interactor.state.current_fee_market_address().clone(),
+        chain_interactor.state.current_testing_sc_address().clone(),
         chain_interactor
             .state
             .current_chain_config_sc_address()
-            .to_bech32_string(),
-    ));
+            .clone(),
+    ];
 
-    let response = chain_interactor
-        .interactor
-        .set_state_overwrite(state_vec)
-        .await;
     chain_interactor
-        .interactor
-        .generate_blocks(2u64)
-        .await
-        .unwrap();
-    assert!(response.is_ok());
+        .reset_state_chain_sim(Some(address_states))
+        .await;
 }
 
+// Test that execute operation works when there is only transfer data and fee is disabled
+// Steps:
+// 1. Create transfer data
+// 2. Deploy header verifier smart contract
+// 3. Deploy testing smart contract
+// 4. Create operation
+// 5. Deploy mvx-esdt-safe smart contract
+// 6. Deploy fee-market smart contract
+// 7. Set fee-market address in mvx-esdt-safe smart contract
+// 8. Unpause mvx-esdt-safe smart contract
+// 9. Set mvx-esdt-safe address in header verifier smart contract
+// 10. Create operation hashes
+// 11. Deploy chain config smart contract
+// 12. Register operation
+// 13. Check that operation-hash-status storage has value OperationHashStatus::NotLocked
+// 14. Execute operation and check logs
+// 15. Check that operation-hash-status storage is empty
 #[tokio::test]
 #[serial]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
-async fn execute_operation_only_transfer_data() {
-    let mut chain_interactor = MvxEsdtSafeInteract::new(Config::new()).await;
+async fn execute_operation_only_transfer_data_no_fee() {
+    let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
     let config = OptionalValue::Some(EsdtSafeConfig::default_config());
 
     let gas_limit = 90_000_000u64;
@@ -1251,41 +1342,50 @@ async fn execute_operation_only_transfer_data() {
         .register_operation(ManagedBuffer::new(), &hash_of_hashes, operations_hashes)
         .await;
 
+    let operation_status = OperationHashStatus::NotLocked as u8;
+    let expected_operation_hash_status = format!("{:02x}", operation_status);
+
     chain_interactor
-        .execute_operations(hash_of_hashes, operation.clone(), None)
+        .check_account_storage(
+            chain_interactor
+                .state
+                .current_header_verifier_address()
+                .to_address(),
+            OPERATION_HASH_STATUS_STORAGE_KEY,
+            Some(&expected_operation_hash_status),
+        )
         .await;
 
-    let mut state_vec = chain_interactor.reset_state_common_vec();
+    chain_interactor
+        .execute_operations(
+            hash_of_hashes,
+            operation.clone(),
+            None,
+            Some("executedBridgeOp"),
+        )
+        .await;
 
-    state_vec.push(SetStateAccount::from_address(
-        chain_interactor
-            .state
-            .current_fee_market_address()
-            .to_bech32_string(),
-    ));
+    chain_interactor
+        .check_account_storage(
+            chain_interactor
+                .state
+                .current_header_verifier_address()
+                .to_address(),
+            OPERATION_HASH_STATUS_STORAGE_KEY,
+            None,
+        )
+        .await;
 
-    state_vec.push(SetStateAccount::from_address(
-        chain_interactor
-            .state
-            .current_testing_sc_address()
-            .to_bech32_string(),
-    ));
-
-    state_vec.push(SetStateAccount::from_address(
+    let address_states = vec![
+        chain_interactor.state.current_fee_market_address().clone(),
+        chain_interactor.state.current_testing_sc_address().clone(),
         chain_interactor
             .state
             .current_chain_config_sc_address()
-            .to_bech32_string(),
-    ));
+            .clone(),
+    ];
 
-    let response = chain_interactor
-        .interactor
-        .set_state_overwrite(state_vec)
-        .await;
     chain_interactor
-        .interactor
-        .generate_blocks(2u64)
-        .await
-        .unwrap();
-    assert!(response.is_ok());
+        .reset_state_chain_sim(Some(address_states))
+        .await;
 }

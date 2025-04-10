@@ -1,4 +1,7 @@
+use base64::engine::general_purpose::STANDARD as BASE64;
+use base64::Engine;
 use multiversx_sc_snippets::multiversx_sc_scenario::multiversx_chain_vm::crypto_functions::sha256;
+use multiversx_sc_snippets::multiversx_sc_scenario::scenario_model::{Log, TxResponseStatus};
 use multiversx_sc_snippets::sdk::gateway::SetStateAccount;
 use multiversx_sc_snippets::{hex, imports::*};
 use proxies::chain_config_proxy::ChainConfigContractProxy;
@@ -11,21 +14,17 @@ use structs::aliases::{OptionalValueTransferDataTuple, PaymentsVec};
 use structs::configs::{EsdtSafeConfig, SovereignConfig};
 use structs::operation::Operation;
 
+use crate::MVX_ESDT_SAFE_CONTRACT_PATH;
 use crate::{config::Config, State};
-use crate::{
-    RegisterTokenArgs, CHAIN_CONFIG_SC_CONTRACT_CODE, FEE_MARKET_CONTRACT_CODE,
-    HEADER_VERIFIER_CONTRACT_CODE, MVX_ESDT_SAFE_CONTRACT_CODE, TESTING_SC_CONTRACT_CODE,
+use common_blackbox_setup::{
+    RegisterTokenArgs, CHAIN_CONFIG_CODE_PATH, FEE_MARKET_CODE_PATH, HEADER_VERIFIER_CODE_PATH,
+    TESTING_SC_CODE_PATH,
 };
 
 pub struct MvxEsdtSafeInteract {
     pub interactor: Interactor,
     pub wallet_address: Address,
     pub bob_address: Address,
-    mvx_esdt_safe_contract_code: BytesValue,
-    header_verifier_contract_code: BytesValue,
-    testing_sc_contract_code: BytesValue,
-    fee_market_contract_code: BytesValue,
-    chain_config_contract_code: BytesValue,
     pub state: State,
 }
 
@@ -47,57 +46,44 @@ impl MvxEsdtSafeInteract {
         interactor.generate_blocks(2u64).await.unwrap();
         assert!(set_state_response.is_ok());
 
-        let mvx_esdt_safe_contract_code =
-            BytesValue::interpret_from(MVX_ESDT_SAFE_CONTRACT_CODE, &InterpreterContext::default());
-
-        let header_verifier_contract_code = BytesValue::interpret_from(
-            HEADER_VERIFIER_CONTRACT_CODE,
-            &InterpreterContext::default(),
-        );
-
-        let fee_market_contract_code =
-            BytesValue::interpret_from(FEE_MARKET_CONTRACT_CODE, &InterpreterContext::default());
-
-        let testing_sc_contract_code =
-            BytesValue::interpret_from(TESTING_SC_CONTRACT_CODE, &InterpreterContext::default());
-
-        let chain_config_contract_code = BytesValue::interpret_from(
-            CHAIN_CONFIG_SC_CONTRACT_CODE,
-            &InterpreterContext::default(),
-        );
-
         MvxEsdtSafeInteract {
             interactor,
             wallet_address,
             bob_address,
-            mvx_esdt_safe_contract_code,
-            header_verifier_contract_code,
-            testing_sc_contract_code,
-            fee_market_contract_code,
-            chain_config_contract_code,
             state: State::load_state(),
         }
     }
 
-    pub fn reset_state_common_vec(&mut self) -> Vec<SetStateAccount> {
-        vec![
-            SetStateAccount::from_address(
-                Bech32Address::from(self.wallet_address.clone()).to_bech32_string(),
+    pub fn assert_expected_log(&mut self, logs: Vec<Log>, expected_log: &str) {
+        let expected_bytes = ManagedBuffer::<StaticApi>::from(expected_log).to_vec();
+
+        let found_log = logs.iter().find(|log| {
+            log.topics.iter().any(|topic| {
+                if let Ok(decoded_topic) = BASE64.decode(topic) {
+                    decoded_topic == expected_bytes
+                } else {
+                    false
+                }
+            })
+        });
+
+        assert!(found_log.is_some(), "Expected log not found");
+    }
+
+    pub fn assert_expected_error_message(
+        &mut self,
+        response: Result<(), TxResponseStatus>,
+        expected_error_message: Option<&str>,
+    ) {
+        match response {
+            Ok(_) => assert!(
+                expected_error_message.is_none(),
+                "Transaction was successful, but expected error"
             ),
-            SetStateAccount::from_address(
-                Bech32Address::from(self.bob_address.clone()).to_bech32_string(),
-            ),
-            SetStateAccount::from_address(
-                self.state
-                    .current_mvx_esdt_safe_contract_address()
-                    .to_bech32_string(),
-            ),
-            SetStateAccount::from_address(
-                self.state
-                    .current_header_verifier_address()
-                    .to_bech32_string(),
-            ),
-        ]
+            Err(error) => {
+                assert_eq!(expected_error_message, Some(error.message.as_str()))
+            }
+        }
     }
 
     // Arguments should be in plain text, they will be converted to hex
@@ -120,25 +106,19 @@ impl MvxEsdtSafeInteract {
                     wanted_key
                 );
             }
-            (None, None) => {
-                println!(
-                    "Confirmed: No key containing '{}' found in account storage.",
-                    wanted_key
-                );
-            }
+            (None, None) => {}
             (Some((_, value)), Some(expected)) => {
-                let wanted_value = hex::encode(expected);
                 assert!(
-                    value.contains(&wanted_value),
+                    value.contains(expected),
                     "Mismatch: expected '{}' to be contained in '{}'",
-                    wanted_value,
+                    expected,
                     value
                 );
             }
             (None, Some(_)) => {
                 panic!(
                     "Expected key containing '{}' was not found in account storage.",
-                    wanted_key
+                    expected_value.unwrap()
                 );
             }
         }
@@ -156,11 +136,12 @@ impl MvxEsdtSafeInteract {
             .gas(90_000_000u64)
             .typed(MvxEsdtSafeProxy)
             .init(header_verifier_address, opt_config)
-            .code(&self.mvx_esdt_safe_contract_code)
+            .code(MVX_ESDT_SAFE_CONTRACT_PATH)
             .code_metadata(CodeMetadata::all())
             .returns(ReturnsNewAddress)
             .run()
             .await;
+
         let new_address_bech32 = bech32::encode(&new_address);
         self.state
             .set_mvx_esdt_safe_contract_address(Bech32Address::from_bech32_string(
@@ -178,11 +159,12 @@ impl MvxEsdtSafeInteract {
             .gas(30_000_000u64)
             .typed(HeaderverifierProxy)
             .init()
-            .code(&self.header_verifier_contract_code)
+            .code(HEADER_VERIFIER_CODE_PATH)
             .code_metadata(CodeMetadata::all())
             .returns(ReturnsNewAddress)
             .run()
             .await;
+
         let new_address_bech32 = bech32::encode(&new_address);
         self.state
             .set_header_verifier_address(Bech32Address::from_bech32_string(
@@ -204,16 +186,18 @@ impl MvxEsdtSafeInteract {
             .gas(60_000_000u64)
             .typed(FeeMarketProxy)
             .init(esdt_safe_address, fee)
-            .code(&self.fee_market_contract_code)
+            .code(FEE_MARKET_CODE_PATH)
             .code_metadata(CodeMetadata::all())
             .returns(ReturnsNewAddress)
             .run()
             .await;
+
         let new_address_bech32 = bech32::encode(&new_address);
         self.state
             .set_fee_market_address(Bech32Address::from_bech32_string(
                 new_address_bech32.clone(),
             ));
+
         println!("new fee market address: {new_address_bech32}");
     }
 
@@ -225,16 +209,18 @@ impl MvxEsdtSafeInteract {
             .gas(30_000_000u64)
             .typed(TestingScProxy)
             .init()
-            .code(&self.testing_sc_contract_code)
+            .code(TESTING_SC_CODE_PATH)
             .code_metadata(CodeMetadata::all())
             .returns(ReturnsNewAddress)
             .run()
             .await;
+
         let new_address_bech32 = bech32::encode(&new_address);
         self.state
             .set_testing_sc_address(Bech32Address::from_bech32_string(
                 new_address_bech32.clone(),
             ));
+
         println!("new testing sc address: {new_address_bech32}");
     }
 
@@ -269,7 +255,7 @@ impl MvxEsdtSafeInteract {
                 self.wallet_address.clone(),
                 MultiValueEncoded::new(),
             )
-            .code(self.chain_config_contract_code.clone())
+            .code(CHAIN_CONFIG_CODE_PATH)
             .code_metadata(CodeMetadata::all())
             .returns(ReturnsNewAddress)
             .run()
@@ -280,6 +266,7 @@ impl MvxEsdtSafeInteract {
             .set_chain_config_sc_address(Bech32Address::from_bech32_string(
                 new_address_bech32.clone(),
             ));
+
         println!("new chain config sc address: {new_address_bech32}");
     }
 
@@ -316,7 +303,7 @@ impl MvxEsdtSafeInteract {
             .gas(30_000_000u64)
             .typed(MvxEsdtSafeProxy)
             .upgrade()
-            .code(&self.mvx_esdt_safe_contract_code)
+            .code(MVX_ESDT_SAFE_CONTRACT_PATH)
             .code_metadata(CodeMetadata::UPGRADEABLE)
             .returns(ReturnsResultUnmanaged)
             .run()
@@ -363,8 +350,9 @@ impl MvxEsdtSafeInteract {
         opt_transfer_data: OptionalValueTransferDataTuple<StaticApi>,
         payments: PaymentsVec<StaticApi>,
         expected_error_message: Option<&str>,
+        expected_log: Option<&str>,
     ) {
-        let response = self
+        let (response, logs) = self
             .interactor
             .tx()
             .from(&self.wallet_address)
@@ -374,17 +362,14 @@ impl MvxEsdtSafeInteract {
             .deposit(to, opt_transfer_data)
             .payment(payments)
             .returns(ReturnsHandledOrError::new())
+            .returns(ReturnsLogs)
             .run()
             .await;
 
-        match response {
-            Ok(_) => assert!(
-                expected_error_message.is_none(),
-                "Transaction was successful, but expected error"
-            ),
-            Err(error) => {
-                assert_eq!(expected_error_message, Some(error.message.as_str()))
-            }
+        self.assert_expected_error_message(response, expected_error_message);
+
+        if let Some(expected_log) = expected_log {
+            self.assert_expected_log(logs, expected_log);
         }
     }
 
@@ -393,8 +378,9 @@ impl MvxEsdtSafeInteract {
         hash_of_hashes: ManagedBuffer<StaticApi>,
         operation: Operation<StaticApi>,
         expected_error_message: Option<&str>,
+        expected_log: Option<&str>,
     ) {
-        let response = self
+        let (response, logs) = self
             .interactor
             .tx()
             .from(&self.wallet_address)
@@ -403,17 +389,14 @@ impl MvxEsdtSafeInteract {
             .typed(MvxEsdtSafeProxy)
             .execute_operations(hash_of_hashes, operation)
             .returns(ReturnsHandledOrError::new())
+            .returns(ReturnsLogs)
             .run()
             .await;
 
-        match response {
-            Ok(_) => assert!(
-                expected_error_message.is_none(),
-                "Transaction was successful, but expected error"
-            ),
-            Err(error) => {
-                assert_eq!(expected_error_message, Some(error.message.as_str()))
-            }
+        self.assert_expected_error_message(response, expected_error_message);
+
+        if let Some(expected_log) = expected_log {
+            self.assert_expected_log(logs, expected_log);
         }
     }
 
@@ -442,15 +425,7 @@ impl MvxEsdtSafeInteract {
             .run()
             .await;
 
-        match response {
-            Ok(_) => assert!(
-                expected_error_message.is_none(),
-                "Transaction was successful, but expected error"
-            ),
-            Err(error) => {
-                assert_eq!(expected_error_message, Some(error.message.as_str()))
-            }
-        }
+        self.assert_expected_error_message(response, expected_error_message);
     }
 
     pub async fn pause_endpoint(&mut self) {
@@ -534,6 +509,7 @@ impl MvxEsdtSafeInteract {
         println!("Result: {result_value:?}");
     }
 
+    //TODO: Make this a common function in common-blackbox-setup
     pub fn get_operation_hash(
         &mut self,
         operation: &Operation<StaticApi>,
@@ -543,5 +519,35 @@ impl MvxEsdtSafeInteract {
         let sha256 = sha256(&serialized_operation.to_vec());
 
         ManagedBuffer::new_from_bytes(&sha256)
+    }
+
+    pub async fn reset_state_chain_sim(&mut self, address_states: Option<Vec<Bech32Address>>) {
+        let mut state_vec = vec![
+            SetStateAccount::from_address(
+                Bech32Address::from(self.wallet_address.clone()).to_bech32_string(),
+            ),
+            SetStateAccount::from_address(
+                Bech32Address::from(self.bob_address.clone()).to_bech32_string(),
+            ),
+            SetStateAccount::from_address(
+                self.state
+                    .current_mvx_esdt_safe_contract_address()
+                    .to_bech32_string(),
+            ),
+            SetStateAccount::from_address(
+                self.state
+                    .current_header_verifier_address()
+                    .to_bech32_string(),
+            ),
+        ];
+
+        if let Some(address_states) = address_states {
+            for address in address_states {
+                state_vec.push(SetStateAccount::from_address(address.to_bech32_string()));
+            }
+        }
+        let response = self.interactor.set_state_overwrite(state_vec).await;
+        self.interactor.generate_blocks(2u64).await.unwrap();
+        assert!(response.is_ok());
     }
 }
