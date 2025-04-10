@@ -39,20 +39,16 @@ pub trait ExecuteModule:
             return;
         }
 
-        let minted_operation_tokens = self.mint_tokens(&hash_of_hashes, &operation_tuple);
-
-        if minted_operation_tokens.is_empty() {
-            return;
+        if let Some(minted_operation_tokens) = self.mint_tokens(&hash_of_hashes, &operation_tuple) {
+            self.distribute_payments(&hash_of_hashes, &operation_tuple, &minted_operation_tokens);
         }
-
-        self.distribute_payments(&hash_of_hashes, &operation_tuple, &minted_operation_tokens);
     }
 
     fn mint_tokens(
         &self,
         hash_of_hashes: &ManagedBuffer,
         operation_tuple: &OperationTuple<Self::Api>,
-    ) -> ManagedVec<OperationEsdtPayment<Self::Api>> {
+    ) -> Option<ManagedVec<OperationEsdtPayment<Self::Api>>> {
         let mut output_payments = ManagedVec::new();
 
         for operation_token in operation_tuple.operation.tokens.iter() {
@@ -69,13 +65,13 @@ pub trait ExecuteModule:
                     ) {
                         output_payments.push(payment);
                     } else {
-                        return ManagedVec::new();
+                        return None;
                     }
                 }
             }
         }
 
-        output_payments
+        Some(output_payments)
     }
 
     fn process_resolved_token(
