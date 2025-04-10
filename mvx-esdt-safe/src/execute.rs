@@ -33,25 +33,25 @@ pub trait ExecuteModule:
             operation: operation.clone(),
         };
 
-        let minted_operation_tokens =
-            self.mint_tokens(&hash_of_hashes, &operation_tuple, &operation.tokens);
+        if operation.tokens.is_empty() {
+            self.execute_sc_call(&hash_of_hashes, &operation_tuple);
 
-        if minted_operation_tokens.is_empty() && operation.data.opt_transfer_data.is_none() {
             return;
         }
 
-        self.distribute_payments(&hash_of_hashes, &operation_tuple, &minted_operation_tokens);
+        if let Some(minted_operation_tokens) = self.mint_tokens(&hash_of_hashes, &operation_tuple) {
+            self.distribute_payments(&hash_of_hashes, &operation_tuple, &minted_operation_tokens);
+        }
     }
 
     fn mint_tokens(
         &self,
         hash_of_hashes: &ManagedBuffer,
         operation_tuple: &OperationTuple<Self::Api>,
-        operation_tokens: &ManagedVec<OperationEsdtPayment<Self::Api>>,
-    ) -> ManagedVec<OperationEsdtPayment<Self::Api>> {
+    ) -> Option<ManagedVec<OperationEsdtPayment<Self::Api>>> {
         let mut output_payments = ManagedVec::new();
 
-        for operation_token in operation_tokens.iter() {
+        for operation_token in operation_tuple.operation.tokens.iter() {
             match self.get_mvx_token_id(&operation_token) {
                 Some(mvx_token_id) => {
                     let payment = self.process_resolved_token(&mvx_token_id, &operation_token);
@@ -65,13 +65,13 @@ pub trait ExecuteModule:
                     ) {
                         output_payments.push(payment);
                     } else {
-                        return ManagedVec::new();
+                        return None;
                     }
                 }
             }
         }
 
-        output_payments
+        Some(output_payments)
     }
 
     fn process_resolved_token(
@@ -234,6 +234,31 @@ pub trait ExecuteModule:
                     .register_promise();
             }
         }
+    }
+
+    fn execute_sc_call(
+        &self,
+        hash_of_hashes: &ManagedBuffer,
+        operation_tuple: &OperationTuple<Self::Api>,
+    ) {
+        let transfer_data = operation_tuple
+            .operation
+            .data
+            .opt_transfer_data
+            .as_ref()
+            .unwrap();
+        let args = ManagedArgBuffer::from(transfer_data.args.clone());
+
+        self.tx()
+            .to(&operation_tuple.operation.to)
+            .raw_call(transfer_data.function.clone())
+            .arguments_raw(args)
+            .gas(transfer_data.gas_limit)
+            .callback(
+                <Self as ExecuteModule>::callbacks(self).execute(hash_of_hashes, operation_tuple),
+            )
+            .gas_for_callback(CALLBACK_GAS)
+            .register_promise();
     }
 
     #[promises_callback]
