@@ -1,0 +1,19 @@
+[
+  {
+    "address": "erd1uv40ahysflse896x4ktnh6ecx43u7cmy9wnxnvcyp7deg299a4sq6vaywa",
+    "nonce": 6221,
+    "balance": "128272570000000000000",
+    "pairs": {
+
+      "454c524f4e44657364744c5453542d346638343965": "120e007e37be2022c0914b2680000000",
+      "454c524f4e4465736474475245454e2d306531363163": "120e007e37be2022c0914b2680000000",
+      "454c524f4e4465736474494e5445524e532d656161643135": "120e007e37be2022c0914b2680000000"
+    },
+    "code": "",
+    "code_hash": "",
+    "root_hash": "bm7koGXVtATCN5jJdsU2nmEx9MQGQ3Szb9Gq/Yb7Di0=",
+    "code_metadata": "",
+    "owner_address": "",
+    "developer_reward": "0"
+  }
+]
