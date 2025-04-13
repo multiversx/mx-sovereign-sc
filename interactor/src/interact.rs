@@ -18,8 +18,6 @@ pub const FIRST_TOKEN: &str = "GREEN-0e161c";
 pub const TOKEN_TICKER: &str = "GREEN";
 pub const SOV_TOKEN: &str = "sov-GREEN-0e161c";
 pub const SECOND_TOKEN: &str = "LTST-4f849e";
-pub const MVX_ESDT_SAFE_CONTRACT_PATH: MxscPath =
-    MxscPath::new("../mvx-esdt-safe/output/mvx-esdt-safe.mxsc.json");
 
 pub async fn mvx_esdt_safe_cli() {
     env_logger::init();

@@ -14,17 +14,16 @@ use structs::aliases::{OptionalValueTransferDataTuple, PaymentsVec};
 use structs::configs::{EsdtSafeConfig, SovereignConfig};
 use structs::operation::Operation;
 
-use crate::MVX_ESDT_SAFE_CONTRACT_PATH;
 use crate::{config::Config, State};
 use common_blackbox_setup::{
-    RegisterTokenArgs, CHAIN_CONFIG_CODE_PATH, FEE_MARKET_CODE_PATH, HEADER_VERIFIER_CODE_PATH,
-    TESTING_SC_CODE_PATH,
+    RegisterTokenArgs, CHAIN_CONFIG_CODE_PATH, FEE_MARKET_CODE_PATH,
+    HEADER_VERIFIER_CODE_PATH, MVX_ESDT_SAFE_CODE_PATH, TESTING_SC_CODE_PATH,
 };
 
 pub struct MvxEsdtSafeInteract {
     pub interactor: Interactor,
-    pub wallet_address: Address,
-    pub bob_address: Address,
+    pub owner_address: Address,
+    pub user_address: Address,
     pub state: State,
 }
 
@@ -35,8 +34,8 @@ impl MvxEsdtSafeInteract {
             .use_chain_simulator(config.use_chain_simulator());
 
         interactor.set_current_dir_from_workspace("interactor");
-        let wallet_address = interactor.register_wallet(test_wallets::mike()).await;
-        let bob_address = interactor.register_wallet(test_wallets::bob()).await;
+        let owner_address = interactor.register_wallet(test_wallets::mike()).await;
+        let user_address = interactor.register_wallet(test_wallets::bob()).await;
 
         // Useful in the chain simulator setting
         // generate blocks until ESDTSystemSCAddress is enabled
@@ -48,8 +47,8 @@ impl MvxEsdtSafeInteract {
 
         MvxEsdtSafeInteract {
             interactor,
-            wallet_address,
-            bob_address,
+            owner_address,
+            user_address,
             state: State::load_state(),
         }
     }
@@ -86,7 +85,7 @@ impl MvxEsdtSafeInteract {
         }
     }
 
-    // Arguments should be in plain text, they will be converted to hex
+    // Key and value should be in hex
     pub async fn check_account_storage(
         &mut self,
         address: Address,
@@ -95,30 +94,49 @@ impl MvxEsdtSafeInteract {
     ) {
         let pairs = self.interactor.get_account_storage(&address).await;
 
-        let wanted_hex = hex::encode(wanted_key);
+        let found_entry = pairs.iter().find(|(key, _)| key.contains(wanted_key));
 
-        let found_entry = pairs.iter().find(|(key, _)| key.contains(&wanted_hex));
+        let decoded_key = hex::decode(wanted_key)
+            .ok()
+            .and_then(|bytes| String::from_utf8(bytes).ok())
+            .unwrap_or_else(|| "<invalid utf-8>".to_string());
 
-        match (found_entry, expected_value) {
-            (Some(_), None) => {
-                panic!(
-                    "Unexpected key containing '{}' found in account storage.",
-                    wanted_key
+        match expected_value {
+            Some(expected) => {
+                assert!(
+                    found_entry.is_some(),
+                    "Expected key containing '{}' (decoded: '{}') was not found in account storage.",
+                    wanted_key,
+                    decoded_key
                 );
-            }
-            (None, None) => {}
-            (Some((_, value)), Some(expected)) => {
+
+                let (_, value) = found_entry.unwrap();
+
+                let decoded_expected = hex::decode(expected)
+                    .ok()
+                    .and_then(|bytes| String::from_utf8(bytes).ok())
+                    .unwrap_or_else(|| "<invalid utf-8>".to_string());
+
+                let decoded_value = hex::decode(value)
+                    .ok()
+                    .and_then(|bytes| String::from_utf8(bytes).ok())
+                    .unwrap_or_else(|| "<invalid utf-8>".to_string());
+
                 assert!(
                     value.contains(expected),
-                    "Mismatch: expected '{}' to be contained in '{}'",
+                    "Mismatch: expected '{}' (decoded: '{}') to be contained in '{}' (decoded: '{}')",
                     expected,
-                    value
+                    decoded_expected,
+                    value,
+                    decoded_value,
                 );
             }
-            (None, Some(_)) => {
-                panic!(
-                    "Expected key containing '{}' was not found in account storage.",
-                    expected_value.unwrap()
+            None => {
+                assert!(
+                    found_entry.is_none(),
+                    "Did not expect to find key containing '{}' (decoded: '{}') in account storage.",
+                    wanted_key,
+                    decoded_key
                 );
             }
         }
@@ -132,11 +150,11 @@ impl MvxEsdtSafeInteract {
         let new_address = self
             .interactor
             .tx()
-            .from(&self.wallet_address)
+            .from(&self.owner_address)
             .gas(90_000_000u64)
             .typed(MvxEsdtSafeProxy)
             .init(header_verifier_address, opt_config)
-            .code(MVX_ESDT_SAFE_CONTRACT_PATH)
+            .code(MVX_ESDT_SAFE_CODE_PATH)
             .code_metadata(CodeMetadata::all())
             .returns(ReturnsNewAddress)
             .run()
@@ -155,7 +173,7 @@ impl MvxEsdtSafeInteract {
         let new_address = self
             .interactor
             .tx()
-            .from(&self.wallet_address)
+            .from(&self.owner_address)
             .gas(30_000_000u64)
             .typed(HeaderverifierProxy)
             .init()
@@ -182,7 +200,7 @@ impl MvxEsdtSafeInteract {
         let new_address = self
             .interactor
             .tx()
-            .from(&self.wallet_address)
+            .from(&self.owner_address)
             .gas(60_000_000u64)
             .typed(FeeMarketProxy)
             .init(esdt_safe_address, fee)
@@ -205,7 +223,7 @@ impl MvxEsdtSafeInteract {
         let new_address = self
             .interactor
             .tx()
-            .from(&self.wallet_address)
+            .from(&self.owner_address)
             .gas(30_000_000u64)
             .typed(TestingScProxy)
             .init()
@@ -228,7 +246,7 @@ impl MvxEsdtSafeInteract {
         let response = self
             .interactor
             .tx()
-            .from(&self.wallet_address)
+            .from(&self.owner_address)
             .to(self.state.current_header_verifier_address())
             .gas(30_000_000u64)
             .typed(HeaderverifierProxy)
@@ -245,14 +263,14 @@ impl MvxEsdtSafeInteract {
         let new_address = self
             .interactor
             .tx()
-            .from(&self.wallet_address)
+            .from(&self.owner_address)
             .gas(60_000_000u64)
             .typed(ChainConfigContractProxy)
             .init(
                 config.min_validators as usize,
                 config.max_validators as usize,
                 config.min_stake,
-                self.wallet_address.clone(),
+                self.owner_address.clone(),
                 MultiValueEncoded::new(),
             )
             .code(CHAIN_CONFIG_CODE_PATH)
@@ -270,6 +288,27 @@ impl MvxEsdtSafeInteract {
         println!("new chain config sc address: {new_address_bech32}");
     }
 
+    pub async fn deploy_contracts(
+        &mut self,
+        esdt_safe_config: OptionalValue<EsdtSafeConfig<StaticApi>>,
+        fee_struct: Option<FeeStruct<StaticApi>>,
+    ) {
+        self.deploy_header_verifier().await;
+        self.deploy_mvx_esdt_safe(
+            self.state.current_header_verifier_address().clone(),
+            esdt_safe_config,
+        )
+        .await;
+        self.deploy_fee_market(
+            self.state.current_mvx_esdt_safe_contract_address().clone(),
+            fee_struct,
+        )
+        .await;
+        self.set_fee_market_address(self.state.current_fee_market_address().to_address())
+            .await;
+        self.unpause_endpoint().await;
+    }
+
     pub async fn register_operation(
         &mut self,
         signature: ManagedBuffer<StaticApi>,
@@ -278,7 +317,7 @@ impl MvxEsdtSafeInteract {
     ) {
         self.interactor
             .tx()
-            .from(&self.wallet_address)
+            .from(&self.owner_address)
             .to(self.state.current_header_verifier_address())
             .gas(30_000_000u64)
             .typed(HeaderverifierProxy)
@@ -299,11 +338,11 @@ impl MvxEsdtSafeInteract {
             .interactor
             .tx()
             .to(self.state.current_mvx_esdt_safe_contract_address())
-            .from(&self.wallet_address)
+            .from(&self.owner_address)
             .gas(30_000_000u64)
             .typed(MvxEsdtSafeProxy)
             .upgrade()
-            .code(MVX_ESDT_SAFE_CONTRACT_PATH)
+            .code(MVX_ESDT_SAFE_CODE_PATH)
             .code_metadata(CodeMetadata::UPGRADEABLE)
             .returns(ReturnsResultUnmanaged)
             .run()
@@ -316,7 +355,7 @@ impl MvxEsdtSafeInteract {
         let response = self
             .interactor
             .tx()
-            .from(&self.wallet_address)
+            .from(&self.owner_address)
             .to(self.state.current_mvx_esdt_safe_contract_address())
             .gas(30_000_000u64)
             .typed(MvxEsdtSafeProxy)
@@ -332,7 +371,7 @@ impl MvxEsdtSafeInteract {
         let response = self
             .interactor
             .tx()
-            .from(&self.wallet_address)
+            .from(&self.owner_address)
             .to(self.state.current_mvx_esdt_safe_contract_address())
             .gas(30_000_000u64)
             .typed(MvxEsdtSafeProxy)
@@ -355,7 +394,7 @@ impl MvxEsdtSafeInteract {
         let (response, logs) = self
             .interactor
             .tx()
-            .from(&self.wallet_address)
+            .from(&self.owner_address)
             .to(self.state.current_mvx_esdt_safe_contract_address())
             .gas(90_000_000u64)
             .typed(MvxEsdtSafeProxy)
@@ -383,7 +422,7 @@ impl MvxEsdtSafeInteract {
         let (response, logs) = self
             .interactor
             .tx()
-            .from(&self.wallet_address)
+            .from(&self.owner_address)
             .to(self.state.current_mvx_esdt_safe_contract_address())
             .gas(120_000_000u64)
             .typed(MvxEsdtSafeProxy)
@@ -409,7 +448,7 @@ impl MvxEsdtSafeInteract {
         let response = self
             .interactor
             .tx()
-            .from(&self.wallet_address)
+            .from(&self.owner_address)
             .to(self.state.current_mvx_esdt_safe_contract_address())
             .gas(90_000_000u64)
             .typed(MvxEsdtSafeProxy)
@@ -432,7 +471,7 @@ impl MvxEsdtSafeInteract {
         let response = self
             .interactor
             .tx()
-            .from(&self.wallet_address)
+            .from(&self.owner_address)
             .to(self.state.current_mvx_esdt_safe_contract_address())
             .gas(30_000_000u64)
             .typed(MvxEsdtSafeProxy)
@@ -448,7 +487,7 @@ impl MvxEsdtSafeInteract {
         let response = self
             .interactor
             .tx()
-            .from(&self.wallet_address)
+            .from(&self.owner_address)
             .to(self.state.current_mvx_esdt_safe_contract_address())
             .gas(30_000_000u64)
             .typed(MvxEsdtSafeProxy)
@@ -481,7 +520,7 @@ impl MvxEsdtSafeInteract {
         let response = self
             .interactor
             .tx()
-            .from(&self.wallet_address)
+            .from(&self.owner_address)
             .to(self.state.current_mvx_esdt_safe_contract_address())
             .gas(30_000_000u64)
             .typed(MvxEsdtSafeProxy)
@@ -524,10 +563,10 @@ impl MvxEsdtSafeInteract {
     pub async fn reset_state_chain_sim(&mut self, address_states: Option<Vec<Bech32Address>>) {
         let mut state_vec = vec![
             SetStateAccount::from_address(
-                Bech32Address::from(self.wallet_address.clone()).to_bech32_string(),
+                Bech32Address::from(self.owner_address.clone()).to_bech32_string(),
             ),
             SetStateAccount::from_address(
-                Bech32Address::from(self.bob_address.clone()).to_bech32_string(),
+                Bech32Address::from(self.user_address.clone()).to_bech32_string(),
             ),
             SetStateAccount::from_address(
                 self.state

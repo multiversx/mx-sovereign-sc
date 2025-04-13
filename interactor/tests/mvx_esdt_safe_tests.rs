@@ -30,42 +30,14 @@ use structs::operation::{Operation, OperationData, OperationEsdtPayment, Transfe
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn deposit_nothing_to_transfer_no_fee() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
-    chain_interactor.deploy_header_verifier().await;
-    chain_interactor
-        .deploy_mvx_esdt_safe(
-            chain_interactor
-                .state
-                .current_header_verifier_address()
-                .clone(),
-            OptionalValue::Some(EsdtSafeConfig::default_config()),
-        )
-        .await;
 
     chain_interactor
-        .deploy_fee_market(
-            chain_interactor
-                .state
-                .current_mvx_esdt_safe_contract_address()
-                .clone(),
-            None,
-        )
+        .deploy_contracts(OptionalValue::Some(EsdtSafeConfig::default_config()), None)
         .await;
-
-    chain_interactor
-        .set_fee_market_address(
-            chain_interactor
-                .state
-                .current_fee_market_address()
-                .clone()
-                .to_address(),
-        )
-        .await;
-
-    chain_interactor.unpause_endpoint().await;
 
     chain_interactor
         .deposit(
-            chain_interactor.bob_address.clone(),
+            chain_interactor.user_address.clone(),
             OptionalValue::None,
             ManagedVec::new(),
             Some(NOTHING_TO_TRANSFER),
@@ -94,39 +66,10 @@ async fn deposit_nothing_to_transfer_no_fee() {
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn deposit_too_many_tokens_no_fee() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
-    chain_interactor.deploy_header_verifier().await;
 
     chain_interactor
-        .deploy_mvx_esdt_safe(
-            chain_interactor
-                .state
-                .current_header_verifier_address()
-                .clone(),
-            OptionalValue::Some(EsdtSafeConfig::default_config()),
-        )
+        .deploy_contracts(OptionalValue::Some(EsdtSafeConfig::default_config()), None)
         .await;
-
-    chain_interactor
-        .deploy_fee_market(
-            chain_interactor
-                .state
-                .current_mvx_esdt_safe_contract_address()
-                .clone(),
-            None,
-        )
-        .await;
-
-    chain_interactor
-        .set_fee_market_address(
-            chain_interactor
-                .state
-                .current_fee_market_address()
-                .clone()
-                .to_address(),
-        )
-        .await;
-
-    chain_interactor.unpause_endpoint().await;
 
     let esdt_token_payment = EsdtTokenPayment::<StaticApi>::new(
         TokenIdentifier::from(FIRST_TOKEN),
@@ -138,7 +81,7 @@ async fn deposit_too_many_tokens_no_fee() {
 
     chain_interactor
         .deposit(
-            chain_interactor.bob_address.clone(),
+            chain_interactor.user_address.clone(),
             OptionalValue::None,
             payments_vec,
             Some(TOO_MANY_TOKENS),
@@ -167,39 +110,10 @@ async fn deposit_too_many_tokens_no_fee() {
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn deposit_no_transfer_data_no_fee() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
-    chain_interactor.deploy_header_verifier().await;
 
     chain_interactor
-        .deploy_mvx_esdt_safe(
-            chain_interactor
-                .state
-                .current_header_verifier_address()
-                .clone(),
-            OptionalValue::Some(EsdtSafeConfig::default_config()),
-        )
+        .deploy_contracts(OptionalValue::Some(EsdtSafeConfig::default_config()), None)
         .await;
-
-    chain_interactor
-        .deploy_fee_market(
-            chain_interactor
-                .state
-                .current_mvx_esdt_safe_contract_address()
-                .clone(),
-            None,
-        )
-        .await;
-
-    chain_interactor
-        .set_fee_market_address(
-            chain_interactor
-                .state
-                .current_fee_market_address()
-                .clone()
-                .to_address(),
-        )
-        .await;
-
-    chain_interactor.unpause_endpoint().await;
 
     let esdt_token_payment_one = EsdtTokenPayment::<StaticApi>::new(
         TokenIdentifier::from(FIRST_TOKEN),
@@ -217,7 +131,7 @@ async fn deposit_no_transfer_data_no_fee() {
 
     chain_interactor
         .deposit(
-            chain_interactor.bob_address.clone(),
+            chain_interactor.user_address.clone(),
             OptionalValue::None,
             payments_vec,
             None,
@@ -249,39 +163,10 @@ async fn deposit_no_transfer_data_no_fee() {
 async fn deposit_gas_limit_too_high_no_fee() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
     let config = EsdtSafeConfig::new(ManagedVec::new(), ManagedVec::new(), 1, ManagedVec::new());
-    chain_interactor.deploy_header_verifier().await;
 
     chain_interactor
-        .deploy_mvx_esdt_safe(
-            chain_interactor
-                .state
-                .current_header_verifier_address()
-                .clone(),
-            OptionalValue::Some(config),
-        )
+        .deploy_contracts(OptionalValue::Some(config), None)
         .await;
-
-    chain_interactor
-        .deploy_fee_market(
-            chain_interactor
-                .state
-                .current_mvx_esdt_safe_contract_address()
-                .clone(),
-            None,
-        )
-        .await;
-
-    chain_interactor
-        .set_fee_market_address(
-            chain_interactor
-                .state
-                .current_fee_market_address()
-                .clone()
-                .to_address(),
-        )
-        .await;
-
-    chain_interactor.unpause_endpoint().await;
 
     chain_interactor.deploy_testing_sc().await;
 
@@ -309,7 +194,7 @@ async fn deposit_gas_limit_too_high_no_fee() {
 
     chain_interactor
         .deposit(
-            chain_interactor.bob_address.clone(),
+            chain_interactor.user_address.clone(),
             OptionalValue::Some(transfer_data),
             payments_vec,
             Some(GAS_LIMIT_TOO_HIGH),
@@ -350,39 +235,10 @@ async fn deposit_endpoint_banned_no_fee() {
         50_000_000,
         ManagedVec::from(vec![ManagedBuffer::from("hello")]),
     );
-    chain_interactor.deploy_header_verifier().await;
 
     chain_interactor
-        .deploy_mvx_esdt_safe(
-            chain_interactor
-                .state
-                .current_header_verifier_address()
-                .clone(),
-            OptionalValue::Some(config),
-        )
+        .deploy_contracts(OptionalValue::Some(config), None)
         .await;
-
-    chain_interactor
-        .deploy_fee_market(
-            chain_interactor
-                .state
-                .current_mvx_esdt_safe_contract_address()
-                .clone(),
-            None,
-        )
-        .await;
-
-    chain_interactor
-        .set_fee_market_address(
-            chain_interactor
-                .state
-                .current_fee_market_address()
-                .clone()
-                .to_address(),
-        )
-        .await;
-
-    chain_interactor.unpause_endpoint().await;
 
     chain_interactor.deploy_testing_sc().await;
 
@@ -410,7 +266,7 @@ async fn deposit_endpoint_banned_no_fee() {
 
     chain_interactor
         .deposit(
-            chain_interactor.bob_address.clone(),
+            chain_interactor.user_address.clone(),
             OptionalValue::Some(transfer_data),
             payments_vec,
             Some(BANNED_ENDPOINT_NAME),
@@ -466,39 +322,9 @@ async fn deposit_fee_enabled() {
         },
     };
 
-    chain_interactor.deploy_header_verifier().await;
-
     chain_interactor
-        .deploy_mvx_esdt_safe(
-            chain_interactor
-                .state
-                .current_header_verifier_address()
-                .clone(),
-            OptionalValue::Some(config),
-        )
+        .deploy_contracts(OptionalValue::Some(config), Some(fee))
         .await;
-
-    chain_interactor
-        .deploy_fee_market(
-            chain_interactor
-                .state
-                .current_mvx_esdt_safe_contract_address()
-                .clone(),
-            Some(fee),
-        )
-        .await;
-
-    chain_interactor
-        .set_fee_market_address(
-            chain_interactor
-                .state
-                .current_fee_market_address()
-                .clone()
-                .to_address(),
-        )
-        .await;
-
-    chain_interactor.unpause_endpoint().await;
 
     chain_interactor.deploy_testing_sc().await;
 
@@ -535,7 +361,7 @@ async fn deposit_fee_enabled() {
 
     chain_interactor
         .deposit(
-            chain_interactor.bob_address.clone(),
+            chain_interactor.user_address.clone(),
             OptionalValue::Some(transfer_data),
             payments_vec,
             None,
@@ -575,39 +401,9 @@ async fn deposit_only_transfer_data_no_fee() {
         ManagedVec::new(),
     );
 
-    chain_interactor.deploy_header_verifier().await;
-
     chain_interactor
-        .deploy_mvx_esdt_safe(
-            chain_interactor
-                .state
-                .current_header_verifier_address()
-                .clone(),
-            OptionalValue::Some(config),
-        )
+        .deploy_contracts(OptionalValue::Some(config), None)
         .await;
-
-    chain_interactor
-        .deploy_fee_market(
-            chain_interactor
-                .state
-                .current_mvx_esdt_safe_contract_address()
-                .clone(),
-            None,
-        )
-        .await;
-
-    chain_interactor
-        .set_fee_market_address(
-            chain_interactor
-                .state
-                .current_fee_market_address()
-                .clone()
-                .to_address(),
-        )
-        .await;
-
-    chain_interactor.unpause_endpoint().await;
 
     chain_interactor.deploy_testing_sc().await;
 
@@ -621,7 +417,7 @@ async fn deposit_only_transfer_data_no_fee() {
 
     chain_interactor
         .deposit(
-            chain_interactor.bob_address.clone(),
+            chain_interactor.user_address.clone(),
             OptionalValue::Some(transfer_data),
             ManagedVec::new(),
             None,
@@ -675,39 +471,9 @@ async fn deposit_payment_does_not_cover_fee() {
         },
     };
 
-    chain_interactor.deploy_header_verifier().await;
-
     chain_interactor
-        .deploy_mvx_esdt_safe(
-            chain_interactor
-                .state
-                .current_header_verifier_address()
-                .clone(),
-            OptionalValue::Some(config),
-        )
+        .deploy_contracts(OptionalValue::Some(config), Some(fee))
         .await;
-
-    chain_interactor
-        .deploy_fee_market(
-            chain_interactor
-                .state
-                .current_mvx_esdt_safe_contract_address()
-                .clone(),
-            Some(fee.clone()),
-        )
-        .await;
-
-    chain_interactor
-        .set_fee_market_address(
-            chain_interactor
-                .state
-                .current_fee_market_address()
-                .clone()
-                .to_address(),
-        )
-        .await;
-
-    chain_interactor.unpause_endpoint().await;
 
     chain_interactor.deploy_testing_sc().await;
 
@@ -738,7 +504,7 @@ async fn deposit_payment_does_not_cover_fee() {
 
     chain_interactor
         .deposit(
-            chain_interactor.bob_address.clone(),
+            chain_interactor.user_address.clone(),
             OptionalValue::Some(transfer_data),
             payments_vec,
             Some(PAYMENT_DOES_NOT_COVER_FEE),
@@ -769,6 +535,7 @@ async fn deposit_payment_does_not_cover_fee() {
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn register_token_invalid_type_token() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
+
     chain_interactor.deploy_header_verifier().await;
 
     chain_interactor
@@ -817,6 +584,7 @@ async fn register_token_invalid_type_token() {
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn register_token_fungible_token() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
+
     chain_interactor.deploy_header_verifier().await;
 
     chain_interactor
@@ -851,6 +619,7 @@ async fn register_token_fungible_token() {
         .await;
 
     let encoded_token_ticker = hex::encode(token_ticker);
+    let encoded_key = &hex::encode(SOV_TO_MVX_TOKEN_STORAGE_KEY);
 
     chain_interactor
         .check_account_storage(
@@ -859,7 +628,7 @@ async fn register_token_fungible_token() {
                 .current_mvx_esdt_safe_contract_address()
                 .clone()
                 .to_address(),
-            SOV_TO_MVX_TOKEN_STORAGE_KEY,
+            encoded_key,
             Some(&encoded_token_ticker),
         )
         .await;
@@ -879,6 +648,7 @@ async fn register_token_fungible_token() {
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn register_token_non_fungible_token() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
+
     chain_interactor.deploy_header_verifier().await;
 
     chain_interactor
@@ -913,6 +683,7 @@ async fn register_token_non_fungible_token() {
         .await;
 
     let encoded_token_ticker = hex::encode(token_ticker);
+    let encoded_key = &hex::encode(SOV_TO_MVX_TOKEN_STORAGE_KEY);
 
     chain_interactor
         .check_account_storage(
@@ -921,7 +692,7 @@ async fn register_token_non_fungible_token() {
                 .current_mvx_esdt_safe_contract_address()
                 .clone()
                 .to_address(),
-            SOV_TO_MVX_TOKEN_STORAGE_KEY,
+            encoded_key,
             Some(&encoded_token_ticker),
         )
         .await;
@@ -941,6 +712,7 @@ async fn register_token_non_fungible_token() {
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn register_token_dynamic_non_fungible_token() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
+
     chain_interactor.deploy_header_verifier().await;
 
     chain_interactor
@@ -975,6 +747,7 @@ async fn register_token_dynamic_non_fungible_token() {
         .await;
 
     let encoded_token_ticker = hex::encode(token_ticker);
+    let encoded_key = &hex::encode(SOV_TO_MVX_TOKEN_STORAGE_KEY);
 
     chain_interactor
         .check_account_storage(
@@ -983,7 +756,7 @@ async fn register_token_dynamic_non_fungible_token() {
                 .current_mvx_esdt_safe_contract_address()
                 .clone()
                 .to_address(),
-            SOV_TO_MVX_TOKEN_STORAGE_KEY,
+            encoded_key,
             Some(&encoded_token_ticker),
         )
         .await;
@@ -995,29 +768,22 @@ async fn register_token_dynamic_non_fungible_token() {
 // Steps:
 // 1. Deploy header verifier smart contract
 // 2. Deploy mvx-esdt-safe smart contract
-// 3. Unpause mvx-esdt-safe smart contract
-// 4. Create a payment for the operation
-// 5. Create operation and hash of hashes
-// 6. Execute operation
-// 7. Check that operation-hash-status storage is empty
+// 3. Deploy fee-market smart contract
+// 4. Set fee-market address in mvx-esdt-safe smart contract
+// 5. Unpause mvx-esdt-safe smart contract
+// 6. Create a payment for the operation
+// 7. Create operation and hash of hashes
+// 8. Execute operation
+// 9. Check that operation-hash-status storage is empty
 #[tokio::test]
 #[serial]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn execute_operation_no_esdt_safe_registered() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
-    chain_interactor.deploy_header_verifier().await;
 
     chain_interactor
-        .deploy_mvx_esdt_safe(
-            chain_interactor
-                .state
-                .current_header_verifier_address()
-                .clone(),
-            OptionalValue::Some(EsdtSafeConfig::default_config()),
-        )
+        .deploy_contracts(OptionalValue::Some(EsdtSafeConfig::default_config()), None)
         .await;
-
-    chain_interactor.unpause_endpoint().await;
 
     chain_interactor.deploy_testing_sc().await;
 
@@ -1029,7 +795,7 @@ async fn execute_operation_no_esdt_safe_registered() {
 
     let operation_data = OperationData::new(
         1,
-        ManagedAddress::from_address(&chain_interactor.wallet_address),
+        ManagedAddress::from_address(&chain_interactor.owner_address),
         None,
     );
 
@@ -1055,18 +821,22 @@ async fn execute_operation_no_esdt_safe_registered() {
         )
         .await;
 
+    let encoded_key = &hex::encode(OPERATION_HASH_STATUS_STORAGE_KEY);
     chain_interactor
         .check_account_storage(
             chain_interactor
                 .state
                 .current_header_verifier_address()
                 .to_address(),
-            OPERATION_HASH_STATUS_STORAGE_KEY,
+            encoded_key,
             None,
         )
         .await;
 
-    let address_states = vec![chain_interactor.state.current_testing_sc_address().clone()];
+    let address_states = vec![
+        chain_interactor.state.current_testing_sc_address().clone(),
+        chain_interactor.state.current_fee_market_address().clone(),
+    ];
 
     chain_interactor
         .reset_state_chain_sim(Some(address_states))
@@ -1078,12 +848,12 @@ async fn execute_operation_no_esdt_safe_registered() {
 // 1. Create payment vector
 // 2. Create transfer data
 // 3. Deploy header verifier smart contract
-// 4. Deploy testing smart contract
-// 5. Create operation
-// 6. Deploy mvx-esdt-safe smart contract
-// 7. Deploy fee-market smart contract
-// 8. Set fee-market address in mvx-esdt-safe smart contract
-// 9. Unpause mvx-esdt-safe smart contract
+// 4. Deploy mvx-esdt-safe smart contract
+// 5. Deploy fee-market smart contract
+// 6. Set fee-market address in mvx-esdt-safe smart contract
+// 7. Unpause mvx-esdt-safe smart contract
+// 8. Deploy testing smart contract
+// 9. Create operation
 // 10. Deposit and check logs
 // 11. Set mvx-esdt-safe address in header verifier smart contract
 // 12. Create operation hashes
@@ -1097,7 +867,6 @@ async fn execute_operation_no_esdt_safe_registered() {
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn execute_operation_success_no_fee() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
-    let config = OptionalValue::Some(EsdtSafeConfig::default_config());
     let token_data = EsdtTokenData {
         amount: BigUint::from(10_000_000_000_000_000_000u128), // 10 Tokens
         ..Default::default()
@@ -1120,11 +889,13 @@ async fn execute_operation_success_no_fee() {
 
     let operation_data = OperationData::new(
         1,
-        ManagedAddress::from_address(&chain_interactor.wallet_address),
+        ManagedAddress::from_address(&chain_interactor.owner_address),
         Some(transfer_data),
     );
 
-    chain_interactor.deploy_header_verifier().await;
+    chain_interactor
+        .deploy_contracts(OptionalValue::Some(EsdtSafeConfig::default_config()), None)
+        .await;
 
     chain_interactor.deploy_testing_sc().await;
 
@@ -1141,36 +912,6 @@ async fn execute_operation_success_no_fee() {
 
     let operation_hash = chain_interactor.get_operation_hash(&operation);
     let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&operation_hash.to_vec()));
-
-    chain_interactor
-        .deploy_mvx_esdt_safe(
-            chain_interactor
-                .state
-                .current_header_verifier_address()
-                .clone(),
-            config,
-        )
-        .await;
-
-    chain_interactor
-        .deploy_fee_market(
-            chain_interactor
-                .state
-                .current_mvx_esdt_safe_contract_address()
-                .clone(),
-            None,
-        )
-        .await;
-
-    chain_interactor
-        .set_fee_market_address(
-            chain_interactor
-                .state
-                .current_fee_market_address()
-                .to_address(),
-        )
-        .await;
-    chain_interactor.unpause_endpoint().await;
 
     chain_interactor
         .deposit(
@@ -1199,6 +940,7 @@ async fn execute_operation_success_no_fee() {
 
     let operation_status = OperationHashStatus::NotLocked as u8;
     let expected_operation_hash_status = format!("{:02x}", operation_status);
+    let encoded_key = &hex::encode(OPERATION_HASH_STATUS_STORAGE_KEY);
 
     chain_interactor
         .check_account_storage(
@@ -1206,7 +948,7 @@ async fn execute_operation_success_no_fee() {
                 .state
                 .current_header_verifier_address()
                 .to_address(),
-            OPERATION_HASH_STATUS_STORAGE_KEY,
+            encoded_key,
             Some(&expected_operation_hash_status),
         )
         .await;
@@ -1226,7 +968,7 @@ async fn execute_operation_success_no_fee() {
                 .state
                 .current_header_verifier_address()
                 .to_address(),
-            OPERATION_HASH_STATUS_STORAGE_KEY,
+            encoded_key,
             None,
         )
         .await;
@@ -1249,12 +991,12 @@ async fn execute_operation_success_no_fee() {
 // Steps:
 // 1. Create transfer data
 // 2. Deploy header verifier smart contract
-// 3. Deploy testing smart contract
-// 4. Create operation
-// 5. Deploy mvx-esdt-safe smart contract
-// 6. Deploy fee-market smart contract
-// 7. Set fee-market address in mvx-esdt-safe smart contract
-// 8. Unpause mvx-esdt-safe smart contract
+// 3. Deploy mvx-esdt-safe smart contract
+// 4. Deploy fee-market smart contract
+// 5. Set fee-market address in mvx-esdt-safe smart contract
+// 6. Unpause mvx-esdt-safe smart contract
+// 7. Deploy testing smart contract
+// 8. Create operation
 // 9. Set mvx-esdt-safe address in header verifier smart contract
 // 10. Create operation hashes
 // 11. Deploy chain config smart contract
@@ -1267,7 +1009,6 @@ async fn execute_operation_success_no_fee() {
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn execute_operation_only_transfer_data_no_fee() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
-    let config = OptionalValue::Some(EsdtSafeConfig::default_config());
 
     let gas_limit = 90_000_000u64;
     let function = ManagedBuffer::<StaticApi>::from("hello");
@@ -1278,11 +1019,13 @@ async fn execute_operation_only_transfer_data_no_fee() {
 
     let operation_data = OperationData::new(
         1,
-        ManagedAddress::from_address(&chain_interactor.wallet_address),
+        ManagedAddress::from_address(&chain_interactor.owner_address),
         Some(transfer_data),
     );
 
-    chain_interactor.deploy_header_verifier().await;
+    chain_interactor
+        .deploy_contracts(OptionalValue::Some(EsdtSafeConfig::default_config()), None)
+        .await;
 
     chain_interactor.deploy_testing_sc().await;
 
@@ -1301,36 +1044,6 @@ async fn execute_operation_only_transfer_data_no_fee() {
     let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&operation_hash.to_vec()));
 
     chain_interactor
-        .deploy_mvx_esdt_safe(
-            chain_interactor
-                .state
-                .current_header_verifier_address()
-                .clone(),
-            config,
-        )
-        .await;
-
-    chain_interactor
-        .deploy_fee_market(
-            chain_interactor
-                .state
-                .current_mvx_esdt_safe_contract_address()
-                .clone(),
-            None,
-        )
-        .await;
-
-    chain_interactor
-        .set_fee_market_address(
-            chain_interactor
-                .state
-                .current_fee_market_address()
-                .to_address(),
-        )
-        .await;
-    chain_interactor.unpause_endpoint().await;
-
-    chain_interactor
         .set_esdt_safe_address_in_header_verifier()
         .await;
 
@@ -1344,6 +1057,7 @@ async fn execute_operation_only_transfer_data_no_fee() {
 
     let operation_status = OperationHashStatus::NotLocked as u8;
     let expected_operation_hash_status = format!("{:02x}", operation_status);
+    let encoded_key = &hex::encode(OPERATION_HASH_STATUS_STORAGE_KEY);
 
     chain_interactor
         .check_account_storage(
@@ -1351,7 +1065,7 @@ async fn execute_operation_only_transfer_data_no_fee() {
                 .state
                 .current_header_verifier_address()
                 .to_address(),
-            OPERATION_HASH_STATUS_STORAGE_KEY,
+            encoded_key,
             Some(&expected_operation_hash_status),
         )
         .await;
@@ -1371,7 +1085,7 @@ async fn execute_operation_only_transfer_data_no_fee() {
                 .state
                 .current_header_verifier_address()
                 .to_address(),
-            OPERATION_HASH_STATUS_STORAGE_KEY,
+            encoded_key,
             None,
         )
         .await;

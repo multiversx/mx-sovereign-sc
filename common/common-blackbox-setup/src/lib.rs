@@ -38,6 +38,8 @@ pub const CHAIN_CONFIG_CODE_PATH: MxscPath =
     MxscPath::new("../chain-config/output/chain-config.mxsc.json");
 pub const TESTING_SC_CODE_PATH: MxscPath =
     MxscPath::new("../testing-sc/output/testing-sc.mxsc.json");
+pub const MVX_ESDT_SAFE_CODE_PATH: MxscPath =
+    MxscPath::new("../mvx-esdt-safe/output/mvx-esdt-safe.mxsc.json");
 
 pub const TEST_TOKEN_ONE: &str = "TONE-123456";
 pub const TEST_TOKEN_ONE_WITH_PREFIX: &str = "sov-TONE-123456";
