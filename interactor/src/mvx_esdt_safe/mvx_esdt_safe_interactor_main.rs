@@ -148,7 +148,7 @@ impl MvxEsdtSafeInteract {
             .interactor
             .tx()
             .from(&self.owner_address)
-            .gas(90_000_000u64)
+            .gas(120_000_000u64)
             .typed(MvxEsdtSafeProxy)
             .init(header_verifier_address, opt_config)
             .code(MVX_ESDT_SAFE_CODE_PATH)
@@ -171,7 +171,7 @@ impl MvxEsdtSafeInteract {
             .interactor
             .tx()
             .from(&self.owner_address)
-            .gas(90_000_000u64)
+            .gas(120_000_000u64)
             .typed(HeaderverifierProxy)
             .init()
             .code(HEADER_VERIFIER_CODE_PATH)
@@ -198,7 +198,7 @@ impl MvxEsdtSafeInteract {
             .interactor
             .tx()
             .from(&self.owner_address)
-            .gas(90_000_000u64)
+            .gas(120_000_000u64)
             .typed(FeeMarketProxy)
             .init(esdt_safe_address, fee)
             .code(FEE_MARKET_CODE_PATH)
@@ -221,7 +221,7 @@ impl MvxEsdtSafeInteract {
             .interactor
             .tx()
             .from(&self.owner_address)
-            .gas(90_000_000u64)
+            .gas(120_000_000u64)
             .typed(TestingScProxy)
             .init()
             .code(TESTING_SC_CODE_PATH)
@@ -261,7 +261,7 @@ impl MvxEsdtSafeInteract {
             .interactor
             .tx()
             .from(&self.owner_address)
-            .gas(90_000_000u64)
+            .gas(120_000_000u64)
             .typed(ChainConfigContractProxy)
             .init(
                 config.min_validators as usize,
