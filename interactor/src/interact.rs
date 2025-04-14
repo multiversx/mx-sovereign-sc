@@ -13,11 +13,6 @@ use std::{
 };
 
 const STATE_FILE: &str = "state.toml";
-pub const FEE_TOKEN: &str = "INTERNS-eaad15";
-pub const FIRST_TOKEN: &str = "GREEN-0e161c";
-pub const TOKEN_TICKER: &str = "GREEN";
-pub const SOV_TOKEN: &str = "sov-GREEN-0e161c";
-pub const SECOND_TOKEN: &str = "LTST-4f849e";
 
 pub async fn mvx_esdt_safe_cli() {
     env_logger::init();

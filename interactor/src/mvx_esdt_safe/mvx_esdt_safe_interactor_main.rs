@@ -15,7 +15,7 @@ use structs::configs::{EsdtSafeConfig, SovereignConfig};
 use structs::operation::Operation;
 
 use crate::{config::Config, State};
-use common_blackbox_setup::{
+use common_tests_setup::{
     RegisterTokenArgs, CHAIN_CONFIG_CODE_PATH, FEE_MARKET_CODE_PATH, HEADER_VERIFIER_CODE_PATH,
     MVX_ESDT_SAFE_CODE_PATH, TESTING_SC_CODE_PATH,
 };

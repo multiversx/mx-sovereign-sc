@@ -38,8 +38,8 @@ path = "../common/proxies"
 [dependencies.error-messages]
 path = "../common/error-messages"
 
-[dev-dependencies.common-blackbox-setup]
-path = "../common/common-blackbox-setup"
+[dev-dependencies.common-tests-setup]
+path = "../common/common-tests-setup"
 
 [dev-dependencies.multiversx-sc-scenario]
 version = "0.57.1"

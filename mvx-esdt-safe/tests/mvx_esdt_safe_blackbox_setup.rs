@@ -1,35 +1,26 @@
-use common_blackbox_setup::{
-    AccountSetup, BaseSetup, ESDT_SAFE_ADDRESS, FEE_TOKEN, HEADER_VERIFIER_ADDRESS,
-    ONE_HUNDRED_MILLION, OWNER_ADDRESS, OWNER_BALANCE, TEST_TOKEN_ONE, TEST_TOKEN_TWO, USER,
+use common_tests_setup::{
+    AccountSetup, BaseSetup, RegisterTokenArgs, ESDT_SAFE_ADDRESS, FEE_TOKEN, FIRST_TEST_TOKEN,
+    HEADER_VERIFIER_ADDRESS, MVX_ESDT_SAFE_CODE_PATH, ONE_HUNDRED_MILLION, OWNER_ADDRESS,
+    OWNER_BALANCE, SECOND_TEST_TOKEN, USER,
 };
 use multiversx_sc::{
     codec::TopEncode,
     imports::OptionalValue,
     types::{
-        BigUint, EsdtLocalRole, EsdtTokenType, ManagedAddress, ManagedBuffer, ManagedVec,
-        MultiValueEncoded, TestSCAddress, TestTokenIdentifier, TokenIdentifier,
+        BigUint, EsdtLocalRole, ManagedAddress, ManagedBuffer, ManagedVec, MultiValueEncoded,
+        TestSCAddress, TestTokenIdentifier, TokenIdentifier,
     },
 };
 use multiversx_sc_modules::transfer_role_proxy::PaymentsVec;
 use multiversx_sc_scenario::{
-    api::StaticApi, imports::MxscPath, multiversx_chain_vm::crypto_functions::sha256,
-    ReturnsHandledOrError, ReturnsLogs, ScenarioTxRun, ScenarioTxWhitebox,
+    api::StaticApi, multiversx_chain_vm::crypto_functions::sha256, ReturnsHandledOrError,
+    ReturnsLogs, ScenarioTxRun, ScenarioTxWhitebox,
 };
 use mvx_esdt_safe::{bridging_mechanism::TRUSTED_TOKEN_IDS, MvxEsdtSafe};
 use proxies::{header_verifier_proxy::HeaderverifierProxy, mvx_esdt_safe_proxy::MvxEsdtSafeProxy};
 use structs::{
     aliases::OptionalValueTransferDataTuple, configs::EsdtSafeConfig, operation::Operation,
 };
-
-const CONTRACT_CODE_PATH: MxscPath = MxscPath::new("output/mvx-esdt-safe.mxsc.json");
-
-pub struct RegisterTokenArgs<'a> {
-    pub sov_token_id: TestTokenIdentifier<'a>,
-    pub token_type: EsdtTokenType,
-    pub token_display_name: &'a str,
-    pub token_ticker: &'a str,
-    pub num_decimals: usize,
-}
 
 pub struct MvxEsdtSafeTestState {
     pub common_setup: BaseSetup,
@@ -42,11 +33,11 @@ impl MvxEsdtSafeTestState {
             address: OWNER_ADDRESS,
             esdt_balances: Some(vec![
                 (
-                    TestTokenIdentifier::new(TEST_TOKEN_ONE),
+                    TestTokenIdentifier::new(FIRST_TEST_TOKEN),
                     ONE_HUNDRED_MILLION.into(),
                 ),
                 (
-                    TestTokenIdentifier::new(TEST_TOKEN_TWO),
+                    TestTokenIdentifier::new(SECOND_TEST_TOKEN),
                     ONE_HUNDRED_MILLION.into(),
                 ),
                 (
@@ -64,7 +55,7 @@ impl MvxEsdtSafeTestState {
         let user_account = AccountSetup {
             address: USER,
             esdt_balances: Some(vec![(
-                TestTokenIdentifier::new(TEST_TOKEN_ONE),
+                TestTokenIdentifier::new(FIRST_TEST_TOKEN),
                 ONE_HUNDRED_MILLION.into(),
             )]),
             egld_balance: Some(OWNER_BALANCE.into()),
@@ -76,7 +67,7 @@ impl MvxEsdtSafeTestState {
 
         common_setup
             .world
-            .register_contract(CONTRACT_CODE_PATH, mvx_esdt_safe::ContractBuilder);
+            .register_contract(MVX_ESDT_SAFE_CODE_PATH, mvx_esdt_safe::ContractBuilder);
 
         Self { common_setup }
     }
@@ -92,7 +83,7 @@ impl MvxEsdtSafeTestState {
             .from(OWNER_ADDRESS)
             .typed(MvxEsdtSafeProxy)
             .init(header_verifier_address, opt_config)
-            .code(CONTRACT_CODE_PATH)
+            .code(MVX_ESDT_SAFE_CODE_PATH)
             .new_address(ESDT_SAFE_ADDRESS)
             .run();
 
@@ -113,10 +104,10 @@ impl MvxEsdtSafeTestState {
             .world
             .account(ESDT_SAFE_ADDRESS)
             .nonce(1)
-            .code(CONTRACT_CODE_PATH)
+            .code(MVX_ESDT_SAFE_CODE_PATH)
             .owner(OWNER_ADDRESS)
             .esdt_roles(
-                TokenIdentifier::from(TEST_TOKEN_ONE),
+                TokenIdentifier::from(FIRST_TEST_TOKEN),
                 vec![
                     EsdtLocalRole::Burn.name().to_string(),
                     EsdtLocalRole::NftBurn.name().to_string(),
@@ -132,7 +123,7 @@ impl MvxEsdtSafeTestState {
                 ],
             )
             .esdt_roles(
-                TokenIdentifier::from(TEST_TOKEN_TWO),
+                TokenIdentifier::from(SECOND_TEST_TOKEN),
                 vec![
                     EsdtLocalRole::Burn.name().to_string(),
                     EsdtLocalRole::NftBurn.name().to_string(),

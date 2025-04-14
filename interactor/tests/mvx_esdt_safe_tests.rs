@@ -1,5 +1,6 @@
-use common_blackbox_setup::{
-    RegisterTokenArgs, ISSUE_COST, OPERATION_HASH_STATUS_STORAGE_KEY, SOV_TO_MVX_TOKEN_STORAGE_KEY,
+use common_tests_setup::{
+    RegisterTokenArgs, FEE_TOKEN, FIRST_TEST_TOKEN, ISSUE_COST, OPERATION_HASH_STATUS_STORAGE_KEY,
+    SECOND_TEST_TOKEN, SOV_TOKEN, SOV_TO_MVX_TOKEN_STORAGE_KEY, TOKEN_TICKER,
 };
 use error_messages::{
     BANNED_ENDPOINT_NAME, GAS_LIMIT_TOO_HIGH, INVALID_TYPE, NOTHING_TO_TRANSFER,
@@ -11,7 +12,6 @@ use multiversx_sc_snippets::{hex, imports::*};
 use proxies::fee_market_proxy::{FeeStruct, FeeType};
 use rust_interact::config::Config;
 use rust_interact::mvx_esdt_safe::mvx_esdt_safe_interactor_main::MvxEsdtSafeInteract;
-use rust_interact::{FEE_TOKEN, FIRST_TOKEN, SECOND_TOKEN, SOV_TOKEN, TOKEN_TICKER};
 use serial_test::serial;
 use structs::aliases::PaymentsVec;
 use structs::configs::EsdtSafeConfig;
@@ -72,7 +72,7 @@ async fn deposit_too_many_tokens_no_fee() {
         .await;
 
     let esdt_token_payment = EsdtTokenPayment::<StaticApi>::new(
-        TokenIdentifier::from(FIRST_TOKEN),
+        TokenIdentifier::from(FIRST_TEST_TOKEN),
         0,
         BigUint::from(1u64),
     );
@@ -116,7 +116,7 @@ async fn deposit_no_transfer_data_no_fee() {
         .await;
 
     let esdt_token_payment_one = EsdtTokenPayment::<StaticApi>::new(
-        TokenIdentifier::from(FIRST_TOKEN),
+        TokenIdentifier::from(FIRST_TEST_TOKEN),
         0,
         BigUint::from(1u64),
     );
@@ -171,13 +171,13 @@ async fn deposit_gas_limit_too_high_no_fee() {
     chain_interactor.deploy_testing_sc().await;
 
     let esdt_token_payment_one = EsdtTokenPayment::<StaticApi>::new(
-        TokenIdentifier::from(FIRST_TOKEN),
+        TokenIdentifier::from(FIRST_TEST_TOKEN),
         0,
         BigUint::from(100u64),
     );
 
     let esdt_token_payment_two = EsdtTokenPayment::<StaticApi>::new(
-        TokenIdentifier::from(SECOND_TOKEN),
+        TokenIdentifier::from(SECOND_TEST_TOKEN),
         0,
         BigUint::from(100u64),
     );
@@ -243,13 +243,13 @@ async fn deposit_endpoint_banned_no_fee() {
     chain_interactor.deploy_testing_sc().await;
 
     let esdt_token_payment_one = EsdtTokenPayment::<StaticApi>::new(
-        TokenIdentifier::from(FIRST_TOKEN),
+        TokenIdentifier::from(FIRST_TEST_TOKEN),
         0,
         BigUint::from(100u64),
     );
 
     let esdt_token_payment_two = EsdtTokenPayment::<StaticApi>::new(
-        TokenIdentifier::from(SECOND_TOKEN),
+        TokenIdentifier::from(SECOND_TEST_TOKEN),
         0,
         BigUint::from(100u64),
     );
@@ -334,13 +334,13 @@ async fn deposit_fee_enabled() {
         EsdtTokenPayment::<StaticApi>::new(TokenIdentifier::from(FEE_TOKEN), 0, fee_amount.clone());
 
     let esdt_token_payment_one = EsdtTokenPayment::<StaticApi>::new(
-        TokenIdentifier::from(FIRST_TOKEN),
+        TokenIdentifier::from(FIRST_TEST_TOKEN),
         0,
         BigUint::from(100u64),
     );
 
     let esdt_token_payment_two = EsdtTokenPayment::<StaticApi>::new(
-        TokenIdentifier::from(SECOND_TOKEN),
+        TokenIdentifier::from(SECOND_TEST_TOKEN),
         0,
         BigUint::from(100u64),
     );
@@ -463,9 +463,9 @@ async fn deposit_payment_does_not_cover_fee() {
     let per_gas = BigUint::from(1u64);
 
     let fee = FeeStruct {
-        base_token: TokenIdentifier::from(FIRST_TOKEN),
+        base_token: TokenIdentifier::from(FIRST_TEST_TOKEN),
         fee_type: FeeType::Fixed {
-            token: TokenIdentifier::from(FIRST_TOKEN),
+            token: TokenIdentifier::from(FIRST_TEST_TOKEN),
             per_transfer: per_transfer.clone(),
             per_gas: per_gas.clone(),
         },
@@ -478,13 +478,13 @@ async fn deposit_payment_does_not_cover_fee() {
     chain_interactor.deploy_testing_sc().await;
 
     let esdt_token_payment_one = EsdtTokenPayment::<StaticApi>::new(
-        TokenIdentifier::from(FIRST_TOKEN),
+        TokenIdentifier::from(FIRST_TEST_TOKEN),
         0,
         BigUint::from(1u64),
     );
 
     let esdt_token_payment_two = EsdtTokenPayment::<StaticApi>::new(
-        TokenIdentifier::from(SECOND_TOKEN),
+        TokenIdentifier::from(SECOND_TEST_TOKEN),
         0,
         BigUint::from(100u64),
     );
@@ -788,7 +788,7 @@ async fn execute_operation_no_esdt_safe_registered() {
     chain_interactor.deploy_testing_sc().await;
 
     let payment = OperationEsdtPayment::new(
-        TokenIdentifier::from(FIRST_TOKEN),
+        TokenIdentifier::from(FIRST_TEST_TOKEN),
         0,
         EsdtTokenData::default(),
     );
@@ -872,10 +872,10 @@ async fn execute_operation_success_no_fee() {
         ..Default::default()
     };
 
-    let payment = OperationEsdtPayment::new(TokenIdentifier::from(FIRST_TOKEN), 0, token_data);
+    let payment = OperationEsdtPayment::new(TokenIdentifier::from(FIRST_TEST_TOKEN), 0, token_data);
     let mut payment_vec = PaymentsVec::new();
     payment_vec.push(EsdtTokenPayment {
-        token_identifier: TokenIdentifier::from_esdt_bytes(FIRST_TOKEN),
+        token_identifier: TokenIdentifier::from_esdt_bytes(FIRST_TEST_TOKEN),
         token_nonce: 0,
         amount: BigUint::from(10_000_000_000_000_000_000u128),
     });

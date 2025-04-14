@@ -45,11 +45,14 @@ pub const TESTING_SC_CODE_PATH: MxscPath =
     MxscPath::new("../testing-sc/output/testing-sc.mxsc.json");
 pub const MVX_ESDT_SAFE_CODE_PATH: MxscPath =
     MxscPath::new("../mvx-esdt-safe/output/mvx-esdt-safe.mxsc.json");
+pub const SOV_ESDT_SAFE_CODE_PATH: MxscPath =
+    MxscPath::new("../sov-esdt-safe/output/to-sovereign.mxsc.json");
 
-pub const TEST_TOKEN_ONE: &str = "TONE-123456";
-pub const TEST_TOKEN_ONE_WITH_PREFIX: &str = "sov-TONE-123456";
-pub const TEST_TOKEN_TWO: &str = "TTWO-123456";
-pub const FEE_TOKEN: &str = "FEE-123456";
+pub const FEE_TOKEN: &str = "INTERNS-eaad15";
+pub const FIRST_TEST_TOKEN: &str = "GREEN-0e161c";
+pub const SECOND_TEST_TOKEN: &str = "LTST-4f849e";
+pub const SOV_TOKEN: &str = "sov-GREEN-0e161c";
+pub const TOKEN_TICKER: &str = "GREEN";
 
 pub const SOV_TO_MVX_TOKEN_STORAGE_KEY: &str = "sovToMxTokenId";
 pub const MVX_TO_SOV_TOKEN_STORAGE_KEY: &str = "mxToSovTokenId";

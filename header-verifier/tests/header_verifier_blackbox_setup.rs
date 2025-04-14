@@ -1,4 +1,4 @@
-use common_blackbox_setup::{
+use common_tests_setup::{
     AccountSetup, BaseSetup, ENSHRINE_ADDRESS, HEADER_VERIFIER_ADDRESS, OWNER_ADDRESS,
     OWNER_BALANCE,
 };
