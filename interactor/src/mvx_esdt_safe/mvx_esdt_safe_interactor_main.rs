@@ -16,8 +16,8 @@ use structs::operation::Operation;
 
 use crate::{config::Config, State};
 use common_blackbox_setup::{
-    RegisterTokenArgs, CHAIN_CONFIG_CODE_PATH, FEE_MARKET_CODE_PATH,
-    HEADER_VERIFIER_CODE_PATH, MVX_ESDT_SAFE_CODE_PATH, TESTING_SC_CODE_PATH,
+    RegisterTokenArgs, CHAIN_CONFIG_CODE_PATH, FEE_MARKET_CODE_PATH, HEADER_VERIFIER_CODE_PATH,
+    MVX_ESDT_SAFE_CODE_PATH, TESTING_SC_CODE_PATH,
 };
 
 pub struct MvxEsdtSafeInteract {
@@ -96,10 +96,7 @@ impl MvxEsdtSafeInteract {
 
         let found_entry = pairs.iter().find(|(key, _)| key.contains(wanted_key));
 
-        let decoded_key = hex::decode(wanted_key)
-            .ok()
-            .and_then(|bytes| String::from_utf8(bytes).ok())
-            .unwrap_or_else(|| "<invalid utf-8>".to_string());
+        let decoded_key = self.decode_from_hex(wanted_key);
 
         match expected_value {
             Some(expected) => {
@@ -112,15 +109,9 @@ impl MvxEsdtSafeInteract {
 
                 let (_, value) = found_entry.unwrap();
 
-                let decoded_expected = hex::decode(expected)
-                    .ok()
-                    .and_then(|bytes| String::from_utf8(bytes).ok())
-                    .unwrap_or_else(|| "<invalid utf-8>".to_string());
+                let decoded_expected = self.decode_from_hex(expected);
 
-                let decoded_value = hex::decode(value)
-                    .ok()
-                    .and_then(|bytes| String::from_utf8(bytes).ok())
-                    .unwrap_or_else(|| "<invalid utf-8>".to_string());
+                let decoded_value = self.decode_from_hex(value);
 
                 assert!(
                     value.contains(expected),
@@ -140,6 +131,12 @@ impl MvxEsdtSafeInteract {
                 );
             }
         }
+    }
+
+    pub fn decode_from_hex(&mut self, hex_string: &str) -> String {
+        let bytes =
+            hex::decode(hex_string).expect("Failed to decode hex string: invalid hex format");
+        String::from_utf8(bytes).expect("Failed to decode UTF-8 string: invalid UTF-8 bytes")
     }
 
     pub async fn deploy_mvx_esdt_safe(
