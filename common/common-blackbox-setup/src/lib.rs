@@ -24,10 +24,7 @@ use structs::configs::SovereignConfig;
 use cross_chain::storage::CrossChainStorage;
 
 pub const ESDT_SAFE_ADDRESS: TestSCAddress = TestSCAddress::new("esdt-safe");
-
 pub const FEE_MARKET_ADDRESS: TestSCAddress = TestSCAddress::new("fee-market");
-const FEE_MARKET_CODE_PATH: MxscPath = MxscPath::new("../fee-market/output/fee-market.mxsc.json");
-
 pub const HEADER_VERIFIER_ADDRESS: TestSCAddress = TestSCAddress::new("header-verifier");
 pub const HEADER_VERIFIER_CODE_PATH: MxscPath =
     MxscPath::new("../header-verifier/output/header-verifier.mxsc.json");
@@ -43,14 +40,38 @@ pub const ENSHRINE_ADDRESS: TestAddress = TestAddress::new("enshrine");
 pub const OWNER_ADDRESS: TestAddress = TestAddress::new("owner");
 pub const USER: TestAddress = TestAddress::new("user");
 
+pub const FEE_MARKET_CODE_PATH: MxscPath =
+    MxscPath::new("../fee-market/output/fee-market.mxsc.json");
+pub const HEADER_VERIFIER_CODE_PATH: MxscPath =
+    MxscPath::new("../header-verifier/output/header-verifier.mxsc.json");
+pub const CHAIN_CONFIG_CODE_PATH: MxscPath =
+    MxscPath::new("../chain-config/output/chain-config.mxsc.json");
+pub const TESTING_SC_CODE_PATH: MxscPath =
+    MxscPath::new("../testing-sc/output/testing-sc.mxsc.json");
+pub const MVX_ESDT_SAFE_CODE_PATH: MxscPath =
+    MxscPath::new("../mvx-esdt-safe/output/mvx-esdt-safe.mxsc.json");
+
 pub const TEST_TOKEN_ONE: &str = "TONE-123456";
 pub const TEST_TOKEN_ONE_WITH_PREFIX: &str = "sov-TONE-123456";
 pub const TEST_TOKEN_TWO: &str = "TTWO-123456";
 pub const FEE_TOKEN: &str = "FEE-123456";
 
+pub const SOV_TO_MVX_TOKEN_STORAGE_KEY: &str = "sovToMxTokenId";
+pub const MVX_TO_SOV_TOKEN_STORAGE_KEY: &str = "mxToSovTokenId";
+pub const OPERATION_HASH_STATUS_STORAGE_KEY: &str = "operationHashStatus";
+
+pub const ISSUE_COST: u64 = 50_000_000_000_000_000; // 0.05 EGLD
 pub const ONE_HUNDRED_MILLION: u32 = 100_000_000;
 pub const ONE_HUNDRED_THOUSAND: u32 = 100_000;
 pub const OWNER_BALANCE: u128 = 100_000_000_000_000_000_000_000;
+
+pub struct RegisterTokenArgs<'a> {
+    pub sov_token_id: TokenIdentifier<StaticApi>,
+    pub token_type: EsdtTokenType,
+    pub token_display_name: &'a str,
+    pub token_ticker: &'a str,
+    pub num_decimals: usize,
+}
 
 pub struct BaseSetup {
     pub world: ScenarioWorld,
