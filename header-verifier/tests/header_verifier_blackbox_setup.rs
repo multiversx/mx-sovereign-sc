@@ -1,7 +1,7 @@
-use common_blackbox_setup::{
-    AccountSetup, BaseSetup, ENSHRINE_ADDRESS, HEADER_VERIFIER_ADDRESS, OWNER_ADDRESS,
-    OWNER_BALANCE,
+use common_test_setup::constants::{
+    ENSHRINE_ADDRESS, HEADER_VERIFIER_ADDRESS, OWNER_ADDRESS, OWNER_BALANCE,
 };
+use common_test_setup::{AccountSetup, BaseSetup};
 use multiversx_sc::{
     api::ManagedTypeApi,
     types::{ManagedBuffer, MultiValueEncoded, TestAddress},

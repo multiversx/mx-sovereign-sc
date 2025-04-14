@@ -55,8 +55,8 @@ version = "3.2.0"
 [dependencies.error-messages]
 path = "../common/error-messages"
 
-[dependencies.common-blackbox-setup]
-path = "../common/common-blackbox-setup"
+[dependencies.common-test-setup]
+path = "../common/common-test-setup"
 
 [features]
 chain-simulator-tests = []

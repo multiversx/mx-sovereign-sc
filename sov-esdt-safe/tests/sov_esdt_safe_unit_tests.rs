@@ -1,6 +1,6 @@
-use common_blackbox_setup::{
-    ESDT_SAFE_ADDRESS, FEE_MARKET_ADDRESS, FEE_TOKEN, ONE_HUNDRED_MILLION, ONE_HUNDRED_THOUSAND,
-    OWNER_ADDRESS, TEST_TOKEN_ONE, TEST_TOKEN_TWO, USER,
+use common_test_setup::constants::{
+    ESDT_SAFE_ADDRESS, FEE_MARKET_ADDRESS, FEE_TOKEN, FIRST_TEST_TOKEN, ONE_HUNDRED_MILLION,
+    ONE_HUNDRED_THOUSAND, OWNER_ADDRESS, SECOND_TEST_TOKEN, USER,
 };
 use multiversx_sc::{
     imports::{MultiValue3, OptionalValue},
@@ -47,8 +47,8 @@ fn deposit_no_fee_no_transfer_data() {
     state.common_setup.deploy_testing_sc();
     state.set_fee_market_address(FEE_MARKET_ADDRESS);
 
-    let test_token_one_identifier = TestTokenIdentifier::new(TEST_TOKEN_ONE);
-    let test_token_two_identifier = TestTokenIdentifier::new(TEST_TOKEN_TWO);
+    let test_token_one_identifier = TestTokenIdentifier::new(FIRST_TEST_TOKEN);
+    let test_token_two_identifier = TestTokenIdentifier::new(SECOND_TEST_TOKEN);
 
     let esdt_token_payment_one = EsdtTokenPayment::<StaticApi>::new(
         test_token_one_identifier.into(),
@@ -137,8 +137,8 @@ fn deposit_with_fee_no_transfer_data() {
     state.common_setup.deploy_testing_sc();
     state.set_fee_market_address(FEE_MARKET_ADDRESS);
 
-    let test_token_one_identifier = TestTokenIdentifier::new(TEST_TOKEN_ONE);
-    let test_token_two_identifier = TestTokenIdentifier::new(TEST_TOKEN_TWO);
+    let test_token_one_identifier = TestTokenIdentifier::new(FIRST_TEST_TOKEN);
+    let test_token_two_identifier = TestTokenIdentifier::new(SECOND_TEST_TOKEN);
 
     let fee_amount = BigUint::from(ONE_HUNDRED_THOUSAND);
 
@@ -228,8 +228,8 @@ fn deposit_no_fee_with_transfer_data() {
     state.common_setup.deploy_testing_sc();
     state.set_fee_market_address(FEE_MARKET_ADDRESS);
 
-    let test_token_one_identifier = TestTokenIdentifier::new(TEST_TOKEN_ONE);
-    let test_token_two_identifier = TestTokenIdentifier::new(TEST_TOKEN_TWO);
+    let test_token_one_identifier = TestTokenIdentifier::new(FIRST_TEST_TOKEN);
+    let test_token_two_identifier = TestTokenIdentifier::new(SECOND_TEST_TOKEN);
 
     let esdt_token_payment_one = EsdtTokenPayment::<StaticApi>::new(
         test_token_one_identifier.into(),
@@ -291,7 +291,7 @@ fn deposit_no_fee_with_transfer_data() {
         .world
         .check_account(OWNER_ADDRESS)
         .esdt_balance(
-            TokenIdentifier::from(TEST_TOKEN_TWO),
+            TokenIdentifier::from(SECOND_TEST_TOKEN),
             &expected_amount_token_two,
         );
 }
@@ -330,8 +330,8 @@ fn deposit_with_fee_with_transfer_data() {
     state.common_setup.deploy_testing_sc();
     state.set_fee_market_address(FEE_MARKET_ADDRESS);
 
-    let test_token_one_identifier = TestTokenIdentifier::new(TEST_TOKEN_ONE);
-    let test_token_two_identifier = TestTokenIdentifier::new(TEST_TOKEN_TWO);
+    let test_token_one_identifier = TestTokenIdentifier::new(FIRST_TEST_TOKEN);
+    let test_token_two_identifier = TestTokenIdentifier::new(SECOND_TEST_TOKEN);
 
     let fee_amount = BigUint::from(ONE_HUNDRED_THOUSAND);
 
@@ -398,7 +398,7 @@ fn deposit_with_fee_with_transfer_data() {
         .world
         .check_account(OWNER_ADDRESS)
         .esdt_balance(
-            TokenIdentifier::from(TEST_TOKEN_TWO),
+            TokenIdentifier::from(SECOND_TEST_TOKEN),
             expected_amount_token_two,
         );
 

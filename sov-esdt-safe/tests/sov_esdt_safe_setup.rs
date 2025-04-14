@@ -7,22 +7,20 @@ use multiversx_sc::{
 };
 
 use multiversx_sc_scenario::{
-    api::StaticApi, imports::MxscPath, ReturnsHandledOrError, ReturnsLogs, ScenarioTxRun,
-    ScenarioTxWhitebox,
+    api::StaticApi, ReturnsHandledOrError, ReturnsLogs, ScenarioTxRun, ScenarioTxWhitebox,
 };
 
-use common_blackbox_setup::{
-    AccountSetup, BaseSetup, ESDT_SAFE_ADDRESS, FEE_MARKET_ADDRESS, FEE_TOKEN, ONE_HUNDRED_MILLION,
-    OWNER_ADDRESS, OWNER_BALANCE, TEST_TOKEN_ONE, TEST_TOKEN_TWO, USER,
+use common_test_setup::constants::{
+    ESDT_SAFE_ADDRESS, FEE_MARKET_ADDRESS, FEE_TOKEN, FIRST_TEST_TOKEN, ONE_HUNDRED_MILLION,
+    OWNER_ADDRESS, OWNER_BALANCE, SECOND_TEST_TOKEN, SOV_ESDT_SAFE_CODE_PATH, USER,
 };
+use common_test_setup::{AccountSetup, BaseSetup};
 use proxies::sov_esdt_safe_proxy::SovEsdtSafeProxy;
 use sov_esdt_safe::SovEsdtSafe;
 use structs::{
     aliases::{OptionalValueTransferDataTuple, PaymentsVec},
     configs::EsdtSafeConfig,
 };
-
-pub const SOV_ESDT_SAFE_CODE_PATH: MxscPath = MxscPath::new("output/to-sovereign.mxsc.json");
 
 pub struct SovEsdtSafeTestState {
     pub common_setup: BaseSetup,
@@ -35,11 +33,11 @@ impl SovEsdtSafeTestState {
             address: OWNER_ADDRESS,
             esdt_balances: Some(vec![
                 (
-                    TestTokenIdentifier::new(TEST_TOKEN_ONE),
+                    TestTokenIdentifier::new(FIRST_TEST_TOKEN),
                     ONE_HUNDRED_MILLION.into(),
                 ),
                 (
-                    TestTokenIdentifier::new(TEST_TOKEN_TWO),
+                    TestTokenIdentifier::new(SECOND_TEST_TOKEN),
                     ONE_HUNDRED_MILLION.into(),
                 ),
                 (
@@ -53,7 +51,7 @@ impl SovEsdtSafeTestState {
         let user_account = AccountSetup {
             address: USER,
             esdt_balances: Some(vec![(
-                TestTokenIdentifier::new(TEST_TOKEN_ONE),
+                TestTokenIdentifier::new(FIRST_TEST_TOKEN),
                 ONE_HUNDRED_MILLION.into(),
             )]),
             egld_balance: Some(OWNER_BALANCE.into()),
@@ -105,14 +103,14 @@ impl SovEsdtSafeTestState {
             .code(SOV_ESDT_SAFE_CODE_PATH)
             .owner(OWNER_ADDRESS)
             .esdt_roles(
-                TokenIdentifier::from(TEST_TOKEN_ONE),
+                TokenIdentifier::from(FIRST_TEST_TOKEN),
                 vec![
                     EsdtLocalRole::Burn.name().to_string(),
                     EsdtLocalRole::NftBurn.name().to_string(),
                 ],
             )
             .esdt_roles(
-                TokenIdentifier::from(TEST_TOKEN_TWO),
+                TokenIdentifier::from(SECOND_TEST_TOKEN),
                 vec![
                     EsdtLocalRole::Burn.name().to_string(),
                     EsdtLocalRole::NftBurn.name().to_string(),
