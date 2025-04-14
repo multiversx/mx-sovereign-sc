@@ -1,6 +1,9 @@
-use common_tests_setup::{
-    RegisterTokenArgs, ESDT_SAFE_ADDRESS, FEE_MARKET_ADDRESS, FEE_TOKEN, FIRST_TEST_TOKEN, HEADER_VERIFIER_ADDRESS, ONE_HUNDRED_MILLION, ONE_HUNDRED_THOUSAND, OWNER_ADDRESS, SECOND_TEST_TOKEN, SOV_TOKEN, TESTING_SC_ADDRESS, USER
+use common_test_setup::constants::{
+    ESDT_SAFE_ADDRESS, FEE_MARKET_ADDRESS, FEE_TOKEN, FIRST_TEST_TOKEN, HEADER_VERIFIER_ADDRESS,
+    ONE_HUNDRED_MILLION, ONE_HUNDRED_THOUSAND, OWNER_ADDRESS, SECOND_TEST_TOKEN, SOV_TOKEN,
+    TESTING_SC_ADDRESS, USER,
 };
+use common_test_setup::RegisterTokenArgs;
 use cross_chain::storage::CrossChainStorage;
 use cross_chain::{DEFAULT_ISSUE_COST, MAX_GAS_PER_TRANSACTION};
 use error_messages::{
@@ -503,7 +506,7 @@ fn deposit_endpoint_banned() {
         .check_multiversx_to_sovereign_token_id_mapper_is_empty(FIRST_TEST_TOKEN);
 }
 
-// Test that deposit with no transfer data, no fee and no payment fails 
+// Test that deposit with no transfer data, no fee and no payment fails
 #[test]
 fn deposit_no_transfer_data_no_fee() {
     let mut state = MvxEsdtSafeTestState::new();

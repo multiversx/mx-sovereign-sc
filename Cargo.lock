@@ -320,7 +320,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "common-tests-setup"
+name = "common-test-setup"
 version = "0.1.0"
 dependencies = [
  "chain-config",
@@ -763,7 +763,7 @@ dependencies = [
 name = "header-verifier"
 version = "0.1.0"
 dependencies = [
- "common-tests-setup",
+ "common-test-setup",
  "cross-chain",
  "error-messages",
  "multiversx-sc",
@@ -1449,7 +1449,7 @@ name = "mvx-esdt-safe"
 version = "0.1.0"
 dependencies = [
  "chain-config",
- "common-tests-setup",
+ "common-test-setup",
  "cross-chain",
  "error-messages",
  "fee-market",
@@ -1869,7 +1869,7 @@ version = "0.1.0"
 dependencies = [
  "base64 0.21.7",
  "clap",
- "common-tests-setup",
+ "common-test-setup",
  "error-messages",
  "header-verifier",
  "multiversx-sc",
@@ -2191,7 +2191,7 @@ dependencies = [
 name = "sov-esdt-safe"
 version = "0.1.0"
 dependencies = [
- "common-tests-setup",
+ "common-test-setup",
  "cross-chain",
  "error-messages",
  "fee-market",
