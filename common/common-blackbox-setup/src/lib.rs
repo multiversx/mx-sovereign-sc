@@ -4,9 +4,9 @@ use header_verifier::{Headerverifier, OperationHashStatus};
 use multiversx_sc_scenario::{
     api::StaticApi,
     imports::{
-        BigUint, ContractBase, EgldOrEsdtTokenIdentifier, ManagedAddress, ManagedBuffer,
-        MultiValue2, MultiValue3, MultiValueEncoded, MxscPath, TestAddress, TestSCAddress,
-        TestTokenIdentifier, Vec,
+        BigUint, ContractBase, EgldOrEsdtTokenIdentifier, EsdtTokenType, ManagedAddress,
+        ManagedBuffer, MultiValue2, MultiValue3, MultiValueEncoded, MxscPath, TestAddress,
+        TestSCAddress, TestTokenIdentifier, TokenIdentifier, Vec,
     },
     multiversx_chain_vm::crypto_functions::sha256,
     scenario_model::{Log, TxResponseStatus},
@@ -26,15 +26,10 @@ use cross_chain::storage::CrossChainStorage;
 pub const ESDT_SAFE_ADDRESS: TestSCAddress = TestSCAddress::new("esdt-safe");
 pub const FEE_MARKET_ADDRESS: TestSCAddress = TestSCAddress::new("fee-market");
 pub const HEADER_VERIFIER_ADDRESS: TestSCAddress = TestSCAddress::new("header-verifier");
-pub const HEADER_VERIFIER_CODE_PATH: MxscPath =
-    MxscPath::new("../header-verifier/output/header-verifier.mxsc.json");
 
 pub const CHAIN_CONFIG_ADDRESS: TestSCAddress = TestSCAddress::new("chain-config");
-const CHAIN_CONFIG_CODE_PATH: MxscPath =
-    MxscPath::new("../chain-config/output/chain-config.mxsc.json");
 
 pub const TESTING_SC_ADDRESS: TestSCAddress = TestSCAddress::new("testing-sc");
-const TESTING_SC_CODE_PATH: MxscPath = MxscPath::new("../testing-sc/output/testing-sc.mxsc.json");
 pub const ENSHRINE_ADDRESS: TestAddress = TestAddress::new("enshrine");
 
 pub const OWNER_ADDRESS: TestAddress = TestAddress::new("owner");
