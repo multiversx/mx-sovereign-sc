@@ -65,110 +65,6 @@ fn deploy_invalid_config() {
     state.update_configuration(config, Some(MAX_GAS_LIMIT_PER_TX_EXCEEDED));
 }
 
-/// This Test checks the flow for setting the token burn mechanism without having roles
-#[test]
-fn set_token_burn_mechanism_no_roles() {
-    let mut state = MvxEsdtSafeTestState::new();
-    state.deploy_contract(
-        HEADER_VERIFIER_ADDRESS,
-        OptionalValue::Some(EsdtSafeConfig::default_config()),
-    );
-
-    state.set_token_burn_mechanism("WEGLD", Some(MINT_AND_BURN_ROLES_NOT_FOUND));
-}
-
-/// This Test checks the flow setting the bridging mechanism for a untrusted token
-#[test]
-fn set_token_burn_mechanism_token_not_trusted() {
-    let mut state = MvxEsdtSafeTestState::new();
-    state.deploy_contract_with_roles();
-
-    state.set_token_burn_mechanism(FIRST_TEST_TOKEN, Some(TOKEN_ID_IS_NOT_TRUSTED));
-}
-
-/// This Test checks the flow setting the bridging mechanism to burn&mint
-#[test]
-fn set_token_burn_mechanism() {
-    let mut state = MvxEsdtSafeTestState::new();
-    state.deploy_contract_with_roles();
-
-    state.set_token_burn_mechanism(TRUSTED_TOKEN_IDS[0], None);
-
-    state
-        .common_setup
-        .world
-        .query()
-        .to(ESDT_SAFE_ADDRESS)
-        .whitebox(mvx_esdt_safe::contract_obj, |sc| {
-            assert!(sc
-                .burn_mechanism_tokens()
-                .contains(&TokenIdentifier::from(TRUSTED_TOKEN_IDS[0])))
-        });
-
-    state.common_setup.check_sc_esdt_balance(
-        vec![MultiValue3::from((
-            TestTokenIdentifier::new(TRUSTED_TOKEN_IDS[0]),
-            0,
-            0,
-        ))],
-        ESDT_SAFE_ADDRESS.to_managed_address(),
-        mvx_esdt_safe::contract_obj,
-    );
-}
-
-/// This Test checks the flow setting the bridging mechanism to lock&send
-#[test]
-fn set_token_lock_mechanism() {
-    let mut state = MvxEsdtSafeTestState::new();
-    state.deploy_contract_with_roles();
-
-    state.set_token_burn_mechanism(TRUSTED_TOKEN_IDS[0], None);
-    state.set_token_lock_mechanism(TRUSTED_TOKEN_IDS[0], None);
-
-    state
-        .common_setup
-        .world
-        .query()
-        .to(ESDT_SAFE_ADDRESS)
-        .whitebox(mvx_esdt_safe::contract_obj, |sc| {
-            assert!(sc.burn_mechanism_tokens().is_empty())
-        });
-
-    state.common_setup.check_sc_esdt_balance(
-        vec![MultiValue3::from((
-            TestTokenIdentifier::new(TRUSTED_TOKEN_IDS[0]),
-            100,
-            0,
-        ))],
-        ESDT_SAFE_ADDRESS.to_managed_address(),
-        mvx_esdt_safe::contract_obj,
-    );
-}
-
-/// This Test checks the flow setting the bridging mechanism to burn&mint of a Sovereign token
-#[test]
-fn set_token_lock_mechanism_token_from_sovereign() {
-    let mut state = MvxEsdtSafeTestState::new();
-    state.deploy_contract_with_roles();
-
-    state.set_token_burn_mechanism(TRUSTED_TOKEN_IDS[0], None);
-
-    state
-        .common_setup
-        .world
-        .tx()
-        .from(OWNER_ADDRESS)
-        .to(ESDT_SAFE_ADDRESS)
-        .whitebox(mvx_esdt_safe::contract_obj, |sc| {
-            sc.multiversx_to_sovereign_token_id_mapper(&TokenIdentifier::from(
-                TRUSTED_TOKEN_IDS[0],
-            ))
-            .set(TokenIdentifier::from("MOCK"));
-        });
-
-    state.set_token_lock_mechanism(TRUSTED_TOKEN_IDS[0], Some(TOKEN_IS_FROM_SOVEREIGN));
-}
-
 /// This Test checks the flow for registering an invalid token
 #[test]
 fn register_token_invalid_type() {
@@ -1911,4 +1807,117 @@ fn execute_operation_no_payments_failed_event() {
     state
         .common_setup
         .check_operation_hash_status_is_empty(&operation_hash);
+}
+
+/// This Test checks the flow for setting the token burn mechanism without having roles
+#[test]
+fn set_token_burn_mechanism_no_roles() {
+    let mut state = MvxEsdtSafeTestState::new();
+    state.deploy_contract(
+        HEADER_VERIFIER_ADDRESS,
+        OptionalValue::Some(EsdtSafeConfig::default_config()),
+    );
+
+    state.set_token_burn_mechanism("WEGLD", Some(MINT_AND_BURN_ROLES_NOT_FOUND));
+}
+
+/// This Test checks the flow setting the bridging mechanism for a untrusted token
+#[test]
+fn set_token_burn_mechanism_token_not_trusted() {
+    let mut state = MvxEsdtSafeTestState::new();
+    state.deploy_contract_with_roles();
+
+    state.set_token_burn_mechanism(FIRST_TEST_TOKEN, Some(TOKEN_ID_IS_NOT_TRUSTED));
+}
+
+/// This Test checks the flow setting the bridging mechanism to burn&mint
+/// Steps:
+/// 1. Deploy the Mvx-ESDT-Safe smart contract
+/// 2. Set token burn mechanism for any trusted token
+/// 3. Check sc storage and balance
+#[test]
+fn set_token_burn_mechanism() {
+    let mut state = MvxEsdtSafeTestState::new();
+    state.deploy_contract_with_roles();
+
+    state.set_token_burn_mechanism(TRUSTED_TOKEN_IDS[0], None);
+
+    state
+        .common_setup
+        .world
+        .query()
+        .to(ESDT_SAFE_ADDRESS)
+        .whitebox(mvx_esdt_safe::contract_obj, |sc| {
+            assert!(sc
+                .burn_mechanism_tokens()
+                .contains(&TokenIdentifier::from(TRUSTED_TOKEN_IDS[0])))
+        });
+
+    state.common_setup.check_sc_esdt_balance(
+        vec![MultiValue3::from((
+            TestTokenIdentifier::new(TRUSTED_TOKEN_IDS[0]),
+            0,
+            0,
+        ))],
+        ESDT_SAFE_ADDRESS.to_managed_address(),
+        mvx_esdt_safe::contract_obj,
+    );
+}
+
+/// This Test checks the flow setting the bridging mechanism to lock&send
+/// Steps:
+/// 1. Deploy the Mvx-ESDT-Safe smart contract
+/// 2. Set token burn mechanism for any trusted token
+/// 3. Set token lock mech
+/// 3. Check sc storage and balance
+#[test]
+fn set_token_lock_mechanism() {
+    let mut state = MvxEsdtSafeTestState::new();
+    state.deploy_contract_with_roles();
+
+    state.set_token_burn_mechanism(TRUSTED_TOKEN_IDS[0], None);
+    state.set_token_lock_mechanism(TRUSTED_TOKEN_IDS[0], None);
+
+    state
+        .common_setup
+        .world
+        .query()
+        .to(ESDT_SAFE_ADDRESS)
+        .whitebox(mvx_esdt_safe::contract_obj, |sc| {
+            assert!(sc.burn_mechanism_tokens().is_empty())
+        });
+
+    state.common_setup.check_sc_esdt_balance(
+        vec![MultiValue3::from((
+            TestTokenIdentifier::new(TRUSTED_TOKEN_IDS[0]),
+            100,
+            0,
+        ))],
+        ESDT_SAFE_ADDRESS.to_managed_address(),
+        mvx_esdt_safe::contract_obj,
+    );
+}
+
+/// This Test checks the flow setting the bridging mechanism to burn&mint of a Sovereign token
+#[test]
+fn set_token_lock_mechanism_token_from_sovereign() {
+    let mut state = MvxEsdtSafeTestState::new();
+    state.deploy_contract_with_roles();
+
+    state.set_token_burn_mechanism(TRUSTED_TOKEN_IDS[0], None);
+
+    state
+        .common_setup
+        .world
+        .tx()
+        .from(OWNER_ADDRESS)
+        .to(ESDT_SAFE_ADDRESS)
+        .whitebox(mvx_esdt_safe::contract_obj, |sc| {
+            sc.multiversx_to_sovereign_token_id_mapper(&TokenIdentifier::from(
+                TRUSTED_TOKEN_IDS[0],
+            ))
+            .set(TokenIdentifier::from("MOCK"));
+        });
+
+    state.set_token_lock_mechanism(TRUSTED_TOKEN_IDS[0], Some(TOKEN_IS_FROM_SOVEREIGN));
 }
