@@ -416,6 +416,7 @@ fn deposit_with_fee_with_transfer_data() {
         .esdt_balance(fee_token_identifier, expected_amount_token_fee);
 }
 
+/// Test the deposit function with no transfer data and no payments
 #[test]
 fn deposit_no_transfer_data_no_payments() {
     let mut state = SovEsdtSafeTestState::new();
@@ -434,6 +435,14 @@ fn deposit_no_transfer_data_no_payments() {
     );
 }
 
+/// Test the deposit function with only cross-chain sc call
+/// Steps:
+/// 1. Deploy the Sov-ESDT-Safe smart contract with roles.
+/// 2. Deploy the Fee-Market smart contract.
+/// 3. Deploy the Testing smart contract.
+/// 5. Set the Fee-Market address.
+/// 6. Create the cross-chain sc call TransferData
+/// 7. Check for the `scCall` log
 #[test]
 fn deposit_sc_call_only() {
     let mut state = SovEsdtSafeTestState::new();
