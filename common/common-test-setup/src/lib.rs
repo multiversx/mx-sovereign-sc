@@ -1,17 +1,24 @@
 #![no_std]
-
+pub mod constants;
+use constants::{
+    CHAIN_CONFIG_ADDRESS, CHAIN_CONFIG_CODE_PATH, ESDT_SAFE_ADDRESS, FEE_MARKET_ADDRESS,
+    FEE_MARKET_CODE_PATH, HEADER_VERIFIER_ADDRESS, HEADER_VERIFIER_CODE_PATH, OWNER_ADDRESS,
+    TESTING_SC_ADDRESS, TESTING_SC_CODE_PATH,
+};
+use cross_chain::storage::CrossChainStorage;
 use header_verifier::{Headerverifier, OperationHashStatus};
 use multiversx_sc_scenario::{
     api::StaticApi,
     imports::{
         BigUint, ContractBase, EgldOrEsdtTokenIdentifier, EsdtTokenType, ManagedAddress,
-        ManagedBuffer, MultiValue2, MultiValue3, MultiValueEncoded, MxscPath, TestAddress,
-        TestSCAddress, TestTokenIdentifier, TokenIdentifier, Vec,
+        ManagedBuffer, MultiValue2, MultiValue3, MultiValueEncoded, TestAddress,
+        TestTokenIdentifier, TokenIdentifier, Vec,
     },
     multiversx_chain_vm::crypto_functions::sha256,
-    scenario_model::TxResponseStatus,
+    scenario_model::{Log, TxResponseStatus},
     DebugApi, ScenarioTxRun, ScenarioTxWhitebox, ScenarioWorld,
 };
+use mvx_esdt_safe::bridging_mechanism::BridgingMechanism;
 use proxies::{
     chain_config_proxy::ChainConfigContractProxy,
     fee_market_proxy::{FeeMarketProxy, FeeStruct},
@@ -19,41 +26,6 @@ use proxies::{
     testing_sc_proxy::TestingScProxy,
 };
 use structs::configs::SovereignConfig;
-
-use cross_chain::storage::CrossChainStorage;
-
-pub const ESDT_SAFE_ADDRESS: TestSCAddress = TestSCAddress::new("esdt-safe");
-pub const FEE_MARKET_ADDRESS: TestSCAddress = TestSCAddress::new("fee-market");
-pub const HEADER_VERIFIER_ADDRESS: TestSCAddress = TestSCAddress::new("header-verifier");
-pub const TESTING_SC_ADDRESS: TestSCAddress = TestSCAddress::new("testing-sc");
-pub const CHAIN_CONFIG_ADDRESS: TestSCAddress = TestSCAddress::new("chain-config");
-pub const OWNER_ADDRESS: TestAddress = TestAddress::new("owner");
-pub const USER: TestAddress = TestAddress::new("user");
-
-pub const FEE_MARKET_CODE_PATH: MxscPath =
-    MxscPath::new("../fee-market/output/fee-market.mxsc.json");
-pub const HEADER_VERIFIER_CODE_PATH: MxscPath =
-    MxscPath::new("../header-verifier/output/header-verifier.mxsc.json");
-pub const CHAIN_CONFIG_CODE_PATH: MxscPath =
-    MxscPath::new("../chain-config/output/chain-config.mxsc.json");
-pub const TESTING_SC_CODE_PATH: MxscPath =
-    MxscPath::new("../testing-sc/output/testing-sc.mxsc.json");
-pub const MVX_ESDT_SAFE_CODE_PATH: MxscPath =
-    MxscPath::new("../mvx-esdt-safe/output/mvx-esdt-safe.mxsc.json");
-
-pub const TEST_TOKEN_ONE: &str = "TONE-123456";
-pub const TEST_TOKEN_ONE_WITH_PREFIX: &str = "sov-TONE-123456";
-pub const TEST_TOKEN_TWO: &str = "TTWO-123456";
-pub const FEE_TOKEN: &str = "FEE-123456";
-
-pub const SOV_TO_MVX_TOKEN_STORAGE_KEY: &str = "sovToMxTokenId";
-pub const MVX_TO_SOV_TOKEN_STORAGE_KEY: &str = "mxToSovTokenId";
-pub const OPERATION_HASH_STATUS_STORAGE_KEY: &str = "operationHashStatus";
-
-pub const ISSUE_COST: u64 = 50_000_000_000_000_000; // 0.05 EGLD
-pub const ONE_HUNDRED_MILLION: u32 = 100_000_000;
-pub const ONE_HUNDRED_THOUSAND: u32 = 100_000;
-pub const OWNER_BALANCE: u128 = 100_000_000_000_000_000_000_000;
 
 pub struct RegisterTokenArgs<'a> {
     pub sov_token_id: TokenIdentifier<StaticApi>,
@@ -65,6 +37,12 @@ pub struct RegisterTokenArgs<'a> {
 
 pub struct BaseSetup {
     pub world: ScenarioWorld,
+}
+
+pub struct AccountSetup<'a> {
+    pub address: TestAddress<'a>,
+    pub esdt_balances: Option<Vec<(TestTokenIdentifier<'a>, BigUint<StaticApi>)>>,
+    pub egld_balance: Option<BigUint<StaticApi>>,
 }
 
 fn world() -> ScenarioWorld {
@@ -80,34 +58,23 @@ fn world() -> ScenarioWorld {
 
 impl BaseSetup {
     #[allow(clippy::new_without_default)]
-    pub fn new() -> Self {
+    pub fn new(account_setups: Vec<AccountSetup>) -> Self {
         let mut world = world();
 
-        world
-            .account(OWNER_ADDRESS)
-            .nonce(1)
-            .esdt_balance(
-                TokenIdentifier::from(FEE_TOKEN),
-                BigUint::from(ONE_HUNDRED_MILLION),
-            )
-            .esdt_balance(
-                TokenIdentifier::from(TEST_TOKEN_ONE),
-                BigUint::from(ONE_HUNDRED_MILLION),
-            )
-            .esdt_balance(
-                TokenIdentifier::from(TEST_TOKEN_TWO),
-                BigUint::from(ONE_HUNDRED_MILLION),
-            )
-            .balance(BigUint::from(OWNER_BALANCE));
+        for acc in account_setups {
+            let mut acc_builder = world.account(acc.address).nonce(1);
 
-        world
-            .account(USER)
-            .nonce(1)
-            .esdt_balance(
-                TokenIdentifier::from(TEST_TOKEN_ONE),
-                BigUint::from(ONE_HUNDRED_MILLION),
-            )
-            .balance(BigUint::from(OWNER_BALANCE));
+            if let Some(esdt_balances) = acc.esdt_balances {
+                for (token_id, amount) in esdt_balances {
+                    acc_builder = acc_builder.esdt_balance(token_id, amount);
+                }
+            }
+
+            if let Some(balance) = acc.egld_balance {
+                acc_builder.balance(balance);
+            }
+        }
+
         Self { world }
     }
 
@@ -211,7 +178,20 @@ impl BaseSetup {
                     let balance = sc
                         .blockchain()
                         .get_sc_balance(&EgldOrEsdtTokenIdentifier::esdt(token_id), nonce);
-                    assert_eq!(balance, amount);
+                    assert_eq!(balance, BigUint::from(amount));
+                }
+            });
+    }
+
+    pub fn check_deposited_tokens_amount(&mut self, tokens: Vec<(TestTokenIdentifier, u64)>) {
+        self.world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .to(ESDT_SAFE_ADDRESS)
+            .whitebox(mvx_esdt_safe::contract_obj, |sc| {
+                for token in tokens {
+                    let (token_id, amount) = token;
+                    assert!(sc.deposited_tokens_amount(&token_id.into()).get() == amount);
                 }
             });
     }
@@ -268,5 +248,15 @@ impl BaseSetup {
                 );
             },
         )
+    }
+
+    pub fn assert_expected_log(&mut self, logs: Vec<Log>, expected_log: &str) {
+        let expected_bytes = ManagedBuffer::<StaticApi>::from(expected_log).to_vec();
+
+        let found_log = logs
+            .iter()
+            .find(|log| log.topics.iter().any(|topic| *topic == expected_bytes));
+
+        assert!(found_log.is_some(), "Expected log not found");
     }
 }

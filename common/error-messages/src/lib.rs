@@ -43,5 +43,10 @@ pub const ITEM_NOT_IN_LIST: &str = "Item not found in list";
 pub const TOKEN_ID_NO_PREFIX: &str = "Token Id does not have prefix";
 pub const TOKEN_NOT_ACCEPTED_AS_FEE: &str = "Token not accepted as fee";
 pub const CANNOT_REGISTER_TOKEN: &str = "Cannot register token";
+pub const TOKEN_ID_IS_NOT_TRUSTED: &str = "Token is not trusted";
+pub const MINT_AND_BURN_ROLES_NOT_FOUND: &str = "This token does not have Mint and Burn roles";
+pub const TOKEN_IS_FROM_SOVEREIGN: &str = "Token is from a Sovereign Chain, it cannot be locked";
+pub const DEPOSIT_AMOUNT_SMALLER_THAN_PAYMENT_AMOUNT: &str =
+    "The deposit amount should not be less than the payment amount";
 pub const NATIVE_TOKEN_ALREADY_REGISTERED: &str = "Native token was already registered";
 pub const ERR_EMPTY_PAYMENTS: &str = "No payments";

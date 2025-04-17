@@ -1,3 +1,4 @@
+use common_test_setup::constants::{ENSHRINE_ADDRESS, HEADER_VERIFIER_ADDRESS, OWNER_ADDRESS};
 use error_messages::{
     CURRENT_OPERATION_NOT_REGISTERED, NO_ESDT_SAFE_ADDRESS, ONLY_ESDT_SAFE_CALLER,
     OUTGOING_TX_HASH_ALREADY_REGISTERED,
@@ -13,17 +14,18 @@ mod header_verifier_blackbox_setup;
 fn test_deploy() {
     let mut state = HeaderVerifierTestState::new();
 
-    state.deploy();
+    state.common_setup.deploy_header_verifier();
 }
 
 #[test]
 fn test_register_esdt_address() {
     let mut state = HeaderVerifierTestState::new();
 
-    state.deploy();
+    state.common_setup.deploy_header_verifier();
     state.propose_register_esdt_address(ENSHRINE_ADDRESS);
 
     state
+        .common_setup
         .world
         .query()
         .to(HEADER_VERIFIER_ADDRESS)
@@ -38,7 +40,7 @@ fn test_register_esdt_address() {
 fn test_register_bridge_operation() {
     let mut state = HeaderVerifierTestState::new();
 
-    state.deploy();
+    state.common_setup.deploy_header_verifier();
 
     let operation_1 = ManagedBuffer::from("operation_1");
     let operation_2 = ManagedBuffer::from("operation_2");
@@ -47,6 +49,7 @@ fn test_register_bridge_operation() {
     state.propose_register_operations(operation.clone());
 
     state
+        .common_setup
         .world
         .query()
         .to(HEADER_VERIFIER_ADDRESS)
@@ -77,7 +80,7 @@ fn test_register_bridge_operation() {
 fn test_remove_executed_hash_caller_not_esdt_address() {
     let mut state = HeaderVerifierTestState::new();
 
-    state.deploy();
+    state.common_setup.deploy_header_verifier();
 
     let operation_1 = ManagedBuffer::from("operation_1");
     let operation_2 = ManagedBuffer::from("operation_2");
@@ -97,7 +100,7 @@ fn test_remove_executed_hash_caller_not_esdt_address() {
 fn test_remove_executed_hash_no_esdt_address_registered() {
     let mut state = HeaderVerifierTestState::new();
 
-    state.deploy();
+    state.common_setup.deploy_header_verifier();
 
     let operation_1 = ManagedBuffer::from("operation_1");
     let operation_2 = ManagedBuffer::from("operation_2");
@@ -116,7 +119,7 @@ fn test_remove_executed_hash_no_esdt_address_registered() {
 fn test_remove_one_executed_hash() {
     let mut state = HeaderVerifierTestState::new();
 
-    state.deploy();
+    state.common_setup.deploy_header_verifier();
 
     let operation_hash_1 = ManagedBuffer::from("operation_1");
     let operation_hash_2 = ManagedBuffer::from("operation_2");
@@ -134,6 +137,7 @@ fn test_remove_one_executed_hash() {
     );
 
     state
+        .common_setup
         .world
         .query()
         .to(HEADER_VERIFIER_ADDRESS)
@@ -157,7 +161,7 @@ fn test_remove_one_executed_hash() {
 fn test_remove_all_executed_hashes() {
     let mut state = HeaderVerifierTestState::new();
 
-    state.deploy();
+    state.common_setup.deploy_header_verifier();
 
     let operation_1 = ManagedBuffer::from("operation_1");
     let operation_2 = ManagedBuffer::from("operation_2");
@@ -180,6 +184,7 @@ fn test_remove_all_executed_hashes() {
         None,
     );
     state
+        .common_setup
         .world
         .query()
         .to(HEADER_VERIFIER_ADDRESS)
@@ -202,7 +207,7 @@ fn test_remove_all_executed_hashes() {
 fn test_lock_operation_not_registered() {
     let mut state = HeaderVerifierTestState::new();
 
-    state.deploy();
+    state.common_setup.deploy_header_verifier();
     state.propose_register_esdt_address(ENSHRINE_ADDRESS);
 
     let operation_1 = ManagedBuffer::from("operation_1");
@@ -221,7 +226,7 @@ fn test_lock_operation_not_registered() {
 fn test_lock_operation() {
     let mut state = HeaderVerifierTestState::new();
 
-    state.deploy();
+    state.common_setup.deploy_header_verifier();
     state.propose_register_esdt_address(ENSHRINE_ADDRESS);
 
     let operation_1 = ManagedBuffer::from("operation_1");
@@ -238,6 +243,7 @@ fn test_lock_operation() {
     );
 
     state
+        .common_setup
         .world
         .query()
         .to(HEADER_VERIFIER_ADDRESS)
@@ -262,27 +268,25 @@ fn test_lock_operation() {
 fn test_change_validator_set() {
     let mut state = HeaderVerifierTestState::new();
 
-    state.deploy();
+    state.common_setup.deploy_header_verifier();
 
     let operation_hash = ManagedBuffer::from("operation_1");
     let hash_of_hashes = state.get_operation_hash(&operation_hash);
 
-    if let Some(change_validator_set_log) = state.change_validator_set(
+    state.change_validator_set(
         &ManagedBuffer::new(),
         &hash_of_hashes,
         &operation_hash,
         None,
-    ) {
-        assert!(!change_validator_set_log.data.is_empty());
-        assert!(!change_validator_set_log.topics.is_empty());
-    }
+        Some("executedBridgeOp"),
+    );
 }
 
 #[test]
 fn test_change_validator_set_operation_already_registered() {
     let mut state = HeaderVerifierTestState::new();
 
-    state.deploy();
+    state.common_setup.deploy_header_verifier();
 
     let operation_1 = ManagedBuffer::from("operation_1");
     let operation_2 = ManagedBuffer::from("operation_2");
@@ -295,5 +299,6 @@ fn test_change_validator_set_operation_already_registered() {
         &operation.bridge_operation_hash,
         &operation.operations_hashes.to_vec().get(0),
         Some(OUTGOING_TX_HASH_ALREADY_REGISTERED),
+        None,
     );
 }

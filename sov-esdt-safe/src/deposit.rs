@@ -50,11 +50,19 @@ pub trait DepositModule:
 
         self.match_fee_payment(total_tokens_for_fees, &fees_payment, &option_transfer_data);
 
-        // Refund tokens
         let caller = self.blockchain().get_caller();
         self.refund_tokens(&caller, refundable_payments);
 
         let tx_nonce = self.get_and_save_next_tx_id();
+
+        if payments.is_empty() {
+            self.sc_call_event(
+                &to,
+                OperationData::new(tx_nonce, caller, option_transfer_data),
+            );
+
+            return;
+        }
         self.deposit_event(
             &to,
             &event_payments,
@@ -62,28 +70,21 @@ pub trait DepositModule:
         );
     }
 
-    /// Processes an individual payment.
-    ///
-    /// It validates the payment and, if the token is not whitelisted, adds it to the refundable payments.
-    /// Otherwise, it burns the sovereign token and returns the event payment data.
     fn process_payment(
         &self,
         current_sc_address: &ManagedAddress,
         payment: &EsdtTokenPayment<Self::Api>,
         refundable_payments: &mut ManagedVec<Self::Api, EsdtTokenPayment<Self::Api>>,
     ) -> Option<EventPaymentTuple<Self::Api>> {
-        // Validate payment details.
         self.require_below_max_amount(&payment.token_identifier, &payment.amount);
         self.require_token_not_on_blacklist(&payment.token_identifier);
 
-        // If token is not whitelisted, mark it for refund.
         if !self.is_token_whitelist_empty() && !self.is_token_whitelisted(&payment.token_identifier)
         {
             refundable_payments.push(payment.clone());
             return None;
         }
 
-        // For valid tokens, burn and get the event token data.
         self.burn_sovereign_token(payment);
         Some(self.get_event_payment_token_data(current_sc_address, payment))
     }

@@ -15,10 +15,11 @@ use structs::configs::{EsdtSafeConfig, SovereignConfig};
 use structs::operation::Operation;
 
 use crate::{config::Config, State};
-use common_blackbox_setup::{
-    RegisterTokenArgs, CHAIN_CONFIG_CODE_PATH, FEE_MARKET_CODE_PATH, HEADER_VERIFIER_CODE_PATH,
+use common_test_setup::constants::{
+    CHAIN_CONFIG_CODE_PATH, FEE_MARKET_CODE_PATH, HEADER_VERIFIER_CODE_PATH,
     MVX_ESDT_SAFE_CODE_PATH, TESTING_SC_CODE_PATH,
 };
+use common_test_setup::RegisterTokenArgs;
 
 pub struct MvxEsdtSafeInteract {
     pub interactor: Interactor,
@@ -148,7 +149,7 @@ impl MvxEsdtSafeInteract {
             .interactor
             .tx()
             .from(&self.owner_address)
-            .gas(90_000_000u64)
+            .gas(120_000_000u64)
             .typed(MvxEsdtSafeProxy)
             .init(header_verifier_address, opt_config)
             .code(MVX_ESDT_SAFE_CODE_PATH)
@@ -171,7 +172,7 @@ impl MvxEsdtSafeInteract {
             .interactor
             .tx()
             .from(&self.owner_address)
-            .gas(30_000_000u64)
+            .gas(120_000_000u64)
             .typed(HeaderverifierProxy)
             .init()
             .code(HEADER_VERIFIER_CODE_PATH)
@@ -198,7 +199,7 @@ impl MvxEsdtSafeInteract {
             .interactor
             .tx()
             .from(&self.owner_address)
-            .gas(60_000_000u64)
+            .gas(120_000_000u64)
             .typed(FeeMarketProxy)
             .init(esdt_safe_address, fee)
             .code(FEE_MARKET_CODE_PATH)
@@ -221,7 +222,7 @@ impl MvxEsdtSafeInteract {
             .interactor
             .tx()
             .from(&self.owner_address)
-            .gas(30_000_000u64)
+            .gas(120_000_000u64)
             .typed(TestingScProxy)
             .init()
             .code(TESTING_SC_CODE_PATH)
@@ -245,7 +246,7 @@ impl MvxEsdtSafeInteract {
             .tx()
             .from(&self.owner_address)
             .to(self.state.current_header_verifier_address())
-            .gas(30_000_000u64)
+            .gas(90_000_000u64)
             .typed(HeaderverifierProxy)
             .set_esdt_safe_address(self.state.current_mvx_esdt_safe_contract_address())
             .returns(ReturnsResultUnmanaged)
@@ -261,7 +262,7 @@ impl MvxEsdtSafeInteract {
             .interactor
             .tx()
             .from(&self.owner_address)
-            .gas(60_000_000u64)
+            .gas(120_000_000u64)
             .typed(ChainConfigContractProxy)
             .init(
                 config.min_validators as usize,
@@ -316,7 +317,7 @@ impl MvxEsdtSafeInteract {
             .tx()
             .from(&self.owner_address)
             .to(self.state.current_header_verifier_address())
-            .gas(30_000_000u64)
+            .gas(90_000_000u64)
             .typed(HeaderverifierProxy)
             .register_bridge_operations(
                 signature,
@@ -336,7 +337,7 @@ impl MvxEsdtSafeInteract {
             .tx()
             .to(self.state.current_mvx_esdt_safe_contract_address())
             .from(&self.owner_address)
-            .gas(30_000_000u64)
+            .gas(90_000_000u64)
             .typed(MvxEsdtSafeProxy)
             .upgrade()
             .code(MVX_ESDT_SAFE_CODE_PATH)
@@ -354,7 +355,7 @@ impl MvxEsdtSafeInteract {
             .tx()
             .from(&self.owner_address)
             .to(self.state.current_mvx_esdt_safe_contract_address())
-            .gas(30_000_000u64)
+            .gas(90_000_000u64)
             .typed(MvxEsdtSafeProxy)
             .update_configuration(new_config)
             .returns(ReturnsResultUnmanaged)
@@ -370,7 +371,7 @@ impl MvxEsdtSafeInteract {
             .tx()
             .from(&self.owner_address)
             .to(self.state.current_mvx_esdt_safe_contract_address())
-            .gas(30_000_000u64)
+            .gas(90_000_000u64)
             .typed(MvxEsdtSafeProxy)
             .set_fee_market_address(fee_market_address)
             .returns(ReturnsResultUnmanaged)
@@ -470,7 +471,7 @@ impl MvxEsdtSafeInteract {
             .tx()
             .from(&self.owner_address)
             .to(self.state.current_mvx_esdt_safe_contract_address())
-            .gas(30_000_000u64)
+            .gas(90_000_000u64)
             .typed(MvxEsdtSafeProxy)
             .pause_endpoint()
             .returns(ReturnsResultUnmanaged)
@@ -486,7 +487,7 @@ impl MvxEsdtSafeInteract {
             .tx()
             .from(&self.owner_address)
             .to(self.state.current_mvx_esdt_safe_contract_address())
-            .gas(30_000_000u64)
+            .gas(90_000_000u64)
             .typed(MvxEsdtSafeProxy)
             .unpause_endpoint()
             .returns(ReturnsResultUnmanaged)
@@ -519,7 +520,7 @@ impl MvxEsdtSafeInteract {
             .tx()
             .from(&self.owner_address)
             .to(self.state.current_mvx_esdt_safe_contract_address())
-            .gas(30_000_000u64)
+            .gas(90_000_000u64)
             .typed(MvxEsdtSafeProxy)
             .set_max_bridged_amount(token_id, max_amount)
             .returns(ReturnsResultUnmanaged)
