@@ -2,6 +2,7 @@ use common_test_setup::constants::{
     ESDT_SAFE_ADDRESS, FEE_MARKET_ADDRESS, FEE_TOKEN, FIRST_TEST_TOKEN, ONE_HUNDRED_MILLION,
     ONE_HUNDRED_THOUSAND, OWNER_ADDRESS, SECOND_TEST_TOKEN, USER,
 };
+use error_messages::NOTHING_TO_TRANSFER;
 use multiversx_sc::{
     imports::{MultiValue3, OptionalValue},
     types::{
@@ -166,8 +167,9 @@ fn deposit_with_fee_no_transfer_data() {
     state.deposit(
         USER.to_managed_address(),
         OptionalValue::None,
-        Some(payments_vec.clone()),
+        payments_vec.clone(),
         None,
+        Some("deposit"),
     );
 
     let expected_amount_token_one =
@@ -368,8 +370,9 @@ fn deposit_with_fee_with_transfer_data() {
     state.deposit(
         USER.to_managed_address(),
         OptionalValue::Some(transfer_data),
-        Some(payments_vec.clone()),
+        payments_vec.clone(),
         None,
+        Some("deposit"),
     );
 
     let expected_amount_token_one =
@@ -411,4 +414,49 @@ fn deposit_with_fee_with_transfer_data() {
         .world
         .check_account(OWNER_ADDRESS)
         .esdt_balance(fee_token_identifier, expected_amount_token_fee);
+}
+
+#[test]
+fn deposit_no_transfer_data_no_payments() {
+    let mut state = SovEsdtSafeTestState::new();
+
+    state.deploy_contract_with_roles();
+    state.common_setup.deploy_fee_market(None);
+    state.common_setup.deploy_testing_sc();
+    state.set_fee_market_address(FEE_MARKET_ADDRESS);
+
+    state.deposit(
+        USER.to_managed_address(),
+        OptionalValue::None,
+        PaymentsVec::new(),
+        Some(NOTHING_TO_TRANSFER),
+        None,
+    );
+}
+
+#[test]
+fn deposit_sc_call_only() {
+    let mut state = SovEsdtSafeTestState::new();
+
+    state.deploy_contract_with_roles();
+    state.common_setup.deploy_fee_market(None);
+    state.common_setup.deploy_testing_sc();
+    state.set_fee_market_address(FEE_MARKET_ADDRESS);
+
+    let gas_limit = 2;
+    let function = ManagedBuffer::<StaticApi>::from("hello");
+    let args =
+        MultiValueEncoded::<StaticApi, ManagedBuffer<StaticApi>>::from(ManagedVec::from(vec![
+            ManagedBuffer::from("1"),
+        ]));
+
+    let transfer_data = MultiValue3::from((gas_limit, function, args));
+
+    state.deposit(
+        USER.to_managed_address(),
+        OptionalValue::Some(transfer_data.clone()),
+        PaymentsVec::new(),
+        None,
+        Some("scCall"),
+    );
 }

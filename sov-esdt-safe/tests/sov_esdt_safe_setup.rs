@@ -159,28 +159,29 @@ impl SovEsdtSafeTestState {
         &mut self,
         to: ManagedAddress<StaticApi>,
         opt_transfer_data: OptionalValueTransferDataTuple<StaticApi>,
-        opt_payment: Option<PaymentsVec<StaticApi>>,
+        payment: PaymentsVec<StaticApi>,
         expected_error_message: Option<&str>,
+        expected_custom_log: Option<&str>,
     ) {
-        let tx = self
+        let (logs, response) = self
             .common_setup
             .world
             .tx()
             .from(OWNER_ADDRESS)
             .to(ESDT_SAFE_ADDRESS)
             .typed(SovEsdtSafeProxy)
-            .deposit(to, opt_transfer_data);
-
-        let response = if let Some(payment) = opt_payment {
-            tx.payment(payment)
-                .returns(ReturnsHandledOrError::new())
-                .run()
-        } else {
-            tx.returns(ReturnsHandledOrError::new()).run()
-        };
+            .deposit(to, opt_transfer_data.clone())
+            .payment(payment)
+            .returns(ReturnsLogs)
+            .returns(ReturnsHandledOrError::new())
+            .run();
 
         self.common_setup
             .assert_expected_error_message(response, expected_error_message);
+
+        if let Some(custom_log) = expected_custom_log {
+            self.common_setup.assert_expected_log(logs, custom_log)
+        };
     }
 
     pub fn set_fee_market_address(&mut self, fee_market_address: TestSCAddress) {

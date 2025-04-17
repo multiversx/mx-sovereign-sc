@@ -54,6 +54,15 @@ pub trait DepositModule:
         self.refund_tokens(&caller, refundable_payments);
 
         let tx_nonce = self.get_and_save_next_tx_id();
+
+        if payments.is_empty() {
+            self.sc_call_event(
+                &to,
+                OperationData::new(tx_nonce, caller, option_transfer_data),
+            );
+
+            return;
+        }
         self.deposit_event(
             &to,
             &event_payments,
