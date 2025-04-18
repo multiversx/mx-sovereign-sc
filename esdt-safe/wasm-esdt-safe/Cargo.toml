@@ -5,9 +5,9 @@
 # ##########################################
 
 [package]
-name = "header-verifier-wasm"
+name = "esdt-safe-wasm"
 version = "0.0.0"
-edition = "2021"
+edition = "2018"
 publish = false
 
 [lib]
@@ -24,11 +24,11 @@ overflow-checks = false
 [profile.dev]
 panic = "abort"
 
-[dependencies.header-verifier]
+[dependencies.esdt-safe]
 path = ".."
 
 [dependencies.multiversx-sc-wasm-adapter]
-version = "=0.56.1"
+version = "=0.57.1"
 
 [workspace]
 members = ["."]
