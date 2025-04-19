@@ -1,0 +1,11 @@
+[package]
+name = "structs"
+version = "0.1.0"
+authors = ["dorin-iancu <dorin.iancu@multiversx.com>"]
+edition = "2021"
+
+[lib]
+path = "src/lib.rs"
+
+[dependencies.multiversx-sc]
+version = "=0.57.1"
