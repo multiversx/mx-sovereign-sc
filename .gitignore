@@ -9,6 +9,10 @@
 # VSCode specific files
 .vscode/*
 
-# .lock specific files
-**/Cargo.lock
+# Cargo.lock files
+/**/Cargo.lock
 !**/wasm*/Cargo.lock
+!Cargo.lock
+
+# MacOS files
+**.DS_STORE
