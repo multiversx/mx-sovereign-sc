@@ -21,14 +21,26 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5c8214115b7bf84099f1309324e63141d4c5d7cc26862f97a0a857dbefe165bd"
 
 [[package]]
+<<<<<<<< HEAD:esdt-safe/wasm-esdt-safe/Cargo.lock
 name = "chain-config"
 version = "0.0.0"
+========
+name = "cross-chain"
+version = "0.1.0"
+>>>>>>>> main:header-verifier/wasm-header-verifier/Cargo.lock
 dependencies = [
+ "error-messages",
  "multiversx-sc",
  "multiversx-sc-modules",
+<<<<<<<< HEAD:esdt-safe/wasm-esdt-safe/Cargo.lock
  "operation",
  "proxies",
  "setup-phase",
+========
+ "proxies",
+ "structs",
+ "utils",
+>>>>>>>> main:header-verifier/wasm-header-verifier/Cargo.lock
 ]
 
 [[package]]
@@ -38,6 +50,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c34f04666d835ff5d62e058c3995147c06f42fe86ff053337632bca83e42702d"
 
 [[package]]
+<<<<<<<< HEAD:esdt-safe/wasm-esdt-safe/Cargo.lock
 name = "esdt-safe"
 version = "0.0.0"
 dependencies = [
@@ -54,11 +67,18 @@ dependencies = [
  "tx-batch-module",
  "utils",
 ]
+========
+name = "error-messages"
+version = "0.1.0"
+>>>>>>>> main:header-verifier/wasm-header-verifier/Cargo.lock
 
 [[package]]
-name = "esdt-safe-wasm"
-version = "0.0.0"
+name = "generic-array"
+version = "1.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e8c8444bc9d71b935156cc0ccab7f622180808af7867b1daae6547d773591703"
 dependencies = [
+<<<<<<<< HEAD:esdt-safe/wasm-esdt-safe/Cargo.lock
  "esdt-safe",
  "multiversx-sc-wasm-adapter",
 ]
@@ -72,6 +92,9 @@ dependencies = [
  "proxies",
  "setup-phase",
  "utils",
+========
+ "typenum",
+>>>>>>>> main:header-verifier/wasm-header-verifier/Cargo.lock
 ]
 
 [[package]]
@@ -85,13 +108,29 @@ dependencies = [
 
 [[package]]
 name = "header-verifier"
+version = "0.1.0"
+dependencies = [
+ "cross-chain",
+ "error-messages",
+ "multiversx-sc",
+ "proxies",
+ "structs",
+]
+
+[[package]]
+name = "header-verifier-wasm"
 version = "0.0.0"
 dependencies = [
+<<<<<<<< HEAD:esdt-safe/wasm-esdt-safe/Cargo.lock
  "chain-config",
  "multiversx-sc",
  "operation",
  "proxies",
  "setup-phase",
+========
+ "header-verifier",
+ "multiversx-sc-wasm-adapter",
+>>>>>>>> main:header-verifier/wasm-header-verifier/Cargo.lock
 ]
 
 [[package]]
@@ -105,13 +144,6 @@ name = "hex-literal"
 version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6fe2267d4ed49bc07b63801559be28c718ea06c4738b7a03c94df7386d2cde46"
-
-[[package]]
-name = "max-bridged-amount-module"
-version = "0.0.0"
-dependencies = [
- "multiversx-sc",
-]
 
 [[package]]
 name = "multiversx-chain-core"
@@ -233,8 +265,12 @@ name = "proxies"
 version = "0.1.0"
 dependencies = [
  "multiversx-sc",
+<<<<<<<< HEAD:esdt-safe/wasm-esdt-safe/Cargo.lock
  "operation",
  "tx-batch-module",
+========
+ "structs",
+>>>>>>>> main:header-verifier/wasm-header-verifier/Cargo.lock
 ]
 
 [[package]]
@@ -257,19 +293,28 @@ dependencies = [
 ]
 
 [[package]]
-name = "setup-phase"
-version = "0.0.0"
-dependencies = [
- "multiversx-sc",
-]
-
-[[package]]
 name = "smallvec"
 version = "1.15.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8917285742e9f3e1683f0a9c4e6b57960b7314d0b08d30d1ecd426713ee2eee9"
 
 [[package]]
+name = "structs"
+version = "0.1.0"
+dependencies = [
+ "multiversx-sc",
+]
+
+[[package]]
+<<<<<<<< HEAD:esdt-safe/wasm-esdt-safe/Cargo.lock
+name = "smallvec"
+version = "1.15.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8917285742e9f3e1683f0a9c4e6b57960b7314d0b08d30d1ecd426713ee2eee9"
+
+[[package]]
+========
+>>>>>>>> main:header-verifier/wasm-header-verifier/Cargo.lock
 name = "syn"
 version = "2.0.100"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -281,6 +326,7 @@ dependencies = [
 ]
 
 [[package]]
+<<<<<<<< HEAD:esdt-safe/wasm-esdt-safe/Cargo.lock
 name = "token-whitelist"
 version = "0.0.0"
 dependencies = [
@@ -307,6 +353,17 @@ checksum = "1dccffe3ce07af9386bfd29e80c0ab1a8205a2fc34e4bcd40364df902cfa8f3f"
 name = "unicode-ident"
 version = "1.0.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
+========
+name = "typenum"
+version = "1.18.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1dccffe3ce07af9386bfd29e80c0ab1a8205a2fc34e4bcd40364df902cfa8f3f"
+
+[[package]]
+name = "unicode-ident"
+version = "1.0.18"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+>>>>>>>> main:header-verifier/wasm-header-verifier/Cargo.lock
 checksum = "5a5f39404a5da50712a4c1eecf25e90dd62b613502b7e925fd4e4d19b5c96512"
 
 [[package]]
@@ -317,8 +374,14 @@ checksum = "151ac09978d3c2862c4e39b557f4eceee2cc72150bc4cb4f16abf061b6e381fb"
 
 [[package]]
 name = "utils"
-version = "0.0.0"
+version = "0.1.0"
 dependencies = [
+<<<<<<<< HEAD:esdt-safe/wasm-esdt-safe/Cargo.lock
  "multiversx-sc",
  "operation",
+========
+ "error-messages",
+ "multiversx-sc",
+ "structs",
+>>>>>>>> main:header-verifier/wasm-header-verifier/Cargo.lock
 ]

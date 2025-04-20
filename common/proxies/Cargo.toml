@@ -11,3 +11,6 @@ path = "../operation"
 
 [dependencies.tx-batch-module]
 path = "../tx-batch-module"
+
+[dependencies.structs]
+path = "../structs"

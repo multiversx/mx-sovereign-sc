@@ -1,8 +1,8 @@
 [package]
 name = "chain-factory"
-version = "0.0.0"
+version = "0.1.0"
 authors = ["you"]
-edition = "2018"
+edition = "2021"
 publish = false
 
 [lib]
@@ -31,3 +31,6 @@ path = "../common/proxies"
 
 [dependencies.operation]
 path = "../common/operation"
+
+[dependencies.error-messages]
+path = "../common/error-messages"

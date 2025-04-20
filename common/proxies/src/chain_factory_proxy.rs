@@ -8,6 +8,7 @@
 #![allow(clippy::all)]
 
 use multiversx_sc::proxy_imports::*;
+use structs::configs::{EsdtSafeConfig, SovereignConfig};
 
 pub struct ChainFactoryContractProxy;
 
@@ -98,7 +99,7 @@ where
     Gas: TxGas<Env>,
 {
     pub fn deploy_sovereign_chain_config_contract<
-        Arg0: ProxyArg<operation::SovereignConfig<Env::Api>>,
+        Arg0: ProxyArg<SovereignConfig<Env::Api>>,
     >(
         self,
         config: Arg0,
@@ -144,7 +145,7 @@ where
         Arg1: ProxyArg<ManagedAddress<Env::Api>>,
         Arg2: ProxyArg<TokenIdentifier<Env::Api>>,
         Arg3: ProxyArg<ManagedBuffer<Env::Api>>,
-        Arg4: ProxyArg<Option<operation::BridgeConfig<Env::Api>>>,
+        Arg4: ProxyArg<Option<EsdtSafeConfig<Env::Api>>>,
     >(
         self,
         is_sovereign_chain: Arg0,
