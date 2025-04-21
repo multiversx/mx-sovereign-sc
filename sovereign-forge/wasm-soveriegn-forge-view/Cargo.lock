@@ -194,6 +194,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "mvx-esdt-safe"
+version = "0.1.0"
+dependencies = [
+ "chain-config",
+ "cross-chain",
+ "error-messages",
+ "fee-market",
+ "header-verifier",
+ "multiversx-sc",
+ "multiversx-sc-modules",
+ "proxies",
+ "setup-phase",
+ "structs",
+ "testing-sc",
+ "utils",
+]
+
+[[package]]
 name = "nibble_vec"
 version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -271,6 +289,7 @@ dependencies = [
  "header-verifier",
  "multiversx-sc",
  "multiversx-sc-modules",
+ "mvx-esdt-safe",
  "proxies",
  "setup-phase",
  "structs",
@@ -301,6 +320,13 @@ dependencies = [
  "proc-macro2",
  "quote",
  "unicode-ident",
+]
+
+[[package]]
+name = "testing-sc"
+version = "0.1.0"
+dependencies = [
+ "multiversx-sc",
 ]
 
 [[package]]
