@@ -20,13 +20,14 @@ version = "=0.57.1"
 [dependencies.multiversx-sc-modules]
 version = "=0.57.1"
 
-[dependencies.operation]
-path = "../common/operation"
+[dependencies.structs]
+path = "../common/structs"
 
 [dependencies.proxies]
 path = "../common/proxies"
 
 [dependencies.setup-phase]
 path = "../common/setup-phase"
+
 [dependencies.error-messages]
 path = "../common/error-messages"
