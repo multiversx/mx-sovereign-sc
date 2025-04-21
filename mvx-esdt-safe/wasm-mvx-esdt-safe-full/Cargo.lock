@@ -27,6 +27,9 @@ dependencies = [
  "error-messages",
  "multiversx-sc",
  "multiversx-sc-modules",
+ "proxies",
+ "setup-phase",
+ "structs",
 ]
 
 [[package]]
@@ -58,6 +61,7 @@ dependencies = [
  "error-messages",
  "multiversx-sc",
  "proxies",
+ "setup-phase",
  "structs",
  "utils",
 ]
@@ -79,6 +83,7 @@ dependencies = [
  "error-messages",
  "multiversx-sc",
  "proxies",
+ "setup-phase",
  "structs",
 ]
 
