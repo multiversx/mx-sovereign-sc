@@ -8,8 +8,8 @@ publish = false
 [lib]
 path = "src/lib.rs"
 
-[dependencies.operation]
-path = "../common/operation"
+[dependencies.structs]
+path = "../common/structs"
 
 [dependencies.proxies]
 path = "../common/proxies"

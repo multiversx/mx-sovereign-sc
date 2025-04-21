@@ -5,8 +5,8 @@ use multiversx_sc::types::{
     system_proxy, EsdtTokenPayment, ManagedArgBuffer, MultiValueEncoded, ToSelf,
 };
 use multiversx_sc::types::{ManagedVec, TokenIdentifier};
-use operation::aliases::GasLimit;
-use operation::{OperationEsdtPayment, TransferData};
+use structs::aliases::GasLimit;
+use structs::operation::{OperationEsdtPayment, TransferData};
 
 use crate::common_storage;
 
