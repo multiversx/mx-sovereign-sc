@@ -26,9 +26,6 @@ multiversx_sc_wasm_adapter::endpoints! {
         setEsdtSafeAddress => set_esdt_safe_address
         removeExecutedHash => remove_executed_hash
         lockOperationHash => lock_operation_hash
-        changeValidatorSet => change_validator_set
-        updateConfig => update_config
-        completeSetupPhase => complete_setup_phase
     )
 }
 

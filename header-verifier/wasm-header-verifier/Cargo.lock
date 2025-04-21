@@ -21,26 +21,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5c8214115b7bf84099f1309324e63141d4c5d7cc26862f97a0a857dbefe165bd"
 
 [[package]]
-name = "chain-config"
-version = "0.0.0"
-dependencies = [
- "multiversx-sc",
- "multiversx-sc-modules",
- "operation",
- "proxies",
- "setup-phase",
-]
-
-[[package]]
 name = "cross-chain"
 version = "0.1.0"
 dependencies = [
  "error-messages",
  "multiversx-sc",
  "multiversx-sc-modules",
- "operation",
- "proxies",
- "setup-phase",
  "proxies",
  "structs",
  "utils",
@@ -53,46 +39,8 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c34f04666d835ff5d62e058c3995147c06f42fe86ff053337632bca83e42702d"
 
 [[package]]
-name = "esdt-safe"
-version = "0.0.0"
-dependencies = [
- "chain-config",
- "fee-market",
- "header-verifier",
- "max-bridged-amount-module",
- "multiversx-sc",
- "multiversx-sc-modules",
- "operation",
- "proxies",
- "setup-phase",
- "token-whitelist",
- "tx-batch-module",
- "utils",
-]
 name = "error-messages"
 version = "0.1.0"
-
-[[package]]
-name = "generic-array"
-version = "1.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e8c8444bc9d71b935156cc0ccab7f622180808af7867b1daae6547d773591703"
-dependencies = [
- "esdt-safe",
- "multiversx-sc-wasm-adapter",
-]
-
-[[package]]
-name = "fee-market"
-version = "0.0.0"
-dependencies = [
- "multiversx-sc",
- "operation",
- "proxies",
- "setup-phase",
- "utils",
- "typenum",
-]
 
 [[package]]
 name = "generic-array"
@@ -111,6 +59,7 @@ dependencies = [
  "error-messages",
  "multiversx-sc",
  "proxies",
+ "setup-phase",
  "structs",
 ]
 
@@ -118,41 +67,6 @@ dependencies = [
 name = "header-verifier-wasm"
 version = "0.0.0"
 dependencies = [
- "chain-config",
- "multiversx-sc",
- "operation",
- "proxies",
- "setup-phase",
-name = "error-messages"
-version = "0.1.0"
-]
-
-[[package]]
-name = "fee-market"
-version = "0.1.0"
-dependencies = [
- "error-messages",
- "multiversx-sc",
- "proxies",
- "structs",
- "utils",
-]
-
-[[package]]
-name = "fee-market-wasm"
-version = "0.0.0"
-dependencies = [
- "fee-market",
- "multiversx-sc-wasm-adapter",
-]
-
-[[package]]
-name = "generic-array"
-version = "1.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e8c8444bc9d71b935156cc0ccab7f622180808af7867b1daae6547d773591703"
-dependencies = [
- "typenum",
  "header-verifier",
  "multiversx-sc-wasm-adapter",
 ]
@@ -245,9 +159,6 @@ dependencies = [
 name = "multiversx-sc-wasm-adapter"
 version = "0.57.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-name = "multiversx-sc-wasm-adapter"
-version = "0.57.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ee8253b84600554fbe16ea0a234b009854348dc95ce174ba6eba046dc5918f8f"
 dependencies = [
  "multiversx-sc",
@@ -272,13 +183,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "operation"
-version = "0.0.0"
-dependencies = [
- "multiversx-sc",
-]
-
-[[package]]
 name = "proc-macro2"
 version = "1.0.94"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -292,8 +196,6 @@ name = "proxies"
 version = "0.1.0"
 dependencies = [
  "multiversx-sc",
- "operation",
- "tx-batch-module",
  "structs",
 ]
 
@@ -318,8 +220,9 @@ dependencies = [
 
 [[package]]
 name = "setup-phase"
-version = "0.0.0"
+version = "0.1.0"
 dependencies = [
+ "error-messages",
  "multiversx-sc",
 ]
 
@@ -337,12 +240,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "smallvec"
-version = "1.15.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8917285742e9f3e1683f0a9c4e6b57960b7314d0b08d30d1ecd426713ee2eee9"
-
-[[package]]
 name = "syn"
 version = "2.0.100"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -354,32 +251,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "token-whitelist"
-version = "0.0.0"
-dependencies = [
- "multiversx-sc",
- "setup-phase",
- "utils",
-]
-
-[[package]]
-name = "tx-batch-module"
-version = "0.0.0"
-dependencies = [
- "multiversx-sc",
- "operation",
-]
-
-[[package]]
-name = "typenum"
-version = "1.18.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1dccffe3ce07af9386bfd29e80c0ab1a8205a2fc34e4bcd40364df902cfa8f3f"
-
-[[package]]
-name = "unicode-ident"
-version = "1.0.18"
-source = "registry+https://github.com/rust-lang/crates.io-index"
 name = "typenum"
 version = "1.18.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -401,11 +272,6 @@ checksum = "151ac09978d3c2862c4e39b557f4eceee2cc72150bc4cb4f16abf061b6e381fb"
 name = "utils"
 version = "0.1.0"
 dependencies = [
- "error-messages",
- "multiversx-sc",
- "structs",
- "multiversx-sc",
- "operation",
  "error-messages",
  "multiversx-sc",
  "structs",

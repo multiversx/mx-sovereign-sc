@@ -7,6 +7,7 @@ use error_messages::{
 };
 use multiversx_sc::codec;
 use multiversx_sc::proxy_imports::{TopDecode, TopEncode};
+use structs::configs::SovereignConfig;
 
 multiversx_sc::imports!();
 
@@ -17,7 +18,9 @@ pub enum OperationHashStatus {
 }
 
 #[multiversx_sc::contract]
-pub trait Headerverifier: cross_chain::events::EventsModule {
+pub trait Headerverifier:
+    cross_chain::events::EventsModule + setup_phase::SetupPhaseModule
+{
     #[init]
     fn init(&self) {}
 
