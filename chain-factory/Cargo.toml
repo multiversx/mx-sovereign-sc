@@ -29,8 +29,8 @@ path = "../chain-config"
 [dependencies.proxies]
 path = "../common/proxies"
 
-[dependencies.operation]
-path = "../common/operation"
+[dependencies.structs]
+path = "../common/structs/"
 
 [dependencies.error-messages]
 path = "../common/error-messages"

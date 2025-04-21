@@ -8,7 +8,6 @@
 #![allow(clippy::all)]
 
 use multiversx_sc::proxy_imports::*;
-use structs::configs::{EsdtSafeConfig, SovereignConfig};
 
 pub struct ChainFactoryContractProxy;
 
@@ -99,7 +98,7 @@ where
     Gas: TxGas<Env>,
 {
     pub fn deploy_sovereign_chain_config_contract<
-        Arg0: ProxyArg<SovereignConfig<Env::Api>>,
+        Arg0: ProxyArg<structs::configs::SovereignConfig<Env::Api>>,
     >(
         self,
         config: Arg0,
@@ -115,12 +114,12 @@ where
         Arg0: ProxyArg<ManagedAddress<Env::Api>>,
     >(
         self,
-        chain_config_address: Arg0,
+        _chain_config_address: Arg0,
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ManagedAddress<Env::Api>> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("deployHeaderVerifier")
-            .argument(&chain_config_address)
+            .argument(&_chain_config_address)
             .original_result()
     }
 
@@ -137,47 +136,6 @@ where
             .raw_call("setEsdtSafeAddressInHeaderVerifier")
             .argument(&header_verifier)
             .argument(&esdt_safe_address)
-            .original_result()
-    }
-
-    pub fn deploy_enshrine_esdt_safe<
-        Arg0: ProxyArg<bool>,
-        Arg1: ProxyArg<ManagedAddress<Env::Api>>,
-        Arg2: ProxyArg<TokenIdentifier<Env::Api>>,
-        Arg3: ProxyArg<ManagedBuffer<Env::Api>>,
-        Arg4: ProxyArg<Option<EsdtSafeConfig<Env::Api>>>,
-    >(
-        self,
-        is_sovereign_chain: Arg0,
-        token_handler_address: Arg1,
-        wegld_identifier: Arg2,
-        sov_token_prefix: Arg3,
-        opt_config: Arg4,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ManagedAddress<Env::Api>> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("deployEnshrineEsdtSafe")
-            .argument(&is_sovereign_chain)
-            .argument(&token_handler_address)
-            .argument(&wegld_identifier)
-            .argument(&sov_token_prefix)
-            .argument(&opt_config)
-            .original_result()
-    }
-
-    pub fn deploy_esdt_safe<
-        Arg0: ProxyArg<bool>,
-        Arg1: ProxyArg<ManagedAddress<Env::Api>>,
-    >(
-        self,
-        is_sovereign_chain: Arg0,
-        header_verifier_address: Arg1,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ManagedAddress<Env::Api>> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("deployEsdtSafe")
-            .argument(&is_sovereign_chain)
-            .argument(&header_verifier_address)
             .original_result()
     }
 
