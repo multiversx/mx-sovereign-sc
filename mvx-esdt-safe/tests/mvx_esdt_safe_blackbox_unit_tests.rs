@@ -1302,20 +1302,20 @@ fn execute_operation_no_esdt_safe_registered() {
 //     );
 // }
 
-/// This test checks the succsesful flow of executing an `operation` with burn mechanism
-/// Steps for this test:
-/// 1. Deploy the Mvx-ESDT-Safe SC with roles for the trusted token
-/// 2. Create the `operation`
-/// 3. Deploy the needed smart contract (Header-Verifier, Fee-Market with no fee and Testing SC)
-/// 4. Set the Fee-Market address in Mvx-ESDT-Safe and Header-Verifier
-/// 5. Deposit the `payment`
-/// 6. Check for the deposit log
-/// 7. Register the `operation`
-/// 8. Check if the registered `operation` is not locked
-/// 9. Set the briding mechanism to burn&mint
-/// 10. Execute the `operation`
-/// 11. Check the balances for the owner, Mvx-ESDT-Safe and Testing SC
-/// 12. Check if the `operation` hash was removed from the Header-Verifier SC
+// /// This test checks the succsesful flow of executing an `operation` with burn mechanism
+// /// Steps for this test:
+// /// 1. Deploy the Mvx-ESDT-Safe SC with roles for the trusted token
+// /// 2. Create the `operation`
+// /// 3. Deploy the needed smart contract (Header-Verifier, Fee-Market with no fee and Testing SC)
+// /// 4. Set the Fee-Market address in Mvx-ESDT-Safe and Header-Verifier
+// /// 5. Deposit the `payment`
+// /// 6. Check for the deposit log
+// /// 7. Register the `operation`
+// /// 8. Check if the registered `operation` is not locked
+// /// 9. Set the briding mechanism to burn&mint
+// /// 10. Execute the `operation`
+// /// 11. Check the balances for the owner, Mvx-ESDT-Safe and Testing SC
+// /// 12. Check if the `operation` hash was removed from the Header-Verifier SC
 // #[test]
 // fn execute_operation_success_burn_mechanism() {
 //     let mut state = MvxEsdtSafeTestState::new();
