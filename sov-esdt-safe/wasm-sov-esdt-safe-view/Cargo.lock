@@ -49,6 +49,7 @@ dependencies = [
  "error-messages",
  "multiversx-sc",
  "proxies",
+ "setup-phase",
  "structs",
  "utils",
 ]
