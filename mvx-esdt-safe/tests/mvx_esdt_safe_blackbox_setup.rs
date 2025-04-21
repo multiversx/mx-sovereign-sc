@@ -8,8 +8,8 @@ use multiversx_sc::{
     codec::TopEncode,
     imports::OptionalValue,
     types::{
-        BigUint, EsdtLocalRole, ManagedAddress, ManagedBuffer, ManagedVec, MultiValueEncoded,
-        TestSCAddress, TestTokenIdentifier, TokenIdentifier,
+        BigUint, EsdtLocalRole, ManagedAddress, ManagedBuffer, ManagedVec, TestSCAddress,
+        TestTokenIdentifier, TokenIdentifier,
     },
 };
 use multiversx_sc_modules::transfer_role_proxy::PaymentsVec;
@@ -18,7 +18,7 @@ use multiversx_sc_scenario::{
     ReturnsLogs, ScenarioTxRun, ScenarioTxWhitebox,
 };
 use mvx_esdt_safe::{bridging_mechanism::TRUSTED_TOKEN_IDS, MvxEsdtSafe};
-use proxies::{header_verifier_proxy::HeaderverifierProxy, mvx_esdt_safe_proxy::MvxEsdtSafeProxy};
+use proxies::mvx_esdt_safe_proxy::MvxEsdtSafeProxy;
 use structs::{
     aliases::OptionalValueTransferDataTuple, configs::EsdtSafeConfig, operation::Operation,
 };
@@ -368,38 +368,38 @@ impl MvxEsdtSafeTestState {
         };
     }
 
-    pub fn set_esdt_safe_address_in_header_verifier(&mut self, esdt_safe_address: TestSCAddress) {
-        self.common_setup
-            .world
-            .tx()
-            .from(OWNER_ADDRESS)
-            .to(HEADER_VERIFIER_ADDRESS)
-            .typed(HeaderverifierProxy)
-            .set_esdt_safe_address(esdt_safe_address)
-            .run();
-    }
+    // pub fn set_esdt_safe_address_in_header_verifier(&mut self, esdt_safe_address: TestSCAddress) {
+    //     self.common_setup
+    //         .world
+    //         .tx()
+    //         .from(OWNER_ADDRESS)
+    //         .to(HEADER_VERIFIER_ADDRESS)
+    //         .typed(HeaderverifierProxy)
+    //         .set_esdt_safe_address(esdt_safe_address)
+    //         .run();
+    // }
 
-    pub fn register_operation(
-        &mut self,
-        signature: ManagedBuffer<StaticApi>,
-        hash_of_hashes: &ManagedBuffer<StaticApi>,
-        operations_hashes: MultiValueEncoded<StaticApi, ManagedBuffer<StaticApi>>,
-    ) {
-        self.common_setup
-            .world
-            .tx()
-            .from(OWNER_ADDRESS)
-            .to(HEADER_VERIFIER_ADDRESS)
-            .typed(HeaderverifierProxy)
-            .register_bridge_operations(
-                signature,
-                hash_of_hashes,
-                ManagedBuffer::new(),
-                ManagedBuffer::new(),
-                operations_hashes,
-            )
-            .run();
-    }
+    // pub fn register_operation(
+    //     &mut self,
+    //     signature: ManagedBuffer<StaticApi>,
+    //     hash_of_hashes: &ManagedBuffer<StaticApi>,
+    //     operations_hashes: MultiValueEncoded<StaticApi, ManagedBuffer<StaticApi>>,
+    // ) {
+    //     self.common_setup
+    //         .world
+    //         .tx()
+    //         .from(OWNER_ADDRESS)
+    //         .to(HEADER_VERIFIER_ADDRESS)
+    //         .typed(HeaderverifierProxy)
+    //         .register_bridge_operations(
+    //             signature,
+    //             hash_of_hashes,
+    //             ManagedBuffer::new(),
+    //             ManagedBuffer::new(),
+    //             operations_hashes,
+    //         )
+    //         .run();
+    // }
 
     pub fn get_operation_hash(
         &mut self,

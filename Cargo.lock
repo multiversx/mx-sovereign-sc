@@ -2306,6 +2306,7 @@ dependencies = [
  "multiversx-sc",
  "multiversx-sc-modules",
  "multiversx-sc-scenario",
+ "mvx-esdt-safe",
  "num-bigint",
  "proxies",
  "setup-phase",

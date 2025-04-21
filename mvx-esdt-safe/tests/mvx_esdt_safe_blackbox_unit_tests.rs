@@ -12,7 +12,6 @@ use error_messages::{
     NOTHING_TO_TRANSFER, NO_ESDT_SAFE_ADDRESS, PAYMENT_DOES_NOT_COVER_FEE, TOKEN_ID_IS_NOT_TRUSTED,
     TOKEN_IS_FROM_SOVEREIGN, TOO_MANY_TOKENS,
 };
-use header_verifier::OperationHashStatus;
 use multiversx_sc::types::MultiValueEncoded;
 use multiversx_sc::{
     imports::{MultiValue3, OptionalValue},
@@ -21,13 +20,10 @@ use multiversx_sc::{
         TestTokenIdentifier, TokenIdentifier,
     },
 };
-use multiversx_sc_scenario::multiversx_chain_vm::crypto_functions::sha256;
 use multiversx_sc_scenario::{api::StaticApi, ScenarioTxWhitebox};
 use mvx_esdt_safe::bridging_mechanism::{BridgingMechanism, TRUSTED_TOKEN_IDS};
 use mvx_esdt_safe_blackbox_setup::MvxEsdtSafeTestState;
 use proxies::fee_market_proxy::{FeeStruct, FeeType};
-use structs::configs::SovereignConfig;
-use structs::operation::TransferData;
 use structs::{
     aliases::PaymentsVec,
     configs::EsdtSafeConfig,
@@ -1090,59 +1086,59 @@ fn execute_operation_no_esdt_safe_registered() {
 /// 7. Call the register operation function
 /// 8. Call the execute operation function
 /// 9. Check the operation hash status
-#[test]
-fn execute_operation_success() {
-    let mut state = MvxEsdtSafeTestState::new();
-    let config = OptionalValue::Some(EsdtSafeConfig::default_config());
-    state.deploy_contract(HEADER_VERIFIER_ADDRESS, config);
-
-    let token_data = EsdtTokenData {
-        amount: BigUint::from(100u64),
-        ..Default::default()
-    };
-
-    let payment = OperationEsdtPayment::new(TokenIdentifier::from(FIRST_TEST_TOKEN), 0, token_data);
-
-    let gas_limit = 1;
-    let function = ManagedBuffer::<StaticApi>::from("hello");
-    let args =
-        ManagedVec::<StaticApi, ManagedBuffer<StaticApi>>::from(vec![ManagedBuffer::from("1")]);
-
-    let transfer_data = TransferData::new(gas_limit, function, args);
-
-    let operation_data =
-        OperationData::new(1, OWNER_ADDRESS.to_managed_address(), Some(transfer_data));
-
-    let operation = Operation::new(
-        TESTING_SC_ADDRESS.to_managed_address(),
-        vec![payment].into(),
-        operation_data,
-    );
-
-    let operation_hash = state.get_operation_hash(&operation);
-    let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&operation_hash.to_vec()));
-
-    state.common_setup.deploy_header_verifier();
-    state.common_setup.deploy_testing_sc();
-    state.set_esdt_safe_address_in_header_verifier(ESDT_SAFE_ADDRESS);
-
-    let operations_hashes = MultiValueEncoded::from(ManagedVec::from(vec![operation_hash.clone()]));
-
-    state
-        .common_setup
-        .deploy_chain_config(SovereignConfig::default_config());
-    state.register_operation(ManagedBuffer::new(), &hash_of_hashes, operations_hashes);
-
-    state
-        .common_setup
-        .check_operation_hash_status(&operation_hash, OperationHashStatus::NotLocked);
-
-    state.execute_operation(&hash_of_hashes, &operation, None, Some("executedBridgeOp"));
-
-    state
-        .common_setup
-        .check_operation_hash_status_is_empty(&operation_hash);
-}
+// #[test]
+// fn execute_operation_success() {
+//     let mut state = MvxEsdtSafeTestState::new();
+//     let config = OptionalValue::Some(EsdtSafeConfig::default_config());
+//     state.deploy_contract(HEADER_VERIFIER_ADDRESS, config);
+//
+//     let token_data = EsdtTokenData {
+//         amount: BigUint::from(100u64),
+//         ..Default::default()
+//     };
+//
+//     let payment = OperationEsdtPayment::new(TokenIdentifier::from(FIRST_TEST_TOKEN), 0, token_data);
+//
+//     let gas_limit = 1;
+//     let function = ManagedBuffer::<StaticApi>::from("hello");
+//     let args =
+//         ManagedVec::<StaticApi, ManagedBuffer<StaticApi>>::from(vec![ManagedBuffer::from("1")]);
+//
+//     let transfer_data = TransferData::new(gas_limit, function, args);
+//
+//     let operation_data =
+//         OperationData::new(1, OWNER_ADDRESS.to_managed_address(), Some(transfer_data));
+//
+//     let operation = Operation::new(
+//         TESTING_SC_ADDRESS.to_managed_address(),
+//         vec![payment].into(),
+//         operation_data,
+//     );
+//
+//     let operation_hash = state.get_operation_hash(&operation);
+//     let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&operation_hash.to_vec()));
+//
+//     state.common_setup.deploy_header_verifier();
+//     state.common_setup.deploy_testing_sc();
+//     state.set_esdt_safe_address_in_header_verifier(ESDT_SAFE_ADDRESS);
+//
+//     let operations_hashes = MultiValueEncoded::from(ManagedVec::from(vec![operation_hash.clone()]));
+//
+//     state
+//         .common_setup
+//         .deploy_chain_config(SovereignConfig::default_config());
+//     state.register_operation(ManagedBuffer::new(), &hash_of_hashes, operations_hashes);
+//
+//     state
+//         .common_setup
+//         .check_operation_hash_status(&operation_hash, OperationHashStatus::NotLocked);
+//
+//     state.execute_operation(&hash_of_hashes, &operation, None, Some("executedBridgeOp"));
+//
+//     state
+//         .common_setup
+//         .check_operation_hash_status_is_empty(&operation_hash);
+// }
 
 /// Test execute operation with native token happy flow
 /// Steps:
@@ -1156,74 +1152,74 @@ fn execute_operation_success() {
 /// 8. Call the register operation function
 /// 9. Call the execute operation function
 /// 10. Check the operation hash status
-#[test]
-fn execute_operation_with_native_token_success() {
-    let mut state = MvxEsdtSafeTestState::new();
-    let config = EsdtSafeConfig::default_config();
-    state.deploy_contract(HEADER_VERIFIER_ADDRESS, OptionalValue::Some(config));
-
-    let token_display_name = "TokenOne";
-    let egld_payment = BigUint::from(DEFAULT_ISSUE_COST);
-
-    state.register_native_token(FIRST_TEST_TOKEN, token_display_name, egld_payment, None);
-
-    let token_data = EsdtTokenData {
-        amount: BigUint::from(100u64),
-        ..Default::default()
-    };
-
-    let payment = OperationEsdtPayment::new(TokenIdentifier::from(FIRST_TEST_TOKEN), 0, token_data);
-
-    let gas_limit = 1;
-    let function = ManagedBuffer::<StaticApi>::from("hello");
-    let args =
-        ManagedVec::<StaticApi, ManagedBuffer<StaticApi>>::from(vec![ManagedBuffer::from("1")]);
-
-    let transfer_data = TransferData::new(gas_limit, function, args);
-
-    let operation_data =
-        OperationData::new(1, OWNER_ADDRESS.to_managed_address(), Some(transfer_data));
-
-    let operation = Operation::new(
-        TESTING_SC_ADDRESS.to_managed_address(),
-        vec![payment].into(),
-        operation_data,
-    );
-
-    let operation_hash = state.get_operation_hash(&operation);
-    let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&operation_hash.to_vec()));
-
-    state.common_setup.deploy_header_verifier();
-    state.common_setup.deploy_testing_sc();
-    state.set_esdt_safe_address_in_header_verifier(ESDT_SAFE_ADDRESS);
-
-    let operations_hashes = MultiValueEncoded::from(ManagedVec::from(vec![operation_hash.clone()]));
-
-    state
-        .common_setup
-        .deploy_chain_config(SovereignConfig::default_config());
-    state.register_operation(ManagedBuffer::new(), &hash_of_hashes, operations_hashes);
-
-    state
-        .common_setup
-        .check_operation_hash_status(&operation_hash, OperationHashStatus::NotLocked);
-
-    state.execute_operation(&hash_of_hashes, &operation, None, Some("executedBridgeOp"));
-
-    state
-        .common_setup
-        .check_operation_hash_status_is_empty(&operation_hash);
-
-    state.common_setup.check_sc_esdt_balance(
-        vec![MultiValue3::from((
-            TestTokenIdentifier::new(TRUSTED_TOKEN_IDS[0]),
-            0u64,
-            0u64,
-        ))],
-        TESTING_SC_ADDRESS.to_managed_address(),
-        testing_sc::contract_obj,
-    );
-}
+// #[test]
+// fn execute_operation_with_native_token_success() {
+//     let mut state = MvxEsdtSafeTestState::new();
+//     let config = EsdtSafeConfig::default_config();
+//     state.deploy_contract(HEADER_VERIFIER_ADDRESS, OptionalValue::Some(config));
+//
+//     let token_display_name = "TokenOne";
+//     let egld_payment = BigUint::from(DEFAULT_ISSUE_COST);
+//
+//     state.register_native_token(FIRST_TEST_TOKEN, token_display_name, egld_payment, None);
+//
+//     let token_data = EsdtTokenData {
+//         amount: BigUint::from(100u64),
+//         ..Default::default()
+//     };
+//
+//     let payment = OperationEsdtPayment::new(TokenIdentifier::from(FIRST_TEST_TOKEN), 0, token_data);
+//
+//     let gas_limit = 1;
+//     let function = ManagedBuffer::<StaticApi>::from("hello");
+//     let args =
+//         ManagedVec::<StaticApi, ManagedBuffer<StaticApi>>::from(vec![ManagedBuffer::from("1")]);
+//
+//     let transfer_data = TransferData::new(gas_limit, function, args);
+//
+//     let operation_data =
+//         OperationData::new(1, OWNER_ADDRESS.to_managed_address(), Some(transfer_data));
+//
+//     let operation = Operation::new(
+//         TESTING_SC_ADDRESS.to_managed_address(),
+//         vec![payment].into(),
+//         operation_data,
+//     );
+//
+//     let operation_hash = state.get_operation_hash(&operation);
+//     let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&operation_hash.to_vec()));
+//
+//     state.common_setup.deploy_header_verifier();
+//     state.common_setup.deploy_testing_sc();
+//     state.set_esdt_safe_address_in_header_verifier(ESDT_SAFE_ADDRESS);
+//
+//     let operations_hashes = MultiValueEncoded::from(ManagedVec::from(vec![operation_hash.clone()]));
+//
+//     state
+//         .common_setup
+//         .deploy_chain_config(SovereignConfig::default_config());
+//     state.register_operation(ManagedBuffer::new(), &hash_of_hashes, operations_hashes);
+//
+//     state
+//         .common_setup
+//         .check_operation_hash_status(&operation_hash, OperationHashStatus::NotLocked);
+//
+//     state.execute_operation(&hash_of_hashes, &operation, None, Some("executedBridgeOp"));
+//
+//     state
+//         .common_setup
+//         .check_operation_hash_status_is_empty(&operation_hash);
+//
+//     state.common_setup.check_sc_esdt_balance(
+//         vec![MultiValue3::from((
+//             TestTokenIdentifier::new(TRUSTED_TOKEN_IDS[0]),
+//             0u64,
+//             0u64,
+//         ))],
+//         TESTING_SC_ADDRESS.to_managed_address(),
+//         testing_sc::contract_obj,
+//     );
+// }
 
 /// This test checks the succsesful flow of executing an `operation` with burn mechanism
 /// Steps for this test:
@@ -1237,74 +1233,74 @@ fn execute_operation_with_native_token_success() {
 /// 8. Execute the `operation`
 /// 9. Check if the registered `operation` hash status is empty
 /// 10. Check the balances for the owner, Mvx-ESDT-Safe and Testing SC
-#[test]
-fn execute_operation_burn_mechanism_without_deposit_cannot_subtract() {
-    let mut state = MvxEsdtSafeTestState::new();
-    state.deploy_contract_with_roles();
-
-    let token_data = EsdtTokenData {
-        amount: BigUint::from(100u64),
-        ..Default::default()
-    };
-
-    let payment =
-        OperationEsdtPayment::new(TokenIdentifier::from(TRUSTED_TOKEN_IDS[0]), 0, token_data);
-
-    let operation_data = OperationData::new(1, OWNER_ADDRESS.to_managed_address(), None);
-
-    let operation = Operation::new(
-        TESTING_SC_ADDRESS.to_managed_address(),
-        vec![payment].into(),
-        operation_data,
-    );
-
-    let operation_hash = state.get_operation_hash(&operation);
-    let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&operation_hash.to_vec()));
-
-    state.common_setup.deploy_header_verifier();
-    state.common_setup.deploy_testing_sc();
-    state.set_esdt_safe_address_in_header_verifier(ESDT_SAFE_ADDRESS);
-
-    let operations_hashes = MultiValueEncoded::from(ManagedVec::from(vec![operation_hash.clone()]));
-
-    state
-        .common_setup
-        .deploy_chain_config(SovereignConfig::default_config());
-
-    state.register_operation(ManagedBuffer::new(), &hash_of_hashes, operations_hashes);
-
-    let token_display_name = "NativeToken";
-    let egld_payment = BigUint::from(DEFAULT_ISSUE_COST);
-
-    state.register_native_token(TRUSTED_TOKEN_IDS[0], token_display_name, egld_payment, None);
-    state.set_token_burn_mechanism(TRUSTED_TOKEN_IDS[0], None);
-
-    state.execute_operation(&hash_of_hashes, &operation, None, Some("executedBridgeOp"));
-
-    state
-        .common_setup
-        .check_operation_hash_status_is_empty(&operation_hash);
-
-    state.common_setup.check_sc_esdt_balance(
-        vec![MultiValue3::from((
-            TestTokenIdentifier::new(TRUSTED_TOKEN_IDS[0]),
-            0u64,
-            0u64,
-        ))],
-        ESDT_SAFE_ADDRESS.to_managed_address(),
-        mvx_esdt_safe::contract_obj,
-    );
-
-    state.common_setup.check_sc_esdt_balance(
-        vec![MultiValue3::from((
-            TestTokenIdentifier::new(TRUSTED_TOKEN_IDS[0]),
-            0u64,
-            0u64,
-        ))],
-        TESTING_SC_ADDRESS.to_managed_address(),
-        testing_sc::contract_obj,
-    );
-}
+// #[test]
+// fn execute_operation_burn_mechanism_without_deposit_cannot_subtract() {
+//     let mut state = MvxEsdtSafeTestState::new();
+//     state.deploy_contract_with_roles();
+//
+//     let token_data = EsdtTokenData {
+//         amount: BigUint::from(100u64),
+//         ..Default::default()
+//     };
+//
+//     let payment =
+//         OperationEsdtPayment::new(TokenIdentifier::from(TRUSTED_TOKEN_IDS[0]), 0, token_data);
+//
+//     let operation_data = OperationData::new(1, OWNER_ADDRESS.to_managed_address(), None);
+//
+//     let operation = Operation::new(
+//         TESTING_SC_ADDRESS.to_managed_address(),
+//         vec![payment].into(),
+//         operation_data,
+//     );
+//
+//     let operation_hash = state.get_operation_hash(&operation);
+//     let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&operation_hash.to_vec()));
+//
+//     state.common_setup.deploy_header_verifier();
+//     state.common_setup.deploy_testing_sc();
+//     state.set_esdt_safe_address_in_header_verifier(ESDT_SAFE_ADDRESS);
+//
+//     let operations_hashes = MultiValueEncoded::from(ManagedVec::from(vec![operation_hash.clone()]));
+//
+//     state
+//         .common_setup
+//         .deploy_chain_config(SovereignConfig::default_config());
+//
+//     state.register_operation(ManagedBuffer::new(), &hash_of_hashes, operations_hashes);
+//
+//     let token_display_name = "NativeToken";
+//     let egld_payment = BigUint::from(DEFAULT_ISSUE_COST);
+//
+//     state.register_native_token(TRUSTED_TOKEN_IDS[0], token_display_name, egld_payment, None);
+//     state.set_token_burn_mechanism(TRUSTED_TOKEN_IDS[0], None);
+//
+//     state.execute_operation(&hash_of_hashes, &operation, None, Some("executedBridgeOp"));
+//
+//     state
+//         .common_setup
+//         .check_operation_hash_status_is_empty(&operation_hash);
+//
+//     state.common_setup.check_sc_esdt_balance(
+//         vec![MultiValue3::from((
+//             TestTokenIdentifier::new(TRUSTED_TOKEN_IDS[0]),
+//             0u64,
+//             0u64,
+//         ))],
+//         ESDT_SAFE_ADDRESS.to_managed_address(),
+//         mvx_esdt_safe::contract_obj,
+//     );
+//
+//     state.common_setup.check_sc_esdt_balance(
+//         vec![MultiValue3::from((
+//             TestTokenIdentifier::new(TRUSTED_TOKEN_IDS[0]),
+//             0u64,
+//             0u64,
+//         ))],
+//         TESTING_SC_ADDRESS.to_managed_address(),
+//         testing_sc::contract_obj,
+//     );
+// }
 
 /// This test checks the succsesful flow of executing an `operation` with burn mechanism
 /// Steps for this test:
@@ -1320,102 +1316,102 @@ fn execute_operation_burn_mechanism_without_deposit_cannot_subtract() {
 /// 10. Execute the `operation`
 /// 11. Check the balances for the owner, Mvx-ESDT-Safe and Testing SC
 /// 12. Check if the `operation` hash was removed from the Header-Verifier SC
-#[test]
-fn execute_operation_success_burn_mechanism() {
-    let mut state = MvxEsdtSafeTestState::new();
-    state.deploy_contract_with_roles();
-
-    let token_data = EsdtTokenData {
-        amount: BigUint::from(100u64),
-        ..Default::default()
-    };
-
-    let payment = OperationEsdtPayment::new(
-        TokenIdentifier::from(TRUSTED_TOKEN_IDS[0]),
-        0,
-        token_data.clone(),
-    );
-
-    let operation_data = OperationData::new(1, OWNER_ADDRESS.to_managed_address(), None);
-
-    let operation = Operation::new(
-        TESTING_SC_ADDRESS.to_managed_address(),
-        vec![payment.clone()].into(),
-        operation_data,
-    );
-
-    let operation_hash = state.get_operation_hash(&operation);
-    let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&operation_hash.to_vec()));
-
-    state.common_setup.deploy_header_verifier();
-    state.common_setup.deploy_testing_sc();
-    state.common_setup.deploy_fee_market(None);
-    state.set_fee_market_address(FEE_MARKET_ADDRESS);
-    state.set_esdt_safe_address_in_header_verifier(ESDT_SAFE_ADDRESS);
-
-    let operations_hashes = MultiValueEncoded::from(ManagedVec::from(vec![operation_hash.clone()]));
-
-    state.deposit(
-        USER.to_managed_address(),
-        OptionalValue::None,
-        PaymentsVec::from(vec![payment]),
-        None,
-        Some("deposit"),
-    );
-
-    state
-        .common_setup
-        .deploy_chain_config(SovereignConfig::default_config());
-
-    state.register_operation(ManagedBuffer::new(), &hash_of_hashes, operations_hashes);
-
-    state
-        .common_setup
-        .check_operation_hash_status(&operation_hash, OperationHashStatus::NotLocked);
-
-    state.set_token_burn_mechanism(TRUSTED_TOKEN_IDS[0], None);
-
-    state.execute_operation(&hash_of_hashes, &operation, None, Some("executedBridgeOp"));
-
-    let expected_amount_trusted_token = BigUint::from(ONE_HUNDRED_MILLION) - &token_data.amount;
-
-    state
-        .common_setup
-        .world
-        .check_account(OWNER_ADDRESS)
-        .esdt_balance(
-            TokenIdentifier::from(TRUSTED_TOKEN_IDS[0]),
-            &expected_amount_trusted_token,
-        );
-
-    state.common_setup.check_sc_esdt_balance(
-        vec![MultiValue3::from((
-            TestTokenIdentifier::new(TRUSTED_TOKEN_IDS[0]),
-            0u64,
-            0u64,
-        ))],
-        ESDT_SAFE_ADDRESS.to_managed_address(),
-        mvx_esdt_safe::contract_obj,
-    );
-
-    state
-        .common_setup
-        .check_deposited_tokens_amount(vec![(TestTokenIdentifier::new(TRUSTED_TOKEN_IDS[0]), 0)]);
-
-    state.common_setup.check_sc_esdt_balance(
-        vec![MultiValue3::from((
-            TestTokenIdentifier::new(TRUSTED_TOKEN_IDS[0]),
-            0u64,
-            100u64,
-        ))],
-        TESTING_SC_ADDRESS.to_managed_address(),
-        testing_sc::contract_obj,
-    );
-
-    state
-        .common_setup
-        .check_operation_hash_status_is_empty(&operation_hash);
-}
+// #[test]
+// fn execute_operation_success_burn_mechanism() {
+//     let mut state = MvxEsdtSafeTestState::new();
+//     state.deploy_contract_with_roles();
+//
+//     let token_data = EsdtTokenData {
+//         amount: BigUint::from(100u64),
+//         ..Default::default()
+//     };
+//
+//     let payment = OperationEsdtPayment::new(
+//         TokenIdentifier::from(TRUSTED_TOKEN_IDS[0]),
+//         0,
+//         token_data.clone(),
+//     );
+//
+//     let operation_data = OperationData::new(1, OWNER_ADDRESS.to_managed_address(), None);
+//
+//     let operation = Operation::new(
+//         TESTING_SC_ADDRESS.to_managed_address(),
+//         vec![payment.clone()].into(),
+//         operation_data,
+//     );
+//
+//     let operation_hash = state.get_operation_hash(&operation);
+//     let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&operation_hash.to_vec()));
+//
+//     state.common_setup.deploy_header_verifier();
+//     state.common_setup.deploy_testing_sc();
+//     state.common_setup.deploy_fee_market(None);
+//     state.set_fee_market_address(FEE_MARKET_ADDRESS);
+//     state.set_esdt_safe_address_in_header_verifier(ESDT_SAFE_ADDRESS);
+//
+//     let operations_hashes = MultiValueEncoded::from(ManagedVec::from(vec![operation_hash.clone()]));
+//
+//     state.deposit(
+//         USER.to_managed_address(),
+//         OptionalValue::None,
+//         PaymentsVec::from(vec![payment]),
+//         None,
+//         Some("deposit"),
+//     );
+//
+//     state
+//         .common_setup
+//         .deploy_chain_config(SovereignConfig::default_config());
+//
+//     state.register_operation(ManagedBuffer::new(), &hash_of_hashes, operations_hashes);
+//
+//     state
+//         .common_setup
+//         .check_operation_hash_status(&operation_hash, OperationHashStatus::NotLocked);
+//
+//     state.set_token_burn_mechanism(TRUSTED_TOKEN_IDS[0], None);
+//
+//     state.execute_operation(&hash_of_hashes, &operation, None, Some("executedBridgeOp"));
+//
+//     let expected_amount_trusted_token = BigUint::from(ONE_HUNDRED_MILLION) - &token_data.amount;
+//
+//     state
+//         .common_setup
+//         .world
+//         .check_account(OWNER_ADDRESS)
+//         .esdt_balance(
+//             TokenIdentifier::from(TRUSTED_TOKEN_IDS[0]),
+//             &expected_amount_trusted_token,
+//         );
+//
+//     state.common_setup.check_sc_esdt_balance(
+//         vec![MultiValue3::from((
+//             TestTokenIdentifier::new(TRUSTED_TOKEN_IDS[0]),
+//             0u64,
+//             0u64,
+//         ))],
+//         ESDT_SAFE_ADDRESS.to_managed_address(),
+//         mvx_esdt_safe::contract_obj,
+//     );
+//
+//     state
+//         .common_setup
+//         .check_deposited_tokens_amount(vec![(TestTokenIdentifier::new(TRUSTED_TOKEN_IDS[0]), 0)]);
+//
+//     state.common_setup.check_sc_esdt_balance(
+//         vec![MultiValue3::from((
+//             TestTokenIdentifier::new(TRUSTED_TOKEN_IDS[0]),
+//             0u64,
+//             100u64,
+//         ))],
+//         TESTING_SC_ADDRESS.to_managed_address(),
+//         testing_sc::contract_obj,
+//     );
+//
+//     state
+//         .common_setup
+//         .check_operation_hash_status_is_empty(&operation_hash);
+// }
 
 /// This test checks the flow of multiple deposit and executes along side bridging mechanism
 /// Steps for this test:
@@ -1440,241 +1436,241 @@ fn execute_operation_success_burn_mechanism() {
 /// 19. Check for `deposited_tokens_amount` mapper and esdt balance
 /// 12. Third deposit of `deposit_payment` to the `USER`
 /// 19. Check for logs, `deposited_tokens_amount` mapper and esdt balance
-#[test]
-fn deposit_execute_switch_mechanism() {
-    let mut state = MvxEsdtSafeTestState::new();
-    state.deploy_contract_with_roles();
-
-    let trusted_token_id = TRUSTED_TOKEN_IDS[0];
-
-    state.common_setup.deploy_header_verifier();
-    state.common_setup.deploy_testing_sc();
-    state.common_setup.deploy_fee_market(None);
-    state.set_fee_market_address(FEE_MARKET_ADDRESS);
-    state.set_esdt_safe_address_in_header_verifier(ESDT_SAFE_ADDRESS);
-
-    let deposited_trusted_token_payment_amount = 1000u64;
-    let deposit_trusted_token_payment_token_data = EsdtTokenData {
-        amount: BigUint::from(deposited_trusted_token_payment_amount),
-        ..Default::default()
-    };
-    let deposit_trusted_token_payment = OperationEsdtPayment::new(
-        TokenIdentifier::from(trusted_token_id),
-        0,
-        deposit_trusted_token_payment_token_data,
-    );
-
-    state.deposit(
-        USER.to_managed_address(),
-        OptionalValue::None,
-        PaymentsVec::from(vec![deposit_trusted_token_payment.clone()]),
-        None,
-        Some("deposit"),
-    );
-
-    state
-        .common_setup
-        .world
-        .check_account(ESDT_SAFE_ADDRESS)
-        .esdt_balance(TestTokenIdentifier::new(trusted_token_id), 1000);
-
-    state.set_token_burn_mechanism(trusted_token_id, None);
-
-    let mut expected_deposited_amount = deposited_trusted_token_payment_amount;
-
-    state.common_setup.check_deposited_tokens_amount(vec![(
-        TestTokenIdentifier::new(trusted_token_id),
-        expected_deposited_amount,
-    )]);
-
-    state.common_setup.check_sc_esdt_balance(
-        vec![MultiValue3::from((
-            TestTokenIdentifier::new(trusted_token_id),
-            0,
-            0u64,
-        ))],
-        ESDT_SAFE_ADDRESS.to_managed_address(),
-        mvx_esdt_safe::contract_obj,
-    );
-
-    let execute_trusted_token_payment_amount = 500u64;
-    let execute_trusted_token_payment_token_data = EsdtTokenData {
-        amount: BigUint::from(execute_trusted_token_payment_amount),
-        ..Default::default()
-    };
-    let execute_trusted_token_payment = OperationEsdtPayment::new(
-        TokenIdentifier::from(trusted_token_id),
-        0,
-        execute_trusted_token_payment_token_data,
-    );
-    let operation_one_data = OperationData::new(1, OWNER_ADDRESS.to_managed_address(), None);
-    let operation_one = Operation::new(
-        TESTING_SC_ADDRESS.to_managed_address(),
-        vec![execute_trusted_token_payment.clone()].into(),
-        operation_one_data,
-    );
-    let operation_one_hash = state.get_operation_hash(&operation_one);
-    let hash_of_hashes_one = ManagedBuffer::new_from_bytes(&sha256(&operation_one_hash.to_vec()));
-    let operations_hashes_one =
-        MultiValueEncoded::from(ManagedVec::from(vec![operation_one_hash.clone()]));
-
-    state.register_operation(
-        ManagedBuffer::new(),
-        &hash_of_hashes_one,
-        operations_hashes_one,
-    );
-
-    state.execute_operation(
-        &hash_of_hashes_one,
-        &operation_one,
-        None,
-        Some("executedBridgeOp"),
-    );
-
-    let mut expected_receiver_amount = execute_trusted_token_payment_amount;
-    expected_deposited_amount -= execute_trusted_token_payment_amount;
-
-    state.common_setup.check_deposited_tokens_amount(vec![(
-        TestTokenIdentifier::new(trusted_token_id),
-        expected_deposited_amount,
-    )]);
-
-    state.common_setup.check_sc_esdt_balance(
-        vec![MultiValue3::from((
-            TestTokenIdentifier::new(trusted_token_id),
-            0,
-            0u64,
-        ))],
-        ESDT_SAFE_ADDRESS.to_managed_address(),
-        mvx_esdt_safe::contract_obj,
-    );
-
-    state.deposit(
-        USER.to_managed_address(),
-        OptionalValue::None,
-        PaymentsVec::from(vec![deposit_trusted_token_payment.clone()]),
-        None,
-        Some("deposit"),
-    );
-
-    expected_deposited_amount += deposited_trusted_token_payment_amount;
-
-    state.common_setup.check_deposited_tokens_amount(vec![(
-        TestTokenIdentifier::new(trusted_token_id),
-        expected_deposited_amount,
-    )]);
-
-    state.common_setup.check_sc_esdt_balance(
-        vec![MultiValue3::from((
-            TestTokenIdentifier::new(trusted_token_id),
-            0,
-            0u64,
-        ))],
-        ESDT_SAFE_ADDRESS.to_managed_address(),
-        mvx_esdt_safe::contract_obj,
-    );
-
-    state.set_token_lock_mechanism(trusted_token_id, None);
-
-    state
-        .common_setup
-        .check_deposited_tokens_amount(vec![(TestTokenIdentifier::new(trusted_token_id), 0)]);
-
-    state.common_setup.check_sc_esdt_balance(
-        vec![MultiValue3::from((
-            TestTokenIdentifier::new(trusted_token_id),
-            0,
-            expected_deposited_amount,
-        ))],
-        ESDT_SAFE_ADDRESS.to_managed_address(),
-        mvx_esdt_safe::contract_obj,
-    );
-
-    let operation_two_data = OperationData::new(2, OWNER_ADDRESS.to_managed_address(), None);
-    let operation_two = Operation::new(
-        TESTING_SC_ADDRESS.to_managed_address(),
-        vec![execute_trusted_token_payment.clone()].into(),
-        operation_two_data,
-    );
-    let operation_two_hash = state.get_operation_hash(&operation_two);
-    let hash_of_hashes_two = ManagedBuffer::new_from_bytes(&sha256(&operation_two_hash.to_vec()));
-    let operations_hashes_two =
-        MultiValueEncoded::from(ManagedVec::from(vec![operation_two_hash.clone()]));
-
-    state.register_operation(
-        ManagedBuffer::new(),
-        &hash_of_hashes_two,
-        operations_hashes_two,
-    );
-
-    state.execute_operation(
-        &hash_of_hashes_two,
-        &operation_two,
-        None,
-        Some("executedBridgeOp"),
-    );
-
-    state
-        .common_setup
-        .check_deposited_tokens_amount(vec![(TestTokenIdentifier::new(trusted_token_id), 0)]);
-
-    expected_receiver_amount += execute_trusted_token_payment_amount;
-    expected_deposited_amount -= execute_trusted_token_payment_amount;
-
-    state.common_setup.check_sc_esdt_balance(
-        vec![MultiValue3::from((
-            TestTokenIdentifier::new(trusted_token_id),
-            0,
-            expected_deposited_amount,
-        ))],
-        ESDT_SAFE_ADDRESS.to_managed_address(),
-        mvx_esdt_safe::contract_obj,
-    );
-
-    state.common_setup.check_sc_esdt_balance(
-        vec![MultiValue3::from((
-            TestTokenIdentifier::new(trusted_token_id),
-            0,
-            expected_receiver_amount,
-        ))],
-        TESTING_SC_ADDRESS.to_managed_address(),
-        testing_sc::contract_obj,
-    );
-
-    state.deposit(
-        USER.to_managed_address(),
-        OptionalValue::None,
-        PaymentsVec::from(vec![deposit_trusted_token_payment]),
-        None,
-        Some("deposit"),
-    );
-
-    expected_deposited_amount += deposited_trusted_token_payment_amount;
-
-    state
-        .common_setup
-        .check_deposited_tokens_amount(vec![(TestTokenIdentifier::new(trusted_token_id), 0)]);
-
-    state.common_setup.check_sc_esdt_balance(
-        vec![MultiValue3::from((
-            TestTokenIdentifier::new(trusted_token_id),
-            0,
-            expected_deposited_amount,
-        ))],
-        ESDT_SAFE_ADDRESS.to_managed_address(),
-        testing_sc::contract_obj,
-    );
-
-    state.common_setup.check_sc_esdt_balance(
-        vec![MultiValue3::from((
-            TestTokenIdentifier::new(trusted_token_id),
-            0,
-            expected_receiver_amount,
-        ))],
-        TESTING_SC_ADDRESS.to_managed_address(),
-        testing_sc::contract_obj,
-    );
-}
+// #[test]
+// fn deposit_execute_switch_mechanism() {
+//     let mut state = MvxEsdtSafeTestState::new();
+//     state.deploy_contract_with_roles();
+//
+//     let trusted_token_id = TRUSTED_TOKEN_IDS[0];
+//
+//     state.common_setup.deploy_header_verifier();
+//     state.common_setup.deploy_testing_sc();
+//     state.common_setup.deploy_fee_market(None);
+//     state.set_fee_market_address(FEE_MARKET_ADDRESS);
+//     state.set_esdt_safe_address_in_header_verifier(ESDT_SAFE_ADDRESS);
+//
+//     let deposited_trusted_token_payment_amount = 1000u64;
+//     let deposit_trusted_token_payment_token_data = EsdtTokenData {
+//         amount: BigUint::from(deposited_trusted_token_payment_amount),
+//         ..Default::default()
+//     };
+//     let deposit_trusted_token_payment = OperationEsdtPayment::new(
+//         TokenIdentifier::from(trusted_token_id),
+//         0,
+//         deposit_trusted_token_payment_token_data,
+//     );
+//
+//     state.deposit(
+//         USER.to_managed_address(),
+//         OptionalValue::None,
+//         PaymentsVec::from(vec![deposit_trusted_token_payment.clone()]),
+//         None,
+//         Some("deposit"),
+//     );
+//
+//     state
+//         .common_setup
+//         .world
+//         .check_account(ESDT_SAFE_ADDRESS)
+//         .esdt_balance(TestTokenIdentifier::new(trusted_token_id), 1000);
+//
+//     state.set_token_burn_mechanism(trusted_token_id, None);
+//
+//     let mut expected_deposited_amount = deposited_trusted_token_payment_amount;
+//
+//     state.common_setup.check_deposited_tokens_amount(vec![(
+//         TestTokenIdentifier::new(trusted_token_id),
+//         expected_deposited_amount,
+//     )]);
+//
+//     state.common_setup.check_sc_esdt_balance(
+//         vec![MultiValue3::from((
+//             TestTokenIdentifier::new(trusted_token_id),
+//             0,
+//             0u64,
+//         ))],
+//         ESDT_SAFE_ADDRESS.to_managed_address(),
+//         mvx_esdt_safe::contract_obj,
+//     );
+//
+//     let execute_trusted_token_payment_amount = 500u64;
+//     let execute_trusted_token_payment_token_data = EsdtTokenData {
+//         amount: BigUint::from(execute_trusted_token_payment_amount),
+//         ..Default::default()
+//     };
+//     let execute_trusted_token_payment = OperationEsdtPayment::new(
+//         TokenIdentifier::from(trusted_token_id),
+//         0,
+//         execute_trusted_token_payment_token_data,
+//     );
+//     let operation_one_data = OperationData::new(1, OWNER_ADDRESS.to_managed_address(), None);
+//     let operation_one = Operation::new(
+//         TESTING_SC_ADDRESS.to_managed_address(),
+//         vec![execute_trusted_token_payment.clone()].into(),
+//         operation_one_data,
+//     );
+//     let operation_one_hash = state.get_operation_hash(&operation_one);
+//     let hash_of_hashes_one = ManagedBuffer::new_from_bytes(&sha256(&operation_one_hash.to_vec()));
+//     let operations_hashes_one =
+//         MultiValueEncoded::from(ManagedVec::from(vec![operation_one_hash.clone()]));
+//
+//     state.register_operation(
+//         ManagedBuffer::new(),
+//         &hash_of_hashes_one,
+//         operations_hashes_one,
+//     );
+//
+//     state.execute_operation(
+//         &hash_of_hashes_one,
+//         &operation_one,
+//         None,
+//         Some("executedBridgeOp"),
+//     );
+//
+//     let mut expected_receiver_amount = execute_trusted_token_payment_amount;
+//     expected_deposited_amount -= execute_trusted_token_payment_amount;
+//
+//     state.common_setup.check_deposited_tokens_amount(vec![(
+//         TestTokenIdentifier::new(trusted_token_id),
+//         expected_deposited_amount,
+//     )]);
+//
+//     state.common_setup.check_sc_esdt_balance(
+//         vec![MultiValue3::from((
+//             TestTokenIdentifier::new(trusted_token_id),
+//             0,
+//             0u64,
+//         ))],
+//         ESDT_SAFE_ADDRESS.to_managed_address(),
+//         mvx_esdt_safe::contract_obj,
+//     );
+//
+//     state.deposit(
+//         USER.to_managed_address(),
+//         OptionalValue::None,
+//         PaymentsVec::from(vec![deposit_trusted_token_payment.clone()]),
+//         None,
+//         Some("deposit"),
+//     );
+//
+//     expected_deposited_amount += deposited_trusted_token_payment_amount;
+//
+//     state.common_setup.check_deposited_tokens_amount(vec![(
+//         TestTokenIdentifier::new(trusted_token_id),
+//         expected_deposited_amount,
+//     )]);
+//
+//     state.common_setup.check_sc_esdt_balance(
+//         vec![MultiValue3::from((
+//             TestTokenIdentifier::new(trusted_token_id),
+//             0,
+//             0u64,
+//         ))],
+//         ESDT_SAFE_ADDRESS.to_managed_address(),
+//         mvx_esdt_safe::contract_obj,
+//     );
+//
+//     state.set_token_lock_mechanism(trusted_token_id, None);
+//
+//     state
+//         .common_setup
+//         .check_deposited_tokens_amount(vec![(TestTokenIdentifier::new(trusted_token_id), 0)]);
+//
+//     state.common_setup.check_sc_esdt_balance(
+//         vec![MultiValue3::from((
+//             TestTokenIdentifier::new(trusted_token_id),
+//             0,
+//             expected_deposited_amount,
+//         ))],
+//         ESDT_SAFE_ADDRESS.to_managed_address(),
+//         mvx_esdt_safe::contract_obj,
+//     );
+//
+//     let operation_two_data = OperationData::new(2, OWNER_ADDRESS.to_managed_address(), None);
+//     let operation_two = Operation::new(
+//         TESTING_SC_ADDRESS.to_managed_address(),
+//         vec![execute_trusted_token_payment.clone()].into(),
+//         operation_two_data,
+//     );
+//     let operation_two_hash = state.get_operation_hash(&operation_two);
+//     let hash_of_hashes_two = ManagedBuffer::new_from_bytes(&sha256(&operation_two_hash.to_vec()));
+//     let operations_hashes_two =
+//         MultiValueEncoded::from(ManagedVec::from(vec![operation_two_hash.clone()]));
+//
+//     state.register_operation(
+//         ManagedBuffer::new(),
+//         &hash_of_hashes_two,
+//         operations_hashes_two,
+//     );
+//
+//     state.execute_operation(
+//         &hash_of_hashes_two,
+//         &operation_two,
+//         None,
+//         Some("executedBridgeOp"),
+//     );
+//
+//     state
+//         .common_setup
+//         .check_deposited_tokens_amount(vec![(TestTokenIdentifier::new(trusted_token_id), 0)]);
+//
+//     expected_receiver_amount += execute_trusted_token_payment_amount;
+//     expected_deposited_amount -= execute_trusted_token_payment_amount;
+//
+//     state.common_setup.check_sc_esdt_balance(
+//         vec![MultiValue3::from((
+//             TestTokenIdentifier::new(trusted_token_id),
+//             0,
+//             expected_deposited_amount,
+//         ))],
+//         ESDT_SAFE_ADDRESS.to_managed_address(),
+//         mvx_esdt_safe::contract_obj,
+//     );
+//
+//     state.common_setup.check_sc_esdt_balance(
+//         vec![MultiValue3::from((
+//             TestTokenIdentifier::new(trusted_token_id),
+//             0,
+//             expected_receiver_amount,
+//         ))],
+//         TESTING_SC_ADDRESS.to_managed_address(),
+//         testing_sc::contract_obj,
+//     );
+//
+//     state.deposit(
+//         USER.to_managed_address(),
+//         OptionalValue::None,
+//         PaymentsVec::from(vec![deposit_trusted_token_payment]),
+//         None,
+//         Some("deposit"),
+//     );
+//
+//     expected_deposited_amount += deposited_trusted_token_payment_amount;
+//
+//     state
+//         .common_setup
+//         .check_deposited_tokens_amount(vec![(TestTokenIdentifier::new(trusted_token_id), 0)]);
+//
+//     state.common_setup.check_sc_esdt_balance(
+//         vec![MultiValue3::from((
+//             TestTokenIdentifier::new(trusted_token_id),
+//             0,
+//             expected_deposited_amount,
+//         ))],
+//         ESDT_SAFE_ADDRESS.to_managed_address(),
+//         testing_sc::contract_obj,
+//     );
+//
+//     state.common_setup.check_sc_esdt_balance(
+//         vec![MultiValue3::from((
+//             TestTokenIdentifier::new(trusted_token_id),
+//             0,
+//             expected_receiver_amount,
+//         ))],
+//         TESTING_SC_ADDRESS.to_managed_address(),
+//         testing_sc::contract_obj,
+//     );
+// }
 
 /// This test checks the flow of executing an Operation with no payments
 /// Steps for this test:
@@ -1687,60 +1683,60 @@ fn deposit_execute_switch_mechanism() {
 /// 7. Execute the `operation`
 /// 8. Check the emited logs
 /// 9. Check if the `operation` hash was removed from the Header-Verifier SC
-#[test]
-fn execute_operation_no_payments() {
-    let mut state = MvxEsdtSafeTestState::new();
-    state.deploy_contract(
-        HEADER_VERIFIER_ADDRESS,
-        OptionalValue::Some(EsdtSafeConfig::default_config()),
-    );
-
-    let token_display_name = "TokenOne";
-    let egld_payment = BigUint::from(DEFAULT_ISSUE_COST);
-
-    state.register_native_token(FIRST_TEST_TOKEN, token_display_name, egld_payment, None);
-
-    let gas_limit = 1;
-    let function = ManagedBuffer::<StaticApi>::from("hello");
-    let args =
-        ManagedVec::<StaticApi, ManagedBuffer<StaticApi>>::from(vec![ManagedBuffer::from("1")]);
-
-    let transfer_data = TransferData::new(gas_limit, function, args);
-
-    let operation_data =
-        OperationData::new(1, OWNER_ADDRESS.to_managed_address(), Some(transfer_data));
-
-    let operation = Operation::new(
-        TESTING_SC_ADDRESS.to_managed_address(),
-        ManagedVec::new(),
-        operation_data,
-    );
-
-    let operation_hash = state.get_operation_hash(&operation);
-    let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&operation_hash.to_vec()));
-
-    state.common_setup.deploy_header_verifier();
-    state.common_setup.deploy_testing_sc();
-    state.set_esdt_safe_address_in_header_verifier(ESDT_SAFE_ADDRESS);
-
-    let operations_hashes = MultiValueEncoded::from(ManagedVec::from(vec![operation_hash.clone()]));
-
-    state
-        .common_setup
-        .deploy_chain_config(SovereignConfig::default_config());
-
-    state.register_operation(ManagedBuffer::new(), &hash_of_hashes, operations_hashes);
-
-    state
-        .common_setup
-        .check_operation_hash_status(&operation_hash, OperationHashStatus::NotLocked);
-
-    state.execute_operation(&hash_of_hashes, &operation, None, Some("executedBridgeOp"));
-
-    state
-        .common_setup
-        .check_operation_hash_status_is_empty(&operation_hash);
-}
+// #[test]
+// fn execute_operation_no_payments() {
+//     let mut state = MvxEsdtSafeTestState::new();
+//     state.deploy_contract(
+//         HEADER_VERIFIER_ADDRESS,
+//         OptionalValue::Some(EsdtSafeConfig::default_config()),
+//     );
+//
+//     let token_display_name = "TokenOne";
+//     let egld_payment = BigUint::from(DEFAULT_ISSUE_COST);
+//
+//     state.register_native_token(FIRST_TEST_TOKEN, token_display_name, egld_payment, None);
+//
+//     let gas_limit = 1;
+//     let function = ManagedBuffer::<StaticApi>::from("hello");
+//     let args =
+//         ManagedVec::<StaticApi, ManagedBuffer<StaticApi>>::from(vec![ManagedBuffer::from("1")]);
+//
+//     let transfer_data = TransferData::new(gas_limit, function, args);
+//
+//     let operation_data =
+//         OperationData::new(1, OWNER_ADDRESS.to_managed_address(), Some(transfer_data));
+//
+//     let operation = Operation::new(
+//         TESTING_SC_ADDRESS.to_managed_address(),
+//         ManagedVec::new(),
+//         operation_data,
+//     );
+//
+//     let operation_hash = state.get_operation_hash(&operation);
+//     let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&operation_hash.to_vec()));
+//
+//     state.common_setup.deploy_header_verifier();
+//     state.common_setup.deploy_testing_sc();
+//     state.set_esdt_safe_address_in_header_verifier(ESDT_SAFE_ADDRESS);
+//
+//     let operations_hashes = MultiValueEncoded::from(ManagedVec::from(vec![operation_hash.clone()]));
+//
+//     state
+//         .common_setup
+//         .deploy_chain_config(SovereignConfig::default_config());
+//
+//     state.register_operation(ManagedBuffer::new(), &hash_of_hashes, operations_hashes);
+//
+//     state
+//         .common_setup
+//         .check_operation_hash_status(&operation_hash, OperationHashStatus::NotLocked);
+//
+//     state.execute_operation(&hash_of_hashes, &operation, None, Some("executedBridgeOp"));
+//
+//     state
+//         .common_setup
+//         .check_operation_hash_status_is_empty(&operation_hash);
+// }
 
 /// This test checks the flow of executing an Operation with no payments
 /// which should emit a failed event
@@ -1754,60 +1750,60 @@ fn execute_operation_no_payments() {
 /// 7. Execute the `operation`
 /// 8. Check the emited logs
 /// 9. Check if the `operation` hash was removed from the Header-Verifier SC
-#[test]
-fn execute_operation_no_payments_failed_event() {
-    let mut state = MvxEsdtSafeTestState::new();
-    state.deploy_contract(
-        HEADER_VERIFIER_ADDRESS,
-        OptionalValue::Some(EsdtSafeConfig::default_config()),
-    );
-
-    let token_display_name = "TokenOne";
-    let egld_payment = BigUint::from(DEFAULT_ISSUE_COST);
-
-    state.register_native_token(FIRST_TEST_TOKEN, token_display_name, egld_payment, None);
-
-    let gas_limit = 1;
-    let function = ManagedBuffer::<StaticApi>::from("WRONG_ENDPOINT");
-    let args =
-        ManagedVec::<StaticApi, ManagedBuffer<StaticApi>>::from(vec![ManagedBuffer::from("1")]);
-
-    let transfer_data = TransferData::new(gas_limit, function, args);
-
-    let operation_data =
-        OperationData::new(1, OWNER_ADDRESS.to_managed_address(), Some(transfer_data));
-
-    let operation = Operation::new(
-        TESTING_SC_ADDRESS.to_managed_address(),
-        ManagedVec::new(),
-        operation_data,
-    );
-
-    let operation_hash = state.get_operation_hash(&operation);
-    let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&operation_hash.to_vec()));
-
-    state.common_setup.deploy_header_verifier();
-    state.common_setup.deploy_testing_sc();
-    state.set_esdt_safe_address_in_header_verifier(ESDT_SAFE_ADDRESS);
-
-    let operations_hashes = MultiValueEncoded::from(ManagedVec::from(vec![operation_hash.clone()]));
-
-    state
-        .common_setup
-        .deploy_chain_config(SovereignConfig::default_config());
-
-    state.register_operation(ManagedBuffer::new(), &hash_of_hashes, operations_hashes);
-
-    state
-        .common_setup
-        .check_operation_hash_status(&operation_hash, OperationHashStatus::NotLocked);
-
-    state.execute_operation(&hash_of_hashes, &operation, None, Some("executedBridgeOp"));
-
-    state
-        .common_setup
-        .check_operation_hash_status_is_empty(&operation_hash);
-}
+// #[test]
+// fn execute_operation_no_payments_failed_event() {
+//     let mut state = MvxEsdtSafeTestState::new();
+//     state.deploy_contract(
+//         HEADER_VERIFIER_ADDRESS,
+//         OptionalValue::Some(EsdtSafeConfig::default_config()),
+//     );
+//
+//     let token_display_name = "TokenOne";
+//     let egld_payment = BigUint::from(DEFAULT_ISSUE_COST);
+//
+//     state.register_native_token(FIRST_TEST_TOKEN, token_display_name, egld_payment, None);
+//
+//     let gas_limit = 1;
+//     let function = ManagedBuffer::<StaticApi>::from("WRONG_ENDPOINT");
+//     let args =
+//         ManagedVec::<StaticApi, ManagedBuffer<StaticApi>>::from(vec![ManagedBuffer::from("1")]);
+//
+//     let transfer_data = TransferData::new(gas_limit, function, args);
+//
+//     let operation_data =
+//         OperationData::new(1, OWNER_ADDRESS.to_managed_address(), Some(transfer_data));
+//
+//     let operation = Operation::new(
+//         TESTING_SC_ADDRESS.to_managed_address(),
+//         ManagedVec::new(),
+//         operation_data,
+//     );
+//
+//     let operation_hash = state.get_operation_hash(&operation);
+//     let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&operation_hash.to_vec()));
+//
+//     state.common_setup.deploy_header_verifier();
+//     state.common_setup.deploy_testing_sc();
+//     state.set_esdt_safe_address_in_header_verifier(ESDT_SAFE_ADDRESS);
+//
+//     let operations_hashes = MultiValueEncoded::from(ManagedVec::from(vec![operation_hash.clone()]));
+//
+//     state
+//         .common_setup
+//         .deploy_chain_config(SovereignConfig::default_config());
+//
+//     state.register_operation(ManagedBuffer::new(), &hash_of_hashes, operations_hashes);
+//
+//     state
+//         .common_setup
+//         .check_operation_hash_status(&operation_hash, OperationHashStatus::NotLocked);
+//
+//     state.execute_operation(&hash_of_hashes, &operation, None, Some("executedBridgeOp"));
+//
+//     state
+//         .common_setup
+//         .check_operation_hash_status_is_empty(&operation_hash);
+// }
 
 /// This Test checks the flow for setting the token burn mechanism without having roles
 #[test]

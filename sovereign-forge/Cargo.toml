@@ -23,6 +23,9 @@ path = "../chain-factory"
 [dependencies.chain-config]
 path = "../chain-config"
 
+[dependencies.mvx-esdt-safe]
+path = "../mvx-esdt-safe"
+
 [dependencies.header-verifier]
 path = "../header-verifier"
 

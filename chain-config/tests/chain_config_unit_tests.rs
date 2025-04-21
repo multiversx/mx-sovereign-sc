@@ -3,7 +3,7 @@ use multiversx_sc_scenario::{
     api::StaticApi, imports::MxscPath, ExpectError, ScenarioTxRun, ScenarioWorld,
 };
 use proxies::chain_config_proxy::ChainConfigContractProxy;
-use operation::SovereignConfig;
+use structs::configs::SovereignConfig;
 
 const CONFIG_ADDRESS: TestSCAddress = TestSCAddress::new("config-address");
 const CONFIG_CODE_PATH: MxscPath = MxscPath::new("output/chain-config.mxsc.json");
