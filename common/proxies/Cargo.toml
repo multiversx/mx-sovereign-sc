@@ -6,11 +6,5 @@ edition = "2021"
 [dependencies.multiversx-sc]
 version = "=0.57.1"
 
-[dependencies.operation]
-path = "../operation"
-
-[dependencies.tx-batch-module]
-path = "../tx-batch-module"
-
 [dependencies.structs]
 path = "../structs"
