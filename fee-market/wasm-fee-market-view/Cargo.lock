@@ -27,17 +27,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c34f04666d835ff5d62e058c3995147c06f42fe86ff053337632bca83e42702d"
 
 [[package]]
-name = "generic-array"
-version = "1.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e8c8444bc9d71b935156cc0ccab7f622180808af7867b1daae6547d773591703"
-dependencies = [
- "multiversx-sc",
- "operation",
- "proxies",
- "setup-phase",
- "utils",
- "typenum",
 name = "error-messages"
 version = "0.1.0"
 
@@ -48,6 +37,7 @@ dependencies = [
  "error-messages",
  "multiversx-sc",
  "proxies",
+ "setup-phase",
  "structs",
  "utils",
 ]
@@ -208,6 +198,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "setup-phase"
+version = "0.1.0"
+dependencies = [
+ "error-messages",
+ "multiversx-sc",
+]
+
+[[package]]
 name = "smallvec"
 version = "1.15.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -232,24 +230,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "tx-batch-module"
-version = "0.0.0"
-name = "testing-sc"
-version = "0.1.0"
-dependencies = [
- "multiversx-sc",
- "operation",
-]
-
-[[package]]
-name = "testing-view-wasm"
-version = "0.0.0"
-dependencies = [
- "multiversx-sc-wasm-adapter",
- "testing-sc",
-]
-
-[[package]]
 name = "typenum"
 version = "1.18.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -266,14 +246,6 @@ name = "unwrap-infallible"
 version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "151ac09978d3c2862c4e39b557f4eceee2cc72150bc4cb4f16abf061b6e381fb"
-
-[[package]]
-name = "utils"
-version = "0.0.0"
-dependencies = [
- "multiversx-sc",
- "operation",
-]
 
 [[package]]
 name = "utils"
