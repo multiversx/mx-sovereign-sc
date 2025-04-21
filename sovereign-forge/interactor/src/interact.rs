@@ -4,13 +4,12 @@ mod config;
 
 use config::Config;
 use multiversx_sc_snippets::{imports::*, sdk::bech32};
-use operation::SovereignConfig;
 use proxies::{
     chain_config_proxy::ChainConfigContractProxy,
     chain_factory_proxy::ChainFactoryContractProxy,
-    esdt_safe_proxy::EsdtSafeProxy,
     fee_market_proxy::{FeeMarketProxy, FeeStruct},
     header_verifier_proxy::HeaderverifierProxy,
+    mvx_esdt_safe_proxy::MvxEsdtSafeProxy,
     sovereign_forge_proxy::SovereignForgeProxy,
 };
 use serde::{Deserialize, Serialize};
@@ -18,6 +17,7 @@ use std::{
     io::{Read, Write},
     path::Path,
 };
+use structs::configs::{EsdtSafeConfig, SovereignConfig};
 
 const STATE_FILE: &str = "state.toml";
 const CHAIN_CONFIG_CODE_PATH: &str = "../../chain-config/output/chain-config.mxsc.json";
@@ -252,7 +252,8 @@ impl ContractInteract {
             .from(&self.wallet_address)
             .gas(50_000_000u64)
             .typed(HeaderverifierProxy)
-            .init(self.state.config_address.clone().unwrap())
+            // .init(self.state.config_address.clone().unwrap())
+            .init()
             .returns(ReturnsNewAddress)
             .code(MxscPath::new(HEADER_VERIFIER_CODE_PATH))
             .run()
@@ -273,8 +274,17 @@ impl ContractInteract {
             .tx()
             .from(&self.wallet_address)
             .gas(100_000_000u64)
-            .typed(EsdtSafeProxy)
-            .init(false)
+            .typed(MvxEsdtSafeProxy)
+            .init(
+                ManagedAddress::from(
+                    self.state
+                        .header_verifier_address
+                        .as_ref()
+                        .unwrap()
+                        .to_address(),
+                ),
+                OptionalValue::<EsdtSafeConfig<StaticApi>>::None,
+            )
             .returns(ReturnsNewAddress)
             .code(MxscPath::new(ESDT_SAFE_CODE_PATH))
             .run()

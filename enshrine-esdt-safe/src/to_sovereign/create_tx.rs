@@ -5,7 +5,7 @@ use multiversx_sc::imports::*;
 use structs::{
     aliases::{GasLimit, OptionalValueTransferDataTuple},
     events::EventPayment,
-    operation::{OperationData, TransferData},
+    operation::TransferData,
 };
 
 const MAX_TRANSFERS_PER_TX: usize = 10;
@@ -26,7 +26,7 @@ pub trait CreateTxModule:
     #[endpoint]
     fn deposit(
         &self,
-        to: ManagedAddress,
+        _to: ManagedAddress,
         optional_transfer_data: OptionalValueTransferDataTuple<Self::Api>,
     ) {
         require!(self.not_paused(), "Cannot create transaction while paused");
@@ -114,7 +114,7 @@ pub trait CreateTxModule:
         );
 
         let fee_market_address = self.fee_market_address().get();
-        let fee_enabled = self.external_fee_enabled(fee_market_address).get();
+        let _fee_enabled = self.external_fee_enabled(fee_market_address).get();
 
         // TODO: update to use correct `pop_first_payment`
         // if !fee_enabled {

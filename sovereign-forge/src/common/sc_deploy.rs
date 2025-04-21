@@ -1,5 +1,5 @@
 use crate::err_msg;
-use multiversx_sc::types::{ManagedAddress, ReturnsResult};
+use multiversx_sc::types::ReturnsResult;
 use proxies::{chain_factory_proxy::ChainFactoryContractProxy, fee_market_proxy::FeeStruct};
 use structs::configs::SovereignConfig;
 

@@ -141,12 +141,12 @@ where
         Arg1: ProxyArg<OptionalValue<MultiValue3<u64, ManagedBuffer<Env::Api>, MultiValueEncoded<Env::Api, ManagedBuffer<Env::Api>>>>>,
     >(
         self,
-        to: Arg0,
+        _to: Arg0,
         optional_transfer_data: Arg1,
     ) -> TxTypedCall<Env, From, To, (), Gas, ()> {
         self.wrapped_tx
             .raw_call("deposit")
-            .argument(&to)
+            .argument(&_to)
             .argument(&optional_transfer_data)
             .original_result()
     }

@@ -11,8 +11,7 @@ use multiversx_sc_scenario::{
     api::StaticApi,
     imports::{
         BigUint, ContractBase, EgldOrEsdtTokenIdentifier, EsdtTokenType, ManagedAddress,
-        ManagedBuffer, MultiValue2, MultiValue3, MultiValueEncoded, TestAddress,
-        TestTokenIdentifier, TokenIdentifier, Vec,
+        ManagedBuffer, MultiValue3, TestAddress, TestTokenIdentifier, TokenIdentifier, Vec,
     },
     multiversx_chain_vm::crypto_functions::sha256,
     scenario_model::{Log, TxResponseStatus},
@@ -118,24 +117,18 @@ impl BaseSetup {
     }
 
     pub fn deploy_chain_config(&mut self, config: SovereignConfig<StaticApi>) -> &mut Self {
-        let mut additional_stake_as_tuple = MultiValueEncoded::new();
-        if let Some(additional_stake) = config.opt_additional_stake_required {
-            for stake in additional_stake {
-                additional_stake_as_tuple.push(MultiValue2::from((stake.token_id, stake.amount)));
-            }
-        }
+        // let mut additional_stake_as_tuple = MultiValueEncoded::new();
+        // if let Some(additional_stake) = config.opt_additional_stake_required {
+        //     for stake in additional_stake {
+        //         additional_stake_as_tuple.push(MultiValue2::from((stake.token_id, stake.amount)));
+        //     }
+        // }
 
         self.world
             .tx()
             .from(OWNER_ADDRESS)
             .typed(ChainConfigContractProxy)
-            .init(
-                config.min_validators as usize,
-                config.max_validators as usize,
-                config.min_stake,
-                OWNER_ADDRESS,
-                additional_stake_as_tuple,
-            )
+            .init(config, OWNER_ADDRESS)
             .code(CHAIN_CONFIG_CODE_PATH)
             .new_address(CHAIN_CONFIG_ADDRESS)
             .run();
