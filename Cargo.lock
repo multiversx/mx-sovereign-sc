@@ -224,9 +224,9 @@ dependencies = [
  "multiversx-sc-modules",
  "multiversx-sc-scenario",
  "num-bigint",
- "operation",
  "proxies",
  "setup-phase",
+ "structs",
 ]
 
 [[package]]
@@ -247,8 +247,8 @@ dependencies = [
  "multiversx-sc-modules",
  "multiversx-sc-scenario",
  "num-bigint",
- "operation",
  "proxies",
+ "structs",
  "utils",
 ]
 
@@ -514,18 +514,16 @@ dependencies = [
  "fee-market",
  "header-verifier",
  "hex",
- "max-bridged-amount-module",
  "multiversx-sc",
  "multiversx-sc-modules",
  "multiversx-sc-scenario",
  "num-bigint",
  "num-traits",
- "operation",
  "proxies",
  "setup-phase",
+ "structs",
  "token-handler",
  "token-whitelist",
- "tx-batch-module",
  "utils",
 ]
 
@@ -546,17 +544,15 @@ dependencies = [
  "fee-market",
  "header-verifier",
  "interactor",
- "max-bridged-amount-module",
  "multiversx-sc",
  "multiversx-sc-snippets",
- "operation",
  "proxies",
  "serde",
  "setup-phase",
+ "structs",
  "token-handler",
  "token-whitelist",
  "toml",
- "tx-batch-module",
  "utils",
 ]
 
@@ -618,6 +614,7 @@ dependencies = [
  "multiversx-sc-scenario",
  "num-bigint",
  "proxies",
+ "setup-phase",
  "structs",
  "utils",
 ]
@@ -670,10 +667,10 @@ dependencies = [
  "clap",
  "multiversx-sc",
  "multiversx-sc-snippets",
- "operation",
  "proxies",
  "serde",
  "sovereign-forge",
+ "structs",
  "toml",
 ]
 
@@ -843,6 +840,7 @@ dependencies = [
  "multiversx-sc",
  "multiversx-sc-scenario",
  "proxies",
+ "setup-phase",
  "structs",
 ]
 
@@ -1139,6 +1137,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "879f10e63c20629ecabbb64a8010319738c66a5cd0c29b02d63d272b03751d01"
 dependencies = [
  "generic-array 0.14.7",
+]
+
+[[package]]
+name = "interactor"
+version = "0.1.0"
+dependencies = [
+ "multiversx-sc",
+ "multiversx-sc-snippets",
+ "serde",
+ "toml",
 ]
 
 [[package]]
@@ -1657,13 +1665,6 @@ dependencies = [
  "libc",
  "pkg-config",
  "vcpkg",
-]
-
-[[package]]
-name = "operation"
-version = "0.0.0"
-dependencies = [
- "multiversx-sc",
 ]
 
 [[package]]
@@ -2295,6 +2296,32 @@ dependencies = [
 ]
 
 [[package]]
+name = "sovereign-forge"
+version = "0.0.0"
+dependencies = [
+ "chain-config",
+ "chain-factory",
+ "fee-market",
+ "header-verifier",
+ "multiversx-sc",
+ "multiversx-sc-modules",
+ "multiversx-sc-scenario",
+ "num-bigint",
+ "proxies",
+ "setup-phase",
+ "structs",
+ "token-handler",
+]
+
+[[package]]
+name = "sovereign-forge-meta"
+version = "0.0.0"
+dependencies = [
+ "multiversx-sc-meta-lib",
+ "sovereign-forge",
+]
+
+[[package]]
 name = "spki"
 version = "0.7.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2423,6 +2450,27 @@ name = "tinyvec_macros"
 version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1f3ccbac311fea05f86f61904b462b55fb3df8837a366dfc601a0161d0532f20"
+
+[[package]]
+name = "token-handler"
+version = "0.0.0"
+dependencies = [
+ "chain-factory",
+ "multiversx-sc",
+ "multiversx-sc-modules",
+ "multiversx-sc-scenario",
+ "num-bigint",
+ "proxies",
+ "structs",
+]
+
+[[package]]
+name = "token-handler-meta"
+version = "0.0.0"
+dependencies = [
+ "multiversx-sc-meta-lib",
+ "token-handler",
+]
 
 [[package]]
 name = "token-whitelist"
@@ -2771,7 +2819,10 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0f51cad774fb3c9461ab9bccc9c62dfb7388397b5deda31bf40e8108ccd678b2"
 dependencies = [
  "bitflags",
+ "hashbrown",
  "indexmap",
+ "semver",
+ "serde",
 ]
 
 [[package]]
@@ -2781,7 +2832,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4abf1132c1fdf747d56bbc1bb52152400c70f336870f968b85e89ea422198ae3"
 dependencies = [
  "bitflags",
- "hashbrown",
  "indexmap",
  "semver",
 ]
@@ -3079,7 +3129,6 @@ version = "0.8.24"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2586fea28e186957ef732a5f8b3be2da217d65c5969d4b1e17f973ebbe876879"
 dependencies = [
- "byteorder",
  "zerocopy-derive",
 ]
 
