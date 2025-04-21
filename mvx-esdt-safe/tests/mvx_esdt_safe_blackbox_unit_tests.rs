@@ -1075,17 +1075,17 @@ fn execute_operation_no_esdt_safe_registered() {
         .check_operation_hash_status_is_empty(&hash_of_hashes);
 }
 
-/// Test that execute operation works in the happy flow
-/// Steps:
-/// 1. Deploy the Mvx-ESDT-Safe smart contract
-/// 2. Create the operation
-/// 3. Create the hash of hashes
-/// 4. Deploy the Header-Verifier smart contract
-/// 5. Deploy the Testing smart contract
-/// 6. Set the Mvx-ESDT-Safe address in the Header-Verifier smart contract
-/// 7. Call the register operation function
-/// 8. Call the execute operation function
-/// 9. Check the operation hash status
+// /// Test that execute operation works in the happy flow
+// /// Steps:
+// /// 1. Deploy the Mvx-ESDT-Safe smart contract
+// /// 2. Create the operation
+// /// 3. Create the hash of hashes
+// /// 4. Deploy the Header-Verifier smart contract
+// /// 5. Deploy the Testing smart contract
+// /// 6. Set the Mvx-ESDT-Safe address in the Header-Verifier smart contract
+// /// 7. Call the register operation function
+// /// 8. Call the execute operation function
+// /// 9. Check the operation hash status
 // #[test]
 // fn execute_operation_success() {
 //     let mut state = MvxEsdtSafeTestState::new();
@@ -1140,18 +1140,18 @@ fn execute_operation_no_esdt_safe_registered() {
 //         .check_operation_hash_status_is_empty(&operation_hash);
 // }
 
-/// Test execute operation with native token happy flow
-/// Steps:
-/// 1. Deploy the Mvx-ESDT-Safe smart contract
-/// 2. Register the native token
-/// 3. Create the operation
-/// 4. Create the hash of hashes
-/// 5. Deploy the Header-Verifier smart contract
-/// 6. Deploy the Testing smart contract
-/// 7. Set the Mvx-ESDT-Safe address in the Header-Verifier smart contract
-/// 8. Call the register operation function
-/// 9. Call the execute operation function
-/// 10. Check the operation hash status
+// /// Test execute operation with native token happy flow
+// /// Steps:
+// /// 1. Deploy the Mvx-ESDT-Safe smart contract
+// /// 2. Register the native token
+// /// 3. Create the operation
+// /// 4. Create the hash of hashes
+// /// 5. Deploy the Header-Verifier smart contract
+// /// 6. Deploy the Testing smart contract
+// /// 7. Set the Mvx-ESDT-Safe address in the Header-Verifier smart contract
+// /// 8. Call the register operation function
+// /// 9. Call the execute operation function
+// /// 10. Check the operation hash status
 // #[test]
 // fn execute_operation_with_native_token_success() {
 //     let mut state = MvxEsdtSafeTestState::new();
@@ -1221,18 +1221,18 @@ fn execute_operation_no_esdt_safe_registered() {
 //     );
 // }
 
-/// This test checks the succsesful flow of executing an `operation` with burn mechanism
-/// Steps for this test:
-/// 1. Deploy the Mvx-ESDT-Safe SC with roles for the trusted token
-/// 2. Create the `operation`
-/// 3. Deploy the needed smart contract (Header-Verifier, Fee-Market with no fee and Testing SC)
-/// 4. Set the Fee-Market address in Header-Verifier
-/// 5. Register the `operation`
-/// 6. Register the native token
-/// 7. Set the bridging mechanism to burn&mint
-/// 8. Execute the `operation`
-/// 9. Check if the registered `operation` hash status is empty
-/// 10. Check the balances for the owner, Mvx-ESDT-Safe and Testing SC
+// /// This test checks the succsesful flow of executing an `operation` with burn mechanism
+// /// Steps for this test:
+// /// 1. Deploy the Mvx-ESDT-Safe SC with roles for the trusted token
+// /// 2. Create the `operation`
+// /// 3. Deploy the needed smart contract (Header-Verifier, Fee-Market with no fee and Testing SC)
+// /// 4. Set the Fee-Market address in Header-Verifier
+// /// 5. Register the `operation`
+// /// 6. Register the native token
+// /// 7. Set the bridging mechanism to burn&mint
+// /// 8. Execute the `operation`
+// /// 9. Check if the registered `operation` hash status is empty
+// /// 10. Check the balances for the owner, Mvx-ESDT-Safe and Testing SC
 // #[test]
 // fn execute_operation_burn_mechanism_without_deposit_cannot_subtract() {
 //     let mut state = MvxEsdtSafeTestState::new();
@@ -1413,29 +1413,29 @@ fn execute_operation_no_esdt_safe_registered() {
 //         .check_operation_hash_status_is_empty(&operation_hash);
 // }
 
-/// This test checks the flow of multiple deposit and executes along side bridging mechanism
-/// Steps for this test:
-/// 1. Deploy the Mvx-ESDT-Safe SC with roles for the trusted token
-/// 2. Deploy the needed smart contract (Header-Verifier, Fee-Market with no fee and Testing SC)
-/// 3. Set the Fee-Market address in Mvx-ESDT-Safe and Header-Verifier
-/// 4. Deposit the `deposit_payment` to the `USER`
-/// 5. Check for logs and esdt balance
-/// 6. Switch the bridging mechanism to Burn&Mint for the trusted token
-/// 7. Check for `deposited_tokens_amount` mapper and esdt balance
-/// 8. Create the first `operation`
-/// 9. Register the `operation`
-/// 10. Execute the `operation`
-/// 11. Check for `deposited_tokens_amount` mapper and esdt balance
-/// 12. Second deposit of `deposit_payment` to the `USER`
-/// 13. Check for logs, `deposited_tokens_amount` mapper and esdt balance
-/// 14. Set bridging mechanism back to Lock&Send
-/// 15. Check `deposited_tokens_amount` mapper and esdt balance
-/// 16. Create the second `operation`
-/// 17. Register the `operation`
-/// 18. Execute the `operation`
-/// 19. Check for `deposited_tokens_amount` mapper and esdt balance
-/// 12. Third deposit of `deposit_payment` to the `USER`
-/// 19. Check for logs, `deposited_tokens_amount` mapper and esdt balance
+// /// This test checks the flow of multiple deposit and executes along side bridging mechanism
+// /// Steps for this test:
+// /// 1. Deploy the Mvx-ESDT-Safe SC with roles for the trusted token
+// /// 2. Deploy the needed smart contract (Header-Verifier, Fee-Market with no fee and Testing SC)
+// /// 3. Set the Fee-Market address in Mvx-ESDT-Safe and Header-Verifier
+// /// 4. Deposit the `deposit_payment` to the `USER`
+// /// 5. Check for logs and esdt balance
+// /// 6. Switch the bridging mechanism to Burn&Mint for the trusted token
+// /// 7. Check for `deposited_tokens_amount` mapper and esdt balance
+// /// 8. Create the first `operation`
+// /// 9. Register the `operation`
+// /// 10. Execute the `operation`
+// /// 11. Check for `deposited_tokens_amount` mapper and esdt balance
+// /// 12. Second deposit of `deposit_payment` to the `USER`
+// /// 13. Check for logs, `deposited_tokens_amount` mapper and esdt balance
+// /// 14. Set bridging mechanism back to Lock&Send
+// /// 15. Check `deposited_tokens_amount` mapper and esdt balance
+// /// 16. Create the second `operation`
+// /// 17. Register the `operation`
+// /// 18. Execute the `operation`
+// /// 19. Check for `deposited_tokens_amount` mapper and esdt balance
+// /// 12. Third deposit of `deposit_payment` to the `USER`
+// /// 19. Check for logs, `deposited_tokens_amount` mapper and esdt balance
 // #[test]
 // fn deposit_execute_switch_mechanism() {
 //     let mut state = MvxEsdtSafeTestState::new();
@@ -1672,17 +1672,17 @@ fn execute_operation_no_esdt_safe_registered() {
 //     );
 // }
 
-/// This test checks the flow of executing an Operation with no payments
-/// Steps for this test:
-/// 1. Deploy the Mvx-ESDT-Safe SC with the default config
-/// 2. Registed the native token
-/// 3. Create the `operation`
-/// 4. Deploy the needed smart contract (Header-Verifier, Fee-Market with no fee and Testing SC)
-/// 5. Register the `operation`
-/// 6. Check if the registered `operation` is not locked
-/// 7. Execute the `operation`
-/// 8. Check the emited logs
-/// 9. Check if the `operation` hash was removed from the Header-Verifier SC
+// /// This test checks the flow of executing an Operation with no payments
+// /// Steps for this test:
+// /// 1. Deploy the Mvx-ESDT-Safe SC with the default config
+// /// 2. Registed the native token
+// /// 3. Create the `operation`
+// /// 4. Deploy the needed smart contract (Header-Verifier, Fee-Market with no fee and Testing SC)
+// /// 5. Register the `operation`
+// /// 6. Check if the registered `operation` is not locked
+// /// 7. Execute the `operation`
+// /// 8. Check the emited logs
+// /// 9. Check if the `operation` hash was removed from the Header-Verifier SC
 // #[test]
 // fn execute_operation_no_payments() {
 //     let mut state = MvxEsdtSafeTestState::new();
@@ -1738,18 +1738,18 @@ fn execute_operation_no_esdt_safe_registered() {
 //         .check_operation_hash_status_is_empty(&operation_hash);
 // }
 
-/// This test checks the flow of executing an Operation with no payments
-/// which should emit a failed event
-/// Steps for this test:
-/// 1. Deploy the Mvx-ESDT-Safe SC with the default config
-/// 2. Registed the native token
-/// 3. Create the `operation`
-/// 4. Deploy the needed smart contract (Header-Verifier, Fee-Market with no fee and Testing SC)
-/// 5. Register the `operation`
-/// 6. Check if the registered `operation` is not locked
-/// 7. Execute the `operation`
-/// 8. Check the emited logs
-/// 9. Check if the `operation` hash was removed from the Header-Verifier SC
+// /// This test checks the flow of executing an Operation with no payments
+// /// which should emit a failed event
+// /// Steps for this test:
+// /// 1. Deploy the Mvx-ESDT-Safe SC with the default config
+// /// 2. Registed the native token
+// /// 3. Create the `operation`
+// /// 4. Deploy the needed smart contract (Header-Verifier, Fee-Market with no fee and Testing SC)
+// /// 5. Register the `operation`
+// /// 6. Check if the registered `operation` is not locked
+// /// 7. Execute the `operation`
+// /// 8. Check the emited logs
+// /// 9. Check if the `operation` hash was removed from the Header-Verifier SC
 // #[test]
 // fn execute_operation_no_payments_failed_event() {
 //     let mut state = MvxEsdtSafeTestState::new();
