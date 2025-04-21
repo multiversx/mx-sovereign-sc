@@ -22,24 +22,38 @@ checksum = "5c8214115b7bf84099f1309324e63141d4c5d7cc26862f97a0a857dbefe165bd"
 
 [[package]]
 name = "chain-config"
-version = "0.0.0"
+version = "0.1.0"
 dependencies = [
+ "error-messages",
  "multiversx-sc",
  "multiversx-sc-modules",
- "operation",
  "proxies",
  "setup-phase",
+ "structs",
 ]
 
 [[package]]
 name = "chain-factory"
-version = "0.0.0"
+version = "0.1.0"
 dependencies = [
  "chain-config",
+ "error-messages",
  "multiversx-sc",
  "multiversx-sc-modules",
- "operation",
  "proxies",
+ "structs",
+ "utils",
+]
+
+[[package]]
+name = "cross-chain"
+version = "0.1.0"
+dependencies = [
+ "error-messages",
+ "multiversx-sc",
+ "multiversx-sc-modules",
+ "proxies",
+ "structs",
  "utils",
 ]
 
@@ -56,15 +70,13 @@ dependencies = [
  "chain-config",
  "fee-market",
  "header-verifier",
- "max-bridged-amount-module",
  "multiversx-sc",
  "multiversx-sc-modules",
- "operation",
  "proxies",
  "setup-phase",
+ "structs",
  "token-handler",
  "token-whitelist",
- "tx-batch-module",
  "utils",
 ]
 
@@ -77,13 +89,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "error-messages"
+version = "0.1.0"
+
+[[package]]
 name = "fee-market"
-version = "0.0.0"
+version = "0.1.0"
 dependencies = [
+ "error-messages",
  "multiversx-sc",
- "operation",
  "proxies",
  "setup-phase",
+ "structs",
  "utils",
 ]
 
@@ -98,13 +115,14 @@ dependencies = [
 
 [[package]]
 name = "header-verifier"
-version = "0.0.0"
+version = "0.1.0"
 dependencies = [
- "chain-config",
+ "cross-chain",
+ "error-messages",
  "multiversx-sc",
- "operation",
  "proxies",
  "setup-phase",
+ "structs",
 ]
 
 [[package]]
@@ -118,13 +136,6 @@ name = "hex-literal"
 version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6fe2267d4ed49bc07b63801559be28c718ea06c4738b7a03c94df7386d2cde46"
-
-[[package]]
-name = "max-bridged-amount-module"
-version = "0.0.0"
-dependencies = [
- "multiversx-sc",
-]
 
 [[package]]
 name = "multiversx-chain-core"
@@ -226,13 +237,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "operation"
-version = "0.0.0"
-dependencies = [
- "multiversx-sc",
-]
-
-[[package]]
 name = "proc-macro2"
 version = "1.0.94"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -246,8 +250,7 @@ name = "proxies"
 version = "0.1.0"
 dependencies = [
  "multiversx-sc",
- "operation",
- "tx-batch-module",
+ "structs",
 ]
 
 [[package]]
@@ -271,8 +274,9 @@ dependencies = [
 
 [[package]]
 name = "setup-phase"
-version = "0.0.0"
+version = "0.1.0"
 dependencies = [
+ "error-messages",
  "multiversx-sc",
 ]
 
@@ -281,6 +285,13 @@ name = "smallvec"
 version = "1.15.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8917285742e9f3e1683f0a9c4e6b57960b7314d0b08d30d1ecd426713ee2eee9"
+
+[[package]]
+name = "structs"
+version = "0.1.0"
+dependencies = [
+ "multiversx-sc",
+]
 
 [[package]]
 name = "syn"
@@ -300,25 +311,18 @@ dependencies = [
  "chain-factory",
  "multiversx-sc",
  "multiversx-sc-modules",
- "operation",
  "proxies",
+ "structs",
 ]
 
 [[package]]
 name = "token-whitelist"
-version = "0.0.0"
+version = "0.1.0"
 dependencies = [
+ "error-messages",
  "multiversx-sc",
  "setup-phase",
  "utils",
-]
-
-[[package]]
-name = "tx-batch-module"
-version = "0.0.0"
-dependencies = [
- "multiversx-sc",
- "operation",
 ]
 
 [[package]]
@@ -341,8 +345,9 @@ checksum = "151ac09978d3c2862c4e39b557f4eceee2cc72150bc4cb4f16abf061b6e381fb"
 
 [[package]]
 name = "utils"
-version = "0.0.0"
+version = "0.1.0"
 dependencies = [
+ "error-messages",
  "multiversx-sc",
- "operation",
+ "structs",
 ]

@@ -1,19 +1,20 @@
 use crate::common;
-use operation::{
-    aliases::{GasLimit, OptionalValueTransferDataTuple},
-    EventPayment, OperationData, TransferData,
-};
 use proxies::fee_market_proxy::FeeMarketProxy;
 
 use multiversx_sc::imports::*;
+use structs::{
+    aliases::{GasLimit, OptionalValueTransferDataTuple},
+    events::EventPayment,
+    operation::{OperationData, TransferData},
+};
 
 const MAX_TRANSFERS_PER_TX: usize = 10;
 
 #[multiversx_sc::module]
 pub trait CreateTxModule:
     super::events::EventsModule
-    + tx_batch_module::TxBatchModule
-    + max_bridged_amount_module::MaxBridgedAmountModule
+    // + tx_batch_module::TxBatchModule
+    // + max_bridged_amount_module::MaxBridgedAmountModule
     + token_whitelist::TokenWhitelistModule
     + setup_phase::SetupPhaseModule
     + utils::UtilsModule
@@ -35,14 +36,14 @@ pub trait CreateTxModule:
         require!(payments.len() <= MAX_TRANSFERS_PER_TX, "Too many tokens");
 
         let mut total_tokens_for_fees = 0usize;
-        let mut event_payments = MultiValueEncoded::new();
+        let mut event_payments = MultiValueEncoded::<Self::Api, EventPayment<Self::Api>>::new();
         let mut refundable_payments = ManagedVec::<Self::Api, _>::new();
 
         let own_sc_address = self.blockchain().get_sc_address();
         let is_sov_chain = self.is_sovereign_chain().get();
 
         for payment in &payments {
-            self.require_below_max_amount(&payment.token_identifier, &payment.amount);
+            // self.require_below_max_amount(&payment.token_identifier, &payment.amount);
             self.require_token_not_blacklisted(&payment.token_identifier);
             let is_token_whitelist_empty = self.token_whitelist().is_empty();
             let is_token_whitelisted = self.token_whitelist().contains(&payment.token_identifier);
@@ -91,12 +92,12 @@ pub trait CreateTxModule:
         let caller = self.blockchain().get_caller();
         self.refund_tokens(&caller, refundable_payments);
 
-        let tx_nonce = self.get_and_save_next_tx_id();
-        self.deposit_event(
-            &to,
-            &EventPayment::map_to_tuple_multi_value(event_payments),
-            OperationData::new(tx_nonce, caller, option_transfer_data),
-        );
+        // let tx_nonce = self.get_and_save_next_tx_id();
+        // self.deposit_event(
+        //     &to,
+        //     &EventPayment::map_to_tuple_multi_value(event_payments),
+        //     OperationData::new(tx_nonce, caller, option_transfer_data),
+        // );
     }
 
     fn check_and_extract_fee(
@@ -115,12 +116,15 @@ pub trait CreateTxModule:
         let fee_market_address = self.fee_market_address().get();
         let fee_enabled = self.external_fee_enabled(fee_market_address).get();
 
-        if !fee_enabled {
+        // TODO: update to use correct `pop_first_payment`
+        // if !fee_enabled {
+        //     return MultiValue2::from((OptionalValue::None, payments));
+        // } else {
+        //     let (fee_payment, no_fee_payments) = self.pop_first_payment(payments.clone());
+        //     return MultiValue2::from((OptionalValue::Some(fee_payment), no_fee_payments));
+        // }
+
             return MultiValue2::from((OptionalValue::None, payments));
-        } else {
-            let (fee_payment, no_fee_payments) = self.pop_first_payment(payments.clone());
-            return MultiValue2::from((OptionalValue::Some(fee_payment), no_fee_payments));
-        }
     }
 
     fn refund_tokens(

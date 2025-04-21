@@ -18,14 +18,8 @@ toml = "0.8.6"
 [dependencies.enshrine-esdt-safe]
 path = ".."
 
-[dependencies.operation]
-path = "../../common/operation"
-
-[dependencies.tx-batch-module]
-path = "../../common/tx-batch-module"
-
-[dependencies.max-bridged-amount-module]
-path = "../../common/max-bridged-amount-module"
+[dependencies.structs]
+path = "../../common/structs"
 
 [dependencies.setup-phase]
 path = "../../common/setup-phase"
