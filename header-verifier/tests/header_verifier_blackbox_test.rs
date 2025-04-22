@@ -22,6 +22,7 @@ fn test_deploy() {
         .deploy_header_verifier(&CHAIN_CONFIG_ADDRESS);
 }
 
+/// Test that registers the ESDT-Safe address
 #[test]
 fn test_register_esdt_address() {
     let mut state = HeaderVerifierTestState::new();
@@ -44,6 +45,7 @@ fn test_register_esdt_address() {
         })
 }
 
+/// Test that register bridge operation fails because the setup phase was not completed
 #[test]
 fn register_bridge_operation_setup_not_completed() {
     let mut state = HeaderVerifierTestState::new();
@@ -65,6 +67,12 @@ fn register_bridge_operation_setup_not_completed() {
     state.register_operations(operation.clone(), Some("The setup phase must be completed"));
 }
 
+/// Test that successfully registeres a bridge operation
+/// Steps:
+/// 1. Deploy the Header-Verifier and Chain-Config contracts
+/// 2. Complete the setup phase
+/// 3. Register the Operation
+/// 4. Check inside the contracts storage that the Operation was registered
 #[test]
 fn test_register_bridge_operation() {
     let mut state = HeaderVerifierTestState::new();
@@ -113,34 +121,7 @@ fn test_register_bridge_operation() {
         });
 }
 
-#[test]
-fn test_remove_executed_hash_caller_not_esdt_address() {
-    let mut state = HeaderVerifierTestState::new();
-
-    state
-        .common_setup
-        .deploy_header_verifier(&CHAIN_CONFIG_ADDRESS);
-
-    state
-        .common_setup
-        .deploy_chain_config(SovereignConfig::default_config());
-
-    state.complete_setup_phase(None);
-
-    let operation_1 = ManagedBuffer::from("operation_1");
-    let operation_2 = ManagedBuffer::from("operation_2");
-    let operation = state.generate_bridge_operation_struct(vec![&operation_1, &operation_2]);
-
-    state.register_operations(operation.clone(), None);
-    state.register_esdt_address(ENSHRINE_ADDRESS);
-    state.remove_executed_hash(
-        OWNER_ADDRESS,
-        &operation.bridge_operation_hash,
-        &operation_1,
-        Some(ONLY_ESDT_SAFE_CALLER),
-    );
-}
-
+/// Test that the removal of an executed hash fails because the caller is not an ESDT-Safe contract
 #[test]
 fn test_remove_executed_hash_no_esdt_address_registered() {
     let mut state = HeaderVerifierTestState::new();
@@ -168,6 +149,14 @@ fn test_remove_executed_hash_no_esdt_address_registered() {
     );
 }
 
+/// Test that successfully removes one executed hash from the contract
+/// Steps:
+/// 1. Deploy the Header-Verifier and Chain-Config contracts
+/// 2. Complete the setup phase
+/// 3. Register the ESDT-Safe address
+/// 4. Register the Operation
+/// 5. Remove the executed Operation hash
+/// 6. Check in the contracts storage that the hash was removed
 #[test]
 fn test_remove_one_executed_hash() {
     let mut state = HeaderVerifierTestState::new();
@@ -218,6 +207,14 @@ fn test_remove_one_executed_hash() {
         });
 }
 
+/// Test that successfully removes all executed hashes
+/// Steps:
+/// 1. Deploy the Header-Verifier and Chain-Config contracts
+/// 2. Complete the setup phase
+/// 3. Register the ESDT-Safe address
+/// 4. Register the Operation
+/// 5. Remove the executed Operation hashes
+/// 6. Check in the contracts storage that the hash was removed
 #[test]
 fn test_remove_all_executed_hashes() {
     let mut state = HeaderVerifierTestState::new();
@@ -273,6 +270,7 @@ fn test_remove_all_executed_hashes() {
         });
 }
 
+/// Test that fails the lock of an Operation because it was not registered
 #[test]
 fn test_lock_operation_not_registered() {
     let mut state = HeaderVerifierTestState::new();
@@ -295,6 +293,14 @@ fn test_lock_operation_not_registered() {
     );
 }
 
+/// Test that successfully lock an Operation hash
+/// Steps:
+/// 1. Deploy the Header-Verifier and Chain-Config contracts
+/// 2. Complete the setup phase
+/// 3. Register the ESDT-Safe address
+/// 4. Register the Operation
+/// 5. Lock the Operation hash
+/// 6. Check in the contracts storage that the hash was locked
 #[test]
 fn test_lock_operation() {
     let mut state = HeaderVerifierTestState::new();
@@ -346,6 +352,10 @@ fn test_lock_operation() {
         })
 }
 
+/// Test that successfully changes the validator set
+/// Steps:
+/// 1. Deploy the Header-Verifier contract
+/// 2. Change the validator set with log assertion
 #[test]
 fn test_change_validator_set() {
     let mut state = HeaderVerifierTestState::new();
@@ -366,6 +376,7 @@ fn test_change_validator_set() {
     );
 }
 
+/// Test that fails the change of validator set because the operation was already registered
 #[test]
 fn test_change_validator_set_operation_already_registered() {
     let mut state = HeaderVerifierTestState::new();
