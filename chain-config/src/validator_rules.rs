@@ -1,4 +1,4 @@
-use operation::SovereignConfig;
+use structs::configs::SovereignConfig;
 
 multiversx_sc::imports!();
 multiversx_sc::derive_imports!();

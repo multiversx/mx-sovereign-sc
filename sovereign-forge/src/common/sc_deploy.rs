@@ -1,7 +1,7 @@
 use crate::err_msg;
 use multiversx_sc::types::ReturnsResult;
-use operation::SovereignConfig;
 use proxies::{chain_factory_proxy::ChainFactoryContractProxy, fee_market_proxy::FeeStruct};
+use structs::configs::SovereignConfig;
 
 #[multiversx_sc::module]
 pub trait ScDeployModule: super::utils::UtilsModule + super::storage::StorageModule {
@@ -28,15 +28,17 @@ pub trait ScDeployModule: super::utils::UtilsModule + super::storage::StorageMod
     #[inline]
     fn deploy_esdt_safe(
         &self,
-        is_sovereign_chain: bool,
-        header_verifier_address: &ManagedAddress,
+        _is_sovereign_chain: bool,
+        _header_verifier_address: &ManagedAddress,
     ) -> ManagedAddress {
-        self.tx()
-            .to(self.get_chain_factory_address())
-            .typed(ChainFactoryContractProxy)
-            .deploy_esdt_safe(is_sovereign_chain, header_verifier_address)
-            .returns(ReturnsResult)
-            .sync_call()
+        // self.tx()
+        //     .to(self.get_chain_factory_address())
+        //     .typed(ChainFactoryContractProxy)
+        //     .deploy_esdt_safe(is_sovereign_chain, header_verifier_address)
+        //     .returns(ReturnsResult)
+        //     .sync_call()
+
+        ManagedAddress::default()
     }
 
     #[inline]

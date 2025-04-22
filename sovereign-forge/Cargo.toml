@@ -23,20 +23,20 @@ path = "../chain-factory"
 [dependencies.chain-config]
 path = "../chain-config"
 
+[dependencies.mvx-esdt-safe]
+path = "../mvx-esdt-safe"
+
 [dependencies.header-verifier]
 path = "../header-verifier"
 
 [dependencies.fee-market]
 path = "../fee-market"
 
-[dependencies.esdt-safe]
-path = "../esdt-safe"
-
 [dependencies.proxies]
 path = "../common/proxies"
 
-[dependencies.operation]
-path = "../common/operation"
+[dependencies.structs]
+path = "../common/structs"
 
 [dependencies.setup-phase]
 path = "../common/setup-phase"

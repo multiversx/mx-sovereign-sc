@@ -3,7 +3,7 @@ use core::ops::Deref;
 use proxies::{chain_factory_proxy::ChainFactoryContractProxy, fee_market_proxy::FeeStruct};
 
 use multiversx_sc::require;
-use operation::SovereignConfig;
+use structs::configs::SovereignConfig;
 
 use crate::common::{
     self,

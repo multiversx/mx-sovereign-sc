@@ -44,7 +44,7 @@ where
     Gas: TxGas<Env>,
 {
     pub fn init<
-        Arg0: ProxyArg<operation::SovereignConfig<Env::Api>>,
+        Arg0: ProxyArg<structs::configs::SovereignConfig<Env::Api>>,
         Arg1: ProxyArg<ManagedAddress<Env::Api>>,
     >(
         self,
@@ -89,7 +89,7 @@ where
     Gas: TxGas<Env>,
 {
     pub fn update_config<
-        Arg0: ProxyArg<operation::SovereignConfig<Env::Api>>,
+        Arg0: ProxyArg<structs::configs::SovereignConfig<Env::Api>>,
     >(
         self,
         new_config: Arg0,
@@ -116,7 +116,7 @@ where
 
     pub fn sovereign_config(
         self,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, operation::SovereignConfig<Env::Api>> {
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, structs::configs::SovereignConfig<Env::Api>> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("sovereignConfig")

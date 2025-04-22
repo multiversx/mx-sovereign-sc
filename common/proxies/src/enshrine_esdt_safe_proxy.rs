@@ -48,7 +48,7 @@ where
         Arg1: ProxyArg<ManagedAddress<Env::Api>>,
         Arg2: ProxyArg<Option<TokenIdentifier<Env::Api>>>,
         Arg3: ProxyArg<Option<ManagedBuffer<Env::Api>>>,
-        Arg4: ProxyArg<Option<operation::BridgeConfig<Env::Api>>>,
+        Arg4: ProxyArg<Option<structs::configs::EsdtSafeConfig<Env::Api>>>,
     >(
         self,
         is_sovereign_chain: Arg0,
@@ -98,7 +98,7 @@ where
     Gas: TxGas<Env>,
 {
     pub fn update_configuration<
-        Arg0: ProxyArg<operation::BridgeConfig<Env::Api>>,
+        Arg0: ProxyArg<structs::configs::EsdtSafeConfig<Env::Api>>,
     >(
         self,
         new_config: Arg0,
@@ -138,22 +138,22 @@ where
 
     pub fn deposit<
         Arg0: ProxyArg<ManagedAddress<Env::Api>>,
-        Arg1: ProxyArg<OptionalValue<MultiValue3<u64, ManagedBuffer<Env::Api>, ManagedVec<Env::Api, ManagedBuffer<Env::Api>>>>>,
+        Arg1: ProxyArg<OptionalValue<MultiValue3<u64, ManagedBuffer<Env::Api>, MultiValueEncoded<Env::Api, ManagedBuffer<Env::Api>>>>>,
     >(
         self,
-        to: Arg0,
+        _to: Arg0,
         optional_transfer_data: Arg1,
     ) -> TxTypedCall<Env, From, To, (), Gas, ()> {
         self.wrapped_tx
             .raw_call("deposit")
-            .argument(&to)
+            .argument(&_to)
             .argument(&optional_transfer_data)
             .original_result()
     }
 
     pub fn execute_operations<
         Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
-        Arg1: ProxyArg<operation::Operation<Env::Api>>,
+        Arg1: ProxyArg<structs::operation::Operation<Env::Api>>,
     >(
         self,
         hash_of_hashes: Arg0,
@@ -176,35 +176,6 @@ where
         self.wrapped_tx
             .raw_call("registerNewTokenID")
             .argument(&tokens)
-            .original_result()
-    }
-
-    pub fn set_max_bridged_amount<
-        Arg0: ProxyArg<TokenIdentifier<Env::Api>>,
-        Arg1: ProxyArg<BigUint<Env::Api>>,
-    >(
-        self,
-        token_id: Arg0,
-        max_amount: Arg1,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("setMaxBridgedAmount")
-            .argument(&token_id)
-            .argument(&max_amount)
-            .original_result()
-    }
-
-    pub fn max_bridged_amount<
-        Arg0: ProxyArg<TokenIdentifier<Env::Api>>,
-    >(
-        self,
-        token_id: Arg0,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, BigUint<Env::Api>> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("getMaxBridgedAmount")
-            .argument(&token_id)
             .original_result()
     }
 

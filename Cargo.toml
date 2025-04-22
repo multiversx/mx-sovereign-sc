@@ -6,9 +6,6 @@ members = [
   "chain-config/meta",
   "chain-factory",
   "chain-factory/meta",
-  "esdt-safe",
-  "esdt-safe/interactor",
-  "esdt-safe/meta",
   "fee-market",
   "fee-market/meta",
   "header-verifier",
@@ -23,4 +20,13 @@ members = [
   "sovereign-forge",
   "sovereign-forge/interactor",
   "sovereign-forge/meta",
+  "header-verifier/meta",
+  "sov-esdt-safe",
+  "sov-esdt-safe/meta",
+  "mvx-esdt-safe",
+  "mvx-esdt-safe/meta",
+  "testing-sc",
+  "testing-sc/meta",
+  "interactor",
+  "common/token-whitelist"
 ]

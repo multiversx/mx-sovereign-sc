@@ -1,7 +1,7 @@
 use crate::{common, to_sovereign};
 use multiversx_sc::imports::*;
-use operation::{Operation, OperationData, OperationEsdtPayment, OperationTuple};
 use proxies::{header_verifier_proxy::HeaderverifierProxy, token_handler_proxy::TokenHandlerProxy};
+use structs::operation::{Operation, OperationEsdtPayment, OperationTuple};
 
 const DEFAULT_ISSUE_COST: u64 = 50_000_000_000_000_000; // 0.05 * 10^18
 
@@ -25,8 +25,8 @@ impl<M: ManagedTypeApi> Default for SplitResult<M> {
 #[multiversx_sc::module]
 pub trait TransferTokensModule:
     super::events::EventsModule
-    + tx_batch_module::TxBatchModule
-    + max_bridged_amount_module::MaxBridgedAmountModule
+    // + tx_batch_module::TxBatchModule
+    // + max_bridged_amount_module::MaxBridgedAmountModule
     + multiversx_sc_modules::pause::PauseModule
     + multiversx_sc_modules::default_issue_callbacks::DefaultIssueCallbacksModule
     + utils::UtilsModule
@@ -144,17 +144,18 @@ pub trait TransferTokensModule:
             operation_tuple.op_hash.clone(),
         );
 
-        // deposit back mainchain tokens into user account
-        let sc_address = self.blockchain().get_sc_address();
-        let tx_nonce = self.get_and_save_next_tx_id();
-
-        self.deposit_event(
-            &operation_tuple.operation.data.op_sender,
-            &operation_tuple
-                .operation
-                .map_tokens_to_multi_value_encoded(),
-            OperationData::new(tx_nonce, sc_address.clone(), None),
-        );
+        // // deposit back mainchain tokens into user account
+        // let sc_address = self.blockchain().get_sc_address();
+        // // TODO: from deposit_common
+        // let tx_nonce = self.get_and_save_next_tx_id();
+        //
+        // self.deposit_event(
+        //     &operation_tuple.operation.data.op_sender,
+        //     &operation_tuple
+        //         .operation
+        //         .map_tokens_to_multi_value_encoded(),
+        //     OperationData::new(tx_nonce, sc_address.clone(), None),
+        // );
     }
 
     fn calculate_operation_hash(&self, operation: &Operation<Self::Api>) -> ManagedBuffer {

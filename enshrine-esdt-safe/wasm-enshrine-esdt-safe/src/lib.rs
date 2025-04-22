@@ -6,9 +6,9 @@
 
 // Init:                                 1
 // Upgrade:                              1
-// Endpoints:                           17
+// Endpoints:                           15
 // Async Callback:                       1
-// Total number of exported functions:  20
+// Total number of exported functions:  18
 
 #![no_std]
 
@@ -26,8 +26,6 @@ multiversx_sc_wasm_adapter::endpoints! {
         deposit => deposit
         executeBridgeOps => execute_operations
         registerNewTokenID => register_new_token_id
-        setMaxBridgedAmount => set_max_bridged_amount
-        getMaxBridgedAmount => max_bridged_amount
         addTokensToWhitelist => add_tokens_to_whitelist
         removeTokensFromWhitelist => remove_tokens_from_whitelist
         addTokensToBlacklist => add_tokens_to_blacklist
