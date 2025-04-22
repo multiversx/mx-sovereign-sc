@@ -41,6 +41,9 @@ path = "../common/structs"
 [dependencies.setup-phase]
 path = "../common/setup-phase"
 
+[dependencies.common-test-setup]
+path = "../common/common-test-setup"
+
 [dev-dependencies]
 num-bigint = "0.4"
 
