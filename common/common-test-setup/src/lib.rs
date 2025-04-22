@@ -11,8 +11,8 @@ use multiversx_sc_scenario::{
     api::StaticApi,
     imports::{
         BigUint, ContractBase, EgldOrEsdtTokenIdentifier, EsdtTokenType, ManagedAddress,
-        ManagedBuffer, MultiValue2, MultiValue3, MultiValueEncoded, TestAddress, TestSCAddress,
-        TestTokenIdentifier, TokenIdentifier, Vec,
+        ManagedBuffer, MultiValue3, TestAddress, TestSCAddress, TestTokenIdentifier,
+        TokenIdentifier, Vec,
     },
     multiversx_chain_vm::crypto_functions::sha256,
     scenario_model::{Log, TxResponseStatus},
@@ -25,7 +25,7 @@ use proxies::{
     header_verifier_proxy::HeaderverifierProxy,
     testing_sc_proxy::TestingScProxy,
 };
-use structs::configs::{SovereignConfig, StakeArgs};
+use structs::configs::SovereignConfig;
 
 pub struct RegisterTokenArgs<'a> {
     pub sov_token_id: TokenIdentifier<StaticApi>,

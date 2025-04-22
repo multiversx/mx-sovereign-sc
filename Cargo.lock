@@ -2301,6 +2301,7 @@ version = "0.0.0"
 dependencies = [
  "chain-config",
  "chain-factory",
+ "common-test-setup",
  "fee-market",
  "header-verifier",
  "multiversx-sc",

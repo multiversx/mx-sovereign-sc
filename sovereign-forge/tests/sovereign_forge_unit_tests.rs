@@ -1,3 +1,4 @@
+use common_test_setup::constants::CHAIN_CONFIG_ADDRESS;
 use multiversx_sc::{
     imports::OptionalValue,
     types::{BigUint, ManagedBuffer, TestAddress, TestSCAddress},
@@ -138,8 +139,7 @@ impl SovereignForgeTestState {
             .tx()
             .from(OWNER_ADDRESS)
             .typed(HeaderverifierProxy)
-            // .init(CHAIN_CONFIG_ADDRESS)
-            .init()
+            .init(CHAIN_CONFIG_ADDRESS)
             .code(HEADER_VERIFIER_CODE_PATH)
             .new_address(HEADER_VERIFIER_ADDRESS)
             .run();

@@ -16,7 +16,7 @@ use structs::operation::Operation;
 
 use crate::{config::Config, State};
 use common_test_setup::constants::{
-    CHAIN_CONFIG_CODE_PATH, FEE_MARKET_CODE_PATH, HEADER_VERIFIER_CODE_PATH,
+    CHAIN_CONFIG_ADDRESS, CHAIN_CONFIG_CODE_PATH, FEE_MARKET_CODE_PATH, HEADER_VERIFIER_CODE_PATH,
     MVX_ESDT_SAFE_CODE_PATH, TESTING_SC_CODE_PATH,
 };
 use common_test_setup::RegisterTokenArgs;
@@ -174,7 +174,7 @@ impl MvxEsdtSafeInteract {
             .from(&self.owner_address)
             .gas(120_000_000u64)
             .typed(HeaderverifierProxy)
-            .init()
+            .init(CHAIN_CONFIG_ADDRESS)
             .code(HEADER_VERIFIER_CODE_PATH)
             .code_metadata(CodeMetadata::all())
             .returns(ReturnsNewAddress)

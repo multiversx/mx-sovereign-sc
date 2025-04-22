@@ -1,7 +1,7 @@
 use common_test_setup::constants::{
-    ESDT_SAFE_ADDRESS, FEE_MARKET_ADDRESS, FEE_TOKEN, FIRST_TEST_TOKEN, HEADER_VERIFIER_ADDRESS,
-    ONE_HUNDRED_MILLION, ONE_HUNDRED_THOUSAND, OWNER_ADDRESS, SECOND_TEST_TOKEN, SOV_TOKEN,
-    TESTING_SC_ADDRESS, USER,
+    CHAIN_CONFIG_ADDRESS, ESDT_SAFE_ADDRESS, FEE_MARKET_ADDRESS, FEE_TOKEN, FIRST_TEST_TOKEN,
+    HEADER_VERIFIER_ADDRESS, ONE_HUNDRED_MILLION, ONE_HUNDRED_THOUSAND, OWNER_ADDRESS,
+    SECOND_TEST_TOKEN, SOV_TOKEN, TESTING_SC_ADDRESS, USER,
 };
 use common_test_setup::RegisterTokenArgs;
 use cross_chain::storage::CrossChainStorage;
@@ -1062,7 +1062,9 @@ fn execute_operation_no_esdt_safe_registered() {
 
     let hash_of_hashes = state.get_operation_hash(&operation);
 
-    state.common_setup.deploy_header_verifier();
+    state
+        .common_setup
+        .deploy_header_verifier(&CHAIN_CONFIG_ADDRESS);
     state.execute_operation(
         &hash_of_hashes,
         &operation,
