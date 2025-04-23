@@ -29,7 +29,8 @@ pub trait Headerverifier:
             "The given address is not a Smart Contract address"
         );
 
-        self.chain_config_address().set(chain_config_address);
+        self.chain_config_address()
+            .set_if_empty(chain_config_address);
     }
 
     #[only_owner]
