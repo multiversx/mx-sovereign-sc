@@ -29,9 +29,11 @@ pub trait Headerverifier:
             "The given address is not a Smart Contract address"
         );
 
-        self.chain_config_address()
-            .set_if_empty(chain_config_address);
+        self.chain_config_address().set(chain_config_address);
     }
+
+    #[upgrade]
+    fn upgrade(&self) {}
 
     #[only_owner]
     #[endpoint(registerBlsPubKeys)]
@@ -39,9 +41,6 @@ pub trait Headerverifier:
         self.bls_pub_keys().clear();
         self.bls_pub_keys().extend(bls_pub_keys);
     }
-
-    #[upgrade]
-    fn upgrade(&self) {}
 
     #[endpoint(registerBridgeOps)]
     fn register_bridge_operations(
