@@ -172,8 +172,7 @@ impl EnshrineTestState {
             .tx()
             .from(ENSHRINE_ESDT_OWNER_ADDRESS)
             .typed(HeaderverifierProxy)
-            // .init(CHAIN_CONFIG_ADDRESS)
-            .init()
+            .init(CHAIN_CONFIG_ADDRESS)
             .code(HEADER_VERIFIER_CODE_PATH)
             .new_address(HEADER_VERIFIER_ADDRESS)
             .run();

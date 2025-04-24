@@ -35,14 +35,13 @@ pub trait FactoryModule: only_admin::OnlyAdminModule {
     // TODO: fix
     #[only_admin]
     #[endpoint(deployHeaderVerifier)]
-    fn deploy_header_verifier(&self, _chain_config_address: ManagedAddress) -> ManagedAddress {
+    fn deploy_header_verifier(&self, chain_config_address: ManagedAddress) -> ManagedAddress {
         let source_address = self.header_verifier_template().get();
         let metadata = self.blockchain().get_code_metadata(&source_address);
 
         self.tx()
             .typed(HeaderverifierProxy)
-            // .init(chain_config_address)
-            .init()
+            .init(chain_config_address)
             .gas(60_000_000)
             .from_source(source_address)
             .code_metadata(metadata)

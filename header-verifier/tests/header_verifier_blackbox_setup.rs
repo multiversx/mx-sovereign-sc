@@ -2,6 +2,7 @@ use common_test_setup::constants::{
     ENSHRINE_ADDRESS, HEADER_VERIFIER_ADDRESS, OWNER_ADDRESS, OWNER_BALANCE,
 };
 use common_test_setup::{AccountSetup, BaseSetup};
+use multiversx_sc::api::ManagedTypeApi;
 use multiversx_sc::types::{ManagedBuffer, MultiValueEncoded, TestAddress};
 use multiversx_sc_scenario::{
     api::StaticApi, multiversx_chain_vm::crypto_functions::sha256, ScenarioTxRun,
@@ -9,12 +10,12 @@ use multiversx_sc_scenario::{
 use multiversx_sc_scenario::{ReturnsHandledOrError, ReturnsLogs};
 use proxies::header_verifier_proxy::HeaderverifierProxy;
 
-// #[derive(Clone)]
-// pub struct BridgeOperation<M: ManagedTypeApi> {
-//     pub signature: ManagedBuffer<M>,
-//     pub bridge_operation_hash: ManagedBuffer<M>,
-//     pub operations_hashes: MultiValueEncoded<M, ManagedBuffer<M>>,
-// }
+#[derive(Clone)]
+pub struct BridgeOperation<M: ManagedTypeApi> {
+    pub signature: ManagedBuffer<M>,
+    pub bridge_operation_hash: ManagedBuffer<M>,
+    pub operations_hashes: MultiValueEncoded<M, ManagedBuffer<M>>,
+}
 
 pub struct HeaderVerifierTestState {
     pub common_setup: BaseSetup,
@@ -42,7 +43,49 @@ impl HeaderVerifierTestState {
         Self { common_setup }
     }
 
-    pub fn propose_register_esdt_address(&mut self, esdt_address: TestAddress) {
+    pub fn register_operations(
+        &mut self,
+        operation: BridgeOperation<StaticApi>,
+        expected_error_message: Option<&str>,
+    ) {
+        let response = self
+            .common_setup
+            .world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .to(HEADER_VERIFIER_ADDRESS)
+            .typed(HeaderverifierProxy)
+            .register_bridge_operations(
+                operation.signature,
+                operation.bridge_operation_hash,
+                ManagedBuffer::new(),
+                ManagedBuffer::new(),
+                operation.operations_hashes,
+            )
+            .returns(ReturnsHandledOrError::new())
+            .run();
+
+        self.common_setup
+            .assert_expected_error_message(response, expected_error_message);
+    }
+
+    pub fn complete_setup_phase(&mut self, expected_error_message: Option<&str>) {
+        let response = self
+            .common_setup
+            .world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .to(HEADER_VERIFIER_ADDRESS)
+            .typed(HeaderverifierProxy)
+            .complete_setup_phase()
+            .returns(ReturnsHandledOrError::new())
+            .run();
+
+        self.common_setup
+            .assert_expected_error_message(response, expected_error_message);
+    }
+
+    pub fn register_esdt_address(&mut self, esdt_address: TestAddress) {
         self.common_setup
             .world
             .tx()
@@ -53,24 +96,7 @@ impl HeaderVerifierTestState {
             .run();
     }
 
-    // pub fn propose_register_operations(&mut self, operation: BridgeOperation<StaticApi>) {
-    //     self.common_setup
-    //         .world
-    //         .tx()
-    //         .from(OWNER_ADDRESS)
-    //         .to(HEADER_VERIFIER_ADDRESS)
-    //         .typed(HeaderverifierProxy)
-    //         .register_bridge_operations(
-    //             operation.signature,
-    //             operation.bridge_operation_hash,
-    //             ManagedBuffer::new(),
-    //             ManagedBuffer::new(),
-    //             operation.operations_hashes,
-    //         )
-    //         .run();
-    // }
-
-    pub fn _propose_remove_executed_hash(
+    pub fn remove_executed_hash(
         &mut self,
         caller: TestAddress,
         hash_of_hashes: &ManagedBuffer<StaticApi>,
@@ -97,7 +123,7 @@ impl HeaderVerifierTestState {
         };
     }
 
-    pub fn _propose_lock_operation_hash(
+    pub fn lock_operation_hash(
         &mut self,
         caller: TestAddress,
         hash_of_hashes: &ManagedBuffer<StaticApi>,
@@ -159,27 +185,27 @@ impl HeaderVerifierTestState {
         };
     }
 
-    // pub fn _generate_bridge_operation_struct(
-    //     &mut self,
-    //     operation_hashes: Vec<&ManagedBuffer<StaticApi>>,
-    // ) -> BridgeOperation<StaticApi> {
-    //     let mut bridge_operations: MultiValueEncoded<StaticApi, ManagedBuffer<StaticApi>> =
-    //         MultiValueEncoded::new();
-    //     let mut appended_hashes = ManagedBuffer::new();
-    //
-    //     for operation_hash in operation_hashes {
-    //         appended_hashes.append(operation_hash);
-    //         bridge_operations.push(operation_hash.clone());
-    //     }
-    //
-    //     let hash_of_hashes = self.get_operation_hash(&appended_hashes);
-    //
-    //     BridgeOperation {
-    //         signature: ManagedBuffer::new(),
-    //         bridge_operation_hash: hash_of_hashes,
-    //         operations_hashes: bridge_operations,
-    //     }
-    // }
+    pub fn generate_bridge_operation_struct(
+        &mut self,
+        operation_hashes: Vec<&ManagedBuffer<StaticApi>>,
+    ) -> BridgeOperation<StaticApi> {
+        let mut bridge_operations: MultiValueEncoded<StaticApi, ManagedBuffer<StaticApi>> =
+            MultiValueEncoded::new();
+        let mut appended_hashes = ManagedBuffer::new();
+
+        for operation_hash in operation_hashes {
+            appended_hashes.append(operation_hash);
+            bridge_operations.push(operation_hash.clone());
+        }
+
+        let hash_of_hashes = self.get_operation_hash(&appended_hashes);
+
+        BridgeOperation {
+            signature: ManagedBuffer::new(),
+            bridge_operation_hash: hash_of_hashes,
+            operations_hashes: bridge_operations,
+        }
+    }
 
     pub fn get_operation_hash(
         &mut self,

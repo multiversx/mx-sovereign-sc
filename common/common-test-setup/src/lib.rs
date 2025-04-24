@@ -11,7 +11,8 @@ use multiversx_sc_scenario::{
     api::StaticApi,
     imports::{
         BigUint, ContractBase, EgldOrEsdtTokenIdentifier, EsdtTokenType, ManagedAddress,
-        ManagedBuffer, MultiValue3, TestAddress, TestTokenIdentifier, TokenIdentifier, Vec,
+        ManagedBuffer, MultiValue3, TestAddress, TestSCAddress, TestTokenIdentifier,
+        TokenIdentifier, Vec,
     },
     multiversx_chain_vm::crypto_functions::sha256,
     scenario_model::{Log, TxResponseStatus},
@@ -103,12 +104,12 @@ impl BaseSetup {
         self
     }
 
-    pub fn deploy_header_verifier(&mut self) -> &mut Self {
+    pub fn deploy_header_verifier(&mut self, chain_config_address: &TestSCAddress) -> &mut Self {
         self.world
             .tx()
             .from(OWNER_ADDRESS)
             .typed(HeaderverifierProxy)
-            .init()
+            .init(chain_config_address.to_managed_address())
             .code(HEADER_VERIFIER_CODE_PATH)
             .new_address(HEADER_VERIFIER_ADDRESS)
             .run();
@@ -117,13 +118,6 @@ impl BaseSetup {
     }
 
     pub fn deploy_chain_config(&mut self, config: SovereignConfig<StaticApi>) -> &mut Self {
-        // let mut additional_stake_as_tuple = MultiValueEncoded::new();
-        // if let Some(additional_stake) = config.opt_additional_stake_required {
-        //     for stake in additional_stake {
-        //         additional_stake_as_tuple.push(MultiValue2::from((stake.token_id, stake.amount)));
-        //     }
-        // }
-
         self.world
             .tx()
             .from(OWNER_ADDRESS)

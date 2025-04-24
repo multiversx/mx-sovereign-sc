@@ -1,3 +1,4 @@
+use common_test_setup::constants::CHAIN_CONFIG_ADDRESS;
 use multiversx_sc::{
     imports::OptionalValue,
     types::{BigUint, ManagedBuffer, TestAddress, TestSCAddress},
@@ -24,7 +25,6 @@ use structs::configs::{EsdtSafeConfig, SovereignConfig};
 const FORGE_ADDRESS: TestSCAddress = TestSCAddress::new("sovereign-forge");
 const FORGE_CODE_PATH: MxscPath = MxscPath::new("output/sovereign-forge.mxsc.json");
 const OWNER_ADDRESS: TestAddress = TestAddress::new("owner");
-
 const FACTORY_ADDRESS: TestSCAddress = TestSCAddress::new("chain-factory");
 const FACTORY_CODE_PATH: MxscPath =
     MxscPath::new("../chain-factory/output/chain-factory.mxsc.json");
@@ -43,8 +43,6 @@ const FEE_MARKET_ADDRESS: TestSCAddress = TestSCAddress::new("fee-market");
 const FEE_MARKET_CODE_PATH: MxscPath = MxscPath::new("../fee-market/output/fee-market.mxsc.json");
 
 const TOKEN_HANDLER_ADDRESS: TestSCAddress = TestSCAddress::new("token-handler");
-
-const _CHAIN_CONFIG_ADDRESS: TestSCAddress = TestSCAddress::new("chain-config");
 
 const BALANCE: u128 = 100_000_000_000_000_000;
 const DEPLOY_COST: u64 = 100_000;
@@ -138,8 +136,7 @@ impl SovereignForgeTestState {
             .tx()
             .from(OWNER_ADDRESS)
             .typed(HeaderverifierProxy)
-            // .init(CHAIN_CONFIG_ADDRESS)
-            .init()
+            .init(CHAIN_CONFIG_ADDRESS)
             .code(HEADER_VERIFIER_CODE_PATH)
             .new_address(HEADER_VERIFIER_ADDRESS)
             .run();

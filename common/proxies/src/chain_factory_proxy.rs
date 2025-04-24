@@ -114,12 +114,12 @@ where
         Arg0: ProxyArg<ManagedAddress<Env::Api>>,
     >(
         self,
-        _chain_config_address: Arg0,
+        chain_config_address: Arg0,
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ManagedAddress<Env::Api>> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("deployHeaderVerifier")
-            .argument(&_chain_config_address)
+            .argument(&chain_config_address)
             .original_result()
     }
 

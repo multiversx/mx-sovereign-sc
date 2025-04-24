@@ -7,6 +7,7 @@ use error_messages::{
 };
 use multiversx_sc::codec;
 use multiversx_sc::proxy_imports::{TopDecode, TopEncode};
+use proxies::chain_config_proxy::ChainConfigContractProxy;
 use structs::configs::SovereignConfig;
 
 multiversx_sc::imports!();
@@ -22,7 +23,17 @@ pub trait Headerverifier:
     cross_chain::events::EventsModule + setup_phase::SetupPhaseModule
 {
     #[init]
-    fn init(&self) {}
+    fn init(&self, chain_config_address: ManagedAddress) {
+        require!(
+            self.blockchain().is_smart_contract(&chain_config_address),
+            "The given address is not a Smart Contract address"
+        );
+
+        self.chain_config_address().set(chain_config_address);
+    }
+
+    #[upgrade]
+    fn upgrade(&self) {}
 
     #[only_owner]
     #[endpoint(registerBlsPubKeys)]
@@ -30,9 +41,6 @@ pub trait Headerverifier:
         self.bls_pub_keys().clear();
         self.bls_pub_keys().extend(bls_pub_keys);
     }
-
-    #[upgrade]
-    fn upgrade(&self) {}
 
     #[endpoint(registerBridgeOps)]
     fn register_bridge_operations(
@@ -139,6 +147,48 @@ pub trait Headerverifier:
                 sc_panic!(CURRENT_OPERATION_ALREADY_IN_EXECUTION)
             }
         }
+    }
+
+    #[endpoint(updateConfig)]
+    fn update_config(&self, new_config: SovereignConfig<Self::Api>) {
+        // TODO: verify signature
+
+        self.tx()
+            .to(self.chain_config_address().get())
+            .typed(ChainConfigContractProxy)
+            .update_config(new_config)
+            .sync_call();
+    }
+
+    #[only_owner]
+    #[endpoint(completeSetupPhase)]
+    fn complete_setup_phase(&self) {
+        if self.is_setup_phase_complete() {
+            return;
+        }
+
+        self.check_validator_range(self.bls_pub_keys().len() as u64);
+
+        // TODO:
+        // self.tx()
+        //     .to(ToSelf)
+        //     .typed(UserBuiltinProxy)
+        //     .change_owner_address()
+        //     .sync_call();
+
+        self.setup_phase_complete().set(true);
+    }
+
+    fn check_validator_range(&self, number_of_validators: u64) {
+        let sovereign_config = self
+            .sovereign_config(self.chain_config_address().get())
+            .get();
+
+        require!(
+            number_of_validators >= sovereign_config.min_validators
+                && number_of_validators <= sovereign_config.max_validators,
+            "The current validator set lenght doesn't meet the Sovereign's requirements"
+        );
     }
 
     fn require_caller_esdt_safe(&self) {
