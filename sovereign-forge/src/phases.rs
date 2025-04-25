@@ -2,8 +2,8 @@ use crate::err_msg;
 use core::ops::Deref;
 use proxies::{chain_factory_proxy::ChainFactoryContractProxy, fee_market_proxy::FeeStruct};
 
-use multiversx_sc::require;
-use structs::configs::SovereignConfig;
+use multiversx_sc::{imports::OptionalValue, require};
+use structs::configs::{EsdtSafeConfig, SovereignConfig};
 
 use crate::common::{
     self,
@@ -110,7 +110,7 @@ pub trait PhasesModule:
     }
 
     #[endpoint(deployPhaseThree)]
-    fn deploy_phase_three(&self, is_sovereign_chain: bool) {
+    fn deploy_phase_three(&self, opt_config: OptionalValue<EsdtSafeConfig<Self::Api>>) {
         let caller = self.blockchain().get_caller();
 
         self.require_phase_two_completed(&caller);
@@ -121,7 +121,7 @@ pub trait PhasesModule:
 
         let header_verifier_address = self.get_contract_address(&caller, ScArray::HeaderVerifier);
 
-        let esdt_safe_address = self.deploy_esdt_safe(is_sovereign_chain, &header_verifier_address);
+        let esdt_safe_address = self.deploy_mvx_esdt_safe(&header_verifier_address, opt_config);
 
         let esdt_safe_contract_info =
             ContractInfo::new(ScArray::ESDTSafe, esdt_safe_address.clone());

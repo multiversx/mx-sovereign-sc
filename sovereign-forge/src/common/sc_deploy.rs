@@ -1,7 +1,7 @@
 use crate::err_msg;
-use multiversx_sc::types::ReturnsResult;
+use multiversx_sc::{imports::OptionalValue, types::ReturnsResult};
 use proxies::{chain_factory_proxy::ChainFactoryContractProxy, fee_market_proxy::FeeStruct};
-use structs::configs::SovereignConfig;
+use structs::configs::{EsdtSafeConfig, SovereignConfig};
 
 #[multiversx_sc::module]
 pub trait ScDeployModule: super::utils::UtilsModule + super::storage::StorageModule {
@@ -25,20 +25,19 @@ pub trait ScDeployModule: super::utils::UtilsModule + super::storage::StorageMod
             .sync_call()
     }
 
+    // TODO: MVX & Sov
     #[inline]
-    fn deploy_esdt_safe(
+    fn deploy_mvx_esdt_safe(
         &self,
-        _is_sovereign_chain: bool,
-        _header_verifier_address: &ManagedAddress,
+        header_verifier_address: &ManagedAddress,
+        opt_config: OptionalValue<EsdtSafeConfig<Self::Api>>,
     ) -> ManagedAddress {
-        // self.tx()
-        //     .to(self.get_chain_factory_address())
-        //     .typed(ChainFactoryContractProxy)
-        //     .deploy_esdt_safe(is_sovereign_chain, header_verifier_address)
-        //     .returns(ReturnsResult)
-        //     .sync_call()
-
-        ManagedAddress::default()
+        self.tx()
+            .to(self.get_chain_factory_address())
+            .typed(ChainFactoryContractProxy)
+            .deploy_mvx_esdt_safe(header_verifier_address, opt_config)
+            .returns(ReturnsResult)
+            .sync_call()
     }
 
     #[inline]
