@@ -210,13 +210,13 @@ impl EnshrineTestState {
     }
 
     fn complete_header_verifier_setup_phase(&mut self) {
-        // self.world
-        //     .tx()
-        //     .from(ENSHRINE_ESDT_OWNER_ADDRESS)
-        //     .to(HEADER_VERIFIER_ADDRESS)
-        //     .typed(HeaderverifierProxy)
-        //     .complete_setup_phase()
-        //     .run();
+        self.world
+            .tx()
+            .from(ENSHRINE_ESDT_OWNER_ADDRESS)
+            .to(HEADER_VERIFIER_ADDRESS)
+            .typed(HeaderverifierProxy)
+            .complete_setup_phase()
+            .run();
     }
 
     fn propose_setup_contracts(
@@ -255,58 +255,60 @@ impl EnshrineTestState {
         self
     }
 
-    // fn propose_execute_operation(
-    //     &mut self,
-    //     error_message: Option<&str>,
-    //     tokens: &Vec<TestTokenIdentifier>,
-    // ) {
-    //     let (tokens, data) = self.setup_payments(tokens);
-    //     let to = managed_address!(&Address::from(&RECEIVER_ADDRESS.eval_to_array()));
-    //     let operation = Operation::new(to, tokens, data);
-    //     let operation_hash = self.get_operation_hash(&operation);
-    //     let hash_of_hashes: ManagedBuffer<StaticApi> =
-    //         ManagedBuffer::from(&sha256(&operation_hash.to_vec()));
-    //
-    //     let response = self
-    //         .world
-    //         .tx()
-    //         .from(USER_ADDRESS)
-    //         .to(ENSHRINE_ESDT_ADDRESS)
-    //         .typed(EnshrineEsdtSafeProxy)
-    //         .execute_operations(hash_of_hashes, operation)
-    //         .returns(ReturnsHandledOrError::new())
-    //         .run();
-    //
-    //     if let Err(error) = response {
-    //         assert_eq!(error_message, Some(error.message.as_str()))
-    //     }
-    // }
-    //
-    // fn propose_register_operation(&mut self, tokens: &Vec<TestTokenIdentifier>) {
-    //     let (tokens, data) = self.setup_payments(tokens);
-    //     let to = managed_address!(&Address::from(RECEIVER_ADDRESS.eval_to_array()));
-    //     let operation = Operation::new(to, tokens, data);
-    //     let operation_hash = self.get_operation_hash(&operation);
-    //     let mut operations_hashes = MultiValueEncoded::<StaticApi, ManagedBuffer<StaticApi>>::new();
-    //
-    //     operations_hashes.push(operation_hash.clone());
-    //
-    //     let _mock_signature = ManagedBuffer::<StaticApi>::new();
-    //     let _hash_of_hashes =
-    //         ManagedBuffer::<StaticApi>::new_from_bytes(&sha256(&operation_hash.to_vec()));
-    //
-    //     self.world
-    //         .tx()
-    //         .from(ENSHRINE_ESDT_OWNER_ADDRESS)
-    //         .to(HEADER_VERIFIER_ADDRESS)
-    //         .typed(HeaderverifierProxy)
-    //         .register_bridge_operations(
-    //             mock_signature,
-    //             hash_of_hashes.clone(),
-    //             operations_hashes.clone(),
-    //         )
-    //         .run();
-    // }
+    fn propose_execute_operation(
+        &mut self,
+        error_message: Option<&str>,
+        tokens: &Vec<TestTokenIdentifier>,
+    ) {
+        let (tokens, data) = self.setup_payments(tokens);
+        let to = managed_address!(&Address::from(&RECEIVER_ADDRESS.eval_to_array()));
+        let operation = Operation::new(to, tokens, data);
+        let operation_hash = self.get_operation_hash(&operation);
+        let hash_of_hashes: ManagedBuffer<StaticApi> =
+            ManagedBuffer::from(&sha256(&operation_hash.to_vec()));
+
+        let response = self
+            .world
+            .tx()
+            .from(USER_ADDRESS)
+            .to(ENSHRINE_ESDT_ADDRESS)
+            .typed(EnshrineEsdtSafeProxy)
+            .execute_operations(hash_of_hashes, operation)
+            .returns(ReturnsHandledOrError::new())
+            .run();
+
+        if let Err(error) = response {
+            assert_eq!(error_message, Some(error.message.as_str()))
+        }
+    }
+
+    fn propose_register_operation(&mut self, tokens: &Vec<TestTokenIdentifier>) {
+        let (tokens, data) = self.setup_payments(tokens);
+        let to = managed_address!(&Address::from(RECEIVER_ADDRESS.eval_to_array()));
+        let operation = Operation::new(to, tokens, data);
+        let operation_hash = self.get_operation_hash(&operation);
+        let mut operations_hashes = MultiValueEncoded::<StaticApi, ManagedBuffer<StaticApi>>::new();
+
+        operations_hashes.push(operation_hash.clone());
+
+        let mock_signature = ManagedBuffer::<StaticApi>::new();
+        let hash_of_hashes =
+            ManagedBuffer::<StaticApi>::new_from_bytes(&sha256(&operation_hash.to_vec()));
+
+        self.world
+            .tx()
+            .from(ENSHRINE_ESDT_OWNER_ADDRESS)
+            .to(HEADER_VERIFIER_ADDRESS)
+            .typed(HeaderverifierProxy)
+            .register_bridge_operations(
+                mock_signature,
+                hash_of_hashes.clone(),
+                ManagedBuffer::new(),
+                ManagedBuffer::new(),
+                operations_hashes.clone(),
+            )
+            .run();
+    }
 
     fn propose_register_fee_market_address(&mut self) {
         self.world
@@ -405,7 +407,7 @@ impl EnshrineTestState {
         }
     }
 
-    fn _propose_whitelist_enshrine_esdt(&mut self) {
+    fn propose_whitelist_enshrine_esdt(&mut self) {
         self.world
             .tx()
             .from(ENSHRINE_ESDT_ADDRESS)
@@ -415,7 +417,7 @@ impl EnshrineTestState {
             .run();
     }
 
-    fn _propose_register_esdt_in_header_verifier(&mut self) {
+    fn propose_register_esdt_in_header_verifier(&mut self) {
         self.world
             .tx()
             .from(ENSHRINE_ESDT_OWNER_ADDRESS)
@@ -425,7 +427,7 @@ impl EnshrineTestState {
             .run();
     }
 
-    fn _setup_payments(
+    fn setup_payments(
         &mut self,
         token_ids: &Vec<TestTokenIdentifier>,
     ) -> (
@@ -456,10 +458,7 @@ impl EnshrineTestState {
         OptionalValue::Some((gas_limit, function, MultiValueEncoded::from(args)).into())
     }
 
-    fn _get_operation_hash(
-        &mut self,
-        operation: &Operation<StaticApi>,
-    ) -> ManagedBuffer<StaticApi> {
+    fn get_operation_hash(&mut self, operation: &Operation<StaticApi>) -> ManagedBuffer<StaticApi> {
         let mut serialized_operation: ManagedBuffer<StaticApi> = ManagedBuffer::new();
         let _ = operation.top_encode(&mut serialized_operation);
         let sha256 = sha256(&serialized_operation.to_vec());
@@ -493,29 +492,29 @@ fn test_deploy() {
     state.propose_setup_contracts(false, None, None);
 }
 
-// #[test]
-// fn test_sovereign_prefix_no_prefix() {
-//     let mut state = EnshrineTestState::new();
-//     let token_vec = Vec::from([NFT_TOKEN_ID, CROWD_TOKEN_ID]);
-//
-//     state.propose_setup_contracts(false, None, None);
-//     state.propose_register_operation(&token_vec);
-//     state.propose_register_esdt_in_header_verifier();
-//     state.propose_whitelist_enshrine_esdt();
-//     state.propose_execute_operation(Some("action is not allowed"), &token_vec);
-// }
+#[test]
+fn test_sovereign_prefix_no_prefix() {
+    let mut state = EnshrineTestState::new();
+    let token_vec = Vec::from([NFT_TOKEN_ID, CROWD_TOKEN_ID]);
 
-// #[test]
-// fn test_sovereign_prefix_has_prefix() {
-//     let mut state = EnshrineTestState::new();
-//     let token_vec = Vec::from([PREFIX_NFT_TOKEN_ID, CROWD_TOKEN_ID]);
-//
-//     state.propose_setup_contracts(false, None, None);
-//     state.propose_register_operation(&token_vec);
-//     state.propose_register_esdt_in_header_verifier();
-//     state.propose_whitelist_enshrine_esdt();
-//     state.propose_execute_operation(None, &token_vec);
-// }
+    state.propose_setup_contracts(false, None, None);
+    state.propose_register_operation(&token_vec);
+    state.propose_register_esdt_in_header_verifier();
+    state.propose_whitelist_enshrine_esdt();
+    state.propose_execute_operation(Some("action is not allowed"), &token_vec);
+}
+
+#[test]
+fn test_sovereign_prefix_has_prefix() {
+    let mut state = EnshrineTestState::new();
+    let token_vec = Vec::from([PREFIX_NFT_TOKEN_ID, CROWD_TOKEN_ID]);
+
+    state.propose_setup_contracts(false, None, None);
+    state.propose_register_operation(&token_vec);
+    state.propose_register_esdt_in_header_verifier();
+    state.propose_whitelist_enshrine_esdt();
+    state.propose_execute_operation(None, &token_vec);
+}
 
 #[test]
 fn test_register_tokens_insufficient_funds() {
@@ -639,7 +638,7 @@ fn test_deposit_max_transfers_exceeded() {
     let amount = BigUint::from(10000u64);
     let wegld_payment = EsdtTokenPayment::new(WEGLD_IDENTIFIER.into(), 0, amount.clone());
     let mut payments = PaymentsVec::new();
-    payments.extend(std::iter::repeat(wegld_payment).take(11));
+    payments.extend(vec![wegld_payment; 11]);
 
     state.propose_setup_contracts(false, None, None);
     state.propose_deposit(
@@ -651,60 +650,60 @@ fn test_deposit_max_transfers_exceeded() {
     );
 }
 
-// #[test]
-// fn test_deposit_no_transfer_data() {
-//     let mut state = EnshrineTestState::new();
-//     let amount = BigUint::from(10000u64);
-//     let wegld_payment = EsdtTokenPayment::new(WEGLD_IDENTIFIER.into(), 0, amount.clone());
-//     let fungible_payment = EsdtTokenPayment::new(FUNGIBLE_TOKEN_ID.into(), 0, amount.clone());
-//     let crowd_payment = EsdtTokenPayment::new(CROWD_TOKEN_ID.into(), 0, amount.clone());
-//     let mut payments = PaymentsVec::new();
-//     let mut tokens_whitelist = MultiValueEncoded::new();
-//     tokens_whitelist.push(WEGLD_IDENTIFIER.into());
-//     tokens_whitelist.push(CROWD_TOKEN_ID.into());
-//
-//     payments.push(wegld_payment);
-//     payments.push(fungible_payment);
-//     payments.push(crowd_payment);
-//
-//     let fee_amount_per_transfer = BigUint::from(100u32);
-//     let fee_amount_per_gas = BigUint::from(100u32);
-//
-//     let fee_struct = state.setup_fee_struct(
-//         WEGLD_IDENTIFIER,
-//         &fee_amount_per_transfer,
-//         &fee_amount_per_gas,
-//     );
-//
-//     state.propose_setup_contracts(false, Some(&fee_struct), None);
-//     state.propose_add_token_to_whitelist(tokens_whitelist);
-//     state.propose_set_fee(Some(&fee_struct), None);
-//     state.propose_deposit(
-//         ENSHRINE_ESDT_OWNER_ADDRESS,
-//         USER_ADDRESS,
-//         payments,
-//         OptionalValue::None,
-//         None,
-//     );
-//
-//     let expected_wegld_amount = BigUint::from(WEGLD_BALANCE) - fee_amount_per_transfer;
-//     let expected_crowd_amount = BigUint::from(WEGLD_BALANCE) - &amount;
-//
-//     state
-//         .world
-//         .check_account(ENSHRINE_ESDT_OWNER_ADDRESS)
-//         .esdt_balance(WEGLD_IDENTIFIER, &expected_wegld_amount);
-//
-//     state
-//         .world
-//         .check_account(ENSHRINE_ESDT_OWNER_ADDRESS)
-//         .esdt_balance(FUNGIBLE_TOKEN_ID, BigUint::from(WEGLD_BALANCE));
-//
-//     state
-//         .world
-//         .check_account(ENSHRINE_ESDT_OWNER_ADDRESS)
-//         .esdt_balance(CROWD_TOKEN_ID, &expected_crowd_amount);
-// }
+#[test]
+fn test_deposit_no_transfer_data() {
+    let mut state = EnshrineTestState::new();
+    let amount = BigUint::from(10000u64);
+    let wegld_payment = EsdtTokenPayment::new(WEGLD_IDENTIFIER.into(), 0, amount.clone());
+    let fungible_payment = EsdtTokenPayment::new(FUNGIBLE_TOKEN_ID.into(), 0, amount.clone());
+    let crowd_payment = EsdtTokenPayment::new(CROWD_TOKEN_ID.into(), 0, amount.clone());
+    let mut payments = PaymentsVec::new();
+    let mut tokens_whitelist = MultiValueEncoded::new();
+    tokens_whitelist.push(WEGLD_IDENTIFIER.into());
+    tokens_whitelist.push(CROWD_TOKEN_ID.into());
+
+    payments.push(wegld_payment);
+    payments.push(fungible_payment);
+    payments.push(crowd_payment);
+
+    let fee_amount_per_transfer = BigUint::from(100u32);
+    let fee_amount_per_gas = BigUint::from(100u32);
+
+    let fee_struct = state.setup_fee_struct(
+        WEGLD_IDENTIFIER,
+        &fee_amount_per_transfer,
+        &fee_amount_per_gas,
+    );
+
+    state.propose_setup_contracts(false, Some(&fee_struct), None);
+    state.propose_add_token_to_whitelist(tokens_whitelist);
+    state.propose_set_fee(Some(&fee_struct), None);
+    state.propose_deposit(
+        ENSHRINE_ESDT_OWNER_ADDRESS,
+        USER_ADDRESS,
+        payments,
+        OptionalValue::None,
+        None,
+    );
+
+    let expected_wegld_amount = BigUint::from(WEGLD_BALANCE) - fee_amount_per_transfer;
+    let expected_crowd_amount = BigUint::from(WEGLD_BALANCE) - &amount;
+
+    state
+        .world
+        .check_account(ENSHRINE_ESDT_OWNER_ADDRESS)
+        .esdt_balance(WEGLD_IDENTIFIER, &expected_wegld_amount);
+
+    state
+        .world
+        .check_account(ENSHRINE_ESDT_OWNER_ADDRESS)
+        .esdt_balance(FUNGIBLE_TOKEN_ID, BigUint::from(WEGLD_BALANCE));
+
+    state
+        .world
+        .check_account(ENSHRINE_ESDT_OWNER_ADDRESS)
+        .esdt_balance(CROWD_TOKEN_ID, &expected_crowd_amount);
+}
 
 #[test]
 fn test_deposit_with_transfer_data_gas_limit_too_high() {
@@ -772,68 +771,68 @@ fn test_deposit_with_transfer_data_banned_endpoint() {
     );
 }
 
-// #[test]
-// fn test_deposit_with_transfer_data_enough_for_fee() {
-//     let mut state = EnshrineTestState::new();
-//     let amount = BigUint::from(1000000000000000u128);
-//     let wegld_payment = EsdtTokenPayment::new(WEGLD_IDENTIFIER.into(), 0, amount.clone());
-//     let fungible_payment = EsdtTokenPayment::new(FUNGIBLE_TOKEN_ID.into(), 0, amount.clone());
-//     let crowd_payment = EsdtTokenPayment::new(CROWD_TOKEN_ID.into(), 0, amount.clone());
-//     let mut payments = PaymentsVec::new();
-//     let gas_limit = 10000000;
-//     let function = ManagedBuffer::from("some_function");
-//     let arg = ManagedBuffer::from("arg");
-//     let mut args = ManagedVec::new();
-//     args.push(arg);
-//
-//     let transfer_data = state.setup_transfer_data(gas_limit, function, args);
-//
-//     let expected_crowd_amount = BigUint::from(WEGLD_BALANCE) - &wegld_payment.amount;
-//     let expected_fungible_amount = BigUint::from(WEGLD_BALANCE) - &fungible_payment.amount;
-//
-//     payments.push(wegld_payment);
-//     payments.push(fungible_payment);
-//     payments.push(crowd_payment);
-//
-//     let fee_amount_per_transfer = BigUint::from(100u32);
-//     let fee_amount_per_gas = BigUint::from(100u32);
-//
-//     let fee_struct = state.setup_fee_struct(
-//         WEGLD_IDENTIFIER,
-//         &fee_amount_per_transfer,
-//         &fee_amount_per_gas,
-//     );
-//
-//     state.propose_setup_contracts(false, Some(&fee_struct), None);
-//     // state.propose_set_max_user_tx_gas_limit(gas_limit);
-//     state.propose_set_fee(Some(&fee_struct), None);
-//     state.propose_deposit(
-//         ENSHRINE_ESDT_OWNER_ADDRESS,
-//         USER_ADDRESS,
-//         payments,
-//         transfer_data,
-//         None,
-//     );
-//
-//     let fee = fee_amount_per_transfer * BigUint::from(2u32)
-//         + BigUint::from(gas_limit) * fee_amount_per_gas;
-//     let expected_wegld_amount = BigUint::from(WEGLD_BALANCE) - fee;
-//
-//     state
-//         .world
-//         .check_account(ENSHRINE_ESDT_OWNER_ADDRESS)
-//         .esdt_balance(WEGLD_IDENTIFIER, &expected_wegld_amount);
-//
-//     state
-//         .world
-//         .check_account(ENSHRINE_ESDT_OWNER_ADDRESS)
-//         .esdt_balance(FUNGIBLE_TOKEN_ID, &expected_fungible_amount);
-//
-//     state
-//         .world
-//         .check_account(ENSHRINE_ESDT_OWNER_ADDRESS)
-//         .esdt_balance(CROWD_TOKEN_ID, &expected_crowd_amount);
-// }
+#[test]
+fn test_deposit_with_transfer_data_enough_for_fee() {
+    let mut state = EnshrineTestState::new();
+    let amount = BigUint::from(1000000000000000u128);
+    let wegld_payment = EsdtTokenPayment::new(WEGLD_IDENTIFIER.into(), 0, amount.clone());
+    let fungible_payment = EsdtTokenPayment::new(FUNGIBLE_TOKEN_ID.into(), 0, amount.clone());
+    let crowd_payment = EsdtTokenPayment::new(CROWD_TOKEN_ID.into(), 0, amount.clone());
+    let mut payments = PaymentsVec::new();
+    let gas_limit = 10000000;
+    let function = ManagedBuffer::from("some_function");
+    let arg = ManagedBuffer::from("arg");
+    let mut args = ManagedVec::new();
+    args.push(arg);
+
+    let transfer_data = state.setup_transfer_data(gas_limit, function, args);
+
+    let expected_crowd_amount = BigUint::from(WEGLD_BALANCE) - &wegld_payment.amount;
+    let expected_fungible_amount = BigUint::from(WEGLD_BALANCE) - &fungible_payment.amount;
+
+    payments.push(wegld_payment);
+    payments.push(fungible_payment);
+    payments.push(crowd_payment);
+
+    let fee_amount_per_transfer = BigUint::from(100u32);
+    let fee_amount_per_gas = BigUint::from(100u32);
+
+    let fee_struct = state.setup_fee_struct(
+        WEGLD_IDENTIFIER,
+        &fee_amount_per_transfer,
+        &fee_amount_per_gas,
+    );
+
+    state.propose_setup_contracts(false, Some(&fee_struct), None);
+    // state.propose_set_max_user_tx_gas_limit(gas_limit);
+    state.propose_set_fee(Some(&fee_struct), None);
+    state.propose_deposit(
+        ENSHRINE_ESDT_OWNER_ADDRESS,
+        USER_ADDRESS,
+        payments,
+        transfer_data,
+        None,
+    );
+
+    let fee = fee_amount_per_transfer * BigUint::from(2u32)
+        + BigUint::from(gas_limit) * fee_amount_per_gas;
+    let expected_wegld_amount = BigUint::from(WEGLD_BALANCE) - fee;
+
+    state
+        .world
+        .check_account(ENSHRINE_ESDT_OWNER_ADDRESS)
+        .esdt_balance(WEGLD_IDENTIFIER, &expected_wegld_amount);
+
+    state
+        .world
+        .check_account(ENSHRINE_ESDT_OWNER_ADDRESS)
+        .esdt_balance(FUNGIBLE_TOKEN_ID, &expected_fungible_amount);
+
+    state
+        .world
+        .check_account(ENSHRINE_ESDT_OWNER_ADDRESS)
+        .esdt_balance(CROWD_TOKEN_ID, &expected_crowd_amount);
+}
 
 #[test]
 fn test_deposit_with_transfer_data_not_enough_for_fee() {

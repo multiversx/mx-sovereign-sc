@@ -19,6 +19,9 @@ pub trait EnshrineEsdtSafe:
     + multiversx_sc_modules::pause::PauseModule
     + multiversx_sc_modules::default_issue_callbacks::DefaultIssueCallbacksModule
     + common::storage::CommonStorage
+    + cross_chain::deposit_common::DepositCommonModule
+    + cross_chain::execute_common::ExecuteCommonModule
+    + cross_chain::storage::CrossChainStorage
 {
     #[init]
     fn init(
@@ -58,14 +61,14 @@ pub trait EnshrineEsdtSafe:
         let caller = self.blockchain().get_caller();
         self.initiator_address().set(caller);
 
-        self.config()
+        self.esdt_safe_config()
             .set(opt_config.unwrap_or_else(EsdtSafeConfig::default_config));
     }
 
     #[only_owner]
     #[endpoint(updateConfiguration)]
     fn update_configuration(&self, new_config: EsdtSafeConfig<Self::Api>) {
-        self.config().set(new_config);
+        self.esdt_safe_config().set(new_config);
     }
 
     #[only_owner]
