@@ -35,9 +35,6 @@ pub trait CreateTxModule:
             .check_and_extract_fee(optional_transfer_data.is_some())
             .into_tuple();
 
-        require!(!payments.is_empty(), "Nothing to transfer");
-        require!(payments.len() <= MAX_TRANSFERS_PER_TX, "Too many tokens");
-
         let mut total_tokens_for_fees = 0usize;
         let mut event_payments = MultiValueEncoded::<Self::Api, EventPayment<Self::Api>>::new();
         let mut refundable_payments = ManagedVec::<Self::Api, _>::new();
