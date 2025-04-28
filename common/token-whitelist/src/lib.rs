@@ -1,5 +1,7 @@
 #![no_std]
 
+use error_messages::TOKEN_BLACKLISTED;
+
 multiversx_sc::imports!();
 
 #[multiversx_sc::module]
@@ -42,7 +44,7 @@ pub trait TokenWhitelistModule: setup_phase::SetupPhaseModule + utils::UtilsModu
     fn require_token_not_blacklisted(&self, token_id: &TokenIdentifier) {
         require!(
             !self.token_blacklist().contains(token_id),
-            "Token blacklisted"
+            TOKEN_BLACKLISTED
         );
     }
 

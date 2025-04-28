@@ -8,13 +8,14 @@ use multiversx_sc_scenario::api::StaticApi;
 use multiversx_sc_scenario::multiversx_chain_vm::crypto_functions::sha256;
 use multiversx_sc_scenario::{imports::MxscPath, ScenarioWorld};
 use multiversx_sc_scenario::{managed_address, ReturnsHandledOrError, ScenarioTxRun};
-use operation::aliases::{GasLimit, OptionalTransferData, PaymentsVec};
-use operation::{BridgeConfig, Operation, OperationData, OperationEsdtPayment, SovereignConfig};
 use proxies::chain_config_proxy::ChainConfigContractProxy;
 use proxies::enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy;
 use proxies::fee_market_proxy::{FeeMarketProxy, FeeStruct, FeeType};
 use proxies::header_verifier_proxy::HeaderverifierProxy;
 use proxies::token_handler_proxy::TokenHandlerProxy;
+use structs::aliases::{GasLimit, OptionalValueTransferDataTuple, PaymentsVec};
+use structs::configs::{EsdtSafeConfig, SovereignConfig};
+use structs::operation::{Operation, OperationData, OperationEsdtPayment};
 
 const ENSHRINE_ESDT_ADDRESS: TestSCAddress = TestSCAddress::new("enshrine-esdt");
 const ENSHRINE_ESDT_CODE_PATH: MxscPath = MxscPath::new("output/enshrine-esdt-safe.mxsc-json");
@@ -128,7 +129,7 @@ impl EnshrineTestState {
         is_sovereign_chain: bool,
         wegld_identifier: Option<TokenIdentifier<StaticApi>>,
         sovereign_token_prefix: Option<ManagedBuffer<StaticApi>>,
-        opt_config: Option<BridgeConfig<StaticApi>>,
+        opt_config: Option<EsdtSafeConfig<StaticApi>>,
     ) -> &mut Self {
         self.world
             .tx()
@@ -222,7 +223,7 @@ impl EnshrineTestState {
         &mut self,
         is_sovereign_chain: bool,
         fee_struct: Option<&FeeStruct<StaticApi>>,
-        opt_config: Option<BridgeConfig<StaticApi>>,
+        opt_config: Option<EsdtSafeConfig<StaticApi>>,
     ) -> &mut Self {
         self.deploy_enshrine_esdt_contract(
             is_sovereign_chain,
@@ -286,12 +287,13 @@ impl EnshrineTestState {
         let to = managed_address!(&Address::from(RECEIVER_ADDRESS.eval_to_array()));
         let operation = Operation::new(to, tokens, data);
         let operation_hash = self.get_operation_hash(&operation);
-        let mut operations_hashes = MultiValueEncoded::new();
+        let mut operations_hashes = MultiValueEncoded::<StaticApi, ManagedBuffer<StaticApi>>::new();
 
         operations_hashes.push(operation_hash.clone());
 
-        let mock_signature = ManagedBuffer::new();
-        let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&operation_hash.to_vec()));
+        let mock_signature = ManagedBuffer::<StaticApi>::new();
+        let hash_of_hashes =
+            ManagedBuffer::<StaticApi>::new_from_bytes(&sha256(&operation_hash.to_vec()));
 
         self.world
             .tx()
@@ -301,6 +303,8 @@ impl EnshrineTestState {
             .register_bridge_operations(
                 mock_signature,
                 hash_of_hashes.clone(),
+                ManagedBuffer::new(),
+                ManagedBuffer::new(),
                 operations_hashes.clone(),
             )
             .run();
@@ -364,7 +368,7 @@ impl EnshrineTestState {
         from: TestAddress,
         to: TestAddress,
         payment: PaymentsVec<StaticApi>,
-        deposit_args: OptionalTransferData<StaticApi>,
+        deposit_args: OptionalValueTransferDataTuple<StaticApi>,
         error_message: Option<&str>,
     ) {
         let response = self
@@ -450,8 +454,8 @@ impl EnshrineTestState {
         gas_limit: GasLimit,
         function: ManagedBuffer<StaticApi>,
         args: ManagedVec<StaticApi, ManagedBuffer<StaticApi>>,
-    ) -> OptionalTransferData<StaticApi> {
-        OptionalValue::Some((gas_limit, function, args).into())
+    ) -> OptionalValueTransferDataTuple<StaticApi> {
+        OptionalValue::Some((gas_limit, function, MultiValueEncoded::from(args)).into())
     }
 
     fn get_operation_hash(&mut self, operation: &Operation<StaticApi>) -> ManagedBuffer<StaticApi> {
@@ -634,7 +638,7 @@ fn test_deposit_max_transfers_exceeded() {
     let amount = BigUint::from(10000u64);
     let wegld_payment = EsdtTokenPayment::new(WEGLD_IDENTIFIER.into(), 0, amount.clone());
     let mut payments = PaymentsVec::new();
-    payments.extend(std::iter::repeat(wegld_payment).take(11));
+    payments.extend(vec![wegld_payment; 11]);
 
     state.propose_setup_contracts(false, None, None);
     state.propose_deposit(
@@ -750,7 +754,7 @@ fn test_deposit_with_transfer_data_banned_endpoint() {
     state.propose_setup_contracts(
         false,
         None,
-        Some(BridgeConfig::new(
+        Some(EsdtSafeConfig::new(
             ManagedVec::new(),
             ManagedVec::new(),
             300_000_000_000,

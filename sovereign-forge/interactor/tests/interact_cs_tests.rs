@@ -1,5 +1,5 @@
 use forge_rust_interact::ContractInteract;
-use multiversx_sc_snippets::imports::*;
+use multiversx_sc_snippets::imports::tokio;
 
 #[tokio::test]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
@@ -9,7 +9,7 @@ async fn deploy_test_sovereign_forge_cs() {
 
     interactor.deploy_chain_config_template().await;
     interactor.deploy_header_verifier_template().await;
-    interactor.deploy_esdt_safe_template().await;
+    interactor.deploy_mvx_esdt_safe_template().await;
     interactor.deploy_fee_market_template().await;
     interactor.deploy_chain_factory().await;
 

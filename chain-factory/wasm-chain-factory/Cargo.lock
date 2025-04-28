@@ -22,24 +22,26 @@ checksum = "5c8214115b7bf84099f1309324e63141d4c5d7cc26862f97a0a857dbefe165bd"
 
 [[package]]
 name = "chain-config"
-version = "0.0.0"
+version = "0.1.0"
 dependencies = [
+ "error-messages",
  "multiversx-sc",
  "multiversx-sc-modules",
- "operation",
  "proxies",
  "setup-phase",
+ "structs",
 ]
 
 [[package]]
 name = "chain-factory"
-version = "0.0.0"
+version = "0.1.0"
 dependencies = [
  "chain-config",
+ "error-messages",
  "multiversx-sc",
  "multiversx-sc-modules",
- "operation",
  "proxies",
+ "structs",
  "utils",
 ]
 
@@ -56,6 +58,10 @@ name = "endian-type"
 version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c34f04666d835ff5d62e058c3995147c06f42fe86ff053337632bca83e42702d"
+
+[[package]]
+name = "error-messages"
+version = "0.1.0"
 
 [[package]]
 name = "generic-array"
@@ -178,13 +184,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "operation"
-version = "0.0.0"
-dependencies = [
- "multiversx-sc",
-]
-
-[[package]]
 name = "proc-macro2"
 version = "1.0.94"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -198,8 +197,7 @@ name = "proxies"
 version = "0.1.0"
 dependencies = [
  "multiversx-sc",
- "operation",
- "tx-batch-module",
+ "structs",
 ]
 
 [[package]]
@@ -223,8 +221,9 @@ dependencies = [
 
 [[package]]
 name = "setup-phase"
-version = "0.0.0"
+version = "0.1.0"
 dependencies = [
+ "error-messages",
  "multiversx-sc",
 ]
 
@@ -235,6 +234,13 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8917285742e9f3e1683f0a9c4e6b57960b7314d0b08d30d1ecd426713ee2eee9"
 
 [[package]]
+name = "structs"
+version = "0.1.0"
+dependencies = [
+ "multiversx-sc",
+]
+
+[[package]]
 name = "syn"
 version = "2.0.100"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -243,14 +249,6 @@ dependencies = [
  "proc-macro2",
  "quote",
  "unicode-ident",
-]
-
-[[package]]
-name = "tx-batch-module"
-version = "0.0.0"
-dependencies = [
- "multiversx-sc",
- "operation",
 ]
 
 [[package]]
@@ -273,8 +271,9 @@ checksum = "151ac09978d3c2862c4e39b557f4eceee2cc72150bc4cb4f16abf061b6e381fb"
 
 [[package]]
 name = "utils"
-version = "0.0.0"
+version = "0.1.0"
 dependencies = [
+ "error-messages",
  "multiversx-sc",
- "operation",
+ "structs",
 ]

@@ -98,7 +98,7 @@ where
     Gas: TxGas<Env>,
 {
     pub fn deploy_sovereign_chain_config_contract<
-        Arg0: ProxyArg<operation::SovereignConfig<Env::Api>>,
+        Arg0: ProxyArg<structs::configs::SovereignConfig<Env::Api>>,
     >(
         self,
         config: Arg0,
@@ -144,7 +144,7 @@ where
         Arg1: ProxyArg<ManagedAddress<Env::Api>>,
         Arg2: ProxyArg<TokenIdentifier<Env::Api>>,
         Arg3: ProxyArg<ManagedBuffer<Env::Api>>,
-        Arg4: ProxyArg<Option<operation::BridgeConfig<Env::Api>>>,
+        Arg4: ProxyArg<Option<structs::configs::EsdtSafeConfig<Env::Api>>>,
     >(
         self,
         is_sovereign_chain: Arg0,
@@ -164,19 +164,19 @@ where
             .original_result()
     }
 
-    pub fn deploy_esdt_safe<
-        Arg0: ProxyArg<bool>,
-        Arg1: ProxyArg<ManagedAddress<Env::Api>>,
+    pub fn deploy_mvx_esdt_safe<
+        Arg0: ProxyArg<ManagedAddress<Env::Api>>,
+        Arg1: ProxyArg<OptionalValue<structs::configs::EsdtSafeConfig<Env::Api>>>,
     >(
         self,
-        is_sovereign_chain: Arg0,
-        header_verifier_address: Arg1,
+        header_verifier_address: Arg0,
+        opt_config: Arg1,
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ManagedAddress<Env::Api>> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("deployEsdtSafe")
-            .argument(&is_sovereign_chain)
             .argument(&header_verifier_address)
+            .argument(&opt_config)
             .original_result()
     }
 

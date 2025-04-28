@@ -4,13 +4,12 @@ mod config;
 
 use config::Config;
 use multiversx_sc_snippets::{imports::*, sdk::bech32};
-use operation::SovereignConfig;
 use proxies::{
     chain_config_proxy::ChainConfigContractProxy,
     chain_factory_proxy::ChainFactoryContractProxy,
-    esdt_safe_proxy::EsdtSafeProxy,
     fee_market_proxy::{FeeMarketProxy, FeeStruct},
     header_verifier_proxy::HeaderverifierProxy,
+    mvx_esdt_safe_proxy::MvxEsdtSafeProxy,
     sovereign_forge_proxy::SovereignForgeProxy,
 };
 use serde::{Deserialize, Serialize};
@@ -18,12 +17,13 @@ use std::{
     io::{Read, Write},
     path::Path,
 };
+use structs::configs::{EsdtSafeConfig, SovereignConfig};
 
 const STATE_FILE: &str = "state.toml";
 const CHAIN_CONFIG_CODE_PATH: &str = "../../chain-config/output/chain-config.mxsc.json";
 const CHAIN_FACTORY_CODE_PATH: &str = "../../chain-factory/output/chain-factory.mxsc.json";
 const HEADER_VERIFIER_CODE_PATH: &str = "../../header-verifier/output/header-verifier.mxsc.json";
-const ESDT_SAFE_CODE_PATH: &str = "../../esdt-safe/output/esdt-safe.mxsc.json";
+const ESDT_SAFE_CODE_PATH: &str = "../../mvx-esdt-safe/output/mvx-esdt-safe.mxsc.json";
 const FEE_MARKET_CODE_PATH: &str = "../../fee-market/output/fee-market.mxsc.json";
 
 pub async fn sovereign_forge_cli() {
@@ -267,14 +267,25 @@ impl ContractInteract {
         println!("new Header-Verifier address: {new_address_bech32}");
     }
 
-    pub async fn deploy_esdt_safe_template(&mut self) {
+    pub async fn deploy_mvx_esdt_safe_template(&mut self) {
+        let header_verifier_address = ManagedAddress::from(
+            self.state
+                .header_verifier_address
+                .clone()
+                .unwrap()
+                .to_address(),
+        );
+
         let new_address = self
             .interactor
             .tx()
             .from(&self.wallet_address)
             .gas(100_000_000u64)
-            .typed(EsdtSafeProxy)
-            .init(false)
+            .typed(MvxEsdtSafeProxy)
+            .init(
+                header_verifier_address,
+                OptionalValue::<EsdtSafeConfig<StaticApi>>::None,
+            )
             .returns(ReturnsNewAddress)
             .code(MxscPath::new(ESDT_SAFE_CODE_PATH))
             .run()
@@ -427,8 +438,6 @@ impl ContractInteract {
     }
 
     pub async fn deploy_phase_three(&mut self) {
-        let is_sovereign_chain = false;
-
         let response = self
             .interactor
             .tx()
@@ -436,7 +445,7 @@ impl ContractInteract {
             .to(self.state.current_address())
             .gas(80_000_000u64)
             .typed(SovereignForgeProxy)
-            .deploy_phase_three(is_sovereign_chain)
+            .deploy_phase_three(OptionalValue::<EsdtSafeConfig<StaticApi>>::None)
             .returns(ReturnsResultUnmanaged)
             .run()
             .await;

@@ -1,10 +1,12 @@
 #![no_std]
 
-use operation::aliases::PaymentsVec;
+use error_messages::{
+    ERR_EMPTY_PAYMENTS, INVALID_SC_ADDRESS, INVALID_TOKEN_ID, ITEM_NOT_IN_LIST, TOKEN_ID_NO_PREFIX,
+};
+use structs::aliases::PaymentsVec;
 
 multiversx_sc::imports!();
 
-static ERR_EMPTY_PAYMENTS: &[u8] = b"No payments";
 const DASH: u8 = b'-';
 const MAX_TOKEN_ID_LEN: usize = 32;
 
@@ -13,12 +15,12 @@ pub trait UtilsModule {
     fn require_sc_address(&self, address: &ManagedAddress) {
         require!(
             !address.is_zero() && self.blockchain().is_smart_contract(address),
-            "Invalid SC address"
+            INVALID_SC_ADDRESS
         );
     }
 
     fn require_valid_token_id(&self, token_id: &TokenIdentifier) {
-        require!(token_id.is_valid_esdt_identifier(), "Invalid token ID");
+        require!(token_id.is_valid_esdt_identifier(), INVALID_TOKEN_ID);
     }
 
     fn remove_items<
@@ -31,14 +33,14 @@ pub trait UtilsModule {
     ) {
         for item in items {
             let was_removed = mapper.swap_remove(&item);
-            require!(was_removed, "Item not found in list");
+            require!(was_removed, ITEM_NOT_IN_LIST);
         }
     }
 
     fn pop_first_payment(
         &self,
         payments: PaymentsVec<Self::Api>,
-    ) -> (EsdtTokenPayment<Self::Api>, PaymentsVec<Self::Api>) {
+    ) -> MultiValue2<OptionalValue<EsdtTokenPayment<Self::Api>>, PaymentsVec<Self::Api>> {
         require!(!payments.is_empty(), ERR_EMPTY_PAYMENTS);
 
         let mut new_payments = payments;
@@ -46,7 +48,7 @@ pub trait UtilsModule {
         let first_payment = new_payments.get(0).clone();
         new_payments.remove(0);
 
-        (first_payment.clone(), new_payments)
+        MultiValue2::from((OptionalValue::Some(first_payment.clone()), new_payments))
     }
 
     fn has_prefix(&self, token_id: &TokenIdentifier) -> bool {
@@ -65,7 +67,7 @@ pub trait UtilsModule {
 
     #[inline]
     fn require_token_has_prefix(&self, token_id: &TokenIdentifier) {
-        require!(self.has_prefix(token_id), "Token Id does not have prefix");
+        require!(self.has_prefix(token_id), TOKEN_ID_NO_PREFIX);
     }
 
     fn has_sov_prefix(&self, token_id: &TokenIdentifier, chain_prefix: &ManagedBuffer) -> bool {

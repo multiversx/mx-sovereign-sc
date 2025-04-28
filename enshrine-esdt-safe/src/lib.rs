@@ -1,7 +1,7 @@
 #![no_std]
 
 use multiversx_sc::imports::*;
-use operation::BridgeConfig;
+use structs::configs::EsdtSafeConfig;
 
 pub mod common;
 pub mod from_sovereign;
@@ -13,14 +13,15 @@ pub trait EnshrineEsdtSafe:
     + to_sovereign::events::EventsModule
     + from_sovereign::events::EventsModule
     + from_sovereign::transfer_tokens::TransferTokensModule
-    + tx_batch_module::TxBatchModule
-    + max_bridged_amount_module::MaxBridgedAmountModule
     + setup_phase::SetupPhaseModule
     + token_whitelist::TokenWhitelistModule
     + utils::UtilsModule
     + multiversx_sc_modules::pause::PauseModule
     + multiversx_sc_modules::default_issue_callbacks::DefaultIssueCallbacksModule
     + common::storage::CommonStorage
+    + cross_chain::deposit_common::DepositCommonModule
+    + cross_chain::execute_common::ExecuteCommonModule
+    + cross_chain::storage::CrossChainStorage
 {
     #[init]
     fn init(
@@ -29,7 +30,7 @@ pub trait EnshrineEsdtSafe:
         token_handler_address: ManagedAddress,
         opt_wegld_identifier: Option<TokenIdentifier>,
         opt_sov_token_prefix: Option<ManagedBuffer>,
-        opt_config: Option<BridgeConfig<Self::Api>>,
+        opt_config: Option<EsdtSafeConfig<Self::Api>>,
     ) {
         self.is_sovereign_chain().set(is_sovereign_chain);
         self.set_paused(true);
@@ -60,14 +61,14 @@ pub trait EnshrineEsdtSafe:
         let caller = self.blockchain().get_caller();
         self.initiator_address().set(caller);
 
-        self.config()
-            .set(opt_config.unwrap_or_else(BridgeConfig::default_config));
+        self.esdt_safe_config()
+            .set(opt_config.unwrap_or_else(EsdtSafeConfig::default_config));
     }
 
     #[only_owner]
     #[endpoint(updateConfiguration)]
-    fn update_configuration(&self, new_config: BridgeConfig<Self::Api>) {
-        self.config().set(new_config);
+    fn update_configuration(&self, new_config: EsdtSafeConfig<Self::Api>) {
+        self.esdt_safe_config().set(new_config);
     }
 
     #[only_owner]

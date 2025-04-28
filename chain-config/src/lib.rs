@@ -1,7 +1,7 @@
 #![no_std]
 
 use multiversx_sc_modules::only_admin;
-use operation::SovereignConfig;
+use structs::configs::SovereignConfig;
 
 multiversx_sc::imports!();
 

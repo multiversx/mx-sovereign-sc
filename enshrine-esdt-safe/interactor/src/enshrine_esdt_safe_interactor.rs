@@ -1,14 +1,15 @@
 #![allow(non_snake_case)]
 #![allow(unused)]
 
-use aliases::{OptionalTransferData, PaymentsVec};
 use fee_market_proxy::*;
 use interactor::constants::{TOKEN_ID, WHITELIST_TOKEN_ID};
 use interactor::interactor_config::Config;
 use interactor::interactor_state::State;
 use multiversx_sc_snippets::imports::*;
-use operation::*;
 use proxies::*;
+use structs::aliases::{OptionalTransferData, PaymentsVec};
+use structs::configs::EsdtSafeConfig;
+use structs::operation::{Operation, OperationData};
 
 const FEE_MARKET_CODE_PATH: &str = "../fee-market/output/fee-market.mxsc.json";
 const HEADER_VERIFIER_CODE_PATH: &str = "../header-verifier/output/header-verifier.mxsc.json";
@@ -32,8 +33,8 @@ pub async fn enshrine_esdt_safe_cli() {
         "deposit" => interact.deposit(None.into(), Option::None).await,
         "executeBridgeOps" => interact.execute_operations().await,
         "registerNewTokenID" => interact.register_new_token_id().await,
-        "setMaxBridgedAmount" => interact.set_max_bridged_amount().await,
-        "getMaxBridgedAmount" => interact.max_bridged_amount().await,
+        // "setMaxBridgedAmount" => interact.set_max_bridged_amount().await,
+        // "getMaxBridgedAmount" => interact.max_bridged_amount().await,
         "addTokensToWhitelist" => interact.add_tokens_to_whitelist(TOKEN_ID).await,
         "removeTokensFromWhitelist" => interact.remove_tokens_from_whitelist().await,
         "addTokensToBlacklist" => interact.add_tokens_to_blacklist().await,
@@ -92,7 +93,7 @@ impl ContractInteract {
     pub async fn deploy(
         &mut self,
         is_sovereign_chain: bool,
-        opt_config: Option<BridgeConfig<StaticApi>>,
+        opt_config: Option<EsdtSafeConfig<StaticApi>>,
     ) {
         let opt_wegld_identifier =
             Option::Some(TokenIdentifier::from_esdt_bytes(WHITELIST_TOKEN_ID));
@@ -207,7 +208,7 @@ impl ContractInteract {
     pub async fn deploy_all(
         &mut self,
         is_sov_chain: bool,
-        opt_config: Option<BridgeConfig<StaticApi>>,
+        opt_config: Option<EsdtSafeConfig<StaticApi>>,
     ) {
         self.deploy_token_handler().await;
         self.deploy(is_sov_chain, opt_config).await;
@@ -216,7 +217,7 @@ impl ContractInteract {
         self.unpause_endpoint().await;
     }
 
-    pub async fn deploy_setup(&mut self, opt_config: Option<BridgeConfig<StaticApi>>) {
+    pub async fn deploy_setup(&mut self, opt_config: Option<EsdtSafeConfig<StaticApi>>) {
         self.deploy_token_handler().await;
         self.deploy(false, opt_config).await;
         self.unpause_endpoint().await;
@@ -284,7 +285,7 @@ impl ContractInteract {
     ) {
         let token_id = TOKEN_ID;
         let token_nonce = 0u64;
-        let token_amount = BigUint::from(20u64);
+        let token_amount = BigUint::<StaticApi>::from(20u64);
         let to = &self.bob_address;
         let mut payments = PaymentsVec::new();
         payments.push(EsdtTokenPayment::new(
@@ -298,34 +299,34 @@ impl ContractInteract {
             BigUint::from(30u64),
         ));
 
-        match error_wanted {
-            Some(error) => {
-                self.interactor
-                    .tx()
-                    .from(&self.wallet_address)
-                    .to(self.state.esdt_safe_address())
-                    .gas(30_000_000u64)
-                    .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
-                    .deposit(to, transfer_data)
-                    .payment(payments)
-                    .returns(error)
-                    .run()
-                    .await;
-            }
-            None => {
-                self.interactor
-                    .tx()
-                    .from(&self.wallet_address)
-                    .to(self.state.esdt_safe_address())
-                    .gas(30_000_000u64)
-                    .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
-                    .deposit(to, transfer_data)
-                    .payment(payments)
-                    .returns(ReturnsResultUnmanaged)
-                    .run()
-                    .await;
-            }
-        }
+        // match error_wanted {
+        //     Some(error) => {
+        //         self.interactor
+        //             .tx()
+        //             .from(&self.wallet_address)
+        //             .to(self.state.esdt_safe_address())
+        //             .gas(30_000_000u64)
+        //             .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
+        //             .deposit(to, transfer_data)
+        //             .payment(payments)
+        //             .returns(error)
+        //             .run()
+        //             .await;
+        //     }
+        //     None => {
+        //         self.interactor
+        //             .tx()
+        //             .from(&self.wallet_address)
+        //             .to(self.state.esdt_safe_address())
+        //             .gas(30_000_000u64)
+        //             .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
+        //             .deposit(to, transfer_data)
+        //             .payment(payments)
+        //             .returns(ReturnsResultUnmanaged)
+        //             .run()
+        //             .await;
+        //     }
+        // }
     }
     pub async fn execute_operations(&mut self) {
         let hash_of_hashes = ManagedBuffer::new_from_bytes(&b""[..]);
@@ -377,40 +378,40 @@ impl ContractInteract {
         println!("Result: {response:?}");
     }
 
-    pub async fn set_max_bridged_amount(&mut self) {
-        let token_id = TokenIdentifier::from_esdt_bytes(&b""[..]);
-        let max_amount = BigUint::<StaticApi>::from(0u128);
+    // pub async fn set_max_bridged_amount(&mut self) {
+    //     let token_id = TokenIdentifier::from_esdt_bytes(&b""[..]);
+    //     let max_amount = BigUint::<StaticApi>::from(0u128);
+    //
+    //     let response = self
+    //         .interactor
+    //         .tx()
+    //         .from(&self.wallet_address)
+    //         .to(self.state.esdt_safe_address())
+    //         .gas(30_000_000u64)
+    //         .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
+    //         .set_max_bridged_amount(token_id, max_amount)
+    //         .returns(ReturnsResultUnmanaged)
+    //         .run()
+    //         .await;
+    //
+    //     println!("Result: {response:?}");
+    // }
 
-        let response = self
-            .interactor
-            .tx()
-            .from(&self.wallet_address)
-            .to(self.state.esdt_safe_address())
-            .gas(30_000_000u64)
-            .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
-            .set_max_bridged_amount(token_id, max_amount)
-            .returns(ReturnsResultUnmanaged)
-            .run()
-            .await;
-
-        println!("Result: {response:?}");
-    }
-
-    pub async fn max_bridged_amount(&mut self) {
-        let token_id = TokenIdentifier::from_esdt_bytes(&b""[..]);
-
-        let result_value = self
-            .interactor
-            .query()
-            .to(self.state.esdt_safe_address())
-            .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
-            .max_bridged_amount(token_id)
-            .returns(ReturnsResultUnmanaged)
-            .run()
-            .await;
-
-        println!("Result: {result_value:?}");
-    }
+    // pub async fn max_bridged_amount(&mut self) {
+    //     let token_id = TokenIdentifier::from_esdt_bytes(&b""[..]);
+    //
+    //     let result_value = self
+    //         .interactor
+    //         .query()
+    //         .to(self.state.esdt_safe_address())
+    //         .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
+    //         .max_bridged_amount(token_id)
+    //         .returns(ReturnsResultUnmanaged)
+    //         .run()
+    //         .await;
+    //
+    //     println!("Result: {result_value:?}");
+    // }
 
     pub async fn add_tokens_to_whitelist(&mut self, token_id: &[u8]) {
         let tokens;

@@ -1,7 +1,7 @@
 use crate::{common, to_sovereign};
 use multiversx_sc::imports::*;
-use operation::{Operation, OperationData, OperationEsdtPayment, OperationTuple};
-use proxies::{header_verifier_proxy::HeaderverifierProxy, token_handler_proxy::TokenHandlerProxy};
+use proxies::token_handler_proxy::TokenHandlerProxy;
+use structs::operation::{Operation, OperationData, OperationEsdtPayment, OperationTuple};
 
 const DEFAULT_ISSUE_COST: u64 = 50_000_000_000_000_000; // 0.05 * 10^18
 
@@ -25,13 +25,14 @@ impl<M: ManagedTypeApi> Default for SplitResult<M> {
 #[multiversx_sc::module]
 pub trait TransferTokensModule:
     super::events::EventsModule
-    + tx_batch_module::TxBatchModule
-    + max_bridged_amount_module::MaxBridgedAmountModule
     + multiversx_sc_modules::pause::PauseModule
     + multiversx_sc_modules::default_issue_callbacks::DefaultIssueCallbacksModule
     + utils::UtilsModule
     + to_sovereign::events::EventsModule
     + common::storage::CommonStorage
+    + cross_chain::deposit_common::DepositCommonModule
+    + cross_chain::execute_common::ExecuteCommonModule
+    + cross_chain::storage::CrossChainStorage
 {
     #[endpoint(executeBridgeOps)]
     fn execute_operations(&self, hash_of_hashes: ManagedBuffer, operation: Operation<Self::Api>) {
@@ -125,15 +126,6 @@ pub trait TransferTokensModule:
         }
     }
 
-    fn remove_executed_hash(&self, hash_of_hashes: &ManagedBuffer, op_hash: &ManagedBuffer) {
-        let header_verifier_address = self.header_verifier_address().get();
-        self.tx()
-            .to(header_verifier_address)
-            .typed(HeaderverifierProxy)
-            .remove_executed_hash(hash_of_hashes, op_hash)
-            .sync_call();
-    }
-
     fn emit_transfer_failed_events(
         &self,
         hash_of_hashes: &ManagedBuffer,
@@ -144,7 +136,6 @@ pub trait TransferTokensModule:
             operation_tuple.op_hash.clone(),
         );
 
-        // deposit back mainchain tokens into user account
         let sc_address = self.blockchain().get_sc_address();
         let tx_nonce = self.get_and_save_next_tx_id();
 
@@ -155,29 +146,6 @@ pub trait TransferTokensModule:
                 .map_tokens_to_multi_value_encoded(),
             OperationData::new(tx_nonce, sc_address.clone(), None),
         );
-    }
-
-    fn calculate_operation_hash(&self, operation: &Operation<Self::Api>) -> ManagedBuffer {
-        let mut serialized_data = ManagedBuffer::new();
-
-        if let core::result::Result::Err(err) = operation.top_encode(&mut serialized_data) {
-            sc_panic!("Transfer data encode error: {}", err.message_bytes());
-        }
-
-        let sha256 = self.crypto().sha256(&serialized_data);
-        let hash = sha256.as_managed_buffer().clone();
-
-        hash
-    }
-
-    fn lock_operation_hash(&self, operation_hash: &ManagedBuffer, hash_of_hashes: &ManagedBuffer) {
-        let header_verifier_address = self.header_verifier_address().get();
-
-        self.tx()
-            .to(header_verifier_address)
-            .typed(HeaderverifierProxy)
-            .lock_operation_hash(hash_of_hashes, operation_hash)
-            .sync_call();
     }
 
     #[inline]

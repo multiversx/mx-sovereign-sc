@@ -128,7 +128,7 @@ where
 
     pub fn deploy_phase_one<
         Arg0: ProxyArg<Option<ManagedBuffer<Env::Api>>>,
-        Arg1: ProxyArg<operation::SovereignConfig<Env::Api>>,
+        Arg1: ProxyArg<structs::configs::SovereignConfig<Env::Api>>,
     >(
         self,
         opt_preferred_chain_id: Arg0,
@@ -151,15 +151,15 @@ where
     }
 
     pub fn deploy_phase_three<
-        Arg0: ProxyArg<bool>,
+        Arg0: ProxyArg<OptionalValue<structs::configs::EsdtSafeConfig<Env::Api>>>,
     >(
         self,
-        is_sovereign_chain: Arg0,
+        opt_config: Arg0,
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("deployPhaseThree")
-            .argument(&is_sovereign_chain)
+            .argument(&opt_config)
             .original_result()
     }
 

@@ -24,7 +24,7 @@ multiversx_sc_wasm_adapter::endpoints! {
         deployHeaderVerifier => deploy_header_verifier
         setEsdtSafeAddressInHeaderVerifier => set_esdt_safe_address_in_header_verifier
         deployEnshrineEsdtSafe => deploy_enshrine_esdt_safe
-        deployEsdtSafe => deploy_esdt_safe
+        deployEsdtSafe => deploy_mvx_esdt_safe
         deployFeeMarket => deploy_fee_market
         completeSetupPhase => complete_setup_phase
         isAdmin => is_admin

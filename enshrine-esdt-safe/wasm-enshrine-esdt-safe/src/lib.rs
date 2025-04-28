@@ -26,8 +26,6 @@ multiversx_sc_wasm_adapter::endpoints! {
         deposit => deposit
         executeBridgeOps => execute_operations
         registerNewTokenID => register_new_token_id
-        setMaxBridgedAmount => set_max_bridged_amount
-        getMaxBridgedAmount => max_bridged_amount
         addTokensToWhitelist => add_tokens_to_whitelist
         removeTokensFromWhitelist => remove_tokens_from_whitelist
         addTokensToBlacklist => add_tokens_to_blacklist
@@ -37,6 +35,8 @@ multiversx_sc_wasm_adapter::endpoints! {
         pause => pause_endpoint
         unpause => unpause_endpoint
         isPaused => paused_status
+        getNativeToken => native_token
+        getMaxBridgedAmount => max_bridged_amount
     )
 }
 

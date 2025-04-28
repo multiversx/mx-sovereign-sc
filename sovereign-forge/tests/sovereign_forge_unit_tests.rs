@@ -1,15 +1,18 @@
-use multiversx_sc::types::{BigUint, ManagedBuffer, TestAddress, TestSCAddress};
+use common_test_setup::constants::CHAIN_CONFIG_ADDRESS;
+use multiversx_sc::{
+    imports::OptionalValue,
+    types::{BigUint, ManagedBuffer, TestAddress, TestSCAddress},
+};
 use multiversx_sc_scenario::{
     api::StaticApi, imports::MxscPath, ReturnsHandledOrError, ScenarioTxRun, ScenarioTxWhitebox,
     ScenarioWorld,
 };
-use operation::SovereignConfig;
 use proxies::{
     chain_config_proxy::ChainConfigContractProxy,
     chain_factory_proxy::ChainFactoryContractProxy,
-    esdt_safe_proxy::EsdtSafeProxy,
     fee_market_proxy::{FeeMarketProxy, FeeStruct},
     header_verifier_proxy::HeaderverifierProxy,
+    mvx_esdt_safe_proxy::MvxEsdtSafeProxy,
     sovereign_forge_proxy::SovereignForgeProxy,
 };
 use setup_phase::SetupPhaseModule;
@@ -17,11 +20,11 @@ use sovereign_forge::common::{
     storage::StorageModule,
     utils::{ScArray, UtilsModule},
 };
+use structs::configs::{EsdtSafeConfig, SovereignConfig};
 
 const FORGE_ADDRESS: TestSCAddress = TestSCAddress::new("sovereign-forge");
 const FORGE_CODE_PATH: MxscPath = MxscPath::new("output/sovereign-forge.mxsc.json");
 const OWNER_ADDRESS: TestAddress = TestAddress::new("owner");
-
 const FACTORY_ADDRESS: TestSCAddress = TestSCAddress::new("chain-factory");
 const FACTORY_CODE_PATH: MxscPath =
     MxscPath::new("../chain-factory/output/chain-factory.mxsc.json");
@@ -41,8 +44,6 @@ const FEE_MARKET_CODE_PATH: MxscPath = MxscPath::new("../fee-market/output/fee-m
 
 const TOKEN_HANDLER_ADDRESS: TestSCAddress = TestSCAddress::new("token-handler");
 
-const CHAIN_CONFIG_ADDRESS: TestSCAddress = TestSCAddress::new("chain-config");
-
 const BALANCE: u128 = 100_000_000_000_000_000;
 const DEPLOY_COST: u64 = 100_000;
 
@@ -53,7 +54,7 @@ fn world() -> ScenarioWorld {
     blockchain.register_contract(FACTORY_CODE_PATH, chain_factory::ContractBuilder);
     blockchain.register_contract(CONFIG_CODE_PATH, chain_config::ContractBuilder);
     blockchain.register_contract(HEADER_VERIFIER_CODE_PATH, header_verifier::ContractBuilder);
-    blockchain.register_contract(ESDT_SAFE_CODE_PATH, esdt_safe::ContractBuilder);
+    blockchain.register_contract(ESDT_SAFE_CODE_PATH, mvx_esdt_safe::ContractBuilder);
     blockchain.register_contract(FEE_MARKET_CODE_PATH, fee_market::ContractBuilder);
 
     blockchain
@@ -143,14 +144,17 @@ impl SovereignForgeTestState {
         self
     }
 
-    fn deploy_esdt_safe_template(&mut self) -> &mut Self {
-        let is_sovereign_chain = false;
-
+    // TODO: MVX-ESDT-SAFE
+    fn deploy_mvx_esdt_safe_template(
+        &mut self,
+        header_verifier_address: &TestSCAddress,
+        opt_config: OptionalValue<EsdtSafeConfig<StaticApi>>,
+    ) -> &mut Self {
         self.world
             .tx()
             .from(OWNER_ADDRESS)
-            .typed(EsdtSafeProxy)
-            .init(is_sovereign_chain)
+            .typed(MvxEsdtSafeProxy)
+            .init(header_verifier_address.to_managed_address(), opt_config)
             .code(ESDT_SAFE_CODE_PATH)
             .new_address(ESDT_SAFE_ADDRESS)
             .run();
@@ -270,14 +274,18 @@ impl SovereignForgeTestState {
         }
     }
 
-    fn deploy_phase_three(&mut self, is_sovereign_chain: bool, error_message: Option<&str>) {
+    fn deploy_phase_three(
+        &mut self,
+        opt_config: OptionalValue<EsdtSafeConfig<StaticApi>>,
+        error_message: Option<&str>,
+    ) {
         let response = self
             .world
             .tx()
             .from(OWNER_ADDRESS)
             .to(FORGE_ADDRESS)
             .typed(SovereignForgeProxy)
-            .deploy_phase_three(is_sovereign_chain)
+            .deploy_phase_three(opt_config)
             .returns(ReturnsHandledOrError::new())
             .run();
 
@@ -574,10 +582,10 @@ fn deploy_phase_three() {
 
     state.deploy_phase_one(&deploy_cost, None, &SovereignConfig::default_config(), None);
     state.deploy_header_verifier_template();
-    state.deploy_esdt_safe_template();
+    state.deploy_mvx_esdt_safe_template(&HEADER_VERIFIER_ADDRESS, OptionalValue::None);
 
     state.deploy_phase_two(None);
-    state.deploy_phase_three(false, None);
+    state.deploy_phase_three(OptionalValue::None, None);
 
     state
         .world
@@ -600,7 +608,7 @@ fn deploy_phase_three_without_phase_one() {
     state.finish_setup();
 
     state.deploy_phase_three(
-        false,
+        OptionalValue::None,
         Some("The Header-Verifier SC is not deployed, you skipped the second phase"),
     );
 }
@@ -617,10 +625,10 @@ fn deploy_phase_three_without_phase_two() {
     state.deploy_phase_one(&deploy_cost, None, &SovereignConfig::default_config(), None);
 
     state.deploy_header_verifier_template();
-    state.deploy_esdt_safe_template();
+    state.deploy_mvx_esdt_safe_template(&HEADER_VERIFIER_ADDRESS, OptionalValue::None);
 
     state.deploy_phase_three(
-        false,
+        OptionalValue::None,
         Some("The Header-Verifier SC is not deployed, you skipped the second phase"),
     );
 }
@@ -637,11 +645,14 @@ fn deploy_phase_three_already_deployed() {
     state.deploy_phase_one(&deploy_cost, None, &SovereignConfig::default_config(), None);
 
     state.deploy_header_verifier_template();
-    state.deploy_esdt_safe_template();
+    state.deploy_mvx_esdt_safe_template(&HEADER_VERIFIER_ADDRESS, OptionalValue::None);
 
     state.deploy_phase_two(None);
-    state.deploy_phase_three(false, None);
-    state.deploy_phase_three(false, Some("The ESDT-Safe SC is already deployed"));
+    state.deploy_phase_three(OptionalValue::None, None);
+    state.deploy_phase_three(
+        OptionalValue::None,
+        Some("The ESDT-Safe SC is already deployed"),
+    );
 }
 
 #[test]
@@ -657,10 +668,10 @@ fn deploy_phase_four() {
     state.deploy_phase_one(&deploy_cost, None, &SovereignConfig::default_config(), None);
 
     state.deploy_header_verifier_template();
-    state.deploy_esdt_safe_template();
+    state.deploy_mvx_esdt_safe_template(&HEADER_VERIFIER_ADDRESS, OptionalValue::None);
 
     state.deploy_phase_two(None);
-    state.deploy_phase_three(false, None);
+    state.deploy_phase_three(OptionalValue::None, None);
     state.deploy_phase_four(None, None);
 
     state
@@ -688,7 +699,7 @@ fn deploy_phase_four_without_previous_phase() {
     state.deploy_phase_one(&deploy_cost, None, &SovereignConfig::default_config(), None);
 
     state.deploy_header_verifier_template();
-    state.deploy_esdt_safe_template();
+    state.deploy_mvx_esdt_safe_template(&HEADER_VERIFIER_ADDRESS, OptionalValue::None);
 
     state.deploy_phase_two(None);
     state.deploy_phase_four(
@@ -710,10 +721,10 @@ fn deploy_phase_four_fee_market_already_deployed() {
     state.deploy_phase_one(&deploy_cost, None, &SovereignConfig::default_config(), None);
 
     state.deploy_header_verifier_template();
-    state.deploy_esdt_safe_template();
+    state.deploy_mvx_esdt_safe_template(&HEADER_VERIFIER_ADDRESS, OptionalValue::None);
 
     state.deploy_phase_two(None);
-    state.deploy_phase_three(false, None);
+    state.deploy_phase_three(OptionalValue::None, None);
     state.deploy_phase_four(None, None);
     state.deploy_phase_four(None, Some("The Fee-Market SC is already deployed"));
 }
