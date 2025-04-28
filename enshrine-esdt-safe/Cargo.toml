@@ -23,6 +23,9 @@ path = "../common/utils"
 [dependencies.proxies]
 path = "../common/proxies"
 
+[dependencies.cross-chain]
+path = "../common/cross-chain"
+
 [dependencies.fee-market]
 path = "../fee-market"
 

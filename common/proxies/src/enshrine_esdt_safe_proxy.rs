@@ -141,12 +141,12 @@ where
         Arg1: ProxyArg<OptionalValue<MultiValue3<u64, ManagedBuffer<Env::Api>, MultiValueEncoded<Env::Api, ManagedBuffer<Env::Api>>>>>,
     >(
         self,
-        _to: Arg0,
+        to: Arg0,
         optional_transfer_data: Arg1,
     ) -> TxTypedCall<Env, From, To, (), Gas, ()> {
         self.wrapped_tx
             .raw_call("deposit")
-            .argument(&_to)
+            .argument(&to)
             .argument(&optional_transfer_data)
             .original_result()
     }
@@ -275,6 +275,28 @@ where
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("isPaused")
+            .original_result()
+    }
+
+    pub fn native_token(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, TokenIdentifier<Env::Api>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getNativeToken")
+            .original_result()
+    }
+
+    pub fn max_bridged_amount<
+        Arg0: ProxyArg<TokenIdentifier<Env::Api>>,
+    >(
+        self,
+        token_id: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, BigUint<Env::Api>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getMaxBridgedAmount")
+            .argument(&token_id)
             .original_result()
     }
 }

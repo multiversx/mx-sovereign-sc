@@ -68,6 +68,7 @@ name = "enshrine-esdt-safe"
 version = "0.0.0"
 dependencies = [
  "chain-config",
+ "cross-chain",
  "fee-market",
  "header-verifier",
  "multiversx-sc",

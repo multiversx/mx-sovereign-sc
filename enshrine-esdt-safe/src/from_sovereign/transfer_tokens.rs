@@ -1,7 +1,7 @@
 use crate::{common, to_sovereign};
 use multiversx_sc::imports::*;
-use proxies::{header_verifier_proxy::HeaderverifierProxy, token_handler_proxy::TokenHandlerProxy};
-use structs::operation::{Operation, OperationEsdtPayment, OperationTuple};
+use proxies::token_handler_proxy::TokenHandlerProxy;
+use structs::operation::{Operation, OperationData, OperationEsdtPayment, OperationTuple};
 
 const DEFAULT_ISSUE_COST: u64 = 50_000_000_000_000_000; // 0.05 * 10^18
 
@@ -32,6 +32,9 @@ pub trait TransferTokensModule:
     + utils::UtilsModule
     + to_sovereign::events::EventsModule
     + common::storage::CommonStorage
+    + cross_chain::deposit_common::DepositCommonModule
+    + cross_chain::execute_common::ExecuteCommonModule
+    + cross_chain::storage::CrossChainStorage
 {
     #[endpoint(executeBridgeOps)]
     fn execute_operations(&self, hash_of_hashes: ManagedBuffer, operation: Operation<Self::Api>) {
@@ -125,14 +128,14 @@ pub trait TransferTokensModule:
         }
     }
 
-    fn remove_executed_hash(&self, hash_of_hashes: &ManagedBuffer, op_hash: &ManagedBuffer) {
-        let header_verifier_address = self.header_verifier_address().get();
-        self.tx()
-            .to(header_verifier_address)
-            .typed(HeaderverifierProxy)
-            .remove_executed_hash(hash_of_hashes, op_hash)
-            .sync_call();
-    }
+    // fn remove_executed_hash(&self, hash_of_hashes: &ManagedBuffer, op_hash: &ManagedBuffer) {
+    //     let header_verifier_address = self.header_verifier_address().get();
+    //     self.tx()
+    //         .to(header_verifier_address)
+    //         .typed(HeaderverifierProxy)
+    //         .remove_executed_hash(hash_of_hashes, op_hash)
+    //         .sync_call();
+    // }
 
     fn emit_transfer_failed_events(
         &self,
@@ -144,42 +147,40 @@ pub trait TransferTokensModule:
             operation_tuple.op_hash.clone(),
         );
 
-        // // deposit back mainchain tokens into user account
-        // let sc_address = self.blockchain().get_sc_address();
-        // // TODO: from deposit_common
-        // let tx_nonce = self.get_and_save_next_tx_id();
-        //
-        // self.deposit_event(
-        //     &operation_tuple.operation.data.op_sender,
-        //     &operation_tuple
-        //         .operation
-        //         .map_tokens_to_multi_value_encoded(),
-        //     OperationData::new(tx_nonce, sc_address.clone(), None),
-        // );
+        let sc_address = self.blockchain().get_sc_address();
+        let tx_nonce = self.get_and_save_next_tx_id();
+
+        self.deposit_event(
+            &operation_tuple.operation.data.op_sender,
+            &operation_tuple
+                .operation
+                .map_tokens_to_multi_value_encoded(),
+            OperationData::new(tx_nonce, sc_address.clone(), None),
+        );
     }
 
-    fn calculate_operation_hash(&self, operation: &Operation<Self::Api>) -> ManagedBuffer {
-        let mut serialized_data = ManagedBuffer::new();
+    // fn calculate_operation_hash(&self, operation: &Operation<Self::Api>) -> ManagedBuffer {
+    //     let mut serialized_data = ManagedBuffer::new();
+    //
+    //     if let core::result::Result::Err(err) = operation.top_encode(&mut serialized_data) {
+    //         sc_panic!("Transfer data encode error: {}", err.message_bytes());
+    //     }
+    //
+    //     let sha256 = self.crypto().sha256(&serialized_data);
+    //     let hash = sha256.as_managed_buffer().clone();
+    //
+    //     hash
+    // }
 
-        if let core::result::Result::Err(err) = operation.top_encode(&mut serialized_data) {
-            sc_panic!("Transfer data encode error: {}", err.message_bytes());
-        }
-
-        let sha256 = self.crypto().sha256(&serialized_data);
-        let hash = sha256.as_managed_buffer().clone();
-
-        hash
-    }
-
-    fn lock_operation_hash(&self, operation_hash: &ManagedBuffer, hash_of_hashes: &ManagedBuffer) {
-        let header_verifier_address = self.header_verifier_address().get();
-
-        self.tx()
-            .to(header_verifier_address)
-            .typed(HeaderverifierProxy)
-            .lock_operation_hash(hash_of_hashes, operation_hash)
-            .sync_call();
-    }
+    // fn lock_operation_hash(&self, operation_hash: &ManagedBuffer, hash_of_hashes: &ManagedBuffer) {
+    //     let header_verifier_address = self.header_verifier_address().get();
+    //
+    //     self.tx()
+    //         .to(header_verifier_address)
+    //         .typed(HeaderverifierProxy)
+    //         .lock_operation_hash(hash_of_hashes, operation_hash)
+    //         .sync_call();
+    // }
 
     #[inline]
     fn get_sovereign_prefix(&self) -> ManagedBuffer {
