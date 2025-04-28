@@ -7,8 +7,6 @@ use structs::{
     operation::{OperationData, TransferData},
 };
 
-const MAX_TRANSFERS_PER_TX: usize = 10;
-
 #[multiversx_sc::module]
 pub trait CreateTxModule:
     super::events::EventsModule
