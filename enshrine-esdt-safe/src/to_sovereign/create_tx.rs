@@ -122,44 +122,4 @@ pub trait CreateTxModule:
 
         self.pop_first_payment(payments.clone())
     }
-
-    // fn refund_tokens(
-    //     &self,
-    //     caller: &ManagedAddress,
-    //     refundable_payments: ManagedVec<EsdtTokenPayment>,
-    // ) {
-    //     for payment in refundable_payments {
-    //         if payment.amount > 0 {
-    //             self.tx().to(caller).payment(payment).transfer();
-    //         }
-    //     }
-    // }
-
-    // fn match_fee_payment(
-    //     &self,
-    //     total_tokens_for_fees: usize,
-    //     fees_payment: &OptionalValue<EsdtTokenPayment<Self::Api>>,
-    //     opt_transfer_data: &Option<TransferData<<Self as ContractBase>::Api>>,
-    // ) {
-    //     match fees_payment {
-    //         OptionalValue::Some(fee) => {
-    //             let mut gas: GasLimit = 0;
-    //
-    //             if let Some(transfer_data) = opt_transfer_data {
-    //                 gas = transfer_data.gas_limit;
-    //             }
-    //
-    //             let fee_market_address = self.fee_market_address().get();
-    //             let caller = self.blockchain().get_caller();
-    //
-    //             self.tx()
-    //                 .to(fee_market_address)
-    //                 .typed(FeeMarketProxy)
-    //                 .subtract_fee(caller, total_tokens_for_fees, OptionalValue::Some(gas))
-    //                 .payment(fee.clone())
-    //                 .sync_call();
-    //         }
-    //         OptionalValue::None => (),
-    //     };
-    // }
 }
