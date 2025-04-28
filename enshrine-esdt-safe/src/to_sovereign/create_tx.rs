@@ -31,7 +31,10 @@ pub trait CreateTxModule:
     ) {
         require!(self.not_paused(), "Cannot create transaction while paused");
 
-        let (fees_payment, payments) = self.enshrine_check_and_extract_fee().into_tuple();
+        let (fees_payment, payments) = self
+            .check_and_extract_fee(optional_transfer_data.is_some())
+            .into_tuple();
+
         require!(!payments.is_empty(), "Nothing to transfer");
         require!(payments.len() <= MAX_TRANSFERS_PER_TX, "Too many tokens");
 
@@ -98,28 +101,5 @@ pub trait CreateTxModule:
             &EventPayment::map_to_tuple_multi_value(event_payments),
             OperationData::new(tx_nonce, caller, option_transfer_data),
         );
-    }
-
-    fn enshrine_check_and_extract_fee(
-        &self,
-    ) -> MultiValue2<OptionalValue<EsdtTokenPayment>, ManagedVec<EsdtTokenPayment>> {
-        let payments = self.call_value().all_esdt_transfers().clone_value();
-
-        require!(!payments.is_empty(), "Nothing to transfer");
-        require!(payments.len() <= MAX_TRANSFERS_PER_TX, "Too many tokens");
-
-        require!(
-            !self.fee_market_address().is_empty(),
-            "Fee market address is not set"
-        );
-
-        let fee_market_address = self.fee_market_address().get();
-        let fee_enabled = self.external_fee_enabled(fee_market_address).get();
-
-        if !fee_enabled {
-            return MultiValue2::from((OptionalValue::None, payments));
-        }
-
-        self.pop_first_payment(payments.clone())
     }
 }
