@@ -13,6 +13,7 @@ pub trait ExecuteModule:
     crate::bridging_mechanism::BridgingMechanism
     + crate::register_token::RegisterTokenModule
     + utils::UtilsModule
+    + setup_phase::SetupPhaseModule
     + cross_chain::events::EventsModule
     + cross_chain::storage::CrossChainStorage
     + cross_chain::deposit_common::DepositCommonModule

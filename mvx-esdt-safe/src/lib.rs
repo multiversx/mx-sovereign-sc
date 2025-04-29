@@ -1,5 +1,9 @@
 #![no_std]
 
+use error_messages::{
+    ESDT_SAFE_CONFIG_NOT_SET, HEADER_VERIFIER_ADDRESS_NOT_SET, SETUP_PHASE_ALREADY_COMPLETED,
+};
+
 use multiversx_sc::imports::*;
 use structs::configs::EsdtSafeConfig;
 
@@ -21,6 +25,7 @@ pub trait MvxEsdtSafe:
     + cross_chain::execute_common::ExecuteCommonModule
     + multiversx_sc_modules::pause::PauseModule
     + utils::UtilsModule
+    + setup_phase::SetupPhaseModule
     + multiversx_sc_modules::only_admin::OnlyAdminModule
 {
     #[init]
@@ -43,6 +48,9 @@ pub trait MvxEsdtSafe:
         self.set_paused(true);
     }
 
+    #[upgrade]
+    fn upgrade(&self) {}
+
     #[only_admin]
     #[endpoint(updateConfiguration)]
     fn update_configuration(&self, new_config: EsdtSafeConfig<Self::Api>) {
@@ -63,6 +71,34 @@ pub trait MvxEsdtSafe:
         self.max_bridged_amount(&token_id).set(&max_amount);
     }
 
-    #[upgrade]
-    fn upgrade(&self) {}
+    #[only_admin]
+    #[endpoint(completSetupPhase)]
+    fn complete_setup_phase(&self) {
+        require!(
+            self.is_setup_phase_complete(),
+            SETUP_PHASE_ALREADY_COMPLETED
+        );
+
+        require!(
+            !self.esdt_safe_config().is_empty(),
+            ESDT_SAFE_CONFIG_NOT_SET
+        );
+
+        let header_verifier_address_mapper = self.header_verifier_address();
+
+        require!(
+            header_verifier_address_mapper.is_empty(),
+            HEADER_VERIFIER_ADDRESS_NOT_SET
+        );
+
+        self.tx()
+            .to(ToSelf)
+            .typed(UserBuiltinProxy)
+            .change_owner_address(&header_verifier_address_mapper.get())
+            .sync_call();
+
+        self.unpause_endpoint();
+
+        self.setup_phase_complete().set(true);
+    }
 }
