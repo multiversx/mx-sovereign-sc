@@ -9,8 +9,9 @@ use cross_chain::{DEFAULT_ISSUE_COST, MAX_GAS_PER_TRANSACTION};
 use error_messages::{
     BANNED_ENDPOINT_NAME, CANNOT_REGISTER_TOKEN, ERR_EMPTY_PAYMENTS, GAS_LIMIT_TOO_HIGH,
     INVALID_TYPE, MAX_GAS_LIMIT_PER_TX_EXCEEDED, MINT_AND_BURN_ROLES_NOT_FOUND,
-    NOTHING_TO_TRANSFER, NO_ESDT_SAFE_ADDRESS, PAYMENT_DOES_NOT_COVER_FEE, TOKEN_ID_IS_NOT_TRUSTED,
-    TOKEN_IS_FROM_SOVEREIGN, TOO_MANY_TOKENS,
+    NOTHING_TO_TRANSFER, NO_ESDT_SAFE_ADDRESS, PAYMENT_DOES_NOT_COVER_FEE,
+    SETUP_PHASE_ALREADY_COMPLETED, TOKEN_ID_IS_NOT_TRUSTED, TOKEN_IS_FROM_SOVEREIGN,
+    TOO_MANY_TOKENS,
 };
 use multiversx_sc::types::MultiValueEncoded;
 use multiversx_sc::{
@@ -24,6 +25,7 @@ use multiversx_sc_scenario::{api::StaticApi, ScenarioTxWhitebox};
 use mvx_esdt_safe::bridging_mechanism::{BridgingMechanism, TRUSTED_TOKEN_IDS};
 use mvx_esdt_safe_blackbox_setup::MvxEsdtSafeTestState;
 use proxies::fee_market_proxy::{FeeStruct, FeeType};
+use setup_phase::SetupPhaseModule;
 use structs::{
     aliases::PaymentsVec,
     configs::EsdtSafeConfig,
@@ -225,6 +227,49 @@ fn deposit_nothing_to_transfer() {
     state
         .common_setup
         .check_multiversx_to_sovereign_token_id_mapper_is_empty(FIRST_TEST_TOKEN);
+}
+
+#[test]
+fn complete_setup_phase() {
+    let mut state = MvxEsdtSafeTestState::new();
+
+    state.deploy_contract(
+        HEADER_VERIFIER_ADDRESS,
+        OptionalValue::Some(EsdtSafeConfig::default_config()),
+    );
+
+    state.complete_setup_phase(None, Some("unpauseContract"));
+
+    state
+        .common_setup
+        .world
+        .query()
+        .to(ESDT_SAFE_ADDRESS)
+        .whitebox(mvx_esdt_safe::contract_obj, |sc| {
+            assert!(sc.is_setup_phase_complete());
+        });
+}
+
+#[test]
+fn complete_setup_phase_already_completed() {
+    let mut state = MvxEsdtSafeTestState::new();
+
+    state.deploy_contract(
+        HEADER_VERIFIER_ADDRESS,
+        OptionalValue::Some(EsdtSafeConfig::default_config()),
+    );
+
+    state.complete_setup_phase(None, Some("unpauseContract"));
+    state
+        .common_setup
+        .world
+        .query()
+        .to(ESDT_SAFE_ADDRESS)
+        .whitebox(mvx_esdt_safe::contract_obj, |sc| {
+            assert!(sc.is_setup_phase_complete());
+        });
+
+    state.complete_setup_phase(Some(SETUP_PHASE_ALREADY_COMPLETED), None);
 }
 
 /// Test that deposit fails when there are too many tokens in the payment (limit being the MAX_TRANSFERS_PER_TX)
