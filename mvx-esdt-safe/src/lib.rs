@@ -75,7 +75,7 @@ pub trait MvxEsdtSafe:
     #[endpoint(completSetupPhase)]
     fn complete_setup_phase(&self) {
         require!(
-            self.is_setup_phase_complete(),
+            !self.is_setup_phase_complete(),
             SETUP_PHASE_ALREADY_COMPLETED
         );
 
@@ -84,17 +84,10 @@ pub trait MvxEsdtSafe:
             ESDT_SAFE_CONFIG_NOT_SET
         );
 
-        let header_verifier_address_mapper = self.header_verifier_address();
-
-        require!(
-            header_verifier_address_mapper.is_empty(),
-            HEADER_VERIFIER_ADDRESS_NOT_SET
-        );
-
         self.tx()
             .to(ToSelf)
             .typed(UserBuiltinProxy)
-            .change_owner_address(&header_verifier_address_mapper.get())
+            .change_owner_address(&self.header_verifier_address().get())
             .sync_call();
 
         self.unpause_endpoint();
