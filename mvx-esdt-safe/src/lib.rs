@@ -1,8 +1,6 @@
 #![no_std]
 
-use error_messages::{
-    ESDT_SAFE_CONFIG_NOT_SET, HEADER_VERIFIER_ADDRESS_NOT_SET, SETUP_PHASE_ALREADY_COMPLETED,
-};
+use error_messages::SETUP_PHASE_ALREADY_COMPLETED;
 
 use multiversx_sc::imports::*;
 use structs::configs::EsdtSafeConfig;
@@ -77,11 +75,6 @@ pub trait MvxEsdtSafe:
         require!(
             !self.is_setup_phase_complete(),
             SETUP_PHASE_ALREADY_COMPLETED
-        );
-
-        require!(
-            !self.esdt_safe_config().is_empty(),
-            ESDT_SAFE_CONFIG_NOT_SET
         );
 
         self.tx()
