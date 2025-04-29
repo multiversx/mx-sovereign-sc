@@ -229,6 +229,11 @@ fn deposit_nothing_to_transfer() {
         .check_multiversx_to_sovereign_token_id_mapper_is_empty(FIRST_TEST_TOKEN);
 }
 
+/// Test that complete setup phase succeeds
+/// Steps:
+/// 1. Deploy the Mvx-ESDT-Safe SC
+/// 2. Complete the setup phase
+/// 3. Check the SCs storage after completing the setup phase
 #[test]
 fn complete_setup_phase() {
     let mut state = MvxEsdtSafeTestState::new();
@@ -250,6 +255,7 @@ fn complete_setup_phase() {
         });
 }
 
+/// Test that complete setup phase fails when the setup phase was already completed
 #[test]
 fn complete_setup_phase_already_completed() {
     let mut state = MvxEsdtSafeTestState::new();
