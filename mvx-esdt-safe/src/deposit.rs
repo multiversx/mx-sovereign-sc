@@ -25,7 +25,7 @@ pub trait DepositModule:
         opt_transfer_data: OptionalValueTransferDataTuple<Self::Api>,
     ) {
         require!(self.not_paused(), ESDT_SAFE_STILL_PAUSED);
-        self.setup_phase_complete();
+        self.require_setup_complete();
 
         let (fees_payment, payments) = self
             .check_and_extract_fee(opt_transfer_data.is_some())

@@ -24,6 +24,7 @@ pub trait ExecuteModule:
     #[endpoint(executeBridgeOps)]
     fn execute_operations(&self, hash_of_hashes: ManagedBuffer, operation: Operation<Self::Api>) {
         require!(self.not_paused(), ESDT_SAFE_STILL_PAUSED);
+        self.require_setup_complete();
 
         let operation_hash = self.calculate_operation_hash(&operation);
 
