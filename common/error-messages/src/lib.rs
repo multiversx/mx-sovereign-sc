@@ -53,3 +53,4 @@ pub const ERR_EMPTY_PAYMENTS: &str = "No payments";
 pub const ESDT_SAFE_CONFIG_NOT_SET: &str = "There is no config set for this contract";
 pub const HEADER_VERIFIER_ADDRESS_NOT_SET: &str = "The Header-Verifier address was not set";
 pub const SETUP_PHASE_ALREADY_COMPLETED: &str = "The setup is completed";
+pub const NATIVE_TOKEN_NOT_REGISTERED: &str = "There is no native token registered";
