@@ -1,6 +1,6 @@
 #![no_std]
 
-use error_messages::{NATIVE_TOKEN_NOT_REGISTERED, SETUP_PHASE_ALREADY_COMPLETED};
+use error_messages::SETUP_PHASE_ALREADY_COMPLETED;
 
 use multiversx_sc::imports::*;
 use structs::configs::EsdtSafeConfig;
