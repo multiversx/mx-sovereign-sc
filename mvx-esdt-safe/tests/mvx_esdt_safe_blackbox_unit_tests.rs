@@ -1858,16 +1858,6 @@ fn execute_operation_no_payments_failed_event() {
 
     state.complete_setup_phase(None, None);
 
-    // state
-    //     .common_setup
-    //     .world
-    //     .tx()
-    //     .from(HEADER_VERIFIER_ADDRESS)
-    //     .to(ESDT_SAFE_ADDRESS)
-    //     .typed(UserBuiltinProxy)
-    //     .change_owner_address(&OWNER_ADDRESS.to_managed_address())
-    //     .run();
-
     let gas_limit = 1;
     let function = ManagedBuffer::<StaticApi>::from("WRONG_ENDPOINT");
     let args =
