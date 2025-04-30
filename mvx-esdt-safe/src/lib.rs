@@ -1,6 +1,6 @@
 #![no_std]
 
-use error_messages::SETUP_PHASE_ALREADY_COMPLETED;
+use error_messages::{NATIVE_TOKEN_NOT_REGISTERED, SETUP_PHASE_ALREADY_COMPLETED};
 
 use multiversx_sc::imports::*;
 use structs::configs::EsdtSafeConfig;
@@ -76,6 +76,9 @@ pub trait MvxEsdtSafe:
             !self.is_setup_phase_complete(),
             SETUP_PHASE_ALREADY_COMPLETED
         );
+
+        // TODO:
+        // require!(!self.native_token().is_empty(), NATIVE_TOKEN_NOT_REGISTERED);
 
         self.tx()
             .to(ToSelf)
