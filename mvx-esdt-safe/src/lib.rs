@@ -80,12 +80,6 @@ pub trait MvxEsdtSafe:
         // TODO:
         // require!(!self.native_token().is_empty(), NATIVE_TOKEN_NOT_REGISTERED);
 
-        self.tx()
-            .to(ToSelf)
-            .typed(UserBuiltinProxy)
-            .change_owner_address(&self.header_verifier_address().get())
-            .sync_call();
-
         self.unpause_endpoint();
 
         self.setup_phase_complete().set(true);
