@@ -13,6 +13,8 @@ use error_messages::{
     SETUP_PHASE_ALREADY_COMPLETED, TOKEN_ID_IS_NOT_TRUSTED, TOKEN_IS_FROM_SOVEREIGN,
     TOO_MANY_TOKENS,
 };
+use header_verifier::OperationHashStatus;
+use multiversx_sc::imports::UserBuiltinProxy;
 use multiversx_sc::types::MultiValueEncoded;
 use multiversx_sc::{
     imports::{MultiValue3, OptionalValue},
@@ -21,11 +23,15 @@ use multiversx_sc::{
         TestTokenIdentifier, TokenIdentifier,
     },
 };
+use multiversx_sc_scenario::multiversx_chain_vm::crypto_functions::sha256;
+use multiversx_sc_scenario::ScenarioTxRun;
 use multiversx_sc_scenario::{api::StaticApi, ScenarioTxWhitebox};
 use mvx_esdt_safe::bridging_mechanism::{BridgingMechanism, TRUSTED_TOKEN_IDS};
 use mvx_esdt_safe_blackbox_setup::MvxEsdtSafeTestState;
 use proxies::fee_market_proxy::{FeeStruct, FeeType};
 use setup_phase::SetupPhaseModule;
+use structs::configs::SovereignConfig;
+use structs::operation::TransferData;
 use structs::{
     aliases::PaymentsVec,
     configs::EsdtSafeConfig,
@@ -213,6 +219,7 @@ fn deposit_nothing_to_transfer() {
         HEADER_VERIFIER_ADDRESS,
         OptionalValue::Some(EsdtSafeConfig::default_config()),
     );
+    state.complete_setup_phase(None, None);
     state.common_setup.deploy_fee_market(None);
     state.set_fee_market_address(FEE_MARKET_ADDRESS);
 
@@ -243,6 +250,10 @@ fn complete_setup_phase() {
         OptionalValue::Some(EsdtSafeConfig::default_config()),
     );
 
+    let token_display_name = "TokenOne";
+    let egld_payment = BigUint::from(DEFAULT_ISSUE_COST);
+
+    state.register_native_token(FIRST_TEST_TOKEN, token_display_name, egld_payment, None);
     state.complete_setup_phase(None, Some("unpauseContract"));
 
     state
@@ -287,6 +298,7 @@ fn deposit_too_many_tokens() {
         HEADER_VERIFIER_ADDRESS,
         OptionalValue::Some(EsdtSafeConfig::default_config()),
     );
+    state.complete_setup_phase(None, None);
     state.common_setup.deploy_fee_market(None);
     state.set_fee_market_address(FEE_MARKET_ADDRESS);
     let esdt_token_payment = EsdtTokenPayment::<StaticApi>::new(
@@ -319,6 +331,7 @@ fn deposit_no_transfer_data() {
         HEADER_VERIFIER_ADDRESS,
         OptionalValue::Some(EsdtSafeConfig::default_config()),
     );
+    state.complete_setup_phase(None, None);
     state.common_setup.deploy_fee_market(None);
     state.set_fee_market_address(FEE_MARKET_ADDRESS);
 
@@ -356,6 +369,7 @@ fn deposit_gas_limit_too_high() {
 
     let config = EsdtSafeConfig::new(ManagedVec::new(), ManagedVec::new(), 1, ManagedVec::new());
     state.deploy_contract(HEADER_VERIFIER_ADDRESS, OptionalValue::Some(config));
+    state.complete_setup_phase(None, None);
     state.common_setup.deploy_fee_market(None);
     state.set_fee_market_address(FEE_MARKET_ADDRESS);
     state.common_setup.deploy_testing_sc();
@@ -409,6 +423,7 @@ fn deposit_endpoint_banned() {
     );
 
     state.deploy_contract(HEADER_VERIFIER_ADDRESS, OptionalValue::Some(config));
+    state.complete_setup_phase(None, None);
     state.common_setup.deploy_fee_market(None);
     state.common_setup.deploy_testing_sc();
     state.set_fee_market_address(FEE_MARKET_ADDRESS);
@@ -458,6 +473,7 @@ fn deposit_no_transfer_data_no_fee() {
         HEADER_VERIFIER_ADDRESS,
         OptionalValue::Some(EsdtSafeConfig::default_config()),
     );
+    state.complete_setup_phase(None, None);
 
     state.common_setup.deploy_fee_market(None);
     state.common_setup.deploy_testing_sc();
@@ -489,6 +505,7 @@ fn deposit_transfer_data_only_no_fee() {
         HEADER_VERIFIER_ADDRESS,
         OptionalValue::Some(EsdtSafeConfig::default_config()),
     );
+    state.complete_setup_phase(None, None);
 
     state.common_setup.deploy_fee_market(None);
     state.common_setup.deploy_testing_sc();
@@ -521,6 +538,7 @@ fn deposit_transfer_data_only_with_fee_nothing_to_transfer() {
         HEADER_VERIFIER_ADDRESS,
         OptionalValue::Some(EsdtSafeConfig::default_config()),
     );
+    state.complete_setup_phase(None, None);
 
     let per_transfer = BigUint::from(100u64);
     let per_gas = BigUint::from(1u64);
@@ -576,6 +594,7 @@ fn deposit_transfer_data_only_with_fee() {
         HEADER_VERIFIER_ADDRESS,
         OptionalValue::Some(EsdtSafeConfig::default_config()),
     );
+    state.complete_setup_phase(None, None);
 
     let per_transfer = BigUint::from(100u64);
     let per_gas = BigUint::from(1u64);
@@ -643,6 +662,7 @@ fn deposit_fee_enabled() {
     );
 
     state.deploy_contract(HEADER_VERIFIER_ADDRESS, OptionalValue::Some(config));
+    state.complete_setup_phase(None, None);
 
     let per_transfer = BigUint::from(100u64);
     let per_gas = BigUint::from(1u64);
@@ -759,6 +779,7 @@ fn deposit_payment_doesnt_cover_fee() {
     );
 
     state.deploy_contract(HEADER_VERIFIER_ADDRESS, OptionalValue::Some(config));
+    state.complete_setup_phase(None, None);
 
     let fee = FeeStruct {
         base_token: TokenIdentifier::from(FIRST_TEST_TOKEN),
@@ -837,6 +858,7 @@ fn deposit_refund() {
     );
 
     state.deploy_contract(HEADER_VERIFIER_ADDRESS, OptionalValue::Some(config));
+    state.complete_setup_phase(None, None);
 
     let per_transfer = BigUint::from(100u64);
     let per_gas = BigUint::from(1u64);
@@ -935,6 +957,7 @@ fn deposit_success_burn_mechanism() {
     let mut state = MvxEsdtSafeTestState::new();
 
     state.deploy_contract_with_roles();
+    state.complete_setup_phase(None, None);
     state.common_setup.deploy_fee_market(None);
     state.set_fee_market_address(FEE_MARKET_ADDRESS);
 
@@ -1042,6 +1065,10 @@ fn register_native_token_already_registered() {
     let config = EsdtSafeConfig::default_config();
     state.deploy_contract(HEADER_VERIFIER_ADDRESS, OptionalValue::Some(config));
 
+    state
+        .common_setup
+        .deploy_header_verifier(&CHAIN_CONFIG_ADDRESS);
+
     let token_display_name = "TokenOne";
     let egld_payment = BigUint::from(DEFAULT_ISSUE_COST);
 
@@ -1096,6 +1123,7 @@ fn execute_operation_no_esdt_safe_registered() {
     let mut state = MvxEsdtSafeTestState::new();
     let config = OptionalValue::Some(EsdtSafeConfig::default_config());
     state.deploy_contract(HEADER_VERIFIER_ADDRESS, config);
+    state.complete_setup_phase(None, None);
 
     let payment = OperationEsdtPayment::new(
         TokenIdentifier::from(FIRST_TEST_TOKEN),
@@ -1791,72 +1819,91 @@ fn execute_operation_no_esdt_safe_registered() {
 //         .check_operation_hash_status_is_empty(&operation_hash);
 // }
 
-// /// This test checks the flow of executing an Operation with no payments
-// /// which should emit a failed event
-// /// Steps for this test:
-// /// 1. Deploy the Mvx-ESDT-Safe SC with the default config
-// /// 2. Registed the native token
-// /// 3. Create the `operation`
-// /// 4. Deploy the needed smart contract (Header-Verifier, Fee-Market with no fee and Testing SC)
-// /// 5. Register the `operation`
-// /// 6. Check if the registered `operation` is not locked
-// /// 7. Execute the `operation`
-// /// 8. Check the emited logs
-// /// 9. Check if the `operation` hash was removed from the Header-Verifier SC
-// #[test]
-// fn execute_operation_no_payments_failed_event() {
-//     let mut state = MvxEsdtSafeTestState::new();
-//     state.deploy_contract(
-//         HEADER_VERIFIER_ADDRESS,
-//         OptionalValue::Some(EsdtSafeConfig::default_config()),
-//     );
-//
-//     let token_display_name = "TokenOne";
-//     let egld_payment = BigUint::from(DEFAULT_ISSUE_COST);
-//
-//     state.register_native_token(FIRST_TEST_TOKEN, token_display_name, egld_payment, None);
-//
-//     let gas_limit = 1;
-//     let function = ManagedBuffer::<StaticApi>::from("WRONG_ENDPOINT");
-//     let args =
-//         ManagedVec::<StaticApi, ManagedBuffer<StaticApi>>::from(vec![ManagedBuffer::from("1")]);
-//
-//     let transfer_data = TransferData::new(gas_limit, function, args);
-//
-//     let operation_data =
-//         OperationData::new(1, OWNER_ADDRESS.to_managed_address(), Some(transfer_data));
-//
-//     let operation = Operation::new(
-//         TESTING_SC_ADDRESS.to_managed_address(),
-//         ManagedVec::new(),
-//         operation_data,
-//     );
-//
-//     let operation_hash = state.get_operation_hash(&operation);
-//     let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&operation_hash.to_vec()));
-//
-//     state.common_setup.deploy_header_verifier();
-//     state.common_setup.deploy_testing_sc();
-//     state.set_esdt_safe_address_in_header_verifier(ESDT_SAFE_ADDRESS);
-//
-//     let operations_hashes = MultiValueEncoded::from(ManagedVec::from(vec![operation_hash.clone()]));
-//
-//     state
-//         .common_setup
-//         .deploy_chain_config(SovereignConfig::default_config());
-//
-//     state.register_operation(ManagedBuffer::new(), &hash_of_hashes, operations_hashes);
-//
-//     state
-//         .common_setup
-//         .check_operation_hash_status(&operation_hash, OperationHashStatus::NotLocked);
-//
-//     state.execute_operation(&hash_of_hashes, &operation, None, Some("executedBridgeOp"));
-//
-//     state
-//         .common_setup
-//         .check_operation_hash_status_is_empty(&operation_hash);
-// }
+/// This test checks the flow of executing an Operation with no payments
+/// which should emit a failed event
+/// Steps for this test:
+/// 1. Deploy the Mvx-ESDT-Safe SC with the default config
+/// 2. Registed the native token
+/// 3. Create the `operation`
+/// 4. Deploy the needed smart contract (Header-Verifier, Fee-Market with no fee and Testing SC)
+/// 5. Register the `operation`
+/// 6. Check if the registered `operation` is not locked
+/// 7. Execute the `operation`
+/// 8. Check the emited logs
+/// 9. Check if the `operation` hash was removed from the Header-Verifier SC
+#[test]
+fn execute_operation_no_payments_failed_event() {
+    let mut state = MvxEsdtSafeTestState::new();
+    state.deploy_contract(
+        HEADER_VERIFIER_ADDRESS,
+        OptionalValue::Some(EsdtSafeConfig::default_config()),
+    );
+
+    state
+        .common_setup
+        .deploy_chain_config(SovereignConfig::default_config());
+
+    state
+        .common_setup
+        .deploy_header_verifier(&CHAIN_CONFIG_ADDRESS);
+
+    state
+        .common_setup
+        .complete_header_verifier_setup_phase(None);
+
+    let token_display_name = "TokenOne";
+    let egld_payment = BigUint::from(DEFAULT_ISSUE_COST);
+
+    state.register_native_token(FIRST_TEST_TOKEN, token_display_name, egld_payment, None);
+
+    state.complete_setup_phase(None, None);
+
+    // state
+    //     .common_setup
+    //     .world
+    //     .tx()
+    //     .from(HEADER_VERIFIER_ADDRESS)
+    //     .to(ESDT_SAFE_ADDRESS)
+    //     .typed(UserBuiltinProxy)
+    //     .change_owner_address(&OWNER_ADDRESS.to_managed_address())
+    //     .run();
+
+    let gas_limit = 1;
+    let function = ManagedBuffer::<StaticApi>::from("WRONG_ENDPOINT");
+    let args =
+        ManagedVec::<StaticApi, ManagedBuffer<StaticApi>>::from(vec![ManagedBuffer::from("1")]);
+
+    let transfer_data = TransferData::new(gas_limit, function, args);
+
+    let operation_data =
+        OperationData::new(1, OWNER_ADDRESS.to_managed_address(), Some(transfer_data));
+
+    let operation = Operation::new(
+        TESTING_SC_ADDRESS.to_managed_address(),
+        ManagedVec::new(),
+        operation_data,
+    );
+
+    let operation_hash = state.get_operation_hash(&operation);
+    let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&operation_hash.to_vec()));
+
+    state.common_setup.deploy_testing_sc();
+    state.set_esdt_safe_address_in_header_verifier(ESDT_SAFE_ADDRESS);
+
+    let operations_hashes = MultiValueEncoded::from(ManagedVec::from(vec![operation_hash.clone()]));
+
+    state.register_operation(ManagedBuffer::new(), &hash_of_hashes, operations_hashes);
+
+    state
+        .common_setup
+        .check_operation_hash_status(&operation_hash, OperationHashStatus::NotLocked);
+
+    state.execute_operation(&hash_of_hashes, &operation, None, Some("executedBridgeOp"));
+
+    state
+        .common_setup
+        .check_operation_hash_status_is_empty(&operation_hash);
+}
 
 /// This Test checks the flow for setting the token burn mechanism without having roles
 #[test]
