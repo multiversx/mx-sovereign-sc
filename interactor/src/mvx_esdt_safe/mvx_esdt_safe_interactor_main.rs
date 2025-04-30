@@ -174,7 +174,7 @@ impl MvxEsdtSafeInteract {
             .from(&self.owner_address)
             .gas(120_000_000u64)
             .typed(HeaderverifierProxy)
-            .init(CHAIN_CONFIG_ADDRESS)
+            .init(self.state.current_chain_config_sc_address())
             .code(HEADER_VERIFIER_CODE_PATH)
             .code_metadata(CodeMetadata::all())
             .returns(ReturnsNewAddress)
@@ -285,12 +285,15 @@ impl MvxEsdtSafeInteract {
         esdt_safe_config: OptionalValue<EsdtSafeConfig<StaticApi>>,
         fee_struct: Option<FeeStruct<StaticApi>>,
     ) {
+        self.deploy_chain_config().await;
         self.deploy_header_verifier().await;
+        self.complete_header_verifier_setup_phase().await;
         self.deploy_mvx_esdt_safe(
             self.state.current_header_verifier_address().clone(),
             esdt_safe_config,
         )
         .await;
+        self.complete_setup_phase().await;
         self.deploy_fee_market(
             self.state.current_mvx_esdt_safe_contract_address().clone(),
             fee_struct,
@@ -320,6 +323,32 @@ impl MvxEsdtSafeInteract {
                 ManagedBuffer::new(),
                 operations_hashes,
             )
+            .returns(ReturnsResultUnmanaged)
+            .run()
+            .await;
+    }
+
+    pub async fn complete_setup_phase(&mut self) {
+        self.interactor
+            .tx()
+            .from(&self.owner_address)
+            .to(self.state.current_mvx_esdt_safe_contract_address())
+            .gas(90_000_000u64)
+            .typed(MvxEsdtSafeProxy)
+            .complete_setup_phase()
+            .returns(ReturnsResultUnmanaged)
+            .run()
+            .await;
+    }
+
+    pub async fn complete_header_verifier_setup_phase(&mut self) {
+        self.interactor
+            .tx()
+            .from(&self.owner_address)
+            .to(self.state.current_header_verifier_address())
+            .gas(90_000_000u64)
+            .typed(HeaderverifierProxy)
+            .complete_setup_phase()
             .returns(ReturnsResultUnmanaged)
             .run()
             .await;
