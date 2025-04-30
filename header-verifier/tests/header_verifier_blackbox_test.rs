@@ -84,7 +84,9 @@ fn test_register_bridge_operation() {
         .common_setup
         .deploy_chain_config(SovereignConfig::default_config());
 
-    state.complete_setup_phase(None);
+    state
+        .common_setup
+        .complete_header_verifier_setup_phase(None);
 
     let operation_1 = ManagedBuffer::from("operation_1");
     let operation_2 = ManagedBuffer::from("operation_2");
@@ -133,7 +135,9 @@ fn test_remove_executed_hash_no_esdt_address_registered() {
         .common_setup
         .deploy_chain_config(SovereignConfig::default_config());
 
-    state.complete_setup_phase(None);
+    state
+        .common_setup
+        .complete_header_verifier_setup_phase(None);
 
     let operation_1 = ManagedBuffer::from("operation_1");
     let operation_2 = ManagedBuffer::from("operation_2");
@@ -168,7 +172,9 @@ fn test_remove_one_executed_hash() {
         .common_setup
         .deploy_chain_config(SovereignConfig::default_config());
 
-    state.complete_setup_phase(None);
+    state
+        .common_setup
+        .complete_header_verifier_setup_phase(None);
 
     let operation_hash_1 = ManagedBuffer::from("operation_1");
     let operation_hash_2 = ManagedBuffer::from("operation_2");
@@ -226,7 +232,9 @@ fn test_remove_all_executed_hashes() {
         .common_setup
         .deploy_chain_config(SovereignConfig::default_config());
 
-    state.complete_setup_phase(None);
+    state
+        .common_setup
+        .complete_header_verifier_setup_phase(None);
 
     let operation_1 = ManagedBuffer::from("operation_1");
     let operation_2 = ManagedBuffer::from("operation_2");
@@ -312,7 +320,9 @@ fn test_lock_operation() {
         .common_setup
         .deploy_chain_config(SovereignConfig::default_config());
 
-    state.complete_setup_phase(None);
+    state
+        .common_setup
+        .complete_header_verifier_setup_phase(None);
 
     state.register_esdt_address(ENSHRINE_ADDRESS);
 
@@ -388,7 +398,9 @@ fn test_change_validator_set_operation_already_registered() {
         .common_setup
         .deploy_chain_config(SovereignConfig::default_config());
 
-    state.complete_setup_phase(None);
+    state
+        .common_setup
+        .complete_header_verifier_setup_phase(None);
 
     let operation_1 = ManagedBuffer::from("operation_1");
     let operation_2 = ManagedBuffer::from("operation_2");
