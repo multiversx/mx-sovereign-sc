@@ -3,7 +3,7 @@ pub mod constants;
 use constants::{
     CHAIN_CONFIG_ADDRESS, CHAIN_CONFIG_CODE_PATH, ESDT_SAFE_ADDRESS, FEE_MARKET_ADDRESS,
     FEE_MARKET_CODE_PATH, HEADER_VERIFIER_ADDRESS, HEADER_VERIFIER_CODE_PATH, OWNER_ADDRESS,
-    OWNER_BALANCE, TESTING_SC_ADDRESS, TESTING_SC_CODE_PATH,
+    TESTING_SC_ADDRESS, TESTING_SC_CODE_PATH,
 };
 use cross_chain::storage::CrossChainStorage;
 use header_verifier::{Headerverifier, OperationHashStatus};
@@ -16,7 +16,7 @@ use multiversx_sc_scenario::{
     },
     multiversx_chain_vm::crypto_functions::sha256,
     scenario_model::{Log, TxResponseStatus},
-    DebugApi, ScenarioTxRun, ScenarioTxWhitebox, ScenarioWorld,
+    DebugApi, ReturnsHandledOrError, ScenarioTxRun, ScenarioTxWhitebox, ScenarioWorld,
 };
 use mvx_esdt_safe::bridging_mechanism::BridgingMechanism;
 use proxies::{
@@ -115,6 +115,20 @@ impl BaseSetup {
             .run();
 
         self
+    }
+
+    pub fn complete_header_verifier_setup_phase(&mut self, expected_error_message: Option<&str>) {
+        let response = self
+            .world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .to(HEADER_VERIFIER_ADDRESS)
+            .typed(HeaderverifierProxy)
+            .complete_setup_phase()
+            .returns(ReturnsHandledOrError::new())
+            .run();
+
+        self.assert_expected_error_message(response, expected_error_message);
     }
 
     pub fn deploy_chain_config(&mut self, config: SovereignConfig<StaticApi>) -> &mut Self {
