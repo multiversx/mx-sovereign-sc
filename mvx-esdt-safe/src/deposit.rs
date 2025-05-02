@@ -9,6 +9,7 @@ use structs::{
 pub trait DepositModule:
     crate::bridging_mechanism::BridgingMechanism
     + utils::UtilsModule
+    + setup_phase::SetupPhaseModule
     + cross_chain::deposit_common::DepositCommonModule
     + cross_chain::execute_common::ExecuteCommonModule
     + cross_chain::storage::CrossChainStorage
@@ -24,6 +25,7 @@ pub trait DepositModule:
         opt_transfer_data: OptionalValueTransferDataTuple<Self::Api>,
     ) {
         require!(self.not_paused(), ESDT_SAFE_STILL_PAUSED);
+        self.require_setup_complete();
 
         let (fees_payment, payments) = self
             .check_and_extract_fee(opt_transfer_data.is_some())

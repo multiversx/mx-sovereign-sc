@@ -4,6 +4,7 @@ use common_test_setup::constants::{
     USER,
 };
 use common_test_setup::{AccountSetup, BaseSetup, RegisterTokenArgs};
+use multiversx_sc::types::MultiValueEncoded;
 use multiversx_sc::{
     codec::TopEncode,
     imports::OptionalValue,
@@ -18,6 +19,7 @@ use multiversx_sc_scenario::{
     ReturnsLogs, ScenarioTxRun, ScenarioTxWhitebox,
 };
 use mvx_esdt_safe::{bridging_mechanism::TRUSTED_TOKEN_IDS, MvxEsdtSafe};
+use proxies::header_verifier_proxy::HeaderverifierProxy;
 use proxies::mvx_esdt_safe_proxy::MvxEsdtSafeProxy;
 use structs::{
     aliases::OptionalValueTransferDataTuple, configs::EsdtSafeConfig, operation::Operation,
@@ -368,38 +370,62 @@ impl MvxEsdtSafeTestState {
         };
     }
 
-    // pub fn set_esdt_safe_address_in_header_verifier(&mut self, esdt_safe_address: TestSCAddress) {
-    //     self.common_setup
-    //         .world
-    //         .tx()
-    //         .from(OWNER_ADDRESS)
-    //         .to(HEADER_VERIFIER_ADDRESS)
-    //         .typed(HeaderverifierProxy)
-    //         .set_esdt_safe_address(esdt_safe_address)
-    //         .run();
-    // }
+    pub fn complete_setup_phase(
+        &mut self,
+        expected_error_message: Option<&str>,
+        expected_custom_log: Option<&str>,
+    ) {
+        let (logs, response) = self
+            .common_setup
+            .world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .to(ESDT_SAFE_ADDRESS)
+            .typed(MvxEsdtSafeProxy)
+            .complete_setup_phase()
+            .returns(ReturnsLogs)
+            .returns(ReturnsHandledOrError::new())
+            .run();
+        self.common_setup
+            .assert_expected_error_message(response, expected_error_message);
 
-    // pub fn register_operation(
-    //     &mut self,
-    //     signature: ManagedBuffer<StaticApi>,
-    //     hash_of_hashes: &ManagedBuffer<StaticApi>,
-    //     operations_hashes: MultiValueEncoded<StaticApi, ManagedBuffer<StaticApi>>,
-    // ) {
-    //     self.common_setup
-    //         .world
-    //         .tx()
-    //         .from(OWNER_ADDRESS)
-    //         .to(HEADER_VERIFIER_ADDRESS)
-    //         .typed(HeaderverifierProxy)
-    //         .register_bridge_operations(
-    //             signature,
-    //             hash_of_hashes,
-    //             ManagedBuffer::new(),
-    //             ManagedBuffer::new(),
-    //             operations_hashes,
-    //         )
-    //         .run();
-    // }
+        if let Some(custom_log) = expected_custom_log {
+            self.common_setup.assert_expected_log(logs, custom_log)
+        };
+    }
+
+    pub fn set_esdt_safe_address_in_header_verifier(&mut self, esdt_safe_address: TestSCAddress) {
+        self.common_setup
+            .world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .to(HEADER_VERIFIER_ADDRESS)
+            .typed(HeaderverifierProxy)
+            .set_esdt_safe_address(esdt_safe_address)
+            .run();
+    }
+
+    pub fn register_operation(
+        &mut self,
+        signature: ManagedBuffer<StaticApi>,
+        hash_of_hashes: &ManagedBuffer<StaticApi>,
+        operations_hashes: MultiValueEncoded<StaticApi, ManagedBuffer<StaticApi>>,
+    ) {
+        self.common_setup
+            .world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .to(HEADER_VERIFIER_ADDRESS)
+            .typed(HeaderverifierProxy)
+            .register_bridge_operations(
+                signature,
+                hash_of_hashes,
+                ManagedBuffer::new(),
+                ManagedBuffer::new(),
+                operations_hashes,
+            )
+            .run();
+    }
 
     pub fn get_operation_hash(
         &mut self,

@@ -16,7 +16,7 @@ use structs::operation::Operation;
 
 use crate::{config::Config, State};
 use common_test_setup::constants::{
-    CHAIN_CONFIG_ADDRESS, CHAIN_CONFIG_CODE_PATH, FEE_MARKET_CODE_PATH, HEADER_VERIFIER_CODE_PATH,
+    CHAIN_CONFIG_CODE_PATH, FEE_MARKET_CODE_PATH, HEADER_VERIFIER_CODE_PATH,
     MVX_ESDT_SAFE_CODE_PATH, TESTING_SC_CODE_PATH,
 };
 use common_test_setup::RegisterTokenArgs;
@@ -174,7 +174,7 @@ impl MvxEsdtSafeInteract {
             .from(&self.owner_address)
             .gas(120_000_000u64)
             .typed(HeaderverifierProxy)
-            .init(CHAIN_CONFIG_ADDRESS)
+            .init(self.state.current_chain_config_sc_address())
             .code(HEADER_VERIFIER_CODE_PATH)
             .code_metadata(CodeMetadata::all())
             .returns(ReturnsNewAddress)
@@ -285,12 +285,15 @@ impl MvxEsdtSafeInteract {
         esdt_safe_config: OptionalValue<EsdtSafeConfig<StaticApi>>,
         fee_struct: Option<FeeStruct<StaticApi>>,
     ) {
+        self.deploy_chain_config().await;
         self.deploy_header_verifier().await;
+        self.complete_header_verifier_setup_phase().await;
         self.deploy_mvx_esdt_safe(
             self.state.current_header_verifier_address().clone(),
             esdt_safe_config,
         )
         .await;
+        self.complete_setup_phase().await;
         self.deploy_fee_market(
             self.state.current_mvx_esdt_safe_contract_address().clone(),
             fee_struct,
@@ -320,6 +323,32 @@ impl MvxEsdtSafeInteract {
                 ManagedBuffer::new(),
                 operations_hashes,
             )
+            .returns(ReturnsResultUnmanaged)
+            .run()
+            .await;
+    }
+
+    pub async fn complete_setup_phase(&mut self) {
+        self.interactor
+            .tx()
+            .from(&self.owner_address)
+            .to(self.state.current_mvx_esdt_safe_contract_address())
+            .gas(90_000_000u64)
+            .typed(MvxEsdtSafeProxy)
+            .complete_setup_phase()
+            .returns(ReturnsResultUnmanaged)
+            .run()
+            .await;
+    }
+
+    pub async fn complete_header_verifier_setup_phase(&mut self) {
+        self.interactor
+            .tx()
+            .from(&self.owner_address)
+            .to(self.state.current_header_verifier_address())
+            .gas(90_000_000u64)
+            .typed(HeaderverifierProxy)
+            .complete_setup_phase()
             .returns(ReturnsResultUnmanaged)
             .run()
             .await;
@@ -570,6 +599,11 @@ impl MvxEsdtSafeInteract {
                     .current_header_verifier_address()
                     .to_bech32_string(),
             ),
+            SetStateAccount::from_address(
+                self.state
+                    .current_chain_config_sc_address()
+                    .to_bech32_string(),
+            ),
         ];
 
         if let Some(address_states) = address_states {
@@ -577,6 +611,31 @@ impl MvxEsdtSafeInteract {
                 state_vec.push(SetStateAccount::from_address(address.to_bech32_string()));
             }
         }
+        let response = self.interactor.set_state_overwrite(state_vec).await;
+        self.interactor.generate_blocks(2u64).await.unwrap();
+        assert!(response.is_ok());
+    }
+
+    pub async fn reset_state_chain_sim_register_tokens(&mut self) {
+        let state_vec = vec![
+            SetStateAccount::from_address(
+                Bech32Address::from(self.owner_address.clone()).to_bech32_string(),
+            ),
+            SetStateAccount::from_address(
+                Bech32Address::from(self.user_address.clone()).to_bech32_string(),
+            ),
+            SetStateAccount::from_address(
+                self.state
+                    .current_mvx_esdt_safe_contract_address()
+                    .to_bech32_string(),
+            ),
+            SetStateAccount::from_address(
+                self.state
+                    .current_header_verifier_address()
+                    .to_bech32_string(),
+            ),
+        ];
+
         let response = self.interactor.set_state_overwrite(state_vec).await;
         self.interactor.generate_blocks(2u64).await.unwrap();
         assert!(response.is_ok());

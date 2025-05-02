@@ -1,5 +1,7 @@
 #![no_std]
 
+use error_messages::SETUP_PHASE_ALREADY_COMPLETED;
+
 use multiversx_sc::imports::*;
 use structs::configs::EsdtSafeConfig;
 
@@ -21,6 +23,7 @@ pub trait MvxEsdtSafe:
     + cross_chain::execute_common::ExecuteCommonModule
     + multiversx_sc_modules::pause::PauseModule
     + utils::UtilsModule
+    + setup_phase::SetupPhaseModule
     + multiversx_sc_modules::only_admin::OnlyAdminModule
 {
     #[init]
@@ -43,6 +46,9 @@ pub trait MvxEsdtSafe:
         self.set_paused(true);
     }
 
+    #[upgrade]
+    fn upgrade(&self) {}
+
     #[only_admin]
     #[endpoint(updateConfiguration)]
     fn update_configuration(&self, new_config: EsdtSafeConfig<Self::Api>) {
@@ -63,6 +69,19 @@ pub trait MvxEsdtSafe:
         self.max_bridged_amount(&token_id).set(&max_amount);
     }
 
-    #[upgrade]
-    fn upgrade(&self) {}
+    #[only_admin]
+    #[endpoint(completSetupPhase)]
+    fn complete_setup_phase(&self) {
+        require!(
+            !self.is_setup_phase_complete(),
+            SETUP_PHASE_ALREADY_COMPLETED
+        );
+
+        // TODO:
+        // require!(!self.native_token().is_empty(), NATIVE_TOKEN_NOT_REGISTERED);
+
+        self.unpause_endpoint();
+
+        self.setup_phase_complete().set(true);
+    }
 }

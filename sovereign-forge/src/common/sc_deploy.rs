@@ -25,7 +25,6 @@ pub trait ScDeployModule: super::utils::UtilsModule + super::storage::StorageMod
             .sync_call()
     }
 
-    // TODO: MVX & Sov
     #[inline]
     fn deploy_mvx_esdt_safe(
         &self,

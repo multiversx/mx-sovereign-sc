@@ -16,7 +16,7 @@ use multiversx_sc_scenario::{
     },
     multiversx_chain_vm::crypto_functions::sha256,
     scenario_model::{Log, TxResponseStatus},
-    DebugApi, ScenarioTxRun, ScenarioTxWhitebox, ScenarioWorld,
+    DebugApi, ReturnsHandledOrError, ScenarioTxRun, ScenarioTxWhitebox, ScenarioWorld,
 };
 use mvx_esdt_safe::bridging_mechanism::BridgingMechanism;
 use proxies::{
@@ -115,6 +115,20 @@ impl BaseSetup {
             .run();
 
         self
+    }
+
+    pub fn complete_header_verifier_setup_phase(&mut self, expected_error_message: Option<&str>) {
+        let response = self
+            .world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .to(HEADER_VERIFIER_ADDRESS)
+            .typed(HeaderverifierProxy)
+            .complete_setup_phase()
+            .returns(ReturnsHandledOrError::new())
+            .run();
+
+        self.assert_expected_error_message(response, expected_error_message);
     }
 
     pub fn deploy_chain_config(&mut self, config: SovereignConfig<StaticApi>) -> &mut Self {

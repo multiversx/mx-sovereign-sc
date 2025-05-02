@@ -50,3 +50,7 @@ pub const DEPOSIT_AMOUNT_SMALLER_THAN_PAYMENT_AMOUNT: &str =
     "The deposit amount should not be less than the payment amount";
 pub const NATIVE_TOKEN_ALREADY_REGISTERED: &str = "Native token was already registered";
 pub const ERR_EMPTY_PAYMENTS: &str = "No payments";
+pub const ESDT_SAFE_CONFIG_NOT_SET: &str = "There is no config set for this contract";
+pub const HEADER_VERIFIER_ADDRESS_NOT_SET: &str = "The Header-Verifier address was not set";
+pub const SETUP_PHASE_ALREADY_COMPLETED: &str = "The setup is completed";
+pub const NATIVE_TOKEN_NOT_REGISTERED: &str = "There is no native token registered";

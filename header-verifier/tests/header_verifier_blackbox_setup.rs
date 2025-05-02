@@ -69,22 +69,6 @@ impl HeaderVerifierTestState {
             .assert_expected_error_message(response, expected_error_message);
     }
 
-    pub fn complete_setup_phase(&mut self, expected_error_message: Option<&str>) {
-        let response = self
-            .common_setup
-            .world
-            .tx()
-            .from(OWNER_ADDRESS)
-            .to(HEADER_VERIFIER_ADDRESS)
-            .typed(HeaderverifierProxy)
-            .complete_setup_phase()
-            .returns(ReturnsHandledOrError::new())
-            .run();
-
-        self.common_setup
-            .assert_expected_error_message(response, expected_error_message);
-    }
-
     pub fn register_esdt_address(&mut self, esdt_address: TestAddress) {
         self.common_setup
             .world
