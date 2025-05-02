@@ -599,6 +599,11 @@ impl MvxEsdtSafeInteract {
                     .current_header_verifier_address()
                     .to_bech32_string(),
             ),
+            SetStateAccount::from_address(
+                self.state
+                    .current_chain_config_sc_address()
+                    .to_bech32_string(),
+            ),
         ];
 
         if let Some(address_states) = address_states {
