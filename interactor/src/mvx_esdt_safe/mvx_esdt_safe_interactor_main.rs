@@ -615,4 +615,29 @@ impl MvxEsdtSafeInteract {
         self.interactor.generate_blocks(2u64).await.unwrap();
         assert!(response.is_ok());
     }
+
+    pub async fn reset_state_chain_sim_register_tokens(&mut self) {
+        let state_vec = vec![
+            SetStateAccount::from_address(
+                Bech32Address::from(self.owner_address.clone()).to_bech32_string(),
+            ),
+            SetStateAccount::from_address(
+                Bech32Address::from(self.user_address.clone()).to_bech32_string(),
+            ),
+            SetStateAccount::from_address(
+                self.state
+                    .current_mvx_esdt_safe_contract_address()
+                    .to_bech32_string(),
+            ),
+            SetStateAccount::from_address(
+                self.state
+                    .current_header_verifier_address()
+                    .to_bech32_string(),
+            ),
+        ];
+
+        let response = self.interactor.set_state_overwrite(state_vec).await;
+        self.interactor.generate_blocks(2u64).await.unwrap();
+        assert!(response.is_ok());
+    }
 }

@@ -576,7 +576,9 @@ async fn register_token_invalid_type_token() {
         )
         .await;
 
-    chain_interactor.reset_state_chain_sim(None).await;
+    chain_interactor
+        .reset_state_chain_sim_register_tokens()
+        .await;
 }
 
 // Test that register token works when the token type is fungible
@@ -640,7 +642,9 @@ async fn register_token_fungible_token() {
         )
         .await;
 
-    chain_interactor.reset_state_chain_sim(None).await;
+    chain_interactor
+        .reset_state_chain_sim_register_tokens()
+        .await;
 }
 
 // Test that register token works when the token type is non-fungible
@@ -704,7 +708,9 @@ async fn register_token_non_fungible_token() {
         )
         .await;
 
-    chain_interactor.reset_state_chain_sim(None).await;
+    chain_interactor
+        .reset_state_chain_sim_register_tokens()
+        .await;
 }
 
 // Test that register token works when the token type is dynamic non-fungible
@@ -768,7 +774,9 @@ async fn register_token_dynamic_non_fungible_token() {
         )
         .await;
 
-    chain_interactor.reset_state_chain_sim(None).await;
+    chain_interactor
+        .reset_state_chain_sim_register_tokens()
+        .await;
 }
 
 // Test that execute operation fails when the esdt safe address is not registered
@@ -939,8 +947,6 @@ async fn execute_operation_success_no_fee() {
 
     let operations_hashes = MultiValueEncoded::from(ManagedVec::from(vec![operation_hash.clone()]));
 
-    chain_interactor.deploy_chain_config().await;
-
     chain_interactor
         .register_operation(ManagedBuffer::new(), &hash_of_hashes, operations_hashes)
         .await;
@@ -983,10 +989,6 @@ async fn execute_operation_success_no_fee() {
     let address_states = vec![
         chain_interactor.state.current_fee_market_address().clone(),
         chain_interactor.state.current_testing_sc_address().clone(),
-        chain_interactor
-            .state
-            .current_chain_config_sc_address()
-            .clone(),
     ];
 
     chain_interactor
@@ -1055,8 +1057,6 @@ async fn execute_operation_only_transfer_data_no_fee() {
         .await;
 
     let operations_hashes = MultiValueEncoded::from(ManagedVec::from(vec![operation_hash.clone()]));
-
-    chain_interactor.deploy_chain_config().await;
 
     chain_interactor
         .register_operation(ManagedBuffer::new(), &hash_of_hashes, operations_hashes)
