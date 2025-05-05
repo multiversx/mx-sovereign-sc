@@ -219,6 +219,26 @@ impl SovereignForgeTestState {
         }
     }
 
+    fn update_sovereign_config(
+        &mut self,
+        new_sovereign_config: SovereignConfig<StaticApi>,
+        expected_error_message: Option<&str>,
+    ) {
+        let response = self
+            .world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .to(FORGE_ADDRESS)
+            .typed(SovereignForgeProxy)
+            .update_sovereign_config(new_sovereign_config)
+            .returns(ReturnsHandledOrError::new())
+            .run();
+
+        if let Err(error) = response {
+            assert_eq!(expected_error_message, Some(error.message.as_str()))
+        }
+    }
+
     fn complete_setup_phase(&mut self, error_message: Option<&str>) {
         let response = self
             .world
@@ -352,6 +372,77 @@ fn register_chain_factory() {
         .whitebox(sovereign_forge::contract_obj, |sc| {
             assert!(!sc.chain_factories(2).is_empty());
         });
+}
+
+#[test]
+fn update_sovereign_config_no_chain_config_deployed() {
+    let mut state = SovereignForgeTestState::new();
+    state.deploy_sovereign_forge();
+
+    state.register_chain_factory(2, TOKEN_HANDLER_ADDRESS, None);
+
+    state
+        .world
+        .query()
+        .to(FORGE_ADDRESS)
+        .whitebox(sovereign_forge::contract_obj, |sc| {
+            assert!(!sc.chain_factories(2).is_empty());
+        });
+
+    state.update_sovereign_config(
+        SovereignConfig::default_config(),
+        Some("The current caller has not deployed any Sovereign Chain"),
+    );
+}
+
+#[test]
+fn update_sovereign() {
+    let mut state = SovereignForgeTestState::new();
+    state.deploy_sovereign_forge();
+    state.deploy_chain_factory();
+    state.deploy_chain_config_template();
+    state.deploy_fee_market_template();
+    state.finish_setup();
+
+    state
+        .world
+        .query()
+        .to(FORGE_ADDRESS)
+        .whitebox(sovereign_forge::contract_obj, |sc| {
+            assert!(!sc.chain_factories(2).is_empty());
+        });
+
+    let deploy_cost = BigUint::from(100_000u32);
+
+    state.complete_setup_phase(None);
+
+    state.deploy_phase_one(
+        &deploy_cost,
+        Some(ManagedBuffer::from("SVCH")),
+        &SovereignConfig::default_config(),
+        None,
+    );
+
+    state
+        .world
+        .query()
+        .to(FORGE_ADDRESS)
+        .whitebox(sovereign_forge::contract_obj, |sc| {
+            assert!(!sc
+                .sovereigns_mapper(&OWNER_ADDRESS.to_managed_address())
+                .is_empty());
+
+            assert!(sc.chain_ids().contains(&ManagedBuffer::from("SVCH")));
+
+            let is_chain_config_deployed =
+                sc.is_contract_deployed(&OWNER_ADDRESS.to_managed_address(), ScArray::ChainConfig);
+            assert!(is_chain_config_deployed);
+        });
+
+    state.update_sovereign_config(
+        SovereignConfig::default_config(),
+        Some("The current caller has not deployed any Sovereign Chain"),
+    );
 }
 
 #[test]
