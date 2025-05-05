@@ -10,7 +10,10 @@ pub mod update_configs;
 
 #[multiversx_sc::contract]
 pub trait ChainFactoryContract:
-    factory::FactoryModule + utils::UtilsModule + only_admin::OnlyAdminModule
+    factory::FactoryModule
+    + utils::UtilsModule
+    + only_admin::OnlyAdminModule
+    + update_configs::UpdateConfigsModule
 {
     #[init]
     fn init(

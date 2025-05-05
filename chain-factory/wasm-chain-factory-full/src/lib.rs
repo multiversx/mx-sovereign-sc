@@ -6,9 +6,9 @@
 
 // Init:                                 1
 // Upgrade:                              1
-// Endpoints:                           11
+// Endpoints:                           13
 // Async Callback (empty):               1
-// Total number of exported functions:  14
+// Total number of exported functions:  16
 
 #![no_std]
 
@@ -31,6 +31,8 @@ multiversx_sc_wasm_adapter::endpoints! {
         addAdmin => add_admin
         removeAdmin => remove_admin
         getAdmins => admins
+        updateEsdtSafeConfig => update_esdt_safe_config
+        updateSovereignConfig => update_sovereign_config
     )
 }
 
