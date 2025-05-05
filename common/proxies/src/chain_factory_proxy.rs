@@ -252,4 +252,36 @@ where
             .raw_call("getAdmins")
             .original_result()
     }
+
+    pub fn update_esdt_safe_config<
+        Arg0: ProxyArg<ManagedAddress<Env::Api>>,
+        Arg1: ProxyArg<structs::configs::EsdtSafeConfig<Env::Api>>,
+    >(
+        self,
+        esdt_safe_address: Arg0,
+        new_config: Arg1,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("updateEsdtSafeConfig")
+            .argument(&esdt_safe_address)
+            .argument(&new_config)
+            .original_result()
+    }
+
+    pub fn update_sovereign_config<
+        Arg0: ProxyArg<ManagedAddress<Env::Api>>,
+        Arg1: ProxyArg<structs::configs::SovereignConfig<Env::Api>>,
+    >(
+        self,
+        chain_config_address: Arg0,
+        new_config: Arg1,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("updateSovereignConfig")
+            .argument(&chain_config_address)
+            .argument(&new_config)
+            .original_result()
+    }
 }
