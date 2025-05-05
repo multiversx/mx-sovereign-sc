@@ -534,41 +534,6 @@ impl MvxEsdtSafeInteract {
         println!("Result: {result_value:?}");
     }
 
-    pub async fn set_max_bridged_amount(&mut self) {
-        let token_id = TokenIdentifier::from_esdt_bytes(&b""[..]);
-        let max_amount = BigUint::<StaticApi>::from(0u128);
-
-        let response = self
-            .interactor
-            .tx()
-            .from(&self.owner_address)
-            .to(self.state.current_mvx_esdt_safe_contract_address())
-            .gas(90_000_000u64)
-            .typed(MvxEsdtSafeProxy)
-            .set_max_bridged_amount(token_id, max_amount)
-            .returns(ReturnsResultUnmanaged)
-            .run()
-            .await;
-
-        println!("Result: {response:?}");
-    }
-
-    pub async fn max_bridged_amount(&mut self) {
-        let token_id = TokenIdentifier::from_esdt_bytes(&b""[..]);
-
-        let result_value = self
-            .interactor
-            .query()
-            .to(self.state.current_mvx_esdt_safe_contract_address())
-            .typed(MvxEsdtSafeProxy)
-            .max_bridged_amount(token_id)
-            .returns(ReturnsResultUnmanaged)
-            .run()
-            .await;
-
-        println!("Result: {result_value:?}");
-    }
-
     //TODO: Make this a common function in common-blackbox-setup
     pub fn get_operation_hash(
         &mut self,
