@@ -7,8 +7,8 @@ use common_test_setup::RegisterTokenArgs;
 use cross_chain::storage::CrossChainStorage;
 use cross_chain::{DEFAULT_ISSUE_COST, MAX_GAS_PER_TRANSACTION};
 use error_messages::{
-    BANNED_ENDPOINT_NAME, CANNOT_REGISTER_TOKEN, ERR_EMPTY_PAYMENTS, GAS_LIMIT_TOO_HIGH,
-    INVALID_TYPE, MAX_GAS_LIMIT_PER_TX_EXCEEDED, MINT_AND_BURN_ROLES_NOT_FOUND,
+    BANNED_ENDPOINT_NAME, CANNOT_REGISTER_TOKEN, DEPOSIT_OVER_MAX_AMOUNT, ERR_EMPTY_PAYMENTS,
+    GAS_LIMIT_TOO_HIGH, INVALID_TYPE, MAX_GAS_LIMIT_PER_TX_EXCEEDED, MINT_AND_BURN_ROLES_NOT_FOUND,
     NOTHING_TO_TRANSFER, NO_ESDT_SAFE_ADDRESS, PAYMENT_DOES_NOT_COVER_FEE,
     SETUP_PHASE_ALREADY_COMPLETED, TOKEN_ID_IS_NOT_TRUSTED, TOKEN_IS_FROM_SOVEREIGN,
     TOO_MANY_TOKENS,
@@ -28,7 +28,7 @@ use mvx_esdt_safe::bridging_mechanism::{BridgingMechanism, TRUSTED_TOKEN_IDS};
 use mvx_esdt_safe_blackbox_setup::MvxEsdtSafeTestState;
 use proxies::fee_market_proxy::{FeeStruct, FeeType};
 use setup_phase::SetupPhaseModule;
-use structs::configs::SovereignConfig;
+use structs::configs::{MaxBridgedAmount, SovereignConfig};
 use structs::operation::TransferData;
 use structs::{
     aliases::PaymentsVec,
@@ -407,6 +407,54 @@ fn deposit_gas_limit_too_high() {
         OptionalValue::Some(transfer_data),
         payments_vec,
         Some(GAS_LIMIT_TOO_HIGH),
+        None,
+    );
+
+    state
+        .common_setup
+        .check_multiversx_to_sovereign_token_id_mapper_is_empty(FIRST_TEST_TOKEN);
+}
+
+#[test]
+fn deposit_max_bridged_amount_exceeded() {
+    let mut state = MvxEsdtSafeTestState::new();
+
+    let config = EsdtSafeConfig::new(
+        ManagedVec::new(),
+        ManagedVec::new(),
+        50_000_000,
+        ManagedVec::from(vec![ManagedBuffer::from("hello")]),
+        ManagedVec::from(vec![MaxBridgedAmount {
+            token_id: TokenIdentifier::from(FIRST_TEST_TOKEN),
+            amount: BigUint::default(),
+        }]),
+    );
+
+    state.deploy_contract(HEADER_VERIFIER_ADDRESS, OptionalValue::Some(config));
+    state.complete_setup_phase(None, None);
+    state.common_setup.deploy_fee_market(None);
+    state.common_setup.deploy_testing_sc();
+    state.set_fee_market_address(FEE_MARKET_ADDRESS);
+
+    let esdt_token_payment_one = EsdtTokenPayment::<StaticApi>::new(
+        TokenIdentifier::from(FIRST_TEST_TOKEN),
+        0,
+        BigUint::from(100u64),
+    );
+
+    let esdt_token_payment_two = EsdtTokenPayment::<StaticApi>::new(
+        TokenIdentifier::from(SECOND_TEST_TOKEN),
+        0,
+        BigUint::from(100u64),
+    );
+
+    let payments_vec = PaymentsVec::from(vec![esdt_token_payment_one, esdt_token_payment_two]);
+
+    state.deposit(
+        USER.to_managed_address(),
+        OptionalValue::None,
+        payments_vec,
+        Some(DEPOSIT_OVER_MAX_AMOUNT),
         None,
     );
 
