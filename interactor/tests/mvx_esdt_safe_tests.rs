@@ -169,7 +169,13 @@ async fn deposit_no_transfer_data_no_fee() {
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn deposit_gas_limit_too_high_no_fee() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
-    let config = EsdtSafeConfig::new(ManagedVec::new(), ManagedVec::new(), 1, ManagedVec::new());
+    let config = EsdtSafeConfig::new(
+        ManagedVec::new(),
+        ManagedVec::new(),
+        1,
+        ManagedVec::new(),
+        ManagedVec::new(),
+    );
 
     chain_interactor
         .deploy_contracts(OptionalValue::Some(config), None)
@@ -241,6 +247,7 @@ async fn deposit_endpoint_banned_no_fee() {
         ManagedVec::new(),
         50_000_000,
         ManagedVec::from(vec![ManagedBuffer::from("hello")]),
+        ManagedVec::new(),
     );
 
     chain_interactor
@@ -314,6 +321,7 @@ async fn deposit_fee_enabled() {
         ManagedVec::new(),
         ManagedVec::new(),
         50_000_000,
+        ManagedVec::new(),
         ManagedVec::new(),
     );
 
@@ -406,6 +414,7 @@ async fn deposit_only_transfer_data_no_fee() {
         ManagedVec::new(),
         50_000_000,
         ManagedVec::new(),
+        ManagedVec::new(),
     );
 
     chain_interactor
@@ -463,6 +472,7 @@ async fn deposit_payment_does_not_cover_fee() {
         ManagedVec::new(),
         ManagedVec::new(),
         50_000_000,
+        ManagedVec::new(),
         ManagedVec::new(),
     );
 

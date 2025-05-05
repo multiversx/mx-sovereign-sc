@@ -62,6 +62,7 @@ fn deploy_invalid_config() {
         ManagedVec::new(),
         MAX_GAS_PER_TRANSACTION + 1,
         ManagedVec::new(),
+        ManagedVec::new(),
     );
 
     state.update_configuration(config, Some(MAX_GAS_LIMIT_PER_TX_EXCEEDED));
@@ -365,7 +366,13 @@ fn deposit_no_transfer_data() {
 fn deposit_gas_limit_too_high() {
     let mut state = MvxEsdtSafeTestState::new();
 
-    let config = EsdtSafeConfig::new(ManagedVec::new(), ManagedVec::new(), 1, ManagedVec::new());
+    let config = EsdtSafeConfig::new(
+        ManagedVec::new(),
+        ManagedVec::new(),
+        1,
+        ManagedVec::new(),
+        ManagedVec::new(),
+    );
     state.deploy_contract(HEADER_VERIFIER_ADDRESS, OptionalValue::Some(config));
     state.complete_setup_phase(None, None);
     state.common_setup.deploy_fee_market(None);
@@ -418,6 +425,7 @@ fn deposit_endpoint_banned() {
         ManagedVec::new(),
         50_000_000,
         ManagedVec::from(vec![ManagedBuffer::from("hello")]),
+        ManagedVec::new(),
     );
 
     state.deploy_contract(HEADER_VERIFIER_ADDRESS, OptionalValue::Some(config));
@@ -657,6 +665,7 @@ fn deposit_fee_enabled() {
         ManagedVec::new(),
         50_000_000,
         ManagedVec::new(),
+        ManagedVec::new(),
     );
 
     state.deploy_contract(HEADER_VERIFIER_ADDRESS, OptionalValue::Some(config));
@@ -774,6 +783,7 @@ fn deposit_payment_doesnt_cover_fee() {
         ManagedVec::new(),
         50_000_000,
         ManagedVec::new(),
+        ManagedVec::new(),
     );
 
     state.deploy_contract(HEADER_VERIFIER_ADDRESS, OptionalValue::Some(config));
@@ -852,6 +862,7 @@ fn deposit_refund() {
         ManagedVec::new(),
         ManagedVec::new(),
         50_000_000,
+        ManagedVec::new(),
         ManagedVec::new(),
     );
 

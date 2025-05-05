@@ -759,6 +759,7 @@ fn test_deposit_with_transfer_data_banned_endpoint() {
             ManagedVec::new(),
             300_000_000_000,
             ManagedVec::from(vec![banned_endpoint]),
+            ManagedVec::new(),
         )),
     );
 
