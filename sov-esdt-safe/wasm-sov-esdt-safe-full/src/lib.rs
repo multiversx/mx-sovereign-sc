@@ -6,9 +6,9 @@
 
 // Init:                                 1
 // Upgrade:                              1
-// Endpoints:                            9
+// Endpoints:                            7
 // Async Callback (empty):               1
-// Total number of exported functions:  12
+// Total number of exported functions:  10
 
 #![no_std]
 
@@ -22,10 +22,8 @@ multiversx_sc_wasm_adapter::endpoints! {
         upgrade => upgrade
         updateConfiguration => update_configuration
         setFeeMarketAddress => set_fee_market_address
-        setMaxBridgedAmount => set_max_bridged_amount
         deposit => deposit
         getNativeToken => native_token
-        getMaxBridgedAmount => max_bridged_amount
         pause => pause_endpoint
         unpause => unpause_endpoint
         isPaused => paused_status
