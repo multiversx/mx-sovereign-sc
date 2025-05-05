@@ -6,6 +6,7 @@ multiversx_sc::imports!();
 
 pub mod complete_phases;
 pub mod factory;
+pub mod update_configs;
 
 #[multiversx_sc::contract]
 pub trait ChainFactoryContract:
