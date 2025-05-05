@@ -286,17 +286,4 @@ where
             .raw_call("getNativeToken")
             .original_result()
     }
-
-    pub fn max_bridged_amount<
-        Arg0: ProxyArg<TokenIdentifier<Env::Api>>,
-    >(
-        self,
-        token_id: Arg0,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, BigUint<Env::Api>> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("getMaxBridgedAmount")
-            .argument(&token_id)
-            .original_result()
-    }
 }
