@@ -99,7 +99,7 @@ pub trait DepositCommonModule:
             .get()
             .max_bridged_token_amounts
             .iter()
-            .any(|m| m.token_id == *token_id && amount <= &m.amount)
+            .any(|m| m.token_id == *token_id && amount >= &m.amount)
     }
 
     fn require_below_max_amount(&self, token_id: &TokenIdentifier, amount: &BigUint) {
