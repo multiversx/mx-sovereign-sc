@@ -5,6 +5,7 @@ use multiversx_sc::imports::*;
 
 pub mod common;
 pub mod phases;
+pub mod update_configs;
 
 #[multiversx_sc::contract]
 pub trait SovereignForge:
