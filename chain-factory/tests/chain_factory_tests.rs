@@ -69,7 +69,7 @@ impl ChainFactoryTestState {
         let response = self
             .world
             .tx()
-            .from(OWNER)
+            .from(CONFIG_ADDRESS)
             .to(FACTORY_ADDRESS)
             .typed(ChainFactoryContractProxy)
             .deploy_sovereign_chain_config_contract(config)
