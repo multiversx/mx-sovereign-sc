@@ -1,4 +1,5 @@
 use multiversx_sc::imports::*;
+use multiversx_sc_modules::only_admin;
 use proxies::{
     chain_config_proxy::ChainConfigContractProxy,
     enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy,
@@ -10,20 +11,19 @@ use structs::configs::{EsdtSafeConfig, SovereignConfig};
 multiversx_sc::derive_imports!();
 
 #[multiversx_sc::module]
-pub trait FactoryModule {
-    #[only_owner]
+pub trait FactoryModule: only_admin::OnlyAdminModule {
+    #[only_admin]
     #[endpoint(deploySovereignChainConfigContract)]
     fn deploy_sovereign_chain_config_contract(
         &self,
         config: SovereignConfig<Self::Api>,
     ) -> ManagedAddress {
-        let caller = self.blockchain().get_caller();
         let source_address = self.chain_config_template().get();
         let metadata = self.blockchain().get_code_metadata(&source_address);
 
         self.tx()
             .typed(ChainConfigContractProxy)
-            .init(config, &caller)
+            .init(config)
             .gas(60_000_000)
             .from_source(source_address)
             .code_metadata(metadata)
@@ -32,7 +32,7 @@ pub trait FactoryModule {
     }
 
     // TODO: fix
-    #[only_owner]
+    #[only_admin]
     #[endpoint(deployHeaderVerifier)]
     fn deploy_header_verifier(&self, chain_config_address: ManagedAddress) -> ManagedAddress {
         let source_address = self.header_verifier_template().get();
@@ -48,7 +48,7 @@ pub trait FactoryModule {
             .sync_call()
     }
 
-    #[only_owner]
+    #[only_admin]
     #[endpoint(setEsdtSafeAddressInHeaderVerifier)]
     fn set_esdt_safe_address_in_header_verifier(
         &self,
@@ -62,7 +62,7 @@ pub trait FactoryModule {
             .sync_call();
     }
 
-    #[only_owner]
+    #[only_admin]
     #[endpoint(deployEnshrineEsdtSafe)]
     fn deploy_enshrine_esdt_safe(
         &self,
@@ -91,7 +91,7 @@ pub trait FactoryModule {
             .sync_call()
     }
 
-    #[only_owner]
+    #[only_admin]
     #[endpoint(deployEsdtSafe)]
     fn deploy_mvx_esdt_safe(
         &self,
@@ -121,7 +121,7 @@ pub trait FactoryModule {
         esdt_safe_address
     }
 
-    #[only_owner]
+    #[only_admin]
     #[endpoint(deployFeeMarket)]
     fn deploy_fee_market(
         &self,
@@ -151,7 +151,7 @@ pub trait FactoryModule {
     }
 
     // TODO:
-    #[only_owner]
+    #[only_admin]
     #[endpoint(completeSetupPhase)]
     fn complete_setup_phase(&self) {
         // TODO: will have to call each contract's endpoint to finish setup phase
