@@ -69,7 +69,7 @@ impl ChainFactoryTestState {
         let response = self
             .world
             .tx()
-            .from(CONFIG_ADDRESS)
+            .from(OWNER)
             .to(FACTORY_ADDRESS)
             .typed(ChainFactoryContractProxy)
             .deploy_sovereign_chain_config_contract(config)
@@ -88,7 +88,7 @@ impl ChainFactoryTestState {
             .tx()
             .from(OWNER.to_managed_address())
             .typed(ChainConfigContractProxy)
-            .init(config, OWNER.to_managed_address())
+            .init(config)
             .code(CONFIG_CODE_PATH)
             .new_address(CONFIG_ADDRESS)
             .code_metadata(CodeMetadata::UPGRADEABLE)
