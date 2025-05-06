@@ -198,10 +198,7 @@ impl EnshrineTestState {
             .tx()
             .from(ENSHRINE_ESDT_OWNER_ADDRESS)
             .typed(ChainConfigContractProxy)
-            .init(
-                SovereignConfig::new(0, 2, BigUint::default(), None),
-                HEADER_VERIFIER_ADDRESS,
-            )
+            .init(SovereignConfig::new(0, 2, BigUint::default(), None))
             .code(CHAIN_CONFIG_CODE_PATH)
             .new_address(CHAIN_CONFIG_ADDRESS)
             .run();

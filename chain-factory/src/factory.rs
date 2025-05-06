@@ -18,13 +18,12 @@ pub trait FactoryModule: only_admin::OnlyAdminModule {
         &self,
         config: SovereignConfig<Self::Api>,
     ) -> ManagedAddress {
-        let caller = self.blockchain().get_caller();
         let source_address = self.chain_config_template().get();
         let metadata = self.blockchain().get_code_metadata(&source_address);
 
         self.tx()
             .typed(ChainConfigContractProxy)
-            .init(config, &caller)
+            .init(config)
             .gas(60_000_000)
             .from_source(source_address)
             .code_metadata(metadata)
