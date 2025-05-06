@@ -95,12 +95,11 @@ pub trait DepositCommonModule:
     }
 
     fn is_above_max_amount(&self, token_id: &TokenIdentifier, amount: &BigUint) -> bool {
-        let max_amount = self.max_bridged_amount(token_id).get();
-        if max_amount > 0 {
-            amount > &max_amount
-        } else {
-            false
-        }
+        self.esdt_safe_config()
+            .get()
+            .max_bridged_token_amounts
+            .iter()
+            .any(|m| m.token_id == *token_id && amount > &m.amount)
     }
 
     fn require_below_max_amount(&self, token_id: &TokenIdentifier, amount: &BigUint) {

@@ -135,6 +135,7 @@ impl SovEsdtSafeTestState {
                     ManagedVec::new(),
                     50_000_000,
                     ManagedVec::new(),
+                    ManagedVec::new(),
                 );
 
                 sc.init(

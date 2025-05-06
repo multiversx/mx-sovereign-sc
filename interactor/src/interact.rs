@@ -27,8 +27,6 @@ pub async fn mvx_esdt_safe_cli() {
         "pause" => interact.pause_endpoint().await,
         "unpause" => interact.unpause_endpoint().await,
         "isPaused" => interact.paused_status().await,
-        "setMaxBridgedAmount" => interact.set_max_bridged_amount().await,
-        "getMaxBridgedAmount" => interact.max_bridged_amount().await,
         _ => panic!("unknown command: {}", &cmd),
     }
 }

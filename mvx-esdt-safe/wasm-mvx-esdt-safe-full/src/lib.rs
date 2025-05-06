@@ -6,10 +6,10 @@
 
 // Init:                                 1
 // Upgrade:                              1
-// Endpoints:                           19
+// Endpoints:                           17
 // Async Callback (empty):               1
 // Promise callbacks:                    3
-// Total number of exported functions:  25
+// Total number of exported functions:  23
 
 #![no_std]
 
@@ -23,7 +23,6 @@ multiversx_sc_wasm_adapter::endpoints! {
         upgrade => upgrade
         updateConfiguration => update_configuration
         setFeeMarketAddress => set_fee_market_address
-        setMaxBridgedAmount => set_max_bridged_amount
         completSetupPhase => complete_setup_phase
         deposit => deposit
         executeBridgeOps => execute_operations
@@ -32,7 +31,6 @@ multiversx_sc_wasm_adapter::endpoints! {
         setTokenBurnMechanism => set_token_burn_mechanism
         setTokenLockMechanism => set_token_lock_mechanism
         getNativeToken => native_token
-        getMaxBridgedAmount => max_bridged_amount
         pause => pause_endpoint
         unpause => unpause_endpoint
         isPaused => paused_status

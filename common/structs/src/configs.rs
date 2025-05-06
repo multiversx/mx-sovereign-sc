@@ -50,12 +50,22 @@ impl<M: ManagedTypeApi> StakeArgs<M> {
 }
 
 #[type_abi]
+#[derive(
+    TopEncode, TopDecode, NestedEncode, NestedDecode, ManagedVecItem, Clone, Debug, PartialEq,
+)]
+pub struct MaxBridgedAmount<M: ManagedTypeApi> {
+    pub token_id: TokenIdentifier<M>,
+    pub amount: BigUint<M>,
+}
+
+#[type_abi]
 #[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, ManagedVecItem, Clone)]
 pub struct EsdtSafeConfig<M: ManagedTypeApi> {
     pub token_whitelist: ManagedVec<M, TokenIdentifier<M>>,
     pub token_blacklist: ManagedVec<M, TokenIdentifier<M>>,
     pub max_tx_gas_limit: GasLimit,
     pub banned_endpoints: ManagedVec<M, ManagedBuffer<M>>,
+    pub max_bridged_token_amounts: ManagedVec<M, MaxBridgedAmount<M>>,
 }
 
 impl<M: ManagedTypeApi> EsdtSafeConfig<M> {
@@ -66,6 +76,7 @@ impl<M: ManagedTypeApi> EsdtSafeConfig<M> {
             token_blacklist: ManagedVec::new(),
             max_tx_gas_limit: DEFAULT_MAX_TX_GAS_LIMIT,
             banned_endpoints: ManagedVec::new(),
+            max_bridged_token_amounts: ManagedVec::new(),
         }
     }
 
@@ -74,12 +85,14 @@ impl<M: ManagedTypeApi> EsdtSafeConfig<M> {
         token_blacklist: ManagedVec<M, TokenIdentifier<M>>,
         max_tx_gas_limit: GasLimit,
         banned_endpoints: ManagedVec<M, ManagedBuffer<M>>,
+        max_bridged_token_amounts: ManagedVec<M, MaxBridgedAmount<M>>,
     ) -> Self {
         EsdtSafeConfig {
             token_whitelist,
             token_blacklist,
             max_tx_gas_limit,
             banned_endpoints,
+            max_bridged_token_amounts,
         }
     }
 }

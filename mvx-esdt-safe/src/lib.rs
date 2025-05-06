@@ -64,12 +64,6 @@ pub trait MvxEsdtSafe:
     }
 
     #[only_admin]
-    #[endpoint(setMaxBridgedAmount)]
-    fn set_max_bridged_amount(&self, token_id: TokenIdentifier, max_amount: BigUint) {
-        self.max_bridged_amount(&token_id).set(&max_amount);
-    }
-
-    #[only_admin]
     #[endpoint(completSetupPhase)]
     fn complete_setup_phase(&self) {
         require!(
