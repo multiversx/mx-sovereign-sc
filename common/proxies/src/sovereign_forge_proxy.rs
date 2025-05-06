@@ -176,6 +176,19 @@ where
             .original_result()
     }
 
+    pub fn sovereign_deployed_contracts<
+        Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
+    >(
+        self,
+        chain_id: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, MultiValueEncoded<Env::Api, ContractInfo<Env::Api>>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getDeployedSovereignContracts")
+            .argument(&chain_id)
+            .original_result()
+    }
+
     pub fn chain_factories<
         Arg0: ProxyArg<u32>,
     >(
@@ -245,4 +258,28 @@ where
             .argument(&new_config)
             .original_result()
     }
+}
+
+#[type_abi]
+#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, ManagedVecItem)]
+pub struct ContractInfo<Api>
+where
+    Api: ManagedTypeApi,
+{
+    pub id: ScArray,
+    pub address: ManagedAddress<Api>,
+}
+
+#[type_abi]
+#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, Clone, ManagedVecItem, PartialEq)]
+pub enum ScArray {
+    ChainFactory,
+    Controller,
+    HeaderVerifier,
+    ESDTSafe,
+    EnshrineESDTSafe,
+    FeeMarket,
+    TokenHandler,
+    ChainConfig,
+    Slashing,
 }
