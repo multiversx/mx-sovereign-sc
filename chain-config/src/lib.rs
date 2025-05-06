@@ -12,13 +12,12 @@ pub trait ChainConfigContract:
     validator_rules::ValidatorRulesModule + only_admin::OnlyAdminModule + setup_phase::SetupPhaseModule
 {
     #[init]
-    fn init(&self, config: SovereignConfig<Self::Api>, admin: ManagedAddress) {
+    fn init(&self, config: SovereignConfig<Self::Api>) {
         self.require_valid_config(&config);
         self.sovereign_config().set(config.clone());
-        self.add_admin(admin);
     }
 
-    #[only_admin]
+    #[only_owner]
     #[endpoint(updateConfig)]
     fn update_config(&self, new_config: SovereignConfig<Self::Api>) {
         self.require_valid_config(&new_config);

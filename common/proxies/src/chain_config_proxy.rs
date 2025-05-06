@@ -45,17 +45,14 @@ where
 {
     pub fn init<
         Arg0: ProxyArg<structs::configs::SovereignConfig<Env::Api>>,
-        Arg1: ProxyArg<ManagedAddress<Env::Api>>,
     >(
         self,
         config: Arg0,
-        admin: Arg1,
     ) -> TxTypedDeploy<Env, From, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_deploy()
             .argument(&config)
-            .argument(&admin)
             .original_result()
     }
 }
