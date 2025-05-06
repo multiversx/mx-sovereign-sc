@@ -264,7 +264,7 @@ impl MvxEsdtSafeInteract {
             .from(&self.owner_address)
             .gas(120_000_000u64)
             .typed(ChainConfigContractProxy)
-            .init(config, self.owner_address.clone())
+            .init(config)
             .code(CHAIN_CONFIG_CODE_PATH)
             .code_metadata(CodeMetadata::all())
             .returns(ReturnsNewAddress)

@@ -136,7 +136,7 @@ impl BaseSetup {
             .tx()
             .from(OWNER_ADDRESS)
             .typed(ChainConfigContractProxy)
-            .init(config, OWNER_ADDRESS)
+            .init(config)
             .code(CHAIN_CONFIG_CODE_PATH)
             .new_address(CHAIN_CONFIG_ADDRESS)
             .run();
