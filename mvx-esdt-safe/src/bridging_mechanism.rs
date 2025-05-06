@@ -6,9 +6,7 @@ use multiversx_sc::imports::*;
 pub const TRUSTED_TOKEN_IDS: [&str; 1] = ["USDC-c76f1f"];
 
 #[multiversx_sc::module]
-pub trait BridgingMechanism:
-    cross_chain::storage::CrossChainStorage + multiversx_sc_modules::only_admin::OnlyAdminModule
-{
+pub trait BridgingMechanism: cross_chain::storage::CrossChainStorage {
     #[only_owner]
     #[endpoint(setTokenBurnMechanism)]
     fn set_token_burn_mechanism(&self, token_id: TokenIdentifier) {

@@ -24,7 +24,6 @@ pub trait MvxEsdtSafe:
     + multiversx_sc_modules::pause::PauseModule
     + utils::UtilsModule
     + setup_phase::SetupPhaseModule
-    + multiversx_sc_modules::only_admin::OnlyAdminModule
 {
     #[init]
     fn init(
