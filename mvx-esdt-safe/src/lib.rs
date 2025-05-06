@@ -34,7 +34,6 @@ pub trait MvxEsdtSafe:
     ) {
         self.require_sc_address(&header_verifier_address);
         self.header_verifier_address().set(&header_verifier_address);
-        self.admins().insert(self.blockchain().get_caller());
 
         self.esdt_safe_config().set(
             opt_config
@@ -49,21 +48,21 @@ pub trait MvxEsdtSafe:
     #[upgrade]
     fn upgrade(&self) {}
 
-    #[only_admin]
+    #[only_owner]
     #[endpoint(updateConfiguration)]
     fn update_configuration(&self, new_config: EsdtSafeConfig<Self::Api>) {
         self.require_esdt_config_valid(&new_config);
         self.esdt_safe_config().set(new_config);
     }
 
-    #[only_admin]
+    #[only_owner]
     #[endpoint(setFeeMarketAddress)]
     fn set_fee_market_address(&self, fee_market_address: ManagedAddress) {
         self.require_sc_address(&fee_market_address);
         self.fee_market_address().set(fee_market_address);
     }
 
-    #[only_admin]
+    #[only_owner]
     #[endpoint(completSetupPhase)]
     fn complete_setup_phase(&self) {
         require!(

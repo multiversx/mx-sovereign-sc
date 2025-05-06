@@ -9,7 +9,7 @@ pub const TRUSTED_TOKEN_IDS: [&str; 1] = ["USDC-c76f1f"];
 pub trait BridgingMechanism:
     cross_chain::storage::CrossChainStorage + multiversx_sc_modules::only_admin::OnlyAdminModule
 {
-    #[only_admin]
+    #[only_owner]
     #[endpoint(setTokenBurnMechanism)]
     fn set_token_burn_mechanism(&self, token_id: TokenIdentifier) {
         let token_esdt_roles = self.blockchain().get_esdt_local_roles(&token_id);
@@ -49,7 +49,7 @@ pub trait BridgingMechanism:
         }
     }
 
-    #[only_admin]
+    #[only_owner]
     #[endpoint(setTokenLockMechanism)]
     fn set_token_lock_mechanism(&self, token_id: TokenIdentifier) {
         require!(
