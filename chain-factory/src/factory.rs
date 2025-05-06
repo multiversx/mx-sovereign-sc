@@ -1,5 +1,4 @@
 use multiversx_sc::imports::*;
-use multiversx_sc_modules::only_admin;
 use proxies::{
     chain_config_proxy::ChainConfigContractProxy,
     enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy,
@@ -11,8 +10,8 @@ use structs::configs::{EsdtSafeConfig, SovereignConfig};
 multiversx_sc::derive_imports!();
 
 #[multiversx_sc::module]
-pub trait FactoryModule: only_admin::OnlyAdminModule {
-    #[only_admin]
+pub trait FactoryModule {
+    #[only_owner]
     #[endpoint(deploySovereignChainConfigContract)]
     fn deploy_sovereign_chain_config_contract(
         &self,
@@ -33,7 +32,7 @@ pub trait FactoryModule: only_admin::OnlyAdminModule {
     }
 
     // TODO: fix
-    #[only_admin]
+    #[only_owner]
     #[endpoint(deployHeaderVerifier)]
     fn deploy_header_verifier(&self, chain_config_address: ManagedAddress) -> ManagedAddress {
         let source_address = self.header_verifier_template().get();
@@ -49,7 +48,7 @@ pub trait FactoryModule: only_admin::OnlyAdminModule {
             .sync_call()
     }
 
-    #[only_admin]
+    #[only_owner]
     #[endpoint(setEsdtSafeAddressInHeaderVerifier)]
     fn set_esdt_safe_address_in_header_verifier(
         &self,
@@ -63,7 +62,7 @@ pub trait FactoryModule: only_admin::OnlyAdminModule {
             .sync_call();
     }
 
-    #[only_admin]
+    #[only_owner]
     #[endpoint(deployEnshrineEsdtSafe)]
     fn deploy_enshrine_esdt_safe(
         &self,
@@ -92,7 +91,7 @@ pub trait FactoryModule: only_admin::OnlyAdminModule {
             .sync_call()
     }
 
-    #[only_admin]
+    #[only_owner]
     #[endpoint(deployEsdtSafe)]
     fn deploy_mvx_esdt_safe(
         &self,
@@ -122,7 +121,7 @@ pub trait FactoryModule: only_admin::OnlyAdminModule {
         esdt_safe_address
     }
 
-    #[only_admin]
+    #[only_owner]
     #[endpoint(deployFeeMarket)]
     fn deploy_fee_market(
         &self,
@@ -152,7 +151,7 @@ pub trait FactoryModule: only_admin::OnlyAdminModule {
     }
 
     // TODO:
-    #[only_admin]
+    #[only_owner]
     #[endpoint(completeSetupPhase)]
     fn complete_setup_phase(&self) {
         // TODO: will have to call each contract's endpoint to finish setup phase
