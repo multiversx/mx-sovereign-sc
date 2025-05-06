@@ -34,12 +34,12 @@ impl ChainConfigTestState {
         Self { world }
     }
 
-    fn deploy_chain_config(&mut self, config: SovereignConfig<StaticApi>, admin: TestAddress) {
+    fn deploy_chain_config(&mut self, config: SovereignConfig<StaticApi>) {
         self.world
             .tx()
             .from(OWNER)
             .typed(ChainConfigContractProxy)
-            .init(config, admin)
+            .init(config)
             .code(CONFIG_CODE_PATH)
             .new_address(CONFIG_ADDRESS)
             .run();
@@ -87,7 +87,7 @@ fn deploy_chain_config() {
     let mut state = ChainConfigTestState::new();
 
     let config = SovereignConfig::new(0, 1, BigUint::default(), None);
-    state.deploy_chain_config(config, OWNER);
+    state.deploy_chain_config(config);
 }
 
 #[test]
@@ -95,7 +95,7 @@ fn update_config() {
     let mut state = ChainConfigTestState::new();
 
     let config = SovereignConfig::new(0, 1, BigUint::default(), None);
-    state.deploy_chain_config(config, OWNER);
+    state.deploy_chain_config(config);
 
     let new_config = SovereignConfig::new(2, 4, BigUint::default(), None);
 
@@ -107,7 +107,7 @@ fn update_config_wrong_validators_array() {
     let mut state = ChainConfigTestState::new();
 
     let config = SovereignConfig::new(0, 1, BigUint::default(), None);
-    state.deploy_chain_config(config, OWNER);
+    state.deploy_chain_config(config);
 
     let new_config = SovereignConfig::new(2, 1, BigUint::default(), None);
 
@@ -122,7 +122,7 @@ fn complete_setup_phase() {
     let mut state = ChainConfigTestState::new();
 
     let config = SovereignConfig::new(0, 1, BigUint::default(), None);
-    state.deploy_chain_config(config, OWNER);
+    state.deploy_chain_config(config);
 
     state.complete_setup_phase(None);
 }
