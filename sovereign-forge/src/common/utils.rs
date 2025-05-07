@@ -138,7 +138,6 @@ pub trait UtilsModule: super::storage::StorageModule {
         self.chain_factories(shard_id).get()
     }
 
-    #[inline]
     fn is_chain_id_lowercase_alphanumeric(&self, chain_id: &ManagedBuffer) -> bool {
         let mut chain_id_byte_array = [0u8; 4];
         let chain_id_byte_array = chain_id.load_to_byte_array(&mut chain_id_byte_array);
