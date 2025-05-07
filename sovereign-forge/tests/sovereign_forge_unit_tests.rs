@@ -49,6 +49,7 @@ const FEE_MARKET_CODE_PATH: MxscPath = MxscPath::new("../fee-market/output/fee-m
 
 const TOKEN_HANDLER_ADDRESS: TestSCAddress = TestSCAddress::new("token-handler");
 
+const CHAIN_ID: &str = "svch";
 const BALANCE: u128 = 100_000_000_000_000_000;
 const DEPLOY_COST: u64 = 100_000;
 
@@ -407,7 +408,7 @@ fn register_chain_factory() {
     let mut state = SovereignForgeTestState::new();
     state.deploy_sovereign_forge();
 
-    state.register_chain_factory(2, TOKEN_HANDLER_ADDRESS, None);
+    state.register_chain_factory(2, FACTORY_ADDRESS, None);
 
     state
         .world
@@ -423,7 +424,7 @@ fn update_sovereign_config_no_chain_config_deployed() {
     let mut state = SovereignForgeTestState::new();
     state.deploy_sovereign_forge();
 
-    state.register_chain_factory(2, TOKEN_HANDLER_ADDRESS, None);
+    state.register_chain_factory(2, FACTORY_ADDRESS, None);
 
     state
         .world
@@ -462,7 +463,7 @@ fn update_sovereign_config() {
 
     state.deploy_phase_one(
         &deploy_cost,
-        Some(ManagedBuffer::from("SVCH")),
+        Some(ManagedBuffer::from(CHAIN_ID)),
         &SovereignConfig::default_config(),
         None,
     );
@@ -476,7 +477,7 @@ fn update_sovereign_config() {
                 .sovereigns_mapper(&OWNER_ADDRESS.to_managed_address())
                 .is_empty());
 
-            assert!(sc.chain_ids().contains(&ManagedBuffer::from("SVCH")));
+            assert!(sc.chain_ids().contains(&ManagedBuffer::from(CHAIN_ID)));
 
             let is_chain_config_deployed = sc.is_contract_deployed(
                 &OWNER_ADDRESS.to_managed_address(),
@@ -489,7 +490,7 @@ fn update_sovereign_config() {
 
     let chain_config_address_from_sovereign_forge = state
         .get_smart_contract_address_from_sovereign_forge(
-            ManagedBuffer::from("SVCH"),
+            ManagedBuffer::from(CHAIN_ID),
             ScArray::ChainConfig,
         );
 
@@ -524,7 +525,7 @@ fn update_esdt_safe_config() {
 
     state.deploy_phase_one(
         &deploy_cost,
-        Some(ManagedBuffer::from("SVCH")),
+        Some(ManagedBuffer::from(CHAIN_ID)),
         &SovereignConfig::default_config(),
         None,
     );
@@ -537,7 +538,7 @@ fn update_esdt_safe_config() {
                 .sovereigns_mapper(&OWNER_ADDRESS.to_managed_address())
                 .is_empty());
 
-            assert!(sc.chain_ids().contains(&ManagedBuffer::from("SVCH")));
+            assert!(sc.chain_ids().contains(&ManagedBuffer::from(CHAIN_ID)));
 
             let is_chain_config_deployed = sc.is_contract_deployed(
                 &OWNER_ADDRESS.to_managed_address(),
@@ -590,7 +591,7 @@ fn update_esdt_safe_config() {
 
     let mvx_esdt_safe_address_from_sovereign_forge = state
         .get_smart_contract_address_from_sovereign_forge(
-            ManagedBuffer::from("SVCH"),
+            ManagedBuffer::from(CHAIN_ID),
             ScArray::ESDTSafe,
         );
 
@@ -680,6 +681,24 @@ fn deploy_phase_one_chain_config_already_deployed() {
 }
 
 #[test]
+fn deploy_phase_one_preferred_chain_id_not_lowercase_alphanumeric() {
+    let mut state = SovereignForgeTestState::new();
+    state.deploy_sovereign_forge();
+    state.deploy_chain_factory();
+    state.deploy_chain_config_template();
+    state.finish_setup();
+
+    let deploy_cost = BigUint::from(100_000u32);
+
+    state.deploy_phase_one(
+        &deploy_cost,
+        Some(ManagedBuffer::from("CHID")),
+        &SovereignConfig::default_config(),
+        Some("The given chain-id is not lower case alphanumeric"),
+    );
+}
+
+#[test]
 fn deploy_phase_one_no_preferred_chain_id() {
     let mut state = SovereignForgeTestState::new();
     state.deploy_sovereign_forge();
@@ -720,7 +739,7 @@ fn deploy_phase_one_preferred_chain_id() {
 
     state.deploy_phase_one(
         &deploy_cost,
-        Some(ManagedBuffer::from("SVCH")),
+        Some(ManagedBuffer::from(CHAIN_ID)),
         &SovereignConfig::default_config(),
         None,
     );
@@ -734,7 +753,7 @@ fn deploy_phase_one_preferred_chain_id() {
                 .sovereigns_mapper(&OWNER_ADDRESS.to_managed_address())
                 .is_empty());
 
-            assert!(sc.chain_ids().contains(&ManagedBuffer::from("SVCH")));
+            assert!(sc.chain_ids().contains(&ManagedBuffer::from(CHAIN_ID)));
 
             let is_chain_config_deployed = sc.is_contract_deployed(
                 &OWNER_ADDRESS.to_managed_address(),
@@ -756,14 +775,14 @@ fn deploy_phase_one_with_chain_id_used() {
 
     state.deploy_phase_one(
         &deploy_cost,
-        Some(ManagedBuffer::from("SVCH")),
+        Some(ManagedBuffer::from(CHAIN_ID)),
         &SovereignConfig::default_config(),
         None,
     );
 
     state.deploy_phase_one(
         &deploy_cost,
-        Some(ManagedBuffer::from("SVCH")),
+        Some(ManagedBuffer::from(CHAIN_ID)),
         &SovereignConfig::default_config(),
         Some("This chain ID is already used"),
     );
