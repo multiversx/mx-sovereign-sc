@@ -89,7 +89,8 @@ pub trait UtilsModule: super::storage::StorageModule {
         match opt_preferred_chain_id {
             Some(preferred_chain_id) => {
                 require!(
-                    self.is_chain_id_lowercase_alphanumeric(&preferred_chain_id),
+                    preferred_chain_id.len() == 4
+                        && self.is_chain_id_lowercase_alphanumeric(&preferred_chain_id),
                     "The given chain-id is not lower case alphanumeric"
                 );
 
@@ -139,6 +140,9 @@ pub trait UtilsModule: super::storage::StorageModule {
 
     #[inline]
     fn is_chain_id_lowercase_alphanumeric(&self, chain_id: &ManagedBuffer) -> bool {
-        chain_id.to_vec().iter().all(|b| CHARSET.contains(b))
+        let mut chain_id_byte_array = [0u8; 4];
+        let chain_id_byte_array = chain_id.load_to_byte_array(&mut chain_id_byte_array);
+
+        chain_id_byte_array.iter().all(|b| CHARSET.contains(b))
     }
 }
