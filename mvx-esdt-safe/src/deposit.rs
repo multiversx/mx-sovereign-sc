@@ -14,7 +14,6 @@ pub trait DepositModule:
     + cross_chain::execute_common::ExecuteCommonModule
     + cross_chain::storage::CrossChainStorage
     + cross_chain::events::EventsModule
-    + multiversx_sc_modules::only_admin::OnlyAdminModule
     + multiversx_sc_modules::pause::PauseModule
 {
     #[payable]

@@ -230,7 +230,7 @@ impl ContractInteract {
             .from(&self.wallet_address)
             .gas(50_000_000u64)
             .typed(ChainConfigContractProxy)
-            .init(SovereignConfig::default_config(), &self.wallet_address)
+            .init(SovereignConfig::default_config())
             .returns(ReturnsNewAddress)
             .code(MxscPath::new(CHAIN_CONFIG_CODE_PATH))
             .run()

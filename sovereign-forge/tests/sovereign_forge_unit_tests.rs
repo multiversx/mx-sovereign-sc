@@ -123,7 +123,7 @@ impl SovereignForgeTestState {
             .tx()
             .from(OWNER_ADDRESS)
             .typed(ChainConfigContractProxy)
-            .init(SovereignConfig::default_config(), OWNER_ADDRESS)
+            .init(SovereignConfig::default_config())
             .code(CONFIG_CODE_PATH)
             .new_address(CONFIG_ADDRESS)
             .run();
