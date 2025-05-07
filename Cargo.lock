@@ -2304,6 +2304,7 @@ dependencies = [
  "chain-factory",
  "common-test-setup",
  "cross-chain",
+ "error-messages",
  "fee-market",
  "header-verifier",
  "multiversx-sc",
