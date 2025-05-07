@@ -29,12 +29,13 @@ pub trait UpdateConfigsModule: common::utils::UtilsModule + common::storage::Sto
 
         self.require_phase_one_completed(&caller);
 
-        let chain_config_address = self.get_contract_address(&caller, ScArray::ChainConfig);
-
         self.tx()
             .to(self.get_chain_factory_address())
             .typed(ChainFactoryContractProxy)
-            .update_sovereign_config(chain_config_address, new_config)
+            .update_sovereign_config(
+                self.get_contract_address(&caller, ScArray::ChainConfig),
+                new_config,
+            )
             .sync_call();
     }
 }
