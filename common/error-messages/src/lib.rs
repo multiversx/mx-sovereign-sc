@@ -54,3 +54,9 @@ pub const ESDT_SAFE_CONFIG_NOT_SET: &str = "There is no config set for this cont
 pub const HEADER_VERIFIER_ADDRESS_NOT_SET: &str = "The Header-Verifier address was not set";
 pub const SETUP_PHASE_ALREADY_COMPLETED: &str = "The setup is completed";
 pub const NATIVE_TOKEN_NOT_REGISTERED: &str = "There is no native token registered";
+pub const DEPLOY_COST_IS_ZERO: &str = "The deploy cost can't be a 0 value";
+pub const ADDRESS_NOT_VALID_SC_ADDRESS: &str = "The given address is not a valid SC address";
+pub const CHAIN_CONFIG_ALREADY_DEPLOYED: &str = "The Chain-Config contract is already deployed";
+pub const HEADER_VERIFIER_ALREADY_DEPLOYED: &str =
+    "The Header-Verifier contract is already deployed";
+pub const FEE_MARKET_ALREADY_DEPLOYED: &str = "The Fee-Market SC is already deployed";
