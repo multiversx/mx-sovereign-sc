@@ -26,6 +26,9 @@ path = "../chain-config"
 [dependencies.mvx-esdt-safe]
 path = "../mvx-esdt-safe"
 
+[dependencies.cross-chain]
+path = "../common/cross-chain"
+
 [dependencies.header-verifier]
 path = "../header-verifier"
 
