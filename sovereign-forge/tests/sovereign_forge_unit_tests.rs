@@ -694,7 +694,25 @@ fn deploy_phase_one_preferred_chain_id_not_lowercase_alphanumeric() {
         &deploy_cost,
         Some(ManagedBuffer::from("CHID")),
         &SovereignConfig::default_config(),
-        Some("The given chain-id is not lower case alphanumeric"),
+        Some("Chain ID is not lowercase alphanumeric"),
+    );
+}
+
+#[test]
+fn deploy_phase_one_preferred_chain_id_not_correct_length() {
+    let mut state = SovereignForgeTestState::new();
+    state.deploy_sovereign_forge();
+    state.deploy_chain_factory();
+    state.deploy_chain_config_template();
+    state.finish_setup();
+
+    let deploy_cost = BigUint::from(100_000u32);
+
+    state.deploy_phase_one(
+        &deploy_cost,
+        Some(ManagedBuffer::from("CHAINID")),
+        &SovereignConfig::default_config(),
+        Some("Chain ID length must be four characters"),
     );
 }
 
