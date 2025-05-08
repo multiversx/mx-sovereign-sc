@@ -88,10 +88,7 @@ pub trait UtilsModule: super::storage::StorageModule {
 
         match opt_preferred_chain_id {
             Some(preferred_chain_id) => {
-                require!(
-                    self.is_valid_chain_id(&preferred_chain_id),
-                    "The given chain-id is not lower case alphanumeric"
-                );
+                self.validate_chain_id(&preferred_chain_id);
 
                 require!(
                     !chain_id_history_mapper.contains(&preferred_chain_id),
@@ -138,8 +135,16 @@ pub trait UtilsModule: super::storage::StorageModule {
     }
 
     #[inline]
-    fn is_valid_chain_id(&self, chain_id: &ManagedBuffer) -> bool {
-        chain_id.len() == 4 && self.is_chain_id_lowercase_alphanumeric(&chain_id)
+    fn validate_chain_id(&self, chain_id: &ManagedBuffer) {
+        require!(
+            chain_id.len() == 4,
+            "Chain ID length must be four characters"
+        );
+
+        require!(
+            self.is_chain_id_lowercase_alphanumeric(&chain_id),
+            "Chain ID is not lowercase alphanumeric"
+        );
     }
 
     fn is_chain_id_lowercase_alphanumeric(&self, chain_id: &ManagedBuffer) -> bool {
