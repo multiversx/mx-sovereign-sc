@@ -73,3 +73,10 @@ pub const ESDT_SAFE_NOT_DEPLOYED: &str =
     "The ESDT-Safe SC is not deployed, you skipped the third phase";
 pub const DEPLOY_COST_NOT_ENOUGH: &str =
     "The given deploy cost is not equal to the standard amount";
+pub const INVALID_METHOD_TO_CALL_IN_CURRENT_CHAIN: &str = "Invalid method to call in current chain";
+pub const CANNOT_TRANSFER_WHILE_PAUSED: &str = "Cannot transfer while paused";
+pub const ONLY_WEGLD_IS_ACCEPTED_AS_REGISTER_FEE: &str =
+    "WEGLD is the only token accepted as register fee";
+pub const NOT_ENOUGH_WEGLD_AMOUNT: &str = "WEGLD fee amount is not met";
+pub const ACTION_IS_NOT_ALLOWED: &str = "action is not allowed";
+pub const INSUFFICIENT_FUNDS: &str = "insufficient funds";
