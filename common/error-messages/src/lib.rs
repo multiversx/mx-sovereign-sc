@@ -80,3 +80,5 @@ pub const ONLY_WEGLD_IS_ACCEPTED_AS_REGISTER_FEE: &str =
 pub const NOT_ENOUGH_WEGLD_AMOUNT: &str = "WEGLD fee amount is not met";
 pub const ACTION_IS_NOT_ALLOWED: &str = "action is not allowed";
 pub const INSUFFICIENT_FUNDS: &str = "insufficient funds";
+pub const ESDT_SAFE_ADDRESS_NOT_SET: &str = "The ESDT-Safe address is not set";
+pub const INVALID_AGGREGATOR_VALUE: &str = "Invalid aggregator value";
