@@ -1,3 +1,4 @@
+use error_messages::INVALID_MIN_MAX_VALIDATOR_NUMBERS;
 use multiversx_sc::types::{BigUint, TestAddress, TestSCAddress};
 use multiversx_sc_scenario::{
     api::StaticApi, imports::MxscPath, ExpectError, ScenarioTxRun, ScenarioWorld,
@@ -113,7 +114,7 @@ fn update_config_wrong_validators_array() {
 
     state.update_chain_config(
         new_config,
-        Some(ExpectError(4, "Invalid min/max validator numbers")),
+        Some(ExpectError(4, INVALID_MIN_MAX_VALIDATOR_NUMBERS)),
     );
 }
 

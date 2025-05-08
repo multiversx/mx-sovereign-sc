@@ -1,3 +1,4 @@
+use error_messages::INVALID_MIN_MAX_VALIDATOR_NUMBERS;
 use structs::configs::SovereignConfig;
 
 multiversx_sc::imports!();
@@ -23,7 +24,7 @@ pub trait ValidatorRulesModule {
     fn require_validator_range(&self, min_validators: u64, max_validators: u64) {
         require!(
             min_validators <= max_validators,
-            "Invalid min/max validator numbers"
+            INVALID_MIN_MAX_VALIDATOR_NUMBERS
         );
     }
 
