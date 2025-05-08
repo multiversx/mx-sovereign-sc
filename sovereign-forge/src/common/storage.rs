@@ -15,6 +15,7 @@ pub trait StorageModule {
         sovereign_creator: &ManagedAddress,
     ) -> SingleValueMapper<ChainId<Self::Api>>;
 
+    #[view(getDeployedSovereignContracts)]
     #[storage_mapper("sovereignDeployedContracts")]
     fn sovereign_deployed_contracts(
         &self,

@@ -80,11 +80,11 @@ pub trait PhasesModule:
 
         let chain_config_address = self.deploy_chain_config(config);
 
-        let chain_factory_contract_info =
+        let chain_config_contract_info =
             ContractInfo::new(ScArray::ChainConfig, chain_config_address);
 
         self.sovereign_deployed_contracts(&chain_id)
-            .insert(chain_factory_contract_info);
+            .insert(chain_config_contract_info);
         self.sovereigns_mapper(&caller).set(chain_id);
     }
 

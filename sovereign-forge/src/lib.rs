@@ -5,6 +5,7 @@ use multiversx_sc::imports::*;
 
 pub mod common;
 pub mod phases;
+pub mod update_configs;
 
 #[multiversx_sc::contract]
 pub trait SovereignForge:
@@ -13,6 +14,7 @@ pub trait SovereignForge:
     + common::utils::UtilsModule
     + common::sc_deploy::ScDeployModule
     + setup_phase::SetupPhaseModule
+    + update_configs::UpdateConfigsModule
 {
     #[init]
     fn init(&self, deploy_cost: BigUint) {

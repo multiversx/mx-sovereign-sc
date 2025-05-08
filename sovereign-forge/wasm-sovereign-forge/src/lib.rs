@@ -6,9 +6,9 @@
 
 // Init:                                 1
 // Upgrade:                              1
-// Endpoints:                           11
+// Endpoints:                           14
 // Async Callback (empty):               1
-// Total number of exported functions:  14
+// Total number of exported functions:  17
 
 #![no_std]
 
@@ -27,10 +27,13 @@ multiversx_sc_wasm_adapter::endpoints! {
         deployPhaseTwo => deploy_phase_two
         deployPhaseThree => deploy_phase_three
         deployPhaseFour => deploy_phase_four
+        getDeployedSovereignContracts => sovereign_deployed_contracts
         getChainFactoryAddress => chain_factories
         getTokenHandlerAddress => token_handlers
         getDeployCost => deploy_cost
         getAllChainIds => chain_ids
+        updateEsdtSafeConfig => update_esdt_safe_config
+        updateSovereignConfig => update_sovereign_config
     )
 }
 
