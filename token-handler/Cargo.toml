@@ -14,6 +14,9 @@ path = "../common/structs"
 [dependencies.proxies]
 path = "../common/proxies"
 
+[dependencies.error-messages]
+path = "../common/error-messages"
+
 [dependencies.chain-factory]
 path = "../chain-factory"
 

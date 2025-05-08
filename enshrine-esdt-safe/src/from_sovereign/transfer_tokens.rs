@@ -1,4 +1,8 @@
 use crate::{common, to_sovereign};
+use error_messages::{
+    CANNOT_TRANSFER_WHILE_PAUSED, INVALID_METHOD_TO_CALL_IN_CURRENT_CHAIN, NOT_ENOUGH_WEGLD_AMOUNT,
+    ONLY_WEGLD_IS_ACCEPTED_AS_REGISTER_FEE,
+};
 use multiversx_sc::imports::*;
 use proxies::token_handler_proxy::TokenHandlerProxy;
 use structs::operation::{Operation, OperationData, OperationEsdtPayment, OperationTuple};
@@ -37,11 +41,8 @@ pub trait TransferTokensModule:
     #[endpoint(executeBridgeOps)]
     fn execute_operations(&self, hash_of_hashes: ManagedBuffer, operation: Operation<Self::Api>) {
         let is_sovereign_chain = self.is_sovereign_chain().get();
-        require!(
-            !is_sovereign_chain,
-            "Invalid method to call in current chain"
-        );
-        require!(self.not_paused(), "Cannot transfer while paused");
+        require!(!is_sovereign_chain, INVALID_METHOD_TO_CALL_IN_CURRENT_CHAIN);
+        require!(self.not_paused(), CANNOT_TRANSFER_WHILE_PAUSED);
 
         let op_hash = self.calculate_operation_hash(&operation);
 
@@ -84,11 +85,11 @@ pub trait TransferTokensModule:
         let wegld_identifier = self.wegld_identifier().get();
         require!(
             call_payment.token_identifier == wegld_identifier,
-            "WEGLD is the only token accepted as register fee"
+            ONLY_WEGLD_IS_ACCEPTED_AS_REGISTER_FEE
         );
         require!(
             call_payment.amount == DEFAULT_ISSUE_COST * tokens.len() as u64,
-            "WEGLD fee amount is not met"
+            NOT_ENOUGH_WEGLD_AMOUNT
         );
 
         for token_id in tokens {

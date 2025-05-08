@@ -1,4 +1,4 @@
-use error_messages::INVALID_ESDT_IDENTIFIER;
+use error_messages::{INVALID_AGGREGATOR_VALUE, INVALID_ESDT_IDENTIFIER};
 
 multiversx_sc::imports!();
 
@@ -20,7 +20,7 @@ impl<M: ManagedTypeApi> From<AggregatorOutputType<M>> for AggregatorResult<M> {
     fn from(value: AggregatorOutputType<M>) -> Self {
         let opt_value = value.into_option();
         if opt_value.is_none() {
-            M::error_api_impl().signal_error(b"Invalid aggregator value");
+            M::error_api_impl().signal_error(INVALID_AGGREGATOR_VALUE.as_bytes());
         }
 
         let result = unsafe { opt_value.unwrap_unchecked() };

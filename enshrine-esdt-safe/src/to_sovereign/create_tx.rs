@@ -1,5 +1,6 @@
 use crate::common;
 
+use error_messages::ESDT_SAFE_STILL_PAUSED;
 use multiversx_sc::imports::*;
 use structs::{
     aliases::OptionalValueTransferDataTuple,
@@ -27,7 +28,7 @@ pub trait CreateTxModule:
         to: ManagedAddress,
         optional_transfer_data: OptionalValueTransferDataTuple<Self::Api>,
     ) {
-        require!(self.not_paused(), "Cannot create transaction while paused");
+        require!(self.not_paused(), ESDT_SAFE_STILL_PAUSED);
 
         let (fees_payment, payments) = self
             .check_and_extract_fee(optional_transfer_data.is_some())

@@ -1,3 +1,4 @@
+use error_messages::CALLER_IS_NOT_WHITELISTED;
 use multiversx_sc::{imports::UnorderedSetMapper, require, types::ManagedAddress};
 
 #[multiversx_sc::module]
@@ -9,7 +10,7 @@ pub trait CommonStorage {
         let caller = self.blockchain().get_caller();
         require!(
             self.enshrine_esdt_whitelist().contains(&caller),
-            "Caller is not whitelisted"
+            CALLER_IS_NOT_WHITELISTED
         );
     }
 }

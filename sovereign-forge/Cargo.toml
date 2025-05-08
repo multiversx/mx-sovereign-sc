@@ -44,6 +44,9 @@ path = "../common/structs"
 [dependencies.setup-phase]
 path = "../common/setup-phase"
 
+[dependencies.error-messages]
+path = "../common/error-messages"
+
 [dev-dependencies.common-test-setup]
 path = "../common/common-test-setup"
 

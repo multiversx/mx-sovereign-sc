@@ -286,6 +286,7 @@ dependencies = [
  "chain-config",
  "chain-factory",
  "cross-chain",
+ "error-messages",
  "fee-market",
  "header-verifier",
  "multiversx-sc",
@@ -334,6 +335,7 @@ name = "token-handler"
 version = "0.0.0"
 dependencies = [
  "chain-factory",
+ "error-messages",
  "multiversx-sc",
  "multiversx-sc-modules",
  "proxies",

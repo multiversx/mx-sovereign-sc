@@ -1,5 +1,6 @@
 #![no_std]
 
+use error_messages::ESDT_SAFE_ADDRESS_NOT_SET;
 use fee_type::FeeStruct;
 
 multiversx_sc::imports!();
@@ -47,7 +48,7 @@ pub trait FeeMarket:
 
         require!(
             !self.esdt_safe_address().is_empty(),
-            "The ESDT-Safe address is not set"
+            ESDT_SAFE_ADDRESS_NOT_SET
         );
 
         self.tx()
