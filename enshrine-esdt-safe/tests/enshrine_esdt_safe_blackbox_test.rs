@@ -1,3 +1,8 @@
+use error_messages::{
+    ACTION_IS_NOT_ALLOWED, BANNED_ENDPOINT_NAME, INSUFFICIENT_FUNDS, NOTHING_TO_TRANSFER,
+    NOT_ENOUGH_WEGLD_AMOUNT, ONLY_WEGLD_IS_ACCEPTED_AS_REGISTER_FEE, PAYMENT_DOES_NOT_COVER_FEE,
+    TOO_MANY_TOKENS,
+};
 use multiversx_sc::codec::TopEncode;
 use multiversx_sc::imports::OptionalValue;
 use multiversx_sc::types::{
@@ -498,7 +503,7 @@ fn test_sovereign_prefix_no_prefix() {
     state.propose_register_operation(&token_vec);
     state.propose_register_esdt_in_header_verifier();
     state.propose_whitelist_enshrine_esdt();
-    state.propose_execute_operation(Some("action is not allowed"), &token_vec);
+    state.propose_execute_operation(Some(ACTION_IS_NOT_ALLOWED), &token_vec);
 }
 
 #[test]
@@ -521,12 +526,7 @@ fn test_register_tokens_insufficient_funds() {
     let payment = EsdtTokenPayment::new(WEGLD_IDENTIFIER.into(), 0, payment_amount);
 
     state.propose_setup_contracts(false, None, None);
-    state.propose_register_tokens(
-        &USER_ADDRESS,
-        payment,
-        token_vec,
-        Some("insufficient funds"),
-    );
+    state.propose_register_tokens(&USER_ADDRESS, payment, token_vec, Some(INSUFFICIENT_FUNDS));
 }
 
 #[test]
@@ -541,7 +541,7 @@ fn test_register_tokens_wrong_token_as_fee() {
         &ENSHRINE_ESDT_OWNER_ADDRESS,
         payment,
         token_vec,
-        Some("WEGLD is the only token accepted as register fee"),
+        Some(ONLY_WEGLD_IS_ACCEPTED_AS_REGISTER_FEE),
     );
 }
 
@@ -577,7 +577,7 @@ fn test_register_tokens_insufficient_wegld() {
         &ENSHRINE_ESDT_OWNER_ADDRESS,
         payment,
         token_vec,
-        Some("WEGLD fee amount is not met"),
+        Some(NOT_ENOUGH_WEGLD_AMOUNT),
     );
 }
 
@@ -625,7 +625,7 @@ fn test_deposit_token_nothing_to_transfer_fee_enabled() {
         USER_ADDRESS,
         payments,
         OptionalValue::None,
-        Some("Nothing to transfer"),
+        Some(NOTHING_TO_TRANSFER),
     );
 }
 
@@ -643,7 +643,7 @@ fn test_deposit_max_transfers_exceeded() {
         USER_ADDRESS,
         payments,
         OptionalValue::None,
-        Some("Too many tokens"),
+        Some(TOO_MANY_TOKENS),
     );
 }
 
@@ -765,7 +765,7 @@ fn test_deposit_with_transfer_data_banned_endpoint() {
         USER_ADDRESS,
         payments,
         transfer_data,
-        Some("Banned endpoint name"),
+        Some(BANNED_ENDPOINT_NAME),
     );
 }
 
@@ -869,7 +869,7 @@ fn test_deposit_with_transfer_data_not_enough_for_fee() {
         USER_ADDRESS,
         payments,
         transfer_data,
-        Some("Payment does not cover fee"),
+        Some(PAYMENT_DOES_NOT_COVER_FEE),
     );
 }
 
