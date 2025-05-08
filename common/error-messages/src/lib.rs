@@ -82,3 +82,4 @@ pub const ACTION_IS_NOT_ALLOWED: &str = "action is not allowed";
 pub const INSUFFICIENT_FUNDS: &str = "insufficient funds";
 pub const ESDT_SAFE_ADDRESS_NOT_SET: &str = "The ESDT-Safe address is not set";
 pub const INVALID_AGGREGATOR_VALUE: &str = "Invalid aggregator value";
+pub const CALLER_IS_NOT_WHITELISTED: &str = "Caller is not whitelisted";
