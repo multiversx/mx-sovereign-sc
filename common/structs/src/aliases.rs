@@ -18,4 +18,4 @@ pub type ExtractedFeeResult<M> =
 pub type OptionalValueTransferDataTuple<M> = OptionalValue<TransferDataTuple<M>>;
 pub type StakeMultiArg<M> = MultiValue2<TokenIdentifier<M>, BigUint<M>>;
 pub type OptionalTransferData<M> =
-    OptionalValue<MultiValue3<GasLimit, ManagedBuffer<M>, ManagedVec<M, ManagedBuffer<M>>>>;
+    OptionalValue<MultiValue3<GasLimit, ManagedBuffer<M>, MultiValueEncoded<M, ManagedBuffer<M>>>>;

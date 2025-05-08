@@ -1,3 +1,5 @@
+use common_interactor::common_interactor_sovereign::CommonInteractorTrait;
+use common_interactor::interactor_config::Config;
 use common_test_setup::constants::{
     FEE_TOKEN, FIRST_TEST_TOKEN, ISSUE_COST, OPERATION_HASH_STATUS_STORAGE_KEY, SECOND_TEST_TOKEN,
     SOV_TOKEN, SOV_TO_MVX_TOKEN_STORAGE_KEY, TOKEN_TICKER,
@@ -11,7 +13,6 @@ use header_verifier::OperationHashStatus;
 use multiversx_sc_snippets::multiversx_sc_scenario::multiversx_chain_vm::crypto_functions::sha256;
 use multiversx_sc_snippets::{hex, imports::*};
 use proxies::fee_market_proxy::{FeeStruct, FeeType};
-use rust_interact::config::Config;
 use rust_interact::mvx_esdt_safe::mvx_esdt_safe_interactor_main::MvxEsdtSafeInteract;
 use serial_test::serial;
 use structs::aliases::PaymentsVec;
@@ -556,13 +557,7 @@ async fn register_token_invalid_type_token() {
     chain_interactor.deploy_header_verifier().await;
 
     chain_interactor
-        .deploy_mvx_esdt_safe(
-            chain_interactor
-                .state
-                .current_header_verifier_address()
-                .clone(),
-            OptionalValue::Some(EsdtSafeConfig::default_config()),
-        )
+        .deploy_mvx_esdt_safe(OptionalValue::Some(EsdtSafeConfig::default_config()))
         .await;
 
     let sov_token_id = TokenIdentifier::from_esdt_bytes(SOV_TOKEN);
@@ -607,13 +602,7 @@ async fn register_token_fungible_token() {
     chain_interactor.deploy_header_verifier().await;
 
     chain_interactor
-        .deploy_mvx_esdt_safe(
-            chain_interactor
-                .state
-                .current_header_verifier_address()
-                .clone(),
-            OptionalValue::Some(EsdtSafeConfig::default_config()),
-        )
+        .deploy_mvx_esdt_safe(OptionalValue::Some(EsdtSafeConfig::default_config()))
         .await;
 
     let sov_token_id = TokenIdentifier::from_esdt_bytes(SOV_TOKEN);
@@ -673,13 +662,7 @@ async fn register_token_non_fungible_token() {
     chain_interactor.deploy_header_verifier().await;
 
     chain_interactor
-        .deploy_mvx_esdt_safe(
-            chain_interactor
-                .state
-                .current_header_verifier_address()
-                .clone(),
-            OptionalValue::Some(EsdtSafeConfig::default_config()),
-        )
+        .deploy_mvx_esdt_safe(OptionalValue::Some(EsdtSafeConfig::default_config()))
         .await;
 
     let sov_token_id = TokenIdentifier::from_esdt_bytes(SOV_TOKEN);
@@ -739,13 +722,7 @@ async fn register_token_dynamic_non_fungible_token() {
     chain_interactor.deploy_header_verifier().await;
 
     chain_interactor
-        .deploy_mvx_esdt_safe(
-            chain_interactor
-                .state
-                .current_header_verifier_address()
-                .clone(),
-            OptionalValue::Some(EsdtSafeConfig::default_config()),
-        )
+        .deploy_mvx_esdt_safe(OptionalValue::Some(EsdtSafeConfig::default_config()))
         .await;
 
     let sov_token_id = TokenIdentifier::from_esdt_bytes(SOV_TOKEN);
