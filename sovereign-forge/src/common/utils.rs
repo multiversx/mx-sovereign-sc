@@ -88,6 +88,8 @@ pub trait UtilsModule: super::storage::StorageModule {
 
         match opt_preferred_chain_id {
             Some(preferred_chain_id) => {
+                self.validate_chain_id(&preferred_chain_id);
+
                 require!(
                     !chain_id_history_mapper.contains(&preferred_chain_id),
                     "This chain ID is already used"
@@ -130,5 +132,25 @@ pub trait UtilsModule: super::storage::StorageModule {
         let shard_id = blockchain_api.get_shard_of_address(&caller);
 
         self.chain_factories(shard_id).get()
+    }
+
+    #[inline]
+    fn validate_chain_id(&self, chain_id: &ManagedBuffer) {
+        require!(
+            chain_id.len() == 4,
+            "Chain ID length must be four characters"
+        );
+
+        require!(
+            self.is_chain_id_lowercase_alphanumeric(chain_id),
+            "Chain ID is not lowercase alphanumeric"
+        );
+    }
+
+    fn is_chain_id_lowercase_alphanumeric(&self, chain_id: &ManagedBuffer) -> bool {
+        let mut chain_id_byte_array = [0u8; 4];
+        let chain_id_byte_array = chain_id.load_to_byte_array(&mut chain_id_byte_array);
+
+        chain_id_byte_array.iter().all(|b| CHARSET.contains(b))
     }
 }
