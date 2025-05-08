@@ -1,3 +1,8 @@
+use error_messages::{
+    CALLER_DID_NOT_DEPLOY_ANY_SOV_CHAIN, CHAIN_CONFIG_NOT_DEPLOYED, CHAIN_ID_ALREADY_IN_USE,
+    CHAIN_ID_NOT_FOUR_CHAR_LONG, CHAIN_ID_NOT_LOWERCASE_ALPHANUMERIC, DEPLOY_COST_NOT_ENOUGH,
+    ESDT_SAFE_NOT_DEPLOYED, HEADER_VERIFIER_NOT_DEPLOYED,
+};
 use multiversx_sc::{
     api::ManagedTypeApi,
     codec,
@@ -43,26 +48,26 @@ pub trait UtilsModule: super::storage::StorageModule {
     fn require_phase_three_completed(&self, caller: &ManagedAddress) {
         require!(
             self.is_contract_deployed(caller, ScArray::ESDTSafe),
-            "The ESDT-Safe SC is not deployed, you skipped the third phase"
+            ESDT_SAFE_NOT_DEPLOYED
         );
     }
 
     fn require_phase_two_completed(&self, caller: &ManagedAddress) {
         require!(
             self.is_contract_deployed(caller, ScArray::HeaderVerifier),
-            "The Header-Verifier SC is not deployed, you skipped the second phase"
+            HEADER_VERIFIER_NOT_DEPLOYED
         );
     }
 
     fn require_phase_one_completed(&self, caller: &ManagedAddress) {
         require!(
             !self.sovereigns_mapper(caller).is_empty(),
-            "The current caller has not deployed any Sovereign Chain"
+            CALLER_DID_NOT_DEPLOY_ANY_SOV_CHAIN
         );
 
         require!(
             self.is_contract_deployed(caller, ScArray::ChainConfig),
-            "The Chain-Config SC is not deployed"
+            CHAIN_CONFIG_NOT_DEPLOYED
         );
     }
 
@@ -92,7 +97,7 @@ pub trait UtilsModule: super::storage::StorageModule {
 
                 require!(
                     !chain_id_history_mapper.contains(&preferred_chain_id),
-                    "This chain ID is already used"
+                    CHAIN_ID_ALREADY_IN_USE
                 );
 
                 chain_id_history_mapper.insert(preferred_chain_id.clone());
@@ -122,7 +127,7 @@ pub trait UtilsModule: super::storage::StorageModule {
     fn require_correct_deploy_cost(&self, call_value: &BigUint) {
         require!(
             call_value == &self.deploy_cost().get(),
-            "The given deploy cost is not equal to the standard amount"
+            DEPLOY_COST_NOT_ENOUGH
         );
     }
 
@@ -136,14 +141,11 @@ pub trait UtilsModule: super::storage::StorageModule {
 
     #[inline]
     fn validate_chain_id(&self, chain_id: &ManagedBuffer) {
-        require!(
-            chain_id.len() == 4,
-            "Chain ID length must be four characters"
-        );
+        require!(chain_id.len() == 4, CHAIN_ID_NOT_FOUR_CHAR_LONG);
 
         require!(
             self.is_chain_id_lowercase_alphanumeric(chain_id),
-            "Chain ID is not lowercase alphanumeric"
+            CHAIN_ID_NOT_LOWERCASE_ALPHANUMERIC
         );
     }
 

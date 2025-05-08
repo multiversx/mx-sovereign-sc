@@ -1,6 +1,12 @@
 use chain_config::validator_rules::ValidatorRulesModule;
 use common_test_setup::constants::CHAIN_CONFIG_ADDRESS;
 use cross_chain::storage::CrossChainStorage;
+use error_messages::{
+    CALLER_DID_NOT_DEPLOY_ANY_SOV_CHAIN, CHAIN_CONFIG_ALREADY_DEPLOYED, CHAIN_ID_ALREADY_IN_USE,
+    CHAIN_ID_NOT_FOUR_CHAR_LONG, CHAIN_ID_NOT_LOWERCASE_ALPHANUMERIC, DEPLOY_COST_NOT_ENOUGH,
+    ESDT_SAFE_ALREADY_DEPLOYED, ESDT_SAFE_NOT_DEPLOYED, FEE_MARKET_ALREADY_DEPLOYED,
+    HEADER_VERIFIER_ALREADY_DEPLOYED, HEADER_VERIFIER_NOT_DEPLOYED,
+};
 use multiversx_sc::{
     imports::OptionalValue,
     types::{
@@ -436,7 +442,7 @@ fn update_sovereign_config_no_chain_config_deployed() {
 
     state.update_sovereign_config(
         SovereignConfig::default_config(),
-        Some("The current caller has not deployed any Sovereign Chain"),
+        Some(CALLER_DID_NOT_DEPLOY_ANY_SOV_CHAIN),
     );
 }
 
@@ -656,7 +662,7 @@ fn deploy_phase_one_deploy_cost_too_low() {
         &deploy_cost,
         None,
         &SovereignConfig::default_config(),
-        Some("The given deploy cost is not equal to the standard amount"),
+        Some(DEPLOY_COST_NOT_ENOUGH),
     );
 }
 
@@ -676,7 +682,7 @@ fn deploy_phase_one_chain_config_already_deployed() {
         &deploy_cost,
         None,
         &config,
-        Some("The Chain-Config contract is already deployed"),
+        Some(CHAIN_CONFIG_ALREADY_DEPLOYED),
     );
 }
 
@@ -694,7 +700,7 @@ fn deploy_phase_one_preferred_chain_id_not_lowercase_alphanumeric() {
         &deploy_cost,
         Some(ManagedBuffer::from("CHID")),
         &SovereignConfig::default_config(),
-        Some("Chain ID is not lowercase alphanumeric"),
+        Some(CHAIN_ID_NOT_LOWERCASE_ALPHANUMERIC),
     );
 }
 
@@ -712,7 +718,7 @@ fn deploy_phase_one_preferred_chain_id_not_correct_length() {
         &deploy_cost,
         Some(ManagedBuffer::from("CHAINID")),
         &SovereignConfig::default_config(),
-        Some("Chain ID length must be four characters"),
+        Some(CHAIN_ID_NOT_FOUR_CHAR_LONG),
     );
 }
 
@@ -802,7 +808,7 @@ fn deploy_phase_one_with_chain_id_used() {
         &deploy_cost,
         Some(ManagedBuffer::from(CHAIN_ID)),
         &SovereignConfig::default_config(),
-        Some("This chain ID is already used"),
+        Some(CHAIN_ID_ALREADY_IN_USE),
     );
 }
 #[test]
@@ -812,9 +818,7 @@ fn deploy_phase_two_without_first_phase() {
     state.deploy_chain_factory();
     state.finish_setup();
 
-    state.deploy_phase_two(Some(
-        "The current caller has not deployed any Sovereign Chain",
-    ));
+    state.deploy_phase_two(Some(CALLER_DID_NOT_DEPLOY_ANY_SOV_CHAIN));
 }
 
 #[test]
@@ -860,7 +864,7 @@ fn deploy_phase_two_header_already_deployed() {
     state.deploy_header_verifier_template();
 
     state.deploy_phase_two(None);
-    state.deploy_phase_two(Some("The Header-Verifier contract is already deployed"));
+    state.deploy_phase_two(Some(HEADER_VERIFIER_ALREADY_DEPLOYED));
 }
 
 #[test]
@@ -902,10 +906,7 @@ fn deploy_phase_three_without_phase_one() {
     state.deploy_chain_config_template();
     state.finish_setup();
 
-    state.deploy_phase_three(
-        OptionalValue::None,
-        Some("The Header-Verifier SC is not deployed, you skipped the second phase"),
-    );
+    state.deploy_phase_three(OptionalValue::None, Some(HEADER_VERIFIER_NOT_DEPLOYED));
 }
 
 #[test]
@@ -922,10 +923,7 @@ fn deploy_phase_three_without_phase_two() {
     state.deploy_header_verifier_template();
     state.deploy_mvx_esdt_safe_template(&HEADER_VERIFIER_ADDRESS, OptionalValue::None);
 
-    state.deploy_phase_three(
-        OptionalValue::None,
-        Some("The Header-Verifier SC is not deployed, you skipped the second phase"),
-    );
+    state.deploy_phase_three(OptionalValue::None, Some(HEADER_VERIFIER_NOT_DEPLOYED));
 }
 
 #[test]
@@ -944,10 +942,7 @@ fn deploy_phase_three_already_deployed() {
 
     state.deploy_phase_two(None);
     state.deploy_phase_three(OptionalValue::None, None);
-    state.deploy_phase_three(
-        OptionalValue::None,
-        Some("The ESDT-Safe SC is already deployed"),
-    );
+    state.deploy_phase_three(OptionalValue::None, Some(ESDT_SAFE_ALREADY_DEPLOYED));
 }
 
 #[test]
@@ -999,10 +994,7 @@ fn deploy_phase_four_without_previous_phase() {
     state.deploy_mvx_esdt_safe_template(&HEADER_VERIFIER_ADDRESS, OptionalValue::None);
 
     state.deploy_phase_two(None);
-    state.deploy_phase_four(
-        None,
-        Some("The ESDT-Safe SC is not deployed, you skipped the third phase"),
-    );
+    state.deploy_phase_four(None, Some(ESDT_SAFE_NOT_DEPLOYED));
 }
 
 #[test]
@@ -1023,5 +1015,5 @@ fn deploy_phase_four_fee_market_already_deployed() {
     state.deploy_phase_two(None);
     state.deploy_phase_three(OptionalValue::None, None);
     state.deploy_phase_four(None, None);
-    state.deploy_phase_four(None, Some("The Fee-Market SC is already deployed"));
+    state.deploy_phase_four(None, Some(FEE_MARKET_ALREADY_DEPLOYED));
 }

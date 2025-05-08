@@ -60,3 +60,16 @@ pub const CHAIN_CONFIG_ALREADY_DEPLOYED: &str = "The Chain-Config contract is al
 pub const HEADER_VERIFIER_ALREADY_DEPLOYED: &str =
     "The Header-Verifier contract is already deployed";
 pub const FEE_MARKET_ALREADY_DEPLOYED: &str = "The Fee-Market SC is already deployed";
+pub const ESDT_SAFE_ALREADY_DEPLOYED: &str = "The ESDT-Safe SC is already deployed";
+pub const CHAIN_ID_NOT_FOUR_CHAR_LONG: &str = "Chain ID length must be four characters";
+pub const CHAIN_ID_NOT_LOWERCASE_ALPHANUMERIC: &str = "Chain ID is not lowercase alphanumeric";
+pub const CHAIN_ID_ALREADY_IN_USE: &str = "This chain ID is already used";
+pub const CHAIN_CONFIG_NOT_DEPLOYED: &str = "The Chain-Config SC is not deployed";
+pub const CALLER_DID_NOT_DEPLOY_ANY_SOV_CHAIN: &str =
+    "The current caller has not deployed any Sovereign Chain";
+pub const HEADER_VERIFIER_NOT_DEPLOYED: &str =
+    "The Header-Verifier SC is not deployed, you skipped the second phase";
+pub const ESDT_SAFE_NOT_DEPLOYED: &str =
+    "The ESDT-Safe SC is not deployed, you skipped the third phase";
+pub const DEPLOY_COST_NOT_ENOUGH: &str =
+    "The given deploy cost is not equal to the standard amount";

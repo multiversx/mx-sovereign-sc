@@ -1,6 +1,9 @@
 use crate::err_msg;
 use core::ops::Deref;
-use error_messages::CHAIN_CONFIG_ALREADY_DEPLOYED;
+use error_messages::{
+    CHAIN_CONFIG_ALREADY_DEPLOYED, ESDT_SAFE_ALREADY_DEPLOYED, FEE_MARKET_ALREADY_DEPLOYED,
+    HEADER_VERIFIER_ALREADY_DEPLOYED,
+};
 use proxies::{chain_factory_proxy::ChainFactoryContractProxy, fee_market_proxy::FeeStruct};
 
 use multiversx_sc::{imports::OptionalValue, require};
@@ -97,7 +100,7 @@ pub trait PhasesModule:
         self.require_phase_one_completed(&caller);
         require!(
             !self.is_contract_deployed(&caller, ScArray::HeaderVerifier),
-            HEADER_VERIFIER_CONTRACT_ALREADY_DEPLOYED
+            HEADER_VERIFIER_ALREADY_DEPLOYED
         );
 
         let chain_config_address = self.get_contract_address(&caller, ScArray::ChainConfig);
@@ -117,7 +120,7 @@ pub trait PhasesModule:
         self.require_phase_two_completed(&caller);
         require!(
             !self.is_contract_deployed(&caller, ScArray::ESDTSafe),
-            "The ESDT-Safe SC is already deployed"
+            ESDT_SAFE_ALREADY_DEPLOYED
         );
 
         let header_verifier_address = self.get_contract_address(&caller, ScArray::HeaderVerifier);
