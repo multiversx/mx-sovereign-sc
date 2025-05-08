@@ -142,7 +142,7 @@ pub trait UtilsModule: super::storage::StorageModule {
         );
 
         require!(
-            self.is_chain_id_lowercase_alphanumeric(&chain_id),
+            self.is_chain_id_lowercase_alphanumeric(chain_id),
             "Chain ID is not lowercase alphanumeric"
         );
     }
