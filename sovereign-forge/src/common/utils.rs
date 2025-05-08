@@ -89,8 +89,7 @@ pub trait UtilsModule: super::storage::StorageModule {
         match opt_preferred_chain_id {
             Some(preferred_chain_id) => {
                 require!(
-                    preferred_chain_id.len() == 4
-                        && self.is_chain_id_lowercase_alphanumeric(&preferred_chain_id),
+                    self.is_valid_chain_id(&preferred_chain_id),
                     "The given chain-id is not lower case alphanumeric"
                 );
 
@@ -136,6 +135,11 @@ pub trait UtilsModule: super::storage::StorageModule {
         let shard_id = blockchain_api.get_shard_of_address(&caller);
 
         self.chain_factories(shard_id).get()
+    }
+
+    #[inline]
+    fn is_valid_chain_id(&self, chain_id: &ManagedBuffer) -> bool {
+        chain_id.len() == 4 && self.is_chain_id_lowercase_alphanumeric(&chain_id)
     }
 
     fn is_chain_id_lowercase_alphanumeric(&self, chain_id: &ManagedBuffer) -> bool {
