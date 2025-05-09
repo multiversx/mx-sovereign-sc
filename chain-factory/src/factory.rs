@@ -72,7 +72,7 @@ pub trait FactoryModule: only_admin::OnlyAdminModule {
         sov_token_prefix: ManagedBuffer,
         opt_config: Option<EsdtSafeConfig<Self::Api>>,
     ) -> ManagedAddress {
-        let source_address = self.enshrine_esdt_safe_template().get();
+        let source_address = self.mvx_esdt_safe_template().get();
         let metadata = self.blockchain().get_code_metadata(&source_address);
 
         self.tx()
@@ -98,7 +98,7 @@ pub trait FactoryModule: only_admin::OnlyAdminModule {
         header_verifier_address: ManagedAddress,
         opt_config: OptionalValue<EsdtSafeConfig<Self::Api>>,
     ) -> ManagedAddress {
-        let source_address = self.enshrine_esdt_safe_template().get();
+        let source_address = self.mvx_esdt_safe_template().get();
         let metadata = self.blockchain().get_code_metadata(&source_address);
 
         let esdt_safe_address = self
@@ -111,7 +111,6 @@ pub trait FactoryModule: only_admin::OnlyAdminModule {
             .returns(ReturnsNewManagedAddress)
             .sync_call();
 
-        // TODO: mvx or sov ?
         self.tx()
             .to(header_verifier_address)
             .typed(HeaderverifierProxy)
@@ -153,8 +152,32 @@ pub trait FactoryModule: only_admin::OnlyAdminModule {
     // TODO:
     #[only_admin]
     #[endpoint(completeSetupPhase)]
-    fn complete_setup_phase(&self) {
-        // TODO: will have to call each contract's endpoint to finish setup phase
+    fn complete_setup_phase(
+        &self,
+        chain_config_address: ManagedAddress,
+        header_verifier_address: ManagedAddress,
+        mvx_esdt_safe_address: ManagedAddress,
+        fee_market_address: ManagedAddress,
+    ) {
+        self.tx()
+            .to(chain_config_address)
+            .typed(ChainConfigContractProxy)
+            .complete_setup_phase(header_verifier_address.clone())
+            .sync_call();
+
+        self.tx()
+            .to(header_verifier_address)
+            .typed(HeaderverifierProxy)
+            .complete_setup_phase()
+            .sync_call();
+
+        self.tx()
+            .to(mvx_esdt_safe_address)
+            .typed(MvxEsdtSafeProxy)
+            .complete_setup_phase()
+            .sync_call();
+
+        // self.tx().to(fee_market_address).typed(FeeMarketProxy).comple
     }
 
     #[storage_mapper("chainConfigTemplate")]
@@ -164,7 +187,7 @@ pub trait FactoryModule: only_admin::OnlyAdminModule {
     fn header_verifier_template(&self) -> SingleValueMapper<ManagedAddress>;
 
     #[storage_mapper("crossChainOperationsTemplate")]
-    fn enshrine_esdt_safe_template(&self) -> SingleValueMapper<ManagedAddress>;
+    fn mvx_esdt_safe_template(&self) -> SingleValueMapper<ManagedAddress>;
 
     #[storage_mapper("feeMarketTemplate")]
     fn fee_market_template(&self) -> SingleValueMapper<ManagedAddress>;
