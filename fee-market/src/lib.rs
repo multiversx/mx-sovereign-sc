@@ -41,6 +41,7 @@ pub trait FeeMarket:
     }
 
     #[only_owner]
+    #[endpoint(completeSetupPhase)]
     fn complete_setup_phase(&self, header_verifier_address: ManagedAddress) {
         if self.is_setup_phase_complete() {
             return;
