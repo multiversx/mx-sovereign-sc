@@ -43,10 +43,17 @@ pub trait PhasesModule:
             );
         }
 
+        let caller = self.blockchain().get_caller();
+
         self.tx()
             .to(self.get_chain_factory_address())
             .typed(ChainFactoryContractProxy)
-            .complete_setup_phase()
+            .complete_setup_phase(
+                self.get_contract_address(&caller, ScArray::ChainConfig),
+                self.get_contract_address(&caller, ScArray::HeaderVerifier),
+                self.get_contract_address(&caller, ScArray::ESDTSafe),
+                self.get_contract_address(&caller, ScArray::FeeMarket),
+            )
             .sync_call();
 
         self.setup_phase_complete().set(true);
