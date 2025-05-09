@@ -166,7 +166,7 @@ pub trait FactoryModule: only_admin::OnlyAdminModule {
             .sync_call();
 
         self.tx()
-            .to(header_verifier_address)
+            .to(header_verifier_address.clone())
             .typed(HeaderverifierProxy)
             .complete_setup_phase()
             .sync_call();
@@ -177,7 +177,11 @@ pub trait FactoryModule: only_admin::OnlyAdminModule {
             .complete_setup_phase()
             .sync_call();
 
-        // self.tx().to(fee_market_address).typed(FeeMarketProxy).comple
+        self.tx()
+            .to(fee_market_address)
+            .typed(FeeMarketProxy)
+            .complete_setup_phase(header_verifier_address)
+            .sync_call();
     }
 
     #[storage_mapper("chainConfigTemplate")]
