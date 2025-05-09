@@ -1,5 +1,0 @@
-# Pem files are used for interactions, but shouldn't be committed
-*.pem
-
-# State files are used for interactions, but shouldn't be committed
-state.toml

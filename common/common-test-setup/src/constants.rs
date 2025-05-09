@@ -24,6 +24,14 @@ pub const MVX_ESDT_SAFE_CODE_PATH: MxscPath =
     MxscPath::new("../mvx-esdt-safe/output/mvx-esdt-safe.mxsc.json");
 pub const SOV_ESDT_SAFE_CODE_PATH: MxscPath =
     MxscPath::new("../sov-esdt-safe/output/to-sovereign.mxsc.json");
+pub const CHAIN_FACTORY_CODE_PATH: MxscPath =
+    MxscPath::new("../chain-factory/output/chain-factory.mxsc.json");
+pub const SOVEREIGN_FORGE_CODE_PATH: MxscPath =
+    MxscPath::new("../sovereign-forge/output/sovereign-forge.mxsc.json");
+pub const ENSHRINE_ESDT_SAFE_CODE_PATH: MxscPath =
+    MxscPath::new("../enshrine-esdt-safe/output/enshrine-esdt-safe.mxsc.json");
+pub const TOKEN_HANDLER_CODE_PATH: MxscPath =
+    MxscPath::new("../token-handler/output/token-handler.mxsc.json");
 
 pub const FEE_TOKEN: &str = "INTERNS-eaad15";
 pub const FIRST_TEST_TOKEN: &str = "GREEN-0e161c";

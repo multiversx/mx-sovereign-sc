@@ -15,11 +15,6 @@ path = "src/interact.rs"
 [dependencies]
 toml = "0.8.6"
 
-[dependencies.base64]
-version = "0.21.0"
-default-features = false
-features = ["alloc"]
-
 [dependencies.mvx-esdt-safe]
 path = "../mvx-esdt-safe"
 
@@ -57,6 +52,9 @@ path = "../common/error-messages"
 
 [dependencies.common-test-setup]
 path = "../common/common-test-setup"
+
+[dependencies.common-interactor]
+path = "../common/common-interactor"
 
 [features]
 chain-simulator-tests = []
