@@ -331,6 +331,7 @@ version = "0.1.0"
 dependencies = [
  "base64 0.21.7",
  "common-test-setup",
+ "error-messages",
  "multiversx-sc",
  "multiversx-sc-snippets",
  "proxies",

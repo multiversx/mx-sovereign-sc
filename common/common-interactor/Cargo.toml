@@ -24,6 +24,9 @@ path = "../structs"
 [dependencies.proxies]
 path = "../proxies"
 
+[dependencies.error-messages]
+path = "../error-messages"
+
 [dependencies.base64]
 version = "0.21.0"
 

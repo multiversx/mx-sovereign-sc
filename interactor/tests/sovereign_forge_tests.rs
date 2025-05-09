@@ -1,5 +1,5 @@
 use common_interactor::{
-    common_interactor_sovereign::CommonInteractorTrait, interactor_config::Config,
+    common_sovereign_interactor::CommonInteractorTrait, interactor_config::Config,
 };
 use multiversx_sc::imports::OptionalValue;
 use multiversx_sc_snippets::imports::tokio;

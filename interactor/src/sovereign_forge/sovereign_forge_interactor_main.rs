@@ -1,7 +1,7 @@
 #![allow(non_snake_case)]
 use common_interactor::interactor_state::State;
 use common_interactor::{
-    common_interactor_sovereign::CommonInteractorTrait, interactor_config::Config,
+    common_sovereign_interactor::CommonInteractorTrait, interactor_config::Config,
 };
 use common_test_setup::constants::SOVEREIGN_FORGE_CODE_PATH;
 use multiversx_sc_snippets::imports::*;

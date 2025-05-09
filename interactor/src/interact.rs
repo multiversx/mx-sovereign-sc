@@ -3,7 +3,7 @@ pub mod mvx_esdt_safe;
 pub mod sovereign_forge;
 
 use common_interactor::{
-    common_interactor_sovereign::CommonInteractorTrait, constants::TOKEN_ID,
+    common_sovereign_interactor::CommonInteractorTrait, constants::TOKEN_ID,
     interactor_config::Config,
 };
 use enshrine_esdt_safe::enshrine_esdt_safe_interactor::EnshrineEsdtSafeInteract;

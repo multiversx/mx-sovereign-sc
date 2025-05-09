@@ -1,13 +1,14 @@
 #![allow(non_snake_case)]
 #![allow(unused)]
 
-use common_interactor::common_interactor_sovereign::CommonInteractorTrait;
+use common_interactor::common_sovereign_interactor::CommonInteractorTrait;
 use common_interactor::constants::TOKEN_ID;
 use common_interactor::interactor_config::Config;
 use common_interactor::interactor_state::State;
 use common_test_setup::constants::ENSHRINE_ESDT_SAFE_CODE_PATH;
 use fee_market_proxy::*;
 use multiversx_sc_snippets::imports::*;
+use proxies::enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy;
 use proxies::*;
 use structs::aliases::{OptionalTransferData, PaymentsVec};
 use structs::configs::EsdtSafeConfig;
@@ -87,7 +88,7 @@ impl EnshrineEsdtSafeInteract {
             .to(self.state.current_enshrine_esdt_safe_address())
             .from(&self.wallet_address)
             .gas(30_000_000u64)
-            .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
+            .typed(EnshrineEsdtSafeProxy)
             .upgrade()
             .code(ENSHRINE_ESDT_SAFE_CODE_PATH)
             .code_metadata(CodeMetadata::all())
@@ -107,7 +108,7 @@ impl EnshrineEsdtSafeInteract {
             .from(&self.wallet_address)
             .to(self.state.current_enshrine_esdt_safe_address())
             .gas(30_000_000u64)
-            .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
+            .typed(EnshrineEsdtSafeProxy)
             .set_fee_market_address(fee_market_address)
             .returns(ReturnsResultUnmanaged)
             .run()
@@ -125,7 +126,7 @@ impl EnshrineEsdtSafeInteract {
             .from(&self.wallet_address)
             .to(self.state.current_enshrine_esdt_safe_address())
             .gas(30_000_000u64)
-            .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
+            .typed(EnshrineEsdtSafeProxy)
             .set_header_verifier_address(header_verifier_address)
             .returns(ReturnsResultUnmanaged)
             .run()
@@ -161,7 +162,7 @@ impl EnshrineEsdtSafeInteract {
             .from(&self.wallet_address)
             .to(self.state.current_enshrine_esdt_safe_address())
             .gas(30_000_000u64)
-            .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
+            .typed(EnshrineEsdtSafeProxy)
             .deposit(to, transfer_data)
             .payment(payments)
             .returns(ReturnsHandledOrError::new())
@@ -185,7 +186,7 @@ impl EnshrineEsdtSafeInteract {
             .from(&self.wallet_address)
             .to(self.state.current_enshrine_esdt_safe_address())
             .gas(30_000_000u64)
-            .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
+            .typed(EnshrineEsdtSafeProxy)
             .execute_operations(hash_of_hashes, operation)
             .returns(ReturnsResultUnmanaged)
             .run()
@@ -207,7 +208,7 @@ impl EnshrineEsdtSafeInteract {
             .from(&self.wallet_address)
             .to(self.state.current_enshrine_esdt_safe_address())
             .gas(30_000_000u64)
-            .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
+            .typed(EnshrineEsdtSafeProxy)
             .register_new_token_id(tokens)
             .payment((
                 TokenIdentifier::from(token_id.as_str()),
@@ -244,7 +245,7 @@ impl EnshrineEsdtSafeInteract {
             .from(&self.wallet_address)
             .to(self.state.current_enshrine_esdt_safe_address())
             .gas(30_000_000u64)
-            .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
+            .typed(EnshrineEsdtSafeProxy)
             .add_tokens_to_whitelist(tokens)
             .returns(ReturnsResultUnmanaged)
             .run()
@@ -262,7 +263,7 @@ impl EnshrineEsdtSafeInteract {
             .from(&self.wallet_address)
             .to(self.state.current_enshrine_esdt_safe_address())
             .gas(30_000_000u64)
-            .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
+            .typed(EnshrineEsdtSafeProxy)
             .remove_tokens_from_whitelist(tokens)
             .returns(ReturnsResultUnmanaged)
             .run()
@@ -280,7 +281,7 @@ impl EnshrineEsdtSafeInteract {
             .from(&self.wallet_address)
             .to(self.state.current_enshrine_esdt_safe_address())
             .gas(30_000_000u64)
-            .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
+            .typed(EnshrineEsdtSafeProxy)
             .add_tokens_to_blacklist(tokens)
             .returns(ReturnsResultUnmanaged)
             .run()
@@ -298,7 +299,7 @@ impl EnshrineEsdtSafeInteract {
             .from(&self.wallet_address)
             .to(self.state.current_enshrine_esdt_safe_address())
             .gas(30_000_000u64)
-            .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
+            .typed(EnshrineEsdtSafeProxy)
             .remove_tokens_from_blacklist(tokens)
             .returns(ReturnsResultUnmanaged)
             .run()
@@ -312,7 +313,7 @@ impl EnshrineEsdtSafeInteract {
             .interactor
             .query()
             .to(self.state.current_enshrine_esdt_safe_address())
-            .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
+            .typed(EnshrineEsdtSafeProxy)
             .token_whitelist()
             .returns(ReturnsResultUnmanaged)
             .run()
@@ -326,7 +327,7 @@ impl EnshrineEsdtSafeInteract {
             .interactor
             .query()
             .to(self.state.current_enshrine_esdt_safe_address())
-            .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
+            .typed(EnshrineEsdtSafeProxy)
             .token_blacklist()
             .returns(ReturnsResultUnmanaged)
             .run()
@@ -342,7 +343,7 @@ impl EnshrineEsdtSafeInteract {
             .from(&self.wallet_address)
             .to(self.state.current_enshrine_esdt_safe_address())
             .gas(30_000_000u64)
-            .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
+            .typed(EnshrineEsdtSafeProxy)
             .pause_endpoint()
             .returns(ReturnsResultUnmanaged)
             .run()
@@ -358,7 +359,7 @@ impl EnshrineEsdtSafeInteract {
             .from(&self.wallet_address)
             .to(self.state.current_enshrine_esdt_safe_address())
             .gas(30_000_000u64)
-            .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
+            .typed(EnshrineEsdtSafeProxy)
             .unpause_endpoint()
             .returns(ReturnsResultUnmanaged)
             .run()
@@ -372,7 +373,7 @@ impl EnshrineEsdtSafeInteract {
             .interactor
             .query()
             .to(self.state.current_enshrine_esdt_safe_address())
-            .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
+            .typed(EnshrineEsdtSafeProxy)
             .paused_status()
             .returns(ReturnsResultUnmanaged)
             .run()

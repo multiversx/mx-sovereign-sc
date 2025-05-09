@@ -1,4 +1,4 @@
-use common_interactor::common_interactor_sovereign::CommonInteractorTrait;
+use common_interactor::common_sovereign_interactor::CommonInteractorTrait;
 use common_interactor::interactor_config::Config;
 use common_test_setup::constants::{
     FEE_TOKEN, FIRST_TEST_TOKEN, ISSUE_COST, OPERATION_HASH_STATUS_STORAGE_KEY, SECOND_TEST_TOKEN,

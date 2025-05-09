@@ -1,4 +1,4 @@
-use common_interactor::common_interactor_sovereign::CommonInteractorTrait;
+use common_interactor::common_sovereign_interactor::CommonInteractorTrait;
 use multiversx_sc_snippets::imports::*;
 use multiversx_sc_snippets::sdk::gateway::SetStateAccount;
 use proxies::fee_market_proxy::FeeStruct;

@@ -472,7 +472,7 @@ pub trait CommonInteractorTrait {
         }
     }
 
-    // Key and value should be in hex
+    /// Key and value should be in hex
     async fn check_account_storage(
         &mut self,
         address: Address,
