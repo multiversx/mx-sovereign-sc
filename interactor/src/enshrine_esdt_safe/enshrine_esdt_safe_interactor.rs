@@ -6,13 +6,16 @@ use common_interactor::constants::TOKEN_ID;
 use common_interactor::interactor_config::Config;
 use common_interactor::interactor_state::State;
 use common_test_setup::constants::ENSHRINE_ESDT_SAFE_CODE_PATH;
+use common_test_setup::RegisterTokenArgs;
 use fee_market_proxy::*;
 use multiversx_sc_snippets::imports::*;
 use proxies::enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy;
 use proxies::*;
 use structs::aliases::{OptionalTransferData, PaymentsVec};
 use structs::configs::EsdtSafeConfig;
-use structs::operation::{Operation, OperationData};
+use structs::operation::{self, Operation, OperationData};
+
+use crate::sovereign_forge;
 
 pub struct EnshrineEsdtSafeInteract {
     pub interactor: Interactor,
@@ -62,25 +65,6 @@ impl EnshrineEsdtSafeInteract {
         }
     }
 
-    pub async fn deploy_all(
-        &mut self,
-        is_sov_chain: bool,
-        opt_config: Option<EsdtSafeConfig<StaticApi>>,
-    ) {
-        self.deploy_chain_factory().await;
-        self.deploy_token_handler().await;
-        self.deploy_enshrine_esdt(is_sov_chain, opt_config).await;
-        self.deploy_header_verifier().await;
-        self.deploy_fee_market(None).await;
-        self.unpause_endpoint().await;
-    }
-
-    pub async fn deploy_setup(&mut self, opt_config: Option<EsdtSafeConfig<StaticApi>>) {
-        self.deploy_token_handler().await;
-        self.deploy_enshrine_esdt(false, opt_config).await;
-        self.unpause_endpoint().await;
-    }
-
     pub async fn upgrade(&mut self) {
         let response = self
             .interactor
@@ -99,9 +83,10 @@ impl EnshrineEsdtSafeInteract {
         println!("Result: {response:?}");
     }
 
-    pub async fn set_fee_market_address_in_enshrine_esdt_safe(&mut self) {
-        let fee_market_address = self.state.current_fee_market_address();
-
+    pub async fn set_fee_market_address_in_enshrine_esdt_safe(
+        &mut self,
+        fee_market_address: Bech32Address,
+    ) {
         let response = self
             .interactor
             .tx()
@@ -117,9 +102,10 @@ impl EnshrineEsdtSafeInteract {
         println!("Result: {response:?}");
     }
 
-    pub async fn set_header_verifier_address_in_enshrine_esdt_safe(&mut self) {
-        let header_verifier_address = self.state.current_header_verifier_address();
-
+    pub async fn set_header_verifier_address_in_enshrine_esdt_safe(
+        &mut self,
+        header_verifier_address: Bech32Address,
+    ) {
         let response = self
             .interactor
             .tx()
@@ -137,25 +123,11 @@ impl EnshrineEsdtSafeInteract {
 
     pub async fn deposit(
         &mut self,
+        payments: PaymentsVec<StaticApi>,
+        to: Bech32Address,
         transfer_data: OptionalTransferData<StaticApi>,
         error_wanted: Option<&str>,
     ) {
-        let token_id = TOKEN_ID;
-        let token_nonce = 0u64;
-        let token_amount = BigUint::<StaticApi>::from(20u64);
-        let to = &self.bob_address;
-        let mut payments = PaymentsVec::new();
-        payments.push(EsdtTokenPayment::new(
-            TokenIdentifier::from(token_id),
-            token_nonce,
-            token_amount.clone(),
-        ));
-        payments.push(EsdtTokenPayment::new(
-            TokenIdentifier::from(token_id),
-            token_nonce,
-            BigUint::from(30u64),
-        ));
-
         let response = self
             .interactor
             .tx()
@@ -172,14 +144,11 @@ impl EnshrineEsdtSafeInteract {
         self.assert_expected_error_message(response, error_wanted);
     }
 
-    pub async fn execute_operations(&mut self) {
-        let hash_of_hashes = ManagedBuffer::new_from_bytes(&b""[..]);
-        let operation = Operation::new(
-            ManagedAddress::zero(),
-            ManagedVec::new(),
-            OperationData::new(0, ManagedAddress::zero(), Option::None),
-        );
-
+    pub async fn execute_operations(
+        &mut self,
+        hash_of_hashes: ManagedBuffer<StaticApi>,
+        operation: Operation<StaticApi>,
+    ) {
         let response = self
             .interactor
             .tx()
@@ -195,13 +164,13 @@ impl EnshrineEsdtSafeInteract {
         println!("Result: {response:?}");
     }
 
-    pub async fn register_new_token_id(&mut self) {
-        let token_id = String::new();
-        let token_nonce = 0u64;
-        let token_amount = BigUint::<StaticApi>::from(0u128);
-
-        let tokens = MultiValueVec::from(vec![TokenIdentifier::from_esdt_bytes(&b""[..])]);
-
+    pub async fn register_new_token_id(
+        &mut self,
+        payment_token_id: TokenIdentifier<StaticApi>,
+        payment_token_nonce: u64,
+        payment_amount: BigUint<StaticApi>,
+        token_identifiers: MultiValueEncoded<StaticApi, TokenIdentifier<StaticApi>>,
+    ) {
         let response = self
             .interactor
             .tx()
@@ -209,12 +178,8 @@ impl EnshrineEsdtSafeInteract {
             .to(self.state.current_enshrine_esdt_safe_address())
             .gas(30_000_000u64)
             .typed(EnshrineEsdtSafeProxy)
-            .register_new_token_id(tokens)
-            .payment((
-                TokenIdentifier::from(token_id.as_str()),
-                token_nonce,
-                token_amount,
-            ))
+            .register_new_token_id(token_identifiers)
+            .payment((payment_token_id, payment_token_nonce, payment_amount))
             .returns(ReturnsResultUnmanaged)
             .run()
             .await;
@@ -222,23 +187,10 @@ impl EnshrineEsdtSafeInteract {
         println!("Result: {response:?}");
     }
 
-    pub async fn add_tokens_to_whitelist(&mut self, token_id: &[u8]) {
-        let tokens;
-
-        match token_id {
-            WHITELIST_TOKEN_ID => {
-                tokens =
-                    MultiValueVec::from(vec![TokenIdentifier::from_esdt_bytes(WHITELIST_TOKEN_ID)]);
-            }
-            TOKEN_ID => {
-                tokens = MultiValueVec::from(vec![TokenIdentifier::from_esdt_bytes(TOKEN_ID)]);
-            }
-            _ => {
-                tokens = MultiValueVec::from(vec![TokenIdentifier::from_esdt_bytes(&b""[..])]);
-                println!("Token not in whitelist");
-            }
-        }
-
+    pub async fn add_tokens_to_whitelist(
+        &mut self,
+        tokens: MultiValueVec<TokenIdentifier<StaticApi>>,
+    ) {
         let response = self
             .interactor
             .tx()
@@ -254,9 +206,10 @@ impl EnshrineEsdtSafeInteract {
         println!("Result: {response:?}");
     }
 
-    pub async fn remove_tokens_from_whitelist(&mut self) {
-        let tokens = MultiValueVec::from(vec![TokenIdentifier::from_esdt_bytes(&b""[..])]);
-
+    pub async fn remove_tokens_from_whitelist(
+        &mut self,
+        tokens: MultiValueVec<TokenIdentifier<StaticApi>>,
+    ) {
         let response = self
             .interactor
             .tx()
@@ -272,9 +225,10 @@ impl EnshrineEsdtSafeInteract {
         println!("Result: {response:?}");
     }
 
-    pub async fn add_tokens_to_blacklist(&mut self) {
-        let tokens = MultiValueVec::from(vec![TokenIdentifier::from_esdt_bytes(&b""[..])]);
-
+    pub async fn add_tokens_to_blacklist(
+        &mut self,
+        tokens: MultiValueVec<TokenIdentifier<StaticApi>>,
+    ) {
         let response = self
             .interactor
             .tx()
@@ -290,9 +244,10 @@ impl EnshrineEsdtSafeInteract {
         println!("Result: {response:?}");
     }
 
-    pub async fn remove_tokens_from_blacklist(&mut self) {
-        let tokens = MultiValueVec::from(vec![TokenIdentifier::from_esdt_bytes(&b""[..])]);
-
+    pub async fn remove_tokens_from_blacklist(
+        &mut self,
+        tokens: MultiValueVec<TokenIdentifier<StaticApi>>,
+    ) {
         let response = self
             .interactor
             .tx()

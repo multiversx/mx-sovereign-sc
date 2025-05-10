@@ -10,7 +10,7 @@ use proxies::sovereign_forge_proxy::SovereignForgeProxy;
 pub struct SovereignForgeInteract {
     interactor: Interactor,
     alice_address: Address,
-    state: State,
+    pub state: State,
 }
 impl CommonInteractorTrait for SovereignForgeInteract {
     fn interactor(&mut self) -> &mut Interactor {
