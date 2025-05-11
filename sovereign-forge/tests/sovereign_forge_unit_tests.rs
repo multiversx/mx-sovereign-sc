@@ -57,7 +57,6 @@ const TOKEN_HANDLER_ADDRESS: TestSCAddress = TestSCAddress::new("token-handler")
 
 const CHAIN_ID: &str = "svch";
 const BALANCE: u128 = 100_000_000_000_000_000;
-const DEPLOY_COST: u64 = 100_000;
 
 fn world() -> ScenarioWorld {
     let mut blockchain = ScenarioWorld::new();
@@ -117,19 +116,7 @@ impl SovereignForgeTestState {
         self
     }
 
-    fn deploy_sovereign_forge(&mut self) -> &mut Self {
-        self.world
-            .tx()
-            .from(OWNER_ADDRESS)
-            .typed(SovereignForgeProxy)
-            .init(DEPLOY_COST)
-            .code(FORGE_CODE_PATH)
-            .new_address(FORGE_ADDRESS)
-            .run();
-
-        self
-    }
-
+   
     fn deploy_chain_config_template(&mut self) -> &mut Self {
         self.world
             .tx()

@@ -54,3 +54,6 @@ hex = "0.4"
 
 [dev-dependencies.multiversx-sc-scenario]
 version = "=0.57.1"
+
+[dev-dependencies.common-test-setup]
+path = "../common/common-test-setup"

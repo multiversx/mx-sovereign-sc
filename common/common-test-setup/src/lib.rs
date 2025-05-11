@@ -1,17 +1,20 @@
 #![no_std]
 pub mod constants;
 use constants::{
-    CHAIN_CONFIG_ADDRESS, CHAIN_CONFIG_CODE_PATH, ESDT_SAFE_ADDRESS, FEE_MARKET_ADDRESS,
-    FEE_MARKET_CODE_PATH, HEADER_VERIFIER_ADDRESS, HEADER_VERIFIER_CODE_PATH, OWNER_ADDRESS,
-    TESTING_SC_ADDRESS, TESTING_SC_CODE_PATH,
+    CHAIN_CONFIG_ADDRESS, CHAIN_CONFIG_CODE_PATH, CHAIN_FACTORY_CODE_PATH,
+    CHAIN_FACTORY_SC_ADDRESS, DEPLOY_COST, ENSHRINE_ESDT_SAFE_CODE_PATH, ENSHRINE_SC_ADDRESS,
+    ESDT_SAFE_ADDRESS, FEE_MARKET_ADDRESS, FEE_MARKET_CODE_PATH, HEADER_VERIFIER_ADDRESS,
+    HEADER_VERIFIER_CODE_PATH, MVX_ESDT_SAFE_CODE_PATH, OWNER_ADDRESS, SOVEREIGN_FORGE_CODE_PATH,
+    SOVEREIGN_FORGE_SC_ADDRESS, TESTING_SC_ADDRESS, TESTING_SC_CODE_PATH, TOKEN_HANDLER_CODE_PATH,
+    TOKEN_HANDLER_SC_ADDRESS,
 };
 use cross_chain::storage::CrossChainStorage;
 use header_verifier::{Headerverifier, OperationHashStatus};
 use multiversx_sc_scenario::{
     api::StaticApi,
     imports::{
-        BigUint, ContractBase, EgldOrEsdtTokenIdentifier, EsdtTokenType, ManagedAddress,
-        ManagedBuffer, MultiValue3, TestAddress, TestSCAddress, TestTokenIdentifier,
+        Address, BigUint, ContractBase, EgldOrEsdtTokenIdentifier, EsdtTokenType, ManagedAddress,
+        ManagedBuffer, MultiValue3, MxscPath, OptionalValue, TestSCAddress, TestTokenIdentifier,
         TokenIdentifier, Vec,
     },
     multiversx_chain_vm::crypto_functions::sha256,
@@ -21,11 +24,16 @@ use multiversx_sc_scenario::{
 use mvx_esdt_safe::bridging_mechanism::BridgingMechanism;
 use proxies::{
     chain_config_proxy::ChainConfigContractProxy,
+    chain_factory_proxy::ChainFactoryContractProxy,
+    enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy,
     fee_market_proxy::{FeeMarketProxy, FeeStruct},
     header_verifier_proxy::HeaderverifierProxy,
+    mvx_esdt_safe_proxy::MvxEsdtSafeProxy,
+    sovereign_forge_proxy::SovereignForgeProxy,
     testing_sc_proxy::TestingScProxy,
+    token_handler_proxy::TokenHandlerProxy,
 };
-use structs::configs::SovereignConfig;
+use structs::configs::{EsdtSafeConfig, SovereignConfig};
 
 pub struct RegisterTokenArgs<'a> {
     pub sov_token_id: TokenIdentifier<StaticApi>,
@@ -40,8 +48,9 @@ pub struct BaseSetup {
 }
 
 pub struct AccountSetup<'a> {
-    pub address: TestAddress<'a>,
-    pub esdt_balances: Option<Vec<(TestTokenIdentifier<'a>, BigUint<StaticApi>)>>,
+    pub address: Address,
+    pub code_path: Option<MxscPath<'a>>,
+    pub esdt_balances: Option<Vec<(TestTokenIdentifier<'a>, u64, BigUint<StaticApi>)>>,
     pub egld_balance: Option<BigUint<StaticApi>>,
 }
 
@@ -52,38 +61,86 @@ fn world() -> ScenarioWorld {
     blockchain.register_contract(HEADER_VERIFIER_CODE_PATH, header_verifier::ContractBuilder);
     blockchain.register_contract(CHAIN_CONFIG_CODE_PATH, chain_config::ContractBuilder);
     blockchain.register_contract(TESTING_SC_CODE_PATH, testing_sc::ContractBuilder);
+    blockchain.register_contract(CHAIN_FACTORY_CODE_PATH, chain_factory::ContractBuilder);
+    blockchain.register_contract(SOVEREIGN_FORGE_CODE_PATH, sovereign_forge::ContractBuilder);
+    blockchain.register_contract(
+        ENSHRINE_ESDT_SAFE_CODE_PATH,
+        enshrine_esdt_safe::ContractBuilder,
+    );
+    blockchain.register_contract(TOKEN_HANDLER_CODE_PATH, token_handler::ContractBuilder);
+    blockchain.register_contract(MVX_ESDT_SAFE_CODE_PATH, mvx_esdt_safe::ContractBuilder);
 
     blockchain
 }
 
 impl BaseSetup {
-    #[allow(clippy::new_without_default)]
     pub fn new(account_setups: Vec<AccountSetup>) -> Self {
         let mut world = world();
 
         for acc in account_setups {
-            let mut acc_builder = world.account(acc.address).nonce(1);
+            let mut acc_builder = match acc.code_path {
+                Some(code_path) => world.account(acc.address.clone()).code(code_path).nonce(1),
+                None => world.account(acc.address.clone()).nonce(1),
+            };
 
-            if let Some(esdt_balances) = acc.esdt_balances {
-                for (token_id, amount) in esdt_balances {
-                    acc_builder = acc_builder.esdt_balance(token_id, amount);
+            if let Some(esdt_balances) = &acc.esdt_balances {
+                for (token_id, nonce, amount) in esdt_balances {
+                    acc_builder = if *nonce != 0 {
+                        acc_builder.esdt_nft_balance(
+                            *token_id,
+                            *nonce,
+                            amount.clone(),
+                            ManagedBuffer::new(),
+                        )
+                    } else {
+                        acc_builder.esdt_balance(*token_id, amount.clone())
+                    };
                 }
             }
 
-            if let Some(balance) = acc.egld_balance {
-                acc_builder.balance(balance);
+            if let Some(balance) = &acc.egld_balance {
+                acc_builder.balance(balance.clone());
             }
         }
 
         Self { world }
     }
 
-    pub fn deploy_fee_market(&mut self, fee: Option<FeeStruct<StaticApi>>) -> &mut Self {
+    pub fn deploy_mvx_esdt_safe(
+        &mut self,
+        header_verifier_address: TestSCAddress,
+        opt_config: OptionalValue<EsdtSafeConfig<StaticApi>>,
+    ) -> &mut Self {
+        self.world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .typed(MvxEsdtSafeProxy)
+            .init(header_verifier_address, opt_config)
+            .code(MVX_ESDT_SAFE_CODE_PATH)
+            .new_address(ESDT_SAFE_ADDRESS)
+            .run();
+
+        self.world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .to(ESDT_SAFE_ADDRESS)
+            .typed(MvxEsdtSafeProxy)
+            .unpause_endpoint()
+            .run();
+
+        self
+    }
+
+    pub fn deploy_fee_market(
+        &mut self,
+        fee: Option<FeeStruct<StaticApi>>,
+        esdt_safe_address: TestSCAddress,
+    ) -> &mut Self {
         self.world
             .tx()
             .from(OWNER_ADDRESS)
             .typed(FeeMarketProxy)
-            .init(ESDT_SAFE_ADDRESS, fee)
+            .init(esdt_safe_address, fee)
             .code(FEE_MARKET_CODE_PATH)
             .new_address(FEE_MARKET_ADDRESS)
             .run();
@@ -104,7 +161,7 @@ impl BaseSetup {
         self
     }
 
-    pub fn deploy_header_verifier(&mut self, chain_config_address: &TestSCAddress) -> &mut Self {
+    pub fn deploy_header_verifier(&mut self, chain_config_address: TestSCAddress) -> &mut Self {
         self.world
             .tx()
             .from(OWNER_ADDRESS)
@@ -144,6 +201,90 @@ impl BaseSetup {
         self
     }
 
+    pub fn complete_chain_config_setup_phase(&mut self, expect_error: Option<&str>) {
+        let transaction = self
+            .world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .to(CHAIN_CONFIG_ADDRESS)
+            .typed(ChainConfigContractProxy)
+            .complete_setup_phase(HEADER_VERIFIER_ADDRESS)
+            .returns(ReturnsHandledOrError::new())
+            .run();
+
+        self.assert_expected_error_message(transaction, expect_error);
+    }
+
+    pub fn deploy_chain_factory(&mut self) -> &mut Self {
+        self.world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .typed(ChainFactoryContractProxy)
+            .init(
+                SOVEREIGN_FORGE_SC_ADDRESS,
+                CHAIN_CONFIG_ADDRESS,
+                HEADER_VERIFIER_ADDRESS,
+                ESDT_SAFE_ADDRESS,
+                FEE_MARKET_ADDRESS,
+            )
+            .code(CHAIN_FACTORY_CODE_PATH)
+            .new_address(CHAIN_FACTORY_SC_ADDRESS)
+            .run();
+
+        self
+    }
+
+    pub fn deploy_sovereign_forge(&mut self) -> &mut Self {
+        self.world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .typed(SovereignForgeProxy)
+            .init(DEPLOY_COST)
+            .code(SOVEREIGN_FORGE_CODE_PATH)
+            .new_address(SOVEREIGN_FORGE_SC_ADDRESS)
+            .run();
+
+        self
+    }
+
+    pub fn deploy_enshrine_esdt_contract(
+        &mut self,
+        is_sovereign_chain: bool,
+        wegld_identifier: Option<TokenIdentifier<StaticApi>>,
+        sovereign_token_prefix: Option<ManagedBuffer<StaticApi>>,
+        opt_config: Option<EsdtSafeConfig<StaticApi>>,
+    ) -> &mut Self {
+        self.world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .typed(EnshrineEsdtSafeProxy)
+            .init(
+                is_sovereign_chain,
+                TOKEN_HANDLER_SC_ADDRESS,
+                wegld_identifier,
+                sovereign_token_prefix,
+                opt_config,
+            )
+            .code(ENSHRINE_ESDT_SAFE_CODE_PATH)
+            .new_address(ENSHRINE_SC_ADDRESS)
+            .run();
+
+        self
+    }
+
+    pub fn deploy_token_handler(&mut self) -> &mut Self {
+        self.world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .typed(TokenHandlerProxy)
+            .init(CHAIN_FACTORY_SC_ADDRESS)
+            .code(TOKEN_HANDLER_CODE_PATH)
+            .new_address(TOKEN_HANDLER_SC_ADDRESS)
+            .run();
+
+        self
+    }
+
     pub fn assert_expected_error_message(
         &mut self,
         response: Result<(), TxResponseStatus>,
@@ -156,6 +297,30 @@ impl BaseSetup {
             ),
             Err(error) => {
                 assert_eq!(expected_error_message, Some(error.message.as_str()))
+            }
+        }
+    }
+
+    pub fn check_account_balance(
+        &mut self,
+        address: Address,
+        tokens: Vec<MultiValue3<TestTokenIdentifier, u64, BigUint<StaticApi>>>,
+    ) {
+        for token in tokens {
+            let (token_id, nonce, amount) = token.into_tuple();
+            if nonce != 0 {
+                self.world
+                    .check_account(&address)
+                    .esdt_nft_balance_and_attributes(
+                        token_id,
+                        nonce,
+                        BigUint::from(amount),
+                        ManagedBuffer::<StaticApi>::new(),
+                    );
+            } else {
+                self.world
+                    .check_account(&address)
+                    .esdt_balance(token_id, BigUint::from(amount));
             }
         }
     }
