@@ -669,10 +669,12 @@ fn complete_setup_phase() {
                 ScArrayFromUtils::FeeMarket,
             );
 
-            assert!(is_chain_config_deployed);
-            assert!(is_header_verifier_deployed);
-            assert!(is_esdt_safe_deployed);
-            assert!(is_fee_market_deployed);
+            assert!(
+                is_chain_config_deployed
+                    && is_header_verifier_deployed
+                    && is_esdt_safe_deployed
+                    && is_fee_market_deployed
+            );
         });
 
     // state.complete_setup_phase(None);
