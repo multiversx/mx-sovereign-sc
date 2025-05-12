@@ -9,8 +9,6 @@ use structs::configs::SovereignConfig;
 const CONFIG_ADDRESS: TestSCAddress = TestSCAddress::new("config-address");
 const CONFIG_CODE_PATH: MxscPath = MxscPath::new("output/chain-config.mxsc.json");
 
-const HEADER_VERIFIER_ADDRESS: TestSCAddress = TestSCAddress::new("header-verifier");
-
 const OWNER: TestAddress = TestAddress::new("owner");
 const OWNER_BALANCE: u64 = 100_000_000_000;
 
@@ -73,7 +71,7 @@ impl ChainConfigTestState {
             .from(OWNER)
             .to(CONFIG_ADDRESS)
             .typed(ChainConfigContractProxy)
-            .complete_setup_phase(HEADER_VERIFIER_ADDRESS);
+            .complete_setup_phase();
 
         if let Some(error) = expect_error {
             transaction.returns(error).run();
