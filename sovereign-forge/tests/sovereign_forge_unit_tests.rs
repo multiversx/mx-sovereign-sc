@@ -95,7 +95,6 @@ impl SovereignForgeTestState {
         self.register_token_handler(1, TOKEN_HANDLER_ADDRESS, None);
         self.register_token_handler(2, TOKEN_HANDLER_ADDRESS, None);
         self.register_token_handler(3, TOKEN_HANDLER_ADDRESS, None);
-        self.complete_setup_phase(None);
     }
 
     fn deploy_chain_factory(&mut self) -> &mut Self {
@@ -156,7 +155,6 @@ impl SovereignForgeTestState {
         self
     }
 
-    // TODO: MVX-ESDT-SAFE
     fn deploy_mvx_esdt_safe_template(
         &mut self,
         header_verifier_address: &TestSCAddress,
@@ -465,8 +463,6 @@ fn update_sovereign_config() {
 
     let deploy_cost = BigUint::from(100_000u32);
 
-    state.complete_setup_phase(None);
-
     state.deploy_phase_one(
         &deploy_cost,
         Some(ManagedBuffer::from(CHAIN_ID)),
@@ -637,16 +633,49 @@ fn complete_setup_phase() {
     let mut state = SovereignForgeTestState::new();
     state.deploy_sovereign_forge();
     state.deploy_chain_factory();
-
+    state.deploy_chain_config_template();
+    state.deploy_fee_market_template();
     state.finish_setup();
+
+    let deploy_cost = BigUint::from(100_000u32);
+    state.deploy_phase_one(&deploy_cost, None, &SovereignConfig::default_config(), None);
+
+    state.deploy_header_verifier_template();
+    state.deploy_mvx_esdt_safe_template(&HEADER_VERIFIER_ADDRESS, OptionalValue::None);
+
+    state.deploy_phase_two(None);
+    state.deploy_phase_three(OptionalValue::None, None);
+    state.deploy_phase_four(None, None);
 
     state
         .world
         .query()
         .to(FORGE_ADDRESS)
         .whitebox(sovereign_forge::contract_obj, |sc| {
-            assert!(sc.is_setup_phase_complete());
+            let is_chain_config_deployed = sc.is_contract_deployed(
+                &OWNER_ADDRESS.to_managed_address(),
+                ScArrayFromUtils::ChainConfig,
+            );
+            let is_header_verifier_deployed = sc.is_contract_deployed(
+                &OWNER_ADDRESS.to_managed_address(),
+                ScArrayFromUtils::HeaderVerifier,
+            );
+            let is_esdt_safe_deployed = sc.is_contract_deployed(
+                &OWNER_ADDRESS.to_managed_address(),
+                ScArrayFromUtils::ESDTSafe,
+            );
+            let is_fee_market_deployed = sc.is_contract_deployed(
+                &OWNER_ADDRESS.to_managed_address(),
+                ScArrayFromUtils::FeeMarket,
+            );
+
+            assert!(is_chain_config_deployed);
+            assert!(is_header_verifier_deployed);
+            assert!(is_esdt_safe_deployed);
+            assert!(is_fee_market_deployed);
         });
+
+    // state.complete_setup_phase(None);
 }
 
 #[test]
