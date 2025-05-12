@@ -392,7 +392,7 @@ pub trait CommonInteractorTrait {
             .tx()
             .from(wallet_address)
             .to(sovereign_forge_address)
-            .gas(30_000_000u64)
+            .gas(90_000_000u64)
             .typed(SovereignForgeProxy)
             .complete_setup_phase()
             .returns(ReturnsResultUnmanaged)
