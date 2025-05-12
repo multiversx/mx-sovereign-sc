@@ -1,0 +1,38 @@
+[package]
+name = "common-interactor"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+path = "src/lib.rs"
+
+[dependencies]
+toml = "0.8.6"
+
+[dependencies.multiversx-sc]
+version = "=0.57.1"
+
+[dependencies.multiversx-sc-snippets]
+version = "=0.57.1"
+
+[dependencies.common-test-setup]
+path = "../common-test-setup"
+
+[dependencies.structs]
+path = "../structs"
+
+[dependencies.proxies]
+path = "../proxies"
+
+[dependencies.error-messages]
+path = "../error-messages"
+
+[dependencies.base64]
+version = "0.21.0"
+
+default-features = false
+features = ["alloc"]
+
+[dependencies.serde]
+version = "1.0"
+features = ["derive"]
