@@ -105,12 +105,12 @@ where
         Arg0: ProxyArg<ManagedAddress<Env::Api>>,
     >(
         self,
-        header_verifier_address: Arg0,
+        _header_verifier_address: Arg0,
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("completeSetupPhase")
-            .argument(&header_verifier_address)
+            .argument(&_header_verifier_address)
             .original_result()
     }
 
