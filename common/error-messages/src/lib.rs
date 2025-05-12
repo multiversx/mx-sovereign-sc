@@ -32,6 +32,7 @@ pub const ESDT_SAFE_NOT_DEPLOYED: &str =
     "The ESDT-Safe SC is not deployed, you skipped the third phase";
 pub const ESDT_SAFE_STILL_PAUSED: &str = "Cannot create transaction while paused";
 pub const FEE_MARKET_ALREADY_DEPLOYED: &str = "The Fee-Market SC is already deployed";
+pub const FEE_MARKET_NOT_DEPLOYED: &str = "The Fee-Market SC is not deployed";
 pub const GAS_LIMIT_TOO_HIGH: &str = "Gas limit too high";
 pub const HASH_OF_HASHES_DOES_NOT_MATCH: &str =
     "Hash of all operations doesn't match the hash of transfer data";
