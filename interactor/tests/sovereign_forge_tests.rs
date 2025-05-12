@@ -10,10 +10,9 @@ use structs::configs::SovereignConfig;
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn deploy_test_sovereign_forge_cs() {
     let mut interactor = SovereignForgeInteract::new(Config::chain_simulator_config()).await;
+    let deploy_cost = BigUint::from(100u32);
 
-    interactor
-        .deploy_sovereign_forge(BigUint::from(100u64))
-        .await;
+    interactor.deploy_sovereign_forge(&deploy_cost).await;
     let sovereign_forge_address = interactor
         .state
         .current_sovereign_forge_sc_address()
@@ -62,15 +61,12 @@ async fn deploy_test_sovereign_forge_cs() {
     interactor.register_chain_factory(2).await;
     interactor.register_chain_factory(3).await;
 
-    interactor.complete_setup_phase().await;
     interactor
-        .deploy_phase_one(
-            BigUint::from(100u64),
-            None,
-            SovereignConfig::default_config(),
-        )
+        .deploy_phase_one(deploy_cost, None, SovereignConfig::default_config())
         .await;
     interactor.deploy_phase_two().await;
     interactor.deploy_phase_three(OptionalValue::None).await;
     interactor.deploy_phase_four(None).await;
+
+    interactor.complete_setup_phase().await;
 }
