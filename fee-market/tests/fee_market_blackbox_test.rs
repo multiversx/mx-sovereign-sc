@@ -7,7 +7,7 @@ use error_messages::{
     TOKEN_NOT_ACCEPTED_AS_FEE,
 };
 use fee_market_blackbox_setup::*;
-use multiversx_sc::{imports::MultiValue3, types::BigUint};
+use multiversx_sc::types::BigUint;
 
 mod fee_market_blackbox_setup;
 
@@ -55,19 +55,19 @@ fn test_substract_fee_no_fee() {
 
     state.substract_fee("Correct", None);
 
-    let tokens = vec![MultiValue3::from((
+    state.common_setup.check_account_single_esdt(
+        ESDT_SAFE_ADDRESS.to_address(),
         FIRST_TEST_TOKEN,
         0u64,
         BigUint::from(OWNER_BALANCE),
-    ))];
+    );
 
-    state
-        .common_setup
-        .check_account_balance(ESDT_SAFE_ADDRESS.to_address(), tokens.clone());
-
-    state
-        .common_setup
-        .check_account_balance(USER_ADDRESS.to_address(), tokens);
+    state.common_setup.check_account_single_esdt(
+        USER_ADDRESS.to_address(),
+        FIRST_TEST_TOKEN,
+        0u64,
+        BigUint::from(OWNER_BALANCE),
+    );
 }
 
 #[test]
@@ -86,19 +86,19 @@ fn test_substract_fee_whitelisted() {
 
     state.substract_fee("Correct", None);
 
-    let tokens = vec![MultiValue3::from((
+    state.common_setup.check_account_single_esdt(
+        ESDT_SAFE_ADDRESS.to_address(),
         FIRST_TEST_TOKEN,
         0u64,
         BigUint::from(OWNER_BALANCE),
-    ))];
+    );
 
-    state
-        .common_setup
-        .check_account_balance(ESDT_SAFE_ADDRESS.to_address(), tokens.clone());
-
-    state
-        .common_setup
-        .check_account_balance(USER_ADDRESS.to_address(), tokens);
+    state.common_setup.check_account_single_esdt(
+        USER_ADDRESS.to_address(),
+        FIRST_TEST_TOKEN,
+        0u64,
+        BigUint::from(OWNER_BALANCE),
+    );
 }
 
 #[test]
@@ -113,19 +113,19 @@ fn test_substract_fee_invalid_payment_token() {
 
     state.substract_fee("InvalidToken", Some(TOKEN_NOT_ACCEPTED_AS_FEE));
 
-    let tokens = vec![MultiValue3::from((
+    state.common_setup.check_account_single_esdt(
+        ESDT_SAFE_ADDRESS.to_address(),
         FIRST_TEST_TOKEN,
         0u64,
         BigUint::from(OWNER_BALANCE),
-    ))];
+    );
 
-    state
-        .common_setup
-        .check_account_balance(ESDT_SAFE_ADDRESS.to_address(), tokens.clone());
-
-    state
-        .common_setup
-        .check_account_balance(USER_ADDRESS.to_address(), tokens);
+    state.common_setup.check_account_single_esdt(
+        USER_ADDRESS.to_address(),
+        FIRST_TEST_TOKEN,
+        0u64,
+        BigUint::from(OWNER_BALANCE),
+    );
 }
 
 #[test]
@@ -140,19 +140,19 @@ fn test_substract_fixed_fee_payment_not_covered() {
 
     state.substract_fee("Less than fee", Some(PAYMENT_DOES_NOT_COVER_FEE));
 
-    let tokens = vec![MultiValue3::from((
+    state.common_setup.check_account_single_esdt(
+        ESDT_SAFE_ADDRESS.to_address(),
         FIRST_TEST_TOKEN,
         0u64,
         BigUint::from(OWNER_BALANCE),
-    ))];
+    );
 
-    state
-        .common_setup
-        .check_account_balance(ESDT_SAFE_ADDRESS.to_address(), tokens.clone());
-
-    state
-        .common_setup
-        .check_account_balance(USER_ADDRESS.to_address(), tokens);
+    state.common_setup.check_account_single_esdt(
+        USER_ADDRESS.to_address(),
+        FIRST_TEST_TOKEN,
+        0u64,
+        BigUint::from(OWNER_BALANCE),
+    );
 }
 
 #[test]
@@ -167,23 +167,17 @@ fn test_substract_fee_fixed_payment_bigger_than_fee() {
 
     state.substract_fee("Correct", None);
 
-    let token_esdt_address = vec![MultiValue3::from((
+    state.common_setup.check_account_single_esdt(
+        ESDT_SAFE_ADDRESS.to_address(),
         FIRST_TEST_TOKEN,
         0u64,
         BigUint::from(OWNER_BALANCE - 200),
-    ))];
+    );
 
-    let token_user = vec![MultiValue3::from((
+    state.common_setup.check_account_single_esdt(
+        USER_ADDRESS.to_address(),
         FIRST_TEST_TOKEN,
         0u64,
         BigUint::from(OWNER_BALANCE + 100),
-    ))];
-
-    state
-        .common_setup
-        .check_account_balance(ESDT_SAFE_ADDRESS.to_address(), token_esdt_address);
-
-    state
-        .common_setup
-        .check_account_balance(USER_ADDRESS.to_address(), token_user);
+    );
 }

@@ -1,9 +1,10 @@
 use common_test_setup::constants::{
-    ENSHRINE_ADDRESS, HEADER_VERIFIER_ADDRESS, OWNER_ADDRESS, OWNER_BALANCE,
+    ENSHRINE_ESDT_SAFE_CODE_PATH, ENSHRINE_SC_ADDRESS, HEADER_VERIFIER_ADDRESS, OWNER_ADDRESS,
+    OWNER_BALANCE,
 };
 use common_test_setup::{AccountSetup, BaseSetup};
 use multiversx_sc::api::ManagedTypeApi;
-use multiversx_sc::types::{ManagedBuffer, MultiValueEncoded, TestAddress};
+use multiversx_sc::types::{ManagedBuffer, MultiValueEncoded, TestSCAddress};
 use multiversx_sc_scenario::{
     api::StaticApi, multiversx_chain_vm::crypto_functions::sha256, ScenarioTxRun,
 };
@@ -25,13 +26,15 @@ impl HeaderVerifierTestState {
     #[allow(clippy::new_without_default)]
     pub fn new() -> Self {
         let owner_setup = AccountSetup {
-            address: OWNER_ADDRESS,
+            address: OWNER_ADDRESS.to_address(),
+            code_path: None,
             esdt_balances: None,
             egld_balance: Some(OWNER_BALANCE.into()),
         };
 
         let enshrine_setup = AccountSetup {
-            address: ENSHRINE_ADDRESS,
+            address: ENSHRINE_SC_ADDRESS.to_address(),
+            code_path: Some(ENSHRINE_ESDT_SAFE_CODE_PATH),
             esdt_balances: None,
             egld_balance: Some(OWNER_BALANCE.into()),
         };
@@ -69,7 +72,7 @@ impl HeaderVerifierTestState {
             .assert_expected_error_message(response, expected_error_message);
     }
 
-    pub fn register_esdt_address(&mut self, esdt_address: TestAddress) {
+    pub fn register_esdt_address(&mut self, esdt_address: TestSCAddress) {
         self.common_setup
             .world
             .tx()
@@ -82,7 +85,7 @@ impl HeaderVerifierTestState {
 
     pub fn remove_executed_hash(
         &mut self,
-        caller: TestAddress,
+        caller: TestSCAddress,
         hash_of_hashes: &ManagedBuffer<StaticApi>,
         operation_hash: &ManagedBuffer<StaticApi>,
         expected_result: Option<&str>,
@@ -109,7 +112,7 @@ impl HeaderVerifierTestState {
 
     pub fn lock_operation_hash(
         &mut self,
-        caller: TestAddress,
+        caller: TestSCAddress,
         hash_of_hashes: &ManagedBuffer<StaticApi>,
         operation_hash: &ManagedBuffer<StaticApi>,
         expected_result: Option<&str>,

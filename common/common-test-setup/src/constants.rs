@@ -3,9 +3,7 @@ use multiversx_sc_scenario::imports::{MxscPath, TestAddress, TestSCAddress, Test
 pub const ESDT_SAFE_ADDRESS: TestSCAddress = TestSCAddress::new("esdt-safe");
 pub const FEE_MARKET_ADDRESS: TestSCAddress = TestSCAddress::new("fee-market");
 pub const HEADER_VERIFIER_ADDRESS: TestSCAddress = TestSCAddress::new("header-verifier");
-
 pub const CHAIN_CONFIG_ADDRESS: TestSCAddress = TestSCAddress::new("chain-config");
-
 pub const TESTING_SC_ADDRESS: TestSCAddress = TestSCAddress::new("testing-sc");
 pub const ENSHRINE_SC_ADDRESS: TestSCAddress = TestSCAddress::new("enshrine");
 pub const CHAIN_FACTORY_SC_ADDRESS: TestSCAddress = TestSCAddress::new("chain-factory");

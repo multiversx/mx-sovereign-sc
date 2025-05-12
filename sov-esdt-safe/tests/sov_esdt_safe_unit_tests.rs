@@ -1,14 +1,11 @@
 use common_test_setup::constants::{
     ESDT_SAFE_ADDRESS, FEE_MARKET_ADDRESS, FEE_TOKEN, FIRST_TEST_TOKEN, ONE_HUNDRED_MILLION,
-    ONE_HUNDRED_THOUSAND, OWNER_ADDRESS, SECOND_TEST_TOKEN, USER,
+    ONE_HUNDRED_THOUSAND, OWNER_ADDRESS, SECOND_TEST_TOKEN, USER_ADDRESS,
 };
 use error_messages::NOTHING_TO_TRANSFER;
 use multiversx_sc::{
     imports::{MultiValue3, OptionalValue},
-    types::{
-        BigUint, EsdtTokenPayment, ManagedBuffer, ManagedVec, MultiValueEncoded,
-        TestTokenIdentifier, TokenIdentifier,
-    },
+    types::{BigUint, EsdtTokenPayment, ManagedBuffer, ManagedVec, MultiValueEncoded},
 };
 use multiversx_sc_scenario::api::StaticApi;
 use proxies::fee_market_proxy::{FeeStruct, FeeType};
@@ -21,7 +18,7 @@ mod sov_esdt_safe_setup;
 fn deploy() {
     let mut state = SovEsdtSafeTestState::new();
 
-    state.deploy_contract(
+    state.common_setup.deploy_sov_esdt_safe(
         FEE_MARKET_ADDRESS,
         OptionalValue::Some(EsdtSafeConfig::default_config()),
     );
@@ -44,21 +41,20 @@ fn deposit_no_fee_no_transfer_data() {
 
     state.deploy_contract_with_roles();
 
-    state.common_setup.deploy_fee_market(None);
+    state
+        .common_setup
+        .deploy_fee_market(None, ESDT_SAFE_ADDRESS);
     state.common_setup.deploy_testing_sc();
     state.set_fee_market_address(FEE_MARKET_ADDRESS);
 
-    let test_token_one_identifier = TestTokenIdentifier::new(FIRST_TEST_TOKEN);
-    let test_token_two_identifier = TestTokenIdentifier::new(SECOND_TEST_TOKEN);
-
     let esdt_token_payment_one = EsdtTokenPayment::<StaticApi>::new(
-        test_token_one_identifier.into(),
+        FIRST_TEST_TOKEN.into(),
         0,
         BigUint::from(ONE_HUNDRED_THOUSAND),
     );
 
     let esdt_token_payment_two = EsdtTokenPayment::<StaticApi>::new(
-        test_token_two_identifier.into(),
+        SECOND_TEST_TOKEN.into(),
         0,
         BigUint::from(ONE_HUNDRED_THOUSAND),
     );
@@ -69,39 +65,36 @@ fn deposit_no_fee_no_transfer_data() {
     ]);
 
     state.deposit_with_logs(
-        USER.to_managed_address(),
+        USER_ADDRESS.to_managed_address(),
         OptionalValue::None,
         payments_vec.clone(),
         None,
         Some("deposit"),
     );
 
-    state.common_setup.check_sc_esdt_balance(
-        vec![
-            MultiValue3::from((test_token_one_identifier, 0u64, 0u64)),
-            MultiValue3::from((test_token_two_identifier, 0u64, 0u64)),
-        ],
-        ESDT_SAFE_ADDRESS.to_managed_address(),
-        sov_esdt_safe::contract_obj,
-    );
+    let expected_tokens = vec![
+        MultiValue3::from((FIRST_TEST_TOKEN, 0u64, BigUint::from(0u64))),
+        MultiValue3::from((SECOND_TEST_TOKEN, 0u64, BigUint::from(0u64))),
+    ];
+
+    state
+        .common_setup
+        .check_account_multiple_esdts(ESDT_SAFE_ADDRESS.to_address(), expected_tokens);
 
     let expected_amount_token_one =
         BigUint::from(ONE_HUNDRED_MILLION) - &esdt_token_payment_one.amount;
 
-    state
-        .common_setup
-        .world
-        .check_account(OWNER_ADDRESS)
-        .esdt_balance(test_token_one_identifier, &expected_amount_token_one);
-
     let expected_amount_token_two =
         BigUint::from(ONE_HUNDRED_MILLION) - &esdt_token_payment_two.amount;
 
+    let expected_balances = vec![
+        MultiValue3::from((FIRST_TEST_TOKEN, 0u64, expected_amount_token_one)),
+        MultiValue3::from((SECOND_TEST_TOKEN, 0u64, expected_amount_token_two)),
+    ];
+
     state
         .common_setup
-        .world
-        .check_account(OWNER_ADDRESS)
-        .esdt_balance(test_token_two_identifier, &expected_amount_token_two);
+        .check_account_multiple_esdts(OWNER_ADDRESS.to_address(), expected_balances);
 }
 
 /// Test the deposit function with fee and without transfer data.
@@ -123,7 +116,7 @@ fn deposit_with_fee_no_transfer_data() {
 
     let per_transfer = BigUint::from(100u64);
     let per_gas = BigUint::from(1u64);
-    let fee_token_identifier = TestTokenIdentifier::new(FEE_TOKEN);
+    let fee_token_identifier = FEE_TOKEN;
 
     let fee = FeeStruct {
         base_token: fee_token_identifier.into(),
@@ -134,29 +127,22 @@ fn deposit_with_fee_no_transfer_data() {
         },
     };
 
-    state.common_setup.deploy_fee_market(Some(fee));
+    state
+        .common_setup
+        .deploy_fee_market(Some(fee), ESDT_SAFE_ADDRESS);
     state.common_setup.deploy_testing_sc();
     state.set_fee_market_address(FEE_MARKET_ADDRESS);
-
-    let test_token_one_identifier = TestTokenIdentifier::new(FIRST_TEST_TOKEN);
-    let test_token_two_identifier = TestTokenIdentifier::new(SECOND_TEST_TOKEN);
 
     let fee_amount = BigUint::from(ONE_HUNDRED_THOUSAND);
 
     let fee_payment =
         EsdtTokenPayment::<StaticApi>::new(fee_token_identifier.into(), 0, fee_amount.clone());
 
-    let esdt_token_payment_one = EsdtTokenPayment::<StaticApi>::new(
-        test_token_one_identifier.into(),
-        0,
-        BigUint::from(100u64),
-    );
+    let esdt_token_payment_one =
+        EsdtTokenPayment::<StaticApi>::new(FIRST_TEST_TOKEN.into(), 0, BigUint::from(100u64));
 
-    let esdt_token_payment_two = EsdtTokenPayment::<StaticApi>::new(
-        test_token_two_identifier.into(),
-        0,
-        BigUint::from(100u64),
-    );
+    let esdt_token_payment_two =
+        EsdtTokenPayment::<StaticApi>::new(SECOND_TEST_TOKEN.into(), 0, BigUint::from(100u64));
 
     let payments_vec = PaymentsVec::from(vec![
         fee_payment,
@@ -165,7 +151,7 @@ fn deposit_with_fee_no_transfer_data() {
     ]);
 
     state.deposit(
-        USER.to_managed_address(),
+        USER_ADDRESS.to_managed_address(),
         OptionalValue::None,
         payments_vec.clone(),
         None,
@@ -175,38 +161,41 @@ fn deposit_with_fee_no_transfer_data() {
     let expected_amount_token_one =
         BigUint::from(ONE_HUNDRED_MILLION) - &esdt_token_payment_one.amount;
 
-    state
-        .common_setup
-        .world
-        .check_account(OWNER_ADDRESS)
-        .esdt_balance(test_token_one_identifier, expected_amount_token_one);
+    state.common_setup.check_account_single_esdt(
+        OWNER_ADDRESS.to_address(),
+        FIRST_TEST_TOKEN,
+        0,
+        expected_amount_token_one,
+    );
 
     let expected_amount_token_two =
         BigUint::from(ONE_HUNDRED_MILLION) - &esdt_token_payment_two.amount;
 
-    state.common_setup.check_sc_esdt_balance(
-        vec![
-            MultiValue3::from((test_token_one_identifier, 0u64, 0u64)),
-            MultiValue3::from((test_token_two_identifier, 0u64, 0u64)),
-        ],
-        ESDT_SAFE_ADDRESS.to_managed_address(),
-        sov_esdt_safe::contract_obj,
-    );
+    let expected_tokens = vec![
+        MultiValue3::from((FIRST_TEST_TOKEN, 0u64, BigUint::from(0u64))),
+        MultiValue3::from((SECOND_TEST_TOKEN, 0u64, BigUint::from(0u64))),
+    ];
 
     state
         .common_setup
-        .world
-        .check_account(OWNER_ADDRESS)
-        .esdt_balance(test_token_two_identifier, expected_amount_token_two);
+        .check_account_multiple_esdts(OWNER_ADDRESS.to_address(), expected_tokens);
+
+    state.common_setup.check_account_single_esdt(
+        OWNER_ADDRESS.to_address(),
+        SECOND_TEST_TOKEN,
+        0u64,
+        expected_amount_token_two,
+    );
 
     let expected_amount_token_fee =
         BigUint::from(ONE_HUNDRED_MILLION) - BigUint::from(payments_vec.len() - 1) * per_transfer;
 
-    state
-        .common_setup
-        .world
-        .check_account(OWNER_ADDRESS)
-        .esdt_balance(fee_token_identifier, expected_amount_token_fee);
+    state.common_setup.check_account_single_esdt(
+        OWNER_ADDRESS.to_address(),
+        fee_token_identifier,
+        0u64,
+        expected_amount_token_fee,
+    );
 }
 
 /// Test the deposit function without fee and with transfer data.
@@ -226,21 +215,20 @@ fn deposit_no_fee_with_transfer_data() {
 
     state.deploy_contract_with_roles();
 
-    state.common_setup.deploy_fee_market(None);
+    state
+        .common_setup
+        .deploy_fee_market(None, ESDT_SAFE_ADDRESS);
     state.common_setup.deploy_testing_sc();
     state.set_fee_market_address(FEE_MARKET_ADDRESS);
 
-    let test_token_one_identifier = TestTokenIdentifier::new(FIRST_TEST_TOKEN);
-    let test_token_two_identifier = TestTokenIdentifier::new(SECOND_TEST_TOKEN);
-
     let esdt_token_payment_one = EsdtTokenPayment::<StaticApi>::new(
-        test_token_one_identifier.into(),
+        FIRST_TEST_TOKEN.into(),
         0,
         BigUint::from(ONE_HUNDRED_THOUSAND),
     );
 
     let esdt_token_payment_two = EsdtTokenPayment::<StaticApi>::new(
-        test_token_two_identifier.into(),
+        SECOND_TEST_TOKEN.into(),
         0,
         BigUint::from(ONE_HUNDRED_THOUSAND),
     );
@@ -260,7 +248,7 @@ fn deposit_no_fee_with_transfer_data() {
     let transfer_data = MultiValue3::from((gas_limit, function, args));
 
     state.deposit_with_logs(
-        USER.to_managed_address(),
+        USER_ADDRESS.to_managed_address(),
         OptionalValue::Some(transfer_data),
         payments_vec.clone(),
         None,
@@ -270,32 +258,31 @@ fn deposit_no_fee_with_transfer_data() {
     let expected_amount_token_one =
         BigUint::from(ONE_HUNDRED_MILLION) - &esdt_token_payment_one.amount;
 
-    state.common_setup.check_sc_esdt_balance(
-        vec![
-            MultiValue3::from((test_token_one_identifier, 0u64, 0u64)),
-            MultiValue3::from((test_token_two_identifier, 0u64, 0u64)),
-        ],
-        ESDT_SAFE_ADDRESS.to_managed_address(),
-        sov_esdt_safe::contract_obj,
-    );
+    let expected_tokens = vec![
+        MultiValue3::from((FIRST_TEST_TOKEN, 0u64, BigUint::from(0u64))),
+        MultiValue3::from((SECOND_TEST_TOKEN, 0u64, BigUint::from(0u64))),
+    ];
 
     state
         .common_setup
-        .world
-        .check_account(OWNER_ADDRESS)
-        .esdt_balance(test_token_one_identifier, &expected_amount_token_one);
+        .check_account_multiple_esdts(ESDT_SAFE_ADDRESS.to_address(), expected_tokens);
+
+    state.common_setup.check_account_single_esdt(
+        OWNER_ADDRESS.to_address(),
+        FIRST_TEST_TOKEN,
+        0u64,
+        expected_amount_token_one,
+    );
 
     let expected_amount_token_two =
         BigUint::from(ONE_HUNDRED_MILLION) - &esdt_token_payment_two.amount;
 
-    state
-        .common_setup
-        .world
-        .check_account(OWNER_ADDRESS)
-        .esdt_balance(
-            TokenIdentifier::from(SECOND_TEST_TOKEN),
-            &expected_amount_token_two,
-        );
+    state.common_setup.check_account_single_esdt(
+        OWNER_ADDRESS.to_address(),
+        SECOND_TEST_TOKEN,
+        0u64,
+        expected_amount_token_two,
+    );
 }
 
 /// Test the deposit function with fee and with transfer data.
@@ -317,7 +304,7 @@ fn deposit_with_fee_with_transfer_data() {
 
     let per_transfer = BigUint::from(100u64);
     let per_gas = BigUint::from(1u64);
-    let fee_token_identifier = TestTokenIdentifier::new(FEE_TOKEN);
+    let fee_token_identifier = FEE_TOKEN;
 
     let fee = FeeStruct {
         base_token: fee_token_identifier.into(),
@@ -328,29 +315,22 @@ fn deposit_with_fee_with_transfer_data() {
         },
     };
 
-    state.common_setup.deploy_fee_market(Some(fee));
+    state
+        .common_setup
+        .deploy_fee_market(Some(fee), ESDT_SAFE_ADDRESS);
     state.common_setup.deploy_testing_sc();
     state.set_fee_market_address(FEE_MARKET_ADDRESS);
-
-    let test_token_one_identifier = TestTokenIdentifier::new(FIRST_TEST_TOKEN);
-    let test_token_two_identifier = TestTokenIdentifier::new(SECOND_TEST_TOKEN);
 
     let fee_amount = BigUint::from(ONE_HUNDRED_THOUSAND);
 
     let fee_payment =
         EsdtTokenPayment::<StaticApi>::new(fee_token_identifier.into(), 0, fee_amount.clone());
 
-    let esdt_token_payment_one = EsdtTokenPayment::<StaticApi>::new(
-        test_token_one_identifier.into(),
-        0,
-        BigUint::from(100u64),
-    );
+    let esdt_token_payment_one =
+        EsdtTokenPayment::<StaticApi>::new(FIRST_TEST_TOKEN.into(), 0, BigUint::from(100u64));
 
-    let esdt_token_payment_two = EsdtTokenPayment::<StaticApi>::new(
-        test_token_two_identifier.into(),
-        0,
-        BigUint::from(100u64),
-    );
+    let esdt_token_payment_two =
+        EsdtTokenPayment::<StaticApi>::new(SECOND_TEST_TOKEN.into(), 0, BigUint::from(100u64));
 
     let payments_vec = PaymentsVec::from(vec![
         fee_payment,
@@ -368,7 +348,7 @@ fn deposit_with_fee_with_transfer_data() {
     let transfer_data = MultiValue3::from((gas_limit, function, args));
 
     state.deposit(
-        USER.to_managed_address(),
+        USER_ADDRESS.to_managed_address(),
         OptionalValue::Some(transfer_data),
         payments_vec.clone(),
         None,
@@ -378,42 +358,42 @@ fn deposit_with_fee_with_transfer_data() {
     let expected_amount_token_one =
         BigUint::from(ONE_HUNDRED_MILLION) - &esdt_token_payment_one.amount;
 
-    state
-        .common_setup
-        .world
-        .check_account(OWNER_ADDRESS)
-        .esdt_balance(test_token_one_identifier, expected_amount_token_one);
+    state.common_setup.check_account_single_esdt(
+        OWNER_ADDRESS.to_address(),
+        FIRST_TEST_TOKEN,
+        0u64,
+        expected_amount_token_one,
+    );
 
     let expected_amount_token_two =
         BigUint::from(ONE_HUNDRED_MILLION) - &esdt_token_payment_two.amount;
 
-    state.common_setup.check_sc_esdt_balance(
-        vec![
-            MultiValue3::from((test_token_one_identifier, 0u64, 0u64)),
-            MultiValue3::from((test_token_two_identifier, 0u64, 0u64)),
-        ],
-        ESDT_SAFE_ADDRESS.to_managed_address(),
-        sov_esdt_safe::contract_obj,
-    );
+    let expected_tokens = vec![
+        MultiValue3::from((FIRST_TEST_TOKEN, 0u64, BigUint::from(0u64))),
+        MultiValue3::from((SECOND_TEST_TOKEN, 0u64, BigUint::from(0u64))),
+    ];
 
     state
         .common_setup
-        .world
-        .check_account(OWNER_ADDRESS)
-        .esdt_balance(
-            TokenIdentifier::from(SECOND_TEST_TOKEN),
-            expected_amount_token_two,
-        );
+        .check_account_multiple_esdts(ESDT_SAFE_ADDRESS.to_address(), expected_tokens);
+
+    state.common_setup.check_account_single_esdt(
+        OWNER_ADDRESS.to_address(),
+        SECOND_TEST_TOKEN,
+        0u64,
+        expected_amount_token_two,
+    );
 
     let expected_amount_token_fee = BigUint::from(ONE_HUNDRED_MILLION)
         - BigUint::from(payments_vec.len() - 1) * per_transfer
         - BigUint::from(gas_limit) * per_gas;
 
-    state
-        .common_setup
-        .world
-        .check_account(OWNER_ADDRESS)
-        .esdt_balance(fee_token_identifier, expected_amount_token_fee);
+    state.common_setup.check_account_single_esdt(
+        OWNER_ADDRESS.to_address(),
+        fee_token_identifier,
+        0u64,
+        expected_amount_token_fee,
+    );
 }
 
 /// Test the deposit function with no transfer data and no payments
@@ -422,12 +402,14 @@ fn deposit_no_transfer_data_no_payments() {
     let mut state = SovEsdtSafeTestState::new();
 
     state.deploy_contract_with_roles();
-    state.common_setup.deploy_fee_market(None);
+    state
+        .common_setup
+        .deploy_fee_market(None, ESDT_SAFE_ADDRESS);
     state.common_setup.deploy_testing_sc();
     state.set_fee_market_address(FEE_MARKET_ADDRESS);
 
     state.deposit(
-        USER.to_managed_address(),
+        USER_ADDRESS.to_managed_address(),
         OptionalValue::None,
         PaymentsVec::new(),
         Some(NOTHING_TO_TRANSFER),
@@ -448,7 +430,9 @@ fn deposit_sc_call_only() {
     let mut state = SovEsdtSafeTestState::new();
 
     state.deploy_contract_with_roles();
-    state.common_setup.deploy_fee_market(None);
+    state
+        .common_setup
+        .deploy_fee_market(None, ESDT_SAFE_ADDRESS);
     state.common_setup.deploy_testing_sc();
     state.set_fee_market_address(FEE_MARKET_ADDRESS);
 
@@ -462,7 +446,7 @@ fn deposit_sc_call_only() {
     let transfer_data = MultiValue3::from((gas_limit, function, args));
 
     state.deposit(
-        USER.to_managed_address(),
+        USER_ADDRESS.to_managed_address(),
         OptionalValue::Some(transfer_data.clone()),
         PaymentsVec::new(),
         None,

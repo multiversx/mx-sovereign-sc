@@ -2440,6 +2440,7 @@ name = "token-handler"
 version = "0.0.0"
 dependencies = [
  "chain-factory",
+ "common-test-setup",
  "error-messages",
  "multiversx-sc",
  "multiversx-sc-modules",

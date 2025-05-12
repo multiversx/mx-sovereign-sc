@@ -8,7 +8,7 @@ use error_messages::{
     NOT_ENOUGH_WEGLD_AMOUNT, ONLY_WEGLD_IS_ACCEPTED_AS_REGISTER_FEE, PAYMENT_DOES_NOT_COVER_FEE,
     TOO_MANY_TOKENS,
 };
-use multiversx_sc::imports::OptionalValue;
+use multiversx_sc::imports::{MultiValue3, OptionalValue};
 use multiversx_sc::types::{
     BigUint, EsdtTokenPayment, ManagedBuffer, ManagedVec, MultiValueEncoded,
 };
@@ -217,23 +217,15 @@ fn test_deposit_no_transfer_data() {
     let expected_wegld_amount = BigUint::from(ENSHRINE_BALANCE) - fee_amount_per_transfer;
     let expected_crowd_amount = BigUint::from(ENSHRINE_BALANCE) - &amount;
 
-    state
-        .common_setup
-        .world
-        .check_account(OWNER_ADDRESS)
-        .esdt_balance(WEGLD_IDENTIFIER, &expected_wegld_amount);
+    let expected_balances = vec![
+        MultiValue3::from((WEGLD_IDENTIFIER, 0u64, expected_wegld_amount.clone())),
+        MultiValue3::from((FUNGIBLE_TOKEN_ID, 0u64, BigUint::from(ENSHRINE_BALANCE))),
+        MultiValue3::from((CROWD_TOKEN_ID, 0u64, expected_crowd_amount.clone())),
+    ];
 
     state
         .common_setup
-        .world
-        .check_account(OWNER_ADDRESS)
-        .esdt_balance(FUNGIBLE_TOKEN_ID, BigUint::from(ENSHRINE_BALANCE));
-
-    state
-        .common_setup
-        .world
-        .check_account(OWNER_ADDRESS)
-        .esdt_balance(CROWD_TOKEN_ID, &expected_crowd_amount);
+        .check_account_multiple_esdts(OWNER_ADDRESS.to_address(), expected_balances);
 }
 
 #[test]
@@ -344,23 +336,15 @@ fn test_deposit_with_transfer_data_enough_for_fee() {
         + BigUint::from(gas_limit) * fee_amount_per_gas;
     let expected_wegld_amount = BigUint::from(ENSHRINE_BALANCE) - fee;
 
-    state
-        .common_setup
-        .world
-        .check_account(OWNER_ADDRESS)
-        .esdt_balance(WEGLD_IDENTIFIER, &expected_wegld_amount);
+    let expected_balances = vec![
+        MultiValue3::from((WEGLD_IDENTIFIER, 0u64, expected_wegld_amount)),
+        MultiValue3::from((FUNGIBLE_TOKEN_ID, 0u64, expected_fungible_amount)),
+        MultiValue3::from((CROWD_TOKEN_ID, 0u64, expected_crowd_amount)),
+    ];
 
     state
         .common_setup
-        .world
-        .check_account(OWNER_ADDRESS)
-        .esdt_balance(FUNGIBLE_TOKEN_ID, &expected_fungible_amount);
-
-    state
-        .common_setup
-        .world
-        .check_account(OWNER_ADDRESS)
-        .esdt_balance(CROWD_TOKEN_ID, &expected_crowd_amount);
+        .check_account_multiple_esdts(OWNER_ADDRESS.to_address(), expected_balances);
 }
 
 #[test]
@@ -431,17 +415,14 @@ fn test_deposit_refund_non_whitelisted_tokens_fee_disabled() {
 
     let expected_amount = BigUint::from(ENSHRINE_BALANCE);
 
-    state
-        .common_setup
-        .world
-        .check_account(OWNER_ADDRESS)
-        .esdt_balance(FUNGIBLE_TOKEN_ID, &expected_amount);
+    let expected_balances = vec![
+        MultiValue3::from((FUNGIBLE_TOKEN_ID, 0u64, expected_amount.clone())),
+        MultiValue3::from((CROWD_TOKEN_ID, 0u64, expected_amount)),
+    ];
 
     state
         .common_setup
-        .world
-        .check_account(OWNER_ADDRESS)
-        .esdt_balance(CROWD_TOKEN_ID, &expected_amount);
+        .check_account_multiple_esdts(OWNER_ADDRESS.to_address(), expected_balances);
 }
 
 #[test]
@@ -481,15 +462,12 @@ fn test_deposit_refund_non_whitelisted_tokens_fee_enabled() {
 
     let expected_amount = BigUint::from(ENSHRINE_BALANCE);
 
-    state
-        .common_setup
-        .world
-        .check_account(OWNER_ADDRESS)
-        .esdt_balance(FUNGIBLE_TOKEN_ID, &expected_amount);
+    let expected_balances = vec![
+        MultiValue3::from((FUNGIBLE_TOKEN_ID, 0u64, expected_amount.clone())),
+        MultiValue3::from((CROWD_TOKEN_ID, 0u64, expected_amount)),
+    ];
 
     state
         .common_setup
-        .world
-        .check_account(OWNER_ADDRESS)
-        .esdt_balance(CROWD_TOKEN_ID, &expected_amount);
+        .check_account_multiple_esdts(OWNER_ADDRESS.to_address(), expected_balances);
 }
