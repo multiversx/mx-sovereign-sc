@@ -149,7 +149,6 @@ pub trait FactoryModule: only_admin::OnlyAdminModule {
         fee_market_address
     }
 
-    // TODO:
     #[only_admin]
     #[endpoint(completeSetupPhase)]
     fn complete_setup_phase(
