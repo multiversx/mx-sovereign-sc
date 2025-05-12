@@ -39,15 +39,14 @@ use structs::{
     operation::Operation,
 };
 
-use crate::{constants::WHITELIST_TOKEN_ID, interactor_state::State};
+use crate::interactor_state::State;
 
 pub trait CommonInteractorTrait {
     fn interactor(&mut self) -> &mut Interactor;
     fn state(&mut self) -> &mut State;
     fn wallet_address(&mut self) -> &Address;
 
-    async fn deploy_sovereign_forge(&mut self) {
-        let deploy_cost = BigUint::<StaticApi>::from(100u128);
+    async fn deploy_sovereign_forge(&mut self, deploy_cost: &BigUint<StaticApi>) {
         let wallet_address = self.wallet_address().clone();
 
         let new_address = self
@@ -72,16 +71,15 @@ pub trait CommonInteractorTrait {
         println!("new Forge address: {new_address_bech32}");
     }
 
-    async fn deploy_chain_factory(&mut self) {
+    async fn deploy_chain_factory(
+        &mut self,
+        sovereign_forge_address: Bech32Address,
+        chain_config_address: Bech32Address,
+        header_verifier_address: Bech32Address,
+        mvx_esdt_safe_address: Bech32Address,
+        fee_market_address: Bech32Address,
+    ) {
         let wallet_address = self.wallet_address().clone();
-        let sovereign_forge_address = self.state().current_sovereign_forge_sc_address().clone();
-        let chain_config_address = self.state().current_chain_config_sc_address().clone();
-        let header_verifier_address = self.state().current_header_verifier_address().clone();
-        let mvx_esdt_safe_address = self
-            .state()
-            .current_mvx_esdt_safe_contract_address()
-            .clone();
-        let fee_market_address = self.state().current_fee_market_address().clone();
 
         let new_address = self
             .interactor()
@@ -111,7 +109,7 @@ pub trait CommonInteractorTrait {
         println!("new Chain-Factory address: {new_address_bech32}");
     }
 
-    async fn deploy_chain_config(&mut self) {
+    async fn deploy_chain_config(&mut self, config: SovereignConfig<StaticApi>) {
         let wallet_address = self.wallet_address().clone();
 
         let new_address = self
@@ -120,7 +118,7 @@ pub trait CommonInteractorTrait {
             .from(wallet_address)
             .gas(50_000_000u64)
             .typed(ChainConfigContractProxy)
-            .init(SovereignConfig::default_config())
+            .init(config)
             .returns(ReturnsNewAddress)
             .code(CHAIN_CONFIG_CODE_PATH)
             .code_metadata(CodeMetadata::all())
@@ -136,9 +134,8 @@ pub trait CommonInteractorTrait {
         println!("new Chain-Config address: {new_address_bech32}");
     }
 
-    async fn deploy_header_verifier(&mut self) {
+    async fn deploy_header_verifier(&mut self, chain_config_address: Bech32Address) {
         let wallet_address = self.wallet_address().clone();
-        let chain_config_address = self.state().current_chain_config_sc_address().clone();
 
         let new_address = self
             .interactor()
@@ -162,9 +159,12 @@ pub trait CommonInteractorTrait {
         println!("new Header-Verifier address: {new_address_bech32}");
     }
 
-    async fn deploy_mvx_esdt_safe(&mut self, opt_config: OptionalValue<EsdtSafeConfig<StaticApi>>) {
+    async fn deploy_mvx_esdt_safe(
+        &mut self,
+        header_verifier_address: Bech32Address,
+        opt_config: OptionalValue<EsdtSafeConfig<StaticApi>>,
+    ) {
         let wallet_address = self.wallet_address().clone();
-        let header_verifier_address = self.state().current_header_verifier_address().clone();
 
         let new_address = self
             .interactor()
@@ -188,12 +188,13 @@ pub trait CommonInteractorTrait {
         println!("new mvx-esdt-safe address: {new_address_bech32}");
     }
 
-    async fn deploy_fee_market(&mut self, fee: Option<FeeStruct<StaticApi>>) {
+    async fn deploy_fee_market(
+        &mut self,
+        mvx_esdt_safe_address: Bech32Address,
+        fee: Option<FeeStruct<StaticApi>>,
+    ) {
         let wallet_address = self.wallet_address().clone();
-        let mvx_esdt_safe_address = self
-            .state()
-            .current_mvx_esdt_safe_contract_address()
-            .clone();
+
         let new_address = self
             .interactor()
             .tx()
@@ -241,9 +242,8 @@ pub trait CommonInteractorTrait {
         println!("new testing sc address: {new_address_bech32}");
     }
 
-    async fn deploy_token_handler(&mut self) {
+    async fn deploy_token_handler(&mut self, chain_factory_address: Bech32Address) {
         let wallet_address = self.wallet_address().clone();
-        let chain_factory_address = self.state().current_chain_factory_sc_address().clone();
 
         let new_address = self
             .interactor()
@@ -267,13 +267,12 @@ pub trait CommonInteractorTrait {
     async fn deploy_enshrine_esdt(
         &mut self,
         is_sovereign_chain: bool,
+        opt_wegld_identifier: Option<TokenIdentifier<StaticApi>>,
+        opt_sov_token_prefix: Option<ManagedBuffer<StaticApi>>,
+        token_handler_address: Bech32Address,
         opt_config: Option<EsdtSafeConfig<StaticApi>>,
     ) {
         let wallet_address = self.wallet_address().clone();
-        let opt_wegld_identifier =
-            Option::Some(TokenIdentifier::from_esdt_bytes(WHITELIST_TOKEN_ID));
-        let opt_sov_token_prefix = Option::Some(ManagedBuffer::new_from_bytes(&b"sov"[..]));
-        let token_handler_address = self.state().current_token_handler_address().clone();
 
         let new_address = self
             .interactor()
@@ -302,9 +301,12 @@ pub trait CommonInteractorTrait {
         println!("new address: {new_address_bech32}");
     }
 
-    async fn deploy_phase_one(&mut self) {
-        let egld_amount = BigUint::<StaticApi>::from(100u128);
-        let config = SovereignConfig::new(0, 1, BigUint::default(), None);
+    async fn deploy_phase_one(
+        &mut self,
+        egld_amount: BigUint<StaticApi>,
+        opt_preferred_chain_id: Option<ManagedBuffer<StaticApi>>,
+        config: SovereignConfig<StaticApi>,
+    ) {
         let wallet_address = self.wallet_address().clone();
         let sovereign_forge_address = self.state().current_sovereign_forge_sc_address().clone();
 
@@ -315,7 +317,7 @@ pub trait CommonInteractorTrait {
             .to(sovereign_forge_address)
             .gas(100_000_000u64)
             .typed(SovereignForgeProxy)
-            .deploy_phase_one(None::<ManagedBuffer<StaticApi>>, config)
+            .deploy_phase_one(opt_preferred_chain_id, config)
             .egld(egld_amount)
             .returns(ReturnsResultUnmanaged)
             .run()
@@ -343,7 +345,7 @@ pub trait CommonInteractorTrait {
         println!("Result: {response:?}");
     }
 
-    async fn deploy_phase_three(&mut self) {
+    async fn deploy_phase_three(&mut self, opt_config: OptionalValue<EsdtSafeConfig<StaticApi>>) {
         let wallet_address = self.wallet_address().clone();
         let sovereign_forge_address = self.state().current_sovereign_forge_sc_address().clone();
 
@@ -354,7 +356,7 @@ pub trait CommonInteractorTrait {
             .to(sovereign_forge_address)
             .gas(80_000_000u64)
             .typed(SovereignForgeProxy)
-            .deploy_phase_three(OptionalValue::<EsdtSafeConfig<StaticApi>>::None)
+            .deploy_phase_three(opt_config)
             .returns(ReturnsResultUnmanaged)
             .run()
             .await;
@@ -362,8 +364,7 @@ pub trait CommonInteractorTrait {
         println!("Result: {response:?}");
     }
 
-    async fn deploy_phase_four(&mut self) {
-        let fee: Option<FeeStruct<StaticApi>> = None;
+    async fn deploy_phase_four(&mut self, fee: Option<FeeStruct<StaticApi>>) {
         let wallet_address = self.wallet_address().clone();
         let sovereign_forge_address = self.state().current_sovereign_forge_sc_address().clone();
 
@@ -417,13 +418,12 @@ pub trait CommonInteractorTrait {
             .await;
     }
 
-    async fn set_esdt_safe_address_in_header_verifier(&mut self) {
+    async fn set_esdt_safe_address_in_header_verifier(
+        &mut self,
+        mvx_esdt_safe_address: Bech32Address,
+    ) {
         let wallet_address = self.wallet_address().clone();
         let header_verifier_address = self.state().current_header_verifier_address().clone();
-        let mvx_esdt_safe_address = self
-            .state()
-            .current_mvx_esdt_safe_contract_address()
-            .clone();
 
         let response = self
             .interactor()

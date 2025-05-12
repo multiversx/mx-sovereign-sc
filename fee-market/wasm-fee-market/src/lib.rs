@@ -6,9 +6,9 @@
 
 // Init:                                 1
 // Upgrade:                              1
-// Endpoints:                            9
+// Endpoints:                           10
 // Async Callback (empty):               1
-// Total number of exported functions:  12
+// Total number of exported functions:  13
 
 #![no_std]
 
@@ -21,6 +21,7 @@ multiversx_sc_wasm_adapter::endpoints! {
         init => init
         upgrade => upgrade
         setPriceAggregatorAddress => set_price_aggregator_address
+        completeSetupPhase => complete_setup_phase
         setFee => set_fee
         removeFee => remove_fee
         getTokenFee => token_fee

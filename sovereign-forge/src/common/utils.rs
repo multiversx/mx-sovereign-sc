@@ -1,7 +1,7 @@
 use error_messages::{
     CALLER_DID_NOT_DEPLOY_ANY_SOV_CHAIN, CHAIN_CONFIG_NOT_DEPLOYED, CHAIN_ID_ALREADY_IN_USE,
     CHAIN_ID_NOT_FOUR_CHAR_LONG, CHAIN_ID_NOT_LOWERCASE_ALPHANUMERIC, DEPLOY_COST_NOT_ENOUGH,
-    ESDT_SAFE_NOT_DEPLOYED, HEADER_VERIFIER_NOT_DEPLOYED,
+    ESDT_SAFE_NOT_DEPLOYED, FEE_MARKET_NOT_DEPLOYED, HEADER_VERIFIER_NOT_DEPLOYED,
 };
 use multiversx_sc::{
     api::ManagedTypeApi,
@@ -43,8 +43,39 @@ pub enum ScArray {
     Slashing,
 }
 
+const NUMBER_OF_SHARDS: u32 = 3;
+
 #[multiversx_sc::module]
 pub trait UtilsModule: super::storage::StorageModule {
+    fn require_initilization_phase_complete(&self) {
+        for shard_id in 1..=NUMBER_OF_SHARDS {
+            require!(
+                !self.chain_factories(shard_id).is_empty(),
+                "There is no Chain-Factory contract assigned for shard {}",
+                shard_id
+            );
+            require!(
+                !self.token_handlers(shard_id).is_empty(),
+                "There is no Token-Handler contract assigned for shard {}",
+                shard_id
+            );
+        }
+    }
+
+    fn require_all_phases(&self, caller: &ManagedAddress) {
+        self.require_phase_one_completed(caller);
+        self.require_phase_two_completed(caller);
+        self.require_phase_three_completed(caller);
+        self.require_phase_four_completed(caller);
+    }
+
+    fn require_phase_four_completed(&self, caller: &ManagedAddress) {
+        require!(
+            self.is_contract_deployed(caller, ScArray::FeeMarket),
+            FEE_MARKET_NOT_DEPLOYED
+        );
+    }
+
     fn require_phase_three_completed(&self, caller: &ManagedAddress) {
         require!(
             self.is_contract_deployed(caller, ScArray::ESDTSafe),

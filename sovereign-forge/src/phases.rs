@@ -14,8 +14,6 @@ use crate::common::{
     utils::{ContractInfo, ScArray},
 };
 
-const NUMBER_OF_SHARDS: u32 = 3;
-
 #[multiversx_sc::module]
 pub trait PhasesModule:
     common::utils::UtilsModule
@@ -30,23 +28,25 @@ pub trait PhasesModule:
             return;
         }
 
-        for shard_id in 1..=NUMBER_OF_SHARDS {
-            require!(
-                !self.chain_factories(shard_id).is_empty(),
-                "There is no Chain-Factory contract assigned for shard {}",
-                shard_id
-            );
-            require!(
-                !self.token_handlers(shard_id).is_empty(),
-                "There is no Token-Handler contract assigned for shard {}",
-                shard_id
-            );
-        }
+        let caller = self.blockchain().get_caller();
+
+        self.require_initilization_phase_complete();
+        self.require_all_phases(&caller);
+
+        let chain_config_address = self.get_contract_address(&caller, ScArray::ChainConfig);
+        let header_verifier_address = self.get_contract_address(&caller, ScArray::HeaderVerifier);
+        let esdt_safe_address = self.get_contract_address(&caller, ScArray::ESDTSafe);
+        let fee_market_address = self.get_contract_address(&caller, ScArray::FeeMarket);
 
         self.tx()
             .to(self.get_chain_factory_address())
             .typed(ChainFactoryContractProxy)
-            .complete_setup_phase()
+            .complete_setup_phase(
+                chain_config_address,
+                header_verifier_address,
+                esdt_safe_address,
+                fee_market_address,
+            )
             .sync_call();
 
         self.setup_phase_complete().set(true);
@@ -59,7 +59,7 @@ pub trait PhasesModule:
         opt_preferred_chain_id: Option<ManagedBuffer>,
         config: SovereignConfig<Self::Api>,
     ) {
-        self.require_setup_complete();
+        self.require_initilization_phase_complete();
 
         let call_value = self.call_value().egld();
         self.require_correct_deploy_cost(call_value.deref());
