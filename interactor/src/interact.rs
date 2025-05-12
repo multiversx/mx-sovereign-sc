@@ -3,8 +3,7 @@ pub mod mvx_esdt_safe;
 pub mod sovereign_forge;
 
 use common_interactor::{
-    common_sovereign_interactor::CommonInteractorTrait,
-    interactor_config::Config,
+    common_sovereign_interactor::CommonInteractorTrait, interactor_config::Config,
 };
 use enshrine_esdt_safe::enshrine_esdt_safe_interactor::EnshrineEsdtSafeInteract;
 use multiversx_sc::{
@@ -92,7 +91,11 @@ pub async fn sovereign_forge_cli() {
 
     match cmd.as_str() {
         "upgrade" => interact.upgrade().await,
-        "deploySovereignForge" => interact.deploy_sovereign_forge(BigUint::from(100u64)).await,
+        "deploySovereignForge" => {
+            interact
+                .deploy_sovereign_forge(&BigUint::from(100u64))
+                .await
+        }
         "deployChainFactory" => {
             interact
                 .deploy_chain_factory(

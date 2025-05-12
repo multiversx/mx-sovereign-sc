@@ -46,7 +46,7 @@ pub trait CommonInteractorTrait {
     fn state(&mut self) -> &mut State;
     fn wallet_address(&mut self) -> &Address;
 
-    async fn deploy_sovereign_forge(&mut self, deploy_cost: BigUint<StaticApi>) {
+    async fn deploy_sovereign_forge(&mut self, deploy_cost: &BigUint<StaticApi>) {
         let wallet_address = self.wallet_address().clone();
 
         let new_address = self
