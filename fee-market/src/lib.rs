@@ -52,12 +52,6 @@ pub trait FeeMarket:
             ESDT_SAFE_ADDRESS_NOT_SET
         );
 
-        // self.tx()
-        //     .to(ESDTSystemSCAddress)
-        //     .typed(UserBuiltinProxy)
-        //     .change_owner_address(&header_verifier_address)
-        //     .sync_call();
-
         self.setup_phase_complete().set(true);
     }
 }
