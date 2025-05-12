@@ -26,7 +26,6 @@ use proxies::{
     mvx_esdt_safe_proxy::MvxEsdtSafeProxy,
     sovereign_forge_proxy::{ScArray, SovereignForgeProxy},
 };
-use setup_phase::SetupPhaseModule;
 use sovereign_forge::common::{
     storage::{ChainId, StorageModule},
     utils::{ScArray as ScArrayFromUtils, UtilsModule},
