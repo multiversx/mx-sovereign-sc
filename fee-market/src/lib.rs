@@ -42,7 +42,7 @@ pub trait FeeMarket:
 
     #[only_owner]
     #[endpoint(completeSetupPhase)]
-    fn complete_setup_phase(&self, header_verifier_address: ManagedAddress) {
+    fn complete_setup_phase(&self, _header_verifier_address: ManagedAddress) {
         if self.is_setup_phase_complete() {
             return;
         }
@@ -52,11 +52,11 @@ pub trait FeeMarket:
             ESDT_SAFE_ADDRESS_NOT_SET
         );
 
-        self.tx()
-            .to(ESDTSystemSCAddress)
-            .typed(UserBuiltinProxy)
-            .change_owner_address(&header_verifier_address)
-            .sync_call();
+        // self.tx()
+        //     .to(ESDTSystemSCAddress)
+        //     .typed(UserBuiltinProxy)
+        //     .change_owner_address(&header_verifier_address)
+        //     .sync_call();
 
         self.setup_phase_complete().set(true);
     }

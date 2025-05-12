@@ -31,11 +31,11 @@ pub trait ChainConfigContract:
         }
 
         // validator set in header verifier
-        self.tx()
-            .to(ToSelf)
-            .typed(UserBuiltinProxy)
-            .change_owner_address(&header_verifier_address)
-            .sync_call();
+        // self.tx()
+        //     .to(ToSelf)
+        //     .typed(UserBuiltinProxy)
+        //     .change_owner_address(&header_verifier_address)
+        //     .sync_call();
 
         self.setup_phase_complete().set(true);
     }
