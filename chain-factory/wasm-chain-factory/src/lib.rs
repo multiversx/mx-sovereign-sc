@@ -26,13 +26,13 @@ multiversx_sc_wasm_adapter::endpoints! {
         deployEnshrineEsdtSafe => deploy_enshrine_esdt_safe
         deployEsdtSafe => deploy_mvx_esdt_safe
         deployFeeMarket => deploy_fee_market
-        completeSetupPhase => complete_setup_phase
         isAdmin => is_admin
         addAdmin => add_admin
         removeAdmin => remove_admin
         getAdmins => admins
         updateEsdtSafeConfig => update_esdt_safe_config
         updateSovereignConfig => update_sovereign_config
+        completeSetupPhase => complete_setup_phase
     )
 }
 
