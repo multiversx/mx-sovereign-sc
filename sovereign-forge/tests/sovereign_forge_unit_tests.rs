@@ -677,7 +677,7 @@ fn complete_setup_phase() {
             );
         });
 
-    // state.complete_setup_phase(None);
+    state.complete_setup_phase(None);
 }
 
 #[test]
