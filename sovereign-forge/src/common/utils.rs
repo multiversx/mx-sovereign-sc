@@ -54,11 +54,12 @@ pub trait UtilsModule: super::storage::StorageModule {
                 "There is no Chain-Factory contract assigned for shard {}",
                 shard_id
             );
-            require!(
-                !self.token_handlers(shard_id).is_empty(),
-                "There is no Token-Handler contract assigned for shard {}",
-                shard_id
-            );
+            // TODO:
+            // require!(
+            //     !self.token_handlers(shard_id).is_empty(),
+            //     "There is no Token-Handler contract assigned for shard {}",
+            //     shard_id
+            // );
         }
     }
 
