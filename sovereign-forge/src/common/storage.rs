@@ -22,6 +22,10 @@ pub trait StorageModule {
         chain_id: &ChainId<Self::Api>,
     ) -> UnorderedSetMapper<ContractInfo<Self::Api>>;
 
+    #[view(getSovereignSetupPhase)]
+    #[storage_mapper("sovereignSetupPhase")]
+    fn sovereign_setup_phase(&self, chain_id: &ChainId<Self::Api>) -> SingleValueMapper<bool>;
+
     #[view(getChainFactoryAddress)]
     #[storage_mapper("chainFactories")]
     fn chain_factories(&self, shard_id: u32) -> SingleValueMapper<ManagedAddress>;
