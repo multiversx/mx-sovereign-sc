@@ -154,9 +154,6 @@ pub trait PhasesModule:
 
         let esdt_safe_address = self.get_contract_address(&caller, ScArray::ESDTSafe);
 
-        if self.is_setup_phase_complete() {
-            return;
-        }
         let fee_market_address = self.deploy_fee_market(&esdt_safe_address, fee);
 
         let fee_market_contract_info = ContractInfo::new(ScArray::FeeMarket, fee_market_address);
