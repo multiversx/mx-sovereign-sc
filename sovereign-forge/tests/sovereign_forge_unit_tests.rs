@@ -5,7 +5,7 @@ use error_messages::{
     CALLER_DID_NOT_DEPLOY_ANY_SOV_CHAIN, CHAIN_CONFIG_ALREADY_DEPLOYED, CHAIN_ID_ALREADY_IN_USE,
     CHAIN_ID_NOT_FOUR_CHAR_LONG, CHAIN_ID_NOT_LOWERCASE_ALPHANUMERIC, DEPLOY_COST_NOT_ENOUGH,
     ESDT_SAFE_ALREADY_DEPLOYED, ESDT_SAFE_NOT_DEPLOYED, FEE_MARKET_ALREADY_DEPLOYED,
-    HEADER_VERIFIER_ALREADY_DEPLOYED, HEADER_VERIFIER_NOT_DEPLOYED,
+    FEE_MARKET_NOT_DEPLOYED, HEADER_VERIFIER_ALREADY_DEPLOYED, HEADER_VERIFIER_NOT_DEPLOYED,
 };
 use multiversx_sc::{
     imports::OptionalValue,
@@ -607,24 +607,12 @@ fn update_esdt_safe_config() {
 }
 
 #[test]
-fn complete_setup_phase_no_chain_config_registered() {
+fn complete_setup_phase_phase_four_not_deployed() {
     let mut state = SovereignForgeTestState::new();
     state.deploy_sovereign_forge();
+    state.deploy_fee_market_template();
 
-    state.complete_setup_phase(Some(
-        "There is no Chain-Factory contract assigned for shard 1",
-    ));
-}
-
-#[test]
-fn complete_setup_phase_no_token_handler_registered() {
-    let mut state = SovereignForgeTestState::new();
-    state.deploy_sovereign_forge();
-    state.register_chain_factory(1, FACTORY_ADDRESS, None);
-
-    state.complete_setup_phase(Some(
-        "There is no Token-Handler contract assigned for shard 1",
-    ));
+    state.complete_setup_phase(Some(FEE_MARKET_NOT_DEPLOYED));
 }
 
 #[test]

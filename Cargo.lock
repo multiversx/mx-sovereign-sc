@@ -2284,7 +2284,6 @@ dependencies = [
  "mvx-esdt-safe",
  "num-bigint",
  "proxies",
- "setup-phase",
  "structs",
  "token-handler",
 ]
