@@ -6,7 +6,7 @@ use structs::configs::SovereignConfig;
 mod chain_config_blackbox_setup;
 
 #[test]
-fn deploy_chain_config() {
+fn test_deploy_chain_config() {
     let mut state = ChainConfigTestState::new();
 
     let config = SovereignConfig::new(0, 1, BigUint::default(), None);
@@ -14,7 +14,7 @@ fn deploy_chain_config() {
 }
 
 #[test]
-fn update_config() {
+fn test_update_config() {
     let mut state = ChainConfigTestState::new();
 
     let config = SovereignConfig::new(0, 1, BigUint::default(), None);
@@ -26,7 +26,7 @@ fn update_config() {
 }
 
 #[test]
-fn update_config_wrong_validators_array() {
+fn test_update_config_wrong_validators_array() {
     let mut state = ChainConfigTestState::new();
 
     let config = SovereignConfig::new(0, 1, BigUint::default(), None);
@@ -38,7 +38,7 @@ fn update_config_wrong_validators_array() {
 }
 
 #[test]
-fn complete_setup_phase() {
+fn test_complete_setup_phase() {
     let mut state = ChainConfigTestState::new();
 
     let config = SovereignConfig::new(0, 1, BigUint::default(), None);

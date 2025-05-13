@@ -38,7 +38,7 @@ use structs::{
 mod mvx_esdt_safe_blackbox_setup;
 
 #[test]
-fn deploy() {
+fn test_deploy() {
     let mut state = MvxEsdtSafeTestState::new();
 
     state.common_setup.deploy_mvx_esdt_safe(
@@ -49,7 +49,7 @@ fn deploy() {
 
 /// Test that deploy fails when the gas limit in the config is too high
 #[test]
-fn deploy_invalid_config() {
+fn test_deploy_invalid_config() {
     let mut state = MvxEsdtSafeTestState::new();
 
     state.common_setup.deploy_mvx_esdt_safe(
@@ -70,7 +70,7 @@ fn deploy_invalid_config() {
 
 /// This Test checks the flow for registering an invalid token
 #[test]
-fn register_token_invalid_type() {
+fn test_register_token_invalid_type() {
     let mut state = MvxEsdtSafeTestState::new();
     let config = OptionalValue::Some(EsdtSafeConfig::default_config());
     state
@@ -101,7 +101,7 @@ fn register_token_invalid_type() {
 
 /// This Test checks the flow for registering an invalid token with prefix
 #[test]
-fn register_token_invalid_type_with_prefix() {
+fn test_register_token_invalid_type_with_prefix() {
     let mut state = MvxEsdtSafeTestState::new();
     let config = EsdtSafeConfig::default_config();
     state
@@ -132,7 +132,7 @@ fn register_token_invalid_type_with_prefix() {
 
 /// This Test checks the flow for registering a token that is not native
 #[test]
-fn register_token_not_native() {
+fn test_register_token_not_native() {
     let mut state = MvxEsdtSafeTestState::new();
     let config = EsdtSafeConfig::default_config();
     state
@@ -163,7 +163,7 @@ fn register_token_not_native() {
 
 /// This Test checks the flow for registering a fungible token
 #[test]
-fn register_token_fungible_token() {
+fn test_register_token_fungible_token() {
     let mut state = MvxEsdtSafeTestState::new();
     let config = EsdtSafeConfig::default_config();
     state
@@ -190,7 +190,7 @@ fn register_token_fungible_token() {
 
 /// Test that register token works with a non-fungible token type
 #[test]
-fn register_token_nonfungible_token() {
+fn test_register_token_nonfungible_token() {
     let mut state = MvxEsdtSafeTestState::new();
     let config = EsdtSafeConfig::default_config();
     state
@@ -221,7 +221,7 @@ fn register_token_nonfungible_token() {
 
 /// Test that deposit fails when there is no payment for transfer
 #[test]
-fn deposit_nothing_to_transfer() {
+fn test_deposit_nothing_to_transfer() {
     let mut state = MvxEsdtSafeTestState::new();
 
     state.common_setup.deploy_mvx_esdt_safe(
@@ -253,7 +253,7 @@ fn deposit_nothing_to_transfer() {
 /// 2. Complete the setup phase
 /// 3. Check the SCs storage after completing the setup phase
 #[test]
-fn complete_setup_phase() {
+fn test_complete_setup_phase() {
     let mut state = MvxEsdtSafeTestState::new();
 
     state.common_setup.deploy_mvx_esdt_safe(
@@ -284,7 +284,7 @@ fn complete_setup_phase() {
 
 /// Test that complete setup phase fails when the setup phase was already completed
 #[test]
-fn complete_setup_phase_already_completed() {
+fn test_complete_setup_phase_already_completed() {
     let mut state = MvxEsdtSafeTestState::new();
 
     state.common_setup.deploy_mvx_esdt_safe(
@@ -307,7 +307,7 @@ fn complete_setup_phase_already_completed() {
 
 /// Test that deposit fails when there are too many tokens in the payment (limit being the MAX_TRANSFERS_PER_TX)
 #[test]
-fn deposit_too_many_tokens() {
+fn test_deposit_too_many_tokens() {
     let mut state = MvxEsdtSafeTestState::new();
 
     state.common_setup.deploy_mvx_esdt_safe(
@@ -342,7 +342,7 @@ fn deposit_too_many_tokens() {
 
 /// Test that deposit with no transfer data succeeds
 #[test]
-fn deposit_no_transfer_data() {
+fn test_deposit_no_transfer_data() {
     let mut state = MvxEsdtSafeTestState::new();
 
     state.common_setup.deploy_mvx_esdt_safe(
@@ -384,7 +384,7 @@ fn deposit_no_transfer_data() {
 
 /// Test that deposit fails when the gas limit is too high
 #[test]
-fn deposit_gas_limit_too_high() {
+fn test_deposit_gas_limit_too_high() {
     let mut state = MvxEsdtSafeTestState::new();
 
     let config = EsdtSafeConfig::new(
@@ -441,7 +441,7 @@ fn deposit_gas_limit_too_high() {
 }
 
 #[test]
-fn deposit_max_bridged_amount_exceeded() {
+fn test_deposit_max_bridged_amount_exceeded() {
     let mut state = MvxEsdtSafeTestState::new();
 
     let config = EsdtSafeConfig::new(
@@ -494,7 +494,7 @@ fn deposit_max_bridged_amount_exceeded() {
 
 /// Test that deposit fails when the endpoint is banned
 #[test]
-fn deposit_endpoint_banned() {
+fn test_deposit_endpoint_banned() {
     let mut state = MvxEsdtSafeTestState::new();
 
     let config = EsdtSafeConfig::new(
@@ -553,7 +553,7 @@ fn deposit_endpoint_banned() {
 
 // Test that deposit with no transfer data, no fee and no payment fails
 #[test]
-fn deposit_no_transfer_data_no_fee() {
+fn test_deposit_no_transfer_data_no_fee() {
     let mut state = MvxEsdtSafeTestState::new();
 
     state.common_setup.deploy_mvx_esdt_safe(
@@ -587,7 +587,7 @@ fn deposit_no_transfer_data_no_fee() {
 /// 9. Call the deposit function
 /// 10. Check the balances of the accounts
 #[test]
-fn deposit_transfer_data_only_no_fee() {
+fn test_deposit_transfer_data_only_no_fee() {
     let mut state = MvxEsdtSafeTestState::new();
 
     state.common_setup.deploy_mvx_esdt_safe(
@@ -622,7 +622,7 @@ fn deposit_transfer_data_only_no_fee() {
 
 /// This test check the flow for a deposit with transfer data that fails
 #[test]
-fn deposit_transfer_data_only_with_fee_nothing_to_transfer() {
+fn test_deposit_transfer_data_only_with_fee_nothing_to_transfer() {
     let mut state = MvxEsdtSafeTestState::new();
 
     state.common_setup.deploy_mvx_esdt_safe(
@@ -680,7 +680,7 @@ fn deposit_transfer_data_only_with_fee_nothing_to_transfer() {
 /// 9. Call the deposit function
 /// 10. Check the balances of the accounts
 #[test]
-fn deposit_transfer_data_only_with_fee() {
+fn test_deposit_transfer_data_only_with_fee() {
     let mut state = MvxEsdtSafeTestState::new();
 
     state.common_setup.deploy_mvx_esdt_safe(
@@ -746,7 +746,7 @@ fn deposit_transfer_data_only_with_fee() {
 /// 9. Call the deposit function
 /// 10. Check the balances of the accounts
 #[test]
-fn deposit_fee_enabled() {
+fn test_deposit_fee_enabled() {
     let mut state = MvxEsdtSafeTestState::new();
 
     let config = EsdtSafeConfig::new(
@@ -854,7 +854,7 @@ fn deposit_fee_enabled() {
 /// 9. Call the deposit function
 /// 10. Check the balances of the accounts
 #[test]
-fn deposit_payment_doesnt_cover_fee() {
+fn test_deposit_payment_doesnt_cover_fee() {
     let mut state = MvxEsdtSafeTestState::new();
 
     let config = EsdtSafeConfig::new(
@@ -938,7 +938,7 @@ fn deposit_payment_doesnt_cover_fee() {
 /// 10. Check the logs
 /// 11. Check the balances of the accounts
 #[test]
-fn deposit_refund() {
+fn test_deposit_refund() {
     let mut state = MvxEsdtSafeTestState::new();
 
     let config = EsdtSafeConfig::new(
@@ -1047,7 +1047,7 @@ fn deposit_refund() {
 
 /// Test that deposit with a burn mechanism works
 #[test]
-fn deposit_success_burn_mechanism() {
+fn test_deposit_success_burn_mechanism() {
     let mut state = MvxEsdtSafeTestState::new();
 
     state.deploy_contract_with_roles();
@@ -1104,7 +1104,7 @@ fn deposit_success_burn_mechanism() {
 
 /// Test that register token works with a valid prefix
 #[test]
-fn register_token_fungible_token_with_prefix() {
+fn test_register_token_fungible_token_with_prefix() {
     let mut state = MvxEsdtSafeTestState::new();
     let config = EsdtSafeConfig::default_config();
     state
@@ -1133,7 +1133,7 @@ fn register_token_fungible_token_with_prefix() {
 
 /// Test that register token fails when token has no prefix
 #[test]
-fn register_token_fungible_token_no_prefix() {
+fn test_register_token_fungible_token_no_prefix() {
     let mut state = MvxEsdtSafeTestState::new();
     let config = EsdtSafeConfig::default_config();
     state
@@ -1164,7 +1164,7 @@ fn register_token_fungible_token_no_prefix() {
 
 /// Test that register token fails if the token is already registered
 #[test]
-fn register_native_token_already_registered() {
+fn test_register_native_token_already_registered() {
     let mut state = MvxEsdtSafeTestState::new();
     let config = EsdtSafeConfig::default_config();
     state
@@ -1198,7 +1198,7 @@ fn register_native_token_already_registered() {
 
 /// Test that register native works in the happy flow
 #[test]
-fn register_native_token() {
+fn test_register_native_token() {
     let mut state = MvxEsdtSafeTestState::new();
     let config = EsdtSafeConfig::default_config();
     state
@@ -1227,7 +1227,7 @@ fn register_native_token() {
 /// 5. Call the execute operation function
 /// 6. Check the operation hash status
 #[test]
-fn execute_operation_no_esdt_safe_registered() {
+fn test_execute_operation_no_esdt_safe_registered() {
     let mut state = MvxEsdtSafeTestState::new();
     let config = OptionalValue::Some(EsdtSafeConfig::default_config());
     state
@@ -1279,7 +1279,7 @@ fn execute_operation_no_esdt_safe_registered() {
 /// 8. Call the execute operation function
 /// 9. Check the operation hash status
 #[test]
-fn execute_operation_success() {
+fn test_execute_operation_success() {
     let mut state = MvxEsdtSafeTestState::new();
     let config = OptionalValue::Some(EsdtSafeConfig::default_config());
     state
@@ -1354,7 +1354,7 @@ fn execute_operation_success() {
 /// 9. Call the execute operation function
 /// 10. Check the operation hash status
 #[test]
-fn execute_operation_with_native_token_success() {
+fn test_execute_operation_with_native_token_success() {
     let mut state = MvxEsdtSafeTestState::new();
     let config = EsdtSafeConfig::default_config();
     state
@@ -1446,7 +1446,7 @@ fn execute_operation_with_native_token_success() {
 /// 9. Check if the registered `operation` hash status is empty
 /// 10. Check the balances for the owner, Mvx-ESDT-Safe and Testing SC
 #[test]
-fn execute_operation_burn_mechanism_without_deposit_cannot_subtract() {
+fn test_execute_operation_burn_mechanism_without_deposit_cannot_subtract() {
     let mut state = MvxEsdtSafeTestState::new();
     state.deploy_contract_with_roles();
 
@@ -1529,7 +1529,7 @@ fn execute_operation_burn_mechanism_without_deposit_cannot_subtract() {
 /// 11. Check the balances for the owner, Mvx-ESDT-Safe and Testing SC
 /// 12. Check if the `operation` hash was removed from the Header-Verifier SC
 #[test]
-fn execute_operation_success_burn_mechanism() {
+fn test_execute_operation_success_burn_mechanism() {
     let mut state = MvxEsdtSafeTestState::new();
     state.deploy_contract_with_roles();
     state.complete_setup_phase(None, Some("unpauseContract"));
@@ -1650,7 +1650,7 @@ fn execute_operation_success_burn_mechanism() {
 /// 12. Third deposit of `deposit_payment` to the `USER`
 /// 19. Check for logs, `deposited_tokens_amount` mapper and esdt balance
 #[test]
-fn deposit_execute_switch_mechanism() {
+fn test_deposit_execute_switch_mechanism() {
     let mut state = MvxEsdtSafeTestState::new();
     state.deploy_contract_with_roles();
     state.complete_setup_phase(None, Some("unpauseContract"));
@@ -1885,7 +1885,7 @@ fn deposit_execute_switch_mechanism() {
 /// 8. Check the emited logs
 /// 9. Check if the `operation` hash was removed from the Header-Verifier SC
 #[test]
-fn execute_operation_no_payments() {
+fn test_execute_operation_no_payments() {
     let mut state = MvxEsdtSafeTestState::new();
     state.common_setup.deploy_mvx_esdt_safe(
         HEADER_VERIFIER_ADDRESS,
@@ -1966,7 +1966,7 @@ fn execute_operation_no_payments() {
 /// 8. Check the emited logs
 /// 9. Check if the `operation` hash was removed from the Header-Verifier SC
 #[test]
-fn execute_operation_no_payments_failed_event() {
+fn test_execute_operation_no_payments_failed_event() {
     let mut state = MvxEsdtSafeTestState::new();
     state.common_setup.deploy_mvx_esdt_safe(
         HEADER_VERIFIER_ADDRESS,
@@ -2036,7 +2036,7 @@ fn execute_operation_no_payments_failed_event() {
 
 /// This Test checks the flow for setting the token burn mechanism without having roles
 #[test]
-fn set_token_burn_mechanism_no_roles() {
+fn test_set_token_burn_mechanism_no_roles() {
     let mut state = MvxEsdtSafeTestState::new();
     state.common_setup.deploy_mvx_esdt_safe(
         HEADER_VERIFIER_ADDRESS,
@@ -2048,7 +2048,7 @@ fn set_token_burn_mechanism_no_roles() {
 
 /// This Test checks the flow setting the bridging mechanism for a untrusted token
 #[test]
-fn set_token_burn_mechanism_token_not_trusted() {
+fn test_set_token_burn_mechanism_token_not_trusted() {
     let mut state = MvxEsdtSafeTestState::new();
     state.deploy_contract_with_roles();
 
@@ -2061,7 +2061,7 @@ fn set_token_burn_mechanism_token_not_trusted() {
 /// 2. Set token burn mechanism for any trusted token
 /// 3. Check sc storage and balance
 #[test]
-fn set_token_burn_mechanism() {
+fn test_set_token_burn_mechanism() {
     let mut state = MvxEsdtSafeTestState::new();
     state.deploy_contract_with_roles();
 
@@ -2093,7 +2093,7 @@ fn set_token_burn_mechanism() {
 /// 3. Set token lock mech
 /// 3. Check sc storage and balance
 #[test]
-fn set_token_lock_mechanism() {
+fn test_set_token_lock_mechanism() {
     let mut state = MvxEsdtSafeTestState::new();
     state.deploy_contract_with_roles();
 
@@ -2119,7 +2119,7 @@ fn set_token_lock_mechanism() {
 
 /// This Test checks the flow setting the bridging mechanism to burn&mint of a Sovereign token
 #[test]
-fn set_token_lock_mechanism_token_from_sovereign() {
+fn test_set_token_lock_mechanism_token_from_sovereign() {
     let mut state = MvxEsdtSafeTestState::new();
     state.deploy_contract_with_roles();
 

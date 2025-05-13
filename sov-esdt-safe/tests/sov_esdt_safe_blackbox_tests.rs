@@ -9,13 +9,13 @@ use multiversx_sc::{
 };
 use multiversx_sc_scenario::api::StaticApi;
 use proxies::fee_market_proxy::{FeeStruct, FeeType};
-use sov_esdt_safe_setup::SovEsdtSafeTestState;
+use sov_esdt_safe_blackbox_setup::SovEsdtSafeTestState;
 use structs::{aliases::PaymentsVec, configs::EsdtSafeConfig};
 
-mod sov_esdt_safe_setup;
+mod sov_esdt_safe_blackbox_setup;
 
 #[test]
-fn deploy() {
+fn test_deploy() {
     let mut state = SovEsdtSafeTestState::new();
 
     state.common_setup.deploy_sov_esdt_safe(
@@ -36,7 +36,7 @@ fn deploy() {
 /// 8. Check the logs for the deposit function.
 /// 9. Check the ESDT balance of the addresses
 #[test]
-fn deposit_no_fee_no_transfer_data() {
+fn test_deposit_no_fee_no_transfer_data() {
     let mut state = SovEsdtSafeTestState::new();
 
     state.deploy_contract_with_roles();
@@ -109,7 +109,7 @@ fn deposit_no_fee_no_transfer_data() {
 /// 8. Call the deposit function with the payments vector.
 /// 9. Check the ESDT balances of the addresses
 #[test]
-fn deposit_with_fee_no_transfer_data() {
+fn test_deposit_with_fee_no_transfer_data() {
     let mut state = SovEsdtSafeTestState::new();
 
     state.deploy_contract_with_roles();
@@ -210,7 +210,7 @@ fn deposit_with_fee_no_transfer_data() {
 /// 8. Check the logs for the deposit function.
 /// 9. Check the ESDT balance of the addresses
 #[test]
-fn deposit_no_fee_with_transfer_data() {
+fn test_deposit_no_fee_with_transfer_data() {
     let mut state = SovEsdtSafeTestState::new();
 
     state.deploy_contract_with_roles();
@@ -297,7 +297,7 @@ fn deposit_no_fee_with_transfer_data() {
 /// 8. Call the deposit function with the payments vector.
 /// 9. Check the ESDT balances of the addresses
 #[test]
-fn deposit_with_fee_with_transfer_data() {
+fn test_deposit_with_fee_with_transfer_data() {
     let mut state = SovEsdtSafeTestState::new();
 
     state.deploy_contract_with_roles();
@@ -398,7 +398,7 @@ fn deposit_with_fee_with_transfer_data() {
 
 /// Test the deposit function with no transfer data and no payments
 #[test]
-fn deposit_no_transfer_data_no_payments() {
+fn test_deposit_no_transfer_data_no_payments() {
     let mut state = SovEsdtSafeTestState::new();
 
     state.deploy_contract_with_roles();
@@ -426,7 +426,7 @@ fn deposit_no_transfer_data_no_payments() {
 /// 6. Create the cross-chain sc call TransferData
 /// 7. Check for the `scCall` log
 #[test]
-fn deposit_sc_call_only() {
+fn test_deposit_sc_call_only() {
     let mut state = SovEsdtSafeTestState::new();
 
     state.deploy_contract_with_roles();

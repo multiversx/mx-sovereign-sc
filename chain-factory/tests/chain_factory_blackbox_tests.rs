@@ -5,13 +5,13 @@ use structs::configs::SovereignConfig;
 mod chain_factory_blackbox_setup;
 
 #[test]
-fn deploy() {
+fn test_deploy() {
     let mut state = ChainFactoryTestState::new();
     state.common_setup.deploy_chain_factory();
 }
 
 #[test]
-fn deploy_chain_config_from_factory() {
+fn test_deploy_chain_config_from_factory() {
     let mut state = ChainFactoryTestState::new();
 
     state.common_setup.deploy_sovereign_forge();

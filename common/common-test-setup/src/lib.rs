@@ -208,7 +208,7 @@ impl BaseSetup {
             .from(OWNER_ADDRESS)
             .to(CHAIN_CONFIG_ADDRESS)
             .typed(ChainConfigContractProxy)
-            .complete_setup_phase(HEADER_VERIFIER_ADDRESS)
+            .complete_setup_phase()
             .returns(ReturnsHandledOrError::new())
             .run();
 

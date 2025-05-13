@@ -25,14 +25,14 @@ use structs::configs::{EsdtSafeConfig, SovereignConfig};
 mod sovereign_forge_blackbox_setup;
 
 #[test]
-fn deploy_contracts() {
+fn test_deploy_contracts() {
     let mut state = SovereignForgeTestState::new();
     state.common_setup.deploy_sovereign_forge();
     state.common_setup.deploy_chain_factory();
 }
 
 #[test]
-fn register_token_handler() {
+fn test_register_token_handler() {
     let mut state = SovereignForgeTestState::new();
     state.common_setup.deploy_sovereign_forge();
 
@@ -49,7 +49,7 @@ fn register_token_handler() {
 }
 
 #[test]
-fn register_chain_factory() {
+fn test_register_chain_factory() {
     let mut state = SovereignForgeTestState::new();
     state.common_setup.deploy_sovereign_forge();
 
@@ -66,7 +66,7 @@ fn register_chain_factory() {
 }
 
 #[test]
-fn update_sovereign_config_no_chain_config_deployed() {
+fn test_update_sovereign_config_no_chain_config_deployed() {
     let mut state = SovereignForgeTestState::new();
     state.common_setup.deploy_sovereign_forge();
 
@@ -88,7 +88,7 @@ fn update_sovereign_config_no_chain_config_deployed() {
 }
 
 #[test]
-fn update_sovereign_config() {
+fn test_update_sovereign_config() {
     let mut state = SovereignForgeTestState::new();
     state.common_setup.deploy_sovereign_forge();
     state.common_setup.deploy_chain_factory();
@@ -157,7 +157,7 @@ fn update_sovereign_config() {
 }
 
 #[test]
-fn update_esdt_safe_config() {
+fn test_update_esdt_safe_config() {
     let mut state = SovereignForgeTestState::new();
     state.common_setup.deploy_sovereign_forge();
     state.common_setup.deploy_chain_factory();
@@ -273,7 +273,7 @@ fn update_esdt_safe_config() {
 }
 
 #[test]
-fn complete_setup_phase_no_chain_config_registered() {
+fn test_complete_setup_phase_no_chain_config_registered() {
     let mut state = SovereignForgeTestState::new();
     state.common_setup.deploy_sovereign_forge();
 
@@ -283,7 +283,7 @@ fn complete_setup_phase_no_chain_config_registered() {
 }
 
 #[test]
-fn complete_setup_phase_no_token_handler_registered() {
+fn test_complete_setup_phase_no_token_handler_registered() {
     let mut state = SovereignForgeTestState::new();
     state.common_setup.deploy_sovereign_forge();
     state.register_chain_factory(1, CHAIN_FACTORY_SC_ADDRESS, None);
@@ -294,7 +294,7 @@ fn complete_setup_phase_no_token_handler_registered() {
 }
 
 #[test]
-fn complete_setup_phase() {
+fn test_complete_setup_phase() {
     let mut state = SovereignForgeTestState::new();
     state.common_setup.deploy_sovereign_forge();
     state.common_setup.deploy_chain_factory();
@@ -362,7 +362,7 @@ fn complete_setup_phase() {
 }
 
 #[test]
-fn deploy_phase_one_deploy_cost_too_low() {
+fn test_deploy_phase_one_deploy_cost_too_low() {
     let mut state = SovereignForgeTestState::new();
     state.common_setup.deploy_sovereign_forge();
     state.common_setup.deploy_chain_factory();
@@ -379,7 +379,7 @@ fn deploy_phase_one_deploy_cost_too_low() {
 }
 
 #[test]
-fn deploy_phase_one_chain_config_already_deployed() {
+fn test_deploy_phase_one_chain_config_already_deployed() {
     let mut state = SovereignForgeTestState::new();
     state.common_setup.deploy_sovereign_forge();
     state.common_setup.deploy_chain_factory();
@@ -403,7 +403,7 @@ fn deploy_phase_one_chain_config_already_deployed() {
 }
 
 #[test]
-fn deploy_phase_one_preferred_chain_id_not_lowercase_alphanumeric() {
+fn test_deploy_phase_one_preferred_chain_id_not_lowercase_alphanumeric() {
     let mut state = SovereignForgeTestState::new();
     state.common_setup.deploy_sovereign_forge();
     state.common_setup.deploy_chain_factory();
@@ -423,7 +423,7 @@ fn deploy_phase_one_preferred_chain_id_not_lowercase_alphanumeric() {
 }
 
 #[test]
-fn deploy_phase_one_preferred_chain_id_not_correct_length() {
+fn test_deploy_phase_one_preferred_chain_id_not_correct_length() {
     let mut state = SovereignForgeTestState::new();
     state.common_setup.deploy_sovereign_forge();
     state.common_setup.deploy_chain_factory();
@@ -443,7 +443,7 @@ fn deploy_phase_one_preferred_chain_id_not_correct_length() {
 }
 
 #[test]
-fn deploy_phase_one_no_preferred_chain_id() {
+fn test_deploy_phase_one_no_preferred_chain_id() {
     let mut state = SovereignForgeTestState::new();
     state.common_setup.deploy_sovereign_forge();
     state.common_setup.deploy_chain_factory();
@@ -480,7 +480,7 @@ fn deploy_phase_one_no_preferred_chain_id() {
 }
 
 #[test]
-fn deploy_phase_one_preferred_chain_id() {
+fn test_deploy_phase_one_preferred_chain_id() {
     let mut state = SovereignForgeTestState::new();
     state.common_setup.deploy_sovereign_forge();
     state.common_setup.deploy_chain_factory();
@@ -519,7 +519,7 @@ fn deploy_phase_one_preferred_chain_id() {
 }
 
 #[test]
-fn deploy_phase_one_with_chain_id_used() {
+fn test_deploy_phase_one_with_chain_id_used() {
     let mut state = SovereignForgeTestState::new();
     state.common_setup.deploy_sovereign_forge();
     state.common_setup.deploy_chain_factory();
@@ -545,7 +545,7 @@ fn deploy_phase_one_with_chain_id_used() {
     );
 }
 #[test]
-fn deploy_phase_two_without_first_phase() {
+fn test_deploy_phase_two_without_first_phase() {
     let mut state = SovereignForgeTestState::new();
     state.common_setup.deploy_sovereign_forge();
     state.common_setup.deploy_chain_factory();
@@ -557,7 +557,7 @@ fn deploy_phase_two_without_first_phase() {
 }
 
 #[test]
-fn deploy_phase_two() {
+fn test_deploy_phase_two() {
     let mut state = SovereignForgeTestState::new();
     state.common_setup.deploy_sovereign_forge();
     state.common_setup.deploy_chain_factory();
@@ -596,7 +596,7 @@ fn deploy_phase_two() {
 }
 
 #[test]
-fn deploy_phase_two_header_already_deployed() {
+fn test_deploy_phase_two_header_already_deployed() {
     let mut state = SovereignForgeTestState::new();
     state.common_setup.deploy_sovereign_forge();
     state.common_setup.deploy_chain_factory();
@@ -624,7 +624,7 @@ fn deploy_phase_two_header_already_deployed() {
 }
 
 #[test]
-fn deploy_phase_three() {
+fn test_deploy_phase_three() {
     let mut state = SovereignForgeTestState::new();
     state.common_setup.deploy_sovereign_forge();
     state.common_setup.deploy_chain_factory();
@@ -669,7 +669,7 @@ fn deploy_phase_three() {
 }
 
 #[test]
-fn deploy_phase_three_without_phase_one() {
+fn test_deploy_phase_three_without_phase_one() {
     let mut state = SovereignForgeTestState::new();
     state.common_setup.deploy_sovereign_forge();
     state.common_setup.deploy_chain_factory();
@@ -684,7 +684,7 @@ fn deploy_phase_three_without_phase_one() {
 }
 
 #[test]
-fn deploy_phase_three_without_phase_two() {
+fn test_deploy_phase_three_without_phase_two() {
     let mut state = SovereignForgeTestState::new();
     state.common_setup.deploy_sovereign_forge();
     state.common_setup.deploy_chain_factory();
@@ -714,7 +714,7 @@ fn deploy_phase_three_without_phase_two() {
 }
 
 #[test]
-fn deploy_phase_three_already_deployed() {
+fn test_deploy_phase_three_already_deployed() {
     let mut state = SovereignForgeTestState::new();
     state.common_setup.deploy_sovereign_forge();
     state.common_setup.deploy_chain_factory();
@@ -748,7 +748,7 @@ fn deploy_phase_three_already_deployed() {
 }
 
 #[test]
-fn deploy_phase_four() {
+fn test_deploy_phase_four() {
     let mut state = SovereignForgeTestState::new();
     state.common_setup.deploy_sovereign_forge();
     state.common_setup.deploy_chain_factory();
@@ -797,7 +797,7 @@ fn deploy_phase_four() {
 }
 
 #[test]
-fn deploy_phase_four_without_previous_phase() {
+fn test_deploy_phase_four_without_previous_phase() {
     let mut state = SovereignForgeTestState::new();
     state.common_setup.deploy_sovereign_forge();
     state.common_setup.deploy_chain_factory();
@@ -831,7 +831,7 @@ fn deploy_phase_four_without_previous_phase() {
 }
 
 #[test]
-fn deploy_phase_four_fee_market_already_deployed() {
+fn test_deploy_phase_four_fee_market_already_deployed() {
     let mut state = SovereignForgeTestState::new();
     state.common_setup.deploy_sovereign_forge();
     state.common_setup.deploy_chain_factory();
