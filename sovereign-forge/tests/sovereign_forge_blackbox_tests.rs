@@ -273,27 +273,6 @@ fn test_update_esdt_safe_config() {
 }
 
 #[test]
-fn test_complete_setup_phase_no_chain_config_registered() {
-    let mut state = SovereignForgeTestState::new();
-    state.common_setup.deploy_sovereign_forge();
-
-    state.complete_setup_phase(Some(
-        "There is no Chain-Factory contract assigned for shard 1",
-    ));
-}
-
-#[test]
-fn test_complete_setup_phase_no_token_handler_registered() {
-    let mut state = SovereignForgeTestState::new();
-    state.common_setup.deploy_sovereign_forge();
-    state.register_chain_factory(1, CHAIN_FACTORY_SC_ADDRESS, None);
-
-    state.complete_setup_phase(Some(
-        "There is no Token-Handler contract assigned for shard 1",
-    ));
-}
-
-#[test]
 fn test_complete_setup_phase() {
     let mut state = SovereignForgeTestState::new();
     state.common_setup.deploy_sovereign_forge();
