@@ -16,10 +16,7 @@ use crate::common::{
 
 #[multiversx_sc::module]
 pub trait PhasesModule:
-    common::utils::UtilsModule
-    + common::storage::StorageModule
-    + setup_phase::SetupPhaseModule
-    + common::sc_deploy::ScDeployModule
+    common::utils::UtilsModule + common::storage::StorageModule + common::sc_deploy::ScDeployModule
 {
     #[only_owner]
     #[endpoint(completeSetupPhase)]

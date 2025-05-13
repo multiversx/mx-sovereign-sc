@@ -41,9 +41,6 @@ path = "../common/proxies"
 [dependencies.structs]
 path = "../common/structs"
 
-[dependencies.setup-phase]
-path = "../common/setup-phase"
-
 [dependencies.error-messages]
 path = "../common/error-messages"
 
