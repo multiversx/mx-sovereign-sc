@@ -23,5 +23,5 @@ fn test_deploy_chain_config_from_factory() {
 
     let config = SovereignConfig::new(0, 1, BigUint::default(), None);
 
-    state.propose_deploy_chain_config_from_factory(config, None);
+    state.deploy_chain_config_from_factory(config, None);
 }

@@ -12,7 +12,7 @@ fn test_deploy() {
     let mut state = TokenHandlerTestState::new();
 
     state.common_setup.deploy_token_handler();
-    state.propose_deploy_factory_sc();
+    state.deploy_factory_sc();
 }
 
 #[test]
@@ -21,8 +21,8 @@ fn test_whitelist_enshrine_esdt_caller_not_admin() {
     let error_message = "Endpoint can only be called by admins";
 
     state.common_setup.deploy_token_handler();
-    state.propose_deploy_factory_sc();
-    state.propose_whitelist_caller(TOKEN_HANDLER_SC_ADDRESS, Some(error_message));
+    state.deploy_factory_sc();
+    state.whitelist_caller(TOKEN_HANDLER_SC_ADDRESS, Some(error_message));
 }
 
 #[test]
@@ -30,8 +30,8 @@ fn test_whitelist_enshrine() {
     let mut state = TokenHandlerTestState::new();
 
     state.common_setup.deploy_token_handler();
-    state.propose_deploy_factory_sc();
-    state.propose_whitelist_caller(CHAIN_FACTORY_SC_ADDRESS, None);
+    state.deploy_factory_sc();
+    state.whitelist_caller(CHAIN_FACTORY_SC_ADDRESS, None);
 }
 
 // NOTE:
@@ -46,7 +46,7 @@ fn test_transfer_tokens_no_payment() {
     let opt_transfer_data = Option::None;
 
     state.common_setup.deploy_token_handler();
-    state.propose_deploy_factory_sc();
+    state.deploy_factory_sc();
 
     state
         .common_setup
@@ -57,7 +57,7 @@ fn test_transfer_tokens_no_payment() {
         .world
         .set_esdt_balance(CHAIN_FACTORY_SC_ADDRESS, b"FUNGIBLE_TOKEN_ID", 100);
 
-    state.propose_whitelist_caller(CHAIN_FACTORY_SC_ADDRESS, None);
+    state.whitelist_caller(CHAIN_FACTORY_SC_ADDRESS, None);
 
     state.common_setup.world.set_esdt_local_roles(
         TOKEN_HANDLER_SC_ADDRESS,
@@ -69,7 +69,7 @@ fn test_transfer_tokens_no_payment() {
         ],
     );
 
-    state.propose_transfer_tokens(
+    state.transfer_tokens(
         CHAIN_FACTORY_SC_ADDRESS,
         esdt_payment,
         opt_transfer_data,

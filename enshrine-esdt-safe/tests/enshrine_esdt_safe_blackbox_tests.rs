@@ -21,7 +21,7 @@ mod enshrine_esdt_safe_blackbox_setup;
 fn test_deploy() {
     let mut state = EnshrineTestState::new();
 
-    state.propose_setup_contracts(false, None, None);
+    state.setup_contracts(false, None, None);
 }
 
 #[test]
@@ -29,11 +29,11 @@ fn test_sovereign_prefix_no_prefix() {
     let mut state = EnshrineTestState::new();
     let token_vec = Vec::from([NFT_TOKEN_ID, CROWD_TOKEN_ID]);
 
-    state.propose_setup_contracts(false, None, None);
-    state.propose_register_operation(&token_vec);
-    state.propose_register_esdt_in_header_verifier();
-    state.propose_whitelist_enshrine_esdt();
-    state.propose_execute_operation(Some(ACTION_IS_NOT_ALLOWED), &token_vec);
+    state.setup_contracts(false, None, None);
+    state.register_operation(&token_vec);
+    state.register_esdt_in_header_verifier();
+    state.whitelist_enshrine_esdt();
+    state.execute_operation(Some(ACTION_IS_NOT_ALLOWED), &token_vec);
 }
 
 #[test]
@@ -41,11 +41,11 @@ fn test_sovereign_prefix_has_prefix() {
     let mut state = EnshrineTestState::new();
     let token_vec = Vec::from([PREFIX_NFT_TOKEN_ID, CROWD_TOKEN_ID]);
 
-    state.propose_setup_contracts(false, None, None);
-    state.propose_register_operation(&token_vec);
-    state.propose_register_esdt_in_header_verifier();
-    state.propose_whitelist_enshrine_esdt();
-    state.propose_execute_operation(None, &token_vec);
+    state.setup_contracts(false, None, None);
+    state.register_operation(&token_vec);
+    state.register_esdt_in_header_verifier();
+    state.whitelist_enshrine_esdt();
+    state.execute_operation(None, &token_vec);
 }
 
 #[test]
@@ -55,8 +55,8 @@ fn test_register_tokens_insufficient_funds() {
     let payment_amount = BigUint::from(ISSUE_COST * token_vec.len() as u64);
     let payment = EsdtTokenPayment::new(WEGLD_IDENTIFIER.into(), 0, payment_amount);
 
-    state.propose_setup_contracts(false, None, None);
-    state.propose_register_tokens(&USER_ADDRESS, payment, token_vec, Some(INSUFFICIENT_FUNDS));
+    state.setup_contracts(false, None, None);
+    state.register_tokens(&USER_ADDRESS, payment, token_vec, Some(INSUFFICIENT_FUNDS));
 }
 
 #[test]
@@ -66,8 +66,8 @@ fn test_register_tokens_wrong_token_as_fee() {
     let payment_amount = BigUint::from(ISSUE_COST * token_vec.len() as u64);
     let payment = EsdtTokenPayment::new(CROWD_TOKEN_ID.into(), 0, payment_amount);
 
-    state.propose_setup_contracts(false, None, None);
-    state.propose_register_tokens(
+    state.setup_contracts(false, None, None);
+    state.register_tokens(
         &OWNER_ADDRESS,
         payment,
         token_vec,
@@ -82,8 +82,8 @@ fn test_register_tokens() {
     let payment_amount = BigUint::from(ISSUE_COST * token_vec.len() as u64);
     let payment = EsdtTokenPayment::new(WEGLD_IDENTIFIER.into(), 0, payment_amount);
 
-    state.propose_setup_contracts(false, None, None);
-    state.propose_register_tokens(&OWNER_ADDRESS, payment, token_vec, None);
+    state.setup_contracts(false, None, None);
+    state.register_tokens(&OWNER_ADDRESS, payment, token_vec, None);
     state
         .common_setup
         .world
@@ -103,8 +103,8 @@ fn test_register_tokens_insufficient_wegld() {
     let payment_amount = BigUint::from(ISSUE_COST + token_vec.len() as u64);
     let payment = EsdtTokenPayment::new(WEGLD_IDENTIFIER.into(), 0, payment_amount);
 
-    state.propose_setup_contracts(false, None, None);
-    state.propose_register_tokens(
+    state.setup_contracts(false, None, None);
+    state.register_tokens(
         &OWNER_ADDRESS,
         payment,
         token_vec,
@@ -121,9 +121,9 @@ fn test_deposit_no_fee() {
 
     payments.push(wegld_payment);
 
-    state.propose_setup_contracts(false, None, None);
-    state.propose_set_fee(None, None);
-    state.propose_deposit(
+    state.setup_contracts(false, None, None);
+    state.set_fee(None, None);
+    state.deposit(
         OWNER_ADDRESS,
         USER_ADDRESS,
         payments,
@@ -149,9 +149,9 @@ fn test_deposit_token_nothing_to_transfer_fee_enabled() {
 
     payments.push(wegld_payment);
 
-    state.propose_setup_contracts(false, Some(&fee_struct), None);
-    state.propose_set_fee(Some(&fee_struct), None);
-    state.propose_deposit(
+    state.setup_contracts(false, Some(&fee_struct), None);
+    state.set_fee(Some(&fee_struct), None);
+    state.deposit(
         OWNER_ADDRESS,
         USER_ADDRESS,
         payments,
@@ -168,8 +168,8 @@ fn test_deposit_max_transfers_exceeded() {
     let mut payments = PaymentsVec::new();
     payments.extend(vec![wegld_payment; 11]);
 
-    state.propose_setup_contracts(false, None, None);
-    state.propose_deposit(
+    state.setup_contracts(false, None, None);
+    state.deposit(
         OWNER_ADDRESS,
         USER_ADDRESS,
         payments,
@@ -203,10 +203,10 @@ fn test_deposit_no_transfer_data() {
         &fee_amount_per_gas,
     );
 
-    state.propose_setup_contracts(false, Some(&fee_struct), None);
-    state.propose_add_token_to_whitelist(tokens_whitelist);
-    state.propose_set_fee(Some(&fee_struct), None);
-    state.propose_deposit(
+    state.setup_contracts(false, Some(&fee_struct), None);
+    state.add_token_to_whitelist(tokens_whitelist);
+    state.set_fee(Some(&fee_struct), None);
+    state.deposit(
         OWNER_ADDRESS,
         USER_ADDRESS,
         payments,
@@ -246,8 +246,8 @@ fn test_deposit_with_transfer_data_gas_limit_too_high() {
     payments.push(wegld_payment);
     payments.push(crowd_payment);
 
-    state.propose_setup_contracts(false, None, None);
-    state.propose_deposit(
+    state.setup_contracts(false, None, None);
+    state.deposit(
         OWNER_ADDRESS,
         USER_ADDRESS,
         payments,
@@ -274,7 +274,7 @@ fn test_deposit_with_transfer_data_banned_endpoint() {
     payments.push(wegld_payment);
     payments.push(crowd_payment);
 
-    state.propose_setup_contracts(
+    state.setup_contracts(
         false,
         None,
         Some(EsdtSafeConfig::new(
@@ -286,7 +286,7 @@ fn test_deposit_with_transfer_data_banned_endpoint() {
         )),
     );
 
-    state.propose_deposit(
+    state.deposit(
         OWNER_ADDRESS,
         USER_ADDRESS,
         payments,
@@ -327,10 +327,10 @@ fn test_deposit_with_transfer_data_enough_for_fee() {
         &fee_amount_per_gas,
     );
 
-    state.propose_setup_contracts(false, Some(&fee_struct), None);
-    // state.propose_set_max_user_tx_gas_limit(gas_limit);
-    state.propose_set_fee(Some(&fee_struct), None);
-    state.propose_deposit(OWNER_ADDRESS, USER_ADDRESS, payments, transfer_data, None);
+    state.setup_contracts(false, Some(&fee_struct), None);
+    // state.set_max_user_tx_gas_limit(gas_limit);
+    state.set_fee(Some(&fee_struct), None);
+    state.deposit(OWNER_ADDRESS, USER_ADDRESS, payments, transfer_data, None);
 
     let fee = fee_amount_per_transfer * BigUint::from(2u32)
         + BigUint::from(gas_limit) * fee_amount_per_gas;
@@ -376,10 +376,10 @@ fn test_deposit_with_transfer_data_not_enough_for_fee() {
         &fee_amount_per_gas,
     );
 
-    state.propose_setup_contracts(false, Some(&fee_struct), None);
-    // state.propose_set_max_user_tx_gas_limit(gas_limit);
-    state.propose_set_fee(Some(&fee_struct), None);
-    state.propose_deposit(
+    state.setup_contracts(false, Some(&fee_struct), None);
+    // state.set_max_user_tx_gas_limit(gas_limit);
+    state.set_fee(Some(&fee_struct), None);
+    state.deposit(
         OWNER_ADDRESS,
         USER_ADDRESS,
         payments,
@@ -403,9 +403,9 @@ fn test_deposit_refund_non_whitelisted_tokens_fee_disabled() {
     payments.push(fungible_payment);
     payments.push(crowd_payment);
 
-    state.propose_setup_contracts(false, None, None);
-    state.propose_add_token_to_whitelist(token_whitelist);
-    state.propose_deposit(
+    state.setup_contracts(false, None, None);
+    state.add_token_to_whitelist(token_whitelist);
+    state.deposit(
         OWNER_ADDRESS,
         USER_ADDRESS,
         payments,
@@ -449,10 +449,10 @@ fn test_deposit_refund_non_whitelisted_tokens_fee_enabled() {
         &fee_amount_per_gas,
     );
 
-    state.propose_setup_contracts(false, Some(&fee_struct), None);
-    state.propose_add_token_to_whitelist(token_whitelist);
-    state.propose_set_fee(Some(&fee_struct), None);
-    state.propose_deposit(
+    state.setup_contracts(false, Some(&fee_struct), None);
+    state.add_token_to_whitelist(token_whitelist);
+    state.set_fee(Some(&fee_struct), None);
+    state.deposit(
         OWNER_ADDRESS,
         USER_ADDRESS,
         payments,

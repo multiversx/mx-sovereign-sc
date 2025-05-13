@@ -29,7 +29,7 @@ impl ChainFactoryTestState {
         Self { common_setup }
     }
 
-    pub fn propose_deploy_chain_config_from_factory(
+    pub fn deploy_chain_config_from_factory(
         &mut self,
         config: SovereignConfig<StaticApi>,
         error_message: Option<&str>,

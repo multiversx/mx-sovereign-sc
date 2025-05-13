@@ -51,7 +51,7 @@ impl TokenHandlerTestState {
         Self { common_setup }
     }
 
-    pub fn propose_deploy_factory_sc(&mut self) -> &mut Self {
+    pub fn deploy_factory_sc(&mut self) -> &mut Self {
         self.common_setup
             .world
             .tx()
@@ -71,7 +71,7 @@ impl TokenHandlerTestState {
         self
     }
 
-    pub fn propose_transfer_tokens(
+    pub fn transfer_tokens(
         &mut self,
         caller: TestSCAddress,
         esdt_payment: Option<EsdtTokenPayment<StaticApi>>,
@@ -107,7 +107,7 @@ impl TokenHandlerTestState {
             .assert_expected_error_message(response, error_message);
     }
 
-    pub fn propose_whitelist_caller(
+    pub fn whitelist_caller(
         &mut self,
         enshrine_address: TestSCAddress,
         error_message: Option<&str>,

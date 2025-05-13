@@ -92,7 +92,7 @@ impl EnshrineTestState {
         Self { common_setup }
     }
 
-    pub fn propose_set_unpaused(&mut self) {
+    pub fn set_unpaused(&mut self) {
         self.common_setup
             .world
             .tx()
@@ -103,7 +103,7 @@ impl EnshrineTestState {
             .run();
     }
 
-    pub fn propose_set_header_verifier_address(&mut self) {
+    pub fn set_header_verifier_address(&mut self) {
         self.common_setup
             .world
             .tx()
@@ -114,7 +114,7 @@ impl EnshrineTestState {
             .run();
     }
 
-    pub fn propose_setup_contracts(
+    pub fn setup_contracts(
         &mut self,
         is_sovereign_chain: bool,
         fee_struct: Option<&FeeStruct<StaticApi>>,
@@ -126,7 +126,7 @@ impl EnshrineTestState {
             Some(SOVEREIGN_TOKEN_PREFIX.into()),
             opt_config,
         );
-        self.propose_set_unpaused();
+        self.set_unpaused();
         self.common_setup
             .deploy_chain_config(SovereignConfig::default_config());
         self.common_setup
@@ -135,26 +135,26 @@ impl EnshrineTestState {
         self.common_setup.deploy_token_handler();
         self.common_setup
             .deploy_fee_market(fee_struct.cloned(), ENSHRINE_SC_ADDRESS);
-        self.propose_set_header_verifier_address();
-        self.propose_register_fee_market_address();
+        self.set_header_verifier_address();
+        self.register_fee_market_address();
         self.common_setup.deploy_chain_factory();
 
         self
     }
 
-    pub fn propose_set_fee(
+    pub fn set_fee(
         &mut self,
         fee_struct: Option<&FeeStruct<StaticApi>>,
         error_message: Option<&str>,
     ) -> &mut Self {
         if let Some(fee) = fee_struct {
-            self.propose_add_fee_token(fee, error_message);
+            self.add_fee_token(fee, error_message);
         }
 
         self
     }
 
-    pub fn propose_execute_operation(
+    pub fn execute_operation(
         &mut self,
         error_message: Option<&str>,
         tokens: &Vec<TestTokenIdentifier>,
@@ -182,7 +182,7 @@ impl EnshrineTestState {
         }
     }
 
-    pub fn propose_register_operation(&mut self, tokens: &Vec<TestTokenIdentifier>) {
+    pub fn register_operation(&mut self, tokens: &Vec<TestTokenIdentifier>) {
         let (tokens, data) = self.setup_payments(tokens);
         let to = managed_address!(&Address::from(RECEIVER_ADDRESS.eval_to_array()));
         let operation = Operation::new(to, tokens, data);
@@ -211,7 +211,7 @@ impl EnshrineTestState {
             .run();
     }
 
-    pub fn propose_register_fee_market_address(&mut self) {
+    pub fn register_fee_market_address(&mut self) {
         self.common_setup
             .world
             .tx()
@@ -222,7 +222,7 @@ impl EnshrineTestState {
             .run();
     }
 
-    pub fn propose_add_token_to_whitelist(
+    pub fn add_token_to_whitelist(
         &mut self,
         tokens: MultiValueEncoded<StaticApi, TokenIdentifier<StaticApi>>,
     ) {
@@ -236,7 +236,7 @@ impl EnshrineTestState {
             .run();
     }
 
-    pub fn propose_register_tokens(
+    pub fn register_tokens(
         &mut self,
         sender: &TestAddress,
         fee_payment: EsdtTokenPayment<StaticApi>,
@@ -267,7 +267,7 @@ impl EnshrineTestState {
         }
     }
 
-    pub fn propose_deposit(
+    pub fn deposit(
         &mut self,
         from: TestAddress,
         to: TestAddress,
@@ -292,7 +292,7 @@ impl EnshrineTestState {
         }
     }
 
-    pub fn propose_add_fee_token(
+    pub fn add_fee_token(
         &mut self,
         fee_struct: &FeeStruct<StaticApi>,
         error_message: Option<&str>,
@@ -313,7 +313,7 @@ impl EnshrineTestState {
         }
     }
 
-    pub fn propose_whitelist_enshrine_esdt(&mut self) {
+    pub fn whitelist_enshrine_esdt(&mut self) {
         self.common_setup
             .world
             .tx()
@@ -324,7 +324,7 @@ impl EnshrineTestState {
             .run();
     }
 
-    pub fn propose_register_esdt_in_header_verifier(&mut self) {
+    pub fn register_esdt_in_header_verifier(&mut self) {
         self.common_setup
             .world
             .tx()
