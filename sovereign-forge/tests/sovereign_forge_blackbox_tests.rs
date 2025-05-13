@@ -8,7 +8,7 @@ use error_messages::{
     CALLER_DID_NOT_DEPLOY_ANY_SOV_CHAIN, CHAIN_CONFIG_ALREADY_DEPLOYED, CHAIN_ID_ALREADY_IN_USE,
     CHAIN_ID_NOT_FOUR_CHAR_LONG, CHAIN_ID_NOT_LOWERCASE_ALPHANUMERIC, DEPLOY_COST_NOT_ENOUGH,
     ESDT_SAFE_ALREADY_DEPLOYED, ESDT_SAFE_NOT_DEPLOYED, FEE_MARKET_ALREADY_DEPLOYED,
-    HEADER_VERIFIER_ALREADY_DEPLOYED, HEADER_VERIFIER_NOT_DEPLOYED,
+    FEE_MARKET_NOT_DEPLOYED, HEADER_VERIFIER_ALREADY_DEPLOYED, HEADER_VERIFIER_NOT_DEPLOYED,
 };
 use multiversx_sc::{
     imports::OptionalValue,
@@ -724,6 +724,16 @@ fn test_deploy_phase_three_already_deployed() {
     state
         .common_setup
         .deploy_phase_three(OptionalValue::None, Some(ESDT_SAFE_ALREADY_DEPLOYED));
+}
+
+#[test]
+fn test_complete_setup_phase_four_not_deployed() {
+    let mut state = SovereignForgeTestState::new();
+    state.common_setup.deploy_sovereign_forge();
+    state
+        .common_setup
+        .deploy_fee_market(None, ESDT_SAFE_ADDRESS);
+    state.complete_setup_phase(Some(FEE_MARKET_NOT_DEPLOYED));
 }
 
 #[test]
