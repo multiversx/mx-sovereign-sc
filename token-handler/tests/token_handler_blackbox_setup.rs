@@ -21,6 +21,7 @@ pub struct TokenHandlerTestState {
 }
 
 impl TokenHandlerTestState {
+    #[allow(clippy::new_without_default)]
     pub fn new() -> Self {
         let owner_account = AccountSetup {
             address: OWNER_ADDRESS.to_address(),

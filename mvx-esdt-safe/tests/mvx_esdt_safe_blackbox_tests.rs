@@ -1023,21 +1023,9 @@ fn test_deposit_refund() {
         - BigUint::from(gas_limit) * per_gas;
 
     let expected_balances = vec![
-        MultiValue3::from((
-            TestTokenIdentifier::from(FIRST_TEST_TOKEN),
-            0u64,
-            expected_amount_token_one,
-        )),
-        MultiValue3::from((
-            TestTokenIdentifier::from(SECOND_TEST_TOKEN),
-            0u64,
-            expected_amount_token_two,
-        )),
-        MultiValue3::from((
-            TestTokenIdentifier::from(FEE_TOKEN),
-            0u64,
-            expected_amount_token_fee,
-        )),
+        MultiValue3::from((FIRST_TEST_TOKEN, 0u64, expected_amount_token_one)),
+        MultiValue3::from((SECOND_TEST_TOKEN, 0u64, expected_amount_token_two)),
+        MultiValue3::from((FEE_TOKEN, 0u64, expected_amount_token_fee)),
     ];
 
     state

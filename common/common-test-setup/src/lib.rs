@@ -417,7 +417,7 @@ impl BaseSetup {
                 .esdt_nft_balance_and_attributes(
                     token_id,
                     nonce,
-                    BigUint::from(amount),
+                    amount,
                     ManagedBuffer::<StaticApi>::new(),
                 );
         }

@@ -16,6 +16,7 @@ pub struct SovereignForgeTestState {
 }
 
 impl SovereignForgeTestState {
+    #[allow(clippy::new_without_default)]
     pub fn new() -> Self {
         let owner_setup = AccountSetup {
             address: OWNER_ADDRESS.to_address(),
