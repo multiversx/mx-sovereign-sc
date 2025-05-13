@@ -133,24 +133,11 @@ fn test_deposit_no_fee() {
 }
 
 #[test]
-fn test_deposit_token_nothing_to_transfer_fee_enabled() {
+fn test_deposit_token_nothing_to_transfer_fee_disabled() {
     let mut state = EnshrineTestState::new();
-    let amount = BigUint::from(10000u64);
-    let wegld_payment = EsdtTokenPayment::new(WEGLD_IDENTIFIER.into(), 0, amount.clone());
-    let mut payments = PaymentsVec::new();
-    let fee_amount_per_transfer = BigUint::from(100u32);
-    let fee_amount_per_gas = BigUint::from(100u32);
+    let payments = PaymentsVec::new();
 
-    let fee_struct = state.setup_fee_struct(
-        WEGLD_IDENTIFIER,
-        &fee_amount_per_transfer,
-        &fee_amount_per_gas,
-    );
-
-    payments.push(wegld_payment);
-
-    state.setup_contracts(false, Some(&fee_struct), None);
-    state.set_fee(Some(&fee_struct), None);
+    state.setup_contracts(false, None, None);
     state.deposit(
         OWNER_ADDRESS,
         USER_ADDRESS,
@@ -351,7 +338,7 @@ fn test_deposit_with_transfer_data_enough_for_fee() {
 fn test_deposit_with_transfer_data_not_enough_for_fee() {
     let mut state = EnshrineTestState::new();
     let amount = BigUint::from(100000000000000000u128);
-    let wegld_payment = EsdtTokenPayment::new(WEGLD_IDENTIFIER.into(), 0, amount.clone());
+    let wegld_payment = EsdtTokenPayment::new(WEGLD_IDENTIFIER.into(), 0, BigUint::zero());
     let fungible_payment = EsdtTokenPayment::new(FUNGIBLE_TOKEN_ID.into(), 0, amount.clone());
     let crowd_payment = EsdtTokenPayment::new(CROWD_TOKEN_ID.into(), 0, amount.clone());
     let mut payments = PaymentsVec::new();

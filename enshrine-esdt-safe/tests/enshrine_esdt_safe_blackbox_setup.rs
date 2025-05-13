@@ -12,13 +12,13 @@ use multiversx_sc::{
     codec::TopEncode,
     imports::OptionalValue,
     types::{
-        Address, BigUint, EsdtTokenData, EsdtTokenPayment, ManagedBuffer, ManagedVec,
-        MultiValueEncoded, TestAddress, TestTokenIdentifier, TokenIdentifier,
+        BigUint, EsdtTokenData, EsdtTokenPayment, ManagedBuffer, ManagedVec, MultiValueEncoded,
+        TestAddress, TestTokenIdentifier, TokenIdentifier,
     },
 };
 use multiversx_sc_scenario::{
-    api::StaticApi, managed_address, multiversx_chain_vm::crypto_functions::sha256,
-    ReturnsHandledOrError, ScenarioTxRun,
+    api::StaticApi, multiversx_chain_vm::crypto_functions::sha256, ReturnsHandledOrError,
+    ScenarioTxRun,
 };
 use proxies::{
     enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy,
@@ -160,7 +160,7 @@ impl EnshrineTestState {
         tokens: &Vec<TestTokenIdentifier>,
     ) {
         let (tokens, data) = self.setup_payments(tokens);
-        let to = managed_address!(&Address::from(&RECEIVER_ADDRESS.eval_to_array()));
+        let to = RECEIVER_ADDRESS.to_managed_address();
         let operation = Operation::new(to, tokens, data);
         let operation_hash = self.get_operation_hash(&operation);
         let hash_of_hashes: ManagedBuffer<StaticApi> =
@@ -177,14 +177,13 @@ impl EnshrineTestState {
             .returns(ReturnsHandledOrError::new())
             .run();
 
-        if let Err(error) = response {
-            assert_eq!(error_message, Some(error.message.as_str()))
-        }
+        self.common_setup
+            .assert_expected_error_message(response, error_message);
     }
 
     pub fn register_operation(&mut self, tokens: &Vec<TestTokenIdentifier>) {
         let (tokens, data) = self.setup_payments(tokens);
-        let to = managed_address!(&Address::from(RECEIVER_ADDRESS.eval_to_array()));
+        let to = RECEIVER_ADDRESS.to_managed_address();
         let operation = Operation::new(to, tokens, data);
         let operation_hash = self.get_operation_hash(&operation);
         let mut operations_hashes = MultiValueEncoded::<StaticApi, ManagedBuffer<StaticApi>>::new();
@@ -262,9 +261,8 @@ impl EnshrineTestState {
             .returns(ReturnsHandledOrError::new())
             .run();
 
-        if let Err(error) = response {
-            assert_eq!(error_message, Some(error.message.as_str()))
-        }
+        self.common_setup
+            .assert_expected_error_message(response, error_message);
     }
 
     pub fn deposit(
@@ -287,9 +285,8 @@ impl EnshrineTestState {
             .returns(ReturnsHandledOrError::new())
             .run();
 
-        if let Err(error) = response {
-            assert_eq!(error_message, Some(error.message.as_str()))
-        }
+        self.common_setup
+            .assert_expected_error_message(response, error_message);
     }
 
     pub fn add_fee_token(
@@ -308,9 +305,8 @@ impl EnshrineTestState {
             .returns(ReturnsHandledOrError::new())
             .run();
 
-        if let Err(error) = response {
-            assert_eq!(error_message, Some(error.message.as_str()))
-        }
+        self.common_setup
+            .assert_expected_error_message(response, error_message);
     }
 
     pub fn whitelist_enshrine_esdt(&mut self) {
@@ -351,7 +347,7 @@ impl EnshrineTestState {
             tokens.push(payment);
         }
 
-        let op_sender = managed_address!(&Address::from(&USER_ADDRESS.eval_to_array()));
+        let op_sender = USER_ADDRESS.to_managed_address();
         let data: OperationData<StaticApi> = OperationData::new(1, op_sender, Option::None);
 
         (tokens, data)

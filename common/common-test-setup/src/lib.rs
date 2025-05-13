@@ -328,9 +328,7 @@ impl BaseSetup {
             .returns(ReturnsHandledOrError::new())
             .run();
 
-        if let Err(error) = response {
-            assert_eq!(error_message, Some(error.message.as_str()))
-        }
+        self.assert_expected_error_message(response, error_message);
     }
 
     pub fn deploy_phase_two(&mut self, error_message: Option<&str>) {
@@ -344,9 +342,7 @@ impl BaseSetup {
             .returns(ReturnsHandledOrError::new())
             .run();
 
-        if let Err(error) = response {
-            assert_eq!(error_message, Some(error.message.as_str()))
-        }
+        self.assert_expected_error_message(response, error_message);
     }
 
     pub fn deploy_phase_three(
@@ -364,9 +360,7 @@ impl BaseSetup {
             .returns(ReturnsHandledOrError::new())
             .run();
 
-        if let Err(error) = response {
-            assert_eq!(error_message, Some(error.message.as_str()))
-        }
+        self.assert_expected_error_message(response, error_message);
     }
 
     pub fn deploy_phase_four(
@@ -384,9 +378,7 @@ impl BaseSetup {
             .returns(ReturnsHandledOrError::new())
             .run();
 
-        if let Err(error) = response {
-            assert_eq!(error_message, Some(error.message.as_str()))
-        }
+        self.assert_expected_error_message(response, error_message);
     }
 
     pub fn assert_expected_error_message(

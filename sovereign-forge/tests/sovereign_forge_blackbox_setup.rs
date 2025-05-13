@@ -137,9 +137,8 @@ impl SovereignForgeTestState {
             .returns(ReturnsHandledOrError::new())
             .run();
 
-        if let Err(error) = response {
-            assert_eq!(error_message, Some(error.message.as_str()))
-        }
+        self.common_setup
+            .assert_expected_error_message(response, error_message);
     }
 
     pub fn get_smart_contract_address_from_sovereign_forge(
