@@ -63,13 +63,6 @@ pub trait UtilsModule: super::storage::StorageModule {
         }
     }
 
-    fn require_all_phases(&self, caller: &ManagedAddress) {
-        self.require_phase_one_completed(caller);
-        self.require_phase_two_completed(caller);
-        self.require_phase_three_completed(caller);
-        self.require_phase_four_completed(caller);
-    }
-
     fn require_phase_four_completed(&self, caller: &ManagedAddress) {
         require!(
             self.is_contract_deployed(caller, ScArray::FeeMarket),
