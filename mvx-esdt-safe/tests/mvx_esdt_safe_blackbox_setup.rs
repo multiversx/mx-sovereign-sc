@@ -1,7 +1,7 @@
 use common_test_setup::constants::{
     ESDT_SAFE_ADDRESS, FEE_TOKEN, FIRST_TEST_TOKEN, HEADER_VERIFIER_ADDRESS,
     MVX_ESDT_SAFE_CODE_PATH, ONE_HUNDRED_MILLION, OWNER_ADDRESS, OWNER_BALANCE, SECOND_TEST_TOKEN,
-    USER,
+    USER_ADDRESS,
 };
 use common_test_setup::{AccountSetup, BaseSetup, RegisterTokenArgs};
 use multiversx_sc::types::MultiValueEncoded;
@@ -33,22 +33,15 @@ impl MvxEsdtSafeTestState {
     #[allow(clippy::new_without_default)]
     pub fn new() -> Self {
         let owner_account = AccountSetup {
-            address: OWNER_ADDRESS,
+            address: OWNER_ADDRESS.to_address(),
+            code_path: None,
             esdt_balances: Some(vec![
-                (
-                    TestTokenIdentifier::new(FIRST_TEST_TOKEN),
-                    ONE_HUNDRED_MILLION.into(),
-                ),
-                (
-                    TestTokenIdentifier::new(SECOND_TEST_TOKEN),
-                    ONE_HUNDRED_MILLION.into(),
-                ),
-                (
-                    TestTokenIdentifier::new(FEE_TOKEN),
-                    ONE_HUNDRED_MILLION.into(),
-                ),
+                (FIRST_TEST_TOKEN, 0u64, ONE_HUNDRED_MILLION.into()),
+                (SECOND_TEST_TOKEN, 0u64, ONE_HUNDRED_MILLION.into()),
+                (FEE_TOKEN, 0u64, ONE_HUNDRED_MILLION.into()),
                 (
                     TestTokenIdentifier::new(TRUSTED_TOKEN_IDS[0]),
+                    0u64,
                     ONE_HUNDRED_MILLION.into(),
                 ),
             ]),
@@ -56,50 +49,17 @@ impl MvxEsdtSafeTestState {
         };
 
         let user_account = AccountSetup {
-            address: USER,
-            esdt_balances: Some(vec![(
-                TestTokenIdentifier::new(FIRST_TEST_TOKEN),
-                ONE_HUNDRED_MILLION.into(),
-            )]),
+            address: USER_ADDRESS.to_address(),
+            code_path: None,
+            esdt_balances: Some(vec![(FIRST_TEST_TOKEN, 0u64, ONE_HUNDRED_MILLION.into())]),
             egld_balance: Some(OWNER_BALANCE.into()),
         };
 
         let account_setups = vec![owner_account, user_account];
 
-        let mut common_setup = BaseSetup::new(account_setups);
-
-        common_setup
-            .world
-            .register_contract(MVX_ESDT_SAFE_CODE_PATH, mvx_esdt_safe::ContractBuilder);
+        let common_setup = BaseSetup::new(account_setups);
 
         Self { common_setup }
-    }
-
-    pub fn deploy_contract(
-        &mut self,
-        header_verifier_address: TestSCAddress,
-        opt_config: OptionalValue<EsdtSafeConfig<StaticApi>>,
-    ) -> &mut Self {
-        self.common_setup
-            .world
-            .tx()
-            .from(OWNER_ADDRESS)
-            .typed(MvxEsdtSafeProxy)
-            .init(header_verifier_address, opt_config)
-            .code(MVX_ESDT_SAFE_CODE_PATH)
-            .new_address(ESDT_SAFE_ADDRESS)
-            .run();
-
-        self.common_setup
-            .world
-            .tx()
-            .from(OWNER_ADDRESS)
-            .to(ESDT_SAFE_ADDRESS)
-            .typed(MvxEsdtSafeProxy)
-            .unpause_endpoint()
-            .run();
-
-        self
     }
 
     pub fn deploy_contract_with_roles(&mut self) -> &mut Self {
@@ -208,15 +168,8 @@ impl MvxEsdtSafeTestState {
             .returns(ReturnsHandledOrError::new())
             .run();
 
-        match response {
-            Ok(_) => assert!(
-                expected_error_message.is_none(),
-                "Transaction was successful, but expected error"
-            ),
-            Err(error) => {
-                assert_eq!(expected_error_message, Some(error.message.as_str()))
-            }
-        }
+        self.common_setup
+            .assert_expected_error_message(response, expected_error_message);
 
         self
     }
@@ -237,15 +190,8 @@ impl MvxEsdtSafeTestState {
             .returns(ReturnsHandledOrError::new())
             .run();
 
-        match response {
-            Ok(_) => assert!(
-                expected_error_message.is_none(),
-                "Transaction was successful, but expected error"
-            ),
-            Err(error) => {
-                assert_eq!(expected_error_message, Some(error.message.as_str()))
-            }
-        }
+        self.common_setup
+            .assert_expected_error_message(response, expected_error_message);
 
         self
     }

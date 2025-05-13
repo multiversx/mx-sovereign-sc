@@ -1,9 +1,6 @@
 use multiversx_sc::{
     imports::OptionalValue,
-    types::{
-        EsdtLocalRole, ManagedAddress, ManagedVec, TestSCAddress, TestTokenIdentifier,
-        TokenIdentifier,
-    },
+    types::{EsdtLocalRole, ManagedAddress, ManagedVec, TestSCAddress, TokenIdentifier},
 };
 
 use multiversx_sc_scenario::{
@@ -12,7 +9,7 @@ use multiversx_sc_scenario::{
 
 use common_test_setup::constants::{
     ESDT_SAFE_ADDRESS, FEE_MARKET_ADDRESS, FEE_TOKEN, FIRST_TEST_TOKEN, ONE_HUNDRED_MILLION,
-    OWNER_ADDRESS, OWNER_BALANCE, SECOND_TEST_TOKEN, SOV_ESDT_SAFE_CODE_PATH, USER,
+    OWNER_ADDRESS, OWNER_BALANCE, SECOND_TEST_TOKEN, SOV_ESDT_SAFE_CODE_PATH, USER_ADDRESS,
 };
 use common_test_setup::{AccountSetup, BaseSetup};
 use proxies::sov_esdt_safe_proxy::SovEsdtSafeProxy;
@@ -30,30 +27,20 @@ impl SovEsdtSafeTestState {
     #[allow(clippy::new_without_default)]
     pub fn new() -> Self {
         let owner_account = AccountSetup {
-            address: OWNER_ADDRESS,
+            address: OWNER_ADDRESS.to_address(),
+            code_path: None,
             esdt_balances: Some(vec![
-                (
-                    TestTokenIdentifier::new(FIRST_TEST_TOKEN),
-                    ONE_HUNDRED_MILLION.into(),
-                ),
-                (
-                    TestTokenIdentifier::new(SECOND_TEST_TOKEN),
-                    ONE_HUNDRED_MILLION.into(),
-                ),
-                (
-                    TestTokenIdentifier::new(FEE_TOKEN),
-                    ONE_HUNDRED_MILLION.into(),
-                ),
+                (FIRST_TEST_TOKEN, 0u64, ONE_HUNDRED_MILLION.into()),
+                (SECOND_TEST_TOKEN, 0u64, ONE_HUNDRED_MILLION.into()),
+                (FEE_TOKEN, 0u64, ONE_HUNDRED_MILLION.into()),
             ]),
             egld_balance: Some(OWNER_BALANCE.into()),
         };
 
         let user_account = AccountSetup {
-            address: USER,
-            esdt_balances: Some(vec![(
-                TestTokenIdentifier::new(FIRST_TEST_TOKEN),
-                ONE_HUNDRED_MILLION.into(),
-            )]),
+            address: USER_ADDRESS.to_address(),
+            code_path: None,
+            esdt_balances: Some(vec![(FIRST_TEST_TOKEN, 0u64, ONE_HUNDRED_MILLION.into())]),
             egld_balance: Some(OWNER_BALANCE.into()),
         };
 
@@ -66,33 +53,6 @@ impl SovEsdtSafeTestState {
             .register_contract(SOV_ESDT_SAFE_CODE_PATH, sov_esdt_safe::ContractBuilder);
 
         Self { common_setup }
-    }
-
-    pub fn deploy_contract(
-        &mut self,
-        fee_market_address: TestSCAddress,
-        opt_config: OptionalValue<EsdtSafeConfig<StaticApi>>,
-    ) -> &mut Self {
-        self.common_setup
-            .world
-            .tx()
-            .from(OWNER_ADDRESS)
-            .typed(SovEsdtSafeProxy)
-            .init(fee_market_address, opt_config)
-            .code(SOV_ESDT_SAFE_CODE_PATH)
-            .new_address(ESDT_SAFE_ADDRESS)
-            .run();
-
-        self.common_setup
-            .world
-            .tx()
-            .from(OWNER_ADDRESS)
-            .to(ESDT_SAFE_ADDRESS)
-            .typed(SovEsdtSafeProxy)
-            .unpause_endpoint()
-            .run();
-
-        self
     }
 
     pub fn deploy_contract_with_roles(&mut self) -> &mut Self {

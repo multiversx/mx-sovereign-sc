@@ -219,6 +219,7 @@ checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 name = "chain-config"
 version = "0.1.0"
 dependencies = [
+ "common-test-setup",
  "error-messages",
  "multiversx-sc",
  "multiversx-sc-modules",
@@ -242,6 +243,7 @@ name = "chain-factory"
 version = "0.1.0"
 dependencies = [
  "chain-config",
+ "common-test-setup",
  "error-messages",
  "multiversx-sc",
  "multiversx-sc-modules",
@@ -345,14 +347,18 @@ name = "common-test-setup"
 version = "0.1.0"
 dependencies = [
  "chain-config",
+ "chain-factory",
  "cross-chain",
+ "enshrine-esdt-safe",
  "fee-market",
  "header-verifier",
  "multiversx-sc-scenario",
  "mvx-esdt-safe",
  "proxies",
+ "sovereign-forge",
  "structs",
  "testing-sc",
+ "token-handler",
 ]
 
 [[package]]
@@ -526,6 +532,7 @@ name = "enshrine-esdt-safe"
 version = "0.0.0"
 dependencies = [
  "chain-config",
+ "common-test-setup",
  "cross-chain",
  "error-messages",
  "fee-market",
@@ -605,6 +612,7 @@ checksum = "37909eebbb50d72f9059c3b6d82c0463f2ff062c9e95845c43a6c9c0355411be"
 name = "fee-market"
 version = "0.1.0"
 dependencies = [
+ "common-test-setup",
  "error-messages",
  "multiversx-sc",
  "multiversx-sc-scenario",
@@ -2431,6 +2439,7 @@ name = "token-handler"
 version = "0.0.0"
 dependencies = [
  "chain-factory",
+ "common-test-setup",
  "error-messages",
  "multiversx-sc",
  "multiversx-sc-modules",

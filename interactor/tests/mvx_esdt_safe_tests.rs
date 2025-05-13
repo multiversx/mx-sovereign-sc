@@ -603,7 +603,7 @@ async fn register_token_invalid_type_token() {
         )
         .await;
 
-    let sov_token_id = TokenIdentifier::from_esdt_bytes(SOV_TOKEN);
+    let sov_token_id = TokenIdentifier::from_esdt_bytes(SOV_TOKEN.as_str());
     let token_type = EsdtTokenType::Invalid;
     let token_display_name = "SOVEREIGN";
     let num_decimals = 18;
@@ -663,7 +663,7 @@ async fn register_token_fungible_token() {
         )
         .await;
 
-    let sov_token_id = TokenIdentifier::from_esdt_bytes(SOV_TOKEN);
+    let sov_token_id = TokenIdentifier::from_esdt_bytes(SOV_TOKEN.as_str());
     let token_type = EsdtTokenType::Fungible;
     let token_display_name = "GREEN";
     let num_decimals = 18;
@@ -738,7 +738,7 @@ async fn register_token_non_fungible_token() {
         )
         .await;
 
-    let sov_token_id = TokenIdentifier::from_esdt_bytes(SOV_TOKEN);
+    let sov_token_id = TokenIdentifier::from_esdt_bytes(SOV_TOKEN.as_str());
     let token_type = EsdtTokenType::NonFungible;
     let token_display_name = "SOVEREIGN";
     let num_decimals = 18;
@@ -813,7 +813,7 @@ async fn register_token_dynamic_non_fungible_token() {
         )
         .await;
 
-    let sov_token_id = TokenIdentifier::from_esdt_bytes(SOV_TOKEN);
+    let sov_token_id = TokenIdentifier::from_esdt_bytes(SOV_TOKEN.as_str());
     let token_type = EsdtTokenType::DynamicNFT;
     let token_display_name = "SOVEREIGN";
     let num_decimals = 18;
@@ -984,7 +984,7 @@ async fn execute_operation_success_no_fee() {
     let payment = OperationEsdtPayment::new(TokenIdentifier::from(FIRST_TEST_TOKEN), 0, token_data);
     let mut payment_vec = PaymentsVec::new();
     payment_vec.push(EsdtTokenPayment {
-        token_identifier: TokenIdentifier::from_esdt_bytes(FIRST_TEST_TOKEN),
+        token_identifier: TokenIdentifier::from_esdt_bytes(FIRST_TEST_TOKEN.as_str()),
         token_nonce: 0,
         amount: BigUint::from(10_000_000_000_000_000_000u128),
     });
