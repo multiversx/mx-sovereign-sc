@@ -169,13 +169,6 @@ pub trait Headerverifier:
 
         self.check_validator_range(self.bls_pub_keys().len() as u64);
 
-        // TODO:
-        // self.tx()
-        //     .to(ToSelf)
-        //     .typed(UserBuiltinProxy)
-        //     .change_owner_address()
-        //     .sync_call();
-
         self.setup_phase_complete().set(true);
     }
 

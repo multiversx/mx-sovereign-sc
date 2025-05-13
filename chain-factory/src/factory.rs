@@ -149,40 +149,6 @@ pub trait FactoryModule: only_admin::OnlyAdminModule {
         fee_market_address
     }
 
-    #[only_admin]
-    #[endpoint(completeSetupPhase)]
-    fn complete_setup_phase(
-        &self,
-        chain_config_address: ManagedAddress,
-        header_verifier_address: ManagedAddress,
-        mvx_esdt_safe_address: ManagedAddress,
-        fee_market_address: ManagedAddress,
-    ) {
-        self.tx()
-            .to(chain_config_address)
-            .typed(ChainConfigContractProxy)
-            .complete_setup_phase(header_verifier_address.clone())
-            .sync_call();
-
-        self.tx()
-            .to(header_verifier_address.clone())
-            .typed(HeaderverifierProxy)
-            .complete_setup_phase()
-            .sync_call();
-
-        self.tx()
-            .to(mvx_esdt_safe_address)
-            .typed(MvxEsdtSafeProxy)
-            .complete_setup_phase()
-            .sync_call();
-
-        self.tx()
-            .to(fee_market_address)
-            .typed(FeeMarketProxy)
-            .complete_setup_phase(header_verifier_address)
-            .sync_call();
-    }
-
     #[storage_mapper("chainConfigTemplate")]
     fn chain_config_template(&self) -> SingleValueMapper<ManagedAddress>;
 

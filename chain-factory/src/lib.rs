@@ -14,6 +14,7 @@ pub trait ChainFactoryContract:
     + utils::UtilsModule
     + only_admin::OnlyAdminModule
     + update_configs::UpdateConfigsModule
+    + complete_phases::CompletePhasesModule
 {
     #[init]
     fn init(

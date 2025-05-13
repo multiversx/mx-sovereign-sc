@@ -52,6 +52,7 @@ pub const SOV_TO_MVX_TOKEN_STORAGE_KEY: &str = "sovToMxTokenId";
 pub const MVX_TO_SOV_TOKEN_STORAGE_KEY: &str = "mxToSovTokenId";
 pub const OPERATION_HASH_STATUS_STORAGE_KEY: &str = "operationHashStatus";
 pub const SOVEREIGN_TOKEN_PREFIX: &str = "sov";
+pub const CHAIN_ID: &str = "svch";
 
 pub const ISSUE_COST: u64 = 50_000_000_000_000_000; // 0.05 EGLD
 pub const ONE_HUNDRED_MILLION: u32 = 100_000_000;

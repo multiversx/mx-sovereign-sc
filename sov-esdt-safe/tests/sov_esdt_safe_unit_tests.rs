@@ -178,7 +178,7 @@ fn deposit_with_fee_no_transfer_data() {
 
     state
         .common_setup
-        .check_account_multiple_esdts(OWNER_ADDRESS.to_address(), expected_tokens);
+        .check_account_multiple_esdts(ESDT_SAFE_ADDRESS.to_address(), expected_tokens);
 
     state.common_setup.check_account_single_esdt(
         OWNER_ADDRESS.to_address(),

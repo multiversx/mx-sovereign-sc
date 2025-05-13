@@ -310,6 +310,85 @@ impl BaseSetup {
         self
     }
 
+    pub fn deploy_phase_one(
+        &mut self,
+        payment: &BigUint<StaticApi>,
+        opt_preferred_chain: Option<ManagedBuffer<StaticApi>>,
+        config: &SovereignConfig<StaticApi>,
+        error_message: Option<&str>,
+    ) {
+        let response = self
+            .world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .to(SOVEREIGN_FORGE_SC_ADDRESS)
+            .typed(SovereignForgeProxy)
+            .deploy_phase_one(opt_preferred_chain, config)
+            .egld(payment)
+            .returns(ReturnsHandledOrError::new())
+            .run();
+
+        if let Err(error) = response {
+            assert_eq!(error_message, Some(error.message.as_str()))
+        }
+    }
+
+    pub fn deploy_phase_two(&mut self, error_message: Option<&str>) {
+        let response = self
+            .world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .to(SOVEREIGN_FORGE_SC_ADDRESS)
+            .typed(SovereignForgeProxy)
+            .deploy_phase_two()
+            .returns(ReturnsHandledOrError::new())
+            .run();
+
+        if let Err(error) = response {
+            assert_eq!(error_message, Some(error.message.as_str()))
+        }
+    }
+
+    pub fn deploy_phase_three(
+        &mut self,
+        opt_config: OptionalValue<EsdtSafeConfig<StaticApi>>,
+        error_message: Option<&str>,
+    ) {
+        let response = self
+            .world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .to(SOVEREIGN_FORGE_SC_ADDRESS)
+            .typed(SovereignForgeProxy)
+            .deploy_phase_three(opt_config)
+            .returns(ReturnsHandledOrError::new())
+            .run();
+
+        if let Err(error) = response {
+            assert_eq!(error_message, Some(error.message.as_str()))
+        }
+    }
+
+    pub fn deploy_phase_four(
+        &mut self,
+        fee: Option<FeeStruct<StaticApi>>,
+        error_message: Option<&str>,
+    ) {
+        let response = self
+            .world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .to(SOVEREIGN_FORGE_SC_ADDRESS)
+            .typed(SovereignForgeProxy)
+            .deploy_phase_four(fee)
+            .returns(ReturnsHandledOrError::new())
+            .run();
+
+        if let Err(error) = response {
+            assert_eq!(error_message, Some(error.message.as_str()))
+        }
+    }
+
     pub fn assert_expected_error_message(
         &mut self,
         response: Result<(), TxResponseStatus>,
