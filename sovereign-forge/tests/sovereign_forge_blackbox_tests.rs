@@ -24,6 +24,14 @@ use sovereign_forge_blackbox_setup::SovereignForgeTestState;
 use structs::configs::{EsdtSafeConfig, SovereignConfig};
 mod sovereign_forge_blackbox_setup;
 
+/// ### TEST
+/// S_FORGE-DEPLOY-OK-001
+///
+/// ### ACTION
+/// Deploy sovereign_forge and chain_factory
+///
+/// ### EXPECTED
+/// * Both sovereign_forge and chain_factory contracts deploy successfully
 #[test]
 fn test_deploy_contracts() {
     let mut state = SovereignForgeTestState::new();
@@ -31,6 +39,14 @@ fn test_deploy_contracts() {
     state.common_setup.deploy_chain_factory();
 }
 
+/// ### TEST
+/// S_FORGE-REGISTER_TOKEN_HANDLER-OK-002
+///
+/// ### ACTION
+/// Register token handler for any shard
+///
+/// ### EXPECTED
+/// * sovereign_forge.token_handlers(2) is non-empty
 #[test]
 fn test_register_token_handler() {
     let mut state = SovereignForgeTestState::new();
