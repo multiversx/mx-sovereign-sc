@@ -2,7 +2,7 @@ use crate::err_msg;
 use core::ops::Deref;
 use error_messages::{
     CHAIN_CONFIG_ALREADY_DEPLOYED, ESDT_SAFE_ALREADY_DEPLOYED, FEE_MARKET_ALREADY_DEPLOYED,
-    HEADER_VERIFIER_ALREADY_DEPLOYED,
+    HEADER_VERIFIER_ALREADY_DEPLOYED, SOVEREIGN_SETUP_PHASE_ALREADY_COMPLETED,
 };
 use proxies::{chain_factory_proxy::ChainFactoryContractProxy, fee_market_proxy::FeeStruct};
 
@@ -24,14 +24,16 @@ pub trait PhasesModule:
     #[only_owner]
     #[endpoint(completeSetupPhase)]
     fn complete_setup_phase(&self) {
-        if self.is_setup_phase_complete() {
-            return;
-        }
-
         let caller = self.blockchain().get_caller();
+        let sovereign_setup_phase_mapper =
+            self.sovereign_setup_phase(&self.sovereigns_mapper(&caller).get());
 
-        self.require_initilization_phase_complete();
-        self.require_all_phases(&caller);
+        require!(
+            sovereign_setup_phase_mapper.is_empty(),
+            SOVEREIGN_SETUP_PHASE_ALREADY_COMPLETED
+        );
+
+        self.require_phase_four_completed(&caller);
 
         let chain_config_address = self.get_contract_address(&caller, ScArray::ChainConfig);
         let header_verifier_address = self.get_contract_address(&caller, ScArray::HeaderVerifier);
@@ -49,7 +51,7 @@ pub trait PhasesModule:
             )
             .sync_call();
 
-        self.setup_phase_complete().set(true);
+        sovereign_setup_phase_mapper.set(true);
     }
 
     #[payable("EGLD")]
@@ -152,6 +154,9 @@ pub trait PhasesModule:
 
         let esdt_safe_address = self.get_contract_address(&caller, ScArray::ESDTSafe);
 
+        if self.is_setup_phase_complete() {
+            return;
+        }
         let fee_market_address = self.deploy_fee_market(&esdt_safe_address, fee);
 
         let fee_market_contract_info = ContractInfo::new(ScArray::FeeMarket, fee_market_address);
