@@ -292,7 +292,6 @@ dependencies = [
  "multiversx-sc",
  "mvx-esdt-safe",
  "proxies",
- "setup-phase",
  "structs",
  "token-handler",
 ]

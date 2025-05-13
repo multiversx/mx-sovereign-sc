@@ -189,6 +189,19 @@ where
             .original_result()
     }
 
+    pub fn sovereign_setup_phase<
+        Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
+    >(
+        self,
+        chain_id: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, bool> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getSovereignSetupPhase")
+            .argument(&chain_id)
+            .original_result()
+    }
+
     pub fn chain_factories<
         Arg0: ProxyArg<u32>,
     >(

@@ -54,19 +54,13 @@ pub trait UtilsModule: super::storage::StorageModule {
                 "There is no Chain-Factory contract assigned for shard {}",
                 shard_id
             );
-            require!(
-                !self.token_handlers(shard_id).is_empty(),
-                "There is no Token-Handler contract assigned for shard {}",
-                shard_id
-            );
+            // TODO:
+            // require!(
+            //     !self.token_handlers(shard_id).is_empty(),
+            //     "There is no Token-Handler contract assigned for shard {}",
+            //     shard_id
+            // );
         }
-    }
-
-    fn require_all_phases(&self, caller: &ManagedAddress) {
-        self.require_phase_one_completed(caller);
-        self.require_phase_two_completed(caller);
-        self.require_phase_three_completed(caller);
-        self.require_phase_four_completed(caller);
     }
 
     fn require_phase_four_completed(&self, caller: &ManagedAddress) {
