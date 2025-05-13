@@ -77,6 +77,8 @@ pub const OUTGOING_TX_HASH_ALREADY_REGISTERED: &str =
 pub const PAYMENT_DOES_NOT_COVER_FEE: &str = "Payment does not cover fee";
 pub const SETUP_PHASE_ALREADY_COMPLETED: &str = "The setup is completed";
 pub const SETUP_PHASE_NOT_COMPLETED: &str = "The setup is not completed";
+pub const SOVEREIGN_SETUP_PHASE_ALREADY_COMPLETED: &str =
+    "This Sovereign-Chain's setup phase is already completed";
 pub const TOKEN_ALREADY_REGISTERED: &str = "This token was already registered";
 pub const TOKEN_BLACKLISTED: &str = "Token is blacklisted";
 pub const TOKEN_ID_IS_NOT_TRUSTED: &str = "Token is not trusted";
