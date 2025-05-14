@@ -6,6 +6,14 @@ use multiversx_sc_snippets::imports::tokio;
 use rust_interact::sovereign_forge::sovereign_forge_interactor_main::SovereignForgeInteract;
 use structs::configs::SovereignConfig;
 
+/// ### TEST
+/// S_FORGE-COMPLETE_SETUP_PHASE-OK-007
+///
+/// ### ACTION
+/// Run deploy phases 1–4 and call complete_setup_phase
+///
+/// ### EXPECTED
+/// Setup phase is complete
 #[tokio::test]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn deploy_test_sovereign_forge_cs() {
