@@ -177,7 +177,7 @@ fn test_register_tokens_insufficient_wegld() {
 /// ### EXPECTED
 /// Deposit is executed successfully
 
-// TODO: add check balance afetr deposit
+// TODO: add check balance after deposit
 #[test]
 fn test_deposit_no_fee() {
     let mut state = EnshrineTestState::new();

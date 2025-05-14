@@ -22,7 +22,7 @@ fn test_deploy() {
 }
 
 /// ### TEST
-/// H_VERIFIER-REGISTER-ESDT-OK-001
+/// H-VERIFIER_REGISTER_ESDT_OK_001
 ///
 /// ### ACTION
 /// Call 'register_esdt_address()' with a valid esdt safe address
@@ -52,7 +52,7 @@ fn test_register_esdt_address() {
 }
 
 /// ### TEST
-/// H_VERIFIER-REGISTER-OPERATION-FAIL-002
+/// H-VERIFIER_REGISTER_OPERATION_FAIL_002
 ///
 /// ### ACTION
 /// Call 'register_operations' with valid operations
@@ -81,7 +81,7 @@ fn register_bridge_operation_setup_not_completed() {
 }
 
 /// ### TEST
-/// H_VERIFIER-REGISTER-OPERATION-OK-003
+/// H-VERIFIER_REGISTER_OPERATION_OK_003
 ///
 /// ### ACTION
 /// Call 'register_operations' with valid operations and setup completed

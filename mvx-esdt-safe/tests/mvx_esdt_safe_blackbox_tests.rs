@@ -59,7 +59,7 @@ fn test_deploy() {
 /// M-ESDT_DEPLOY_FAIL_002
 ///
 /// ### ACTION
-/// Call 'update_configuration(config)' with invalid config
+/// Call 'update_configuration()' with invalid config
 ///
 /// ### EXPECTED
 /// Error MAX_GAS_LIMIT_PER_TX_EXCEEDED
@@ -2175,8 +2175,7 @@ fn test_set_token_burn_mechanism() {
 /// M-ESDT_SET_BURN_OK_037
 ///
 /// ### ACTION
-/// Call 'set_token_burn_mechanism()' with a trusted token id
-/// Call 'set_token_lock_mechanism()' with a trusted token id
+/// Call both 'set_token_burn_mechanism()' and 'set_token_lock_mechanism()' with a trusted token id.
 ///
 /// ### EXPECTED
 /// The trusted token has the lock mechanism set
@@ -2209,8 +2208,7 @@ fn test_set_token_lock_mechanism() {
 /// M-ESDT_SET_BURN_FAIL_038
 ///
 /// ### ACTION
-/// Call 'set_token_burn_mechanism()' on a trusted token
-/// Call 'set_token_lock_mechanism()' on a token from sovereign
+/// Call both 'set_token_burn_mechanism()' and 'set_token_lock_mechanism()' with a trusted token id.
 ///
 /// ### EXPECTED
 /// ERROR TOKEN_IS_FROM_SOVEREIGN
