@@ -59,7 +59,7 @@ fn test_register_esdt_address() {
 /// Call 'register_operations' with valid operations
 ///
 /// ### EXPECTED
-/// Error: The setup phase must be completed
+/// Error SETUP_PHASE_NOT_COMPLETED
 #[test]
 fn register_bridge_operation_setup_not_completed() {
     let mut state = HeaderVerifierTestState::new();

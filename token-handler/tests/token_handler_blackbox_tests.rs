@@ -23,7 +23,7 @@ fn test_deploy() {
 /// Call 'whitelist_caller()' whitout being an admin
 ///
 /// ### EXPECTED
-/// Error Endpoint can only be called by admins
+/// Error ENDPOINT_CAN_ONLY_BE_CALLED_BY_ADMIN
 #[test]
 fn test_whitelist_enshrine_esdt_caller_not_admin() {
     let mut state = TokenHandlerTestState::new();
@@ -64,7 +64,7 @@ fn test_whitelist_enshrine() {
 /// Call 'transfer_tokens()'
 ///
 /// ### EXPECTED
-/// Error action is not allowed
+/// Error ACTION_IS_NOT_ALLOWED
 #[test]
 fn test_transfer_tokens_no_payment() {
     let mut state = TokenHandlerTestState::new();
