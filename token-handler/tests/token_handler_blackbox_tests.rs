@@ -15,6 +15,14 @@ fn test_deploy() {
     state.deploy_factory_sc();
 }
 
+/// ### TEST
+/// T_HANDLER-WHITELIST_ENSRINE-FAIL-001
+///
+/// ### ACTION
+/// Call 'whitelist_caller()' whitout being an admin
+///
+/// ### EXPECTED
+/// Error Endpoint can only be called by admins
 #[test]
 fn test_whitelist_enshrine_esdt_caller_not_admin() {
     let mut state = TokenHandlerTestState::new();
@@ -25,6 +33,14 @@ fn test_whitelist_enshrine_esdt_caller_not_admin() {
     state.whitelist_caller(TOKEN_HANDLER_SC_ADDRESS, Some(error_message));
 }
 
+/// ### TEST
+/// T_HANDLER-WHITELIST_ENSRINE-OK-001
+///
+/// ### ACTION
+/// Call 'whitelist_caller()'
+///
+/// ### EXPECTED
+/// The caller is whitelisted
 #[test]
 fn test_whitelist_enshrine() {
     let mut state = TokenHandlerTestState::new();
@@ -37,6 +53,15 @@ fn test_whitelist_enshrine() {
 // NOTE:
 // This test at the moment is expected to fail since there is no way
 // to give the correct permissions to the TokenHandler SC
+
+/// ### TEST
+/// T_HANDLER-TRANSFER-FAIL-001
+///
+/// ### ACTION
+/// Call 'transfer_tokens()'
+///
+/// ### EXPECTED
+/// Error action is not allowed
 #[test]
 fn test_transfer_tokens_no_payment() {
     let mut state = TokenHandlerTestState::new();
