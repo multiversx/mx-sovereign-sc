@@ -22,6 +22,14 @@ fn test_deploy_fee_market() {
         .deploy_fee_market(Some(fee), ESDT_SAFE_ADDRESS);
 }
 
+/// ### TEST
+/// F_MARKET-SET-FEE-FAIL-001
+///
+/// ### ACTION
+/// Call 'set_fee()' with wrong parameters
+///
+/// ### EXPECTED
+/// Errors: INVALID_TOKEN_ID, INVALID_FEE_TYPE, INVALID_FEE
 #[test]
 fn test_set_fee_wrong_params() {
     let mut state = FeeMarketTestState::new();
@@ -41,6 +49,14 @@ fn test_set_fee_wrong_params() {
     state.set_fee(FIRST_TEST_TOKEN, "AnyTokenWrong", Some(INVALID_TOKEN_ID));
 }
 
+/// ### TEST
+/// F_MARKET-SUBSTRACT-FEE-OK-001
+///
+/// ### ACTION
+/// Call 'substract_fee()' with no fee set
+///
+/// ### EXPECTED
+/// User balance is unchanged
 #[test]
 fn test_substract_fee_no_fee() {
     let mut state = FeeMarketTestState::new();
@@ -70,6 +86,14 @@ fn test_substract_fee_no_fee() {
     );
 }
 
+/// ### TEST
+/// F_MARKET-SUBSTRACT-FEE-OK-002
+///
+/// ### ACTION
+/// Call 'substract_fee()' with a whitelisted user
+///
+/// ### EXPECTED
+/// User balance is unchanged
 #[test]
 fn test_substract_fee_whitelisted() {
     let mut state = FeeMarketTestState::new();
@@ -101,6 +125,14 @@ fn test_substract_fee_whitelisted() {
     );
 }
 
+/// ### TEST
+/// F_MARKET-SUBSTRACT-FEE-FAIL-001
+///
+/// ### ACTION
+/// Call 'substract_fee()' with an invalid payment token
+///
+/// ### EXPECTED
+/// Error TOKEN_NOT_ACCEPTED_AS_FEE
 #[test]
 fn test_substract_fee_invalid_payment_token() {
     let mut state = FeeMarketTestState::new();
@@ -128,6 +160,14 @@ fn test_substract_fee_invalid_payment_token() {
     );
 }
 
+/// ### TEST
+/// F_MARKET-SUBSTRACT-FEE-FAIL-002
+///
+/// ### ACTION
+/// Call 'substract_fee()' with not enough tokens to cover the fee
+///
+/// ### EXPECTED
+/// Error PAYMENT_DOES_NOT_COVER_FEE
 #[test]
 fn test_substract_fixed_fee_payment_not_covered() {
     let mut state = FeeMarketTestState::new();
@@ -155,6 +195,14 @@ fn test_substract_fixed_fee_payment_not_covered() {
     );
 }
 
+/// ### TEST
+/// F_MARKET-SUBSTRACT-FEE-OK-003
+///
+/// ### ACTION
+/// Call 'substract_fee()' with payment bigger than fee
+///
+/// ### EXPECTED
+/// User balance is refunded with the difference
 #[test]
 fn test_substract_fee_fixed_payment_bigger_than_fee() {
     let mut state = FeeMarketTestState::new();
