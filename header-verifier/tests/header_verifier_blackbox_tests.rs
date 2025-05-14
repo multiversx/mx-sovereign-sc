@@ -3,6 +3,7 @@ use common_test_setup::constants::{
 };
 use error_messages::{
     CURRENT_OPERATION_NOT_REGISTERED, NO_ESDT_SAFE_ADDRESS, OUTGOING_TX_HASH_ALREADY_REGISTERED,
+    SETUP_PHASE_NOT_COMPLETED,
 };
 use header_verifier::{Headerverifier, OperationHashStatus};
 use header_verifier_blackbox_setup::*;
@@ -63,7 +64,7 @@ fn register_bridge_operation_setup_not_completed() {
     let operation_2 = ManagedBuffer::from("operation_2");
     let operation = state.generate_bridge_operation_struct(vec![&operation_1, &operation_2]);
 
-    state.register_operations(operation.clone(), Some("The setup phase must be completed"));
+    state.register_operations(operation.clone(), Some(SETUP_PHASE_NOT_COMPLETED));
 }
 
 /// Test that successfully registeres a bridge operation
