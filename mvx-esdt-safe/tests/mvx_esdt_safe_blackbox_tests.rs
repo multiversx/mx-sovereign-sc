@@ -37,6 +37,14 @@ use structs::{
 };
 mod mvx_esdt_safe_blackbox_setup;
 
+/// ### TEST
+/// M-ESDT_DEPLOY_OK_001
+///
+/// ### ACTION
+/// Call 'deploy_mvx_esdt_safe()' with default config
+///
+/// ### EXPECTED
+/// Contract is deployed with the default config
 #[test]
 fn test_deploy() {
     let mut state = MvxEsdtSafeTestState::new();
@@ -48,7 +56,7 @@ fn test_deploy() {
 }
 
 /// ### TEST
-/// M-ESDT_DEPLOY-FAIL-001
+/// M-ESDT_DEPLOY_FAIL_002
 ///
 /// ### ACTION
 /// Call 'update_configuration(config)' with invalid config
@@ -76,7 +84,7 @@ fn test_deploy_invalid_config() {
 }
 
 /// ### TEST
-/// M-ESDT_REG-FAIL-001
+/// M-ESDT_REG_FAIL_003
 ///
 /// ### ACTION
 /// Call 'register_token()' with invalid token type
@@ -114,7 +122,7 @@ fn test_register_token_invalid_type() {
 }
 
 /// ### TEST
-/// M-ESDT_REG-FAIL-002
+/// M-ESDT_REG_FAIL_004
 ///
 /// ### ACTION
 /// Call 'register_token()' with invalid token type and prefix
@@ -152,7 +160,7 @@ fn test_register_token_invalid_type_with_prefix() {
 }
 
 /// ### TEST
-/// M-ESDT_REG-FAIL-003
+/// M-ESDT_REG_FAIL_005
 ///
 /// ### ACTION
 /// Call 'register_token()' with token id not starting with prefix
@@ -190,7 +198,7 @@ fn test_register_token_not_native() {
 }
 
 /// ### TEST
-/// M-ESDT_REG-OK-001
+/// M-ESDT_REG_OK_006
 ///
 /// ### ACTION
 /// Call 'register_token()' with valid token id and type
@@ -224,7 +232,7 @@ fn test_register_token_fungible_token() {
 }
 
 /// ### TEST
-/// M-ESDT_REG-FAIL-004
+/// M-ESDT_REG_FAIL_007
 ///
 /// ### ACTION
 /// Call 'register_token()' with token id not starting with prefix and token type NonFungible
@@ -262,7 +270,7 @@ fn test_register_token_nonfungible_token() {
 }
 
 /// ### TEST
-/// M-ESDT_DEP-FAIL-001
+/// M-ESDT_DEP_FAIL_008
 ///
 /// ### ACTION
 /// Call 'deposit()' with empty payments_vec and no transfer_data
@@ -297,7 +305,7 @@ fn test_deposit_nothing_to_transfer() {
 }
 
 /// ### TEST
-/// M-ESDT_SETUP-OK-001
+/// M-ESDT_SETUP_OK_009
 ///
 /// ### ACTION
 /// Call 'complete_setup_phase()'
@@ -335,7 +343,7 @@ fn test_complete_setup_phase() {
 }
 
 /// ### TEST
-/// M-ESDT_SETUP-FAIL-001
+/// M-ESDT_SETUP_FAIL_010
 ///
 /// ### ACTION
 /// Call 'complete_setup_phase()' twice
@@ -365,7 +373,7 @@ fn test_complete_setup_phase_already_completed() {
 }
 
 /// ### TEST
-/// M-ESDT_DEP-FAIL-002
+/// M-ESDT_DEP_FAIL_011
 ///
 /// ### ACTION
 /// Call 'deposit()' with too many tokens in payments_vec
@@ -407,7 +415,7 @@ fn test_deposit_too_many_tokens() {
 }
 
 /// ### TEST
-/// M-ESDT_DEP-OK-001
+/// M-ESDT_DEP_OK_012
 ///
 /// ### ACTION
 /// Call 'deposit()' with valid payments_vec and no transfer_data
@@ -456,7 +464,7 @@ fn test_deposit_no_transfer_data() {
 }
 
 /// ### TEST
-/// M-ESDT_DEP-FAIL-003
+/// M-ESDT_DEP_FAIL_013
 ///
 /// ### ACTION
 /// Call 'deposit()' with gas limit too high in transfer_data
@@ -521,7 +529,7 @@ fn test_deposit_gas_limit_too_high() {
 }
 
 /// ### TEST
-/// M-ESDT_DEP-FAIL-004
+/// M-ESDT_DEP_FAIL_014
 ///
 /// ### ACTION
 /// Call 'deposit()' with max bridged amount exceeded
@@ -581,7 +589,7 @@ fn test_deposit_max_bridged_amount_exceeded() {
 }
 
 /// ### TEST
-/// M-ESDT_DEP-FAIL-005
+/// M-ESDT_DEP_FAIL_015
 ///
 /// ### ACTION
 /// Call 'deposit()' with banned endpoint name in transfer_data
@@ -647,7 +655,7 @@ fn test_deposit_endpoint_banned() {
 }
 
 /// ### TEST
-/// M-ESDT_DEP-FAIL-006
+/// M-ESDT_DEP_FAIL_016
 ///
 /// ### ACTION
 /// Call 'deposit()' with no transfer_data and no payments_vec
@@ -680,7 +688,7 @@ fn test_deposit_no_transfer_data_no_fee() {
 }
 
 /// ### TEST
-/// M-ESDT_DEP-OK-002
+/// M-ESDT_DEP_OK_017
 ///
 /// ### ACTION
 /// Call 'deposit()' with transfer data only and no payments
@@ -722,7 +730,7 @@ fn test_deposit_transfer_data_only_no_fee() {
 }
 
 /// ### TEST
-/// M-ESDT_DEP-FAIL-007
+/// M-ESDT_DEP_FAIL_018
 ///
 /// ### ACTION
 /// Call 'deposit()' with transfer data only, no payments and fee set
@@ -776,7 +784,7 @@ fn test_deposit_transfer_data_only_with_fee_nothing_to_transfer() {
 }
 
 /// ### TEST
-/// M-ESDT_DEP-OK-003
+/// M-ESDT_DEP_OK_019
 ///
 /// ### ACTION
 /// Call 'deposit()' with transfer data and fee payment
@@ -838,7 +846,7 @@ fn test_deposit_transfer_data_only_with_fee() {
 }
 
 /// ### TEST
-/// M-ESDT_DEP-OK-004
+/// M-ESDT_DEP_OK_020
 ///
 /// ### ACTION
 /// Call 'deposit()' with transfer data and valid payment
@@ -942,7 +950,7 @@ fn test_deposit_fee_enabled() {
 }
 
 /// ### TEST
-/// M-ESDT_DEP-FAIL-008
+/// M-ESDT_DEP_FAIL_021
 ///
 /// ### ACTION
 /// Call 'deposit()' with transfer data and payment not enough for fee
@@ -1117,7 +1125,7 @@ fn test_deposit_refund() {
 }
 
 /// ### TEST
-/// M-ESDT_DEP-OK-005
+/// M-ESDT_DEP_OK_022
 ///
 /// ### ACTION
 /// Call 'deposit()' with burn mechanism set
@@ -1181,7 +1189,7 @@ fn test_deposit_success_burn_mechanism() {
 }
 
 /// ### TEST
-/// M-ESDT_REG-OK-002
+/// M-ESDT_REG_OK_023
 ///
 /// ### ACTION
 /// Call 'register_token()' with valid token attributes
@@ -1217,7 +1225,7 @@ fn test_register_token_fungible_token_with_prefix() {
 }
 
 /// ### TEST
-/// M-ESDT_REG-FAIL-005
+/// M-ESDT_REG_FAIL_024
 ///
 /// ### ACTION
 /// Call 'register_token()' with no prefix and type fungible
@@ -1255,7 +1263,7 @@ fn test_register_token_fungible_token_no_prefix() {
 }
 
 /// ### TEST
-/// M-ESDT_REG-FAIL-006
+/// M-ESDT_REG_FAIL_025
 ///
 /// ### ACTION
 /// Call register_token twice
@@ -1296,7 +1304,7 @@ fn test_register_native_token_already_registered() {
 }
 
 /// ### TEST
-/// M-ESDT_REG-OK-003
+/// M-ESDT_REG_OK_026
 ///
 /// ### ACTION
 /// Call 'register_native_token()' with valid token attributes
@@ -1325,7 +1333,7 @@ fn test_register_native_token() {
 }
 
 /// ### TEST
-/// M-ESDT_EXEC-FAIL-001
+/// M-ESDT_EXEC_FAIL_027
 ///
 /// ### ACTION
 /// Call 'execute_operation()' with no esdt-safe-address set
@@ -1374,7 +1382,7 @@ fn test_execute_operation_no_esdt_safe_registered() {
 }
 
 /// ### TEST
-/// M-ESDT_EXEC-OK-001
+/// M-ESDT_EXEC_OK_028
 ///
 /// ### ACTION
 /// Call 'execute_operation()' with valid operation
@@ -1445,7 +1453,7 @@ fn test_execute_operation_success() {
 }
 
 /// ### TEST
-/// M-ESDT_EXEC-OK-002
+/// M-ESDT_EXEC_OK_029
 ///
 /// ### ACTION
 /// Call 'execute_operation()' with payment containing the registered token
@@ -1533,7 +1541,7 @@ fn test_execute_operation_with_native_token_success() {
 }
 
 /// ### TEST
-/// M-ESDT_EXEC-OK-003
+/// M-ESDT_EXEC_OK_030
 ///
 /// ### ACTION
 /// Call 'execute_operation()' after setting the burn mechanism
@@ -1610,7 +1618,7 @@ fn test_execute_operation_burn_mechanism_without_deposit_cannot_subtract() {
 }
 
 /// ### TEST
-/// M-ESDT_EXEC-OK-004
+/// M-ESDT_EXEC_OK_031
 ///
 /// ### ACTION
 /// Call 'execute_operation()' after setting the burn mechanism
@@ -1716,7 +1724,7 @@ fn test_execute_operation_success_burn_mechanism() {
 }
 
 /// ### TEST
-/// M-ESDT_EXEC-OK-005
+/// M-ESDT_EXEC_OK_032
 ///
 /// ### ACTION
 /// Call 'execute_operation()' after switching to the lock mechanism from the burn mechanism
@@ -1949,7 +1957,7 @@ fn test_deposit_execute_switch_mechanism() {
 }
 
 /// ### TEST
-/// M-ESDT_EXEC-OK-006
+/// M-ESDT_EXEC_OK_033
 ///
 /// ### ACTION
 /// Call 'execute_operation()' with empty payments
@@ -2095,7 +2103,7 @@ fn test_execute_operation_no_payments_failed_event() {
 }
 
 /// ### TEST
-/// M-ESDT_SET_BURN_FAIL_001
+/// M-ESDT_SET_BURN_FAIL_034
 ///
 /// ### ACTION
 /// Call 'set_token_burn_mechanism()' without the propper roles
@@ -2114,7 +2122,7 @@ fn test_set_token_burn_mechanism_no_roles() {
 }
 
 /// ### TEST
-/// M-ESDT_SET_BURN_FAIL_002
+/// M-ESDT_SET_BURN_FAIL_035
 ///
 /// ### ACTION
 /// Call 'set_token_burn_mechanism()' without a trusted token id
@@ -2130,7 +2138,7 @@ fn test_set_token_burn_mechanism_token_not_trusted() {
 }
 
 /// ### TEST
-/// M-ESDT_SET_BURN_OK_001
+/// M-ESDT_SET_BURN_OK_036
 ///
 /// ### ACTION
 /// Call 'set_token_burn_mechanism()' with a trusted token id
@@ -2164,7 +2172,7 @@ fn test_set_token_burn_mechanism() {
 }
 
 /// ### TEST
-/// M-ESDT_SET_BURN_OK_002
+/// M-ESDT_SET_BURN_OK_037
 ///
 /// ### ACTION
 /// Call 'set_token_burn_mechanism()' with a trusted token id
@@ -2198,7 +2206,7 @@ fn test_set_token_lock_mechanism() {
 }
 
 /// ### TEST
-/// M-ESDT_SET_BURN_FAIL_003
+/// M-ESDT_SET_BURN_FAIL_038
 ///
 /// ### ACTION
 /// Call 'set_token_burn_mechanism()' on a trusted token

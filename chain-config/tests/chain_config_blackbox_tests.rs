@@ -14,10 +14,10 @@ fn test_deploy_chain_config() {
 }
 
 /// ### TEST
-/// C_CONFIG-UPDATE_CONFIG-OK-001
+/// C-CONFIG_UPDATE_CONFIG_OK_001
 ///
 /// ### ACTION
-/// Call 'update_chain_config()' with a valid new config
+/// Call 'update_chain_config()' with a new valid config
 ///
 /// ### EXPECTED
 /// Chain config is updated with the new config
@@ -34,10 +34,10 @@ fn test_update_config() {
 }
 
 /// ### TEST
-/// C_CONFIG-UPDATE_CONFIG-FAIL-001
+/// C-CONFIG_UPDATE_CONFIG_FAIL_002
 ///
 /// ### ACTION
-/// Call 'update_chain_config()' with an invalid new config
+/// Call 'update_chain_config()' with an new invalid config
 ///
 /// ### EXPECTED
 /// Error INVALID_MIN_MAX_VALIDATOR_NUMBERS
@@ -54,7 +54,7 @@ fn test_update_config_wrong_validators_array() {
 }
 
 /// ### TEST
-/// C_CONFIG-COMPLETE_SETUP_PHASE-OK-001
+/// C-CONFIG_COMPLETE_SETUP_PHASE_OK_003
 ///
 /// ### ACTION
 /// Call 'complete_chain_config_setup_phase()'

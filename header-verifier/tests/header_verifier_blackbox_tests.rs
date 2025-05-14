@@ -52,7 +52,7 @@ fn test_register_esdt_address() {
 }
 
 /// ### TEST
-/// H_VERIFIER-REGISTER-OPERATION-FAIL-001
+/// H_VERIFIER-REGISTER-OPERATION-FAIL-002
 ///
 /// ### ACTION
 /// Call 'register_operations' with valid operations
@@ -81,7 +81,7 @@ fn register_bridge_operation_setup_not_completed() {
 }
 
 /// ### TEST
-/// H_VERIFIER-REGISTER-OPERATION-OK-001
+/// H_VERIFIER-REGISTER-OPERATION-OK-003
 ///
 /// ### ACTION
 /// Call 'register_operations' with valid operations and setup completed
@@ -139,7 +139,7 @@ fn test_register_bridge_operation() {
 }
 
 /// ### TEST
-/// H_VERIFIER-REMOVE_HASH-FAIL-001
+/// H-VERIFIER_REMOVE_HASH_FAIL_004
 ///
 /// ### ACTION
 /// Call 'remove_executed_hash()' without registering any esdt safe address
@@ -176,7 +176,7 @@ fn test_remove_executed_hash_no_esdt_address_registered() {
 }
 
 /// ### TEST
-/// H_VERIFIER-REMOVE_HASH-OK-001
+/// H-VERIFIER_REMOVE_HASH_OK_005
 ///
 /// ### ACTION
 /// Call 'remove_executed_hash()' after registering the esdt safe address
@@ -236,7 +236,7 @@ fn test_remove_one_executed_hash() {
 }
 
 /// ### TEST
-/// H_VERIFIER-REMOVE_HASH-OK-002
+/// H-VERIFIER_REMOVE_HASH_OK_006
 ///
 /// ### ACTION
 /// Call 'remove_executed_hash()' after registering the esdt safe address
@@ -301,7 +301,7 @@ fn test_remove_all_executed_hashes() {
 }
 
 /// ### TEST
-/// H_VERIFIER-LOCK_OPERATION-FAIL-001
+/// H-VERIFIER_LOCK_OPERATION_FAIL_007
 ///
 /// ### ACTION
 /// Call 'lock_operation_hash()' without registering the operation
@@ -331,7 +331,7 @@ fn test_lock_operation_not_registered() {
 }
 
 /// ### TEST
-/// H_VERIFIER-LOCK_OPERATION-OK-001
+/// H-VERIFIER_LOCK_OPERATION_OK_008
 ///
 /// ### ACTION
 /// Call 'lock_operation_hash()' after registering the operations
@@ -392,7 +392,7 @@ fn test_lock_operation() {
 }
 
 /// ### TEST
-/// H_VERIFIER-CHANGE_VALIDATORS-OK-001
+/// H-VERIFIER_CHANGE_VALIDATORS_OK_009
 ///
 /// ### ACTION
 /// Call 'change_validators_set()' with a valid operation hash
@@ -420,7 +420,7 @@ fn test_change_validator_set() {
 }
 
 /// ### TEST
-/// H_VERIFIER-CHANGE_VALIDATORS-FAIL-001
+/// H-VERIFIER_CHANGE_VALIDATORS_FAIL_010
 ///
 /// ### ACTION
 /// Call 'change_validators_set()' after registering the operation
