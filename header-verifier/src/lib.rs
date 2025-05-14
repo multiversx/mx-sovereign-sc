@@ -1,9 +1,10 @@
 #![no_std]
 
 use error_messages::{
-    BLS_SIGNATURE_NOT_VALID, CURRENT_OPERATION_ALREADY_IN_EXECUTION,
-    CURRENT_OPERATION_NOT_REGISTERED, HASH_OF_HASHES_DOES_NOT_MATCH, NO_ESDT_SAFE_ADDRESS,
-    ONLY_ESDT_SAFE_CALLER, OUTGOING_TX_HASH_ALREADY_REGISTERED,
+    ADDRESS_NOT_VALID_SC_ADDRESS, BLS_SIGNATURE_NOT_VALID, CURRENT_OPERATION_ALREADY_IN_EXECUTION,
+    CURRENT_OPERATION_NOT_REGISTERED, HASH_OF_HASHES_DOES_NOT_MATCH, INVALID_VALIDATOR_SET_LENGTH,
+    NO_ESDT_SAFE_ADDRESS, ONLY_ESDT_SAFE_CALLER, OUTGOING_TX_HASH_ALREADY_REGISTERED,
+    SETUP_PHASE_NOT_COMPLETED,
 };
 use multiversx_sc::codec;
 use multiversx_sc::proxy_imports::{TopDecode, TopEncode};
@@ -26,7 +27,7 @@ pub trait Headerverifier:
     fn init(&self, chain_config_address: ManagedAddress) {
         require!(
             self.blockchain().is_smart_contract(&chain_config_address),
-            "The given address is not a Smart Contract address"
+            ADDRESS_NOT_VALID_SC_ADDRESS
         );
 
         self.chain_config_address().set(chain_config_address);
@@ -51,10 +52,7 @@ pub trait Headerverifier:
         _epoch: ManagedBuffer,
         operations_hashes: MultiValueEncoded<ManagedBuffer>,
     ) {
-        require!(
-            self.is_setup_phase_complete(),
-            "The setup phase must be completed"
-        );
+        require!(self.is_setup_phase_complete(), SETUP_PHASE_NOT_COMPLETED);
 
         let mut hash_of_hashes_history_mapper = self.hash_of_hashes_history();
 
@@ -180,7 +178,7 @@ pub trait Headerverifier:
         require!(
             number_of_validators >= sovereign_config.min_validators
                 && number_of_validators <= sovereign_config.max_validators,
-            "The current validator set lenght doesn't meet the Sovereign's requirements"
+            INVALID_VALIDATOR_SET_LENGTH
         );
     }
 

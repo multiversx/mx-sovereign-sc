@@ -24,6 +24,7 @@ pub const DEPLOY_COST_NOT_ENOUGH: &str =
 pub const DEPOSIT_AMOUNT_SMALLER_THAN_PAYMENT_AMOUNT: &str =
     "The deposit amount should not be less than the payment amount";
 pub const DEPOSIT_OVER_MAX_AMOUNT: &str = "Deposit over max amount";
+pub const ENDPOINT_CAN_ONLY_BE_CALLED_BY_ADMIN: &str = "Endpoint can only be called by admins";
 pub const ERR_EMPTY_PAYMENTS: &str = "No payments";
 pub const ESDT_SAFE_ADDRESS_NOT_SET: &str = "The ESDT-Safe address is not set";
 pub const ESDT_SAFE_ALREADY_DEPLOYED: &str = "The ESDT-Safe SC is already deployed";
@@ -56,6 +57,8 @@ pub const INVALID_TOKEN_ID: &str = "Invalid token ID";
 pub const INVALID_TOKEN_PROVIDED_FOR_FEE: &str = "Invalid token provided for fee";
 pub const INVALID_TOKEN_USDC_PAIR_ADDRESS: &str = "Invalid TOKEN-USDC pair address from router";
 pub const INVALID_TYPE: &str = "Invalid type";
+pub const INVALID_VALIDATOR_SET_LENGTH: &str =
+    "The current validator set lenght doesn't meet the Sovereign's requirements";
 pub const INVALID_WEGLD_USDC_PAIR_ADDRESS: &str = "Invalid WEGLD-USDC pair address from router";
 pub const ITEM_NOT_IN_LIST: &str = "Item not found in list";
 pub const MAX_GAS_LIMIT_PER_TX_EXCEEDED: &str =
