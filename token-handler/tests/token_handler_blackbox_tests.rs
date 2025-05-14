@@ -2,6 +2,7 @@ use common_test_setup::constants::{
     CHAIN_FACTORY_SC_ADDRESS, FUNGIBLE_TOKEN_ID, NFT_TOKEN_ID, TOKEN_HANDLER_SC_ADDRESS,
     USER_ADDRESS,
 };
+use error_messages::{ACTION_IS_NOT_ALLOWED, ENDPOINT_CAN_ONLY_BE_CALLED_BY_ADMIN};
 use multiversx_sc::types::{BigUint, EsdtLocalRole};
 
 mod token_handler_blackbox_setup;
@@ -26,11 +27,13 @@ fn test_deploy() {
 #[test]
 fn test_whitelist_enshrine_esdt_caller_not_admin() {
     let mut state = TokenHandlerTestState::new();
-    let error_message = "Endpoint can only be called by admins";
 
     state.common_setup.deploy_token_handler();
     state.deploy_factory_sc();
-    state.whitelist_caller(TOKEN_HANDLER_SC_ADDRESS, Some(error_message));
+    state.whitelist_caller(
+        TOKEN_HANDLER_SC_ADDRESS,
+        Some(ENDPOINT_CAN_ONLY_BE_CALLED_BY_ADMIN),
+    );
 }
 
 /// ### TEST
@@ -100,7 +103,7 @@ fn test_transfer_tokens_no_payment() {
         opt_transfer_data,
         USER_ADDRESS.to_managed_address(),
         tokens,
-        Some("action is not allowed"),
+        Some(ACTION_IS_NOT_ALLOWED),
     );
 
     state.common_setup.check_account_single_esdt(
