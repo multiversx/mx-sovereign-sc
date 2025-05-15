@@ -5,11 +5,16 @@ use common_test_setup::{
     },
     AccountSetup, BaseSetup,
 };
-use multiversx_sc::types::{BigUint, ManagedAddress, ReturnsResultUnmanaged, TestSCAddress};
+use multiversx_sc::types::{
+    BigUint, ManagedAddress, ReturnsResultUnmanaged, TestSCAddress, TestTokenIdentifier,
+};
 use multiversx_sc_scenario::{api::StaticApi, ReturnsHandledOrError, ScenarioTxRun};
 use proxies::sovereign_forge_proxy::{ScArray, SovereignForgeProxy};
 use sovereign_forge::common::storage::ChainId;
-use structs::configs::{EsdtSafeConfig, SovereignConfig};
+use structs::{
+    configs::{EsdtSafeConfig, SovereignConfig},
+    fee::FeeStruct,
+};
 
 pub struct SovereignForgeTestState {
     pub common_setup: BaseSetup,
@@ -117,6 +122,44 @@ impl SovereignForgeTestState {
             .to(SOVEREIGN_FORGE_SC_ADDRESS)
             .typed(SovereignForgeProxy)
             .update_esdt_safe_config(new_esdt_safe_config)
+            .returns(ReturnsHandledOrError::new())
+            .run();
+
+        if let Err(error) = response {
+            assert_eq!(expected_error_message, Some(error.message.as_str()))
+        }
+    }
+
+    pub fn set_fee(&mut self, new_fee: FeeStruct<StaticApi>, expected_error_message: Option<&str>) {
+        let response = self
+            .common_setup
+            .world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .to(SOVEREIGN_FORGE_SC_ADDRESS)
+            .typed(SovereignForgeProxy)
+            .set_fee(new_fee)
+            .returns(ReturnsHandledOrError::new())
+            .run();
+
+        if let Err(error) = response {
+            assert_eq!(expected_error_message, Some(error.message.as_str()))
+        }
+    }
+
+    pub fn remove_fee(
+        &mut self,
+        token_id: TestTokenIdentifier,
+        expected_error_message: Option<&str>,
+    ) {
+        let response = self
+            .common_setup
+            .world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .to(SOVEREIGN_FORGE_SC_ADDRESS)
+            .typed(SovereignForgeProxy)
+            .remove_fee(new_fee)
             .returns(ReturnsHandledOrError::new())
             .run();
 
