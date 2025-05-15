@@ -1,30 +1,8 @@
 use error_messages::{INVALID_FEE, INVALID_FEE_TYPE};
+use structs::fee::{FeeStruct, FeeType};
 
 multiversx_sc::imports!();
 multiversx_sc::derive_imports!();
-
-#[type_abi]
-#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, Clone)]
-pub enum FeeType<M: ManagedTypeApi> {
-    None,
-    Fixed {
-        token: TokenIdentifier<M>,
-        per_transfer: BigUint<M>,
-        per_gas: BigUint<M>,
-    },
-    AnyToken {
-        base_fee_token: TokenIdentifier<M>,
-        per_transfer: BigUint<M>,
-        per_gas: BigUint<M>,
-    },
-}
-
-#[type_abi]
-#[derive(TopDecode, TopEncode, NestedEncode, NestedDecode, Clone)]
-pub struct FeeStruct<M: ManagedTypeApi> {
-    pub base_token: TokenIdentifier<M>,
-    pub fee_type: FeeType<M>,
-}
 
 #[multiversx_sc::module]
 pub trait FeeTypeModule: utils::UtilsModule {
