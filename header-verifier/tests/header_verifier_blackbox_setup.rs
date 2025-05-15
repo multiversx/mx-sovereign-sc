@@ -85,14 +85,14 @@ impl HeaderVerifierTestState {
             .run();
     }
 
-    pub fn register_fee_market_address(&mut self, fee_market: TestSCAddress) {
+    pub fn register_fee_market_address(&mut self, fee_market_address: TestSCAddress) {
         self.common_setup
             .world
             .tx()
             .from(OWNER_ADDRESS)
             .to(HEADER_VERIFIER_ADDRESS)
             .typed(HeaderverifierProxy)
-            .set_esdt_safe_address(fee_market)
+            .set_fee_market_address(fee_market_address)
             .run();
     }
 
