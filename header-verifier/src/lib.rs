@@ -177,7 +177,7 @@ pub trait Headerverifier:
         require!(
             number_of_validators >= sovereign_config.min_validators
                 && number_of_validators <= sovereign_config.max_validators,
-            "The current validator set lenght doesn't meet the Sovereign's requirements"
+            INVALID_VALIDATOR_SET_LENGTH
         );
     }
 
