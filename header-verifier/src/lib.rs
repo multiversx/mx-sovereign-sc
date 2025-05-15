@@ -123,7 +123,7 @@ pub trait Headerverifier:
     #[only_owner]
     #[endpoint(setFeeMarketAddress)]
     fn set_fee_market_address(&self, fee_market_address: ManagedAddress) {
-        self.esdt_safe_address().set(fee_market_address);
+        self.fee_market_address().set(fee_market_address);
     }
 
     #[endpoint(removeExecutedHash)]
@@ -223,15 +223,15 @@ pub trait Headerverifier:
         }
 
         require!(
-            self.chain_config_address().is_empty(),
+            !self.chain_config_address().is_empty(),
             CHAIN_CONFIG_ADDRESS_NOT_SET
         );
         require!(
-            self.esdt_safe_address().is_empty(),
+            !self.esdt_safe_address().is_empty(),
             ESDT_SAFE_ADDRESS_NOT_SET
         );
         require!(
-            self.fee_market_address().is_empty(),
+            !self.fee_market_address().is_empty(),
             FEE_MARKET_ADDRESS_NOT_SET
         );
 
