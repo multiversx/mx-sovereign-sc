@@ -19,14 +19,14 @@ use structs::configs::{EsdtSafeConfig, SovereignConfig};
 use structs::fee::{FeeStruct, FeeType};
 use structs::operation::{Operation, OperationData, OperationEsdtPayment, TransferData};
 
-// Test that deposit fails when there is nothing to transfer and fee is disabled
-// Steps:
-// 1. Deploy header verifier smart contract
-// 2. Deploy mvx-esdt-safe smart contract
-// 3. Deploy fee-market smart contract
-// 4. Set fee-market address in mvx-esdt-safe smart contract
-// 5. Unpause mvx-esdt-safe smart contract
-// 6. Deposit tokens
+/// ### TEST
+/// M-ESDT_DEP_FAIL_001
+///
+/// ### ACTION
+/// Call 'deposit()' with empty payments_vec and no transfer_data
+///
+/// ### EXPECTED
+/// Error NOTHING_TO_TRANSFER
 #[tokio::test]
 #[serial]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
@@ -58,15 +58,14 @@ async fn deposit_nothing_to_transfer_no_fee() {
         .await;
 }
 
-// Test that deposit fails when the token limit is exceeded and fee is disabled
-// Steps:
-// 1. Deploy header verifier smart contract
-// 2. Deploy mvx-esdt-safe smart contract
-// 3. Deploy fee-market smart contract
-// 4. Set fee-market address in mvx-esdt-safe smart contract
-// 5. Unpause mvx-esdt-safe smart contract
-// 6. Create a payments vector consisting of 11 EsdtTokenPayments
-// 7. Deposit tokens
+/// ### TEST
+/// M-ESDT_DEP_FAIL_002
+///
+/// ### ACTION
+/// Call 'deposit()' with too many tokens in payments_vec
+///
+/// ### EXPECTED
+/// Error TOO_MANY_TOKENS
 #[tokio::test]
 #[serial]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
@@ -106,15 +105,14 @@ async fn deposit_too_many_tokens_no_fee() {
         .await;
 }
 
-// Test that deposit works when there is no transfer data and fee is disabled
-// Steps:
-// 1. Deploy header verifier smart contract
-// 2. Deploy mvx-esdt-safe smart contract
-// 3. Deploy fee-market smart contract
-// 4. Set fee-market address in mvx-esdt-safe smart contract
-// 5. Unpause mvx-esdt-safe smart contract
-// 6. Create a payments vector
-// 7. Deposit and check logs
+/// ### TEST
+/// M-ESDT_DEP_FAIL_003
+///
+/// ### ACTION
+/// Call 'deposit()' with no transfer_data and no payments_vec
+///
+/// ### EXPECTED
+/// Error NOTHING_TO_TRANSFER
 #[tokio::test]
 #[serial]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
@@ -160,17 +158,14 @@ async fn deposit_no_transfer_data_no_fee() {
         .await;
 }
 
-// Test that deposit fails when the gas limit is too high and fee is disabled
-// Steps:
-// 1. Deploy header verifier smart contract
-// 2. Deploy mvx-esdt-safe smart contract
-// 3. Deploy fee-market smart contract
-// 4. Set fee-market address in mvx-esdt-safe smart contract
-// 5. Unpause mvx-esdt-safe smart contract
-// 6. Deploy testing smart contract
-// 7. Create a payments vector
-// 8. Create transfer data
-// 9. Deposit
+/// ### TEST
+/// M-ESDT_DEP_FAIL_004
+///
+/// ### ACTION
+/// Call 'deposit()' with gas limit too high in transfer_data
+///
+/// ### EXPECTED
+/// Error GAS_LIMIT_TOO_HIGH
 #[tokio::test]
 #[serial]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
@@ -236,18 +231,14 @@ async fn deposit_gas_limit_too_high_no_fee() {
         .await;
 }
 
-// Test that deposit fails when the endpoint is banned and fee is disabled
-// Steps:
-// 1. Create an EsdtSafeConfig with a banned endpoint
-// 2. Deploy header verifier smart contract
-// 3. Deploy mvx-esdt-safe smart contract
-// 4. Deploy fee-market smart contract
-// 5. Set fee-market address in mvx-esdt-safe smart contract
-// 6. Unpause mvx-esdt-safe smart contract
-// 7. Deploy testing smart contract
-// 8. Create a payments vector
-// 9. Create transfer data that contains the banned endpoint name
-// 10. Deposit
+/// ### TEST
+/// M-ESDT_DEP_FAIL_005
+///
+/// ### ACTION
+/// Call 'deposit()' with banned endpoint name in transfer_data
+///
+/// ### EXPECTED
+/// Error BANNED_ENDPOINT_NAME
 #[tokio::test]
 #[serial]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
@@ -315,18 +306,14 @@ async fn deposit_endpoint_banned_no_fee() {
 
 // NOTE: Add checks for account storage after finding out how to encode values in state
 
-// Test that deposit works when there is transfer data and fee is enabled
-// Steps:
-// 1. Create the FeeStruct
-// 2. Deploy header verifier smart contract
-// 3. Deploy mvx-esdt-safe smart contract
-// 4. Deploy fee-market smart contract
-// 5. Set fee-market address in mvx-esdt-safe smart contract
-// 6. Unpause mvx-esdt-safe smart contract
-// 7. Deploy testing smart contract
-// 8. Create a payments vector containing the fee payment as well
-// 9. Create transfer data
-// 10. Deposit
+/// ### TEST
+/// M-ESDT_DEP_OK_006
+///
+/// ### ACTION
+/// Call 'deposit()' with transfer data and valid payment
+///
+/// ### EXPECTED
+/// USER's balance is updated
 #[tokio::test]
 #[serial]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
@@ -413,16 +400,14 @@ async fn deposit_fee_enabled() {
         .await;
 }
 
-// Test that deposit works when there is only transfer data and fee is disabled
-// Steps:
-// 1. Deploy header verifier smart contract
-// 2. Deploy mvx-esdt-safe smart contract
-// 3. Deploy fee-market smart contract
-// 4. Set fee-market address in mvx-esdt-safe smart contract
-// 5. Unpause mvx-esdt-safe smart contract
-// 6. Deploy testing smart contract
-// 7. Create transfer data
-// 8. Deposit and check logs
+/// ### TEST
+/// M-ESDT_DEP_OK_007
+///
+/// ### ACTION
+/// Call 'deposit()' with transfer data only and no payments
+///
+/// ### EXPECTED
+/// The endpoint is called in the testing smart contract
 #[tokio::test]
 #[serial]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
@@ -474,18 +459,14 @@ async fn deposit_only_transfer_data_no_fee() {
         .await;
 }
 
-// Test that deposit fails when payment does not cover fee
-// Steps:
-// 1. Create the FeeStruct
-// 2. Deploy header verifier smart contract
-// 3. Deploy mvx-esdt-safe smart contract
-// 4. Deploy fee-market smart contract
-// 5. Set fee-market address in mvx-esdt-safe smart contract
-// 6. Unpause mvx-esdt-safe smart contract
-// 7. Deploy testing smart contract
-// 8. Create a payments vector without the fee payment
-// 9. Create transfer data
-// 10. Deposit
+/// ### TEST
+/// M-ESDT_DEP_FAIL_008
+///
+/// ### ACTION
+/// Call 'deposit()' with transfer data and payment not enough for fee
+///
+/// ### EXPECTED
+/// Error PAYMENT_DOES_NOT_COVER_FEE
 #[tokio::test]
 #[serial]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
@@ -568,12 +549,14 @@ async fn deposit_payment_does_not_cover_fee() {
 
 // TODO: add deposit_refund_fee test after finding a method to check for balance
 
-// Test that register token fails when the token type is invalid
-// Steps:
-// 1. Deploy header verifier smart contract
-// 2. Deploy mvx-esdt-safe smart contract
-// 3. Create the token properties
-// 4. Register the token
+/// ### TEST
+/// M-ESDT_REG_FAIL_009
+///
+/// ### ACTION
+/// Call 'register_token()' with invalid token type
+///
+/// ### EXPECTED
+/// Error CANNOT_REGISTER_TOKEN
 #[tokio::test]
 #[serial]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
@@ -627,13 +610,14 @@ async fn register_token_invalid_type_token() {
     chain_interactor.reset_state_chain_sim(None).await;
 }
 
-// Test that register token works when the token type is fungible
-// Steps:
-// 1. Deploy header verifier smart contract
-// 2. Deploy mvx-esdt-safe smart contract
-// 3. Create the token properties
-// 4. Register the token
-// 5. Check that the token ticker exists in sov-to-mvx-token storage
+/// ### TEST
+/// M-ESDT_REG_OK_010
+///
+/// ### ACTION
+/// Call 'register_token()' with valid token id and type
+///
+/// ### EXPECTED
+/// The token is registered
 #[tokio::test]
 #[serial]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
@@ -702,13 +686,14 @@ async fn register_token_fungible_token() {
     chain_interactor.reset_state_chain_sim(None).await;
 }
 
-// Test that register token works when the token type is non-fungible
-// Steps:
-// 1. Deploy header verifier smart contract
-// 2. Deploy mvx-esdt-safe smart contract
-// 3. Create the token properties
-// 4. Register the token
-// 5. Check that the token ticker exists in sov-to-mvx-token storage
+/// ### TEST
+/// M-ESDT_REG_OK_011
+///
+/// ### ACTION
+/// Call 'register_token()' with valid token id and non-fungible type
+///
+/// ### EXPECTED
+/// The token is registered
 #[tokio::test]
 #[serial]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
@@ -777,13 +762,14 @@ async fn register_token_non_fungible_token() {
     chain_interactor.reset_state_chain_sim(None).await;
 }
 
-// Test that register token works when the token type is dynamic non-fungible
-// Steps:
-// 1. Deploy header verifier smart contract
-// 2. Deploy mvx-esdt-safe smart contract
-// 3. Create the token properties
-// 4. Register the token
-// 5. Check that the token ticker exists in sov-to-mvx-token storage
+/// ### TEST
+/// M-ESDT_REG_OK_012
+///
+/// ### ACTION
+/// Call 'register_token()' with valid token id and dynamic NFT type
+///
+/// ### EXPECTED
+/// The token is registered
 #[tokio::test]
 #[serial]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
@@ -852,17 +838,14 @@ async fn register_token_dynamic_non_fungible_token() {
     chain_interactor.reset_state_chain_sim(None).await;
 }
 
-// Test that execute operation fails when the esdt safe address is not registered
-// Steps:
-// 1. Deploy header verifier smart contract
-// 2. Deploy mvx-esdt-safe smart contract
-// 3. Deploy fee-market smart contract
-// 4. Set fee-market address in mvx-esdt-safe smart contract
-// 5. Unpause mvx-esdt-safe smart contract
-// 6. Create a payment for the operation
-// 7. Create operation and hash of hashes
-// 8. Execute operation
-// 9. Check that operation-hash-status storage is empty
+/// ### TEST
+/// M-ESDT_EXEC_FAIL_013
+///
+/// ### ACTION
+/// Call 'execute_operation()' with no esdt-safe-address set
+///
+/// ### EXPECTED
+/// Error NO_ESDT_SAFE_ADDRESS
 #[tokio::test]
 #[serial]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
@@ -952,25 +935,14 @@ async fn execute_operation_no_esdt_safe_registered() {
         .await;
 }
 
-// Test that execute operation works in the happy flow
-// Steps:
-// 1. Create payment vector
-// 2. Create transfer data
-// 3. Deploy header verifier smart contract
-// 4. Deploy mvx-esdt-safe smart contract
-// 5. Deploy fee-market smart contract
-// 6. Set fee-market address in mvx-esdt-safe smart contract
-// 7. Unpause mvx-esdt-safe smart contract
-// 8. Deploy testing smart contract
-// 9. Create operation
-// 10. Deposit and check logs
-// 11. Set mvx-esdt-safe address in header verifier smart contract
-// 12. Create operation hashes
-// 13. Deploy chain config smart contract
-// 14. Register operation
-// 15. Check that operation-hash-status storage has value OperationHashStatus::NotLocked
-// 16. Execute operation and check logs
-// 17. Check that operation-hash-status storage is empty
+/// ### TEST
+/// M-ESDT_EXEC_OK_014
+///
+/// ### ACTION
+/// Call 'execute_operation()' with valid operation
+///
+/// ### EXPECTED
+/// The operation is executed in the testing smart contract
 #[tokio::test]
 #[serial]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
@@ -1099,23 +1071,14 @@ async fn execute_operation_success_no_fee() {
         .await;
 }
 
-// Test that execute operation works when there is only transfer data and fee is disabled
-// Steps:
-// 1. Create transfer data
-// 2. Deploy header verifier smart contract
-// 3. Deploy mvx-esdt-safe smart contract
-// 4. Deploy fee-market smart contract
-// 5. Set fee-market address in mvx-esdt-safe smart contract
-// 6. Unpause mvx-esdt-safe smart contract
-// 7. Deploy testing smart contract
-// 8. Create operation
-// 9. Set mvx-esdt-safe address in header verifier smart contract
-// 10. Create operation hashes
-// 11. Deploy chain config smart contract
-// 12. Register operation
-// 13. Check that operation-hash-status storage has value OperationHashStatus::NotLocked
-// 14. Execute operation and check logs
-// 15. Check that operation-hash-status storage is empty
+/// ### TEST
+/// M-ESDT_EXEC_OK_015
+///
+/// ### ACTION
+/// Call 'execute_operation()' with valid operation and no fee
+///
+/// ### EXPECTED
+/// The operation is executed in the testing smart contract
 #[tokio::test]
 #[serial]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
