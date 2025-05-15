@@ -31,7 +31,6 @@ pub trait FactoryModule: only_admin::OnlyAdminModule {
             .sync_call()
     }
 
-    // TODO: fix
     #[only_admin]
     #[endpoint(deployHeaderVerifier)]
     fn deploy_header_verifier(&self, chain_config_address: ManagedAddress) -> ManagedAddress {

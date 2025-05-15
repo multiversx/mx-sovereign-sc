@@ -129,11 +129,7 @@ pub trait PhasesModule:
         let esdt_safe_contract_info =
             ContractInfo::new(ScArray::ESDTSafe, esdt_safe_address.clone());
 
-        self.tx()
-            .to(self.get_chain_factory_address())
-            .typed(ChainFactoryContractProxy)
-            .set_esdt_safe_address_in_header_verifier(header_verifier_address, esdt_safe_address)
-            .sync_call();
+        self.set_esdt_safe_address_in_header_verifier(&header_verifier_address, &esdt_safe_address);
 
         self.sovereign_deployed_contracts(&self.sovereigns_mapper(&caller).get())
             .insert(esdt_safe_contract_info);
