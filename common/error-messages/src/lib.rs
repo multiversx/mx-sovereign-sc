@@ -11,6 +11,7 @@ pub const CALLER_IS_NOT_WHITELISTED: &str = "Caller is not whitelisted";
 pub const CANNOT_REGISTER_TOKEN: &str = "Cannot register token";
 pub const CANNOT_TRANSFER_WHILE_PAUSED: &str = "Cannot transfer while paused";
 pub const CHAIN_CONFIG_ALREADY_DEPLOYED: &str = "The Chain-Config contract is already deployed";
+pub const CHAIN_CONFIG_ADDRESS_NOT_SET: &str = "Chain-Config address was not set";
 pub const CHAIN_CONFIG_NOT_DEPLOYED: &str = "The Chain-Config SC is not deployed";
 pub const CHAIN_ID_ALREADY_IN_USE: &str = "This chain ID is already used";
 pub const CHAIN_ID_NOT_FOUR_CHAR_LONG: &str = "Chain ID length must be four characters";
@@ -34,6 +35,7 @@ pub const ESDT_SAFE_NOT_DEPLOYED: &str =
 pub const ESDT_SAFE_STILL_PAUSED: &str = "Cannot create transaction while paused";
 pub const FEE_MARKET_ALREADY_DEPLOYED: &str = "The Fee-Market SC is already deployed";
 pub const FEE_MARKET_NOT_DEPLOYED: &str = "The Fee-Market SC is not deployed";
+pub const FEE_MARKET_ADDRESS_NOT_SET: &str = "Fee-Market address not set";
 pub const GAS_LIMIT_TOO_HIGH: &str = "Gas limit too high";
 pub const HASH_OF_HASHES_DOES_NOT_MATCH: &str =
     "Hash of all operations doesn't match the hash of transfer data";
