@@ -58,7 +58,7 @@ fn test_whitelist_enshrine() {
 // to give the correct permissions to the TokenHandler SC
 
 /// ### TEST
-/// T-HANDLER_TRANSFER_FAIL_001
+/// T-HANDLER_TRANSFER_FAIL_002
 ///
 /// ### ACTION
 /// Call 'transfer_tokens()'

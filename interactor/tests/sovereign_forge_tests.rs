@@ -7,7 +7,7 @@ use rust_interact::sovereign_forge::sovereign_forge_interactor_main::SovereignFo
 use structs::configs::SovereignConfig;
 
 /// ### TEST
-/// S-FORGE_COMPLETE_SETUP_PHASE_OK_007
+/// S-FORGE_COMPLETE_SETUP_PHASE_OK_001
 ///
 /// ### ACTION
 /// Run deploy phases 1–4 and call complete_setup_phase
