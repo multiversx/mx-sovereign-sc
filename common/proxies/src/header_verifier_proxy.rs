@@ -236,7 +236,7 @@ where
     }
 
     pub fn set_fee<
-        Arg0: ProxyArg<fee_market_proxy::FeeStruct<Env::Api>>,
+        Arg0: ProxyArg<structs::fee::FeeStruct<Env::Api>>,
     >(
         self,
         new_fee: Arg0,

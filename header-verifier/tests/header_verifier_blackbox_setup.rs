@@ -4,14 +4,14 @@ use common_test_setup::constants::{
 };
 use common_test_setup::{AccountSetup, BaseSetup};
 use multiversx_sc::api::ManagedTypeApi;
-use multiversx_sc::types::{ManagedBuffer, MultiValueEncoded, TestSCAddress};
+use multiversx_sc::types::{ManagedBuffer, MultiValueEncoded, TestSCAddress, TestTokenIdentifier};
 use multiversx_sc_scenario::{
     api::StaticApi, multiversx_chain_vm::crypto_functions::sha256, ScenarioTxRun,
 };
 use multiversx_sc_scenario::{ReturnsHandledOrError, ReturnsLogs};
-use proxies::fee_market_proxy::FeeType;
 use proxies::header_verifier_proxy::HeaderverifierProxy;
 use structs::configs::{EsdtSafeConfig, SovereignConfig};
+use structs::fee::FeeStruct;
 
 #[derive(Clone)]
 pub struct BridgeOperation<M: ManagedTypeApi> {
@@ -225,7 +225,7 @@ impl HeaderVerifierTestState {
             .assert_expected_error_message(response, expected_error_message);
     }
 
-    pub fn set_fee(&mut self, new_fee: FeeType<StaticApi>, expected_error_message: Option<&str>) {
+    pub fn set_fee(&mut self, new_fee: FeeStruct<StaticApi>, expected_error_message: Option<&str>) {
         let response = self
             .common_setup
             .world
@@ -234,6 +234,26 @@ impl HeaderVerifierTestState {
             .to(HEADER_VERIFIER_ADDRESS)
             .typed(HeaderverifierProxy)
             .set_fee(new_fee)
+            .returns(ReturnsHandledOrError::new())
+            .run();
+
+        self.common_setup
+            .assert_expected_error_message(response, expected_error_message);
+    }
+
+    pub fn remove_fee(
+        &mut self,
+        token_id: TestTokenIdentifier,
+        expected_error_message: Option<&str>,
+    ) {
+        let response = self
+            .common_setup
+            .world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .to(HEADER_VERIFIER_ADDRESS)
+            .typed(HeaderverifierProxy)
+            .remove_fee(token_id)
             .returns(ReturnsHandledOrError::new())
             .run();
 

@@ -10,9 +10,10 @@ use error_messages::{
 use multiversx_sc::codec;
 use multiversx_sc::proxy_imports::{TopDecode, TopEncode};
 use proxies::chain_config_proxy::ChainConfigContractProxy;
-use proxies::fee_market_proxy::{FeeMarketProxy, FeeStruct};
+use proxies::fee_market_proxy::FeeMarketProxy;
 use proxies::mvx_esdt_safe_proxy::MvxEsdtSafeProxy;
 use structs::configs::{EsdtSafeConfig, SovereignConfig};
+use structs::fee::FeeStruct;
 
 multiversx_sc::imports!();
 
