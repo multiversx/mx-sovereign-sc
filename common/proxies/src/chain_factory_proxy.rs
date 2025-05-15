@@ -182,7 +182,7 @@ where
 
     pub fn deploy_fee_market<
         Arg0: ProxyArg<ManagedAddress<Env::Api>>,
-        Arg1: ProxyArg<Option<super::fee_market_proxy::FeeStruct<Env::Api>>>,
+        Arg1: ProxyArg<Option<structs::fee::FeeStruct<Env::Api>>>,
     >(
         self,
         esdt_safe_address: Arg0,

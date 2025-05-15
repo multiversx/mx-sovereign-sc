@@ -1,12 +1,12 @@
 use common_interactor::common_sovereign_interactor::CommonInteractorTrait;
 use multiversx_sc_snippets::imports::*;
 use multiversx_sc_snippets::sdk::gateway::SetStateAccount;
-use proxies::fee_market_proxy::FeeStruct;
 use proxies::header_verifier_proxy::HeaderverifierProxy;
 use proxies::mvx_esdt_safe_proxy::MvxEsdtSafeProxy;
 use structs::aliases::{OptionalValueTransferDataTuple, PaymentsVec};
 
 use structs::configs::{EsdtSafeConfig, SovereignConfig};
+use structs::fee::FeeStruct;
 use structs::operation::Operation;
 
 use common_interactor::interactor_config::Config;
