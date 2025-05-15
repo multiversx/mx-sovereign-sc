@@ -26,9 +26,9 @@ use multiversx_sc_scenario::multiversx_chain_vm::crypto_functions::sha256;
 use multiversx_sc_scenario::{api::StaticApi, ScenarioTxWhitebox};
 use mvx_esdt_safe::bridging_mechanism::{BridgingMechanism, TRUSTED_TOKEN_IDS};
 use mvx_esdt_safe_blackbox_setup::MvxEsdtSafeTestState;
-use proxies::fee_market_proxy::{FeeStruct, FeeType};
 use setup_phase::SetupPhaseModule;
 use structs::configs::{MaxBridgedAmount, SovereignConfig};
+use structs::fee::{FeeStruct, FeeType};
 use structs::operation::TransferData;
 use structs::{
     aliases::PaymentsVec,

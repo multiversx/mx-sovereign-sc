@@ -1,13 +1,14 @@
 use multiversx_sc::imports::*;
 use multiversx_sc_modules::only_admin;
 use proxies::{
-    chain_config_proxy::ChainConfigContractProxy,
-    enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy,
-    fee_market_proxy::{FeeMarketProxy, FeeStruct},
-    header_verifier_proxy::HeaderverifierProxy,
+    chain_config_proxy::ChainConfigContractProxy, enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy,
+    fee_market_proxy::FeeMarketProxy, header_verifier_proxy::HeaderverifierProxy,
     mvx_esdt_safe_proxy::MvxEsdtSafeProxy,
 };
-use structs::configs::{EsdtSafeConfig, SovereignConfig};
+use structs::{
+    configs::{EsdtSafeConfig, SovereignConfig},
+    fee::FeeStruct,
+};
 multiversx_sc::derive_imports!();
 
 #[multiversx_sc::module]
@@ -31,7 +32,6 @@ pub trait FactoryModule: only_admin::OnlyAdminModule {
             .sync_call()
     }
 
-    // TODO: fix
     #[only_admin]
     #[endpoint(deployHeaderVerifier)]
     fn deploy_header_verifier(&self, chain_config_address: ManagedAddress) -> ManagedAddress {

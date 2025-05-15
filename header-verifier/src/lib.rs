@@ -4,7 +4,6 @@ use error_messages::{
     ADDRESS_NOT_VALID_SC_ADDRESS, BLS_SIGNATURE_NOT_VALID, CURRENT_OPERATION_ALREADY_IN_EXECUTION,
     CURRENT_OPERATION_NOT_REGISTERED, HASH_OF_HASHES_DOES_NOT_MATCH, INVALID_VALIDATOR_SET_LENGTH,
     NO_ESDT_SAFE_ADDRESS, ONLY_ESDT_SAFE_CALLER, OUTGOING_TX_HASH_ALREADY_REGISTERED,
-    SETUP_PHASE_NOT_COMPLETED,
 };
 use multiversx_sc::codec;
 use multiversx_sc::proxy_imports::{TopDecode, TopEncode};
@@ -52,7 +51,7 @@ pub trait Headerverifier:
         _epoch: ManagedBuffer,
         operations_hashes: MultiValueEncoded<ManagedBuffer>,
     ) {
-        require!(self.is_setup_phase_complete(), SETUP_PHASE_NOT_COMPLETED);
+        self.require_setup_complete();
 
         let mut hash_of_hashes_history_mapper = self.hash_of_hashes_history();
 

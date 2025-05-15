@@ -164,7 +164,7 @@ where
     }
 
     pub fn deploy_phase_four<
-        Arg0: ProxyArg<Option<super::fee_market_proxy::FeeStruct<Env::Api>>>,
+        Arg0: ProxyArg<Option<structs::fee::FeeStruct<Env::Api>>>,
     >(
         self,
         fee: Arg0,

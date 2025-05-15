@@ -4,10 +4,13 @@ use error_messages::{
     CHAIN_CONFIG_ALREADY_DEPLOYED, ESDT_SAFE_ALREADY_DEPLOYED, FEE_MARKET_ALREADY_DEPLOYED,
     HEADER_VERIFIER_ALREADY_DEPLOYED, SOVEREIGN_SETUP_PHASE_ALREADY_COMPLETED,
 };
-use proxies::{chain_factory_proxy::ChainFactoryContractProxy, fee_market_proxy::FeeStruct};
+use proxies::chain_factory_proxy::ChainFactoryContractProxy;
 
 use multiversx_sc::{imports::OptionalValue, require};
-use structs::configs::{EsdtSafeConfig, SovereignConfig};
+use structs::{
+    configs::{EsdtSafeConfig, SovereignConfig},
+    fee::FeeStruct,
+};
 
 use crate::common::{
     self,
@@ -129,11 +132,7 @@ pub trait PhasesModule:
         let esdt_safe_contract_info =
             ContractInfo::new(ScArray::ESDTSafe, esdt_safe_address.clone());
 
-        self.tx()
-            .to(self.get_chain_factory_address())
-            .typed(ChainFactoryContractProxy)
-            .set_esdt_safe_address_in_header_verifier(header_verifier_address, esdt_safe_address)
-            .sync_call();
+        self.set_esdt_safe_address_in_header_verifier(&header_verifier_address, &esdt_safe_address);
 
         self.sovereign_deployed_contracts(&self.sovereigns_mapper(&caller).get())
             .insert(esdt_safe_contract_info);

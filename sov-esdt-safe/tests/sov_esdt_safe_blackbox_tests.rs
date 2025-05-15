@@ -8,9 +8,12 @@ use multiversx_sc::{
     types::{BigUint, EsdtTokenPayment, ManagedBuffer, ManagedVec, MultiValueEncoded},
 };
 use multiversx_sc_scenario::api::StaticApi;
-use proxies::fee_market_proxy::{FeeStruct, FeeType};
 use sov_esdt_safe_blackbox_setup::SovEsdtSafeTestState;
-use structs::{aliases::PaymentsVec, configs::EsdtSafeConfig};
+use structs::{
+    aliases::PaymentsVec,
+    configs::EsdtSafeConfig,
+    fee::{FeeStruct, FeeType},
+};
 
 mod sov_esdt_safe_blackbox_setup;
 

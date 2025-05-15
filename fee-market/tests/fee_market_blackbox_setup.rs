@@ -5,7 +5,6 @@ use multiversx_sc::{
     },
 };
 use multiversx_sc_scenario::{api::StaticApi, ReturnsHandledOrError, ScenarioTxRun};
-use proxies::fee_market_proxy::{FeeMarketProxy, FeeStruct, FeeType};
 
 use common_test_setup::{
     constants::{
@@ -15,6 +14,8 @@ use common_test_setup::{
     },
     AccountSetup, BaseSetup,
 };
+use proxies::fee_market_proxy::FeeMarketProxy;
+use structs::fee::{FeeStruct, FeeType};
 
 pub struct FeeMarketTestState {
     pub common_setup: BaseSetup,

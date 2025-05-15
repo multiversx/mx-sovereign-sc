@@ -4,9 +4,6 @@ use structs::configs::SovereignConfig;
 multiversx_sc::imports!();
 multiversx_sc::derive_imports!();
 
-// TODO: What to fill here?
-pub enum SlashableOffenses {}
-
 #[type_abi]
 #[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, ManagedVecItem)]
 pub struct TokenIdAmountPair<M: ManagedTypeApi> {

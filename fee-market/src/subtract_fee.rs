@@ -2,36 +2,15 @@ use error_messages::{
     INVALID_PERCENTAGE_SUM, INVALID_TOKEN_PROVIDED_FOR_FEE, PAYMENT_DOES_NOT_COVER_FEE,
     TOKEN_NOT_ACCEPTED_AS_FEE,
 };
-use structs::aliases::GasLimit;
-
-use crate::fee_type::FeeType;
+use structs::{
+    aliases::GasLimit,
+    fee::{AddressPercentagePair, FeeType, FinalPayment, SubtractPaymentArguments},
+};
 
 multiversx_sc::imports!();
 multiversx_sc::derive_imports!();
 
 const TOTAL_PERCENTAGE: usize = 10_000;
-
-#[type_abi]
-#[derive(TopEncode, TopDecode)]
-pub struct FinalPayment<M: ManagedTypeApi> {
-    pub fee: EsdtTokenPayment<M>,
-    pub remaining_tokens: EsdtTokenPayment<M>,
-}
-
-#[derive(TopEncode, TopDecode, ManagedVecItem)]
-pub struct AddressPercentagePair<M: ManagedTypeApi> {
-    pub address: ManagedAddress<M>,
-    pub percentage: usize,
-}
-
-pub struct SubtractPaymentArguments<M: ManagedTypeApi> {
-    pub fee_token: TokenIdentifier<M>,
-    pub per_transfer: BigUint<M>,
-    pub per_gas: BigUint<M>,
-    pub payment: EsdtTokenPayment<M>,
-    pub total_transfers: usize,
-    pub opt_gas_limit: OptionalValue<GasLimit>,
-}
 
 #[multiversx_sc::module]
 pub trait SubtractFeeModule:
