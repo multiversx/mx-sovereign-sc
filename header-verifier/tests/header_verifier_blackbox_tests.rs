@@ -1,9 +1,9 @@
 use common_test_setup::constants::{
-    CHAIN_CONFIG_ADDRESS, ENSHRINE_SC_ADDRESS, HEADER_VERIFIER_ADDRESS,
+    CHAIN_CONFIG_ADDRESS, ENSHRINE_SC_ADDRESS, FEE_MARKET_ADDRESS, HEADER_VERIFIER_ADDRESS,
 };
 use error_messages::{
-    CURRENT_OPERATION_NOT_REGISTERED, NO_ESDT_SAFE_ADDRESS, OUTGOING_TX_HASH_ALREADY_REGISTERED,
-    SETUP_PHASE_NOT_COMPLETED,
+    CURRENT_OPERATION_NOT_REGISTERED, ESDT_SAFE_ADDRESS_NOT_SET,
+    OUTGOING_TX_HASH_ALREADY_REGISTERED, SETUP_PHASE_NOT_COMPLETED,
 };
 use header_verifier::{Headerverifier, OperationHashStatus};
 use header_verifier_blackbox_setup::*;
@@ -59,6 +59,7 @@ fn register_bridge_operation_setup_not_completed() {
         .deploy_chain_config(SovereignConfig::default_config());
 
     state.register_esdt_address(ENSHRINE_SC_ADDRESS);
+    state.register_fee_market_address(FEE_MARKET_ADDRESS);
 
     let operation_1 = ManagedBuffer::from("operation_1");
     let operation_2 = ManagedBuffer::from("operation_2");
@@ -84,6 +85,9 @@ fn test_register_bridge_operation() {
     state
         .common_setup
         .deploy_chain_config(SovereignConfig::default_config());
+
+    state.register_esdt_address(ENSHRINE_SC_ADDRESS);
+    state.register_fee_market_address(FEE_MARKET_ADDRESS);
 
     state
         .common_setup
@@ -125,7 +129,7 @@ fn test_register_bridge_operation() {
 
 /// Test that the removal of an executed hash fails because the caller is not an ESDT-Safe contract
 #[test]
-fn test_remove_executed_hash_no_esdt_address_registered() {
+fn test_complete_setup_phase_no_esdt_address_registered() {
     let mut state = HeaderVerifierTestState::new();
 
     state
@@ -138,19 +142,7 @@ fn test_remove_executed_hash_no_esdt_address_registered() {
 
     state
         .common_setup
-        .complete_header_verifier_setup_phase(None);
-
-    let operation_1 = ManagedBuffer::from("operation_1");
-    let operation_2 = ManagedBuffer::from("operation_2");
-    let operation = state.generate_bridge_operation_struct(vec![&operation_1, &operation_2]);
-
-    state.register_operations(operation.clone(), None);
-    state.remove_executed_hash(
-        ENSHRINE_SC_ADDRESS,
-        &operation.bridge_operation_hash,
-        &operation_1,
-        Some(NO_ESDT_SAFE_ADDRESS),
-    );
+        .complete_header_verifier_setup_phase(Some(ESDT_SAFE_ADDRESS_NOT_SET));
 }
 
 /// Test that successfully removes one executed hash from the contract
@@ -173,6 +165,9 @@ fn test_remove_one_executed_hash() {
         .common_setup
         .deploy_chain_config(SovereignConfig::default_config());
 
+    state.register_esdt_address(ENSHRINE_SC_ADDRESS);
+    state.register_fee_market_address(FEE_MARKET_ADDRESS);
+
     state
         .common_setup
         .complete_header_verifier_setup_phase(None);
@@ -181,8 +176,6 @@ fn test_remove_one_executed_hash() {
     let operation_hash_2 = ManagedBuffer::from("operation_2");
     let operation =
         state.generate_bridge_operation_struct(vec![&operation_hash_1, &operation_hash_2]);
-
-    state.register_esdt_address(ENSHRINE_SC_ADDRESS);
 
     state.register_operations(operation.clone(), None);
     state.remove_executed_hash(
@@ -233,6 +226,9 @@ fn test_remove_all_executed_hashes() {
         .common_setup
         .deploy_chain_config(SovereignConfig::default_config());
 
+    state.register_esdt_address(ENSHRINE_SC_ADDRESS);
+    state.register_fee_market_address(FEE_MARKET_ADDRESS);
+
     state
         .common_setup
         .complete_header_verifier_setup_phase(None);
@@ -240,8 +236,6 @@ fn test_remove_all_executed_hashes() {
     let operation_1 = ManagedBuffer::from("operation_1");
     let operation_2 = ManagedBuffer::from("operation_2");
     let operation = state.generate_bridge_operation_struct(vec![&operation_1, &operation_2]);
-
-    state.register_esdt_address(ENSHRINE_SC_ADDRESS);
 
     state.register_operations(operation.clone(), None);
 
@@ -288,6 +282,7 @@ fn test_lock_operation_not_registered() {
         .deploy_header_verifier(CHAIN_CONFIG_ADDRESS);
 
     state.register_esdt_address(ENSHRINE_SC_ADDRESS);
+    state.register_fee_market_address(FEE_MARKET_ADDRESS);
 
     let operation_1 = ManagedBuffer::from("operation_1");
     let operation_2 = ManagedBuffer::from("operation_2");
@@ -321,11 +316,12 @@ fn test_lock_operation() {
         .common_setup
         .deploy_chain_config(SovereignConfig::default_config());
 
+    state.register_esdt_address(ENSHRINE_SC_ADDRESS);
+    state.register_fee_market_address(FEE_MARKET_ADDRESS);
+
     state
         .common_setup
         .complete_header_verifier_setup_phase(None);
-
-    state.register_esdt_address(ENSHRINE_SC_ADDRESS);
 
     let operation_1 = ManagedBuffer::from("operation_1");
     let operation_2 = ManagedBuffer::from("operation_2");
@@ -399,6 +395,9 @@ fn test_change_validator_set_operation_already_registered() {
         .common_setup
         .deploy_chain_config(SovereignConfig::default_config());
 
+    state.register_esdt_address(ENSHRINE_SC_ADDRESS);
+    state.register_fee_market_address(FEE_MARKET_ADDRESS);
+
     state
         .common_setup
         .complete_header_verifier_setup_phase(None);
@@ -417,3 +416,22 @@ fn test_change_validator_set_operation_already_registered() {
         None,
     );
 }
+
+// #[test]
+// fn test_update_sovereign_config() {
+//     let mut state = HeaderVerifierTestState::new();
+
+//     state
+//         .common_setup
+//         .deploy_header_verifier(CHAIN_CONFIG_ADDRESS);
+
+//     state
+//         .common_setup
+//         .deploy_chain_config(SovereignConfig::default_config());
+
+//     // state
+//     //     .common_setup
+//     //     .complete_header_verifier_setup_phase(None);
+
+//     state.update_sovereign_config(&SovereignConfig::default_config(), None);
+// }
