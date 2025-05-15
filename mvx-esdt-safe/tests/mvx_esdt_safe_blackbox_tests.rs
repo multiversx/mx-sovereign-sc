@@ -511,8 +511,8 @@ fn test_deposit_max_bridged_amount_exceeded() {
     );
 
     let tokens_vec = vec![
-        MultiValue3::from((FIRST_TEST_TOKEN, 0u64, BigUint::from(100u64))),
-        MultiValue3::from((SECOND_TEST_TOKEN, 0u64, BigUint::from(100u64))),
+        MultiValue3::from((FIRST_TEST_TOKEN, 0u64, BigUint::from(0u64))),
+        MultiValue3::from((SECOND_TEST_TOKEN, 0u64, BigUint::from(0u64))),
     ];
 
     state
@@ -742,7 +742,7 @@ fn test_deposit_transfer_data_only_with_fee() {
         FEE_MARKET_ADDRESS.to_address(),
         FEE_TOKEN,
         0u64,
-        fee_amount,
+        BigUint::from(gas_limit),
     );
 }
 
