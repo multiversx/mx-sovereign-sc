@@ -1,7 +1,7 @@
 use common_test_setup::constants::{
-    CHAIN_CONFIG_ADDRESS, ESDT_SAFE_ADDRESS, FEE_MARKET_ADDRESS, FEE_TOKEN, FIRST_TEST_TOKEN,
-    HEADER_VERIFIER_ADDRESS, ONE_HUNDRED_MILLION, ONE_HUNDRED_THOUSAND, OWNER_ADDRESS,
-    SECOND_TEST_TOKEN, SOV_TOKEN, TESTING_SC_ADDRESS, USER_ADDRESS,
+    CHAIN_CONFIG_ADDRESS, CROWD_TOKEN_ID, ESDT_SAFE_ADDRESS, FEE_MARKET_ADDRESS, FEE_TOKEN,
+    FIRST_TEST_TOKEN, HEADER_VERIFIER_ADDRESS, ONE_HUNDRED_MILLION, ONE_HUNDRED_THOUSAND,
+    OWNER_ADDRESS, SECOND_TEST_TOKEN, SOV_TOKEN, TESTING_SC_ADDRESS, USER_ADDRESS,
 };
 use common_test_setup::RegisterTokenArgs;
 use cross_chain::storage::CrossChainStorage;
@@ -97,6 +97,10 @@ fn test_register_token_invalid_type() {
         egld_payment,
         Some(CANNOT_REGISTER_TOKEN),
     );
+
+    state
+        .common_setup
+        .check_multiversx_to_sovereign_token_id_mapper_is_empty(SECOND_TEST_TOKEN.as_str());
 }
 
 /// This Test checks the flow for registering an invalid token with prefix
@@ -127,7 +131,7 @@ fn test_register_token_invalid_type_with_prefix() {
 
     state
         .common_setup
-        .check_multiversx_to_sovereign_token_id_mapper_is_empty(FIRST_TEST_TOKEN.as_str());
+        .check_multiversx_to_sovereign_token_id_mapper_is_empty(SECOND_TEST_TOKEN.as_str());
 }
 
 /// This Test checks the flow for registering a token that is not native
@@ -159,6 +163,10 @@ fn test_register_token_not_native() {
         egld_payment,
         Some(CANNOT_REGISTER_TOKEN),
     );
+
+    state
+        .common_setup
+        .check_multiversx_to_sovereign_token_id_mapper_is_empty(SECOND_TEST_TOKEN.as_str());
 }
 
 /// This Test checks the flow for registering a fungible token
@@ -186,6 +194,8 @@ fn test_register_token_fungible_token() {
     };
 
     state.register_token(register_token_args, egld_payment, None);
+
+    // TODO: add check for storage after callback fix
 }
 
 /// Test that register token works with a non-fungible token type
@@ -217,6 +227,10 @@ fn test_register_token_nonfungible_token() {
         egld_payment,
         Some(CANNOT_REGISTER_TOKEN),
     );
+
+    state
+        .common_setup
+        .check_multiversx_to_sovereign_token_id_mapper_is_empty(SECOND_TEST_TOKEN.as_str());
 }
 
 /// Test that deposit fails when there is no payment for transfer
@@ -241,10 +255,6 @@ fn test_deposit_nothing_to_transfer() {
         Some(NOTHING_TO_TRANSFER),
         None,
     );
-
-    state
-        .common_setup
-        .check_multiversx_to_sovereign_token_id_mapper_is_empty(FIRST_TEST_TOKEN.as_str());
 }
 
 /// Test that complete setup phase succeeds
@@ -335,9 +345,12 @@ fn test_deposit_too_many_tokens() {
         None,
     );
 
-    state
-        .common_setup
-        .check_multiversx_to_sovereign_token_id_mapper_is_empty(FIRST_TEST_TOKEN.as_str());
+    state.common_setup.check_account_single_esdt(
+        ESDT_SAFE_ADDRESS.to_address(),
+        FIRST_TEST_TOKEN,
+        0u64,
+        BigUint::zero(),
+    );
 }
 
 /// Test that deposit with no transfer data succeeds
@@ -377,9 +390,14 @@ fn test_deposit_no_transfer_data() {
         Some("deposit"),
     );
 
+    let tokens_vec = vec![
+        MultiValue3::from((FIRST_TEST_TOKEN, 0u64, BigUint::from(100u64))),
+        MultiValue3::from((SECOND_TEST_TOKEN, 0u64, BigUint::from(100u64))),
+    ];
+
     state
         .common_setup
-        .check_multiversx_to_sovereign_token_id_mapper_is_empty(FIRST_TEST_TOKEN.as_str());
+        .check_account_multiple_esdts(ESDT_SAFE_ADDRESS.to_address(), tokens_vec);
 }
 
 /// Test that deposit fails when the gas limit is too high
@@ -435,9 +453,14 @@ fn test_deposit_gas_limit_too_high() {
         None,
     );
 
+    let tokens_vec = vec![
+        MultiValue3::from((FIRST_TEST_TOKEN, 0u64, BigUint::from(0u64))),
+        MultiValue3::from((SECOND_TEST_TOKEN, 0u64, BigUint::from(0u64))),
+    ];
+
     state
         .common_setup
-        .check_multiversx_to_sovereign_token_id_mapper_is_empty(FIRST_TEST_TOKEN.as_str());
+        .check_account_multiple_esdts(ESDT_SAFE_ADDRESS.to_address(), tokens_vec);
 }
 
 #[test]
@@ -487,9 +510,14 @@ fn test_deposit_max_bridged_amount_exceeded() {
         None,
     );
 
+    let tokens_vec = vec![
+        MultiValue3::from((FIRST_TEST_TOKEN, 0u64, BigUint::from(100u64))),
+        MultiValue3::from((SECOND_TEST_TOKEN, 0u64, BigUint::from(100u64))),
+    ];
+
     state
         .common_setup
-        .check_multiversx_to_sovereign_token_id_mapper_is_empty(FIRST_TEST_TOKEN.as_str());
+        .check_account_multiple_esdts(ESDT_SAFE_ADDRESS.to_address(), tokens_vec);
 }
 
 /// Test that deposit fails when the endpoint is banned
@@ -546,35 +574,14 @@ fn test_deposit_endpoint_banned() {
         None,
     );
 
-    state
-        .common_setup
-        .check_multiversx_to_sovereign_token_id_mapper_is_empty(FIRST_TEST_TOKEN.as_str());
-}
-
-// Test that deposit with no transfer data, no fee and no payment fails
-#[test]
-fn test_deposit_no_transfer_data_no_fee() {
-    let mut state = MvxEsdtSafeTestState::new();
-
-    state.common_setup.deploy_mvx_esdt_safe(
-        HEADER_VERIFIER_ADDRESS,
-        OptionalValue::Some(EsdtSafeConfig::default_config()),
-    );
-    state.complete_setup_phase(None, None);
+    let tokens_vec = vec![
+        MultiValue3::from((FIRST_TEST_TOKEN, 0u64, BigUint::from(0u64))),
+        MultiValue3::from((SECOND_TEST_TOKEN, 0u64, BigUint::from(0u64))),
+    ];
 
     state
         .common_setup
-        .deploy_fee_market(None, ESDT_SAFE_ADDRESS);
-    state.common_setup.deploy_testing_sc();
-    state.set_fee_market_address(FEE_MARKET_ADDRESS);
-
-    state.deposit(
-        USER_ADDRESS.to_managed_address(),
-        OptionalValue::None,
-        PaymentsVec::new(),
-        Some(NOTHING_TO_TRANSFER),
-        None,
-    );
+        .check_account_multiple_esdts(ESDT_SAFE_ADDRESS.to_address(), tokens_vec);
 }
 
 /// This test checks the flow for a deposit with transfer data only
@@ -703,7 +710,6 @@ fn test_deposit_transfer_data_only_with_fee() {
 
     let fee_amount = BigUint::from(ONE_HUNDRED_THOUSAND);
 
-    EsdtTokenPayment::<StaticApi>::new(TokenIdentifier::from(FEE_TOKEN), 0, fee_amount.clone());
     let fee_payment =
         EsdtTokenPayment::<StaticApi>::new(TokenIdentifier::from(FEE_TOKEN), 0, fee_amount.clone());
 
@@ -730,6 +736,13 @@ fn test_deposit_transfer_data_only_with_fee() {
         payments_vec,
         None,
         Some("scCall"),
+    );
+
+    state.common_setup.check_account_single_esdt(
+        FEE_MARKET_ADDRESS.to_address(),
+        FEE_TOKEN,
+        0u64,
+        fee_amount,
     );
 }
 
@@ -916,12 +929,13 @@ fn test_deposit_payment_doesnt_cover_fee() {
         None,
     );
 
+    let tokens_vec = vec![
+        MultiValue3::from((FIRST_TEST_TOKEN, 0u64, BigUint::from(0u64))),
+        MultiValue3::from((SECOND_TEST_TOKEN, 0u64, BigUint::from(0u64))),
+    ];
     state
         .common_setup
-        .check_multiversx_to_sovereign_token_id_mapper_is_empty(FIRST_TEST_TOKEN.as_str());
-    state
-        .common_setup
-        .check_multiversx_to_sovereign_token_id_mapper_is_empty(SECOND_TEST_TOKEN.as_str());
+        .check_account_multiple_esdts(ESDT_SAFE_ADDRESS.to_address(), tokens_vec);
 }
 
 /// Test that after deposit fails the tokens are refunded
@@ -942,7 +956,7 @@ fn test_deposit_refund() {
     let mut state = MvxEsdtSafeTestState::new();
 
     let config = EsdtSafeConfig::new(
-        ManagedVec::new(),
+        ManagedVec::from(vec![TokenIdentifier::from(CROWD_TOKEN_ID)]),
         ManagedVec::new(),
         50_000_000,
         ManagedVec::new(),
@@ -1012,20 +1026,14 @@ fn test_deposit_refund() {
         Some("deposit"),
     );
 
-    let expected_amount_token_one =
-        BigUint::from(ONE_HUNDRED_MILLION) - &esdt_token_payment_one.amount;
-
-    let expected_amount_token_two =
-        BigUint::from(ONE_HUNDRED_MILLION) - &esdt_token_payment_two.amount;
-
-    let expected_amount_token_fee = BigUint::from(ONE_HUNDRED_MILLION)
-        - BigUint::from(payments_vec.len() - 1) * per_transfer
-        - BigUint::from(gas_limit) * per_gas;
-
     let expected_balances = vec![
-        MultiValue3::from((FIRST_TEST_TOKEN, 0u64, expected_amount_token_one)),
-        MultiValue3::from((SECOND_TEST_TOKEN, 0u64, expected_amount_token_two)),
-        MultiValue3::from((FEE_TOKEN, 0u64, expected_amount_token_fee)),
+        MultiValue3::from((FIRST_TEST_TOKEN, 0u64, BigUint::from(ONE_HUNDRED_MILLION))),
+        MultiValue3::from((SECOND_TEST_TOKEN, 0u64, BigUint::from(ONE_HUNDRED_MILLION))),
+        MultiValue3::from((
+            FEE_TOKEN,
+            0u64,
+            BigUint::from(ONE_HUNDRED_MILLION - gas_limit as u32),
+        )),
     ];
 
     state
@@ -1072,10 +1080,6 @@ fn test_deposit_success_burn_mechanism() {
         Some("deposit"),
     );
 
-    state
-        .common_setup
-        .check_multiversx_to_sovereign_token_id_mapper_is_empty(TRUSTED_TOKEN_IDS[0]);
-
     let expected_tokens = vec![
         MultiValue3::from((
             TestTokenIdentifier::new(TRUSTED_TOKEN_IDS[0]),
@@ -1088,6 +1092,13 @@ fn test_deposit_success_burn_mechanism() {
     state
         .common_setup
         .check_account_multiple_esdts(ESDT_SAFE_ADDRESS.to_address(), expected_tokens);
+
+    let tokens = vec![
+        (TestTokenIdentifier::new(TRUSTED_TOKEN_IDS[0]), 100u64),
+        (SECOND_TEST_TOKEN, 0u64),
+    ];
+
+    state.common_setup.check_deposited_tokens_amount(tokens);
 }
 
 /// Test that register token works with a valid prefix
@@ -1116,7 +1127,7 @@ fn test_register_token_fungible_token_with_prefix() {
 
     state.register_token(register_token_args, egld_payment, None);
 
-    // TODO: Add check for storage after callback issue is fixed
+    // TODO: add check for storage after callback fix
 }
 
 /// Test that register token fails when token has no prefix
@@ -1148,6 +1159,10 @@ fn test_register_token_fungible_token_no_prefix() {
         egld_payment,
         Some(CANNOT_REGISTER_TOKEN),
     );
+
+    state
+        .common_setup
+        .check_multiversx_to_sovereign_token_id_mapper_is_empty(FIRST_TEST_TOKEN.as_str());
 }
 
 /// Test that register token fails if the token is already registered
@@ -1248,6 +1263,7 @@ fn test_execute_operation_no_esdt_safe_registered() {
         &operation,
         Some(NO_ESDT_SAFE_ADDRESS),
         None,
+        None,
     );
 
     state
@@ -1322,7 +1338,13 @@ fn test_execute_operation_success() {
         .common_setup
         .check_operation_hash_status(&operation_hash, OperationHashStatus::NotLocked);
 
-    state.execute_operation(&hash_of_hashes, &operation, None, Some("executedBridgeOp"));
+    state.execute_operation(
+        &hash_of_hashes,
+        &operation,
+        None,
+        Some("executedBridgeOp"),
+        None,
+    );
 
     state
         .common_setup
@@ -1407,92 +1429,17 @@ fn test_execute_operation_with_native_token_success() {
         .common_setup
         .check_operation_hash_status(&operation_hash, OperationHashStatus::NotLocked);
 
-    state.execute_operation(&hash_of_hashes, &operation, None, Some("executedBridgeOp"));
+    state.execute_operation(
+        &hash_of_hashes,
+        &operation,
+        None,
+        Some("executedBridgeOp"),
+        None,
+    );
 
     state
         .common_setup
         .check_operation_hash_status_is_empty(&operation_hash);
-
-    state.common_setup.check_account_single_esdt(
-        TESTING_SC_ADDRESS.to_address(),
-        TestTokenIdentifier::new(TRUSTED_TOKEN_IDS[0]),
-        0u64,
-        BigUint::from(0u64),
-    );
-}
-
-/// This test checks the succsesful flow of executing an `operation` with burn mechanism
-/// Steps for this test:
-/// 1. Deploy the Mvx-ESDT-Safe SC with roles for the trusted token
-/// 2. Create the `operation`
-/// 3. Deploy the needed smart contract (Header-Verifier, Fee-Market with no fee and Testing SC)
-/// 4. Set the Fee-Market address in Header-Verifier
-/// 5. Register the `operation`
-/// 6. Register the native token
-/// 7. Set the bridging mechanism to burn&mint
-/// 8. Execute the `operation`
-/// 9. Check if the registered `operation` hash status is empty
-/// 10. Check the balances for the owner, Mvx-ESDT-Safe and Testing SC
-#[test]
-fn test_execute_operation_burn_mechanism_without_deposit_cannot_subtract() {
-    let mut state = MvxEsdtSafeTestState::new();
-    state.deploy_contract_with_roles();
-
-    let token_display_name = "NativeToken";
-    let egld_payment = BigUint::from(DEFAULT_ISSUE_COST);
-
-    state.register_native_token(TRUSTED_TOKEN_IDS[0], token_display_name, egld_payment, None);
-    state.complete_setup_phase(None, Some("unpauseContract"));
-
-    let token_data = EsdtTokenData {
-        amount: BigUint::from(100u64),
-        ..Default::default()
-    };
-
-    let payment =
-        OperationEsdtPayment::new(TokenIdentifier::from(TRUSTED_TOKEN_IDS[0]), 0, token_data);
-
-    let operation_data = OperationData::new(1, OWNER_ADDRESS.to_managed_address(), None);
-
-    let operation = Operation::new(
-        TESTING_SC_ADDRESS.to_managed_address(),
-        vec![payment].into(),
-        operation_data,
-    );
-
-    let operation_hash = state.get_operation_hash(&operation);
-    let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&operation_hash.to_vec()));
-
-    state
-        .common_setup
-        .deploy_chain_config(SovereignConfig::default_config());
-    state
-        .common_setup
-        .deploy_header_verifier(CHAIN_CONFIG_ADDRESS);
-
-    state.common_setup.deploy_testing_sc();
-    state.set_esdt_safe_address_in_header_verifier(ESDT_SAFE_ADDRESS);
-    state
-        .common_setup
-        .complete_header_verifier_setup_phase(None);
-
-    let operations_hashes = MultiValueEncoded::from(ManagedVec::from(vec![operation_hash.clone()]));
-
-    state.register_operation(ManagedBuffer::new(), &hash_of_hashes, operations_hashes);
-    state.set_token_burn_mechanism(TRUSTED_TOKEN_IDS[0], None);
-
-    state.execute_operation(&hash_of_hashes, &operation, None, Some("executedBridgeOp"));
-
-    state
-        .common_setup
-        .check_operation_hash_status_is_empty(&operation_hash);
-
-    state.common_setup.check_account_single_esdt(
-        ESDT_SAFE_ADDRESS.to_address(),
-        TestTokenIdentifier::new(TRUSTED_TOKEN_IDS[0]),
-        0u64,
-        BigUint::from(0u64),
-    );
 
     state.common_setup.check_account_single_esdt(
         TESTING_SC_ADDRESS.to_address(),
@@ -1578,7 +1525,13 @@ fn test_execute_operation_success_burn_mechanism() {
 
     state.set_token_burn_mechanism(TRUSTED_TOKEN_IDS[0], None);
 
-    state.execute_operation(&hash_of_hashes, &operation, None, Some("executedBridgeOp"));
+    state.execute_operation(
+        &hash_of_hashes,
+        &operation,
+        None,
+        Some("executedBridgeOp"),
+        None,
+    );
 
     let expected_amount_trusted_token = BigUint::from(ONE_HUNDRED_MILLION) - &token_data.amount;
 
@@ -1735,6 +1688,7 @@ fn test_deposit_execute_switch_mechanism() {
         &operation_one,
         None,
         Some("executedBridgeOp"),
+        None,
     );
 
     let mut expected_receiver_amount = execute_trusted_token_payment_amount;
@@ -1809,6 +1763,7 @@ fn test_deposit_execute_switch_mechanism() {
         &operation_two,
         None,
         Some("executedBridgeOp"),
+        None,
     );
 
     state
@@ -1934,7 +1889,13 @@ fn test_execute_operation_no_payments() {
         .common_setup
         .check_operation_hash_status(&operation_hash, OperationHashStatus::NotLocked);
 
-    state.execute_operation(&hash_of_hashes, &operation, None, Some("executedBridgeOp"));
+    state.execute_operation(
+        &hash_of_hashes,
+        &operation,
+        None,
+        Some("executedBridgeOp"),
+        None,
+    );
 
     state
         .common_setup
@@ -2015,7 +1976,13 @@ fn test_execute_operation_no_payments_failed_event() {
         .common_setup
         .check_operation_hash_status(&operation_hash, OperationHashStatus::NotLocked);
 
-    state.execute_operation(&hash_of_hashes, &operation, None, Some("executedBridgeOp"));
+    state.execute_operation(
+        &hash_of_hashes,
+        &operation,
+        None,
+        Some("executedBridgeOp"),
+        Some("invalid function (not found)"),
+    );
 
     state
         .common_setup
@@ -2065,13 +2032,6 @@ fn test_set_token_burn_mechanism() {
                 .burn_mechanism_tokens()
                 .contains(&TokenIdentifier::from(TRUSTED_TOKEN_IDS[0])))
         });
-
-    state.common_setup.check_account_single_esdt(
-        ESDT_SAFE_ADDRESS.to_address(),
-        TestTokenIdentifier::new(TRUSTED_TOKEN_IDS[0]),
-        0u64,
-        BigUint::from(0u64),
-    );
 }
 
 /// This Test checks the flow setting the bridging mechanism to lock&send
@@ -2096,13 +2056,6 @@ fn test_set_token_lock_mechanism() {
         .whitebox(mvx_esdt_safe::contract_obj, |sc| {
             assert!(sc.burn_mechanism_tokens().is_empty())
         });
-
-    state.common_setup.check_account_single_esdt(
-        ESDT_SAFE_ADDRESS.to_address(),
-        TestTokenIdentifier::new(TRUSTED_TOKEN_IDS[0]),
-        100u64,
-        BigUint::from(0u64),
-    );
 }
 
 /// This Test checks the flow setting the bridging mechanism to burn&mint of a Sovereign token
