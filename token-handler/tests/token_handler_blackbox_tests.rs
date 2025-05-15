@@ -17,7 +17,7 @@ fn test_deploy() {
 }
 
 /// ### TEST
-/// T-HANDLER_WHITELIST_ENSRINE_FAIL_001
+/// T-HANDLER_WHITELIST_ENSHRINE_FAIL_001
 ///
 /// ### ACTION
 /// Call 'whitelist_caller()' whitout being an admin
@@ -37,7 +37,7 @@ fn test_whitelist_enshrine_esdt_caller_not_admin() {
 }
 
 /// ### TEST
-/// T-HANDLER_WHITELIST_ENSRINE_OK_001
+/// T-HANDLER_WHITELIST_ENSHRINE_OK_002
 ///
 /// ### ACTION
 /// Call 'whitelist_caller()'
@@ -58,7 +58,7 @@ fn test_whitelist_enshrine() {
 // to give the correct permissions to the TokenHandler SC
 
 /// ### TEST
-/// T-HANDLER_TRANSFER_FAIL_002
+/// T-HANDLER_TRANSFER_FAIL_003
 ///
 /// ### ACTION
 /// Call 'transfer_tokens()'
