@@ -8,7 +8,10 @@ use error_messages::{
 };
 use header_verifier::{Headerverifier, OperationHashStatus};
 use header_verifier_blackbox_setup::*;
-use multiversx_sc::{imports::OptionalValue, types::ManagedBuffer};
+use multiversx_sc::{
+    imports::OptionalValue,
+    types::{ManagedBuffer, MultiValueEncoded},
+};
 use multiversx_sc_scenario::{DebugApi, ScenarioTxWhitebox};
 use structs::{
     configs::{EsdtSafeConfig, SovereignConfig},
@@ -597,4 +600,49 @@ fn test_remove_fee_header_verifier_setup_phase_not_completed() {
         .deploy_fee_market(None, ESDT_SAFE_ADDRESS);
 
     state.remove_fee(FIRST_TEST_TOKEN, Some(SETUP_PHASE_NOT_COMPLETED));
+}
+
+#[test]
+fn test_distribute_fee_header_verifier_setup_phase_not_completed() {
+    let mut state = HeaderVerifierTestState::new();
+
+    state
+        .common_setup
+        .deploy_header_verifier(CHAIN_CONFIG_ADDRESS);
+
+    state
+        .common_setup
+        .deploy_fee_market(None, ESDT_SAFE_ADDRESS);
+
+    state.distribute_fee(MultiValueEncoded::new(), Some(SETUP_PHASE_NOT_COMPLETED));
+}
+
+#[test]
+fn test_distribute_fee_sovereign_verifier_setup_phase_not_completed() {
+    let mut state = HeaderVerifierTestState::new();
+
+    state
+        .common_setup
+        .deploy_header_verifier(CHAIN_CONFIG_ADDRESS);
+
+    state
+        .common_setup
+        .deploy_chain_config(SovereignConfig::default_config());
+
+    state
+        .common_setup
+        .deploy_mvx_esdt_safe(HEADER_VERIFIER_ADDRESS, OptionalValue::None);
+
+    state
+        .common_setup
+        .deploy_fee_market(None, ESDT_SAFE_ADDRESS);
+
+    state.register_esdt_address(ESDT_SAFE_ADDRESS);
+    state.register_fee_market_address(FEE_MARKET_ADDRESS);
+
+    state
+        .common_setup
+        .complete_header_verifier_setup_phase(None);
+
+    state.distribute_fee(MultiValueEncoded::new(), Some(CALLER_IS_NOT_OWNER));
 }
