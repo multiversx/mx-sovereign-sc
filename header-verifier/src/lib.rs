@@ -4,8 +4,7 @@ use error_messages::{
     ADDRESS_NOT_VALID_SC_ADDRESS, BLS_SIGNATURE_NOT_VALID, CHAIN_CONFIG_ADDRESS_NOT_SET,
     CURRENT_OPERATION_ALREADY_IN_EXECUTION, CURRENT_OPERATION_NOT_REGISTERED,
     ESDT_SAFE_ADDRESS_NOT_SET, FEE_MARKET_ADDRESS_NOT_SET, HASH_OF_HASHES_DOES_NOT_MATCH,
-    INVALID_VALIDATOR_SET_LENGTH, NO_ESDT_SAFE_ADDRESS, ONLY_ESDT_SAFE_CALLER,
-    OUTGOING_TX_HASH_ALREADY_REGISTERED,
+    INVALID_VALIDATOR_SET_LENGTH, ONLY_ESDT_SAFE_CALLER, OUTGOING_TX_HASH_ALREADY_REGISTERED,
 };
 use multiversx_sc::codec;
 use multiversx_sc::proxy_imports::{TopDecode, TopEncode};
@@ -255,7 +254,7 @@ pub trait Headerverifier:
     fn require_caller_esdt_safe(&self) {
         let esdt_safe_mapper = self.esdt_safe_address();
 
-        require!(!esdt_safe_mapper.is_empty(), NO_ESDT_SAFE_ADDRESS);
+        require!(!esdt_safe_mapper.is_empty(), ESDT_SAFE_ADDRESS_NOT_SET);
 
         let caller = self.blockchain().get_caller();
         require!(caller == esdt_safe_mapper.get(), ONLY_ESDT_SAFE_CALLER);
