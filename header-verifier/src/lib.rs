@@ -156,9 +156,10 @@ pub trait Headerverifier:
         }
     }
 
+    // TODO: verify signature
     #[endpoint(updateSovereignConfig)]
     fn update_sovereign_config(&self, new_config: SovereignConfig<Self::Api>) {
-        // TODO: verify signature
+        self.require_setup_complete();
 
         self.tx()
             .to(self.chain_config_address().get())
@@ -167,9 +168,10 @@ pub trait Headerverifier:
             .sync_call();
     }
 
+    // TODO: verify signature
     #[endpoint(updateEsdtSafeConfig)]
     fn update_esdt_safe_config(&self, new_config: EsdtSafeConfig<Self::Api>) {
-        // TODO: verify signature
+        self.require_setup_complete();
 
         self.tx()
             .to(self.esdt_safe_address().get())
@@ -178,9 +180,11 @@ pub trait Headerverifier:
             .sync_call();
     }
 
+    // TODO: verify signature
     #[endpoint(setFee)]
     fn set_fee(&self, new_fee: FeeStruct<Self::Api>) {
         // TODO: verify signature
+        self.require_setup_complete();
 
         self.tx()
             .to(self.fee_market_address().get())
@@ -189,9 +193,10 @@ pub trait Headerverifier:
             .sync_call();
     }
 
+    // TODO: verify signature
     #[endpoint(removeFee)]
     fn remove_fee(&self, base_token: TokenIdentifier<Self::Api>) {
-        // TODO: verify signature
+        self.require_setup_complete();
 
         self.tx()
             .to(self.fee_market_address().get())
@@ -200,12 +205,13 @@ pub trait Headerverifier:
             .sync_call();
     }
 
+    // TODO: verify signature
     #[endpoint(distributeFee)]
     fn distribute_fee(
         &self,
         address_percentage_pairs: MultiValueEncoded<MultiValue2<ManagedAddress, usize>>,
     ) {
-        // TODO: verify signature
+        self.require_setup_complete();
 
         self.tx()
             .to(self.fee_market_address().get())
