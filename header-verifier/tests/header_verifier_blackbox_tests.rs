@@ -475,10 +475,6 @@ fn test_update_esdt_safe_config_header_verifier_setup_phase_not_complete() {
         .common_setup
         .deploy_header_verifier(CHAIN_CONFIG_ADDRESS);
 
-    state
-        .common_setup
-        .deploy_chain_config(SovereignConfig::default_config());
-
     state.update_esdt_safe_config(
         &EsdtSafeConfig::default_config(),
         Some(SETUP_PHASE_NOT_COMPLETED),
@@ -552,6 +548,26 @@ fn test_set_fee_header_verifier_setup_phase_not_completed() {
 
     state
         .common_setup
+        .deploy_fee_market(None, ESDT_SAFE_ADDRESS);
+
+    let fee = FeeStruct {
+        base_token: FIRST_TEST_TOKEN.to_token_identifier(),
+        fee_type: FeeType::None,
+    };
+
+    state.set_fee(fee, Some(SETUP_PHASE_NOT_COMPLETED));
+}
+
+#[test]
+fn test_remove_fee_sovereign_setup_phase_not_completed() {
+    let mut state = HeaderVerifierTestState::new();
+
+    state
+        .common_setup
+        .deploy_header_verifier(CHAIN_CONFIG_ADDRESS);
+
+    state
+        .common_setup
         .deploy_chain_config(SovereignConfig::default_config());
 
     state
@@ -561,10 +577,24 @@ fn test_set_fee_header_verifier_setup_phase_not_completed() {
     state.register_esdt_address(ESDT_SAFE_ADDRESS);
     state.register_fee_market_address(FEE_MARKET_ADDRESS);
 
-    let fee = FeeStruct {
-        base_token: FIRST_TEST_TOKEN.to_token_identifier(),
-        fee_type: FeeType::None,
-    };
+    state
+        .common_setup
+        .complete_header_verifier_setup_phase(None);
 
-    state.set_fee(fee, Some(SETUP_PHASE_NOT_COMPLETED));
+    state.remove_fee(FIRST_TEST_TOKEN, Some(CALLER_IS_NOT_OWNER));
+}
+
+#[test]
+fn test_remove_fee_header_verifier_setup_phase_not_completed() {
+    let mut state = HeaderVerifierTestState::new();
+
+    state
+        .common_setup
+        .deploy_header_verifier(CHAIN_CONFIG_ADDRESS);
+
+    state
+        .common_setup
+        .deploy_fee_market(None, ESDT_SAFE_ADDRESS);
+
+    state.remove_fee(FIRST_TEST_TOKEN, Some(SETUP_PHASE_NOT_COMPLETED));
 }
