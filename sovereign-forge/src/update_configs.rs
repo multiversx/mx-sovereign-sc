@@ -58,7 +58,7 @@ pub trait UpdateConfigsModule: common::utils::UtilsModule + common::storage::Sto
             .sync_call();
     }
 
-    #[endpoint(setFee)]
+    #[endpoint(removeFee)]
     fn remove_fee(&self, token_id: TokenIdentifier<Self::Api>) {
         let blockchain_api = self.blockchain();
         let caller = blockchain_api.get_caller();
