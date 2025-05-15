@@ -12,11 +12,11 @@ use error_messages::{
 use header_verifier::OperationHashStatus;
 use multiversx_sc_snippets::multiversx_sc_scenario::multiversx_chain_vm::crypto_functions::sha256;
 use multiversx_sc_snippets::{hex, imports::*};
-use proxies::fee_market_proxy::{FeeStruct, FeeType};
 use rust_interact::mvx_esdt_safe::mvx_esdt_safe_interactor_main::MvxEsdtSafeInteract;
 use serial_test::serial;
 use structs::aliases::PaymentsVec;
 use structs::configs::{EsdtSafeConfig, SovereignConfig};
+use structs::fee::{FeeStruct, FeeType};
 use structs::operation::{Operation, OperationData, OperationEsdtPayment, TransferData};
 
 // Test that deposit fails when there is nothing to transfer and fee is disabled

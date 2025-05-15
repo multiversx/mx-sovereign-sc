@@ -4,10 +4,13 @@ use error_messages::{
     CHAIN_CONFIG_ALREADY_DEPLOYED, ESDT_SAFE_ALREADY_DEPLOYED, FEE_MARKET_ALREADY_DEPLOYED,
     HEADER_VERIFIER_ALREADY_DEPLOYED, SOVEREIGN_SETUP_PHASE_ALREADY_COMPLETED,
 };
-use proxies::{chain_factory_proxy::ChainFactoryContractProxy, fee_market_proxy::FeeStruct};
+use proxies::chain_factory_proxy::ChainFactoryContractProxy;
 
 use multiversx_sc::{imports::OptionalValue, require};
-use structs::configs::{EsdtSafeConfig, SovereignConfig};
+use structs::{
+    configs::{EsdtSafeConfig, SovereignConfig},
+    fee::FeeStruct,
+};
 
 use crate::common::{
     self,

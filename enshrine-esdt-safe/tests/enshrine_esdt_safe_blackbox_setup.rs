@@ -21,14 +21,13 @@ use multiversx_sc_scenario::{
     ScenarioTxRun,
 };
 use proxies::{
-    enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy,
-    fee_market_proxy::{FeeMarketProxy, FeeStruct, FeeType},
-    header_verifier_proxy::HeaderverifierProxy,
-    token_handler_proxy::TokenHandlerProxy,
+    enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy, fee_market_proxy::FeeMarketProxy,
+    header_verifier_proxy::HeaderverifierProxy, token_handler_proxy::TokenHandlerProxy,
 };
 use structs::{
     aliases::{GasLimit, OptionalValueTransferDataTuple, PaymentsVec},
     configs::{EsdtSafeConfig, SovereignConfig},
+    fee::{FeeStruct, FeeType},
     operation::{Operation, OperationData, OperationEsdtPayment},
 };
 

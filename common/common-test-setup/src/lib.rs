@@ -22,18 +22,16 @@ use multiversx_sc_scenario::{
 };
 use mvx_esdt_safe::bridging_mechanism::BridgingMechanism;
 use proxies::{
-    chain_config_proxy::ChainConfigContractProxy,
-    chain_factory_proxy::ChainFactoryContractProxy,
-    enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy,
-    fee_market_proxy::{FeeMarketProxy, FeeStruct},
-    header_verifier_proxy::HeaderverifierProxy,
-    mvx_esdt_safe_proxy::MvxEsdtSafeProxy,
-    sov_esdt_safe_proxy::SovEsdtSafeProxy,
-    sovereign_forge_proxy::SovereignForgeProxy,
-    testing_sc_proxy::TestingScProxy,
-    token_handler_proxy::TokenHandlerProxy,
+    chain_config_proxy::ChainConfigContractProxy, chain_factory_proxy::ChainFactoryContractProxy,
+    enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy, fee_market_proxy::FeeMarketProxy,
+    header_verifier_proxy::HeaderverifierProxy, mvx_esdt_safe_proxy::MvxEsdtSafeProxy,
+    sov_esdt_safe_proxy::SovEsdtSafeProxy, sovereign_forge_proxy::SovereignForgeProxy,
+    testing_sc_proxy::TestingScProxy, token_handler_proxy::TokenHandlerProxy,
 };
-use structs::configs::{EsdtSafeConfig, SovereignConfig};
+use structs::{
+    configs::{EsdtSafeConfig, SovereignConfig},
+    fee::FeeStruct,
+};
 
 pub struct RegisterTokenArgs<'a> {
     pub sov_token_id: TokenIdentifier<StaticApi>,
