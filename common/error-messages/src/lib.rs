@@ -74,6 +74,7 @@ pub const NOTHING_TO_TRANSFER: &str = "Nothing to transfer";
 pub const ONLY_DEPLOYED_CONTRACTS_CAN_CALL_ENDPOINT: &str =
     "Only deployed contracts may call this endpoint";
 pub const ONLY_ESDT_SAFE_CALLER: &str = "Only ESDT Safe can call this endpoint";
+pub const CALLER_IS_NOT_OWNER: &str = "Endpoint can only be called by owner";
 pub const ONLY_WEGLD_IS_ACCEPTED_AS_REGISTER_FEE: &str =
     "WEGLD is the only token accepted as register fee";
 pub const OUTGOING_TX_HASH_ALREADY_REGISTERED: &str =
