@@ -271,6 +271,19 @@ where
             .argument(&new_config)
             .original_result()
     }
+
+    pub fn set_fee<
+        Arg0: ProxyArg<structs::fee::FeeStruct<Env::Api>>,
+    >(
+        self,
+        new_fee: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("setFee")
+            .argument(&new_fee)
+            .original_result()
+    }
 }
 
 #[type_abi]

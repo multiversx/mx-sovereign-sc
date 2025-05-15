@@ -6,9 +6,9 @@
 
 // Init:                                 1
 // Upgrade:                              1
-// Endpoints:                           15
+// Endpoints:                           16
 // Async Callback (empty):               1
-// Total number of exported functions:  18
+// Total number of exported functions:  19
 
 #![no_std]
 
@@ -35,6 +35,7 @@ multiversx_sc_wasm_adapter::endpoints! {
         getAllChainIds => chain_ids
         updateEsdtSafeConfig => update_esdt_safe_config
         updateSovereignConfig => update_sovereign_config
+        setFee => set_fee
     )
 }
 
