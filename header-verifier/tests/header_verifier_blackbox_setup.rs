@@ -9,7 +9,9 @@ use multiversx_sc_scenario::{
     api::StaticApi, multiversx_chain_vm::crypto_functions::sha256, ScenarioTxRun,
 };
 use multiversx_sc_scenario::{ReturnsHandledOrError, ReturnsLogs};
+use proxies::fee_market_proxy::FeeType;
 use proxies::header_verifier_proxy::HeaderverifierProxy;
+use structs::configs::{EsdtSafeConfig, SovereignConfig};
 
 #[derive(Clone)]
 pub struct BridgeOperation<M: ManagedTypeApi> {
@@ -80,6 +82,17 @@ impl HeaderVerifierTestState {
             .to(HEADER_VERIFIER_ADDRESS)
             .typed(HeaderverifierProxy)
             .set_esdt_safe_address(esdt_address)
+            .run();
+    }
+
+    pub fn register_fee_market_address(&mut self, fee_market: TestSCAddress) {
+        self.common_setup
+            .world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .to(HEADER_VERIFIER_ADDRESS)
+            .typed(HeaderverifierProxy)
+            .set_esdt_safe_address(fee_market)
             .run();
     }
 
@@ -170,6 +183,62 @@ impl HeaderVerifierTestState {
         if let Some(custom_log) = expected_custom_log {
             self.common_setup.assert_expected_log(logs, custom_log)
         };
+    }
+
+    pub fn update_sovereign_config(
+        &mut self,
+        new_config: &SovereignConfig<StaticApi>,
+        expected_error_message: Option<&str>,
+    ) {
+        let response = self
+            .common_setup
+            .world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .to(HEADER_VERIFIER_ADDRESS)
+            .typed(HeaderverifierProxy)
+            .update_sovereign_config(new_config)
+            .returns(ReturnsHandledOrError::new())
+            .run();
+
+        self.common_setup
+            .assert_expected_error_message(response, expected_error_message);
+    }
+
+    pub fn update_esdt_safe_config(
+        &mut self,
+        new_config: &EsdtSafeConfig<StaticApi>,
+        expected_error_message: Option<&str>,
+    ) {
+        let response = self
+            .common_setup
+            .world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .to(HEADER_VERIFIER_ADDRESS)
+            .typed(HeaderverifierProxy)
+            .update_esdt_safe_config(new_config)
+            .returns(ReturnsHandledOrError::new())
+            .run();
+
+        self.common_setup
+            .assert_expected_error_message(response, expected_error_message);
+    }
+
+    pub fn set_fee(&mut self, new_fee: FeeType<StaticApi>, expected_error_message: Option<&str>) {
+        let response = self
+            .common_setup
+            .world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .to(HEADER_VERIFIER_ADDRESS)
+            .typed(HeaderverifierProxy)
+            .set_fee(new_fee)
+            .returns(ReturnsHandledOrError::new())
+            .run();
+
+        self.common_setup
+            .assert_expected_error_message(response, expected_error_message);
     }
 
     pub fn generate_bridge_operation_struct(
