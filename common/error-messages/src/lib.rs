@@ -68,7 +68,6 @@ pub const MAX_GAS_LIMIT_PER_TX_EXCEEDED: &str =
 pub const MINT_AND_BURN_ROLES_NOT_FOUND: &str = "This token does not have Mint and Burn roles";
 pub const NATIVE_TOKEN_ALREADY_REGISTERED: &str = "Native token was already registered";
 pub const NATIVE_TOKEN_NOT_REGISTERED: &str = "There is no native token registered";
-pub const NO_ESDT_SAFE_ADDRESS: &str = "There is no registered ESDT address";
 pub const NO_HEADER_VERIFIER_ADDRESS: &str = "There is no registered Header-Verifier address";
 pub const NOT_ENOUGH_WEGLD_AMOUNT: &str = "WEGLD fee amount is not met";
 pub const NOTHING_TO_TRANSFER: &str = "Nothing to transfer";
