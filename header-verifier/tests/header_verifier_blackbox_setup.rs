@@ -4,7 +4,10 @@ use common_test_setup::constants::{
 };
 use common_test_setup::{AccountSetup, BaseSetup};
 use multiversx_sc::api::ManagedTypeApi;
-use multiversx_sc::types::{ManagedBuffer, MultiValueEncoded, TestSCAddress, TestTokenIdentifier};
+use multiversx_sc::imports::MultiValue2;
+use multiversx_sc::types::{
+    ManagedAddress, ManagedBuffer, MultiValueEncoded, TestSCAddress, TestTokenIdentifier,
+};
 use multiversx_sc_scenario::{
     api::StaticApi, multiversx_chain_vm::crypto_functions::sha256, ScenarioTxRun,
 };
@@ -254,6 +257,29 @@ impl HeaderVerifierTestState {
             .to(HEADER_VERIFIER_ADDRESS)
             .typed(HeaderverifierProxy)
             .remove_fee(token_id)
+            .returns(ReturnsHandledOrError::new())
+            .run();
+
+        self.common_setup
+            .assert_expected_error_message(response, expected_error_message);
+    }
+
+    pub fn distribute_fee(
+        &mut self,
+        address_percentage_pairs: MultiValueEncoded<
+            StaticApi,
+            MultiValue2<ManagedAddress<StaticApi>, usize>,
+        >,
+        expected_error_message: Option<&str>,
+    ) {
+        let response = self
+            .common_setup
+            .world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .to(HEADER_VERIFIER_ADDRESS)
+            .typed(HeaderverifierProxy)
+            .distribute_fee(address_percentage_pairs)
             .returns(ReturnsHandledOrError::new())
             .run();
 
