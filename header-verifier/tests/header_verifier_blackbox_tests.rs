@@ -1,6 +1,6 @@
 use common_test_setup::constants::{
     CHAIN_CONFIG_ADDRESS, ENSHRINE_SC_ADDRESS, ESDT_SAFE_ADDRESS, FEE_MARKET_ADDRESS,
-    HEADER_VERIFIER_ADDRESS,
+    FIRST_TEST_TOKEN, HEADER_VERIFIER_ADDRESS,
 };
 use error_messages::{
     CALLER_IS_NOT_OWNER, CURRENT_OPERATION_NOT_REGISTERED, ESDT_SAFE_ADDRESS_NOT_SET,
@@ -10,7 +10,10 @@ use header_verifier::{Headerverifier, OperationHashStatus};
 use header_verifier_blackbox_setup::*;
 use multiversx_sc::{imports::OptionalValue, types::ManagedBuffer};
 use multiversx_sc_scenario::{DebugApi, ScenarioTxWhitebox};
-use structs::configs::{EsdtSafeConfig, SovereignConfig};
+use structs::{
+    configs::{EsdtSafeConfig, SovereignConfig},
+    fee::{FeeStruct, FeeType},
+};
 
 mod header_verifier_blackbox_setup;
 
@@ -506,4 +509,62 @@ fn test_update_esdt_safe_config_sovereign_setup_phase_not_complete() {
         .complete_header_verifier_setup_phase(None);
 
     state.update_esdt_safe_config(&EsdtSafeConfig::default_config(), Some(CALLER_IS_NOT_OWNER));
+}
+
+#[test]
+fn test_set_fee_sovereign_setup_phase_not_completed() {
+    let mut state = HeaderVerifierTestState::new();
+
+    state
+        .common_setup
+        .deploy_header_verifier(CHAIN_CONFIG_ADDRESS);
+
+    state
+        .common_setup
+        .deploy_chain_config(SovereignConfig::default_config());
+
+    state
+        .common_setup
+        .deploy_fee_market(None, ESDT_SAFE_ADDRESS);
+
+    state.register_esdt_address(ESDT_SAFE_ADDRESS);
+    state.register_fee_market_address(FEE_MARKET_ADDRESS);
+
+    state
+        .common_setup
+        .complete_header_verifier_setup_phase(None);
+
+    let fee = FeeStruct {
+        base_token: FIRST_TEST_TOKEN.to_token_identifier(),
+        fee_type: FeeType::None,
+    };
+
+    state.set_fee(fee, Some(CALLER_IS_NOT_OWNER));
+}
+
+#[test]
+fn test_set_fee_header_verifier_setup_phase_not_completed() {
+    let mut state = HeaderVerifierTestState::new();
+
+    state
+        .common_setup
+        .deploy_header_verifier(CHAIN_CONFIG_ADDRESS);
+
+    state
+        .common_setup
+        .deploy_chain_config(SovereignConfig::default_config());
+
+    state
+        .common_setup
+        .deploy_fee_market(None, ESDT_SAFE_ADDRESS);
+
+    state.register_esdt_address(ESDT_SAFE_ADDRESS);
+    state.register_fee_market_address(FEE_MARKET_ADDRESS);
+
+    let fee = FeeStruct {
+        base_token: FIRST_TEST_TOKEN.to_token_identifier(),
+        fee_type: FeeType::None,
+    };
+
+    state.set_fee(fee, Some(SETUP_PHASE_NOT_COMPLETED));
 }
