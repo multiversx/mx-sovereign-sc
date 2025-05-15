@@ -6,6 +6,7 @@ multiversx_sc::derive_imports!();
 pub mod aliases;
 pub mod configs;
 pub mod events;
+pub mod fee;
 pub mod operation;
 
 pub const MIN_BLOCKS_FOR_FINALITY: u64 = 10;

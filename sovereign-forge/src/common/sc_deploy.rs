@@ -1,7 +1,10 @@
 use crate::err_msg;
 use multiversx_sc::{imports::OptionalValue, types::ReturnsResult};
-use proxies::{chain_factory_proxy::ChainFactoryContractProxy, fee_market_proxy::FeeStruct};
-use structs::configs::{EsdtSafeConfig, SovereignConfig};
+use proxies::chain_factory_proxy::ChainFactoryContractProxy;
+use structs::{
+    configs::{EsdtSafeConfig, SovereignConfig},
+    fee::FeeStruct,
+};
 
 #[multiversx_sc::module]
 pub trait ScDeployModule: super::utils::UtilsModule + super::storage::StorageModule {

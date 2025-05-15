@@ -1,7 +1,7 @@
 #![no_std]
 
 use error_messages::ESDT_SAFE_ADDRESS_NOT_SET;
-use fee_type::FeeStruct;
+use structs::fee::FeeStruct;
 
 multiversx_sc::imports!();
 
