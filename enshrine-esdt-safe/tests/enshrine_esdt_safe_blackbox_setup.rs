@@ -176,10 +176,9 @@ impl EnshrineTestState {
             .returns(ReturnsLogs)
             .run();
 
-        print!("Logs: {:?}", logs);
-
         self.common_setup
             .assert_expected_error_message(response, error_message);
+
         if let Some(expected_log) = expected_log {
             self.common_setup.assert_expected_log(logs, expected_log);
         }
