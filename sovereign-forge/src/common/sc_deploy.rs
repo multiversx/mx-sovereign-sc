@@ -46,12 +46,13 @@ pub trait ScDeployModule: super::utils::UtilsModule + super::storage::StorageMod
     fn deploy_fee_market(
         &self,
         esdt_safe_address: &ManagedAddress,
+        header_verifier_address: &ManagedAddress,
         fee: Option<FeeStruct<Self::Api>>,
     ) -> ManagedAddress {
         self.tx()
             .to(self.get_chain_factory_address())
             .typed(ChainFactoryContractProxy)
-            .deploy_fee_market(esdt_safe_address, fee)
+            .deploy_fee_market(esdt_safe_address, header_verifier_address, fee)
             .returns(ReturnsResult)
             .sync_call()
     }
