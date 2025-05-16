@@ -183,7 +183,6 @@ pub trait Headerverifier:
     // TODO: verify signature
     #[endpoint(setFee)]
     fn set_fee(&self, new_fee: FeeStruct<Self::Api>) {
-        // TODO: verify signature
         self.require_setup_complete();
 
         self.tx()
