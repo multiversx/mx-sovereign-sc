@@ -352,6 +352,17 @@ impl MvxEsdtSafeTestState {
             .run();
     }
 
+    pub fn set_fee_market_address_in_header_verifier(&mut self, fee_market_address: TestSCAddress) {
+        self.common_setup
+            .world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .to(HEADER_VERIFIER_ADDRESS)
+            .typed(HeaderverifierProxy)
+            .set_fee_market_address(fee_market_address)
+            .run();
+    }
+
     pub fn register_operation(
         &mut self,
         signature: ManagedBuffer<StaticApi>,
