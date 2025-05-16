@@ -24,6 +24,14 @@ use sovereign_forge_blackbox_setup::SovereignForgeTestState;
 use structs::configs::{EsdtSafeConfig, SovereignConfig};
 mod sovereign_forge_blackbox_setup;
 
+/// ### TEST
+/// S-FORGE_DEPLOY_OK_001
+///
+/// ### ACTION
+/// Deploy sovereign_forge and chain_factory
+///
+/// ### EXPECTED
+/// Both sovereign_forge and chain_factory contracts deploy successfully
 #[test]
 fn test_deploy_contracts() {
     let mut state = SovereignForgeTestState::new();
@@ -31,6 +39,14 @@ fn test_deploy_contracts() {
     state.common_setup.deploy_chain_factory();
 }
 
+/// ### TEST
+/// S-FORGE_REGISTER_TOKEN_HANDLER_OK_002
+///
+/// ### ACTION
+/// Register token handler for any shard
+///
+/// ### EXPECTED
+/// sovereign_forge.token_handlers() storage is non-empty
 #[test]
 fn test_register_token_handler() {
     let mut state = SovereignForgeTestState::new();
@@ -48,6 +64,14 @@ fn test_register_token_handler() {
         });
 }
 
+/// ### TEST
+/// S-FORGE_REGISTER_CHAIN_FACTORY_OK_003
+///
+/// ### ACTION
+/// Register chain_factory any shard
+///
+/// ### EXPECTED
+/// chain_factories() storage non-empty
 #[test]
 fn test_register_chain_factory() {
     let mut state = SovereignForgeTestState::new();
@@ -65,6 +89,14 @@ fn test_register_chain_factory() {
         });
 }
 
+/// ### TEST
+/// S-FORGE_UPDATE_CONFIG_FAIL_004
+///
+/// ### ACTION
+/// Update config without deploying chain_config
+///
+/// ### EXPECTED
+/// Error CALLER_DID_NOT_DEPLOY_ANY_SOV_CHAIN
 #[test]
 fn test_update_sovereign_config_no_chain_config_deployed() {
     let mut state = SovereignForgeTestState::new();
@@ -87,6 +119,14 @@ fn test_update_sovereign_config_no_chain_config_deployed() {
     );
 }
 
+/// ### TEST
+/// S-FORGE_UPDATE_CONFIG_OK_005
+///
+/// ### ACTION
+/// Update sovereign config
+///
+/// ### EXPECTED
+/// Sovereign config was modified
 #[test]
 fn test_update_sovereign_config() {
     let mut state = SovereignForgeTestState::new();
@@ -156,6 +196,14 @@ fn test_update_sovereign_config() {
         })
 }
 
+/// ### TEST
+/// S-FORGE_UPDATE_ESDT_SAFE_CONFIG_OK_006
+///
+/// ### ACTION
+/// Update ESDT safe config
+///
+/// ### EXPECTED
+/// ESDT safe config was modified
 #[test]
 fn test_update_esdt_safe_config() {
     let mut state = SovereignForgeTestState::new();
@@ -272,6 +320,14 @@ fn test_update_esdt_safe_config() {
         })
 }
 
+/// ### TEST
+/// S-FORGE_COMPLETE_SETUP_PHASE_OK_007
+///
+/// ### ACTION
+/// Run deploy phases 1–4 and call complete_setup_phase
+///
+/// ### EXPECTED
+/// Setup phase is complete
 #[test]
 fn test_complete_setup_phase() {
     let mut state = SovereignForgeTestState::new();
@@ -338,8 +394,17 @@ fn test_complete_setup_phase() {
         });
 
     state.complete_setup_phase(None);
+    // TODO: add storage check
 }
 
+/// ### TEST
+/// S-FORGE_DEPLOY_PHASE_ONE_FAIL_008
+///
+/// ### ACTION
+/// deploy_phase_one with insufficient cost
+///
+/// ### EXPECTED
+/// Error DEPLOY_COST_NOT_ENOUGH
 #[test]
 fn test_deploy_phase_one_deploy_cost_too_low() {
     let mut state = SovereignForgeTestState::new();
@@ -357,6 +422,14 @@ fn test_deploy_phase_one_deploy_cost_too_low() {
     );
 }
 
+/// ### TEST
+/// S-FORGE_DEPLOY_PHASE_ONE_FAIL_009
+///
+/// ### ACTION
+/// Call deploy_phase_one twice for same chain_config
+///
+/// ### EXPECTED
+/// Error CHAIN_CONFIG_ALREADY_DEPLOYED
 #[test]
 fn test_deploy_phase_one_chain_config_already_deployed() {
     let mut state = SovereignForgeTestState::new();
@@ -381,6 +454,14 @@ fn test_deploy_phase_one_chain_config_already_deployed() {
     );
 }
 
+/// ### TEST
+/// S-FORGE_DEPLOY_PHASE_ONE_FAIL_010
+///
+/// ### ACTION
+/// Call deploy_phase_one wrong chain id format
+///
+/// ### EXPECTED
+/// Error CHAIN_ID_NOT_LOWERCASE_ALPHANUMERIC
 #[test]
 fn test_deploy_phase_one_preferred_chain_id_not_lowercase_alphanumeric() {
     let mut state = SovereignForgeTestState::new();
@@ -401,6 +482,14 @@ fn test_deploy_phase_one_preferred_chain_id_not_lowercase_alphanumeric() {
     );
 }
 
+/// ### TEST
+/// S-FORGE_DEPLOY_PHASE_ONE_FAIL_011
+///
+/// ### ACTION
+/// Call deploy_phase_one wrong chain id length
+///
+/// ### EXPECTED
+/// Error CHAIN_ID_NOT_FOUR_CHAR_LONG
 #[test]
 fn test_deploy_phase_one_preferred_chain_id_not_correct_length() {
     let mut state = SovereignForgeTestState::new();
@@ -421,6 +510,14 @@ fn test_deploy_phase_one_preferred_chain_id_not_correct_length() {
     );
 }
 
+/// ### TEST
+/// S-FORGE_DEPLOY_PHASE_ONE_OK_012
+///
+/// ### ACTION
+/// Call deploy_phase_one with no preferred chain id
+///
+/// ### EXPECTED
+/// Chain-Config is deployed and address is set in storage
 #[test]
 fn test_deploy_phase_one_no_preferred_chain_id() {
     let mut state = SovereignForgeTestState::new();
@@ -458,6 +555,14 @@ fn test_deploy_phase_one_no_preferred_chain_id() {
         })
 }
 
+/// ### TEST
+/// S-FORGE_DEPLOY_PHASE_ONE_OK_013
+///
+/// ### ACTION
+/// Call deploy_phase_one with preferred chain id
+///
+/// ### EXPECTED
+/// Chain-Config is deployed and address is set in storage
 #[test]
 fn test_deploy_phase_one_preferred_chain_id() {
     let mut state = SovereignForgeTestState::new();
@@ -497,6 +602,14 @@ fn test_deploy_phase_one_preferred_chain_id() {
         })
 }
 
+/// ### TEST
+/// S-FORGE_DEPLOY_PHASE_ONE_FAIL_014
+///
+/// ### ACTION
+/// Call deploy_phase_one with an used chain id
+///
+/// ### EXPECTED
+/// Error CHAIN_ID_ALREADY_IN_USE
 #[test]
 fn test_deploy_phase_one_with_chain_id_used() {
     let mut state = SovereignForgeTestState::new();
@@ -523,6 +636,15 @@ fn test_deploy_phase_one_with_chain_id_used() {
         Some(CHAIN_ID_ALREADY_IN_USE),
     );
 }
+
+/// ### TEST
+/// S-FORGE_DEPLOY_PHASE_TWO_FAIL_015
+///
+/// ### ACTION
+/// Call deploy_phase_two without the first phase
+///
+/// ### EXPECTED
+/// Error CALLER_DID_NOT_DEPLOY_ANY_SOV_CHAIN
 #[test]
 fn test_deploy_phase_two_without_first_phase() {
     let mut state = SovereignForgeTestState::new();
@@ -535,6 +657,14 @@ fn test_deploy_phase_two_without_first_phase() {
         .deploy_phase_two(Some(CALLER_DID_NOT_DEPLOY_ANY_SOV_CHAIN));
 }
 
+/// ### TEST
+/// S-FORGE_DEPLOY_PHASE_TWO_OK_016
+///
+/// ### ACTION
+/// Call deploy_phase_two
+///
+/// ### EXPECTED
+/// Header-Verifier is deployed and address is set in the storage
 #[test]
 fn test_deploy_phase_two() {
     let mut state = SovereignForgeTestState::new();
@@ -574,6 +704,14 @@ fn test_deploy_phase_two() {
         })
 }
 
+/// ### TEST
+/// S-FORGE_DEPLOY_PHASE_TWO_FAIL_017
+///
+/// ### ACTION
+/// Call deploy_phase_two two times
+///
+/// ### EXPECTED
+/// Error HEADER_VERIFIER_ALREADY_DEPLOYED
 #[test]
 fn test_deploy_phase_two_header_already_deployed() {
     let mut state = SovereignForgeTestState::new();
@@ -602,6 +740,14 @@ fn test_deploy_phase_two_header_already_deployed() {
         .deploy_phase_two(Some(HEADER_VERIFIER_ALREADY_DEPLOYED));
 }
 
+/// ### TEST
+/// S-FORGE_DEPLOY_PHASE_THREE_OK_018
+///
+/// ### ACTION
+/// Call deploy_phase_three
+///
+/// ### EXPECTED
+/// Mvx-ESDT-Safe is deployed and address is set in storage
 #[test]
 fn test_deploy_phase_three() {
     let mut state = SovereignForgeTestState::new();
@@ -647,6 +793,14 @@ fn test_deploy_phase_three() {
         })
 }
 
+/// ### TEST
+/// S-FORGE_DEPLOY_PHASE_THREE_FAIL_019
+///
+/// ### ACTION
+/// Call deploy_phase_three without the phase one
+///
+/// ### EXPECTED
+/// Error HEADER_VERIFIER_NOT_DEPLOYED
 #[test]
 fn test_deploy_phase_three_without_phase_one() {
     let mut state = SovereignForgeTestState::new();
@@ -662,6 +816,14 @@ fn test_deploy_phase_three_without_phase_one() {
         .deploy_phase_three(OptionalValue::None, Some(HEADER_VERIFIER_NOT_DEPLOYED));
 }
 
+/// ### TEST
+/// S-FORGE_DEPLOY_PHASE_THREE_FAIL_020
+///
+/// ### ACTION
+/// Call deploy_phase_three without the phase two
+///
+/// ### EXPECTED
+/// Error HEADER_VERIFIER_NOT_DEPLOYED
 #[test]
 fn test_deploy_phase_three_without_phase_two() {
     let mut state = SovereignForgeTestState::new();
@@ -692,6 +854,14 @@ fn test_deploy_phase_three_without_phase_two() {
         .deploy_phase_three(OptionalValue::None, Some(HEADER_VERIFIER_NOT_DEPLOYED));
 }
 
+/// ### TEST
+/// S-FORGE_DEPLOY_PHASE_THREE_FAIL_021
+///
+/// ### ACTION
+/// Call deploy_phase_three two times
+///
+/// ### EXPECTED
+/// Error ESDT_SAFE_ALREADY_DEPLOYED
 #[test]
 fn test_deploy_phase_three_already_deployed() {
     let mut state = SovereignForgeTestState::new();
@@ -726,6 +896,14 @@ fn test_deploy_phase_three_already_deployed() {
         .deploy_phase_three(OptionalValue::None, Some(ESDT_SAFE_ALREADY_DEPLOYED));
 }
 
+/// ### TEST
+/// S-FORGE_COMPLETE_SETUP_PHASE_FAIL_022
+///
+/// ### ACTION
+/// Call complete_setup_phase without phase four deployed
+///
+/// ### EXPECTED
+/// Error FEE_MARKET_NOT_DEPLOYED
 #[test]
 fn test_complete_setup_phase_four_not_deployed() {
     let mut state = SovereignForgeTestState::new();
@@ -736,6 +914,14 @@ fn test_complete_setup_phase_four_not_deployed() {
     state.complete_setup_phase(Some(FEE_MARKET_NOT_DEPLOYED));
 }
 
+/// ### TEST
+/// S-FORGE_DEPLOY_PHASE_FOUR_OK_023
+///
+/// ### ACTION
+/// Call deploy_phase_four
+///
+/// ### EXPECTED
+/// Fee-Market is deployed and address is set in storage
 #[test]
 fn test_deploy_phase_four() {
     let mut state = SovereignForgeTestState::new();
@@ -785,6 +971,14 @@ fn test_deploy_phase_four() {
         })
 }
 
+/// ### TEST
+/// S-FORGE_DEPLOY_PHASE_FOUR_FAIL_024
+///
+/// ### ACTION
+/// Call deploy_phase_four without phase three
+///
+/// ### EXPECTED
+/// Error ESDT_SAFE_NOT_DEPLOYED
 #[test]
 fn test_deploy_phase_four_without_previous_phase() {
     let mut state = SovereignForgeTestState::new();
@@ -819,6 +1013,14 @@ fn test_deploy_phase_four_without_previous_phase() {
         .deploy_phase_four(None, Some(ESDT_SAFE_NOT_DEPLOYED));
 }
 
+/// ### TEST
+/// S-FORGE_DEPLOY_PHASE_FOUR_FAIL_025
+///
+/// ### ACTION
+/// Call deploy_phase_four two times
+///
+/// ### EXPECTED
+/// Error FEE_MARKET_ALREADY_DEPLOYED
 #[test]
 fn test_deploy_phase_four_fee_market_already_deployed() {
     let mut state = SovereignForgeTestState::new();

@@ -4,9 +4,9 @@ use common_test_setup::constants::{
 };
 use enshrine_esdt_safe_blackbox_setup::EnshrineTestState;
 use error_messages::{
-    ACTION_IS_NOT_ALLOWED, BANNED_ENDPOINT_NAME, INSUFFICIENT_FUNDS, NOTHING_TO_TRANSFER,
-    NOT_ENOUGH_WEGLD_AMOUNT, ONLY_WEGLD_IS_ACCEPTED_AS_REGISTER_FEE, PAYMENT_DOES_NOT_COVER_FEE,
-    TOO_MANY_TOKENS,
+    ACTION_IS_NOT_ALLOWED, BANNED_ENDPOINT_NAME, GAS_LIMIT_TOO_HIGH, INSUFFICIENT_FUNDS,
+    NOTHING_TO_TRANSFER, NOT_ENOUGH_WEGLD_AMOUNT, ONLY_WEGLD_IS_ACCEPTED_AS_REGISTER_FEE,
+    PAYMENT_DOES_NOT_COVER_FEE, TOO_MANY_TOKENS,
 };
 use multiversx_sc::imports::{MultiValue3, OptionalValue};
 use multiversx_sc::types::{
@@ -17,6 +17,14 @@ use structs::configs::EsdtSafeConfig;
 
 mod enshrine_esdt_safe_blackbox_setup;
 
+/// ### TEST
+/// E-ESDT_DEPLOY_OK_001
+///
+/// ### ACTION
+/// Call 'setup_contracts()'
+///
+/// ### EXPECTED
+/// Contracts are deployed successfully
 #[test]
 fn test_deploy() {
     let mut state = EnshrineTestState::new();
@@ -24,6 +32,14 @@ fn test_deploy() {
     state.setup_contracts(false, None, None);
 }
 
+/// ### TEST
+/// E-ESDT_EXECUTE_FAIL_002
+///
+/// ### ACTION
+/// Call 'execute_operation()' with invalid token payments
+///
+/// ### EXPECTED
+/// Error ACTION_IS_NOT_ALLOWED
 #[test]
 fn test_sovereign_prefix_no_prefix() {
     let mut state = EnshrineTestState::new();
@@ -36,6 +52,14 @@ fn test_sovereign_prefix_no_prefix() {
     state.execute_operation(Some(ACTION_IS_NOT_ALLOWED), &token_vec);
 }
 
+/// ### TEST
+/// E-ESDT_EXECUTE_OK_003
+///
+/// ### ACTION
+/// Call 'execute_operation()' with valid token payments
+///
+/// ### EXPECTED
+/// Operation is executed successfully
 #[test]
 fn test_sovereign_prefix_has_prefix() {
     let mut state = EnshrineTestState::new();
@@ -48,6 +72,14 @@ fn test_sovereign_prefix_has_prefix() {
     state.execute_operation(None, &token_vec);
 }
 
+/// ### TEST
+/// E-ESDT_REGISTER_FAIL_004
+///
+/// ### ACTION
+/// Call 'register_tokens()' with insufficient funds
+///
+/// ### EXPECTED
+/// Error INSUFFICIENT_FUNDS
 #[test]
 fn test_register_tokens_insufficient_funds() {
     let mut state = EnshrineTestState::new();
@@ -59,6 +91,14 @@ fn test_register_tokens_insufficient_funds() {
     state.register_tokens(&USER_ADDRESS, payment, token_vec, Some(INSUFFICIENT_FUNDS));
 }
 
+/// ### TEST
+/// E-ESDT_REGISTER_FAIL_005
+///
+/// ### ACTION
+/// Call 'register_tokens()' with invalid token as fee
+///
+/// ### EXPECTED
+/// Error ONLY_WEGLD_IS_ACCEPTED_AS_REGISTER_FEE
 #[test]
 fn test_register_tokens_wrong_token_as_fee() {
     let mut state = EnshrineTestState::new();
@@ -75,6 +115,14 @@ fn test_register_tokens_wrong_token_as_fee() {
     );
 }
 
+/// ### TEST
+/// E-ESDT_REGISTER_FAIL_006
+///
+/// ### ACTION
+/// Call 'register_tokens()' with valid payments
+///
+/// ### EXPECTED
+/// Token is registered successfully
 #[test]
 fn test_register_tokens() {
     let mut state = EnshrineTestState::new();
@@ -91,6 +139,14 @@ fn test_register_tokens() {
         .esdt_balance(WEGLD_IDENTIFIER, BigUint::zero());
 }
 
+/// ### TEST
+/// E-ESDT_REGISTER_FAIL_007
+///
+/// ### ACTION
+/// Call 'register_tokens()' with insufficient WEGLD amount
+///
+/// ### EXPECTED
+/// Error NOT_ENOUGH_WEGLD_AMOUNT
 #[test]
 fn test_register_tokens_insufficient_wegld() {
     let mut state = EnshrineTestState::new();
@@ -112,6 +168,16 @@ fn test_register_tokens_insufficient_wegld() {
     );
 }
 
+/// ### TEST
+/// E-ESDT_DEPOSIT_OK_008
+///
+/// ### ACTION
+/// Call 'deposit()' with valid payments
+///
+/// ### EXPECTED
+/// Deposit is executed successfully
+
+// TODO: add check balance after deposit
 #[test]
 fn test_deposit_no_fee() {
     let mut state = EnshrineTestState::new();
@@ -132,6 +198,14 @@ fn test_deposit_no_fee() {
     );
 }
 
+/// ### TEST
+/// E-ESDT_DEPOSIT_FAIL_009
+///
+/// ### ACTION
+/// Call 'deposit()' with no payments
+///
+/// ### EXPECTED
+/// Error NOTHING_TO_TRANSFER
 #[test]
 fn test_deposit_token_nothing_to_transfer_fee_disabled() {
     let mut state = EnshrineTestState::new();
@@ -147,6 +221,14 @@ fn test_deposit_token_nothing_to_transfer_fee_disabled() {
     );
 }
 
+/// ### TEST
+/// E-ESDT_DEPOSIT_FAIL_010
+///
+/// ### ACTION
+/// Call 'deposit()' with too many payments
+///
+/// ### EXPECTED
+/// Error TOO_MANY_TOKENS
 #[test]
 fn test_deposit_max_transfers_exceeded() {
     let mut state = EnshrineTestState::new();
@@ -165,6 +247,14 @@ fn test_deposit_max_transfers_exceeded() {
     );
 }
 
+/// ### TEST
+/// E-ESDT_DEPOSIT_OK_011
+///
+/// ### ACTION
+/// Call 'deposit()' with no transfer data
+///
+/// ### EXPECTED
+/// Deposit is executed successfully
 #[test]
 fn test_deposit_no_transfer_data() {
     let mut state = EnshrineTestState::new();
@@ -215,6 +305,14 @@ fn test_deposit_no_transfer_data() {
         .check_account_multiple_esdts(OWNER_ADDRESS.to_address(), expected_balances);
 }
 
+/// ### TEST
+/// E-ESDT_DEPOSIT_FAIL_012
+///
+/// ### ACTION
+/// Call 'deposit()' with gas limit too high in transfer data
+///
+/// ### EXPECTED
+/// Error GAS_LIMIT_TOO_HIGH
 #[test]
 fn test_deposit_with_transfer_data_gas_limit_too_high() {
     let mut state = EnshrineTestState::new();
@@ -239,10 +337,18 @@ fn test_deposit_with_transfer_data_gas_limit_too_high() {
         USER_ADDRESS,
         payments,
         transfer_data,
-        Some("Gas limit too high"),
+        Some(GAS_LIMIT_TOO_HIGH),
     );
 }
 
+/// ### TEST
+/// E-ESDT_DEPOSIT_FAIL_013
+///
+/// ### ACTION
+/// Call 'deposit()' with banned endpoint in transfer data
+///
+/// ### EXPECTED
+/// Error BANNED_ENDPOINT_NAME
 #[test]
 fn test_deposit_with_transfer_data_banned_endpoint() {
     let mut state = EnshrineTestState::new();
@@ -282,6 +388,14 @@ fn test_deposit_with_transfer_data_banned_endpoint() {
     );
 }
 
+/// ### TEST
+/// E-ESDT_DEPOSIT_OK_014
+///
+/// ### ACTION
+/// Call 'deposit()' with transfer data and fee
+///
+/// ### EXPECTED
+/// Deposit is executed successfully
 #[test]
 fn test_deposit_with_transfer_data_enough_for_fee() {
     let mut state = EnshrineTestState::new();
@@ -334,6 +448,14 @@ fn test_deposit_with_transfer_data_enough_for_fee() {
         .check_account_multiple_esdts(OWNER_ADDRESS.to_address(), expected_balances);
 }
 
+/// ### TEST
+/// E-ESDT_DEPOSIT_FAIL_015
+///
+/// ### ACTION
+/// Call 'deposit()' with transfer data and not enough fee tokens
+///
+/// ### EXPECTED
+/// Error PAYMENT_DOES_NOT_COVER_FEE
 #[test]
 fn test_deposit_with_transfer_data_not_enough_for_fee() {
     let mut state = EnshrineTestState::new();
@@ -375,6 +497,14 @@ fn test_deposit_with_transfer_data_not_enough_for_fee() {
     );
 }
 
+/// ### TEST
+/// E-ESDT_DEPOSIT_OK_016
+///
+/// ### ACTION
+/// Call 'deposit()' with non whitelisted tokens
+///
+/// ### EXPECTED
+/// Deposit is executed successfully and the tokens are refunded
 #[test]
 fn test_deposit_refund_non_whitelisted_tokens_fee_disabled() {
     let mut state = EnshrineTestState::new();
@@ -412,6 +542,14 @@ fn test_deposit_refund_non_whitelisted_tokens_fee_disabled() {
         .check_account_multiple_esdts(OWNER_ADDRESS.to_address(), expected_balances);
 }
 
+/// ### TEST
+/// E-ESDT_DEPOSIT_OK_017
+///
+/// ### ACTION
+/// Call 'deposit()' with non whitelisted tokens and fee enabled
+///
+/// ### EXPECTED
+/// Deposit is executed successfully and all the tokens are refunded
 #[test]
 fn test_deposit_refund_non_whitelisted_tokens_fee_enabled() {
     let mut state = EnshrineTestState::new();
