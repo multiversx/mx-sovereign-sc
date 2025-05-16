@@ -8,8 +8,8 @@ use cross_chain::storage::CrossChainStorage;
 use cross_chain::{DEFAULT_ISSUE_COST, MAX_GAS_PER_TRANSACTION};
 use error_messages::{
     BANNED_ENDPOINT_NAME, CANNOT_REGISTER_TOKEN, DEPOSIT_OVER_MAX_AMOUNT, ERR_EMPTY_PAYMENTS,
-    GAS_LIMIT_TOO_HIGH, INVALID_TYPE, MAX_GAS_LIMIT_PER_TX_EXCEEDED, MINT_AND_BURN_ROLES_NOT_FOUND,
-    NOTHING_TO_TRANSFER, NO_ESDT_SAFE_ADDRESS, PAYMENT_DOES_NOT_COVER_FEE,
+    ESDT_SAFE_ADDRESS_NOT_SET, GAS_LIMIT_TOO_HIGH, INVALID_TYPE, MAX_GAS_LIMIT_PER_TX_EXCEEDED,
+    MINT_AND_BURN_ROLES_NOT_FOUND, NOTHING_TO_TRANSFER, PAYMENT_DOES_NOT_COVER_FEE,
     SETUP_PHASE_ALREADY_COMPLETED, TOKEN_ID_IS_NOT_TRUSTED, TOKEN_IS_FROM_SOVEREIGN,
     TOO_MANY_TOKENS,
 };
@@ -1372,7 +1372,7 @@ fn test_execute_operation_no_esdt_safe_registered() {
     state.execute_operation(
         &hash_of_hashes,
         &operation,
-        Some(NO_ESDT_SAFE_ADDRESS),
+        Some(ESDT_SAFE_ADDRESS_NOT_SET),
         None,
     );
 
@@ -1431,6 +1431,8 @@ fn test_execute_operation_success() {
     state
         .common_setup
         .deploy_header_verifier(CHAIN_CONFIG_ADDRESS);
+    state.set_esdt_safe_address_in_header_verifier(ESDT_SAFE_ADDRESS);
+    state.set_fee_market_address_in_header_verifier(FEE_MARKET_ADDRESS);
     state
         .common_setup
         .complete_header_verifier_setup_phase(None);
@@ -1512,6 +1514,8 @@ fn test_execute_operation_with_native_token_success() {
     state
         .common_setup
         .deploy_header_verifier(CHAIN_CONFIG_ADDRESS);
+    state.set_esdt_safe_address_in_header_verifier(ESDT_SAFE_ADDRESS);
+    state.set_fee_market_address_in_header_verifier(FEE_MARKET_ADDRESS);
     state
         .common_setup
         .complete_header_verifier_setup_phase(None);
@@ -1587,6 +1591,7 @@ fn test_execute_operation_burn_mechanism_without_deposit_cannot_subtract() {
 
     state.common_setup.deploy_testing_sc();
     state.set_esdt_safe_address_in_header_verifier(ESDT_SAFE_ADDRESS);
+    state.set_fee_market_address_in_header_verifier(FEE_MARKET_ADDRESS);
     state
         .common_setup
         .complete_header_verifier_setup_phase(None);
@@ -1659,6 +1664,8 @@ fn test_execute_operation_success_burn_mechanism() {
     state
         .common_setup
         .deploy_header_verifier(CHAIN_CONFIG_ADDRESS);
+    state.set_esdt_safe_address_in_header_verifier(ESDT_SAFE_ADDRESS);
+    state.set_fee_market_address_in_header_verifier(FEE_MARKET_ADDRESS);
     state
         .common_setup
         .complete_header_verifier_setup_phase(None);
@@ -1667,7 +1674,6 @@ fn test_execute_operation_success_burn_mechanism() {
         .common_setup
         .deploy_fee_market(None, ESDT_SAFE_ADDRESS);
     state.set_fee_market_address(FEE_MARKET_ADDRESS);
-    state.set_esdt_safe_address_in_header_verifier(ESDT_SAFE_ADDRESS);
 
     let operations_hashes = MultiValueEncoded::from(ManagedVec::from(vec![operation_hash.clone()]));
 
@@ -1748,13 +1754,14 @@ fn test_deposit_execute_switch_mechanism() {
         .deploy_header_verifier(CHAIN_CONFIG_ADDRESS);
     state
         .common_setup
-        .complete_header_verifier_setup_phase(None);
-    state.common_setup.deploy_testing_sc();
-    state
-        .common_setup
         .deploy_fee_market(None, ESDT_SAFE_ADDRESS);
     state.set_fee_market_address(FEE_MARKET_ADDRESS);
     state.set_esdt_safe_address_in_header_verifier(ESDT_SAFE_ADDRESS);
+    state.set_fee_market_address_in_header_verifier(FEE_MARKET_ADDRESS);
+    state
+        .common_setup
+        .complete_header_verifier_setup_phase(None);
+    state.common_setup.deploy_testing_sc();
 
     let deposited_trusted_token_payment_amount = 1000u64;
     let deposit_trusted_token_payment_token_data = EsdtTokenData {
@@ -2010,13 +2017,19 @@ fn test_execute_operation_no_payments() {
     state
         .common_setup
         .deploy_header_verifier(CHAIN_CONFIG_ADDRESS);
+    state
+        .common_setup
+        .deploy_fee_market(None, ESDT_SAFE_ADDRESS);
+
+    state.set_fee_market_address(FEE_MARKET_ADDRESS);
+    state.set_esdt_safe_address_in_header_verifier(ESDT_SAFE_ADDRESS);
+    state.set_fee_market_address_in_header_verifier(FEE_MARKET_ADDRESS);
 
     state
         .common_setup
         .complete_header_verifier_setup_phase(None);
 
     state.common_setup.deploy_testing_sc();
-    state.set_esdt_safe_address_in_header_verifier(ESDT_SAFE_ADDRESS);
 
     let operations_hashes = MultiValueEncoded::from(ManagedVec::from(vec![operation_hash.clone()]));
 
@@ -2048,6 +2061,9 @@ fn test_execute_operation_no_payments_failed_event() {
     state
         .common_setup
         .deploy_header_verifier(CHAIN_CONFIG_ADDRESS);
+
+    state.set_esdt_safe_address_in_header_verifier(ESDT_SAFE_ADDRESS);
+    state.set_fee_market_address_in_header_verifier(FEE_MARKET_ADDRESS);
 
     state
         .common_setup

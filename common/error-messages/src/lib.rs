@@ -11,6 +11,7 @@ pub const CALLER_IS_NOT_WHITELISTED: &str = "Caller is not whitelisted";
 pub const CANNOT_REGISTER_TOKEN: &str = "Cannot register token";
 pub const CANNOT_TRANSFER_WHILE_PAUSED: &str = "Cannot transfer while paused";
 pub const CHAIN_CONFIG_ALREADY_DEPLOYED: &str = "The Chain-Config contract is already deployed";
+pub const CHAIN_CONFIG_ADDRESS_NOT_SET: &str = "Chain-Config address was not set";
 pub const CHAIN_CONFIG_NOT_DEPLOYED: &str = "The Chain-Config SC is not deployed";
 pub const CHAIN_ID_ALREADY_IN_USE: &str = "This chain ID is already used";
 pub const CHAIN_ID_NOT_FOUR_CHAR_LONG: &str = "Chain ID length must be four characters";
@@ -34,6 +35,7 @@ pub const ESDT_SAFE_NOT_DEPLOYED: &str =
 pub const ESDT_SAFE_STILL_PAUSED: &str = "Cannot create transaction while paused";
 pub const FEE_MARKET_ALREADY_DEPLOYED: &str = "The Fee-Market SC is already deployed";
 pub const FEE_MARKET_NOT_DEPLOYED: &str = "The Fee-Market SC is not deployed";
+pub const FEE_MARKET_ADDRESS_NOT_SET: &str = "Fee-Market address not set";
 pub const GAS_LIMIT_TOO_HIGH: &str = "Gas limit too high";
 pub const HASH_OF_HASHES_DOES_NOT_MATCH: &str =
     "Hash of all operations doesn't match the hash of transfer data";
@@ -66,13 +68,13 @@ pub const MAX_GAS_LIMIT_PER_TX_EXCEEDED: &str =
 pub const MINT_AND_BURN_ROLES_NOT_FOUND: &str = "This token does not have Mint and Burn roles";
 pub const NATIVE_TOKEN_ALREADY_REGISTERED: &str = "Native token was already registered";
 pub const NATIVE_TOKEN_NOT_REGISTERED: &str = "There is no native token registered";
-pub const NO_ESDT_SAFE_ADDRESS: &str = "There is no registered ESDT address";
 pub const NO_HEADER_VERIFIER_ADDRESS: &str = "There is no registered Header-Verifier address";
 pub const NOT_ENOUGH_WEGLD_AMOUNT: &str = "WEGLD fee amount is not met";
 pub const NOTHING_TO_TRANSFER: &str = "Nothing to transfer";
 pub const ONLY_DEPLOYED_CONTRACTS_CAN_CALL_ENDPOINT: &str =
     "Only deployed contracts may call this endpoint";
 pub const ONLY_ESDT_SAFE_CALLER: &str = "Only ESDT Safe can call this endpoint";
+pub const CALLER_IS_NOT_OWNER: &str = "Endpoint can only be called by owner";
 pub const ONLY_WEGLD_IS_ACCEPTED_AS_REGISTER_FEE: &str =
     "WEGLD is the only token accepted as register fee";
 pub const OUTGOING_TX_HASH_ALREADY_REGISTERED: &str =

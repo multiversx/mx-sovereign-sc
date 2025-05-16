@@ -130,6 +130,8 @@ impl EnshrineTestState {
             .deploy_chain_config(SovereignConfig::default_config());
         self.common_setup
             .deploy_header_verifier(CHAIN_CONFIG_ADDRESS);
+        self.register_esdt_in_header_verifier();
+        self.register_fee_market_in_header_verifier();
         self.common_setup.complete_header_verifier_setup_phase(None);
         self.common_setup.deploy_token_handler();
         self.common_setup
@@ -327,6 +329,17 @@ impl EnshrineTestState {
             .to(HEADER_VERIFIER_ADDRESS)
             .typed(HeaderverifierProxy)
             .set_esdt_safe_address(ENSHRINE_SC_ADDRESS)
+            .run();
+    }
+
+    pub fn register_fee_market_in_header_verifier(&mut self) {
+        self.common_setup
+            .world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .to(HEADER_VERIFIER_ADDRESS)
+            .typed(HeaderverifierProxy)
+            .set_fee_market_address(FEE_MARKET_ADDRESS)
             .run();
     }
 
