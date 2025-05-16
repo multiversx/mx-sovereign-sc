@@ -125,6 +125,7 @@ pub trait FactoryModule: only_admin::OnlyAdminModule {
     fn deploy_fee_market(
         &self,
         esdt_safe_address: ManagedAddress,
+        header_verifier_address: ManagedAddress,
         fee: Option<FeeStruct<Self::Api>>,
     ) -> ManagedAddress {
         let source_address = self.fee_market_template().get();
@@ -142,6 +143,12 @@ pub trait FactoryModule: only_admin::OnlyAdminModule {
 
         self.tx()
             .to(&esdt_safe_address)
+            .typed(MvxEsdtSafeProxy)
+            .set_fee_market_address(&fee_market_address)
+            .sync_call();
+
+        self.tx()
+            .to(&header_verifier_address)
             .typed(MvxEsdtSafeProxy)
             .set_fee_market_address(&fee_market_address)
             .sync_call();
