@@ -1,6 +1,6 @@
 use chain_config::validator_rules::ValidatorRulesModule;
 use common_test_setup::constants::{
-    CHAIN_CONFIG_ADDRESS, CHAIN_FACTORY_SC_ADDRESS, CHAIN_ID, ESDT_SAFE_ADDRESS,
+    CHAIN_CONFIG_ADDRESS, CHAIN_FACTORY_SC_ADDRESS, CHAIN_ID, ESDT_SAFE_ADDRESS, FIRST_TEST_TOKEN,
     HEADER_VERIFIER_ADDRESS, OWNER_ADDRESS, SOVEREIGN_FORGE_SC_ADDRESS,
 };
 use cross_chain::storage::CrossChainStorage;
@@ -10,6 +10,7 @@ use error_messages::{
     ESDT_SAFE_ALREADY_DEPLOYED, ESDT_SAFE_NOT_DEPLOYED, FEE_MARKET_ALREADY_DEPLOYED,
     FEE_MARKET_NOT_DEPLOYED, HEADER_VERIFIER_ALREADY_DEPLOYED, HEADER_VERIFIER_NOT_DEPLOYED,
 };
+use fee_market::fee_type::FeeTypeModule;
 use multiversx_sc::{
     imports::OptionalValue,
     types::{BigUint, ManagedBuffer, ManagedVec},
@@ -21,7 +22,10 @@ use sovereign_forge::common::{
     utils::{ScArray as ScArrayFromUtils, UtilsModule},
 };
 use sovereign_forge_blackbox_setup::SovereignForgeTestState;
-use structs::configs::{EsdtSafeConfig, SovereignConfig};
+use structs::{
+    configs::{EsdtSafeConfig, SovereignConfig},
+    fee::{FeeStruct, FeeType},
+};
 mod sovereign_forge_blackbox_setup;
 
 #[test]
@@ -269,6 +273,194 @@ fn test_update_esdt_safe_config() {
         .whitebox(mvx_esdt_safe::contract_obj, |sc| {
             let max_bridged_amount = sc.esdt_safe_config().get().max_tx_gas_limit;
             assert!(max_bridged_amount == 100_000);
+        })
+}
+
+#[test]
+fn test_set_fee() {
+    let mut state = SovereignForgeTestState::new();
+    state.common_setup.deploy_sovereign_forge();
+    state.common_setup.deploy_chain_factory();
+    state
+        .common_setup
+        .deploy_chain_config(SovereignConfig::default_config());
+    state
+        .common_setup
+        .deploy_fee_market(None, ESDT_SAFE_ADDRESS);
+    state.finish_setup();
+
+    let deploy_cost = BigUint::from(100_000u32);
+    state.common_setup.deploy_phase_one(
+        &deploy_cost,
+        Some(ManagedBuffer::from(CHAIN_ID)),
+        &SovereignConfig::default_config(),
+        None,
+    );
+    state
+        .common_setup
+        .deploy_header_verifier(CHAIN_CONFIG_ADDRESS);
+    state
+        .common_setup
+        .deploy_mvx_esdt_safe(HEADER_VERIFIER_ADDRESS, OptionalValue::None);
+    state.common_setup.deploy_phase_two(None);
+    state
+        .common_setup
+        .deploy_phase_three(OptionalValue::None, None);
+    state.common_setup.deploy_phase_four(None, None);
+
+    state
+        .common_setup
+        .world
+        .query()
+        .to(SOVEREIGN_FORGE_SC_ADDRESS)
+        .whitebox(sovereign_forge::contract_obj, |sc| {
+            let is_chain_config_deployed = sc.is_contract_deployed(
+                &OWNER_ADDRESS.to_managed_address(),
+                ScArrayFromUtils::ChainConfig,
+            );
+            let is_header_verifier_deployed = sc.is_contract_deployed(
+                &OWNER_ADDRESS.to_managed_address(),
+                ScArrayFromUtils::HeaderVerifier,
+            );
+            let is_esdt_safe_deployed = sc.is_contract_deployed(
+                &OWNER_ADDRESS.to_managed_address(),
+                ScArrayFromUtils::ESDTSafe,
+            );
+            let is_fee_market_deployed = sc.is_contract_deployed(
+                &OWNER_ADDRESS.to_managed_address(),
+                ScArrayFromUtils::FeeMarket,
+            );
+
+            assert!(
+                is_chain_config_deployed
+                    && is_header_verifier_deployed
+                    && is_esdt_safe_deployed
+                    && is_fee_market_deployed
+            );
+        });
+
+    let fee_type = FeeType::Fixed {
+        token: FIRST_TEST_TOKEN.to_token_identifier(),
+        per_transfer: BigUint::default(),
+        per_gas: BigUint::default(),
+    };
+
+    let new_fee = FeeStruct {
+        base_token: FIRST_TEST_TOKEN.to_token_identifier(),
+        fee_type,
+    };
+
+    state.set_fee(new_fee, None);
+
+    let fee_market_address = state.get_smart_contract_address_from_sovereign_forge(
+        ManagedBuffer::from(CHAIN_ID),
+        ScArray::FeeMarket,
+    );
+
+    state
+        .common_setup
+        .world
+        .query()
+        .to(fee_market_address)
+        .whitebox(fee_market::contract_obj, |sc| {
+            assert!(sc.is_fee_enabled());
+            assert!(!sc
+                .token_fee(&FIRST_TEST_TOKEN.to_token_identifier())
+                .is_empty());
+        });
+}
+
+#[test]
+fn test_remove_fee() {
+    let mut state = SovereignForgeTestState::new();
+    state.common_setup.deploy_sovereign_forge();
+    state.common_setup.deploy_chain_factory();
+    state
+        .common_setup
+        .deploy_chain_config(SovereignConfig::default_config());
+    state
+        .common_setup
+        .deploy_fee_market(None, ESDT_SAFE_ADDRESS);
+    state.finish_setup();
+
+    let deploy_cost = BigUint::from(100_000u32);
+    state.common_setup.deploy_phase_one(
+        &deploy_cost,
+        Some(ManagedBuffer::from(CHAIN_ID)),
+        &SovereignConfig::default_config(),
+        None,
+    );
+    state
+        .common_setup
+        .deploy_header_verifier(CHAIN_CONFIG_ADDRESS);
+    state
+        .common_setup
+        .deploy_mvx_esdt_safe(HEADER_VERIFIER_ADDRESS, OptionalValue::None);
+    state.common_setup.deploy_phase_two(None);
+    state
+        .common_setup
+        .deploy_phase_three(OptionalValue::None, None);
+
+    let fee_type = FeeType::Fixed {
+        token: FIRST_TEST_TOKEN.to_token_identifier(),
+        per_transfer: BigUint::default(),
+        per_gas: BigUint::default(),
+    };
+
+    let fee = FeeStruct {
+        base_token: FIRST_TEST_TOKEN.to_token_identifier(),
+        fee_type,
+    };
+    state.common_setup.deploy_phase_four(Some(fee), None);
+
+    state
+        .common_setup
+        .world
+        .query()
+        .to(SOVEREIGN_FORGE_SC_ADDRESS)
+        .whitebox(sovereign_forge::contract_obj, |sc| {
+            let is_chain_config_deployed = sc.is_contract_deployed(
+                &OWNER_ADDRESS.to_managed_address(),
+                ScArrayFromUtils::ChainConfig,
+            );
+            let is_header_verifier_deployed = sc.is_contract_deployed(
+                &OWNER_ADDRESS.to_managed_address(),
+                ScArrayFromUtils::HeaderVerifier,
+            );
+            let is_esdt_safe_deployed = sc.is_contract_deployed(
+                &OWNER_ADDRESS.to_managed_address(),
+                ScArrayFromUtils::ESDTSafe,
+            );
+            let is_fee_market_deployed = sc.is_contract_deployed(
+                &OWNER_ADDRESS.to_managed_address(),
+                ScArrayFromUtils::FeeMarket,
+            );
+
+            assert!(
+                is_chain_config_deployed
+                    && is_header_verifier_deployed
+                    && is_esdt_safe_deployed
+                    && is_fee_market_deployed
+            );
+        });
+
+    state.remove_fee(FIRST_TEST_TOKEN, None);
+
+    let fee_market_address = state.get_smart_contract_address_from_sovereign_forge(
+        ManagedBuffer::from(CHAIN_ID),
+        ScArray::FeeMarket,
+    );
+
+    state
+        .common_setup
+        .world
+        .query()
+        .to(fee_market_address)
+        .whitebox(fee_market::contract_obj, |sc| {
+            assert!(!sc.is_fee_enabled());
+            assert!(sc
+                .token_fee(&FIRST_TEST_TOKEN.to_token_identifier())
+                .is_empty());
         })
 }
 

@@ -159,7 +159,7 @@ impl SovereignForgeTestState {
             .from(OWNER_ADDRESS)
             .to(SOVEREIGN_FORGE_SC_ADDRESS)
             .typed(SovereignForgeProxy)
-            .remove_fee(new_fee)
+            .remove_fee(token_id)
             .returns(ReturnsHandledOrError::new())
             .run();
 
