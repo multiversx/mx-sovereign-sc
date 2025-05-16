@@ -182,16 +182,19 @@ where
 
     pub fn deploy_fee_market<
         Arg0: ProxyArg<ManagedAddress<Env::Api>>,
-        Arg1: ProxyArg<Option<structs::fee::FeeStruct<Env::Api>>>,
+        Arg1: ProxyArg<ManagedAddress<Env::Api>>,
+        Arg2: ProxyArg<Option<structs::fee::FeeStruct<Env::Api>>>,
     >(
         self,
         esdt_safe_address: Arg0,
-        fee: Arg1,
+        header_verifier_address: Arg1,
+        fee: Arg2,
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ManagedAddress<Env::Api>> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("deployFeeMarket")
             .argument(&esdt_safe_address)
+            .argument(&header_verifier_address)
             .argument(&fee)
             .original_result()
     }
