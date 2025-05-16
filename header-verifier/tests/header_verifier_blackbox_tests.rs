@@ -29,7 +29,14 @@ fn test_deploy() {
         .deploy_header_verifier(CHAIN_CONFIG_ADDRESS);
 }
 
-/// Test that registers the ESDT-Safe address
+/// ### TEST
+/// H-VERIFIER_REGISTER_ESDT_OK_001
+///
+/// ### ACTION
+/// Call 'register_esdt_address()' with a valid esdt safe address
+///
+/// ### EXPECTED
+/// The esdt safe address is registered in the contract storage
 #[test]
 fn test_register_esdt_address() {
     let mut state = HeaderVerifierTestState::new();
@@ -52,7 +59,14 @@ fn test_register_esdt_address() {
         })
 }
 
-/// Test that register bridge operation fails because the setup phase was not completed
+/// ### TEST
+/// H-VERIFIER_REGISTER_OPERATION_FAIL_002
+///
+/// ### ACTION
+/// Call 'register_operations' with valid operations
+///
+/// ### EXPECTED
+/// Error SETUP_PHASE_NOT_COMPLETED
 #[test]
 fn register_bridge_operation_setup_not_completed() {
     let mut state = HeaderVerifierTestState::new();
@@ -75,12 +89,14 @@ fn register_bridge_operation_setup_not_completed() {
     state.register_operations(operation.clone(), Some(SETUP_PHASE_NOT_COMPLETED));
 }
 
-/// Test that successfully registeres a bridge operation
-/// Steps:
-/// 1. Deploy the Header-Verifier and Chain-Config contracts
-/// 2. Complete the setup phase
-/// 3. Register the Operation
-/// 4. Check inside the contracts storage that the Operation was registered
+/// ### TEST
+/// H-VERIFIER_REGISTER_OPERATION_OK_003
+///
+/// ### ACTION
+/// Call 'register_operations' with valid operations and setup completed
+///
+/// ### EXPECTED
+/// The operations are registered in the contract storage
 #[test]
 fn test_register_bridge_operation() {
     let mut state = HeaderVerifierTestState::new();
@@ -134,7 +150,14 @@ fn test_register_bridge_operation() {
         });
 }
 
-/// Test that the removal of an executed hash fails because the caller is not an ESDT-Safe contract
+/// ### TEST
+/// H-VERIFIER_REMOVE_HASH_FAIL_004
+///
+/// ### ACTION
+/// Call 'remove_executed_hash()' without registering any esdt safe address
+///
+/// ### EXPECTED
+/// Error: NO_ESDT_SAFE_ADDRESS
 #[test]
 fn test_complete_setup_phase_no_esdt_address_registered() {
     let mut state = HeaderVerifierTestState::new();
@@ -152,14 +175,14 @@ fn test_complete_setup_phase_no_esdt_address_registered() {
         .complete_header_verifier_setup_phase(Some(ESDT_SAFE_ADDRESS_NOT_SET));
 }
 
-/// Test that successfully removes one executed hash from the contract
-/// Steps:
-/// 1. Deploy the Header-Verifier and Chain-Config contracts
-/// 2. Complete the setup phase
-/// 3. Register the ESDT-Safe address
-/// 4. Register the Operation
-/// 5. Remove the executed Operation hash
-/// 6. Check in the contracts storage that the hash was removed
+/// ### TEST
+/// H-VERIFIER_REMOVE_HASH_OK_005
+///
+/// ### ACTION
+/// Call 'remove_executed_hash()' after registering the esdt safe address
+///
+/// ### EXPECTED
+/// The operation hash is removed from the contract storage
 #[test]
 fn test_remove_one_executed_hash() {
     let mut state = HeaderVerifierTestState::new();
@@ -213,14 +236,14 @@ fn test_remove_one_executed_hash() {
         });
 }
 
-/// Test that successfully removes all executed hashes
-/// Steps:
-/// 1. Deploy the Header-Verifier and Chain-Config contracts
-/// 2. Complete the setup phase
-/// 3. Register the ESDT-Safe address
-/// 4. Register the Operation
-/// 5. Remove the executed Operation hashes
-/// 6. Check in the contracts storage that the hash was removed
+/// ### TEST
+/// H-VERIFIER_REMOVE_HASH_OK_006
+///
+/// ### ACTION
+/// Call 'remove_executed_hash()' after registering the esdt safe address
+///
+/// ### EXPECTED
+/// All the operation hashes are removed from the contract storage
 #[test]
 fn test_remove_all_executed_hashes() {
     let mut state = HeaderVerifierTestState::new();
@@ -279,7 +302,14 @@ fn test_remove_all_executed_hashes() {
         });
 }
 
-/// Test that fails the lock of an Operation because it was not registered
+/// ### TEST
+/// H-VERIFIER_LOCK_OPERATION_FAIL_007
+///
+/// ### ACTION
+/// Call 'lock_operation_hash()' without registering the operation
+///
+/// ### EXPECTED
+/// Error: CURRENT_OPERATION_NOT_REGISTERED
 #[test]
 fn test_lock_operation_not_registered() {
     let mut state = HeaderVerifierTestState::new();
@@ -303,14 +333,14 @@ fn test_lock_operation_not_registered() {
     );
 }
 
-/// Test that successfully lock an Operation hash
-/// Steps:
-/// 1. Deploy the Header-Verifier and Chain-Config contracts
-/// 2. Complete the setup phase
-/// 3. Register the ESDT-Safe address
-/// 4. Register the Operation
-/// 5. Lock the Operation hash
-/// 6. Check in the contracts storage that the hash was locked
+/// ### TEST
+/// H-VERIFIER_LOCK_OPERATION_OK_008
+///
+/// ### ACTION
+/// Call 'lock_operation_hash()' after registering the operations
+///
+/// ### EXPECTED
+/// Only the first operation hash is locked in the contract storage
 #[test]
 fn test_lock_operation() {
     let mut state = HeaderVerifierTestState::new();
@@ -365,10 +395,14 @@ fn test_lock_operation() {
         })
 }
 
-/// Test that successfully changes the validator set
-/// Steps:
-/// 1. Deploy the Header-Verifier contract
-/// 2. Change the validator set with log assertion
+/// ### TEST
+/// H-VERIFIER_CHANGE_VALIDATORS_OK_009
+///
+/// ### ACTION
+/// Call 'change_validators_set()' with a valid operation hash
+///
+/// ### EXPECTED
+/// The validator set is changed in the contract storage
 #[test]
 fn test_change_validator_set() {
     let mut state = HeaderVerifierTestState::new();
@@ -389,7 +423,14 @@ fn test_change_validator_set() {
     );
 }
 
-/// Test that fails the change of validator set because the operation was already registered
+/// ### TEST
+/// H-VERIFIER_CHANGE_VALIDATORS_FAIL_010
+///
+/// ### ACTION
+/// Call 'change_validators_set()' after registering the operation
+///
+/// ### EXPECTED
+/// Error OUTGOING_TX_HASH_ALREADY_REGISTERED
 #[test]
 fn test_change_validator_set_operation_already_registered() {
     let mut state = HeaderVerifierTestState::new();

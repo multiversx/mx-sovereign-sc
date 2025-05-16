@@ -37,6 +37,14 @@ use structs::{
 };
 mod mvx_esdt_safe_blackbox_setup;
 
+/// ### TEST
+/// M-ESDT_DEPLOY_OK_001
+///
+/// ### ACTION
+/// Call 'deploy_mvx_esdt_safe()' with default config
+///
+/// ### EXPECTED
+/// Contract is deployed with the default config
 #[test]
 fn test_deploy() {
     let mut state = MvxEsdtSafeTestState::new();
@@ -47,7 +55,14 @@ fn test_deploy() {
     );
 }
 
-/// Test that deploy fails when the gas limit in the config is too high
+/// ### TEST
+/// M-ESDT_DEPLOY_FAIL_002
+///
+/// ### ACTION
+/// Call 'update_configuration()' with invalid config
+///
+/// ### EXPECTED
+/// Error MAX_GAS_LIMIT_PER_TX_EXCEEDED
 #[test]
 fn test_deploy_invalid_config() {
     let mut state = MvxEsdtSafeTestState::new();
@@ -68,7 +83,14 @@ fn test_deploy_invalid_config() {
     state.update_configuration(config, Some(MAX_GAS_LIMIT_PER_TX_EXCEEDED));
 }
 
-/// This Test checks the flow for registering an invalid token
+/// ### TEST
+/// M-ESDT_REG_FAIL_003
+///
+/// ### ACTION
+/// Call 'register_token()' with invalid token type
+///
+/// ### EXPECTED
+/// Error CANNOT_REGISTER_TOKEN
 #[test]
 fn test_register_token_invalid_type() {
     let mut state = MvxEsdtSafeTestState::new();
@@ -99,7 +121,14 @@ fn test_register_token_invalid_type() {
     );
 }
 
-/// This Test checks the flow for registering an invalid token with prefix
+/// ### TEST
+/// M-ESDT_REG_FAIL_004
+///
+/// ### ACTION
+/// Call 'register_token()' with invalid token type and prefix
+///
+/// ### EXPECTED
+/// Error INVALID_TYPE
 #[test]
 fn test_register_token_invalid_type_with_prefix() {
     let mut state = MvxEsdtSafeTestState::new();
@@ -130,7 +159,14 @@ fn test_register_token_invalid_type_with_prefix() {
         .check_multiversx_to_sovereign_token_id_mapper_is_empty(FIRST_TEST_TOKEN.as_str());
 }
 
-/// This Test checks the flow for registering a token that is not native
+/// ### TEST
+/// M-ESDT_REG_FAIL_005
+///
+/// ### ACTION
+/// Call 'register_token()' with token id not starting with prefix
+///
+/// ### EXPECTED
+/// Error CANNOT_REGISTER_TOKEN
 #[test]
 fn test_register_token_not_native() {
     let mut state = MvxEsdtSafeTestState::new();
@@ -161,7 +197,14 @@ fn test_register_token_not_native() {
     );
 }
 
-/// This Test checks the flow for registering a fungible token
+/// ### TEST
+/// M-ESDT_REG_OK_006
+///
+/// ### ACTION
+/// Call 'register_token()' with valid token id and type
+///
+/// ### EXPECTED
+/// The token is registered
 #[test]
 fn test_register_token_fungible_token() {
     let mut state = MvxEsdtSafeTestState::new();
@@ -188,7 +231,14 @@ fn test_register_token_fungible_token() {
     state.register_token(register_token_args, egld_payment, None);
 }
 
-/// Test that register token works with a non-fungible token type
+/// ### TEST
+/// M-ESDT_REG_FAIL_007
+///
+/// ### ACTION
+/// Call 'register_token()' with token id not starting with prefix and token type NonFungible
+///
+/// ### EXPECTED
+/// Error CANNOT_REGISTER_TOKEN
 #[test]
 fn test_register_token_nonfungible_token() {
     let mut state = MvxEsdtSafeTestState::new();
@@ -219,7 +269,14 @@ fn test_register_token_nonfungible_token() {
     );
 }
 
-/// Test that deposit fails when there is no payment for transfer
+/// ### TEST
+/// M-ESDT_DEP_FAIL_008
+///
+/// ### ACTION
+/// Call 'deposit()' with empty payments_vec and no transfer_data
+///
+/// ### EXPECTED
+/// Error NOTHING_TO_TRANSFER
 #[test]
 fn test_deposit_nothing_to_transfer() {
     let mut state = MvxEsdtSafeTestState::new();
@@ -247,11 +304,14 @@ fn test_deposit_nothing_to_transfer() {
         .check_multiversx_to_sovereign_token_id_mapper_is_empty(FIRST_TEST_TOKEN.as_str());
 }
 
-/// Test that complete setup phase succeeds
-/// Steps:
-/// 1. Deploy the Mvx-ESDT-Safe SC
-/// 2. Complete the setup phase
-/// 3. Check the SCs storage after completing the setup phase
+/// ### TEST
+/// M-ESDT_SETUP_OK_009
+///
+/// ### ACTION
+/// Call 'complete_setup_phase()'
+///
+/// ### EXPECTED
+/// The setup phase is marked as completed in the smart contract's storage
 #[test]
 fn test_complete_setup_phase() {
     let mut state = MvxEsdtSafeTestState::new();
@@ -282,7 +342,14 @@ fn test_complete_setup_phase() {
         });
 }
 
-/// Test that complete setup phase fails when the setup phase was already completed
+/// ### TEST
+/// M-ESDT_SETUP_FAIL_010
+///
+/// ### ACTION
+/// Call 'complete_setup_phase()' twice
+///
+/// ### EXPECTED
+/// Error SETUP_PHASE_ALREADY_COMPLETED
 #[test]
 fn test_complete_setup_phase_already_completed() {
     let mut state = MvxEsdtSafeTestState::new();
@@ -305,7 +372,14 @@ fn test_complete_setup_phase_already_completed() {
     state.complete_setup_phase(Some(SETUP_PHASE_ALREADY_COMPLETED), None);
 }
 
-/// Test that deposit fails when there are too many tokens in the payment (limit being the MAX_TRANSFERS_PER_TX)
+/// ### TEST
+/// M-ESDT_DEP_FAIL_011
+///
+/// ### ACTION
+/// Call 'deposit()' with too many tokens in payments_vec
+///
+/// ### EXPECTED
+/// Error TOO_MANY_TOKENS
 #[test]
 fn test_deposit_too_many_tokens() {
     let mut state = MvxEsdtSafeTestState::new();
@@ -340,7 +414,14 @@ fn test_deposit_too_many_tokens() {
         .check_multiversx_to_sovereign_token_id_mapper_is_empty(FIRST_TEST_TOKEN.as_str());
 }
 
-/// Test that deposit with no transfer data succeeds
+/// ### TEST
+/// M-ESDT_DEP_OK_012
+///
+/// ### ACTION
+/// Call 'deposit()' with valid payments_vec and no transfer_data
+///
+/// ### EXPECTED
+/// * USER's balance is updated
 #[test]
 fn test_deposit_no_transfer_data() {
     let mut state = MvxEsdtSafeTestState::new();
@@ -382,7 +463,14 @@ fn test_deposit_no_transfer_data() {
         .check_multiversx_to_sovereign_token_id_mapper_is_empty(FIRST_TEST_TOKEN.as_str());
 }
 
-/// Test that deposit fails when the gas limit is too high
+/// ### TEST
+/// M-ESDT_DEP_FAIL_013
+///
+/// ### ACTION
+/// Call 'deposit()' with gas limit too high in transfer_data
+///
+/// ### EXPECTED
+/// Error GAS_LIMIT_TOO_HIGH
 #[test]
 fn test_deposit_gas_limit_too_high() {
     let mut state = MvxEsdtSafeTestState::new();
@@ -440,6 +528,14 @@ fn test_deposit_gas_limit_too_high() {
         .check_multiversx_to_sovereign_token_id_mapper_is_empty(FIRST_TEST_TOKEN.as_str());
 }
 
+/// ### TEST
+/// M-ESDT_DEP_FAIL_014
+///
+/// ### ACTION
+/// Call 'deposit()' with max bridged amount exceeded
+///
+/// ### EXPECTED
+/// Error DEPOSIT_OVER_MAX_AMOUNT
 #[test]
 fn test_deposit_max_bridged_amount_exceeded() {
     let mut state = MvxEsdtSafeTestState::new();
@@ -492,7 +588,14 @@ fn test_deposit_max_bridged_amount_exceeded() {
         .check_multiversx_to_sovereign_token_id_mapper_is_empty(FIRST_TEST_TOKEN.as_str());
 }
 
-/// Test that deposit fails when the endpoint is banned
+/// ### TEST
+/// M-ESDT_DEP_FAIL_015
+///
+/// ### ACTION
+/// Call 'deposit()' with banned endpoint name in transfer_data
+///
+/// ### EXPECTED
+/// Error BANNED_ENDPOINT_NAME
 #[test]
 fn test_deposit_endpoint_banned() {
     let mut state = MvxEsdtSafeTestState::new();
@@ -551,7 +654,14 @@ fn test_deposit_endpoint_banned() {
         .check_multiversx_to_sovereign_token_id_mapper_is_empty(FIRST_TEST_TOKEN.as_str());
 }
 
-// Test that deposit with no transfer data, no fee and no payment fails
+/// ### TEST
+/// M-ESDT_DEP_FAIL_016
+///
+/// ### ACTION
+/// Call 'deposit()' with no transfer_data and no payments_vec
+///
+/// ### EXPECTED
+/// Error NOTHING_TO_TRANSFER
 #[test]
 fn test_deposit_no_transfer_data_no_fee() {
     let mut state = MvxEsdtSafeTestState::new();
@@ -577,15 +687,14 @@ fn test_deposit_no_transfer_data_no_fee() {
     );
 }
 
-/// This test checks the flow for a deposit with transfer data only
-/// Steps for this test:
-/// 1. Deploy the Mvx-ESDT-Safe smart contract
-/// 3. Deploy the Testing smart contract
-/// 6. Create the ESDT token payments
-/// 7. Create the payments vector
-/// 8. Create the transfer data
-/// 9. Call the deposit function
-/// 10. Check the balances of the accounts
+/// ### TEST
+/// M-ESDT_DEP_OK_017
+///
+/// ### ACTION
+/// Call 'deposit()' with transfer data only and no payments
+///
+/// ### EXPECTED
+/// The endpoint is called in the testing smart contract
 #[test]
 fn test_deposit_transfer_data_only_no_fee() {
     let mut state = MvxEsdtSafeTestState::new();
@@ -620,7 +729,14 @@ fn test_deposit_transfer_data_only_no_fee() {
     );
 }
 
-/// This test check the flow for a deposit with transfer data that fails
+/// ### TEST
+/// M-ESDT_DEP_FAIL_018
+///
+/// ### ACTION
+/// Call 'deposit()' with transfer data only, no payments and fee set
+///
+/// ### EXPECTED
+/// Error ERR_EMPTY_PAYMENTS
 #[test]
 fn test_deposit_transfer_data_only_with_fee_nothing_to_transfer() {
     let mut state = MvxEsdtSafeTestState::new();
@@ -667,18 +783,14 @@ fn test_deposit_transfer_data_only_with_fee_nothing_to_transfer() {
     );
 }
 
-/// This test check the flow for a deposit with transfer data only and the fee is enabled
-/// Steps for this test:
-/// 1. Deploy the Mvx-ESDT-Safe smart contract
-/// 2. Deploy the Fee-Market smart contract
-/// 3. Deploy the Testing smart contract
-/// 4. Set the Fee-Market address
-/// 5. Create the fee payment
-/// 6. Create the ESDT token payments
-/// 7. Create the payments vector
-/// 8. Create the transfer data
-/// 9. Call the deposit function
-/// 10. Check the balances of the accounts
+/// ### TEST
+/// M-ESDT_DEP_OK_019
+///
+/// ### ACTION
+/// Call 'deposit()' with transfer data and fee payment
+///
+/// ### EXPECTED
+/// The endpoint is called in the testing smart contract
 #[test]
 fn test_deposit_transfer_data_only_with_fee() {
     let mut state = MvxEsdtSafeTestState::new();
@@ -733,18 +845,14 @@ fn test_deposit_transfer_data_only_with_fee() {
     );
 }
 
-/// This test check the flow for a deposit when the fee is enabled
-/// Steps for this test:
-/// 1. Deploy the Mvx-ESDT-Safe smart contract
-/// 2. Deploy the Fee-Market smart contract
-/// 3. Deploy the Testing smart contract
-/// 4. Set the Fee-Market address
-/// 5. Create the fee payment
-/// 6. Create the ESDT token payments
-/// 7. Create the payments vector
-/// 8. Create the transfer data
-/// 9. Call the deposit function
-/// 10. Check the balances of the accounts
+/// ### TEST
+/// M-ESDT_DEP_OK_020
+///
+/// ### ACTION
+/// Call 'deposit()' with transfer data and valid payment
+///
+/// ### EXPECTED
+/// USER's balance is updated
 #[test]
 fn test_deposit_fee_enabled() {
     let mut state = MvxEsdtSafeTestState::new();
@@ -841,18 +949,14 @@ fn test_deposit_fee_enabled() {
         .check_account_multiple_esdts(OWNER_ADDRESS.to_address(), expected_balances);
 }
 
-/// Test that deposit fails when the payment does not cover the fee
-/// Steps:
-/// 1. Deploy the Mvx-ESDT-Safe smart contract
-/// 2. Deploy the Fee-Market smart contract
-/// 3. Deploy the Testing smart contract
-/// 4. Set the Fee-Market address
-/// 5. Create the fee payment
-/// 6. Create the ESDT token payments
-/// 7. Create the payments vector
-/// 8. Create the transfer data
-/// 9. Call the deposit function
-/// 10. Check the balances of the accounts
+/// ### TEST
+/// M-ESDT_DEP_FAIL_021
+///
+/// ### ACTION
+/// Call 'deposit()' with transfer data and payment not enough for fee
+///
+/// ### EXPECTED
+/// Error PAYMENT_DOES_NOT_COVER_FEE
 #[test]
 fn test_deposit_payment_doesnt_cover_fee() {
     let mut state = MvxEsdtSafeTestState::new();
@@ -924,19 +1028,6 @@ fn test_deposit_payment_doesnt_cover_fee() {
         .check_multiversx_to_sovereign_token_id_mapper_is_empty(SECOND_TEST_TOKEN.as_str());
 }
 
-/// Test that after deposit fails the tokens are refunded
-/// Steps:
-/// 1. Deploy the Mvx-ESDT-Safe smart contract
-/// 2. Deploy the Fee-Market smart contract
-/// 3. Deploy the Testing smart contract
-/// 4. Set the Fee-Market address
-/// 5. Create the fee payment
-/// 6. Create the ESDT token payments
-/// 7. Create the payments vector
-/// 8. Create the transfer data
-/// 9. Call the deposit function
-/// 10. Check the logs
-/// 11. Check the balances of the accounts
 #[test]
 fn test_deposit_refund() {
     let mut state = MvxEsdtSafeTestState::new();
@@ -1033,7 +1124,14 @@ fn test_deposit_refund() {
         .check_account_multiple_esdts(OWNER_ADDRESS.to_address(), expected_balances);
 }
 
-/// Test that deposit with a burn mechanism works
+/// ### TEST
+/// M-ESDT_DEP_OK_022
+///
+/// ### ACTION
+/// Call 'deposit()' with burn mechanism set
+///
+/// ### EXPECTED
+/// USER's balance is updated
 #[test]
 fn test_deposit_success_burn_mechanism() {
     let mut state = MvxEsdtSafeTestState::new();
@@ -1090,7 +1188,14 @@ fn test_deposit_success_burn_mechanism() {
         .check_account_multiple_esdts(ESDT_SAFE_ADDRESS.to_address(), expected_tokens);
 }
 
-/// Test that register token works with a valid prefix
+/// ### TEST
+/// M-ESDT_REG_OK_023
+///
+/// ### ACTION
+/// Call 'register_token()' with valid token attributes
+///
+/// ### EXPECTED
+/// The token is registered
 #[test]
 fn test_register_token_fungible_token_with_prefix() {
     let mut state = MvxEsdtSafeTestState::new();
@@ -1119,7 +1224,14 @@ fn test_register_token_fungible_token_with_prefix() {
     // TODO: Add check for storage after callback issue is fixed
 }
 
-/// Test that register token fails when token has no prefix
+/// ### TEST
+/// M-ESDT_REG_FAIL_024
+///
+/// ### ACTION
+/// Call 'register_token()' with no prefix and type fungible
+///
+/// ### EXPECTED
+/// Error CANNOT_REGISTER_TOKEN
 #[test]
 fn test_register_token_fungible_token_no_prefix() {
     let mut state = MvxEsdtSafeTestState::new();
@@ -1150,7 +1262,14 @@ fn test_register_token_fungible_token_no_prefix() {
     );
 }
 
-/// Test that register token fails if the token is already registered
+/// ### TEST
+/// M-ESDT_REG_FAIL_025
+///
+/// ### ACTION
+/// Call register_token twice
+///
+/// ### EXPECTED
+/// The first token is registered and then error NATIVE_TOKEN_ALREADY_REGISTERED
 #[test]
 fn test_register_native_token_already_registered() {
     let mut state = MvxEsdtSafeTestState::new();
@@ -1184,7 +1303,14 @@ fn test_register_native_token_already_registered() {
     );
 }
 
-/// Test that register native works in the happy flow
+/// ### TEST
+/// M-ESDT_REG_OK_026
+///
+/// ### ACTION
+/// Call 'register_native_token()' with valid token attributes
+///
+/// ### EXPECTED
+/// The token is registered
 #[test]
 fn test_register_native_token() {
     let mut state = MvxEsdtSafeTestState::new();
@@ -1206,14 +1332,14 @@ fn test_register_native_token() {
     // TODO: Check storage
 }
 
-/// Test that execute operation fails when the Mvx-ESDT-Safe address is not set in Header-Verifier contract
-/// Steps:
-/// 1. Deploy the Mvx-ESDT-Safe smart contract
-/// 2. Create the operation
-/// 3. Create the hash of hashes
-/// 4. Deploy the Header-Verifier smart contract
-/// 5. Call the execute operation function
-/// 6. Check the operation hash status
+/// ### TEST
+/// M-ESDT_EXEC_FAIL_027
+///
+/// ### ACTION
+/// Call 'execute_operation()' with no esdt-safe-address set
+///
+/// ### EXPECTED
+/// Error NO_ESDT_SAFE_ADDRESS
 #[test]
 fn test_execute_operation_no_esdt_safe_registered() {
     let mut state = MvxEsdtSafeTestState::new();
@@ -1255,17 +1381,14 @@ fn test_execute_operation_no_esdt_safe_registered() {
         .check_operation_hash_status_is_empty(&hash_of_hashes);
 }
 
-/// Test that execute operation works in the happy flow
-/// Steps:
-/// 1. Deploy the Mvx-ESDT-Safe smart contract
-/// 2. Create the operation
-/// 3. Create the hash of hashes
-/// 4. Deploy the Header-Verifier smart contract
-/// 5. Deploy the Testing smart contract
-/// 6. Set the Mvx-ESDT-Safe address in the Header-Verifier smart contract
-/// 7. Call the register operation function
-/// 8. Call the execute operation function
-/// 9. Check the operation hash status
+/// ### TEST
+/// M-ESDT_EXEC_OK_028
+///
+/// ### ACTION
+/// Call 'execute_operation()' with valid operation
+///
+/// ### EXPECTED
+/// The operation is executed in the testing smart contract
 #[test]
 fn test_execute_operation_success() {
     let mut state = MvxEsdtSafeTestState::new();
@@ -1331,18 +1454,14 @@ fn test_execute_operation_success() {
         .check_operation_hash_status_is_empty(&operation_hash);
 }
 
-/// Test execute operation with native token happy flow
-/// Steps:
-/// 1. Deploy the Mvx-ESDT-Safe smart contract
-/// 2. Register the native token
-/// 3. Create the operation
-/// 4. Create the hash of hashes
-/// 5. Deploy the Header-Verifier smart contract
-/// 6. Deploy the Testing smart contract
-/// 7. Set the Mvx-ESDT-Safe address in the Header-Verifier smart contract
-/// 8. Call the register operation function
-/// 9. Call the execute operation function
-/// 10. Check the operation hash status
+/// ### TEST
+/// M-ESDT_EXEC_OK_029
+///
+/// ### ACTION
+/// Call 'execute_operation()' with payment containing the registered token
+///
+/// ### EXPECTED
+/// The operation is executed in the testing smart contract
 #[test]
 fn test_execute_operation_with_native_token_success() {
     let mut state = MvxEsdtSafeTestState::new();
@@ -1425,18 +1544,14 @@ fn test_execute_operation_with_native_token_success() {
     );
 }
 
-/// This test checks the succsesful flow of executing an `operation` with burn mechanism
-/// Steps for this test:
-/// 1. Deploy the Mvx-ESDT-Safe SC with roles for the trusted token
-/// 2. Create the `operation`
-/// 3. Deploy the needed smart contract (Header-Verifier, Fee-Market with no fee and Testing SC)
-/// 4. Set the Fee-Market address in Header-Verifier
-/// 5. Register the `operation`
-/// 6. Register the native token
-/// 7. Set the bridging mechanism to burn&mint
-/// 8. Execute the `operation`
-/// 9. Check if the registered `operation` hash status is empty
-/// 10. Check the balances for the owner, Mvx-ESDT-Safe and Testing SC
+/// ### TEST
+/// M-ESDT_EXEC_OK_030
+///
+/// ### ACTION
+/// Call 'execute_operation()' after setting the burn mechanism
+///
+/// ### EXPECTED
+/// The operation is executed in the testing smart contract
 #[test]
 fn test_execute_operation_burn_mechanism_without_deposit_cannot_subtract() {
     let mut state = MvxEsdtSafeTestState::new();
@@ -1507,20 +1622,14 @@ fn test_execute_operation_burn_mechanism_without_deposit_cannot_subtract() {
     );
 }
 
-/// This test checks the succsesful flow of executing an `operation` with burn mechanism
-/// Steps for this test:
-/// 1. Deploy the Mvx-ESDT-Safe SC with roles for the trusted token
-/// 2. Create the `operation`
-/// 3. Deploy the needed smart contract (Header-Verifier, Fee-Market with no fee and Testing SC)
-/// 4. Set the Fee-Market address in Mvx-ESDT-Safe and Header-Verifier
-/// 5. Deposit the `payment`
-/// 6. Check for the deposit log
-/// 7. Register the `operation`
-/// 8. Check if the registered `operation` is not locked
-/// 9. Set the briding mechanism to burn&mint
-/// 10. Execute the `operation`
-/// 11. Check the balances for the owner, Mvx-ESDT-Safe and Testing SC
-/// 12. Check if the `operation` hash was removed from the Header-Verifier SC
+/// ### TEST
+/// M-ESDT_EXEC_OK_031
+///
+/// ### ACTION
+/// Call 'execute_operation()' after setting the burn mechanism
+///
+/// ### EXPECTED
+/// The operation is executed in the testing smart contract
 #[test]
 fn test_execute_operation_success_burn_mechanism() {
     let mut state = MvxEsdtSafeTestState::new();
@@ -1620,29 +1729,15 @@ fn test_execute_operation_success_burn_mechanism() {
         .check_operation_hash_status_is_empty(&operation_hash);
 }
 
-/// This test checks the flow of multiple deposit and executes along side bridging mechanism
-/// Steps for this test:
-/// 1. Deploy the Mvx-ESDT-Safe SC with roles for the trusted token
-/// 2. Deploy the needed smart contract (Header-Verifier, Fee-Market with no fee and Testing SC)
-/// 3. Set the Fee-Market address in Mvx-ESDT-Safe and Header-Verifier
-/// 4. Deposit the `deposit_payment` to the `USER`
-/// 5. Check for logs and esdt balance
-/// 6. Switch the bridging mechanism to Burn&Mint for the trusted token
-/// 7. Check for `deposited_tokens_amount` mapper and esdt balance
-/// 8. Create the first `operation`
-/// 9. Register the `operation`
-/// 10. Execute the `operation`
-/// 11. Check for `deposited_tokens_amount` mapper and esdt balance
-/// 12. Second deposit of `deposit_payment` to the `USER`
-/// 13. Check for logs, `deposited_tokens_amount` mapper and esdt balance
-/// 14. Set bridging mechanism back to Lock&Send
-/// 15. Check `deposited_tokens_amount` mapper and esdt balance
-/// 16. Create the second `operation`
-/// 17. Register the `operation`
-/// 18. Execute the `operation`
-/// 19. Check for `deposited_tokens_amount` mapper and esdt balance
-/// 12. Third deposit of `deposit_payment` to the `USER`
-/// 19. Check for logs, `deposited_tokens_amount` mapper and esdt balance
+/// ### TEST
+/// M-ESDT_EXEC_OK_032
+///
+/// ### ACTION
+/// Call 'execute_operation()' after switching to the lock mechanism from the burn mechanism
+///
+/// ### EXPECTED
+/// The operation is executed the first time in the testing smart contract
+/// The operation is executed again in the testing smart contract
 #[test]
 fn test_deposit_execute_switch_mechanism() {
     let mut state = MvxEsdtSafeTestState::new();
@@ -1868,17 +1963,14 @@ fn test_deposit_execute_switch_mechanism() {
     );
 }
 
-/// This test checks the flow of executing an Operation with no payments
-/// Steps for this test:
-/// 1. Deploy the Mvx-ESDT-Safe SC with the default config
-/// 2. Registed the native token
-/// 3. Create the `operation`
-/// 4. Deploy the needed smart contract (Header-Verifier, Fee-Market with no fee and Testing SC)
-/// 5. Register the `operation`
-/// 6. Check if the registered `operation` is not locked
-/// 7. Execute the `operation`
-/// 8. Check the emited logs
-/// 9. Check if the `operation` hash was removed from the Header-Verifier SC
+/// ### TEST
+/// M-ESDT_EXEC_OK_033
+///
+/// ### ACTION
+/// Call 'execute_operation()' with empty payments
+///
+/// ### EXPECTED
+/// The operation is executed in the testing smart contract
 #[test]
 fn test_execute_operation_no_payments() {
     let mut state = MvxEsdtSafeTestState::new();
@@ -1954,18 +2046,6 @@ fn test_execute_operation_no_payments() {
         .check_operation_hash_status_is_empty(&operation_hash);
 }
 
-/// This test checks the flow of executing an Operation with no payments
-/// which should emit a failed event
-/// Steps for this test:
-/// 1. Deploy the Mvx-ESDT-Safe SC with the default config
-/// 2. Registed the native token
-/// 3. Create the `operation`
-/// 4. Deploy the needed smart contract (Header-Verifier, Fee-Market with no fee and Testing SC)
-/// 5. Register the `operation`
-/// 6. Check if the registered `operation` is not locked
-/// 7. Execute the `operation`
-/// 8. Check the emited logs
-/// 9. Check if the `operation` hash was removed from the Header-Verifier SC
 #[test]
 fn test_execute_operation_no_payments_failed_event() {
     let mut state = MvxEsdtSafeTestState::new();
@@ -2038,7 +2118,14 @@ fn test_execute_operation_no_payments_failed_event() {
         .check_operation_hash_status_is_empty(&operation_hash);
 }
 
-/// This Test checks the flow for setting the token burn mechanism without having roles
+/// ### TEST
+/// M-ESDT_SET_BURN_FAIL_034
+///
+/// ### ACTION
+/// Call 'set_token_burn_mechanism()' without the propper roles
+///
+/// ### EXPECTED
+/// Error MINT_AND_BURN_ROLES_NOT_FOUND
 #[test]
 fn test_set_token_burn_mechanism_no_roles() {
     let mut state = MvxEsdtSafeTestState::new();
@@ -2050,7 +2137,14 @@ fn test_set_token_burn_mechanism_no_roles() {
     state.set_token_burn_mechanism("WEGLD", Some(MINT_AND_BURN_ROLES_NOT_FOUND));
 }
 
-/// This Test checks the flow setting the bridging mechanism for a untrusted token
+/// ### TEST
+/// M-ESDT_SET_BURN_FAIL_035
+///
+/// ### ACTION
+/// Call 'set_token_burn_mechanism()' without a trusted token id
+///
+/// ### EXPECTED
+/// Error TOKEN_ID_IS_NOT_TRUSTED
 #[test]
 fn test_set_token_burn_mechanism_token_not_trusted() {
     let mut state = MvxEsdtSafeTestState::new();
@@ -2059,11 +2153,14 @@ fn test_set_token_burn_mechanism_token_not_trusted() {
     state.set_token_burn_mechanism(FIRST_TEST_TOKEN.as_str(), Some(TOKEN_ID_IS_NOT_TRUSTED));
 }
 
-/// This Test checks the flow setting the bridging mechanism to burn&mint
-/// Steps:
-/// 1. Deploy the Mvx-ESDT-Safe smart contract
-/// 2. Set token burn mechanism for any trusted token
-/// 3. Check sc storage and balance
+/// ### TEST
+/// M-ESDT_SET_BURN_OK_036
+///
+/// ### ACTION
+/// Call 'set_token_burn_mechanism()' with a trusted token id
+///
+/// ### EXPECTED
+/// The trusted token has the burn mechanism set
 #[test]
 fn test_set_token_burn_mechanism() {
     let mut state = MvxEsdtSafeTestState::new();
@@ -2090,12 +2187,14 @@ fn test_set_token_burn_mechanism() {
     );
 }
 
-/// This Test checks the flow setting the bridging mechanism to lock&send
-/// Steps:
-/// 1. Deploy the Mvx-ESDT-Safe smart contract
-/// 2. Set token burn mechanism for any trusted token
-/// 3. Set token lock mech
-/// 3. Check sc storage and balance
+/// ### TEST
+/// M-ESDT_SET_BURN_OK_037
+///
+/// ### ACTION
+/// Call both 'set_token_burn_mechanism()' and 'set_token_lock_mechanism()' with a trusted token id.
+///
+/// ### EXPECTED
+/// The trusted token has the lock mechanism set
 #[test]
 fn test_set_token_lock_mechanism() {
     let mut state = MvxEsdtSafeTestState::new();
@@ -2121,7 +2220,14 @@ fn test_set_token_lock_mechanism() {
     );
 }
 
-/// This Test checks the flow setting the bridging mechanism to burn&mint of a Sovereign token
+/// ### TEST
+/// M-ESDT_SET_BURN_FAIL_038
+///
+/// ### ACTION
+/// Call both 'set_token_burn_mechanism()' and 'set_token_lock_mechanism()' with a trusted token id.
+///
+/// ### EXPECTED
+/// ERROR TOKEN_IS_FROM_SOVEREIGN
 #[test]
 fn test_set_token_lock_mechanism_token_from_sovereign() {
     let mut state = MvxEsdtSafeTestState::new();
