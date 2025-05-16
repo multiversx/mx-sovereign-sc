@@ -1,6 +1,7 @@
 use common_test_setup::constants::{
-    CROWD_TOKEN_ID, ENSHRINE_BALANCE, FUNGIBLE_TOKEN_ID, ISSUE_COST, NFT_TOKEN_ID, OWNER_ADDRESS,
-    PREFIX_NFT_TOKEN_ID, USER_ADDRESS, WEGLD_IDENTIFIER,
+    CROWD_TOKEN_ID, ENSHRINE_BALANCE, ENSHRINE_SC_ADDRESS, FUNGIBLE_TOKEN_ID, ISSUE_COST,
+    NFT_TOKEN_ID, OWNER_ADDRESS, PREFIX_NFT_TOKEN_ID, RECEIVER_ADDRESS, USER_ADDRESS,
+    WEGLD_IDENTIFIER,
 };
 use enshrine_esdt_safe_blackbox_setup::EnshrineTestState;
 use error_messages::{
@@ -41,15 +42,15 @@ fn test_deploy() {
 /// ### EXPECTED
 /// Error ACTION_IS_NOT_ALLOWED
 #[test]
-fn test_sovereign_prefix_no_prefix() {
+fn test_execute_with_non_prefixed_token() {
     let mut state = EnshrineTestState::new();
     let token_vec = Vec::from([NFT_TOKEN_ID, CROWD_TOKEN_ID]);
 
     state.setup_contracts(false, None, None);
-    state.register_operation(&token_vec);
+    let operation = state.register_operation(&token_vec, RECEIVER_ADDRESS.to_managed_address());
     state.register_esdt_in_header_verifier();
     state.whitelist_enshrine_esdt();
-    state.execute_operation(Some(ACTION_IS_NOT_ALLOWED), &token_vec);
+    state.execute_operation(Some(ACTION_IS_NOT_ALLOWED), operation, None);
 }
 
 /// ### TEST
@@ -61,15 +62,15 @@ fn test_sovereign_prefix_no_prefix() {
 /// ### EXPECTED
 /// Operation is executed successfully
 #[test]
-fn test_sovereign_prefix_has_prefix() {
+fn test_execute_with_prefixed_token() {
     let mut state = EnshrineTestState::new();
     let token_vec = Vec::from([PREFIX_NFT_TOKEN_ID, CROWD_TOKEN_ID]);
 
     state.setup_contracts(false, None, None);
-    state.register_operation(&token_vec);
+    let operation = state.register_operation(&token_vec, RECEIVER_ADDRESS.to_managed_address());
     state.register_esdt_in_header_verifier();
     state.whitelist_enshrine_esdt();
-    state.execute_operation(None, &token_vec);
+    state.execute_operation(None, operation, Some("executedBridgeOp"));
 }
 
 /// ### TEST
@@ -88,7 +89,13 @@ fn test_register_tokens_insufficient_funds() {
     let payment = EsdtTokenPayment::new(WEGLD_IDENTIFIER.into(), 0, payment_amount);
 
     state.setup_contracts(false, None, None);
-    state.register_tokens(&USER_ADDRESS, payment, token_vec, Some(INSUFFICIENT_FUNDS));
+    state.register_tokens(
+        &USER_ADDRESS,
+        payment,
+        token_vec.clone(),
+        Some(INSUFFICIENT_FUNDS),
+    );
+    state.check_paid_issued_token_storage_is_empty();
 }
 
 /// ### TEST
@@ -113,6 +120,7 @@ fn test_register_tokens_wrong_token_as_fee() {
         token_vec,
         Some(ONLY_WEGLD_IS_ACCEPTED_AS_REGISTER_FEE),
     );
+    state.check_paid_issued_token_storage_is_empty();
 }
 
 /// ### TEST
@@ -131,12 +139,13 @@ fn test_register_tokens() {
     let payment = EsdtTokenPayment::new(WEGLD_IDENTIFIER.into(), 0, payment_amount);
 
     state.setup_contracts(false, None, None);
-    state.register_tokens(&OWNER_ADDRESS, payment, token_vec, None);
+    state.register_tokens(&OWNER_ADDRESS, payment, token_vec.clone(), None);
     state
         .common_setup
         .world
         .check_account(OWNER_ADDRESS)
         .esdt_balance(WEGLD_IDENTIFIER, BigUint::zero());
+    state.check_paid_issued_token_storage(token_vec);
 }
 
 /// ### TEST
@@ -166,6 +175,7 @@ fn test_register_tokens_insufficient_wegld() {
         token_vec,
         Some(NOT_ENOUGH_WEGLD_AMOUNT),
     );
+    state.check_paid_issued_token_storage_is_empty();
 }
 
 /// ### TEST
@@ -339,6 +349,15 @@ fn test_deposit_with_transfer_data_gas_limit_too_high() {
         transfer_data,
         Some(GAS_LIMIT_TOO_HIGH),
     );
+
+    let expected_tokens = vec![
+        MultiValue3::from((WEGLD_IDENTIFIER, 0u64, BigUint::from(0u64))),
+        MultiValue3::from((CROWD_TOKEN_ID, 0u64, BigUint::from(0u64))),
+    ];
+
+    state
+        .common_setup
+        .check_account_multiple_esdts(ENSHRINE_SC_ADDRESS.to_address(), expected_tokens);
 }
 
 /// ### TEST
@@ -386,6 +405,15 @@ fn test_deposit_with_transfer_data_banned_endpoint() {
         transfer_data,
         Some(BANNED_ENDPOINT_NAME),
     );
+
+    let expected_tokens = vec![
+        MultiValue3::from((WEGLD_IDENTIFIER, 0u64, BigUint::from(0u64))),
+        MultiValue3::from((CROWD_TOKEN_ID, 0u64, BigUint::from(0u64))),
+    ];
+
+    state
+        .common_setup
+        .check_account_multiple_esdts(ENSHRINE_SC_ADDRESS.to_address(), expected_tokens);
 }
 
 /// ### TEST
@@ -495,6 +523,15 @@ fn test_deposit_with_transfer_data_not_enough_for_fee() {
         transfer_data,
         Some(PAYMENT_DOES_NOT_COVER_FEE),
     );
+    let expected_tokens = vec![
+        MultiValue3::from((WEGLD_IDENTIFIER, 0u64, BigUint::from(0u64))),
+        MultiValue3::from((FUNGIBLE_TOKEN_ID, 0u64, BigUint::from(0u64))),
+        MultiValue3::from((CROWD_TOKEN_ID, 0u64, BigUint::from(0u64))),
+    ];
+
+    state
+        .common_setup
+        .check_account_multiple_esdts(ENSHRINE_SC_ADDRESS.to_address(), expected_tokens);
 }
 
 /// ### TEST
