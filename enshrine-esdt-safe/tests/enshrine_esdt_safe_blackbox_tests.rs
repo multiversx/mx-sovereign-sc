@@ -1,7 +1,7 @@
 use common_test_setup::constants::{
     CROWD_TOKEN_ID, ENSHRINE_BALANCE, ENSHRINE_SC_ADDRESS, FUNGIBLE_TOKEN_ID, ISSUE_COST,
-    NFT_TOKEN_ID, OWNER_ADDRESS, PREFIX_NFT_TOKEN_ID, RECEIVER_ADDRESS, USER_ADDRESS,
-    WEGLD_IDENTIFIER,
+    NFT_TOKEN_ID, ONE_HUNDRED_THOUSAND, OWNER_ADDRESS, PREFIX_NFT_TOKEN_ID, RECEIVER_ADDRESS,
+    USER_ADDRESS, WEGLD_IDENTIFIER,
 };
 use enshrine_esdt_safe_blackbox_setup::EnshrineTestState;
 use error_messages::{
@@ -186,12 +186,10 @@ fn test_register_tokens_insufficient_wegld() {
 ///
 /// ### EXPECTED
 /// Deposit is executed successfully
-
-// TODO: add check balance after deposit
 #[test]
 fn test_deposit_no_fee() {
     let mut state = EnshrineTestState::new();
-    let amount = BigUint::from(10000u64);
+    let amount = BigUint::from(ONE_HUNDRED_THOUSAND);
     let wegld_payment = EsdtTokenPayment::new(WEGLD_IDENTIFIER.into(), 0, amount.clone());
     let mut payments = PaymentsVec::new();
 
@@ -205,6 +203,13 @@ fn test_deposit_no_fee() {
         payments,
         OptionalValue::None,
         None,
+    );
+
+    state.common_setup.check_account_single_esdt(
+        ENSHRINE_SC_ADDRESS.to_address(),
+        WEGLD_IDENTIFIER,
+        0,
+        amount,
     );
 }
 
