@@ -8,17 +8,18 @@ use common_test_setup::{
     },
     AccountSetup, BaseSetup,
 };
+use enshrine_esdt_safe::common::storage::CommonStorage;
 use multiversx_sc::{
     codec::TopEncode,
     imports::OptionalValue,
     types::{
-        BigUint, EsdtTokenData, EsdtTokenPayment, ManagedBuffer, ManagedVec, MultiValueEncoded,
-        TestAddress, TestTokenIdentifier, TokenIdentifier,
+        BigUint, EsdtTokenData, EsdtTokenPayment, ManagedAddress, ManagedBuffer, ManagedVec,
+        MultiValueEncoded, TestAddress, TestTokenIdentifier, TokenIdentifier,
     },
 };
 use multiversx_sc_scenario::{
-    api::StaticApi, multiversx_chain_vm::crypto_functions::sha256, ReturnsHandledOrError,
-    ScenarioTxRun,
+    api::StaticApi, multiversx_chain_vm::crypto_functions::sha256, DebugApi, ReturnsHandledOrError,
+    ReturnsLogs, ScenarioTxRun, ScenarioTxWhitebox,
 };
 use proxies::{
     enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy, fee_market_proxy::FeeMarketProxy,
@@ -156,16 +157,14 @@ impl EnshrineTestState {
     pub fn execute_operation(
         &mut self,
         error_message: Option<&str>,
-        tokens: &Vec<TestTokenIdentifier>,
+        operation: Operation<StaticApi>,
+        expected_log: Option<&str>,
     ) {
-        let (tokens, data) = self.setup_payments(tokens);
-        let to = RECEIVER_ADDRESS.to_managed_address();
-        let operation = Operation::new(to, tokens, data);
         let operation_hash = self.get_operation_hash(&operation);
         let hash_of_hashes: ManagedBuffer<StaticApi> =
             ManagedBuffer::from(&sha256(&operation_hash.to_vec()));
 
-        let response = self
+        let (response, logs) = self
             .common_setup
             .world
             .tx()
@@ -174,15 +173,23 @@ impl EnshrineTestState {
             .typed(EnshrineEsdtSafeProxy)
             .execute_operations(hash_of_hashes, operation)
             .returns(ReturnsHandledOrError::new())
+            .returns(ReturnsLogs)
             .run();
 
         self.common_setup
             .assert_expected_error_message(response, error_message);
+
+        if let Some(expected_log) = expected_log {
+            self.common_setup.assert_expected_log(logs, expected_log);
+        }
     }
 
-    pub fn register_operation(&mut self, tokens: &Vec<TestTokenIdentifier>) {
-        let (tokens, data) = self.setup_payments(tokens);
-        let to = RECEIVER_ADDRESS.to_managed_address();
+    pub fn register_operation(
+        &mut self,
+        payment_tokens: &Vec<TestTokenIdentifier>,
+        to: ManagedAddress<StaticApi>,
+    ) -> Operation<StaticApi> {
+        let (tokens, data) = self.setup_payments(payment_tokens);
         let operation = Operation::new(to, tokens, data);
         let operation_hash = self.get_operation_hash(&operation);
         let mut operations_hashes = MultiValueEncoded::<StaticApi, ManagedBuffer<StaticApi>>::new();
@@ -207,6 +214,8 @@ impl EnshrineTestState {
                 operations_hashes.clone(),
             )
             .run();
+
+        operation
     }
 
     pub fn register_fee_market_address(&mut self) {
@@ -388,5 +397,32 @@ impl EnshrineTestState {
             base_token: base_token.into(),
             fee_type,
         }
+    }
+
+    pub fn check_paid_issued_token_storage(&mut self, tokens: Vec<TestTokenIdentifier>) {
+        self.common_setup
+            .world
+            .query()
+            .to(ENSHRINE_SC_ADDRESS)
+            .whitebox(enshrine_esdt_safe::contract_obj, |sc| {
+                for token in tokens.iter() {
+                    let token_id: TokenIdentifier<DebugApi> = (*token).into();
+                    assert!(
+                        sc.paid_issued_tokens().contains(&token_id),
+                        "Token {:?} not found in storage",
+                        token_id
+                    );
+                }
+            });
+    }
+
+    pub fn check_paid_issued_token_storage_is_empty(&mut self) {
+        self.common_setup
+            .world
+            .query()
+            .to(ENSHRINE_SC_ADDRESS)
+            .whitebox(enshrine_esdt_safe::contract_obj, |sc| {
+                assert!(sc.paid_issued_tokens().is_empty(), "Storage is not empty");
+            });
     }
 }

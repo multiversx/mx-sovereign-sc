@@ -453,7 +453,7 @@ impl BaseSetup {
                         &TestTokenIdentifier::new(token_name).into()
                     )
                     .is_empty());
-            })
+            });
     }
 
     pub fn check_operation_hash_status_is_empty(
@@ -504,6 +504,22 @@ impl BaseSetup {
             .iter()
             .find(|log| log.topics.iter().any(|topic| *topic == expected_bytes));
 
-        assert!(found_log.is_some(), "Expected log not found");
+        assert!(
+            found_log.is_some(),
+            "Expected log '{}' not found",
+            expected_log
+        );
+    }
+
+    pub fn assert_expected_data(&self, logs: Vec<Log>, expected_data: &str) {
+        let expected_bytes = ManagedBuffer::<StaticApi>::from(expected_data).to_vec();
+
+        let found = logs.iter().any(|log| {
+            log.data
+                .iter()
+                .any(|data_item| data_item.to_vec() == expected_bytes)
+        });
+
+        assert!(found, "Expected data '{}' not found", expected_data);
     }
 }
