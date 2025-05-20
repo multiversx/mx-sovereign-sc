@@ -309,8 +309,8 @@ impl MvxEsdtSafeInteract {
         println!("Result: {result_value:?}");
     }
 
-    pub async fn reset_state_chain_sim(&mut self, address_states: Option<Vec<Bech32Address>>) {
-        let mut state_vec = vec![
+    pub async fn reset_state_chain_sim(&mut self) {
+        let state_vec = vec![
             SetStateAccount::from_address(
                 Bech32Address::from(self.owner_address.clone()).to_bech32_string(),
             ),
@@ -328,17 +328,38 @@ impl MvxEsdtSafeInteract {
                     .to_bech32_string(),
             ),
             SetStateAccount::from_address(
+                self.state.current_fee_market_address().to_bech32_string(),
+            ),
+            SetStateAccount::from_address(
+                self.state.current_testing_sc_address().to_bech32_string(),
+            ),
+            SetStateAccount::from_address(
                 self.state
                     .current_chain_config_sc_address()
                     .to_bech32_string(),
             ),
+            SetStateAccount::from_address(
+                self.state
+                    .current_sovereign_forge_sc_address()
+                    .to_bech32_string(),
+            ),
+            SetStateAccount::from_address(
+                self.state
+                    .current_chain_factory_sc_address()
+                    .to_bech32_string(),
+            ),
+            SetStateAccount::from_address(
+                self.state
+                    .current_enshrine_esdt_safe_address()
+                    .to_bech32_string(),
+            ),
+            SetStateAccount::from_address(
+                self.state
+                    .current_token_handler_address()
+                    .to_bech32_string(),
+            ),
         ];
 
-        if let Some(address_states) = address_states {
-            for address in address_states {
-                state_vec.push(SetStateAccount::from_address(address.to_bech32_string()));
-            }
-        }
         let response = self.interactor.set_state_overwrite(state_vec).await;
         self.interactor.generate_blocks(2u64).await.unwrap();
         assert!(response.is_ok());

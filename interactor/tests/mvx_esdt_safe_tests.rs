@@ -52,11 +52,7 @@ async fn deposit_nothing_to_transfer_no_fee() {
         )
         .await;
 
-    let address_states = vec![chain_interactor.state.current_fee_market_address().clone()];
-
-    chain_interactor
-        .reset_state_chain_sim(Some(address_states))
-        .await;
+    chain_interactor.reset_state_chain_sim().await;
 }
 
 /// ### TEST
@@ -99,11 +95,7 @@ async fn deposit_too_many_tokens_no_fee() {
         )
         .await;
 
-    let address_states = vec![chain_interactor.state.current_fee_market_address().clone()];
-
-    chain_interactor
-        .reset_state_chain_sim(Some(address_states))
-        .await;
+    chain_interactor.reset_state_chain_sim().await;
 }
 
 /// ### TEST
@@ -152,11 +144,7 @@ async fn deposit_no_transfer_data_no_fee() {
         )
         .await;
 
-    let address_states = vec![chain_interactor.state.current_fee_market_address().clone()];
-
-    chain_interactor
-        .reset_state_chain_sim(Some(address_states))
-        .await;
+    chain_interactor.reset_state_chain_sim().await;
 }
 
 /// ### TEST
@@ -222,14 +210,7 @@ async fn deposit_gas_limit_too_high_no_fee() {
         )
         .await;
 
-    let address_states = vec![
-        chain_interactor.state.current_fee_market_address().clone(),
-        chain_interactor.state.current_testing_sc_address().clone(),
-    ];
-
-    chain_interactor
-        .reset_state_chain_sim(Some(address_states))
-        .await;
+    chain_interactor.reset_state_chain_sim().await;
 }
 
 /// ### TEST
@@ -295,14 +276,7 @@ async fn deposit_endpoint_banned_no_fee() {
         )
         .await;
 
-    let address_states = vec![
-        chain_interactor.state.current_fee_market_address().clone(),
-        chain_interactor.state.current_testing_sc_address().clone(),
-    ];
-
-    chain_interactor
-        .reset_state_chain_sim(Some(address_states))
-        .await;
+    chain_interactor.reset_state_chain_sim().await;
 }
 
 // NOTE: Add checks for account storage after finding out how to encode values in state
@@ -391,14 +365,7 @@ async fn deposit_fee_enabled() {
         )
         .await;
 
-    let address_states = vec![
-        chain_interactor.state.current_fee_market_address().clone(),
-        chain_interactor.state.current_testing_sc_address().clone(),
-    ];
-
-    chain_interactor
-        .reset_state_chain_sim(Some(address_states))
-        .await;
+    chain_interactor.reset_state_chain_sim().await;
 }
 
 /// ### TEST
@@ -450,14 +417,7 @@ async fn deposit_only_transfer_data_no_fee() {
         )
         .await;
 
-    let address_states = vec![
-        chain_interactor.state.current_fee_market_address().clone(),
-        chain_interactor.state.current_testing_sc_address().clone(),
-    ];
-
-    chain_interactor
-        .reset_state_chain_sim(Some(address_states))
-        .await;
+    chain_interactor.reset_state_chain_sim().await;
 }
 
 /// ### TEST
@@ -538,14 +498,7 @@ async fn deposit_payment_does_not_cover_fee() {
         )
         .await;
 
-    let address_states = vec![
-        chain_interactor.state.current_fee_market_address().clone(),
-        chain_interactor.state.current_testing_sc_address().clone(),
-    ];
-
-    chain_interactor
-        .reset_state_chain_sim(Some(address_states))
-        .await;
+    chain_interactor.reset_state_chain_sim().await;
 }
 
 // TODO: add deposit_refund_fee test after finding a method to check for balance
@@ -621,7 +574,7 @@ async fn register_token_invalid_type_token() {
         )
         .await;
 
-    chain_interactor.reset_state_chain_sim(None).await;
+    chain_interactor.reset_state_chain_sim().await;
 }
 
 /// ### TEST
@@ -697,7 +650,7 @@ async fn register_token_fungible_token() {
         )
         .await;
 
-    chain_interactor.reset_state_chain_sim(None).await;
+    chain_interactor.reset_state_chain_sim().await;
 }
 
 /// ### TEST
@@ -773,7 +726,7 @@ async fn register_token_non_fungible_token() {
         )
         .await;
 
-    chain_interactor.reset_state_chain_sim(None).await;
+    chain_interactor.reset_state_chain_sim().await;
 }
 
 /// ### TEST
@@ -849,7 +802,7 @@ async fn register_token_dynamic_non_fungible_token() {
         )
         .await;
 
-    chain_interactor.reset_state_chain_sim(None).await;
+    chain_interactor.reset_state_chain_sim().await;
 }
 
 /// ### TEST
@@ -939,14 +892,7 @@ async fn execute_operation_no_esdt_safe_registered() {
         )
         .await;
 
-    let address_states = vec![
-        chain_interactor.state.current_testing_sc_address().clone(),
-        chain_interactor.state.current_fee_market_address().clone(),
-    ];
-
-    chain_interactor
-        .reset_state_chain_sim(Some(address_states))
-        .await;
+    chain_interactor.reset_state_chain_sim().await;
 }
 
 /// ### TEST
@@ -1075,14 +1021,7 @@ async fn execute_operation_success_no_fee() {
         )
         .await;
 
-    let address_states = vec![
-        chain_interactor.state.current_fee_market_address().clone(),
-        chain_interactor.state.current_testing_sc_address().clone(),
-    ];
-
-    chain_interactor
-        .reset_state_chain_sim(Some(address_states))
-        .await;
+    chain_interactor.reset_state_chain_sim().await;
 }
 
 /// ### TEST
@@ -1186,16 +1125,5 @@ async fn execute_operation_only_transfer_data_no_fee() {
         )
         .await;
 
-    let address_states = vec![
-        chain_interactor.state.current_fee_market_address().clone(),
-        chain_interactor.state.current_testing_sc_address().clone(),
-        chain_interactor
-            .state
-            .current_chain_config_sc_address()
-            .clone(),
-    ];
-
-    chain_interactor
-        .reset_state_chain_sim(Some(address_states))
-        .await;
+    chain_interactor.reset_state_chain_sim().await;
 }
