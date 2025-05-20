@@ -1854,6 +1854,7 @@ fn test_deposit_execute_switch_mechanism() {
     state
         .common_setup
         .deploy_header_verifier(CHAIN_CONFIG_ADDRESS);
+    state.common_setup.deploy_testing_sc();
     state
         .common_setup
         .deploy_fee_market(None, ESDT_SAFE_ADDRESS);
