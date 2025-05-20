@@ -71,12 +71,17 @@ impl MvxEsdtSafeInteract {
         self.deploy_chain_config(sovereign_config).await;
         self.deploy_header_verifier(self.state.current_chain_config_sc_address().clone())
             .await;
-        self.complete_header_verifier_setup_phase().await;
         self.deploy_mvx_esdt_safe(
             self.state.current_header_verifier_address().clone(),
             esdt_safe_config,
         )
         .await;
+        self.set_esdt_safe_address_in_header_verifier(
+            self.state.current_mvx_esdt_safe_contract_address().clone(),
+        )
+        .await;
+        self.complete_header_verifier_setup_phase().await;
+        self.deploy_testing_sc().await;
         self.complete_setup_phase().await;
         self.deploy_fee_market(
             self.state.current_mvx_esdt_safe_contract_address().clone(),
