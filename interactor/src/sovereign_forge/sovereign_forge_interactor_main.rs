@@ -158,4 +158,21 @@ impl SovereignForgeInteract {
 
         println!("Result: {result_value:?}");
     }
+
+    pub async fn check_setup_phase_status(&mut self, chain_id: &str, expected_value: bool) {
+        let result_value = self
+            .interactor
+            .query()
+            .to(self.state.current_sovereign_forge_sc_address())
+            .typed(SovereignForgeProxy)
+            .sovereign_setup_phase(chain_id)
+            .returns(ReturnsResultUnmanaged)
+            .run()
+            .await;
+
+        assert_eq!(
+            result_value, expected_value,
+            "Expected setup phase status to be {expected_value}, but got {result_value}"
+        );
+    }
 }

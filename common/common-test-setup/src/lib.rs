@@ -13,8 +13,8 @@ use header_verifier::{Headerverifier, OperationHashStatus};
 use multiversx_sc_scenario::{
     api::StaticApi,
     imports::{
-        Address, BigUint, EsdtTokenType, ManagedBuffer, MultiValue3, MxscPath, OptionalValue,
-        TestSCAddress, TestTokenIdentifier, TokenIdentifier, Vec,
+        Address, BigUint, EsdtTokenType, ManagedBuffer, MultiValue3, MultiValueEncoded, MxscPath,
+        OptionalValue, TestSCAddress, TestTokenIdentifier, TokenIdentifier, TopEncode, Vec,
     },
     multiversx_chain_vm::crypto_functions::sha256,
     scenario_model::{Log, TxResponseStatus},
@@ -31,6 +31,7 @@ use proxies::{
 use structs::{
     configs::{EsdtSafeConfig, SovereignConfig},
     fee::FeeStruct,
+    operation::Operation,
 };
 
 pub struct RegisterTokenArgs<'a> {
@@ -50,6 +51,11 @@ pub struct AccountSetup<'a> {
     pub code_path: Option<MxscPath<'a>>,
     pub esdt_balances: Option<Vec<(TestTokenIdentifier<'a>, u64, BigUint<StaticApi>)>>,
     pub egld_balance: Option<BigUint<StaticApi>>,
+}
+
+pub enum CallerAddress {
+    Owner,
+    SafeSC,
 }
 
 fn world() -> ScenarioWorld {
@@ -379,6 +385,72 @@ impl BaseSetup {
         self.assert_expected_error_message(response, error_message);
     }
 
+    pub fn register_operation(
+        &mut self,
+        caller: CallerAddress,
+        signature: ManagedBuffer<StaticApi>,
+        hash_of_hashes: &ManagedBuffer<StaticApi>,
+        operations_hashes: MultiValueEncoded<StaticApi, ManagedBuffer<StaticApi>>,
+    ) {
+        let from_address: Address = match caller {
+            CallerAddress::SafeSC => ENSHRINE_SC_ADDRESS.to_address(),
+            CallerAddress::Owner => OWNER_ADDRESS.to_address(),
+        };
+
+        self.world
+            .tx()
+            .from(from_address)
+            .to(HEADER_VERIFIER_ADDRESS)
+            .typed(HeaderverifierProxy)
+            .register_bridge_operations(
+                signature,
+                hash_of_hashes,
+                ManagedBuffer::new(),
+                ManagedBuffer::new(),
+                operations_hashes,
+            )
+            .run();
+    }
+
+    pub fn set_esdt_safe_address_in_header_verifier(&mut self, esdt_safe_address: TestSCAddress) {
+        self.world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .to(HEADER_VERIFIER_ADDRESS)
+            .typed(HeaderverifierProxy)
+            .set_esdt_safe_address(esdt_safe_address)
+            .run();
+    }
+
+    pub fn set_fee(
+        &mut self,
+        fee_struct: Option<FeeStruct<StaticApi>>,
+        error_message: Option<&str>,
+    ) {
+        let response = self
+            .world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .to(FEE_MARKET_ADDRESS)
+            .typed(FeeMarketProxy)
+            .set_fee(fee_struct.unwrap())
+            .returns(ReturnsHandledOrError::new())
+            .run();
+
+        self.assert_expected_error_message(response, error_message);
+    }
+
+    pub fn get_operation_hash(
+        &mut self,
+        operation: &Operation<StaticApi>,
+    ) -> ManagedBuffer<StaticApi> {
+        let mut serialized_operation: ManagedBuffer<StaticApi> = ManagedBuffer::new();
+        let _ = operation.top_encode(&mut serialized_operation);
+        let sha256 = sha256(&serialized_operation.to_vec());
+
+        ManagedBuffer::new_from_bytes(&sha256)
+    }
+
     pub fn assert_expected_error_message(
         &mut self,
         response: Result<(), TxResponseStatus>,
@@ -453,7 +525,7 @@ impl BaseSetup {
                         &TestTokenIdentifier::new(token_name).into()
                     )
                     .is_empty());
-            })
+            });
     }
 
     pub fn check_operation_hash_status_is_empty(
@@ -504,6 +576,22 @@ impl BaseSetup {
             .iter()
             .find(|log| log.topics.iter().any(|topic| *topic == expected_bytes));
 
-        assert!(found_log.is_some(), "Expected log not found");
+        assert!(
+            found_log.is_some(),
+            "Expected log '{}' not found",
+            expected_log
+        );
+    }
+
+    pub fn assert_expected_data(&self, logs: Vec<Log>, expected_data: &str) {
+        let expected_bytes = ManagedBuffer::<StaticApi>::from(expected_data).to_vec();
+
+        let found = logs.iter().any(|log| {
+            log.data
+                .iter()
+                .any(|data_item| data_item.to_vec() == expected_bytes)
+        });
+
+        assert!(found, "Expected data '{}' not found", expected_data);
     }
 }

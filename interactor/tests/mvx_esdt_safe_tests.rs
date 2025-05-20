@@ -1,8 +1,9 @@
 use common_interactor::common_sovereign_interactor::CommonInteractorTrait;
 use common_interactor::interactor_config::Config;
 use common_test_setup::constants::{
-    FEE_TOKEN, FIRST_TEST_TOKEN, ISSUE_COST, OPERATION_HASH_STATUS_STORAGE_KEY, SECOND_TEST_TOKEN,
-    SOV_TOKEN, SOV_TO_MVX_TOKEN_STORAGE_KEY, TOKEN_TICKER,
+    FEE_TOKEN, FIRST_TEST_TOKEN, ISSUE_COST, MVX_TO_SOV_TOKEN_STORAGE_KEY,
+    OPERATION_HASH_STATUS_STORAGE_KEY, SECOND_TEST_TOKEN, SOV_TOKEN, SOV_TO_MVX_TOKEN_STORAGE_KEY,
+    TOKEN_TICKER,
 };
 use common_test_setup::RegisterTokenArgs;
 use error_messages::{
@@ -604,6 +605,19 @@ async fn register_token_invalid_type_token() {
             },
             egld_payment,
             Some(INVALID_TYPE),
+        )
+        .await;
+
+    let key = hex::encode(MVX_TO_SOV_TOKEN_STORAGE_KEY);
+    chain_interactor
+        .check_account_storage(
+            chain_interactor
+                .state
+                .current_mvx_esdt_safe_contract_address()
+                .clone()
+                .to_address(),
+            key.as_str(),
+            None,
         )
         .await;
 

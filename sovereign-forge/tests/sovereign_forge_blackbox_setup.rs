@@ -203,4 +203,22 @@ impl SovereignForgeTestState {
             .address
             .clone()
     }
+
+    pub fn check_setup_phase_completed(
+        &mut self,
+        chain_id: ChainId<StaticApi>,
+        expected_result: bool,
+    ) {
+        let response = self
+            .common_setup
+            .world
+            .query()
+            .to(SOVEREIGN_FORGE_SC_ADDRESS)
+            .typed(SovereignForgeProxy)
+            .sovereign_setup_phase(chain_id)
+            .returns(ReturnsResultUnmanaged)
+            .run();
+
+        assert_eq!(response, expected_result);
+    }
 }

@@ -1,9 +1,9 @@
 use common_test_setup::constants::{
-    CHAIN_CONFIG_ADDRESS, ESDT_SAFE_ADDRESS, FEE_MARKET_ADDRESS, FEE_TOKEN, FIRST_TEST_TOKEN,
-    HEADER_VERIFIER_ADDRESS, ONE_HUNDRED_MILLION, ONE_HUNDRED_THOUSAND, OWNER_ADDRESS,
-    SECOND_TEST_TOKEN, SOV_TOKEN, TESTING_SC_ADDRESS, USER_ADDRESS,
+    CHAIN_CONFIG_ADDRESS, CROWD_TOKEN_ID, ESDT_SAFE_ADDRESS, FEE_MARKET_ADDRESS, FEE_TOKEN,
+    FIRST_TEST_TOKEN, HEADER_VERIFIER_ADDRESS, ONE_HUNDRED_MILLION, ONE_HUNDRED_THOUSAND,
+    OWNER_ADDRESS, SECOND_TEST_TOKEN, SOV_TOKEN, TESTING_SC_ADDRESS, USER_ADDRESS,
 };
-use common_test_setup::RegisterTokenArgs;
+use common_test_setup::{CallerAddress, RegisterTokenArgs};
 use cross_chain::storage::CrossChainStorage;
 use cross_chain::{DEFAULT_ISSUE_COST, MAX_GAS_PER_TRANSACTION};
 use error_messages::{
@@ -119,6 +119,10 @@ fn test_register_token_invalid_type() {
         egld_payment,
         Some(CANNOT_REGISTER_TOKEN),
     );
+
+    state
+        .common_setup
+        .check_multiversx_to_sovereign_token_id_mapper_is_empty(SECOND_TEST_TOKEN.as_str());
 }
 
 /// ### TEST
@@ -156,7 +160,7 @@ fn test_register_token_invalid_type_with_prefix() {
 
     state
         .common_setup
-        .check_multiversx_to_sovereign_token_id_mapper_is_empty(FIRST_TEST_TOKEN.as_str());
+        .check_multiversx_to_sovereign_token_id_mapper_is_empty(SECOND_TEST_TOKEN.as_str());
 }
 
 /// ### TEST
@@ -195,6 +199,10 @@ fn test_register_token_not_native() {
         egld_payment,
         Some(CANNOT_REGISTER_TOKEN),
     );
+
+    state
+        .common_setup
+        .check_multiversx_to_sovereign_token_id_mapper_is_empty(SECOND_TEST_TOKEN.as_str());
 }
 
 /// ### TEST
@@ -229,6 +237,8 @@ fn test_register_token_fungible_token() {
     };
 
     state.register_token(register_token_args, egld_payment, None);
+
+    // TODO: add check for storage after callback fix
 }
 
 /// ### TEST
@@ -267,6 +277,10 @@ fn test_register_token_nonfungible_token() {
         egld_payment,
         Some(CANNOT_REGISTER_TOKEN),
     );
+
+    state
+        .common_setup
+        .check_multiversx_to_sovereign_token_id_mapper_is_empty(SECOND_TEST_TOKEN.as_str());
 }
 
 /// ### TEST
@@ -409,9 +423,12 @@ fn test_deposit_too_many_tokens() {
         None,
     );
 
-    state
-        .common_setup
-        .check_multiversx_to_sovereign_token_id_mapper_is_empty(FIRST_TEST_TOKEN.as_str());
+    state.common_setup.check_account_single_esdt(
+        ESDT_SAFE_ADDRESS.to_address(),
+        FIRST_TEST_TOKEN,
+        0u64,
+        BigUint::zero(),
+    );
 }
 
 /// ### TEST
@@ -458,9 +475,14 @@ fn test_deposit_no_transfer_data() {
         Some("deposit"),
     );
 
+    let tokens_vec = vec![
+        MultiValue3::from((FIRST_TEST_TOKEN, 0u64, BigUint::from(100u64))),
+        MultiValue3::from((SECOND_TEST_TOKEN, 0u64, BigUint::from(100u64))),
+    ];
+
     state
         .common_setup
-        .check_multiversx_to_sovereign_token_id_mapper_is_empty(FIRST_TEST_TOKEN.as_str());
+        .check_account_multiple_esdts(ESDT_SAFE_ADDRESS.to_address(), tokens_vec);
 }
 
 /// ### TEST
@@ -523,9 +545,14 @@ fn test_deposit_gas_limit_too_high() {
         None,
     );
 
+    let tokens_vec = vec![
+        MultiValue3::from((FIRST_TEST_TOKEN, 0u64, BigUint::from(0u64))),
+        MultiValue3::from((SECOND_TEST_TOKEN, 0u64, BigUint::from(0u64))),
+    ];
+
     state
         .common_setup
-        .check_multiversx_to_sovereign_token_id_mapper_is_empty(FIRST_TEST_TOKEN.as_str());
+        .check_account_multiple_esdts(ESDT_SAFE_ADDRESS.to_address(), tokens_vec);
 }
 
 /// ### TEST
@@ -583,9 +610,14 @@ fn test_deposit_max_bridged_amount_exceeded() {
         None,
     );
 
+    let tokens_vec = vec![
+        MultiValue3::from((FIRST_TEST_TOKEN, 0u64, BigUint::from(0u64))),
+        MultiValue3::from((SECOND_TEST_TOKEN, 0u64, BigUint::from(0u64))),
+    ];
+
     state
         .common_setup
-        .check_multiversx_to_sovereign_token_id_mapper_is_empty(FIRST_TEST_TOKEN.as_str());
+        .check_account_multiple_esdts(ESDT_SAFE_ADDRESS.to_address(), tokens_vec);
 }
 
 /// ### TEST
@@ -641,6 +673,11 @@ fn test_deposit_endpoint_banned() {
 
     let transfer_data = MultiValue3::from((gas_limit, function, args));
 
+    let tokens_vec = vec![
+        MultiValue3::from((FIRST_TEST_TOKEN, 0u64, BigUint::from(0u64))),
+        MultiValue3::from((SECOND_TEST_TOKEN, 0u64, BigUint::from(0u64))),
+    ];
+
     state.deposit(
         USER_ADDRESS.to_managed_address(),
         OptionalValue::Some(transfer_data),
@@ -651,7 +688,7 @@ fn test_deposit_endpoint_banned() {
 
     state
         .common_setup
-        .check_multiversx_to_sovereign_token_id_mapper_is_empty(FIRST_TEST_TOKEN.as_str());
+        .check_account_multiple_esdts(ESDT_SAFE_ADDRESS.to_address(), tokens_vec);
 }
 
 /// ### TEST
@@ -815,7 +852,6 @@ fn test_deposit_transfer_data_only_with_fee() {
 
     let fee_amount = BigUint::from(ONE_HUNDRED_THOUSAND);
 
-    EsdtTokenPayment::<StaticApi>::new(TokenIdentifier::from(FEE_TOKEN), 0, fee_amount.clone());
     let fee_payment =
         EsdtTokenPayment::<StaticApi>::new(TokenIdentifier::from(FEE_TOKEN), 0, fee_amount.clone());
 
@@ -842,6 +878,13 @@ fn test_deposit_transfer_data_only_with_fee() {
         payments_vec,
         None,
         Some("scCall"),
+    );
+
+    state.common_setup.check_account_single_esdt(
+        FEE_MARKET_ADDRESS.to_address(),
+        FEE_TOKEN,
+        0u64,
+        gas_limit.into(),
     );
 }
 
@@ -1020,20 +1063,29 @@ fn test_deposit_payment_doesnt_cover_fee() {
         None,
     );
 
+    let tokens_vec = vec![
+        MultiValue3::from((FIRST_TEST_TOKEN, 0u64, BigUint::from(0u64))),
+        MultiValue3::from((SECOND_TEST_TOKEN, 0u64, BigUint::from(0u64))),
+    ];
     state
         .common_setup
-        .check_multiversx_to_sovereign_token_id_mapper_is_empty(FIRST_TEST_TOKEN.as_str());
-    state
-        .common_setup
-        .check_multiversx_to_sovereign_token_id_mapper_is_empty(SECOND_TEST_TOKEN.as_str());
+        .check_account_multiple_esdts(ESDT_SAFE_ADDRESS.to_address(), tokens_vec);
 }
 
+/// ### TEST
+/// M-ESDT_DEP_FAIL_022
+///
+/// ### ACTION
+/// Call 'deposit()' with transfer data and non-whitelisted tokens
+///
+/// ### EXPECTED
+/// The tokens are refunded back to the user, except the fee
 #[test]
 fn test_deposit_refund() {
     let mut state = MvxEsdtSafeTestState::new();
 
     let config = EsdtSafeConfig::new(
-        ManagedVec::new(),
+        ManagedVec::from(vec![TokenIdentifier::from(CROWD_TOKEN_ID)]),
         ManagedVec::new(),
         50_000_000,
         ManagedVec::new(),
@@ -1103,20 +1155,14 @@ fn test_deposit_refund() {
         Some("deposit"),
     );
 
-    let expected_amount_token_one =
-        BigUint::from(ONE_HUNDRED_MILLION) - &esdt_token_payment_one.amount;
-
-    let expected_amount_token_two =
-        BigUint::from(ONE_HUNDRED_MILLION) - &esdt_token_payment_two.amount;
-
-    let expected_amount_token_fee = BigUint::from(ONE_HUNDRED_MILLION)
-        - BigUint::from(payments_vec.len() - 1) * per_transfer
-        - BigUint::from(gas_limit) * per_gas;
-
     let expected_balances = vec![
-        MultiValue3::from((FIRST_TEST_TOKEN, 0u64, expected_amount_token_one)),
-        MultiValue3::from((SECOND_TEST_TOKEN, 0u64, expected_amount_token_two)),
-        MultiValue3::from((FEE_TOKEN, 0u64, expected_amount_token_fee)),
+        MultiValue3::from((FIRST_TEST_TOKEN, 0u64, BigUint::from(ONE_HUNDRED_MILLION))),
+        MultiValue3::from((SECOND_TEST_TOKEN, 0u64, BigUint::from(ONE_HUNDRED_MILLION))),
+        MultiValue3::from((
+            FEE_TOKEN,
+            0u64,
+            BigUint::from(ONE_HUNDRED_MILLION - gas_limit as u32),
+        )),
     ];
 
     state
@@ -1125,7 +1171,7 @@ fn test_deposit_refund() {
 }
 
 /// ### TEST
-/// M-ESDT_DEP_OK_022
+/// M-ESDT_DEP_OK_023
 ///
 /// ### ACTION
 /// Call 'deposit()' with burn mechanism set
@@ -1170,10 +1216,6 @@ fn test_deposit_success_burn_mechanism() {
         Some("deposit"),
     );
 
-    state
-        .common_setup
-        .check_multiversx_to_sovereign_token_id_mapper_is_empty(TRUSTED_TOKEN_IDS[0]);
-
     let expected_tokens = vec![
         MultiValue3::from((
             TestTokenIdentifier::new(TRUSTED_TOKEN_IDS[0]),
@@ -1186,10 +1228,17 @@ fn test_deposit_success_burn_mechanism() {
     state
         .common_setup
         .check_account_multiple_esdts(ESDT_SAFE_ADDRESS.to_address(), expected_tokens);
+
+    let tokens = vec![
+        (TestTokenIdentifier::new(TRUSTED_TOKEN_IDS[0]), 100u64),
+        (SECOND_TEST_TOKEN, 0u64),
+    ];
+
+    state.common_setup.check_deposited_tokens_amount(tokens);
 }
 
 /// ### TEST
-/// M-ESDT_REG_OK_023
+/// M-ESDT_REG_OK_024
 ///
 /// ### ACTION
 /// Call 'register_token()' with valid token attributes
@@ -1221,11 +1270,11 @@ fn test_register_token_fungible_token_with_prefix() {
 
     state.register_token(register_token_args, egld_payment, None);
 
-    // TODO: Add check for storage after callback issue is fixed
+    // TODO: add check for storage after callback fix
 }
 
 /// ### TEST
-/// M-ESDT_REG_FAIL_024
+/// M-ESDT_REG_FAIL_025
 ///
 /// ### ACTION
 /// Call 'register_token()' with no prefix and type fungible
@@ -1260,10 +1309,14 @@ fn test_register_token_fungible_token_no_prefix() {
         egld_payment,
         Some(CANNOT_REGISTER_TOKEN),
     );
+
+    state
+        .common_setup
+        .check_multiversx_to_sovereign_token_id_mapper_is_empty(FIRST_TEST_TOKEN.as_str());
 }
 
 /// ### TEST
-/// M-ESDT_REG_FAIL_025
+/// M-ESDT_REG_FAIL_026
 ///
 /// ### ACTION
 /// Call register_token twice
@@ -1304,7 +1357,7 @@ fn test_register_native_token_already_registered() {
 }
 
 /// ### TEST
-/// M-ESDT_REG_OK_026
+/// M-ESDT_REG_OK_027
 ///
 /// ### ACTION
 /// Call 'register_native_token()' with valid token attributes
@@ -1333,7 +1386,7 @@ fn test_register_native_token() {
 }
 
 /// ### TEST
-/// M-ESDT_EXEC_FAIL_027
+/// M-ESDT_EXEC_FAIL_028
 ///
 /// ### ACTION
 /// Call 'execute_operation()' with no esdt-safe-address set
@@ -1363,7 +1416,7 @@ fn test_execute_operation_no_esdt_safe_registered() {
         operation_data,
     );
 
-    let hash_of_hashes = state.get_operation_hash(&operation);
+    let hash_of_hashes = state.common_setup.get_operation_hash(&operation);
 
     state
         .common_setup
@@ -1374,6 +1427,7 @@ fn test_execute_operation_no_esdt_safe_registered() {
         &operation,
         Some(ESDT_SAFE_ADDRESS_NOT_SET),
         None,
+        None,
     );
 
     state
@@ -1382,7 +1436,7 @@ fn test_execute_operation_no_esdt_safe_registered() {
 }
 
 /// ### TEST
-/// M-ESDT_EXEC_OK_028
+/// M-ESDT_EXEC_OK_029
 ///
 /// ### ACTION
 /// Call 'execute_operation()' with valid operation
@@ -1422,7 +1476,7 @@ fn test_execute_operation_success() {
         operation_data,
     );
 
-    let operation_hash = state.get_operation_hash(&operation);
+    let operation_hash = state.common_setup.get_operation_hash(&operation);
     let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&operation_hash.to_vec()));
 
     state
@@ -1437,17 +1491,30 @@ fn test_execute_operation_success() {
         .common_setup
         .complete_header_verifier_setup_phase(None);
     state.common_setup.deploy_testing_sc();
-    state.set_esdt_safe_address_in_header_verifier(ESDT_SAFE_ADDRESS);
+    state
+        .common_setup
+        .set_esdt_safe_address_in_header_verifier(ESDT_SAFE_ADDRESS);
 
     let operations_hashes = MultiValueEncoded::from(ManagedVec::from(vec![operation_hash.clone()]));
 
-    state.register_operation(ManagedBuffer::new(), &hash_of_hashes, operations_hashes);
+    state.common_setup.register_operation(
+        CallerAddress::Owner,
+        ManagedBuffer::new(),
+        &hash_of_hashes,
+        operations_hashes,
+    );
 
     state
         .common_setup
         .check_operation_hash_status(&operation_hash, OperationHashStatus::NotLocked);
 
-    state.execute_operation(&hash_of_hashes, &operation, None, Some("executedBridgeOp"));
+    state.execute_operation(
+        &hash_of_hashes,
+        &operation,
+        None,
+        Some("executedBridgeOp"),
+        None,
+    );
 
     state
         .common_setup
@@ -1455,7 +1522,7 @@ fn test_execute_operation_success() {
 }
 
 /// ### TEST
-/// M-ESDT_EXEC_OK_029
+/// M-ESDT_EXEC_OK_030
 ///
 /// ### ACTION
 /// Call 'execute_operation()' with payment containing the registered token
@@ -1505,7 +1572,7 @@ fn test_execute_operation_with_native_token_success() {
         operation_data,
     );
 
-    let operation_hash = state.get_operation_hash(&operation);
+    let operation_hash = state.common_setup.get_operation_hash(&operation);
     let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&operation_hash.to_vec()));
 
     state
@@ -1520,17 +1587,30 @@ fn test_execute_operation_with_native_token_success() {
         .common_setup
         .complete_header_verifier_setup_phase(None);
     state.common_setup.deploy_testing_sc();
-    state.set_esdt_safe_address_in_header_verifier(ESDT_SAFE_ADDRESS);
+    state
+        .common_setup
+        .set_esdt_safe_address_in_header_verifier(ESDT_SAFE_ADDRESS);
 
     let operations_hashes = MultiValueEncoded::from(ManagedVec::from(vec![operation_hash.clone()]));
 
-    state.register_operation(ManagedBuffer::new(), &hash_of_hashes, operations_hashes);
+    state.common_setup.register_operation(
+        CallerAddress::Owner,
+        ManagedBuffer::new(),
+        &hash_of_hashes,
+        operations_hashes,
+    );
 
     state
         .common_setup
         .check_operation_hash_status(&operation_hash, OperationHashStatus::NotLocked);
 
-    state.execute_operation(&hash_of_hashes, &operation, None, Some("executedBridgeOp"));
+    state.execute_operation(
+        &hash_of_hashes,
+        &operation,
+        None,
+        Some("executedBridgeOp"),
+        None,
+    );
 
     state
         .common_setup
@@ -1545,7 +1625,7 @@ fn test_execute_operation_with_native_token_success() {
 }
 
 /// ### TEST
-/// M-ESDT_EXEC_OK_030
+/// M-ESDT_EXEC_OK_031
 ///
 /// ### ACTION
 /// Call 'execute_operation()' after setting the burn mechanism
@@ -1579,7 +1659,7 @@ fn test_execute_operation_burn_mechanism_without_deposit_cannot_subtract() {
         operation_data,
     );
 
-    let operation_hash = state.get_operation_hash(&operation);
+    let operation_hash = state.common_setup.get_operation_hash(&operation);
     let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&operation_hash.to_vec()));
 
     state
@@ -1590,29 +1670,34 @@ fn test_execute_operation_burn_mechanism_without_deposit_cannot_subtract() {
         .deploy_header_verifier(CHAIN_CONFIG_ADDRESS);
 
     state.common_setup.deploy_testing_sc();
-    state.set_esdt_safe_address_in_header_verifier(ESDT_SAFE_ADDRESS);
-    state.set_fee_market_address_in_header_verifier(FEE_MARKET_ADDRESS);
+    state
+        .common_setup
+        .set_esdt_safe_address_in_header_verifier(ESDT_SAFE_ADDRESS);
     state
         .common_setup
         .complete_header_verifier_setup_phase(None);
 
     let operations_hashes = MultiValueEncoded::from(ManagedVec::from(vec![operation_hash.clone()]));
 
-    state.register_operation(ManagedBuffer::new(), &hash_of_hashes, operations_hashes);
+    state.common_setup.register_operation(
+        CallerAddress::Owner,
+        ManagedBuffer::new(),
+        &hash_of_hashes,
+        operations_hashes,
+    );
     state.set_token_burn_mechanism(TRUSTED_TOKEN_IDS[0], None);
 
-    state.execute_operation(&hash_of_hashes, &operation, None, Some("executedBridgeOp"));
+    state.execute_operation(
+        &hash_of_hashes,
+        &operation,
+        None,
+        Some("executedBridgeOp"),
+        None,
+    );
 
     state
         .common_setup
         .check_operation_hash_status_is_empty(&operation_hash);
-
-    state.common_setup.check_account_single_esdt(
-        ESDT_SAFE_ADDRESS.to_address(),
-        TestTokenIdentifier::new(TRUSTED_TOKEN_IDS[0]),
-        0u64,
-        BigUint::from(0u64),
-    );
 
     state.common_setup.check_account_single_esdt(
         TESTING_SC_ADDRESS.to_address(),
@@ -1623,7 +1708,7 @@ fn test_execute_operation_burn_mechanism_without_deposit_cannot_subtract() {
 }
 
 /// ### TEST
-/// M-ESDT_EXEC_OK_031
+/// M-ESDT_EXEC_OK_032
 ///
 /// ### ACTION
 /// Call 'execute_operation()' after setting the burn mechanism
@@ -1655,7 +1740,7 @@ fn test_execute_operation_success_burn_mechanism() {
         operation_data,
     );
 
-    let operation_hash = state.get_operation_hash(&operation);
+    let operation_hash = state.common_setup.get_operation_hash(&operation);
     let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&operation_hash.to_vec()));
 
     state
@@ -1674,6 +1759,9 @@ fn test_execute_operation_success_burn_mechanism() {
         .common_setup
         .deploy_fee_market(None, ESDT_SAFE_ADDRESS);
     state.set_fee_market_address(FEE_MARKET_ADDRESS);
+    state
+        .common_setup
+        .set_esdt_safe_address_in_header_verifier(ESDT_SAFE_ADDRESS);
 
     let operations_hashes = MultiValueEncoded::from(ManagedVec::from(vec![operation_hash.clone()]));
 
@@ -1685,7 +1773,12 @@ fn test_execute_operation_success_burn_mechanism() {
         Some("deposit"),
     );
 
-    state.register_operation(ManagedBuffer::new(), &hash_of_hashes, operations_hashes);
+    state.common_setup.register_operation(
+        CallerAddress::Owner,
+        ManagedBuffer::new(),
+        &hash_of_hashes,
+        operations_hashes,
+    );
 
     state
         .common_setup
@@ -1693,7 +1786,13 @@ fn test_execute_operation_success_burn_mechanism() {
 
     state.set_token_burn_mechanism(TRUSTED_TOKEN_IDS[0], None);
 
-    state.execute_operation(&hash_of_hashes, &operation, None, Some("executedBridgeOp"));
+    state.execute_operation(
+        &hash_of_hashes,
+        &operation,
+        None,
+        Some("executedBridgeOp"),
+        None,
+    );
 
     let expected_amount_trusted_token = BigUint::from(ONE_HUNDRED_MILLION) - &token_data.amount;
 
@@ -1730,7 +1829,7 @@ fn test_execute_operation_success_burn_mechanism() {
 }
 
 /// ### TEST
-/// M-ESDT_EXEC_OK_032
+/// M-ESDT_EXEC_OK_033
 ///
 /// ### ACTION
 /// Call 'execute_operation()' after switching to the lock mechanism from the burn mechanism
@@ -1756,12 +1855,9 @@ fn test_deposit_execute_switch_mechanism() {
         .common_setup
         .deploy_fee_market(None, ESDT_SAFE_ADDRESS);
     state.set_fee_market_address(FEE_MARKET_ADDRESS);
-    state.set_esdt_safe_address_in_header_verifier(ESDT_SAFE_ADDRESS);
-    state.set_fee_market_address_in_header_verifier(FEE_MARKET_ADDRESS);
     state
         .common_setup
-        .complete_header_verifier_setup_phase(None);
-    state.common_setup.deploy_testing_sc();
+        .set_esdt_safe_address_in_header_verifier(ESDT_SAFE_ADDRESS);
 
     let deposited_trusted_token_payment_amount = 1000u64;
     let deposit_trusted_token_payment_token_data = EsdtTokenData {
@@ -1821,12 +1917,13 @@ fn test_deposit_execute_switch_mechanism() {
         vec![execute_trusted_token_payment.clone()].into(),
         operation_one_data,
     );
-    let operation_one_hash = state.get_operation_hash(&operation_one);
+    let operation_one_hash = state.common_setup.get_operation_hash(&operation_one);
     let hash_of_hashes_one = ManagedBuffer::new_from_bytes(&sha256(&operation_one_hash.to_vec()));
     let operations_hashes_one =
         MultiValueEncoded::from(ManagedVec::from(vec![operation_one_hash.clone()]));
 
-    state.register_operation(
+    state.common_setup.register_operation(
+        CallerAddress::Owner,
         ManagedBuffer::new(),
         &hash_of_hashes_one,
         operations_hashes_one,
@@ -1837,6 +1934,7 @@ fn test_deposit_execute_switch_mechanism() {
         &operation_one,
         None,
         Some("executedBridgeOp"),
+        None,
     );
 
     let mut expected_receiver_amount = execute_trusted_token_payment_amount;
@@ -1895,12 +1993,13 @@ fn test_deposit_execute_switch_mechanism() {
         vec![execute_trusted_token_payment.clone()].into(),
         operation_two_data,
     );
-    let operation_two_hash = state.get_operation_hash(&operation_two);
+    let operation_two_hash = state.common_setup.get_operation_hash(&operation_two);
     let hash_of_hashes_two = ManagedBuffer::new_from_bytes(&sha256(&operation_two_hash.to_vec()));
     let operations_hashes_two =
         MultiValueEncoded::from(ManagedVec::from(vec![operation_two_hash.clone()]));
 
-    state.register_operation(
+    state.common_setup.register_operation(
+        CallerAddress::Owner,
         ManagedBuffer::new(),
         &hash_of_hashes_two,
         operations_hashes_two,
@@ -1911,6 +2010,7 @@ fn test_deposit_execute_switch_mechanism() {
         &operation_two,
         None,
         Some("executedBridgeOp"),
+        None,
     );
 
     state
@@ -1964,7 +2064,7 @@ fn test_deposit_execute_switch_mechanism() {
 }
 
 /// ### TEST
-/// M-ESDT_EXEC_OK_033
+/// M-ESDT_EXEC_OK_034
 ///
 /// ### ACTION
 /// Call 'execute_operation()' with empty payments
@@ -2007,7 +2107,7 @@ fn test_execute_operation_no_payments() {
         operation_data,
     );
 
-    let operation_hash = state.get_operation_hash(&operation);
+    let operation_hash = state.common_setup.get_operation_hash(&operation);
     let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&operation_hash.to_vec()));
 
     state
@@ -2030,22 +2130,44 @@ fn test_execute_operation_no_payments() {
         .complete_header_verifier_setup_phase(None);
 
     state.common_setup.deploy_testing_sc();
+    state
+        .common_setup
+        .set_esdt_safe_address_in_header_verifier(ESDT_SAFE_ADDRESS);
 
     let operations_hashes = MultiValueEncoded::from(ManagedVec::from(vec![operation_hash.clone()]));
 
-    state.register_operation(ManagedBuffer::new(), &hash_of_hashes, operations_hashes);
+    state.common_setup.register_operation(
+        CallerAddress::Owner,
+        ManagedBuffer::new(),
+        &hash_of_hashes,
+        operations_hashes,
+    );
 
     state
         .common_setup
         .check_operation_hash_status(&operation_hash, OperationHashStatus::NotLocked);
 
-    state.execute_operation(&hash_of_hashes, &operation, None, Some("executedBridgeOp"));
+    state.execute_operation(
+        &hash_of_hashes,
+        &operation,
+        None,
+        Some("executedBridgeOp"),
+        None,
+    );
 
     state
         .common_setup
         .check_operation_hash_status_is_empty(&operation_hash);
 }
 
+/// ### TEST
+/// M-ESDT_EXEC_OK_035
+///
+/// ### ACTION
+/// Call 'execute_operation()' with empty payments and wrong endpoint
+///
+/// ### EXPECTED
+/// The operation is not executed in the testing smart contract
 #[test]
 fn test_execute_operation_no_payments_failed_event() {
     let mut state = MvxEsdtSafeTestState::new();
@@ -2097,21 +2219,34 @@ fn test_execute_operation_no_payments_failed_event() {
         operation_data,
     );
 
-    let operation_hash = state.get_operation_hash(&operation);
+    let operation_hash = state.common_setup.get_operation_hash(&operation);
     let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&operation_hash.to_vec()));
 
     state.common_setup.deploy_testing_sc();
-    state.set_esdt_safe_address_in_header_verifier(ESDT_SAFE_ADDRESS);
+    state
+        .common_setup
+        .set_esdt_safe_address_in_header_verifier(ESDT_SAFE_ADDRESS);
 
     let operations_hashes = MultiValueEncoded::from(ManagedVec::from(vec![operation_hash.clone()]));
 
-    state.register_operation(ManagedBuffer::new(), &hash_of_hashes, operations_hashes);
+    state.common_setup.register_operation(
+        CallerAddress::Owner,
+        ManagedBuffer::new(),
+        &hash_of_hashes,
+        operations_hashes,
+    );
 
     state
         .common_setup
         .check_operation_hash_status(&operation_hash, OperationHashStatus::NotLocked);
 
-    state.execute_operation(&hash_of_hashes, &operation, None, Some("executedBridgeOp"));
+    state.execute_operation(
+        &hash_of_hashes,
+        &operation,
+        None,
+        Some("executedBridgeOp"),
+        Some("invalid function (not found)"),
+    );
 
     state
         .common_setup
@@ -2119,7 +2254,7 @@ fn test_execute_operation_no_payments_failed_event() {
 }
 
 /// ### TEST
-/// M-ESDT_SET_BURN_FAIL_034
+/// M-ESDT_SET_BURN_FAIL_036
 ///
 /// ### ACTION
 /// Call 'set_token_burn_mechanism()' without the propper roles
@@ -2138,7 +2273,7 @@ fn test_set_token_burn_mechanism_no_roles() {
 }
 
 /// ### TEST
-/// M-ESDT_SET_BURN_FAIL_035
+/// M-ESDT_SET_BURN_FAIL_037
 ///
 /// ### ACTION
 /// Call 'set_token_burn_mechanism()' without a trusted token id
@@ -2154,7 +2289,7 @@ fn test_set_token_burn_mechanism_token_not_trusted() {
 }
 
 /// ### TEST
-/// M-ESDT_SET_BURN_OK_036
+/// M-ESDT_SET_BURN_OK_038
 ///
 /// ### ACTION
 /// Call 'set_token_burn_mechanism()' with a trusted token id
@@ -2188,7 +2323,7 @@ fn test_set_token_burn_mechanism() {
 }
 
 /// ### TEST
-/// M-ESDT_SET_BURN_OK_037
+/// M-ESDT_SET_BURN_OK_039
 ///
 /// ### ACTION
 /// Call both 'set_token_burn_mechanism()' and 'set_token_lock_mechanism()' with a trusted token id.
@@ -2221,7 +2356,7 @@ fn test_set_token_lock_mechanism() {
 }
 
 /// ### TEST
-/// M-ESDT_SET_BURN_FAIL_038
+/// M-ESDT_SET_BURN_FAIL_040
 ///
 /// ### ACTION
 /// Call both 'set_token_burn_mechanism()' and 'set_token_lock_mechanism()' with a trusted token id.
