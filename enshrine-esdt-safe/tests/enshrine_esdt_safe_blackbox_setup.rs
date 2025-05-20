@@ -12,8 +12,8 @@ use enshrine_esdt_safe::common::storage::CommonStorage;
 use multiversx_sc::{
     imports::OptionalValue,
     types::{
-        BigUint, EsdtTokenPayment, ManagedBuffer, ManagedVec, MultiValueEncoded, TestAddress,
-        TestTokenIdentifier, TokenIdentifier,
+        BigUint, EsdtTokenData, EsdtTokenPayment, ManagedBuffer, ManagedVec, MultiValueEncoded,
+        TestAddress, TestTokenIdentifier, TokenIdentifier,
     },
 };
 use multiversx_sc_scenario::{
@@ -21,13 +21,14 @@ use multiversx_sc_scenario::{
     ReturnsLogs, ScenarioTxRun, ScenarioTxWhitebox,
 };
 use proxies::{
-    enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy, token_handler_proxy::TokenHandlerProxy,
+    enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy, header_verifier_proxy::HeaderverifierProxy,
+    token_handler_proxy::TokenHandlerProxy,
 };
 use structs::{
     aliases::{GasLimit, OptionalValueTransferDataTuple, PaymentsVec},
     configs::{EsdtSafeConfig, SovereignConfig},
     fee::{FeeStruct, FeeType},
-    operation::Operation,
+    operation::{Operation, OperationData, OperationEsdtPayment},
 };
 
 pub struct EnshrineTestState {
@@ -130,7 +131,6 @@ impl EnshrineTestState {
         self.common_setup
             .deploy_header_verifier(CHAIN_CONFIG_ADDRESS);
         self.register_esdt_in_header_verifier();
-        self.register_fee_market_in_header_verifier();
         self.common_setup.complete_header_verifier_setup_phase(None);
         self.common_setup.deploy_token_handler();
         self.common_setup
@@ -271,39 +271,6 @@ impl EnshrineTestState {
             .typed(HeaderverifierProxy)
             .set_esdt_safe_address(ENSHRINE_SC_ADDRESS)
             .run();
-    }
-
-    pub fn register_fee_market_in_header_verifier(&mut self) {
-        self.common_setup
-            .world
-            .tx()
-            .from(OWNER_ADDRESS)
-            .to(HEADER_VERIFIER_ADDRESS)
-            .typed(HeaderverifierProxy)
-            .set_fee_market_address(FEE_MARKET_ADDRESS)
-            .run();
-    }
-
-    pub fn setup_payments(
-        &mut self,
-        token_ids: &Vec<TestTokenIdentifier>,
-    ) -> (
-        ManagedVec<StaticApi, OperationEsdtPayment<StaticApi>>,
-        OperationData<StaticApi>,
-    ) {
-        let mut tokens: ManagedVec<StaticApi, OperationEsdtPayment<StaticApi>> = ManagedVec::new();
-
-        for token_id in token_ids {
-            let payment: OperationEsdtPayment<StaticApi> =
-                OperationEsdtPayment::new((*token_id).into(), 1, EsdtTokenData::default());
-
-            tokens.push(payment);
-        }
-
-        let op_sender = USER_ADDRESS.to_managed_address();
-        let data: OperationData<StaticApi> = OperationData::new(1, op_sender, Option::None);
-
-        (tokens, data)
     }
 
     pub fn setup_transfer_data(

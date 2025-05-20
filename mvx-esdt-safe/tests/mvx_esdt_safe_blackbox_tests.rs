@@ -1485,8 +1485,9 @@ fn test_execute_operation_success() {
     state
         .common_setup
         .deploy_header_verifier(CHAIN_CONFIG_ADDRESS);
-    state.set_esdt_safe_address_in_header_verifier(ESDT_SAFE_ADDRESS);
-    state.set_fee_market_address_in_header_verifier(FEE_MARKET_ADDRESS);
+    state
+        .common_setup
+        .set_esdt_safe_address_in_header_verifier(ESDT_SAFE_ADDRESS);
     state
         .common_setup
         .complete_header_verifier_setup_phase(None);
@@ -1581,8 +1582,9 @@ fn test_execute_operation_with_native_token_success() {
     state
         .common_setup
         .deploy_header_verifier(CHAIN_CONFIG_ADDRESS);
-    state.set_esdt_safe_address_in_header_verifier(ESDT_SAFE_ADDRESS);
-    state.set_fee_market_address_in_header_verifier(FEE_MARKET_ADDRESS);
+    state
+        .common_setup
+        .set_esdt_safe_address_in_header_verifier(ESDT_SAFE_ADDRESS);
     state
         .common_setup
         .complete_header_verifier_setup_phase(None);
@@ -1749,8 +1751,9 @@ fn test_execute_operation_success_burn_mechanism() {
     state
         .common_setup
         .deploy_header_verifier(CHAIN_CONFIG_ADDRESS);
-    state.set_esdt_safe_address_in_header_verifier(ESDT_SAFE_ADDRESS);
-    state.set_fee_market_address_in_header_verifier(FEE_MARKET_ADDRESS);
+    state
+        .common_setup
+        .set_esdt_safe_address_in_header_verifier(ESDT_SAFE_ADDRESS);
     state
         .common_setup
         .complete_header_verifier_setup_phase(None);
@@ -1858,6 +1861,9 @@ fn test_deposit_execute_switch_mechanism() {
     state
         .common_setup
         .set_esdt_safe_address_in_header_verifier(ESDT_SAFE_ADDRESS);
+    state
+        .common_setup
+        .complete_header_verifier_setup_phase(None);
 
     let deposited_trusted_token_payment_amount = 1000u64;
     let deposit_trusted_token_payment_token_data = EsdtTokenData {
@@ -2122,8 +2128,9 @@ fn test_execute_operation_no_payments() {
         .deploy_fee_market(None, ESDT_SAFE_ADDRESS);
 
     state.set_fee_market_address(FEE_MARKET_ADDRESS);
-    state.set_esdt_safe_address_in_header_verifier(ESDT_SAFE_ADDRESS);
-    state.set_fee_market_address_in_header_verifier(FEE_MARKET_ADDRESS);
+    state
+        .common_setup
+        .set_esdt_safe_address_in_header_verifier(ESDT_SAFE_ADDRESS);
 
     state
         .common_setup
@@ -2184,8 +2191,9 @@ fn test_execute_operation_no_payments_failed_event() {
         .common_setup
         .deploy_header_verifier(CHAIN_CONFIG_ADDRESS);
 
-    state.set_esdt_safe_address_in_header_verifier(ESDT_SAFE_ADDRESS);
-    state.set_fee_market_address_in_header_verifier(FEE_MARKET_ADDRESS);
+    state
+        .common_setup
+        .set_esdt_safe_address_in_header_verifier(ESDT_SAFE_ADDRESS);
 
     state
         .common_setup
