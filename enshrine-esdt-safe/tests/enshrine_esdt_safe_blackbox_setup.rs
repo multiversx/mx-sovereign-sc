@@ -10,11 +10,10 @@ use common_test_setup::{
 };
 use enshrine_esdt_safe::common::storage::CommonStorage;
 use multiversx_sc::{
-    codec::TopEncode,
     imports::OptionalValue,
     types::{
-        BigUint, EsdtTokenData, EsdtTokenPayment, ManagedAddress, ManagedBuffer, ManagedVec,
-        MultiValueEncoded, TestAddress, TestTokenIdentifier, TokenIdentifier,
+        BigUint, EsdtTokenPayment, ManagedBuffer, ManagedVec, MultiValueEncoded, TestAddress,
+        TestTokenIdentifier, TokenIdentifier,
     },
 };
 use multiversx_sc_scenario::{
@@ -22,14 +21,13 @@ use multiversx_sc_scenario::{
     ReturnsLogs, ScenarioTxRun, ScenarioTxWhitebox,
 };
 use proxies::{
-    enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy, fee_market_proxy::FeeMarketProxy,
-    header_verifier_proxy::HeaderverifierProxy, token_handler_proxy::TokenHandlerProxy,
+    enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy, token_handler_proxy::TokenHandlerProxy,
 };
 use structs::{
     aliases::{GasLimit, OptionalValueTransferDataTuple, PaymentsVec},
     configs::{EsdtSafeConfig, SovereignConfig},
     fee::{FeeStruct, FeeType},
-    operation::{Operation, OperationData, OperationEsdtPayment},
+    operation::Operation,
 };
 
 pub struct EnshrineTestState {
@@ -142,25 +140,13 @@ impl EnshrineTestState {
         self
     }
 
-    pub fn set_fee(
-        &mut self,
-        fee_struct: Option<&FeeStruct<StaticApi>>,
-        error_message: Option<&str>,
-    ) -> &mut Self {
-        if let Some(fee) = fee_struct {
-            self.add_fee_token(fee, error_message);
-        }
-
-        self
-    }
-
     pub fn execute_operation(
         &mut self,
         error_message: Option<&str>,
         operation: Operation<StaticApi>,
         expected_log: Option<&str>,
     ) {
-        let operation_hash = self.get_operation_hash(&operation);
+        let operation_hash = self.common_setup.get_operation_hash(&operation);
         let hash_of_hashes: ManagedBuffer<StaticApi> =
             ManagedBuffer::from(&sha256(&operation_hash.to_vec()));
 
@@ -182,40 +168,6 @@ impl EnshrineTestState {
         if let Some(expected_log) = expected_log {
             self.common_setup.assert_expected_log(logs, expected_log);
         }
-    }
-
-    pub fn register_operation(
-        &mut self,
-        payment_tokens: &Vec<TestTokenIdentifier>,
-        to: ManagedAddress<StaticApi>,
-    ) -> Operation<StaticApi> {
-        let (tokens, data) = self.setup_payments(payment_tokens);
-        let operation = Operation::new(to, tokens, data);
-        let operation_hash = self.get_operation_hash(&operation);
-        let mut operations_hashes = MultiValueEncoded::<StaticApi, ManagedBuffer<StaticApi>>::new();
-
-        operations_hashes.push(operation_hash.clone());
-
-        let mock_signature = ManagedBuffer::<StaticApi>::new();
-        let hash_of_hashes =
-            ManagedBuffer::<StaticApi>::new_from_bytes(&sha256(&operation_hash.to_vec()));
-
-        self.common_setup
-            .world
-            .tx()
-            .from(ENSHRINE_SC_ADDRESS)
-            .to(HEADER_VERIFIER_ADDRESS)
-            .typed(HeaderverifierProxy)
-            .register_bridge_operations(
-                mock_signature,
-                hash_of_hashes.clone(),
-                ManagedBuffer::new(),
-                ManagedBuffer::new(),
-                operations_hashes.clone(),
-            )
-            .run();
-
-        operation
     }
 
     pub fn register_fee_market_address(&mut self) {
@@ -297,26 +249,6 @@ impl EnshrineTestState {
             .assert_expected_error_message(response, error_message);
     }
 
-    pub fn add_fee_token(
-        &mut self,
-        fee_struct: &FeeStruct<StaticApi>,
-        error_message: Option<&str>,
-    ) {
-        let response = self
-            .common_setup
-            .world
-            .tx()
-            .from(OWNER_ADDRESS)
-            .to(FEE_MARKET_ADDRESS)
-            .typed(FeeMarketProxy)
-            .set_fee(fee_struct)
-            .returns(ReturnsHandledOrError::new())
-            .run();
-
-        self.common_setup
-            .assert_expected_error_message(response, error_message);
-    }
-
     pub fn whitelist_enshrine_esdt(&mut self) {
         self.common_setup
             .world
@@ -328,39 +260,6 @@ impl EnshrineTestState {
             .run();
     }
 
-    pub fn register_esdt_in_header_verifier(&mut self) {
-        self.common_setup
-            .world
-            .tx()
-            .from(OWNER_ADDRESS)
-            .to(HEADER_VERIFIER_ADDRESS)
-            .typed(HeaderverifierProxy)
-            .set_esdt_safe_address(ENSHRINE_SC_ADDRESS)
-            .run();
-    }
-
-    pub fn setup_payments(
-        &mut self,
-        token_ids: &Vec<TestTokenIdentifier>,
-    ) -> (
-        ManagedVec<StaticApi, OperationEsdtPayment<StaticApi>>,
-        OperationData<StaticApi>,
-    ) {
-        let mut tokens: ManagedVec<StaticApi, OperationEsdtPayment<StaticApi>> = ManagedVec::new();
-
-        for token_id in token_ids {
-            let payment: OperationEsdtPayment<StaticApi> =
-                OperationEsdtPayment::new((*token_id).into(), 1, EsdtTokenData::default());
-
-            tokens.push(payment);
-        }
-
-        let op_sender = USER_ADDRESS.to_managed_address();
-        let data: OperationData<StaticApi> = OperationData::new(1, op_sender, Option::None);
-
-        (tokens, data)
-    }
-
     pub fn setup_transfer_data(
         &mut self,
         gas_limit: GasLimit,
@@ -368,17 +267,6 @@ impl EnshrineTestState {
         args: ManagedVec<StaticApi, ManagedBuffer<StaticApi>>,
     ) -> OptionalValueTransferDataTuple<StaticApi> {
         OptionalValue::Some((gas_limit, function, MultiValueEncoded::from(args)).into())
-    }
-
-    pub fn get_operation_hash(
-        &mut self,
-        operation: &Operation<StaticApi>,
-    ) -> ManagedBuffer<StaticApi> {
-        let mut serialized_operation: ManagedBuffer<StaticApi> = ManagedBuffer::new();
-        let _ = operation.top_encode(&mut serialized_operation);
-        let sha256 = sha256(&serialized_operation.to_vec());
-
-        ManagedBuffer::new_from_bytes(&sha256)
     }
 
     pub fn setup_fee_struct(
