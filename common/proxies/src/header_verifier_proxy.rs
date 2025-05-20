@@ -164,19 +164,6 @@ where
             .original_result()
     }
 
-    pub fn set_fee_market_address<
-        Arg0: ProxyArg<ManagedAddress<Env::Api>>,
-    >(
-        self,
-        fee_market_address: Arg0,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("setFeeMarketAddress")
-            .argument(&fee_market_address)
-            .original_result()
-    }
-
     pub fn remove_executed_hash<
         Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
         Arg1: ProxyArg<ManagedBuffer<Env::Api>>,
@@ -232,45 +219,6 @@ where
             .payment(NotPayable)
             .raw_call("updateEsdtSafeConfig")
             .argument(&new_config)
-            .original_result()
-    }
-
-    pub fn set_fee<
-        Arg0: ProxyArg<structs::fee::FeeStruct<Env::Api>>,
-    >(
-        self,
-        new_fee: Arg0,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("setFee")
-            .argument(&new_fee)
-            .original_result()
-    }
-
-    pub fn remove_fee<
-        Arg0: ProxyArg<TokenIdentifier<Env::Api>>,
-    >(
-        self,
-        base_token: Arg0,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("removeFee")
-            .argument(&base_token)
-            .original_result()
-    }
-
-    pub fn distribute_fee<
-        Arg0: ProxyArg<MultiValueEncoded<Env::Api, MultiValue2<ManagedAddress<Env::Api>, usize>>>,
-    >(
-        self,
-        address_percentage_pairs: Arg0,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("distributeFee")
-            .argument(&address_percentage_pairs)
             .original_result()
     }
 

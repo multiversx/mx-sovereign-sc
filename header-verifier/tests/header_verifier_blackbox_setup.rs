@@ -4,17 +4,13 @@ use common_test_setup::constants::{
 };
 use common_test_setup::{AccountSetup, BaseSetup};
 use multiversx_sc::api::ManagedTypeApi;
-use multiversx_sc::imports::MultiValue2;
-use multiversx_sc::types::{
-    ManagedAddress, ManagedBuffer, MultiValueEncoded, TestSCAddress, TestTokenIdentifier,
-};
+use multiversx_sc::types::{ManagedBuffer, MultiValueEncoded, TestSCAddress};
 use multiversx_sc_scenario::{
     api::StaticApi, multiversx_chain_vm::crypto_functions::sha256, ScenarioTxRun,
 };
 use multiversx_sc_scenario::{ReturnsHandledOrError, ReturnsLogs};
 use proxies::header_verifier_proxy::HeaderverifierProxy;
-use structs::configs::{EsdtSafeConfig, SovereignConfig};
-use structs::fee::FeeStruct;
+use structs::configs::SovereignConfig;
 
 #[derive(Clone)]
 pub struct BridgeOperation<M: ManagedTypeApi> {
@@ -85,17 +81,6 @@ impl HeaderVerifierTestState {
             .to(HEADER_VERIFIER_ADDRESS)
             .typed(HeaderverifierProxy)
             .set_esdt_safe_address(esdt_address)
-            .run();
-    }
-
-    pub fn register_fee_market_address(&mut self, fee_market_address: TestSCAddress) {
-        self.common_setup
-            .world
-            .tx()
-            .from(OWNER_ADDRESS)
-            .to(HEADER_VERIFIER_ADDRESS)
-            .typed(HeaderverifierProxy)
-            .set_fee_market_address(fee_market_address)
             .run();
     }
 
@@ -201,85 +186,6 @@ impl HeaderVerifierTestState {
             .to(HEADER_VERIFIER_ADDRESS)
             .typed(HeaderverifierProxy)
             .update_sovereign_config(new_config)
-            .returns(ReturnsHandledOrError::new())
-            .run();
-
-        self.common_setup
-            .assert_expected_error_message(response, expected_error_message);
-    }
-
-    pub fn update_esdt_safe_config(
-        &mut self,
-        new_config: &EsdtSafeConfig<StaticApi>,
-        expected_error_message: Option<&str>,
-    ) {
-        let response = self
-            .common_setup
-            .world
-            .tx()
-            .from(OWNER_ADDRESS)
-            .to(HEADER_VERIFIER_ADDRESS)
-            .typed(HeaderverifierProxy)
-            .update_esdt_safe_config(new_config)
-            .returns(ReturnsHandledOrError::new())
-            .run();
-
-        self.common_setup
-            .assert_expected_error_message(response, expected_error_message);
-    }
-
-    pub fn set_fee(&mut self, new_fee: FeeStruct<StaticApi>, expected_error_message: Option<&str>) {
-        let response = self
-            .common_setup
-            .world
-            .tx()
-            .from(OWNER_ADDRESS)
-            .to(HEADER_VERIFIER_ADDRESS)
-            .typed(HeaderverifierProxy)
-            .set_fee(new_fee)
-            .returns(ReturnsHandledOrError::new())
-            .run();
-
-        self.common_setup
-            .assert_expected_error_message(response, expected_error_message);
-    }
-
-    pub fn remove_fee(
-        &mut self,
-        token_id: TestTokenIdentifier,
-        expected_error_message: Option<&str>,
-    ) {
-        let response = self
-            .common_setup
-            .world
-            .tx()
-            .from(OWNER_ADDRESS)
-            .to(HEADER_VERIFIER_ADDRESS)
-            .typed(HeaderverifierProxy)
-            .remove_fee(token_id)
-            .returns(ReturnsHandledOrError::new())
-            .run();
-
-        self.common_setup
-            .assert_expected_error_message(response, expected_error_message);
-    }
-
-    pub fn distribute_fee(
-        &mut self,
-        address_percentage_pairs: MultiValueEncoded<
-            StaticApi,
-            MultiValue2<ManagedAddress<StaticApi>, usize>,
-        >,
-        expected_error_message: Option<&str>,
-    ) {
-        let response = self
-            .common_setup
-            .world
-            .tx()
-            .from(OWNER_ADDRESS)
-            .to(HEADER_VERIFIER_ADDRESS)
-            .typed(HeaderverifierProxy)
-            .distribute_fee(address_percentage_pairs)
             .returns(ReturnsHandledOrError::new())
             .run();
 

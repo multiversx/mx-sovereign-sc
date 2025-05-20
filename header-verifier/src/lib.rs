@@ -3,16 +3,14 @@
 use error_messages::{
     ADDRESS_NOT_VALID_SC_ADDRESS, BLS_SIGNATURE_NOT_VALID, CHAIN_CONFIG_ADDRESS_NOT_SET,
     CURRENT_OPERATION_ALREADY_IN_EXECUTION, CURRENT_OPERATION_NOT_REGISTERED,
-    ESDT_SAFE_ADDRESS_NOT_SET, FEE_MARKET_ADDRESS_NOT_SET, HASH_OF_HASHES_DOES_NOT_MATCH,
-    INVALID_VALIDATOR_SET_LENGTH, ONLY_ESDT_SAFE_CALLER, OUTGOING_TX_HASH_ALREADY_REGISTERED,
+    ESDT_SAFE_ADDRESS_NOT_SET, HASH_OF_HASHES_DOES_NOT_MATCH, INVALID_VALIDATOR_SET_LENGTH,
+    ONLY_ESDT_SAFE_CALLER, OUTGOING_TX_HASH_ALREADY_REGISTERED,
 };
 use multiversx_sc::codec;
 use multiversx_sc::proxy_imports::{TopDecode, TopEncode};
 use proxies::chain_config_proxy::ChainConfigContractProxy;
-use proxies::fee_market_proxy::FeeMarketProxy;
 use proxies::mvx_esdt_safe_proxy::MvxEsdtSafeProxy;
 use structs::configs::{EsdtSafeConfig, SovereignConfig};
-use structs::fee::FeeStruct;
 
 multiversx_sc::imports!();
 
@@ -119,12 +117,6 @@ pub trait Headerverifier:
         self.esdt_safe_address().set(esdt_safe_address);
     }
 
-    #[only_owner]
-    #[endpoint(setFeeMarketAddress)]
-    fn set_fee_market_address(&self, fee_market_address: ManagedAddress) {
-        self.fee_market_address().set(fee_market_address);
-    }
-
     #[endpoint(removeExecutedHash)]
     fn remove_executed_hash(&self, hash_of_hashes: &ManagedBuffer, operation_hash: &ManagedBuffer) {
         self.require_caller_esdt_safe();
@@ -180,45 +172,6 @@ pub trait Headerverifier:
             .sync_call();
     }
 
-    // TODO: verify signature
-    #[endpoint(setFee)]
-    fn set_fee(&self, new_fee: FeeStruct<Self::Api>) {
-        self.require_setup_complete();
-
-        self.tx()
-            .to(self.fee_market_address().get())
-            .typed(FeeMarketProxy)
-            .set_fee(new_fee)
-            .sync_call();
-    }
-
-    // TODO: verify signature
-    #[endpoint(removeFee)]
-    fn remove_fee(&self, base_token: TokenIdentifier<Self::Api>) {
-        self.require_setup_complete();
-
-        self.tx()
-            .to(self.fee_market_address().get())
-            .typed(FeeMarketProxy)
-            .remove_fee(base_token)
-            .sync_call();
-    }
-
-    // TODO: verify signature
-    #[endpoint(distributeFee)]
-    fn distribute_fee(
-        &self,
-        address_percentage_pairs: MultiValueEncoded<MultiValue2<ManagedAddress, usize>>,
-    ) {
-        self.require_setup_complete();
-
-        self.tx()
-            .to(self.fee_market_address().get())
-            .typed(FeeMarketProxy)
-            .distribute_fees(address_percentage_pairs)
-            .sync_call();
-    }
-
     #[only_owner]
     #[endpoint(completeSetupPhase)]
     fn complete_setup_phase(&self) {
@@ -233,10 +186,6 @@ pub trait Headerverifier:
         require!(
             !self.esdt_safe_address().is_empty(),
             ESDT_SAFE_ADDRESS_NOT_SET
-        );
-        require!(
-            !self.fee_market_address().is_empty(),
-            FEE_MARKET_ADDRESS_NOT_SET
         );
 
         self.check_validator_range(self.bls_pub_keys().len() as u64);
@@ -315,9 +264,6 @@ pub trait Headerverifier:
 
     #[storage_mapper("esdtSafeAddress")]
     fn esdt_safe_address(&self) -> SingleValueMapper<ManagedAddress>;
-
-    #[storage_mapper("feeMarketAddress")]
-    fn fee_market_address(&self) -> SingleValueMapper<ManagedAddress>;
 
     #[storage_mapper("chainConfigAddress")]
     fn chain_config_address(&self) -> SingleValueMapper<ManagedAddress>;

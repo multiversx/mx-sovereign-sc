@@ -6,9 +6,9 @@
 
 // Init:                                 1
 // Upgrade:                              1
-// Endpoints:                           13
+// Endpoints:                            9
 // Async Callback (empty):               1
-// Total number of exported functions:  16
+// Total number of exported functions:  12
 
 #![no_std]
 
@@ -24,14 +24,10 @@ multiversx_sc_wasm_adapter::endpoints! {
         registerBridgeOps => register_bridge_operations
         changeValidatorSet => change_validator_set
         setEsdtSafeAddress => set_esdt_safe_address
-        setFeeMarketAddress => set_fee_market_address
         removeExecutedHash => remove_executed_hash
         lockOperationHash => lock_operation_hash
         updateSovereignConfig => update_sovereign_config
         updateEsdtSafeConfig => update_esdt_safe_config
-        setFee => set_fee
-        removeFee => remove_fee
-        distributeFee => distribute_fee
         completeSetupPhase => complete_setup_phase
     )
 }
