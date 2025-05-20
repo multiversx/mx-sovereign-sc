@@ -55,7 +55,7 @@ pub struct AccountSetup<'a> {
 
 pub enum CallerAddress {
     Owner,
-    Enshrine,
+    SafeSC,
 }
 
 fn world() -> ScenarioWorld {
