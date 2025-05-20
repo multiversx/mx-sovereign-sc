@@ -12,8 +12,8 @@ use enshrine_esdt_safe::common::storage::CommonStorage;
 use multiversx_sc::{
     imports::OptionalValue,
     types::{
-        BigUint, EsdtTokenData, EsdtTokenPayment, ManagedBuffer, ManagedVec, MultiValueEncoded,
-        TestAddress, TestTokenIdentifier, TokenIdentifier,
+        BigUint, EsdtTokenPayment, ManagedBuffer, ManagedVec, MultiValueEncoded, TestAddress,
+        TestTokenIdentifier, TokenIdentifier,
     },
 };
 use multiversx_sc_scenario::{
@@ -28,7 +28,7 @@ use structs::{
     aliases::{GasLimit, OptionalValueTransferDataTuple, PaymentsVec},
     configs::{EsdtSafeConfig, SovereignConfig},
     fee::{FeeStruct, FeeType},
-    operation::{Operation, OperationData, OperationEsdtPayment},
+    operation::Operation,
 };
 
 pub struct EnshrineTestState {
