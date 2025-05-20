@@ -393,7 +393,7 @@ impl BaseSetup {
         operations_hashes: MultiValueEncoded<StaticApi, ManagedBuffer<StaticApi>>,
     ) {
         let from_address: Address = match caller {
-            CallerAddress::Enshrine => ENSHRINE_SC_ADDRESS.to_address(),
+            CallerAddress::SafeSC => ENSHRINE_SC_ADDRESS.to_address(),
             CallerAddress::Owner => OWNER_ADDRESS.to_address(),
         };
 

@@ -73,7 +73,7 @@ fn test_execute_with_non_prefixed_token() {
     let operations_hashes = MultiValueEncoded::from(ManagedVec::from(vec![operation_hash.clone()]));
 
     state.common_setup.register_operation(
-        CallerAddress::Enshrine,
+        CallerAddress::SafeSC,
         ManagedBuffer::new(),
         &hash_of_hashes,
         operations_hashes,
@@ -124,7 +124,7 @@ fn test_execute_with_prefixed_token() {
 
     state.setup_contracts(false, None, None);
     state.common_setup.register_operation(
-        CallerAddress::Enshrine,
+        CallerAddress::SafeSC,
         ManagedBuffer::new(),
         &hash_of_hashes,
         operations_hashes,
