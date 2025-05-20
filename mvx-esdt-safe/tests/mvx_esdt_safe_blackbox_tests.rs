@@ -3,7 +3,7 @@ use common_test_setup::constants::{
     FIRST_TEST_TOKEN, HEADER_VERIFIER_ADDRESS, ONE_HUNDRED_MILLION, ONE_HUNDRED_THOUSAND,
     OWNER_ADDRESS, SECOND_TEST_TOKEN, SOV_TOKEN, TESTING_SC_ADDRESS, USER_ADDRESS,
 };
-use common_test_setup::RegisterTokenArgs;
+use common_test_setup::{CallerAddress, RegisterTokenArgs};
 use cross_chain::storage::CrossChainStorage;
 use cross_chain::{DEFAULT_ISSUE_COST, MAX_GAS_PER_TRANSACTION};
 use error_messages::{
@@ -1416,7 +1416,7 @@ fn test_execute_operation_no_esdt_safe_registered() {
         operation_data,
     );
 
-    let hash_of_hashes = state.get_operation_hash(&operation);
+    let hash_of_hashes = state.common_setup.get_operation_hash(&operation);
 
     state
         .common_setup
@@ -1476,7 +1476,7 @@ fn test_execute_operation_success() {
         operation_data,
     );
 
-    let operation_hash = state.get_operation_hash(&operation);
+    let operation_hash = state.common_setup.get_operation_hash(&operation);
     let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&operation_hash.to_vec()));
 
     state
@@ -1489,11 +1489,18 @@ fn test_execute_operation_success() {
         .common_setup
         .complete_header_verifier_setup_phase(None);
     state.common_setup.deploy_testing_sc();
-    state.set_esdt_safe_address_in_header_verifier(ESDT_SAFE_ADDRESS);
+    state
+        .common_setup
+        .set_esdt_safe_address_in_header_verifier(ESDT_SAFE_ADDRESS);
 
     let operations_hashes = MultiValueEncoded::from(ManagedVec::from(vec![operation_hash.clone()]));
 
-    state.register_operation(ManagedBuffer::new(), &hash_of_hashes, operations_hashes);
+    state.common_setup.register_operation(
+        CallerAddress::Owner,
+        ManagedBuffer::new(),
+        &hash_of_hashes,
+        operations_hashes,
+    );
 
     state
         .common_setup
@@ -1563,7 +1570,7 @@ fn test_execute_operation_with_native_token_success() {
         operation_data,
     );
 
-    let operation_hash = state.get_operation_hash(&operation);
+    let operation_hash = state.common_setup.get_operation_hash(&operation);
     let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&operation_hash.to_vec()));
 
     state
@@ -1576,11 +1583,18 @@ fn test_execute_operation_with_native_token_success() {
         .common_setup
         .complete_header_verifier_setup_phase(None);
     state.common_setup.deploy_testing_sc();
-    state.set_esdt_safe_address_in_header_verifier(ESDT_SAFE_ADDRESS);
+    state
+        .common_setup
+        .set_esdt_safe_address_in_header_verifier(ESDT_SAFE_ADDRESS);
 
     let operations_hashes = MultiValueEncoded::from(ManagedVec::from(vec![operation_hash.clone()]));
 
-    state.register_operation(ManagedBuffer::new(), &hash_of_hashes, operations_hashes);
+    state.common_setup.register_operation(
+        CallerAddress::Owner,
+        ManagedBuffer::new(),
+        &hash_of_hashes,
+        operations_hashes,
+    );
 
     state
         .common_setup
@@ -1641,7 +1655,7 @@ fn test_execute_operation_burn_mechanism_without_deposit_cannot_subtract() {
         operation_data,
     );
 
-    let operation_hash = state.get_operation_hash(&operation);
+    let operation_hash = state.common_setup.get_operation_hash(&operation);
     let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&operation_hash.to_vec()));
 
     state
@@ -1652,14 +1666,21 @@ fn test_execute_operation_burn_mechanism_without_deposit_cannot_subtract() {
         .deploy_header_verifier(CHAIN_CONFIG_ADDRESS);
 
     state.common_setup.deploy_testing_sc();
-    state.set_esdt_safe_address_in_header_verifier(ESDT_SAFE_ADDRESS);
+    state
+        .common_setup
+        .set_esdt_safe_address_in_header_verifier(ESDT_SAFE_ADDRESS);
     state
         .common_setup
         .complete_header_verifier_setup_phase(None);
 
     let operations_hashes = MultiValueEncoded::from(ManagedVec::from(vec![operation_hash.clone()]));
 
-    state.register_operation(ManagedBuffer::new(), &hash_of_hashes, operations_hashes);
+    state.common_setup.register_operation(
+        CallerAddress::Owner,
+        ManagedBuffer::new(),
+        &hash_of_hashes,
+        operations_hashes,
+    );
     state.set_token_burn_mechanism(TRUSTED_TOKEN_IDS[0], None);
 
     state.execute_operation(
@@ -1715,7 +1736,7 @@ fn test_execute_operation_success_burn_mechanism() {
         operation_data,
     );
 
-    let operation_hash = state.get_operation_hash(&operation);
+    let operation_hash = state.common_setup.get_operation_hash(&operation);
     let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&operation_hash.to_vec()));
 
     state
@@ -1732,7 +1753,9 @@ fn test_execute_operation_success_burn_mechanism() {
         .common_setup
         .deploy_fee_market(None, ESDT_SAFE_ADDRESS);
     state.set_fee_market_address(FEE_MARKET_ADDRESS);
-    state.set_esdt_safe_address_in_header_verifier(ESDT_SAFE_ADDRESS);
+    state
+        .common_setup
+        .set_esdt_safe_address_in_header_verifier(ESDT_SAFE_ADDRESS);
 
     let operations_hashes = MultiValueEncoded::from(ManagedVec::from(vec![operation_hash.clone()]));
 
@@ -1744,7 +1767,12 @@ fn test_execute_operation_success_burn_mechanism() {
         Some("deposit"),
     );
 
-    state.register_operation(ManagedBuffer::new(), &hash_of_hashes, operations_hashes);
+    state.common_setup.register_operation(
+        CallerAddress::Owner,
+        ManagedBuffer::new(),
+        &hash_of_hashes,
+        operations_hashes,
+    );
 
     state
         .common_setup
@@ -1825,7 +1853,9 @@ fn test_deposit_execute_switch_mechanism() {
         .common_setup
         .deploy_fee_market(None, ESDT_SAFE_ADDRESS);
     state.set_fee_market_address(FEE_MARKET_ADDRESS);
-    state.set_esdt_safe_address_in_header_verifier(ESDT_SAFE_ADDRESS);
+    state
+        .common_setup
+        .set_esdt_safe_address_in_header_verifier(ESDT_SAFE_ADDRESS);
 
     let deposited_trusted_token_payment_amount = 1000u64;
     let deposit_trusted_token_payment_token_data = EsdtTokenData {
@@ -1885,12 +1915,13 @@ fn test_deposit_execute_switch_mechanism() {
         vec![execute_trusted_token_payment.clone()].into(),
         operation_one_data,
     );
-    let operation_one_hash = state.get_operation_hash(&operation_one);
+    let operation_one_hash = state.common_setup.get_operation_hash(&operation_one);
     let hash_of_hashes_one = ManagedBuffer::new_from_bytes(&sha256(&operation_one_hash.to_vec()));
     let operations_hashes_one =
         MultiValueEncoded::from(ManagedVec::from(vec![operation_one_hash.clone()]));
 
-    state.register_operation(
+    state.common_setup.register_operation(
+        CallerAddress::Owner,
         ManagedBuffer::new(),
         &hash_of_hashes_one,
         operations_hashes_one,
@@ -1960,12 +1991,13 @@ fn test_deposit_execute_switch_mechanism() {
         vec![execute_trusted_token_payment.clone()].into(),
         operation_two_data,
     );
-    let operation_two_hash = state.get_operation_hash(&operation_two);
+    let operation_two_hash = state.common_setup.get_operation_hash(&operation_two);
     let hash_of_hashes_two = ManagedBuffer::new_from_bytes(&sha256(&operation_two_hash.to_vec()));
     let operations_hashes_two =
         MultiValueEncoded::from(ManagedVec::from(vec![operation_two_hash.clone()]));
 
-    state.register_operation(
+    state.common_setup.register_operation(
+        CallerAddress::Owner,
         ManagedBuffer::new(),
         &hash_of_hashes_two,
         operations_hashes_two,
@@ -2073,7 +2105,7 @@ fn test_execute_operation_no_payments() {
         operation_data,
     );
 
-    let operation_hash = state.get_operation_hash(&operation);
+    let operation_hash = state.common_setup.get_operation_hash(&operation);
     let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&operation_hash.to_vec()));
 
     state
@@ -2089,11 +2121,18 @@ fn test_execute_operation_no_payments() {
         .complete_header_verifier_setup_phase(None);
 
     state.common_setup.deploy_testing_sc();
-    state.set_esdt_safe_address_in_header_verifier(ESDT_SAFE_ADDRESS);
+    state
+        .common_setup
+        .set_esdt_safe_address_in_header_verifier(ESDT_SAFE_ADDRESS);
 
     let operations_hashes = MultiValueEncoded::from(ManagedVec::from(vec![operation_hash.clone()]));
 
-    state.register_operation(ManagedBuffer::new(), &hash_of_hashes, operations_hashes);
+    state.common_setup.register_operation(
+        CallerAddress::Owner,
+        ManagedBuffer::new(),
+        &hash_of_hashes,
+        operations_hashes,
+    );
 
     state
         .common_setup
@@ -2168,15 +2207,22 @@ fn test_execute_operation_no_payments_failed_event() {
         operation_data,
     );
 
-    let operation_hash = state.get_operation_hash(&operation);
+    let operation_hash = state.common_setup.get_operation_hash(&operation);
     let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&operation_hash.to_vec()));
 
     state.common_setup.deploy_testing_sc();
-    state.set_esdt_safe_address_in_header_verifier(ESDT_SAFE_ADDRESS);
+    state
+        .common_setup
+        .set_esdt_safe_address_in_header_verifier(ESDT_SAFE_ADDRESS);
 
     let operations_hashes = MultiValueEncoded::from(ManagedVec::from(vec![operation_hash.clone()]));
 
-    state.register_operation(ManagedBuffer::new(), &hash_of_hashes, operations_hashes);
+    state.common_setup.register_operation(
+        CallerAddress::Owner,
+        ManagedBuffer::new(),
+        &hash_of_hashes,
+        operations_hashes,
+    );
 
     state
         .common_setup
