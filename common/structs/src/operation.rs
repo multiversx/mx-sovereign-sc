@@ -1,6 +1,10 @@
 use aliases::{GasLimit, OptionalValueTransferDataTuple, TxId};
+use multiversx_sc::api::CryptoApi;
 
-use crate::aliases::{self, EventPaymentTuple, TransferDataTuple};
+use crate::{
+    aliases::{self, EventPaymentTuple, TransferDataTuple},
+    generate_hash::GenerateHash,
+};
 
 multiversx_sc::imports!();
 multiversx_sc::derive_imports!();
@@ -40,6 +44,8 @@ impl<M: ManagedTypeApi> Operation<M> {
         tuples
     }
 }
+
+impl<A: CryptoApi> GenerateHash<A> for Operation<A> {}
 
 #[type_abi]
 #[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, ManagedVecItem, Clone)]
