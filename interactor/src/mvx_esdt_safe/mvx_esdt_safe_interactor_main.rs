@@ -99,7 +99,7 @@ impl MvxEsdtSafeInteract {
         let fifth_token_struct = IssueTokenStruct::Meta {
             token_display_name: "META".to_string(),
             token_ticker: "META".to_string(),
-            num_decimals: 10,
+            properties: EsdtTokenProperties::new_meta(None),
         };
         self.issue_token(fifth_token_struct).await;
     }

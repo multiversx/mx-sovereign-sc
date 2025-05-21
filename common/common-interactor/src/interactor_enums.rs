@@ -1,5 +1,8 @@
 use multiversx_sc::{
-    imports::{FungibleTokenProperties, NonFungibleTokenProperties, SemiFungibleTokenProperties},
+    imports::{
+        FungibleTokenProperties, MetaTokenProperties, NonFungibleTokenProperties,
+        SemiFungibleTokenProperties,
+    },
     types::{BigUint, EsdtTokenType},
 };
 use multiversx_sc_snippets::imports::StaticApi;
@@ -8,6 +11,7 @@ pub enum EsdtTokenProperties {
     Fungible(FungibleTokenProperties),
     NonFungible(NonFungibleTokenProperties),
     SemiFungible(SemiFungibleTokenProperties),
+    Meta(MetaTokenProperties),
     None,
 }
 
@@ -22,6 +26,10 @@ impl EsdtTokenProperties {
 
     pub fn new_semi_fungible(props: Option<SemiFungibleTokenProperties>) -> Self {
         EsdtTokenProperties::SemiFungible(props.unwrap_or_default())
+    }
+
+    pub fn new_meta(props: Option<MetaTokenProperties>) -> Self {
+        EsdtTokenProperties::Meta(props.unwrap_or_default())
     }
 }
 
@@ -51,6 +59,6 @@ pub enum IssueTokenStruct {
     Meta {
         token_display_name: String,
         token_ticker: String,
-        num_decimals: usize,
+        properties: EsdtTokenProperties,
     },
 }

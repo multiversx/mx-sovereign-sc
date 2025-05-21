@@ -131,6 +131,10 @@ impl State {
             .as_ref()
             .expect("no known token handler SC, deploy first")
     }
+
+    pub fn current_first_token_id(&self) -> &[u8] {
+        self.first_token_id.as_bytes()
+    }
 }
 
 impl Drop for State {

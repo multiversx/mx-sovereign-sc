@@ -1,4 +1,5 @@
 use common_interactor::common_sovereign_interactor::CommonInteractorTrait;
+use common_interactor::constants::ONE_THOUSAND_TOKENS;
 use common_interactor::interactor_config::Config;
 use common_test_setup::constants::{
     FEE_TOKEN, FIRST_TEST_TOKEN, ISSUE_COST, MVX_TO_SOV_TOKEN_STORAGE_KEY,
@@ -24,7 +25,20 @@ use structs::operation::{Operation, OperationData, OperationEsdtPayment, Transfe
 #[serial]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn test_issue_tokens() {
-    let _chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
+    let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
+    let wallet_address = chain_interactor.wallet_address().clone();
+    chain_interactor
+        .interactor
+        .tx()
+        .from(wallet_address)
+        .to(chain_interactor.user_address)
+        .single_esdt(
+            &TokenIdentifier::from(chain_interactor.state.current_first_token_id()),
+            0u64,
+            &BigUint::from(ONE_THOUSAND_TOKENS),
+        )
+        .run()
+        .await;
 }
 
 /// ### TEST

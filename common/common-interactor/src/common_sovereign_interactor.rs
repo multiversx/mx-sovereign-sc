@@ -10,8 +10,8 @@ use multiversx_sc::{
     codec::TopEncode,
     imports::{ESDTSystemSCProxy, OptionalValue},
     types::{
-        Address, BigUint, CodeMetadata, ESDTSystemSCAddress, EsdtTokenType, ManagedBuffer,
-        ReturnsNewAddress, ReturnsResultUnmanaged, TokenIdentifier,
+        Address, BigUint, CodeMetadata, ESDTSystemSCAddress, ManagedBuffer, ReturnsNewAddress,
+        ReturnsResultUnmanaged, TokenIdentifier,
     },
 };
 use multiversx_sc_snippets::{
@@ -48,25 +48,26 @@ pub trait CommonInteractorTrait {
 
     async fn issue_token(&mut self, token_struct: IssueTokenStruct) -> String {
         let wallet_address = self.wallet_address().clone();
+        let interactor = self.interactor();
+        let base_tx = interactor
+            .tx()
+            .from(wallet_address.clone())
+            .to(ESDTSystemSCAddress)
+            .gas(100_000_000u64)
+            .typed(ESDTSystemSCProxy);
 
         match token_struct {
             IssueTokenStruct::Fungible {
                 token_display_name,
                 token_ticker,
                 initial_supply,
-
                 properties,
             } => {
                 let attributes = match properties {
                     EsdtTokenProperties::Fungible(props) => props,
                     _ => panic!("Invalid token properties for Fungible token"),
                 };
-                self.interactor()
-                    .tx()
-                    .from(wallet_address)
-                    .to(ESDTSystemSCAddress)
-                    .gas(100_000_000u64)
-                    .typed(ESDTSystemSCProxy)
+                base_tx
                     .issue_fungible(
                         ISSUE_COST.into(),
                         &token_display_name,
@@ -88,12 +89,7 @@ pub trait CommonInteractorTrait {
                     EsdtTokenProperties::NonFungible(props) => props,
                     _ => panic!("Invalid token properties for NonFungible token"),
                 };
-                self.interactor()
-                    .tx()
-                    .from(wallet_address)
-                    .to(ESDTSystemSCAddress)
-                    .gas(100_000_000u64)
-                    .typed(ESDTSystemSCProxy)
+                base_tx
                     .issue_non_fungible(
                         ISSUE_COST.into(),
                         &token_display_name,
@@ -114,12 +110,7 @@ pub trait CommonInteractorTrait {
                     EsdtTokenProperties::SemiFungible(props) => props,
                     _ => panic!("Invalid token properties for SemiFungible token"),
                 };
-                self.interactor()
-                    .tx()
-                    .from(wallet_address)
-                    .to(ESDTSystemSCAddress)
-                    .gas(100_000_000u64)
-                    .typed(ESDTSystemSCProxy)
+                base_tx
                     .issue_semi_fungible(
                         ISSUE_COST.into(),
                         &token_display_name,
@@ -137,12 +128,7 @@ pub trait CommonInteractorTrait {
                 token_type,
                 num_decimals,
             } => {
-                self.interactor()
-                    .tx()
-                    .from(wallet_address)
-                    .to(ESDTSystemSCAddress)
-                    .gas(100_000_000u64)
-                    .typed(ESDTSystemSCProxy)
+                base_tx
                     .issue_dynamic(
                         ISSUE_COST.into(),
                         &token_display_name,
@@ -158,20 +144,18 @@ pub trait CommonInteractorTrait {
             IssueTokenStruct::Meta {
                 token_display_name,
                 token_ticker,
-                num_decimals,
+                properties,
             } => {
-                self.interactor()
-                    .tx()
-                    .from(wallet_address)
-                    .to(ESDTSystemSCAddress)
-                    .gas(100_000_000u64)
-                    .typed(ESDTSystemSCProxy)
-                    .issue_and_set_all_roles(
+                let attributes = match properties {
+                    EsdtTokenProperties::Meta(props) => props,
+                    _ => panic!("Invalid token properties for Meta token"),
+                };
+                base_tx
+                    .register_meta_esdt(
                         ISSUE_COST.into(),
                         &token_display_name,
                         &token_ticker,
-                        EsdtTokenType::Meta,
-                        num_decimals,
+                        attributes,
                     )
                     .returns(ReturnsNewTokenIdentifier)
                     .run()
