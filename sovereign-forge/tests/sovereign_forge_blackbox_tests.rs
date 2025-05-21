@@ -1,7 +1,8 @@
 use chain_config::validator_rules::ValidatorRulesModule;
 use common_test_setup::constants::{
     CHAIN_CONFIG_ADDRESS, CHAIN_FACTORY_SC_ADDRESS, CHAIN_ID, DEPLOY_COST, ESDT_SAFE_ADDRESS,
-    HEADER_VERIFIER_ADDRESS, ONE_HUNDRED_THOUSAND, OWNER_ADDRESS, SOVEREIGN_FORGE_SC_ADDRESS,
+    FIRST_TEST_TOKEN, HEADER_VERIFIER_ADDRESS, ONE_HUNDRED_THOUSAND, OWNER_ADDRESS,
+    SOVEREIGN_FORGE_SC_ADDRESS,
 };
 use cross_chain::storage::CrossChainStorage;
 use error_messages::{
@@ -10,6 +11,7 @@ use error_messages::{
     ESDT_SAFE_ALREADY_DEPLOYED, ESDT_SAFE_NOT_DEPLOYED, FEE_MARKET_ALREADY_DEPLOYED,
     FEE_MARKET_NOT_DEPLOYED, HEADER_VERIFIER_ALREADY_DEPLOYED, HEADER_VERIFIER_NOT_DEPLOYED,
 };
+use fee_market::fee_type::FeeTypeModule;
 use multiversx_sc::{
     imports::OptionalValue,
     types::{BigUint, ManagedBuffer, ManagedVec},
@@ -21,7 +23,10 @@ use sovereign_forge::common::{
     utils::{ScArray as ScArrayFromUtils, UtilsModule},
 };
 use sovereign_forge_blackbox_setup::SovereignForgeTestState;
-use structs::configs::{EsdtSafeConfig, SovereignConfig};
+use structs::{
+    configs::{EsdtSafeConfig, SovereignConfig},
+    fee::{FeeStruct, FeeType},
+};
 mod sovereign_forge_blackbox_setup;
 
 /// ### TEST
@@ -322,13 +327,217 @@ fn test_update_esdt_safe_config() {
 }
 
 /// ### TEST
-/// S-FORGE_COMPLETE_SETUP_PHASE_OK_007
+/// S-FORGE_SET_FEE_OK_007
 ///
 /// ### ACTION
-/// Run deploy phases 1–4 and call complete_setup_phase
+/// Set sovereign fee
 ///
 /// ### EXPECTED
-/// Setup phase is complete
+/// The sovereign fee is modified
+#[test]
+fn test_set_fee() {
+    let mut state = SovereignForgeTestState::new();
+    state.common_setup.deploy_sovereign_forge();
+    state.common_setup.deploy_chain_factory();
+    state
+        .common_setup
+        .deploy_chain_config(SovereignConfig::default_config());
+    state
+        .common_setup
+        .deploy_fee_market(None, ESDT_SAFE_ADDRESS);
+    state.finish_setup();
+
+    let deploy_cost = BigUint::from(100_000u32);
+    state.common_setup.deploy_phase_one(
+        &deploy_cost,
+        Some(ManagedBuffer::from(CHAIN_ID)),
+        &SovereignConfig::default_config(),
+        None,
+    );
+    state
+        .common_setup
+        .deploy_header_verifier(CHAIN_CONFIG_ADDRESS);
+    state
+        .common_setup
+        .deploy_mvx_esdt_safe(HEADER_VERIFIER_ADDRESS, OptionalValue::None);
+    state.common_setup.deploy_phase_two(None);
+    state
+        .common_setup
+        .deploy_phase_three(OptionalValue::None, None);
+    state.common_setup.deploy_phase_four(None, None);
+
+    state
+        .common_setup
+        .world
+        .query()
+        .to(SOVEREIGN_FORGE_SC_ADDRESS)
+        .whitebox(sovereign_forge::contract_obj, |sc| {
+            let is_chain_config_deployed = sc.is_contract_deployed(
+                &OWNER_ADDRESS.to_managed_address(),
+                ScArrayFromUtils::ChainConfig,
+            );
+            let is_header_verifier_deployed = sc.is_contract_deployed(
+                &OWNER_ADDRESS.to_managed_address(),
+                ScArrayFromUtils::HeaderVerifier,
+            );
+            let is_esdt_safe_deployed = sc.is_contract_deployed(
+                &OWNER_ADDRESS.to_managed_address(),
+                ScArrayFromUtils::ESDTSafe,
+            );
+            let is_fee_market_deployed = sc.is_contract_deployed(
+                &OWNER_ADDRESS.to_managed_address(),
+                ScArrayFromUtils::FeeMarket,
+            );
+
+            assert!(
+                is_chain_config_deployed
+                    && is_header_verifier_deployed
+                    && is_esdt_safe_deployed
+                    && is_fee_market_deployed
+            );
+        });
+
+    let fee_type = FeeType::Fixed {
+        token: FIRST_TEST_TOKEN.to_token_identifier(),
+        per_transfer: BigUint::default(),
+        per_gas: BigUint::default(),
+    };
+
+    let new_fee = FeeStruct {
+        base_token: FIRST_TEST_TOKEN.to_token_identifier(),
+        fee_type,
+    };
+
+    state.set_fee(new_fee, None);
+
+    let fee_market_address = state.get_smart_contract_address_from_sovereign_forge(
+        ManagedBuffer::from(CHAIN_ID),
+        ScArray::FeeMarket,
+    );
+
+    state
+        .common_setup
+        .world
+        .query()
+        .to(fee_market_address)
+        .whitebox(fee_market::contract_obj, |sc| {
+            assert!(sc.is_fee_enabled());
+            assert!(!sc
+                .token_fee(&FIRST_TEST_TOKEN.to_token_identifier())
+                .is_empty());
+        });
+}
+
+/// ### TEST
+/// S-FORGE_REMOVE_FEE_OK_008
+///
+/// ### ACTION
+/// Remove sovereign fee
+///
+/// ### EXPECTED
+/// The sovereign fee is removed
+#[test]
+fn test_remove_fee() {
+    let mut state = SovereignForgeTestState::new();
+    state.common_setup.deploy_sovereign_forge();
+    state.common_setup.deploy_chain_factory();
+    state
+        .common_setup
+        .deploy_chain_config(SovereignConfig::default_config());
+    state
+        .common_setup
+        .deploy_fee_market(None, ESDT_SAFE_ADDRESS);
+    state.finish_setup();
+
+    let deploy_cost = BigUint::from(100_000u32);
+    state.common_setup.deploy_phase_one(
+        &deploy_cost,
+        Some(ManagedBuffer::from(CHAIN_ID)),
+        &SovereignConfig::default_config(),
+        None,
+    );
+    state
+        .common_setup
+        .deploy_header_verifier(CHAIN_CONFIG_ADDRESS);
+    state
+        .common_setup
+        .deploy_mvx_esdt_safe(HEADER_VERIFIER_ADDRESS, OptionalValue::None);
+    state.common_setup.deploy_phase_two(None);
+    state
+        .common_setup
+        .deploy_phase_three(OptionalValue::None, None);
+
+    let fee_type = FeeType::Fixed {
+        token: FIRST_TEST_TOKEN.to_token_identifier(),
+        per_transfer: BigUint::default(),
+        per_gas: BigUint::default(),
+    };
+
+    let fee = FeeStruct {
+        base_token: FIRST_TEST_TOKEN.to_token_identifier(),
+        fee_type,
+    };
+    state.common_setup.deploy_phase_four(Some(fee), None);
+
+    state
+        .common_setup
+        .world
+        .query()
+        .to(SOVEREIGN_FORGE_SC_ADDRESS)
+        .whitebox(sovereign_forge::contract_obj, |sc| {
+            let is_chain_config_deployed = sc.is_contract_deployed(
+                &OWNER_ADDRESS.to_managed_address(),
+                ScArrayFromUtils::ChainConfig,
+            );
+            let is_header_verifier_deployed = sc.is_contract_deployed(
+                &OWNER_ADDRESS.to_managed_address(),
+                ScArrayFromUtils::HeaderVerifier,
+            );
+            let is_esdt_safe_deployed = sc.is_contract_deployed(
+                &OWNER_ADDRESS.to_managed_address(),
+                ScArrayFromUtils::ESDTSafe,
+            );
+            let is_fee_market_deployed = sc.is_contract_deployed(
+                &OWNER_ADDRESS.to_managed_address(),
+                ScArrayFromUtils::FeeMarket,
+            );
+
+            assert!(
+                is_chain_config_deployed
+                    && is_header_verifier_deployed
+                    && is_esdt_safe_deployed
+                    && is_fee_market_deployed
+            );
+        });
+
+    state.remove_fee(FIRST_TEST_TOKEN, None);
+
+    let fee_market_address = state.get_smart_contract_address_from_sovereign_forge(
+        ManagedBuffer::from(CHAIN_ID),
+        ScArray::FeeMarket,
+    );
+
+    state
+        .common_setup
+        .world
+        .query()
+        .to(fee_market_address)
+        .whitebox(fee_market::contract_obj, |sc| {
+            assert!(!sc.is_fee_enabled());
+            assert!(sc
+                .token_fee(&FIRST_TEST_TOKEN.to_token_identifier())
+                .is_empty());
+        })
+}
+
+/// ### TEST
+/// S-FORGE_COMPLETE_SETUP_PHASE_009
+///
+/// ### ACTION
+/// Call setup_phase()
+///
+/// ### EXPECTED
+/// Setup phase is completed and set in storage
 #[test]
 fn test_complete_setup_phase() {
     let mut state = SovereignForgeTestState::new();
@@ -400,7 +609,7 @@ fn test_complete_setup_phase() {
 }
 
 /// ### TEST
-/// S-FORGE_DEPLOY_PHASE_ONE_FAIL_008
+/// S-FORGE_DEPLOY_PHASE_ONE_FAIL_010
 ///
 /// ### ACTION
 /// deploy_phase_one with insufficient cost
@@ -425,7 +634,7 @@ fn test_deploy_phase_one_deploy_cost_too_low() {
 }
 
 /// ### TEST
-/// S-FORGE_DEPLOY_PHASE_ONE_FAIL_009
+/// S-FORGE_DEPLOY_PHASE_ONE_FAIL_011
 ///
 /// ### ACTION
 /// Call deploy_phase_one twice for same chain_config
@@ -457,7 +666,7 @@ fn test_deploy_phase_one_chain_config_already_deployed() {
 }
 
 /// ### TEST
-/// S-FORGE_DEPLOY_PHASE_ONE_FAIL_010
+/// S-FORGE_DEPLOY_PHASE_ONE_FAIL_012
 ///
 /// ### ACTION
 /// Call deploy_phase_one wrong chain id format
@@ -485,7 +694,7 @@ fn test_deploy_phase_one_preferred_chain_id_not_lowercase_alphanumeric() {
 }
 
 /// ### TEST
-/// S-FORGE_DEPLOY_PHASE_ONE_FAIL_011
+/// S-FORGE_DEPLOY_PHASE_ONE_FAIL_013
 ///
 /// ### ACTION
 /// Call deploy_phase_one wrong chain id length
@@ -513,7 +722,7 @@ fn test_deploy_phase_one_preferred_chain_id_not_correct_length() {
 }
 
 /// ### TEST
-/// S-FORGE_DEPLOY_PHASE_ONE_OK_012
+/// S-FORGE_DEPLOY_PHASE_ONE_OK_014
 ///
 /// ### ACTION
 /// Call deploy_phase_one with no preferred chain id
@@ -558,7 +767,7 @@ fn test_deploy_phase_one_no_preferred_chain_id() {
 }
 
 /// ### TEST
-/// S-FORGE_DEPLOY_PHASE_ONE_OK_013
+/// S-FORGE_DEPLOY_PHASE_ONE_OK_015
 ///
 /// ### ACTION
 /// Call deploy_phase_one with preferred chain id
@@ -605,7 +814,7 @@ fn test_deploy_phase_one_preferred_chain_id() {
 }
 
 /// ### TEST
-/// S-FORGE_DEPLOY_PHASE_ONE_FAIL_014
+/// S-FORGE_DEPLOY_PHASE_ONE_FAIL_016
 ///
 /// ### ACTION
 /// Call deploy_phase_one with an used chain id
@@ -640,7 +849,7 @@ fn test_deploy_phase_one_with_chain_id_used() {
 }
 
 /// ### TEST
-/// S-FORGE_DEPLOY_PHASE_TWO_FAIL_015
+/// S-FORGE_DEPLOY_PHASE_TWO_FAIL_017
 ///
 /// ### ACTION
 /// Call deploy_phase_two without the first phase
@@ -660,7 +869,7 @@ fn test_deploy_phase_two_without_first_phase() {
 }
 
 /// ### TEST
-/// S-FORGE_DEPLOY_PHASE_TWO_OK_016
+/// S-FORGE_DEPLOY_PHASE_TWO_OK_018
 ///
 /// ### ACTION
 /// Call deploy_phase_two
@@ -707,7 +916,7 @@ fn test_deploy_phase_two() {
 }
 
 /// ### TEST
-/// S-FORGE_DEPLOY_PHASE_TWO_FAIL_017
+/// S-FORGE_DEPLOY_PHASE_TWO_FAIL_019
 ///
 /// ### ACTION
 /// Call deploy_phase_two two times
@@ -743,7 +952,7 @@ fn test_deploy_phase_two_header_already_deployed() {
 }
 
 /// ### TEST
-/// S-FORGE_DEPLOY_PHASE_THREE_OK_018
+/// S-FORGE_DEPLOY_PHASE_THREE_OK_020
 ///
 /// ### ACTION
 /// Call deploy_phase_three
@@ -796,7 +1005,7 @@ fn test_deploy_phase_three() {
 }
 
 /// ### TEST
-/// S-FORGE_DEPLOY_PHASE_THREE_FAIL_019
+/// S-FORGE_DEPLOY_PHASE_THREE_FAIL_021
 ///
 /// ### ACTION
 /// Call deploy_phase_three without the phase one
@@ -819,7 +1028,7 @@ fn test_deploy_phase_three_without_phase_one() {
 }
 
 /// ### TEST
-/// S-FORGE_DEPLOY_PHASE_THREE_FAIL_020
+/// S-FORGE_DEPLOY_PHASE_THREE_FAIL_022
 ///
 /// ### ACTION
 /// Call deploy_phase_three without the phase two
@@ -857,7 +1066,7 @@ fn test_deploy_phase_three_without_phase_two() {
 }
 
 /// ### TEST
-/// S-FORGE_DEPLOY_PHASE_THREE_FAIL_021
+/// S-FORGE_DEPLOY_PHASE_THREE_FAIL_023
 ///
 /// ### ACTION
 /// Call deploy_phase_three two times
@@ -899,7 +1108,7 @@ fn test_deploy_phase_three_already_deployed() {
 }
 
 /// ### TEST
-/// S-FORGE_COMPLETE_SETUP_PHASE_FAIL_022
+/// S-FORGE_COMPLETE_SETUP_PHASE_FAIL_024
 ///
 /// ### ACTION
 /// Call complete_setup_phase without phase four deployed
@@ -917,7 +1126,7 @@ fn test_complete_setup_phase_four_not_deployed() {
 }
 
 /// ### TEST
-/// S-FORGE_DEPLOY_PHASE_FOUR_OK_023
+/// S-FORGE_DEPLOY_PHASE_FOUR_OK_025
 ///
 /// ### ACTION
 /// Call deploy_phase_four
@@ -974,7 +1183,7 @@ fn test_deploy_phase_four() {
 }
 
 /// ### TEST
-/// S-FORGE_DEPLOY_PHASE_FOUR_FAIL_024
+/// S-FORGE_DEPLOY_PHASE_FOUR_FAIL_026
 ///
 /// ### ACTION
 /// Call deploy_phase_four without phase three
@@ -1016,7 +1225,7 @@ fn test_deploy_phase_four_without_previous_phase() {
 }
 
 /// ### TEST
-/// S-FORGE_DEPLOY_PHASE_FOUR_FAIL_025
+/// S-FORGE_DEPLOY_PHASE_FOUR_FAIL_027
 ///
 /// ### ACTION
 /// Call deploy_phase_four two times
