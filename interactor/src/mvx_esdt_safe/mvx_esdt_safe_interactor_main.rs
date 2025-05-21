@@ -1,4 +1,6 @@
 use common_interactor::common_sovereign_interactor::CommonInteractorTrait;
+use common_interactor::constants::ONE_THOUSAND_TOKENS;
+use common_interactor::interactor_enums::{EsdtTokenProperties, IssueTokenStruct};
 use multiversx_sc_snippets::imports::*;
 use multiversx_sc_snippets::sdk::gateway::SetStateAccount;
 use proxies::header_verifier_proxy::HeaderverifierProxy;
@@ -37,6 +39,12 @@ impl CommonInteractorTrait for MvxEsdtSafeInteract {
 
 impl MvxEsdtSafeInteract {
     pub async fn new(config: Config) -> Self {
+        let mut interactor = Self::initialize_interactor(config).await;
+        interactor.initialize_tokens_in_wallets().await;
+        interactor
+    }
+
+    async fn initialize_interactor(config: Config) -> Self {
         let mut interactor = Interactor::new(config.gateway_uri())
             .await
             .use_chain_simulator(config.use_chain_simulator());
@@ -46,13 +54,7 @@ impl MvxEsdtSafeInteract {
         let owner_address = interactor.register_wallet(test_wallets::mike()).await;
         let user_address = interactor.register_wallet(test_wallets::bob()).await;
 
-        // Useful in the chain simulator setting
-        // generate blocks until ESDTSystemSCAddress is enabled
         interactor.generate_blocks_until_epoch(1u64).await.unwrap();
-
-        let set_state_response = interactor.set_state_for_saved_accounts().await;
-        interactor.generate_blocks(2u64).await.unwrap();
-        assert!(set_state_response.is_ok());
 
         MvxEsdtSafeInteract {
             interactor,
@@ -60,6 +62,46 @@ impl MvxEsdtSafeInteract {
             user_address,
             state: State::load_state(),
         }
+    }
+
+    async fn initialize_tokens_in_wallets(&mut self) {
+        let first_token_struct = IssueTokenStruct::Fungible {
+            token_display_name: "MVX".to_string(),
+            token_ticker: "MVX".to_string(),
+            initial_supply: BigUint::from(ONE_THOUSAND_TOKENS),
+            properties: EsdtTokenProperties::new_fungible(None),
+        };
+        let token_id = self.issue_token(first_token_struct).await;
+        self.state.set_first_token_id(token_id);
+
+        let second_token_struct = IssueTokenStruct::NonFungible {
+            token_display_name: "NFT".to_string(),
+            token_ticker: "NFT".to_string(),
+            properties: EsdtTokenProperties::new_non_fungible(None),
+        };
+        self.issue_token(second_token_struct).await;
+
+        let third_token_struct = IssueTokenStruct::SemiFungible {
+            token_display_name: "SFT".to_string(),
+            token_ticker: "SFT".to_string(),
+            properties: EsdtTokenProperties::new_semi_fungible(None),
+        };
+        self.issue_token(third_token_struct).await;
+
+        let forth_token_struct = IssueTokenStruct::Dynamic {
+            token_display_name: "DYN".to_string(),
+            token_ticker: "DYN".to_string(),
+            token_type: EsdtTokenType::DynamicNFT,
+            num_decimals: 10,
+        };
+        self.issue_token(forth_token_struct).await;
+
+        let fifth_token_struct = IssueTokenStruct::Meta {
+            token_display_name: "META".to_string(),
+            token_ticker: "META".to_string(),
+            num_decimals: 10,
+        };
+        self.issue_token(fifth_token_struct).await;
     }
 
     pub async fn deploy_contracts(

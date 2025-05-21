@@ -20,6 +20,13 @@ use structs::configs::{EsdtSafeConfig, SovereignConfig};
 use structs::fee::{FeeStruct, FeeType};
 use structs::operation::{Operation, OperationData, OperationEsdtPayment, TransferData};
 
+#[tokio::test]
+#[serial]
+#[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
+async fn test_issue_tokens() {
+    let _chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
+}
+
 /// ### TEST
 /// M-ESDT_DEP_FAIL_001
 ///

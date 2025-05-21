@@ -20,6 +20,7 @@ pub struct State {
     pub chain_factory_sc_address: Option<Bech32Address>,
     pub enshrine_esdt_safe_sc_address: Option<Bech32Address>,
     pub token_handler_address: Option<Bech32Address>,
+    pub first_token_id: String,
 }
 
 impl State {
@@ -70,6 +71,10 @@ impl State {
 
     pub fn set_token_handler_address(&mut self, address: Bech32Address) {
         self.token_handler_address = Some(address);
+    }
+
+    pub fn set_first_token_id(&mut self, token_id: String) {
+        self.first_token_id = token_id;
     }
 
     /// Returns the contract addresses

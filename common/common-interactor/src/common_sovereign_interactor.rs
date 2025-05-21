@@ -3,20 +3,20 @@
 use base64::{engine::general_purpose::STANDARD as BASE64, Engine};
 use common_test_setup::constants::{
     CHAIN_CONFIG_CODE_PATH, CHAIN_FACTORY_CODE_PATH, ENSHRINE_ESDT_SAFE_CODE_PATH,
-    FEE_MARKET_CODE_PATH, HEADER_VERIFIER_CODE_PATH, MVX_ESDT_SAFE_CODE_PATH,
+    FEE_MARKET_CODE_PATH, HEADER_VERIFIER_CODE_PATH, ISSUE_COST, MVX_ESDT_SAFE_CODE_PATH,
     SOVEREIGN_FORGE_CODE_PATH, TESTING_SC_CODE_PATH, TOKEN_HANDLER_CODE_PATH,
 };
 use multiversx_sc::{
     codec::TopEncode,
-    imports::OptionalValue,
+    imports::{ESDTSystemSCProxy, OptionalValue},
     types::{
-        Address, BigUint, CodeMetadata, ManagedBuffer, ReturnsNewAddress, ReturnsResultUnmanaged,
-        TokenIdentifier,
+        Address, BigUint, CodeMetadata, ESDTSystemSCAddress, EsdtTokenType, ManagedBuffer,
+        ReturnsNewAddress, ReturnsResultUnmanaged, TokenIdentifier,
     },
 };
 use multiversx_sc_snippets::{
     hex,
-    imports::{bech32, Bech32Address, StaticApi},
+    imports::{bech32, Bech32Address, ReturnsNewTokenIdentifier, StaticApi},
     multiversx_sc_scenario::{
         multiversx_chain_vm::crypto_functions::sha256,
         scenario_model::{Log, TxResponseStatus},
@@ -36,12 +36,149 @@ use structs::{
     operation::Operation,
 };
 
-use crate::interactor_state::State;
+use crate::{
+    interactor_enums::{EsdtTokenProperties, IssueTokenStruct},
+    interactor_state::State,
+};
 
 pub trait CommonInteractorTrait {
     fn interactor(&mut self) -> &mut Interactor;
     fn state(&mut self) -> &mut State;
     fn wallet_address(&mut self) -> &Address;
+
+    async fn issue_token(&mut self, token_struct: IssueTokenStruct) -> String {
+        let wallet_address = self.wallet_address().clone();
+
+        match token_struct {
+            IssueTokenStruct::Fungible {
+                token_display_name,
+                token_ticker,
+                initial_supply,
+
+                properties,
+            } => {
+                let attributes = match properties {
+                    EsdtTokenProperties::Fungible(props) => props,
+                    _ => panic!("Invalid token properties for Fungible token"),
+                };
+                self.interactor()
+                    .tx()
+                    .from(wallet_address)
+                    .to(ESDTSystemSCAddress)
+                    .gas(100_000_000u64)
+                    .typed(ESDTSystemSCProxy)
+                    .issue_fungible(
+                        ISSUE_COST.into(),
+                        &token_display_name,
+                        &token_ticker,
+                        initial_supply,
+                        attributes,
+                    )
+                    .returns(ReturnsNewTokenIdentifier)
+                    .run()
+                    .await
+            }
+
+            IssueTokenStruct::NonFungible {
+                token_display_name,
+                token_ticker,
+                properties,
+            } => {
+                let attributes = match properties {
+                    EsdtTokenProperties::NonFungible(props) => props,
+                    _ => panic!("Invalid token properties for NonFungible token"),
+                };
+                self.interactor()
+                    .tx()
+                    .from(wallet_address)
+                    .to(ESDTSystemSCAddress)
+                    .gas(100_000_000u64)
+                    .typed(ESDTSystemSCProxy)
+                    .issue_non_fungible(
+                        ISSUE_COST.into(),
+                        &token_display_name,
+                        &token_ticker,
+                        attributes,
+                    )
+                    .returns(ReturnsNewTokenIdentifier)
+                    .run()
+                    .await
+            }
+
+            IssueTokenStruct::SemiFungible {
+                token_display_name,
+                token_ticker,
+                properties,
+            } => {
+                let attributes = match properties {
+                    EsdtTokenProperties::SemiFungible(props) => props,
+                    _ => panic!("Invalid token properties for SemiFungible token"),
+                };
+                self.interactor()
+                    .tx()
+                    .from(wallet_address)
+                    .to(ESDTSystemSCAddress)
+                    .gas(100_000_000u64)
+                    .typed(ESDTSystemSCProxy)
+                    .issue_semi_fungible(
+                        ISSUE_COST.into(),
+                        &token_display_name,
+                        &token_ticker,
+                        attributes,
+                    )
+                    .returns(ReturnsNewTokenIdentifier)
+                    .run()
+                    .await
+            }
+
+            IssueTokenStruct::Dynamic {
+                token_display_name,
+                token_ticker,
+                token_type,
+                num_decimals,
+            } => {
+                self.interactor()
+                    .tx()
+                    .from(wallet_address)
+                    .to(ESDTSystemSCAddress)
+                    .gas(100_000_000u64)
+                    .typed(ESDTSystemSCProxy)
+                    .issue_dynamic(
+                        ISSUE_COST.into(),
+                        &token_display_name,
+                        &token_ticker,
+                        token_type,
+                        num_decimals,
+                    )
+                    .returns(ReturnsNewTokenIdentifier)
+                    .run()
+                    .await
+            }
+
+            IssueTokenStruct::Meta {
+                token_display_name,
+                token_ticker,
+                num_decimals,
+            } => {
+                self.interactor()
+                    .tx()
+                    .from(wallet_address)
+                    .to(ESDTSystemSCAddress)
+                    .gas(100_000_000u64)
+                    .typed(ESDTSystemSCProxy)
+                    .issue_and_set_all_roles(
+                        ISSUE_COST.into(),
+                        &token_display_name,
+                        &token_ticker,
+                        EsdtTokenType::Meta,
+                        num_decimals,
+                    )
+                    .returns(ReturnsNewTokenIdentifier)
+                    .run()
+                    .await
+            }
+        }
+    }
 
     async fn deploy_sovereign_forge(&mut self, deploy_cost: &BigUint<StaticApi>) {
         let wallet_address = self.wallet_address().clone();
