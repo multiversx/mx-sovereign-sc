@@ -7,7 +7,6 @@ use error_messages::{
 };
 use multiversx_sc::codec;
 use multiversx_sc::proxy_imports::{TopDecode, TopEncode};
-use proxies::chain_config_proxy::ChainConfigContractProxy;
 use structs::configs::SovereignConfig;
 
 multiversx_sc::imports!();
@@ -144,17 +143,6 @@ pub trait Headerverifier:
                 sc_panic!(CURRENT_OPERATION_ALREADY_IN_EXECUTION)
             }
         }
-    }
-
-    #[endpoint(updateConfig)]
-    fn update_config(&self, new_config: SovereignConfig<Self::Api>) {
-        // TODO: verify signature
-
-        self.tx()
-            .to(self.chain_config_address().get())
-            .typed(ChainConfigContractProxy)
-            .update_config(new_config)
-            .sync_call();
     }
 
     #[only_owner]
