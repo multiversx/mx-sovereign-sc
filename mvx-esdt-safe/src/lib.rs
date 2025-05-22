@@ -3,7 +3,7 @@
 use error_messages::SETUP_PHASE_ALREADY_COMPLETED;
 
 use multiversx_sc::imports::*;
-use structs::configs::EsdtSafeConfig;
+use structs::{configs::EsdtSafeConfig, generate_hash::GenerateHash};
 
 pub mod bridging_mechanism;
 pub mod deposit;
@@ -49,9 +49,27 @@ pub trait MvxEsdtSafe:
 
     #[only_owner]
     #[endpoint(updateConfiguration)]
-    fn update_configuration(&self, new_config: EsdtSafeConfig<Self::Api>) {
+    fn update_configuration(
+        &self,
+        hash_of_hashes: ManagedBuffer,
+        new_config: EsdtSafeConfig<Self::Api>,
+    ) {
+        let opt_hash = if self.is_setup_phase_complete() {
+            Some(new_config.generate_hash())
+        } else {
+            None
+        };
+
+        if let Some(ref config_hash) = opt_hash {
+            self.lock_operation_hash(config_hash, &hash_of_hashes);
+        }
+
         self.require_esdt_config_valid(&new_config);
         self.esdt_safe_config().set(new_config);
+
+        if let Some(config_hash) = opt_hash {
+            self.remove_executed_hash(&hash_of_hashes, &config_hash);
+        }
     }
 
     #[only_owner]

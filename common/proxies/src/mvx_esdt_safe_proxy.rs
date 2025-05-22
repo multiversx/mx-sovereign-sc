@@ -89,14 +89,17 @@ where
     Gas: TxGas<Env>,
 {
     pub fn update_configuration<
-        Arg0: ProxyArg<structs::configs::EsdtSafeConfig<Env::Api>>,
+        Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
+        Arg1: ProxyArg<structs::configs::EsdtSafeConfig<Env::Api>>,
     >(
         self,
-        new_config: Arg0,
+        hash_of_hashes: Arg0,
+        new_config: Arg1,
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("updateConfiguration")
+            .argument(&hash_of_hashes)
             .argument(&new_config)
             .original_result()
     }
