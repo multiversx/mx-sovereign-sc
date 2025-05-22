@@ -10,8 +10,8 @@ use multiversx_sc::{
     codec::TopEncode,
     imports::{ESDTSystemSCProxy, OptionalValue},
     types::{
-        Address, BigUint, CodeMetadata, ESDTSystemSCAddress, ManagedBuffer, ReturnsNewAddress,
-        ReturnsResultUnmanaged, TokenIdentifier,
+        Address, BigUint, CodeMetadata, ESDTSystemSCAddress, EsdtTokenType, ManagedBuffer,
+        ReturnsNewAddress, ReturnsResultUnmanaged, TokenIdentifier,
     },
 };
 use multiversx_sc_snippets::{
@@ -36,10 +36,14 @@ use structs::{
     operation::Operation,
 };
 
-use crate::{
-    interactor_enums::{EsdtTokenProperties, IssueTokenStruct},
-    interactor_state::State,
-};
+use crate::interactor_state::State;
+
+pub struct IssueTokenStruct {
+    pub token_display_name: String,
+    pub token_ticker: String,
+    pub token_type: EsdtTokenType,
+    pub num_decimals: usize,
+}
 
 pub trait CommonInteractorTrait {
     fn interactor(&mut self) -> &mut Interactor;
@@ -56,110 +60,38 @@ pub trait CommonInteractorTrait {
             .gas(100_000_000u64)
             .typed(ESDTSystemSCProxy);
 
-        match token_struct {
-            IssueTokenStruct::Fungible {
-                token_display_name,
-                token_ticker,
-                initial_supply,
-                properties,
-            } => {
-                let attributes = match properties {
-                    EsdtTokenProperties::Fungible(props) => props,
-                    _ => panic!("Invalid token properties for Fungible token"),
-                };
+        match token_struct.token_type {
+            EsdtTokenType::Fungible
+            | EsdtTokenType::NonFungible
+            | EsdtTokenType::SemiFungible
+            | EsdtTokenType::Meta => {
                 base_tx
-                    .issue_fungible(
+                    .issue_and_set_all_roles(
                         ISSUE_COST.into(),
-                        &token_display_name,
-                        &token_ticker,
-                        initial_supply,
-                        attributes,
+                        token_struct.token_display_name,
+                        token_struct.token_ticker,
+                        token_struct.token_type,
+                        token_struct.num_decimals,
                     )
                     .returns(ReturnsNewTokenIdentifier)
                     .run()
                     .await
             }
-
-            IssueTokenStruct::NonFungible {
-                token_display_name,
-                token_ticker,
-                properties,
-            } => {
-                let attributes = match properties {
-                    EsdtTokenProperties::NonFungible(props) => props,
-                    _ => panic!("Invalid token properties for NonFungible token"),
-                };
-                base_tx
-                    .issue_non_fungible(
-                        ISSUE_COST.into(),
-                        &token_display_name,
-                        &token_ticker,
-                        attributes,
-                    )
-                    .returns(ReturnsNewTokenIdentifier)
-                    .run()
-                    .await
-            }
-
-            IssueTokenStruct::SemiFungible {
-                token_display_name,
-                token_ticker,
-                properties,
-            } => {
-                let attributes = match properties {
-                    EsdtTokenProperties::SemiFungible(props) => props,
-                    _ => panic!("Invalid token properties for SemiFungible token"),
-                };
-                base_tx
-                    .issue_semi_fungible(
-                        ISSUE_COST.into(),
-                        &token_display_name,
-                        &token_ticker,
-                        attributes,
-                    )
-                    .returns(ReturnsNewTokenIdentifier)
-                    .run()
-                    .await
-            }
-
-            IssueTokenStruct::Dynamic {
-                token_display_name,
-                token_ticker,
-                token_type,
-                num_decimals,
-            } => {
+            EsdtTokenType::DynamicMeta | EsdtTokenType::DynamicNFT | EsdtTokenType::DynamicSFT => {
                 base_tx
                     .issue_dynamic(
                         ISSUE_COST.into(),
-                        &token_display_name,
-                        &token_ticker,
-                        token_type,
-                        num_decimals,
+                        token_struct.token_display_name,
+                        token_struct.token_ticker,
+                        token_struct.token_type,
+                        token_struct.num_decimals,
                     )
                     .returns(ReturnsNewTokenIdentifier)
                     .run()
                     .await
             }
-
-            IssueTokenStruct::Meta {
-                token_display_name,
-                token_ticker,
-                properties,
-            } => {
-                let attributes = match properties {
-                    EsdtTokenProperties::Meta(props) => props,
-                    _ => panic!("Invalid token properties for Meta token"),
-                };
-                base_tx
-                    .register_meta_esdt(
-                        ISSUE_COST.into(),
-                        &token_display_name,
-                        &token_ticker,
-                        attributes,
-                    )
-                    .returns(ReturnsNewTokenIdentifier)
-                    .run()
-                    .await
+            _ => {
+                panic!("Unsupported token type: {:?}", token_struct.token_type);
             }
         }
     }

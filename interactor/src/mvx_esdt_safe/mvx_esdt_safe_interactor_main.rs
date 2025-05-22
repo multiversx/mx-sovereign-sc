@@ -1,6 +1,4 @@
-use common_interactor::common_sovereign_interactor::CommonInteractorTrait;
-use common_interactor::constants::ONE_THOUSAND_TOKENS;
-use common_interactor::interactor_enums::{EsdtTokenProperties, IssueTokenStruct};
+use common_interactor::common_sovereign_interactor::{CommonInteractorTrait, IssueTokenStruct};
 use multiversx_sc_snippets::imports::*;
 use multiversx_sc_snippets::sdk::gateway::SetStateAccount;
 use proxies::header_verifier_proxy::HeaderverifierProxy;
@@ -65,30 +63,32 @@ impl MvxEsdtSafeInteract {
     }
 
     async fn initialize_tokens_in_wallets(&mut self) {
-        let first_token_struct = IssueTokenStruct::Fungible {
+        let first_token_struct = IssueTokenStruct {
             token_display_name: "MVX".to_string(),
             token_ticker: "MVX".to_string(),
-            initial_supply: BigUint::from(ONE_THOUSAND_TOKENS),
-            properties: EsdtTokenProperties::new_fungible(None),
+            token_type: EsdtTokenType::Fungible,
+            num_decimals: 18,
         };
         let token_id = self.issue_token(first_token_struct).await;
         self.state.set_first_token_id(token_id);
 
-        let second_token_struct = IssueTokenStruct::NonFungible {
+        let second_token_struct = IssueTokenStruct {
             token_display_name: "NFT".to_string(),
             token_ticker: "NFT".to_string(),
-            properties: EsdtTokenProperties::new_non_fungible(None),
+            token_type: EsdtTokenType::NonFungible,
+            num_decimals: 0,
         };
         self.issue_token(second_token_struct).await;
 
-        let third_token_struct = IssueTokenStruct::SemiFungible {
+        let third_token_struct = IssueTokenStruct {
             token_display_name: "SFT".to_string(),
             token_ticker: "SFT".to_string(),
-            properties: EsdtTokenProperties::new_semi_fungible(None),
+            token_type: EsdtTokenType::SemiFungible,
+            num_decimals: 0,
         };
         self.issue_token(third_token_struct).await;
 
-        let forth_token_struct = IssueTokenStruct::Dynamic {
+        let forth_token_struct = IssueTokenStruct {
             token_display_name: "DYN".to_string(),
             token_ticker: "DYN".to_string(),
             token_type: EsdtTokenType::DynamicNFT,
@@ -96,10 +96,11 @@ impl MvxEsdtSafeInteract {
         };
         self.issue_token(forth_token_struct).await;
 
-        let fifth_token_struct = IssueTokenStruct::Meta {
+        let fifth_token_struct = IssueTokenStruct {
             token_display_name: "META".to_string(),
             token_ticker: "META".to_string(),
-            properties: EsdtTokenProperties::new_meta(None),
+            token_type: EsdtTokenType::Meta,
+            num_decimals: 0,
         };
         self.issue_token(fifth_token_struct).await;
     }
