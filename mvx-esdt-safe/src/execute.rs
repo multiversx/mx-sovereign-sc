@@ -28,7 +28,7 @@ pub trait ExecuteModule:
 
         let operation_hash = operation.generate_hash();
 
-        self.lock_operation_hash(&operation_hash, &hash_of_hashes);
+        self.lock_operation_hash(&hash_of_hashes, &operation_hash);
 
         let operation_tuple = OperationTuple {
             op_hash: operation_hash,
