@@ -79,7 +79,7 @@ impl State {
         self.token_handler_address = Some(address);
     }
 
-    pub fn set_first_token_id(&mut self, token: TokenProperties) {
+    pub fn set_first_token(&mut self, token: TokenProperties) {
         self.first_token = token;
     }
 

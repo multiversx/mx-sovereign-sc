@@ -79,8 +79,10 @@ impl MvxEsdtSafeInteract {
             attributes: None,
         };
 
-        self.issue_and_mint_token(first_token_struct, first_token_mint)
+        let first_token = self
+            .issue_and_mint_token(first_token_struct, first_token_mint)
             .await;
+        self.state.set_first_token(first_token);
 
         let second_token_struct = IssueTokenStruct {
             token_display_name: "NFT".to_string(),

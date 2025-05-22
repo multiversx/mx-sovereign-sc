@@ -85,10 +85,6 @@ pub trait CommonInteractorTrait {
             .mint_tokens(token_id.clone(), issue.token_type, mint)
             .await;
 
-        self.state().set_first_token_id(TokenProperties {
-            token_id: token_id.clone(),
-            nonce,
-        });
         TokenProperties {
             token_id: token_id.clone(),
             nonce,
