@@ -27,13 +27,17 @@ use structs::operation::{Operation, OperationData, OperationEsdtPayment, Transfe
 async fn test_issue_tokens() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
     let wallet_address = chain_interactor.wallet_address().clone();
+    println!(
+        "Wallet address: {}",
+        Bech32Address::from(wallet_address.clone())
+    );
     chain_interactor
         .interactor
         .tx()
         .from(wallet_address)
         .to(chain_interactor.user_address)
         .single_esdt(
-            &TokenIdentifier::from(chain_interactor.state.current_first_token_id()),
+            &TokenIdentifier::from(chain_interactor.state.first_token.token_id.as_bytes()),
             0u64,
             &BigUint::from(ONE_THOUSAND_TOKENS),
         )

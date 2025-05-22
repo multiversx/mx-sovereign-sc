@@ -10,6 +10,12 @@ use std::{
 const STATE_FILE: &str = "state.toml";
 
 #[derive(Debug, Default, Serialize, Deserialize)]
+pub struct TokenProperties {
+    pub token_id: String,
+    pub nonce: u64,
+}
+
+#[derive(Debug, Default, Serialize, Deserialize)]
 pub struct State {
     pub mvx_esdt_safe_address: Option<Bech32Address>,
     pub header_verfier_address: Option<Bech32Address>,
@@ -20,7 +26,7 @@ pub struct State {
     pub chain_factory_sc_address: Option<Bech32Address>,
     pub enshrine_esdt_safe_sc_address: Option<Bech32Address>,
     pub token_handler_address: Option<Bech32Address>,
-    pub first_token_id: String,
+    pub first_token: TokenProperties,
 }
 
 impl State {
@@ -73,8 +79,8 @@ impl State {
         self.token_handler_address = Some(address);
     }
 
-    pub fn set_first_token_id(&mut self, token_id: String) {
-        self.first_token_id = token_id;
+    pub fn set_first_token_id(&mut self, token: TokenProperties) {
+        self.first_token = token;
     }
 
     /// Returns the contract addresses
@@ -130,10 +136,6 @@ impl State {
         self.token_handler_address
             .as_ref()
             .expect("no known token handler SC, deploy first")
-    }
-
-    pub fn current_first_token_id(&self) -> &[u8] {
-        self.first_token_id.as_bytes()
     }
 }
 

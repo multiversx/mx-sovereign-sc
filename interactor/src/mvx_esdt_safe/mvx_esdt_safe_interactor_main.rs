@@ -1,4 +1,7 @@
-use common_interactor::common_sovereign_interactor::{CommonInteractorTrait, IssueTokenStruct};
+use common_interactor::common_sovereign_interactor::{
+    CommonInteractorTrait, IssueTokenStruct, MintTokenStruct,
+};
+use common_interactor::constants::ONE_THOUSAND_TOKENS;
 use multiversx_sc_snippets::imports::*;
 use multiversx_sc_snippets::sdk::gateway::SetStateAccount;
 use proxies::header_verifier_proxy::HeaderverifierProxy;
@@ -69,8 +72,15 @@ impl MvxEsdtSafeInteract {
             token_type: EsdtTokenType::Fungible,
             num_decimals: 18,
         };
-        let token_id = self.issue_token(first_token_struct).await;
-        self.state.set_first_token_id(token_id);
+
+        let first_token_mint = MintTokenStruct {
+            name: None,
+            amount: BigUint::from(ONE_THOUSAND_TOKENS),
+            attributes: None,
+        };
+
+        self.issue_and_mint_token(first_token_struct, first_token_mint)
+            .await;
 
         let second_token_struct = IssueTokenStruct {
             token_display_name: "NFT".to_string(),
@@ -78,7 +88,13 @@ impl MvxEsdtSafeInteract {
             token_type: EsdtTokenType::NonFungible,
             num_decimals: 0,
         };
-        self.issue_token(second_token_struct).await;
+        let second_token_mint = MintTokenStruct {
+            name: Some("NFT".to_string()),
+            amount: BigUint::from(1u64),
+            attributes: None,
+        };
+        self.issue_and_mint_token(second_token_struct, second_token_mint)
+            .await;
 
         let third_token_struct = IssueTokenStruct {
             token_display_name: "SFT".to_string(),
@@ -86,7 +102,13 @@ impl MvxEsdtSafeInteract {
             token_type: EsdtTokenType::SemiFungible,
             num_decimals: 0,
         };
-        self.issue_token(third_token_struct).await;
+        let third_token_mint = MintTokenStruct {
+            name: Some("SFT".to_string()),
+            amount: BigUint::from(ONE_THOUSAND_TOKENS),
+            attributes: None,
+        };
+        self.issue_and_mint_token(third_token_struct, third_token_mint)
+            .await;
 
         let forth_token_struct = IssueTokenStruct {
             token_display_name: "DYN".to_string(),
@@ -94,15 +116,27 @@ impl MvxEsdtSafeInteract {
             token_type: EsdtTokenType::DynamicNFT,
             num_decimals: 10,
         };
-        self.issue_token(forth_token_struct).await;
+        let forth_token_mint = MintTokenStruct {
+            name: Some("DYN".to_string()),
+            amount: BigUint::from(1u64),
+            attributes: None,
+        };
+        self.issue_and_mint_token(forth_token_struct, forth_token_mint)
+            .await;
 
         let fifth_token_struct = IssueTokenStruct {
             token_display_name: "META".to_string(),
             token_ticker: "META".to_string(),
             token_type: EsdtTokenType::Meta,
-            num_decimals: 0,
+            num_decimals: 18,
         };
-        self.issue_token(fifth_token_struct).await;
+        let fifth_token_mint = MintTokenStruct {
+            name: Some("META".to_string()),
+            amount: BigUint::from(ONE_THOUSAND_TOKENS),
+            attributes: None,
+        };
+        self.issue_and_mint_token(fifth_token_struct, fifth_token_mint)
+            .await;
     }
 
     pub async fn deploy_contracts(
