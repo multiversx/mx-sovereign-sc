@@ -6,10 +6,10 @@
 
 // Init:                                 1
 // Upgrade:                              1
-// Endpoints:                           13
+// Endpoints:                           14
 // Async Callback (empty):               1
 // Promise callbacks:                    3
-// Total number of exported functions:  19
+// Total number of exported functions:  20
 
 #![no_std]
 
@@ -21,9 +21,10 @@ multiversx_sc_wasm_adapter::endpoints! {
     (
         init => init
         upgrade => upgrade
+        updateEsdtSafeConfigSetupPhase => update_esdt_safe_config_during_setup_phase
         updateEsdtSafeConfig => update_esdt_safe_config
         setFeeMarketAddress => set_fee_market_address
-        completSetupPhase => complete_setup_phase
+        completeSetupPhase => complete_setup_phase
         deposit => deposit
         executeBridgeOps => execute_operations
         registerToken => register_token

@@ -130,7 +130,6 @@ impl MvxEsdtSafeTestState {
 
     pub fn update_configuration(
         &mut self,
-        hash_of_hashes: &ManagedBuffer<StaticApi>,
         new_config: EsdtSafeConfig<StaticApi>,
         err_message: Option<&str>,
     ) {
@@ -141,7 +140,7 @@ impl MvxEsdtSafeTestState {
             .from(OWNER_ADDRESS)
             .to(ESDT_SAFE_ADDRESS)
             .typed(MvxEsdtSafeProxy)
-            .update_esdt_safe_config(hash_of_hashes, new_config)
+            .update_esdt_safe_config_during_setup_phase(new_config)
             .returns(ReturnsHandledOrError::new())
             .run();
 

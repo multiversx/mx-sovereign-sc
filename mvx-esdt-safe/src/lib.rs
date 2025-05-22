@@ -48,6 +48,12 @@ pub trait MvxEsdtSafe:
     fn upgrade(&self) {}
 
     #[only_owner]
+    #[endpoint(updateEsdtSafeConfigSetupPhase)]
+    fn update_esdt_safe_config_during_setup_phase(&self, new_config: EsdtSafeConfig<Self::Api>) {
+        self.require_esdt_config_valid(&new_config);
+        self.esdt_safe_config().set(new_config);
+    }
+
     #[endpoint(updateEsdtSafeConfig)]
     fn update_esdt_safe_config(
         &self,
@@ -80,7 +86,7 @@ pub trait MvxEsdtSafe:
     }
 
     #[only_owner]
-    #[endpoint(completSetupPhase)]
+    #[endpoint(completeSetupPhase)]
     fn complete_setup_phase(&self) {
         require!(
             !self.is_setup_phase_complete(),
