@@ -22,7 +22,7 @@ pub trait UpdateConfigsModule: only_admin::OnlyAdminModule {
         self.tx()
             .to(esdt_safe_address)
             .typed(MvxEsdtSafeProxy)
-            .update_configuration(new_config)
+            .update_configuration(ManagedBuffer::new(), new_config)
             .sync_call();
     }
 

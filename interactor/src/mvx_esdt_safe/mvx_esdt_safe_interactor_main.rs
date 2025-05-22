@@ -142,7 +142,11 @@ impl MvxEsdtSafeInteract {
         println!("Result: {response:?}");
     }
 
-    pub async fn update_configuration(&mut self, new_config: EsdtSafeConfig<StaticApi>) {
+    pub async fn update_configuration(
+        &mut self,
+        hash_of_hashes: &ManagedBuffer<StaticApi>,
+        new_config: EsdtSafeConfig<StaticApi>,
+    ) {
         let response = self
             .interactor
             .tx()
@@ -150,7 +154,7 @@ impl MvxEsdtSafeInteract {
             .to(self.state.current_mvx_esdt_safe_contract_address())
             .gas(90_000_000u64)
             .typed(MvxEsdtSafeProxy)
-            .update_configuration(new_config)
+            .update_configuration(hash_of_hashes, new_config)
             .returns(ReturnsResultUnmanaged)
             .run()
             .await;

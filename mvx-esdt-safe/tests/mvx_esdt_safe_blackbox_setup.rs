@@ -12,6 +12,7 @@ use multiversx_sc::{
     },
 };
 use multiversx_sc_modules::transfer_role_proxy::PaymentsVec;
+use multiversx_sc_scenario::ReturnsTxHash;
 use multiversx_sc_scenario::{
     api::StaticApi, ReturnsHandledOrError, ReturnsLogs, ScenarioTxRun, ScenarioTxWhitebox,
 };
@@ -130,6 +131,7 @@ impl MvxEsdtSafeTestState {
 
     pub fn update_configuration(
         &mut self,
+        hash_of_hashes: &ManagedBuffer<StaticApi>,
         new_config: EsdtSafeConfig<StaticApi>,
         err_message: Option<&str>,
     ) {
@@ -140,7 +142,7 @@ impl MvxEsdtSafeTestState {
             .from(OWNER_ADDRESS)
             .to(ESDT_SAFE_ADDRESS)
             .typed(MvxEsdtSafeProxy)
-            .update_configuration(new_config)
+            .update_configuration(hash_of_hashes, new_config)
             .returns(ReturnsHandledOrError::new())
             .run();
 

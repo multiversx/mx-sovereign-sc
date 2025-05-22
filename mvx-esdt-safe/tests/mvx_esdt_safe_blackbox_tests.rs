@@ -80,7 +80,11 @@ fn test_deploy_invalid_config() {
         ManagedVec::new(),
     );
 
-    state.update_configuration(config, Some(MAX_GAS_LIMIT_PER_TX_EXCEEDED));
+    state.update_configuration(
+        &ManagedBuffer::new(),
+        config,
+        Some(MAX_GAS_LIMIT_PER_TX_EXCEEDED),
+    );
 }
 
 /// ### TEST
