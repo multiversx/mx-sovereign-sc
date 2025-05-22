@@ -72,6 +72,8 @@ pub struct EsdtSafeConfig<M: ManagedTypeApi> {
     pub max_bridged_token_amounts: ManagedVec<M, MaxBridgedAmount<M>>,
 }
 
+impl<A: CryptoApi> GenerateHash<A> for EsdtSafeConfig<A> {}
+
 impl<M: ManagedTypeApi> EsdtSafeConfig<M> {
     #[inline]
     pub fn default_config() -> Self {
@@ -100,5 +102,3 @@ impl<M: ManagedTypeApi> EsdtSafeConfig<M> {
         }
     }
 }
-
-impl<A: CryptoApi> GenerateHash<A> for EsdtSafeConfig<A> {}
