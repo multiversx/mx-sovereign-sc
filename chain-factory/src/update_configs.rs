@@ -36,7 +36,7 @@ pub trait UpdateConfigsModule: only_admin::OnlyAdminModule {
         self.tx()
             .to(chain_config_address)
             .typed(ChainConfigContractProxy)
-            .update_config(new_config)
+            .update_config(ManagedBuffer::new(), new_config)
             .sync_call();
     }
 

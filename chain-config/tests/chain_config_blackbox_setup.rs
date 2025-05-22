@@ -2,6 +2,7 @@ use common_test_setup::{
     constants::{CHAIN_CONFIG_ADDRESS, OWNER_ADDRESS, OWNER_BALANCE},
     AccountSetup, BaseSetup,
 };
+use multiversx_sc::types::ManagedBuffer;
 use multiversx_sc_scenario::{api::StaticApi, ReturnsHandledOrError, ScenarioTxRun};
 use proxies::chain_config_proxy::ChainConfigContractProxy;
 use structs::configs::SovereignConfig;
@@ -29,6 +30,7 @@ impl ChainConfigTestState {
 
     pub fn update_chain_config(
         &mut self,
+        hash_of_hashes: ManagedBuffer<StaticApi>,
         config: SovereignConfig<StaticApi>,
         expect_error: Option<&str>,
     ) {
@@ -39,7 +41,7 @@ impl ChainConfigTestState {
             .from(OWNER_ADDRESS)
             .to(CHAIN_CONFIG_ADDRESS)
             .typed(ChainConfigContractProxy)
-            .update_config(config)
+            .update_config(hash_of_hashes, config)
             .returns(ReturnsHandledOrError::new())
             .run();
 
