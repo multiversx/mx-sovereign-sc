@@ -41,7 +41,7 @@ impl ChainConfigTestState {
             .from(OWNER_ADDRESS)
             .to(CHAIN_CONFIG_ADDRESS)
             .typed(ChainConfigContractProxy)
-            .update_config(hash_of_hashes, config)
+            .update_sovereign_config(hash_of_hashes, config)
             .returns(ReturnsHandledOrError::new())
             .run();
 

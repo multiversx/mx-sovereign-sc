@@ -20,7 +20,7 @@ multiversx_sc_wasm_adapter::endpoints! {
     (
         init => init
         upgrade => upgrade
-        updateConfig => update_config
+        updateSovereignConfig => update_sovereign_config
         completeSetupPhase => complete_setup_phase
         sovereignConfig => sovereign_config
         wasPreviouslySlashed => was_previously_slashed

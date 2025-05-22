@@ -21,8 +21,12 @@ pub trait ChainConfigContract:
     }
 
     #[only_owner]
-    #[endpoint(updateConfig)]
-    fn update_config(&self, hash_of_hashes: ManagedBuffer, new_config: SovereignConfig<Self::Api>) {
+    #[endpoint(updateSovereignConfig)]
+    fn update_sovereign_config(
+        &self,
+        hash_of_hashes: ManagedBuffer,
+        new_config: SovereignConfig<Self::Api>,
+    ) {
         let opt_hash = if self.is_setup_phase_complete() {
             Some(new_config.generate_hash())
         } else {

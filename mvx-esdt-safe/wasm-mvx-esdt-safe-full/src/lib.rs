@@ -21,7 +21,7 @@ multiversx_sc_wasm_adapter::endpoints! {
     (
         init => init
         upgrade => upgrade
-        updateConfiguration => update_configuration
+        updateEsdtSafeConfig => update_esdt_safe_config
         setFeeMarketAddress => set_fee_market_address
         completSetupPhase => complete_setup_phase
         deposit => deposit

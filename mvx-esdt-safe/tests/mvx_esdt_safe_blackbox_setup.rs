@@ -141,7 +141,7 @@ impl MvxEsdtSafeTestState {
             .from(OWNER_ADDRESS)
             .to(ESDT_SAFE_ADDRESS)
             .typed(MvxEsdtSafeProxy)
-            .update_configuration(hash_of_hashes, new_config)
+            .update_esdt_safe_config(hash_of_hashes, new_config)
             .returns(ReturnsHandledOrError::new())
             .run();
 

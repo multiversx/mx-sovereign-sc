@@ -48,8 +48,8 @@ pub trait MvxEsdtSafe:
     fn upgrade(&self) {}
 
     #[only_owner]
-    #[endpoint(updateConfiguration)]
-    fn update_configuration(
+    #[endpoint(updateEsdtSafeConfig)]
+    fn update_esdt_safe_config(
         &self,
         hash_of_hashes: ManagedBuffer,
         new_config: EsdtSafeConfig<Self::Api>,
