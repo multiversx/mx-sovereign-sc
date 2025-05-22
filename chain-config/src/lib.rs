@@ -1,6 +1,7 @@
 #![no_std]
 
-use structs::configs::SovereignConfig;
+use cross_chain::{execute_common, storage};
+use structs::{configs::SovereignConfig, generate_hash::GenerateHash};
 
 multiversx_sc::imports!();
 
@@ -8,7 +9,10 @@ pub mod validator_rules;
 
 #[multiversx_sc::contract]
 pub trait ChainConfigContract:
-    validator_rules::ValidatorRulesModule + setup_phase::SetupPhaseModule
+    validator_rules::ValidatorRulesModule
+    + setup_phase::SetupPhaseModule
+    + execute_common::ExecuteCommonModule
+    + storage::CrossChainStorage
 {
     #[init]
     fn init(&self, config: SovereignConfig<Self::Api>) {
@@ -18,9 +22,23 @@ pub trait ChainConfigContract:
 
     #[only_owner]
     #[endpoint(updateConfig)]
-    fn update_config(&self, new_config: SovereignConfig<Self::Api>) {
+    fn update_config(&self, hash_of_hashes: ManagedBuffer, new_config: SovereignConfig<Self::Api>) {
+        let opt_hash = if self.is_setup_phase_complete() {
+            Some(new_config.generate_hash())
+        } else {
+            None
+        };
+
+        if let Some(ref config_hash) = opt_hash {
+            self.lock_operation_hash(config_hash, &hash_of_hashes);
+        }
+
         self.require_valid_config(&new_config);
         self.sovereign_config().set(new_config);
+
+        if let Some(config_hash) = opt_hash {
+            self.remove_executed_hash(&hash_of_hashes, &config_hash);
+        }
     }
 
     #[only_owner]
