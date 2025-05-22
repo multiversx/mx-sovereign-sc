@@ -12,7 +12,6 @@ use multiversx_sc::{
     },
 };
 use multiversx_sc_modules::transfer_role_proxy::PaymentsVec;
-use multiversx_sc_scenario::ReturnsTxHash;
 use multiversx_sc_scenario::{
     api::StaticApi, ReturnsHandledOrError, ReturnsLogs, ScenarioTxRun, ScenarioTxWhitebox,
 };
