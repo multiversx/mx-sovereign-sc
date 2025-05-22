@@ -1,6 +1,5 @@
 use error_messages::NO_HEADER_VERIFIER_ADDRESS;
 use proxies::header_verifier_proxy::HeaderverifierProxy;
-use structs::operation::Operation;
 
 multiversx_sc::imports!();
 
