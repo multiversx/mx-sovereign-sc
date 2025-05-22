@@ -17,6 +17,8 @@ pub struct Operation<M: ManagedTypeApi> {
     pub data: OperationData<M>,
 }
 
+impl<A: CryptoApi> GenerateHash<A> for Operation<A> {}
+
 impl<M: ManagedTypeApi> Operation<M> {
     #[inline]
     pub fn new(
@@ -44,8 +46,6 @@ impl<M: ManagedTypeApi> Operation<M> {
         tuples
     }
 }
-
-impl<A: CryptoApi> GenerateHash<A> for Operation<A> {}
 
 #[type_abi]
 #[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, ManagedVecItem, Clone)]
