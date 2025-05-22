@@ -196,19 +196,6 @@ where
             .original_result()
     }
 
-    pub fn update_config<
-        Arg0: ProxyArg<structs::configs::SovereignConfig<Env::Api>>,
-    >(
-        self,
-        new_config: Arg0,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("updateConfig")
-            .argument(&new_config)
-            .original_result()
-    }
-
     pub fn complete_setup_phase(
         self,
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
