@@ -116,7 +116,7 @@ fn test_update_config_setup_phase_not_completed() {
 /// Call 'update_chain_config()'  with an invalid config
 ///
 /// ### EXPECTED
-/// updateSovereignConfigFail event is emitted
+/// failedBridgeOp event is emitted
 #[test]
 fn test_update_config_invalid_config() {
     let mut state = ChainConfigTestState::new();
@@ -146,12 +146,7 @@ fn test_update_config_invalid_config() {
 
     state.common_setup.complete_chain_config_setup_phase(None);
 
-    state.update_sovereign_config(
-        hash_of_hashes,
-        new_config,
-        None,
-        Some("updateSovereignConfigFail"),
-    );
+    state.update_sovereign_config(hash_of_hashes, new_config, None, Some("failedBridgeOp"));
 }
 
 /// ### TEST

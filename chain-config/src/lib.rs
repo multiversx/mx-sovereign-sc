@@ -36,7 +36,7 @@ pub trait ChainConfigContract:
         self.lock_operation_hash(&config_hash, &hash_of_hashes);
 
         if let Some(error_message) = self.is_new_config_valid(&new_config) {
-            self.update_sovereign_config_fail_event(
+            self.failed_bridge_operation_event(
                 &hash_of_hashes,
                 &config_hash,
                 &ManagedBuffer::from(error_message),

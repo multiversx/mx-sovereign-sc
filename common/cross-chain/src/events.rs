@@ -27,8 +27,8 @@ pub trait EventsModule {
         #[indexed] hash_of_bridge_op: &ManagedBuffer,
     );
 
-    #[event("updateSovereignConfigFail")]
-    fn update_sovereign_config_fail_event(
+    #[event("failedBridgeOp")]
+    fn failed_bridge_operation_event(
         &self,
         #[indexed] hash_of_hashes: &ManagedBuffer,
         #[indexed] hash: &ManagedBuffer,
