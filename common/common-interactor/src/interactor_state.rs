@@ -10,6 +10,12 @@ use std::{
 const STATE_FILE: &str = "state.toml";
 
 #[derive(Debug, Default, Serialize, Deserialize)]
+pub struct TokenProperties {
+    pub token_id: String,
+    pub nonce: u64,
+}
+
+#[derive(Debug, Default, Serialize, Deserialize)]
 pub struct State {
     pub mvx_esdt_safe_address: Option<Bech32Address>,
     pub header_verfier_address: Option<Bech32Address>,
@@ -20,6 +26,9 @@ pub struct State {
     pub chain_factory_sc_address: Option<Bech32Address>,
     pub enshrine_esdt_safe_sc_address: Option<Bech32Address>,
     pub token_handler_address: Option<Bech32Address>,
+    pub first_token: Option<TokenProperties>,
+    pub fee_token: Option<TokenProperties>,
+    pub second_token: Option<TokenProperties>,
 }
 
 impl State {
@@ -70,6 +79,18 @@ impl State {
 
     pub fn set_token_handler_address(&mut self, address: Bech32Address) {
         self.token_handler_address = Some(address);
+    }
+
+    pub fn set_first_token(&mut self, token: TokenProperties) {
+        self.first_token = Some(token);
+    }
+
+    pub fn set_fee_token(&mut self, token: TokenProperties) {
+        self.fee_token = Some(token);
+    }
+
+    pub fn set_second_token(&mut self, token: TokenProperties) {
+        self.second_token = Some(token);
     }
 
     /// Returns the contract addresses
@@ -125,6 +146,30 @@ impl State {
         self.token_handler_address
             .as_ref()
             .expect("no known token handler SC, deploy first")
+    }
+
+    pub fn get_first_token_id(&self) -> &str {
+        self.first_token
+            .as_ref()
+            .expect("no known first token, issue first")
+            .token_id
+            .as_str()
+    }
+
+    pub fn get_fee_token_id(&self) -> &str {
+        self.fee_token
+            .as_ref()
+            .expect("no known fee token, issue first")
+            .token_id
+            .as_str()
+    }
+
+    pub fn get_second_token_id(&self) -> &str {
+        self.second_token
+            .as_ref()
+            .expect("no known second token, issue first")
+            .token_id
+            .as_str()
     }
 }
 
