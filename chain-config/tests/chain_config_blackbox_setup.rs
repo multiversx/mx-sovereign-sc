@@ -3,7 +3,7 @@ use common_test_setup::{
     AccountSetup, BaseSetup,
 };
 use multiversx_sc::types::ManagedBuffer;
-use multiversx_sc_scenario::{api::StaticApi, ReturnsHandledOrError, ScenarioTxRun};
+use multiversx_sc_scenario::{api::StaticApi, ReturnsHandledOrError, ReturnsLogs, ScenarioTxRun};
 use proxies::chain_config_proxy::ChainConfigContractProxy;
 use structs::configs::SovereignConfig;
 
@@ -28,13 +28,34 @@ impl ChainConfigTestState {
         Self { common_setup }
     }
 
-    pub fn update_chain_config(
+    pub fn update_sovereign_config_during_setup_phase(
+        &mut self,
+        config: SovereignConfig<StaticApi>,
+        expect_error: Option<&str>,
+    ) {
+        let result = self
+            .common_setup
+            .world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .to(CHAIN_CONFIG_ADDRESS)
+            .typed(ChainConfigContractProxy)
+            .update_sovereign_config_during_setup_phase(config)
+            .returns(ReturnsHandledOrError::new())
+            .run();
+
+        self.common_setup
+            .assert_expected_error_message(result, expect_error);
+    }
+
+    pub fn update_sovereign_config(
         &mut self,
         hash_of_hashes: ManagedBuffer<StaticApi>,
         config: SovereignConfig<StaticApi>,
         expect_error: Option<&str>,
+        expected_custom_log: Option<&str>,
     ) {
-        let transaction = self
+        let (result, logs) = self
             .common_setup
             .world
             .tx()
@@ -43,9 +64,14 @@ impl ChainConfigTestState {
             .typed(ChainConfigContractProxy)
             .update_sovereign_config(hash_of_hashes, config)
             .returns(ReturnsHandledOrError::new())
+            .returns(ReturnsLogs)
             .run();
 
         self.common_setup
-            .assert_expected_error_message(transaction, expect_error);
+            .assert_expected_error_message(result, expect_error);
+
+        if let Some(custom_log) = expected_custom_log {
+            self.common_setup.assert_expected_log(logs, custom_log)
+        };
     }
 }

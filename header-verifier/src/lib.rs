@@ -169,6 +169,8 @@ pub trait Headerverifier:
         );
     }
 
+    // TODO:
+    // This needs to check for all the Sovereign Contracts
     fn require_caller_esdt_safe(&self) {
         let esdt_safe_mapper = self.esdt_safe_address();
 

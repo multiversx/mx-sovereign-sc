@@ -144,13 +144,4 @@ where
             .argument(&validator)
             .original_result()
     }
-
-    pub fn native_token(
-        self,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, TokenIdentifier<Env::Api>> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("getNativeToken")
-            .original_result()
-    }
 }
