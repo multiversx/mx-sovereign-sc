@@ -9,22 +9,46 @@ authors = ["you"]
 path = "src/lib.rs"
 
 [dependencies.multiversx-sc]
-version = "=0.54.5"
+version = "=0.57.1"
 
-[dependencies.multiversx-sc-modules]
-version = "=0.54.5"
+[dev-dependencies.multiversx-sc-modules]
+version = "=0.57.1"
+
+[dependencies.token-handler]
+path = "../token-handler"
+
+[dependencies.chain-factory]
+path = "../chain-factory"
+
+[dependencies.chain-config]
+path = "../chain-config"
+
+[dependencies.mvx-esdt-safe]
+path = "../mvx-esdt-safe"
+
+[dependencies.cross-chain]
+path = "../common/cross-chain"
+
+[dependencies.header-verifier]
+path = "../header-verifier"
+
+[dependencies.fee-market]
+path = "../fee-market"
 
 [dependencies.proxies]
 path = "../common/proxies"
 
-[dependencies.transaction]
-path = "../common/transaction"
+[dependencies.structs]
+path = "../common/structs"
 
-[dependencies.setup-phase]
-path = "../common/setup-phase"
+[dependencies.error-messages]
+path = "../common/error-messages"
+
+[dev-dependencies.common-test-setup]
+path = "../common/common-test-setup"
 
 [dev-dependencies]
 num-bigint = "0.4"
 
 [dev-dependencies.multiversx-sc-scenario]
-version = "=0.54.5"
+version = "=0.57.1"

@@ -5,7 +5,8 @@ use multiversx_sc::types::{
     system_proxy, EsdtTokenPayment, ManagedArgBuffer, MultiValueEncoded, ToSelf,
 };
 use multiversx_sc::types::{ManagedVec, TokenIdentifier};
-use transaction::{GasLimit, OperationEsdtPayment, TransferData};
+use structs::aliases::GasLimit;
+use structs::operation::{OperationEsdtPayment, TransferData};
 
 use crate::common_storage;
 
@@ -27,7 +28,7 @@ pub trait TransferTokensModule: common_storage::CommonStorage {
 
         let mut output_payments = self.mint_tokens(&tokens.to_vec());
         let call_value_esdt_transfer = self.call_value().all_esdt_transfers();
-        output_payments.extend(&call_value_esdt_transfer.clone_value());
+        output_payments.extend(call_value_esdt_transfer.clone());
 
         self.distribute_payments(&to, &output_payments, &opt_transfer_data);
     }
@@ -99,7 +100,7 @@ pub trait TransferTokensModule: common_storage::CommonStorage {
                 );
             }
 
-            output_payments.push(operation_token.into());
+            output_payments.push(operation_token.clone().into());
         }
 
         output_payments
@@ -150,9 +151,9 @@ pub trait TransferTokensModule: common_storage::CommonStorage {
         args.push_arg(mapped_tokens.len());
 
         for token in mapped_tokens {
-            args.push_arg(token.token_identifier);
+            args.push_arg(token.token_identifier.clone());
             args.push_arg(token.token_nonce);
-            args.push_arg(token.amount);
+            args.push_arg(token.amount.clone());
         }
 
         args

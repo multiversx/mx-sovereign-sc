@@ -1,358 +1,231 @@
-use multiversx_sc::{
-    imports::OptionalValue,
-    types::{
-        BigUint, EsdtTokenPayment, ManagedVec, MultiValueEncoded, ReturnsResultUnmanaged,
-        TestAddress, TestSCAddress, TestTokenIdentifier,
-    },
+use common_test_setup::constants::{
+    ESDT_SAFE_ADDRESS, FIRST_TEST_TOKEN, OWNER_BALANCE, SECOND_TEST_TOKEN, USER_ADDRESS,
+    WRONG_TOKEN_ID,
 };
-use multiversx_sc_scenario::{
-    api::StaticApi, imports::MxscPath, ExpectError, ScenarioTxRun, ScenarioWorld,
+use error_messages::{
+    INVALID_FEE, INVALID_FEE_TYPE, INVALID_TOKEN_ID, PAYMENT_DOES_NOT_COVER_FEE,
+    TOKEN_NOT_ACCEPTED_AS_FEE,
 };
-use proxies::fee_market_proxy::{FeeMarketProxy, FeeStruct, FeeType};
+use fee_market_blackbox_setup::*;
+use multiversx_sc::types::BigUint;
 
-const FEE_MARKET_CODE_PATH: MxscPath = MxscPath::new("output/fee-market.mxsc.json");
-const FEE_MARKET_ADDRESS: TestSCAddress = TestSCAddress::new("fee-market");
-
-const ESDT_SAFE_ADDRESS: TestSCAddress = TestSCAddress::new("esdt-safe");
-const ESDT_SAFE_CODE_PATH: MxscPath = MxscPath::new("../esdt-safe/output/esdt-safe.mxsc.json");
-
-const OWNER_ADDRESS: TestAddress = TestAddress::new("owner");
-const USER_ADDRESS: TestAddress = TestAddress::new("user");
-
-const TOKEN_ID: TestTokenIdentifier = TestTokenIdentifier::new("TDK-123456");
-const DIFFERENT_TOKEN_ID: TestTokenIdentifier = TestTokenIdentifier::new("WRONG-123456");
-const ANOTHER_TOKEN_ID: TestTokenIdentifier = TestTokenIdentifier::new("ANOTHER-123456");
-const WRONG_TOKEN_ID: TestTokenIdentifier = TestTokenIdentifier::new("WRONG-TOKEN");
-
-fn world() -> ScenarioWorld {
-    let mut blockchain = ScenarioWorld::new();
-
-    blockchain.register_contract(FEE_MARKET_CODE_PATH, fee_market::ContractBuilder);
-
-    blockchain
-}
-
-struct FeeMarketTestState {
-    world: ScenarioWorld,
-}
-
-impl FeeMarketTestState {
-    fn new() -> Self {
-        let mut world = world();
-
-        world
-            .account(OWNER_ADDRESS)
-            .esdt_balance(TOKEN_ID, 1000)
-            .nonce(1);
-
-        world
-            .account(USER_ADDRESS)
-            .esdt_balance(TOKEN_ID, 1000)
-            .nonce(1);
-
-        world
-            .account(ESDT_SAFE_ADDRESS)
-            .code(ESDT_SAFE_CODE_PATH)
-            .esdt_balance(TOKEN_ID, 1000)
-            .esdt_balance(DIFFERENT_TOKEN_ID, 1000)
-            .esdt_balance(ANOTHER_TOKEN_ID, 1000)
-            .nonce(1);
-
-        Self { world }
-    }
-
-    fn deploy_fee_market(&mut self) -> &mut Self {
-        let fee = FeeStruct {
-            base_token: TOKEN_ID.to_token_identifier(),
-            fee_type: FeeType::Fixed {
-                token: TOKEN_ID.to_token_identifier(),
-                per_transfer: BigUint::from(100u64),
-                per_gas: BigUint::from(0u64),
-            },
-        };
-
-        self.world
-            .tx()
-            .from(OWNER_ADDRESS)
-            .typed(FeeMarketProxy)
-            .init(ESDT_SAFE_ADDRESS, Option::Some(fee))
-            .code(FEE_MARKET_CODE_PATH)
-            .new_address(FEE_MARKET_ADDRESS)
-            .run();
-
-        self
-    }
-
-    fn substract_fee(&mut self, payment_wanted: &str, error_status: Option<ExpectError>) {
-        let payment: EsdtTokenPayment<StaticApi> = match payment_wanted {
-            "Correct" => {
-                EsdtTokenPayment::new(TOKEN_ID.to_token_identifier(), 0u64, BigUint::from(200u64))
-            }
-            "InvalidToken" => EsdtTokenPayment::new(
-                DIFFERENT_TOKEN_ID.to_token_identifier::<StaticApi>(),
-                0u64,
-                BigUint::from(10u64),
-            ),
-            "AnyToken" => EsdtTokenPayment::new(
-                ANOTHER_TOKEN_ID.to_token_identifier(),
-                0u64,
-                BigUint::from(10u64),
-            ),
-            "Less than fee" => {
-                EsdtTokenPayment::new(TOKEN_ID.to_token_identifier(), 0u64, BigUint::from(0u64))
-            }
-            _ => {
-                panic!("Invalid payment wanted");
-            }
-        };
-
-        match error_status {
-            Some(error) => {
-                self.world
-                    .tx()
-                    .from(ESDT_SAFE_ADDRESS)
-                    .to(FEE_MARKET_ADDRESS)
-                    .typed(FeeMarketProxy)
-                    .subtract_fee(USER_ADDRESS, 1u8, OptionalValue::Some(30u64))
-                    .payment(payment)
-                    .returns(error)
-                    .run();
-            }
-            None => {
-                self.world
-                    .tx()
-                    .from(ESDT_SAFE_ADDRESS)
-                    .to(FEE_MARKET_ADDRESS)
-                    .typed(FeeMarketProxy)
-                    .subtract_fee(USER_ADDRESS, 1u8, OptionalValue::Some(30u64))
-                    .payment(payment)
-                    .returns(ReturnsResultUnmanaged)
-                    .run();
-            }
-        }
-    }
-
-    fn remove_fee(&mut self) {
-        self.world
-            .tx()
-            .from(OWNER_ADDRESS)
-            .to(FEE_MARKET_ADDRESS)
-            .typed(FeeMarketProxy)
-            .remove_fee(TOKEN_ID)
-            .run();
-    }
-
-    fn add_fee(
-        &mut self,
-        token_id: TestTokenIdentifier,
-        fee_type: &str,
-        error_status: Option<ExpectError>,
-    ) {
-        let fee_struct: FeeStruct<StaticApi> = match fee_type {
-            "None" => {
-                let fee_type = FeeType::None;
-                FeeStruct {
-                    base_token: token_id.to_token_identifier(),
-                    fee_type,
-                }
-            }
-            "Fixed" => {
-                let fee_type = FeeType::Fixed {
-                    token: TOKEN_ID.to_token_identifier(),
-                    per_transfer: BigUint::from(10u8),
-                    per_gas: BigUint::from(10u8),
-                };
-                FeeStruct {
-                    base_token: token_id.to_token_identifier(),
-                    fee_type,
-                }
-            }
-            "AnyToken" => {
-                let fee_type = FeeType::AnyToken {
-                    base_fee_token: DIFFERENT_TOKEN_ID.to_token_identifier(),
-                    per_transfer: BigUint::from(10u8),
-                    per_gas: BigUint::from(10u8),
-                };
-                FeeStruct {
-                    base_token: token_id.to_token_identifier(),
-                    fee_type,
-                }
-            }
-            "AnyTokenWrong" => {
-                let fee_type = FeeType::AnyToken {
-                    base_fee_token: WRONG_TOKEN_ID.to_token_identifier(),
-                    per_transfer: BigUint::from(10u8),
-                    per_gas: BigUint::from(10u8),
-                };
-                FeeStruct {
-                    base_token: token_id.to_token_identifier(),
-                    fee_type,
-                }
-            }
-            _ => {
-                panic!("Invalid fee type");
-            }
-        };
-
-        match error_status {
-            Some(error) => {
-                self.world
-                    .tx()
-                    .from(OWNER_ADDRESS)
-                    .to(FEE_MARKET_ADDRESS)
-                    .typed(FeeMarketProxy)
-                    .set_fee(fee_struct)
-                    .returns(error)
-                    .run();
-            }
-            None => {
-                self.world
-                    .tx()
-                    .from(OWNER_ADDRESS)
-                    .to(FEE_MARKET_ADDRESS)
-                    .typed(FeeMarketProxy)
-                    .set_fee(fee_struct)
-                    .run();
-            }
-        }
-    }
-
-    fn add_users_to_whitelist(&mut self) {
-        let mut users_vec = ManagedVec::new();
-        users_vec.push(USER_ADDRESS.to_managed_address());
-        let users = MultiValueEncoded::from(users_vec);
-        self.world
-            .tx()
-            .from(OWNER_ADDRESS)
-            .to(FEE_MARKET_ADDRESS)
-            .typed(FeeMarketProxy)
-            .add_users_to_whitelist(users)
-            .run();
-    }
-
-    fn check_balance_sc(&mut self, address: TestSCAddress, expected_balance: u64) {
-        self.world
-            .check_account(address)
-            .esdt_balance(TOKEN_ID, expected_balance);
-    }
-
-    fn check_account(&mut self, address: TestAddress, expected_balance: u64) {
-        self.world
-            .check_account(address)
-            .esdt_balance(TOKEN_ID, expected_balance);
-    }
-}
+mod fee_market_blackbox_setup;
 
 #[test]
 fn test_deploy_fee_market() {
     let mut state = FeeMarketTestState::new();
 
-    state.deploy_fee_market();
+    let fee = state.get_fee();
+
+    state
+        .common_setup
+        .deploy_fee_market(Some(fee), ESDT_SAFE_ADDRESS);
 }
 
+/// ### TEST
+/// F-MARKET_SET_FEE_FAIL_001
+///
+/// ### ACTION
+/// Call 'set_fee()' with wrong parameters
+///
+/// ### EXPECTED
+/// Errors: INVALID_TOKEN_ID, INVALID_FEE_TYPE, INVALID_FEE
 #[test]
-fn test_add_fee_wrong_params() {
+fn test_set_fee_wrong_params() {
     let mut state = FeeMarketTestState::new();
 
-    state.deploy_fee_market();
+    let fee = state.get_fee();
 
-    state.add_fee(
-        WRONG_TOKEN_ID,
-        "Fixed",
-        Some(ExpectError(4, "Invalid token ID")),
-    );
+    state
+        .common_setup
+        .deploy_fee_market(Some(fee), ESDT_SAFE_ADDRESS);
 
-    state.add_fee(TOKEN_ID, "None", Some(ExpectError(4, "Invalid fee type")));
+    state.set_fee(WRONG_TOKEN_ID, "Fixed", Some(INVALID_TOKEN_ID));
 
-    state.add_fee(
-        DIFFERENT_TOKEN_ID,
-        "Fixed",
-        Some(ExpectError(4, "Invalid fee")),
-    );
+    state.set_fee(FIRST_TEST_TOKEN, "None", Some(INVALID_FEE_TYPE));
 
-    state.add_fee(
-        TOKEN_ID,
-        "AnyTokenWrong",
-        Some(ExpectError(4, "Invalid token ID")),
-    );
+    state.set_fee(SECOND_TEST_TOKEN, "Fixed", Some(INVALID_FEE));
+
+    state.set_fee(FIRST_TEST_TOKEN, "AnyTokenWrong", Some(INVALID_TOKEN_ID));
 }
 
+/// ### TEST
+/// F-MARKET_SUBSTRACT_FEE_OK_002
+///
+/// ### ACTION
+/// Call 'substract_fee()' with no fee set
+///
+/// ### EXPECTED
+/// User balance is unchanged
 #[test]
 fn test_substract_fee_no_fee() {
     let mut state = FeeMarketTestState::new();
 
-    state.deploy_fee_market();
+    let fee = state.get_fee();
+
+    state
+        .common_setup
+        .deploy_fee_market(Some(fee), ESDT_SAFE_ADDRESS);
+
     state.remove_fee();
 
     state.substract_fee("Correct", None);
 
-    state.check_balance_sc(ESDT_SAFE_ADDRESS, 1000);
-    state.check_account(USER_ADDRESS, 1000);
+    state.common_setup.check_account_single_esdt(
+        ESDT_SAFE_ADDRESS.to_address(),
+        FIRST_TEST_TOKEN,
+        0u64,
+        BigUint::from(OWNER_BALANCE),
+    );
+
+    state.common_setup.check_account_single_esdt(
+        USER_ADDRESS.to_address(),
+        FIRST_TEST_TOKEN,
+        0u64,
+        BigUint::from(OWNER_BALANCE),
+    );
 }
 
+/// ### TEST
+/// F-MARKET_SUBSTRACT_FEE_OK_003
+///
+/// ### ACTION
+/// Call 'substract_fee()' with a whitelisted user
+///
+/// ### EXPECTED
+/// User balance is unchanged
 #[test]
 fn test_substract_fee_whitelisted() {
     let mut state = FeeMarketTestState::new();
 
-    state.deploy_fee_market();
-    state.add_users_to_whitelist();
+    let fee = state.get_fee();
+
+    state
+        .common_setup
+        .deploy_fee_market(Some(fee), ESDT_SAFE_ADDRESS);
+
+    let whitelisted_users = vec![USER_ADDRESS];
+
+    state.add_users_to_whitelist(whitelisted_users);
 
     state.substract_fee("Correct", None);
 
-    state.check_balance_sc(ESDT_SAFE_ADDRESS, 1000);
-    state.check_account(USER_ADDRESS, 1000);
+    state.common_setup.check_account_single_esdt(
+        ESDT_SAFE_ADDRESS.to_address(),
+        FIRST_TEST_TOKEN,
+        0u64,
+        BigUint::from(OWNER_BALANCE),
+    );
+
+    state.common_setup.check_account_single_esdt(
+        USER_ADDRESS.to_address(),
+        FIRST_TEST_TOKEN,
+        0u64,
+        BigUint::from(OWNER_BALANCE),
+    );
 }
 
+/// ### TEST
+/// F-MARKET_SUBSTRACT_FEE_FAIL_004
+///
+/// ### ACTION
+/// Call 'substract_fee()' with an invalid payment token
+///
+/// ### EXPECTED
+/// Error TOKEN_NOT_ACCEPTED_AS_FEE
 #[test]
 fn test_substract_fee_invalid_payment_token() {
     let mut state = FeeMarketTestState::new();
 
-    state.deploy_fee_market();
+    let fee = state.get_fee();
 
-    state.substract_fee(
-        "InvalidToken",
-        Some(ExpectError(4, "Token not accepted as fee")),
+    state
+        .common_setup
+        .deploy_fee_market(Some(fee), ESDT_SAFE_ADDRESS);
+
+    state.substract_fee("InvalidToken", Some(TOKEN_NOT_ACCEPTED_AS_FEE));
+
+    state.common_setup.check_account_single_esdt(
+        ESDT_SAFE_ADDRESS.to_address(),
+        FIRST_TEST_TOKEN,
+        0u64,
+        BigUint::from(OWNER_BALANCE),
     );
 
-    state.check_balance_sc(ESDT_SAFE_ADDRESS, 1000);
-    state.check_account(USER_ADDRESS, 1000);
+    state.common_setup.check_account_single_esdt(
+        USER_ADDRESS.to_address(),
+        FIRST_TEST_TOKEN,
+        0u64,
+        BigUint::from(OWNER_BALANCE),
+    );
 }
 
-// FAILS => get_safe_price should be mocked here in order to make this test work
-// #[test]
-// fn test_substract_fee_any_token() {
-//     let mut state = FeeMarketTestState::new();
-
-//     state.deploy_fee_market();
-//     state.add_fee(ANOTHER_TOKEN_ID, "AnyToken", None);
-
-//     state.substract_fee("AnyToken", Some(ExpectError(4, "Invalid token provided for fee")));
-
-// }
-
+/// ### TEST
+/// F-MARKET_SUBSTRACT_FEE_FAIL_005
+///
+/// ### ACTION
+/// Call 'substract_fee()' with not enough tokens to cover the fee
+///
+/// ### EXPECTED
+/// Error PAYMENT_DOES_NOT_COVER_FEE
 #[test]
 fn test_substract_fixed_fee_payment_not_covered() {
     let mut state = FeeMarketTestState::new();
 
-    state.deploy_fee_market();
+    let fee = state.get_fee();
 
-    state.substract_fee(
-        "Less than fee",
-        Some(ExpectError(4, "Payment does not cover fee")),
+    state
+        .common_setup
+        .deploy_fee_market(Some(fee), ESDT_SAFE_ADDRESS);
+
+    state.substract_fee("Less than fee", Some(PAYMENT_DOES_NOT_COVER_FEE));
+
+    state.common_setup.check_account_single_esdt(
+        ESDT_SAFE_ADDRESS.to_address(),
+        FIRST_TEST_TOKEN,
+        0u64,
+        BigUint::from(OWNER_BALANCE),
     );
 
-    state.check_balance_sc(ESDT_SAFE_ADDRESS, 1000);
-    state.check_account(USER_ADDRESS, 1000);
+    state.common_setup.check_account_single_esdt(
+        USER_ADDRESS.to_address(),
+        FIRST_TEST_TOKEN,
+        0u64,
+        BigUint::from(OWNER_BALANCE),
+    );
 }
 
+/// ### TEST
+/// F-MARKET_SUBSTRACT_FEE_OK_006
+///
+/// ### ACTION
+/// Call 'substract_fee()' with payment bigger than fee
+///
+/// ### EXPECTED
+/// User balance is refunded with the difference
 #[test]
 fn test_substract_fee_fixed_payment_bigger_than_fee() {
     let mut state = FeeMarketTestState::new();
 
-    state.deploy_fee_market();
+    let fee = state.get_fee();
+
+    state
+        .common_setup
+        .deploy_fee_market(Some(fee), ESDT_SAFE_ADDRESS);
 
     state.substract_fee("Correct", None);
 
-    state.check_balance_sc(ESDT_SAFE_ADDRESS, 800);
-    state.check_account(USER_ADDRESS, 1100);
+    state.common_setup.check_account_single_esdt(
+        ESDT_SAFE_ADDRESS.to_address(),
+        FIRST_TEST_TOKEN,
+        0u64,
+        BigUint::from(OWNER_BALANCE - 200),
+    );
+
+    state.common_setup.check_account_single_esdt(
+        USER_ADDRESS.to_address(),
+        FIRST_TEST_TOKEN,
+        0u64,
+        BigUint::from(OWNER_BALANCE + 100),
+    );
 }

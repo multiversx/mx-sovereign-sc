@@ -8,20 +8,29 @@ publish = false
 [lib]
 path = "src/lib.rs"
 
-[dependencies.transaction]
-path = "../common/transaction"
+[dependencies.structs]
+path = "../common/structs"
 
 [dependencies.proxies]
 path = "../common/proxies"
+
+[dependencies.error-messages]
+path = "../common/error-messages"
 
 [dependencies.chain-factory]
 path = "../chain-factory"
 
 [dependencies.multiversx-sc]
-version = "=0.54.5"
+version = "=0.57.1"
+
+[dependencies.multiversx-sc-modules]
+version = "=0.57.1"
+
+[dev-dependencies.common-test-setup]
+path = "../common/common-test-setup"
 
 [dev-dependencies]
 num-bigint = "0.4"
 
 [dev-dependencies.multiversx-sc-scenario]
-version = "=0.54.5"
+version = "=0.57.1"

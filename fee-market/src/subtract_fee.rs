@@ -1,33 +1,16 @@
-use transaction::GasLimit;
-
-use crate::fee_type::FeeType;
+use error_messages::{
+    INVALID_PERCENTAGE_SUM, INVALID_TOKEN_PROVIDED_FOR_FEE, PAYMENT_DOES_NOT_COVER_FEE,
+    TOKEN_NOT_ACCEPTED_AS_FEE,
+};
+use structs::{
+    aliases::GasLimit,
+    fee::{AddressPercentagePair, FeeType, FinalPayment, SubtractPaymentArguments},
+};
 
 multiversx_sc::imports!();
 multiversx_sc::derive_imports!();
 
 const TOTAL_PERCENTAGE: usize = 10_000;
-
-#[type_abi]
-#[derive(TopEncode, TopDecode)]
-pub struct FinalPayment<M: ManagedTypeApi> {
-    pub fee: EsdtTokenPayment<M>,
-    pub remaining_tokens: EsdtTokenPayment<M>,
-}
-
-#[derive(TopEncode, TopDecode, ManagedVecItem)]
-pub struct AddressPercentagePair<M: ManagedTypeApi> {
-    pub address: ManagedAddress<M>,
-    pub percentage: usize,
-}
-
-pub struct SubtractPaymentArguments<M: ManagedTypeApi> {
-    pub fee_token: TokenIdentifier<M>,
-    pub per_transfer: BigUint<M>,
-    pub per_gas: BigUint<M>,
-    pub payment: EsdtTokenPayment<M>,
-    pub total_transfers: usize,
-    pub opt_gas_limit: OptionalValue<GasLimit>,
-}
 
 #[multiversx_sc::module]
 pub trait SubtractFeeModule:
@@ -70,7 +53,7 @@ pub trait SubtractFeeModule:
 
         require!(
             percentage_sum == TOTAL_PERCENTAGE as u64,
-            "Invalid percentage sum"
+            INVALID_PERCENTAGE_SUM
         );
 
         for token_id in self.tokens_for_fees().iter() {
@@ -111,10 +94,10 @@ pub trait SubtractFeeModule:
         self.require_caller_esdt_safe();
 
         let caller = self.blockchain().get_caller();
-        let payment = self.call_value().single_esdt();
+        let payment = self.call_value().single_esdt().clone();
 
         if !self.is_fee_enabled() || self.users_whitelist().contains(&original_caller) {
-            self.tx().to(&caller).payment(&payment).transfer();
+            self.tx().to(&caller).payment(payment.clone()).transfer();
 
             return FinalPayment {
                 fee: EsdtTokenPayment::new(payment.token_identifier.clone(), 0, BigUint::zero()),
@@ -148,7 +131,7 @@ pub trait SubtractFeeModule:
     ) -> FinalPayment<Self::Api> {
         let fee_type = self.token_fee(&payment.token_identifier).get();
         match fee_type {
-            FeeType::None => sc_panic!("Token not accepted as fee"),
+            FeeType::None => sc_panic!(TOKEN_NOT_ACCEPTED_AS_FEE),
             FeeType::Fixed {
                 token,
                 per_transfer,
@@ -193,7 +176,7 @@ pub trait SubtractFeeModule:
     ) -> FinalPayment<Self::Api> {
         require!(
             args.payment.token_identifier == args.fee_token,
-            "Invalid token provided for fee"
+            INVALID_TOKEN_PROVIDED_FOR_FEE
         );
 
         let mut total_fee = args.per_transfer * args.total_transfers as u32;
@@ -202,7 +185,7 @@ pub trait SubtractFeeModule:
         }
 
         let mut payment = args.payment;
-        require!(total_fee <= payment.amount, "Payment does not cover fee");
+        require!(total_fee <= payment.amount, PAYMENT_DOES_NOT_COVER_FEE);
 
         payment.amount -= &total_fee;
 

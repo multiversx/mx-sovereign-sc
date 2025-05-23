@@ -1,6 +1,6 @@
 [package]
 name = "testing-sc"
-version = "0.0.0"
+version = "0.1.0"
 publish = false
 edition = "2021"
 authors = ["you"]
@@ -9,10 +9,10 @@ authors = ["you"]
 path = "src/lib.rs"
 
 [dependencies.multiversx-sc]
-version = "=0.54.5"
+version = "=0.57.1"
 
 [dev-dependencies]
 num-bigint = "0.4"
 
 [dev-dependencies.multiversx-sc-scenario]
-version = "=0.54.5"
+version = "=0.57.1"

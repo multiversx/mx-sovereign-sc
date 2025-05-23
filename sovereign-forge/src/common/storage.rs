@@ -1,6 +1,11 @@
-use multiversx_sc::imports::{SingleValueMapper, UnorderedSetMapper};
+use multiversx_sc::{
+    imports::{SingleValueMapper, UnorderedSetMapper},
+    types::ManagedBuffer,
+};
 
-use super::utils::ChainContractsMap;
+use super::utils::ContractInfo;
+
+pub type ChainId<M> = ManagedBuffer<M>;
 
 #[multiversx_sc::module]
 pub trait StorageModule {
@@ -8,11 +13,24 @@ pub trait StorageModule {
     fn sovereigns_mapper(
         &self,
         sovereign_creator: &ManagedAddress,
-    ) -> SingleValueMapper<ChainContractsMap<Self::Api>>;
+    ) -> SingleValueMapper<ChainId<Self::Api>>;
 
+    #[view(getDeployedSovereignContracts)]
+    #[storage_mapper("sovereignDeployedContracts")]
+    fn sovereign_deployed_contracts(
+        &self,
+        chain_id: &ChainId<Self::Api>,
+    ) -> UnorderedSetMapper<ContractInfo<Self::Api>>;
+
+    #[view(getSovereignSetupPhase)]
+    #[storage_mapper("sovereignSetupPhase")]
+    fn sovereign_setup_phase(&self, chain_id: &ChainId<Self::Api>) -> SingleValueMapper<bool>;
+
+    #[view(getChainFactoryAddress)]
     #[storage_mapper("chainFactories")]
     fn chain_factories(&self, shard_id: u32) -> SingleValueMapper<ManagedAddress>;
 
+    #[view(getTokenHandlerAddress)]
     #[storage_mapper("tokenHadlersFactories")]
     fn token_handlers(&self, shard_id: u32) -> SingleValueMapper<ManagedAddress>;
 

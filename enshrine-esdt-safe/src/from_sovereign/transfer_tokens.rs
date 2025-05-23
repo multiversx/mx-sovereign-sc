@@ -1,7 +1,11 @@
 use crate::{common, to_sovereign};
+use error_messages::{
+    CANNOT_TRANSFER_WHILE_PAUSED, INVALID_METHOD_TO_CALL_IN_CURRENT_CHAIN, NOT_ENOUGH_WEGLD_AMOUNT,
+    ONLY_WEGLD_IS_ACCEPTED_AS_REGISTER_FEE,
+};
 use multiversx_sc::imports::*;
-use proxies::{header_verifier_proxy::HeaderverifierProxy, token_handler_proxy::TokenHandlerProxy};
-use transaction::{Operation, OperationData, OperationEsdtPayment, OperationTuple};
+use proxies::token_handler_proxy::TokenHandlerProxy;
+use structs::operation::{Operation, OperationData, OperationEsdtPayment, OperationTuple};
 
 const DEFAULT_ISSUE_COST: u64 = 50_000_000_000_000_000; // 0.05 * 10^18
 
@@ -25,22 +29,20 @@ impl<M: ManagedTypeApi> Default for SplitResult<M> {
 #[multiversx_sc::module]
 pub trait TransferTokensModule:
     super::events::EventsModule
-    + tx_batch_module::TxBatchModule
-    + max_bridged_amount_module::MaxBridgedAmountModule
     + multiversx_sc_modules::pause::PauseModule
     + multiversx_sc_modules::default_issue_callbacks::DefaultIssueCallbacksModule
     + utils::UtilsModule
     + to_sovereign::events::EventsModule
     + common::storage::CommonStorage
+    + cross_chain::deposit_common::DepositCommonModule
+    + cross_chain::execute_common::ExecuteCommonModule
+    + cross_chain::storage::CrossChainStorage
 {
     #[endpoint(executeBridgeOps)]
     fn execute_operations(&self, hash_of_hashes: ManagedBuffer, operation: Operation<Self::Api>) {
         let is_sovereign_chain = self.is_sovereign_chain().get();
-        require!(
-            !is_sovereign_chain,
-            "Invalid method to call in current chain"
-        );
-        require!(self.not_paused(), "Cannot transfer while paused");
+        require!(!is_sovereign_chain, INVALID_METHOD_TO_CALL_IN_CURRENT_CHAIN);
+        require!(self.not_paused(), CANNOT_TRANSFER_WHILE_PAUSED);
 
         let op_hash = self.calculate_operation_hash(&operation);
 
@@ -83,11 +85,11 @@ pub trait TransferTokensModule:
         let wegld_identifier = self.wegld_identifier().get();
         require!(
             call_payment.token_identifier == wegld_identifier,
-            "WEGLD is the only token accepted as register fee"
+            ONLY_WEGLD_IS_ACCEPTED_AS_REGISTER_FEE
         );
         require!(
             call_payment.amount == DEFAULT_ISSUE_COST * tokens.len() as u64,
-            "WEGLD fee amount is not met"
+            NOT_ENOUGH_WEGLD_AMOUNT
         );
 
         for token_id in tokens {
@@ -106,7 +108,7 @@ pub trait TransferTokensModule:
 
         for token in tokens.iter() {
             if !self.has_sov_prefix(&token.token_identifier, &sov_prefix) {
-                non_sov_tokens.push(token);
+                non_sov_tokens.push(token.clone());
 
                 continue;
             }
@@ -115,7 +117,7 @@ pub trait TransferTokensModule:
                 return SplitResult::default();
             }
 
-            sov_tokens.push(token.into());
+            sov_tokens.push(token.clone().into());
         }
 
         SplitResult {
@@ -123,15 +125,6 @@ pub trait TransferTokensModule:
             non_sov_tokens,
             are_tokens_registered: true,
         }
-    }
-
-    fn remove_executed_hash(&self, hash_of_hashes: &ManagedBuffer, op_hash: &ManagedBuffer) {
-        let header_verifier_address = self.header_verifier_address().get();
-        self.tx()
-            .to(header_verifier_address)
-            .typed(HeaderverifierProxy)
-            .remove_executed_hash(hash_of_hashes, op_hash)
-            .sync_call();
     }
 
     fn emit_transfer_failed_events(
@@ -144,7 +137,6 @@ pub trait TransferTokensModule:
             operation_tuple.op_hash.clone(),
         );
 
-        // deposit back mainchain tokens into user account
         let sc_address = self.blockchain().get_sc_address();
         let tx_nonce = self.get_and_save_next_tx_id();
 
@@ -155,29 +147,6 @@ pub trait TransferTokensModule:
                 .map_tokens_to_multi_value_encoded(),
             OperationData::new(tx_nonce, sc_address.clone(), None),
         );
-    }
-
-    fn calculate_operation_hash(&self, operation: &Operation<Self::Api>) -> ManagedBuffer {
-        let mut serialized_data = ManagedBuffer::new();
-
-        if let core::result::Result::Err(err) = operation.top_encode(&mut serialized_data) {
-            sc_panic!("Transfer data encode error: {}", err.message_bytes());
-        }
-
-        let sha256 = self.crypto().sha256(&serialized_data);
-        let hash = sha256.as_managed_buffer().clone();
-
-        hash
-    }
-
-    fn lock_operation_hash(&self, operation_hash: &ManagedBuffer, hash_of_hashes: &ManagedBuffer) {
-        let header_verifier_address = self.header_verifier_address().get();
-
-        self.tx()
-            .to(header_verifier_address)
-            .typed(HeaderverifierProxy)
-            .lock_operation_hash(hash_of_hashes, operation_hash)
-            .sync_call();
     }
 
     #[inline]
@@ -194,10 +163,4 @@ pub trait TransferTokensModule:
     fn is_wegld(&self, token_id: &TokenIdentifier<Self::Api>) -> bool {
         token_id.eq(&self.wegld_identifier().get())
     }
-
-    #[storage_mapper("headerVerifierAddress")]
-    fn header_verifier_address(&self) -> SingleValueMapper<ManagedAddress>;
-
-    #[storage_mapper("paidIssuedTokens")]
-    fn paid_issued_tokens(&self) -> UnorderedSetMapper<TokenIdentifier<Self::Api>>;
 }

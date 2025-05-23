@@ -1,8 +1,8 @@
+use error_messages::INVALID_MIN_MAX_VALIDATOR_NUMBERS;
+use structs::configs::SovereignConfig;
+
 multiversx_sc::imports!();
 multiversx_sc::derive_imports!();
-
-// TODO: What to fill here?
-pub enum SlashableOffenses {}
 
 #[type_abi]
 #[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, ManagedVecItem)]
@@ -13,25 +13,21 @@ pub struct TokenIdAmountPair<M: ManagedTypeApi> {
 
 #[multiversx_sc::module]
 pub trait ValidatorRulesModule {
-    #[view(getMinValidators)]
-    #[storage_mapper("minValidators")]
-    fn min_validators(&self) -> SingleValueMapper<u64>;
+    fn require_valid_config(&self, config: &SovereignConfig<Self::Api>) {
+        // TODO: determine a range value
+        self.require_validator_range(config.min_validators, config.max_validators);
+    }
 
-    #[view(getMaxValidators)]
-    #[storage_mapper("maxValidators")]
-    fn max_validators(&self) -> SingleValueMapper<u64>;
+    fn require_validator_range(&self, min_validators: u64, max_validators: u64) {
+        require!(
+            min_validators <= max_validators,
+            INVALID_MIN_MAX_VALIDATOR_NUMBERS
+        );
+    }
 
-    // TODO: Read user stake and verify
-    #[view(getMinStake)]
-    #[storage_mapper("minStake")]
-    fn min_stake(&self) -> SingleValueMapper<BigUint>;
-
-    // TODO: Read user stake and verify
-    #[view(getAdditionalStakeRequired)]
-    #[storage_mapper("additionalStakeRequired")]
-    fn additional_stake_required(
-        &self,
-    ) -> SingleValueMapper<ManagedVec<TokenIdAmountPair<Self::Api>>>;
+    #[view(sovereignConfig)]
+    #[storage_mapper("sovereignConfig")]
+    fn sovereign_config(&self) -> SingleValueMapper<SovereignConfig<Self::Api>>;
 
     #[view(wasPreviouslySlashed)]
     #[storage_mapper("wasPreviouslySlashed")]

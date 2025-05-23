@@ -1,0 +1,1 @@
+pub mod enshrine_esdt_safe_interactor;

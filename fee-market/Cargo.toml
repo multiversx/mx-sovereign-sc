@@ -1,6 +1,6 @@
 [package]
 name = "fee-market"
-version = "0.0.0"
+version = "0.1.0"
 authors = ["you"]
 edition = "2021"
 publish = false
@@ -11,17 +11,26 @@ path = "src/lib.rs"
 [dependencies.utils]
 path = "../common/utils"
 
-[dependencies.transaction]
-path = "../common/transaction"
+[dependencies.setup-phase]
+path = "../common/setup-phase"
 
 [dependencies.proxies]
 path = "../common/proxies"
 
+[dependencies.structs]
+path = "../common/structs"
+
 [dependencies.multiversx-sc]
-version = "=0.54.5"
+version = "=0.57.1"
+
+[dependencies.error-messages]
+path = "../common/error-messages"
 
 [dev-dependencies]
 num-bigint = "0.4.2"
 
 [dev-dependencies.multiversx-sc-scenario]
-version = "=0.54.5"
+version = "=0.57.1"
+
+[dev-dependencies.common-test-setup]
+path = "../common/common-test-setup"

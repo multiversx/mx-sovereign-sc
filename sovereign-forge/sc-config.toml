@@ -1,6 +1,3 @@
-[settings]
-main = "main"
-
 [contracts.main]
 name = "sovereign-forge"
 
@@ -17,3 +14,7 @@ add-labels = ["sovereign-forge-external-view"]
 
 [[proxy]]
 path = "../common/proxies/src/sovereign_forge_proxy.rs"
+
+[[proxy.path-rename]]
+from = "proxies::fee_market_proxy::FeeStruct<Env::Api>"
+to = "super::fee_market_proxy::FeeStruct<Env::Api>"

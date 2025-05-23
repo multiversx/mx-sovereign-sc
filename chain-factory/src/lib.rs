@@ -4,11 +4,17 @@ use multiversx_sc_modules::only_admin;
 
 multiversx_sc::imports!();
 
+pub mod complete_phases;
 pub mod factory;
+pub mod update_configs;
 
 #[multiversx_sc::contract]
 pub trait ChainFactoryContract:
-    factory::FactoryModule + utils::UtilsModule + only_admin::OnlyAdminModule
+    factory::FactoryModule
+    + utils::UtilsModule
+    + only_admin::OnlyAdminModule
+    + update_configs::UpdateConfigsModule
+    + complete_phases::CompletePhasesModule
 {
     #[init]
     fn init(
@@ -29,7 +35,7 @@ pub trait ChainFactoryContract:
         self.chain_config_template().set(chain_config_template);
         self.header_verifier_template()
             .set(header_verifier_template);
-        self.enshrine_esdt_safe_template()
+        self.mvx_esdt_safe_template()
             .set(cross_chain_operation_template);
         self.fee_market_template().set(fee_market_template);
     }

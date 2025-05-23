@@ -44,27 +44,15 @@ where
     Gas: TxGas<Env>,
 {
     pub fn init<
-        Arg0: ProxyArg<u64>,
-        Arg1: ProxyArg<u64>,
-        Arg2: ProxyArg<BigUint<Env::Api>>,
-        Arg3: ProxyArg<ManagedAddress<Env::Api>>,
-        Arg4: ProxyArg<MultiValueEncoded<Env::Api, MultiValue2<TokenIdentifier<Env::Api>, BigUint<Env::Api>>>>,
+        Arg0: ProxyArg<structs::configs::SovereignConfig<Env::Api>>,
     >(
         self,
-        min_validators: Arg0,
-        max_validators: Arg1,
-        min_stake: Arg2,
-        admin: Arg3,
-        additional_stake_required: Arg4,
+        config: Arg0,
     ) -> TxTypedDeploy<Env, From, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_deploy()
-            .argument(&min_validators)
-            .argument(&max_validators)
-            .argument(&min_stake)
-            .argument(&admin)
-            .argument(&additional_stake_required)
+            .argument(&config)
             .original_result()
     }
 }
@@ -97,58 +85,34 @@ where
     To: TxTo<Env>,
     Gas: TxGas<Env>,
 {
-    pub fn deploy_bridge<
-        Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
-        Arg1: ProxyArg<u32>,
-        Arg2: ProxyArg<MultiValueEncoded<Env::Api, ManagedAddress<Env::Api>>>,
+    pub fn update_config<
+        Arg0: ProxyArg<structs::configs::SovereignConfig<Env::Api>>,
     >(
         self,
-        code: Arg0,
-        min_valid_signers: Arg1,
-        signers: Arg2,
+        new_config: Arg0,
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
-            .raw_call("deployBridge")
-            .argument(&code)
-            .argument(&min_valid_signers)
-            .argument(&signers)
+            .raw_call("updateConfig")
+            .argument(&new_config)
             .original_result()
     }
 
-    pub fn min_validators(
+    pub fn complete_setup_phase(
         self,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, u64> {
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
-            .raw_call("getMinValidators")
+            .raw_call("completeSetupPhase")
             .original_result()
     }
 
-    pub fn max_validators(
+    pub fn sovereign_config(
         self,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, u64> {
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, structs::configs::SovereignConfig<Env::Api>> {
         self.wrapped_tx
             .payment(NotPayable)
-            .raw_call("getMaxValidators")
-            .original_result()
-    }
-
-    pub fn min_stake(
-        self,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, BigUint<Env::Api>> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("getMinStake")
-            .original_result()
-    }
-
-    pub fn additional_stake_required(
-        self,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ManagedVec<Env::Api, TokenIdAmountPair<Env::Api>>> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("getAdditionalStakeRequired")
+            .raw_call("sovereignConfig")
             .original_result()
     }
 
@@ -164,62 +128,4 @@ where
             .argument(&validator)
             .original_result()
     }
-
-    pub fn is_admin<
-        Arg0: ProxyArg<ManagedAddress<Env::Api>>,
-    >(
-        self,
-        address: Arg0,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, bool> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("isAdmin")
-            .argument(&address)
-            .original_result()
-    }
-
-    pub fn add_admin<
-        Arg0: ProxyArg<ManagedAddress<Env::Api>>,
-    >(
-        self,
-        address: Arg0,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("addAdmin")
-            .argument(&address)
-            .original_result()
-    }
-
-    pub fn remove_admin<
-        Arg0: ProxyArg<ManagedAddress<Env::Api>>,
-    >(
-        self,
-        address: Arg0,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("removeAdmin")
-            .argument(&address)
-            .original_result()
-    }
-
-    pub fn admins(
-        self,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, MultiValueEncoded<Env::Api, ManagedAddress<Env::Api>>> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("getAdmins")
-            .original_result()
-    }
-}
-
-#[type_abi]
-#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, ManagedVecItem)]
-pub struct TokenIdAmountPair<Api>
-where
-    Api: ManagedTypeApi,
-{
-    pub token_id: TokenIdentifier<Api>,
-    pub amount: BigUint<Api>,
 }

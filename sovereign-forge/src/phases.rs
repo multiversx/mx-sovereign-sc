@@ -1,64 +1,73 @@
+use crate::err_msg;
 use core::ops::Deref;
+use error_messages::{
+    CHAIN_CONFIG_ALREADY_DEPLOYED, ESDT_SAFE_ALREADY_DEPLOYED, FEE_MARKET_ALREADY_DEPLOYED,
+    HEADER_VERIFIER_ALREADY_DEPLOYED, SOVEREIGN_SETUP_PHASE_ALREADY_COMPLETED,
+};
 use proxies::chain_factory_proxy::ChainFactoryContractProxy;
-use transaction::StakeMultiArg;
 
-use multiversx_sc::{
-    require,
-    types::{ManagedVec, MultiValueEncoded, ReturnsResult},
+use multiversx_sc::{imports::OptionalValue, require};
+use structs::{
+    configs::{EsdtSafeConfig, SovereignConfig},
+    fee::FeeStruct,
 };
 
-use crate::{
-    common::{
-        self,
-        utils::{ChainContractsMap, ContractInfo, ScArray},
-    },
-    err_msg,
+use crate::common::{
+    self,
+    utils::{ContractInfo, ScArray},
 };
-
-const NUMBER_OF_SHARDS: u32 = 3;
 
 #[multiversx_sc::module]
 pub trait PhasesModule:
-    common::utils::UtilsModule + common::storage::StorageModule + setup_phase::SetupPhaseModule
+    common::utils::UtilsModule + common::storage::StorageModule + common::sc_deploy::ScDeployModule
 {
     #[only_owner]
     #[endpoint(completeSetupPhase)]
     fn complete_setup_phase(&self) {
-        if !self.is_setup_phase_complete() {
-            return;
-        }
+        let caller = self.blockchain().get_caller();
+        let sovereign_setup_phase_mapper =
+            self.sovereign_setup_phase(&self.sovereigns_mapper(&caller).get());
 
-        for shard_id in 1..=NUMBER_OF_SHARDS {
-            require!(
-                !self.chain_factories(shard_id).is_empty(),
-                "There is no Chain-Factory contract assigned for shard {}",
-                shard_id
-            );
-            require!(
-                !self.token_handlers(shard_id).is_empty(),
-                "There is no Token-Handler contract assigned for shard {}",
-                shard_id
-            );
-        }
+        require!(
+            sovereign_setup_phase_mapper.is_empty(),
+            SOVEREIGN_SETUP_PHASE_ALREADY_COMPLETED
+        );
 
-        self.setup_phase_complete().set(true);
+        self.require_phase_four_completed(&caller);
+
+        let chain_config_address = self.get_contract_address(&caller, ScArray::ChainConfig);
+        let header_verifier_address = self.get_contract_address(&caller, ScArray::HeaderVerifier);
+        let esdt_safe_address = self.get_contract_address(&caller, ScArray::ESDTSafe);
+        let fee_market_address = self.get_contract_address(&caller, ScArray::FeeMarket);
+
+        self.tx()
+            .to(self.get_chain_factory_address())
+            .typed(ChainFactoryContractProxy)
+            .complete_setup_phase(
+                chain_config_address,
+                header_verifier_address,
+                esdt_safe_address,
+                fee_market_address,
+            )
+            .sync_call();
+
+        sovereign_setup_phase_mapper.set(true);
     }
 
     #[payable("EGLD")]
     #[endpoint(deployPhaseOne)]
     fn deploy_phase_one(
         &self,
-        min_validators: u64,
-        max_validators: u64,
-        min_stake: BigUint,
-        additional_stake_required: MultiValueEncoded<StakeMultiArg<Self::Api>>,
+        opt_preferred_chain_id: Option<ManagedBuffer>,
+        config: SovereignConfig<Self::Api>,
     ) {
-        self.require_setup_complete();
+        self.require_initilization_phase_complete();
 
-        let call_value = self.call_value().egld_value();
+        let call_value = self.call_value().egld();
         self.require_correct_deploy_cost(call_value.deref());
 
-        let chain_id = self.generate_chain_id();
+        let chain_id = self.generate_chain_id(opt_preferred_chain_id);
+
         let blockchain_api = self.blockchain();
         let caller = blockchain_api.get_caller();
         let caller_shard_id = blockchain_api.get_shard_of_address(&caller);
@@ -70,51 +79,82 @@ pub trait PhasesModule:
             caller_shard_id
         );
 
-        let chain_factory_address = chain_factories_mapper.get();
-
-        let chain_config_address = self.deploy_chain_config(
-            chain_factory_address,
-            min_validators,
-            max_validators,
-            min_stake,
-            additional_stake_required,
-        );
-
-        let sovereigns_mapper = self.sovereigns_mapper(&caller);
         require!(
-            sovereigns_mapper.is_empty(),
-            "There is already a deployed Sovereign Chain for this user"
+            !self.is_contract_deployed(&caller, ScArray::ChainConfig),
+            CHAIN_CONFIG_ALREADY_DEPLOYED
         );
 
-        let chain_factory_contract_info =
+        let chain_config_address = self.deploy_chain_config(config);
+
+        let chain_config_contract_info =
             ContractInfo::new(ScArray::ChainConfig, chain_config_address);
 
-        let mut contracts_info = ManagedVec::new();
-        contracts_info.push(chain_factory_contract_info);
-
-        let chain_contracts_map = ChainContractsMap::new(chain_id, contracts_info);
-
-        sovereigns_mapper.set(chain_contracts_map);
+        self.sovereign_deployed_contracts(&chain_id)
+            .insert(chain_config_contract_info);
+        self.sovereigns_mapper(&caller).set(chain_id);
     }
 
-    fn deploy_chain_config(
-        &self,
-        chain_factory_address: ManagedAddress,
-        min_validators: u64,
-        max_validators: u64,
-        min_stake: BigUint,
-        additional_stake_required: MultiValueEncoded<StakeMultiArg<Self::Api>>,
-    ) -> ManagedAddress {
-        self.tx()
-            .to(chain_factory_address)
-            .typed(ChainFactoryContractProxy)
-            .deploy_sovereign_chain_config_contract(
-                min_validators,
-                max_validators,
-                min_stake,
-                additional_stake_required,
-            )
-            .returns(ReturnsResult)
-            .sync_call()
+    #[endpoint(deployPhaseTwo)]
+    fn deploy_phase_two(&self) {
+        let blockchain_api = self.blockchain();
+        let caller = blockchain_api.get_caller();
+
+        self.require_phase_one_completed(&caller);
+        require!(
+            !self.is_contract_deployed(&caller, ScArray::HeaderVerifier),
+            HEADER_VERIFIER_ALREADY_DEPLOYED
+        );
+
+        let chain_config_address = self.get_contract_address(&caller, ScArray::ChainConfig);
+        let header_verifier_address = self.deploy_header_verifier(chain_config_address);
+
+        let header_verifier_contract_info =
+            ContractInfo::new(ScArray::HeaderVerifier, header_verifier_address);
+
+        self.sovereign_deployed_contracts(&self.sovereigns_mapper(&caller).get())
+            .insert(header_verifier_contract_info);
+    }
+
+    #[endpoint(deployPhaseThree)]
+    fn deploy_phase_three(&self, opt_config: OptionalValue<EsdtSafeConfig<Self::Api>>) {
+        let caller = self.blockchain().get_caller();
+
+        self.require_phase_two_completed(&caller);
+        require!(
+            !self.is_contract_deployed(&caller, ScArray::ESDTSafe),
+            ESDT_SAFE_ALREADY_DEPLOYED
+        );
+
+        let header_verifier_address = self.get_contract_address(&caller, ScArray::HeaderVerifier);
+
+        let esdt_safe_address = self.deploy_mvx_esdt_safe(&header_verifier_address, opt_config);
+
+        let esdt_safe_contract_info =
+            ContractInfo::new(ScArray::ESDTSafe, esdt_safe_address.clone());
+
+        self.set_esdt_safe_address_in_header_verifier(&header_verifier_address, &esdt_safe_address);
+
+        self.sovereign_deployed_contracts(&self.sovereigns_mapper(&caller).get())
+            .insert(esdt_safe_contract_info);
+    }
+
+    #[endpoint(deployPhaseFour)]
+    fn deploy_phase_four(&self, fee: Option<FeeStruct<Self::Api>>) {
+        let caller = self.blockchain().get_caller();
+
+        self.require_phase_three_completed(&caller);
+        require!(
+            !self.is_contract_deployed(&caller, ScArray::FeeMarket),
+            FEE_MARKET_ALREADY_DEPLOYED
+        );
+
+        let esdt_safe_address = self.get_contract_address(&caller, ScArray::ESDTSafe);
+
+        let fee_market_address = self.deploy_fee_market(&esdt_safe_address, fee);
+
+        let fee_market_contract_info = ContractInfo::new(ScArray::FeeMarket, fee_market_address);
+
+        self.sovereign_deployed_contracts(&self.sovereigns_mapper(&caller).get())
+            .insert(fee_market_contract_info);
     }
 }

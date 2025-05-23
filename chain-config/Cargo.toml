@@ -1,8 +1,8 @@
 [package]
 name = "chain-config"
-version = "0.0.0"
+version = "0.1.0"
 authors = ["you"]
-edition = "2018"
+edition = "2021"
 publish = false
 
 [lib]
@@ -12,13 +12,25 @@ path = "src/lib.rs"
 num-bigint = "0.4.2"
 
 [dev-dependencies.multiversx-sc-scenario]
-version = "=0.54.5"
+version = "=0.57.1"
 
 [dependencies.multiversx-sc]
-version = "=0.54.5"
+version = "=0.57.1"
 
 [dependencies.multiversx-sc-modules]
-version = "=0.54.5"
+version = "=0.57.1"
 
-[dependencies.transaction]
-path = "../common/transaction"
+[dependencies.structs]
+path = "../common/structs"
+
+[dependencies.proxies]
+path = "../common/proxies"
+
+[dependencies.setup-phase]
+path = "../common/setup-phase"
+
+[dependencies.error-messages]
+path = "../common/error-messages"
+
+[dev-dependencies.common-test-setup]
+path = "../common/common-test-setup"

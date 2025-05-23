@@ -1,45 +1,36 @@
 #![no_std]
 
-use multiversx_sc_modules::only_admin;
-use transaction::StakeMultiArg;
-use validator_rules::TokenIdAmountPair;
+use structs::configs::SovereignConfig;
 
 multiversx_sc::imports!();
 
-pub mod bridge;
 pub mod validator_rules;
 
 #[multiversx_sc::contract]
 pub trait ChainConfigContract:
-    bridge::BridgeModule + validator_rules::ValidatorRulesModule + only_admin::OnlyAdminModule
+    validator_rules::ValidatorRulesModule + setup_phase::SetupPhaseModule
 {
     #[init]
-    fn init(
-        &self,
-        min_validators: u64,
-        max_validators: u64,
-        min_stake: BigUint,
-        admin: ManagedAddress,
-        additional_stake_required: MultiValueEncoded<StakeMultiArg<Self::Api>>,
-    ) {
-        require!(
-            min_validators <= max_validators,
-            "Invalid min/max validator numbers"
-        );
+    fn init(&self, config: SovereignConfig<Self::Api>) {
+        self.require_valid_config(&config);
+        self.sovereign_config().set(config.clone());
+    }
 
-        let mut additional_stake_vec = ManagedVec::new();
-        for multi_value in additional_stake_required {
-            let (token_id, amount) = multi_value.into_tuple();
-            let value = TokenIdAmountPair { token_id, amount };
+    #[only_owner]
+    #[endpoint(updateConfig)]
+    fn update_config(&self, new_config: SovereignConfig<Self::Api>) {
+        self.require_valid_config(&new_config);
+        self.sovereign_config().set(new_config);
+    }
 
-            additional_stake_vec.push(value);
+    #[only_owner]
+    #[endpoint(completeSetupPhase)]
+    fn complete_setup_phase(&self) {
+        if self.is_setup_phase_complete() {
+            return;
         }
 
-        self.min_validators().set(min_validators);
-        self.max_validators().set(max_validators);
-        self.min_stake().set(min_stake);
-        self.add_admin(admin);
-        self.additional_stake_required().set(additional_stake_vec);
+        self.setup_phase_complete().set(true);
     }
 
     #[upgrade]

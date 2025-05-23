@@ -1,6 +1,7 @@
 #![no_std]
 
-use fee_type::FeeStruct;
+use error_messages::ESDT_SAFE_ADDRESS_NOT_SET;
+use structs::fee::FeeStruct;
 
 multiversx_sc::imports!();
 
@@ -16,6 +17,7 @@ pub trait FeeMarket:
     + subtract_fee::SubtractFeeModule
     + price_aggregator::PriceAggregatorModule
     + utils::UtilsModule
+    + setup_phase::SetupPhaseModule
 {
     #[init]
     fn init(&self, esdt_safe_address: ManagedAddress, fee: Option<FeeStruct<Self::Api>>) {
@@ -36,5 +38,20 @@ pub trait FeeMarket:
         self.require_sc_address(&price_aggregator_address);
         self.price_aggregator_address()
             .set(price_aggregator_address);
+    }
+
+    #[only_owner]
+    #[endpoint(completeSetupPhase)]
+    fn complete_setup_phase(&self) {
+        if self.is_setup_phase_complete() {
+            return;
+        }
+
+        require!(
+            !self.esdt_safe_address().is_empty(),
+            ESDT_SAFE_ADDRESS_NOT_SET
+        );
+
+        self.setup_phase_complete().set(true);
     }
 }

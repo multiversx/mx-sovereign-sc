@@ -1,3 +1,5 @@
+use error_messages::{INVALID_AGGREGATOR_VALUE, INVALID_ESDT_IDENTIFIER};
+
 multiversx_sc::imports!();
 
 pub type AggregatorOutputType<M> =
@@ -18,7 +20,7 @@ impl<M: ManagedTypeApi> From<AggregatorOutputType<M>> for AggregatorResult<M> {
     fn from(value: AggregatorOutputType<M>) -> Self {
         let opt_value = value.into_option();
         if opt_value.is_none() {
-            M::error_api_impl().signal_error(b"Invalid aggregator value");
+            M::error_api_impl().signal_error(INVALID_AGGREGATOR_VALUE.as_bytes());
         }
 
         let result = unsafe { opt_value.unwrap_unchecked() };
@@ -72,10 +74,7 @@ pub trait PriceAggregatorModule {
     }
 
     fn get_token_ticker(&self, token_id: &TokenIdentifier) -> ManagedBuffer {
-        require!(
-            token_id.is_valid_esdt_identifier(),
-            "Invalid ESDT identifier"
-        );
+        require!(token_id.is_valid_esdt_identifier(), INVALID_ESDT_IDENTIFIER);
 
         let buffer = token_id.as_managed_buffer();
         let ticker = buffer.copy_slice(0, buffer.len() - DASH_TICKER_LEN);

@@ -45,7 +45,7 @@ where
 {
     pub fn init<
         Arg0: ProxyArg<ManagedAddress<Env::Api>>,
-        Arg1: ProxyArg<Option<FeeStruct<Env::Api>>>,
+        Arg1: ProxyArg<Option<structs::fee::FeeStruct<Env::Api>>>,
     >(
         self,
         esdt_safe_address: Arg0,
@@ -101,8 +101,17 @@ where
             .original_result()
     }
 
+    pub fn complete_setup_phase(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("completeSetupPhase")
+            .original_result()
+    }
+
     pub fn set_fee<
-        Arg0: ProxyArg<FeeStruct<Env::Api>>,
+        Arg0: ProxyArg<structs::fee::FeeStruct<Env::Api>>,
     >(
         self,
         fee_struct: Arg0,
@@ -132,7 +141,7 @@ where
     >(
         self,
         token_id: Arg0,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, FeeType<Env::Api>> {
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, structs::fee::FeeType<Env::Api>> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("getTokenFee")
@@ -189,7 +198,7 @@ where
         original_caller: Arg0,
         total_transfers: Arg1,
         opt_gas_limit: Arg2,
-    ) -> TxTypedCall<Env, From, To, (), Gas, FinalPayment<Env::Api>> {
+    ) -> TxTypedCall<Env, From, To, (), Gas, structs::fee::FinalPayment<Env::Api>> {
         self.wrapped_tx
             .raw_call("subtractFee")
             .argument(&original_caller)
@@ -206,44 +215,4 @@ where
             .raw_call("getUsersWhitelist")
             .original_result()
     }
-}
-
-#[type_abi]
-#[derive(TopDecode, TopEncode, NestedEncode, NestedDecode, Clone)]
-pub struct FeeStruct<Api>
-where
-    Api: ManagedTypeApi,
-{
-    pub base_token: TokenIdentifier<Api>,
-    pub fee_type: FeeType<Api>,
-}
-
-#[rustfmt::skip]
-#[type_abi]
-#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, Clone)]
-pub enum FeeType<Api>
-where
-    Api: ManagedTypeApi,
-{
-    None,
-    Fixed {
-        token: TokenIdentifier<Api>,
-        per_transfer: BigUint<Api>,
-        per_gas: BigUint<Api>,
-    },
-    AnyToken {
-        base_fee_token: TokenIdentifier<Api>,
-        per_transfer: BigUint<Api>,
-        per_gas: BigUint<Api>,
-    },
-}
-
-#[type_abi]
-#[derive(TopEncode, TopDecode)]
-pub struct FinalPayment<Api>
-where
-    Api: ManagedTypeApi,
-{
-    pub fee: EsdtTokenPayment<Api>,
-    pub remaining_tokens: EsdtTokenPayment<Api>,
 }

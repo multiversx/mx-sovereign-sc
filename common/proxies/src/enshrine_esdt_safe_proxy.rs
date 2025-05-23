@@ -48,12 +48,14 @@ where
         Arg1: ProxyArg<ManagedAddress<Env::Api>>,
         Arg2: ProxyArg<Option<TokenIdentifier<Env::Api>>>,
         Arg3: ProxyArg<Option<ManagedBuffer<Env::Api>>>,
+        Arg4: ProxyArg<Option<structs::configs::EsdtSafeConfig<Env::Api>>>,
     >(
         self,
         is_sovereign_chain: Arg0,
         token_handler_address: Arg1,
         opt_wegld_identifier: Arg2,
         opt_sov_token_prefix: Arg3,
+        opt_config: Arg4,
     ) -> TxTypedDeploy<Env, From, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
@@ -62,6 +64,7 @@ where
             .argument(&token_handler_address)
             .argument(&opt_wegld_identifier)
             .argument(&opt_sov_token_prefix)
+            .argument(&opt_config)
             .original_result()
     }
 }
@@ -94,6 +97,19 @@ where
     To: TxTo<Env>,
     Gas: TxGas<Env>,
 {
+    pub fn update_configuration<
+        Arg0: ProxyArg<structs::configs::EsdtSafeConfig<Env::Api>>,
+    >(
+        self,
+        new_config: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("updateConfiguration")
+            .argument(&new_config)
+            .original_result()
+    }
+
     pub fn set_fee_market_address<
         Arg0: ProxyArg<ManagedAddress<Env::Api>>,
     >(
@@ -120,35 +136,9 @@ where
             .original_result()
     }
 
-    pub fn set_max_user_tx_gas_limit<
-        Arg0: ProxyArg<u64>,
-    >(
-        self,
-        max_user_tx_gas_limit: Arg0,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("setMaxTxGasLimit")
-            .argument(&max_user_tx_gas_limit)
-            .original_result()
-    }
-
-    pub fn set_banned_endpoint<
-        Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
-    >(
-        self,
-        endpoint_name: Arg0,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("setBannedEndpoint")
-            .argument(&endpoint_name)
-            .original_result()
-    }
-
     pub fn deposit<
         Arg0: ProxyArg<ManagedAddress<Env::Api>>,
-        Arg1: ProxyArg<OptionalValue<MultiValue3<u64, ManagedBuffer<Env::Api>, ManagedVec<Env::Api, ManagedBuffer<Env::Api>>>>>,
+        Arg1: ProxyArg<OptionalValue<MultiValue3<u64, ManagedBuffer<Env::Api>, MultiValueEncoded<Env::Api, ManagedBuffer<Env::Api>>>>>,
     >(
         self,
         to: Arg0,
@@ -163,7 +153,7 @@ where
 
     pub fn execute_operations<
         Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
-        Arg1: ProxyArg<transaction::Operation<Env::Api>>,
+        Arg1: ProxyArg<structs::operation::Operation<Env::Api>>,
     >(
         self,
         hash_of_hashes: Arg0,
@@ -186,35 +176,6 @@ where
         self.wrapped_tx
             .raw_call("registerNewTokenID")
             .argument(&tokens)
-            .original_result()
-    }
-
-    pub fn set_max_bridged_amount<
-        Arg0: ProxyArg<TokenIdentifier<Env::Api>>,
-        Arg1: ProxyArg<BigUint<Env::Api>>,
-    >(
-        self,
-        token_id: Arg0,
-        max_amount: Arg1,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("setMaxBridgedAmount")
-            .argument(&token_id)
-            .argument(&max_amount)
-            .original_result()
-    }
-
-    pub fn max_bridged_amount<
-        Arg0: ProxyArg<TokenIdentifier<Env::Api>>,
-    >(
-        self,
-        token_id: Arg0,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, BigUint<Env::Api>> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("getMaxBridgedAmount")
-            .argument(&token_id)
             .original_result()
     }
 
@@ -314,6 +275,15 @@ where
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("isPaused")
+            .original_result()
+    }
+
+    pub fn native_token(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, TokenIdentifier<Env::Api>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getNativeToken")
             .original_result()
     }
 }
