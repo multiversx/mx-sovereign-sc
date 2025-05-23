@@ -200,6 +200,8 @@ impl MvxEsdtSafeInteract {
 
         if let Some(expected_log) = expected_log {
             self.assert_expected_log(logs, expected_log);
+        } else if !logs.is_empty() {
+            panic!("Expected no logs, but got: {:?}", logs);
         }
     }
 
@@ -227,6 +229,8 @@ impl MvxEsdtSafeInteract {
 
         if let Some(expected_log) = expected_log {
             self.assert_expected_log(logs, expected_log);
+        } else if !logs.is_empty() {
+            panic!("Expected no logs, but got: {:?}", logs);
         }
     }
 

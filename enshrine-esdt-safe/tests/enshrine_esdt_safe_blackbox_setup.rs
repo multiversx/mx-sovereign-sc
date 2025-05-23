@@ -167,6 +167,8 @@ impl EnshrineTestState {
 
         if let Some(expected_log) = expected_log {
             self.common_setup.assert_expected_log(logs, expected_log);
+        } else if !logs.is_empty() {
+            panic!("Expected no logs, but got: {:?}", logs);
         }
     }
 

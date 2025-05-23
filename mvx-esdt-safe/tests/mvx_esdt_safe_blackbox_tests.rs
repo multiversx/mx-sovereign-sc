@@ -299,7 +299,7 @@ fn test_deposit_nothing_to_transfer() {
         HEADER_VERIFIER_ADDRESS,
         OptionalValue::Some(EsdtSafeConfig::default_config()),
     );
-    state.complete_setup_phase(None, None);
+    state.complete_setup_phase(None, Some("unpauseContract"));
     state
         .common_setup
         .deploy_fee_market(None, ESDT_SAFE_ADDRESS);
@@ -402,7 +402,7 @@ fn test_deposit_too_many_tokens() {
         HEADER_VERIFIER_ADDRESS,
         OptionalValue::Some(EsdtSafeConfig::default_config()),
     );
-    state.complete_setup_phase(None, None);
+    state.complete_setup_phase(None, Some("unpauseContract"));
     state
         .common_setup
         .deploy_fee_market(None, ESDT_SAFE_ADDRESS);
@@ -447,7 +447,7 @@ fn test_deposit_no_transfer_data() {
         HEADER_VERIFIER_ADDRESS,
         OptionalValue::Some(EsdtSafeConfig::default_config()),
     );
-    state.complete_setup_phase(None, None);
+    state.complete_setup_phase(None, Some("unpauseContract"));
     state
         .common_setup
         .deploy_fee_market(None, ESDT_SAFE_ADDRESS);
@@ -507,7 +507,7 @@ fn test_deposit_gas_limit_too_high() {
     state
         .common_setup
         .deploy_mvx_esdt_safe(HEADER_VERIFIER_ADDRESS, OptionalValue::Some(config));
-    state.complete_setup_phase(None, None);
+    state.complete_setup_phase(None, Some("unpauseContract"));
     state
         .common_setup
         .deploy_fee_market(None, ESDT_SAFE_ADDRESS);
@@ -581,7 +581,7 @@ fn test_deposit_max_bridged_amount_exceeded() {
     state
         .common_setup
         .deploy_mvx_esdt_safe(HEADER_VERIFIER_ADDRESS, OptionalValue::Some(config));
-    state.complete_setup_phase(None, None);
+    state.complete_setup_phase(None, Some("unpauseContract"));
     state
         .common_setup
         .deploy_fee_market(None, ESDT_SAFE_ADDRESS);
@@ -643,7 +643,7 @@ fn test_deposit_endpoint_banned() {
     state
         .common_setup
         .deploy_mvx_esdt_safe(HEADER_VERIFIER_ADDRESS, OptionalValue::Some(config));
-    state.complete_setup_phase(None, None);
+    state.complete_setup_phase(None, Some("unpauseContract"));
     state
         .common_setup
         .deploy_fee_market(None, ESDT_SAFE_ADDRESS);
@@ -707,7 +707,7 @@ fn test_deposit_no_transfer_data_no_fee() {
         HEADER_VERIFIER_ADDRESS,
         OptionalValue::Some(EsdtSafeConfig::default_config()),
     );
-    state.complete_setup_phase(None, None);
+    state.complete_setup_phase(None, Some("unpauseContract"));
 
     state
         .common_setup
@@ -740,7 +740,7 @@ fn test_deposit_transfer_data_only_no_fee() {
         HEADER_VERIFIER_ADDRESS,
         OptionalValue::Some(EsdtSafeConfig::default_config()),
     );
-    state.complete_setup_phase(None, None);
+    state.complete_setup_phase(None, Some("unpauseContract"));
 
     state
         .common_setup
@@ -782,7 +782,7 @@ fn test_deposit_transfer_data_only_with_fee_nothing_to_transfer() {
         HEADER_VERIFIER_ADDRESS,
         OptionalValue::Some(EsdtSafeConfig::default_config()),
     );
-    state.complete_setup_phase(None, None);
+    state.complete_setup_phase(None, Some("unpauseContract"));
 
     let per_transfer = BigUint::from(100u64);
     let per_gas = BigUint::from(1u64);
@@ -836,7 +836,7 @@ fn test_deposit_transfer_data_only_with_fee() {
         HEADER_VERIFIER_ADDRESS,
         OptionalValue::Some(EsdtSafeConfig::default_config()),
     );
-    state.complete_setup_phase(None, None);
+    state.complete_setup_phase(None, Some("unpauseContract"));
 
     let per_transfer = BigUint::from(100u64);
     let per_gas = BigUint::from(1u64);
@@ -911,7 +911,7 @@ fn test_deposit_fee_enabled() {
     state
         .common_setup
         .deploy_mvx_esdt_safe(HEADER_VERIFIER_ADDRESS, OptionalValue::Some(config));
-    state.complete_setup_phase(None, None);
+    state.complete_setup_phase(None, Some("unpauseContract"));
 
     let per_transfer = BigUint::from(100u64);
     let per_gas = BigUint::from(1u64);
@@ -1015,7 +1015,7 @@ fn test_deposit_payment_doesnt_cover_fee() {
     state
         .common_setup
         .deploy_mvx_esdt_safe(HEADER_VERIFIER_ADDRESS, OptionalValue::Some(config));
-    state.complete_setup_phase(None, None);
+    state.complete_setup_phase(None, Some("unpauseContract"));
 
     let fee = FeeStruct {
         base_token: TokenIdentifier::from(FIRST_TEST_TOKEN),
@@ -1095,7 +1095,7 @@ fn test_deposit_refund() {
     state
         .common_setup
         .deploy_mvx_esdt_safe(HEADER_VERIFIER_ADDRESS, OptionalValue::Some(config));
-    state.complete_setup_phase(None, None);
+    state.complete_setup_phase(None, Some("unpauseContract"));
 
     let per_transfer = BigUint::from(100u64);
     let per_gas = BigUint::from(1u64);
@@ -1183,7 +1183,7 @@ fn test_deposit_success_burn_mechanism() {
     let mut state = MvxEsdtSafeTestState::new();
 
     state.deploy_contract_with_roles();
-    state.complete_setup_phase(None, None);
+    state.complete_setup_phase(None, Some("unpauseContract"));
     state
         .common_setup
         .deploy_fee_market(None, ESDT_SAFE_ADDRESS);
@@ -1400,7 +1400,7 @@ fn test_execute_operation_no_esdt_safe_registered() {
     state
         .common_setup
         .deploy_mvx_esdt_safe(HEADER_VERIFIER_ADDRESS, config);
-    state.complete_setup_phase(None, None);
+    state.complete_setup_phase(None, Some("unpauseContract"));
 
     let payment = OperationEsdtPayment::new(
         TokenIdentifier::from(FIRST_TEST_TOKEN),
@@ -2189,7 +2189,7 @@ fn test_execute_operation_no_payments_failed_event() {
         None,
     );
 
-    state.complete_setup_phase(None, None);
+    state.complete_setup_phase(None, Some("unpauseContract"));
 
     let gas_limit = 1;
     let function = ManagedBuffer::<StaticApi>::from("WRONG_ENDPOINT");
