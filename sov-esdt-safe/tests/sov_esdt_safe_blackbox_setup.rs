@@ -142,6 +142,8 @@ impl SovEsdtSafeTestState {
 
         if let Some(custom_log) = expected_custom_log {
             self.common_setup.assert_expected_log(logs, custom_log)
+        } else if !logs.is_empty() {
+            panic!("Expected no logs, but got: {:?}", logs);
         };
     }
 
@@ -182,6 +184,8 @@ impl SovEsdtSafeTestState {
 
         if let Some(custom_log) = expected_custom_log {
             self.common_setup.assert_expected_log(logs, custom_log)
+        } else if !logs.is_empty() {
+            panic!("Expected no logs, but got: {:?}", logs);
         };
     }
 }
