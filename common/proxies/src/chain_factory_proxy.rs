@@ -276,6 +276,38 @@ where
             .original_result()
     }
 
+    pub fn set_fee<
+        Arg0: ProxyArg<ManagedAddress<Env::Api>>,
+        Arg1: ProxyArg<structs::fee::FeeStruct<Env::Api>>,
+    >(
+        self,
+        fee_market_address: Arg0,
+        new_fee: Arg1,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("setFee")
+            .argument(&fee_market_address)
+            .argument(&new_fee)
+            .original_result()
+    }
+
+    pub fn remove_fee<
+        Arg0: ProxyArg<ManagedAddress<Env::Api>>,
+        Arg1: ProxyArg<TokenIdentifier<Env::Api>>,
+    >(
+        self,
+        fee_market_address: Arg0,
+        token_id: Arg1,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("removeFee")
+            .argument(&fee_market_address)
+            .argument(&token_id)
+            .original_result()
+    }
+
     pub fn complete_setup_phase<
         Arg0: ProxyArg<ManagedAddress<Env::Api>>,
         Arg1: ProxyArg<ManagedAddress<Env::Api>>,
