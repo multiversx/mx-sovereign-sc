@@ -26,7 +26,9 @@ pub struct State {
     pub chain_factory_sc_address: Option<Bech32Address>,
     pub enshrine_esdt_safe_sc_address: Option<Bech32Address>,
     pub token_handler_address: Option<Bech32Address>,
-    pub first_token: TokenProperties,
+    pub first_token: Option<TokenProperties>,
+    pub fee_token: Option<TokenProperties>,
+    pub second_token: Option<TokenProperties>,
 }
 
 impl State {
@@ -80,7 +82,15 @@ impl State {
     }
 
     pub fn set_first_token(&mut self, token: TokenProperties) {
-        self.first_token = token;
+        self.first_token = Some(token);
+    }
+
+    pub fn set_fee_token(&mut self, token: TokenProperties) {
+        self.fee_token = Some(token);
+    }
+
+    pub fn set_second_token(&mut self, token: TokenProperties) {
+        self.second_token = Some(token);
     }
 
     /// Returns the contract addresses
@@ -136,6 +146,30 @@ impl State {
         self.token_handler_address
             .as_ref()
             .expect("no known token handler SC, deploy first")
+    }
+
+    pub fn get_first_token_id(&self) -> &str {
+        self.first_token
+            .as_ref()
+            .expect("no known first token, issue first")
+            .token_id
+            .as_str()
+    }
+
+    pub fn get_fee_token_id(&self) -> &str {
+        self.fee_token
+            .as_ref()
+            .expect("no known fee token, issue first")
+            .token_id
+            .as_str()
+    }
+
+    pub fn get_second_token_id(&self) -> &str {
+        self.second_token
+            .as_ref()
+            .expect("no known second token, issue first")
+            .token_id
+            .as_str()
     }
 }
 

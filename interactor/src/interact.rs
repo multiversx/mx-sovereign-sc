@@ -74,7 +74,6 @@ pub async fn mvx_esdt_safe_cli() {
                 )
                 .await
         }
-        "resetState" => interact.reset_state_chain_sim(None).await,
         _ => panic!("Unknown command: {}", cmd),
     }
 }
