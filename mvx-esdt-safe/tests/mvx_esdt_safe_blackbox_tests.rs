@@ -7,13 +7,13 @@ use common_test_setup::{CallerAddress, RegisterTokenArgs};
 use cross_chain::storage::CrossChainStorage;
 use cross_chain::{DEFAULT_ISSUE_COST, MAX_GAS_PER_TRANSACTION};
 use error_messages::{
-    BANNED_ENDPOINT_NAME, CANNOT_REGISTER_TOKEN, DEPOSIT_OVER_MAX_AMOUNT, ERR_EMPTY_PAYMENTS,
-    GAS_LIMIT_TOO_HIGH, INVALID_TYPE, MAX_GAS_LIMIT_PER_TX_EXCEEDED, MINT_AND_BURN_ROLES_NOT_FOUND,
-    NOTHING_TO_TRANSFER, NO_ESDT_SAFE_ADDRESS, PAYMENT_DOES_NOT_COVER_FEE,
-    SETUP_PHASE_ALREADY_COMPLETED, TOKEN_ID_IS_NOT_TRUSTED, TOKEN_IS_FROM_SOVEREIGN,
-    TOO_MANY_TOKENS,
+    BANNED_ENDPOINT_NAME, CANNOT_REGISTER_TOKEN, CURRENT_OPERATION_NOT_REGISTERED,
+    DEPOSIT_OVER_MAX_AMOUNT, ERR_EMPTY_PAYMENTS, GAS_LIMIT_TOO_HIGH, INVALID_TYPE,
+    MAX_GAS_LIMIT_PER_TX_EXCEEDED, MINT_AND_BURN_ROLES_NOT_FOUND, NOTHING_TO_TRANSFER,
+    NO_ESDT_SAFE_ADDRESS, PAYMENT_DOES_NOT_COVER_FEE, SETUP_PHASE_ALREADY_COMPLETED,
+    SETUP_PHASE_NOT_COMPLETED, TOKEN_ID_IS_NOT_TRUSTED, TOKEN_IS_FROM_SOVEREIGN, TOO_MANY_TOKENS,
 };
-use header_verifier::OperationHashStatus;
+use header_verifier::{Headerverifier, OperationHashStatus};
 use multiversx_sc::types::MultiValueEncoded;
 use multiversx_sc::{
     imports::{MultiValue3, OptionalValue},
@@ -29,6 +29,7 @@ use mvx_esdt_safe_blackbox_setup::MvxEsdtSafeTestState;
 use setup_phase::SetupPhaseModule;
 use structs::configs::{MaxBridgedAmount, SovereignConfig};
 use structs::fee::{FeeStruct, FeeType};
+use structs::generate_hash::GenerateHash;
 use structs::operation::TransferData;
 use structs::{
     aliases::PaymentsVec,
@@ -80,7 +81,7 @@ fn test_deploy_invalid_config() {
         ManagedVec::new(),
     );
 
-    state.update_configuration(config, Some(MAX_GAS_LIMIT_PER_TX_EXCEEDED));
+    state.update_esdt_safe_config_during_setup_phase(config, Some(MAX_GAS_LIMIT_PER_TX_EXCEEDED));
 }
 
 /// ### TEST
@@ -2372,4 +2373,190 @@ fn test_set_token_lock_mechanism_token_from_sovereign() {
         });
 
     state.set_token_lock_mechanism(TRUSTED_TOKEN_IDS[0], Some(TOKEN_IS_FROM_SOVEREIGN));
+}
+
+/// ### TEST
+/// M-ESDT_UPDATE_CONFIG_FAIL_041
+///
+/// ### ACTION
+/// Call `update_esdt_safe_config()` before setup phase completion
+///
+/// ### EXPECTED
+/// ERROR SETUP_PHASE_NOT_COMPLETED
+#[test]
+fn test_update_config_setup_phase_not_completed() {
+    let mut state = MvxEsdtSafeTestState::new();
+    state.deploy_contract_with_roles();
+
+    let new_config = EsdtSafeConfig {
+        token_whitelist: ManagedVec::new(),
+        token_blacklist: ManagedVec::new(),
+        max_tx_gas_limit: 100_000,
+        banned_endpoints: ManagedVec::new(),
+        max_bridged_token_amounts: ManagedVec::new(),
+    };
+
+    state.update_esdt_safe_config(
+        &ManagedBuffer::new(),
+        new_config,
+        Some(SETUP_PHASE_NOT_COMPLETED),
+        None,
+    );
+}
+
+/// ### TEST
+/// M-ESDT_UPDATE_CONFIG_FAIL_042
+///
+/// ### ACTION
+/// Call `update_esdt_safe_config()` before registering operation
+///
+/// ### EXPECTED
+/// ERROR CURRENT_OPERATION_NOT_REGISTERED
+#[test]
+fn test_update_config_operation_not_registered() {
+    let mut state = MvxEsdtSafeTestState::new();
+    state.deploy_contract_with_roles();
+    // state.common_setup.deploy_chain_config(config)
+    state
+        .common_setup
+        .deploy_header_verifier(CHAIN_CONFIG_ADDRESS);
+    state
+        .common_setup
+        .set_esdt_safe_address_in_header_verifier(ESDT_SAFE_ADDRESS);
+
+    state.complete_setup_phase(None, None);
+
+    let new_config = EsdtSafeConfig {
+        token_whitelist: ManagedVec::new(),
+        token_blacklist: ManagedVec::new(),
+        max_tx_gas_limit: 100_000,
+        banned_endpoints: ManagedVec::new(),
+        max_bridged_token_amounts: ManagedVec::new(),
+    };
+
+    state.update_esdt_safe_config(
+        &ManagedBuffer::new(),
+        new_config,
+        Some(CURRENT_OPERATION_NOT_REGISTERED),
+        None,
+    );
+}
+
+/// ### TEST
+/// M-ESDT_UPDATE_CONFIG_ERROR_043
+///
+/// ### ACTION
+/// Call `update_esdt_safe_config()` with an invalid config
+///
+/// ### EXPECTED
+/// failedBridgeOp event is emitted
+#[test]
+fn test_update_config_invalid_config() {
+    let mut state = MvxEsdtSafeTestState::new();
+    state.deploy_contract_with_roles();
+    state
+        .common_setup
+        .deploy_chain_config(SovereignConfig::default_config());
+    state
+        .common_setup
+        .deploy_header_verifier(CHAIN_CONFIG_ADDRESS);
+    state
+        .common_setup
+        .set_esdt_safe_address_in_header_verifier(ESDT_SAFE_ADDRESS);
+    state
+        .common_setup
+        .complete_header_verifier_setup_phase(None);
+
+    state.complete_setup_phase(None, None);
+
+    let new_config = EsdtSafeConfig {
+        max_tx_gas_limit: MAX_GAS_PER_TRANSACTION + 1,
+        ..EsdtSafeConfig::default_config()
+    };
+
+    let config_hash = new_config.generate_hash();
+    let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&config_hash.to_vec()));
+
+    state.common_setup.register_operation(
+        CallerAddress::Owner,
+        ManagedBuffer::new(),
+        &hash_of_hashes,
+        MultiValueEncoded::from_iter(vec![config_hash]),
+    );
+
+    state.update_esdt_safe_config(&hash_of_hashes, new_config, None, Some("failedBridgeOp"));
+}
+
+/// ### TEST
+/// M-ESDT_UPDATE_CONFIG_OK_044
+///
+/// ### ACTION
+/// Call `update_esdt_safe_config()`
+///
+/// ### EXPECTED
+/// EsdtSafeConfig is updated and executedBridgeOp is emitted
+#[test]
+fn test_update_config() {
+    let mut state = MvxEsdtSafeTestState::new();
+    state.deploy_contract_with_roles();
+    state
+        .common_setup
+        .deploy_chain_config(SovereignConfig::default_config());
+    state
+        .common_setup
+        .deploy_header_verifier(CHAIN_CONFIG_ADDRESS);
+    state
+        .common_setup
+        .set_esdt_safe_address_in_header_verifier(ESDT_SAFE_ADDRESS);
+    state
+        .common_setup
+        .complete_header_verifier_setup_phase(None);
+
+    state.complete_setup_phase(None, None);
+
+    let new_config = EsdtSafeConfig {
+        max_tx_gas_limit: 100_000,
+        ..EsdtSafeConfig::default_config()
+    };
+
+    let config_hash = new_config.generate_hash();
+    let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&config_hash.to_vec()));
+
+    state.common_setup.register_operation(
+        CallerAddress::Owner,
+        ManagedBuffer::new(),
+        &hash_of_hashes,
+        MultiValueEncoded::from_iter(vec![config_hash]),
+    );
+
+    state.update_esdt_safe_config(&hash_of_hashes, new_config, None, Some("executedBridgeOp"));
+
+    state
+        .common_setup
+        .world
+        .query()
+        .to(ESDT_SAFE_ADDRESS)
+        .whitebox(mvx_esdt_safe::contract_obj, |sc| {
+            let config = sc.esdt_safe_config().get();
+            assert!(config.max_tx_gas_limit == 100_000);
+        });
+
+    state
+        .common_setup
+        .world
+        .query()
+        .to(HEADER_VERIFIER_ADDRESS)
+        .whitebox(header_verifier::contract_obj, |sc| {
+            let new_config_whitebox = EsdtSafeConfig {
+                max_tx_gas_limit: 100_000,
+                ..EsdtSafeConfig::default_config()
+            };
+
+            let config_hash_whitebox = new_config_whitebox.generate_hash();
+            let hash_of_hashes_whitebox =
+                ManagedBuffer::new_from_bytes(&sha256(&config_hash_whitebox.to_vec()));
+            assert!(sc
+                .operation_hash_status(&hash_of_hashes_whitebox, &config_hash_whitebox)
+                .is_empty())
+        });
 }

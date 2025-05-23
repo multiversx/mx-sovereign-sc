@@ -60,22 +60,24 @@ pub trait MvxEsdtSafe:
         hash_of_hashes: ManagedBuffer,
         new_config: EsdtSafeConfig<Self::Api>,
     ) {
-        let opt_hash = if self.is_setup_phase_complete() {
-            Some(new_config.generate_hash())
-        } else {
-            None
-        };
+        self.require_setup_complete();
 
-        if let Some(ref config_hash) = opt_hash {
-            self.lock_operation_hash(config_hash, &hash_of_hashes);
+        let config_hash = new_config.generate_hash();
+        self.lock_operation_hash(&hash_of_hashes, &config_hash);
+
+        if let Some(error_message) = self.is_esdt_safe_config_valid(&new_config) {
+            self.failed_bridge_operation_event(
+                &hash_of_hashes,
+                &config_hash,
+                &ManagedBuffer::from(error_message),
+            );
+
+            return;
         }
 
-        self.require_esdt_config_valid(&new_config);
         self.esdt_safe_config().set(new_config);
-
-        if let Some(config_hash) = opt_hash {
-            self.remove_executed_hash(&hash_of_hashes, &config_hash);
-        }
+        self.remove_executed_hash(&hash_of_hashes, &config_hash);
+        self.execute_bridge_operation_event(&hash_of_hashes, &config_hash);
     }
 
     #[only_owner]
