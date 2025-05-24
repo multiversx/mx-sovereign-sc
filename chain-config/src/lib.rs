@@ -41,11 +41,10 @@ pub trait ChainConfigContract:
                 &config_hash,
                 &ManagedBuffer::from(error_message),
             );
-
-            return;
+        } else {
+            self.sovereign_config().set(new_config);
         }
 
-        self.sovereign_config().set(new_config);
         self.remove_executed_hash(&hash_of_hashes, &config_hash);
         self.execute_bridge_operation_event(&hash_of_hashes, &config_hash);
     }

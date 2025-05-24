@@ -73,9 +73,10 @@ pub trait MvxEsdtSafe:
             );
 
             return;
+        } else {
+            self.esdt_safe_config().set(new_config);
         }
 
-        self.esdt_safe_config().set(new_config);
         self.remove_executed_hash(&hash_of_hashes, &config_hash);
         self.execute_bridge_operation_event(&hash_of_hashes, &config_hash);
     }
