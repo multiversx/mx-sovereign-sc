@@ -1,4 +1,5 @@
 use error_messages::INVALID_MIN_MAX_VALIDATOR_NUMBERS;
+use proxies::header_verifier_proxy::HeaderverifierProxy;
 use structs::configs::SovereignConfig;
 
 multiversx_sc::imports!();
@@ -23,6 +24,30 @@ pub trait ValidatorRulesModule {
             min_validators <= max_validators,
             INVALID_MIN_MAX_VALIDATOR_NUMBERS
         );
+    }
+
+    fn is_new_config_valid(&self, config: &SovereignConfig<Self::Api>) -> Option<&str> {
+        if config.min_validators <= config.max_validators {
+            None
+        } else {
+            Some(INVALID_MIN_MAX_VALIDATOR_NUMBERS)
+        }
+    }
+
+    fn lock_operation_hash(&self, hash_of_hashes: &ManagedBuffer, hash: &ManagedBuffer) {
+        self.tx()
+            .to(self.blockchain().get_owner_address())
+            .typed(HeaderverifierProxy)
+            .lock_operation_hash(hash_of_hashes, hash)
+            .sync_call();
+    }
+
+    fn remove_executed_hash(&self, hash_of_hashes: &ManagedBuffer, op_hash: &ManagedBuffer) {
+        self.tx()
+            .to(self.blockchain().get_owner_address())
+            .typed(HeaderverifierProxy)
+            .remove_executed_hash(hash_of_hashes, op_hash)
+            .sync_call();
     }
 
     #[view(sovereignConfig)]

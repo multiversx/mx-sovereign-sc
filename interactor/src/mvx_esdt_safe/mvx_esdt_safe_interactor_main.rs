@@ -150,7 +150,7 @@ impl MvxEsdtSafeInteract {
             .to(self.state.current_mvx_esdt_safe_contract_address())
             .gas(90_000_000u64)
             .typed(MvxEsdtSafeProxy)
-            .update_configuration(new_config)
+            .update_esdt_safe_config_during_setup_phase(new_config)
             .returns(ReturnsResultUnmanaged)
             .run()
             .await;

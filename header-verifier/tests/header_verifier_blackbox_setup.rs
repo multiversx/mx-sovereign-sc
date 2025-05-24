@@ -194,6 +194,8 @@ impl HeaderVerifierTestState {
         }
     }
 
+    // TODO:
+    // Cleanup, use the example from chain-config tests
     pub fn get_operation_hash(
         &mut self,
         operation: &ManagedBuffer<StaticApi>,

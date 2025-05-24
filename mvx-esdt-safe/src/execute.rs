@@ -1,6 +1,7 @@
 use error_messages::ESDT_SAFE_STILL_PAUSED;
 use structs::{
     aliases::GasLimit,
+    generate_hash::GenerateHash,
     operation::{Operation, OperationData, OperationEsdtPayment, OperationTuple},
 };
 
@@ -25,9 +26,9 @@ pub trait ExecuteModule:
         require!(self.not_paused(), ESDT_SAFE_STILL_PAUSED);
         self.require_setup_complete();
 
-        let operation_hash = self.calculate_operation_hash(&operation);
+        let operation_hash = operation.generate_hash();
 
-        self.lock_operation_hash(&operation_hash, &hash_of_hashes);
+        self.lock_operation_hash(&hash_of_hashes, &operation_hash);
 
         let operation_tuple = OperationTuple {
             op_hash: operation_hash,

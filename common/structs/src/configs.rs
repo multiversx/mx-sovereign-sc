@@ -1,4 +1,6 @@
-use crate::{aliases::GasLimit, DEFAULT_MAX_TX_GAS_LIMIT};
+use multiversx_sc::api::CryptoApi;
+
+use crate::{aliases::GasLimit, generate_hash::GenerateHash, DEFAULT_MAX_TX_GAS_LIMIT};
 
 multiversx_sc::imports!();
 multiversx_sc::derive_imports!();
@@ -13,6 +15,8 @@ pub struct SovereignConfig<M: ManagedTypeApi> {
     pub min_stake: BigUint<M>,
     pub opt_additional_stake_required: Option<ManagedVec<M, StakeArgs<M>>>,
 }
+
+impl<A: CryptoApi> GenerateHash<A> for SovereignConfig<A> {}
 
 impl<M: ManagedTypeApi> SovereignConfig<M> {
     pub fn new(
@@ -67,6 +71,8 @@ pub struct EsdtSafeConfig<M: ManagedTypeApi> {
     pub banned_endpoints: ManagedVec<M, ManagedBuffer<M>>,
     pub max_bridged_token_amounts: ManagedVec<M, MaxBridgedAmount<M>>,
 }
+
+impl<A: CryptoApi> GenerateHash<A> for EsdtSafeConfig<A> {}
 
 impl<M: ManagedTypeApi> EsdtSafeConfig<M> {
     #[inline]

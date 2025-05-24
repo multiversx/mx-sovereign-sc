@@ -7,7 +7,6 @@ use error_messages::{
 };
 use multiversx_sc::codec;
 use multiversx_sc::proxy_imports::{TopDecode, TopEncode};
-use proxies::chain_config_proxy::ChainConfigContractProxy;
 use structs::configs::SovereignConfig;
 
 multiversx_sc::imports!();
@@ -146,17 +145,6 @@ pub trait Headerverifier:
         }
     }
 
-    #[endpoint(updateConfig)]
-    fn update_config(&self, new_config: SovereignConfig<Self::Api>) {
-        // TODO: verify signature
-
-        self.tx()
-            .to(self.chain_config_address().get())
-            .typed(ChainConfigContractProxy)
-            .update_config(new_config)
-            .sync_call();
-    }
-
     #[only_owner]
     #[endpoint(completeSetupPhase)]
     fn complete_setup_phase(&self) {
@@ -181,6 +169,8 @@ pub trait Headerverifier:
         );
     }
 
+    // TODO:
+    // This needs to check for all the Sovereign Contracts
     fn require_caller_esdt_safe(&self) {
         let esdt_safe_mapper = self.esdt_safe_address();
 
