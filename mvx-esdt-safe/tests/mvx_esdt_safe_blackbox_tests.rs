@@ -2416,7 +2416,6 @@ fn test_update_config_setup_phase_not_completed() {
 fn test_update_config_operation_not_registered() {
     let mut state = MvxEsdtSafeTestState::new();
     state.deploy_contract_with_roles();
-    // state.common_setup.deploy_chain_config(config)
     state
         .common_setup
         .deploy_header_verifier(CHAIN_CONFIG_ADDRESS);

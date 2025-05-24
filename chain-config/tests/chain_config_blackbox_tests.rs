@@ -81,7 +81,7 @@ fn test_complete_setup_phase() {
 /// C-CONFIG_UPDATE_CONFIG_FAIL_004
 ///
 /// ### ACTION
-/// Call 'update_chain_config()' during the setup phase
+/// Call 'update_sovereign_config()' during the setup phase
 ///
 /// ### EXPECTED
 /// Error SETUP_PHASE_NOT_COMPLETED
@@ -110,10 +110,10 @@ fn test_update_config_setup_phase_not_completed() {
 }
 
 /// ### TEST
-/// C-CONFIG_UPDATE_CONFIG_FAIL_005
+/// C-CONFIG_UPDATE_CONFIG_OK_005
 ///
 /// ### ACTION
-/// Call 'update_chain_config()'  with an invalid config
+/// Call 'update_sovereign_config()'  with an invalid config
 ///
 /// ### EXPECTED
 /// failedBridgeOp event is emitted
@@ -150,10 +150,10 @@ fn test_update_config_invalid_config() {
 }
 
 /// ### TEST
-/// C-CONFIG_UPDATE_CONFIG_FAIL_005
+/// C-CONFIG_UPDATE_CONFIG_OK_006
 ///
 /// ### ACTION
-/// Call 'update_chain_config()'  
+/// Call 'update_sovereign_config()'  
 ///
 /// ### EXPECTED
 /// executedBridgeOp event is emitted
