@@ -79,8 +79,6 @@ pub trait MvxEsdtSafe:
                 &config_hash,
                 &ManagedBuffer::from(error_message),
             );
-
-            return;
         } else {
             self.esdt_safe_config().set(new_config);
         }
