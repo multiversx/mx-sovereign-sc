@@ -26,12 +26,17 @@ pub trait SovEsdtSafe:
         self.require_sc_address(&fee_market_address);
         self.fee_market_address().set(fee_market_address);
 
-        self.esdt_safe_config().set(
-            opt_config
-                .into_option()
-                .inspect(|config| self.require_esdt_config_valid(config))
-                .unwrap_or_else(EsdtSafeConfig::default_config),
-        );
+        let new_config = match opt_config {
+            OptionalValue::Some(cfg) => {
+                if let Some(error_message) = self.is_esdt_safe_config_valid(&cfg) {
+                    sc_panic!(error_message);
+                }
+                cfg
+            }
+            OptionalValue::None => EsdtSafeConfig::default_config(),
+        };
+
+        self.esdt_safe_config().set(new_config);
 
         self.set_paused(true);
     }
@@ -39,7 +44,10 @@ pub trait SovEsdtSafe:
     #[only_owner]
     #[endpoint(updateConfiguration)]
     fn update_configuration(&self, new_config: EsdtSafeConfig<Self::Api>) {
-        self.require_esdt_config_valid(&new_config);
+        if let Some(error_message) = self.is_esdt_safe_config_valid(&new_config) {
+            sc_panic!(error_message);
+        }
+
         self.esdt_safe_config().set(new_config);
     }
 
