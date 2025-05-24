@@ -20,7 +20,9 @@ pub trait ChainConfigContract:
     #[only_owner]
     #[endpoint(updateSovereignConfigSetupPhase)]
     fn update_sovereign_config_during_setup_phase(&self, new_config: SovereignConfig<Self::Api>) {
-        self.require_valid_config(&new_config);
+        if let Some(error_message) = self.is_new_config_valid(&new_config) {
+            sc_panic!(error_message);
+        }
         self.sovereign_config().set(new_config);
     }
 
