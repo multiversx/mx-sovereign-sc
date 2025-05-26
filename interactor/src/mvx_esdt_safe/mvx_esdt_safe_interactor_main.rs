@@ -1,6 +1,8 @@
-use common_interactor::common_sovereign_interactor::CommonInteractorTrait;
+use common_interactor::common_sovereign_interactor::{
+    CommonInteractorTrait, IssueTokenStruct, MintTokenStruct,
+};
+use common_interactor::constants::ONE_THOUSAND_TOKENS;
 use multiversx_sc_snippets::imports::*;
-use multiversx_sc_snippets::sdk::gateway::SetStateAccount;
 use proxies::header_verifier_proxy::HeaderverifierProxy;
 use proxies::mvx_esdt_safe_proxy::MvxEsdtSafeProxy;
 use structs::aliases::{OptionalValueTransferDataTuple, PaymentsVec};
@@ -37,6 +39,12 @@ impl CommonInteractorTrait for MvxEsdtSafeInteract {
 
 impl MvxEsdtSafeInteract {
     pub async fn new(config: Config) -> Self {
+        let mut interactor = Self::initialize_interactor(config).await;
+        interactor.initialize_tokens_in_wallets().await;
+        interactor
+    }
+
+    async fn initialize_interactor(config: Config) -> Self {
         let mut interactor = Interactor::new(config.gateway_uri())
             .await
             .use_chain_simulator(config.use_chain_simulator());
@@ -46,13 +54,7 @@ impl MvxEsdtSafeInteract {
         let owner_address = interactor.register_wallet(test_wallets::mike()).await;
         let user_address = interactor.register_wallet(test_wallets::bob()).await;
 
-        // Useful in the chain simulator setting
-        // generate blocks until ESDTSystemSCAddress is enabled
         interactor.generate_blocks_until_epoch(1u64).await.unwrap();
-
-        let set_state_response = interactor.set_state_for_saved_accounts().await;
-        interactor.generate_blocks(2u64).await.unwrap();
-        assert!(set_state_response.is_ok());
 
         MvxEsdtSafeInteract {
             interactor,
@@ -60,6 +62,130 @@ impl MvxEsdtSafeInteract {
             user_address,
             state: State::load_state(),
         }
+    }
+
+    async fn initialize_tokens_in_wallets(&mut self) {
+        let first_token_struct = IssueTokenStruct {
+            token_display_name: "MVX".to_string(),
+            token_ticker: "MVX".to_string(),
+            token_type: EsdtTokenType::Fungible,
+            num_decimals: 18,
+        };
+        let first_token_mint = MintTokenStruct {
+            name: None,
+            amount: BigUint::from(ONE_THOUSAND_TOKENS),
+            attributes: None,
+        };
+        let first_token = self
+            .issue_and_mint_token(first_token_struct, first_token_mint)
+            .await;
+        self.state.set_first_token(first_token);
+
+        let fee_token_struct = IssueTokenStruct {
+            token_display_name: "FEE".to_string(),
+            token_ticker: "FEE".to_string(),
+            token_type: EsdtTokenType::Fungible,
+            num_decimals: 0,
+        };
+        let fee_token_mint = MintTokenStruct {
+            name: None,
+            amount: BigUint::from(ONE_THOUSAND_TOKENS),
+            attributes: None,
+        };
+        let fee_token = self
+            .issue_and_mint_token(fee_token_struct, fee_token_mint)
+            .await;
+        self.state.set_fee_token(fee_token);
+
+        let second_token_struct = IssueTokenStruct {
+            token_display_name: "MVX2".to_string(),
+            token_ticker: "MVX2".to_string(),
+            token_type: EsdtTokenType::Fungible,
+            num_decimals: 18,
+        };
+        let second_token_mint = MintTokenStruct {
+            name: None,
+            amount: BigUint::from(ONE_THOUSAND_TOKENS),
+            attributes: None,
+        };
+        let second_token = self
+            .issue_and_mint_token(second_token_struct, second_token_mint)
+            .await;
+        self.state.set_second_token(second_token);
+    }
+
+    pub async fn issue_and_mint_all_types_of_tokens(&mut self) {
+        let first_token_struct = IssueTokenStruct {
+            token_display_name: "FUNG".to_string(),
+            token_ticker: "FUNG".to_string(),
+            token_type: EsdtTokenType::Fungible,
+            num_decimals: 18,
+        };
+
+        let first_token_mint = MintTokenStruct {
+            name: None,
+            amount: BigUint::from(ONE_THOUSAND_TOKENS),
+            attributes: None,
+        };
+
+        self.issue_and_mint_token(first_token_struct, first_token_mint)
+            .await;
+
+        let second_token_struct = IssueTokenStruct {
+            token_display_name: "NFT".to_string(),
+            token_ticker: "NFT".to_string(),
+            token_type: EsdtTokenType::NonFungible,
+            num_decimals: 0,
+        };
+        let second_token_mint = MintTokenStruct {
+            name: Some("NFT".to_string()),
+            amount: BigUint::from(1u64),
+            attributes: None,
+        };
+        self.issue_and_mint_token(second_token_struct, second_token_mint)
+            .await;
+
+        let third_token_struct = IssueTokenStruct {
+            token_display_name: "SFT".to_string(),
+            token_ticker: "SFT".to_string(),
+            token_type: EsdtTokenType::SemiFungible,
+            num_decimals: 0,
+        };
+        let third_token_mint = MintTokenStruct {
+            name: Some("SFT".to_string()),
+            amount: BigUint::from(ONE_THOUSAND_TOKENS),
+            attributes: None,
+        };
+        self.issue_and_mint_token(third_token_struct, third_token_mint)
+            .await;
+
+        let forth_token_struct = IssueTokenStruct {
+            token_display_name: "DYN".to_string(),
+            token_ticker: "DYN".to_string(),
+            token_type: EsdtTokenType::DynamicNFT,
+            num_decimals: 10,
+        };
+        let forth_token_mint = MintTokenStruct {
+            name: Some("DYN".to_string()),
+            amount: BigUint::from(1u64),
+            attributes: None,
+        };
+        self.issue_and_mint_token(forth_token_struct, forth_token_mint)
+            .await;
+
+        let fifth_token_struct = IssueTokenStruct {
+            token_display_name: "META".to_string(),
+            token_ticker: "META".to_string(),
+            token_type: EsdtTokenType::Meta,
+            num_decimals: 18,
+        };
+        let fifth_token_mint = MintTokenStruct {
+            name: Some("META".to_string()),
+            amount: BigUint::from(ONE_THOUSAND_TOKENS),
+            attributes: None,
+        };
+        self.issue_and_mint_token(fifth_token_struct, fifth_token_mint)
+            .await;
     }
 
     pub async fn deploy_contracts(
@@ -302,40 +428,5 @@ impl MvxEsdtSafeInteract {
             .await;
 
         println!("Result: {result_value:?}");
-    }
-
-    pub async fn reset_state_chain_sim(&mut self, address_states: Option<Vec<Bech32Address>>) {
-        let mut state_vec = vec![
-            SetStateAccount::from_address(
-                Bech32Address::from(self.owner_address.clone()).to_bech32_string(),
-            ),
-            SetStateAccount::from_address(
-                Bech32Address::from(self.user_address.clone()).to_bech32_string(),
-            ),
-            SetStateAccount::from_address(
-                self.state
-                    .current_mvx_esdt_safe_contract_address()
-                    .to_bech32_string(),
-            ),
-            SetStateAccount::from_address(
-                self.state
-                    .current_header_verifier_address()
-                    .to_bech32_string(),
-            ),
-            SetStateAccount::from_address(
-                self.state
-                    .current_chain_config_sc_address()
-                    .to_bech32_string(),
-            ),
-        ];
-
-        if let Some(address_states) = address_states {
-            for address in address_states {
-                state_vec.push(SetStateAccount::from_address(address.to_bech32_string()));
-            }
-        }
-        let response = self.interactor.set_state_overwrite(state_vec).await;
-        self.interactor.generate_blocks(2u64).await.unwrap();
-        assert!(response.is_ok());
     }
 }
