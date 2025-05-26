@@ -2423,7 +2423,7 @@ fn test_update_config_operation_not_registered() {
         .common_setup
         .set_esdt_safe_address_in_header_verifier(ESDT_SAFE_ADDRESS);
 
-    state.complete_setup_phase(None, None);
+    state.complete_setup_phase(None, Some("unpauseContract"));
 
     let new_config = EsdtSafeConfig {
         token_whitelist: ManagedVec::new(),
@@ -2466,7 +2466,7 @@ fn test_update_config_invalid_config() {
         .common_setup
         .complete_header_verifier_setup_phase(None);
 
-    state.complete_setup_phase(None, None);
+    state.complete_setup_phase(None, Some("unpauseContract"));
 
     let new_config = EsdtSafeConfig {
         max_tx_gas_limit: MAX_GAS_PER_TRANSACTION + 1,
@@ -2511,7 +2511,7 @@ fn test_update_config() {
         .common_setup
         .complete_header_verifier_setup_phase(None);
 
-    state.complete_setup_phase(None, None);
+    state.complete_setup_phase(None, Some("unpauseContract"));
 
     let new_config = EsdtSafeConfig {
         max_tx_gas_limit: 100_000,

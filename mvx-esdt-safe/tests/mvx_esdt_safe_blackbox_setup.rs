@@ -170,9 +170,8 @@ impl MvxEsdtSafeTestState {
         self.common_setup
             .assert_expected_error_message(result, err_message);
 
-        if let Some(custom_log) = expected_custom_log {
-            self.common_setup.assert_expected_log(logs, custom_log)
-        };
+        self.common_setup
+            .assert_expected_log(logs, expected_custom_log);
     }
 
     pub fn set_token_burn_mechanism(
