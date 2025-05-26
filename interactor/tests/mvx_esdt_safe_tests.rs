@@ -21,7 +21,7 @@ use structs::fee::{FeeStruct, FeeType};
 use structs::operation::{Operation, OperationData, OperationEsdtPayment, TransferData};
 
 /// ### TEST
-/// M-ESDT_ISSUE_OK_000
+/// M-ESDT_ISSUE_OK
 ///
 /// ### ACTION
 /// Issue and mint all types of tokens to the wallet address
@@ -50,7 +50,7 @@ async fn test_issue_tokens() {
 }
 
 /// ### TEST
-/// M-ESDT_DEP_FAIL_001
+/// M-ESDT_DEP_FAIL
 ///
 /// ### ACTION
 /// Call 'deposit()' with empty payments_vec and no transfer_data
@@ -83,7 +83,7 @@ async fn deposit_nothing_to_transfer_no_fee() {
 }
 
 /// ### TEST
-/// M-ESDT_DEP_FAIL_002
+/// M-ESDT_DEP_FAIL
 ///
 /// ### ACTION
 /// Call 'deposit()' with too many tokens in payments_vec
@@ -124,7 +124,7 @@ async fn deposit_too_many_tokens_no_fee() {
 }
 
 /// ### TEST
-/// M-ESDT_DEP_FAIL_003
+/// M-ESDT_DEP_FAIL
 ///
 /// ### ACTION
 /// Call 'deposit()' with no transfer_data and no payments_vec
@@ -171,7 +171,7 @@ async fn deposit_no_transfer_data_no_fee() {
 }
 
 /// ### TEST
-/// M-ESDT_DEP_FAIL_004
+/// M-ESDT_DEP_FAIL
 ///
 /// ### ACTION
 /// Call 'deposit()' with gas limit too high in transfer_data
@@ -235,7 +235,7 @@ async fn deposit_gas_limit_too_high_no_fee() {
 }
 
 /// ### TEST
-/// M-ESDT_DEP_FAIL_005
+/// M-ESDT_DEP_FAIL
 ///
 /// ### ACTION
 /// Call 'deposit()' with banned endpoint name in transfer_data
@@ -301,7 +301,7 @@ async fn deposit_endpoint_banned_no_fee() {
 // NOTE: Add checks for account storage after finding out how to encode values in state
 
 /// ### TEST
-/// M-ESDT_DEP_OK_006
+/// M-ESDT_DEP_OK
 ///
 /// ### ACTION
 /// Call 'deposit()' with transfer data and valid payment
@@ -386,7 +386,7 @@ async fn deposit_fee_enabled() {
 }
 
 /// ### TEST
-/// M-ESDT_DEP_OK_007
+/// M-ESDT_DEP_OK
 ///
 /// ### ACTION
 /// Call 'deposit()' with transfer data only and no payments
@@ -436,7 +436,7 @@ async fn deposit_only_transfer_data_no_fee() {
 }
 
 /// ### TEST
-/// M-ESDT_DEP_FAIL_008
+/// M-ESDT_DEP_FAIL
 ///
 /// ### ACTION
 /// Call 'deposit()' with transfer data and payment not enough for fee
@@ -517,7 +517,7 @@ async fn deposit_payment_does_not_cover_fee() {
 // TODO: add deposit_refund_fee test after finding a method to check for balance
 
 /// ### TEST
-/// M-ESDT_REG_FAIL_009
+/// M-ESDT_REG_FAIL
 ///
 /// ### ACTION
 /// Call 'register_token()' with invalid token type
@@ -589,7 +589,7 @@ async fn register_token_invalid_type_token() {
 }
 
 /// ### TEST
-/// M-ESDT_REG_OK_010
+/// M-ESDT_REG_OK
 ///
 /// ### ACTION
 /// Call 'register_token()' with valid token id and type
@@ -663,7 +663,7 @@ async fn register_token_fungible_token() {
 }
 
 /// ### TEST
-/// M-ESDT_REG_OK_011
+/// M-ESDT_REG_OK
 ///
 /// ### ACTION
 /// Call 'register_token()' with valid token id and non-fungible type
@@ -737,7 +737,7 @@ async fn register_token_non_fungible_token() {
 }
 
 /// ### TEST
-/// M-ESDT_REG_OK_012
+/// M-ESDT_REG_OK
 ///
 /// ### ACTION
 /// Call 'register_token()' with valid token id and dynamic NFT type
@@ -811,7 +811,7 @@ async fn register_token_dynamic_non_fungible_token() {
 }
 
 /// ### TEST
-/// M-ESDT_EXEC_FAIL_013
+/// M-ESDT_EXEC_FAIL
 ///
 /// ### ACTION
 /// Call 'execute_operation()' with no esdt-safe-address set
@@ -899,7 +899,7 @@ async fn execute_operation_no_esdt_safe_registered() {
 }
 
 /// ### TEST
-/// M-ESDT_EXEC_OK_014
+/// M-ESDT_EXEC_OK
 ///
 /// ### ACTION
 /// Call 'execute_operation()' with valid operation
@@ -1032,7 +1032,7 @@ async fn execute_operation_success_no_fee() {
 }
 
 /// ### TEST
-/// M-ESDT_EXEC_OK_015
+/// M-ESDT_EXEC_OK
 ///
 /// ### ACTION
 /// Call 'execute_operation()' with valid operation and no fee

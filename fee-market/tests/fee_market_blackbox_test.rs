@@ -23,7 +23,7 @@ fn test_deploy_fee_market() {
 }
 
 /// ### TEST
-/// F-MARKET_SET_FEE_FAIL_001
+/// F-MARKET_SET_FEE_FAIL
 ///
 /// ### ACTION
 /// Call 'set_fee()' with wrong parameters
@@ -50,7 +50,7 @@ fn test_set_fee_wrong_params() {
 }
 
 /// ### TEST
-/// F-MARKET_SUBSTRACT_FEE_OK_002
+/// F-MARKET_SUBSTRACT_FEE_OK
 ///
 /// ### ACTION
 /// Call 'substract_fee()' with no fee set
@@ -87,7 +87,7 @@ fn test_substract_fee_no_fee() {
 }
 
 /// ### TEST
-/// F-MARKET_SUBSTRACT_FEE_OK_003
+/// F-MARKET_SUBSTRACT_FEE_OK
 ///
 /// ### ACTION
 /// Call 'substract_fee()' with a whitelisted user
@@ -126,7 +126,7 @@ fn test_substract_fee_whitelisted() {
 }
 
 /// ### TEST
-/// F-MARKET_SUBSTRACT_FEE_FAIL_004
+/// F-MARKET_SUBSTRACT_FEE_FAIL
 ///
 /// ### ACTION
 /// Call 'substract_fee()' with an invalid payment token
@@ -161,7 +161,7 @@ fn test_substract_fee_invalid_payment_token() {
 }
 
 /// ### TEST
-/// F-MARKET_SUBSTRACT_FEE_FAIL_005
+/// F-MARKET_SUBSTRACT_FEE_FAIL
 ///
 /// ### ACTION
 /// Call 'substract_fee()' with not enough tokens to cover the fee
@@ -196,7 +196,7 @@ fn test_substract_fixed_fee_payment_not_covered() {
 }
 
 /// ### TEST
-/// F-MARKET_SUBSTRACT_FEE_OK_006
+/// F-MARKET_SUBSTRACT_FEE_OK
 ///
 /// ### ACTION
 /// Call 'substract_fee()' with payment bigger than fee
