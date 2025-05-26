@@ -11,7 +11,7 @@ fn test_deploy() {
 }
 
 /// ### TEST
-/// C-FACTORY_DEPLOY_CHAIN_CONFIG_OK_001
+/// C-FACTORY_DEPLOY_CHAIN_CONFIG_OK
 ///
 /// ### ACTION
 /// Call 'deploy_chain_config_from_factory()' with a valid config

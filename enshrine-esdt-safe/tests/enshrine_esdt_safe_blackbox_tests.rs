@@ -23,7 +23,7 @@ use structs::operation::{Operation, OperationData, OperationEsdtPayment};
 mod enshrine_esdt_safe_blackbox_setup;
 
 /// ### TEST
-/// E-ESDT_DEPLOY_OK_001
+/// E-ESDT_DEPLOY_OK
 ///
 /// ### ACTION
 /// Call 'setup_contracts()'
@@ -38,7 +38,7 @@ fn test_deploy() {
 }
 
 /// ### TEST
-/// E-ESDT_EXECUTE_FAIL_002
+/// E-ESDT_EXECUTE_FAIL
 ///
 /// ### ACTION
 /// Call 'execute_operation()' with invalid token payments
@@ -86,7 +86,7 @@ fn test_execute_with_non_prefixed_token() {
 }
 
 /// ### TEST
-/// E-ESDT_EXECUTE_OK_003
+/// E-ESDT_EXECUTE_OK
 ///
 /// ### ACTION
 /// Call 'execute_operation()' with valid token payments
@@ -137,7 +137,7 @@ fn test_execute_with_prefixed_token() {
 }
 
 /// ### TEST
-/// E-ESDT_REGISTER_FAIL_004
+/// E-ESDT_REGISTER_FAIL
 ///
 /// ### ACTION
 /// Call 'register_tokens()' with insufficient funds
@@ -162,7 +162,7 @@ fn test_register_tokens_insufficient_funds() {
 }
 
 /// ### TEST
-/// E-ESDT_REGISTER_FAIL_005
+/// E-ESDT_REGISTER_FAIL
 ///
 /// ### ACTION
 /// Call 'register_tokens()' with invalid token as fee
@@ -187,7 +187,7 @@ fn test_register_tokens_wrong_token_as_fee() {
 }
 
 /// ### TEST
-/// E-ESDT_REGISTER_FAIL_006
+/// E-ESDT_REGISTER_FAIL
 ///
 /// ### ACTION
 /// Call 'register_tokens()' with valid payments
@@ -212,7 +212,7 @@ fn test_register_tokens() {
 }
 
 /// ### TEST
-/// E-ESDT_REGISTER_FAIL_007
+/// E-ESDT_REGISTER_FAIL
 ///
 /// ### ACTION
 /// Call 'register_tokens()' with insufficient WEGLD amount
@@ -242,7 +242,7 @@ fn test_register_tokens_insufficient_wegld() {
 }
 
 /// ### TEST
-/// E-ESDT_DEPOSIT_OK_008
+/// E-ESDT_DEPOSIT_OK
 ///
 /// ### ACTION
 /// Call 'deposit()' with valid payments
@@ -276,7 +276,7 @@ fn test_deposit_no_fee() {
 }
 
 /// ### TEST
-/// E-ESDT_DEPOSIT_FAIL_009
+/// E-ESDT_DEPOSIT_FAIL
 ///
 /// ### ACTION
 /// Call 'deposit()' with no payments
@@ -299,7 +299,7 @@ fn test_deposit_token_nothing_to_transfer_fee_disabled() {
 }
 
 /// ### TEST
-/// E-ESDT_DEPOSIT_FAIL_010
+/// E-ESDT_DEPOSIT_FAIL
 ///
 /// ### ACTION
 /// Call 'deposit()' with too many payments
@@ -325,7 +325,7 @@ fn test_deposit_max_transfers_exceeded() {
 }
 
 /// ### TEST
-/// E-ESDT_DEPOSIT_OK_011
+/// E-ESDT_DEPOSIT_OK
 ///
 /// ### ACTION
 /// Call 'deposit()' with no transfer data
@@ -383,7 +383,7 @@ fn test_deposit_no_transfer_data() {
 }
 
 /// ### TEST
-/// E-ESDT_DEPOSIT_FAIL_012
+/// E-ESDT_DEPOSIT_FAIL
 ///
 /// ### ACTION
 /// Call 'deposit()' with gas limit too high in transfer data
@@ -428,7 +428,7 @@ fn test_deposit_with_transfer_data_gas_limit_too_high() {
 }
 
 /// ### TEST
-/// E-ESDT_DEPOSIT_FAIL_013
+/// E-ESDT_DEPOSIT_FAIL
 ///
 /// ### ACTION
 /// Call 'deposit()' with banned endpoint in transfer data
@@ -484,7 +484,7 @@ fn test_deposit_with_transfer_data_banned_endpoint() {
 }
 
 /// ### TEST
-/// E-ESDT_DEPOSIT_OK_014
+/// E-ESDT_DEPOSIT_OK
 ///
 /// ### ACTION
 /// Call 'deposit()' with transfer data and fee
@@ -544,7 +544,7 @@ fn test_deposit_with_transfer_data_enough_for_fee() {
 }
 
 /// ### TEST
-/// E-ESDT_DEPOSIT_FAIL_015
+/// E-ESDT_DEPOSIT_FAIL
 ///
 /// ### ACTION
 /// Call 'deposit()' with transfer data and not enough fee tokens
@@ -602,7 +602,7 @@ fn test_deposit_with_transfer_data_not_enough_for_fee() {
 }
 
 /// ### TEST
-/// E-ESDT_DEPOSIT_OK_016
+/// E-ESDT_DEPOSIT_OK
 ///
 /// ### ACTION
 /// Call 'deposit()' with non whitelisted tokens
@@ -647,7 +647,7 @@ fn test_deposit_refund_non_whitelisted_tokens_fee_disabled() {
 }
 
 /// ### TEST
-/// E-ESDT_DEPOSIT_OK_017
+/// E-ESDT_DEPOSIT_OK
 ///
 /// ### ACTION
 /// Call 'deposit()' with non whitelisted tokens and fee enabled
