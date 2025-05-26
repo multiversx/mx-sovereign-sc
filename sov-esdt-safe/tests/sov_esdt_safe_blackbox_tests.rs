@@ -28,7 +28,7 @@ fn test_deploy() {
 }
 
 /// ### TEST
-/// S-ESDT_DEPOSIT_OK_001
+/// S-ESDT_DEPOSIT_OK
 ///
 /// ### ACTION
 /// Call 'deposit()' with no transfer data and no fee
@@ -98,7 +98,7 @@ fn test_deposit_no_fee_no_transfer_data() {
 }
 
 /// ### TEST
-/// S-ESDT_DEPOSIT_OK_002
+/// S-ESDT_DEPOSIT_OK
 ///
 /// ### ACTION
 /// Call 'deposit()' with no transfer data
@@ -196,7 +196,7 @@ fn test_deposit_with_fee_no_transfer_data() {
 }
 
 /// ### TEST
-/// S-ESDT_DEPOSIT_OK_003
+/// S-ESDT_DEPOSIT_OK
 ///
 /// ### ACTION
 /// Call 'deposit()' with transfer data and no fee
@@ -280,7 +280,7 @@ fn test_deposit_no_fee_with_transfer_data() {
 }
 
 /// ### TEST
-/// S-ESDT_DEPOSIT_OK_004
+/// S-ESDT_DEPOSIT_OK
 ///
 /// ### ACTION
 /// Call 'deposit()' with transfer data and fee
@@ -388,7 +388,7 @@ fn test_deposit_with_fee_with_transfer_data() {
 }
 
 /// ### TEST
-/// S-ESDT_DEPOSIT_FAIL_005
+/// S-ESDT_DEPOSIT_FAIL
 ///
 /// ### ACTION
 /// Call 'deposit()' with no transfer data and no payments
@@ -416,7 +416,7 @@ fn test_deposit_no_transfer_data_no_payments() {
 }
 
 /// ### TEST
-/// S-ESDT_DEPOSIT_OK_006
+/// S-ESDT_DEPOSIT_OK
 ///
 /// ### ACTION
 /// Call 'deposit()' with transfer data and no payments
