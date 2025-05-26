@@ -59,9 +59,9 @@ pub trait PhasesModule:
     fn deploy_phase_one(
         &self,
         opt_preferred_chain_id: Option<ManagedBuffer>,
-        config: SovereignConfig<Self::Api>,
+        config: OptionalValue<SovereignConfig<Self::Api>>,
     ) {
-        self.require_initilization_phase_complete();
+        self.require_initialization_phase_complete();
 
         let call_value = self.call_value().egld();
         self.require_correct_deploy_cost(call_value.deref());

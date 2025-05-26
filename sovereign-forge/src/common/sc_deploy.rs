@@ -9,7 +9,10 @@ use structs::{
 #[multiversx_sc::module]
 pub trait ScDeployModule: super::utils::UtilsModule + super::storage::StorageModule {
     #[inline]
-    fn deploy_chain_config(&self, config: SovereignConfig<Self::Api>) -> ManagedAddress {
+    fn deploy_chain_config(
+        &self,
+        config: OptionalValue<SovereignConfig<Self::Api>>,
+    ) -> ManagedAddress {
         self.tx()
             .to(self.get_chain_factory_address())
             .typed(ChainFactoryContractProxy)

@@ -47,7 +47,7 @@ const NUMBER_OF_SHARDS: u32 = 3;
 
 #[multiversx_sc::module]
 pub trait UtilsModule: super::storage::StorageModule {
-    fn require_initilization_phase_complete(&self) {
+    fn require_initialization_phase_complete(&self) {
         for shard_id in 1..=NUMBER_OF_SHARDS {
             require!(
                 !self.chain_factories(shard_id).is_empty(),
