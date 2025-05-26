@@ -3,20 +3,20 @@
 use base64::{engine::general_purpose::STANDARD as BASE64, Engine};
 use common_test_setup::constants::{
     CHAIN_CONFIG_CODE_PATH, CHAIN_FACTORY_CODE_PATH, ENSHRINE_ESDT_SAFE_CODE_PATH,
-    FEE_MARKET_CODE_PATH, HEADER_VERIFIER_CODE_PATH, MVX_ESDT_SAFE_CODE_PATH,
+    FEE_MARKET_CODE_PATH, HEADER_VERIFIER_CODE_PATH, ISSUE_COST, MVX_ESDT_SAFE_CODE_PATH,
     SOVEREIGN_FORGE_CODE_PATH, TESTING_SC_CODE_PATH, TOKEN_HANDLER_CODE_PATH,
 };
 use multiversx_sc::{
     codec::TopEncode,
-    imports::OptionalValue,
+    imports::{ESDTSystemSCProxy, OptionalValue, UserBuiltinProxy},
     types::{
-        Address, BigUint, CodeMetadata, ManagedBuffer, ReturnsNewAddress, ReturnsResultUnmanaged,
-        TokenIdentifier,
+        Address, BigUint, CodeMetadata, ESDTSystemSCAddress, EsdtTokenType, ManagedBuffer,
+        ManagedVec, ReturnsNewAddress, ReturnsResult, ReturnsResultUnmanaged, TokenIdentifier,
     },
 };
 use multiversx_sc_snippets::{
     hex,
-    imports::{bech32, Bech32Address, StaticApi},
+    imports::{bech32, Bech32Address, ReturnsNewTokenIdentifier, StaticApi},
     multiversx_sc_scenario::{
         multiversx_chain_vm::crypto_functions::sha256,
         scenario_model::{Log, TxResponseStatus},
@@ -36,12 +36,110 @@ use structs::{
     operation::Operation,
 };
 
-use crate::interactor_state::State;
+use crate::interactor_state::{State, TokenProperties};
+
+pub struct IssueTokenStruct {
+    pub token_display_name: String,
+    pub token_ticker: String,
+    pub token_type: EsdtTokenType,
+    pub num_decimals: usize,
+}
+
+pub struct MintTokenStruct {
+    pub name: Option<String>,
+    pub amount: BigUint<StaticApi>,
+    pub attributes: Option<Vec<u8>>,
+}
 
 pub trait CommonInteractorTrait {
     fn interactor(&mut self) -> &mut Interactor;
     fn state(&mut self) -> &mut State;
     fn wallet_address(&mut self) -> &Address;
+
+    async fn issue_and_mint_token(
+        &mut self,
+        issue: IssueTokenStruct,
+        mint: MintTokenStruct,
+    ) -> TokenProperties {
+        let wallet_address = self.wallet_address().clone();
+        let interactor = self.interactor();
+
+        let token_id = interactor
+            .tx()
+            .from(wallet_address.clone())
+            .to(ESDTSystemSCAddress)
+            .gas(100_000_000u64)
+            .typed(ESDTSystemSCProxy)
+            .issue_and_set_all_roles(
+                ISSUE_COST.into(),
+                issue.token_display_name,
+                issue.token_ticker,
+                issue.token_type,
+                issue.num_decimals,
+            )
+            .returns(ReturnsNewTokenIdentifier)
+            .run()
+            .await;
+
+        let nonce = self
+            .mint_tokens(token_id.clone(), issue.token_type, mint)
+            .await;
+
+        TokenProperties {
+            token_id: token_id.clone(),
+            nonce,
+        }
+    }
+
+    async fn mint_tokens(
+        &mut self,
+        token_id: String,
+        token_type: EsdtTokenType,
+        mint: MintTokenStruct,
+    ) -> u64 {
+        let wallet_address = self.wallet_address().clone();
+        let interactor = self.interactor();
+        let mint_base_tx = interactor
+            .tx()
+            .from(wallet_address.clone())
+            .to(wallet_address.clone())
+            .gas(100_000_000u64)
+            .typed(UserBuiltinProxy);
+
+        match token_type {
+            EsdtTokenType::Fungible => {
+                mint_base_tx
+                    .esdt_local_mint(TokenIdentifier::from(token_id.as_bytes()), 0, mint.amount)
+                    .returns(ReturnsResultUnmanaged)
+                    .run()
+                    .await;
+                0u64
+            }
+            EsdtTokenType::NonFungible
+            | EsdtTokenType::SemiFungible
+            | EsdtTokenType::DynamicNFT
+            | EsdtTokenType::DynamicMeta
+            | EsdtTokenType::DynamicSFT
+            | EsdtTokenType::Meta => {
+                mint_base_tx
+                    .esdt_nft_create(
+                        TokenIdentifier::from(token_id.as_bytes()),
+                        mint.amount,
+                        mint.name.unwrap_or_default(),
+                        BigUint::zero(),
+                        ManagedBuffer::new(),
+                        &mint.attributes.unwrap_or_default(),
+                        &ManagedVec::new(),
+                    )
+                    .returns(ReturnsResult)
+                    .run()
+                    .await
+            }
+            _ => {
+                panic!("Unsupported token type: {:?}", token_type);
+            }
+        }
+    }
 
     async fn deploy_sovereign_forge(&mut self, deploy_cost: &BigUint<StaticApi>) {
         let wallet_address = self.wallet_address().clone();
