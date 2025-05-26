@@ -30,7 +30,7 @@ use structs::{
 mod sovereign_forge_blackbox_setup;
 
 /// ### TEST
-/// S-FORGE_DEPLOY_OK_001
+/// S-FORGE_DEPLOY_OK
 ///
 /// ### ACTION
 /// Deploy sovereign_forge and chain_factory
@@ -45,7 +45,7 @@ fn test_deploy_contracts() {
 }
 
 /// ### TEST
-/// S-FORGE_REGISTER_TOKEN_HANDLER_OK_002
+/// S-FORGE_REGISTER_TOKEN_HANDLER_OK
 ///
 /// ### ACTION
 /// Register token handler for any shard
@@ -70,7 +70,7 @@ fn test_register_token_handler() {
 }
 
 /// ### TEST
-/// S-FORGE_REGISTER_CHAIN_FACTORY_OK_003
+/// S-FORGE_REGISTER_CHAIN_FACTORY_OK
 ///
 /// ### ACTION
 /// Register chain_factory any shard
@@ -95,7 +95,7 @@ fn test_register_chain_factory() {
 }
 
 /// ### TEST
-/// S-FORGE_UPDATE_CONFIG_FAIL_004
+/// S-FORGE_UPDATE_CONFIG_FAIL
 ///
 /// ### ACTION
 /// Update config without deploying chain_config
@@ -125,7 +125,7 @@ fn test_update_sovereign_config_no_chain_config_deployed() {
 }
 
 /// ### TEST
-/// S-FORGE_UPDATE_CONFIG_OK_005
+/// S-FORGE_UPDATE_CONFIG_OK
 ///
 /// ### ACTION
 /// Update sovereign config
@@ -202,7 +202,7 @@ fn test_update_sovereign_config() {
 }
 
 /// ### TEST
-/// S-FORGE_UPDATE_ESDT_SAFE_CONFIG_OK_006
+/// S-FORGE_UPDATE_ESDT_SAFE_CONFIG_OK
 ///
 /// ### ACTION
 /// Update ESDT safe config
@@ -327,7 +327,7 @@ fn test_update_esdt_safe_config() {
 }
 
 /// ### TEST
-/// S-FORGE_SET_FEE_OK_007
+/// S-FORGE_SET_FEE_OK
 ///
 /// ### ACTION
 /// Set sovereign fee
@@ -429,7 +429,7 @@ fn test_set_fee() {
 }
 
 /// ### TEST
-/// S-FORGE_REMOVE_FEE_OK_008
+/// S-FORGE_REMOVE_FEE_OK
 ///
 /// ### ACTION
 /// Remove sovereign fee
@@ -531,7 +531,7 @@ fn test_remove_fee() {
 }
 
 /// ### TEST
-/// S-FORGE_COMPLETE_SETUP_PHASE_009
+/// S-FORGE_COMPLETE_SETUP_PHASE
 ///
 /// ### ACTION
 /// Call setup_phase()
@@ -609,7 +609,7 @@ fn test_complete_setup_phase() {
 }
 
 /// ### TEST
-/// S-FORGE_DEPLOY_PHASE_ONE_FAIL_010
+/// S-FORGE_DEPLOY_PHASE_ONE_FAIL
 ///
 /// ### ACTION
 /// deploy_phase_one with insufficient cost
@@ -634,7 +634,7 @@ fn test_deploy_phase_one_deploy_cost_too_low() {
 }
 
 /// ### TEST
-/// S-FORGE_DEPLOY_PHASE_ONE_FAIL_011
+/// S-FORGE_DEPLOY_PHASE_ONE_FAIL
 ///
 /// ### ACTION
 /// Call deploy_phase_one twice for same chain_config
@@ -665,7 +665,7 @@ fn test_deploy_phase_one_chain_config_already_deployed() {
 }
 
 /// ### TEST
-/// S-FORGE_DEPLOY_PHASE_ONE_FAIL_012
+/// S-FORGE_DEPLOY_PHASE_ONE_FAIL
 ///
 /// ### ACTION
 /// Call deploy_phase_one wrong chain id format
@@ -693,7 +693,7 @@ fn test_deploy_phase_one_preferred_chain_id_not_lowercase_alphanumeric() {
 }
 
 /// ### TEST
-/// S-FORGE_DEPLOY_PHASE_ONE_FAIL_013
+/// S-FORGE_DEPLOY_PHASE_ONE_FAIL
 ///
 /// ### ACTION
 /// Call deploy_phase_one wrong chain id length
@@ -721,7 +721,7 @@ fn test_deploy_phase_one_preferred_chain_id_not_correct_length() {
 }
 
 /// ### TEST
-/// S-FORGE_DEPLOY_PHASE_ONE_OK_014
+/// S-FORGE_DEPLOY_PHASE_ONE_OK
 ///
 /// ### ACTION
 /// Call deploy_phase_one with no preferred chain id
@@ -763,7 +763,7 @@ fn test_deploy_phase_one_no_preferred_chain_id() {
 }
 
 /// ### TEST
-/// S-FORGE_DEPLOY_PHASE_ONE_OK_015
+/// S-FORGE_DEPLOY_PHASE_ONE_OK
 ///
 /// ### ACTION
 /// Call deploy_phase_one with preferred chain id
@@ -810,7 +810,7 @@ fn test_deploy_phase_one_preferred_chain_id() {
 }
 
 /// ### TEST
-/// S-FORGE_DEPLOY_PHASE_ONE_FAIL_016
+/// S-FORGE_DEPLOY_PHASE_ONE_FAIL
 ///
 /// ### ACTION
 /// Call deploy_phase_one with an used chain id
@@ -845,7 +845,7 @@ fn test_deploy_phase_one_with_chain_id_used() {
 }
 
 /// ### TEST
-/// S-FORGE_DEPLOY_PHASE_TWO_FAIL_017
+/// S-FORGE_DEPLOY_PHASE_TWO_FAIL
 ///
 /// ### ACTION
 /// Call deploy_phase_two without the first phase
@@ -865,7 +865,7 @@ fn test_deploy_phase_two_without_first_phase() {
 }
 
 /// ### TEST
-/// S-FORGE_DEPLOY_PHASE_TWO_OK_018
+/// S-FORGE_DEPLOY_PHASE_TWO_OK
 ///
 /// ### ACTION
 /// Call deploy_phase_two
@@ -909,7 +909,7 @@ fn test_deploy_phase_two() {
 }
 
 /// ### TEST
-/// S-FORGE_DEPLOY_PHASE_TWO_FAIL_019
+/// S-FORGE_DEPLOY_PHASE_TWO_FAIL
 ///
 /// ### ACTION
 /// Call deploy_phase_two two times
@@ -942,7 +942,7 @@ fn test_deploy_phase_two_header_already_deployed() {
 }
 
 /// ### TEST
-/// S-FORGE_DEPLOY_PHASE_THREE_OK_020
+/// S-FORGE_DEPLOY_PHASE_THREE_OK
 ///
 /// ### ACTION
 /// Call deploy_phase_three
@@ -992,7 +992,7 @@ fn test_deploy_phase_three() {
 }
 
 /// ### TEST
-/// S-FORGE_DEPLOY_PHASE_THREE_FAIL_021
+/// S-FORGE_DEPLOY_PHASE_THREE_FAIL
 ///
 /// ### ACTION
 /// Call deploy_phase_three without the phase one
@@ -1015,7 +1015,7 @@ fn test_deploy_phase_three_without_phase_one() {
 }
 
 /// ### TEST
-/// S-FORGE_DEPLOY_PHASE_THREE_FAIL_022
+/// S-FORGE_DEPLOY_PHASE_THREE_FAIL
 ///
 /// ### ACTION
 /// Call deploy_phase_three without the phase two
@@ -1050,7 +1050,7 @@ fn test_deploy_phase_three_without_phase_two() {
 }
 
 /// ### TEST
-/// S-FORGE_DEPLOY_PHASE_THREE_FAIL_023
+/// S-FORGE_DEPLOY_PHASE_THREE_FAIL
 ///
 /// ### ACTION
 /// Call deploy_phase_three two times
@@ -1089,7 +1089,7 @@ fn test_deploy_phase_three_already_deployed() {
 }
 
 /// ### TEST
-/// S-FORGE_COMPLETE_SETUP_PHASE_FAIL_024
+/// S-FORGE_COMPLETE_SETUP_PHASE_FAIL
 ///
 /// ### ACTION
 /// Call complete_setup_phase without phase four deployed
@@ -1107,7 +1107,7 @@ fn test_complete_setup_phase_four_not_deployed() {
 }
 
 /// ### TEST
-/// S-FORGE_DEPLOY_PHASE_FOUR_OK_025
+/// S-FORGE_DEPLOY_PHASE_FOUR_OK
 ///
 /// ### ACTION
 /// Call deploy_phase_four
@@ -1161,7 +1161,7 @@ fn test_deploy_phase_four() {
 }
 
 /// ### TEST
-/// S-FORGE_DEPLOY_PHASE_FOUR_FAIL_026
+/// S-FORGE_DEPLOY_PHASE_FOUR_FAIL
 ///
 /// ### ACTION
 /// Call deploy_phase_four without phase three
@@ -1200,7 +1200,7 @@ fn test_deploy_phase_four_without_previous_phase() {
 }
 
 /// ### TEST
-/// S-FORGE_DEPLOY_PHASE_FOUR_FAIL_027
+/// S-FORGE_DEPLOY_PHASE_FOUR_FAIL
 ///
 /// ### ACTION
 /// Call deploy_phase_four two times
