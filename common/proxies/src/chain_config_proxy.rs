@@ -44,15 +44,15 @@ where
     Gas: TxGas<Env>,
 {
     pub fn init<
-        Arg0: ProxyArg<structs::configs::SovereignConfig<Env::Api>>,
+        Arg0: ProxyArg<OptionalValue<structs::configs::SovereignConfig<Env::Api>>>,
     >(
         self,
-        config: Arg0,
+        opt_config: Arg0,
     ) -> TxTypedDeploy<Env, From, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_deploy()
-            .argument(&config)
+            .argument(&opt_config)
             .original_result()
     }
 }

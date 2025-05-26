@@ -2,7 +2,10 @@ use chain_config::validator_rules::ValidatorRulesModule;
 use chain_config_blackbox_setup::ChainConfigTestState;
 use common_test_setup::{constants::CHAIN_CONFIG_ADDRESS, CallerAddress};
 use error_messages::{INVALID_MIN_MAX_VALIDATOR_NUMBERS, SETUP_PHASE_NOT_COMPLETED};
-use multiversx_sc::types::{BigUint, ManagedBuffer, MultiValueEncoded};
+use multiversx_sc::{
+    imports::OptionalValue,
+    types::{BigUint, ManagedBuffer, MultiValueEncoded},
+};
 use multiversx_sc_scenario::{multiversx_chain_vm::crypto_functions::sha256, ScenarioTxWhitebox};
 use structs::{configs::SovereignConfig, generate_hash::GenerateHash};
 
@@ -12,8 +15,25 @@ mod chain_config_blackbox_setup;
 fn test_deploy_chain_config() {
     let mut state = ChainConfigTestState::new();
 
-    let config = SovereignConfig::new(0, 1, BigUint::default(), None);
-    state.common_setup.deploy_chain_config(config);
+    state
+        .common_setup
+        .deploy_chain_config(OptionalValue::None, None);
+}
+
+#[test]
+fn test_deploy_chain_config_invalid_config() {
+    let mut state = ChainConfigTestState::new();
+
+    let config = SovereignConfig {
+        min_validators: 2,
+        max_validators: 1,
+        ..SovereignConfig::default_config()
+    };
+
+    state.common_setup.deploy_chain_config(
+        OptionalValue::Some(config),
+        Some(INVALID_MIN_MAX_VALIDATOR_NUMBERS),
+    );
 }
 
 /// ### TEST
@@ -28,8 +48,9 @@ fn test_deploy_chain_config() {
 fn test_update_config_during_setup_phase() {
     let mut state = ChainConfigTestState::new();
 
-    let config = SovereignConfig::new(0, 1, BigUint::default(), None);
-    state.common_setup.deploy_chain_config(config);
+    state
+        .common_setup
+        .deploy_chain_config(OptionalValue::None, None);
 
     let new_config = SovereignConfig::new(2, 4, BigUint::default(), None);
 
@@ -48,8 +69,9 @@ fn test_update_config_during_setup_phase() {
 fn test_update_config_during_setup_phase_wrong_validators_array() {
     let mut state = ChainConfigTestState::new();
 
-    let config = SovereignConfig::new(0, 1, BigUint::default(), None);
-    state.common_setup.deploy_chain_config(config);
+    state
+        .common_setup
+        .deploy_chain_config(OptionalValue::None, None);
 
     let new_config = SovereignConfig::new(2, 1, BigUint::default(), None);
 
@@ -71,8 +93,9 @@ fn test_update_config_during_setup_phase_wrong_validators_array() {
 fn test_complete_setup_phase() {
     let mut state = ChainConfigTestState::new();
 
-    let config = SovereignConfig::new(0, 1, BigUint::default(), None);
-    state.common_setup.deploy_chain_config(config);
+    state
+        .common_setup
+        .deploy_chain_config(OptionalValue::None, None);
 
     state.common_setup.complete_chain_config_setup_phase(None);
 }
@@ -89,8 +112,10 @@ fn test_complete_setup_phase() {
 fn test_update_config_setup_phase_not_completed() {
     let mut state = ChainConfigTestState::new();
 
-    let config = SovereignConfig::new(0, 1, BigUint::default(), None);
-    state.common_setup.deploy_chain_config(config);
+    state
+        .common_setup
+        .deploy_chain_config(OptionalValue::None, None);
+
     state
         .common_setup
         .deploy_header_verifier(CHAIN_CONFIG_ADDRESS);
@@ -123,7 +148,8 @@ fn test_update_config_invalid_config() {
 
     state
         .common_setup
-        .deploy_chain_config(SovereignConfig::default_config());
+        .deploy_chain_config(OptionalValue::None, None);
+
     state
         .common_setup
         .deploy_header_verifier(CHAIN_CONFIG_ADDRESS);
@@ -163,7 +189,8 @@ fn test_update_config() {
 
     state
         .common_setup
-        .deploy_chain_config(SovereignConfig::default_config());
+        .deploy_chain_config(OptionalValue::None, None);
+
     state
         .common_setup
         .deploy_header_verifier(CHAIN_CONFIG_ADDRESS);

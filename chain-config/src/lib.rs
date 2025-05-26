@@ -12,9 +12,18 @@ pub trait ChainConfigContract:
     validator_rules::ValidatorRulesModule + setup_phase::SetupPhaseModule + events::EventsModule
 {
     #[init]
-    fn init(&self, config: SovereignConfig<Self::Api>) {
-        self.require_valid_config(&config);
-        self.sovereign_config().set(config.clone());
+    fn init(&self, opt_config: OptionalValue<SovereignConfig<Self::Api>>) {
+        let new_config = match opt_config {
+            OptionalValue::Some(cfg) => {
+                if let Some(error_message) = self.is_new_config_valid(&cfg) {
+                    sc_panic!(error_message);
+                }
+                cfg
+            }
+            OptionalValue::None => SovereignConfig::default_config(),
+        };
+
+        self.sovereign_config().set(new_config.clone());
     }
 
     #[only_owner]

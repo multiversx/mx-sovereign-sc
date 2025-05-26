@@ -64,7 +64,7 @@ impl MvxEsdtSafeInteract {
 
     pub async fn deploy_contracts(
         &mut self,
-        sovereign_config: SovereignConfig<StaticApi>,
+        sovereign_config: OptionalValue<SovereignConfig<StaticApi>>,
         esdt_safe_config: OptionalValue<EsdtSafeConfig<StaticApi>>,
         fee_struct: Option<FeeStruct<StaticApi>>,
     ) {

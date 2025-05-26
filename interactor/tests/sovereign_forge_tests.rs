@@ -27,9 +27,7 @@ async fn deploy_test_sovereign_forge_cs() {
         .current_sovereign_forge_sc_address()
         .clone();
 
-    interactor
-        .deploy_chain_config(SovereignConfig::default_config())
-        .await;
+    interactor.deploy_chain_config(OptionalValue::None).await;
     let chain_config_address = interactor.state.current_chain_config_sc_address().clone();
 
     interactor

@@ -16,7 +16,7 @@ use multiversx_sc_snippets::{hex, imports::*};
 use rust_interact::mvx_esdt_safe::mvx_esdt_safe_interactor_main::MvxEsdtSafeInteract;
 use serial_test::serial;
 use structs::aliases::PaymentsVec;
-use structs::configs::{EsdtSafeConfig, SovereignConfig};
+use structs::configs::EsdtSafeConfig;
 use structs::fee::{FeeStruct, FeeType};
 use structs::operation::{Operation, OperationData, OperationEsdtPayment, TransferData};
 
@@ -36,7 +36,7 @@ async fn deposit_nothing_to_transfer_no_fee() {
 
     chain_interactor
         .deploy_contracts(
-            SovereignConfig::default_config(),
+            OptionalValue::None,
             OptionalValue::Some(EsdtSafeConfig::default_config()),
             None,
         )
@@ -75,7 +75,7 @@ async fn deposit_too_many_tokens_no_fee() {
 
     chain_interactor
         .deploy_contracts(
-            SovereignConfig::default_config(),
+            OptionalValue::None,
             OptionalValue::Some(EsdtSafeConfig::default_config()),
             None,
         )
@@ -122,7 +122,7 @@ async fn deposit_no_transfer_data_no_fee() {
 
     chain_interactor
         .deploy_contracts(
-            SovereignConfig::default_config(),
+            OptionalValue::None,
             OptionalValue::Some(EsdtSafeConfig::default_config()),
             None,
         )
@@ -181,11 +181,7 @@ async fn deposit_gas_limit_too_high_no_fee() {
     );
 
     chain_interactor
-        .deploy_contracts(
-            SovereignConfig::default_config(),
-            OptionalValue::Some(config),
-            None,
-        )
+        .deploy_contracts(OptionalValue::None, OptionalValue::Some(config), None)
         .await;
 
     chain_interactor.deploy_testing_sc().await;
@@ -254,11 +250,7 @@ async fn deposit_endpoint_banned_no_fee() {
     );
 
     chain_interactor
-        .deploy_contracts(
-            SovereignConfig::default_config(),
-            OptionalValue::Some(config),
-            None,
-        )
+        .deploy_contracts(OptionalValue::None, OptionalValue::Some(config), None)
         .await;
 
     chain_interactor.deploy_testing_sc().await;
@@ -341,11 +333,7 @@ async fn deposit_fee_enabled() {
     };
 
     chain_interactor
-        .deploy_contracts(
-            SovereignConfig::default_config(),
-            OptionalValue::Some(config),
-            Some(fee),
-        )
+        .deploy_contracts(OptionalValue::None, OptionalValue::Some(config), Some(fee))
         .await;
 
     chain_interactor.deploy_testing_sc().await;
@@ -423,11 +411,7 @@ async fn deposit_only_transfer_data_no_fee() {
     );
 
     chain_interactor
-        .deploy_contracts(
-            SovereignConfig::default_config(),
-            OptionalValue::Some(config),
-            None,
-        )
+        .deploy_contracts(OptionalValue::None, OptionalValue::Some(config), None)
         .await;
 
     chain_interactor.deploy_testing_sc().await;
@@ -494,11 +478,7 @@ async fn deposit_payment_does_not_cover_fee() {
     };
 
     chain_interactor
-        .deploy_contracts(
-            SovereignConfig::default_config(),
-            OptionalValue::Some(config),
-            Some(fee),
-        )
+        .deploy_contracts(OptionalValue::None, OptionalValue::Some(config), Some(fee))
         .await;
 
     chain_interactor.deploy_testing_sc().await;
@@ -565,7 +545,7 @@ async fn register_token_invalid_type_token() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
 
     chain_interactor
-        .deploy_chain_config(SovereignConfig::default_config())
+        .deploy_chain_config(OptionalValue::None)
         .await;
 
     chain_interactor
@@ -639,7 +619,7 @@ async fn register_token_fungible_token() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
 
     chain_interactor
-        .deploy_chain_config(SovereignConfig::default_config())
+        .deploy_chain_config(OptionalValue::None)
         .await;
 
     chain_interactor
@@ -715,7 +695,7 @@ async fn register_token_non_fungible_token() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
 
     chain_interactor
-        .deploy_chain_config(SovereignConfig::default_config())
+        .deploy_chain_config(OptionalValue::None)
         .await;
 
     chain_interactor
@@ -791,7 +771,7 @@ async fn register_token_dynamic_non_fungible_token() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
 
     chain_interactor
-        .deploy_chain_config(SovereignConfig::default_config())
+        .deploy_chain_config(OptionalValue::None)
         .await;
 
     chain_interactor
@@ -867,7 +847,7 @@ async fn execute_operation_no_esdt_safe_registered() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
 
     chain_interactor
-        .deploy_chain_config(SovereignConfig::default_config())
+        .deploy_chain_config(OptionalValue::None)
         .await;
 
     chain_interactor
@@ -990,7 +970,7 @@ async fn execute_operation_success_no_fee() {
 
     chain_interactor
         .deploy_contracts(
-            SovereignConfig::default_config(),
+            OptionalValue::None,
             OptionalValue::Some(EsdtSafeConfig::default_config()),
             None,
         )
@@ -1114,7 +1094,7 @@ async fn execute_operation_only_transfer_data_no_fee() {
 
     chain_interactor
         .deploy_contracts(
-            SovereignConfig::default_config(),
+            OptionalValue::None,
             OptionalValue::Some(EsdtSafeConfig::default_config()),
             None,
         )

@@ -192,15 +192,23 @@ impl BaseSetup {
         self.assert_expected_error_message(response, expected_error_message);
     }
 
-    pub fn deploy_chain_config(&mut self, config: SovereignConfig<StaticApi>) -> &mut Self {
-        self.world
+    pub fn deploy_chain_config(
+        &mut self,
+        opt_config: OptionalValue<SovereignConfig<StaticApi>>,
+        expected_error_message: Option<&str>,
+    ) -> &mut Self {
+        let response = self
+            .world
             .tx()
             .from(OWNER_ADDRESS)
             .typed(ChainConfigContractProxy)
-            .init(config)
+            .init(opt_config)
             .code(CHAIN_CONFIG_CODE_PATH)
             .new_address(CHAIN_CONFIG_ADDRESS)
+            .returns(ReturnsHandledOrError::new())
             .run();
+
+        self.assert_expected_error_message(response, expected_error_message);
 
         self
     }

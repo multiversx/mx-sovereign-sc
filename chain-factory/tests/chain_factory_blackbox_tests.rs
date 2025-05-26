@@ -1,5 +1,5 @@
 use chain_factory_blackbox_setup::ChainFactoryTestState;
-use multiversx_sc::types::BigUint;
+use multiversx_sc::{imports::OptionalValue, types::BigUint};
 use structs::configs::SovereignConfig;
 
 mod chain_factory_blackbox_setup;
@@ -25,7 +25,7 @@ fn test_deploy_chain_config_from_factory() {
     state.common_setup.deploy_sovereign_forge();
     state
         .common_setup
-        .deploy_chain_config(SovereignConfig::default_config());
+        .deploy_chain_config(OptionalValue::None, None);
 
     state.common_setup.deploy_chain_factory();
 

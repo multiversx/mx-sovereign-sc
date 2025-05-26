@@ -7,9 +7,8 @@ use error_messages::{
 };
 use header_verifier::{Headerverifier, OperationHashStatus};
 use header_verifier_blackbox_setup::*;
-use multiversx_sc::types::ManagedBuffer;
+use multiversx_sc::{imports::OptionalValue, types::ManagedBuffer};
 use multiversx_sc_scenario::{DebugApi, ScenarioTxWhitebox};
-use structs::configs::SovereignConfig;
 
 mod header_verifier_blackbox_setup;
 
@@ -70,7 +69,7 @@ fn register_bridge_operation_setup_not_completed() {
 
     state
         .common_setup
-        .deploy_chain_config(SovereignConfig::default_config());
+        .deploy_chain_config(OptionalValue::None, None);
 
     state.register_esdt_address(ENSHRINE_SC_ADDRESS);
 
@@ -99,7 +98,7 @@ fn test_register_bridge_operation() {
 
     state
         .common_setup
-        .deploy_chain_config(SovereignConfig::default_config());
+        .deploy_chain_config(OptionalValue::None, None);
 
     state
         .common_setup
@@ -157,7 +156,7 @@ fn test_remove_executed_hash_no_esdt_address_registered() {
 
     state
         .common_setup
-        .deploy_chain_config(SovereignConfig::default_config());
+        .deploy_chain_config(OptionalValue::None, None);
 
     state
         .common_setup
@@ -194,7 +193,7 @@ fn test_remove_one_executed_hash() {
 
     state
         .common_setup
-        .deploy_chain_config(SovereignConfig::default_config());
+        .deploy_chain_config(OptionalValue::None, None);
 
     state
         .common_setup
@@ -254,7 +253,7 @@ fn test_remove_all_executed_hashes() {
 
     state
         .common_setup
-        .deploy_chain_config(SovereignConfig::default_config());
+        .deploy_chain_config(OptionalValue::None, None);
 
     state
         .common_setup
@@ -349,7 +348,7 @@ fn test_lock_operation() {
 
     state
         .common_setup
-        .deploy_chain_config(SovereignConfig::default_config());
+        .deploy_chain_config(OptionalValue::None, None);
 
     state
         .common_setup
@@ -438,7 +437,7 @@ fn test_change_validator_set_operation_already_registered() {
 
     state
         .common_setup
-        .deploy_chain_config(SovereignConfig::default_config());
+        .deploy_chain_config(OptionalValue::None, None);
 
     state
         .common_setup

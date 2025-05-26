@@ -32,11 +32,7 @@ pub async fn mvx_esdt_safe_cli() {
         "pause" => interact.pause_endpoint().await,
         "unpause" => interact.unpause_endpoint().await,
         "isPaused" => interact.paused_status().await,
-        "deployChainConfig" => {
-            interact
-                .deploy_chain_config(SovereignConfig::default_config())
-                .await
-        }
+        "deployChainConfig" => interact.deploy_chain_config(OptionalValue::None).await,
         "deployHeaderVerifier" => {
             interact
                 .deploy_header_verifier(interact.state.current_chain_config_sc_address().clone())
@@ -110,11 +106,7 @@ pub async fn sovereign_forge_cli() {
                 )
                 .await
         }
-        "deployChainConfig" => {
-            interact
-                .deploy_chain_config(SovereignConfig::default_config())
-                .await
-        }
+        "deployChainConfig" => interact.deploy_chain_config(OptionalValue::None).await,
         "deployHeaderVerifier" => {
             interact
                 .deploy_header_verifier(interact.state.current_chain_config_sc_address().clone())

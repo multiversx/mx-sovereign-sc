@@ -106,7 +106,7 @@ pub trait CommonInteractorTrait {
         println!("new Chain-Factory address: {new_address_bech32}");
     }
 
-    async fn deploy_chain_config(&mut self, config: SovereignConfig<StaticApi>) {
+    async fn deploy_chain_config(&mut self, opt_config: OptionalValue<SovereignConfig<StaticApi>>) {
         let wallet_address = self.wallet_address().clone();
 
         let new_address = self
@@ -115,7 +115,7 @@ pub trait CommonInteractorTrait {
             .from(wallet_address)
             .gas(50_000_000u64)
             .typed(ChainConfigContractProxy)
-            .init(config)
+            .init(opt_config)
             .returns(ReturnsNewAddress)
             .code(CHAIN_CONFIG_CODE_PATH)
             .code_metadata(CodeMetadata::all())
