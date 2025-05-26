@@ -535,20 +535,31 @@ pub trait CommonInteractorTrait {
         println!("Result: {response:?}");
     }
 
-    fn assert_expected_log(&mut self, logs: Vec<Log>, expected_log: &str) {
-        let expected_bytes = ManagedBuffer::<StaticApi>::from(expected_log).to_vec();
+    fn assert_expected_log(&mut self, logs: Vec<Log>, expected_log: Option<&str>) {
+        match expected_log {
+            None => {
+                assert!(
+                    logs.is_empty(),
+                    "Expected no logs, but found some: {:?}",
+                    logs
+                );
+            }
+            Some(expected_log) => {
+                let expected_bytes = ManagedBuffer::<StaticApi>::from(expected_log).to_vec();
 
-        let found_log = logs.iter().find(|log| {
-            log.topics.iter().any(|topic| {
-                if let Ok(decoded_topic) = BASE64.decode(topic) {
-                    decoded_topic == expected_bytes
-                } else {
-                    false
-                }
-            })
-        });
+                let found_log = logs.iter().find(|log| {
+                    log.topics.iter().any(|topic| {
+                        if let Ok(decoded_topic) = BASE64.decode(topic) {
+                            decoded_topic == expected_bytes
+                        } else {
+                            false
+                        }
+                    })
+                });
 
-        assert!(found_log.is_some(), "Expected log not found");
+                assert!(found_log.is_some(), "Expected log not found");
+            }
+        }
     }
 
     fn assert_expected_error_message(

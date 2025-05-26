@@ -324,9 +324,7 @@ impl MvxEsdtSafeInteract {
 
         self.assert_expected_error_message(response, expected_error_message);
 
-        if let Some(expected_log) = expected_log {
-            self.assert_expected_log(logs, expected_log);
-        }
+        self.assert_expected_log(logs, expected_log);
     }
 
     pub async fn execute_operations(
@@ -351,9 +349,7 @@ impl MvxEsdtSafeInteract {
 
         self.assert_expected_error_message(response, expected_error_message);
 
-        if let Some(expected_log) = expected_log {
-            self.assert_expected_log(logs, expected_log);
-        }
+        self.assert_expected_log(logs, expected_log);
     }
 
     pub async fn register_token(
