@@ -26,4 +26,12 @@ pub trait EventsModule {
         #[indexed] hash_of_hashes: &ManagedBuffer,
         #[indexed] hash_of_bridge_op: &ManagedBuffer,
     );
+
+    #[event("failedBridgeOp")]
+    fn failed_bridge_operation_event(
+        &self,
+        #[indexed] hash_of_hashes: &ManagedBuffer,
+        #[indexed] hash: &ManagedBuffer,
+        error_message: &ManagedBuffer,
+    );
 }

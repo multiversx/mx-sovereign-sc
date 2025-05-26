@@ -220,6 +220,7 @@ name = "chain-config"
 version = "0.1.0"
 dependencies = [
  "common-test-setup",
+ "cross-chain",
  "error-messages",
  "multiversx-sc",
  "multiversx-sc-modules",

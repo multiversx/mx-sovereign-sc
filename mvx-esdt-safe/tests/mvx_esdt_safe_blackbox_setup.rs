@@ -128,24 +128,51 @@ impl MvxEsdtSafeTestState {
         self
     }
 
-    pub fn update_configuration(
+    pub fn update_esdt_safe_config_during_setup_phase(
         &mut self,
         new_config: EsdtSafeConfig<StaticApi>,
         err_message: Option<&str>,
     ) {
-        let response = self
+        let result = self
             .common_setup
             .world
             .tx()
             .from(OWNER_ADDRESS)
             .to(ESDT_SAFE_ADDRESS)
             .typed(MvxEsdtSafeProxy)
-            .update_configuration(new_config)
+            .update_esdt_safe_config_during_setup_phase(new_config)
             .returns(ReturnsHandledOrError::new())
             .run();
 
         self.common_setup
-            .assert_expected_error_message(response, err_message);
+            .assert_expected_error_message(result, err_message);
+    }
+
+    pub fn update_esdt_safe_config(
+        &mut self,
+        hash_of_hashes: &ManagedBuffer<StaticApi>,
+        new_config: EsdtSafeConfig<StaticApi>,
+        err_message: Option<&str>,
+        expected_custom_log: Option<&str>,
+    ) {
+        let (result, logs) = self
+            .common_setup
+            .world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .to(ESDT_SAFE_ADDRESS)
+            .typed(MvxEsdtSafeProxy)
+            .update_esdt_safe_config(hash_of_hashes, new_config)
+            .returns(ReturnsHandledOrError::new())
+            .returns(ReturnsLogs)
+            .run();
+
+        self.common_setup
+            .assert_expected_error_message(result, err_message);
+
+        if let Some(custom_log) = expected_custom_log {
+            self.common_setup.assert_expected_log(logs, custom_log)
+        };
     }
 
     pub fn set_token_burn_mechanism(
@@ -153,7 +180,7 @@ impl MvxEsdtSafeTestState {
         token_id: &str,
         expected_error_message: Option<&str>,
     ) -> &mut Self {
-        let response = self
+        let result = self
             .common_setup
             .world
             .tx()
@@ -165,7 +192,7 @@ impl MvxEsdtSafeTestState {
             .run();
 
         self.common_setup
-            .assert_expected_error_message(response, expected_error_message);
+            .assert_expected_error_message(result, expected_error_message);
 
         self
     }
@@ -175,7 +202,7 @@ impl MvxEsdtSafeTestState {
         token_id: &str,
         expected_error_message: Option<&str>,
     ) -> &mut Self {
-        let response = self
+        let result = self
             .common_setup
             .world
             .tx()
@@ -187,7 +214,7 @@ impl MvxEsdtSafeTestState {
             .run();
 
         self.common_setup
-            .assert_expected_error_message(response, expected_error_message);
+            .assert_expected_error_message(result, expected_error_message);
 
         self
     }
@@ -211,7 +238,7 @@ impl MvxEsdtSafeTestState {
         expected_error_message: Option<&str>,
         expected_custom_log: Option<&str>,
     ) {
-        let (logs, response) = self
+        let (logs, result) = self
             .common_setup
             .world
             .tx()
@@ -225,7 +252,7 @@ impl MvxEsdtSafeTestState {
             .run();
 
         self.common_setup
-            .assert_expected_error_message(response, expected_error_message);
+            .assert_expected_error_message(result, expected_error_message);
 
         if let Some(custom_log) = expected_custom_log {
             self.common_setup.assert_expected_log(logs, custom_log)
@@ -238,7 +265,7 @@ impl MvxEsdtSafeTestState {
         payment: BigUint<StaticApi>,
         expected_error_message: Option<&str>,
     ) {
-        let response = self
+        let result = self
             .common_setup
             .world
             .tx()
@@ -257,7 +284,7 @@ impl MvxEsdtSafeTestState {
             .run();
 
         self.common_setup
-            .assert_expected_error_message(response, expected_error_message);
+            .assert_expected_error_message(result, expected_error_message);
     }
 
     pub fn register_native_token(
@@ -267,7 +294,7 @@ impl MvxEsdtSafeTestState {
         payment: BigUint<StaticApi>,
         expected_error_message: Option<&str>,
     ) {
-        let response = self
+        let result = self
             .common_setup
             .world
             .tx()
@@ -283,7 +310,7 @@ impl MvxEsdtSafeTestState {
             .run();
 
         self.common_setup
-            .assert_expected_error_message(response, expected_error_message);
+            .assert_expected_error_message(result, expected_error_message);
     }
 
     pub fn execute_operation(
@@ -294,7 +321,7 @@ impl MvxEsdtSafeTestState {
         expected_custom_log: Option<&str>,
         expected_custom_log_data: Option<&str>,
     ) {
-        let (logs, response) = self
+        let (logs, result) = self
             .common_setup
             .world
             .tx()
@@ -307,7 +334,7 @@ impl MvxEsdtSafeTestState {
             .run();
 
         self.common_setup
-            .assert_expected_error_message(response, expected_error_message);
+            .assert_expected_error_message(result, expected_error_message);
 
         if let Some(custom_log) = expected_custom_log {
             self.common_setup
@@ -325,7 +352,7 @@ impl MvxEsdtSafeTestState {
         expected_error_message: Option<&str>,
         expected_custom_log: Option<&str>,
     ) {
-        let (logs, response) = self
+        let (logs, result) = self
             .common_setup
             .world
             .tx()
@@ -337,7 +364,7 @@ impl MvxEsdtSafeTestState {
             .returns(ReturnsHandledOrError::new())
             .run();
         self.common_setup
-            .assert_expected_error_message(response, expected_error_message);
+            .assert_expected_error_message(result, expected_error_message);
 
         if let Some(custom_log) = expected_custom_log {
             self.common_setup.assert_expected_log(logs, custom_log)

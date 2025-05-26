@@ -24,6 +24,7 @@ checksum = "5c8214115b7bf84099f1309324e63141d4c5d7cc26862f97a0a857dbefe165bd"
 name = "chain-config"
 version = "0.1.0"
 dependencies = [
+ "cross-chain",
  "error-messages",
  "multiversx-sc",
  "multiversx-sc-modules",
@@ -38,6 +39,18 @@ version = "0.0.0"
 dependencies = [
  "chain-config",
  "multiversx-sc-wasm-adapter",
+]
+
+[[package]]
+name = "cross-chain"
+version = "0.1.0"
+dependencies = [
+ "error-messages",
+ "multiversx-sc",
+ "multiversx-sc-modules",
+ "proxies",
+ "structs",
+ "utils",
 ]
 
 [[package]]
@@ -255,3 +268,12 @@ name = "unwrap-infallible"
 version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "151ac09978d3c2862c4e39b557f4eceee2cc72150bc4cb4f16abf061b6e381fb"
+
+[[package]]
+name = "utils"
+version = "0.1.0"
+dependencies = [
+ "error-messages",
+ "multiversx-sc",
+ "structs",
+]

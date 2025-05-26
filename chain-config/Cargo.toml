@@ -32,5 +32,8 @@ path = "../common/setup-phase"
 [dependencies.error-messages]
 path = "../common/error-messages"
 
+[dependencies.cross-chain]
+path = "../common/cross-chain"
+
 [dev-dependencies.common-test-setup]
 path = "../common/common-test-setup"
