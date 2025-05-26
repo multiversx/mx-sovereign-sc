@@ -11,6 +11,14 @@ use structs::{configs::SovereignConfig, generate_hash::GenerateHash};
 
 mod chain_config_blackbox_setup;
 
+/// ### TEST
+/// C-CONFIG_DEPLOY_OK_001
+///
+/// ### ACTION
+/// Deploy chain-config with default config
+///
+/// ### EXPECTED
+/// Chain config is deployed
 #[test]
 fn test_deploy_chain_config() {
     let mut state = ChainConfigTestState::new();
@@ -20,6 +28,14 @@ fn test_deploy_chain_config() {
         .deploy_chain_config(OptionalValue::None, None);
 }
 
+/// ### TEST
+/// C-CONFIG_DEPLOY_FAIL_002
+///
+/// ### ACTION
+/// Call 'update_chain_config_during_setup_phase()' with a new valid config
+///
+/// ### EXPECTED
+/// Chain config is updated with the new config
 #[test]
 fn test_deploy_chain_config_invalid_config() {
     let mut state = ChainConfigTestState::new();
@@ -37,7 +53,7 @@ fn test_deploy_chain_config_invalid_config() {
 }
 
 /// ### TEST
-/// C-CONFIG_UPDATE_CONFIG_DURING_SETUP_PHASE_OK_001
+/// C-CONFIG_UPDATE_CONFIG_DURING_SETUP_PHASE_OK_003
 ///
 /// ### ACTION
 /// Call 'update_chain_config_during_setup_phase()' with a new valid config
@@ -58,7 +74,7 @@ fn test_update_config_during_setup_phase() {
 }
 
 /// ### TEST
-/// C-CONFIG_UPDATE_CONFIG_DURING_SETUP_PHASE_FAIL_002
+/// C-CONFIG_UPDATE_CONFIG_DURING_SETUP_PHASE_FAIL_004
 ///
 /// ### ACTION
 /// Call 'update_chain_config_during_setup_phase()' with an new invalid config
@@ -82,7 +98,7 @@ fn test_update_config_during_setup_phase_wrong_validators_array() {
 }
 
 /// ### TEST
-/// C-CONFIG_COMPLETE_SETUP_PHASE_OK_003
+/// C-CONFIG_COMPLETE_SETUP_PHASE_OK_005
 ///
 /// ### ACTION
 /// Call 'complete_chain_config_setup_phase()'
@@ -101,7 +117,7 @@ fn test_complete_setup_phase() {
 }
 
 /// ### TEST
-/// C-CONFIG_UPDATE_CONFIG_FAIL_004
+/// C-CONFIG_UPDATE_CONFIG_FAIL_006
 ///
 /// ### ACTION
 /// Call 'update_sovereign_config()' during the setup phase
@@ -135,7 +151,7 @@ fn test_update_config_setup_phase_not_completed() {
 }
 
 /// ### TEST
-/// C-CONFIG_UPDATE_CONFIG_OK_005
+/// C-CONFIG_UPDATE_CONFIG_OK_007
 ///
 /// ### ACTION
 /// Call 'update_sovereign_config()'  with an invalid config
@@ -176,7 +192,7 @@ fn test_update_config_invalid_config() {
 }
 
 /// ### TEST
-/// C-CONFIG_UPDATE_CONFIG_OK_006
+/// C-CONFIG_UPDATE_CONFIG_OK_008
 ///
 /// ### ACTION
 /// Call 'update_sovereign_config()'  
