@@ -104,7 +104,7 @@ pub trait FactoryModule: only_admin::OnlyAdminModule {
         let esdt_safe_address = self
             .tx()
             .typed(MvxEsdtSafeProxy)
-            .init(&header_verifier_address, opt_config)
+            .init(opt_config)
             .gas(60_000_000)
             .from_source(source_address)
             .code_metadata(metadata)

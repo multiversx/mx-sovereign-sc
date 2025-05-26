@@ -524,13 +524,7 @@ async fn register_token_invalid_type_token() {
         .await;
 
     chain_interactor
-        .deploy_mvx_esdt_safe(
-            chain_interactor
-                .state
-                .current_header_verifier_address()
-                .clone(),
-            OptionalValue::Some(EsdtSafeConfig::default_config()),
-        )
+        .deploy_mvx_esdt_safe(OptionalValue::Some(EsdtSafeConfig::default_config()))
         .await;
 
     let sov_token_id = TokenIdentifier::from_esdt_bytes(SOV_TOKEN.as_str());
@@ -596,13 +590,7 @@ async fn register_token_fungible_token() {
         .await;
 
     chain_interactor
-        .deploy_mvx_esdt_safe(
-            chain_interactor
-                .state
-                .current_header_verifier_address()
-                .clone(),
-            OptionalValue::Some(EsdtSafeConfig::default_config()),
-        )
+        .deploy_mvx_esdt_safe(OptionalValue::Some(EsdtSafeConfig::default_config()))
         .await;
 
     let sov_token_id = TokenIdentifier::from_esdt_bytes(SOV_TOKEN.as_str());
@@ -670,13 +658,7 @@ async fn register_token_non_fungible_token() {
         .await;
 
     chain_interactor
-        .deploy_mvx_esdt_safe(
-            chain_interactor
-                .state
-                .current_header_verifier_address()
-                .clone(),
-            OptionalValue::Some(EsdtSafeConfig::default_config()),
-        )
+        .deploy_mvx_esdt_safe(OptionalValue::Some(EsdtSafeConfig::default_config()))
         .await;
 
     let sov_token_id = TokenIdentifier::from_esdt_bytes(SOV_TOKEN.as_str());
@@ -744,13 +726,7 @@ async fn register_token_dynamic_non_fungible_token() {
         .await;
 
     chain_interactor
-        .deploy_mvx_esdt_safe(
-            chain_interactor
-                .state
-                .current_header_verifier_address()
-                .clone(),
-            OptionalValue::Some(EsdtSafeConfig::default_config()),
-        )
+        .deploy_mvx_esdt_safe(OptionalValue::Some(EsdtSafeConfig::default_config()))
         .await;
 
     let sov_token_id = TokenIdentifier::from_esdt_bytes(SOV_TOKEN.as_str());
@@ -818,13 +794,7 @@ async fn execute_operation_no_esdt_safe_registered() {
         .await;
 
     chain_interactor
-        .deploy_mvx_esdt_safe(
-            chain_interactor
-                .state
-                .current_header_verifier_address()
-                .clone(),
-            OptionalValue::Some(EsdtSafeConfig::default_config()),
-        )
+        .deploy_mvx_esdt_safe(OptionalValue::Some(EsdtSafeConfig::default_config()))
         .await;
 
     chain_interactor.unpause_endpoint().await;

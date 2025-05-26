@@ -101,17 +101,6 @@ impl EnshrineTestState {
             .run();
     }
 
-    pub fn set_header_verifier_address(&mut self) {
-        self.common_setup
-            .world
-            .tx()
-            .from(OWNER_ADDRESS)
-            .to(ENSHRINE_SC_ADDRESS)
-            .typed(EnshrineEsdtSafeProxy)
-            .set_header_verifier_address(HEADER_VERIFIER_ADDRESS)
-            .run();
-    }
-
     pub fn setup_contracts(
         &mut self,
         is_sovereign_chain: bool,
@@ -133,7 +122,6 @@ impl EnshrineTestState {
         self.common_setup.deploy_token_handler();
         self.common_setup
             .deploy_fee_market(fee_struct.cloned(), ENSHRINE_SC_ADDRESS);
-        self.set_header_verifier_address();
         self.register_fee_market_address();
         self.common_setup.deploy_chain_factory();
 

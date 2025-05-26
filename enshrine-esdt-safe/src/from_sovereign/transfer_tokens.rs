@@ -49,8 +49,8 @@ pub trait TransferTokensModule:
 
         let op_hash = operation.generate_hash();
 
-        let header_verifier_address = self.get_header_verifier_address();
-        self.lock_operation_hash(&hash_of_hashes, &op_hash, &header_verifier_address);
+        let header_verifier_address = self.blockchain().get_owner_address();
+        self.lock_operation_hash(&header_verifier_address, &hash_of_hashes, &op_hash);
 
         let split_result = self.split_payments_for_prefix_and_fee(&operation.tokens);
         if !split_result.are_tokens_registered {
@@ -78,7 +78,7 @@ pub trait TransferTokensModule:
             .multi_esdt(split_result.sov_tokens)
             .sync_call();
 
-        self.remove_executed_hash(&hash_of_hashes, &op_hash, &header_verifier_address);
+        self.remove_executed_hash(&header_verifier_address, &hash_of_hashes, &op_hash);
         self.execute_bridge_operation_event(hash_of_hashes, op_hash);
     }
 

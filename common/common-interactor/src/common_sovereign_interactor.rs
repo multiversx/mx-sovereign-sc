@@ -254,11 +254,7 @@ pub trait CommonInteractorTrait {
         println!("new Header-Verifier address: {new_address_bech32}");
     }
 
-    async fn deploy_mvx_esdt_safe(
-        &mut self,
-        header_verifier_address: Bech32Address,
-        opt_config: OptionalValue<EsdtSafeConfig<StaticApi>>,
-    ) {
+    async fn deploy_mvx_esdt_safe(&mut self, opt_config: OptionalValue<EsdtSafeConfig<StaticApi>>) {
         let wallet_address = self.wallet_address().clone();
 
         let new_address = self
@@ -267,7 +263,7 @@ pub trait CommonInteractorTrait {
             .from(wallet_address)
             .gas(100_000_000u64)
             .typed(MvxEsdtSafeProxy)
-            .init(header_verifier_address, opt_config)
+            .init(opt_config)
             .returns(ReturnsNewAddress)
             .code(MVX_ESDT_SAFE_CODE_PATH)
             .code_metadata(CodeMetadata::all())

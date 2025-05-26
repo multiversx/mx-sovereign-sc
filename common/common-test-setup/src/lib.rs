@@ -14,7 +14,8 @@ use multiversx_sc_scenario::{
     api::StaticApi,
     imports::{
         Address, BigUint, EsdtTokenType, ManagedBuffer, MultiValue3, MultiValueEncoded, MxscPath,
-        OptionalValue, TestSCAddress, TestTokenIdentifier, TokenIdentifier, TopEncode, Vec,
+        OptionalValue, TestSCAddress, TestTokenIdentifier, TokenIdentifier, TopEncode,
+        UserBuiltinProxy, Vec,
     },
     multiversx_chain_vm::crypto_functions::sha256,
     scenario_model::{Log, TxResponseStatus},
@@ -112,14 +113,13 @@ impl BaseSetup {
 
     pub fn deploy_mvx_esdt_safe(
         &mut self,
-        header_verifier_address: TestSCAddress,
         opt_config: OptionalValue<EsdtSafeConfig<StaticApi>>,
     ) -> &mut Self {
         self.world
             .tx()
             .from(OWNER_ADDRESS)
             .typed(MvxEsdtSafeProxy)
-            .init(header_verifier_address, opt_config)
+            .init(opt_config)
             .code(MVX_ESDT_SAFE_CODE_PATH)
             .new_address(ESDT_SAFE_ADDRESS)
             .run();
@@ -185,6 +185,20 @@ impl BaseSetup {
             .from(OWNER_ADDRESS)
             .to(HEADER_VERIFIER_ADDRESS)
             .typed(HeaderverifierProxy)
+            .complete_setup_phase()
+            .returns(ReturnsHandledOrError::new())
+            .run();
+
+        self.assert_expected_error_message(response, expected_error_message);
+    }
+
+    pub fn complete_sovereign_forge_setup_phase(&mut self, expected_error_message: Option<&str>) {
+        let response = self
+            .world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .to(SOVEREIGN_FORGE_SC_ADDRESS)
+            .typed(SovereignForgeProxy)
             .complete_setup_phase()
             .returns(ReturnsHandledOrError::new())
             .run();
@@ -391,6 +405,40 @@ impl BaseSetup {
             .run();
 
         self.assert_expected_error_message(response, error_message);
+    }
+
+    pub fn finish_sovereign_setup_phase(&mut self, expected_error_message: Option<&str>) {
+        let response = self
+            .world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .to(SOVEREIGN_FORGE_SC_ADDRESS)
+            .typed(SovereignForgeProxy)
+            .complete_setup_phase()
+            .returns(ReturnsHandledOrError::new())
+            .run();
+
+        self.assert_expected_error_message(response, expected_error_message);
+    }
+
+    pub fn deploy_sovereign_chain(
+        &mut self,
+        payment: &BigUint<StaticApi>,
+        opt_preferred_chain: Option<ManagedBuffer<StaticApi>>,
+        opt_sovereign_config: OptionalValue<SovereignConfig<StaticApi>>,
+        opt_esdt_safe_config: OptionalValue<EsdtSafeConfig<StaticApi>>,
+        opt_fee: Option<FeeStruct<StaticApi>>,
+    ) {
+        self.deploy_sovereign_forge();
+        self.deploy_chain_factory();
+        self.deploy_token_handler();
+
+        self.deploy_phase_one(payment, opt_preferred_chain, opt_sovereign_config, None);
+        self.deploy_phase_two(None);
+        self.deploy_phase_three(opt_esdt_safe_config, None);
+        self.deploy_phase_four(opt_fee, None);
+
+        self.finish_sovereign_setup_phase(None);
     }
 
     pub fn register_operation(

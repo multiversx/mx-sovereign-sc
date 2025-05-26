@@ -1,20 +1,7 @@
-use error_messages::NO_HEADER_VERIFIER_ADDRESS;
-
 multiversx_sc::imports!();
 
 #[multiversx_sc::module]
 pub trait ExecuteCommonModule: crate::storage::CrossChainStorage {
-    fn get_header_verifier_address(&self) -> ManagedAddress {
-        let header_verifier_address_mapper = self.header_verifier_address();
-
-        require!(
-            !header_verifier_address_mapper.is_empty(),
-            NO_HEADER_VERIFIER_ADDRESS
-        );
-
-        header_verifier_address_mapper.get()
-    }
-
     fn is_native_token(&self, token_identifier: &TokenIdentifier) -> bool {
         let esdt_safe_native_token_mapper = self.native_token();
 

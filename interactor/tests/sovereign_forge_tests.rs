@@ -34,9 +34,7 @@ async fn deploy_test_sovereign_forge_cs() {
         .await;
     let header_verifier_address = interactor.state.current_header_verifier_address().clone();
 
-    interactor
-        .deploy_mvx_esdt_safe(header_verifier_address.clone(), OptionalValue::None)
-        .await;
+    interactor.deploy_mvx_esdt_safe(OptionalValue::None).await;
     let mvx_esdt_safe_address = interactor
         .state
         .current_mvx_esdt_safe_contract_address()

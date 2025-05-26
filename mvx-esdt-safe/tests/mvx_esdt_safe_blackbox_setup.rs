@@ -4,6 +4,7 @@ use common_test_setup::constants::{
     USER_ADDRESS,
 };
 use common_test_setup::{AccountSetup, BaseSetup, RegisterTokenArgs};
+use multiversx_sc::imports::UserBuiltinProxy;
 use multiversx_sc::{
     imports::OptionalValue,
     types::{
@@ -64,7 +65,7 @@ impl MvxEsdtSafeTestState {
             .account(ESDT_SAFE_ADDRESS)
             .nonce(1)
             .code(MVX_ESDT_SAFE_CODE_PATH)
-            .owner(OWNER_ADDRESS)
+            .owner(HEADER_VERIFIER_ADDRESS)
             .esdt_roles(
                 TokenIdentifier::from(FIRST_TEST_TOKEN),
                 vec![
@@ -110,10 +111,7 @@ impl MvxEsdtSafeTestState {
                     ManagedVec::new(),
                 );
 
-                sc.init(
-                    HEADER_VERIFIER_ADDRESS.to_managed_address(),
-                    OptionalValue::Some(config),
-                );
+                sc.init(OptionalValue::Some(config));
             });
 
         self.common_setup
@@ -241,7 +239,7 @@ impl MvxEsdtSafeTestState {
             .common_setup
             .world
             .tx()
-            .from(OWNER_ADDRESS)
+            .from(HEADER_VERIFIER_ADDRESS)
             .to(ESDT_SAFE_ADDRESS)
             .typed(MvxEsdtSafeProxy)
             .deposit(to, opt_transfer_data.clone())
@@ -359,10 +357,20 @@ impl MvxEsdtSafeTestState {
             .returns(ReturnsLogs)
             .returns(ReturnsHandledOrError::new())
             .run();
+
         self.common_setup
             .assert_expected_error_message(result, expected_error_message);
 
         self.common_setup
             .assert_expected_log(logs, expected_custom_log);
+
+        self.common_setup
+            .world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .to(ESDT_SAFE_ADDRESS)
+            .typed(UserBuiltinProxy)
+            .change_owner_address(&HEADER_VERIFIER_ADDRESS.to_managed_address())
+            .run();
     }
 }
