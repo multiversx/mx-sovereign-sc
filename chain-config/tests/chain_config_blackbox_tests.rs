@@ -98,7 +98,7 @@ fn test_update_config_during_setup_phase_wrong_validators_array() {
 }
 
 /// ### TEST
-/// C-CONFIG_COMPLETE_SETUP_PHASE_OK_005
+/// C-CONFIG_COMPLETE_SETUP_PHASE_OK
 ///
 /// ### ACTION
 /// Call 'complete_chain_config_setup_phase()'

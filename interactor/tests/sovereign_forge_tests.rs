@@ -7,7 +7,7 @@ use multiversx_sc_snippets::imports::tokio;
 use rust_interact::sovereign_forge::sovereign_forge_interactor_main::SovereignForgeInteract;
 
 /// ### TEST
-/// S-FORGE_COMPLETE_SETUP_PHASE_OK_001
+/// S-FORGE_COMPLETE_SETUP_PHASE_OK
 ///
 /// ### ACTION
 /// Run deploy phases 1–4 and call complete_setup_phase

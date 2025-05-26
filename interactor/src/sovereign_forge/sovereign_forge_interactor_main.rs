@@ -1,4 +1,6 @@
 #![allow(non_snake_case)]
+use common_interactor::common_sovereign_interactor::{IssueTokenStruct, MintTokenStruct};
+use common_interactor::constants::ONE_THOUSAND_TOKENS;
 use common_interactor::interactor_state::State;
 use common_interactor::{
     common_sovereign_interactor::CommonInteractorTrait, interactor_config::Config,
@@ -27,6 +29,12 @@ impl CommonInteractorTrait for SovereignForgeInteract {
 }
 impl SovereignForgeInteract {
     pub async fn new(config: Config) -> Self {
+        let mut interactor = Self::initialize_interactor(config).await;
+        interactor.initialize_tokens_in_wallets().await;
+        interactor
+    }
+
+    async fn initialize_interactor(config: Config) -> Self {
         let mut interactor = Interactor::new(config.gateway_uri())
             .await
             .use_chain_simulator(config.use_chain_simulator());
@@ -35,8 +43,6 @@ impl SovereignForgeInteract {
         interactor.set_current_dir_from_workspace(current_working_dir);
         let alice_address = interactor.register_wallet(test_wallets::alice()).await;
 
-        // Useful in the chain simulator setting
-        // generate blocks until ESDTSystemSCAddress is enabled
         interactor.generate_blocks_until_epoch(1).await.unwrap();
 
         SovereignForgeInteract {
@@ -44,6 +50,24 @@ impl SovereignForgeInteract {
             alice_address,
             state: State::load_state(),
         }
+    }
+
+    async fn initialize_tokens_in_wallets(&mut self) {
+        let first_token_struct = IssueTokenStruct {
+            token_display_name: "MVX".to_string(),
+            token_ticker: "MVX".to_string(),
+            token_type: EsdtTokenType::Fungible,
+            num_decimals: 18,
+        };
+        let first_token_mint = MintTokenStruct {
+            name: None,
+            amount: BigUint::from(ONE_THOUSAND_TOKENS),
+            attributes: None,
+        };
+        let first_token = self
+            .issue_and_mint_token(first_token_struct, first_token_mint)
+            .await;
+        self.state.set_first_token(first_token);
     }
 
     pub async fn upgrade(&mut self) {
