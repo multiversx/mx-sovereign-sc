@@ -128,7 +128,7 @@ where
 
     pub fn deploy_phase_one<
         Arg0: ProxyArg<Option<ManagedBuffer<Env::Api>>>,
-        Arg1: ProxyArg<structs::configs::SovereignConfig<Env::Api>>,
+        Arg1: ProxyArg<OptionalValue<structs::configs::SovereignConfig<Env::Api>>>,
     >(
         self,
         opt_preferred_chain_id: Arg0,

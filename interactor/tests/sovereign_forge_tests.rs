@@ -5,7 +5,6 @@ use common_test_setup::constants::CHAIN_ID;
 use multiversx_sc::{imports::OptionalValue, types::BigUint};
 use multiversx_sc_snippets::imports::tokio;
 use rust_interact::sovereign_forge::sovereign_forge_interactor_main::SovereignForgeInteract;
-use structs::configs::SovereignConfig;
 
 /// ### TEST
 /// S-FORGE_COMPLETE_SETUP_PHASE_OK_001
@@ -69,11 +68,7 @@ async fn deploy_test_sovereign_forge_cs() {
     interactor.register_chain_factory(3).await;
 
     interactor
-        .deploy_phase_one(
-            deploy_cost,
-            Some(CHAIN_ID.into()),
-            SovereignConfig::default_config(),
-        )
+        .deploy_phase_one(deploy_cost, Some(CHAIN_ID.into()), OptionalValue::None)
         .await;
     interactor.deploy_phase_two().await;
     interactor.deploy_phase_three(OptionalValue::None).await;

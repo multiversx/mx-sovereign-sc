@@ -326,7 +326,7 @@ impl BaseSetup {
         &mut self,
         payment: &BigUint<StaticApi>,
         opt_preferred_chain: Option<ManagedBuffer<StaticApi>>,
-        config: &SovereignConfig<StaticApi>,
+        opt_config: OptionalValue<SovereignConfig<StaticApi>>,
         error_message: Option<&str>,
     ) {
         let response = self
@@ -335,7 +335,7 @@ impl BaseSetup {
             .from(OWNER_ADDRESS)
             .to(SOVEREIGN_FORGE_SC_ADDRESS)
             .typed(SovereignForgeProxy)
-            .deploy_phase_one(opt_preferred_chain, config)
+            .deploy_phase_one(opt_preferred_chain, opt_config)
             .egld(payment)
             .returns(ReturnsHandledOrError::new())
             .run();

@@ -15,7 +15,6 @@ use mvx_esdt_safe::mvx_esdt_safe_interactor_main::MvxEsdtSafeInteract;
 use sovereign_forge::sovereign_forge_interactor_main::SovereignForgeInteract;
 use structs::{
     aliases::PaymentsVec,
-    configs::SovereignConfig,
     operation::{Operation, OperationData},
 };
 
@@ -136,11 +135,7 @@ pub async fn sovereign_forge_cli() {
         "completeSetup" => interact.complete_setup_phase().await,
         "deployPhaseOne" => {
             interact
-                .deploy_phase_one(
-                    BigUint::from(100u64),
-                    None,
-                    SovereignConfig::default_config(),
-                )
+                .deploy_phase_one(BigUint::from(100u64), None, OptionalValue::None)
                 .await
         }
         "deployPhaseTwo" => interact.deploy_phase_two().await,
