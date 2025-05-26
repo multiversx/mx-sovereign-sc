@@ -12,7 +12,7 @@ use structs::{configs::SovereignConfig, generate_hash::GenerateHash};
 mod chain_config_blackbox_setup;
 
 /// ### TEST
-/// C-CONFIG_DEPLOY_OK_001
+/// C-CONFIG_DEPLOY_OK
 ///
 /// ### ACTION
 /// Deploy chain-config with default config
@@ -29,7 +29,7 @@ fn test_deploy_chain_config() {
 }
 
 /// ### TEST
-/// C-CONFIG_DEPLOY_FAIL_002
+/// C-CONFIG_DEPLOY_FAIL
 ///
 /// ### ACTION
 /// Call 'update_chain_config_during_setup_phase()' with a new valid config
