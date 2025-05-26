@@ -29,11 +29,7 @@ fn test_deploy_chain_config() {
 }
 
 /// ### TEST
-<<<<<<< HEAD
 /// C-CONFIG_DEPLOY_FAIL
-=======
-/// C-CONFIG_UPDATE_CONFIG_OK
->>>>>>> rc/beta
 ///
 /// ### ACTION
 /// Call 'update_chain_config_during_setup_phase()' with a new valid config
@@ -57,11 +53,7 @@ fn test_deploy_chain_config_invalid_config() {
 }
 
 /// ### TEST
-<<<<<<< HEAD
 /// C-CONFIG_UPDATE_CONFIG_DURING_SETUP_PHASE_OK_003
-=======
-/// C-CONFIG_UPDATE_CONFIG_FAIL
->>>>>>> rc/beta
 ///
 /// ### ACTION
 /// Call 'update_chain_config_during_setup_phase()' with a new valid config
@@ -106,11 +98,7 @@ fn test_update_config_during_setup_phase_wrong_validators_array() {
 }
 
 /// ### TEST
-<<<<<<< HEAD
-/// C-CONFIG_COMPLETE_SETUP_PHASE_OK_005
-=======
 /// C-CONFIG_COMPLETE_SETUP_PHASE_OK
->>>>>>> rc/beta
 ///
 /// ### ACTION
 /// Call 'complete_chain_config_setup_phase()'
