@@ -167,11 +167,8 @@ impl HeaderVerifierTestState {
         self.common_setup
             .assert_expected_error_message(response, expected_error_message);
 
-        if let Some(custom_log) = expected_custom_log {
-            self.common_setup.assert_expected_log(logs, custom_log)
-        } else if !logs.is_empty() {
-            panic!("Expected no logs, but got: {:?}", logs);
-        }
+        self.common_setup
+            .assert_expected_log(logs, expected_custom_log);
     }
 
     pub fn generate_bridge_operation_struct(

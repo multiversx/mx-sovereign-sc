@@ -569,18 +569,29 @@ impl BaseSetup {
         )
     }
 
-    pub fn assert_expected_log(&mut self, logs: Vec<Log>, expected_log: &str) {
-        let expected_bytes = ManagedBuffer::<StaticApi>::from(expected_log).to_vec();
+    pub fn assert_expected_log(&mut self, logs: Vec<Log>, expected_log: Option<&str>) {
+        match expected_log {
+            None => {
+                assert!(
+                    logs.is_empty(),
+                    "Expected no logs, but found some: {:?}",
+                    logs
+                );
+            }
+            Some(expected_str) => {
+                let expected_bytes = ManagedBuffer::<StaticApi>::from(expected_str).to_vec();
 
-        let found_log = logs
-            .iter()
-            .find(|log| log.topics.iter().any(|topic| *topic == expected_bytes));
+                let found_log = logs
+                    .iter()
+                    .find(|log| log.topics.iter().any(|topic| *topic == expected_bytes));
 
-        assert!(
-            found_log.is_some(),
-            "Expected log '{}' not found",
-            expected_log
-        );
+                assert!(
+                    found_log.is_some(),
+                    "Expected log '{}' not found",
+                    expected_str
+                );
+            }
+        }
     }
 
     pub fn assert_expected_data(&self, logs: Vec<Log>, expected_data: &str) {
