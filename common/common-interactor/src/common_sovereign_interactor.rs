@@ -106,7 +106,7 @@ pub trait CommonInteractorTrait {
         println!("new Chain-Factory address: {new_address_bech32}");
     }
 
-    async fn deploy_chain_config(&mut self, config: SovereignConfig<StaticApi>) {
+    async fn deploy_chain_config(&mut self, opt_config: OptionalValue<SovereignConfig<StaticApi>>) {
         let wallet_address = self.wallet_address().clone();
 
         let new_address = self
@@ -115,7 +115,7 @@ pub trait CommonInteractorTrait {
             .from(wallet_address)
             .gas(50_000_000u64)
             .typed(ChainConfigContractProxy)
-            .init(config)
+            .init(opt_config)
             .returns(ReturnsNewAddress)
             .code(CHAIN_CONFIG_CODE_PATH)
             .code_metadata(CodeMetadata::all())
@@ -302,7 +302,7 @@ pub trait CommonInteractorTrait {
         &mut self,
         egld_amount: BigUint<StaticApi>,
         opt_preferred_chain_id: Option<ManagedBuffer<StaticApi>>,
-        config: SovereignConfig<StaticApi>,
+        opt_config: OptionalValue<SovereignConfig<StaticApi>>,
     ) {
         let wallet_address = self.wallet_address().clone();
         let sovereign_forge_address = self.state().current_sovereign_forge_sc_address().clone();
@@ -314,7 +314,7 @@ pub trait CommonInteractorTrait {
             .to(sovereign_forge_address)
             .gas(100_000_000u64)
             .typed(SovereignForgeProxy)
-            .deploy_phase_one(opt_preferred_chain_id, config)
+            .deploy_phase_one(opt_preferred_chain_id, opt_config)
             .egld(egld_amount)
             .returns(ReturnsResultUnmanaged)
             .run()

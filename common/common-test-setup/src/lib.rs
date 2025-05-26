@@ -192,15 +192,23 @@ impl BaseSetup {
         self.assert_expected_error_message(response, expected_error_message);
     }
 
-    pub fn deploy_chain_config(&mut self, config: SovereignConfig<StaticApi>) -> &mut Self {
-        self.world
+    pub fn deploy_chain_config(
+        &mut self,
+        opt_config: OptionalValue<SovereignConfig<StaticApi>>,
+        expected_error_message: Option<&str>,
+    ) -> &mut Self {
+        let response = self
+            .world
             .tx()
             .from(OWNER_ADDRESS)
             .typed(ChainConfigContractProxy)
-            .init(config)
+            .init(opt_config)
             .code(CHAIN_CONFIG_CODE_PATH)
             .new_address(CHAIN_CONFIG_ADDRESS)
+            .returns(ReturnsHandledOrError::new())
             .run();
+
+        self.assert_expected_error_message(response, expected_error_message);
 
         self
     }
@@ -318,7 +326,7 @@ impl BaseSetup {
         &mut self,
         payment: &BigUint<StaticApi>,
         opt_preferred_chain: Option<ManagedBuffer<StaticApi>>,
-        config: &SovereignConfig<StaticApi>,
+        opt_config: OptionalValue<SovereignConfig<StaticApi>>,
         error_message: Option<&str>,
     ) {
         let response = self
@@ -327,7 +335,7 @@ impl BaseSetup {
             .from(OWNER_ADDRESS)
             .to(SOVEREIGN_FORGE_SC_ADDRESS)
             .typed(SovereignForgeProxy)
-            .deploy_phase_one(opt_preferred_chain, config)
+            .deploy_phase_one(opt_preferred_chain, opt_config)
             .egld(payment)
             .returns(ReturnsHandledOrError::new())
             .run();

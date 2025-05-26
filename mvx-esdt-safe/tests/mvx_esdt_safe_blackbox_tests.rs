@@ -27,7 +27,7 @@ use multiversx_sc_scenario::{api::StaticApi, ScenarioTxWhitebox};
 use mvx_esdt_safe::bridging_mechanism::{BridgingMechanism, TRUSTED_TOKEN_IDS};
 use mvx_esdt_safe_blackbox_setup::MvxEsdtSafeTestState;
 use setup_phase::SetupPhaseModule;
-use structs::configs::{MaxBridgedAmount, SovereignConfig};
+use structs::configs::MaxBridgedAmount;
 use structs::fee::{FeeStruct, FeeType};
 use structs::generate_hash::GenerateHash;
 use structs::operation::TransferData;
@@ -1482,7 +1482,7 @@ fn test_execute_operation_success() {
 
     state
         .common_setup
-        .deploy_chain_config(SovereignConfig::default_config());
+        .deploy_chain_config(OptionalValue::None, None);
     state
         .common_setup
         .deploy_header_verifier(CHAIN_CONFIG_ADDRESS);
@@ -1576,7 +1576,7 @@ fn test_execute_operation_with_native_token_success() {
 
     state
         .common_setup
-        .deploy_chain_config(SovereignConfig::default_config());
+        .deploy_chain_config(OptionalValue::None, None);
     state
         .common_setup
         .deploy_header_verifier(CHAIN_CONFIG_ADDRESS);
@@ -1661,7 +1661,7 @@ fn test_execute_operation_burn_mechanism_without_deposit_cannot_subtract() {
 
     state
         .common_setup
-        .deploy_chain_config(SovereignConfig::default_config());
+        .deploy_chain_config(OptionalValue::None, None);
     state
         .common_setup
         .deploy_header_verifier(CHAIN_CONFIG_ADDRESS);
@@ -1742,7 +1742,7 @@ fn test_execute_operation_success_burn_mechanism() {
 
     state
         .common_setup
-        .deploy_chain_config(SovereignConfig::default_config());
+        .deploy_chain_config(OptionalValue::None, None);
     state
         .common_setup
         .deploy_header_verifier(CHAIN_CONFIG_ADDRESS);
@@ -1842,7 +1842,7 @@ fn test_deposit_execute_switch_mechanism() {
 
     state
         .common_setup
-        .deploy_chain_config(SovereignConfig::default_config());
+        .deploy_chain_config(OptionalValue::None, None);
     state
         .common_setup
         .deploy_header_verifier(CHAIN_CONFIG_ADDRESS);
@@ -2111,7 +2111,7 @@ fn test_execute_operation_no_payments() {
 
     state
         .common_setup
-        .deploy_chain_config(SovereignConfig::default_config());
+        .deploy_chain_config(OptionalValue::None, None);
 
     state
         .common_setup
@@ -2170,7 +2170,7 @@ fn test_execute_operation_no_payments_failed_event() {
 
     state
         .common_setup
-        .deploy_chain_config(SovereignConfig::default_config());
+        .deploy_chain_config(OptionalValue::None, None);
 
     state
         .common_setup
@@ -2455,7 +2455,7 @@ fn test_update_config_invalid_config() {
     state.deploy_contract_with_roles();
     state
         .common_setup
-        .deploy_chain_config(SovereignConfig::default_config());
+        .deploy_chain_config(OptionalValue::None, None);
     state
         .common_setup
         .deploy_header_verifier(CHAIN_CONFIG_ADDRESS);
@@ -2500,7 +2500,7 @@ fn test_update_config() {
     state.deploy_contract_with_roles();
     state
         .common_setup
-        .deploy_chain_config(SovereignConfig::default_config());
+        .deploy_chain_config(OptionalValue::None, None);
     state
         .common_setup
         .deploy_header_verifier(CHAIN_CONFIG_ADDRESS);

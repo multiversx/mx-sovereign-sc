@@ -25,7 +25,7 @@ use proxies::{
 };
 use structs::{
     aliases::{GasLimit, OptionalValueTransferDataTuple, PaymentsVec},
-    configs::{EsdtSafeConfig, SovereignConfig},
+    configs::EsdtSafeConfig,
     fee::{FeeStruct, FeeType},
     operation::Operation,
 };
@@ -126,7 +126,7 @@ impl EnshrineTestState {
         );
         self.set_unpaused();
         self.common_setup
-            .deploy_chain_config(SovereignConfig::default_config());
+            .deploy_chain_config(OptionalValue::None, None);
         self.common_setup
             .deploy_header_verifier(CHAIN_CONFIG_ADDRESS);
         self.common_setup.complete_header_verifier_setup_phase(None);

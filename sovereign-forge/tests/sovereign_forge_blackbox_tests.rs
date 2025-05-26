@@ -139,7 +139,7 @@ fn test_update_sovereign_config() {
     state.common_setup.deploy_chain_factory();
     state
         .common_setup
-        .deploy_chain_config(SovereignConfig::default_config());
+        .deploy_chain_config(OptionalValue::None, None);
     state
         .common_setup
         .deploy_fee_market(None, ESDT_SAFE_ADDRESS);
@@ -159,7 +159,7 @@ fn test_update_sovereign_config() {
     state.common_setup.deploy_phase_one(
         &deploy_cost,
         Some(ManagedBuffer::from(CHAIN_ID)),
-        &SovereignConfig::default_config(),
+        OptionalValue::None,
         None,
     );
 
@@ -216,7 +216,7 @@ fn test_update_esdt_safe_config() {
     state.common_setup.deploy_chain_factory();
     state
         .common_setup
-        .deploy_chain_config(SovereignConfig::default_config());
+        .deploy_chain_config(OptionalValue::None, None);
     state
         .common_setup
         .deploy_fee_market(None, ESDT_SAFE_ADDRESS);
@@ -236,7 +236,7 @@ fn test_update_esdt_safe_config() {
     state.common_setup.deploy_phase_one(
         &deploy_cost,
         Some(ManagedBuffer::from(CHAIN_ID)),
-        &SovereignConfig::default_config(),
+        OptionalValue::None,
         None,
     );
     state
@@ -341,7 +341,7 @@ fn test_set_fee() {
     state.common_setup.deploy_chain_factory();
     state
         .common_setup
-        .deploy_chain_config(SovereignConfig::default_config());
+        .deploy_chain_config(OptionalValue::None, None);
     state
         .common_setup
         .deploy_fee_market(None, ESDT_SAFE_ADDRESS);
@@ -351,7 +351,7 @@ fn test_set_fee() {
     state.common_setup.deploy_phase_one(
         &deploy_cost,
         Some(ManagedBuffer::from(CHAIN_ID)),
-        &SovereignConfig::default_config(),
+        OptionalValue::None,
         None,
     );
     state
@@ -443,7 +443,7 @@ fn test_remove_fee() {
     state.common_setup.deploy_chain_factory();
     state
         .common_setup
-        .deploy_chain_config(SovereignConfig::default_config());
+        .deploy_chain_config(OptionalValue::None, None);
     state
         .common_setup
         .deploy_fee_market(None, ESDT_SAFE_ADDRESS);
@@ -453,7 +453,7 @@ fn test_remove_fee() {
     state.common_setup.deploy_phase_one(
         &deploy_cost,
         Some(ManagedBuffer::from(CHAIN_ID)),
-        &SovereignConfig::default_config(),
+        OptionalValue::None,
         None,
     );
     state
@@ -545,18 +545,18 @@ fn test_complete_setup_phase() {
     state.common_setup.deploy_chain_factory();
     state
         .common_setup
-        .deploy_chain_config(SovereignConfig::default_config());
+        .deploy_chain_config(OptionalValue::None, None);
     state
         .common_setup
         .deploy_fee_market(None, ESDT_SAFE_ADDRESS);
     state.finish_setup();
 
     let deploy_cost = BigUint::from(DEPLOY_COST);
-    let preffered_chain_id = ManagedBuffer::from(CHAIN_ID);
+    let preferred_chain_id = ManagedBuffer::from(CHAIN_ID);
     state.common_setup.deploy_phase_one(
         &deploy_cost,
-        Some(preffered_chain_id.clone()),
-        &SovereignConfig::default_config(),
+        Some(preferred_chain_id.clone()),
+        OptionalValue::None,
         None,
     );
 
@@ -605,7 +605,7 @@ fn test_complete_setup_phase() {
         });
 
     state.complete_setup_phase(None);
-    state.check_setup_phase_completed(preffered_chain_id, true);
+    state.check_setup_phase_completed(preferred_chain_id, true);
 }
 
 /// ### TEST
@@ -628,7 +628,7 @@ fn test_deploy_phase_one_deploy_cost_too_low() {
     state.common_setup.deploy_phase_one(
         &deploy_cost,
         None,
-        &SovereignConfig::default_config(),
+        OptionalValue::None,
         Some(DEPLOY_COST_NOT_ENOUGH),
     );
 }
@@ -648,19 +648,18 @@ fn test_deploy_phase_one_chain_config_already_deployed() {
     state.common_setup.deploy_chain_factory();
     state
         .common_setup
-        .deploy_chain_config(SovereignConfig::default_config());
+        .deploy_chain_config(OptionalValue::None, None);
     state.finish_setup();
 
     let deploy_cost = BigUint::from(DEPLOY_COST);
-    let config = SovereignConfig::default_config();
 
     state
         .common_setup
-        .deploy_phase_one(&deploy_cost, None, &config, None);
+        .deploy_phase_one(&deploy_cost, None, OptionalValue::None, None);
     state.common_setup.deploy_phase_one(
         &deploy_cost,
         None,
-        &config,
+        OptionalValue::None,
         Some(CHAIN_CONFIG_ALREADY_DEPLOYED),
     );
 }
@@ -680,7 +679,7 @@ fn test_deploy_phase_one_preferred_chain_id_not_lowercase_alphanumeric() {
     state.common_setup.deploy_chain_factory();
     state
         .common_setup
-        .deploy_chain_config(SovereignConfig::default_config());
+        .deploy_chain_config(OptionalValue::None, None);
     state.finish_setup();
 
     let deploy_cost = BigUint::from(DEPLOY_COST);
@@ -688,7 +687,7 @@ fn test_deploy_phase_one_preferred_chain_id_not_lowercase_alphanumeric() {
     state.common_setup.deploy_phase_one(
         &deploy_cost,
         Some(ManagedBuffer::from("CHID")),
-        &SovereignConfig::default_config(),
+        OptionalValue::None,
         Some(CHAIN_ID_NOT_LOWERCASE_ALPHANUMERIC),
     );
 }
@@ -708,7 +707,7 @@ fn test_deploy_phase_one_preferred_chain_id_not_correct_length() {
     state.common_setup.deploy_chain_factory();
     state
         .common_setup
-        .deploy_chain_config(SovereignConfig::default_config());
+        .deploy_chain_config(OptionalValue::None, None);
     state.finish_setup();
 
     let deploy_cost = BigUint::from(DEPLOY_COST);
@@ -716,7 +715,7 @@ fn test_deploy_phase_one_preferred_chain_id_not_correct_length() {
     state.common_setup.deploy_phase_one(
         &deploy_cost,
         Some(ManagedBuffer::from("CHAINID")),
-        &SovereignConfig::default_config(),
+        OptionalValue::None,
         Some(CHAIN_ID_NOT_FOUR_CHAR_LONG),
     );
 }
@@ -736,17 +735,14 @@ fn test_deploy_phase_one_no_preferred_chain_id() {
     state.common_setup.deploy_chain_factory();
     state
         .common_setup
-        .deploy_chain_config(SovereignConfig::default_config());
+        .deploy_chain_config(OptionalValue::None, None);
     state.finish_setup();
 
     let deploy_cost = BigUint::from(DEPLOY_COST);
 
-    state.common_setup.deploy_phase_one(
-        &deploy_cost,
-        None,
-        &SovereignConfig::default_config(),
-        None,
-    );
+    state
+        .common_setup
+        .deploy_phase_one(&deploy_cost, None, OptionalValue::None, None);
 
     state
         .common_setup
@@ -781,7 +777,7 @@ fn test_deploy_phase_one_preferred_chain_id() {
     state.common_setup.deploy_chain_factory();
     state
         .common_setup
-        .deploy_chain_config(SovereignConfig::default_config());
+        .deploy_chain_config(OptionalValue::None, None);
     state.finish_setup();
 
     let deploy_cost = BigUint::from(DEPLOY_COST);
@@ -789,7 +785,7 @@ fn test_deploy_phase_one_preferred_chain_id() {
     state.common_setup.deploy_phase_one(
         &deploy_cost,
         Some(ManagedBuffer::from(CHAIN_ID)),
-        &SovereignConfig::default_config(),
+        OptionalValue::None,
         None,
     );
 
@@ -828,7 +824,7 @@ fn test_deploy_phase_one_with_chain_id_used() {
     state.common_setup.deploy_chain_factory();
     state
         .common_setup
-        .deploy_chain_config(SovereignConfig::default_config());
+        .deploy_chain_config(OptionalValue::None, None);
     state.finish_setup();
 
     let deploy_cost = BigUint::from(DEPLOY_COST);
@@ -836,14 +832,14 @@ fn test_deploy_phase_one_with_chain_id_used() {
     state.common_setup.deploy_phase_one(
         &deploy_cost,
         Some(ManagedBuffer::from(CHAIN_ID)),
-        &SovereignConfig::default_config(),
+        OptionalValue::None,
         None,
     );
 
     state.common_setup.deploy_phase_one(
         &deploy_cost,
         Some(ManagedBuffer::from(CHAIN_ID)),
-        &SovereignConfig::default_config(),
+        OptionalValue::None,
         Some(CHAIN_ID_ALREADY_IN_USE),
     );
 }
@@ -883,17 +879,14 @@ fn test_deploy_phase_two() {
     state.common_setup.deploy_chain_factory();
     state
         .common_setup
-        .deploy_chain_config(SovereignConfig::default_config());
+        .deploy_chain_config(OptionalValue::None, None);
     state.finish_setup();
 
     let deploy_cost = BigUint::from(DEPLOY_COST);
 
-    state.common_setup.deploy_phase_one(
-        &deploy_cost,
-        None,
-        &SovereignConfig::default_config(),
-        None,
-    );
+    state
+        .common_setup
+        .deploy_phase_one(&deploy_cost, None, OptionalValue::None, None);
     state
         .common_setup
         .deploy_header_verifier(CHAIN_CONFIG_ADDRESS);
@@ -930,17 +923,14 @@ fn test_deploy_phase_two_header_already_deployed() {
     state.common_setup.deploy_chain_factory();
     state
         .common_setup
-        .deploy_chain_config(SovereignConfig::default_config());
+        .deploy_chain_config(OptionalValue::None, None);
     state.finish_setup();
 
     let deploy_cost = BigUint::from(DEPLOY_COST);
 
-    state.common_setup.deploy_phase_one(
-        &deploy_cost,
-        None,
-        &SovereignConfig::default_config(),
-        None,
-    );
+    state
+        .common_setup
+        .deploy_phase_one(&deploy_cost, None, OptionalValue::None, None);
     state
         .common_setup
         .deploy_header_verifier(CHAIN_CONFIG_ADDRESS);
@@ -966,17 +956,14 @@ fn test_deploy_phase_three() {
     state.common_setup.deploy_chain_factory();
     state
         .common_setup
-        .deploy_chain_config(SovereignConfig::default_config());
+        .deploy_chain_config(OptionalValue::None, None);
     state.finish_setup();
 
     let deploy_cost = BigUint::from(DEPLOY_COST);
 
-    state.common_setup.deploy_phase_one(
-        &deploy_cost,
-        None,
-        &SovereignConfig::default_config(),
-        None,
-    );
+    state
+        .common_setup
+        .deploy_phase_one(&deploy_cost, None, OptionalValue::None, None);
     state
         .common_setup
         .deploy_header_verifier(CHAIN_CONFIG_ADDRESS);
@@ -1019,7 +1006,7 @@ fn test_deploy_phase_three_without_phase_one() {
     state.common_setup.deploy_chain_factory();
     state
         .common_setup
-        .deploy_chain_config(SovereignConfig::default_config());
+        .deploy_chain_config(OptionalValue::None, None);
     state.finish_setup();
 
     state
@@ -1042,16 +1029,13 @@ fn test_deploy_phase_three_without_phase_two() {
     state.common_setup.deploy_chain_factory();
     state
         .common_setup
-        .deploy_chain_config(SovereignConfig::default_config());
+        .deploy_chain_config(OptionalValue::None, None);
     state.finish_setup();
 
     let deploy_cost = BigUint::from(DEPLOY_COST);
-    state.common_setup.deploy_phase_one(
-        &deploy_cost,
-        None,
-        &SovereignConfig::default_config(),
-        None,
-    );
+    state
+        .common_setup
+        .deploy_phase_one(&deploy_cost, None, OptionalValue::None, None);
 
     state
         .common_setup
@@ -1080,16 +1064,13 @@ fn test_deploy_phase_three_already_deployed() {
     state.common_setup.deploy_chain_factory();
     state
         .common_setup
-        .deploy_chain_config(SovereignConfig::default_config());
+        .deploy_chain_config(OptionalValue::None, None);
     state.finish_setup();
 
     let deploy_cost = BigUint::from(DEPLOY_COST);
-    state.common_setup.deploy_phase_one(
-        &deploy_cost,
-        None,
-        &SovereignConfig::default_config(),
-        None,
-    );
+    state
+        .common_setup
+        .deploy_phase_one(&deploy_cost, None, OptionalValue::None, None);
 
     state
         .common_setup
@@ -1140,19 +1121,16 @@ fn test_deploy_phase_four() {
     state.common_setup.deploy_chain_factory();
     state
         .common_setup
-        .deploy_chain_config(SovereignConfig::default_config());
+        .deploy_chain_config(OptionalValue::None, None);
     state
         .common_setup
         .deploy_fee_market(None, ESDT_SAFE_ADDRESS);
     state.finish_setup();
 
     let deploy_cost = BigUint::from(DEPLOY_COST);
-    state.common_setup.deploy_phase_one(
-        &deploy_cost,
-        None,
-        &SovereignConfig::default_config(),
-        None,
-    );
+    state
+        .common_setup
+        .deploy_phase_one(&deploy_cost, None, OptionalValue::None, None);
 
     state
         .common_setup
@@ -1197,19 +1175,16 @@ fn test_deploy_phase_four_without_previous_phase() {
     state.common_setup.deploy_chain_factory();
     state
         .common_setup
-        .deploy_chain_config(SovereignConfig::default_config());
+        .deploy_chain_config(OptionalValue::None, None);
     state
         .common_setup
         .deploy_fee_market(None, ESDT_SAFE_ADDRESS);
     state.finish_setup();
 
     let deploy_cost = BigUint::from(DEPLOY_COST);
-    state.common_setup.deploy_phase_one(
-        &deploy_cost,
-        None,
-        &SovereignConfig::default_config(),
-        None,
-    );
+    state
+        .common_setup
+        .deploy_phase_one(&deploy_cost, None, OptionalValue::None, None);
 
     state
         .common_setup
@@ -1239,19 +1214,16 @@ fn test_deploy_phase_four_fee_market_already_deployed() {
     state.common_setup.deploy_chain_factory();
     state
         .common_setup
-        .deploy_chain_config(SovereignConfig::default_config());
+        .deploy_chain_config(OptionalValue::None, None);
     state
         .common_setup
         .deploy_fee_market(None, ESDT_SAFE_ADDRESS);
     state.finish_setup();
 
     let deploy_cost = BigUint::from(DEPLOY_COST);
-    state.common_setup.deploy_phase_one(
-        &deploy_cost,
-        None,
-        &SovereignConfig::default_config(),
-        None,
-    );
+    state
+        .common_setup
+        .deploy_phase_one(&deploy_cost, None, OptionalValue::None, None);
 
     state
         .common_setup

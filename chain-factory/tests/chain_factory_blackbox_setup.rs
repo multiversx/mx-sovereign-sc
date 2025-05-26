@@ -4,6 +4,7 @@ use common_test_setup::{
     },
     AccountSetup, BaseSetup,
 };
+use multiversx_sc::imports::OptionalValue;
 use multiversx_sc_scenario::{api::StaticApi, ReturnsHandledOrError, ScenarioTxRun};
 use proxies::chain_factory_proxy::ChainFactoryContractProxy;
 use structs::configs::SovereignConfig;
@@ -31,7 +32,7 @@ impl ChainFactoryTestState {
 
     pub fn deploy_chain_config_from_factory(
         &mut self,
-        config: SovereignConfig<StaticApi>,
+        opt_config: OptionalValue<SovereignConfig<StaticApi>>,
         error_message: Option<&str>,
     ) {
         let response = self
@@ -41,7 +42,7 @@ impl ChainFactoryTestState {
             .from(SOVEREIGN_FORGE_SC_ADDRESS)
             .to(CHAIN_FACTORY_SC_ADDRESS)
             .typed(ChainFactoryContractProxy)
-            .deploy_sovereign_chain_config_contract(config)
+            .deploy_sovereign_chain_config_contract(opt_config)
             .returns(ReturnsHandledOrError::new())
             .run();
 

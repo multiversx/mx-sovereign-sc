@@ -17,14 +17,14 @@ pub trait FactoryModule: only_admin::OnlyAdminModule {
     #[endpoint(deploySovereignChainConfigContract)]
     fn deploy_sovereign_chain_config_contract(
         &self,
-        config: SovereignConfig<Self::Api>,
+        opt_config: OptionalValue<SovereignConfig<Self::Api>>,
     ) -> ManagedAddress {
         let source_address = self.chain_config_template().get();
         let metadata = self.blockchain().get_code_metadata(&source_address);
 
         self.tx()
             .typed(ChainConfigContractProxy)
-            .init(config)
+            .init(opt_config)
             .gas(60_000_000)
             .from_source(source_address)
             .code_metadata(metadata)
