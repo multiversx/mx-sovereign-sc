@@ -1,26 +1,9 @@
 use error_messages::NO_HEADER_VERIFIER_ADDRESS;
-use proxies::header_verifier_proxy::HeaderverifierProxy;
 
 multiversx_sc::imports!();
 
 #[multiversx_sc::module]
 pub trait ExecuteCommonModule: crate::storage::CrossChainStorage {
-    fn lock_operation_hash(&self, hash_of_hashes: &ManagedBuffer, hash: &ManagedBuffer) {
-        self.tx()
-            .to(self.get_header_verifier_address())
-            .typed(HeaderverifierProxy)
-            .lock_operation_hash(hash_of_hashes, hash)
-            .sync_call();
-    }
-
-    fn remove_executed_hash(&self, hash_of_hashes: &ManagedBuffer, op_hash: &ManagedBuffer) {
-        self.tx()
-            .to(self.get_header_verifier_address())
-            .typed(HeaderverifierProxy)
-            .remove_executed_hash(hash_of_hashes, op_hash)
-            .sync_call();
-    }
-
     fn get_header_verifier_address(&self) -> ManagedAddress {
         let header_verifier_address_mapper = self.header_verifier_address();
 

@@ -70,8 +70,9 @@ pub trait MvxEsdtSafe:
     ) {
         self.require_setup_complete();
 
+        let header_verifier_address = self.get_header_verifier_address();
         let config_hash = new_config.generate_hash();
-        self.lock_operation_hash(&hash_of_hashes, &config_hash);
+        self.lock_operation_hash(&hash_of_hashes, &config_hash, &header_verifier_address);
 
         if let Some(error_message) = self.is_esdt_safe_config_valid(&new_config) {
             self.failed_bridge_operation_event(
@@ -83,7 +84,7 @@ pub trait MvxEsdtSafe:
             self.esdt_safe_config().set(new_config);
         }
 
-        self.remove_executed_hash(&hash_of_hashes, &config_hash);
+        self.remove_executed_hash(&hash_of_hashes, &config_hash, &header_verifier_address);
         self.execute_bridge_operation_event(&hash_of_hashes, &config_hash);
     }
 

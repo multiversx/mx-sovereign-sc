@@ -28,7 +28,8 @@ pub trait ExecuteModule:
 
         let operation_hash = operation.generate_hash();
 
-        self.lock_operation_hash(&hash_of_hashes, &operation_hash);
+        let header_verifier_address = self.get_header_verifier_address();
+        self.lock_operation_hash(&hash_of_hashes, &operation_hash, &header_verifier_address);
 
         let operation_tuple = OperationTuple {
             op_hash: operation_hash,
@@ -36,13 +37,18 @@ pub trait ExecuteModule:
         };
 
         if operation.tokens.is_empty() {
-            self.execute_sc_call(&hash_of_hashes, &operation_tuple);
+            self.execute_sc_call(&header_verifier_address, &hash_of_hashes, &operation_tuple);
 
             return;
         }
 
         if let Some(minted_operation_tokens) = self.mint_tokens(&hash_of_hashes, &operation_tuple) {
-            self.distribute_payments(&hash_of_hashes, &operation_tuple, &minted_operation_tokens);
+            self.distribute_payments(
+                &header_verifier_address,
+                &hash_of_hashes,
+                &operation_tuple,
+                &minted_operation_tokens,
+            );
         }
     }
 
@@ -110,7 +116,11 @@ pub trait ExecuteModule:
 
             if operation_token.token_data.amount > deposited_amount {
                 self.emit_transfer_failed_events(hash_of_hashes, operation_tuple);
-                self.remove_executed_hash(hash_of_hashes, &operation_tuple.op_hash);
+                self.remove_executed_hash(
+                    hash_of_hashes,
+                    &operation_tuple.op_hash,
+                    &self.get_header_verifier_address(),
+                );
 
                 return None;
             }
@@ -197,6 +207,7 @@ pub trait ExecuteModule:
 
     fn distribute_payments(
         &self,
+        header_verifier_address: &ManagedAddress,
         hash_of_hashes: &ManagedBuffer,
         operation_tuple: &OperationTuple<Self::Api>,
         tokens_list: &ManagedVec<OperationEsdtPayment<Self::Api>>,
@@ -216,10 +227,11 @@ pub trait ExecuteModule:
                     .arguments_raw(args)
                     .payment(&mapped_tokens)
                     .gas(transfer_data.gas_limit)
-                    .callback(
-                        <Self as ExecuteModule>::callbacks(self)
-                            .execute(hash_of_hashes, operation_tuple),
-                    )
+                    .callback(<Self as ExecuteModule>::callbacks(self).execute(
+                        header_verifier_address,
+                        hash_of_hashes,
+                        operation_tuple,
+                    ))
                     .gas_for_callback(CALLBACK_GAS)
                     .register_promise();
             }
@@ -228,10 +240,11 @@ pub trait ExecuteModule:
                     .to(&operation_tuple.operation.to)
                     .multi_esdt(mapped_tokens)
                     .gas(ESDT_TRANSACTION_GAS)
-                    .callback(
-                        <Self as ExecuteModule>::callbacks(self)
-                            .execute(hash_of_hashes, operation_tuple),
-                    )
+                    .callback(<Self as ExecuteModule>::callbacks(self).execute(
+                        header_verifier_address,
+                        hash_of_hashes,
+                        operation_tuple,
+                    ))
                     .gas_for_callback(CALLBACK_GAS)
                     .register_promise();
             }
@@ -240,6 +253,7 @@ pub trait ExecuteModule:
 
     fn execute_sc_call(
         &self,
+        header_verifier_address: &ManagedAddress,
         hash_of_hashes: &ManagedBuffer,
         operation_tuple: &OperationTuple<Self::Api>,
     ) {
@@ -256,9 +270,11 @@ pub trait ExecuteModule:
             .raw_call(transfer_data.function.clone())
             .arguments_raw(args)
             .gas(transfer_data.gas_limit)
-            .callback(
-                <Self as ExecuteModule>::callbacks(self).execute(hash_of_hashes, operation_tuple),
-            )
+            .callback(<Self as ExecuteModule>::callbacks(self).execute(
+                header_verifier_address,
+                hash_of_hashes,
+                operation_tuple,
+            ))
             .gas_for_callback(CALLBACK_GAS)
             .register_promise();
     }
@@ -266,6 +282,7 @@ pub trait ExecuteModule:
     #[promises_callback]
     fn execute(
         &self,
+        header_verifier_address: &ManagedAddress,
         hash_of_hashes: &ManagedBuffer,
         operation_tuple: &OperationTuple<Self::Api>,
         #[call_result] result: ManagedAsyncCallResult<IgnoreValue>,
@@ -279,7 +296,11 @@ pub trait ExecuteModule:
             }
         }
 
-        self.remove_executed_hash(hash_of_hashes, &operation_tuple.op_hash);
+        self.remove_executed_hash(
+            hash_of_hashes,
+            &operation_tuple.op_hash,
+            header_verifier_address,
+        );
     }
 
     fn emit_transfer_failed_events(
