@@ -17,5 +17,5 @@ path = "../error-messages"
 path = "../proxies"
 
 [dependencies.multiversx-sc]
-version = "=0.57.1"
+version = "=0.58.0"
 features = ["esdt-token-payment-legacy-decode"]

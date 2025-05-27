@@ -21,16 +21,16 @@ path = "../common/error-messages"
 path = "../chain-factory"
 
 [dependencies.multiversx-sc]
-version = "=0.57.1"
+version = "=0.58.0"
 
 [dependencies.multiversx-sc-modules]
-version = "=0.57.1"
-
-[dev-dependencies.common-test-setup]
-path = "../common/common-test-setup"
+version = "=0.58.0"
 
 [dev-dependencies]
 num-bigint = "0.4"
 
+[dev-dependencies.common-test-setup]
+path = "../common/common-test-setup"
+
 [dev-dependencies.multiversx-sc-scenario]
-version = "=0.57.1"
+version = "=0.58.0"
