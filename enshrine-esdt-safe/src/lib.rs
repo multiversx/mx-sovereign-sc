@@ -50,7 +50,7 @@ pub trait EnshrineEsdtSafe:
                 self.wegld_identifier().set(identifier);
             }
 
-            None => sc_panic!("WEGLG identifier must be set in Mainchain"),
+            None => sc_panic!("WEGLD identifier must be set in Mainchain"),
         }
 
         match opt_sov_token_prefix {
