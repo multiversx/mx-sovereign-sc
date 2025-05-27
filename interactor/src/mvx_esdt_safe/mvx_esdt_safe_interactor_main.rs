@@ -199,7 +199,6 @@ impl MvxEsdtSafeInteract {
             .await;
         self.complete_header_verifier_setup_phase().await;
         self.deploy_mvx_esdt_safe(esdt_safe_config).await;
-        self.complete_setup_phase().await;
         self.deploy_fee_market(
             self.state.current_mvx_esdt_safe_contract_address().clone(),
             fee_struct,
@@ -207,6 +206,7 @@ impl MvxEsdtSafeInteract {
         .await;
         self.set_fee_market_address(self.state.current_fee_market_address().to_address())
             .await;
+        self.complete_setup_phase().await;
     }
 
     pub async fn register_operation(
@@ -241,6 +241,20 @@ impl MvxEsdtSafeInteract {
             .gas(90_000_000u64)
             .typed(MvxEsdtSafeProxy)
             .complete_setup_phase()
+            .returns(ReturnsResultUnmanaged)
+            .run()
+            .await;
+
+        let managed_address =
+            ManagedAddress::from_address(self.state.current_header_verifier_address().as_address());
+
+        self.interactor
+            .tx()
+            .from(&self.owner_address)
+            .to(self.state.current_mvx_esdt_safe_contract_address())
+            .gas(90_000_000u64)
+            .typed(UserBuiltinProxy)
+            .change_owner_address(&managed_address)
             .returns(ReturnsResultUnmanaged)
             .run()
             .await;

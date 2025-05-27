@@ -14,8 +14,7 @@ use multiversx_sc_scenario::{
     api::StaticApi,
     imports::{
         Address, BigUint, EsdtTokenType, ManagedBuffer, MultiValue3, MultiValueEncoded, MxscPath,
-        OptionalValue, TestSCAddress, TestTokenIdentifier, TokenIdentifier, TopEncode,
-        UserBuiltinProxy, Vec,
+        OptionalValue, TestSCAddress, TestTokenIdentifier, TokenIdentifier, TopEncode, Vec,
     },
     multiversx_chain_vm::crypto_functions::sha256,
     scenario_model::{Log, TxResponseStatus},
