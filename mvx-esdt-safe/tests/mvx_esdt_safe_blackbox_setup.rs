@@ -364,7 +364,7 @@ impl MvxEsdtSafeTestState {
             .assert_expected_log(logs, expected_custom_log);
 
         self.common_setup
-            .make_header_verifier_owner_of_the_sc(ESDT_SAFE_ADDRESS);
+            .change_ownership_to_header_verifier(ESDT_SAFE_ADDRESS);
     }
 
     pub fn complete_setup_phase_as_header_verifier(

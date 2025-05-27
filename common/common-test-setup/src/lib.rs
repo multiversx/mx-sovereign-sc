@@ -496,7 +496,7 @@ impl BaseSetup {
         self.assert_expected_error_message(response, error_message);
     }
 
-    pub fn make_header_verifier_owner_of_the_sc(&mut self, sc_address: TestSCAddress) {
+    pub fn change_ownership_to_header_verifier(&mut self, sc_address: TestSCAddress) {
         self.world
             .tx()
             .from(OWNER_ADDRESS)

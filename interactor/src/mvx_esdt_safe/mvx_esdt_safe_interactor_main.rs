@@ -245,19 +245,13 @@ impl MvxEsdtSafeInteract {
             .run()
             .await;
 
-        let managed_address =
-            ManagedAddress::from_address(self.state.current_header_verifier_address().as_address());
-
-        self.interactor
-            .tx()
-            .from(&self.owner_address)
-            .to(self.state.current_mvx_esdt_safe_contract_address())
-            .gas(90_000_000u64)
-            .typed(UserBuiltinProxy)
-            .change_owner_address(&managed_address)
-            .returns(ReturnsResultUnmanaged)
-            .run()
-            .await;
+        self.change_ownership_to_header_verifier(
+            self.owner_address.clone(),
+            self.state
+                .current_mvx_esdt_safe_contract_address()
+                .to_address(),
+        )
+        .await;
     }
 
     pub async fn upgrade(&mut self) {

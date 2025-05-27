@@ -179,7 +179,7 @@ fn test_substract_fixed_fee_payment_not_covered() {
         .deploy_fee_market(Some(fee), ESDT_SAFE_ADDRESS);
     state
         .common_setup
-        .make_header_verifier_owner_of_the_sc(FEE_MARKET_ADDRESS);
+        .change_ownership_to_header_verifier(FEE_MARKET_ADDRESS);
 
     state.substract_fee("Less than fee", Some(PAYMENT_DOES_NOT_COVER_FEE));
 
@@ -217,7 +217,7 @@ fn test_substract_fee_fixed_payment_bigger_than_fee() {
         .deploy_fee_market(Some(fee), ESDT_SAFE_ADDRESS);
     state
         .common_setup
-        .make_header_verifier_owner_of_the_sc(FEE_MARKET_ADDRESS);
+        .change_ownership_to_header_verifier(FEE_MARKET_ADDRESS);
 
     state.substract_fee("Correct", None);
 
