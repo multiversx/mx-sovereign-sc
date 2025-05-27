@@ -46,6 +46,7 @@ fn test_deposit_no_fee_no_transfer_data() {
         .deploy_fee_market(None, ESDT_SAFE_ADDRESS);
     state.common_setup.deploy_testing_sc();
     state.set_fee_market_address(FEE_MARKET_ADDRESS);
+    state.change_owner_of_sov_esdt_safe();
 
     let esdt_token_payment_one = EsdtTokenPayment::<StaticApi>::new(
         FIRST_TEST_TOKEN.into(),
@@ -129,6 +130,7 @@ fn test_deposit_with_fee_no_transfer_data() {
         .deploy_fee_market(Some(fee), ESDT_SAFE_ADDRESS);
     state.common_setup.deploy_testing_sc();
     state.set_fee_market_address(FEE_MARKET_ADDRESS);
+    state.change_owner_of_sov_esdt_safe();
 
     let fee_amount = BigUint::from(ONE_HUNDRED_THOUSAND);
 
@@ -214,6 +216,7 @@ fn test_deposit_no_fee_with_transfer_data() {
         .deploy_fee_market(None, ESDT_SAFE_ADDRESS);
     state.common_setup.deploy_testing_sc();
     state.set_fee_market_address(FEE_MARKET_ADDRESS);
+    state.change_owner_of_sov_esdt_safe();
 
     let esdt_token_payment_one = EsdtTokenPayment::<StaticApi>::new(
         FIRST_TEST_TOKEN.into(),
@@ -311,6 +314,7 @@ fn test_deposit_with_fee_with_transfer_data() {
         .deploy_fee_market(Some(fee), ESDT_SAFE_ADDRESS);
     state.common_setup.deploy_testing_sc();
     state.set_fee_market_address(FEE_MARKET_ADDRESS);
+    state.change_owner_of_sov_esdt_safe();
 
     let fee_amount = BigUint::from(ONE_HUNDRED_THOUSAND);
 
@@ -405,6 +409,7 @@ fn test_deposit_no_transfer_data_no_payments() {
         .deploy_fee_market(None, ESDT_SAFE_ADDRESS);
     state.common_setup.deploy_testing_sc();
     state.set_fee_market_address(FEE_MARKET_ADDRESS);
+    state.change_owner_of_sov_esdt_safe();
 
     state.deposit(
         USER_ADDRESS.to_managed_address(),
@@ -433,6 +438,7 @@ fn test_deposit_sc_call_only() {
         .deploy_fee_market(None, ESDT_SAFE_ADDRESS);
     state.common_setup.deploy_testing_sc();
     state.set_fee_market_address(FEE_MARKET_ADDRESS);
+    state.change_owner_of_sov_esdt_safe();
 
     let gas_limit = 2;
     let function = ManagedBuffer::<StaticApi>::from("hello");
