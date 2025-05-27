@@ -407,40 +407,6 @@ impl BaseSetup {
         self.assert_expected_error_message(response, error_message);
     }
 
-    pub fn finish_sovereign_setup_phase(&mut self, expected_error_message: Option<&str>) {
-        let response = self
-            .world
-            .tx()
-            .from(OWNER_ADDRESS)
-            .to(SOVEREIGN_FORGE_SC_ADDRESS)
-            .typed(SovereignForgeProxy)
-            .complete_setup_phase()
-            .returns(ReturnsHandledOrError::new())
-            .run();
-
-        self.assert_expected_error_message(response, expected_error_message);
-    }
-
-    pub fn deploy_sovereign_chain(
-        &mut self,
-        payment: &BigUint<StaticApi>,
-        opt_preferred_chain: Option<ManagedBuffer<StaticApi>>,
-        opt_sovereign_config: OptionalValue<SovereignConfig<StaticApi>>,
-        opt_esdt_safe_config: OptionalValue<EsdtSafeConfig<StaticApi>>,
-        opt_fee: Option<FeeStruct<StaticApi>>,
-    ) {
-        self.deploy_sovereign_forge();
-        self.deploy_chain_factory();
-        self.deploy_token_handler();
-
-        self.deploy_phase_one(payment, opt_preferred_chain, opt_sovereign_config, None);
-        self.deploy_phase_two(None);
-        self.deploy_phase_three(opt_esdt_safe_config, None);
-        self.deploy_phase_four(opt_fee, None);
-
-        self.finish_sovereign_setup_phase(None);
-    }
-
     pub fn register_operation(
         &mut self,
         caller: CallerAddress,
