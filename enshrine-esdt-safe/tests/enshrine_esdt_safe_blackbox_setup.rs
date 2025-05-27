@@ -1,10 +1,9 @@
 use common_test_setup::{
     constants::{
         CHAIN_CONFIG_ADDRESS, CHAIN_FACTORY_SC_ADDRESS, CROWD_TOKEN_ID, ENSHRINE_BALANCE,
-        ENSHRINE_SC_ADDRESS, FEE_MARKET_ADDRESS, FUNGIBLE_TOKEN_ID, HEADER_VERIFIER_ADDRESS,
-        INSUFFICIENT_WEGLD_ADDRESS, NFT_TOKEN_ID, OWNER_ADDRESS, OWNER_BALANCE,
-        PREFIX_NFT_TOKEN_ID, RECEIVER_ADDRESS, SOVEREIGN_TOKEN_PREFIX, TOKEN_HANDLER_SC_ADDRESS,
-        USER_ADDRESS, WEGLD_IDENTIFIER,
+        ENSHRINE_SC_ADDRESS, FEE_MARKET_ADDRESS, FUNGIBLE_TOKEN_ID, INSUFFICIENT_WEGLD_ADDRESS,
+        NFT_TOKEN_ID, OWNER_ADDRESS, OWNER_BALANCE, PREFIX_NFT_TOKEN_ID, RECEIVER_ADDRESS,
+        SOVEREIGN_TOKEN_PREFIX, TOKEN_HANDLER_SC_ADDRESS, USER_ADDRESS, WEGLD_IDENTIFIER,
     },
     AccountSetup, BaseSetup,
 };
@@ -101,17 +100,6 @@ impl EnshrineTestState {
             .run();
     }
 
-    pub fn set_header_verifier_address(&mut self) {
-        self.common_setup
-            .world
-            .tx()
-            .from(OWNER_ADDRESS)
-            .to(ENSHRINE_SC_ADDRESS)
-            .typed(EnshrineEsdtSafeProxy)
-            .set_header_verifier_address(HEADER_VERIFIER_ADDRESS)
-            .run();
-    }
-
     pub fn setup_contracts(
         &mut self,
         is_sovereign_chain: bool,
@@ -133,9 +121,10 @@ impl EnshrineTestState {
         self.common_setup.deploy_token_handler();
         self.common_setup
             .deploy_fee_market(fee_struct.cloned(), ENSHRINE_SC_ADDRESS);
-        self.set_header_verifier_address();
         self.register_fee_market_address();
         self.common_setup.deploy_chain_factory();
+        self.common_setup
+            .change_ownership_to_header_verifier(ENSHRINE_SC_ADDRESS);
 
         self
     }

@@ -26,14 +26,7 @@ pub trait MvxEsdtSafe:
     + setup_phase::SetupPhaseModule
 {
     #[init]
-    fn init(
-        &self,
-        header_verifier_address: ManagedAddress,
-        opt_config: OptionalValue<EsdtSafeConfig<Self::Api>>,
-    ) {
-        self.require_sc_address(&header_verifier_address);
-        self.header_verifier_address().set(&header_verifier_address);
-
+    fn init(&self, opt_config: OptionalValue<EsdtSafeConfig<Self::Api>>) {
         let new_config = match opt_config {
             OptionalValue::Some(cfg) => {
                 if let Some(error_message) = self.is_esdt_safe_config_valid(&cfg) {
@@ -70,9 +63,9 @@ pub trait MvxEsdtSafe:
     ) {
         self.require_setup_complete();
 
-        let header_verifier_address = self.get_header_verifier_address();
+        let header_verifier_address = self.blockchain().get_owner_address();
         let config_hash = new_config.generate_hash();
-        self.lock_operation_hash(&hash_of_hashes, &config_hash, &header_verifier_address);
+        self.lock_operation_hash(&header_verifier_address, &hash_of_hashes, &config_hash);
 
         if let Some(error_message) = self.is_esdt_safe_config_valid(&new_config) {
             self.failed_bridge_operation_event(
@@ -84,7 +77,7 @@ pub trait MvxEsdtSafe:
             self.esdt_safe_config().set(new_config);
         }
 
-        self.remove_executed_hash(&hash_of_hashes, &config_hash, &header_verifier_address);
+        self.remove_executed_hash(&header_verifier_address, &hash_of_hashes, &config_hash);
         self.execute_bridge_operation_event(&hash_of_hashes, &config_hash);
     }
 

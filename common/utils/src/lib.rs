@@ -15,9 +15,9 @@ const MAX_TOKEN_ID_LEN: usize = 32;
 pub trait UtilsModule {
     fn lock_operation_hash(
         &self,
+        header_verifier_address: &ManagedAddress,
         hash_of_hashes: &ManagedBuffer,
         hash: &ManagedBuffer,
-        header_verifier_address: &ManagedAddress,
     ) {
         self.tx()
             .to(header_verifier_address)
@@ -28,9 +28,9 @@ pub trait UtilsModule {
 
     fn remove_executed_hash(
         &self,
+        header_verifier_address: &ManagedAddress,
         hash_of_hashes: &ManagedBuffer,
         op_hash: &ManagedBuffer,
-        header_verifier_address: &ManagedAddress,
     ) {
         self.tx()
             .to(header_verifier_address)

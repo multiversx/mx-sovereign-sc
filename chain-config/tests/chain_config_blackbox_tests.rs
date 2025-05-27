@@ -11,6 +11,8 @@ use structs::{configs::SovereignConfig, generate_hash::GenerateHash};
 
 mod chain_config_blackbox_setup;
 
+// TODO: Add change owner functionality after the fix is done in lock_operation_hash endpoint
+
 /// ### TEST
 /// C-CONFIG_DEPLOY_OK
 ///
