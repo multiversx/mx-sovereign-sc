@@ -14,8 +14,8 @@ use multiversx_sc_scenario::{
     api::StaticApi,
     imports::{
         Address, BigUint, EsdtTokenType, ManagedBuffer, MultiValue3, MultiValueEncoded, MxscPath,
-        OptionalValue, TestSCAddress, TestTokenIdentifier, TokenIdentifier, TopEncode,
-        UserBuiltinProxy, Vec,
+        OptionalValue, ReturnsResultUnmanaged, TestSCAddress, TestTokenIdentifier, TokenIdentifier,
+        TopEncode, UserBuiltinProxy, Vec,
     },
     multiversx_chain_vm::crypto_functions::sha256,
     scenario_model::{Log, TxResponseStatus},
@@ -494,6 +494,17 @@ impl BaseSetup {
             .run();
 
         self.assert_expected_error_message(response, error_message);
+    }
+
+    pub fn change_ownership_to_header_verifier(&mut self, sc_address: TestSCAddress) {
+        self.world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .to(sc_address)
+            .typed(UserBuiltinProxy)
+            .change_owner_address(&HEADER_VERIFIER_ADDRESS.to_managed_address())
+            .returns(ReturnsResultUnmanaged)
+            .run();
     }
 
     pub fn get_operation_hash(

@@ -1,6 +1,6 @@
 use common_test_setup::constants::{
-    ESDT_SAFE_ADDRESS, FIRST_TEST_TOKEN, OWNER_BALANCE, SECOND_TEST_TOKEN, USER_ADDRESS,
-    WRONG_TOKEN_ID,
+    ESDT_SAFE_ADDRESS, FEE_MARKET_ADDRESS, FIRST_TEST_TOKEN, OWNER_BALANCE, SECOND_TEST_TOKEN,
+    USER_ADDRESS, WRONG_TOKEN_ID,
 };
 use error_messages::{
     INVALID_FEE, INVALID_FEE_TYPE, INVALID_TOKEN_ID, PAYMENT_DOES_NOT_COVER_FEE,
@@ -177,6 +177,9 @@ fn test_substract_fixed_fee_payment_not_covered() {
     state
         .common_setup
         .deploy_fee_market(Some(fee), ESDT_SAFE_ADDRESS);
+    state
+        .common_setup
+        .change_ownership_to_header_verifier(FEE_MARKET_ADDRESS);
 
     state.substract_fee("Less than fee", Some(PAYMENT_DOES_NOT_COVER_FEE));
 
@@ -212,6 +215,9 @@ fn test_substract_fee_fixed_payment_bigger_than_fee() {
     state
         .common_setup
         .deploy_fee_market(Some(fee), ESDT_SAFE_ADDRESS);
+    state
+        .common_setup
+        .change_ownership_to_header_verifier(FEE_MARKET_ADDRESS);
 
     state.substract_fee("Correct", None);
 

@@ -10,8 +10,9 @@ use multiversx_sc::{
     codec::TopEncode,
     imports::{ESDTSystemSCProxy, OptionalValue, UserBuiltinProxy},
     types::{
-        Address, BigUint, CodeMetadata, ESDTSystemSCAddress, EsdtTokenType, ManagedBuffer,
-        ManagedVec, ReturnsNewAddress, ReturnsResult, ReturnsResultUnmanaged, TokenIdentifier,
+        Address, BigUint, CodeMetadata, ESDTSystemSCAddress, EsdtTokenType, ManagedAddress,
+        ManagedBuffer, ManagedVec, ReturnsNewAddress, ReturnsResult, ReturnsResultUnmanaged,
+        TokenIdentifier,
     },
 };
 use multiversx_sc_snippets::{
@@ -491,6 +492,27 @@ pub trait CommonInteractorTrait {
             .await;
 
         println!("Result: {response:?}");
+    }
+
+    async fn change_ownership_to_header_verifier(
+        &mut self,
+        initial_owner: Address,
+        sc_address: Address,
+    ) {
+        let managed_header_verifier_address = ManagedAddress::from_address(
+            self.state().current_header_verifier_address().as_address(),
+        );
+
+        self.interactor()
+            .tx()
+            .from(initial_owner)
+            .to(sc_address)
+            .gas(90_000_000u64)
+            .typed(UserBuiltinProxy)
+            .change_owner_address(&managed_header_verifier_address)
+            .returns(ReturnsResultUnmanaged)
+            .run()
+            .await;
     }
 
     async fn complete_header_verifier_setup_phase(&mut self) {

@@ -1,8 +1,7 @@
 use chain_config::validator_rules::ValidatorRulesModule;
 use common_test_setup::constants::{
     CHAIN_CONFIG_ADDRESS, CHAIN_FACTORY_SC_ADDRESS, CHAIN_ID, DEPLOY_COST, ESDT_SAFE_ADDRESS,
-    FIRST_TEST_TOKEN, HEADER_VERIFIER_ADDRESS, ONE_HUNDRED_THOUSAND, OWNER_ADDRESS,
-    SOVEREIGN_FORGE_SC_ADDRESS,
+    FIRST_TEST_TOKEN, ONE_HUNDRED_THOUSAND, OWNER_ADDRESS, SOVEREIGN_FORGE_SC_ADDRESS,
 };
 use cross_chain::storage::CrossChainStorage;
 use error_messages::{

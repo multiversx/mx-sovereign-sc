@@ -4,7 +4,6 @@ use common_test_setup::constants::{
     USER_ADDRESS,
 };
 use common_test_setup::{AccountSetup, BaseSetup, RegisterTokenArgs};
-use multiversx_sc::imports::UserBuiltinProxy;
 use multiversx_sc::{
     imports::OptionalValue,
     types::{
@@ -65,7 +64,7 @@ impl MvxEsdtSafeTestState {
             .account(ESDT_SAFE_ADDRESS)
             .nonce(1)
             .code(MVX_ESDT_SAFE_CODE_PATH)
-            .owner(HEADER_VERIFIER_ADDRESS)
+            .owner(OWNER_ADDRESS)
             .esdt_roles(
                 TokenIdentifier::from(FIRST_TEST_TOKEN),
                 vec![
@@ -181,7 +180,7 @@ impl MvxEsdtSafeTestState {
             .common_setup
             .world
             .tx()
-            .from(OWNER_ADDRESS)
+            .from(HEADER_VERIFIER_ADDRESS)
             .to(ESDT_SAFE_ADDRESS)
             .typed(MvxEsdtSafeProxy)
             .set_token_burn_mechanism(TokenIdentifier::from(token_id))
@@ -203,7 +202,7 @@ impl MvxEsdtSafeTestState {
             .common_setup
             .world
             .tx()
-            .from(OWNER_ADDRESS)
+            .from(HEADER_VERIFIER_ADDRESS)
             .to(ESDT_SAFE_ADDRESS)
             .typed(MvxEsdtSafeProxy)
             .set_token_lock_mechanism(TokenIdentifier::from(token_id))
@@ -239,7 +238,7 @@ impl MvxEsdtSafeTestState {
             .common_setup
             .world
             .tx()
-            .from(HEADER_VERIFIER_ADDRESS)
+            .from(OWNER_ADDRESS)
             .to(ESDT_SAFE_ADDRESS)
             .typed(MvxEsdtSafeProxy)
             .deposit(to, opt_transfer_data.clone())
@@ -365,12 +364,30 @@ impl MvxEsdtSafeTestState {
             .assert_expected_log(logs, expected_custom_log);
 
         self.common_setup
+            .change_ownership_to_header_verifier(ESDT_SAFE_ADDRESS);
+    }
+
+    pub fn complete_setup_phase_as_header_verifier(
+        &mut self,
+        expected_error_message: Option<&str>,
+        expected_custom_log: Option<&str>,
+    ) {
+        let (logs, result) = self
+            .common_setup
             .world
             .tx()
-            .from(OWNER_ADDRESS)
+            .from(HEADER_VERIFIER_ADDRESS)
             .to(ESDT_SAFE_ADDRESS)
-            .typed(UserBuiltinProxy)
-            .change_owner_address(&HEADER_VERIFIER_ADDRESS.to_managed_address())
+            .typed(MvxEsdtSafeProxy)
+            .complete_setup_phase()
+            .returns(ReturnsLogs)
+            .returns(ReturnsHandledOrError::new())
             .run();
+
+        self.common_setup
+            .assert_expected_error_message(result, expected_error_message);
+
+        self.common_setup
+            .assert_expected_log(logs, expected_custom_log);
     }
 }
