@@ -13,27 +13,17 @@ const MAX_TOKEN_ID_LEN: usize = 32;
 
 #[multiversx_sc::module]
 pub trait UtilsModule {
-    fn lock_operation_hash(
-        &self,
-        header_verifier_address: &ManagedAddress,
-        hash_of_hashes: &ManagedBuffer,
-        hash: &ManagedBuffer,
-    ) {
+    fn lock_operation_hash(&self, hash_of_hashes: &ManagedBuffer, hash: &ManagedBuffer) {
         self.tx()
-            .to(header_verifier_address)
+            .to(self.blockchain().get_owner_address())
             .typed(HeaderverifierProxy)
             .lock_operation_hash(hash_of_hashes, hash)
             .sync_call();
     }
 
-    fn remove_executed_hash(
-        &self,
-        header_verifier_address: &ManagedAddress,
-        hash_of_hashes: &ManagedBuffer,
-        op_hash: &ManagedBuffer,
-    ) {
+    fn remove_executed_hash(&self, hash_of_hashes: &ManagedBuffer, op_hash: &ManagedBuffer) {
         self.tx()
-            .to(header_verifier_address)
+            .to(self.blockchain().get_owner_address())
             .typed(HeaderverifierProxy)
             .remove_executed_hash(hash_of_hashes, op_hash)
             .sync_call();

@@ -47,9 +47,8 @@ pub trait ChainConfigContract:
     ) {
         self.require_setup_complete();
 
-        let header_verifier_address = self.blockchain().get_owner_address();
         let config_hash = new_config.generate_hash();
-        self.lock_operation_hash(&header_verifier_address, &config_hash, &hash_of_hashes);
+        self.lock_operation_hash(&config_hash, &hash_of_hashes);
 
         if let Some(error_message) = self.is_new_config_valid(&new_config) {
             self.failed_bridge_operation_event(
@@ -61,7 +60,7 @@ pub trait ChainConfigContract:
             self.sovereign_config().set(new_config);
         }
 
-        self.remove_executed_hash(&header_verifier_address, &hash_of_hashes, &config_hash);
+        self.remove_executed_hash(&hash_of_hashes, &config_hash);
         self.execute_bridge_operation_event(&hash_of_hashes, &config_hash);
     }
 
