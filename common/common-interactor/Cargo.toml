@@ -10,10 +10,10 @@ path = "src/lib.rs"
 toml = "0.8.6"
 
 [dependencies.multiversx-sc]
-version = "=0.57.1"
+version = "=0.58.0"
 
 [dependencies.multiversx-sc-snippets]
-version = "=0.57.1"
+version = "=0.58.0"
 
 [dependencies.common-test-setup]
 path = "../common-test-setup"
@@ -29,7 +29,6 @@ path = "../error-messages"
 
 [dependencies.base64]
 version = "0.21.0"
-
 default-features = false
 features = ["alloc"]
 
