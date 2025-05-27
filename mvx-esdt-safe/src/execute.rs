@@ -28,8 +28,8 @@ pub trait ExecuteModule:
 
         let operation_hash = operation.generate_hash();
 
-        let header_verifier_address = self.get_header_verifier_address();
-        self.lock_operation_hash(&hash_of_hashes, &operation_hash, &header_verifier_address);
+        let header_verifier_address = self.blockchain().get_owner_address();
+        self.lock_operation_hash(&header_verifier_address, &hash_of_hashes, &operation_hash);
 
         let operation_tuple = OperationTuple {
             op_hash: operation_hash,
@@ -42,7 +42,9 @@ pub trait ExecuteModule:
             return;
         }
 
-        if let Some(minted_operation_tokens) = self.mint_tokens(&hash_of_hashes, &operation_tuple) {
+        if let Some(minted_operation_tokens) =
+            self.mint_tokens(&header_verifier_address, &hash_of_hashes, &operation_tuple)
+        {
             self.distribute_payments(
                 &header_verifier_address,
                 &hash_of_hashes,
@@ -54,6 +56,7 @@ pub trait ExecuteModule:
 
     fn mint_tokens(
         &self,
+        header_verifier_address: &ManagedAddress,
         hash_of_hashes: &ManagedBuffer,
         operation_tuple: &OperationTuple<Self::Api>,
     ) -> Option<ManagedVec<OperationEsdtPayment<Self::Api>>> {
@@ -67,6 +70,7 @@ pub trait ExecuteModule:
                 }
                 None => {
                     if let Some(payment) = self.process_unresolved_token(
+                        header_verifier_address,
                         hash_of_hashes,
                         operation_tuple,
                         &operation_token,
@@ -102,6 +106,7 @@ pub trait ExecuteModule:
 
     fn process_unresolved_token(
         &self,
+        header_verifier_address: &ManagedAddress,
         hash_of_hashes: &ManagedBuffer,
         operation_tuple: &OperationTuple<Self::Api>,
         operation_token: &OperationEsdtPayment<Self::Api>,
@@ -117,9 +122,9 @@ pub trait ExecuteModule:
             if operation_token.token_data.amount > deposited_amount {
                 self.emit_transfer_failed_events(hash_of_hashes, operation_tuple);
                 self.remove_executed_hash(
+                    header_verifier_address,
                     hash_of_hashes,
                     &operation_tuple.op_hash,
-                    &self.get_header_verifier_address(),
                 );
 
                 return None;
@@ -297,9 +302,9 @@ pub trait ExecuteModule:
         }
 
         self.remove_executed_hash(
+            header_verifier_address,
             hash_of_hashes,
             &operation_tuple.op_hash,
-            header_verifier_address,
         );
     }
 

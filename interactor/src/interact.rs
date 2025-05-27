@@ -38,12 +38,7 @@ pub async fn mvx_esdt_safe_cli() {
                 .await
         }
         "deployEsdtSafe" => {
-            interact
-                .deploy_mvx_esdt_safe(
-                    interact.state.current_header_verifier_address().clone(),
-                    OptionalValue::None,
-                )
-                .await;
+            interact.deploy_mvx_esdt_safe(OptionalValue::None).await;
         }
         "deployFeeMarket" => {
             interact
@@ -110,14 +105,7 @@ pub async fn sovereign_forge_cli() {
                 .deploy_header_verifier(interact.state.current_chain_config_sc_address().clone())
                 .await
         }
-        "deployEsdtSafe" => {
-            interact
-                .deploy_mvx_esdt_safe(
-                    interact.state.current_header_verifier_address().clone(),
-                    OptionalValue::None,
-                )
-                .await
-        }
+        "deployEsdtSafe" => interact.deploy_mvx_esdt_safe(OptionalValue::None).await,
         "deployFeeMarket" => {
             interact
                 .deploy_fee_market(
@@ -174,13 +162,6 @@ pub async fn enshrine_esdt_safe_cli() {
             interact
                 .set_fee_market_address_in_enshrine_esdt_safe(
                     interact.state.current_fee_market_address().clone(),
-                )
-                .await
-        }
-        "setHeaderVerifierAddress" => {
-            interact
-                .set_header_verifier_address_in_enshrine_esdt_safe(
-                    interact.state.current_header_verifier_address().clone(),
                 )
                 .await
         }

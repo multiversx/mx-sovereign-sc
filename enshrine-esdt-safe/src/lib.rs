@@ -79,14 +79,6 @@ pub trait EnshrineEsdtSafe:
         self.fee_market_address().set(fee_market_address);
     }
 
-    #[only_owner]
-    #[endpoint(setHeaderVerifierAddress)]
-    fn set_header_verifier_address(&self, header_verifier_address: ManagedAddress) {
-        self.require_sc_address(&header_verifier_address);
-
-        self.header_verifier_address().set(&header_verifier_address);
-    }
-
     #[upgrade]
     fn upgrade(&self) {}
 }

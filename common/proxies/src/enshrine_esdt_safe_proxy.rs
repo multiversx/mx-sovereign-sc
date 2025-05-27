@@ -123,19 +123,6 @@ where
             .original_result()
     }
 
-    pub fn set_header_verifier_address<
-        Arg0: ProxyArg<ManagedAddress<Env::Api>>,
-    >(
-        self,
-        header_verifier_address: Arg0,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("setHeaderVerifierAddress")
-            .argument(&header_verifier_address)
-            .original_result()
-    }
-
     pub fn deposit<
         Arg0: ProxyArg<ManagedAddress<Env::Api>>,
         Arg1: ProxyArg<OptionalValue<MultiValue3<u64, ManagedBuffer<Env::Api>, MultiValueEncoded<Env::Api, ManagedBuffer<Env::Api>>>>>,
