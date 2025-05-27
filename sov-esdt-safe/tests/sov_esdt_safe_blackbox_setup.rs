@@ -1,9 +1,6 @@
 use multiversx_sc::{
-    imports::{OptionalValue, UserBuiltinProxy},
-    types::{
-        EsdtLocalRole, ManagedAddress, ManagedVec, ReturnsResultUnmanaged, TestSCAddress,
-        TokenIdentifier,
-    },
+    imports::OptionalValue,
+    types::{EsdtLocalRole, ManagedAddress, ManagedVec, TestSCAddress, TokenIdentifier},
 };
 
 use multiversx_sc_scenario::{
@@ -11,9 +8,8 @@ use multiversx_sc_scenario::{
 };
 
 use common_test_setup::constants::{
-    ESDT_SAFE_ADDRESS, FEE_MARKET_ADDRESS, FEE_TOKEN, FIRST_TEST_TOKEN, HEADER_VERIFIER_ADDRESS,
-    ONE_HUNDRED_MILLION, OWNER_ADDRESS, OWNER_BALANCE, SECOND_TEST_TOKEN, SOV_ESDT_SAFE_CODE_PATH,
-    USER_ADDRESS,
+    ESDT_SAFE_ADDRESS, FEE_MARKET_ADDRESS, FEE_TOKEN, FIRST_TEST_TOKEN, ONE_HUNDRED_MILLION,
+    OWNER_ADDRESS, OWNER_BALANCE, SECOND_TEST_TOKEN, SOV_ESDT_SAFE_CODE_PATH, USER_ADDRESS,
 };
 use common_test_setup::{AccountSetup, BaseSetup};
 use proxies::sov_esdt_safe_proxy::SovEsdtSafeProxy;
@@ -185,17 +181,5 @@ impl SovEsdtSafeTestState {
 
         self.common_setup
             .assert_expected_log(logs, expected_custom_log);
-    }
-
-    pub fn change_owner_of_sov_esdt_safe(&mut self) {
-        self.common_setup
-            .world
-            .tx()
-            .from(OWNER_ADDRESS)
-            .to(ESDT_SAFE_ADDRESS)
-            .typed(UserBuiltinProxy)
-            .change_owner_address(&HEADER_VERIFIER_ADDRESS.to_managed_address())
-            .returns(ReturnsResultUnmanaged)
-            .run();
     }
 }

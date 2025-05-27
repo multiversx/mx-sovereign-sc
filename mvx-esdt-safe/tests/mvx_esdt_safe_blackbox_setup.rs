@@ -4,7 +4,6 @@ use common_test_setup::constants::{
     USER_ADDRESS,
 };
 use common_test_setup::{AccountSetup, BaseSetup, RegisterTokenArgs};
-use multiversx_sc::imports::UserBuiltinProxy;
 use multiversx_sc::{
     imports::OptionalValue,
     types::{
@@ -365,13 +364,7 @@ impl MvxEsdtSafeTestState {
             .assert_expected_log(logs, expected_custom_log);
 
         self.common_setup
-            .world
-            .tx()
-            .from(OWNER_ADDRESS)
-            .to(ESDT_SAFE_ADDRESS)
-            .typed(UserBuiltinProxy)
-            .change_owner_address(&HEADER_VERIFIER_ADDRESS.to_managed_address())
-            .run();
+            .make_header_verifier_owner_of_the_sc(ESDT_SAFE_ADDRESS);
     }
 
     pub fn complete_setup_phase_as_header_verifier(

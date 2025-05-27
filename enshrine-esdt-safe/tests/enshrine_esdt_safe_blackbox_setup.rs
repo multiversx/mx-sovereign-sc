@@ -123,6 +123,8 @@ impl EnshrineTestState {
             .deploy_fee_market(fee_struct.cloned(), ENSHRINE_SC_ADDRESS);
         self.register_fee_market_address();
         self.common_setup.deploy_chain_factory();
+        self.common_setup
+            .make_header_verifier_owner_of_the_sc(ENSHRINE_SC_ADDRESS);
 
         self
     }
