@@ -26,14 +26,7 @@ pub trait MvxEsdtSafe:
     + setup_phase::SetupPhaseModule
 {
     #[init]
-    fn init(
-        &self,
-        header_verifier_address: ManagedAddress,
-        opt_config: OptionalValue<EsdtSafeConfig<Self::Api>>,
-    ) {
-        self.require_sc_address(&header_verifier_address);
-        self.header_verifier_address().set(&header_verifier_address);
-
+    fn init(&self, opt_config: OptionalValue<EsdtSafeConfig<Self::Api>>) {
         let new_config = match opt_config {
             OptionalValue::Some(cfg) => {
                 if let Some(error_message) = self.is_esdt_safe_config_valid(&cfg) {

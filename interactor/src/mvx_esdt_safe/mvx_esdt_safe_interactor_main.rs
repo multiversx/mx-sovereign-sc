@@ -198,12 +198,7 @@ impl MvxEsdtSafeInteract {
         self.deploy_header_verifier(self.state.current_chain_config_sc_address().clone())
             .await;
         self.complete_header_verifier_setup_phase().await;
-        self.deploy_mvx_esdt_safe(
-            self.state.current_header_verifier_address().clone(),
-            esdt_safe_config,
-        )
-        .await;
-        self.complete_setup_phase().await;
+        self.deploy_mvx_esdt_safe(esdt_safe_config).await;
         self.deploy_fee_market(
             self.state.current_mvx_esdt_safe_contract_address().clone(),
             fee_struct,
@@ -211,6 +206,7 @@ impl MvxEsdtSafeInteract {
         .await;
         self.set_fee_market_address(self.state.current_fee_market_address().to_address())
             .await;
+        self.complete_setup_phase().await;
     }
 
     pub async fn register_operation(
@@ -248,6 +244,14 @@ impl MvxEsdtSafeInteract {
             .returns(ReturnsResultUnmanaged)
             .run()
             .await;
+
+        self.change_ownership_to_header_verifier(
+            self.owner_address.clone(),
+            self.state
+                .current_mvx_esdt_safe_contract_address()
+                .to_address(),
+        )
+        .await;
     }
 
     pub async fn upgrade(&mut self) {

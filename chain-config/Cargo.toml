@@ -35,5 +35,8 @@ path = "../common/error-messages"
 [dependencies.cross-chain]
 path = "../common/cross-chain"
 
+[dependencies.utils]
+path = "../common/utils"
+
 [dev-dependencies.common-test-setup]
 path = "../common/common-test-setup"

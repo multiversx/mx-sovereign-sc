@@ -229,6 +229,7 @@ dependencies = [
  "proxies",
  "setup-phase",
  "structs",
+ "utils",
 ]
 
 [[package]]
@@ -2669,6 +2670,7 @@ version = "0.1.0"
 dependencies = [
  "error-messages",
  "multiversx-sc",
+ "proxies",
  "structs",
 ]
 

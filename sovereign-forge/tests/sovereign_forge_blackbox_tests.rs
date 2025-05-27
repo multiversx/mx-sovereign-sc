@@ -1,8 +1,7 @@
 use chain_config::validator_rules::ValidatorRulesModule;
 use common_test_setup::constants::{
     CHAIN_CONFIG_ADDRESS, CHAIN_FACTORY_SC_ADDRESS, CHAIN_ID, DEPLOY_COST, ESDT_SAFE_ADDRESS,
-    FIRST_TEST_TOKEN, HEADER_VERIFIER_ADDRESS, ONE_HUNDRED_THOUSAND, OWNER_ADDRESS,
-    SOVEREIGN_FORGE_SC_ADDRESS,
+    FIRST_TEST_TOKEN, ONE_HUNDRED_THOUSAND, OWNER_ADDRESS, SOVEREIGN_FORGE_SC_ADDRESS,
 };
 use cross_chain::storage::CrossChainStorage;
 use error_messages::{
@@ -261,9 +260,7 @@ fn test_update_esdt_safe_config() {
     state
         .common_setup
         .deploy_header_verifier(CHAIN_CONFIG_ADDRESS);
-    state
-        .common_setup
-        .deploy_mvx_esdt_safe(HEADER_VERIFIER_ADDRESS, OptionalValue::None);
+    state.common_setup.deploy_mvx_esdt_safe(OptionalValue::None);
 
     state.common_setup.deploy_phase_two(None);
     state
@@ -357,9 +354,7 @@ fn test_set_fee() {
     state
         .common_setup
         .deploy_header_verifier(CHAIN_CONFIG_ADDRESS);
-    state
-        .common_setup
-        .deploy_mvx_esdt_safe(HEADER_VERIFIER_ADDRESS, OptionalValue::None);
+    state.common_setup.deploy_mvx_esdt_safe(OptionalValue::None);
     state.common_setup.deploy_phase_two(None);
     state
         .common_setup
@@ -459,9 +454,7 @@ fn test_remove_fee() {
     state
         .common_setup
         .deploy_header_verifier(CHAIN_CONFIG_ADDRESS);
-    state
-        .common_setup
-        .deploy_mvx_esdt_safe(HEADER_VERIFIER_ADDRESS, OptionalValue::None);
+    state.common_setup.deploy_mvx_esdt_safe(OptionalValue::None);
     state.common_setup.deploy_phase_two(None);
     state
         .common_setup
@@ -563,9 +556,7 @@ fn test_complete_setup_phase() {
     state
         .common_setup
         .deploy_header_verifier(CHAIN_CONFIG_ADDRESS);
-    state
-        .common_setup
-        .deploy_mvx_esdt_safe(HEADER_VERIFIER_ADDRESS, OptionalValue::None);
+    state.common_setup.deploy_mvx_esdt_safe(OptionalValue::None);
 
     state.common_setup.deploy_phase_two(None);
     state
@@ -967,9 +958,7 @@ fn test_deploy_phase_three() {
     state
         .common_setup
         .deploy_header_verifier(CHAIN_CONFIG_ADDRESS);
-    state
-        .common_setup
-        .deploy_mvx_esdt_safe(HEADER_VERIFIER_ADDRESS, OptionalValue::None);
+    state.common_setup.deploy_mvx_esdt_safe(OptionalValue::None);
 
     state.common_setup.deploy_phase_two(None);
     state
@@ -1040,9 +1029,7 @@ fn test_deploy_phase_three_without_phase_two() {
     state
         .common_setup
         .deploy_header_verifier(CHAIN_CONFIG_ADDRESS);
-    state
-        .common_setup
-        .deploy_mvx_esdt_safe(HEADER_VERIFIER_ADDRESS, OptionalValue::None);
+    state.common_setup.deploy_mvx_esdt_safe(OptionalValue::None);
 
     state
         .common_setup
@@ -1075,9 +1062,7 @@ fn test_deploy_phase_three_already_deployed() {
     state
         .common_setup
         .deploy_header_verifier(CHAIN_CONFIG_ADDRESS);
-    state
-        .common_setup
-        .deploy_mvx_esdt_safe(HEADER_VERIFIER_ADDRESS, OptionalValue::None);
+    state.common_setup.deploy_mvx_esdt_safe(OptionalValue::None);
 
     state.common_setup.deploy_phase_two(None);
     state
@@ -1135,9 +1120,7 @@ fn test_deploy_phase_four() {
     state
         .common_setup
         .deploy_header_verifier(CHAIN_CONFIG_ADDRESS);
-    state
-        .common_setup
-        .deploy_mvx_esdt_safe(HEADER_VERIFIER_ADDRESS, OptionalValue::None);
+    state.common_setup.deploy_mvx_esdt_safe(OptionalValue::None);
 
     state.common_setup.deploy_phase_two(None);
     state
@@ -1189,9 +1172,7 @@ fn test_deploy_phase_four_without_previous_phase() {
     state
         .common_setup
         .deploy_header_verifier(CHAIN_CONFIG_ADDRESS);
-    state
-        .common_setup
-        .deploy_mvx_esdt_safe(HEADER_VERIFIER_ADDRESS, OptionalValue::None);
+    state.common_setup.deploy_mvx_esdt_safe(OptionalValue::None);
 
     state.common_setup.deploy_phase_two(None);
     state
@@ -1228,9 +1209,7 @@ fn test_deploy_phase_four_fee_market_already_deployed() {
     state
         .common_setup
         .deploy_header_verifier(CHAIN_CONFIG_ADDRESS);
-    state
-        .common_setup
-        .deploy_mvx_esdt_safe(HEADER_VERIFIER_ADDRESS, OptionalValue::None);
+    state.common_setup.deploy_mvx_esdt_safe(OptionalValue::None);
 
     state.common_setup.deploy_phase_two(None);
     state
