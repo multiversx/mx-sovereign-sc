@@ -3,7 +3,7 @@
 use error_messages::{
     BLS_SIGNATURE_NOT_VALID, CALLER_NOT_FROM_CURRENT_SOVEREIGN, CHAIN_CONFIG_NOT_DEPLOYED,
     CURRENT_OPERATION_ALREADY_IN_EXECUTION, CURRENT_OPERATION_NOT_REGISTERED,
-    HASH_OF_HASHES_DOES_NOT_MATCH, INVALID_VALIDATOR_SET_LENGTH,
+    HASH_OF_HASHES_DOES_NOT_MATCH, INVALID_SC_ADDRESS, INVALID_VALIDATOR_SET_LENGTH,
     OUTGOING_TX_HASH_ALREADY_REGISTERED,
 };
 use multiversx_sc::codec;
@@ -115,7 +115,7 @@ pub trait Headerverifier:
 
     #[endpoint(lockOperationHash)]
     fn lock_operation_hash(&self, hash_of_hashes: ManagedBuffer, operation_hash: ManagedBuffer) {
-        // self.require_caller_esdt_safe();
+        self.require_caller_is_from_current_sovereign();
 
         let operation_hash_status_mapper =
             self.operation_hash_status(&hash_of_hashes, &operation_hash);
@@ -168,6 +168,10 @@ pub trait Headerverifier:
 
     fn require_caller_is_from_current_sovereign(&self) {
         let caller = self.blockchain().get_caller();
+        require!(
+            self.blockchain().is_smart_contract(&caller),
+            INVALID_SC_ADDRESS
+        );
         require!(
             self.sovereign_contracts()
                 .iter()
