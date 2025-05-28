@@ -208,6 +208,8 @@ pub trait Headerverifier:
         true
     }
 
+    fn is_contract_from_current_sov_chain(&self, chain_id: &ManagedBuffer) {}
+
     fn is_signature_count_valid(&self, pub_keys_count: usize) -> bool {
         let total_bls_pub_keys = self.bls_pub_keys().len();
         let minimum_signatures = 2 * total_bls_pub_keys / 3;
@@ -239,4 +241,10 @@ pub trait Headerverifier:
         &self,
         sc_address: ManagedAddress,
     ) -> SingleValueMapper<SovereignConfig<Self::Api>, ManagedAddress>;
+
+    // TODO
+    // MultiValue storage for all sovereign-contracts
+    // should be in
+    // 1. During sov-forge setup phase
+    // 2. After deployment of each contract
 }
