@@ -44,15 +44,15 @@ where
     Gas: TxGas<Env>,
 {
     pub fn init<
-        Arg0: ProxyArg<ManagedAddress<Env::Api>>,
+        Arg0: ProxyArg<MultiValueEncoded<Env::Api, proxies::sovereign_forge_proxy::ContractInfo<Env::Api>>>,
     >(
         self,
-        chain_config_address: Arg0,
+        sovereign_addresses: Arg0,
     ) -> TxTypedDeploy<Env, From, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_deploy()
-            .argument(&chain_config_address)
+            .argument(&sovereign_addresses)
             .original_result()
     }
 }
@@ -148,19 +148,6 @@ where
             .argument(&_pub_keys_bitmap)
             .argument(&_epoch)
             .argument(&_pub_keys_id)
-            .original_result()
-    }
-
-    pub fn set_esdt_safe_address<
-        Arg0: ProxyArg<ManagedAddress<Env::Api>>,
-    >(
-        self,
-        esdt_safe_address: Arg0,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("setEsdtSafeAddress")
-            .argument(&esdt_safe_address)
             .original_result()
     }
 

@@ -7,6 +7,8 @@ pub const BLS_SIGNATURE_NOT_VALID: &str = "BLS signature is not valid";
 pub const BRIDGE_ALREADY_DEPLOYED: &str = "Bridge already deployed";
 pub const CALLER_DID_NOT_DEPLOY_ANY_SOV_CHAIN: &str =
     "The current caller has not deployed any Sovereign Chain";
+pub const CALLER_NOT_FROM_CURRENT_SOVEREIGN: &str =
+    "Caller is not from the current Sovereign-Chain";
 pub const CALLER_IS_NOT_WHITELISTED: &str = "Caller is not whitelisted";
 pub const CANNOT_REGISTER_TOKEN: &str = "Cannot register token";
 pub const CANNOT_TRANSFER_WHILE_PAUSED: &str = "Cannot transfer while paused";
@@ -58,7 +60,7 @@ pub const INVALID_TOKEN_PROVIDED_FOR_FEE: &str = "Invalid token provided for fee
 pub const INVALID_TOKEN_USDC_PAIR_ADDRESS: &str = "Invalid TOKEN-USDC pair address from router";
 pub const INVALID_TYPE: &str = "Invalid type";
 pub const INVALID_VALIDATOR_SET_LENGTH: &str =
-    "The current validator set lenght doesn't meet the Sovereign's requirements";
+    "The current validator set length doesn't meet the Sovereign's requirements";
 pub const INVALID_WEGLD_USDC_PAIR_ADDRESS: &str = "Invalid WEGLD-USDC pair address from router";
 pub const ITEM_NOT_IN_LIST: &str = "Item not found in list";
 pub const MAX_GAS_LIMIT_PER_TX_EXCEEDED: &str =
