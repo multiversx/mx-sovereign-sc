@@ -10,12 +10,10 @@ use multiversx_sc::{imports::OptionalValue, require};
 use structs::{
     configs::{EsdtSafeConfig, SovereignConfig},
     fee::FeeStruct,
+    forge::{ContractInfo, ScArray},
 };
 
-use crate::common::{
-    self,
-    utils::{ContractInfo, ScArray},
-};
+use crate::common::{self};
 
 #[multiversx_sc::module]
 pub trait PhasesModule:
