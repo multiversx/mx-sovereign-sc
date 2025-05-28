@@ -1,10 +1,10 @@
 #![no_std]
 
 use error_messages::{
-    ADDRESS_NOT_VALID_SC_ADDRESS, BLS_SIGNATURE_NOT_VALID, CALLER_NOT_FROM_CURRENT_SOVEREIGN,
+    BLS_SIGNATURE_NOT_VALID, CALLER_NOT_FROM_CURRENT_SOVEREIGN,
     CURRENT_OPERATION_ALREADY_IN_EXECUTION, CURRENT_OPERATION_NOT_REGISTERED,
-    HASH_OF_HASHES_DOES_NOT_MATCH, INVALID_VALIDATOR_SET_LENGTH, NO_ESDT_SAFE_ADDRESS,
-    ONLY_ESDT_SAFE_CALLER, OUTGOING_TX_HASH_ALREADY_REGISTERED,
+    HASH_OF_HASHES_DOES_NOT_MATCH, INVALID_VALIDATOR_SET_LENGTH,
+    OUTGOING_TX_HASH_ALREADY_REGISTERED,
 };
 use multiversx_sc::codec;
 use multiversx_sc::proxy_imports::{TopDecode, TopEncode};
@@ -226,7 +226,7 @@ pub trait Headerverifier:
 
     #[storage_mapper("sovereignContracts")]
     fn sovereign_contracts(&self) -> UnorderedSetMapper<ContractInfo<Self::Api>>;
-    // fn sovereign_addresses(&self, sc_id: ScArray) -> SingleValueMapper<ManagedAddress>;
+    // fn sovereign_addresses(&self, sc_id: ManagedAddress) -> SingleValueMapper<ScArray>;
 
     #[storage_mapper_from_address("sovereignConfig")]
     fn sovereign_config(
