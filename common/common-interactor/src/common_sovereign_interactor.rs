@@ -36,7 +36,10 @@ use structs::{
     operation::Operation,
 };
 
-use crate::interactor_state::{State, TokenProperties};
+use crate::{
+    constants::{ONE_HUNDRED_TOKENS, ONE_THOUSAND_TOKENS},
+    interactor_state::{State, TokenProperties},
+};
 
 pub struct IssueTokenStruct {
     pub token_display_name: String,
@@ -628,17 +631,20 @@ pub trait CommonInteractorTrait {
 
     async fn check_address_balance(
         &mut self,
-        address: &Address,
+        address: &Bech32Address,
         expected_tokens: Vec<(String, BigUint<StaticApi>)>,
     ) {
-        let balances = self.interactor().get_account_esdt(address).await;
+        let balances = self
+            .interactor()
+            .get_account_esdt(&address.to_address())
+            .await;
 
         for (token_id, expected_amount) in expected_tokens {
             if expected_amount == 0u64 {
                 match balances.get(&token_id) {
                     None => {}
                     Some(esdt_balance) => {
-                        panic!("Expected token '{}' to be absent (balance 0), but found it with balance: {}",token_id, esdt_balance.balance);
+                        panic!("Expected token '{}' to be absent (balance 0), but found it with balance: {}", token_id, esdt_balance.balance);
                     }
                 }
                 continue;
@@ -677,5 +683,25 @@ pub trait CommonInteractorTrait {
         let sha256 = sha256(&serialized_operation.to_vec());
 
         ManagedBuffer::new_from_bytes(&sha256)
+    }
+
+    fn thousand_tokens(&mut self, token_id: String) -> (String, BigUint<StaticApi>) {
+        (token_id, BigUint::from(ONE_THOUSAND_TOKENS))
+    }
+
+    fn hundred_tokens(&mut self, token_id: String) -> (String, BigUint<StaticApi>) {
+        (token_id, BigUint::from(ONE_HUNDRED_TOKENS))
+    }
+
+    fn zero_tokens(&mut self, token_id: String) -> (String, BigUint<StaticApi>) {
+        (token_id, BigUint::from(0u64))
+    }
+
+    fn custom_amount_tokens<T: Into<BigUint<StaticApi>>>(
+        &mut self,
+        token_id: impl Into<String>,
+        amount: T,
+    ) -> (String, BigUint<StaticApi>) {
+        (token_id.into(), amount.into())
     }
 }

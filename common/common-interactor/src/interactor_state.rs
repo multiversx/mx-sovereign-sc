@@ -148,28 +148,55 @@ impl State {
             .expect("no known token handler SC, deploy first")
     }
 
-    pub fn get_first_token_id(&self) -> &str {
+    pub fn get_first_token_id_string(&self) -> String {
+        self.first_token
+            .as_ref()
+            .expect("no known first token, issue first")
+            .token_id
+            .clone()
+    }
+
+    pub fn get_fee_token_id_string(&self) -> String {
+        self.fee_token
+            .as_ref()
+            .expect("no known fee token, issue first")
+            .token_id
+            .clone()
+    }
+
+    pub fn get_second_token_id_string(&self) -> String {
+        self.second_token
+            .as_ref()
+            .expect("no known second token, issue first")
+            .token_id
+            .clone()
+    }
+
+    pub fn get_first_token_id(&self) -> TokenIdentifier<StaticApi> {
         self.first_token
             .as_ref()
             .expect("no known first token, issue first")
             .token_id
             .as_str()
+            .into()
     }
 
-    pub fn get_fee_token_id(&self) -> &str {
+    pub fn get_fee_token_id(&self) -> TokenIdentifier<StaticApi> {
         self.fee_token
             .as_ref()
             .expect("no known fee token, issue first")
             .token_id
             .as_str()
+            .into()
     }
 
-    pub fn get_second_token_id(&self) -> &str {
+    pub fn get_second_token_id(&self) -> TokenIdentifier<StaticApi> {
         self.second_token
             .as_ref()
             .expect("no known second token, issue first")
             .token_id
             .as_str()
+            .into()
     }
 }
 
