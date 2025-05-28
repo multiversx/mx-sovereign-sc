@@ -2,8 +2,9 @@ use multiversx_sc::types::TokenIdentifier;
 use proxies::chain_factory_proxy::ChainFactoryContractProxy;
 use structs::configs::{EsdtSafeConfig, SovereignConfig};
 use structs::fee::FeeStruct;
+use structs::forge::ScArray;
 
-use crate::common::{self, utils::ScArray};
+use crate::common::{self};
 use crate::err_msg;
 
 #[multiversx_sc::module]

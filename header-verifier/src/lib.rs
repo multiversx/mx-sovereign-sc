@@ -8,8 +8,8 @@ use error_messages::{
 };
 use multiversx_sc::codec;
 use multiversx_sc::proxy_imports::{TopDecode, TopEncode};
-use proxies::sovereign_forge_proxy::{ContractInfo, ScArray};
 use structs::configs::SovereignConfig;
+use structs::forge::ContractInfo;
 
 multiversx_sc::imports!();
 
@@ -24,8 +24,8 @@ pub trait Headerverifier:
     cross_chain::events::EventsModule + setup_phase::SetupPhaseModule
 {
     #[init]
-    fn init(&self, sovereign_addresses: MultiValueEncoded<ContractInfo<Self::Api>>) {
-        self.sovereign_addresses().extend(sovereign_addresses);
+    fn init(&self, sovereign_contracts: MultiValueEncoded<ContractInfo<Self::Api>>) {
+        self.sovereign_contracts().extend(sovereign_contracts);
     }
 
     #[upgrade]
@@ -163,7 +163,7 @@ pub trait Headerverifier:
     fn require_caller_is_from_current_sovereign(&self) {
         let caller = self.blockchain().get_caller();
         require!(
-            self.sovereign_addresses()
+            self.sovereign_contracts()
                 .iter()
                 .any(|sc| sc.address == caller),
             CALLER_NOT_FROM_CURRENT_SOVEREIGN
@@ -224,8 +224,8 @@ pub trait Headerverifier:
     #[storage_mapper("chainConfigAddress")]
     fn chain_config_address(&self) -> SingleValueMapper<ManagedAddress>;
 
-    #[storage_mapper("sovereignAddresses")]
-    fn sovereign_addresses(&self) -> UnorderedSetMapper<ContractInfo<Self::Api>>;
+    #[storage_mapper("sovereignContracts")]
+    fn sovereign_contracts(&self) -> UnorderedSetMapper<ContractInfo<Self::Api>>;
     // fn sovereign_addresses(&self, sc_id: ScArray) -> SingleValueMapper<ManagedAddress>;
 
     #[storage_mapper_from_address("sovereignConfig")]

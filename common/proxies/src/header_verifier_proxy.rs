@@ -44,15 +44,15 @@ where
     Gas: TxGas<Env>,
 {
     pub fn init<
-        Arg0: ProxyArg<MultiValueEncoded<Env::Api, proxies::sovereign_forge_proxy::ContractInfo<Env::Api>>>,
+        Arg0: ProxyArg<MultiValueEncoded<Env::Api, structs::forge::ContractInfo<Env::Api>>>,
     >(
         self,
-        sovereign_addresses: Arg0,
+        sovereign_contracts: Arg0,
     ) -> TxTypedDeploy<Env, From, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_deploy()
-            .argument(&sovereign_addresses)
+            .argument(&sovereign_contracts)
             .original_result()
     }
 }

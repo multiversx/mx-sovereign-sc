@@ -7,6 +7,7 @@ pub mod aliases;
 pub mod configs;
 pub mod events;
 pub mod fee;
+pub mod forge;
 pub mod generate_hash;
 pub mod operation;
 

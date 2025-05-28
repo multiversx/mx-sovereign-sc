@@ -3,7 +3,7 @@ use multiversx_sc_modules::only_admin;
 use proxies::{
     chain_config_proxy::ChainConfigContractProxy, enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy,
     fee_market_proxy::FeeMarketProxy, header_verifier_proxy::HeaderverifierProxy,
-    mvx_esdt_safe_proxy::MvxEsdtSafeProxy,
+    mvx_esdt_safe_proxy::MvxEsdtSafeProxy, sovereign_forge_proxy::ContractInfo,
 };
 use structs::{
     configs::{EsdtSafeConfig, SovereignConfig},
@@ -34,33 +34,22 @@ pub trait FactoryModule: only_admin::OnlyAdminModule {
 
     #[only_admin]
     #[endpoint(deployHeaderVerifier)]
-    fn deploy_header_verifier(&self, chain_config_address: ManagedAddress) -> ManagedAddress {
+    fn deploy_header_verifier(
+        &self,
+        sovereign_contracts: MultiValueEncoded<ContractInfo<Self::Api>>,
+    ) -> ManagedAddress {
         let source_address = self.header_verifier_template().get();
         let metadata = self.blockchain().get_code_metadata(&source_address);
 
         self.tx()
             .typed(HeaderverifierProxy)
-            .init(chain_config_address)
+            .init(sovereign_contracts)
             .gas(60_000_000)
             .from_source(source_address)
             .code_metadata(metadata)
             .returns(ReturnsNewManagedAddress)
             .sync_call()
     }
-
-    // #[only_admin]
-    // #[endpoint(setEsdtSafeAddressInHeaderVerifier)]
-    // fn set_esdt_safe_address_in_header_verifier(
-    //     &self,
-    //     header_verifier: ManagedAddress,
-    //     esdt_safe_address: ManagedAddress,
-    // ) {
-    //     self.tx()
-    //         .to(header_verifier)
-    //         .typed(HeaderverifierProxy)
-    //         .set_esdt_safe_address(esdt_safe_address)
-    //         .sync_call();
-    // }
 
     #[only_admin]
     #[endpoint(deployEnshrineEsdtSafe)]
