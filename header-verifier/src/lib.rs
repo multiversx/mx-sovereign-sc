@@ -107,7 +107,7 @@ pub trait Headerverifier:
 
     #[endpoint(removeExecutedHash)]
     fn remove_executed_hash(&self, hash_of_hashes: &ManagedBuffer, operation_hash: &ManagedBuffer) {
-        // self.require_caller_esdt_safe();
+        self.require_caller_is_from_current_sovereign();
 
         self.operation_hash_status(hash_of_hashes, operation_hash)
             .clear();

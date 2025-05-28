@@ -2,8 +2,8 @@ use common_test_setup::constants::{
     CHAIN_CONFIG_ADDRESS, ENSHRINE_SC_ADDRESS, ESDT_SAFE_ADDRESS, HEADER_VERIFIER_ADDRESS,
 };
 use error_messages::{
-    CURRENT_OPERATION_NOT_REGISTERED, OUTGOING_TX_HASH_ALREADY_REGISTERED,
-    SETUP_PHASE_NOT_COMPLETED,
+    CALLER_NOT_FROM_CURRENT_SOVEREIGN, CURRENT_OPERATION_NOT_REGISTERED,
+    OUTGOING_TX_HASH_ALREADY_REGISTERED, SETUP_PHASE_NOT_COMPLETED,
 };
 use header_verifier::{Headerverifier, OperationHashStatus};
 use header_verifier_blackbox_setup::*;
@@ -19,34 +19,6 @@ fn test_deploy() {
 
     state.common_setup.deploy_header_verifier(vec![]);
 }
-
-/// ### TEST
-/// H-VERIFIER_REGISTER_ESDT_OK
-///
-/// ### ACTION
-/// Call 'register_esdt_address()' with a valid esdt safe address
-///
-/// ### EXPECTED
-/// The esdt safe address is registered in the contract storage
-// #[test]
-// fn test_register_esdt_address() {
-//     let mut state = HeaderVerifierTestState::new();
-
-//     state
-//         .common_setup
-//         .deploy_header_verifier(CHAIN_CONFIG_ADDRESS);
-
-//     state
-//         .common_setup
-//         .world
-//         .query()
-//         .to(HEADER_VERIFIER_ADDRESS)
-//         .whitebox(header_verifier::contract_obj, |sc| {
-//             let esdt_address = sc.esdt_safe_address().get();
-
-//             assert_eq!(esdt_address, ENSHRINE_SC_ADDRESS);
-//         })
-// }
 
 /// ### TEST
 /// H-VERIFIER_REGISTER_OPERATION_FAIL
@@ -136,7 +108,6 @@ fn test_register_bridge_operation() {
         });
 }
 
-// FIXME
 /// ### TEST
 /// H-VERIFIER_REMOVE_HASH_FAIL
 ///
@@ -144,35 +115,37 @@ fn test_register_bridge_operation() {
 /// Call 'remove_executed_hash()' without registering any esdt safe address
 ///
 /// ### EXPECTED
-/// Error: NO_ESDT_SAFE_ADDRESS
-// #[test]
-// fn test_remove_executed_hash_no_esdt_address_registered() {
-//     let mut state = HeaderVerifierTestState::new();
+/// Error: CALLER_NOT_FROM_CURRENT_SOVEREIGN
+#[test]
+fn test_remove_executed_hash_no_esdt_address_registered() {
+    let mut state = HeaderVerifierTestState::new();
 
-//     state
-//         .common_setup
-//         .deploy_header_verifier(CHAIN_CONFIG_ADDRESS);
+    state
+        .common_setup
+        .deploy_chain_config(OptionalValue::None, None);
 
-//     state
-//         .common_setup
-//         .deploy_chain_config(OptionalValue::None, None);
+    let contracts_array = state
+        .common_setup
+        .get_contract_info_struct_for_sc_type(vec![ScArray::ChainConfig]);
 
-//     state
-//         .common_setup
-//         .complete_header_verifier_setup_phase(None);
+    state.common_setup.deploy_header_verifier(contracts_array);
 
-//     let operation_1 = ManagedBuffer::from("operation_1");
-//     let operation_2 = ManagedBuffer::from("operation_2");
-//     let operation = state.generate_bridge_operation_struct(vec![&operation_1, &operation_2]);
+    state
+        .common_setup
+        .complete_header_verifier_setup_phase(None);
 
-//     state.register_operations(operation.clone(), None);
-//     state.remove_executed_hash(
-//         ENSHRINE_SC_ADDRESS,
-//         &operation.bridge_operation_hash,
-//         &operation_1,
-//         Some(NO_ESDT_SAFE_ADDRESS),
-//     );
-// }
+    let operation_1 = ManagedBuffer::from("operation_1");
+    let operation_2 = ManagedBuffer::from("operation_2");
+    let operation = state.generate_bridge_operation_struct(vec![&operation_1, &operation_2]);
+
+    state.register_operations(operation.clone(), None);
+    state.remove_executed_hash(
+        ENSHRINE_SC_ADDRESS,
+        &operation.bridge_operation_hash,
+        &operation_1,
+        Some(CALLER_NOT_FROM_CURRENT_SOVEREIGN),
+    );
+}
 
 /// ### TEST
 /// H-VERIFIER_REMOVE_HASH_OK
@@ -207,7 +180,7 @@ fn test_remove_one_executed_hash() {
 
     state.register_operations(operation.clone(), None);
     state.remove_executed_hash(
-        ENSHRINE_SC_ADDRESS,
+        CHAIN_CONFIG_ADDRESS,
         &operation.bridge_operation_hash,
         &operation_hash_1,
         None,
@@ -267,14 +240,14 @@ fn test_remove_all_executed_hashes() {
     state.register_operations(operation.clone(), None);
 
     state.remove_executed_hash(
-        ENSHRINE_SC_ADDRESS,
+        CHAIN_CONFIG_ADDRESS,
         &operation.bridge_operation_hash,
         &operation_1,
         None,
     );
 
     state.remove_executed_hash(
-        ENSHRINE_SC_ADDRESS,
+        CHAIN_CONFIG_ADDRESS,
         &operation.bridge_operation_hash,
         &operation_2,
         None,
@@ -311,6 +284,40 @@ fn test_remove_all_executed_hashes() {
 fn test_lock_operation_not_registered() {
     let mut state = HeaderVerifierTestState::new();
 
+    state
+        .common_setup
+        .deploy_chain_config(OptionalValue::None, None);
+
+    let contracts_array = state
+        .common_setup
+        .get_contract_info_struct_for_sc_type(vec![ScArray::ChainConfig]);
+
+    state.common_setup.deploy_header_verifier(contracts_array);
+
+    let operation_1 = ManagedBuffer::from("operation_1");
+    let operation_2 = ManagedBuffer::from("operation_2");
+    let operation = state.generate_bridge_operation_struct(vec![&operation_1, &operation_2]);
+
+    state.lock_operation_hash(
+        CHAIN_CONFIG_ADDRESS,
+        &operation.bridge_operation_hash,
+        &operation_1,
+        Some(CURRENT_OPERATION_NOT_REGISTERED),
+    );
+}
+
+/// ### TEST
+/// H-VERIFIER_LOCK_OPERATION_FAIL
+///
+/// ### ACTION
+/// Call 'lock_operation_hash()' from an unregistered sc
+///
+/// ### EXPECTED
+/// Error: CURRENT_OPERATION_NOT_REGISTERED
+#[test]
+fn test_lock_operation_caller_not_from_sovereign() {
+    let mut state = HeaderVerifierTestState::new();
+
     let contracts_array = state
         .common_setup
         .get_contract_info_struct_for_sc_type(vec![ScArray::ChainConfig]);
@@ -325,7 +332,7 @@ fn test_lock_operation_not_registered() {
         ENSHRINE_SC_ADDRESS,
         &operation.bridge_operation_hash,
         &operation_1,
-        Some(CURRENT_OPERATION_NOT_REGISTERED),
+        Some(CALLER_NOT_FROM_CURRENT_SOVEREIGN),
     );
 }
 
@@ -362,7 +369,7 @@ fn test_lock_operation() {
     state.register_operations(operation.clone(), None);
 
     state.lock_operation_hash(
-        ENSHRINE_SC_ADDRESS,
+        CHAIN_CONFIG_ADDRESS,
         &operation.bridge_operation_hash,
         &operation_1,
         None,
