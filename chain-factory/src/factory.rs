@@ -3,11 +3,12 @@ use multiversx_sc_modules::only_admin;
 use proxies::{
     chain_config_proxy::ChainConfigContractProxy, enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy,
     fee_market_proxy::FeeMarketProxy, header_verifier_proxy::HeaderverifierProxy,
-    mvx_esdt_safe_proxy::MvxEsdtSafeProxy, sovereign_forge_proxy::ContractInfo,
+    mvx_esdt_safe_proxy::MvxEsdtSafeProxy,
 };
 use structs::{
     configs::{EsdtSafeConfig, SovereignConfig},
     fee::FeeStruct,
+    forge::ContractInfo,
 };
 multiversx_sc::derive_imports!();
 
@@ -89,17 +90,14 @@ pub trait FactoryModule: only_admin::OnlyAdminModule {
         let source_address = self.mvx_esdt_safe_template().get();
         let metadata = self.blockchain().get_code_metadata(&source_address);
 
-        let esdt_safe_address = self
-            .tx()
+        self.tx()
             .typed(MvxEsdtSafeProxy)
             .init(opt_config)
             .gas(60_000_000)
             .from_source(source_address)
             .code_metadata(metadata)
             .returns(ReturnsNewManagedAddress)
-            .sync_call();
-
-        esdt_safe_address
+            .sync_call()
     }
 
     #[only_admin]
