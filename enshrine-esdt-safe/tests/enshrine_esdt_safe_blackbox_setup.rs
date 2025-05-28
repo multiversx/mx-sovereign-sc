@@ -1,8 +1,8 @@
 use common_test_setup::{
     constants::{
-        CHAIN_CONFIG_ADDRESS, CHAIN_FACTORY_SC_ADDRESS, CROWD_TOKEN_ID, ENSHRINE_BALANCE,
-        ENSHRINE_SC_ADDRESS, FEE_MARKET_ADDRESS, FUNGIBLE_TOKEN_ID, INSUFFICIENT_WEGLD_ADDRESS,
-        NFT_TOKEN_ID, OWNER_ADDRESS, OWNER_BALANCE, PREFIX_NFT_TOKEN_ID, RECEIVER_ADDRESS,
+        CHAIN_FACTORY_SC_ADDRESS, CROWD_TOKEN_ID, ENSHRINE_BALANCE, ENSHRINE_SC_ADDRESS,
+        FEE_MARKET_ADDRESS, FUNGIBLE_TOKEN_ID, INSUFFICIENT_WEGLD_ADDRESS, NFT_TOKEN_ID,
+        OWNER_ADDRESS, OWNER_BALANCE, PREFIX_NFT_TOKEN_ID, RECEIVER_ADDRESS,
         SOVEREIGN_TOKEN_PREFIX, TOKEN_HANDLER_SC_ADDRESS, USER_ADDRESS, WEGLD_IDENTIFIER,
     },
     AccountSetup, BaseSetup,
@@ -124,9 +124,10 @@ impl EnshrineTestState {
         self.common_setup
             .change_ownership_to_header_verifier(ENSHRINE_SC_ADDRESS);
 
-        let contracts_array = self
-            .common_setup
-            .get_contract_info_struct_for_sc_type(vec![ScArray::ChainConfig, ScArray::ESDTSafe]);
+        let contracts_array = self.common_setup.get_contract_info_struct_for_sc_type(vec![
+            ScArray::ChainConfig,
+            ScArray::EnshrineESDTSafe,
+        ]);
 
         self.common_setup.deploy_header_verifier(contracts_array);
         self.common_setup.complete_header_verifier_setup_phase(None);
