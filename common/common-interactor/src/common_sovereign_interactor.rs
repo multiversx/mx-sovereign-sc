@@ -7,7 +7,7 @@ use common_test_setup::constants::{
     SOVEREIGN_FORGE_CODE_PATH, TESTING_SC_CODE_PATH, TOKEN_HANDLER_CODE_PATH,
 };
 use multiversx_sc::{
-    codec::TopEncode,
+    codec::{num_bigint, TopEncode},
     imports::{ESDTSystemSCProxy, OptionalValue, UserBuiltinProxy},
     types::{
         Address, BigUint, CodeMetadata, ESDTSystemSCAddress, EsdtTokenType, ManagedBuffer,
@@ -54,7 +54,7 @@ pub struct MintTokenStruct {
 pub trait CommonInteractorTrait {
     fn interactor(&mut self) -> &mut Interactor;
     fn state(&mut self) -> &mut State;
-    fn wallet_address(&mut self) -> &Address;
+    fn wallet_address(&self) -> &Address;
 
     async fn issue_and_mint_token(
         &mut self,
@@ -622,6 +622,45 @@ pub trait CommonInteractorTrait {
                     wanted_key,
                     decoded_key
                 );
+            }
+        }
+    }
+
+    async fn check_address_balance(
+        &mut self,
+        address: &Address,
+        expected_tokens: Vec<(String, BigUint<StaticApi>)>,
+    ) {
+        let balances = self.interactor().get_account_esdt(address).await;
+
+        for (token_id, expected_amount) in expected_tokens {
+            if expected_amount == 0u64 {
+                match balances.get(&token_id) {
+                    None => {}
+                    Some(esdt_balance) => {
+                        panic!("Expected token '{}' to be absent (balance 0), but found it with balance: {}",token_id, esdt_balance.balance);
+                    }
+                }
+                continue;
+            }
+            match balances.get(&token_id) {
+                Some(esdt_balance) => {
+                    let actual_amount = BigUint::from(
+                        num_bigint::BigUint::parse_bytes(esdt_balance.balance.as_bytes(), 10)
+                            .expect("Failed to parse actual amount as number"),
+                    );
+                    let expected_amount_string = num_bigint::BigUint::from_bytes_be(
+                        expected_amount.to_bytes_be().as_slice(),
+                    )
+                    .to_string();
+
+                    assert_eq!(
+                        actual_amount, expected_amount,
+                        "\nBalance mismatch for token {}:\nexpected: {}\nfound:    {}",
+                        token_id, expected_amount_string, esdt_balance.balance
+                    );
+                }
+                None => panic!("Token {} not found in account balance.", token_id),
             }
         }
     }
