@@ -2,9 +2,9 @@
 
 use error_messages::{
     BLS_SIGNATURE_NOT_VALID, CALLER_NOT_FROM_CURRENT_SOVEREIGN, CHAIN_CONFIG_NOT_DEPLOYED,
-    CURRENT_OPERATION_ALREADY_IN_EXECUTION, CURRENT_OPERATION_NOT_REGISTERED,
-    HASH_OF_HASHES_DOES_NOT_MATCH, INVALID_SC_ADDRESS, INVALID_VALIDATOR_SET_LENGTH,
-    OUTGOING_TX_HASH_ALREADY_REGISTERED,
+    COULD_NOT_RETRIEVE_SOVEREIGN_CONFIG, CURRENT_OPERATION_ALREADY_IN_EXECUTION,
+    CURRENT_OPERATION_NOT_REGISTERED, HASH_OF_HASHES_DOES_NOT_MATCH, INVALID_SC_ADDRESS,
+    INVALID_VALIDATOR_SET_LENGTH, OUTGOING_TX_HASH_ALREADY_REGISTERED,
 };
 use multiversx_sc::codec;
 use multiversx_sc::proxy_imports::{TopDecode, TopEncode};
@@ -154,7 +154,7 @@ pub trait Headerverifier:
                 self.sovereign_contracts()
                     .iter()
                     .find(|sc| sc.id == ScArray::ChainConfig)
-                    .unwrap_or_else(|| sc_panic!(CHAIN_CONFIG_NOT_DEPLOYED))
+                    .unwrap_or_else(|| sc_panic!(COULD_NOT_RETRIEVE_SOVEREIGN_CONFIG))
                     .address,
             )
             .get();
