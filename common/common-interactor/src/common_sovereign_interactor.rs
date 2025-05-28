@@ -6,6 +6,7 @@ use common_test_setup::constants::{
     FEE_MARKET_CODE_PATH, HEADER_VERIFIER_CODE_PATH, ISSUE_COST, MVX_ESDT_SAFE_CODE_PATH,
     SOVEREIGN_FORGE_CODE_PATH, TESTING_SC_CODE_PATH, TOKEN_HANDLER_CODE_PATH,
 };
+use error_messages::FAILED_TO_PARSE_AS_NUMBER;
 use multiversx_sc::{
     codec::{num_bigint, TopEncode},
     imports::{ESDTSystemSCProxy, OptionalValue, UserBuiltinProxy},
@@ -653,7 +654,7 @@ pub trait CommonInteractorTrait {
                 Some(esdt_balance) => {
                     let actual_amount = BigUint::from(
                         num_bigint::BigUint::parse_bytes(esdt_balance.balance.as_bytes(), 10)
-                            .expect("Failed to parse actual amount as number"),
+                            .expect(FAILED_TO_PARSE_AS_NUMBER),
                     );
                     let expected_amount_string = num_bigint::BigUint::from_bytes_be(
                         expected_amount.to_bytes_be().as_slice(),
