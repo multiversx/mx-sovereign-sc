@@ -7,7 +7,11 @@ use multiversx_sc::{
     types::{BigUint, ManagedBuffer, MultiValueEncoded},
 };
 use multiversx_sc_scenario::{multiversx_chain_vm::crypto_functions::sha256, ScenarioTxWhitebox};
-use structs::{configs::SovereignConfig, generate_hash::GenerateHash};
+use structs::{
+    configs::SovereignConfig,
+    forge::{ContractInfo, ScArray},
+    generate_hash::GenerateHash,
+};
 
 mod chain_config_blackbox_setup;
 
@@ -136,7 +140,10 @@ fn test_update_config_setup_phase_not_completed() {
 
     state
         .common_setup
-        .deploy_header_verifier(CHAIN_CONFIG_ADDRESS);
+        .deploy_header_verifier(vec![ContractInfo::new(
+            ScArray::ChainConfig,
+            CHAIN_CONFIG_ADDRESS.to_managed_address(),
+        )]);
 
     state
         .common_setup
@@ -170,7 +177,10 @@ fn test_update_config_invalid_config() {
 
     state
         .common_setup
-        .deploy_header_verifier(CHAIN_CONFIG_ADDRESS);
+        .deploy_header_verifier(vec![ContractInfo::new(
+            ScArray::ChainConfig,
+            CHAIN_CONFIG_ADDRESS.to_managed_address(),
+        )]);
 
     state
         .common_setup
@@ -211,7 +221,10 @@ fn test_update_config() {
 
     state
         .common_setup
-        .deploy_header_verifier(CHAIN_CONFIG_ADDRESS);
+        .deploy_header_verifier(vec![ContractInfo::new(
+            ScArray::ChainConfig,
+            CHAIN_CONFIG_ADDRESS.to_managed_address(),
+        )]);
 
     state
         .common_setup

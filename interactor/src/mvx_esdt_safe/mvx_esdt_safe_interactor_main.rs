@@ -9,6 +9,7 @@ use structs::aliases::{OptionalValueTransferDataTuple, PaymentsVec};
 
 use structs::configs::{EsdtSafeConfig, SovereignConfig};
 use structs::fee::FeeStruct;
+use structs::forge::{ContractInfo, ScArray};
 use structs::operation::Operation;
 
 use common_interactor::interactor_config::Config;
@@ -195,8 +196,16 @@ impl MvxEsdtSafeInteract {
         fee_struct: Option<FeeStruct<StaticApi>>,
     ) {
         self.deploy_chain_config(sovereign_config).await;
-        self.deploy_header_verifier(self.state.current_chain_config_sc_address().clone())
-            .await;
+        self.deploy_header_verifier(vec![ContractInfo::new(
+            ScArray::ChainConfig,
+            ManagedAddress::from(
+                self.state
+                    .current_chain_config_sc_address()
+                    .clone()
+                    .to_address(),
+            ),
+        )])
+        .await;
         self.complete_header_verifier_setup_phase().await;
         self.deploy_mvx_esdt_safe(esdt_safe_config).await;
         self.deploy_fee_market(

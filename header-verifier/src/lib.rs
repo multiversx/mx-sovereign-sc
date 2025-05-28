@@ -1,7 +1,7 @@
 #![no_std]
 
 use error_messages::{
-    BLS_SIGNATURE_NOT_VALID, CALLER_NOT_FROM_CURRENT_SOVEREIGN,
+    BLS_SIGNATURE_NOT_VALID, CALLER_NOT_FROM_CURRENT_SOVEREIGN, CHAIN_CONFIG_NOT_DEPLOYED,
     CURRENT_OPERATION_ALREADY_IN_EXECUTION, CURRENT_OPERATION_NOT_REGISTERED,
     HASH_OF_HASHES_DOES_NOT_MATCH, INVALID_VALIDATOR_SET_LENGTH,
     OUTGOING_TX_HASH_ALREADY_REGISTERED,
@@ -9,7 +9,7 @@ use error_messages::{
 use multiversx_sc::codec;
 use multiversx_sc::proxy_imports::{TopDecode, TopEncode};
 use structs::configs::SovereignConfig;
-use structs::forge::ContractInfo;
+use structs::forge::{ContractInfo, ScArray};
 
 multiversx_sc::imports!();
 
@@ -150,7 +150,13 @@ pub trait Headerverifier:
 
     fn check_validator_range(&self, number_of_validators: u64) {
         let sovereign_config = self
-            .sovereign_config(self.chain_config_address().get())
+            .sovereign_config(
+                self.sovereign_contracts()
+                    .iter()
+                    .find(|sc| sc.id == ScArray::ChainConfig)
+                    .unwrap_or_else(|| sc_panic!(CHAIN_CONFIG_NOT_DEPLOYED))
+                    .address,
+            )
             .get();
 
         require!(

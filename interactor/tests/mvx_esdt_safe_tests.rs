@@ -18,6 +18,7 @@ use serial_test::serial;
 use structs::aliases::PaymentsVec;
 use structs::configs::EsdtSafeConfig;
 use structs::fee::{FeeStruct, FeeType};
+use structs::forge::ScArray;
 use structs::operation::{Operation, OperationData, OperationEsdtPayment, TransferData};
 
 /// ### TEST
@@ -514,13 +515,11 @@ async fn register_token_invalid_type_token() {
         .deploy_chain_config(OptionalValue::None)
         .await;
 
+    let contracts_array =
+        chain_interactor.get_contract_info_struct_for_sc_type(vec![ScArray::ChainConfig]);
+
     chain_interactor
-        .deploy_header_verifier(
-            chain_interactor
-                .state
-                .current_chain_config_sc_address()
-                .clone(),
-        )
+        .deploy_header_verifier(contracts_array)
         .await;
 
     chain_interactor
@@ -580,13 +579,11 @@ async fn register_token_fungible_token() {
         .deploy_chain_config(OptionalValue::None)
         .await;
 
+    let contracts_array =
+        chain_interactor.get_contract_info_struct_for_sc_type(vec![ScArray::ChainConfig]);
+
     chain_interactor
-        .deploy_header_verifier(
-            chain_interactor
-                .state
-                .current_chain_config_sc_address()
-                .clone(),
-        )
+        .deploy_header_verifier(contracts_array)
         .await;
 
     chain_interactor
@@ -648,13 +645,11 @@ async fn register_token_non_fungible_token() {
         .deploy_chain_config(OptionalValue::None)
         .await;
 
+    let contracts_array =
+        chain_interactor.get_contract_info_struct_for_sc_type(vec![ScArray::ChainConfig]);
+
     chain_interactor
-        .deploy_header_verifier(
-            chain_interactor
-                .state
-                .current_chain_config_sc_address()
-                .clone(),
-        )
+        .deploy_header_verifier(contracts_array)
         .await;
 
     chain_interactor
@@ -716,13 +711,11 @@ async fn register_token_dynamic_non_fungible_token() {
         .deploy_chain_config(OptionalValue::None)
         .await;
 
+    let contracts_array =
+        chain_interactor.get_contract_info_struct_for_sc_type(vec![ScArray::ChainConfig]);
+
     chain_interactor
-        .deploy_header_verifier(
-            chain_interactor
-                .state
-                .current_chain_config_sc_address()
-                .clone(),
-        )
+        .deploy_header_verifier(contracts_array)
         .await;
 
     chain_interactor
@@ -784,13 +777,11 @@ async fn execute_operation_no_esdt_safe_registered() {
         .deploy_chain_config(OptionalValue::None)
         .await;
 
+    let contracts_array =
+        chain_interactor.get_contract_info_struct_for_sc_type(vec![ScArray::ChainConfig]);
+
     chain_interactor
-        .deploy_header_verifier(
-            chain_interactor
-                .state
-                .current_chain_config_sc_address()
-                .clone(),
-        )
+        .deploy_header_verifier(contracts_array)
         .await;
 
     chain_interactor
@@ -930,15 +921,6 @@ async fn execute_operation_success_no_fee() {
         )
         .await;
 
-    chain_interactor
-        .set_esdt_safe_address_in_header_verifier(
-            chain_interactor
-                .state
-                .current_mvx_esdt_safe_contract_address()
-                .clone(),
-        )
-        .await;
-
     let operations_hashes = MultiValueEncoded::from(ManagedVec::from(vec![operation_hash.clone()]));
 
     chain_interactor
@@ -1031,15 +1013,6 @@ async fn execute_operation_only_transfer_data_no_fee() {
 
     let operation_hash = chain_interactor.get_operation_hash(&operation);
     let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&operation_hash.to_vec()));
-
-    chain_interactor
-        .set_esdt_safe_address_in_header_verifier(
-            chain_interactor
-                .state
-                .current_mvx_esdt_safe_contract_address()
-                .clone(),
-        )
-        .await;
 
     let operations_hashes = MultiValueEncoded::from(ManagedVec::from(vec![operation_hash.clone()]));
 

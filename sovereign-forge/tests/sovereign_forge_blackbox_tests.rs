@@ -16,15 +16,12 @@ use multiversx_sc::{
     types::{BigUint, ManagedBuffer, ManagedVec},
 };
 use multiversx_sc_scenario::ScenarioTxWhitebox;
-use proxies::sovereign_forge_proxy::ScArray;
-use sovereign_forge::common::{
-    storage::StorageModule,
-    utils::{ScArray as ScArrayFromUtils, UtilsModule},
-};
+use sovereign_forge::common::{storage::StorageModule, utils::UtilsModule};
 use sovereign_forge_blackbox_setup::SovereignForgeTestState;
 use structs::{
     configs::{EsdtSafeConfig, SovereignConfig},
     fee::{FeeStruct, FeeType},
+    forge::ScArray,
 };
 mod sovereign_forge_blackbox_setup;
 
@@ -174,10 +171,8 @@ fn test_update_sovereign_config() {
 
             assert!(sc.chain_ids().contains(&ManagedBuffer::from(CHAIN_ID)));
 
-            let is_chain_config_deployed = sc.is_contract_deployed(
-                &OWNER_ADDRESS.to_managed_address(),
-                ScArrayFromUtils::ChainConfig,
-            );
+            let is_chain_config_deployed =
+                sc.is_contract_deployed(&OWNER_ADDRESS.to_managed_address(), ScArray::ChainConfig);
             assert!(is_chain_config_deployed);
         });
 
@@ -250,46 +245,43 @@ fn test_update_esdt_safe_config() {
 
             assert!(sc.chain_ids().contains(&ManagedBuffer::from(CHAIN_ID)));
 
-            let is_chain_config_deployed = sc.is_contract_deployed(
-                &OWNER_ADDRESS.to_managed_address(),
-                ScArrayFromUtils::ChainConfig,
-            );
+            let is_chain_config_deployed =
+                sc.is_contract_deployed(&OWNER_ADDRESS.to_managed_address(), ScArray::ChainConfig);
             assert!(is_chain_config_deployed);
         });
 
-    state
+    let contracts_array = state
         .common_setup
-        .deploy_header_verifier(CHAIN_CONFIG_ADDRESS);
+        .get_contract_info_struct_for_sc_type(vec![ScArray::ESDTSafe]);
+
+    state.common_setup.deploy_header_verifier(contracts_array);
+
     state.common_setup.deploy_mvx_esdt_safe(OptionalValue::None);
 
-    state.common_setup.deploy_phase_two(None);
+    state
+        .common_setup
+        .deploy_phase_two(OptionalValue::None, None);
     state
         .common_setup
         .world
         .query()
         .to(SOVEREIGN_FORGE_SC_ADDRESS)
         .whitebox(sovereign_forge::contract_obj, |sc| {
-            let is_header_verifier_deployed = sc.is_contract_deployed(
-                &OWNER_ADDRESS.to_managed_address(),
-                ScArrayFromUtils::HeaderVerifier,
-            );
+            let is_header_verifier_deployed = sc
+                .is_contract_deployed(&OWNER_ADDRESS.to_managed_address(), ScArray::HeaderVerifier);
 
             assert!(is_header_verifier_deployed);
         });
 
-    state
-        .common_setup
-        .deploy_phase_three(OptionalValue::None, None);
+    state.common_setup.deploy_phase_three(None, None);
     state
         .common_setup
         .world
         .query()
         .to(SOVEREIGN_FORGE_SC_ADDRESS)
         .whitebox(sovereign_forge::contract_obj, |sc| {
-            let is_esdt_safe_deployed = sc.is_contract_deployed(
-                &OWNER_ADDRESS.to_managed_address(),
-                ScArrayFromUtils::ESDTSafe,
-            );
+            let is_esdt_safe_deployed =
+                sc.is_contract_deployed(&OWNER_ADDRESS.to_managed_address(), ScArray::ESDTSafe);
 
             assert!(is_esdt_safe_deployed);
         });
@@ -340,9 +332,11 @@ fn test_set_fee() {
         .common_setup
         .deploy_chain_config(OptionalValue::None, None);
 
-    state
+    let contracts_array = state
         .common_setup
-        .deploy_header_verifier(CHAIN_CONFIG_ADDRESS);
+        .get_contract_info_struct_for_sc_type(vec![ScArray::ESDTSafe]);
+
+    state.common_setup.deploy_header_verifier(contracts_array);
 
     state.common_setup.deploy_mvx_esdt_safe(OptionalValue::None);
 
@@ -360,11 +354,11 @@ fn test_set_fee() {
         OptionalValue::None,
         None,
     );
-    state.common_setup.deploy_phase_two(None);
     state
         .common_setup
-        .deploy_phase_three(OptionalValue::None, None);
-    state.common_setup.deploy_phase_four(None, None);
+        .deploy_phase_two(OptionalValue::None, None);
+    state.common_setup.deploy_phase_three(None, None);
+    state.common_setup.deploy_phase_four(None);
 
     state
         .common_setup
@@ -372,22 +366,14 @@ fn test_set_fee() {
         .query()
         .to(SOVEREIGN_FORGE_SC_ADDRESS)
         .whitebox(sovereign_forge::contract_obj, |sc| {
-            let is_chain_config_deployed = sc.is_contract_deployed(
-                &OWNER_ADDRESS.to_managed_address(),
-                ScArrayFromUtils::ChainConfig,
-            );
-            let is_header_verifier_deployed = sc.is_contract_deployed(
-                &OWNER_ADDRESS.to_managed_address(),
-                ScArrayFromUtils::HeaderVerifier,
-            );
-            let is_esdt_safe_deployed = sc.is_contract_deployed(
-                &OWNER_ADDRESS.to_managed_address(),
-                ScArrayFromUtils::ESDTSafe,
-            );
-            let is_fee_market_deployed = sc.is_contract_deployed(
-                &OWNER_ADDRESS.to_managed_address(),
-                ScArrayFromUtils::FeeMarket,
-            );
+            let is_chain_config_deployed =
+                sc.is_contract_deployed(&OWNER_ADDRESS.to_managed_address(), ScArray::ChainConfig);
+            let is_header_verifier_deployed = sc
+                .is_contract_deployed(&OWNER_ADDRESS.to_managed_address(), ScArray::HeaderVerifier);
+            let is_esdt_safe_deployed =
+                sc.is_contract_deployed(&OWNER_ADDRESS.to_managed_address(), ScArray::ESDTSafe);
+            let is_fee_market_deployed =
+                sc.is_contract_deployed(&OWNER_ADDRESS.to_managed_address(), ScArray::FeeMarket);
 
             assert!(
                 is_chain_config_deployed
@@ -456,15 +442,15 @@ fn test_remove_fee() {
         OptionalValue::None,
         None,
     );
-    state
+    let contracts_array = state
         .common_setup
-        .deploy_header_verifier(CHAIN_CONFIG_ADDRESS);
-    state.common_setup.deploy_mvx_esdt_safe(OptionalValue::None);
-    state.common_setup.deploy_phase_two(None);
-    state
-        .common_setup
-        .deploy_phase_three(OptionalValue::None, None);
+        .get_contract_info_struct_for_sc_type(vec![ScArray::ESDTSafe]);
 
+    state.common_setup.deploy_header_verifier(contracts_array);
+    state.common_setup.deploy_mvx_esdt_safe(OptionalValue::None);
+    state
+        .common_setup
+        .deploy_phase_two(OptionalValue::None, None);
     let fee_type = FeeType::Fixed {
         token: FIRST_TEST_TOKEN.to_token_identifier(),
         per_transfer: BigUint::default(),
@@ -475,7 +461,9 @@ fn test_remove_fee() {
         base_token: FIRST_TEST_TOKEN.to_token_identifier(),
         fee_type,
     };
-    state.common_setup.deploy_phase_four(Some(fee), None);
+    state.common_setup.deploy_phase_three(Some(fee), None);
+
+    state.common_setup.deploy_phase_four(None);
 
     state
         .common_setup
@@ -483,22 +471,14 @@ fn test_remove_fee() {
         .query()
         .to(SOVEREIGN_FORGE_SC_ADDRESS)
         .whitebox(sovereign_forge::contract_obj, |sc| {
-            let is_chain_config_deployed = sc.is_contract_deployed(
-                &OWNER_ADDRESS.to_managed_address(),
-                ScArrayFromUtils::ChainConfig,
-            );
-            let is_header_verifier_deployed = sc.is_contract_deployed(
-                &OWNER_ADDRESS.to_managed_address(),
-                ScArrayFromUtils::HeaderVerifier,
-            );
-            let is_esdt_safe_deployed = sc.is_contract_deployed(
-                &OWNER_ADDRESS.to_managed_address(),
-                ScArrayFromUtils::ESDTSafe,
-            );
-            let is_fee_market_deployed = sc.is_contract_deployed(
-                &OWNER_ADDRESS.to_managed_address(),
-                ScArrayFromUtils::FeeMarket,
-            );
+            let is_chain_config_deployed =
+                sc.is_contract_deployed(&OWNER_ADDRESS.to_managed_address(), ScArray::ChainConfig);
+            let is_header_verifier_deployed = sc
+                .is_contract_deployed(&OWNER_ADDRESS.to_managed_address(), ScArray::HeaderVerifier);
+            let is_esdt_safe_deployed =
+                sc.is_contract_deployed(&OWNER_ADDRESS.to_managed_address(), ScArray::ESDTSafe);
+            let is_fee_market_deployed =
+                sc.is_contract_deployed(&OWNER_ADDRESS.to_managed_address(), ScArray::FeeMarket);
 
             assert!(
                 is_chain_config_deployed
@@ -558,16 +538,18 @@ fn test_complete_setup_phase() {
         None,
     );
 
-    state
+    let contracts_array = state
         .common_setup
-        .deploy_header_verifier(CHAIN_CONFIG_ADDRESS);
+        .get_contract_info_struct_for_sc_type(vec![ScArray::ESDTSafe]);
+
+    state.common_setup.deploy_header_verifier(contracts_array);
     state.common_setup.deploy_mvx_esdt_safe(OptionalValue::None);
 
-    state.common_setup.deploy_phase_two(None);
     state
         .common_setup
-        .deploy_phase_three(OptionalValue::None, None);
-    state.common_setup.deploy_phase_four(None, None);
+        .deploy_phase_two(OptionalValue::None, None);
+    state.common_setup.deploy_phase_three(None, None);
+    state.common_setup.deploy_phase_four(None);
 
     state
         .common_setup
@@ -575,22 +557,14 @@ fn test_complete_setup_phase() {
         .query()
         .to(SOVEREIGN_FORGE_SC_ADDRESS)
         .whitebox(sovereign_forge::contract_obj, |sc| {
-            let is_chain_config_deployed = sc.is_contract_deployed(
-                &OWNER_ADDRESS.to_managed_address(),
-                ScArrayFromUtils::ChainConfig,
-            );
-            let is_header_verifier_deployed = sc.is_contract_deployed(
-                &OWNER_ADDRESS.to_managed_address(),
-                ScArrayFromUtils::HeaderVerifier,
-            );
-            let is_esdt_safe_deployed = sc.is_contract_deployed(
-                &OWNER_ADDRESS.to_managed_address(),
-                ScArrayFromUtils::ESDTSafe,
-            );
-            let is_fee_market_deployed = sc.is_contract_deployed(
-                &OWNER_ADDRESS.to_managed_address(),
-                ScArrayFromUtils::FeeMarket,
-            );
+            let is_chain_config_deployed =
+                sc.is_contract_deployed(&OWNER_ADDRESS.to_managed_address(), ScArray::ChainConfig);
+            let is_header_verifier_deployed = sc
+                .is_contract_deployed(&OWNER_ADDRESS.to_managed_address(), ScArray::HeaderVerifier);
+            let is_esdt_safe_deployed =
+                sc.is_contract_deployed(&OWNER_ADDRESS.to_managed_address(), ScArray::ESDTSafe);
+            let is_fee_market_deployed =
+                sc.is_contract_deployed(&OWNER_ADDRESS.to_managed_address(), ScArray::FeeMarket);
 
             assert!(
                 is_chain_config_deployed
@@ -750,10 +724,8 @@ fn test_deploy_phase_one_no_preferred_chain_id() {
                 .sovereigns_mapper(&OWNER_ADDRESS.to_managed_address())
                 .is_empty());
 
-            let is_chain_config_deployed = sc.is_contract_deployed(
-                &OWNER_ADDRESS.to_managed_address(),
-                ScArrayFromUtils::ChainConfig,
-            );
+            let is_chain_config_deployed =
+                sc.is_contract_deployed(&OWNER_ADDRESS.to_managed_address(), ScArray::ChainConfig);
             assert!(is_chain_config_deployed);
         })
 }
@@ -797,10 +769,8 @@ fn test_deploy_phase_one_preferred_chain_id() {
 
             assert!(sc.chain_ids().contains(&ManagedBuffer::from(CHAIN_ID)));
 
-            let is_chain_config_deployed = sc.is_contract_deployed(
-                &OWNER_ADDRESS.to_managed_address(),
-                ScArrayFromUtils::ChainConfig,
-            );
+            let is_chain_config_deployed =
+                sc.is_contract_deployed(&OWNER_ADDRESS.to_managed_address(), ScArray::ChainConfig);
             assert!(is_chain_config_deployed);
         })
 }
@@ -855,9 +825,10 @@ fn test_deploy_phase_two_without_first_phase() {
     state.common_setup.deploy_chain_factory();
     state.finish_setup();
 
-    state
-        .common_setup
-        .deploy_phase_two(Some(CALLER_DID_NOT_DEPLOY_ANY_SOV_CHAIN));
+    state.common_setup.deploy_phase_two(
+        OptionalValue::None,
+        Some(CALLER_DID_NOT_DEPLOY_ANY_SOV_CHAIN),
+    );
 }
 
 /// ### TEST
@@ -883,11 +854,15 @@ fn test_deploy_phase_two() {
     state
         .common_setup
         .deploy_phase_one(&deploy_cost, None, OptionalValue::None, None);
+    let contracts_array = state
+        .common_setup
+        .get_contract_info_struct_for_sc_type(vec![ScArray::ESDTSafe]);
+
+    state.common_setup.deploy_header_verifier(contracts_array);
+
     state
         .common_setup
-        .deploy_header_verifier(CHAIN_CONFIG_ADDRESS);
-
-    state.common_setup.deploy_phase_two(None);
+        .deploy_phase_two(OptionalValue::None, None);
 
     state
         .common_setup
@@ -895,10 +870,8 @@ fn test_deploy_phase_two() {
         .query()
         .to(SOVEREIGN_FORGE_SC_ADDRESS)
         .whitebox(sovereign_forge::contract_obj, |sc| {
-            let is_header_verifier_deployed = sc.is_contract_deployed(
-                &OWNER_ADDRESS.to_managed_address(),
-                ScArrayFromUtils::HeaderVerifier,
-            );
+            let is_header_verifier_deployed = sc
+                .is_contract_deployed(&OWNER_ADDRESS.to_managed_address(), ScArray::HeaderVerifier);
 
             assert!(is_header_verifier_deployed);
         })
@@ -927,14 +900,18 @@ fn test_deploy_phase_two_header_already_deployed() {
     state
         .common_setup
         .deploy_phase_one(&deploy_cost, None, OptionalValue::None, None);
-    state
+    let contracts_array = state
         .common_setup
-        .deploy_header_verifier(CHAIN_CONFIG_ADDRESS);
+        .get_contract_info_struct_for_sc_type(vec![ScArray::ESDTSafe]);
 
-    state.common_setup.deploy_phase_two(None);
+    state.common_setup.deploy_header_verifier(contracts_array);
+
     state
         .common_setup
-        .deploy_phase_two(Some(HEADER_VERIFIER_ALREADY_DEPLOYED));
+        .deploy_phase_two(OptionalValue::None, None);
+    state
+        .common_setup
+        .deploy_phase_two(OptionalValue::None, Some(HEADER_VERIFIER_ALREADY_DEPLOYED));
 }
 
 /// ### TEST
@@ -960,15 +937,17 @@ fn test_deploy_phase_three() {
     state
         .common_setup
         .deploy_phase_one(&deploy_cost, None, OptionalValue::None, None);
-    state
+    let contracts_array = state
         .common_setup
-        .deploy_header_verifier(CHAIN_CONFIG_ADDRESS);
+        .get_contract_info_struct_for_sc_type(vec![ScArray::ESDTSafe]);
+
+    state.common_setup.deploy_header_verifier(contracts_array);
     state.common_setup.deploy_mvx_esdt_safe(OptionalValue::None);
 
-    state.common_setup.deploy_phase_two(None);
     state
         .common_setup
-        .deploy_phase_three(OptionalValue::None, None);
+        .deploy_phase_two(OptionalValue::None, None);
+    state.common_setup.deploy_phase_three(None, None);
 
     state
         .common_setup
@@ -976,10 +955,8 @@ fn test_deploy_phase_three() {
         .query()
         .to(SOVEREIGN_FORGE_SC_ADDRESS)
         .whitebox(sovereign_forge::contract_obj, |sc| {
-            let is_esdt_safe_deployed = sc.is_contract_deployed(
-                &OWNER_ADDRESS.to_managed_address(),
-                ScArrayFromUtils::ESDTSafe,
-            );
+            let is_esdt_safe_deployed =
+                sc.is_contract_deployed(&OWNER_ADDRESS.to_managed_address(), ScArray::ESDTSafe);
 
             assert!(is_esdt_safe_deployed);
         })
@@ -1005,7 +982,7 @@ fn test_deploy_phase_three_without_phase_one() {
 
     state
         .common_setup
-        .deploy_phase_three(OptionalValue::None, Some(HEADER_VERIFIER_NOT_DEPLOYED));
+        .deploy_phase_three(None, Some(HEADER_VERIFIER_NOT_DEPLOYED));
 }
 
 /// ### TEST
@@ -1031,14 +1008,16 @@ fn test_deploy_phase_three_without_phase_two() {
         .common_setup
         .deploy_phase_one(&deploy_cost, None, OptionalValue::None, None);
 
-    state
+    let contracts_array = state
         .common_setup
-        .deploy_header_verifier(CHAIN_CONFIG_ADDRESS);
+        .get_contract_info_struct_for_sc_type(vec![ScArray::ESDTSafe]);
+
+    state.common_setup.deploy_header_verifier(contracts_array);
     state.common_setup.deploy_mvx_esdt_safe(OptionalValue::None);
 
     state
         .common_setup
-        .deploy_phase_three(OptionalValue::None, Some(HEADER_VERIFIER_NOT_DEPLOYED));
+        .deploy_phase_three(None, Some(HEADER_VERIFIER_NOT_DEPLOYED));
 }
 
 /// ### TEST
@@ -1064,18 +1043,20 @@ fn test_deploy_phase_three_already_deployed() {
         .common_setup
         .deploy_phase_one(&deploy_cost, None, OptionalValue::None, None);
 
-    state
+    let contracts_array = state
         .common_setup
-        .deploy_header_verifier(CHAIN_CONFIG_ADDRESS);
+        .get_contract_info_struct_for_sc_type(vec![ScArray::ESDTSafe]);
+
+    state.common_setup.deploy_header_verifier(contracts_array);
     state.common_setup.deploy_mvx_esdt_safe(OptionalValue::None);
 
-    state.common_setup.deploy_phase_two(None);
     state
         .common_setup
-        .deploy_phase_three(OptionalValue::None, None);
+        .deploy_phase_two(OptionalValue::None, None);
+    state.common_setup.deploy_phase_three(None, None);
     state
         .common_setup
-        .deploy_phase_three(OptionalValue::None, Some(ESDT_SAFE_ALREADY_DEPLOYED));
+        .deploy_phase_three(None, Some(ESDT_SAFE_ALREADY_DEPLOYED));
 }
 
 /// ### TEST
@@ -1122,16 +1103,17 @@ fn test_deploy_phase_four() {
         .common_setup
         .deploy_phase_one(&deploy_cost, None, OptionalValue::None, None);
 
-    state
+    let contracts_array = state
         .common_setup
-        .deploy_header_verifier(CHAIN_CONFIG_ADDRESS);
+        .get_contract_info_struct_for_sc_type(vec![ScArray::ESDTSafe]);
+
+    state.common_setup.deploy_header_verifier(contracts_array);
     state.common_setup.deploy_mvx_esdt_safe(OptionalValue::None);
 
-    state.common_setup.deploy_phase_two(None);
     state
         .common_setup
-        .deploy_phase_three(OptionalValue::None, None);
-    state.common_setup.deploy_phase_four(None, None);
+        .deploy_phase_two(OptionalValue::None, None);
+    state.common_setup.deploy_phase_three(None, None);
 
     state
         .common_setup
@@ -1139,10 +1121,8 @@ fn test_deploy_phase_four() {
         .query()
         .to(SOVEREIGN_FORGE_SC_ADDRESS)
         .whitebox(sovereign_forge::contract_obj, |sc| {
-            let is_fee_market_deployed = sc.is_contract_deployed(
-                &OWNER_ADDRESS.to_managed_address(),
-                ScArrayFromUtils::FeeMarket,
-            );
+            let is_fee_market_deployed =
+                sc.is_contract_deployed(&OWNER_ADDRESS.to_managed_address(), ScArray::FeeMarket);
 
             assert!(is_fee_market_deployed);
         })
@@ -1174,15 +1154,19 @@ fn test_deploy_phase_four_without_previous_phase() {
         .common_setup
         .deploy_phase_one(&deploy_cost, None, OptionalValue::None, None);
 
-    state
+    let contracts_array = state
         .common_setup
-        .deploy_header_verifier(CHAIN_CONFIG_ADDRESS);
+        .get_contract_info_struct_for_sc_type(vec![ScArray::ESDTSafe]);
+
+    state.common_setup.deploy_header_verifier(contracts_array);
     state.common_setup.deploy_mvx_esdt_safe(OptionalValue::None);
 
-    state.common_setup.deploy_phase_two(None);
     state
         .common_setup
-        .deploy_phase_four(None, Some(ESDT_SAFE_NOT_DEPLOYED));
+        .deploy_phase_two(OptionalValue::None, None);
+    state
+        .common_setup
+        .deploy_phase_four(Some(ESDT_SAFE_NOT_DEPLOYED));
 }
 
 /// ### TEST
@@ -1211,17 +1195,18 @@ fn test_deploy_phase_four_fee_market_already_deployed() {
         .common_setup
         .deploy_phase_one(&deploy_cost, None, OptionalValue::None, None);
 
-    state
+    let contracts_array = state
         .common_setup
-        .deploy_header_verifier(CHAIN_CONFIG_ADDRESS);
+        .get_contract_info_struct_for_sc_type(vec![ScArray::ESDTSafe]);
+
+    state.common_setup.deploy_header_verifier(contracts_array);
     state.common_setup.deploy_mvx_esdt_safe(OptionalValue::None);
 
-    state.common_setup.deploy_phase_two(None);
     state
         .common_setup
-        .deploy_phase_three(OptionalValue::None, None);
-    state.common_setup.deploy_phase_four(None, None);
+        .deploy_phase_two(OptionalValue::None, None);
+    state.common_setup.deploy_phase_three(None, None);
     state
         .common_setup
-        .deploy_phase_four(None, Some(FEE_MARKET_ALREADY_DEPLOYED));
+        .deploy_phase_three(None, Some(FEE_MARKET_ALREADY_DEPLOYED));
 }

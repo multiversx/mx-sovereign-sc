@@ -111,15 +111,15 @@ where
     }
 
     pub fn deploy_header_verifier<
-        Arg0: ProxyArg<ManagedAddress<Env::Api>>,
+        Arg0: ProxyArg<MultiValueEncoded<Env::Api, structs::forge::ContractInfo<Env::Api>>>,
     >(
         self,
-        chain_config_address: Arg0,
+        sovereign_contracts: Arg0,
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ManagedAddress<Env::Api>> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("deployHeaderVerifier")
-            .argument(&chain_config_address)
+            .argument(&sovereign_contracts)
             .original_result()
     }
 

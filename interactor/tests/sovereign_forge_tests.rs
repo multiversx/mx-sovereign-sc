@@ -5,6 +5,7 @@ use common_test_setup::constants::CHAIN_ID;
 use multiversx_sc::{imports::OptionalValue, types::BigUint};
 use multiversx_sc_snippets::imports::tokio;
 use rust_interact::sovereign_forge::sovereign_forge_interactor_main::SovereignForgeInteract;
+use structs::forge::ScArray;
 
 /// ### TEST
 /// S-FORGE_COMPLETE_SETUP_PHASE_OK
@@ -28,10 +29,10 @@ async fn deploy_test_sovereign_forge_cs() {
 
     interactor.deploy_chain_config(OptionalValue::None).await;
     let chain_config_address = interactor.state.current_chain_config_sc_address().clone();
+    let contracts_array =
+        interactor.get_contract_info_struct_for_sc_type(vec![ScArray::ChainConfig]);
 
-    interactor
-        .deploy_header_verifier(chain_config_address.clone())
-        .await;
+    interactor.deploy_header_verifier(contracts_array).await;
     let header_verifier_address = interactor.state.current_header_verifier_address().clone();
 
     interactor.deploy_mvx_esdt_safe(OptionalValue::None).await;
@@ -68,9 +69,9 @@ async fn deploy_test_sovereign_forge_cs() {
     interactor
         .deploy_phase_one(deploy_cost, Some(CHAIN_ID.into()), OptionalValue::None)
         .await;
-    interactor.deploy_phase_two().await;
-    interactor.deploy_phase_three(OptionalValue::None).await;
-    interactor.deploy_phase_four(None).await;
+    interactor.deploy_phase_two(OptionalValue::None).await;
+    interactor.deploy_phase_three(None).await;
+    interactor.deploy_phase_four().await;
 
     interactor.complete_setup_phase().await;
     interactor.check_setup_phase_status(CHAIN_ID, true).await;

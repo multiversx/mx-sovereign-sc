@@ -78,9 +78,6 @@ fn test_execute_with_non_prefixed_token() {
         &hash_of_hashes,
         operations_hashes,
     );
-    state
-        .common_setup
-        .set_esdt_safe_address_in_header_verifier(ENSHRINE_SC_ADDRESS);
     state.whitelist_enshrine_esdt();
     state.execute_operation(Some(ACTION_IS_NOT_ALLOWED), operation, None);
 }
@@ -129,9 +126,6 @@ fn test_execute_with_prefixed_token() {
         &hash_of_hashes,
         operations_hashes,
     );
-    state
-        .common_setup
-        .set_esdt_safe_address_in_header_verifier(ENSHRINE_SC_ADDRESS);
     state.whitelist_enshrine_esdt();
     state.execute_operation(None, operation, Some("executedBridgeOp"));
 }

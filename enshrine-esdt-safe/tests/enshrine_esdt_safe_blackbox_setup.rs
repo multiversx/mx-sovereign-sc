@@ -26,6 +26,7 @@ use structs::{
     aliases::{GasLimit, OptionalValueTransferDataTuple, PaymentsVec},
     configs::EsdtSafeConfig,
     fee::{FeeStruct, FeeType},
+    forge::ScArray,
     operation::Operation,
 };
 
@@ -115,9 +116,6 @@ impl EnshrineTestState {
         self.set_unpaused();
         self.common_setup
             .deploy_chain_config(OptionalValue::None, None);
-        self.common_setup
-            .deploy_header_verifier(CHAIN_CONFIG_ADDRESS);
-        self.common_setup.complete_header_verifier_setup_phase(None);
         self.common_setup.deploy_token_handler();
         self.common_setup
             .deploy_fee_market(fee_struct.cloned(), ENSHRINE_SC_ADDRESS);
@@ -125,6 +123,13 @@ impl EnshrineTestState {
         self.common_setup.deploy_chain_factory();
         self.common_setup
             .change_ownership_to_header_verifier(ENSHRINE_SC_ADDRESS);
+
+        let contracts_array = self
+            .common_setup
+            .get_contract_info_struct_for_sc_type(vec![ScArray::ChainConfig, ScArray::ESDTSafe]);
+
+        self.common_setup.deploy_header_verifier(contracts_array);
+        self.common_setup.complete_header_verifier_setup_phase(None);
 
         self
     }
