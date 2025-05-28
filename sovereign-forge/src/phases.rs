@@ -104,14 +104,14 @@ pub trait PhasesModule:
             ESDT_SAFE_ALREADY_DEPLOYED
         );
 
-        let header_verifier_address = self.get_contract_address(&caller, ScArray::HeaderVerifier);
+        // let header_verifier_address = self.get_contract_address(&caller, ScArray::HeaderVerifier);
 
-        let esdt_safe_address = self.deploy_mvx_esdt_safe(&header_verifier_address, opt_config);
+        let esdt_safe_address = self.deploy_mvx_esdt_safe(opt_config);
 
         let esdt_safe_contract_info =
             ContractInfo::new(ScArray::ESDTSafe, esdt_safe_address.clone());
 
-        self.set_esdt_safe_address_in_header_verifier(&header_verifier_address, &esdt_safe_address);
+        // self.set_esdt_safe_address_in_header_verifier(&header_verifier_address, &esdt_safe_address);
 
         self.sovereign_deployed_contracts(&self.sovereigns_mapper(&caller).get())
             .insert(esdt_safe_contract_info);

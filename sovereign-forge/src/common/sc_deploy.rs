@@ -34,13 +34,12 @@ pub trait ScDeployModule: super::utils::UtilsModule + super::storage::StorageMod
     #[inline]
     fn deploy_mvx_esdt_safe(
         &self,
-        header_verifier_address: &ManagedAddress,
         opt_config: OptionalValue<EsdtSafeConfig<Self::Api>>,
     ) -> ManagedAddress {
         self.tx()
             .to(self.get_chain_factory_address())
             .typed(ChainFactoryContractProxy)
-            .deploy_mvx_esdt_safe(header_verifier_address, opt_config)
+            .deploy_mvx_esdt_safe(opt_config)
             .returns(ReturnsResult)
             .sync_call()
     }
@@ -59,15 +58,15 @@ pub trait ScDeployModule: super::utils::UtilsModule + super::storage::StorageMod
             .sync_call()
     }
 
-    fn set_esdt_safe_address_in_header_verifier(
-        &self,
-        header_verifier_address: &ManagedAddress,
-        esdt_safe_address: &ManagedAddress,
-    ) {
-        self.tx()
-            .to(self.get_chain_factory_address())
-            .typed(ChainFactoryContractProxy)
-            .set_esdt_safe_address_in_header_verifier(header_verifier_address, esdt_safe_address)
-            .sync_call();
-    }
+    // fn set_esdt_safe_address_in_header_verifier(
+    //     &self,
+    //     header_verifier_address: &ManagedAddress,
+    //     esdt_safe_address: &ManagedAddress,
+    // ) {
+    //     self.tx()
+    //         .to(self.get_chain_factory_address())
+    //         .typed(ChainFactoryContractProxy)
+    //         .set_esdt_safe_address_in_header_verifier(header_verifier_address, esdt_safe_address)
+    //         .sync_call();
+    // }
 }

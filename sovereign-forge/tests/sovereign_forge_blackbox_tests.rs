@@ -335,13 +335,22 @@ fn test_update_esdt_safe_config() {
 fn test_set_fee() {
     let mut state = SovereignForgeTestState::new();
     state.common_setup.deploy_sovereign_forge();
-    state.common_setup.deploy_chain_factory();
+
     state
         .common_setup
         .deploy_chain_config(OptionalValue::None, None);
+
+    state
+        .common_setup
+        .deploy_header_verifier(CHAIN_CONFIG_ADDRESS);
+
+    state.common_setup.deploy_mvx_esdt_safe(OptionalValue::None);
+
     state
         .common_setup
         .deploy_fee_market(None, ESDT_SAFE_ADDRESS);
+
+    state.common_setup.deploy_chain_factory();
     state.finish_setup();
 
     let deploy_cost = BigUint::from(100_000u32);
@@ -351,10 +360,6 @@ fn test_set_fee() {
         OptionalValue::None,
         None,
     );
-    state
-        .common_setup
-        .deploy_header_verifier(CHAIN_CONFIG_ADDRESS);
-    state.common_setup.deploy_mvx_esdt_safe(OptionalValue::None);
     state.common_setup.deploy_phase_two(None);
     state
         .common_setup

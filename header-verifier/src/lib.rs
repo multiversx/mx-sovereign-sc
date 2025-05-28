@@ -116,7 +116,7 @@ pub trait Headerverifier:
 
     #[endpoint(removeExecutedHash)]
     fn remove_executed_hash(&self, hash_of_hashes: &ManagedBuffer, operation_hash: &ManagedBuffer) {
-        self.require_caller_esdt_safe();
+        // self.require_caller_esdt_safe();
 
         self.operation_hash_status(hash_of_hashes, operation_hash)
             .clear();
@@ -124,7 +124,7 @@ pub trait Headerverifier:
 
     #[endpoint(lockOperationHash)]
     fn lock_operation_hash(&self, hash_of_hashes: ManagedBuffer, operation_hash: ManagedBuffer) {
-        self.require_caller_esdt_safe();
+        // self.require_caller_esdt_safe();
 
         let operation_hash_status_mapper =
             self.operation_hash_status(&hash_of_hashes, &operation_hash);

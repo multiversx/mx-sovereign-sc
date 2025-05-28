@@ -48,19 +48,19 @@ pub trait FactoryModule: only_admin::OnlyAdminModule {
             .sync_call()
     }
 
-    #[only_admin]
-    #[endpoint(setEsdtSafeAddressInHeaderVerifier)]
-    fn set_esdt_safe_address_in_header_verifier(
-        &self,
-        header_verifier: ManagedAddress,
-        esdt_safe_address: ManagedAddress,
-    ) {
-        self.tx()
-            .to(header_verifier)
-            .typed(HeaderverifierProxy)
-            .set_esdt_safe_address(esdt_safe_address)
-            .sync_call();
-    }
+    // #[only_admin]
+    // #[endpoint(setEsdtSafeAddressInHeaderVerifier)]
+    // fn set_esdt_safe_address_in_header_verifier(
+    //     &self,
+    //     header_verifier: ManagedAddress,
+    //     esdt_safe_address: ManagedAddress,
+    // ) {
+    //     self.tx()
+    //         .to(header_verifier)
+    //         .typed(HeaderverifierProxy)
+    //         .set_esdt_safe_address(esdt_safe_address)
+    //         .sync_call();
+    // }
 
     #[only_admin]
     #[endpoint(deployEnshrineEsdtSafe)]
@@ -95,7 +95,6 @@ pub trait FactoryModule: only_admin::OnlyAdminModule {
     #[endpoint(deployEsdtSafe)]
     fn deploy_mvx_esdt_safe(
         &self,
-        header_verifier_address: ManagedAddress,
         opt_config: OptionalValue<EsdtSafeConfig<Self::Api>>,
     ) -> ManagedAddress {
         let source_address = self.mvx_esdt_safe_template().get();
@@ -109,12 +108,6 @@ pub trait FactoryModule: only_admin::OnlyAdminModule {
             .from_source(source_address)
             .code_metadata(metadata)
             .returns(ReturnsNewManagedAddress)
-            .sync_call();
-
-        self.tx()
-            .to(header_verifier_address)
-            .typed(HeaderverifierProxy)
-            .set_esdt_safe_address(&esdt_safe_address)
             .sync_call();
 
         esdt_safe_address
