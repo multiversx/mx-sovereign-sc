@@ -11,6 +11,7 @@ pub const CALLER_NOT_FROM_CURRENT_SOVEREIGN: &str =
     "Caller is not from the current Sovereign-Chain";
 pub const CALLER_IS_NOT_WHITELISTED: &str = "Caller is not whitelisted";
 pub const CANNOT_REGISTER_TOKEN: &str = "Cannot register token";
+pub const COULD_NOT_RETRIEVE_SOVEREIGN_CONFIG: &str = "Error at retrieving Sovereign Config";
 pub const CANNOT_TRANSFER_WHILE_PAUSED: &str = "Cannot transfer while paused";
 pub const CHAIN_CONFIG_ALREADY_DEPLOYED: &str = "The Chain-Config contract is already deployed";
 pub const CHAIN_CONFIG_NOT_DEPLOYED: &str = "The Chain-Config SC is not deployed";
