@@ -6,7 +6,7 @@ use error_messages::{
 };
 use proxies::chain_factory_proxy::ChainFactoryContractProxy;
 
-use multiversx_sc::{imports::OptionalValue, require};
+use multiversx_sc::{imports::OptionalValue, require, types::MultiValueEncoded};
 use structs::{
     configs::{EsdtSafeConfig, SovereignConfig},
     fee::FeeStruct,
@@ -146,8 +146,11 @@ pub trait PhasesModule:
             HEADER_VERIFIER_ALREADY_DEPLOYED
         );
 
-        let chain_config_address = self.get_contract_address(&caller, ScArray::ChainConfig);
-        let header_verifier_address = self.deploy_header_verifier(chain_config_address);
+        let contract_addresses = MultiValueEncoded::from_iter(
+            self.sovereign_deployed_contracts(&self.sovereigns_mapper(&caller).get())
+                .iter(),
+        );
+        let header_verifier_address = self.deploy_header_verifier(contract_addresses);
 
         let header_verifier_contract_info =
             ContractInfo::new(ScArray::HeaderVerifier, header_verifier_address);
