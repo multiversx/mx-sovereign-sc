@@ -31,11 +31,10 @@ fn test_deploy() {
 #[test]
 fn register_bridge_operation_setup_not_completed() {
     let mut state = HeaderVerifierTestState::new();
-    let contracts_array = state
-        .common_setup
-        .get_contract_info_struct_for_sc_type(vec![ScArray::ChainConfig, ScArray::ESDTSafe]);
 
-    state.common_setup.deploy_header_verifier(contracts_array);
+    state
+        .common_setup
+        .deploy_header_verifier(vec![ScArray::ChainConfig, ScArray::ESDTSafe]);
 
     state
         .common_setup
@@ -64,11 +63,9 @@ fn test_register_bridge_operation() {
         .common_setup
         .deploy_chain_config(OptionalValue::None, None);
 
-    let contracts_array = state
+    state
         .common_setup
-        .get_contract_info_struct_for_sc_type(vec![ScArray::ChainConfig]);
-
-    state.common_setup.deploy_header_verifier(contracts_array);
+        .deploy_header_verifier(vec![ScArray::ChainConfig]);
 
     state
         .common_setup
@@ -124,11 +121,9 @@ fn test_remove_executed_hash_no_esdt_address_registered() {
         .common_setup
         .deploy_chain_config(OptionalValue::None, None);
 
-    let contracts_array = state
+    state
         .common_setup
-        .get_contract_info_struct_for_sc_type(vec![ScArray::ChainConfig]);
-
-    state.common_setup.deploy_header_verifier(contracts_array);
+        .deploy_header_verifier(vec![ScArray::ChainConfig]);
 
     state
         .common_setup
@@ -163,11 +158,9 @@ fn test_remove_one_executed_hash() {
         .common_setup
         .deploy_chain_config(OptionalValue::None, None);
 
-    let contracts_array = state
+    state
         .common_setup
-        .get_contract_info_struct_for_sc_type(vec![ScArray::ChainConfig]);
-
-    state.common_setup.deploy_header_verifier(contracts_array);
+        .deploy_header_verifier(vec![ScArray::ChainConfig]);
 
     state
         .common_setup
@@ -223,11 +216,9 @@ fn test_remove_all_executed_hashes() {
         .common_setup
         .deploy_chain_config(OptionalValue::None, None);
 
-    let contracts_array = state
+    state
         .common_setup
-        .get_contract_info_struct_for_sc_type(vec![ScArray::ChainConfig]);
-
-    state.common_setup.deploy_header_verifier(contracts_array);
+        .deploy_header_verifier(vec![ScArray::ChainConfig]);
 
     state
         .common_setup
@@ -288,11 +279,9 @@ fn test_lock_operation_not_registered() {
         .common_setup
         .deploy_chain_config(OptionalValue::None, None);
 
-    let contracts_array = state
+    state
         .common_setup
-        .get_contract_info_struct_for_sc_type(vec![ScArray::ChainConfig]);
-
-    state.common_setup.deploy_header_verifier(contracts_array);
+        .deploy_header_verifier(vec![ScArray::ChainConfig]);
 
     let operation_1 = ManagedBuffer::from("operation_1");
     let operation_2 = ManagedBuffer::from("operation_2");
@@ -313,16 +302,14 @@ fn test_lock_operation_not_registered() {
 /// Call 'lock_operation_hash()' from an unregistered sc
 ///
 /// ### EXPECTED
-/// Error: CURRENT_OPERATION_NOT_REGISTERED
+/// Error: CALLER_NOT_FROM_CURRENT_SOVEREIGN
 #[test]
 fn test_lock_operation_caller_not_from_sovereign() {
     let mut state = HeaderVerifierTestState::new();
 
-    let contracts_array = state
+    state
         .common_setup
-        .get_contract_info_struct_for_sc_type(vec![ScArray::ChainConfig]);
-
-    state.common_setup.deploy_header_verifier(contracts_array);
+        .deploy_header_verifier(vec![ScArray::ChainConfig]);
 
     let operation_1 = ManagedBuffer::from("operation_1");
     let operation_2 = ManagedBuffer::from("operation_2");
@@ -352,11 +339,9 @@ fn test_lock_operation() {
         .common_setup
         .deploy_chain_config(OptionalValue::None, None);
 
-    let contracts_array = state
+    state
         .common_setup
-        .get_contract_info_struct_for_sc_type(vec![ScArray::ChainConfig]);
-
-    state.common_setup.deploy_header_verifier(contracts_array);
+        .deploy_header_verifier(vec![ScArray::ChainConfig]);
 
     state
         .common_setup
@@ -413,11 +398,9 @@ fn test_change_validator_set() {
         .common_setup
         .deploy_chain_config(OptionalValue::None, None);
 
-    let contracts_array = state
+    state
         .common_setup
-        .get_contract_info_struct_for_sc_type(vec![ScArray::ChainConfig]);
-
-    state.common_setup.deploy_header_verifier(contracts_array);
+        .deploy_header_verifier(vec![ScArray::ChainConfig]);
 
     let operation_hash = ManagedBuffer::from("operation_1");
     let hash_of_hashes = state.get_operation_hash(&operation_hash);
@@ -447,11 +430,9 @@ fn test_change_validator_set_operation_already_registered() {
         .common_setup
         .deploy_chain_config(OptionalValue::None, None);
 
-    let contracts_array = state
+    state
         .common_setup
-        .get_contract_info_struct_for_sc_type(vec![ScArray::ChainConfig]);
-
-    state.common_setup.deploy_header_verifier(contracts_array);
+        .deploy_header_verifier(vec![ScArray::ChainConfig]);
 
     state
         .common_setup

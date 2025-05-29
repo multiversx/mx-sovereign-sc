@@ -166,15 +166,14 @@ impl BaseSetup {
         self
     }
 
-    pub fn deploy_header_verifier(
-        &mut self,
-        sovereign_contracts: Vec<ContractInfo<StaticApi>>,
-    ) -> &mut Self {
+    pub fn deploy_header_verifier(&mut self, sovereign_contracts: Vec<ScArray>) -> &mut Self {
+        let contracts_array = self.get_contract_info_struct_for_sc_type(sovereign_contracts);
+
         self.world
             .tx()
             .from(OWNER_ADDRESS)
             .typed(HeaderverifierProxy)
-            .init(MultiValueEncoded::from_iter(sovereign_contracts))
+            .init(MultiValueEncoded::from_iter(contracts_array))
             .code(HEADER_VERIFIER_CODE_PATH)
             .new_address(HEADER_VERIFIER_ADDRESS)
             .run();

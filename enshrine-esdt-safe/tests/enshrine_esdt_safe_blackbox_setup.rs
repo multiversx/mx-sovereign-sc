@@ -124,12 +124,9 @@ impl EnshrineTestState {
         self.common_setup
             .change_ownership_to_header_verifier(ENSHRINE_SC_ADDRESS);
 
-        let contracts_array = self.common_setup.get_contract_info_struct_for_sc_type(vec![
-            ScArray::ChainConfig,
-            ScArray::EnshrineESDTSafe,
-        ]);
+        self.common_setup
+            .deploy_header_verifier(vec![ScArray::ChainConfig, ScArray::EnshrineESDTSafe]);
 
-        self.common_setup.deploy_header_verifier(contracts_array);
         self.common_setup.complete_header_verifier_setup_phase(None);
 
         self

@@ -250,11 +250,9 @@ fn test_update_esdt_safe_config() {
             assert!(is_chain_config_deployed);
         });
 
-    let contracts_array = state
+    state
         .common_setup
-        .get_contract_info_struct_for_sc_type(vec![ScArray::ESDTSafe]);
-
-    state.common_setup.deploy_header_verifier(contracts_array);
+        .deploy_header_verifier(vec![ScArray::ESDTSafe]);
 
     state.common_setup.deploy_mvx_esdt_safe(OptionalValue::None);
 
@@ -319,11 +317,9 @@ fn test_set_fee() {
         .common_setup
         .deploy_chain_config(OptionalValue::None, None);
 
-    let contracts_array = state
+    state
         .common_setup
-        .get_contract_info_struct_for_sc_type(vec![ScArray::ESDTSafe]);
-
-    state.common_setup.deploy_header_verifier(contracts_array);
+        .deploy_header_verifier(vec![ScArray::ESDTSafe]);
 
     state.common_setup.deploy_mvx_esdt_safe(OptionalValue::None);
 
@@ -429,11 +425,11 @@ fn test_remove_fee() {
         OptionalValue::None,
         None,
     );
-    let contracts_array = state
-        .common_setup
-        .get_contract_info_struct_for_sc_type(vec![ScArray::ESDTSafe]);
 
-    state.common_setup.deploy_header_verifier(contracts_array);
+    state
+        .common_setup
+        .deploy_header_verifier(vec![ScArray::ESDTSafe]);
+
     state.common_setup.deploy_mvx_esdt_safe(OptionalValue::None);
     state
         .common_setup
@@ -525,11 +521,10 @@ fn test_complete_setup_phase() {
         None,
     );
 
-    let contracts_array = state
+    state
         .common_setup
-        .get_contract_info_struct_for_sc_type(vec![ScArray::ESDTSafe]);
+        .deploy_header_verifier(vec![ScArray::ESDTSafe]);
 
-    state.common_setup.deploy_header_verifier(contracts_array);
     state.common_setup.deploy_mvx_esdt_safe(OptionalValue::None);
 
     state
@@ -987,11 +982,10 @@ fn test_deploy_phase_three_without_phase_two() {
         .common_setup
         .deploy_phase_one(&deploy_cost, None, OptionalValue::None, None);
 
-    let contracts_array = state
+    state
         .common_setup
-        .get_contract_info_struct_for_sc_type(vec![ScArray::ESDTSafe]);
+        .deploy_header_verifier(vec![ScArray::ESDTSafe]);
 
-    state.common_setup.deploy_header_verifier(contracts_array);
     state.common_setup.deploy_mvx_esdt_safe(OptionalValue::None);
 
     state
@@ -1080,11 +1074,10 @@ fn test_deploy_phase_four() {
         .common_setup
         .deploy_phase_one(&deploy_cost, None, OptionalValue::None, None);
 
-    let contracts_array = state
+    state
         .common_setup
-        .get_contract_info_struct_for_sc_type(vec![ScArray::ESDTSafe]);
+        .deploy_header_verifier(vec![ScArray::ESDTSafe]);
 
-    state.common_setup.deploy_header_verifier(contracts_array);
     state.common_setup.deploy_mvx_esdt_safe(OptionalValue::None);
 
     state
@@ -1131,11 +1124,9 @@ fn test_deploy_phase_four_without_previous_phase() {
         .common_setup
         .deploy_phase_one(&deploy_cost, None, OptionalValue::None, None);
 
-    let contracts_array = state
+    state
         .common_setup
-        .get_contract_info_struct_for_sc_type(vec![ScArray::ESDTSafe]);
-
-    state.common_setup.deploy_header_verifier(contracts_array);
+        .deploy_header_verifier(vec![ScArray::ESDTSafe]);
     state.common_setup.deploy_mvx_esdt_safe(OptionalValue::None);
 
     state
@@ -1150,7 +1141,7 @@ fn test_deploy_phase_four_without_previous_phase() {
 /// S-FORGE_DEPLOY_PHASE_FOUR_FAIL
 ///
 /// ### ACTION
-/// Call deploy_phase_four two times
+/// Call deploy_phase_three two times
 ///
 /// ### EXPECTED
 /// Error FEE_MARKET_ALREADY_DEPLOYED
@@ -1172,11 +1163,9 @@ fn test_deploy_phase_four_fee_market_already_deployed() {
         .common_setup
         .deploy_phase_one(&deploy_cost, None, OptionalValue::None, None);
 
-    let contracts_array = state
+    state
         .common_setup
-        .get_contract_info_struct_for_sc_type(vec![ScArray::ESDTSafe]);
-
-    state.common_setup.deploy_header_verifier(contracts_array);
+        .deploy_header_verifier(vec![ScArray::ESDTSafe]);
     state.common_setup.deploy_mvx_esdt_safe(OptionalValue::None);
 
     state
