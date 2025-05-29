@@ -18,6 +18,7 @@ use serial_test::serial;
 use structs::aliases::PaymentsVec;
 use structs::configs::EsdtSafeConfig;
 use structs::fee::{FeeStruct, FeeType};
+use structs::forge::ScArray;
 use structs::operation::{Operation, OperationData, OperationEsdtPayment, TransferData};
 
 /// ### TEST
@@ -68,6 +69,7 @@ async fn deposit_nothing_to_transfer_no_fee() {
             OptionalValue::None,
             OptionalValue::Some(EsdtSafeConfig::default_config()),
             None,
+            vec![ScArray::ChainConfig, ScArray::ESDTSafe],
         )
         .await;
 
@@ -101,6 +103,7 @@ async fn deposit_too_many_tokens_no_fee() {
             OptionalValue::None,
             OptionalValue::Some(EsdtSafeConfig::default_config()),
             None,
+            vec![ScArray::ChainConfig, ScArray::ESDTSafe],
         )
         .await;
 
@@ -142,6 +145,7 @@ async fn deposit_no_transfer_data_no_fee() {
             OptionalValue::None,
             OptionalValue::Some(EsdtSafeConfig::default_config()),
             None,
+            vec![ScArray::ChainConfig, ScArray::ESDTSafe],
         )
         .await;
 
@@ -192,7 +196,12 @@ async fn deposit_gas_limit_too_high_no_fee() {
     );
 
     chain_interactor
-        .deploy_contracts(OptionalValue::None, OptionalValue::Some(config), None)
+        .deploy_contracts(
+            OptionalValue::None,
+            OptionalValue::Some(config),
+            None,
+            vec![ScArray::ChainConfig, ScArray::ESDTSafe],
+        )
         .await;
 
     chain_interactor.deploy_testing_sc().await;
@@ -252,7 +261,12 @@ async fn deposit_endpoint_banned_no_fee() {
     );
 
     chain_interactor
-        .deploy_contracts(OptionalValue::None, OptionalValue::Some(config), None)
+        .deploy_contracts(
+            OptionalValue::None,
+            OptionalValue::Some(config),
+            None,
+            vec![ScArray::ChainConfig, ScArray::ESDTSafe],
+        )
         .await;
 
     chain_interactor.deploy_testing_sc().await;
@@ -327,7 +341,12 @@ async fn deposit_fee_enabled() {
     };
 
     chain_interactor
-        .deploy_contracts(OptionalValue::None, OptionalValue::Some(config), Some(fee))
+        .deploy_contracts(
+            OptionalValue::None,
+            OptionalValue::Some(config),
+            Some(fee),
+            vec![ScArray::ChainConfig, ScArray::ESDTSafe],
+        )
         .await;
 
     chain_interactor.deploy_testing_sc().await;
@@ -395,7 +414,12 @@ async fn deposit_only_transfer_data_no_fee() {
     );
 
     chain_interactor
-        .deploy_contracts(OptionalValue::None, OptionalValue::Some(config), None)
+        .deploy_contracts(
+            OptionalValue::None,
+            OptionalValue::Some(config),
+            None,
+            vec![ScArray::ChainConfig, ScArray::ESDTSafe],
+        )
         .await;
 
     chain_interactor.deploy_testing_sc().await;
@@ -453,7 +477,12 @@ async fn deposit_payment_does_not_cover_fee() {
     };
 
     chain_interactor
-        .deploy_contracts(OptionalValue::None, OptionalValue::Some(config), Some(fee))
+        .deploy_contracts(
+            OptionalValue::None,
+            OptionalValue::Some(config),
+            Some(fee),
+            vec![ScArray::ChainConfig, ScArray::ESDTSafe],
+        )
         .await;
 
     chain_interactor.deploy_testing_sc().await;
@@ -514,13 +543,11 @@ async fn register_token_invalid_type_token() {
         .deploy_chain_config(OptionalValue::None)
         .await;
 
+    let contracts_array =
+        chain_interactor.get_contract_info_struct_for_sc_type(vec![ScArray::ChainConfig]);
+
     chain_interactor
-        .deploy_header_verifier(
-            chain_interactor
-                .state
-                .current_chain_config_sc_address()
-                .clone(),
-        )
+        .deploy_header_verifier(contracts_array)
         .await;
 
     chain_interactor
@@ -580,13 +607,11 @@ async fn register_token_fungible_token() {
         .deploy_chain_config(OptionalValue::None)
         .await;
 
+    let contracts_array =
+        chain_interactor.get_contract_info_struct_for_sc_type(vec![ScArray::ChainConfig]);
+
     chain_interactor
-        .deploy_header_verifier(
-            chain_interactor
-                .state
-                .current_chain_config_sc_address()
-                .clone(),
-        )
+        .deploy_header_verifier(contracts_array)
         .await;
 
     chain_interactor
@@ -648,13 +673,11 @@ async fn register_token_non_fungible_token() {
         .deploy_chain_config(OptionalValue::None)
         .await;
 
+    let contracts_array =
+        chain_interactor.get_contract_info_struct_for_sc_type(vec![ScArray::ChainConfig]);
+
     chain_interactor
-        .deploy_header_verifier(
-            chain_interactor
-                .state
-                .current_chain_config_sc_address()
-                .clone(),
-        )
+        .deploy_header_verifier(contracts_array)
         .await;
 
     chain_interactor
@@ -716,13 +739,11 @@ async fn register_token_dynamic_non_fungible_token() {
         .deploy_chain_config(OptionalValue::None)
         .await;
 
+    let contracts_array =
+        chain_interactor.get_contract_info_struct_for_sc_type(vec![ScArray::ChainConfig]);
+
     chain_interactor
-        .deploy_header_verifier(
-            chain_interactor
-                .state
-                .current_chain_config_sc_address()
-                .clone(),
-        )
+        .deploy_header_verifier(contracts_array)
         .await;
 
     chain_interactor
@@ -784,13 +805,11 @@ async fn execute_operation_no_esdt_safe_registered() {
         .deploy_chain_config(OptionalValue::None)
         .await;
 
+    let contracts_array =
+        chain_interactor.get_contract_info_struct_for_sc_type(vec![ScArray::ChainConfig]);
+
     chain_interactor
-        .deploy_header_verifier(
-            chain_interactor
-                .state
-                .current_chain_config_sc_address()
-                .clone(),
-        )
+        .deploy_header_verifier(contracts_array)
         .await;
 
     chain_interactor
@@ -898,6 +917,7 @@ async fn execute_operation_success_no_fee() {
             OptionalValue::None,
             OptionalValue::Some(EsdtSafeConfig::default_config()),
             None,
+            vec![ScArray::ChainConfig, ScArray::ESDTSafe],
         )
         .await;
 
@@ -927,15 +947,6 @@ async fn execute_operation_success_no_fee() {
             payment_vec,
             None,
             Some("deposit"),
-        )
-        .await;
-
-    chain_interactor
-        .set_esdt_safe_address_in_header_verifier(
-            chain_interactor
-                .state
-                .current_mvx_esdt_safe_contract_address()
-                .clone(),
         )
         .await;
 
@@ -1013,6 +1024,7 @@ async fn execute_operation_only_transfer_data_no_fee() {
             OptionalValue::None,
             OptionalValue::Some(EsdtSafeConfig::default_config()),
             None,
+            vec![ScArray::ChainConfig, ScArray::ESDTSafe],
         )
         .await;
 
@@ -1031,15 +1043,6 @@ async fn execute_operation_only_transfer_data_no_fee() {
 
     let operation_hash = chain_interactor.get_operation_hash(&operation);
     let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&operation_hash.to_vec()));
-
-    chain_interactor
-        .set_esdt_safe_address_in_header_verifier(
-            chain_interactor
-                .state
-                .current_mvx_esdt_safe_contract_address()
-                .clone(),
-        )
-        .await;
 
     let operations_hashes = MultiValueEncoded::from(ManagedVec::from(vec![operation_hash.clone()]));
 

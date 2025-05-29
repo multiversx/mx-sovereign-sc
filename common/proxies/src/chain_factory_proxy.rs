@@ -111,31 +111,15 @@ where
     }
 
     pub fn deploy_header_verifier<
-        Arg0: ProxyArg<ManagedAddress<Env::Api>>,
+        Arg0: ProxyArg<MultiValueEncoded<Env::Api, structs::forge::ContractInfo<Env::Api>>>,
     >(
         self,
-        chain_config_address: Arg0,
+        sovereign_contracts: Arg0,
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ManagedAddress<Env::Api>> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("deployHeaderVerifier")
-            .argument(&chain_config_address)
-            .original_result()
-    }
-
-    pub fn set_esdt_safe_address_in_header_verifier<
-        Arg0: ProxyArg<ManagedAddress<Env::Api>>,
-        Arg1: ProxyArg<ManagedAddress<Env::Api>>,
-    >(
-        self,
-        header_verifier: Arg0,
-        esdt_safe_address: Arg1,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("setEsdtSafeAddressInHeaderVerifier")
-            .argument(&header_verifier)
-            .argument(&esdt_safe_address)
+            .argument(&sovereign_contracts)
             .original_result()
     }
 
@@ -165,17 +149,14 @@ where
     }
 
     pub fn deploy_mvx_esdt_safe<
-        Arg0: ProxyArg<ManagedAddress<Env::Api>>,
-        Arg1: ProxyArg<OptionalValue<structs::configs::EsdtSafeConfig<Env::Api>>>,
+        Arg0: ProxyArg<OptionalValue<structs::configs::EsdtSafeConfig<Env::Api>>>,
     >(
         self,
-        header_verifier_address: Arg0,
-        opt_config: Arg1,
+        opt_config: Arg0,
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ManagedAddress<Env::Api>> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("deployEsdtSafe")
-            .argument(&header_verifier_address)
             .argument(&opt_config)
             .original_result()
     }

@@ -2,8 +2,7 @@ use multiversx_sc::{
     imports::{SingleValueMapper, UnorderedSetMapper},
     types::ManagedBuffer,
 };
-
-use super::utils::ContractInfo;
+use structs::forge::ContractInfo;
 
 pub type ChainId<M> = ManagedBuffer<M>;
 

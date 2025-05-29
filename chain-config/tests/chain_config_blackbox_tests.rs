@@ -7,7 +7,7 @@ use multiversx_sc::{
     types::{BigUint, ManagedBuffer, MultiValueEncoded},
 };
 use multiversx_sc_scenario::{multiversx_chain_vm::crypto_functions::sha256, ScenarioTxWhitebox};
-use structs::{configs::SovereignConfig, generate_hash::GenerateHash};
+use structs::{configs::SovereignConfig, forge::ScArray, generate_hash::GenerateHash};
 
 mod chain_config_blackbox_setup;
 
@@ -34,10 +34,10 @@ fn test_deploy_chain_config() {
 /// C-CONFIG_DEPLOY_FAIL
 ///
 /// ### ACTION
-/// Call 'update_chain_config_during_setup_phase()' with a new valid config
+/// Call 'update_chain_config_during_setup_phase()' with a invalid config
 ///
 /// ### EXPECTED
-/// Chain config is updated with the new config
+/// ERROR INVALID_MIN_MAX_VALIDATOR_NUMBERS
 #[test]
 fn test_deploy_chain_config_invalid_config() {
     let mut state = ChainConfigTestState::new();
@@ -55,7 +55,7 @@ fn test_deploy_chain_config_invalid_config() {
 }
 
 /// ### TEST
-/// C-CONFIG_UPDATE_CONFIG_DURING_SETUP_PHASE_OK_003
+/// C-CONFIG_UPDATE_CONFIG_DURING_SETUP_PHASE_OK
 ///
 /// ### ACTION
 /// Call 'update_chain_config_during_setup_phase()' with a new valid config
@@ -76,7 +76,7 @@ fn test_update_config_during_setup_phase() {
 }
 
 /// ### TEST
-/// C-CONFIG_UPDATE_CONFIG_DURING_SETUP_PHASE_FAIL_004
+/// C-CONFIG_UPDATE_CONFIG_DURING_SETUP_PHASE_FAIL
 ///
 /// ### ACTION
 /// Call 'update_chain_config_during_setup_phase()' with an new invalid config
@@ -119,7 +119,7 @@ fn test_complete_setup_phase() {
 }
 
 /// ### TEST
-/// C-CONFIG_UPDATE_CONFIG_FAIL_006
+/// C-CONFIG_UPDATE_CONFIG_FAIL
 ///
 /// ### ACTION
 /// Call 'update_sovereign_config()' during the setup phase
@@ -136,7 +136,7 @@ fn test_update_config_setup_phase_not_completed() {
 
     state
         .common_setup
-        .deploy_header_verifier(CHAIN_CONFIG_ADDRESS);
+        .deploy_header_verifier(vec![ScArray::ChainConfig]);
 
     state
         .common_setup
@@ -153,7 +153,7 @@ fn test_update_config_setup_phase_not_completed() {
 }
 
 /// ### TEST
-/// C-CONFIG_UPDATE_CONFIG_OK_007
+/// C-CONFIG_UPDATE_CONFIG_OK
 ///
 /// ### ACTION
 /// Call 'update_sovereign_config()'  with an invalid config
@@ -170,7 +170,7 @@ fn test_update_config_invalid_config() {
 
     state
         .common_setup
-        .deploy_header_verifier(CHAIN_CONFIG_ADDRESS);
+        .deploy_header_verifier(vec![ScArray::ChainConfig]);
 
     state
         .common_setup
@@ -194,7 +194,7 @@ fn test_update_config_invalid_config() {
 }
 
 /// ### TEST
-/// C-CONFIG_UPDATE_CONFIG_OK_008
+/// C-CONFIG_UPDATE_CONFIG_OK
 ///
 /// ### ACTION
 /// Call 'update_sovereign_config()'  
@@ -211,7 +211,7 @@ fn test_update_config() {
 
     state
         .common_setup
-        .deploy_header_verifier(CHAIN_CONFIG_ADDRESS);
+        .deploy_header_verifier(vec![ScArray::ChainConfig]);
 
     state
         .common_setup

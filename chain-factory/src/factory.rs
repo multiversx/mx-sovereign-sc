@@ -8,6 +8,7 @@ use proxies::{
 use structs::{
     configs::{EsdtSafeConfig, SovereignConfig},
     fee::FeeStruct,
+    forge::ContractInfo,
 };
 multiversx_sc::derive_imports!();
 
@@ -34,32 +35,21 @@ pub trait FactoryModule: only_admin::OnlyAdminModule {
 
     #[only_admin]
     #[endpoint(deployHeaderVerifier)]
-    fn deploy_header_verifier(&self, chain_config_address: ManagedAddress) -> ManagedAddress {
+    fn deploy_header_verifier(
+        &self,
+        sovereign_contracts: MultiValueEncoded<ContractInfo<Self::Api>>,
+    ) -> ManagedAddress {
         let source_address = self.header_verifier_template().get();
         let metadata = self.blockchain().get_code_metadata(&source_address);
 
         self.tx()
             .typed(HeaderverifierProxy)
-            .init(chain_config_address)
+            .init(sovereign_contracts)
             .gas(60_000_000)
             .from_source(source_address)
             .code_metadata(metadata)
             .returns(ReturnsNewManagedAddress)
             .sync_call()
-    }
-
-    #[only_admin]
-    #[endpoint(setEsdtSafeAddressInHeaderVerifier)]
-    fn set_esdt_safe_address_in_header_verifier(
-        &self,
-        header_verifier: ManagedAddress,
-        esdt_safe_address: ManagedAddress,
-    ) {
-        self.tx()
-            .to(header_verifier)
-            .typed(HeaderverifierProxy)
-            .set_esdt_safe_address(esdt_safe_address)
-            .sync_call();
     }
 
     #[only_admin]
@@ -95,29 +85,19 @@ pub trait FactoryModule: only_admin::OnlyAdminModule {
     #[endpoint(deployEsdtSafe)]
     fn deploy_mvx_esdt_safe(
         &self,
-        header_verifier_address: ManagedAddress,
         opt_config: OptionalValue<EsdtSafeConfig<Self::Api>>,
     ) -> ManagedAddress {
         let source_address = self.mvx_esdt_safe_template().get();
         let metadata = self.blockchain().get_code_metadata(&source_address);
 
-        let esdt_safe_address = self
-            .tx()
+        self.tx()
             .typed(MvxEsdtSafeProxy)
             .init(opt_config)
             .gas(60_000_000)
             .from_source(source_address)
             .code_metadata(metadata)
             .returns(ReturnsNewManagedAddress)
-            .sync_call();
-
-        self.tx()
-            .to(header_verifier_address)
-            .typed(HeaderverifierProxy)
-            .set_esdt_safe_address(&esdt_safe_address)
-            .sync_call();
-
-        esdt_safe_address
+            .sync_call()
     }
 
     #[only_admin]

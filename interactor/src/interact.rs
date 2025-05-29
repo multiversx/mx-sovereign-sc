@@ -32,11 +32,7 @@ pub async fn mvx_esdt_safe_cli() {
         "unpause" => interact.unpause_endpoint().await,
         "isPaused" => interact.paused_status().await,
         "deployChainConfig" => interact.deploy_chain_config(OptionalValue::None).await,
-        "deployHeaderVerifier" => {
-            interact
-                .deploy_header_verifier(interact.state.current_chain_config_sc_address().clone())
-                .await
-        }
+        "deployHeaderVerifier" => interact.deploy_header_verifier(vec![]).await,
         "deployEsdtSafe" => {
             interact.deploy_mvx_esdt_safe(OptionalValue::None).await;
         }
@@ -54,16 +50,6 @@ pub async fn mvx_esdt_safe_cli() {
         "deployTestingSc" => interact.deploy_testing_sc().await,
         "completeSetup" => interact.complete_setup_phase().await,
         "completeHeaderVerifierSetup" => interact.complete_header_verifier_setup_phase().await,
-        "setEsdtInVerifier" => {
-            interact
-                .set_esdt_safe_address_in_header_verifier(
-                    interact
-                        .state
-                        .current_mvx_esdt_safe_contract_address()
-                        .clone(),
-                )
-                .await
-        }
         _ => panic!("Unknown command: {}", cmd),
     }
 }
@@ -100,11 +86,7 @@ pub async fn sovereign_forge_cli() {
                 .await
         }
         "deployChainConfig" => interact.deploy_chain_config(OptionalValue::None).await,
-        "deployHeaderVerifier" => {
-            interact
-                .deploy_header_verifier(interact.state.current_chain_config_sc_address().clone())
-                .await
-        }
+        "deployHeaderVerifier" => interact.deploy_header_verifier(vec![]).await,
         "deployEsdtSafe" => interact.deploy_mvx_esdt_safe(OptionalValue::None).await,
         "deployFeeMarket" => {
             interact
@@ -125,9 +107,9 @@ pub async fn sovereign_forge_cli() {
                 .deploy_phase_one(BigUint::from(100u64), None, OptionalValue::None)
                 .await
         }
-        "deployPhaseTwo" => interact.deploy_phase_two().await,
-        "deployPhaseThree" => interact.deploy_phase_three(OptionalValue::None).await,
-        "deployPhaseFour" => interact.deploy_phase_four(None).await,
+        "deployPhaseTwo" => interact.deploy_phase_two(OptionalValue::None).await,
+        "deployPhaseThree" => interact.deploy_phase_three(None).await,
+        "deployPhaseFour" => interact.deploy_phase_four().await,
         "getChainFactories" => interact.get_chain_factories().await,
         "getTokenHandlers" => interact.get_token_handlers().await,
         "getDeployCost" => interact.get_deploy_cost().await,

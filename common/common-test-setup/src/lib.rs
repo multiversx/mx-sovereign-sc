@@ -32,6 +32,7 @@ use proxies::{
 use structs::{
     configs::{EsdtSafeConfig, SovereignConfig},
     fee::FeeStruct,
+    forge::{ContractInfo, ScArray},
     operation::Operation,
 };
 
@@ -165,12 +166,14 @@ impl BaseSetup {
         self
     }
 
-    pub fn deploy_header_verifier(&mut self, chain_config_address: TestSCAddress) -> &mut Self {
+    pub fn deploy_header_verifier(&mut self, sovereign_contracts: Vec<ScArray>) -> &mut Self {
+        let contracts_array = self.get_contract_info_struct_for_sc_type(sovereign_contracts);
+
         self.world
             .tx()
             .from(OWNER_ADDRESS)
             .typed(HeaderverifierProxy)
-            .init(chain_config_address.to_managed_address())
+            .init(MultiValueEncoded::from_iter(contracts_array))
             .code(HEADER_VERIFIER_CODE_PATH)
             .new_address(HEADER_VERIFIER_ADDRESS)
             .run();
@@ -357,21 +360,7 @@ impl BaseSetup {
         self.assert_expected_error_message(response, error_message);
     }
 
-    pub fn deploy_phase_two(&mut self, error_message: Option<&str>) {
-        let response = self
-            .world
-            .tx()
-            .from(OWNER_ADDRESS)
-            .to(SOVEREIGN_FORGE_SC_ADDRESS)
-            .typed(SovereignForgeProxy)
-            .deploy_phase_two()
-            .returns(ReturnsHandledOrError::new())
-            .run();
-
-        self.assert_expected_error_message(response, error_message);
-    }
-
-    pub fn deploy_phase_three(
+    pub fn deploy_phase_two(
         &mut self,
         opt_config: OptionalValue<EsdtSafeConfig<StaticApi>>,
         error_message: Option<&str>,
@@ -382,14 +371,14 @@ impl BaseSetup {
             .from(OWNER_ADDRESS)
             .to(SOVEREIGN_FORGE_SC_ADDRESS)
             .typed(SovereignForgeProxy)
-            .deploy_phase_three(opt_config)
+            .deploy_phase_two(opt_config)
             .returns(ReturnsHandledOrError::new())
             .run();
 
         self.assert_expected_error_message(response, error_message);
     }
 
-    pub fn deploy_phase_four(
+    pub fn deploy_phase_three(
         &mut self,
         fee: Option<FeeStruct<StaticApi>>,
         error_message: Option<&str>,
@@ -400,7 +389,21 @@ impl BaseSetup {
             .from(OWNER_ADDRESS)
             .to(SOVEREIGN_FORGE_SC_ADDRESS)
             .typed(SovereignForgeProxy)
-            .deploy_phase_four(fee)
+            .deploy_phase_three(fee)
+            .returns(ReturnsHandledOrError::new())
+            .run();
+
+        self.assert_expected_error_message(response, error_message);
+    }
+
+    pub fn deploy_phase_four(&mut self, error_message: Option<&str>) {
+        let response = self
+            .world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .to(SOVEREIGN_FORGE_SC_ADDRESS)
+            .typed(SovereignForgeProxy)
+            .deploy_phase_four()
             .returns(ReturnsHandledOrError::new())
             .run();
 
@@ -431,16 +434,6 @@ impl BaseSetup {
                 ManagedBuffer::new(),
                 operations_hashes,
             )
-            .run();
-    }
-
-    pub fn set_esdt_safe_address_in_header_verifier(&mut self, esdt_safe_address: TestSCAddress) {
-        self.world
-            .tx()
-            .from(OWNER_ADDRESS)
-            .to(HEADER_VERIFIER_ADDRESS)
-            .typed(HeaderverifierProxy)
-            .set_esdt_safe_address(esdt_safe_address)
             .run();
     }
 
@@ -497,6 +490,33 @@ impl BaseSetup {
             Err(error) => {
                 assert_eq!(expected_error_message, Some(error.message.as_str()))
             }
+        }
+    }
+
+    pub fn get_contract_info_struct_for_sc_type(
+        &mut self,
+        sc_array: Vec<ScArray>,
+    ) -> Vec<ContractInfo<StaticApi>> {
+        sc_array
+            .iter()
+            .map(|sc| {
+                ContractInfo::new(
+                    sc.clone(),
+                    self.get_sc_address(sc.clone()).to_managed_address(),
+                )
+            })
+            .collect()
+    }
+
+    pub fn get_sc_address(&mut self, sc_type: ScArray) -> TestSCAddress {
+        match sc_type {
+            ScArray::ChainConfig => CHAIN_CONFIG_ADDRESS,
+            ScArray::ChainFactory => CHAIN_FACTORY_SC_ADDRESS,
+            ScArray::ESDTSafe => ESDT_SAFE_ADDRESS,
+            ScArray::HeaderVerifier => HEADER_VERIFIER_ADDRESS,
+            ScArray::FeeMarket => FEE_MARKET_ADDRESS,
+            ScArray::EnshrineESDTSafe => ENSHRINE_SC_ADDRESS,
+            _ => TestSCAddress::new("ERROR"),
         }
     }
 

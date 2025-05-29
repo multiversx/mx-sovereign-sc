@@ -141,16 +141,7 @@ where
             .original_result()
     }
 
-    pub fn deploy_phase_two(
-        self,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("deployPhaseTwo")
-            .original_result()
-    }
-
-    pub fn deploy_phase_three<
+    pub fn deploy_phase_two<
         Arg0: ProxyArg<OptionalValue<structs::configs::EsdtSafeConfig<Env::Api>>>,
     >(
         self,
@@ -158,12 +149,12 @@ where
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
-            .raw_call("deployPhaseThree")
+            .raw_call("deployPhaseTwo")
             .argument(&opt_config)
             .original_result()
     }
 
-    pub fn deploy_phase_four<
+    pub fn deploy_phase_three<
         Arg0: ProxyArg<Option<structs::fee::FeeStruct<Env::Api>>>,
     >(
         self,
@@ -171,8 +162,17 @@ where
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
-            .raw_call("deployPhaseFour")
+            .raw_call("deployPhaseThree")
             .argument(&fee)
+            .original_result()
+    }
+
+    pub fn deploy_phase_four(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("deployPhaseFour")
             .original_result()
     }
 
@@ -181,7 +181,7 @@ where
     >(
         self,
         chain_id: Arg0,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, MultiValueEncoded<Env::Api, ContractInfo<Env::Api>>> {
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, MultiValueEncoded<Env::Api, structs::forge::ContractInfo<Env::Api>>> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("getDeployedSovereignContracts")
@@ -297,28 +297,4 @@ where
             .argument(&token_id)
             .original_result()
     }
-}
-
-#[type_abi]
-#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, ManagedVecItem)]
-pub struct ContractInfo<Api>
-where
-    Api: ManagedTypeApi,
-{
-    pub id: ScArray,
-    pub address: ManagedAddress<Api>,
-}
-
-#[type_abi]
-#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, Clone, ManagedVecItem, PartialEq)]
-pub enum ScArray {
-    ChainFactory,
-    Controller,
-    HeaderVerifier,
-    ESDTSafe,
-    EnshrineESDTSafe,
-    FeeMarket,
-    TokenHandler,
-    ChainConfig,
-    Slashing,
 }

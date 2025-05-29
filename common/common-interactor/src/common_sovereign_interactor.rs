@@ -11,8 +11,8 @@ use multiversx_sc::{
     imports::{ESDTSystemSCProxy, OptionalValue, UserBuiltinProxy},
     types::{
         Address, BigUint, CodeMetadata, ESDTSystemSCAddress, EsdtTokenType, ManagedAddress,
-        ManagedBuffer, ManagedVec, ReturnsNewAddress, ReturnsResult, ReturnsResultUnmanaged,
-        TokenIdentifier,
+        ManagedBuffer, ManagedVec, MultiValueEncoded, ReturnsNewAddress, ReturnsResult,
+        ReturnsResultUnmanaged, TestSCAddress, TokenIdentifier,
     },
 };
 use multiversx_sc_snippets::{
@@ -34,6 +34,7 @@ use proxies::{
 use structs::{
     configs::{EsdtSafeConfig, SovereignConfig},
     fee::FeeStruct,
+    forge::{ContractInfo, ScArray},
     operation::Operation,
 };
 
@@ -230,7 +231,7 @@ pub trait CommonInteractorTrait {
         println!("new Chain-Config address: {new_address_bech32}");
     }
 
-    async fn deploy_header_verifier(&mut self, chain_config_address: Bech32Address) {
+    async fn deploy_header_verifier(&mut self, contracts_array: Vec<ContractInfo<StaticApi>>) {
         let wallet_address = self.wallet_address().clone();
 
         let new_address = self
@@ -239,7 +240,7 @@ pub trait CommonInteractorTrait {
             .from(wallet_address)
             .gas(50_000_000u64)
             .typed(HeaderverifierProxy)
-            .init(chain_config_address)
+            .init(MultiValueEncoded::from_iter(contracts_array))
             .returns(ReturnsNewAddress)
             .code(HEADER_VERIFIER_CODE_PATH)
             .code_metadata(CodeMetadata::all())
@@ -393,6 +394,46 @@ pub trait CommonInteractorTrait {
         println!("new address: {new_address_bech32}");
     }
 
+    fn get_contract_info_struct_for_sc_type(
+        &mut self,
+        sc_array: Vec<ScArray>,
+    ) -> Vec<ContractInfo<StaticApi>> {
+        sc_array
+            .iter()
+            .map(|sc| ContractInfo::new(sc.clone(), self.get_sc_address(sc.clone())))
+            .collect()
+    }
+
+    fn get_sc_address(&mut self, sc_type: ScArray) -> ManagedAddress<StaticApi> {
+        match sc_type {
+            ScArray::ChainConfig => ManagedAddress::from_address(
+                &self.state().current_chain_config_sc_address().to_address(),
+            ),
+            ScArray::ChainFactory => ManagedAddress::from_address(
+                &self.state().current_chain_factory_sc_address().to_address(),
+            ),
+            ScArray::ESDTSafe => ManagedAddress::from_address(
+                &self
+                    .state()
+                    .current_mvx_esdt_safe_contract_address()
+                    .to_address(),
+            ),
+            ScArray::HeaderVerifier => ManagedAddress::from_address(
+                &self.state().current_header_verifier_address().to_address(),
+            ),
+            ScArray::FeeMarket => ManagedAddress::from_address(
+                &self.state().current_fee_market_address().to_address(),
+            ),
+            ScArray::EnshrineESDTSafe => ManagedAddress::from_address(
+                &self
+                    .state()
+                    .current_enshrine_esdt_safe_address()
+                    .to_address(),
+            ),
+            _ => TestSCAddress::new("ERROR").to_managed_address(),
+        }
+    }
+
     async fn deploy_phase_one(
         &mut self,
         egld_amount: BigUint<StaticApi>,
@@ -418,7 +459,7 @@ pub trait CommonInteractorTrait {
         println!("Result: {response:?}");
     }
 
-    async fn deploy_phase_two(&mut self) {
+    async fn deploy_phase_two(&mut self, opt_config: OptionalValue<EsdtSafeConfig<StaticApi>>) {
         let wallet_address = self.wallet_address().clone();
         let sovereign_forge_address = self.state().current_sovereign_forge_sc_address().clone();
 
@@ -429,7 +470,7 @@ pub trait CommonInteractorTrait {
             .to(sovereign_forge_address)
             .gas(30_000_000u64)
             .typed(SovereignForgeProxy)
-            .deploy_phase_two()
+            .deploy_phase_two(opt_config)
             .returns(ReturnsResultUnmanaged)
             .run()
             .await;
@@ -437,7 +478,7 @@ pub trait CommonInteractorTrait {
         println!("Result: {response:?}");
     }
 
-    async fn deploy_phase_three(&mut self, opt_config: OptionalValue<EsdtSafeConfig<StaticApi>>) {
+    async fn deploy_phase_three(&mut self, fee: Option<FeeStruct<StaticApi>>) {
         let wallet_address = self.wallet_address().clone();
         let sovereign_forge_address = self.state().current_sovereign_forge_sc_address().clone();
 
@@ -448,7 +489,7 @@ pub trait CommonInteractorTrait {
             .to(sovereign_forge_address)
             .gas(80_000_000u64)
             .typed(SovereignForgeProxy)
-            .deploy_phase_three(opt_config)
+            .deploy_phase_three(fee)
             .returns(ReturnsResultUnmanaged)
             .run()
             .await;
@@ -456,7 +497,7 @@ pub trait CommonInteractorTrait {
         println!("Result: {response:?}");
     }
 
-    async fn deploy_phase_four(&mut self, fee: Option<FeeStruct<StaticApi>>) {
+    async fn deploy_phase_four(&mut self) {
         let wallet_address = self.wallet_address().clone();
         let sovereign_forge_address = self.state().current_sovereign_forge_sc_address().clone();
 
@@ -467,7 +508,7 @@ pub trait CommonInteractorTrait {
             .to(sovereign_forge_address)
             .gas(80_000_000u64)
             .typed(SovereignForgeProxy)
-            .deploy_phase_four(fee)
+            .deploy_phase_four()
             .returns(ReturnsResultUnmanaged)
             .run()
             .await;
@@ -529,28 +570,6 @@ pub trait CommonInteractorTrait {
             .returns(ReturnsResultUnmanaged)
             .run()
             .await;
-    }
-
-    async fn set_esdt_safe_address_in_header_verifier(
-        &mut self,
-        mvx_esdt_safe_address: Bech32Address,
-    ) {
-        let wallet_address = self.wallet_address().clone();
-        let header_verifier_address = self.state().current_header_verifier_address().clone();
-
-        let response = self
-            .interactor()
-            .tx()
-            .from(wallet_address)
-            .to(header_verifier_address)
-            .gas(90_000_000u64)
-            .typed(HeaderverifierProxy)
-            .set_esdt_safe_address(mvx_esdt_safe_address)
-            .returns(ReturnsResultUnmanaged)
-            .run()
-            .await;
-
-        println!("Result: {response:?}");
     }
 
     fn assert_expected_log(&mut self, logs: Vec<Log>, expected_log: Option<&str>) {
