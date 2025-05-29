@@ -896,7 +896,7 @@ fn test_deploy_phase_two_header_already_deployed() {
 /// Call deploy_phase_three
 ///
 /// ### EXPECTED
-/// Mvx-ESDT-Safe is deployed and address is set in storage
+/// Fee-Market is deployed and address is set in storage
 #[test]
 fn test_deploy_phase_three() {
     let mut state = SovereignForgeTestState::new();
@@ -929,10 +929,10 @@ fn test_deploy_phase_three() {
         .query()
         .to(SOVEREIGN_FORGE_SC_ADDRESS)
         .whitebox(sovereign_forge::contract_obj, |sc| {
-            let is_esdt_safe_deployed =
+            let is_fee_market_deployed =
                 sc.is_contract_deployed(&OWNER_ADDRESS.to_managed_address(), ScArray::ESDTSafe);
 
-            assert!(is_esdt_safe_deployed);
+            assert!(is_fee_market_deployed);
         })
 }
 
@@ -1037,7 +1037,7 @@ fn test_deploy_phase_three_already_deployed() {
 /// Call complete_setup_phase without phase four deployed
 ///
 /// ### EXPECTED
-/// Error FEE_MARKET_NOT_DEPLOYED
+/// Error HEADER_VERIFIER_NOT_DEPLOYED
 #[test]
 fn test_complete_setup_phase_four_not_deployed() {
     let mut state = SovereignForgeTestState::new();
@@ -1055,7 +1055,7 @@ fn test_complete_setup_phase_four_not_deployed() {
 /// Call deploy_phase_four
 ///
 /// ### EXPECTED
-/// Fee-Market is deployed and address is set in storage
+/// Header-Verifier is deployed and address is set in storage
 #[test]
 fn test_deploy_phase_four() {
     let mut state = SovereignForgeTestState::new();
@@ -1083,6 +1083,7 @@ fn test_deploy_phase_four() {
     state
         .common_setup
         .deploy_phase_two(OptionalValue::None, None);
+
     state.common_setup.deploy_phase_three(None, None);
 
     state
@@ -1091,10 +1092,10 @@ fn test_deploy_phase_four() {
         .query()
         .to(SOVEREIGN_FORGE_SC_ADDRESS)
         .whitebox(sovereign_forge::contract_obj, |sc| {
-            let is_fee_market_deployed =
+            let is_header_verifier_deployed =
                 sc.is_contract_deployed(&OWNER_ADDRESS.to_managed_address(), ScArray::FeeMarket);
 
-            assert!(is_fee_market_deployed);
+            assert!(is_header_verifier_deployed);
         })
 }
 
@@ -1105,7 +1106,7 @@ fn test_deploy_phase_four() {
 /// Call deploy_phase_four without phase three
 ///
 /// ### EXPECTED
-/// Error ESDT_SAFE_NOT_DEPLOYED
+/// Error FEE_MARKET_NOT_DEPLOYED
 #[test]
 fn test_deploy_phase_four_without_previous_phase() {
     let mut state = SovereignForgeTestState::new();
