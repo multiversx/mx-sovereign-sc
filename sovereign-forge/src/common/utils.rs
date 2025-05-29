@@ -32,21 +32,21 @@ pub trait UtilsModule: super::storage::StorageModule {
 
     fn require_phase_four_completed(&self, caller: &ManagedAddress) {
         require!(
-            self.is_contract_deployed(caller, ScArray::FeeMarket),
+            self.is_contract_deployed(caller, ScArray::HeaderVerifier),
             HEADER_VERIFIER_NOT_DEPLOYED
         );
     }
 
     fn require_phase_three_completed(&self, caller: &ManagedAddress) {
         require!(
-            self.is_contract_deployed(caller, ScArray::ESDTSafe),
+            self.is_contract_deployed(caller, ScArray::FeeMarket),
             FEE_MARKET_NOT_DEPLOYED
         );
     }
 
     fn require_phase_two_completed(&self, caller: &ManagedAddress) {
         require!(
-            self.is_contract_deployed(caller, ScArray::HeaderVerifier),
+            self.is_contract_deployed(caller, ScArray::ESDTSafe),
             ESDT_SAFE_NOT_DEPLOYED
         );
     }

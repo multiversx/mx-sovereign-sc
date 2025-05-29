@@ -13,7 +13,7 @@ pub trait UpdateConfigsModule: common::utils::UtilsModule + common::storage::Sto
     fn update_esdt_safe_config(&self, new_config: EsdtSafeConfig<Self::Api>) {
         let caller = self.blockchain().get_caller();
 
-        self.require_phase_three_completed(&caller);
+        self.require_phase_two_completed(&caller);
 
         self.tx()
             .to(self.get_chain_factory_address())
