@@ -32,9 +32,6 @@ async fn deploy_test_sovereign_forge_cs() {
     let contracts_array =
         interactor.get_contract_info_struct_for_sc_type(vec![ScArray::ChainConfig]);
 
-    interactor.deploy_header_verifier(contracts_array).await;
-    let header_verifier_address = interactor.state.current_header_verifier_address().clone();
-
     interactor.deploy_mvx_esdt_safe(OptionalValue::None).await;
     let mvx_esdt_safe_address = interactor
         .state
@@ -46,6 +43,9 @@ async fn deploy_test_sovereign_forge_cs() {
         .await;
     let fee_market_address = interactor.state.current_fee_market_address().clone();
 
+    interactor.deploy_header_verifier(contracts_array).await;
+    let header_verifier_address = interactor.state.current_header_verifier_address().clone();
+
     interactor
         .deploy_chain_factory(
             sovereign_forge_address,
@@ -55,6 +55,7 @@ async fn deploy_test_sovereign_forge_cs() {
             fee_market_address,
         )
         .await;
+
     let chain_factory_address = interactor.state.current_chain_factory_sc_address().clone();
 
     interactor.deploy_token_handler(chain_factory_address).await;
