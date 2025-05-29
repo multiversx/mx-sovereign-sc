@@ -107,9 +107,9 @@ pub async fn sovereign_forge_cli() {
                 .deploy_phase_one(BigUint::from(100u64), None, OptionalValue::None)
                 .await
         }
-        // "deployPhaseTwo" => interact.deploy_phase_two().await,
-        // "deployPhaseThree" => interact.deploy_phase_three(OptionalValue::None).await,
-        // "deployPhaseFour" => interact.deploy_phase_four(None).await,
+        "deployPhaseTwo" => interact.deploy_phase_two(OptionalValue::None).await,
+        "deployPhaseThree" => interact.deploy_phase_three(None).await,
+        "deployPhaseFour" => interact.deploy_phase_four().await,
         "getChainFactories" => interact.get_chain_factories().await,
         "getTokenHandlers" => interact.get_token_handlers().await,
         "getDeployCost" => interact.get_deploy_cost().await,

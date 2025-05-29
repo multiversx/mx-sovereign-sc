@@ -8,7 +8,7 @@ use error_messages::{
     CALLER_DID_NOT_DEPLOY_ANY_SOV_CHAIN, CHAIN_CONFIG_ALREADY_DEPLOYED, CHAIN_ID_ALREADY_IN_USE,
     CHAIN_ID_NOT_FOUR_CHAR_LONG, CHAIN_ID_NOT_LOWERCASE_ALPHANUMERIC, DEPLOY_COST_NOT_ENOUGH,
     ESDT_SAFE_ALREADY_DEPLOYED, ESDT_SAFE_NOT_DEPLOYED, FEE_MARKET_ALREADY_DEPLOYED,
-    FEE_MARKET_NOT_DEPLOYED, HEADER_VERIFIER_NOT_DEPLOYED,
+    FEE_MARKET_NOT_DEPLOYED, HEADER_VERIFIER_ALREADY_DEPLOYED, HEADER_VERIFIER_NOT_DEPLOYED,
 };
 use fee_market::fee_type::FeeTypeModule;
 use multiversx_sc::{
@@ -1086,14 +1086,16 @@ fn test_deploy_phase_four() {
 
     state.common_setup.deploy_phase_three(None, None);
 
+    state.common_setup.deploy_phase_four(None);
+
     state
         .common_setup
         .world
         .query()
         .to(SOVEREIGN_FORGE_SC_ADDRESS)
         .whitebox(sovereign_forge::contract_obj, |sc| {
-            let is_header_verifier_deployed =
-                sc.is_contract_deployed(&OWNER_ADDRESS.to_managed_address(), ScArray::FeeMarket);
+            let is_header_verifier_deployed = sc
+                .is_contract_deployed(&OWNER_ADDRESS.to_managed_address(), ScArray::HeaderVerifier);
 
             assert!(is_header_verifier_deployed);
         })
@@ -1142,10 +1144,10 @@ fn test_deploy_phase_four_without_previous_phase() {
 /// S-FORGE_DEPLOY_PHASE_FOUR_FAIL
 ///
 /// ### ACTION
-/// Call deploy_phase_three two times
+/// Call deploy_phase_four times
 ///
 /// ### EXPECTED
-/// Error FEE_MARKET_ALREADY_DEPLOYED
+/// Error HEADER_VERIFIER_ALREADY_DEPLOYED
 #[test]
 fn test_deploy_phase_four_fee_market_already_deployed() {
     let mut state = SovereignForgeTestState::new();
@@ -1173,7 +1175,8 @@ fn test_deploy_phase_four_fee_market_already_deployed() {
         .common_setup
         .deploy_phase_two(OptionalValue::None, None);
     state.common_setup.deploy_phase_three(None, None);
+    state.common_setup.deploy_phase_four(None);
     state
         .common_setup
-        .deploy_phase_three(None, Some(FEE_MARKET_ALREADY_DEPLOYED));
+        .deploy_phase_four(Some(HEADER_VERIFIER_ALREADY_DEPLOYED));
 }
