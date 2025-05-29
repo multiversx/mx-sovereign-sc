@@ -1149,7 +1149,7 @@ fn test_deploy_phase_four_without_previous_phase() {
 /// ### EXPECTED
 /// Error HEADER_VERIFIER_ALREADY_DEPLOYED
 #[test]
-fn test_deploy_phase_four_fee_market_already_deployed() {
+fn test_deploy_phase_four_header_verifier_already_deployed() {
     let mut state = SovereignForgeTestState::new();
     state.common_setup.deploy_sovereign_forge();
     state.common_setup.deploy_chain_factory();
