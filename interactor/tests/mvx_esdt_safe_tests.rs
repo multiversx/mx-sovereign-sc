@@ -69,6 +69,7 @@ async fn deposit_nothing_to_transfer_no_fee() {
             OptionalValue::None,
             OptionalValue::Some(EsdtSafeConfig::default_config()),
             None,
+            vec![ScArray::ChainConfig, ScArray::ESDTSafe],
         )
         .await;
 
@@ -102,6 +103,7 @@ async fn deposit_too_many_tokens_no_fee() {
             OptionalValue::None,
             OptionalValue::Some(EsdtSafeConfig::default_config()),
             None,
+            vec![ScArray::ChainConfig, ScArray::ESDTSafe],
         )
         .await;
 
@@ -143,6 +145,7 @@ async fn deposit_no_transfer_data_no_fee() {
             OptionalValue::None,
             OptionalValue::Some(EsdtSafeConfig::default_config()),
             None,
+            vec![ScArray::ChainConfig, ScArray::ESDTSafe],
         )
         .await;
 
@@ -193,7 +196,12 @@ async fn deposit_gas_limit_too_high_no_fee() {
     );
 
     chain_interactor
-        .deploy_contracts(OptionalValue::None, OptionalValue::Some(config), None)
+        .deploy_contracts(
+            OptionalValue::None,
+            OptionalValue::Some(config),
+            None,
+            vec![ScArray::ChainConfig, ScArray::ESDTSafe],
+        )
         .await;
 
     chain_interactor.deploy_testing_sc().await;
@@ -253,7 +261,12 @@ async fn deposit_endpoint_banned_no_fee() {
     );
 
     chain_interactor
-        .deploy_contracts(OptionalValue::None, OptionalValue::Some(config), None)
+        .deploy_contracts(
+            OptionalValue::None,
+            OptionalValue::Some(config),
+            None,
+            vec![ScArray::ChainConfig, ScArray::ESDTSafe],
+        )
         .await;
 
     chain_interactor.deploy_testing_sc().await;
@@ -328,7 +341,12 @@ async fn deposit_fee_enabled() {
     };
 
     chain_interactor
-        .deploy_contracts(OptionalValue::None, OptionalValue::Some(config), Some(fee))
+        .deploy_contracts(
+            OptionalValue::None,
+            OptionalValue::Some(config),
+            Some(fee),
+            vec![ScArray::ChainConfig, ScArray::ESDTSafe],
+        )
         .await;
 
     chain_interactor.deploy_testing_sc().await;
@@ -396,7 +414,12 @@ async fn deposit_only_transfer_data_no_fee() {
     );
 
     chain_interactor
-        .deploy_contracts(OptionalValue::None, OptionalValue::Some(config), None)
+        .deploy_contracts(
+            OptionalValue::None,
+            OptionalValue::Some(config),
+            None,
+            vec![ScArray::ChainConfig, ScArray::ESDTSafe],
+        )
         .await;
 
     chain_interactor.deploy_testing_sc().await;
@@ -454,7 +477,12 @@ async fn deposit_payment_does_not_cover_fee() {
     };
 
     chain_interactor
-        .deploy_contracts(OptionalValue::None, OptionalValue::Some(config), Some(fee))
+        .deploy_contracts(
+            OptionalValue::None,
+            OptionalValue::Some(config),
+            Some(fee),
+            vec![ScArray::ChainConfig, ScArray::ESDTSafe],
+        )
         .await;
 
     chain_interactor.deploy_testing_sc().await;
@@ -889,6 +917,7 @@ async fn execute_operation_success_no_fee() {
             OptionalValue::None,
             OptionalValue::Some(EsdtSafeConfig::default_config()),
             None,
+            vec![ScArray::ChainConfig, ScArray::ESDTSafe],
         )
         .await;
 
@@ -995,6 +1024,7 @@ async fn execute_operation_only_transfer_data_no_fee() {
             OptionalValue::None,
             OptionalValue::Some(EsdtSafeConfig::default_config()),
             None,
+            vec![ScArray::ChainConfig, ScArray::ESDTSafe],
         )
         .await;
 
