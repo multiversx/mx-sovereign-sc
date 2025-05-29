@@ -2,11 +2,9 @@
 
 use base64::{engine::general_purpose::STANDARD as BASE64, Engine};
 use common_test_setup::constants::{
-    CHAIN_CONFIG_ADDRESS, CHAIN_CONFIG_CODE_PATH, CHAIN_FACTORY_CODE_PATH,
-    CHAIN_FACTORY_SC_ADDRESS, ENSHRINE_ESDT_SAFE_CODE_PATH, ENSHRINE_SC_ADDRESS, ESDT_SAFE_ADDRESS,
-    FEE_MARKET_ADDRESS, FEE_MARKET_CODE_PATH, HEADER_VERIFIER_ADDRESS, HEADER_VERIFIER_CODE_PATH,
-    ISSUE_COST, MVX_ESDT_SAFE_CODE_PATH, SOVEREIGN_FORGE_CODE_PATH, TESTING_SC_CODE_PATH,
-    TOKEN_HANDLER_CODE_PATH,
+    CHAIN_CONFIG_CODE_PATH, CHAIN_FACTORY_CODE_PATH, ENSHRINE_ESDT_SAFE_CODE_PATH,
+    FEE_MARKET_CODE_PATH, HEADER_VERIFIER_CODE_PATH, ISSUE_COST, MVX_ESDT_SAFE_CODE_PATH,
+    SOVEREIGN_FORGE_CODE_PATH, TESTING_SC_CODE_PATH, TOKEN_HANDLER_CODE_PATH,
 };
 use multiversx_sc::{
     codec::TopEncode,
@@ -408,12 +406,30 @@ pub trait CommonInteractorTrait {
 
     fn get_sc_address(&mut self, sc_type: ScArray) -> ManagedAddress<StaticApi> {
         match sc_type {
-            ScArray::ChainConfig => CHAIN_CONFIG_ADDRESS.to_managed_address(),
-            ScArray::ChainFactory => CHAIN_FACTORY_SC_ADDRESS.to_managed_address(),
-            ScArray::ESDTSafe => ESDT_SAFE_ADDRESS.to_managed_address(),
-            ScArray::HeaderVerifier => HEADER_VERIFIER_ADDRESS.to_managed_address(),
-            ScArray::FeeMarket => FEE_MARKET_ADDRESS.to_managed_address(),
-            ScArray::EnshrineESDTSafe => ENSHRINE_SC_ADDRESS.to_managed_address(),
+            ScArray::ChainConfig => ManagedAddress::from_address(
+                &self.state().current_chain_config_sc_address().to_address(),
+            ),
+            ScArray::ChainFactory => ManagedAddress::from_address(
+                &self.state().current_chain_factory_sc_address().to_address(),
+            ),
+            ScArray::ESDTSafe => ManagedAddress::from_address(
+                &self
+                    .state()
+                    .current_mvx_esdt_safe_contract_address()
+                    .to_address(),
+            ),
+            ScArray::HeaderVerifier => ManagedAddress::from_address(
+                &self.state().current_header_verifier_address().to_address(),
+            ),
+            ScArray::FeeMarket => ManagedAddress::from_address(
+                &self.state().current_fee_market_address().to_address(),
+            ),
+            ScArray::EnshrineESDTSafe => ManagedAddress::from_address(
+                &self
+                    .state()
+                    .current_enshrine_esdt_safe_address()
+                    .to_address(),
+            ),
             _ => TestSCAddress::new("ERROR").to_managed_address(),
         }
     }
