@@ -630,6 +630,59 @@ pub trait CommonInteractorTrait {
         }
     }
 
+    async fn check_wallet_balance(&mut self) {
+        let wallet_address = self.wallet_address().clone();
+        let first_token_id = self.state().get_first_token_id_string();
+        let second_token_id = self.state().get_second_token_id_string();
+        let fee_token_id = self.state().get_fee_token_id_string();
+
+        let expected_tokens_wallet = vec![
+            self.thousand_tokens(first_token_id),
+            self.thousand_tokens(second_token_id),
+            self.thousand_tokens(fee_token_id),
+        ];
+
+        self.check_address_balance(&Bech32Address::from(wallet_address), expected_tokens_wallet)
+            .await;
+    }
+
+    async fn check_mvx_esdt_safe_balance_is_empty(&mut self) {
+        let first_token_id = self.state().get_first_token_id_string();
+        let second_token_id = self.state().get_second_token_id_string();
+        let mvx_esdt_safe_address = self
+            .state()
+            .current_mvx_esdt_safe_contract_address()
+            .clone();
+
+        let expected_tokens_mvx_esdt_safe = vec![
+            self.zero_tokens(first_token_id),
+            self.zero_tokens(second_token_id),
+        ];
+
+        self.check_address_balance(&mvx_esdt_safe_address, expected_tokens_mvx_esdt_safe)
+            .await;
+    }
+
+    async fn check_fee_market_balance_is_empty(&mut self) {
+        let fee_market_address = self.state().current_fee_market_address().clone();
+        let fee_token_id = self.state().get_fee_token_id_string();
+
+        let expected_tokens_fee_market = vec![self.zero_tokens(fee_token_id)];
+
+        self.check_address_balance(&fee_market_address, expected_tokens_fee_market)
+            .await;
+    }
+
+    async fn check_testing_sc_balance_is_empty(&mut self) {
+        let testing_sc_address = self.state().current_testing_sc_address().clone();
+        let first_token_id = self.state().get_first_token_id_string();
+
+        let expected_tokens_testing_sc = vec![self.zero_tokens(first_token_id)];
+
+        self.check_address_balance(&testing_sc_address, expected_tokens_testing_sc)
+            .await;
+    }
+
     async fn check_address_balance(
         &mut self,
         address: &Bech32Address,
