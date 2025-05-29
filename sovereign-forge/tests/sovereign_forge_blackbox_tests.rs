@@ -1,14 +1,14 @@
 use chain_config::validator_rules::ValidatorRulesModule;
 use common_test_setup::constants::{
-    CHAIN_CONFIG_ADDRESS, CHAIN_FACTORY_SC_ADDRESS, CHAIN_ID, DEPLOY_COST, ESDT_SAFE_ADDRESS,
-    FIRST_TEST_TOKEN, ONE_HUNDRED_THOUSAND, OWNER_ADDRESS, SOVEREIGN_FORGE_SC_ADDRESS,
+    CHAIN_FACTORY_SC_ADDRESS, CHAIN_ID, DEPLOY_COST, ESDT_SAFE_ADDRESS, FIRST_TEST_TOKEN,
+    ONE_HUNDRED_THOUSAND, OWNER_ADDRESS, SOVEREIGN_FORGE_SC_ADDRESS,
 };
 use cross_chain::storage::CrossChainStorage;
 use error_messages::{
     CALLER_DID_NOT_DEPLOY_ANY_SOV_CHAIN, CHAIN_CONFIG_ALREADY_DEPLOYED, CHAIN_ID_ALREADY_IN_USE,
     CHAIN_ID_NOT_FOUR_CHAR_LONG, CHAIN_ID_NOT_LOWERCASE_ALPHANUMERIC, DEPLOY_COST_NOT_ENOUGH,
     ESDT_SAFE_ALREADY_DEPLOYED, ESDT_SAFE_NOT_DEPLOYED, FEE_MARKET_ALREADY_DEPLOYED,
-    FEE_MARKET_NOT_DEPLOYED, HEADER_VERIFIER_ALREADY_DEPLOYED, HEADER_VERIFIER_NOT_DEPLOYED,
+    FEE_MARKET_NOT_DEPLOYED, HEADER_VERIFIER_NOT_DEPLOYED,
 };
 use fee_market::fee_type::FeeTypeModule;
 use multiversx_sc::{
@@ -261,19 +261,6 @@ fn test_update_esdt_safe_config() {
     state
         .common_setup
         .deploy_phase_two(OptionalValue::None, None);
-    state
-        .common_setup
-        .world
-        .query()
-        .to(SOVEREIGN_FORGE_SC_ADDRESS)
-        .whitebox(sovereign_forge::contract_obj, |sc| {
-            let is_header_verifier_deployed = sc
-                .is_contract_deployed(&OWNER_ADDRESS.to_managed_address(), ScArray::HeaderVerifier);
-
-            assert!(is_header_verifier_deployed);
-        });
-
-    state.common_setup.deploy_phase_three(None, None);
     state
         .common_setup
         .world
@@ -838,7 +825,7 @@ fn test_deploy_phase_two_without_first_phase() {
 /// Call deploy_phase_two
 ///
 /// ### EXPECTED
-/// Header-Verifier is deployed and address is set in the storage
+/// ESDT-Safe is deployed and address is set in the storage
 #[test]
 fn test_deploy_phase_two() {
     let mut state = SovereignForgeTestState::new();
@@ -847,6 +834,7 @@ fn test_deploy_phase_two() {
     state
         .common_setup
         .deploy_chain_config(OptionalValue::None, None);
+    state.common_setup.deploy_mvx_esdt_safe(OptionalValue::None);
     state.finish_setup();
 
     let deploy_cost = BigUint::from(DEPLOY_COST);
@@ -854,11 +842,6 @@ fn test_deploy_phase_two() {
     state
         .common_setup
         .deploy_phase_one(&deploy_cost, None, OptionalValue::None, None);
-    let contracts_array = state
-        .common_setup
-        .get_contract_info_struct_for_sc_type(vec![ScArray::ESDTSafe]);
-
-    state.common_setup.deploy_header_verifier(contracts_array);
 
     state
         .common_setup
@@ -870,10 +853,10 @@ fn test_deploy_phase_two() {
         .query()
         .to(SOVEREIGN_FORGE_SC_ADDRESS)
         .whitebox(sovereign_forge::contract_obj, |sc| {
-            let is_header_verifier_deployed = sc
-                .is_contract_deployed(&OWNER_ADDRESS.to_managed_address(), ScArray::HeaderVerifier);
+            let is_esdt_safe_deployed =
+                sc.is_contract_deployed(&OWNER_ADDRESS.to_managed_address(), ScArray::ESDTSafe);
 
-            assert!(is_header_verifier_deployed);
+            assert!(is_esdt_safe_deployed);
         })
 }
 
@@ -884,7 +867,7 @@ fn test_deploy_phase_two() {
 /// Call deploy_phase_two two times
 ///
 /// ### EXPECTED
-/// Error HEADER_VERIFIER_ALREADY_DEPLOYED
+/// Error ESDT_SAFE_ALREADY_DEPLOYED
 #[test]
 fn test_deploy_phase_two_header_already_deployed() {
     let mut state = SovereignForgeTestState::new();
@@ -893,6 +876,7 @@ fn test_deploy_phase_two_header_already_deployed() {
     state
         .common_setup
         .deploy_chain_config(OptionalValue::None, None);
+    state.common_setup.deploy_mvx_esdt_safe(OptionalValue::None);
     state.finish_setup();
 
     let deploy_cost = BigUint::from(DEPLOY_COST);
@@ -900,18 +884,14 @@ fn test_deploy_phase_two_header_already_deployed() {
     state
         .common_setup
         .deploy_phase_one(&deploy_cost, None, OptionalValue::None, None);
-    let contracts_array = state
-        .common_setup
-        .get_contract_info_struct_for_sc_type(vec![ScArray::ESDTSafe]);
-
-    state.common_setup.deploy_header_verifier(contracts_array);
 
     state
         .common_setup
         .deploy_phase_two(OptionalValue::None, None);
+
     state
         .common_setup
-        .deploy_phase_two(OptionalValue::None, Some(HEADER_VERIFIER_ALREADY_DEPLOYED));
+        .deploy_phase_two(OptionalValue::None, Some(ESDT_SAFE_ALREADY_DEPLOYED));
 }
 
 /// ### TEST
@@ -937,12 +917,11 @@ fn test_deploy_phase_three() {
     state
         .common_setup
         .deploy_phase_one(&deploy_cost, None, OptionalValue::None, None);
-    let contracts_array = state
-        .common_setup
-        .get_contract_info_struct_for_sc_type(vec![ScArray::ESDTSafe]);
 
-    state.common_setup.deploy_header_verifier(contracts_array);
     state.common_setup.deploy_mvx_esdt_safe(OptionalValue::None);
+    state
+        .common_setup
+        .deploy_fee_market(None, ESDT_SAFE_ADDRESS);
 
     state
         .common_setup
@@ -969,7 +948,7 @@ fn test_deploy_phase_three() {
 /// Call deploy_phase_three without the phase one
 ///
 /// ### EXPECTED
-/// Error HEADER_VERIFIER_NOT_DEPLOYED
+/// Error ESDT_SAFE_NOT_DEPLOYED
 #[test]
 fn test_deploy_phase_three_without_phase_one() {
     let mut state = SovereignForgeTestState::new();
@@ -982,7 +961,7 @@ fn test_deploy_phase_three_without_phase_one() {
 
     state
         .common_setup
-        .deploy_phase_three(None, Some(HEADER_VERIFIER_NOT_DEPLOYED));
+        .deploy_phase_three(None, Some(ESDT_SAFE_NOT_DEPLOYED));
 }
 
 /// ### TEST
@@ -992,7 +971,7 @@ fn test_deploy_phase_three_without_phase_one() {
 /// Call deploy_phase_three without the phase two
 ///
 /// ### EXPECTED
-/// Error HEADER_VERIFIER_NOT_DEPLOYED
+/// Error ESDT_SAFE_NOT_DEPLOYED
 #[test]
 fn test_deploy_phase_three_without_phase_two() {
     let mut state = SovereignForgeTestState::new();
@@ -1017,7 +996,7 @@ fn test_deploy_phase_three_without_phase_two() {
 
     state
         .common_setup
-        .deploy_phase_three(None, Some(HEADER_VERIFIER_NOT_DEPLOYED));
+        .deploy_phase_three(None, Some(ESDT_SAFE_NOT_DEPLOYED));
 }
 
 /// ### TEST
@@ -1027,7 +1006,7 @@ fn test_deploy_phase_three_without_phase_two() {
 /// Call deploy_phase_three two times
 ///
 /// ### EXPECTED
-/// Error ESDT_SAFE_ALREADY_DEPLOYED
+/// Error FEE_MARKET_ALREADY_DEPLOYED
 #[test]
 fn test_deploy_phase_three_already_deployed() {
     let mut state = SovereignForgeTestState::new();
@@ -1043,12 +1022,10 @@ fn test_deploy_phase_three_already_deployed() {
         .common_setup
         .deploy_phase_one(&deploy_cost, None, OptionalValue::None, None);
 
-    let contracts_array = state
-        .common_setup
-        .get_contract_info_struct_for_sc_type(vec![ScArray::ESDTSafe]);
-
-    state.common_setup.deploy_header_verifier(contracts_array);
     state.common_setup.deploy_mvx_esdt_safe(OptionalValue::None);
+    state
+        .common_setup
+        .deploy_fee_market(None, ESDT_SAFE_ADDRESS);
 
     state
         .common_setup
@@ -1056,7 +1033,7 @@ fn test_deploy_phase_three_already_deployed() {
     state.common_setup.deploy_phase_three(None, None);
     state
         .common_setup
-        .deploy_phase_three(None, Some(ESDT_SAFE_ALREADY_DEPLOYED));
+        .deploy_phase_three(None, Some(FEE_MARKET_ALREADY_DEPLOYED));
 }
 
 /// ### TEST
@@ -1074,7 +1051,7 @@ fn test_complete_setup_phase_four_not_deployed() {
     state
         .common_setup
         .deploy_fee_market(None, ESDT_SAFE_ADDRESS);
-    state.complete_setup_phase(Some(FEE_MARKET_NOT_DEPLOYED));
+    state.complete_setup_phase(Some(HEADER_VERIFIER_NOT_DEPLOYED));
 }
 
 /// ### TEST
@@ -1166,7 +1143,7 @@ fn test_deploy_phase_four_without_previous_phase() {
         .deploy_phase_two(OptionalValue::None, None);
     state
         .common_setup
-        .deploy_phase_four(Some(ESDT_SAFE_NOT_DEPLOYED));
+        .deploy_phase_four(Some(FEE_MARKET_NOT_DEPLOYED));
 }
 
 /// ### TEST
