@@ -9,7 +9,7 @@ use header_verifier::{Headerverifier, OperationHashStatus};
 use header_verifier_blackbox_setup::*;
 use multiversx_sc::{imports::OptionalValue, types::ManagedBuffer};
 use multiversx_sc_scenario::{DebugApi, ScenarioTxWhitebox};
-use structs::forge::{ContractInfo, ScArray};
+use structs::forge::ScArray;
 
 mod header_verifier_blackbox_setup;
 
