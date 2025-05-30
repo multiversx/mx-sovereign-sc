@@ -1,6 +1,5 @@
 #![no_std]
 
-use cross_chain::events;
 use multiversx_sc::imports::*;
 use structs::{configs::SovereignConfig, generate_hash::GenerateHash};
 
@@ -12,8 +11,8 @@ pub mod validator_rules;
 pub trait ChainConfigContract:
     validator_rules::ValidatorRulesModule
     + setup_phase::SetupPhaseModule
-    + events::EventsModule
     + utils::UtilsModule
+    + events::EventsModule
 {
     #[init]
     fn init(&self, opt_config: OptionalValue<SovereignConfig<Self::Api>>) {
