@@ -1,10 +1,12 @@
 use error_messages::{
-    INVALID_PERCENTAGE_SUM, INVALID_TOKEN_PROVIDED_FOR_FEE, PAYMENT_DOES_NOT_COVER_FEE,
-    TOKEN_NOT_ACCEPTED_AS_FEE,
+    ERROR_AT_ENCODING, INVALID_PERCENTAGE_SUM, INVALID_TOKEN_PROVIDED_FOR_FEE,
+    PAYMENT_DOES_NOT_COVER_FEE, TOKEN_NOT_ACCEPTED_AS_FEE,
 };
+use multiversx_sc::api::SHA256_RESULT_LEN;
 use structs::{
     aliases::GasLimit,
     fee::{AddressPercentagePair, FeeType, FinalPayment, SubtractPaymentArguments},
+    generate_hash::GenerateHash,
 };
 
 multiversx_sc::imports!();
@@ -18,6 +20,7 @@ pub trait SubtractFeeModule:
     + crate::fee_common::CommonFeeModule
     + crate::price_aggregator::PriceAggregatorModule
     + utils::UtilsModule
+    + setup_phase::SetupPhaseModule
 {
     #[only_owner]
     #[endpoint(addUsersToWhitelist)]
@@ -36,20 +39,34 @@ pub trait SubtractFeeModule:
     #[endpoint(distributeFees)]
     fn distribute_fees(
         &self,
+        hash_of_hashes: ManagedBuffer,
         address_percentage_pairs: MultiValueEncoded<MultiValue2<ManagedAddress, usize>>,
     ) {
+        self.require_setup_complete();
+
         let percentage_total = BigUint::from(TOTAL_PERCENTAGE);
 
         let mut percentage_sum = 0u64;
         let mut pairs = ManagedVec::<Self::Api, AddressPercentagePair<Self::Api>>::new();
+        let mut aggregated_hashes = ManagedBuffer::new();
+
         for pair in address_percentage_pairs {
             let (address, percentage) = pair.into_tuple();
-            pairs.push(AddressPercentagePair {
+            let pair_struct = AddressPercentagePair {
                 address,
                 percentage,
-            });
+            };
+
+            let pair_hash = pair_struct.generate_hash();
+            aggregated_hashes.append(&pair_hash);
+            pairs.push(pair_struct);
+
             percentage_sum += percentage as u64;
         }
+
+        let pairs_hash = self.compute_aggregated_pairs_hash(&aggregated_hashes);
+
+        self.lock_operation_hash(&hash_of_hashes, &pairs_hash);
 
         require!(
             percentage_sum == TOTAL_PERCENTAGE as u64,
@@ -81,6 +98,8 @@ pub trait SubtractFeeModule:
         }
 
         self.tokens_for_fees().clear();
+
+        self.remove_executed_hash(&hash_of_hashes, &pairs_hash);
     }
 
     #[payable("*")]
@@ -228,6 +247,16 @@ pub trait SubtractFeeModule:
                 remaining_amount,
             ),
         }
+    }
+
+    fn compute_aggregated_pairs_hash(&self, aggregated_hash: &ManagedBuffer) -> ManagedBuffer {
+        let mut serialized_data = ManagedBuffer::new();
+        if aggregated_hash.top_encode(&mut serialized_data).is_err() {
+            sc_panic!(ERROR_AT_ENCODING);
+        }
+
+        let sha256 = self.crypto().sha256(&serialized_data);
+        sha256.as_managed_buffer().clone()
     }
 
     #[view(getUsersWhitelist)]

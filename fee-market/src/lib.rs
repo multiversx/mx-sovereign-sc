@@ -25,7 +25,7 @@ pub trait FeeMarket:
         self.esdt_safe_address().set(esdt_safe_address);
 
         match fee {
-            Some(fee_struct) => self.set_fee(fee_struct),
+            Some(fee_struct) => self.set_fee_in_storage(&fee_struct),
             _ => self.fee_enabled().set(false),
         }
     }

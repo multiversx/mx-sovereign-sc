@@ -1,4 +1,6 @@
-use crate::aliases::GasLimit;
+use multiversx_sc::api::CryptoApi;
+
+use crate::{aliases::GasLimit, generate_hash::GenerateHash};
 
 multiversx_sc::imports!();
 multiversx_sc::derive_imports!();
@@ -26,6 +28,9 @@ pub struct FeeStruct<M: ManagedTypeApi> {
     pub fee_type: FeeType<M>,
 }
 
+impl<A: CryptoApi> GenerateHash<A> for FeeStruct<A> {}
+impl<A: CryptoApi> GenerateHash<A> for TokenIdentifier<A> {}
+
 #[type_abi]
 #[derive(TopEncode, TopDecode)]
 pub struct FinalPayment<M: ManagedTypeApi> {
@@ -33,11 +38,14 @@ pub struct FinalPayment<M: ManagedTypeApi> {
     pub remaining_tokens: EsdtTokenPayment<M>,
 }
 
+#[type_abi]
 #[derive(TopEncode, TopDecode, ManagedVecItem)]
 pub struct AddressPercentagePair<M: ManagedTypeApi> {
     pub address: ManagedAddress<M>,
     pub percentage: usize,
 }
+
+impl<A: CryptoApi> GenerateHash<A> for AddressPercentagePair<A> {}
 
 pub struct SubtractPaymentArguments<M: ManagedTypeApi> {
     pub fee_token: TokenIdentifier<M>,
