@@ -1,5 +1,11 @@
 #![allow(non_snake_case)]
 
+use error_messages::{
+    NO_KNOWN_CHAIN_CONFIG_SC, NO_KNOWN_CHAIN_FACTORY_SC, NO_KNOWN_ENSHRINE_ESDT_SAFE_SC,
+    NO_KNOWN_FEE_MARKET, NO_KNOWN_FEE_TOKEN, NO_KNOWN_FIRST_TOKEN, NO_KNOWN_HEADER_VERIFIER,
+    NO_KNOWN_MVX_ESDT_SAFE, NO_KNOWN_SECOND_TOKEN, NO_KNOWN_SOVEREIGN_FORGE_SC,
+    NO_KNOWN_TESTING_SC, NO_KNOWN_TOKEN_HANDLER_SC,
+};
 use multiversx_sc_snippets::imports::*;
 use serde::{Deserialize, Serialize};
 use std::{
@@ -97,79 +103,102 @@ impl State {
     pub fn current_mvx_esdt_safe_contract_address(&self) -> &Bech32Address {
         self.mvx_esdt_safe_address
             .as_ref()
-            .expect("no known contract, deploy first")
+            .expect(NO_KNOWN_MVX_ESDT_SAFE)
     }
 
     pub fn current_header_verifier_address(&self) -> &Bech32Address {
         self.header_verfier_address
             .as_ref()
-            .expect("no known header verifier contract, deploy first")
+            .expect(NO_KNOWN_HEADER_VERIFIER)
     }
 
     pub fn current_fee_market_address(&self) -> &Bech32Address {
-        self.fee_market_address
-            .as_ref()
-            .expect("no known fee market contract, deploy first")
+        self.fee_market_address.as_ref().expect(NO_KNOWN_FEE_MARKET)
     }
 
     pub fn current_testing_sc_address(&self) -> &Bech32Address {
-        self.testing_sc_address
-            .as_ref()
-            .expect("no known testing SC contract, deploy first")
+        self.testing_sc_address.as_ref().expect(NO_KNOWN_TESTING_SC)
     }
 
     pub fn current_chain_config_sc_address(&self) -> &Bech32Address {
         self.chain_config_sc_address
             .as_ref()
-            .expect("no known chain config SC contract, deploy first")
+            .expect(NO_KNOWN_CHAIN_CONFIG_SC)
     }
 
     pub fn current_sovereign_forge_sc_address(&self) -> &Bech32Address {
         self.sovereign_forge_sc_address
             .as_ref()
-            .expect("no known sovereign forge SC, deploy first")
+            .expect(NO_KNOWN_SOVEREIGN_FORGE_SC)
     }
 
     pub fn current_chain_factory_sc_address(&self) -> &Bech32Address {
         self.chain_factory_sc_address
             .as_ref()
-            .expect("no known chain factory SC, deploy first")
+            .expect(NO_KNOWN_CHAIN_FACTORY_SC)
     }
 
     pub fn current_enshrine_esdt_safe_address(&self) -> &Bech32Address {
         self.enshrine_esdt_safe_sc_address
             .as_ref()
-            .expect("no known enshrine esdt safe SC, deploy first")
+            .expect(NO_KNOWN_ENSHRINE_ESDT_SAFE_SC)
     }
 
     pub fn current_token_handler_address(&self) -> &Bech32Address {
         self.token_handler_address
             .as_ref()
-            .expect("no known token handler SC, deploy first")
+            .expect(NO_KNOWN_TOKEN_HANDLER_SC)
     }
 
-    pub fn get_first_token_id(&self) -> &str {
+    pub fn get_first_token_id_string(&self) -> String {
         self.first_token
             .as_ref()
-            .expect("no known first token, issue first")
+            .expect(NO_KNOWN_FIRST_TOKEN)
             .token_id
-            .as_str()
+            .clone()
     }
 
-    pub fn get_fee_token_id(&self) -> &str {
+    pub fn get_fee_token_id_string(&self) -> String {
         self.fee_token
             .as_ref()
-            .expect("no known fee token, issue first")
+            .expect(NO_KNOWN_FEE_TOKEN)
             .token_id
-            .as_str()
+            .clone()
     }
 
-    pub fn get_second_token_id(&self) -> &str {
+    pub fn get_second_token_id_string(&self) -> String {
         self.second_token
             .as_ref()
-            .expect("no known second token, issue first")
+            .expect(NO_KNOWN_SECOND_TOKEN)
+            .token_id
+            .clone()
+    }
+
+    pub fn get_first_token_id(&self) -> TokenIdentifier<StaticApi> {
+        self.first_token
+            .as_ref()
+            .expect(NO_KNOWN_FIRST_TOKEN)
             .token_id
             .as_str()
+            .into()
+    }
+
+    pub fn get_fee_token_id(&self) -> TokenIdentifier<StaticApi> {
+        self.fee_token
+            .as_ref()
+            .expect(NO_KNOWN_FEE_TOKEN)
+            .token_id
+            .as_str()
+            .into()
+    }
+
+    pub fn get_second_token_id(&self) -> TokenIdentifier<StaticApi> {
+        self.second_token
+            .as_ref()
+            .expect(NO_KNOWN_SECOND_TOKEN)
+            .token_id
+            .as_str()
+            .into()
     }
 }
 

@@ -32,7 +32,7 @@ impl CommonInteractorTrait for MvxEsdtSafeInteract {
         &mut self.state
     }
 
-    fn wallet_address(&mut self) -> &Address {
+    fn wallet_address(&self) -> &Address {
         &self.owner_address
     }
 }
@@ -114,77 +114,61 @@ impl MvxEsdtSafeInteract {
         self.state.set_second_token(second_token);
     }
 
-    pub async fn issue_and_mint_all_types_of_tokens(&mut self) {
-        let first_token_struct = IssueTokenStruct {
-            token_display_name: "FUNG".to_string(),
-            token_ticker: "FUNG".to_string(),
-            token_type: EsdtTokenType::Fungible,
-            num_decimals: 18,
-        };
-
-        let first_token_mint = MintTokenStruct {
-            name: None,
-            amount: BigUint::from(ONE_THOUSAND_TOKENS),
-            attributes: None,
-        };
-
-        self.issue_and_mint_token(first_token_struct, first_token_mint)
-            .await;
-
-        let second_token_struct = IssueTokenStruct {
+    pub async fn issue_and_mint_the_remaining_types_of_tokens(&mut self) {
+        let nft_token_struct = IssueTokenStruct {
             token_display_name: "NFT".to_string(),
             token_ticker: "NFT".to_string(),
             token_type: EsdtTokenType::NonFungible,
             num_decimals: 0,
         };
-        let second_token_mint = MintTokenStruct {
+        let nft_token_mint = MintTokenStruct {
             name: Some("NFT".to_string()),
             amount: BigUint::from(1u64),
             attributes: None,
         };
-        self.issue_and_mint_token(second_token_struct, second_token_mint)
+        self.issue_and_mint_token(nft_token_struct, nft_token_mint)
             .await;
 
-        let third_token_struct = IssueTokenStruct {
+        let sft_token_struct = IssueTokenStruct {
             token_display_name: "SFT".to_string(),
             token_ticker: "SFT".to_string(),
             token_type: EsdtTokenType::SemiFungible,
             num_decimals: 0,
         };
-        let third_token_mint = MintTokenStruct {
+        let sft_token_mint = MintTokenStruct {
             name: Some("SFT".to_string()),
             amount: BigUint::from(ONE_THOUSAND_TOKENS),
             attributes: None,
         };
-        self.issue_and_mint_token(third_token_struct, third_token_mint)
+        self.issue_and_mint_token(sft_token_struct, sft_token_mint)
             .await;
 
-        let forth_token_struct = IssueTokenStruct {
+        let dyn_token_struct = IssueTokenStruct {
             token_display_name: "DYN".to_string(),
             token_ticker: "DYN".to_string(),
             token_type: EsdtTokenType::DynamicNFT,
             num_decimals: 10,
         };
-        let forth_token_mint = MintTokenStruct {
+        let dyn_token_mint = MintTokenStruct {
             name: Some("DYN".to_string()),
             amount: BigUint::from(1u64),
             attributes: None,
         };
-        self.issue_and_mint_token(forth_token_struct, forth_token_mint)
+        self.issue_and_mint_token(dyn_token_struct, dyn_token_mint)
             .await;
 
-        let fifth_token_struct = IssueTokenStruct {
+        let meta_token_struct = IssueTokenStruct {
             token_display_name: "META".to_string(),
             token_ticker: "META".to_string(),
             token_type: EsdtTokenType::Meta,
             num_decimals: 18,
         };
-        let fifth_token_mint = MintTokenStruct {
+        let meta_token_mint = MintTokenStruct {
             name: Some("META".to_string()),
             amount: BigUint::from(ONE_THOUSAND_TOKENS),
             attributes: None,
         };
-        self.issue_and_mint_token(fifth_token_struct, fifth_token_mint)
+        self.issue_and_mint_token(meta_token_struct, meta_token_mint)
             .await;
     }
 
