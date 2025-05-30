@@ -12,7 +12,7 @@ pub trait FeeTypeModule:
     utils::UtilsModule + setup_phase::SetupPhaseModule + events::EventsModule
 {
     #[only_owner]
-    #[endpoint(removeFee)]
+    #[endpoint(removeFeeDuringSetupPhase)]
     fn remove_fee_during_setup_phase(&self, base_token: TokenIdentifier) {
         self.token_fee(&base_token).clear();
         self.fee_enabled().set(false);
@@ -33,7 +33,7 @@ pub trait FeeTypeModule:
     }
 
     #[only_owner]
-    #[endpoint(setFee)]
+    #[endpoint(setFeeDuringSetupPhase)]
     fn set_fee_during_setup_phase(&self, fee_struct: FeeStruct<Self::Api>) {
         if let Some(set_fee_error_msg) = self.set_fee_in_storage(&fee_struct) {
             sc_panic!(set_fee_error_msg);

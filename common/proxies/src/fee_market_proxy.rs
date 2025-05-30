@@ -118,7 +118,23 @@ where
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
+            .raw_call("removeFeeDuringSetupPhase")
+            .argument(&base_token)
+            .original_result()
+    }
+
+    pub fn remove_fee<
+        Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
+        Arg1: ProxyArg<TokenIdentifier<Env::Api>>,
+    >(
+        self,
+        hash_of_hashes: Arg0,
+        base_token: Arg1,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
             .raw_call("removeFee")
+            .argument(&hash_of_hashes)
             .argument(&base_token)
             .original_result()
     }
@@ -131,7 +147,23 @@ where
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
+            .raw_call("setFeeDuringSetupPhase")
+            .argument(&fee_struct)
+            .original_result()
+    }
+
+    pub fn set_fee<
+        Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
+        Arg1: ProxyArg<structs::fee::FeeStruct<Env::Api>>,
+    >(
+        self,
+        hash_of_hashes: Arg0,
+        fee_struct: Arg1,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
             .raw_call("setFee")
+            .argument(&hash_of_hashes)
             .argument(&fee_struct)
             .original_result()
     }
