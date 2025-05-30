@@ -437,7 +437,7 @@ impl BaseSetup {
             .run();
     }
 
-    pub fn set_fee(
+    pub fn set_fee_during_setup_phase(
         &mut self,
         fee_struct: Option<FeeStruct<StaticApi>>,
         error_message: Option<&str>,
@@ -448,7 +448,26 @@ impl BaseSetup {
             .from(OWNER_ADDRESS)
             .to(FEE_MARKET_ADDRESS)
             .typed(FeeMarketProxy)
-            .set_fee(fee_struct.unwrap())
+            .set_fee_during_setup_phase(fee_struct.unwrap())
+            .returns(ReturnsHandledOrError::new())
+            .run();
+
+        self.assert_expected_error_message(response, error_message);
+    }
+
+    pub fn set_fee(
+        &mut self,
+        hash_of_hashes: &ManagedBuffer<StaticApi>,
+        fee_struct: Option<FeeStruct<StaticApi>>,
+        error_message: Option<&str>,
+    ) {
+        let response = self
+            .world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .to(FEE_MARKET_ADDRESS)
+            .typed(FeeMarketProxy)
+            .set_fee(hash_of_hashes, fee_struct.unwrap())
             .returns(ReturnsHandledOrError::new())
             .run();
 

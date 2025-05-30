@@ -111,6 +111,7 @@ name = "fee-market"
 version = "0.1.0"
 dependencies = [
  "error-messages",
+ "events",
  "multiversx-sc",
  "proxies",
  "setup-phase",
