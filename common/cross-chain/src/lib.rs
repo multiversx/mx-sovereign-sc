@@ -5,7 +5,6 @@ use structs::configs::EsdtSafeConfig;
 multiversx_sc::imports!();
 
 pub mod deposit_common;
-pub mod events;
 pub mod execute_common;
 pub mod storage;
 

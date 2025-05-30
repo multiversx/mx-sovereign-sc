@@ -26,6 +26,7 @@ version = "0.1.0"
 dependencies = [
  "cross-chain",
  "error-messages",
+ "events",
  "multiversx-sc",
  "multiversx-sc-modules",
  "proxies",
@@ -70,6 +71,15 @@ name = "error-messages"
 version = "0.1.0"
 
 [[package]]
+name = "events"
+version = "0.1.0"
+dependencies = [
+ "multiversx-sc",
+ "multiversx-sc-modules",
+ "structs",
+]
+
+[[package]]
 name = "fee-market"
 version = "0.1.0"
 dependencies = [
@@ -96,6 +106,7 @@ version = "0.1.0"
 dependencies = [
  "cross-chain",
  "error-messages",
+ "events",
  "multiversx-sc",
  "proxies",
  "setup-phase",
@@ -202,6 +213,7 @@ dependencies = [
  "chain-config",
  "cross-chain",
  "error-messages",
+ "events",
  "fee-market",
  "header-verifier",
  "multiversx-sc",
