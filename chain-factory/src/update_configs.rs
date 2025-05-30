@@ -46,7 +46,7 @@ pub trait UpdateConfigsModule: only_admin::OnlyAdminModule {
         self.tx()
             .to(fee_market_address)
             .typed(FeeMarketProxy)
-            .set_fee(new_fee)
+            .set_fee_during_setup_phase(new_fee)
             .sync_call();
     }
 
@@ -56,7 +56,7 @@ pub trait UpdateConfigsModule: only_admin::OnlyAdminModule {
         self.tx()
             .to(fee_market_address)
             .typed(FeeMarketProxy)
-            .remove_fee(token_id)
+            .remove_fee_during_setup_phase(token_id)
             .sync_call();
     }
 }
