@@ -29,6 +29,9 @@ path = "../common/structs"
 [dependencies.cross-chain]
 path = "../common/cross-chain"
 
+[dependencies.events]
+path = "../common/events"
+
 [dependencies.setup-phase]
 path = "../common/setup-phase"
 

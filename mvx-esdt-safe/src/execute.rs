@@ -15,7 +15,7 @@ pub trait ExecuteModule:
     + crate::register_token::RegisterTokenModule
     + utils::UtilsModule
     + setup_phase::SetupPhaseModule
-    + cross_chain::events::EventsModule
+    + events::EventsModule
     + cross_chain::storage::CrossChainStorage
     + cross_chain::deposit_common::DepositCommonModule
     + cross_chain::execute_common::ExecuteCommonModule

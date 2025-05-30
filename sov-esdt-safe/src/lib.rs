@@ -13,7 +13,7 @@ pub trait SovEsdtSafe:
     + cross_chain::deposit_common::DepositCommonModule
     + cross_chain::execute_common::ExecuteCommonModule
     + cross_chain::storage::CrossChainStorage
-    + cross_chain::events::EventsModule
+    + events::EventsModule
     + utils::UtilsModule
     + multiversx_sc_modules::pause::PauseModule
 {

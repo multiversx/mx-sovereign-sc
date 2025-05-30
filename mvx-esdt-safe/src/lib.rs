@@ -18,7 +18,7 @@ pub trait MvxEsdtSafe:
     + register_token::RegisterTokenModule
     + bridging_mechanism::BridgingMechanism
     + cross_chain::deposit_common::DepositCommonModule
-    + cross_chain::events::EventsModule
+    + events::EventsModule
     + cross_chain::storage::CrossChainStorage
     + cross_chain::execute_common::ExecuteCommonModule
     + multiversx_sc_modules::pause::PauseModule

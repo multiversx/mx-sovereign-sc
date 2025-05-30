@@ -1,3 +1,5 @@
+#![no_std]
+
 use structs::{aliases::EventPaymentTuple, operation::OperationData};
 
 multiversx_sc::imports!();

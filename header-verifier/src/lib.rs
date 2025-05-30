@@ -20,9 +20,7 @@ pub enum OperationHashStatus {
 }
 
 #[multiversx_sc::contract]
-pub trait Headerverifier:
-    cross_chain::events::EventsModule + setup_phase::SetupPhaseModule
-{
+pub trait Headerverifier: events::EventsModule + setup_phase::SetupPhaseModule {
     #[init]
     fn init(&self, sovereign_contracts: MultiValueEncoded<ContractInfo<Self::Api>>) {
         self.sovereign_contracts().extend(sovereign_contracts);
