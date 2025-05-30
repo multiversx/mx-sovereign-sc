@@ -626,6 +626,7 @@ version = "0.1.0"
 dependencies = [
  "common-test-setup",
  "error-messages",
+ "events",
  "multiversx-sc",
  "multiversx-sc-scenario",
  "num-bigint",

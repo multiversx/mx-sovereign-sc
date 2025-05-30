@@ -2,7 +2,6 @@ use error_messages::{
     ERROR_AT_ENCODING, INVALID_PERCENTAGE_SUM, INVALID_TOKEN_PROVIDED_FOR_FEE,
     PAYMENT_DOES_NOT_COVER_FEE, TOKEN_NOT_ACCEPTED_AS_FEE,
 };
-use multiversx_sc::api::SHA256_RESULT_LEN;
 use structs::{
     aliases::GasLimit,
     fee::{AddressPercentagePair, FeeType, FinalPayment, SubtractPaymentArguments},
@@ -21,6 +20,7 @@ pub trait SubtractFeeModule:
     + crate::price_aggregator::PriceAggregatorModule
     + utils::UtilsModule
     + setup_phase::SetupPhaseModule
+    + events::EventsModule
 {
     #[only_owner]
     #[endpoint(addUsersToWhitelist)]
@@ -68,10 +68,17 @@ pub trait SubtractFeeModule:
 
         self.lock_operation_hash(&hash_of_hashes, &pairs_hash);
 
-        require!(
-            percentage_sum == TOTAL_PERCENTAGE as u64,
-            INVALID_PERCENTAGE_SUM
-        );
+        if percentage_sum == TOTAL_PERCENTAGE as u64 {
+            self.failed_bridge_operation_event(
+                &hash_of_hashes,
+                &pairs_hash,
+                &ManagedBuffer::from(INVALID_PERCENTAGE_SUM),
+            );
+
+            self.remove_executed_hash(&hash_of_hashes, &pairs_hash);
+
+            return;
+        }
 
         for token_id in self.tokens_for_fees().iter() {
             let accumulated_fees = self.accumulated_fees(&token_id).get();
@@ -100,6 +107,7 @@ pub trait SubtractFeeModule:
         self.tokens_for_fees().clear();
 
         self.remove_executed_hash(&hash_of_hashes, &pairs_hash);
+        self.execute_bridge_operation_event(&hash_of_hashes, &pairs_hash);
     }
 
     #[payable("*")]
