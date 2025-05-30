@@ -1,4 +1,4 @@
-use error_messages::{INVALID_FEE, INVALID_FEE_TYPE};
+use error_messages::{INVALID_FEE, INVALID_FEE_TYPE, INVALID_TOKEN_ID};
 use structs::{
     fee::{FeeStruct, FeeType},
     generate_hash::GenerateHash,
@@ -8,7 +8,9 @@ multiversx_sc::imports!();
 multiversx_sc::derive_imports!();
 
 #[multiversx_sc::module]
-pub trait FeeTypeModule: utils::UtilsModule + setup_phase::SetupPhaseModule {
+pub trait FeeTypeModule:
+    utils::UtilsModule + setup_phase::SetupPhaseModule + events::EventsModule
+{
     #[only_owner]
     #[endpoint(setFee)]
     fn set_fee(&self, hash_of_hashes: ManagedBuffer, fee_struct: FeeStruct<Self::Api>) {
@@ -17,13 +19,25 @@ pub trait FeeTypeModule: utils::UtilsModule + setup_phase::SetupPhaseModule {
         let fee_hash = fee_struct.generate_hash();
         self.lock_operation_hash(&hash_of_hashes, &fee_hash);
 
-        self.set_fee_in_storage(&fee_struct);
+        if let Some(set_fee_error_msg) = self.set_fee_in_storage(&fee_struct) {
+            self.failed_bridge_operation_event(
+                &hash_of_hashes,
+                &fee_hash,
+                &ManagedBuffer::from(set_fee_error_msg),
+            );
+            self.remove_executed_hash(&hash_of_hashes, &fee_hash);
+
+            return;
+        }
 
         self.remove_executed_hash(&hash_of_hashes, &fee_hash);
+        self.execute_bridge_operation_event(&hash_of_hashes, &fee_hash);
     }
 
-    fn set_fee_in_storage(&self, fee_struct: &FeeStruct<Self::Api>) {
-        self.require_valid_token_id(&fee_struct.base_token);
+    fn set_fee_in_storage(&self, fee_struct: &FeeStruct<Self::Api>) -> Option<&str> {
+        if !self.is_valid_token_id(&fee_struct.base_token) {
+            return Some(INVALID_TOKEN_ID);
+        }
 
         let token = match &fee_struct.fee_type {
             FeeType::None => sc_panic!(INVALID_FEE_TYPE),
@@ -43,10 +57,15 @@ pub trait FeeTypeModule: utils::UtilsModule + setup_phase::SetupPhaseModule {
             } => base_fee_token,
         };
 
-        self.require_valid_token_id(token);
+        if !self.is_valid_token_id(token) {
+            return Some(INVALID_TOKEN_ID);
+        }
+
         self.fee_enabled().set(true);
         self.token_fee(&fee_struct.base_token)
             .set(fee_struct.fee_type.clone());
+
+        None
     }
 
     fn is_fee_enabled(&self) -> bool {

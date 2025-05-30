@@ -6,7 +6,7 @@ multiversx_sc::imports!();
 multiversx_sc::derive_imports!();
 
 #[type_abi]
-#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, Clone)]
+#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, Clone, PartialEq)]
 pub enum FeeType<M: ManagedTypeApi> {
     None,
     Fixed {

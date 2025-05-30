@@ -36,8 +36,8 @@ pub trait UtilsModule {
         );
     }
 
-    fn require_valid_token_id(&self, token_id: &TokenIdentifier) {
-        require!(token_id.is_valid_esdt_identifier(), INVALID_TOKEN_ID);
+    fn is_valid_token_id(&self, token_id: &TokenIdentifier) -> bool {
+        token_id.is_valid_esdt_identifier()
     }
 
     fn remove_items<
