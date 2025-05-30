@@ -23,15 +23,15 @@ fn test_deploy_fee_market() {
 }
 
 /// ### TEST
-/// F-MARKET_SET_FEE_FAIL
+/// F-MARKET_set_fee_during_setup_phase_FAIL
 ///
 /// ### ACTION
-/// Call 'set_fee()' with wrong parameters
+/// Call 'set_fee_during_setup_phase()' with wrong parameters
 ///
 /// ### EXPECTED
 /// Errors: INVALID_TOKEN_ID, INVALID_FEE_TYPE, INVALID_FEE
 #[test]
-fn test_set_fee_wrong_params() {
+fn test_set_fee_during_setup_phase_wrong_params() {
     let mut state = FeeMarketTestState::new();
 
     let fee = state.get_fee();
@@ -40,13 +40,13 @@ fn test_set_fee_wrong_params() {
         .common_setup
         .deploy_fee_market(Some(fee), ESDT_SAFE_ADDRESS);
 
-    state.set_fee(WRONG_TOKEN_ID, "Fixed", Some(INVALID_TOKEN_ID));
+    state.set_fee_during_setup_phase(WRONG_TOKEN_ID, "Fixed", Some(INVALID_TOKEN_ID));
 
-    state.set_fee(FIRST_TEST_TOKEN, "None", Some(INVALID_FEE_TYPE));
+    state.set_fee_during_setup_phase(FIRST_TEST_TOKEN, "None", Some(INVALID_FEE_TYPE));
 
-    state.set_fee(SECOND_TEST_TOKEN, "Fixed", Some(INVALID_FEE));
+    state.set_fee_during_setup_phase(SECOND_TEST_TOKEN, "Fixed", Some(INVALID_FEE));
 
-    state.set_fee(FIRST_TEST_TOKEN, "AnyTokenWrong", Some(INVALID_TOKEN_ID));
+    state.set_fee_during_setup_phase(FIRST_TEST_TOKEN, "AnyTokenWrong", Some(INVALID_TOKEN_ID));
 }
 
 /// ### TEST
@@ -67,7 +67,7 @@ fn test_substract_fee_no_fee() {
         .common_setup
         .deploy_fee_market(Some(fee), ESDT_SAFE_ADDRESS);
 
-    state.remove_fee();
+    state.remove_fee_during_setup_phase();
 
     state.substract_fee("Correct", None);
 

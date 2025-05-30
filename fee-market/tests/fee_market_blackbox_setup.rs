@@ -110,18 +110,18 @@ impl FeeMarketTestState {
             .assert_expected_error_message(response, expected_error_message);
     }
 
-    pub fn remove_fee(&mut self) {
+    pub fn remove_fee_during_setup_phase(&mut self) {
         self.common_setup
             .world
             .tx()
             .from(OWNER_ADDRESS)
             .to(FEE_MARKET_ADDRESS)
             .typed(FeeMarketProxy)
-            .remove_fee(FIRST_TEST_TOKEN.to_token_identifier())
+            .remove_fee_during_setup_phase(FIRST_TEST_TOKEN.to_token_identifier())
             .run();
     }
 
-    pub fn set_fee(
+    pub fn set_fee_during_setup_phase(
         &mut self,
         token_id: TestTokenIdentifier,
         fee_type: &str,
@@ -180,7 +180,7 @@ impl FeeMarketTestState {
             .from(OWNER_ADDRESS)
             .to(FEE_MARKET_ADDRESS)
             .typed(FeeMarketProxy)
-            .set_fee(fee_struct)
+            .set_fee_during_setup_phase(fee_struct)
             .returns(ReturnsHandledOrError::new())
             .run();
 
