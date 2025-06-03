@@ -455,7 +455,7 @@ impl BaseSetup {
 
     pub fn set_fee_during_setup_phase(
         &mut self,
-        fee_struct: Option<FeeStruct<StaticApi>>,
+        fee_struct: FeeStruct<StaticApi>,
         error_message: Option<&str>,
     ) {
         let response = self
@@ -464,7 +464,7 @@ impl BaseSetup {
             .from(OWNER_ADDRESS)
             .to(FEE_MARKET_ADDRESS)
             .typed(FeeMarketProxy)
-            .set_fee_during_setup_phase(fee_struct.unwrap())
+            .set_fee_during_setup_phase(fee_struct)
             .returns(ReturnsHandledOrError::new())
             .run();
 
