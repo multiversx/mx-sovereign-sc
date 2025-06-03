@@ -580,9 +580,10 @@ impl BaseSetup {
                 );
             }
             Some(expected_str) => {
-                if expected_str.is_empty() {
-                    panic!("Expected log string cannot be empty");
-                }
+                assert!(
+                    !expected_str.is_empty(),
+                    "Expected log string cannot be empty"
+                );
                 let expected_bytes = ManagedBuffer::<StaticApi>::from(expected_str).to_vec();
 
                 let found_log = logs

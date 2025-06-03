@@ -550,9 +550,10 @@ pub trait CommonInteractorTrait {
                 );
             }
             Some(expected_log) => {
-                if expected_log.is_empty() {
-                    panic!("Expected log string cannot be empty");
-                }
+                assert!(
+                    !expected_log.is_empty(),
+                    "Expected log string cannot be empty"
+                );
                 let expected_bytes = ManagedBuffer::<StaticApi>::from(expected_log).to_vec();
 
                 let found_log = logs.iter().find(|log| {
