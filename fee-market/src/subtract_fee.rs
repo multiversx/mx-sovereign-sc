@@ -1,6 +1,6 @@
 use error_messages::{
-    ERROR_AT_ENCODING, INVALID_PERCENTAGE_SUM, INVALID_TOKEN_PROVIDED_FOR_FEE,
-    PAYMENT_DOES_NOT_COVER_FEE, TOKEN_NOT_ACCEPTED_AS_FEE,
+    INVALID_PERCENTAGE_SUM, INVALID_TOKEN_PROVIDED_FOR_FEE, PAYMENT_DOES_NOT_COVER_FEE,
+    TOKEN_NOT_ACCEPTED_AS_FEE,
 };
 use structs::{
     aliases::GasLimit,
@@ -68,7 +68,7 @@ pub trait SubtractFeeModule:
 
         self.lock_operation_hash(&hash_of_hashes, pairs_hash_byte_array.as_managed_buffer());
 
-        if !percentage_sum == TOTAL_PERCENTAGE as u64 {
+        if percentage_sum != TOTAL_PERCENTAGE as u64 {
             self.failed_bridge_operation_event(
                 &hash_of_hashes,
                 pairs_hash_byte_array.as_managed_buffer(),
