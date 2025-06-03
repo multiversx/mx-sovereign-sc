@@ -24,6 +24,7 @@ pub const DEPLOY_COST_NOT_ENOUGH: &str =
 pub const DEPOSIT_AMOUNT_SMALLER_THAN_PAYMENT_AMOUNT: &str =
     "The deposit amount should not be less than the payment amount";
 pub const DEPOSIT_OVER_MAX_AMOUNT: &str = "Deposit over max amount";
+pub const EMPTY_EXPECTED_LOG: &str = "Expected log string cannot be empty";
 pub const ENDPOINT_CAN_ONLY_BE_CALLED_BY_ADMIN: &str = "Endpoint can only be called by admins";
 pub const ERR_EMPTY_PAYMENTS: &str = "No payments";
 pub const ESDT_SAFE_ADDRESS_NOT_SET: &str = "The ESDT-Safe address is not set";
