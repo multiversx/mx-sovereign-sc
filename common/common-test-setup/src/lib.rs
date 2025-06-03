@@ -9,6 +9,7 @@ use constants::{
     TOKEN_HANDLER_CODE_PATH, TOKEN_HANDLER_SC_ADDRESS,
 };
 use cross_chain::storage::CrossChainStorage;
+use error_messages::EMPTY_EXPECTED_LOG;
 use header_verifier::{Headerverifier, OperationHashStatus};
 use multiversx_sc_scenario::{
     api::StaticApi,
@@ -580,10 +581,7 @@ impl BaseSetup {
                 );
             }
             Some(expected_str) => {
-                assert!(
-                    !expected_str.is_empty(),
-                    "Expected log string cannot be empty"
-                );
+                assert!(!expected_str.is_empty(), "{}", EMPTY_EXPECTED_LOG);
                 let expected_bytes = ManagedBuffer::<StaticApi>::from(expected_str).to_vec();
 
                 let found_log = logs

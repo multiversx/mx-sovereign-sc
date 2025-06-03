@@ -6,7 +6,7 @@ use common_test_setup::constants::{
     FEE_MARKET_CODE_PATH, HEADER_VERIFIER_CODE_PATH, ISSUE_COST, MVX_ESDT_SAFE_CODE_PATH,
     SOVEREIGN_FORGE_CODE_PATH, TESTING_SC_CODE_PATH, TOKEN_HANDLER_CODE_PATH,
 };
-use error_messages::FAILED_TO_PARSE_AS_NUMBER;
+use error_messages::{EMPTY_EXPECTED_LOG, FAILED_TO_PARSE_AS_NUMBER};
 use multiversx_sc::{
     codec::{num_bigint, TopEncode},
     imports::{ESDTSystemSCProxy, OptionalValue, UserBuiltinProxy},
@@ -550,10 +550,7 @@ pub trait CommonInteractorTrait {
                 );
             }
             Some(expected_log) => {
-                assert!(
-                    !expected_log.is_empty(),
-                    "Expected log string cannot be empty"
-                );
+                assert!(!expected_log.is_empty(), "{}", EMPTY_EXPECTED_LOG);
                 let expected_bytes = ManagedBuffer::<StaticApi>::from(expected_log).to_vec();
 
                 let found_log = logs.iter().find(|log| {
@@ -566,7 +563,11 @@ pub trait CommonInteractorTrait {
                     })
                 });
 
-                assert!(found_log.is_some(), "Expected log not found");
+                assert!(
+                    found_log.is_some(),
+                    "Expected log '{}' not found",
+                    expected_log
+                );
             }
         }
     }
