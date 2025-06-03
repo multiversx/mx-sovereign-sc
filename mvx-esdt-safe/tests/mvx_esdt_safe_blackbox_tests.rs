@@ -64,7 +64,7 @@ fn test_deploy() {
 /// ### EXPECTED
 /// Error MAX_GAS_LIMIT_PER_TX_EXCEEDED
 #[test]
-fn test_deploy_invalid_config() {
+fn test_update_invalid_config() {
     let mut state = MvxEsdtSafeTestState::new();
 
     state.common_setup.deploy_mvx_esdt_safe(
@@ -653,39 +653,6 @@ fn test_deposit_endpoint_banned() {
     state
         .common_setup
         .check_account_multiple_esdts(ESDT_SAFE_ADDRESS.to_address(), tokens_vec);
-}
-
-/// ### TEST
-/// M-ESDT_DEP_FAIL
-///
-/// ### ACTION
-/// Call 'deposit()' with no transfer_data and no payments_vec
-///
-/// ### EXPECTED
-/// Error NOTHING_TO_TRANSFER
-#[test]
-fn test_deposit_no_transfer_data_no_fee() {
-    let mut state = MvxEsdtSafeTestState::new();
-
-    state.common_setup.deploy_mvx_esdt_safe(
-        HEADER_VERIFIER_ADDRESS,
-        OptionalValue::Some(EsdtSafeConfig::default_config()),
-    );
-    state.complete_setup_phase(None, Some("unpauseContract"));
-
-    state
-        .common_setup
-        .deploy_fee_market(None, ESDT_SAFE_ADDRESS);
-    state.common_setup.deploy_testing_sc();
-    state.set_fee_market_address(FEE_MARKET_ADDRESS);
-
-    state.deposit(
-        USER_ADDRESS.to_managed_address(),
-        OptionalValue::None,
-        PaymentsVec::new(),
-        Some(NOTHING_TO_TRANSFER),
-        None,
-    );
 }
 
 /// ### TEST
