@@ -464,6 +464,14 @@ fn test_remove_fee_register_with_one_hash_of_hashes() {
         });
 }
 
+/// ### TEST
+/// F-MARKET_DISTRIBUTE_FEES_ERR
+///
+/// ### ACTION
+/// Call 'distribute_fees()' when setup is not completed
+///
+/// ### EXPECTED
+/// Error CALLER_NOT_OWNER
 #[test]
 fn distribute_fees_setup_not_completed() {
     let mut state = FeeMarketTestState::new();
@@ -479,6 +487,14 @@ fn distribute_fees_setup_not_completed() {
     state.distribute_fees(&ManagedBuffer::new(), vec![], Some(CALLER_NOT_OWNER), None);
 }
 
+/// ### TEST
+/// F-MARKET_DISTRIBUTE_FEES_ERR
+///
+/// ### ACTION
+/// Call 'distribute_fees()' when operation is not registered
+///
+/// ### EXPECTED
+/// Error CURRENT_OPERATION_NOT_REGISTERED
 #[test]
 fn distribute_fees_operation_not_registered() {
     let mut state = FeeMarketTestState::new();
@@ -509,6 +525,14 @@ fn distribute_fees_operation_not_registered() {
     );
 }
 
+/// ### TEST
+/// F-MARKET_DISTRIBUTE_FEES_ERR
+///
+/// ### ACTION
+/// Call 'distribute_fees()' with one pair
+///
+/// ### EXPECTED
+/// OWNER balance is unchanged, `failedBridgeOp` event emitted
 #[test]
 fn distribute_fees_percentage_under_limit() {
     let mut state = FeeMarketTestState::new();
@@ -560,6 +584,14 @@ fn distribute_fees_percentage_under_limit() {
     );
 }
 
+/// ### TEST
+/// F-MARKET_DISTRIBUTE_FEES_OK
+///
+/// ### ACTION
+/// Call 'distribute_fees()' with one pair
+///
+/// ### EXPECTED
+/// OWNER balance is changed, `executedBridgeOp` event emitted
 #[test]
 fn distribute_fees() {
     let mut state = FeeMarketTestState::new();
@@ -568,9 +600,22 @@ fn distribute_fees() {
         .common_setup
         .deploy_chain_config(OptionalValue::None, None);
 
+    let fee_per_transfer = BigUint::from(100u32);
+
+    let fee = FeeStruct {
+        base_token: FIRST_TEST_TOKEN.to_token_identifier(),
+        fee_type: FeeType::Fixed {
+            token: FIRST_TEST_TOKEN.to_token_identifier(),
+            per_transfer: fee_per_transfer.clone(),
+            per_gas: BigUint::default(),
+        },
+    };
+
     state
         .common_setup
-        .deploy_fee_market(None, ESDT_SAFE_ADDRESS);
+        .deploy_fee_market(Some(fee), ESDT_SAFE_ADDRESS);
+
+    state.subtract_fee("Correct", None);
 
     state.common_setup.complete_fee_market_setup_phase(None);
 
@@ -608,6 +653,13 @@ fn distribute_fees() {
         vec![address_pair_tuple],
         None,
         Some("executedBridgeOp"),
+    );
+
+    state.common_setup.check_account_single_esdt(
+        OWNER_ADDRESS.to_address(),
+        FIRST_TEST_TOKEN,
+        0,
+        BigUint::from(OWNER_BALANCE) + fee_per_transfer,
     );
 }
 
@@ -688,7 +740,7 @@ fn test_subtract_fee_whitelisted() {
 }
 
 /// ### TEST
-/// F-MARKET_subtract_FEE_FAIL
+/// F-MARKET_SUBTRACT_FEE_FAIL
 ///
 /// ### ACTION
 /// Call 'subtract_fee()' with an invalid payment token
@@ -723,7 +775,7 @@ fn test_subtract_fee_invalid_payment_token() {
 }
 
 /// ### TEST
-/// F-MARKET_subtract_FEE_FAIL
+/// F-MARKET_SUBTRACT_FEE_FAIL
 ///
 /// ### ACTION
 /// Call 'subtract_fee()' with not enough tokens to cover the fee
