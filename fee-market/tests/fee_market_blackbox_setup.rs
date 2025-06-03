@@ -68,7 +68,7 @@ impl FeeMarketTestState {
         }
     }
 
-    pub fn substract_fee(&mut self, payment_wanted: &str, expected_error_message: Option<&str>) {
+    pub fn subtract_fee(&mut self, payment_wanted: &str, expected_error_message: Option<&str>) {
         let payment: EsdtTokenPayment<StaticApi> = match payment_wanted {
             "Correct" => EsdtTokenPayment::new(
                 FIRST_TEST_TOKEN.to_token_identifier(),

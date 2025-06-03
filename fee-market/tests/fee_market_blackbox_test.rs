@@ -612,15 +612,15 @@ fn distribute_fees() {
 }
 
 /// ### TEST
-/// F-MARKET_SUBSTRACT_FEE_OK
+/// F-MARKET_subtract_FEE_OK
 ///
 /// ### ACTION
-/// Call 'substract_fee()' with no fee set
+/// Call 'subtract_fee()' with no fee set
 ///
 /// ### EXPECTED
 /// User balance is unchanged
 #[test]
-fn test_substract_fee_no_fee() {
+fn test_subtract_fee_no_fee() {
     let mut state = FeeMarketTestState::new();
 
     let fee = state.get_fee();
@@ -631,7 +631,7 @@ fn test_substract_fee_no_fee() {
 
     state.remove_fee_during_setup_phase();
 
-    state.substract_fee("Correct", None);
+    state.subtract_fee("Correct", None);
 
     state.common_setup.check_account_single_esdt(
         ESDT_SAFE_ADDRESS.to_address(),
@@ -649,15 +649,15 @@ fn test_substract_fee_no_fee() {
 }
 
 /// ### TEST
-/// F-MARKET_SUBSTRACT_FEE_OK
+/// F-MARKET_subtract_FEE_OK
 ///
 /// ### ACTION
-/// Call 'substract_fee()' with a whitelisted user
+/// Call 'subtract_fee()' with a whitelisted user
 ///
 /// ### EXPECTED
 /// User balance is unchanged
 #[test]
-fn test_substract_fee_whitelisted() {
+fn test_subtract_fee_whitelisted() {
     let mut state = FeeMarketTestState::new();
 
     let fee = state.get_fee();
@@ -670,7 +670,7 @@ fn test_substract_fee_whitelisted() {
 
     state.add_users_to_whitelist(whitelisted_users);
 
-    state.substract_fee("Correct", None);
+    state.subtract_fee("Correct", None);
 
     state.common_setup.check_account_single_esdt(
         ESDT_SAFE_ADDRESS.to_address(),
@@ -688,15 +688,15 @@ fn test_substract_fee_whitelisted() {
 }
 
 /// ### TEST
-/// F-MARKET_SUBSTRACT_FEE_FAIL
+/// F-MARKET_subtract_FEE_FAIL
 ///
 /// ### ACTION
-/// Call 'substract_fee()' with an invalid payment token
+/// Call 'subtract_fee()' with an invalid payment token
 ///
 /// ### EXPECTED
 /// Error TOKEN_NOT_ACCEPTED_AS_FEE
 #[test]
-fn test_substract_fee_invalid_payment_token() {
+fn test_subtract_fee_invalid_payment_token() {
     let mut state = FeeMarketTestState::new();
 
     let fee = state.get_fee();
@@ -705,7 +705,7 @@ fn test_substract_fee_invalid_payment_token() {
         .common_setup
         .deploy_fee_market(Some(fee), ESDT_SAFE_ADDRESS);
 
-    state.substract_fee("InvalidToken", Some(TOKEN_NOT_ACCEPTED_AS_FEE));
+    state.subtract_fee("InvalidToken", Some(TOKEN_NOT_ACCEPTED_AS_FEE));
 
     state.common_setup.check_account_single_esdt(
         ESDT_SAFE_ADDRESS.to_address(),
@@ -723,15 +723,15 @@ fn test_substract_fee_invalid_payment_token() {
 }
 
 /// ### TEST
-/// F-MARKET_SUBSTRACT_FEE_FAIL
+/// F-MARKET_subtract_FEE_FAIL
 ///
 /// ### ACTION
-/// Call 'substract_fee()' with not enough tokens to cover the fee
+/// Call 'subtract_fee()' with not enough tokens to cover the fee
 ///
 /// ### EXPECTED
 /// Error PAYMENT_DOES_NOT_COVER_FEE
 #[test]
-fn test_substract_fixed_fee_payment_not_covered() {
+fn test_subtract_fixed_fee_payment_not_covered() {
     let mut state = FeeMarketTestState::new();
 
     let fee = state.get_fee();
@@ -743,7 +743,7 @@ fn test_substract_fixed_fee_payment_not_covered() {
         .common_setup
         .change_ownership_to_header_verifier(FEE_MARKET_ADDRESS);
 
-    state.substract_fee("Less than fee", Some(PAYMENT_DOES_NOT_COVER_FEE));
+    state.subtract_fee("Less than fee", Some(PAYMENT_DOES_NOT_COVER_FEE));
 
     state.common_setup.check_account_single_esdt(
         ESDT_SAFE_ADDRESS.to_address(),
@@ -761,15 +761,15 @@ fn test_substract_fixed_fee_payment_not_covered() {
 }
 
 /// ### TEST
-/// F-MARKET_SUBSTRACT_FEE_OK
+/// F-MARKET_subtract_FEE_OK
 ///
 /// ### ACTION
-/// Call 'substract_fee()' with payment bigger than fee
+/// Call 'subtract_fee()' with payment bigger than fee
 ///
 /// ### EXPECTED
 /// User balance is refunded with the difference
 #[test]
-fn test_substract_fee_fixed_payment_bigger_than_fee() {
+fn test_subtract_fee_fixed_payment_bigger_than_fee() {
     let mut state = FeeMarketTestState::new();
 
     let fee = state.get_fee();
@@ -781,7 +781,7 @@ fn test_substract_fee_fixed_payment_bigger_than_fee() {
         .common_setup
         .change_ownership_to_header_verifier(FEE_MARKET_ADDRESS);
 
-    state.substract_fee("Correct", None);
+    state.subtract_fee("Correct", None);
 
     state.common_setup.check_account_single_esdt(
         ESDT_SAFE_ADDRESS.to_address(),
