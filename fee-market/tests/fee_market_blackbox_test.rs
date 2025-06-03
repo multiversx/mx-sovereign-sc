@@ -55,13 +55,21 @@ fn test_set_fee_during_setup_phase_wrong_params() {
         .common_setup
         .deploy_fee_market(Some(fee), ESDT_SAFE_ADDRESS);
 
-    state.set_fee_during_setup_phase(WRONG_TOKEN_ID, "Fixed", Some(INVALID_TOKEN_ID));
+    state.set_fee_during_setup_phase(WRONG_TOKEN_ID, WantedFeeType::Fixed, Some(INVALID_TOKEN_ID));
 
-    state.set_fee_during_setup_phase(FIRST_TEST_TOKEN, "None", Some(INVALID_FEE_TYPE));
+    state.set_fee_during_setup_phase(
+        FIRST_TEST_TOKEN,
+        WantedFeeType::None,
+        Some(INVALID_FEE_TYPE),
+    );
 
-    state.set_fee_during_setup_phase(SECOND_TEST_TOKEN, "Fixed", Some(INVALID_FEE));
+    state.set_fee_during_setup_phase(SECOND_TEST_TOKEN, WantedFeeType::Fixed, Some(INVALID_FEE));
 
-    state.set_fee_during_setup_phase(FIRST_TEST_TOKEN, "AnyTokenWrong", Some(INVALID_TOKEN_ID));
+    state.set_fee_during_setup_phase(
+        FIRST_TEST_TOKEN,
+        WantedFeeType::AnyTokenWrong,
+        Some(INVALID_TOKEN_ID),
+    );
 }
 
 /// ### TEST
@@ -615,7 +623,13 @@ fn distribute_fees() {
         .common_setup
         .deploy_fee_market(Some(fee), ESDT_SAFE_ADDRESS);
 
-    state.subtract_fee("Correct", None);
+    state.subtract_fee(
+        WantedFeeType::Correct,
+        USER_ADDRESS.to_address(),
+        1u64 as usize,
+        OptionalValue::Some(30u64),
+        None,
+    );
 
     state.common_setup.complete_fee_market_setup_phase(None);
 
@@ -681,9 +695,15 @@ fn test_subtract_fee_no_fee() {
         .common_setup
         .deploy_fee_market(Some(fee), ESDT_SAFE_ADDRESS);
 
-    state.remove_fee_during_setup_phase();
+    state.remove_fee_during_setup_phase(FIRST_TEST_TOKEN);
 
-    state.subtract_fee("Correct", None);
+    state.subtract_fee(
+        WantedFeeType::Correct,
+        USER_ADDRESS.to_address(),
+        1u64 as usize,
+        OptionalValue::Some(30u64),
+        None,
+    );
 
     state.common_setup.check_account_single_esdt(
         ESDT_SAFE_ADDRESS.to_address(),
@@ -722,7 +742,13 @@ fn test_subtract_fee_whitelisted() {
 
     state.add_users_to_whitelist(whitelisted_users);
 
-    state.subtract_fee("Correct", None);
+    state.subtract_fee(
+        WantedFeeType::Correct,
+        USER_ADDRESS.to_address(),
+        1u64 as usize,
+        OptionalValue::Some(30u64),
+        None,
+    );
 
     state.common_setup.check_account_single_esdt(
         ESDT_SAFE_ADDRESS.to_address(),
@@ -757,7 +783,13 @@ fn test_subtract_fee_invalid_payment_token() {
         .common_setup
         .deploy_fee_market(Some(fee), ESDT_SAFE_ADDRESS);
 
-    state.subtract_fee("InvalidToken", Some(TOKEN_NOT_ACCEPTED_AS_FEE));
+    state.subtract_fee(
+        WantedFeeType::InvalidToken,
+        USER_ADDRESS.to_address(),
+        1u64 as usize,
+        OptionalValue::Some(30u64),
+        Some(TOKEN_NOT_ACCEPTED_AS_FEE),
+    );
 
     state.common_setup.check_account_single_esdt(
         ESDT_SAFE_ADDRESS.to_address(),
@@ -795,7 +827,13 @@ fn test_subtract_fixed_fee_payment_not_covered() {
         .common_setup
         .change_ownership_to_header_verifier(FEE_MARKET_ADDRESS);
 
-    state.subtract_fee("Less than fee", Some(PAYMENT_DOES_NOT_COVER_FEE));
+    state.subtract_fee(
+        WantedFeeType::LessThanFee,
+        USER_ADDRESS.to_address(),
+        1u64 as usize,
+        OptionalValue::Some(30u64),
+        Some(PAYMENT_DOES_NOT_COVER_FEE),
+    );
 
     state.common_setup.check_account_single_esdt(
         ESDT_SAFE_ADDRESS.to_address(),
@@ -833,7 +871,13 @@ fn test_subtract_fee_fixed_payment_bigger_than_fee() {
         .common_setup
         .change_ownership_to_header_verifier(FEE_MARKET_ADDRESS);
 
-    state.subtract_fee("Correct", None);
+    state.subtract_fee(
+        WantedFeeType::Correct,
+        USER_ADDRESS.to_address(),
+        1u64 as usize,
+        OptionalValue::Some(30u64),
+        None,
+    );
 
     state.common_setup.check_account_single_esdt(
         ESDT_SAFE_ADDRESS.to_address(),
