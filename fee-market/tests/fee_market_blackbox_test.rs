@@ -38,7 +38,7 @@ fn test_deploy_fee_market() {
 }
 
 /// ### TEST
-/// F-MARKET_set_fee_during_setup_phase_FAIL
+/// F-MARKET_SET_FEE_DURING_SETUP_PHASE_FAIL
 ///
 /// ### ACTION
 /// Call 'set_fee_during_setup_phase()' with wrong parameters
