@@ -115,17 +115,18 @@ pub trait SubtractFeeModule:
 
     #[payable("*")]
     #[endpoint(subtractFee)]
-    fn subtract_fee(&self, fee_context: FeeContext<Self::Api>) -> FinalPayment<Self::Api> {
+    fn subtract_fee(
+        &self,
+        original_caller: ManagedAddress,
+        total_transfers: usize,
+        opt_gas_limit: OptionalValue<GasLimit>,
+    ) -> FinalPayment<Self::Api> {
         self.require_caller_esdt_safe();
 
         let caller = self.blockchain().get_caller();
         let payment = self.call_value().single_esdt().clone();
 
-        if !self.is_fee_enabled()
-            || self
-                .users_whitelist()
-                .contains(&fee_context.original_caller)
-        {
+        if !self.is_fee_enabled() || self.users_whitelist().contains(&original_caller) {
             self.tx().to(&caller).payment(payment.clone()).transfer();
 
             return FinalPayment {
@@ -134,11 +135,7 @@ pub trait SubtractFeeModule:
             };
         }
 
-        let final_payment = self.subtract_fee_by_type(
-            payment,
-            fee_context.total_transfers,
-            fee_context.opt_gas_limit.into(),
-        );
+        let final_payment = self.subtract_fee_by_type(payment, total_transfers, opt_gas_limit);
 
         self.tokens_for_fees()
             .insert(final_payment.fee.token_identifier.clone());
@@ -148,7 +145,7 @@ pub trait SubtractFeeModule:
 
         if final_payment.remaining_tokens.amount > 0 {
             self.tx()
-                .to(&fee_context.original_caller)
+                .to(&original_caller)
                 .payment(&final_payment.remaining_tokens)
                 .transfer();
         }

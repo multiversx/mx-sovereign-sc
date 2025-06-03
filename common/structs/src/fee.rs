@@ -47,16 +47,6 @@ pub struct AddressPercentagePair<M: ManagedTypeApi> {
 
 impl<A: CryptoApi> GenerateHash<A> for AddressPercentagePair<A> {}
 
-#[type_abi]
-#[derive(TopEncode, TopDecode)]
-pub struct FeeContext<M: ManagedTypeApi> {
-    pub original_caller: ManagedAddress<M>,
-    pub total_transfers: usize,
-    pub opt_gas_limit: Option<GasLimit>,
-}
-
-impl<A: CryptoApi> GenerateHash<A> for FeeContext<A> {}
-
 pub struct SubtractPaymentArguments<M: ManagedTypeApi> {
     pub fee_token: TokenIdentifier<M>,
     pub per_transfer: BigUint<M>,
