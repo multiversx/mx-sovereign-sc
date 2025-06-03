@@ -465,7 +465,7 @@ fn test_remove_fee_register_with_one_hash_of_hashes() {
 }
 
 /// ### TEST
-/// F-MARKET_DISTRIBUTE_FEES_ERR
+/// F-MARKET_DISTRIBUTE_FEES_FAIL
 ///
 /// ### ACTION
 /// Call 'distribute_fees()' when setup is not completed
@@ -488,7 +488,7 @@ fn distribute_fees_setup_not_completed() {
 }
 
 /// ### TEST
-/// F-MARKET_DISTRIBUTE_FEES_ERR
+/// F-MARKET_DISTRIBUTE_FEES_FAIL
 ///
 /// ### ACTION
 /// Call 'distribute_fees()' when operation is not registered
@@ -526,7 +526,7 @@ fn distribute_fees_operation_not_registered() {
 }
 
 /// ### TEST
-/// F-MARKET_DISTRIBUTE_FEES_ERR
+/// F-MARKET_DISTRIBUTE_FEES_FAIL
 ///
 /// ### ACTION
 /// Call 'distribute_fees()' with one pair
