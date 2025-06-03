@@ -1,8 +1,8 @@
 use multiversx_sc::{
     imports::{MultiValue2, OptionalValue},
     types::{
-        BigUint, EsdtTokenPayment, ManagedAddress, ManagedBuffer, ManagedVec, MultiValueEncoded,
-        TestAddress, TestTokenIdentifier,
+        Address, BigUint, EsdtTokenPayment, ManagedAddress, ManagedBuffer, ManagedVec,
+        MultiValueEncoded, TestAddress, TestTokenIdentifier,
     },
 };
 use multiversx_sc_scenario::{api::StaticApi, ReturnsHandledOrError, ReturnsLogs, ScenarioTxRun};
@@ -20,6 +20,15 @@ use structs::fee::{FeeStruct, FeeType};
 
 pub struct FeeMarketTestState {
     pub common_setup: BaseSetup,
+}
+
+pub enum WantedFeeType {
+    Correct,
+    InvalidToken,
+    LessThanFee,
+    AnyTokenWrong,
+    None,
+    Fixed,
 }
 
 impl FeeMarketTestState {
@@ -68,31 +77,31 @@ impl FeeMarketTestState {
         }
     }
 
-    pub fn subtract_fee(&mut self, payment_wanted: &str, expected_error_message: Option<&str>) {
+    pub fn subtract_fee(
+        &mut self,
+        payment_wanted: WantedFeeType,
+        original_caller: Address,
+        total_transfers: usize,
+        opt_gas_limit: OptionalValue<u64>,
+        expected_error_message: Option<&str>,
+    ) {
         let payment: EsdtTokenPayment<StaticApi> = match payment_wanted {
-            "Correct" => EsdtTokenPayment::new(
+            WantedFeeType::Correct => EsdtTokenPayment::new(
                 FIRST_TEST_TOKEN.to_token_identifier(),
                 0u64,
                 BigUint::from(200u64),
             ),
-            "InvalidToken" => EsdtTokenPayment::new(
+            WantedFeeType::InvalidToken => EsdtTokenPayment::new(
                 SECOND_TEST_TOKEN.to_token_identifier(),
                 0u64,
                 BigUint::from(10u64),
             ),
-            "AnyToken" => EsdtTokenPayment::new(
-                CROWD_TOKEN_ID.to_token_identifier(),
-                0u64,
-                BigUint::from(10u64),
-            ),
-            "Less than fee" => EsdtTokenPayment::new(
+            WantedFeeType::LessThanFee => EsdtTokenPayment::new(
                 FIRST_TEST_TOKEN.to_token_identifier(),
                 0u64,
                 BigUint::from(0u64),
             ),
-            _ => {
-                panic!("Invalid payment wanted");
-            }
+            _ => panic!("Invalid payment wanted type"),
         };
 
         let response = self
@@ -102,7 +111,7 @@ impl FeeMarketTestState {
             .from(ESDT_SAFE_ADDRESS)
             .to(FEE_MARKET_ADDRESS)
             .typed(FeeMarketProxy)
-            .subtract_fee(USER_ADDRESS, 1u8, OptionalValue::Some(30u64))
+            .subtract_fee(original_caller, total_transfers, opt_gas_limit)
             .payment(payment)
             .returns(ReturnsHandledOrError::new())
             .run();
@@ -111,14 +120,14 @@ impl FeeMarketTestState {
             .assert_expected_error_message(response, expected_error_message);
     }
 
-    pub fn remove_fee_during_setup_phase(&mut self) {
+    pub fn remove_fee_during_setup_phase(&mut self, base_token: TestTokenIdentifier) {
         self.common_setup
             .world
             .tx()
             .from(OWNER_ADDRESS)
             .to(FEE_MARKET_ADDRESS)
             .typed(FeeMarketProxy)
-            .remove_fee_during_setup_phase(FIRST_TEST_TOKEN.to_token_identifier())
+            .remove_fee_during_setup_phase(base_token)
             .run();
     }
 
@@ -177,18 +186,18 @@ impl FeeMarketTestState {
     pub fn set_fee_during_setup_phase(
         &mut self,
         token_id: TestTokenIdentifier,
-        fee_type: &str,
+        fee_type: WantedFeeType,
         expected_error_message: Option<&str>,
     ) {
         let fee_struct: FeeStruct<StaticApi> = match fee_type {
-            "None" => {
+            WantedFeeType::None => {
                 let fee_type = FeeType::None;
                 FeeStruct {
                     base_token: token_id.to_token_identifier(),
                     fee_type,
                 }
             }
-            "Fixed" => {
+            WantedFeeType::Fixed => {
                 let fee_type = FeeType::Fixed {
                     token: FIRST_TEST_TOKEN.to_token_identifier(),
                     per_transfer: BigUint::from(10u8),
@@ -199,18 +208,7 @@ impl FeeMarketTestState {
                     fee_type,
                 }
             }
-            "AnyToken" => {
-                let fee_type = FeeType::AnyToken {
-                    base_fee_token: SECOND_TEST_TOKEN.to_token_identifier(),
-                    per_transfer: BigUint::from(10u8),
-                    per_gas: BigUint::from(10u8),
-                };
-                FeeStruct {
-                    base_token: token_id.to_token_identifier(),
-                    fee_type,
-                }
-            }
-            "AnyTokenWrong" => {
+            WantedFeeType::AnyTokenWrong => {
                 let fee_type = FeeType::AnyToken {
                     base_fee_token: WRONG_TOKEN_ID.to_token_identifier(),
                     per_transfer: BigUint::from(10u8),
