@@ -225,20 +225,14 @@ where
     }
 
     pub fn subtract_fee<
-        Arg0: ProxyArg<ManagedAddress<Env::Api>>,
-        Arg1: ProxyArg<usize>,
-        Arg2: ProxyArg<OptionalValue<u64>>,
+        Arg0: ProxyArg<structs::fee::FeeContext<Env::Api>>,
     >(
         self,
-        original_caller: Arg0,
-        total_transfers: Arg1,
-        opt_gas_limit: Arg2,
+        fee_context: Arg0,
     ) -> TxTypedCall<Env, From, To, (), Gas, structs::fee::FinalPayment<Env::Api>> {
         self.wrapped_tx
             .raw_call("subtractFee")
-            .argument(&original_caller)
-            .argument(&total_transfers)
-            .argument(&opt_gas_limit)
+            .argument(&fee_context)
             .original_result()
     }
 
