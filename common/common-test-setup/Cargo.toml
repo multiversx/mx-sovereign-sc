@@ -44,3 +44,6 @@ path = "../../enshrine-esdt-safe"
 
 [dependencies.token-handler]
 path = "../../token-handler"
+
+[dependencies.error-messages]
+path = "../error-messages"

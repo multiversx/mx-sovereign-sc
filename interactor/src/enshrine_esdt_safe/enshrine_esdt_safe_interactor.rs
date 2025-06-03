@@ -105,6 +105,22 @@ impl EnshrineEsdtSafeInteract {
             .issue_and_mint_token(second_token_struct, second_token_mint)
             .await;
         self.state.set_second_token(second_token);
+
+        let fee_token_mint = MintTokenStruct {
+            name: None,
+            amount: BigUint::from(ONE_THOUSAND_TOKENS),
+            attributes: None,
+        };
+        let fee_token_struct = IssueTokenStruct {
+            token_display_name: "FEE".to_string(),
+            token_ticker: "FEE".to_string(),
+            token_type: EsdtTokenType::Fungible,
+            num_decimals: 18,
+        };
+        let fee_token = self
+            .issue_and_mint_token(fee_token_struct, fee_token_mint)
+            .await;
+        self.state.set_fee_token(fee_token);
     }
 
     //TODO: chain factory is mocked until the dependency cicle is fixed

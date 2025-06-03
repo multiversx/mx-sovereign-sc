@@ -8,7 +8,7 @@ use common_test_setup::constants::{
     ONE_HUNDRED_TOKENS, ONE_THOUSAND_TOKENS, SOVEREIGN_FORGE_CODE_PATH, TESTING_SC_CODE_PATH,
     TOKEN_HANDLER_CODE_PATH,
 };
-use error_messages::FAILED_TO_PARSE_AS_NUMBER;
+use error_messages::{EMPTY_EXPECTED_LOG, FAILED_TO_PARSE_AS_NUMBER};
 use multiversx_sc::{
     codec::{num_bigint, TopEncode},
     imports::{ESDTSystemSCProxy, OptionalValue, UserBuiltinProxy},
@@ -585,6 +585,7 @@ pub trait CommonInteractorTrait {
         println!("Result: {response:?}");
     }
 
+    //NOTE: transferValue returns an empty log and calling this function on it will panic
     fn assert_expected_log(&mut self, logs: Vec<Log>, expected_log: Option<&str>) {
         match expected_log {
             None => {
@@ -595,6 +596,7 @@ pub trait CommonInteractorTrait {
                 );
             }
             Some(expected_log) => {
+                assert!(!expected_log.is_empty(), "{}", EMPTY_EXPECTED_LOG);
                 let expected_bytes = expected_log.as_bytes();
 
                 let found_log = logs.iter().find(|log| {
@@ -607,7 +609,11 @@ pub trait CommonInteractorTrait {
                     })
                 });
 
-                assert!(found_log.is_some(), "Expected log not found");
+                assert!(
+                    found_log.is_some(),
+                    "Expected log '{}' not found",
+                    expected_log
+                );
             }
         }
     }
