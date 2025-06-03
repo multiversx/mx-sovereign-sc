@@ -510,7 +510,7 @@ fn distribute_fees_operation_not_registered() {
 }
 
 #[test]
-fn distribute_fees() {
+fn distribute_fees_percentage_under_limit() {
     let mut state = FeeMarketTestState::new();
 
     state
@@ -539,19 +539,76 @@ fn distribute_fees() {
     let address_pair_tuple =
         MultiValue2::from((address_pair.address.clone(), address_pair.percentage));
     let address_pair_hash = address_pair.generate_hash();
-    // let mut aggregated_hash: ManagedBuffer<StaticApi> = ManagedBuffer::new();
-    // aggregated_hash.append(&address_pair_hash);
+    let pair_hash_byte_array = ManagedBuffer::new_from_bytes(&sha256(&address_pair_hash.to_vec()));
+    let mut aggregated_hash: ManagedBuffer<StaticApi> = ManagedBuffer::new();
+    aggregated_hash.append(&pair_hash_byte_array);
 
-    let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&address_pair_hash.to_vec()));
+    let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&aggregated_hash.to_vec()));
 
     state.common_setup.register_operation(
         CallerAddress::Owner,
         ManagedBuffer::new(),
         &hash_of_hashes,
-        MultiValueEncoded::from_iter(vec![address_pair_hash]),
+        MultiValueEncoded::from_iter(vec![pair_hash_byte_array]),
     );
 
-    state.distribute_fees(&hash_of_hashes, vec![address_pair_tuple], None, None);
+    state.distribute_fees(
+        &hash_of_hashes,
+        vec![address_pair_tuple],
+        None,
+        Some("failedBridgeOp"),
+    );
+}
+
+#[test]
+fn distribute_fees() {
+    let mut state = FeeMarketTestState::new();
+
+    state
+        .common_setup
+        .deploy_chain_config(OptionalValue::None, None);
+
+    state
+        .common_setup
+        .deploy_fee_market(None, ESDT_SAFE_ADDRESS);
+
+    state.common_setup.complete_fee_market_setup_phase(None);
+
+    state
+        .common_setup
+        .deploy_header_verifier(vec![ScArray::ChainConfig, ScArray::FeeMarket]);
+
+    state
+        .common_setup
+        .complete_header_verifier_setup_phase(None);
+
+    let address_pair: AddressPercentagePair<StaticApi> = AddressPercentagePair {
+        address: OWNER_ADDRESS.to_managed_address(),
+        percentage: 10_000,
+    };
+
+    let address_pair_tuple =
+        MultiValue2::from((address_pair.address.clone(), address_pair.percentage));
+    let address_pair_hash = address_pair.generate_hash();
+    let pair_hash_byte_array = ManagedBuffer::new_from_bytes(&sha256(&address_pair_hash.to_vec()));
+    let mut aggregated_hash: ManagedBuffer<StaticApi> = ManagedBuffer::new();
+    aggregated_hash.append(&pair_hash_byte_array);
+
+    let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&aggregated_hash.to_vec()));
+
+    state.common_setup.register_operation(
+        CallerAddress::Owner,
+        ManagedBuffer::new(),
+        &hash_of_hashes,
+        MultiValueEncoded::from_iter(vec![pair_hash_byte_array]),
+    );
+
+    state.distribute_fees(
+        &hash_of_hashes,
+        vec![address_pair_tuple],
+        None,
+        Some("executedBridgeOp"),
+    );
 }
 
 /// ### TEST
