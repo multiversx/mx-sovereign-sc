@@ -4,7 +4,7 @@ use error_messages::{
 };
 use structs::{
     aliases::GasLimit,
-    fee::{AddressPercentagePair, FeeContext, FeeType, FinalPayment, SubtractPaymentArguments},
+    fee::{AddressPercentagePair, FeeType, FinalPayment, SubtractPaymentArguments},
     generate_hash::GenerateHash,
 };
 
