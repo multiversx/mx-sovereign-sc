@@ -539,6 +539,7 @@ pub trait CommonInteractorTrait {
         println!("Result: {response:?}");
     }
 
+    //NOTE: transferValue returns an empty log and calling this function on it will panic
     fn assert_expected_log(&mut self, logs: Vec<Log>, expected_log: Option<&str>) {
         match expected_log {
             None => {
@@ -549,6 +550,9 @@ pub trait CommonInteractorTrait {
                 );
             }
             Some(expected_log) => {
+                if expected_log.is_empty() {
+                    panic!("Expected log string cannot be empty");
+                }
                 let expected_bytes = ManagedBuffer::<StaticApi>::from(expected_log).to_vec();
 
                 let found_log = logs.iter().find(|log| {

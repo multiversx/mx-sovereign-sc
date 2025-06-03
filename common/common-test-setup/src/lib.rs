@@ -569,6 +569,7 @@ impl BaseSetup {
         )
     }
 
+    //NOTE: transferValue returns an empty log and calling this function on it will panic
     pub fn assert_expected_log(&mut self, logs: Vec<Log>, expected_log: Option<&str>) {
         match expected_log {
             None => {
@@ -579,6 +580,9 @@ impl BaseSetup {
                 );
             }
             Some(expected_str) => {
+                if expected_str.is_empty() {
+                    panic!("Expected log string cannot be empty");
+                }
                 let expected_bytes = ManagedBuffer::<StaticApi>::from(expected_str).to_vec();
 
                 let found_log = logs
