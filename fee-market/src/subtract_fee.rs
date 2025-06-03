@@ -64,18 +64,18 @@ pub trait SubtractFeeModule:
             percentage_sum += percentage as u64;
         }
 
-        let pairs_hash = self.compute_aggregated_pairs_hash(&aggregated_hashes);
+        let pairs_hash_byte_array = self.crypto().sha256(aggregated_hashes);
 
-        self.lock_operation_hash(&hash_of_hashes, &pairs_hash);
+        self.lock_operation_hash(&hash_of_hashes, pairs_hash_byte_array.as_managed_buffer());
 
         if !percentage_sum == TOTAL_PERCENTAGE as u64 {
             self.failed_bridge_operation_event(
                 &hash_of_hashes,
-                &pairs_hash,
+                pairs_hash_byte_array.as_managed_buffer(),
                 &ManagedBuffer::from(INVALID_PERCENTAGE_SUM),
             );
 
-            self.remove_executed_hash(&hash_of_hashes, &pairs_hash);
+            self.remove_executed_hash(&hash_of_hashes, pairs_hash_byte_array.as_managed_buffer());
 
             return;
         }
@@ -106,8 +106,11 @@ pub trait SubtractFeeModule:
 
         self.tokens_for_fees().clear();
 
-        self.remove_executed_hash(&hash_of_hashes, &pairs_hash);
-        self.execute_bridge_operation_event(&hash_of_hashes, &pairs_hash);
+        self.remove_executed_hash(&hash_of_hashes, pairs_hash_byte_array.as_managed_buffer());
+        self.execute_bridge_operation_event(
+            &hash_of_hashes,
+            pairs_hash_byte_array.as_managed_buffer(),
+        );
     }
 
     #[payable("*")]
@@ -255,16 +258,6 @@ pub trait SubtractFeeModule:
                 remaining_amount,
             ),
         }
-    }
-
-    fn compute_aggregated_pairs_hash(&self, aggregated_hash: &ManagedBuffer) -> ManagedBuffer {
-        let mut serialized_data = ManagedBuffer::new();
-        if aggregated_hash.top_encode(&mut serialized_data).is_err() {
-            sc_panic!(ERROR_AT_ENCODING);
-        }
-
-        let sha256 = self.crypto().sha256(&serialized_data);
-        sha256.as_managed_buffer().clone()
     }
 
     #[view(getUsersWhitelist)]
