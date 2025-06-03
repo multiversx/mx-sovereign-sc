@@ -1,16 +1,17 @@
 use multiversx_sc::{
-    imports::OptionalValue,
+    imports::{MultiValue2, OptionalValue},
     types::{
-        BigUint, EsdtTokenPayment, ManagedVec, MultiValueEncoded, TestAddress, TestTokenIdentifier,
+        BigUint, EsdtTokenPayment, ManagedAddress, ManagedBuffer, ManagedVec, MultiValueEncoded,
+        TestAddress, TestTokenIdentifier,
     },
 };
-use multiversx_sc_scenario::{api::StaticApi, ReturnsHandledOrError, ScenarioTxRun};
+use multiversx_sc_scenario::{api::StaticApi, ReturnsHandledOrError, ReturnsLogs, ScenarioTxRun};
 
 use common_test_setup::{
     constants::{
         CROWD_TOKEN_ID, ESDT_SAFE_ADDRESS, FEE_MARKET_ADDRESS, FIRST_TEST_TOKEN,
-        MVX_ESDT_SAFE_CODE_PATH, OWNER_ADDRESS, OWNER_BALANCE, SECOND_TEST_TOKEN, USER_ADDRESS,
-        WRONG_TOKEN_ID,
+        HEADER_VERIFIER_ADDRESS, MVX_ESDT_SAFE_CODE_PATH, OWNER_ADDRESS, OWNER_BALANCE,
+        SECOND_TEST_TOKEN, USER_ADDRESS, WRONG_TOKEN_ID,
     },
     AccountSetup, BaseSetup,
 };
@@ -121,6 +122,58 @@ impl FeeMarketTestState {
             .run();
     }
 
+    pub fn remove_fee(
+        &mut self,
+        hash_of_hashes: &ManagedBuffer<StaticApi>,
+        token_id: TestTokenIdentifier,
+        expected_error_message: Option<&str>,
+        expected_custom_log: Option<&str>,
+    ) {
+        let (response, logs) = self
+            .common_setup
+            .world
+            .tx()
+            .from(HEADER_VERIFIER_ADDRESS)
+            .to(FEE_MARKET_ADDRESS)
+            .typed(FeeMarketProxy)
+            .remove_fee(hash_of_hashes, token_id)
+            .returns(ReturnsHandledOrError::new())
+            .returns(ReturnsLogs)
+            .run();
+
+        self.common_setup
+            .assert_expected_error_message(response, expected_error_message);
+
+        self.common_setup
+            .assert_expected_log(logs, expected_custom_log);
+    }
+
+    pub fn set_fee(
+        &mut self,
+        hash_of_hashes: &ManagedBuffer<StaticApi>,
+        fee_struct: &FeeStruct<StaticApi>,
+        expected_error_message: Option<&str>,
+        expected_custom_log: Option<&str>,
+    ) {
+        let (response, logs) = self
+            .common_setup
+            .world
+            .tx()
+            .from(HEADER_VERIFIER_ADDRESS)
+            .to(FEE_MARKET_ADDRESS)
+            .typed(FeeMarketProxy)
+            .set_fee(hash_of_hashes, fee_struct)
+            .returns(ReturnsHandledOrError::new())
+            .returns(ReturnsLogs)
+            .run();
+
+        self.common_setup
+            .assert_expected_error_message(response, expected_error_message);
+
+        self.common_setup
+            .assert_expected_log(logs, expected_custom_log);
+    }
+
     pub fn set_fee_during_setup_phase(
         &mut self,
         token_id: TestTokenIdentifier,
@@ -186,6 +239,35 @@ impl FeeMarketTestState {
 
         self.common_setup
             .assert_expected_error_message(response, expected_error_message);
+    }
+
+    pub fn distribute_fees(
+        &mut self,
+        hash_of_hashes: &ManagedBuffer<StaticApi>,
+        address_percentage_pairs: Vec<MultiValue2<ManagedAddress<StaticApi>, usize>>,
+        expected_error_message: Option<&str>,
+        expected_custom_log: Option<&str>,
+    ) {
+        let (response, logs) = self
+            .common_setup
+            .world
+            .tx()
+            .from(HEADER_VERIFIER_ADDRESS)
+            .to(FEE_MARKET_ADDRESS)
+            .typed(FeeMarketProxy)
+            .distribute_fees(
+                hash_of_hashes,
+                MultiValueEncoded::from_iter(address_percentage_pairs),
+            )
+            .returns(ReturnsHandledOrError::new())
+            .returns(ReturnsLogs)
+            .run();
+
+        self.common_setup
+            .assert_expected_error_message(response, expected_error_message);
+
+        self.common_setup
+            .assert_expected_log(logs, expected_custom_log);
     }
 
     pub fn add_users_to_whitelist(&mut self, users_vector: Vec<TestAddress>) {

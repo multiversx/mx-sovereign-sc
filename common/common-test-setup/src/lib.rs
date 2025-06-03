@@ -195,6 +195,22 @@ impl BaseSetup {
         self.assert_expected_error_message(response, expected_error_message);
     }
 
+    pub fn complete_fee_market_setup_phase(&mut self, expected_error_message: Option<&str>) {
+        let response = self
+            .world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .to(FEE_MARKET_ADDRESS)
+            .typed(FeeMarketProxy)
+            .complete_setup_phase()
+            .returns(ReturnsHandledOrError::new())
+            .run();
+
+        self.change_ownership_to_header_verifier(FEE_MARKET_ADDRESS);
+
+        self.assert_expected_error_message(response, expected_error_message);
+    }
+
     pub fn complete_sovereign_forge_setup_phase(&mut self, expected_error_message: Option<&str>) {
         let response = self
             .world
