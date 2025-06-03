@@ -30,6 +30,7 @@ pub trait FeeTypeModule:
         self.fee_enabled().set(false);
 
         self.remove_executed_hash(&hash_of_hashes, &token_id_hash);
+        self.execute_bridge_operation_event(&hash_of_hashes, &token_id_hash);
     }
 
     #[only_owner]
