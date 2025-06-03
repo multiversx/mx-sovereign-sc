@@ -612,7 +612,7 @@ fn distribute_fees() {
 }
 
 /// ### TEST
-/// F-MARKET_subtract_FEE_OK
+/// F-MARKET_SUBTRACT_FEE_OK
 ///
 /// ### ACTION
 /// Call 'subtract_fee()' with no fee set
@@ -649,7 +649,7 @@ fn test_subtract_fee_no_fee() {
 }
 
 /// ### TEST
-/// F-MARKET_subtract_FEE_OK
+/// F-MARKET_SUBTRACT_FEE_OK
 ///
 /// ### ACTION
 /// Call 'subtract_fee()' with a whitelisted user
@@ -761,7 +761,7 @@ fn test_subtract_fixed_fee_payment_not_covered() {
 }
 
 /// ### TEST
-/// F-MARKET_subtract_FEE_OK
+/// F-MARKET_SUBTRACT_FEE_OK
 ///
 /// ### ACTION
 /// Call 'subtract_fee()' with payment bigger than fee
