@@ -1,7 +1,7 @@
 #![no_std]
 
 use error_messages::{
-    ERR_EMPTY_PAYMENTS, INVALID_SC_ADDRESS, INVALID_TOKEN_ID, ITEM_NOT_IN_LIST, TOKEN_ID_NO_PREFIX,
+    ERR_EMPTY_PAYMENTS, INVALID_SC_ADDRESS, ITEM_NOT_IN_LIST, TOKEN_ID_NO_PREFIX,
 };
 use proxies::header_verifier_proxy::HeaderverifierProxy;
 use structs::aliases::PaymentsVec;
@@ -36,8 +36,8 @@ pub trait UtilsModule {
         );
     }
 
-    fn require_valid_token_id(&self, token_id: &TokenIdentifier) {
-        require!(token_id.is_valid_esdt_identifier(), INVALID_TOKEN_ID);
+    fn is_valid_token_id(&self, token_id: &TokenIdentifier) -> bool {
+        token_id.is_valid_esdt_identifier()
     }
 
     fn remove_items<

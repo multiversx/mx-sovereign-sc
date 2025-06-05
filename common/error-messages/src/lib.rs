@@ -9,6 +9,7 @@ pub const CALLER_DID_NOT_DEPLOY_ANY_SOV_CHAIN: &str =
     "The current caller has not deployed any Sovereign Chain";
 pub const CALLER_NOT_FROM_CURRENT_SOVEREIGN: &str =
     "Caller is not from the current Sovereign-Chain";
+pub const CALLER_NOT_OWNER: &str = "Endpoint can only be called by owner";
 pub const CALLER_IS_NOT_WHITELISTED: &str = "Caller is not whitelisted";
 pub const CANNOT_REGISTER_TOKEN: &str = "Cannot register token";
 pub const COULD_NOT_RETRIEVE_SOVEREIGN_CONFIG: &str = "Error at retrieving Sovereign Config";
@@ -92,3 +93,4 @@ pub const TOKEN_ID_NO_PREFIX: &str = "Token Id does not have prefix";
 pub const TOKEN_IS_FROM_SOVEREIGN: &str = "Token is from a Sovereign Chain, it cannot be locked";
 pub const TOKEN_NOT_ACCEPTED_AS_FEE: &str = "Token not accepted as fee";
 pub const TOO_MANY_TOKENS: &str = "Too many tokens";
+pub const ERROR_AT_ENCODING: &str = "Error at encoding";

@@ -18,6 +18,7 @@ pub trait FeeMarket:
     + price_aggregator::PriceAggregatorModule
     + utils::UtilsModule
     + setup_phase::SetupPhaseModule
+    + events::EventsModule
 {
     #[init]
     fn init(&self, esdt_safe_address: ManagedAddress, fee: Option<FeeStruct<Self::Api>>) {
@@ -25,7 +26,9 @@ pub trait FeeMarket:
         self.esdt_safe_address().set(esdt_safe_address);
 
         match fee {
-            Some(fee_struct) => self.set_fee(fee_struct),
+            Some(fee_struct) => {
+                let _ = self.set_fee_in_storage(&fee_struct);
+            }
             _ => self.fee_enabled().set(false),
         }
     }

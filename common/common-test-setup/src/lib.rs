@@ -195,6 +195,22 @@ impl BaseSetup {
         self.assert_expected_error_message(response, expected_error_message);
     }
 
+    pub fn complete_fee_market_setup_phase(&mut self, expected_error_message: Option<&str>) {
+        let response = self
+            .world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .to(FEE_MARKET_ADDRESS)
+            .typed(FeeMarketProxy)
+            .complete_setup_phase()
+            .returns(ReturnsHandledOrError::new())
+            .run();
+
+        self.change_ownership_to_header_verifier(FEE_MARKET_ADDRESS);
+
+        self.assert_expected_error_message(response, expected_error_message);
+    }
+
     pub fn complete_sovereign_forge_setup_phase(&mut self, expected_error_message: Option<&str>) {
         let response = self
             .world
@@ -437,8 +453,27 @@ impl BaseSetup {
             .run();
     }
 
+    pub fn set_fee_during_setup_phase(
+        &mut self,
+        fee_struct: FeeStruct<StaticApi>,
+        error_message: Option<&str>,
+    ) {
+        let response = self
+            .world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .to(FEE_MARKET_ADDRESS)
+            .typed(FeeMarketProxy)
+            .set_fee_during_setup_phase(fee_struct)
+            .returns(ReturnsHandledOrError::new())
+            .run();
+
+        self.assert_expected_error_message(response, error_message);
+    }
+
     pub fn set_fee(
         &mut self,
+        hash_of_hashes: &ManagedBuffer<StaticApi>,
         fee_struct: Option<FeeStruct<StaticApi>>,
         error_message: Option<&str>,
     ) {
@@ -448,7 +483,7 @@ impl BaseSetup {
             .from(OWNER_ADDRESS)
             .to(FEE_MARKET_ADDRESS)
             .typed(FeeMarketProxy)
-            .set_fee(fee_struct.unwrap())
+            .set_fee(hash_of_hashes, fee_struct.unwrap())
             .returns(ReturnsHandledOrError::new())
             .run();
 
