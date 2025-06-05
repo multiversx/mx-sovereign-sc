@@ -16,7 +16,7 @@ use multiversx_sc_snippets::{hex, imports::*};
 use rust_interact::mvx_esdt_safe::mvx_esdt_safe_interactor_main::MvxEsdtSafeInteract;
 use serial_test::serial;
 use structs::aliases::PaymentsVec;
-use structs::configs::EsdtSafeConfig;
+use structs::configs::{EsdtSafeConfig, SovereignConfig};
 use structs::fee::{FeeStruct, FeeType};
 use structs::forge::ScArray;
 use structs::operation::{Operation, OperationData, OperationEsdtPayment, TransferData};
@@ -693,9 +693,10 @@ async fn test_deposit_refund() {
 
     chain_interactor
         .deploy_contracts(
-            SovereignConfig::default_config(),
+            OptionalValue::Some(SovereignConfig::default_config()),
             OptionalValue::Some(config),
             Some(fee),
+            vec![ScArray::ChainConfig, ScArray::ESDTSafe, ScArray::FeeMarket],
         )
         .await;
 
