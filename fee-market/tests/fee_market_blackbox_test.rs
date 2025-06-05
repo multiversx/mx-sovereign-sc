@@ -1,9 +1,6 @@
-use common_test_setup::{
-    constants::{
-        ESDT_SAFE_ADDRESS, FEE_MARKET_ADDRESS, FIRST_TEST_TOKEN, OWNER_ADDRESS, OWNER_BALANCE,
-        SECOND_TEST_TOKEN, USER_ADDRESS, WRONG_TOKEN_ID,
-    },
-    CallerAddress,
+use common_test_setup::constants::{
+    ESDT_SAFE_ADDRESS, FEE_MARKET_ADDRESS, FIRST_TEST_TOKEN, OWNER_ADDRESS, OWNER_BALANCE,
+    SECOND_TEST_TOKEN, USER_ADDRESS, WRONG_TOKEN_ID,
 };
 use error_messages::{
     CALLER_NOT_OWNER, CURRENT_OPERATION_NOT_REGISTERED, INVALID_FEE, INVALID_FEE_TYPE,
@@ -140,7 +137,7 @@ fn test_set_fee_invalid_fee_type() {
         .complete_header_verifier_setup_phase(None);
 
     state.common_setup.register_operation(
-        CallerAddress::Owner,
+        OWNER_ADDRESS,
         ManagedBuffer::new(),
         &hash_of_hashes,
         MultiValueEncoded::from_iter(vec![fee_hash]),
@@ -228,7 +225,7 @@ fn test_set_fee() {
         .complete_header_verifier_setup_phase(None);
 
     state.common_setup.register_operation(
-        CallerAddress::Owner,
+        OWNER_ADDRESS,
         ManagedBuffer::new(),
         &hash_of_hashes,
         MultiValueEncoded::from_iter(vec![fee_hash]),
@@ -321,7 +318,7 @@ fn test_remove_fee_register_separate_operations() {
         .complete_header_verifier_setup_phase(None);
 
     state.common_setup.register_operation(
-        CallerAddress::Owner,
+        OWNER_ADDRESS,
         ManagedBuffer::new(),
         &register_fee_hash_of_hashes,
         MultiValueEncoded::from_iter(vec![register_fee_hash]),
@@ -355,7 +352,7 @@ fn test_remove_fee_register_separate_operations() {
     let remove_fee_hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&remove_fee_hash));
 
     state.common_setup.register_operation(
-        CallerAddress::Owner,
+        OWNER_ADDRESS,
         ManagedBuffer::new(),
         &remove_fee_hash_of_hashes,
         MultiValueEncoded::from_iter(vec![ManagedBuffer::new_from_bytes(&remove_fee_hash)]),
@@ -434,7 +431,7 @@ fn test_remove_fee_register_with_one_hash_of_hashes() {
         .complete_header_verifier_setup_phase(None);
 
     state.common_setup.register_operation(
-        CallerAddress::Owner,
+        OWNER_ADDRESS,
         ManagedBuffer::new(),
         &hash_of_hashes,
         MultiValueEncoded::from_iter(vec![remove_fee_hash, register_fee_hash]),
@@ -578,7 +575,7 @@ fn distribute_fees_percentage_under_limit() {
     let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&aggregated_hash.to_vec()));
 
     state.common_setup.register_operation(
-        CallerAddress::Owner,
+        OWNER_ADDRESS,
         ManagedBuffer::new(),
         &hash_of_hashes,
         MultiValueEncoded::from_iter(vec![pair_hash_byte_array]),
@@ -656,7 +653,7 @@ fn distribute_fees() {
     let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&aggregated_hash.to_vec()));
 
     state.common_setup.register_operation(
-        CallerAddress::Owner,
+        OWNER_ADDRESS,
         ManagedBuffer::new(),
         &hash_of_hashes,
         MultiValueEncoded::from_iter(vec![pair_hash_byte_array]),

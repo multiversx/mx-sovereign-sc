@@ -36,7 +36,7 @@ impl CommonInteractorTrait for EnshrineEsdtSafeInteract {
         &mut self.state
     }
 
-    fn wallet_address(&mut self) -> &Address {
+    fn wallet_address(&self) -> &Address {
         &self.wallet_address
     }
 }

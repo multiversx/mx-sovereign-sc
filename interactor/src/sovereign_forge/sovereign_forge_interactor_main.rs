@@ -19,7 +19,7 @@ impl CommonInteractorTrait for SovereignForgeInteract {
         &mut self.interactor
     }
 
-    fn wallet_address(&mut self) -> &Address {
+    fn wallet_address(&self) -> &Address {
         &self.alice_address
     }
 

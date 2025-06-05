@@ -353,6 +353,7 @@ dependencies = [
  "chain-factory",
  "cross-chain",
  "enshrine-esdt-safe",
+ "error-messages",
  "fee-market",
  "header-verifier",
  "multiversx-sc-scenario",

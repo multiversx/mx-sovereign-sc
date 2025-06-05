@@ -9,13 +9,14 @@ use constants::{
     TOKEN_HANDLER_CODE_PATH, TOKEN_HANDLER_SC_ADDRESS,
 };
 use cross_chain::storage::CrossChainStorage;
+use error_messages::EMPTY_EXPECTED_LOG;
 use header_verifier::{Headerverifier, OperationHashStatus};
 use multiversx_sc_scenario::{
     api::StaticApi,
     imports::{
         Address, BigUint, EsdtTokenType, ManagedBuffer, MultiValue3, MultiValueEncoded, MxscPath,
-        OptionalValue, ReturnsResultUnmanaged, TestSCAddress, TestTokenIdentifier, TokenIdentifier,
-        TopEncode, UserBuiltinProxy, Vec,
+        OptionalValue, ReturnsResultUnmanaged, TestAddress, TestSCAddress, TestTokenIdentifier,
+        TokenIdentifier, TopEncode, UserBuiltinProxy, Vec,
     },
     multiversx_chain_vm::crypto_functions::sha256,
     scenario_model::{Log, TxResponseStatus},
@@ -53,11 +54,6 @@ pub struct AccountSetup<'a> {
     pub code_path: Option<MxscPath<'a>>,
     pub esdt_balances: Option<Vec<(TestTokenIdentifier<'a>, u64, BigUint<StaticApi>)>>,
     pub egld_balance: Option<BigUint<StaticApi>>,
-}
-
-pub enum CallerAddress {
-    Owner,
-    SafeSC,
 }
 
 fn world() -> ScenarioWorld {
@@ -428,19 +424,14 @@ impl BaseSetup {
 
     pub fn register_operation(
         &mut self,
-        caller: CallerAddress,
+        caller: TestAddress,
         signature: ManagedBuffer<StaticApi>,
         hash_of_hashes: &ManagedBuffer<StaticApi>,
         operations_hashes: MultiValueEncoded<StaticApi, ManagedBuffer<StaticApi>>,
     ) {
-        let from_address: Address = match caller {
-            CallerAddress::SafeSC => ENSHRINE_SC_ADDRESS.to_address(),
-            CallerAddress::Owner => OWNER_ADDRESS.to_address(),
-        };
-
         self.world
             .tx()
-            .from(from_address)
+            .from(caller)
             .to(HEADER_VERIFIER_ADDRESS)
             .typed(HeaderverifierProxy)
             .register_bridge_operations(
@@ -657,6 +648,7 @@ impl BaseSetup {
         )
     }
 
+    //NOTE: transferValue returns an empty log and calling this function on it will panic
     pub fn assert_expected_log(&mut self, logs: Vec<Log>, expected_log: Option<&str>) {
         match expected_log {
             None => {
@@ -667,6 +659,7 @@ impl BaseSetup {
                 );
             }
             Some(expected_str) => {
+                assert!(!expected_str.is_empty(), "{}", EMPTY_EXPECTED_LOG);
                 let expected_bytes = ManagedBuffer::<StaticApi>::from(expected_str).to_vec();
 
                 let found_log = logs
