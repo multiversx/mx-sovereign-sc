@@ -108,4 +108,4 @@ pub const TOKEN_ID_NO_PREFIX: &str = "Token Id does not have prefix";
 pub const TOKEN_IS_FROM_SOVEREIGN: &str = "Token is from a Sovereign Chain, it cannot be locked";
 pub const TOKEN_NOT_ACCEPTED_AS_FEE: &str = "Token not accepted as fee";
 pub const TOO_MANY_TOKENS: &str = "Too many tokens";
-pub const ERROR_AT_ENCODING: &str = "Error at encoding";
+pub const ERROR_AT_ENCODING: &str = "Error at encoding hash";

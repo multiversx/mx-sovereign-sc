@@ -1,7 +1,7 @@
 use crate::{common, to_sovereign};
 use error_messages::{
-    CANNOT_TRANSFER_WHILE_PAUSED, INVALID_METHOD_TO_CALL_IN_CURRENT_CHAIN, NOT_ENOUGH_WEGLD_AMOUNT,
-    ONLY_WEGLD_IS_ACCEPTED_AS_REGISTER_FEE,
+    CANNOT_TRANSFER_WHILE_PAUSED, ERROR_AT_ENCODING, INVALID_METHOD_TO_CALL_IN_CURRENT_CHAIN,
+    NOT_ENOUGH_WEGLD_AMOUNT, ONLY_WEGLD_IS_ACCEPTED_AS_REGISTER_FEE,
 };
 use multiversx_sc::imports::*;
 use proxies::token_handler_proxy::TokenHandlerProxy;
@@ -48,6 +48,7 @@ pub trait TransferTokensModule:
         require!(self.not_paused(), CANNOT_TRANSFER_WHILE_PAUSED);
 
         let op_hash = operation.generate_hash();
+        require!(!op_hash.is_empty(), ERROR_AT_ENCODING);
 
         self.lock_operation_hash(&hash_of_hashes, &op_hash);
 

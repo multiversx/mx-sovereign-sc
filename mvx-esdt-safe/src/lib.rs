@@ -1,6 +1,6 @@
 #![no_std]
 
-use error_messages::SETUP_PHASE_ALREADY_COMPLETED;
+use error_messages::{ERROR_AT_ENCODING, SETUP_PHASE_ALREADY_COMPLETED};
 
 use multiversx_sc::imports::*;
 use structs::{configs::EsdtSafeConfig, generate_hash::GenerateHash};
@@ -64,6 +64,8 @@ pub trait MvxEsdtSafe:
         self.require_setup_complete();
 
         let config_hash = new_config.generate_hash();
+        require!(!config_hash.is_empty(), ERROR_AT_ENCODING);
+
         self.lock_operation_hash(&hash_of_hashes, &config_hash);
 
         if let Some(error_message) = self.is_esdt_safe_config_valid(&new_config) {
