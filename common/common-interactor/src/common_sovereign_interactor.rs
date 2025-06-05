@@ -18,7 +18,10 @@ use multiversx_sc::{
 };
 use multiversx_sc_snippets::{
     hex,
-    imports::{bech32, Bech32Address, ReturnsNewTokenIdentifier, StaticApi},
+    imports::{
+        bech32, Bech32Address, ReturnsHandledOrError, ReturnsLogs, ReturnsNewTokenIdentifier,
+        StaticApi,
+    },
     multiversx_sc_scenario::{
         multiversx_chain_vm::crypto_functions::sha256,
         scenario_model::{Log, TxResponseStatus},
@@ -33,6 +36,7 @@ use proxies::{
     token_handler_proxy,
 };
 use structs::{
+    aliases::{OptionalValueTransferDataTuple, PaymentsVec},
     configs::{EsdtSafeConfig, SovereignConfig},
     fee::FeeStruct,
     forge::{ContractInfo, ScArray},
@@ -61,6 +65,7 @@ pub trait CommonInteractorTrait {
     fn interactor(&mut self) -> &mut Interactor;
     fn state(&mut self) -> &mut State;
     fn wallet_address(&self) -> &Address;
+    fn user_address(&self) -> Address;
 
     async fn issue_and_mint_token(
         &mut self,
@@ -574,6 +579,38 @@ pub trait CommonInteractorTrait {
             .returns(ReturnsResultUnmanaged)
             .run()
             .await;
+    }
+
+    async fn deposit_mvx_esdt_safe(
+        &mut self,
+        to: Address,
+        opt_transfer_data: OptionalValueTransferDataTuple<StaticApi>,
+        payments: PaymentsVec<StaticApi>,
+        expected_error_message: Option<&str>,
+        expected_log: Option<&str>,
+    ) {
+        let wallet_address = self.wallet_address().clone();
+        let current_mvx_esdt_safe_address = self
+            .state()
+            .current_mvx_esdt_safe_contract_address()
+            .clone();
+        let (response, logs) = self
+            .interactor()
+            .tx()
+            .from(wallet_address)
+            .to(current_mvx_esdt_safe_address)
+            .gas(90_000_000u64)
+            .typed(MvxEsdtSafeProxy)
+            .deposit(to, opt_transfer_data)
+            .payment(payments)
+            .returns(ReturnsHandledOrError::new())
+            .returns(ReturnsLogs)
+            .run()
+            .await;
+
+        self.assert_expected_error_message(response, expected_error_message);
+
+        self.assert_expected_log(logs, expected_log);
     }
 
     //NOTE: transferValue returns an empty log and calling this function on it will panic

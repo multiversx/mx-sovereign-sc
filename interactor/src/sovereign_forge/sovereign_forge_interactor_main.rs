@@ -11,7 +11,8 @@ use proxies::sovereign_forge_proxy::SovereignForgeProxy;
 
 pub struct SovereignForgeInteract {
     interactor: Interactor,
-    alice_address: Address,
+    owner_address: Address,
+    user_address: Address,
     pub state: State,
 }
 impl CommonInteractorTrait for SovereignForgeInteract {
@@ -20,7 +21,11 @@ impl CommonInteractorTrait for SovereignForgeInteract {
     }
 
     fn wallet_address(&self) -> &Address {
-        &self.alice_address
+        &self.owner_address
+    }
+
+    fn user_address(&self) -> Address {
+        self.user_address.clone()
     }
 
     fn state(&mut self) -> &mut State {
@@ -41,13 +46,15 @@ impl SovereignForgeInteract {
 
         let current_working_dir = "interactor";
         interactor.set_current_dir_from_workspace(current_working_dir);
-        let alice_address = interactor.register_wallet(test_wallets::alice()).await;
+        let owner_address = interactor.register_wallet(test_wallets::alice()).await;
+        let user_address = interactor.register_wallet(test_wallets::bob()).await;
 
         interactor.generate_blocks_until_epoch(1).await.unwrap();
 
         SovereignForgeInteract {
             interactor,
-            alice_address,
+            owner_address,
+            user_address,
             state: State::load_state(),
         }
     }
@@ -68,6 +75,38 @@ impl SovereignForgeInteract {
             .issue_and_mint_token(first_token_struct, first_token_mint)
             .await;
         self.state.set_first_token(first_token);
+
+        let second_token_struct = IssueTokenStruct {
+            token_display_name: "MVX2".to_string(),
+            token_ticker: "MVX2".to_string(),
+            token_type: EsdtTokenType::Fungible,
+            num_decimals: 18,
+        };
+        let second_token_mint = MintTokenStruct {
+            name: None,
+            amount: BigUint::from(ONE_THOUSAND_TOKENS),
+            attributes: None,
+        };
+        let first_token = self
+            .issue_and_mint_token(second_token_struct, second_token_mint)
+            .await;
+        self.state.set_first_token(first_token);
+
+        let fee_token_struct = IssueTokenStruct {
+            token_display_name: "FEE".to_string(),
+            token_ticker: "FEE".to_string(),
+            token_type: EsdtTokenType::Fungible,
+            num_decimals: 18,
+        };
+        let fee_token_mint = MintTokenStruct {
+            name: None,
+            amount: BigUint::from(ONE_THOUSAND_TOKENS),
+            attributes: None,
+        };
+        let first_token = self
+            .issue_and_mint_token(fee_token_struct, fee_token_mint)
+            .await;
+        self.state.set_first_token(first_token);
     }
 
     pub async fn upgrade(&mut self) {
@@ -75,7 +114,7 @@ impl SovereignForgeInteract {
             .interactor
             .tx()
             .to(self.state.current_sovereign_forge_sc_address())
-            .from(&self.alice_address)
+            .from(self.owner_address.clone())
             .gas(50_000_000u64)
             .typed(SovereignForgeProxy)
             .upgrade()
@@ -95,7 +134,7 @@ impl SovereignForgeInteract {
         let response = self
             .interactor
             .tx()
-            .from(&self.alice_address)
+            .from(&self.owner_address.clone())
             .to(self.state.current_sovereign_forge_sc_address())
             .gas(30_000_000u64)
             .typed(SovereignForgeProxy)
@@ -111,7 +150,7 @@ impl SovereignForgeInteract {
         let response = self
             .interactor
             .tx()
-            .from(&self.alice_address)
+            .from(&self.owner_address.clone())
             .to(self.state.current_sovereign_forge_sc_address())
             .gas(30_000_000u64)
             .typed(SovereignForgeProxy)

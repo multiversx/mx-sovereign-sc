@@ -39,6 +39,10 @@ impl CommonInteractorTrait for EnshrineEsdtSafeInteract {
     fn wallet_address(&self) -> &Address {
         &self.wallet_address
     }
+
+    fn user_address(&self) -> Address {
+        self.bob_address.clone()
+    }
 }
 
 impl EnshrineEsdtSafeInteract {
