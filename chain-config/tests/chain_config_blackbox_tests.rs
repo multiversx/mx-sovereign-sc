@@ -1,6 +1,6 @@
 use chain_config::validator_rules::ValidatorRulesModule;
 use chain_config_blackbox_setup::ChainConfigTestState;
-use common_test_setup::{constants::CHAIN_CONFIG_ADDRESS, CallerAddress};
+use common_test_setup::constants::{CHAIN_CONFIG_ADDRESS, OWNER_ADDRESS};
 use error_messages::{INVALID_MIN_MAX_VALIDATOR_NUMBERS, SETUP_PHASE_NOT_COMPLETED};
 use multiversx_sc::{
     imports::OptionalValue,
@@ -182,7 +182,7 @@ fn test_update_config_invalid_config() {
     let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&config_hash.to_vec()));
 
     state.common_setup.register_operation(
-        CallerAddress::Owner,
+        OWNER_ADDRESS,
         ManagedBuffer::new(),
         &hash_of_hashes,
         MultiValueEncoded::from_iter(vec![config_hash]),
@@ -223,7 +223,7 @@ fn test_update_config() {
     let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&config_hash.to_vec()));
 
     state.common_setup.register_operation(
-        CallerAddress::Owner,
+        OWNER_ADDRESS,
         ManagedBuffer::new(),
         &hash_of_hashes,
         MultiValueEncoded::from_iter(vec![config_hash]),

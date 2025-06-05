@@ -2469,7 +2469,7 @@ fn test_update_config_invalid_config() {
     let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&config_hash.to_vec()));
 
     state.common_setup.register_operation(
-        CallerAddress::Owner,
+        OWNER_ADDRESS,
         ManagedBuffer::new(),
         &hash_of_hashes,
         MultiValueEncoded::from_iter(vec![config_hash]),
@@ -2513,7 +2513,7 @@ fn test_update_config() {
     let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&config_hash.to_vec()));
 
     state.common_setup.register_operation(
-        CallerAddress::Owner,
+        OWNER_ADDRESS,
         ManagedBuffer::new(),
         &hash_of_hashes,
         MultiValueEncoded::from_iter(vec![config_hash]),
