@@ -1,4 +1,4 @@
-use error_messages::{INVALID_FEE, INVALID_FEE_TYPE, INVALID_TOKEN_ID};
+use error_messages::{ERROR_AT_ENCODING, INVALID_FEE, INVALID_FEE_TYPE, INVALID_TOKEN_ID};
 use structs::{
     fee::{FeeStruct, FeeType},
     generate_hash::GenerateHash,
@@ -24,6 +24,8 @@ pub trait FeeTypeModule:
         self.require_setup_complete();
 
         let token_id_hash = base_token.generate_hash();
+        require!(!token_id_hash.is_empty(), ERROR_AT_ENCODING);
+
         self.lock_operation_hash(&hash_of_hashes, &token_id_hash);
 
         self.token_fee(&base_token).clear();
@@ -47,6 +49,8 @@ pub trait FeeTypeModule:
         self.require_setup_complete();
 
         let fee_hash = fee_struct.generate_hash();
+        require!(!fee_hash.is_empty(), ERROR_AT_ENCODING);
+
         self.lock_operation_hash(&hash_of_hashes, &fee_hash);
 
         if let Some(set_fee_error_msg) = self.set_fee_in_storage(&fee_struct) {

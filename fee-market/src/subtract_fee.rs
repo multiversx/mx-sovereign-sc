@@ -1,6 +1,6 @@
 use error_messages::{
-    INVALID_PERCENTAGE_SUM, INVALID_TOKEN_PROVIDED_FOR_FEE, PAYMENT_DOES_NOT_COVER_FEE,
-    TOKEN_NOT_ACCEPTED_AS_FEE,
+    ERROR_AT_ENCODING, INVALID_PERCENTAGE_SUM, INVALID_TOKEN_PROVIDED_FOR_FEE,
+    PAYMENT_DOES_NOT_COVER_FEE, TOKEN_NOT_ACCEPTED_AS_FEE,
 };
 use structs::{
     aliases::GasLimit,
@@ -58,6 +58,8 @@ pub trait SubtractFeeModule:
             };
 
             let pair_hash = pair_struct.generate_hash();
+            require!(!pair_hash.is_empty(), ERROR_AT_ENCODING);
+
             aggregated_hashes.append(&pair_hash);
             pairs.push(pair_struct);
 

@@ -1,5 +1,6 @@
 #![no_std]
 
+use error_messages::ERROR_AT_ENCODING;
 use multiversx_sc::imports::*;
 use structs::{configs::SovereignConfig, generate_hash::GenerateHash};
 
@@ -47,6 +48,8 @@ pub trait ChainConfigContract:
         self.require_setup_complete();
 
         let config_hash = new_config.generate_hash();
+        require!(!config_hash.is_empty(), ERROR_AT_ENCODING);
+
         self.lock_operation_hash(&config_hash, &hash_of_hashes);
 
         if let Some(error_message) = self.is_new_config_valid(&new_config) {

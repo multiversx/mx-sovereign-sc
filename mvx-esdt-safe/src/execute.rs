@@ -1,4 +1,4 @@
-use error_messages::ESDT_SAFE_STILL_PAUSED;
+use error_messages::{ERROR_AT_ENCODING, ESDT_SAFE_STILL_PAUSED};
 use structs::{
     aliases::GasLimit,
     generate_hash::GenerateHash,
@@ -27,6 +27,7 @@ pub trait ExecuteModule:
         self.require_setup_complete();
 
         let operation_hash = operation.generate_hash();
+        require!(!operation_hash.is_empty(), ERROR_AT_ENCODING);
 
         self.lock_operation_hash(&hash_of_hashes, &operation_hash);
 
