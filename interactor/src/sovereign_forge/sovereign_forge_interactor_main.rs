@@ -4,7 +4,9 @@ use common_interactor::interactor_state::State;
 use common_interactor::{
     common_sovereign_interactor::CommonInteractorTrait, interactor_config::Config,
 };
-use common_test_setup::constants::{ONE_THOUSAND_TOKENS, SOVEREIGN_FORGE_CODE_PATH};
+use common_test_setup::constants::{
+    INTERACTOR_WORKING_DIR, ONE_THOUSAND_TOKENS, SOVEREIGN_FORGE_CODE_PATH,
+};
 use multiversx_sc_snippets::imports::*;
 use proxies::sovereign_forge_proxy::SovereignForgeProxy;
 
@@ -43,7 +45,7 @@ impl SovereignForgeInteract {
             .await
             .use_chain_simulator(config.use_chain_simulator());
 
-        let current_working_dir = "interactor";
+        let current_working_dir = INTERACTOR_WORKING_DIR;
         interactor.set_current_dir_from_workspace(current_working_dir);
         let alice_address = interactor.register_wallet(test_wallets::alice()).await;
         let user_address = interactor.register_wallet(test_wallets::mike()).await;

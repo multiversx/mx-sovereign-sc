@@ -12,7 +12,9 @@ use structs::operation::Operation;
 use common_interactor::interactor_config::Config;
 use common_interactor::interactor_state::State;
 
-use common_test_setup::constants::{MVX_ESDT_SAFE_CODE_PATH, ONE_THOUSAND_TOKENS};
+use common_test_setup::constants::{
+    INTERACTOR_WORKING_DIR, MVX_ESDT_SAFE_CODE_PATH, ONE_THOUSAND_TOKENS,
+};
 use common_test_setup::RegisterTokenArgs;
 
 pub struct MvxEsdtSafeInteract {
@@ -51,7 +53,7 @@ impl MvxEsdtSafeInteract {
             .await
             .use_chain_simulator(config.use_chain_simulator());
 
-        let working_dir = "interactor";
+        let working_dir = INTERACTOR_WORKING_DIR;
         interactor.set_current_dir_from_workspace(working_dir);
         let owner_address = interactor.register_wallet(test_wallets::mike()).await;
         let user_address = interactor.register_wallet(test_wallets::bob()).await;

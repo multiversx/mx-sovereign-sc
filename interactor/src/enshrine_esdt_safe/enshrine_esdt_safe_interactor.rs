@@ -7,7 +7,8 @@ use common_interactor::common_sovereign_interactor::{
 use common_interactor::interactor_config::Config;
 use common_interactor::interactor_state::State;
 use common_test_setup::constants::{
-    DEPLOY_COST, ENSHRINE_ESDT_SAFE_CODE_PATH, ONE_THOUSAND_TOKENS, SOVEREIGN_TOKEN_PREFIX,
+    DEPLOY_COST, ENSHRINE_ESDT_SAFE_CODE_PATH, INTERACTOR_WORKING_DIR, ONE_THOUSAND_TOKENS,
+    SOVEREIGN_TOKEN_PREFIX,
 };
 use common_test_setup::RegisterTokenArgs;
 use fee_market_proxy::*;
@@ -58,7 +59,7 @@ impl EnshrineEsdtSafeInteract {
             .await
             .use_chain_simulator(config.use_chain_simulator());
 
-        let working_dir = "interactor";
+        let working_dir = INTERACTOR_WORKING_DIR;
         interactor.set_current_dir_from_workspace(working_dir);
         let owner_address = interactor.register_wallet(test_wallets::mike()).await;
         let user_address = interactor.register_wallet(test_wallets::bob()).await;
@@ -123,7 +124,7 @@ impl EnshrineEsdtSafeInteract {
         self.state.set_fee_token(fee_token);
     }
 
-    //TODO: chain factory is mocked until the dependency cicle is fixed
+    //TODO: The unpause should be done via the chain factory, will refactor in the future
     pub async fn deploy_contracts(
         &mut self,
         is_sovereign_chain: bool,
