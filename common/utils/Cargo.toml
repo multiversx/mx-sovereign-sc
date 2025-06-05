@@ -13,6 +13,9 @@ path = "../structs"
 [dependencies.error-messages]
 path = "../error-messages"
 
+[dependencies.proxies]
+path = "../proxies"
+
 [dependencies.multiversx-sc]
 version = "=0.58.0"
 features = ["esdt-token-payment-legacy-decode"]

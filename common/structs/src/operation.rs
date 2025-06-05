@@ -1,6 +1,10 @@
 use aliases::{GasLimit, OptionalValueTransferDataTuple, TxId};
+use multiversx_sc::api::CryptoApi;
 
-use crate::aliases::{self, EventPaymentTuple, TransferDataTuple};
+use crate::{
+    aliases::{self, EventPaymentTuple, TransferDataTuple},
+    generate_hash::GenerateHash,
+};
 
 multiversx_sc::imports!();
 multiversx_sc::derive_imports!();
@@ -12,6 +16,8 @@ pub struct Operation<M: ManagedTypeApi> {
     pub tokens: ManagedVec<M, OperationEsdtPayment<M>>,
     pub data: OperationData<M>,
 }
+
+impl<A: CryptoApi> GenerateHash<A> for Operation<A> {}
 
 impl<M: ManagedTypeApi> Operation<M> {
     #[inline]

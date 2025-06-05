@@ -1,9 +1,9 @@
 #![no_std]
 
-use error_messages::SETUP_PHASE_ALREADY_COMPLETED;
+use error_messages::{ERROR_AT_ENCODING, SETUP_PHASE_ALREADY_COMPLETED};
 
 use multiversx_sc::imports::*;
-use structs::configs::EsdtSafeConfig;
+use structs::{configs::EsdtSafeConfig, generate_hash::GenerateHash};
 
 pub mod bridging_mechanism;
 pub mod deposit;
@@ -18,7 +18,7 @@ pub trait MvxEsdtSafe:
     + register_token::RegisterTokenModule
     + bridging_mechanism::BridgingMechanism
     + cross_chain::deposit_common::DepositCommonModule
-    + cross_chain::events::EventsModule
+    + events::EventsModule
     + cross_chain::storage::CrossChainStorage
     + cross_chain::execute_common::ExecuteCommonModule
     + multiversx_sc_modules::pause::PauseModule
@@ -26,20 +26,18 @@ pub trait MvxEsdtSafe:
     + setup_phase::SetupPhaseModule
 {
     #[init]
-    fn init(
-        &self,
-        header_verifier_address: ManagedAddress,
-        opt_config: OptionalValue<EsdtSafeConfig<Self::Api>>,
-    ) {
-        self.require_sc_address(&header_verifier_address);
-        self.header_verifier_address().set(&header_verifier_address);
+    fn init(&self, opt_config: OptionalValue<EsdtSafeConfig<Self::Api>>) {
+        let new_config = match opt_config {
+            OptionalValue::Some(cfg) => {
+                if let Some(error_message) = self.is_esdt_safe_config_valid(&cfg) {
+                    sc_panic!(error_message);
+                }
+                cfg
+            }
+            OptionalValue::None => EsdtSafeConfig::default_config(),
+        };
 
-        self.esdt_safe_config().set(
-            opt_config
-                .into_option()
-                .inspect(|config| self.require_esdt_config_valid(config))
-                .unwrap_or_else(EsdtSafeConfig::default_config),
-        );
+        self.esdt_safe_config().set(new_config);
 
         self.set_paused(true);
     }
@@ -48,10 +46,40 @@ pub trait MvxEsdtSafe:
     fn upgrade(&self) {}
 
     #[only_owner]
-    #[endpoint(updateConfiguration)]
-    fn update_configuration(&self, new_config: EsdtSafeConfig<Self::Api>) {
-        self.require_esdt_config_valid(&new_config);
+    #[endpoint(updateEsdtSafeConfigSetupPhase)]
+    fn update_esdt_safe_config_during_setup_phase(&self, new_config: EsdtSafeConfig<Self::Api>) {
+        if let Some(error_message) = self.is_esdt_safe_config_valid(&new_config) {
+            sc_panic!(error_message);
+        }
+
         self.esdt_safe_config().set(new_config);
+    }
+
+    #[endpoint(updateEsdtSafeConfig)]
+    fn update_esdt_safe_config(
+        &self,
+        hash_of_hashes: ManagedBuffer,
+        new_config: EsdtSafeConfig<Self::Api>,
+    ) {
+        self.require_setup_complete();
+
+        let config_hash = new_config.generate_hash();
+        require!(!config_hash.is_empty(), ERROR_AT_ENCODING);
+
+        self.lock_operation_hash(&hash_of_hashes, &config_hash);
+
+        if let Some(error_message) = self.is_esdt_safe_config_valid(&new_config) {
+            self.failed_bridge_operation_event(
+                &hash_of_hashes,
+                &config_hash,
+                &ManagedBuffer::from(error_message),
+            );
+        } else {
+            self.esdt_safe_config().set(new_config);
+        }
+
+        self.remove_executed_hash(&hash_of_hashes, &config_hash);
+        self.execute_bridge_operation_event(&hash_of_hashes, &config_hash);
     }
 
     #[only_owner]
@@ -62,7 +90,7 @@ pub trait MvxEsdtSafe:
     }
 
     #[only_owner]
-    #[endpoint(completSetupPhase)]
+    #[endpoint(completeSetupPhase)]
     fn complete_setup_phase(&self) {
         require!(
             !self.is_setup_phase_complete(),

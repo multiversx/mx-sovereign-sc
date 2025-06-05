@@ -22,7 +22,7 @@ pub trait UpdateConfigsModule: only_admin::OnlyAdminModule {
         self.tx()
             .to(esdt_safe_address)
             .typed(MvxEsdtSafeProxy)
-            .update_configuration(new_config)
+            .update_esdt_safe_config_during_setup_phase(new_config)
             .sync_call();
     }
 
@@ -36,7 +36,7 @@ pub trait UpdateConfigsModule: only_admin::OnlyAdminModule {
         self.tx()
             .to(chain_config_address)
             .typed(ChainConfigContractProxy)
-            .update_config(new_config)
+            .update_sovereign_config_during_setup_phase(new_config)
             .sync_call();
     }
 
@@ -46,7 +46,7 @@ pub trait UpdateConfigsModule: only_admin::OnlyAdminModule {
         self.tx()
             .to(fee_market_address)
             .typed(FeeMarketProxy)
-            .set_fee(new_fee)
+            .set_fee_during_setup_phase(new_fee)
             .sync_call();
     }
 
@@ -56,7 +56,7 @@ pub trait UpdateConfigsModule: only_admin::OnlyAdminModule {
         self.tx()
             .to(fee_market_address)
             .typed(FeeMarketProxy)
-            .remove_fee(token_id)
+            .remove_fee_during_setup_phase(token_id)
             .sync_call();
     }
 }

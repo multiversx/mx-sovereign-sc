@@ -1,8 +1,9 @@
 #![no_std]
 
 use error_messages::{
-    ERR_EMPTY_PAYMENTS, INVALID_SC_ADDRESS, INVALID_TOKEN_ID, ITEM_NOT_IN_LIST, TOKEN_ID_NO_PREFIX,
+    ERR_EMPTY_PAYMENTS, INVALID_SC_ADDRESS, ITEM_NOT_IN_LIST, TOKEN_ID_NO_PREFIX,
 };
+use proxies::header_verifier_proxy::HeaderverifierProxy;
 use structs::aliases::PaymentsVec;
 
 multiversx_sc::imports!();
@@ -12,6 +13,22 @@ const MAX_TOKEN_ID_LEN: usize = 32;
 
 #[multiversx_sc::module]
 pub trait UtilsModule {
+    fn lock_operation_hash(&self, hash_of_hashes: &ManagedBuffer, hash: &ManagedBuffer) {
+        self.tx()
+            .to(self.blockchain().get_owner_address())
+            .typed(HeaderverifierProxy)
+            .lock_operation_hash(hash_of_hashes, hash)
+            .sync_call();
+    }
+
+    fn remove_executed_hash(&self, hash_of_hashes: &ManagedBuffer, op_hash: &ManagedBuffer) {
+        self.tx()
+            .to(self.blockchain().get_owner_address())
+            .typed(HeaderverifierProxy)
+            .remove_executed_hash(hash_of_hashes, op_hash)
+            .sync_call();
+    }
+
     fn require_sc_address(&self, address: &ManagedAddress) {
         require!(
             !address.is_zero() && self.blockchain().is_smart_contract(address),
@@ -19,8 +36,8 @@ pub trait UtilsModule {
         );
     }
 
-    fn require_valid_token_id(&self, token_id: &TokenIdentifier) {
-        require!(token_id.is_valid_esdt_identifier(), INVALID_TOKEN_ID);
+    fn is_valid_token_id(&self, token_id: &TokenIdentifier) -> bool {
+        token_id.is_valid_esdt_identifier()
     }
 
     fn remove_items<

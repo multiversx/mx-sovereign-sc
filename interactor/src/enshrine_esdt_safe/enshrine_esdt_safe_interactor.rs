@@ -102,25 +102,6 @@ impl EnshrineEsdtSafeInteract {
         println!("Result: {response:?}");
     }
 
-    pub async fn set_header_verifier_address_in_enshrine_esdt_safe(
-        &mut self,
-        header_verifier_address: Bech32Address,
-    ) {
-        let response = self
-            .interactor
-            .tx()
-            .from(&self.wallet_address)
-            .to(self.state.current_enshrine_esdt_safe_address())
-            .gas(30_000_000u64)
-            .typed(EnshrineEsdtSafeProxy)
-            .set_header_verifier_address(header_verifier_address)
-            .returns(ReturnsResultUnmanaged)
-            .run()
-            .await;
-
-        println!("Result: {response:?}");
-    }
-
     pub async fn deposit(
         &mut self,
         payments: PaymentsVec<StaticApi>,

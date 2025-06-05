@@ -7,8 +7,12 @@ pub const BLS_SIGNATURE_NOT_VALID: &str = "BLS signature is not valid";
 pub const BRIDGE_ALREADY_DEPLOYED: &str = "Bridge already deployed";
 pub const CALLER_DID_NOT_DEPLOY_ANY_SOV_CHAIN: &str =
     "The current caller has not deployed any Sovereign Chain";
+pub const CALLER_NOT_FROM_CURRENT_SOVEREIGN: &str =
+    "Caller is not from the current Sovereign-Chain";
+pub const CALLER_NOT_OWNER: &str = "Endpoint can only be called by owner";
 pub const CALLER_IS_NOT_WHITELISTED: &str = "Caller is not whitelisted";
 pub const CANNOT_REGISTER_TOKEN: &str = "Cannot register token";
+pub const COULD_NOT_RETRIEVE_SOVEREIGN_CONFIG: &str = "Error at retrieving Sovereign Config";
 pub const CANNOT_TRANSFER_WHILE_PAUSED: &str = "Cannot transfer while paused";
 pub const CHAIN_CONFIG_ALREADY_DEPLOYED: &str = "The Chain-Config contract is already deployed";
 pub const CHAIN_CONFIG_NOT_DEPLOYED: &str = "The Chain-Config SC is not deployed";
@@ -31,7 +35,7 @@ pub const ESDT_SAFE_ADDRESS_NOT_SET: &str = "The ESDT-Safe address is not set";
 pub const ESDT_SAFE_ALREADY_DEPLOYED: &str = "The ESDT-Safe SC is already deployed";
 pub const ESDT_SAFE_CONFIG_NOT_SET: &str = "There is no config set for this contract";
 pub const ESDT_SAFE_NOT_DEPLOYED: &str =
-    "The ESDT-Safe SC is not deployed, you skipped the third phase";
+    "The ESDT-Safe SC is not deployed, you skipped the second phase";
 pub const ESDT_SAFE_STILL_PAUSED: &str = "Cannot create transaction while paused";
 pub const FAILED_TO_PARSE_AS_NUMBER: &str = "Failed to parse actual amount as number";
 pub const FEE_MARKET_ALREADY_DEPLOYED: &str = "The Fee-Market SC is already deployed";
@@ -43,7 +47,7 @@ pub const HEADER_VERIFIER_ADDRESS_NOT_SET: &str = "The Header-Verifier address w
 pub const HEADER_VERIFIER_ALREADY_DEPLOYED: &str =
     "The Header-Verifier contract is already deployed";
 pub const HEADER_VERIFIER_NOT_DEPLOYED: &str =
-    "The Header-Verifier SC is not deployed, you skipped the second phase";
+    "The Header-Verifier SC is not deployed, you skipped the fourth phase";
 pub const INSUFFICIENT_FUNDS: &str = "insufficient funds";
 pub const INVALID_AGGREGATOR_VALUE: &str = "Invalid aggregator value";
 pub const INVALID_CALLER: &str = "Invalid caller";
@@ -60,7 +64,7 @@ pub const INVALID_TOKEN_PROVIDED_FOR_FEE: &str = "Invalid token provided for fee
 pub const INVALID_TOKEN_USDC_PAIR_ADDRESS: &str = "Invalid TOKEN-USDC pair address from router";
 pub const INVALID_TYPE: &str = "Invalid type";
 pub const INVALID_VALIDATOR_SET_LENGTH: &str =
-    "The current validator set lenght doesn't meet the Sovereign's requirements";
+    "The current validator set length doesn't meet the Sovereign's requirements";
 pub const INVALID_WEGLD_USDC_PAIR_ADDRESS: &str = "Invalid WEGLD-USDC pair address from router";
 pub const ITEM_NOT_IN_LIST: &str = "Item not found in list";
 pub const MAX_GAS_LIMIT_PER_TX_EXCEEDED: &str =
@@ -104,3 +108,4 @@ pub const TOKEN_ID_NO_PREFIX: &str = "Token Id does not have prefix";
 pub const TOKEN_IS_FROM_SOVEREIGN: &str = "Token is from a Sovereign Chain, it cannot be locked";
 pub const TOKEN_NOT_ACCEPTED_AS_FEE: &str = "Token not accepted as fee";
 pub const TOO_MANY_TOKENS: &str = "Too many tokens";
+pub const ERROR_AT_ENCODING: &str = "Error at encoding hash";

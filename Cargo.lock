@@ -220,7 +220,9 @@ name = "chain-config"
 version = "0.1.0"
 dependencies = [
  "common-test-setup",
+ "cross-chain",
  "error-messages",
+ "events",
  "multiversx-sc",
  "multiversx-sc-modules",
  "multiversx-sc-scenario",
@@ -228,6 +230,7 @@ dependencies = [
  "proxies",
  "setup-phase",
  "structs",
+ "utils",
 ]
 
 [[package]]
@@ -604,6 +607,15 @@ name = "error-messages"
 version = "0.1.0"
 
 [[package]]
+name = "events"
+version = "0.1.0"
+dependencies = [
+ "multiversx-sc",
+ "multiversx-sc-modules",
+ "structs",
+]
+
+[[package]]
 name = "fastrand"
 version = "2.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -615,6 +627,7 @@ version = "0.1.0"
 dependencies = [
  "common-test-setup",
  "error-messages",
+ "events",
  "multiversx-sc",
  "multiversx-sc-scenario",
  "num-bigint",
@@ -828,6 +841,7 @@ dependencies = [
  "common-test-setup",
  "cross-chain",
  "error-messages",
+ "events",
  "multiversx-sc",
  "multiversx-sc-scenario",
  "proxies",
@@ -1524,6 +1538,7 @@ dependencies = [
  "common-test-setup",
  "cross-chain",
  "error-messages",
+ "events",
  "fee-market",
  "header-verifier",
  "multiversx-sc",
@@ -2272,6 +2287,7 @@ dependencies = [
  "common-test-setup",
  "cross-chain",
  "error-messages",
+ "events",
  "fee-market",
  "multiversx-sc",
  "multiversx-sc-modules",
@@ -2709,6 +2725,7 @@ version = "0.1.0"
 dependencies = [
  "error-messages",
  "multiversx-sc",
+ "proxies",
  "structs",
 ]
 

@@ -44,15 +44,15 @@ where
     Gas: TxGas<Env>,
 {
     pub fn init<
-        Arg0: ProxyArg<ManagedAddress<Env::Api>>,
+        Arg0: ProxyArg<MultiValueEncoded<Env::Api, structs::forge::ContractInfo<Env::Api>>>,
     >(
         self,
-        chain_config_address: Arg0,
+        sovereign_contracts: Arg0,
     ) -> TxTypedDeploy<Env, From, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_deploy()
-            .argument(&chain_config_address)
+            .argument(&sovereign_contracts)
             .original_result()
     }
 }
@@ -151,19 +151,6 @@ where
             .original_result()
     }
 
-    pub fn set_esdt_safe_address<
-        Arg0: ProxyArg<ManagedAddress<Env::Api>>,
-    >(
-        self,
-        esdt_safe_address: Arg0,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("setEsdtSafeAddress")
-            .argument(&esdt_safe_address)
-            .original_result()
-    }
-
     pub fn remove_executed_hash<
         Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
         Arg1: ProxyArg<ManagedBuffer<Env::Api>>,
@@ -193,19 +180,6 @@ where
             .raw_call("lockOperationHash")
             .argument(&hash_of_hashes)
             .argument(&operation_hash)
-            .original_result()
-    }
-
-    pub fn update_config<
-        Arg0: ProxyArg<structs::configs::SovereignConfig<Env::Api>>,
-    >(
-        self,
-        new_config: Arg0,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("updateConfig")
-            .argument(&new_config)
             .original_result()
     }
 

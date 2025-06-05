@@ -9,6 +9,7 @@ use structs::aliases::{OptionalValueTransferDataTuple, PaymentsVec};
 
 use structs::configs::{EsdtSafeConfig, SovereignConfig};
 use structs::fee::FeeStruct;
+use structs::forge::ScArray;
 use structs::operation::Operation;
 
 use common_interactor::interactor_config::Config;
@@ -174,20 +175,13 @@ impl MvxEsdtSafeInteract {
 
     pub async fn deploy_contracts(
         &mut self,
-        sovereign_config: SovereignConfig<StaticApi>,
+        sovereign_config: OptionalValue<SovereignConfig<StaticApi>>,
         esdt_safe_config: OptionalValue<EsdtSafeConfig<StaticApi>>,
         fee_struct: Option<FeeStruct<StaticApi>>,
+        sc_array: Vec<ScArray>,
     ) {
         self.deploy_chain_config(sovereign_config).await;
-        self.deploy_header_verifier(self.state.current_chain_config_sc_address().clone())
-            .await;
-        self.complete_header_verifier_setup_phase().await;
-        self.deploy_mvx_esdt_safe(
-            self.state.current_header_verifier_address().clone(),
-            esdt_safe_config,
-        )
-        .await;
-        self.complete_setup_phase().await;
+        self.deploy_mvx_esdt_safe(esdt_safe_config).await;
         self.deploy_fee_market(
             self.state.current_mvx_esdt_safe_contract_address().clone(),
             fee_struct,
@@ -195,6 +189,10 @@ impl MvxEsdtSafeInteract {
         .await;
         self.set_fee_market_address(self.state.current_fee_market_address().to_address())
             .await;
+        let contracts_array = self.get_contract_info_struct_for_sc_type(sc_array);
+        self.deploy_header_verifier(contracts_array).await;
+        self.complete_header_verifier_setup_phase().await;
+        self.complete_setup_phase().await;
     }
 
     pub async fn register_operation(
@@ -232,6 +230,14 @@ impl MvxEsdtSafeInteract {
             .returns(ReturnsResultUnmanaged)
             .run()
             .await;
+
+        self.change_ownership_to_header_verifier(
+            self.owner_address.clone(),
+            self.state
+                .current_mvx_esdt_safe_contract_address()
+                .to_address(),
+        )
+        .await;
     }
 
     pub async fn upgrade(&mut self) {
@@ -260,7 +266,7 @@ impl MvxEsdtSafeInteract {
             .to(self.state.current_mvx_esdt_safe_contract_address())
             .gas(90_000_000u64)
             .typed(MvxEsdtSafeProxy)
-            .update_configuration(new_config)
+            .update_esdt_safe_config_during_setup_phase(new_config)
             .returns(ReturnsResultUnmanaged)
             .run()
             .await;

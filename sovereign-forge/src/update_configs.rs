@@ -2,8 +2,9 @@ use multiversx_sc::types::TokenIdentifier;
 use proxies::chain_factory_proxy::ChainFactoryContractProxy;
 use structs::configs::{EsdtSafeConfig, SovereignConfig};
 use structs::fee::FeeStruct;
+use structs::forge::ScArray;
 
-use crate::common::{self, utils::ScArray};
+use crate::common::{self};
 use crate::err_msg;
 
 #[multiversx_sc::module]
@@ -12,7 +13,7 @@ pub trait UpdateConfigsModule: common::utils::UtilsModule + common::storage::Sto
     fn update_esdt_safe_config(&self, new_config: EsdtSafeConfig<Self::Api>) {
         let caller = self.blockchain().get_caller();
 
-        self.require_phase_three_completed(&caller);
+        self.require_phase_two_completed(&caller);
 
         self.tx()
             .to(self.get_chain_factory_address())

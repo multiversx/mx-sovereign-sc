@@ -44,15 +44,15 @@ where
     Gas: TxGas<Env>,
 {
     pub fn init<
-        Arg0: ProxyArg<structs::configs::SovereignConfig<Env::Api>>,
+        Arg0: ProxyArg<OptionalValue<structs::configs::SovereignConfig<Env::Api>>>,
     >(
         self,
-        config: Arg0,
+        opt_config: Arg0,
     ) -> TxTypedDeploy<Env, From, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_deploy()
-            .argument(&config)
+            .argument(&opt_config)
             .original_result()
     }
 }
@@ -85,7 +85,7 @@ where
     To: TxTo<Env>,
     Gas: TxGas<Env>,
 {
-    pub fn update_config<
+    pub fn update_sovereign_config_during_setup_phase<
         Arg0: ProxyArg<structs::configs::SovereignConfig<Env::Api>>,
     >(
         self,
@@ -93,7 +93,23 @@ where
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
-            .raw_call("updateConfig")
+            .raw_call("updateSovereignConfigSetupPhase")
+            .argument(&new_config)
+            .original_result()
+    }
+
+    pub fn update_sovereign_config<
+        Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
+        Arg1: ProxyArg<structs::configs::SovereignConfig<Env::Api>>,
+    >(
+        self,
+        hash_of_hashes: Arg0,
+        new_config: Arg1,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("updateSovereignConfig")
+            .argument(&hash_of_hashes)
             .argument(&new_config)
             .original_result()
     }

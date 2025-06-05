@@ -25,6 +25,14 @@ pub trait ValidatorRulesModule {
         );
     }
 
+    fn is_new_config_valid(&self, config: &SovereignConfig<Self::Api>) -> Option<&str> {
+        if config.min_validators <= config.max_validators {
+            None
+        } else {
+            Some(INVALID_MIN_MAX_VALIDATOR_NUMBERS)
+        }
+    }
+
     #[view(sovereignConfig)]
     #[storage_mapper("sovereignConfig")]
     fn sovereign_config(&self) -> SingleValueMapper<SovereignConfig<Self::Api>>;

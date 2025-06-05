@@ -3,51 +3,18 @@ use error_messages::{
     CHAIN_ID_NOT_FOUR_CHAR_LONG, CHAIN_ID_NOT_LOWERCASE_ALPHANUMERIC, DEPLOY_COST_NOT_ENOUGH,
     ESDT_SAFE_NOT_DEPLOYED, FEE_MARKET_NOT_DEPLOYED, HEADER_VERIFIER_NOT_DEPLOYED,
 };
-use multiversx_sc::{
-    api::ManagedTypeApi,
-    codec,
-    derive::{type_abi, ManagedVecItem},
-    proxy_imports::{NestedDecode, NestedEncode, TopDecode, TopEncode},
-    require,
-    types::ManagedAddress,
-};
+use multiversx_sc::require;
+use structs::forge::ScArray;
 
 const CHARSET: &[u8] = b"0123456789abcdefghijklmnopqrstuvwxyz";
 
 use crate::err_msg;
 
-#[type_abi]
-#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, ManagedVecItem)]
-pub struct ContractInfo<M: ManagedTypeApi> {
-    pub id: ScArray,
-    pub address: ManagedAddress<M>,
-}
-
-impl<M: ManagedTypeApi> ContractInfo<M> {
-    pub fn new(id: ScArray, address: ManagedAddress<M>) -> Self {
-        ContractInfo { id, address }
-    }
-}
-
-#[type_abi]
-#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, Clone, ManagedVecItem, PartialEq)]
-pub enum ScArray {
-    ChainFactory,
-    Controller,
-    HeaderVerifier,
-    ESDTSafe,
-    EnshrineESDTSafe,
-    FeeMarket,
-    TokenHandler,
-    ChainConfig,
-    Slashing,
-}
-
 const NUMBER_OF_SHARDS: u32 = 3;
 
 #[multiversx_sc::module]
 pub trait UtilsModule: super::storage::StorageModule {
-    fn require_initilization_phase_complete(&self) {
+    fn require_initialization_phase_complete(&self) {
         for shard_id in 1..=NUMBER_OF_SHARDS {
             require!(
                 !self.chain_factories(shard_id).is_empty(),
@@ -65,22 +32,22 @@ pub trait UtilsModule: super::storage::StorageModule {
 
     fn require_phase_four_completed(&self, caller: &ManagedAddress) {
         require!(
-            self.is_contract_deployed(caller, ScArray::FeeMarket),
-            FEE_MARKET_NOT_DEPLOYED
+            self.is_contract_deployed(caller, ScArray::HeaderVerifier),
+            HEADER_VERIFIER_NOT_DEPLOYED
         );
     }
 
     fn require_phase_three_completed(&self, caller: &ManagedAddress) {
         require!(
-            self.is_contract_deployed(caller, ScArray::ESDTSafe),
-            ESDT_SAFE_NOT_DEPLOYED
+            self.is_contract_deployed(caller, ScArray::FeeMarket),
+            FEE_MARKET_NOT_DEPLOYED
         );
     }
 
     fn require_phase_two_completed(&self, caller: &ManagedAddress) {
         require!(
-            self.is_contract_deployed(caller, ScArray::HeaderVerifier),
-            HEADER_VERIFIER_NOT_DEPLOYED
+            self.is_contract_deployed(caller, ScArray::ESDTSafe),
+            ESDT_SAFE_NOT_DEPLOYED
         );
     }
 
