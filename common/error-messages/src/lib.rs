@@ -28,6 +28,7 @@ pub const DEPLOY_COST_NOT_ENOUGH: &str =
 pub const DEPOSIT_AMOUNT_SMALLER_THAN_PAYMENT_AMOUNT: &str =
     "The deposit amount should not be less than the payment amount";
 pub const DEPOSIT_OVER_MAX_AMOUNT: &str = "Deposit over max amount";
+pub const EMPTY_EXPECTED_LOG: &str = "Expected log string cannot be empty";
 pub const ENDPOINT_CAN_ONLY_BE_CALLED_BY_ADMIN: &str = "Endpoint can only be called by admins";
 pub const ERR_EMPTY_PAYMENTS: &str = "No payments";
 pub const ESDT_SAFE_ADDRESS_NOT_SET: &str = "The ESDT-Safe address is not set";
@@ -36,6 +37,7 @@ pub const ESDT_SAFE_CONFIG_NOT_SET: &str = "There is no config set for this cont
 pub const ESDT_SAFE_NOT_DEPLOYED: &str =
     "The ESDT-Safe SC is not deployed, you skipped the second phase";
 pub const ESDT_SAFE_STILL_PAUSED: &str = "Cannot create transaction while paused";
+pub const FAILED_TO_PARSE_AS_NUMBER: &str = "Failed to parse actual amount as number";
 pub const FEE_MARKET_ALREADY_DEPLOYED: &str = "The Fee-Market SC is already deployed";
 pub const FEE_MARKET_NOT_DEPLOYED: &str = "The Fee-Market SC is not deployed";
 pub const GAS_LIMIT_TOO_HIGH: &str = "Gas limit too high";
@@ -72,6 +74,19 @@ pub const NATIVE_TOKEN_ALREADY_REGISTERED: &str = "Native token was already regi
 pub const NATIVE_TOKEN_NOT_REGISTERED: &str = "There is no native token registered";
 pub const NO_ESDT_SAFE_ADDRESS: &str = "There is no registered ESDT address";
 pub const NO_HEADER_VERIFIER_ADDRESS: &str = "There is no registered Header-Verifier address";
+pub const NO_KNOWN_CHAIN_CONFIG_SC: &str = "No known Chain Config SC contract, deploy first";
+pub const NO_KNOWN_CHAIN_FACTORY_SC: &str = "No known Chain Factory SC, deploy first";
+pub const NO_KNOWN_ENSHRINE_ESDT_SAFE_SC: &str =
+    "No known Enshrine ESDT Safe SC contract, deploy first";
+pub const NO_KNOWN_FIRST_TOKEN: &str = "No known first token, register first";
+pub const NO_KNOWN_FEE_MARKET: &str = "No known Fee Market contract, deploy first";
+pub const NO_KNOWN_FEE_TOKEN: &str = "No known fee token, register first";
+pub const NO_KNOWN_MVX_ESDT_SAFE: &str = "No known MVX ESDT Safe contract, deploy first";
+pub const NO_KNOWN_HEADER_VERIFIER: &str = "No known Header Verifier contract, deploy first";
+pub const NO_KNOWN_SECOND_TOKEN: &str = "No known second token, register first";
+pub const NO_KNOWN_SOVEREIGN_FORGE_SC: &str = "No known Sovereign Forge SC, deploy first";
+pub const NO_KNOWN_TESTING_SC: &str = "No known Testing SC contract, deploy first";
+pub const NO_KNOWN_TOKEN_HANDLER_SC: &str = "No known Token Handler contract, deploy first";
 pub const NOT_ENOUGH_WEGLD_AMOUNT: &str = "WEGLD fee amount is not met";
 pub const NOTHING_TO_TRANSFER: &str = "Nothing to transfer";
 pub const ONLY_DEPLOYED_CONTRACTS_CAN_CALL_ENDPOINT: &str =
