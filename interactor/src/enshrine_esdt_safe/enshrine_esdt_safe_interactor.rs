@@ -302,11 +302,7 @@ impl EnshrineEsdtSafeInteract {
         error_message: Option<&str>,
     ) {
         let mut managed_token_ids: MultiValueEncoded<StaticApi, TokenIdentifier<StaticApi>> =
-            MultiValueEncoded::new();
-
-        for token_id in tokens_to_register {
-            managed_token_ids.push(token_id)
-        }
+            MultiValueEncoded::from_iter(tokens_to_register);
 
         let response = self
             .interactor

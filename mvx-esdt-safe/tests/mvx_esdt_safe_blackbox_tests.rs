@@ -1719,7 +1719,7 @@ fn execute_operation_only_transfer_data_no_fee() {
     let operations_hashes = MultiValueEncoded::from(ManagedVec::from(vec![operation_hash.clone()]));
 
     state.common_setup.register_operation(
-        CallerAddress::Owner,
+        OWNER_ADDRESS,
         ManagedBuffer::new(),
         &hash_of_hashes,
         operations_hashes,
