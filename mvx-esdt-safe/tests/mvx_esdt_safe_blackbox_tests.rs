@@ -3,7 +3,7 @@ use common_test_setup::constants::{
     HEADER_VERIFIER_ADDRESS, ONE_HUNDRED_MILLION, ONE_HUNDRED_THOUSAND, OWNER_ADDRESS,
     SECOND_TEST_TOKEN, SOV_TOKEN, TESTING_SC_ADDRESS, USER_ADDRESS,
 };
-use common_test_setup::{CallerAddress, RegisterTokenArgs};
+use common_test_setup::RegisterTokenArgs;
 use cross_chain::storage::CrossChainStorage;
 use cross_chain::{DEFAULT_ISSUE_COST, MAX_GAS_PER_TRANSACTION};
 use error_messages::{
@@ -1499,7 +1499,7 @@ fn test_execute_operation_success() {
     let operations_hashes = MultiValueEncoded::from(ManagedVec::from(vec![operation_hash.clone()]));
 
     state.common_setup.register_operation(
-        CallerAddress::Owner,
+        OWNER_ADDRESS,
         ManagedBuffer::new(),
         &hash_of_hashes,
         operations_hashes,
@@ -1587,7 +1587,7 @@ fn test_execute_operation_with_native_token_success() {
     let operations_hashes = MultiValueEncoded::from(ManagedVec::from(vec![operation_hash.clone()]));
 
     state.common_setup.register_operation(
-        CallerAddress::Owner,
+        OWNER_ADDRESS,
         ManagedBuffer::new(),
         &hash_of_hashes,
         operations_hashes,
@@ -1670,7 +1670,7 @@ fn test_execute_operation_burn_mechanism_without_deposit_cannot_subtract() {
     let operations_hashes = MultiValueEncoded::from(ManagedVec::from(vec![operation_hash.clone()]));
 
     state.common_setup.register_operation(
-        CallerAddress::Owner,
+        OWNER_ADDRESS,
         ManagedBuffer::new(),
         &hash_of_hashes,
         operations_hashes,
@@ -1759,7 +1759,7 @@ fn test_execute_operation_success_burn_mechanism() {
     );
 
     state.common_setup.register_operation(
-        CallerAddress::Owner,
+        OWNER_ADDRESS,
         ManagedBuffer::new(),
         &hash_of_hashes,
         operations_hashes,
@@ -1909,7 +1909,7 @@ fn test_deposit_execute_switch_mechanism() {
         MultiValueEncoded::from(ManagedVec::from(vec![operation_one_hash.clone()]));
 
     state.common_setup.register_operation(
-        CallerAddress::Owner,
+        OWNER_ADDRESS,
         ManagedBuffer::new(),
         &hash_of_hashes_one,
         operations_hashes_one,
@@ -1985,7 +1985,7 @@ fn test_deposit_execute_switch_mechanism() {
         MultiValueEncoded::from(ManagedVec::from(vec![operation_two_hash.clone()]));
 
     state.common_setup.register_operation(
-        CallerAddress::Owner,
+        OWNER_ADDRESS,
         ManagedBuffer::new(),
         &hash_of_hashes_two,
         operations_hashes_two,
@@ -2112,7 +2112,7 @@ fn test_execute_operation_no_payments() {
     let operations_hashes = MultiValueEncoded::from(ManagedVec::from(vec![operation_hash.clone()]));
 
     state.common_setup.register_operation(
-        CallerAddress::Owner,
+        OWNER_ADDRESS,
         ManagedBuffer::new(),
         &hash_of_hashes,
         operations_hashes,
@@ -2198,7 +2198,7 @@ fn test_execute_operation_no_payments_failed_event() {
     let operations_hashes = MultiValueEncoded::from(ManagedVec::from(vec![operation_hash.clone()]));
 
     state.common_setup.register_operation(
-        CallerAddress::Owner,
+        OWNER_ADDRESS,
         ManagedBuffer::new(),
         &hash_of_hashes,
         operations_hashes,

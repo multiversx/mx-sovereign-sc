@@ -3,7 +3,6 @@ use common_test_setup::constants::{
     NFT_TOKEN_ID, ONE_HUNDRED_THOUSAND, OWNER_ADDRESS, PREFIX_NFT_TOKEN_ID, RECEIVER_ADDRESS,
     USER_ADDRESS, WEGLD_IDENTIFIER,
 };
-use common_test_setup::CallerAddress;
 use enshrine_esdt_safe_blackbox_setup::EnshrineTestState;
 use error_messages::{
     ACTION_IS_NOT_ALLOWED, BANNED_ENDPOINT_NAME, GAS_LIMIT_TOO_HIGH, INSUFFICIENT_FUNDS,
@@ -73,7 +72,7 @@ fn test_execute_with_non_prefixed_token() {
     let operations_hashes = MultiValueEncoded::from(ManagedVec::from(vec![operation_hash.clone()]));
 
     state.common_setup.register_operation(
-        CallerAddress::SafeSC,
+        OWNER_ADDRESS,
         ManagedBuffer::new(),
         &hash_of_hashes,
         operations_hashes,
@@ -121,7 +120,7 @@ fn test_execute_with_prefixed_token() {
 
     state.setup_contracts(false, None, None);
     state.common_setup.register_operation(
-        CallerAddress::SafeSC,
+        OWNER_ADDRESS,
         ManagedBuffer::new(),
         &hash_of_hashes,
         operations_hashes,

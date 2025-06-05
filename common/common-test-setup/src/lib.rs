@@ -15,8 +15,8 @@ use multiversx_sc_scenario::{
     api::StaticApi,
     imports::{
         Address, BigUint, EsdtTokenType, ManagedBuffer, MultiValue3, MultiValueEncoded, MxscPath,
-        OptionalValue, ReturnsResultUnmanaged, TestSCAddress, TestTokenIdentifier, TokenIdentifier,
-        TopEncode, UserBuiltinProxy, Vec,
+        OptionalValue, ReturnsResultUnmanaged, TestAddress, TestSCAddress, TestTokenIdentifier,
+        TokenIdentifier, TopEncode, UserBuiltinProxy, Vec,
     },
     multiversx_chain_vm::crypto_functions::sha256,
     scenario_model::{Log, TxResponseStatus},
@@ -54,11 +54,6 @@ pub struct AccountSetup<'a> {
     pub code_path: Option<MxscPath<'a>>,
     pub esdt_balances: Option<Vec<(TestTokenIdentifier<'a>, u64, BigUint<StaticApi>)>>,
     pub egld_balance: Option<BigUint<StaticApi>>,
-}
-
-pub enum CallerAddress {
-    Owner,
-    SafeSC,
 }
 
 fn world() -> ScenarioWorld {
@@ -429,19 +424,14 @@ impl BaseSetup {
 
     pub fn register_operation(
         &mut self,
-        caller: CallerAddress,
+        caller: TestAddress,
         signature: ManagedBuffer<StaticApi>,
         hash_of_hashes: &ManagedBuffer<StaticApi>,
         operations_hashes: MultiValueEncoded<StaticApi, ManagedBuffer<StaticApi>>,
     ) {
-        let from_address: Address = match caller {
-            CallerAddress::SafeSC => ENSHRINE_SC_ADDRESS.to_address(),
-            CallerAddress::Owner => OWNER_ADDRESS.to_address(),
-        };
-
         self.world
             .tx()
-            .from(from_address)
+            .from(caller)
             .to(HEADER_VERIFIER_ADDRESS)
             .typed(HeaderverifierProxy)
             .register_bridge_operations(
