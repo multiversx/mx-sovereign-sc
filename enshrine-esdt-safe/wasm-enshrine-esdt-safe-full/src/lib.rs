@@ -6,9 +6,9 @@
 
 // Init:                                 1
 // Upgrade:                              1
-// Endpoints:                           16
+// Endpoints:                           15
 // Async Callback:                       1
-// Total number of exported functions:  19
+// Total number of exported functions:  18
 
 #![no_std]
 
@@ -22,7 +22,6 @@ multiversx_sc_wasm_adapter::endpoints! {
         upgrade => upgrade
         updateConfiguration => update_configuration
         setFeeMarketAddress => set_fee_market_address
-        setHeaderVerifierAddress => set_header_verifier_address
         deposit => deposit
         executeBridgeOps => execute_operations
         registerNewTokenID => register_new_token_id

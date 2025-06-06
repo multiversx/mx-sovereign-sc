@@ -1,14 +1,15 @@
 #![no_std]
 
 use error_messages::{
-    ADDRESS_NOT_VALID_SC_ADDRESS, BLS_SIGNATURE_NOT_VALID, CURRENT_OPERATION_ALREADY_IN_EXECUTION,
+    BLS_SIGNATURE_NOT_VALID, CALLER_NOT_FROM_CURRENT_SOVEREIGN,
+    COULD_NOT_RETRIEVE_SOVEREIGN_CONFIG, CURRENT_OPERATION_ALREADY_IN_EXECUTION,
     CURRENT_OPERATION_NOT_REGISTERED, HASH_OF_HASHES_DOES_NOT_MATCH, INVALID_VALIDATOR_SET_LENGTH,
-    NO_ESDT_SAFE_ADDRESS, ONLY_ESDT_SAFE_CALLER, OUTGOING_TX_HASH_ALREADY_REGISTERED,
+    OUTGOING_TX_HASH_ALREADY_REGISTERED,
 };
 use multiversx_sc::codec;
 use multiversx_sc::proxy_imports::{TopDecode, TopEncode};
-use proxies::chain_config_proxy::ChainConfigContractProxy;
 use structs::configs::SovereignConfig;
+use structs::forge::{ContractInfo, ScArray};
 
 multiversx_sc::imports!();
 
@@ -19,17 +20,10 @@ pub enum OperationHashStatus {
 }
 
 #[multiversx_sc::contract]
-pub trait Headerverifier:
-    cross_chain::events::EventsModule + setup_phase::SetupPhaseModule
-{
+pub trait Headerverifier: events::EventsModule + setup_phase::SetupPhaseModule {
     #[init]
-    fn init(&self, chain_config_address: ManagedAddress) {
-        require!(
-            self.blockchain().is_smart_contract(&chain_config_address),
-            ADDRESS_NOT_VALID_SC_ADDRESS
-        );
-
-        self.chain_config_address().set(chain_config_address);
+    fn init(&self, sovereign_contracts: MultiValueEncoded<ContractInfo<Self::Api>>) {
+        self.sovereign_contracts().extend(sovereign_contracts);
     }
 
     #[upgrade]
@@ -109,15 +103,9 @@ pub trait Headerverifier:
         self.execute_bridge_operation_event(&bridge_operations_hash, &operation_hash);
     }
 
-    #[only_owner]
-    #[endpoint(setEsdtSafeAddress)]
-    fn set_esdt_safe_address(&self, esdt_safe_address: ManagedAddress) {
-        self.esdt_safe_address().set(esdt_safe_address);
-    }
-
     #[endpoint(removeExecutedHash)]
     fn remove_executed_hash(&self, hash_of_hashes: &ManagedBuffer, operation_hash: &ManagedBuffer) {
-        self.require_caller_esdt_safe();
+        self.require_caller_is_from_current_sovereign();
 
         self.operation_hash_status(hash_of_hashes, operation_hash)
             .clear();
@@ -125,7 +113,7 @@ pub trait Headerverifier:
 
     #[endpoint(lockOperationHash)]
     fn lock_operation_hash(&self, hash_of_hashes: ManagedBuffer, operation_hash: ManagedBuffer) {
-        self.require_caller_esdt_safe();
+        self.require_caller_is_from_current_sovereign();
 
         let operation_hash_status_mapper =
             self.operation_hash_status(&hash_of_hashes, &operation_hash);
@@ -146,17 +134,6 @@ pub trait Headerverifier:
         }
     }
 
-    #[endpoint(updateConfig)]
-    fn update_config(&self, new_config: SovereignConfig<Self::Api>) {
-        // TODO: verify signature
-
-        self.tx()
-            .to(self.chain_config_address().get())
-            .typed(ChainConfigContractProxy)
-            .update_config(new_config)
-            .sync_call();
-    }
-
     #[only_owner]
     #[endpoint(completeSetupPhase)]
     fn complete_setup_phase(&self) {
@@ -171,7 +148,13 @@ pub trait Headerverifier:
 
     fn check_validator_range(&self, number_of_validators: u64) {
         let sovereign_config = self
-            .sovereign_config(self.chain_config_address().get())
+            .sovereign_config(
+                self.sovereign_contracts()
+                    .iter()
+                    .find(|sc| sc.id == ScArray::ChainConfig)
+                    .unwrap_or_else(|| sc_panic!(COULD_NOT_RETRIEVE_SOVEREIGN_CONFIG))
+                    .address,
+            )
             .get();
 
         require!(
@@ -181,13 +164,14 @@ pub trait Headerverifier:
         );
     }
 
-    fn require_caller_esdt_safe(&self) {
-        let esdt_safe_mapper = self.esdt_safe_address();
-
-        require!(!esdt_safe_mapper.is_empty(), NO_ESDT_SAFE_ADDRESS);
-
+    fn require_caller_is_from_current_sovereign(&self) {
         let caller = self.blockchain().get_caller();
-        require!(caller == esdt_safe_mapper.get(), ONLY_ESDT_SAFE_CALLER);
+        require!(
+            self.sovereign_contracts()
+                .iter()
+                .any(|sc| sc.address == caller),
+            CALLER_NOT_FROM_CURRENT_SOVEREIGN
+        );
     }
 
     fn calculate_and_check_transfers_hashes(
@@ -243,6 +227,9 @@ pub trait Headerverifier:
 
     #[storage_mapper("chainConfigAddress")]
     fn chain_config_address(&self) -> SingleValueMapper<ManagedAddress>;
+
+    #[storage_mapper("sovereignContracts")]
+    fn sovereign_contracts(&self) -> UnorderedSetMapper<ContractInfo<Self::Api>>;
 
     #[storage_mapper_from_address("sovereignConfig")]
     fn sovereign_config(

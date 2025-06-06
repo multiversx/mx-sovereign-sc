@@ -8,6 +8,9 @@ publish = false
 [lib]
 path = "src/lib.rs"
 
+[dependencies.multiversx-sc]
+version = "=0.58.0"
+
 [dependencies.utils]
 path = "../common/utils"
 
@@ -20,11 +23,11 @@ path = "../common/proxies"
 [dependencies.structs]
 path = "../common/structs"
 
-[dependencies.multiversx-sc]
-version = "=0.58.0"
-
 [dependencies.error-messages]
 path = "../common/error-messages"
+
+[dependencies.events]
+path = "../common/events"
 
 [dev-dependencies]
 num-bigint = "0.4.2"

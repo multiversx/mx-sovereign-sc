@@ -18,6 +18,7 @@ use proxies::*;
 use structs::aliases::{OptionalTransferData, PaymentsVec};
 use structs::configs::{EsdtSafeConfig, SovereignConfig};
 use structs::fee::FeeStruct;
+use structs::forge::ScArray;
 use structs::operation::{self, Operation, OperationData};
 
 use crate::sovereign_forge;
@@ -130,8 +131,10 @@ impl EnshrineEsdtSafeInteract {
         is_sovereign_chain: bool,
         fee_struct: Option<FeeStruct<StaticApi>>,
         opt_config: Option<EsdtSafeConfig<StaticApi>>,
+        sc_array: Vec<ScArray>,
     ) {
         let owner = self.owner_address().clone();
+        self.deploy_chain_config(OptionalValue::None).await;
         self.deploy_token_handler(owner).await;
         self.deploy_enshrine_esdt(
             is_sovereign_chain,
@@ -152,14 +155,9 @@ impl EnshrineEsdtSafeInteract {
             self.state.current_fee_market_address().clone(),
         )
         .await;
-        self.deploy_chain_config(SovereignConfig::default_config())
-            .await;
-        self.deploy_header_verifier(self.state.current_chain_config_sc_address().clone())
-            .await;
-        self.set_header_verifier_address_in_enshrine_esdt_safe(
-            self.state.current_header_verifier_address().clone(),
-        )
-        .await;
+        let contracts_array = self.get_contract_info_struct_for_sc_type(sc_array);
+
+        self.deploy_header_verifier(contracts_array).await;
         self.complete_header_verifier_setup_phase().await;
         self.unpause_endpoint().await;
     }
@@ -194,25 +192,6 @@ impl EnshrineEsdtSafeInteract {
             .gas(30_000_000u64)
             .typed(EnshrineEsdtSafeProxy)
             .set_fee_market_address(fee_market_address)
-            .returns(ReturnsResultUnmanaged)
-            .run()
-            .await;
-
-        println!("Result: {response:?}");
-    }
-
-    pub async fn set_header_verifier_address_in_enshrine_esdt_safe(
-        &mut self,
-        header_verifier_address: Bech32Address,
-    ) {
-        let response = self
-            .interactor
-            .tx()
-            .from(&self.owner_address)
-            .to(self.state.current_enshrine_esdt_safe_address())
-            .gas(30_000_000u64)
-            .typed(EnshrineEsdtSafeProxy)
-            .set_header_verifier_address(header_verifier_address)
             .returns(ReturnsResultUnmanaged)
             .run()
             .await;

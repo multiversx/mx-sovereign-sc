@@ -43,6 +43,15 @@ name = "error-messages"
 version = "0.1.0"
 
 [[package]]
+name = "events"
+version = "0.1.0"
+dependencies = [
+ "multiversx-sc",
+ "multiversx-sc-modules",
+ "structs",
+]
+
+[[package]]
 name = "generic-array"
 version = "1.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -57,6 +66,7 @@ version = "0.1.0"
 dependencies = [
  "cross-chain",
  "error-messages",
+ "events",
  "multiversx-sc",
  "proxies",
  "setup-phase",
@@ -274,5 +284,6 @@ version = "0.1.0"
 dependencies = [
  "error-messages",
  "multiversx-sc",
+ "proxies",
  "structs",
 ]

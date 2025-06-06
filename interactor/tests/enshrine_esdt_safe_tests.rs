@@ -18,6 +18,7 @@ use serial_test::serial;
 use structs::aliases::{OptionalTransferData, PaymentsVec};
 use structs::configs::EsdtSafeConfig;
 use structs::fee::{FeeStruct, FeeType};
+use structs::forge::ScArray;
 
 /// ### TEST
 /// E-ESDT_DEPLOY_OK
@@ -34,7 +35,14 @@ async fn test_deploy() {
     let mut chain_interactor =
         EnshrineEsdtSafeInteract::new(Config::chain_simulator_config()).await;
 
-    chain_interactor.deploy_contracts(false, None, None).await;
+    chain_interactor
+        .deploy_contracts(
+            false,
+            None,
+            None,
+            vec![ScArray::ChainConfig, ScArray::EnshrineESDTSafe],
+        )
+        .await;
 }
 
 /// ### TEST
@@ -63,7 +71,14 @@ async fn test_register_tokens_wrong_token_as_fee() {
         payment_amount,
     );
 
-    chain_interactor.deploy_contracts(false, None, None).await;
+    chain_interactor
+        .deploy_contracts(
+            false,
+            None,
+            None,
+            vec![ScArray::ChainConfig, ScArray::EnshrineESDTSafe],
+        )
+        .await;
 
     chain_interactor
         .register_tokens(
@@ -102,7 +117,14 @@ async fn test_register_tokens() {
         payment_amount.clone(),
     );
 
-    chain_interactor.deploy_contracts(false, None, None).await;
+    chain_interactor
+        .deploy_contracts(
+            false,
+            None,
+            None,
+            vec![ScArray::ChainConfig, ScArray::EnshrineESDTSafe],
+        )
+        .await;
 
     chain_interactor
         .register_tokens(payment, token_vec, None)
@@ -157,7 +179,14 @@ async fn test_register_tokens_insufficient_wegld() {
         payment_amount,
     );
 
-    chain_interactor.deploy_contracts(false, None, None).await;
+    chain_interactor
+        .deploy_contracts(
+            false,
+            None,
+            None,
+            vec![ScArray::ChainConfig, ScArray::EnshrineESDTSafe],
+        )
+        .await;
 
     chain_interactor
         .register_tokens(payment, token_vec, Some(NOT_ENOUGH_WEGLD_AMOUNT))
@@ -190,7 +219,14 @@ async fn test_deposit_no_fee() {
 
     payments.push(wegld_payment);
 
-    chain_interactor.deploy_contracts(false, None, None).await;
+    chain_interactor
+        .deploy_contracts(
+            false,
+            None,
+            None,
+            vec![ScArray::ChainConfig, ScArray::EnshrineESDTSafe],
+        )
+        .await;
 
     chain_interactor
         .deposit(
@@ -257,7 +293,14 @@ async fn test_deposit_token_nothing_to_transfer_fee_disabled() {
 
     let payments = PaymentsVec::new();
 
-    chain_interactor.deploy_contracts(false, None, None).await;
+    chain_interactor
+        .deploy_contracts(
+            false,
+            None,
+            None,
+            vec![ScArray::ChainConfig, ScArray::EnshrineESDTSafe],
+        )
+        .await;
 
     chain_interactor
         .deposit(
@@ -289,14 +332,20 @@ async fn test_deposit_token_nothing_to_transfer_fee_disabled() {
 async fn test_deposit_max_transfers_exceeded() {
     let mut chain_interactor =
         EnshrineEsdtSafeInteract::new(Config::chain_simulator_config()).await;
-
     let amount = BigUint::from(TEN_TOKENS);
     let wegld_payment =
         EsdtTokenPayment::new(chain_interactor.state.get_first_token_id(), 0, amount);
     let mut payments = PaymentsVec::new();
     payments.extend(vec![wegld_payment; 11]);
 
-    chain_interactor.deploy_contracts(false, None, None).await;
+    chain_interactor
+        .deploy_contracts(
+            false,
+            None,
+            None,
+            vec![ScArray::ChainConfig, ScArray::EnshrineESDTSafe],
+        )
+        .await;
 
     chain_interactor
         .deposit(
@@ -360,7 +409,12 @@ async fn test_deposit_no_transfer_data() {
     };
 
     chain_interactor
-        .deploy_contracts(false, Some(fee_struct), None)
+        .deploy_contracts(
+            false,
+            Some(fee_struct),
+            None,
+            vec![ScArray::ChainConfig, ScArray::EnshrineESDTSafe],
+        )
         .await;
 
     chain_interactor
@@ -452,7 +506,14 @@ async fn test_deposit_with_transfer_data_gas_limit_too_high() {
     payments.push(wegld_payment);
     payments.push(second_payment);
 
-    chain_interactor.deploy_contracts(false, None, None).await;
+    chain_interactor
+        .deploy_contracts(
+            false,
+            None,
+            None,
+            vec![ScArray::ChainConfig, ScArray::EnshrineESDTSafe],
+        )
+        .await;
 
     chain_interactor
         .deposit(
@@ -519,7 +580,12 @@ async fn test_deposit_with_transfer_data_banned_endpoint() {
     );
 
     chain_interactor
-        .deploy_contracts(false, None, Some(config))
+        .deploy_contracts(
+            false,
+            None,
+            Some(config),
+            vec![ScArray::ChainConfig, ScArray::EnshrineESDTSafe],
+        )
         .await;
 
     chain_interactor
@@ -591,7 +657,12 @@ async fn test_deposit_with_transfer_data_enough_for_fee() {
     };
 
     chain_interactor
-        .deploy_contracts(false, Some(fee_struct), None)
+        .deploy_contracts(
+            false,
+            Some(fee_struct),
+            None,
+            vec![ScArray::ChainConfig, ScArray::EnshrineESDTSafe],
+        )
         .await;
 
     chain_interactor
@@ -693,7 +764,12 @@ async fn test_deposit_with_transfer_data_not_enough_for_fee() {
     };
 
     chain_interactor
-        .deploy_contracts(false, Some(fee_struct), None)
+        .deploy_contracts(
+            false,
+            Some(fee_struct),
+            None,
+            vec![ScArray::ChainConfig, ScArray::EnshrineESDTSafe],
+        )
         .await;
 
     chain_interactor
@@ -745,7 +821,14 @@ async fn test_deposit_refund_non_whitelisted_tokens_fee_disabled() {
     payments.push(wegld_payment);
     payments.push(fungible_payment);
 
-    chain_interactor.deploy_contracts(false, None, None).await;
+    chain_interactor
+        .deploy_contracts(
+            false,
+            None,
+            None,
+            vec![ScArray::ChainConfig, ScArray::EnshrineESDTSafe],
+        )
+        .await;
     chain_interactor
         .add_tokens_to_whitelist(token_whitelist)
         .await;
@@ -766,7 +849,7 @@ async fn test_deposit_refund_non_whitelisted_tokens_fee_disabled() {
 }
 
 /// ### TEST
-/// E-ESDT_DEPOSIT_OK_017
+/// E-ESDT_DEPOSIT_OK
 ///
 /// ### ACTION
 /// Call 'deposit()' with non whitelisted tokens and fee enabled
@@ -811,7 +894,12 @@ async fn test_deposit_refund_non_whitelisted_tokens_fee_enabled() {
     };
 
     chain_interactor
-        .deploy_contracts(false, Some(fee_struct), None)
+        .deploy_contracts(
+            false,
+            Some(fee_struct),
+            None,
+            vec![ScArray::ChainConfig, ScArray::EnshrineESDTSafe],
+        )
         .await;
     chain_interactor
         .add_tokens_to_whitelist(token_whitelist)

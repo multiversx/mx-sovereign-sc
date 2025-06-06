@@ -77,9 +77,6 @@ fn test_execute_with_non_prefixed_token() {
         &hash_of_hashes,
         operations_hashes,
     );
-    state
-        .common_setup
-        .set_esdt_safe_address_in_header_verifier(ENSHRINE_SC_ADDRESS);
     state.whitelist_enshrine_esdt();
     state.execute_operation(Some(ACTION_IS_NOT_ALLOWED), operation, None);
 }
@@ -128,9 +125,6 @@ fn test_execute_with_prefixed_token() {
         &hash_of_hashes,
         operations_hashes,
     );
-    state
-        .common_setup
-        .set_esdt_safe_address_in_header_verifier(ENSHRINE_SC_ADDRESS);
     state.whitelist_enshrine_esdt();
     state.execute_operation(None, operation, Some("executedBridgeOp"));
 }
@@ -358,7 +352,9 @@ fn test_deposit_no_transfer_data() {
 
     state.setup_contracts(false, Some(&fee_struct), None);
     state.add_token_to_whitelist(tokens_whitelist);
-    state.common_setup.set_fee(Some(fee_struct), None);
+    state
+        .common_setup
+        .set_fee_during_setup_phase(fee_struct, None);
     state.deposit(
         OWNER_ADDRESS,
         USER_ADDRESS,
@@ -524,7 +520,9 @@ fn test_deposit_with_transfer_data_enough_for_fee() {
 
     state.setup_contracts(false, Some(&fee_struct), None);
     // state.set_max_user_tx_gas_limit(gas_limit);
-    state.common_setup.set_fee(Some(fee_struct), None);
+    state
+        .common_setup
+        .set_fee_during_setup_phase(fee_struct, None);
     state.deposit(OWNER_ADDRESS, USER_ADDRESS, payments, transfer_data, None);
 
     let fee = fee_amount_per_transfer * BigUint::from(2u32)
@@ -581,7 +579,9 @@ fn test_deposit_with_transfer_data_not_enough_for_fee() {
 
     state.setup_contracts(false, Some(&fee_struct), None);
     // state.set_max_user_tx_gas_limit(gas_limit);
-    state.common_setup.set_fee(Some(fee_struct), None);
+    state
+        .common_setup
+        .set_fee_during_setup_phase(fee_struct, None);
     state.deposit(
         OWNER_ADDRESS,
         USER_ADDRESS,
@@ -679,7 +679,9 @@ fn test_deposit_refund_non_whitelisted_tokens_fee_enabled() {
 
     state.setup_contracts(false, Some(&fee_struct), None);
     state.add_token_to_whitelist(token_whitelist);
-    state.common_setup.set_fee(Some(fee_struct), None);
+    state
+        .common_setup
+        .set_fee_during_setup_phase(fee_struct, None);
     state.deposit(
         OWNER_ADDRESS,
         USER_ADDRESS,

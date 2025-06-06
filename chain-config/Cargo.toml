@@ -14,9 +14,6 @@ num-bigint = "0.4.2"
 [dev-dependencies.multiversx-sc-scenario]
 version = "=0.58.0"
 
-[dev-dependencies.common-test-setup]
-path = "../common/common-test-setup"
-
 [dependencies.multiversx-sc]
 version = "=0.58.0"
 
@@ -34,3 +31,15 @@ path = "../common/setup-phase"
 
 [dependencies.error-messages]
 path = "../common/error-messages"
+
+[dependencies.cross-chain]
+path = "../common/cross-chain"
+
+[dependencies.events]
+path = "../common/events"
+
+[dependencies.utils]
+path = "../common/utils"
+
+[dev-dependencies.common-test-setup]
+path = "../common/common-test-setup"

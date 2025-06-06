@@ -50,7 +50,7 @@ pub trait EnshrineEsdtSafe:
                 self.wegld_identifier().set(identifier);
             }
 
-            None => sc_panic!("WEGLG identifier must be set in Mainchain"),
+            None => sc_panic!("WEGLD identifier must be set in Mainchain"),
         }
 
         match opt_sov_token_prefix {
@@ -77,14 +77,6 @@ pub trait EnshrineEsdtSafe:
         self.require_sc_address(&fee_market_address);
 
         self.fee_market_address().set(fee_market_address);
-    }
-
-    #[only_owner]
-    #[endpoint(setHeaderVerifierAddress)]
-    fn set_header_verifier_address(&self, header_verifier_address: ManagedAddress) {
-        self.require_sc_address(&header_verifier_address);
-
-        self.header_verifier_address().set(&header_verifier_address);
     }
 
     #[upgrade]
