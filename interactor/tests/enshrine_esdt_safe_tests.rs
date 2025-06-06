@@ -40,7 +40,7 @@ async fn test_deploy() {
             false,
             None,
             None,
-            vec![ScArray::ChainConfig, ScArray::ESDTSafe],
+            vec![ScArray::ChainConfig, ScArray::EnshrineESDTSafe],
         )
         .await;
 }
@@ -76,7 +76,7 @@ async fn test_register_tokens_wrong_token_as_fee() {
             false,
             None,
             None,
-            vec![ScArray::ChainConfig, ScArray::ESDTSafe],
+            vec![ScArray::ChainConfig, ScArray::EnshrineESDTSafe],
         )
         .await;
 
@@ -122,7 +122,7 @@ async fn test_register_tokens() {
             false,
             None,
             None,
-            vec![ScArray::ChainConfig, ScArray::ESDTSafe],
+            vec![ScArray::ChainConfig, ScArray::EnshrineESDTSafe],
         )
         .await;
 
@@ -184,7 +184,7 @@ async fn test_register_tokens_insufficient_wegld() {
             false,
             None,
             None,
-            vec![ScArray::ChainConfig, ScArray::ESDTSafe],
+            vec![ScArray::ChainConfig, ScArray::EnshrineESDTSafe],
         )
         .await;
 
@@ -224,7 +224,7 @@ async fn test_deposit_no_fee() {
             false,
             None,
             None,
-            vec![ScArray::ChainConfig, ScArray::ESDTSafe],
+            vec![ScArray::ChainConfig, ScArray::EnshrineESDTSafe],
         )
         .await;
 
@@ -298,7 +298,7 @@ async fn test_deposit_token_nothing_to_transfer_fee_disabled() {
             false,
             None,
             None,
-            vec![ScArray::ChainConfig, ScArray::ESDTSafe],
+            vec![ScArray::ChainConfig, ScArray::EnshrineESDTSafe],
         )
         .await;
 
@@ -343,7 +343,7 @@ async fn test_deposit_max_transfers_exceeded() {
             false,
             None,
             None,
-            vec![ScArray::ChainConfig, ScArray::ESDTSafe],
+            vec![ScArray::ChainConfig, ScArray::EnshrineESDTSafe],
         )
         .await;
 
@@ -413,7 +413,7 @@ async fn test_deposit_no_transfer_data() {
             false,
             Some(fee_struct),
             None,
-            vec![ScArray::ChainConfig, ScArray::ESDTSafe],
+            vec![ScArray::ChainConfig, ScArray::EnshrineESDTSafe],
         )
         .await;
 
@@ -511,7 +511,7 @@ async fn test_deposit_with_transfer_data_gas_limit_too_high() {
             false,
             None,
             None,
-            vec![ScArray::ChainConfig, ScArray::ESDTSafe],
+            vec![ScArray::ChainConfig, ScArray::EnshrineESDTSafe],
         )
         .await;
 
@@ -584,7 +584,7 @@ async fn test_deposit_with_transfer_data_banned_endpoint() {
             false,
             None,
             Some(config),
-            vec![ScArray::ChainConfig, ScArray::ESDTSafe],
+            vec![ScArray::ChainConfig, ScArray::EnshrineESDTSafe],
         )
         .await;
 
@@ -661,7 +661,7 @@ async fn test_deposit_with_transfer_data_enough_for_fee() {
             false,
             Some(fee_struct),
             None,
-            vec![ScArray::ChainConfig, ScArray::ESDTSafe],
+            vec![ScArray::ChainConfig, ScArray::EnshrineESDTSafe],
         )
         .await;
 
@@ -768,7 +768,7 @@ async fn test_deposit_with_transfer_data_not_enough_for_fee() {
             false,
             Some(fee_struct),
             None,
-            vec![ScArray::ChainConfig, ScArray::ESDTSafe],
+            vec![ScArray::ChainConfig, ScArray::EnshrineESDTSafe],
         )
         .await;
 
@@ -826,7 +826,7 @@ async fn test_deposit_refund_non_whitelisted_tokens_fee_disabled() {
             false,
             None,
             None,
-            vec![ScArray::ChainConfig, ScArray::ESDTSafe],
+            vec![ScArray::ChainConfig, ScArray::EnshrineESDTSafe],
         )
         .await;
     chain_interactor
@@ -898,7 +898,7 @@ async fn test_deposit_refund_non_whitelisted_tokens_fee_enabled() {
             false,
             Some(fee_struct),
             None,
-            vec![ScArray::ChainConfig, ScArray::ESDTSafe],
+            vec![ScArray::ChainConfig, ScArray::EnshrineESDTSafe],
         )
         .await;
     chain_interactor
