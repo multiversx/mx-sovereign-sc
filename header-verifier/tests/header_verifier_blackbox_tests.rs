@@ -2,8 +2,9 @@ use common_test_setup::constants::{
     CHAIN_CONFIG_ADDRESS, ENSHRINE_SC_ADDRESS, HEADER_VERIFIER_ADDRESS,
 };
 use error_messages::{
-    CALLER_NOT_FROM_CURRENT_SOVEREIGN, CURRENT_OPERATION_NOT_REGISTERED,
-    OUTGOING_TX_HASH_ALREADY_REGISTERED, SETUP_PHASE_NOT_COMPLETED,
+    CALLER_NOT_FROM_CURRENT_SOVEREIGN, CURRENT_OPERATION_ALREADY_IN_EXECUTION,
+    CURRENT_OPERATION_NOT_REGISTERED, OUTGOING_TX_HASH_ALREADY_REGISTERED,
+    SETUP_PHASE_NOT_COMPLETED,
 };
 use header_verifier::{Headerverifier, OperationHashStatus};
 use header_verifier_blackbox_setup::*;
@@ -382,6 +383,71 @@ fn test_lock_operation() {
         })
 }
 
+/// ### TEST
+/// H-VERIFIER_LOCK_OPERATION_FAIL
+///
+/// ### ACTION
+/// Call 'lock_operation_hash()' on already locked hash
+///
+/// ### EXPECTED
+/// Error CURRENT_OPERATION_ALREADY_IN_EXECUTION
+#[test]
+fn test_lock_operation_hash_already_locked() {
+    let mut state = HeaderVerifierTestState::new();
+
+    state
+        .common_setup
+        .deploy_chain_config(OptionalValue::None, None);
+
+    state
+        .common_setup
+        .deploy_header_verifier(vec![ScArray::ChainConfig]);
+
+    state
+        .common_setup
+        .complete_header_verifier_setup_phase(None);
+
+    let operation_1 = ManagedBuffer::from("operation_1");
+    let operation_2 = ManagedBuffer::from("operation_2");
+    let operation = state.generate_bridge_operation_struct(vec![&operation_1, &operation_2]);
+
+    state.register_operations(operation.clone(), None);
+
+    state.lock_operation_hash(
+        CHAIN_CONFIG_ADDRESS,
+        &operation.bridge_operation_hash,
+        &operation_1,
+        None,
+    );
+
+    state
+        .common_setup
+        .world
+        .query()
+        .to(HEADER_VERIFIER_ADDRESS)
+        .whitebox(header_verifier::contract_obj, |sc| {
+            let hash_of_hashes: ManagedBuffer<DebugApi> =
+                ManagedBuffer::from(operation.bridge_operation_hash.to_vec());
+            let operation_hash_debug_api_1 = ManagedBuffer::from(operation_1.to_vec());
+            let operation_hash_debug_api_2 = ManagedBuffer::from(operation_2.to_vec());
+            let is_hash_1_locked = sc
+                .operation_hash_status(&hash_of_hashes, &operation_hash_debug_api_1)
+                .get();
+            let is_hash_2_locked = sc
+                .operation_hash_status(&hash_of_hashes, &operation_hash_debug_api_2)
+                .get();
+
+            assert!(is_hash_1_locked == OperationHashStatus::Locked);
+            assert!(is_hash_2_locked == OperationHashStatus::NotLocked);
+        });
+
+    state.lock_operation_hash(
+        CHAIN_CONFIG_ADDRESS,
+        &operation.bridge_operation_hash,
+        &operation_1,
+        Some(CURRENT_OPERATION_ALREADY_IN_EXECUTION),
+    );
+}
 /// ### TEST
 /// H-VERIFIER_CHANGE_VALIDATORS_OK
 ///
