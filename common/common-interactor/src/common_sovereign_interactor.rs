@@ -13,9 +13,9 @@ use multiversx_sc::{
     codec::{num_bigint, TopEncode},
     imports::{ESDTSystemSCProxy, OptionalValue, UserBuiltinProxy},
     types::{
-        Address, BigUint, CodeMetadata, ESDTSystemSCAddress, EsdtTokenType, ManagedBuffer,
-        ManagedVec, MultiValueEncoded, ReturnsNewAddress, ReturnsResult, ReturnsResultUnmanaged,
-        TokenIdentifier,
+        Address, BigUint, CodeMetadata, ESDTSystemSCAddress, EsdtTokenType, ManagedAddress,
+        ManagedBuffer, ManagedVec, MultiValueEncoded, ReturnsNewAddress, ReturnsResult,
+        ReturnsResultUnmanaged, TestSCAddress, TokenIdentifier,
     },
 };
 use multiversx_sc_snippets::{
@@ -37,6 +37,7 @@ use proxies::{
 use structs::{
     configs::{EsdtSafeConfig, SovereignConfig},
     fee::FeeStruct,
+    forge::{ContractInfo, ScArray},
     operation::Operation,
 };
 
@@ -207,7 +208,7 @@ pub trait CommonInteractorTrait {
         println!("new Chain-Factory address: {new_address_bech32}");
     }
 
-    async fn deploy_chain_config(&mut self, config: SovereignConfig<StaticApi>) {
+    async fn deploy_chain_config(&mut self, opt_config: OptionalValue<SovereignConfig<StaticApi>>) {
         let owner_address = self.owner_address().clone();
 
         let new_address = self
@@ -216,7 +217,7 @@ pub trait CommonInteractorTrait {
             .from(owner_address)
             .gas(50_000_000u64)
             .typed(ChainConfigContractProxy)
-            .init(config)
+            .init(opt_config)
             .returns(ReturnsNewAddress)
             .code(CHAIN_CONFIG_CODE_PATH)
             .code_metadata(CodeMetadata::all())
@@ -232,7 +233,7 @@ pub trait CommonInteractorTrait {
         println!("new Chain-Config address: {new_address_bech32}");
     }
 
-    async fn deploy_header_verifier(&mut self, chain_config_address: Bech32Address) {
+    async fn deploy_header_verifier(&mut self, contracts_array: Vec<ContractInfo<StaticApi>>) {
         let owner_address = self.owner_address().clone();
 
         let new_address = self
@@ -241,7 +242,7 @@ pub trait CommonInteractorTrait {
             .from(owner_address)
             .gas(50_000_000u64)
             .typed(HeaderverifierProxy)
-            .init(chain_config_address)
+            .init(MultiValueEncoded::from_iter(contracts_array))
             .returns(ReturnsNewAddress)
             .code(HEADER_VERIFIER_CODE_PATH)
             .code_metadata(CodeMetadata::all())
@@ -257,11 +258,7 @@ pub trait CommonInteractorTrait {
         println!("new Header-Verifier address: {new_address_bech32}");
     }
 
-    async fn deploy_mvx_esdt_safe(
-        &mut self,
-        header_verifier_address: Bech32Address,
-        opt_config: OptionalValue<EsdtSafeConfig<StaticApi>>,
-    ) {
+    async fn deploy_mvx_esdt_safe(&mut self, opt_config: OptionalValue<EsdtSafeConfig<StaticApi>>) {
         let owner_address = self.owner_address().clone();
 
         let new_address = self
@@ -270,7 +267,7 @@ pub trait CommonInteractorTrait {
             .from(owner_address)
             .gas(100_000_000u64)
             .typed(MvxEsdtSafeProxy)
-            .init(header_verifier_address, opt_config)
+            .init(opt_config)
             .returns(ReturnsNewAddress)
             .code(MVX_ESDT_SAFE_CODE_PATH)
             .code_metadata(CodeMetadata::all())
@@ -400,11 +397,51 @@ pub trait CommonInteractorTrait {
         println!("new address: {new_address_bech32}");
     }
 
+    fn get_contract_info_struct_for_sc_type(
+        &mut self,
+        sc_array: Vec<ScArray>,
+    ) -> Vec<ContractInfo<StaticApi>> {
+        sc_array
+            .iter()
+            .map(|sc| ContractInfo::new(sc.clone(), self.get_sc_address(sc.clone())))
+            .collect()
+    }
+
+    fn get_sc_address(&mut self, sc_type: ScArray) -> ManagedAddress<StaticApi> {
+        match sc_type {
+            ScArray::ChainConfig => ManagedAddress::from_address(
+                &self.state().current_chain_config_sc_address().to_address(),
+            ),
+            ScArray::ChainFactory => ManagedAddress::from_address(
+                &self.state().current_chain_factory_sc_address().to_address(),
+            ),
+            ScArray::ESDTSafe => ManagedAddress::from_address(
+                &self
+                    .state()
+                    .current_mvx_esdt_safe_contract_address()
+                    .to_address(),
+            ),
+            ScArray::HeaderVerifier => ManagedAddress::from_address(
+                &self.state().current_header_verifier_address().to_address(),
+            ),
+            ScArray::FeeMarket => ManagedAddress::from_address(
+                &self.state().current_fee_market_address().to_address(),
+            ),
+            ScArray::EnshrineESDTSafe => ManagedAddress::from_address(
+                &self
+                    .state()
+                    .current_enshrine_esdt_safe_address()
+                    .to_address(),
+            ),
+            _ => TestSCAddress::new("ERROR").to_managed_address(),
+        }
+    }
+
     async fn deploy_phase_one(
         &mut self,
         egld_amount: BigUint<StaticApi>,
         opt_preferred_chain_id: Option<ManagedBuffer<StaticApi>>,
-        config: SovereignConfig<StaticApi>,
+        opt_config: OptionalValue<SovereignConfig<StaticApi>>,
     ) {
         let owner_address = self.owner_address().clone();
         let sovereign_forge_address = self.state().current_sovereign_forge_sc_address().clone();
@@ -416,7 +453,7 @@ pub trait CommonInteractorTrait {
             .to(sovereign_forge_address)
             .gas(100_000_000u64)
             .typed(SovereignForgeProxy)
-            .deploy_phase_one(opt_preferred_chain_id, config)
+            .deploy_phase_one(opt_preferred_chain_id, opt_config)
             .egld(egld_amount)
             .returns(ReturnsResultUnmanaged)
             .run()
@@ -425,7 +462,7 @@ pub trait CommonInteractorTrait {
         println!("Result: {response:?}");
     }
 
-    async fn deploy_phase_two(&mut self) {
+    async fn deploy_phase_two(&mut self, opt_config: OptionalValue<EsdtSafeConfig<StaticApi>>) {
         let owner_address = self.owner_address().clone();
         let sovereign_forge_address = self.state().current_sovereign_forge_sc_address().clone();
 
@@ -436,7 +473,7 @@ pub trait CommonInteractorTrait {
             .to(sovereign_forge_address)
             .gas(30_000_000u64)
             .typed(SovereignForgeProxy)
-            .deploy_phase_two()
+            .deploy_phase_two(opt_config)
             .returns(ReturnsResultUnmanaged)
             .run()
             .await;
@@ -444,7 +481,7 @@ pub trait CommonInteractorTrait {
         println!("Result: {response:?}");
     }
 
-    async fn deploy_phase_three(&mut self, opt_config: OptionalValue<EsdtSafeConfig<StaticApi>>) {
+    async fn deploy_phase_three(&mut self, fee: Option<FeeStruct<StaticApi>>) {
         let owner_address = self.owner_address().clone();
         let sovereign_forge_address = self.state().current_sovereign_forge_sc_address().clone();
 
@@ -455,7 +492,7 @@ pub trait CommonInteractorTrait {
             .to(sovereign_forge_address)
             .gas(80_000_000u64)
             .typed(SovereignForgeProxy)
-            .deploy_phase_three(opt_config)
+            .deploy_phase_three(fee)
             .returns(ReturnsResultUnmanaged)
             .run()
             .await;
@@ -463,7 +500,7 @@ pub trait CommonInteractorTrait {
         println!("Result: {response:?}");
     }
 
-    async fn deploy_phase_four(&mut self, fee: Option<FeeStruct<StaticApi>>) {
+    async fn deploy_phase_four(&mut self) {
         let owner_address = self.owner_address().clone();
         let sovereign_forge_address = self.state().current_sovereign_forge_sc_address().clone();
 
@@ -474,7 +511,7 @@ pub trait CommonInteractorTrait {
             .to(sovereign_forge_address)
             .gas(80_000_000u64)
             .typed(SovereignForgeProxy)
-            .deploy_phase_four(fee)
+            .deploy_phase_four()
             .returns(ReturnsResultUnmanaged)
             .run()
             .await;
@@ -499,6 +536,27 @@ pub trait CommonInteractorTrait {
             .await;
 
         println!("Result: {response:?}");
+    }
+
+    async fn change_ownership_to_header_verifier(
+        &mut self,
+        initial_owner: Address,
+        sc_address: Address,
+    ) {
+        let managed_header_verifier_address = ManagedAddress::from_address(
+            self.state().current_header_verifier_address().as_address(),
+        );
+
+        self.interactor()
+            .tx()
+            .from(initial_owner)
+            .to(sc_address)
+            .gas(90_000_000u64)
+            .typed(UserBuiltinProxy)
+            .change_owner_address(&managed_header_verifier_address)
+            .returns(ReturnsResultUnmanaged)
+            .run()
+            .await;
     }
 
     async fn register_operation(
@@ -542,28 +600,6 @@ pub trait CommonInteractorTrait {
             .returns(ReturnsResultUnmanaged)
             .run()
             .await;
-    }
-
-    async fn set_esdt_safe_address_in_header_verifier(
-        &mut self,
-        mvx_esdt_safe_address: Bech32Address,
-    ) {
-        let owner_address = self.owner_address().clone();
-        let header_verifier_address = self.state().current_header_verifier_address().clone();
-
-        let response = self
-            .interactor()
-            .tx()
-            .from(owner_address)
-            .to(header_verifier_address)
-            .gas(90_000_000u64)
-            .typed(HeaderverifierProxy)
-            .set_esdt_safe_address(mvx_esdt_safe_address)
-            .returns(ReturnsResultUnmanaged)
-            .run()
-            .await;
-
-        println!("Result: {response:?}");
     }
 
     async fn whitelist_enshrine_esdt(&mut self, enshrine_esdt_safe_address: Bech32Address) {

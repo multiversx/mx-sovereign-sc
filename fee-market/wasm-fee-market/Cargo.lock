@@ -31,10 +31,20 @@ name = "error-messages"
 version = "0.1.0"
 
 [[package]]
+name = "events"
+version = "0.1.0"
+dependencies = [
+ "multiversx-sc",
+ "multiversx-sc-modules",
+ "structs",
+]
+
+[[package]]
 name = "fee-market"
 version = "0.1.0"
 dependencies = [
  "error-messages",
+ "events",
  "multiversx-sc",
  "proxies",
  "setup-phase",
@@ -132,6 +142,15 @@ dependencies = [
  "quote",
  "radix_trie",
  "syn",
+]
+
+[[package]]
+name = "multiversx-sc-modules"
+version = "0.58.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "989abf1c261eb0e069035fbad362ad873bdb5cac7de1137695d07f4f9e5e036b"
+dependencies = [
+ "multiversx-sc",
 ]
 
 [[package]]
@@ -253,5 +272,6 @@ version = "0.1.0"
 dependencies = [
  "error-messages",
  "multiversx-sc",
+ "proxies",
  "structs",
 ]

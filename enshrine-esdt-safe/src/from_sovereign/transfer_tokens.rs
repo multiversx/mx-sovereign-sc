@@ -1,11 +1,14 @@
 use crate::{common, to_sovereign};
 use error_messages::{
-    CANNOT_TRANSFER_WHILE_PAUSED, INVALID_METHOD_TO_CALL_IN_CURRENT_CHAIN, NOT_ENOUGH_WEGLD_AMOUNT,
-    ONLY_WEGLD_IS_ACCEPTED_AS_REGISTER_FEE,
+    CANNOT_TRANSFER_WHILE_PAUSED, ERROR_AT_ENCODING, INVALID_METHOD_TO_CALL_IN_CURRENT_CHAIN,
+    NOT_ENOUGH_WEGLD_AMOUNT, ONLY_WEGLD_IS_ACCEPTED_AS_REGISTER_FEE,
 };
 use multiversx_sc::imports::*;
 use proxies::token_handler_proxy::TokenHandlerProxy;
-use structs::operation::{Operation, OperationData, OperationEsdtPayment, OperationTuple};
+use structs::{
+    generate_hash::GenerateHash,
+    operation::{Operation, OperationData, OperationEsdtPayment, OperationTuple},
+};
 
 const DEFAULT_ISSUE_COST: u64 = 50_000_000_000_000_000; // 0.05 * 10^18
 
@@ -44,9 +47,10 @@ pub trait TransferTokensModule:
         require!(!is_sovereign_chain, INVALID_METHOD_TO_CALL_IN_CURRENT_CHAIN);
         require!(self.not_paused(), CANNOT_TRANSFER_WHILE_PAUSED);
 
-        let op_hash = self.calculate_operation_hash(&operation);
+        let op_hash = operation.generate_hash();
+        require!(!op_hash.is_empty(), ERROR_AT_ENCODING);
 
-        self.lock_operation_hash(&op_hash, &hash_of_hashes);
+        self.lock_operation_hash(&hash_of_hashes, &op_hash);
 
         let split_result = self.split_payments_for_prefix_and_fee(&operation.tokens);
         if !split_result.are_tokens_registered {

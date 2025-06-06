@@ -1,6 +1,7 @@
-use error_messages::ESDT_SAFE_STILL_PAUSED;
+use error_messages::{ERROR_AT_ENCODING, ESDT_SAFE_STILL_PAUSED};
 use structs::{
     aliases::GasLimit,
+    generate_hash::GenerateHash,
     operation::{Operation, OperationData, OperationEsdtPayment, OperationTuple},
 };
 
@@ -14,7 +15,7 @@ pub trait ExecuteModule:
     + crate::register_token::RegisterTokenModule
     + utils::UtilsModule
     + setup_phase::SetupPhaseModule
-    + cross_chain::events::EventsModule
+    + events::EventsModule
     + cross_chain::storage::CrossChainStorage
     + cross_chain::deposit_common::DepositCommonModule
     + cross_chain::execute_common::ExecuteCommonModule
@@ -25,9 +26,10 @@ pub trait ExecuteModule:
         require!(self.not_paused(), ESDT_SAFE_STILL_PAUSED);
         self.require_setup_complete();
 
-        let operation_hash = self.calculate_operation_hash(&operation);
+        let operation_hash = operation.generate_hash();
+        require!(!operation_hash.is_empty(), ERROR_AT_ENCODING);
 
-        self.lock_operation_hash(&operation_hash, &hash_of_hashes);
+        self.lock_operation_hash(&hash_of_hashes, &operation_hash);
 
         let operation_tuple = OperationTuple {
             op_hash: operation_hash,

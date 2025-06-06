@@ -9,11 +9,12 @@ use multiversx_sc::types::{
     BigUint, ManagedAddress, ReturnsResultUnmanaged, TestSCAddress, TestTokenIdentifier,
 };
 use multiversx_sc_scenario::{api::StaticApi, ReturnsHandledOrError, ScenarioTxRun};
-use proxies::sovereign_forge_proxy::{ScArray, SovereignForgeProxy};
+use proxies::sovereign_forge_proxy::SovereignForgeProxy;
 use sovereign_forge::common::storage::ChainId;
 use structs::{
     configs::{EsdtSafeConfig, SovereignConfig},
     fee::FeeStruct,
+    forge::ScArray,
 };
 
 pub struct SovereignForgeTestState {

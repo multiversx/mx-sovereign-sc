@@ -24,12 +24,15 @@ checksum = "5c8214115b7bf84099f1309324e63141d4c5d7cc26862f97a0a857dbefe165bd"
 name = "chain-config"
 version = "0.1.0"
 dependencies = [
+ "cross-chain",
  "error-messages",
+ "events",
  "multiversx-sc",
  "multiversx-sc-modules",
  "proxies",
  "setup-phase",
  "structs",
+ "utils",
 ]
 
 [[package]]
@@ -54,6 +57,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "cross-chain"
+version = "0.1.0"
+dependencies = [
+ "error-messages",
+ "multiversx-sc",
+ "multiversx-sc-modules",
+ "proxies",
+ "structs",
+ "utils",
+]
+
+[[package]]
 name = "endian-type"
 version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -62,6 +77,15 @@ checksum = "c34f04666d835ff5d62e058c3995147c06f42fe86ff053337632bca83e42702d"
 [[package]]
 name = "error-messages"
 version = "0.1.0"
+
+[[package]]
+name = "events"
+version = "0.1.0"
+dependencies = [
+ "multiversx-sc",
+ "multiversx-sc-modules",
+ "structs",
+]
 
 [[package]]
 name = "generic-array"
@@ -275,5 +299,6 @@ version = "0.1.0"
 dependencies = [
  "error-messages",
  "multiversx-sc",
+ "proxies",
  "structs",
 ]

@@ -72,17 +72,6 @@ impl HeaderVerifierTestState {
             .assert_expected_error_message(response, expected_error_message);
     }
 
-    pub fn register_esdt_address(&mut self, esdt_address: TestSCAddress) {
-        self.common_setup
-            .world
-            .tx()
-            .from(OWNER_ADDRESS)
-            .to(HEADER_VERIFIER_ADDRESS)
-            .typed(HeaderverifierProxy)
-            .set_esdt_safe_address(esdt_address)
-            .run();
-    }
-
     pub fn remove_executed_hash(
         &mut self,
         caller: TestSCAddress,
@@ -193,6 +182,8 @@ impl HeaderVerifierTestState {
         }
     }
 
+    // TODO:
+    // Cleanup, use the example from chain-config tests
     pub fn get_operation_hash(
         &mut self,
         operation: &ManagedBuffer<StaticApi>,
