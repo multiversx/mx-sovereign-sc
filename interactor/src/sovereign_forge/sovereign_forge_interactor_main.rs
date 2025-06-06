@@ -5,9 +5,12 @@ use common_interactor::interactor_state::State;
 use common_interactor::{
     common_sovereign_interactor::CommonInteractorTrait, interactor_config::Config,
 };
-use common_test_setup::constants::SOVEREIGN_FORGE_CODE_PATH;
+use common_test_setup::constants::{CHAIN_ID, SOVEREIGN_FORGE_CODE_PATH};
 use multiversx_sc_snippets::imports::*;
 use proxies::sovereign_forge_proxy::SovereignForgeProxy;
+use structs::configs::{EsdtSafeConfig, SovereignConfig};
+use structs::fee::FeeStruct;
+use structs::forge::ScArray;
 
 pub struct SovereignForgeInteract {
     interactor: Interactor,
@@ -87,10 +90,10 @@ impl SovereignForgeInteract {
             amount: BigUint::from(ONE_THOUSAND_TOKENS),
             attributes: None,
         };
-        let first_token = self
+        let second_token = self
             .issue_and_mint_token(second_token_struct, second_token_mint)
             .await;
-        self.state.set_first_token(first_token);
+        self.state.set_second_token(second_token);
 
         let fee_token_struct = IssueTokenStruct {
             token_display_name: "FEE".to_string(),
@@ -103,10 +106,65 @@ impl SovereignForgeInteract {
             amount: BigUint::from(ONE_THOUSAND_TOKENS),
             attributes: None,
         };
-        let first_token = self
+        let fee_token = self
             .issue_and_mint_token(fee_token_struct, fee_token_mint)
             .await;
-        self.state.set_first_token(first_token);
+        self.state.set_fee_token(fee_token);
+    }
+
+    pub async fn deploy_and_complete_setup_phase(
+        &mut self,
+        deploy_cost: BigUint<StaticApi>,
+        optional_sov_config: OptionalValue<SovereignConfig<StaticApi>>,
+        optional_esdt_safe_config: OptionalValue<EsdtSafeConfig<StaticApi>>,
+        sc_array: Vec<ScArray>,
+        fee: Option<FeeStruct<StaticApi>>,
+    ) {
+        self.deploy_sovereign_forge(&deploy_cost).await;
+        let sovereign_forge_address = self.state.current_sovereign_forge_sc_address().clone();
+
+        self.deploy_chain_config(optional_sov_config.clone()).await;
+        let chain_config_address = self.state.current_chain_config_sc_address().clone();
+        let contracts_array = self.get_contract_info_struct_for_sc_type(sc_array);
+
+        self.deploy_mvx_esdt_safe(OptionalValue::None).await;
+        let mvx_esdt_safe_address = self.state.current_mvx_esdt_safe_contract_address().clone();
+
+        self.deploy_fee_market(mvx_esdt_safe_address.clone(), fee.clone())
+            .await;
+        let fee_market_address = self.state.current_fee_market_address().clone();
+
+        self.deploy_header_verifier(contracts_array).await;
+        let header_verifier_address = self.state.current_header_verifier_address().clone();
+
+        self.deploy_chain_factory(
+            sovereign_forge_address,
+            chain_config_address,
+            header_verifier_address,
+            mvx_esdt_safe_address,
+            fee_market_address,
+        )
+        .await;
+
+        let chain_factory_address = self.state.current_chain_factory_sc_address().clone();
+
+        self.deploy_token_handler(chain_factory_address).await;
+
+        self.register_token_handler(1).await;
+        self.register_token_handler(2).await;
+        self.register_token_handler(3).await;
+        self.register_chain_factory(1).await;
+        self.register_chain_factory(2).await;
+        self.register_chain_factory(3).await;
+
+        self.deploy_phase_one(deploy_cost, Some(CHAIN_ID.into()), optional_sov_config)
+            .await;
+        self.deploy_phase_two(optional_esdt_safe_config).await;
+        self.deploy_phase_three(fee).await;
+        self.deploy_phase_four().await;
+
+        self.complete_setup_phase().await;
+        self.check_setup_phase_status(CHAIN_ID, true).await;
     }
 
     pub async fn upgrade(&mut self) {

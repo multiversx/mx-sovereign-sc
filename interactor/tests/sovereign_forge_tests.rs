@@ -1,11 +1,16 @@
 use common_interactor::{
-    common_sovereign_interactor::CommonInteractorTrait, interactor_config::Config,
+    common_sovereign_interactor::CommonInteractorTrait,
+    constants::{ONE_HUNDRED_TOKENS, ONE_THOUSAND_TOKENS},
+    interactor_config::Config,
 };
-use common_test_setup::constants::CHAIN_ID;
-use multiversx_sc::{imports::OptionalValue, types::BigUint};
-use multiversx_sc_snippets::imports::tokio;
+use common_test_setup::constants::{CHAIN_ID, DEPLOY_COST};
+use multiversx_sc::{
+    imports::OptionalValue,
+    types::{BigUint, EsdtTokenPayment},
+};
+use multiversx_sc_snippets::imports::{tokio, Bech32Address, StaticApi};
 use rust_interact::sovereign_forge::sovereign_forge_interactor_main::SovereignForgeInteract;
-use structs::forge::ScArray;
+use structs::{aliases::PaymentsVec, forge::ScArray};
 
 /// ### TEST
 /// S-FORGE_COMPLETE_SETUP_PHASE_OK
@@ -17,9 +22,9 @@ use structs::forge::ScArray;
 /// Setup phase is complete
 #[tokio::test]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
-async fn deploy_test_sovereign_forge_cs() {
+async fn test_deploy_sovereign_forge_cs() {
     let mut interactor = SovereignForgeInteract::new(Config::chain_simulator_config()).await;
-    let deploy_cost = BigUint::from(100u32);
+    let deploy_cost = BigUint::from(DEPLOY_COST);
 
     interactor.deploy_sovereign_forge(&deploy_cost).await;
     let sovereign_forge_address = interactor
@@ -76,4 +81,91 @@ async fn deploy_test_sovereign_forge_cs() {
 
     interactor.complete_setup_phase().await;
     interactor.check_setup_phase_status(CHAIN_ID, true).await;
+}
+
+/// ### TEST
+/// S-FORGE_COMPLETE-DEPOSIT-FLOW_OK
+///
+/// ### ACTION
+/// Run deploy phases 1–4 and call complete_setup_phase
+///
+/// ### EXPECTED
+/// Deposit is successful and tokens are transferred to the mvx-esdt-safe-sc
+#[tokio::test]
+#[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
+async fn test_complete_deposit_flow() {
+    let mut interactor = SovereignForgeInteract::new(Config::chain_simulator_config()).await;
+    let deploy_cost = BigUint::from(DEPLOY_COST);
+    let user_address = interactor.user_address().clone();
+
+    interactor
+        .deploy_and_complete_setup_phase(
+            deploy_cost,
+            OptionalValue::None,
+            OptionalValue::None,
+            vec![ScArray::ChainConfig, ScArray::ESDTSafe],
+            None,
+        )
+        .await;
+
+    let esdt_token_payment_one = EsdtTokenPayment::<StaticApi>::new(
+        interactor.state.get_first_token_id(),
+        0,
+        BigUint::from(ONE_HUNDRED_TOKENS),
+    );
+
+    let esdt_token_payment_two = EsdtTokenPayment::<StaticApi>::new(
+        interactor.state.get_second_token_id(),
+        0,
+        BigUint::from(ONE_HUNDRED_TOKENS),
+    );
+
+    let payments_vec = PaymentsVec::from(vec![esdt_token_payment_one, esdt_token_payment_two]);
+
+    interactor
+        .deposit_mvx_esdt_safe(
+            user_address,
+            OptionalValue::None,
+            payments_vec,
+            None,
+            Some("deposit"),
+        )
+        .await;
+
+    let expected_tokens_wallet = vec![
+        interactor.custom_amount_tokens(
+            interactor.state.get_first_token_id_string(),
+            ONE_THOUSAND_TOKENS - ONE_HUNDRED_TOKENS,
+        ),
+        interactor.custom_amount_tokens(
+            interactor.state.get_second_token_id_string(),
+            ONE_THOUSAND_TOKENS - ONE_HUNDRED_TOKENS,
+        ),
+    ];
+    interactor
+        .check_address_balance(
+            &Bech32Address::from(interactor.wallet_address().clone()),
+            expected_tokens_wallet,
+        )
+        .await;
+
+    let expected_tokens_contract = vec![
+        interactor.custom_amount_tokens(
+            interactor.state.get_first_token_id_string(),
+            ONE_HUNDRED_TOKENS,
+        ),
+        interactor.custom_amount_tokens(
+            interactor.state.get_second_token_id_string(),
+            ONE_HUNDRED_TOKENS,
+        ),
+    ];
+    interactor
+        .check_address_balance(
+            &interactor
+                .state
+                .current_mvx_esdt_safe_contract_address()
+                .clone(),
+            expected_tokens_contract,
+        )
+        .await;
 }

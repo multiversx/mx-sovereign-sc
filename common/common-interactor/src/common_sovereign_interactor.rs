@@ -526,22 +526,19 @@ pub trait CommonInteractorTrait {
     }
 
     async fn complete_setup_phase(&mut self) {
-        let wallet_address = self.wallet_address().clone();
-        let sovereign_forge_address = self.state().current_sovereign_forge_sc_address().clone();
+        let owner_address = self.wallet_address().clone();
+        let sov_forge_address = self.state().current_sovereign_forge_sc_address().clone();
 
-        let response = self
-            .interactor()
+        self.interactor()
             .tx()
-            .from(wallet_address)
-            .to(sovereign_forge_address)
+            .from(owner_address)
+            .to(sov_forge_address)
             .gas(90_000_000u64)
             .typed(SovereignForgeProxy)
             .complete_setup_phase()
             .returns(ReturnsResultUnmanaged)
             .run()
             .await;
-
-        println!("Result: {response:?}");
     }
 
     async fn change_ownership_to_header_verifier(
