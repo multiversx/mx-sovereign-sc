@@ -1,17 +1,19 @@
 #![allow(non_snake_case)]
 use common_interactor::common_sovereign_interactor::{IssueTokenStruct, MintTokenStruct};
-use common_interactor::constants::ONE_THOUSAND_TOKENS;
 use common_interactor::interactor_state::State;
 use common_interactor::{
     common_sovereign_interactor::CommonInteractorTrait, interactor_config::Config,
 };
-use common_test_setup::constants::SOVEREIGN_FORGE_CODE_PATH;
+use common_test_setup::constants::{
+    INTERACTOR_WORKING_DIR, ONE_THOUSAND_TOKENS, SOVEREIGN_FORGE_CODE_PATH,
+};
 use multiversx_sc_snippets::imports::*;
 use proxies::sovereign_forge_proxy::SovereignForgeProxy;
 
 pub struct SovereignForgeInteract {
     interactor: Interactor,
     alice_address: Address,
+    user_address: Address,
     pub state: State,
 }
 impl CommonInteractorTrait for SovereignForgeInteract {
@@ -19,8 +21,12 @@ impl CommonInteractorTrait for SovereignForgeInteract {
         &mut self.interactor
     }
 
-    fn wallet_address(&self) -> &Address {
+    fn owner_address(&self) -> &Address {
         &self.alice_address
+    }
+
+    fn user_address(&self) -> &Address {
+        &self.user_address
     }
 
     fn state(&mut self) -> &mut State {
@@ -39,15 +45,17 @@ impl SovereignForgeInteract {
             .await
             .use_chain_simulator(config.use_chain_simulator());
 
-        let current_working_dir = "interactor";
+        let current_working_dir = INTERACTOR_WORKING_DIR;
         interactor.set_current_dir_from_workspace(current_working_dir);
         let alice_address = interactor.register_wallet(test_wallets::alice()).await;
+        let user_address = interactor.register_wallet(test_wallets::mike()).await;
 
         interactor.generate_blocks_until_epoch(1).await.unwrap();
 
         SovereignForgeInteract {
             interactor,
             alice_address,
+            user_address,
             state: State::load_state(),
         }
     }
