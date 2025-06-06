@@ -13,18 +13,6 @@ pub struct TokenIdAmountPair<M: ManagedTypeApi> {
 
 #[multiversx_sc::module]
 pub trait ValidatorRulesModule {
-    fn require_valid_config(&self, config: &SovereignConfig<Self::Api>) {
-        // TODO: determine a range value
-        self.require_validator_range(config.min_validators, config.max_validators);
-    }
-
-    fn require_validator_range(&self, min_validators: u64, max_validators: u64) {
-        require!(
-            min_validators <= max_validators,
-            INVALID_MIN_MAX_VALIDATOR_NUMBERS
-        );
-    }
-
     fn is_new_config_valid(&self, config: &SovereignConfig<Self::Api>) -> Option<&str> {
         if config.min_validators <= config.max_validators {
             None

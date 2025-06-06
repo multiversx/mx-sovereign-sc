@@ -19,39 +19,6 @@ use crate::common::{self};
 pub trait PhasesModule:
     common::utils::UtilsModule + common::storage::StorageModule + common::sc_deploy::ScDeployModule
 {
-    #[only_owner]
-    #[endpoint(completeSetupPhase)]
-    fn complete_setup_phase(&self) {
-        let caller = self.blockchain().get_caller();
-        let sovereign_setup_phase_mapper =
-            self.sovereign_setup_phase(&self.sovereigns_mapper(&caller).get());
-
-        require!(
-            sovereign_setup_phase_mapper.is_empty(),
-            SOVEREIGN_SETUP_PHASE_ALREADY_COMPLETED
-        );
-
-        self.require_phase_four_completed(&caller);
-
-        let chain_config_address = self.get_contract_address(&caller, ScArray::ChainConfig);
-        let header_verifier_address = self.get_contract_address(&caller, ScArray::HeaderVerifier);
-        let esdt_safe_address = self.get_contract_address(&caller, ScArray::ESDTSafe);
-        let fee_market_address = self.get_contract_address(&caller, ScArray::FeeMarket);
-
-        self.tx()
-            .to(self.get_chain_factory_address())
-            .typed(ChainFactoryContractProxy)
-            .complete_setup_phase(
-                chain_config_address,
-                header_verifier_address,
-                esdt_safe_address,
-                fee_market_address,
-            )
-            .sync_call();
-
-        sovereign_setup_phase_mapper.set(true);
-    }
-
     #[payable("EGLD")]
     #[endpoint(deployPhaseOne)]
     fn deploy_phase_one(
@@ -153,5 +120,38 @@ pub trait PhasesModule:
 
         self.sovereign_deployed_contracts(&self.sovereigns_mapper(&caller).get())
             .insert(header_verifier_contract_info);
+    }
+
+    #[only_owner]
+    #[endpoint(completeSetupPhase)]
+    fn complete_setup_phase(&self) {
+        let caller = self.blockchain().get_caller();
+        let sovereign_setup_phase_mapper =
+            self.sovereign_setup_phase(&self.sovereigns_mapper(&caller).get());
+
+        require!(
+            sovereign_setup_phase_mapper.is_empty(),
+            SOVEREIGN_SETUP_PHASE_ALREADY_COMPLETED
+        );
+
+        self.require_phase_four_completed(&caller);
+
+        let chain_config_address = self.get_contract_address(&caller, ScArray::ChainConfig);
+        let header_verifier_address = self.get_contract_address(&caller, ScArray::HeaderVerifier);
+        let esdt_safe_address = self.get_contract_address(&caller, ScArray::ESDTSafe);
+        let fee_market_address = self.get_contract_address(&caller, ScArray::FeeMarket);
+
+        self.tx()
+            .to(self.get_chain_factory_address())
+            .typed(ChainFactoryContractProxy)
+            .complete_setup_phase(
+                chain_config_address,
+                header_verifier_address,
+                esdt_safe_address,
+                fee_market_address,
+            )
+            .sync_call();
+
+        sovereign_setup_phase_mapper.set(true);
     }
 }

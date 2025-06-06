@@ -398,6 +398,60 @@ fn test_set_fee() {
 }
 
 /// ### TEST
+/// S-FORGE_SET_FEE_FAIL
+///
+/// ### ACTION
+/// Call `set_fee()` phase three not completed
+///
+/// ### EXPECTED
+/// Error FEE_MARKET_NOT_DEPLOYED
+#[test]
+fn test_set_fee_phase_three_not_completed() {
+    let mut state = SovereignForgeTestState::new();
+    state.common_setup.deploy_sovereign_forge();
+
+    state
+        .common_setup
+        .deploy_chain_config(OptionalValue::None, None);
+
+    state
+        .common_setup
+        .deploy_header_verifier(vec![ScArray::ESDTSafe]);
+
+    state.common_setup.deploy_mvx_esdt_safe(OptionalValue::None);
+
+    state
+        .common_setup
+        .deploy_fee_market(None, ESDT_SAFE_ADDRESS);
+
+    state.common_setup.deploy_chain_factory();
+    state.finish_setup();
+
+    let deploy_cost = BigUint::from(100_000u32);
+    state.common_setup.deploy_phase_one(
+        &deploy_cost,
+        Some(ManagedBuffer::from(CHAIN_ID)),
+        OptionalValue::None,
+        None,
+    );
+    state
+        .common_setup
+        .deploy_phase_two(OptionalValue::None, None);
+
+    let fee_type = FeeType::Fixed {
+        token: FIRST_TEST_TOKEN.to_token_identifier(),
+        per_transfer: BigUint::default(),
+        per_gas: BigUint::default(),
+    };
+
+    let new_fee = FeeStruct {
+        base_token: FIRST_TEST_TOKEN.to_token_identifier(),
+        fee_type,
+    };
+
+    state.set_fee(new_fee, Some(FEE_MARKET_NOT_DEPLOYED));
+}
+/// ### TEST
 /// S-FORGE_REMOVE_FEE_OK
 ///
 /// ### ACTION
@@ -489,6 +543,47 @@ fn test_remove_fee() {
                 .token_fee(&FIRST_TEST_TOKEN.to_token_identifier())
                 .is_empty());
         })
+}
+
+/// ### TEST
+/// S-FORGE_REMOVE_FEE_FAIL
+///
+/// ### ACTION
+/// Call `remove_fee()` when phase three not deployed
+///
+/// ### EXPECTED
+/// Error FEE_MARKET_NOT_DEPLOYED
+#[test]
+fn test_remove_fee_phase_three_not_completed() {
+    let mut state = SovereignForgeTestState::new();
+    state.common_setup.deploy_sovereign_forge();
+    state.common_setup.deploy_chain_factory();
+    state
+        .common_setup
+        .deploy_chain_config(OptionalValue::None, None);
+    state
+        .common_setup
+        .deploy_fee_market(None, ESDT_SAFE_ADDRESS);
+    state.finish_setup();
+
+    let deploy_cost = BigUint::from(100_000u32);
+    state.common_setup.deploy_phase_one(
+        &deploy_cost,
+        Some(ManagedBuffer::from(CHAIN_ID)),
+        OptionalValue::None,
+        None,
+    );
+
+    state
+        .common_setup
+        .deploy_header_verifier(vec![ScArray::ESDTSafe]);
+
+    state.common_setup.deploy_mvx_esdt_safe(OptionalValue::None);
+    state
+        .common_setup
+        .deploy_phase_two(OptionalValue::None, None);
+
+    state.remove_fee(FIRST_TEST_TOKEN, Some(FEE_MARKET_NOT_DEPLOYED));
 }
 
 /// ### TEST

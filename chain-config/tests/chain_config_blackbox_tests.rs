@@ -7,11 +7,10 @@ use multiversx_sc::{
     types::{BigUint, ManagedBuffer, MultiValueEncoded},
 };
 use multiversx_sc_scenario::{multiversx_chain_vm::crypto_functions::sha256, ScenarioTxWhitebox};
+use setup_phase::SetupPhaseModule;
 use structs::{configs::SovereignConfig, forge::ScArray, generate_hash::GenerateHash};
 
 mod chain_config_blackbox_setup;
-
-// TODO: Add change owner functionality after the fix is done in lock_operation_hash endpoint
 
 /// ### TEST
 /// C-CONFIG_DEPLOY_OK
@@ -22,12 +21,31 @@ mod chain_config_blackbox_setup;
 /// ### EXPECTED
 /// Chain config is deployed
 #[test]
-fn test_deploy_chain_config() {
+fn test_deploy_chain_config_default_config() {
     let mut state = ChainConfigTestState::new();
 
     state
         .common_setup
         .deploy_chain_config(OptionalValue::None, None);
+}
+
+/// ### TEST
+/// C-CONFIG_DEPLOY_OK
+///
+/// ### ACTION
+/// Deploy chain-config with specific config
+///
+/// ### EXPECTED
+/// Chain config is deployed
+#[test]
+fn test_deploy_chain_config() {
+    let mut state = ChainConfigTestState::new();
+
+    let config = SovereignConfig::new(1, 2, BigUint::from(100u32), None);
+
+    state
+        .common_setup
+        .deploy_chain_config(OptionalValue::Some(config), None);
 }
 
 /// ### TEST
@@ -52,6 +70,34 @@ fn test_deploy_chain_config_invalid_config() {
         OptionalValue::Some(config),
         Some(INVALID_MIN_MAX_VALIDATOR_NUMBERS),
     );
+}
+
+/// ### TEST
+/// C-CONFIG_COMPLETE_SETUP_PHASE_OK
+///
+/// ### ACTION
+/// Call `complete_setup_phase()`
+///
+/// ### EXPECTED
+/// Setup phase is completed
+#[test]
+fn complete_setup_phase() {
+    let mut state = ChainConfigTestState::new();
+
+    state
+        .common_setup
+        .deploy_chain_config(OptionalValue::None, None);
+
+    state.common_setup.complete_chain_config_setup_phase(None);
+
+    state
+        .common_setup
+        .world
+        .query()
+        .to(CHAIN_CONFIG_ADDRESS)
+        .whitebox(chain_config::contract_obj, |sc| {
+            assert!(sc.is_setup_phase_complete());
+        })
 }
 
 /// ### TEST

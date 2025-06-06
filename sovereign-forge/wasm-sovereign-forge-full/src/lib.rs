@@ -22,11 +22,11 @@ multiversx_sc_wasm_adapter::endpoints! {
         upgrade => upgrade
         registerTokenHandler => register_token_handler
         registerChainFactory => register_chain_factory
-        completeSetupPhase => complete_setup_phase
         deployPhaseOne => deploy_phase_one
         deployPhaseTwo => deploy_phase_two
         deployPhaseThree => deploy_phase_three
         deployPhaseFour => deploy_phase_four
+        completeSetupPhase => complete_setup_phase
         getDeployedSovereignContracts => sovereign_deployed_contracts
         getSovereignSetupPhase => sovereign_setup_phase
         getChainFactoryAddress => chain_factories
