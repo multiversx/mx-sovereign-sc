@@ -65,7 +65,7 @@ fn test_deploy() {
 /// ### EXPECTED
 /// Error MAX_GAS_LIMIT_PER_TX_EXCEEDED
 #[test]
-fn test_deploy_invalid_config() {
+fn test_update_invalid_config() {
     let mut state = MvxEsdtSafeTestState::new();
 
     state
@@ -207,7 +207,10 @@ fn test_register_token_not_native() {
 #[test]
 fn test_register_token_fungible_token() {
     let mut state = MvxEsdtSafeTestState::new();
-    state.common_setup.deploy_mvx_esdt_safe(OptionalValue::None);
+    let config = EsdtSafeConfig::default_config();
+    state
+        .common_setup
+        .deploy_mvx_esdt_safe(OptionalValue::Some(config));
 
     let sov_token_id = SOV_TOKEN;
     let token_type = EsdtTokenType::Fungible;
@@ -684,7 +687,13 @@ fn test_deposit_endpoint_banned() {
 fn test_deposit_no_transfer_data_no_fee() {
     let mut state = MvxEsdtSafeTestState::new();
 
-    state.common_setup.deploy_mvx_esdt_safe(OptionalValue::None);
+    state
+        .common_setup
+        .deploy_mvx_esdt_safe(OptionalValue::Some(EsdtSafeConfig::default_config()));
+
+    state
+        .common_setup
+        .deploy_header_verifier(vec![ScArray::ChainConfig, ScArray::ESDTSafe]);
 
     state
         .common_setup
@@ -1289,6 +1298,40 @@ fn test_register_token_fungible_token_no_prefix() {
 }
 
 /// ### TEST
+/// M-ESDT_REG_OK
+///
+/// ### ACTION
+/// Call 'register_token()' with valid token attributes and token type DynamicNFT
+///
+/// ### EXPECTED
+/// The token is registered
+#[test]
+fn test_register_token_non_fungible_token_dynamic() {
+    let mut state = MvxEsdtSafeTestState::new();
+    let config = EsdtSafeConfig::default_config();
+    state
+        .common_setup
+        .deploy_mvx_esdt_safe(OptionalValue::Some(config));
+
+    let sov_token_id = SOV_TOKEN;
+    let token_type = EsdtTokenType::DynamicNFT;
+    let token_display_name = "TokenOne";
+    let token_ticker = FIRST_TEST_TOKEN.as_str();
+    let num_decimals = 3;
+    let egld_payment = BigUint::from(DEFAULT_ISSUE_COST);
+
+    let register_token_args = RegisterTokenArgs {
+        sov_token_id: sov_token_id.into(),
+        token_type,
+        token_display_name,
+        token_ticker,
+        num_decimals,
+    };
+
+    state.register_token(register_token_args, egld_payment, None);
+}
+
+/// ### TEST
 /// M-ESDT_REG_FAIL
 ///
 /// ### ACTION
@@ -1695,6 +1738,73 @@ fn test_execute_operation_burn_mechanism_without_deposit_cannot_subtract() {
         0u64,
         BigUint::from(0u64),
     );
+}
+
+/// ### TEST
+/// M-ESDT_EXEC_OK
+///
+/// ### ACTION
+/// Call 'execute_operation()' with transfer data only
+///
+/// ### EXPECTED
+/// The operation is executed in the testing smart contract
+#[test]
+fn execute_operation_only_transfer_data_no_fee() {
+    let mut state = MvxEsdtSafeTestState::new();
+    state.deploy_contract_with_roles();
+    state.complete_setup_phase(None, Some("unpauseContract"));
+
+    let gas_limit = 90_000_000u64;
+    let function = ManagedBuffer::<StaticApi>::from("hello");
+    let args =
+        ManagedVec::<StaticApi, ManagedBuffer<StaticApi>>::from(vec![ManagedBuffer::from("1")]);
+
+    let transfer_data = TransferData::new(gas_limit, function, args);
+
+    let operation_data =
+        OperationData::new(1, OWNER_ADDRESS.to_managed_address(), Some(transfer_data));
+
+    let operation = Operation::new(
+        TESTING_SC_ADDRESS.to_managed_address(),
+        ManagedVec::new(),
+        operation_data,
+    );
+
+    let operation_hash = state.common_setup.get_operation_hash(&operation);
+    let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&operation_hash.to_vec()));
+
+    state
+        .common_setup
+        .deploy_chain_config(OptionalValue::None, None);
+    state
+        .common_setup
+        .deploy_header_verifier(vec![ScArray::ChainConfig, ScArray::ESDTSafe]);
+    state
+        .common_setup
+        .complete_header_verifier_setup_phase(None);
+
+    state.common_setup.deploy_testing_sc();
+
+    let operations_hashes = MultiValueEncoded::from(ManagedVec::from(vec![operation_hash.clone()]));
+
+    state.common_setup.register_operation(
+        OWNER_ADDRESS,
+        ManagedBuffer::new(),
+        &hash_of_hashes,
+        operations_hashes,
+    );
+
+    state.execute_operation(
+        &hash_of_hashes,
+        &operation,
+        None,
+        Some("executedBridgeOp"),
+        None,
+    );
+
+    state
+        .common_setup
+        .check_operation_hash_status_is_empty(&operation_hash);
 }
 
 /// ### TEST
@@ -2374,7 +2484,7 @@ fn test_set_token_lock_mechanism_token_from_sovereign() {
 }
 
 /// ### TEST
-/// M-ESDT_UPDATE_CONFIG_FAIL_041
+/// M-ESDT_UPDATE_CONFIG_FAIL
 ///
 /// ### ACTION
 /// Call `update_esdt_safe_config()` before setup phase completion
@@ -2403,7 +2513,7 @@ fn test_update_config_setup_phase_not_completed() {
 }
 
 /// ### TEST
-/// M-ESDT_UPDATE_CONFIG_FAIL_042
+/// M-ESDT_UPDATE_CONFIG_FAIL
 ///
 /// ### ACTION
 /// Call `update_esdt_safe_config()` before registering operation
@@ -2437,7 +2547,7 @@ fn test_update_config_operation_not_registered() {
 }
 
 /// ### TEST
-/// M-ESDT_UPDATE_CONFIG_ERROR_043
+/// M-ESDT_UPDATE_CONFIG_ERROR
 ///
 /// ### ACTION
 /// Call `update_esdt_safe_config()` with an invalid config
@@ -2479,7 +2589,7 @@ fn test_update_config_invalid_config() {
 }
 
 /// ### TEST
-/// M-ESDT_UPDATE_CONFIG_OK_044
+/// M-ESDT_UPDATE_CONFIG_OK
 ///
 /// ### ACTION
 /// Call `update_esdt_safe_config()`

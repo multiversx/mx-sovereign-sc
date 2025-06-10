@@ -49,10 +49,12 @@ pub const WEGLD_IDENTIFIER: TestTokenIdentifier = TestTokenIdentifier::new("WEGL
 pub const WRONG_TOKEN_ID: TestTokenIdentifier = TestTokenIdentifier::new("WRONG-TOKEN");
 
 pub const SOV_TO_MVX_TOKEN_STORAGE_KEY: &str = "sovToMxTokenId";
+pub const NATIVE_TOKEN_STORAGE_KEY: &str = "nativeToken";
 pub const MVX_TO_SOV_TOKEN_STORAGE_KEY: &str = "mxToSovTokenId";
 pub const OPERATION_HASH_STATUS_STORAGE_KEY: &str = "operationHashStatus";
 pub const SOVEREIGN_TOKEN_PREFIX: &str = "sov";
 pub const CHAIN_ID: &str = "svch";
+pub const INTERACTOR_WORKING_DIR: &str = "interactor";
 
 pub const ISSUE_COST: u64 = 50_000_000_000_000_000; // 0.05 EGLD
 pub const ONE_HUNDRED_MILLION: u32 = 100_000_000;
@@ -60,3 +62,6 @@ pub const ONE_HUNDRED_THOUSAND: u32 = 100_000;
 pub const OWNER_BALANCE: u128 = 100_000_000_000_000_000_000_000;
 pub const DEPLOY_COST: u64 = 100_000;
 pub const ENSHRINE_BALANCE: u128 = 100_000_000_000_000_000;
+pub const ONE_THOUSAND_TOKENS: u128 = 1_000_000_000_000_000_000_000u128;
+pub const ONE_HUNDRED_TOKENS: u128 = 100_000_000_000_000_000_000u128;
+pub const TEN_TOKENS: u128 = 10_000_000_000_000_000_000u128;

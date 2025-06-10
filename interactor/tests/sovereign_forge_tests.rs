@@ -58,7 +58,9 @@ async fn deploy_test_sovereign_forge_cs() {
 
     let chain_factory_address = interactor.state.current_chain_factory_sc_address().clone();
 
-    interactor.deploy_token_handler(chain_factory_address).await;
+    interactor
+        .deploy_token_handler(chain_factory_address.to_address())
+        .await;
 
     interactor.register_token_handler(1).await;
     interactor.register_token_handler(2).await;
