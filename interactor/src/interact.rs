@@ -151,21 +151,24 @@ pub async fn enshrine_esdt_safe_cli() {
             interact
                 .deposit(
                     PaymentsVec::new(),
-                    interact.bob_address.clone().into(),
+                    interact.user_address.clone(),
                     OptionalValue::None,
+                    None,
                     None,
                 )
                 .await
         }
         "executeBridgeOps" => {
             interact
-                .execute_operations(
-                    ManagedBuffer::new(),
+                .execute_operation(
+                    &ManagedBuffer::new(),
                     Operation::new(
-                        interact.bob_address.clone().into(),
+                        interact.user_address.clone().into(),
                         ManagedVec::new(),
-                        OperationData::new(0, interact.bob_address.clone().into(), None),
+                        OperationData::new(0, interact.user_address.clone().into(), None),
                     ),
+                    None,
+                    None,
                 )
                 .await
         }

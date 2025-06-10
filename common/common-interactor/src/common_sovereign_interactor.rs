@@ -1,10 +1,12 @@
 #![allow(async_fn_in_trait)]
 
+use crate::interactor_state::{State, TokenProperties};
 use base64::{engine::general_purpose::STANDARD as BASE64, Engine};
 use common_test_setup::constants::{
     CHAIN_CONFIG_CODE_PATH, CHAIN_FACTORY_CODE_PATH, ENSHRINE_ESDT_SAFE_CODE_PATH,
     FEE_MARKET_CODE_PATH, HEADER_VERIFIER_CODE_PATH, ISSUE_COST, MVX_ESDT_SAFE_CODE_PATH,
-    SOVEREIGN_FORGE_CODE_PATH, TESTING_SC_CODE_PATH, TOKEN_HANDLER_CODE_PATH,
+    ONE_HUNDRED_TOKENS, ONE_THOUSAND_TOKENS, SOVEREIGN_FORGE_CODE_PATH, TESTING_SC_CODE_PATH,
+    TOKEN_HANDLER_CODE_PATH,
 };
 use error_messages::{EMPTY_EXPECTED_LOG, FAILED_TO_PARSE_AS_NUMBER};
 use multiversx_sc::{
@@ -43,11 +45,6 @@ use structs::{
     operation::Operation,
 };
 
-use crate::{
-    constants::{ONE_HUNDRED_TOKENS, ONE_THOUSAND_TOKENS},
-    interactor_state::{State, TokenProperties},
-};
-
 pub struct IssueTokenStruct {
     pub token_display_name: String,
     pub token_ticker: String,
@@ -64,20 +61,20 @@ pub struct MintTokenStruct {
 pub trait CommonInteractorTrait {
     fn interactor(&mut self) -> &mut Interactor;
     fn state(&mut self) -> &mut State;
-    fn wallet_address(&self) -> &Address;
-    fn user_address(&self) -> Address;
+    fn owner_address(&self) -> &Address;
+    fn user_address(&self) -> &Address;
 
     async fn issue_and_mint_token(
         &mut self,
         issue: IssueTokenStruct,
         mint: MintTokenStruct,
     ) -> TokenProperties {
-        let wallet_address = self.wallet_address().clone();
+        let owner_address = self.owner_address().clone();
         let interactor = self.interactor();
 
         let token_id = interactor
             .tx()
-            .from(wallet_address.clone())
+            .from(owner_address.clone())
             .to(ESDTSystemSCAddress)
             .gas(100_000_000u64)
             .typed(ESDTSystemSCProxy)
@@ -108,12 +105,12 @@ pub trait CommonInteractorTrait {
         token_type: EsdtTokenType,
         mint: MintTokenStruct,
     ) -> u64 {
-        let wallet_address = self.wallet_address().clone();
+        let owner_address = self.owner_address().clone();
         let interactor = self.interactor();
         let mint_base_tx = interactor
             .tx()
-            .from(wallet_address.clone())
-            .to(wallet_address.clone())
+            .from(owner_address.clone())
+            .to(owner_address.clone())
             .gas(100_000_000u64)
             .typed(UserBuiltinProxy);
 
@@ -153,12 +150,12 @@ pub trait CommonInteractorTrait {
     }
 
     async fn deploy_sovereign_forge(&mut self, deploy_cost: &BigUint<StaticApi>) {
-        let wallet_address = self.wallet_address().clone();
+        let owner_address = self.owner_address().clone();
 
         let new_address = self
             .interactor()
             .tx()
-            .from(wallet_address)
+            .from(owner_address)
             .gas(50_000_000u64)
             .typed(SovereignForgeProxy)
             .init(deploy_cost)
@@ -185,12 +182,12 @@ pub trait CommonInteractorTrait {
         mvx_esdt_safe_address: Bech32Address,
         fee_market_address: Bech32Address,
     ) {
-        let wallet_address = self.wallet_address().clone();
+        let owner_address = self.owner_address().clone();
 
         let new_address = self
             .interactor()
             .tx()
-            .from(wallet_address)
+            .from(owner_address)
             .gas(50_000_000u64)
             .typed(ChainFactoryContractProxy)
             .init(
@@ -216,12 +213,12 @@ pub trait CommonInteractorTrait {
     }
 
     async fn deploy_chain_config(&mut self, opt_config: OptionalValue<SovereignConfig<StaticApi>>) {
-        let wallet_address = self.wallet_address().clone();
+        let owner_address = self.owner_address().clone();
 
         let new_address = self
             .interactor()
             .tx()
-            .from(wallet_address)
+            .from(owner_address)
             .gas(50_000_000u64)
             .typed(ChainConfigContractProxy)
             .init(opt_config)
@@ -241,12 +238,12 @@ pub trait CommonInteractorTrait {
     }
 
     async fn deploy_header_verifier(&mut self, contracts_array: Vec<ContractInfo<StaticApi>>) {
-        let wallet_address = self.wallet_address().clone();
+        let owner_address = self.owner_address().clone();
 
         let new_address = self
             .interactor()
             .tx()
-            .from(wallet_address)
+            .from(owner_address)
             .gas(50_000_000u64)
             .typed(HeaderverifierProxy)
             .init(MultiValueEncoded::from_iter(contracts_array))
@@ -266,12 +263,12 @@ pub trait CommonInteractorTrait {
     }
 
     async fn deploy_mvx_esdt_safe(&mut self, opt_config: OptionalValue<EsdtSafeConfig<StaticApi>>) {
-        let wallet_address = self.wallet_address().clone();
+        let owner_address = self.owner_address().clone();
 
         let new_address = self
             .interactor()
             .tx()
-            .from(wallet_address)
+            .from(owner_address)
             .gas(100_000_000u64)
             .typed(MvxEsdtSafeProxy)
             .init(opt_config)
@@ -292,18 +289,18 @@ pub trait CommonInteractorTrait {
 
     async fn deploy_fee_market(
         &mut self,
-        mvx_esdt_safe_address: Bech32Address,
+        esdt_safe_address: Bech32Address,
         fee: Option<FeeStruct<StaticApi>>,
     ) {
-        let wallet_address = self.wallet_address().clone();
+        let owner_address = self.owner_address().clone();
 
         let new_address = self
             .interactor()
             .tx()
-            .from(wallet_address)
+            .from(owner_address)
             .gas(80_000_000u64)
             .typed(FeeMarketProxy)
-            .init(mvx_esdt_safe_address, fee)
+            .init(esdt_safe_address, fee)
             .returns(ReturnsNewAddress)
             .code(FEE_MARKET_CODE_PATH)
             .code_metadata(CodeMetadata::all())
@@ -320,12 +317,12 @@ pub trait CommonInteractorTrait {
     }
 
     async fn deploy_testing_sc(&mut self) {
-        let wallet_address = self.wallet_address().clone();
+        let owner_address = self.owner_address().clone();
 
         let new_address = self
             .interactor()
             .tx()
-            .from(wallet_address)
+            .from(owner_address)
             .gas(120_000_000u64)
             .typed(TestingScProxy)
             .init()
@@ -344,17 +341,18 @@ pub trait CommonInteractorTrait {
         println!("new testing sc address: {new_address_bech32}");
     }
 
-    async fn deploy_token_handler(&mut self, chain_factory_address: Bech32Address) {
-        let wallet_address = self.wallet_address().clone();
+    async fn deploy_token_handler(&mut self, chain_factory_address: Address) {
+        let owner_address = self.owner_address().clone();
 
         let new_address = self
             .interactor()
             .tx()
-            .from(wallet_address)
+            .from(owner_address)
             .gas(100_000_000u64)
             .typed(token_handler_proxy::TokenHandlerProxy)
             .init(chain_factory_address)
             .code(TOKEN_HANDLER_CODE_PATH)
+            .code_metadata(CodeMetadata::all())
             .returns(ReturnsNewAddress)
             .run()
             .await;
@@ -374,12 +372,12 @@ pub trait CommonInteractorTrait {
         token_handler_address: Bech32Address,
         opt_config: Option<EsdtSafeConfig<StaticApi>>,
     ) {
-        let wallet_address = self.wallet_address().clone();
+        let owner_address = self.owner_address().clone();
 
         let new_address = self
             .interactor()
             .tx()
-            .from(wallet_address)
+            .from(owner_address)
             .gas(100_000_000u64)
             .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
             .init(
@@ -449,13 +447,13 @@ pub trait CommonInteractorTrait {
         opt_preferred_chain_id: Option<ManagedBuffer<StaticApi>>,
         opt_config: OptionalValue<SovereignConfig<StaticApi>>,
     ) {
-        let wallet_address = self.wallet_address().clone();
+        let owner_address = self.owner_address().clone();
         let sovereign_forge_address = self.state().current_sovereign_forge_sc_address().clone();
 
         let response = self
             .interactor()
             .tx()
-            .from(wallet_address)
+            .from(owner_address)
             .to(sovereign_forge_address)
             .gas(100_000_000u64)
             .typed(SovereignForgeProxy)
@@ -469,13 +467,13 @@ pub trait CommonInteractorTrait {
     }
 
     async fn deploy_phase_two(&mut self, opt_config: OptionalValue<EsdtSafeConfig<StaticApi>>) {
-        let wallet_address = self.wallet_address().clone();
+        let owner_address = self.owner_address().clone();
         let sovereign_forge_address = self.state().current_sovereign_forge_sc_address().clone();
 
         let response = self
             .interactor()
             .tx()
-            .from(wallet_address)
+            .from(owner_address)
             .to(sovereign_forge_address)
             .gas(30_000_000u64)
             .typed(SovereignForgeProxy)
@@ -488,13 +486,13 @@ pub trait CommonInteractorTrait {
     }
 
     async fn deploy_phase_three(&mut self, fee: Option<FeeStruct<StaticApi>>) {
-        let wallet_address = self.wallet_address().clone();
+        let owner_address = self.owner_address().clone();
         let sovereign_forge_address = self.state().current_sovereign_forge_sc_address().clone();
 
         let response = self
             .interactor()
             .tx()
-            .from(wallet_address)
+            .from(owner_address)
             .to(sovereign_forge_address)
             .gas(80_000_000u64)
             .typed(SovereignForgeProxy)
@@ -507,13 +505,13 @@ pub trait CommonInteractorTrait {
     }
 
     async fn deploy_phase_four(&mut self) {
-        let wallet_address = self.wallet_address().clone();
+        let owner_address = self.owner_address().clone();
         let sovereign_forge_address = self.state().current_sovereign_forge_sc_address().clone();
 
         let response = self
             .interactor()
             .tx()
-            .from(wallet_address)
+            .from(owner_address)
             .to(sovereign_forge_address)
             .gas(80_000_000u64)
             .typed(SovereignForgeProxy)
@@ -526,13 +524,13 @@ pub trait CommonInteractorTrait {
     }
 
     async fn complete_setup_phase(&mut self) {
-        let owner_address = self.wallet_address().clone();
-        let sov_forge_address = self.state().current_sovereign_forge_sc_address().clone();
+        let owner_address = self.owner_address().clone();
+        let sovereign_forge_address = self.state().current_sovereign_forge_sc_address().clone();
 
         self.interactor()
             .tx()
             .from(owner_address)
-            .to(sov_forge_address)
+            .to(sovereign_forge_address)
             .gas(90_000_000u64)
             .typed(SovereignForgeProxy)
             .complete_setup_phase()
@@ -562,13 +560,40 @@ pub trait CommonInteractorTrait {
             .await;
     }
 
-    async fn complete_header_verifier_setup_phase(&mut self) {
-        let wallet_address = self.wallet_address().clone();
+    async fn register_operation(
+        &mut self,
+        signature: ManagedBuffer<StaticApi>,
+        hash_of_hashes: &ManagedBuffer<StaticApi>,
+        operations_hashes: MultiValueEncoded<StaticApi, ManagedBuffer<StaticApi>>,
+    ) {
+        let owner_address = self.owner_address().clone();
         let header_verifier_address = self.state().current_header_verifier_address().clone();
 
         self.interactor()
             .tx()
-            .from(wallet_address)
+            .from(owner_address)
+            .to(header_verifier_address)
+            .gas(90_000_000u64)
+            .typed(HeaderverifierProxy)
+            .register_bridge_operations(
+                signature,
+                hash_of_hashes,
+                ManagedBuffer::new(),
+                ManagedBuffer::new(),
+                operations_hashes,
+            )
+            .returns(ReturnsResultUnmanaged)
+            .run()
+            .await;
+    }
+
+    async fn complete_header_verifier_setup_phase(&mut self) {
+        let owner_address = self.owner_address().clone();
+        let header_verifier_address = self.state().current_header_verifier_address().clone();
+
+        self.interactor()
+            .tx()
+            .from(owner_address)
             .to(header_verifier_address)
             .gas(90_000_000u64)
             .typed(HeaderverifierProxy)
@@ -610,6 +635,25 @@ pub trait CommonInteractorTrait {
         self.assert_expected_log(logs, expected_log);
     }
 
+    async fn whitelist_enshrine_esdt(&mut self, enshrine_esdt_safe_address: Bech32Address) {
+        let token_handler_address = self.state().current_token_handler_address().clone();
+        let owner_address = self.owner_address().clone();
+
+        let response = self
+            .interactor()
+            .tx()
+            .from(owner_address)
+            .to(token_handler_address)
+            .gas(50_000_000u64)
+            .typed(token_handler_proxy::TokenHandlerProxy)
+            .whitelist_enshrine_esdt(enshrine_esdt_safe_address)
+            .returns(ReturnsResultUnmanaged)
+            .run()
+            .await;
+
+        println!("Result: {response:?}");
+    }
+
     //NOTE: transferValue returns an empty log and calling this function on it will panic
     fn assert_expected_log(&mut self, logs: Vec<Log>, expected_log: Option<&str>) {
         match expected_log {
@@ -622,7 +666,7 @@ pub trait CommonInteractorTrait {
             }
             Some(expected_log) => {
                 assert!(!expected_log.is_empty(), "{}", EMPTY_EXPECTED_LOG);
-                let expected_bytes = ManagedBuffer::<StaticApi>::from(expected_log).to_vec();
+                let expected_bytes = expected_log.as_bytes();
 
                 let found_log = logs.iter().find(|log| {
                     log.topics.iter().any(|topic| {
@@ -708,7 +752,7 @@ pub trait CommonInteractorTrait {
     }
 
     async fn check_wallet_balance(&mut self) {
-        let wallet_address = self.wallet_address().clone();
+        let owner_address = self.owner_address().clone();
         let first_token_id = self.state().get_first_token_id_string();
         let second_token_id = self.state().get_second_token_id_string();
         let fee_token_id = self.state().get_fee_token_id_string();
@@ -719,7 +763,7 @@ pub trait CommonInteractorTrait {
             self.thousand_tokens(fee_token_id),
         ];
 
-        self.check_address_balance(&Bech32Address::from(wallet_address), expected_tokens_wallet)
+        self.check_address_balance(&Bech32Address::from(owner_address), expected_tokens_wallet)
             .await;
     }
 
@@ -757,6 +801,39 @@ pub trait CommonInteractorTrait {
         let expected_tokens_testing_sc = vec![self.zero_tokens(first_token_id)];
 
         self.check_address_balance(&testing_sc_address, expected_tokens_testing_sc)
+            .await;
+    }
+
+    async fn check_enshrine_esdt_safe_balance_is_empty(&mut self) {
+        let enshrine_esdt_safe_address = self.state().current_enshrine_esdt_safe_address().clone();
+        let first_token_id = self.state().get_first_token_id_string();
+        let second_token_id = self.state().get_second_token_id_string();
+
+        let expected_tokens_enshrine_esdt_safe = vec![
+            self.zero_tokens(first_token_id),
+            self.zero_tokens(second_token_id),
+        ];
+
+        self.check_address_balance(
+            &enshrine_esdt_safe_address,
+            expected_tokens_enshrine_esdt_safe,
+        )
+        .await;
+    }
+
+    async fn check_user_address_balance_is_empty(&mut self) {
+        let owner_address = self.user_address().clone();
+        let first_token_id = self.state().get_first_token_id_string();
+        let second_token_id = self.state().get_second_token_id_string();
+        let fee_token_id = self.state().get_fee_token_id_string();
+
+        let expected_tokens_user = vec![
+            self.zero_tokens(first_token_id),
+            self.zero_tokens(second_token_id),
+            self.zero_tokens(fee_token_id),
+        ];
+
+        self.check_address_balance(&Bech32Address::from(owner_address), expected_tokens_user)
             .await;
     }
 

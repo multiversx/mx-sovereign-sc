@@ -1957,6 +1957,7 @@ dependencies = [
  "clap",
  "common-interactor",
  "common-test-setup",
+ "cross-chain",
  "error-messages",
  "header-verifier",
  "multiversx-sc",

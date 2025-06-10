@@ -56,5 +56,8 @@ path = "../common/common-test-setup"
 [dependencies.common-interactor]
 path = "../common/common-interactor"
 
+[dependencies.cross-chain]
+path = "../common/cross-chain"
+
 [features]
 chain-simulator-tests = []
