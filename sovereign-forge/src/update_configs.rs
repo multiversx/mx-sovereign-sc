@@ -47,7 +47,7 @@ pub trait UpdateConfigsModule: common::utils::UtilsModule + common::storage::Sto
         let blockchain_api = self.blockchain();
         let caller = blockchain_api.get_caller();
 
-        self.require_phase_four_completed(&caller);
+        self.require_phase_three_completed(&caller);
 
         self.tx()
             .to(self.get_chain_factory_address())
@@ -64,7 +64,7 @@ pub trait UpdateConfigsModule: common::utils::UtilsModule + common::storage::Sto
         let blockchain_api = self.blockchain();
         let caller = blockchain_api.get_caller();
 
-        self.require_phase_four_completed(&caller);
+        self.require_phase_three_completed(&caller);
 
         self.tx()
             .to(self.get_chain_factory_address())
