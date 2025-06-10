@@ -1,9 +1,9 @@
 use common_interactor::{
-    common_sovereign_interactor::CommonInteractorTrait,
-    constants::{ONE_HUNDRED_TOKENS, ONE_THOUSAND_TOKENS},
-    interactor_config::Config,
+    common_sovereign_interactor::CommonInteractorTrait, interactor_config::Config,
 };
-use common_test_setup::constants::{CHAIN_ID, DEPLOY_COST};
+use common_test_setup::constants::{
+    CHAIN_ID, DEPLOY_COST, ONE_HUNDRED_TOKENS, ONE_THOUSAND_TOKENS,
+};
 use multiversx_sc::{
     imports::OptionalValue,
     types::{BigUint, EsdtTokenPayment},
@@ -146,7 +146,7 @@ async fn test_complete_deposit_flow() {
     ];
     interactor
         .check_address_balance(
-            &Bech32Address::from(interactor.wallet_address().clone()),
+            &Bech32Address::from(interactor.owner_address().clone()),
             expected_tokens_wallet,
         )
         .await;

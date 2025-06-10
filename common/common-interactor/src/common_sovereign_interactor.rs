@@ -611,7 +611,7 @@ pub trait CommonInteractorTrait {
         expected_error_message: Option<&str>,
         expected_log: Option<&str>,
     ) {
-        let wallet_address = self.wallet_address().clone();
+        let wallet_address = self.owner_address().clone();
         let current_mvx_esdt_safe_address = self
             .state()
             .current_mvx_esdt_safe_contract_address()

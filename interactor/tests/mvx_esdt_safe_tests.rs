@@ -262,7 +262,7 @@ async fn test_deposit_max_bridged_amount_exceeded() {
     let payments_vec = PaymentsVec::from(vec![esdt_token_payment]);
 
     chain_interactor
-        .deposit(
+        .deposit_mvx_esdt_safe(
             chain_interactor.user_address.clone(),
             OptionalValue::None,
             payments_vec,
@@ -780,7 +780,7 @@ async fn test_deposit_transfer_data_only_with_fee_nothing_to_transfer() {
     let transfer_data = MultiValue3::from((gas_limit, function, args));
 
     chain_interactor
-        .deposit(
+        .deposit_mvx_esdt_safe(
             chain_interactor.user_address.clone(),
             OptionalValue::Some(transfer_data),
             ManagedVec::new(),
@@ -1526,7 +1526,7 @@ async fn test_execute_operation_with_native_token_success() {
     let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&operation_hash.to_vec()));
 
     chain_interactor
-        .deposit(
+        .deposit_mvx_esdt_safe(
             chain_interactor
                 .state
                 .current_mvx_esdt_safe_contract_address()

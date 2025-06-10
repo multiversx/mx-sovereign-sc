@@ -4,8 +4,8 @@ use common_interactor::interactor_state::State;
 use common_interactor::{
     common_sovereign_interactor::CommonInteractorTrait, interactor_config::Config,
 };
-use common_test_setup::constants::{CHAIN_ID, {
-    INTERACTOR_WORKING_DIR, ONE_THOUSAND_TOKENS, SOVEREIGN_FORGE_CODE_PATH},
+use common_test_setup::constants::{
+    CHAIN_ID, {INTERACTOR_WORKING_DIR, ONE_THOUSAND_TOKENS, SOVEREIGN_FORGE_CODE_PATH},
 };
 use multiversx_sc_snippets::imports::*;
 use proxies::sovereign_forge_proxy::SovereignForgeProxy;
@@ -24,12 +24,8 @@ impl CommonInteractorTrait for SovereignForgeInteract {
         &mut self.interactor
     }
 
-    fn wallet_address(&self) -> &Address {
+    fn owner_address(&self) -> &Address {
         &self.owner_address
-    }
-
-    fn user_address(&self) -> Address {
-        self.user_address.clone()
     }
 
     fn user_address(&self) -> &Address {
@@ -153,7 +149,8 @@ impl SovereignForgeInteract {
 
         let chain_factory_address = self.state.current_chain_factory_sc_address().clone();
 
-        self.deploy_token_handler(chain_factory_address).await;
+        self.deploy_token_handler(chain_factory_address.to_address())
+            .await;
 
         self.register_token_handler(1).await;
         self.register_token_handler(2).await;
