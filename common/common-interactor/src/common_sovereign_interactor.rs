@@ -635,6 +635,36 @@ pub trait CommonInteractorTrait {
         self.assert_expected_log(logs, expected_log);
     }
 
+    async fn execute_operations_mvx(
+        &mut self,
+        hash_of_hashes: ManagedBuffer<StaticApi>,
+        operation: Operation<StaticApi>,
+        expected_error_message: Option<&str>,
+        expected_log: Option<&str>,
+    ) {
+        let owner_address = self.owner_address().clone();
+        let current_mvx_esdt_safe_address = self
+            .state()
+            .current_mvx_esdt_safe_contract_address()
+            .clone();
+        let (response, logs) = self
+            .interactor()
+            .tx()
+            .from(owner_address)
+            .to(current_mvx_esdt_safe_address)
+            .gas(120_000_000u64)
+            .typed(MvxEsdtSafeProxy)
+            .execute_operations(hash_of_hashes, operation)
+            .returns(ReturnsHandledOrError::new())
+            .returns(ReturnsLogs)
+            .run()
+            .await;
+
+        self.assert_expected_error_message(response, expected_error_message);
+
+        self.assert_expected_log(logs, expected_log);
+    }
+
     async fn whitelist_enshrine_esdt(&mut self, enshrine_esdt_safe_address: Bech32Address) {
         let token_handler_address = self.state().current_token_handler_address().clone();
         let owner_address = self.owner_address().clone();

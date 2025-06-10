@@ -4,7 +4,7 @@ use common_test_setup::constants::{
     CROWD_TOKEN_ID, FIRST_TEST_TOKEN, ISSUE_COST, MVX_TO_SOV_TOKEN_STORAGE_KEY,
     NATIVE_TOKEN_STORAGE_KEY, ONE_HUNDRED_TOKENS, ONE_THOUSAND_TOKENS,
     OPERATION_HASH_STATUS_STORAGE_KEY, SOV_TOKEN, SOV_TO_MVX_TOKEN_STORAGE_KEY, TEN_TOKENS,
-    TOKEN_TICKER,
+    TOKEN_TICKER, WRONG_ENDPOINT_NAME,
 };
 use common_test_setup::RegisterTokenArgs;
 use cross_chain::MAX_GAS_PER_TRANSACTION;
@@ -1401,7 +1401,7 @@ async fn test_execute_operation_no_esdt_safe_registered() {
     let hash_of_hashes = chain_interactor.get_operation_hash(&operation);
 
     chain_interactor
-        .execute_operations(
+        .execute_operations_mvx(
             hash_of_hashes,
             operation,
             Some(SETUP_PHASE_NOT_COMPLETED),
@@ -1560,7 +1560,7 @@ async fn test_execute_operation_with_native_token_success() {
         .await;
 
     chain_interactor
-        .execute_operations(hash_of_hashes, operation, None, Some("executedBridgeOp"))
+        .execute_operations_mvx(hash_of_hashes, operation, None, Some("executedBridgeOp"))
         .await;
 
     chain_interactor
@@ -1693,7 +1693,7 @@ async fn test_execute_operation_success_no_fee() {
         .await;
 
     chain_interactor
-        .execute_operations(hash_of_hashes, operation, None, Some("executedBridgeOp"))
+        .execute_operations_mvx(hash_of_hashes, operation, None, Some("executedBridgeOp"))
         .await;
 
     chain_interactor
@@ -1799,7 +1799,7 @@ async fn test_execute_operation_only_transfer_data_no_fee() {
         .await;
 
     chain_interactor
-        .execute_operations(hash_of_hashes, operation, None, Some("executedBridgeOp"))
+        .execute_operations_mvx(hash_of_hashes, operation, None, Some("executedBridgeOp"))
         .await;
 
     chain_interactor
@@ -1835,7 +1835,7 @@ async fn test_execute_operation_no_payments_failed_event() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
 
     let gas_limit = 90_000_000u64;
-    let function = ManagedBuffer::<StaticApi>::from("WRONG-ENDPOINT-NAME");
+    let function = ManagedBuffer::<StaticApi>::from(WRONG_ENDPOINT_NAME);
     let args =
         ManagedVec::<StaticApi, ManagedBuffer<StaticApi>>::from(vec![ManagedBuffer::from("1")]);
 
@@ -1894,7 +1894,7 @@ async fn test_execute_operation_no_payments_failed_event() {
         .await;
 
     chain_interactor
-        .execute_operations(
+        .execute_operations_mvx(
             hash_of_hashes,
             operation,
             Some(function.to_string().as_str()),

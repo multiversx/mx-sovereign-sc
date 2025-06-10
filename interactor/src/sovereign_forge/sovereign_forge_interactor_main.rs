@@ -5,7 +5,7 @@ use common_interactor::{
     common_sovereign_interactor::CommonInteractorTrait, interactor_config::Config,
 };
 use common_test_setup::constants::{
-    CHAIN_ID, {INTERACTOR_WORKING_DIR, ONE_THOUSAND_TOKENS, SOVEREIGN_FORGE_CODE_PATH},
+    INTERACTOR_WORKING_DIR, ONE_THOUSAND_TOKENS, SOVEREIGN_FORGE_CODE_PATH,
 };
 use multiversx_sc_snippets::imports::*;
 use proxies::sovereign_forge_proxy::SovereignForgeProxy;
@@ -15,8 +15,8 @@ use structs::forge::ScArray;
 
 pub struct SovereignForgeInteract {
     interactor: Interactor,
-    owner_address: Address,
-    user_address: Address,
+    pub owner_address: Address,
+    pub user_address: Address,
     pub state: State,
 }
 impl CommonInteractorTrait for SovereignForgeInteract {
@@ -115,6 +115,7 @@ impl SovereignForgeInteract {
 
     pub async fn deploy_and_complete_setup_phase(
         &mut self,
+        chain_id: &str,
         deploy_cost: BigUint<StaticApi>,
         optional_sov_config: OptionalValue<SovereignConfig<StaticApi>>,
         optional_esdt_safe_config: OptionalValue<EsdtSafeConfig<StaticApi>>,
@@ -159,14 +160,16 @@ impl SovereignForgeInteract {
         self.register_chain_factory(2).await;
         self.register_chain_factory(3).await;
 
-        self.deploy_phase_one(deploy_cost, Some(CHAIN_ID.into()), optional_sov_config)
+        self.deploy_phase_one(deploy_cost, Some(chain_id.into()), optional_sov_config)
             .await;
         self.deploy_phase_two(optional_esdt_safe_config).await;
         self.deploy_phase_three(fee).await;
         self.deploy_phase_four().await;
 
         self.complete_setup_phase().await;
-        self.check_setup_phase_status(CHAIN_ID, true).await;
+        self.check_setup_phase_status(chain_id, true).await;
+        self.update_smart_contracts_addresses_in_state(chain_id)
+            .await;
     }
 
     pub async fn upgrade(&mut self) {
@@ -220,6 +223,44 @@ impl SovereignForgeInteract {
             .await;
 
         println!("Result: {response:?}");
+    }
+
+    pub async fn update_smart_contracts_addresses_in_state(&mut self, chain_id: &str) {
+        let result_value = self
+            .interactor
+            .query()
+            .to(self.state.current_sovereign_forge_sc_address())
+            .typed(SovereignForgeProxy)
+            .sovereign_deployed_contracts(chain_id)
+            .returns(ReturnsResult)
+            .run()
+            .await;
+
+        for contract in result_value {
+            match contract.id {
+                ScArray::ChainConfig => {
+                    self.state.set_chain_factory_sc_address(Bech32Address::from(
+                        contract.address.to_address(),
+                    ));
+                }
+                ScArray::ESDTSafe => {
+                    self.state
+                        .set_mvx_esdt_safe_contract_address(Bech32Address::from(
+                            contract.address.to_address(),
+                        ));
+                }
+                ScArray::FeeMarket => {
+                    self.state
+                        .set_fee_market_address(Bech32Address::from(contract.address.to_address()));
+                }
+                ScArray::HeaderVerifier => {
+                    self.state.set_header_verifier_address(Bech32Address::from(
+                        contract.address.to_address(),
+                    ));
+                }
+                _ => {}
+            }
+        }
     }
 
     pub async fn get_chain_factories(&mut self) {
