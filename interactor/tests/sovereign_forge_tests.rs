@@ -120,7 +120,7 @@ async fn test_deploy_sovereign_forge_cs() {
 /// S-FORGE_COMPLETE-DEPOSIT-FLOW_OK
 ///
 /// ### ACTION
-/// Run deploy phases 1–4 and call complete_setup_phase
+/// Deploy and complete setup phase, then call deposit_in_mvx_esdt_safe
 ///
 /// ### EXPECTED
 /// Deposit is successful and tokens are transferred to the mvx-esdt-safe-sc
@@ -157,7 +157,7 @@ async fn test_complete_deposit_flow() {
     let payments_vec = PaymentsVec::from(vec![esdt_token_payment_one, esdt_token_payment_two]);
 
     chain_interactor
-        .deposit_mvx_esdt_safe(
+        .deposit_in_mvx_esdt_safe(
             user_address,
             OptionalValue::None,
             payments_vec,
@@ -208,7 +208,7 @@ async fn test_complete_deposit_flow() {
 /// S-FORGE_EXEC_OK
 ///
 /// ### ACTION
-/// Call 'execute_operation()' with valid operation in a complete flow
+/// Call 'execute_operation()' with valid operation(contains transfer data) in a complete flow
 ///
 /// ### EXPECTED
 /// The operation is executed in the testing smart contract
@@ -272,7 +272,7 @@ async fn test_complete_flow_execute_operation_success_no_fee() {
     let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&operation_hash.to_vec()));
 
     chain_interactor
-        .deposit_mvx_esdt_safe(
+        .deposit_in_mvx_esdt_safe(
             chain_interactor
                 .state
                 .current_mvx_esdt_safe_contract_address()
@@ -306,7 +306,12 @@ async fn test_complete_flow_execute_operation_success_no_fee() {
         .await;
 
     chain_interactor
-        .execute_operations_mvx(hash_of_hashes, operation, None, Some("executedBridgeOp"))
+        .execute_operations_in_mvx_esdt_safe(
+            hash_of_hashes,
+            operation,
+            None,
+            Some("executedBridgeOp"),
+        )
         .await;
 
     chain_interactor
@@ -342,10 +347,11 @@ async fn test_complete_flow_execute_operation_success_no_fee() {
 /// S-FORGE_EXEC_OK
 ///
 /// ### ACTION
-/// Call 'execute_operation()' with valid operation in a complete flow on both chains
+/// Call 'execute_operation()' with valid operation(contains transfer data) in a complete flow on both chains
 ///
 /// ### EXPECTED
 /// The operation is executed in the testing smart contract
+/// The fee is deducted
 #[tokio::test]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn test_complete_flow_execute_operation_success_with_fee() {
@@ -429,7 +435,7 @@ async fn test_complete_flow_execute_operation_success_with_fee() {
     let deposit_transfer_data = MultiValue3::from((gas_limit, function, deposit_args));
 
     chain_interactor
-        .deposit_mvx_esdt_safe(
+        .deposit_in_mvx_esdt_safe(
             chain_interactor
                 .state
                 .current_mvx_esdt_safe_contract_address()
@@ -463,7 +469,12 @@ async fn test_complete_flow_execute_operation_success_with_fee() {
         .await;
 
     chain_interactor
-        .execute_operations_mvx(hash_of_hashes, operation, None, Some("executedBridgeOp"))
+        .execute_operations_in_mvx_esdt_safe(
+            hash_of_hashes,
+            operation,
+            None,
+            Some("executedBridgeOp"),
+        )
         .await;
 
     chain_interactor
@@ -511,7 +522,7 @@ async fn test_complete_flow_execute_operation_success_with_fee() {
 /// S-FORGE_EXEC_OK
 ///
 /// ### ACTION
-/// Call 'execute_operation()' with valid operation and no fee
+/// Call 'execute_operation()' with valid operation(contains transfer data) and no fee
 ///
 /// ### EXPECTED
 /// The operation is executed in the testing smart contract
@@ -582,7 +593,12 @@ async fn test_complete_flow_execute_operation_only_transfer_data_no_fee() {
         .await;
 
     chain_interactor
-        .execute_operations_mvx(hash_of_hashes, operation, None, Some("executedBridgeOp"))
+        .execute_operations_in_mvx_esdt_safe(
+            hash_of_hashes,
+            operation,
+            None,
+            Some("executedBridgeOp"),
+        )
         .await;
 
     chain_interactor
@@ -613,7 +629,7 @@ async fn test_complete_flow_execute_operation_only_transfer_data_no_fee() {
 /// The testing smart contract returns a failed event
 #[tokio::test]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
-async fn test_complete_flow_execute_operation_no_payments_failed_event() {
+async fn test_complete_flow_execute_operation_wrong_endpoint() {
     let mut chain_interactor = SovereignForgeInteract::new(Config::chain_simulator_config()).await;
 
     let gas_limit = 90_000_000u64;
@@ -678,7 +694,7 @@ async fn test_complete_flow_execute_operation_no_payments_failed_event() {
         .await;
 
     chain_interactor
-        .execute_operations_mvx(
+        .execute_operations_in_mvx_esdt_safe(
             hash_of_hashes,
             operation,
             Some(function.to_string().as_str()),

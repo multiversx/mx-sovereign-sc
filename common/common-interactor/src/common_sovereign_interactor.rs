@@ -603,7 +603,7 @@ pub trait CommonInteractorTrait {
             .await;
     }
 
-    async fn deposit_mvx_esdt_safe(
+    async fn deposit_in_mvx_esdt_safe(
         &mut self,
         to: Address,
         opt_transfer_data: OptionalValueTransferDataTuple<StaticApi>,
@@ -635,7 +635,7 @@ pub trait CommonInteractorTrait {
         self.assert_expected_log(logs, expected_log);
     }
 
-    async fn execute_operations_mvx(
+    async fn execute_operations_in_mvx_esdt_safe(
         &mut self,
         hash_of_hashes: ManagedBuffer<StaticApi>,
         operation: Operation<StaticApi>,
