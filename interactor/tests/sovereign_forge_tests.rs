@@ -214,7 +214,7 @@ async fn test_complete_deposit_flow() {
 /// The operation is executed in the testing smart contract
 #[tokio::test]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
-async fn test_complete_flow_execute_operation_success_no_fee() {
+async fn test_complete_flow_execute_operation_with_transfer_data_success_no_fee() {
     let mut chain_interactor = SovereignForgeInteract::new(Config::chain_simulator_config()).await;
     let owner_address = chain_interactor.owner_address().clone();
     let token_data = EsdtTokenData {
