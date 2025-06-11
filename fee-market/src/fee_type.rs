@@ -24,7 +24,16 @@ pub trait FeeTypeModule:
         self.require_setup_complete();
 
         let token_id_hash = base_token.generate_hash();
-        require!(!token_id_hash.is_empty(), ERROR_AT_ENCODING);
+        if token_id_hash.is_empty() {
+            self.failed_bridge_operation_event(
+                &hash_of_hashes,
+                &token_id_hash,
+                &ManagedBuffer::from(ERROR_AT_ENCODING),
+            );
+
+            self.remove_executed_hash(&hash_of_hashes, &token_id_hash);
+            return;
+        };
 
         self.lock_operation_hash(&hash_of_hashes, &token_id_hash);
 
@@ -49,7 +58,16 @@ pub trait FeeTypeModule:
         self.require_setup_complete();
 
         let fee_hash = fee_struct.generate_hash();
-        require!(!fee_hash.is_empty(), ERROR_AT_ENCODING);
+        if fee_hash.is_empty() {
+            self.failed_bridge_operation_event(
+                &hash_of_hashes,
+                &fee_hash,
+                &ManagedBuffer::from(ERROR_AT_ENCODING),
+            );
+
+            self.remove_executed_hash(&hash_of_hashes, &fee_hash);
+            return;
+        };
 
         self.lock_operation_hash(&hash_of_hashes, &fee_hash);
 

@@ -48,7 +48,16 @@ pub trait ChainConfigContract:
         self.require_setup_complete();
 
         let config_hash = new_config.generate_hash();
-        require!(!config_hash.is_empty(), ERROR_AT_ENCODING);
+        if config_hash.is_empty() {
+            self.failed_bridge_operation_event(
+                &hash_of_hashes,
+                &config_hash,
+                &ManagedBuffer::from(ERROR_AT_ENCODING),
+            );
+
+            self.remove_executed_hash(&hash_of_hashes, &config_hash);
+            return;
+        };
 
         self.lock_operation_hash(&config_hash, &hash_of_hashes);
 
@@ -58,6 +67,9 @@ pub trait ChainConfigContract:
                 &config_hash,
                 &ManagedBuffer::from(error_message),
             );
+
+            self.remove_executed_hash(&hash_of_hashes, &config_hash);
+            return;
         } else {
             self.sovereign_config().set(new_config);
         }
