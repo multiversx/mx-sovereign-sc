@@ -27,7 +27,16 @@ pub trait ExecuteModule:
         self.require_setup_complete();
 
         let operation_hash = operation.generate_hash();
-        require!(!operation_hash.is_empty(), ERROR_AT_ENCODING);
+        if operation_hash.is_empty() {
+            self.failed_bridge_operation_event(
+                &hash_of_hashes,
+                &operation_hash,
+                &ManagedBuffer::from(ERROR_AT_ENCODING),
+            );
+
+            self.remove_executed_hash(&hash_of_hashes, &operation_hash);
+            return;
+        };
 
         self.lock_operation_hash(&hash_of_hashes, &operation_hash);
 

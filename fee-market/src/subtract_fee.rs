@@ -58,7 +58,16 @@ pub trait SubtractFeeModule:
             };
 
             let pair_hash = pair_struct.generate_hash();
-            require!(!pair_hash.is_empty(), ERROR_AT_ENCODING);
+            if pair_hash.is_empty() {
+                self.failed_bridge_operation_event(
+                    &hash_of_hashes,
+                    &pair_hash,
+                    &ManagedBuffer::from(ERROR_AT_ENCODING),
+                );
+
+                self.remove_executed_hash(&hash_of_hashes, &pair_hash);
+                return;
+            };
 
             aggregated_hashes.append(&pair_hash);
             pairs.push(pair_struct);
