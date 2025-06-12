@@ -1,12 +1,13 @@
 use common_test_setup::{
     constants::{
-        CHAIN_FACTORY_SC_ADDRESS, OWNER_ADDRESS, OWNER_BALANCE, SOVEREIGN_FORGE_SC_ADDRESS,
-        TOKEN_HANDLER_SC_ADDRESS,
+        CHAIN_FACTORY_SC_ADDRESS, ESDT_SAFE_ADDRESS, OWNER_ADDRESS, OWNER_BALANCE,
+        SOVEREIGN_FORGE_SC_ADDRESS, TOKEN_HANDLER_SC_ADDRESS,
     },
     AccountSetup, BaseSetup,
 };
-use multiversx_sc::types::{
-    BigUint, ManagedAddress, ReturnsResultUnmanaged, TestSCAddress, TestTokenIdentifier,
+use multiversx_sc::{
+    imports::OptionalValue,
+    types::{BigUint, ManagedAddress, ReturnsResultUnmanaged, TestSCAddress, TestTokenIdentifier},
 };
 use multiversx_sc_scenario::{api::StaticApi, ReturnsHandledOrError, ScenarioTxRun};
 use proxies::sovereign_forge_proxy::SovereignForgeProxy;
@@ -45,6 +46,30 @@ impl SovereignForgeTestState {
         self.register_token_handler(1, TOKEN_HANDLER_SC_ADDRESS, None);
         self.register_token_handler(2, TOKEN_HANDLER_SC_ADDRESS, None);
         self.register_token_handler(3, TOKEN_HANDLER_SC_ADDRESS, None);
+    }
+
+    pub fn deploy_template_scs(&mut self, templates: Option<Vec<ScArray>>) {
+        for sc in templates.unwrap_or_default().into_iter() {
+            match sc {
+                ScArray::ChainConfig => {
+                    self.common_setup
+                        .deploy_chain_config(OptionalValue::None, None);
+                }
+                ScArray::ESDTSafe => {
+                    self.common_setup.deploy_mvx_esdt_safe(OptionalValue::None);
+                }
+                ScArray::FeeMarket => {
+                    self.common_setup.deploy_fee_market(None, ESDT_SAFE_ADDRESS);
+                }
+                ScArray::HeaderVerifier => {
+                    self.common_setup.deploy_header_verifier(vec![]);
+                }
+                ScArray::ChainFactory => {
+                    self.common_setup.deploy_chain_factory();
+                }
+                _ => {}
+            }
+        }
     }
 
     pub fn register_token_handler(
