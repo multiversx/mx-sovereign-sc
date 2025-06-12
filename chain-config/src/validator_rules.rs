@@ -1,4 +1,7 @@
-use error_messages::{INVALID_MIN_MAX_VALIDATOR_NUMBERS, VALIDATOR_RANGE_EXCEEDED};
+use error_messages::{
+    INVALID_MIN_MAX_VALIDATOR_NUMBERS, VALIDATOR_ALREADY_REGISTERED, VALIDATOR_NOT_REGISTERED,
+    VALIDATOR_RANGE_EXCEEDED,
+};
 use structs::{configs::SovereignConfig, ValidatorInfo};
 
 multiversx_sc::imports!();
@@ -24,12 +27,14 @@ pub trait ValidatorRulesModule: setup_phase::SetupPhaseModule + events::EventsMo
     #[endpoint(register)]
     fn register(&self, new_validator: ValidatorInfo<Self::Api>) {
         self.require_setup_complete();
+        self.require_validator_not_registered(&new_validator.bls_key);
+
         let max_number_of_validators = self.sovereign_config().get().max_validators;
         let last_bls_key_id = self.last_bls_key_id().get();
         let current_bls_key_id = &last_bls_key_id + 1u32;
 
         require!(
-            current_bls_key_id < max_number_of_validators,
+            current_bls_key_id <= max_number_of_validators,
             VALIDATOR_RANGE_EXCEEDED
         );
 
@@ -50,6 +55,8 @@ pub trait ValidatorRulesModule: setup_phase::SetupPhaseModule + events::EventsMo
     #[endpoint(unregister)]
     fn unregister(&self, validator_info: ValidatorInfo<Self::Api>) {
         self.require_setup_complete();
+        self.require_validator_registered(&validator_info.bls_key);
+
         let min_number_of_validators = self.sovereign_config().get().min_validators;
         let last_bls_key_id = self.last_bls_key_id().get();
         let current_bls_key_id = &last_bls_key_id - 1u32;
@@ -70,6 +77,20 @@ pub trait ValidatorRulesModule: setup_phase::SetupPhaseModule + events::EventsMo
             &validator_info.bls_key,
             &validator_info.egld_stake,
             &validator_info.token_stake,
+        );
+    }
+
+    fn require_validator_not_registered(&self, bls_key: &ManagedBuffer) {
+        require!(
+            self.bls_key_to_id_mapper(bls_key).is_empty(),
+            VALIDATOR_NOT_REGISTERED
+        );
+    }
+
+    fn require_validator_registered(&self, bls_key: &ManagedBuffer) {
+        require!(
+            !self.bls_key_to_id_mapper(bls_key).is_empty(),
+            VALIDATOR_ALREADY_REGISTERED
         );
     }
 

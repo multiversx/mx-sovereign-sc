@@ -110,3 +110,5 @@ pub const TOKEN_NOT_ACCEPTED_AS_FEE: &str = "Token not accepted as fee";
 pub const TOO_MANY_TOKENS: &str = "Too many tokens";
 pub const ERROR_AT_ENCODING: &str = "Error at encoding hash";
 pub const VALIDATOR_RANGE_EXCEEDED: &str = "Validator range exceeded";
+pub const VALIDATOR_NOT_REGISTERED: &str = "Validator not registered";
+pub const VALIDATOR_ALREADY_REGISTERED: &str = "Validator already registered";
