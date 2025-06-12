@@ -2,7 +2,7 @@ use common_test_setup::{
     constants::{CHAIN_CONFIG_ADDRESS, OWNER_ADDRESS, OWNER_BALANCE},
     AccountSetup, BaseSetup,
 };
-use multiversx_sc::types::ManagedBuffer;
+use multiversx_sc::types::{BigUint, ManagedBuffer, ReturnsResult};
 use multiversx_sc_scenario::{api::StaticApi, ReturnsHandledOrError, ReturnsLogs, ScenarioTxRun};
 use proxies::chain_config_proxy::ChainConfigContractProxy;
 use structs::{configs::SovereignConfig, ValidatorInfo};
@@ -122,5 +122,17 @@ impl ChainConfigTestState {
 
         self.common_setup
             .assert_expected_log(logs, expected_custom_log);
+    }
+
+    pub fn is_bls_key_to_id_mapper_empty(&mut self, bls_key: &ManagedBuffer<StaticApi>) -> bool {
+        self.common_setup
+            .world
+            .query()
+            .to(CHAIN_CONFIG_ADDRESS)
+            .typed(ChainConfigContractProxy)
+            .bls_key_to_id_mapper(bls_key)
+            .returns(ReturnsResult)
+            .run()
+            == BigUint::default()
     }
 }

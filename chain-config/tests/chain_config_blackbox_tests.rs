@@ -2,7 +2,8 @@ use chain_config::validator_rules::ValidatorRulesModule;
 use chain_config_blackbox_setup::ChainConfigTestState;
 use common_test_setup::constants::{CHAIN_CONFIG_ADDRESS, OWNER_ADDRESS, USER_ADDRESS};
 use error_messages::{
-    INVALID_MIN_MAX_VALIDATOR_NUMBERS, SETUP_PHASE_NOT_COMPLETED, VALIDATOR_RANGE_EXCEEDED,
+    INVALID_MIN_MAX_VALIDATOR_NUMBERS, SETUP_PHASE_NOT_COMPLETED, VALIDATOR_ALREADY_REGISTERED,
+    VALIDATOR_NOT_REGISTERED, VALIDATOR_RANGE_EXCEEDED,
 };
 use multiversx_sc::{
     imports::OptionalValue,
@@ -330,14 +331,39 @@ fn test_register_validator_range_exceeded_too_many_validators() {
     };
 
     let new_validator = ValidatorInfo {
+        address: OWNER_ADDRESS.to_managed_address(),
+        bls_key: ManagedBuffer::from("validator2"),
+        egld_stake: BigUint::default(),
+        token_stake: EsdtTokenData::default(),
+    };
+
+    state.register(&new_validator_one, None, Some("register"));
+    assert!(!state.is_bls_key_to_id_mapper_empty(&new_validator_one.bls_key));
+
+    state.register(&new_validator, Some(VALIDATOR_RANGE_EXCEEDED), None);
+}
+
+#[test]
+fn test_register_validator_already_registered() {
+    let mut state = ChainConfigTestState::new();
+
+    state
+        .common_setup
+        .deploy_chain_config(OptionalValue::None, None);
+
+    state.common_setup.complete_chain_config_setup_phase(None);
+
+    let new_validator = ValidatorInfo {
         address: USER_ADDRESS.to_managed_address(),
         bls_key: ManagedBuffer::from("validator1"),
         egld_stake: BigUint::default(),
         token_stake: EsdtTokenData::default(),
     };
 
-    state.register(&new_validator_one, None, Some("register"));
-    state.register(&new_validator, Some(VALIDATOR_RANGE_EXCEEDED), None);
+    state.register(&new_validator, None, Some("register"));
+    assert!(!state.is_bls_key_to_id_mapper_empty(&new_validator.bls_key));
+
+    state.register(&new_validator, Some(VALIDATOR_ALREADY_REGISTERED), None);
 }
 
 #[test]
@@ -357,5 +383,105 @@ fn test_register_validator() {
         token_stake: EsdtTokenData::default(),
     };
 
-    state.register(&new_validator, None, None);
+    state.register(&new_validator, None, Some("register"));
+}
+
+#[test]
+fn test_unregister_validator_setup_phase_not_completed() {
+    let mut state = ChainConfigTestState::new();
+
+    state
+        .common_setup
+        .deploy_chain_config(OptionalValue::None, None);
+
+    let new_validator = ValidatorInfo {
+        address: USER_ADDRESS.to_managed_address(),
+        bls_key: ManagedBuffer::from("validator1"),
+        egld_stake: BigUint::default(),
+        token_stake: EsdtTokenData::default(),
+    };
+
+    state.register(&new_validator, Some(SETUP_PHASE_NOT_COMPLETED), None);
+}
+
+#[test]
+fn test_unregister_validator_range_exceeded_too_few_validators() {
+    let mut state = ChainConfigTestState::new();
+
+    let config = SovereignConfig {
+        min_validators: 1,
+        max_validators: 2,
+        ..SovereignConfig::default_config()
+    };
+
+    state
+        .common_setup
+        .deploy_chain_config(OptionalValue::Some(config), None);
+
+    state.common_setup.complete_chain_config_setup_phase(None);
+
+    let new_validator = ValidatorInfo {
+        address: USER_ADDRESS.to_managed_address(),
+        bls_key: ManagedBuffer::from("validator1"),
+        egld_stake: BigUint::default(),
+        token_stake: EsdtTokenData::default(),
+    };
+
+    state.register(&new_validator, None, Some("register"));
+    assert!(!state.is_bls_key_to_id_mapper_empty(&new_validator.bls_key));
+
+    state.unregister(&new_validator, Some(VALIDATOR_RANGE_EXCEEDED), None);
+}
+
+#[test]
+fn test_unregister_validator_not_registered() {
+    let mut state = ChainConfigTestState::new();
+
+    let config = SovereignConfig {
+        min_validators: 1,
+        max_validators: 2,
+        ..SovereignConfig::default_config()
+    };
+
+    state
+        .common_setup
+        .deploy_chain_config(OptionalValue::Some(config), None);
+
+    state.common_setup.complete_chain_config_setup_phase(None);
+
+    let new_validator = ValidatorInfo {
+        address: USER_ADDRESS.to_managed_address(),
+        bls_key: ManagedBuffer::from("validator1"),
+        egld_stake: BigUint::default(),
+        token_stake: EsdtTokenData::default(),
+    };
+
+    state.unregister(&new_validator, Some(VALIDATOR_NOT_REGISTERED), None);
+
+    assert!(state.is_bls_key_to_id_mapper_empty(&new_validator.bls_key));
+}
+
+#[test]
+fn test_unregister_validator() {
+    let mut state = ChainConfigTestState::new();
+
+    state
+        .common_setup
+        .deploy_chain_config(OptionalValue::None, None);
+
+    state.common_setup.complete_chain_config_setup_phase(None);
+
+    let new_validator = ValidatorInfo {
+        address: USER_ADDRESS.to_managed_address(),
+        bls_key: ManagedBuffer::from("validator1"),
+        egld_stake: BigUint::default(),
+        token_stake: EsdtTokenData::default(),
+    };
+
+    state.register(&new_validator, None, Some("register"));
+    assert!(!state.is_bls_key_to_id_mapper_empty(&new_validator.bls_key));
+
+    state.unregister(&new_validator, None, Some("unregister"));
+
+    assert!(state.is_bls_key_to_id_mapper_empty(&new_validator.bls_key));
 }
