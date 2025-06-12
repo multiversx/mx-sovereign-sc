@@ -295,6 +295,14 @@ fn test_update_config() {
         });
 }
 
+/// ### TEST
+/// C-CONFIG_REGISTER_VALIDATOR_FAIL
+///
+/// ### ACTION
+/// Call 'register()' during the setup phase
+///
+/// ### EXPECTED
+/// Error SETUP_PHASE_NOT_COMPLETED
 #[test]
 fn test_register_validator_setup_not_completed() {
     let mut state = ChainConfigTestState::new();
@@ -313,6 +321,14 @@ fn test_register_validator_setup_not_completed() {
     state.register(&new_validator, Some(SETUP_PHASE_NOT_COMPLETED), None);
 }
 
+/// ### TEST
+/// C-CONFIG_REGISTER_VALIDATOR_FAIL
+///
+/// ### ACTION
+/// Call 'register()' with too many validators
+///
+/// ### EXPECTED
+/// Error VALIDATOR_RANGE_EXCEEDED
 #[test]
 fn test_register_validator_range_exceeded_too_many_validators() {
     let mut state = ChainConfigTestState::new();
@@ -343,6 +359,14 @@ fn test_register_validator_range_exceeded_too_many_validators() {
     state.register(&new_validator, Some(VALIDATOR_RANGE_EXCEEDED), None);
 }
 
+/// ### TEST
+/// C-CONFIG_REGISTER_VALIDATOR_FAIL
+///
+/// ### ACTION
+/// Call 'register()' with already registered validator
+///
+/// ### EXPECTED
+/// Error VALIDATOR_ALREADY_REGISTERED
 #[test]
 fn test_register_validator_already_registered() {
     let mut state = ChainConfigTestState::new();
@@ -366,6 +390,14 @@ fn test_register_validator_already_registered() {
     state.register(&new_validator, Some(VALIDATOR_ALREADY_REGISTERED), None);
 }
 
+/// ### TEST
+/// C-CONFIG_REGISTER_VALIDATOR_OK
+///
+/// ### ACTION
+/// Call 'register()' with valid validator
+///
+/// ### EXPECTED
+/// Validator is registered successfully
 #[test]
 fn test_register_validator() {
     let mut state = ChainConfigTestState::new();
@@ -386,6 +418,14 @@ fn test_register_validator() {
     state.register(&new_validator, None, Some("register"));
 }
 
+/// ### TEST
+/// C-CONFIG_UNREGISTER_FAIL
+///
+/// ### ACTION
+/// Call 'unregister()' during setup phase
+///
+/// ### EXPECTED
+/// Error SETUP_PHASE_NOT_COMPLETED
 #[test]
 fn test_unregister_validator_setup_phase_not_completed() {
     let mut state = ChainConfigTestState::new();
@@ -404,6 +444,14 @@ fn test_unregister_validator_setup_phase_not_completed() {
     state.register(&new_validator, Some(SETUP_PHASE_NOT_COMPLETED), None);
 }
 
+/// ### TEST
+/// C-CONFIG_UNREGISTER_FAIL
+///
+/// ### ACTION
+/// Call 'unregister()' with too few validators
+///
+/// ### EXPECTED
+/// Error VALIDATOR_RANGE_EXCEEDED
 #[test]
 fn test_unregister_validator_range_exceeded_too_few_validators() {
     let mut state = ChainConfigTestState::new();
@@ -433,6 +481,14 @@ fn test_unregister_validator_range_exceeded_too_few_validators() {
     state.unregister(&new_validator, Some(VALIDATOR_RANGE_EXCEEDED), None);
 }
 
+/// ### TEST
+/// C-CONFIG_UNREGISTER_FAIL
+///
+/// ### ACTION
+/// Call 'unregister()' with not registered validator
+///
+/// ### EXPECTED
+/// Error VALIDATOR_NOT_REGISTERED
 #[test]
 fn test_unregister_validator_not_registered() {
     let mut state = ChainConfigTestState::new();
@@ -461,6 +517,14 @@ fn test_unregister_validator_not_registered() {
     assert!(state.is_bls_key_to_id_mapper_empty(&new_validator.bls_key));
 }
 
+/// ### TEST
+/// C-CONFIG_UNREGISTER_OK
+///
+/// ### ACTION
+/// Call 'unregister()' with registered validator
+///
+/// ### EXPECTED
+/// Validator is unregistered successfully
 #[test]
 fn test_unregister_validator() {
     let mut state = ChainConfigTestState::new();
