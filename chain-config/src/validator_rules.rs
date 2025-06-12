@@ -62,7 +62,7 @@ pub trait ValidatorRulesModule: setup_phase::SetupPhaseModule + events::EventsMo
         let current_bls_key_id = &last_bls_key_id - 1u32;
 
         require!(
-            current_bls_key_id > min_number_of_validators,
+            current_bls_key_id >= min_number_of_validators,
             VALIDATOR_RANGE_EXCEEDED
         );
 
@@ -83,14 +83,14 @@ pub trait ValidatorRulesModule: setup_phase::SetupPhaseModule + events::EventsMo
     fn require_validator_not_registered(&self, bls_key: &ManagedBuffer) {
         require!(
             self.bls_key_to_id_mapper(bls_key).is_empty(),
-            VALIDATOR_NOT_REGISTERED
+            VALIDATOR_ALREADY_REGISTERED
         );
     }
 
     fn require_validator_registered(&self, bls_key: &ManagedBuffer) {
         require!(
             !self.bls_key_to_id_mapper(bls_key).is_empty(),
-            VALIDATOR_ALREADY_REGISTERED
+            VALIDATOR_NOT_REGISTERED
         );
     }
 
