@@ -109,3 +109,4 @@ pub const TOKEN_IS_FROM_SOVEREIGN: &str = "Token is from a Sovereign Chain, it c
 pub const TOKEN_NOT_ACCEPTED_AS_FEE: &str = "Token not accepted as fee";
 pub const TOO_MANY_TOKENS: &str = "Too many tokens";
 pub const ERROR_AT_ENCODING: &str = "Error at encoding hash";
+pub const VALIDATOR_RANGE_EXCEEDED: &str = "Validator range exceeded";

@@ -36,4 +36,23 @@ pub trait EventsModule {
         #[indexed] hash: &ManagedBuffer,
         error_message: &ManagedBuffer,
     );
+
+    // address, blsKeys, eGLDStake, tokenStake
+    #[event("register")]
+    fn register_event(
+        &self,
+        #[indexed] address: &ManagedAddress,
+        #[indexed] bls_key: &ManagedBuffer,
+        #[indexed] egld_stake: &BigUint,
+        #[indexed] token_stake: &EsdtTokenData<Self::Api>,
+    );
+
+    #[event("unregister")]
+    fn unregister_event(
+        &self,
+        #[indexed] address: &ManagedAddress,
+        #[indexed] bls_key: &ManagedBuffer,
+        #[indexed] egld_stake: &BigUint,
+        #[indexed] token_stake: &EsdtTokenData<Self::Api>,
+    );
 }
