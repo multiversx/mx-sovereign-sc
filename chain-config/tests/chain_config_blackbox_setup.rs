@@ -124,7 +124,10 @@ impl ChainConfigTestState {
             .assert_expected_log(logs, expected_custom_log);
     }
 
-    pub fn is_bls_key_to_id_mapper_empty(&mut self, bls_key: &ManagedBuffer<StaticApi>) -> bool {
+    pub fn is_bls_key_to_id_mapper_empty(
+        &mut self,
+        bls_key: &ManagedBuffer<StaticApi>,
+    ) -> BigUint<StaticApi> {
         self.common_setup
             .world
             .query()
@@ -133,6 +136,27 @@ impl ChainConfigTestState {
             .bls_key_to_id_mapper(bls_key)
             .returns(ReturnsResult)
             .run()
-            == BigUint::default()
+    }
+
+    pub fn get_bls_key_by_id(&mut self, id: &BigUint<StaticApi>) -> ManagedBuffer<StaticApi> {
+        let (_, bls_key) = self
+            .common_setup
+            .world
+            .query()
+            .to(CHAIN_CONFIG_ADDRESS)
+            .typed(ChainConfigContractProxy)
+            .bls_keys_map()
+            .returns(ReturnsResult)
+            .run()
+            .into_iter()
+            .find(|v| {
+                let (returned_id, _) = v.into_tuple();
+
+                returned_id.eq(id)
+            })
+            .unwrap()
+            .into_tuple();
+
+        bls_key
     }
 }

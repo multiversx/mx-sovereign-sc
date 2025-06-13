@@ -346,7 +346,7 @@ fn test_register_validator_range_exceeded_too_many_validators() {
         token_stake: EsdtTokenData::default(),
     };
 
-    let new_validator = ValidatorInfo {
+    let new_validator_two = ValidatorInfo {
         address: OWNER_ADDRESS.to_managed_address(),
         bls_key: ManagedBuffer::from("validator2"),
         egld_stake: BigUint::default(),
@@ -354,9 +354,12 @@ fn test_register_validator_range_exceeded_too_many_validators() {
     };
 
     state.register(&new_validator_one, None, Some("register"));
-    assert!(!state.is_bls_key_to_id_mapper_empty(&new_validator_one.bls_key));
+    let id_one = state.is_bls_key_to_id_mapper_empty(&new_validator_one.bls_key);
+    assert!(state.get_bls_key_by_id(&id_one) == new_validator_one.bls_key);
 
-    state.register(&new_validator, Some(VALIDATOR_RANGE_EXCEEDED), None);
+    state.register(&new_validator_two, Some(VALIDATOR_RANGE_EXCEEDED), None);
+    let id_two = state.is_bls_key_to_id_mapper_empty(&new_validator_one.bls_key);
+    assert!(state.get_bls_key_by_id(&id_two) == new_validator_two.bls_key);
 }
 
 /// ### TEST

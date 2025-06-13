@@ -39,8 +39,8 @@ pub trait ValidatorRulesModule: setup_phase::SetupPhaseModule + events::EventsMo
         );
 
         self.last_bls_key_id().set(current_bls_key_id.clone());
-        self.id_to_bls_key_mapper(&current_bls_key_id)
-            .set(new_validator.bls_key.clone());
+        self.bls_keys_map()
+            .insert(current_bls_key_id.clone(), new_validator.bls_key.clone());
         self.bls_key_to_id_mapper(&new_validator.bls_key)
             .set(current_bls_key_id);
 
@@ -66,11 +66,10 @@ pub trait ValidatorRulesModule: setup_phase::SetupPhaseModule + events::EventsMo
             VALIDATOR_RANGE_EXCEEDED
         );
 
-        self.last_bls_key_id().set(current_bls_key_id.clone());
-        self.id_to_bls_key_mapper(&current_bls_key_id)
-            .set(validator_info.bls_key.clone());
+        self.bls_keys_map().remove(&current_bls_key_id);
         self.bls_key_to_id_mapper(&validator_info.bls_key)
-            .set(current_bls_key_id);
+            .set(current_bls_key_id.clone());
+        self.last_bls_key_id().set(current_bls_key_id);
 
         self.unregister_event(
             &validator_info.address,
@@ -105,6 +104,10 @@ pub trait ValidatorRulesModule: setup_phase::SetupPhaseModule + events::EventsMo
     #[view(blsKeyToId)]
     #[storage_mapper("blsKeyToId")]
     fn bls_key_to_id_mapper(&self, id: &ManagedBuffer) -> SingleValueMapper<BigUint<Self::Api>>;
+
+    #[view(blsKeysMap)]
+    #[storage_mapper("blsKeysMap")]
+    fn bls_keys_map(&self) -> MapMapper<BigUint<Self::Api>, ManagedBuffer>;
 
     #[storage_mapper("lastBlsKeyId")]
     fn last_bls_key_id(&self) -> SingleValueMapper<BigUint<Self::Api>>;

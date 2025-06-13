@@ -6,9 +6,9 @@
 
 // Init:                                 1
 // Upgrade:                              1
-// Endpoints:                            9
+// Endpoints:                           10
 // Async Callback (empty):               1
-// Total number of exported functions:  12
+// Total number of exported functions:  13
 
 #![no_std]
 
@@ -28,6 +28,7 @@ multiversx_sc_wasm_adapter::endpoints! {
         sovereignConfig => sovereign_config
         idToBlsKey => id_to_bls_key_mapper
         blsKeyToId => bls_key_to_id_mapper
+        blsKeysMap => bls_keys_map
         wasPreviouslySlashed => was_previously_slashed
     )
 }

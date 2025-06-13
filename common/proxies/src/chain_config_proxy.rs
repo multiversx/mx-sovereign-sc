@@ -184,6 +184,15 @@ where
             .original_result()
     }
 
+    pub fn bls_keys_map(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, MultiValueEncoded<Env::Api, MultiValue2<BigUint<Env::Api>, ManagedBuffer<Env::Api>>>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("blsKeysMap")
+            .original_result()
+    }
+
     pub fn was_previously_slashed<
         Arg0: ProxyArg<ManagedAddress<Env::Api>>,
     >(
