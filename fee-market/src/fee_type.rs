@@ -18,7 +18,6 @@ pub trait FeeTypeModule:
         self.fee_enabled().set(false);
     }
 
-    #[only_owner]
     #[endpoint(removeFee)]
     fn remove_fee(&self, hash_of_hashes: ManagedBuffer, base_token: TokenIdentifier) {
         self.require_setup_complete();
@@ -52,7 +51,6 @@ pub trait FeeTypeModule:
         }
     }
 
-    #[only_owner]
     #[endpoint(setFee)]
     fn set_fee(&self, hash_of_hashes: ManagedBuffer, fee_struct: FeeStruct<Self::Api>) {
         self.require_setup_complete();
