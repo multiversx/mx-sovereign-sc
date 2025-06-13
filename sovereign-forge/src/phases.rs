@@ -122,7 +122,6 @@ pub trait PhasesModule:
             .insert(header_verifier_contract_info);
     }
 
-    #[only_owner]
     #[endpoint(completeSetupPhase)]
     fn complete_setup_phase(&self) {
         let caller = self.blockchain().get_caller();
