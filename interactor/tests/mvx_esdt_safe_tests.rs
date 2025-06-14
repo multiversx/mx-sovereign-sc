@@ -4,7 +4,7 @@ use common_test_setup::constants::{
     CROWD_TOKEN_ID, FIRST_TEST_TOKEN, ISSUE_COST, MVX_TO_SOV_TOKEN_STORAGE_KEY,
     NATIVE_TOKEN_STORAGE_KEY, ONE_HUNDRED_TOKENS, ONE_THOUSAND_TOKENS,
     OPERATION_HASH_STATUS_STORAGE_KEY, SOV_TOKEN, SOV_TO_MVX_TOKEN_STORAGE_KEY, TEN_TOKENS,
-    TOKEN_TICKER,
+    TOKEN_TICKER, WRONG_ENDPOINT_NAME,
 };
 use common_test_setup::RegisterTokenArgs;
 use cross_chain::MAX_GAS_PER_TRANSACTION;
@@ -262,7 +262,7 @@ async fn test_deposit_max_bridged_amount_exceeded() {
     let payments_vec = PaymentsVec::from(vec![esdt_token_payment]);
 
     chain_interactor
-        .deposit(
+        .deposit_in_mvx_esdt_safe(
             chain_interactor.user_address.clone(),
             OptionalValue::None,
             payments_vec,
@@ -296,7 +296,7 @@ async fn test_deposit_nothing_to_transfer() {
         .await;
 
     chain_interactor
-        .deposit(
+        .deposit_in_mvx_esdt_safe(
             chain_interactor.user_address.clone(),
             OptionalValue::None,
             ManagedVec::new(),
@@ -344,7 +344,7 @@ async fn test_deposit_too_many_tokens_no_fee() {
     let payments_vec = PaymentsVec::from(vec![esdt_token_payment; 11]);
 
     chain_interactor
-        .deposit(
+        .deposit_in_mvx_esdt_safe(
             chain_interactor.user_address.clone(),
             OptionalValue::None,
             payments_vec,
@@ -399,7 +399,7 @@ async fn test_deposit_no_transfer_data() {
     let payments_vec = PaymentsVec::from(vec![esdt_token_payment_one, esdt_token_payment_two]);
 
     chain_interactor
-        .deposit(
+        .deposit_in_mvx_esdt_safe(
             chain_interactor.user_address.clone(),
             OptionalValue::None,
             payments_vec,
@@ -502,7 +502,7 @@ async fn test_deposit_gas_limit_too_high_no_fee() {
     let transfer_data = MultiValue3::from((gas_limit, function, args));
 
     chain_interactor
-        .deposit(
+        .deposit_in_mvx_esdt_safe(
             chain_interactor.user_address.clone(),
             OptionalValue::Some(transfer_data),
             payments_vec,
@@ -573,7 +573,7 @@ async fn test_deposit_endpoint_banned_no_fee() {
     let transfer_data = MultiValue3::from((gas_limit, function, args));
 
     chain_interactor
-        .deposit(
+        .deposit_in_mvx_esdt_safe(
             chain_interactor.user_address.clone(),
             OptionalValue::Some(transfer_data),
             payments_vec,
@@ -665,7 +665,7 @@ async fn test_deposit_fee_enabled() {
     let transfer_data = MultiValue3::from((gas_limit, function, args));
 
     chain_interactor
-        .deposit(
+        .deposit_in_mvx_esdt_safe(
             chain_interactor.user_address.clone(),
             OptionalValue::Some(transfer_data),
             payments_vec.clone(),
@@ -780,7 +780,7 @@ async fn test_deposit_transfer_data_only_with_fee_nothing_to_transfer() {
     let transfer_data = MultiValue3::from((gas_limit, function, args));
 
     chain_interactor
-        .deposit(
+        .deposit_in_mvx_esdt_safe(
             chain_interactor.user_address.clone(),
             OptionalValue::Some(transfer_data),
             ManagedVec::new(),
@@ -837,7 +837,7 @@ async fn test_deposit_only_transfer_data_no_fee() {
     let transfer_data = MultiValue3::from((gas_limit, function, args));
 
     chain_interactor
-        .deposit(
+        .deposit_in_mvx_esdt_safe(
             chain_interactor.user_address.clone(),
             OptionalValue::Some(transfer_data),
             ManagedVec::new(),
@@ -928,7 +928,7 @@ async fn test_deposit_payment_does_not_cover_fee() {
     let transfer_data = MultiValue3::from((gas_limit, function, args));
 
     chain_interactor
-        .deposit(
+        .deposit_in_mvx_esdt_safe(
             chain_interactor.user_address.clone(),
             OptionalValue::Some(transfer_data),
             payments_vec,
@@ -1016,7 +1016,7 @@ async fn test_deposit_refund() {
     let transfer_data = MultiValue3::from((gas_limit, function, args));
 
     chain_interactor
-        .deposit(
+        .deposit_in_mvx_esdt_safe(
             chain_interactor.user_address.clone(),
             OptionalValue::Some(transfer_data),
             payments_vec.clone(),
@@ -1401,7 +1401,7 @@ async fn test_execute_operation_no_esdt_safe_registered() {
     let hash_of_hashes = chain_interactor.get_operation_hash(&operation);
 
     chain_interactor
-        .execute_operations(
+        .execute_operations_in_mvx_esdt_safe(
             hash_of_hashes,
             operation,
             Some(SETUP_PHASE_NOT_COMPLETED),
@@ -1526,7 +1526,7 @@ async fn test_execute_operation_with_native_token_success() {
     let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&operation_hash.to_vec()));
 
     chain_interactor
-        .deposit(
+        .deposit_in_mvx_esdt_safe(
             chain_interactor
                 .state
                 .current_mvx_esdt_safe_contract_address()
@@ -1560,7 +1560,12 @@ async fn test_execute_operation_with_native_token_success() {
         .await;
 
     chain_interactor
-        .execute_operations(hash_of_hashes, operation, None, Some("executedBridgeOp"))
+        .execute_operations_in_mvx_esdt_safe(
+            hash_of_hashes,
+            operation,
+            None,
+            Some("executedBridgeOp"),
+        )
         .await;
 
     chain_interactor
@@ -1659,7 +1664,7 @@ async fn test_execute_operation_success_no_fee() {
     let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&operation_hash.to_vec()));
 
     chain_interactor
-        .deposit(
+        .deposit_in_mvx_esdt_safe(
             chain_interactor
                 .state
                 .current_mvx_esdt_safe_contract_address()
@@ -1693,7 +1698,12 @@ async fn test_execute_operation_success_no_fee() {
         .await;
 
     chain_interactor
-        .execute_operations(hash_of_hashes, operation, None, Some("executedBridgeOp"))
+        .execute_operations_in_mvx_esdt_safe(
+            hash_of_hashes,
+            operation,
+            None,
+            Some("executedBridgeOp"),
+        )
         .await;
 
     chain_interactor
@@ -1799,7 +1809,12 @@ async fn test_execute_operation_only_transfer_data_no_fee() {
         .await;
 
     chain_interactor
-        .execute_operations(hash_of_hashes, operation, None, Some("executedBridgeOp"))
+        .execute_operations_in_mvx_esdt_safe(
+            hash_of_hashes,
+            operation,
+            None,
+            Some("executedBridgeOp"),
+        )
         .await;
 
     chain_interactor
@@ -1835,7 +1850,7 @@ async fn test_execute_operation_no_payments_failed_event() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
 
     let gas_limit = 90_000_000u64;
-    let function = ManagedBuffer::<StaticApi>::from("WRONG-ENDPOINT-NAME");
+    let function = ManagedBuffer::<StaticApi>::from(WRONG_ENDPOINT_NAME);
     let args =
         ManagedVec::<StaticApi, ManagedBuffer<StaticApi>>::from(vec![ManagedBuffer::from("1")]);
 
@@ -1894,7 +1909,7 @@ async fn test_execute_operation_no_payments_failed_event() {
         .await;
 
     chain_interactor
-        .execute_operations(
+        .execute_operations_in_mvx_esdt_safe(
             hash_of_hashes,
             operation,
             Some(function.to_string().as_str()),

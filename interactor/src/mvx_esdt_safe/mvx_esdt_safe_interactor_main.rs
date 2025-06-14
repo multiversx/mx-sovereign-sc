@@ -3,12 +3,10 @@ use common_interactor::common_sovereign_interactor::{
 };
 use multiversx_sc_snippets::imports::*;
 use proxies::mvx_esdt_safe_proxy::MvxEsdtSafeProxy;
-use structs::aliases::{OptionalValueTransferDataTuple, PaymentsVec};
 
 use structs::configs::{EsdtSafeConfig, SovereignConfig};
 use structs::fee::FeeStruct;
 use structs::forge::ScArray;
-use structs::operation::Operation;
 
 use common_interactor::interactor_config::Config;
 use common_interactor::interactor_state::State;
@@ -277,58 +275,6 @@ impl MvxEsdtSafeInteract {
             .await;
 
         println!("Result: {response:?}");
-    }
-
-    pub async fn deposit(
-        &mut self,
-        to: Address,
-        opt_transfer_data: OptionalValueTransferDataTuple<StaticApi>,
-        payments: PaymentsVec<StaticApi>,
-        expected_error_message: Option<&str>,
-        expected_log: Option<&str>,
-    ) {
-        let (response, logs) = self
-            .interactor
-            .tx()
-            .from(&self.owner_address)
-            .to(self.state.current_mvx_esdt_safe_contract_address())
-            .gas(90_000_000u64)
-            .typed(MvxEsdtSafeProxy)
-            .deposit(to, opt_transfer_data)
-            .payment(payments)
-            .returns(ReturnsHandledOrError::new())
-            .returns(ReturnsLogs)
-            .run()
-            .await;
-
-        self.assert_expected_error_message(response, expected_error_message);
-
-        self.assert_expected_log(logs, expected_log);
-    }
-
-    pub async fn execute_operations(
-        &mut self,
-        hash_of_hashes: ManagedBuffer<StaticApi>,
-        operation: Operation<StaticApi>,
-        expected_error_message: Option<&str>,
-        expected_log: Option<&str>,
-    ) {
-        let (response, logs) = self
-            .interactor
-            .tx()
-            .from(&self.owner_address)
-            .to(self.state.current_mvx_esdt_safe_contract_address())
-            .gas(120_000_000u64)
-            .typed(MvxEsdtSafeProxy)
-            .execute_operations(hash_of_hashes, operation)
-            .returns(ReturnsHandledOrError::new())
-            .returns(ReturnsLogs)
-            .run()
-            .await;
-
-        self.assert_expected_error_message(response, expected_error_message);
-
-        self.assert_expected_log(logs, expected_log);
     }
 
     pub async fn register_token(

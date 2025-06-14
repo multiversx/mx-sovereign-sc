@@ -3,6 +3,7 @@ use error_messages::{
 };
 use multiversx_sc::imports::*;
 
+// NOTE: Maybe this vector should contain only the token identifier, without the '-c76f1f' part
 pub const TRUSTED_TOKEN_IDS: [&str; 1] = ["USDC-c76f1f"];
 
 #[multiversx_sc::module]

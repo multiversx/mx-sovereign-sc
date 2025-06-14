@@ -20,7 +20,10 @@ use multiversx_sc::{
 };
 use multiversx_sc_snippets::{
     hex,
-    imports::{bech32, Bech32Address, ReturnsNewTokenIdentifier, StaticApi},
+    imports::{
+        bech32, Bech32Address, ReturnsHandledOrError, ReturnsLogs, ReturnsNewTokenIdentifier,
+        StaticApi,
+    },
     multiversx_sc_scenario::{
         multiversx_chain_vm::crypto_functions::sha256,
         scenario_model::{Log, TxResponseStatus},
@@ -35,6 +38,7 @@ use proxies::{
     token_handler_proxy,
 };
 use structs::{
+    aliases::{OptionalValueTransferDataTuple, PaymentsVec},
     configs::{EsdtSafeConfig, SovereignConfig},
     fee::FeeStruct,
     forge::{ContractInfo, ScArray},
@@ -523,8 +527,7 @@ pub trait CommonInteractorTrait {
         let owner_address = self.owner_address().clone();
         let sovereign_forge_address = self.state().current_sovereign_forge_sc_address().clone();
 
-        let response = self
-            .interactor()
+        self.interactor()
             .tx()
             .from(owner_address)
             .to(sovereign_forge_address)
@@ -534,8 +537,6 @@ pub trait CommonInteractorTrait {
             .returns(ReturnsResultUnmanaged)
             .run()
             .await;
-
-        println!("Result: {response:?}");
     }
 
     async fn change_ownership_to_header_verifier(
@@ -600,6 +601,68 @@ pub trait CommonInteractorTrait {
             .returns(ReturnsResultUnmanaged)
             .run()
             .await;
+    }
+
+    async fn deposit_in_mvx_esdt_safe(
+        &mut self,
+        to: Address,
+        opt_transfer_data: OptionalValueTransferDataTuple<StaticApi>,
+        payments: PaymentsVec<StaticApi>,
+        expected_error_message: Option<&str>,
+        expected_log: Option<&str>,
+    ) {
+        let wallet_address = self.owner_address().clone();
+        let current_mvx_esdt_safe_address = self
+            .state()
+            .current_mvx_esdt_safe_contract_address()
+            .clone();
+        let (response, logs) = self
+            .interactor()
+            .tx()
+            .from(wallet_address)
+            .to(current_mvx_esdt_safe_address)
+            .gas(90_000_000u64)
+            .typed(MvxEsdtSafeProxy)
+            .deposit(to, opt_transfer_data)
+            .payment(payments)
+            .returns(ReturnsHandledOrError::new())
+            .returns(ReturnsLogs)
+            .run()
+            .await;
+
+        self.assert_expected_error_message(response, expected_error_message);
+
+        self.assert_expected_log(logs, expected_log);
+    }
+
+    async fn execute_operations_in_mvx_esdt_safe(
+        &mut self,
+        hash_of_hashes: ManagedBuffer<StaticApi>,
+        operation: Operation<StaticApi>,
+        expected_error_message: Option<&str>,
+        expected_log: Option<&str>,
+    ) {
+        let owner_address = self.owner_address().clone();
+        let current_mvx_esdt_safe_address = self
+            .state()
+            .current_mvx_esdt_safe_contract_address()
+            .clone();
+        let (response, logs) = self
+            .interactor()
+            .tx()
+            .from(owner_address)
+            .to(current_mvx_esdt_safe_address)
+            .gas(120_000_000u64)
+            .typed(MvxEsdtSafeProxy)
+            .execute_operations(hash_of_hashes, operation)
+            .returns(ReturnsHandledOrError::new())
+            .returns(ReturnsLogs)
+            .run()
+            .await;
+
+        self.assert_expected_error_message(response, expected_error_message);
+
+        self.assert_expected_log(logs, expected_log);
     }
 
     async fn whitelist_enshrine_esdt(&mut self, enshrine_esdt_safe_address: Bech32Address) {
