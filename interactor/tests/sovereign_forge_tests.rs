@@ -2,8 +2,8 @@ use common_interactor::{
     common_sovereign_interactor::CommonInteractorTrait, interactor_config::Config,
 };
 use common_test_setup::constants::{
-    CHAIN_ID, DEPLOY_COST, ONE_HUNDRED_TOKENS, ONE_THOUSAND_TOKENS,
-    OPERATION_HASH_STATUS_STORAGE_KEY, TEN_TOKENS, WRONG_ENDPOINT_NAME,
+    CHAIN_ID, DEPLOY_COST, ESDT_SAFE_CONFIG_STORAGE_KEY, ONE_HUNDRED_TOKENS, ONE_THOUSAND_TOKENS,
+    OPERATION_HASH_STATUS_STORAGE_KEY, TEN_TOKENS, TOKEN_FEE_STORAGE_KEY, WRONG_ENDPOINT_NAME,
 };
 use header_verifier::OperationHashStatus;
 use multiversx_sc::{
@@ -19,10 +19,12 @@ use multiversx_sc_snippets::{
     multiversx_sc_scenario::multiversx_chain_vm::crypto_functions::sha256,
 };
 use rust_interact::sovereign_forge::sovereign_forge_interactor_main::SovereignForgeInteract;
+use serial_test::serial;
 use structs::{
     aliases::PaymentsVec,
+    configs::EsdtSafeConfig,
     fee::{FeeStruct, FeeType},
-    forge::ScArray,
+    generate_hash::GenerateHash,
     operation::{Operation, OperationData, OperationEsdtPayment, TransferData},
 };
 
@@ -35,84 +37,18 @@ use structs::{
 /// ### EXPECTED
 /// Setup phase is complete
 #[tokio::test]
+#[serial]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn test_deploy_sovereign_forge_cs() {
     let mut chain_interactor = SovereignForgeInteract::new(Config::chain_simulator_config()).await;
-    let deploy_cost = BigUint::from(DEPLOY_COST);
-
-    chain_interactor.deploy_sovereign_forge(&deploy_cost).await;
-    let sovereign_forge_address = chain_interactor
-        .state
-        .current_sovereign_forge_sc_address()
-        .clone();
-
     chain_interactor
-        .deploy_chain_config(OptionalValue::None)
-        .await;
-    let chain_config_address = chain_interactor
-        .state
-        .current_chain_config_sc_address()
-        .clone();
-    let contracts_array =
-        chain_interactor.get_contract_info_struct_for_sc_type(vec![ScArray::ChainConfig]);
-
-    chain_interactor
-        .deploy_mvx_esdt_safe(OptionalValue::None)
-        .await;
-    let mvx_esdt_safe_address = chain_interactor
-        .state
-        .current_mvx_esdt_safe_contract_address()
-        .clone();
-
-    chain_interactor
-        .deploy_fee_market(mvx_esdt_safe_address.clone(), None)
-        .await;
-    let fee_market_address = chain_interactor.state.current_fee_market_address().clone();
-
-    chain_interactor
-        .deploy_header_verifier(contracts_array)
-        .await;
-    let header_verifier_address = chain_interactor
-        .state
-        .current_header_verifier_address()
-        .clone();
-
-    chain_interactor
-        .deploy_chain_factory(
-            sovereign_forge_address,
-            chain_config_address,
-            header_verifier_address,
-            mvx_esdt_safe_address,
-            fee_market_address,
+        .deploy_and_complete_setup_phase(
+            CHAIN_ID,
+            BigUint::from(DEPLOY_COST),
+            OptionalValue::None,
+            OptionalValue::None,
+            None,
         )
-        .await;
-
-    let chain_factory_address = chain_interactor
-        .state
-        .current_chain_factory_sc_address()
-        .clone();
-
-    chain_interactor
-        .deploy_token_handler(chain_factory_address.to_address())
-        .await;
-
-    chain_interactor.register_token_handler(1).await;
-    chain_interactor.register_token_handler(2).await;
-    chain_interactor.register_token_handler(3).await;
-    chain_interactor.register_chain_factory(1).await;
-    chain_interactor.register_chain_factory(2).await;
-    chain_interactor.register_chain_factory(3).await;
-
-    chain_interactor
-        .deploy_phase_one(deploy_cost, Some(CHAIN_ID.into()), OptionalValue::None)
-        .await;
-    chain_interactor.deploy_phase_two(OptionalValue::None).await;
-    chain_interactor.deploy_phase_three(None).await;
-    chain_interactor.deploy_phase_four().await;
-
-    chain_interactor.complete_setup_phase().await;
-    chain_interactor
-        .check_setup_phase_status(CHAIN_ID, true)
         .await;
 }
 
@@ -137,7 +73,6 @@ async fn test_complete_deposit_flow() {
             deploy_cost,
             OptionalValue::None,
             OptionalValue::None,
-            vec![ScArray::ChainConfig, ScArray::ESDTSafe],
             None,
         )
         .await;
@@ -178,7 +113,7 @@ async fn test_complete_deposit_flow() {
     ];
     chain_interactor
         .check_address_balance(
-            &Bech32Address::from(chain_interactor.owner_address().clone()),
+            &Bech32Address::from(chain_interactor.user_address()),
             expected_tokens_wallet,
         )
         .await;
@@ -202,6 +137,8 @@ async fn test_complete_deposit_flow() {
             expected_tokens_contract,
         )
         .await;
+    chain_interactor.check_fee_market_balance_is_empty().await;
+    chain_interactor.check_testing_sc_balance_is_empty().await;
 }
 
 /// ### TEST
@@ -213,10 +150,11 @@ async fn test_complete_deposit_flow() {
 /// ### EXPECTED
 /// The operation is executed in the testing smart contract
 #[tokio::test]
+#[serial]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn test_complete_flow_execute_operation_with_transfer_data_success_no_fee() {
     let mut chain_interactor = SovereignForgeInteract::new(Config::chain_simulator_config()).await;
-    let owner_address = chain_interactor.owner_address().clone();
+    let user_address = chain_interactor.user_address().clone();
     let token_data = EsdtTokenData {
         amount: BigUint::from(TEN_TOKENS),
         ..Default::default()
@@ -240,7 +178,7 @@ async fn test_complete_flow_execute_operation_with_transfer_data_success_no_fee(
 
     let operation_data = OperationData::new(
         1,
-        ManagedAddress::from_address(&chain_interactor.owner_address),
+        ManagedAddress::from_address(&chain_interactor.user_address),
         Some(transfer_data),
     );
 
@@ -250,7 +188,6 @@ async fn test_complete_flow_execute_operation_with_transfer_data_success_no_fee(
             DEPLOY_COST.into(),
             OptionalValue::None,
             OptionalValue::None,
-            vec![ScArray::ChainConfig, ScArray::ESDTSafe],
             None,
         )
         .await;
@@ -334,13 +271,24 @@ async fn test_complete_flow_execute_operation_with_transfer_data_success_no_fee(
         chain_interactor.thousand_tokens(chain_interactor.state.get_fee_token_id_string()),
     ];
     chain_interactor
-        .check_address_balance(&Bech32Address::from(owner_address), expected_tokens_wallet)
+        .check_address_balance(&Bech32Address::from(user_address), expected_tokens_wallet)
         .await;
 
     chain_interactor
         .check_mvx_esdt_safe_balance_is_empty()
         .await;
     chain_interactor.check_fee_market_balance_is_empty().await;
+
+    let expected_testing_sc_balance = vec![(
+        chain_interactor.state.get_first_token_id().to_string(),
+        BigUint::from(TEN_TOKENS),
+    )];
+    chain_interactor
+        .check_address_balance(
+            &chain_interactor.state.current_testing_sc_address().clone(),
+            expected_testing_sc_balance,
+        )
+        .await;
 }
 
 /// ### TEST
@@ -353,10 +301,11 @@ async fn test_complete_flow_execute_operation_with_transfer_data_success_no_fee(
 /// The operation is executed in the testing smart contract
 /// The fee is deducted
 #[tokio::test]
+#[serial]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn test_complete_flow_execute_operation_success_with_fee() {
     let mut chain_interactor = SovereignForgeInteract::new(Config::chain_simulator_config()).await;
-    let owner_address = chain_interactor.owner_address().clone();
+    let user_address = chain_interactor.user_address().clone();
     let token_data = EsdtTokenData {
         amount: BigUint::from(TEN_TOKENS),
         ..Default::default()
@@ -382,7 +331,7 @@ async fn test_complete_flow_execute_operation_success_with_fee() {
 
     let operation_data = OperationData::new(
         1,
-        ManagedAddress::from_address(&chain_interactor.owner_address),
+        ManagedAddress::from_address(&chain_interactor.user_address),
         Some(transfer_data),
     );
 
@@ -410,7 +359,6 @@ async fn test_complete_flow_execute_operation_success_with_fee() {
             DEPLOY_COST.into(),
             OptionalValue::None,
             OptionalValue::None,
-            vec![ScArray::ChainConfig, ScArray::ESDTSafe, ScArray::FeeMarket],
             Some(fee),
         )
         .await;
@@ -500,7 +448,7 @@ async fn test_complete_flow_execute_operation_success_with_fee() {
         ),
     ];
     chain_interactor
-        .check_address_balance(&Bech32Address::from(owner_address), expected_tokens_wallet)
+        .check_address_balance(&Bech32Address::from(user_address), expected_tokens_wallet)
         .await;
 
     chain_interactor
@@ -516,6 +464,17 @@ async fn test_complete_flow_execute_operation_success_with_fee() {
             expected_token_fee_market,
         )
         .await;
+
+    let expected_testing_sc_balance = vec![(
+        chain_interactor.state.get_first_token_id().to_string(),
+        BigUint::from(TEN_TOKENS),
+    )];
+    chain_interactor
+        .check_address_balance(
+            &chain_interactor.state.current_testing_sc_address().clone(),
+            expected_testing_sc_balance,
+        )
+        .await;
 }
 
 /// ### TEST
@@ -527,6 +486,7 @@ async fn test_complete_flow_execute_operation_success_with_fee() {
 /// ### EXPECTED
 /// The operation is executed in the testing smart contract
 #[tokio::test]
+#[serial]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn test_complete_flow_execute_operation_only_transfer_data_no_fee() {
     let mut chain_interactor = SovereignForgeInteract::new(Config::chain_simulator_config()).await;
@@ -540,7 +500,7 @@ async fn test_complete_flow_execute_operation_only_transfer_data_no_fee() {
 
     let operation_data = OperationData::new(
         1,
-        ManagedAddress::from_address(&chain_interactor.owner_address),
+        ManagedAddress::from_address(&chain_interactor.user_address),
         Some(transfer_data),
     );
 
@@ -550,7 +510,6 @@ async fn test_complete_flow_execute_operation_only_transfer_data_no_fee() {
             DEPLOY_COST.into(),
             OptionalValue::None,
             OptionalValue::None,
-            vec![ScArray::ChainConfig, ScArray::ESDTSafe],
             None,
         )
         .await;
@@ -612,11 +571,12 @@ async fn test_complete_flow_execute_operation_only_transfer_data_no_fee() {
         )
         .await;
 
-    chain_interactor.check_wallet_balance().await;
+    chain_interactor.check_wallet_balance_unchanged().await;
     chain_interactor
         .check_mvx_esdt_safe_balance_is_empty()
         .await;
     chain_interactor.check_fee_market_balance_is_empty().await;
+    chain_interactor.check_testing_sc_balance_is_empty().await;
 }
 
 /// ### TEST
@@ -628,6 +588,7 @@ async fn test_complete_flow_execute_operation_only_transfer_data_no_fee() {
 /// ### EXPECTED
 /// The testing smart contract returns a failed event
 #[tokio::test]
+#[serial]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn test_complete_flow_execute_operation_wrong_endpoint() {
     let mut chain_interactor = SovereignForgeInteract::new(Config::chain_simulator_config()).await;
@@ -641,7 +602,7 @@ async fn test_complete_flow_execute_operation_wrong_endpoint() {
 
     let operation_data = OperationData::new(
         1,
-        ManagedAddress::from_address(&chain_interactor.owner_address),
+        ManagedAddress::from_address(&chain_interactor.user_address),
         Some(transfer_data),
     );
 
@@ -651,7 +612,6 @@ async fn test_complete_flow_execute_operation_wrong_endpoint() {
             DEPLOY_COST.into(),
             OptionalValue::None,
             OptionalValue::None,
-            vec![ScArray::ChainConfig, ScArray::ESDTSafe],
             None,
         )
         .await;
@@ -713,9 +673,172 @@ async fn test_complete_flow_execute_operation_wrong_endpoint() {
         )
         .await;
 
-    chain_interactor.check_wallet_balance().await;
+    chain_interactor.check_wallet_balance_unchanged().await;
     chain_interactor
         .check_mvx_esdt_safe_balance_is_empty()
         .await;
     chain_interactor.check_fee_market_balance_is_empty().await;
+    chain_interactor.check_testing_sc_balance_is_empty().await;
+}
+
+/// ### TEST
+/// S-FORGE_UPDATE_ESDT_SAFE_CONFIG_OK
+///     
+/// ### ACTION
+/// Deploy and complete setup phase, then call update_esdt_safe_config
+///
+/// ### EXPECTED
+/// The ESDT Safe config is updated successfully
+#[tokio::test]
+#[serial]
+#[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
+async fn test_complete_flow_update_esdt_safe_config() {
+    let mut chain_interactor = SovereignForgeInteract::new(Config::chain_simulator_config()).await;
+
+    chain_interactor
+        .deploy_and_complete_setup_phase(
+            CHAIN_ID,
+            DEPLOY_COST.into(),
+            OptionalValue::None,
+            OptionalValue::None,
+            None,
+        )
+        .await;
+
+    let new_esdt_safe_config = EsdtSafeConfig::new(
+        ManagedVec::from_single_item(chain_interactor.state.get_first_token_id()),
+        ManagedVec::from_single_item(chain_interactor.state.get_second_token_id()),
+        120_000_000u64,
+        ManagedVec::new(),
+        ManagedVec::new(),
+    );
+
+    let config_hash = new_esdt_safe_config.generate_hash();
+    let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&config_hash.to_vec()));
+
+    let operations_hashes = MultiValueEncoded::from(ManagedVec::from(vec![config_hash.clone()]));
+
+    chain_interactor
+        .register_operation(ManagedBuffer::new(), &hash_of_hashes, operations_hashes)
+        .await;
+
+    chain_interactor
+        .update_esdt_safe_config(hash_of_hashes, new_esdt_safe_config)
+        .await;
+
+    let wanted_key_encoded = hex::encode(ESDT_SAFE_CONFIG_STORAGE_KEY);
+    let expected_value_encoded = hex::encode(chain_interactor.state.get_first_token_id_string());
+    chain_interactor
+        .check_account_storage(
+            chain_interactor
+                .state
+                .current_mvx_esdt_safe_contract_address()
+                .clone()
+                .to_address(),
+            wanted_key_encoded.as_str(),
+            Some(&expected_value_encoded),
+        )
+        .await;
+}
+
+/// ### TEST
+/// S-FORGE_SET_AND_REMOVE_FEE_OK
+///     
+/// ### ACTION
+/// Deploy and complete setup phase, then call set_fee and remove_fee
+///
+/// ### EXPECTED
+/// The fee is set and then removed successfully
+#[tokio::test]
+#[serial]
+#[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
+async fn test_complete_flow_set_and_remove_fee() {
+    let mut chain_interactor = SovereignForgeInteract::new(Config::chain_simulator_config()).await;
+
+    chain_interactor
+        .deploy_and_complete_setup_phase(
+            CHAIN_ID,
+            DEPLOY_COST.into(),
+            OptionalValue::None,
+            OptionalValue::None,
+            None,
+        )
+        .await;
+
+    let fee = FeeStruct {
+        base_token: chain_interactor.state.get_fee_token_id(),
+        fee_type: FeeType::Fixed {
+            token: chain_interactor.state.get_fee_token_id(),
+            per_transfer: BigUint::from(100u64),
+            per_gas: BigUint::from(1u64),
+        },
+    };
+
+    let fee_hash = fee.generate_hash();
+    let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&fee_hash.to_vec()));
+
+    let operations_hashes = MultiValueEncoded::from(ManagedVec::from(vec![fee_hash.clone()]));
+
+    chain_interactor
+        .register_operation(
+            ManagedBuffer::new(),
+            &hash_of_hashes,
+            operations_hashes.clone(),
+        )
+        .await;
+
+    chain_interactor
+        .set_fee_after_setup_phase(hash_of_hashes.clone(), fee)
+        .await;
+
+    let wanted_key_encoded = hex::encode(TOKEN_FEE_STORAGE_KEY);
+    let expected_value_encoded = hex::encode(chain_interactor.state.get_fee_token_id_string());
+    chain_interactor
+        .check_account_storage(
+            chain_interactor
+                .state
+                .current_fee_market_address()
+                .clone()
+                .to_address(),
+            wanted_key_encoded.as_str(),
+            Some(&expected_value_encoded),
+        )
+        .await;
+
+    let remove_fee_hash = sha256(
+        &chain_interactor
+            .state
+            .get_fee_token_id()
+            .as_managed_buffer()
+            .to_vec(),
+    );
+
+    let remove_fee_hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&remove_fee_hash));
+
+    chain_interactor
+        .register_operation(
+            ManagedBuffer::new(),
+            &remove_fee_hash_of_hashes,
+            MultiValueEncoded::from_iter(vec![ManagedBuffer::new_from_bytes(&remove_fee_hash)]),
+        )
+        .await;
+
+    chain_interactor
+        .remove_fee_after_setup_phase(
+            remove_fee_hash_of_hashes,
+            chain_interactor.state.get_fee_token_id(),
+        )
+        .await;
+
+    chain_interactor
+        .check_account_storage(
+            chain_interactor
+                .state
+                .current_fee_market_address()
+                .clone()
+                .to_address(),
+            wanted_key_encoded.as_str(),
+            None,
+        )
+        .await;
 }

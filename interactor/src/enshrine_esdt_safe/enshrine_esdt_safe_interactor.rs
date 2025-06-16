@@ -39,7 +39,15 @@ impl CommonInteractorTrait for EnshrineEsdtSafeInteract {
         &mut self.state
     }
 
-    fn owner_address(&self) -> &Address {
+    fn bridge_owner(&self) -> &Address {
+        &self.owner_address
+    }
+
+    fn bridge_service(&self) -> &Address {
+        &self.owner_address
+    }
+
+    fn sovereign_owner(&self) -> &Address {
         &self.owner_address
     }
 
@@ -133,7 +141,7 @@ impl EnshrineEsdtSafeInteract {
         opt_config: Option<EsdtSafeConfig<StaticApi>>,
         sc_array: Vec<ScArray>,
     ) {
-        let owner = self.owner_address().clone();
+        let owner = self.bridge_owner().clone();
         self.deploy_chain_config(OptionalValue::None).await;
         self.deploy_token_handler(owner).await;
         self.deploy_enshrine_esdt(
@@ -210,7 +218,7 @@ impl EnshrineEsdtSafeInteract {
         let (response, logs) = self
             .interactor
             .tx()
-            .from(&self.owner_address)
+            .from(&self.user_address)
             .to(self.state.current_enshrine_esdt_safe_address())
             .gas(30_000_000u64)
             .typed(EnshrineEsdtSafeProxy)
@@ -286,7 +294,7 @@ impl EnshrineEsdtSafeInteract {
         let response = self
             .interactor
             .tx()
-            .from(self.owner_address.clone())
+            .from(self.user_address.clone())
             .to(self.state.current_enshrine_esdt_safe_address())
             .gas(30_000_000u64)
             .typed(EnshrineEsdtSafeProxy)

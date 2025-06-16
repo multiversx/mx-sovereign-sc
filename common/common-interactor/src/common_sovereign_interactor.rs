@@ -61,7 +61,9 @@ pub struct MintTokenStruct {
 pub trait CommonInteractorTrait {
     fn interactor(&mut self) -> &mut Interactor;
     fn state(&mut self) -> &mut State;
-    fn owner_address(&self) -> &Address;
+    fn bridge_owner(&self) -> &Address;
+    fn sovereign_owner(&self) -> &Address;
+    fn bridge_service(&self) -> &Address;
     fn user_address(&self) -> &Address;
 
     async fn issue_and_mint_token(
@@ -69,12 +71,12 @@ pub trait CommonInteractorTrait {
         issue: IssueTokenStruct,
         mint: MintTokenStruct,
     ) -> TokenProperties {
-        let owner_address = self.owner_address().clone();
+        let user_address = self.user_address().clone();
         let interactor = self.interactor();
 
         let token_id = interactor
             .tx()
-            .from(owner_address.clone())
+            .from(user_address)
             .to(ESDTSystemSCAddress)
             .gas(100_000_000u64)
             .typed(ESDTSystemSCProxy)
@@ -105,12 +107,12 @@ pub trait CommonInteractorTrait {
         token_type: EsdtTokenType,
         mint: MintTokenStruct,
     ) -> u64 {
-        let owner_address = self.owner_address().clone();
+        let user_address = self.user_address().clone();
         let interactor = self.interactor();
         let mint_base_tx = interactor
             .tx()
-            .from(owner_address.clone())
-            .to(owner_address.clone())
+            .from(user_address.clone())
+            .to(user_address)
             .gas(100_000_000u64)
             .typed(UserBuiltinProxy);
 
@@ -150,12 +152,12 @@ pub trait CommonInteractorTrait {
     }
 
     async fn deploy_sovereign_forge(&mut self, deploy_cost: &BigUint<StaticApi>) {
-        let owner_address = self.owner_address().clone();
+        let bridge_owner = self.bridge_owner().clone();
 
         let new_address = self
             .interactor()
             .tx()
-            .from(owner_address)
+            .from(bridge_owner)
             .gas(50_000_000u64)
             .typed(SovereignForgeProxy)
             .init(deploy_cost)
@@ -182,12 +184,12 @@ pub trait CommonInteractorTrait {
         mvx_esdt_safe_address: Bech32Address,
         fee_market_address: Bech32Address,
     ) {
-        let owner_address = self.owner_address().clone();
+        let bridge_owner = self.bridge_owner().clone();
 
         let new_address = self
             .interactor()
             .tx()
-            .from(owner_address)
+            .from(bridge_owner)
             .gas(50_000_000u64)
             .typed(ChainFactoryContractProxy)
             .init(
@@ -213,12 +215,12 @@ pub trait CommonInteractorTrait {
     }
 
     async fn deploy_chain_config(&mut self, opt_config: OptionalValue<SovereignConfig<StaticApi>>) {
-        let owner_address = self.owner_address().clone();
+        let bridge_owner = self.bridge_owner().clone();
 
         let new_address = self
             .interactor()
             .tx()
-            .from(owner_address)
+            .from(bridge_owner)
             .gas(50_000_000u64)
             .typed(ChainConfigContractProxy)
             .init(opt_config)
@@ -238,12 +240,12 @@ pub trait CommonInteractorTrait {
     }
 
     async fn deploy_header_verifier(&mut self, contracts_array: Vec<ContractInfo<StaticApi>>) {
-        let owner_address = self.owner_address().clone();
+        let bridge_owner = self.bridge_owner().clone();
 
         let new_address = self
             .interactor()
             .tx()
-            .from(owner_address)
+            .from(bridge_owner)
             .gas(50_000_000u64)
             .typed(HeaderverifierProxy)
             .init(MultiValueEncoded::from_iter(contracts_array))
@@ -263,12 +265,12 @@ pub trait CommonInteractorTrait {
     }
 
     async fn deploy_mvx_esdt_safe(&mut self, opt_config: OptionalValue<EsdtSafeConfig<StaticApi>>) {
-        let owner_address = self.owner_address().clone();
+        let bridge_owner = self.bridge_owner().clone();
 
         let new_address = self
             .interactor()
             .tx()
-            .from(owner_address)
+            .from(bridge_owner)
             .gas(100_000_000u64)
             .typed(MvxEsdtSafeProxy)
             .init(opt_config)
@@ -292,12 +294,12 @@ pub trait CommonInteractorTrait {
         esdt_safe_address: Bech32Address,
         fee: Option<FeeStruct<StaticApi>>,
     ) {
-        let owner_address = self.owner_address().clone();
+        let bridge_owner = self.bridge_owner().clone();
 
         let new_address = self
             .interactor()
             .tx()
-            .from(owner_address)
+            .from(bridge_owner)
             .gas(80_000_000u64)
             .typed(FeeMarketProxy)
             .init(esdt_safe_address, fee)
@@ -317,12 +319,12 @@ pub trait CommonInteractorTrait {
     }
 
     async fn deploy_testing_sc(&mut self) {
-        let owner_address = self.owner_address().clone();
+        let bridge_owner = self.bridge_owner().clone();
 
         let new_address = self
             .interactor()
             .tx()
-            .from(owner_address)
+            .from(bridge_owner)
             .gas(120_000_000u64)
             .typed(TestingScProxy)
             .init()
@@ -342,12 +344,12 @@ pub trait CommonInteractorTrait {
     }
 
     async fn deploy_token_handler(&mut self, chain_factory_address: Address) {
-        let owner_address = self.owner_address().clone();
+        let bridge_owner = self.bridge_owner().clone();
 
         let new_address = self
             .interactor()
             .tx()
-            .from(owner_address)
+            .from(bridge_owner)
             .gas(100_000_000u64)
             .typed(token_handler_proxy::TokenHandlerProxy)
             .init(chain_factory_address)
@@ -372,12 +374,12 @@ pub trait CommonInteractorTrait {
         token_handler_address: Bech32Address,
         opt_config: Option<EsdtSafeConfig<StaticApi>>,
     ) {
-        let owner_address = self.owner_address().clone();
+        let bridge_owner = self.bridge_owner().clone();
 
         let new_address = self
             .interactor()
             .tx()
-            .from(owner_address)
+            .from(bridge_owner)
             .gas(100_000_000u64)
             .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
             .init(
@@ -447,13 +449,13 @@ pub trait CommonInteractorTrait {
         opt_preferred_chain_id: Option<ManagedBuffer<StaticApi>>,
         opt_config: OptionalValue<SovereignConfig<StaticApi>>,
     ) {
-        let owner_address = self.owner_address().clone();
+        let sovereign_owner = self.sovereign_owner().clone();
         let sovereign_forge_address = self.state().current_sovereign_forge_sc_address().clone();
 
         let response = self
             .interactor()
             .tx()
-            .from(owner_address)
+            .from(sovereign_owner)
             .to(sovereign_forge_address)
             .gas(100_000_000u64)
             .typed(SovereignForgeProxy)
@@ -467,13 +469,13 @@ pub trait CommonInteractorTrait {
     }
 
     async fn deploy_phase_two(&mut self, opt_config: OptionalValue<EsdtSafeConfig<StaticApi>>) {
-        let owner_address = self.owner_address().clone();
+        let sovereign_owner = self.sovereign_owner().clone();
         let sovereign_forge_address = self.state().current_sovereign_forge_sc_address().clone();
 
         let response = self
             .interactor()
             .tx()
-            .from(owner_address)
+            .from(sovereign_owner)
             .to(sovereign_forge_address)
             .gas(30_000_000u64)
             .typed(SovereignForgeProxy)
@@ -486,13 +488,13 @@ pub trait CommonInteractorTrait {
     }
 
     async fn deploy_phase_three(&mut self, fee: Option<FeeStruct<StaticApi>>) {
-        let owner_address = self.owner_address().clone();
+        let sovereign_owner = self.sovereign_owner().clone();
         let sovereign_forge_address = self.state().current_sovereign_forge_sc_address().clone();
 
         let response = self
             .interactor()
             .tx()
-            .from(owner_address)
+            .from(sovereign_owner)
             .to(sovereign_forge_address)
             .gas(80_000_000u64)
             .typed(SovereignForgeProxy)
@@ -505,13 +507,13 @@ pub trait CommonInteractorTrait {
     }
 
     async fn deploy_phase_four(&mut self) {
-        let owner_address = self.owner_address().clone();
+        let sovereign_owner = self.sovereign_owner().clone();
         let sovereign_forge_address = self.state().current_sovereign_forge_sc_address().clone();
 
         let response = self
             .interactor()
             .tx()
-            .from(owner_address)
+            .from(sovereign_owner)
             .to(sovereign_forge_address)
             .gas(80_000_000u64)
             .typed(SovereignForgeProxy)
@@ -524,12 +526,12 @@ pub trait CommonInteractorTrait {
     }
 
     async fn complete_setup_phase(&mut self) {
-        let owner_address = self.owner_address().clone();
+        let sovereign_owner = self.sovereign_owner().clone();
         let sovereign_forge_address = self.state().current_sovereign_forge_sc_address().clone();
 
         self.interactor()
             .tx()
-            .from(owner_address)
+            .from(sovereign_owner)
             .to(sovereign_forge_address)
             .gas(90_000_000u64)
             .typed(SovereignForgeProxy)
@@ -560,18 +562,100 @@ pub trait CommonInteractorTrait {
             .await;
     }
 
+    async fn update_esdt_safe_config(
+        &mut self,
+        hash_of_hashes: ManagedBuffer<StaticApi>,
+        new_config: EsdtSafeConfig<StaticApi>,
+    ) {
+        let bridge_owner = self.bridge_owner().clone();
+        let current_mvx_esdt_safe_address = self
+            .state()
+            .current_mvx_esdt_safe_contract_address()
+            .clone();
+
+        self.interactor()
+            .tx()
+            .from(bridge_owner)
+            .to(current_mvx_esdt_safe_address)
+            .gas(90_000_000u64)
+            .typed(MvxEsdtSafeProxy)
+            .update_esdt_safe_config(hash_of_hashes, new_config)
+            .returns(ReturnsResultUnmanaged)
+            .run()
+            .await;
+    }
+
+    async fn set_fee_after_setup_phase(
+        &mut self,
+        hash_of_hashes: ManagedBuffer<StaticApi>,
+        fee: FeeStruct<StaticApi>,
+    ) {
+        let bridge_service = self.bridge_service().clone();
+        let current_fee_market_address = self.state().current_fee_market_address().clone();
+
+        self.interactor()
+            .tx()
+            .from(bridge_service)
+            .to(current_fee_market_address)
+            .gas(50_000_000u64)
+            .typed(FeeMarketProxy)
+            .set_fee(hash_of_hashes, fee)
+            .returns(ReturnsResultUnmanaged)
+            .run()
+            .await;
+    }
+
+    async fn remove_fee_after_setup_phase(
+        &mut self,
+        hash_of_hashes: ManagedBuffer<StaticApi>,
+        base_token: TokenIdentifier<StaticApi>,
+    ) {
+        let bridge_service = self.bridge_service().clone();
+        let current_fee_market_address = self.state().current_fee_market_address().clone();
+
+        self.interactor()
+            .tx()
+            .from(bridge_service)
+            .to(current_fee_market_address)
+            .gas(50_000_000u64)
+            .typed(FeeMarketProxy)
+            .remove_fee(hash_of_hashes, base_token)
+            .returns(ReturnsResultUnmanaged)
+            .run()
+            .await;
+    }
+
+    async fn set_token_burn_mechanism(&mut self, token_id: TokenIdentifier<StaticApi>) {
+        let current_mvx_esdt_safe_address = self
+            .state()
+            .current_mvx_esdt_safe_contract_address()
+            .clone();
+        let bridge_owner = self.bridge_owner().clone();
+
+        self.interactor()
+            .tx()
+            .to(current_mvx_esdt_safe_address)
+            .from(bridge_owner)
+            .gas(30_000_000u64)
+            .typed(MvxEsdtSafeProxy)
+            .set_token_burn_mechanism(token_id)
+            .returns(ReturnsResultUnmanaged)
+            .run()
+            .await;
+    }
+
     async fn register_operation(
         &mut self,
         signature: ManagedBuffer<StaticApi>,
         hash_of_hashes: &ManagedBuffer<StaticApi>,
         operations_hashes: MultiValueEncoded<StaticApi, ManagedBuffer<StaticApi>>,
     ) {
-        let owner_address = self.owner_address().clone();
+        let bridge_service = self.bridge_service().clone();
         let header_verifier_address = self.state().current_header_verifier_address().clone();
 
         self.interactor()
             .tx()
-            .from(owner_address)
+            .from(bridge_service)
             .to(header_verifier_address)
             .gas(90_000_000u64)
             .typed(HeaderverifierProxy)
@@ -588,12 +672,12 @@ pub trait CommonInteractorTrait {
     }
 
     async fn complete_header_verifier_setup_phase(&mut self) {
-        let owner_address = self.owner_address().clone();
+        let bridge_owner = self.bridge_owner().clone();
         let header_verifier_address = self.state().current_header_verifier_address().clone();
 
         self.interactor()
             .tx()
-            .from(owner_address)
+            .from(bridge_owner)
             .to(header_verifier_address)
             .gas(90_000_000u64)
             .typed(HeaderverifierProxy)
@@ -611,7 +695,7 @@ pub trait CommonInteractorTrait {
         expected_error_message: Option<&str>,
         expected_log: Option<&str>,
     ) {
-        let wallet_address = self.owner_address().clone();
+        let user_address = self.user_address().clone();
         let current_mvx_esdt_safe_address = self
             .state()
             .current_mvx_esdt_safe_contract_address()
@@ -619,7 +703,7 @@ pub trait CommonInteractorTrait {
         let (response, logs) = self
             .interactor()
             .tx()
-            .from(wallet_address)
+            .from(user_address)
             .to(current_mvx_esdt_safe_address)
             .gas(90_000_000u64)
             .typed(MvxEsdtSafeProxy)
@@ -642,7 +726,7 @@ pub trait CommonInteractorTrait {
         expected_error_message: Option<&str>,
         expected_log: Option<&str>,
     ) {
-        let owner_address = self.owner_address().clone();
+        let bridge_service = self.bridge_service().clone();
         let current_mvx_esdt_safe_address = self
             .state()
             .current_mvx_esdt_safe_contract_address()
@@ -650,7 +734,7 @@ pub trait CommonInteractorTrait {
         let (response, logs) = self
             .interactor()
             .tx()
-            .from(owner_address)
+            .from(bridge_service)
             .to(current_mvx_esdt_safe_address)
             .gas(120_000_000u64)
             .typed(MvxEsdtSafeProxy)
@@ -667,12 +751,12 @@ pub trait CommonInteractorTrait {
 
     async fn whitelist_enshrine_esdt(&mut self, enshrine_esdt_safe_address: Bech32Address) {
         let token_handler_address = self.state().current_token_handler_address().clone();
-        let owner_address = self.owner_address().clone();
+        let bridge_owner = self.bridge_owner().clone();
 
         let response = self
             .interactor()
             .tx()
-            .from(owner_address)
+            .from(bridge_owner)
             .to(token_handler_address)
             .gas(50_000_000u64)
             .typed(token_handler_proxy::TokenHandlerProxy)
@@ -781,8 +865,8 @@ pub trait CommonInteractorTrait {
         }
     }
 
-    async fn check_wallet_balance(&mut self) {
-        let owner_address = self.owner_address().clone();
+    async fn check_wallet_balance_unchanged(&mut self) {
+        let user_address = self.user_address().clone();
         let first_token_id = self.state().get_first_token_id_string();
         let second_token_id = self.state().get_second_token_id_string();
         let fee_token_id = self.state().get_fee_token_id_string();
@@ -793,7 +877,7 @@ pub trait CommonInteractorTrait {
             self.thousand_tokens(fee_token_id),
         ];
 
-        self.check_address_balance(&Bech32Address::from(owner_address), expected_tokens_wallet)
+        self.check_address_balance(&Bech32Address::from(user_address), expected_tokens_wallet)
             .await;
     }
 
@@ -852,7 +936,7 @@ pub trait CommonInteractorTrait {
     }
 
     async fn check_user_address_balance_is_empty(&mut self) {
-        let owner_address = self.user_address().clone();
+        let bridge_owner = self.user_address().clone();
         let first_token_id = self.state().get_first_token_id_string();
         let second_token_id = self.state().get_second_token_id_string();
         let fee_token_id = self.state().get_fee_token_id_string();
@@ -863,7 +947,7 @@ pub trait CommonInteractorTrait {
             self.zero_tokens(fee_token_id),
         ];
 
-        self.check_address_balance(&Bech32Address::from(owner_address), expected_tokens_user)
+        self.check_address_balance(&Bech32Address::from(bridge_owner), expected_tokens_user)
             .await;
     }
 

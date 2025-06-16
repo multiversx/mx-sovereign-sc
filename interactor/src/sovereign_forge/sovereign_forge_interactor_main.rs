@@ -14,8 +14,10 @@ use structs::fee::FeeStruct;
 use structs::forge::ScArray;
 
 pub struct SovereignForgeInteract {
-    interactor: Interactor,
-    pub owner_address: Address,
+    pub interactor: Interactor,
+    pub bridge_owner: Address,
+    pub sovereign_owner: Address,
+    pub bridge_service: Address,
     pub user_address: Address,
     pub state: State,
 }
@@ -24,8 +26,16 @@ impl CommonInteractorTrait for SovereignForgeInteract {
         &mut self.interactor
     }
 
-    fn owner_address(&self) -> &Address {
-        &self.owner_address
+    fn bridge_owner(&self) -> &Address {
+        &self.bridge_owner
+    }
+
+    fn sovereign_owner(&self) -> &Address {
+        &self.sovereign_owner
+    }
+
+    fn bridge_service(&self) -> &Address {
+        &self.bridge_service
     }
 
     fn user_address(&self) -> &Address {
@@ -50,14 +60,18 @@ impl SovereignForgeInteract {
 
         let current_working_dir = INTERACTOR_WORKING_DIR;
         interactor.set_current_dir_from_workspace(current_working_dir);
-        let owner_address = interactor.register_wallet(test_wallets::alice()).await;
+        let bridge_owner = interactor.register_wallet(test_wallets::mike()).await;
+        let sovereign_owner = interactor.register_wallet(test_wallets::alice()).await;
+        let bridge_service = interactor.register_wallet(test_wallets::carol()).await;
         let user_address = interactor.register_wallet(test_wallets::bob()).await;
 
         interactor.generate_blocks_until_epoch(1).await.unwrap();
 
         SovereignForgeInteract {
             interactor,
-            owner_address,
+            bridge_owner,
+            sovereign_owner,
+            bridge_service,
             user_address,
             state: State::load_state(),
         }
@@ -113,13 +127,11 @@ impl SovereignForgeInteract {
         self.state.set_fee_token(fee_token);
     }
 
-    pub async fn deploy_and_complete_setup_phase(
+    pub async fn deploy_template_contracts(
         &mut self,
-        chain_id: &str,
         deploy_cost: BigUint<StaticApi>,
         optional_sov_config: OptionalValue<SovereignConfig<StaticApi>>,
         optional_esdt_safe_config: OptionalValue<EsdtSafeConfig<StaticApi>>,
-        sc_array: Vec<ScArray>,
         fee: Option<FeeStruct<StaticApi>>,
     ) {
         self.deploy_sovereign_forge(&deploy_cost).await;
@@ -127,16 +139,15 @@ impl SovereignForgeInteract {
 
         self.deploy_chain_config(optional_sov_config.clone()).await;
         let chain_config_address = self.state.current_chain_config_sc_address().clone();
-        let contracts_array = self.get_contract_info_struct_for_sc_type(sc_array);
 
-        self.deploy_mvx_esdt_safe(OptionalValue::None).await;
+        self.deploy_mvx_esdt_safe(optional_esdt_safe_config).await;
         let mvx_esdt_safe_address = self.state.current_mvx_esdt_safe_contract_address().clone();
 
         self.deploy_fee_market(mvx_esdt_safe_address.clone(), fee.clone())
             .await;
         let fee_market_address = self.state.current_fee_market_address().clone();
 
-        self.deploy_header_verifier(contracts_array).await;
+        self.deploy_header_verifier(Vec::new()).await;
         let header_verifier_address = self.state.current_header_verifier_address().clone();
 
         self.deploy_chain_factory(
@@ -152,10 +163,28 @@ impl SovereignForgeInteract {
 
         self.deploy_token_handler(chain_factory_address.to_address())
             .await;
+    }
 
+    pub async fn deploy_and_complete_setup_phase(
+        &mut self,
+        chain_id: &str,
+        deploy_cost: BigUint<StaticApi>,
+        optional_sov_config: OptionalValue<SovereignConfig<StaticApi>>,
+        optional_esdt_safe_config: OptionalValue<EsdtSafeConfig<StaticApi>>,
+        fee: Option<FeeStruct<StaticApi>>,
+    ) {
+        self.deploy_template_contracts(
+            deploy_cost.clone(),
+            optional_sov_config.clone(),
+            optional_esdt_safe_config.clone(),
+            fee.clone(),
+        )
+        .await;
+        self.register_token_handler(0).await;
         self.register_token_handler(1).await;
         self.register_token_handler(2).await;
         self.register_token_handler(3).await;
+        self.register_chain_factory(0).await;
         self.register_chain_factory(1).await;
         self.register_chain_factory(2).await;
         self.register_chain_factory(3).await;
@@ -177,7 +206,7 @@ impl SovereignForgeInteract {
             .interactor
             .tx()
             .to(self.state.current_sovereign_forge_sc_address())
-            .from(self.owner_address.clone())
+            .from(self.bridge_owner.clone())
             .gas(50_000_000u64)
             .typed(SovereignForgeProxy)
             .upgrade()
@@ -197,7 +226,7 @@ impl SovereignForgeInteract {
         let response = self
             .interactor
             .tx()
-            .from(&self.owner_address.clone())
+            .from(&self.bridge_owner.clone())
             .to(self.state.current_sovereign_forge_sc_address())
             .gas(30_000_000u64)
             .typed(SovereignForgeProxy)
@@ -213,7 +242,7 @@ impl SovereignForgeInteract {
         let response = self
             .interactor
             .tx()
-            .from(&self.owner_address.clone())
+            .from(&self.bridge_owner.clone())
             .to(self.state.current_sovereign_forge_sc_address())
             .gas(30_000_000u64)
             .typed(SovereignForgeProxy)

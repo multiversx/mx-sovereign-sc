@@ -39,7 +39,7 @@ use structs::operation::{Operation, OperationData, OperationEsdtPayment, Transfe
 async fn test_issue_tokens() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
 
-    let owner_address = chain_interactor.owner_address().clone();
+    let bridge_owner = chain_interactor.bridge_owner().clone();
     let user_address = chain_interactor.user_address.clone();
     let first_token_id = chain_interactor.state.get_first_token_id().clone();
 
@@ -50,8 +50,8 @@ async fn test_issue_tokens() {
     chain_interactor
         .interactor()
         .tx()
-        .from(owner_address)
-        .to(user_address.clone())
+        .from(user_address)
+        .to(bridge_owner.clone())
         .single_esdt(&first_token_id, 0u64, &BigUint::from(ONE_THOUSAND_TOKENS))
         .run()
         .await;
@@ -60,7 +60,7 @@ async fn test_issue_tokens() {
         vec![chain_interactor.thousand_tokens(chain_interactor.state.get_first_token_id_string())];
 
     chain_interactor
-        .check_address_balance(&Bech32Address::from(user_address), expected_token)
+        .check_address_balance(&Bech32Address::from(bridge_owner), expected_token)
         .await;
 }
 
@@ -71,7 +71,7 @@ async fn test_issue_tokens() {
 /// Call 'update_configuration()' with invalid config
 ///
 /// ### EXPECTED
-/// Error MAX_GAS_LIMIT_PER_TX_EXCEEDED
+/// Error 'failedBridgeOp' log
 #[tokio::test]
 #[serial]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
@@ -305,7 +305,7 @@ async fn test_deposit_nothing_to_transfer() {
         )
         .await;
 
-    chain_interactor.check_wallet_balance().await;
+    chain_interactor.check_wallet_balance_unchanged().await;
     chain_interactor
         .check_mvx_esdt_safe_balance_is_empty()
         .await;
@@ -353,7 +353,7 @@ async fn test_deposit_too_many_tokens_no_fee() {
         )
         .await;
 
-    chain_interactor.check_wallet_balance().await;
+    chain_interactor.check_wallet_balance_unchanged().await;
     chain_interactor
         .check_mvx_esdt_safe_balance_is_empty()
         .await;
@@ -373,7 +373,7 @@ async fn test_deposit_too_many_tokens_no_fee() {
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn test_deposit_no_transfer_data() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
-    let owner_address = chain_interactor.owner_address().clone();
+    let user_address = chain_interactor.user_address().clone();
 
     chain_interactor
         .deploy_contracts(
@@ -441,7 +441,7 @@ async fn test_deposit_no_transfer_data() {
         chain_interactor.thousand_tokens(chain_interactor.state.get_fee_token_id_string()),
     ];
     chain_interactor
-        .check_address_balance(&Bech32Address::from(owner_address), expected_tokens_wallet)
+        .check_address_balance(&Bech32Address::from(user_address), expected_tokens_wallet)
         .await;
 
     chain_interactor.check_fee_market_balance_is_empty().await;
@@ -511,7 +511,7 @@ async fn test_deposit_gas_limit_too_high_no_fee() {
         )
         .await;
 
-    chain_interactor.check_wallet_balance().await;
+    chain_interactor.check_wallet_balance_unchanged().await;
     chain_interactor
         .check_mvx_esdt_safe_balance_is_empty()
         .await;
@@ -582,7 +582,7 @@ async fn test_deposit_endpoint_banned_no_fee() {
         )
         .await;
 
-    chain_interactor.check_wallet_balance().await;
+    chain_interactor.check_wallet_balance_unchanged().await;
     chain_interactor
         .check_mvx_esdt_safe_balance_is_empty()
         .await;
@@ -722,7 +722,7 @@ async fn test_deposit_fee_enabled() {
     ];
     chain_interactor
         .check_address_balance(
-            &Bech32Address::from(chain_interactor.owner_address().clone()),
+            &Bech32Address::from(chain_interactor.user_address().clone()),
             expected_tokens_wallet,
         )
         .await
@@ -789,7 +789,7 @@ async fn test_deposit_transfer_data_only_with_fee_nothing_to_transfer() {
         )
         .await;
 
-    chain_interactor.check_wallet_balance().await;
+    chain_interactor.check_wallet_balance_unchanged().await;
     chain_interactor
         .check_mvx_esdt_safe_balance_is_empty()
         .await;
@@ -846,7 +846,7 @@ async fn test_deposit_only_transfer_data_no_fee() {
         )
         .await;
 
-    chain_interactor.check_wallet_balance().await;
+    chain_interactor.check_wallet_balance_unchanged().await;
     chain_interactor
         .check_mvx_esdt_safe_balance_is_empty()
         .await;
@@ -937,7 +937,7 @@ async fn test_deposit_payment_does_not_cover_fee() {
         )
         .await;
 
-    chain_interactor.check_wallet_balance().await;
+    chain_interactor.check_wallet_balance_unchanged().await;
     chain_interactor
         .check_mvx_esdt_safe_balance_is_empty()
         .await;
@@ -949,7 +949,7 @@ async fn test_deposit_payment_does_not_cover_fee() {
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn test_deposit_refund() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
-    let owner_address = chain_interactor.owner_address().clone();
+    let user_address = chain_interactor.user_address().clone();
 
     let config = EsdtSafeConfig::new(
         ManagedVec::from(vec![TokenIdentifier::from(CROWD_TOKEN_ID)]),
@@ -1034,7 +1034,7 @@ async fn test_deposit_refund() {
         ),
     ];
     chain_interactor
-        .check_address_balance(&Bech32Address::from(owner_address), expected_tokens_wallet)
+        .check_address_balance(&Bech32Address::from(user_address), expected_tokens_wallet)
         .await;
 
     chain_interactor
@@ -1421,7 +1421,7 @@ async fn test_execute_operation_no_esdt_safe_registered() {
         )
         .await;
 
-    chain_interactor.check_wallet_balance().await;
+    chain_interactor.check_wallet_balance_unchanged().await;
 
     chain_interactor.check_testing_sc_balance_is_empty().await;
 
@@ -1441,7 +1441,7 @@ async fn test_execute_operation_no_esdt_safe_registered() {
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn test_execute_operation_with_native_token_success() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
-    let owner_address = chain_interactor.owner_address().clone();
+    let user_address = chain_interactor.user_address().clone();
     let token_data = EsdtTokenData {
         amount: BigUint::from(TEN_TOKENS),
         ..Default::default()
@@ -1510,6 +1510,15 @@ async fn test_execute_operation_with_native_token_success() {
         .await;
 
     chain_interactor.complete_setup_phase().await;
+    chain_interactor
+        .change_ownership_to_header_verifier(
+            chain_interactor.owner_address.clone(),
+            chain_interactor
+                .state
+                .current_mvx_esdt_safe_contract_address()
+                .to_address(),
+        )
+        .await;
 
     let operation = Operation::new(
         ManagedAddress::from_address(
@@ -1588,7 +1597,7 @@ async fn test_execute_operation_with_native_token_success() {
         chain_interactor.thousand_tokens(chain_interactor.state.get_fee_token_id_string()),
     ];
     chain_interactor
-        .check_address_balance(&Bech32Address::from(owner_address), expected_tokens_wallet)
+        .check_address_balance(&Bech32Address::from(user_address), expected_tokens_wallet)
         .await;
 
     chain_interactor
@@ -1610,7 +1619,7 @@ async fn test_execute_operation_with_native_token_success() {
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn test_execute_operation_success_no_fee() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
-    let owner_address = chain_interactor.owner_address().clone();
+    let user_address = chain_interactor.user_address().clone();
     let token_data = EsdtTokenData {
         amount: BigUint::from(TEN_TOKENS),
         ..Default::default()
@@ -1726,7 +1735,7 @@ async fn test_execute_operation_success_no_fee() {
         chain_interactor.thousand_tokens(chain_interactor.state.get_fee_token_id_string()),
     ];
     chain_interactor
-        .check_address_balance(&Bech32Address::from(owner_address), expected_tokens_wallet)
+        .check_address_balance(&Bech32Address::from(user_address), expected_tokens_wallet)
         .await;
 
     chain_interactor
@@ -1828,7 +1837,7 @@ async fn test_execute_operation_only_transfer_data_no_fee() {
         )
         .await;
 
-    chain_interactor.check_wallet_balance().await;
+    chain_interactor.check_wallet_balance_unchanged().await;
     chain_interactor
         .check_mvx_esdt_safe_balance_is_empty()
         .await;
@@ -1928,7 +1937,7 @@ async fn test_execute_operation_no_payments_failed_event() {
         )
         .await;
 
-    chain_interactor.check_wallet_balance().await;
+    chain_interactor.check_wallet_balance_unchanged().await;
     chain_interactor
         .check_mvx_esdt_safe_balance_is_empty()
         .await;

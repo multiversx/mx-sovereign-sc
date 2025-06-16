@@ -31,7 +31,15 @@ impl CommonInteractorTrait for MvxEsdtSafeInteract {
         &mut self.state
     }
 
-    fn owner_address(&self) -> &Address {
+    fn bridge_owner(&self) -> &Address {
+        &self.owner_address
+    }
+
+    fn sovereign_owner(&self) -> &Address {
+        &self.owner_address
+    }
+
+    fn bridge_service(&self) -> &Address {
         &self.owner_address
     }
 
@@ -195,6 +203,14 @@ impl MvxEsdtSafeInteract {
         self.deploy_header_verifier(contracts_array).await;
         self.complete_header_verifier_setup_phase().await;
         self.complete_setup_phase().await;
+        self.change_ownership_to_header_verifier(
+            self.owner_address.clone(),
+            self.state
+                .current_mvx_esdt_safe_contract_address()
+                .clone()
+                .to_address(),
+        )
+        .await;
     }
 
     pub async fn complete_setup_phase(&mut self) {
@@ -208,14 +224,6 @@ impl MvxEsdtSafeInteract {
             .returns(ReturnsResultUnmanaged)
             .run()
             .await;
-
-        self.change_ownership_to_header_verifier(
-            self.owner_address.clone(),
-            self.state
-                .current_mvx_esdt_safe_contract_address()
-                .to_address(),
-        )
-        .await;
     }
 
     pub async fn upgrade(&mut self) {
