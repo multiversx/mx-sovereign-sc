@@ -335,7 +335,7 @@ fn test_register_validator_range_exceeded_too_many_validators() {
 
     state
         .common_setup
-        .deploy_chain_config(OptionalValue::None, None);
+        .deploy_chain_config(OptionalValue::Some(SovereignConfig::default_config()), None);
 
     state.common_setup.complete_chain_config_setup_phase(None);
 
@@ -354,12 +354,10 @@ fn test_register_validator_range_exceeded_too_many_validators() {
     };
 
     state.register(&new_validator_one, None, Some("register"));
-    let id_one = state.is_bls_key_to_id_mapper_empty(&new_validator_one.bls_key);
+    let id_one = state.get_bls_key_id(&new_validator_one.bls_key);
     assert!(state.get_bls_key_by_id(&id_one) == new_validator_one.bls_key);
 
     state.register(&new_validator_two, Some(VALIDATOR_RANGE_EXCEEDED), None);
-    let id_two = state.is_bls_key_to_id_mapper_empty(&new_validator_one.bls_key);
-    assert!(state.get_bls_key_by_id(&id_two) == new_validator_two.bls_key);
 }
 
 /// ### TEST
@@ -388,7 +386,7 @@ fn test_register_validator_already_registered() {
     };
 
     state.register(&new_validator, None, Some("register"));
-    assert!(!state.is_bls_key_to_id_mapper_empty(&new_validator.bls_key));
+    assert!(state.get_bls_key_id(&new_validator.bls_key) == 1);
 
     state.register(&new_validator, Some(VALIDATOR_ALREADY_REGISTERED), None);
 }
@@ -397,7 +395,7 @@ fn test_register_validator_already_registered() {
 /// C-CONFIG_REGISTER_VALIDATOR_OK
 ///
 /// ### ACTION
-/// Call 'register()' with valid validator
+/// Call 'register()' with valid validators
 ///
 /// ### EXPECTED
 /// Validator is registered successfully
@@ -405,9 +403,14 @@ fn test_register_validator_already_registered() {
 fn test_register_validator() {
     let mut state = ChainConfigTestState::new();
 
+    let config = SovereignConfig {
+        max_validators: 2,
+        ..SovereignConfig::default_config()
+    };
+
     state
         .common_setup
-        .deploy_chain_config(OptionalValue::None, None);
+        .deploy_chain_config(OptionalValue::Some(config), None);
 
     state.common_setup.complete_chain_config_setup_phase(None);
 
@@ -418,7 +421,18 @@ fn test_register_validator() {
         token_stake: EsdtTokenData::default(),
     };
 
+    let new_validator_two = ValidatorInfo {
+        address: OWNER_ADDRESS.to_managed_address(),
+        bls_key: ManagedBuffer::from("validator2"),
+        egld_stake: BigUint::default(),
+        token_stake: EsdtTokenData::default(),
+    };
+
     state.register(&new_validator, None, Some("register"));
+    assert!(state.get_bls_key_id(&new_validator.bls_key) == 1);
+
+    state.register(&new_validator_two, None, Some("register"));
+    assert!(state.get_bls_key_id(&new_validator_two.bls_key) == 2);
 }
 
 /// ### TEST
@@ -445,43 +459,6 @@ fn test_unregister_validator_setup_phase_not_completed() {
     };
 
     state.register(&new_validator, Some(SETUP_PHASE_NOT_COMPLETED), None);
-}
-
-/// ### TEST
-/// C-CONFIG_UNREGISTER_FAIL
-///
-/// ### ACTION
-/// Call 'unregister()' with too few validators
-///
-/// ### EXPECTED
-/// Error VALIDATOR_RANGE_EXCEEDED
-#[test]
-fn test_unregister_validator_range_exceeded_too_few_validators() {
-    let mut state = ChainConfigTestState::new();
-
-    let config = SovereignConfig {
-        min_validators: 1,
-        max_validators: 2,
-        ..SovereignConfig::default_config()
-    };
-
-    state
-        .common_setup
-        .deploy_chain_config(OptionalValue::Some(config), None);
-
-    state.common_setup.complete_chain_config_setup_phase(None);
-
-    let new_validator = ValidatorInfo {
-        address: USER_ADDRESS.to_managed_address(),
-        bls_key: ManagedBuffer::from("validator1"),
-        egld_stake: BigUint::default(),
-        token_stake: EsdtTokenData::default(),
-    };
-
-    state.register(&new_validator, None, Some("register"));
-    assert!(!state.is_bls_key_to_id_mapper_empty(&new_validator.bls_key));
-
-    state.unregister(&new_validator, Some(VALIDATOR_RANGE_EXCEEDED), None);
 }
 
 /// ### TEST
@@ -517,7 +494,7 @@ fn test_unregister_validator_not_registered() {
 
     state.unregister(&new_validator, Some(VALIDATOR_NOT_REGISTERED), None);
 
-    assert!(state.is_bls_key_to_id_mapper_empty(&new_validator.bls_key));
+    assert!(state.get_bls_key_id(&new_validator.bls_key) == 0);
 }
 
 /// ### TEST
@@ -546,9 +523,9 @@ fn test_unregister_validator() {
     };
 
     state.register(&new_validator, None, Some("register"));
-    assert!(!state.is_bls_key_to_id_mapper_empty(&new_validator.bls_key));
+    assert!(state.get_bls_key_id(&new_validator.bls_key) == 1);
 
     state.unregister(&new_validator, None, Some("unregister"));
 
-    assert!(state.is_bls_key_to_id_mapper_empty(&new_validator.bls_key));
+    assert!(state.get_bls_key_id(&new_validator.bls_key) == 0);
 }

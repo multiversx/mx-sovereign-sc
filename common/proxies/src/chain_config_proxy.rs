@@ -158,29 +158,16 @@ where
             .original_result()
     }
 
-    pub fn id_to_bls_key_mapper<
-        Arg0: ProxyArg<BigUint<Env::Api>>,
-    >(
-        self,
-        id: Arg0,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ManagedBuffer<Env::Api>> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("idToBlsKey")
-            .argument(&id)
-            .original_result()
-    }
-
     pub fn bls_key_to_id_mapper<
         Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
     >(
         self,
-        id: Arg0,
+        bls_key: Arg0,
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, BigUint<Env::Api>> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("blsKeyToId")
-            .argument(&id)
+            .argument(&bls_key)
             .original_result()
     }
 

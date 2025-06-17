@@ -37,10 +37,10 @@ pub trait EventsModule {
         error_message: &ManagedBuffer,
     );
 
-    // address, blsKeys, eGLDStake, tokenStake
     #[event("register")]
     fn register_event(
         &self,
+        #[indexed] id: &BigUint,
         #[indexed] address: &ManagedAddress,
         #[indexed] bls_key: &ManagedBuffer,
         #[indexed] egld_stake: &BigUint,
@@ -50,6 +50,7 @@ pub trait EventsModule {
     #[event("unregister")]
     fn unregister_event(
         &self,
+        #[indexed] id: &BigUint,
         #[indexed] address: &ManagedAddress,
         #[indexed] bls_key: &ManagedBuffer,
         #[indexed] egld_stake: &BigUint,

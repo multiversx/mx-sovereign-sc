@@ -30,21 +30,23 @@ pub trait ValidatorRulesModule: setup_phase::SetupPhaseModule + events::EventsMo
         self.require_validator_not_registered(&new_validator.bls_key);
 
         let max_number_of_validators = self.sovereign_config().get().max_validators;
-        let last_bls_key_id = self.last_bls_key_id().get();
-        let current_bls_key_id = &last_bls_key_id + 1u32;
+        let last_bls_key_id_mapper = self.last_bls_key_id();
+        let current_bls_key_id = &last_bls_key_id_mapper.get() + 1u32;
 
         require!(
             current_bls_key_id <= max_number_of_validators,
             VALIDATOR_RANGE_EXCEEDED
         );
 
-        self.last_bls_key_id().set(current_bls_key_id.clone());
+        self.last_bls_key_id()
+            .update(|id| *id += BigUint::from(1u32));
         self.bls_keys_map()
             .insert(current_bls_key_id.clone(), new_validator.bls_key.clone());
         self.bls_key_to_id_mapper(&new_validator.bls_key)
-            .set(current_bls_key_id);
+            .set(current_bls_key_id.clone());
 
         self.register_event(
+            &current_bls_key_id,
             &new_validator.address,
             &new_validator.bls_key,
             &new_validator.egld_stake,
@@ -57,21 +59,13 @@ pub trait ValidatorRulesModule: setup_phase::SetupPhaseModule + events::EventsMo
         self.require_setup_complete();
         self.require_validator_registered(&validator_info.bls_key);
 
-        let min_number_of_validators = self.sovereign_config().get().min_validators;
-        let last_bls_key_id = self.last_bls_key_id().get();
-        let current_bls_key_id = &last_bls_key_id - 1u32;
+        let validator_id = self.bls_key_to_id_mapper(&validator_info.bls_key).get();
 
-        require!(
-            current_bls_key_id >= min_number_of_validators,
-            VALIDATOR_RANGE_EXCEEDED
-        );
-
-        self.bls_keys_map().remove(&current_bls_key_id);
-        self.bls_key_to_id_mapper(&validator_info.bls_key)
-            .set(current_bls_key_id.clone());
-        self.last_bls_key_id().set(current_bls_key_id);
+        self.bls_keys_map().remove(&validator_id);
+        self.bls_key_to_id_mapper(&validator_info.bls_key).clear();
 
         self.unregister_event(
+            &validator_id,
             &validator_info.address,
             &validator_info.bls_key,
             &validator_info.egld_stake,
@@ -97,13 +91,12 @@ pub trait ValidatorRulesModule: setup_phase::SetupPhaseModule + events::EventsMo
     #[storage_mapper("sovereignConfig")]
     fn sovereign_config(&self) -> SingleValueMapper<SovereignConfig<Self::Api>>;
 
-    #[view(idToBlsKey)]
-    #[storage_mapper("idToBlsKey")]
-    fn id_to_bls_key_mapper(&self, id: &BigUint<Self::Api>) -> SingleValueMapper<ManagedBuffer>;
-
     #[view(blsKeyToId)]
     #[storage_mapper("blsKeyToId")]
-    fn bls_key_to_id_mapper(&self, id: &ManagedBuffer) -> SingleValueMapper<BigUint<Self::Api>>;
+    fn bls_key_to_id_mapper(
+        &self,
+        bls_key: &ManagedBuffer,
+    ) -> SingleValueMapper<BigUint<Self::Api>>;
 
     #[view(blsKeysMap)]
     #[storage_mapper("blsKeysMap")]
