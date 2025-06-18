@@ -123,12 +123,60 @@ where
             .original_result()
     }
 
+    pub fn register<
+        Arg0: ProxyArg<structs::ValidatorInfo<Env::Api>>,
+    >(
+        self,
+        new_validator: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("register")
+            .argument(&new_validator)
+            .original_result()
+    }
+
+    pub fn unregister<
+        Arg0: ProxyArg<structs::ValidatorInfo<Env::Api>>,
+    >(
+        self,
+        validator_info: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("unregister")
+            .argument(&validator_info)
+            .original_result()
+    }
+
     pub fn sovereign_config(
         self,
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, structs::configs::SovereignConfig<Env::Api>> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("sovereignConfig")
+            .original_result()
+    }
+
+    pub fn bls_key_to_id_mapper<
+        Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
+    >(
+        self,
+        bls_key: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, BigUint<Env::Api>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("blsKeyToId")
+            .argument(&bls_key)
+            .original_result()
+    }
+
+    pub fn bls_keys_map(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, MultiValueEncoded<Env::Api, MultiValue2<BigUint<Env::Api>, ManagedBuffer<Env::Api>>>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("blsKeysMap")
             .original_result()
     }
 
