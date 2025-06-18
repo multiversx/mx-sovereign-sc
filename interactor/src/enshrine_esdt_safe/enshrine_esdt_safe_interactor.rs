@@ -6,11 +6,11 @@ use common_interactor::common_sovereign_interactor::{
 };
 use common_interactor::interactor_config::Config;
 use common_interactor::interactor_state::State;
+use common_test_setup::base_setup::init::RegisterTokenArgs;
 use common_test_setup::constants::{
     DEPLOY_COST, ENSHRINE_ESDT_SAFE_CODE_PATH, INTERACTOR_WORKING_DIR, ONE_THOUSAND_TOKENS,
     SOVEREIGN_TOKEN_PREFIX,
 };
-use common_test_setup::RegisterTokenArgs;
 use fee_market_proxy::*;
 use multiversx_sc_snippets::imports::*;
 use proxies::enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy;

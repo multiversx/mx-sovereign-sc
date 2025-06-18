@@ -1,11 +1,11 @@
 use common_test_setup::{
+    base_setup::init::{AccountSetup, BaseSetup},
     constants::{
         CHAIN_FACTORY_SC_ADDRESS, CROWD_TOKEN_ID, ENSHRINE_BALANCE, ENSHRINE_SC_ADDRESS,
         FEE_MARKET_ADDRESS, FUNGIBLE_TOKEN_ID, INSUFFICIENT_WEGLD_ADDRESS, NFT_TOKEN_ID,
         OWNER_ADDRESS, OWNER_BALANCE, PREFIX_NFT_TOKEN_ID, RECEIVER_ADDRESS,
         SOVEREIGN_TOKEN_PREFIX, TOKEN_HANDLER_SC_ADDRESS, USER_ADDRESS, WEGLD_IDENTIFIER,
     },
-    AccountSetup, BaseSetup,
 };
 use enshrine_esdt_safe::common::storage::CommonStorage;
 use multiversx_sc::{
