@@ -1,15 +1,17 @@
 #![no_std]
 
 use error_messages::{
-    BLS_SIGNATURE_NOT_VALID, CALLER_NOT_FROM_CURRENT_SOVEREIGN,
+    BLS_SIGNATURE_NOT_VALID, CALLER_NOT_FROM_CURRENT_SOVEREIGN, CHAIN_CONFIG_NOT_DEPLOYED,
     COULD_NOT_RETRIEVE_SOVEREIGN_CONFIG, CURRENT_OPERATION_ALREADY_IN_EXECUTION,
     CURRENT_OPERATION_NOT_REGISTERED, HASH_OF_HASHES_DOES_NOT_MATCH, INVALID_VALIDATOR_SET_LENGTH,
     OUTGOING_TX_HASH_ALREADY_REGISTERED,
 };
 use multiversx_sc::codec;
 use multiversx_sc::proxy_imports::{TopDecode, TopEncode};
+use proxies::chain_config_proxy::ChainConfigContractProxy;
 use structs::configs::SovereignConfig;
 use structs::forge::{ContractInfo, ScArray};
+use structs::ValidatorSignature;
 
 multiversx_sc::imports!();
 
@@ -32,8 +34,8 @@ pub trait Headerverifier: events::EventsModule + setup_phase::SetupPhaseModule {
     #[only_owner]
     #[endpoint(registerBlsPubKeys)]
     fn register_bls_pub_keys(&self, bls_pub_keys: MultiValueEncoded<ManagedBuffer>) {
-        self.bls_pub_keys().clear();
-        self.bls_pub_keys().extend(bls_pub_keys);
+        // self.bls_pub_keys().clear();
+        // self.bls_pub_keys().extend(bls_pub_keys);
     }
 
     #[endpoint(registerBridgeOps)]
@@ -76,9 +78,9 @@ pub trait Headerverifier: events::EventsModule + setup_phase::SetupPhaseModule {
         signature: ManagedBuffer,
         bridge_operations_hash: ManagedBuffer,
         operation_hash: ManagedBuffer,
-        _pub_keys_bitmap: ManagedBuffer,
-        _epoch: ManagedBuffer,
-        _pub_keys_id: MultiValueEncoded<ManagedBuffer>,
+        pub_keys_bitmap: ManagedBuffer,
+        epoch: u64,
+        pub_keys_id: MultiValueEncoded<BigUint<Self::Api>>,
     ) {
         let mut hash_of_hashes_history_mapper = self.hash_of_hashes_history();
 
@@ -97,7 +99,11 @@ pub trait Headerverifier: events::EventsModule + setup_phase::SetupPhaseModule {
             operations_hashes.clone(),
         );
 
-        // TODO change validators set
+        if !self.bls_pub_keys(epoch - 3).is_empty() {
+            self.bls_pub_keys(epoch - 3).clear();
+        }
+
+        self.bls_pub_keys(epoch).extend(pub_keys_id);
 
         hash_of_hashes_history_mapper.insert(bridge_operations_hash.clone());
         self.execute_bridge_operation_event(&bridge_operations_hash, &operation_hash);
@@ -141,7 +147,10 @@ pub trait Headerverifier: events::EventsModule + setup_phase::SetupPhaseModule {
             return;
         }
 
-        self.check_validator_range(self.bls_pub_keys().len() as u64);
+        self.check_validator_range(
+            self.bls_pub_keys(self.blockchain().get_block_epoch().into())
+                .len() as u64,
+        );
 
         self.setup_phase_complete().set(true);
     }
@@ -202,15 +211,47 @@ pub trait Headerverifier: events::EventsModule + setup_phase::SetupPhaseModule {
         true
     }
 
+    fn get_bls_key_by_id(&self, id: &BigUint<Self::Api>) {
+        let chain_config_address = self
+            .sovereign_contracts()
+            .iter()
+            .find(|sc| sc.id == ScArray::ChainConfig)
+            .unwrap()
+            .address;
+
+        let mapper = self
+            .tx()
+            .to(chain_config_address)
+            .typed(ChainConfigContractProxy)
+            .bls_keys_map()
+            .returns(ReturnsResult)
+            .sync_call();
+    }
+
     fn is_signature_count_valid(&self, pub_keys_count: usize) -> bool {
-        let total_bls_pub_keys = self.bls_pub_keys().len();
+        let total_bls_pub_keys = self.bls_pub_keys(self.blockchain().get_block_epoch()).len();
         let minimum_signatures = 2 * total_bls_pub_keys / 3;
 
         pub_keys_count > minimum_signatures
     }
 
+    fn get_bls_keys(&self) {}
+
     #[storage_mapper("blsPubKeys")]
-    fn bls_pub_keys(&self) -> SetMapper<ManagedBuffer>;
+    fn bls_pub_keys(&self, epoch: u64) -> SetMapper<ManagedBuffer>;
+
+    #[storage_mapper_from_address("blsKeyToId")]
+    fn bls_key_to_id_mapper(
+        &self,
+        sc_address: ManagedAddress,
+        bls_key: &ManagedBuffer,
+    ) -> SingleValueMapper<BigUint<Self::Api>, ManagedAddress>;
+
+    #[storage_mapper_from_address("blsKeysMap")]
+    fn bls_keys_map(
+        &self,
+        sc_address: ManagedAddress,
+    ) -> MapMapper<BigUint<Self::Api>, ManagedBuffer, ManagedAddress>;
 
     #[storage_mapper("operationHashStatus")]
     fn operation_hash_status(
