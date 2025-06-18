@@ -13,10 +13,10 @@ use structs::operation::Operation;
 use common_interactor::interactor_config::Config;
 use common_interactor::interactor_state::State;
 
+use common_test_setup::base_setup::init::RegisterTokenArgs;
 use common_test_setup::constants::{
     INTERACTOR_WORKING_DIR, MVX_ESDT_SAFE_CODE_PATH, ONE_THOUSAND_TOKENS,
 };
-use common_test_setup::RegisterTokenArgs;
 
 pub struct MvxEsdtSafeInteract {
     pub interactor: Interactor,
