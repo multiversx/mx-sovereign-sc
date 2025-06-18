@@ -1,6 +1,6 @@
 use common_test_setup::{
+    base_setup::init::{AccountSetup, BaseSetup},
     constants::{CHAIN_CONFIG_ADDRESS, OWNER_ADDRESS, OWNER_BALANCE},
-    AccountSetup, BaseSetup,
 };
 use multiversx_sc::types::ManagedBuffer;
 use multiversx_sc_scenario::{api::StaticApi, ReturnsHandledOrError, ReturnsLogs, ScenarioTxRun};
