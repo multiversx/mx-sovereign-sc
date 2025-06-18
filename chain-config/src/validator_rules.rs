@@ -38,8 +38,7 @@ pub trait ValidatorRulesModule: setup_phase::SetupPhaseModule + events::EventsMo
             VALIDATOR_RANGE_EXCEEDED
         );
 
-        self.last_bls_key_id()
-            .update(|id| *id += BigUint::from(1u32));
+        self.last_bls_key_id().set(current_bls_key_id.clone());
         self.bls_keys_map()
             .insert(current_bls_key_id.clone(), new_validator.bls_key.clone());
         self.bls_key_to_id_mapper(&new_validator.bls_key)
