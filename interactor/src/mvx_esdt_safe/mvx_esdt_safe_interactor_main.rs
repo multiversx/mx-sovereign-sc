@@ -18,7 +18,9 @@ use common_test_setup::constants::{
 
 pub struct MvxEsdtSafeInteract {
     pub interactor: Interactor,
-    pub owner_address: Address,
+    pub bridge_owner: Address,
+    pub sovereign_owner: Address,
+    pub bridge_service: Address,
     pub user_address: Address,
     pub state: State,
 }
@@ -32,15 +34,15 @@ impl CommonInteractorTrait for MvxEsdtSafeInteract {
     }
 
     fn bridge_owner(&self) -> &Address {
-        &self.owner_address
+        &self.bridge_owner
     }
 
     fn sovereign_owner(&self) -> &Address {
-        &self.owner_address
+        &self.sovereign_owner
     }
 
     fn bridge_service(&self) -> &Address {
-        &self.owner_address
+        &self.bridge_service
     }
 
     fn user_address(&self) -> &Address {
@@ -62,14 +64,18 @@ impl MvxEsdtSafeInteract {
 
         let working_dir = INTERACTOR_WORKING_DIR;
         interactor.set_current_dir_from_workspace(working_dir);
-        let owner_address = interactor.register_wallet(test_wallets::mike()).await;
+        let bridge_owner = interactor.register_wallet(test_wallets::mike()).await;
+        let sovereign_owner = interactor.register_wallet(test_wallets::alice()).await;
+        let bridge_service = interactor.register_wallet(test_wallets::carol()).await;
         let user_address = interactor.register_wallet(test_wallets::bob()).await;
 
         interactor.generate_blocks_until_epoch(1u64).await.unwrap();
 
         MvxEsdtSafeInteract {
             interactor,
-            owner_address,
+            bridge_owner,
+            sovereign_owner,
+            bridge_service,
             user_address,
             state: State::load_state(),
         }
@@ -204,7 +210,7 @@ impl MvxEsdtSafeInteract {
         self.complete_header_verifier_setup_phase().await;
         self.complete_setup_phase().await;
         self.change_ownership_to_header_verifier(
-            self.owner_address.clone(),
+            self.bridge_owner.clone(),
             self.state
                 .current_mvx_esdt_safe_contract_address()
                 .clone()
@@ -216,7 +222,7 @@ impl MvxEsdtSafeInteract {
     pub async fn complete_setup_phase(&mut self) {
         self.interactor
             .tx()
-            .from(&self.owner_address)
+            .from(&self.bridge_owner)
             .to(self.state.current_mvx_esdt_safe_contract_address())
             .gas(90_000_000u64)
             .typed(MvxEsdtSafeProxy)
@@ -231,7 +237,7 @@ impl MvxEsdtSafeInteract {
             .interactor
             .tx()
             .to(self.state.current_mvx_esdt_safe_contract_address())
-            .from(&self.owner_address)
+            .from(&self.bridge_owner)
             .gas(90_000_000u64)
             .typed(MvxEsdtSafeProxy)
             .upgrade()
@@ -254,7 +260,7 @@ impl MvxEsdtSafeInteract {
         let (response, logs) = self
             .interactor
             .tx()
-            .from(&self.owner_address)
+            .from(&self.bridge_service)
             .to(self.state.current_mvx_esdt_safe_contract_address())
             .gas(90_000_000u64)
             .typed(MvxEsdtSafeProxy)
@@ -273,7 +279,7 @@ impl MvxEsdtSafeInteract {
         let response = self
             .interactor
             .tx()
-            .from(&self.owner_address)
+            .from(&self.bridge_owner)
             .to(self.state.current_mvx_esdt_safe_contract_address())
             .gas(90_000_000u64)
             .typed(MvxEsdtSafeProxy)
@@ -294,7 +300,7 @@ impl MvxEsdtSafeInteract {
         let response = self
             .interactor
             .tx()
-            .from(&self.owner_address)
+            .from(&self.user_address)
             .to(self.state.current_mvx_esdt_safe_contract_address())
             .gas(90_000_000u64)
             .typed(MvxEsdtSafeProxy)
@@ -323,7 +329,7 @@ impl MvxEsdtSafeInteract {
         let response = self
             .interactor
             .tx()
-            .from(&self.owner_address)
+            .from(&self.bridge_owner)
             .to(self.state.current_mvx_esdt_safe_contract_address())
             .gas(90_000_000u64)
             .typed(MvxEsdtSafeProxy)
@@ -340,7 +346,7 @@ impl MvxEsdtSafeInteract {
         let response = self
             .interactor
             .tx()
-            .from(&self.owner_address)
+            .from(&self.bridge_owner)
             .to(self.state.current_mvx_esdt_safe_contract_address())
             .gas(90_000_000u64)
             .typed(MvxEsdtSafeProxy)
@@ -356,7 +362,7 @@ impl MvxEsdtSafeInteract {
         let response = self
             .interactor
             .tx()
-            .from(&self.owner_address)
+            .from(&self.bridge_owner)
             .to(self.state.current_mvx_esdt_safe_contract_address())
             .gas(90_000_000u64)
             .typed(MvxEsdtSafeProxy)

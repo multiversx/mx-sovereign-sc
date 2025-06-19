@@ -567,7 +567,7 @@ pub trait CommonInteractorTrait {
         hash_of_hashes: ManagedBuffer<StaticApi>,
         new_config: EsdtSafeConfig<StaticApi>,
     ) {
-        let bridge_owner = self.bridge_owner().clone();
+        let bridge_service = self.bridge_service().clone();
         let current_mvx_esdt_safe_address = self
             .state()
             .current_mvx_esdt_safe_contract_address()
@@ -575,7 +575,7 @@ pub trait CommonInteractorTrait {
 
         self.interactor()
             .tx()
-            .from(bridge_owner)
+            .from(bridge_service)
             .to(current_mvx_esdt_safe_address)
             .gas(90_000_000u64)
             .typed(MvxEsdtSafeProxy)
@@ -630,12 +630,12 @@ pub trait CommonInteractorTrait {
             .state()
             .current_mvx_esdt_safe_contract_address()
             .clone();
-        let bridge_owner = self.bridge_owner().clone();
+        let sovereign_owner = self.sovereign_owner().clone();
 
         self.interactor()
             .tx()
             .to(current_mvx_esdt_safe_address)
-            .from(bridge_owner)
+            .from(sovereign_owner)
             .gas(30_000_000u64)
             .typed(MvxEsdtSafeProxy)
             .set_token_burn_mechanism(token_id)
@@ -933,22 +933,6 @@ pub trait CommonInteractorTrait {
             expected_tokens_enshrine_esdt_safe,
         )
         .await;
-    }
-
-    async fn check_user_address_balance_is_empty(&mut self) {
-        let bridge_owner = self.user_address().clone();
-        let first_token_id = self.state().get_first_token_id_string();
-        let second_token_id = self.state().get_second_token_id_string();
-        let fee_token_id = self.state().get_fee_token_id_string();
-
-        let expected_tokens_user = vec![
-            self.zero_tokens(first_token_id),
-            self.zero_tokens(second_token_id),
-            self.zero_tokens(fee_token_id),
-        ];
-
-        self.check_address_balance(&Bech32Address::from(bridge_owner), expected_tokens_user)
-            .await;
     }
 
     async fn check_address_balance(

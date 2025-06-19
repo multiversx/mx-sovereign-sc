@@ -127,42 +127,18 @@ impl SovereignForgeInteract {
         self.state.set_fee_token(fee_token);
     }
 
-    pub async fn deploy_template_contracts(
-        &mut self,
-        deploy_cost: BigUint<StaticApi>,
-        optional_sov_config: OptionalValue<SovereignConfig<StaticApi>>,
-        optional_esdt_safe_config: OptionalValue<EsdtSafeConfig<StaticApi>>,
-        fee: Option<FeeStruct<StaticApi>>,
-    ) {
-        self.deploy_sovereign_forge(&deploy_cost).await;
-        let sovereign_forge_address = self.state.current_sovereign_forge_sc_address().clone();
+    pub async fn deploy_template_contracts(&mut self) {
+        self.deploy_chain_config(OptionalValue::None).await;
 
-        self.deploy_chain_config(optional_sov_config.clone()).await;
-        let chain_config_address = self.state.current_chain_config_sc_address().clone();
+        self.deploy_mvx_esdt_safe(OptionalValue::None).await;
 
-        self.deploy_mvx_esdt_safe(optional_esdt_safe_config).await;
-        let mvx_esdt_safe_address = self.state.current_mvx_esdt_safe_contract_address().clone();
-
-        self.deploy_fee_market(mvx_esdt_safe_address.clone(), fee.clone())
-            .await;
-        let fee_market_address = self.state.current_fee_market_address().clone();
-
-        self.deploy_header_verifier(Vec::new()).await;
-        let header_verifier_address = self.state.current_header_verifier_address().clone();
-
-        self.deploy_chain_factory(
-            sovereign_forge_address,
-            chain_config_address,
-            header_verifier_address,
-            mvx_esdt_safe_address,
-            fee_market_address,
+        self.deploy_fee_market(
+            self.state.current_mvx_esdt_safe_contract_address().clone(),
+            None,
         )
         .await;
 
-        let chain_factory_address = self.state.current_chain_factory_sc_address().clone();
-
-        self.deploy_token_handler(chain_factory_address.to_address())
-            .await;
+        self.deploy_header_verifier(Vec::new()).await;
     }
 
     pub async fn deploy_and_complete_setup_phase(
@@ -173,13 +149,27 @@ impl SovereignForgeInteract {
         optional_esdt_safe_config: OptionalValue<EsdtSafeConfig<StaticApi>>,
         fee: Option<FeeStruct<StaticApi>>,
     ) {
-        self.deploy_template_contracts(
-            deploy_cost.clone(),
-            optional_sov_config.clone(),
-            optional_esdt_safe_config.clone(),
-            fee.clone(),
+        self.deploy_template_contracts().await;
+        self.deploy_sovereign_forge(&deploy_cost).await;
+
+        let sov_forge_address = self.state.current_sovereign_forge_sc_address().clone();
+        let chain_config_address = self.state.current_chain_config_sc_address().clone();
+        let mvx_esdt_safe_address = self.state.current_mvx_esdt_safe_contract_address().clone();
+        let fee_market_address = self.state.current_fee_market_address().clone();
+        let header_verifier_address = self.state.current_header_verifier_address().clone();
+        let chain_factory_address = self.state.current_chain_factory_sc_address().clone();
+
+        self.deploy_token_handler(chain_factory_address.to_address())
+            .await;
+        self.deploy_chain_factory(
+            sov_forge_address,
+            chain_config_address,
+            header_verifier_address,
+            mvx_esdt_safe_address,
+            fee_market_address,
         )
         .await;
+
         self.register_token_handler(0).await;
         self.register_token_handler(1).await;
         self.register_token_handler(2).await;

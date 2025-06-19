@@ -1383,7 +1383,7 @@ async fn test_execute_operation_no_esdt_safe_registered() {
 
     let operation_data = OperationData::new(
         1,
-        ManagedAddress::from_address(&chain_interactor.owner_address),
+        ManagedAddress::from_address(&chain_interactor.user_address),
         None,
     );
 
@@ -1465,7 +1465,7 @@ async fn test_execute_operation_with_native_token_success() {
 
     let operation_data = OperationData::new(
         1,
-        ManagedAddress::from_address(&chain_interactor.owner_address),
+        ManagedAddress::from_address(&chain_interactor.user_address),
         Some(transfer_data),
     );
 
@@ -1512,7 +1512,7 @@ async fn test_execute_operation_with_native_token_success() {
     chain_interactor.complete_setup_phase().await;
     chain_interactor
         .change_ownership_to_header_verifier(
-            chain_interactor.owner_address.clone(),
+            chain_interactor.bridge_owner.clone(),
             chain_interactor
                 .state
                 .current_mvx_esdt_safe_contract_address()
@@ -1643,7 +1643,7 @@ async fn test_execute_operation_success_no_fee() {
 
     let operation_data = OperationData::new(
         1,
-        ManagedAddress::from_address(&chain_interactor.owner_address),
+        ManagedAddress::from_address(&chain_interactor.user_address),
         Some(transfer_data),
     );
 
@@ -1767,7 +1767,7 @@ async fn test_execute_operation_only_transfer_data_no_fee() {
 
     let operation_data = OperationData::new(
         1,
-        ManagedAddress::from_address(&chain_interactor.owner_address),
+        ManagedAddress::from_address(&chain_interactor.user_address),
         Some(transfer_data),
     );
 
@@ -1867,7 +1867,7 @@ async fn test_execute_operation_no_payments_failed_event() {
 
     let operation_data = OperationData::new(
         1,
-        ManagedAddress::from_address(&chain_interactor.owner_address),
+        ManagedAddress::from_address(&chain_interactor.user_address),
         Some(transfer_data),
     );
 
