@@ -157,10 +157,7 @@ impl SovereignForgeInteract {
         let mvx_esdt_safe_address = self.state.current_mvx_esdt_safe_contract_address().clone();
         let fee_market_address = self.state.current_fee_market_address().clone();
         let header_verifier_address = self.state.current_header_verifier_address().clone();
-        let chain_factory_address = self.state.current_chain_factory_sc_address().clone();
 
-        self.deploy_token_handler(chain_factory_address.to_address())
-            .await;
         self.deploy_chain_factory(
             sov_forge_address,
             chain_config_address,
@@ -169,6 +166,10 @@ impl SovereignForgeInteract {
             fee_market_address,
         )
         .await;
+        let chain_factory_address = self.state.current_chain_factory_sc_address().clone();
+
+        self.deploy_token_handler(chain_factory_address.to_address())
+            .await;
 
         self.register_token_handler(0).await;
         self.register_token_handler(1).await;
