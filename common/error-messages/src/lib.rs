@@ -113,3 +113,8 @@ pub const VALIDATOR_RANGE_EXCEEDED: &str = "Validator range exceeded";
 pub const VALIDATOR_NOT_REGISTERED: &str = "Validator not registered";
 pub const VALIDATOR_ALREADY_REGISTERED: &str = "Validator already registered";
 pub const BLS_KEY_NOT_REGISTERED: &str = "BLS key not registered";
+pub const MIN_NUMBER_OF_SIGNATURE_NOT_MET: &str = "Minimum number of signatures was not met";
+pub const VALIDATORS_ALREADY_REGISTERED_IN_EPOCH: &str =
+    "There already is a validator set registered for this epoch";
+pub const BITMAP_LEN_DOES_NOT_MATCH_BLS_KEY_LEN: &str =
+    "Bitmap length does not match BLS keys length";

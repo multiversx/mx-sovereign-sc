@@ -427,6 +427,8 @@ impl BaseSetup {
         caller: TestAddress,
         signature: ManagedBuffer<StaticApi>,
         hash_of_hashes: &ManagedBuffer<StaticApi>,
+        pub_keys_bitmap: ManagedBuffer<StaticApi>,
+        epoch: u64,
         operations_hashes: MultiValueEncoded<StaticApi, ManagedBuffer<StaticApi>>,
     ) {
         self.world
@@ -437,8 +439,8 @@ impl BaseSetup {
             .register_bridge_operations(
                 signature,
                 hash_of_hashes,
-                ManagedBuffer::new(),
-                ManagedBuffer::new(),
+                pub_keys_bitmap,
+                epoch,
                 operations_hashes,
             )
             .run();

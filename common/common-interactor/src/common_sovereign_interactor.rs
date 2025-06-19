@@ -578,7 +578,6 @@ pub trait CommonInteractorTrait {
                 signature,
                 hash_of_hashes,
                 ManagedBuffer::new(),
-                ManagedBuffer::new(),
                 operations_hashes,
             )
             .returns(ReturnsResultUnmanaged)

@@ -89,13 +89,15 @@ where
         Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
         Arg1: ProxyArg<ManagedBuffer<Env::Api>>,
         Arg2: ProxyArg<ManagedBuffer<Env::Api>>,
-        Arg3: ProxyArg<MultiValueEncoded<Env::Api, ManagedBuffer<Env::Api>>>,
+        Arg3: ProxyArg<u64>,
+        Arg4: ProxyArg<MultiValueEncoded<Env::Api, ManagedBuffer<Env::Api>>>,
     >(
         self,
         signature: Arg0,
         bridge_operations_hash: Arg1,
         pub_keys_bitmap: Arg2,
-        operations_hashes: Arg3,
+        epoch: Arg3,
+        operations_hashes: Arg4,
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
@@ -103,6 +105,7 @@ where
             .argument(&signature)
             .argument(&bridge_operations_hash)
             .argument(&pub_keys_bitmap)
+            .argument(&epoch)
             .argument(&operations_hashes)
             .original_result()
     }
