@@ -30,13 +30,6 @@ pub trait Headerverifier: events::EventsModule + setup_phase::SetupPhaseModule {
     #[upgrade]
     fn upgrade(&self) {}
 
-    #[only_owner]
-    #[endpoint(registerBlsPubKeys)]
-    fn register_bls_pub_keys(&self, bls_pub_keys: MultiValueEncoded<ManagedBuffer>) {
-        // self.bls_pub_keys().clear();
-        // self.bls_pub_keys().extend(bls_pub_keys);
-    }
-
     #[endpoint(registerBridgeOps)]
     fn register_bridge_operations(
         &self,
@@ -54,15 +47,14 @@ pub trait Headerverifier: events::EventsModule + setup_phase::SetupPhaseModule {
             OUTGOING_TX_HASH_ALREADY_REGISTERED
         );
 
-        let epoch = self.blockchain().get_block_epoch();
-
-        let bls_keys_mapper = self.bls_pub_keys(epoch);
-
         let is_bls_valid = self.verify_bls(
             &signature,
             &bridge_operations_hash,
             pub_keys_bitmap,
-            &ManagedVec::from_iter(bls_keys_mapper.iter()),
+            &ManagedVec::from_iter(
+                self.bls_pub_keys(self.blockchain().get_block_epoch())
+                    .iter(),
+            ),
         );
 
         require!(is_bls_valid, BLS_SIGNATURE_NOT_VALID);
@@ -262,7 +254,8 @@ pub trait Headerverifier: events::EventsModule + setup_phase::SetupPhaseModule {
     }
 
     fn is_signature_count_valid(&self, bls_keys_bitmap: &ManagedBuffer) -> bool {
-        let bitmap_byte_array = bls_keys_bitmap.to_vec();
+        let mut bitmap_byte_array = [0u8; 0];
+        bls_keys_bitmap.load_to_byte_array(&mut bitmap_byte_array);
         let total_bls_pub_keys = bitmap_byte_array.len();
         let minimum_signatures = 2 * total_bls_pub_keys / 3;
 
