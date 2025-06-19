@@ -1,17 +1,16 @@
 #![no_std]
 
 use error_messages::{
-    BLS_SIGNATURE_NOT_VALID, CALLER_NOT_FROM_CURRENT_SOVEREIGN, CHAIN_CONFIG_NOT_DEPLOYED,
-    COULD_NOT_RETRIEVE_SOVEREIGN_CONFIG, CURRENT_OPERATION_ALREADY_IN_EXECUTION,
-    CURRENT_OPERATION_NOT_REGISTERED, HASH_OF_HASHES_DOES_NOT_MATCH, INVALID_VALIDATOR_SET_LENGTH,
+    BLS_KEY_NOT_REGISTERED, BLS_SIGNATURE_NOT_VALID, CALLER_NOT_FROM_CURRENT_SOVEREIGN,
+    CHAIN_CONFIG_NOT_DEPLOYED, COULD_NOT_RETRIEVE_SOVEREIGN_CONFIG,
+    CURRENT_OPERATION_ALREADY_IN_EXECUTION, CURRENT_OPERATION_NOT_REGISTERED,
+    HASH_OF_HASHES_DOES_NOT_MATCH, INVALID_VALIDATOR_SET_LENGTH,
     OUTGOING_TX_HASH_ALREADY_REGISTERED,
 };
 use multiversx_sc::codec;
 use multiversx_sc::proxy_imports::{TopDecode, TopEncode};
-use proxies::chain_config_proxy::ChainConfigContractProxy;
 use structs::configs::SovereignConfig;
 use structs::forge::{ContractInfo, ScArray};
-use structs::ValidatorSignature;
 
 multiversx_sc::imports!();
 
@@ -43,8 +42,7 @@ pub trait Headerverifier: events::EventsModule + setup_phase::SetupPhaseModule {
         &self,
         signature: ManagedBuffer,
         bridge_operations_hash: ManagedBuffer,
-        _pub_keys_bitmap: ManagedBuffer,
-        _epoch: ManagedBuffer,
+        pub_keys_bitmap: ManagedBuffer,
         operations_hashes: MultiValueEncoded<ManagedBuffer>,
     ) {
         self.require_setup_complete();
@@ -56,7 +54,17 @@ pub trait Headerverifier: events::EventsModule + setup_phase::SetupPhaseModule {
             OUTGOING_TX_HASH_ALREADY_REGISTERED
         );
 
-        let is_bls_valid = self.verify_bls(&signature, &bridge_operations_hash);
+        let epoch = self.blockchain().get_block_epoch();
+
+        let bls_keys_mapper = self.bls_pub_keys(epoch);
+
+        let is_bls_valid = self.verify_bls(
+            &signature,
+            &bridge_operations_hash,
+            pub_keys_bitmap,
+            &ManagedVec::from_iter(bls_keys_mapper.iter()),
+        );
+
         require!(is_bls_valid, BLS_SIGNATURE_NOT_VALID);
 
         self.calculate_and_check_transfers_hashes(
@@ -89,11 +97,20 @@ pub trait Headerverifier: events::EventsModule + setup_phase::SetupPhaseModule {
             OUTGOING_TX_HASH_ALREADY_REGISTERED
         );
 
-        let is_bls_valid = self.verify_bls(&signature, &bridge_operations_hash);
+        let bls_keys = self.get_bls_keys_by_id(pub_keys_id);
+
+        let is_bls_valid = self.verify_bls(
+            &signature,
+            &bridge_operations_hash,
+            pub_keys_bitmap,
+            &bls_keys,
+        );
+
         require!(is_bls_valid, BLS_SIGNATURE_NOT_VALID);
 
         let mut operations_hashes = MultiValueEncoded::new();
         operations_hashes.push(operation_hash.clone());
+
         self.calculate_and_check_transfers_hashes(
             &bridge_operations_hash,
             operations_hashes.clone(),
@@ -103,7 +120,7 @@ pub trait Headerverifier: events::EventsModule + setup_phase::SetupPhaseModule {
             self.bls_pub_keys(epoch - 3).clear();
         }
 
-        self.bls_pub_keys(epoch).extend(pub_keys_id);
+        self.bls_pub_keys(epoch).extend(bls_keys);
 
         hash_of_hashes_history_mapper.insert(bridge_operations_hash.clone());
         self.execute_bridge_operation_event(&bridge_operations_hash, &operation_hash);
@@ -148,8 +165,7 @@ pub trait Headerverifier: events::EventsModule + setup_phase::SetupPhaseModule {
         }
 
         self.check_validator_range(
-            self.bls_pub_keys(self.blockchain().get_block_epoch().into())
-                .len() as u64,
+            self.bls_pub_keys(self.blockchain().get_block_epoch()).len() as u64
         );
 
         self.setup_phase_complete().set(true);
@@ -207,35 +223,57 @@ pub trait Headerverifier: events::EventsModule + setup_phase::SetupPhaseModule {
         &self,
         _signature: &ManagedBuffer,
         _bridge_operations_hash: &ManagedBuffer,
+        bls_keys_bitmap: ManagedBuffer,
+        _bls_pub_keys: &ManagedVec<ManagedBuffer>,
     ) -> bool {
+        let _is_signature_count_valid = self.is_signature_count_valid(&bls_keys_bitmap);
+
+        // self.crypto().verify_bls_aggregated_signature(
+        //     bls_pub_keys,
+        //     bridge_operations_hash,
+        //     signature,
+        // );
+
         true
     }
 
-    fn get_bls_key_by_id(&self, id: &BigUint<Self::Api>) {
+    fn get_bls_keys_by_id(
+        &self,
+        ids: MultiValueEncoded<BigUint<Self::Api>>,
+    ) -> ManagedVec<ManagedBuffer> {
         let chain_config_address = self
             .sovereign_contracts()
             .iter()
             .find(|sc| sc.id == ScArray::ChainConfig)
-            .unwrap()
+            .unwrap_or_else(|| sc_panic!(CHAIN_CONFIG_NOT_DEPLOYED))
             .address;
 
-        let mapper = self
-            .tx()
-            .to(chain_config_address)
-            .typed(ChainConfigContractProxy)
-            .bls_keys_map()
-            .returns(ReturnsResult)
-            .sync_call();
+        let mut bls_keys = ManagedVec::new();
+
+        for id in ids.into_iter() {
+            bls_keys.push(
+                self.bls_keys_map(chain_config_address.clone())
+                    .get(&id)
+                    .unwrap_or_else(|| sc_panic!(BLS_KEY_NOT_REGISTERED)),
+            );
+        }
+
+        bls_keys
     }
 
-    fn is_signature_count_valid(&self, pub_keys_count: usize) -> bool {
-        let total_bls_pub_keys = self.bls_pub_keys(self.blockchain().get_block_epoch()).len();
+    fn is_signature_count_valid(&self, bls_keys_bitmap: &ManagedBuffer) -> bool {
+        let bitmap_byte_array = bls_keys_bitmap.to_vec();
+        let total_bls_pub_keys = bitmap_byte_array.len();
         let minimum_signatures = 2 * total_bls_pub_keys / 3;
 
-        pub_keys_count > minimum_signatures
-    }
+        let signature_count = bitmap_byte_array
+            .iter()
+            .copied()
+            .filter(|b| *b == 1)
+            .count();
 
-    fn get_bls_keys(&self) {}
+        signature_count > minimum_signatures
+    }
 
     #[storage_mapper("blsPubKeys")]
     fn bls_pub_keys(&self, epoch: u64) -> SetMapper<ManagedBuffer>;
