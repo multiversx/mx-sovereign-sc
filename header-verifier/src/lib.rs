@@ -108,7 +108,7 @@ pub trait Headerverifier: events::EventsModule + setup_phase::SetupPhaseModule {
             operations_hashes.clone(),
         );
 
-        if !self.bls_pub_keys(epoch - 3).is_empty() {
+        if epoch > 3 && !self.bls_pub_keys(epoch - 3).is_empty() {
             self.bls_pub_keys(epoch - 3).clear();
         }
 
@@ -216,9 +216,10 @@ pub trait Headerverifier: events::EventsModule + setup_phase::SetupPhaseModule {
         _signature: &ManagedBuffer,
         _bridge_operations_hash: &ManagedBuffer,
         bls_keys_bitmap: ManagedBuffer,
-        _bls_pub_keys: &ManagedVec<ManagedBuffer>,
+        bls_pub_keys: &ManagedVec<ManagedBuffer>,
     ) -> bool {
-        let _is_signature_count_valid = self.is_signature_count_valid(&bls_keys_bitmap);
+        let _is_signature_count_valid =
+            self.is_signature_count_valid(&bls_keys_bitmap, bls_pub_keys.len());
 
         // self.crypto().verify_bls_aggregated_signature(
         //     bls_pub_keys,
@@ -253,9 +254,16 @@ pub trait Headerverifier: events::EventsModule + setup_phase::SetupPhaseModule {
         bls_keys
     }
 
-    fn is_signature_count_valid(&self, bls_keys_bitmap: &ManagedBuffer) -> bool {
-        let mut bitmap_byte_array = [0u8; 0];
-        bls_keys_bitmap.load_to_byte_array(&mut bitmap_byte_array);
+    fn is_signature_count_valid(
+        &self,
+        bls_keys_bitmap: &ManagedBuffer,
+        bls_keys_length: usize,
+    ) -> bool {
+        let mut padded_bitmap_byte_array = [0u8; 1024];
+        bls_keys_bitmap.load_to_byte_array(&mut padded_bitmap_byte_array);
+
+        let bitmap_byte_array = &padded_bitmap_byte_array[..bls_keys_length];
+
         let total_bls_pub_keys = bitmap_byte_array.len();
         let minimum_signatures = 2 * total_bls_pub_keys / 3;
 
