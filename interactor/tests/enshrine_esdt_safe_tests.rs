@@ -88,7 +88,7 @@ async fn test_register_tokens_wrong_token_as_fee() {
         )
         .await;
 
-    chain_interactor.check_wallet_balance().await;
+    chain_interactor.check_wallet_balance_unchanged().await;
 }
 
 /// ### TEST
@@ -130,11 +130,11 @@ async fn test_register_tokens() {
         .register_tokens(payment, token_vec, None)
         .await;
 
-    let expected_owner_balance = BigUint::from(ONE_THOUSAND_TOKENS) - payment_amount;
-    let expected_owner_tokens = vec![
+    let expected_user_address_balance = BigUint::from(ONE_THOUSAND_TOKENS) - payment_amount;
+    let expected_user_address_tokens = vec![
         (
             chain_interactor.state.get_first_token_id().to_string(),
-            expected_owner_balance.clone(),
+            expected_user_address_balance.clone(),
         ),
         (
             chain_interactor.state.get_second_token_id().to_string(),
@@ -147,8 +147,8 @@ async fn test_register_tokens() {
     ];
     chain_interactor
         .check_address_balance(
-            &Bech32Address::from(chain_interactor.owner_address.clone()),
-            expected_owner_tokens,
+            &Bech32Address::from(chain_interactor.user_address.clone()),
+            expected_user_address_tokens,
         )
         .await;
 }
@@ -191,7 +191,7 @@ async fn test_register_tokens_insufficient_wegld() {
     chain_interactor
         .register_tokens(payment, token_vec, Some(NOT_ENOUGH_WEGLD_AMOUNT))
         .await;
-    chain_interactor.check_wallet_balance().await;
+    chain_interactor.check_wallet_balance_unchanged().await;
 }
 
 /// ### TEST
@@ -253,7 +253,7 @@ async fn test_deposit_no_fee() {
         )
         .await;
 
-    let expected_owner_tokens = vec![
+    let expected_user_address_tokens = vec![
         (
             chain_interactor.state.get_first_token_id().to_string(),
             BigUint::from(ONE_THOUSAND_TOKENS) - amount,
@@ -270,8 +270,8 @@ async fn test_deposit_no_fee() {
 
     chain_interactor
         .check_address_balance(
-            &Bech32Address::from(chain_interactor.owner_address.clone()),
-            expected_owner_tokens,
+            &Bech32Address::from(chain_interactor.user_address.clone()),
+            expected_user_address_tokens,
         )
         .await;
 }
@@ -312,7 +312,7 @@ async fn test_deposit_token_nothing_to_transfer_fee_disabled() {
         )
         .await;
 
-    chain_interactor.check_wallet_balance().await;
+    chain_interactor.check_wallet_balance_unchanged().await;
     chain_interactor
         .check_enshrine_esdt_safe_balance_is_empty()
         .await;
@@ -357,7 +357,7 @@ async fn test_deposit_max_transfers_exceeded() {
         )
         .await;
 
-    chain_interactor.check_wallet_balance().await;
+    chain_interactor.check_wallet_balance_unchanged().await;
     chain_interactor
         .check_enshrine_esdt_safe_balance_is_empty()
         .await;
@@ -434,7 +434,7 @@ async fn test_deposit_no_transfer_data() {
     let expected_fee_amount = BigUint::from(ONE_THOUSAND_TOKENS) - fee_amount_per_transfer;
     let expected_second_token_amount = BigUint::from(ONE_THOUSAND_TOKENS) - &amount;
 
-    let expected_owner_balances = vec![
+    let expected_user_address_balances = vec![
         (
             chain_interactor.state.get_first_token_id_string(),
             expected_fee_amount,
@@ -447,8 +447,8 @@ async fn test_deposit_no_transfer_data() {
 
     chain_interactor
         .check_address_balance(
-            &Bech32Address::from(chain_interactor.owner_address.clone()),
-            expected_owner_balances,
+            &Bech32Address::from(chain_interactor.user_address.clone()),
+            expected_user_address_balances,
         )
         .await;
 
@@ -525,7 +525,7 @@ async fn test_deposit_with_transfer_data_gas_limit_too_high() {
         )
         .await;
 
-    chain_interactor.check_wallet_balance().await;
+    chain_interactor.check_wallet_balance_unchanged().await;
     chain_interactor
         .check_enshrine_esdt_safe_balance_is_empty()
         .await;
@@ -597,7 +597,7 @@ async fn test_deposit_with_transfer_data_banned_endpoint() {
             None,
         )
         .await;
-    chain_interactor.check_wallet_balance().await;
+    chain_interactor.check_wallet_balance_unchanged().await;
     chain_interactor
         .check_enshrine_esdt_safe_balance_is_empty()
         .await;
@@ -690,7 +690,7 @@ async fn test_deposit_with_transfer_data_enough_for_fee() {
     ];
     chain_interactor
         .check_address_balance(
-            &Bech32Address::from(chain_interactor.owner_address.clone()),
+            &Bech32Address::from(chain_interactor.user_address.clone()),
             expected_wallet_balances,
         )
         .await;
@@ -782,7 +782,7 @@ async fn test_deposit_with_transfer_data_not_enough_for_fee() {
         )
         .await;
 
-    chain_interactor.check_wallet_balance().await;
+    chain_interactor.check_wallet_balance_unchanged().await;
     chain_interactor
         .check_enshrine_esdt_safe_balance_is_empty()
         .await;
@@ -842,7 +842,7 @@ async fn test_deposit_refund_non_whitelisted_tokens_fee_disabled() {
             Some("deposit"),
         )
         .await;
-    chain_interactor.check_wallet_balance().await;
+    chain_interactor.check_wallet_balance_unchanged().await;
     chain_interactor
         .check_enshrine_esdt_safe_balance_is_empty()
         .await;
@@ -915,7 +915,7 @@ async fn test_deposit_refund_non_whitelisted_tokens_fee_enabled() {
         )
         .await;
 
-    chain_interactor.check_wallet_balance().await;
+    chain_interactor.check_wallet_balance_unchanged().await;
     chain_interactor
         .check_enshrine_esdt_safe_balance_is_empty()
         .await;

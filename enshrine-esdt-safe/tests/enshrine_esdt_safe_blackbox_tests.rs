@@ -180,7 +180,7 @@ fn test_register_tokens_wrong_token_as_fee() {
 }
 
 /// ### TEST
-/// E-ESDT_REGISTER_FAIL
+/// E-ESDT_REGISTER_OK
 ///
 /// ### ACTION
 /// Call 'register_tokens()' with valid payments

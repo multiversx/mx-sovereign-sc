@@ -25,7 +25,9 @@ use crate::sovereign_forge;
 
 pub struct EnshrineEsdtSafeInteract {
     pub interactor: Interactor,
-    pub owner_address: Address,
+    pub bridge_owner: Address,
+    pub sovereign_owner: Address,
+    pub bridge_service: Address,
     pub user_address: Address,
     pub state: State,
 }
@@ -39,8 +41,16 @@ impl CommonInteractorTrait for EnshrineEsdtSafeInteract {
         &mut self.state
     }
 
-    fn owner_address(&self) -> &Address {
-        &self.owner_address
+    fn bridge_owner(&self) -> &Address {
+        &self.bridge_owner
+    }
+
+    fn bridge_service(&self) -> &Address {
+        &self.bridge_service
+    }
+
+    fn sovereign_owner(&self) -> &Address {
+        &self.sovereign_owner
     }
 
     fn user_address(&self) -> &Address {
@@ -62,14 +72,18 @@ impl EnshrineEsdtSafeInteract {
 
         let working_dir = INTERACTOR_WORKING_DIR;
         interactor.set_current_dir_from_workspace(working_dir);
-        let owner_address = interactor.register_wallet(test_wallets::mike()).await;
+        let bridge_owner = interactor.register_wallet(test_wallets::mike()).await;
+        let sovereign_owner = interactor.register_wallet(test_wallets::alice()).await;
+        let bridge_service = interactor.register_wallet(test_wallets::carol()).await;
         let user_address = interactor.register_wallet(test_wallets::bob()).await;
 
         interactor.generate_blocks_until_epoch(1u64).await.unwrap();
 
         EnshrineEsdtSafeInteract {
             interactor,
-            owner_address,
+            bridge_owner,
+            sovereign_owner,
+            bridge_service,
             user_address,
             state: State::load_state(),
         }
@@ -133,7 +147,7 @@ impl EnshrineEsdtSafeInteract {
         opt_config: Option<EsdtSafeConfig<StaticApi>>,
         sc_array: Vec<ScArray>,
     ) {
-        let owner = self.owner_address().clone();
+        let owner = self.bridge_owner().clone();
         self.deploy_chain_config(OptionalValue::None).await;
         self.deploy_token_handler(owner).await;
         self.deploy_enshrine_esdt(
@@ -167,7 +181,7 @@ impl EnshrineEsdtSafeInteract {
             .interactor
             .tx()
             .to(self.state.current_enshrine_esdt_safe_address())
-            .from(&self.owner_address)
+            .from(&self.bridge_owner)
             .gas(30_000_000u64)
             .typed(EnshrineEsdtSafeProxy)
             .upgrade()
@@ -187,7 +201,7 @@ impl EnshrineEsdtSafeInteract {
         let response = self
             .interactor
             .tx()
-            .from(&self.owner_address)
+            .from(&self.bridge_owner)
             .to(self.state.current_enshrine_esdt_safe_address())
             .gas(30_000_000u64)
             .typed(EnshrineEsdtSafeProxy)
@@ -210,7 +224,7 @@ impl EnshrineEsdtSafeInteract {
         let (response, logs) = self
             .interactor
             .tx()
-            .from(&self.owner_address)
+            .from(&self.user_address)
             .to(self.state.current_enshrine_esdt_safe_address())
             .gas(30_000_000u64)
             .typed(EnshrineEsdtSafeProxy)
@@ -236,7 +250,7 @@ impl EnshrineEsdtSafeInteract {
         let (response, logs) = self
             .interactor
             .tx()
-            .from(&self.owner_address)
+            .from(&self.user_address)
             .to(self.state.current_enshrine_esdt_safe_address())
             .gas(30_000_000u64)
             .typed(EnshrineEsdtSafeProxy)
@@ -251,29 +265,6 @@ impl EnshrineEsdtSafeInteract {
         self.assert_expected_log(logs, expected_log);
     }
 
-    pub async fn register_new_token_id(
-        &mut self,
-        payment_token_id: TokenIdentifier<StaticApi>,
-        payment_token_nonce: u64,
-        payment_amount: BigUint<StaticApi>,
-        token_identifiers: MultiValueEncoded<StaticApi, TokenIdentifier<StaticApi>>,
-    ) {
-        let response = self
-            .interactor
-            .tx()
-            .from(&self.owner_address)
-            .to(self.state.current_enshrine_esdt_safe_address())
-            .gas(30_000_000u64)
-            .typed(EnshrineEsdtSafeProxy)
-            .register_new_token_id(token_identifiers)
-            .payment((payment_token_id, payment_token_nonce, payment_amount))
-            .returns(ReturnsResultUnmanaged)
-            .run()
-            .await;
-
-        println!("Result: {response:?}");
-    }
-
     pub async fn register_tokens(
         &mut self,
         fee_payment: EsdtTokenPayment<StaticApi>,
@@ -286,7 +277,7 @@ impl EnshrineEsdtSafeInteract {
         let response = self
             .interactor
             .tx()
-            .from(self.owner_address.clone())
+            .from(self.user_address.clone())
             .to(self.state.current_enshrine_esdt_safe_address())
             .gas(30_000_000u64)
             .typed(EnshrineEsdtSafeProxy)
@@ -306,7 +297,7 @@ impl EnshrineEsdtSafeInteract {
         let response = self
             .interactor
             .tx()
-            .from(&self.owner_address)
+            .from(&self.bridge_owner)
             .to(self.state.current_enshrine_esdt_safe_address())
             .gas(30_000_000u64)
             .typed(EnshrineEsdtSafeProxy)
@@ -325,7 +316,7 @@ impl EnshrineEsdtSafeInteract {
         let response = self
             .interactor
             .tx()
-            .from(&self.owner_address)
+            .from(&self.bridge_owner)
             .to(self.state.current_enshrine_esdt_safe_address())
             .gas(30_000_000u64)
             .typed(EnshrineEsdtSafeProxy)
@@ -344,7 +335,7 @@ impl EnshrineEsdtSafeInteract {
         let response = self
             .interactor
             .tx()
-            .from(&self.owner_address)
+            .from(&self.bridge_owner)
             .to(self.state.current_enshrine_esdt_safe_address())
             .gas(30_000_000u64)
             .typed(EnshrineEsdtSafeProxy)
@@ -363,7 +354,7 @@ impl EnshrineEsdtSafeInteract {
         let response = self
             .interactor
             .tx()
-            .from(&self.owner_address)
+            .from(&self.bridge_owner)
             .to(self.state.current_enshrine_esdt_safe_address())
             .gas(30_000_000u64)
             .typed(EnshrineEsdtSafeProxy)
@@ -407,7 +398,7 @@ impl EnshrineEsdtSafeInteract {
         let response = self
             .interactor
             .tx()
-            .from(&self.owner_address)
+            .from(&self.bridge_owner)
             .to(self.state.current_enshrine_esdt_safe_address())
             .gas(30_000_000u64)
             .typed(EnshrineEsdtSafeProxy)
@@ -423,7 +414,7 @@ impl EnshrineEsdtSafeInteract {
         let response = self
             .interactor
             .tx()
-            .from(&self.owner_address)
+            .from(&self.bridge_owner)
             .to(self.state.current_enshrine_esdt_safe_address())
             .gas(30_000_000u64)
             .typed(EnshrineEsdtSafeProxy)
