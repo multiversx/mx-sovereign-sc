@@ -4,7 +4,8 @@ use common_test_setup::constants::{
 };
 use error_messages::{
     CALLER_NOT_OWNER, CURRENT_OPERATION_NOT_REGISTERED, INVALID_FEE, INVALID_FEE_TYPE,
-    INVALID_TOKEN_ID, PAYMENT_DOES_NOT_COVER_FEE, TOKEN_NOT_ACCEPTED_AS_FEE,
+    INVALID_TOKEN_ID, PAYMENT_DOES_NOT_COVER_FEE, SETUP_PHASE_NOT_COMPLETED,
+    TOKEN_NOT_ACCEPTED_AS_FEE,
 };
 use fee_market::fee_type::FeeTypeModule;
 use fee_market_blackbox_setup::*;
@@ -94,7 +95,12 @@ fn test_set_fee_setup_not_completed() {
         fee_type: FeeType::None,
     };
 
-    state.set_fee(&ManagedBuffer::new(), &fee, Some(CALLER_NOT_OWNER), None);
+    state.set_fee(
+        &ManagedBuffer::new(),
+        &fee,
+        Some(SETUP_PHASE_NOT_COMPLETED),
+        None,
+    );
 }
 
 /// ### TEST
@@ -268,7 +274,7 @@ fn test_remove_fee_setup_phase_not_completed() {
     state.remove_fee(
         &ManagedBuffer::new(),
         FIRST_TEST_TOKEN,
-        Some(CALLER_NOT_OWNER),
+        Some(SETUP_PHASE_NOT_COMPLETED),
         None,
     );
 }

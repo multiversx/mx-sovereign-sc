@@ -1,8 +1,8 @@
+use common_test_setup::base_setup::init::{AccountSetup, BaseSetup};
 use common_test_setup::constants::{
     ENSHRINE_ESDT_SAFE_CODE_PATH, ENSHRINE_SC_ADDRESS, HEADER_VERIFIER_ADDRESS, OWNER_ADDRESS,
     OWNER_BALANCE,
 };
-use common_test_setup::{AccountSetup, BaseSetup};
 use multiversx_sc::api::ManagedTypeApi;
 use multiversx_sc::types::{ManagedBuffer, MultiValueEncoded, TestSCAddress};
 use multiversx_sc_scenario::{
