@@ -49,6 +49,7 @@ impl HeaderVerifierTestState {
     pub fn register_operations(
         &mut self,
         operation: BridgeOperation<StaticApi>,
+        pub_keys_bitmap: ManagedBuffer<StaticApi>,
         epoch: u64,
         expected_error_message: Option<&str>,
     ) {
@@ -62,7 +63,7 @@ impl HeaderVerifierTestState {
             .register_bridge_operations(
                 operation.signature,
                 operation.bridge_operation_hash,
-                ManagedBuffer::new(),
+                pub_keys_bitmap,
                 epoch,
                 operation.operations_hashes,
             )
