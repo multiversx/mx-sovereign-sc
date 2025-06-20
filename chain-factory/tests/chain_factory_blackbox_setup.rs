@@ -1,8 +1,8 @@
 use common_test_setup::{
+    base_setup::init::{AccountSetup, BaseSetup},
     constants::{
         CHAIN_FACTORY_SC_ADDRESS, OWNER_ADDRESS, OWNER_BALANCE, SOVEREIGN_FORGE_SC_ADDRESS,
     },
-    AccountSetup, BaseSetup,
 };
 use multiversx_sc::imports::OptionalValue;
 use multiversx_sc_scenario::{api::StaticApi, ReturnsHandledOrError, ScenarioTxRun};
