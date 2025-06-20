@@ -1,10 +1,10 @@
 use common_test_setup::{
+    base_setup::init::{AccountSetup, BaseSetup},
     constants::{
         CHAIN_FACTORY_CODE_PATH, CHAIN_FACTORY_SC_ADDRESS, CROWD_TOKEN_ID, FUNGIBLE_TOKEN_ID,
         NFT_TOKEN_ID, ONE_HUNDRED_THOUSAND, OWNER_ADDRESS, OWNER_BALANCE, TOKEN_HANDLER_SC_ADDRESS,
         USER_ADDRESS,
     },
-    AccountSetup, BaseSetup,
 };
 use multiversx_sc::types::{
     EsdtTokenData, EsdtTokenPayment, ManagedAddress, MultiValueEncoded, TestSCAddress,

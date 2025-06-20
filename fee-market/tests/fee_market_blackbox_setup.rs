@@ -8,12 +8,12 @@ use multiversx_sc::{
 use multiversx_sc_scenario::{api::StaticApi, ReturnsHandledOrError, ReturnsLogs, ScenarioTxRun};
 
 use common_test_setup::{
+    base_setup::init::{AccountSetup, BaseSetup},
     constants::{
         CROWD_TOKEN_ID, ESDT_SAFE_ADDRESS, FEE_MARKET_ADDRESS, FIRST_TEST_TOKEN,
         HEADER_VERIFIER_ADDRESS, MVX_ESDT_SAFE_CODE_PATH, OWNER_ADDRESS, OWNER_BALANCE,
         SECOND_TEST_TOKEN, USER_ADDRESS, WRONG_TOKEN_ID,
     },
-    AccountSetup, BaseSetup,
 };
 use proxies::fee_market_proxy::FeeMarketProxy;
 use structs::fee::{FeeStruct, FeeType};

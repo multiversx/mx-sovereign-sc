@@ -934,7 +934,7 @@ fn test_deploy_phase_two() {
 /// ### EXPECTED
 /// Error ESDT_SAFE_ALREADY_DEPLOYED
 #[test]
-fn test_deploy_phase_two_header_already_deployed() {
+fn test_deploy_phase_two_esdt_safe_already_deployed() {
     let mut state = SovereignForgeTestState::new();
     state.common_setup.deploy_sovereign_forge();
 

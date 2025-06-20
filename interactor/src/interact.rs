@@ -8,7 +8,7 @@ use common_interactor::{
 use enshrine_esdt_safe::enshrine_esdt_safe_interactor::EnshrineEsdtSafeInteract;
 use multiversx_sc::{
     imports::{MultiValueVec, OptionalValue},
-    types::{BigUint, ManagedBuffer, ManagedVec, MultiValueEncoded, TokenIdentifier},
+    types::{BigUint, ManagedBuffer, ManagedVec},
 };
 use multiversx_sc_snippets::env_logger;
 use mvx_esdt_safe::mvx_esdt_safe_interactor_main::MvxEsdtSafeInteract;
@@ -169,16 +169,6 @@ pub async fn enshrine_esdt_safe_cli() {
                     ),
                     None,
                     None,
-                )
-                .await
-        }
-        "registerNewTokenID" => {
-            interact
-                .register_new_token_id(
-                    TokenIdentifier::from_esdt_bytes(""),
-                    0u64,
-                    BigUint::from(100u64),
-                    MultiValueEncoded::new(),
                 )
                 .await
         }
