@@ -7,6 +7,7 @@ use multiversx_sc_scenario::{
 use structs::{
     forge::{ContractInfo, ScArray},
     operation::Operation,
+    ValidatorInfo,
 };
 
 use crate::{
@@ -18,6 +19,12 @@ use crate::{
 };
 
 impl BaseSetup {
+    pub fn register_multiple_validators(&mut self, new_validators: Vec<ValidatorInfo<StaticApi>>) {
+        for new_validator in new_validators {
+            self.register_validator(new_validator, None, Some("register"));
+        }
+    }
+
     pub fn change_ownership_to_header_verifier(&mut self, sc_address: TestSCAddress) {
         self.world
             .tx()
