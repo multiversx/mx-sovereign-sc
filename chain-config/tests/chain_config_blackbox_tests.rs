@@ -236,6 +236,8 @@ fn test_update_config_invalid_config() {
         OWNER_ADDRESS,
         ManagedBuffer::new(),
         &hash_of_hashes,
+        ManagedBuffer::new(),
+        0,
         MultiValueEncoded::from_iter(vec![config_hash]),
     );
 
@@ -277,6 +279,8 @@ fn test_update_config() {
         OWNER_ADDRESS,
         ManagedBuffer::new(),
         &hash_of_hashes,
+        ManagedBuffer::new(),
+        0,
         MultiValueEncoded::from_iter(vec![config_hash]),
     );
 
