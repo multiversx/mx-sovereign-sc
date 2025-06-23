@@ -115,3 +115,4 @@ pub const NO_REGISTERED_VALIDATORS: &str = "No registered validators";
 pub const VALIDATOR_NOT_REGISTERED: &str = "Validator not registered";
 pub const VALIDATOR_ALREADY_REGISTERED: &str = "Validator already registered";
 pub const INVALID_ADDITIONAL_STAKE: &str = "Invalid additional stake sent";
+pub const GENESIS_PHASE_NOT_COMPLETE: &str = "Genesis phase not complete";

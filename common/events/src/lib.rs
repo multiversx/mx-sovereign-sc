@@ -56,4 +56,7 @@ pub trait EventsModule {
         #[indexed] egld_stake: &BigUint,
         #[indexed] token_stake: &EsdtTokenData<Self::Api>,
     );
+
+    #[event("completeGenesisPhase")]
+    fn complete_genesis_event(&self);
 }

@@ -15,7 +15,6 @@ pub trait ChainConfigContract:
     + setup_phase::SetupPhaseModule
     + utils::UtilsModule
     + events::EventsModule
-    + pause::PauseModule
 {
     #[init]
     fn init(&self, opt_config: OptionalValue<SovereignConfig<Self::Api>>) {
@@ -30,7 +29,7 @@ pub trait ChainConfigContract:
         };
 
         self.sovereign_config().set(new_config.clone());
-        self.set_paused(true);
+        self.genesis_phase().set(true);
     }
 
     #[only_owner]
@@ -91,7 +90,8 @@ pub trait ChainConfigContract:
         );
         self.require_validator_set_valid(validator_bls_keys_mapper.len() as u64);
 
-        self.set_paused(false);
+        self.genesis_phase().set(false);
+        self.complete_genesis_event();
     }
 
     #[only_owner]

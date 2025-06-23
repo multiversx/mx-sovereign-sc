@@ -1,9 +1,8 @@
 use error_messages::{
-    INVALID_ADDITIONAL_STAKE, INVALID_MIN_MAX_VALIDATOR_NUMBERS, INVALID_TOKEN_ID,
-    NOT_ENOUGH_VALIDATORS, VALIDATOR_ALREADY_REGISTERED, VALIDATOR_NOT_REGISTERED,
-    VALIDATOR_RANGE_EXCEEDED,
+    GENESIS_PHASE_NOT_COMPLETE, INVALID_ADDITIONAL_STAKE, INVALID_MIN_MAX_VALIDATOR_NUMBERS,
+    INVALID_TOKEN_ID, NOT_ENOUGH_VALIDATORS, VALIDATOR_ALREADY_REGISTERED,
+    VALIDATOR_NOT_REGISTERED, VALIDATOR_RANGE_EXCEEDED,
 };
-use multiversx_sc_modules::pause;
 use structs::{configs::SovereignConfig, ValidatorInfo};
 
 multiversx_sc::imports!();
@@ -17,9 +16,7 @@ pub struct TokenIdAmountPair<M: ManagedTypeApi> {
 }
 
 #[multiversx_sc::module]
-pub trait ValidatorRulesModule:
-    setup_phase::SetupPhaseModule + events::EventsModule + pause::PauseModule
-{
+pub trait ValidatorRulesModule: setup_phase::SetupPhaseModule + events::EventsModule {
     fn is_new_config_valid(&self, config: &SovereignConfig<Self::Api>) -> Option<&str> {
         if let Some(additional_stake) = config.opt_additional_stake_required.clone() {
             for stake in additional_stake {
@@ -40,9 +37,12 @@ pub trait ValidatorRulesModule:
         self.require_validator_not_registered(&new_validator.bls_key);
 
         if self.bls_keys_map().is_empty() {
-            self.require_caller_whitelist();
+            self.require_caller_whitelisted();
         } else {
-            self.require_not_paused();
+            require!(
+                !self.is_genesis_phase_complete(),
+                GENESIS_PHASE_NOT_COMPLETE
+            );
         }
 
         let max_number_of_validators = self.sovereign_config().get().max_validators;
@@ -111,7 +111,11 @@ pub trait ValidatorRulesModule:
         );
     }
 
-    fn require_caller_whitelist(&self) {
+    fn is_genesis_phase_complete(&self) -> bool {
+        self.genesis_phase().get()
+    }
+
+    fn require_caller_whitelisted(&self) {
         if let Some(additional_stake) = &self.sovereign_config().get().opt_additional_stake_required
         {
             let call_value = self.call_value().all_esdt_transfers();
@@ -143,6 +147,9 @@ pub trait ValidatorRulesModule:
 
     #[storage_mapper("lastBlsKeyId")]
     fn last_bls_key_id(&self) -> SingleValueMapper<BigUint<Self::Api>>;
+
+    #[storage_mapper("genesisPhase")]
+    fn genesis_phase(&self) -> SingleValueMapper<bool>;
 
     #[view(wasPreviouslySlashed)]
     #[storage_mapper("wasPreviouslySlashed")]
