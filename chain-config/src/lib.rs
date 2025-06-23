@@ -2,7 +2,6 @@
 
 use error_messages::{ERROR_AT_ENCODING, NO_REGISTERED_VALIDATORS};
 use multiversx_sc::imports::*;
-use multiversx_sc_modules::pause;
 use structs::{configs::SovereignConfig, generate_hash::GenerateHash};
 
 multiversx_sc::imports!();
@@ -85,7 +84,7 @@ pub trait ChainConfigContract:
     fn complete_genesis(&self) {
         let validator_bls_keys_mapper = self.bls_keys_map();
         require!(
-            validator_bls_keys_mapper.is_empty(),
+            !validator_bls_keys_mapper.is_empty(),
             NO_REGISTERED_VALIDATORS
         );
         self.require_validator_set_valid(validator_bls_keys_mapper.len() as u64);

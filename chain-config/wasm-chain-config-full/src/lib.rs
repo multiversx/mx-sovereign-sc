@@ -6,9 +6,9 @@
 
 // Init:                                 1
 // Upgrade:                              1
-// Endpoints:                           13
+// Endpoints:                           10
 // Async Callback (empty):               1
-// Total number of exported functions:  16
+// Total number of exported functions:  13
 
 #![no_std]
 
@@ -30,9 +30,6 @@ multiversx_sc_wasm_adapter::endpoints! {
         blsKeyToId => bls_key_to_id_mapper
         blsKeysMap => bls_keys_map
         wasPreviouslySlashed => was_previously_slashed
-        pause => pause_endpoint
-        unpause => unpause_endpoint
-        isPaused => paused_status
     )
 }
 

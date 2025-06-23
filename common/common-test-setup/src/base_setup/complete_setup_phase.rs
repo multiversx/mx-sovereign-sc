@@ -1,4 +1,4 @@
-use multiversx_sc_scenario::{ReturnsHandledOrError, ScenarioTxRun};
+use multiversx_sc_scenario::{ReturnsHandledOrError, ReturnsLogs, ScenarioTxRun};
 use proxies::{
     chain_config_proxy::ChainConfigContractProxy, fee_market_proxy::FeeMarketProxy,
     header_verifier_proxy::HeaderverifierProxy, sovereign_forge_proxy::SovereignForgeProxy,
@@ -69,5 +69,26 @@ impl BaseSetup {
             .run();
 
         self.assert_expected_error_message(transaction, expect_error);
+    }
+
+    pub fn complete_chain_config_genesis_phase(
+        &mut self,
+        expect_error: Option<&str>,
+        expected_log: Option<&str>,
+    ) {
+        let (transaction, logs) = self
+            .world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .to(CHAIN_CONFIG_ADDRESS)
+            .typed(ChainConfigContractProxy)
+            .complete_genesis()
+            .returns(ReturnsHandledOrError::new())
+            .returns(ReturnsLogs)
+            .run();
+
+        self.assert_expected_error_message(transaction, expect_error);
+
+        self.assert_expected_log(logs, expected_log);
     }
 }

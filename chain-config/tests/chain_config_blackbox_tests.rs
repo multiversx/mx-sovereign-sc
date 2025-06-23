@@ -1,18 +1,27 @@
 use chain_config::validator_rules::ValidatorRulesModule;
 use chain_config_blackbox_setup::ChainConfigTestState;
-use common_test_setup::constants::{CHAIN_CONFIG_ADDRESS, OWNER_ADDRESS, USER_ADDRESS};
+use common_test_setup::constants::{
+    CHAIN_CONFIG_ADDRESS, FIRST_TEST_TOKEN, OWNER_ADDRESS, USER_ADDRESS,
+};
 use error_messages::{
-    INVALID_MIN_MAX_VALIDATOR_NUMBERS, SETUP_PHASE_NOT_COMPLETED, VALIDATOR_ALREADY_REGISTERED,
-    VALIDATOR_NOT_REGISTERED, VALIDATOR_RANGE_EXCEEDED,
+    GENESIS_PHASE_NOT_COMPLETE, INVALID_ADDITIONAL_STAKE, INVALID_MIN_MAX_VALIDATOR_NUMBERS,
+    NOT_ENOUGH_VALIDATORS, NO_REGISTERED_VALIDATORS, SETUP_PHASE_NOT_COMPLETED,
+    VALIDATOR_ALREADY_REGISTERED, VALIDATOR_NOT_REGISTERED, VALIDATOR_RANGE_EXCEEDED,
 };
 use multiversx_sc::{
     imports::OptionalValue,
-    types::{BigUint, EsdtTokenData, ManagedBuffer, MultiValueEncoded},
+    types::{
+        BigUint, EsdtTokenData, EsdtTokenPayment, ManagedBuffer, ManagedVec, MultiEsdtPayment,
+        MultiValueEncoded,
+    },
 };
 use multiversx_sc_scenario::{multiversx_chain_vm::crypto_functions::sha256, ScenarioTxWhitebox};
 use setup_phase::SetupPhaseModule;
 use structs::{
-    configs::SovereignConfig, forge::ScArray, generate_hash::GenerateHash, ValidatorInfo,
+    configs::{SovereignConfig, StakeArgs},
+    forge::ScArray,
+    generate_hash::GenerateHash,
+    ValidatorInfo,
 };
 
 mod chain_config_blackbox_setup;
@@ -299,32 +308,6 @@ fn test_update_config() {
 /// C-CONFIG_REGISTER_VALIDATOR_FAIL
 ///
 /// ### ACTION
-/// Call 'register()' during the setup phase
-///
-/// ### EXPECTED
-/// Error SETUP_PHASE_NOT_COMPLETED
-#[test]
-fn test_register_validator_setup_not_completed() {
-    let mut state = ChainConfigTestState::new();
-
-    state
-        .common_setup
-        .deploy_chain_config(OptionalValue::None, None);
-
-    let new_validator = ValidatorInfo {
-        address: USER_ADDRESS.to_managed_address(),
-        bls_key: ManagedBuffer::from("validator1"),
-        egld_stake: BigUint::default(),
-        token_stake: EsdtTokenData::default(),
-    };
-
-    state.register(&new_validator, Some(SETUP_PHASE_NOT_COMPLETED), None);
-}
-
-/// ### TEST
-/// C-CONFIG_REGISTER_VALIDATOR_FAIL
-///
-/// ### ACTION
 /// Call 'register()' with too many validators
 ///
 /// ### EXPECTED
@@ -353,11 +336,25 @@ fn test_register_validator_range_exceeded_too_many_validators() {
         token_stake: EsdtTokenData::default(),
     };
 
-    state.register(&new_validator_one, None, Some("register"));
+    state.register(
+        &new_validator_one,
+        MultiEsdtPayment::new(),
+        None,
+        Some("register"),
+    );
     let id_one = state.get_bls_key_id(&new_validator_one.bls_key);
     assert!(state.get_bls_key_by_id(&id_one) == new_validator_one.bls_key);
 
-    state.register(&new_validator_two, Some(VALIDATOR_RANGE_EXCEEDED), None);
+    state
+        .common_setup
+        .complete_chain_config_genesis_phase(None, Some("completeGenesisPhase"));
+
+    state.register(
+        &new_validator_two,
+        MultiEsdtPayment::new(),
+        Some(VALIDATOR_RANGE_EXCEEDED),
+        None,
+    );
 }
 
 /// ### TEST
@@ -385,26 +382,44 @@ fn test_register_validator_already_registered() {
         token_stake: EsdtTokenData::default(),
     };
 
-    state.register(&new_validator, None, Some("register"));
+    state.register(
+        &new_validator,
+        MultiEsdtPayment::new(),
+        None,
+        Some("register"),
+    );
     assert!(state.get_bls_key_id(&new_validator.bls_key) == 1);
 
-    state.register(&new_validator, Some(VALIDATOR_ALREADY_REGISTERED), None);
+    state.register(
+        &new_validator,
+        MultiEsdtPayment::new(),
+        Some(VALIDATOR_ALREADY_REGISTERED),
+        None,
+    );
 }
 
 /// ### TEST
-/// C-CONFIG_REGISTER_VALIDATOR_OK
+/// C-CONFIG_REGISTER_VALIDATOR_FAIL
 ///
 /// ### ACTION
-/// Call 'register()' with valid validators
+/// Call 'register()' as a validator that isn't whitelisted
 ///
 /// ### EXPECTED
-/// Validator is registered successfully
+/// Error INVALID_ADDITIONAL_STAKE
 #[test]
-fn test_register_validator() {
+fn test_register_validator_not_whitelisted() {
     let mut state = ChainConfigTestState::new();
+
+    let first_token_stake_arg = StakeArgs {
+        token_id: FIRST_TEST_TOKEN.to_token_identifier(),
+        amount: BigUint::from(100u64),
+    };
+
+    let additional_stage_args = ManagedVec::from(vec![first_token_stake_arg]);
 
     let config = SovereignConfig {
         max_validators: 2,
+        opt_additional_stake_required: Some(additional_stage_args),
         ..SovereignConfig::default_config()
     };
 
@@ -421,18 +436,198 @@ fn test_register_validator() {
         token_stake: EsdtTokenData::default(),
     };
 
-    let new_validator_two = ValidatorInfo {
-        address: OWNER_ADDRESS.to_managed_address(),
+    state.register(
+        &new_validator,
+        MultiEsdtPayment::new(),
+        Some(INVALID_ADDITIONAL_STAKE),
+        None,
+    );
+}
+
+/// ### TEST
+/// C-CONFIG_REGISTER_VALIDATOR_OK
+///
+/// ### ACTION
+/// Call 'register()' as a whitelisted validator
+///
+/// ### EXPECTED
+/// Validator is registered successfully
+#[test]
+fn test_register_validator_is_whitelisted() {
+    let mut state = ChainConfigTestState::new();
+
+    let first_token_stake_arg = StakeArgs {
+        token_id: FIRST_TEST_TOKEN.to_token_identifier(),
+        amount: BigUint::from(100u64),
+    };
+
+    let additional_stage_args = ManagedVec::from(vec![first_token_stake_arg]);
+
+    let config = SovereignConfig {
+        max_validators: 2,
+        opt_additional_stake_required: Some(additional_stage_args),
+        ..SovereignConfig::default_config()
+    };
+
+    state
+        .common_setup
+        .deploy_chain_config(OptionalValue::Some(config), None);
+
+    // state
+    //     .common_setup
+    //     .complete_chain_config_genesis_phase(None, Some("completeGenesisPhase"));
+    state.common_setup.complete_chain_config_setup_phase(None);
+
+    let new_validator = ValidatorInfo {
+        address: USER_ADDRESS.to_managed_address(),
+        bls_key: ManagedBuffer::from("validator1"),
+        egld_stake: BigUint::default(),
+        token_stake: EsdtTokenData::default(),
+    };
+
+    let payment = EsdtTokenPayment::new(
+        FIRST_TEST_TOKEN.to_token_identifier(),
+        0,
+        BigUint::from(100u64),
+    );
+
+    state.register(
+        &new_validator,
+        ManagedVec::from(vec![payment]),
+        None,
+        Some("register"),
+    );
+}
+
+/// ### TEST
+/// C-CONFIG_REGISTER_VALIDATOR_OK
+///
+/// ### ACTION
+/// Call 'register()' as a non whitelisted validator after genesis phase
+///
+/// ### EXPECTED
+/// Error GENESIS_PHASE_NOT_COMPLETE
+#[test]
+fn test_register_validator_not_whitelisted_after_genesis() {
+    let mut state = ChainConfigTestState::new();
+
+    let first_token_stake_arg = StakeArgs {
+        token_id: FIRST_TEST_TOKEN.to_token_identifier(),
+        amount: BigUint::from(100u64),
+    };
+
+    let additional_stage_args = ManagedVec::from(vec![first_token_stake_arg]);
+
+    let config = SovereignConfig {
+        max_validators: 2,
+        opt_additional_stake_required: Some(additional_stage_args),
+        ..SovereignConfig::default_config()
+    };
+
+    state
+        .common_setup
+        .deploy_chain_config(OptionalValue::Some(config), None);
+
+    state.common_setup.complete_chain_config_setup_phase(None);
+
+    let whitelisted_validator = ValidatorInfo {
+        address: USER_ADDRESS.to_managed_address(),
+        bls_key: ManagedBuffer::from("validator1"),
+        egld_stake: BigUint::default(),
+        token_stake: EsdtTokenData::default(),
+    };
+
+    let payment = EsdtTokenPayment::new(
+        FIRST_TEST_TOKEN.to_token_identifier(),
+        0,
+        BigUint::from(100u64),
+    );
+
+    state.register(
+        &whitelisted_validator,
+        ManagedVec::from(vec![payment]),
+        None,
+        Some("register"),
+    );
+
+    state
+        .common_setup
+        .complete_chain_config_genesis_phase(None, Some("completeGenesisPhase"));
+
+    let validator = ValidatorInfo {
+        address: USER_ADDRESS.to_managed_address(),
         bls_key: ManagedBuffer::from("validator2"),
         egld_stake: BigUint::default(),
         token_stake: EsdtTokenData::default(),
     };
 
-    state.register(&new_validator, None, Some("register"));
-    assert!(state.get_bls_key_id(&new_validator.bls_key) == 1);
+    state.register(&validator, ManagedVec::new(), None, Some("register"));
+}
 
-    state.register(&new_validator_two, None, Some("register"));
-    assert!(state.get_bls_key_id(&new_validator_two.bls_key) == 2);
+/// ### TEST
+/// C-CONFIG_REGISTER_VALIDATOR_ERROR
+///
+/// ### ACTION
+/// Call 'register()' as a non whitelisted validator during genesis phase
+///
+/// ### EXPECTED
+/// Error GENESIS_PHASE_NOT_COMPLETE
+#[test]
+fn test_register_validator_not_whitelisted_during_genesis() {
+    let mut state = ChainConfigTestState::new();
+
+    let first_token_stake_arg = StakeArgs {
+        token_id: FIRST_TEST_TOKEN.to_token_identifier(),
+        amount: BigUint::from(100u64),
+    };
+
+    let additional_stage_args = ManagedVec::from(vec![first_token_stake_arg]);
+
+    let config = SovereignConfig {
+        max_validators: 2,
+        opt_additional_stake_required: Some(additional_stage_args),
+        ..SovereignConfig::default_config()
+    };
+
+    state
+        .common_setup
+        .deploy_chain_config(OptionalValue::Some(config), None);
+
+    state.common_setup.complete_chain_config_setup_phase(None);
+
+    let whitelisted_validator = ValidatorInfo {
+        address: USER_ADDRESS.to_managed_address(),
+        bls_key: ManagedBuffer::from("validator1"),
+        egld_stake: BigUint::default(),
+        token_stake: EsdtTokenData::default(),
+    };
+
+    let payment = EsdtTokenPayment::new(
+        FIRST_TEST_TOKEN.to_token_identifier(),
+        0,
+        BigUint::from(100u64),
+    );
+
+    state.register(
+        &whitelisted_validator,
+        ManagedVec::from(vec![payment]),
+        None,
+        Some("register"),
+    );
+
+    let validator = ValidatorInfo {
+        address: USER_ADDRESS.to_managed_address(),
+        bls_key: ManagedBuffer::from("validator2"),
+        egld_stake: BigUint::default(),
+        token_stake: EsdtTokenData::default(),
+    };
+
+    state.register(
+        &validator,
+        ManagedVec::new(),
+        Some(GENESIS_PHASE_NOT_COMPLETE),
+        None,
+    );
 }
 
 /// ### TEST
@@ -458,7 +653,7 @@ fn test_unregister_validator_setup_phase_not_completed() {
         token_stake: EsdtTokenData::default(),
     };
 
-    state.register(&new_validator, Some(SETUP_PHASE_NOT_COMPLETED), None);
+    state.unregister(&new_validator, Some(SETUP_PHASE_NOT_COMPLETED), None);
 }
 
 /// ### TEST
@@ -522,10 +717,128 @@ fn test_unregister_validator() {
         token_stake: EsdtTokenData::default(),
     };
 
-    state.register(&new_validator, None, Some("register"));
+    state.register(
+        &new_validator,
+        MultiEsdtPayment::new(),
+        None,
+        Some("register"),
+    );
     assert!(state.get_bls_key_id(&new_validator.bls_key) == 1);
 
     state.unregister(&new_validator, None, Some("unregister"));
 
     assert!(state.get_bls_key_id(&new_validator.bls_key) == 0);
+}
+
+/// ### TEST
+/// C-CONFIG_COMPLETE_GENESIS_PHASE_ERROR
+///
+/// ### ACTION
+/// Call 'complete_genesis()' with no registered validators
+///
+/// ### EXPECTED
+/// Error NO_REGISTERED_VALIDATORS
+#[test]
+fn complete_genesis_no_registered_validators() {
+    let mut state = ChainConfigTestState::new();
+
+    state
+        .common_setup
+        .deploy_chain_config(OptionalValue::None, None);
+
+    state
+        .common_setup
+        .complete_chain_config_genesis_phase(Some(NO_REGISTERED_VALIDATORS), None);
+}
+
+/// ### TEST
+/// C-CONFIG_COMPLETE_GENESIS_PHASE_ERROR
+///
+/// ### ACTION
+/// Call 'complete_genesis()' with no registered validators
+///
+/// ### EXPECTED
+/// Error NOT_ENOUGH_VALIDATORS
+#[test]
+fn complete_genesis_not_enough_registered_validators() {
+    let mut state = ChainConfigTestState::new();
+
+    let config = SovereignConfig {
+        min_validators: 2,
+        max_validators: 3,
+        ..SovereignConfig::default_config()
+    };
+
+    state
+        .common_setup
+        .deploy_chain_config(OptionalValue::Some(config), None);
+
+    let new_validator = ValidatorInfo {
+        address: USER_ADDRESS.to_managed_address(),
+        bls_key: ManagedBuffer::from("validator1"),
+        egld_stake: BigUint::default(),
+        token_stake: EsdtTokenData::default(),
+    };
+
+    state.register(
+        &new_validator,
+        MultiEsdtPayment::new(),
+        None,
+        Some("register"),
+    );
+    assert!(state.get_bls_key_id(&new_validator.bls_key) == 1);
+
+    state
+        .common_setup
+        .complete_chain_config_genesis_phase(Some(NOT_ENOUGH_VALIDATORS), None);
+}
+
+/// ### TEST
+/// C-CONFIG_COMPLETE_GENESIS_PHASE_OK
+///
+/// ### ACTION
+/// Call 'complete_genesis()'
+///
+/// ### EXPECTED
+/// The `genesis_phase` storage is updated
+#[test]
+fn complete_genesis() {
+    let mut state = ChainConfigTestState::new();
+
+    let config = SovereignConfig {
+        min_validators: 1,
+        ..SovereignConfig::default_config()
+    };
+
+    state
+        .common_setup
+        .deploy_chain_config(OptionalValue::Some(config), None);
+
+    let new_validator = ValidatorInfo {
+        address: USER_ADDRESS.to_managed_address(),
+        bls_key: ManagedBuffer::from("validator1"),
+        egld_stake: BigUint::default(),
+        token_stake: EsdtTokenData::default(),
+    };
+
+    state.register(
+        &new_validator,
+        MultiEsdtPayment::new(),
+        None,
+        Some("register"),
+    );
+    assert!(state.get_bls_key_id(&new_validator.bls_key) == 1);
+
+    state
+        .common_setup
+        .complete_chain_config_genesis_phase(None, Some("completeGenesisPhase"));
+
+    state
+        .common_setup
+        .world
+        .query()
+        .to(CHAIN_CONFIG_ADDRESS)
+        .whitebox(chain_config::contract_obj, |sc| {
+            assert!(!sc.genesis_phase().get());
+        })
 }
