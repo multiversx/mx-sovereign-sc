@@ -114,6 +114,15 @@ where
             .original_result()
     }
 
+    pub fn complete_genesis(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("completeGenesis")
+            .original_result()
+    }
+
     pub fn complete_setup_phase(
         self,
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
@@ -128,9 +137,8 @@ where
     >(
         self,
         new_validator: Arg0,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+    ) -> TxTypedCall<Env, From, To, (), Gas, ()> {
         self.wrapped_tx
-            .payment(NotPayable)
             .raw_call("register")
             .argument(&new_validator)
             .original_result()
@@ -190,6 +198,33 @@ where
             .payment(NotPayable)
             .raw_call("wasPreviouslySlashed")
             .argument(&validator)
+            .original_result()
+    }
+
+    pub fn pause_endpoint(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("pause")
+            .original_result()
+    }
+
+    pub fn unpause_endpoint(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("unpause")
+            .original_result()
+    }
+
+    pub fn paused_status(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, bool> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("isPaused")
             .original_result()
     }
 }

@@ -1,7 +1,8 @@
 #![no_std]
 
-use error_messages::ERROR_AT_ENCODING;
+use error_messages::{ERROR_AT_ENCODING, NO_REGISTERED_VALIDATORS};
 use multiversx_sc::imports::*;
+use multiversx_sc_modules::pause;
 use structs::{configs::SovereignConfig, generate_hash::GenerateHash};
 
 multiversx_sc::imports!();
@@ -14,6 +15,7 @@ pub trait ChainConfigContract:
     + setup_phase::SetupPhaseModule
     + utils::UtilsModule
     + events::EventsModule
+    + pause::PauseModule
 {
     #[init]
     fn init(&self, opt_config: OptionalValue<SovereignConfig<Self::Api>>) {
@@ -28,6 +30,7 @@ pub trait ChainConfigContract:
         };
 
         self.sovereign_config().set(new_config.clone());
+        self.set_paused(true);
     }
 
     #[only_owner]
@@ -76,6 +79,19 @@ pub trait ChainConfigContract:
 
         self.remove_executed_hash(&hash_of_hashes, &config_hash);
         self.execute_bridge_operation_event(&hash_of_hashes, &config_hash);
+    }
+
+    #[only_owner]
+    #[endpoint(completeGenesis)]
+    fn complete_genesis(&self) {
+        let validator_bls_keys_mapper = self.bls_keys_map();
+        require!(
+            validator_bls_keys_mapper.is_empty(),
+            NO_REGISTERED_VALIDATORS
+        );
+        self.require_validator_set_valid(validator_bls_keys_mapper.len() as u64);
+
+        self.set_paused(false);
     }
 
     #[only_owner]

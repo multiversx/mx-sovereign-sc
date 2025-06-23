@@ -1,7 +1,9 @@
 use error_messages::{
-    INVALID_MIN_MAX_VALIDATOR_NUMBERS, VALIDATOR_ALREADY_REGISTERED, VALIDATOR_NOT_REGISTERED,
+    INVALID_ADDITIONAL_STAKE, INVALID_MIN_MAX_VALIDATOR_NUMBERS, INVALID_TOKEN_ID,
+    NOT_ENOUGH_VALIDATORS, VALIDATOR_ALREADY_REGISTERED, VALIDATOR_NOT_REGISTERED,
     VALIDATOR_RANGE_EXCEEDED,
 };
+use multiversx_sc_modules::pause;
 use structs::{configs::SovereignConfig, ValidatorInfo};
 
 multiversx_sc::imports!();
@@ -15,8 +17,16 @@ pub struct TokenIdAmountPair<M: ManagedTypeApi> {
 }
 
 #[multiversx_sc::module]
-pub trait ValidatorRulesModule: setup_phase::SetupPhaseModule + events::EventsModule {
+pub trait ValidatorRulesModule:
+    setup_phase::SetupPhaseModule + events::EventsModule + pause::PauseModule
+{
     fn is_new_config_valid(&self, config: &SovereignConfig<Self::Api>) -> Option<&str> {
+        if let Some(additional_stake) = config.opt_additional_stake_required.clone() {
+            for stake in additional_stake {
+                require!(stake.token_id.is_valid_esdt_identifier(), INVALID_TOKEN_ID);
+            }
+        }
+
         if config.min_validators <= config.max_validators {
             None
         } else {
@@ -24,10 +34,16 @@ pub trait ValidatorRulesModule: setup_phase::SetupPhaseModule + events::EventsMo
         }
     }
 
+    #[payable]
     #[endpoint(register)]
     fn register(&self, new_validator: ValidatorInfo<Self::Api>) {
-        self.require_setup_complete();
         self.require_validator_not_registered(&new_validator.bls_key);
+
+        if self.bls_keys_map().is_empty() {
+            self.require_caller_whitelist();
+        } else {
+            self.require_not_paused();
+        }
 
         let max_number_of_validators = self.sovereign_config().get().max_validators;
         let last_bls_key_id_mapper = self.last_bls_key_id();
@@ -84,6 +100,30 @@ pub trait ValidatorRulesModule: setup_phase::SetupPhaseModule + events::EventsMo
             !self.bls_key_to_id_mapper(bls_key).is_empty(),
             VALIDATOR_NOT_REGISTERED
         );
+    }
+
+    fn require_validator_set_valid(&self, validator_len: u64) {
+        let config = self.sovereign_config().get();
+
+        require!(
+            validator_len >= config.min_validators,
+            NOT_ENOUGH_VALIDATORS
+        );
+    }
+
+    fn require_caller_whitelist(&self) {
+        if let Some(additional_stake) = &self.sovereign_config().get().opt_additional_stake_required
+        {
+            let call_value = self.call_value().all_esdt_transfers();
+
+            for stake in additional_stake {
+                let matched = call_value.iter().any(|paid| {
+                    paid.token_identifier == stake.token_id && paid.amount >= stake.amount
+                });
+
+                require!(matched, INVALID_ADDITIONAL_STAKE);
+            }
+        }
     }
 
     #[view(sovereignConfig)]
