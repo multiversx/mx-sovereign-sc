@@ -1,6 +1,6 @@
 #![no_std]
 
-use error_messages::{ERROR_AT_ENCODING, NO_REGISTERED_VALIDATORS};
+use error_messages::ERROR_AT_ENCODING;
 use multiversx_sc::imports::*;
 use structs::{configs::SovereignConfig, generate_hash::GenerateHash};
 
@@ -28,7 +28,7 @@ pub trait ChainConfigContract:
         };
 
         self.sovereign_config().set(new_config.clone());
-        self.genesis_phase().set(true);
+        self.genesis_phase_status().set(true);
     }
 
     #[only_owner]
@@ -80,26 +80,15 @@ pub trait ChainConfigContract:
     }
 
     #[only_owner]
-    #[endpoint(completeGenesis)]
-    fn complete_genesis(&self) {
-        let validator_bls_keys_mapper = self.bls_keys_map();
-        require!(
-            !validator_bls_keys_mapper.is_empty(),
-            NO_REGISTERED_VALIDATORS
-        );
-        self.require_validator_set_valid(validator_bls_keys_mapper.len() as u64);
-
-        self.genesis_phase().set(false);
-        self.complete_genesis_event();
-    }
-
-    #[only_owner]
     #[endpoint(completeSetupPhase)]
     fn complete_setup_phase(&self) {
         if self.is_setup_phase_complete() {
             return;
         }
+        self.require_validator_set_valid(self.bls_keys_map().len());
 
+        self.genesis_phase_status().set(false);
+        self.complete_genesis_event();
         self.setup_phase_complete().set(true);
     }
 

@@ -1,19 +1,12 @@
 use error_messages::{
-    GENESIS_PHASE_NOT_COMPLETE, INVALID_ADDITIONAL_STAKE, INVALID_MIN_MAX_VALIDATOR_NUMBERS,
-    INVALID_TOKEN_ID, NOT_ENOUGH_VALIDATORS, VALIDATOR_ALREADY_REGISTERED,
-    VALIDATOR_NOT_REGISTERED, VALIDATOR_RANGE_EXCEEDED,
+    INVALID_ADDITIONAL_STAKE, INVALID_MIN_MAX_VALIDATOR_NUMBERS, INVALID_TOKEN_ID,
+    NOT_ENOUGH_VALIDATORS, VALIDATOR_ALREADY_REGISTERED, VALIDATOR_NOT_REGISTERED,
+    VALIDATOR_RANGE_EXCEEDED,
 };
 use structs::{configs::SovereignConfig, ValidatorInfo};
 
 multiversx_sc::imports!();
 multiversx_sc::derive_imports!();
-
-#[type_abi]
-#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, ManagedVecItem)]
-pub struct TokenIdAmountPair<M: ManagedTypeApi> {
-    pub token_id: TokenIdentifier<M>,
-    pub amount: BigUint<M>,
-}
 
 #[multiversx_sc::module]
 pub trait ValidatorRulesModule: setup_phase::SetupPhaseModule + events::EventsModule {
@@ -34,16 +27,11 @@ pub trait ValidatorRulesModule: setup_phase::SetupPhaseModule + events::EventsMo
     #[payable]
     #[endpoint(register)]
     fn register(&self, new_validator: ValidatorInfo<Self::Api>) {
-        self.require_validator_not_registered(&new_validator.bls_key);
-
-        if self.bls_keys_map().is_empty() {
-            self.require_caller_whitelisted();
-        } else {
-            require!(
-                !self.is_genesis_phase_complete(),
-                GENESIS_PHASE_NOT_COMPLETE
-            );
+        if !self.is_genesis_phase_complete() {
+            self.validate_additional_stake();
         }
+
+        self.require_validator_not_registered(&new_validator.bls_key);
 
         let max_number_of_validators = self.sovereign_config().get().max_validators;
         let last_bls_key_id_mapper = self.last_bls_key_id();
@@ -102,20 +90,21 @@ pub trait ValidatorRulesModule: setup_phase::SetupPhaseModule + events::EventsMo
         );
     }
 
-    fn require_validator_set_valid(&self, validator_len: u64) {
+    fn require_validator_set_valid(&self, validator_len: usize) {
         let config = self.sovereign_config().get();
 
         require!(
-            validator_len >= config.min_validators,
+            validator_len as u64 >= config.min_validators,
             NOT_ENOUGH_VALIDATORS
         );
     }
 
     fn is_genesis_phase_complete(&self) -> bool {
-        self.genesis_phase().get()
+        self.genesis_phase_status().get()
     }
 
-    fn require_caller_whitelisted(&self) {
+    // TODO: send back tokens if additional stake is not enough
+    fn validate_additional_stake(&self) {
         if let Some(additional_stake) = &self.sovereign_config().get().opt_additional_stake_required
         {
             let call_value = self.call_value().all_esdt_transfers();
@@ -149,7 +138,7 @@ pub trait ValidatorRulesModule: setup_phase::SetupPhaseModule + events::EventsMo
     fn last_bls_key_id(&self) -> SingleValueMapper<BigUint<Self::Api>>;
 
     #[storage_mapper("genesisPhase")]
-    fn genesis_phase(&self) -> SingleValueMapper<bool>;
+    fn genesis_phase_status(&self) -> SingleValueMapper<bool>;
 
     #[view(wasPreviouslySlashed)]
     #[storage_mapper("wasPreviouslySlashed")]

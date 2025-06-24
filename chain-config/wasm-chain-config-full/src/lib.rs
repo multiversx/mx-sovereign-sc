@@ -6,9 +6,9 @@
 
 // Init:                                 1
 // Upgrade:                              1
-// Endpoints:                           10
+// Endpoints:                            9
 // Async Callback (empty):               1
-// Total number of exported functions:  13
+// Total number of exported functions:  12
 
 #![no_std]
 
@@ -22,7 +22,6 @@ multiversx_sc_wasm_adapter::endpoints! {
         upgrade => upgrade
         updateSovereignConfigSetupPhase => update_sovereign_config_during_setup_phase
         updateSovereignConfig => update_sovereign_config
-        completeGenesis => complete_genesis
         completeSetupPhase => complete_setup_phase
         register => register
         unregister => unregister

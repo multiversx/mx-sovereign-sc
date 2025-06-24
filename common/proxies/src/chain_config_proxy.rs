@@ -114,15 +114,6 @@ where
             .original_result()
     }
 
-    pub fn complete_genesis(
-        self,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("completeGenesis")
-            .original_result()
-    }
-
     pub fn complete_setup_phase(
         self,
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {

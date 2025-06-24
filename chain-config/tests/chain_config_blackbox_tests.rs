@@ -836,6 +836,6 @@ fn complete_genesis() {
         .query()
         .to(CHAIN_CONFIG_ADDRESS)
         .whitebox(chain_config::contract_obj, |sc| {
-            assert!(!sc.genesis_phase().get());
+            assert!(!sc.genesis_phase_status().get());
         })
 }
