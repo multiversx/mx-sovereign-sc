@@ -473,9 +473,6 @@ fn test_register_validator_is_whitelisted() {
         .common_setup
         .deploy_chain_config(OptionalValue::Some(config), None);
 
-    // state
-    //     .common_setup
-    //     .complete_chain_config_genesis_phase(None, Some("completeGenesisPhase"));
     state.common_setup.complete_chain_config_setup_phase(None);
 
     let new_validator = ValidatorInfo {
@@ -506,7 +503,7 @@ fn test_register_validator_is_whitelisted() {
 /// Call 'register()' as a non whitelisted validator after genesis phase
 ///
 /// ### EXPECTED
-/// Error GENESIS_PHASE_NOT_COMPLETE
+/// Validator is registered successfully
 #[test]
 fn test_register_validator_not_whitelisted_after_genesis() {
     let mut state = ChainConfigTestState::new();
