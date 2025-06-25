@@ -3,7 +3,8 @@ use error_messages::{
     NOT_ENOUGH_VALIDATORS, REGISTRATION_PAUSED, VALIDATOR_ALREADY_REGISTERED,
     VALIDATOR_NOT_REGISTERED, VALIDATOR_RANGE_EXCEEDED,
 };
-use structs::{configs::SovereignConfig, ValidatorInfo};
+use multiversx_sc::chain_core::EGLD_000000_TOKEN_IDENTIFIER;
+use structs::{configs::SovereignConfig, TokenStake, ValidatorInfo};
 
 multiversx_sc::imports!();
 multiversx_sc::derive_imports!();
@@ -26,14 +27,15 @@ pub trait ValidatorRulesModule: setup_phase::SetupPhaseModule + events::EventsMo
 
     #[payable]
     #[endpoint(register)]
-    fn register(&self, new_validator: ValidatorInfo<Self::Api>) {
+    fn register(&self, new_bls_key: ManagedBuffer<Self::Api>) {
+        let call_value = self.call_value().all_esdt_transfers();
         if self.is_genesis_phase_active() {
-            self.validate_additional_stake();
+            self.validate_additional_stake(&call_value);
         } else {
             self.require_registration_not_frozen();
         }
 
-        self.require_validator_not_registered(&new_validator.bls_key);
+        self.require_validator_not_registered(&new_bls_key);
 
         let max_number_of_validators = self.sovereign_config().get().max_validators;
         let last_bls_key_id_mapper = self.last_bls_key_id();
@@ -46,19 +48,20 @@ pub trait ValidatorRulesModule: setup_phase::SetupPhaseModule + events::EventsMo
 
         self.last_bls_key_id().set(current_bls_key_id.clone());
         self.bls_keys_map()
-            .insert(current_bls_key_id.clone(), new_validator.bls_key.clone());
-        self.bls_key_to_id_mapper(&new_validator.bls_key)
+            .insert(current_bls_key_id.clone(), new_bls_key.clone());
+        self.bls_key_to_id_mapper(&new_bls_key)
             .set(current_bls_key_id.clone());
 
         self.register_event(
             &current_bls_key_id,
-            &new_validator.address,
-            &new_validator.bls_key,
-            &new_validator.egld_stake,
-            &new_validator.token_stake,
+            &self.blockchain().get_caller(),
+            &new_bls_key,
+            &egld_value,
+            &TokenStake::map_token_stake_vec_from_esdt_call_value(&call_value),
         );
     }
 
+    // TODO: add storage for registered stake in order to return it upon unregistering
     #[endpoint(unregister)]
     fn unregister(&self, validator_info: ValidatorInfo<Self::Api>) {
         self.require_validator_registered(&validator_info.bls_key);
@@ -105,15 +108,11 @@ pub trait ValidatorRulesModule: setup_phase::SetupPhaseModule + events::EventsMo
     }
 
     // TODO: send back tokens if additional stake is not enough
-    fn validate_additional_stake(&self) {
+    fn validate_additional_stake(&self, call_value: &ManagedVec<EsdtTokenPayment<Self::Api>>) {
         if let Some(additional_stake) = &self.sovereign_config().get().opt_additional_stake_required
         {
-            let call_value = self.call_value().all_esdt_transfers();
-
             for stake in additional_stake {
-                let matched = call_value.iter().any(|paid| {
-                    paid.token_identifier == stake.token_id && paid.amount >= stake.amount
-                });
+                let matched = call_value.iter().any(|paid| paid.amount >= stake.amount);
 
                 require!(matched, INVALID_ADDITIONAL_STAKE);
             }

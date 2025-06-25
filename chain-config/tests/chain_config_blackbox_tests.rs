@@ -324,14 +324,14 @@ fn test_register_validator_range_exceeded_too_many_validators() {
         address: USER_ADDRESS.to_managed_address(),
         bls_key: ManagedBuffer::from("validator1"),
         egld_stake: BigUint::default(),
-        token_stake: EsdtTokenData::default(),
+        token_stake: ManagedVec::new(),
     };
 
     let new_validator_two = ValidatorInfo {
         address: OWNER_ADDRESS.to_managed_address(),
         bls_key: ManagedBuffer::from("validator2"),
         egld_stake: BigUint::default(),
-        token_stake: EsdtTokenData::default(),
+        token_stake: ManagedVec::new(),
     };
 
     state.register(
@@ -371,7 +371,7 @@ fn test_register_validator_already_registered() {
         address: USER_ADDRESS.to_managed_address(),
         bls_key: ManagedBuffer::from("validator1"),
         egld_stake: BigUint::default(),
-        token_stake: EsdtTokenData::default(),
+        token_stake: ManagedVec::new(),
     };
 
     state.register(
@@ -423,7 +423,7 @@ fn test_register_validator_not_whitelisted() {
         address: USER_ADDRESS.to_managed_address(),
         bls_key: ManagedBuffer::from("validator1"),
         egld_stake: BigUint::default(),
-        token_stake: EsdtTokenData::default(),
+        token_stake: ManagedVec::new(),
     };
 
     state.register(
@@ -467,7 +467,7 @@ fn test_register_validator_is_whitelisted() {
         address: USER_ADDRESS.to_managed_address(),
         bls_key: ManagedBuffer::from("validator1"),
         egld_stake: BigUint::default(),
-        token_stake: EsdtTokenData::default(),
+        token_stake: ManagedVec::new(),
     };
 
     let payment = EsdtTokenPayment::new(
@@ -517,7 +517,7 @@ fn test_register_validator_not_whitelisted_after_genesis() {
         address: USER_ADDRESS.to_managed_address(),
         bls_key: ManagedBuffer::from("validator1"),
         egld_stake: BigUint::default(),
-        token_stake: EsdtTokenData::default(),
+        token_stake: ManagedVec::new(),
     };
 
     let payment = EsdtTokenPayment::new(
@@ -565,7 +565,7 @@ fn test_register_validator_not_whitelisted_after_genesis() {
         address: USER_ADDRESS.to_managed_address(),
         bls_key: ManagedBuffer::from("validator2"),
         egld_stake: BigUint::default(),
-        token_stake: EsdtTokenData::default(),
+        token_stake: ManagedVec::new(),
     };
 
     state.register(&validator, ManagedVec::new(), None, Some("register"));
@@ -604,7 +604,7 @@ fn test_register_validator_not_whitelisted_during_genesis() {
         address: USER_ADDRESS.to_managed_address(),
         bls_key: ManagedBuffer::from("validator1"),
         egld_stake: BigUint::default(),
-        token_stake: EsdtTokenData::default(),
+        token_stake: ManagedVec::new(),
     };
 
     let payment = EsdtTokenPayment::new(
@@ -624,7 +624,7 @@ fn test_register_validator_not_whitelisted_during_genesis() {
         address: USER_ADDRESS.to_managed_address(),
         bls_key: ManagedBuffer::from("validator2"),
         egld_stake: BigUint::default(),
-        token_stake: EsdtTokenData::default(),
+        token_stake: ManagedVec::new(),
     };
 
     state.register(
@@ -663,7 +663,7 @@ fn test_unregister_validator_not_registered() {
         address: USER_ADDRESS.to_managed_address(),
         bls_key: ManagedBuffer::from("validator1"),
         egld_stake: BigUint::default(),
-        token_stake: EsdtTokenData::default(),
+        token_stake: ManagedVec::new(),
     };
 
     state.unregister(&new_validator, Some(VALIDATOR_NOT_REGISTERED), None);
@@ -691,7 +691,7 @@ fn test_unregister_validator() {
         address: USER_ADDRESS.to_managed_address(),
         bls_key: ManagedBuffer::from("validator1"),
         egld_stake: BigUint::default(),
-        token_stake: EsdtTokenData::default(),
+        token_stake: ManagedVec::new(),
     };
 
     state.register(
