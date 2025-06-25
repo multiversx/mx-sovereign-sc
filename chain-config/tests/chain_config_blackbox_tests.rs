@@ -4,8 +4,9 @@ use common_test_setup::constants::{
     CHAIN_CONFIG_ADDRESS, FIRST_TEST_TOKEN, OWNER_ADDRESS, USER_ADDRESS,
 };
 use error_messages::{
-    INVALID_ADDITIONAL_STAKE, INVALID_MIN_MAX_VALIDATOR_NUMBERS, SETUP_PHASE_NOT_COMPLETED,
-    VALIDATOR_ALREADY_REGISTERED, VALIDATOR_NOT_REGISTERED, VALIDATOR_RANGE_EXCEEDED,
+    INVALID_ADDITIONAL_STAKE, INVALID_MIN_MAX_VALIDATOR_NUMBERS, INVALID_REGISTRATION_STATUS,
+    SETUP_PHASE_NOT_COMPLETED, VALIDATOR_ALREADY_REGISTERED, VALIDATOR_NOT_REGISTERED,
+    VALIDATOR_RANGE_EXCEEDED,
 };
 use multiversx_sc::{
     imports::OptionalValue,
@@ -704,4 +705,108 @@ fn test_unregister_validator() {
     state.unregister(&new_validator, None, Some("unregister"));
 
     assert!(state.get_bls_key_id(&new_validator.bls_key) == 0);
+}
+
+/// ### TEST
+/// C-CONFIG_UPDATE_REGISTRATION_FAIL
+///
+/// ### ACTION
+/// Call 'update_registration_status()' before setup phase completion
+///
+/// ### EXPECTED
+/// Error SETUP_PHASE_NOT_COMPLETED
+#[test]
+fn update_registration_setup_not_complete() {
+    let mut state = ChainConfigTestState::new();
+
+    state
+        .common_setup
+        .deploy_chain_config(OptionalValue::None, None);
+
+    state.common_setup.update_registration_status(
+        &ManagedBuffer::new(),
+        1,
+        Some(SETUP_PHASE_NOT_COMPLETED),
+        None,
+    );
+}
+
+/// ### TEST
+/// C-CONFIG_UPDATE_REGISTRATION_FAIL
+///
+/// ### ACTION
+/// Call 'update_registration_status()' with the wrong registration status
+///
+/// ### EXPECTED
+/// "failedBridgeOp" event is emitted
+#[test]
+fn update_registration_wrong_status() {
+    let mut state = ChainConfigTestState::new();
+
+    state
+        .common_setup
+        .deploy_chain_config(OptionalValue::None, None);
+
+    state.common_setup.complete_chain_config_setup_phase(None);
+
+    state.common_setup.update_registration_status(
+        &ManagedBuffer::new(),
+        1,
+        None,
+        Some("failedBridgeOp"),
+    );
+}
+
+/// ### TEST
+/// C-CONFIG_UPDATE_REGISTRATION_OK
+///
+/// ### ACTION
+/// Call 'update_registration_status()'
+///
+/// ### EXPECTED
+/// "registrationStatusUpdate" event is emitted and storage is updated
+#[test]
+fn update_registration_operation_not_registered() {
+    let mut state = ChainConfigTestState::new();
+
+    state
+        .common_setup
+        .deploy_chain_config(OptionalValue::None, None);
+
+    state.common_setup.complete_chain_config_setup_phase(None);
+
+    state
+        .common_setup
+        .deploy_header_verifier(vec![ScArray::ChainConfig]);
+
+    state
+        .common_setup
+        .complete_header_verifier_setup_phase(None);
+
+    let new_status_hash_byte_array = sha256(&[1u8]);
+    let new_status_hash = ManagedBuffer::new_from_bytes(&new_status_hash_byte_array);
+    let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&new_status_hash_byte_array));
+
+    state.common_setup.register_operation(
+        OWNER_ADDRESS,
+        ManagedBuffer::new(),
+        &hash_of_hashes,
+        MultiValueEncoded::from_iter(vec![new_status_hash]),
+    );
+
+    state.common_setup.update_registration_status(
+        &hash_of_hashes,
+        1,
+        None,
+        Some("registrationStatusUpdate"),
+    );
+
+    state
+        .common_setup
+        .world
+        .query()
+        .to(CHAIN_CONFIG_ADDRESS)
+        .whitebox(chain_config::contract_obj, |sc| {
+            assert!(sc.registration_status().get() == 1);
+        })
 }
