@@ -1,10 +1,11 @@
 #![allow(non_snake_case)]
 
 use error_messages::{
-    NO_KNOWN_CHAIN_CONFIG_SC, NO_KNOWN_CHAIN_FACTORY_SC, NO_KNOWN_ENSHRINE_ESDT_SAFE_SC,
-    NO_KNOWN_FEE_MARKET, NO_KNOWN_FEE_TOKEN, NO_KNOWN_FIRST_TOKEN, NO_KNOWN_HEADER_VERIFIER,
-    NO_KNOWN_MVX_ESDT_SAFE, NO_KNOWN_SECOND_TOKEN, NO_KNOWN_SOVEREIGN_FORGE_SC,
-    NO_KNOWN_TESTING_SC, NO_KNOWN_TOKEN_HANDLER_SC,
+    NO_KNOWN_CHAIN_CONFIG_SC, NO_KNOWN_CHAIN_FACTORY_IN_THE_SPECIFIED_SHARD,
+    NO_KNOWN_CHAIN_FACTORY_SC, NO_KNOWN_ENSHRINE_ESDT_SAFE_SC, NO_KNOWN_FEE_MARKET,
+    NO_KNOWN_FEE_TOKEN, NO_KNOWN_FIRST_TOKEN, NO_KNOWN_HEADER_VERIFIER, NO_KNOWN_MVX_ESDT_SAFE,
+    NO_KNOWN_SECOND_TOKEN, NO_KNOWN_SOVEREIGN_FORGE_SC, NO_KNOWN_TESTING_SC,
+    NO_KNOWN_TOKEN_HANDLER_IN_THE_SPECIFIED_SHARD, NO_KNOWN_TOKEN_HANDLER_SC,
 };
 use multiversx_sc_snippets::imports::*;
 use serde::{Deserialize, Serialize};
@@ -21,17 +22,53 @@ pub struct TokenProperties {
     pub nonce: u64,
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+pub struct AddressInfo {
+    pub address: Bech32Address,
+    pub chain_id: String,
+}
+
+// NOTE: This struct holds deployed contract addresses.
+// The index of each address corresponds to the shard number where the contract was deployed.
+// For example, index 0 = shard 0, index 1 = shard 1, etc.
+#[derive(Debug, Default, Serialize, Deserialize)]
+pub struct ShardAddresses {
+    pub addresses: Vec<AddressInfo>,
+}
+
+impl ShardAddresses {
+    pub fn push(&mut self, address: AddressInfo) -> usize {
+        self.addresses.push(address);
+        self.addresses.len() - 1
+    }
+
+    pub fn get_by_contract_id(&self, chain_id: &str) -> Option<&Bech32Address> {
+        self.addresses
+            .iter()
+            .find(|info| info.chain_id == chain_id)
+            .map(|info| &info.address)
+    }
+
+    pub fn first(&self) -> &Bech32Address {
+        &self
+            .addresses
+            .first()
+            .expect("No addresses available")
+            .address
+    }
+}
+
 #[derive(Debug, Default, Serialize, Deserialize)]
 pub struct State {
-    pub mvx_esdt_safe_address: Option<Bech32Address>,
-    pub header_verfier_address: Option<Bech32Address>,
-    pub fee_market_address: Option<Bech32Address>,
-    pub testing_sc_address: Option<Bech32Address>,
-    pub chain_config_sc_address: Option<Bech32Address>,
-    pub sovereign_forge_sc_address: Option<Bech32Address>,
-    pub chain_factory_sc_address: Option<Bech32Address>,
-    pub enshrine_esdt_safe_sc_address: Option<Bech32Address>,
-    pub token_handler_address: Option<Bech32Address>,
+    pub mvx_esdt_safe_addresses: Option<ShardAddresses>,
+    pub header_verfier_addresses: Option<ShardAddresses>,
+    pub fee_market_addresses: Option<ShardAddresses>,
+    pub testing_sc_addresses: Option<ShardAddresses>,
+    pub chain_config_sc_addresses: Option<ShardAddresses>,
+    pub sovereign_forge_sc_addresses: Option<Bech32Address>,
+    pub chain_factory_sc_addresses: Option<ShardAddresses>,
+    pub enshrine_esdt_safe_sc_addresses: Option<ShardAddresses>,
+    pub token_handler_addresses: Option<ShardAddresses>,
     pub first_token: Option<TokenProperties>,
     pub fee_token: Option<TokenProperties>,
     pub second_token: Option<TokenProperties>,
@@ -51,40 +88,48 @@ impl State {
     }
 
     /// Sets the contract addresses
-    pub fn set_mvx_esdt_safe_contract_address(&mut self, address: Bech32Address) {
-        self.mvx_esdt_safe_address = Some(address);
+    pub fn set_mvx_esdt_safe_contract_address(&mut self, address: AddressInfo) {
+        let list = self.mvx_esdt_safe_addresses.get_or_insert_default();
+        list.push(address);
     }
 
-    pub fn set_header_verifier_address(&mut self, address: Bech32Address) {
-        self.header_verfier_address = Some(address);
+    pub fn set_header_verifier_address(&mut self, address: AddressInfo) {
+        let list = self.header_verfier_addresses.get_or_insert_default();
+        list.push(address);
     }
 
-    pub fn set_fee_market_address(&mut self, address: Bech32Address) {
-        self.fee_market_address = Some(address);
+    pub fn set_fee_market_address(&mut self, address: AddressInfo) {
+        let list = self.fee_market_addresses.get_or_insert_default();
+        list.push(address);
     }
 
-    pub fn set_testing_sc_address(&mut self, address: Bech32Address) {
-        self.testing_sc_address = Some(address);
+    pub fn set_testing_sc_address(&mut self, address: AddressInfo) {
+        let list = self.testing_sc_addresses.get_or_insert_default();
+        list.push(address);
     }
 
-    pub fn set_chain_config_sc_address(&mut self, address: Bech32Address) {
-        self.chain_config_sc_address = Some(address);
+    pub fn set_chain_config_sc_address(&mut self, address: AddressInfo) {
+        let list = self.chain_config_sc_addresses.get_or_insert_default();
+        list.push(address);
     }
 
     pub fn set_sovereign_forge_sc_address(&mut self, address: Bech32Address) {
-        self.sovereign_forge_sc_address = Some(address);
+        self.sovereign_forge_sc_addresses = Some(address);
     }
 
-    pub fn set_chain_factory_sc_address(&mut self, address: Bech32Address) {
-        self.chain_factory_sc_address = Some(address);
+    pub fn set_chain_factory_sc_address(&mut self, address: AddressInfo) {
+        let list = self.chain_factory_sc_addresses.get_or_insert_default();
+        list.push(address);
     }
 
-    pub fn set_enshrine_esdt_safe_sc_address(&mut self, address: Bech32Address) {
-        self.enshrine_esdt_safe_sc_address = Some(address);
+    pub fn set_enshrine_esdt_safe_sc_address(&mut self, address: AddressInfo) {
+        let list = self.enshrine_esdt_safe_sc_addresses.get_or_insert_default();
+        list.push(address);
     }
 
-    pub fn set_token_handler_address(&mut self, address: Bech32Address) {
-        self.token_handler_address = Some(address);
+    pub fn set_token_handler_address(&mut self, address: AddressInfo) {
+        let list = self.token_handler_addresses.get_or_insert_default();
+        list.push(address);
     }
 
     pub fn set_first_token(&mut self, token: TokenProperties) {
@@ -101,53 +146,65 @@ impl State {
 
     /// Returns the contract addresses
     pub fn current_mvx_esdt_safe_contract_address(&self) -> &Bech32Address {
-        self.mvx_esdt_safe_address
+        self.mvx_esdt_safe_addresses
             .as_ref()
             .expect(NO_KNOWN_MVX_ESDT_SAFE)
+            .first()
     }
 
     pub fn current_header_verifier_address(&self) -> &Bech32Address {
-        self.header_verfier_address
+        self.header_verfier_addresses
             .as_ref()
             .expect(NO_KNOWN_HEADER_VERIFIER)
+            .first()
     }
 
     pub fn current_fee_market_address(&self) -> &Bech32Address {
-        self.fee_market_address.as_ref().expect(NO_KNOWN_FEE_MARKET)
+        self.fee_market_addresses
+            .as_ref()
+            .expect(NO_KNOWN_FEE_MARKET)
+            .first()
     }
 
     pub fn current_testing_sc_address(&self) -> &Bech32Address {
-        self.testing_sc_address.as_ref().expect(NO_KNOWN_TESTING_SC)
+        self.testing_sc_addresses
+            .as_ref()
+            .expect(NO_KNOWN_TESTING_SC)
+            .first()
     }
 
     pub fn current_chain_config_sc_address(&self) -> &Bech32Address {
-        self.chain_config_sc_address
+        self.chain_config_sc_addresses
             .as_ref()
             .expect(NO_KNOWN_CHAIN_CONFIG_SC)
+            .first()
     }
 
     pub fn current_sovereign_forge_sc_address(&self) -> &Bech32Address {
-        self.sovereign_forge_sc_address
+        self.sovereign_forge_sc_addresses
             .as_ref()
             .expect(NO_KNOWN_SOVEREIGN_FORGE_SC)
     }
 
     pub fn current_chain_factory_sc_address(&self) -> &Bech32Address {
-        self.chain_factory_sc_address
+        self.chain_factory_sc_addresses
             .as_ref()
             .expect(NO_KNOWN_CHAIN_FACTORY_SC)
+            .first()
     }
 
     pub fn current_enshrine_esdt_safe_address(&self) -> &Bech32Address {
-        self.enshrine_esdt_safe_sc_address
+        self.enshrine_esdt_safe_sc_addresses
             .as_ref()
             .expect(NO_KNOWN_ENSHRINE_ESDT_SAFE_SC)
+            .first()
     }
 
     pub fn current_token_handler_address(&self) -> &Bech32Address {
-        self.token_handler_address
+        self.token_handler_addresses
             .as_ref()
             .expect(NO_KNOWN_TOKEN_HANDLER_SC)
+            .first()
     }
 
     pub fn get_first_token_id_string(&self) -> String {
@@ -199,6 +256,22 @@ impl State {
             .token_id
             .as_str()
             .into()
+    }
+
+    pub fn get_chain_factory_sc_address(&self, chain_id: String) -> &Bech32Address {
+        self.chain_factory_sc_addresses
+            .as_ref()
+            .expect(NO_KNOWN_CHAIN_FACTORY_SC)
+            .get_by_contract_id(&chain_id)
+            .expect(NO_KNOWN_CHAIN_FACTORY_IN_THE_SPECIFIED_SHARD)
+    }
+
+    pub fn get_token_handler_address(&self, chain_id: String) -> &Bech32Address {
+        self.token_handler_addresses
+            .as_ref()
+            .expect(NO_KNOWN_TOKEN_HANDLER_SC)
+            .get_by_contract_id(&chain_id)
+            .expect(NO_KNOWN_TOKEN_HANDLER_IN_THE_SPECIFIED_SHARD)
     }
 }
 

@@ -1,6 +1,6 @@
 #![allow(async_fn_in_trait)]
 
-use crate::interactor_state::{State, TokenProperties};
+use crate::interactor_state::{AddressInfo, State, TokenProperties};
 use base64::{engine::general_purpose::STANDARD as BASE64, Engine};
 use common_test_setup::constants::{
     CHAIN_CONFIG_CODE_PATH, CHAIN_FACTORY_CODE_PATH, ENSHRINE_ESDT_SAFE_CODE_PATH,
@@ -58,10 +58,17 @@ pub struct MintTokenStruct {
     pub attributes: Option<Vec<u8>>,
 }
 
+#[derive(Clone)]
+pub struct TemplateAddresses {
+    pub chain_config_address: Bech32Address,
+    pub header_verifier_address: Bech32Address,
+    pub esdt_safe_address: Bech32Address,
+    pub fee_market_address: Bech32Address,
+}
+
 pub trait CommonInteractorTrait {
     fn interactor(&mut self) -> &mut Interactor;
     fn state(&mut self) -> &mut State;
-    fn bridge_owner(&self) -> &Address;
     fn sovereign_owner(&self) -> &Address;
     fn bridge_service(&self) -> &Address;
     fn user_address(&self) -> &Address;
@@ -151,13 +158,15 @@ pub trait CommonInteractorTrait {
         }
     }
 
-    async fn deploy_sovereign_forge(&mut self, deploy_cost: &BigUint<StaticApi>) {
-        let bridge_owner = self.bridge_owner().clone();
-
+    async fn deploy_sovereign_forge(
+        &mut self,
+        caller: Address,
+        deploy_cost: &BigUint<StaticApi>,
+    ) -> Address {
         let new_address = self
             .interactor()
             .tx()
-            .from(bridge_owner)
+            .from(caller)
             .gas(50_000_000u64)
             .typed(SovereignForgeProxy)
             .init(deploy_cost)
@@ -167,37 +176,32 @@ pub trait CommonInteractorTrait {
             .run()
             .await;
 
-        let new_address_bech32 = bech32::encode(&new_address);
+        let new_address_bech32 = Bech32Address::from_bech32_string(bech32::encode(&new_address));
         self.state()
-            .set_sovereign_forge_sc_address(Bech32Address::from_bech32_string(
-                new_address_bech32.clone(),
-            ));
+            .set_sovereign_forge_sc_address(new_address_bech32);
 
-        println!("new Forge address: {new_address_bech32}");
+        new_address
     }
 
     async fn deploy_chain_factory(
         &mut self,
-        sovereign_forge_address: Bech32Address,
-        chain_config_address: Bech32Address,
-        header_verifier_address: Bech32Address,
-        mvx_esdt_safe_address: Bech32Address,
-        fee_market_address: Bech32Address,
+        caller: Address,
+        chain_id: String,
+        sovereign_forge_address: Address,
+        template_addresses: TemplateAddresses,
     ) {
-        let bridge_owner = self.bridge_owner().clone();
-
         let new_address = self
             .interactor()
             .tx()
-            .from(bridge_owner)
+            .from(caller)
             .gas(50_000_000u64)
             .typed(ChainFactoryContractProxy)
             .init(
                 sovereign_forge_address,
-                chain_config_address,
-                header_verifier_address,
-                mvx_esdt_safe_address,
-                fee_market_address,
+                template_addresses.chain_config_address,
+                template_addresses.header_verifier_address,
+                template_addresses.esdt_safe_address,
+                template_addresses.fee_market_address,
             )
             .code(CHAIN_FACTORY_CODE_PATH)
             .code_metadata(CodeMetadata::all())
@@ -205,22 +209,23 @@ pub trait CommonInteractorTrait {
             .run()
             .await;
 
-        let new_address_bech32 = bech32::encode(&new_address);
-        self.state()
-            .set_chain_factory_sc_address(Bech32Address::from_bech32_string(
-                new_address_bech32.clone(),
-            ));
-
-        println!("new Chain-Factory address: {new_address_bech32}");
+        let new_address_bech32 = Bech32Address::from_bech32_string(bech32::encode(&new_address));
+        self.state().set_chain_factory_sc_address(AddressInfo {
+            address: new_address_bech32.clone(),
+            chain_id,
+        });
     }
 
-    async fn deploy_chain_config(&mut self, opt_config: OptionalValue<SovereignConfig<StaticApi>>) {
-        let bridge_owner = self.bridge_owner().clone();
-
+    async fn deploy_chain_config(
+        &mut self,
+        caller: Address,
+        chain_id: String,
+        opt_config: OptionalValue<SovereignConfig<StaticApi>>,
+    ) {
         let new_address = self
             .interactor()
             .tx()
-            .from(bridge_owner)
+            .from(caller)
             .gas(50_000_000u64)
             .typed(ChainConfigContractProxy)
             .init(opt_config)
@@ -230,22 +235,88 @@ pub trait CommonInteractorTrait {
             .run()
             .await;
 
-        let new_address_bech32 = bech32::encode(&new_address);
-        self.state()
-            .set_chain_config_sc_address(Bech32Address::from_bech32_string(
-                new_address_bech32.clone(),
-            ));
-
-        println!("new Chain-Config address: {new_address_bech32}");
+        let new_address_bech32 = Bech32Address::from_bech32_string(bech32::encode(&new_address));
+        self.state().set_chain_config_sc_address(AddressInfo {
+            address: new_address_bech32,
+            chain_id,
+        });
     }
 
-    async fn deploy_header_verifier(&mut self, contracts_array: Vec<ContractInfo<StaticApi>>) {
-        let bridge_owner = self.bridge_owner().clone();
+    async fn deploy_template_contracts(&mut self, caller: Address) -> Vec<Bech32Address> {
+        let mut template_contracts = vec![];
 
+        let chain_config_template = self
+            .interactor()
+            .tx()
+            .from(caller.clone())
+            .gas(50_000_000u64)
+            .typed(ChainConfigContractProxy)
+            .init(OptionalValue::<SovereignConfig<StaticApi>>::None)
+            .returns(ReturnsNewAddress)
+            .code(CHAIN_CONFIG_CODE_PATH)
+            .code_metadata(CodeMetadata::all())
+            .run()
+            .await;
+        template_contracts.push(Bech32Address::from(chain_config_template));
+
+        let mvx_esdt_safe_template = self
+            .interactor()
+            .tx()
+            .from(caller.clone())
+            .gas(100_000_000u64)
+            .typed(MvxEsdtSafeProxy)
+            .init(OptionalValue::<EsdtSafeConfig<StaticApi>>::None)
+            .returns(ReturnsNewAddress)
+            .code(MVX_ESDT_SAFE_CODE_PATH)
+            .code_metadata(CodeMetadata::all())
+            .run()
+            .await;
+        template_contracts.push(Bech32Address::from(mvx_esdt_safe_template.clone()));
+
+        let fee_market_address = self
+            .interactor()
+            .tx()
+            .from(caller.clone())
+            .gas(80_000_000u64)
+            .typed(FeeMarketProxy)
+            .init(
+                Bech32Address::from(mvx_esdt_safe_template),
+                None::<FeeStruct<StaticApi>>,
+            )
+            .returns(ReturnsNewAddress)
+            .code(FEE_MARKET_CODE_PATH)
+            .code_metadata(CodeMetadata::all())
+            .run()
+            .await;
+        template_contracts.push(Bech32Address::from(fee_market_address));
+
+        let header_verifier_address = self
+            .interactor()
+            .tx()
+            .from(caller.clone())
+            .gas(50_000_000u64)
+            .typed(HeaderverifierProxy)
+            .init(MultiValueEncoded::new())
+            .returns(ReturnsNewAddress)
+            .code(HEADER_VERIFIER_CODE_PATH)
+            .code_metadata(CodeMetadata::all())
+            .run()
+            .await;
+        template_contracts.push(Bech32Address::from(header_verifier_address));
+
+        template_contracts
+    }
+
+    async fn deploy_header_verifier(
+        &mut self,
+        caller: Address,
+        chain_id: String,
+        contracts_array: Vec<ContractInfo<StaticApi>>,
+    ) {
         let new_address = self
             .interactor()
             .tx()
-            .from(bridge_owner)
+            .from(caller)
             .gas(50_000_000u64)
             .typed(HeaderverifierProxy)
             .init(MultiValueEncoded::from_iter(contracts_array))
@@ -255,22 +326,23 @@ pub trait CommonInteractorTrait {
             .run()
             .await;
 
-        let new_address_bech32 = bech32::encode(&new_address);
-        self.state()
-            .set_header_verifier_address(Bech32Address::from_bech32_string(
-                new_address_bech32.clone(),
-            ));
-
-        println!("new Header-Verifier address: {new_address_bech32}");
+        let new_address_bech32 = Bech32Address::from_bech32_string(bech32::encode(&new_address));
+        self.state().set_header_verifier_address(AddressInfo {
+            address: new_address_bech32,
+            chain_id,
+        });
     }
 
-    async fn deploy_mvx_esdt_safe(&mut self, opt_config: OptionalValue<EsdtSafeConfig<StaticApi>>) {
-        let bridge_owner = self.bridge_owner().clone();
-
+    async fn deploy_mvx_esdt_safe(
+        &mut self,
+        caller: Address,
+        chain_id: String,
+        opt_config: OptionalValue<EsdtSafeConfig<StaticApi>>,
+    ) {
         let new_address = self
             .interactor()
             .tx()
-            .from(bridge_owner)
+            .from(caller)
             .gas(100_000_000u64)
             .typed(MvxEsdtSafeProxy)
             .init(opt_config)
@@ -280,26 +352,25 @@ pub trait CommonInteractorTrait {
             .run()
             .await;
 
-        let new_address_bech32 = bech32::encode(&new_address);
+        let new_address_bech32 = Bech32Address::from_bech32_string(bech32::encode(&new_address));
         self.state()
-            .set_mvx_esdt_safe_contract_address(Bech32Address::from_bech32_string(
-                new_address_bech32.clone(),
-            ));
-
-        println!("new mvx-esdt-safe address: {new_address_bech32}");
+            .set_mvx_esdt_safe_contract_address(AddressInfo {
+                address: new_address_bech32,
+                chain_id,
+            });
     }
 
     async fn deploy_fee_market(
         &mut self,
+        caller: Address,
+        chain_id: String,
         esdt_safe_address: Bech32Address,
         fee: Option<FeeStruct<StaticApi>>,
     ) {
-        let bridge_owner = self.bridge_owner().clone();
-
         let new_address = self
             .interactor()
             .tx()
-            .from(bridge_owner)
+            .from(caller)
             .gas(80_000_000u64)
             .typed(FeeMarketProxy)
             .init(esdt_safe_address, fee)
@@ -309,22 +380,18 @@ pub trait CommonInteractorTrait {
             .run()
             .await;
 
-        let new_address_bech32 = bech32::encode(&new_address);
-        self.state()
-            .set_fee_market_address(Bech32Address::from_bech32_string(
-                new_address_bech32.clone(),
-            ));
-
-        println!("new Fee-Market address: {new_address_bech32}");
+        let new_address_bech32 = Bech32Address::from_bech32_string(bech32::encode(&new_address));
+        self.state().set_fee_market_address(AddressInfo {
+            address: new_address_bech32,
+            chain_id,
+        });
     }
 
-    async fn deploy_testing_sc(&mut self) {
-        let bridge_owner = self.bridge_owner().clone();
-
+    async fn deploy_testing_sc(&mut self, caller: Address, chain_id: String) {
         let new_address = self
             .interactor()
             .tx()
-            .from(bridge_owner)
+            .from(caller)
             .gas(120_000_000u64)
             .typed(TestingScProxy)
             .init()
@@ -334,22 +401,23 @@ pub trait CommonInteractorTrait {
             .run()
             .await;
 
-        let new_address_bech32 = bech32::encode(&new_address);
-        self.state()
-            .set_testing_sc_address(Bech32Address::from_bech32_string(
-                new_address_bech32.clone(),
-            ));
-
-        println!("new testing sc address: {new_address_bech32}");
+        let new_address_bech32 = Bech32Address::from_bech32_string(bech32::encode(&new_address));
+        self.state().set_testing_sc_address(AddressInfo {
+            address: new_address_bech32,
+            chain_id,
+        });
     }
 
-    async fn deploy_token_handler(&mut self, chain_factory_address: Address) {
-        let bridge_owner = self.bridge_owner().clone();
+    async fn deploy_token_handler(&mut self, caller: Address, chain_id: String) {
+        let chain_factory_address = self
+            .state()
+            .get_chain_factory_sc_address(chain_id.clone())
+            .clone();
 
         let new_address = self
             .interactor()
             .tx()
-            .from(bridge_owner)
+            .from(caller)
             .gas(100_000_000u64)
             .typed(token_handler_proxy::TokenHandlerProxy)
             .init(chain_factory_address)
@@ -358,28 +426,31 @@ pub trait CommonInteractorTrait {
             .returns(ReturnsNewAddress)
             .run()
             .await;
-        let new_address_bech32 = bech32::encode(&new_address);
-        self.state()
-            .set_token_handler_address(Bech32Address::from_bech32_string(
-                new_address_bech32.clone(),
-            ));
-        println!("new token_handler_address: {new_address_bech32}");
+
+        let new_address_bech32 = Bech32Address::from_bech32_string(bech32::encode(&new_address));
+        self.state().set_token_handler_address(AddressInfo {
+            address: new_address_bech32,
+            chain_id,
+        });
     }
 
     async fn deploy_enshrine_esdt(
         &mut self,
+        caller: Address,
+        chain_id: String,
         is_sovereign_chain: bool,
         opt_wegld_identifier: Option<TokenIdentifier<StaticApi>>,
         opt_sov_token_prefix: Option<ManagedBuffer<StaticApi>>,
-        token_handler_address: Bech32Address,
         opt_config: Option<EsdtSafeConfig<StaticApi>>,
     ) {
-        let bridge_owner = self.bridge_owner().clone();
-
+        let token_handler_address = self
+            .state()
+            .get_token_handler_address(chain_id.clone())
+            .clone();
         let new_address = self
             .interactor()
             .tx()
-            .from(bridge_owner)
+            .from(caller)
             .gas(100_000_000u64)
             .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
             .init(
@@ -394,13 +465,12 @@ pub trait CommonInteractorTrait {
             .returns(ReturnsNewAddress)
             .run()
             .await;
-        let new_address_bech32 = bech32::encode(&new_address);
-        self.state()
-            .set_enshrine_esdt_safe_sc_address(Bech32Address::from_bech32_string(
-                new_address_bech32.clone(),
-            ));
 
-        println!("new address: {new_address_bech32}");
+        let new_address_bech32 = Bech32Address::from_bech32_string(bech32::encode(&new_address));
+        self.state().set_enshrine_esdt_safe_sc_address(AddressInfo {
+            address: new_address_bech32,
+            chain_id,
+        });
     }
 
     fn get_contract_info_struct_for_sc_type(
@@ -445,17 +515,17 @@ pub trait CommonInteractorTrait {
 
     async fn deploy_phase_one(
         &mut self,
+        caller: Address,
         egld_amount: BigUint<StaticApi>,
         opt_preferred_chain_id: Option<ManagedBuffer<StaticApi>>,
         opt_config: OptionalValue<SovereignConfig<StaticApi>>,
     ) {
-        let sovereign_owner = self.sovereign_owner().clone();
         let sovereign_forge_address = self.state().current_sovereign_forge_sc_address().clone();
 
         let response = self
             .interactor()
             .tx()
-            .from(sovereign_owner)
+            .from(caller)
             .to(sovereign_forge_address)
             .gas(100_000_000u64)
             .typed(SovereignForgeProxy)
@@ -468,14 +538,16 @@ pub trait CommonInteractorTrait {
         println!("Result: {response:?}");
     }
 
-    async fn deploy_phase_two(&mut self, opt_config: OptionalValue<EsdtSafeConfig<StaticApi>>) {
-        let sovereign_owner = self.sovereign_owner().clone();
+    async fn deploy_phase_two(
+        &mut self,
+        caller: Address,
+        opt_config: OptionalValue<EsdtSafeConfig<StaticApi>>,
+    ) {
         let sovereign_forge_address = self.state().current_sovereign_forge_sc_address().clone();
-
         let response = self
             .interactor()
             .tx()
-            .from(sovereign_owner)
+            .from(caller)
             .to(sovereign_forge_address)
             .gas(30_000_000u64)
             .typed(SovereignForgeProxy)
@@ -487,14 +559,13 @@ pub trait CommonInteractorTrait {
         println!("Result: {response:?}");
     }
 
-    async fn deploy_phase_three(&mut self, fee: Option<FeeStruct<StaticApi>>) {
-        let sovereign_owner = self.sovereign_owner().clone();
+    async fn deploy_phase_three(&mut self, caller: Address, fee: Option<FeeStruct<StaticApi>>) {
         let sovereign_forge_address = self.state().current_sovereign_forge_sc_address().clone();
 
         let response = self
             .interactor()
             .tx()
-            .from(sovereign_owner)
+            .from(caller)
             .to(sovereign_forge_address)
             .gas(80_000_000u64)
             .typed(SovereignForgeProxy)
@@ -506,14 +577,13 @@ pub trait CommonInteractorTrait {
         println!("Result: {response:?}");
     }
 
-    async fn deploy_phase_four(&mut self) {
-        let sovereign_owner = self.sovereign_owner().clone();
+    async fn deploy_phase_four(&mut self, caller: Address) {
         let sovereign_forge_address = self.state().current_sovereign_forge_sc_address().clone();
 
         let response = self
             .interactor()
             .tx()
-            .from(sovereign_owner)
+            .from(caller)
             .to(sovereign_forge_address)
             .gas(80_000_000u64)
             .typed(SovereignForgeProxy)
@@ -525,13 +595,12 @@ pub trait CommonInteractorTrait {
         println!("Result: {response:?}");
     }
 
-    async fn complete_setup_phase(&mut self) {
-        let sovereign_owner = self.sovereign_owner().clone();
+    async fn complete_setup_phase(&mut self, caller: Address) {
         let sovereign_forge_address = self.state().current_sovereign_forge_sc_address().clone();
 
         self.interactor()
             .tx()
-            .from(sovereign_owner)
+            .from(caller)
             .to(sovereign_forge_address)
             .gas(90_000_000u64)
             .typed(SovereignForgeProxy)
@@ -671,13 +740,12 @@ pub trait CommonInteractorTrait {
             .await;
     }
 
-    async fn complete_header_verifier_setup_phase(&mut self) {
-        let bridge_owner = self.bridge_owner().clone();
+    async fn complete_header_verifier_setup_phase(&mut self, caller: Address) {
         let header_verifier_address = self.state().current_header_verifier_address().clone();
 
         self.interactor()
             .tx()
-            .from(bridge_owner)
+            .from(caller)
             .to(header_verifier_address)
             .gas(90_000_000u64)
             .typed(HeaderverifierProxy)
@@ -749,14 +817,17 @@ pub trait CommonInteractorTrait {
         self.assert_expected_log(logs, expected_log);
     }
 
-    async fn whitelist_enshrine_esdt(&mut self, enshrine_esdt_safe_address: Bech32Address) {
+    async fn whitelist_enshrine_esdt(
+        &mut self,
+        caller: Address,
+        enshrine_esdt_safe_address: Bech32Address,
+    ) {
         let token_handler_address = self.state().current_token_handler_address().clone();
-        let bridge_owner = self.bridge_owner().clone();
 
         let response = self
             .interactor()
             .tx()
-            .from(bridge_owner)
+            .from(caller)
             .to(token_handler_address)
             .gas(50_000_000u64)
             .typed(token_handler_proxy::TokenHandlerProxy)

@@ -15,7 +15,9 @@ impl<M: ManagedTypeApi> ContractInfo<M> {
 }
 
 #[type_abi]
-#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, Clone, ManagedVecItem, PartialEq)]
+#[derive(
+    TopEncode, TopDecode, Debug, NestedEncode, NestedDecode, Clone, ManagedVecItem, PartialEq,
+)]
 pub enum ScArray {
     ChainFactory,
     Controller,

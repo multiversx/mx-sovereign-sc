@@ -4,8 +4,8 @@ use common_test_setup::base_setup::init::RegisterTokenArgs;
 use common_test_setup::constants::{
     CROWD_TOKEN_ID, FIRST_TEST_TOKEN, ISSUE_COST, MVX_TO_SOV_TOKEN_STORAGE_KEY,
     NATIVE_TOKEN_STORAGE_KEY, ONE_HUNDRED_TOKENS, ONE_THOUSAND_TOKENS,
-    OPERATION_HASH_STATUS_STORAGE_KEY, SOV_TOKEN, SOV_TO_MVX_TOKEN_STORAGE_KEY, TEN_TOKENS,
-    TOKEN_TICKER, WRONG_ENDPOINT_NAME,
+    OPERATION_HASH_STATUS_STORAGE_KEY, PREFERRED_CHAIN_IDS, SOV_TOKEN,
+    SOV_TO_MVX_TOKEN_STORAGE_KEY, TEN_TOKENS, TOKEN_TICKER, WRONG_ENDPOINT_NAME,
 };
 use cross_chain::MAX_GAS_PER_TRANSACTION;
 use error_messages::{
@@ -39,7 +39,7 @@ use structs::operation::{Operation, OperationData, OperationEsdtPayment, Transfe
 async fn test_issue_tokens() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
 
-    let bridge_owner = chain_interactor.bridge_owner().clone();
+    let bridge_owner = chain_interactor.bridge_owner.clone();
     let user_address = chain_interactor.user_address.clone();
     let first_token_id = chain_interactor.state.get_first_token_id().clone();
 
@@ -477,7 +477,12 @@ async fn test_deposit_gas_limit_too_high_no_fee() {
         )
         .await;
 
-    chain_interactor.deploy_testing_sc().await;
+    chain_interactor
+        .deploy_testing_sc(
+            chain_interactor.bridge_owner.clone(),
+            PREFERRED_CHAIN_IDS[0].to_string(),
+        )
+        .await;
 
     let esdt_token_payment_one = EsdtTokenPayment::<StaticApi>::new(
         chain_interactor.state.get_first_token_id(),
@@ -548,7 +553,12 @@ async fn test_deposit_endpoint_banned_no_fee() {
         )
         .await;
 
-    chain_interactor.deploy_testing_sc().await;
+    chain_interactor
+        .deploy_testing_sc(
+            chain_interactor.bridge_owner.clone(),
+            PREFERRED_CHAIN_IDS[0].to_string(),
+        )
+        .await;
 
     let esdt_token_payment_one = EsdtTokenPayment::<StaticApi>::new(
         chain_interactor.state.get_first_token_id(),
@@ -632,7 +642,12 @@ async fn test_deposit_fee_enabled() {
         )
         .await;
 
-    chain_interactor.deploy_testing_sc().await;
+    chain_interactor
+        .deploy_testing_sc(
+            chain_interactor.bridge_owner.clone(),
+            PREFERRED_CHAIN_IDS[0].to_string(),
+        )
+        .await;
 
     let fee_amount = BigUint::from(ONE_HUNDRED_TOKENS);
 
@@ -826,7 +841,12 @@ async fn test_deposit_only_transfer_data_no_fee() {
         )
         .await;
 
-    chain_interactor.deploy_testing_sc().await;
+    chain_interactor
+        .deploy_testing_sc(
+            chain_interactor.bridge_owner.clone(),
+            PREFERRED_CHAIN_IDS[0].to_string(),
+        )
+        .await;
 
     let gas_limit = 1000u64;
     let function = ManagedBuffer::<StaticApi>::from("hello");
@@ -1066,7 +1086,11 @@ async fn test_register_native_token() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
 
     chain_interactor
-        .deploy_mvx_esdt_safe(OptionalValue::None)
+        .deploy_mvx_esdt_safe(
+            chain_interactor.bridge_owner.clone(),
+            PREFERRED_CHAIN_IDS[0].to_string(),
+            OptionalValue::None,
+        )
         .await;
 
     let token_display_name = "SOVEREIGN";
@@ -1108,7 +1132,11 @@ async fn test_register_native_token_twice() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
 
     chain_interactor
-        .deploy_mvx_esdt_safe(OptionalValue::None)
+        .deploy_mvx_esdt_safe(
+            chain_interactor.bridge_owner.clone(),
+            PREFERRED_CHAIN_IDS[0].to_string(),
+            OptionalValue::None,
+        )
         .await;
 
     let token_display_name = "SOVEREIGN";
@@ -1159,18 +1187,30 @@ async fn test_register_token_fungible_token() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
 
     chain_interactor
-        .deploy_chain_config(OptionalValue::None)
+        .deploy_chain_config(
+            chain_interactor.bridge_owner.clone(),
+            PREFERRED_CHAIN_IDS[0].to_string(),
+            OptionalValue::None,
+        )
         .await;
 
     let contracts_array =
         chain_interactor.get_contract_info_struct_for_sc_type(vec![ScArray::ChainConfig]);
 
     chain_interactor
-        .deploy_header_verifier(contracts_array)
+        .deploy_header_verifier(
+            chain_interactor.bridge_owner.clone(),
+            PREFERRED_CHAIN_IDS[0].to_string(),
+            contracts_array,
+        )
         .await;
 
     chain_interactor
-        .deploy_mvx_esdt_safe(OptionalValue::Some(EsdtSafeConfig::default_config()))
+        .deploy_mvx_esdt_safe(
+            chain_interactor.bridge_owner.clone(),
+            PREFERRED_CHAIN_IDS[0].to_string(),
+            OptionalValue::Some(EsdtSafeConfig::default_config()),
+        )
         .await;
 
     let sov_token_id = TokenIdentifier::from_esdt_bytes(SOV_TOKEN.as_str());
@@ -1225,18 +1265,30 @@ async fn test_register_token_non_fungible_token() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
 
     chain_interactor
-        .deploy_chain_config(OptionalValue::None)
+        .deploy_chain_config(
+            chain_interactor.bridge_owner.clone(),
+            PREFERRED_CHAIN_IDS[0].to_string(),
+            OptionalValue::None,
+        )
         .await;
 
     let contracts_array =
         chain_interactor.get_contract_info_struct_for_sc_type(vec![ScArray::ChainConfig]);
 
     chain_interactor
-        .deploy_header_verifier(contracts_array)
+        .deploy_header_verifier(
+            chain_interactor.bridge_owner.clone(),
+            PREFERRED_CHAIN_IDS[0].to_string(),
+            contracts_array,
+        )
         .await;
 
     chain_interactor
-        .deploy_mvx_esdt_safe(OptionalValue::Some(EsdtSafeConfig::default_config()))
+        .deploy_mvx_esdt_safe(
+            chain_interactor.bridge_owner.clone(),
+            PREFERRED_CHAIN_IDS[0].to_string(),
+            OptionalValue::Some(EsdtSafeConfig::default_config()),
+        )
         .await;
 
     let sov_token_id = TokenIdentifier::from_esdt_bytes(SOV_TOKEN.as_str());
@@ -1291,18 +1343,30 @@ async fn test_register_token_dynamic_non_fungible_token() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
 
     chain_interactor
-        .deploy_chain_config(OptionalValue::None)
+        .deploy_chain_config(
+            chain_interactor.bridge_owner.clone(),
+            PREFERRED_CHAIN_IDS[0].to_string(),
+            OptionalValue::None,
+        )
         .await;
 
     let contracts_array =
         chain_interactor.get_contract_info_struct_for_sc_type(vec![ScArray::ChainConfig]);
 
     chain_interactor
-        .deploy_header_verifier(contracts_array)
+        .deploy_header_verifier(
+            chain_interactor.bridge_owner.clone(),
+            PREFERRED_CHAIN_IDS[0].to_string(),
+            contracts_array,
+        )
         .await;
 
     chain_interactor
-        .deploy_mvx_esdt_safe(OptionalValue::Some(EsdtSafeConfig::default_config()))
+        .deploy_mvx_esdt_safe(
+            chain_interactor.bridge_owner.clone(),
+            PREFERRED_CHAIN_IDS[0].to_string(),
+            OptionalValue::Some(EsdtSafeConfig::default_config()),
+        )
         .await;
 
     let sov_token_id = TokenIdentifier::from_esdt_bytes(SOV_TOKEN.as_str());
@@ -1357,23 +1421,52 @@ async fn test_execute_operation_no_esdt_safe_registered() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
 
     chain_interactor
-        .deploy_chain_config(OptionalValue::None)
+        .deploy_chain_config(
+            chain_interactor.bridge_owner.clone(),
+            PREFERRED_CHAIN_IDS[0].to_string(),
+            OptionalValue::None,
+        )
         .await;
 
     let contracts_array =
         chain_interactor.get_contract_info_struct_for_sc_type(vec![ScArray::ChainConfig]);
 
     chain_interactor
-        .deploy_header_verifier(contracts_array)
+        .deploy_header_verifier(
+            chain_interactor.bridge_owner.clone(),
+            PREFERRED_CHAIN_IDS[0].to_string(),
+            contracts_array,
+        )
         .await;
 
     chain_interactor
-        .deploy_mvx_esdt_safe(OptionalValue::Some(EsdtSafeConfig::default_config()))
+        .deploy_mvx_esdt_safe(
+            chain_interactor.bridge_owner.clone(),
+            PREFERRED_CHAIN_IDS[0].to_string(),
+            OptionalValue::Some(EsdtSafeConfig::default_config()),
+        )
+        .await;
+
+    chain_interactor
+        .deploy_fee_market(
+            chain_interactor.bridge_owner.clone(),
+            PREFERRED_CHAIN_IDS[0].to_string(),
+            chain_interactor
+                .state
+                .current_mvx_esdt_safe_contract_address()
+                .clone(),
+            None,
+        )
         .await;
 
     chain_interactor.unpause_endpoint().await;
 
-    chain_interactor.deploy_testing_sc().await;
+    chain_interactor
+        .deploy_testing_sc(
+            chain_interactor.bridge_owner.clone(),
+            PREFERRED_CHAIN_IDS[0].to_string(),
+        )
+        .await;
 
     let payment = OperationEsdtPayment::new(
         chain_interactor.state.get_first_token_id(),
@@ -1470,13 +1563,23 @@ async fn test_execute_operation_with_native_token_success() {
     );
 
     chain_interactor
-        .deploy_chain_config(OptionalValue::None)
+        .deploy_chain_config(
+            chain_interactor.bridge_owner.clone(),
+            PREFERRED_CHAIN_IDS[0].to_string(),
+            OptionalValue::None,
+        )
         .await;
     chain_interactor
-        .deploy_mvx_esdt_safe(OptionalValue::None)
+        .deploy_mvx_esdt_safe(
+            chain_interactor.bridge_owner.clone(),
+            PREFERRED_CHAIN_IDS[0].to_string(),
+            OptionalValue::None,
+        )
         .await;
     chain_interactor
         .deploy_fee_market(
+            chain_interactor.bridge_owner.clone(),
+            PREFERRED_CHAIN_IDS[0].to_string(),
             chain_interactor
                 .state
                 .current_mvx_esdt_safe_contract_address()
@@ -1486,6 +1589,7 @@ async fn test_execute_operation_with_native_token_success() {
         .await;
     chain_interactor
         .set_fee_market_address(
+            chain_interactor.bridge_owner.clone(),
             chain_interactor
                 .state
                 .current_fee_market_address()
@@ -1495,12 +1599,21 @@ async fn test_execute_operation_with_native_token_success() {
     let contracts_array = chain_interactor
         .get_contract_info_struct_for_sc_type(vec![ScArray::ChainConfig, ScArray::ESDTSafe]);
     chain_interactor
-        .deploy_header_verifier(contracts_array)
+        .deploy_header_verifier(
+            chain_interactor.bridge_owner.clone(),
+            PREFERRED_CHAIN_IDS[0].to_string(),
+            contracts_array,
+        )
         .await;
     chain_interactor
-        .complete_header_verifier_setup_phase()
+        .complete_header_verifier_setup_phase(chain_interactor.bridge_owner.clone())
         .await;
-    chain_interactor.deploy_testing_sc().await;
+    chain_interactor
+        .deploy_testing_sc(
+            chain_interactor.bridge_owner.clone(),
+            PREFERRED_CHAIN_IDS[0].to_string(),
+        )
+        .await;
 
     let token_name = "SOVEREIGN";
     let egld_amount = BigUint::from(ISSUE_COST);
@@ -1656,7 +1769,12 @@ async fn test_execute_operation_success_no_fee() {
         )
         .await;
 
-    chain_interactor.deploy_testing_sc().await;
+    chain_interactor
+        .deploy_testing_sc(
+            chain_interactor.bridge_owner.clone(),
+            PREFERRED_CHAIN_IDS[0].to_string(),
+        )
+        .await;
 
     let operation = Operation::new(
         ManagedAddress::from_address(
@@ -1780,7 +1898,12 @@ async fn test_execute_operation_only_transfer_data_no_fee() {
         )
         .await;
 
-    chain_interactor.deploy_testing_sc().await;
+    chain_interactor
+        .deploy_testing_sc(
+            chain_interactor.bridge_owner.clone(),
+            PREFERRED_CHAIN_IDS[0].to_string(),
+        )
+        .await;
 
     let operation = Operation::new(
         ManagedAddress::from_address(
@@ -1880,7 +2003,12 @@ async fn test_execute_operation_no_payments_failed_event() {
         )
         .await;
 
-    chain_interactor.deploy_testing_sc().await;
+    chain_interactor
+        .deploy_testing_sc(
+            chain_interactor.bridge_owner.clone(),
+            PREFERRED_CHAIN_IDS[0].to_string(),
+        )
+        .await;
 
     let operation = Operation::new(
         ManagedAddress::from_address(

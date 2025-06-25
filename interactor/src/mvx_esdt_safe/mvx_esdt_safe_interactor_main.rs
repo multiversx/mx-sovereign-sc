@@ -13,7 +13,7 @@ use common_interactor::interactor_state::State;
 
 use common_test_setup::base_setup::init::RegisterTokenArgs;
 use common_test_setup::constants::{
-    INTERACTOR_WORKING_DIR, MVX_ESDT_SAFE_CODE_PATH, ONE_THOUSAND_TOKENS,
+    INTERACTOR_WORKING_DIR, MVX_ESDT_SAFE_CODE_PATH, ONE_THOUSAND_TOKENS, PREFERRED_CHAIN_IDS,
 };
 
 pub struct MvxEsdtSafeInteract {
@@ -31,10 +31,6 @@ impl CommonInteractorTrait for MvxEsdtSafeInteract {
 
     fn state(&mut self) -> &mut State {
         &mut self.state
-    }
-
-    fn bridge_owner(&self) -> &Address {
-        &self.bridge_owner
     }
 
     fn sovereign_owner(&self) -> &Address {
@@ -77,7 +73,7 @@ impl MvxEsdtSafeInteract {
             sovereign_owner,
             bridge_service,
             user_address,
-            state: State::load_state(),
+            state: State::default(),
         }
     }
 
@@ -196,18 +192,40 @@ impl MvxEsdtSafeInteract {
         fee_struct: Option<FeeStruct<StaticApi>>,
         sc_array: Vec<ScArray>,
     ) {
-        self.deploy_chain_config(sovereign_config).await;
-        self.deploy_mvx_esdt_safe(esdt_safe_config).await;
+        let owner = self.bridge_owner.clone();
+        self.deploy_chain_config(
+            owner.clone(),
+            PREFERRED_CHAIN_IDS[0].to_string(),
+            sovereign_config,
+        )
+        .await;
+        self.deploy_mvx_esdt_safe(
+            owner.clone(),
+            PREFERRED_CHAIN_IDS[0].to_string(),
+            esdt_safe_config,
+        )
+        .await;
         self.deploy_fee_market(
+            owner.clone(),
+            PREFERRED_CHAIN_IDS[0].to_string(),
             self.state.current_mvx_esdt_safe_contract_address().clone(),
             fee_struct,
         )
         .await;
-        self.set_fee_market_address(self.state.current_fee_market_address().to_address())
-            .await;
+        self.set_fee_market_address(
+            owner.clone(),
+            self.state.current_fee_market_address().to_address(),
+        )
+        .await;
         let contracts_array = self.get_contract_info_struct_for_sc_type(sc_array);
-        self.deploy_header_verifier(contracts_array).await;
-        self.complete_header_verifier_setup_phase().await;
+        self.deploy_header_verifier(
+            owner.clone(),
+            PREFERRED_CHAIN_IDS[0].to_string(),
+            contracts_array,
+        )
+        .await;
+        self.complete_header_verifier_setup_phase(owner.clone())
+            .await;
         self.complete_setup_phase().await;
         self.change_ownership_to_header_verifier(
             self.bridge_owner.clone(),
@@ -275,11 +293,11 @@ impl MvxEsdtSafeInteract {
         self.assert_expected_log(logs, expected_log);
     }
 
-    pub async fn set_fee_market_address(&mut self, fee_market_address: Address) {
+    pub async fn set_fee_market_address(&mut self, caller: Address, fee_market_address: Address) {
         let response = self
             .interactor
             .tx()
-            .from(&self.bridge_owner)
+            .from(caller)
             .to(self.state.current_mvx_esdt_safe_contract_address())
             .gas(90_000_000u64)
             .typed(MvxEsdtSafeProxy)

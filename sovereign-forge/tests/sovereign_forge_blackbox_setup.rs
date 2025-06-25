@@ -40,12 +40,12 @@ impl SovereignForgeTestState {
     }
 
     pub fn finish_setup(&mut self) {
+        self.register_chain_factory(0, CHAIN_FACTORY_SC_ADDRESS, None);
         self.register_chain_factory(1, CHAIN_FACTORY_SC_ADDRESS, None);
         self.register_chain_factory(2, CHAIN_FACTORY_SC_ADDRESS, None);
-        self.register_chain_factory(3, CHAIN_FACTORY_SC_ADDRESS, None);
+        self.register_token_handler(0, TOKEN_HANDLER_SC_ADDRESS, None);
         self.register_token_handler(1, TOKEN_HANDLER_SC_ADDRESS, None);
         self.register_token_handler(2, TOKEN_HANDLER_SC_ADDRESS, None);
-        self.register_token_handler(3, TOKEN_HANDLER_SC_ADDRESS, None);
     }
 
     pub fn deploy_template_scs(&mut self, templates: Option<Vec<ScArray>>) {

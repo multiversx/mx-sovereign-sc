@@ -1,11 +1,14 @@
 #![allow(non_snake_case)]
-use common_interactor::common_sovereign_interactor::{IssueTokenStruct, MintTokenStruct};
-use common_interactor::interactor_state::State;
+use common_interactor::common_sovereign_interactor::{
+    IssueTokenStruct, MintTokenStruct, TemplateAddresses,
+};
+use common_interactor::interactor_state::{AddressInfo, State};
 use common_interactor::{
     common_sovereign_interactor::CommonInteractorTrait, interactor_config::Config,
 };
 use common_test_setup::constants::{
-    INTERACTOR_WORKING_DIR, ONE_THOUSAND_TOKENS, SOVEREIGN_FORGE_CODE_PATH,
+    DEPLOY_COST, INTERACTOR_WORKING_DIR, NUMBER_OF_SHARDS, ONE_THOUSAND_TOKENS,
+    PREFERRED_CHAIN_IDS, SOVEREIGN_FORGE_CODE_PATH,
 };
 use multiversx_sc_snippets::imports::*;
 use proxies::sovereign_forge_proxy::SovereignForgeProxy;
@@ -15,8 +18,12 @@ use structs::forge::ScArray;
 
 pub struct SovereignForgeInteract {
     pub interactor: Interactor,
-    pub bridge_owner: Address,
-    pub sovereign_owner: Address,
+    pub bridge_owner_shard_0: Address,
+    pub bridge_owner_shard_1: Address,
+    pub bridge_owner_shard_2: Address,
+    pub sovereign_owner_shard_0: Address,
+    pub sovereign_owner_shard_1: Address,
+    pub sovereign_owner_shard_2: Address,
     pub bridge_service: Address,
     pub user_address: Address,
     pub state: State,
@@ -26,12 +33,8 @@ impl CommonInteractorTrait for SovereignForgeInteract {
         &mut self.interactor
     }
 
-    fn bridge_owner(&self) -> &Address {
-        &self.bridge_owner
-    }
-
     fn sovereign_owner(&self) -> &Address {
-        &self.sovereign_owner
+        &self.sovereign_owner_shard_0
     }
 
     fn bridge_service(&self) -> &Address {
@@ -60,20 +63,29 @@ impl SovereignForgeInteract {
 
         let current_working_dir = INTERACTOR_WORKING_DIR;
         interactor.set_current_dir_from_workspace(current_working_dir);
-        let bridge_owner = interactor.register_wallet(test_wallets::mike()).await;
-        let sovereign_owner = interactor.register_wallet(test_wallets::alice()).await;
-        let bridge_service = interactor.register_wallet(test_wallets::carol()).await;
-        let user_address = interactor.register_wallet(test_wallets::bob()).await;
+
+        let bridge_owner_shard_0 = interactor.register_wallet(test_wallets::bob()).await;
+        let bridge_owner_shard_1 = interactor.register_wallet(test_wallets::alice()).await;
+        let bridge_owner_shard_2 = interactor.register_wallet(test_wallets::carol()).await;
+        let sovereign_owner_shard_0 = interactor.register_wallet(test_wallets::mike()).await;
+        let sovereign_owner_shard_1 = interactor.register_wallet(test_wallets::frank()).await;
+        let sovereign_owner_shard_2 = interactor.register_wallet(test_wallets::heidi()).await;
+        let bridge_service = interactor.register_wallet(test_wallets::dan()).await;
+        let user_address = interactor.register_wallet(test_wallets::eve()).await;
 
         interactor.generate_blocks_until_epoch(1).await.unwrap();
 
         SovereignForgeInteract {
             interactor,
-            bridge_owner,
-            sovereign_owner,
+            bridge_owner_shard_0,
+            bridge_owner_shard_1,
+            bridge_owner_shard_2,
+            sovereign_owner_shard_0,
+            sovereign_owner_shard_1,
+            sovereign_owner_shard_2,
             bridge_service,
             user_address,
-            state: State::load_state(),
+            state: State::default(),
         }
     }
 
@@ -127,77 +139,121 @@ impl SovereignForgeInteract {
         self.state.set_fee_token(fee_token);
     }
 
-    pub async fn deploy_template_contracts(&mut self) {
-        self.deploy_chain_config(OptionalValue::None).await;
-
-        self.deploy_mvx_esdt_safe(OptionalValue::None).await;
-
-        self.deploy_fee_market(
-            self.state.current_mvx_esdt_safe_contract_address().clone(),
-            None,
-        )
-        .await;
-
-        self.deploy_header_verifier(Vec::new()).await;
-    }
-
     pub async fn deploy_and_complete_setup_phase(
         &mut self,
-        chain_id: &str,
         deploy_cost: BigUint<StaticApi>,
         optional_sov_config: OptionalValue<SovereignConfig<StaticApi>>,
         optional_esdt_safe_config: OptionalValue<EsdtSafeConfig<StaticApi>>,
         fee: Option<FeeStruct<StaticApi>>,
     ) {
-        self.deploy_template_contracts().await;
-        self.deploy_sovereign_forge(&deploy_cost).await;
+        let initial_caller = self.bridge_owner_shard_0.clone();
+        let template_contracts = self.deploy_template_contracts(initial_caller.clone()).await;
 
-        let sov_forge_address = self.state.current_sovereign_forge_sc_address().clone();
-        let chain_config_address = self.state.current_chain_config_sc_address().clone();
-        let mvx_esdt_safe_address = self.state.current_mvx_esdt_safe_contract_address().clone();
-        let fee_market_address = self.state.current_fee_market_address().clone();
-        let header_verifier_address = self.state.current_header_verifier_address().clone();
-
-        self.deploy_chain_factory(
-            sov_forge_address,
+        let (
             chain_config_address,
-            header_verifier_address,
             mvx_esdt_safe_address,
             fee_market_address,
+            header_verifier_address,
+        ) = match template_contracts.as_slice() {
+            [a, b, c, d] => (a.clone(), b.clone(), c.clone(), d.clone()),
+            _ => panic!(
+                "Expected 4 deployed contract addresses, got {}",
+                template_contracts.len()
+            ),
+        };
+
+        let sovereign_forge_address = self
+            .deploy_sovereign_forge(initial_caller.clone(), &BigUint::from(DEPLOY_COST))
+            .await;
+
+        for shard_id in 0..NUMBER_OF_SHARDS {
+            self.finish_init_setup_phase_for_one_shard(
+                shard_id,
+                initial_caller.clone(),
+                sovereign_forge_address.clone(),
+                TemplateAddresses {
+                    chain_config_address: chain_config_address.clone(),
+                    header_verifier_address: header_verifier_address.clone(),
+                    esdt_safe_address: mvx_esdt_safe_address.clone(),
+                    fee_market_address: fee_market_address.clone(),
+                },
+            )
+            .await;
+        }
+        for shard in 0..NUMBER_OF_SHARDS {
+            self.deploy_on_one_shard(
+                shard,
+                deploy_cost.clone(),
+                optional_esdt_safe_config.clone(),
+                optional_sov_config.clone(),
+                fee.clone(),
+            )
+            .await;
+        }
+    }
+
+    pub async fn finish_init_setup_phase_for_one_shard(
+        &mut self,
+        shard_id: u32,
+        initial_caller: Address,
+        sovereign_forge_address: Address,
+        template_addresses: TemplateAddresses,
+    ) {
+        let caller = self.get_bridge_owner_for_shard(shard_id);
+        let preferred_chain_id = PREFERRED_CHAIN_IDS[shard_id as usize].to_string();
+
+        self.deploy_chain_factory(
+            caller.clone(),
+            preferred_chain_id.clone(),
+            sovereign_forge_address.clone(),
+            template_addresses.clone(),
         )
         .await;
-        let chain_factory_address = self.state.current_chain_factory_sc_address().clone();
-
-        self.deploy_token_handler(chain_factory_address.to_address())
+        self.register_chain_factory(initial_caller.clone(), shard_id, preferred_chain_id.clone())
             .await;
 
-        self.register_token_handler(0).await;
-        self.register_token_handler(1).await;
-        self.register_token_handler(2).await;
-        self.register_token_handler(3).await;
-        self.register_chain_factory(0).await;
-        self.register_chain_factory(1).await;
-        self.register_chain_factory(2).await;
-        self.register_chain_factory(3).await;
-
-        self.deploy_phase_one(deploy_cost, Some(chain_id.into()), optional_sov_config)
+        self.deploy_token_handler(caller.clone(), preferred_chain_id.clone())
             .await;
-        self.deploy_phase_two(optional_esdt_safe_config).await;
-        self.deploy_phase_three(fee).await;
-        self.deploy_phase_four().await;
-
-        self.complete_setup_phase().await;
-        self.check_setup_phase_status(chain_id, true).await;
-        self.update_smart_contracts_addresses_in_state(chain_id)
+        self.register_token_handler(initial_caller.clone(), shard_id, preferred_chain_id)
             .await;
     }
 
-    pub async fn upgrade(&mut self) {
+    pub async fn deploy_on_one_shard(
+        &mut self,
+        shard: u32,
+        deploy_cost: BigUint<StaticApi>,
+        optional_esdt_safe_config: OptionalValue<EsdtSafeConfig<StaticApi>>,
+        optional_sov_config: OptionalValue<SovereignConfig<StaticApi>>,
+        fee: Option<FeeStruct<StaticApi>>,
+    ) {
+        let caller = self.get_sovereign_owner_for_shard(shard);
+        let preferred_chain_id = PREFERRED_CHAIN_IDS[shard as usize].to_string();
+        self.deploy_phase_one(
+            caller.clone(),
+            deploy_cost.clone(),
+            Some(preferred_chain_id.clone().into()),
+            optional_sov_config.clone(),
+        )
+        .await;
+        self.deploy_phase_two(caller.clone(), optional_esdt_safe_config.clone())
+            .await;
+        self.deploy_phase_three(caller.clone(), fee.clone()).await;
+        self.deploy_phase_four(caller.clone()).await;
+
+        self.complete_setup_phase(caller.clone()).await;
+        self.check_setup_phase_status(&preferred_chain_id, true)
+            .await;
+
+        self.update_smart_contracts_addresses_in_state(preferred_chain_id)
+            .await;
+    }
+
+    pub async fn upgrade(&mut self, caller: Address) {
         let response = self
             .interactor
             .tx()
             .to(self.state.current_sovereign_forge_sc_address())
-            .from(self.bridge_owner.clone())
+            .from(caller)
             .gas(50_000_000u64)
             .typed(SovereignForgeProxy)
             .upgrade()
@@ -210,15 +266,19 @@ impl SovereignForgeInteract {
         println!("Result: {response:?}");
     }
 
-    pub async fn register_token_handler(&mut self, shard_id: u32) {
-        let address = self.state.current_token_handler_address().to_address();
-        let token_handler_address = ManagedAddress::from(address);
-
+    pub async fn register_token_handler(
+        &mut self,
+        caller: Address,
+        shard_id: u32,
+        chain_id: String,
+    ) {
+        let sovereign_forge_address = self.state.current_sovereign_forge_sc_address();
+        let token_handler_address = self.state.get_token_handler_address(chain_id);
         let response = self
             .interactor
             .tx()
-            .from(&self.bridge_owner.clone())
-            .to(self.state.current_sovereign_forge_sc_address())
+            .from(caller)
+            .to(sovereign_forge_address)
             .gas(30_000_000u64)
             .typed(SovereignForgeProxy)
             .register_token_handler(shard_id, token_handler_address)
@@ -229,15 +289,23 @@ impl SovereignForgeInteract {
         println!("Result: {response:?}");
     }
 
-    pub async fn register_chain_factory(&mut self, shard_id: u32) {
+    pub async fn register_chain_factory(
+        &mut self,
+        caller: Address,
+        shard_id: u32,
+        chain_id: String,
+    ) {
+        let sovereign_forge_address = self.state.current_sovereign_forge_sc_address();
+        let chain_factory_address = self.state.get_chain_factory_sc_address(chain_id);
+
         let response = self
             .interactor
             .tx()
-            .from(&self.bridge_owner.clone())
-            .to(self.state.current_sovereign_forge_sc_address())
+            .from(caller)
+            .to(sovereign_forge_address)
             .gas(30_000_000u64)
             .typed(SovereignForgeProxy)
-            .register_chain_factory(shard_id, self.state.current_chain_factory_sc_address())
+            .register_chain_factory(shard_id, chain_factory_address)
             .returns(ReturnsResultUnmanaged)
             .run()
             .await;
@@ -245,102 +313,47 @@ impl SovereignForgeInteract {
         println!("Result: {response:?}");
     }
 
-    pub async fn update_smart_contracts_addresses_in_state(&mut self, chain_id: &str) {
+    pub async fn update_smart_contracts_addresses_in_state(&mut self, chain_id: String) {
         let result_value = self
             .interactor
             .query()
             .to(self.state.current_sovereign_forge_sc_address())
             .typed(SovereignForgeProxy)
-            .sovereign_deployed_contracts(chain_id)
+            .sovereign_deployed_contracts(chain_id.clone())
             .returns(ReturnsResult)
             .run()
             .await;
 
         for contract in result_value {
+            let address = Bech32Address::from(contract.address.to_address());
             match contract.id {
                 ScArray::ChainConfig => {
-                    self.state.set_chain_factory_sc_address(Bech32Address::from(
-                        contract.address.to_address(),
-                    ));
+                    self.state.set_chain_config_sc_address(AddressInfo {
+                        address,
+                        chain_id: chain_id.clone(),
+                    });
                 }
                 ScArray::ESDTSafe => {
-                    self.state
-                        .set_mvx_esdt_safe_contract_address(Bech32Address::from(
-                            contract.address.to_address(),
-                        ));
+                    self.state.set_mvx_esdt_safe_contract_address(AddressInfo {
+                        address,
+                        chain_id: chain_id.clone(),
+                    });
                 }
                 ScArray::FeeMarket => {
-                    self.state
-                        .set_fee_market_address(Bech32Address::from(contract.address.to_address()));
+                    self.state.set_fee_market_address(AddressInfo {
+                        address,
+                        chain_id: chain_id.clone(),
+                    });
                 }
                 ScArray::HeaderVerifier => {
-                    self.state.set_header_verifier_address(Bech32Address::from(
-                        contract.address.to_address(),
-                    ));
+                    self.state.set_header_verifier_address(AddressInfo {
+                        address,
+                        chain_id: chain_id.clone(),
+                    });
                 }
                 _ => {}
             }
         }
-    }
-
-    pub async fn get_chain_factories(&mut self) {
-        let shard_id = 0u32;
-
-        let result_value = self
-            .interactor
-            .query()
-            .to(self.state.current_sovereign_forge_sc_address())
-            .typed(SovereignForgeProxy)
-            .chain_factories(shard_id)
-            .returns(ReturnsResultUnmanaged)
-            .run()
-            .await;
-
-        println!("Result: {result_value:?}");
-    }
-
-    pub async fn get_token_handlers(&mut self) {
-        let shard_id = 0u32;
-
-        let result_value = self
-            .interactor
-            .query()
-            .to(self.state.current_sovereign_forge_sc_address())
-            .typed(SovereignForgeProxy)
-            .token_handlers(shard_id)
-            .returns(ReturnsResultUnmanaged)
-            .run()
-            .await;
-
-        println!("Result: {result_value:?}");
-    }
-
-    pub async fn get_deploy_cost(&mut self) {
-        let result_value = self
-            .interactor
-            .query()
-            .to(self.state.current_sovereign_forge_sc_address())
-            .typed(SovereignForgeProxy)
-            .deploy_cost()
-            .returns(ReturnsResultUnmanaged)
-            .run()
-            .await;
-
-        println!("Result: {result_value:?}");
-    }
-
-    pub async fn get_chain_ids(&mut self) {
-        let result_value = self
-            .interactor
-            .query()
-            .to(self.state.current_sovereign_forge_sc_address())
-            .typed(SovereignForgeProxy)
-            .chain_ids()
-            .returns(ReturnsResultUnmanaged)
-            .run()
-            .await;
-
-        println!("Result: {result_value:?}");
     }
 
     pub async fn check_setup_phase_status(&mut self, chain_id: &str, expected_value: bool) {
@@ -358,5 +371,23 @@ impl SovereignForgeInteract {
             result_value, expected_value,
             "Expected setup phase status to be {expected_value}, but got {result_value}"
         );
+    }
+
+    fn get_bridge_owner_for_shard(&self, shard_id: u32) -> Address {
+        match shard_id {
+            0 => self.bridge_owner_shard_0.clone(),
+            1 => self.bridge_owner_shard_1.clone(),
+            2 => self.bridge_owner_shard_2.clone(),
+            _ => panic!("Invalid shard ID: {shard_id}"),
+        }
+    }
+
+    fn get_sovereign_owner_for_shard(&self, shard_id: u32) -> Address {
+        match shard_id {
+            0 => self.sovereign_owner_shard_0.clone(),
+            1 => self.sovereign_owner_shard_1.clone(),
+            2 => self.sovereign_owner_shard_2.clone(),
+            _ => panic!("Invalid shard ID: {shard_id}"),
+        }
     }
 }

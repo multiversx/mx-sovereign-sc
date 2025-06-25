@@ -75,6 +75,8 @@ pub const NATIVE_TOKEN_NOT_REGISTERED: &str = "There is no native token register
 pub const NO_ESDT_SAFE_ADDRESS: &str = "There is no registered ESDT address";
 pub const NO_HEADER_VERIFIER_ADDRESS: &str = "There is no registered Header-Verifier address";
 pub const NO_KNOWN_CHAIN_CONFIG_SC: &str = "No known Chain Config SC contract, deploy first";
+pub const NO_KNOWN_CHAIN_FACTORY_IN_THE_SPECIFIED_SHARD: &str =
+    "No chain factory address found for the specified shard";
 pub const NO_KNOWN_CHAIN_FACTORY_SC: &str = "No known Chain Factory SC, deploy first";
 pub const NO_KNOWN_ENSHRINE_ESDT_SAFE_SC: &str =
     "No known Enshrine ESDT Safe SC contract, deploy first";
@@ -86,6 +88,8 @@ pub const NO_KNOWN_HEADER_VERIFIER: &str = "No known Header Verifier contract, d
 pub const NO_KNOWN_SECOND_TOKEN: &str = "No known second token, register first";
 pub const NO_KNOWN_SOVEREIGN_FORGE_SC: &str = "No known Sovereign Forge SC, deploy first";
 pub const NO_KNOWN_TESTING_SC: &str = "No known Testing SC contract, deploy first";
+pub const NO_KNOWN_TOKEN_HANDLER_IN_THE_SPECIFIED_SHARD: &str =
+    "No token handler address found for the specified shard";
 pub const NO_KNOWN_TOKEN_HANDLER_SC: &str = "No known Token Handler contract, deploy first";
 pub const NOT_ENOUGH_WEGLD_AMOUNT: &str = "WEGLD fee amount is not met";
 pub const NOTHING_TO_TRANSFER: &str = "Nothing to transfer";

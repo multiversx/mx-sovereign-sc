@@ -2,14 +2,14 @@
 #![allow(unused)]
 
 use common_interactor::common_sovereign_interactor::{
-    CommonInteractorTrait, IssueTokenStruct, MintTokenStruct,
+    CommonInteractorTrait, IssueTokenStruct, MintTokenStruct, TemplateAddresses,
 };
 use common_interactor::interactor_config::Config;
 use common_interactor::interactor_state::State;
 use common_test_setup::base_setup::init::RegisterTokenArgs;
 use common_test_setup::constants::{
     DEPLOY_COST, ENSHRINE_ESDT_SAFE_CODE_PATH, INTERACTOR_WORKING_DIR, ONE_THOUSAND_TOKENS,
-    SOVEREIGN_TOKEN_PREFIX,
+    PREFERRED_CHAIN_IDS, SOVEREIGN_TOKEN_PREFIX,
 };
 use fee_market_proxy::*;
 use multiversx_sc_snippets::imports::*;
@@ -39,10 +39,6 @@ impl CommonInteractorTrait for EnshrineEsdtSafeInteract {
 
     fn state(&mut self) -> &mut State {
         &mut self.state
-    }
-
-    fn bridge_owner(&self) -> &Address {
-        &self.bridge_owner
     }
 
     fn bridge_service(&self) -> &Address {
@@ -85,7 +81,7 @@ impl EnshrineEsdtSafeInteract {
             sovereign_owner,
             bridge_service,
             user_address,
-            state: State::load_state(),
+            state: State::default(),
         }
     }
 
@@ -147,20 +143,34 @@ impl EnshrineEsdtSafeInteract {
         opt_config: Option<EsdtSafeConfig<StaticApi>>,
         sc_array: Vec<ScArray>,
     ) {
-        let owner = self.bridge_owner().clone();
-        self.deploy_chain_config(OptionalValue::None).await;
-        self.deploy_token_handler(owner).await;
+        let owner = self.bridge_owner.clone();
+        self.deploy_chain_config(
+            owner.clone(),
+            PREFERRED_CHAIN_IDS[0].to_string(),
+            OptionalValue::None,
+        )
+        .await;
+        self.deploy_sovereign_forge(owner.clone(), &BigUint::from(DEPLOY_COST))
+            .await;
+        self.deploy_token_handler(owner.clone(), PREFERRED_CHAIN_IDS[0].to_string())
+            .await;
         self.deploy_enshrine_esdt(
+            owner.clone(),
+            PREFERRED_CHAIN_IDS[0].to_string(),
             is_sovereign_chain,
             Some(self.state.get_first_token_id()),
             Some(SOVEREIGN_TOKEN_PREFIX.into()),
-            self.state.current_token_handler_address().clone(),
             opt_config,
         )
         .await;
-        self.whitelist_enshrine_esdt(self.state.current_enshrine_esdt_safe_address().clone())
-            .await;
+        self.whitelist_enshrine_esdt(
+            owner.clone(),
+            self.state.current_enshrine_esdt_safe_address().clone(),
+        )
+        .await;
         self.deploy_fee_market(
+            owner.clone(),
+            PREFERRED_CHAIN_IDS[0].to_string(),
             self.state.current_enshrine_esdt_safe_address().clone(),
             fee_struct,
         )
@@ -171,8 +181,26 @@ impl EnshrineEsdtSafeInteract {
         .await;
         let contracts_array = self.get_contract_info_struct_for_sc_type(sc_array);
 
-        self.deploy_header_verifier(contracts_array).await;
-        self.complete_header_verifier_setup_phase().await;
+        self.deploy_header_verifier(
+            owner.clone(),
+            PREFERRED_CHAIN_IDS[0].to_string(),
+            contracts_array,
+        )
+        .await;
+        self.deploy_chain_factory(
+            owner.clone(),
+            PREFERRED_CHAIN_IDS[0].to_string(),
+            self.state.current_sovereign_forge_sc_address().to_address(),
+            TemplateAddresses {
+                chain_config_address: self.state.current_chain_config_sc_address().clone(),
+                esdt_safe_address: self.state.current_enshrine_esdt_safe_address().clone(),
+                fee_market_address: self.state.current_fee_market_address().clone(),
+                header_verifier_address: self.state.current_header_verifier_address().clone(),
+            },
+        )
+        .await;
+        self.complete_header_verifier_setup_phase(owner.clone())
+            .await;
         self.unpause_endpoint().await;
     }
 

@@ -3,12 +3,14 @@ pub mod mvx_esdt_safe;
 pub mod sovereign_forge;
 
 use common_interactor::{
-    common_sovereign_interactor::CommonInteractorTrait, interactor_config::Config,
+    common_sovereign_interactor::{CommonInteractorTrait, TemplateAddresses},
+    interactor_config::Config,
 };
+use common_test_setup::constants::PREFERRED_CHAIN_IDS;
 use enshrine_esdt_safe::enshrine_esdt_safe_interactor::EnshrineEsdtSafeInteract;
 use multiversx_sc::{
     imports::{MultiValueVec, OptionalValue},
-    types::{BigUint, ManagedBuffer, ManagedVec},
+    types::{Address, BigUint, ManagedBuffer, ManagedVec},
 };
 use multiversx_sc_snippets::env_logger;
 use mvx_esdt_safe::mvx_esdt_safe_interactor_main::MvxEsdtSafeInteract;
@@ -31,14 +33,34 @@ pub async fn mvx_esdt_safe_cli() {
         "pause" => interact.pause_endpoint().await,
         "unpause" => interact.unpause_endpoint().await,
         "isPaused" => interact.paused_status().await,
-        "deployChainConfig" => interact.deploy_chain_config(OptionalValue::None).await,
-        "deployHeaderVerifier" => interact.deploy_header_verifier(vec![]).await,
+        "deployChainConfig" => {
+            interact
+                .deploy_chain_config(
+                    Address::zero(),
+                    PREFERRED_CHAIN_IDS[0].to_string(),
+                    OptionalValue::None,
+                )
+                .await
+        }
+        "deployHeaderVerifier" => {
+            interact
+                .deploy_header_verifier(Address::zero(), PREFERRED_CHAIN_IDS[0].to_string(), vec![])
+                .await
+        }
         "deployEsdtSafe" => {
-            interact.deploy_mvx_esdt_safe(OptionalValue::None).await;
+            interact
+                .deploy_mvx_esdt_safe(
+                    Address::zero(),
+                    PREFERRED_CHAIN_IDS[0].to_string(),
+                    OptionalValue::None,
+                )
+                .await;
         }
         "deployFeeMarket" => {
             interact
                 .deploy_fee_market(
+                    Address::zero(),
+                    PREFERRED_CHAIN_IDS[0].to_string(),
                     interact
                         .state
                         .current_mvx_esdt_safe_contract_address()
@@ -47,9 +69,17 @@ pub async fn mvx_esdt_safe_cli() {
                 )
                 .await;
         }
-        "deployTestingSc" => interact.deploy_testing_sc().await,
+        "deployTestingSc" => {
+            interact
+                .deploy_testing_sc(Address::zero(), PREFERRED_CHAIN_IDS[0].to_string())
+                .await
+        }
         "completeSetup" => interact.complete_setup_phase().await,
-        "completeHeaderVerifierSetup" => interact.complete_header_verifier_setup_phase().await,
+        "completeHeaderVerifierSetup" => {
+            interact
+                .complete_header_verifier_setup_phase(Address::zero())
+                .await
+        }
         _ => panic!("Unknown command: {}", cmd),
     }
 }
@@ -65,32 +95,70 @@ pub async fn sovereign_forge_cli() {
     let mut interact = SovereignForgeInteract::new(config).await;
 
     match cmd.as_str() {
-        "upgrade" => interact.upgrade().await,
+        "upgrade" => interact.upgrade(Address::zero()).await,
         "deploySovereignForge" => {
             interact
-                .deploy_sovereign_forge(&BigUint::from(100u64))
-                .await
+                .deploy_sovereign_forge(Address::zero(), &BigUint::from(100u64))
+                .await;
         }
         "deployChainFactory" => {
             interact
                 .deploy_chain_factory(
-                    interact.state.current_sovereign_forge_sc_address().clone(),
-                    interact.state.current_chain_config_sc_address().clone(),
-                    interact.state.current_header_verifier_address().clone(),
+                    Address::zero(),
+                    PREFERRED_CHAIN_IDS[0].to_string(),
                     interact
                         .state
-                        .current_mvx_esdt_safe_contract_address()
-                        .clone(),
-                    interact.state.current_fee_market_address().clone(),
+                        .current_sovereign_forge_sc_address()
+                        .to_address(),
+                    TemplateAddresses {
+                        chain_config_address: interact
+                            .state
+                            .current_chain_config_sc_address()
+                            .clone(),
+
+                        header_verifier_address: interact
+                            .state
+                            .current_header_verifier_address()
+                            .clone(),
+
+                        esdt_safe_address: interact
+                            .state
+                            .current_mvx_esdt_safe_contract_address()
+                            .clone(),
+
+                        fee_market_address: interact.state.current_fee_market_address().clone(),
+                    },
+                )
+                .await;
+        }
+        "deployChainConfig" => {
+            interact
+                .deploy_chain_config(
+                    Address::zero(),
+                    PREFERRED_CHAIN_IDS[0].to_string(),
+                    OptionalValue::None,
                 )
                 .await
         }
-        "deployChainConfig" => interact.deploy_chain_config(OptionalValue::None).await,
-        "deployHeaderVerifier" => interact.deploy_header_verifier(vec![]).await,
-        "deployEsdtSafe" => interact.deploy_mvx_esdt_safe(OptionalValue::None).await,
+        "deployHeaderVerifier" => {
+            interact
+                .deploy_header_verifier(Address::zero(), PREFERRED_CHAIN_IDS[0].to_string(), vec![])
+                .await
+        }
+        "deployEsdtSafe" => {
+            interact
+                .deploy_mvx_esdt_safe(
+                    Address::zero(),
+                    PREFERRED_CHAIN_IDS[0].to_string(),
+                    OptionalValue::None,
+                )
+                .await
+        }
         "deployFeeMarket" => {
             interact
                 .deploy_fee_market(
+                    Address::zero(),
+                    PREFERRED_CHAIN_IDS[0].to_string(),
                     interact
                         .state
                         .current_mvx_esdt_safe_contract_address()
@@ -99,21 +167,34 @@ pub async fn sovereign_forge_cli() {
                 )
                 .await
         }
-        "registerTokenHandler" => interact.register_token_handler(0).await,
-        "registerChainFactory" => interact.register_chain_factory(0).await,
-        "completeSetup" => interact.complete_setup_phase().await,
-        "deployPhaseOne" => {
+        "registerTokenHandler" => {
             interact
-                .deploy_phase_one(BigUint::from(100u64), None, OptionalValue::None)
+                .register_token_handler(Address::zero(), 0, PREFERRED_CHAIN_IDS[0].to_string())
                 .await
         }
-        "deployPhaseTwo" => interact.deploy_phase_two(OptionalValue::None).await,
-        "deployPhaseThree" => interact.deploy_phase_three(None).await,
-        "deployPhaseFour" => interact.deploy_phase_four().await,
-        "getChainFactories" => interact.get_chain_factories().await,
-        "getTokenHandlers" => interact.get_token_handlers().await,
-        "getDeployCost" => interact.get_deploy_cost().await,
-        "getChainIds" => interact.get_chain_ids().await,
+        "registerChainFactory" => {
+            interact
+                .register_chain_factory(Address::zero(), 0, PREFERRED_CHAIN_IDS[0].to_string())
+                .await
+        }
+        "completeSetup" => interact.complete_setup_phase(Address::zero()).await,
+        "deployPhaseOne" => {
+            interact
+                .deploy_phase_one(
+                    Address::zero(),
+                    BigUint::from(100u64),
+                    None,
+                    OptionalValue::None,
+                )
+                .await
+        }
+        "deployPhaseTwo" => {
+            interact
+                .deploy_phase_two(Address::zero(), OptionalValue::None)
+                .await
+        }
+        "deployPhaseThree" => interact.deploy_phase_three(Address::zero(), None).await,
+        "deployPhaseFour" => interact.deploy_phase_four(Address::zero()).await,
         _ => panic!("Unknown command: {}", cmd),
     }
 }
@@ -131,10 +212,11 @@ pub async fn enshrine_esdt_safe_cli() {
         "deploy" => {
             interact
                 .deploy_enshrine_esdt(
+                    Address::zero(),
+                    PREFERRED_CHAIN_IDS[0].to_string(),
                     false,
                     None,
                     None,
-                    interact.state.current_token_handler_address().clone(),
                     None,
                 )
                 .await

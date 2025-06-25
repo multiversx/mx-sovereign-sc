@@ -2,8 +2,9 @@ use common_interactor::{
     common_sovereign_interactor::CommonInteractorTrait, interactor_config::Config,
 };
 use common_test_setup::constants::{
-    CHAIN_ID, DEPLOY_COST, ESDT_SAFE_CONFIG_STORAGE_KEY, ONE_HUNDRED_TOKENS, ONE_THOUSAND_TOKENS,
-    OPERATION_HASH_STATUS_STORAGE_KEY, TEN_TOKENS, TOKEN_FEE_STORAGE_KEY, WRONG_ENDPOINT_NAME,
+    DEPLOY_COST, ESDT_SAFE_CONFIG_STORAGE_KEY, ONE_HUNDRED_TOKENS, ONE_THOUSAND_TOKENS,
+    OPERATION_HASH_STATUS_STORAGE_KEY, PREFERRED_CHAIN_IDS, TEN_TOKENS, TOKEN_FEE_STORAGE_KEY,
+    WRONG_ENDPOINT_NAME,
 };
 use header_verifier::OperationHashStatus;
 use multiversx_sc::{
@@ -43,7 +44,6 @@ async fn test_deploy_sovereign_forge_cs() {
     let mut chain_interactor = SovereignForgeInteract::new(Config::chain_simulator_config()).await;
     chain_interactor
         .deploy_and_complete_setup_phase(
-            CHAIN_ID,
             BigUint::from(DEPLOY_COST),
             OptionalValue::None,
             OptionalValue::None,
@@ -69,7 +69,6 @@ async fn test_complete_deposit_flow() {
 
     chain_interactor
         .deploy_and_complete_setup_phase(
-            CHAIN_ID,
             deploy_cost,
             OptionalValue::None,
             OptionalValue::None,
@@ -184,7 +183,6 @@ async fn test_complete_flow_execute_operation_with_transfer_data_success_no_fee(
 
     chain_interactor
         .deploy_and_complete_setup_phase(
-            CHAIN_ID,
             DEPLOY_COST.into(),
             OptionalValue::None,
             OptionalValue::None,
@@ -192,7 +190,12 @@ async fn test_complete_flow_execute_operation_with_transfer_data_success_no_fee(
         )
         .await;
 
-    chain_interactor.deploy_testing_sc().await;
+    chain_interactor
+        .deploy_testing_sc(
+            chain_interactor.bridge_owner_shard_0.clone(),
+            PREFERRED_CHAIN_IDS[0].to_string(),
+        )
+        .await;
 
     let operation = Operation::new(
         ManagedAddress::from_address(
@@ -355,7 +358,6 @@ async fn test_complete_flow_execute_operation_success_with_fee() {
 
     chain_interactor
         .deploy_and_complete_setup_phase(
-            CHAIN_ID,
             DEPLOY_COST.into(),
             OptionalValue::None,
             OptionalValue::None,
@@ -363,7 +365,12 @@ async fn test_complete_flow_execute_operation_success_with_fee() {
         )
         .await;
 
-    chain_interactor.deploy_testing_sc().await;
+    chain_interactor
+        .deploy_testing_sc(
+            chain_interactor.bridge_owner_shard_0.clone(),
+            PREFERRED_CHAIN_IDS[0].to_string(),
+        )
+        .await;
 
     let operation = Operation::new(
         ManagedAddress::from_address(
@@ -506,7 +513,6 @@ async fn test_complete_flow_execute_operation_only_transfer_data_no_fee() {
 
     chain_interactor
         .deploy_and_complete_setup_phase(
-            CHAIN_ID,
             DEPLOY_COST.into(),
             OptionalValue::None,
             OptionalValue::None,
@@ -514,7 +520,12 @@ async fn test_complete_flow_execute_operation_only_transfer_data_no_fee() {
         )
         .await;
 
-    chain_interactor.deploy_testing_sc().await;
+    chain_interactor
+        .deploy_testing_sc(
+            chain_interactor.bridge_owner_shard_0.clone(),
+            PREFERRED_CHAIN_IDS[0].to_string(),
+        )
+        .await;
 
     let operation = Operation::new(
         ManagedAddress::from_address(
@@ -608,7 +619,6 @@ async fn test_complete_flow_execute_operation_wrong_endpoint() {
 
     chain_interactor
         .deploy_and_complete_setup_phase(
-            CHAIN_ID,
             DEPLOY_COST.into(),
             OptionalValue::None,
             OptionalValue::None,
@@ -616,7 +626,12 @@ async fn test_complete_flow_execute_operation_wrong_endpoint() {
         )
         .await;
 
-    chain_interactor.deploy_testing_sc().await;
+    chain_interactor
+        .deploy_testing_sc(
+            chain_interactor.bridge_owner_shard_0.clone(),
+            PREFERRED_CHAIN_IDS[0].to_string(),
+        )
+        .await;
 
     let operation = Operation::new(
         ManagedAddress::from_address(
@@ -697,7 +712,6 @@ async fn test_complete_flow_update_esdt_safe_config() {
 
     chain_interactor
         .deploy_and_complete_setup_phase(
-            CHAIN_ID,
             DEPLOY_COST.into(),
             OptionalValue::None,
             OptionalValue::None,
@@ -757,7 +771,6 @@ async fn test_complete_flow_set_and_remove_fee() {
 
     chain_interactor
         .deploy_and_complete_setup_phase(
-            CHAIN_ID,
             DEPLOY_COST.into(),
             OptionalValue::None,
             OptionalValue::None,
