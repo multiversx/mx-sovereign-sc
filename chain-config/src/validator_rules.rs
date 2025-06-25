@@ -1,7 +1,7 @@
 use error_messages::{
     INVALID_ADDITIONAL_STAKE, INVALID_MIN_MAX_VALIDATOR_NUMBERS, INVALID_TOKEN_ID,
-    NOT_ENOUGH_VALIDATORS, VALIDATOR_ALREADY_REGISTERED, VALIDATOR_NOT_REGISTERED,
-    VALIDATOR_RANGE_EXCEEDED,
+    NOT_ENOUGH_VALIDATORS, REGISTRATION_PAUSED, VALIDATOR_ALREADY_REGISTERED,
+    VALIDATOR_NOT_REGISTERED, VALIDATOR_RANGE_EXCEEDED,
 };
 use structs::{configs::SovereignConfig, ValidatorInfo};
 
@@ -27,8 +27,10 @@ pub trait ValidatorRulesModule: setup_phase::SetupPhaseModule + events::EventsMo
     #[payable]
     #[endpoint(register)]
     fn register(&self, new_validator: ValidatorInfo<Self::Api>) {
-        if !self.is_genesis_phase_complete() {
+        if self.is_genesis_phase_active() {
             self.validate_additional_stake();
+        } else {
+            self.require_registration_not_frozen();
         }
 
         self.require_validator_not_registered(&new_validator.bls_key);
@@ -59,7 +61,6 @@ pub trait ValidatorRulesModule: setup_phase::SetupPhaseModule + events::EventsMo
 
     #[endpoint(unregister)]
     fn unregister(&self, validator_info: ValidatorInfo<Self::Api>) {
-        self.require_setup_complete();
         self.require_validator_registered(&validator_info.bls_key);
 
         let validator_id = self.bls_key_to_id_mapper(&validator_info.bls_key).get();
@@ -99,7 +100,7 @@ pub trait ValidatorRulesModule: setup_phase::SetupPhaseModule + events::EventsMo
         );
     }
 
-    fn is_genesis_phase_complete(&self) -> bool {
+    fn is_genesis_phase_active(&self) -> bool {
         self.genesis_phase_status().get()
     }
 
@@ -117,6 +118,10 @@ pub trait ValidatorRulesModule: setup_phase::SetupPhaseModule + events::EventsMo
                 require!(matched, INVALID_ADDITIONAL_STAKE);
             }
         }
+    }
+
+    fn require_registration_not_frozen(&self) {
+        require!(self.registration_status().get() == 1, REGISTRATION_PAUSED);
     }
 
     #[view(sovereignConfig)]
@@ -141,7 +146,7 @@ pub trait ValidatorRulesModule: setup_phase::SetupPhaseModule + events::EventsMo
     fn genesis_phase_status(&self) -> SingleValueMapper<bool>;
 
     #[storage_mapper("registration_status")]
-    fn registration_status(&self) -> SingleValueMapper<ManagedBuffer>;
+    fn registration_status(&self) -> SingleValueMapper<u8>;
 
     #[view(wasPreviouslySlashed)]
     #[storage_mapper("wasPreviouslySlashed")]

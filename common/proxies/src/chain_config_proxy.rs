@@ -116,7 +116,7 @@ where
 
     pub fn change_registration_status<
         Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
-        Arg1: ProxyArg<ManagedBuffer<Env::Api>>,
+        Arg1: ProxyArg<u8>,
     >(
         self,
         hash_of_hashes: Arg0,

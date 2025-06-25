@@ -4,8 +4,7 @@ use common_test_setup::constants::{
     CHAIN_CONFIG_ADDRESS, FIRST_TEST_TOKEN, OWNER_ADDRESS, USER_ADDRESS,
 };
 use error_messages::{
-    GENESIS_PHASE_NOT_COMPLETE, INVALID_ADDITIONAL_STAKE, INVALID_MIN_MAX_VALIDATOR_NUMBERS,
-    NOT_ENOUGH_VALIDATORS, NO_REGISTERED_VALIDATORS, SETUP_PHASE_NOT_COMPLETED,
+    INVALID_ADDITIONAL_STAKE, INVALID_MIN_MAX_VALIDATOR_NUMBERS, SETUP_PHASE_NOT_COMPLETED,
     VALIDATOR_ALREADY_REGISTERED, VALIDATOR_NOT_REGISTERED, VALIDATOR_RANGE_EXCEEDED,
 };
 use multiversx_sc::{
@@ -320,8 +319,6 @@ fn test_register_validator_range_exceeded_too_many_validators() {
         .common_setup
         .deploy_chain_config(OptionalValue::Some(SovereignConfig::default_config()), None);
 
-    state.common_setup.complete_chain_config_setup_phase(None);
-
     let new_validator_one = ValidatorInfo {
         address: USER_ADDRESS.to_managed_address(),
         bls_key: ManagedBuffer::from("validator1"),
@@ -344,10 +341,6 @@ fn test_register_validator_range_exceeded_too_many_validators() {
     );
     let id_one = state.get_bls_key_id(&new_validator_one.bls_key);
     assert!(state.get_bls_key_by_id(&id_one) == new_validator_one.bls_key);
-
-    state
-        .common_setup
-        .complete_chain_config_genesis_phase(None, Some("completeGenesisPhase"));
 
     state.register(
         &new_validator_two,
@@ -372,8 +365,6 @@ fn test_register_validator_already_registered() {
     state
         .common_setup
         .deploy_chain_config(OptionalValue::None, None);
-
-    state.common_setup.complete_chain_config_setup_phase(None);
 
     let new_validator = ValidatorInfo {
         address: USER_ADDRESS.to_managed_address(),
@@ -427,8 +418,6 @@ fn test_register_validator_not_whitelisted() {
         .common_setup
         .deploy_chain_config(OptionalValue::Some(config), None);
 
-    state.common_setup.complete_chain_config_setup_phase(None);
-
     let new_validator = ValidatorInfo {
         address: USER_ADDRESS.to_managed_address(),
         bls_key: ManagedBuffer::from("validator1"),
@@ -472,8 +461,6 @@ fn test_register_validator_is_whitelisted() {
     state
         .common_setup
         .deploy_chain_config(OptionalValue::Some(config), None);
-
-    state.common_setup.complete_chain_config_setup_phase(None);
 
     let new_validator = ValidatorInfo {
         address: USER_ADDRESS.to_managed_address(),
@@ -525,8 +512,6 @@ fn test_register_validator_not_whitelisted_after_genesis() {
         .common_setup
         .deploy_chain_config(OptionalValue::Some(config), None);
 
-    state.common_setup.complete_chain_config_setup_phase(None);
-
     let whitelisted_validator = ValidatorInfo {
         address: USER_ADDRESS.to_managed_address(),
         bls_key: ManagedBuffer::from("validator1"),
@@ -547,9 +532,33 @@ fn test_register_validator_not_whitelisted_after_genesis() {
         Some("register"),
     );
 
+    state.common_setup.complete_chain_config_setup_phase(None);
+
     state
         .common_setup
-        .complete_chain_config_genesis_phase(None, Some("completeGenesisPhase"));
+        .deploy_header_verifier(vec![ScArray::ChainConfig]);
+
+    state
+        .common_setup
+        .complete_header_verifier_setup_phase(None);
+
+    let new_status_hash_byte_array = sha256(&[1u8]);
+    let new_status_hash = ManagedBuffer::new_from_bytes(&new_status_hash_byte_array);
+    let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&new_status_hash_byte_array));
+
+    state.common_setup.register_operation(
+        OWNER_ADDRESS,
+        ManagedBuffer::new(),
+        &hash_of_hashes,
+        MultiValueEncoded::from_iter(vec![new_status_hash]),
+    );
+
+    state.common_setup.update_registration_status(
+        &hash_of_hashes,
+        1,
+        None,
+        Some("registrationStatusUpdate"),
+    );
 
     let validator = ValidatorInfo {
         address: USER_ADDRESS.to_managed_address(),
@@ -590,8 +599,6 @@ fn test_register_validator_not_whitelisted_during_genesis() {
         .common_setup
         .deploy_chain_config(OptionalValue::Some(config), None);
 
-    state.common_setup.complete_chain_config_setup_phase(None);
-
     let whitelisted_validator = ValidatorInfo {
         address: USER_ADDRESS.to_managed_address(),
         bls_key: ManagedBuffer::from("validator1"),
@@ -622,35 +629,9 @@ fn test_register_validator_not_whitelisted_during_genesis() {
     state.register(
         &validator,
         ManagedVec::new(),
-        Some(GENESIS_PHASE_NOT_COMPLETE),
+        Some(INVALID_ADDITIONAL_STAKE),
         None,
     );
-}
-
-/// ### TEST
-/// C-CONFIG_UNREGISTER_FAIL
-///
-/// ### ACTION
-/// Call 'unregister()' during setup phase
-///
-/// ### EXPECTED
-/// Error SETUP_PHASE_NOT_COMPLETED
-#[test]
-fn test_unregister_validator_setup_phase_not_completed() {
-    let mut state = ChainConfigTestState::new();
-
-    state
-        .common_setup
-        .deploy_chain_config(OptionalValue::None, None);
-
-    let new_validator = ValidatorInfo {
-        address: USER_ADDRESS.to_managed_address(),
-        bls_key: ManagedBuffer::from("validator1"),
-        egld_stake: BigUint::default(),
-        token_stake: EsdtTokenData::default(),
-    };
-
-    state.unregister(&new_validator, Some(SETUP_PHASE_NOT_COMPLETED), None);
 }
 
 /// ### TEST
@@ -666,7 +647,7 @@ fn test_unregister_validator_not_registered() {
     let mut state = ChainConfigTestState::new();
 
     let config = SovereignConfig {
-        min_validators: 1,
+        min_validators: 0,
         max_validators: 2,
         ..SovereignConfig::default_config()
     };
@@ -705,8 +686,6 @@ fn test_unregister_validator() {
         .common_setup
         .deploy_chain_config(OptionalValue::None, None);
 
-    state.common_setup.complete_chain_config_setup_phase(None);
-
     let new_validator = ValidatorInfo {
         address: USER_ADDRESS.to_managed_address(),
         bls_key: ManagedBuffer::from("validator1"),
@@ -725,117 +704,4 @@ fn test_unregister_validator() {
     state.unregister(&new_validator, None, Some("unregister"));
 
     assert!(state.get_bls_key_id(&new_validator.bls_key) == 0);
-}
-
-/// ### TEST
-/// C-CONFIG_COMPLETE_GENESIS_PHASE_ERROR
-///
-/// ### ACTION
-/// Call 'complete_genesis()' with no registered validators
-///
-/// ### EXPECTED
-/// Error NO_REGISTERED_VALIDATORS
-#[test]
-fn complete_genesis_no_registered_validators() {
-    let mut state = ChainConfigTestState::new();
-
-    state
-        .common_setup
-        .deploy_chain_config(OptionalValue::None, None);
-
-    state
-        .common_setup
-        .complete_chain_config_genesis_phase(Some(NO_REGISTERED_VALIDATORS), None);
-}
-
-/// ### TEST
-/// C-CONFIG_COMPLETE_GENESIS_PHASE_ERROR
-///
-/// ### ACTION
-/// Call 'complete_genesis()' with no registered validators
-///
-/// ### EXPECTED
-/// Error NOT_ENOUGH_VALIDATORS
-#[test]
-fn complete_genesis_not_enough_registered_validators() {
-    let mut state = ChainConfigTestState::new();
-
-    let config = SovereignConfig {
-        min_validators: 2,
-        max_validators: 3,
-        ..SovereignConfig::default_config()
-    };
-
-    state
-        .common_setup
-        .deploy_chain_config(OptionalValue::Some(config), None);
-
-    let new_validator = ValidatorInfo {
-        address: USER_ADDRESS.to_managed_address(),
-        bls_key: ManagedBuffer::from("validator1"),
-        egld_stake: BigUint::default(),
-        token_stake: EsdtTokenData::default(),
-    };
-
-    state.register(
-        &new_validator,
-        MultiEsdtPayment::new(),
-        None,
-        Some("register"),
-    );
-    assert!(state.get_bls_key_id(&new_validator.bls_key) == 1);
-
-    state
-        .common_setup
-        .complete_chain_config_genesis_phase(Some(NOT_ENOUGH_VALIDATORS), None);
-}
-
-/// ### TEST
-/// C-CONFIG_COMPLETE_GENESIS_PHASE_OK
-///
-/// ### ACTION
-/// Call 'complete_genesis()'
-///
-/// ### EXPECTED
-/// The `genesis_phase` storage is updated
-#[test]
-fn complete_genesis() {
-    let mut state = ChainConfigTestState::new();
-
-    let config = SovereignConfig {
-        min_validators: 1,
-        ..SovereignConfig::default_config()
-    };
-
-    state
-        .common_setup
-        .deploy_chain_config(OptionalValue::Some(config), None);
-
-    let new_validator = ValidatorInfo {
-        address: USER_ADDRESS.to_managed_address(),
-        bls_key: ManagedBuffer::from("validator1"),
-        egld_stake: BigUint::default(),
-        token_stake: EsdtTokenData::default(),
-    };
-
-    state.register(
-        &new_validator,
-        MultiEsdtPayment::new(),
-        None,
-        Some("register"),
-    );
-    assert!(state.get_bls_key_id(&new_validator.bls_key) == 1);
-
-    state
-        .common_setup
-        .complete_chain_config_genesis_phase(None, Some("completeGenesisPhase"));
-
-    state
-        .common_setup
-        .world
-        .query()
-        .to(CHAIN_CONFIG_ADDRESS)
-        .whitebox(chain_config::contract_obj, |sc| {
-            assert!(!sc.genesis_phase_status().get());
-        })
 }
