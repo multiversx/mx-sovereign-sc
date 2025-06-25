@@ -1,8 +1,6 @@
 #![no_std]
 
-use core::hash;
-
-use error_messages::ERROR_AT_ENCODING;
+use error_messages::{ERROR_AT_ENCODING, INVALID_REGISTRATION_STATUS};
 use multiversx_sc::imports::*;
 use structs::{configs::SovereignConfig, generate_hash::GenerateHash};
 
@@ -82,20 +80,21 @@ pub trait ChainConfigContract:
     }
 
     #[endpoint(resumeRegistration)]
-    fn change_registration_status(
-        &self,
-        hash_of_hashes: ManagedBuffer,
-        registration_status: ManagedBuffer,
-    ) {
+    fn change_registration_status(&self, hash_of_hashes: ManagedBuffer, registration_status: u8) {
         self.require_setup_complete();
 
+        require!(registration_status == 1, INVALID_REGISTRATION_STATUS);
+
         let status_hash = ManagedBuffer::new_from_bytes(
-            &self.crypto().sha256(&registration_status).to_byte_array(),
+            &self
+                .crypto()
+                .sha256(ManagedBuffer::new_from_bytes(&[1u8]))
+                .to_byte_array(),
         );
 
         self.lock_operation_hash(&status_hash, &hash_of_hashes);
 
-        self.registration_status().set(registration_status);
+        self.registration_status().set(1);
 
         self.remove_executed_hash(&hash_of_hashes, &status_hash);
         self.registration_status_update_event();
@@ -110,6 +109,7 @@ pub trait ChainConfigContract:
         self.require_validator_set_valid(self.bls_keys_map().len());
 
         self.genesis_phase_status().set(false);
+        self.registration_status().set(0);
         self.complete_genesis_event();
         self.setup_phase_complete().set(true);
     }
