@@ -140,6 +140,9 @@ pub trait ValidatorRulesModule: setup_phase::SetupPhaseModule + events::EventsMo
     #[storage_mapper("genesisPhase")]
     fn genesis_phase_status(&self) -> SingleValueMapper<bool>;
 
+    #[storage_mapper("registration_status")]
+    fn registration_status(&self) -> SingleValueMapper<ManagedBuffer>;
+
     #[view(wasPreviouslySlashed)]
     #[storage_mapper("wasPreviouslySlashed")]
     fn was_previously_slashed(&self, validator: &ManagedAddress) -> SingleValueMapper<bool>;

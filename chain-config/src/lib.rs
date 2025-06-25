@@ -1,5 +1,7 @@
 #![no_std]
 
+use core::hash;
+
 use error_messages::ERROR_AT_ENCODING;
 use multiversx_sc::imports::*;
 use structs::{configs::SovereignConfig, generate_hash::GenerateHash};
@@ -77,6 +79,26 @@ pub trait ChainConfigContract:
 
         self.remove_executed_hash(&hash_of_hashes, &config_hash);
         self.execute_bridge_operation_event(&hash_of_hashes, &config_hash);
+    }
+
+    #[endpoint(resumeRegistration)]
+    fn change_registration_status(
+        &self,
+        hash_of_hashes: ManagedBuffer,
+        registration_status: ManagedBuffer,
+    ) {
+        self.require_setup_complete();
+
+        let status_hash = ManagedBuffer::new_from_bytes(
+            &self.crypto().sha256(&registration_status).to_byte_array(),
+        );
+
+        self.lock_operation_hash(&status_hash, &hash_of_hashes);
+
+        self.registration_status().set(registration_status);
+
+        self.remove_executed_hash(&hash_of_hashes, &status_hash);
+        self.registration_status_update_event();
     }
 
     #[only_owner]

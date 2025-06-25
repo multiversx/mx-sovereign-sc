@@ -59,4 +59,7 @@ pub trait EventsModule {
 
     #[event("completeGenesisPhase")]
     fn complete_genesis_event(&self);
+
+    #[event("registrationStatusUpdate")]
+    fn registration_status_update_event(&self);
 }
