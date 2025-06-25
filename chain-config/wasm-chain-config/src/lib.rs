@@ -22,7 +22,7 @@ multiversx_sc_wasm_adapter::endpoints! {
         upgrade => upgrade
         updateSovereignConfigSetupPhase => update_sovereign_config_during_setup_phase
         updateSovereignConfig => update_sovereign_config
-        resumeRegistration => change_registration_status
+        resumeRegistration => update_registration_status
         completeSetupPhase => complete_setup_phase
         register => register
         unregister => unregister

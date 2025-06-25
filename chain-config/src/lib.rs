@@ -80,10 +80,8 @@ pub trait ChainConfigContract:
     }
 
     #[endpoint(resumeRegistration)]
-    fn change_registration_status(&self, hash_of_hashes: ManagedBuffer, registration_status: u8) {
+    fn update_registration_status(&self, hash_of_hashes: ManagedBuffer, registration_status: u8) {
         self.require_setup_complete();
-
-        require!(registration_status == 1, INVALID_REGISTRATION_STATUS);
 
         let status_hash = ManagedBuffer::new_from_bytes(
             &self
@@ -91,6 +89,18 @@ pub trait ChainConfigContract:
                 .sha256(ManagedBuffer::new_from_bytes(&[1u8]))
                 .to_byte_array(),
         );
+
+        if registration_status != 1 {
+            self.failed_bridge_operation_event(
+                &hash_of_hashes,
+                &status_hash,
+                &ManagedBuffer::from(INVALID_REGISTRATION_STATUS),
+            );
+
+            self.remove_executed_hash(&hash_of_hashes, &status_hash);
+
+            return;
+        }
 
         self.lock_operation_hash(&status_hash, &hash_of_hashes);
 

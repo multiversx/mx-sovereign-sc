@@ -87,7 +87,7 @@ impl BaseSetup {
             .from(OWNER_ADDRESS)
             .to(CHAIN_CONFIG_ADDRESS)
             .typed(ChainConfigContractProxy)
-            .change_registration_status(hash_of_hashes, registration_status)
+            .update_registration_status(hash_of_hashes, registration_status)
             .returns(ReturnsHandledOrError::new())
             .returns(ReturnsLogs)
             .run();

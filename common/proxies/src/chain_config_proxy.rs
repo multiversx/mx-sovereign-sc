@@ -114,7 +114,7 @@ where
             .original_result()
     }
 
-    pub fn change_registration_status<
+    pub fn update_registration_status<
         Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
         Arg1: ProxyArg<u8>,
     >(
