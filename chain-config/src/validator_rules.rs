@@ -1,10 +1,13 @@
 use error_messages::{
-    INVALID_ADDITIONAL_STAKE, INVALID_MIN_MAX_VALIDATOR_NUMBERS, INVALID_TOKEN_ID,
-    NOT_ENOUGH_VALIDATORS, REGISTRATION_PAUSED, VALIDATOR_ALREADY_REGISTERED,
-    VALIDATOR_NOT_REGISTERED, VALIDATOR_RANGE_EXCEEDED,
+    EMPTY_ADDITIONAL_STAKE, INVALID_ADDITIONAL_STAKE, INVALID_EGLD_STAKE,
+    INVALID_MIN_MAX_VALIDATOR_NUMBERS, INVALID_TOKEN_ID, NOT_ENOUGH_VALIDATORS,
+    REGISTRATION_PAUSED, VALIDATOR_ALREADY_REGISTERED, VALIDATOR_NOT_REGISTERED,
+    VALIDATOR_RANGE_EXCEEDED,
 };
-use multiversx_sc::chain_core::EGLD_000000_TOKEN_IDENTIFIER;
-use structs::{configs::SovereignConfig, TokenStake, ValidatorInfo};
+use structs::{
+    configs::{SovereignConfig, StakeArgs},
+    ValidatorInfo,
+};
 
 multiversx_sc::imports!();
 multiversx_sc::derive_imports!();
@@ -13,6 +16,7 @@ multiversx_sc::derive_imports!();
 pub trait ValidatorRulesModule: setup_phase::SetupPhaseModule + events::EventsModule {
     fn is_new_config_valid(&self, config: &SovereignConfig<Self::Api>) -> Option<&str> {
         if let Some(additional_stake) = config.opt_additional_stake_required.clone() {
+            require!(!additional_stake.is_empty(), EMPTY_ADDITIONAL_STAKE);
             for stake in additional_stake {
                 require!(stake.token_id.is_valid_esdt_identifier(), INVALID_TOKEN_ID);
             }
@@ -28,12 +32,11 @@ pub trait ValidatorRulesModule: setup_phase::SetupPhaseModule + events::EventsMo
     #[payable]
     #[endpoint(register)]
     fn register(&self, new_bls_key: ManagedBuffer<Self::Api>) {
-        let call_value = self.call_value().all_esdt_transfers();
-        if self.is_genesis_phase_active() {
-            self.validate_additional_stake(&call_value);
-        } else {
+        if !self.is_genesis_phase_active() {
             self.require_registration_not_frozen();
         }
+
+        let (egld_stake, additional_stake) = self.validate_stake();
 
         self.require_validator_not_registered(&new_bls_key);
 
@@ -56,8 +59,8 @@ pub trait ValidatorRulesModule: setup_phase::SetupPhaseModule + events::EventsMo
             &current_bls_key_id,
             &self.blockchain().get_caller(),
             &new_bls_key,
-            &egld_value,
-            &TokenStake::map_token_stake_vec_from_esdt_call_value(&call_value),
+            &egld_stake,
+            &additional_stake,
         );
     }
 
@@ -108,15 +111,33 @@ pub trait ValidatorRulesModule: setup_phase::SetupPhaseModule + events::EventsMo
     }
 
     // TODO: send back tokens if additional stake is not enough
-    fn validate_additional_stake(&self, call_value: &ManagedVec<EsdtTokenPayment<Self::Api>>) {
-        if let Some(additional_stake) = &self.sovereign_config().get().opt_additional_stake_required
-        {
-            for stake in additional_stake {
-                let matched = call_value.iter().any(|paid| paid.amount >= stake.amount);
+    fn validate_stake(&self) -> (BigUint<Self::Api>, Option<ManagedVec<StakeArgs<Self::Api>>>) {
+        let sovereign_config = self.sovereign_config().get();
 
-                require!(matched, INVALID_ADDITIONAL_STAKE);
-            }
+        let call_value = self.call_value().all_transfers().clone_value();
+
+        let egld_payment = call_value
+            .iter()
+            .find(|p| p.token_identifier.is_egld() && p.amount >= sovereign_config.min_stake);
+
+        require!(egld_payment.is_some(), INVALID_EGLD_STAKE);
+
+        let egld_amount = &egld_payment.unwrap().amount;
+
+        if let Some(additional_stakes) = &sovereign_config.opt_additional_stake_required {
+            let matched = additional_stakes.iter().all(|s| {
+                call_value
+                    .iter()
+                    .any(|c| c.token_identifier == s.token_id && c.amount >= s.amount)
+            });
+
+            require!(matched, INVALID_ADDITIONAL_STAKE);
         }
+
+        (
+            egld_amount.clone(),
+            sovereign_config.opt_additional_stake_required,
+        )
     }
 
     fn require_registration_not_frozen(&self) {

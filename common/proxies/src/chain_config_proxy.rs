@@ -140,14 +140,14 @@ where
     }
 
     pub fn register<
-        Arg0: ProxyArg<structs::ValidatorInfo<Env::Api>>,
+        Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
     >(
         self,
-        new_validator: Arg0,
+        new_bls_key: Arg0,
     ) -> TxTypedCall<Env, From, To, (), Gas, ()> {
         self.wrapped_tx
             .raw_call("register")
-            .argument(&new_validator)
+            .argument(&new_bls_key)
             .original_result()
     }
 

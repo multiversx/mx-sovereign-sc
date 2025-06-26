@@ -4,7 +4,7 @@ use common_test_setup::{
         CHAIN_CONFIG_ADDRESS, FIRST_TEST_TOKEN, ONE_HUNDRED_MILLION, OWNER_ADDRESS, OWNER_BALANCE,
     },
 };
-use multiversx_sc::types::{BigUint, ManagedBuffer, MultiEsdtPayment, ReturnsResult};
+use multiversx_sc::types::{BigUint, ManagedBuffer, MultiEgldOrEsdtPayment, ReturnsResult};
 use multiversx_sc_scenario::{api::StaticApi, ReturnsHandledOrError, ReturnsLogs, ScenarioTxRun};
 use proxies::chain_config_proxy::ChainConfigContractProxy;
 use structs::{configs::SovereignConfig, ValidatorInfo};
@@ -78,8 +78,8 @@ impl ChainConfigTestState {
 
     pub fn register(
         &mut self,
-        new_validator: &ValidatorInfo<StaticApi>,
-        payment: MultiEsdtPayment<StaticApi>,
+        bls_key: &ManagedBuffer<StaticApi>,
+        payment: &MultiEgldOrEsdtPayment<StaticApi>,
         expect_error: Option<&str>,
         expected_custom_log: Option<&str>,
     ) {
@@ -90,7 +90,7 @@ impl ChainConfigTestState {
             .from(OWNER_ADDRESS)
             .to(CHAIN_CONFIG_ADDRESS)
             .typed(ChainConfigContractProxy)
-            .register(new_validator)
+            .register(bls_key)
             .returns(ReturnsHandledOrError::new())
             .returns(ReturnsLogs)
             .payment(payment)

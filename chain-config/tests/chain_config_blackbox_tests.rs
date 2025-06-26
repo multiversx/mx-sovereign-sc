@@ -4,15 +4,16 @@ use common_test_setup::constants::{
     CHAIN_CONFIG_ADDRESS, FIRST_TEST_TOKEN, OWNER_ADDRESS, USER_ADDRESS,
 };
 use error_messages::{
-    INVALID_ADDITIONAL_STAKE, INVALID_MIN_MAX_VALIDATOR_NUMBERS, INVALID_REGISTRATION_STATUS,
+    INVALID_ADDITIONAL_STAKE, INVALID_EGLD_STAKE, INVALID_MIN_MAX_VALIDATOR_NUMBERS,
     SETUP_PHASE_NOT_COMPLETED, VALIDATOR_ALREADY_REGISTERED, VALIDATOR_NOT_REGISTERED,
     VALIDATOR_RANGE_EXCEEDED,
 };
 use multiversx_sc::{
+    chain_core::EGLD_000000_TOKEN_IDENTIFIER,
     imports::OptionalValue,
     types::{
-        BigUint, EsdtTokenData, EsdtTokenPayment, ManagedBuffer, ManagedVec, MultiEsdtPayment,
-        MultiValueEncoded,
+        BigUint, EgldOrEsdtTokenIdentifier, EgldOrEsdtTokenPayment, ManagedBuffer, ManagedVec,
+        MultiEgldOrEsdtPayment, MultiValueEncoded,
     },
 };
 use multiversx_sc_scenario::{multiversx_chain_vm::crypto_functions::sha256, ScenarioTxWhitebox};
@@ -320,33 +321,69 @@ fn test_register_validator_range_exceeded_too_many_validators() {
         .common_setup
         .deploy_chain_config(OptionalValue::Some(SovereignConfig::default_config()), None);
 
-    let new_validator_one = ValidatorInfo {
-        address: USER_ADDRESS.to_managed_address(),
-        bls_key: ManagedBuffer::from("validator1"),
-        egld_stake: BigUint::default(),
-        token_stake: ManagedVec::new(),
-    };
-
-    let new_validator_two = ValidatorInfo {
-        address: OWNER_ADDRESS.to_managed_address(),
-        bls_key: ManagedBuffer::from("validator2"),
-        egld_stake: BigUint::default(),
-        token_stake: ManagedVec::new(),
-    };
-
-    state.register(
-        &new_validator_one,
-        MultiEsdtPayment::new(),
-        None,
-        Some("register"),
+    let egld_payment = EgldOrEsdtTokenPayment::new(
+        EgldOrEsdtTokenIdentifier::from(EGLD_000000_TOKEN_IDENTIFIER.as_bytes()),
+        0,
+        BigUint::from(100u64),
     );
-    let id_one = state.get_bls_key_id(&new_validator_one.bls_key);
-    assert!(state.get_bls_key_by_id(&id_one) == new_validator_one.bls_key);
+
+    let mut payments_vec = MultiEgldOrEsdtPayment::new();
+
+    payments_vec.push(egld_payment);
+
+    let new_validator_one = ManagedBuffer::from("validator1");
+    let new_validator_two = ManagedBuffer::from("validator2");
+
+    state.register(&new_validator_one, &payments_vec, None, Some("register"));
+
+    let id_one = state.get_bls_key_id(&new_validator_one);
+    assert!(state.get_bls_key_by_id(&id_one) == new_validator_one);
 
     state.register(
         &new_validator_two,
-        MultiEsdtPayment::new(),
+        &payments_vec,
         Some(VALIDATOR_RANGE_EXCEEDED),
+        None,
+    );
+}
+
+/// ### TEST
+/// C-CONFIG_REGISTER_VALIDATOR_FAIL
+///
+/// ### ACTION
+/// Call 'register()' with not enough EGLD stake
+///
+/// ### EXPECTED
+/// Error INVALID_EGLD_STAKE
+#[test]
+fn test_register_validator_not_enough_egld_stake() {
+    let mut state = ChainConfigTestState::new();
+
+    let config = SovereignConfig {
+        min_stake: BigUint::from(100u64),
+        ..SovereignConfig::default_config()
+    };
+
+    state
+        .common_setup
+        .deploy_chain_config(OptionalValue::Some(config), None);
+
+    let egld_payment = EgldOrEsdtTokenPayment::new(
+        EgldOrEsdtTokenIdentifier::from(EGLD_000000_TOKEN_IDENTIFIER.as_bytes()),
+        0,
+        BigUint::from(99u64),
+    );
+
+    let mut payments_vec = MultiEgldOrEsdtPayment::new();
+
+    payments_vec.push(egld_payment);
+
+    let new_validator_one = ManagedBuffer::from("validator1");
+
+    state.register(
+        &new_validator_one,
+        &payments_vec,
+        Some(INVALID_EGLD_STAKE),
         None,
     );
 }
@@ -367,24 +404,24 @@ fn test_register_validator_already_registered() {
         .common_setup
         .deploy_chain_config(OptionalValue::None, None);
 
-    let new_validator = ValidatorInfo {
-        address: USER_ADDRESS.to_managed_address(),
-        bls_key: ManagedBuffer::from("validator1"),
-        egld_stake: BigUint::default(),
-        token_stake: ManagedVec::new(),
-    };
-
-    state.register(
-        &new_validator,
-        MultiEsdtPayment::new(),
-        None,
-        Some("register"),
+    let egld_payment = EgldOrEsdtTokenPayment::new(
+        EgldOrEsdtTokenIdentifier::from(EGLD_000000_TOKEN_IDENTIFIER.as_bytes()),
+        0,
+        BigUint::from(100u64),
     );
-    assert!(state.get_bls_key_id(&new_validator.bls_key) == 1);
+
+    let mut payments_vec = MultiEgldOrEsdtPayment::new();
+
+    payments_vec.push(egld_payment);
+
+    let new_validator = ManagedBuffer::from("validator1");
+
+    state.register(&new_validator, &payments_vec, None, Some("register"));
+    assert!(state.get_bls_key_id(&new_validator) == 1);
 
     state.register(
         &new_validator,
-        MultiEsdtPayment::new(),
+        &payments_vec,
         Some(VALIDATOR_ALREADY_REGISTERED),
         None,
     );
@@ -419,16 +456,21 @@ fn test_register_validator_not_whitelisted() {
         .common_setup
         .deploy_chain_config(OptionalValue::Some(config), None);
 
-    let new_validator = ValidatorInfo {
-        address: USER_ADDRESS.to_managed_address(),
-        bls_key: ManagedBuffer::from("validator1"),
-        egld_stake: BigUint::default(),
-        token_stake: ManagedVec::new(),
-    };
+    let new_validator = ManagedBuffer::from("validator1");
+
+    let egld_payment = EgldOrEsdtTokenPayment::new(
+        EgldOrEsdtTokenIdentifier::from(EGLD_000000_TOKEN_IDENTIFIER.as_bytes()),
+        0,
+        BigUint::from(100u64),
+    );
+
+    let mut payments_vec = MultiEgldOrEsdtPayment::new();
+
+    payments_vec.push(egld_payment);
 
     state.register(
         &new_validator,
-        MultiEsdtPayment::new(),
+        &payments_vec,
         Some(INVALID_ADDITIONAL_STAKE),
         None,
     );
@@ -463,25 +505,26 @@ fn test_register_validator_is_whitelisted() {
         .common_setup
         .deploy_chain_config(OptionalValue::Some(config), None);
 
-    let new_validator = ValidatorInfo {
-        address: USER_ADDRESS.to_managed_address(),
-        bls_key: ManagedBuffer::from("validator1"),
-        egld_stake: BigUint::default(),
-        token_stake: ManagedVec::new(),
-    };
+    let new_validator = ManagedBuffer::from("validator1");
 
-    let payment = EsdtTokenPayment::new(
-        FIRST_TEST_TOKEN.to_token_identifier(),
+    let egld_payment = EgldOrEsdtTokenPayment::new(
+        EgldOrEsdtTokenIdentifier::from(EGLD_000000_TOKEN_IDENTIFIER.as_bytes()),
         0,
         BigUint::from(100u64),
     );
 
-    state.register(
-        &new_validator,
-        ManagedVec::from(vec![payment]),
-        None,
-        Some("register"),
+    let payment = EgldOrEsdtTokenPayment::new(
+        EgldOrEsdtTokenIdentifier::from(FIRST_TEST_TOKEN.as_bytes()),
+        0,
+        BigUint::from(100u64),
     );
+
+    let mut payments_vec = MultiEgldOrEsdtPayment::new();
+
+    payments_vec.push(egld_payment);
+    payments_vec.push(payment);
+
+    state.register(&new_validator, &payments_vec, None, Some("register"));
 }
 
 /// ### TEST
@@ -513,22 +556,27 @@ fn test_register_validator_not_whitelisted_after_genesis() {
         .common_setup
         .deploy_chain_config(OptionalValue::Some(config), None);
 
-    let whitelisted_validator = ValidatorInfo {
-        address: USER_ADDRESS.to_managed_address(),
-        bls_key: ManagedBuffer::from("validator1"),
-        egld_stake: BigUint::default(),
-        token_stake: ManagedVec::new(),
-    };
+    let whitelisted_validator = ManagedBuffer::from("validator1");
 
-    let payment = EsdtTokenPayment::new(
-        FIRST_TEST_TOKEN.to_token_identifier(),
+    let egld_payment = EgldOrEsdtTokenPayment::new(
+        EgldOrEsdtTokenIdentifier::from(EGLD_000000_TOKEN_IDENTIFIER.as_bytes()),
         0,
         BigUint::from(100u64),
     );
 
+    let payment = EgldOrEsdtTokenPayment::new(
+        EgldOrEsdtTokenIdentifier::from(FIRST_TEST_TOKEN.as_bytes()),
+        0,
+        BigUint::from(100u64),
+    );
+
+    let mut payments_vec = MultiEgldOrEsdtPayment::new();
+    payments_vec.push(egld_payment);
+    payments_vec.push(payment);
+
     state.register(
         &whitelisted_validator,
-        ManagedVec::from(vec![payment]),
+        &payments_vec,
         None,
         Some("register"),
     );
@@ -561,14 +609,9 @@ fn test_register_validator_not_whitelisted_after_genesis() {
         Some("registrationStatusUpdate"),
     );
 
-    let validator = ValidatorInfo {
-        address: USER_ADDRESS.to_managed_address(),
-        bls_key: ManagedBuffer::from("validator2"),
-        egld_stake: BigUint::default(),
-        token_stake: ManagedVec::new(),
-    };
+    let validator = ManagedBuffer::from("validator2");
 
-    state.register(&validator, ManagedVec::new(), None, Some("register"));
+    state.register(&validator, &payments_vec, None, Some("register"));
 }
 
 /// ### TEST
@@ -600,36 +643,41 @@ fn test_register_validator_not_whitelisted_during_genesis() {
         .common_setup
         .deploy_chain_config(OptionalValue::Some(config), None);
 
-    let whitelisted_validator = ValidatorInfo {
-        address: USER_ADDRESS.to_managed_address(),
-        bls_key: ManagedBuffer::from("validator1"),
-        egld_stake: BigUint::default(),
-        token_stake: ManagedVec::new(),
-    };
+    let whitelisted_validator = ManagedBuffer::from("validator1");
 
-    let payment = EsdtTokenPayment::new(
-        FIRST_TEST_TOKEN.to_token_identifier(),
+    let egld_payment = EgldOrEsdtTokenPayment::new(
+        EgldOrEsdtTokenIdentifier::from(EGLD_000000_TOKEN_IDENTIFIER.as_bytes()),
         0,
         BigUint::from(100u64),
     );
 
+    let payment = EgldOrEsdtTokenPayment::new(
+        EgldOrEsdtTokenIdentifier::from(FIRST_TEST_TOKEN.as_bytes()),
+        0,
+        BigUint::from(100u64),
+    );
+
+    let mut payments_vec_with_whitelist_stake = MultiEgldOrEsdtPayment::new();
+
+    payments_vec_with_whitelist_stake.push(egld_payment.clone());
+    payments_vec_with_whitelist_stake.push(payment);
+
     state.register(
         &whitelisted_validator,
-        ManagedVec::from(vec![payment]),
+        &payments_vec_with_whitelist_stake,
         None,
         Some("register"),
     );
 
-    let validator = ValidatorInfo {
-        address: USER_ADDRESS.to_managed_address(),
-        bls_key: ManagedBuffer::from("validator2"),
-        egld_stake: BigUint::default(),
-        token_stake: ManagedVec::new(),
-    };
+    let validator = ManagedBuffer::from("validator2");
+
+    let mut payments_vec_no_whitelist_stake = MultiEgldOrEsdtPayment::new();
+
+    payments_vec_no_whitelist_stake.push(egld_payment);
 
     state.register(
         &validator,
-        ManagedVec::new(),
+        &payments_vec_no_whitelist_stake,
         Some(INVALID_ADDITIONAL_STAKE),
         None,
     );
@@ -687,6 +735,16 @@ fn test_unregister_validator() {
         .common_setup
         .deploy_chain_config(OptionalValue::None, None);
 
+    let egld_payment = EgldOrEsdtTokenPayment::new(
+        EgldOrEsdtTokenIdentifier::from(EGLD_000000_TOKEN_IDENTIFIER.as_bytes()),
+        0,
+        BigUint::from(100u64),
+    );
+
+    let mut payments_vec = MultiEgldOrEsdtPayment::new();
+
+    payments_vec.push(egld_payment);
+
     let new_validator = ValidatorInfo {
         address: USER_ADDRESS.to_managed_address(),
         bls_key: ManagedBuffer::from("validator1"),
@@ -695,8 +753,8 @@ fn test_unregister_validator() {
     };
 
     state.register(
-        &new_validator,
-        MultiEsdtPayment::new(),
+        &new_validator.bls_key,
+        &payments_vec,
         None,
         Some("register"),
     );
@@ -751,7 +809,7 @@ fn update_registration_wrong_status() {
 
     state.common_setup.update_registration_status(
         &ManagedBuffer::new(),
-        1,
+        0,
         None,
         Some("failedBridgeOp"),
     );
