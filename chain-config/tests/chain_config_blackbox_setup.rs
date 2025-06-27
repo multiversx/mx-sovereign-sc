@@ -1,9 +1,16 @@
 use common_test_setup::{
     base_setup::init::{AccountSetup, BaseSetup},
-    constants::{CHAIN_CONFIG_ADDRESS, OWNER_ADDRESS, OWNER_BALANCE},
+    constants::{
+        CHAIN_CONFIG_ADDRESS, FIRST_TEST_TOKEN, ONE_HUNDRED_MILLION, OWNER_ADDRESS, OWNER_BALANCE,
+    },
 };
-use multiversx_sc::types::{BigUint, ManagedBuffer, ReturnsResult};
-use multiversx_sc_scenario::{api::StaticApi, ReturnsHandledOrError, ReturnsLogs, ScenarioTxRun};
+use multiversx_sc::types::{
+    BigUint, ManagedBuffer, MultiEgldOrEsdtPayment, MultiValueEncoded, ReturnsResult,
+};
+use multiversx_sc_scenario::{
+    api::StaticApi, multiversx_chain_vm::crypto_functions::sha256, ReturnsHandledOrError,
+    ReturnsLogs, ScenarioTxRun,
+};
 use proxies::chain_config_proxy::ChainConfigContractProxy;
 use structs::{configs::SovereignConfig, ValidatorInfo};
 
@@ -18,7 +25,7 @@ impl ChainConfigTestState {
             address: OWNER_ADDRESS.to_address(),
             code_path: None,
             egld_balance: Some(OWNER_BALANCE.into()),
-            esdt_balances: None,
+            esdt_balances: Some(vec![(FIRST_TEST_TOKEN, 0u64, ONE_HUNDRED_MILLION.into())]),
         };
 
         let account_setups = vec![owner_account];
@@ -76,7 +83,8 @@ impl ChainConfigTestState {
 
     pub fn register(
         &mut self,
-        new_validator: &ValidatorInfo<StaticApi>,
+        bls_key: &ManagedBuffer<StaticApi>,
+        payment: &MultiEgldOrEsdtPayment<StaticApi>,
         expect_error: Option<&str>,
         expected_custom_log: Option<&str>,
     ) {
@@ -87,9 +95,10 @@ impl ChainConfigTestState {
             .from(OWNER_ADDRESS)
             .to(CHAIN_CONFIG_ADDRESS)
             .typed(ChainConfigContractProxy)
-            .register(new_validator)
+            .register(bls_key)
             .returns(ReturnsHandledOrError::new())
             .returns(ReturnsLogs)
+            .payment(payment)
             .run();
 
         self.common_setup
@@ -155,5 +164,25 @@ impl ChainConfigTestState {
             .into_tuple();
 
         bls_key
+    }
+
+    pub fn register_and_update_registration_status(&mut self, registration_status: u8) {
+        let new_status_hash_byte_array = sha256(&[registration_status]);
+        let new_status_hash = ManagedBuffer::new_from_bytes(&new_status_hash_byte_array);
+        let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&new_status_hash_byte_array));
+
+        self.common_setup.register_operation(
+            OWNER_ADDRESS,
+            ManagedBuffer::new(),
+            &hash_of_hashes,
+            MultiValueEncoded::from_iter(vec![new_status_hash]),
+        );
+
+        self.common_setup.update_registration_status(
+            &hash_of_hashes,
+            1,
+            None,
+            Some("registrationStatusUpdate"),
+        );
     }
 }

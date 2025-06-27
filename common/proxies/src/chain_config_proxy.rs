@@ -114,6 +114,22 @@ where
             .original_result()
     }
 
+    pub fn update_registration_status<
+        Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
+        Arg1: ProxyArg<u8>,
+    >(
+        self,
+        hash_of_hashes: Arg0,
+        registration_status: Arg1,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("resumeRegistration")
+            .argument(&hash_of_hashes)
+            .argument(&registration_status)
+            .original_result()
+    }
+
     pub fn complete_setup_phase(
         self,
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
@@ -124,15 +140,14 @@ where
     }
 
     pub fn register<
-        Arg0: ProxyArg<structs::ValidatorInfo<Env::Api>>,
+        Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
     >(
         self,
-        new_validator: Arg0,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        new_bls_key: Arg0,
+    ) -> TxTypedCall<Env, From, To, (), Gas, ()> {
         self.wrapped_tx
-            .payment(NotPayable)
             .raw_call("register")
-            .argument(&new_validator)
+            .argument(&new_bls_key)
             .original_result()
     }
 

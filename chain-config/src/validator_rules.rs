@@ -1,22 +1,28 @@
 use error_messages::{
-    INVALID_MIN_MAX_VALIDATOR_NUMBERS, VALIDATOR_ALREADY_REGISTERED, VALIDATOR_NOT_REGISTERED,
-    VALIDATOR_RANGE_EXCEEDED,
+    ADDITIONAL_STAKE_NOT_REQUIRED, ADDITIONAL_STAKE_ZERO_VALUE, EMPTY_ADDITIONAL_STAKE,
+    INVALID_ADDITIONAL_STAKE, INVALID_EGLD_STAKE, INVALID_MIN_MAX_VALIDATOR_NUMBERS,
+    INVALID_TOKEN_ID, NOT_ENOUGH_VALIDATORS, REGISTRATION_DISABLED, VALIDATOR_ALREADY_REGISTERED,
+    VALIDATOR_NOT_REGISTERED, VALIDATOR_RANGE_EXCEEDED,
 };
 use structs::{configs::SovereignConfig, ValidatorInfo};
 
 multiversx_sc::imports!();
 multiversx_sc::derive_imports!();
 
-#[type_abi]
-#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, ManagedVecItem)]
-pub struct TokenIdAmountPair<M: ManagedTypeApi> {
-    pub token_id: TokenIdentifier<M>,
-    pub amount: BigUint<M>,
-}
-
 #[multiversx_sc::module]
 pub trait ValidatorRulesModule: setup_phase::SetupPhaseModule + events::EventsModule {
     fn is_new_config_valid(&self, config: &SovereignConfig<Self::Api>) -> Option<&str> {
+        if let Some(additional_stake) = config.opt_additional_stake_required.clone() {
+            require!(!additional_stake.is_empty(), EMPTY_ADDITIONAL_STAKE);
+            for stake in additional_stake {
+                require!(
+                    stake.token_identifier.is_valid_esdt_identifier(),
+                    INVALID_TOKEN_ID
+                );
+                require!(stake.amount > 0, ADDITIONAL_STAKE_ZERO_VALUE);
+            }
+        }
+
         if config.min_validators <= config.max_validators {
             None
         } else {
@@ -24,10 +30,14 @@ pub trait ValidatorRulesModule: setup_phase::SetupPhaseModule + events::EventsMo
         }
     }
 
+    #[payable]
     #[endpoint(register)]
-    fn register(&self, new_validator: ValidatorInfo<Self::Api>) {
-        self.require_setup_complete();
-        self.require_validator_not_registered(&new_validator.bls_key);
+    fn register(&self, new_bls_key: ManagedBuffer<Self::Api>) {
+        self.require_registration_enabled();
+
+        let (egld_stake, additional_stake) = self.validate_stake();
+
+        self.require_validator_not_registered(&new_bls_key);
 
         let max_number_of_validators = self.sovereign_config().get().max_validators;
         let last_bls_key_id_mapper = self.last_bls_key_id();
@@ -40,22 +50,22 @@ pub trait ValidatorRulesModule: setup_phase::SetupPhaseModule + events::EventsMo
 
         self.last_bls_key_id().set(current_bls_key_id.clone());
         self.bls_keys_map()
-            .insert(current_bls_key_id.clone(), new_validator.bls_key.clone());
-        self.bls_key_to_id_mapper(&new_validator.bls_key)
+            .insert(current_bls_key_id.clone(), new_bls_key.clone());
+        self.bls_key_to_id_mapper(&new_bls_key)
             .set(current_bls_key_id.clone());
 
         self.register_event(
             &current_bls_key_id,
-            &new_validator.address,
-            &new_validator.bls_key,
-            &new_validator.egld_stake,
-            &new_validator.token_stake,
+            &self.blockchain().get_caller(),
+            &new_bls_key,
+            &egld_stake,
+            &additional_stake,
         );
     }
 
+    // TODO: add storage for registered stake in order to return it upon unregistering
     #[endpoint(unregister)]
     fn unregister(&self, validator_info: ValidatorInfo<Self::Api>) {
-        self.require_setup_complete();
         self.require_validator_registered(&validator_info.bls_key);
 
         let validator_id = self.bls_key_to_id_mapper(&validator_info.bls_key).get();
@@ -86,6 +96,63 @@ pub trait ValidatorRulesModule: setup_phase::SetupPhaseModule + events::EventsMo
         );
     }
 
+    fn require_validator_set_valid(&self, validator_len: usize) {
+        let config = self.sovereign_config().get();
+
+        require!(
+            validator_len as u64 >= config.min_validators,
+            NOT_ENOUGH_VALIDATORS
+        );
+    }
+
+    fn validate_stake(
+        &self,
+    ) -> (
+        BigUint<Self::Api>,
+        Option<ManagedVec<EsdtTokenPayment<Self::Api>>>,
+    ) {
+        let sovereign_config = self.sovereign_config().get();
+
+        let (egld_amount, esdt_payments) = self.split_payments();
+
+        require!(
+            egld_amount == sovereign_config.min_stake,
+            INVALID_EGLD_STAKE
+        );
+
+        if let Some(additional) = &sovereign_config.opt_additional_stake_required {
+            let valid = additional.iter().all(|s| {
+                esdt_payments
+                    .iter()
+                    .any(|p| p.token_identifier == s.token_identifier && p.amount == s.amount)
+            });
+            require!(valid, INVALID_ADDITIONAL_STAKE);
+        } else {
+            require!(esdt_payments.is_empty(), ADDITIONAL_STAKE_NOT_REQUIRED);
+        }
+
+        (egld_amount, Some(esdt_payments))
+    }
+
+    fn split_payments(&self) -> (BigUint, ManagedVec<EsdtTokenPayment<Self::Api>>) {
+        let mut egld_amount = BigUint::zero();
+        let mut esdt_payments = ManagedVec::new();
+
+        for payment in self.call_value().all_transfers().clone_value().into_iter() {
+            if payment.token_identifier.is_egld() {
+                egld_amount = payment.amount.clone();
+            } else {
+                esdt_payments.push(payment.unwrap_esdt());
+            }
+        }
+
+        (egld_amount, esdt_payments)
+    }
+
+    fn require_registration_enabled(&self) {
+        require!(self.registration_status().get() == 1, REGISTRATION_DISABLED);
+    }
+
     #[view(sovereignConfig)]
     #[storage_mapper("sovereignConfig")]
     fn sovereign_config(&self) -> SingleValueMapper<SovereignConfig<Self::Api>>;
@@ -103,6 +170,9 @@ pub trait ValidatorRulesModule: setup_phase::SetupPhaseModule + events::EventsMo
 
     #[storage_mapper("lastBlsKeyId")]
     fn last_bls_key_id(&self) -> SingleValueMapper<BigUint<Self::Api>>;
+
+    #[storage_mapper("registration_status")]
+    fn registration_status(&self) -> SingleValueMapper<u8>;
 
     #[view(wasPreviouslySlashed)]
     #[storage_mapper("wasPreviouslySlashed")]
