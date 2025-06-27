@@ -1,13 +1,14 @@
 use crate::err_msg;
 use multiversx_sc::{
     imports::OptionalValue,
-    types::{MultiValueEncoded, ReturnsResult},
+    sc_panic,
+    types::{ManagedAsyncCallResult, MultiValueEncoded},
 };
 use proxies::chain_factory_proxy::ChainFactoryContractProxy;
 use structs::{
     configs::{EsdtSafeConfig, SovereignConfig},
     fee::FeeStruct,
-    forge::ContractInfo,
+    forge::{ContractInfo, ScArray},
 };
 
 #[multiversx_sc::module]
@@ -15,40 +16,61 @@ pub trait ScDeployModule: super::utils::UtilsModule + super::storage::StorageMod
     #[inline]
     fn deploy_chain_config(
         &self,
+        chain_id: &ManagedBuffer,
         config: OptionalValue<SovereignConfig<Self::Api>>,
-    ) -> ManagedAddress {
+    ) {
         self.tx()
             .to(self.get_chain_factory_address())
             .typed(ChainFactoryContractProxy)
             .deploy_sovereign_chain_config_contract(config)
-            .returns(ReturnsResult)
-            .sync_call()
+            .gas(self.blockchain().get_gas_left() / 2)
+            .callback(
+                self.callbacks()
+                    .register_deployed_contract(chain_id, ScArray::ChainConfig),
+            )
+            .gas_for_callback(15_000_000)
+            .register_promise();
     }
 
     #[inline]
     fn deploy_header_verifier(
         &self,
         sovereign_contract: MultiValueEncoded<ContractInfo<Self::Api>>,
-    ) -> ManagedAddress {
+    ) {
+        let chain_id = self
+            .sovereigns_mapper(&self.blockchain().get_caller())
+            .get();
+
         self.tx()
             .to(self.get_chain_factory_address())
             .typed(ChainFactoryContractProxy)
             .deploy_header_verifier(sovereign_contract)
-            .returns(ReturnsResult)
-            .sync_call()
+            .gas(self.blockchain().get_gas_left() / 2)
+            .callback(
+                self.callbacks()
+                    .register_deployed_contract(&chain_id, ScArray::HeaderVerifier),
+            )
+            .gas_for_callback(15_000_000)
+            .register_promise();
     }
 
     #[inline]
-    fn deploy_mvx_esdt_safe(
-        &self,
-        opt_config: OptionalValue<EsdtSafeConfig<Self::Api>>,
-    ) -> ManagedAddress {
+    fn deploy_mvx_esdt_safe(&self, opt_config: OptionalValue<EsdtSafeConfig<Self::Api>>) {
+        let chain_id = self
+            .sovereigns_mapper(&self.blockchain().get_caller())
+            .get();
+
         self.tx()
             .to(self.get_chain_factory_address())
             .typed(ChainFactoryContractProxy)
             .deploy_mvx_esdt_safe(opt_config)
-            .returns(ReturnsResult)
-            .sync_call()
+            .gas(self.blockchain().get_gas_left() / 2)
+            .callback(
+                self.callbacks()
+                    .register_deployed_contract(&chain_id, ScArray::ESDTSafe),
+            )
+            .gas_for_callback(15_000_000)
+            .register_promise();
     }
 
     #[inline]
@@ -56,12 +78,41 @@ pub trait ScDeployModule: super::utils::UtilsModule + super::storage::StorageMod
         &self,
         esdt_safe_address: &ManagedAddress,
         fee: Option<FeeStruct<Self::Api>>,
-    ) -> ManagedAddress {
+    ) {
+        let chain_id = self
+            .sovereigns_mapper(&self.blockchain().get_caller())
+            .get();
+
         self.tx()
             .to(self.get_chain_factory_address())
             .typed(ChainFactoryContractProxy)
             .deploy_fee_market(esdt_safe_address, fee)
-            .returns(ReturnsResult)
-            .sync_call()
+            .gas(self.blockchain().get_gas_left() / 2)
+            .callback(
+                self.callbacks()
+                    .register_deployed_contract(&chain_id, ScArray::FeeMarket),
+            )
+            .gas_for_callback(15_000_000)
+            .register_promise();
+    }
+
+    #[promises_callback]
+    fn register_deployed_contract(
+        &self,
+        chain_id: &ManagedBuffer,
+        sc_id: ScArray,
+        #[call_result] result: ManagedAsyncCallResult<ManagedAddress>,
+    ) {
+        match result {
+            ManagedAsyncCallResult::Ok(sc_address) => {
+                let new_contract_info = ContractInfo::new(sc_id, sc_address);
+
+                self.sovereign_deployed_contracts(chain_id)
+                    .insert(new_contract_info);
+            }
+            ManagedAsyncCallResult::Err(_) => {
+                sc_panic!("");
+            }
+        }
     }
 }
