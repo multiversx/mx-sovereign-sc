@@ -5,7 +5,7 @@ use common_test_setup::constants::{
 };
 use error_messages::{
     ADDITIONAL_STAKE_ZERO_VALUE, INVALID_ADDITIONAL_STAKE, INVALID_EGLD_STAKE,
-    INVALID_MIN_MAX_VALIDATOR_NUMBERS, REGISTRATION_FROZEN, SETUP_PHASE_NOT_COMPLETED,
+    INVALID_MIN_MAX_VALIDATOR_NUMBERS, REGISTRATION_DISABLED, SETUP_PHASE_NOT_COMPLETED,
     VALIDATOR_ALREADY_REGISTERED, VALIDATOR_NOT_REGISTERED, VALIDATOR_RANGE_EXCEEDED,
 };
 use multiversx_sc::{
@@ -937,12 +937,12 @@ fn update_registration_status() {
 /// C-CONFIG_UPDATE_REGISTRATION_OK
 ///
 /// ### ACTION
-/// Call 'register()' when registration is unfrozen as a non genesis validator
+/// Call 'register()' when registration is enabled as a non genesis validator
 ///
 /// ### EXPECTED
 /// "registrationStatusUpdate" event is emitted and storage is updated
 #[test]
-fn update_register_validator_registration_unfrozen_validator_not_whitelisted() {
+fn update_register_validator_registration_enabled_validator_not_whitelisted() {
     let mut state = ChainConfigTestState::new();
 
     state
@@ -1004,12 +1004,12 @@ fn update_register_validator_registration_unfrozen_validator_not_whitelisted() {
 /// C-CONFIG_UPDATE_REGISTRATION_FAIL
 ///
 /// ### ACTION
-/// Call 'register()' when registration is frozen as a non genesis validator
+/// Call 'register()' when registration is disabled as a non genesis validator
 ///
 /// ### EXPECTED
 /// Error REGISTRATION_PAUSED
 #[test]
-fn update_register_validator_registration_frozen_validator_not_whitelisted() {
+fn update_register_validator_registration_disabled_validator_not_whitelisted() {
     let mut state = ChainConfigTestState::new();
 
     state
@@ -1048,19 +1048,19 @@ fn update_register_validator_registration_frozen_validator_not_whitelisted() {
 
     let validator = ManagedBuffer::from("validator_1");
 
-    state.register(&validator, &payments_vec, Some(REGISTRATION_FROZEN), None);
+    state.register(&validator, &payments_vec, Some(REGISTRATION_DISABLED), None);
 }
 
 /// ### TEST
 /// C-CONFIG_REGISTER_OK
 ///
 /// ### ACTION
-/// Call 'register()' when registration is frozen as a non genesis validator
+/// Call 'register()' when registration is disabled as a non genesis validator
 ///
 /// ### EXPECTED
 /// "registrationStatusUpdate" event is emitted and storage is updated
 #[test]
-fn update_register_validator_registration_frozen_validator_whitelisted() {
+fn update_register_validator_registration_disabled_validator_whitelisted() {
     let mut state = ChainConfigTestState::new();
 
     let first_token_stake_arg = EsdtTokenPayment {
@@ -1100,5 +1100,5 @@ fn update_register_validator_registration_frozen_validator_whitelisted() {
 
     let validator = ManagedBuffer::from("validator_1");
 
-    state.register(&validator, &payments_vec, Some(REGISTRATION_FROZEN), None);
+    state.register(&validator, &payments_vec, Some(REGISTRATION_DISABLED), None);
 }

@@ -1,7 +1,7 @@
 use error_messages::{
     ADDITIONAL_STAKE_ZERO_VALUE, EMPTY_ADDITIONAL_STAKE, INVALID_ADDITIONAL_STAKE,
     INVALID_EGLD_STAKE, INVALID_MIN_MAX_VALIDATOR_NUMBERS, INVALID_TOKEN_ID, NOT_ENOUGH_VALIDATORS,
-    REGISTRATION_FROZEN, VALIDATOR_ALREADY_REGISTERED, VALIDATOR_NOT_REGISTERED,
+    REGISTRATION_DISABLED, VALIDATOR_ALREADY_REGISTERED, VALIDATOR_NOT_REGISTERED,
     VALIDATOR_RANGE_EXCEEDED,
 };
 use structs::{configs::SovereignConfig, ValidatorInfo};
@@ -33,7 +33,7 @@ pub trait ValidatorRulesModule: setup_phase::SetupPhaseModule + events::EventsMo
     #[payable]
     #[endpoint(register)]
     fn register(&self, new_bls_key: ManagedBuffer<Self::Api>) {
-        self.require_registration_not_frozen();
+        self.require_registration_disabled();
 
         let (egld_stake, additional_stake) = self.validate_stake();
 
@@ -142,8 +142,8 @@ pub trait ValidatorRulesModule: setup_phase::SetupPhaseModule + events::EventsMo
         )
     }
 
-    fn require_registration_not_frozen(&self) {
-        require!(self.registration_status().get() == 1, REGISTRATION_FROZEN);
+    fn require_registration_disabled(&self) {
+        require!(self.registration_status().get() == 1, REGISTRATION_DISABLED);
     }
 
     #[view(sovereignConfig)]
