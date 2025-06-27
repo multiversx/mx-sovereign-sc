@@ -12,14 +12,17 @@ use multiversx_sc::{
     chain_core::EGLD_000000_TOKEN_IDENTIFIER,
     imports::OptionalValue,
     types::{
-        BigUint, EgldOrEsdtTokenIdentifier, EgldOrEsdtTokenPayment, EsdtTokenPayment,
-        ManagedBuffer, ManagedVec, MultiEgldOrEsdtPayment, MultiValueEncoded,
+        BigUint, EgldOrEsdtTokenIdentifier, EgldOrEsdtTokenPayment, ManagedBuffer, ManagedVec,
+        MultiEgldOrEsdtPayment, MultiValueEncoded,
     },
 };
 use multiversx_sc_scenario::{multiversx_chain_vm::crypto_functions::sha256, ScenarioTxWhitebox};
 use setup_phase::SetupPhaseModule;
 use structs::{
-    configs::SovereignConfig, forge::ScArray, generate_hash::GenerateHash, ValidatorInfo,
+    configs::{SovereignConfig, StakeArgs},
+    forge::ScArray,
+    generate_hash::GenerateHash,
+    ValidatorInfo,
 };
 
 mod chain_config_blackbox_setup;
@@ -149,9 +152,8 @@ fn test_update_config_during_setup_phase_additional_stake_zero_amount() {
         .common_setup
         .deploy_chain_config(OptionalValue::None, None);
 
-    let first_token_stake_arg = EsdtTokenPayment {
+    let first_token_stake_arg = StakeArgs {
         token_identifier: FIRST_TEST_TOKEN.to_token_identifier(),
-        token_nonce: 0,
         amount: BigUint::zero(),
     };
 
@@ -491,9 +493,8 @@ fn test_register_validator_already_registered() {
 fn test_register_validator_not_whitelisted() {
     let mut state = ChainConfigTestState::new();
 
-    let first_token_stake_arg = EsdtTokenPayment {
+    let first_token_stake_arg = StakeArgs {
         token_identifier: FIRST_TEST_TOKEN.to_token_identifier(),
-        token_nonce: 0,
         amount: BigUint::from(100u64),
     };
 
@@ -553,9 +554,8 @@ fn test_register_validator_not_whitelisted() {
 fn test_register_validator_is_whitelisted() {
     let mut state = ChainConfigTestState::new();
 
-    let first_token_stake_arg = EsdtTokenPayment {
+    let first_token_stake_arg = StakeArgs {
         token_identifier: FIRST_TEST_TOKEN.to_token_identifier(),
-        token_nonce: 0,
         amount: BigUint::from(100u64),
     };
 
@@ -617,9 +617,8 @@ fn test_register_validator_is_whitelisted() {
 fn test_register_validator_not_whitelisted_after_genesis() {
     let mut state = ChainConfigTestState::new();
 
-    let first_token_stake_arg = EsdtTokenPayment {
+    let first_token_stake_arg = StakeArgs {
         token_identifier: FIRST_TEST_TOKEN.to_token_identifier(),
-        token_nonce: 0,
         amount: BigUint::from(100u64),
     };
 
@@ -689,9 +688,8 @@ fn test_register_validator_not_whitelisted_after_genesis() {
 fn test_register_validator_not_whitelisted_during_genesis() {
     let mut state = ChainConfigTestState::new();
 
-    let first_token_stake_arg = EsdtTokenPayment {
+    let first_token_stake_arg = StakeArgs {
         token_identifier: FIRST_TEST_TOKEN.to_token_identifier(),
-        token_nonce: 0,
         amount: BigUint::from(100u64),
     };
 
@@ -1063,9 +1061,8 @@ fn update_register_validator_registration_disabled_validator_not_whitelisted() {
 fn update_register_validator_registration_disabled_validator_whitelisted() {
     let mut state = ChainConfigTestState::new();
 
-    let first_token_stake_arg = EsdtTokenPayment {
+    let first_token_stake_arg = StakeArgs {
         token_identifier: FIRST_TEST_TOKEN.to_token_identifier(),
-        token_nonce: 0,
         amount: BigUint::from(100u64),
     };
 

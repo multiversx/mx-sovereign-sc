@@ -36,30 +36,5 @@ pub struct ValidatorInfo<M: ManagedTypeApi> {
     pub address: ManagedAddress<M>,
     pub bls_key: ManagedBuffer<M>,
     pub egld_stake: BigUint<M>,
-    pub token_stake: ManagedVec<M, TokenStake<M>>,
-}
-
-#[type_abi]
-#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, ManagedVecItem)]
-pub struct TokenStake<M: ManagedTypeApi> {
-    pub token_id: TokenIdentifier<M>,
-    pub nonce: u64,
-    pub amount: BigUint<M>,
-}
-
-impl<M: ManagedTypeApi> TokenStake<M> {
-    pub fn map_token_stake_vec_from_esdt_call_value(
-        payments: &ManagedVec<M, EsdtTokenPayment<M>>,
-    ) -> ManagedVec<M, Self> {
-        let mut mapped_payments = ManagedVec::new();
-        for payment in payments {
-            mapped_payments.push(TokenStake {
-                token_id: payment.token_identifier.clone(),
-                nonce: payment.token_nonce,
-                amount: payment.amount.clone(),
-            });
-        }
-
-        mapped_payments
-    }
+    pub token_stake: ManagedVec<M, EsdtTokenPayment<M>>,
 }

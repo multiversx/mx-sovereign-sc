@@ -1,6 +1,6 @@
 #![no_std]
 
-use structs::{aliases::EventPaymentTuple, operation::OperationData, TokenStake};
+use structs::{aliases::EventPaymentTuple, operation::OperationData};
 
 multiversx_sc::imports!();
 multiversx_sc::derive_imports!();
@@ -44,7 +44,7 @@ pub trait EventsModule {
         #[indexed] address: &ManagedAddress,
         #[indexed] bls_key: &ManagedBuffer,
         #[indexed] egld_stake: &BigUint,
-        #[indexed] token_stake: &Option<ManagedVec<EsdtTokenPayment<Self::Api>>>,
+        #[indexed] token_stake: &Option<ManagedVec<EgldOrEsdtTokenPayment<Self::Api>>>,
     );
 
     #[event("unregister")]
@@ -54,7 +54,7 @@ pub trait EventsModule {
         #[indexed] address: &ManagedAddress,
         #[indexed] bls_key: &ManagedBuffer,
         #[indexed] egld_stake: &BigUint,
-        #[indexed] token_stake: &ManagedVec<TokenStake<Self::Api>>,
+        #[indexed] token_stake: &ManagedVec<EsdtTokenPayment<Self::Api>>,
     );
 
     #[event("completeGenesisPhase")]

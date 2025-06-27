@@ -13,7 +13,7 @@ pub struct SovereignConfig<M: ManagedTypeApi> {
     pub min_validators: u64,
     pub max_validators: u64,
     pub min_stake: BigUint<M>,
-    pub opt_additional_stake_required: Option<ManagedVec<M, EsdtTokenPayment<M>>>,
+    pub opt_additional_stake_required: Option<ManagedVec<M, StakeArgs<M>>>,
 }
 
 impl<A: CryptoApi> GenerateHash<A> for SovereignConfig<A> {}
@@ -23,7 +23,7 @@ impl<M: ManagedTypeApi> SovereignConfig<M> {
         min_validators: u64,
         max_validators: u64,
         min_stake: BigUint<M>,
-        opt_additional_stake_required: Option<ManagedVec<M, EsdtTokenPayment<M>>>,
+        opt_additional_stake_required: Option<ManagedVec<M, StakeArgs<M>>>,
     ) -> Self {
         SovereignConfig {
             min_validators,
@@ -43,13 +43,16 @@ impl<M: ManagedTypeApi> SovereignConfig<M> {
     TopEncode, TopDecode, NestedEncode, NestedDecode, ManagedVecItem, Clone, Debug, PartialEq,
 )]
 pub struct StakeArgs<M: ManagedTypeApi> {
-    pub token_id: TokenIdentifier<M>,
+    pub token_identifier: TokenIdentifier<M>,
     pub amount: BigUint<M>,
 }
 
 impl<M: ManagedTypeApi> StakeArgs<M> {
-    pub fn new(token_id: TokenIdentifier<M>, amount: BigUint<M>) -> Self {
-        StakeArgs { token_id, amount }
+    pub fn new(token_identifier: TokenIdentifier<M>, amount: BigUint<M>) -> Self {
+        StakeArgs {
+            token_identifier,
+            amount,
+        }
     }
 }
 

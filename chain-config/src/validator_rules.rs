@@ -33,7 +33,7 @@ pub trait ValidatorRulesModule: setup_phase::SetupPhaseModule + events::EventsMo
     #[payable]
     #[endpoint(register)]
     fn register(&self, new_bls_key: ManagedBuffer<Self::Api>) {
-        self.require_registration_disabled();
+        self.require_registration_enabled();
 
         let (egld_stake, additional_stake) = self.validate_stake();
 
@@ -109,40 +109,45 @@ pub trait ValidatorRulesModule: setup_phase::SetupPhaseModule + events::EventsMo
         &self,
     ) -> (
         BigUint<Self::Api>,
-        Option<ManagedVec<EsdtTokenPayment<Self::Api>>>,
+        Option<ManagedVec<EgldOrEsdtTokenPayment<Self::Api>>>,
     ) {
         let sovereign_config = self.sovereign_config().get();
 
-        let call_value = self.call_value().all_transfers().clone_value();
         let mut egld_amount = BigUint::zero();
+        let mut remaining_payments = ManagedVec::new();
 
-        if sovereign_config.min_stake > 0 {
-            let egld_payment = call_value
-                .iter()
-                .find(|p| p.token_identifier.is_egld() && p.amount >= sovereign_config.min_stake);
+        let min_stake = sovereign_config.min_stake.clone();
+        let mut require_egld = min_stake > BigUint::zero();
 
-            require!(egld_payment.is_some(), INVALID_EGLD_STAKE);
-
-            egld_amount = egld_payment.unwrap().amount.clone();
+        for payment in self.call_value().all_transfers().clone_value().into_iter() {
+            if require_egld && payment.token_identifier.is_egld() && payment.amount == min_stake {
+                egld_amount = payment.amount.clone();
+                require_egld = false;
+            } else {
+                remaining_payments.push(payment);
+            }
         }
 
-        if let Some(additional_stakes) = &sovereign_config.opt_additional_stake_required {
-            let matched = additional_stakes.iter().all(|s| {
-                call_value
+        if sovereign_config.min_stake > BigUint::zero() {
+            require!(
+                egld_amount == sovereign_config.min_stake,
+                INVALID_EGLD_STAKE
+            );
+        }
+
+        if let Some(additional) = &sovereign_config.opt_additional_stake_required {
+            let valid = additional.iter().all(|s| {
+                remaining_payments
                     .iter()
-                    .any(|c| c.token_identifier == s.token_identifier && c.amount >= s.amount)
+                    .any(|p| p.token_identifier == s.token_identifier && p.amount >= s.amount)
             });
-
-            require!(matched, INVALID_ADDITIONAL_STAKE);
+            require!(valid, INVALID_ADDITIONAL_STAKE);
         }
 
-        (
-            egld_amount.clone(),
-            sovereign_config.opt_additional_stake_required,
-        )
+        (egld_amount, Some(remaining_payments))
     }
 
-    fn require_registration_disabled(&self) {
+    fn require_registration_enabled(&self) {
         require!(self.registration_status().get() == 1, REGISTRATION_DISABLED);
     }
 
