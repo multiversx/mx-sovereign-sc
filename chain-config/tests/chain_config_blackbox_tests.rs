@@ -809,7 +809,7 @@ fn update_registration_wrong_status() {
 
     state.common_setup.update_registration_status(
         &ManagedBuffer::new(),
-        0,
+        2,
         None,
         Some("failedBridgeOp"),
     );

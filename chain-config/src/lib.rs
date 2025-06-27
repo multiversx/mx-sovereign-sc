@@ -86,11 +86,11 @@ pub trait ChainConfigContract:
         let status_hash = ManagedBuffer::new_from_bytes(
             &self
                 .crypto()
-                .sha256(ManagedBuffer::new_from_bytes(&[1u8]))
+                .sha256(ManagedBuffer::new_from_bytes(&[registration_status]))
                 .to_byte_array(),
         );
 
-        if registration_status != 1 {
+        if registration_status != 0u8 || registration_status != 1u8 {
             self.failed_bridge_operation_event(
                 &hash_of_hashes,
                 &status_hash,
@@ -109,6 +109,10 @@ pub trait ChainConfigContract:
         self.remove_executed_hash(&hash_of_hashes, &status_hash);
         self.registration_status_update_event();
     }
+
+    // #[only_owner]
+    // #[endpoint(freezeRegistration)]
+    // fn freeze_registration
 
     #[only_owner]
     #[endpoint(completeSetupPhase)]

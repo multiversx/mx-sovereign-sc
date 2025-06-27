@@ -118,5 +118,5 @@ pub const INVALID_ADDITIONAL_STAKE: &str = "Invalid additional stake sent";
 pub const INVALID_EGLD_STAKE: &str = "Invalid EGLD stake sent";
 pub const GENESIS_PHASE_NOT_COMPLETE: &str = "Genesis phase not complete";
 pub const REGISTRATION_PAUSED: &str = "Registration is paused";
-pub const INVALID_REGISTRATION_STATUS: &str = "Registration status can only be set to true";
+pub const INVALID_REGISTRATION_STATUS: &str = "Registration status can only be 0 or 1";
 pub const EMPTY_ADDITIONAL_STAKE: &str = "Additional stake was sent as an empty array";
