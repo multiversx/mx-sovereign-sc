@@ -1,6 +1,8 @@
 #![no_std]
 
-use error_messages::{ERROR_AT_ENCODING, INVALID_REGISTRATION_STATUS};
+use error_messages::{
+    ERROR_AT_ENCODING, INVALID_REGISTRATION_STATUS, SAME_REGISTRATION_STATUS_PROVIDED,
+};
 use multiversx_sc::imports::*;
 use structs::{configs::SovereignConfig, generate_hash::GenerateHash};
 
@@ -90,7 +92,7 @@ pub trait ChainConfigContract:
                 .to_byte_array(),
         );
 
-        if registration_status != 0u8 || registration_status != 1u8 {
+        if registration_status != 0 && registration_status != 1 {
             self.failed_bridge_operation_event(
                 &hash_of_hashes,
                 &status_hash,
@@ -104,7 +106,21 @@ pub trait ChainConfigContract:
 
         self.lock_operation_hash(&status_hash, &hash_of_hashes);
 
-        self.registration_status().set(1);
+        let registration_status_mapper = self.registration_status();
+
+        if registration_status == registration_status_mapper.get() {
+            self.failed_bridge_operation_event(
+                &hash_of_hashes,
+                &status_hash,
+                &ManagedBuffer::from(SAME_REGISTRATION_STATUS_PROVIDED),
+            );
+
+            self.remove_executed_hash(&hash_of_hashes, &status_hash);
+
+            return;
+        }
+
+        registration_status_mapper.set(registration_status);
 
         self.remove_executed_hash(&hash_of_hashes, &status_hash);
         self.registration_status_update_event();
