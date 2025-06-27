@@ -110,8 +110,8 @@ pub trait ScDeployModule: super::utils::UtilsModule + super::storage::StorageMod
                 self.sovereign_deployed_contracts(chain_id)
                     .insert(new_contract_info);
             }
-            ManagedAsyncCallResult::Err(_) => {
-                sc_panic!("");
+            ManagedAsyncCallResult::Err(call_err) => {
+                sc_panic!(call_err.err_msg);
             }
         }
     }
