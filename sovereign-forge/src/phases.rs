@@ -10,7 +10,7 @@ use multiversx_sc::{imports::OptionalValue, require, types::MultiValueEncoded};
 use structs::{
     configs::{EsdtSafeConfig, SovereignConfig},
     fee::FeeStruct,
-    forge::{ContractInfo, ScArray},
+    forge::ScArray,
 };
 
 use crate::common::{self};
