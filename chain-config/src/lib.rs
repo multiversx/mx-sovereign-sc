@@ -1,14 +1,15 @@
 #![no_std]
 
-use error_messages::{
-    ERROR_AT_ENCODING, INVALID_REGISTRATION_STATUS, SAME_REGISTRATION_STATUS_PROVIDED,
-};
+use error_messages::{ERROR_AT_ENCODING, INVALID_REGISTRATION_STATUS};
 use multiversx_sc::imports::*;
 use structs::{configs::SovereignConfig, generate_hash::GenerateHash};
 
 multiversx_sc::imports!();
 
 pub mod validator_rules;
+
+pub const ENABLED: u8 = 1;
+pub const DISABLED: u8 = 0;
 
 #[multiversx_sc::contract]
 pub trait ChainConfigContract:
@@ -30,7 +31,7 @@ pub trait ChainConfigContract:
         };
 
         self.sovereign_config().set(new_config.clone());
-        self.genesis_phase_status().set(true);
+        self.registration_status().set(ENABLED);
     }
 
     #[only_owner]
@@ -92,7 +93,9 @@ pub trait ChainConfigContract:
                 .to_byte_array(),
         );
 
-        if registration_status != 0 && registration_status != 1 {
+        self.lock_operation_hash(&status_hash, &hash_of_hashes);
+
+        if registration_status != DISABLED && registration_status != ENABLED {
             self.failed_bridge_operation_event(
                 &hash_of_hashes,
                 &status_hash,
@@ -104,31 +107,15 @@ pub trait ChainConfigContract:
             return;
         }
 
-        self.lock_operation_hash(&status_hash, &hash_of_hashes);
-
         let registration_status_mapper = self.registration_status();
-
-        if registration_status == registration_status_mapper.get() {
-            self.failed_bridge_operation_event(
-                &hash_of_hashes,
-                &status_hash,
-                &ManagedBuffer::from(SAME_REGISTRATION_STATUS_PROVIDED),
-            );
-
-            self.remove_executed_hash(&hash_of_hashes, &status_hash);
-
-            return;
-        }
 
         registration_status_mapper.set(registration_status);
 
         self.remove_executed_hash(&hash_of_hashes, &status_hash);
-        self.registration_status_update_event();
+        self.registration_status_update_event(&ManagedBuffer::new_from_bytes(&[
+            registration_status,
+        ]));
     }
-
-    // #[only_owner]
-    // #[endpoint(freezeRegistration)]
-    // fn freeze_registration
 
     #[only_owner]
     #[endpoint(completeSetupPhase)]
@@ -138,8 +125,7 @@ pub trait ChainConfigContract:
         }
         self.require_validator_set_valid(self.bls_keys_map().len());
 
-        self.genesis_phase_status().set(false);
-        self.registration_status().set(0);
+        self.registration_status().set(DISABLED);
         self.complete_genesis_event();
         self.setup_phase_complete().set(true);
     }

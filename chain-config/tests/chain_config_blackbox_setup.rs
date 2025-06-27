@@ -4,8 +4,13 @@ use common_test_setup::{
         CHAIN_CONFIG_ADDRESS, FIRST_TEST_TOKEN, ONE_HUNDRED_MILLION, OWNER_ADDRESS, OWNER_BALANCE,
     },
 };
-use multiversx_sc::types::{BigUint, ManagedBuffer, MultiEgldOrEsdtPayment, ReturnsResult};
-use multiversx_sc_scenario::{api::StaticApi, ReturnsHandledOrError, ReturnsLogs, ScenarioTxRun};
+use multiversx_sc::types::{
+    BigUint, ManagedBuffer, MultiEgldOrEsdtPayment, MultiValueEncoded, ReturnsResult,
+};
+use multiversx_sc_scenario::{
+    api::StaticApi, multiversx_chain_vm::crypto_functions::sha256, ReturnsHandledOrError,
+    ReturnsLogs, ScenarioTxRun,
+};
 use proxies::chain_config_proxy::ChainConfigContractProxy;
 use structs::{configs::SovereignConfig, ValidatorInfo};
 
@@ -159,5 +164,25 @@ impl ChainConfigTestState {
             .into_tuple();
 
         bls_key
+    }
+
+    pub fn register_and_update_registration_status(&mut self, registration_status: u8) {
+        let new_status_hash_byte_array = sha256(&[registration_status]);
+        let new_status_hash = ManagedBuffer::new_from_bytes(&new_status_hash_byte_array);
+        let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&new_status_hash_byte_array));
+
+        self.common_setup.register_operation(
+            OWNER_ADDRESS,
+            ManagedBuffer::new(),
+            &hash_of_hashes,
+            MultiValueEncoded::from_iter(vec![new_status_hash]),
+        );
+
+        self.common_setup.update_registration_status(
+            &hash_of_hashes,
+            1,
+            None,
+            Some("registrationStatusUpdate"),
+        );
     }
 }

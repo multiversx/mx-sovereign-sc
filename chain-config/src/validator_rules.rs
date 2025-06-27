@@ -1,13 +1,10 @@
 use error_messages::{
     ADDITIONAL_STAKE_ZERO_VALUE, EMPTY_ADDITIONAL_STAKE, INVALID_ADDITIONAL_STAKE,
     INVALID_EGLD_STAKE, INVALID_MIN_MAX_VALIDATOR_NUMBERS, INVALID_TOKEN_ID, NOT_ENOUGH_VALIDATORS,
-    REGISTRATION_PAUSED, VALIDATOR_ALREADY_REGISTERED, VALIDATOR_NOT_REGISTERED,
+    REGISTRATION_FROZEN, VALIDATOR_ALREADY_REGISTERED, VALIDATOR_NOT_REGISTERED,
     VALIDATOR_RANGE_EXCEEDED,
 };
-use structs::{
-    configs::{SovereignConfig, StakeArgs},
-    ValidatorInfo,
-};
+use structs::{configs::SovereignConfig, ValidatorInfo};
 
 multiversx_sc::imports!();
 multiversx_sc::derive_imports!();
@@ -18,7 +15,10 @@ pub trait ValidatorRulesModule: setup_phase::SetupPhaseModule + events::EventsMo
         if let Some(additional_stake) = config.opt_additional_stake_required.clone() {
             require!(!additional_stake.is_empty(), EMPTY_ADDITIONAL_STAKE);
             for stake in additional_stake {
-                require!(stake.token_id.is_valid_esdt_identifier(), INVALID_TOKEN_ID);
+                require!(
+                    stake.token_identifier.is_valid_esdt_identifier(),
+                    INVALID_TOKEN_ID
+                );
                 require!(stake.amount > 0, ADDITIONAL_STAKE_ZERO_VALUE);
             }
         }
@@ -33,9 +33,7 @@ pub trait ValidatorRulesModule: setup_phase::SetupPhaseModule + events::EventsMo
     #[payable]
     #[endpoint(register)]
     fn register(&self, new_bls_key: ManagedBuffer<Self::Api>) {
-        if !self.is_genesis_phase_active() {
-            self.require_registration_not_frozen();
-        }
+        self.require_registration_not_frozen();
 
         let (egld_stake, additional_stake) = self.validate_stake();
 
@@ -107,29 +105,32 @@ pub trait ValidatorRulesModule: setup_phase::SetupPhaseModule + events::EventsMo
         );
     }
 
-    fn is_genesis_phase_active(&self) -> bool {
-        self.genesis_phase_status().get()
-    }
-
-    // TODO: send back tokens if additional stake is not enough
-    fn validate_stake(&self) -> (BigUint<Self::Api>, Option<ManagedVec<StakeArgs<Self::Api>>>) {
+    fn validate_stake(
+        &self,
+    ) -> (
+        BigUint<Self::Api>,
+        Option<ManagedVec<EsdtTokenPayment<Self::Api>>>,
+    ) {
         let sovereign_config = self.sovereign_config().get();
 
         let call_value = self.call_value().all_transfers().clone_value();
+        let mut egld_amount = BigUint::zero();
 
-        let egld_payment = call_value
-            .iter()
-            .find(|p| p.token_identifier.is_egld() && p.amount >= sovereign_config.min_stake);
+        if sovereign_config.min_stake > 0 {
+            let egld_payment = call_value
+                .iter()
+                .find(|p| p.token_identifier.is_egld() && p.amount >= sovereign_config.min_stake);
 
-        require!(egld_payment.is_some(), INVALID_EGLD_STAKE);
+            require!(egld_payment.is_some(), INVALID_EGLD_STAKE);
 
-        let egld_amount = &egld_payment.unwrap().amount;
+            egld_amount = egld_payment.unwrap().amount.clone();
+        }
 
         if let Some(additional_stakes) = &sovereign_config.opt_additional_stake_required {
             let matched = additional_stakes.iter().all(|s| {
                 call_value
                     .iter()
-                    .any(|c| c.token_identifier == s.token_id && c.amount >= s.amount)
+                    .any(|c| c.token_identifier == s.token_identifier && c.amount >= s.amount)
             });
 
             require!(matched, INVALID_ADDITIONAL_STAKE);
@@ -142,7 +143,7 @@ pub trait ValidatorRulesModule: setup_phase::SetupPhaseModule + events::EventsMo
     }
 
     fn require_registration_not_frozen(&self) {
-        require!(self.registration_status().get() == 1, REGISTRATION_PAUSED);
+        require!(self.registration_status().get() == 1, REGISTRATION_FROZEN);
     }
 
     #[view(sovereignConfig)]
@@ -162,9 +163,6 @@ pub trait ValidatorRulesModule: setup_phase::SetupPhaseModule + events::EventsMo
 
     #[storage_mapper("lastBlsKeyId")]
     fn last_bls_key_id(&self) -> SingleValueMapper<BigUint<Self::Api>>;
-
-    #[storage_mapper("genesisPhase")]
-    fn genesis_phase_status(&self) -> SingleValueMapper<bool>;
 
     #[storage_mapper("registration_status")]
     fn registration_status(&self) -> SingleValueMapper<u8>;

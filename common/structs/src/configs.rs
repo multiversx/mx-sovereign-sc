@@ -13,7 +13,7 @@ pub struct SovereignConfig<M: ManagedTypeApi> {
     pub min_validators: u64,
     pub max_validators: u64,
     pub min_stake: BigUint<M>,
-    pub opt_additional_stake_required: Option<ManagedVec<M, StakeArgs<M>>>,
+    pub opt_additional_stake_required: Option<ManagedVec<M, EsdtTokenPayment<M>>>,
 }
 
 impl<A: CryptoApi> GenerateHash<A> for SovereignConfig<A> {}
@@ -23,7 +23,7 @@ impl<M: ManagedTypeApi> SovereignConfig<M> {
         min_validators: u64,
         max_validators: u64,
         min_stake: BigUint<M>,
-        opt_additional_stake_required: Option<ManagedVec<M, StakeArgs<M>>>,
+        opt_additional_stake_required: Option<ManagedVec<M, EsdtTokenPayment<M>>>,
     ) -> Self {
         SovereignConfig {
             min_validators,

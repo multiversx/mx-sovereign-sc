@@ -1,28 +1,25 @@
-use chain_config::validator_rules::ValidatorRulesModule;
+use chain_config::{validator_rules::ValidatorRulesModule, ENABLED};
 use chain_config_blackbox_setup::ChainConfigTestState;
 use common_test_setup::constants::{
     CHAIN_CONFIG_ADDRESS, FIRST_TEST_TOKEN, OWNER_ADDRESS, USER_ADDRESS,
 };
 use error_messages::{
     ADDITIONAL_STAKE_ZERO_VALUE, INVALID_ADDITIONAL_STAKE, INVALID_EGLD_STAKE,
-    INVALID_MIN_MAX_VALIDATOR_NUMBERS, REGISTRATION_PAUSED, SETUP_PHASE_NOT_COMPLETED,
+    INVALID_MIN_MAX_VALIDATOR_NUMBERS, REGISTRATION_FROZEN, SETUP_PHASE_NOT_COMPLETED,
     VALIDATOR_ALREADY_REGISTERED, VALIDATOR_NOT_REGISTERED, VALIDATOR_RANGE_EXCEEDED,
 };
 use multiversx_sc::{
     chain_core::EGLD_000000_TOKEN_IDENTIFIER,
     imports::OptionalValue,
     types::{
-        BigUint, EgldOrEsdtTokenIdentifier, EgldOrEsdtTokenPayment, ManagedBuffer, ManagedVec,
-        MultiEgldOrEsdtPayment, MultiValueEncoded,
+        BigUint, EgldOrEsdtTokenIdentifier, EgldOrEsdtTokenPayment, EsdtTokenPayment,
+        ManagedBuffer, ManagedVec, MultiEgldOrEsdtPayment, MultiValueEncoded,
     },
 };
 use multiversx_sc_scenario::{multiversx_chain_vm::crypto_functions::sha256, ScenarioTxWhitebox};
 use setup_phase::SetupPhaseModule;
 use structs::{
-    configs::{SovereignConfig, StakeArgs},
-    forge::ScArray,
-    generate_hash::GenerateHash,
-    ValidatorInfo,
+    configs::SovereignConfig, forge::ScArray, generate_hash::GenerateHash, ValidatorInfo,
 };
 
 mod chain_config_blackbox_setup;
@@ -152,8 +149,9 @@ fn test_update_config_during_setup_phase_additional_stake_zero_amount() {
         .common_setup
         .deploy_chain_config(OptionalValue::None, None);
 
-    let first_token_stake_arg = StakeArgs {
-        token_id: FIRST_TEST_TOKEN.to_token_identifier(),
+    let first_token_stake_arg = EsdtTokenPayment {
+        token_identifier: FIRST_TEST_TOKEN.to_token_identifier(),
+        token_nonce: 0,
         amount: BigUint::zero(),
     };
 
@@ -408,6 +406,18 @@ fn test_register_validator_not_enough_egld_stake() {
 
     let new_validator_one = ManagedBuffer::from("validator1");
 
+    state.common_setup.complete_chain_config_setup_phase(None);
+
+    state
+        .common_setup
+        .deploy_header_verifier(vec![ScArray::ChainConfig]);
+
+    state
+        .common_setup
+        .complete_header_verifier_setup_phase(None);
+
+    state.register_and_update_registration_status(ENABLED);
+
     state.register(
         &new_validator_one,
         &payments_vec,
@@ -432,6 +442,8 @@ fn test_register_validator_already_registered() {
         .common_setup
         .deploy_chain_config(OptionalValue::None, None);
 
+    state.common_setup.complete_chain_config_setup_phase(None);
+
     let egld_payment = EgldOrEsdtTokenPayment::new(
         EgldOrEsdtTokenIdentifier::from(EGLD_000000_TOKEN_IDENTIFIER.as_bytes()),
         0,
@@ -443,6 +455,18 @@ fn test_register_validator_already_registered() {
     payments_vec.push(egld_payment);
 
     let new_validator = ManagedBuffer::from("validator1");
+
+    state.common_setup.complete_chain_config_setup_phase(None);
+
+    state
+        .common_setup
+        .deploy_header_verifier(vec![ScArray::ChainConfig]);
+
+    state
+        .common_setup
+        .complete_header_verifier_setup_phase(None);
+
+    state.register_and_update_registration_status(ENABLED);
 
     state.register(&new_validator, &payments_vec, None, Some("register"));
     assert!(state.get_bls_key_id(&new_validator) == 1);
@@ -467,8 +491,9 @@ fn test_register_validator_already_registered() {
 fn test_register_validator_not_whitelisted() {
     let mut state = ChainConfigTestState::new();
 
-    let first_token_stake_arg = StakeArgs {
-        token_id: FIRST_TEST_TOKEN.to_token_identifier(),
+    let first_token_stake_arg = EsdtTokenPayment {
+        token_identifier: FIRST_TEST_TOKEN.to_token_identifier(),
+        token_nonce: 0,
         amount: BigUint::from(100u64),
     };
 
@@ -496,6 +521,18 @@ fn test_register_validator_not_whitelisted() {
 
     payments_vec.push(egld_payment);
 
+    state.common_setup.complete_chain_config_setup_phase(None);
+
+    state
+        .common_setup
+        .deploy_header_verifier(vec![ScArray::ChainConfig]);
+
+    state
+        .common_setup
+        .complete_header_verifier_setup_phase(None);
+
+    state.register_and_update_registration_status(ENABLED);
+
     state.register(
         &new_validator,
         &payments_vec,
@@ -516,8 +553,9 @@ fn test_register_validator_not_whitelisted() {
 fn test_register_validator_is_whitelisted() {
     let mut state = ChainConfigTestState::new();
 
-    let first_token_stake_arg = StakeArgs {
-        token_id: FIRST_TEST_TOKEN.to_token_identifier(),
+    let first_token_stake_arg = EsdtTokenPayment {
+        token_identifier: FIRST_TEST_TOKEN.to_token_identifier(),
+        token_nonce: 0,
         amount: BigUint::from(100u64),
     };
 
@@ -552,6 +590,18 @@ fn test_register_validator_is_whitelisted() {
     payments_vec.push(egld_payment);
     payments_vec.push(payment);
 
+    state.common_setup.complete_chain_config_setup_phase(None);
+
+    state
+        .common_setup
+        .deploy_header_verifier(vec![ScArray::ChainConfig]);
+
+    state
+        .common_setup
+        .complete_header_verifier_setup_phase(None);
+
+    state.register_and_update_registration_status(ENABLED);
+
     state.register(&new_validator, &payments_vec, None, Some("register"));
 }
 
@@ -567,8 +617,9 @@ fn test_register_validator_is_whitelisted() {
 fn test_register_validator_not_whitelisted_after_genesis() {
     let mut state = ChainConfigTestState::new();
 
-    let first_token_stake_arg = StakeArgs {
-        token_id: FIRST_TEST_TOKEN.to_token_identifier(),
+    let first_token_stake_arg = EsdtTokenPayment {
+        token_identifier: FIRST_TEST_TOKEN.to_token_identifier(),
+        token_nonce: 0,
         amount: BigUint::from(100u64),
     };
 
@@ -602,13 +653,6 @@ fn test_register_validator_not_whitelisted_after_genesis() {
     payments_vec.push(egld_payment);
     payments_vec.push(payment);
 
-    state.register(
-        &whitelisted_validator,
-        &payments_vec,
-        None,
-        Some("register"),
-    );
-
     state.common_setup.complete_chain_config_setup_phase(None);
 
     state
@@ -619,22 +663,13 @@ fn test_register_validator_not_whitelisted_after_genesis() {
         .common_setup
         .complete_header_verifier_setup_phase(None);
 
-    let new_status_hash_byte_array = sha256(&[1u8]);
-    let new_status_hash = ManagedBuffer::new_from_bytes(&new_status_hash_byte_array);
-    let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&new_status_hash_byte_array));
+    state.register_and_update_registration_status(ENABLED);
 
-    state.common_setup.register_operation(
-        OWNER_ADDRESS,
-        ManagedBuffer::new(),
-        &hash_of_hashes,
-        MultiValueEncoded::from_iter(vec![new_status_hash]),
-    );
-
-    state.common_setup.update_registration_status(
-        &hash_of_hashes,
-        1,
+    state.register(
+        &whitelisted_validator,
+        &payments_vec,
         None,
-        Some("registrationStatusUpdate"),
+        Some("register"),
     );
 
     let validator = ManagedBuffer::from("validator2");
@@ -646,7 +681,7 @@ fn test_register_validator_not_whitelisted_after_genesis() {
 /// C-CONFIG_REGISTER_VALIDATOR_ERROR
 ///
 /// ### ACTION
-/// Call 'register()' as a non whitelisted validator during genesis phase
+/// Call 'register()' twice with whitelisted and non-whitelisted validator
 ///
 /// ### EXPECTED
 /// Error GENESIS_PHASE_NOT_COMPLETE
@@ -654,8 +689,9 @@ fn test_register_validator_not_whitelisted_after_genesis() {
 fn test_register_validator_not_whitelisted_during_genesis() {
     let mut state = ChainConfigTestState::new();
 
-    let first_token_stake_arg = StakeArgs {
-        token_id: FIRST_TEST_TOKEN.to_token_identifier(),
+    let first_token_stake_arg = EsdtTokenPayment {
+        token_identifier: FIRST_TEST_TOKEN.to_token_identifier(),
+        token_nonce: 0,
         amount: BigUint::from(100u64),
     };
 
@@ -844,32 +880,6 @@ fn update_registration_invalid_status() {
 }
 
 /// ### TEST
-/// C-CONFIG_UPDATE_REGISTRATION_FAIL
-///
-/// ### ACTION
-/// Call 'update_registration_status()' with the same registration status
-///
-/// ### EXPECTED
-/// "failedBridgeOp" event is emitted
-#[test]
-fn update_registration_same_status() {
-    let mut state = ChainConfigTestState::new();
-
-    state
-        .common_setup
-        .deploy_chain_config(OptionalValue::None, None);
-
-    state.common_setup.complete_chain_config_setup_phase(None);
-
-    state.common_setup.update_registration_status(
-        &ManagedBuffer::new(),
-        0,
-        None,
-        Some("failedBridgeOp"),
-    );
-}
-
-/// ### TEST
 /// C-CONFIG_UPDATE_REGISTRATION_OK
 ///
 /// ### ACTION
@@ -1038,11 +1048,11 @@ fn update_register_validator_registration_frozen_validator_not_whitelisted() {
 
     let validator = ManagedBuffer::from("validator_1");
 
-    state.register(&validator, &payments_vec, Some(REGISTRATION_PAUSED), None);
+    state.register(&validator, &payments_vec, Some(REGISTRATION_FROZEN), None);
 }
 
 /// ### TEST
-/// C-CONFIG_UPDATE_REGISTRATION_OK
+/// C-CONFIG_REGISTER_OK
 ///
 /// ### ACTION
 /// Call 'register()' when registration is frozen as a non genesis validator
@@ -1053,8 +1063,9 @@ fn update_register_validator_registration_frozen_validator_not_whitelisted() {
 fn update_register_validator_registration_frozen_validator_whitelisted() {
     let mut state = ChainConfigTestState::new();
 
-    let first_token_stake_arg = StakeArgs {
-        token_id: FIRST_TEST_TOKEN.to_token_identifier(),
+    let first_token_stake_arg = EsdtTokenPayment {
+        token_identifier: FIRST_TEST_TOKEN.to_token_identifier(),
+        token_nonce: 0,
         amount: BigUint::from(100u64),
     };
 
@@ -1089,5 +1100,5 @@ fn update_register_validator_registration_frozen_validator_whitelisted() {
 
     let validator = ManagedBuffer::from("validator_1");
 
-    state.register(&validator, &payments_vec, Some(REGISTRATION_PAUSED), None);
+    state.register(&validator, &payments_vec, Some(REGISTRATION_FROZEN), None);
 }
