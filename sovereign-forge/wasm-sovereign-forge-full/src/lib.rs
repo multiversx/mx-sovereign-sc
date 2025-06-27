@@ -8,7 +8,8 @@
 // Upgrade:                              1
 // Endpoints:                           17
 // Async Callback (empty):               1
-// Total number of exported functions:  20
+// Promise callbacks:                    1
+// Total number of exported functions:  21
 
 #![no_std]
 
@@ -37,6 +38,7 @@ multiversx_sc_wasm_adapter::endpoints! {
         updateSovereignConfig => update_sovereign_config
         setFee => set_fee
         removeFee => remove_fee
+        register_deployed_contract => register_deployed_contract
     )
 }
 
