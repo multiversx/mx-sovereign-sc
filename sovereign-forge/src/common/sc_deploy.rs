@@ -36,28 +36,6 @@ pub trait ScDeployModule: super::utils::UtilsModule + super::storage::StorageMod
     }
 
     #[inline]
-    fn deploy_header_verifier(
-        &self,
-        sovereign_contract: MultiValueEncoded<ContractInfo<Self::Api>>,
-    ) {
-        let chain_id = self
-            .sovereigns_mapper(&self.blockchain().get_caller())
-            .get();
-
-        self.tx()
-            .to(self.get_chain_factory_address())
-            .typed(ChainFactoryContractProxy)
-            .deploy_header_verifier(sovereign_contract)
-            .gas(PHASE_TWO_ASYNC_CALL_GAS)
-            .callback(
-                self.callbacks()
-                    .register_deployed_contract(&chain_id, ScArray::HeaderVerifier),
-            )
-            .gas_for_callback(PHASE_TWO_CALLBACK_GAS)
-            .register_promise();
-    }
-
-    #[inline]
     fn deploy_mvx_esdt_safe(&self, opt_config: OptionalValue<EsdtSafeConfig<Self::Api>>) {
         let chain_id = self
             .sovereigns_mapper(&self.blockchain().get_caller())
@@ -67,12 +45,12 @@ pub trait ScDeployModule: super::utils::UtilsModule + super::storage::StorageMod
             .to(self.get_chain_factory_address())
             .typed(ChainFactoryContractProxy)
             .deploy_mvx_esdt_safe(opt_config)
-            .gas(PHASE_THREE_ASYNC_CALL_GAS)
+            .gas(PHASE_TWO_ASYNC_CALL_GAS)
             .callback(
                 self.callbacks()
                     .register_deployed_contract(&chain_id, ScArray::ESDTSafe),
             )
-            .gas_for_callback(PHASE_THREE_CALLBACK_GAS)
+            .gas_for_callback(PHASE_TWO_CALLBACK_GAS)
             .register_promise();
     }
 
@@ -90,10 +68,32 @@ pub trait ScDeployModule: super::utils::UtilsModule + super::storage::StorageMod
             .to(self.get_chain_factory_address())
             .typed(ChainFactoryContractProxy)
             .deploy_fee_market(esdt_safe_address, fee)
-            .gas(PHASE_FOUR_ASYNC_CALL_GAS)
+            .gas(PHASE_THREE_ASYNC_CALL_GAS)
             .callback(
                 self.callbacks()
                     .register_deployed_contract(&chain_id, ScArray::FeeMarket),
+            )
+            .gas_for_callback(PHASE_THREE_CALLBACK_GAS)
+            .register_promise();
+    }
+
+    #[inline]
+    fn deploy_header_verifier(
+        &self,
+        sovereign_contract: MultiValueEncoded<ContractInfo<Self::Api>>,
+    ) {
+        let chain_id = self
+            .sovereigns_mapper(&self.blockchain().get_caller())
+            .get();
+
+        self.tx()
+            .to(self.get_chain_factory_address())
+            .typed(ChainFactoryContractProxy)
+            .deploy_header_verifier(sovereign_contract)
+            .gas(PHASE_FOUR_ASYNC_CALL_GAS)
+            .callback(
+                self.callbacks()
+                    .register_deployed_contract(&chain_id, ScArray::HeaderVerifier),
             )
             .gas_for_callback(PHASE_FOUR_CALLBACK_GAS)
             .register_promise();
