@@ -11,6 +11,9 @@ pub mod validator_rules;
 pub const ENABLED: u8 = 1;
 pub const DISABLED: u8 = 0;
 
+pub const ENABLED_STR: &str = "enabled";
+pub const DISABLED_STR: &str = "disabled";
+
 #[multiversx_sc::contract]
 pub trait ChainConfigContract:
     validator_rules::ValidatorRulesModule
@@ -112,9 +115,12 @@ pub trait ChainConfigContract:
         registration_status_mapper.set(registration_status);
 
         self.remove_executed_hash(&hash_of_hashes, &status_hash);
-        self.registration_status_update_event(&ManagedBuffer::new_from_bytes(&[
-            registration_status,
-        ]));
+        let event_msg = match registration_status {
+            DISABLED => ManagedBuffer::from(DISABLED_STR),
+            ENABLED => ManagedBuffer::from(ENABLED_STR),
+            _ => ManagedBuffer::from(INVALID_REGISTRATION_STATUS),
+        };
+        self.registration_status_update_event(&event_msg);
     }
 
     #[only_owner]
