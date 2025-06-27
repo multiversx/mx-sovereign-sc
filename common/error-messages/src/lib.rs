@@ -119,3 +119,4 @@ pub const REGISTRATION_DISABLED: &str = "Registration is disabled";
 pub const INVALID_REGISTRATION_STATUS: &str = "Registration status can only be 0 or 1";
 pub const EMPTY_ADDITIONAL_STAKE: &str = "Additional stake was sent as an empty array";
 pub const ADDITIONAL_STAKE_ZERO_VALUE: &str = "Additional stake cannot be a zero value";
+pub const ADDITIONAL_STAKE_NOT_REQUIRED: &str = "Additional stake was provided but is not required";

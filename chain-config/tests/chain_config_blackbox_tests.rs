@@ -352,7 +352,7 @@ fn test_register_validator_range_exceeded_too_many_validators() {
     let egld_payment = EgldOrEsdtTokenPayment::new(
         EgldOrEsdtTokenIdentifier::from(EGLD_000000_TOKEN_IDENTIFIER.as_bytes()),
         0,
-        BigUint::from(100u64),
+        BigUint::zero(),
     );
 
     let mut payments_vec = MultiEgldOrEsdtPayment::new();
@@ -449,7 +449,7 @@ fn test_register_validator_already_registered() {
     let egld_payment = EgldOrEsdtTokenPayment::new(
         EgldOrEsdtTokenIdentifier::from(EGLD_000000_TOKEN_IDENTIFIER.as_bytes()),
         0,
-        BigUint::from(100u64),
+        BigUint::zero(),
     );
 
     let mut payments_vec = MultiEgldOrEsdtPayment::new();
@@ -515,7 +515,7 @@ fn test_register_validator_not_whitelisted() {
     let egld_payment = EgldOrEsdtTokenPayment::new(
         EgldOrEsdtTokenIdentifier::from(EGLD_000000_TOKEN_IDENTIFIER.as_bytes()),
         0,
-        BigUint::from(100u64),
+        BigUint::zero(),
     );
 
     let mut payments_vec = MultiEgldOrEsdtPayment::new();
@@ -576,7 +576,7 @@ fn test_register_validator_is_whitelisted() {
     let egld_payment = EgldOrEsdtTokenPayment::new(
         EgldOrEsdtTokenIdentifier::from(EGLD_000000_TOKEN_IDENTIFIER.as_bytes()),
         0,
-        BigUint::from(100u64),
+        BigUint::zero(),
     );
 
     let payment = EgldOrEsdtTokenPayment::new(
@@ -639,7 +639,7 @@ fn test_register_validator_not_whitelisted_after_genesis() {
     let egld_payment = EgldOrEsdtTokenPayment::new(
         EgldOrEsdtTokenIdentifier::from(EGLD_000000_TOKEN_IDENTIFIER.as_bytes()),
         0,
-        BigUint::from(100u64),
+        BigUint::zero(),
     );
 
     let payment = EgldOrEsdtTokenPayment::new(
@@ -710,7 +710,7 @@ fn test_register_validator_not_whitelisted_during_genesis() {
     let egld_payment = EgldOrEsdtTokenPayment::new(
         EgldOrEsdtTokenIdentifier::from(EGLD_000000_TOKEN_IDENTIFIER.as_bytes()),
         0,
-        BigUint::from(100u64),
+        BigUint::zero(),
     );
 
     let payment = EgldOrEsdtTokenPayment::new(
@@ -800,7 +800,7 @@ fn test_unregister_validator() {
     let egld_payment = EgldOrEsdtTokenPayment::new(
         EgldOrEsdtTokenIdentifier::from(EGLD_000000_TOKEN_IDENTIFIER.as_bytes()),
         0,
-        BigUint::from(100u64),
+        BigUint::zero(),
     );
 
     let mut payments_vec = MultiEgldOrEsdtPayment::new();
@@ -987,7 +987,7 @@ fn update_register_validator_registration_enabled_validator_not_whitelisted() {
     let egld_payment = EgldOrEsdtTokenPayment::new(
         EgldOrEsdtTokenIdentifier::from(EGLD_000000_TOKEN_IDENTIFIER.as_bytes()),
         0,
-        BigUint::from(100u64),
+        BigUint::zero(),
     );
 
     let mut payments_vec = MultiEgldOrEsdtPayment::new();
@@ -1038,7 +1038,7 @@ fn update_register_validator_registration_disabled_validator_not_whitelisted() {
     let egld_payment = EgldOrEsdtTokenPayment::new(
         EgldOrEsdtTokenIdentifier::from(EGLD_000000_TOKEN_IDENTIFIER.as_bytes()),
         0,
-        BigUint::from(100u64),
+        BigUint::zero(),
     );
 
     let mut payments_vec = MultiEgldOrEsdtPayment::new();

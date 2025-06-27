@@ -1,8 +1,8 @@
 use error_messages::{
-    ADDITIONAL_STAKE_ZERO_VALUE, EMPTY_ADDITIONAL_STAKE, INVALID_ADDITIONAL_STAKE,
-    INVALID_EGLD_STAKE, INVALID_MIN_MAX_VALIDATOR_NUMBERS, INVALID_TOKEN_ID, NOT_ENOUGH_VALIDATORS,
-    REGISTRATION_DISABLED, VALIDATOR_ALREADY_REGISTERED, VALIDATOR_NOT_REGISTERED,
-    VALIDATOR_RANGE_EXCEEDED,
+    ADDITIONAL_STAKE_NOT_REQUIRED, ADDITIONAL_STAKE_ZERO_VALUE, EMPTY_ADDITIONAL_STAKE,
+    INVALID_ADDITIONAL_STAKE, INVALID_EGLD_STAKE, INVALID_MIN_MAX_VALIDATOR_NUMBERS,
+    INVALID_TOKEN_ID, NOT_ENOUGH_VALIDATORS, REGISTRATION_DISABLED, VALIDATOR_ALREADY_REGISTERED,
+    VALIDATOR_NOT_REGISTERED, VALIDATOR_RANGE_EXCEEDED,
 };
 use structs::{configs::SovereignConfig, ValidatorInfo};
 
@@ -109,42 +109,44 @@ pub trait ValidatorRulesModule: setup_phase::SetupPhaseModule + events::EventsMo
         &self,
     ) -> (
         BigUint<Self::Api>,
-        Option<ManagedVec<EgldOrEsdtTokenPayment<Self::Api>>>,
+        Option<ManagedVec<EsdtTokenPayment<Self::Api>>>,
     ) {
         let sovereign_config = self.sovereign_config().get();
 
-        let mut egld_amount = BigUint::zero();
-        let mut remaining_payments = ManagedVec::new();
+        let (egld_amount, esdt_payments) = self.split_payments();
 
-        let min_stake = sovereign_config.min_stake.clone();
-        let mut require_egld = min_stake > BigUint::zero();
-
-        for payment in self.call_value().all_transfers().clone_value().into_iter() {
-            if require_egld && payment.token_identifier.is_egld() && payment.amount == min_stake {
-                egld_amount = payment.amount.clone();
-                require_egld = false;
-            } else {
-                remaining_payments.push(payment);
-            }
-        }
-
-        if sovereign_config.min_stake > BigUint::zero() {
-            require!(
-                egld_amount == sovereign_config.min_stake,
-                INVALID_EGLD_STAKE
-            );
-        }
+        require!(
+            egld_amount == sovereign_config.min_stake,
+            INVALID_EGLD_STAKE
+        );
 
         if let Some(additional) = &sovereign_config.opt_additional_stake_required {
             let valid = additional.iter().all(|s| {
-                remaining_payments
+                esdt_payments
                     .iter()
-                    .any(|p| p.token_identifier == s.token_identifier && p.amount >= s.amount)
+                    .any(|p| p.token_identifier == s.token_identifier && p.amount == s.amount)
             });
             require!(valid, INVALID_ADDITIONAL_STAKE);
+        } else {
+            require!(esdt_payments.is_empty(), ADDITIONAL_STAKE_NOT_REQUIRED);
         }
 
-        (egld_amount, Some(remaining_payments))
+        (egld_amount, Some(esdt_payments))
+    }
+
+    fn split_payments(&self) -> (BigUint, ManagedVec<EsdtTokenPayment<Self::Api>>) {
+        let mut egld_amount = BigUint::zero();
+        let mut esdt_payments = ManagedVec::new();
+
+        for payment in self.call_value().all_transfers().clone_value().into_iter() {
+            if payment.token_identifier.is_egld() {
+                egld_amount = payment.amount.clone();
+            } else {
+                esdt_payments.push(payment.unwrap_esdt());
+            }
+        }
+
+        (egld_amount, esdt_payments)
     }
 
     fn require_registration_enabled(&self) {
