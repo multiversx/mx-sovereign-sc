@@ -23,12 +23,12 @@ pub trait ScDeployModule: super::utils::UtilsModule + super::storage::StorageMod
             .to(self.get_chain_factory_address())
             .typed(ChainFactoryContractProxy)
             .deploy_sovereign_chain_config_contract(config)
-            .gas(self.blockchain().get_gas_left())
+            .gas(self.blockchain().get_gas_left() / 2)
             .callback(
                 self.callbacks()
                     .register_deployed_contract(chain_id, ScArray::ChainConfig),
             )
-            .gas_for_callback(100_000_000)
+            .gas_for_callback(15_000_000)
             .register_promise();
     }
 
@@ -45,12 +45,12 @@ pub trait ScDeployModule: super::utils::UtilsModule + super::storage::StorageMod
             .to(self.get_chain_factory_address())
             .typed(ChainFactoryContractProxy)
             .deploy_header_verifier(sovereign_contract)
-            .gas(self.blockchain().get_gas_left())
+            .gas(self.blockchain().get_gas_left() / 2)
             .callback(
                 self.callbacks()
                     .register_deployed_contract(&chain_id, ScArray::HeaderVerifier),
             )
-            .gas_for_callback(100_000_000)
+            .gas_for_callback(15_000_000)
             .register_promise();
     }
 
@@ -64,12 +64,12 @@ pub trait ScDeployModule: super::utils::UtilsModule + super::storage::StorageMod
             .to(self.get_chain_factory_address())
             .typed(ChainFactoryContractProxy)
             .deploy_mvx_esdt_safe(opt_config)
-            .gas(self.blockchain().get_gas_left())
+            .gas(self.blockchain().get_gas_left() / 2)
             .callback(
                 self.callbacks()
                     .register_deployed_contract(&chain_id, ScArray::ESDTSafe),
             )
-            .gas_for_callback(100_000_000)
+            .gas_for_callback(15_000_000)
             .register_promise();
     }
 
@@ -87,12 +87,12 @@ pub trait ScDeployModule: super::utils::UtilsModule + super::storage::StorageMod
             .to(self.get_chain_factory_address())
             .typed(ChainFactoryContractProxy)
             .deploy_fee_market(esdt_safe_address, fee)
-            .gas(self.blockchain().get_gas_left())
+            .gas(self.blockchain().get_gas_left() / 2)
             .callback(
                 self.callbacks()
                     .register_deployed_contract(&chain_id, ScArray::FeeMarket),
             )
-            .gas_for_callback(100_000_000)
+            .gas_for_callback(15_000_000)
             .register_promise();
     }
 
