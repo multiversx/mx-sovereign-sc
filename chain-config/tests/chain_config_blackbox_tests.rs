@@ -4,9 +4,9 @@ use common_test_setup::constants::{
     CHAIN_CONFIG_ADDRESS, FIRST_TEST_TOKEN, OWNER_ADDRESS, USER_ADDRESS,
 };
 use error_messages::{
-    INVALID_ADDITIONAL_STAKE, INVALID_EGLD_STAKE, INVALID_MIN_MAX_VALIDATOR_NUMBERS,
-    REGISTRATION_PAUSED, SETUP_PHASE_NOT_COMPLETED, VALIDATOR_ALREADY_REGISTERED,
-    VALIDATOR_NOT_REGISTERED, VALIDATOR_RANGE_EXCEEDED,
+    ADDITIONAL_STAKE_ZERO_VALUE, INVALID_ADDITIONAL_STAKE, INVALID_EGLD_STAKE,
+    INVALID_MIN_MAX_VALIDATOR_NUMBERS, REGISTRATION_PAUSED, SETUP_PHASE_NOT_COMPLETED,
+    VALIDATOR_ALREADY_REGISTERED, VALIDATOR_NOT_REGISTERED, VALIDATOR_RANGE_EXCEEDED,
 };
 use multiversx_sc::{
     chain_core::EGLD_000000_TOKEN_IDENTIFIER,
@@ -134,6 +134,34 @@ fn test_update_config_during_setup_phase() {
     let new_config = SovereignConfig::new(2, 4, BigUint::default(), None);
 
     state.update_sovereign_config_during_setup_phase(new_config, None);
+}
+
+/// ### TEST
+/// C-CONFIG_UPDATE_CONFIG_DURING_SETUP_PHASE_FAIL
+///
+/// ### ACTION
+/// Call 'update_config()' with additional stake with a zero amount
+///
+/// ### EXPECTED
+/// Error ADDITIONAL_STAKE_ZERO_VALUE
+#[test]
+fn test_update_config_during_setup_phase_additional_stake_zero_amount() {
+    let mut state = ChainConfigTestState::new();
+
+    state
+        .common_setup
+        .deploy_chain_config(OptionalValue::None, None);
+
+    let first_token_stake_arg = StakeArgs {
+        token_id: FIRST_TEST_TOKEN.to_token_identifier(),
+        amount: BigUint::zero(),
+    };
+
+    let additional_stage_args = ManagedVec::from(vec![first_token_stake_arg]);
+
+    let new_config = SovereignConfig::new(2, 4, BigUint::default(), Some(additional_stage_args));
+
+    state.update_sovereign_config_during_setup_phase(new_config, Some(ADDITIONAL_STAKE_ZERO_VALUE));
 }
 
 /// ### TEST

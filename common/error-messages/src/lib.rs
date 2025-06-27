@@ -121,3 +121,4 @@ pub const REGISTRATION_PAUSED: &str = "Registration is paused";
 pub const INVALID_REGISTRATION_STATUS: &str = "Registration status can only be 0 or 1";
 pub const SAME_REGISTRATION_STATUS_PROVIDED: &str = "Same registration status provided";
 pub const EMPTY_ADDITIONAL_STAKE: &str = "Additional stake was sent as an empty array";
+pub const ADDITIONAL_STAKE_ZERO_VALUE: &str = "Additional stake cannot be a zero value";

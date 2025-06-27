@@ -1,6 +1,6 @@
 use error_messages::{
-    EMPTY_ADDITIONAL_STAKE, INVALID_ADDITIONAL_STAKE, INVALID_EGLD_STAKE,
-    INVALID_MIN_MAX_VALIDATOR_NUMBERS, INVALID_TOKEN_ID, NOT_ENOUGH_VALIDATORS,
+    ADDITIONAL_STAKE_ZERO_VALUE, EMPTY_ADDITIONAL_STAKE, INVALID_ADDITIONAL_STAKE,
+    INVALID_EGLD_STAKE, INVALID_MIN_MAX_VALIDATOR_NUMBERS, INVALID_TOKEN_ID, NOT_ENOUGH_VALIDATORS,
     REGISTRATION_PAUSED, VALIDATOR_ALREADY_REGISTERED, VALIDATOR_NOT_REGISTERED,
     VALIDATOR_RANGE_EXCEEDED,
 };
@@ -19,6 +19,7 @@ pub trait ValidatorRulesModule: setup_phase::SetupPhaseModule + events::EventsMo
             require!(!additional_stake.is_empty(), EMPTY_ADDITIONAL_STAKE);
             for stake in additional_stake {
                 require!(stake.token_id.is_valid_esdt_identifier(), INVALID_TOKEN_ID);
+                require!(stake.amount > 0, ADDITIONAL_STAKE_ZERO_VALUE);
             }
         }
 
