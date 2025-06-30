@@ -26,6 +26,8 @@ pub const PHASE_THREE_CALLBACK_GAS: u64 = 2_000_000;
 pub const PHASE_FOUR_ASYNC_CALL_GAS: u64 = 7_500_000;
 pub const PHASE_FOUR_CALLBACK_GAS: u64 = 3_000_000;
 
+pub const COMPLETE_SETUP_PHASE_GAS: u64 = 80_000_000;
+
 #[type_abi]
 #[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, ManagedVecItem, Clone)]
 pub struct EsdtInfo<M: ManagedTypeApi> {
