@@ -127,7 +127,8 @@ pub trait PhasesModule:
                 esdt_safe_address,
                 fee_market_address,
             )
-            .sync_call();
+            .gas(100_000)
+            .transfer_execute();
 
         sovereign_setup_phase_mapper.set(true);
     }
