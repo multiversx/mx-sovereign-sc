@@ -9,6 +9,9 @@ use structs::{
     configs::{EsdtSafeConfig, SovereignConfig},
     fee::FeeStruct,
     forge::{ContractInfo, ScArray},
+    PHASE_FOUR_ASYNC_CALL_GAS, PHASE_FOUR_CALLBACK_GAS, PHASE_ONE_ASYNC_CALL_GAS,
+    PHASE_ONE_CALLBACK_GAS, PHASE_THREE_ASYNC_CALL_GAS, PHASE_THREE_CALLBACK_GAS,
+    PHASE_TWO_ASYNC_CALL_GAS, PHASE_TWO_CALLBACK_GAS,
 };
 
 #[multiversx_sc::module]
@@ -23,34 +26,12 @@ pub trait ScDeployModule: super::utils::UtilsModule + super::storage::StorageMod
             .to(self.get_chain_factory_address())
             .typed(ChainFactoryContractProxy)
             .deploy_sovereign_chain_config_contract(config)
-            .gas(self.blockchain().get_gas_left() / 2)
+            .gas(PHASE_ONE_ASYNC_CALL_GAS)
             .callback(
                 self.callbacks()
                     .register_deployed_contract(chain_id, ScArray::ChainConfig),
             )
-            .gas_for_callback(15_000_000)
-            .register_promise();
-    }
-
-    #[inline]
-    fn deploy_header_verifier(
-        &self,
-        sovereign_contract: MultiValueEncoded<ContractInfo<Self::Api>>,
-    ) {
-        let chain_id = self
-            .sovereigns_mapper(&self.blockchain().get_caller())
-            .get();
-
-        self.tx()
-            .to(self.get_chain_factory_address())
-            .typed(ChainFactoryContractProxy)
-            .deploy_header_verifier(sovereign_contract)
-            .gas(self.blockchain().get_gas_left() / 2)
-            .callback(
-                self.callbacks()
-                    .register_deployed_contract(&chain_id, ScArray::HeaderVerifier),
-            )
-            .gas_for_callback(15_000_000)
+            .gas_for_callback(PHASE_ONE_CALLBACK_GAS)
             .register_promise();
     }
 
@@ -64,12 +45,12 @@ pub trait ScDeployModule: super::utils::UtilsModule + super::storage::StorageMod
             .to(self.get_chain_factory_address())
             .typed(ChainFactoryContractProxy)
             .deploy_mvx_esdt_safe(opt_config)
-            .gas(self.blockchain().get_gas_left() / 2)
+            .gas(PHASE_TWO_ASYNC_CALL_GAS)
             .callback(
                 self.callbacks()
                     .register_deployed_contract(&chain_id, ScArray::ESDTSafe),
             )
-            .gas_for_callback(15_000_000)
+            .gas_for_callback(PHASE_TWO_CALLBACK_GAS)
             .register_promise();
     }
 
@@ -87,12 +68,34 @@ pub trait ScDeployModule: super::utils::UtilsModule + super::storage::StorageMod
             .to(self.get_chain_factory_address())
             .typed(ChainFactoryContractProxy)
             .deploy_fee_market(esdt_safe_address, fee)
-            .gas(self.blockchain().get_gas_left() / 2)
+            .gas(PHASE_THREE_ASYNC_CALL_GAS)
             .callback(
                 self.callbacks()
                     .register_deployed_contract(&chain_id, ScArray::FeeMarket),
             )
-            .gas_for_callback(15_000_000)
+            .gas_for_callback(PHASE_THREE_CALLBACK_GAS)
+            .register_promise();
+    }
+
+    #[inline]
+    fn deploy_header_verifier(
+        &self,
+        sovereign_contract: MultiValueEncoded<ContractInfo<Self::Api>>,
+    ) {
+        let chain_id = self
+            .sovereigns_mapper(&self.blockchain().get_caller())
+            .get();
+
+        self.tx()
+            .to(self.get_chain_factory_address())
+            .typed(ChainFactoryContractProxy)
+            .deploy_header_verifier(sovereign_contract)
+            .gas(PHASE_FOUR_ASYNC_CALL_GAS)
+            .callback(
+                self.callbacks()
+                    .register_deployed_contract(&chain_id, ScArray::HeaderVerifier),
+            )
+            .gas_for_callback(PHASE_FOUR_CALLBACK_GAS)
             .register_promise();
     }
 
@@ -110,8 +113,8 @@ pub trait ScDeployModule: super::utils::UtilsModule + super::storage::StorageMod
                 self.sovereign_deployed_contracts(chain_id)
                     .insert(new_contract_info);
             }
-            ManagedAsyncCallResult::Err(_) => {
-                sc_panic!("");
+            ManagedAsyncCallResult::Err(call_err) => {
+                sc_panic!(call_err.err_msg);
             }
         }
     }
