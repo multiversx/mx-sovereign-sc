@@ -11,6 +11,7 @@ use structs::{
     configs::{EsdtSafeConfig, SovereignConfig},
     fee::FeeStruct,
     forge::ScArray,
+    COMPLETE_SETUP_PHASE_GAS,
 };
 
 use crate::common::{self};
@@ -127,7 +128,7 @@ pub trait PhasesModule:
                 esdt_safe_address,
                 fee_market_address,
             )
-            .gas(100_000)
+            .gas(COMPLETE_SETUP_PHASE_GAS)
             .transfer_execute();
 
         sovereign_setup_phase_mapper.set(true);
