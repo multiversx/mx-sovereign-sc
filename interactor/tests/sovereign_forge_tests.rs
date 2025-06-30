@@ -40,7 +40,7 @@ use structs::{
 #[serial]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn test_deploy_sovereign_forge_cs() {
-    let mut chain_interactor = SovereignForgeInteract::new(Config::load_config()).await;
+    let mut chain_interactor = SovereignForgeInteract::new(Config::chain_simulator_config()).await;
     chain_interactor
         .deploy_and_complete_setup_phase(
             CHAIN_ID,
