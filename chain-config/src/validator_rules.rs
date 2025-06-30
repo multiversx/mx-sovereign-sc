@@ -4,7 +4,10 @@ use error_messages::{
     INVALID_TOKEN_ID, NOT_ENOUGH_VALIDATORS, REGISTRATION_DISABLED, VALIDATOR_ALREADY_REGISTERED,
     VALIDATOR_NOT_REGISTERED, VALIDATOR_RANGE_EXCEEDED,
 };
-use structs::{configs::SovereignConfig, ValidatorInfo};
+use structs::{
+    configs::{SovereignConfig, StakeArgs},
+    ValidatorInfo,
+};
 
 multiversx_sc::imports!();
 multiversx_sc::derive_imports!();
@@ -163,6 +166,10 @@ pub trait ValidatorRulesModule: setup_phase::SetupPhaseModule + events::EventsMo
         &self,
         bls_key: &ManagedBuffer,
     ) -> SingleValueMapper<BigUint<Self::Api>>;
+
+    #[view(stakeAmount)]
+    #[storage_mapper("stakeAmount")]
+    fn stake_amount(&self, bls_key: &ManagedBuffer) -> SingleValueMapper<StakeArgs<Self::Api>>;
 
     #[view(blsKeysMap)]
     #[storage_mapper("blsKeysMap")]
