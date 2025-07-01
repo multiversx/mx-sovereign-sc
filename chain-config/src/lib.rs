@@ -6,7 +6,9 @@ use structs::{configs::SovereignConfig, generate_hash::GenerateHash};
 
 multiversx_sc::imports!();
 
-pub mod validator_rules;
+pub mod config_utils;
+pub mod storage;
+pub mod validator;
 
 pub const ENABLED: u8 = 1;
 pub const DISABLED: u8 = 0;
@@ -16,7 +18,9 @@ pub const DISABLED_STR: &str = "disabled";
 
 #[multiversx_sc::contract]
 pub trait ChainConfigContract:
-    validator_rules::ValidatorRulesModule
+    validator::ValidatorModule
+    + storage::ChainConfigStorageModule
+    + config_utils::ChainConfigUtilsModule
     + setup_phase::SetupPhaseModule
     + utils::UtilsModule
     + events::EventsModule

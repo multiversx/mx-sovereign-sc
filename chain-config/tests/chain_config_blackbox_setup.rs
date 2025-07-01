@@ -12,7 +12,7 @@ use multiversx_sc_scenario::{
     ReturnsLogs, ScenarioTxRun,
 };
 use proxies::chain_config_proxy::ChainConfigContractProxy;
-use structs::{configs::SovereignConfig, ValidatorInfo};
+use structs::configs::SovereignConfig;
 
 pub struct ChainConfigTestState {
     pub common_setup: BaseSetup,
