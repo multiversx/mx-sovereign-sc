@@ -5,10 +5,7 @@ use error_messages::{
     VALIDATOR_NOT_REGISTERED, VALIDATOR_RANGE_EXCEEDED,
 };
 use multiversx_sc::chain_core::EGLD_000000_TOKEN_IDENTIFIER;
-use structs::{
-    configs::{SovereignConfig, StakeArgs},
-    ValidatorInfo,
-};
+use structs::{configs::SovereignConfig, ValidatorInfo};
 
 multiversx_sc::imports!();
 multiversx_sc::derive_imports!();
