@@ -36,5 +36,5 @@ pub struct ValidatorInfo<M: ManagedTypeApi> {
     pub address: ManagedAddress<M>,
     pub bls_key: ManagedBuffer<M>,
     pub egld_stake: BigUint<M>,
-    pub token_stake: ManagedVec<M, EsdtTokenPayment<M>>,
+    pub token_stake: Option<ManagedVec<M, EsdtTokenPayment<M>>>,
 }
