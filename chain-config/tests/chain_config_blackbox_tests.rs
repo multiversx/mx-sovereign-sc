@@ -4,9 +4,10 @@ use common_test_setup::constants::{
     CHAIN_CONFIG_ADDRESS, FIRST_TEST_TOKEN, OWNER_ADDRESS, USER_ADDRESS,
 };
 use error_messages::{
-    ADDITIONAL_STAKE_ZERO_VALUE, INVALID_ADDITIONAL_STAKE, INVALID_EGLD_STAKE,
-    INVALID_MIN_MAX_VALIDATOR_NUMBERS, REGISTRATION_DISABLED, SETUP_PHASE_NOT_COMPLETED,
-    VALIDATOR_ALREADY_REGISTERED, VALIDATOR_NOT_REGISTERED, VALIDATOR_RANGE_EXCEEDED,
+    ADDITIONAL_STAKE_ZERO_VALUE, INVALID_ADDITIONAL_STAKE, INVALID_BLS_KEY_FOR_CALLER,
+    INVALID_EGLD_STAKE, INVALID_MIN_MAX_VALIDATOR_NUMBERS, REGISTRATION_DISABLED,
+    SETUP_PHASE_NOT_COMPLETED, VALIDATOR_ALREADY_REGISTERED, VALIDATOR_NOT_REGISTERED,
+    VALIDATOR_RANGE_EXCEEDED,
 };
 use multiversx_sc::{
     chain_core::EGLD_000000_TOKEN_IDENTIFIER,
@@ -732,6 +733,40 @@ fn test_unregister_validator_not_registered() {
     state.unregister(&new_validator.bls_key, Some(VALIDATOR_NOT_REGISTERED), None);
 
     assert!(state.get_bls_key_id(&new_validator.bls_key) == 0);
+}
+
+/// ### TEST
+/// C-CONFIG_UNREGISTER_FAIL
+///
+/// ### ACTION
+/// Call 'unregister()' with registered BLS key but wrong caller
+///
+/// ### EXPECTED
+/// Error
+#[test]
+fn test_unregister_validator_wrong_bls_key() {
+    let mut state = ChainConfigTestState::new();
+
+    state
+        .common_setup
+        .deploy_chain_config(OptionalValue::None, None);
+
+    let new_validator_bls_key = ManagedBuffer::from("validator1");
+
+    state.register(
+        &new_validator_bls_key,
+        &ManagedVec::new(),
+        None,
+        Some("register"),
+    );
+    assert!(state.get_bls_key_id(&new_validator_bls_key) == 1);
+
+    state.unregister_with_caller(
+        &new_validator_bls_key,
+        USER_ADDRESS,
+        Some(INVALID_BLS_KEY_FOR_CALLER),
+        None,
+    );
 }
 
 /// ### TEST
