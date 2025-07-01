@@ -1,8 +1,9 @@
 use error_messages::{
-    ADDITIONAL_STAKE_NOT_REQUIRED, ADDITIONAL_STAKE_ZERO_VALUE, EMPTY_ADDITIONAL_STAKE,
-    INVALID_ADDITIONAL_STAKE, INVALID_EGLD_STAKE, INVALID_MIN_MAX_VALIDATOR_NUMBERS,
-    INVALID_TOKEN_ID, NOT_ENOUGH_VALIDATORS, REGISTRATION_DISABLED, VALIDATOR_ALREADY_REGISTERED,
-    VALIDATOR_NOT_REGISTERED, VALIDATOR_RANGE_EXCEEDED,
+    ADDITIONAL_STAKE_NOT_REQUIRED, ADDITIONAL_STAKE_ZERO_VALUE, CALLER_HAS_INCORRECT_BLS_KEY,
+    EMPTY_ADDITIONAL_STAKE, INVALID_ADDITIONAL_STAKE, INVALID_EGLD_STAKE,
+    INVALID_MIN_MAX_VALIDATOR_NUMBERS, INVALID_TOKEN_ID, NOT_ENOUGH_VALIDATORS,
+    REGISTRATION_DISABLED, VALIDATOR_ALREADY_REGISTERED, VALIDATOR_NOT_REGISTERED,
+    VALIDATOR_RANGE_EXCEEDED,
 };
 use multiversx_sc::chain_core::EGLD_000000_TOKEN_IDENTIFIER;
 use structs::{configs::SovereignConfig, ValidatorInfo};
@@ -78,6 +79,9 @@ pub trait ValidatorRulesModule: setup_phase::SetupPhaseModule + events::EventsMo
         self.require_validator_registered(&bls_key);
 
         let validator_id = self.bls_key_to_id_mapper(&bls_key).get();
+
+        self.require_caller_has_bls_key(self.blockchain().get_caller(), &validator_id);
+
         let validator_info = self.validator_info(&validator_id).get();
 
         self.bls_keys_map().remove(&validator_id);
@@ -98,7 +102,7 @@ pub trait ValidatorRulesModule: setup_phase::SetupPhaseModule + events::EventsMo
         self.tx()
             .to(&self.blockchain().get_caller())
             .payment(self.get_total_stake(validator_info))
-            .sync_call();
+            .transfer_execute();
     }
 
     fn get_total_stake(
@@ -132,6 +136,17 @@ pub trait ValidatorRulesModule: setup_phase::SetupPhaseModule + events::EventsMo
         require!(
             !self.bls_key_to_id_mapper(bls_key).is_empty(),
             VALIDATOR_NOT_REGISTERED
+        );
+    }
+
+    fn require_caller_has_bls_key(
+        &self,
+        caller: ManagedAddress<Self::Api>,
+        id: &BigUint<Self::Api>,
+    ) {
+        require!(
+            self.validator_info(id).get().address == caller,
+            CALLER_HAS_INCORRECT_BLS_KEY
         );
     }
 
@@ -203,8 +218,8 @@ pub trait ValidatorRulesModule: setup_phase::SetupPhaseModule + events::EventsMo
         bls_key: &ManagedBuffer,
     ) -> SingleValueMapper<BigUint<Self::Api>>;
 
-    #[view(stakeAmount)]
-    #[storage_mapper("stakeAmount")]
+    #[view(validatorInfo)]
+    #[storage_mapper("validatorInfo")]
     fn validator_info(
         &self,
         id: &BigUint<Self::Api>,
