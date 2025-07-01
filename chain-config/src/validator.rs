@@ -59,13 +59,18 @@ pub trait ValidatorModule:
     fn unregister(&self, bls_key: ManagedBuffer<Self::Api>) {
         self.require_validator_registered(&bls_key);
 
+        let caller = self.blockchain().get_caller();
         let validator_id = self.bls_key_to_id_mapper(&bls_key).get();
-        let validator_info = self.validator_info(&validator_id).get();
+        let validator_info_mapper = self.validator_info(&validator_id);
+        let validator_info = validator_info_mapper.get();
+
+        self.require_caller_has_bls_key(&caller, &validator_info);
 
         self.bls_keys_map().remove(&validator_id);
         self.bls_key_to_id_mapper(&validator_info.bls_key).clear();
-        self.refund_stake(&validator_info);
-        self.validator_info(&validator_id).clear();
+        validator_info_mapper.clear();
+
+        self.refund_stake(&caller, &validator_info);
 
         self.unregister_event(
             &validator_id,

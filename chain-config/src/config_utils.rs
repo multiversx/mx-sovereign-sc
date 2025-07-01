@@ -1,7 +1,7 @@
 use error_messages::{
     ADDITIONAL_STAKE_NOT_REQUIRED, ADDITIONAL_STAKE_ZERO_VALUE, EMPTY_ADDITIONAL_STAKE,
-    INVALID_ADDITIONAL_STAKE, INVALID_EGLD_STAKE, INVALID_MIN_MAX_VALIDATOR_NUMBERS,
-    INVALID_TOKEN_ID,
+    INVALID_ADDITIONAL_STAKE, INVALID_BLS_KEY_FOR_CALLER, INVALID_EGLD_STAKE,
+    INVALID_MIN_MAX_VALIDATOR_NUMBERS, INVALID_TOKEN_ID,
 };
 use multiversx_sc::chain_core::EGLD_000000_TOKEN_IDENTIFIER;
 use structs::{configs::SovereignConfig, ValidatorInfo};
@@ -32,11 +32,15 @@ pub trait ChainConfigUtilsModule: storage::ChainConfigStorageModule {
         }
     }
 
-    fn refund_stake(&self, validator_info: &ValidatorInfo<Self::Api>) {
+    fn refund_stake(
+        &self,
+        caller: &ManagedAddress<Self::Api>,
+        validator_info: &ValidatorInfo<Self::Api>,
+    ) {
         self.tx()
-            .to(&self.blockchain().get_caller())
+            .to(caller)
             .payment(self.get_total_stake(validator_info))
-            .sync_call();
+            .transfer_execute();
     }
 
     fn get_total_stake(
@@ -101,5 +105,16 @@ pub trait ChainConfigUtilsModule: storage::ChainConfigStorageModule {
         }
 
         (egld_amount, esdt_payments)
+    }
+
+    fn require_caller_has_bls_key(
+        &self,
+        caller: &ManagedAddress<Self::Api>,
+        validator_info: &ValidatorInfo<Self::Api>,
+    ) {
+        require!(
+            validator_info.address == *caller,
+            INVALID_BLS_KEY_FOR_CALLER
+        );
     }
 }

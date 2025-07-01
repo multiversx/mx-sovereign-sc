@@ -2,10 +2,11 @@ use common_test_setup::{
     base_setup::init::{AccountSetup, BaseSetup},
     constants::{
         CHAIN_CONFIG_ADDRESS, FIRST_TEST_TOKEN, ONE_HUNDRED_MILLION, OWNER_ADDRESS, OWNER_BALANCE,
+        USER_ADDRESS,
     },
 };
 use multiversx_sc::types::{
-    BigUint, ManagedBuffer, MultiEgldOrEsdtPayment, MultiValueEncoded, ReturnsResult,
+    BigUint, ManagedBuffer, MultiEgldOrEsdtPayment, MultiValueEncoded, ReturnsResult, TestAddress,
 };
 use multiversx_sc_scenario::{
     api::StaticApi, multiversx_chain_vm::crypto_functions::sha256, ReturnsHandledOrError,
@@ -28,7 +29,14 @@ impl ChainConfigTestState {
             esdt_balances: Some(vec![(FIRST_TEST_TOKEN, 0u64, ONE_HUNDRED_MILLION.into())]),
         };
 
-        let account_setups = vec![owner_account];
+        let user_account = AccountSetup {
+            address: USER_ADDRESS.to_address(),
+            code_path: None,
+            egld_balance: Some(OWNER_BALANCE.into()),
+            esdt_balances: Some(vec![(FIRST_TEST_TOKEN, 0u64, ONE_HUNDRED_MILLION.into())]),
+        };
+
+        let account_setups = vec![owner_account, user_account];
 
         let common_setup = BaseSetup::new(account_setups);
 
@@ -99,6 +107,32 @@ impl ChainConfigTestState {
             .returns(ReturnsHandledOrError::new())
             .returns(ReturnsLogs)
             .payment(payment)
+            .run();
+
+        self.common_setup
+            .assert_expected_error_message(result, expect_error);
+
+        self.common_setup
+            .assert_expected_log(logs, expected_custom_log);
+    }
+
+    pub fn unregister_with_caller(
+        &mut self,
+        bls_key: &ManagedBuffer<StaticApi>,
+        caller: TestAddress,
+        expect_error: Option<&str>,
+        expected_custom_log: Option<&str>,
+    ) {
+        let (result, logs) = self
+            .common_setup
+            .world
+            .tx()
+            .from(caller)
+            .to(CHAIN_CONFIG_ADDRESS)
+            .typed(ChainConfigContractProxy)
+            .unregister(bls_key)
+            .returns(ReturnsHandledOrError::new())
+            .returns(ReturnsLogs)
             .run();
 
         self.common_setup
