@@ -1,6 +1,6 @@
 use error_messages::{
     NOT_ENOUGH_VALIDATORS, REGISTRATION_DISABLED, VALIDATOR_ALREADY_REGISTERED,
-    VALIDATOR_NOT_REGISTERED,
+    VALIDATOR_NOT_REGISTERED, VALIDATOR_RANGE_EXCEEDED,
 };
 use structs::{configs::SovereignConfig, ValidatorInfo};
 
@@ -16,6 +16,17 @@ pub trait ChainConfigStorageModule {
         require!(
             self.bls_key_to_id_mapper(bls_key).is_empty(),
             VALIDATOR_ALREADY_REGISTERED
+        );
+    }
+
+    fn require_valid_validator_range(
+        &self,
+        current_bls_key_id: &BigUint<Self::Api>,
+        max_number_of_validators: u64,
+    ) {
+        require!(
+            *current_bls_key_id <= max_number_of_validators,
+            VALIDATOR_RANGE_EXCEEDED
         );
     }
 
