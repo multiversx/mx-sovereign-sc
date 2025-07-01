@@ -1,7 +1,7 @@
 use error_messages::{
     ADDITIONAL_STAKE_NOT_REQUIRED, ADDITIONAL_STAKE_ZERO_VALUE, EMPTY_ADDITIONAL_STAKE,
     INVALID_ADDITIONAL_STAKE, INVALID_BLS_KEY_FOR_CALLER, INVALID_EGLD_STAKE,
-    INVALID_MIN_MAX_VALIDATOR_NUMBERS, INVALID_TOKEN_ID,
+    INVALID_MIN_MAX_VALIDATOR_NUMBERS, INVALID_REGISTRATION_STATUS, INVALID_TOKEN_ID,
 };
 use multiversx_sc::chain_core::EGLD_000000_TOKEN_IDENTIFIER;
 use structs::{configs::SovereignConfig, ValidatorInfo};
@@ -10,6 +10,12 @@ use crate::storage;
 
 multiversx_sc::imports!();
 multiversx_sc::derive_imports!();
+
+pub const ENABLED: u8 = 1;
+pub const DISABLED: u8 = 0;
+
+pub const ENABLED_STR: &str = "enabled";
+pub const DISABLED_STR: &str = "disabled";
 
 #[multiversx_sc::module]
 pub trait ChainConfigUtilsModule: storage::ChainConfigStorageModule {
@@ -29,6 +35,14 @@ pub trait ChainConfigUtilsModule: storage::ChainConfigStorageModule {
             None
         } else {
             Some(INVALID_MIN_MAX_VALIDATOR_NUMBERS)
+        }
+    }
+
+    fn get_event_msg(&self, registration_status: u8) -> ManagedBuffer {
+        match registration_status {
+            DISABLED => ManagedBuffer::from(DISABLED_STR),
+            ENABLED => ManagedBuffer::from(ENABLED_STR),
+            _ => ManagedBuffer::from(INVALID_REGISTRATION_STATUS),
         }
     }
 
