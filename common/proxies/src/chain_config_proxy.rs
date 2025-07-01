@@ -149,7 +149,7 @@ where
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, structs::ValidatorInfo<Env::Api>> {
         self.wrapped_tx
             .payment(NotPayable)
-            .raw_call("stakeAmount")
+            .raw_call("validator_info")
             .argument(&id)
             .original_result()
     }
@@ -215,7 +215,7 @@ where
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
-            .raw_call("resumeRegistration")
+            .raw_call("updateRegistrationStatus")
             .argument(&hash_of_hashes)
             .argument(&registration_status)
             .original_result()
