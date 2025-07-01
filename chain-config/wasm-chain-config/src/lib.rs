@@ -28,7 +28,7 @@ multiversx_sc_wasm_adapter::endpoints! {
         unregister => unregister
         sovereignConfig => sovereign_config
         blsKeyToId => bls_key_to_id_mapper
-        stakeAmount => validator_info
+        validatorInfo => validator_info
         blsKeysMap => bls_keys_map
         wasPreviouslySlashed => was_previously_slashed
     )
