@@ -54,7 +54,7 @@ pub trait EventsModule {
         #[indexed] address: &ManagedAddress,
         #[indexed] bls_key: &ManagedBuffer,
         #[indexed] egld_stake: &BigUint,
-        #[indexed] token_stake: &ManagedVec<EsdtTokenPayment<Self::Api>>,
+        #[indexed] token_stake: &Option<ManagedVec<EsdtTokenPayment<Self::Api>>>,
     );
 
     #[event("completeGenesisPhase")]

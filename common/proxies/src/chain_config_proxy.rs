@@ -152,15 +152,15 @@ where
     }
 
     pub fn unregister<
-        Arg0: ProxyArg<structs::ValidatorInfo<Env::Api>>,
+        Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
     >(
         self,
-        validator_info: Arg0,
+        bls_key: Arg0,
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("unregister")
-            .argument(&validator_info)
+            .argument(&bls_key)
             .original_result()
     }
 
@@ -183,6 +183,19 @@ where
             .payment(NotPayable)
             .raw_call("blsKeyToId")
             .argument(&bls_key)
+            .original_result()
+    }
+
+    pub fn validator_info<
+        Arg0: ProxyArg<BigUint<Env::Api>>,
+    >(
+        self,
+        id: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, structs::ValidatorInfo<Env::Api>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("stakeAmount")
+            .argument(&id)
             .original_result()
     }
 

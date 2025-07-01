@@ -4,6 +4,7 @@ use error_messages::{
     INVALID_TOKEN_ID, NOT_ENOUGH_VALIDATORS, REGISTRATION_DISABLED, VALIDATOR_ALREADY_REGISTERED,
     VALIDATOR_NOT_REGISTERED, VALIDATOR_RANGE_EXCEEDED,
 };
+use multiversx_sc::chain_core::EGLD_000000_TOKEN_IDENTIFIER;
 use structs::{
     configs::{SovereignConfig, StakeArgs},
     ValidatorInfo,
@@ -57,6 +58,8 @@ pub trait ValidatorRulesModule: setup_phase::SetupPhaseModule + events::EventsMo
         self.bls_key_to_id_mapper(&new_bls_key)
             .set(current_bls_key_id.clone());
 
+        let caller = self.blockchain().get_caller();
+
         self.register_event(
             &current_bls_key_id,
             &self.blockchain().get_caller(),
@@ -64,17 +67,26 @@ pub trait ValidatorRulesModule: setup_phase::SetupPhaseModule + events::EventsMo
             &egld_stake,
             &additional_stake,
         );
+
+        self.validator_info(&current_bls_key_id).set(ValidatorInfo {
+            address: caller,
+            bls_key: new_bls_key,
+            egld_stake,
+            token_stake: additional_stake,
+        });
     }
 
-    // TODO: add storage for registered stake in order to return it upon unregistering
     #[endpoint(unregister)]
-    fn unregister(&self, validator_info: ValidatorInfo<Self::Api>) {
-        self.require_validator_registered(&validator_info.bls_key);
+    fn unregister(&self, bls_key: ManagedBuffer<Self::Api>) {
+        self.require_validator_registered(&bls_key);
 
-        let validator_id = self.bls_key_to_id_mapper(&validator_info.bls_key).get();
+        let validator_id = self.bls_key_to_id_mapper(&bls_key).get();
+        let validator_info = self.validator_info(&validator_id).get();
 
         self.bls_keys_map().remove(&validator_id);
         self.bls_key_to_id_mapper(&validator_info.bls_key).clear();
+        self.refund_stake(&validator_info);
+        self.validator_info(&validator_id).clear();
 
         self.unregister_event(
             &validator_id,
@@ -83,6 +95,33 @@ pub trait ValidatorRulesModule: setup_phase::SetupPhaseModule + events::EventsMo
             &validator_info.egld_stake,
             &validator_info.token_stake,
         );
+    }
+
+    fn refund_stake(&self, validator_info: &ValidatorInfo<Self::Api>) {
+        self.tx()
+            .to(&self.blockchain().get_caller())
+            .payment(self.get_total_stake(validator_info))
+            .sync_call();
+    }
+
+    fn get_total_stake(
+        &self,
+        validator_info: &ValidatorInfo<Self::Api>,
+    ) -> MultiEgldOrEsdtPayment<Self::Api> {
+        let mut total_stake = MultiEgldOrEsdtPayment::new();
+        total_stake.push(EgldOrEsdtTokenPayment::new(
+            EgldOrEsdtTokenIdentifier::from(ManagedBuffer::from(EGLD_000000_TOKEN_IDENTIFIER)),
+            0,
+            validator_info.egld_stake.clone(),
+        ));
+
+        if let Some(additional_stake) = &validator_info.token_stake {
+            for stake in additional_stake {
+                total_stake.push(stake.clone().into());
+            }
+        }
+
+        total_stake
     }
 
     fn require_validator_not_registered(&self, bls_key: &ManagedBuffer) {
@@ -169,7 +208,10 @@ pub trait ValidatorRulesModule: setup_phase::SetupPhaseModule + events::EventsMo
 
     #[view(stakeAmount)]
     #[storage_mapper("stakeAmount")]
-    fn stake_amount(&self, bls_key: &ManagedBuffer) -> SingleValueMapper<StakeArgs<Self::Api>>;
+    fn validator_info(
+        &self,
+        id: &BigUint<Self::Api>,
+    ) -> SingleValueMapper<ValidatorInfo<Self::Api>>;
 
     #[view(blsKeysMap)]
     #[storage_mapper("blsKeysMap")]

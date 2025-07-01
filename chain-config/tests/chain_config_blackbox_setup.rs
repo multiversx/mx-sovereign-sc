@@ -110,7 +110,7 @@ impl ChainConfigTestState {
 
     pub fn unregister(
         &mut self,
-        validator: &ValidatorInfo<StaticApi>,
+        bls_key: &ManagedBuffer<StaticApi>,
         expect_error: Option<&str>,
         expected_custom_log: Option<&str>,
     ) {
@@ -121,7 +121,7 @@ impl ChainConfigTestState {
             .from(OWNER_ADDRESS)
             .to(CHAIN_CONFIG_ADDRESS)
             .typed(ChainConfigContractProxy)
-            .unregister(validator)
+            .unregister(bls_key)
             .returns(ReturnsHandledOrError::new())
             .returns(ReturnsLogs)
             .run();

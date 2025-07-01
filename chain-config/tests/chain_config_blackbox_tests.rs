@@ -726,10 +726,10 @@ fn test_unregister_validator_not_registered() {
         address: USER_ADDRESS.to_managed_address(),
         bls_key: ManagedBuffer::from("validator1"),
         egld_stake: BigUint::default(),
-        token_stake: ManagedVec::new(),
+        token_stake: Some(ManagedVec::new()),
     };
 
-    state.unregister(&new_validator, Some(VALIDATOR_NOT_REGISTERED), None);
+    state.unregister(&new_validator.bls_key, Some(VALIDATOR_NOT_REGISTERED), None);
 
     assert!(state.get_bls_key_id(&new_validator.bls_key) == 0);
 }
@@ -738,38 +738,86 @@ fn test_unregister_validator_not_registered() {
 /// C-CONFIG_UNREGISTER_OK
 ///
 /// ### ACTION
-/// Call 'unregister()' with registered validator
+/// Call 'unregister()' with registered validator with both EGLD and ESDT stake
 ///
 /// ### EXPECTED
-/// Validator is unregistered successfully
+/// Validator is unregistered successfully and stake is returned
 #[test]
 fn test_unregister_validator() {
     let mut state = ChainConfigTestState::new();
 
-    state
-        .common_setup
-        .deploy_chain_config(OptionalValue::None, None);
+    let min_stake = BigUint::from(100_000u64);
 
-    let payments_vec = MultiEgldOrEsdtPayment::new();
-
-    let new_validator = ValidatorInfo {
-        address: USER_ADDRESS.to_managed_address(),
-        bls_key: ManagedBuffer::from("validator1"),
-        egld_stake: BigUint::default(),
-        token_stake: ManagedVec::new(),
+    let mut additional_stake_vec = ManagedVec::new();
+    let additional_stake = StakeArgs {
+        token_identifier: FIRST_TEST_TOKEN.to_token_identifier(),
+        amount: min_stake.clone(),
     };
 
+    additional_stake_vec.push(additional_stake);
+
+    let config = SovereignConfig {
+        min_validators: 0,
+        max_validators: 2,
+        min_stake: min_stake.clone(),
+        opt_additional_stake_required: Some(additional_stake_vec),
+    };
+
+    state
+        .common_setup
+        .deploy_chain_config(OptionalValue::Some(config), None);
+
+    let payment = EgldOrEsdtTokenPayment::new(
+        EgldOrEsdtTokenIdentifier::from(EGLD_000000_TOKEN_IDENTIFIER.as_bytes()),
+        0,
+        min_stake.clone(),
+    );
+    let first_token_payment = EgldOrEsdtTokenPayment::new(
+        EgldOrEsdtTokenIdentifier::from(FIRST_TEST_TOKEN.as_bytes()),
+        0,
+        min_stake.clone(),
+    );
+
+    let mut payments_vec = MultiEgldOrEsdtPayment::new();
+
+    payments_vec.push(payment);
+    payments_vec.push(first_token_payment);
+
+    let new_validator_bls_key = ManagedBuffer::from("validator1");
+
     state.register(
-        &new_validator.bls_key,
+        &new_validator_bls_key,
         &payments_vec,
         None,
         Some("register"),
     );
-    assert!(state.get_bls_key_id(&new_validator.bls_key) == 1);
+    assert!(state.get_bls_key_id(&new_validator_bls_key) == 1);
 
-    state.unregister(&new_validator, None, Some("unregister"));
+    state
+        .common_setup
+        .world
+        .check_account(CHAIN_CONFIG_ADDRESS)
+        .balance(&min_stake);
+    state
+        .common_setup
+        .world
+        .check_account(CHAIN_CONFIG_ADDRESS)
+        .esdt_balance(FIRST_TEST_TOKEN, &min_stake);
 
-    assert!(state.get_bls_key_id(&new_validator.bls_key) == 0);
+    state.unregister(&new_validator_bls_key, None, Some("unregister"));
+
+    state
+        .common_setup
+        .world
+        .check_account(CHAIN_CONFIG_ADDRESS)
+        .balance(BigUint::zero());
+    state
+        .common_setup
+        .world
+        .check_account(CHAIN_CONFIG_ADDRESS)
+        .esdt_balance(FIRST_TEST_TOKEN, BigUint::zero());
+
+    assert!(state.get_bls_key_id(&new_validator_bls_key) == 0);
 }
 
 /// ### TEST
