@@ -65,7 +65,7 @@ pub trait ConfigsModule:
         self.execute_bridge_operation_event(&hash_of_hashes, &config_hash);
     }
 
-    #[endpoint(resumeRegistration)]
+    #[endpoint(updateRegistrationStatus)]
     fn update_registration_status(&self, hash_of_hashes: ManagedBuffer, registration_status: u8) {
         self.require_setup_complete();
 

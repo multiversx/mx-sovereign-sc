@@ -4,12 +4,17 @@ use error_messages::{
 };
 use structs::{configs::SovereignConfig, ValidatorInfo};
 
+use crate::config_utils::ENABLED;
+
 multiversx_sc::imports!();
 
 #[multiversx_sc::module]
 pub trait ChainConfigStorageModule {
     fn require_registration_enabled(&self) {
-        require!(self.registration_status().get() == 1, REGISTRATION_DISABLED);
+        require!(
+            self.registration_status().get() == ENABLED,
+            REGISTRATION_DISABLED
+        );
     }
 
     fn require_validator_not_registered(&self, bls_key: &ManagedBuffer) {
@@ -57,8 +62,8 @@ pub trait ChainConfigStorageModule {
         bls_key: &ManagedBuffer,
     ) -> SingleValueMapper<BigUint<Self::Api>>;
 
-    #[view(stakeAmount)]
-    #[storage_mapper("stakeAmount")]
+    #[view(validator_info)]
+    #[storage_mapper("validator_info")]
     fn validator_info(
         &self,
         id: &BigUint<Self::Api>,
