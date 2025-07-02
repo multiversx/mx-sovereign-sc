@@ -10,7 +10,8 @@ use multiversx_sc::{imports::OptionalValue, require, types::MultiValueEncoded};
 use structs::{
     configs::{EsdtSafeConfig, SovereignConfig},
     fee::FeeStruct,
-    forge::{ContractInfo, ScArray},
+    forge::ScArray,
+    COMPLETE_SETUP_PHASE_GAS,
 };
 
 use crate::common::{self};
@@ -49,13 +50,7 @@ pub trait PhasesModule:
             CHAIN_CONFIG_ALREADY_DEPLOYED
         );
 
-        let chain_config_address = self.deploy_chain_config(config);
-
-        let chain_config_contract_info =
-            ContractInfo::new(ScArray::ChainConfig, chain_config_address);
-
-        self.sovereign_deployed_contracts(&chain_id)
-            .insert(chain_config_contract_info);
+        self.deploy_chain_config(&chain_id, config);
         self.sovereigns_mapper(&caller).set(chain_id);
     }
 
@@ -69,13 +64,7 @@ pub trait PhasesModule:
             ESDT_SAFE_ALREADY_DEPLOYED
         );
 
-        let esdt_safe_address = self.deploy_mvx_esdt_safe(opt_config);
-
-        let esdt_safe_contract_info =
-            ContractInfo::new(ScArray::ESDTSafe, esdt_safe_address.clone());
-
-        self.sovereign_deployed_contracts(&self.sovereigns_mapper(&caller).get())
-            .insert(esdt_safe_contract_info);
+        self.deploy_mvx_esdt_safe(opt_config);
     }
 
     #[endpoint(deployPhaseThree)]
@@ -90,12 +79,7 @@ pub trait PhasesModule:
 
         let esdt_safe_address = self.get_contract_address(&caller, ScArray::ESDTSafe);
 
-        let fee_market_address = self.deploy_fee_market(&esdt_safe_address, fee);
-
-        let fee_market_contract_info = ContractInfo::new(ScArray::FeeMarket, fee_market_address);
-
-        self.sovereign_deployed_contracts(&self.sovereigns_mapper(&caller).get())
-            .insert(fee_market_contract_info);
+        self.deploy_fee_market(&esdt_safe_address, fee);
     }
 
     #[endpoint(deployPhaseFour)]
@@ -113,13 +97,8 @@ pub trait PhasesModule:
             self.sovereign_deployed_contracts(&self.sovereigns_mapper(&caller).get())
                 .iter(),
         );
-        let header_verifier_address = self.deploy_header_verifier(contract_addresses);
 
-        let header_verifier_contract_info =
-            ContractInfo::new(ScArray::HeaderVerifier, header_verifier_address);
-
-        self.sovereign_deployed_contracts(&self.sovereigns_mapper(&caller).get())
-            .insert(header_verifier_contract_info);
+        self.deploy_header_verifier(contract_addresses);
     }
 
     #[endpoint(completeSetupPhase)]
@@ -149,7 +128,8 @@ pub trait PhasesModule:
                 esdt_safe_address,
                 fee_market_address,
             )
-            .sync_call();
+            .gas(COMPLETE_SETUP_PHASE_GAS)
+            .transfer_execute();
 
         sovereign_setup_phase_mapper.set(true);
     }
