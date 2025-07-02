@@ -1,4 +1,4 @@
-use chain_config::{validator_rules::ValidatorRulesModule, ENABLED};
+use chain_config::{config_utils::ENABLED, storage::ChainConfigStorageModule};
 use chain_config_blackbox_setup::ChainConfigTestState;
 use common_test_setup::constants::{
     CHAIN_CONFIG_ADDRESS, FIRST_TEST_TOKEN, OWNER_ADDRESS, USER_ADDRESS,

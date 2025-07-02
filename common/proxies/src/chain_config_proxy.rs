@@ -85,51 +85,6 @@ where
     To: TxTo<Env>,
     Gas: TxGas<Env>,
 {
-    pub fn update_sovereign_config_during_setup_phase<
-        Arg0: ProxyArg<structs::configs::SovereignConfig<Env::Api>>,
-    >(
-        self,
-        new_config: Arg0,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("updateSovereignConfigSetupPhase")
-            .argument(&new_config)
-            .original_result()
-    }
-
-    pub fn update_sovereign_config<
-        Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
-        Arg1: ProxyArg<structs::configs::SovereignConfig<Env::Api>>,
-    >(
-        self,
-        hash_of_hashes: Arg0,
-        new_config: Arg1,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("updateSovereignConfig")
-            .argument(&hash_of_hashes)
-            .argument(&new_config)
-            .original_result()
-    }
-
-    pub fn update_registration_status<
-        Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
-        Arg1: ProxyArg<u8>,
-    >(
-        self,
-        hash_of_hashes: Arg0,
-        registration_status: Arg1,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("resumeRegistration")
-            .argument(&hash_of_hashes)
-            .argument(&registration_status)
-            .original_result()
-    }
-
     pub fn complete_setup_phase(
         self,
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
@@ -194,7 +149,7 @@ where
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, structs::ValidatorInfo<Env::Api>> {
         self.wrapped_tx
             .payment(NotPayable)
-            .raw_call("validatorInfo")
+            .raw_call("validator_info")
             .argument(&id)
             .original_result()
     }
@@ -218,6 +173,51 @@ where
             .payment(NotPayable)
             .raw_call("wasPreviouslySlashed")
             .argument(&validator)
+            .original_result()
+    }
+
+    pub fn update_sovereign_config_during_setup_phase<
+        Arg0: ProxyArg<structs::configs::SovereignConfig<Env::Api>>,
+    >(
+        self,
+        new_config: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("updateSovereignConfigSetupPhase")
+            .argument(&new_config)
+            .original_result()
+    }
+
+    pub fn update_sovereign_config<
+        Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
+        Arg1: ProxyArg<structs::configs::SovereignConfig<Env::Api>>,
+    >(
+        self,
+        hash_of_hashes: Arg0,
+        new_config: Arg1,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("updateSovereignConfig")
+            .argument(&hash_of_hashes)
+            .argument(&new_config)
+            .original_result()
+    }
+
+    pub fn update_registration_status<
+        Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
+        Arg1: ProxyArg<u8>,
+    >(
+        self,
+        hash_of_hashes: Arg0,
+        registration_status: Arg1,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("updateRegistrationStatus")
+            .argument(&hash_of_hashes)
+            .argument(&registration_status)
             .original_result()
     }
 }
