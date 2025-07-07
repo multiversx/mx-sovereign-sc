@@ -1,7 +1,7 @@
 use multiversx_sc_scenario::{
     api::StaticApi,
-    imports::{ManagedBuffer, MultiValueEncoded, TestAddress},
-    ReturnsHandledOrError, ScenarioTxRun,
+    imports::{ManagedBuffer, MultiValueEncoded, ReturnsHandledOrError, TestAddress},
+    ScenarioTxRun,
 };
 use proxies::{fee_market_proxy::FeeMarketProxy, header_verifier_proxy::HeaderverifierProxy};
 use structs::fee::FeeStruct;

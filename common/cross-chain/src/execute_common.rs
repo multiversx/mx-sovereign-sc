@@ -21,7 +21,7 @@ pub trait ExecuteCommonModule: crate::storage::CrossChainStorage {
     fn is_sft_or_meta(self, token_type: &EsdtTokenType) -> bool {
         *token_type == EsdtTokenType::SemiFungible
             || *token_type == EsdtTokenType::DynamicSFT
-            || *token_type == EsdtTokenType::Meta
+            || *token_type == EsdtTokenType::MetaFungible
             || *token_type == EsdtTokenType::DynamicMeta
     }
 

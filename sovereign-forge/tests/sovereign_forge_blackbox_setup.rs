@@ -7,9 +7,12 @@ use common_test_setup::{
 };
 use multiversx_sc::{
     imports::OptionalValue,
-    types::{BigUint, ManagedAddress, ReturnsResultUnmanaged, TestSCAddress, TestTokenIdentifier},
+    types::{
+        BigUint, ManagedAddress, ReturnsHandledOrError, ReturnsResultUnmanaged, TestSCAddress,
+        TestTokenIdentifier,
+    },
 };
-use multiversx_sc_scenario::{api::StaticApi, ReturnsHandledOrError, ScenarioTxRun};
+use multiversx_sc_scenario::{api::StaticApi, ScenarioTxRun};
 use proxies::sovereign_forge_proxy::SovereignForgeProxy;
 use sovereign_forge::common::storage::ChainId;
 use structs::{

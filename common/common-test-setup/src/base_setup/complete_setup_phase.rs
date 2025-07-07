@@ -1,4 +1,4 @@
-use multiversx_sc_scenario::{ReturnsHandledOrError, ScenarioTxRun};
+use multiversx_sc_scenario::{imports::ReturnsHandledOrError, ScenarioTxRun};
 use proxies::{
     chain_config_proxy::ChainConfigContractProxy, fee_market_proxy::FeeMarketProxy,
     header_verifier_proxy::HeaderverifierProxy, sovereign_forge_proxy::SovereignForgeProxy,

@@ -1294,12 +1294,15 @@ dependencies = [
 
 [[package]]
 name = "multiversx-chain-core"
-version = "0.15.0"
+version = "0.16.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "be3c3805e7d3052ad369528ac2b9da4fe2071cb235e8f7edbaedbef76b75b2fa"
+checksum = "a1a48fd8abda910b83f4f5f03081d387774c3c6b8b0824e2624faad5467089ad"
 dependencies = [
+ "bech32",
  "bitflags",
+ "hex",
  "multiversx-sc-codec",
+ "serde",
 ]
 
 [[package]]
@@ -1319,9 +1322,9 @@ dependencies = [
 
 [[package]]
 name = "multiversx-chain-vm"
-version = "0.15.0"
+version = "0.16.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "26e158fc37d55e243cd73c61d13d6b0b395242f0756447b9f2f8e48ab45ca932"
+checksum = "0a910fa541f8ad1d752f4934f5fd7bdb432ca443b684fb9eb2558dfa27e1510b"
 dependencies = [
  "anyhow",
  "bitflags",
@@ -1344,9 +1347,9 @@ dependencies = [
 
 [[package]]
 name = "multiversx-chain-vm-executor"
-version = "0.4.0"
+version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dad8bd8027123be9cce338ff02bc280541d0fe01bc5a7e2ae3e0f015f42413ae"
+checksum = "0cfb36050709604abee7d7896ad890358692245ddd406adcbce9d717b06c6cdf"
 dependencies = [
  "serde",
  "toml 0.7.8",
@@ -1354,9 +1357,9 @@ dependencies = [
 
 [[package]]
 name = "multiversx-sc"
-version = "0.58.0"
+version = "0.59.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b80108022e160cdfb256fddd4360f99becb134925822e38ed3ce4f08bc1ff78c"
+checksum = "8360be609fb5fe32dd373d23e6f9fa194fd96ddece5ee8ff62c1932750736040"
 dependencies = [
  "bitflags",
  "generic-array 1.2.0",
@@ -1370,9 +1373,9 @@ dependencies = [
 
 [[package]]
 name = "multiversx-sc-codec"
-version = "0.22.1"
+version = "0.23.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ecd901c77708e59ceb438edb90d7a4a0eff6fc1a87304dcd553bb22d19fd8732"
+checksum = "6ab6f2d0f670d9612994109f55b6a4abe580bd8399e4512f7aa8b40d7560eeca"
 dependencies = [
  "arrayvec",
  "bitflags",
@@ -1383,9 +1386,9 @@ dependencies = [
 
 [[package]]
 name = "multiversx-sc-codec-derive"
-version = "0.22.1"
+version = "0.23.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ed8737b8842497cc91d40a3bd6fcadc288364d30ee4defa8bb3a5a9aaac4f86a"
+checksum = "77f2719e6cc3ad323652de2276c714b656aea8b0f3aafe6fc5be4a525b41fd98"
 dependencies = [
  "hex",
  "proc-macro2",
@@ -1395,9 +1398,9 @@ dependencies = [
 
 [[package]]
 name = "multiversx-sc-derive"
-version = "0.58.0"
+version = "0.59.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9e6a1ca25c8522583cde6ab10538622f99fc5c998bef0d6a6a60064d53aa9df9"
+checksum = "3786f1434d8ca71a4b6d44ba3b276abd19067141206ccd189fbe66599c9fedc6"
 dependencies = [
  "hex",
  "proc-macro2",
@@ -1408,9 +1411,9 @@ dependencies = [
 
 [[package]]
 name = "multiversx-sc-meta-lib"
-version = "0.58.0"
+version = "0.59.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2e6a459f2cda322819d20a936e2927c038711f38e177940686d018350e65d18d"
+checksum = "0052cca9bd391f2351ee791d0169f1b38e294b8795a426db8d7f17a45b787f35"
 dependencies = [
  "clap",
  "colored",
@@ -1423,28 +1426,27 @@ dependencies = [
  "serde",
  "serde_json",
  "toml 0.8.20",
- "wasmparser 0.231.0",
+ "wasmparser 0.235.0",
  "wasmprinter",
  "wat",
 ]
 
 [[package]]
 name = "multiversx-sc-modules"
-version = "0.58.0"
+version = "0.59.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "989abf1c261eb0e069035fbad362ad873bdb5cac7de1137695d07f4f9e5e036b"
+checksum = "203b32ae6bcd81a8580cb1c10462c56fbea72ab48ab8713119cf9cd2b4127e7d"
 dependencies = [
  "multiversx-sc",
 ]
 
 [[package]]
 name = "multiversx-sc-scenario"
-version = "0.58.0"
+version = "0.59.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "39af4c82653d1a88c6b23f8240811639ec5a3ec034004408d7c4fec69d88dc27"
+checksum = "9b5e49376fa6b02126df745c5179b90b304a7763d1fcc62d412bebcf4817edea"
 dependencies = [
  "base64 0.22.1",
- "bech32",
  "colored",
  "hex",
  "itertools",
@@ -1466,9 +1468,9 @@ dependencies = [
 
 [[package]]
 name = "multiversx-sc-snippets"
-version = "0.58.0"
+version = "0.59.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "64a69dad92eab602f949cf5ce6950cd82e6878682f026594a450b54068a4474c"
+checksum = "0c66677445c11effeb8268fe9f721860720b95ba9e1e0766983fd70045f8f15c"
 dependencies = [
  "anyhow",
  "base64 0.22.1",
@@ -1487,14 +1489,13 @@ dependencies = [
 
 [[package]]
 name = "multiversx-sdk"
-version = "0.10.0"
+version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "65b436285ff93371b8376fd740912d00ef86e407fdc05bd1766da92375b10b19"
+checksum = "29125673ef210a66cc876b695a7a543bbd68d89ca227580940ef97b1602594d1"
 dependencies = [
  "aes",
  "anyhow",
  "base64 0.22.1",
- "bech32",
  "bip39",
  "ctr",
  "hex",
@@ -1517,9 +1518,9 @@ dependencies = [
 
 [[package]]
 name = "multiversx-sdk-http"
-version = "0.10.0"
+version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "85781cf706354b0605fd14bbe5d9e38c2f76f76386cffe42d89e7aa5a5e62a51"
+checksum = "747fb9f7b7a2b08484b5349e8018fd93cfce861f9e25bc7b47c4bfc5d963286c"
 dependencies = [
  "anyhow",
  "hex",
@@ -2869,9 +2870,9 @@ dependencies = [
 
 [[package]]
 name = "wasmparser"
-version = "0.231.0"
+version = "0.235.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b1ddaf0d6e069fcd98801b1bf030e3648897d9f09c45ac9ef566d068aca1b76f"
+checksum = "161296c618fa2d63f6ed5fffd1112937e803cb9ec71b32b01a76321555660917"
 dependencies = [
  "bitflags",
  "hashbrown",
@@ -2882,13 +2883,13 @@ dependencies = [
 
 [[package]]
 name = "wasmprinter"
-version = "0.231.0"
+version = "0.235.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4a7edd6cf24de82084a947de7ef493fc0b5a0448affb95a84313823d4f41b1d6"
+checksum = "75aa8e9076de6b9544e6dab4badada518cca0bf4966d35b131bbd057aed8fa0a"
 dependencies = [
  "anyhow",
  "termcolor",
- "wasmparser 0.231.0",
+ "wasmparser 0.235.0",
 ]
 
 [[package]]
