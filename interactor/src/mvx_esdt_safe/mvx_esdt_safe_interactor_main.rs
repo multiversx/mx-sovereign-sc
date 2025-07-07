@@ -11,7 +11,6 @@ use structs::forge::ScArray;
 use common_interactor::interactor_config::Config;
 use common_interactor::interactor_state::State;
 
-use common_test_setup::base_setup::init::RegisterTokenArgs;
 use common_test_setup::constants::{
     INTERACTOR_WORKING_DIR, MVX_ESDT_SAFE_CODE_PATH, ONE_THOUSAND_TOKENS, PREFERRED_CHAIN_IDS,
 };
@@ -307,34 +306,6 @@ impl MvxEsdtSafeInteract {
             .await;
 
         println!("Result: {response:?}");
-    }
-
-    pub async fn register_token(
-        &mut self,
-        args: RegisterTokenArgs<'_>,
-        egld_amount: BigUint<StaticApi>,
-        expected_error_message: Option<&str>,
-    ) {
-        let response = self
-            .interactor
-            .tx()
-            .from(&self.user_address)
-            .to(self.state.current_mvx_esdt_safe_contract_address())
-            .gas(90_000_000u64)
-            .typed(MvxEsdtSafeProxy)
-            .register_token(
-                args.sov_token_id,
-                args.token_type,
-                args.token_display_name,
-                args.token_ticker,
-                args.num_decimals,
-            )
-            .egld(egld_amount)
-            .returns(ReturnsHandledOrError::new())
-            .run()
-            .await;
-
-        self.assert_expected_error_message(response, expected_error_message);
     }
 
     pub async fn register_native_token(

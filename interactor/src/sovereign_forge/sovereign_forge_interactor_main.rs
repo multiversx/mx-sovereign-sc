@@ -1,6 +1,6 @@
 #![allow(non_snake_case)]
 use common_interactor::common_sovereign_interactor::{
-    IssueTokenStruct, MintTokenStruct, TemplateAddresses,
+    EsdtSafeType, IssueTokenStruct, MintTokenStruct, TemplateAddresses,
 };
 use common_interactor::interactor_state::{AddressInfo, State};
 use common_interactor::{
@@ -26,6 +26,7 @@ pub struct SovereignForgeInteract {
     pub sovereign_owner_shard_2: Address,
     pub bridge_service: Address,
     pub user_address: Address,
+    pub second_user_address: Address,
     pub state: State,
 }
 impl CommonInteractorTrait for SovereignForgeInteract {
@@ -70,8 +71,9 @@ impl SovereignForgeInteract {
         let sovereign_owner_shard_0 = interactor.register_wallet(test_wallets::mike()).await;
         let sovereign_owner_shard_1 = interactor.register_wallet(test_wallets::frank()).await;
         let sovereign_owner_shard_2 = interactor.register_wallet(test_wallets::heidi()).await;
-        let bridge_service = interactor.register_wallet(test_wallets::dan()).await;
-        let user_address = interactor.register_wallet(test_wallets::eve()).await;
+        let bridge_service = interactor.register_wallet(test_wallets::dan()).await; //shard 1
+        let user_address = interactor.register_wallet(test_wallets::eve()).await; //shard 1
+        let second_user_address = interactor.register_wallet(test_wallets::mallory()).await; //shard 1
 
         interactor.generate_blocks_until_epoch(1).await.unwrap();
 
@@ -85,6 +87,7 @@ impl SovereignForgeInteract {
             sovereign_owner_shard_2,
             bridge_service,
             user_address,
+            second_user_address,
             state: State::default(),
         }
     }
@@ -137,6 +140,76 @@ impl SovereignForgeInteract {
             .issue_and_mint_token(fee_token_struct, fee_token_mint)
             .await;
         self.state.set_fee_token(fee_token);
+
+        let nft_token_struct = IssueTokenStruct {
+            token_display_name: "NFT".to_string(),
+            token_ticker: "NFT".to_string(),
+            token_type: EsdtTokenType::NonFungible,
+            num_decimals: 0,
+        };
+        let nft_token_mint = MintTokenStruct {
+            name: Some("NFT".to_string()),
+            amount: BigUint::from(1u64),
+            attributes: None,
+        };
+        let nft_token = self
+            .issue_and_mint_token(nft_token_struct, nft_token_mint)
+            .await;
+
+        self.state.set_nft_token_id(nft_token);
+
+        let sft_token_struct = IssueTokenStruct {
+            token_display_name: "SFT".to_string(),
+            token_ticker: "SFT".to_string(),
+            token_type: EsdtTokenType::SemiFungible,
+            num_decimals: 0,
+        };
+        let sft_token_mint = MintTokenStruct {
+            name: Some("SFT".to_string()),
+            amount: BigUint::from(ONE_THOUSAND_TOKENS),
+            attributes: None,
+        };
+        let sft_token = self
+            .issue_and_mint_token(sft_token_struct, sft_token_mint)
+            .await;
+
+        self.state.set_sft_token_id(sft_token);
+
+        let dyn_token_struct = IssueTokenStruct {
+            token_display_name: "DYN".to_string(),
+            token_ticker: "DYN".to_string(),
+            token_type: EsdtTokenType::DynamicNFT,
+            num_decimals: 10,
+        };
+        let dyn_token_mint = MintTokenStruct {
+            name: Some("DYN".to_string()),
+            amount: BigUint::from(1u64),
+            attributes: None,
+        };
+
+        let dyn_token = self
+            .issue_and_mint_token(dyn_token_struct, dyn_token_mint)
+            .await;
+
+        self.state.set_dynamic_nft_token_id(dyn_token);
+
+        let meta_esdt_token_struct = IssueTokenStruct {
+            token_display_name: "META".to_string(),
+            token_ticker: "META".to_string(),
+            token_type: EsdtTokenType::Meta,
+            num_decimals: 0,
+        };
+        let meta_esdt_token_mint = MintTokenStruct {
+            name: Some("META".to_string()),
+            amount: BigUint::from(ONE_THOUSAND_TOKENS),
+            attributes: None,
+        };
+
+        let meta_esdt_token = self
+            .issue_and_mint_token(meta_esdt_token_struct, meta_esdt_token_mint)
+            .await;
+
+        self.state.set_meta_esdt_token_id(meta_esdt_token);
     }
 
     pub async fn deploy_and_complete_setup_phase(
@@ -147,26 +220,30 @@ impl SovereignForgeInteract {
         fee: Option<FeeStruct<StaticApi>>,
     ) {
         let initial_caller = self.bridge_owner_shard_0.clone();
-        let template_contracts = self.deploy_template_contracts(initial_caller.clone()).await;
-
-        let (
-            chain_config_address,
-            mvx_esdt_safe_address,
-            fee_market_address,
-            header_verifier_address,
-        ) = match template_contracts.as_slice() {
-            [a, b, c, d] => (a.clone(), b.clone(), c.clone(), d.clone()),
-            _ => panic!(
-                "Expected 4 deployed contract addresses, got {}",
-                template_contracts.len()
-            ),
-        };
 
         let sovereign_forge_address = self
             .deploy_sovereign_forge(initial_caller.clone(), &BigUint::from(DEPLOY_COST))
             .await;
 
         for shard_id in 0..NUMBER_OF_SHARDS {
+            let caller = self.get_sovereign_owner_for_shard(shard_id);
+            let template_contracts = self
+                .deploy_template_contracts(caller.clone(), EsdtSafeType::MvxEsdtSafe)
+                .await;
+
+            let (
+                chain_config_address,
+                mvx_esdt_safe_address,
+                fee_market_address,
+                header_verifier_address,
+            ) = match template_contracts.as_slice() {
+                [a, b, c, d] => (a.clone(), b.clone(), c.clone(), d.clone()),
+                _ => panic!(
+                    "Expected 4 deployed contract addresses, got {}",
+                    template_contracts.len()
+                ),
+            };
+
             self.finish_init_setup_phase_for_one_shard(
                 shard_id,
                 initial_caller.clone(),
@@ -179,7 +256,9 @@ impl SovereignForgeInteract {
                 },
             )
             .await;
+            println!("Finished setup phase for shard {shard_id}");
         }
+
         for shard in 0..NUMBER_OF_SHARDS {
             self.deploy_on_one_shard(
                 shard,
@@ -244,7 +323,10 @@ impl SovereignForgeInteract {
         self.check_setup_phase_status(&preferred_chain_id, true)
             .await;
 
-        self.update_smart_contracts_addresses_in_state(preferred_chain_id)
+        self.update_smart_contracts_addresses_in_state(preferred_chain_id.clone())
+            .await;
+
+        self.deploy_testing_sc(caller.clone(), preferred_chain_id)
             .await;
     }
 

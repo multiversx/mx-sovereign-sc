@@ -14,6 +14,7 @@ pub trait TokenHandler:
 {
     #[init]
     fn init(&self, chain_factory_master: ManagedAddress) {
+        //TODO: This should be a require check
         self.blockchain().is_smart_contract(&chain_factory_master);
 
         self.add_admin(chain_factory_master);

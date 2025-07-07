@@ -78,6 +78,7 @@ pub const NO_KNOWN_CHAIN_CONFIG_SC: &str = "No known Chain Config SC contract, d
 pub const NO_KNOWN_CHAIN_FACTORY_IN_THE_SPECIFIED_SHARD: &str =
     "No chain factory address found for the specified shard";
 pub const NO_KNOWN_CHAIN_FACTORY_SC: &str = "No known Chain Factory SC, deploy first";
+pub const NO_KNOWN_DYNAMIC_NFT_TOKEN_ID: &str = "No known Dynamic NFT token ID";
 pub const NO_KNOWN_ENSHRINE_ESDT_SAFE_SC: &str =
     "No known Enshrine ESDT Safe SC contract, deploy first";
 pub const NO_KNOWN_FIRST_TOKEN: &str = "No known first token, register first";
@@ -87,6 +88,7 @@ pub const NO_KNOWN_MVX_ESDT_SAFE: &str = "No known MVX ESDT Safe contract, deplo
 pub const NO_KNOWN_HEADER_VERIFIER: &str = "No known Header Verifier contract, deploy first";
 pub const NO_KNOWN_SECOND_TOKEN: &str = "No known second token, register first";
 pub const NO_KNOWN_SOVEREIGN_FORGE_SC: &str = "No known Sovereign Forge SC, deploy first";
+pub const NO_KNOWN_META_ESDT_TOKEN: &str = "No known Meta ESDT token ID";
 pub const NO_KNOWN_TESTING_SC: &str = "No known Testing SC contract, deploy first";
 pub const NO_KNOWN_TOKEN_HANDLER_IN_THE_SPECIFIED_SHARD: &str =
     "No token handler address found for the specified shard";

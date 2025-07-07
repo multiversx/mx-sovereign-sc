@@ -2,9 +2,10 @@
 
 use error_messages::{
     NO_KNOWN_CHAIN_CONFIG_SC, NO_KNOWN_CHAIN_FACTORY_IN_THE_SPECIFIED_SHARD,
-    NO_KNOWN_CHAIN_FACTORY_SC, NO_KNOWN_ENSHRINE_ESDT_SAFE_SC, NO_KNOWN_FEE_MARKET,
-    NO_KNOWN_FEE_TOKEN, NO_KNOWN_FIRST_TOKEN, NO_KNOWN_HEADER_VERIFIER, NO_KNOWN_MVX_ESDT_SAFE,
-    NO_KNOWN_SECOND_TOKEN, NO_KNOWN_SOVEREIGN_FORGE_SC, NO_KNOWN_TESTING_SC,
+    NO_KNOWN_CHAIN_FACTORY_SC, NO_KNOWN_DYNAMIC_NFT_TOKEN_ID, NO_KNOWN_ENSHRINE_ESDT_SAFE_SC,
+    NO_KNOWN_FEE_MARKET, NO_KNOWN_FEE_TOKEN, NO_KNOWN_FIRST_TOKEN, NO_KNOWN_HEADER_VERIFIER,
+    NO_KNOWN_META_ESDT_TOKEN, NO_KNOWN_MVX_ESDT_SAFE, NO_KNOWN_SECOND_TOKEN,
+    NO_KNOWN_SOVEREIGN_FORGE_SC, NO_KNOWN_TESTING_SC,
     NO_KNOWN_TOKEN_HANDLER_IN_THE_SPECIFIED_SHARD, NO_KNOWN_TOKEN_HANDLER_SC,
 };
 use multiversx_sc_snippets::imports::*;
@@ -16,7 +17,7 @@ use std::{
 
 const STATE_FILE: &str = "state.toml";
 
-#[derive(Debug, Default, Serialize, Deserialize)]
+#[derive(Debug, Default, Serialize, Deserialize, Clone)]
 pub struct TokenProperties {
     pub token_id: String,
     pub nonce: u64,
@@ -72,6 +73,10 @@ pub struct State {
     pub first_token: Option<TokenProperties>,
     pub fee_token: Option<TokenProperties>,
     pub second_token: Option<TokenProperties>,
+    pub nft_token_id: Option<TokenProperties>,
+    pub meta_esdt_token_id: Option<TokenProperties>,
+    pub dynamic_nft_token_id: Option<TokenProperties>,
+    pub sft_token_id: Option<TokenProperties>,
 }
 
 impl State {
@@ -142,6 +147,22 @@ impl State {
 
     pub fn set_second_token(&mut self, token: TokenProperties) {
         self.second_token = Some(token);
+    }
+
+    pub fn set_nft_token_id(&mut self, token: TokenProperties) {
+        self.nft_token_id = Some(token);
+    }
+
+    pub fn set_meta_esdt_token_id(&mut self, token: TokenProperties) {
+        self.meta_esdt_token_id = Some(token);
+    }
+
+    pub fn set_dynamic_nft_token_id(&mut self, token: TokenProperties) {
+        self.dynamic_nft_token_id = Some(token);
+    }
+
+    pub fn set_sft_token_id(&mut self, token: TokenProperties) {
+        self.sft_token_id = Some(token);
     }
 
     /// Returns the contract addresses
@@ -231,6 +252,38 @@ impl State {
             .clone()
     }
 
+    pub fn get_nft_token_id_string(&self) -> String {
+        self.nft_token_id
+            .as_ref()
+            .expect(NO_KNOWN_FIRST_TOKEN)
+            .token_id
+            .clone()
+    }
+
+    pub fn get_meta_esdt_token_id_string(&self) -> String {
+        self.meta_esdt_token_id
+            .as_ref()
+            .expect(NO_KNOWN_META_ESDT_TOKEN)
+            .token_id
+            .clone()
+    }
+
+    pub fn get_dynamic_nft_token_id_string(&self) -> String {
+        self.dynamic_nft_token_id
+            .as_ref()
+            .expect(NO_KNOWN_DYNAMIC_NFT_TOKEN_ID)
+            .token_id
+            .clone()
+    }
+
+    pub fn get_sft_token_id_string(&self) -> String {
+        self.sft_token_id
+            .as_ref()
+            .expect(NO_KNOWN_FIRST_TOKEN)
+            .token_id
+            .clone()
+    }
+
     pub fn get_first_token_id(&self) -> TokenIdentifier<StaticApi> {
         self.first_token
             .as_ref()
@@ -258,6 +311,34 @@ impl State {
             .into()
     }
 
+    pub fn get_nft_token_id(&self) -> TokenProperties {
+        self.nft_token_id
+            .as_ref()
+            .expect(NO_KNOWN_FIRST_TOKEN)
+            .clone()
+    }
+
+    pub fn get_meta_esdt_token_id(&self) -> TokenProperties {
+        self.meta_esdt_token_id
+            .as_ref()
+            .expect(NO_KNOWN_META_ESDT_TOKEN)
+            .clone()
+    }
+
+    pub fn get_dynamic_nft_token_id(&self) -> TokenProperties {
+        self.dynamic_nft_token_id
+            .as_ref()
+            .expect(NO_KNOWN_DYNAMIC_NFT_TOKEN_ID)
+            .clone()
+    }
+
+    pub fn get_sft_token_id(&self) -> TokenProperties {
+        self.sft_token_id
+            .as_ref()
+            .expect(NO_KNOWN_FIRST_TOKEN)
+            .clone()
+    }
+
     pub fn get_chain_factory_sc_address(&self, chain_id: String) -> &Bech32Address {
         self.chain_factory_sc_addresses
             .as_ref()
@@ -272,6 +353,46 @@ impl State {
             .expect(NO_KNOWN_TOKEN_HANDLER_SC)
             .get_by_contract_id(&chain_id)
             .expect(NO_KNOWN_TOKEN_HANDLER_IN_THE_SPECIFIED_SHARD)
+    }
+
+    pub fn get_mvx_esdt_safe_address(&self, shard: u32) -> &Bech32Address {
+        self.mvx_esdt_safe_addresses
+            .as_ref()
+            .expect(NO_KNOWN_MVX_ESDT_SAFE)
+            .addresses
+            .get(shard as usize)
+            .map(|info| &info.address)
+            .unwrap_or_else(|| panic!("No MVX ESDT Safe address for shard {}", shard))
+    }
+
+    pub fn get_fee_market_address(&self, shard: u32) -> &Bech32Address {
+        self.fee_market_addresses
+            .as_ref()
+            .expect(NO_KNOWN_FEE_MARKET)
+            .addresses
+            .get(shard as usize)
+            .map(|info| &info.address)
+            .unwrap_or_else(|| panic!("No Fee Market address for shard {}", shard))
+    }
+
+    pub fn get_testing_sc_address(&self, shard: u32) -> &Bech32Address {
+        self.testing_sc_addresses
+            .as_ref()
+            .expect(NO_KNOWN_TESTING_SC)
+            .addresses
+            .get(shard as usize)
+            .map(|info| &info.address)
+            .unwrap_or_else(|| panic!("No Testing SC address for shard {}", shard))
+    }
+
+    pub fn get_header_verifier_address(&self, shard: u32) -> &Bech32Address {
+        self.header_verfier_addresses
+            .as_ref()
+            .expect(NO_KNOWN_HEADER_VERIFIER)
+            .addresses
+            .get(shard as usize)
+            .map(|info| &info.address)
+            .unwrap_or_else(|| panic!("No Header Verifier address for shard {}", shard))
     }
 }
 

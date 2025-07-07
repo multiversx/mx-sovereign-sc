@@ -60,6 +60,9 @@ pub const ESDT_SAFE_CONFIG_STORAGE_KEY: &str = "crossChainConfig";
 pub const TOKEN_FEE_STORAGE_KEY: &str = "tokenFee";
 pub const NUMBER_OF_SHARDS: u32 = 3;
 pub const PREFERRED_CHAIN_IDS: [&str; 3] = ["shd0", "shd1", "shd2"];
+pub const SHARD_0: u32 = 0;
+pub const SHARD_1: u32 = 1;
+pub const SHARD_2: u32 = 2;
 
 pub const ISSUE_COST: u64 = 50_000_000_000_000_000; // 0.05 EGLD
 pub const ONE_HUNDRED_MILLION: u32 = 100_000_000;

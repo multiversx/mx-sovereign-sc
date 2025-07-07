@@ -2,7 +2,7 @@
 #![allow(unused)]
 
 use common_interactor::common_sovereign_interactor::{
-    CommonInteractorTrait, IssueTokenStruct, MintTokenStruct, TemplateAddresses,
+    CommonInteractorTrait, EsdtSafeType, IssueTokenStruct, MintTokenStruct, TemplateAddresses,
 };
 use common_interactor::interactor_config::Config;
 use common_interactor::interactor_state::State;
@@ -152,7 +152,37 @@ impl EnshrineEsdtSafeInteract {
         .await;
         self.deploy_sovereign_forge(owner.clone(), &BigUint::from(DEPLOY_COST))
             .await;
-        self.deploy_token_handler(owner.clone(), PREFERRED_CHAIN_IDS[0].to_string())
+
+        let template_contracts = self
+            .deploy_template_contracts(owner.clone(), EsdtSafeType::EnshrineEsdtSafe)
+            .await;
+        let (
+            chain_config_address,
+            enshrine_esdt_safe_address,
+            fee_market_address,
+            header_verifier_address,
+        ) = match template_contracts.as_slice() {
+            [a, b, c, d] => (a.clone(), b.clone(), c.clone(), d.clone()),
+            _ => panic!(
+                "Expected 4 deployed contract addresses, got {}",
+                template_contracts.len()
+            ),
+        };
+
+        self.deploy_chain_factory(
+            owner.clone(),
+            PREFERRED_CHAIN_IDS[0].to_string(),
+            self.state.current_sovereign_forge_sc_address().to_address(),
+            TemplateAddresses {
+                chain_config_address,
+                esdt_safe_address: enshrine_esdt_safe_address,
+                fee_market_address,
+                header_verifier_address,
+            },
+        )
+        .await;
+
+        self.deploy_token_handler_enshrine(owner.clone(), PREFERRED_CHAIN_IDS[0].to_string())
             .await;
         self.deploy_enshrine_esdt(
             owner.clone(),
@@ -187,18 +217,7 @@ impl EnshrineEsdtSafeInteract {
             contracts_array,
         )
         .await;
-        self.deploy_chain_factory(
-            owner.clone(),
-            PREFERRED_CHAIN_IDS[0].to_string(),
-            self.state.current_sovereign_forge_sc_address().to_address(),
-            TemplateAddresses {
-                chain_config_address: self.state.current_chain_config_sc_address().clone(),
-                esdt_safe_address: self.state.current_enshrine_esdt_safe_address().clone(),
-                fee_market_address: self.state.current_fee_market_address().clone(),
-                header_verifier_address: self.state.current_header_verifier_address().clone(),
-            },
-        )
-        .await;
+
         self.complete_header_verifier_setup_phase(owner.clone())
             .await;
         self.unpause_endpoint().await;

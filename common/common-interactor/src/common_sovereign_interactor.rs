@@ -5,8 +5,8 @@ use base64::{engine::general_purpose::STANDARD as BASE64, Engine};
 use common_test_setup::constants::{
     CHAIN_CONFIG_CODE_PATH, CHAIN_FACTORY_CODE_PATH, ENSHRINE_ESDT_SAFE_CODE_PATH,
     FEE_MARKET_CODE_PATH, HEADER_VERIFIER_CODE_PATH, ISSUE_COST, MVX_ESDT_SAFE_CODE_PATH,
-    ONE_HUNDRED_TOKENS, ONE_THOUSAND_TOKENS, SOVEREIGN_FORGE_CODE_PATH, TESTING_SC_CODE_PATH,
-    TOKEN_HANDLER_CODE_PATH,
+    ONE_HUNDRED_TOKENS, ONE_THOUSAND_TOKENS, SOVEREIGN_FORGE_CODE_PATH, SOVEREIGN_TOKEN_PREFIX,
+    TESTING_SC_CODE_PATH, TOKEN_HANDLER_CODE_PATH, WEGLD_IDENTIFIER,
 };
 use error_messages::{EMPTY_EXPECTED_LOG, FAILED_TO_PARSE_AS_NUMBER};
 use multiversx_sc::{
@@ -21,8 +21,8 @@ use multiversx_sc::{
 use multiversx_sc_snippets::{
     hex,
     imports::{
-        bech32, Bech32Address, ReturnsHandledOrError, ReturnsLogs, ReturnsNewTokenIdentifier,
-        StaticApi,
+        bech32, Bech32Address, ReturnsGasUsed, ReturnsHandledOrError, ReturnsLogs,
+        ReturnsNewTokenIdentifier, StaticApi,
     },
     multiversx_sc_scenario::{
         multiversx_chain_vm::crypto_functions::sha256,
@@ -45,6 +45,8 @@ use structs::{
     operation::Operation,
 };
 
+use common_test_setup::base_setup::init::RegisterTokenArgs;
+
 pub struct IssueTokenStruct {
     pub token_display_name: String,
     pub token_ticker: String,
@@ -56,6 +58,11 @@ pub struct MintTokenStruct {
     pub name: Option<String>,
     pub amount: BigUint<StaticApi>,
     pub attributes: Option<Vec<u8>>,
+}
+
+pub enum EsdtSafeType {
+    MvxEsdtSafe,
+    EnshrineEsdtSafe,
 }
 
 #[derive(Clone)]
@@ -242,7 +249,11 @@ pub trait CommonInteractorTrait {
         });
     }
 
-    async fn deploy_template_contracts(&mut self, caller: Address) -> Vec<Bech32Address> {
+    async fn deploy_template_contracts(
+        &mut self,
+        caller: Address,
+        esdt_safe_type: EsdtSafeType,
+    ) -> Vec<Bech32Address> {
         let mut template_contracts = vec![];
 
         let chain_config_template = self
@@ -259,19 +270,46 @@ pub trait CommonInteractorTrait {
             .await;
         template_contracts.push(Bech32Address::from(chain_config_template));
 
-        let mvx_esdt_safe_template = self
-            .interactor()
-            .tx()
-            .from(caller.clone())
-            .gas(100_000_000u64)
-            .typed(MvxEsdtSafeProxy)
-            .init(OptionalValue::<EsdtSafeConfig<StaticApi>>::None)
-            .returns(ReturnsNewAddress)
-            .code(MVX_ESDT_SAFE_CODE_PATH)
-            .code_metadata(CodeMetadata::all())
-            .run()
-            .await;
-        template_contracts.push(Bech32Address::from(mvx_esdt_safe_template.clone()));
+        let esdt_safe_template = match esdt_safe_type {
+            EsdtSafeType::MvxEsdtSafe => {
+                let mvx_esdt_safe_template = self
+                    .interactor()
+                    .tx()
+                    .from(caller.clone())
+                    .gas(100_000_000u64)
+                    .typed(MvxEsdtSafeProxy)
+                    .init(OptionalValue::<EsdtSafeConfig<StaticApi>>::None)
+                    .returns(ReturnsNewAddress)
+                    .code(MVX_ESDT_SAFE_CODE_PATH)
+                    .code_metadata(CodeMetadata::all())
+                    .run()
+                    .await;
+                template_contracts.push(Bech32Address::from(mvx_esdt_safe_template.clone()));
+                mvx_esdt_safe_template
+            }
+            EsdtSafeType::EnshrineEsdtSafe => {
+                let enshrine_esdt_safe_template = self
+                    .interactor()
+                    .tx()
+                    .from(caller.clone())
+                    .gas(100_000_000u64)
+                    .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
+                    .init(
+                        false,
+                        ESDTSystemSCAddress,
+                        Some(TokenIdentifier::from(WEGLD_IDENTIFIER)),
+                        Some(ManagedBuffer::from(SOVEREIGN_TOKEN_PREFIX)),
+                        None::<EsdtSafeConfig<StaticApi>>,
+                    )
+                    .returns(ReturnsNewAddress)
+                    .code(ENSHRINE_ESDT_SAFE_CODE_PATH)
+                    .code_metadata(CodeMetadata::all())
+                    .run()
+                    .await;
+                template_contracts.push(Bech32Address::from(enshrine_esdt_safe_template.clone()));
+                enshrine_esdt_safe_template
+            }
+        };
 
         let fee_market_address = self
             .interactor()
@@ -280,7 +318,7 @@ pub trait CommonInteractorTrait {
             .gas(80_000_000u64)
             .typed(FeeMarketProxy)
             .init(
-                Bech32Address::from(mvx_esdt_safe_template),
+                Bech32Address::from(esdt_safe_template),
                 None::<FeeStruct<StaticApi>>,
             )
             .returns(ReturnsNewAddress)
@@ -434,6 +472,28 @@ pub trait CommonInteractorTrait {
         });
     }
 
+    //TODO: Remove this after enshrine changes
+    async fn deploy_token_handler_enshrine(&mut self, caller: Address, chain_id: String) {
+        let new_address = self
+            .interactor()
+            .tx()
+            .from(caller.clone())
+            .gas(100_000_000u64)
+            .typed(token_handler_proxy::TokenHandlerProxy)
+            .init(caller)
+            .code(TOKEN_HANDLER_CODE_PATH)
+            .code_metadata(CodeMetadata::all())
+            .returns(ReturnsNewAddress)
+            .run()
+            .await;
+
+        let new_address_bech32 = Bech32Address::from_bech32_string(bech32::encode(&new_address));
+        self.state().set_token_handler_address(AddressInfo {
+            address: new_address_bech32,
+            chain_id,
+        });
+    }
+
     async fn deploy_enshrine_esdt(
         &mut self,
         caller: Address,
@@ -527,7 +587,7 @@ pub trait CommonInteractorTrait {
             .tx()
             .from(caller)
             .to(sovereign_forge_address)
-            .gas(60_000_000u64)
+            .gas(30_000_000u64)
             .typed(SovereignForgeProxy)
             .deploy_phase_one(opt_preferred_chain_id, opt_config)
             .egld(egld_amount)
@@ -549,7 +609,7 @@ pub trait CommonInteractorTrait {
             .tx()
             .from(caller)
             .to(sovereign_forge_address)
-            .gas(60_000_000u64)
+            .gas(30_000_000u64)
             .typed(SovereignForgeProxy)
             .deploy_phase_two(opt_config)
             .returns(ReturnsResultUnmanaged)
@@ -567,7 +627,7 @@ pub trait CommonInteractorTrait {
             .tx()
             .from(caller)
             .to(sovereign_forge_address)
-            .gas(60_000_000u64)
+            .gas(30_000_000u64)
             .typed(SovereignForgeProxy)
             .deploy_phase_three(fee)
             .returns(ReturnsResultUnmanaged)
@@ -585,7 +645,7 @@ pub trait CommonInteractorTrait {
             .tx()
             .from(caller)
             .to(sovereign_forge_address)
-            .gas(60_000_000u64)
+            .gas(30_000_000u64)
             .typed(SovereignForgeProxy)
             .deploy_phase_four()
             .returns(ReturnsResultUnmanaged)
@@ -605,7 +665,7 @@ pub trait CommonInteractorTrait {
             .gas(90_000_000u64)
             .typed(SovereignForgeProxy)
             .complete_setup_phase()
-            .returns(ReturnsResultUnmanaged)
+            .returns(ReturnsGasUsed)
             .run()
             .await;
     }
@@ -715,12 +775,13 @@ pub trait CommonInteractorTrait {
 
     async fn register_operation(
         &mut self,
+        shard: u32,
         signature: ManagedBuffer<StaticApi>,
         hash_of_hashes: &ManagedBuffer<StaticApi>,
         operations_hashes: MultiValueEncoded<StaticApi, ManagedBuffer<StaticApi>>,
     ) {
         let bridge_service = self.bridge_service().clone();
-        let header_verifier_address = self.state().current_header_verifier_address().clone();
+        let header_verifier_address = self.state().get_header_verifier_address(shard).clone();
 
         self.interactor()
             .tx()
@@ -758,16 +819,14 @@ pub trait CommonInteractorTrait {
     async fn deposit_in_mvx_esdt_safe(
         &mut self,
         to: Address,
+        shard: u32,
         opt_transfer_data: OptionalValueTransferDataTuple<StaticApi>,
         payments: PaymentsVec<StaticApi>,
         expected_error_message: Option<&str>,
         expected_log: Option<&str>,
     ) {
         let user_address = self.user_address().clone();
-        let current_mvx_esdt_safe_address = self
-            .state()
-            .current_mvx_esdt_safe_contract_address()
-            .clone();
+        let current_mvx_esdt_safe_address = self.state().get_mvx_esdt_safe_address(shard).clone();
         let (response, logs) = self
             .interactor()
             .tx()
@@ -789,16 +848,14 @@ pub trait CommonInteractorTrait {
 
     async fn execute_operations_in_mvx_esdt_safe(
         &mut self,
+        shard: u32,
         hash_of_hashes: ManagedBuffer<StaticApi>,
         operation: Operation<StaticApi>,
         expected_error_message: Option<&str>,
         expected_log: Option<&str>,
     ) {
         let bridge_service = self.bridge_service().clone();
-        let current_mvx_esdt_safe_address = self
-            .state()
-            .current_mvx_esdt_safe_contract_address()
-            .clone();
+        let current_mvx_esdt_safe_address = self.state().get_mvx_esdt_safe_address(shard).clone();
         let (response, logs) = self
             .interactor()
             .tx()
@@ -815,6 +872,37 @@ pub trait CommonInteractorTrait {
         self.assert_expected_error_message(response, expected_error_message);
 
         self.assert_expected_log(logs, expected_log);
+    }
+
+    async fn register_token(
+        &mut self,
+        shard: u32,
+        args: RegisterTokenArgs<'_>,
+        egld_amount: BigUint<StaticApi>,
+        expected_error_message: Option<&str>,
+    ) {
+        let user_address = self.user_address().clone();
+        let mvx_esdt_safe_address = self.state().get_mvx_esdt_safe_address(shard).clone();
+        let response = self
+            .interactor()
+            .tx()
+            .from(user_address)
+            .to(mvx_esdt_safe_address)
+            .gas(90_000_000u64)
+            .typed(MvxEsdtSafeProxy)
+            .register_token(
+                args.sov_token_id,
+                args.token_type,
+                args.token_display_name,
+                args.token_ticker,
+                args.num_decimals,
+            )
+            .egld(egld_amount)
+            .returns(ReturnsHandledOrError::new())
+            .run()
+            .await;
+
+        self.assert_expected_error_message(response, expected_error_message);
     }
 
     async fn whitelist_enshrine_esdt(
@@ -840,6 +928,7 @@ pub trait CommonInteractorTrait {
     }
 
     //NOTE: transferValue returns an empty log and calling this function on it will panic
+    //TODO: cross shard transactions do not return the same type of logs like the ones on the same shard
     fn assert_expected_log(&mut self, logs: Vec<Log>, expected_log: Option<&str>) {
         match expected_log {
             None => {
@@ -952,13 +1041,10 @@ pub trait CommonInteractorTrait {
             .await;
     }
 
-    async fn check_mvx_esdt_safe_balance_is_empty(&mut self) {
+    async fn check_mvx_esdt_safe_balance_is_empty(&mut self, shard: u32) {
         let first_token_id = self.state().get_first_token_id_string();
         let second_token_id = self.state().get_second_token_id_string();
-        let mvx_esdt_safe_address = self
-            .state()
-            .current_mvx_esdt_safe_contract_address()
-            .clone();
+        let mvx_esdt_safe_address = self.state().get_mvx_esdt_safe_address(shard).clone();
 
         let expected_tokens_mvx_esdt_safe = vec![
             self.zero_tokens(first_token_id),
@@ -969,8 +1055,8 @@ pub trait CommonInteractorTrait {
             .await;
     }
 
-    async fn check_fee_market_balance_is_empty(&mut self) {
-        let fee_market_address = self.state().current_fee_market_address().clone();
+    async fn check_fee_market_balance_is_empty(&mut self, shard: u32) {
+        let fee_market_address = self.state().get_fee_market_address(shard).clone();
         let fee_token_id = self.state().get_fee_token_id_string();
 
         let expected_tokens_fee_market = vec![self.zero_tokens(fee_token_id)];
@@ -979,8 +1065,8 @@ pub trait CommonInteractorTrait {
             .await;
     }
 
-    async fn check_testing_sc_balance_is_empty(&mut self) {
-        let testing_sc_address = self.state().current_testing_sc_address().clone();
+    async fn check_testing_sc_balance_is_empty(&mut self, shard: u32) {
+        let testing_sc_address = self.state().get_testing_sc_address(shard).clone();
         let first_token_id = self.state().get_first_token_id_string();
 
         let expected_tokens_testing_sc = vec![self.zero_tokens(first_token_id)];
@@ -1026,24 +1112,37 @@ pub trait CommonInteractorTrait {
                 }
                 continue;
             }
-            match balances.get(&token_id) {
-                Some(esdt_balance) => {
+            let complete_tokens = balances.iter().find(|(key, _)| key.starts_with(&token_id));
+
+            match complete_tokens {
+                Some((token_id, esdt_balance)) => {
+                    if expected_amount == 0u64 {
+                        panic!(
+                        "Expected token starting with '{}' to be absent, but found: {} with balance: {}",
+                        token_id, token_id, esdt_balance.balance);
+                    }
+
                     let actual_amount = BigUint::from(
                         num_bigint::BigUint::parse_bytes(esdt_balance.balance.as_bytes(), 10)
                             .expect(FAILED_TO_PARSE_AS_NUMBER),
                     );
-                    let expected_amount_string = num_bigint::BigUint::from_bytes_be(
-                        expected_amount.to_bytes_be().as_slice(),
-                    )
-                    .to_string();
 
                     assert_eq!(
-                        actual_amount, expected_amount,
+                        actual_amount,
+                        expected_amount,
                         "\nBalance mismatch for token {}:\nexpected: {}\nfound:    {}",
-                        token_id, expected_amount_string, esdt_balance.balance
+                        token_id,
+                        expected_amount.to_display(),
+                        esdt_balance.balance
                     );
                 }
-                None => panic!("Token {} not found in account balance.", token_id),
+                None => {
+                    panic!(
+                        "Expected token starting with '{}' with balance {}, but none was found",
+                        token_id,
+                        expected_amount.to_display()
+                    );
+                }
             }
         }
     }
@@ -1072,6 +1171,10 @@ pub trait CommonInteractorTrait {
 
     fn zero_tokens(&mut self, token_id: String) -> (String, BigUint<StaticApi>) {
         (token_id, BigUint::from(0u64))
+    }
+
+    fn one_token(&mut self, token_id: String) -> (String, BigUint<StaticApi>) {
+        (token_id, BigUint::from(1u64))
     }
 
     fn custom_amount_tokens<T: Into<BigUint<StaticApi>>>(

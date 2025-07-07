@@ -4,7 +4,7 @@ use common_test_setup::base_setup::init::RegisterTokenArgs;
 use common_test_setup::constants::{
     CROWD_TOKEN_ID, FIRST_TEST_TOKEN, ISSUE_COST, MVX_TO_SOV_TOKEN_STORAGE_KEY,
     NATIVE_TOKEN_STORAGE_KEY, ONE_HUNDRED_TOKENS, ONE_THOUSAND_TOKENS,
-    OPERATION_HASH_STATUS_STORAGE_KEY, PREFERRED_CHAIN_IDS, SOV_TOKEN,
+    OPERATION_HASH_STATUS_STORAGE_KEY, PREFERRED_CHAIN_IDS, SHARD_0, SOV_TOKEN,
     SOV_TO_MVX_TOKEN_STORAGE_KEY, TEN_TOKENS, TOKEN_TICKER, WRONG_ENDPOINT_NAME,
 };
 use cross_chain::MAX_GAS_PER_TRANSACTION;
@@ -100,6 +100,7 @@ async fn test_update_invalid_config() {
 
     chain_interactor
         .register_operation(
+            SHARD_0,
             ManagedBuffer::new(),
             &hash_of_hashes,
             MultiValueEncoded::from_iter(vec![config_hash]),
@@ -143,6 +144,7 @@ async fn test_register_token_invalid_type_token_no_prefix() {
 
     chain_interactor
         .register_token(
+            SHARD_0,
             RegisterTokenArgs {
                 sov_token_id,
                 token_type,
@@ -201,6 +203,7 @@ async fn test_register_token_invalid_type_token_with_prefix() {
 
     chain_interactor
         .register_token(
+            SHARD_0,
             RegisterTokenArgs {
                 sov_token_id,
                 token_type,
@@ -264,6 +267,7 @@ async fn test_deposit_max_bridged_amount_exceeded() {
     chain_interactor
         .deposit_in_mvx_esdt_safe(
             chain_interactor.user_address.clone(),
+            SHARD_0,
             OptionalValue::None,
             payments_vec,
             Some(DEPOSIT_OVER_MAX_AMOUNT),
@@ -298,6 +302,7 @@ async fn test_deposit_nothing_to_transfer() {
     chain_interactor
         .deposit_in_mvx_esdt_safe(
             chain_interactor.user_address.clone(),
+            SHARD_0,
             OptionalValue::None,
             ManagedVec::new(),
             Some(NOTHING_TO_TRANSFER),
@@ -307,9 +312,11 @@ async fn test_deposit_nothing_to_transfer() {
 
     chain_interactor.check_wallet_balance_unchanged().await;
     chain_interactor
-        .check_mvx_esdt_safe_balance_is_empty()
+        .check_mvx_esdt_safe_balance_is_empty(SHARD_0)
         .await;
-    chain_interactor.check_fee_market_balance_is_empty().await;
+    chain_interactor
+        .check_fee_market_balance_is_empty(SHARD_0)
+        .await;
 }
 
 /// ### TEST
@@ -346,6 +353,7 @@ async fn test_deposit_too_many_tokens_no_fee() {
     chain_interactor
         .deposit_in_mvx_esdt_safe(
             chain_interactor.user_address.clone(),
+            SHARD_0,
             OptionalValue::None,
             payments_vec,
             Some(TOO_MANY_TOKENS),
@@ -355,9 +363,11 @@ async fn test_deposit_too_many_tokens_no_fee() {
 
     chain_interactor.check_wallet_balance_unchanged().await;
     chain_interactor
-        .check_mvx_esdt_safe_balance_is_empty()
+        .check_mvx_esdt_safe_balance_is_empty(SHARD_0)
         .await;
-    chain_interactor.check_fee_market_balance_is_empty().await;
+    chain_interactor
+        .check_fee_market_balance_is_empty(SHARD_0)
+        .await;
 }
 
 /// ### TEST
@@ -401,6 +411,7 @@ async fn test_deposit_no_transfer_data() {
     chain_interactor
         .deposit_in_mvx_esdt_safe(
             chain_interactor.user_address.clone(),
+            SHARD_0,
             OptionalValue::None,
             payments_vec,
             None,
@@ -444,7 +455,9 @@ async fn test_deposit_no_transfer_data() {
         .check_address_balance(&Bech32Address::from(user_address), expected_tokens_wallet)
         .await;
 
-    chain_interactor.check_fee_market_balance_is_empty().await;
+    chain_interactor
+        .check_fee_market_balance_is_empty(SHARD_0)
+        .await;
 }
 
 /// ### TEST
@@ -509,6 +522,7 @@ async fn test_deposit_gas_limit_too_high_no_fee() {
     chain_interactor
         .deposit_in_mvx_esdt_safe(
             chain_interactor.user_address.clone(),
+            SHARD_0,
             OptionalValue::Some(transfer_data),
             payments_vec,
             Some(GAS_LIMIT_TOO_HIGH),
@@ -518,9 +532,11 @@ async fn test_deposit_gas_limit_too_high_no_fee() {
 
     chain_interactor.check_wallet_balance_unchanged().await;
     chain_interactor
-        .check_mvx_esdt_safe_balance_is_empty()
+        .check_mvx_esdt_safe_balance_is_empty(SHARD_0)
         .await;
-    chain_interactor.check_fee_market_balance_is_empty().await;
+    chain_interactor
+        .check_fee_market_balance_is_empty(SHARD_0)
+        .await;
 }
 
 /// ### TEST
@@ -585,6 +601,7 @@ async fn test_deposit_endpoint_banned_no_fee() {
     chain_interactor
         .deposit_in_mvx_esdt_safe(
             chain_interactor.user_address.clone(),
+            SHARD_0,
             OptionalValue::Some(transfer_data),
             payments_vec,
             Some(BANNED_ENDPOINT_NAME),
@@ -594,9 +611,11 @@ async fn test_deposit_endpoint_banned_no_fee() {
 
     chain_interactor.check_wallet_balance_unchanged().await;
     chain_interactor
-        .check_mvx_esdt_safe_balance_is_empty()
+        .check_mvx_esdt_safe_balance_is_empty(SHARD_0)
         .await;
-    chain_interactor.check_fee_market_balance_is_empty().await;
+    chain_interactor
+        .check_fee_market_balance_is_empty(SHARD_0)
+        .await;
 }
 
 /// ### TEST
@@ -682,6 +701,7 @@ async fn test_deposit_fee_enabled() {
     chain_interactor
         .deposit_in_mvx_esdt_safe(
             chain_interactor.user_address.clone(),
+            SHARD_0,
             OptionalValue::Some(transfer_data),
             payments_vec.clone(),
             None,
@@ -797,6 +817,7 @@ async fn test_deposit_transfer_data_only_with_fee_nothing_to_transfer() {
     chain_interactor
         .deposit_in_mvx_esdt_safe(
             chain_interactor.user_address.clone(),
+            SHARD_0,
             OptionalValue::Some(transfer_data),
             ManagedVec::new(),
             Some(ERR_EMPTY_PAYMENTS),
@@ -806,9 +827,11 @@ async fn test_deposit_transfer_data_only_with_fee_nothing_to_transfer() {
 
     chain_interactor.check_wallet_balance_unchanged().await;
     chain_interactor
-        .check_mvx_esdt_safe_balance_is_empty()
+        .check_mvx_esdt_safe_balance_is_empty(SHARD_0)
         .await;
-    chain_interactor.check_fee_market_balance_is_empty().await;
+    chain_interactor
+        .check_fee_market_balance_is_empty(SHARD_0)
+        .await;
 }
 
 /// ### TEST
@@ -859,6 +882,7 @@ async fn test_deposit_only_transfer_data_no_fee() {
     chain_interactor
         .deposit_in_mvx_esdt_safe(
             chain_interactor.user_address.clone(),
+            SHARD_0,
             OptionalValue::Some(transfer_data),
             ManagedVec::new(),
             None,
@@ -868,9 +892,11 @@ async fn test_deposit_only_transfer_data_no_fee() {
 
     chain_interactor.check_wallet_balance_unchanged().await;
     chain_interactor
-        .check_mvx_esdt_safe_balance_is_empty()
+        .check_mvx_esdt_safe_balance_is_empty(SHARD_0)
         .await;
-    chain_interactor.check_fee_market_balance_is_empty().await;
+    chain_interactor
+        .check_fee_market_balance_is_empty(SHARD_0)
+        .await;
 }
 
 /// ### TEST
@@ -950,6 +976,7 @@ async fn test_deposit_payment_does_not_cover_fee() {
     chain_interactor
         .deposit_in_mvx_esdt_safe(
             chain_interactor.user_address.clone(),
+            SHARD_0,
             OptionalValue::Some(transfer_data),
             payments_vec,
             Some(PAYMENT_DOES_NOT_COVER_FEE),
@@ -959,9 +986,11 @@ async fn test_deposit_payment_does_not_cover_fee() {
 
     chain_interactor.check_wallet_balance_unchanged().await;
     chain_interactor
-        .check_mvx_esdt_safe_balance_is_empty()
+        .check_mvx_esdt_safe_balance_is_empty(SHARD_0)
         .await;
-    chain_interactor.check_fee_market_balance_is_empty().await;
+    chain_interactor
+        .check_fee_market_balance_is_empty(SHARD_0)
+        .await;
 }
 
 #[tokio::test]
@@ -1038,6 +1067,7 @@ async fn test_deposit_refund() {
     chain_interactor
         .deposit_in_mvx_esdt_safe(
             chain_interactor.user_address.clone(),
+            SHARD_0,
             OptionalValue::Some(transfer_data),
             payments_vec.clone(),
             None,
@@ -1058,7 +1088,7 @@ async fn test_deposit_refund() {
         .await;
 
     chain_interactor
-        .check_mvx_esdt_safe_balance_is_empty()
+        .check_mvx_esdt_safe_balance_is_empty(SHARD_0)
         .await;
 
     let expected_tokens_fee_market = vec![chain_interactor
@@ -1222,6 +1252,7 @@ async fn test_register_token_fungible_token() {
 
     chain_interactor
         .register_token(
+            SHARD_0,
             RegisterTokenArgs {
                 sov_token_id,
                 token_type,
@@ -1300,6 +1331,7 @@ async fn test_register_token_non_fungible_token() {
 
     chain_interactor
         .register_token(
+            SHARD_0,
             RegisterTokenArgs {
                 sov_token_id,
                 token_type,
@@ -1378,6 +1410,7 @@ async fn test_register_token_dynamic_non_fungible_token() {
 
     chain_interactor
         .register_token(
+            SHARD_0,
             RegisterTokenArgs {
                 sov_token_id,
                 token_type,
@@ -1495,6 +1528,7 @@ async fn test_execute_operation_no_esdt_safe_registered() {
 
     chain_interactor
         .execute_operations_in_mvx_esdt_safe(
+            SHARD_0,
             hash_of_hashes,
             operation,
             Some(SETUP_PHASE_NOT_COMPLETED),
@@ -1516,9 +1550,13 @@ async fn test_execute_operation_no_esdt_safe_registered() {
 
     chain_interactor.check_wallet_balance_unchanged().await;
 
-    chain_interactor.check_testing_sc_balance_is_empty().await;
+    chain_interactor
+        .check_testing_sc_balance_is_empty(SHARD_0)
+        .await;
 
-    chain_interactor.check_fee_market_balance_is_empty().await;
+    chain_interactor
+        .check_fee_market_balance_is_empty(SHARD_0)
+        .await;
 }
 
 /// ### TEST
@@ -1653,6 +1691,7 @@ async fn test_execute_operation_with_native_token_success() {
                 .state
                 .current_mvx_esdt_safe_contract_address()
                 .to_address(),
+            SHARD_0,
             OptionalValue::None,
             payment_vec,
             None,
@@ -1663,7 +1702,12 @@ async fn test_execute_operation_with_native_token_success() {
     let operations_hashes = MultiValueEncoded::from(ManagedVec::from(vec![operation_hash.clone()]));
 
     chain_interactor
-        .register_operation(ManagedBuffer::new(), &hash_of_hashes, operations_hashes)
+        .register_operation(
+            SHARD_0,
+            ManagedBuffer::new(),
+            &hash_of_hashes,
+            operations_hashes,
+        )
         .await;
 
     let operation_status = OperationHashStatus::NotLocked as u8;
@@ -1683,6 +1727,7 @@ async fn test_execute_operation_with_native_token_success() {
 
     chain_interactor
         .execute_operations_in_mvx_esdt_safe(
+            SHARD_0,
             hash_of_hashes,
             operation,
             None,
@@ -1714,9 +1759,11 @@ async fn test_execute_operation_with_native_token_success() {
         .await;
 
     chain_interactor
-        .check_mvx_esdt_safe_balance_is_empty()
+        .check_mvx_esdt_safe_balance_is_empty(SHARD_0)
         .await;
-    chain_interactor.check_fee_market_balance_is_empty().await;
+    chain_interactor
+        .check_fee_market_balance_is_empty(SHARD_0)
+        .await;
 }
 
 /// ### TEST
@@ -1796,6 +1843,7 @@ async fn test_execute_operation_success_no_fee() {
                 .state
                 .current_mvx_esdt_safe_contract_address()
                 .to_address(),
+            SHARD_0,
             OptionalValue::None,
             payment_vec,
             None,
@@ -1806,7 +1854,12 @@ async fn test_execute_operation_success_no_fee() {
     let operations_hashes = MultiValueEncoded::from(ManagedVec::from(vec![operation_hash.clone()]));
 
     chain_interactor
-        .register_operation(ManagedBuffer::new(), &hash_of_hashes, operations_hashes)
+        .register_operation(
+            SHARD_0,
+            ManagedBuffer::new(),
+            &hash_of_hashes,
+            operations_hashes,
+        )
         .await;
 
     let operation_status = OperationHashStatus::NotLocked as u8;
@@ -1826,6 +1879,7 @@ async fn test_execute_operation_success_no_fee() {
 
     chain_interactor
         .execute_operations_in_mvx_esdt_safe(
+            SHARD_0,
             hash_of_hashes,
             operation,
             None,
@@ -1857,9 +1911,11 @@ async fn test_execute_operation_success_no_fee() {
         .await;
 
     chain_interactor
-        .check_mvx_esdt_safe_balance_is_empty()
+        .check_mvx_esdt_safe_balance_is_empty(SHARD_0)
         .await;
-    chain_interactor.check_fee_market_balance_is_empty().await;
+    chain_interactor
+        .check_fee_market_balance_is_empty(SHARD_0)
+        .await;
 }
 
 /// ### TEST
@@ -1922,7 +1978,12 @@ async fn test_execute_operation_only_transfer_data_no_fee() {
     let operations_hashes = MultiValueEncoded::from(ManagedVec::from(vec![operation_hash.clone()]));
 
     chain_interactor
-        .register_operation(ManagedBuffer::new(), &hash_of_hashes, operations_hashes)
+        .register_operation(
+            SHARD_0,
+            ManagedBuffer::new(),
+            &hash_of_hashes,
+            operations_hashes,
+        )
         .await;
 
     let operation_status = OperationHashStatus::NotLocked as u8;
@@ -1942,6 +2003,7 @@ async fn test_execute_operation_only_transfer_data_no_fee() {
 
     chain_interactor
         .execute_operations_in_mvx_esdt_safe(
+            SHARD_0,
             hash_of_hashes,
             operation,
             None,
@@ -1962,9 +2024,11 @@ async fn test_execute_operation_only_transfer_data_no_fee() {
 
     chain_interactor.check_wallet_balance_unchanged().await;
     chain_interactor
-        .check_mvx_esdt_safe_balance_is_empty()
+        .check_mvx_esdt_safe_balance_is_empty(SHARD_0)
         .await;
-    chain_interactor.check_fee_market_balance_is_empty().await;
+    chain_interactor
+        .check_fee_market_balance_is_empty(SHARD_0)
+        .await;
 }
 
 /// ### TEST
@@ -2027,7 +2091,12 @@ async fn test_execute_operation_no_payments_failed_event() {
     let operations_hashes = MultiValueEncoded::from(ManagedVec::from(vec![operation_hash.clone()]));
 
     chain_interactor
-        .register_operation(ManagedBuffer::new(), &hash_of_hashes, operations_hashes)
+        .register_operation(
+            SHARD_0,
+            ManagedBuffer::new(),
+            &hash_of_hashes,
+            operations_hashes,
+        )
         .await;
 
     let operation_status = OperationHashStatus::NotLocked as u8;
@@ -2047,6 +2116,7 @@ async fn test_execute_operation_no_payments_failed_event() {
 
     chain_interactor
         .execute_operations_in_mvx_esdt_safe(
+            SHARD_0,
             hash_of_hashes,
             operation,
             Some(function.to_string().as_str()),
@@ -2067,7 +2137,9 @@ async fn test_execute_operation_no_payments_failed_event() {
 
     chain_interactor.check_wallet_balance_unchanged().await;
     chain_interactor
-        .check_mvx_esdt_safe_balance_is_empty()
+        .check_mvx_esdt_safe_balance_is_empty(SHARD_0)
         .await;
-    chain_interactor.check_fee_market_balance_is_empty().await;
+    chain_interactor
+        .check_fee_market_balance_is_empty(SHARD_0)
+        .await;
 }
