@@ -1,8 +1,8 @@
 use common_interactor::common_sovereign_interactor::CommonInteractorTrait;
 use common_interactor::interactor_config::Config;
 use common_test_setup::constants::{
-    CROWD_TOKEN_ID, ISSUE_COST, NFT_TOKEN_ID, ONE_HUNDRED_THOUSAND, ONE_HUNDRED_TOKENS,
-    ONE_THOUSAND_TOKENS, PREFIX_NFT_TOKEN_ID, TEN_TOKENS,
+    CROWD_TOKEN_ID, DEPOSIT_LOG, ISSUE_COST, NFT_TOKEN_ID, ONE_HUNDRED_THOUSAND,
+    ONE_HUNDRED_TOKENS, ONE_THOUSAND_TOKENS, PREFIX_NFT_TOKEN_ID, TEN_TOKENS, TESTING_SC_ENDPOINT,
 };
 use error_messages::{
     BANNED_ENDPOINT_NAME, GAS_LIMIT_TOO_HIGH, NOTHING_TO_TRANSFER, NOT_ENOUGH_WEGLD_AMOUNT,
@@ -234,7 +234,7 @@ async fn test_deposit_no_fee() {
             chain_interactor.user_address.clone(),
             OptionalValue::None,
             None,
-            Some("deposit"),
+            Some(DEPOSIT_LOG),
         )
         .await;
 
@@ -427,7 +427,7 @@ async fn test_deposit_no_transfer_data() {
             chain_interactor.user_address.clone(),
             OptionalValue::None,
             None,
-            Some("deposit"),
+            Some(DEPOSIT_LOG),
         )
         .await;
 
@@ -493,7 +493,7 @@ async fn test_deposit_with_transfer_data_gas_limit_too_high() {
         EsdtTokenPayment::new(chain_interactor.state.get_second_token_id(), 0, amount);
     let mut payments = PaymentsVec::new();
     let gas_limit = 1_000_000_000_000_000_000u64;
-    let function = ManagedBuffer::from("hello");
+    let function = ManagedBuffer::from(TESTING_SC_ENDPOINT);
     let arg = ManagedBuffer::from("arg");
     let mut args = ManagedVec::new();
     args.push(arg);
@@ -671,7 +671,7 @@ async fn test_deposit_with_transfer_data_enough_for_fee() {
             chain_interactor.user_address.clone(),
             transfer_data,
             None,
-            Some("deposit"),
+            Some(DEPOSIT_LOG),
         )
         .await;
 
@@ -839,7 +839,7 @@ async fn test_deposit_refund_non_whitelisted_tokens_fee_disabled() {
             chain_interactor.user_address.clone(),
             OptionalValue::None,
             None,
-            Some("deposit"),
+            Some(DEPOSIT_LOG),
         )
         .await;
     chain_interactor.check_wallet_balance_unchanged().await;
@@ -911,7 +911,7 @@ async fn test_deposit_refund_non_whitelisted_tokens_fee_enabled() {
             chain_interactor.user_address.clone(),
             OptionalValue::None,
             None,
-            Some("deposit"),
+            Some(DEPOSIT_LOG),
         )
         .await;
 

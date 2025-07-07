@@ -1,6 +1,6 @@
 use chain_config::validator_rules::ValidatorRulesModule;
 use chain_config_blackbox_setup::ChainConfigTestState;
-use common_test_setup::constants::{CHAIN_CONFIG_ADDRESS, OWNER_ADDRESS};
+use common_test_setup::constants::{CHAIN_CONFIG_ADDRESS, EXECUTED_BRIDGE_LOG, OWNER_ADDRESS};
 use error_messages::{INVALID_MIN_MAX_VALIDATOR_NUMBERS, SETUP_PHASE_NOT_COMPLETED};
 use multiversx_sc::{
     imports::OptionalValue,
@@ -277,7 +277,7 @@ fn test_update_config() {
 
     state.common_setup.complete_chain_config_setup_phase(None);
 
-    state.update_sovereign_config(hash_of_hashes, new_config, None, Some("executedBridgeOp"));
+    state.update_sovereign_config(hash_of_hashes, new_config, None, Some(EXECUTED_BRIDGE_LOG));
 
     state
         .common_setup

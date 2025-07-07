@@ -1,8 +1,8 @@
 use common_interactor::common_sovereign_interactor::CommonInteractorTrait;
 use common_interactor::interactor_config::Config;
 use common_test_setup::constants::{
-    DEPLOY_COST, ONE_HUNDRED_TOKENS, ONE_THOUSAND_TOKENS, OPERATION_HASH_STATUS_STORAGE_KEY,
-    SHARD_0, SHARD_2, TEN_TOKENS,
+    DEPLOY_COST, DEPOSIT_LOG, EXECUTED_BRIDGE_LOG, ONE_HUNDRED_TOKENS, ONE_THOUSAND_TOKENS,
+    OPERATION_HASH_STATUS_STORAGE_KEY, SHARD_0, SHARD_2, TEN_TOKENS, TESTING_SC_ENDPOINT,
 };
 use header_verifier::OperationHashStatus;
 use multiversx_sc::{
@@ -73,7 +73,7 @@ async fn test_complete_deposit_flow_different_shard() {
             OptionalValue::None,
             payments_vec,
             None,
-            Some("deposit"),
+            Some(DEPOSIT_LOG),
         )
         .await;
 
@@ -142,7 +142,7 @@ async fn test_execute_operation_success_no_fee_different_shard() {
     let shard = SHARD_0;
 
     let gas_limit = 90_000_000u64;
-    let function = ManagedBuffer::<StaticApi>::from("hello");
+    let function = ManagedBuffer::<StaticApi>::from(TESTING_SC_ENDPOINT);
     let args =
         ManagedVec::<StaticApi, ManagedBuffer<StaticApi>>::from(vec![ManagedBuffer::from("1")]);
 
@@ -209,7 +209,7 @@ async fn test_execute_operation_success_no_fee_different_shard() {
             hash_of_hashes,
             operation,
             None,
-            Some("executedBridgeOp"),
+            Some(EXECUTED_BRIDGE_LOG),
         )
         .await;
 
@@ -293,7 +293,7 @@ async fn test_execute_operation_success_no_fee_different_shard_transfer_nft() {
             OptionalValue::None,
             payment_vec,
             None,
-            Some("deposit"),
+            Some(DEPOSIT_LOG),
         )
         .await;
 
@@ -338,7 +338,7 @@ async fn test_execute_operation_success_no_fee_different_shard_transfer_nft() {
             hash_of_hashes,
             operation,
             None,
-            Some("executedBridgeOp"),
+            Some(EXECUTED_BRIDGE_LOG),
         )
         .await;
 
@@ -456,7 +456,7 @@ async fn test_execute_operation_success_no_fee_different_shard_transfer_sft() {
             OptionalValue::None,
             payment_vec,
             None,
-            Some("deposit"),
+            Some(DEPOSIT_LOG),
         )
         .await;
 
@@ -492,7 +492,7 @@ async fn test_execute_operation_success_no_fee_different_shard_transfer_sft() {
             hash_of_hashes,
             operation,
             None,
-            Some("executedBridgeOp"),
+            Some(EXECUTED_BRIDGE_LOG),
         )
         .await;
 
@@ -614,7 +614,7 @@ async fn test_execute_operation_success_no_fee_different_shard_transfer_meta_esd
             OptionalValue::None,
             payment_vec,
             None,
-            Some("deposit"),
+            Some(DEPOSIT_LOG),
         )
         .await;
 
@@ -650,7 +650,7 @@ async fn test_execute_operation_success_no_fee_different_shard_transfer_meta_esd
             hash_of_hashes,
             operation,
             None,
-            Some("executedBridgeOp"),
+            Some(EXECUTED_BRIDGE_LOG),
         )
         .await;
 
@@ -775,7 +775,7 @@ async fn test_execute_operation_success_no_fee_different_shard_transfer_dynamic_
             OptionalValue::None,
             payment_vec,
             None,
-            Some("deposit"),
+            Some(DEPOSIT_LOG),
         )
         .await;
 
@@ -811,7 +811,7 @@ async fn test_execute_operation_success_no_fee_different_shard_transfer_dynamic_
             hash_of_hashes,
             operation,
             None,
-            Some("executedBridgeOp"),
+            Some(EXECUTED_BRIDGE_LOG),
         )
         .await;
 
@@ -961,7 +961,7 @@ async fn test_execute_operation_success_with_fee_different_shard_transfer_dynami
             OptionalValue::None,
             payment_vec,
             None,
-            Some("deposit"),
+            Some(DEPOSIT_LOG),
         )
         .await;
 
@@ -997,7 +997,7 @@ async fn test_execute_operation_success_with_fee_different_shard_transfer_dynami
             hash_of_hashes,
             operation,
             None,
-            Some("executedBridgeOp"),
+            Some(EXECUTED_BRIDGE_LOG),
         )
         .await;
 

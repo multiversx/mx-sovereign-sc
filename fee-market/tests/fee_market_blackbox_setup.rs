@@ -136,7 +136,7 @@ impl FeeMarketTestState {
         hash_of_hashes: &ManagedBuffer<StaticApi>,
         token_id: TestTokenIdentifier,
         expected_error_message: Option<&str>,
-        expected_custom_log: Option<&str>,
+        expected_log: Option<&str>,
     ) {
         let (response, logs) = self
             .common_setup
@@ -154,7 +154,7 @@ impl FeeMarketTestState {
             .assert_expected_error_message(response, expected_error_message);
 
         self.common_setup
-            .assert_expected_log(logs, expected_custom_log);
+            .assert_expected_log(logs, expected_log);
     }
 
     pub fn set_fee(
@@ -162,7 +162,7 @@ impl FeeMarketTestState {
         hash_of_hashes: &ManagedBuffer<StaticApi>,
         fee_struct: &FeeStruct<StaticApi>,
         expected_error_message: Option<&str>,
-        expected_custom_log: Option<&str>,
+        expected_log: Option<&str>,
     ) {
         let (response, logs) = self
             .common_setup
@@ -180,7 +180,7 @@ impl FeeMarketTestState {
             .assert_expected_error_message(response, expected_error_message);
 
         self.common_setup
-            .assert_expected_log(logs, expected_custom_log);
+            .assert_expected_log(logs, expected_log);
     }
 
     pub fn set_fee_during_setup_phase(
@@ -244,7 +244,7 @@ impl FeeMarketTestState {
         hash_of_hashes: &ManagedBuffer<StaticApi>,
         address_percentage_pairs: Vec<MultiValue2<ManagedAddress<StaticApi>, usize>>,
         expected_error_message: Option<&str>,
-        expected_custom_log: Option<&str>,
+        expected_log: Option<&str>,
     ) {
         let (response, logs) = self
             .common_setup
@@ -265,7 +265,7 @@ impl FeeMarketTestState {
             .assert_expected_error_message(response, expected_error_message);
 
         self.common_setup
-            .assert_expected_log(logs, expected_custom_log);
+            .assert_expected_log(logs, expected_log);
     }
 
     pub fn add_users_to_whitelist(&mut self, users_vector: Vec<TestAddress>) {

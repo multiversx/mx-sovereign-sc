@@ -1,6 +1,7 @@
 use common_test_setup::constants::{
-    ESDT_SAFE_ADDRESS, FEE_MARKET_ADDRESS, FEE_TOKEN, FIRST_TEST_TOKEN, ONE_HUNDRED_MILLION,
-    ONE_HUNDRED_THOUSAND, OWNER_ADDRESS, SECOND_TEST_TOKEN, USER_ADDRESS,
+    DEPOSIT_LOG, ESDT_SAFE_ADDRESS, FEE_MARKET_ADDRESS, FEE_TOKEN, FIRST_TEST_TOKEN,
+    ONE_HUNDRED_MILLION, ONE_HUNDRED_THOUSAND, OWNER_ADDRESS, SC_CALL_LOG, SECOND_TEST_TOKEN,
+    TESTING_SC_ENDPOINT, USER_ADDRESS,
 };
 use error_messages::NOTHING_TO_TRANSFER;
 use multiversx_sc::{
@@ -69,7 +70,7 @@ fn test_deposit_no_fee_no_transfer_data() {
         OptionalValue::None,
         payments_vec.clone(),
         None,
-        Some("deposit"),
+        Some(DEPOSIT_LOG),
     );
 
     let expected_tokens = vec![
@@ -152,7 +153,7 @@ fn test_deposit_with_fee_no_transfer_data() {
         OptionalValue::None,
         payments_vec.clone(),
         None,
-        Some("deposit"),
+        Some(DEPOSIT_LOG),
     );
 
     let expected_amount_token_one =
@@ -233,7 +234,7 @@ fn test_deposit_no_fee_with_transfer_data() {
     ]);
 
     let gas_limit = 1;
-    let function = ManagedBuffer::<StaticApi>::from("hello");
+    let function = ManagedBuffer::<StaticApi>::from(TESTING_SC_ENDPOINT);
     let args =
         MultiValueEncoded::<StaticApi, ManagedBuffer<StaticApi>>::from(ManagedVec::from(vec![
             ManagedBuffer::from("1"),
@@ -246,7 +247,7 @@ fn test_deposit_no_fee_with_transfer_data() {
         OptionalValue::Some(transfer_data),
         payments_vec.clone(),
         None,
-        Some("deposit"),
+        Some(DEPOSIT_LOG),
     );
 
     let expected_amount_token_one =
@@ -330,7 +331,7 @@ fn test_deposit_with_fee_with_transfer_data() {
     ]);
 
     let gas_limit = 2;
-    let function = ManagedBuffer::<StaticApi>::from("hello");
+    let function = ManagedBuffer::<StaticApi>::from(TESTING_SC_ENDPOINT);
     let args =
         MultiValueEncoded::<StaticApi, ManagedBuffer<StaticApi>>::from(ManagedVec::from(vec![
             ManagedBuffer::from("1"),
@@ -343,7 +344,7 @@ fn test_deposit_with_fee_with_transfer_data() {
         OptionalValue::Some(transfer_data),
         payments_vec.clone(),
         None,
-        Some("deposit"),
+        Some(DEPOSIT_LOG),
     );
 
     let expected_amount_token_one =
@@ -435,7 +436,7 @@ fn test_deposit_sc_call_only() {
     state.set_fee_market_address(FEE_MARKET_ADDRESS);
 
     let gas_limit = 2;
-    let function = ManagedBuffer::<StaticApi>::from("hello");
+    let function = ManagedBuffer::<StaticApi>::from(TESTING_SC_ENDPOINT);
     let args =
         MultiValueEncoded::<StaticApi, ManagedBuffer<StaticApi>>::from(ManagedVec::from(vec![
             ManagedBuffer::from("1"),
@@ -448,6 +449,6 @@ fn test_deposit_sc_call_only() {
         OptionalValue::Some(transfer_data.clone()),
         PaymentsVec::new(),
         None,
-        Some("scCall"),
+        Some(SC_CALL_LOG),
     );
 }

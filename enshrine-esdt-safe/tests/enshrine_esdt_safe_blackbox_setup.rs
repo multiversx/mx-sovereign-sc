@@ -190,7 +190,7 @@ impl EnshrineTestState {
         sender: &TestAddress,
         fee_payment: EsdtTokenPayment<StaticApi>,
         tokens_to_register: Vec<TestTokenIdentifier>,
-        error_message: Option<&str>,
+        expected_error_message: Option<&str>,
     ) {
         let mut managed_token_ids: MultiValueEncoded<StaticApi, TokenIdentifier<StaticApi>> =
             MultiValueEncoded::new();
@@ -212,7 +212,7 @@ impl EnshrineTestState {
             .run();
 
         self.common_setup
-            .assert_expected_error_message(response, error_message);
+            .assert_expected_error_message(response, expected_error_message);
     }
 
     pub fn deposit(
@@ -221,7 +221,7 @@ impl EnshrineTestState {
         to: TestAddress,
         payment: PaymentsVec<StaticApi>,
         deposit_args: OptionalValueTransferDataTuple<StaticApi>,
-        error_message: Option<&str>,
+        expected_error_message: Option<&str>,
     ) {
         let response = self
             .common_setup
@@ -236,7 +236,7 @@ impl EnshrineTestState {
             .run();
 
         self.common_setup
-            .assert_expected_error_message(response, error_message);
+            .assert_expected_error_message(response, expected_error_message);
     }
 
     pub fn whitelist_enshrine_esdt(&mut self) {
