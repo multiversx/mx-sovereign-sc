@@ -2,9 +2,9 @@ use common_interactor::{
     common_sovereign_interactor::CommonInteractorTrait, interactor_config::Config,
 };
 use common_test_setup::constants::{
-    DEPLOY_COST, ESDT_SAFE_CONFIG_STORAGE_KEY, ONE_HUNDRED_TOKENS, ONE_THOUSAND_TOKENS,
-    OPERATION_HASH_STATUS_STORAGE_KEY, SHARD_1, TEN_TOKENS, TOKEN_FEE_STORAGE_KEY,
-    WRONG_ENDPOINT_NAME,
+    DEPLOY_COST, DEPOSIT_LOG, ESDT_SAFE_CONFIG_STORAGE_KEY, EXECUTED_BRIDGE_LOG,
+    ONE_HUNDRED_TOKENS, ONE_THOUSAND_TOKENS, OPERATION_HASH_STATUS_STORAGE_KEY, SHARD_1,
+    TEN_TOKENS, TESTING_SC_ENDPOINT, TOKEN_FEE_STORAGE_KEY, WRONG_ENDPOINT_NAME,
 };
 use header_verifier::OperationHashStatus;
 use multiversx_sc::{
@@ -99,7 +99,7 @@ async fn test_complete_deposit_flow() {
             OptionalValue::None,
             payments_vec,
             None,
-            Some("deposit"),
+            Some(DEPOSIT_LOG),
         )
         .await;
 
@@ -178,7 +178,7 @@ async fn test_complete_flow_execute_operation_with_transfer_data_success_no_fee(
     });
 
     let gas_limit = 90_000_000u64;
-    let function = ManagedBuffer::<StaticApi>::from("hello");
+    let function = ManagedBuffer::<StaticApi>::from(TESTING_SC_ENDPOINT);
     let args =
         ManagedVec::<StaticApi, ManagedBuffer<StaticApi>>::from(vec![ManagedBuffer::from("1")]);
 
@@ -223,7 +223,7 @@ async fn test_complete_flow_execute_operation_with_transfer_data_success_no_fee(
             OptionalValue::None,
             payment_vec,
             None,
-            Some("deposit"),
+            Some(DEPOSIT_LOG),
         )
         .await;
 
@@ -259,7 +259,7 @@ async fn test_complete_flow_execute_operation_with_transfer_data_success_no_fee(
             hash_of_hashes,
             operation,
             None,
-            Some("executedBridgeOp"),
+            Some(EXECUTED_BRIDGE_LOG),
         )
         .await;
 
@@ -339,7 +339,7 @@ async fn test_complete_flow_execute_operation_success_with_fee() {
     };
 
     let gas_limit = 90_000_000u64;
-    let function = ManagedBuffer::<StaticApi>::from("hello");
+    let function = ManagedBuffer::<StaticApi>::from(TESTING_SC_ENDPOINT);
     let args =
         ManagedVec::<StaticApi, ManagedBuffer<StaticApi>>::from(vec![ManagedBuffer::from("1")]);
 
@@ -405,7 +405,7 @@ async fn test_complete_flow_execute_operation_success_with_fee() {
             OptionalValue::Some(deposit_transfer_data),
             payment_vec,
             None,
-            Some("deposit"),
+            Some(DEPOSIT_LOG),
         )
         .await;
 
@@ -441,7 +441,7 @@ async fn test_complete_flow_execute_operation_success_with_fee() {
             hash_of_hashes,
             operation,
             None,
-            Some("executedBridgeOp"),
+            Some(EXECUTED_BRIDGE_LOG),
         )
         .await;
 
@@ -513,7 +513,7 @@ async fn test_complete_flow_execute_operation_only_transfer_data_no_fee() {
     let shard = SHARD_1;
 
     let gas_limit = 90_000_000u64;
-    let function = ManagedBuffer::<StaticApi>::from("hello");
+    let function = ManagedBuffer::<StaticApi>::from(TESTING_SC_ENDPOINT);
     let args =
         ManagedVec::<StaticApi, ManagedBuffer<StaticApi>>::from(vec![ManagedBuffer::from("1")]);
 
@@ -580,7 +580,7 @@ async fn test_complete_flow_execute_operation_only_transfer_data_no_fee() {
             hash_of_hashes,
             operation,
             None,
-            Some("executedBridgeOp"),
+            Some(EXECUTED_BRIDGE_LOG),
         )
         .await;
 
@@ -945,7 +945,7 @@ async fn test_execute_operation_success_transfer_nft() {
             OptionalValue::None,
             payment_vec,
             None,
-            Some("deposit"),
+            Some(DEPOSIT_LOG),
         )
         .await;
 
@@ -990,7 +990,7 @@ async fn test_execute_operation_success_transfer_nft() {
             hash_of_hashes,
             operation,
             None,
-            Some("executedBridgeOp"),
+            Some(EXECUTED_BRIDGE_LOG),
         )
         .await;
 
@@ -1108,7 +1108,7 @@ async fn test_execute_operation_success_no_fee_transfer_sft() {
             OptionalValue::None,
             payment_vec,
             None,
-            Some("deposit"),
+            Some(DEPOSIT_LOG),
         )
         .await;
 
@@ -1144,7 +1144,7 @@ async fn test_execute_operation_success_no_fee_transfer_sft() {
             hash_of_hashes,
             operation,
             None,
-            Some("executedBridgeOp"),
+            Some(EXECUTED_BRIDGE_LOG),
         )
         .await;
 
@@ -1266,7 +1266,7 @@ async fn test_execute_operation_success_no_fee_transfer_meta_esdt() {
             OptionalValue::None,
             payment_vec,
             None,
-            Some("deposit"),
+            Some(DEPOSIT_LOG),
         )
         .await;
 
@@ -1302,7 +1302,7 @@ async fn test_execute_operation_success_no_fee_transfer_meta_esdt() {
             hash_of_hashes,
             operation,
             None,
-            Some("executedBridgeOp"),
+            Some(EXECUTED_BRIDGE_LOG),
         )
         .await;
 
@@ -1427,7 +1427,7 @@ async fn test_execute_operation_success_no_fee_transfer_dynamic_nft() {
             OptionalValue::None,
             payment_vec,
             None,
-            Some("deposit"),
+            Some(DEPOSIT_LOG),
         )
         .await;
 
@@ -1463,7 +1463,7 @@ async fn test_execute_operation_success_no_fee_transfer_dynamic_nft() {
             hash_of_hashes,
             operation,
             None,
-            Some("executedBridgeOp"),
+            Some(EXECUTED_BRIDGE_LOG),
         )
         .await;
 
@@ -1613,7 +1613,7 @@ async fn test_execute_operation_success_with_fee_transfer_dynamic_nft() {
             OptionalValue::None,
             payment_vec,
             None,
-            Some("deposit"),
+            Some(DEPOSIT_LOG),
         )
         .await;
 
@@ -1649,7 +1649,7 @@ async fn test_execute_operation_success_with_fee_transfer_dynamic_nft() {
             hash_of_hashes,
             operation,
             None,
-            Some("executedBridgeOp"),
+            Some(EXECUTED_BRIDGE_LOG),
         )
         .await;
 

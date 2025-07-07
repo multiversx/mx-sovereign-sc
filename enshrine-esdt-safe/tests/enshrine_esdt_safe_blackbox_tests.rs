@@ -1,7 +1,7 @@
 use common_test_setup::constants::{
-    CROWD_TOKEN_ID, ENSHRINE_BALANCE, ENSHRINE_SC_ADDRESS, FUNGIBLE_TOKEN_ID, ISSUE_COST,
-    NFT_TOKEN_ID, ONE_HUNDRED_THOUSAND, OWNER_ADDRESS, PREFIX_NFT_TOKEN_ID, RECEIVER_ADDRESS,
-    USER_ADDRESS, WEGLD_IDENTIFIER,
+    CROWD_TOKEN_ID, ENSHRINE_BALANCE, ENSHRINE_SC_ADDRESS, EXECUTED_BRIDGE_LOG, FUNGIBLE_TOKEN_ID,
+    ISSUE_COST, NFT_TOKEN_ID, ONE_HUNDRED_THOUSAND, OWNER_ADDRESS, PREFIX_NFT_TOKEN_ID,
+    RECEIVER_ADDRESS, TESTING_SC_ENDPOINT, USER_ADDRESS, WEGLD_IDENTIFIER,
 };
 use enshrine_esdt_safe_blackbox_setup::EnshrineTestState;
 use error_messages::{
@@ -126,7 +126,7 @@ fn test_execute_with_prefixed_token() {
         operations_hashes,
     );
     state.whitelist_enshrine_esdt();
-    state.execute_operation(None, operation, Some("executedBridgeOp"));
+    state.execute_operation(None, operation, Some(EXECUTED_BRIDGE_LOG));
 }
 
 /// ### TEST
@@ -393,7 +393,7 @@ fn test_deposit_with_transfer_data_gas_limit_too_high() {
     let crowd_payment = EsdtTokenPayment::new(CROWD_TOKEN_ID.into(), 0, amount);
     let mut payments = PaymentsVec::new();
     let gas_limit = 1000000000000000000;
-    let function = ManagedBuffer::from("some_function");
+    let function = ManagedBuffer::from(TESTING_SC_ENDPOINT);
     let arg = ManagedBuffer::from("arg");
     let mut args = ManagedVec::new();
     args.push(arg);
@@ -438,7 +438,7 @@ fn test_deposit_with_transfer_data_banned_endpoint() {
     let crowd_payment = EsdtTokenPayment::new(CROWD_TOKEN_ID.into(), 0, amount);
     let mut payments = PaymentsVec::new();
     let gas_limit = 1000000000;
-    let banned_endpoint = ManagedBuffer::from("some_function");
+    let banned_endpoint = ManagedBuffer::from(TESTING_SC_ENDPOINT);
     let arg = ManagedBuffer::from("arg");
     let mut args = ManagedVec::new();
     args.push(arg);
@@ -495,7 +495,7 @@ fn test_deposit_with_transfer_data_enough_for_fee() {
     let crowd_payment = EsdtTokenPayment::new(CROWD_TOKEN_ID.into(), 0, amount.clone());
     let mut payments = PaymentsVec::new();
     let gas_limit = 10000000;
-    let function = ManagedBuffer::from("some_function");
+    let function = ManagedBuffer::from(TESTING_SC_ENDPOINT);
     let arg = ManagedBuffer::from("arg");
     let mut args = ManagedVec::new();
     args.push(arg);
@@ -557,7 +557,7 @@ fn test_deposit_with_transfer_data_not_enough_for_fee() {
     let crowd_payment = EsdtTokenPayment::new(CROWD_TOKEN_ID.into(), 0, amount.clone());
     let mut payments = PaymentsVec::new();
     let gas_limit = 10000000;
-    let function = ManagedBuffer::from("some_function");
+    let function = ManagedBuffer::from(TESTING_SC_ENDPOINT);
     let arg = ManagedBuffer::from("arg");
     let mut args = ManagedVec::new();
     args.push(arg);

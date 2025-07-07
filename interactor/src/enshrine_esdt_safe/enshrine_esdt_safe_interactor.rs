@@ -265,7 +265,7 @@ impl EnshrineEsdtSafeInteract {
         payments: PaymentsVec<StaticApi>,
         to: Address,
         transfer_data: OptionalTransferData<StaticApi>,
-        error_wanted: Option<&str>,
+        expected_error_message: Option<&str>,
         expected_log: Option<&str>,
     ) {
         let (response, logs) = self
@@ -282,7 +282,7 @@ impl EnshrineEsdtSafeInteract {
             .run()
             .await;
 
-        self.assert_expected_error_message(response, error_wanted);
+        self.assert_expected_error_message(response, expected_error_message);
 
         self.assert_expected_log(logs, expected_log);
     }
@@ -316,7 +316,7 @@ impl EnshrineEsdtSafeInteract {
         &mut self,
         fee_payment: EsdtTokenPayment<StaticApi>,
         tokens_to_register: Vec<TokenIdentifier<StaticApi>>,
-        error_message: Option<&str>,
+        expected_error_message: Option<&str>,
     ) {
         let mut managed_token_ids: MultiValueEncoded<StaticApi, TokenIdentifier<StaticApi>> =
             MultiValueEncoded::from_iter(tokens_to_register);
@@ -334,7 +334,7 @@ impl EnshrineEsdtSafeInteract {
             .run()
             .await;
 
-        self.assert_expected_error_message(response, error_message);
+        self.assert_expected_error_message(response, expected_error_message);
     }
 
     pub async fn add_tokens_to_whitelist(

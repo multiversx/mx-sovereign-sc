@@ -31,7 +31,7 @@ impl ChainConfigTestState {
     pub fn update_sovereign_config_during_setup_phase(
         &mut self,
         config: SovereignConfig<StaticApi>,
-        expect_error: Option<&str>,
+        expected_error_message: Option<&str>,
     ) {
         let result = self
             .common_setup
@@ -45,15 +45,15 @@ impl ChainConfigTestState {
             .run();
 
         self.common_setup
-            .assert_expected_error_message(result, expect_error);
+            .assert_expected_error_message(result, expected_error_message);
     }
 
     pub fn update_sovereign_config(
         &mut self,
         hash_of_hashes: ManagedBuffer<StaticApi>,
         config: SovereignConfig<StaticApi>,
-        expect_error: Option<&str>,
-        expected_custom_log: Option<&str>,
+        expected_error_message: Option<&str>,
+        expected_log: Option<&str>,
     ) {
         let (result, logs) = self
             .common_setup
@@ -68,9 +68,8 @@ impl ChainConfigTestState {
             .run();
 
         self.common_setup
-            .assert_expected_error_message(result, expect_error);
+            .assert_expected_error_message(result, expected_error_message);
 
-        self.common_setup
-            .assert_expected_log(logs, expected_custom_log);
+        self.common_setup.assert_expected_log(logs, expected_log);
     }
 }

@@ -2,10 +2,11 @@ use common_interactor::common_sovereign_interactor::CommonInteractorTrait;
 use common_interactor::interactor_config::Config;
 use common_test_setup::base_setup::init::RegisterTokenArgs;
 use common_test_setup::constants::{
-    CROWD_TOKEN_ID, FIRST_TEST_TOKEN, ISSUE_COST, MVX_TO_SOV_TOKEN_STORAGE_KEY,
-    NATIVE_TOKEN_STORAGE_KEY, ONE_HUNDRED_TOKENS, ONE_THOUSAND_TOKENS,
-    OPERATION_HASH_STATUS_STORAGE_KEY, PREFERRED_CHAIN_IDS, SHARD_0, SOV_TOKEN,
-    SOV_TO_MVX_TOKEN_STORAGE_KEY, TEN_TOKENS, TOKEN_TICKER, WRONG_ENDPOINT_NAME,
+    CROWD_TOKEN_ID, DEPOSIT_LOG, EXECUTED_BRIDGE_LOG, FIRST_TEST_TOKEN, ISSUE_COST,
+    MVX_TO_SOV_TOKEN_STORAGE_KEY, NATIVE_TOKEN_STORAGE_KEY, ONE_HUNDRED_TOKENS,
+    ONE_THOUSAND_TOKENS, OPERATION_HASH_STATUS_STORAGE_KEY, PREFERRED_CHAIN_IDS, SC_CALL_LOG,
+    SHARD_0, SOV_TOKEN, SOV_TO_MVX_TOKEN_STORAGE_KEY, TEN_TOKENS, TESTING_SC_ENDPOINT,
+    TOKEN_TICKER, WRONG_ENDPOINT_NAME,
 };
 use cross_chain::MAX_GAS_PER_TRANSACTION;
 use error_messages::{
@@ -240,7 +241,7 @@ async fn test_deposit_max_bridged_amount_exceeded() {
         ManagedVec::new(),
         ManagedVec::new(),
         50_000_000,
-        ManagedVec::from(vec![ManagedBuffer::from("hello")]),
+        ManagedVec::from(vec![ManagedBuffer::from(TESTING_SC_ENDPOINT)]),
         ManagedVec::from(vec![MaxBridgedAmount {
             token_id: chain_interactor.state.get_first_token_id(),
             amount: BigUint::default(),
@@ -415,7 +416,7 @@ async fn test_deposit_no_transfer_data() {
             OptionalValue::None,
             payments_vec,
             None,
-            Some("deposit"),
+            Some(DEPOSIT_LOG),
         )
         .await;
 
@@ -512,7 +513,7 @@ async fn test_deposit_gas_limit_too_high_no_fee() {
     let payments_vec = PaymentsVec::from(vec![esdt_token_payment_one, esdt_token_payment_two]);
 
     let gas_limit = 2u64;
-    let function = ManagedBuffer::<StaticApi>::from("hello");
+    let function = ManagedBuffer::<StaticApi>::from(TESTING_SC_ENDPOINT);
     let args = MultiValueEncoded::from(ManagedVec::<StaticApi, ManagedBuffer<StaticApi>>::from(
         vec![ManagedBuffer::from("1")],
     ));
@@ -556,7 +557,7 @@ async fn test_deposit_endpoint_banned_no_fee() {
         ManagedVec::new(),
         ManagedVec::new(),
         50_000_000,
-        ManagedVec::from(vec![ManagedBuffer::from("hello")]),
+        ManagedVec::from(vec![ManagedBuffer::from(TESTING_SC_ENDPOINT)]),
         ManagedVec::new(),
     );
 
@@ -591,7 +592,7 @@ async fn test_deposit_endpoint_banned_no_fee() {
     let payments_vec = PaymentsVec::from(vec![esdt_token_payment_one, esdt_token_payment_two]);
 
     let gas_limit = 2u64;
-    let function = ManagedBuffer::<StaticApi>::from("hello");
+    let function = ManagedBuffer::<StaticApi>::from(TESTING_SC_ENDPOINT);
     let args = MultiValueEncoded::from(ManagedVec::<StaticApi, ManagedBuffer<StaticApi>>::from(
         vec![ManagedBuffer::from("1")],
     ));
@@ -691,7 +692,7 @@ async fn test_deposit_fee_enabled() {
     ]);
 
     let gas_limit = 1000u64;
-    let function = ManagedBuffer::<StaticApi>::from("hello");
+    let function = ManagedBuffer::<StaticApi>::from(TESTING_SC_ENDPOINT);
     let args = MultiValueEncoded::from(ManagedVec::<StaticApi, ManagedBuffer<StaticApi>>::from(
         vec![ManagedBuffer::from("1")],
     ));
@@ -705,7 +706,7 @@ async fn test_deposit_fee_enabled() {
             OptionalValue::Some(transfer_data),
             payments_vec.clone(),
             None,
-            Some("deposit"),
+            Some(DEPOSIT_LOG),
         )
         .await;
 
@@ -807,7 +808,7 @@ async fn test_deposit_transfer_data_only_with_fee_nothing_to_transfer() {
         .await;
 
     let gas_limit = 1000u64;
-    let function = ManagedBuffer::<StaticApi>::from("hello");
+    let function = ManagedBuffer::<StaticApi>::from(TESTING_SC_ENDPOINT);
     let args = MultiValueEncoded::from(ManagedVec::<StaticApi, ManagedBuffer<StaticApi>>::from(
         vec![ManagedBuffer::from("1")],
     ));
@@ -872,7 +873,7 @@ async fn test_deposit_only_transfer_data_no_fee() {
         .await;
 
     let gas_limit = 1000u64;
-    let function = ManagedBuffer::<StaticApi>::from("hello");
+    let function = ManagedBuffer::<StaticApi>::from(TESTING_SC_ENDPOINT);
     let args = MultiValueEncoded::from(ManagedVec::<StaticApi, ManagedBuffer<StaticApi>>::from(
         vec![ManagedBuffer::from("1")],
     ));
@@ -886,7 +887,7 @@ async fn test_deposit_only_transfer_data_no_fee() {
             OptionalValue::Some(transfer_data),
             ManagedVec::new(),
             None,
-            Some("scCall"),
+            Some(SC_CALL_LOG),
         )
         .await;
 
@@ -966,7 +967,7 @@ async fn test_deposit_payment_does_not_cover_fee() {
     ]);
 
     let gas_limit = 10_000u64;
-    let function = ManagedBuffer::<StaticApi>::from("hello");
+    let function = ManagedBuffer::<StaticApi>::from(TESTING_SC_ENDPOINT);
     let args = MultiValueEncoded::from(ManagedVec::<StaticApi, ManagedBuffer<StaticApi>>::from(
         vec![ManagedBuffer::from("1")],
     ));
@@ -1056,7 +1057,7 @@ async fn test_deposit_refund() {
     ]);
 
     let gas_limit = 1;
-    let function = ManagedBuffer::<StaticApi>::from("hello");
+    let function = ManagedBuffer::<StaticApi>::from(TESTING_SC_ENDPOINT);
     let args =
         MultiValueEncoded::<StaticApi, ManagedBuffer<StaticApi>>::from(ManagedVec::from(vec![
             ManagedBuffer::from("1"),
@@ -1071,7 +1072,7 @@ async fn test_deposit_refund() {
             OptionalValue::Some(transfer_data),
             payments_vec.clone(),
             None,
-            Some("deposit"),
+            Some(DEPOSIT_LOG),
         )
         .await;
 
@@ -1588,7 +1589,7 @@ async fn test_execute_operation_with_native_token_success() {
     });
 
     let gas_limit = 90_000_000u64;
-    let function = ManagedBuffer::<StaticApi>::from("hello");
+    let function = ManagedBuffer::<StaticApi>::from(TESTING_SC_ENDPOINT);
     let args =
         ManagedVec::<StaticApi, ManagedBuffer<StaticApi>>::from(vec![ManagedBuffer::from("1")]);
 
@@ -1695,7 +1696,7 @@ async fn test_execute_operation_with_native_token_success() {
             OptionalValue::None,
             payment_vec,
             None,
-            Some("deposit"),
+            Some(DEPOSIT_LOG),
         )
         .await;
 
@@ -1731,7 +1732,7 @@ async fn test_execute_operation_with_native_token_success() {
             hash_of_hashes,
             operation,
             None,
-            Some("executedBridgeOp"),
+            Some(EXECUTED_BRIDGE_LOG),
         )
         .await;
 
@@ -1795,7 +1796,7 @@ async fn test_execute_operation_success_no_fee() {
     });
 
     let gas_limit = 90_000_000u64;
-    let function = ManagedBuffer::<StaticApi>::from("hello");
+    let function = ManagedBuffer::<StaticApi>::from(TESTING_SC_ENDPOINT);
     let args =
         ManagedVec::<StaticApi, ManagedBuffer<StaticApi>>::from(vec![ManagedBuffer::from("1")]);
 
@@ -1847,7 +1848,7 @@ async fn test_execute_operation_success_no_fee() {
             OptionalValue::None,
             payment_vec,
             None,
-            Some("deposit"),
+            Some(DEPOSIT_LOG),
         )
         .await;
 
@@ -1883,7 +1884,7 @@ async fn test_execute_operation_success_no_fee() {
             hash_of_hashes,
             operation,
             None,
-            Some("executedBridgeOp"),
+            Some(EXECUTED_BRIDGE_LOG),
         )
         .await;
 
@@ -1933,7 +1934,7 @@ async fn test_execute_operation_only_transfer_data_no_fee() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
 
     let gas_limit = 90_000_000u64;
-    let function = ManagedBuffer::<StaticApi>::from("hello");
+    let function = ManagedBuffer::<StaticApi>::from(TESTING_SC_ENDPOINT);
     let args =
         ManagedVec::<StaticApi, ManagedBuffer<StaticApi>>::from(vec![ManagedBuffer::from("1")]);
 
@@ -2007,7 +2008,7 @@ async fn test_execute_operation_only_transfer_data_no_fee() {
             hash_of_hashes,
             operation,
             None,
-            Some("executedBridgeOp"),
+            Some(EXECUTED_BRIDGE_LOG),
         )
         .await;
 

@@ -222,7 +222,7 @@ impl BaseSetup {
         payment: &BigUint<StaticApi>,
         opt_preferred_chain: Option<ManagedBuffer<StaticApi>>,
         opt_config: OptionalValue<SovereignConfig<StaticApi>>,
-        error_message: Option<&str>,
+        expected_error_message: Option<&str>,
     ) {
         let response = self
             .world
@@ -235,13 +235,13 @@ impl BaseSetup {
             .returns(ReturnsHandledOrError::new())
             .run();
 
-        self.assert_expected_error_message(response, error_message);
+        self.assert_expected_error_message(response, expected_error_message);
     }
 
     pub fn deploy_phase_two(
         &mut self,
         opt_config: OptionalValue<EsdtSafeConfig<StaticApi>>,
-        error_message: Option<&str>,
+        expected_error_message: Option<&str>,
     ) {
         let response = self
             .world
@@ -253,13 +253,13 @@ impl BaseSetup {
             .returns(ReturnsHandledOrError::new())
             .run();
 
-        self.assert_expected_error_message(response, error_message);
+        self.assert_expected_error_message(response, expected_error_message);
     }
 
     pub fn deploy_phase_three(
         &mut self,
         fee: Option<FeeStruct<StaticApi>>,
-        error_message: Option<&str>,
+        expected_error_message: Option<&str>,
     ) {
         let response = self
             .world
@@ -271,10 +271,10 @@ impl BaseSetup {
             .returns(ReturnsHandledOrError::new())
             .run();
 
-        self.assert_expected_error_message(response, error_message);
+        self.assert_expected_error_message(response, expected_error_message);
     }
 
-    pub fn deploy_phase_four(&mut self, error_message: Option<&str>) {
+    pub fn deploy_phase_four(&mut self, expected_error_message: Option<&str>) {
         let response = self
             .world
             .tx()
@@ -285,6 +285,6 @@ impl BaseSetup {
             .returns(ReturnsHandledOrError::new())
             .run();
 
-        self.assert_expected_error_message(response, error_message);
+        self.assert_expected_error_message(response, expected_error_message);
     }
 }

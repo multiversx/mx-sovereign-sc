@@ -1,8 +1,9 @@
 use common_test_setup::base_setup::init::RegisterTokenArgs;
 use common_test_setup::constants::{
-    CROWD_TOKEN_ID, ESDT_SAFE_ADDRESS, FEE_MARKET_ADDRESS, FEE_TOKEN, FIRST_TEST_TOKEN,
-    HEADER_VERIFIER_ADDRESS, ONE_HUNDRED_MILLION, ONE_HUNDRED_THOUSAND, OWNER_ADDRESS,
-    SECOND_TEST_TOKEN, SOV_TOKEN, TESTING_SC_ADDRESS, USER_ADDRESS,
+    CROWD_TOKEN_ID, DEPOSIT_LOG, ESDT_SAFE_ADDRESS, EXECUTED_BRIDGE_LOG, FEE_MARKET_ADDRESS,
+    FEE_TOKEN, FIRST_TEST_TOKEN, HEADER_VERIFIER_ADDRESS, ONE_HUNDRED_MILLION,
+    ONE_HUNDRED_THOUSAND, OWNER_ADDRESS, SC_CALL_LOG, SECOND_TEST_TOKEN, SOV_TOKEN,
+    TESTING_SC_ADDRESS, TESTING_SC_ENDPOINT, UNPAUSE_CONTRACT_LOG, USER_ADDRESS,
 };
 use cross_chain::storage::CrossChainStorage;
 use cross_chain::{DEFAULT_ISSUE_COST, MAX_GAS_PER_TRANSACTION};
@@ -288,7 +289,7 @@ fn test_deposit_nothing_to_transfer() {
         .common_setup
         .deploy_fee_market(None, ESDT_SAFE_ADDRESS);
     state.set_fee_market_address(FEE_MARKET_ADDRESS);
-    state.complete_setup_phase(None, Some("unpauseContract"));
+    state.complete_setup_phase(None, Some(UNPAUSE_CONTRACT_LOG));
 
     state.deposit(
         USER_ADDRESS.to_managed_address(),
@@ -326,7 +327,7 @@ fn test_complete_setup_phase() {
         egld_payment,
         None,
     );
-    state.complete_setup_phase(None, Some("unpauseContract"));
+    state.complete_setup_phase(None, Some(UNPAUSE_CONTRACT_LOG));
 
     state
         .common_setup
@@ -356,7 +357,7 @@ fn test_complete_setup_phase_already_completed() {
         .common_setup
         .deploy_header_verifier(vec![ScArray::ChainConfig, ScArray::ESDTSafe]);
 
-    state.complete_setup_phase(None, Some("unpauseContract"));
+    state.complete_setup_phase(None, Some(UNPAUSE_CONTRACT_LOG));
     state
         .common_setup
         .world
@@ -391,7 +392,7 @@ fn test_deposit_too_many_tokens() {
         0,
         BigUint::default(),
     );
-    state.complete_setup_phase(None, Some("unpauseContract"));
+    state.complete_setup_phase(None, Some(UNPAUSE_CONTRACT_LOG));
 
     let payments_vec = PaymentsVec::from(vec![esdt_token_payment; 11]);
 
@@ -428,7 +429,7 @@ fn test_deposit_no_transfer_data() {
         .common_setup
         .deploy_fee_market(None, ESDT_SAFE_ADDRESS);
     state.set_fee_market_address(FEE_MARKET_ADDRESS);
-    state.complete_setup_phase(None, Some("unpauseContract"));
+    state.complete_setup_phase(None, Some(UNPAUSE_CONTRACT_LOG));
 
     let esdt_token_payment_one = EsdtTokenPayment::<StaticApi>::new(
         TokenIdentifier::from(FIRST_TEST_TOKEN),
@@ -449,7 +450,7 @@ fn test_deposit_no_transfer_data() {
         OptionalValue::None,
         payments_vec,
         None,
-        Some("deposit"),
+        Some(DEPOSIT_LOG),
     );
 
     let tokens_vec = vec![
@@ -490,7 +491,7 @@ fn test_deposit_gas_limit_too_high() {
         .deploy_fee_market(None, ESDT_SAFE_ADDRESS);
     state.set_fee_market_address(FEE_MARKET_ADDRESS);
     state.common_setup.deploy_testing_sc();
-    state.complete_setup_phase(None, Some("unpauseContract"));
+    state.complete_setup_phase(None, Some(UNPAUSE_CONTRACT_LOG));
 
     let esdt_token_payment_one = EsdtTokenPayment::<StaticApi>::new(
         TokenIdentifier::from(FIRST_TEST_TOKEN),
@@ -507,7 +508,7 @@ fn test_deposit_gas_limit_too_high() {
     let payments_vec = PaymentsVec::from(vec![esdt_token_payment_one, esdt_token_payment_two]);
 
     let gas_limit = 2;
-    let function = ManagedBuffer::<StaticApi>::from("hello");
+    let function = ManagedBuffer::<StaticApi>::from(TESTING_SC_ENDPOINT);
     let args =
         MultiValueEncoded::<StaticApi, ManagedBuffer<StaticApi>>::from(ManagedVec::from(vec![
             ManagedBuffer::from("1"),
@@ -549,7 +550,7 @@ fn test_deposit_max_bridged_amount_exceeded() {
         ManagedVec::new(),
         ManagedVec::new(),
         50_000_000,
-        ManagedVec::from(vec![ManagedBuffer::from("hello")]),
+        ManagedVec::from(vec![ManagedBuffer::from(TESTING_SC_ENDPOINT)]),
         ManagedVec::from(vec![MaxBridgedAmount {
             token_id: TokenIdentifier::from(FIRST_TEST_TOKEN),
             amount: BigUint::default(),
@@ -565,7 +566,7 @@ fn test_deposit_max_bridged_amount_exceeded() {
         .deploy_fee_market(None, ESDT_SAFE_ADDRESS);
     state.common_setup.deploy_testing_sc();
     state.set_fee_market_address(FEE_MARKET_ADDRESS);
-    state.complete_setup_phase(None, Some("unpauseContract"));
+    state.complete_setup_phase(None, Some(UNPAUSE_CONTRACT_LOG));
 
     let esdt_token_payment_one = EsdtTokenPayment::<StaticApi>::new(
         TokenIdentifier::from(FIRST_TEST_TOKEN),
@@ -615,7 +616,7 @@ fn test_deposit_endpoint_banned() {
         ManagedVec::new(),
         ManagedVec::new(),
         50_000_000,
-        ManagedVec::from(vec![ManagedBuffer::from("hello")]),
+        ManagedVec::from(vec![ManagedBuffer::from(TESTING_SC_ENDPOINT)]),
         ManagedVec::new(),
     );
 
@@ -632,7 +633,7 @@ fn test_deposit_endpoint_banned() {
         .deploy_fee_market(None, ESDT_SAFE_ADDRESS);
     state.common_setup.deploy_testing_sc();
     state.set_fee_market_address(FEE_MARKET_ADDRESS);
-    state.complete_setup_phase(None, Some("unpauseContract"));
+    state.complete_setup_phase(None, Some(UNPAUSE_CONTRACT_LOG));
 
     let esdt_token_payment_one = EsdtTokenPayment::<StaticApi>::new(
         TokenIdentifier::from(FIRST_TEST_TOKEN),
@@ -649,7 +650,7 @@ fn test_deposit_endpoint_banned() {
     let payments_vec = PaymentsVec::from(vec![esdt_token_payment_one, esdt_token_payment_two]);
 
     let gas_limit = 2;
-    let function = ManagedBuffer::<StaticApi>::from("hello");
+    let function = ManagedBuffer::<StaticApi>::from(TESTING_SC_ENDPOINT);
     let args =
         MultiValueEncoded::<StaticApi, ManagedBuffer<StaticApi>>::from(ManagedVec::from(vec![
             ManagedBuffer::from("1"),
@@ -700,7 +701,7 @@ fn test_deposit_no_transfer_data_no_fee() {
         .deploy_fee_market(None, ESDT_SAFE_ADDRESS);
     state.common_setup.deploy_testing_sc();
     state.set_fee_market_address(FEE_MARKET_ADDRESS);
-    state.complete_setup_phase(None, Some("unpauseContract"));
+    state.complete_setup_phase(None, Some(UNPAUSE_CONTRACT_LOG));
 
     state.deposit(
         USER_ADDRESS.to_managed_address(),
@@ -730,10 +731,10 @@ fn test_deposit_transfer_data_only_no_fee() {
         .deploy_fee_market(None, ESDT_SAFE_ADDRESS);
     state.common_setup.deploy_testing_sc();
     state.set_fee_market_address(FEE_MARKET_ADDRESS);
-    state.complete_setup_phase(None, Some("unpauseContract"));
+    state.complete_setup_phase(None, Some(UNPAUSE_CONTRACT_LOG));
 
     let gas_limit = 2;
-    let function = ManagedBuffer::<StaticApi>::from("hello");
+    let function = ManagedBuffer::<StaticApi>::from(TESTING_SC_ENDPOINT);
     let args =
         MultiValueEncoded::<StaticApi, ManagedBuffer<StaticApi>>::from(ManagedVec::from(vec![
             ManagedBuffer::from("1"),
@@ -746,7 +747,7 @@ fn test_deposit_transfer_data_only_no_fee() {
         OptionalValue::Some(transfer_data),
         PaymentsVec::new(),
         None,
-        Some("scCall"),
+        Some(SC_CALL_LOG),
     );
 }
 
@@ -785,10 +786,10 @@ fn test_deposit_transfer_data_only_with_fee_nothing_to_transfer() {
         .deploy_fee_market(Some(fee), ESDT_SAFE_ADDRESS);
     state.common_setup.deploy_testing_sc();
     state.set_fee_market_address(FEE_MARKET_ADDRESS);
-    state.complete_setup_phase(None, Some("unpauseContract"));
+    state.complete_setup_phase(None, Some(UNPAUSE_CONTRACT_LOG));
 
     let gas_limit = 2;
-    let function = ManagedBuffer::<StaticApi>::from("hello");
+    let function = ManagedBuffer::<StaticApi>::from(TESTING_SC_ENDPOINT);
     let args =
         MultiValueEncoded::<StaticApi, ManagedBuffer<StaticApi>>::from(ManagedVec::from(vec![
             ManagedBuffer::from("1"),
@@ -846,10 +847,10 @@ fn test_deposit_transfer_data_only_with_fee() {
         .deploy_fee_market(Some(fee), ESDT_SAFE_ADDRESS);
     state.common_setup.deploy_testing_sc();
     state.set_fee_market_address(FEE_MARKET_ADDRESS);
-    state.complete_setup_phase(None, Some("unpauseContract"));
+    state.complete_setup_phase(None, Some(UNPAUSE_CONTRACT_LOG));
 
     let gas_limit = 2;
-    let function = ManagedBuffer::<StaticApi>::from("hello");
+    let function = ManagedBuffer::<StaticApi>::from(TESTING_SC_ENDPOINT);
     let args =
         MultiValueEncoded::<StaticApi, ManagedBuffer<StaticApi>>::from(ManagedVec::from(vec![
             ManagedBuffer::from("1"),
@@ -862,7 +863,7 @@ fn test_deposit_transfer_data_only_with_fee() {
         OptionalValue::Some(transfer_data),
         payments_vec,
         None,
-        Some("scCall"),
+        Some(SC_CALL_LOG),
     );
 
     state.common_setup.check_account_single_esdt(
@@ -914,7 +915,7 @@ fn test_deposit_fee_enabled() {
         .deploy_fee_market(Some(fee), ESDT_SAFE_ADDRESS);
     state.common_setup.deploy_testing_sc();
     state.set_fee_market_address(FEE_MARKET_ADDRESS);
-    state.complete_setup_phase(None, Some("unpauseContract"));
+    state.complete_setup_phase(None, Some(UNPAUSE_CONTRACT_LOG));
 
     let fee_amount = BigUint::from(ONE_HUNDRED_THOUSAND);
 
@@ -940,7 +941,7 @@ fn test_deposit_fee_enabled() {
     ]);
 
     let gas_limit = 2;
-    let function = ManagedBuffer::<StaticApi>::from("hello");
+    let function = ManagedBuffer::<StaticApi>::from(TESTING_SC_ENDPOINT);
     let args =
         MultiValueEncoded::<StaticApi, ManagedBuffer<StaticApi>>::from(ManagedVec::from(vec![
             ManagedBuffer::from("1"),
@@ -953,7 +954,7 @@ fn test_deposit_fee_enabled() {
         OptionalValue::Some(transfer_data),
         payments_vec.clone(),
         None,
-        Some("deposit"),
+        Some(DEPOSIT_LOG),
     );
 
     let expected_amount_token_one =
@@ -1015,7 +1016,7 @@ fn test_deposit_payment_doesnt_cover_fee() {
         .deploy_fee_market(Some(fee), ESDT_SAFE_ADDRESS);
     state.common_setup.deploy_testing_sc();
     state.set_fee_market_address(FEE_MARKET_ADDRESS);
-    state.complete_setup_phase(None, Some("unpauseContract"));
+    state.complete_setup_phase(None, Some(UNPAUSE_CONTRACT_LOG));
 
     let esdt_token_payment_one = EsdtTokenPayment::<StaticApi>::new(
         TokenIdentifier::from(FIRST_TEST_TOKEN),
@@ -1032,7 +1033,7 @@ fn test_deposit_payment_doesnt_cover_fee() {
     let payments_vec = PaymentsVec::from(vec![esdt_token_payment_one, esdt_token_payment_two]);
 
     let gas_limit = 10_000;
-    let function = ManagedBuffer::<StaticApi>::from("hello");
+    let function = ManagedBuffer::<StaticApi>::from(TESTING_SC_ENDPOINT);
     let args =
         MultiValueEncoded::<StaticApi, ManagedBuffer<StaticApi>>::from(ManagedVec::from(vec![
             ManagedBuffer::from("1"),
@@ -1098,7 +1099,7 @@ fn test_deposit_refund() {
         .deploy_fee_market(Some(fee), ESDT_SAFE_ADDRESS);
     state.common_setup.deploy_testing_sc();
     state.set_fee_market_address(FEE_MARKET_ADDRESS);
-    state.complete_setup_phase(None, Some("unpauseContract"));
+    state.complete_setup_phase(None, Some(UNPAUSE_CONTRACT_LOG));
 
     let fee_amount = BigUint::from(ONE_HUNDRED_THOUSAND);
 
@@ -1124,7 +1125,7 @@ fn test_deposit_refund() {
     ]);
 
     let gas_limit = 1;
-    let function = ManagedBuffer::<StaticApi>::from("hello");
+    let function = ManagedBuffer::<StaticApi>::from(TESTING_SC_ENDPOINT);
     let args =
         MultiValueEncoded::<StaticApi, ManagedBuffer<StaticApi>>::from(ManagedVec::from(vec![
             ManagedBuffer::from("1"),
@@ -1137,7 +1138,7 @@ fn test_deposit_refund() {
         OptionalValue::Some(transfer_data),
         payments_vec.clone(),
         None,
-        Some("deposit"),
+        Some(DEPOSIT_LOG),
     );
 
     let expected_balances = vec![
@@ -1175,7 +1176,7 @@ fn test_deposit_success_burn_mechanism() {
         .common_setup
         .deploy_fee_market(None, ESDT_SAFE_ADDRESS);
     state.set_fee_market_address(FEE_MARKET_ADDRESS);
-    state.complete_setup_phase(None, Some("unpauseContract"));
+    state.complete_setup_phase(None, Some(UNPAUSE_CONTRACT_LOG));
 
     state.set_token_burn_mechanism(TRUSTED_TOKEN_IDS[0], None);
 
@@ -1201,7 +1202,7 @@ fn test_deposit_success_burn_mechanism() {
         OptionalValue::None,
         payments_vec,
         None,
-        Some("deposit"),
+        Some(DEPOSIT_LOG),
     );
 
     let expected_tokens = vec![
@@ -1407,7 +1408,7 @@ fn test_register_native_token() {
 fn test_execute_operation_no_chain_config_registered() {
     let mut state = MvxEsdtSafeTestState::new();
     state.common_setup.deploy_mvx_esdt_safe(OptionalValue::None);
-    state.complete_setup_phase(None, Some("unpauseContract"));
+    state.complete_setup_phase(None, Some(UNPAUSE_CONTRACT_LOG));
 
     let payment = OperationEsdtPayment::new(
         TokenIdentifier::from(FIRST_TEST_TOKEN),
@@ -1452,7 +1453,7 @@ fn test_execute_operation_no_chain_config_registered() {
 fn test_execute_operation_no_esdt_safe_registered() {
     let mut state = MvxEsdtSafeTestState::new();
     state.common_setup.deploy_mvx_esdt_safe(OptionalValue::None);
-    state.complete_setup_phase(None, Some("unpauseContract"));
+    state.complete_setup_phase(None, Some(UNPAUSE_CONTRACT_LOG));
 
     let payment = OperationEsdtPayment::new(
         TokenIdentifier::from(FIRST_TEST_TOKEN),
@@ -1500,7 +1501,7 @@ fn test_execute_operation_success() {
     let mut state = MvxEsdtSafeTestState::new();
     state.common_setup.deploy_mvx_esdt_safe(OptionalValue::None);
 
-    state.complete_setup_phase(None, Some("unpauseContract"));
+    state.complete_setup_phase(None, Some(UNPAUSE_CONTRACT_LOG));
 
     let token_data = EsdtTokenData {
         amount: BigUint::from(100u64),
@@ -1510,7 +1511,7 @@ fn test_execute_operation_success() {
     let payment = OperationEsdtPayment::new(TokenIdentifier::from(FIRST_TEST_TOKEN), 0, token_data);
 
     let gas_limit = 1;
-    let function = ManagedBuffer::<StaticApi>::from("hello");
+    let function = ManagedBuffer::<StaticApi>::from(TESTING_SC_ENDPOINT);
     let args =
         ManagedVec::<StaticApi, ManagedBuffer<StaticApi>>::from(vec![ManagedBuffer::from("1")]);
 
@@ -1556,7 +1557,7 @@ fn test_execute_operation_success() {
         &hash_of_hashes,
         &operation,
         None,
-        Some("executedBridgeOp"),
+        Some(EXECUTED_BRIDGE_LOG),
         None,
     );
 
@@ -1588,7 +1589,7 @@ fn test_execute_operation_with_native_token_success() {
         None,
     );
 
-    state.complete_setup_phase(None, Some("unpauseContract"));
+    state.complete_setup_phase(None, Some(UNPAUSE_CONTRACT_LOG));
 
     let token_data = EsdtTokenData {
         amount: BigUint::from(100u64),
@@ -1598,7 +1599,7 @@ fn test_execute_operation_with_native_token_success() {
     let payment = OperationEsdtPayment::new(TokenIdentifier::from(FIRST_TEST_TOKEN), 0, token_data);
 
     let gas_limit = 1;
-    let function = ManagedBuffer::<StaticApi>::from("hello");
+    let function = ManagedBuffer::<StaticApi>::from(TESTING_SC_ENDPOINT);
     let args =
         ManagedVec::<StaticApi, ManagedBuffer<StaticApi>>::from(vec![ManagedBuffer::from("1")]);
 
@@ -1644,7 +1645,7 @@ fn test_execute_operation_with_native_token_success() {
         &hash_of_hashes,
         &operation,
         None,
-        Some("executedBridgeOp"),
+        Some(EXECUTED_BRIDGE_LOG),
         None,
     );
 
@@ -1677,7 +1678,7 @@ fn test_execute_operation_burn_mechanism_without_deposit_cannot_subtract() {
     let egld_payment = BigUint::from(DEFAULT_ISSUE_COST);
 
     state.register_native_token(TRUSTED_TOKEN_IDS[0], token_display_name, egld_payment, None);
-    state.complete_setup_phase(None, Some("unpauseContract"));
+    state.complete_setup_phase(None, Some(UNPAUSE_CONTRACT_LOG));
 
     let token_data = EsdtTokenData {
         amount: BigUint::from(100u64),
@@ -1724,7 +1725,7 @@ fn test_execute_operation_burn_mechanism_without_deposit_cannot_subtract() {
         &hash_of_hashes,
         &operation,
         None,
-        Some("executedBridgeOp"),
+        Some(EXECUTED_BRIDGE_LOG),
         None,
     );
 
@@ -1752,10 +1753,10 @@ fn test_execute_operation_burn_mechanism_without_deposit_cannot_subtract() {
 fn execute_operation_only_transfer_data_no_fee() {
     let mut state = MvxEsdtSafeTestState::new();
     state.deploy_contract_with_roles();
-    state.complete_setup_phase(None, Some("unpauseContract"));
+    state.complete_setup_phase(None, Some(UNPAUSE_CONTRACT_LOG));
 
     let gas_limit = 90_000_000u64;
-    let function = ManagedBuffer::<StaticApi>::from("hello");
+    let function = ManagedBuffer::<StaticApi>::from(TESTING_SC_ENDPOINT);
     let args =
         ManagedVec::<StaticApi, ManagedBuffer<StaticApi>>::from(vec![ManagedBuffer::from("1")]);
 
@@ -1798,7 +1799,7 @@ fn execute_operation_only_transfer_data_no_fee() {
         &hash_of_hashes,
         &operation,
         None,
-        Some("executedBridgeOp"),
+        Some(EXECUTED_BRIDGE_LOG),
         None,
     );
 
@@ -1856,7 +1857,7 @@ fn test_execute_operation_success_burn_mechanism() {
         .common_setup
         .deploy_fee_market(None, ESDT_SAFE_ADDRESS);
     state.set_fee_market_address(FEE_MARKET_ADDRESS);
-    state.complete_setup_phase(None, Some("unpauseContract"));
+    state.complete_setup_phase(None, Some(UNPAUSE_CONTRACT_LOG));
 
     let operations_hashes = MultiValueEncoded::from(ManagedVec::from(vec![operation_hash.clone()]));
 
@@ -1865,7 +1866,7 @@ fn test_execute_operation_success_burn_mechanism() {
         OptionalValue::None,
         PaymentsVec::from(vec![payment]),
         None,
-        Some("deposit"),
+        Some(DEPOSIT_LOG),
     );
 
     state.common_setup.register_operation(
@@ -1885,7 +1886,7 @@ fn test_execute_operation_success_burn_mechanism() {
         &hash_of_hashes,
         &operation,
         None,
-        Some("executedBridgeOp"),
+        Some(EXECUTED_BRIDGE_LOG),
         None,
     );
 
@@ -1953,7 +1954,7 @@ fn test_deposit_execute_switch_mechanism() {
         .common_setup
         .deploy_fee_market(None, ESDT_SAFE_ADDRESS);
     state.set_fee_market_address(FEE_MARKET_ADDRESS);
-    state.complete_setup_phase(None, Some("unpauseContract"));
+    state.complete_setup_phase(None, Some(UNPAUSE_CONTRACT_LOG));
 
     let deposited_trusted_token_payment_amount = 1000u64;
     let deposit_trusted_token_payment_token_data = EsdtTokenData {
@@ -1971,7 +1972,7 @@ fn test_deposit_execute_switch_mechanism() {
         OptionalValue::None,
         PaymentsVec::from(vec![deposit_trusted_token_payment.clone()]),
         None,
-        Some("deposit"),
+        Some(DEPOSIT_LOG),
     );
 
     state.common_setup.check_account_single_esdt(
@@ -2029,7 +2030,7 @@ fn test_deposit_execute_switch_mechanism() {
         &hash_of_hashes_one,
         &operation_one,
         None,
-        Some("executedBridgeOp"),
+        Some(EXECUTED_BRIDGE_LOG),
         None,
     );
 
@@ -2053,7 +2054,7 @@ fn test_deposit_execute_switch_mechanism() {
         OptionalValue::None,
         PaymentsVec::from(vec![deposit_trusted_token_payment.clone()]),
         None,
-        Some("deposit"),
+        Some(DEPOSIT_LOG),
     );
 
     expected_deposited_amount += deposited_trusted_token_payment_amount;
@@ -2105,7 +2106,7 @@ fn test_deposit_execute_switch_mechanism() {
         &hash_of_hashes_two,
         &operation_two,
         None,
-        Some("executedBridgeOp"),
+        Some(EXECUTED_BRIDGE_LOG),
         None,
     );
 
@@ -2135,7 +2136,7 @@ fn test_deposit_execute_switch_mechanism() {
         OptionalValue::None,
         PaymentsVec::from(vec![deposit_trusted_token_payment]),
         None,
-        Some("deposit"),
+        Some(DEPOSIT_LOG),
     );
 
     expected_deposited_amount += deposited_trusted_token_payment_amount;
@@ -2184,10 +2185,10 @@ fn test_execute_operation_no_payments() {
         None,
     );
 
-    state.complete_setup_phase(None, Some("unpauseContract"));
+    state.complete_setup_phase(None, Some(UNPAUSE_CONTRACT_LOG));
 
     let gas_limit = 1;
-    let function = ManagedBuffer::<StaticApi>::from("hello");
+    let function = ManagedBuffer::<StaticApi>::from(TESTING_SC_ENDPOINT);
     let args =
         ManagedVec::<StaticApi, ManagedBuffer<StaticApi>>::from(vec![ManagedBuffer::from("1")]);
 
@@ -2236,7 +2237,7 @@ fn test_execute_operation_no_payments() {
         &hash_of_hashes,
         &operation,
         None,
-        Some("executedBridgeOp"),
+        Some(EXECUTED_BRIDGE_LOG),
         None,
     );
 
@@ -2282,7 +2283,7 @@ fn test_execute_operation_no_payments_failed_event() {
         None,
     );
 
-    state.complete_setup_phase(None, Some("unpauseContract"));
+    state.complete_setup_phase(None, Some(UNPAUSE_CONTRACT_LOG));
 
     let gas_limit = 1;
     let function = ManagedBuffer::<StaticApi>::from("WRONG_ENDPOINT");
@@ -2322,7 +2323,7 @@ fn test_execute_operation_no_payments_failed_event() {
         &hash_of_hashes,
         &operation,
         None,
-        Some("executedBridgeOp"),
+        Some(EXECUTED_BRIDGE_LOG),
         Some("invalid function (not found)"),
     );
 
@@ -2348,7 +2349,7 @@ fn test_set_token_burn_mechanism_no_roles() {
     state
         .common_setup
         .deploy_header_verifier(vec![ScArray::ChainConfig, ScArray::ESDTSafe]);
-    state.complete_setup_phase(None, Some("unpauseContract"));
+    state.complete_setup_phase(None, Some(UNPAUSE_CONTRACT_LOG));
 
     state.set_token_burn_mechanism("WEGLD", Some(MINT_AND_BURN_ROLES_NOT_FOUND));
 }
@@ -2368,7 +2369,7 @@ fn test_set_token_burn_mechanism_token_not_trusted() {
     state
         .common_setup
         .deploy_header_verifier(vec![ScArray::ChainConfig, ScArray::ESDTSafe]);
-    state.complete_setup_phase(None, Some("unpauseContract"));
+    state.complete_setup_phase(None, Some(UNPAUSE_CONTRACT_LOG));
 
     state.set_token_burn_mechanism(FIRST_TEST_TOKEN.as_str(), Some(TOKEN_ID_IS_NOT_TRUSTED));
 }
@@ -2388,7 +2389,7 @@ fn test_set_token_burn_mechanism() {
     state
         .common_setup
         .deploy_header_verifier(vec![ScArray::ChainConfig, ScArray::ESDTSafe]);
-    state.complete_setup_phase(None, Some("unpauseContract"));
+    state.complete_setup_phase(None, Some(UNPAUSE_CONTRACT_LOG));
 
     state.set_token_burn_mechanism(TRUSTED_TOKEN_IDS[0], None);
 
@@ -2426,7 +2427,7 @@ fn test_set_token_lock_mechanism() {
     state
         .common_setup
         .deploy_header_verifier(vec![ScArray::ChainConfig, ScArray::ESDTSafe]);
-    state.complete_setup_phase(None, Some("unpauseContract"));
+    state.complete_setup_phase(None, Some(UNPAUSE_CONTRACT_LOG));
 
     state.set_token_burn_mechanism(TRUSTED_TOKEN_IDS[0], None);
     state.set_token_lock_mechanism(TRUSTED_TOKEN_IDS[0], None);
@@ -2463,7 +2464,7 @@ fn test_set_token_lock_mechanism_token_from_sovereign() {
     state
         .common_setup
         .deploy_header_verifier(vec![ScArray::ChainConfig, ScArray::ESDTSafe]);
-    state.complete_setup_phase(None, Some("unpauseContract"));
+    state.complete_setup_phase(None, Some(UNPAUSE_CONTRACT_LOG));
 
     state.set_token_burn_mechanism(TRUSTED_TOKEN_IDS[0], None);
 
@@ -2528,7 +2529,7 @@ fn test_update_config_operation_not_registered() {
         .common_setup
         .deploy_header_verifier(vec![ScArray::ChainConfig, ScArray::ESDTSafe]);
 
-    state.complete_setup_phase(None, Some("unpauseContract"));
+    state.complete_setup_phase(None, Some(UNPAUSE_CONTRACT_LOG));
 
     let new_config = EsdtSafeConfig {
         token_whitelist: ManagedVec::new(),
@@ -2568,7 +2569,7 @@ fn test_update_config_invalid_config() {
         .common_setup
         .complete_header_verifier_setup_phase(None);
 
-    state.complete_setup_phase(None, Some("unpauseContract"));
+    state.complete_setup_phase(None, Some(UNPAUSE_CONTRACT_LOG));
 
     let new_config = EsdtSafeConfig {
         max_tx_gas_limit: MAX_GAS_PER_TRANSACTION + 1,
@@ -2612,7 +2613,7 @@ fn test_update_config() {
         .common_setup
         .complete_header_verifier_setup_phase(None);
 
-    state.complete_setup_phase(None, Some("unpauseContract"));
+    state.complete_setup_phase(None, Some(UNPAUSE_CONTRACT_LOG));
 
     let new_config = EsdtSafeConfig {
         max_tx_gas_limit: 100_000,
@@ -2629,7 +2630,7 @@ fn test_update_config() {
         MultiValueEncoded::from_iter(vec![config_hash]),
     );
 
-    state.update_esdt_safe_config(&hash_of_hashes, new_config, None, Some("executedBridgeOp"));
+    state.update_esdt_safe_config(&hash_of_hashes, new_config, None, Some(EXECUTED_BRIDGE_LOG));
 
     state
         .common_setup

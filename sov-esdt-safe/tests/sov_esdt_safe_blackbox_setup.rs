@@ -122,7 +122,7 @@ impl SovEsdtSafeTestState {
         opt_transfer_data: OptionalValueTransferDataTuple<StaticApi>,
         payment: PaymentsVec<StaticApi>,
         expected_error_message: Option<&str>,
-        expected_custom_log: Option<&str>,
+        expected_log: Option<&str>,
     ) {
         let (logs, response) = self
             .common_setup
@@ -141,7 +141,7 @@ impl SovEsdtSafeTestState {
             .assert_expected_error_message(response, expected_error_message);
 
         self.common_setup
-            .assert_expected_log(logs, expected_custom_log);
+            .assert_expected_log(logs, expected_log);
     }
 
     pub fn set_fee_market_address(&mut self, fee_market_address: TestSCAddress) {
@@ -161,7 +161,7 @@ impl SovEsdtSafeTestState {
         opt_transfer_data: OptionalValueTransferDataTuple<StaticApi>,
         payment: PaymentsVec<StaticApi>,
         expected_error_message: Option<&str>,
-        expected_custom_log: Option<&str>,
+        expected_log: Option<&str>,
     ) {
         let (logs, response) = self
             .common_setup
@@ -180,6 +180,6 @@ impl SovEsdtSafeTestState {
             .assert_expected_error_message(response, expected_error_message);
 
         self.common_setup
-            .assert_expected_log(logs, expected_custom_log);
+            .assert_expected_log(logs, expected_log);
     }
 }

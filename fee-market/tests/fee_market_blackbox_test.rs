@@ -1,6 +1,6 @@
 use common_test_setup::constants::{
-    ESDT_SAFE_ADDRESS, FEE_MARKET_ADDRESS, FIRST_TEST_TOKEN, OWNER_ADDRESS, OWNER_BALANCE,
-    SECOND_TEST_TOKEN, USER_ADDRESS, WRONG_TOKEN_ID,
+    ESDT_SAFE_ADDRESS, EXECUTED_BRIDGE_LOG, FEE_MARKET_ADDRESS, FIRST_TEST_TOKEN, OWNER_ADDRESS,
+    OWNER_BALANCE, SECOND_TEST_TOKEN, USER_ADDRESS, WRONG_TOKEN_ID,
 };
 use error_messages::{
     CALLER_NOT_OWNER, CURRENT_OPERATION_NOT_REGISTERED, INVALID_FEE, INVALID_FEE_TYPE,
@@ -237,7 +237,7 @@ fn test_set_fee() {
         MultiValueEncoded::from_iter(vec![fee_hash]),
     );
 
-    state.set_fee(&hash_of_hashes, &fee, None, Some("executedBridgeOp"));
+    state.set_fee(&hash_of_hashes, &fee, None, Some(EXECUTED_BRIDGE_LOG));
 
     state
         .common_setup
@@ -334,7 +334,7 @@ fn test_remove_fee_register_separate_operations() {
         &register_fee_hash_of_hashes,
         &fee,
         None,
-        Some("executedBridgeOp"),
+        Some(EXECUTED_BRIDGE_LOG),
     );
 
     state
@@ -368,7 +368,7 @@ fn test_remove_fee_register_separate_operations() {
         &remove_fee_hash_of_hashes,
         FIRST_TEST_TOKEN,
         None,
-        Some("executedBridgeOp"),
+        Some(EXECUTED_BRIDGE_LOG),
     );
 
     state
@@ -443,7 +443,7 @@ fn test_remove_fee_register_with_one_hash_of_hashes() {
         MultiValueEncoded::from_iter(vec![remove_fee_hash, register_fee_hash]),
     );
 
-    state.set_fee(&hash_of_hashes, &fee, None, Some("executedBridgeOp"));
+    state.set_fee(&hash_of_hashes, &fee, None, Some(EXECUTED_BRIDGE_LOG));
 
     state
         .common_setup
@@ -460,7 +460,7 @@ fn test_remove_fee_register_with_one_hash_of_hashes() {
         &hash_of_hashes,
         FIRST_TEST_TOKEN,
         None,
-        Some("executedBridgeOp"),
+        Some(EXECUTED_BRIDGE_LOG),
     );
 
     state
@@ -669,7 +669,7 @@ fn distribute_fees() {
         &hash_of_hashes,
         vec![address_pair_tuple],
         None,
-        Some("executedBridgeOp"),
+        Some(EXECUTED_BRIDGE_LOG),
     );
 
     state.common_setup.check_account_single_esdt(

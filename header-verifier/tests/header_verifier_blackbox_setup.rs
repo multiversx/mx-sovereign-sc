@@ -77,7 +77,7 @@ impl HeaderVerifierTestState {
         caller: TestSCAddress,
         hash_of_hashes: &ManagedBuffer<StaticApi>,
         operation_hash: &ManagedBuffer<StaticApi>,
-        expected_result: Option<&str>,
+        expected_error_message: Option<&str>,
     ) {
         let response = self
             .common_setup
@@ -90,13 +90,8 @@ impl HeaderVerifierTestState {
             .returns(ReturnsHandledOrError::new())
             .run();
 
-        match response {
-            Ok(_) => assert!(
-                expected_result.is_none(),
-                "Transaction was successful, but expected error"
-            ),
-            Err(error) => assert_eq!(expected_result, Some(error.message.as_str())),
-        };
+        self.common_setup
+            .assert_expected_error_message(response, expected_error_message);
     }
 
     pub fn lock_operation_hash(
@@ -104,7 +99,7 @@ impl HeaderVerifierTestState {
         caller: TestSCAddress,
         hash_of_hashes: &ManagedBuffer<StaticApi>,
         operation_hash: &ManagedBuffer<StaticApi>,
-        expected_result: Option<&str>,
+        expected_error_message: Option<&str>,
     ) {
         let response = self
             .common_setup
@@ -117,13 +112,8 @@ impl HeaderVerifierTestState {
             .returns(ReturnsHandledOrError::new())
             .run();
 
-        match response {
-            Ok(_) => assert!(
-                expected_result.is_none(),
-                "Transaction was successful, but expected error"
-            ),
-            Err(error) => assert_eq!(expected_result, Some(error.message.as_str())),
-        };
+        self.common_setup
+            .assert_expected_error_message(response, expected_error_message);
     }
 
     pub fn change_validator_set(
@@ -132,7 +122,7 @@ impl HeaderVerifierTestState {
         hash_of_hashes: &ManagedBuffer<StaticApi>,
         operation_hash: &ManagedBuffer<StaticApi>,
         expected_error_message: Option<&str>,
-        expected_custom_log: Option<&str>,
+        expected_log: Option<&str>,
     ) {
         let (logs, response) = self
             .common_setup
@@ -157,7 +147,7 @@ impl HeaderVerifierTestState {
             .assert_expected_error_message(response, expected_error_message);
 
         self.common_setup
-            .assert_expected_log(logs, expected_custom_log);
+            .assert_expected_log(logs, expected_log);
     }
 
     pub fn generate_bridge_operation_struct(

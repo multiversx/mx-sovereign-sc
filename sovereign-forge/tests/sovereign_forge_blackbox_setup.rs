@@ -76,7 +76,7 @@ impl SovereignForgeTestState {
         &mut self,
         shard_id: u32,
         token_handler_address: TestSCAddress,
-        error_message: Option<&str>,
+        expected_error_message: Option<&str>,
     ) {
         let response = self
             .common_setup
@@ -90,14 +90,14 @@ impl SovereignForgeTestState {
             .run();
 
         self.common_setup
-            .assert_expected_error_message(response, error_message);
+            .assert_expected_error_message(response, expected_error_message);
     }
 
     pub fn register_chain_factory(
         &mut self,
         shard_id: u32,
         chain_factory_address: TestSCAddress,
-        error_message: Option<&str>,
+        expected_error_message: Option<&str>,
     ) {
         let response = self
             .common_setup
@@ -111,7 +111,7 @@ impl SovereignForgeTestState {
             .run();
 
         self.common_setup
-            .assert_expected_error_message(response, error_message);
+            .assert_expected_error_message(response, expected_error_message);
     }
 
     pub fn update_sovereign_config(
@@ -194,7 +194,7 @@ impl SovereignForgeTestState {
         }
     }
 
-    pub fn complete_setup_phase(&mut self, error_message: Option<&str>) {
+    pub fn complete_setup_phase(&mut self, expected_error_message: Option<&str>) {
         let response = self
             .common_setup
             .world
@@ -207,7 +207,7 @@ impl SovereignForgeTestState {
             .run();
 
         self.common_setup
-            .assert_expected_error_message(response, error_message);
+            .assert_expected_error_message(response, expected_error_message);
     }
 
     pub fn get_smart_contract_address_from_sovereign_forge(

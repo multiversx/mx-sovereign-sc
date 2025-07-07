@@ -78,7 +78,7 @@ impl TokenHandlerTestState {
         opt_transfer_data: Option<TransferData<StaticApi>>,
         to: ManagedAddress<StaticApi>,
         tokens: MultiValueEncoded<StaticApi, OperationEsdtPayment<StaticApi>>,
-        error_message: Option<&str>,
+        expected_error_message: Option<&str>,
     ) {
         let response = match esdt_payment {
             Option::Some(payment) => self
@@ -104,13 +104,13 @@ impl TokenHandlerTestState {
                 .run(),
         };
         self.common_setup
-            .assert_expected_error_message(response, error_message);
+            .assert_expected_error_message(response, expected_error_message);
     }
 
     pub fn whitelist_caller(
         &mut self,
         enshrine_address: TestSCAddress,
-        error_message: Option<&str>,
+        expected_error_message: Option<&str>,
     ) {
         let response = self
             .common_setup
@@ -124,7 +124,7 @@ impl TokenHandlerTestState {
             .run();
 
         self.common_setup
-            .assert_expected_error_message(response, error_message);
+            .assert_expected_error_message(response, expected_error_message);
     }
 
     pub fn setup_payments(

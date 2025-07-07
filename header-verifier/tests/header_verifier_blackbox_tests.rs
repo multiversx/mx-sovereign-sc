@@ -1,5 +1,5 @@
 use common_test_setup::constants::{
-    CHAIN_CONFIG_ADDRESS, ENSHRINE_SC_ADDRESS, HEADER_VERIFIER_ADDRESS,
+    CHAIN_CONFIG_ADDRESS, ENSHRINE_SC_ADDRESS, EXECUTED_BRIDGE_LOG, HEADER_VERIFIER_ADDRESS,
 };
 use error_messages::{
     CALLER_NOT_FROM_CURRENT_SOVEREIGN, CURRENT_OPERATION_ALREADY_IN_EXECUTION,
@@ -476,7 +476,7 @@ fn test_change_validator_set() {
         &hash_of_hashes,
         &operation_hash,
         None,
-        Some("executedBridgeOp"),
+        Some(EXECUTED_BRIDGE_LOG),
     );
 }
 
