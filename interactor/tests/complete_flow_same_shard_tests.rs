@@ -61,6 +61,7 @@ async fn test_deploy_sovereign_forge_cs() {
 /// ### EXPECTED
 /// Deposit is successful and tokens are transferred to the mvx-esdt-safe-sc
 #[tokio::test]
+#[serial]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn test_complete_deposit_flow() {
     let mut chain_interactor = SovereignForgeInteract::new(Config::chain_simulator_config()).await;
@@ -464,7 +465,7 @@ async fn test_complete_flow_execute_operation_success_with_fee() {
     let expected_tokens_wallet = vec![
         chain_interactor.custom_amount_tokens(
             chain_interactor.state.get_first_token_id_string(),
-            ONE_THOUSAND_TOKENS - ONE_HUNDRED_TOKENS,
+            ONE_THOUSAND_TOKENS - TEN_TOKENS,
         ),
         chain_interactor.thousand_tokens(chain_interactor.state.get_second_token_id_string()),
         chain_interactor.custom_amount_tokens(
@@ -773,7 +774,7 @@ async fn test_complete_flow_update_esdt_safe_config() {
         .await;
 
     chain_interactor
-        .update_esdt_safe_config(hash_of_hashes, new_esdt_safe_config)
+        .update_esdt_safe_config(hash_of_hashes, new_esdt_safe_config, shard)
         .await;
 
     let wanted_key_encoded = hex::encode(ESDT_SAFE_CONFIG_STORAGE_KEY);
@@ -782,7 +783,7 @@ async fn test_complete_flow_update_esdt_safe_config() {
         .check_account_storage(
             chain_interactor
                 .state
-                .current_mvx_esdt_safe_contract_address()
+                .get_mvx_esdt_safe_address(shard)
                 .clone()
                 .to_address(),
             wanted_key_encoded.as_str(),
@@ -839,7 +840,7 @@ async fn test_complete_flow_set_and_remove_fee() {
         .await;
 
     chain_interactor
-        .set_fee_after_setup_phase(hash_of_hashes.clone(), fee)
+        .set_fee_after_setup_phase(hash_of_hashes.clone(), fee, shard)
         .await;
 
     let wanted_key_encoded = hex::encode(TOKEN_FEE_STORAGE_KEY);
@@ -879,6 +880,7 @@ async fn test_complete_flow_set_and_remove_fee() {
         .remove_fee_after_setup_phase(
             remove_fee_hash_of_hashes,
             chain_interactor.state.get_fee_token_id(),
+            shard,
         )
         .await;
 
@@ -1197,8 +1199,8 @@ async fn test_execute_operation_success_no_fee_transfer_sft() {
         .check_testing_sc_balance_is_empty(shard)
         .await;
 
-    let expected_second_user_balance = vec![chain_interactor
-        .custom_amount_tokens(sft_token.token_id.clone(), ONE_THOUSAND_TOKENS - TEN_TOKENS)];
+    let expected_second_user_balance =
+        vec![chain_interactor.custom_amount_tokens(sft_token.token_id.clone(), TEN_TOKENS)];
     chain_interactor
         .check_address_balance(
             &Bech32Address::from(chain_interactor.second_user_address.clone()),
@@ -1355,10 +1357,8 @@ async fn test_execute_operation_success_no_fee_transfer_meta_esdt() {
         .check_testing_sc_balance_is_empty(shard)
         .await;
 
-    let expected_second_user_balance = vec![chain_interactor.custom_amount_tokens(
-        meta_esdt_token.token_id.clone(),
-        ONE_THOUSAND_TOKENS - TEN_TOKENS,
-    )];
+    let expected_second_user_balance =
+        vec![chain_interactor.custom_amount_tokens(meta_esdt_token.token_id.clone(), TEN_TOKENS)];
     chain_interactor
         .check_address_balance(
             &Bech32Address::from(chain_interactor.second_user_address.clone()),

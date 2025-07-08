@@ -376,7 +376,7 @@ pub trait CommonInteractorTrait {
         caller: Address,
         chain_id: String,
         opt_config: OptionalValue<EsdtSafeConfig<StaticApi>>,
-    ) -> Bech32Address {
+    ) {
         let new_address = self
             .interactor()
             .tx()
@@ -396,8 +396,6 @@ pub trait CommonInteractorTrait {
                 address: new_address_bech32.clone(),
                 chain_id,
             });
-
-        new_address_bech32
     }
 
     async fn deploy_fee_market(
@@ -406,7 +404,7 @@ pub trait CommonInteractorTrait {
         chain_id: String,
         esdt_safe_address: Bech32Address,
         fee: Option<FeeStruct<StaticApi>>,
-    ) -> Bech32Address {
+    ) {
         let new_address = self
             .interactor()
             .tx()
@@ -425,10 +423,9 @@ pub trait CommonInteractorTrait {
             address: new_address_bech32.clone(),
             chain_id,
         });
-        new_address_bech32
     }
 
-    async fn deploy_testing_sc(&mut self, caller: Address, chain_id: String) -> Bech32Address {
+    async fn deploy_testing_sc(&mut self, caller: Address, chain_id: String) {
         let new_address = self
             .interactor()
             .tx()
@@ -447,8 +444,6 @@ pub trait CommonInteractorTrait {
             address: new_address_bech32.clone(),
             chain_id,
         });
-
-        new_address_bech32
     }
 
     async fn deploy_token_handler(&mut self, caller: Address, chain_id: String) {
@@ -700,12 +695,10 @@ pub trait CommonInteractorTrait {
         &mut self,
         hash_of_hashes: ManagedBuffer<StaticApi>,
         new_config: EsdtSafeConfig<StaticApi>,
+        shard: u32,
     ) {
         let bridge_service = self.bridge_service().clone();
-        let current_mvx_esdt_safe_address = self
-            .state()
-            .current_mvx_esdt_safe_contract_address()
-            .clone();
+        let current_mvx_esdt_safe_address = self.state().get_mvx_esdt_safe_address(shard).clone();
 
         self.interactor()
             .tx()
@@ -723,9 +716,10 @@ pub trait CommonInteractorTrait {
         &mut self,
         hash_of_hashes: ManagedBuffer<StaticApi>,
         fee: FeeStruct<StaticApi>,
+        shard: u32,
     ) {
         let bridge_service = self.bridge_service().clone();
-        let current_fee_market_address = self.state().current_fee_market_address().clone();
+        let current_fee_market_address = self.state().get_fee_market_address(shard).clone();
 
         self.interactor()
             .tx()
@@ -743,9 +737,10 @@ pub trait CommonInteractorTrait {
         &mut self,
         hash_of_hashes: ManagedBuffer<StaticApi>,
         base_token: TokenIdentifier<StaticApi>,
+        shard: u32,
     ) {
         let bridge_service = self.bridge_service().clone();
-        let current_fee_market_address = self.state().current_fee_market_address().clone();
+        let current_fee_market_address = self.state().get_fee_market_address(shard).clone();
 
         self.interactor()
             .tx()
@@ -847,8 +842,6 @@ pub trait CommonInteractorTrait {
             .await;
 
         self.assert_expected_error_message(response, expected_error_message);
-
-        println!("Logs: {:?}", logs);
 
         self.assert_expected_log(logs, expected_log);
     }
@@ -1153,7 +1146,7 @@ pub trait CommonInteractorTrait {
                 match balances.get(&token_id) {
                     None => {}
                     Some(esdt_balance) => {
-                        panic!("Expected token '{}' to be absent (balance 0), but found it with balance: {}", token_id, esdt_balance.balance);
+                        panic!("For address: {} -> Expected token '{}' to be absent (balance 0), but found it with balance: {}", address, token_id, esdt_balance.balance);
                     }
                 }
                 continue;
@@ -1164,8 +1157,8 @@ pub trait CommonInteractorTrait {
                 Some((token_id, esdt_balance)) => {
                     if expected_amount == 0u64 {
                         panic!(
-                        "Expected token starting with '{}' to be absent, but found: {} with balance: {}",
-                        token_id, token_id, esdt_balance.balance);
+                        "For address: {} -> Expected token starting with '{}' to be absent, but found: {} with balance: {}",
+                        address, token_id, token_id, esdt_balance.balance);
                     }
 
                     let actual_amount = BigUint::from(
@@ -1176,7 +1169,8 @@ pub trait CommonInteractorTrait {
                     assert_eq!(
                         actual_amount,
                         expected_amount,
-                        "\nBalance mismatch for token {}:\nexpected: {}\nfound:    {}",
+                        "\nFor address: {} -> Balance mismatch for token {}:\nexpected: {}\nfound:    {}",
+                        address,
                         token_id,
                         expected_amount.to_display(),
                         esdt_balance.balance
@@ -1184,7 +1178,8 @@ pub trait CommonInteractorTrait {
                 }
                 None => {
                     panic!(
-                        "Expected token starting with '{}' with balance {}, but none was found",
+                        "For address: {} -> Expected token starting with '{}' with balance {}, but none was found",
+                        address,
                         token_id,
                         expected_amount.to_display()
                     );

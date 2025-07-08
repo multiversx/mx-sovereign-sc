@@ -16,11 +16,11 @@ const NUMBER_OF_SHARDS: u32 = 3;
 pub trait UtilsModule: super::storage::StorageModule {
     fn require_initialization_phase_complete(&self) {
         for shard_id in 0..NUMBER_OF_SHARDS {
-            // require!(
-            //     !self.chain_factories(shard_id).is_empty(),
-            //     "There is no Chain-Factory contract assigned for shard {}",
-            //     shard_id
-            // );
+            require!(
+                !self.chain_factories(shard_id).is_empty(),
+                "There is no Chain-Factory contract assigned for shard {}",
+                shard_id
+            );
             // TODO:
             // require!(
             //     !self.token_handlers(shard_id).is_empty(),

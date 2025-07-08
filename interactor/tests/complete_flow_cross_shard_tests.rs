@@ -1,8 +1,8 @@
 use common_interactor::common_sovereign_interactor::CommonInteractorTrait;
 use common_interactor::interactor_config::Config;
 use common_test_setup::constants::{
-    DEPLOY_COST, DEPOSIT_LOG, EXECUTED_BRIDGE_LOG, ONE_HUNDRED_TOKENS, ONE_THOUSAND_TOKENS,
-    OPERATION_HASH_STATUS_STORAGE_KEY, SHARD_0, SHARD_2, TEN_TOKENS, TESTING_SC_ENDPOINT,
+    DEPLOY_COST, EXECUTED_BRIDGE_LOG, ONE_HUNDRED_TOKENS, ONE_THOUSAND_TOKENS,
+    OPERATION_HASH_STATUS_STORAGE_KEY, SHARD_0, SHARD_2, TESTING_SC_ENDPOINT,
 };
 use header_verifier::OperationHashStatus;
 use multiversx_sc::{
@@ -24,6 +24,8 @@ use structs::{
     fee::{FeeStruct, FeeType},
     operation::{Operation, OperationData, OperationEsdtPayment, TransferData},
 };
+
+//TODO: Change expected log to be DEPOSIT_LOG and EXECUTED_BRIDGE_LOG when the framework fix is implemented
 
 /// ### TEST
 /// S-FORGE_COMPLETE-DEPOSIT-FLOW_OK
@@ -73,7 +75,7 @@ async fn test_complete_deposit_flow_no_fee_different_shard() {
             OptionalValue::None,
             payments_vec,
             None,
-            Some(DEPOSIT_LOG),
+            Some(&chain_interactor.state.get_first_token_id_string()),
         )
         .await;
 
@@ -181,7 +183,7 @@ async fn test_complete_deposit_flow_only_transfer_data_no_fee_different_shard() 
             OptionalValue::Some(transfer_data),
             payments_vec,
             None,
-            Some(DEPOSIT_LOG),
+            Some(&chain_interactor.state.get_first_token_id_string()),
         )
         .await;
 
@@ -401,7 +403,7 @@ async fn test_execute_operation_success_no_fee_different_shard_transfer_nft() {
             OptionalValue::None,
             payment_vec,
             None,
-            Some(DEPOSIT_LOG),
+            Some(&chain_interactor.state.get_nft_token_id_string()),
         )
         .await;
 
@@ -446,7 +448,7 @@ async fn test_execute_operation_success_no_fee_different_shard_transfer_nft() {
             hash_of_hashes,
             operation,
             None,
-            Some(EXECUTED_BRIDGE_LOG),
+            Some(&chain_interactor.state.get_nft_token_id_string()),
         )
         .await;
 
@@ -512,7 +514,7 @@ async fn test_execute_operation_success_no_fee_different_shard_transfer_sft() {
     let shard = SHARD_0;
 
     let token_data = EsdtTokenData {
-        amount: BigUint::from(TEN_TOKENS),
+        amount: BigUint::from(ONE_HUNDRED_TOKENS),
         ..Default::default()
     };
 
@@ -551,7 +553,7 @@ async fn test_execute_operation_success_no_fee_different_shard_transfer_sft() {
     payment_vec.push(EsdtTokenPayment {
         token_identifier: TokenIdentifier::from_esdt_bytes(sft_token.token_id.clone()),
         token_nonce: sft_token.nonce,
-        amount: BigUint::from(TEN_TOKENS),
+        amount: BigUint::from(ONE_HUNDRED_TOKENS),
     });
 
     chain_interactor
@@ -564,7 +566,7 @@ async fn test_execute_operation_success_no_fee_different_shard_transfer_sft() {
             OptionalValue::None,
             payment_vec,
             None,
-            Some(DEPOSIT_LOG),
+            Some(&chain_interactor.state.get_sft_token_id_string()),
         )
         .await;
 
@@ -600,7 +602,7 @@ async fn test_execute_operation_success_no_fee_different_shard_transfer_sft() {
             hash_of_hashes,
             operation,
             None,
-            Some(EXECUTED_BRIDGE_LOG),
+            Some(&chain_interactor.state.get_sft_token_id_string()),
         )
         .await;
 
@@ -624,7 +626,7 @@ async fn test_execute_operation_success_no_fee_different_shard_transfer_sft() {
         chain_interactor.one_token(chain_interactor.state.get_dynamic_nft_token_id_string()),
         chain_interactor.custom_amount_tokens(
             chain_interactor.state.get_sft_token_id_string(),
-            ONE_THOUSAND_TOKENS - TEN_TOKENS,
+            ONE_THOUSAND_TOKENS - ONE_HUNDRED_TOKENS,
         ),
     ];
     chain_interactor
@@ -644,8 +646,8 @@ async fn test_execute_operation_success_no_fee_different_shard_transfer_sft() {
         .check_testing_sc_balance_is_empty(shard)
         .await;
 
-    let expected_second_user_balance = vec![chain_interactor
-        .custom_amount_tokens(sft_token.token_id.clone(), ONE_THOUSAND_TOKENS - TEN_TOKENS)];
+    let expected_second_user_balance =
+        vec![chain_interactor.custom_amount_tokens(sft_token.token_id.clone(), ONE_HUNDRED_TOKENS)];
     chain_interactor
         .check_address_balance(
             &Bech32Address::from(chain_interactor.second_user_address.clone()),
@@ -670,7 +672,7 @@ async fn test_execute_operation_success_no_fee_different_shard_transfer_meta_esd
     let shard = SHARD_2;
 
     let token_data = EsdtTokenData {
-        amount: BigUint::from(TEN_TOKENS),
+        amount: BigUint::from(ONE_HUNDRED_TOKENS),
         ..Default::default()
     };
 
@@ -709,7 +711,7 @@ async fn test_execute_operation_success_no_fee_different_shard_transfer_meta_esd
     payment_vec.push(EsdtTokenPayment {
         token_identifier: TokenIdentifier::from_esdt_bytes(meta_esdt_token.token_id.clone()),
         token_nonce: meta_esdt_token.nonce,
-        amount: BigUint::from(TEN_TOKENS),
+        amount: BigUint::from(ONE_HUNDRED_TOKENS),
     });
 
     chain_interactor
@@ -722,7 +724,7 @@ async fn test_execute_operation_success_no_fee_different_shard_transfer_meta_esd
             OptionalValue::None,
             payment_vec,
             None,
-            Some(DEPOSIT_LOG),
+            Some(&chain_interactor.state.get_meta_esdt_token_id_string()),
         )
         .await;
 
@@ -758,7 +760,7 @@ async fn test_execute_operation_success_no_fee_different_shard_transfer_meta_esd
             hash_of_hashes,
             operation,
             None,
-            Some(EXECUTED_BRIDGE_LOG),
+            Some(&chain_interactor.state.get_meta_esdt_token_id_string()),
         )
         .await;
 
@@ -780,7 +782,7 @@ async fn test_execute_operation_success_no_fee_different_shard_transfer_meta_esd
         chain_interactor.one_token(chain_interactor.state.get_nft_token_id_string()),
         chain_interactor.custom_amount_tokens(
             chain_interactor.state.get_meta_esdt_token_id_string(),
-            ONE_THOUSAND_TOKENS - TEN_TOKENS,
+            ONE_THOUSAND_TOKENS - ONE_HUNDRED_TOKENS,
         ),
         chain_interactor.one_token(chain_interactor.state.get_dynamic_nft_token_id_string()),
         chain_interactor.thousand_tokens(chain_interactor.state.get_sft_token_id_string()),
@@ -802,10 +804,9 @@ async fn test_execute_operation_success_no_fee_different_shard_transfer_meta_esd
         .check_testing_sc_balance_is_empty(shard)
         .await;
 
-    let expected_second_user_balance = vec![chain_interactor.custom_amount_tokens(
-        meta_esdt_token.token_id.clone(),
-        ONE_THOUSAND_TOKENS - TEN_TOKENS,
-    )];
+    let expected_second_user_balance =
+        vec![chain_interactor
+            .custom_amount_tokens(meta_esdt_token.token_id.clone(), ONE_HUNDRED_TOKENS)];
     chain_interactor
         .check_address_balance(
             &Bech32Address::from(chain_interactor.second_user_address.clone()),
@@ -883,7 +884,7 @@ async fn test_execute_operation_success_no_fee_different_shard_transfer_dynamic_
             OptionalValue::None,
             payment_vec,
             None,
-            Some(DEPOSIT_LOG),
+            Some(&chain_interactor.state.get_dynamic_nft_token_id_string()),
         )
         .await;
 
@@ -919,7 +920,7 @@ async fn test_execute_operation_success_no_fee_different_shard_transfer_dynamic_
             hash_of_hashes,
             operation,
             None,
-            Some(EXECUTED_BRIDGE_LOG),
+            Some(&chain_interactor.state.get_dynamic_nft_token_id_string()),
         )
         .await;
 
@@ -1069,7 +1070,7 @@ async fn test_execute_operation_success_with_fee_different_shard_transfer_dynami
             OptionalValue::None,
             payment_vec,
             None,
-            Some(DEPOSIT_LOG),
+            Some(&chain_interactor.state.get_dynamic_nft_token_id_string()),
         )
         .await;
 
@@ -1105,7 +1106,7 @@ async fn test_execute_operation_success_with_fee_different_shard_transfer_dynami
             hash_of_hashes,
             operation,
             None,
-            Some(EXECUTED_BRIDGE_LOG),
+            Some(&chain_interactor.state.get_dynamic_nft_token_id_string()),
         )
         .await;
 
@@ -1247,7 +1248,7 @@ async fn test_complete_flow_execute_operation_with_transfer_data_success_nft_no_
             OptionalValue::None,
             payment_vec,
             None,
-            Some(DEPOSIT_LOG),
+            Some(&chain_interactor.state.get_nft_token_id_string()),
         )
         .await;
 
@@ -1411,7 +1412,7 @@ async fn test_complete_flow_execute_operation_with_transfer_data_success_sft_no_
             OptionalValue::None,
             payment_vec,
             None,
-            Some(DEPOSIT_LOG),
+            Some(&chain_interactor.state.get_sft_token_id_string()),
         )
         .await;
 
@@ -1578,7 +1579,7 @@ async fn test_complete_flow_execute_operation_with_transfer_data_success_meta_es
             OptionalValue::None,
             payment_vec,
             None,
-            Some(DEPOSIT_LOG),
+            Some(&chain_interactor.state.get_meta_esdt_token_id_string()),
         )
         .await;
 
@@ -1747,7 +1748,7 @@ async fn test_complete_flow_execute_operation_with_transfer_data_success_dynamic
             OptionalValue::None,
             payment_vec,
             None,
-            Some(DEPOSIT_LOG),
+            Some(&chain_interactor.state.get_dynamic_nft_token_id_string()),
         )
         .await;
 
@@ -1851,7 +1852,6 @@ async fn test_complete_flow_execute_operation_with_transfer_data_success_dynamic
         ..Default::default()
     };
 
-    let gas_limit = 60_000_000u64;
     let per_transfer = BigUint::from(100u64);
     let per_gas = BigUint::from(1u64);
     let fee = FeeStruct {
@@ -1863,11 +1863,13 @@ async fn test_complete_flow_execute_operation_with_transfer_data_success_dynamic
         },
     };
 
-    let fee_amount = per_transfer + per_gas * BigUint::from(gas_limit);
+    let fee_amount = per_transfer;
 
     let payment = OperationEsdtPayment::new(
-        TokenIdentifier::from_esdt_bytes(chain_interactor.state.get_nft_token_id().token_id),
-        chain_interactor.state.get_nft_token_id().nonce,
+        TokenIdentifier::from_esdt_bytes(
+            chain_interactor.state.get_dynamic_nft_token_id().token_id,
+        ),
+        chain_interactor.state.get_dynamic_nft_token_id().nonce,
         token_data,
     );
 
@@ -1926,13 +1928,13 @@ async fn test_complete_flow_execute_operation_with_transfer_data_success_dynamic
         .deposit_in_mvx_esdt_safe(
             chain_interactor
                 .state
-                .current_mvx_esdt_safe_contract_address()
+                .get_testing_sc_address(shard)
                 .to_address(),
             shard,
             OptionalValue::None,
             payment_vec,
             None,
-            Some(DEPOSIT_LOG),
+            Some(&chain_interactor.state.get_dynamic_nft_token_id_string()),
         )
         .await;
 
@@ -2013,8 +2015,8 @@ async fn test_complete_flow_execute_operation_with_transfer_data_success_dynamic
         .await;
 
     let expected_testing_sc_balance = vec![(
-        chain_interactor.state.get_sft_token_id_string(),
-        BigUint::from(ONE_HUNDRED_TOKENS),
+        chain_interactor.state.get_dynamic_nft_token_id_string(),
+        BigUint::from(1u64),
     )];
     chain_interactor
         .check_address_balance(

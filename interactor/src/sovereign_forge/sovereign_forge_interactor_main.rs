@@ -11,7 +11,6 @@ use common_test_setup::constants::{
     PREFERRED_CHAIN_IDS, SOVEREIGN_FORGE_CODE_PATH,
 };
 use multiversx_sc_snippets::imports::*;
-use proxies::mvx_esdt_safe_proxy::MvxEsdtSafeProxy;
 use proxies::sovereign_forge_proxy::SovereignForgeProxy;
 use structs::configs::{EsdtSafeConfig, SovereignConfig};
 use structs::fee::FeeStruct;
@@ -278,60 +277,6 @@ impl SovereignForgeInteract {
             )
             .await;
         }
-    }
-
-    pub async fn unpause_endpoint(&mut self, mvx_esdt_safe_address: Bech32Address) {
-        let response = self
-            .interactor
-            .tx()
-            .from(&self.bridge_owner_shard_2)
-            .to(mvx_esdt_safe_address)
-            .gas(90_000_000u64)
-            .typed(MvxEsdtSafeProxy)
-            .unpause_endpoint()
-            .returns(ReturnsResultUnmanaged)
-            .run()
-            .await;
-
-        println!("Result: {response:?}");
-    }
-
-    pub async fn complete_setup_phase_mvx(
-        &mut self,
-        caller: Address,
-        mvx_esdt_safe_address: Bech32Address,
-    ) {
-        self.interactor()
-            .tx()
-            .from(caller)
-            .to(mvx_esdt_safe_address)
-            .gas(90_000_000u64)
-            .typed(MvxEsdtSafeProxy)
-            .complete_setup_phase()
-            .returns(ReturnsResultUnmanaged)
-            .run()
-            .await;
-    }
-
-    pub async fn set_fee_market_address(
-        &mut self,
-        caller: Address,
-        mvx_esdt_safe_address: Bech32Address,
-        fee_market_address: Address,
-    ) {
-        let response = self
-            .interactor
-            .tx()
-            .from(caller)
-            .to(mvx_esdt_safe_address)
-            .gas(90_000_000u64)
-            .typed(MvxEsdtSafeProxy)
-            .set_fee_market_address(fee_market_address)
-            .returns(ReturnsResultUnmanaged)
-            .run()
-            .await;
-
-        println!("Result: {response:?}");
     }
 
     pub async fn finish_init_setup_phase_for_one_shard(
