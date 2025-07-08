@@ -72,7 +72,7 @@ pub async fn mvx_esdt_safe_cli() {
         "deployTestingSc" => {
             interact
                 .deploy_testing_sc(Address::zero(), PREFERRED_CHAIN_IDS[0].to_string())
-                .await
+                .await;
         }
         "completeSetup" => interact.complete_setup_phase().await,
         "completeHeaderVerifierSetup" => {
@@ -152,7 +152,7 @@ pub async fn sovereign_forge_cli() {
                     PREFERRED_CHAIN_IDS[0].to_string(),
                     OptionalValue::None,
                 )
-                .await
+                .await;
         }
         "deployFeeMarket" => {
             interact
@@ -165,7 +165,7 @@ pub async fn sovereign_forge_cli() {
                         .clone(),
                     None,
                 )
-                .await
+                .await;
         }
         "registerTokenHandler" => {
             interact

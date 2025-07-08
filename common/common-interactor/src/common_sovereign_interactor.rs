@@ -376,7 +376,7 @@ pub trait CommonInteractorTrait {
         caller: Address,
         chain_id: String,
         opt_config: OptionalValue<EsdtSafeConfig<StaticApi>>,
-    ) {
+    ) -> Bech32Address {
         let new_address = self
             .interactor()
             .tx()
@@ -393,9 +393,11 @@ pub trait CommonInteractorTrait {
         let new_address_bech32 = Bech32Address::from_bech32_string(bech32::encode(&new_address));
         self.state()
             .set_mvx_esdt_safe_contract_address(AddressInfo {
-                address: new_address_bech32,
+                address: new_address_bech32.clone(),
                 chain_id,
             });
+
+        new_address_bech32
     }
 
     async fn deploy_fee_market(
@@ -404,7 +406,7 @@ pub trait CommonInteractorTrait {
         chain_id: String,
         esdt_safe_address: Bech32Address,
         fee: Option<FeeStruct<StaticApi>>,
-    ) {
+    ) -> Bech32Address {
         let new_address = self
             .interactor()
             .tx()
@@ -420,12 +422,13 @@ pub trait CommonInteractorTrait {
 
         let new_address_bech32 = Bech32Address::from_bech32_string(bech32::encode(&new_address));
         self.state().set_fee_market_address(AddressInfo {
-            address: new_address_bech32,
+            address: new_address_bech32.clone(),
             chain_id,
         });
+        new_address_bech32
     }
 
-    async fn deploy_testing_sc(&mut self, caller: Address, chain_id: String) {
+    async fn deploy_testing_sc(&mut self, caller: Address, chain_id: String) -> Bech32Address {
         let new_address = self
             .interactor()
             .tx()
@@ -441,9 +444,11 @@ pub trait CommonInteractorTrait {
 
         let new_address_bech32 = Bech32Address::from_bech32_string(bech32::encode(&new_address));
         self.state().set_testing_sc_address(AddressInfo {
-            address: new_address_bech32,
+            address: new_address_bech32.clone(),
             chain_id,
         });
+
+        new_address_bech32
     }
 
     async fn deploy_token_handler(&mut self, caller: Address, chain_id: String) {
@@ -843,6 +848,39 @@ pub trait CommonInteractorTrait {
 
         self.assert_expected_error_message(response, expected_error_message);
 
+        println!("Logs: {:?}", logs);
+
+        self.assert_expected_log(logs, expected_log);
+    }
+
+    async fn deposit_in_mvx_esdt_safe_test(
+        &mut self,
+        to: Address,
+        mvx_address: Bech32Address,
+        opt_transfer_data: OptionalValueTransferDataTuple<StaticApi>,
+        payments: PaymentsVec<StaticApi>,
+        expected_error_message: Option<&str>,
+        expected_log: Option<&str>,
+    ) {
+        let user_address = self.user_address().clone();
+        let (response, logs) = self
+            .interactor()
+            .tx()
+            .from(user_address)
+            .to(mvx_address)
+            .gas(90_000_000u64)
+            .typed(MvxEsdtSafeProxy)
+            .deposit(to, opt_transfer_data)
+            .payment(payments)
+            .returns(ReturnsHandledOrError::new())
+            .returns(ReturnsLogs)
+            .run()
+            .await;
+
+        self.assert_expected_error_message(response, expected_error_message);
+
+        println!("Logs: {:?}", logs);
+
         self.assert_expected_log(logs, expected_log);
     }
 
@@ -1030,11 +1068,19 @@ pub trait CommonInteractorTrait {
         let first_token_id = self.state().get_first_token_id_string();
         let second_token_id = self.state().get_second_token_id_string();
         let fee_token_id = self.state().get_fee_token_id_string();
+        let nft_token_id = self.state().get_nft_token_id_string();
+        let sft_token_id = self.state().get_sft_token_id_string();
+        let meta_esdt_token_id = self.state().get_meta_esdt_token_id_string();
+        let dynamic_nft_token_id = self.state().get_dynamic_nft_token_id_string();
 
         let expected_tokens_wallet = vec![
             self.thousand_tokens(first_token_id),
             self.thousand_tokens(second_token_id),
             self.thousand_tokens(fee_token_id),
+            self.one_token(nft_token_id),
+            self.thousand_tokens(sft_token_id),
+            self.thousand_tokens(meta_esdt_token_id),
+            self.one_token(dynamic_nft_token_id),
         ];
 
         self.check_address_balance(&Bech32Address::from(user_address), expected_tokens_wallet)

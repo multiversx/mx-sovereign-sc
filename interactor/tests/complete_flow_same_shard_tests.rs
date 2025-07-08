@@ -112,6 +112,11 @@ async fn test_complete_deposit_flow() {
             chain_interactor.state.get_second_token_id_string(),
             ONE_THOUSAND_TOKENS - ONE_HUNDRED_TOKENS,
         ),
+        chain_interactor.thousand_tokens(chain_interactor.state.get_fee_token_id_string()),
+        chain_interactor.one_token(chain_interactor.state.get_nft_token_id_string()),
+        chain_interactor.thousand_tokens(chain_interactor.state.get_meta_esdt_token_id_string()),
+        chain_interactor.one_token(chain_interactor.state.get_dynamic_nft_token_id_string()),
+        chain_interactor.thousand_tokens(chain_interactor.state.get_sft_token_id_string()),
     ];
     chain_interactor
         .check_address_balance(
@@ -457,15 +462,19 @@ async fn test_complete_flow_execute_operation_success_with_fee() {
         .await;
 
     let expected_tokens_wallet = vec![
-        (
-            chain_interactor.state.get_first_token_id().to_string(),
-            BigUint::from(ONE_THOUSAND_TOKENS - TEN_TOKENS),
+        chain_interactor.custom_amount_tokens(
+            chain_interactor.state.get_first_token_id_string(),
+            ONE_THOUSAND_TOKENS - ONE_HUNDRED_TOKENS,
         ),
         chain_interactor.thousand_tokens(chain_interactor.state.get_second_token_id_string()),
-        (
-            chain_interactor.state.get_fee_token_id().to_string(),
+        chain_interactor.custom_amount_tokens(
+            chain_interactor.state.get_fee_token_id_string(),
             BigUint::from(ONE_THOUSAND_TOKENS) - fee_amount.clone(),
         ),
+        chain_interactor.one_token(chain_interactor.state.get_nft_token_id_string()),
+        chain_interactor.thousand_tokens(chain_interactor.state.get_meta_esdt_token_id_string()),
+        chain_interactor.one_token(chain_interactor.state.get_dynamic_nft_token_id_string()),
+        chain_interactor.thousand_tokens(chain_interactor.state.get_sft_token_id_string()),
     ];
     chain_interactor
         .check_address_balance(&Bech32Address::from(user_address), expected_tokens_wallet)
