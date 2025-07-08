@@ -7,10 +7,8 @@ use multiversx_sc::api::ManagedTypeApi;
 use multiversx_sc::types::{
     ManagedBuffer, MultiValueEncoded, ReturnsHandledOrError, TestSCAddress,
 };
-use multiversx_sc_scenario::ReturnsLogs;
-use multiversx_sc_scenario::{
-    api::StaticApi, multiversx_chain_vm::crypto_functions::sha256, ScenarioTxRun,
-};
+use multiversx_sc_scenario::imports::*;
+use multiversx_sc_scenario::multiversx_chain_vm::crypto_functions::sha256;
 use proxies::header_verifier_proxy::HeaderverifierProxy;
 
 #[derive(Clone)]
@@ -148,8 +146,7 @@ impl HeaderVerifierTestState {
         self.common_setup
             .assert_expected_error_message(response, expected_error_message);
 
-        self.common_setup
-            .assert_expected_log(logs, expected_log);
+        self.common_setup.assert_expected_log(logs, expected_log);
     }
 
     pub fn generate_bridge_operation_struct(

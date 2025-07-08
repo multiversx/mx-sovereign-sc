@@ -15,10 +15,7 @@ use multiversx_sc::{
         ReturnsHandledOrError, TestAddress, TestTokenIdentifier, TokenIdentifier,
     },
 };
-use multiversx_sc_scenario::{
-    api::StaticApi, multiversx_chain_vm::crypto_functions::sha256, DebugApi, ReturnsLogs,
-    ScenarioTxRun, ScenarioTxWhitebox,
-};
+use multiversx_sc_scenario::{imports::*, multiversx_chain_vm::crypto_functions::sha256};
 use proxies::{
     enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy, token_handler_proxy::TokenHandlerProxy,
 };

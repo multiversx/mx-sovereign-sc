@@ -12,7 +12,7 @@ use multiversx_sc::{
         TestTokenIdentifier,
     },
 };
-use multiversx_sc_scenario::{api::StaticApi, ScenarioTxRun};
+use multiversx_sc_scenario::imports::*;
 use proxies::sovereign_forge_proxy::SovereignForgeProxy;
 use sovereign_forge::common::storage::ChainId;
 use structs::{

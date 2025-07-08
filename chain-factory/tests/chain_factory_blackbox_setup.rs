@@ -5,7 +5,7 @@ use common_test_setup::{
     },
 };
 use multiversx_sc::{imports::OptionalValue, types::ReturnsHandledOrError};
-use multiversx_sc_scenario::{api::StaticApi, ScenarioTxRun};
+use multiversx_sc_scenario::imports::*;
 use proxies::chain_factory_proxy::ChainFactoryContractProxy;
 use structs::configs::SovereignConfig;
 

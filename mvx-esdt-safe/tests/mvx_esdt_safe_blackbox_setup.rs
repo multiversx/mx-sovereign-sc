@@ -13,7 +13,7 @@ use multiversx_sc::{
     },
 };
 use multiversx_sc_modules::transfer_role_proxy::PaymentsVec;
-use multiversx_sc_scenario::{api::StaticApi, ReturnsLogs, ScenarioTxRun, ScenarioTxWhitebox};
+use multiversx_sc_scenario::imports::*;
 use mvx_esdt_safe::{bridging_mechanism::TRUSTED_TOKEN_IDS, MvxEsdtSafe};
 use proxies::mvx_esdt_safe_proxy::MvxEsdtSafeProxy;
 use structs::{

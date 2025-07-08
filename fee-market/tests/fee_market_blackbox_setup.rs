@@ -5,7 +5,7 @@ use multiversx_sc::{
         MultiValueEncoded, ReturnsHandledOrError, TestAddress, TestTokenIdentifier,
     },
 };
-use multiversx_sc_scenario::{api::StaticApi, ReturnsLogs, ScenarioTxRun};
+use multiversx_sc_scenario::imports::*;
 
 use common_test_setup::{
     base_setup::init::{AccountSetup, BaseSetup},
@@ -153,8 +153,7 @@ impl FeeMarketTestState {
         self.common_setup
             .assert_expected_error_message(response, expected_error_message);
 
-        self.common_setup
-            .assert_expected_log(logs, expected_log);
+        self.common_setup.assert_expected_log(logs, expected_log);
     }
 
     pub fn set_fee(
@@ -179,8 +178,7 @@ impl FeeMarketTestState {
         self.common_setup
             .assert_expected_error_message(response, expected_error_message);
 
-        self.common_setup
-            .assert_expected_log(logs, expected_log);
+        self.common_setup.assert_expected_log(logs, expected_log);
     }
 
     pub fn set_fee_during_setup_phase(
@@ -264,8 +262,7 @@ impl FeeMarketTestState {
         self.common_setup
             .assert_expected_error_message(response, expected_error_message);
 
-        self.common_setup
-            .assert_expected_log(logs, expected_log);
+        self.common_setup.assert_expected_log(logs, expected_log);
     }
 
     pub fn add_users_to_whitelist(&mut self, users_vector: Vec<TestAddress>) {

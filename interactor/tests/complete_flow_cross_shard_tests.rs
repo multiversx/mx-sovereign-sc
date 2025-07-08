@@ -2,8 +2,7 @@ use common_interactor::common_sovereign_interactor::CommonInteractorTrait;
 use common_interactor::interactor_config::Config;
 use common_test_setup::constants::{
     DEPLOY_COST, DEPOSIT_LOG, EXECUTED_BRIDGE_LOG, ONE_HUNDRED_TOKENS, ONE_THOUSAND_TOKENS,
-    OPERATION_HASH_STATUS_STORAGE_KEY, PREFERRED_CHAIN_IDS, SHARD_0, SHARD_2, TEN_TOKENS,
-    TESTING_SC_ENDPOINT,
+    OPERATION_HASH_STATUS_STORAGE_KEY, SHARD_0, SHARD_2, TEN_TOKENS, TESTING_SC_ENDPOINT,
 };
 use header_verifier::OperationHashStatus;
 use multiversx_sc::{
