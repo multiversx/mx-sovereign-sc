@@ -1,9 +1,10 @@
 use multiversx_sc_scenario::{
     api::StaticApi,
     imports::{
-        BigUint, ManagedBuffer, MultiValueEncoded, OptionalValue, TestSCAddress, TokenIdentifier,
+        BigUint, ManagedBuffer, MultiValueEncoded, OptionalValue, ReturnsHandledOrError,
+        TestSCAddress, TokenIdentifier,
     },
-    ReturnsHandledOrError, ScenarioTxRun,
+    ScenarioTxRun,
 };
 use proxies::{
     chain_config_proxy::ChainConfigContractProxy, chain_factory_proxy::ChainFactoryContractProxy,

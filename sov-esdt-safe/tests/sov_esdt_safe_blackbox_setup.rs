@@ -1,11 +1,12 @@
 use multiversx_sc::{
     imports::OptionalValue,
-    types::{EsdtLocalRole, ManagedAddress, ManagedVec, TestSCAddress, TokenIdentifier},
+    types::{
+        EsdtLocalRole, ManagedAddress, ManagedVec, ReturnsHandledOrError, TestSCAddress,
+        TokenIdentifier,
+    },
 };
 
-use multiversx_sc_scenario::{
-    api::StaticApi, ReturnsHandledOrError, ReturnsLogs, ScenarioTxRun, ScenarioTxWhitebox,
-};
+use multiversx_sc_scenario::{api::StaticApi, ReturnsLogs, ScenarioTxRun, ScenarioTxWhitebox};
 
 use common_test_setup::base_setup::init::{AccountSetup, BaseSetup};
 use common_test_setup::constants::{

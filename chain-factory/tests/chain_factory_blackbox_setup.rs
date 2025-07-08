@@ -4,8 +4,8 @@ use common_test_setup::{
         CHAIN_FACTORY_SC_ADDRESS, OWNER_ADDRESS, OWNER_BALANCE, SOVEREIGN_FORGE_SC_ADDRESS,
     },
 };
-use multiversx_sc::imports::OptionalValue;
-use multiversx_sc_scenario::{api::StaticApi, ReturnsHandledOrError, ScenarioTxRun};
+use multiversx_sc::{imports::OptionalValue, types::ReturnsHandledOrError};
+use multiversx_sc_scenario::{api::StaticApi, ScenarioTxRun};
 use proxies::chain_factory_proxy::ChainFactoryContractProxy;
 use structs::configs::SovereignConfig;
 

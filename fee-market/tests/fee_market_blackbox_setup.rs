@@ -2,10 +2,10 @@ use multiversx_sc::{
     imports::{MultiValue2, OptionalValue},
     types::{
         Address, BigUint, EsdtTokenPayment, ManagedAddress, ManagedBuffer, ManagedVec,
-        MultiValueEncoded, TestAddress, TestTokenIdentifier,
+        MultiValueEncoded, ReturnsHandledOrError, TestAddress, TestTokenIdentifier,
     },
 };
-use multiversx_sc_scenario::{api::StaticApi, ReturnsHandledOrError, ReturnsLogs, ScenarioTxRun};
+use multiversx_sc_scenario::{api::StaticApi, ReturnsLogs, ScenarioTxRun};
 
 use common_test_setup::{
     base_setup::init::{AccountSetup, BaseSetup},

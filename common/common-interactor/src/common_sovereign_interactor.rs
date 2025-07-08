@@ -21,7 +21,7 @@ use multiversx_sc::{
 use multiversx_sc_snippets::{
     hex,
     imports::{
-        bech32, Bech32Address, ReturnsGasUsed, ReturnsHandledOrError, ReturnsLogs,
+        Bech32Address, ReturnsGasUsed, ReturnsHandledOrError, ReturnsLogs,
         ReturnsNewTokenIdentifier, StaticApi,
     },
     multiversx_sc_scenario::{
@@ -144,7 +144,7 @@ pub trait CommonInteractorTrait {
             | EsdtTokenType::DynamicNFT
             | EsdtTokenType::DynamicMeta
             | EsdtTokenType::DynamicSFT
-            | EsdtTokenType::Meta => {
+            | EsdtTokenType::MetaFungible => {
                 mint_base_tx
                     .esdt_nft_create(
                         TokenIdentifier::from(token_id.as_bytes()),
@@ -183,9 +183,9 @@ pub trait CommonInteractorTrait {
             .run()
             .await;
 
-        let new_address_bech32 = Bech32Address::from_bech32_string(bech32::encode(&new_address));
+        let new_address_bech32 = Bech32Address::from(&new_address);
         self.state()
-            .set_sovereign_forge_sc_address(new_address_bech32);
+            .set_sovereign_forge_sc_address(new_address_bech32.clone());
 
         new_address
     }
@@ -216,11 +216,11 @@ pub trait CommonInteractorTrait {
             .run()
             .await;
 
-        let new_address_bech32 = Bech32Address::from_bech32_string(bech32::encode(&new_address));
-        self.state().set_chain_factory_sc_address(AddressInfo {
-            address: new_address_bech32.clone(),
-            chain_id,
-        });
+        let new_address_bech32 = Bech32Address::from(&new_address);
+        self.state()
+            .set_chain_factory_sc_address(new_address_bech32.clone());
+
+        println!("new Chain-Factory address: {new_address_bech32}");
     }
 
     async fn deploy_chain_config(
@@ -390,7 +390,7 @@ pub trait CommonInteractorTrait {
             .run()
             .await;
 
-        let new_address_bech32 = Bech32Address::from_bech32_string(bech32::encode(&new_address));
+        let new_address_bech32 = Bech32Address::from_bech32_string(Bech32Address::from(&new_address));
         self.state()
             .set_mvx_esdt_safe_contract_address(AddressInfo {
                 address: new_address_bech32.clone(),

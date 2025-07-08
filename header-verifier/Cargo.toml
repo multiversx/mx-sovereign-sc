@@ -9,7 +9,7 @@ publish = false
 path = "src/lib.rs"
 
 [dependencies.multiversx-sc]
-version = "0.58.0"
+version = "0.59.0"
 
 [dependencies.structs]
 path = "../common/structs"
@@ -33,4 +33,4 @@ path = "../common/cross-chain"
 path = "../common/common-test-setup"
 
 [dev-dependencies.multiversx-sc-scenario]
-version = "0.58.0"
+version = "0.59.0"
