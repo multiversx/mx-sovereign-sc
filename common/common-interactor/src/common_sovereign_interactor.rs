@@ -21,8 +21,7 @@ use multiversx_sc::{
 use multiversx_sc_snippets::{
     hex,
     imports::{
-        bech32, Bech32Address, ReturnsHandledOrError, ReturnsLogs, ReturnsNewTokenIdentifier,
-        StaticApi,
+        Bech32Address, ReturnsHandledOrError, ReturnsLogs, ReturnsNewTokenIdentifier, StaticApi,
     },
     multiversx_sc_scenario::{
         multiversx_chain_vm::crypto_functions::sha256,
@@ -130,7 +129,7 @@ pub trait CommonInteractorTrait {
             | EsdtTokenType::DynamicNFT
             | EsdtTokenType::DynamicMeta
             | EsdtTokenType::DynamicSFT
-            | EsdtTokenType::Meta => {
+            | EsdtTokenType::MetaFungible => {
                 mint_base_tx
                     .esdt_nft_create(
                         TokenIdentifier::from(token_id.as_bytes()),
@@ -167,11 +166,9 @@ pub trait CommonInteractorTrait {
             .run()
             .await;
 
-        let new_address_bech32 = bech32::encode(&new_address);
+        let new_address_bech32 = Bech32Address::from(&new_address);
         self.state()
-            .set_sovereign_forge_sc_address(Bech32Address::from_bech32_string(
-                new_address_bech32.clone(),
-            ));
+            .set_sovereign_forge_sc_address(new_address_bech32.clone());
 
         println!("new Forge address: {new_address_bech32}");
     }
@@ -205,11 +202,9 @@ pub trait CommonInteractorTrait {
             .run()
             .await;
 
-        let new_address_bech32 = bech32::encode(&new_address);
+        let new_address_bech32 = Bech32Address::from(&new_address);
         self.state()
-            .set_chain_factory_sc_address(Bech32Address::from_bech32_string(
-                new_address_bech32.clone(),
-            ));
+            .set_chain_factory_sc_address(new_address_bech32.clone());
 
         println!("new Chain-Factory address: {new_address_bech32}");
     }
@@ -230,11 +225,9 @@ pub trait CommonInteractorTrait {
             .run()
             .await;
 
-        let new_address_bech32 = bech32::encode(&new_address);
+        let new_address_bech32 = Bech32Address::from(&new_address);
         self.state()
-            .set_chain_config_sc_address(Bech32Address::from_bech32_string(
-                new_address_bech32.clone(),
-            ));
+            .set_chain_config_sc_address(new_address_bech32.clone());
 
         println!("new Chain-Config address: {new_address_bech32}");
     }
@@ -255,11 +248,9 @@ pub trait CommonInteractorTrait {
             .run()
             .await;
 
-        let new_address_bech32 = bech32::encode(&new_address);
+        let new_address_bech32 = Bech32Address::from(&new_address);
         self.state()
-            .set_header_verifier_address(Bech32Address::from_bech32_string(
-                new_address_bech32.clone(),
-            ));
+            .set_header_verifier_address(new_address_bech32.clone());
 
         println!("new Header-Verifier address: {new_address_bech32}");
     }
@@ -280,11 +271,9 @@ pub trait CommonInteractorTrait {
             .run()
             .await;
 
-        let new_address_bech32 = bech32::encode(&new_address);
+        let new_address_bech32 = Bech32Address::from(&new_address);
         self.state()
-            .set_mvx_esdt_safe_contract_address(Bech32Address::from_bech32_string(
-                new_address_bech32.clone(),
-            ));
+            .set_mvx_esdt_safe_contract_address(new_address_bech32.clone());
 
         println!("new mvx-esdt-safe address: {new_address_bech32}");
     }
@@ -309,11 +298,9 @@ pub trait CommonInteractorTrait {
             .run()
             .await;
 
-        let new_address_bech32 = bech32::encode(&new_address);
+        let new_address_bech32 = Bech32Address::from(&new_address);
         self.state()
-            .set_fee_market_address(Bech32Address::from_bech32_string(
-                new_address_bech32.clone(),
-            ));
+            .set_fee_market_address(new_address_bech32.clone());
 
         println!("new Fee-Market address: {new_address_bech32}");
     }
@@ -334,11 +321,10 @@ pub trait CommonInteractorTrait {
             .run()
             .await;
 
-        let new_address_bech32 = bech32::encode(&new_address);
+        let new_address_bech32 = Bech32Address::from(&new_address);
+
         self.state()
-            .set_testing_sc_address(Bech32Address::from_bech32_string(
-                new_address_bech32.clone(),
-            ));
+            .set_testing_sc_address(new_address_bech32.clone());
 
         println!("new testing sc address: {new_address_bech32}");
     }
@@ -358,11 +344,10 @@ pub trait CommonInteractorTrait {
             .returns(ReturnsNewAddress)
             .run()
             .await;
-        let new_address_bech32 = bech32::encode(&new_address);
+
+        let new_address_bech32 = Bech32Address::from(&new_address);
         self.state()
-            .set_token_handler_address(Bech32Address::from_bech32_string(
-                new_address_bech32.clone(),
-            ));
+            .set_token_handler_address(new_address_bech32.clone());
         println!("new token_handler_address: {new_address_bech32}");
     }
 
@@ -394,11 +379,10 @@ pub trait CommonInteractorTrait {
             .returns(ReturnsNewAddress)
             .run()
             .await;
-        let new_address_bech32 = bech32::encode(&new_address);
+
+        let new_address_bech32 = Bech32Address::from(&new_address);
         self.state()
-            .set_enshrine_esdt_safe_sc_address(Bech32Address::from_bech32_string(
-                new_address_bech32.clone(),
-            ));
+            .set_enshrine_esdt_safe_sc_address(new_address_bech32.clone());
 
         println!("new address: {new_address_bech32}");
     }

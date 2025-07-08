@@ -177,7 +177,7 @@ impl MvxEsdtSafeInteract {
         let meta_token_struct = IssueTokenStruct {
             token_display_name: "META".to_string(),
             token_ticker: "META".to_string(),
-            token_type: EsdtTokenType::Meta,
+            token_type: EsdtTokenType::MetaFungible,
             num_decimals: 18,
         };
         let meta_token_mint = MintTokenStruct {
