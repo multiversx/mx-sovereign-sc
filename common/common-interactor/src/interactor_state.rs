@@ -4,8 +4,8 @@ use error_messages::{
     NO_KNOWN_CHAIN_CONFIG_SC, NO_KNOWN_CHAIN_FACTORY_IN_THE_SPECIFIED_SHARD,
     NO_KNOWN_CHAIN_FACTORY_SC, NO_KNOWN_DYNAMIC_NFT_TOKEN_ID, NO_KNOWN_ENSHRINE_ESDT_SAFE_SC,
     NO_KNOWN_FEE_MARKET, NO_KNOWN_FEE_TOKEN, NO_KNOWN_FIRST_TOKEN, NO_KNOWN_HEADER_VERIFIER,
-    NO_KNOWN_META_ESDT_TOKEN, NO_KNOWN_MVX_ESDT_SAFE, NO_KNOWN_SECOND_TOKEN,
-    NO_KNOWN_SOVEREIGN_FORGE_SC, NO_KNOWN_TESTING_SC,
+    NO_KNOWN_META_ESDT_TOKEN, NO_KNOWN_MVX_ESDT_SAFE, NO_KNOWN_NFT_TOKEN, NO_KNOWN_SECOND_TOKEN,
+    NO_KNOWN_SFT_TOKEN, NO_KNOWN_SOVEREIGN_FORGE_SC, NO_KNOWN_TESTING_SC,
     NO_KNOWN_TOKEN_HANDLER_IN_THE_SPECIFIED_SHARD, NO_KNOWN_TOKEN_HANDLER_SC,
 };
 use multiversx_sc_snippets::imports::*;
@@ -255,7 +255,7 @@ impl State {
     pub fn get_nft_token_id_string(&self) -> String {
         self.nft_token_id
             .as_ref()
-            .expect(NO_KNOWN_FIRST_TOKEN)
+            .expect(NO_KNOWN_NFT_TOKEN)
             .token_id
             .clone()
     }
@@ -279,7 +279,7 @@ impl State {
     pub fn get_sft_token_id_string(&self) -> String {
         self.sft_token_id
             .as_ref()
-            .expect(NO_KNOWN_FIRST_TOKEN)
+            .expect(NO_KNOWN_SFT_TOKEN)
             .token_id
             .clone()
     }
@@ -314,7 +314,7 @@ impl State {
     pub fn get_nft_token_id(&self) -> TokenProperties {
         self.nft_token_id
             .as_ref()
-            .expect(NO_KNOWN_FIRST_TOKEN)
+            .expect(NO_KNOWN_NFT_TOKEN)
             .clone()
     }
 
@@ -335,7 +335,7 @@ impl State {
     pub fn get_sft_token_id(&self) -> TokenProperties {
         self.sft_token_id
             .as_ref()
-            .expect(NO_KNOWN_FIRST_TOKEN)
+            .expect(NO_KNOWN_SFT_TOKEN)
             .clone()
     }
 

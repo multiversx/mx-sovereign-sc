@@ -88,7 +88,7 @@ async fn test_register_tokens_wrong_token_as_fee() {
         )
         .await;
 
-    chain_interactor.check_wallet_balance_unchanged().await;
+    chain_interactor.check_wallet_balance_unchanged(None).await;
 }
 
 /// ### TEST
@@ -191,7 +191,7 @@ async fn test_register_tokens_insufficient_wegld() {
     chain_interactor
         .register_tokens(payment, token_vec, Some(NOT_ENOUGH_WEGLD_AMOUNT))
         .await;
-    chain_interactor.check_wallet_balance_unchanged().await;
+    chain_interactor.check_wallet_balance_unchanged(None).await;
 }
 
 /// ### TEST
@@ -312,7 +312,7 @@ async fn test_deposit_token_nothing_to_transfer_fee_disabled() {
         )
         .await;
 
-    chain_interactor.check_wallet_balance_unchanged().await;
+    chain_interactor.check_wallet_balance_unchanged(None).await;
     chain_interactor
         .check_enshrine_esdt_safe_balance_is_empty()
         .await;
@@ -357,7 +357,7 @@ async fn test_deposit_max_transfers_exceeded() {
         )
         .await;
 
-    chain_interactor.check_wallet_balance_unchanged().await;
+    chain_interactor.check_wallet_balance_unchanged(None).await;
     chain_interactor
         .check_enshrine_esdt_safe_balance_is_empty()
         .await;
@@ -525,7 +525,7 @@ async fn test_deposit_with_transfer_data_gas_limit_too_high() {
         )
         .await;
 
-    chain_interactor.check_wallet_balance_unchanged().await;
+    chain_interactor.check_wallet_balance_unchanged(None).await;
     chain_interactor
         .check_enshrine_esdt_safe_balance_is_empty()
         .await;
@@ -597,7 +597,7 @@ async fn test_deposit_with_transfer_data_banned_endpoint() {
             None,
         )
         .await;
-    chain_interactor.check_wallet_balance_unchanged().await;
+    chain_interactor.check_wallet_balance_unchanged(None).await;
     chain_interactor
         .check_enshrine_esdt_safe_balance_is_empty()
         .await;
@@ -782,7 +782,7 @@ async fn test_deposit_with_transfer_data_not_enough_for_fee() {
         )
         .await;
 
-    chain_interactor.check_wallet_balance_unchanged().await;
+    chain_interactor.check_wallet_balance_unchanged(None).await;
     chain_interactor
         .check_enshrine_esdt_safe_balance_is_empty()
         .await;
@@ -842,7 +842,7 @@ async fn test_deposit_refund_non_whitelisted_tokens_fee_disabled() {
             Some(DEPOSIT_LOG),
         )
         .await;
-    chain_interactor.check_wallet_balance_unchanged().await;
+    chain_interactor.check_wallet_balance_unchanged(None).await;
     chain_interactor
         .check_enshrine_esdt_safe_balance_is_empty()
         .await;
@@ -915,7 +915,7 @@ async fn test_deposit_refund_non_whitelisted_tokens_fee_enabled() {
         )
         .await;
 
-    chain_interactor.check_wallet_balance_unchanged().await;
+    chain_interactor.check_wallet_balance_unchanged(None).await;
     chain_interactor
         .check_enshrine_esdt_safe_balance_is_empty()
         .await;

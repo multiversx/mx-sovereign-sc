@@ -334,7 +334,15 @@ async fn test_execute_operation_success_no_fee_different_shard() {
         )
         .await;
 
-    chain_interactor.check_wallet_balance_unchanged().await;
+    let additional_expected_tokens_wallet = vec![
+        chain_interactor.zero_tokens(chain_interactor.state.get_nft_token_id_string()),
+        chain_interactor.thousand_tokens(chain_interactor.state.get_meta_esdt_token_id_string()),
+        chain_interactor.one_token(chain_interactor.state.get_dynamic_nft_token_id_string()),
+        chain_interactor.thousand_tokens(chain_interactor.state.get_sft_token_id_string()),
+    ];
+    chain_interactor
+        .check_wallet_balance_unchanged(Some(additional_expected_tokens_wallet))
+        .await;
 
     chain_interactor
         .check_mvx_esdt_safe_balance_is_empty(shard)

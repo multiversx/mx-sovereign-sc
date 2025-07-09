@@ -311,7 +311,7 @@ async fn test_deposit_nothing_to_transfer() {
         )
         .await;
 
-    chain_interactor.check_wallet_balance_unchanged().await;
+    chain_interactor.check_wallet_balance_unchanged(None).await;
     chain_interactor
         .check_mvx_esdt_safe_balance_is_empty(SHARD_0)
         .await;
@@ -362,7 +362,7 @@ async fn test_deposit_too_many_tokens_no_fee() {
         )
         .await;
 
-    chain_interactor.check_wallet_balance_unchanged().await;
+    chain_interactor.check_wallet_balance_unchanged(None).await;
     chain_interactor
         .check_mvx_esdt_safe_balance_is_empty(SHARD_0)
         .await;
@@ -531,7 +531,7 @@ async fn test_deposit_gas_limit_too_high_no_fee() {
         )
         .await;
 
-    chain_interactor.check_wallet_balance_unchanged().await;
+    chain_interactor.check_wallet_balance_unchanged(None).await;
     chain_interactor
         .check_mvx_esdt_safe_balance_is_empty(SHARD_0)
         .await;
@@ -610,7 +610,7 @@ async fn test_deposit_endpoint_banned_no_fee() {
         )
         .await;
 
-    chain_interactor.check_wallet_balance_unchanged().await;
+    chain_interactor.check_wallet_balance_unchanged(None).await;
     chain_interactor
         .check_mvx_esdt_safe_balance_is_empty(SHARD_0)
         .await;
@@ -826,7 +826,7 @@ async fn test_deposit_transfer_data_only_with_fee_nothing_to_transfer() {
         )
         .await;
 
-    chain_interactor.check_wallet_balance_unchanged().await;
+    chain_interactor.check_wallet_balance_unchanged(None).await;
     chain_interactor
         .check_mvx_esdt_safe_balance_is_empty(SHARD_0)
         .await;
@@ -891,7 +891,7 @@ async fn test_deposit_only_transfer_data_no_fee() {
         )
         .await;
 
-    chain_interactor.check_wallet_balance_unchanged().await;
+    chain_interactor.check_wallet_balance_unchanged(None).await;
     chain_interactor
         .check_mvx_esdt_safe_balance_is_empty(SHARD_0)
         .await;
@@ -985,7 +985,7 @@ async fn test_deposit_payment_does_not_cover_fee() {
         )
         .await;
 
-    chain_interactor.check_wallet_balance_unchanged().await;
+    chain_interactor.check_wallet_balance_unchanged(None).await;
     chain_interactor
         .check_mvx_esdt_safe_balance_is_empty(SHARD_0)
         .await;
@@ -1549,7 +1549,7 @@ async fn test_execute_operation_no_esdt_safe_registered() {
         )
         .await;
 
-    chain_interactor.check_wallet_balance_unchanged().await;
+    chain_interactor.check_wallet_balance_unchanged(None).await;
 
     chain_interactor
         .check_testing_sc_balance_is_empty(SHARD_0)
@@ -2023,7 +2023,7 @@ async fn test_execute_operation_only_transfer_data_no_fee() {
         )
         .await;
 
-    chain_interactor.check_wallet_balance_unchanged().await;
+    chain_interactor.check_wallet_balance_unchanged(None).await;
     chain_interactor
         .check_mvx_esdt_safe_balance_is_empty(SHARD_0)
         .await;
@@ -2136,7 +2136,7 @@ async fn test_execute_operation_no_payments_failed_event() {
         )
         .await;
 
-    chain_interactor.check_wallet_balance_unchanged().await;
+    chain_interactor.check_wallet_balance_unchanged(None).await;
     chain_interactor
         .check_mvx_esdt_safe_balance_is_empty(SHARD_0)
         .await;

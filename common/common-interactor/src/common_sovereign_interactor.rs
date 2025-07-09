@@ -1056,25 +1056,24 @@ pub trait CommonInteractorTrait {
         }
     }
 
-    async fn check_wallet_balance_unchanged(&mut self) {
+    async fn check_wallet_balance_unchanged(
+        &mut self,
+        additional_tokens: Option<Vec<(String, BigUint<StaticApi>)>>,
+    ) {
         let user_address = self.user_address().clone();
         let first_token_id = self.state().get_first_token_id_string();
         let second_token_id = self.state().get_second_token_id_string();
-        let fee_token_id = self.state().get_fee_token_id_string();
-        let nft_token_id = self.state().get_nft_token_id_string();
-        let sft_token_id = self.state().get_sft_token_id_string();
-        let meta_esdt_token_id = self.state().get_meta_esdt_token_id_string();
-        let dynamic_nft_token_id = self.state().get_dynamic_nft_token_id_string();
 
-        let expected_tokens_wallet = vec![
+        let mut expected_tokens_wallet = vec![
             self.thousand_tokens(first_token_id),
             self.thousand_tokens(second_token_id),
-            self.thousand_tokens(fee_token_id),
-            self.one_token(nft_token_id),
-            self.thousand_tokens(sft_token_id),
-            self.thousand_tokens(meta_esdt_token_id),
-            self.one_token(dynamic_nft_token_id),
         ];
+
+        if let Some(tokens) = additional_tokens {
+            for (token_id, amount) in tokens {
+                expected_tokens_wallet.push((token_id, amount));
+            }
+        }
 
         self.check_address_balance(&Bech32Address::from(user_address), expected_tokens_wallet)
             .await;
