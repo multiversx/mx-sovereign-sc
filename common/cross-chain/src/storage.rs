@@ -13,12 +13,14 @@ pub trait CrossChainStorage {
     #[storage_mapper("feeMarketAddress")]
     fn fee_market_address(&self) -> SingleValueMapper<ManagedAddress>;
 
+    #[view(getSovToMxTokenId)]
     #[storage_mapper("sovToMxTokenId")]
     fn sovereign_to_multiversx_token_id_mapper(
         &self,
         sov_token_id: &TokenIdentifier,
     ) -> SingleValueMapper<TokenIdentifier>;
 
+    #[view(getMxToSovTokenId)]
     #[storage_mapper("mxToSovTokenId")]
     fn multiversx_to_sovereign_token_id_mapper(
         &self,

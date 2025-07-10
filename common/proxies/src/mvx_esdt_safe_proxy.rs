@@ -232,6 +232,32 @@ where
             .original_result()
     }
 
+    pub fn sovereign_to_multiversx_token_id_mapper<
+        Arg0: ProxyArg<TokenIdentifier<Env::Api>>,
+    >(
+        self,
+        sov_token_id: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, TokenIdentifier<Env::Api>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getSovToMxTokenId")
+            .argument(&sov_token_id)
+            .original_result()
+    }
+
+    pub fn multiversx_to_sovereign_token_id_mapper<
+        Arg0: ProxyArg<TokenIdentifier<Env::Api>>,
+    >(
+        self,
+        mx_token_id: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, TokenIdentifier<Env::Api>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getMxToSovTokenId")
+            .argument(&mx_token_id)
+            .original_result()
+    }
+
     pub fn native_token(
         self,
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, TokenIdentifier<Env::Api>> {
