@@ -48,9 +48,9 @@ pub const PREFIX_NFT_TOKEN_ID: TestTokenIdentifier = TestTokenIdentifier::new("s
 pub const WEGLD_IDENTIFIER: TestTokenIdentifier = TestTokenIdentifier::new("WEGLD-123456");
 pub const WRONG_TOKEN_ID: TestTokenIdentifier = TestTokenIdentifier::new("WRONG-TOKEN");
 
-pub const SOV_TO_MVX_TOKEN_STORAGE_KEY: &str = "sovToMxTokenId";
+pub const SOV_TO_MVX_TOKEN_STORAGE_KEY: &str = "sovToMvxTokenId";
 pub const NATIVE_TOKEN_STORAGE_KEY: &str = "nativeToken";
-pub const MVX_TO_SOV_TOKEN_STORAGE_KEY: &str = "mxToSovTokenId";
+pub const MVX_TO_SOV_TOKEN_STORAGE_KEY: &str = "mvxToSovTokenId";
 pub const OPERATION_HASH_STATUS_STORAGE_KEY: &str = "operationHashStatus";
 pub const SOVEREIGN_TOKEN_PREFIX: &str = "sov";
 pub const CHAIN_ID: &str = "svch";
