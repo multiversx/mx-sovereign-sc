@@ -273,7 +273,7 @@ where
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, TokenIdentifier<Env::Api>> {
         self.wrapped_tx
             .payment(NotPayable)
-            .raw_call("getSovToMxTokenId")
+            .raw_call("getSovToMvxTokenId")
             .argument(&sov_token_id)
             .original_result()
     }
@@ -282,12 +282,12 @@ where
         Arg0: ProxyArg<TokenIdentifier<Env::Api>>,
     >(
         self,
-        mx_token_id: Arg0,
+        mvx_token_id: Arg0,
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, TokenIdentifier<Env::Api>> {
         self.wrapped_tx
             .payment(NotPayable)
-            .raw_call("getMxToSovTokenId")
-            .argument(&mx_token_id)
+            .raw_call("getMvxToSovTokenId")
+            .argument(&mvx_token_id)
             .original_result()
     }
 

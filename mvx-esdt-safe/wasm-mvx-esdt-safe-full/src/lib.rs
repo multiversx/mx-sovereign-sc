@@ -31,8 +31,8 @@ multiversx_sc_wasm_adapter::endpoints! {
         registerNativeToken => register_native_token
         setTokenBurnMechanism => set_token_burn_mechanism
         setTokenLockMechanism => set_token_lock_mechanism
-        getSovToMxTokenId => sovereign_to_multiversx_token_id_mapper
-        getMxToSovTokenId => multiversx_to_sovereign_token_id_mapper
+        getSovToMvxTokenId => sovereign_to_multiversx_token_id_mapper
+        getMvxToSovTokenId => multiversx_to_sovereign_token_id_mapper
         getNativeToken => native_token
         pause => pause_endpoint
         unpause => unpause_endpoint

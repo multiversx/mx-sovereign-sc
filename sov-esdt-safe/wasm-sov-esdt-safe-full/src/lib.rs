@@ -23,8 +23,8 @@ multiversx_sc_wasm_adapter::endpoints! {
         updateConfiguration => update_configuration
         setFeeMarketAddress => set_fee_market_address
         deposit => deposit
-        getSovToMxTokenId => sovereign_to_multiversx_token_id_mapper
-        getMxToSovTokenId => multiversx_to_sovereign_token_id_mapper
+        getSovToMvxTokenId => sovereign_to_multiversx_token_id_mapper
+        getMvxToSovTokenId => multiversx_to_sovereign_token_id_mapper
         getNativeToken => native_token
         pause => pause_endpoint
         unpause => unpause_endpoint
