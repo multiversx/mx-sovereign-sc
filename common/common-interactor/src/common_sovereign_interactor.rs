@@ -932,8 +932,27 @@ pub trait CommonInteractorTrait {
             .returns(ReturnsHandledOrError::new())
             .run()
             .await;
-
         self.assert_expected_error_message(response, expected_error_message);
+    }
+
+    async fn get_sov_to_mvx_token_id(&mut self, shard: u32, token_id: TokenIdentifier<StaticApi>) {
+        let mvx_esdt_safe_address = self.state().get_mvx_esdt_safe_address(shard).clone();
+        let user_address = self.user_address().clone();
+        let token = self
+            .interactor()
+            .tx()
+            .from(user_address)
+            .to(mvx_esdt_safe_address)
+            .typed(MvxEsdtSafeProxy)
+            .sovereign_to_multiversx_token_id_mapper(token_id)
+            .returns(ReturnsResult)
+            .run()
+            .await;
+
+        self.state().set_sov_to_mvx_token_id(TokenProperties {
+            token_id: token.to_string(),
+            nonce: 0u64,
+        });
     }
 
     async fn whitelist_enshrine_esdt(
@@ -1054,6 +1073,22 @@ pub trait CommonInteractorTrait {
                 );
             }
         }
+    }
+
+    async fn print_account_storage_for_key(&mut self, address: Address, wanted_key: &str) {
+        let pairs = self.interactor().get_account_storage(&address).await;
+
+        let found_entry = pairs.iter().find(|(key, _)| key.contains(wanted_key));
+
+        let decoded_key = self.decode_from_hex(wanted_key);
+
+        let (_, value) = found_entry.unwrap();
+
+        let decoded_value = self.decode_from_hex(value);
+        println!(
+            "Found key: '{}' (decoded: '{}') with value: '{}' (decoded: '{}')",
+            wanted_key, decoded_key, value, decoded_value
+        );
     }
 
     async fn check_wallet_balance_unchanged(

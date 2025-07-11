@@ -90,6 +90,7 @@ pub const NO_KNOWN_SECOND_TOKEN: &str = "No known second token, register first";
 pub const NO_KNOWN_SOVEREIGN_FORGE_SC: &str = "No known Sovereign Forge SC, deploy first";
 pub const NO_KNOWN_META_ESDT_TOKEN: &str = "No known Meta ESDT token ID";
 pub const NO_KNOWN_NFT_TOKEN: &str = "No known NFT token, register first";
+pub const NO_KNOWN_SOV_TO_MVX_TOKEN: &str = "No known Sovereign to MVX token ID";
 pub const NO_KNOWN_SFT_TOKEN: &str = "No known SFT token, register first";
 pub const NO_KNOWN_TESTING_SC: &str = "No known Testing SC contract, deploy first";
 pub const NO_KNOWN_TOKEN_HANDLER_IN_THE_SPECIFIED_SHARD: &str =

@@ -5,8 +5,8 @@ use error_messages::{
     NO_KNOWN_CHAIN_FACTORY_SC, NO_KNOWN_DYNAMIC_NFT_TOKEN_ID, NO_KNOWN_ENSHRINE_ESDT_SAFE_SC,
     NO_KNOWN_FEE_MARKET, NO_KNOWN_FEE_TOKEN, NO_KNOWN_FIRST_TOKEN, NO_KNOWN_HEADER_VERIFIER,
     NO_KNOWN_META_ESDT_TOKEN, NO_KNOWN_MVX_ESDT_SAFE, NO_KNOWN_NFT_TOKEN, NO_KNOWN_SECOND_TOKEN,
-    NO_KNOWN_SFT_TOKEN, NO_KNOWN_SOVEREIGN_FORGE_SC, NO_KNOWN_TESTING_SC,
-    NO_KNOWN_TOKEN_HANDLER_IN_THE_SPECIFIED_SHARD, NO_KNOWN_TOKEN_HANDLER_SC,
+    NO_KNOWN_SFT_TOKEN, NO_KNOWN_SOVEREIGN_FORGE_SC, NO_KNOWN_SOV_TO_MVX_TOKEN,
+    NO_KNOWN_TESTING_SC, NO_KNOWN_TOKEN_HANDLER_IN_THE_SPECIFIED_SHARD, NO_KNOWN_TOKEN_HANDLER_SC,
 };
 use multiversx_sc_snippets::imports::*;
 use serde::{Deserialize, Serialize};
@@ -77,6 +77,7 @@ pub struct State {
     pub meta_esdt_token_id: Option<TokenProperties>,
     pub dynamic_nft_token_id: Option<TokenProperties>,
     pub sft_token_id: Option<TokenProperties>,
+    pub sov_to_mvx_token_id: Option<TokenProperties>,
 }
 
 impl State {
@@ -163,6 +164,10 @@ impl State {
 
     pub fn set_sft_token_id(&mut self, token: TokenProperties) {
         self.sft_token_id = Some(token);
+    }
+
+    pub fn set_sov_to_mvx_token_id(&mut self, token: TokenProperties) {
+        self.sov_to_mvx_token_id = Some(token);
     }
 
     /// Returns the contract addresses
@@ -336,6 +341,13 @@ impl State {
         self.sft_token_id
             .as_ref()
             .expect(NO_KNOWN_SFT_TOKEN)
+            .clone()
+    }
+
+    pub fn get_sov_to_mvx_token_id(&self) -> TokenProperties {
+        self.sov_to_mvx_token_id
+            .as_ref()
+            .expect(NO_KNOWN_SOV_TO_MVX_TOKEN)
             .clone()
     }
 

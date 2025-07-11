@@ -1,17 +1,22 @@
 use common_interactor::{
     common_sovereign_interactor::CommonInteractorTrait, interactor_config::Config,
 };
-use common_test_setup::constants::{
-    DEPLOY_COST, DEPOSIT_LOG, ESDT_SAFE_CONFIG_STORAGE_KEY, EXECUTED_BRIDGE_LOG,
-    ONE_HUNDRED_TOKENS, ONE_THOUSAND_TOKENS, OPERATION_HASH_STATUS_STORAGE_KEY, SHARD_1,
-    TEN_TOKENS, TESTING_SC_ENDPOINT, TOKEN_FEE_STORAGE_KEY, WRONG_ENDPOINT_NAME,
+use common_test_setup::{
+    base_setup::init::RegisterTokenArgs,
+    constants::{
+        DEPLOY_COST, DEPOSIT_LOG, ESDT_SAFE_CONFIG_STORAGE_KEY, EXECUTED_BRIDGE_LOG, ISSUE_COST,
+        ONE_HUNDRED_TOKENS, ONE_THOUSAND_TOKENS, OPERATION_HASH_STATUS_STORAGE_KEY,
+        REGISTER_TOKEN_PREFIX, SHARD_1, SOV_TO_MVX_TOKEN_STORAGE_KEY, TEN_TOKENS,
+        TESTING_SC_ENDPOINT, TOKEN_DISPLAY_NAME, TOKEN_FEE_STORAGE_KEY, TOKEN_TICKER,
+        WRONG_ENDPOINT_NAME,
+    },
 };
 use header_verifier::OperationHashStatus;
 use multiversx_sc::{
     imports::{MultiValue3, OptionalValue},
     types::{
-        BigUint, EsdtTokenData, EsdtTokenPayment, ManagedAddress, ManagedBuffer, ManagedVec,
-        MultiValueEncoded, TokenIdentifier,
+        BigUint, EsdtTokenData, EsdtTokenPayment, EsdtTokenType, ManagedAddress, ManagedBuffer,
+        ManagedVec, MultiValueEncoded, TokenIdentifier,
     },
 };
 use multiversx_sc_snippets::{
@@ -1732,5 +1737,137 @@ async fn test_execute_operation_success_with_fee_transfer_dynamic_nft() {
             &Bech32Address::from(chain_interactor.second_user_address.clone()),
             expected_second_user_balance,
         )
+        .await;
+}
+
+// NOTE: This test is ignored because for now, a transaction can not be called with a token that does not exist in wallet, making this specific scenario hard to test
+/// ### TEST
+/// S-FORGE_COMPLETE-DEPOSIT-FLOW_OK
+///
+/// ### ACTION
+/// Deploy and complete setup phase, register and deposit tokens
+///
+/// ### EXPECTED
+/// Deposit is successful and tokens are transferred to the user
+#[tokio::test]
+#[ignore]
+#[serial]
+#[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
+async fn test_register_and_deposit() {
+    let mut chain_interactor = SovereignForgeInteract::new(Config::chain_simulator_config()).await;
+    let shard = SHARD_1;
+
+    let deploy_cost = BigUint::from(DEPLOY_COST);
+    let user_address = chain_interactor.user_address().clone();
+
+    chain_interactor
+        .deploy_and_complete_setup_phase(
+            deploy_cost,
+            OptionalValue::None,
+            OptionalValue::None,
+            None,
+        )
+        .await;
+
+    let sov_token_id = TokenIdentifier::from_esdt_bytes(
+        REGISTER_TOKEN_PREFIX.to_string() + &chain_interactor.state.get_first_token_id_string(),
+    );
+    let token_type = EsdtTokenType::Fungible;
+    let token_display_name = TOKEN_DISPLAY_NAME;
+    let num_decimals = 18;
+    let wanted_token_id = chain_interactor.state.get_first_token_id_string();
+    let token_ticker = wanted_token_id.split('-').next().unwrap_or(TOKEN_TICKER);
+    let egld_payment = BigUint::from(ISSUE_COST);
+
+    chain_interactor
+        .register_token(
+            shard,
+            RegisterTokenArgs {
+                sov_token_id: sov_token_id.clone(),
+                token_type,
+                token_display_name,
+                token_ticker,
+                num_decimals,
+            },
+            egld_payment,
+            None,
+        )
+        .await;
+
+    let encoded_token_ticker = hex::encode(token_ticker);
+    let encoded_key = &hex::encode(SOV_TO_MVX_TOKEN_STORAGE_KEY);
+
+    chain_interactor
+        .check_account_storage(
+            chain_interactor
+                .state
+                .get_mvx_esdt_safe_address(shard)
+                .clone()
+                .to_address(),
+            encoded_key,
+            Some(&encoded_token_ticker),
+        )
+        .await;
+
+    chain_interactor
+        .get_sov_to_mvx_token_id(shard, sov_token_id)
+        .await;
+
+    let esdt_token_payment_one = EsdtTokenPayment::<StaticApi>::new(
+        TokenIdentifier::from_esdt_bytes(chain_interactor.state.get_sov_to_mvx_token_id().token_id),
+        0,
+        BigUint::from(ONE_HUNDRED_TOKENS),
+    );
+
+    let payments_vec = PaymentsVec::from(vec![esdt_token_payment_one]);
+
+    chain_interactor
+        .deposit_in_mvx_esdt_safe(
+            user_address,
+            shard,
+            OptionalValue::None,
+            payments_vec,
+            None,
+            Some(DEPOSIT_LOG),
+        )
+        .await;
+
+    let expected_tokens_wallet = vec![
+        chain_interactor.custom_amount_tokens(
+            chain_interactor.state.get_first_token_id_string(),
+            ONE_THOUSAND_TOKENS - ONE_HUNDRED_TOKENS,
+        ),
+        chain_interactor.thousand_tokens(chain_interactor.state.get_second_token_id_string()),
+        chain_interactor.thousand_tokens(chain_interactor.state.get_fee_token_id_string()),
+        chain_interactor.one_token(chain_interactor.state.get_nft_token_id_string()),
+        chain_interactor.thousand_tokens(chain_interactor.state.get_meta_esdt_token_id_string()),
+        chain_interactor.one_token(chain_interactor.state.get_dynamic_nft_token_id_string()),
+        chain_interactor.thousand_tokens(chain_interactor.state.get_sft_token_id_string()),
+    ];
+    chain_interactor
+        .check_address_balance(
+            &Bech32Address::from(chain_interactor.user_address()),
+            expected_tokens_wallet,
+        )
+        .await;
+
+    let expected_tokens_contract = vec![chain_interactor.custom_amount_tokens(
+        chain_interactor.state.get_first_token_id_string(),
+        ONE_HUNDRED_TOKENS,
+    )];
+    chain_interactor
+        .check_address_balance(
+            &chain_interactor
+                .state
+                .get_mvx_esdt_safe_address(shard)
+                .clone(),
+            expected_tokens_contract,
+        )
+        .await;
+    chain_interactor
+        .check_fee_market_balance_is_empty(shard)
+        .await;
+    chain_interactor
+        .check_testing_sc_balance_is_empty(shard)
         .await;
 }
