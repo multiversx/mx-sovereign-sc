@@ -10,8 +10,9 @@ use common_test_setup::constants::{
 use cross_chain::MAX_GAS_PER_TRANSACTION;
 use error_messages::{
     BANNED_ENDPOINT_NAME, CANNOT_REGISTER_TOKEN, DEPOSIT_OVER_MAX_AMOUNT, ERR_EMPTY_PAYMENTS,
-    GAS_LIMIT_TOO_HIGH, INVALID_TYPE, NATIVE_TOKEN_ALREADY_REGISTERED, NOTHING_TO_TRANSFER,
-    PAYMENT_DOES_NOT_COVER_FEE, SETUP_PHASE_NOT_COMPLETED, TOO_MANY_TOKENS,
+    GAS_LIMIT_TOO_HIGH, INVALID_TYPE, MAX_GAS_LIMIT_PER_TX_EXCEEDED,
+    NATIVE_TOKEN_ALREADY_REGISTERED, NOTHING_TO_TRANSFER, PAYMENT_DOES_NOT_COVER_FEE,
+    SETUP_PHASE_NOT_COMPLETED, TOO_MANY_TOKENS,
 };
 use header_verifier::OperationHashStatus;
 use multiversx_sc_snippets::multiversx_sc_scenario::multiversx_chain_vm::crypto_functions::sha256;
@@ -107,7 +108,13 @@ async fn test_update_invalid_config() {
         .await;
 
     chain_interactor
-        .update_configuration(hash_of_hashes, config, None, Some("failedBridgeOp"))
+        .update_configuration(
+            hash_of_hashes,
+            config,
+            None,
+            Some("failedBridgeOp"),
+            Some(MAX_GAS_LIMIT_PER_TX_EXCEEDED),
+        )
         .await;
 }
 
@@ -1406,6 +1413,7 @@ async fn test_execute_operation_no_esdt_safe_registered() {
             operation,
             Some(SETUP_PHASE_NOT_COMPLETED),
             None,
+            None,
         )
         .await;
 
@@ -1574,6 +1582,7 @@ async fn test_execute_operation_with_native_token_success() {
             operation,
             None,
             Some("executedBridgeOp"),
+            None,
         )
         .await;
 
@@ -1712,6 +1721,7 @@ async fn test_execute_operation_success_no_fee() {
             operation,
             None,
             Some("executedBridgeOp"),
+            None,
         )
         .await;
 
@@ -1823,6 +1833,7 @@ async fn test_execute_operation_only_transfer_data_no_fee() {
             operation,
             None,
             Some("executedBridgeOp"),
+            None,
         )
         .await;
 
@@ -1922,6 +1933,7 @@ async fn test_execute_operation_no_payments_failed_event() {
             hash_of_hashes,
             operation,
             Some(function.to_string().as_str()),
+            None,
             None,
         )
         .await;

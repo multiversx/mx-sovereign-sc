@@ -150,6 +150,7 @@ impl MvxEsdtSafeTestState {
         new_config: EsdtSafeConfig<StaticApi>,
         err_message: Option<&str>,
         expected_custom_log: Option<&str>,
+        expected_log_error: Option<&str>,
     ) {
         let (result, logs) = self
             .common_setup
@@ -163,11 +164,13 @@ impl MvxEsdtSafeTestState {
             .returns(ReturnsLogs)
             .run();
 
+        println!("Update ESDT Safe Config Result: {:?}", logs);
+
         self.common_setup
             .assert_expected_error_message(result, err_message);
 
         self.common_setup
-            .assert_expected_log(logs, expected_custom_log);
+            .assert_expected_log(logs, expected_custom_log, expected_log_error);
     }
 
     pub fn set_token_burn_mechanism(
@@ -250,7 +253,7 @@ impl MvxEsdtSafeTestState {
             .assert_expected_error_message(result, expected_error_message);
 
         self.common_setup
-            .assert_expected_log(logs, expected_custom_log);
+            .assert_expected_log(logs, expected_custom_log, None);
     }
 
     pub fn register_token(
@@ -314,6 +317,7 @@ impl MvxEsdtSafeTestState {
         expected_error_message: Option<&str>,
         expected_custom_log: Option<&str>,
         expected_custom_log_data: Option<&str>,
+        expected_log_error: Option<&str>,
     ) {
         let (logs, result) = self
             .common_setup
@@ -330,8 +334,11 @@ impl MvxEsdtSafeTestState {
         self.common_setup
             .assert_expected_error_message(result, expected_error_message);
 
-        self.common_setup
-            .assert_expected_log(logs.clone(), expected_custom_log);
+        self.common_setup.assert_expected_log(
+            logs.clone(),
+            expected_custom_log,
+            expected_log_error,
+        );
 
         if let Some(custom_log_data) = expected_custom_log_data {
             self.common_setup
@@ -360,7 +367,7 @@ impl MvxEsdtSafeTestState {
             .assert_expected_error_message(result, expected_error_message);
 
         self.common_setup
-            .assert_expected_log(logs, expected_custom_log);
+            .assert_expected_log(logs, expected_custom_log, None);
 
         self.common_setup
             .change_ownership_to_header_verifier(ESDT_SAFE_ADDRESS);
@@ -387,6 +394,6 @@ impl MvxEsdtSafeTestState {
             .assert_expected_error_message(result, expected_error_message);
 
         self.common_setup
-            .assert_expected_log(logs, expected_custom_log);
+            .assert_expected_log(logs, expected_custom_log, None);
     }
 }

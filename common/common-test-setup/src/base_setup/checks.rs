@@ -119,13 +119,24 @@ impl BaseSetup {
     }
 
     //NOTE: transferValue returns an empty log and calling this function on it will panic
-    pub fn assert_expected_log(&mut self, logs: Vec<Log>, expected_log: Option<&str>) {
+    pub fn assert_expected_log(
+        &mut self,
+        logs: Vec<Log>,
+        expected_log: Option<&str>,
+        expected_log_error: Option<&str>,
+    ) {
         match expected_log {
             None => {
                 assert!(
                     logs.is_empty(),
                     "Expected no logs, but found some: {:?}",
                     logs
+                );
+
+                assert!(
+                    expected_log_error.is_none(),
+                    "Expected no logs, but wanted to check for error: {}",
+                    expected_log_error.unwrap()
                 );
             }
             Some(expected_str) => {
@@ -141,6 +152,23 @@ impl BaseSetup {
                     "Expected log '{}' not found",
                     expected_str
                 );
+
+                if let Some(expected_error) = expected_log_error {
+                    let found_log = found_log.unwrap();
+                    let expected_error_bytes =
+                        ManagedBuffer::<StaticApi>::from(expected_error).to_vec();
+
+                    let found_error_in_data = found_log
+                        .data
+                        .iter()
+                        .any(|data_item| data_item.to_vec() == expected_error_bytes);
+
+                    assert!(
+                        found_error_in_data,
+                        "Expected error '{}' not found in data field of log with topic '{}'",
+                        expected_error, expected_str
+                    );
+                }
             }
         }
     }

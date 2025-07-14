@@ -54,6 +54,7 @@ impl ChainConfigTestState {
         config: SovereignConfig<StaticApi>,
         expect_error: Option<&str>,
         expected_custom_log: Option<&str>,
+        expected_log_error: Option<&str>,
     ) {
         let (result, logs) = self
             .common_setup
@@ -71,6 +72,6 @@ impl ChainConfigTestState {
             .assert_expected_error_message(result, expect_error);
 
         self.common_setup
-            .assert_expected_log(logs, expected_custom_log);
+            .assert_expected_log(logs, expected_custom_log, expected_log_error);
     }
 }
