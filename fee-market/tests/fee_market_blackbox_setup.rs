@@ -137,6 +137,7 @@ impl FeeMarketTestState {
         token_id: TestTokenIdentifier,
         expected_error_message: Option<&str>,
         expected_custom_log: Option<&str>,
+        expected_log_error: Option<&str>,
     ) {
         let (response, logs) = self
             .common_setup
@@ -154,7 +155,7 @@ impl FeeMarketTestState {
             .assert_expected_error_message(response, expected_error_message);
 
         self.common_setup
-            .assert_expected_log(logs, expected_custom_log);
+            .assert_expected_log(logs, expected_custom_log, expected_log_error);
     }
 
     pub fn set_fee(
@@ -163,6 +164,7 @@ impl FeeMarketTestState {
         fee_struct: &FeeStruct<StaticApi>,
         expected_error_message: Option<&str>,
         expected_custom_log: Option<&str>,
+        expected_log_error: Option<&str>,
     ) {
         let (response, logs) = self
             .common_setup
@@ -180,7 +182,7 @@ impl FeeMarketTestState {
             .assert_expected_error_message(response, expected_error_message);
 
         self.common_setup
-            .assert_expected_log(logs, expected_custom_log);
+            .assert_expected_log(logs, expected_custom_log, expected_log_error);
     }
 
     pub fn set_fee_during_setup_phase(
@@ -265,7 +267,7 @@ impl FeeMarketTestState {
             .assert_expected_error_message(response, expected_error_message);
 
         self.common_setup
-            .assert_expected_log(logs, expected_custom_log);
+            .assert_expected_log(logs, expected_custom_log, None);
     }
 
     pub fn add_users_to_whitelist(&mut self, users_vector: Vec<TestAddress>) {

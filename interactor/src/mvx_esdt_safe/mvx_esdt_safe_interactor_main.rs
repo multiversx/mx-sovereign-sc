@@ -256,6 +256,7 @@ impl MvxEsdtSafeInteract {
         new_config: EsdtSafeConfig<StaticApi>,
         expected_error_message: Option<&str>,
         expected_log: Option<&str>,
+        expected_log_error: Option<&str>,
     ) {
         let (response, logs) = self
             .interactor
@@ -272,7 +273,7 @@ impl MvxEsdtSafeInteract {
 
         self.assert_expected_error_message(response, expected_error_message);
 
-        self.assert_expected_log(logs, expected_log);
+        self.assert_expected_log(logs, expected_log, expected_log_error);
     }
 
     pub async fn set_fee_market_address(&mut self, fee_market_address: Address) {

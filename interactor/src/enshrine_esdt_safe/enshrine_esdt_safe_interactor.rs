@@ -237,7 +237,7 @@ impl EnshrineEsdtSafeInteract {
 
         self.assert_expected_error_message(response, error_wanted);
 
-        self.assert_expected_log(logs, expected_log);
+        self.assert_expected_log(logs, expected_log, None);
     }
 
     pub async fn execute_operation(
@@ -262,7 +262,7 @@ impl EnshrineEsdtSafeInteract {
 
         self.assert_expected_error_message(response, expected_error_message);
 
-        self.assert_expected_log(logs, expected_log);
+        self.assert_expected_log(logs, expected_log, None);
     }
 
     pub async fn register_tokens(

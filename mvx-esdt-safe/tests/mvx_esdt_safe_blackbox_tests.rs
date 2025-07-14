@@ -1433,6 +1433,7 @@ fn test_execute_operation_no_chain_config_registered() {
         Some(CALLER_NOT_FROM_CURRENT_SOVEREIGN),
         None,
         None,
+        None,
     );
 
     state
@@ -1478,6 +1479,7 @@ fn test_execute_operation_no_esdt_safe_registered() {
         &hash_of_hashes,
         &operation,
         Some(CALLER_NOT_FROM_CURRENT_SOVEREIGN),
+        None,
         None,
         None,
     );
@@ -1557,6 +1559,7 @@ fn test_execute_operation_success() {
         &operation,
         None,
         Some("executedBridgeOp"),
+        None,
         None,
     );
 
@@ -1646,6 +1649,7 @@ fn test_execute_operation_with_native_token_success() {
         None,
         Some("executedBridgeOp"),
         None,
+        None,
     );
 
     state
@@ -1726,6 +1730,7 @@ fn test_execute_operation_burn_mechanism_without_deposit_cannot_subtract() {
         None,
         Some("executedBridgeOp"),
         None,
+        None,
     );
 
     state
@@ -1799,6 +1804,7 @@ fn execute_operation_only_transfer_data_no_fee() {
         &operation,
         None,
         Some("executedBridgeOp"),
+        None,
         None,
     );
 
@@ -1886,6 +1892,7 @@ fn test_execute_operation_success_burn_mechanism() {
         &operation,
         None,
         Some("executedBridgeOp"),
+        None,
         None,
     );
 
@@ -2031,6 +2038,7 @@ fn test_deposit_execute_switch_mechanism() {
         None,
         Some("executedBridgeOp"),
         None,
+        None,
     );
 
     let mut expected_receiver_amount = execute_trusted_token_payment_amount;
@@ -2106,6 +2114,7 @@ fn test_deposit_execute_switch_mechanism() {
         &operation_two,
         None,
         Some("executedBridgeOp"),
+        None,
         None,
     );
 
@@ -2238,6 +2247,7 @@ fn test_execute_operation_no_payments() {
         None,
         Some("executedBridgeOp"),
         None,
+        None,
     );
 
     state
@@ -2324,6 +2334,7 @@ fn test_execute_operation_no_payments_failed_event() {
         None,
         Some("executedBridgeOp"),
         Some("invalid function (not found)"),
+        None,
     );
 
     state
@@ -2509,6 +2520,7 @@ fn test_update_config_setup_phase_not_completed() {
         new_config,
         Some(SETUP_PHASE_NOT_COMPLETED),
         None,
+        None,
     );
 }
 
@@ -2542,6 +2554,7 @@ fn test_update_config_operation_not_registered() {
         &ManagedBuffer::new(),
         new_config,
         Some(CURRENT_OPERATION_NOT_REGISTERED),
+        None,
         None,
     );
 }
@@ -2585,7 +2598,13 @@ fn test_update_config_invalid_config() {
         MultiValueEncoded::from_iter(vec![config_hash]),
     );
 
-    state.update_esdt_safe_config(&hash_of_hashes, new_config, None, Some("failedBridgeOp"));
+    state.update_esdt_safe_config(
+        &hash_of_hashes,
+        new_config,
+        None,
+        Some("failedBridgeOp"),
+        Some(MAX_GAS_LIMIT_PER_TX_EXCEEDED),
+    );
 }
 
 /// ### TEST
@@ -2629,7 +2648,13 @@ fn test_update_config() {
         MultiValueEncoded::from_iter(vec![config_hash]),
     );
 
-    state.update_esdt_safe_config(&hash_of_hashes, new_config, None, Some("executedBridgeOp"));
+    state.update_esdt_safe_config(
+        &hash_of_hashes,
+        new_config,
+        None,
+        Some("executedBridgeOp"),
+        None,
+    );
 
     state
         .common_setup
