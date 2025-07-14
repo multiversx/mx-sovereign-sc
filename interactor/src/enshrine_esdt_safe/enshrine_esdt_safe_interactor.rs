@@ -9,7 +9,7 @@ use common_interactor::interactor_state::State;
 use common_test_setup::base_setup::init::RegisterTokenArgs;
 use common_test_setup::constants::{
     DEPLOY_COST, ENSHRINE_ESDT_SAFE_CODE_PATH, INTERACTOR_WORKING_DIR, ONE_THOUSAND_TOKENS,
-    PREFERRED_CHAIN_IDS, SOVEREIGN_TOKEN_PREFIX,
+    PREFERRED_CHAIN_IDS, SHARD_0, SOVEREIGN_TOKEN_PREFIX,
 };
 use fee_market_proxy::*;
 use multiversx_sc_snippets::imports::*;
@@ -171,7 +171,6 @@ impl EnshrineEsdtSafeInteract {
 
         self.deploy_chain_factory(
             owner.clone(),
-            PREFERRED_CHAIN_IDS[0].to_string(),
             self.state.current_sovereign_forge_sc_address().to_address(),
             TemplateAddresses {
                 chain_config_address,
@@ -182,10 +181,10 @@ impl EnshrineEsdtSafeInteract {
         )
         .await;
 
-        self.deploy_token_handler_enshrine(owner.clone(), PREFERRED_CHAIN_IDS[0].to_string())
-            .await;
+        self.deploy_token_handler(owner.clone(), SHARD_0).await;
         self.deploy_enshrine_esdt(
             owner.clone(),
+            SHARD_0,
             PREFERRED_CHAIN_IDS[0].to_string(),
             is_sovereign_chain,
             Some(self.state.get_first_token_id()),

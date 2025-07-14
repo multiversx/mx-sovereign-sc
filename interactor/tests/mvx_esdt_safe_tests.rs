@@ -492,10 +492,7 @@ async fn test_deposit_gas_limit_too_high_no_fee() {
         .await;
 
     chain_interactor
-        .deploy_testing_sc(
-            chain_interactor.bridge_owner.clone(),
-            PREFERRED_CHAIN_IDS[0].to_string(),
-        )
+        .deploy_testing_sc(chain_interactor.bridge_owner.clone())
         .await;
 
     let esdt_token_payment_one = EsdtTokenPayment::<StaticApi>::new(
@@ -571,10 +568,7 @@ async fn test_deposit_endpoint_banned_no_fee() {
         .await;
 
     chain_interactor
-        .deploy_testing_sc(
-            chain_interactor.bridge_owner.clone(),
-            PREFERRED_CHAIN_IDS[0].to_string(),
-        )
+        .deploy_testing_sc(chain_interactor.bridge_owner.clone())
         .await;
 
     let esdt_token_payment_one = EsdtTokenPayment::<StaticApi>::new(
@@ -663,10 +657,7 @@ async fn test_deposit_fee_enabled() {
         .await;
 
     chain_interactor
-        .deploy_testing_sc(
-            chain_interactor.bridge_owner.clone(),
-            PREFERRED_CHAIN_IDS[0].to_string(),
-        )
+        .deploy_testing_sc(chain_interactor.bridge_owner.clone())
         .await;
 
     let fee_amount = BigUint::from(ONE_HUNDRED_TOKENS);
@@ -866,10 +857,7 @@ async fn test_deposit_only_transfer_data_no_fee() {
         .await;
 
     chain_interactor
-        .deploy_testing_sc(
-            chain_interactor.bridge_owner.clone(),
-            PREFERRED_CHAIN_IDS[0].to_string(),
-        )
+        .deploy_testing_sc(chain_interactor.bridge_owner.clone())
         .await;
 
     let gas_limit = 1000u64;
@@ -1496,10 +1484,7 @@ async fn test_execute_operation_no_esdt_safe_registered() {
     chain_interactor.unpause_endpoint().await;
 
     chain_interactor
-        .deploy_testing_sc(
-            chain_interactor.bridge_owner.clone(),
-            PREFERRED_CHAIN_IDS[0].to_string(),
-        )
+        .deploy_testing_sc(chain_interactor.bridge_owner.clone())
         .await;
 
     let payment = OperationEsdtPayment::new(
@@ -1529,6 +1514,7 @@ async fn test_execute_operation_no_esdt_safe_registered() {
 
     chain_interactor
         .execute_operations_in_mvx_esdt_safe(
+            chain_interactor.bridge_owner.clone(),
             SHARD_0,
             hash_of_hashes,
             operation,
@@ -1551,9 +1537,7 @@ async fn test_execute_operation_no_esdt_safe_registered() {
 
     chain_interactor.check_wallet_balance_unchanged(None).await;
 
-    chain_interactor
-        .check_testing_sc_balance_is_empty(SHARD_0)
-        .await;
+    chain_interactor.check_testing_sc_balance_is_empty().await;
 
     chain_interactor
         .check_fee_market_balance_is_empty(SHARD_0)
@@ -1648,10 +1632,7 @@ async fn test_execute_operation_with_native_token_success() {
         .complete_header_verifier_setup_phase(chain_interactor.bridge_owner.clone())
         .await;
     chain_interactor
-        .deploy_testing_sc(
-            chain_interactor.bridge_owner.clone(),
-            PREFERRED_CHAIN_IDS[0].to_string(),
-        )
+        .deploy_testing_sc(chain_interactor.bridge_owner.clone())
         .await;
 
     let token_name = "SOVEREIGN";
@@ -1728,6 +1709,7 @@ async fn test_execute_operation_with_native_token_success() {
 
     chain_interactor
         .execute_operations_in_mvx_esdt_safe(
+            chain_interactor.bridge_owner.clone(),
             SHARD_0,
             hash_of_hashes,
             operation,
@@ -1818,10 +1800,7 @@ async fn test_execute_operation_success_no_fee() {
         .await;
 
     chain_interactor
-        .deploy_testing_sc(
-            chain_interactor.bridge_owner.clone(),
-            PREFERRED_CHAIN_IDS[0].to_string(),
-        )
+        .deploy_testing_sc(chain_interactor.bridge_owner.clone())
         .await;
 
     let operation = Operation::new(
@@ -1880,6 +1859,7 @@ async fn test_execute_operation_success_no_fee() {
 
     chain_interactor
         .execute_operations_in_mvx_esdt_safe(
+            chain_interactor.bridge_owner.clone(),
             SHARD_0,
             hash_of_hashes,
             operation,
@@ -1956,10 +1936,7 @@ async fn test_execute_operation_only_transfer_data_no_fee() {
         .await;
 
     chain_interactor
-        .deploy_testing_sc(
-            chain_interactor.bridge_owner.clone(),
-            PREFERRED_CHAIN_IDS[0].to_string(),
-        )
+        .deploy_testing_sc(chain_interactor.bridge_owner.clone())
         .await;
 
     let operation = Operation::new(
@@ -2004,6 +1981,7 @@ async fn test_execute_operation_only_transfer_data_no_fee() {
 
     chain_interactor
         .execute_operations_in_mvx_esdt_safe(
+            chain_interactor.bridge_owner.clone(),
             SHARD_0,
             hash_of_hashes,
             operation,
@@ -2069,10 +2047,7 @@ async fn test_execute_operation_no_payments_failed_event() {
         .await;
 
     chain_interactor
-        .deploy_testing_sc(
-            chain_interactor.bridge_owner.clone(),
-            PREFERRED_CHAIN_IDS[0].to_string(),
-        )
+        .deploy_testing_sc(chain_interactor.bridge_owner.clone())
         .await;
 
     let operation = Operation::new(
@@ -2117,6 +2092,7 @@ async fn test_execute_operation_no_payments_failed_event() {
 
     chain_interactor
         .execute_operations_in_mvx_esdt_safe(
+            chain_interactor.bridge_owner.clone(),
             SHARD_0,
             hash_of_hashes,
             operation,

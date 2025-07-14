@@ -24,9 +24,10 @@ pub struct SovereignForgeInteract {
     pub sovereign_owner_shard_0: Address,
     pub sovereign_owner_shard_1: Address,
     pub sovereign_owner_shard_2: Address,
-    pub bridge_service: Address,
+    pub bridge_service_shard_0: Address,
+    pub bridge_service_shard_1: Address,
+    pub bridge_service_shard_2: Address,
     pub user_address: Address,
-    pub second_user_address: Address,
     pub state: State,
 }
 impl CommonInteractorTrait for SovereignForgeInteract {
@@ -39,7 +40,7 @@ impl CommonInteractorTrait for SovereignForgeInteract {
     }
 
     fn bridge_service(&self) -> &Address {
-        &self.bridge_service
+        &self.bridge_service_shard_0
     }
 
     fn user_address(&self) -> &Address {
@@ -73,15 +74,19 @@ impl SovereignForgeInteract {
         let current_working_dir = INTERACTOR_WORKING_DIR;
         interactor.set_current_dir_from_workspace(current_working_dir);
 
+        let shard_0_wallet = Wallet::from_pem_file("wallets/shard-0-wallet.pem")
+            .expect("Failed to load shard 0 wallet");
+
         let bridge_owner_shard_0 = interactor.register_wallet(test_wallets::bob()).await;
         let bridge_owner_shard_1 = interactor.register_wallet(test_wallets::alice()).await;
         let bridge_owner_shard_2 = interactor.register_wallet(test_wallets::carol()).await;
         let sovereign_owner_shard_0 = interactor.register_wallet(test_wallets::mike()).await;
         let sovereign_owner_shard_1 = interactor.register_wallet(test_wallets::frank()).await;
         let sovereign_owner_shard_2 = interactor.register_wallet(test_wallets::heidi()).await;
-        let bridge_service = interactor.register_wallet(test_wallets::dan()).await; //shard 1
+        let bridge_service_shard_0 = interactor.register_wallet(shard_0_wallet).await;
+        let bridge_service_shard_1 = interactor.register_wallet(test_wallets::dan()).await;
+        let bridge_service_shard_2 = interactor.register_wallet(test_wallets::judy()).await;
         let user_address = interactor.register_wallet(test_wallets::grace()).await; //shard 1
-        let second_user_address = interactor.register_wallet(test_wallets::mallory()).await; //shard 1
 
         interactor.generate_blocks_until_epoch(1).await.unwrap();
 
@@ -93,9 +98,10 @@ impl SovereignForgeInteract {
             sovereign_owner_shard_0,
             sovereign_owner_shard_1,
             sovereign_owner_shard_2,
-            bridge_service,
+            bridge_service_shard_0,
+            bridge_service_shard_1,
+            bridge_service_shard_2,
             user_address,
-            second_user_address,
             state: State::default(),
         }
     }
@@ -234,7 +240,7 @@ impl SovereignForgeInteract {
             .await;
 
         for shard_id in 0..NUMBER_OF_SHARDS {
-            let caller = self.get_sovereign_owner_for_shard(shard_id);
+            let caller = self.get_bridge_owner_for_shard(shard_id);
             let template_contracts = self
                 .deploy_template_contracts(caller.clone(), EsdtSafeType::MvxEsdtSafe)
                 .await;
@@ -277,6 +283,9 @@ impl SovereignForgeInteract {
             )
             .await;
         }
+
+        self.deploy_testing_sc(self.bridge_owner_shard_1.clone())
+            .await;
     }
 
     pub async fn finish_init_setup_phase_for_one_shard(
@@ -287,21 +296,18 @@ impl SovereignForgeInteract {
         template_addresses: TemplateAddresses,
     ) {
         let caller = self.get_bridge_owner_for_shard(shard_id);
-        let preferred_chain_id = PREFERRED_CHAIN_IDS[shard_id as usize].to_string();
 
         self.deploy_chain_factory(
             caller.clone(),
-            preferred_chain_id.clone(),
             sovereign_forge_address.clone(),
             template_addresses.clone(),
         )
         .await;
-        self.register_chain_factory(initial_caller.clone(), shard_id, preferred_chain_id.clone())
+        self.register_chain_factory(initial_caller.clone(), shard_id)
             .await;
 
-        self.deploy_token_handler(caller.clone(), preferred_chain_id.clone())
-            .await;
-        self.register_token_handler(initial_caller.clone(), shard_id, preferred_chain_id)
+        self.deploy_token_handler(caller.clone(), shard_id).await;
+        self.register_token_handler(initial_caller.clone(), shard_id)
             .await;
     }
 
@@ -333,9 +339,6 @@ impl SovereignForgeInteract {
 
         self.update_smart_contracts_addresses_in_state(preferred_chain_id.clone())
             .await;
-
-        self.deploy_testing_sc(caller.clone(), preferred_chain_id)
-            .await;
     }
 
     pub async fn upgrade(&mut self, caller: Address) {
@@ -356,14 +359,9 @@ impl SovereignForgeInteract {
         println!("Result: {response:?}");
     }
 
-    pub async fn register_token_handler(
-        &mut self,
-        caller: Address,
-        shard_id: u32,
-        chain_id: String,
-    ) {
+    pub async fn register_token_handler(&mut self, caller: Address, shard_id: u32) {
         let sovereign_forge_address = self.state.current_sovereign_forge_sc_address();
-        let token_handler_address = self.state.get_token_handler_address(chain_id);
+        let token_handler_address = self.state.get_token_handler_address(shard_id);
         let response = self
             .interactor
             .tx()
@@ -379,14 +377,9 @@ impl SovereignForgeInteract {
         println!("Result: {response:?}");
     }
 
-    pub async fn register_chain_factory(
-        &mut self,
-        caller: Address,
-        shard_id: u32,
-        chain_id: String,
-    ) {
+    pub async fn register_chain_factory(&mut self, caller: Address, shard_id: u32) {
         let sovereign_forge_address = self.state.current_sovereign_forge_sc_address();
-        let chain_factory_address = self.state.get_chain_factory_sc_address(chain_id);
+        let chain_factory_address = self.state.get_chain_factory_sc_address(shard_id);
 
         let response = self
             .interactor
@@ -477,6 +470,15 @@ impl SovereignForgeInteract {
             0 => self.sovereign_owner_shard_0.clone(),
             1 => self.sovereign_owner_shard_1.clone(),
             2 => self.sovereign_owner_shard_2.clone(),
+            _ => panic!("Invalid shard ID: {shard_id}"),
+        }
+    }
+
+    pub fn get_bridge_service_for_shard(&self, shard_id: u32) -> Address {
+        match shard_id {
+            0 => self.bridge_service_shard_0.clone(),
+            1 => self.bridge_service_shard_1.clone(),
+            2 => self.bridge_service_shard_2.clone(),
             _ => panic!("Invalid shard ID: {shard_id}"),
         }
     }

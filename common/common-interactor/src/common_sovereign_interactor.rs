@@ -8,7 +8,7 @@ use common_test_setup::constants::{
     ONE_HUNDRED_TOKENS, ONE_THOUSAND_TOKENS, SOVEREIGN_FORGE_CODE_PATH, SOVEREIGN_TOKEN_PREFIX,
     TESTING_SC_CODE_PATH, TOKEN_HANDLER_CODE_PATH, WEGLD_IDENTIFIER,
 };
-use error_messages::{EMPTY_EXPECTED_LOG, FAILED_TO_PARSE_AS_NUMBER};
+use error_messages::FAILED_TO_PARSE_AS_NUMBER;
 use multiversx_sc::{
     codec::{num_bigint, TopEncode},
     imports::{ESDTSystemSCProxy, OptionalValue, UserBuiltinProxy},
@@ -193,7 +193,6 @@ pub trait CommonInteractorTrait {
     async fn deploy_chain_factory(
         &mut self,
         caller: Address,
-        chain_id: String,
         sovereign_forge_address: Address,
         template_addresses: TemplateAddresses,
     ) {
@@ -217,10 +216,8 @@ pub trait CommonInteractorTrait {
             .await;
 
         let new_address_bech32 = Bech32Address::from(&new_address);
-        self.state().set_chain_factory_sc_address(AddressInfo {
-            address: new_address_bech32,
-            chain_id,
-        });
+        self.state()
+            .set_chain_factory_sc_address(new_address_bech32);
     }
 
     async fn deploy_chain_config(
@@ -425,7 +422,7 @@ pub trait CommonInteractorTrait {
         });
     }
 
-    async fn deploy_testing_sc(&mut self, caller: Address, chain_id: String) {
+    async fn deploy_testing_sc(&mut self, caller: Address) {
         let new_address = self
             .interactor()
             .tx()
@@ -440,17 +437,11 @@ pub trait CommonInteractorTrait {
             .await;
 
         let new_address_bech32 = Bech32Address::from(&new_address);
-        self.state().set_testing_sc_address(AddressInfo {
-            address: new_address_bech32.clone(),
-            chain_id,
-        });
+        self.state().set_testing_sc_address(new_address_bech32);
     }
 
-    async fn deploy_token_handler(&mut self, caller: Address, chain_id: String) {
-        let chain_factory_address = self
-            .state()
-            .get_chain_factory_sc_address(chain_id.clone())
-            .clone();
+    async fn deploy_token_handler(&mut self, caller: Address, shard: u32) {
+        let chain_factory_address = self.state().get_chain_factory_sc_address(shard).clone();
 
         let new_address = self
             .interactor()
@@ -466,47 +457,21 @@ pub trait CommonInteractorTrait {
             .await;
 
         let new_address_bech32 = Bech32Address::from(&new_address);
-        self.state().set_token_handler_address(AddressInfo {
-            address: new_address_bech32,
-            chain_id,
-        });
+        self.state().set_token_handler_address(new_address_bech32);
     }
 
-    //TODO: Remove this after enshrine changes
-    async fn deploy_token_handler_enshrine(&mut self, caller: Address, chain_id: String) {
-        let new_address = self
-            .interactor()
-            .tx()
-            .from(caller.clone())
-            .gas(100_000_000u64)
-            .typed(token_handler_proxy::TokenHandlerProxy)
-            .init(caller)
-            .code(TOKEN_HANDLER_CODE_PATH)
-            .code_metadata(CodeMetadata::all())
-            .returns(ReturnsNewAddress)
-            .run()
-            .await;
-
-        let new_address_bech32 = Bech32Address::from(&new_address);
-        self.state().set_token_handler_address(AddressInfo {
-            address: new_address_bech32,
-            chain_id,
-        });
-    }
-
+    #[allow(clippy::too_many_arguments)]
     async fn deploy_enshrine_esdt(
         &mut self,
         caller: Address,
+        shard: u32,
         chain_id: String,
         is_sovereign_chain: bool,
         opt_wegld_identifier: Option<TokenIdentifier<StaticApi>>,
         opt_sov_token_prefix: Option<ManagedBuffer<StaticApi>>,
         opt_config: Option<EsdtSafeConfig<StaticApi>>,
     ) {
-        let token_handler_address = self
-            .state()
-            .get_token_handler_address(chain_id.clone())
-            .clone();
+        let token_handler_address = self.state().get_token_handler_address(shard).clone();
         let new_address = self
             .interactor()
             .tx()
@@ -879,18 +844,18 @@ pub trait CommonInteractorTrait {
 
     async fn execute_operations_in_mvx_esdt_safe(
         &mut self,
+        caller: Address,
         shard: u32,
         hash_of_hashes: ManagedBuffer<StaticApi>,
         operation: Operation<StaticApi>,
         expected_error_message: Option<&str>,
         expected_log: Option<&str>,
     ) {
-        let bridge_service = self.bridge_service().clone();
         let current_mvx_esdt_safe_address = self.state().get_mvx_esdt_safe_address(shard).clone();
         let (response, logs) = self
             .interactor()
             .tx()
-            .from(bridge_service)
+            .from(caller)
             .to(current_mvx_esdt_safe_address)
             .gas(120_000_000u64)
             .typed(MvxEsdtSafeProxy)
@@ -989,7 +954,6 @@ pub trait CommonInteractorTrait {
                 );
             }
             Some(expected_log) => {
-                assert!(!expected_log.is_empty(), "{}", EMPTY_EXPECTED_LOG);
                 let expected_bytes = expected_log.as_bytes();
 
                 let found_log = logs.iter().find(|log| {
@@ -1138,8 +1102,8 @@ pub trait CommonInteractorTrait {
             .await;
     }
 
-    async fn check_testing_sc_balance_is_empty(&mut self, shard: u32) {
-        let testing_sc_address = self.state().get_testing_sc_address(shard).clone();
+    async fn check_testing_sc_balance_is_empty(&mut self) {
+        let testing_sc_address = self.state().current_testing_sc_address().clone();
         let first_token_id = self.state().get_first_token_id_string();
 
         let expected_tokens_testing_sc = vec![self.zero_tokens(first_token_id)];

@@ -1,8 +1,8 @@
 use common_interactor::common_sovereign_interactor::CommonInteractorTrait;
 use common_interactor::interactor_config::Config;
 use common_test_setup::constants::{
-    DEPLOY_COST, EXECUTED_BRIDGE_LOG, ONE_HUNDRED_TOKENS, ONE_THOUSAND_TOKENS,
-    OPERATION_HASH_STATUS_STORAGE_KEY, SHARD_0, SHARD_2, TESTING_SC_ENDPOINT,
+    DEPLOY_COST, ONE_HUNDRED_TOKENS, ONE_THOUSAND_TOKENS, OPERATION_HASH_STATUS_STORAGE_KEY,
+    SHARD_0, SHARD_2, TESTING_SC_ENDPOINT,
 };
 use header_verifier::OperationHashStatus;
 use multiversx_sc::{
@@ -43,7 +43,6 @@ async fn test_complete_deposit_flow_no_fee_different_shard() {
     let shard = SHARD_2;
 
     let deploy_cost = BigUint::from(DEPLOY_COST);
-    let user_address = chain_interactor.user_address().clone();
 
     chain_interactor
         .deploy_and_complete_setup_phase(
@@ -70,7 +69,10 @@ async fn test_complete_deposit_flow_no_fee_different_shard() {
 
     chain_interactor
         .deposit_in_mvx_esdt_safe(
-            user_address,
+            chain_interactor
+                .state
+                .get_mvx_esdt_safe_address(shard)
+                .to_address(),
             shard,
             OptionalValue::None,
             payments_vec,
@@ -123,9 +125,7 @@ async fn test_complete_deposit_flow_no_fee_different_shard() {
     chain_interactor
         .check_fee_market_balance_is_empty(shard)
         .await;
-    chain_interactor
-        .check_testing_sc_balance_is_empty(shard)
-        .await;
+    chain_interactor.check_testing_sc_balance_is_empty().await;
 }
 
 /// ### TEST
@@ -144,7 +144,6 @@ async fn test_complete_deposit_flow_only_transfer_data_no_fee_different_shard() 
     let shard = SHARD_2;
 
     let deploy_cost = BigUint::from(DEPLOY_COST);
-    let user_address = chain_interactor.user_address().clone();
 
     chain_interactor
         .deploy_and_complete_setup_phase(
@@ -178,7 +177,10 @@ async fn test_complete_deposit_flow_only_transfer_data_no_fee_different_shard() 
 
     chain_interactor
         .deposit_in_mvx_esdt_safe(
-            user_address,
+            chain_interactor
+                .state
+                .get_mvx_esdt_safe_address(shard)
+                .to_address(),
             shard,
             OptionalValue::Some(transfer_data),
             payments_vec,
@@ -231,9 +233,7 @@ async fn test_complete_deposit_flow_only_transfer_data_no_fee_different_shard() 
     chain_interactor
         .check_fee_market_balance_is_empty(shard)
         .await;
-    chain_interactor
-        .check_testing_sc_balance_is_empty(shard)
-        .await;
+    chain_interactor.check_testing_sc_balance_is_empty().await;
 }
 
 /// ### TEST
@@ -277,7 +277,7 @@ async fn test_execute_operation_success_no_fee_different_shard() {
         ManagedAddress::from_address(
             &chain_interactor
                 .state
-                .get_testing_sc_address(shard)
+                .current_testing_sc_address()
                 .to_address(),
         ),
         ManagedVec::new(),
@@ -313,13 +313,15 @@ async fn test_execute_operation_success_no_fee_different_shard() {
         )
         .await;
 
+    let caller = chain_interactor.get_bridge_service_for_shard(shard);
     chain_interactor
         .execute_operations_in_mvx_esdt_safe(
+            caller,
             shard,
             hash_of_hashes,
             operation,
             None,
-            Some(EXECUTED_BRIDGE_LOG),
+            Some(""),
         )
         .await;
 
@@ -416,7 +418,7 @@ async fn test_execute_operation_success_no_fee_different_shard_transfer_nft() {
         .await;
 
     let operation = Operation::new(
-        ManagedAddress::from_address(&chain_interactor.second_user_address),
+        ManagedAddress::from_address(&chain_interactor.user_address),
         vec![payment].into(),
         operation_data,
     );
@@ -450,8 +452,10 @@ async fn test_execute_operation_success_no_fee_different_shard_transfer_nft() {
         )
         .await;
 
+    let caller = chain_interactor.get_bridge_service_for_shard(shard);
     chain_interactor
         .execute_operations_in_mvx_esdt_safe(
+            caller,
             shard,
             hash_of_hashes,
             operation,
@@ -493,17 +497,7 @@ async fn test_execute_operation_success_no_fee_different_shard_transfer_nft() {
     chain_interactor
         .check_fee_market_balance_is_empty(shard)
         .await;
-    chain_interactor
-        .check_testing_sc_balance_is_empty(shard)
-        .await;
-
-    let expected_second_user_balance = vec![chain_interactor.one_token(nft_token.token_id.clone())];
-    chain_interactor
-        .check_address_balance(
-            &Bech32Address::from(chain_interactor.second_user_address.clone()),
-            expected_second_user_balance,
-        )
-        .await;
+    chain_interactor.check_testing_sc_balance_is_empty().await;
 }
 
 /// ### TEST
@@ -549,7 +543,7 @@ async fn test_execute_operation_success_no_fee_different_shard_transfer_sft() {
         .await;
 
     let operation = Operation::new(
-        ManagedAddress::from_address(&chain_interactor.second_user_address),
+        ManagedAddress::from_address(&chain_interactor.user_address),
         vec![payment].into(),
         operation_data,
     );
@@ -604,8 +598,10 @@ async fn test_execute_operation_success_no_fee_different_shard_transfer_sft() {
         )
         .await;
 
+    let caller = chain_interactor.get_bridge_service_for_shard(shard);
     chain_interactor
         .execute_operations_in_mvx_esdt_safe(
+            caller,
             shard,
             hash_of_hashes,
             operation,
@@ -632,10 +628,7 @@ async fn test_execute_operation_success_no_fee_different_shard_transfer_sft() {
         chain_interactor.one_token(chain_interactor.state.get_nft_token_id_string()),
         chain_interactor.thousand_tokens(chain_interactor.state.get_meta_esdt_token_id_string()),
         chain_interactor.one_token(chain_interactor.state.get_dynamic_nft_token_id_string()),
-        chain_interactor.custom_amount_tokens(
-            chain_interactor.state.get_sft_token_id_string(),
-            ONE_THOUSAND_TOKENS - ONE_HUNDRED_TOKENS,
-        ),
+        chain_interactor.thousand_tokens(chain_interactor.state.get_sft_token_id_string()),
     ];
     chain_interactor
         .check_address_balance(
@@ -650,18 +643,7 @@ async fn test_execute_operation_success_no_fee_different_shard_transfer_sft() {
     chain_interactor
         .check_fee_market_balance_is_empty(shard)
         .await;
-    chain_interactor
-        .check_testing_sc_balance_is_empty(shard)
-        .await;
-
-    let expected_second_user_balance =
-        vec![chain_interactor.custom_amount_tokens(sft_token.token_id.clone(), ONE_HUNDRED_TOKENS)];
-    chain_interactor
-        .check_address_balance(
-            &Bech32Address::from(chain_interactor.second_user_address.clone()),
-            expected_second_user_balance,
-        )
-        .await;
+    chain_interactor.check_testing_sc_balance_is_empty().await;
 }
 
 /// ### TEST
@@ -707,7 +689,7 @@ async fn test_execute_operation_success_no_fee_different_shard_transfer_meta_esd
         .await;
 
     let operation = Operation::new(
-        ManagedAddress::from_address(&chain_interactor.second_user_address),
+        ManagedAddress::from_address(&chain_interactor.user_address),
         vec![payment].into(),
         operation_data,
     );
@@ -762,8 +744,10 @@ async fn test_execute_operation_success_no_fee_different_shard_transfer_meta_esd
         )
         .await;
 
+    let caller = chain_interactor.get_bridge_service_for_shard(shard);
     chain_interactor
         .execute_operations_in_mvx_esdt_safe(
+            caller,
             shard,
             hash_of_hashes,
             operation,
@@ -788,10 +772,7 @@ async fn test_execute_operation_success_no_fee_different_shard_transfer_meta_esd
         chain_interactor.thousand_tokens(chain_interactor.state.get_second_token_id_string()),
         chain_interactor.thousand_tokens(chain_interactor.state.get_fee_token_id_string()),
         chain_interactor.one_token(chain_interactor.state.get_nft_token_id_string()),
-        chain_interactor.custom_amount_tokens(
-            chain_interactor.state.get_meta_esdt_token_id_string(),
-            ONE_THOUSAND_TOKENS - ONE_HUNDRED_TOKENS,
-        ),
+        chain_interactor.thousand_tokens(chain_interactor.state.get_meta_esdt_token_id_string()),
         chain_interactor.one_token(chain_interactor.state.get_dynamic_nft_token_id_string()),
         chain_interactor.thousand_tokens(chain_interactor.state.get_sft_token_id_string()),
     ];
@@ -808,19 +789,7 @@ async fn test_execute_operation_success_no_fee_different_shard_transfer_meta_esd
     chain_interactor
         .check_fee_market_balance_is_empty(shard)
         .await;
-    chain_interactor
-        .check_testing_sc_balance_is_empty(shard)
-        .await;
-
-    let expected_second_user_balance =
-        vec![chain_interactor
-            .custom_amount_tokens(meta_esdt_token.token_id.clone(), ONE_HUNDRED_TOKENS)];
-    chain_interactor
-        .check_address_balance(
-            &Bech32Address::from(chain_interactor.second_user_address.clone()),
-            expected_second_user_balance,
-        )
-        .await;
+    chain_interactor.check_testing_sc_balance_is_empty().await;
 }
 
 /// ### TEST
@@ -867,7 +836,7 @@ async fn test_execute_operation_success_no_fee_different_shard_transfer_dynamic_
         .await;
 
     let operation = Operation::new(
-        ManagedAddress::from_address(&chain_interactor.second_user_address),
+        ManagedAddress::from_address(&chain_interactor.user_address),
         vec![payment].into(),
         operation_data,
     );
@@ -922,8 +891,10 @@ async fn test_execute_operation_success_no_fee_different_shard_transfer_dynamic_
         )
         .await;
 
+    let caller = chain_interactor.get_bridge_service_for_shard(shard);
     chain_interactor
         .execute_operations_in_mvx_esdt_safe(
+            caller,
             shard,
             hash_of_hashes,
             operation,
@@ -965,14 +936,12 @@ async fn test_execute_operation_success_no_fee_different_shard_transfer_dynamic_
     chain_interactor
         .check_fee_market_balance_is_empty(shard)
         .await;
-    chain_interactor
-        .check_testing_sc_balance_is_empty(shard)
-        .await;
+    chain_interactor.check_testing_sc_balance_is_empty().await;
     let expected_second_user_balance =
         vec![chain_interactor.one_token(dynamic_nft.token_id.clone())];
     chain_interactor
         .check_address_balance(
-            &Bech32Address::from(chain_interactor.second_user_address.clone()),
+            &Bech32Address::from(chain_interactor.user_address.clone()),
             expected_second_user_balance,
         )
         .await;
@@ -1060,7 +1029,7 @@ async fn test_execute_operation_success_with_fee_different_shard_transfer_dynami
         .await;
 
     let operation = Operation::new(
-        ManagedAddress::from_address(&chain_interactor.second_user_address),
+        ManagedAddress::from_address(&chain_interactor.user_address),
         vec![payment].into(),
         operation_data,
     );
@@ -1108,8 +1077,10 @@ async fn test_execute_operation_success_with_fee_different_shard_transfer_dynami
         )
         .await;
 
+    let caller = chain_interactor.get_bridge_service_for_shard(shard);
     chain_interactor
         .execute_operations_in_mvx_esdt_safe(
+            caller,
             shard,
             hash_of_hashes,
             operation,
@@ -1156,21 +1127,6 @@ async fn test_execute_operation_success_with_fee_different_shard_transfer_dynami
         .check_address_balance(
             &chain_interactor.state.get_fee_market_address(shard).clone(),
             expected_token_fee_market,
-        )
-        .await;
-
-    let expected_second_user_balance = vec![chain_interactor.one_token(
-        chain_interactor
-            .state
-            .dynamic_nft_token_id
-            .clone()
-            .unwrap()
-            .token_id,
-    )];
-    chain_interactor
-        .check_address_balance(
-            &Bech32Address::from(chain_interactor.second_user_address.clone()),
-            expected_second_user_balance,
         )
         .await;
 }
@@ -1236,7 +1192,7 @@ async fn test_complete_flow_execute_operation_with_transfer_data_success_nft_no_
         ManagedAddress::from_address(
             &chain_interactor
                 .state
-                .get_testing_sc_address(shard)
+                .current_testing_sc_address()
                 .to_address(),
         ),
         vec![payment].into(),
@@ -1250,7 +1206,7 @@ async fn test_complete_flow_execute_operation_with_transfer_data_success_nft_no_
         .deposit_in_mvx_esdt_safe(
             chain_interactor
                 .state
-                .current_mvx_esdt_safe_contract_address()
+                .get_mvx_esdt_safe_address(shard)
                 .to_address(),
             shard,
             OptionalValue::None,
@@ -1286,13 +1242,15 @@ async fn test_complete_flow_execute_operation_with_transfer_data_success_nft_no_
         )
         .await;
 
+    let caller = chain_interactor.get_bridge_service_for_shard(shard);
     chain_interactor
         .execute_operations_in_mvx_esdt_safe(
+            caller,
             shard,
             hash_of_hashes,
             operation,
             None,
-            Some(EXECUTED_BRIDGE_LOG),
+            Some(chain_interactor.state.get_nft_token_id_string().as_str()),
         )
         .await;
 
@@ -1333,7 +1291,7 @@ async fn test_complete_flow_execute_operation_with_transfer_data_success_nft_no_
     )];
     chain_interactor
         .check_address_balance(
-            &chain_interactor.state.get_testing_sc_address(shard).clone(),
+            &chain_interactor.state.current_testing_sc_address().clone(),
             expected_testing_sc_balance,
         )
         .await;
@@ -1400,7 +1358,7 @@ async fn test_complete_flow_execute_operation_with_transfer_data_success_sft_no_
         ManagedAddress::from_address(
             &chain_interactor
                 .state
-                .get_testing_sc_address(shard)
+                .current_testing_sc_address()
                 .to_address(),
         ),
         vec![payment].into(),
@@ -1414,7 +1372,7 @@ async fn test_complete_flow_execute_operation_with_transfer_data_success_sft_no_
         .deposit_in_mvx_esdt_safe(
             chain_interactor
                 .state
-                .current_mvx_esdt_safe_contract_address()
+                .get_mvx_esdt_safe_address(shard)
                 .to_address(),
             shard,
             OptionalValue::None,
@@ -1450,13 +1408,15 @@ async fn test_complete_flow_execute_operation_with_transfer_data_success_sft_no_
         )
         .await;
 
+    let caller = chain_interactor.get_bridge_service_for_shard(shard);
     chain_interactor
         .execute_operations_in_mvx_esdt_safe(
+            caller,
             shard,
             hash_of_hashes,
             operation,
             None,
-            Some(EXECUTED_BRIDGE_LOG),
+            Some(chain_interactor.state.get_sft_token_id_string().as_str()),
         )
         .await;
 
@@ -1500,7 +1460,7 @@ async fn test_complete_flow_execute_operation_with_transfer_data_success_sft_no_
     )];
     chain_interactor
         .check_address_balance(
-            &chain_interactor.state.get_testing_sc_address(shard).clone(),
+            &chain_interactor.state.current_testing_sc_address().clone(),
             expected_testing_sc_balance,
         )
         .await;
@@ -1567,7 +1527,7 @@ async fn test_complete_flow_execute_operation_with_transfer_data_success_meta_es
         ManagedAddress::from_address(
             &chain_interactor
                 .state
-                .get_testing_sc_address(shard)
+                .current_testing_sc_address()
                 .to_address(),
         ),
         vec![payment].into(),
@@ -1581,7 +1541,7 @@ async fn test_complete_flow_execute_operation_with_transfer_data_success_meta_es
         .deposit_in_mvx_esdt_safe(
             chain_interactor
                 .state
-                .current_mvx_esdt_safe_contract_address()
+                .get_mvx_esdt_safe_address(shard)
                 .to_address(),
             shard,
             OptionalValue::None,
@@ -1617,13 +1577,20 @@ async fn test_complete_flow_execute_operation_with_transfer_data_success_meta_es
         )
         .await;
 
+    let caller = chain_interactor.get_bridge_service_for_shard(shard);
     chain_interactor
         .execute_operations_in_mvx_esdt_safe(
+            caller,
             shard,
             hash_of_hashes,
             operation,
             None,
-            Some(EXECUTED_BRIDGE_LOG),
+            Some(
+                chain_interactor
+                    .state
+                    .get_meta_esdt_token_id_string()
+                    .as_str(),
+            ),
         )
         .await;
 
@@ -1667,7 +1634,7 @@ async fn test_complete_flow_execute_operation_with_transfer_data_success_meta_es
     )];
     chain_interactor
         .check_address_balance(
-            &chain_interactor.state.get_testing_sc_address(shard).clone(),
+            &chain_interactor.state.current_testing_sc_address().clone(),
             expected_testing_sc_balance,
         )
         .await;
@@ -1736,7 +1703,7 @@ async fn test_complete_flow_execute_operation_with_transfer_data_success_dynamic
         ManagedAddress::from_address(
             &chain_interactor
                 .state
-                .get_testing_sc_address(shard)
+                .current_testing_sc_address()
                 .to_address(),
         ),
         vec![payment].into(),
@@ -1750,7 +1717,7 @@ async fn test_complete_flow_execute_operation_with_transfer_data_success_dynamic
         .deposit_in_mvx_esdt_safe(
             chain_interactor
                 .state
-                .current_mvx_esdt_safe_contract_address()
+                .get_mvx_esdt_safe_address(shard)
                 .to_address(),
             shard,
             OptionalValue::None,
@@ -1786,13 +1753,20 @@ async fn test_complete_flow_execute_operation_with_transfer_data_success_dynamic
         )
         .await;
 
+    let caller = chain_interactor.get_bridge_service_for_shard(shard);
     chain_interactor
         .execute_operations_in_mvx_esdt_safe(
+            caller,
             shard,
             hash_of_hashes,
             operation,
             None,
-            Some(EXECUTED_BRIDGE_LOG),
+            Some(
+                chain_interactor
+                    .state
+                    .get_dynamic_nft_token_id_string()
+                    .as_str(),
+            ),
         )
         .await;
 
@@ -1833,7 +1807,7 @@ async fn test_complete_flow_execute_operation_with_transfer_data_success_dynamic
     )];
     chain_interactor
         .check_address_balance(
-            &chain_interactor.state.get_testing_sc_address(shard).clone(),
+            &chain_interactor.state.current_testing_sc_address().clone(),
             expected_testing_sc_balance,
         )
         .await;
@@ -1922,7 +1896,7 @@ async fn test_complete_flow_execute_operation_with_transfer_data_success_dynamic
         ManagedAddress::from_address(
             &chain_interactor
                 .state
-                .get_testing_sc_address(shard)
+                .current_testing_sc_address()
                 .to_address(),
         ),
         vec![payment].into(),
@@ -1936,7 +1910,7 @@ async fn test_complete_flow_execute_operation_with_transfer_data_success_dynamic
         .deposit_in_mvx_esdt_safe(
             chain_interactor
                 .state
-                .get_testing_sc_address(shard)
+                .get_mvx_esdt_safe_address(shard)
                 .to_address(),
             shard,
             OptionalValue::None,
@@ -1972,13 +1946,20 @@ async fn test_complete_flow_execute_operation_with_transfer_data_success_dynamic
         )
         .await;
 
+    let caller = chain_interactor.get_bridge_service_for_shard(shard);
     chain_interactor
         .execute_operations_in_mvx_esdt_safe(
+            caller,
             shard,
             hash_of_hashes,
             operation,
             None,
-            Some(EXECUTED_BRIDGE_LOG),
+            Some(
+                chain_interactor
+                    .state
+                    .get_dynamic_nft_token_id_string()
+                    .as_str(),
+            ),
         )
         .await;
 
@@ -2028,7 +2009,7 @@ async fn test_complete_flow_execute_operation_with_transfer_data_success_dynamic
     )];
     chain_interactor
         .check_address_balance(
-            &chain_interactor.state.get_testing_sc_address(shard).clone(),
+            &chain_interactor.state.current_testing_sc_address().clone(),
             expected_testing_sc_balance,
         )
         .await;

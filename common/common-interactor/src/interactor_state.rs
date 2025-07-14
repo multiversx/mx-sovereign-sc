@@ -64,12 +64,12 @@ pub struct State {
     pub mvx_esdt_safe_addresses: Option<ShardAddresses>,
     pub header_verfier_addresses: Option<ShardAddresses>,
     pub fee_market_addresses: Option<ShardAddresses>,
-    pub testing_sc_addresses: Option<ShardAddresses>,
+    pub testing_sc_address: Option<Bech32Address>,
     pub chain_config_sc_addresses: Option<ShardAddresses>,
     pub sovereign_forge_sc_addresses: Option<Bech32Address>,
-    pub chain_factory_sc_addresses: Option<ShardAddresses>,
+    pub chain_factory_sc_addresses: Option<Vec<Bech32Address>>,
     pub enshrine_esdt_safe_sc_addresses: Option<ShardAddresses>,
-    pub token_handler_addresses: Option<ShardAddresses>,
+    pub token_handler_addresses: Option<Vec<Bech32Address>>,
     pub first_token: Option<TokenProperties>,
     pub fee_token: Option<TokenProperties>,
     pub second_token: Option<TokenProperties>,
@@ -109,9 +109,8 @@ impl State {
         list.push(address);
     }
 
-    pub fn set_testing_sc_address(&mut self, address: AddressInfo) {
-        let list = self.testing_sc_addresses.get_or_insert_default();
-        list.push(address);
+    pub fn set_testing_sc_address(&mut self, address: Bech32Address) {
+        self.testing_sc_address = Some(address);
     }
 
     pub fn set_chain_config_sc_address(&mut self, address: AddressInfo) {
@@ -123,7 +122,7 @@ impl State {
         self.sovereign_forge_sc_addresses = Some(address);
     }
 
-    pub fn set_chain_factory_sc_address(&mut self, address: AddressInfo) {
+    pub fn set_chain_factory_sc_address(&mut self, address: Bech32Address) {
         let list = self.chain_factory_sc_addresses.get_or_insert_default();
         list.push(address);
     }
@@ -133,7 +132,7 @@ impl State {
         list.push(address);
     }
 
-    pub fn set_token_handler_address(&mut self, address: AddressInfo) {
+    pub fn set_token_handler_address(&mut self, address: Bech32Address) {
         let list = self.token_handler_addresses.get_or_insert_default();
         list.push(address);
     }
@@ -193,10 +192,7 @@ impl State {
     }
 
     pub fn current_testing_sc_address(&self) -> &Bech32Address {
-        self.testing_sc_addresses
-            .as_ref()
-            .expect(NO_KNOWN_TESTING_SC)
-            .first()
+        self.testing_sc_address.as_ref().expect(NO_KNOWN_TESTING_SC)
     }
 
     pub fn current_chain_config_sc_address(&self) -> &Bech32Address {
@@ -217,6 +213,7 @@ impl State {
             .as_ref()
             .expect(NO_KNOWN_CHAIN_FACTORY_SC)
             .first()
+            .expect(NO_KNOWN_CHAIN_FACTORY_IN_THE_SPECIFIED_SHARD)
     }
 
     pub fn current_enshrine_esdt_safe_address(&self) -> &Bech32Address {
@@ -231,6 +228,7 @@ impl State {
             .as_ref()
             .expect(NO_KNOWN_TOKEN_HANDLER_SC)
             .first()
+            .expect(NO_KNOWN_TOKEN_HANDLER_IN_THE_SPECIFIED_SHARD)
     }
 
     pub fn get_first_token_id_string(&self) -> String {
@@ -351,20 +349,20 @@ impl State {
             .clone()
     }
 
-    pub fn get_chain_factory_sc_address(&self, chain_id: String) -> &Bech32Address {
+    pub fn get_chain_factory_sc_address(&self, shard: u32) -> &Bech32Address {
         self.chain_factory_sc_addresses
             .as_ref()
             .expect(NO_KNOWN_CHAIN_FACTORY_SC)
-            .get_by_contract_id(&chain_id)
-            .expect(NO_KNOWN_CHAIN_FACTORY_IN_THE_SPECIFIED_SHARD)
+            .get(shard as usize)
+            .unwrap_or_else(|| panic!("No Chain Factory SC address for shard {}", shard))
     }
 
-    pub fn get_token_handler_address(&self, chain_id: String) -> &Bech32Address {
+    pub fn get_token_handler_address(&self, shard: u32) -> &Bech32Address {
         self.token_handler_addresses
             .as_ref()
             .expect(NO_KNOWN_TOKEN_HANDLER_SC)
-            .get_by_contract_id(&chain_id)
-            .expect(NO_KNOWN_TOKEN_HANDLER_IN_THE_SPECIFIED_SHARD)
+            .get(shard as usize)
+            .unwrap_or_else(|| panic!("No Token Handler address for shard {}", shard))
     }
 
     pub fn get_mvx_esdt_safe_address(&self, shard: u32) -> &Bech32Address {
@@ -385,16 +383,6 @@ impl State {
             .get(shard as usize)
             .map(|info| &info.address)
             .unwrap_or_else(|| panic!("No Fee Market address for shard {}", shard))
-    }
-
-    pub fn get_testing_sc_address(&self, shard: u32) -> &Bech32Address {
-        self.testing_sc_addresses
-            .as_ref()
-            .expect(NO_KNOWN_TESTING_SC)
-            .addresses
-            .get(shard as usize)
-            .map(|info| &info.address)
-            .unwrap_or_else(|| panic!("No Testing SC address for shard {}", shard))
     }
 
     pub fn get_header_verifier_address(&self, shard: u32) -> &Bech32Address {

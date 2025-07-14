@@ -6,7 +6,7 @@ use common_interactor::{
     common_sovereign_interactor::{CommonInteractorTrait, TemplateAddresses},
     interactor_config::Config,
 };
-use common_test_setup::constants::PREFERRED_CHAIN_IDS;
+use common_test_setup::constants::{PREFERRED_CHAIN_IDS, SHARD_0};
 use enshrine_esdt_safe::enshrine_esdt_safe_interactor::EnshrineEsdtSafeInteract;
 use multiversx_sc::{
     imports::{MultiValueVec, OptionalValue},
@@ -70,9 +70,7 @@ pub async fn mvx_esdt_safe_cli() {
                 .await;
         }
         "deployTestingSc" => {
-            interact
-                .deploy_testing_sc(Address::zero(), PREFERRED_CHAIN_IDS[0].to_string())
-                .await;
+            interact.deploy_testing_sc(Address::zero()).await;
         }
         "completeSetup" => interact.complete_setup_phase().await,
         "completeHeaderVerifierSetup" => {
@@ -105,7 +103,6 @@ pub async fn sovereign_forge_cli() {
             interact
                 .deploy_chain_factory(
                     Address::zero(),
-                    PREFERRED_CHAIN_IDS[0].to_string(),
                     interact
                         .state
                         .current_sovereign_forge_sc_address()
@@ -167,16 +164,8 @@ pub async fn sovereign_forge_cli() {
                 )
                 .await;
         }
-        "registerTokenHandler" => {
-            interact
-                .register_token_handler(Address::zero(), 0, PREFERRED_CHAIN_IDS[0].to_string())
-                .await
-        }
-        "registerChainFactory" => {
-            interact
-                .register_chain_factory(Address::zero(), 0, PREFERRED_CHAIN_IDS[0].to_string())
-                .await
-        }
+        "registerTokenHandler" => interact.register_token_handler(Address::zero(), 0).await,
+        "registerChainFactory" => interact.register_chain_factory(Address::zero(), 0).await,
         "completeSetup" => interact.complete_setup_phase(Address::zero()).await,
         "deployPhaseOne" => {
             interact
@@ -213,6 +202,7 @@ pub async fn enshrine_esdt_safe_cli() {
             interact
                 .deploy_enshrine_esdt(
                     Address::zero(),
+                    SHARD_0,
                     PREFERRED_CHAIN_IDS[0].to_string(),
                     false,
                     None,

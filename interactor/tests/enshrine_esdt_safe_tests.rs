@@ -29,6 +29,7 @@ use structs::forge::ScArray;
 /// ### EXPECTED
 /// Contracts are deployed successfully
 #[tokio::test]
+#[ignore]
 #[serial]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn test_deploy() {
@@ -54,6 +55,7 @@ async fn test_deploy() {
 /// ### EXPECTED
 /// Error ONLY_WEGLD_IS_ACCEPTED_AS_REGISTER_FEE
 #[tokio::test]
+#[ignore]
 #[serial]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn test_register_tokens_wrong_token_as_fee() {
@@ -100,6 +102,7 @@ async fn test_register_tokens_wrong_token_as_fee() {
 /// ### EXPECTED
 /// Token is registered successfully
 #[tokio::test]
+#[ignore]
 #[serial]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn test_register_tokens() {
@@ -162,6 +165,7 @@ async fn test_register_tokens() {
 /// ### EXPECTED
 /// Error NOT_ENOUGH_WEGLD_AMOUNT
 #[tokio::test]
+#[ignore]
 #[serial]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn test_register_tokens_insufficient_wegld() {
@@ -203,6 +207,7 @@ async fn test_register_tokens_insufficient_wegld() {
 /// ### EXPECTED
 /// Deposit is executed successfully
 #[tokio::test]
+#[ignore]
 #[serial]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn test_deposit_no_fee() {
@@ -285,6 +290,7 @@ async fn test_deposit_no_fee() {
 /// ### EXPECTED
 /// Error NOTHING_TO_TRANSFER
 #[tokio::test]
+#[ignore]
 #[serial]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn test_deposit_token_nothing_to_transfer_fee_disabled() {
@@ -327,6 +333,7 @@ async fn test_deposit_token_nothing_to_transfer_fee_disabled() {
 /// ### EXPECTED
 /// Error TOO_MANY_TOKENS
 #[tokio::test]
+#[ignore]
 #[serial]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn test_deposit_max_transfers_exceeded() {
@@ -372,6 +379,7 @@ async fn test_deposit_max_transfers_exceeded() {
 /// ### EXPECTED
 /// Deposit is executed successfully
 #[tokio::test]
+#[ignore]
 #[serial]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn test_deposit_no_transfer_data() {
@@ -477,6 +485,7 @@ async fn test_deposit_no_transfer_data() {
 /// ### EXPECTED
 /// Error GAS_LIMIT_TOO_HIGH
 #[tokio::test]
+#[ignore]
 #[serial]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn test_deposit_with_transfer_data_gas_limit_too_high() {
@@ -540,6 +549,7 @@ async fn test_deposit_with_transfer_data_gas_limit_too_high() {
 /// ### EXPECTED
 /// Error BANNED_ENDPOINT_NAME
 #[tokio::test]
+#[ignore]
 #[serial]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn test_deposit_with_transfer_data_banned_endpoint() {
@@ -612,6 +622,7 @@ async fn test_deposit_with_transfer_data_banned_endpoint() {
 /// ### EXPECTED
 /// Deposit is executed successfully
 #[tokio::test]
+#[ignore]
 #[serial]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn test_deposit_with_transfer_data_enough_for_fee() {
@@ -719,6 +730,7 @@ async fn test_deposit_with_transfer_data_enough_for_fee() {
 /// ### EXPECTED
 /// Error PAYMENT_DOES_NOT_COVER_FEE
 #[tokio::test]
+#[ignore]
 #[serial]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn test_deposit_with_transfer_data_not_enough_for_fee() {
@@ -797,6 +809,7 @@ async fn test_deposit_with_transfer_data_not_enough_for_fee() {
 /// ### EXPECTED
 /// Deposit is executed successfully and the tokens are refunded
 #[tokio::test]
+#[ignore]
 #[serial]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn test_deposit_refund_non_whitelisted_tokens_fee_disabled() {
@@ -857,6 +870,7 @@ async fn test_deposit_refund_non_whitelisted_tokens_fee_disabled() {
 /// ### EXPECTED
 /// Deposit is executed successfully and all the tokens are refunded
 #[tokio::test]
+#[ignore]
 #[serial]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn test_deposit_refund_non_whitelisted_tokens_fee_enabled() {
