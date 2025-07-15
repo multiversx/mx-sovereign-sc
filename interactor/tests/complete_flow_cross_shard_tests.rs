@@ -322,6 +322,7 @@ async fn test_execute_operation_success_no_fee_different_shard() {
             operation,
             None,
             Some(""),
+            None,
         )
         .await;
 
@@ -461,6 +462,7 @@ async fn test_execute_operation_success_no_fee_different_shard_transfer_nft() {
             operation,
             None,
             Some(&chain_interactor.state.get_nft_token_id_string()),
+            None,
         )
         .await;
 
@@ -607,6 +609,7 @@ async fn test_execute_operation_success_no_fee_different_shard_transfer_sft() {
             operation,
             None,
             Some(&chain_interactor.state.get_sft_token_id_string()),
+            None,
         )
         .await;
 
@@ -753,6 +756,7 @@ async fn test_execute_operation_success_no_fee_different_shard_transfer_meta_esd
             operation,
             None,
             Some(&chain_interactor.state.get_meta_esdt_token_id_string()),
+            None,
         )
         .await;
 
@@ -900,6 +904,7 @@ async fn test_execute_operation_success_no_fee_different_shard_transfer_dynamic_
             operation,
             None,
             Some(&chain_interactor.state.get_dynamic_nft_token_id_string()),
+            None,
         )
         .await;
 
@@ -1086,6 +1091,7 @@ async fn test_execute_operation_success_with_fee_different_shard_transfer_dynami
             operation,
             None,
             Some(&chain_interactor.state.get_dynamic_nft_token_id_string()),
+            None,
         )
         .await;
 
@@ -1251,6 +1257,7 @@ async fn test_complete_flow_execute_operation_with_transfer_data_success_nft_no_
             operation,
             None,
             Some(chain_interactor.state.get_nft_token_id_string().as_str()),
+            None,
         )
         .await;
 
@@ -1417,6 +1424,7 @@ async fn test_complete_flow_execute_operation_with_transfer_data_success_sft_no_
             operation,
             None,
             Some(chain_interactor.state.get_sft_token_id_string().as_str()),
+            None,
         )
         .await;
 
@@ -1591,6 +1599,7 @@ async fn test_complete_flow_execute_operation_with_transfer_data_success_meta_es
                     .get_meta_esdt_token_id_string()
                     .as_str(),
             ),
+            None,
         )
         .await;
 
@@ -1767,6 +1776,7 @@ async fn test_complete_flow_execute_operation_with_transfer_data_success_dynamic
                     .get_dynamic_nft_token_id_string()
                     .as_str(),
             ),
+            None,
         )
         .await;
 
@@ -1960,6 +1970,7 @@ async fn test_complete_flow_execute_operation_with_transfer_data_success_dynamic
                     .get_dynamic_nft_token_id_string()
                     .as_str(),
             ),
+            None,
         )
         .await;
 

@@ -154,7 +154,8 @@ impl EnshrineTestState {
         self.common_setup
             .assert_expected_error_message(response, error_message);
 
-        self.common_setup.assert_expected_log(logs, expected_log);
+        self.common_setup
+            .assert_expected_log(logs, expected_log, None);
     }
 
     pub fn register_fee_market_address(&mut self) {

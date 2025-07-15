@@ -273,6 +273,7 @@ async fn test_complete_flow_execute_operation_with_transfer_data_success_no_fee(
             operation,
             None,
             Some(EXECUTED_BRIDGE_LOG),
+            None,
         )
         .await;
 
@@ -457,6 +458,7 @@ async fn test_complete_flow_execute_operation_success_with_fee() {
             operation,
             None,
             Some(EXECUTED_BRIDGE_LOG),
+            None,
         )
         .await;
 
@@ -603,6 +605,7 @@ async fn test_complete_flow_execute_operation_only_transfer_data_no_fee() {
             operation,
             None,
             Some(EXECUTED_BRIDGE_LOG),
+            None,
         )
         .await;
 
@@ -720,6 +723,7 @@ async fn test_complete_flow_execute_operation_wrong_endpoint() {
             hash_of_hashes,
             operation,
             Some(WRONG_ENDPOINT_NAME),
+            None,
             None,
         )
         .await;
@@ -1030,6 +1034,7 @@ async fn test_execute_operation_success_transfer_nft() {
             operation,
             None,
             Some(EXECUTED_BRIDGE_LOG),
+            None,
         )
         .await;
 
@@ -1176,6 +1181,7 @@ async fn test_execute_operation_success_no_fee_transfer_sft() {
             operation,
             None,
             Some(EXECUTED_BRIDGE_LOG),
+            None,
         )
         .await;
 
@@ -1322,6 +1328,7 @@ async fn test_execute_operation_success_no_fee_transfer_meta_esdt() {
             operation,
             None,
             Some(EXECUTED_BRIDGE_LOG),
+            None,
         )
         .await;
 
@@ -1469,6 +1476,7 @@ async fn test_execute_operation_success_no_fee_transfer_dynamic_nft() {
             operation,
             None,
             Some(EXECUTED_BRIDGE_LOG),
+            None,
         )
         .await;
 
@@ -1647,6 +1655,7 @@ async fn test_execute_operation_success_with_fee_transfer_dynamic_nft() {
             operation,
             None,
             Some(EXECUTED_BRIDGE_LOG),
+            None,
         )
         .await;
 
