@@ -2,37 +2,37 @@
 
 use error_messages::{
     NO_KNOWN_CHAIN_CONFIG_SC, NO_KNOWN_CHAIN_FACTORY_IN_THE_SPECIFIED_SHARD,
-    NO_KNOWN_CHAIN_FACTORY_SC, NO_KNOWN_DYNAMIC_NFT_TOKEN_ID, NO_KNOWN_ENSHRINE_ESDT_SAFE_SC,
-    NO_KNOWN_FEE_MARKET, NO_KNOWN_FEE_TOKEN, NO_KNOWN_FIRST_TOKEN, NO_KNOWN_HEADER_VERIFIER,
-    NO_KNOWN_META_ESDT_TOKEN, NO_KNOWN_MVX_ESDT_SAFE, NO_KNOWN_NFT_TOKEN, NO_KNOWN_SECOND_TOKEN,
-    NO_KNOWN_SFT_TOKEN, NO_KNOWN_SOVEREIGN_FORGE_SC, NO_KNOWN_SOV_TO_MVX_TOKEN,
-    NO_KNOWN_TESTING_SC, NO_KNOWN_TOKEN_HANDLER_IN_THE_SPECIFIED_SHARD, NO_KNOWN_TOKEN_HANDLER_SC,
+    NO_KNOWN_CHAIN_FACTORY_SC, NO_KNOWN_DYNAMIC_META_ESDT_TOKEN_ID, NO_KNOWN_DYNAMIC_NFT_TOKEN_ID,
+    NO_KNOWN_DYNAMIC_SFT_TOKEN_ID, NO_KNOWN_ENSHRINE_ESDT_SAFE_SC, NO_KNOWN_FEE_MARKET,
+    NO_KNOWN_FEE_TOKEN, NO_KNOWN_FIRST_TOKEN, NO_KNOWN_HEADER_VERIFIER, NO_KNOWN_META_ESDT_TOKEN,
+    NO_KNOWN_MVX_ESDT_SAFE, NO_KNOWN_NFT_TOKEN, NO_KNOWN_SECOND_TOKEN, NO_KNOWN_SFT_TOKEN,
+    NO_KNOWN_SOVEREIGN_FORGE_SC, NO_KNOWN_SOV_TO_MVX_TOKEN, NO_KNOWN_TESTING_SC,
+    NO_KNOWN_TOKEN_HANDLER_IN_THE_SPECIFIED_SHARD, NO_KNOWN_TOKEN_HANDLER_SC,
 };
 use multiversx_sc_snippets::imports::*;
-use serde::{Deserialize, Serialize};
-use std::{
-    io::{Read, Write},
-    path::Path,
-};
 
-const STATE_FILE: &str = "state.toml";
-
-#[derive(Debug, Default, Serialize, Deserialize, Clone)]
+#[derive(Debug, Default, Clone)]
 pub struct TokenProperties {
     pub token_id: String,
     pub nonce: u64,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug)]
 pub struct AddressInfo {
     pub address: Bech32Address,
     pub chain_id: String,
 }
 
+#[derive(Debug, Clone)]
+pub struct TokenBalance {
+    pub token_id: String,
+    pub amount: BigUint<StaticApi>,
+}
+
 // NOTE: This struct holds deployed contract addresses.
 // The index of each address corresponds to the shard number where the contract was deployed.
 // For example, index 0 = shard 0, index 1 = shard 1, etc.
-#[derive(Debug, Default, Serialize, Deserialize)]
+#[derive(Debug, Default)]
 pub struct ShardAddresses {
     pub addresses: Vec<AddressInfo>,
 }
@@ -41,13 +41,6 @@ impl ShardAddresses {
     pub fn push(&mut self, address: AddressInfo) -> usize {
         self.addresses.push(address);
         self.addresses.len() - 1
-    }
-
-    pub fn get_by_contract_id(&self, chain_id: &str) -> Option<&Bech32Address> {
-        self.addresses
-            .iter()
-            .find(|info| info.chain_id == chain_id)
-            .map(|info| &info.address)
     }
 
     pub fn first(&self) -> &Bech32Address {
@@ -59,7 +52,7 @@ impl ShardAddresses {
     }
 }
 
-#[derive(Debug, Default, Serialize, Deserialize)]
+#[derive(Debug, Default)]
 pub struct State {
     pub mvx_esdt_safe_addresses: Option<ShardAddresses>,
     pub header_verfier_addresses: Option<ShardAddresses>,
@@ -76,23 +69,14 @@ pub struct State {
     pub nft_token_id: Option<TokenProperties>,
     pub meta_esdt_token_id: Option<TokenProperties>,
     pub dynamic_nft_token_id: Option<TokenProperties>,
+    pub dynamic_sft_token_id: Option<TokenProperties>,
+    pub dynamic_meta_esdt_token_id: Option<TokenProperties>,
     pub sft_token_id: Option<TokenProperties>,
     pub sov_to_mvx_token_id: Option<TokenProperties>,
+    pub initial_balance: Vec<(Bech32Address, Vec<TokenBalance>)>,
 }
 
 impl State {
-    // Deserializes state from file
-    pub fn load_state() -> Self {
-        if Path::new(STATE_FILE).exists() {
-            let mut file = std::fs::File::open(STATE_FILE).unwrap();
-            let mut content = String::new();
-            file.read_to_string(&mut content).unwrap();
-            toml::from_str(&content).unwrap()
-        } else {
-            Self::default()
-        }
-    }
-
     /// Sets the contract addresses
     pub fn set_mvx_esdt_safe_contract_address(&mut self, address: AddressInfo) {
         let list = self.mvx_esdt_safe_addresses.get_or_insert_default();
@@ -165,8 +149,20 @@ impl State {
         self.sft_token_id = Some(token);
     }
 
+    pub fn set_dynamic_sft_token_id(&mut self, token: TokenProperties) {
+        self.dynamic_sft_token_id = Some(token);
+    }
+
+    pub fn set_dynamic_meta_esdt_token_id(&mut self, token: TokenProperties) {
+        self.dynamic_meta_esdt_token_id = Some(token);
+    }
+
     pub fn set_sov_to_mvx_token_id(&mut self, token: TokenProperties) {
         self.sov_to_mvx_token_id = Some(token);
+    }
+
+    pub fn set_initial_balance(&mut self, address: Bech32Address, tokens: Vec<TokenBalance>) {
+        self.initial_balance.push((address, tokens));
     }
 
     /// Returns the contract addresses
@@ -287,6 +283,22 @@ impl State {
             .clone()
     }
 
+    pub fn get_dynamic_sft_token_id_string(&self) -> String {
+        self.dynamic_sft_token_id
+            .as_ref()
+            .expect(NO_KNOWN_DYNAMIC_SFT_TOKEN_ID)
+            .token_id
+            .clone()
+    }
+
+    pub fn get_dynamic_meta_esdt_token_id_string(&self) -> String {
+        self.dynamic_meta_esdt_token_id
+            .as_ref()
+            .expect(NO_KNOWN_DYNAMIC_META_ESDT_TOKEN_ID)
+            .token_id
+            .clone()
+    }
+
     pub fn get_first_token_id(&self) -> TokenIdentifier<StaticApi> {
         self.first_token
             .as_ref()
@@ -342,6 +354,20 @@ impl State {
             .clone()
     }
 
+    pub fn get_dynamic_sft_token_id(&self) -> TokenProperties {
+        self.dynamic_sft_token_id
+            .as_ref()
+            .expect(NO_KNOWN_DYNAMIC_SFT_TOKEN_ID)
+            .clone()
+    }
+
+    pub fn get_dynamic_meta_esdt_token_id(&self) -> TokenProperties {
+        self.dynamic_meta_esdt_token_id
+            .as_ref()
+            .expect(NO_KNOWN_DYNAMIC_META_ESDT_TOKEN_ID)
+            .clone()
+    }
+
     pub fn get_sov_to_mvx_token_id(&self) -> TokenProperties {
         self.sov_to_mvx_token_id
             .as_ref()
@@ -394,13 +420,12 @@ impl State {
             .map(|info| &info.address)
             .unwrap_or_else(|| panic!("No Header Verifier address for shard {}", shard))
     }
-}
 
-impl Drop for State {
-    // Serializes state to file
-    fn drop(&mut self) {
-        let mut file = std::fs::File::create(STATE_FILE).unwrap();
-        file.write_all(toml::to_string(self).unwrap().as_bytes())
-            .unwrap();
+    pub fn get_initial_balance_for_address(&self, address: Bech32Address) -> Vec<TokenBalance> {
+        self.initial_balance
+            .iter()
+            .filter(|(addr, _)| *addr == address)
+            .flat_map(|(_, balance)| balance.iter().cloned())
+            .collect()
     }
 }

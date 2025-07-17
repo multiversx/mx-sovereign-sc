@@ -42,13 +42,16 @@ pub const SECOND_TEST_TOKEN: TestTokenIdentifier = TestTokenIdentifier::new("LTS
 pub const SOV_TOKEN: TestTokenIdentifier = TestTokenIdentifier::new("sov-GREEN-0e161c");
 pub const TOKEN_TICKER: &str = "GREEN";
 pub const TOKEN_DISPLAY_NAME: &str = "Sovereign";
-pub const REGISTER_TOKEN_PREFIX: &str = "SOV-";
+pub const REGISTER_TOKEN_PREFIX: &str = "sov-";
 pub const NFT_TOKEN_ID: TestTokenIdentifier = TestTokenIdentifier::new("NFT-123456");
 pub const CROWD_TOKEN_ID: TestTokenIdentifier = TestTokenIdentifier::new("CROWD-123456");
 pub const FUNGIBLE_TOKEN_ID: TestTokenIdentifier = TestTokenIdentifier::new("FUNG-123456");
 pub const PREFIX_NFT_TOKEN_ID: TestTokenIdentifier = TestTokenIdentifier::new("sov-NFT-123456");
 pub const WEGLD_IDENTIFIER: TestTokenIdentifier = TestTokenIdentifier::new("WEGLD-123456");
 pub const WRONG_TOKEN_ID: TestTokenIdentifier = TestTokenIdentifier::new("WRONG-TOKEN");
+
+pub const SOVEREIGN_RECEIVER_ADDRESS: TestAddress =
+    TestAddress::new("erd18tudnj2z8vjh0339yu3vrkgzz2jpz8mjq0uhgnmklnap6z33qqeszq2yn4");
 
 pub const SOV_TO_MVX_TOKEN_STORAGE_KEY: &str = "sovToMvxTokenId";
 pub const NATIVE_TOKEN_STORAGE_KEY: &str = "nativeToken";

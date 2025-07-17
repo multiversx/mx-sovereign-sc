@@ -11,6 +11,7 @@ use common_test_setup::constants::{
     DEPLOY_COST, ENSHRINE_ESDT_SAFE_CODE_PATH, INTERACTOR_WORKING_DIR, ONE_THOUSAND_TOKENS,
     PREFERRED_CHAIN_IDS, SHARD_0, SOVEREIGN_TOKEN_PREFIX,
 };
+use error_messages::FAILED_TO_LOAD_WALLET_SHARD_0;
 use fee_market_proxy::*;
 use multiversx_sc_snippets::imports::*;
 use proxies::enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy;
@@ -25,9 +26,15 @@ use crate::sovereign_forge;
 
 pub struct EnshrineEsdtSafeInteract {
     pub interactor: Interactor,
-    pub bridge_owner: Address,
-    pub sovereign_owner: Address,
-    pub bridge_service: Address,
+    pub bridge_owner_shard_0: Address,
+    pub bridge_owner_shard_1: Address,
+    pub bridge_owner_shard_2: Address,
+    pub sovereign_owner_shard_0: Address,
+    pub sovereign_owner_shard_1: Address,
+    pub sovereign_owner_shard_2: Address,
+    pub bridge_service_shard_0: Address,
+    pub bridge_service_shard_1: Address,
+    pub bridge_service_shard_2: Address,
     pub user_address: Address,
     pub state: State,
 }
@@ -41,12 +48,40 @@ impl CommonInteractorTrait for EnshrineEsdtSafeInteract {
         &mut self.state
     }
 
-    fn bridge_service(&self) -> &Address {
-        &self.bridge_service
+    fn bridge_owner_shard_0(&self) -> &Address {
+        &self.bridge_owner_shard_0
     }
 
-    fn sovereign_owner(&self) -> &Address {
-        &self.sovereign_owner
+    fn bridge_owner_shard_1(&self) -> &Address {
+        &self.bridge_owner_shard_1
+    }
+
+    fn bridge_owner_shard_2(&self) -> &Address {
+        &self.bridge_owner_shard_2
+    }
+
+    fn bridge_service_shard_0(&self) -> &Address {
+        &self.bridge_service_shard_0
+    }
+
+    fn bridge_service_shard_1(&self) -> &Address {
+        &self.bridge_service_shard_1
+    }
+
+    fn bridge_service_shard_2(&self) -> &Address {
+        &self.bridge_service_shard_2
+    }
+
+    fn sovereign_owner_shard_0(&self) -> &Address {
+        &self.sovereign_owner_shard_0
+    }
+
+    fn sovereign_owner_shard_1(&self) -> &Address {
+        &self.sovereign_owner_shard_1
+    }
+
+    fn sovereign_owner_shard_2(&self) -> &Address {
+        &self.sovereign_owner_shard_2
     }
 
     fn user_address(&self) -> &Address {
@@ -68,18 +103,34 @@ impl EnshrineEsdtSafeInteract {
 
         let working_dir = INTERACTOR_WORKING_DIR;
         interactor.set_current_dir_from_workspace(working_dir);
-        let bridge_owner = interactor.register_wallet(test_wallets::mike()).await;
-        let sovereign_owner = interactor.register_wallet(test_wallets::alice()).await;
-        let bridge_service = interactor.register_wallet(test_wallets::carol()).await;
-        let user_address = interactor.register_wallet(test_wallets::bob()).await;
+
+        let shard_0_wallet = Wallet::from_pem_file("wallets/shard-0-wallet.pem")
+            .expect(FAILED_TO_LOAD_WALLET_SHARD_0);
+
+        let bridge_owner_shard_0 = interactor.register_wallet(test_wallets::bob()).await;
+        let bridge_owner_shard_1 = interactor.register_wallet(test_wallets::alice()).await;
+        let bridge_owner_shard_2 = interactor.register_wallet(test_wallets::carol()).await;
+        let sovereign_owner_shard_0 = interactor.register_wallet(test_wallets::mike()).await;
+        let sovereign_owner_shard_1 = interactor.register_wallet(test_wallets::frank()).await;
+        let sovereign_owner_shard_2 = interactor.register_wallet(test_wallets::heidi()).await;
+        let bridge_service_shard_0 = interactor.register_wallet(shard_0_wallet).await;
+        let bridge_service_shard_1 = interactor.register_wallet(test_wallets::dan()).await;
+        let bridge_service_shard_2 = interactor.register_wallet(test_wallets::judy()).await;
+        let user_address = interactor.register_wallet(test_wallets::grace()).await; //shard 1
 
         interactor.generate_blocks_until_epoch(1u64).await.unwrap();
 
         EnshrineEsdtSafeInteract {
             interactor,
-            bridge_owner,
-            sovereign_owner,
-            bridge_service,
+            bridge_owner_shard_0,
+            bridge_owner_shard_1,
+            bridge_owner_shard_2,
+            sovereign_owner_shard_0,
+            sovereign_owner_shard_1,
+            sovereign_owner_shard_2,
+            bridge_service_shard_0,
+            bridge_service_shard_1,
+            bridge_service_shard_2,
             user_address,
             state: State::default(),
         }
@@ -143,7 +194,7 @@ impl EnshrineEsdtSafeInteract {
         opt_config: Option<EsdtSafeConfig<StaticApi>>,
         sc_array: Vec<ScArray>,
     ) {
-        let owner = self.bridge_owner.clone();
+        let owner = self.bridge_owner_shard_0.clone();
         self.deploy_chain_config(
             owner.clone(),
             PREFERRED_CHAIN_IDS[0].to_string(),
@@ -227,7 +278,7 @@ impl EnshrineEsdtSafeInteract {
             .interactor
             .tx()
             .to(self.state.current_enshrine_esdt_safe_address())
-            .from(&self.bridge_owner)
+            .from(&self.bridge_owner_shard_0)
             .gas(30_000_000u64)
             .typed(EnshrineEsdtSafeProxy)
             .upgrade()
@@ -247,7 +298,7 @@ impl EnshrineEsdtSafeInteract {
         let response = self
             .interactor
             .tx()
-            .from(&self.bridge_owner)
+            .from(&self.bridge_owner_shard_0)
             .to(self.state.current_enshrine_esdt_safe_address())
             .gas(30_000_000u64)
             .typed(EnshrineEsdtSafeProxy)
@@ -343,7 +394,7 @@ impl EnshrineEsdtSafeInteract {
         let response = self
             .interactor
             .tx()
-            .from(&self.bridge_owner)
+            .from(&self.bridge_owner_shard_0)
             .to(self.state.current_enshrine_esdt_safe_address())
             .gas(30_000_000u64)
             .typed(EnshrineEsdtSafeProxy)
@@ -362,7 +413,7 @@ impl EnshrineEsdtSafeInteract {
         let response = self
             .interactor
             .tx()
-            .from(&self.bridge_owner)
+            .from(&self.bridge_owner_shard_0)
             .to(self.state.current_enshrine_esdt_safe_address())
             .gas(30_000_000u64)
             .typed(EnshrineEsdtSafeProxy)
@@ -381,7 +432,7 @@ impl EnshrineEsdtSafeInteract {
         let response = self
             .interactor
             .tx()
-            .from(&self.bridge_owner)
+            .from(&self.bridge_owner_shard_0)
             .to(self.state.current_enshrine_esdt_safe_address())
             .gas(30_000_000u64)
             .typed(EnshrineEsdtSafeProxy)
@@ -400,7 +451,7 @@ impl EnshrineEsdtSafeInteract {
         let response = self
             .interactor
             .tx()
-            .from(&self.bridge_owner)
+            .from(&self.bridge_owner_shard_0)
             .to(self.state.current_enshrine_esdt_safe_address())
             .gas(30_000_000u64)
             .typed(EnshrineEsdtSafeProxy)
@@ -444,7 +495,7 @@ impl EnshrineEsdtSafeInteract {
         let response = self
             .interactor
             .tx()
-            .from(&self.bridge_owner)
+            .from(&self.bridge_owner_shard_0)
             .to(self.state.current_enshrine_esdt_safe_address())
             .gas(30_000_000u64)
             .typed(EnshrineEsdtSafeProxy)
@@ -460,7 +511,7 @@ impl EnshrineEsdtSafeInteract {
         let response = self
             .interactor
             .tx()
-            .from(&self.bridge_owner)
+            .from(&self.bridge_owner_shard_0)
             .to(self.state.current_enshrine_esdt_safe_address())
             .gas(30_000_000u64)
             .typed(EnshrineEsdtSafeProxy)

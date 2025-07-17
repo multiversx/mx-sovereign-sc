@@ -1,7 +1,3 @@
-[[bin]]
-name = "rust-interact"
-path = "src/interactor_main.rs"
-
 [package]
 name = "rust-interact"
 version = "0.1.0"

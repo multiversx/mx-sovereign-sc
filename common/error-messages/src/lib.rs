@@ -38,6 +38,7 @@ pub const ESDT_SAFE_NOT_DEPLOYED: &str =
     "The ESDT-Safe SC is not deployed, you skipped the second phase";
 pub const ESDT_SAFE_STILL_PAUSED: &str = "Cannot create transaction while paused";
 pub const FAILED_TO_PARSE_AS_NUMBER: &str = "Failed to parse actual amount as number";
+pub const FAILED_TO_LOAD_WALLET_SHARD_0: &str = "Failed to load shard 0 wallet";
 pub const FEE_MARKET_ALREADY_DEPLOYED: &str = "The Fee-Market SC is already deployed";
 pub const FEE_MARKET_NOT_DEPLOYED: &str = "The Fee-Market SC is not deployed";
 pub const GAS_LIMIT_TOO_HIGH: &str = "Gas limit too high";
@@ -78,7 +79,9 @@ pub const NO_KNOWN_CHAIN_CONFIG_SC: &str = "No known Chain Config SC contract, d
 pub const NO_KNOWN_CHAIN_FACTORY_IN_THE_SPECIFIED_SHARD: &str =
     "No chain factory address found for the specified shard";
 pub const NO_KNOWN_CHAIN_FACTORY_SC: &str = "No known Chain Factory SC, deploy first";
+pub const NO_KNOWN_DYNAMIC_META_ESDT_TOKEN_ID: &str = "No known Dynamic Meta ESDT token ID";
 pub const NO_KNOWN_DYNAMIC_NFT_TOKEN_ID: &str = "No known Dynamic NFT token ID";
+pub const NO_KNOWN_DYNAMIC_SFT_TOKEN_ID: &str = "No known Dynamic SFT token ID";
 pub const NO_KNOWN_ENSHRINE_ESDT_SAFE_SC: &str =
     "No known Enshrine ESDT Safe SC contract, deploy first";
 pub const NO_KNOWN_FIRST_TOKEN: &str = "No known first token, register first";

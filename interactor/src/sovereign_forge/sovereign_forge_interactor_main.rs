@@ -1,20 +1,15 @@
 #![allow(non_snake_case)]
-use common_interactor::common_sovereign_interactor::{
-    EsdtSafeType, IssueTokenStruct, MintTokenStruct, TemplateAddresses,
-};
-use common_interactor::interactor_state::{AddressInfo, State};
+use common_interactor::common_sovereign_interactor::{IssueTokenStruct, MintTokenStruct};
+use common_interactor::interactor_state::State;
 use common_interactor::{
     common_sovereign_interactor::CommonInteractorTrait, interactor_config::Config,
 };
 use common_test_setup::constants::{
-    DEPLOY_COST, INTERACTOR_WORKING_DIR, NUMBER_OF_SHARDS, ONE_THOUSAND_TOKENS,
-    PREFERRED_CHAIN_IDS, SOVEREIGN_FORGE_CODE_PATH,
+    INTERACTOR_WORKING_DIR, ONE_THOUSAND_TOKENS, SOVEREIGN_FORGE_CODE_PATH,
 };
+use error_messages::FAILED_TO_LOAD_WALLET_SHARD_0;
 use multiversx_sc_snippets::imports::*;
 use proxies::sovereign_forge_proxy::SovereignForgeProxy;
-use structs::configs::{EsdtSafeConfig, SovereignConfig};
-use structs::fee::FeeStruct;
-use structs::forge::ScArray;
 
 pub struct SovereignForgeInteract {
     pub interactor: Interactor,
@@ -35,12 +30,40 @@ impl CommonInteractorTrait for SovereignForgeInteract {
         &mut self.interactor
     }
 
-    fn sovereign_owner(&self) -> &Address {
+    fn bridge_owner_shard_0(&self) -> &Address {
+        &self.bridge_owner_shard_0
+    }
+
+    fn bridge_owner_shard_1(&self) -> &Address {
+        &self.bridge_owner_shard_1
+    }
+
+    fn bridge_owner_shard_2(&self) -> &Address {
+        &self.bridge_owner_shard_2
+    }
+
+    fn sovereign_owner_shard_0(&self) -> &Address {
         &self.sovereign_owner_shard_0
     }
 
-    fn bridge_service(&self) -> &Address {
+    fn sovereign_owner_shard_1(&self) -> &Address {
+        &self.sovereign_owner_shard_1
+    }
+
+    fn sovereign_owner_shard_2(&self) -> &Address {
+        &self.sovereign_owner_shard_2
+    }
+
+    fn bridge_service_shard_0(&self) -> &Address {
         &self.bridge_service_shard_0
+    }
+
+    fn bridge_service_shard_1(&self) -> &Address {
+        &self.bridge_service_shard_1
+    }
+
+    fn bridge_service_shard_2(&self) -> &Address {
+        &self.bridge_service_shard_2
     }
 
     fn user_address(&self) -> &Address {
@@ -75,7 +98,7 @@ impl SovereignForgeInteract {
         interactor.set_current_dir_from_workspace(current_working_dir);
 
         let shard_0_wallet = Wallet::from_pem_file("wallets/shard-0-wallet.pem")
-            .expect("Failed to load shard 0 wallet");
+            .expect(FAILED_TO_LOAD_WALLET_SHARD_0);
 
         let bridge_owner_shard_0 = interactor.register_wallet(test_wallets::bob()).await;
         let bridge_owner_shard_1 = interactor.register_wallet(test_wallets::alice()).await;
@@ -158,7 +181,7 @@ impl SovereignForgeInteract {
         let nft_token_struct = IssueTokenStruct {
             token_display_name: "NFT".to_string(),
             token_ticker: "NFT".to_string(),
-            token_type: EsdtTokenType::NonFungible,
+            token_type: EsdtTokenType::NonFungibleV2,
             num_decimals: 0,
         };
         let nft_token_mint = MintTokenStruct {
@@ -224,121 +247,60 @@ impl SovereignForgeInteract {
             .await;
 
         self.state.set_meta_esdt_token_id(meta_esdt_token);
-    }
 
-    pub async fn deploy_and_complete_setup_phase(
-        &mut self,
-        deploy_cost: BigUint<StaticApi>,
-        optional_sov_config: OptionalValue<SovereignConfig<StaticApi>>,
-        optional_esdt_safe_config: OptionalValue<EsdtSafeConfig<StaticApi>>,
-        fee: Option<FeeStruct<StaticApi>>,
-    ) {
-        let initial_caller = self.bridge_owner_shard_0.clone();
+        let dyn_sft_token_struct = IssueTokenStruct {
+            token_display_name: "DYNS".to_string(),
+            token_ticker: "DYNS".to_string(),
+            token_type: EsdtTokenType::DynamicSFT,
+            num_decimals: 18,
+        };
+        let dyn_sft_token_mint = MintTokenStruct {
+            name: Some("DYNS".to_string()),
+            amount: BigUint::from(ONE_THOUSAND_TOKENS),
+            attributes: None,
+        };
 
-        let sovereign_forge_address = self
-            .deploy_sovereign_forge(initial_caller.clone(), &BigUint::from(DEPLOY_COST))
+        let dyn_sft_token = self
+            .issue_and_mint_token(dyn_sft_token_struct, dyn_sft_token_mint)
             .await;
 
-        for shard_id in 0..NUMBER_OF_SHARDS {
-            let caller = self.get_bridge_owner_for_shard(shard_id);
-            let template_contracts = self
-                .deploy_template_contracts(caller.clone(), EsdtSafeType::MvxEsdtSafe)
-                .await;
+        self.state.set_dynamic_sft_token_id(dyn_sft_token);
 
-            let (
-                chain_config_address,
-                mvx_esdt_safe_address,
-                fee_market_address,
-                header_verifier_address,
-            ) = match template_contracts.as_slice() {
-                [a, b, c, d] => (a.clone(), b.clone(), c.clone(), d.clone()),
-                _ => panic!(
-                    "Expected 4 deployed contract addresses, got {}",
-                    template_contracts.len()
-                ),
-            };
+        let dyn_meta_esdt_token_struct = IssueTokenStruct {
+            token_display_name: "DYNM".to_string(),
+            token_ticker: "DYNM".to_string(),
+            token_type: EsdtTokenType::DynamicMeta,
+            num_decimals: 18,
+        };
 
-            self.finish_init_setup_phase_for_one_shard(
-                shard_id,
-                initial_caller.clone(),
-                sovereign_forge_address.clone(),
-                TemplateAddresses {
-                    chain_config_address: chain_config_address.clone(),
-                    header_verifier_address: header_verifier_address.clone(),
-                    esdt_safe_address: mvx_esdt_safe_address.clone(),
-                    fee_market_address: fee_market_address.clone(),
-                },
-            )
-            .await;
-            println!("Finished setup phase for shard {shard_id}");
-        }
+        let dyn_meta_esdt_token_mint = MintTokenStruct {
+            name: Some("DYNM".to_string()),
+            amount: BigUint::from(ONE_THOUSAND_TOKENS),
+            attributes: None,
+        };
 
-        for shard in 0..NUMBER_OF_SHARDS {
-            self.deploy_on_one_shard(
-                shard,
-                deploy_cost.clone(),
-                optional_esdt_safe_config.clone(),
-                optional_sov_config.clone(),
-                fee.clone(),
-            )
-            .await;
-        }
-
-        self.deploy_testing_sc(self.bridge_owner_shard_1.clone())
-            .await;
-    }
-
-    pub async fn finish_init_setup_phase_for_one_shard(
-        &mut self,
-        shard_id: u32,
-        initial_caller: Address,
-        sovereign_forge_address: Address,
-        template_addresses: TemplateAddresses,
-    ) {
-        let caller = self.get_bridge_owner_for_shard(shard_id);
-
-        self.deploy_chain_factory(
-            caller.clone(),
-            sovereign_forge_address.clone(),
-            template_addresses.clone(),
-        )
-        .await;
-        self.register_chain_factory(initial_caller.clone(), shard_id)
+        let dyn_meta_esdt_token = self
+            .issue_and_mint_token(dyn_meta_esdt_token_struct, dyn_meta_esdt_token_mint)
             .await;
 
-        self.deploy_token_handler(caller.clone(), shard_id).await;
-        self.register_token_handler(initial_caller.clone(), shard_id)
-            .await;
-    }
+        self.state
+            .set_dynamic_meta_esdt_token_id(dyn_meta_esdt_token);
 
-    pub async fn deploy_on_one_shard(
-        &mut self,
-        shard: u32,
-        deploy_cost: BigUint<StaticApi>,
-        optional_esdt_safe_config: OptionalValue<EsdtSafeConfig<StaticApi>>,
-        optional_sov_config: OptionalValue<SovereignConfig<StaticApi>>,
-        fee: Option<FeeStruct<StaticApi>>,
-    ) {
-        let caller = self.get_sovereign_owner_for_shard(shard);
-        let preferred_chain_id = PREFERRED_CHAIN_IDS[shard as usize].to_string();
-        self.deploy_phase_one(
-            caller.clone(),
-            deploy_cost.clone(),
-            Some(preferred_chain_id.clone().into()),
-            optional_sov_config.clone(),
-        )
-        .await;
-        self.deploy_phase_two(caller.clone(), optional_esdt_safe_config.clone())
-            .await;
-        self.deploy_phase_three(caller.clone(), fee.clone()).await;
-        self.deploy_phase_four(caller.clone()).await;
-
-        self.complete_setup_phase(caller.clone()).await;
-        self.check_setup_phase_status(&preferred_chain_id, true)
-            .await;
-
-        self.update_smart_contracts_addresses_in_state(preferred_chain_id.clone())
-            .await;
+        let expected_tokens_wallet = vec![
+            self.thousand_tokens(self.state.get_first_token_id_string()),
+            self.thousand_tokens(self.state.get_second_token_id_string()),
+            self.thousand_tokens(self.state.get_fee_token_id_string()),
+            self.one_token(self.state.get_nft_token_id_string()),
+            self.thousand_tokens(self.state.get_meta_esdt_token_id_string()),
+            self.one_token(self.state.get_dynamic_nft_token_id_string()),
+            self.thousand_tokens(self.state.get_sft_token_id_string()),
+            self.thousand_tokens(self.state.get_dynamic_meta_esdt_token_id_string()),
+            self.thousand_tokens(self.state.get_dynamic_sft_token_id_string()),
+        ];
+        self.state.set_initial_balance(
+            Bech32Address::from(self.user_address().clone()),
+            expected_tokens_wallet,
+        );
     }
 
     pub async fn upgrade(&mut self, caller: Address) {
@@ -357,129 +319,5 @@ impl SovereignForgeInteract {
             .await;
 
         println!("Result: {response:?}");
-    }
-
-    pub async fn register_token_handler(&mut self, caller: Address, shard_id: u32) {
-        let sovereign_forge_address = self.state.current_sovereign_forge_sc_address();
-        let token_handler_address = self.state.get_token_handler_address(shard_id);
-        let response = self
-            .interactor
-            .tx()
-            .from(caller)
-            .to(sovereign_forge_address)
-            .gas(30_000_000u64)
-            .typed(SovereignForgeProxy)
-            .register_token_handler(shard_id, token_handler_address)
-            .returns(ReturnsResultUnmanaged)
-            .run()
-            .await;
-
-        println!("Result: {response:?}");
-    }
-
-    pub async fn register_chain_factory(&mut self, caller: Address, shard_id: u32) {
-        let sovereign_forge_address = self.state.current_sovereign_forge_sc_address();
-        let chain_factory_address = self.state.get_chain_factory_sc_address(shard_id);
-
-        let response = self
-            .interactor
-            .tx()
-            .from(caller)
-            .to(sovereign_forge_address)
-            .gas(30_000_000u64)
-            .typed(SovereignForgeProxy)
-            .register_chain_factory(shard_id, chain_factory_address)
-            .returns(ReturnsResultUnmanaged)
-            .run()
-            .await;
-
-        println!("Result: {response:?}");
-    }
-
-    pub async fn update_smart_contracts_addresses_in_state(&mut self, chain_id: String) {
-        let result_value = self
-            .interactor
-            .query()
-            .to(self.state.current_sovereign_forge_sc_address())
-            .typed(SovereignForgeProxy)
-            .sovereign_deployed_contracts(chain_id.clone())
-            .returns(ReturnsResult)
-            .run()
-            .await;
-
-        for contract in result_value {
-            let address = Bech32Address::from(contract.address.to_address());
-            match contract.id {
-                ScArray::ChainConfig => {
-                    self.state.set_chain_config_sc_address(AddressInfo {
-                        address,
-                        chain_id: chain_id.clone(),
-                    });
-                }
-                ScArray::ESDTSafe => {
-                    self.state.set_mvx_esdt_safe_contract_address(AddressInfo {
-                        address,
-                        chain_id: chain_id.clone(),
-                    });
-                }
-                ScArray::FeeMarket => {
-                    self.state.set_fee_market_address(AddressInfo {
-                        address,
-                        chain_id: chain_id.clone(),
-                    });
-                }
-                ScArray::HeaderVerifier => {
-                    self.state.set_header_verifier_address(AddressInfo {
-                        address,
-                        chain_id: chain_id.clone(),
-                    });
-                }
-                _ => {}
-            }
-        }
-    }
-
-    pub async fn check_setup_phase_status(&mut self, chain_id: &str, expected_value: bool) {
-        let result_value = self
-            .interactor
-            .query()
-            .to(self.state.current_sovereign_forge_sc_address())
-            .typed(SovereignForgeProxy)
-            .sovereign_setup_phase(chain_id)
-            .returns(ReturnsResultUnmanaged)
-            .run()
-            .await;
-
-        assert_eq!(
-            result_value, expected_value,
-            "Expected setup phase status to be {expected_value}, but got {result_value}"
-        );
-    }
-
-    fn get_bridge_owner_for_shard(&self, shard_id: u32) -> Address {
-        match shard_id {
-            0 => self.bridge_owner_shard_0.clone(),
-            1 => self.bridge_owner_shard_1.clone(),
-            2 => self.bridge_owner_shard_2.clone(),
-            _ => panic!("Invalid shard ID: {shard_id}"),
-        }
-    }
-
-    pub fn get_sovereign_owner_for_shard(&self, shard_id: u32) -> Address {
-        match shard_id {
-            0 => self.sovereign_owner_shard_0.clone(),
-            1 => self.sovereign_owner_shard_1.clone(),
-            2 => self.sovereign_owner_shard_2.clone(),
-            _ => panic!("Invalid shard ID: {shard_id}"),
-        }
-    }
-
-    pub fn get_bridge_service_for_shard(&self, shard_id: u32) -> Address {
-        match shard_id {
-            0 => self.bridge_service_shard_0.clone(),
-            1 => self.bridge_service_shard_1.clone(),
-            2 => self.bridge_service_shard_2.clone(),
-            _ => panic!("Invalid shard ID: {shard_id}"),
-        }
     }
 }

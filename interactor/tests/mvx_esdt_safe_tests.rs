@@ -2,11 +2,11 @@ use common_interactor::common_sovereign_interactor::CommonInteractorTrait;
 use common_interactor::interactor_config::Config;
 use common_test_setup::base_setup::init::RegisterTokenArgs;
 use common_test_setup::constants::{
-    CROWD_TOKEN_ID, DEPOSIT_LOG, EXECUTED_BRIDGE_LOG, FIRST_TEST_TOKEN, ISSUE_COST,
+    CROWD_TOKEN_ID, DEPLOY_COST, DEPOSIT_LOG, EXECUTED_BRIDGE_LOG, FIRST_TEST_TOKEN, ISSUE_COST,
     MVX_TO_SOV_TOKEN_STORAGE_KEY, NATIVE_TOKEN_STORAGE_KEY, ONE_HUNDRED_TOKENS,
     ONE_THOUSAND_TOKENS, OPERATION_HASH_STATUS_STORAGE_KEY, PREFERRED_CHAIN_IDS, SC_CALL_LOG,
-    SHARD_0, SOV_TOKEN, SOV_TO_MVX_TOKEN_STORAGE_KEY, TEN_TOKENS, TESTING_SC_ENDPOINT,
-    TOKEN_TICKER, WRONG_ENDPOINT_NAME,
+    SHARD_0, SOVEREIGN_RECEIVER_ADDRESS, SOV_TOKEN, SOV_TO_MVX_TOKEN_STORAGE_KEY, TEN_TOKENS,
+    TESTING_SC_ENDPOINT, TOKEN_TICKER, WRONG_ENDPOINT_NAME,
 };
 use cross_chain::MAX_GAS_PER_TRANSACTION;
 use error_messages::{
@@ -21,50 +21,11 @@ use multiversx_sc_snippets::{hex, imports::*};
 use rust_interact::mvx_esdt_safe::mvx_esdt_safe_interactor_main::MvxEsdtSafeInteract;
 use serial_test::serial;
 use structs::aliases::PaymentsVec;
-use structs::configs::{EsdtSafeConfig, MaxBridgedAmount, SovereignConfig};
+use structs::configs::{EsdtSafeConfig, MaxBridgedAmount};
 use structs::fee::{FeeStruct, FeeType};
 use structs::forge::ScArray;
 use structs::generate_hash::GenerateHash;
 use structs::operation::{Operation, OperationData, OperationEsdtPayment, TransferData};
-
-/// ### TEST
-/// M-ESDT_ISSUE_OK
-///
-/// ### ACTION
-/// Issue and mint all types of tokens to the wallet address
-///
-/// ### EXPECTED
-/// All the tokens are minted to the wallet address
-#[tokio::test]
-#[serial]
-#[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
-async fn test_issue_tokens() {
-    let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
-
-    let bridge_owner = chain_interactor.bridge_owner.clone();
-    let user_address = chain_interactor.user_address.clone();
-    let first_token_id = chain_interactor.state.get_first_token_id().clone();
-
-    chain_interactor
-        .issue_and_mint_the_remaining_types_of_tokens()
-        .await;
-
-    chain_interactor
-        .interactor()
-        .tx()
-        .from(user_address)
-        .to(bridge_owner.clone())
-        .single_esdt(&first_token_id, 0u64, &BigUint::from(ONE_THOUSAND_TOKENS))
-        .run()
-        .await;
-
-    let expected_token =
-        vec![chain_interactor.thousand_tokens(chain_interactor.state.get_first_token_id_string())];
-
-    chain_interactor
-        .check_address_balance(&Bech32Address::from(bridge_owner), expected_token)
-        .await;
-}
 
 /// ### TEST
 /// M-ESDT_DEPLOY_FAIL
@@ -79,13 +40,15 @@ async fn test_issue_tokens() {
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn test_update_invalid_config() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
+    let shard = SHARD_0;
 
     chain_interactor
-        .deploy_contracts(
+        .deploy_and_complete_setup_phase_on_a_shard(
+            shard,
+            DEPLOY_COST.into(),
             OptionalValue::None,
-            OptionalValue::Some(EsdtSafeConfig::default_config()),
+            OptionalValue::None,
             None,
-            vec![ScArray::ChainConfig, ScArray::ESDTSafe],
         )
         .await;
 
@@ -102,7 +65,7 @@ async fn test_update_invalid_config() {
 
     chain_interactor
         .register_operation(
-            SHARD_0,
+            shard,
             ManagedBuffer::new(),
             &hash_of_hashes,
             MultiValueEncoded::from_iter(vec![config_hash]),
@@ -111,6 +74,7 @@ async fn test_update_invalid_config() {
 
     chain_interactor
         .update_configuration(
+            shard,
             hash_of_hashes,
             config,
             None,
@@ -133,13 +97,15 @@ async fn test_update_invalid_config() {
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn test_register_token_invalid_type_token_no_prefix() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
+    let shard = SHARD_0;
 
     chain_interactor
-        .deploy_contracts(
+        .deploy_and_complete_setup_phase_on_a_shard(
+            shard,
+            DEPLOY_COST.into(),
             OptionalValue::None,
             OptionalValue::None,
             None,
-            vec![ScArray::ChainConfig, ScArray::ESDTSafe],
         )
         .await;
 
@@ -192,13 +158,15 @@ async fn test_register_token_invalid_type_token_no_prefix() {
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn test_register_token_invalid_type_token_with_prefix() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
+    let shard = SHARD_0;
 
     chain_interactor
-        .deploy_contracts(
+        .deploy_and_complete_setup_phase_on_a_shard(
+            shard,
+            DEPLOY_COST.into(),
             OptionalValue::None,
             OptionalValue::None,
             None,
-            vec![ScArray::ChainConfig, ScArray::ESDTSafe],
         )
         .await;
 
@@ -211,7 +179,7 @@ async fn test_register_token_invalid_type_token_with_prefix() {
 
     chain_interactor
         .register_token(
-            SHARD_0,
+            shard,
             RegisterTokenArgs {
                 sov_token_id,
                 token_type,
@@ -243,6 +211,7 @@ async fn test_register_token_invalid_type_token_with_prefix() {
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn test_deposit_max_bridged_amount_exceeded() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
+    let shard = SHARD_0;
 
     let config = EsdtSafeConfig::new(
         ManagedVec::new(),
@@ -256,11 +225,12 @@ async fn test_deposit_max_bridged_amount_exceeded() {
     );
 
     chain_interactor
-        .deploy_contracts(
+        .deploy_and_complete_setup_phase_on_a_shard(
+            shard,
+            DEPLOY_COST.into(),
             OptionalValue::None,
             OptionalValue::Some(config),
             None,
-            vec![ScArray::ChainConfig, ScArray::ESDTSafe],
         )
         .await;
 
@@ -274,13 +244,17 @@ async fn test_deposit_max_bridged_amount_exceeded() {
 
     chain_interactor
         .deposit_in_mvx_esdt_safe(
-            chain_interactor.user_address.clone(),
-            SHARD_0,
+            SOVEREIGN_RECEIVER_ADDRESS.to_address(),
+            shard,
             OptionalValue::None,
             payments_vec,
             Some(DEPOSIT_OVER_MAX_AMOUNT),
             None,
         )
+        .await;
+    chain_interactor.check_wallet_balance_unchanged().await;
+    chain_interactor
+        .check_mvx_esdt_safe_balance_is_empty(shard)
         .await;
 }
 
@@ -297,20 +271,22 @@ async fn test_deposit_max_bridged_amount_exceeded() {
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn test_deposit_nothing_to_transfer() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
+    let shard = SHARD_0;
 
     chain_interactor
-        .deploy_contracts(
+        .deploy_and_complete_setup_phase_on_a_shard(
+            shard,
+            DEPLOY_COST.into(),
             OptionalValue::None,
-            OptionalValue::Some(EsdtSafeConfig::default_config()),
+            OptionalValue::None,
             None,
-            vec![ScArray::ChainConfig, ScArray::ESDTSafe],
         )
         .await;
 
     chain_interactor
         .deposit_in_mvx_esdt_safe(
-            chain_interactor.user_address.clone(),
-            SHARD_0,
+            SOVEREIGN_RECEIVER_ADDRESS.to_address(),
+            shard,
             OptionalValue::None,
             ManagedVec::new(),
             Some(NOTHING_TO_TRANSFER),
@@ -318,12 +294,12 @@ async fn test_deposit_nothing_to_transfer() {
         )
         .await;
 
-    chain_interactor.check_wallet_balance_unchanged(None).await;
+    chain_interactor.check_wallet_balance_unchanged().await;
     chain_interactor
-        .check_mvx_esdt_safe_balance_is_empty(SHARD_0)
+        .check_mvx_esdt_safe_balance_is_empty(shard)
         .await;
     chain_interactor
-        .check_fee_market_balance_is_empty(SHARD_0)
+        .check_fee_market_balance_is_empty(shard)
         .await;
 }
 
@@ -340,13 +316,15 @@ async fn test_deposit_nothing_to_transfer() {
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn test_deposit_too_many_tokens_no_fee() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
+    let shard = SHARD_0;
 
     chain_interactor
-        .deploy_contracts(
+        .deploy_and_complete_setup_phase_on_a_shard(
+            shard,
+            DEPLOY_COST.into(),
             OptionalValue::None,
-            OptionalValue::Some(EsdtSafeConfig::default_config()),
+            OptionalValue::None,
             None,
-            vec![ScArray::ChainConfig, ScArray::ESDTSafe],
         )
         .await;
 
@@ -360,8 +338,8 @@ async fn test_deposit_too_many_tokens_no_fee() {
 
     chain_interactor
         .deposit_in_mvx_esdt_safe(
-            chain_interactor.user_address.clone(),
-            SHARD_0,
+            SOVEREIGN_RECEIVER_ADDRESS.to_address(),
+            shard,
             OptionalValue::None,
             payments_vec,
             Some(TOO_MANY_TOKENS),
@@ -369,12 +347,12 @@ async fn test_deposit_too_many_tokens_no_fee() {
         )
         .await;
 
-    chain_interactor.check_wallet_balance_unchanged(None).await;
+    chain_interactor.check_wallet_balance_unchanged().await;
     chain_interactor
-        .check_mvx_esdt_safe_balance_is_empty(SHARD_0)
+        .check_mvx_esdt_safe_balance_is_empty(shard)
         .await;
     chain_interactor
-        .check_fee_market_balance_is_empty(SHARD_0)
+        .check_fee_market_balance_is_empty(shard)
         .await;
 }
 
@@ -392,13 +370,15 @@ async fn test_deposit_too_many_tokens_no_fee() {
 async fn test_deposit_no_transfer_data() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
     let user_address = chain_interactor.user_address().clone();
+    let shard = SHARD_0;
 
     chain_interactor
-        .deploy_contracts(
+        .deploy_and_complete_setup_phase_on_a_shard(
+            shard,
+            DEPLOY_COST.into(),
             OptionalValue::None,
-            OptionalValue::Some(EsdtSafeConfig::default_config()),
+            OptionalValue::None,
             None,
-            vec![ScArray::ChainConfig, ScArray::ESDTSafe],
         )
         .await;
 
@@ -418,8 +398,8 @@ async fn test_deposit_no_transfer_data() {
 
     chain_interactor
         .deposit_in_mvx_esdt_safe(
-            chain_interactor.user_address.clone(),
-            SHARD_0,
+            SOVEREIGN_RECEIVER_ADDRESS.to_address(),
+            shard,
             OptionalValue::None,
             payments_vec,
             None,
@@ -427,7 +407,7 @@ async fn test_deposit_no_transfer_data() {
         )
         .await;
 
-    let expected_tokens_mvx_esdt_safe = vec![
+    let expected_changed_balance_mvx_esdt_safe = vec![
         chain_interactor.custom_amount_tokens(
             chain_interactor.state.get_first_token_id_string(),
             ONE_HUNDRED_TOKENS,
@@ -444,11 +424,11 @@ async fn test_deposit_no_transfer_data() {
                 .state
                 .current_mvx_esdt_safe_contract_address()
                 .clone(),
-            expected_tokens_mvx_esdt_safe,
+            expected_changed_balance_mvx_esdt_safe,
         )
         .await;
 
-    let expected_tokens_wallet = vec![
+    let expected_changed_balance_wallet = vec![
         chain_interactor.custom_amount_tokens(
             chain_interactor.state.get_first_token_id_string(),
             ONE_THOUSAND_TOKENS - ONE_HUNDRED_TOKENS,
@@ -457,14 +437,16 @@ async fn test_deposit_no_transfer_data() {
             chain_interactor.state.get_second_token_id_string(),
             ONE_THOUSAND_TOKENS - ONE_HUNDRED_TOKENS,
         ),
-        chain_interactor.thousand_tokens(chain_interactor.state.get_fee_token_id_string()),
     ];
     chain_interactor
-        .check_address_balance(&Bech32Address::from(user_address), expected_tokens_wallet)
+        .check_address_balance(
+            &Bech32Address::from(user_address),
+            expected_changed_balance_wallet,
+        )
         .await;
 
     chain_interactor
-        .check_fee_market_balance_is_empty(SHARD_0)
+        .check_fee_market_balance_is_empty(shard)
         .await;
 }
 
@@ -481,6 +463,7 @@ async fn test_deposit_no_transfer_data() {
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn test_deposit_gas_limit_too_high_no_fee() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
+    let shard = SHARD_0;
     let config = EsdtSafeConfig::new(
         ManagedVec::new(),
         ManagedVec::new(),
@@ -490,17 +473,16 @@ async fn test_deposit_gas_limit_too_high_no_fee() {
     );
 
     chain_interactor
-        .deploy_contracts(
+        .deploy_and_complete_setup_phase_on_a_shard(
+            shard,
+            DEPLOY_COST.into(),
             OptionalValue::None,
             OptionalValue::Some(config),
             None,
-            vec![ScArray::ChainConfig, ScArray::ESDTSafe],
         )
         .await;
 
-    chain_interactor
-        .deploy_testing_sc(chain_interactor.bridge_owner.clone())
-        .await;
+    chain_interactor.deploy_testing_sc().await;
 
     let esdt_token_payment_one = EsdtTokenPayment::<StaticApi>::new(
         chain_interactor.state.get_first_token_id(),
@@ -526,8 +508,8 @@ async fn test_deposit_gas_limit_too_high_no_fee() {
 
     chain_interactor
         .deposit_in_mvx_esdt_safe(
-            chain_interactor.user_address.clone(),
-            SHARD_0,
+            SOVEREIGN_RECEIVER_ADDRESS.to_address(),
+            shard,
             OptionalValue::Some(transfer_data),
             payments_vec,
             Some(GAS_LIMIT_TOO_HIGH),
@@ -535,12 +517,12 @@ async fn test_deposit_gas_limit_too_high_no_fee() {
         )
         .await;
 
-    chain_interactor.check_wallet_balance_unchanged(None).await;
+    chain_interactor.check_wallet_balance_unchanged().await;
     chain_interactor
-        .check_mvx_esdt_safe_balance_is_empty(SHARD_0)
+        .check_mvx_esdt_safe_balance_is_empty(shard)
         .await;
     chain_interactor
-        .check_fee_market_balance_is_empty(SHARD_0)
+        .check_fee_market_balance_is_empty(shard)
         .await;
 }
 
@@ -557,6 +539,7 @@ async fn test_deposit_gas_limit_too_high_no_fee() {
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn test_deposit_endpoint_banned_no_fee() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
+    let shard = SHARD_0;
     let config = EsdtSafeConfig::new(
         ManagedVec::new(),
         ManagedVec::new(),
@@ -566,17 +549,16 @@ async fn test_deposit_endpoint_banned_no_fee() {
     );
 
     chain_interactor
-        .deploy_contracts(
+        .deploy_and_complete_setup_phase_on_a_shard(
+            shard,
+            DEPLOY_COST.into(),
             OptionalValue::None,
             OptionalValue::Some(config),
             None,
-            vec![ScArray::ChainConfig, ScArray::ESDTSafe],
         )
         .await;
 
-    chain_interactor
-        .deploy_testing_sc(chain_interactor.bridge_owner.clone())
-        .await;
+    chain_interactor.deploy_testing_sc().await;
 
     let esdt_token_payment_one = EsdtTokenPayment::<StaticApi>::new(
         chain_interactor.state.get_first_token_id(),
@@ -602,8 +584,8 @@ async fn test_deposit_endpoint_banned_no_fee() {
 
     chain_interactor
         .deposit_in_mvx_esdt_safe(
-            chain_interactor.user_address.clone(),
-            SHARD_0,
+            SOVEREIGN_RECEIVER_ADDRESS.to_address(),
+            shard,
             OptionalValue::Some(transfer_data),
             payments_vec,
             Some(BANNED_ENDPOINT_NAME),
@@ -611,13 +593,14 @@ async fn test_deposit_endpoint_banned_no_fee() {
         )
         .await;
 
-    chain_interactor.check_wallet_balance_unchanged(None).await;
+    chain_interactor.check_wallet_balance_unchanged().await;
     chain_interactor
-        .check_mvx_esdt_safe_balance_is_empty(SHARD_0)
+        .check_mvx_esdt_safe_balance_is_empty(shard)
         .await;
     chain_interactor
-        .check_fee_market_balance_is_empty(SHARD_0)
+        .check_fee_market_balance_is_empty(shard)
         .await;
+    chain_interactor.check_testing_sc_balance_is_empty().await;
 }
 
 /// ### TEST
@@ -633,6 +616,7 @@ async fn test_deposit_endpoint_banned_no_fee() {
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn test_deposit_fee_enabled() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
+    let shard = SHARD_0;
     let config = EsdtSafeConfig::new(
         ManagedVec::new(),
         ManagedVec::new(),
@@ -655,17 +639,16 @@ async fn test_deposit_fee_enabled() {
     };
 
     chain_interactor
-        .deploy_contracts(
+        .deploy_and_complete_setup_phase_on_a_shard(
+            shard,
+            DEPLOY_COST.into(),
             OptionalValue::None,
             OptionalValue::Some(config),
             Some(fee),
-            vec![ScArray::ChainConfig, ScArray::ESDTSafe],
         )
         .await;
 
-    chain_interactor
-        .deploy_testing_sc(chain_interactor.bridge_owner.clone())
-        .await;
+    chain_interactor.deploy_testing_sc().await;
 
     let fee_amount = BigUint::from(ONE_HUNDRED_TOKENS);
 
@@ -699,8 +682,8 @@ async fn test_deposit_fee_enabled() {
 
     chain_interactor
         .deposit_in_mvx_esdt_safe(
-            chain_interactor.user_address.clone(),
-            SHARD_0,
+            SOVEREIGN_RECEIVER_ADDRESS.to_address(),
+            shard,
             OptionalValue::Some(transfer_data),
             payments_vec.clone(),
             None,
@@ -725,12 +708,10 @@ async fn test_deposit_fee_enabled() {
     let expected_fee_market_token_amount =
         BigUint::from(gas_limit) + BigUint::from(payments_vec.len() - 1) * per_transfer.clone();
 
-    let expected_fee_market_tokens = vec![
-        (chain_interactor.custom_amount_tokens(
-            chain_interactor.state.get_fee_token_id_string(),
-            expected_fee_market_token_amount.clone(),
-        )),
-    ];
+    let expected_fee_market_tokens = vec![chain_interactor.custom_amount_tokens(
+        chain_interactor.state.get_fee_token_id_string(),
+        expected_fee_market_token_amount.clone(),
+    )];
     chain_interactor
         .check_address_balance(
             &chain_interactor.state.current_fee_market_address().clone(),
@@ -775,6 +756,7 @@ async fn test_deposit_fee_enabled() {
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn test_deposit_transfer_data_only_with_fee_nothing_to_transfer() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
+    let shard = SHARD_0;
     let config = EsdtSafeConfig::new(
         ManagedVec::new(),
         ManagedVec::new(),
@@ -797,11 +779,12 @@ async fn test_deposit_transfer_data_only_with_fee_nothing_to_transfer() {
     };
 
     chain_interactor
-        .deploy_contracts(
+        .deploy_and_complete_setup_phase_on_a_shard(
+            shard,
+            DEPLOY_COST.into(),
             OptionalValue::None,
             OptionalValue::Some(config),
             Some(fee),
-            vec![ScArray::ChainConfig, ScArray::ESDTSafe],
         )
         .await;
 
@@ -815,8 +798,8 @@ async fn test_deposit_transfer_data_only_with_fee_nothing_to_transfer() {
 
     chain_interactor
         .deposit_in_mvx_esdt_safe(
-            chain_interactor.user_address.clone(),
-            SHARD_0,
+            SOVEREIGN_RECEIVER_ADDRESS.to_address(),
+            shard,
             OptionalValue::Some(transfer_data),
             ManagedVec::new(),
             Some(ERR_EMPTY_PAYMENTS),
@@ -824,13 +807,14 @@ async fn test_deposit_transfer_data_only_with_fee_nothing_to_transfer() {
         )
         .await;
 
-    chain_interactor.check_wallet_balance_unchanged(None).await;
+    chain_interactor.check_wallet_balance_unchanged().await;
     chain_interactor
-        .check_mvx_esdt_safe_balance_is_empty(SHARD_0)
+        .check_mvx_esdt_safe_balance_is_empty(shard)
         .await;
     chain_interactor
-        .check_fee_market_balance_is_empty(SHARD_0)
+        .check_fee_market_balance_is_empty(shard)
         .await;
+    chain_interactor.check_testing_sc_balance_is_empty().await;
 }
 
 /// ### TEST
@@ -846,6 +830,7 @@ async fn test_deposit_transfer_data_only_with_fee_nothing_to_transfer() {
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn test_deposit_only_transfer_data_no_fee() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
+    let shard = SHARD_0;
     let config = EsdtSafeConfig::new(
         ManagedVec::new(),
         ManagedVec::new(),
@@ -855,17 +840,16 @@ async fn test_deposit_only_transfer_data_no_fee() {
     );
 
     chain_interactor
-        .deploy_contracts(
+        .deploy_and_complete_setup_phase_on_a_shard(
+            shard,
+            DEPLOY_COST.into(),
             OptionalValue::None,
             OptionalValue::Some(config),
             None,
-            vec![ScArray::ChainConfig, ScArray::ESDTSafe],
         )
         .await;
 
-    chain_interactor
-        .deploy_testing_sc(chain_interactor.bridge_owner.clone())
-        .await;
+    chain_interactor.deploy_testing_sc().await;
 
     let gas_limit = 1000u64;
     let function = ManagedBuffer::<StaticApi>::from(TESTING_SC_ENDPOINT);
@@ -877,8 +861,8 @@ async fn test_deposit_only_transfer_data_no_fee() {
 
     chain_interactor
         .deposit_in_mvx_esdt_safe(
-            chain_interactor.user_address.clone(),
-            SHARD_0,
+            SOVEREIGN_RECEIVER_ADDRESS.to_address(),
+            shard,
             OptionalValue::Some(transfer_data),
             ManagedVec::new(),
             None,
@@ -886,12 +870,12 @@ async fn test_deposit_only_transfer_data_no_fee() {
         )
         .await;
 
-    chain_interactor.check_wallet_balance_unchanged(None).await;
+    chain_interactor.check_wallet_balance_unchanged().await;
     chain_interactor
-        .check_mvx_esdt_safe_balance_is_empty(SHARD_0)
+        .check_mvx_esdt_safe_balance_is_empty(shard)
         .await;
     chain_interactor
-        .check_fee_market_balance_is_empty(SHARD_0)
+        .check_fee_market_balance_is_empty(shard)
         .await;
 }
 
@@ -908,6 +892,7 @@ async fn test_deposit_only_transfer_data_no_fee() {
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn test_deposit_payment_does_not_cover_fee() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
+    let shard = SHARD_0;
     let config = EsdtSafeConfig::new(
         ManagedVec::new(),
         ManagedVec::new(),
@@ -929,11 +914,12 @@ async fn test_deposit_payment_does_not_cover_fee() {
     };
 
     chain_interactor
-        .deploy_contracts(
+        .deploy_and_complete_setup_phase_on_a_shard(
+            shard,
+            DEPLOY_COST.into(),
             OptionalValue::None,
             OptionalValue::Some(config),
             Some(fee),
-            vec![ScArray::ChainConfig, ScArray::ESDTSafe],
         )
         .await;
 
@@ -971,8 +957,8 @@ async fn test_deposit_payment_does_not_cover_fee() {
 
     chain_interactor
         .deposit_in_mvx_esdt_safe(
-            chain_interactor.user_address.clone(),
-            SHARD_0,
+            SOVEREIGN_RECEIVER_ADDRESS.to_address(),
+            shard,
             OptionalValue::Some(transfer_data),
             payments_vec,
             Some(PAYMENT_DOES_NOT_COVER_FEE),
@@ -980,13 +966,14 @@ async fn test_deposit_payment_does_not_cover_fee() {
         )
         .await;
 
-    chain_interactor.check_wallet_balance_unchanged(None).await;
+    chain_interactor.check_wallet_balance_unchanged().await;
     chain_interactor
-        .check_mvx_esdt_safe_balance_is_empty(SHARD_0)
+        .check_mvx_esdt_safe_balance_is_empty(shard)
         .await;
     chain_interactor
-        .check_fee_market_balance_is_empty(SHARD_0)
+        .check_fee_market_balance_is_empty(shard)
         .await;
+    chain_interactor.check_testing_sc_balance_is_empty().await;
 }
 
 #[tokio::test]
@@ -994,6 +981,7 @@ async fn test_deposit_payment_does_not_cover_fee() {
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn test_deposit_refund() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
+    let shard = SHARD_0;
     let user_address = chain_interactor.user_address().clone();
 
     let config = EsdtSafeConfig::new(
@@ -1017,11 +1005,12 @@ async fn test_deposit_refund() {
     };
 
     chain_interactor
-        .deploy_contracts(
-            OptionalValue::Some(SovereignConfig::default_config()),
+        .deploy_and_complete_setup_phase_on_a_shard(
+            shard,
+            DEPLOY_COST.into(),
+            OptionalValue::None,
             OptionalValue::Some(config),
             Some(fee),
-            vec![ScArray::ChainConfig, ScArray::ESDTSafe, ScArray::FeeMarket],
         )
         .await;
 
@@ -1062,8 +1051,8 @@ async fn test_deposit_refund() {
 
     chain_interactor
         .deposit_in_mvx_esdt_safe(
-            chain_interactor.user_address.clone(),
-            SHARD_0,
+            SOVEREIGN_RECEIVER_ADDRESS.to_address(),
+            shard,
             OptionalValue::Some(transfer_data),
             payments_vec.clone(),
             None,
@@ -1071,20 +1060,16 @@ async fn test_deposit_refund() {
         )
         .await;
 
-    let expected_tokens_wallet = vec![
-        chain_interactor.thousand_tokens(chain_interactor.state.get_first_token_id_string()),
-        chain_interactor.thousand_tokens(chain_interactor.state.get_second_token_id_string()),
-        chain_interactor.custom_amount_tokens(
-            chain_interactor.state.get_fee_token_id_string(),
-            ONE_THOUSAND_TOKENS - gas_limit as u128,
-        ),
-    ];
+    let expected_tokens_wallet = vec![chain_interactor.custom_amount_tokens(
+        chain_interactor.state.get_fee_token_id_string(),
+        ONE_THOUSAND_TOKENS - gas_limit as u128,
+    )];
     chain_interactor
         .check_address_balance(&Bech32Address::from(user_address), expected_tokens_wallet)
         .await;
 
     chain_interactor
-        .check_mvx_esdt_safe_balance_is_empty(SHARD_0)
+        .check_mvx_esdt_safe_balance_is_empty(shard)
         .await;
 
     let expected_tokens_fee_market = vec![chain_interactor
@@ -1095,6 +1080,7 @@ async fn test_deposit_refund() {
             expected_tokens_fee_market,
         )
         .await;
+    chain_interactor.check_testing_sc_balance_is_empty().await;
 }
 
 /// ### TEST
@@ -1110,10 +1096,11 @@ async fn test_deposit_refund() {
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn test_register_native_token() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
+    let shard = SHARD_0;
 
     chain_interactor
         .deploy_mvx_esdt_safe(
-            chain_interactor.bridge_owner.clone(),
+            chain_interactor.get_bridge_owner_for_shard(shard).clone(),
             PREFERRED_CHAIN_IDS[0].to_string(),
             OptionalValue::None,
         )
@@ -1156,10 +1143,11 @@ async fn test_register_native_token() {
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn test_register_native_token_twice() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
+    let shard = SHARD_0;
 
     chain_interactor
         .deploy_mvx_esdt_safe(
-            chain_interactor.bridge_owner.clone(),
+            chain_interactor.get_bridge_owner_for_shard(shard).clone(),
             PREFERRED_CHAIN_IDS[0].to_string(),
             OptionalValue::None,
         )
@@ -1211,10 +1199,11 @@ async fn test_register_native_token_twice() {
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn test_register_token_fungible_token() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
+    let shard = SHARD_0;
 
     chain_interactor
         .deploy_chain_config(
-            chain_interactor.bridge_owner.clone(),
+            chain_interactor.get_bridge_owner_for_shard(shard).clone(),
             PREFERRED_CHAIN_IDS[0].to_string(),
             OptionalValue::None,
         )
@@ -1225,7 +1214,7 @@ async fn test_register_token_fungible_token() {
 
     chain_interactor
         .deploy_header_verifier(
-            chain_interactor.bridge_owner.clone(),
+            chain_interactor.get_bridge_owner_for_shard(shard).clone(),
             PREFERRED_CHAIN_IDS[0].to_string(),
             contracts_array,
         )
@@ -1233,7 +1222,7 @@ async fn test_register_token_fungible_token() {
 
     chain_interactor
         .deploy_mvx_esdt_safe(
-            chain_interactor.bridge_owner.clone(),
+            chain_interactor.get_bridge_owner_for_shard(shard).clone(),
             PREFERRED_CHAIN_IDS[0].to_string(),
             OptionalValue::Some(EsdtSafeConfig::default_config()),
         )
@@ -1290,10 +1279,11 @@ async fn test_register_token_fungible_token() {
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn test_register_token_non_fungible_token() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
+    let shard = SHARD_0;
 
     chain_interactor
         .deploy_chain_config(
-            chain_interactor.bridge_owner.clone(),
+            chain_interactor.get_bridge_owner_for_shard(shard).clone(),
             PREFERRED_CHAIN_IDS[0].to_string(),
             OptionalValue::None,
         )
@@ -1304,7 +1294,7 @@ async fn test_register_token_non_fungible_token() {
 
     chain_interactor
         .deploy_header_verifier(
-            chain_interactor.bridge_owner.clone(),
+            chain_interactor.get_bridge_owner_for_shard(shard).clone(),
             PREFERRED_CHAIN_IDS[0].to_string(),
             contracts_array,
         )
@@ -1312,7 +1302,7 @@ async fn test_register_token_non_fungible_token() {
 
     chain_interactor
         .deploy_mvx_esdt_safe(
-            chain_interactor.bridge_owner.clone(),
+            chain_interactor.get_bridge_owner_for_shard(shard).clone(),
             PREFERRED_CHAIN_IDS[0].to_string(),
             OptionalValue::Some(EsdtSafeConfig::default_config()),
         )
@@ -1369,10 +1359,11 @@ async fn test_register_token_non_fungible_token() {
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn test_register_token_dynamic_non_fungible_token() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
+    let shard = SHARD_0;
 
     chain_interactor
         .deploy_chain_config(
-            chain_interactor.bridge_owner.clone(),
+            chain_interactor.get_bridge_owner_for_shard(shard).clone(),
             PREFERRED_CHAIN_IDS[0].to_string(),
             OptionalValue::None,
         )
@@ -1383,7 +1374,7 @@ async fn test_register_token_dynamic_non_fungible_token() {
 
     chain_interactor
         .deploy_header_verifier(
-            chain_interactor.bridge_owner.clone(),
+            chain_interactor.get_bridge_owner_for_shard(shard).clone(),
             PREFERRED_CHAIN_IDS[0].to_string(),
             contracts_array,
         )
@@ -1391,7 +1382,7 @@ async fn test_register_token_dynamic_non_fungible_token() {
 
     chain_interactor
         .deploy_mvx_esdt_safe(
-            chain_interactor.bridge_owner.clone(),
+            chain_interactor.get_bridge_owner_for_shard(shard).clone(),
             PREFERRED_CHAIN_IDS[0].to_string(),
             OptionalValue::Some(EsdtSafeConfig::default_config()),
         )
@@ -1448,50 +1439,16 @@ async fn test_register_token_dynamic_non_fungible_token() {
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn test_execute_operation_no_esdt_safe_registered() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
+    let shard = SHARD_0;
 
     chain_interactor
-        .deploy_chain_config(
-            chain_interactor.bridge_owner.clone(),
-            PREFERRED_CHAIN_IDS[0].to_string(),
+        .deploy_and_complete_setup_phase_on_a_shard(
+            shard,
+            DEPLOY_COST.into(),
             OptionalValue::None,
-        )
-        .await;
-
-    let contracts_array =
-        chain_interactor.get_contract_info_struct_for_sc_type(vec![ScArray::ChainConfig]);
-
-    chain_interactor
-        .deploy_header_verifier(
-            chain_interactor.bridge_owner.clone(),
-            PREFERRED_CHAIN_IDS[0].to_string(),
-            contracts_array,
-        )
-        .await;
-
-    chain_interactor
-        .deploy_mvx_esdt_safe(
-            chain_interactor.bridge_owner.clone(),
-            PREFERRED_CHAIN_IDS[0].to_string(),
-            OptionalValue::Some(EsdtSafeConfig::default_config()),
-        )
-        .await;
-
-    chain_interactor
-        .deploy_fee_market(
-            chain_interactor.bridge_owner.clone(),
-            PREFERRED_CHAIN_IDS[0].to_string(),
-            chain_interactor
-                .state
-                .current_mvx_esdt_safe_contract_address()
-                .clone(),
+            OptionalValue::None,
             None,
         )
-        .await;
-
-    chain_interactor.unpause_endpoint().await;
-
-    chain_interactor
-        .deploy_testing_sc(chain_interactor.bridge_owner.clone())
         .await;
 
     let payment = OperationEsdtPayment::new(
@@ -1521,8 +1478,8 @@ async fn test_execute_operation_no_esdt_safe_registered() {
 
     chain_interactor
         .execute_operations_in_mvx_esdt_safe(
-            chain_interactor.bridge_owner.clone(),
-            SHARD_0,
+            chain_interactor.get_bridge_service_for_shard(shard).clone(),
+            shard,
             hash_of_hashes,
             operation,
             Some(SETUP_PHASE_NOT_COMPLETED),
@@ -1543,218 +1500,12 @@ async fn test_execute_operation_no_esdt_safe_registered() {
         )
         .await;
 
-    chain_interactor.check_wallet_balance_unchanged(None).await;
+    chain_interactor.check_wallet_balance_unchanged().await;
 
     chain_interactor.check_testing_sc_balance_is_empty().await;
 
     chain_interactor
-        .check_fee_market_balance_is_empty(SHARD_0)
-        .await;
-}
-
-/// ### TEST
-/// M-ESDT_EXEC_OK
-///
-/// ### ACTION
-/// Call 'execute_operation()' with valid operation
-///
-/// ### EXPECTED
-/// The operation is executed in the testing smart contract
-#[tokio::test]
-#[serial]
-#[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
-async fn test_execute_operation_with_native_token_success() {
-    let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
-    let user_address = chain_interactor.user_address().clone();
-    let token_data = EsdtTokenData {
-        amount: BigUint::from(TEN_TOKENS),
-        ..Default::default()
-    };
-
-    let payment =
-        OperationEsdtPayment::new(chain_interactor.state.get_first_token_id(), 0, token_data);
-    let mut payment_vec = PaymentsVec::new();
-    payment_vec.push(EsdtTokenPayment {
-        token_identifier: chain_interactor.state.get_first_token_id(),
-        token_nonce: 0,
-        amount: BigUint::from(TEN_TOKENS),
-    });
-
-    let gas_limit = 90_000_000u64;
-    let function = ManagedBuffer::<StaticApi>::from(TESTING_SC_ENDPOINT);
-    let args =
-        ManagedVec::<StaticApi, ManagedBuffer<StaticApi>>::from(vec![ManagedBuffer::from("1")]);
-
-    let transfer_data = TransferData::new(gas_limit, function, args);
-
-    let operation_data = OperationData::new(
-        1,
-        ManagedAddress::from_address(&chain_interactor.user_address),
-        Some(transfer_data),
-    );
-
-    chain_interactor
-        .deploy_chain_config(
-            chain_interactor.bridge_owner.clone(),
-            PREFERRED_CHAIN_IDS[0].to_string(),
-            OptionalValue::None,
-        )
-        .await;
-    chain_interactor
-        .deploy_mvx_esdt_safe(
-            chain_interactor.bridge_owner.clone(),
-            PREFERRED_CHAIN_IDS[0].to_string(),
-            OptionalValue::None,
-        )
-        .await;
-    chain_interactor
-        .deploy_fee_market(
-            chain_interactor.bridge_owner.clone(),
-            PREFERRED_CHAIN_IDS[0].to_string(),
-            chain_interactor
-                .state
-                .current_mvx_esdt_safe_contract_address()
-                .clone(),
-            None,
-        )
-        .await;
-    chain_interactor
-        .set_fee_market_address(
-            chain_interactor.bridge_owner.clone(),
-            chain_interactor
-                .state
-                .current_fee_market_address()
-                .to_address(),
-        )
-        .await;
-    let contracts_array = chain_interactor
-        .get_contract_info_struct_for_sc_type(vec![ScArray::ChainConfig, ScArray::ESDTSafe]);
-    chain_interactor
-        .deploy_header_verifier(
-            chain_interactor.bridge_owner.clone(),
-            PREFERRED_CHAIN_IDS[0].to_string(),
-            contracts_array,
-        )
-        .await;
-    chain_interactor
-        .complete_header_verifier_setup_phase(chain_interactor.bridge_owner.clone())
-        .await;
-    chain_interactor
-        .deploy_testing_sc(chain_interactor.bridge_owner.clone())
-        .await;
-
-    let token_name = "SOVEREIGN";
-    let egld_amount = BigUint::from(ISSUE_COST);
-    let token_ticker = TOKEN_TICKER;
-    chain_interactor
-        .register_native_token(token_ticker, token_name, egld_amount, None)
-        .await;
-
-    chain_interactor.complete_setup_phase().await;
-    chain_interactor
-        .change_ownership_to_header_verifier(
-            chain_interactor.bridge_owner.clone(),
-            chain_interactor
-                .state
-                .current_mvx_esdt_safe_contract_address()
-                .to_address(),
-        )
-        .await;
-
-    let operation = Operation::new(
-        ManagedAddress::from_address(
-            &chain_interactor
-                .state
-                .current_testing_sc_address()
-                .to_address(),
-        ),
-        vec![payment].into(),
-        operation_data,
-    );
-
-    let operation_hash = chain_interactor.get_operation_hash(&operation);
-    let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&operation_hash.to_vec()));
-
-    chain_interactor
-        .deposit_in_mvx_esdt_safe(
-            chain_interactor
-                .state
-                .current_mvx_esdt_safe_contract_address()
-                .to_address(),
-            SHARD_0,
-            OptionalValue::None,
-            payment_vec,
-            None,
-            Some(DEPOSIT_LOG),
-        )
-        .await;
-
-    let operations_hashes = MultiValueEncoded::from(ManagedVec::from(vec![operation_hash.clone()]));
-
-    chain_interactor
-        .register_operation(
-            SHARD_0,
-            ManagedBuffer::new(),
-            &hash_of_hashes,
-            operations_hashes,
-        )
-        .await;
-
-    let operation_status = OperationHashStatus::NotLocked as u8;
-    let expected_operation_hash_status = format!("{:02x}", operation_status);
-    let encoded_key = &hex::encode(OPERATION_HASH_STATUS_STORAGE_KEY);
-
-    chain_interactor
-        .check_account_storage(
-            chain_interactor
-                .state
-                .current_header_verifier_address()
-                .to_address(),
-            encoded_key,
-            Some(&expected_operation_hash_status),
-        )
-        .await;
-
-    chain_interactor
-        .execute_operations_in_mvx_esdt_safe(
-            chain_interactor.bridge_owner.clone(),
-            SHARD_0,
-            hash_of_hashes,
-            operation,
-            None,
-            Some(EXECUTED_BRIDGE_LOG),
-            None,
-        )
-        .await;
-
-    chain_interactor
-        .check_account_storage(
-            chain_interactor
-                .state
-                .current_header_verifier_address()
-                .to_address(),
-            encoded_key,
-            None,
-        )
-        .await;
-
-    let expected_tokens_wallet = vec![
-        (
-            chain_interactor.state.get_first_token_id().to_string(),
-            BigUint::from(ONE_THOUSAND_TOKENS - TEN_TOKENS),
-        ),
-        chain_interactor.thousand_tokens(chain_interactor.state.get_second_token_id_string()),
-        chain_interactor.thousand_tokens(chain_interactor.state.get_fee_token_id_string()),
-    ];
-    chain_interactor
-        .check_address_balance(&Bech32Address::from(user_address), expected_tokens_wallet)
-        .await;
-
-    chain_interactor
-        .check_mvx_esdt_safe_balance_is_empty(SHARD_0)
-        .await;
-    chain_interactor
-        .check_fee_market_balance_is_empty(SHARD_0)
+        .check_fee_market_balance_is_empty(shard)
         .await;
 }
 
@@ -1771,6 +1522,7 @@ async fn test_execute_operation_with_native_token_success() {
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn test_execute_operation_success_no_fee() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
+    let shard = SHARD_0;
     let user_address = chain_interactor.user_address().clone();
     let token_data = EsdtTokenData {
         amount: BigUint::from(TEN_TOKENS),
@@ -1800,17 +1552,16 @@ async fn test_execute_operation_success_no_fee() {
     );
 
     chain_interactor
-        .deploy_contracts(
+        .deploy_and_complete_setup_phase_on_a_shard(
+            shard,
+            DEPLOY_COST.into(),
             OptionalValue::None,
-            OptionalValue::Some(EsdtSafeConfig::default_config()),
+            OptionalValue::None,
             None,
-            vec![ScArray::ChainConfig, ScArray::ESDTSafe],
         )
         .await;
 
-    chain_interactor
-        .deploy_testing_sc(chain_interactor.bridge_owner.clone())
-        .await;
+    chain_interactor.deploy_testing_sc().await;
 
     let operation = Operation::new(
         ManagedAddress::from_address(
@@ -1828,11 +1579,8 @@ async fn test_execute_operation_success_no_fee() {
 
     chain_interactor
         .deposit_in_mvx_esdt_safe(
-            chain_interactor
-                .state
-                .current_mvx_esdt_safe_contract_address()
-                .to_address(),
-            SHARD_0,
+            SOVEREIGN_RECEIVER_ADDRESS.to_address(),
+            shard,
             OptionalValue::None,
             payment_vec,
             None,
@@ -1844,7 +1592,7 @@ async fn test_execute_operation_success_no_fee() {
 
     chain_interactor
         .register_operation(
-            SHARD_0,
+            shard,
             ManagedBuffer::new(),
             &hash_of_hashes,
             operations_hashes,
@@ -1868,8 +1616,8 @@ async fn test_execute_operation_success_no_fee() {
 
     chain_interactor
         .execute_operations_in_mvx_esdt_safe(
-            chain_interactor.bridge_owner.clone(),
-            SHARD_0,
+            chain_interactor.get_bridge_service_for_shard(shard).clone(),
+            shard,
             hash_of_hashes,
             operation,
             None,
@@ -1889,23 +1637,19 @@ async fn test_execute_operation_success_no_fee() {
         )
         .await;
 
-    let expected_tokens_wallet = vec![
-        (
-            chain_interactor.state.get_first_token_id().to_string(),
-            BigUint::from(ONE_THOUSAND_TOKENS - TEN_TOKENS),
-        ),
-        chain_interactor.thousand_tokens(chain_interactor.state.get_second_token_id_string()),
-        chain_interactor.thousand_tokens(chain_interactor.state.get_fee_token_id_string()),
-    ];
+    let expected_tokens_wallet = vec![chain_interactor.custom_amount_tokens(
+        chain_interactor.state.get_first_token_id_string(),
+        ONE_THOUSAND_TOKENS - TEN_TOKENS,
+    )];
     chain_interactor
         .check_address_balance(&Bech32Address::from(user_address), expected_tokens_wallet)
         .await;
 
     chain_interactor
-        .check_mvx_esdt_safe_balance_is_empty(SHARD_0)
+        .check_mvx_esdt_safe_balance_is_empty(shard)
         .await;
     chain_interactor
-        .check_fee_market_balance_is_empty(SHARD_0)
+        .check_fee_market_balance_is_empty(shard)
         .await;
 }
 
@@ -1922,6 +1666,7 @@ async fn test_execute_operation_success_no_fee() {
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn test_execute_operation_only_transfer_data_no_fee() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
+    let shard = SHARD_0;
 
     let gas_limit = 90_000_000u64;
     let function = ManagedBuffer::<StaticApi>::from(TESTING_SC_ENDPOINT);
@@ -1937,17 +1682,16 @@ async fn test_execute_operation_only_transfer_data_no_fee() {
     );
 
     chain_interactor
-        .deploy_contracts(
+        .deploy_and_complete_setup_phase_on_a_shard(
+            shard,
+            DEPLOY_COST.into(),
             OptionalValue::None,
-            OptionalValue::Some(EsdtSafeConfig::default_config()),
+            OptionalValue::None,
             None,
-            vec![ScArray::ChainConfig, ScArray::ESDTSafe],
         )
         .await;
 
-    chain_interactor
-        .deploy_testing_sc(chain_interactor.bridge_owner.clone())
-        .await;
+    chain_interactor.deploy_testing_sc().await;
 
     let operation = Operation::new(
         ManagedAddress::from_address(
@@ -1967,7 +1711,7 @@ async fn test_execute_operation_only_transfer_data_no_fee() {
 
     chain_interactor
         .register_operation(
-            SHARD_0,
+            shard,
             ManagedBuffer::new(),
             &hash_of_hashes,
             operations_hashes,
@@ -1991,8 +1735,8 @@ async fn test_execute_operation_only_transfer_data_no_fee() {
 
     chain_interactor
         .execute_operations_in_mvx_esdt_safe(
-            chain_interactor.bridge_owner.clone(),
-            SHARD_0,
+            chain_interactor.get_bridge_service_for_shard(shard).clone(),
+            shard,
             hash_of_hashes,
             operation,
             None,
@@ -2012,12 +1756,12 @@ async fn test_execute_operation_only_transfer_data_no_fee() {
         )
         .await;
 
-    chain_interactor.check_wallet_balance_unchanged(None).await;
+    chain_interactor.check_wallet_balance_unchanged().await;
     chain_interactor
-        .check_mvx_esdt_safe_balance_is_empty(SHARD_0)
+        .check_mvx_esdt_safe_balance_is_empty(shard)
         .await;
     chain_interactor
-        .check_fee_market_balance_is_empty(SHARD_0)
+        .check_fee_market_balance_is_empty(shard)
         .await;
 }
 
@@ -2034,6 +1778,7 @@ async fn test_execute_operation_only_transfer_data_no_fee() {
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn test_execute_operation_no_payments_failed_event() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
+    let shard = SHARD_0;
 
     let gas_limit = 90_000_000u64;
     let function = ManagedBuffer::<StaticApi>::from(WRONG_ENDPOINT_NAME);
@@ -2049,17 +1794,16 @@ async fn test_execute_operation_no_payments_failed_event() {
     );
 
     chain_interactor
-        .deploy_contracts(
+        .deploy_and_complete_setup_phase_on_a_shard(
+            shard,
+            DEPLOY_COST.into(),
             OptionalValue::None,
-            OptionalValue::Some(EsdtSafeConfig::default_config()),
+            OptionalValue::None,
             None,
-            vec![ScArray::ChainConfig, ScArray::ESDTSafe],
         )
         .await;
 
-    chain_interactor
-        .deploy_testing_sc(chain_interactor.bridge_owner.clone())
-        .await;
+    chain_interactor.deploy_testing_sc().await;
 
     let operation = Operation::new(
         ManagedAddress::from_address(
@@ -2079,7 +1823,7 @@ async fn test_execute_operation_no_payments_failed_event() {
 
     chain_interactor
         .register_operation(
-            SHARD_0,
+            shard,
             ManagedBuffer::new(),
             &hash_of_hashes,
             operations_hashes,
@@ -2103,8 +1847,8 @@ async fn test_execute_operation_no_payments_failed_event() {
 
     chain_interactor
         .execute_operations_in_mvx_esdt_safe(
-            chain_interactor.bridge_owner.clone(),
-            SHARD_0,
+            chain_interactor.get_bridge_service_for_shard(shard).clone(),
+            shard,
             hash_of_hashes,
             operation,
             Some(function.to_string().as_str()),
@@ -2124,11 +1868,11 @@ async fn test_execute_operation_no_payments_failed_event() {
         )
         .await;
 
-    chain_interactor.check_wallet_balance_unchanged(None).await;
+    chain_interactor.check_wallet_balance_unchanged().await;
     chain_interactor
-        .check_mvx_esdt_safe_balance_is_empty(SHARD_0)
+        .check_mvx_esdt_safe_balance_is_empty(shard)
         .await;
     chain_interactor
-        .check_fee_market_balance_is_empty(SHARD_0)
+        .check_fee_market_balance_is_empty(shard)
         .await;
 }

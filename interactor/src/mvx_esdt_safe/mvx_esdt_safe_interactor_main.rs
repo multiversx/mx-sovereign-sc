@@ -1,25 +1,30 @@
 use common_interactor::common_sovereign_interactor::{
     CommonInteractorTrait, IssueTokenStruct, MintTokenStruct,
 };
+use error_messages::FAILED_TO_LOAD_WALLET_SHARD_0;
 use multiversx_sc_snippets::imports::*;
 use proxies::mvx_esdt_safe_proxy::MvxEsdtSafeProxy;
 
-use structs::configs::{EsdtSafeConfig, SovereignConfig};
-use structs::fee::FeeStruct;
-use structs::forge::ScArray;
+use structs::configs::EsdtSafeConfig;
 
 use common_interactor::interactor_config::Config;
 use common_interactor::interactor_state::State;
 
 use common_test_setup::constants::{
-    INTERACTOR_WORKING_DIR, MVX_ESDT_SAFE_CODE_PATH, ONE_THOUSAND_TOKENS, PREFERRED_CHAIN_IDS,
+    INTERACTOR_WORKING_DIR, MVX_ESDT_SAFE_CODE_PATH, ONE_THOUSAND_TOKENS,
 };
 
 pub struct MvxEsdtSafeInteract {
     pub interactor: Interactor,
-    pub bridge_owner: Address,
-    pub sovereign_owner: Address,
-    pub bridge_service: Address,
+    pub bridge_owner_shard_0: Address,
+    pub bridge_owner_shard_1: Address,
+    pub bridge_owner_shard_2: Address,
+    pub sovereign_owner_shard_0: Address,
+    pub sovereign_owner_shard_1: Address,
+    pub sovereign_owner_shard_2: Address,
+    pub bridge_service_shard_0: Address,
+    pub bridge_service_shard_1: Address,
+    pub bridge_service_shard_2: Address,
     pub user_address: Address,
     pub state: State,
 }
@@ -32,12 +37,40 @@ impl CommonInteractorTrait for MvxEsdtSafeInteract {
         &mut self.state
     }
 
-    fn sovereign_owner(&self) -> &Address {
-        &self.sovereign_owner
+    fn bridge_owner_shard_0(&self) -> &Address {
+        &self.bridge_owner_shard_0
     }
 
-    fn bridge_service(&self) -> &Address {
-        &self.bridge_service
+    fn bridge_owner_shard_1(&self) -> &Address {
+        &self.bridge_owner_shard_1
+    }
+
+    fn bridge_owner_shard_2(&self) -> &Address {
+        &self.bridge_owner_shard_2
+    }
+
+    fn sovereign_owner_shard_0(&self) -> &Address {
+        &self.sovereign_owner_shard_0
+    }
+
+    fn sovereign_owner_shard_1(&self) -> &Address {
+        &self.sovereign_owner_shard_1
+    }
+
+    fn sovereign_owner_shard_2(&self) -> &Address {
+        &self.sovereign_owner_shard_2
+    }
+
+    fn bridge_service_shard_0(&self) -> &Address {
+        &self.bridge_service_shard_0
+    }
+
+    fn bridge_service_shard_1(&self) -> &Address {
+        &self.bridge_service_shard_1
+    }
+
+    fn bridge_service_shard_2(&self) -> &Address {
+        &self.bridge_service_shard_2
     }
 
     fn user_address(&self) -> &Address {
@@ -59,18 +92,34 @@ impl MvxEsdtSafeInteract {
 
         let working_dir = INTERACTOR_WORKING_DIR;
         interactor.set_current_dir_from_workspace(working_dir);
-        let bridge_owner = interactor.register_wallet(test_wallets::mike()).await;
-        let sovereign_owner = interactor.register_wallet(test_wallets::alice()).await;
-        let bridge_service = interactor.register_wallet(test_wallets::carol()).await;
-        let user_address = interactor.register_wallet(test_wallets::bob()).await;
+
+        let shard_0_wallet = Wallet::from_pem_file("wallets/shard-0-wallet.pem")
+            .expect(FAILED_TO_LOAD_WALLET_SHARD_0);
+
+        let bridge_owner_shard_0 = interactor.register_wallet(test_wallets::bob()).await;
+        let bridge_owner_shard_1 = interactor.register_wallet(test_wallets::alice()).await;
+        let bridge_owner_shard_2 = interactor.register_wallet(test_wallets::carol()).await;
+        let sovereign_owner_shard_0 = interactor.register_wallet(test_wallets::mike()).await;
+        let sovereign_owner_shard_1 = interactor.register_wallet(test_wallets::frank()).await;
+        let sovereign_owner_shard_2 = interactor.register_wallet(test_wallets::heidi()).await;
+        let bridge_service_shard_0 = interactor.register_wallet(shard_0_wallet).await;
+        let bridge_service_shard_1 = interactor.register_wallet(test_wallets::dan()).await;
+        let bridge_service_shard_2 = interactor.register_wallet(test_wallets::judy()).await;
+        let user_address = interactor.register_wallet(test_wallets::grace()).await; //shard 1
 
         interactor.generate_blocks_until_epoch(1u64).await.unwrap();
 
         MvxEsdtSafeInteract {
             interactor,
-            bridge_owner,
-            sovereign_owner,
-            bridge_service,
+            bridge_owner_shard_0,
+            bridge_owner_shard_1,
+            bridge_owner_shard_2,
+            sovereign_owner_shard_0,
+            sovereign_owner_shard_1,
+            sovereign_owner_shard_2,
+            bridge_service_shard_0,
+            bridge_service_shard_1,
+            bridge_service_shard_2,
             user_address,
             state: State::default(),
         }
@@ -124,129 +173,15 @@ impl MvxEsdtSafeInteract {
             .issue_and_mint_token(second_token_struct, second_token_mint)
             .await;
         self.state.set_second_token(second_token);
-    }
 
-    pub async fn issue_and_mint_the_remaining_types_of_tokens(&mut self) {
-        let nft_token_struct = IssueTokenStruct {
-            token_display_name: "NFT".to_string(),
-            token_ticker: "NFT".to_string(),
-            token_type: EsdtTokenType::NonFungible,
-            num_decimals: 0,
-        };
-        let nft_token_mint = MintTokenStruct {
-            name: Some("NFT".to_string()),
-            amount: BigUint::from(1u64),
-            attributes: None,
-        };
-        self.issue_and_mint_token(nft_token_struct, nft_token_mint)
-            .await;
+        let initial_balance = vec![
+            self.thousand_tokens(self.state.get_first_token_id_string()),
+            self.thousand_tokens(self.state.get_second_token_id_string()),
+            self.thousand_tokens(self.state.get_fee_token_id_string()),
+        ];
 
-        let sft_token_struct = IssueTokenStruct {
-            token_display_name: "SFT".to_string(),
-            token_ticker: "SFT".to_string(),
-            token_type: EsdtTokenType::SemiFungible,
-            num_decimals: 0,
-        };
-        let sft_token_mint = MintTokenStruct {
-            name: Some("SFT".to_string()),
-            amount: BigUint::from(ONE_THOUSAND_TOKENS),
-            attributes: None,
-        };
-        self.issue_and_mint_token(sft_token_struct, sft_token_mint)
-            .await;
-
-        let dyn_token_struct = IssueTokenStruct {
-            token_display_name: "DYN".to_string(),
-            token_ticker: "DYN".to_string(),
-            token_type: EsdtTokenType::DynamicNFT,
-            num_decimals: 10,
-        };
-        let dyn_token_mint = MintTokenStruct {
-            name: Some("DYN".to_string()),
-            amount: BigUint::from(1u64),
-            attributes: None,
-        };
-        self.issue_and_mint_token(dyn_token_struct, dyn_token_mint)
-            .await;
-
-        let meta_token_struct = IssueTokenStruct {
-            token_display_name: "META".to_string(),
-            token_ticker: "META".to_string(),
-            token_type: EsdtTokenType::MetaFungible,
-            num_decimals: 18,
-        };
-        let meta_token_mint = MintTokenStruct {
-            name: Some("META".to_string()),
-            amount: BigUint::from(ONE_THOUSAND_TOKENS),
-            attributes: None,
-        };
-        self.issue_and_mint_token(meta_token_struct, meta_token_mint)
-            .await;
-    }
-
-    pub async fn deploy_contracts(
-        &mut self,
-        sovereign_config: OptionalValue<SovereignConfig<StaticApi>>,
-        esdt_safe_config: OptionalValue<EsdtSafeConfig<StaticApi>>,
-        fee_struct: Option<FeeStruct<StaticApi>>,
-        sc_array: Vec<ScArray>,
-    ) {
-        let owner = self.bridge_owner.clone();
-        self.deploy_chain_config(
-            owner.clone(),
-            PREFERRED_CHAIN_IDS[0].to_string(),
-            sovereign_config,
-        )
-        .await;
-        self.deploy_mvx_esdt_safe(
-            owner.clone(),
-            PREFERRED_CHAIN_IDS[0].to_string(),
-            esdt_safe_config,
-        )
-        .await;
-        self.deploy_fee_market(
-            owner.clone(),
-            PREFERRED_CHAIN_IDS[0].to_string(),
-            self.state.current_mvx_esdt_safe_contract_address().clone(),
-            fee_struct,
-        )
-        .await;
-        self.set_fee_market_address(
-            owner.clone(),
-            self.state.current_fee_market_address().to_address(),
-        )
-        .await;
-        let contracts_array = self.get_contract_info_struct_for_sc_type(sc_array);
-        self.deploy_header_verifier(
-            owner.clone(),
-            PREFERRED_CHAIN_IDS[0].to_string(),
-            contracts_array,
-        )
-        .await;
-        self.complete_header_verifier_setup_phase(owner.clone())
-            .await;
-        self.complete_setup_phase().await;
-        self.change_ownership_to_header_verifier(
-            self.bridge_owner.clone(),
-            self.state
-                .current_mvx_esdt_safe_contract_address()
-                .clone()
-                .to_address(),
-        )
-        .await;
-    }
-
-    pub async fn complete_setup_phase(&mut self) {
-        self.interactor
-            .tx()
-            .from(&self.bridge_owner)
-            .to(self.state.current_mvx_esdt_safe_contract_address())
-            .gas(90_000_000u64)
-            .typed(MvxEsdtSafeProxy)
-            .complete_setup_phase()
-            .returns(ReturnsResultUnmanaged)
-            .run()
-            .await;
+        self.state
+            .set_initial_balance(self.user_address.to_bech32_default(), initial_balance);
     }
 
     pub async fn upgrade(&mut self) {
@@ -254,7 +189,7 @@ impl MvxEsdtSafeInteract {
             .interactor
             .tx()
             .to(self.state.current_mvx_esdt_safe_contract_address())
-            .from(&self.bridge_owner)
+            .from(&self.bridge_owner_shard_0)
             .gas(90_000_000u64)
             .typed(MvxEsdtSafeProxy)
             .upgrade()
@@ -269,16 +204,18 @@ impl MvxEsdtSafeInteract {
 
     pub async fn update_configuration(
         &mut self,
+        shard: u32,
         hash_of_hashes: ManagedBuffer<StaticApi>,
         new_config: EsdtSafeConfig<StaticApi>,
         expected_error_message: Option<&str>,
         expected_log: Option<&str>,
         expected_log_error: Option<&str>,
     ) {
+        let bridge_service = self.get_bridge_service_for_shard(shard);
         let (response, logs) = self
             .interactor
             .tx()
-            .from(&self.bridge_service)
+            .from(bridge_service)
             .to(self.state.current_mvx_esdt_safe_contract_address())
             .gas(90_000_000u64)
             .typed(MvxEsdtSafeProxy)
@@ -319,7 +256,7 @@ impl MvxEsdtSafeInteract {
         let response = self
             .interactor
             .tx()
-            .from(&self.bridge_owner)
+            .from(&self.bridge_owner_shard_0)
             .to(self.state.current_mvx_esdt_safe_contract_address())
             .gas(90_000_000u64)
             .typed(MvxEsdtSafeProxy)
@@ -336,7 +273,7 @@ impl MvxEsdtSafeInteract {
         let response = self
             .interactor
             .tx()
-            .from(&self.bridge_owner)
+            .from(&self.bridge_owner_shard_0)
             .to(self.state.current_mvx_esdt_safe_contract_address())
             .gas(90_000_000u64)
             .typed(MvxEsdtSafeProxy)
@@ -352,7 +289,7 @@ impl MvxEsdtSafeInteract {
         let response = self
             .interactor
             .tx()
-            .from(&self.bridge_owner)
+            .from(&self.bridge_owner_shard_0)
             .to(self.state.current_mvx_esdt_safe_contract_address())
             .gas(90_000_000u64)
             .typed(MvxEsdtSafeProxy)
