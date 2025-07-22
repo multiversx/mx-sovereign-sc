@@ -12,7 +12,7 @@ use error_messages::{
 use multiversx_sc_snippets::imports::*;
 
 #[derive(Debug, Default, Clone)]
-pub struct TokenProperties {
+pub struct EsdtTokenInfo {
     pub token_id: String,
     pub nonce: u64,
 }
@@ -63,16 +63,16 @@ pub struct State {
     pub chain_factory_sc_addresses: Option<Vec<Bech32Address>>,
     pub enshrine_esdt_safe_sc_addresses: Option<ShardAddresses>,
     pub token_handler_addresses: Option<Vec<Bech32Address>>,
-    pub first_token: Option<TokenProperties>,
-    pub fee_token: Option<TokenProperties>,
-    pub second_token: Option<TokenProperties>,
-    pub nft_token_id: Option<TokenProperties>,
-    pub meta_esdt_token_id: Option<TokenProperties>,
-    pub dynamic_nft_token_id: Option<TokenProperties>,
-    pub dynamic_sft_token_id: Option<TokenProperties>,
-    pub dynamic_meta_esdt_token_id: Option<TokenProperties>,
-    pub sft_token_id: Option<TokenProperties>,
-    pub sov_to_mvx_token_id: Option<TokenProperties>,
+    pub first_token: Option<EsdtTokenInfo>,
+    pub fee_token: Option<EsdtTokenInfo>,
+    pub second_token: Option<EsdtTokenInfo>,
+    pub nft_token_id: Option<EsdtTokenInfo>,
+    pub meta_esdt_token_id: Option<EsdtTokenInfo>,
+    pub dynamic_nft_token_id: Option<EsdtTokenInfo>,
+    pub dynamic_sft_token_id: Option<EsdtTokenInfo>,
+    pub dynamic_meta_esdt_token_id: Option<EsdtTokenInfo>,
+    pub sft_token_id: Option<EsdtTokenInfo>,
+    pub sov_to_mvx_token_id: Option<EsdtTokenInfo>,
     pub initial_balance: Vec<(Bech32Address, Vec<TokenBalance>)>,
 }
 
@@ -121,43 +121,43 @@ impl State {
         list.push(address);
     }
 
-    pub fn set_first_token(&mut self, token: TokenProperties) {
+    pub fn set_first_token(&mut self, token: EsdtTokenInfo) {
         self.first_token = Some(token);
     }
 
-    pub fn set_fee_token(&mut self, token: TokenProperties) {
+    pub fn set_fee_token(&mut self, token: EsdtTokenInfo) {
         self.fee_token = Some(token);
     }
 
-    pub fn set_second_token(&mut self, token: TokenProperties) {
+    pub fn set_second_token(&mut self, token: EsdtTokenInfo) {
         self.second_token = Some(token);
     }
 
-    pub fn set_nft_token_id(&mut self, token: TokenProperties) {
+    pub fn set_nft_token_id(&mut self, token: EsdtTokenInfo) {
         self.nft_token_id = Some(token);
     }
 
-    pub fn set_meta_esdt_token_id(&mut self, token: TokenProperties) {
+    pub fn set_meta_esdt_token_id(&mut self, token: EsdtTokenInfo) {
         self.meta_esdt_token_id = Some(token);
     }
 
-    pub fn set_dynamic_nft_token_id(&mut self, token: TokenProperties) {
+    pub fn set_dynamic_nft_token_id(&mut self, token: EsdtTokenInfo) {
         self.dynamic_nft_token_id = Some(token);
     }
 
-    pub fn set_sft_token_id(&mut self, token: TokenProperties) {
+    pub fn set_sft_token_id(&mut self, token: EsdtTokenInfo) {
         self.sft_token_id = Some(token);
     }
 
-    pub fn set_dynamic_sft_token_id(&mut self, token: TokenProperties) {
+    pub fn set_dynamic_sft_token_id(&mut self, token: EsdtTokenInfo) {
         self.dynamic_sft_token_id = Some(token);
     }
 
-    pub fn set_dynamic_meta_esdt_token_id(&mut self, token: TokenProperties) {
+    pub fn set_dynamic_meta_esdt_token_id(&mut self, token: EsdtTokenInfo) {
         self.dynamic_meta_esdt_token_id = Some(token);
     }
 
-    pub fn set_sov_to_mvx_token_id(&mut self, token: TokenProperties) {
+    pub fn set_sov_to_mvx_token_id(&mut self, token: EsdtTokenInfo) {
         self.sov_to_mvx_token_id = Some(token);
     }
 
@@ -308,6 +308,13 @@ impl State {
             .into()
     }
 
+    pub fn get_first_token_id_as_esdt_info(&self) -> EsdtTokenInfo {
+        self.first_token
+            .as_ref()
+            .expect(NO_KNOWN_FIRST_TOKEN)
+            .clone()
+    }
+
     pub fn get_fee_token_id(&self) -> TokenIdentifier<StaticApi> {
         self.fee_token
             .as_ref()
@@ -326,49 +333,49 @@ impl State {
             .into()
     }
 
-    pub fn get_nft_token_id(&self) -> TokenProperties {
+    pub fn get_nft_token_id(&self) -> EsdtTokenInfo {
         self.nft_token_id
             .as_ref()
             .expect(NO_KNOWN_NFT_TOKEN)
             .clone()
     }
 
-    pub fn get_meta_esdt_token_id(&self) -> TokenProperties {
+    pub fn get_meta_esdt_token_id(&self) -> EsdtTokenInfo {
         self.meta_esdt_token_id
             .as_ref()
             .expect(NO_KNOWN_META_ESDT_TOKEN)
             .clone()
     }
 
-    pub fn get_dynamic_nft_token_id(&self) -> TokenProperties {
+    pub fn get_dynamic_nft_token_id(&self) -> EsdtTokenInfo {
         self.dynamic_nft_token_id
             .as_ref()
             .expect(NO_KNOWN_DYNAMIC_NFT_TOKEN_ID)
             .clone()
     }
 
-    pub fn get_sft_token_id(&self) -> TokenProperties {
+    pub fn get_sft_token_id(&self) -> EsdtTokenInfo {
         self.sft_token_id
             .as_ref()
             .expect(NO_KNOWN_SFT_TOKEN)
             .clone()
     }
 
-    pub fn get_dynamic_sft_token_id(&self) -> TokenProperties {
+    pub fn get_dynamic_sft_token_id(&self) -> EsdtTokenInfo {
         self.dynamic_sft_token_id
             .as_ref()
             .expect(NO_KNOWN_DYNAMIC_SFT_TOKEN_ID)
             .clone()
     }
 
-    pub fn get_dynamic_meta_esdt_token_id(&self) -> TokenProperties {
+    pub fn get_dynamic_meta_esdt_token_id(&self) -> EsdtTokenInfo {
         self.dynamic_meta_esdt_token_id
             .as_ref()
             .expect(NO_KNOWN_DYNAMIC_META_ESDT_TOKEN_ID)
             .clone()
     }
 
-    pub fn get_sov_to_mvx_token_id(&self) -> TokenProperties {
+    pub fn get_sov_to_mvx_token_id(&self) -> EsdtTokenInfo {
         self.sov_to_mvx_token_id
             .as_ref()
             .expect(NO_KNOWN_SOV_TO_MVX_TOKEN)
@@ -427,5 +434,17 @@ impl State {
             .filter(|(addr, _)| *addr == address)
             .flat_map(|(_, balance)| balance.iter().cloned())
             .collect()
+    }
+
+    pub fn get_initial_token_balance_for_address(
+        &self,
+        address: Bech32Address,
+        token_id: TokenIdentifier<StaticApi>,
+    ) -> BigUint<StaticApi> {
+        self.get_initial_balance_for_address(address)
+            .into_iter()
+            .find(|balance| balance.token_id == token_id.to_string())
+            .map(|balance| balance.amount)
+            .unwrap_or_else(|| BigUint::from(0u64))
     }
 }

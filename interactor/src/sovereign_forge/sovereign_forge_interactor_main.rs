@@ -1,27 +1,25 @@
 #![allow(non_snake_case)]
 use common_interactor::common_sovereign_interactor::{IssueTokenStruct, MintTokenStruct};
-use common_interactor::interactor_state::State;
+use common_interactor::interactor_state::{EsdtTokenInfo, State, TokenBalance};
 use common_interactor::{
     common_sovereign_interactor::CommonInteractorTrait, interactor_config::Config,
 };
 use common_test_setup::constants::{
-    INTERACTOR_WORKING_DIR, ONE_THOUSAND_TOKENS, SOVEREIGN_FORGE_CODE_PATH,
+    DEPLOY_COST, GAS_LIMIT, INTERACTOR_WORKING_DIR, ONE_THOUSAND_TOKENS,
+    OPERATION_HASH_STATUS_STORAGE_KEY, SOVEREIGN_FORGE_CODE_PATH, SOVEREIGN_RECEIVER_ADDRESS,
+    TESTING_SC_ENDPOINT,
 };
-use error_messages::FAILED_TO_LOAD_WALLET_SHARD_0;
-use multiversx_sc_snippets::imports::*;
+use header_verifier::OperationHashStatus;
+use multiversx_sc_snippets::multiversx_sc_scenario::multiversx_chain_vm::crypto_functions::sha256;
+use multiversx_sc_snippets::{hex, imports::*};
+use proxies::fee_market_proxy::FeeMarketProxy;
 use proxies::sovereign_forge_proxy::SovereignForgeProxy;
+use structs::aliases::PaymentsVec;
+use structs::fee::{FeeStruct, FeeType};
+use structs::operation::{Operation, OperationData, OperationEsdtPayment, TransferData};
 
 pub struct SovereignForgeInteract {
     pub interactor: Interactor,
-    pub bridge_owner_shard_0: Address,
-    pub bridge_owner_shard_1: Address,
-    pub bridge_owner_shard_2: Address,
-    pub sovereign_owner_shard_0: Address,
-    pub sovereign_owner_shard_1: Address,
-    pub sovereign_owner_shard_2: Address,
-    pub bridge_service_shard_0: Address,
-    pub bridge_service_shard_1: Address,
-    pub bridge_service_shard_2: Address,
     pub user_address: Address,
     pub state: State,
 }
@@ -30,53 +28,19 @@ impl CommonInteractorTrait for SovereignForgeInteract {
         &mut self.interactor
     }
 
-    fn bridge_owner_shard_0(&self) -> &Address {
-        &self.bridge_owner_shard_0
-    }
-
-    fn bridge_owner_shard_1(&self) -> &Address {
-        &self.bridge_owner_shard_1
-    }
-
-    fn bridge_owner_shard_2(&self) -> &Address {
-        &self.bridge_owner_shard_2
-    }
-
-    fn sovereign_owner_shard_0(&self) -> &Address {
-        &self.sovereign_owner_shard_0
-    }
-
-    fn sovereign_owner_shard_1(&self) -> &Address {
-        &self.sovereign_owner_shard_1
-    }
-
-    fn sovereign_owner_shard_2(&self) -> &Address {
-        &self.sovereign_owner_shard_2
-    }
-
-    fn bridge_service_shard_0(&self) -> &Address {
-        &self.bridge_service_shard_0
-    }
-
-    fn bridge_service_shard_1(&self) -> &Address {
-        &self.bridge_service_shard_1
-    }
-
-    fn bridge_service_shard_2(&self) -> &Address {
-        &self.bridge_service_shard_2
+    fn state(&mut self) -> &mut State {
+        &mut self.state
     }
 
     fn user_address(&self) -> &Address {
         &self.user_address
     }
-
-    fn state(&mut self) -> &mut State {
-        &mut self.state
-    }
 }
 impl SovereignForgeInteract {
     pub async fn new(config: Config) -> Self {
         let mut interactor = Self::initialize_interactor(config.clone()).await;
+
+        interactor.register_wallets().await;
 
         match config.use_chain_simulator() {
             true => {
@@ -97,33 +61,12 @@ impl SovereignForgeInteract {
         let current_working_dir = INTERACTOR_WORKING_DIR;
         interactor.set_current_dir_from_workspace(current_working_dir);
 
-        let shard_0_wallet = Wallet::from_pem_file("wallets/shard-0-wallet.pem")
-            .expect(FAILED_TO_LOAD_WALLET_SHARD_0);
-
-        let bridge_owner_shard_0 = interactor.register_wallet(test_wallets::bob()).await;
-        let bridge_owner_shard_1 = interactor.register_wallet(test_wallets::alice()).await;
-        let bridge_owner_shard_2 = interactor.register_wallet(test_wallets::carol()).await;
-        let sovereign_owner_shard_0 = interactor.register_wallet(test_wallets::mike()).await;
-        let sovereign_owner_shard_1 = interactor.register_wallet(test_wallets::frank()).await;
-        let sovereign_owner_shard_2 = interactor.register_wallet(test_wallets::heidi()).await;
-        let bridge_service_shard_0 = interactor.register_wallet(shard_0_wallet).await;
-        let bridge_service_shard_1 = interactor.register_wallet(test_wallets::dan()).await;
-        let bridge_service_shard_2 = interactor.register_wallet(test_wallets::judy()).await;
         let user_address = interactor.register_wallet(test_wallets::grace()).await; //shard 1
 
         interactor.generate_blocks_until_epoch(1).await.unwrap();
 
         SovereignForgeInteract {
             interactor,
-            bridge_owner_shard_0,
-            bridge_owner_shard_1,
-            bridge_owner_shard_2,
-            sovereign_owner_shard_0,
-            sovereign_owner_shard_1,
-            sovereign_owner_shard_2,
-            bridge_service_shard_0,
-            bridge_service_shard_1,
-            bridge_service_shard_2,
             user_address,
             state: State::default(),
         }
@@ -319,5 +262,448 @@ impl SovereignForgeInteract {
             .await;
 
         println!("Result: {response:?}");
+    }
+
+    pub async fn get_token_fee(&mut self, shard: u32, token: TokenIdentifier<StaticApi>) {
+        let user_address = self.user_address().clone();
+        let fee_market_addrress = self.state.get_fee_market_address(shard);
+        let response = self
+            .interactor
+            .tx()
+            .from(user_address)
+            .to(fee_market_addrress)
+            .gas(90_000_000u64)
+            .typed(FeeMarketProxy)
+            .token_fee(token)
+            .returns(ReturnsHandledOrError::new())
+            .run()
+            .await;
+        println!("Result: {response:?}");
+    }
+
+    pub async fn complete_deposit_flow_with_transfer_data_only(
+        &mut self,
+        shard: u32,
+        fee: Option<FeeStruct<StaticApi>>,
+        expected_log: Option<&str>,
+    ) {
+        let gas_limit = 90_000_000u64;
+        let function = ManagedBuffer::<StaticApi>::from(TESTING_SC_ENDPOINT);
+        let args = MultiValueEncoded::from(
+            ManagedVec::<StaticApi, ManagedBuffer<StaticApi>>::from(vec![ManagedBuffer::from("1")]),
+        );
+
+        let transfer_data = MultiValue3::from((gas_limit, function, args));
+
+        self.deploy_and_complete_setup_phase(
+            DEPLOY_COST.into(),
+            OptionalValue::None,
+            OptionalValue::None,
+            fee.clone(),
+        )
+        .await;
+
+        match fee.as_ref() {
+            Some(fee_struct) => {
+                let fee_amount = match &fee_struct.fee_type {
+                    FeeType::Fixed {
+                        per_transfer,
+                        per_gas,
+                        token: _,
+                    }
+                    | FeeType::AnyToken {
+                        per_transfer,
+                        per_gas,
+                        base_fee_token: _,
+                    } => per_transfer.clone() + per_gas.clone() * gas_limit,
+                    FeeType::None => BigUint::zero(),
+                };
+
+                let mut payment_vec = PaymentsVec::new();
+
+                let fee_payment = EsdtTokenPayment::<StaticApi>::new(
+                    self.state.get_fee_token_id(),
+                    0,
+                    fee_amount.clone(),
+                );
+
+                payment_vec.push(fee_payment);
+                self.deposit_in_mvx_esdt_safe(
+                    SOVEREIGN_RECEIVER_ADDRESS.to_address(),
+                    shard,
+                    OptionalValue::Some(transfer_data),
+                    payment_vec,
+                    None,
+                    expected_log,
+                )
+                .await;
+            }
+            None => {
+                self.deposit_in_mvx_esdt_safe(
+                    SOVEREIGN_RECEIVER_ADDRESS.to_address(),
+                    shard,
+                    OptionalValue::Some(transfer_data),
+                    PaymentsVec::new(),
+                    None,
+                    expected_log,
+                )
+                .await;
+            }
+        }
+    }
+
+    pub async fn deposit_no_transfer_data(
+        &mut self,
+        shard: u32,
+        token: EsdtTokenInfo,
+        amount: BigUint<StaticApi>,
+        fee: Option<FeeStruct<StaticApi>>,
+    ) {
+        match fee.as_ref() {
+            Some(fee_struct) => {
+                let fee_amount = match &fee_struct.fee_type {
+                    FeeType::Fixed { per_transfer, .. } => per_transfer.clone(),
+                    FeeType::AnyToken { per_transfer, .. } => per_transfer.clone(),
+                    FeeType::None => BigUint::zero(),
+                };
+
+                let mut payment_vec = PaymentsVec::new();
+
+                let fee_payment = EsdtTokenPayment::<StaticApi>::new(
+                    self.state.get_fee_token_id(),
+                    0,
+                    fee_amount.clone(),
+                );
+
+                let token_payment = EsdtTokenPayment::<StaticApi>::new(
+                    TokenIdentifier::from_esdt_bytes(&token.token_id),
+                    token.nonce,
+                    amount.clone(),
+                );
+
+                payment_vec.push(fee_payment);
+                payment_vec.push(token_payment);
+
+                self.deposit_in_mvx_esdt_safe(
+                    SOVEREIGN_RECEIVER_ADDRESS.to_address(),
+                    shard,
+                    OptionalValue::None,
+                    payment_vec,
+                    None,
+                    Some(&token.token_id),
+                )
+                .await;
+
+                let expected_fee_market_balance = vec![TokenBalance {
+                    token_id: self.state.get_fee_token_id().to_string(),
+                    amount: fee_amount.clone(),
+                }];
+                let fee_market_address = self.state.get_fee_market_address(shard).clone();
+
+                self.check_address_balance(&fee_market_address, expected_fee_market_balance)
+                    .await;
+            }
+            None => {
+                let mut payment_vec = PaymentsVec::new();
+
+                let token_payment = EsdtTokenPayment::<StaticApi>::new(
+                    TokenIdentifier::from_esdt_bytes(&token.token_id),
+                    token.nonce,
+                    amount.clone(),
+                );
+
+                payment_vec.push(token_payment);
+
+                self.deposit_in_mvx_esdt_safe(
+                    SOVEREIGN_RECEIVER_ADDRESS.to_address(),
+                    shard,
+                    OptionalValue::None,
+                    payment_vec,
+                    None,
+                    Some(&token.token_id),
+                )
+                .await;
+
+                self.check_fee_market_balance_is_empty(shard).await;
+            }
+        }
+    }
+
+    pub async fn deposit_with_transfer_data(
+        &mut self,
+        shard: u32,
+        token: EsdtTokenInfo,
+        amount: BigUint<StaticApi>,
+        fee: Option<FeeStruct<StaticApi>>,
+    ) {
+        let function = ManagedBuffer::<StaticApi>::from(TESTING_SC_ENDPOINT);
+        let args = MultiValueEncoded::from(
+            ManagedVec::<StaticApi, ManagedBuffer<StaticApi>>::from(vec![ManagedBuffer::from("1")]),
+        );
+
+        let transfer_data = MultiValue3::from((GAS_LIMIT, function, args));
+
+        match fee.as_ref() {
+            Some(fee_struct) => {
+                let fee_amount = match &fee_struct.fee_type {
+                    FeeType::Fixed {
+                        per_transfer,
+                        per_gas,
+                        token: _,
+                    } => per_transfer.clone() + per_gas.clone() * GAS_LIMIT,
+                    FeeType::AnyToken {
+                        per_transfer,
+                        per_gas,
+                        base_fee_token: _,
+                    } => per_transfer.clone() + per_gas.clone() * GAS_LIMIT,
+                    FeeType::None => BigUint::zero(),
+                };
+
+                let mut payment_vec = PaymentsVec::new();
+
+                let fee_payment = EsdtTokenPayment::<StaticApi>::new(
+                    self.state.get_fee_token_id(),
+                    0,
+                    fee_amount.clone(),
+                );
+
+                let token_payment = EsdtTokenPayment::<StaticApi>::new(
+                    TokenIdentifier::from_esdt_bytes(&token.token_id),
+                    token.nonce,
+                    amount.clone(),
+                );
+
+                payment_vec.push(fee_payment);
+                payment_vec.push(token_payment);
+
+                self.deposit_in_mvx_esdt_safe(
+                    SOVEREIGN_RECEIVER_ADDRESS.to_address(),
+                    shard,
+                    OptionalValue::Some(transfer_data),
+                    payment_vec,
+                    None,
+                    Some(&token.token_id),
+                )
+                .await;
+
+                let expected_fee_market_balance = vec![TokenBalance {
+                    token_id: self.state.get_fee_token_id().to_string(),
+                    amount: fee_amount.clone(),
+                }];
+                let fee_market_address = self.state.get_fee_market_address(shard).clone();
+
+                self.check_address_balance(&fee_market_address, expected_fee_market_balance)
+                    .await;
+            }
+            None => {
+                let mut payment_vec = PaymentsVec::new();
+
+                let token_payment = EsdtTokenPayment::<StaticApi>::new(
+                    TokenIdentifier::from_esdt_bytes(&token.token_id),
+                    token.nonce,
+                    amount.clone(),
+                );
+
+                payment_vec.push(token_payment);
+
+                self.deposit_in_mvx_esdt_safe(
+                    SOVEREIGN_RECEIVER_ADDRESS.to_address(),
+                    shard,
+                    OptionalValue::Some(transfer_data),
+                    payment_vec,
+                    None,
+                    Some(&token.token_id),
+                )
+                .await;
+
+                self.check_fee_market_balance_is_empty(shard).await;
+            }
+        }
+    }
+
+    pub async fn complete_execute_operation_flow_with_transfer_data_only(
+        &mut self,
+        shard: u32,
+        expected_error: Option<&str>,
+        expected_log: Option<&str>,
+        expected_log_error: Option<&str>,
+        endpoint: &str,
+    ) {
+        let user_address = self.user_address().clone();
+
+        let gas_limit = 90_000_000u64;
+        let function = ManagedBuffer::<StaticApi>::from(endpoint);
+        let args =
+            ManagedVec::<StaticApi, ManagedBuffer<StaticApi>>::from(vec![ManagedBuffer::from("1")]);
+
+        let transfer_data = TransferData::new(gas_limit, function, args);
+
+        let operation_data = OperationData::new(
+            1,
+            ManagedAddress::from_address(&user_address),
+            Some(transfer_data),
+        );
+
+        self.deploy_and_complete_setup_phase(
+            DEPLOY_COST.into(),
+            OptionalValue::None,
+            OptionalValue::None,
+            None,
+        )
+        .await;
+
+        let operation = Operation::new(
+            ManagedAddress::from_address(&self.state.current_testing_sc_address().to_address()),
+            ManagedVec::new(),
+            operation_data,
+        );
+
+        let operation_hash = self.get_operation_hash(&operation);
+        let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&operation_hash.to_vec()));
+
+        let operations_hashes =
+            MultiValueEncoded::from(ManagedVec::from(vec![operation_hash.clone()]));
+
+        self.register_operation(
+            shard,
+            ManagedBuffer::new(),
+            &hash_of_hashes,
+            operations_hashes,
+        )
+        .await;
+
+        let operation_status = OperationHashStatus::NotLocked as u8;
+        let expected_operation_hash_status = format!("{:02x}", operation_status);
+        let encoded_key = &hex::encode(OPERATION_HASH_STATUS_STORAGE_KEY);
+
+        self.check_account_storage(
+            self.state.get_header_verifier_address(shard).to_address(),
+            encoded_key,
+            Some(&expected_operation_hash_status),
+        )
+        .await;
+
+        let caller = self.get_bridge_service_for_shard(shard);
+        self.execute_operations_in_mvx_esdt_safe(
+            caller,
+            shard,
+            hash_of_hashes,
+            operation,
+            expected_error,
+            expected_log,
+            expected_log_error,
+        )
+        .await;
+
+        self.check_account_storage(
+            self.state.get_header_verifier_address(shard).to_address(),
+            encoded_key,
+            None,
+        )
+        .await;
+    }
+
+    pub async fn execute_operation(
+        &mut self,
+        shard: u32,
+        expected_error: Option<&str>,
+        expected_log: Option<&str>,
+        token: EsdtTokenInfo,
+        amount: BigUint<StaticApi>,
+        endpoint: Option<&str>,
+    ) {
+        let user_address = self.user_address().clone();
+
+        let token_data = EsdtTokenData {
+            amount,
+            ..Default::default()
+        };
+
+        let payment = OperationEsdtPayment::new(
+            TokenIdentifier::from_esdt_bytes(&token.token_id),
+            token.nonce,
+            token_data,
+        );
+
+        let mut payment_vec = ManagedVec::new();
+        payment_vec.push(payment);
+
+        let operation = match endpoint {
+            Some(endpoint) => {
+                let gas_limit = 90_000_000u64;
+                let function = ManagedBuffer::<StaticApi>::from(endpoint);
+                let args = ManagedVec::<StaticApi, ManagedBuffer<StaticApi>>::from(vec![
+                    ManagedBuffer::from("1"),
+                ]);
+
+                let transfer_data = TransferData::new(gas_limit, function, args);
+
+                let operation_data = OperationData::new(
+                    1,
+                    ManagedAddress::from_address(&user_address),
+                    Some(transfer_data),
+                );
+                Operation::new(
+                    ManagedAddress::from_address(
+                        &self.state.current_testing_sc_address().to_address(),
+                    ),
+                    payment_vec,
+                    operation_data,
+                )
+            }
+            None => {
+                let operation_data =
+                    OperationData::new(1, ManagedAddress::from_address(&user_address), None);
+                Operation::new(
+                    ManagedAddress::from_address(self.user_address()),
+                    payment_vec,
+                    operation_data,
+                )
+            }
+        };
+
+        let operation_hash = self.get_operation_hash(&operation);
+        let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&operation_hash.to_vec()));
+
+        let operations_hashes =
+            MultiValueEncoded::from(ManagedVec::from(vec![operation_hash.clone()]));
+
+        self.register_operation(
+            shard,
+            ManagedBuffer::new(),
+            &hash_of_hashes,
+            operations_hashes,
+        )
+        .await;
+
+        let operation_status = OperationHashStatus::NotLocked as u8;
+        let expected_operation_hash_status = format!("{:02x}", operation_status);
+        let encoded_key = &hex::encode(OPERATION_HASH_STATUS_STORAGE_KEY);
+
+        self.check_account_storage(
+            self.state.get_header_verifier_address(shard).to_address(),
+            encoded_key,
+            Some(&expected_operation_hash_status),
+        )
+        .await;
+
+        let caller = self.get_bridge_service_for_shard(shard);
+        self.execute_operations_in_mvx_esdt_safe(
+            caller,
+            shard,
+            hash_of_hashes,
+            operation,
+            expected_error,
+            expected_log,
+            None,
+        )
+        .await;
+
+        self.check_account_storage(
+            self.state.get_header_verifier_address(shard).to_address(),
+            encoded_key,
+            None,
+        )
+        .await;
     }
 }

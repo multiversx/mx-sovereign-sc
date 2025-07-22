@@ -6,9 +6,9 @@
 
 // Init:                                 1
 // Upgrade:                              1
-// Endpoints:                           17
+// Endpoints:                           19
 // Async Callback:                       1
-// Total number of exported functions:  20
+// Total number of exported functions:  22
 
 #![no_std]
 
@@ -36,6 +36,8 @@ multiversx_sc_wasm_adapter::endpoints! {
         isPaused => paused_status
         getSovToMvxTokenId => sovereign_to_multiversx_token_id_mapper
         getMvxToSovTokenId => multiversx_to_sovereign_token_id_mapper
+        getSovEsdtTokenInfo => sovereign_to_multiversx_esdt_info_mapper
+        getMvxEsdtTokenInfo => multiversx_to_sovereign_esdt_info_mapper
         getNativeToken => native_token
     )
 }

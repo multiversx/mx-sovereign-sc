@@ -1,7 +1,6 @@
 use common_interactor::common_sovereign_interactor::{
     CommonInteractorTrait, IssueTokenStruct, MintTokenStruct,
 };
-use error_messages::FAILED_TO_LOAD_WALLET_SHARD_0;
 use multiversx_sc_snippets::imports::*;
 use proxies::mvx_esdt_safe_proxy::MvxEsdtSafeProxy;
 
@@ -11,20 +10,11 @@ use common_interactor::interactor_config::Config;
 use common_interactor::interactor_state::State;
 
 use common_test_setup::constants::{
-    INTERACTOR_WORKING_DIR, MVX_ESDT_SAFE_CODE_PATH, ONE_THOUSAND_TOKENS,
+    INTERACTOR_WORKING_DIR, MVX_ESDT_SAFE_CODE_PATH, ONE_THOUSAND_TOKENS, SHARD_0,
 };
 
 pub struct MvxEsdtSafeInteract {
     pub interactor: Interactor,
-    pub bridge_owner_shard_0: Address,
-    pub bridge_owner_shard_1: Address,
-    pub bridge_owner_shard_2: Address,
-    pub sovereign_owner_shard_0: Address,
-    pub sovereign_owner_shard_1: Address,
-    pub sovereign_owner_shard_2: Address,
-    pub bridge_service_shard_0: Address,
-    pub bridge_service_shard_1: Address,
-    pub bridge_service_shard_2: Address,
     pub user_address: Address,
     pub state: State,
 }
@@ -37,42 +27,6 @@ impl CommonInteractorTrait for MvxEsdtSafeInteract {
         &mut self.state
     }
 
-    fn bridge_owner_shard_0(&self) -> &Address {
-        &self.bridge_owner_shard_0
-    }
-
-    fn bridge_owner_shard_1(&self) -> &Address {
-        &self.bridge_owner_shard_1
-    }
-
-    fn bridge_owner_shard_2(&self) -> &Address {
-        &self.bridge_owner_shard_2
-    }
-
-    fn sovereign_owner_shard_0(&self) -> &Address {
-        &self.sovereign_owner_shard_0
-    }
-
-    fn sovereign_owner_shard_1(&self) -> &Address {
-        &self.sovereign_owner_shard_1
-    }
-
-    fn sovereign_owner_shard_2(&self) -> &Address {
-        &self.sovereign_owner_shard_2
-    }
-
-    fn bridge_service_shard_0(&self) -> &Address {
-        &self.bridge_service_shard_0
-    }
-
-    fn bridge_service_shard_1(&self) -> &Address {
-        &self.bridge_service_shard_1
-    }
-
-    fn bridge_service_shard_2(&self) -> &Address {
-        &self.bridge_service_shard_2
-    }
-
     fn user_address(&self) -> &Address {
         &self.user_address
     }
@@ -80,8 +34,19 @@ impl CommonInteractorTrait for MvxEsdtSafeInteract {
 
 impl MvxEsdtSafeInteract {
     pub async fn new(config: Config) -> Self {
-        let mut interactor = Self::initialize_interactor(config).await;
-        interactor.initialize_tokens_in_wallets().await;
+        let mut interactor = Self::initialize_interactor(config.clone()).await;
+
+        interactor.register_wallets().await;
+
+        match config.use_chain_simulator() {
+            true => {
+                interactor.initialize_tokens_in_wallets().await;
+            }
+            false => {
+                println!("Skipping token initialization for real network");
+            }
+        }
+
         interactor
     }
 
@@ -93,33 +58,12 @@ impl MvxEsdtSafeInteract {
         let working_dir = INTERACTOR_WORKING_DIR;
         interactor.set_current_dir_from_workspace(working_dir);
 
-        let shard_0_wallet = Wallet::from_pem_file("wallets/shard-0-wallet.pem")
-            .expect(FAILED_TO_LOAD_WALLET_SHARD_0);
-
-        let bridge_owner_shard_0 = interactor.register_wallet(test_wallets::bob()).await;
-        let bridge_owner_shard_1 = interactor.register_wallet(test_wallets::alice()).await;
-        let bridge_owner_shard_2 = interactor.register_wallet(test_wallets::carol()).await;
-        let sovereign_owner_shard_0 = interactor.register_wallet(test_wallets::mike()).await;
-        let sovereign_owner_shard_1 = interactor.register_wallet(test_wallets::frank()).await;
-        let sovereign_owner_shard_2 = interactor.register_wallet(test_wallets::heidi()).await;
-        let bridge_service_shard_0 = interactor.register_wallet(shard_0_wallet).await;
-        let bridge_service_shard_1 = interactor.register_wallet(test_wallets::dan()).await;
-        let bridge_service_shard_2 = interactor.register_wallet(test_wallets::judy()).await;
         let user_address = interactor.register_wallet(test_wallets::grace()).await; //shard 1
 
         interactor.generate_blocks_until_epoch(1u64).await.unwrap();
 
         MvxEsdtSafeInteract {
             interactor,
-            bridge_owner_shard_0,
-            bridge_owner_shard_1,
-            bridge_owner_shard_2,
-            sovereign_owner_shard_0,
-            sovereign_owner_shard_1,
-            sovereign_owner_shard_2,
-            bridge_service_shard_0,
-            bridge_service_shard_1,
-            bridge_service_shard_2,
             user_address,
             state: State::default(),
         }
@@ -185,11 +129,12 @@ impl MvxEsdtSafeInteract {
     }
 
     pub async fn upgrade(&mut self) {
+        let caller = self.get_bridge_owner_for_shard(SHARD_0).clone();
         let response = self
             .interactor
             .tx()
             .to(self.state.current_mvx_esdt_safe_contract_address())
-            .from(&self.bridge_owner_shard_0)
+            .from(caller)
             .gas(90_000_000u64)
             .typed(MvxEsdtSafeProxy)
             .upgrade()
@@ -253,10 +198,11 @@ impl MvxEsdtSafeInteract {
         egld_amount: BigUint<StaticApi>,
         expected_error_message: Option<&str>,
     ) {
+        let caller = self.get_bridge_owner_for_shard(SHARD_0).clone();
         let response = self
             .interactor
             .tx()
-            .from(&self.bridge_owner_shard_0)
+            .from(&caller)
             .to(self.state.current_mvx_esdt_safe_contract_address())
             .gas(90_000_000u64)
             .typed(MvxEsdtSafeProxy)
@@ -267,51 +213,5 @@ impl MvxEsdtSafeInteract {
             .await;
 
         self.assert_expected_error_message(response, expected_error_message);
-    }
-
-    pub async fn pause_endpoint(&mut self) {
-        let response = self
-            .interactor
-            .tx()
-            .from(&self.bridge_owner_shard_0)
-            .to(self.state.current_mvx_esdt_safe_contract_address())
-            .gas(90_000_000u64)
-            .typed(MvxEsdtSafeProxy)
-            .pause_endpoint()
-            .returns(ReturnsResultUnmanaged)
-            .run()
-            .await;
-
-        println!("Result: {response:?}");
-    }
-
-    pub async fn unpause_endpoint(&mut self) {
-        let response = self
-            .interactor
-            .tx()
-            .from(&self.bridge_owner_shard_0)
-            .to(self.state.current_mvx_esdt_safe_contract_address())
-            .gas(90_000_000u64)
-            .typed(MvxEsdtSafeProxy)
-            .unpause_endpoint()
-            .returns(ReturnsResultUnmanaged)
-            .run()
-            .await;
-
-        println!("Result: {response:?}");
-    }
-
-    pub async fn paused_status(&mut self) {
-        let result_value = self
-            .interactor
-            .query()
-            .to(self.state.current_mvx_esdt_safe_contract_address())
-            .typed(MvxEsdtSafeProxy)
-            .paused_status()
-            .returns(ReturnsResultUnmanaged)
-            .run()
-            .await;
-
-        println!("Result: {result_value:?}");
     }
 }

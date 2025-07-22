@@ -75,6 +75,7 @@ pub const EXECUTED_BRIDGE_LOG: &str = "executedBridgeOp";
 pub const SC_CALL_LOG: &str = "scCall";
 
 pub const ISSUE_COST: u64 = 50_000_000_000_000_000; // 0.05 EGLD
+pub const GAS_LIMIT: u64 = 90_000_000; // 90 million gas limit
 pub const ONE_HUNDRED_MILLION: u32 = 100_000_000;
 pub const ONE_HUNDRED_THOUSAND: u32 = 100_000;
 pub const OWNER_BALANCE: u128 = 100_000_000_000_000_000_000_000;
@@ -83,3 +84,5 @@ pub const ENSHRINE_BALANCE: u128 = 100_000_000_000_000_000;
 pub const ONE_THOUSAND_TOKENS: u128 = 1_000_000_000_000_000_000_000u128;
 pub const ONE_HUNDRED_TOKENS: u128 = 100_000_000_000_000_000_000u128;
 pub const TEN_TOKENS: u128 = 10_000_000_000_000_000_000u128;
+pub const PER_TRANSFER: u64 = 100;
+pub const PER_GAS: u64 = 1;

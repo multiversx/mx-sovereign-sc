@@ -1,15 +1,15 @@
 #![allow(async_fn_in_trait)]
 
-use crate::interactor_state::{AddressInfo, State, TokenBalance, TokenProperties};
+use crate::interactor_state::{AddressInfo, EsdtTokenInfo, State, TokenBalance};
 use base64::{engine::general_purpose::STANDARD as BASE64, Engine};
 use common_test_setup::constants::{
     CHAIN_CONFIG_CODE_PATH, CHAIN_FACTORY_CODE_PATH, DEPLOY_COST, ENSHRINE_ESDT_SAFE_CODE_PATH,
     FEE_MARKET_CODE_PATH, HEADER_VERIFIER_CODE_PATH, ISSUE_COST, MVX_ESDT_SAFE_CODE_PATH,
-    NUMBER_OF_SHARDS, ONE_HUNDRED_TOKENS, ONE_THOUSAND_TOKENS, PREFERRED_CHAIN_IDS,
-    SOVEREIGN_FORGE_CODE_PATH, SOVEREIGN_TOKEN_PREFIX, TESTING_SC_CODE_PATH,
-    TOKEN_HANDLER_CODE_PATH, WEGLD_IDENTIFIER,
+    NUMBER_OF_SHARDS, ONE_HUNDRED_TOKENS, ONE_THOUSAND_TOKENS, PER_GAS, PER_TRANSFER,
+    PREFERRED_CHAIN_IDS, SHARD_0, SOVEREIGN_FORGE_CODE_PATH, SOVEREIGN_TOKEN_PREFIX,
+    TESTING_SC_CODE_PATH, TOKEN_HANDLER_CODE_PATH, WEGLD_IDENTIFIER,
 };
-use error_messages::FAILED_TO_PARSE_AS_NUMBER;
+use error_messages::{FAILED_TO_LOAD_WALLET_SHARD_0, FAILED_TO_PARSE_AS_NUMBER};
 use multiversx_sc::{
     codec::{num_bigint, TopEncode},
     imports::{ESDTSystemSCProxy, OptionalValue, UserBuiltinProxy},
@@ -23,13 +23,13 @@ use multiversx_sc_snippets::{
     hex,
     imports::{
         Bech32Address, ReturnsGasUsed, ReturnsHandledOrError, ReturnsLogs,
-        ReturnsNewTokenIdentifier, StaticApi,
+        ReturnsNewTokenIdentifier, StaticApi, Wallet,
     },
     multiversx_sc_scenario::{
         multiversx_chain_vm::crypto_functions::sha256,
         scenario_model::{Log, TxResponseStatus},
     },
-    Interactor, InteractorRunAsync,
+    test_wallets, Interactor, InteractorRunAsync,
 };
 use proxies::{
     chain_config_proxy::ChainConfigContractProxy, chain_factory_proxy::ChainFactoryContractProxy,
@@ -41,12 +41,20 @@ use proxies::{
 use structs::{
     aliases::{OptionalValueTransferDataTuple, PaymentsVec},
     configs::{EsdtSafeConfig, SovereignConfig},
-    fee::FeeStruct,
+    fee::{FeeStruct, FeeType},
     forge::{ContractInfo, ScArray},
     operation::Operation,
+    EsdtInfo,
 };
 
 use common_test_setup::base_setup::init::RegisterTokenArgs;
+
+fn payable_metadata() -> CodeMetadata {
+    CodeMetadata::UPGRADEABLE
+        | CodeMetadata::READABLE
+        | CodeMetadata::PAYABLE_BY_SC
+        | CodeMetadata::PAYABLE
+}
 
 pub struct IssueTokenStruct {
     pub token_display_name: String,
@@ -77,22 +85,42 @@ pub struct TemplateAddresses {
 pub trait CommonInteractorTrait {
     fn interactor(&mut self) -> &mut Interactor;
     fn state(&mut self) -> &mut State;
-    fn bridge_owner_shard_0(&self) -> &Address;
-    fn bridge_owner_shard_1(&self) -> &Address;
-    fn bridge_owner_shard_2(&self) -> &Address;
-    fn sovereign_owner_shard_0(&self) -> &Address;
-    fn sovereign_owner_shard_1(&self) -> &Address;
-    fn sovereign_owner_shard_2(&self) -> &Address;
-    fn bridge_service_shard_0(&self) -> &Address;
-    fn bridge_service_shard_1(&self) -> &Address;
-    fn bridge_service_shard_2(&self) -> &Address;
     fn user_address(&self) -> &Address;
+
+    async fn register_wallets(&mut self) {
+        let shard_0_wallet = Wallet::from_pem_file("wallets/shard-0-wallet.pem")
+            .expect(FAILED_TO_LOAD_WALLET_SHARD_0);
+
+        self.interactor().register_wallet(test_wallets::bob()).await; // bridge_owner_shard_0
+        self.interactor()
+            .register_wallet(test_wallets::alice())
+            .await; // bridge_owner_shard_1
+        self.interactor()
+            .register_wallet(test_wallets::carol())
+            .await; // bridge_owner_shard_2
+        self.interactor()
+            .register_wallet(test_wallets::mike())
+            .await; // sovereign_owner_shard_0
+        self.interactor()
+            .register_wallet(test_wallets::frank())
+            .await; // sovereign_owner_shard_1
+        self.interactor()
+            .register_wallet(test_wallets::heidi())
+            .await; // sovereign_owner_shard_2
+        self.interactor().register_wallet(shard_0_wallet).await; // bridge_service_shard_0
+        self.interactor().register_wallet(test_wallets::dan()).await; // bridge_service_shard_1
+        self.interactor()
+            .register_wallet(test_wallets::judy())
+            .await; // bridge_service_shard_2
+
+        self.interactor().generate_blocks(1u64).await.unwrap();
+    }
 
     async fn issue_and_mint_token(
         &mut self,
         issue: IssueTokenStruct,
         mint: MintTokenStruct,
-    ) -> TokenProperties {
+    ) -> EsdtTokenInfo {
         let user_address = self.user_address().clone();
         let interactor = self.interactor();
 
@@ -117,7 +145,7 @@ pub trait CommonInteractorTrait {
             .mint_tokens(token_id.clone(), issue.token_type, mint)
             .await;
 
-        TokenProperties {
+        EsdtTokenInfo {
             token_id: token_id.clone(),
             nonce,
         }
@@ -147,7 +175,7 @@ pub trait CommonInteractorTrait {
                     .await;
                 0u64
             }
-            EsdtTokenType::NonFungible
+            EsdtTokenType::NonFungibleV2
             | EsdtTokenType::SemiFungible
             | EsdtTokenType::DynamicNFT
             | EsdtTokenType::DynamicMeta
@@ -186,7 +214,7 @@ pub trait CommonInteractorTrait {
             .typed(SovereignForgeProxy)
             .init(deploy_cost)
             .code(SOVEREIGN_FORGE_CODE_PATH)
-            .code_metadata(CodeMetadata::UPGRADEABLE | CodeMetadata::READABLE)
+            .code_metadata(payable_metadata())
             .returns(ReturnsNewAddress)
             .run()
             .await;
@@ -218,7 +246,7 @@ pub trait CommonInteractorTrait {
                 template_addresses.fee_market_address,
             )
             .code(CHAIN_FACTORY_CODE_PATH)
-            .code_metadata(CodeMetadata::UPGRADEABLE | CodeMetadata::READABLE)
+            .code_metadata(payable_metadata())
             .returns(ReturnsNewAddress)
             .run()
             .await;
@@ -243,7 +271,7 @@ pub trait CommonInteractorTrait {
             .init(opt_config)
             .returns(ReturnsNewAddress)
             .code(CHAIN_CONFIG_CODE_PATH)
-            .code_metadata(CodeMetadata::UPGRADEABLE | CodeMetadata::READABLE)
+            .code_metadata(payable_metadata())
             .run()
             .await;
 
@@ -270,7 +298,7 @@ pub trait CommonInteractorTrait {
             .init(OptionalValue::<SovereignConfig<StaticApi>>::None)
             .returns(ReturnsNewAddress)
             .code(CHAIN_CONFIG_CODE_PATH)
-            .code_metadata(CodeMetadata::UPGRADEABLE | CodeMetadata::READABLE)
+            .code_metadata(payable_metadata())
             .run()
             .await;
         template_contracts.push(Bech32Address::from(chain_config_template));
@@ -286,7 +314,7 @@ pub trait CommonInteractorTrait {
                     .init(OptionalValue::<EsdtSafeConfig<StaticApi>>::None)
                     .returns(ReturnsNewAddress)
                     .code(MVX_ESDT_SAFE_CODE_PATH)
-                    .code_metadata(CodeMetadata::UPGRADEABLE | CodeMetadata::READABLE)
+                    .code_metadata(payable_metadata())
                     .run()
                     .await;
                 template_contracts.push(Bech32Address::from(mvx_esdt_safe_template.clone()));
@@ -308,7 +336,7 @@ pub trait CommonInteractorTrait {
                     )
                     .returns(ReturnsNewAddress)
                     .code(ENSHRINE_ESDT_SAFE_CODE_PATH)
-                    .code_metadata(CodeMetadata::UPGRADEABLE | CodeMetadata::READABLE)
+                    .code_metadata(payable_metadata())
                     .run()
                     .await;
                 template_contracts.push(Bech32Address::from(enshrine_esdt_safe_template.clone()));
@@ -328,7 +356,7 @@ pub trait CommonInteractorTrait {
             )
             .returns(ReturnsNewAddress)
             .code(FEE_MARKET_CODE_PATH)
-            .code_metadata(CodeMetadata::UPGRADEABLE | CodeMetadata::READABLE)
+            .code_metadata(payable_metadata())
             .run()
             .await;
         template_contracts.push(Bech32Address::from(fee_market_address));
@@ -342,7 +370,7 @@ pub trait CommonInteractorTrait {
             .init(MultiValueEncoded::new())
             .returns(ReturnsNewAddress)
             .code(HEADER_VERIFIER_CODE_PATH)
-            .code_metadata(CodeMetadata::UPGRADEABLE | CodeMetadata::READABLE)
+            .code_metadata(payable_metadata())
             .run()
             .await;
         template_contracts.push(Bech32Address::from(header_verifier_address));
@@ -365,7 +393,7 @@ pub trait CommonInteractorTrait {
             .init(MultiValueEncoded::from_iter(contracts_array))
             .returns(ReturnsNewAddress)
             .code(HEADER_VERIFIER_CODE_PATH)
-            .code_metadata(CodeMetadata::UPGRADEABLE | CodeMetadata::READABLE)
+            .code_metadata(payable_metadata())
             .run()
             .await;
 
@@ -391,7 +419,7 @@ pub trait CommonInteractorTrait {
             .init(opt_config)
             .returns(ReturnsNewAddress)
             .code(MVX_ESDT_SAFE_CODE_PATH)
-            .code_metadata(CodeMetadata::UPGRADEABLE | CodeMetadata::READABLE)
+            .code_metadata(payable_metadata())
             .run()
             .await;
 
@@ -419,7 +447,7 @@ pub trait CommonInteractorTrait {
             .init(esdt_safe_address, fee)
             .returns(ReturnsNewAddress)
             .code(FEE_MARKET_CODE_PATH)
-            .code_metadata(CodeMetadata::UPGRADEABLE | CodeMetadata::READABLE)
+            .code_metadata(payable_metadata())
             .run()
             .await;
 
@@ -431,7 +459,7 @@ pub trait CommonInteractorTrait {
     }
 
     async fn deploy_testing_sc(&mut self) {
-        let bridge_owner = self.bridge_owner_shard_0().clone();
+        let bridge_owner = self.get_bridge_owner_for_shard(SHARD_0).clone();
         let new_address = self
             .interactor()
             .tx()
@@ -440,7 +468,7 @@ pub trait CommonInteractorTrait {
             .typed(TestingScProxy)
             .init()
             .code(TESTING_SC_CODE_PATH)
-            .code_metadata(CodeMetadata::UPGRADEABLE | CodeMetadata::READABLE)
+            .code_metadata(payable_metadata())
             .returns(ReturnsNewAddress)
             .run()
             .await;
@@ -460,7 +488,7 @@ pub trait CommonInteractorTrait {
             .typed(token_handler_proxy::TokenHandlerProxy)
             .init(chain_factory_address)
             .code(TOKEN_HANDLER_CODE_PATH)
-            .code_metadata(CodeMetadata::UPGRADEABLE | CodeMetadata::READABLE)
+            .code_metadata(payable_metadata())
             .returns(ReturnsNewAddress)
             .run()
             .await;
@@ -495,7 +523,7 @@ pub trait CommonInteractorTrait {
                 opt_config,
             )
             .code(ENSHRINE_ESDT_SAFE_CODE_PATH)
-            .code_metadata(CodeMetadata::UPGRADEABLE | CodeMetadata::READABLE)
+            .code_metadata(payable_metadata())
             .returns(ReturnsNewAddress)
             .run()
             .await;
@@ -514,7 +542,7 @@ pub trait CommonInteractorTrait {
         optional_esdt_safe_config: OptionalValue<EsdtSafeConfig<StaticApi>>,
         fee: Option<FeeStruct<StaticApi>>,
     ) {
-        let initial_caller = self.bridge_owner_shard_0().clone();
+        let initial_caller = self.get_bridge_owner_for_shard(SHARD_0).clone();
 
         let sovereign_forge_address = self
             .deploy_sovereign_forge(initial_caller.clone(), &BigUint::from(DEPLOY_COST))
@@ -969,7 +997,7 @@ pub trait CommonInteractorTrait {
             .state()
             .current_mvx_esdt_safe_contract_address()
             .clone();
-        let sovereign_owner = self.sovereign_owner_shard_0().clone();
+        let sovereign_owner = self.get_sovereign_owner_for_shard(SHARD_0).clone();
 
         self.interactor()
             .tx()
@@ -1056,6 +1084,30 @@ pub trait CommonInteractorTrait {
         self.assert_expected_log(logs, expected_log, None);
     }
 
+    async fn withdraw_from_testing_sc(
+        &mut self,
+        expected_token: TokenIdentifier<StaticApi>,
+        nonce: u64,
+        amount: BigUint<StaticApi>,
+    ) {
+        let user_address = self.user_address().clone();
+        let testing_sc_address = self.state().current_testing_sc_address().clone();
+        self.interactor()
+            .tx()
+            .from(user_address)
+            .to(testing_sc_address)
+            .gas(90_000_000u64)
+            .typed(TestingScProxy)
+            .send_tokens(
+                TokenIdentifier::from_esdt_bytes(expected_token.to_string()),
+                nonce,
+                amount.clone(),
+            )
+            .returns(ReturnsResultUnmanaged)
+            .run()
+            .await;
+    }
+
     #[allow(clippy::too_many_arguments)]
     async fn execute_operations_in_mvx_esdt_safe(
         &mut self,
@@ -1116,11 +1168,14 @@ pub trait CommonInteractorTrait {
         self.assert_expected_error_message(response, expected_error_message);
     }
 
-    async fn get_sov_to_mvx_token_id(&mut self, shard: u32, token_id: TokenIdentifier<StaticApi>) {
+    async fn get_sov_to_mvx_token_id(
+        &mut self,
+        shard: u32,
+        token_id: TokenIdentifier<StaticApi>,
+    ) -> TokenIdentifier<StaticApi> {
         let mvx_esdt_safe_address = self.state().get_mvx_esdt_safe_address(shard).clone();
         let user_address = self.user_address().clone();
-        let token = self
-            .interactor()
+        self.interactor()
             .tx()
             .from(user_address)
             .to(mvx_esdt_safe_address)
@@ -1128,12 +1183,26 @@ pub trait CommonInteractorTrait {
             .sovereign_to_multiversx_token_id_mapper(token_id)
             .returns(ReturnsResult)
             .run()
-            .await;
+            .await
+    }
 
-        self.state().set_sov_to_mvx_token_id(TokenProperties {
-            token_id: token.to_string(),
-            nonce: 0u64,
-        });
+    async fn get_sov_to_mvx_token_id_with_nonce(
+        &mut self,
+        shard: u32,
+        token_id: TokenIdentifier<StaticApi>,
+        nonce: u64,
+    ) -> EsdtInfo<StaticApi> {
+        let mvx_esdt_safe_address = self.state().get_mvx_esdt_safe_address(shard).clone();
+        let user_address = self.user_address().clone();
+        self.interactor()
+            .tx()
+            .from(user_address)
+            .to(mvx_esdt_safe_address)
+            .typed(MvxEsdtSafeProxy)
+            .sovereign_to_multiversx_esdt_info_mapper(token_id, nonce)
+            .returns(ReturnsResult)
+            .run()
+            .await
     }
 
     async fn whitelist_enshrine_esdt(
@@ -1159,7 +1228,6 @@ pub trait CommonInteractorTrait {
     }
 
     //NOTE: transferValue returns an empty log and calling this function on it will panic
-    //TODO: cross shard transactions do not return the same type of logs like the ones on the same shard
     fn assert_expected_log(
         &mut self,
         logs: Vec<Log>,
@@ -1284,7 +1352,7 @@ pub trait CommonInteractorTrait {
         }
     }
 
-    async fn check_wallet_balance_unchanged(&mut self) {
+    async fn check_initial_wallet_balance_unchanged(&mut self) {
         let user_address = self.user_address().clone();
         let expected_tokens_wallet = self
             .state()
@@ -1351,13 +1419,6 @@ pub trait CommonInteractorTrait {
         let mut wanted_balance = self
             .state()
             .get_initial_balance_for_address(address.clone());
-
-        if wanted_balance.is_empty() && !balances.is_empty() {
-            panic!(
-                "For address: {} -> Expected no tokens, but found some: {:?}",
-                address, balances
-            );
-        }
 
         for changed_balance in expected_changed_balances {
             if let Some(existing_token) = wanted_balance
@@ -1434,29 +1495,56 @@ pub trait CommonInteractorTrait {
         );
     }
 
-    fn get_bridge_service_for_shard(&self, shard_id: u32) -> Address {
-        match shard_id {
-            0 => self.bridge_service_shard_0().clone(),
-            1 => self.bridge_service_shard_1().clone(),
-            2 => self.bridge_service_shard_2().clone(),
-            _ => panic!("Invalid shard ID: {shard_id}"),
+    fn get_token_by_type(&mut self, token_type: EsdtTokenType) -> EsdtTokenInfo {
+        match token_type {
+            EsdtTokenType::NonFungibleV2 => self.state().get_nft_token_id(),
+            EsdtTokenType::Fungible => self.state().get_first_token_id_as_esdt_info(),
+            EsdtTokenType::SemiFungible => self.state().get_sft_token_id(),
+            EsdtTokenType::MetaFungible => self.state().get_meta_esdt_token_id(),
+            EsdtTokenType::DynamicNFT => self.state().get_dynamic_nft_token_id(),
+            EsdtTokenType::DynamicSFT => self.state().get_dynamic_sft_token_id(),
+            EsdtTokenType::DynamicMeta => self.state().get_dynamic_meta_esdt_token_id(),
+            _ => panic!("Unsupported token type for test"),
         }
     }
 
+    fn create_standard_fee(&mut self) -> FeeStruct<StaticApi> {
+        let per_transfer = BigUint::from(PER_TRANSFER);
+        let per_gas = BigUint::from(PER_GAS);
+        FeeStruct {
+            base_token: self.state().get_fee_token_id(),
+            fee_type: FeeType::Fixed {
+                token: self.state().get_fee_token_id(),
+                per_transfer,
+                per_gas,
+            },
+        }
+    }
+
+    fn get_bridge_service_for_shard(&self, shard_id: u32) -> Address {
+        let shard_0_wallet = Wallet::from_pem_file("wallets/shard-0-wallet.pem")
+            .expect(FAILED_TO_LOAD_WALLET_SHARD_0);
+        match shard_id {
+            0 => shard_0_wallet.to_address(),
+            1 => test_wallets::dan().to_address(),
+            2 => test_wallets::judy().to_address(),
+            _ => panic!("Invalid shard ID: {shard_id}"),
+        }
+    }
     fn get_bridge_owner_for_shard(&self, shard_id: u32) -> Address {
         match shard_id {
-            0 => self.bridge_owner_shard_0().clone(),
-            1 => self.bridge_owner_shard_1().clone(),
-            2 => self.bridge_owner_shard_2().clone(),
+            0 => test_wallets::bob().to_address(),
+            1 => test_wallets::alice().to_address(),
+            2 => test_wallets::carol().to_address(),
             _ => panic!("Invalid shard ID: {shard_id}"),
         }
     }
 
     fn get_sovereign_owner_for_shard(&self, shard_id: u32) -> Address {
         match shard_id {
-            0 => self.sovereign_owner_shard_0().clone(),
-            1 => self.sovereign_owner_shard_1().clone(),
-            2 => self.sovereign_owner_shard_2().clone(),
+            0 => test_wallets::mike().to_address(),
+            1 => test_wallets::frank().to_address(),
+            2 => test_wallets::heidi().to_address(),
             _ => panic!("Invalid shard ID: {shard_id}"),
         }
     }
