@@ -616,6 +616,7 @@ impl SovereignForgeInteract {
 
         let token_data = EsdtTokenData {
             amount,
+            token_type: token.token_type,
             ..Default::default()
         };
 

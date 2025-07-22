@@ -11,10 +11,11 @@ use error_messages::{
 };
 use multiversx_sc_snippets::imports::*;
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Clone)]
 pub struct EsdtTokenInfo {
     pub token_id: String,
     pub nonce: u64,
+    pub token_type: EsdtTokenType,
 }
 
 #[derive(Debug)]

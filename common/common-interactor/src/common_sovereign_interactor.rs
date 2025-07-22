@@ -148,6 +148,7 @@ pub trait CommonInteractorTrait {
         EsdtTokenInfo {
             token_id: token_id.clone(),
             nonce,
+            token_type: issue.token_type,
         }
     }
 
