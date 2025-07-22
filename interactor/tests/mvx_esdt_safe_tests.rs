@@ -10,10 +10,10 @@ use common_test_setup::constants::{
 };
 use cross_chain::MAX_GAS_PER_TRANSACTION;
 use error_messages::{
-    BANNED_ENDPOINT_NAME, CANNOT_REGISTER_TOKEN, DEPOSIT_OVER_MAX_AMOUNT, ERR_EMPTY_PAYMENTS,
-    GAS_LIMIT_TOO_HIGH, INVALID_TYPE, MAX_GAS_LIMIT_PER_TX_EXCEEDED,
-    NATIVE_TOKEN_ALREADY_REGISTERED, NOTHING_TO_TRANSFER, PAYMENT_DOES_NOT_COVER_FEE,
-    SETUP_PHASE_NOT_COMPLETED, TOO_MANY_TOKENS,
+    BANNED_ENDPOINT_NAME, CANNOT_REGISTER_TOKEN, CURRENT_OPERATION_NOT_REGISTERED,
+    DEPOSIT_OVER_MAX_AMOUNT, ERR_EMPTY_PAYMENTS, GAS_LIMIT_TOO_HIGH, INVALID_TYPE,
+    MAX_GAS_LIMIT_PER_TX_EXCEEDED, NATIVE_TOKEN_ALREADY_REGISTERED, NOTHING_TO_TRANSFER,
+    PAYMENT_DOES_NOT_COVER_FEE, TOO_MANY_TOKENS,
 };
 use header_verifier::OperationHashStatus;
 use multiversx_sc_snippets::multiversx_sc_scenario::multiversx_chain_vm::crypto_functions::sha256;
@@ -252,7 +252,9 @@ async fn test_deposit_max_bridged_amount_exceeded() {
             None,
         )
         .await;
-    chain_interactor.check_initial_wallet_balance_unchanged().await;
+    chain_interactor
+        .check_initial_wallet_balance_unchanged()
+        .await;
     chain_interactor
         .check_mvx_esdt_safe_balance_is_empty(shard)
         .await;
@@ -294,7 +296,9 @@ async fn test_deposit_nothing_to_transfer() {
         )
         .await;
 
-    chain_interactor.check_initial_wallet_balance_unchanged().await;
+    chain_interactor
+        .check_initial_wallet_balance_unchanged()
+        .await;
     chain_interactor
         .check_mvx_esdt_safe_balance_is_empty(shard)
         .await;
@@ -347,7 +351,9 @@ async fn test_deposit_too_many_tokens_no_fee() {
         )
         .await;
 
-    chain_interactor.check_initial_wallet_balance_unchanged().await;
+    chain_interactor
+        .check_initial_wallet_balance_unchanged()
+        .await;
     chain_interactor
         .check_mvx_esdt_safe_balance_is_empty(shard)
         .await;
@@ -388,13 +394,7 @@ async fn test_deposit_no_transfer_data() {
         BigUint::from(ONE_HUNDRED_TOKENS),
     );
 
-    let esdt_token_payment_two = EsdtTokenPayment::<StaticApi>::new(
-        chain_interactor.state.get_second_token_id(),
-        0,
-        BigUint::from(ONE_HUNDRED_TOKENS),
-    );
-
-    let payments_vec = PaymentsVec::from(vec![esdt_token_payment_one, esdt_token_payment_two]);
+    let payments_vec = PaymentsVec::from(vec![esdt_token_payment_one]);
 
     chain_interactor
         .deposit_in_mvx_esdt_safe(
@@ -407,16 +407,10 @@ async fn test_deposit_no_transfer_data() {
         )
         .await;
 
-    let expected_changed_balance_mvx_esdt_safe = vec![
-        chain_interactor.custom_amount_tokens(
-            chain_interactor.state.get_first_token_id_string(),
-            ONE_HUNDRED_TOKENS,
-        ),
-        chain_interactor.custom_amount_tokens(
-            chain_interactor.state.get_second_token_id_string(),
-            ONE_HUNDRED_TOKENS,
-        ),
-    ];
+    let expected_changed_balance_mvx_esdt_safe = vec![chain_interactor.custom_amount_tokens(
+        chain_interactor.state.get_first_token_id_string(),
+        ONE_HUNDRED_TOKENS,
+    )];
 
     chain_interactor
         .check_address_balance(
@@ -428,16 +422,10 @@ async fn test_deposit_no_transfer_data() {
         )
         .await;
 
-    let expected_changed_balance_wallet = vec![
-        chain_interactor.custom_amount_tokens(
-            chain_interactor.state.get_first_token_id_string(),
-            ONE_THOUSAND_TOKENS - ONE_HUNDRED_TOKENS,
-        ),
-        chain_interactor.custom_amount_tokens(
-            chain_interactor.state.get_second_token_id_string(),
-            ONE_THOUSAND_TOKENS - ONE_HUNDRED_TOKENS,
-        ),
-    ];
+    let expected_changed_balance_wallet = vec![chain_interactor.custom_amount_tokens(
+        chain_interactor.state.get_first_token_id_string(),
+        ONE_THOUSAND_TOKENS - ONE_HUNDRED_TOKENS,
+    )];
     chain_interactor
         .check_address_balance(
             &Bech32Address::from(user_address),
@@ -517,7 +505,9 @@ async fn test_deposit_gas_limit_too_high_no_fee() {
         )
         .await;
 
-    chain_interactor.check_initial_wallet_balance_unchanged().await;
+    chain_interactor
+        .check_initial_wallet_balance_unchanged()
+        .await;
     chain_interactor
         .check_mvx_esdt_safe_balance_is_empty(shard)
         .await;
@@ -593,7 +583,9 @@ async fn test_deposit_endpoint_banned_no_fee() {
         )
         .await;
 
-    chain_interactor.check_initial_wallet_balance_unchanged().await;
+    chain_interactor
+        .check_initial_wallet_balance_unchanged()
+        .await;
     chain_interactor
         .check_mvx_esdt_safe_balance_is_empty(shard)
         .await;
@@ -687,7 +679,7 @@ async fn test_deposit_fee_enabled() {
             OptionalValue::Some(transfer_data),
             payments_vec.clone(),
             None,
-            Some(DEPOSIT_LOG),
+            Some(&chain_interactor.state.get_first_token_id_string()),
         )
         .await;
 
@@ -807,7 +799,9 @@ async fn test_deposit_transfer_data_only_with_fee_nothing_to_transfer() {
         )
         .await;
 
-    chain_interactor.check_initial_wallet_balance_unchanged().await;
+    chain_interactor
+        .check_initial_wallet_balance_unchanged()
+        .await;
     chain_interactor
         .check_mvx_esdt_safe_balance_is_empty(shard)
         .await;
@@ -870,7 +864,9 @@ async fn test_deposit_only_transfer_data_no_fee() {
         )
         .await;
 
-    chain_interactor.check_initial_wallet_balance_unchanged().await;
+    chain_interactor
+        .check_initial_wallet_balance_unchanged()
+        .await;
     chain_interactor
         .check_mvx_esdt_safe_balance_is_empty(shard)
         .await;
@@ -966,7 +962,9 @@ async fn test_deposit_payment_does_not_cover_fee() {
         )
         .await;
 
-    chain_interactor.check_initial_wallet_balance_unchanged().await;
+    chain_interactor
+        .check_initial_wallet_balance_unchanged()
+        .await;
     chain_interactor
         .check_mvx_esdt_safe_balance_is_empty(shard)
         .await;
@@ -1056,7 +1054,7 @@ async fn test_deposit_refund() {
             OptionalValue::Some(transfer_data),
             payments_vec.clone(),
             None,
-            Some(DEPOSIT_LOG),
+            Some(&chain_interactor.state.get_first_token_id_string()),
         )
         .await;
 
@@ -1437,7 +1435,7 @@ async fn test_register_token_dynamic_non_fungible_token() {
 #[tokio::test]
 #[serial]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
-async fn test_execute_operation_no_esdt_safe_registered() {
+async fn test_execute_operation_no_operation_registered() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
     let shard = SHARD_0;
 
@@ -1482,7 +1480,7 @@ async fn test_execute_operation_no_esdt_safe_registered() {
             shard,
             hash_of_hashes,
             operation,
-            Some(SETUP_PHASE_NOT_COMPLETED),
+            Some(CURRENT_OPERATION_NOT_REGISTERED),
             None,
             None,
         )
@@ -1500,7 +1498,9 @@ async fn test_execute_operation_no_esdt_safe_registered() {
         )
         .await;
 
-    chain_interactor.check_initial_wallet_balance_unchanged().await;
+    chain_interactor
+        .check_initial_wallet_balance_unchanged()
+        .await;
 
     chain_interactor.check_testing_sc_balance_is_empty().await;
 
@@ -1756,7 +1756,9 @@ async fn test_execute_operation_only_transfer_data_no_fee() {
         )
         .await;
 
-    chain_interactor.check_initial_wallet_balance_unchanged().await;
+    chain_interactor
+        .check_initial_wallet_balance_unchanged()
+        .await;
     chain_interactor
         .check_mvx_esdt_safe_balance_is_empty(shard)
         .await;
@@ -1868,7 +1870,9 @@ async fn test_execute_operation_no_payments_failed_event() {
         )
         .await;
 
-    chain_interactor.check_initial_wallet_balance_unchanged().await;
+    chain_interactor
+        .check_initial_wallet_balance_unchanged()
+        .await;
     chain_interactor
         .check_mvx_esdt_safe_balance_is_empty(shard)
         .await;
