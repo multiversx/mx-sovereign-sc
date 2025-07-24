@@ -1,17 +1,14 @@
 use common_interactor::common_sovereign_interactor::CommonInteractorTrait;
 use common_interactor::interactor_config::Config;
 use common_interactor::interactor_state::EsdtTokenInfo;
-use common_interactor::interactor_state::TokenBalance;
 use common_test_setup::base_setup::init::RegisterTokenArgs;
 use common_test_setup::constants::GAS_LIMIT;
-use common_test_setup::constants::ONE_THOUSAND_TOKENS;
 use common_test_setup::constants::PER_GAS;
 use common_test_setup::constants::PER_TRANSFER;
 use common_test_setup::constants::{
     DEPLOY_COST, ISSUE_COST, ONE_HUNDRED_TOKENS, REGISTER_TOKEN_PREFIX, SC_CALL_LOG, SHARD_0,
     SHARD_1, SHARD_2, TESTING_SC_ENDPOINT, TOKEN_DISPLAY_NAME, TOKEN_TICKER, WRONG_ENDPOINT_NAME,
 };
-use multiversx_sc::imports::Bech32Address;
 use multiversx_sc::imports::OptionalValue;
 use multiversx_sc::types::EsdtTokenType;
 use multiversx_sc::types::{BigUint, TokenIdentifier};
@@ -153,6 +150,8 @@ async fn test_deposit_with_fee(
     let shard = SHARD_0;
 
     let token = chain_interactor.get_token_by_type(token_type);
+    let fee_token = chain_interactor.state.get_fee_token_id();
+    let fee_amount = fee_token.amount - PER_TRANSFER;
 
     let fee = chain_interactor.create_standard_fee();
 
@@ -169,39 +168,12 @@ async fn test_deposit_with_fee(
         .deposit_no_transfer_data(shard, token.clone(), amount.clone(), Some(fee))
         .await;
 
-    let expected_changed_user_balances = vec![
-        TokenBalance {
-            token_id: token.token_id.clone(),
-            amount: chain_interactor
-                .state
-                .get_initial_token_balance_for_address(
-                    chain_interactor.user_address.clone().into(),
-                    TokenIdentifier::from(&token.token_id),
-                )
-                - amount.clone(),
-        },
-        TokenBalance {
-            token_id: chain_interactor.state.get_fee_token_id_string(),
-            amount: BigUint::from(ONE_THOUSAND_TOKENS) - PER_TRANSFER,
-        },
-    ];
     chain_interactor
-        .check_address_balance(
-            &Bech32Address::from(chain_interactor.user_address.clone()),
-            expected_changed_user_balances,
-        )
+        .check_user_balance_with_fee_deduction(token.clone(), amount.clone(), fee_amount)
         .await;
 
-    let expected_mvx_balance = vec![TokenBalance {
-        token_id: token.token_id.clone(),
-        amount,
-    }];
-    let mvx_esdt_safe_address = chain_interactor
-        .state
-        .get_mvx_esdt_safe_address(shard)
-        .clone();
     chain_interactor
-        .check_address_balance(&mvx_esdt_safe_address, expected_mvx_balance)
+        .check_mvx_esdt_safe_balance_with_amount(shard, token, amount)
         .await;
 }
 
@@ -246,33 +218,12 @@ async fn test_deposit_without_fee_and_execute(
         .deposit_no_transfer_data(shard, token.clone(), amount.clone(), None)
         .await;
 
-    let expected_changed_user_balances = vec![TokenBalance {
-        token_id: token.token_id.clone(),
-        amount: chain_interactor
-            .state
-            .get_initial_token_balance_for_address(
-                chain_interactor.user_address().clone().into(),
-                TokenIdentifier::from(&token.token_id),
-            )
-            - amount.clone(),
-    }];
     chain_interactor
-        .check_address_balance(
-            &Bech32Address::from(chain_interactor.user_address.clone()),
-            expected_changed_user_balances,
-        )
+        .check_user_balance_after_deduction(token.clone(), amount.clone())
         .await;
 
-    let expected_mvx_balance = vec![TokenBalance {
-        token_id: token.token_id.clone(),
-        amount: amount.clone(),
-    }];
-    let mvx_esdt_safe_address = chain_interactor
-        .state
-        .get_mvx_esdt_safe_address(shard)
-        .clone();
     chain_interactor
-        .check_address_balance(&mvx_esdt_safe_address, expected_mvx_balance)
+        .check_mvx_esdt_safe_balance_with_amount(shard, token.clone(), amount.clone())
         .await;
 
     chain_interactor
@@ -287,7 +238,7 @@ async fn test_deposit_without_fee_and_execute(
         .await;
 
     chain_interactor
-        .check_initial_wallet_balance_unchanged()
+        .check_user_balance_with_amount(token.clone(), token.amount.clone())
         .await;
 
     chain_interactor
@@ -363,6 +314,7 @@ async fn test_register_execute_and_deposit_sov_token(
         token_id: sov_token_id.to_string(),
         nonce: token.nonce,
         token_type,
+        amount: token.amount.clone(),
     };
 
     chain_interactor
@@ -376,21 +328,6 @@ async fn test_register_execute_and_deposit_sov_token(
         )
         .await;
 
-    let expected_changed_user_balances = vec![TokenBalance {
-        token_id: expected_token.to_string(),
-        amount: amount.clone(),
-    }];
-    chain_interactor
-        .check_address_balance(
-            &Bech32Address::from(chain_interactor.user_address.clone()),
-            expected_changed_user_balances,
-        )
-        .await;
-
-    chain_interactor
-        .check_mvx_esdt_safe_balance_is_empty(shard)
-        .await;
-
     let mut nonce = token.nonce;
     if token_type == EsdtTokenType::NonFungibleV2 || token_type == EsdtTokenType::DynamicNFT {
         let sov_token_info = chain_interactor
@@ -399,18 +336,30 @@ async fn test_register_execute_and_deposit_sov_token(
         nonce = sov_token_info.token_nonce;
     }
 
-    let deposit_token_info = EsdtTokenInfo {
+    let expected_token_info = EsdtTokenInfo {
         token_id: expected_token.to_string(),
         nonce,
         token_type,
+        amount: amount.clone(),
     };
 
     chain_interactor
-        .deposit_no_transfer_data(shard, deposit_token_info, amount, None)
+        .check_user_balance_with_amount(
+            expected_token_info.clone(),
+            expected_token_info.amount.clone(),
+        )
         .await;
 
     chain_interactor
-        .check_initial_wallet_balance_unchanged()
+        .check_mvx_esdt_safe_balance_is_empty(shard)
+        .await;
+
+    chain_interactor
+        .deposit_no_transfer_data(shard, expected_token_info.clone(), amount.clone(), None)
+        .await;
+
+    chain_interactor
+        .check_user_balance_after_deduction(expected_token_info, amount)
         .await;
     chain_interactor
         .check_mvx_esdt_safe_balance_is_empty(shard)
@@ -458,33 +407,12 @@ async fn test_deposit_mvx_token_with_transfer_data(
         .deposit_with_transfer_data(shard, token.clone(), amount.clone(), None)
         .await;
 
-    let expected_changed_wallet_balances = vec![TokenBalance {
-        token_id: token.token_id.clone(),
-        amount: chain_interactor
-            .state
-            .get_initial_token_balance_for_address(
-                chain_interactor.user_address.clone().into(),
-                TokenIdentifier::from(&token.token_id),
-            )
-            - amount.clone(),
-    }];
     chain_interactor
-        .check_address_balance(
-            &Bech32Address::from(chain_interactor.user_address.clone()),
-            expected_changed_wallet_balances,
-        )
+        .check_user_balance_after_deduction(token.clone(), amount.clone())
         .await;
 
-    let expected_mvx_balance = vec![TokenBalance {
-        token_id: token.token_id.clone(),
-        amount: amount.clone(),
-    }];
-    let mvx_esdt_safe_address = chain_interactor
-        .state
-        .get_mvx_esdt_safe_address(shard)
-        .clone();
     chain_interactor
-        .check_address_balance(&mvx_esdt_safe_address, expected_mvx_balance)
+        .check_mvx_esdt_safe_balance_with_amount(shard, token.clone(), amount.clone())
         .await;
 }
 
@@ -515,6 +443,8 @@ async fn test_deposit_mvx_token_with_transfer_data_and_fee(
     let shard = SHARD_0;
 
     let fee = chain_interactor.create_standard_fee();
+    let fee_token = chain_interactor.state.get_fee_token_id();
+    let fee_amount = fee_token.amount - PER_TRANSFER - PER_GAS * GAS_LIMIT;
 
     chain_interactor
         .deploy_and_complete_setup_phase(
@@ -531,39 +461,12 @@ async fn test_deposit_mvx_token_with_transfer_data_and_fee(
         .deposit_with_transfer_data(shard, token.clone(), amount.clone(), Some(fee))
         .await;
 
-    let expected_changed_wallet_balances = vec![
-        TokenBalance {
-            token_id: token.token_id.clone(),
-            amount: chain_interactor
-                .state
-                .get_initial_token_balance_for_address(
-                    chain_interactor.user_address.clone().into(),
-                    TokenIdentifier::from(&token.token_id),
-                )
-                - amount.clone(),
-        },
-        TokenBalance {
-            token_id: chain_interactor.state.get_fee_token_id_string(),
-            amount: BigUint::from(ONE_THOUSAND_TOKENS) - PER_TRANSFER - PER_GAS * GAS_LIMIT,
-        },
-    ];
     chain_interactor
-        .check_address_balance(
-            &Bech32Address::from(chain_interactor.user_address.clone()),
-            expected_changed_wallet_balances,
-        )
+        .check_user_balance_with_fee_deduction(token.clone(), amount.clone(), fee_amount)
         .await;
 
-    let expected_mvx_balance = vec![TokenBalance {
-        token_id: token.token_id.clone(),
-        amount: amount.clone(),
-    }];
-    let mvx_esdt_safe_address = chain_interactor
-        .state
-        .get_mvx_esdt_safe_address(shard)
-        .clone();
     chain_interactor
-        .check_address_balance(&mvx_esdt_safe_address, expected_mvx_balance)
+        .check_mvx_esdt_safe_balance_with_amount(shard, token.clone(), amount.clone())
         .await;
 }
 
@@ -619,34 +522,16 @@ async fn test_deposit_and_execute_with_transfer_data(
         )
         .await;
 
-    let expected_changed_user_balances = vec![TokenBalance {
-        token_id: token.token_id.clone(),
-        amount: chain_interactor
-            .state
-            .get_initial_token_balance_for_address(
-                chain_interactor.user_address.clone().into(),
-                TokenIdentifier::from(&token.token_id),
-            )
-            - amount.clone(),
-    }];
     chain_interactor
-        .check_address_balance(
-            &Bech32Address::from(chain_interactor.user_address.clone()),
-            expected_changed_user_balances,
-        )
+        .check_user_balance_after_deduction(token.clone(), amount.clone())
         .await;
 
     chain_interactor
         .check_mvx_esdt_safe_balance_is_empty(shard)
         .await;
 
-    let expected_testing_sc_balance = vec![TokenBalance {
-        token_id: token.token_id.clone(),
-        amount,
-    }];
-    let testing_sc = chain_interactor.state.current_testing_sc_address().clone();
     chain_interactor
-        .check_address_balance(&testing_sc, expected_testing_sc_balance)
+        .check_testing_sc_balance_with_amount(token.clone(), amount.clone())
         .await;
 }
 
@@ -724,6 +609,7 @@ async fn test_register_execute_with_transfer_data_and_deposit_sov_token(
         token_id: sov_token_id.to_string(),
         nonce: token.nonce,
         token_type,
+        amount: token.amount.clone(),
     };
 
     chain_interactor
@@ -737,20 +623,6 @@ async fn test_register_execute_with_transfer_data_and_deposit_sov_token(
         )
         .await;
 
-    chain_interactor
-        .check_mvx_esdt_safe_balance_is_empty(shard)
-        .await;
-
-    chain_interactor
-        .check_address_balance(
-            &chain_interactor.state.current_testing_sc_address().clone(),
-            vec![TokenBalance {
-                token_id: expected_token.to_string(),
-                amount: amount.clone(),
-            }],
-        )
-        .await;
-
     let mut nonce = token.nonce;
     if token_type == EsdtTokenType::NonFungibleV2 || token_type == EsdtTokenType::DynamicNFT {
         let sov_token_info = chain_interactor
@@ -759,23 +631,30 @@ async fn test_register_execute_with_transfer_data_and_deposit_sov_token(
         nonce = sov_token_info.token_nonce;
     }
 
+    let expected_token_info = EsdtTokenInfo {
+        token_id: expected_token.to_string(),
+        nonce,
+        token_type,
+        amount: token.amount,
+    };
+
+    chain_interactor
+        .check_mvx_esdt_safe_balance_is_empty(shard)
+        .await;
+
+    chain_interactor
+        .check_user_balance_with_amount(expected_token_info.clone(), amount.clone())
+        .await;
+
     chain_interactor
         .withdraw_from_testing_sc(expected_token.clone(), nonce, amount.clone())
         .await;
 
-    let deposit_token_info = EsdtTokenInfo {
-        token_id: expected_token.to_string(),
-        nonce,
-        token_type,
-    };
-
     chain_interactor
-        .deposit_no_transfer_data(shard, deposit_token_info, amount, None)
+        .deposit_no_transfer_data(shard, expected_token_info, amount, None)
         .await;
 
-    chain_interactor
-        .check_initial_wallet_balance_unchanged()
-        .await;
+    chain_interactor.check_user_balance_unchanged().await;
     chain_interactor
         .check_mvx_esdt_safe_balance_is_empty(shard)
         .await;
@@ -845,6 +724,7 @@ async fn test_register_execute_call_failed(
         token_id: sov_token_id.to_string(),
         nonce: token.nonce,
         token_type,
+        amount: token.amount,
     };
 
     chain_interactor
@@ -858,9 +738,7 @@ async fn test_register_execute_call_failed(
         )
         .await;
 
-    chain_interactor
-        .check_initial_wallet_balance_unchanged()
-        .await;
+    chain_interactor.check_user_balance_unchanged().await;
 
     chain_interactor
         .check_mvx_esdt_safe_balance_is_empty(shard)

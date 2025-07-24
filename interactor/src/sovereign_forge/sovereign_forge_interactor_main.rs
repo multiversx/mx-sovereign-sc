@@ -1,6 +1,6 @@
 #![allow(non_snake_case)]
 use common_interactor::common_sovereign_interactor::{IssueTokenStruct, MintTokenStruct};
-use common_interactor::interactor_state::{EsdtTokenInfo, State, TokenBalance};
+use common_interactor::interactor_state::{EsdtTokenInfo, State};
 use common_interactor::{
     common_sovereign_interactor::CommonInteractorTrait, interactor_config::Config,
 };
@@ -229,21 +229,18 @@ impl SovereignForgeInteract {
         self.state
             .set_dynamic_meta_esdt_token_id(dyn_meta_esdt_token);
 
-        let expected_tokens_wallet = vec![
-            self.thousand_tokens(self.state.get_first_token_id_string()),
-            self.thousand_tokens(self.state.get_second_token_id_string()),
-            self.thousand_tokens(self.state.get_fee_token_id_string()),
-            self.one_token(self.state.get_nft_token_id_string()),
-            self.thousand_tokens(self.state.get_meta_esdt_token_id_string()),
-            self.one_token(self.state.get_dynamic_nft_token_id_string()),
-            self.thousand_tokens(self.state.get_sft_token_id_string()),
-            self.thousand_tokens(self.state.get_dynamic_meta_esdt_token_id_string()),
-            self.thousand_tokens(self.state.get_dynamic_sft_token_id_string()),
+        let initial_tokens_wallet = vec![
+            self.state.get_first_token_id(),
+            self.state.get_second_token_id(),
+            self.state.get_fee_token_id(),
+            self.state.get_nft_token_id(),
+            self.state.get_meta_esdt_token_id(),
+            self.state.get_dynamic_nft_token_id(),
+            self.state.get_sft_token_id(),
+            self.state.get_dynamic_meta_esdt_token_id(),
+            self.state.get_dynamic_sft_token_id(),
         ];
-        self.state.set_initial_balance(
-            Bech32Address::from(self.user_address().clone()),
-            expected_tokens_wallet,
-        );
+        self.state.set_initial_wallet_balance(initial_tokens_wallet);
     }
 
     pub async fn upgrade(&mut self, caller: Address) {
@@ -322,7 +319,7 @@ impl SovereignForgeInteract {
                 let mut payment_vec = PaymentsVec::new();
 
                 let fee_payment = EsdtTokenPayment::<StaticApi>::new(
-                    self.state.get_fee_token_id(),
+                    self.state.get_fee_token_identifier(),
                     0,
                     fee_amount.clone(),
                 );
@@ -370,7 +367,7 @@ impl SovereignForgeInteract {
                 let mut payment_vec = PaymentsVec::new();
 
                 let fee_payment = EsdtTokenPayment::<StaticApi>::new(
-                    self.state.get_fee_token_id(),
+                    self.state.get_fee_token_identifier(),
                     0,
                     fee_amount.clone(),
                 );
@@ -394,13 +391,7 @@ impl SovereignForgeInteract {
                 )
                 .await;
 
-                let expected_fee_market_balance = vec![TokenBalance {
-                    token_id: self.state.get_fee_token_id().to_string(),
-                    amount: fee_amount.clone(),
-                }];
-                let fee_market_address = self.state.get_fee_market_address(shard).clone();
-
-                self.check_address_balance(&fee_market_address, expected_fee_market_balance)
+                self.check_fee_market_balance_with_amount(shard, token, fee_amount)
                     .await;
             }
             None => {
@@ -462,7 +453,7 @@ impl SovereignForgeInteract {
                 let mut payment_vec = PaymentsVec::new();
 
                 let fee_payment = EsdtTokenPayment::<StaticApi>::new(
-                    self.state.get_fee_token_id(),
+                    self.state.get_fee_token_identifier(),
                     0,
                     fee_amount.clone(),
                 );
@@ -486,13 +477,7 @@ impl SovereignForgeInteract {
                 )
                 .await;
 
-                let expected_fee_market_balance = vec![TokenBalance {
-                    token_id: self.state.get_fee_token_id().to_string(),
-                    amount: fee_amount.clone(),
-                }];
-                let fee_market_address = self.state.get_fee_market_address(shard).clone();
-
-                self.check_address_balance(&fee_market_address, expected_fee_market_balance)
+                self.check_fee_market_balance_with_amount(shard, token, fee_amount)
                     .await;
             }
             None => {

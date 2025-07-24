@@ -183,7 +183,7 @@ impl EnshrineEsdtSafeInteract {
             SHARD_0,
             PREFERRED_CHAIN_IDS[0].to_string(),
             is_sovereign_chain,
-            Some(self.state.get_first_token_id()),
+            Some(self.state.get_first_token_identifier()),
             Some(SOVEREIGN_TOKEN_PREFIX.into()),
             opt_config,
         )

@@ -118,14 +118,14 @@ impl MvxEsdtSafeInteract {
             .await;
         self.state.set_second_token(second_token);
 
-        let initial_balance = vec![
-            self.thousand_tokens(self.state.get_first_token_id_string()),
-            self.thousand_tokens(self.state.get_second_token_id_string()),
-            self.thousand_tokens(self.state.get_fee_token_id_string()),
+        let initial_wallet_balance = vec![
+            self.state.get_first_token_id().clone(),
+            self.state.get_fee_token_id().clone(),
+            self.state.get_second_token_id().clone(),
         ];
 
         self.state
-            .set_initial_balance(self.user_address.to_bech32_default(), initial_balance);
+            .set_initial_wallet_balance(initial_wallet_balance);
     }
 
     pub async fn upgrade(&mut self) {
