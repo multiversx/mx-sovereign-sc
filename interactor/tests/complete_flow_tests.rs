@@ -6,8 +6,8 @@ use common_test_setup::constants::GAS_LIMIT;
 use common_test_setup::constants::PER_GAS;
 use common_test_setup::constants::PER_TRANSFER;
 use common_test_setup::constants::{
-    DEPLOY_COST, ISSUE_COST, ONE_HUNDRED_TOKENS, REGISTER_TOKEN_PREFIX, SC_CALL_LOG, SHARD_0,
-    SHARD_1, SHARD_2, TESTING_SC_ENDPOINT, TOKEN_DISPLAY_NAME, TOKEN_TICKER, WRONG_ENDPOINT_NAME,
+    DEPLOY_COST, ISSUE_COST, ONE_HUNDRED_TOKENS, REGISTER_TOKEN_PREFIX, SC_CALL_LOG, SHARD_1,
+    SHARD_2, TESTING_SC_ENDPOINT, TOKEN_DISPLAY_NAME, TOKEN_TICKER, WRONG_ENDPOINT_NAME,
 };
 use multiversx_sc::imports::OptionalValue;
 use multiversx_sc::types::EsdtTokenType;
@@ -40,6 +40,15 @@ async fn test_complete_deposit_flow_no_fee_only_transfer_data(#[case] shard: u32
     chain_interactor
         .complete_deposit_flow_with_transfer_data_only(shard, None, Some(SC_CALL_LOG))
         .await;
+
+    chain_interactor.check_user_balance_unchanged().await;
+    chain_interactor
+        .check_mvx_esdt_safe_balance_is_empty(shard)
+        .await;
+    chain_interactor
+        .check_fee_market_balance_is_empty(shard)
+        .await;
+    chain_interactor.check_testing_sc_balance_is_empty().await;
 }
 
 /// ### TEST
@@ -60,12 +69,27 @@ async fn test_complete_deposit_flow_with_fee_only_transfer_data(#[case] shard: u
     let mut chain_interactor = SovereignForgeInteract::new(Config::chain_simulator_config()).await;
 
     let fee = chain_interactor.create_standard_fee();
+    let fee_token = chain_interactor.state.get_fee_token_id();
+    let fee_amount = BigUint::from(PER_GAS * GAS_LIMIT);
 
     chain_interactor
         .complete_deposit_flow_with_transfer_data_only(shard, Some(fee), Some(SC_CALL_LOG))
         .await;
+
+    chain_interactor
+        .check_mvx_esdt_safe_balance_is_empty(shard)
+        .await;
+
+    chain_interactor
+        .check_fee_market_balance_with_amount(shard, fee_token.clone(), fee_amount.clone())
+        .await;
+
+    chain_interactor
+        .check_user_balance_after_deduction(fee_token, fee_amount)
+        .await;
 }
 
+//TODO: Fix the logs after framework fix is implemented, check for the TESTING_SC_ENDPOINT executed log as well
 /// ### TEST
 /// S-FORGE_COMPLETE-EXEC-FLOW_OK
 ///
@@ -92,8 +116,18 @@ async fn test_complete_execute_flow_with_transfer_data_only_success(#[case] shar
             TESTING_SC_ENDPOINT,
         )
         .await;
+
+    chain_interactor.check_user_balance_unchanged().await;
+    chain_interactor
+        .check_mvx_esdt_safe_balance_is_empty(shard)
+        .await;
+    chain_interactor
+        .check_fee_market_balance_is_empty(shard)
+        .await;
+    chain_interactor.check_testing_sc_balance_is_empty().await;
 }
 
+//TODO: Fix the logs after framework fix is implemented
 /// ### TEST
 /// S-FORGE_COMPLETE-EXEC-FAIL
 ///
@@ -121,6 +155,14 @@ async fn test_complete_execute_flow_with_transfer_data_only_fail(#[case] shard: 
             WRONG_ENDPOINT_NAME,
         )
         .await;
+    chain_interactor.check_user_balance_unchanged().await;
+    chain_interactor
+        .check_mvx_esdt_safe_balance_is_empty(shard)
+        .await;
+    chain_interactor
+        .check_fee_market_balance_is_empty(shard)
+        .await;
+    chain_interactor.check_testing_sc_balance_is_empty().await;
 }
 
 /// ### TEST
@@ -145,13 +187,12 @@ async fn test_complete_execute_flow_with_transfer_data_only_fail(#[case] shard: 
 async fn test_deposit_with_fee(
     #[case] token_type: EsdtTokenType,
     #[case] amount: BigUint<StaticApi>,
+    #[values(SHARD_1, SHARD_2)] shard: u32,
 ) {
     let mut chain_interactor = SovereignForgeInteract::new(Config::chain_simulator_config()).await;
-    let shard = SHARD_0;
 
     let token = chain_interactor.get_token_by_type(token_type);
-    let fee_token = chain_interactor.state.get_fee_token_id();
-    let fee_amount = fee_token.amount - PER_TRANSFER;
+    let fee_amount = BigUint::from(PER_TRANSFER);
 
     let fee = chain_interactor.create_standard_fee();
 
@@ -169,11 +210,19 @@ async fn test_deposit_with_fee(
         .await;
 
     chain_interactor
-        .check_user_balance_with_fee_deduction(token.clone(), amount.clone(), fee_amount)
+        .check_user_balance_with_fee_deduction(token.clone(), amount.clone(), fee_amount.clone())
         .await;
 
     chain_interactor
         .check_mvx_esdt_safe_balance_with_amount(shard, token, amount)
+        .await;
+
+    chain_interactor
+        .check_fee_market_balance_with_amount(
+            shard,
+            chain_interactor.state.get_fee_token_id(),
+            fee_amount,
+        )
         .await;
 }
 
@@ -199,9 +248,9 @@ async fn test_deposit_with_fee(
 async fn test_deposit_without_fee_and_execute(
     #[case] token_type: EsdtTokenType,
     #[case] amount: BigUint<StaticApi>,
+    #[values(SHARD_1, SHARD_2)] shard: u32,
 ) {
     let mut chain_interactor = SovereignForgeInteract::new(Config::chain_simulator_config()).await;
-    let shard = SHARD_2;
 
     let token = chain_interactor.get_token_by_type(token_type);
 
@@ -244,6 +293,10 @@ async fn test_deposit_without_fee_and_execute(
     chain_interactor
         .check_mvx_esdt_safe_balance_is_empty(shard)
         .await;
+
+    chain_interactor
+        .check_fee_market_balance_is_empty(shard)
+        .await;
 }
 
 /// ### TEST
@@ -255,22 +308,50 @@ async fn test_deposit_without_fee_and_execute(
 /// ### EXPECTED
 /// The deposit is successful and the event is found in logs
 #[rstest]
-#[case::fungible(EsdtTokenType::Fungible, BigUint::from(ONE_HUNDRED_TOKENS))]
-#[case::non_fungible(EsdtTokenType::NonFungibleV2, BigUint::from(1u64))]
-#[case::semi_fungible(EsdtTokenType::SemiFungible, BigUint::from(ONE_HUNDRED_TOKENS))]
-#[case::meta_fungible(EsdtTokenType::MetaFungible, BigUint::from(ONE_HUNDRED_TOKENS))]
-#[case::dynamic_nft(EsdtTokenType::DynamicNFT, BigUint::from(1u64))]
-#[case::dynamic_sft(EsdtTokenType::DynamicSFT, BigUint::from(ONE_HUNDRED_TOKENS))]
-#[case(EsdtTokenType::DynamicMeta, BigUint::from(ONE_HUNDRED_TOKENS))]
+#[rstest]
+#[case::fungible(
+    EsdtTokenType::Fungible,
+    BigUint::from(ONE_HUNDRED_TOKENS),
+    0u64,
+    18usize
+)]
+#[case::non_fungible(EsdtTokenType::NonFungibleV2, BigUint::from(1u64), 1u64, 0usize)]
+#[case::semi_fungible(
+    EsdtTokenType::SemiFungible,
+    BigUint::from(ONE_HUNDRED_TOKENS),
+    1u64,
+    0usize
+)]
+#[case::meta_fungible(
+    EsdtTokenType::MetaFungible,
+    BigUint::from(ONE_HUNDRED_TOKENS),
+    1u64,
+    18usize
+)]
+#[case::dynamic_nft(EsdtTokenType::DynamicNFT, BigUint::from(1u64), 1u64, 0usize)]
+#[case::dynamic_sft(
+    EsdtTokenType::DynamicSFT,
+    BigUint::from(ONE_HUNDRED_TOKENS),
+    1u64,
+    0usize
+)]
+#[case::dynamic_meta(
+    EsdtTokenType::DynamicMeta,
+    BigUint::from(ONE_HUNDRED_TOKENS),
+    1u64,
+    18usize
+)]
 #[tokio::test]
 #[serial]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn test_register_execute_and_deposit_sov_token(
     #[case] token_type: EsdtTokenType,
     #[case] amount: BigUint<StaticApi>,
+    #[case] nonce: u64,
+    #[case] decimals: usize,
+    #[values(SHARD_1, SHARD_2)] shard: u32,
 ) {
     let mut chain_interactor = SovereignForgeInteract::new(Config::chain_simulator_config()).await;
-    let shard = SHARD_0;
 
     chain_interactor
         .deploy_and_complete_setup_phase(
@@ -281,14 +362,12 @@ async fn test_register_execute_and_deposit_sov_token(
         )
         .await;
 
-    let token = chain_interactor.get_token_by_type(token_type);
-
-    let sov_token_id = TokenIdentifier::from_esdt_bytes(
-        REGISTER_TOKEN_PREFIX.to_string() + &token.token_id.clone(),
-    );
+    let token_id = "SOV-123456";
+    let sov_token_id =
+        TokenIdentifier::from_esdt_bytes(REGISTER_TOKEN_PREFIX.to_string() + token_id);
     let token_display_name = TOKEN_DISPLAY_NAME;
-    let num_decimals = 18;
-    let wanted_token_id = token.token_id.clone();
+    let num_decimals = decimals;
+    let wanted_token_id = token_id;
     let token_ticker = wanted_token_id.split('-').next().unwrap_or(TOKEN_TICKER);
 
     chain_interactor
@@ -312,9 +391,9 @@ async fn test_register_execute_and_deposit_sov_token(
 
     let token_info = EsdtTokenInfo {
         token_id: sov_token_id.to_string(),
-        nonce: token.nonce,
+        nonce,
         token_type,
-        amount: token.amount.clone(),
+        amount: amount.clone(),
     };
 
     chain_interactor
@@ -327,14 +406,6 @@ async fn test_register_execute_and_deposit_sov_token(
             None,
         )
         .await;
-
-    let mut nonce = token.nonce;
-    if token_type == EsdtTokenType::NonFungibleV2 || token_type == EsdtTokenType::DynamicNFT {
-        let sov_token_info = chain_interactor
-            .get_sov_to_mvx_token_id_with_nonce(shard, sov_token_id, token.nonce)
-            .await;
-        nonce = sov_token_info.token_nonce;
-    }
 
     let expected_token_info = EsdtTokenInfo {
         token_id: expected_token.to_string(),
@@ -350,20 +421,49 @@ async fn test_register_execute_and_deposit_sov_token(
         )
         .await;
 
-    chain_interactor
-        .check_mvx_esdt_safe_balance_is_empty(shard)
-        .await;
+    if token_type == EsdtTokenType::MetaFungible
+        || token_type == EsdtTokenType::DynamicMeta
+        || token_type == EsdtTokenType::DynamicSFT
+        || token_type == EsdtTokenType::SemiFungible
+    {
+        chain_interactor
+            .check_mvx_esdt_safe_balance_with_amount(
+                shard,
+                expected_token_info.clone(),
+                1u64.into(),
+            )
+            .await;
+    } else {
+        chain_interactor
+            .check_mvx_esdt_safe_balance_is_empty(shard)
+            .await;
+    }
 
     chain_interactor
         .deposit_no_transfer_data(shard, expected_token_info.clone(), amount.clone(), None)
         .await;
 
     chain_interactor
-        .check_user_balance_after_deduction(expected_token_info, amount)
+        .check_user_balance_after_deduction(expected_token_info.clone(), amount)
         .await;
-    chain_interactor
-        .check_mvx_esdt_safe_balance_is_empty(shard)
-        .await;
+
+    if token_type == EsdtTokenType::MetaFungible
+        || token_type == EsdtTokenType::DynamicMeta
+        || token_type == EsdtTokenType::DynamicSFT
+        || token_type == EsdtTokenType::SemiFungible
+    {
+        chain_interactor
+            .check_mvx_esdt_safe_balance_with_amount(
+                shard,
+                expected_token_info.clone(),
+                1u64.into(),
+            )
+            .await;
+    } else {
+        chain_interactor
+            .check_mvx_esdt_safe_balance_is_empty(shard)
+            .await;
+    }
 }
 
 /// ### TEST
@@ -388,9 +488,9 @@ async fn test_register_execute_and_deposit_sov_token(
 async fn test_deposit_mvx_token_with_transfer_data(
     #[case] token_type: EsdtTokenType,
     #[case] amount: BigUint<StaticApi>,
+    #[values(SHARD_1, SHARD_2)] shard: u32,
 ) {
     let mut chain_interactor = SovereignForgeInteract::new(Config::chain_simulator_config()).await;
-    let shard = SHARD_2;
 
     chain_interactor
         .deploy_and_complete_setup_phase(
@@ -438,13 +538,13 @@ async fn test_deposit_mvx_token_with_transfer_data(
 async fn test_deposit_mvx_token_with_transfer_data_and_fee(
     #[case] token_type: EsdtTokenType,
     #[case] amount: BigUint<StaticApi>,
+    #[values(SHARD_1, SHARD_2)] shard: u32,
 ) {
     let mut chain_interactor = SovereignForgeInteract::new(Config::chain_simulator_config()).await;
-    let shard = SHARD_0;
 
     let fee = chain_interactor.create_standard_fee();
     let fee_token = chain_interactor.state.get_fee_token_id();
-    let fee_amount = fee_token.amount - PER_TRANSFER - PER_GAS * GAS_LIMIT;
+    let fee_amount = BigUint::from(PER_TRANSFER + PER_GAS * GAS_LIMIT);
 
     chain_interactor
         .deploy_and_complete_setup_phase(
@@ -462,11 +562,15 @@ async fn test_deposit_mvx_token_with_transfer_data_and_fee(
         .await;
 
     chain_interactor
-        .check_user_balance_with_fee_deduction(token.clone(), amount.clone(), fee_amount)
+        .check_user_balance_with_fee_deduction(token.clone(), amount.clone(), fee_amount.clone())
         .await;
 
     chain_interactor
         .check_mvx_esdt_safe_balance_with_amount(shard, token.clone(), amount.clone())
+        .await;
+
+    chain_interactor
+        .check_fee_market_balance_with_amount(shard, fee_token, fee_amount)
         .await;
 }
 
@@ -492,9 +596,9 @@ async fn test_deposit_mvx_token_with_transfer_data_and_fee(
 async fn test_deposit_and_execute_with_transfer_data(
     #[case] token_type: EsdtTokenType,
     #[case] amount: BigUint<StaticApi>,
+    #[values(SHARD_1, SHARD_2)] shard: u32,
 ) {
     let mut chain_interactor = SovereignForgeInteract::new(Config::chain_simulator_config()).await;
-    let shard = SHARD_2;
 
     let token = chain_interactor.get_token_by_type(token_type);
 
@@ -544,22 +648,49 @@ async fn test_deposit_and_execute_with_transfer_data(
 /// ### EXPECTED
 /// The deposit is successful and the event is found in logs
 #[rstest]
-#[case::fungible(EsdtTokenType::Fungible, BigUint::from(ONE_HUNDRED_TOKENS))]
-#[case::non_fungible(EsdtTokenType::NonFungibleV2, BigUint::from(1u64))]
-#[case::semi_fungible(EsdtTokenType::SemiFungible, BigUint::from(ONE_HUNDRED_TOKENS))]
-#[case::meta_fungible(EsdtTokenType::MetaFungible, BigUint::from(ONE_HUNDRED_TOKENS))]
-#[case::dynamic_nft(EsdtTokenType::DynamicNFT, BigUint::from(1u64))]
-#[case::dynamic_sft(EsdtTokenType::DynamicSFT, BigUint::from(ONE_HUNDRED_TOKENS))]
-#[case::dynamic_meta(EsdtTokenType::DynamicMeta, BigUint::from(ONE_HUNDRED_TOKENS))]
+#[case::fungible(
+    EsdtTokenType::Fungible,
+    BigUint::from(ONE_HUNDRED_TOKENS),
+    0u64,
+    18usize
+)]
+#[case::non_fungible(EsdtTokenType::NonFungibleV2, BigUint::from(1u64), 1u64, 0usize)]
+#[case::semi_fungible(
+    EsdtTokenType::SemiFungible,
+    BigUint::from(ONE_HUNDRED_TOKENS),
+    1u64,
+    0usize
+)]
+#[case::meta_fungible(
+    EsdtTokenType::MetaFungible,
+    BigUint::from(ONE_HUNDRED_TOKENS),
+    1u64,
+    18usize
+)]
+#[case::dynamic_nft(EsdtTokenType::DynamicNFT, BigUint::from(1u64), 1u64, 0usize)]
+#[case::dynamic_sft(
+    EsdtTokenType::DynamicSFT,
+    BigUint::from(ONE_HUNDRED_TOKENS),
+    1u64,
+    0usize
+)]
+#[case::dynamic_meta(
+    EsdtTokenType::DynamicMeta,
+    BigUint::from(ONE_HUNDRED_TOKENS),
+    1u64,
+    18usize
+)]
 #[tokio::test]
 #[serial]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn test_register_execute_with_transfer_data_and_deposit_sov_token(
     #[case] token_type: EsdtTokenType,
     #[case] amount: BigUint<StaticApi>,
+    #[case] nonce: u64,
+    #[case] decimals: usize,
+    #[values(SHARD_1, SHARD_2)] shard: u32,
 ) {
     let mut chain_interactor = SovereignForgeInteract::new(Config::chain_simulator_config()).await;
-    let shard = SHARD_0;
 
     chain_interactor
         .deploy_and_complete_setup_phase(
@@ -570,21 +701,14 @@ async fn test_register_execute_with_transfer_data_and_deposit_sov_token(
         )
         .await;
 
-    let token = chain_interactor.get_token_by_type(token_type);
+    let token_id = "SOV-123456";
 
-    let sov_token_id = TokenIdentifier::from_esdt_bytes(
-        REGISTER_TOKEN_PREFIX.to_string() + &token.token_id.clone(),
-    );
+    let sov_token_id =
+        TokenIdentifier::from_esdt_bytes(REGISTER_TOKEN_PREFIX.to_string() + token_id);
     let token_display_name = TOKEN_DISPLAY_NAME;
-    let num_decimals = 18;
-    let wanted_token_id = token.token_id.clone();
+    let num_decimals = decimals;
+    let wanted_token_id = token_id;
     let token_ticker = wanted_token_id.split('-').next().unwrap_or(TOKEN_TICKER);
-
-    println!("Registering token: {}", sov_token_id);
-    println!("Token type: {:?}", token_type);
-    println!("Token display name: {}", token_display_name);
-    println!("Token ticker: {}", token_ticker);
-    println!("Number of decimals: {}", num_decimals);
 
     chain_interactor
         .register_token(
@@ -607,9 +731,9 @@ async fn test_register_execute_with_transfer_data_and_deposit_sov_token(
 
     let token_info = EsdtTokenInfo {
         token_id: sov_token_id.to_string(),
-        nonce: token.nonce,
+        nonce,
         token_type,
-        amount: token.amount.clone(),
+        amount: amount.clone(),
     };
 
     chain_interactor
@@ -623,41 +747,72 @@ async fn test_register_execute_with_transfer_data_and_deposit_sov_token(
         )
         .await;
 
-    let mut nonce = token.nonce;
-    if token_type == EsdtTokenType::NonFungibleV2 || token_type == EsdtTokenType::DynamicNFT {
-        let sov_token_info = chain_interactor
-            .get_sov_to_mvx_token_id_with_nonce(shard, sov_token_id, token.nonce)
-            .await;
-        nonce = sov_token_info.token_nonce;
-    }
-
     let expected_token_info = EsdtTokenInfo {
         token_id: expected_token.to_string(),
         nonce,
         token_type,
-        amount: token.amount,
+        amount: amount.clone(),
     };
 
+    chain_interactor.check_user_balance_unchanged().await;
+
     chain_interactor
-        .check_mvx_esdt_safe_balance_is_empty(shard)
+        .check_testing_sc_balance_with_amount(expected_token_info.clone(), amount.clone())
         .await;
+
+    if token_type == EsdtTokenType::MetaFungible
+        || token_type == EsdtTokenType::DynamicMeta
+        || token_type == EsdtTokenType::DynamicSFT
+        || token_type == EsdtTokenType::SemiFungible
+    {
+        chain_interactor
+            .check_mvx_esdt_safe_balance_with_amount(
+                shard,
+                expected_token_info.clone(),
+                1u64.into(),
+            )
+            .await;
+    } else {
+        chain_interactor
+            .check_mvx_esdt_safe_balance_is_empty(shard)
+            .await;
+    }
+
+    chain_interactor
+        .withdraw_from_testing_sc(expected_token.clone(), nonce, amount.clone())
+        .await;
+
+    chain_interactor.check_testing_sc_balance_is_empty().await;
 
     chain_interactor
         .check_user_balance_with_amount(expected_token_info.clone(), amount.clone())
         .await;
 
     chain_interactor
-        .withdraw_from_testing_sc(expected_token.clone(), nonce, amount.clone())
+        .deposit_no_transfer_data(shard, expected_token_info.clone(), amount, None)
         .await;
 
     chain_interactor
-        .deposit_no_transfer_data(shard, expected_token_info, amount, None)
+        .check_user_balance_with_amount(expected_token_info.clone(), 0u64.into())
         .await;
 
-    chain_interactor.check_user_balance_unchanged().await;
-    chain_interactor
-        .check_mvx_esdt_safe_balance_is_empty(shard)
-        .await;
+    if token_type == EsdtTokenType::MetaFungible
+        || token_type == EsdtTokenType::DynamicMeta
+        || token_type == EsdtTokenType::DynamicSFT
+        || token_type == EsdtTokenType::SemiFungible
+    {
+        chain_interactor
+            .check_mvx_esdt_safe_balance_with_amount(
+                shard,
+                expected_token_info.clone(),
+                1u64.into(),
+            )
+            .await;
+    } else {
+        chain_interactor
+            .check_mvx_esdt_safe_balance_is_empty(shard)
+            .await;
+    }
 }
 
 /// ### TEST
@@ -669,22 +824,49 @@ async fn test_register_execute_with_transfer_data_and_deposit_sov_token(
 /// ### EXPECTED
 /// The operation is not executed in the testing smart contract and the failed event is found in logs
 #[rstest]
-#[case::fungible(EsdtTokenType::Fungible, BigUint::from(ONE_HUNDRED_TOKENS))]
-#[case::non_fungible(EsdtTokenType::NonFungibleV2, BigUint::from(1u64))]
-#[case::semi_fungible(EsdtTokenType::SemiFungible, BigUint::from(ONE_HUNDRED_TOKENS))]
-#[case::meta_fungible(EsdtTokenType::MetaFungible, BigUint::from(ONE_HUNDRED_TOKENS))]
-#[case::dynamic_nft(EsdtTokenType::DynamicNFT, BigUint::from(1u64))]
-#[case::dynamic_sft(EsdtTokenType::DynamicSFT, BigUint::from(ONE_HUNDRED_TOKENS))]
-#[case::dynamic_meta(EsdtTokenType::DynamicMeta, BigUint::from(ONE_HUNDRED_TOKENS))]
+#[case::fungible(
+    EsdtTokenType::Fungible,
+    BigUint::from(ONE_HUNDRED_TOKENS),
+    0u64,
+    18usize
+)]
+#[case::non_fungible(EsdtTokenType::NonFungibleV2, BigUint::from(1u64), 1u64, 0usize)]
+#[case::semi_fungible(
+    EsdtTokenType::SemiFungible,
+    BigUint::from(ONE_HUNDRED_TOKENS),
+    1u64,
+    0usize
+)]
+#[case::meta_fungible(
+    EsdtTokenType::MetaFungible,
+    BigUint::from(ONE_HUNDRED_TOKENS),
+    1u64,
+    18usize
+)]
+#[case::dynamic_nft(EsdtTokenType::DynamicNFT, BigUint::from(1u64), 1u64, 0usize)]
+#[case::dynamic_sft(
+    EsdtTokenType::DynamicSFT,
+    BigUint::from(ONE_HUNDRED_TOKENS),
+    1u64,
+    0usize
+)]
+#[case::dynamic_meta(
+    EsdtTokenType::DynamicMeta,
+    BigUint::from(ONE_HUNDRED_TOKENS),
+    1u64,
+    18usize
+)]
 #[tokio::test]
 #[serial]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn test_register_execute_call_failed(
     #[case] token_type: EsdtTokenType,
     #[case] amount: BigUint<StaticApi>,
+    #[case] nonce: u64,
+    #[case] decimals: usize,
+    #[values(SHARD_1, SHARD_2)] shard: u32,
 ) {
     let mut chain_interactor = SovereignForgeInteract::new(Config::chain_simulator_config()).await;
-    let shard = SHARD_0;
 
     chain_interactor
         .deploy_and_complete_setup_phase(
@@ -695,14 +877,13 @@ async fn test_register_execute_call_failed(
         )
         .await;
 
-    let token = chain_interactor.get_token_by_type(token_type);
+    let token_id = "SOV-123456";
 
-    let sov_token_id = TokenIdentifier::from_esdt_bytes(
-        REGISTER_TOKEN_PREFIX.to_string() + &token.token_id.clone(),
-    );
+    let sov_token_id =
+        TokenIdentifier::from_esdt_bytes(REGISTER_TOKEN_PREFIX.to_string() + token_id);
     let token_display_name = TOKEN_DISPLAY_NAME;
-    let num_decimals = 18;
-    let wanted_token_id = token.token_id.clone();
+    let num_decimals = decimals;
+    let wanted_token_id = token_id;
     let token_ticker = wanted_token_id.split('-').next().unwrap_or(TOKEN_TICKER);
 
     chain_interactor
@@ -722,15 +903,15 @@ async fn test_register_execute_call_failed(
 
     let token_info = EsdtTokenInfo {
         token_id: sov_token_id.to_string(),
-        nonce: token.nonce,
+        nonce,
         token_type,
-        amount: token.amount,
+        amount: amount.clone(),
     };
 
     chain_interactor
         .execute_operation(
             shard,
-            Some(WRONG_ENDPOINT_NAME),
+            Some(FUNCTION_NOT_FOUND),
             None,
             token_info,
             amount.clone(),
@@ -740,7 +921,34 @@ async fn test_register_execute_call_failed(
 
     chain_interactor.check_user_balance_unchanged().await;
 
-    chain_interactor
-        .check_mvx_esdt_safe_balance_is_empty(shard)
+    let expected_token = chain_interactor
+        .get_sov_to_mvx_token_id(shard, sov_token_id)
         .await;
+
+    let expected_token_info = EsdtTokenInfo {
+        token_id: expected_token.to_string(),
+        nonce,
+        token_type,
+        amount: amount.clone(),
+    };
+
+    if token_type == EsdtTokenType::MetaFungible
+        || token_type == EsdtTokenType::DynamicMeta
+        || token_type == EsdtTokenType::DynamicSFT
+        || token_type == EsdtTokenType::SemiFungible
+    {
+        chain_interactor
+            .check_mvx_esdt_safe_balance_with_amount(
+                shard,
+                expected_token_info.clone(),
+                1u64.into(),
+            )
+            .await;
+    } else {
+        chain_interactor
+            .check_mvx_esdt_safe_balance_is_empty(shard)
+            .await;
+    }
+
+    chain_interactor.check_testing_sc_balance_is_empty().await;
 }

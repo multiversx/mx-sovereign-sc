@@ -391,7 +391,9 @@ impl SovereignForgeInteract {
                 )
                 .await;
 
-                self.check_fee_market_balance_with_amount(shard, token, fee_amount)
+                let fee_token = self.state.get_fee_token_id();
+
+                self.check_fee_market_balance_with_amount(shard, fee_token, fee_amount)
                     .await;
             }
             None => {
@@ -477,8 +479,12 @@ impl SovereignForgeInteract {
                 )
                 .await;
 
-                self.check_fee_market_balance_with_amount(shard, token, fee_amount)
-                    .await;
+                self.check_fee_market_balance_with_amount(
+                    shard,
+                    self.state.get_fee_token_id(),
+                    fee_amount,
+                )
+                .await;
             }
             None => {
                 let mut payment_vec = PaymentsVec::new();

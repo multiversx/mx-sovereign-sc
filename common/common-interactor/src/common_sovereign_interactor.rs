@@ -1377,6 +1377,8 @@ pub trait CommonInteractorTrait {
         address: &Bech32Address,
         expected_token_balance: Vec<EsdtTokenInfo>,
     ) {
+        let address_name = self.get_address_name(address);
+
         let balances = self
             .interactor()
             .get_account_esdt(&address.to_address())
@@ -1385,7 +1387,8 @@ pub trait CommonInteractorTrait {
         if expected_token_balance.is_empty() {
             assert!(
                 balances.is_empty(),
-                "Expected no tokens for address {}, but found: {:?}",
+                "Expected no tokens for {} ({}), but found: {:?}",
+                address_name,
                 address,
                 balances
             );
@@ -1395,11 +1398,13 @@ pub trait CommonInteractorTrait {
         for token_balance in expected_token_balance {
             let token_id = &token_balance.token_id;
             let expected_amount = &token_balance.amount;
+
             if *expected_amount == 0u64 {
                 match balances.get(token_id) {
                     None => {}
                     Some(esdt_balance) => {
-                        panic!("For address: {} -> Expected token '{}' to be absent (balance 0), but found it with balance: {}", address, token_id, esdt_balance.balance);
+                        panic!("For {} ({}) -> Expected token '{}' to be absent (balance 0), but found it with balance: {}", 
+                           address_name, address, token_id, esdt_balance.balance);
                     }
                 }
                 continue;
@@ -1414,22 +1419,24 @@ pub trait CommonInteractorTrait {
                             .expect(FAILED_TO_PARSE_AS_NUMBER),
                     );
                     assert_eq!(
-                        actual_amount,
-                        *expected_amount,
-                        "\nFor address: {} -> Balance mismatch for token {}:\nexpected: {}\nfound:    {}",
-                        address,
-                        found_token_id,
-                        expected_amount.to_display(),
-                        esdt_balance.balance
-                    );
+                    actual_amount,
+                    *expected_amount,
+                    "\nFor {} ({}) -> Balance mismatch for token {}:\nexpected: {}\nfound:    {}",
+                    address_name,
+                    address,
+                    found_token_id,
+                    expected_amount.to_display(),
+                    esdt_balance.balance
+                );
                 }
                 None => {
                     panic!(
-                        "For address: {} -> Expected token starting with '{}' with balance {}, but none was found",
-                        address,
-                        token_id,
-                        expected_amount.to_display()
-                    );
+                    "For {} ({}) -> Expected token starting with '{}' with balance {}, but none was found",
+                    address_name,
+                    address,
+                    token_id,
+                    expected_amount.to_display()
+                );
                 }
             }
         }
@@ -1628,5 +1635,37 @@ pub trait CommonInteractorTrait {
             nonce: token.nonce,
             token_type: token.token_type,
         }
+    }
+
+    fn get_address_name(&mut self, address: &Bech32Address) -> &'static str {
+        let testing_addr = self.state().current_testing_sc_address();
+        if address == testing_addr {
+            return "Testing SC";
+        }
+
+        // Check shard-specific contract addresses
+        for shard_id in 0..3 {
+            let mvx_addr = self.state().get_mvx_esdt_safe_address(shard_id);
+            if address == mvx_addr {
+                return match shard_id {
+                    0 => "MVX ESDT Safe Shard 0",
+                    1 => "MVX ESDT Safe Shard 1",
+                    2 => "MVX ESDT Safe Shard 2",
+                    _ => "Unknown MVX ESDT Safe",
+                };
+            }
+
+            let fee_addr = self.state().get_fee_market_address(shard_id);
+            if address == fee_addr {
+                return match shard_id {
+                    0 => "Fee Market Shard 0",
+                    1 => "Fee Market Shard 1",
+                    2 => "Fee Market Shard 2",
+                    _ => "Unknown Fee Market",
+                };
+            }
+        }
+
+        "Unknown Address"
     }
 }
