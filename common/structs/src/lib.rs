@@ -14,6 +14,20 @@ pub mod operation;
 pub const MIN_BLOCKS_FOR_FINALITY: u64 = 10;
 pub const DEFAULT_MAX_TX_GAS_LIMIT: u64 = 300_000_000;
 
+pub const PHASE_ONE_ASYNC_CALL_GAS: u64 = 7_500_000;
+pub const PHASE_ONE_CALLBACK_GAS: u64 = 3_000_000;
+
+pub const PHASE_TWO_ASYNC_CALL_GAS: u64 = 17_000_000;
+pub const PHASE_TWO_CALLBACK_GAS: u64 = 2_000_000;
+
+pub const PHASE_THREE_ASYNC_CALL_GAS: u64 = 16_000_000;
+pub const PHASE_THREE_CALLBACK_GAS: u64 = 2_000_000;
+
+pub const PHASE_FOUR_ASYNC_CALL_GAS: u64 = 7_500_000;
+pub const PHASE_FOUR_CALLBACK_GAS: u64 = 3_000_000;
+
+pub const COMPLETE_SETUP_PHASE_GAS: u64 = 80_000_000;
+
 #[type_abi]
 #[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, ManagedVecItem, Clone)]
 pub struct EsdtInfo<M: ManagedTypeApi> {
@@ -36,5 +50,5 @@ pub struct ValidatorInfo<M: ManagedTypeApi> {
     pub address: ManagedAddress<M>,
     pub bls_key: ManagedBuffer<M>,
     pub egld_stake: BigUint<M>,
-    pub token_stake: EsdtTokenData<M>,
+    pub token_stake: Option<ManagedVec<M, EsdtTokenPayment<M>>>,
 }

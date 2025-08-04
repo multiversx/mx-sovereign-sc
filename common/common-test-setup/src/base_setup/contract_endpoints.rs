@@ -89,13 +89,12 @@ impl BaseSetup {
             .from(OWNER_ADDRESS)
             .to(CHAIN_CONFIG_ADDRESS)
             .typed(ChainConfigContractProxy)
-            .register(new_validator)
+            .register(new_validator.bls_key)
             .returns(ReturnsHandledOrError::new())
             .returns(ReturnsLogs)
             .run();
 
         self.assert_expected_error_message(response, expected_error_message);
-
         self.assert_expected_log(logs, expected_log);
     }
 }

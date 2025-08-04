@@ -85,6 +85,97 @@ where
     To: TxTo<Env>,
     Gas: TxGas<Env>,
 {
+    pub fn complete_setup_phase(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("completeSetupPhase")
+            .original_result()
+    }
+
+    pub fn register<
+        Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
+    >(
+        self,
+        new_bls_key: Arg0,
+    ) -> TxTypedCall<Env, From, To, (), Gas, ()> {
+        self.wrapped_tx
+            .raw_call("register")
+            .argument(&new_bls_key)
+            .original_result()
+    }
+
+    pub fn unregister<
+        Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
+    >(
+        self,
+        bls_key: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("unregister")
+            .argument(&bls_key)
+            .original_result()
+    }
+
+    pub fn sovereign_config(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, structs::configs::SovereignConfig<Env::Api>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("sovereignConfig")
+            .original_result()
+    }
+
+    pub fn bls_key_to_id_mapper<
+        Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
+    >(
+        self,
+        bls_key: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, BigUint<Env::Api>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("blsKeyToId")
+            .argument(&bls_key)
+            .original_result()
+    }
+
+    pub fn validator_info<
+        Arg0: ProxyArg<BigUint<Env::Api>>,
+    >(
+        self,
+        id: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, structs::ValidatorInfo<Env::Api>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("validator_info")
+            .argument(&id)
+            .original_result()
+    }
+
+    pub fn bls_keys_map(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, MultiValueEncoded<Env::Api, MultiValue2<BigUint<Env::Api>, ManagedBuffer<Env::Api>>>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("blsKeysMap")
+            .original_result()
+    }
+
+    pub fn was_previously_slashed<
+        Arg0: ProxyArg<ManagedAddress<Env::Api>>,
+    >(
+        self,
+        validator: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, bool> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("wasPreviouslySlashed")
+            .argument(&validator)
+            .original_result()
+    }
+
     pub fn update_sovereign_config_during_setup_phase<
         Arg0: ProxyArg<structs::configs::SovereignConfig<Env::Api>>,
     >(
@@ -114,82 +205,19 @@ where
             .original_result()
     }
 
-    pub fn complete_setup_phase(
-        self,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("completeSetupPhase")
-            .original_result()
-    }
-
-    pub fn register<
-        Arg0: ProxyArg<structs::ValidatorInfo<Env::Api>>,
-    >(
-        self,
-        new_validator: Arg0,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("register")
-            .argument(&new_validator)
-            .original_result()
-    }
-
-    pub fn unregister<
-        Arg0: ProxyArg<structs::ValidatorInfo<Env::Api>>,
-    >(
-        self,
-        validator_info: Arg0,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("unregister")
-            .argument(&validator_info)
-            .original_result()
-    }
-
-    pub fn sovereign_config(
-        self,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, structs::configs::SovereignConfig<Env::Api>> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("sovereignConfig")
-            .original_result()
-    }
-
-    pub fn bls_key_to_id_mapper<
+    pub fn update_registration_status<
         Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
+        Arg1: ProxyArg<u8>,
     >(
         self,
-        bls_key: Arg0,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, BigUint<Env::Api>> {
+        hash_of_hashes: Arg0,
+        registration_status: Arg1,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
-            .raw_call("blsKeyToId")
-            .argument(&bls_key)
-            .original_result()
-    }
-
-    pub fn bls_keys_map(
-        self,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, MultiValueEncoded<Env::Api, MultiValue2<BigUint<Env::Api>, ManagedBuffer<Env::Api>>>> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("blsKeysMap")
-            .original_result()
-    }
-
-    pub fn was_previously_slashed<
-        Arg0: ProxyArg<ManagedAddress<Env::Api>>,
-    >(
-        self,
-        validator: Arg0,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, bool> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("wasPreviouslySlashed")
-            .argument(&validator)
+            .raw_call("updateRegistrationStatus")
+            .argument(&hash_of_hashes)
+            .argument(&registration_status)
             .original_result()
     }
 }

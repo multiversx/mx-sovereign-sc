@@ -173,9 +173,12 @@ pub trait Headerverifier: events::EventsModule + setup_phase::SetupPhaseModule {
             self.bls_pub_keys(self.blockchain().get_block_epoch()).len() as u64
         );
 
+        // add epoch 0
+
         self.setup_phase_complete().set(true);
     }
 
+    // Not needed since check is done in chain-config
     fn check_validator_range(&self, number_of_validators: u64) {
         let sovereign_config = self
             .sovereign_config(
