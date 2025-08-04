@@ -97,4 +97,26 @@ impl BaseSetup {
         self.assert_expected_error_message(response, expected_error_message);
         self.assert_expected_log(logs, expected_log);
     }
+
+    pub fn update_registration_status(
+        &mut self,
+        hash_of_hashes: &ManagedBuffer<StaticApi>,
+        registration_status: u8,
+        expected_error_message: Option<&str>,
+        expected_log: Option<&str>,
+    ) {
+        let (response, logs) = self
+            .world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .to(CHAIN_CONFIG_ADDRESS)
+            .typed(ChainConfigContractProxy)
+            .update_registration_status(hash_of_hashes, registration_status)
+            .returns(ReturnsHandledOrError::new())
+            .returns(ReturnsLogs)
+            .run();
+
+        self.assert_expected_error_message(response, expected_error_message);
+        self.assert_expected_log(logs, expected_log);
+    }
 }
