@@ -415,7 +415,11 @@ fn test_register_validator_not_enough_egld_stake() {
         .common_setup
         .complete_header_verifier_setup_phase(None);
 
-    state.register_and_update_registration_status(ENABLED);
+    let signature = ManagedBuffer::new();
+    let bitmap = ManagedBuffer::new();
+    let epoch = 0;
+
+    state.register_and_update_registration_status(ENABLED, signature, bitmap, epoch);
 
     state.register(
         &new_validator_one,
@@ -457,7 +461,11 @@ fn test_register_validator_already_registered() {
         .common_setup
         .complete_header_verifier_setup_phase(None);
 
-    state.register_and_update_registration_status(ENABLED);
+    let signature = ManagedBuffer::new();
+    let bitmap = ManagedBuffer::from("1u8");
+    let epoch = 0;
+
+    state.register_and_update_registration_status(ENABLED, signature, bitmap, epoch);
 
     state.register(&new_validator, &payments_vec, None, Some("register"));
     assert!(state.get_bls_key_id(&new_validator) == 1);
@@ -513,7 +521,11 @@ fn test_register_validator_not_whitelisted() {
         .common_setup
         .complete_header_verifier_setup_phase(None);
 
-    state.register_and_update_registration_status(ENABLED);
+    let signature = ManagedBuffer::new();
+    let bitmap = ManagedBuffer::new();
+    let epoch = 0;
+
+    state.register_and_update_registration_status(ENABLED, signature, bitmap, epoch);
 
     state.register(
         &new_validator,
@@ -574,7 +586,11 @@ fn test_register_validator_is_whitelisted() {
         .common_setup
         .complete_header_verifier_setup_phase(None);
 
-    state.register_and_update_registration_status(ENABLED);
+    let signature = ManagedBuffer::new();
+    let bitmap = ManagedBuffer::new();
+    let epoch = 0;
+
+    state.register_and_update_registration_status(ENABLED, signature, bitmap, epoch);
 
     state.register(&new_validator, &payments_vec, None, Some("register"));
 }
@@ -629,7 +645,11 @@ fn test_register_validator_not_whitelisted_after_genesis() {
         .common_setup
         .complete_header_verifier_setup_phase(None);
 
-    state.register_and_update_registration_status(ENABLED);
+    let signature = ManagedBuffer::new();
+    let bitmap = ManagedBuffer::new();
+    let epoch = 0;
+
+    state.register_and_update_registration_status(ENABLED, signature, bitmap, epoch);
 
     state.register(
         &whitelisted_validator,

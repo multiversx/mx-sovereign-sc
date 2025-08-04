@@ -169,8 +169,11 @@ pub trait Headerverifier: events::EventsModule + setup_phase::SetupPhaseModule {
             return;
         }
 
+        let sovereign_config = self.get_sovereign_config();
+
         self.check_validator_range(
-            self.bls_pub_keys(self.blockchain().get_block_epoch()).len() as u64
+            &sovereign_config,
+            self.bls_pub_keys(self.blockchain().get_block_epoch()).len() as u64,
         );
 
         // add epoch 0
@@ -178,18 +181,25 @@ pub trait Headerverifier: events::EventsModule + setup_phase::SetupPhaseModule {
         self.setup_phase_complete().set(true);
     }
 
-    // Not needed since check is done in chain-config
-    fn check_validator_range(&self, number_of_validators: u64) {
-        let sovereign_config = self
-            .sovereign_config(
-                self.sovereign_contracts()
-                    .iter()
-                    .find(|sc| sc.id == ScArray::ChainConfig)
-                    .unwrap_or_else(|| sc_panic!(COULD_NOT_RETRIEVE_SOVEREIGN_CONFIG))
-                    .address,
-            )
-            .get();
+    fn get_genesis_validators(&self) -> ManagedVec<ManagedBuffer> {}
 
+    fn get_sovereign_config(&self) -> SovereignConfig<Self::Api> {
+        self.sovereign_config(
+            self.sovereign_contracts()
+                .iter()
+                .find(|sc| sc.id == ScArray::ChainConfig)
+                .unwrap_or_else(|| sc_panic!(COULD_NOT_RETRIEVE_SOVEREIGN_CONFIG))
+                .address,
+        )
+        .get()
+    }
+
+    // Not needed since check is done in chain-config
+    fn check_validator_range(
+        &self,
+        sovereign_config: &SovereignConfig<Self::Api>,
+        number_of_validators: u64,
+    ) {
         require!(
             number_of_validators >= sovereign_config.min_validators
                 && number_of_validators <= sovereign_config.max_validators,
