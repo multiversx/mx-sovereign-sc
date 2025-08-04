@@ -181,8 +181,6 @@ pub trait Headerverifier: events::EventsModule + setup_phase::SetupPhaseModule {
         self.setup_phase_complete().set(true);
     }
 
-    fn get_genesis_validators(&self) -> ManagedVec<ManagedBuffer> {}
-
     fn get_sovereign_config(&self) -> SovereignConfig<Self::Api> {
         self.sovereign_config(
             self.sovereign_contracts()
