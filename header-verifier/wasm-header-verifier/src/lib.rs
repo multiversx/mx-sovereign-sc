@@ -6,9 +6,9 @@
 
 // Init:                                 1
 // Upgrade:                              1
-// Endpoints:                            5
+// Endpoints:                            6
 // Async Callback (empty):               1
-// Total number of exported functions:   8
+// Total number of exported functions:   9
 
 #![no_std]
 
@@ -24,6 +24,7 @@ multiversx_sc_wasm_adapter::endpoints! {
         changeValidatorSet => change_validator_set
         removeExecutedHash => remove_executed_hash
         lockOperationHash => lock_operation_hash
+        setGenesisValidators => set_genesis_validators
         completeSetupPhase => complete_setup_phase
     )
 }

@@ -127,3 +127,5 @@ pub const EMPTY_ADDITIONAL_STAKE: &str = "Additional stake was sent as an empty 
 pub const ADDITIONAL_STAKE_ZERO_VALUE: &str = "Additional stake cannot be a zero value";
 pub const ADDITIONAL_STAKE_NOT_REQUIRED: &str = "Additional stake was provided but is not required";
 pub const INVALID_BLS_KEY_FOR_CALLER: &str = "Invalid BLS key for caller";
+pub const GENESIS_VALIDATORS_ALREADY_SET: &str = "Genesis Validator were already set";
+pub const CALLER_NOT_CHAIN_CONFIG: &str = "Only Chain-Config SC can call this endpoint";

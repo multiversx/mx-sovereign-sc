@@ -1,12 +1,12 @@
 #![no_std]
 
 use error_messages::{
-    BITMAP_LEN_DOES_NOT_MATCH_BLS_KEY_LEN, BLS_KEY_NOT_REGISTERED,
+    BITMAP_LEN_DOES_NOT_MATCH_BLS_KEY_LEN, BLS_KEY_NOT_REGISTERED, CALLER_NOT_CHAIN_CONFIG,
     CALLER_NOT_FROM_CURRENT_SOVEREIGN, CHAIN_CONFIG_NOT_DEPLOYED,
     COULD_NOT_RETRIEVE_SOVEREIGN_CONFIG, CURRENT_OPERATION_ALREADY_IN_EXECUTION,
-    CURRENT_OPERATION_NOT_REGISTERED, HASH_OF_HASHES_DOES_NOT_MATCH, INVALID_VALIDATOR_SET_LENGTH,
-    MIN_NUMBER_OF_SIGNATURE_NOT_MET, OUTGOING_TX_HASH_ALREADY_REGISTERED,
-    VALIDATORS_ALREADY_REGISTERED_IN_EPOCH,
+    CURRENT_OPERATION_NOT_REGISTERED, GENESIS_VALIDATORS_ALREADY_SET,
+    HASH_OF_HASHES_DOES_NOT_MATCH, INVALID_VALIDATOR_SET_LENGTH, MIN_NUMBER_OF_SIGNATURE_NOT_MET,
+    OUTGOING_TX_HASH_ALREADY_REGISTERED, VALIDATORS_ALREADY_REGISTERED_IN_EPOCH,
 };
 use multiversx_sc::codec;
 use multiversx_sc::proxy_imports::{TopDecode, TopEncode};
@@ -160,6 +160,19 @@ pub trait Headerverifier: events::EventsModule + setup_phase::SetupPhaseModule {
                 sc_panic!(CURRENT_OPERATION_ALREADY_IN_EXECUTION)
             }
         }
+    }
+
+    #[endpoint(setGenesisValidators)]
+    fn set_genesis_validators(&self, genesis_validators: MultiValueEncoded<ManagedBuffer>) {
+        require!(
+            self.blockchain().get_caller() == self.get_chain_config_address(),
+            CALLER_NOT_CHAIN_CONFIG
+        );
+        require!(
+            self.bls_pub_keys(0).is_empty(),
+            GENESIS_VALIDATORS_ALREADY_SET
+        );
+        self.bls_pub_keys(0).extend(genesis_validators);
     }
 
     #[only_owner]
