@@ -205,10 +205,15 @@ impl ChainConfigTestState {
         let new_status_hash = ManagedBuffer::new_from_bytes(&new_status_hash_byte_array);
         let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&new_status_hash_byte_array));
 
+        let bitmap = ManagedBuffer::new();
+        let epoch = 0;
+
         self.common_setup.register_operation(
             OWNER_ADDRESS,
             ManagedBuffer::new(),
             &hash_of_hashes,
+            bitmap,
+            epoch,
             MultiValueEncoded::from_iter(vec![new_status_hash]),
         );
 

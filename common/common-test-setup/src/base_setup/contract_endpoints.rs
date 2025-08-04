@@ -1,7 +1,6 @@
 use multiversx_sc_scenario::{
     api::StaticApi,
     imports::{ManagedBuffer, MultiValueEncoded, TestAddress},
-    scenario_model::Log,
     ReturnsHandledOrError, ReturnsLogs, ScenarioTxRun,
 };
 use proxies::{
