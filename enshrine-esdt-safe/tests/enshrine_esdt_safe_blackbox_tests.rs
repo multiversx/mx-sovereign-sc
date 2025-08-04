@@ -10,6 +10,7 @@ use error_messages::{
     PAYMENT_DOES_NOT_COVER_FEE, TOO_MANY_TOKENS,
 };
 use multiversx_sc::imports::{MultiValue3, OptionalValue};
+use multiversx_sc::typenum::bit;
 use multiversx_sc::types::{
     BigUint, EsdtTokenData, EsdtTokenPayment, ManagedBuffer, ManagedVec, MultiValueEncoded,
     TokenIdentifier,
@@ -70,11 +71,15 @@ fn test_execute_with_non_prefixed_token() {
     let operation_hash = state.common_setup.get_operation_hash(&operation);
     let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&operation_hash.to_vec()));
     let operations_hashes = MultiValueEncoded::from(ManagedVec::from(vec![operation_hash.clone()]));
+    let bitmap = ManagedBuffer::new();
+    let epoch = 0;
 
     state.common_setup.register_operation(
         OWNER_ADDRESS,
         ManagedBuffer::new(),
         &hash_of_hashes,
+        bitmap,
+        epoch,
         operations_hashes,
     );
     state.whitelist_enshrine_esdt();
@@ -117,12 +122,16 @@ fn test_execute_with_prefixed_token() {
     let operation_hash = state.common_setup.get_operation_hash(&operation);
     let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&operation_hash.to_vec()));
     let operations_hashes = MultiValueEncoded::from(ManagedVec::from(vec![operation_hash.clone()]));
+    let bitmap = ManagedBuffer::new();
+    let epoch = 0;
 
     state.setup_contracts(false, None, None);
     state.common_setup.register_operation(
         OWNER_ADDRESS,
         ManagedBuffer::new(),
         &hash_of_hashes,
+        bitmap,
+        epoch,
         operations_hashes,
     );
     state.whitelist_enshrine_esdt();

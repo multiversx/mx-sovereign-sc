@@ -653,18 +653,16 @@ pub trait CommonInteractorTrait {
         let bridge_service = self.bridge_service().clone();
         let header_verifier_address = self.state().current_header_verifier_address().clone();
 
+        let bitmap = ManagedBuffer::new();
+        let epoch = 0u32;
+
         self.interactor()
             .tx()
             .from(bridge_service)
             .to(header_verifier_address)
             .gas(90_000_000u64)
             .typed(HeaderverifierProxy)
-            .register_bridge_operations(
-                signature,
-                hash_of_hashes,
-                ManagedBuffer::new(),
-                operations_hashes,
-            )
+            .register_bridge_operations(signature, hash_of_hashes, bitmap, epoch, operations_hashes)
             .returns(ReturnsResultUnmanaged)
             .run()
             .await;

@@ -142,10 +142,15 @@ fn test_set_fee_invalid_fee_type() {
         .common_setup
         .complete_header_verifier_setup_phase(None);
 
+    let bitmap = ManagedBuffer::new();
+    let epoch = 0;
+
     state.common_setup.register_operation(
         OWNER_ADDRESS,
         ManagedBuffer::new(),
         &hash_of_hashes,
+        bitmap,
+        epoch,
         MultiValueEncoded::from_iter(vec![fee_hash]),
     );
 
@@ -230,10 +235,15 @@ fn test_set_fee() {
         .common_setup
         .complete_header_verifier_setup_phase(None);
 
+    let bitmap = ManagedBuffer::new();
+    let epoch = 0;
+
     state.common_setup.register_operation(
         OWNER_ADDRESS,
         ManagedBuffer::new(),
         &hash_of_hashes,
+        bitmap,
+        epoch,
         MultiValueEncoded::from_iter(vec![fee_hash]),
     );
 
@@ -323,10 +333,15 @@ fn test_remove_fee_register_separate_operations() {
         .common_setup
         .complete_header_verifier_setup_phase(None);
 
+    let bitmap = ManagedBuffer::new();
+    let epoch = 0;
+
     state.common_setup.register_operation(
         OWNER_ADDRESS,
         ManagedBuffer::new(),
         &register_fee_hash_of_hashes,
+        bitmap.clone(),
+        epoch,
         MultiValueEncoded::from_iter(vec![register_fee_hash]),
     );
 
@@ -361,6 +376,8 @@ fn test_remove_fee_register_separate_operations() {
         OWNER_ADDRESS,
         ManagedBuffer::new(),
         &remove_fee_hash_of_hashes,
+        bitmap,
+        epoch,
         MultiValueEncoded::from_iter(vec![ManagedBuffer::new_from_bytes(&remove_fee_hash)]),
     );
 
@@ -436,10 +453,15 @@ fn test_remove_fee_register_with_one_hash_of_hashes() {
         .common_setup
         .complete_header_verifier_setup_phase(None);
 
+    let bitmap = ManagedBuffer::new();
+    let epoch = 0;
+
     state.common_setup.register_operation(
         OWNER_ADDRESS,
         ManagedBuffer::new(),
         &hash_of_hashes,
+        bitmap,
+        epoch,
         MultiValueEncoded::from_iter(vec![remove_fee_hash, register_fee_hash]),
     );
 
@@ -580,10 +602,15 @@ fn distribute_fees_percentage_under_limit() {
 
     let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&aggregated_hash.to_vec()));
 
+    let bitmap = ManagedBuffer::new();
+    let epoch = 0;
+
     state.common_setup.register_operation(
         OWNER_ADDRESS,
         ManagedBuffer::new(),
         &hash_of_hashes,
+        bitmap,
+        epoch,
         MultiValueEncoded::from_iter(vec![pair_hash_byte_array]),
     );
 
@@ -657,11 +684,15 @@ fn distribute_fees() {
     aggregated_hash.append(&pair_hash_byte_array);
 
     let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&aggregated_hash.to_vec()));
+    let bitmap = ManagedBuffer::new();
+    let epoch = 0;
 
     state.common_setup.register_operation(
         OWNER_ADDRESS,
         ManagedBuffer::new(),
         &hash_of_hashes,
+        bitmap,
+        epoch,
         MultiValueEncoded::from_iter(vec![pair_hash_byte_array]),
     );
 

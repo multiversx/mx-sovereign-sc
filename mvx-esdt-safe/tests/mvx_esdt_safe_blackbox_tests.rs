@@ -14,6 +14,7 @@ use error_messages::{
     SETUP_PHASE_NOT_COMPLETED, TOKEN_ID_IS_NOT_TRUSTED, TOKEN_IS_FROM_SOVEREIGN, TOO_MANY_TOKENS,
 };
 use header_verifier::{Headerverifier, OperationHashStatus};
+use multiversx_sc::typenum::bit;
 use multiversx_sc::types::MultiValueEncoded;
 use multiversx_sc::{
     imports::{MultiValue3, OptionalValue},
@@ -1540,11 +1541,15 @@ fn test_execute_operation_success() {
     state.common_setup.deploy_testing_sc();
 
     let operations_hashes = MultiValueEncoded::from(ManagedVec::from(vec![operation_hash.clone()]));
+    let bitmap = ManagedBuffer::new();
+    let epoch = 0;
 
     state.common_setup.register_operation(
         OWNER_ADDRESS,
         ManagedBuffer::new(),
         &hash_of_hashes,
+        bitmap,
+        epoch,
         operations_hashes,
     );
 
@@ -1628,11 +1633,15 @@ fn test_execute_operation_with_native_token_success() {
     state.common_setup.deploy_testing_sc();
 
     let operations_hashes = MultiValueEncoded::from(ManagedVec::from(vec![operation_hash.clone()]));
+    let bitmap = ManagedBuffer::new();
+    let epoch = 0;
 
     state.common_setup.register_operation(
         OWNER_ADDRESS,
         ManagedBuffer::new(),
         &hash_of_hashes,
+        bitmap,
+        epoch,
         operations_hashes,
     );
 
@@ -1711,11 +1720,15 @@ fn test_execute_operation_burn_mechanism_without_deposit_cannot_subtract() {
         .complete_header_verifier_setup_phase(None);
 
     let operations_hashes = MultiValueEncoded::from(ManagedVec::from(vec![operation_hash.clone()]));
+    let bitmap = ManagedBuffer::new();
+    let epoch = 0;
 
     state.common_setup.register_operation(
         OWNER_ADDRESS,
         ManagedBuffer::new(),
         &hash_of_hashes,
+        bitmap,
+        epoch,
         operations_hashes,
     );
     state.set_token_burn_mechanism(TRUSTED_TOKEN_IDS[0], None);
@@ -1786,11 +1799,15 @@ fn execute_operation_only_transfer_data_no_fee() {
     state.common_setup.deploy_testing_sc();
 
     let operations_hashes = MultiValueEncoded::from(ManagedVec::from(vec![operation_hash.clone()]));
+    let bitmap = ManagedBuffer::new();
+    let epoch = 0;
 
     state.common_setup.register_operation(
         OWNER_ADDRESS,
         ManagedBuffer::new(),
         &hash_of_hashes,
+        bitmap,
+        epoch,
         operations_hashes,
     );
 
@@ -1868,10 +1885,15 @@ fn test_execute_operation_success_burn_mechanism() {
         Some("deposit"),
     );
 
+    let bitmap = ManagedBuffer::new();
+    let epoch = 0;
+
     state.common_setup.register_operation(
         OWNER_ADDRESS,
         ManagedBuffer::new(),
         &hash_of_hashes,
+        bitmap,
+        epoch,
         operations_hashes,
     );
 
@@ -2017,11 +2039,15 @@ fn test_deposit_execute_switch_mechanism() {
     let hash_of_hashes_one = ManagedBuffer::new_from_bytes(&sha256(&operation_one_hash.to_vec()));
     let operations_hashes_one =
         MultiValueEncoded::from(ManagedVec::from(vec![operation_one_hash.clone()]));
+    let bitmap = ManagedBuffer::new();
+    let epoch = 0;
 
     state.common_setup.register_operation(
         OWNER_ADDRESS,
         ManagedBuffer::new(),
         &hash_of_hashes_one,
+        bitmap,
+        epoch,
         operations_hashes_one,
     );
 
@@ -2093,11 +2119,15 @@ fn test_deposit_execute_switch_mechanism() {
     let hash_of_hashes_two = ManagedBuffer::new_from_bytes(&sha256(&operation_two_hash.to_vec()));
     let operations_hashes_two =
         MultiValueEncoded::from(ManagedVec::from(vec![operation_two_hash.clone()]));
+    let bitmap = ManagedBuffer::new();
+    let epoch = 0;
 
     state.common_setup.register_operation(
         OWNER_ADDRESS,
         ManagedBuffer::new(),
         &hash_of_hashes_two,
+        bitmap,
+        epoch,
         operations_hashes_two,
     );
 
@@ -2220,11 +2250,15 @@ fn test_execute_operation_no_payments() {
     state.common_setup.deploy_testing_sc();
 
     let operations_hashes = MultiValueEncoded::from(ManagedVec::from(vec![operation_hash.clone()]));
+    let bitmap = ManagedBuffer::new();
+    let epoch = 0;
 
     state.common_setup.register_operation(
         OWNER_ADDRESS,
         ManagedBuffer::new(),
         &hash_of_hashes,
+        bitmap,
+        epoch,
         operations_hashes,
     );
 
@@ -2307,10 +2341,15 @@ fn test_execute_operation_no_payments_failed_event() {
 
     let operations_hashes = MultiValueEncoded::from(ManagedVec::from(vec![operation_hash.clone()]));
 
+    let bitmap = ManagedBuffer::new();
+    let epoch = 0;
+
     state.common_setup.register_operation(
         OWNER_ADDRESS,
         ManagedBuffer::new(),
         &hash_of_hashes,
+        bitmap,
+        epoch,
         operations_hashes,
     );
 
@@ -2577,11 +2616,15 @@ fn test_update_config_invalid_config() {
 
     let config_hash = new_config.generate_hash();
     let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&config_hash.to_vec()));
+    let bitmap = ManagedBuffer::new();
+    let epoch = 0;
 
     state.common_setup.register_operation(
         OWNER_ADDRESS,
         ManagedBuffer::new(),
         &hash_of_hashes,
+        bitmap,
+        epoch,
         MultiValueEncoded::from_iter(vec![config_hash]),
     );
 
@@ -2621,11 +2664,15 @@ fn test_update_config() {
 
     let config_hash = new_config.generate_hash();
     let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&config_hash.to_vec()));
+    let bitmap = ManagedBuffer::new();
+    let epoch = 0;
 
     state.common_setup.register_operation(
         OWNER_ADDRESS,
         ManagedBuffer::new(),
         &hash_of_hashes,
+        bitmap,
+        epoch,
         MultiValueEncoded::from_iter(vec![config_hash]),
     );
 

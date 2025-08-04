@@ -78,7 +78,7 @@ fn test_register_bridge_operation() {
         address: USER_ADDRESS.to_managed_address(),
         bls_key: ManagedBuffer::from("bls_key_validator_1"),
         egld_stake: BigUint::default(),
-        token_stake: EsdtTokenData::default(),
+        token_stake: Some(ManagedVec::new()),
     };
 
     state
