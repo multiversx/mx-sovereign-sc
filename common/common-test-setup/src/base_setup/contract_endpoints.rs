@@ -1,6 +1,6 @@
 use multiversx_sc_scenario::{
     api::StaticApi,
-    imports::{ManagedBuffer, MultiValueEncoded, TestAddress},
+    imports::{ManagedBuffer, MultiEgldOrEsdtPayment, MultiValueEncoded, TestAddress},
     ReturnsHandledOrError, ReturnsLogs, ScenarioTxRun,
 };
 use proxies::{
@@ -117,5 +117,29 @@ impl BaseSetup {
 
         self.assert_expected_error_message(response, expected_error_message);
         self.assert_expected_log(logs, expected_log);
+    }
+
+    // TODO: Use this for any validator registration
+    pub fn register_as_validator(
+        &mut self,
+        bls_key: &ManagedBuffer<StaticApi>,
+        payment: &MultiEgldOrEsdtPayment<StaticApi>,
+        expected_error_message: Option<&str>,
+        expected_custom_log: Option<&str>,
+    ) {
+        let _ = payment;
+        let (response, logs) = self
+            .world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .to(CHAIN_CONFIG_ADDRESS)
+            .typed(ChainConfigContractProxy)
+            .register(bls_key)
+            .returns(ReturnsHandledOrError::new())
+            .returns(ReturnsLogs)
+            .run();
+
+        self.assert_expected_error_message(response, expected_error_message);
+        self.assert_expected_log(logs, expected_custom_log);
     }
 }
