@@ -1,14 +1,14 @@
 #![no_std]
 
 use error_messages::{
-    BITMAP_LEN_DOES_NOT_MATCH_BLS_KEY_LEN, BLS_KEY_NOT_REGISTERED, CALLER_NOT_CHAIN_CONFIG,
+    BITMAP_LEN_DOES_NOT_MATCH_BLS_KEY_LEN, BLS_KEY_NOT_REGISTERED,
     CALLER_NOT_FROM_CURRENT_SOVEREIGN, CHAIN_CONFIG_NOT_DEPLOYED,
-    COULD_NOT_RETRIEVE_SOVEREIGN_CONFIG, CURRENT_OPERATION_ALREADY_IN_EXECUTION,
-    CURRENT_OPERATION_NOT_REGISTERED, GENESIS_VALIDATORS_ALREADY_SET,
-    HASH_OF_HASHES_DOES_NOT_MATCH, INVALID_VALIDATOR_SET_LENGTH, MIN_NUMBER_OF_SIGNATURE_NOT_MET,
+    CURRENT_OPERATION_ALREADY_IN_EXECUTION, CURRENT_OPERATION_NOT_REGISTERED,
+    GENESIS_VALIDATORS_ALREADY_SET, HASH_OF_HASHES_DOES_NOT_MATCH, MIN_NUMBER_OF_SIGNATURE_NOT_MET,
     OUTGOING_TX_HASH_ALREADY_REGISTERED, VALIDATORS_ALREADY_REGISTERED_IN_EPOCH,
 };
 use multiversx_sc::codec;
+use multiversx_sc::proxy_imports::heap::Vec;
 use multiversx_sc::proxy_imports::{TopDecode, TopEncode};
 use structs::configs::SovereignConfig;
 use structs::forge::{ContractInfo, ScArray};
@@ -175,7 +175,7 @@ pub trait Headerverifier: events::EventsModule + setup_phase::SetupPhaseModule {
         );
 
         let genesis_validators: Vec<ManagedBuffer> = self
-            .bls_keys_map(self.chain_config_address().get())
+            .bls_keys_map(self.get_chain_config_address())
             .iter()
             .map(|(_, bls_key)| bls_key)
             .collect();
@@ -236,18 +236,11 @@ pub trait Headerverifier: events::EventsModule + setup_phase::SetupPhaseModule {
         &self,
         ids: MultiValueEncoded<BigUint<Self::Api>>,
     ) -> ManagedVec<ManagedBuffer> {
-        let chain_config_address = self
-            .sovereign_contracts()
-            .iter()
-            .find(|sc| sc.id == ScArray::ChainConfig)
-            .unwrap_or_else(|| sc_panic!(CHAIN_CONFIG_NOT_DEPLOYED))
-            .address;
-
         let mut bls_keys = ManagedVec::new();
 
         for id in ids.into_iter() {
             bls_keys.push(
-                self.bls_keys_map(chain_config_address.clone())
+                self.bls_keys_map(self.get_chain_config_address())
                     .get(&id)
                     .unwrap_or_else(|| sc_panic!(BLS_KEY_NOT_REGISTERED)),
             );
@@ -273,7 +266,7 @@ pub trait Headerverifier: events::EventsModule + setup_phase::SetupPhaseModule {
             if *has_signed == 1u8 {
                 approving_validators_bls_keys.push(
                     self.bls_keys_map(self.get_chain_config_address())
-                        .get(&BigUint::from(index))
+                        .get(&BigUint::from(index + 1))
                         .unwrap_or_else(|| sc_panic!(BLS_KEY_NOT_REGISTERED)),
                 );
             }
@@ -282,7 +275,7 @@ pub trait Headerverifier: events::EventsModule + setup_phase::SetupPhaseModule {
         let minimum_signatures = 2 * bls_keys_length / 3 + 1;
 
         require!(
-            approving_validators_bls_keys.len() > minimum_signatures,
+            approving_validators_bls_keys.len() >= minimum_signatures,
             MIN_NUMBER_OF_SIGNATURE_NOT_MET
         );
 
