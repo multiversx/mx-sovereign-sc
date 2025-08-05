@@ -8,7 +8,6 @@ use error_messages::{
     OUTGOING_TX_HASH_ALREADY_REGISTERED, VALIDATORS_ALREADY_REGISTERED_IN_EPOCH,
 };
 use multiversx_sc::codec;
-use multiversx_sc::proxy_imports::heap::Vec;
 use multiversx_sc::proxy_imports::{TopDecode, TopEncode};
 use structs::configs::SovereignConfig;
 use structs::forge::{ContractInfo, ScArray};
@@ -174,7 +173,7 @@ pub trait Headerverifier: events::EventsModule + setup_phase::SetupPhaseModule {
             GENESIS_VALIDATORS_ALREADY_SET
         );
 
-        let genesis_validators: Vec<ManagedBuffer> = self
+        let genesis_validators: ManagedVec<ManagedBuffer> = self
             .bls_keys_map(self.get_chain_config_address())
             .iter()
             .map(|(_, bls_key)| bls_key)
