@@ -162,19 +162,6 @@ pub trait Headerverifier: events::EventsModule + setup_phase::SetupPhaseModule {
         }
     }
 
-    #[endpoint(setGenesisValidators)]
-    fn set_genesis_validators(&self, genesis_validators: MultiValueEncoded<ManagedBuffer>) {
-        require!(
-            self.blockchain().get_caller() == self.get_chain_config_address(),
-            CALLER_NOT_CHAIN_CONFIG
-        );
-        require!(
-            self.bls_pub_keys(0).is_empty(),
-            GENESIS_VALIDATORS_ALREADY_SET
-        );
-        self.bls_pub_keys(0).extend(genesis_validators);
-    }
-
     #[only_owner]
     #[endpoint(completeSetupPhase)]
     fn complete_setup_phase(&self) {
@@ -182,40 +169,20 @@ pub trait Headerverifier: events::EventsModule + setup_phase::SetupPhaseModule {
             return;
         }
 
-        let sovereign_config = self.get_sovereign_config();
-
-        self.check_validator_range(
-            &sovereign_config,
-            self.bls_pub_keys(self.blockchain().get_block_epoch()).len() as u64,
+        require!(
+            self.bls_pub_keys(0).is_empty(),
+            GENESIS_VALIDATORS_ALREADY_SET
         );
 
-        // add epoch 0
+        let genesis_validators: Vec<ManagedBuffer> = self
+            .bls_keys_map(self.chain_config_address().get())
+            .iter()
+            .map(|(_, bls_key)| bls_key)
+            .collect();
+
+        self.bls_pub_keys(0).extend(genesis_validators);
 
         self.setup_phase_complete().set(true);
-    }
-
-    fn get_sovereign_config(&self) -> SovereignConfig<Self::Api> {
-        self.sovereign_config(
-            self.sovereign_contracts()
-                .iter()
-                .find(|sc| sc.id == ScArray::ChainConfig)
-                .unwrap_or_else(|| sc_panic!(COULD_NOT_RETRIEVE_SOVEREIGN_CONFIG))
-                .address,
-        )
-        .get()
-    }
-
-    // Not needed since check is done in chain-config
-    fn check_validator_range(
-        &self,
-        sovereign_config: &SovereignConfig<Self::Api>,
-        number_of_validators: u64,
-    ) {
-        require!(
-            number_of_validators >= sovereign_config.min_validators
-                && number_of_validators <= sovereign_config.max_validators,
-            INVALID_VALIDATOR_SET_LENGTH
-        );
     }
 
     fn require_caller_is_from_current_sovereign(&self) {
