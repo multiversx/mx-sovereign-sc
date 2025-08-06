@@ -14,8 +14,7 @@ use error_messages::{
     SETUP_PHASE_NOT_COMPLETED, TOKEN_ID_IS_NOT_TRUSTED, TOKEN_IS_FROM_SOVEREIGN, TOO_MANY_TOKENS,
 };
 use header_verifier::{Headerverifier, OperationHashStatus};
-use multiversx_sc::typenum::bit;
-use multiversx_sc::types::MultiValueEncoded;
+use multiversx_sc::types::{MultiEgldOrEsdtPayment, MultiValueEncoded};
 use multiversx_sc::{
     imports::{MultiValue3, OptionalValue},
     types::{
@@ -1532,6 +1531,15 @@ fn test_execute_operation_success() {
     state
         .common_setup
         .deploy_chain_config(OptionalValue::None, None);
+
+    let genesis_validator = ManagedBuffer::from("genesis_validator");
+    state.common_setup.register_as_validator(
+        &genesis_validator,
+        &MultiEgldOrEsdtPayment::new(),
+        None,
+        Some("register"),
+    );
+
     state
         .common_setup
         .deploy_header_verifier(vec![ScArray::ChainConfig, ScArray::ESDTSafe]);
@@ -1541,7 +1549,7 @@ fn test_execute_operation_success() {
     state.common_setup.deploy_testing_sc();
 
     let operations_hashes = MultiValueEncoded::from(ManagedVec::from(vec![operation_hash.clone()]));
-    let bitmap = ManagedBuffer::new();
+    let bitmap = ManagedBuffer::new_from_bytes(&[1]);
     let epoch = 0;
 
     state.common_setup.register_operation(
@@ -1624,6 +1632,15 @@ fn test_execute_operation_with_native_token_success() {
     state
         .common_setup
         .deploy_chain_config(OptionalValue::None, None);
+
+    let genesis_validator = ManagedBuffer::from("genesis_validator");
+    state.common_setup.register_as_validator(
+        &genesis_validator,
+        &MultiEgldOrEsdtPayment::new(),
+        None,
+        Some("register"),
+    );
+
     state
         .common_setup
         .deploy_header_verifier(vec![ScArray::ChainConfig, ScArray::ESDTSafe]);
@@ -1633,7 +1650,7 @@ fn test_execute_operation_with_native_token_success() {
     state.common_setup.deploy_testing_sc();
 
     let operations_hashes = MultiValueEncoded::from(ManagedVec::from(vec![operation_hash.clone()]));
-    let bitmap = ManagedBuffer::new();
+    let bitmap = ManagedBuffer::new_from_bytes(&[1]);
     let epoch = 0;
 
     state.common_setup.register_operation(
@@ -1710,6 +1727,14 @@ fn test_execute_operation_burn_mechanism_without_deposit_cannot_subtract() {
     state
         .common_setup
         .deploy_chain_config(OptionalValue::None, None);
+
+    let genesis_validator = ManagedBuffer::from("genesis_validator");
+    state.common_setup.register_as_validator(
+        &genesis_validator,
+        &MultiEgldOrEsdtPayment::new(),
+        None,
+        Some("register"),
+    );
     state
         .common_setup
         .deploy_header_verifier(vec![ScArray::ChainConfig, ScArray::ESDTSafe]);
@@ -1720,7 +1745,7 @@ fn test_execute_operation_burn_mechanism_without_deposit_cannot_subtract() {
         .complete_header_verifier_setup_phase(None);
 
     let operations_hashes = MultiValueEncoded::from(ManagedVec::from(vec![operation_hash.clone()]));
-    let bitmap = ManagedBuffer::new();
+    let bitmap = ManagedBuffer::new_from_bytes(&[1]);
     let epoch = 0;
 
     state.common_setup.register_operation(
@@ -1789,6 +1814,15 @@ fn execute_operation_only_transfer_data_no_fee() {
     state
         .common_setup
         .deploy_chain_config(OptionalValue::None, None);
+
+    let genesis_validator = ManagedBuffer::from("genesis_validator");
+    state.common_setup.register_as_validator(
+        &genesis_validator,
+        &MultiEgldOrEsdtPayment::new(),
+        None,
+        Some("register"),
+    );
+
     state
         .common_setup
         .deploy_header_verifier(vec![ScArray::ChainConfig, ScArray::ESDTSafe]);
@@ -1799,7 +1833,7 @@ fn execute_operation_only_transfer_data_no_fee() {
     state.common_setup.deploy_testing_sc();
 
     let operations_hashes = MultiValueEncoded::from(ManagedVec::from(vec![operation_hash.clone()]));
-    let bitmap = ManagedBuffer::new();
+    let bitmap = ManagedBuffer::new_from_bytes(&[1]);
     let epoch = 0;
 
     state.common_setup.register_operation(
@@ -1862,6 +1896,15 @@ fn test_execute_operation_success_burn_mechanism() {
     state
         .common_setup
         .deploy_chain_config(OptionalValue::None, None);
+
+    let genesis_validator = ManagedBuffer::from("genesis_validator");
+    state.common_setup.register_as_validator(
+        &genesis_validator,
+        &MultiEgldOrEsdtPayment::new(),
+        None,
+        Some("register"),
+    );
+
     state
         .common_setup
         .deploy_header_verifier(vec![ScArray::ChainConfig, ScArray::ESDTSafe]);
@@ -1885,7 +1928,7 @@ fn test_execute_operation_success_burn_mechanism() {
         Some("deposit"),
     );
 
-    let bitmap = ManagedBuffer::new();
+    let bitmap = ManagedBuffer::new_from_bytes(&[1]);
     let epoch = 0;
 
     state.common_setup.register_operation(
@@ -1967,6 +2010,15 @@ fn test_deposit_execute_switch_mechanism() {
     state
         .common_setup
         .deploy_chain_config(OptionalValue::None, None);
+
+    let genesis_validator = ManagedBuffer::from("genesis_validator");
+    state.common_setup.register_as_validator(
+        &genesis_validator,
+        &MultiEgldOrEsdtPayment::new(),
+        None,
+        Some("register"),
+    );
+
     state
         .common_setup
         .complete_header_verifier_setup_phase(None);
@@ -2039,7 +2091,7 @@ fn test_deposit_execute_switch_mechanism() {
     let hash_of_hashes_one = ManagedBuffer::new_from_bytes(&sha256(&operation_one_hash.to_vec()));
     let operations_hashes_one =
         MultiValueEncoded::from(ManagedVec::from(vec![operation_one_hash.clone()]));
-    let bitmap = ManagedBuffer::new();
+    let bitmap = ManagedBuffer::new_from_bytes(&[1]);
     let epoch = 0;
 
     state.common_setup.register_operation(
@@ -2119,7 +2171,7 @@ fn test_deposit_execute_switch_mechanism() {
     let hash_of_hashes_two = ManagedBuffer::new_from_bytes(&sha256(&operation_two_hash.to_vec()));
     let operations_hashes_two =
         MultiValueEncoded::from(ManagedVec::from(vec![operation_two_hash.clone()]));
-    let bitmap = ManagedBuffer::new();
+    let bitmap = ManagedBuffer::new_from_bytes(&[1]);
     let epoch = 0;
 
     state.common_setup.register_operation(
@@ -2239,6 +2291,14 @@ fn test_execute_operation_no_payments() {
         .common_setup
         .deploy_chain_config(OptionalValue::None, None);
 
+    let genesis_validator = ManagedBuffer::from("genesis_validator");
+    state.common_setup.register_as_validator(
+        &genesis_validator,
+        &MultiEgldOrEsdtPayment::new(),
+        None,
+        Some("register"),
+    );
+
     state
         .common_setup
         .deploy_header_verifier(vec![ScArray::ChainConfig, ScArray::ESDTSafe]);
@@ -2250,7 +2310,7 @@ fn test_execute_operation_no_payments() {
     state.common_setup.deploy_testing_sc();
 
     let operations_hashes = MultiValueEncoded::from(ManagedVec::from(vec![operation_hash.clone()]));
-    let bitmap = ManagedBuffer::new();
+    let bitmap = ManagedBuffer::new_from_bytes(&[1]);
     let epoch = 0;
 
     state.common_setup.register_operation(
@@ -2298,6 +2358,14 @@ fn test_execute_operation_no_payments_failed_event() {
         .common_setup
         .deploy_chain_config(OptionalValue::None, None);
 
+    let genesis_validator = ManagedBuffer::from("genesis_validator");
+    state.common_setup.register_as_validator(
+        &genesis_validator,
+        &MultiEgldOrEsdtPayment::new(),
+        None,
+        Some("register"),
+    );
+
     state
         .common_setup
         .deploy_header_verifier(vec![ScArray::ChainConfig, ScArray::ESDTSafe]);
@@ -2322,26 +2390,21 @@ fn test_execute_operation_no_payments_failed_event() {
     let function = ManagedBuffer::<StaticApi>::from("WRONG_ENDPOINT");
     let args =
         ManagedVec::<StaticApi, ManagedBuffer<StaticApi>>::from(vec![ManagedBuffer::from("1")]);
-
     let transfer_data = TransferData::new(gas_limit, function, args);
-
     let operation_data =
         OperationData::new(1, OWNER_ADDRESS.to_managed_address(), Some(transfer_data));
-
     let operation = Operation::new(
         TESTING_SC_ADDRESS.to_managed_address(),
         ManagedVec::new(),
         operation_data,
     );
-
     let operation_hash = state.common_setup.get_operation_hash(&operation);
     let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&operation_hash.to_vec()));
 
     state.common_setup.deploy_testing_sc();
 
     let operations_hashes = MultiValueEncoded::from(ManagedVec::from(vec![operation_hash.clone()]));
-
-    let bitmap = ManagedBuffer::new();
+    let bitmap = ManagedBuffer::new_from_bytes(&[1]);
     let epoch = 0;
 
     state.common_setup.register_operation(
@@ -2600,6 +2663,15 @@ fn test_update_config_invalid_config() {
     state
         .common_setup
         .deploy_chain_config(OptionalValue::None, None);
+
+    let genesis_validator = ManagedBuffer::from("genesis_validator");
+    state.common_setup.register_as_validator(
+        &genesis_validator,
+        &MultiEgldOrEsdtPayment::new(),
+        None,
+        Some("register"),
+    );
+
     state
         .common_setup
         .deploy_header_verifier(vec![ScArray::ChainConfig, ScArray::ESDTSafe]);
@@ -2616,7 +2688,7 @@ fn test_update_config_invalid_config() {
 
     let config_hash = new_config.generate_hash();
     let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&config_hash.to_vec()));
-    let bitmap = ManagedBuffer::new();
+    let bitmap = ManagedBuffer::new_from_bytes(&[1]);
     let epoch = 0;
 
     state.common_setup.register_operation(
@@ -2647,6 +2719,14 @@ fn test_update_config() {
         .common_setup
         .deploy_chain_config(OptionalValue::None, None);
 
+    let genesis_validator = ManagedBuffer::from("genesis_validator");
+    state.common_setup.register_as_validator(
+        &genesis_validator,
+        &MultiEgldOrEsdtPayment::new(),
+        None,
+        Some("register"),
+    );
+
     state
         .common_setup
         .deploy_header_verifier(vec![ScArray::ChainConfig, ScArray::ESDTSafe]);
@@ -2664,7 +2744,7 @@ fn test_update_config() {
 
     let config_hash = new_config.generate_hash();
     let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&config_hash.to_vec()));
-    let bitmap = ManagedBuffer::new();
+    let bitmap = ManagedBuffer::new_from_bytes(&[1]);
     let epoch = 0;
 
     state.common_setup.register_operation(
