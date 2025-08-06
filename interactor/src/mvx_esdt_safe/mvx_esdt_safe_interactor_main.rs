@@ -2,7 +2,6 @@ use common_interactor::common_sovereign_interactor::{
     CommonInteractorTrait, IssueTokenStruct, MintTokenStruct,
 };
 use multiversx_sc_snippets::imports::*;
-use proxies::chain_config_proxy::ChainConfigContractProxy;
 use proxies::mvx_esdt_safe_proxy::MvxEsdtSafeProxy;
 
 use structs::configs::{EsdtSafeConfig, SovereignConfig};
