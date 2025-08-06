@@ -91,7 +91,7 @@ pub trait Headerverifier: events::EventsModule + setup_phase::SetupPhaseModule {
             VALIDATORS_ALREADY_REGISTERED_IN_EPOCH
         );
         require!(
-            pub_keys_bitmap.len() == pub_keys_id.len(),
+            pub_keys_bitmap.len() == self.bls_pub_keys(epoch - 1).len(),
             BITMAP_LEN_DOES_NOT_MATCH_BLS_KEY_LEN
         );
 

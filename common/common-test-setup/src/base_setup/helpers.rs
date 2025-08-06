@@ -1,13 +1,15 @@
 use multiversx_sc_scenario::{
     api::StaticApi,
-    imports::{ManagedBuffer, ReturnsResultUnmanaged, TestSCAddress, TopEncode, UserBuiltinProxy},
+    imports::{
+        ManagedBuffer, MultiEgldOrEsdtPayment, ReturnsResultUnmanaged, TestSCAddress, TopEncode,
+        UserBuiltinProxy,
+    },
     multiversx_chain_vm::crypto_functions::sha256,
     ScenarioTxRun,
 };
 use structs::{
     forge::{ContractInfo, ScArray},
     operation::Operation,
-    ValidatorInfo,
 };
 
 use crate::{
@@ -19,9 +21,15 @@ use crate::{
 };
 
 impl BaseSetup {
-    pub fn register_multiple_validators(&mut self, new_validators: Vec<ValidatorInfo<StaticApi>>) {
+    // TODO: add payment
+    pub fn register_multiple_validators(&mut self, new_validators: Vec<ManagedBuffer<StaticApi>>) {
         for new_validator in new_validators {
-            self.register_validator(new_validator, None, Some("register"));
+            self.register_as_validator(
+                &new_validator,
+                &MultiEgldOrEsdtPayment::new(),
+                None,
+                Some("register"),
+            );
         }
     }
 

@@ -1,5 +1,5 @@
 use common_test_setup::constants::{
-    CHAIN_CONFIG_ADDRESS, ENSHRINE_SC_ADDRESS, HEADER_VERIFIER_ADDRESS, USER_ADDRESS,
+    CHAIN_CONFIG_ADDRESS, ENSHRINE_SC_ADDRESS, HEADER_VERIFIER_ADDRESS,
 };
 use error_messages::{
     CALLER_NOT_FROM_CURRENT_SOVEREIGN, CURRENT_OPERATION_ALREADY_IN_EXECUTION,
@@ -10,10 +10,10 @@ use header_verifier::{Headerverifier, OperationHashStatus};
 use header_verifier_blackbox_setup::*;
 use multiversx_sc::{
     imports::OptionalValue,
-    types::{BigUint, EsdtTokenData, ManagedBuffer, ManagedVec, MultiValueEncoded},
+    types::{BigUint, ManagedBuffer, MultiEgldOrEsdtPayment, MultiValueEncoded},
 };
-use multiversx_sc_scenario::{api::StaticApi, DebugApi, ScenarioTxWhitebox};
-use structs::{configs::SovereignConfig, forge::ScArray, ValidatorInfo};
+use multiversx_sc_scenario::{DebugApi, ScenarioTxWhitebox};
+use structs::{configs::SovereignConfig, forge::ScArray};
 
 mod header_verifier_blackbox_setup;
 
@@ -72,21 +72,15 @@ fn test_register_bridge_operation() {
         .common_setup
         .deploy_chain_config(OptionalValue::None, None);
 
+    let genesis_validator = ManagedBuffer::from("genesis_validator");
+    state.common_setup.register_as_validator(
+        &genesis_validator,
+        &MultiEgldOrEsdtPayment::new(),
+        None,
+        Some("register"),
+    );
+
     state.common_setup.complete_chain_config_setup_phase(None);
-
-    let new_validator = ValidatorInfo {
-        address: USER_ADDRESS.to_managed_address(),
-        bls_key: ManagedBuffer::from("bls_key_validator_1"),
-        egld_stake: BigUint::default(),
-        token_stake: Some(ManagedVec::new()),
-    };
-
-    state
-        .common_setup
-        .register_validator(new_validator, None, Some("register"));
-
-    let mut validator_set = MultiValueEncoded::new();
-    validator_set.push(BigUint::from(0u64));
 
     state
         .common_setup
@@ -99,21 +93,9 @@ fn test_register_bridge_operation() {
     let operation_1 = ManagedBuffer::from("operation_1");
     let operation_2 = ManagedBuffer::from("operation_2");
     let operation = state.generate_bridge_operation_struct(vec![&operation_1, &operation_2]);
+    let bitmap = ManagedBuffer::new_from_bytes(&[1]);
 
-    let bitmap = ManagedBuffer::from("1");
-
-    state.change_validator_set(
-        &ManagedBuffer::new(),
-        &operation.bridge_operation_hash,
-        &operation.operations_hashes.to_vec().get(0),
-        1,
-        &bitmap,
-        validator_set,
-        None,
-        Some("executedBridgeOp"),
-    );
-
-    state.register_operations(operation.clone(), bitmap, 0, None);
+    state.register_operations(operation.clone(), bitmap.clone(), 0, None);
 
     state
         .common_setup
@@ -159,6 +141,14 @@ fn test_remove_executed_hash_no_esdt_address_registered() {
         .common_setup
         .deploy_chain_config(OptionalValue::None, None);
 
+    let genesis_validator = ManagedBuffer::from("genesis_validator");
+    state.common_setup.register_as_validator(
+        &genesis_validator,
+        &MultiEgldOrEsdtPayment::new(),
+        None,
+        Some("register"),
+    );
+
     state
         .common_setup
         .deploy_header_verifier(vec![ScArray::ChainConfig]);
@@ -170,8 +160,9 @@ fn test_remove_executed_hash_no_esdt_address_registered() {
     let operation_1 = ManagedBuffer::from("operation_1");
     let operation_2 = ManagedBuffer::from("operation_2");
     let operation = state.generate_bridge_operation_struct(vec![&operation_1, &operation_2]);
+    let bitmap = ManagedBuffer::new_from_bytes(&[1]);
 
-    state.register_operations(operation.clone(), ManagedBuffer::new(), 0, None);
+    state.register_operations(operation.clone(), bitmap, 0, None);
     state.remove_executed_hash(
         ENSHRINE_SC_ADDRESS,
         &operation.bridge_operation_hash,
@@ -196,6 +187,14 @@ fn test_remove_one_executed_hash() {
         .common_setup
         .deploy_chain_config(OptionalValue::None, None);
 
+    let genesis_validator = ManagedBuffer::from("genesis_validator");
+    state.common_setup.register_as_validator(
+        &genesis_validator,
+        &MultiEgldOrEsdtPayment::new(),
+        None,
+        Some("register"),
+    );
+
     state
         .common_setup
         .deploy_header_verifier(vec![ScArray::ChainConfig]);
@@ -208,8 +207,9 @@ fn test_remove_one_executed_hash() {
     let operation_hash_2 = ManagedBuffer::from("operation_2");
     let operation =
         state.generate_bridge_operation_struct(vec![&operation_hash_1, &operation_hash_2]);
+    let bitmap = ManagedBuffer::new_from_bytes(&[1]);
 
-    state.register_operations(operation.clone(), ManagedBuffer::new(), 0, None);
+    state.register_operations(operation.clone(), bitmap, 0, None);
     state.remove_executed_hash(
         CHAIN_CONFIG_ADDRESS,
         &operation.bridge_operation_hash,
@@ -254,6 +254,14 @@ fn test_remove_all_executed_hashes() {
         .common_setup
         .deploy_chain_config(OptionalValue::None, None);
 
+    let genesis_validator = ManagedBuffer::from("genesis_validator");
+    state.common_setup.register_as_validator(
+        &genesis_validator,
+        &MultiEgldOrEsdtPayment::new(),
+        None,
+        Some("register"),
+    );
+
     state
         .common_setup
         .deploy_header_verifier(vec![ScArray::ChainConfig]);
@@ -265,8 +273,9 @@ fn test_remove_all_executed_hashes() {
     let operation_1 = ManagedBuffer::from("operation_1");
     let operation_2 = ManagedBuffer::from("operation_2");
     let operation = state.generate_bridge_operation_struct(vec![&operation_1, &operation_2]);
+    let bitmap = ManagedBuffer::new_from_bytes(&[1]);
 
-    state.register_operations(operation.clone(), ManagedBuffer::new(), 0, None);
+    state.register_operations(operation.clone(), bitmap, 0, None);
 
     state.remove_executed_hash(
         CHAIN_CONFIG_ADDRESS,
@@ -377,6 +386,14 @@ fn test_lock_operation() {
         .common_setup
         .deploy_chain_config(OptionalValue::None, None);
 
+    let genesis_validator = ManagedBuffer::from("genesis_validator");
+    state.common_setup.register_as_validator(
+        &genesis_validator,
+        &MultiEgldOrEsdtPayment::new(),
+        None,
+        Some("register"),
+    );
+
     state
         .common_setup
         .deploy_header_verifier(vec![ScArray::ChainConfig]);
@@ -388,8 +405,9 @@ fn test_lock_operation() {
     let operation_1 = ManagedBuffer::from("operation_1");
     let operation_2 = ManagedBuffer::from("operation_2");
     let operation = state.generate_bridge_operation_struct(vec![&operation_1, &operation_2]);
+    let bitmap = ManagedBuffer::new_from_bytes(&[1]);
 
-    state.register_operations(operation.clone(), ManagedBuffer::new(), 0, None);
+    state.register_operations(operation.clone(), bitmap, 0, None);
 
     state.lock_operation_hash(
         CHAIN_CONFIG_ADDRESS,
@@ -436,6 +454,14 @@ fn test_lock_operation_hash_already_locked() {
         .common_setup
         .deploy_chain_config(OptionalValue::None, None);
 
+    let genesis_validator = ManagedBuffer::from("genesis_validator");
+    state.common_setup.register_as_validator(
+        &genesis_validator,
+        &MultiEgldOrEsdtPayment::new(),
+        None,
+        Some("register"),
+    );
+
     state
         .common_setup
         .deploy_header_verifier(vec![ScArray::ChainConfig]);
@@ -447,8 +473,9 @@ fn test_lock_operation_hash_already_locked() {
     let operation_1 = ManagedBuffer::from("operation_1");
     let operation_2 = ManagedBuffer::from("operation_2");
     let operation = state.generate_bridge_operation_struct(vec![&operation_1, &operation_2]);
+    let bitmap = ManagedBuffer::new_from_bytes(&[1]);
 
-    state.register_operations(operation.clone(), ManagedBuffer::new(), 0, None);
+    state.register_operations(operation.clone(), bitmap, 0, None);
 
     state.lock_operation_hash(
         CHAIN_CONFIG_ADDRESS,
@@ -496,41 +523,72 @@ fn test_lock_operation_hash_already_locked() {
 #[test]
 fn test_change_validator_set() {
     let mut state = HeaderVerifierTestState::new();
+    let sovereign_config = SovereignConfig {
+        max_validators: 3,
+        ..SovereignConfig::default_config()
+    };
 
     state
         .common_setup
-        .deploy_chain_config(OptionalValue::None, None);
+        .deploy_chain_config(OptionalValue::Some(sovereign_config), None);
 
+    let genesis_validator = ManagedBuffer::from("genesis_validator");
+    state.common_setup.register_as_validator(
+        &genesis_validator,
+        &MultiEgldOrEsdtPayment::new(),
+        None,
+        Some("register"),
+    );
+    state.common_setup.complete_chain_config_setup_phase(None);
     state
         .common_setup
         .deploy_header_verifier(vec![ScArray::ChainConfig]);
+    state
+        .common_setup
+        .complete_header_verifier_setup_phase(None);
 
     let operation_hash = ManagedBuffer::from("operation_1");
     let hash_of_hashes = state.get_operation_hash(&operation_hash);
 
-    let mut validator_set = MultiValueEncoded::new();
-    validator_set.push(BigUint::from(0u32));
-    validator_set.push(BigUint::from(1u32));
-    validator_set.push(BigUint::from(1u32));
-    validator_set.push(BigUint::from(0u32));
-    validator_set.push(BigUint::from(1u32));
+    state.common_setup.update_registration_status(
+        &hash_of_hashes,
+        1,
+        None,
+        Some("registrationStatusUpdate"),
+    );
 
-    let bitmap_byte_array = [0u8, 1u8, 0u8, 0u8];
+    let second_validator = ManagedBuffer::from("second_validator");
+    state.common_setup.register_as_validator(
+        &second_validator,
+        &MultiEgldOrEsdtPayment::new(),
+        None,
+        Some("register"),
+    );
+    let third_validator = ManagedBuffer::from("third_validator");
+    state.common_setup.register_as_validator(
+        &third_validator,
+        &MultiEgldOrEsdtPayment::new(),
+        None,
+        Some("register"),
+    );
+
+    let mut validator_set = MultiValueEncoded::new();
+    validator_set.push(BigUint::from(1u32));
+    validator_set.push(BigUint::from(2u32));
+    validator_set.push(BigUint::from(3u32));
+
+    let bitmap = ManagedBuffer::new_from_bytes(&[1]);
 
     state.change_validator_set(
         &ManagedBuffer::new(),
         &hash_of_hashes,
         &operation_hash,
-        0,
-        &ManagedBuffer::new_from_bytes(&bitmap_byte_array),
+        1,
+        &bitmap,
         validator_set,
         None,
         Some("executedBridgeOp"),
     );
-
-    // state.common_setup.world.query().to(HEADER_VERIFIER_ADDRESS).whitebox(header_verifier::contract_obj, |sc| {
-    //     sc.
-    // })
 }
 
 /// ### TEST
@@ -549,6 +607,14 @@ fn test_change_validator_set_operation_already_registered() {
         .common_setup
         .deploy_chain_config(OptionalValue::None, None);
 
+    let genesis_validator = ManagedBuffer::from("genesis_validator");
+    state.common_setup.register_as_validator(
+        &genesis_validator,
+        &MultiEgldOrEsdtPayment::new(),
+        None,
+        Some("register"),
+    );
+
     state
         .common_setup
         .deploy_header_verifier(vec![ScArray::ChainConfig]);
@@ -561,8 +627,7 @@ fn test_change_validator_set_operation_already_registered() {
     let operation_2 = ManagedBuffer::from("operation_2");
     let operation = state.generate_bridge_operation_struct(vec![&operation_1, &operation_2]);
 
-    let bitmap_byte_array = [0u8, 1u8, 0u8, 0u8];
-    let bitmap = ManagedBuffer::new_from_bytes(&bitmap_byte_array);
+    let bitmap = ManagedBuffer::new_from_bytes(&[1]);
 
     state.register_operations(operation.clone(), bitmap.clone(), 0, None);
 
@@ -570,7 +635,7 @@ fn test_change_validator_set_operation_already_registered() {
         &ManagedBuffer::new(),
         &operation.bridge_operation_hash,
         &operation.operations_hashes.to_vec().get(0),
-        0,
+        1,
         &bitmap,
         MultiValueEncoded::new(),
         Some(OUTGOING_TX_HASH_ALREADY_REGISTERED),
