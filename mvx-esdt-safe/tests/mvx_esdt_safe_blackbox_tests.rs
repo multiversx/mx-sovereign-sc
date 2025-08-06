@@ -13,7 +13,8 @@ use error_messages::{
     NOTHING_TO_TRANSFER, PAYMENT_DOES_NOT_COVER_FEE, SETUP_PHASE_ALREADY_COMPLETED,
     SETUP_PHASE_NOT_COMPLETED, TOKEN_ID_IS_NOT_TRUSTED, TOKEN_IS_FROM_SOVEREIGN, TOO_MANY_TOKENS,
 };
-use header_verifier::{Headerverifier, OperationHashStatus};
+use header_verifier::storage::HeaderVerifierStorageModule;
+use header_verifier::utils::OperationHashStatus;
 use multiversx_sc::types::{MultiEgldOrEsdtPayment, MultiValueEncoded};
 use multiversx_sc::{
     imports::{MultiValue3, OptionalValue},

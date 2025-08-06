@@ -6,7 +6,7 @@ use error_messages::{
     CURRENT_OPERATION_NOT_REGISTERED, OUTGOING_TX_HASH_ALREADY_REGISTERED,
     SETUP_PHASE_NOT_COMPLETED,
 };
-use header_verifier::{Headerverifier, OperationHashStatus};
+use header_verifier::{storage::HeaderVerifierStorageModule, utils::OperationHashStatus};
 use header_verifier_blackbox_setup::*;
 use multiversx_sc::{
     imports::OptionalValue,

@@ -20,11 +20,11 @@ multiversx_sc_wasm_adapter::endpoints! {
     (
         init => init
         upgrade => upgrade
+        completeSetupPhase => complete_setup_phase
         registerBridgeOps => register_bridge_operations
         changeValidatorSet => change_validator_set
         removeExecutedHash => remove_executed_hash
         lockOperationHash => lock_operation_hash
-        completeSetupPhase => complete_setup_phase
     )
 }
 
