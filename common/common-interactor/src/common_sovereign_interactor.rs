@@ -1178,6 +1178,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             if is_executed && original_token.token_type != EsdtTokenType::Fungible {
                 let address = &self.state().get_mvx_esdt_safe_address(shard).to_address();
                 let storage = self.interactor().get_account_storage(address).await;
+                println!("Address: {:?}", address.to_bech32_default());
                 println!("Storage: {:?}", storage);
                 let token_info = self
                     .get_sov_to_mvx_token_id_with_nonce(
