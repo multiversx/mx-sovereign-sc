@@ -538,6 +538,13 @@ pub trait InteractorHelpers {
         self.check_testing_sc_balance(Vec::new()).await;
     }
 
+    /// For user we have two cases:
+    /// 1. User should get tokens back after execute call (with_transfer_data = false)
+    /// 2. User should not get tokens back after execute call (with_transfer_data = true)
+    ///
+    /// For MVX we have two cases:
+    /// 1. Tokens are deposited to MVX ESDT Safe
+    /// 2. Tokens leave the contract after operations or are burned (special case for the 1 SFT/META sov token that stays in the sc)
     async fn check_balances_after_action(&mut self, bcc: BalanceCheckConfig) {
         let BalanceCheckConfig {
             shard,
@@ -547,6 +554,7 @@ pub trait InteractorHelpers {
             with_transfer_data,
             is_sovereign_token,
             is_execute,
+            expected_error,
         } = bcc;
 
         let fee_amount = fee
@@ -563,11 +571,14 @@ pub trait InteractorHelpers {
                 .state()
                 .get_initial_token_balance_for_wallet(token_id.clone());
 
-            let user_should_get_token_back =
-                is_execute && is_sovereign_token && !with_transfer_data;
+            let user_should_get_token_back = is_execute && !with_transfer_data;
 
             let remaining_amount = if user_should_get_token_back {
-                initial_user_balance
+                if is_sovereign_token {
+                    amount
+                } else {
+                    initial_user_balance
+                }
             } else {
                 Self::safe_subtract(initial_user_balance, amount.clone())
             };
@@ -582,45 +593,34 @@ pub trait InteractorHelpers {
             expected_user_tokens.push(self.custom_amount_tokens(fee_token, remaining_fee));
         }
 
-        if expected_user_tokens.is_empty() {
+        if expected_user_tokens.is_empty() || expected_error.is_some() {
             self.check_user_balance_unchanged().await;
         } else {
             self.check_user_balance(expected_user_tokens).await;
         }
 
         // MVX tokens
-        let mvx_tokens = match (&token, &amount) {
-            (Some(token), Some(amount)) => {
-                let is_sft_meta = matches!(
+        let mvx_tokens = match (&token, &amount, is_sovereign_token, is_execute) {
+            (Some(token), Some(_), true, _) => {
+                if matches!(
                     token.token_type,
                     EsdtTokenType::MetaFungible
                         | EsdtTokenType::DynamicMeta
                         | EsdtTokenType::DynamicSFT
                         | EsdtTokenType::SemiFungible
-                );
-
-                let token_to_store = if is_sft_meta {
-                    self.custom_amount_tokens(token.clone(), BigUint::from(1u64))
-                } else {
-                    self.custom_amount_tokens(token.clone(), amount.clone())
-                };
-
-                if !is_execute {
-                    // Deposit
-                    if is_sovereign_token {
-                        if is_sft_meta {
-                            vec![token_to_store]
-                        } else {
-                            vec![]
-                        }
-                    } else {
-                        vec![token_to_store]
-                    }
+                ) {
+                    vec![self.custom_amount_tokens(token.clone(), BigUint::from(1u64))]
                 } else {
                     vec![]
                 }
             }
-            _ => vec![],
+            (Some(token), Some(amount), false, false) => {
+                // Non-sovereign deposits: full amount goes to MVX safe
+                vec![self.custom_amount_tokens(token.clone(), amount.clone())]
+            }
+            _ => {
+                vec![]
+            }
         };
 
         self.check_mvx_balance(shard, mvx_tokens).await;
@@ -638,7 +638,7 @@ pub trait InteractorHelpers {
         // TESTING SC
         let testing_sc_tokens = match (&token, &amount) {
             (Some(token), Some(amount)) => {
-                if is_execute && with_transfer_data {
+                if is_execute && with_transfer_data && expected_error.is_none() {
                     vec![self.custom_amount_tokens(token.clone(), amount.clone())]
                 } else {
                     vec![]

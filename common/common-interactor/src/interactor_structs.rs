@@ -1,6 +1,6 @@
 use multiversx_sc::{
     imports::Bech32Address,
-    types::{BigUint, EsdtTokenType},
+    types::{BigUint, EsdtTokenType, TokenIdentifier},
 };
 use multiversx_sc_snippets::imports::StaticApi;
 use structs::fee::FeeStruct;
@@ -21,20 +21,21 @@ pub struct MintTokenStruct {
 }
 
 #[derive(Clone)]
-pub struct ActionConfig<'a> {
+pub struct ActionConfig {
     pub shard: u32,
-    pub expected_error: Option<&'a str>,
-    pub expected_log: Option<&'a str>,
-    pub expected_log_error: Option<&'a str>,
+    pub expected_error: Option<String>,
+    pub expected_log: Option<String>,
+    pub expected_log_error: Option<String>,
     pub is_sovereign: bool,
     pub with_transfer_data: Option<bool>,
     pub decimals: Option<usize>,
     pub token_type: Option<EsdtTokenType>,
     pub nonce: Option<u64>,
-    pub endpoint: Option<&'a str>,
+    pub endpoint: Option<String>,
+    pub sovereign_token_id: Option<TokenIdentifier<StaticApi>>,
 }
 
-impl<'a> ActionConfig<'a> {
+impl ActionConfig {
     pub fn new(shard: u32) -> Self {
         Self {
             shard,
@@ -47,26 +48,17 @@ impl<'a> ActionConfig<'a> {
             token_type: None,
             nonce: None,
             endpoint: None,
+            sovereign_token_id: None,
         }
     }
 
-    pub fn expect_error(mut self, error: &'a str) -> Self {
+    pub fn expect_error(mut self, error: String) -> Self {
         self.expected_error = Some(error);
         self
     }
 
-    pub fn expect_log(mut self, log: &'a str) -> Self {
+    pub fn expect_log(mut self, log: String) -> Self {
         self.expected_log = Some(log);
-        self
-    }
-
-    pub fn sovereign(mut self) -> Self {
-        self.is_sovereign = true;
-        self
-    }
-
-    pub fn with_transfer_data(mut self) -> Self {
-        self.with_transfer_data = Some(true);
         self
     }
 
@@ -77,8 +69,18 @@ impl<'a> ActionConfig<'a> {
         self
     }
 
-    pub fn with_endpoint(mut self, endpoint: &'a str) -> Self {
+    pub fn with_endpoint(mut self, endpoint: String) -> Self {
         self.endpoint = Some(endpoint);
+        self.with_transfer_data = Some(true);
+        self
+    }
+
+    pub fn with_sovereign_token_id(
+        mut self,
+        sovereign_token_id: TokenIdentifier<StaticApi>,
+    ) -> Self {
+        self.sovereign_token_id = Some(sovereign_token_id);
+        self.is_sovereign = true;
         self
     }
 }
@@ -92,6 +94,7 @@ pub struct BalanceCheckConfig {
     pub with_transfer_data: bool,
     pub is_sovereign_token: bool,
     pub is_execute: bool,
+    pub expected_error: Option<String>,
 }
 
 impl BalanceCheckConfig {
@@ -131,6 +134,11 @@ impl BalanceCheckConfig {
 
     pub fn is_execute(mut self, value: bool) -> Self {
         self.is_execute = value;
+        self
+    }
+
+    pub fn expected_error(mut self, value: Option<String>) -> Self {
+        self.expected_error = value;
         self
     }
 }

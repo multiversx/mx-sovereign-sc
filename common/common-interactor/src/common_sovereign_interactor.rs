@@ -1172,18 +1172,13 @@ pub trait CommonInteractorTrait: InteractorHelpers {
         shard: u32,
         original_token: &EsdtTokenInfo,
         amount: &BigUint<StaticApi>,
+        is_executed: bool,
     ) -> EsdtTokenInfo {
-        let (mapped_token_id, mapped_nonce) = match original_token.token_type {
-            EsdtTokenType::Fungible => {
-                let token_id = self
-                    .get_sov_to_mvx_token_id(
-                        shard,
-                        TokenIdentifier::from_esdt_bytes(&original_token.token_id),
-                    )
-                    .await;
-                (token_id.to_string(), original_token.nonce)
-            }
-            _ => {
+        let (mapped_token_id, mapped_nonce) =
+            if is_executed && original_token.token_type != EsdtTokenType::Fungible {
+                let address = &self.state().get_mvx_esdt_safe_address(shard).to_address();
+                let storage = self.interactor().get_account_storage(address).await;
+                println!("Storage: {:?}", storage);
                 let token_info = self
                     .get_sov_to_mvx_token_id_with_nonce(
                         shard,
@@ -1195,8 +1190,15 @@ pub trait CommonInteractorTrait: InteractorHelpers {
                     token_info.token_identifier.to_string(),
                     token_info.token_nonce,
                 )
-            }
-        };
+            } else {
+                let token_id = self
+                    .get_sov_to_mvx_token_id(
+                        shard,
+                        TokenIdentifier::from_esdt_bytes(&original_token.token_id),
+                    )
+                    .await;
+                (token_id.to_string(), original_token.nonce)
+            };
 
         EsdtTokenInfo {
             token_id: mapped_token_id,
