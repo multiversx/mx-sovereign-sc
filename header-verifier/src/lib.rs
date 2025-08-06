@@ -90,8 +90,11 @@ pub trait Headerverifier: events::EventsModule + setup_phase::SetupPhaseModule {
             self.bls_pub_keys(epoch).is_empty(),
             VALIDATORS_ALREADY_REGISTERED_IN_EPOCH
         );
+
+        let bls_keys_previous_epoch = self.bls_pub_keys(epoch - 1);
+
         require!(
-            pub_keys_bitmap.len() == self.bls_pub_keys(epoch - 1).len(),
+            pub_keys_bitmap.len() == bls_keys_previous_epoch.len(),
             BITMAP_LEN_DOES_NOT_MATCH_BLS_KEY_LEN
         );
 
@@ -101,8 +104,6 @@ pub trait Headerverifier: events::EventsModule + setup_phase::SetupPhaseModule {
             !hash_of_hashes_history_mapper.contains(&bridge_operations_hash),
             OUTGOING_TX_HASH_ALREADY_REGISTERED
         );
-
-        let bls_keys_previous_epoch = self.bls_pub_keys(epoch - 1);
 
         self.verify_bls(
             &signature,
