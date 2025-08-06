@@ -132,7 +132,7 @@ impl EnshrineTestState {
         self
     }
 
-    pub fn execute_operation(
+    pub fn _execute_operation(
         &mut self,
         error_message: Option<&str>,
         operation: Operation<StaticApi>,
@@ -239,7 +239,7 @@ impl EnshrineTestState {
             .assert_expected_error_message(response, error_message);
     }
 
-    pub fn whitelist_enshrine_esdt(&mut self) {
+    pub fn _whitelist_enshrine_esdt(&mut self) {
         self.common_setup
             .world
             .tx()

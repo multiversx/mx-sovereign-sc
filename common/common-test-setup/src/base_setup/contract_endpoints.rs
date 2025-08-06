@@ -7,7 +7,7 @@ use proxies::{
     chain_config_proxy::ChainConfigContractProxy, fee_market_proxy::FeeMarketProxy,
     header_verifier_proxy::HeaderverifierProxy,
 };
-use structs::{fee::FeeStruct, ValidatorInfo};
+use structs::fee::FeeStruct;
 
 use crate::{
     base_setup::init::BaseSetup,

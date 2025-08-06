@@ -17,9 +17,7 @@ use multiversx_sc::{
         MultiEgldOrEsdtPayment, MultiValueEncoded,
     },
 };
-use multiversx_sc_scenario::{
-    api::StaticApi, multiversx_chain_vm::crypto_functions::sha256, ScenarioTxWhitebox,
-};
+use multiversx_sc_scenario::{multiversx_chain_vm::crypto_functions::sha256, ScenarioTxWhitebox};
 use setup_phase::SetupPhaseModule;
 use structs::{
     configs::{SovereignConfig, StakeArgs},

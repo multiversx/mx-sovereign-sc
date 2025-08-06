@@ -1,24 +1,20 @@
 use common_test_setup::constants::{
     CROWD_TOKEN_ID, ENSHRINE_BALANCE, ENSHRINE_SC_ADDRESS, FUNGIBLE_TOKEN_ID, ISSUE_COST,
-    NFT_TOKEN_ID, ONE_HUNDRED_THOUSAND, OWNER_ADDRESS, PREFIX_NFT_TOKEN_ID, RECEIVER_ADDRESS,
-    USER_ADDRESS, WEGLD_IDENTIFIER,
+    NFT_TOKEN_ID, ONE_HUNDRED_THOUSAND, OWNER_ADDRESS, PREFIX_NFT_TOKEN_ID, USER_ADDRESS,
+    WEGLD_IDENTIFIER,
 };
 use enshrine_esdt_safe_blackbox_setup::EnshrineTestState;
 use error_messages::{
-    ACTION_IS_NOT_ALLOWED, BANNED_ENDPOINT_NAME, GAS_LIMIT_TOO_HIGH, INSUFFICIENT_FUNDS,
-    NOTHING_TO_TRANSFER, NOT_ENOUGH_WEGLD_AMOUNT, ONLY_WEGLD_IS_ACCEPTED_AS_REGISTER_FEE,
-    PAYMENT_DOES_NOT_COVER_FEE, TOO_MANY_TOKENS,
+    BANNED_ENDPOINT_NAME, GAS_LIMIT_TOO_HIGH, INSUFFICIENT_FUNDS, NOTHING_TO_TRANSFER,
+    NOT_ENOUGH_WEGLD_AMOUNT, ONLY_WEGLD_IS_ACCEPTED_AS_REGISTER_FEE, PAYMENT_DOES_NOT_COVER_FEE,
+    TOO_MANY_TOKENS,
 };
 use multiversx_sc::imports::{MultiValue3, OptionalValue};
-use multiversx_sc::typenum::bit;
 use multiversx_sc::types::{
-    BigUint, EsdtTokenData, EsdtTokenPayment, ManagedBuffer, ManagedVec, MultiValueEncoded,
-    TokenIdentifier,
+    BigUint, EsdtTokenPayment, ManagedBuffer, ManagedVec, MultiValueEncoded,
 };
-use multiversx_sc_scenario::multiversx_chain_vm::crypto_functions::sha256;
 use structs::aliases::PaymentsVec;
 use structs::configs::EsdtSafeConfig;
-use structs::operation::{Operation, OperationData, OperationEsdtPayment};
 
 mod enshrine_esdt_safe_blackbox_setup;
 
