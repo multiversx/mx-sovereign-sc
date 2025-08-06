@@ -1472,6 +1472,18 @@ async fn test_execute_operation_with_native_token_success() {
     chain_interactor
         .deploy_chain_config(OptionalValue::None)
         .await;
+    let genesis_validator = ManagedBuffer::from("genesis_validator");
+    let chain_config_address = chain_interactor
+        .state
+        .current_chain_config_sc_address()
+        .clone();
+    chain_interactor
+        .register_as_validator(
+            genesis_validator,
+            MultiEgldOrEsdtPayment::new(),
+            chain_config_address,
+        )
+        .await;
     chain_interactor
         .deploy_mvx_esdt_safe(OptionalValue::None)
         .await;
