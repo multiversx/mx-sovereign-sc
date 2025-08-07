@@ -3,9 +3,9 @@
 use error_messages::{
     BITMAP_LEN_DOES_NOT_MATCH_BLS_KEY_LEN, BLS_KEY_NOT_REGISTERED,
     CALLER_NOT_FROM_CURRENT_SOVEREIGN, CHAIN_CONFIG_NOT_DEPLOYED,
-    CURRENT_OPERATION_ALREADY_IN_EXECUTION, CURRENT_OPERATION_NOT_REGISTERED,
-    HASH_OF_HASHES_DOES_NOT_MATCH, OUTGOING_TX_HASH_ALREADY_REGISTERED,
-    VALIDATORS_ALREADY_REGISTERED_IN_EPOCH,
+    CHAIN_CONFIG_SETUP_PHASE_NOT_COMPLETE, CURRENT_OPERATION_ALREADY_IN_EXECUTION,
+    CURRENT_OPERATION_NOT_REGISTERED, HASH_OF_HASHES_DOES_NOT_MATCH,
+    OUTGOING_TX_HASH_ALREADY_REGISTERED, VALIDATORS_ALREADY_REGISTERED_IN_EPOCH,
 };
 use multiversx_sc::codec;
 use multiversx_sc::proxy_imports::{TopDecode, TopEncode};
@@ -171,9 +171,16 @@ pub trait Headerverifier: events::EventsModule + setup_phase::SetupPhaseModule {
         if self.is_setup_phase_complete() {
             return;
         }
+        let chain_config_address = self.get_chain_config_address();
+
+        require!(
+            self.chain_config_setup_phase_complete(chain_config_address.clone())
+                .get(),
+            CHAIN_CONFIG_SETUP_PHASE_NOT_COMPLETE
+        );
 
         let genesis_validators: ManagedVec<ManagedBuffer> = self
-            .bls_keys_map(self.get_chain_config_address())
+            .bls_keys_map(chain_config_address)
             .iter()
             .map(|(_, bls_key)| bls_key)
             .collect();
@@ -283,6 +290,12 @@ pub trait Headerverifier: events::EventsModule + setup_phase::SetupPhaseModule {
 
     #[storage_mapper("blsPubKeys")]
     fn bls_pub_keys(&self, epoch: u64) -> SetMapper<ManagedBuffer>;
+
+    #[storage_mapper_from_address("setupPhaseComplete")]
+    fn chain_config_setup_phase_complete(
+        &self,
+        sc_address: ManagedAddress,
+    ) -> SingleValueMapper<bool, ManagedAddress>;
 
     #[storage_mapper_from_address("blsKeyToId")]
     fn bls_key_to_id_mapper(

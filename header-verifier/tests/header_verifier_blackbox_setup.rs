@@ -179,7 +179,7 @@ impl HeaderVerifierTestState {
             bridge_operations.push(operation_hash.clone());
         }
 
-        let hash_of_hashes = self.get_operation_hash(&appended_hashes);
+        let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&appended_hashes.to_vec()));
 
         BridgeOperation {
             signature: ManagedBuffer::new(),
