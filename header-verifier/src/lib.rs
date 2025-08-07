@@ -123,7 +123,7 @@ pub trait Headerverifier: events::EventsModule + setup_phase::SetupPhaseModule {
             &ManagedVec::from_iter(bls_keys_previous_epoch.iter()),
         );
 
-        if epoch > MAX_STORED_EPOCHS && !self.bls_pub_keys(epoch - MAX_STORED_EPOCHS).is_empty() {
+        if epoch >= MAX_STORED_EPOCHS && !self.bls_pub_keys(epoch - MAX_STORED_EPOCHS).is_empty() {
             self.bls_pub_keys(epoch - MAX_STORED_EPOCHS).clear();
         }
 

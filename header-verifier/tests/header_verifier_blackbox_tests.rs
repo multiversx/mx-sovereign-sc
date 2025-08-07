@@ -814,4 +814,14 @@ fn test_change_multiple_validator_sets() {
     state
         .common_setup
         .check_registered_validator_in_header_verifier(4, vec![fourth_validator_str]);
+
+    state
+        .common_setup
+        .world
+        .query()
+        .to(HEADER_VERIFIER_ADDRESS)
+        .whitebox(header_verifier::contract_obj, |sc| {
+            assert!(sc.bls_pub_keys(0).is_empty());
+            assert!(sc.bls_pub_keys(1).is_empty());
+        })
 }
