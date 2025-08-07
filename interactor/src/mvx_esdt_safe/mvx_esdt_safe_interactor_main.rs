@@ -206,6 +206,7 @@ impl MvxEsdtSafeInteract {
             chain_config_address.clone(),
         )
         .await;
+        self.complete_chain_config_setup_phase().await;
 
         self.deploy_mvx_esdt_safe(esdt_safe_config).await;
         self.deploy_fee_market(

@@ -116,6 +116,7 @@ impl EnshrineTestState {
         self.set_unpaused();
         self.common_setup
             .deploy_chain_config(OptionalValue::None, None);
+        self.common_setup.complete_chain_config_setup_phase(None);
         self.common_setup.deploy_token_handler();
         self.common_setup
             .deploy_fee_market(fee_struct.cloned(), ENSHRINE_SC_ADDRESS);

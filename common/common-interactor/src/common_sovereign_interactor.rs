@@ -705,6 +705,22 @@ pub trait CommonInteractorTrait {
             .await;
     }
 
+    async fn complete_chain_config_setup_phase(&mut self) {
+        let bridge_owner = self.bridge_owner().clone();
+        let chain_config_address = self.state().current_chain_config_sc_address().clone();
+
+        self.interactor()
+            .tx()
+            .from(bridge_owner)
+            .to(chain_config_address)
+            .gas(90_000_000u64)
+            .typed(HeaderverifierProxy)
+            .complete_setup_phase()
+            .returns(ReturnsResultUnmanaged)
+            .run()
+            .await;
+    }
+
     async fn deposit_in_mvx_esdt_safe(
         &mut self,
         to: Address,

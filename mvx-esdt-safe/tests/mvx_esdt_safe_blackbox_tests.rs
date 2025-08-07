@@ -1540,6 +1540,8 @@ fn test_execute_operation_success() {
         Some("register"),
     );
 
+    state.common_setup.complete_chain_config_setup_phase(None);
+
     state
         .common_setup
         .deploy_header_verifier(vec![ScArray::ChainConfig, ScArray::ESDTSafe]);
@@ -1641,6 +1643,8 @@ fn test_execute_operation_with_native_token_success() {
         Some("register"),
     );
 
+    state.common_setup.complete_chain_config_setup_phase(None);
+
     state
         .common_setup
         .deploy_header_verifier(vec![ScArray::ChainConfig, ScArray::ESDTSafe]);
@@ -1735,6 +1739,9 @@ fn test_execute_operation_burn_mechanism_without_deposit_cannot_subtract() {
         None,
         Some("register"),
     );
+
+    state.common_setup.complete_chain_config_setup_phase(None);
+
     state
         .common_setup
         .deploy_header_verifier(vec![ScArray::ChainConfig, ScArray::ESDTSafe]);
@@ -1823,6 +1830,8 @@ fn execute_operation_only_transfer_data_no_fee() {
         Some("register"),
     );
 
+    state.common_setup.complete_chain_config_setup_phase(None);
+
     state
         .common_setup
         .deploy_header_verifier(vec![ScArray::ChainConfig, ScArray::ESDTSafe]);
@@ -1904,6 +1913,8 @@ fn test_execute_operation_success_burn_mechanism() {
         None,
         Some("register"),
     );
+
+    state.common_setup.complete_chain_config_setup_phase(None);
 
     state
         .common_setup
@@ -2018,6 +2029,8 @@ fn test_deposit_execute_switch_mechanism() {
         None,
         Some("register"),
     );
+
+    state.common_setup.complete_chain_config_setup_phase(None);
 
     state
         .common_setup
@@ -2299,6 +2312,8 @@ fn test_execute_operation_no_payments() {
         Some("register"),
     );
 
+    state.common_setup.complete_chain_config_setup_phase(None);
+
     state
         .common_setup
         .deploy_header_verifier(vec![ScArray::ChainConfig, ScArray::ESDTSafe]);
@@ -2365,6 +2380,8 @@ fn test_execute_operation_no_payments_failed_event() {
         None,
         Some("register"),
     );
+
+    state.common_setup.complete_chain_config_setup_phase(None);
 
     state
         .common_setup
@@ -2672,6 +2689,8 @@ fn test_update_config_invalid_config() {
         Some("register"),
     );
 
+    state.common_setup.complete_chain_config_setup_phase(None);
+
     state
         .common_setup
         .deploy_header_verifier(vec![ScArray::ChainConfig, ScArray::ESDTSafe]);
@@ -2726,6 +2745,8 @@ fn test_update_config() {
         None,
         Some("register"),
     );
+
+    state.common_setup.complete_chain_config_setup_phase(None);
 
     state
         .common_setup

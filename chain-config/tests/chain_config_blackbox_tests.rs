@@ -4,10 +4,10 @@ use common_test_setup::constants::{
     CHAIN_CONFIG_ADDRESS, FIRST_TEST_TOKEN, OWNER_ADDRESS, USER_ADDRESS,
 };
 use error_messages::{
-    ADDITIONAL_STAKE_ZERO_VALUE, INVALID_ADDITIONAL_STAKE, INVALID_BLS_KEY_FOR_CALLER,
-    INVALID_EGLD_STAKE, INVALID_MIN_MAX_VALIDATOR_NUMBERS, REGISTRATION_DISABLED,
-    SETUP_PHASE_NOT_COMPLETED, VALIDATOR_ALREADY_REGISTERED, VALIDATOR_NOT_REGISTERED,
-    VALIDATOR_RANGE_EXCEEDED,
+    ADDITIONAL_STAKE_ZERO_VALUE, CHAIN_CONFIG_SETUP_PHASE_NOT_COMPLETE, INVALID_ADDITIONAL_STAKE,
+    INVALID_BLS_KEY_FOR_CALLER, INVALID_EGLD_STAKE, INVALID_MIN_MAX_VALIDATOR_NUMBERS,
+    REGISTRATION_DISABLED, SETUP_PHASE_NOT_COMPLETED, VALIDATOR_ALREADY_REGISTERED,
+    VALIDATOR_NOT_REGISTERED, VALIDATOR_RANGE_EXCEEDED,
 };
 use multiversx_sc::{
     chain_core::EGLD_000000_TOKEN_IDENTIFIER,
@@ -223,6 +223,7 @@ fn test_update_config_setup_phase_not_completed() {
     state
         .common_setup
         .deploy_chain_config(OptionalValue::None, None);
+    // state.common_setup.complete_chain_config_setup_phase(None);
 
     state
         .common_setup
@@ -230,7 +231,7 @@ fn test_update_config_setup_phase_not_completed() {
 
     state
         .common_setup
-        .complete_header_verifier_setup_phase(None);
+        .complete_header_verifier_setup_phase(Some(CHAIN_CONFIG_SETUP_PHASE_NOT_COMPLETE));
 
     let new_config = SovereignConfig::new(2, 1, BigUint::default(), None);
 
