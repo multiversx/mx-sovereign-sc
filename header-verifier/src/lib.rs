@@ -4,8 +4,8 @@ use error_messages::{
     BITMAP_LEN_DOES_NOT_MATCH_BLS_KEY_LEN, BLS_KEY_NOT_REGISTERED,
     CALLER_NOT_FROM_CURRENT_SOVEREIGN, CHAIN_CONFIG_NOT_DEPLOYED,
     CURRENT_OPERATION_ALREADY_IN_EXECUTION, CURRENT_OPERATION_NOT_REGISTERED,
-    GENESIS_VALIDATORS_ALREADY_SET, HASH_OF_HASHES_DOES_NOT_MATCH, MIN_NUMBER_OF_SIGNATURE_NOT_MET,
-    OUTGOING_TX_HASH_ALREADY_REGISTERED, VALIDATORS_ALREADY_REGISTERED_IN_EPOCH,
+    HASH_OF_HASHES_DOES_NOT_MATCH, OUTGOING_TX_HASH_ALREADY_REGISTERED,
+    VALIDATORS_ALREADY_REGISTERED_IN_EPOCH,
 };
 use multiversx_sc::codec;
 use multiversx_sc::proxy_imports::{TopDecode, TopEncode};
@@ -20,7 +20,7 @@ pub enum OperationHashStatus {
     Locked,
 }
 
-const EPOCH_RANGE: u64 = 3;
+const MAX_STORED_EPOCHS: u64 = 3;
 
 #[multiversx_sc::contract]
 pub trait Headerverifier: events::EventsModule + setup_phase::SetupPhaseModule {
@@ -55,16 +55,17 @@ pub trait Headerverifier: events::EventsModule + setup_phase::SetupPhaseModule {
             OUTGOING_TX_HASH_ALREADY_REGISTERED
         );
 
+        self.calculate_and_check_transfers_hashes(
+            &bridge_operations_hash,
+            operations_hashes.clone(),
+        );
+
         self.verify_bls(
+            epoch,
             &signature,
             &bridge_operations_hash,
             pub_keys_bitmap,
             &ManagedVec::from_iter(bls_pub_keys_mapper.iter()),
-        );
-
-        self.calculate_and_check_transfers_hashes(
-            &bridge_operations_hash,
-            operations_hashes.clone(),
         );
 
         for operation_hash in operations_hashes {
@@ -75,6 +76,7 @@ pub trait Headerverifier: events::EventsModule + setup_phase::SetupPhaseModule {
         hash_of_hashes_history_mapper.insert(bridge_operations_hash);
     }
 
+    // TODO: Add error events instead of panics
     #[endpoint(changeValidatorSet)]
     fn change_validator_set(
         &self,
@@ -105,13 +107,6 @@ pub trait Headerverifier: events::EventsModule + setup_phase::SetupPhaseModule {
             OUTGOING_TX_HASH_ALREADY_REGISTERED
         );
 
-        self.verify_bls(
-            &signature,
-            &bridge_operations_hash,
-            pub_keys_bitmap,
-            &ManagedVec::from_iter(bls_keys_previous_epoch.iter()),
-        );
-
         let mut operations_hashes = MultiValueEncoded::new();
         operations_hashes.push(operation_hash.clone());
 
@@ -120,8 +115,16 @@ pub trait Headerverifier: events::EventsModule + setup_phase::SetupPhaseModule {
             operations_hashes.clone(),
         );
 
-        if epoch > EPOCH_RANGE && !self.bls_pub_keys(epoch - EPOCH_RANGE).is_empty() {
-            self.bls_pub_keys(epoch - EPOCH_RANGE).clear();
+        self.verify_bls(
+            epoch - 1, // Use the validator signatures from the last epoch
+            &signature,
+            &bridge_operations_hash,
+            pub_keys_bitmap,
+            &ManagedVec::from_iter(bls_keys_previous_epoch.iter()),
+        );
+
+        if epoch > MAX_STORED_EPOCHS && !self.bls_pub_keys(epoch - MAX_STORED_EPOCHS).is_empty() {
+            self.bls_pub_keys(epoch - MAX_STORED_EPOCHS).clear();
         }
 
         let new_bls_keys = self.get_bls_keys_by_id(pub_keys_id);
@@ -169,11 +172,6 @@ pub trait Headerverifier: events::EventsModule + setup_phase::SetupPhaseModule {
             return;
         }
 
-        require!(
-            self.bls_pub_keys(0).is_empty(),
-            GENESIS_VALIDATORS_ALREADY_SET
-        );
-
         let genesis_validators: ManagedVec<ManagedBuffer> = self
             .bls_keys_map(self.get_chain_config_address())
             .iter()
@@ -217,13 +215,14 @@ pub trait Headerverifier: events::EventsModule + setup_phase::SetupPhaseModule {
     // TODO
     fn verify_bls(
         &self,
+        epoch: u64,
         _signature: &ManagedBuffer,
         _bridge_operations_hash: &ManagedBuffer,
         bls_keys_bitmap: ManagedBuffer,
         bls_pub_keys: &ManagedVec<ManagedBuffer>,
     ) {
         let _approving_validators =
-            self.get_approving_validators(&bls_keys_bitmap, bls_pub_keys.len());
+            self.get_approving_validators(epoch, &bls_keys_bitmap, bls_pub_keys.len());
 
         // self.crypto().verify_bls_aggregated_signature(
         //     approving_validators,
@@ -251,6 +250,7 @@ pub trait Headerverifier: events::EventsModule + setup_phase::SetupPhaseModule {
 
     fn get_approving_validators(
         &self,
+        epoch: u64,
         bls_keys_bitmap: &ManagedBuffer,
         bls_keys_length: usize,
     ) -> ManagedVec<ManagedBuffer> {
@@ -263,21 +263,12 @@ pub trait Headerverifier: events::EventsModule + setup_phase::SetupPhaseModule {
             ManagedVec::new();
 
         for (index, has_signed) in bitmap_byte_array.iter().enumerate() {
+            let bls_keys_from_storage: ManagedVec<ManagedBuffer> =
+                self.bls_pub_keys(epoch).iter().collect();
             if *has_signed == 1u8 {
-                approving_validators_bls_keys.push(
-                    self.bls_keys_map(self.get_chain_config_address())
-                        .get(&BigUint::from(index + 1))
-                        .unwrap_or_else(|| sc_panic!(BLS_KEY_NOT_REGISTERED)),
-                );
+                approving_validators_bls_keys.push(bls_keys_from_storage.get(index).clone());
             }
         }
-
-        let minimum_signatures = 2 * bls_keys_length / 3 + 1;
-
-        require!(
-            approving_validators_bls_keys.len() >= minimum_signatures,
-            MIN_NUMBER_OF_SIGNATURE_NOT_MET
-        );
 
         approving_validators_bls_keys
     }
