@@ -85,6 +85,15 @@ where
     To: TxTo<Env>,
     Gas: TxGas<Env>,
 {
+    pub fn complete_setup_phase(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("completeSetupPhase")
+            .original_result()
+    }
+
     pub fn register_bridge_operations<
         Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
         Arg1: ProxyArg<ManagedBuffer<Env::Api>>,
@@ -167,15 +176,6 @@ where
             .raw_call("lockOperationHash")
             .argument(&hash_of_hashes)
             .argument(&operation_hash)
-            .original_result()
-    }
-
-    pub fn complete_setup_phase(
-        self,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("completeSetupPhase")
             .original_result()
     }
 }
