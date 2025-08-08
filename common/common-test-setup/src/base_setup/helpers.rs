@@ -1,6 +1,9 @@
 use multiversx_sc_scenario::{
     api::StaticApi,
-    imports::{ManagedBuffer, ReturnsResultUnmanaged, TestSCAddress, TopEncode, UserBuiltinProxy},
+    imports::{
+        ManagedBuffer, MultiEgldOrEsdtPayment, ReturnsResultUnmanaged, TestSCAddress, TopEncode,
+        UserBuiltinProxy,
+    },
     multiversx_chain_vm::crypto_functions::sha256,
     ScenarioTxRun,
 };
@@ -18,6 +21,18 @@ use crate::{
 };
 
 impl BaseSetup {
+    // TODO: add payment
+    pub fn register_multiple_validators(&mut self, new_validators: Vec<ManagedBuffer<StaticApi>>) {
+        for new_validator in new_validators {
+            self.register_as_validator(
+                &new_validator,
+                &MultiEgldOrEsdtPayment::new(),
+                None,
+                Some("register"),
+            );
+        }
+    }
+
     pub fn change_ownership_to_header_verifier(&mut self, sc_address: TestSCAddress) {
         self.world
             .tx()

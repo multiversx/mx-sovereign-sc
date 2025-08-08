@@ -14,8 +14,8 @@ use multiversx_sc::{
     imports::{ESDTSystemSCProxy, OptionalValue, UserBuiltinProxy},
     types::{
         Address, BigUint, CodeMetadata, ESDTSystemSCAddress, EsdtTokenType, ManagedAddress,
-        ManagedBuffer, ManagedVec, MultiValueEncoded, ReturnsNewAddress, ReturnsResult,
-        ReturnsResultUnmanaged, TestSCAddress, TokenIdentifier,
+        ManagedBuffer, ManagedVec, MultiEgldOrEsdtPayment, MultiValueEncoded, ReturnsNewAddress,
+        ReturnsResult, ReturnsResultUnmanaged, TestSCAddress, TokenIdentifier,
     },
 };
 use multiversx_sc_snippets::{
@@ -287,6 +287,27 @@ pub trait CommonInteractorTrait {
             ));
 
         println!("new mvx-esdt-safe address: {new_address_bech32}");
+    }
+
+    async fn register_as_validator(
+        &mut self,
+        bls_key: ManagedBuffer<StaticApi>,
+        payment: MultiEgldOrEsdtPayment<StaticApi>,
+        chain_config_address: Bech32Address,
+    ) {
+        let bridge_owner = self.bridge_owner().clone();
+
+        self.interactor()
+            .tx()
+            .from(bridge_owner)
+            .to(chain_config_address)
+            .gas(90_000_000u64)
+            .typed(ChainConfigContractProxy)
+            .register(bls_key)
+            .payment(payment)
+            .returns(ReturnsResultUnmanaged)
+            .run()
+            .await;
     }
 
     async fn deploy_fee_market(
@@ -653,19 +674,16 @@ pub trait CommonInteractorTrait {
         let bridge_service = self.bridge_service().clone();
         let header_verifier_address = self.state().current_header_verifier_address().clone();
 
+        let bitmap = ManagedBuffer::new_from_bytes(&[1]);
+        let epoch = 0u32;
+
         self.interactor()
             .tx()
             .from(bridge_service)
             .to(header_verifier_address)
             .gas(90_000_000u64)
             .typed(HeaderverifierProxy)
-            .register_bridge_operations(
-                signature,
-                hash_of_hashes,
-                ManagedBuffer::new(),
-                ManagedBuffer::new(),
-                operations_hashes,
-            )
+            .register_bridge_operations(signature, hash_of_hashes, bitmap, epoch, operations_hashes)
             .returns(ReturnsResultUnmanaged)
             .run()
             .await;
@@ -679,6 +697,22 @@ pub trait CommonInteractorTrait {
             .tx()
             .from(bridge_owner)
             .to(header_verifier_address)
+            .gas(90_000_000u64)
+            .typed(HeaderverifierProxy)
+            .complete_setup_phase()
+            .returns(ReturnsResultUnmanaged)
+            .run()
+            .await;
+    }
+
+    async fn complete_chain_config_setup_phase(&mut self) {
+        let bridge_owner = self.bridge_owner().clone();
+        let chain_config_address = self.state().current_chain_config_sc_address().clone();
+
+        self.interactor()
+            .tx()
+            .from(bridge_owner)
+            .to(chain_config_address)
             .gas(90_000_000u64)
             .typed(HeaderverifierProxy)
             .complete_setup_phase()

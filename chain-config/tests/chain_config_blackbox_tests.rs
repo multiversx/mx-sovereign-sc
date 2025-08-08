@@ -4,10 +4,10 @@ use common_test_setup::constants::{
     CHAIN_CONFIG_ADDRESS, FIRST_TEST_TOKEN, OWNER_ADDRESS, USER_ADDRESS,
 };
 use error_messages::{
-    ADDITIONAL_STAKE_ZERO_VALUE, INVALID_ADDITIONAL_STAKE, INVALID_BLS_KEY_FOR_CALLER,
-    INVALID_EGLD_STAKE, INVALID_MIN_MAX_VALIDATOR_NUMBERS, REGISTRATION_DISABLED,
-    SETUP_PHASE_NOT_COMPLETED, VALIDATOR_ALREADY_REGISTERED, VALIDATOR_NOT_REGISTERED,
-    VALIDATOR_RANGE_EXCEEDED,
+    ADDITIONAL_STAKE_ZERO_VALUE, CHAIN_CONFIG_SETUP_PHASE_NOT_COMPLETE, INVALID_ADDITIONAL_STAKE,
+    INVALID_BLS_KEY_FOR_CALLER, INVALID_EGLD_STAKE, INVALID_MIN_MAX_VALIDATOR_NUMBERS,
+    REGISTRATION_DISABLED, SETUP_PHASE_NOT_COMPLETED, VALIDATOR_ALREADY_REGISTERED,
+    VALIDATOR_NOT_REGISTERED, VALIDATOR_RANGE_EXCEEDED,
 };
 use multiversx_sc::{
     chain_core::EGLD_000000_TOKEN_IDENTIFIER,
@@ -230,7 +230,7 @@ fn test_update_config_setup_phase_not_completed() {
 
     state
         .common_setup
-        .complete_header_verifier_setup_phase(None);
+        .complete_header_verifier_setup_phase(Some(CHAIN_CONFIG_SETUP_PHASE_NOT_COMPLETE));
 
     let new_config = SovereignConfig::new(2, 1, BigUint::default(), None);
 
@@ -262,23 +262,35 @@ fn test_update_config_invalid_config() {
         .common_setup
         .deploy_header_verifier(vec![ScArray::ChainConfig]);
 
+    let genesis_validator = ManagedBuffer::from("genesis_validator");
+
+    state.register(
+        &genesis_validator,
+        &MultiEgldOrEsdtPayment::new(),
+        None,
+        Some("register"),
+    );
+
+    state.common_setup.complete_chain_config_setup_phase(None);
+
     state
         .common_setup
         .complete_header_verifier_setup_phase(None);
 
     let new_config = SovereignConfig::new(2, 1, BigUint::default(), None);
-
     let config_hash = new_config.generate_hash();
     let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&config_hash.to_vec()));
+    let bitmap = ManagedBuffer::new_from_bytes(&[1]);
+    let signature = ManagedBuffer::new();
 
     state.common_setup.register_operation(
         OWNER_ADDRESS,
-        ManagedBuffer::new(),
+        signature,
         &hash_of_hashes,
+        bitmap,
+        0,
         MultiValueEncoded::from_iter(vec![config_hash]),
     );
-
-    state.common_setup.complete_chain_config_setup_phase(None);
 
     state.update_sovereign_config(hash_of_hashes, new_config, None, Some("failedBridgeOp"));
 }
@@ -303,23 +315,35 @@ fn test_update_config() {
         .common_setup
         .deploy_header_verifier(vec![ScArray::ChainConfig]);
 
+    let genesis_validator = ManagedBuffer::from("genesis_validator");
+    state.register(
+        &genesis_validator,
+        &MultiEgldOrEsdtPayment::new(),
+        None,
+        Some("register"),
+    );
+
+    state.common_setup.complete_chain_config_setup_phase(None);
+
     state
         .common_setup
         .complete_header_verifier_setup_phase(None);
 
     let new_config = SovereignConfig::new(1, 2, BigUint::default(), None);
-
     let config_hash = new_config.generate_hash();
     let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&config_hash.to_vec()));
+    let signature = ManagedBuffer::new();
+    let bitmap = ManagedBuffer::new_from_bytes(&[1]);
+    let epoch = 0;
 
     state.common_setup.register_operation(
         OWNER_ADDRESS,
-        ManagedBuffer::new(),
+        signature,
         &hash_of_hashes,
+        bitmap,
+        epoch,
         MultiValueEncoded::from_iter(vec![config_hash]),
     );
-
-    state.common_setup.complete_chain_config_setup_phase(None);
 
     state.update_sovereign_config(hash_of_hashes, new_config, None, Some("executedBridgeOp"));
 
@@ -354,14 +378,18 @@ fn test_register_validator_range_exceeded_too_many_validators() {
 
     let new_validator_one = ManagedBuffer::from("validator1");
     let new_validator_two = ManagedBuffer::from("validator2");
+    let new_validator_three = ManagedBuffer::from("validator3");
 
     state.register(&new_validator_one, &payments_vec, None, Some("register"));
-
     let id_one = state.get_bls_key_id(&new_validator_one);
     assert!(state.get_bls_key_by_id(&id_one) == new_validator_one);
 
+    state.register(&new_validator_two, &payments_vec, None, Some("register"));
+    let id_two = state.get_bls_key_id(&new_validator_two);
+    assert!(state.get_bls_key_by_id(&id_two) == new_validator_two);
+
     state.register(
-        &new_validator_two,
+        &new_validator_three,
         &payments_vec,
         Some(VALIDATOR_RANGE_EXCEEDED),
         None,
@@ -381,6 +409,7 @@ fn test_register_validator_not_enough_egld_stake() {
     let mut state = ChainConfigTestState::new();
 
     let config = SovereignConfig {
+        max_validators: 3,
         min_stake: BigUint::from(100u64),
         ..SovereignConfig::default_config()
     };
@@ -389,17 +418,27 @@ fn test_register_validator_not_enough_egld_stake() {
         .common_setup
         .deploy_chain_config(OptionalValue::Some(config), None);
 
-    let egld_payment = EgldOrEsdtTokenPayment::new(
+    let egld_payment_not_enough = EgldOrEsdtTokenPayment::new(
         EgldOrEsdtTokenIdentifier::from(EGLD_000000_TOKEN_IDENTIFIER.as_bytes()),
         0,
         BigUint::from(99u64),
     );
+    let egld_payment_enough = EgldOrEsdtTokenPayment::new(
+        EgldOrEsdtTokenIdentifier::from(EGLD_000000_TOKEN_IDENTIFIER.as_bytes()),
+        0,
+        BigUint::from(100u64),
+    );
 
-    let mut payments_vec = MultiEgldOrEsdtPayment::new();
+    let mut payments_vec_enough = MultiEgldOrEsdtPayment::new();
+    payments_vec_enough.push(egld_payment_enough);
 
-    payments_vec.push(egld_payment);
-
-    let new_validator_one = ManagedBuffer::from("validator1");
+    let genesis_validator = ManagedBuffer::from("genesis_validator");
+    state.register(
+        &genesis_validator,
+        &payments_vec_enough,
+        None,
+        Some("register"),
+    );
 
     state.common_setup.complete_chain_config_setup_phase(None);
 
@@ -411,11 +450,19 @@ fn test_register_validator_not_enough_egld_stake() {
         .common_setup
         .complete_header_verifier_setup_phase(None);
 
-    state.register_and_update_registration_status(ENABLED);
+    let signature = ManagedBuffer::new();
+    let bitmap = ManagedBuffer::new_from_bytes(&[1]);
+    let epoch = 0;
 
+    state.register_and_update_registration_status(ENABLED, signature, bitmap, epoch);
+
+    let mut payments_vec_not_enough = MultiEgldOrEsdtPayment::new();
+    payments_vec_not_enough.push(egld_payment_not_enough);
+
+    let new_validator_one = ManagedBuffer::from("validator1");
     state.register(
         &new_validator_one,
-        &payments_vec,
+        &payments_vec_not_enough,
         Some(INVALID_EGLD_STAKE),
         None,
     );
@@ -433,15 +480,18 @@ fn test_register_validator_not_enough_egld_stake() {
 fn test_register_validator_already_registered() {
     let mut state = ChainConfigTestState::new();
 
+    let sovereign_config = SovereignConfig {
+        max_validators: 10,
+        ..SovereignConfig::default_config()
+    };
     state
         .common_setup
-        .deploy_chain_config(OptionalValue::None, None);
-
-    state.common_setup.complete_chain_config_setup_phase(None);
+        .deploy_chain_config(OptionalValue::Some(sovereign_config), None);
 
     let payments_vec = MultiEgldOrEsdtPayment::new();
 
-    let new_validator = ManagedBuffer::from("validator1");
+    let genesis_validator = ManagedBuffer::from("genesis_validator");
+    state.register(&genesis_validator, &payments_vec, None, Some("register"));
 
     state.common_setup.complete_chain_config_setup_phase(None);
 
@@ -453,10 +503,15 @@ fn test_register_validator_already_registered() {
         .common_setup
         .complete_header_verifier_setup_phase(None);
 
-    state.register_and_update_registration_status(ENABLED);
+    let signature = ManagedBuffer::new();
+    let bitmap = ManagedBuffer::new_from_bytes(&[1u8]);
+    let epoch = 0;
 
+    state.register_and_update_registration_status(ENABLED, signature, bitmap, epoch);
+
+    let new_validator = ManagedBuffer::from("validator1");
     state.register(&new_validator, &payments_vec, None, Some("register"));
-    assert!(state.get_bls_key_id(&new_validator) == 1);
+    assert!(state.get_bls_key_id(&new_validator) == 2);
 
     state.register(
         &new_validator,
@@ -496,8 +551,17 @@ fn test_register_validator_not_whitelisted() {
         .deploy_chain_config(OptionalValue::Some(config), None);
 
     let new_validator = ManagedBuffer::from("validator1");
+    let payment = EgldOrEsdtTokenPayment {
+        token_identifier: EgldOrEsdtTokenIdentifier::from(FIRST_TEST_TOKEN.as_bytes()),
+        token_nonce: 0,
+        amount: BigUint::from(100u64),
+    };
 
-    let payments_vec = MultiEgldOrEsdtPayment::new();
+    let mut payments_vec = MultiEgldOrEsdtPayment::new();
+    payments_vec.push(payment);
+
+    let genesis_validator = ManagedBuffer::from("genesis_validator");
+    state.register(&genesis_validator, &payments_vec, None, Some("register"));
 
     state.common_setup.complete_chain_config_setup_phase(None);
 
@@ -509,11 +573,16 @@ fn test_register_validator_not_whitelisted() {
         .common_setup
         .complete_header_verifier_setup_phase(None);
 
-    state.register_and_update_registration_status(ENABLED);
+    let signature = ManagedBuffer::new();
+    let bitmap = ManagedBuffer::new_from_bytes(&[1]);
+    let epoch = 0;
 
+    state.register_and_update_registration_status(ENABLED, signature, bitmap, epoch);
+
+    let empty_payments_vec = MultiEgldOrEsdtPayment::new();
     state.register(
         &new_validator,
-        &payments_vec,
+        &empty_payments_vec,
         Some(INVALID_ADDITIONAL_STAKE),
         None,
     );
@@ -548,17 +617,16 @@ fn test_register_validator_is_whitelisted() {
         .common_setup
         .deploy_chain_config(OptionalValue::Some(config), None);
 
-    let new_validator = ManagedBuffer::from("validator1");
-
     let payment = EgldOrEsdtTokenPayment::new(
         EgldOrEsdtTokenIdentifier::from(FIRST_TEST_TOKEN.as_bytes()),
         0,
         BigUint::from(100u64),
     );
-
     let mut payments_vec = MultiEgldOrEsdtPayment::new();
-
     payments_vec.push(payment);
+
+    let genesis_validator = ManagedBuffer::from("genesis_validator");
+    state.register(&genesis_validator, &payments_vec, None, Some("register"));
 
     state.common_setup.complete_chain_config_setup_phase(None);
 
@@ -570,8 +638,13 @@ fn test_register_validator_is_whitelisted() {
         .common_setup
         .complete_header_verifier_setup_phase(None);
 
-    state.register_and_update_registration_status(ENABLED);
+    let signature = ManagedBuffer::new();
+    let bitmap = ManagedBuffer::new_from_bytes(&[1u8]);
+    let epoch = 0;
 
+    state.register_and_update_registration_status(ENABLED, signature, bitmap, epoch);
+
+    let new_validator = ManagedBuffer::from("validator1");
     state.register(&new_validator, &payments_vec, None, Some("register"));
 }
 
@@ -579,7 +652,7 @@ fn test_register_validator_is_whitelisted() {
 /// C-CONFIG_REGISTER_VALIDATOR_OK
 ///
 /// ### ACTION
-/// Call 'register()' as a non whitelisted validator after genesis phase
+/// Call 'register()' as a whitelisted validator after genesis phase
 ///
 /// ### EXPECTED
 /// Validator is registered successfully
@@ -595,7 +668,7 @@ fn test_register_validator_not_whitelisted_after_genesis() {
     let additional_stage_args = ManagedVec::from(vec![first_token_stake_arg]);
 
     let config = SovereignConfig {
-        max_validators: 2,
+        max_validators: 3,
         opt_additional_stake_required: Some(additional_stage_args),
         ..SovereignConfig::default_config()
     };
@@ -603,8 +676,6 @@ fn test_register_validator_not_whitelisted_after_genesis() {
     state
         .common_setup
         .deploy_chain_config(OptionalValue::Some(config), None);
-
-    let whitelisted_validator = ManagedBuffer::from("validator1");
 
     let payment = EgldOrEsdtTokenPayment::new(
         EgldOrEsdtTokenIdentifier::from(FIRST_TEST_TOKEN.as_bytes()),
@@ -614,6 +685,9 @@ fn test_register_validator_not_whitelisted_after_genesis() {
 
     let mut payments_vec = MultiEgldOrEsdtPayment::new();
     payments_vec.push(payment);
+
+    let genesis_validator = ManagedBuffer::from("genesis_validator");
+    state.register(&genesis_validator, &payments_vec, None, Some("register"));
 
     state.common_setup.complete_chain_config_setup_phase(None);
 
@@ -625,7 +699,12 @@ fn test_register_validator_not_whitelisted_after_genesis() {
         .common_setup
         .complete_header_verifier_setup_phase(None);
 
-    state.register_and_update_registration_status(ENABLED);
+    let signature = ManagedBuffer::new();
+    let bitmap = ManagedBuffer::new_from_bytes(&[1]);
+    let epoch = 0;
+
+    let whitelisted_validator = ManagedBuffer::from("validator1");
+    state.register_and_update_registration_status(ENABLED, signature, bitmap, epoch);
 
     state.register(
         &whitelisted_validator,
@@ -921,6 +1000,14 @@ fn update_registration_status() {
         .common_setup
         .deploy_chain_config(OptionalValue::None, None);
 
+    let genesis_validator = ManagedBuffer::from("genesis_validator");
+    state.register(
+        &genesis_validator,
+        &MultiEgldOrEsdtPayment::new(),
+        None,
+        Some("register"),
+    );
+
     state.common_setup.complete_chain_config_setup_phase(None);
 
     state
@@ -935,10 +1022,16 @@ fn update_registration_status() {
     let new_status_hash = ManagedBuffer::new_from_bytes(&new_status_hash_byte_array);
     let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&new_status_hash_byte_array));
 
+    let signature = ManagedBuffer::new();
+    let bitmap = ManagedBuffer::new_from_bytes(&[1]);
+    let epoch = 0;
+
     state.common_setup.register_operation(
         OWNER_ADDRESS,
-        ManagedBuffer::new(),
+        signature,
         &hash_of_hashes,
+        bitmap,
+        epoch,
         MultiValueEncoded::from_iter(vec![new_status_hash]),
     );
 
@@ -975,6 +1068,10 @@ fn update_register_validator_registration_enabled_validator_not_whitelisted() {
         .common_setup
         .deploy_chain_config(OptionalValue::None, None);
 
+    let payments_vec = MultiEgldOrEsdtPayment::new();
+    let genesis_validator = ManagedBuffer::from("genesis_validator");
+    state.register(&genesis_validator, &payments_vec, None, Some("register"));
+
     state.common_setup.complete_chain_config_setup_phase(None);
 
     state
@@ -989,10 +1086,16 @@ fn update_register_validator_registration_enabled_validator_not_whitelisted() {
     let new_status_hash = ManagedBuffer::new_from_bytes(&new_status_hash_byte_array);
     let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&new_status_hash_byte_array));
 
+    let signature = ManagedBuffer::new();
+    let bitmap = ManagedBuffer::new_from_bytes(&[1]);
+    let epoch = 0;
+
     state.common_setup.register_operation(
         OWNER_ADDRESS,
-        ManagedBuffer::new(),
+        signature,
         &hash_of_hashes,
+        bitmap,
+        epoch,
         MultiValueEncoded::from_iter(vec![new_status_hash]),
     );
 
@@ -1012,10 +1115,7 @@ fn update_register_validator_registration_enabled_validator_not_whitelisted() {
             assert!(sc.registration_status().get() == 1);
         });
 
-    let payments_vec = MultiEgldOrEsdtPayment::new();
-
     let validator = ManagedBuffer::from("validator_1");
-
     state.register(&validator, &payments_vec, None, Some("register"));
 }
 
@@ -1035,6 +1135,14 @@ fn update_register_validator_registration_disabled_validator_not_whitelisted() {
         .common_setup
         .deploy_chain_config(OptionalValue::None, None);
 
+    let genesis_validator = ManagedBuffer::from("genesis_validator");
+    state.register(
+        &genesis_validator,
+        &MultiEgldOrEsdtPayment::new(),
+        None,
+        Some("register"),
+    );
+
     state.common_setup.complete_chain_config_setup_phase(None);
 
     state
@@ -1048,11 +1156,16 @@ fn update_register_validator_registration_disabled_validator_not_whitelisted() {
     let new_status_hash_byte_array = sha256(&[1u8]);
     let new_status_hash = ManagedBuffer::new_from_bytes(&new_status_hash_byte_array);
     let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&new_status_hash_byte_array));
+    let signature = ManagedBuffer::new();
+    let bitmap = ManagedBuffer::new_from_bytes(&[1]);
+    let epoch = 0;
 
     state.common_setup.register_operation(
         OWNER_ADDRESS,
-        ManagedBuffer::new(),
+        signature,
         &hash_of_hashes,
+        bitmap,
+        epoch,
         MultiValueEncoded::from_iter(vec![new_status_hash]),
     );
 

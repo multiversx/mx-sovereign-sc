@@ -34,7 +34,7 @@ impl<M: ManagedTypeApi> SovereignConfig<M> {
     }
 
     pub fn default_config() -> Self {
-        SovereignConfig::new(0, 1, BigUint::default(), None)
+        SovereignConfig::new(0, 2, BigUint::default(), None)
     }
 }
 

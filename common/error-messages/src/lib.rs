@@ -113,6 +113,12 @@ pub const VALIDATOR_RANGE_EXCEEDED: &str = "Validator range exceeded";
 pub const NOT_ENOUGH_VALIDATORS: &str = "Not enough validators registered";
 pub const VALIDATOR_NOT_REGISTERED: &str = "Validator not registered";
 pub const VALIDATOR_ALREADY_REGISTERED: &str = "Validator already registered";
+pub const BLS_KEY_NOT_REGISTERED: &str = "BLS key not registered";
+pub const MIN_NUMBER_OF_SIGNATURE_NOT_MET: &str = "Minimum number of signatures was not met";
+pub const VALIDATORS_ALREADY_REGISTERED_IN_EPOCH: &str =
+    "There already is a validator set registered for this epoch";
+pub const BITMAP_LEN_DOES_NOT_MATCH_BLS_KEY_LEN: &str =
+    "Bitmap length does not match BLS keys length";
 pub const INVALID_ADDITIONAL_STAKE: &str = "Invalid additional stake sent";
 pub const INVALID_EGLD_STAKE: &str = "Invalid EGLD stake sent";
 pub const REGISTRATION_DISABLED: &str = "Registration is disabled";
@@ -121,3 +127,7 @@ pub const EMPTY_ADDITIONAL_STAKE: &str = "Additional stake was sent as an empty 
 pub const ADDITIONAL_STAKE_ZERO_VALUE: &str = "Additional stake cannot be a zero value";
 pub const ADDITIONAL_STAKE_NOT_REQUIRED: &str = "Additional stake was provided but is not required";
 pub const INVALID_BLS_KEY_FOR_CALLER: &str = "Invalid BLS key for caller";
+pub const GENESIS_VALIDATORS_ALREADY_SET: &str = "Genesis Validator were already set";
+pub const CALLER_NOT_CHAIN_CONFIG: &str = "Only Chain-Config SC can call this endpoint";
+pub const CHAIN_CONFIG_SETUP_PHASE_NOT_COMPLETE: &str =
+    "The Chain-Config SC setup phase is not completed";

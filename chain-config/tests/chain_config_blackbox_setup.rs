@@ -200,15 +200,23 @@ impl ChainConfigTestState {
         bls_key
     }
 
-    pub fn register_and_update_registration_status(&mut self, registration_status: u8) {
+    pub fn register_and_update_registration_status(
+        &mut self,
+        registration_status: u8,
+        signature: ManagedBuffer<StaticApi>,
+        bitmap: ManagedBuffer<StaticApi>,
+        epoch: u64,
+    ) {
         let new_status_hash_byte_array = sha256(&[registration_status]);
         let new_status_hash = ManagedBuffer::new_from_bytes(&new_status_hash_byte_array);
         let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&new_status_hash_byte_array));
 
         self.common_setup.register_operation(
             OWNER_ADDRESS,
-            ManagedBuffer::new(),
+            signature,
             &hash_of_hashes,
+            bitmap,
+            epoch,
             MultiValueEncoded::from_iter(vec![new_status_hash]),
         );
 
