@@ -1,11 +1,8 @@
-use error_messages::{
-    BITMAP_LEN_DOES_NOT_MATCH_BLS_KEY_LEN, CURRENT_OPERATION_ALREADY_IN_EXECUTION,
-    OUTGOING_TX_HASH_ALREADY_REGISTERED,
-};
+use error_messages::CURRENT_OPERATION_ALREADY_IN_EXECUTION;
 
 use crate::{
     checks, storage,
-    utils::{self, OperationHashStatus, EPOCH_RANGE},
+    utils::{self, OperationHashStatus, MAX_STORED_EPOCHS},
 };
 multiversx_sc::imports!();
 
@@ -28,28 +25,27 @@ pub trait HeaderVerifierOperationsModule:
     ) {
         self.require_setup_complete();
         let bls_pub_keys_mapper = self.bls_pub_keys(epoch);
-        require!(
-            pub_keys_bitmap.len() == bls_pub_keys_mapper.len(),
-            BITMAP_LEN_DOES_NOT_MATCH_BLS_KEY_LEN
-        );
+
+        self.require_bitmap_and_bls_same_length(pub_keys_bitmap.len(), bls_pub_keys_mapper.len());
 
         let mut hash_of_hashes_history_mapper = self.hash_of_hashes_history();
 
-        require!(
-            !hash_of_hashes_history_mapper.contains(&bridge_operations_hash),
-            OUTGOING_TX_HASH_ALREADY_REGISTERED
-        );
-
-        self.verify_bls(
-            &signature,
+        self.require_hash_of_hashes_not_registered(
             &bridge_operations_hash,
-            pub_keys_bitmap,
-            &ManagedVec::from_iter(bls_pub_keys_mapper.iter()),
+            &hash_of_hashes_history_mapper,
         );
 
         self.calculate_and_check_transfers_hashes(
             &bridge_operations_hash,
             operations_hashes.clone(),
+        );
+
+        self.verify_bls(
+            epoch,
+            &signature,
+            &bridge_operations_hash,
+            pub_keys_bitmap,
+            &ManagedVec::from_iter(bls_pub_keys_mapper.iter()),
         );
 
         for operation_hash in operations_hashes {
@@ -60,6 +56,7 @@ pub trait HeaderVerifierOperationsModule:
         hash_of_hashes_history_mapper.insert(bridge_operations_hash);
     }
 
+    // TODO: Add error events instead of panics
     #[endpoint(changeValidatorSet)]
     fn change_validator_set(
         &self,
@@ -87,13 +84,6 @@ pub trait HeaderVerifierOperationsModule:
             &hash_of_hashes_history_mapper,
         );
 
-        self.verify_bls(
-            &signature,
-            &bridge_operations_hash,
-            pub_keys_bitmap,
-            &ManagedVec::from_iter(bls_keys_previous_epoch.iter()),
-        );
-
         let mut operations_hashes = MultiValueEncoded::new();
         operations_hashes.push(operation_hash.clone());
 
@@ -102,8 +92,16 @@ pub trait HeaderVerifierOperationsModule:
             operations_hashes.clone(),
         );
 
-        if epoch > EPOCH_RANGE && !self.bls_pub_keys(epoch - EPOCH_RANGE).is_empty() {
-            self.bls_pub_keys(epoch - EPOCH_RANGE).clear();
+        self.verify_bls(
+            epoch - 1, // Use the validator signatures from the last epoch
+            &signature,
+            &bridge_operations_hash,
+            pub_keys_bitmap,
+            &ManagedVec::from_iter(bls_keys_previous_epoch.iter()),
+        );
+
+        if epoch >= MAX_STORED_EPOCHS && !self.bls_pub_keys(epoch - MAX_STORED_EPOCHS).is_empty() {
+            self.bls_pub_keys(epoch - MAX_STORED_EPOCHS).clear();
         }
 
         let new_bls_keys = self.get_bls_keys_by_id(pub_keys_id);

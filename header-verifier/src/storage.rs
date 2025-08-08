@@ -22,6 +22,12 @@ pub trait HeaderVerifierStorageModule {
         sc_address: ManagedAddress,
     ) -> MapMapper<BigUint<Self::Api>, ManagedBuffer, ManagedAddress>;
 
+    #[storage_mapper_from_address("setupPhaseComplete")]
+    fn chain_config_setup_phase_complete(
+        &self,
+        sc_address: ManagedAddress,
+    ) -> SingleValueMapper<bool, ManagedAddress>;
+
     #[storage_mapper("operationHashStatus")]
     fn operation_hash_status(
         &self,

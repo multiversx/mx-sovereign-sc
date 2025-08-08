@@ -14,7 +14,7 @@ pub enum OperationHashStatus {
     Locked,
 }
 
-pub const EPOCH_RANGE: u64 = 3;
+pub const MAX_STORED_EPOCHS: u64 = 3;
 
 #[multiversx_sc::module]
 pub trait HeaderVerifierUtilsModule:
@@ -49,6 +49,7 @@ pub trait HeaderVerifierUtilsModule:
 
     fn get_approving_validators(
         &self,
+        epoch: u64,
         bls_keys_bitmap: &ManagedBuffer,
         bls_keys_length: usize,
     ) -> ManagedVec<ManagedBuffer> {
@@ -61,18 +62,12 @@ pub trait HeaderVerifierUtilsModule:
             ManagedVec::new();
 
         for (index, has_signed) in bitmap_byte_array.iter().enumerate() {
+            let bls_keys_from_storage: ManagedVec<ManagedBuffer> =
+                self.bls_pub_keys(epoch).iter().collect();
             if *has_signed == 1u8 {
-                approving_validators_bls_keys.push(
-                    self.bls_keys_map(self.get_chain_config_address())
-                        .get(&BigUint::from(index + 1))
-                        .unwrap_or_else(|| sc_panic!(BLS_KEY_NOT_REGISTERED)),
-                );
+                approving_validators_bls_keys.push(bls_keys_from_storage.get(index).clone());
             }
         }
-
-        let minimum_signatures = 2 * bls_keys_length / 3 + 1;
-
-        self.require_min_signatures_amount(approving_validators_bls_keys.len(), minimum_signatures);
 
         approving_validators_bls_keys
     }
@@ -97,13 +92,14 @@ pub trait HeaderVerifierUtilsModule:
     // TODO
     fn verify_bls(
         &self,
+        epoch: u64,
         _signature: &ManagedBuffer,
         _bridge_operations_hash: &ManagedBuffer,
         bls_keys_bitmap: ManagedBuffer,
         bls_pub_keys: &ManagedVec<ManagedBuffer>,
     ) {
         let _approving_validators =
-            self.get_approving_validators(&bls_keys_bitmap, bls_pub_keys.len());
+            self.get_approving_validators(epoch, &bls_keys_bitmap, bls_pub_keys.len());
 
         // self.crypto().verify_bls_aggregated_signature(
         //     approving_validators,

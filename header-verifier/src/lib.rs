@@ -33,7 +33,7 @@ pub trait Headerverifier:
         }
         let chain_config_address = self.get_chain_config_address();
 
-        self.require_genesis_validators_not_set(self.bls_pub_keys(0));
+        self.require_chain_config_setup_complete(&chain_config_address);
 
         let genesis_validators: ManagedVec<ManagedBuffer> = self
             .bls_keys_map(chain_config_address)

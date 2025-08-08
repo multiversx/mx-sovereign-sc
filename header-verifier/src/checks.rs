@@ -1,6 +1,7 @@
 use error_messages::{
-    BITMAP_LEN_DOES_NOT_MATCH_BLS_KEY_LEN, CURRENT_OPERATION_NOT_REGISTERED,
-    GENESIS_VALIDATORS_ALREADY_SET, HASH_OF_HASHES_DOES_NOT_MATCH, MIN_NUMBER_OF_SIGNATURE_NOT_MET,
+    BITMAP_LEN_DOES_NOT_MATCH_BLS_KEY_LEN, CHAIN_CONFIG_SETUP_PHASE_NOT_COMPLETE,
+    CURRENT_OPERATION_NOT_REGISTERED, GENESIS_VALIDATORS_ALREADY_SET,
+    HASH_OF_HASHES_DOES_NOT_MATCH, MIN_NUMBER_OF_SIGNATURE_NOT_MET,
     OUTGOING_TX_HASH_ALREADY_REGISTERED, VALIDATORS_ALREADY_REGISTERED_IN_EPOCH,
 };
 
@@ -17,6 +18,14 @@ pub trait HeaderVerifierChecksModule:
         require!(
             self.bls_pub_keys(epoch).is_empty(),
             VALIDATORS_ALREADY_REGISTERED_IN_EPOCH
+        );
+    }
+
+    fn require_chain_config_setup_complete(&self, chain_config_address: &ManagedAddress) {
+        require!(
+            self.chain_config_setup_phase_complete(chain_config_address.clone())
+                .get(),
+            CHAIN_CONFIG_SETUP_PHASE_NOT_COMPLETE
         );
     }
 
