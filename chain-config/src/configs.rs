@@ -1,4 +1,6 @@
-use error_messages::{ERROR_AT_ENCODING, INVALID_REGISTRATION_STATUS};
+use error_messages::{
+    ERROR_AT_ENCODING, INVALID_REGISTRATION_STATUS, SETUP_PHASE_ALREADY_COMPLETED,
+};
 use structs::{configs::SovereignConfig, generate_hash::GenerateHash};
 
 use crate::{
@@ -20,6 +22,11 @@ pub trait ConfigsModule:
     #[only_owner]
     #[endpoint(updateSovereignConfigSetupPhase)]
     fn update_sovereign_config_during_setup_phase(&self, new_config: SovereignConfig<Self::Api>) {
+        require!(
+            !self.setup_phase_complete().get(),
+            SETUP_PHASE_ALREADY_COMPLETED
+        );
+
         if let Some(error_message) = self.is_new_config_valid(&new_config) {
             sc_panic!(error_message);
         }
