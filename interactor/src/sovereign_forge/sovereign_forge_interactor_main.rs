@@ -160,13 +160,13 @@ impl SovereignForgeInteract {
 
         self.deploy_chain_factory(
             sov_forge_address,
-            chain_config_address,
+            chain_config_address.clone(),
             header_verifier_address,
             mvx_esdt_safe_address,
             fee_market_address,
         )
         .await;
-        let chain_factory_address = self.state.current_chain_factory_sc_address().clone();
+        let chain_factory_address = self.state().current_chain_factory_sc_address().clone();
 
         self.deploy_token_handler(chain_factory_address.to_address())
             .await;
@@ -182,6 +182,14 @@ impl SovereignForgeInteract {
 
         self.deploy_phase_one(deploy_cost, Some(chain_id.into()), optional_sov_config)
             .await;
+
+        self.register_as_validator(
+            ManagedBuffer::from("genesis_validator"),
+            MultiEgldOrEsdtPayment::new(),
+            chain_config_address,
+        )
+        .await;
+
         self.deploy_phase_two(optional_esdt_safe_config).await;
         self.deploy_phase_three(fee).await;
         self.deploy_phase_four().await;

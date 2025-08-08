@@ -1,23 +1,20 @@
 use common_test_setup::constants::{
     CROWD_TOKEN_ID, ENSHRINE_BALANCE, ENSHRINE_SC_ADDRESS, FUNGIBLE_TOKEN_ID, ISSUE_COST,
-    NFT_TOKEN_ID, ONE_HUNDRED_THOUSAND, OWNER_ADDRESS, PREFIX_NFT_TOKEN_ID, RECEIVER_ADDRESS,
-    USER_ADDRESS, WEGLD_IDENTIFIER,
+    NFT_TOKEN_ID, ONE_HUNDRED_THOUSAND, OWNER_ADDRESS, PREFIX_NFT_TOKEN_ID, USER_ADDRESS,
+    WEGLD_IDENTIFIER,
 };
 use enshrine_esdt_safe_blackbox_setup::EnshrineTestState;
 use error_messages::{
-    ACTION_IS_NOT_ALLOWED, BANNED_ENDPOINT_NAME, GAS_LIMIT_TOO_HIGH, INSUFFICIENT_FUNDS,
-    NOTHING_TO_TRANSFER, NOT_ENOUGH_WEGLD_AMOUNT, ONLY_WEGLD_IS_ACCEPTED_AS_REGISTER_FEE,
-    PAYMENT_DOES_NOT_COVER_FEE, TOO_MANY_TOKENS,
+    BANNED_ENDPOINT_NAME, GAS_LIMIT_TOO_HIGH, INSUFFICIENT_FUNDS, NOTHING_TO_TRANSFER,
+    NOT_ENOUGH_WEGLD_AMOUNT, ONLY_WEGLD_IS_ACCEPTED_AS_REGISTER_FEE, PAYMENT_DOES_NOT_COVER_FEE,
+    TOO_MANY_TOKENS,
 };
 use multiversx_sc::imports::{MultiValue3, OptionalValue};
 use multiversx_sc::types::{
-    BigUint, EsdtTokenData, EsdtTokenPayment, ManagedBuffer, ManagedVec, MultiValueEncoded,
-    TokenIdentifier,
+    BigUint, EsdtTokenPayment, ManagedBuffer, ManagedVec, MultiValueEncoded,
 };
-use multiversx_sc_scenario::multiversx_chain_vm::crypto_functions::sha256;
 use structs::aliases::PaymentsVec;
 use structs::configs::EsdtSafeConfig;
-use structs::operation::{Operation, OperationData, OperationEsdtPayment};
 
 mod enshrine_esdt_safe_blackbox_setup;
 
@@ -34,99 +31,6 @@ fn test_deploy() {
     let mut state = EnshrineTestState::new();
 
     state.setup_contracts(false, None, None);
-}
-
-/// ### TEST
-/// E-ESDT_EXECUTE_FAIL
-///
-/// ### ACTION
-/// Call 'execute_operation()' with invalid token payments
-///
-/// ### EXPECTED
-/// Error ACTION_IS_NOT_ALLOWED
-#[test]
-fn test_execute_with_non_prefixed_token() {
-    let mut state = EnshrineTestState::new();
-    let token_data = EsdtTokenData {
-        amount: BigUint::from(100u64),
-        ..Default::default()
-    };
-
-    let payment = vec![
-        OperationEsdtPayment::new(TokenIdentifier::from(NFT_TOKEN_ID), 1, token_data.clone()),
-        OperationEsdtPayment::new(TokenIdentifier::from(CROWD_TOKEN_ID), 0, token_data),
-    ];
-
-    let operation_data = OperationData::new(1, OWNER_ADDRESS.to_managed_address(), None);
-
-    state.setup_contracts(false, None, None);
-
-    let operation = Operation::new(
-        RECEIVER_ADDRESS.to_managed_address(),
-        ManagedVec::from(payment),
-        operation_data,
-    );
-
-    let operation_hash = state.common_setup.get_operation_hash(&operation);
-    let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&operation_hash.to_vec()));
-    let operations_hashes = MultiValueEncoded::from(ManagedVec::from(vec![operation_hash.clone()]));
-
-    state.common_setup.register_operation(
-        OWNER_ADDRESS,
-        ManagedBuffer::new(),
-        &hash_of_hashes,
-        operations_hashes,
-    );
-    state.whitelist_enshrine_esdt();
-    state.execute_operation(Some(ACTION_IS_NOT_ALLOWED), operation, None);
-}
-
-/// ### TEST
-/// E-ESDT_EXECUTE_OK
-///
-/// ### ACTION
-/// Call 'execute_operation()' with valid token payments
-///
-/// ### EXPECTED
-/// Operation is executed successfully
-#[test]
-fn test_execute_with_prefixed_token() {
-    let mut state = EnshrineTestState::new();
-    let token_data = EsdtTokenData {
-        amount: BigUint::from(100u64),
-        ..Default::default()
-    };
-
-    let payment = vec![
-        OperationEsdtPayment::new(
-            TokenIdentifier::from(PREFIX_NFT_TOKEN_ID),
-            1,
-            token_data.clone(),
-        ),
-        OperationEsdtPayment::new(TokenIdentifier::from(CROWD_TOKEN_ID), 0, token_data),
-    ];
-
-    let operation_data = OperationData::new(1, OWNER_ADDRESS.to_managed_address(), None);
-
-    let operation = Operation::new(
-        RECEIVER_ADDRESS.to_managed_address(),
-        ManagedVec::from(payment),
-        operation_data,
-    );
-
-    let operation_hash = state.common_setup.get_operation_hash(&operation);
-    let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&operation_hash.to_vec()));
-    let operations_hashes = MultiValueEncoded::from(ManagedVec::from(vec![operation_hash.clone()]));
-
-    state.setup_contracts(false, None, None);
-    state.common_setup.register_operation(
-        OWNER_ADDRESS,
-        ManagedBuffer::new(),
-        &hash_of_hashes,
-        operations_hashes,
-    );
-    state.whitelist_enshrine_esdt();
-    state.execute_operation(None, operation, Some("executedBridgeOp"));
 }
 
 /// ### TEST

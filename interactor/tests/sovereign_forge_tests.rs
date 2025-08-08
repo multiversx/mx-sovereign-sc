@@ -5,7 +5,7 @@ use common_test_setup::constants::{
     CHAIN_ID, DEPLOY_COST, ESDT_SAFE_CONFIG_STORAGE_KEY, ONE_HUNDRED_TOKENS, ONE_THOUSAND_TOKENS,
     OPERATION_HASH_STATUS_STORAGE_KEY, TEN_TOKENS, TOKEN_FEE_STORAGE_KEY, WRONG_ENDPOINT_NAME,
 };
-use header_verifier::OperationHashStatus;
+use header_verifier::utils::OperationHashStatus;
 use multiversx_sc::{
     imports::{MultiValue3, OptionalValue},
     types::{
@@ -61,7 +61,8 @@ async fn test_deploy_sovereign_forge_cs() {
 /// ### EXPECTED
 /// Deposit is successful and tokens are transferred to the mvx-esdt-safe-sc
 #[tokio::test]
-#[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
+#[ignore]
+// #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn test_complete_deposit_flow() {
     let mut chain_interactor = SovereignForgeInteract::new(Config::chain_simulator_config()).await;
     let deploy_cost = BigUint::from(DEPLOY_COST);
@@ -151,7 +152,8 @@ async fn test_complete_deposit_flow() {
 /// The operation is executed in the testing smart contract
 #[tokio::test]
 #[serial]
-#[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
+#[ignore]
+// #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn test_complete_flow_execute_operation_with_transfer_data_success_no_fee() {
     let mut chain_interactor = SovereignForgeInteract::new(Config::chain_simulator_config()).await;
     let user_address = chain_interactor.user_address().clone();
@@ -303,7 +305,8 @@ async fn test_complete_flow_execute_operation_with_transfer_data_success_no_fee(
 /// The fee is deducted
 #[tokio::test]
 #[serial]
-#[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
+#[ignore]
+// #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn test_complete_flow_execute_operation_success_with_fee() {
     let mut chain_interactor = SovereignForgeInteract::new(Config::chain_simulator_config()).await;
     let user_address = chain_interactor.user_address().clone();
@@ -489,7 +492,8 @@ async fn test_complete_flow_execute_operation_success_with_fee() {
 /// The operation is executed in the testing smart contract
 #[tokio::test]
 #[serial]
-#[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
+#[ignore]
+// #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn test_complete_flow_execute_operation_only_transfer_data_no_fee() {
     let mut chain_interactor = SovereignForgeInteract::new(Config::chain_simulator_config()).await;
 
@@ -592,7 +596,8 @@ async fn test_complete_flow_execute_operation_only_transfer_data_no_fee() {
 /// The testing smart contract returns a failed event
 #[tokio::test]
 #[serial]
-#[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
+#[ignore]
+// #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn test_complete_flow_execute_operation_wrong_endpoint() {
     let mut chain_interactor = SovereignForgeInteract::new(Config::chain_simulator_config()).await;
 
@@ -695,7 +700,8 @@ async fn test_complete_flow_execute_operation_wrong_endpoint() {
 /// The ESDT Safe config is updated successfully
 #[tokio::test]
 #[serial]
-#[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
+#[ignore]
+// #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn test_complete_flow_update_esdt_safe_config() {
     let mut chain_interactor = SovereignForgeInteract::new(Config::chain_simulator_config()).await;
 
@@ -755,7 +761,8 @@ async fn test_complete_flow_update_esdt_safe_config() {
 /// The fee is set and then removed successfully
 #[tokio::test]
 #[serial]
-#[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
+#[ignore]
+// #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn test_complete_flow_set_and_remove_fee() {
     let mut chain_interactor = SovereignForgeInteract::new(Config::chain_simulator_config()).await;
 

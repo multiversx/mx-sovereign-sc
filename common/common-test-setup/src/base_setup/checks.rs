@@ -1,6 +1,6 @@
 use cross_chain::storage::CrossChainStorage;
 use error_messages::EMPTY_EXPECTED_LOG;
-use header_verifier::{Headerverifier, OperationHashStatus};
+use header_verifier::{storage::HeaderVerifierStorageModule, utils::OperationHashStatus};
 use multiversx_sc_scenario::{
     api::StaticApi,
     imports::{Address, BigUint, ManagedBuffer, MultiValue3, TestTokenIdentifier},
@@ -49,6 +49,23 @@ impl BaseSetup {
                 expected_balance,
                 ManagedBuffer::<StaticApi>::new(),
             );
+    }
+
+    pub fn check_registered_validator_in_header_verifier(
+        &mut self,
+        epoch: u64,
+        bls_keys: Vec<&str>,
+    ) {
+        self.world.query().to(HEADER_VERIFIER_ADDRESS).whitebox(
+            header_verifier::contract_obj,
+            |sc| {
+                for bls_key in bls_keys {
+                    assert!(sc
+                        .bls_pub_keys(epoch)
+                        .contains(&ManagedBuffer::from(bls_key)));
+                }
+            },
+        )
     }
 
     pub fn check_deposited_tokens_amount(&mut self, tokens: Vec<(TestTokenIdentifier, u64)>) {

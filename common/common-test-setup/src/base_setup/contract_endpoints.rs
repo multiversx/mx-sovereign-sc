@@ -1,14 +1,20 @@
 use multiversx_sc_scenario::{
     api::StaticApi,
-    imports::{ManagedBuffer, MultiValueEncoded, ReturnsHandledOrError, TestAddress},
-    ScenarioTxRun,
+    imports::{
+        ManagedBuffer, MultiEgldOrEsdtPayment, MultiValueEncoded, ReturnsHandledOrError,
+        TestAddress,
+    },
+    ReturnsLogs, ScenarioTxRun,
 };
-use proxies::{fee_market_proxy::FeeMarketProxy, header_verifier_proxy::HeaderverifierProxy};
+use proxies::{
+    chain_config_proxy::ChainConfigContractProxy, fee_market_proxy::FeeMarketProxy,
+    header_verifier_proxy::HeaderverifierProxy,
+};
 use structs::fee::FeeStruct;
 
 use crate::{
     base_setup::init::BaseSetup,
-    constants::{FEE_MARKET_ADDRESS, HEADER_VERIFIER_ADDRESS, OWNER_ADDRESS},
+    constants::{CHAIN_CONFIG_ADDRESS, FEE_MARKET_ADDRESS, HEADER_VERIFIER_ADDRESS, OWNER_ADDRESS},
 };
 
 impl BaseSetup {
@@ -17,6 +23,8 @@ impl BaseSetup {
         caller: TestAddress,
         signature: ManagedBuffer<StaticApi>,
         hash_of_hashes: &ManagedBuffer<StaticApi>,
+        bls_keys_bitmap: ManagedBuffer<StaticApi>,
+        epoch: u64,
         operations_hashes: MultiValueEncoded<StaticApi, ManagedBuffer<StaticApi>>,
     ) {
         self.world
@@ -27,8 +35,8 @@ impl BaseSetup {
             .register_bridge_operations(
                 signature,
                 hash_of_hashes,
-                ManagedBuffer::new(),
-                ManagedBuffer::new(),
+                bls_keys_bitmap,
+                epoch,
                 operations_hashes,
             )
             .run();
@@ -69,5 +77,51 @@ impl BaseSetup {
             .run();
 
         self.assert_expected_error_message(response, error_message);
+    }
+
+    pub fn update_registration_status(
+        &mut self,
+        hash_of_hashes: &ManagedBuffer<StaticApi>,
+        registration_status: u8,
+        expected_error_message: Option<&str>,
+        expected_log: Option<&str>,
+    ) {
+        let (response, logs) = self
+            .world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .to(CHAIN_CONFIG_ADDRESS)
+            .typed(ChainConfigContractProxy)
+            .update_registration_status(hash_of_hashes, registration_status)
+            .returns(ReturnsHandledOrError::new())
+            .returns(ReturnsLogs)
+            .run();
+
+        self.assert_expected_error_message(response, expected_error_message);
+        self.assert_expected_log(logs, expected_log, None);
+    }
+
+    // TODO: Use this for any validator registration
+    pub fn register_as_validator(
+        &mut self,
+        bls_key: &ManagedBuffer<StaticApi>,
+        payment: &MultiEgldOrEsdtPayment<StaticApi>,
+        expected_error_message: Option<&str>,
+        expected_custom_log: Option<&str>,
+    ) {
+        let (response, logs) = self
+            .world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .to(CHAIN_CONFIG_ADDRESS)
+            .typed(ChainConfigContractProxy)
+            .register(bls_key)
+            .payment(payment)
+            .returns(ReturnsHandledOrError::new())
+            .returns(ReturnsLogs)
+            .run();
+
+        self.assert_expected_error_message(response, expected_error_message);
+        self.assert_expected_log(logs, expected_custom_log, None);
     }
 }

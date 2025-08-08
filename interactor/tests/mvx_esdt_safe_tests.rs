@@ -14,7 +14,7 @@ use error_messages::{
     NATIVE_TOKEN_ALREADY_REGISTERED, NOTHING_TO_TRANSFER, PAYMENT_DOES_NOT_COVER_FEE,
     SETUP_PHASE_NOT_COMPLETED, TOO_MANY_TOKENS,
 };
-use header_verifier::OperationHashStatus;
+use header_verifier::utils::OperationHashStatus;
 use multiversx_sc_snippets::multiversx_sc_scenario::multiversx_chain_vm::crypto_functions::sha256;
 use multiversx_sc_snippets::{hex, imports::*};
 use rust_interact::mvx_esdt_safe::mvx_esdt_safe_interactor_main::MvxEsdtSafeInteract;
@@ -1480,6 +1480,19 @@ async fn test_execute_operation_with_native_token_success() {
     chain_interactor
         .deploy_chain_config(OptionalValue::None)
         .await;
+    let genesis_validator = ManagedBuffer::from("genesis_validator");
+    let chain_config_address = chain_interactor
+        .state
+        .current_chain_config_sc_address()
+        .clone();
+    chain_interactor
+        .register_as_validator(
+            genesis_validator,
+            MultiEgldOrEsdtPayment::new(),
+            chain_config_address,
+        )
+        .await;
+    chain_interactor.complete_chain_config_setup_phase().await;
     chain_interactor
         .deploy_mvx_esdt_safe(OptionalValue::None)
         .await;

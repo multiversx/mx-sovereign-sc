@@ -197,6 +197,17 @@ impl MvxEsdtSafeInteract {
         sc_array: Vec<ScArray>,
     ) {
         self.deploy_chain_config(sovereign_config).await;
+
+        let genesis_validator = ManagedBuffer::from("genesis_validator");
+        let chain_config_address = self.state.current_chain_config_sc_address();
+        self.register_as_validator(
+            genesis_validator,
+            MultiEgldOrEsdtPayment::new(),
+            chain_config_address.clone(),
+        )
+        .await;
+        self.complete_chain_config_setup_phase().await;
+
         self.deploy_mvx_esdt_safe(esdt_safe_config).await;
         self.deploy_fee_market(
             self.state.current_mvx_esdt_safe_contract_address().clone(),
