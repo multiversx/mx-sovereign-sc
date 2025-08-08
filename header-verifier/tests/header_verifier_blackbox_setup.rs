@@ -166,36 +166,6 @@ impl HeaderVerifierTestState {
             .assert_expected_log(logs, expected_custom_log);
     }
 
-    pub fn change_multiple_validator_sets(
-        &mut self,
-        signature: &str,
-        epochs: Vec<u64>,
-        bitmaps: Vec<&str>,
-        validator_sets: Vec<Vec<BigUint<StaticApi>>>,
-    ) {
-        for (index, validator_set) in validator_sets.iter().enumerate() {
-            let operation_hash = ManagedBuffer::from(format!("operation_{}", index));
-            let hash_of_hashes = self.get_operation_hash(&operation_hash);
-            let validator_set_multi_value =
-                MultiValueEncoded::from(ManagedVec::from(validator_set.clone()));
-            self.common_setup
-                .world
-                .tx()
-                .from(OWNER_ADDRESS)
-                .to(HEADER_VERIFIER_ADDRESS)
-                .typed(HeaderverifierProxy)
-                .change_validator_set(
-                    signature,
-                    hash_of_hashes,
-                    operation_hash,
-                    bitmaps[index],
-                    epochs[index],
-                    validator_set_multi_value,
-                )
-                .run();
-        }
-    }
-
     pub fn generate_bridge_operation_struct(
         &mut self,
         operation_hashes: Vec<&ManagedBuffer<StaticApi>>,
