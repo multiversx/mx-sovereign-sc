@@ -223,7 +223,6 @@ fn test_update_config_setup_phase_not_completed() {
     state
         .common_setup
         .deploy_chain_config(OptionalValue::None, None);
-    // state.common_setup.complete_chain_config_setup_phase(None);
 
     state
         .common_setup

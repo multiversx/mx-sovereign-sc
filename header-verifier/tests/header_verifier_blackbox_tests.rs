@@ -705,48 +705,45 @@ fn test_change_multiple_validator_sets() {
         Some("registrationStatusUpdate"),
     );
 
-    let second_validator_str = "second_validator";
-    let second_validator = ManagedBuffer::from(second_validator_str);
+    for epoch in 1..10 {
+        let validator_key = format!("validator_{}", epoch);
+        state.common_setup.register_as_validator(
+            &ManagedBuffer::from(&validator_key),
+            &MultiEgldOrEsdtPayment::new(),
+            None,
+            Some("register"),
+        );
 
-    let third_validator_str = "third_validator";
-    let third_validator = ManagedBuffer::from(third_validator_str);
+        let operation_hash = ManagedBuffer::from(format!("validators_epoch_{}", epoch));
+        let hash_of_hashes = state.get_operation_hash(&operation_hash);
+        let bitmap = ManagedBuffer::new_from_bytes(&[1]);
+        let mut validator_set = MultiValueEncoded::new();
+        validator_set.push(BigUint::from(epoch + 1));
 
-    let fourth_validator_str = "fourth_validator";
-    let fourth_validator = ManagedBuffer::from(fourth_validator_str);
+        state.change_validator_set(
+            &ManagedBuffer::new(),
+            &hash_of_hashes,
+            &operation_hash,
+            epoch,
+            &bitmap,
+            validator_set,
+            None,
+            Some("executedBridgeOp"),
+        );
 
-    let fifth_validator_str = "fifth_validator";
-    let fifth_validator = ManagedBuffer::from(fifth_validator_str);
+        state
+            .common_setup
+            .check_registered_validator_in_header_verifier(epoch, vec![&validator_key]);
 
-    state.common_setup.register_multiple_validators(vec![
-        second_validator,
-        third_validator,
-        fourth_validator,
-        fifth_validator,
-    ]);
-
-    state.change_multiple_validator_sets(
-        "",
-        vec![1, 2, 3, 4],
-        vec!["1", "1", "1", "1"],
-        vec![
-            vec![BigUint::from(1u32)],
-            vec![BigUint::from(2u32)],
-            vec![BigUint::from(3u32)],
-            vec![BigUint::from(4u32)],
-        ],
-    );
-
-    state
-        .common_setup
-        .check_registered_validator_in_header_verifier(4, vec![fourth_validator_str]);
-
-    state
-        .common_setup
-        .world
-        .query()
-        .to(HEADER_VERIFIER_ADDRESS)
-        .whitebox(header_verifier::contract_obj, |sc| {
-            assert!(sc.bls_pub_keys(0).is_empty());
-            assert!(sc.bls_pub_keys(1).is_empty());
-        })
+        if epoch >= 3 {
+            state
+                .common_setup
+                .world
+                .query()
+                .to(HEADER_VERIFIER_ADDRESS)
+                .whitebox(header_verifier::contract_obj, |sc| {
+                    assert!(sc.bls_pub_keys(epoch - 3).is_empty());
+                })
+        }
+    }
 }
