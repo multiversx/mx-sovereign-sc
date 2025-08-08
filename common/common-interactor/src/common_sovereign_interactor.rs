@@ -1178,9 +1178,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
     ) -> EsdtTokenInfo {
         let edge_case = !is_executed
             || original_token.token_type == EsdtTokenType::Fungible
-            || ((original_token.token_type == EsdtTokenType::DynamicNFT
-                || original_token.token_type == EsdtTokenType::NonFungibleV2)
-                && config.expected_error.is_some());
+            || (self.is_nft(original_token) && config.expected_error.is_some());
 
         let (mapped_token_id, mapped_nonce) = if edge_case {
             let token_id = self

@@ -705,4 +705,11 @@ pub trait InteractorHelpers {
             BigUint::zero()
         }
     }
+
+    fn is_nft(&self, token: &EsdtTokenInfo) -> bool {
+        matches!(
+            token.token_type,
+            EsdtTokenType::NonFungibleV2 | EsdtTokenType::DynamicNFT | EsdtTokenType::NonFungible
+        )
+    }
 }

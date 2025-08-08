@@ -215,6 +215,42 @@ impl CompleteFlowInteract {
         .await;
     }
 
+    pub async fn execute_wrapper(
+        &mut self,
+        config: ActionConfig,
+        token: Option<EsdtTokenInfo>,
+        amount: Option<BigUint<StaticApi>>,
+    ) {
+        self.execute_operation(config.clone(), token.clone(), amount.clone())
+            .await;
+
+        let (balance_check_token, balance_check_amount) = match config.sovereign_token_id.as_ref() {
+            Some(_) => {
+                let mapped_token = self
+                    .create_mapped_token(
+                        config.clone(),
+                        &token.clone().unwrap(),
+                        &amount.clone().unwrap_or_default(),
+                        true,
+                    )
+                    .await;
+                (Some(mapped_token), amount)
+            }
+            None => (token, amount),
+        };
+
+        let balance_config = BalanceCheckConfig::new()
+            .shard(config.shard)
+            .token(balance_check_token)
+            .amount(balance_check_amount)
+            .is_sovereign_token(config.is_sovereign)
+            .is_execute(true)
+            .with_transfer_data(config.with_transfer_data.unwrap_or_default())
+            .expected_error(config.expected_error.clone());
+
+        self.check_balances_after_action(balance_config).await;
+    }
+
     async fn register_sovereign_token(
         &mut self,
         config: &ActionConfig,
@@ -245,40 +281,6 @@ impl CompleteFlowInteract {
             token_type: config.token_type.unwrap(),
             amount,
         }
-    }
-
-    pub async fn execute_wrapper(
-        &mut self,
-        config: ActionConfig,
-        token: Option<EsdtTokenInfo>,
-        amount: Option<BigUint<StaticApi>>,
-    ) {
-        self.execute_operation(config.clone(), token.clone(), amount.clone())
-            .await;
-
-        let (balance_check_token, balance_check_amount) = if config.sovereign_token_id.is_some() {
-            let mapped_token = self
-                .create_mapped_token(
-                    config.clone(),
-                    &token.clone().unwrap(),
-                    &amount.clone().unwrap_or_default(),
-                    true,
-                )
-                .await;
-            (Some(mapped_token), amount)
-        } else {
-            (token, amount)
-        };
-
-        let balance_config = BalanceCheckConfig::new()
-            .shard(config.shard)
-            .token(balance_check_token)
-            .amount(balance_check_amount)
-            .is_sovereign_token(config.is_sovereign)
-            .is_execute(true)
-            .with_transfer_data(config.with_transfer_data.unwrap_or_default())
-            .expected_error(config.expected_error.clone());
-        self.check_balances_after_action(balance_config).await;
     }
 
     pub async fn register_and_execute_sovereign_token(
