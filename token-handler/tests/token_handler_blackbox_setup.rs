@@ -7,10 +7,10 @@ use common_test_setup::{
     },
 };
 use multiversx_sc::types::{
-    EsdtTokenData, EsdtTokenPayment, ManagedAddress, MultiValueEncoded, TestSCAddress,
-    TestTokenIdentifier,
+    EsdtTokenData, EsdtTokenPayment, ManagedAddress, MultiValueEncoded, ReturnsHandledOrError,
+    TestSCAddress, TestTokenIdentifier,
 };
-use multiversx_sc_scenario::{api::StaticApi, ReturnsHandledOrError, ScenarioTxRun};
+use multiversx_sc_scenario::{api::StaticApi, ScenarioTxRun};
 use proxies::{
     chain_factory_proxy::ChainFactoryContractProxy, token_handler_proxy::TokenHandlerProxy,
 };

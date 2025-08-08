@@ -4,11 +4,13 @@ use common_test_setup::constants::{
     OWNER_BALANCE,
 };
 use multiversx_sc::api::ManagedTypeApi;
-use multiversx_sc::types::{BigUint, ManagedBuffer, MultiValueEncoded, TestSCAddress};
+use multiversx_sc::types::{
+    ManagedBuffer, MultiValueEncoded, ReturnsHandledOrError, TestSCAddress,
+};
+use multiversx_sc_scenario::ReturnsLogs;
 use multiversx_sc_scenario::{
     api::StaticApi, multiversx_chain_vm::crypto_functions::sha256, ScenarioTxRun,
 };
-use multiversx_sc_scenario::{ReturnsHandledOrError, ReturnsLogs};
 use proxies::header_verifier_proxy::HeaderverifierProxy;
 
 #[derive(Clone)]
@@ -163,7 +165,7 @@ impl HeaderVerifierTestState {
             .assert_expected_error_message(response, expected_error_message);
 
         self.common_setup
-            .assert_expected_log(logs, expected_custom_log);
+            .assert_expected_log(logs, expected_custom_log, None);
     }
 
     pub fn generate_bridge_operation_struct(

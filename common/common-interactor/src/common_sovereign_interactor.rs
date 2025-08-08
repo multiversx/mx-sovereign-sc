@@ -21,8 +21,7 @@ use multiversx_sc::{
 use multiversx_sc_snippets::{
     hex,
     imports::{
-        bech32, Bech32Address, ReturnsHandledOrError, ReturnsLogs, ReturnsNewTokenIdentifier,
-        StaticApi,
+        Bech32Address, ReturnsHandledOrError, ReturnsLogs, ReturnsNewTokenIdentifier, StaticApi,
     },
     multiversx_sc_scenario::{
         multiversx_chain_vm::crypto_functions::sha256,
@@ -130,7 +129,7 @@ pub trait CommonInteractorTrait {
             | EsdtTokenType::DynamicNFT
             | EsdtTokenType::DynamicMeta
             | EsdtTokenType::DynamicSFT
-            | EsdtTokenType::Meta => {
+            | EsdtTokenType::MetaFungible => {
                 mint_base_tx
                     .esdt_nft_create(
                         TokenIdentifier::from(token_id.as_bytes()),
@@ -167,11 +166,9 @@ pub trait CommonInteractorTrait {
             .run()
             .await;
 
-        let new_address_bech32 = bech32::encode(&new_address);
+        let new_address_bech32 = Bech32Address::from(&new_address);
         self.state()
-            .set_sovereign_forge_sc_address(Bech32Address::from_bech32_string(
-                new_address_bech32.clone(),
-            ));
+            .set_sovereign_forge_sc_address(new_address_bech32.clone());
 
         println!("new Forge address: {new_address_bech32}");
     }
@@ -205,11 +202,9 @@ pub trait CommonInteractorTrait {
             .run()
             .await;
 
-        let new_address_bech32 = bech32::encode(&new_address);
+        let new_address_bech32 = Bech32Address::from(&new_address);
         self.state()
-            .set_chain_factory_sc_address(Bech32Address::from_bech32_string(
-                new_address_bech32.clone(),
-            ));
+            .set_chain_factory_sc_address(new_address_bech32.clone());
 
         println!("new Chain-Factory address: {new_address_bech32}");
     }
@@ -230,11 +225,9 @@ pub trait CommonInteractorTrait {
             .run()
             .await;
 
-        let new_address_bech32 = bech32::encode(&new_address);
+        let new_address_bech32 = Bech32Address::from(&new_address);
         self.state()
-            .set_chain_config_sc_address(Bech32Address::from_bech32_string(
-                new_address_bech32.clone(),
-            ));
+            .set_chain_config_sc_address(new_address_bech32.clone());
 
         println!("new Chain-Config address: {new_address_bech32}");
     }
@@ -255,11 +248,9 @@ pub trait CommonInteractorTrait {
             .run()
             .await;
 
-        let new_address_bech32 = bech32::encode(&new_address);
+        let new_address_bech32 = Bech32Address::from(&new_address);
         self.state()
-            .set_header_verifier_address(Bech32Address::from_bech32_string(
-                new_address_bech32.clone(),
-            ));
+            .set_header_verifier_address(new_address_bech32.clone());
 
         println!("new Header-Verifier address: {new_address_bech32}");
     }
@@ -280,11 +271,9 @@ pub trait CommonInteractorTrait {
             .run()
             .await;
 
-        let new_address_bech32 = bech32::encode(&new_address);
+        let new_address_bech32 = Bech32Address::from(&new_address);
         self.state()
-            .set_mvx_esdt_safe_contract_address(Bech32Address::from_bech32_string(
-                new_address_bech32.clone(),
-            ));
+            .set_mvx_esdt_safe_contract_address(new_address_bech32.clone());
 
         println!("new mvx-esdt-safe address: {new_address_bech32}");
     }
@@ -330,11 +319,9 @@ pub trait CommonInteractorTrait {
             .run()
             .await;
 
-        let new_address_bech32 = bech32::encode(&new_address);
+        let new_address_bech32 = Bech32Address::from(&new_address);
         self.state()
-            .set_fee_market_address(Bech32Address::from_bech32_string(
-                new_address_bech32.clone(),
-            ));
+            .set_fee_market_address(new_address_bech32.clone());
 
         println!("new Fee-Market address: {new_address_bech32}");
     }
@@ -355,11 +342,10 @@ pub trait CommonInteractorTrait {
             .run()
             .await;
 
-        let new_address_bech32 = bech32::encode(&new_address);
+        let new_address_bech32 = Bech32Address::from(&new_address);
+
         self.state()
-            .set_testing_sc_address(Bech32Address::from_bech32_string(
-                new_address_bech32.clone(),
-            ));
+            .set_testing_sc_address(new_address_bech32.clone());
 
         println!("new testing sc address: {new_address_bech32}");
     }
@@ -379,11 +365,10 @@ pub trait CommonInteractorTrait {
             .returns(ReturnsNewAddress)
             .run()
             .await;
-        let new_address_bech32 = bech32::encode(&new_address);
+
+        let new_address_bech32 = Bech32Address::from(&new_address);
         self.state()
-            .set_token_handler_address(Bech32Address::from_bech32_string(
-                new_address_bech32.clone(),
-            ));
+            .set_token_handler_address(new_address_bech32.clone());
         println!("new token_handler_address: {new_address_bech32}");
     }
 
@@ -415,11 +400,10 @@ pub trait CommonInteractorTrait {
             .returns(ReturnsNewAddress)
             .run()
             .await;
-        let new_address_bech32 = bech32::encode(&new_address);
+
+        let new_address_bech32 = Bech32Address::from(&new_address);
         self.state()
-            .set_enshrine_esdt_safe_sc_address(Bech32Address::from_bech32_string(
-                new_address_bech32.clone(),
-            ));
+            .set_enshrine_esdt_safe_sc_address(new_address_bech32.clone());
 
         println!("new address: {new_address_bech32}");
     }
@@ -750,7 +734,7 @@ pub trait CommonInteractorTrait {
 
         self.assert_expected_error_message(response, expected_error_message);
 
-        self.assert_expected_log(logs, expected_log);
+        self.assert_expected_log(logs, expected_log, None);
     }
 
     async fn execute_operations_in_mvx_esdt_safe(
@@ -759,6 +743,7 @@ pub trait CommonInteractorTrait {
         operation: Operation<StaticApi>,
         expected_error_message: Option<&str>,
         expected_log: Option<&str>,
+        expected_log_error: Option<&str>,
     ) {
         let bridge_service = self.bridge_service().clone();
         let current_mvx_esdt_safe_address = self
@@ -780,7 +765,7 @@ pub trait CommonInteractorTrait {
 
         self.assert_expected_error_message(response, expected_error_message);
 
-        self.assert_expected_log(logs, expected_log);
+        self.assert_expected_log(logs, expected_log, expected_log_error);
     }
 
     async fn whitelist_enshrine_esdt(&mut self, enshrine_esdt_safe_address: Bech32Address) {
@@ -803,13 +788,23 @@ pub trait CommonInteractorTrait {
     }
 
     //NOTE: transferValue returns an empty log and calling this function on it will panic
-    fn assert_expected_log(&mut self, logs: Vec<Log>, expected_log: Option<&str>) {
+    fn assert_expected_log(
+        &mut self,
+        logs: Vec<Log>,
+        expected_log: Option<&str>,
+        expected_log_error: Option<&str>,
+    ) {
         match expected_log {
             None => {
                 assert!(
                     logs.is_empty(),
                     "Expected no logs, but found some: {:?}",
                     logs
+                );
+                assert!(
+                    expected_log_error.is_none(),
+                    "Expected no logs, but wanted to check for error: {}",
+                    expected_log_error.unwrap()
                 );
             }
             Some(expected_log) => {
@@ -831,6 +826,25 @@ pub trait CommonInteractorTrait {
                     "Expected log '{}' not found",
                     expected_log
                 );
+
+                if let Some(expected_error) = expected_log_error {
+                    let found_log = found_log.unwrap();
+                    let expected_error_bytes = expected_error.as_bytes();
+
+                    let found_error_in_data = found_log.data.iter().any(|data_item| {
+                        if let Ok(decoded_data) = BASE64.decode(data_item) {
+                            decoded_data == expected_error_bytes
+                        } else {
+                            false
+                        }
+                    });
+
+                    assert!(
+                        found_error_in_data,
+                        "Expected error '{}' not found in data field of log with topic '{}'",
+                        expected_error, expected_log
+                    );
+                }
             }
         }
     }
