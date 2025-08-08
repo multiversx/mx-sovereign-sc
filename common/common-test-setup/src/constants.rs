@@ -14,6 +14,16 @@ pub const OWNER_ADDRESS: TestAddress = TestAddress::new("owner");
 pub const USER_ADDRESS: TestAddress = TestAddress::new("user");
 pub const INSUFFICIENT_WEGLD_ADDRESS: TestAddress = TestAddress::new("insufficient_wegld");
 pub const RECEIVER_ADDRESS: TestAddress = TestAddress::new("receiver");
+pub const TESTING_SC: &str = "Testing SC";
+pub const USER_ADDRESS_STR: &str = "User Address";
+pub const MVX_ESDT_SAFE_SHARD_0: &str = "MVX ESDT Safe Shard 0";
+pub const MVX_ESDT_SAFE_SHARD_1: &str = "MVX ESDT Safe Shard 1";
+pub const MVX_ESDT_SAFE_SHARD_2: &str = "MVX ESDT Safe Shard 2";
+pub const UNKNOWN_MVX_ESDT_SAFE: &str = "Unknown MVX ESDT Safe";
+pub const FEE_MARKET_SHARD_0: &str = "Fee Market Shard 0";
+pub const FEE_MARKET_SHARD_1: &str = "Fee Market Shard 1";
+pub const FEE_MARKET_SHARD_2: &str = "Fee Market Shard 2";
+pub const UNKNOWN_FEE_MARKET: &str = "Unknown Fee Market";
 
 pub const FEE_MARKET_CODE_PATH: MxscPath =
     MxscPath::new("../fee-market/output/fee-market.mxsc.json");
@@ -35,6 +45,7 @@ pub const ENSHRINE_ESDT_SAFE_CODE_PATH: MxscPath =
     MxscPath::new("../enshrine-esdt-safe/output/enshrine-esdt-safe.mxsc.json");
 pub const TOKEN_HANDLER_CODE_PATH: MxscPath =
     MxscPath::new("../token-handler/output/token-handler.mxsc.json");
+pub const WALLET_PATH: &str = "wallets/shard-0-wallet.pem";
 
 pub const FEE_TOKEN: TestTokenIdentifier = TestTokenIdentifier::new("INTERNS-eaad15");
 pub const FIRST_TEST_TOKEN: TestTokenIdentifier = TestTokenIdentifier::new("GREEN-0e161c");

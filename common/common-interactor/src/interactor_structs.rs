@@ -20,7 +20,7 @@ pub struct MintTokenStruct {
     pub attributes: Option<Vec<u8>>,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct ActionConfig {
     pub shard: u32,
     pub expected_error: Option<String>,
@@ -36,20 +36,13 @@ pub struct ActionConfig {
 }
 
 impl ActionConfig {
-    pub fn new(shard: u32) -> Self {
-        Self {
-            shard,
-            expected_error: None,
-            expected_log: None,
-            expected_log_error: None,
-            is_sovereign: false,
-            with_transfer_data: None,
-            decimals: None,
-            token_type: None,
-            nonce: None,
-            endpoint: None,
-            sovereign_token_id: None,
-        }
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    pub fn shard(mut self, shard: u32) -> Self {
+        self.shard = shard;
+        self
     }
 
     pub fn expect_error(mut self, error: String) -> Self {

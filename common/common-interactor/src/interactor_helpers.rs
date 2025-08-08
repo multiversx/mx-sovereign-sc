@@ -1,5 +1,9 @@
 use base64::{engine::general_purpose::STANDARD as BASE64, Engine};
-use common_test_setup::constants::{GAS_LIMIT, PER_GAS, PER_TRANSFER, TESTING_SC_ENDPOINT};
+use common_test_setup::constants::{
+    FEE_MARKET_SHARD_0, FEE_MARKET_SHARD_1, FEE_MARKET_SHARD_2, GAS_LIMIT, MVX_ESDT_SAFE_SHARD_0,
+    MVX_ESDT_SAFE_SHARD_1, MVX_ESDT_SAFE_SHARD_2, PER_GAS, PER_TRANSFER, TESTING_SC,
+    TESTING_SC_ENDPOINT, UNKNOWN_FEE_MARKET, UNKNOWN_MVX_ESDT_SAFE, USER_ADDRESS_STR, WALLET_PATH,
+};
 use error_messages::{FAILED_TO_LOAD_WALLET_SHARD_0, FAILED_TO_PARSE_AS_NUMBER};
 use multiversx_sc::{
     codec::{num_bigint, TopEncode},
@@ -172,12 +176,12 @@ pub trait InteractorHelpers {
     fn get_address_name(&mut self, address: &Bech32Address) -> &'static str {
         let testing_addr = self.state().current_testing_sc_address();
         if address == testing_addr {
-            return "Testing SC";
+            return TESTING_SC;
         }
 
         let user_address = self.user_address();
         if address == user_address {
-            return "User Address";
+            return USER_ADDRESS_STR;
         }
 
         // Check shard-specific contract addresses
@@ -185,20 +189,20 @@ pub trait InteractorHelpers {
             let mvx_addr = self.state().get_mvx_esdt_safe_address(shard_id);
             if address == mvx_addr {
                 return match shard_id {
-                    0 => "MVX ESDT Safe Shard 0",
-                    1 => "MVX ESDT Safe Shard 1",
-                    2 => "MVX ESDT Safe Shard 2",
-                    _ => "Unknown MVX ESDT Safe",
+                    0 => MVX_ESDT_SAFE_SHARD_0,
+                    1 => MVX_ESDT_SAFE_SHARD_1,
+                    2 => MVX_ESDT_SAFE_SHARD_2,
+                    _ => UNKNOWN_MVX_ESDT_SAFE,
                 };
             }
 
             let fee_addr = self.state().get_fee_market_address(shard_id);
             if address == fee_addr {
                 return match shard_id {
-                    0 => "Fee Market Shard 0",
-                    1 => "Fee Market Shard 1",
-                    2 => "Fee Market Shard 2",
-                    _ => "Unknown Fee Market",
+                    0 => FEE_MARKET_SHARD_0,
+                    1 => FEE_MARKET_SHARD_1,
+                    2 => FEE_MARKET_SHARD_2,
+                    _ => UNKNOWN_FEE_MARKET,
                 };
             }
         }
@@ -260,8 +264,8 @@ pub trait InteractorHelpers {
     }
 
     fn get_bridge_service_for_shard(&self, shard_id: u32) -> Address {
-        let shard_0_wallet = Wallet::from_pem_file("wallets/shard-0-wallet.pem")
-            .expect(FAILED_TO_LOAD_WALLET_SHARD_0);
+        let shard_0_wallet =
+            Wallet::from_pem_file(WALLET_PATH).expect(FAILED_TO_LOAD_WALLET_SHARD_0);
         match shard_id {
             0 => shard_0_wallet.to_address(),
             1 => test_wallets::dan().to_address(),
@@ -301,7 +305,7 @@ pub trait InteractorHelpers {
         ManagedBuffer::new_from_bytes(&sha256)
     }
 
-    fn custom_amount_tokens(
+    fn set_token_amount(
         &mut self,
         token: EsdtTokenInfo,
         new_amount: BigUint<StaticApi>,
@@ -509,7 +513,7 @@ pub trait InteractorHelpers {
             .await;
     }
 
-    async fn check_mvx_balance(&mut self, shard: u32, expected_tokens: Vec<EsdtTokenInfo>) {
+    async fn check_mvx_esdt_balance(&mut self, shard: u32, expected_tokens: Vec<EsdtTokenInfo>) {
         let mvx_address = self.state().get_mvx_esdt_safe_address(shard).clone();
         self.check_address_balance(&mvx_address, expected_tokens)
             .await;
@@ -533,7 +537,7 @@ pub trait InteractorHelpers {
     }
 
     async fn check_all_contracts_empty(&mut self, shard: u32) {
-        self.check_mvx_balance(shard, Vec::new()).await;
+        self.check_mvx_esdt_balance(shard, Vec::new()).await;
         self.check_fee_market_balance(shard, Vec::new()).await;
         self.check_testing_sc_balance(Vec::new()).await;
     }
@@ -573,24 +577,20 @@ pub trait InteractorHelpers {
 
             let user_should_get_token_back = is_execute && !with_transfer_data;
 
-            let remaining_amount = if user_should_get_token_back {
-                if is_sovereign_token {
-                    amount
-                } else {
-                    initial_user_balance
-                }
-            } else {
-                Self::safe_subtract(initial_user_balance, amount.clone())
+            let remaining_amount = match (user_should_get_token_back, is_sovereign_token) {
+                (true, true) => amount,
+                (true, false) => initial_user_balance,
+                (false, _) => Self::safe_subtract(initial_user_balance, amount.clone()),
             };
 
-            expected_user_tokens.push(self.custom_amount_tokens(token.clone(), remaining_amount));
+            expected_user_tokens.push(self.set_token_amount(token.clone(), remaining_amount));
         }
 
         if fee.is_some() && fee_amount > 0u64 {
             let fee_token = self.state().get_fee_token_id();
             let initial_fee_balance = fee_token.clone().amount;
             let remaining_fee = Self::safe_subtract(initial_fee_balance, fee_amount.clone());
-            expected_user_tokens.push(self.custom_amount_tokens(fee_token, remaining_fee));
+            expected_user_tokens.push(self.set_token_amount(fee_token, remaining_fee));
         }
 
         if expected_user_tokens.is_empty() || expected_error.is_some() {
@@ -609,26 +609,26 @@ pub trait InteractorHelpers {
                         | EsdtTokenType::DynamicSFT
                         | EsdtTokenType::SemiFungible
                 ) {
-                    vec![self.custom_amount_tokens(token.clone(), BigUint::from(1u64))]
+                    vec![self.set_token_amount(token.clone(), BigUint::from(1u64))]
                 } else {
                     vec![]
                 }
             }
             (Some(token), Some(amount), false, false) => {
                 // Non-sovereign deposits: full amount goes to MVX safe
-                vec![self.custom_amount_tokens(token.clone(), amount.clone())]
+                vec![self.set_token_amount(token.clone(), amount.clone())]
             }
             _ => {
                 vec![]
             }
         };
 
-        self.check_mvx_balance(shard, mvx_tokens).await;
+        self.check_mvx_esdt_balance(shard, mvx_tokens).await;
 
         // FEE market
         if fee_amount > 0u64 {
             let fee_token = self.state().get_fee_token_id();
-            let expected_fee_tokens = vec![self.custom_amount_tokens(fee_token, fee_amount)];
+            let expected_fee_tokens = vec![self.set_token_amount(fee_token, fee_amount)];
             self.check_fee_market_balance(shard, expected_fee_tokens)
                 .await;
         } else {
@@ -639,7 +639,7 @@ pub trait InteractorHelpers {
         let testing_sc_tokens = match (&token, &amount) {
             (Some(token), Some(amount)) => {
                 if is_execute && with_transfer_data && expected_error.is_none() {
-                    vec![self.custom_amount_tokens(token.clone(), amount.clone())]
+                    vec![self.set_token_amount(token.clone(), amount.clone())]
                 } else {
                     vec![]
                 }

@@ -395,10 +395,10 @@ async fn test_deposit_no_transfer_data() {
 
     let first_token_id = chain_interactor.state.get_first_token_id();
     let expected_mvx_balance =
-        chain_interactor.custom_amount_tokens(first_token_id.clone(), ONE_HUNDRED_TOKENS.into());
+        chain_interactor.set_token_amount(first_token_id.clone(), ONE_HUNDRED_TOKENS.into());
 
     chain_interactor
-        .check_mvx_balance(shard, vec![expected_mvx_balance])
+        .check_mvx_esdt_balance(shard, vec![expected_mvx_balance])
         .await;
 
     let balance_config = BalanceCheckConfig::new()
@@ -923,7 +923,7 @@ async fn test_deposit_refund() {
         )
         .await;
 
-    let expected_tokens_wallet = vec![chain_interactor.custom_amount_tokens(
+    let expected_tokens_wallet = vec![chain_interactor.set_token_amount(
         chain_interactor.state.get_fee_token_id(),
         (ONE_THOUSAND_TOKENS - gas_limit as u128).into(),
     )];
@@ -931,10 +931,12 @@ async fn test_deposit_refund() {
         .check_address_balance(&Bech32Address::from(user_address), expected_tokens_wallet)
         .await;
 
-    chain_interactor.check_mvx_balance(shard, Vec::new()).await;
+    chain_interactor
+        .check_mvx_esdt_balance(shard, Vec::new())
+        .await;
 
     let expected_fee_market_balance = chain_interactor
-        .custom_amount_tokens(chain_interactor.state.get_fee_token_id(), gas_limit.into());
+        .set_token_amount(chain_interactor.state.get_fee_token_id(), gas_limit.into());
     chain_interactor
         .check_fee_market_balance(shard, vec![expected_fee_market_balance.clone()])
         .await;
@@ -1504,13 +1506,15 @@ async fn test_execute_operation_success_no_fee() {
         .check_balances_after_action(balance_config)
         .await;
 
-    chain_interactor.check_mvx_balance(shard, Vec::new()).await;
+    chain_interactor
+        .check_mvx_esdt_balance(shard, Vec::new())
+        .await;
 
     chain_interactor
         .check_fee_market_balance(shard, Vec::new())
         .await;
 
-    let expected_testing_sc_balance = vec![chain_interactor.custom_amount_tokens(
+    let expected_testing_sc_balance = vec![chain_interactor.set_token_amount(
         chain_interactor.state.get_first_token_id(),
         TEN_TOKENS.into(),
     )];

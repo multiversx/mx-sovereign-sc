@@ -156,7 +156,7 @@ impl CompleteFlowInteract {
         self.check_balances_after_action(balance_config).await;
     }
 
-    async fn execute_operation(
+    async fn register_and_execute_operation(
         &mut self,
         config: ActionConfig,
         token: Option<EsdtTokenInfo>,
@@ -221,7 +221,7 @@ impl CompleteFlowInteract {
         token: Option<EsdtTokenInfo>,
         amount: Option<BigUint<StaticApi>>,
     ) {
-        self.execute_operation(config.clone(), token.clone(), amount.clone())
+        self.register_and_execute_operation(config.clone(), token.clone(), amount.clone())
             .await;
 
         let (balance_check_token, balance_check_amount) = match config.sovereign_token_id.as_ref() {

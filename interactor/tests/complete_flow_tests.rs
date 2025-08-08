@@ -46,7 +46,8 @@ async fn test_complete_deposit_flow_no_fee_only_transfer_data(#[case] shard: u32
 
     chain_interactor
         .deposit_wrapper(
-            ActionConfig::new(shard)
+            ActionConfig::new()
+                .shard(shard)
                 .with_endpoint(TESTING_SC_ENDPOINT.to_string())
                 .expect_log(SC_CALL_LOG.to_string()),
             None,
@@ -86,7 +87,8 @@ async fn test_complete_deposit_flow_with_fee_only_transfer_data(#[case] shard: u
 
     chain_interactor
         .deposit_wrapper(
-            ActionConfig::new(shard)
+            ActionConfig::new()
+                .shard(shard)
                 .with_endpoint(TESTING_SC_ENDPOINT.to_string())
                 .expect_log(SC_CALL_LOG.to_string()),
             None,
@@ -125,7 +127,8 @@ async fn test_complete_execute_flow_with_transfer_data_only_success(#[case] shar
 
     chain_interactor
         .execute_wrapper(
-            ActionConfig::new(shard)
+            ActionConfig::new()
+                .shard(shard)
                 .with_endpoint(TESTING_SC_ENDPOINT.to_string())
                 .expect_log("".to_string()),
             None,
@@ -164,7 +167,8 @@ async fn test_complete_execute_flow_with_transfer_data_only_fail(#[case] shard: 
     //NOTE: For now, there is a failed log only for top_encode error, which is hard to achieve. If the sc returns an error, the logs are no longer retrieved by the framework
     chain_interactor
         .execute_wrapper(
-            ActionConfig::new(shard)
+            ActionConfig::new()
+                .shard(shard)
                 .with_endpoint(WRONG_ENDPOINT_NAME.to_string())
                 .expect_error(FUNCTION_NOT_FOUND.to_string()),
             None,
@@ -214,7 +218,9 @@ async fn test_deposit_with_fee(
 
     chain_interactor
         .deposit_wrapper(
-            ActionConfig::new(shard).expect_log(token.clone().token_id),
+            ActionConfig::new()
+                .shard(shard)
+                .expect_log(token.clone().token_id),
             Some(token),
             Some(amount),
             Some(fee),
@@ -261,7 +267,9 @@ async fn test_deposit_without_fee_and_execute(
 
     chain_interactor
         .deposit_wrapper(
-            ActionConfig::new(shard).expect_log(token.clone().token_id),
+            ActionConfig::new()
+                .shard(shard)
+                .expect_log(token.clone().token_id),
             Some(token.clone()),
             Some(amount.clone()),
             None,
@@ -270,7 +278,9 @@ async fn test_deposit_without_fee_and_execute(
 
     chain_interactor
         .execute_wrapper(
-            ActionConfig::new(shard).expect_log(token.clone().token_id),
+            ActionConfig::new()
+                .shard(shard)
+                .expect_log(token.clone().token_id),
             Some(token),
             Some(amount),
         )
@@ -342,14 +352,17 @@ async fn test_register_execute_and_deposit_sov_token(
 
     let sov_token = chain_interactor
         .register_and_execute_sovereign_token(
-            ActionConfig::new(shard).for_register(token_type, decimals, nonce),
+            ActionConfig::new()
+                .shard(shard)
+                .for_register(token_type, decimals, nonce),
             amount.clone(),
         )
         .await;
 
     chain_interactor
         .deposit_wrapper(
-            ActionConfig::new(shard)
+            ActionConfig::new()
+                .shard(shard)
                 .with_sovereign_token_id(TokenIdentifier::from_esdt_bytes(&sov_token.token_id))
                 .expect_log(sov_token.clone().token_id),
             Some(sov_token),
@@ -398,7 +411,8 @@ async fn test_deposit_mvx_token_with_transfer_data(
 
     chain_interactor
         .deposit_wrapper(
-            ActionConfig::new(shard)
+            ActionConfig::new()
+                .shard(shard)
                 .with_endpoint(TESTING_SC_ENDPOINT.to_string())
                 .expect_log(token.clone().token_id),
             Some(token),
@@ -449,7 +463,8 @@ async fn test_deposit_mvx_token_with_transfer_data_and_fee(
 
     chain_interactor
         .deposit_wrapper(
-            ActionConfig::new(shard)
+            ActionConfig::new()
+                .shard(shard)
                 .with_endpoint(TESTING_SC_ENDPOINT.to_string())
                 .expect_log(token.clone().token_id),
             Some(token),
@@ -498,7 +513,9 @@ async fn test_deposit_and_execute_with_transfer_data(
 
     chain_interactor
         .deposit_wrapper(
-            ActionConfig::new(shard).expect_log(token.clone().token_id),
+            ActionConfig::new()
+                .shard(shard)
+                .expect_log(token.clone().token_id),
             Some(token.clone()),
             Some(amount.clone()),
             None,
@@ -507,7 +524,8 @@ async fn test_deposit_and_execute_with_transfer_data(
 
     chain_interactor
         .execute_wrapper(
-            ActionConfig::new(shard)
+            ActionConfig::new()
+                .shard(shard)
                 .with_endpoint(TESTING_SC_ENDPOINT.to_string())
                 .expect_log(token.clone().token_id),
             Some(token.clone()),
@@ -580,7 +598,8 @@ async fn test_register_execute_with_transfer_data_and_deposit_sov_token(
 
     let sov_token = chain_interactor
         .register_and_execute_sovereign_token(
-            ActionConfig::new(shard)
+            ActionConfig::new()
+                .shard(shard)
                 .for_register(token_type, decimals, nonce)
                 .with_endpoint(TESTING_SC_ENDPOINT.to_string()),
             amount.clone(),
@@ -593,7 +612,8 @@ async fn test_register_execute_with_transfer_data_and_deposit_sov_token(
 
     chain_interactor
         .deposit_wrapper(
-            ActionConfig::new(shard)
+            ActionConfig::new()
+                .shard(shard)
                 .with_sovereign_token_id(TokenIdentifier::from_esdt_bytes(&sov_token.token_id))
                 .with_endpoint(TESTING_SC_ENDPOINT.to_string())
                 .expect_log(sov_token.clone().token_id),
@@ -668,7 +688,8 @@ async fn test_register_execute_call_failed(
 
     chain_interactor
         .register_and_execute_sovereign_token(
-            ActionConfig::new(shard)
+            ActionConfig::new()
+                .shard(shard)
                 .for_register(token_type, decimals, nonce)
                 .with_endpoint(WRONG_ENDPOINT_NAME.to_string())
                 .expect_error(FUNCTION_NOT_FOUND.to_string()),
