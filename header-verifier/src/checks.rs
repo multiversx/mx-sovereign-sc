@@ -54,10 +54,6 @@ pub trait HeaderVerifierChecksModule:
         );
     }
 
-    fn require_genesis_validators_not_set(&self, bls_keys_mapper: SetMapper<ManagedBuffer>) {
-        require!(bls_keys_mapper.is_empty(), GENESIS_VALIDATORS_ALREADY_SET);
-    }
-
     fn require_matching_hash_of_hashes(
         &self,
         hash_of_hashes: &ManagedBuffer,
@@ -66,13 +62,6 @@ pub trait HeaderVerifierChecksModule:
         require!(
             computed_hash_of_hashes.eq(hash_of_hashes),
             HASH_OF_HASHES_DOES_NOT_MATCH
-        );
-    }
-
-    fn require_min_signatures_amount(&self, current_signature_count: usize, min_signatures: usize) {
-        require!(
-            current_signature_count >= min_signatures,
-            MIN_NUMBER_OF_SIGNATURE_NOT_MET
         );
     }
 }
