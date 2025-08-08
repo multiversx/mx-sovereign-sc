@@ -149,6 +149,7 @@ impl EnshrineEsdtSafeInteract {
     ) {
         let owner = self.bridge_owner().clone();
         self.deploy_chain_config(OptionalValue::None).await;
+        self.complete_chain_config_setup_phase().await;
         self.deploy_token_handler(owner).await;
         self.deploy_enshrine_esdt(
             is_sovereign_chain,

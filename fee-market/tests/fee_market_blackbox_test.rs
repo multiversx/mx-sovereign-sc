@@ -127,6 +127,8 @@ fn test_set_fee_invalid_fee_type() {
         Some("register"),
     );
 
+    state.common_setup.complete_chain_config_setup_phase(None);
+
     state
         .common_setup
         .deploy_fee_market(None, ESDT_SAFE_ADDRESS);
@@ -222,6 +224,8 @@ fn test_set_fee() {
         None,
         Some("register"),
     );
+
+    state.common_setup.complete_chain_config_setup_phase(None);
 
     state
         .common_setup
@@ -326,6 +330,8 @@ fn test_remove_fee_register_separate_operations() {
         None,
         Some("register"),
     );
+
+    state.common_setup.complete_chain_config_setup_phase(None);
 
     state
         .common_setup
@@ -444,6 +450,8 @@ fn test_remove_fee_register_with_one_hash_of_hashes() {
         None,
         Some("register"),
     );
+
+    state.common_setup.complete_chain_config_setup_phase(None);
 
     state
         .common_setup
@@ -565,6 +573,7 @@ fn distribute_fees_operation_not_registered() {
     state
         .common_setup
         .deploy_chain_config(OptionalValue::None, None);
+    state.common_setup.complete_chain_config_setup_phase(None);
 
     state
         .common_setup
@@ -611,6 +620,8 @@ fn distribute_fees_percentage_under_limit() {
         None,
         Some("register"),
     );
+
+    state.common_setup.complete_chain_config_setup_phase(None);
 
     state
         .common_setup
@@ -682,6 +693,7 @@ fn distribute_fees() {
         None,
         Some("register"),
     );
+    state.common_setup.complete_chain_config_setup_phase(None);
 
     let fee_per_transfer = BigUint::from(100u32);
 

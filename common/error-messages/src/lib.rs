@@ -129,3 +129,5 @@ pub const ADDITIONAL_STAKE_NOT_REQUIRED: &str = "Additional stake was provided b
 pub const INVALID_BLS_KEY_FOR_CALLER: &str = "Invalid BLS key for caller";
 pub const GENESIS_VALIDATORS_ALREADY_SET: &str = "Genesis Validator were already set";
 pub const CALLER_NOT_CHAIN_CONFIG: &str = "Only Chain-Config SC can call this endpoint";
+pub const CHAIN_CONFIG_SETUP_PHASE_NOT_COMPLETE: &str =
+    "The Chain-Config SC setup phase is not completed";

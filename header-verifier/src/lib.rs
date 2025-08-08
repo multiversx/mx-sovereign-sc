@@ -31,11 +31,12 @@ pub trait Headerverifier:
         if self.is_setup_phase_complete() {
             return;
         }
+        let chain_config_address = self.get_chain_config_address();
 
         self.require_genesis_validators_not_set(self.bls_pub_keys(0));
 
         let genesis_validators: ManagedVec<ManagedBuffer> = self
-            .bls_keys_map(self.get_chain_config_address())
+            .bls_keys_map(chain_config_address)
             .iter()
             .map(|(_, bls_key)| bls_key)
             .collect();

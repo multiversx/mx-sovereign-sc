@@ -51,6 +51,23 @@ impl BaseSetup {
             );
     }
 
+    pub fn check_registered_validator_in_header_verifier(
+        &mut self,
+        epoch: u64,
+        bls_keys: Vec<&str>,
+    ) {
+        self.world.query().to(HEADER_VERIFIER_ADDRESS).whitebox(
+            header_verifier::contract_obj,
+            |sc| {
+                for bls_key in bls_keys {
+                    assert!(sc
+                        .bls_pub_keys(epoch)
+                        .contains(&ManagedBuffer::from(bls_key)));
+                }
+            },
+        )
+    }
+
     pub fn check_deposited_tokens_amount(&mut self, tokens: Vec<(TestTokenIdentifier, u64)>) {
         self.world
             .tx()

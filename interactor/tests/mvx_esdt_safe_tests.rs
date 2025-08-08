@@ -1484,6 +1484,7 @@ async fn test_execute_operation_with_native_token_success() {
             chain_config_address,
         )
         .await;
+    chain_interactor.complete_chain_config_setup_phase().await;
     chain_interactor
         .deploy_mvx_esdt_safe(OptionalValue::None)
         .await;

@@ -106,7 +106,6 @@ impl BaseSetup {
         expected_error_message: Option<&str>,
         expected_custom_log: Option<&str>,
     ) {
-        let _ = payment;
         let (response, logs) = self
             .world
             .tx()
@@ -114,6 +113,7 @@ impl BaseSetup {
             .to(CHAIN_CONFIG_ADDRESS)
             .typed(ChainConfigContractProxy)
             .register(bls_key)
+            .payment(payment)
             .returns(ReturnsHandledOrError::new())
             .returns(ReturnsLogs)
             .run();
