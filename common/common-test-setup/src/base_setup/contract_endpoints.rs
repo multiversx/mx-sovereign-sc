@@ -1,7 +1,10 @@
 use multiversx_sc_scenario::{
     api::StaticApi,
-    imports::{ManagedBuffer, MultiEgldOrEsdtPayment, MultiValueEncoded, TestAddress},
-    ReturnsHandledOrError, ReturnsLogs, ScenarioTxRun,
+    imports::{
+        ManagedBuffer, MultiEgldOrEsdtPayment, MultiValueEncoded, ReturnsHandledOrError,
+        TestAddress,
+    },
+    ReturnsLogs, ScenarioTxRun,
 };
 use proxies::{
     chain_config_proxy::ChainConfigContractProxy, fee_market_proxy::FeeMarketProxy,
@@ -95,7 +98,7 @@ impl BaseSetup {
             .run();
 
         self.assert_expected_error_message(response, expected_error_message);
-        self.assert_expected_log(logs, expected_log);
+        self.assert_expected_log(logs, expected_log, None);
     }
 
     // TODO: Use this for any validator registration
@@ -119,6 +122,6 @@ impl BaseSetup {
             .run();
 
         self.assert_expected_error_message(response, expected_error_message);
-        self.assert_expected_log(logs, expected_custom_log);
+        self.assert_expected_log(logs, expected_custom_log, None);
     }
 }

@@ -250,6 +250,7 @@ async fn test_complete_flow_execute_operation_with_transfer_data_success_no_fee(
             operation,
             None,
             Some("executedBridgeOp"),
+            None,
         )
         .await;
 
@@ -425,6 +426,7 @@ async fn test_complete_flow_execute_operation_success_with_fee() {
             operation,
             None,
             Some("executedBridgeOp"),
+            None,
         )
         .await;
 
@@ -561,6 +563,7 @@ async fn test_complete_flow_execute_operation_only_transfer_data_no_fee() {
             operation,
             None,
             Some("executedBridgeOp"),
+            None,
         )
         .await;
 
@@ -663,6 +666,7 @@ async fn test_complete_flow_execute_operation_wrong_endpoint() {
             hash_of_hashes,
             operation,
             Some(function.to_string().as_str()),
+            None,
             None,
         )
         .await;

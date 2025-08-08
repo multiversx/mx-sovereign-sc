@@ -100,6 +100,7 @@ fn test_set_fee_setup_not_completed() {
         &fee,
         Some(SETUP_PHASE_NOT_COMPLETED),
         None,
+        None,
     );
 }
 
@@ -163,7 +164,7 @@ fn test_set_fee_invalid_fee_type() {
         MultiValueEncoded::from_iter(vec![fee_hash]),
     );
 
-    state.set_fee(&hash_of_hashes, &fee, Some(INVALID_FEE_TYPE), None);
+    state.set_fee(&hash_of_hashes, &fee, Some(INVALID_FEE_TYPE), None, None);
 }
 
 /// ### TEST
@@ -197,6 +198,7 @@ fn test_set_fee_operation_not_registered() {
         &ManagedBuffer::new(),
         &fee,
         Some(CURRENT_OPERATION_NOT_REGISTERED),
+        None,
         None,
     );
 }
@@ -265,7 +267,7 @@ fn test_set_fee() {
         MultiValueEncoded::from_iter(vec![fee_hash]),
     );
 
-    state.set_fee(&hash_of_hashes, &fee, None, Some("executedBridgeOp"));
+    state.set_fee(&hash_of_hashes, &fee, None, Some("executedBridgeOp"), None);
 
     state
         .common_setup
@@ -303,6 +305,7 @@ fn test_remove_fee_setup_phase_not_completed() {
         &ManagedBuffer::new(),
         FIRST_TEST_TOKEN,
         Some(SETUP_PHASE_NOT_COMPLETED),
+        None,
         None,
     );
 }
@@ -377,6 +380,7 @@ fn test_remove_fee_register_separate_operations() {
         &fee,
         None,
         Some("executedBridgeOp"),
+        None,
     );
 
     state
@@ -413,6 +417,7 @@ fn test_remove_fee_register_separate_operations() {
         FIRST_TEST_TOKEN,
         None,
         Some("executedBridgeOp"),
+        None,
     );
 
     state
@@ -503,7 +508,7 @@ fn test_remove_fee_register_with_one_hash_of_hashes() {
         MultiValueEncoded::from_iter(vec![remove_fee_hash, register_fee_hash]),
     );
 
-    state.set_fee(&hash_of_hashes, &fee, None, Some("executedBridgeOp"));
+    state.set_fee(&hash_of_hashes, &fee, None, Some("executedBridgeOp"), None);
 
     state
         .common_setup
@@ -521,6 +526,7 @@ fn test_remove_fee_register_with_one_hash_of_hashes() {
         FIRST_TEST_TOKEN,
         None,
         Some("executedBridgeOp"),
+        None,
     );
 
     state

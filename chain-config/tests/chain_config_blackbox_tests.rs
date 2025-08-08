@@ -239,6 +239,7 @@ fn test_update_config_setup_phase_not_completed() {
         new_config,
         Some(SETUP_PHASE_NOT_COMPLETED),
         None,
+        None,
     );
 }
 
@@ -292,7 +293,15 @@ fn test_update_config_invalid_config() {
         MultiValueEncoded::from_iter(vec![config_hash]),
     );
 
-    state.update_sovereign_config(hash_of_hashes, new_config, None, Some("failedBridgeOp"));
+    state.common_setup.complete_chain_config_setup_phase(None);
+
+    state.update_sovereign_config(
+        hash_of_hashes,
+        new_config,
+        None,
+        Some("failedBridgeOp"),
+        Some(INVALID_MIN_MAX_VALIDATOR_NUMBERS),
+    );
 }
 
 /// ### TEST
@@ -345,7 +354,15 @@ fn test_update_config() {
         MultiValueEncoded::from_iter(vec![config_hash]),
     );
 
-    state.update_sovereign_config(hash_of_hashes, new_config, None, Some("executedBridgeOp"));
+    state.common_setup.complete_chain_config_setup_phase(None);
+
+    state.update_sovereign_config(
+        hash_of_hashes,
+        new_config,
+        None,
+        Some("executedBridgeOp"),
+        None,
+    );
 
     state
         .common_setup

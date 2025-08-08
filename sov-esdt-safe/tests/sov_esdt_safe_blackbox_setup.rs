@@ -1,11 +1,12 @@
 use multiversx_sc::{
     imports::OptionalValue,
-    types::{EsdtLocalRole, ManagedAddress, ManagedVec, TestSCAddress, TokenIdentifier},
+    types::{
+        EsdtLocalRole, ManagedAddress, ManagedVec, ReturnsHandledOrError, TestSCAddress,
+        TokenIdentifier,
+    },
 };
 
-use multiversx_sc_scenario::{
-    api::StaticApi, ReturnsHandledOrError, ReturnsLogs, ScenarioTxRun, ScenarioTxWhitebox,
-};
+use multiversx_sc_scenario::{api::StaticApi, ReturnsLogs, ScenarioTxRun, ScenarioTxWhitebox};
 
 use common_test_setup::base_setup::init::{AccountSetup, BaseSetup};
 use common_test_setup::constants::{
@@ -141,7 +142,7 @@ impl SovEsdtSafeTestState {
             .assert_expected_error_message(response, expected_error_message);
 
         self.common_setup
-            .assert_expected_log(logs, expected_custom_log);
+            .assert_expected_log(logs, expected_custom_log, None);
     }
 
     pub fn set_fee_market_address(&mut self, fee_market_address: TestSCAddress) {
@@ -180,6 +181,6 @@ impl SovEsdtSafeTestState {
             .assert_expected_error_message(response, expected_error_message);
 
         self.common_setup
-            .assert_expected_log(logs, expected_custom_log);
+            .assert_expected_log(logs, expected_custom_log, None);
     }
 }
