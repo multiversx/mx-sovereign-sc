@@ -62,11 +62,13 @@ pub trait ChainConfigUtilsModule: storage::ChainConfigStorageModule {
         validator_info: &ValidatorInfo<Self::Api>,
     ) -> MultiEgldOrEsdtPayment<Self::Api> {
         let mut total_stake = MultiEgldOrEsdtPayment::new();
-        total_stake.push(EgldOrEsdtTokenPayment::new(
-            EgldOrEsdtTokenIdentifier::from(ManagedBuffer::from(EGLD_000000_TOKEN_IDENTIFIER)),
-            0,
-            validator_info.egld_stake.clone(),
-        ));
+        if validator_info.egld_stake > 0 {
+            total_stake.push(EgldOrEsdtTokenPayment::new(
+                EgldOrEsdtTokenIdentifier::from(ManagedBuffer::from(EGLD_000000_TOKEN_IDENTIFIER)),
+                0,
+                validator_info.egld_stake.clone(),
+            ));
+        }
 
         if let Some(additional_stake) = &validator_info.token_stake {
             for stake in additional_stake {
@@ -112,7 +114,7 @@ pub trait ChainConfigUtilsModule: storage::ChainConfigStorageModule {
 
         for payment in self.call_value().all_transfers().clone_value().into_iter() {
             if payment.token_identifier.is_egld() {
-                egld_amount = payment.amount.clone();
+                egld_amount += payment.amount.clone();
             } else {
                 esdt_payments.push(payment.unwrap_esdt());
             }
