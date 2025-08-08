@@ -1,4 +1,7 @@
-use error_messages::{ERROR_AT_ENCODING, INVALID_FEE, INVALID_FEE_TYPE, INVALID_TOKEN_ID};
+use error_messages::{
+    ERROR_AT_ENCODING, INVALID_FEE, INVALID_FEE_TYPE, INVALID_TOKEN_ID,
+    SETUP_PHASE_ALREADY_COMPLETED,
+};
 use structs::{
     fee::{FeeStruct, FeeType},
     generate_hash::GenerateHash,
@@ -14,6 +17,11 @@ pub trait FeeTypeModule:
     #[only_owner]
     #[endpoint(removeFeeDuringSetupPhase)]
     fn remove_fee_during_setup_phase(&self, base_token: TokenIdentifier) {
+        require!(
+            !self.is_setup_phase_complete(),
+            SETUP_PHASE_ALREADY_COMPLETED
+        );
+
         self.token_fee(&base_token).clear();
         self.fee_enabled().set(false);
     }
@@ -46,6 +54,11 @@ pub trait FeeTypeModule:
     #[only_owner]
     #[endpoint(setFeeDuringSetupPhase)]
     fn set_fee_during_setup_phase(&self, fee_struct: FeeStruct<Self::Api>) {
+        require!(
+            !self.is_setup_phase_complete(),
+            SETUP_PHASE_ALREADY_COMPLETED
+        );
+
         if let Some(set_fee_error_msg) = self.set_fee_in_storage(&fee_struct) {
             sc_panic!(set_fee_error_msg);
         }
