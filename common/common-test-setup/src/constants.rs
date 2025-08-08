@@ -43,6 +43,7 @@ pub const SOV_TOKEN: TestTokenIdentifier = TestTokenIdentifier::new("sov-GREEN-0
 pub const TOKEN_TICKER: &str = "GREEN";
 pub const TOKEN_DISPLAY_NAME: &str = "Sovereign";
 pub const REGISTER_TOKEN_PREFIX: &str = "sov-";
+pub const REGISTER_DEFAULT_TOKEN: &str = "SOV-123456";
 pub const NFT_TOKEN_ID: TestTokenIdentifier = TestTokenIdentifier::new("NFT-123456");
 pub const CROWD_TOKEN_ID: TestTokenIdentifier = TestTokenIdentifier::new("CROWD-123456");
 pub const FUNGIBLE_TOKEN_ID: TestTokenIdentifier = TestTokenIdentifier::new("FUNG-123456");

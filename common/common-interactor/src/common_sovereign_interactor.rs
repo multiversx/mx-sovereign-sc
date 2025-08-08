@@ -2,7 +2,9 @@
 use crate::{
     interactor_helpers::InteractorHelpers,
     interactor_state::{AddressInfo, EsdtTokenInfo},
-    interactor_structs::{EsdtSafeType, IssueTokenStruct, MintTokenStruct, TemplateAddresses},
+    interactor_structs::{
+        ActionConfig, EsdtSafeType, IssueTokenStruct, MintTokenStruct, TemplateAddresses,
+    },
 };
 use common_test_setup::constants::{
     CHAIN_CONFIG_CODE_PATH, CHAIN_FACTORY_CODE_PATH, DEPLOY_COST, ENSHRINE_ESDT_SAFE_CODE_PATH,
@@ -1169,37 +1171,38 @@ pub trait CommonInteractorTrait: InteractorHelpers {
 
     async fn create_mapped_token(
         &mut self,
-        shard: u32,
+        config: ActionConfig,
         original_token: &EsdtTokenInfo,
         amount: &BigUint<StaticApi>,
         is_executed: bool,
     ) -> EsdtTokenInfo {
-        let (mapped_token_id, mapped_nonce) =
-            if is_executed && original_token.token_type != EsdtTokenType::Fungible {
-                let address = &self.state().get_mvx_esdt_safe_address(shard).to_address();
-                let storage = self.interactor().get_account_storage(address).await;
-                println!("Address: {:?}", address.to_bech32_default());
-                println!("Storage: {:?}", storage);
-                let token_info = self
-                    .get_sov_to_mvx_token_id_with_nonce(
-                        shard,
-                        TokenIdentifier::from_esdt_bytes(&original_token.token_id),
-                        original_token.nonce,
-                    )
-                    .await;
-                (
-                    token_info.token_identifier.to_string(),
-                    token_info.token_nonce,
+        let edge_case = !is_executed
+            || original_token.token_type == EsdtTokenType::Fungible
+            || ((original_token.token_type == EsdtTokenType::DynamicNFT
+                || original_token.token_type == EsdtTokenType::NonFungibleV2)
+                && config.expected_error.is_some());
+
+        let (mapped_token_id, mapped_nonce) = if edge_case {
+            let token_id = self
+                .get_sov_to_mvx_token_id(
+                    config.shard,
+                    TokenIdentifier::from_esdt_bytes(&original_token.token_id),
                 )
-            } else {
-                let token_id = self
-                    .get_sov_to_mvx_token_id(
-                        shard,
-                        TokenIdentifier::from_esdt_bytes(&original_token.token_id),
-                    )
-                    .await;
-                (token_id.to_string(), original_token.nonce)
-            };
+                .await;
+            (token_id.to_string(), original_token.nonce)
+        } else {
+            let token_info = self
+                .get_sov_to_mvx_token_id_with_nonce(
+                    config.shard,
+                    TokenIdentifier::from_esdt_bytes(&original_token.token_id),
+                    original_token.nonce,
+                )
+                .await;
+            (
+                token_info.token_identifier.to_string(),
+                token_info.token_nonce,
+            )
+        };
 
         EsdtTokenInfo {
             token_id: mapped_token_id,

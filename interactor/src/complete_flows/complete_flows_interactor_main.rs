@@ -8,7 +8,8 @@ use common_interactor::{
 use common_test_setup::base_setup::init::RegisterTokenArgs;
 use common_test_setup::constants::{
     INTERACTOR_WORKING_DIR, ISSUE_COST, ONE_THOUSAND_TOKENS, OPERATION_HASH_STATUS_STORAGE_KEY,
-    REGISTER_TOKEN_PREFIX, SOVEREIGN_RECEIVER_ADDRESS, TOKEN_DISPLAY_NAME, TOKEN_TICKER,
+    REGISTER_DEFAULT_TOKEN, REGISTER_TOKEN_PREFIX, SOVEREIGN_RECEIVER_ADDRESS, TOKEN_DISPLAY_NAME,
+    TOKEN_TICKER,
 };
 use header_verifier::OperationHashStatus;
 use multiversx_sc_snippets::multiversx_sc_scenario::multiversx_chain_vm::crypto_functions::sha256;
@@ -88,13 +89,9 @@ impl CompleteFlowInteract {
         let mut all_tokens = Vec::new();
 
         for (ticker, token_type, decimals) in token_configs {
-            let amount = if matches!(
-                token_type,
-                EsdtTokenType::NonFungibleV2 | EsdtTokenType::DynamicNFT
-            ) {
-                BigUint::from(1u64)
-            } else {
-                BigUint::from(ONE_THOUSAND_TOKENS)
+            let amount = match token_type {
+                EsdtTokenType::NonFungibleV2 | EsdtTokenType::DynamicNFT => BigUint::from(1u64),
+                _ => BigUint::from(ONE_THOUSAND_TOKENS),
             };
 
             let token = self
@@ -223,7 +220,7 @@ impl CompleteFlowInteract {
         config: &ActionConfig,
         amount: BigUint<StaticApi>,
     ) -> EsdtTokenInfo {
-        let token_id = "SOV-123456";
+        let token_id = REGISTER_DEFAULT_TOKEN;
         let sov_token_id =
             TokenIdentifier::from_esdt_bytes(REGISTER_TOKEN_PREFIX.to_string() + token_id);
         let token_ticker = token_id.split('-').next().unwrap_or(TOKEN_TICKER);
@@ -262,7 +259,7 @@ impl CompleteFlowInteract {
         let (balance_check_token, balance_check_amount) = if config.sovereign_token_id.is_some() {
             let mapped_token = self
                 .create_mapped_token(
-                    config.shard,
+                    config.clone(),
                     &token.clone().unwrap(),
                     &amount.clone().unwrap_or_default(),
                     true,
@@ -292,7 +289,7 @@ impl CompleteFlowInteract {
         let sov_token = self.register_sovereign_token(&config, amount.clone()).await;
 
         let mapped_token = self
-            .create_mapped_token(config.shard, &sov_token, &amount, false)
+            .create_mapped_token(config.clone(), &sov_token, &amount, false)
             .await;
 
         if config.expected_error.is_none() {

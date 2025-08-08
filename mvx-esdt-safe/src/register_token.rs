@@ -143,12 +143,5 @@ pub trait RegisterTokenModule:
                 token_identifier: sov_id.clone(),
                 token_nonce: sov_nonce,
             });
-        let esdt_info = self
-            .sovereign_to_multiversx_esdt_info_mapper(sov_id, sov_nonce)
-            .get();
-        require!(
-            esdt_info.token_nonce == 1,
-            "Expected nonce to be 1, got something else",
-        );
     }
 }
