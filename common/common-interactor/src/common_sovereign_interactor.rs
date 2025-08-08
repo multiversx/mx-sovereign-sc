@@ -1,35 +1,32 @@
 #![allow(async_fn_in_trait)]
-
-use crate::interactor_state::{AddressInfo, EsdtTokenInfo, State};
-use base64::{engine::general_purpose::STANDARD as BASE64, Engine};
+use crate::{
+    interactor_helpers::InteractorHelpers,
+    interactor_state::{AddressInfo, EsdtTokenInfo},
+    interactor_structs::{
+        ActionConfig, EsdtSafeType, IssueTokenStruct, MintTokenStruct, TemplateAddresses,
+    },
+};
 use common_test_setup::constants::{
     CHAIN_CONFIG_CODE_PATH, CHAIN_FACTORY_CODE_PATH, DEPLOY_COST, ENSHRINE_ESDT_SAFE_CODE_PATH,
     FEE_MARKET_CODE_PATH, HEADER_VERIFIER_CODE_PATH, ISSUE_COST, MVX_ESDT_SAFE_CODE_PATH,
-    NUMBER_OF_SHARDS, PER_GAS, PER_TRANSFER, PREFERRED_CHAIN_IDS, SHARD_0,
-    SOVEREIGN_FORGE_CODE_PATH, SOVEREIGN_TOKEN_PREFIX, TESTING_SC_CODE_PATH,
-    TOKEN_HANDLER_CODE_PATH, WEGLD_IDENTIFIER,
+    NUMBER_OF_SHARDS, PREFERRED_CHAIN_IDS, SHARD_0, SOVEREIGN_FORGE_CODE_PATH,
+    SOVEREIGN_TOKEN_PREFIX, TESTING_SC_CODE_PATH, TOKEN_HANDLER_CODE_PATH, WEGLD_IDENTIFIER,
 };
-use error_messages::{FAILED_TO_LOAD_WALLET_SHARD_0, FAILED_TO_PARSE_AS_NUMBER};
+use error_messages::FAILED_TO_LOAD_WALLET_SHARD_0;
 use multiversx_sc::{
-    codec::{num_bigint, TopEncode},
     imports::{ESDTSystemSCProxy, OptionalValue, UserBuiltinProxy},
     types::{
-        Address, BigUint, CodeMetadata, ESDTSystemSCAddress, EsdtTokenType, ManagedAddress,
-        ManagedBuffer, ManagedVec, MultiValueEncoded, ReturnsNewAddress, ReturnsResult,
-        ReturnsResultUnmanaged, TestSCAddress, TokenIdentifier,
+        Address, BigUint, CodeMetadata, ESDTSystemSCAddress, EsdtTokenType, ManagedBuffer,
+        ManagedVec, MultiValueEncoded, ReturnsNewAddress, ReturnsResult, ReturnsResultUnmanaged,
+        TokenIdentifier,
     },
 };
 use multiversx_sc_snippets::{
-    hex,
     imports::{
         Bech32Address, ReturnsGasUsed, ReturnsHandledOrError, ReturnsLogs,
         ReturnsNewTokenIdentifier, StaticApi, Wallet,
     },
-    multiversx_sc_scenario::{
-        multiversx_chain_vm::crypto_functions::sha256,
-        scenario_model::{Log, TxResponseStatus},
-    },
-    test_wallets, Interactor, InteractorRunAsync,
+    test_wallets, InteractorRunAsync,
 };
 use proxies::{
     chain_config_proxy::ChainConfigContractProxy, chain_factory_proxy::ChainFactoryContractProxy,
@@ -41,7 +38,7 @@ use proxies::{
 use structs::{
     aliases::{OptionalValueTransferDataTuple, PaymentsVec},
     configs::{EsdtSafeConfig, SovereignConfig},
-    fee::{FeeStruct, FeeType},
+    fee::FeeStruct,
     forge::{ContractInfo, ScArray},
     operation::Operation,
     EsdtInfo,
@@ -53,37 +50,7 @@ fn metadata() -> CodeMetadata {
     CodeMetadata::UPGRADEABLE | CodeMetadata::READABLE
 }
 
-pub struct IssueTokenStruct {
-    pub token_display_name: String,
-    pub token_ticker: String,
-    pub token_type: EsdtTokenType,
-    pub num_decimals: usize,
-}
-#[derive(Clone)]
-pub struct MintTokenStruct {
-    pub name: Option<String>,
-    pub amount: BigUint<StaticApi>,
-    pub attributes: Option<Vec<u8>>,
-}
-
-pub enum EsdtSafeType {
-    MvxEsdtSafe,
-    EnshrineEsdtSafe,
-}
-
-#[derive(Clone)]
-pub struct TemplateAddresses {
-    pub chain_config_address: Bech32Address,
-    pub header_verifier_address: Bech32Address,
-    pub esdt_safe_address: Bech32Address,
-    pub fee_market_address: Bech32Address,
-}
-
-pub trait CommonInteractorTrait {
-    fn interactor(&mut self) -> &mut Interactor;
-    fn state(&mut self) -> &mut State;
-    fn user_address(&self) -> &Address;
-
+pub trait CommonInteractorTrait: InteractorHelpers {
     async fn register_wallets(&mut self) {
         let shard_0_wallet = Wallet::from_pem_file("wallets/shard-0-wallet.pem")
             .expect(FAILED_TO_LOAD_WALLET_SHARD_0);
@@ -198,6 +165,33 @@ pub trait CommonInteractorTrait {
                 panic!("Unsupported token type: {:?}", token_type);
             }
         }
+    }
+
+    async fn create_token_with_config(
+        &mut self,
+        token_type: EsdtTokenType,
+        ticker: &str,
+        amount: BigUint<StaticApi>,
+        decimals: usize,
+    ) -> EsdtTokenInfo {
+        let token_struct = IssueTokenStruct {
+            token_display_name: ticker.to_string(),
+            token_ticker: ticker.to_string(),
+            token_type,
+            num_decimals: decimals,
+        };
+
+        let mint_struct = MintTokenStruct {
+            name: if matches!(token_type, EsdtTokenType::Fungible) {
+                None
+            } else {
+                Some(ticker.to_string())
+            },
+            amount,
+            attributes: None,
+        };
+
+        self.issue_and_mint_token(token_struct, mint_struct).await
     }
 
     async fn deploy_sovereign_forge(
@@ -784,46 +778,6 @@ pub trait CommonInteractorTrait {
         }
     }
 
-    fn get_contract_info_struct_for_sc_type(
-        &mut self,
-        sc_array: Vec<ScArray>,
-    ) -> Vec<ContractInfo<StaticApi>> {
-        sc_array
-            .iter()
-            .map(|sc| ContractInfo::new(sc.clone(), self.get_sc_address(sc.clone())))
-            .collect()
-    }
-
-    fn get_sc_address(&mut self, sc_type: ScArray) -> ManagedAddress<StaticApi> {
-        match sc_type {
-            ScArray::ChainConfig => ManagedAddress::from_address(
-                &self.state().current_chain_config_sc_address().to_address(),
-            ),
-            ScArray::ChainFactory => ManagedAddress::from_address(
-                &self.state().current_chain_factory_sc_address().to_address(),
-            ),
-            ScArray::ESDTSafe => ManagedAddress::from_address(
-                &self
-                    .state()
-                    .current_mvx_esdt_safe_contract_address()
-                    .to_address(),
-            ),
-            ScArray::HeaderVerifier => ManagedAddress::from_address(
-                &self.state().current_header_verifier_address().to_address(),
-            ),
-            ScArray::FeeMarket => ManagedAddress::from_address(
-                &self.state().current_fee_market_address().to_address(),
-            ),
-            ScArray::EnshrineESDTSafe => ManagedAddress::from_address(
-                &self
-                    .state()
-                    .current_enshrine_esdt_safe_address()
-                    .to_address(),
-            ),
-            _ => TestSCAddress::new("ERROR").to_managed_address(),
-        }
-    }
-
     async fn deploy_phase_one(
         &mut self,
         caller: Address,
@@ -1078,7 +1032,7 @@ pub trait CommonInteractorTrait {
 
     async fn withdraw_from_testing_sc(
         &mut self,
-        expected_token: TokenIdentifier<StaticApi>,
+        expected_token: EsdtTokenInfo,
         nonce: u64,
         amount: BigUint<StaticApi>,
     ) {
@@ -1091,7 +1045,7 @@ pub trait CommonInteractorTrait {
             .gas(90_000_000u64)
             .typed(TestingScProxy)
             .send_tokens(
-                TokenIdentifier::from_esdt_bytes(expected_token.to_string()),
+                TokenIdentifier::from_esdt_bytes(expected_token.token_id.to_string()),
                 nonce,
                 amount.clone(),
             )
@@ -1197,347 +1151,6 @@ pub trait CommonInteractorTrait {
             .await
     }
 
-    async fn whitelist_enshrine_esdt(
-        &mut self,
-        caller: Address,
-        enshrine_esdt_safe_address: Bech32Address,
-    ) {
-        let token_handler_address = self.state().current_token_handler_address().clone();
-
-        let response = self
-            .interactor()
-            .tx()
-            .from(caller)
-            .to(token_handler_address)
-            .gas(50_000_000u64)
-            .typed(token_handler_proxy::TokenHandlerProxy)
-            .whitelist_enshrine_esdt(enshrine_esdt_safe_address)
-            .returns(ReturnsResultUnmanaged)
-            .run()
-            .await;
-
-        println!("Result: {response:?}");
-    }
-
-    //NOTE: transferValue returns an empty log and calling this function on it will panic
-    fn assert_expected_log(
-        &mut self,
-        logs: Vec<Log>,
-        expected_log: Option<&str>,
-        expected_log_error: Option<&str>,
-    ) {
-        match expected_log {
-            None => {
-                assert!(
-                    logs.is_empty(),
-                    "Expected no logs, but found some: {:?}",
-                    logs
-                );
-                assert!(
-                    expected_log_error.is_none(),
-                    "Expected no logs, but wanted to check for error: {}",
-                    expected_log_error.unwrap()
-                );
-            }
-            Some(expected_log) => {
-                let expected_bytes = expected_log.as_bytes();
-
-                let found_log = logs.iter().find(|log| {
-                    log.topics.iter().any(|topic| {
-                        if let Ok(decoded_topic) = BASE64.decode(topic) {
-                            decoded_topic == expected_bytes
-                        } else {
-                            false
-                        }
-                    })
-                });
-
-                assert!(
-                    found_log.is_some(),
-                    "Expected log '{}' not found",
-                    expected_log
-                );
-
-                if let Some(expected_error) = expected_log_error {
-                    let found_log = found_log.unwrap();
-                    let expected_error_bytes = expected_error.as_bytes();
-
-                    let found_error_in_data = found_log.data.iter().any(|data_item| {
-                        if let Ok(decoded_data) = BASE64.decode(data_item) {
-                            decoded_data == expected_error_bytes
-                        } else {
-                            false
-                        }
-                    });
-
-                    assert!(
-                        found_error_in_data,
-                        "Expected error '{}' not found in data field of log with topic '{}'",
-                        expected_error, expected_log
-                    );
-                }
-            }
-        }
-    }
-
-    fn assert_expected_error_message(
-        &mut self,
-        response: Result<(), TxResponseStatus>,
-        expected_error_message: Option<&str>,
-    ) {
-        match response {
-            Ok(_) => assert!(
-                expected_error_message.is_none(),
-                "Transaction was successful, but expected error"
-            ),
-            Err(error) => {
-                assert_eq!(expected_error_message, Some(error.message.as_str()))
-            }
-        }
-    }
-
-    /// Key and value should be in hex
-    async fn check_account_storage(
-        &mut self,
-        address: Address,
-        wanted_key: &str,
-        expected_value: Option<&str>,
-    ) {
-        let pairs = self.interactor().get_account_storage(&address).await;
-
-        let found_entry = pairs.iter().find(|(key, _)| key.contains(wanted_key));
-
-        let decoded_key = self.decode_from_hex(wanted_key);
-
-        match expected_value {
-            Some(expected) => {
-                assert!(
-                    found_entry.is_some(),
-                    "Expected key containing '{}' (decoded: '{}') was not found in account storage.",
-                    wanted_key,
-                    decoded_key
-                );
-
-                let (_, value) = found_entry.unwrap();
-
-                let decoded_expected = self.decode_from_hex(expected);
-
-                let decoded_value = self.decode_from_hex(value);
-
-                assert!(
-                    value.contains(expected),
-                    "Mismatch: expected '{}' (decoded: '{}') to be contained in '{}' (decoded: '{}')",
-                    expected,
-                    decoded_expected,
-                    value,
-                    decoded_value,
-                );
-            }
-            None => {
-                assert!(
-                    found_entry.is_none(),
-                    "Did not expect to find key containing '{}' (decoded: '{}') in account storage.",
-                    wanted_key,
-                    decoded_key
-                );
-            }
-        }
-    }
-
-    async fn check_mvx_esdt_safe_balance_is_empty(&mut self, shard: u32) {
-        let mvx_esdt_safe_address = self.state().get_mvx_esdt_safe_address(shard).clone();
-
-        self.check_address_balance(&mvx_esdt_safe_address, Vec::new())
-            .await;
-    }
-
-    async fn check_fee_market_balance_is_empty(&mut self, shard: u32) {
-        let fee_market_address = self.state().get_fee_market_address(shard).clone();
-
-        self.check_address_balance(&fee_market_address, Vec::new())
-            .await;
-    }
-
-    async fn check_testing_sc_balance_is_empty(&mut self) {
-        let testing_sc_address = self.state().current_testing_sc_address().clone();
-
-        self.check_address_balance(&testing_sc_address, Vec::new())
-            .await;
-    }
-
-    async fn check_enshrine_esdt_safe_balance_is_empty(&mut self) {
-        let enshrine_esdt_safe_address = self.state().current_enshrine_esdt_safe_address().clone();
-
-        self.check_address_balance(&enshrine_esdt_safe_address, Vec::new())
-            .await;
-    }
-
-    async fn check_address_balance(
-        &mut self,
-        address: &Bech32Address,
-        expected_token_balance: Vec<EsdtTokenInfo>,
-    ) {
-        let address_name = self.get_address_name(address);
-
-        let balances = self
-            .interactor()
-            .get_account_esdt(&address.to_address())
-            .await;
-
-        if expected_token_balance.is_empty() {
-            assert!(
-                balances.is_empty(),
-                "Expected no tokens for {} ({}), but found: {:?}",
-                address_name,
-                address,
-                balances
-            );
-            return;
-        }
-
-        for token_balance in expected_token_balance {
-            let token_id = &token_balance.token_id;
-            let expected_amount = &token_balance.amount;
-
-            if *expected_amount == 0u64 {
-                match balances.get(token_id) {
-                    None => {}
-                    Some(esdt_balance) => {
-                        panic!("For {} ({}) -> Expected token '{}' to be absent (balance 0), but found it with balance: {}", 
-                           address_name, address, token_id, esdt_balance.balance);
-                    }
-                }
-                continue;
-            }
-
-            let complete_tokens = balances.iter().find(|(key, _)| key.starts_with(token_id));
-
-            match complete_tokens {
-                Some((found_token_id, esdt_balance)) => {
-                    let actual_amount = BigUint::from(
-                        num_bigint::BigUint::parse_bytes(esdt_balance.balance.as_bytes(), 10)
-                            .expect(FAILED_TO_PARSE_AS_NUMBER),
-                    );
-                    assert_eq!(
-                    actual_amount,
-                    *expected_amount,
-                    "\nFor {} ({}) -> Balance mismatch for token {}:\nexpected: {}\nfound:    {}",
-                    address_name,
-                    address,
-                    found_token_id,
-                    expected_amount.to_display(),
-                    esdt_balance.balance
-                );
-                }
-                None => {
-                    panic!(
-                    "For {} ({}) -> Expected token starting with '{}' with balance {}, but none was found",
-                    address_name,
-                    address,
-                    token_id,
-                    expected_amount.to_display()
-                );
-                }
-            }
-        }
-    }
-
-    async fn check_user_balance_unchanged(&mut self) {
-        let user_address = self.user_address().clone();
-        let expected_balance = self.state().get_initial_wallet_balance().clone().unwrap();
-
-        self.check_address_balance(&Bech32Address::from(user_address), expected_balance)
-            .await;
-    }
-
-    async fn check_user_balance_after_deduction(
-        &mut self,
-        token: EsdtTokenInfo,
-        deducted_amount: BigUint<StaticApi>,
-    ) {
-        let expected_balance =
-            vec![self.custom_amount_tokens(token.clone(), token.amount.clone() - deducted_amount)];
-
-        self.check_address_balance(
-            &Bech32Address::from(self.user_address().clone()),
-            expected_balance,
-        )
-        .await;
-    }
-
-    async fn check_user_balance_with_amount(
-        &mut self,
-        token: EsdtTokenInfo,
-        amount: BigUint<StaticApi>,
-    ) {
-        let expected_balance = vec![self.custom_amount_tokens(token.clone(), amount.clone())];
-
-        self.check_address_balance(
-            &Bech32Address::from(self.user_address().clone()),
-            expected_balance,
-        )
-        .await;
-    }
-
-    async fn check_user_balance_with_fee_deduction(
-        &mut self,
-        token: EsdtTokenInfo,
-        deducted_amount: BigUint<StaticApi>,
-        fee_amount: BigUint<StaticApi>,
-    ) {
-        let token_balance =
-            self.custom_amount_tokens(token.clone(), token.amount.clone() - deducted_amount);
-        let fee_token = self.state().get_fee_token_id();
-        let fee_balance =
-            self.custom_amount_tokens(fee_token.clone(), fee_token.amount.clone() - fee_amount);
-
-        let expected_balances = vec![token_balance, fee_balance];
-
-        self.check_address_balance(
-            &Bech32Address::from(self.user_address().clone()),
-            expected_balances,
-        )
-        .await;
-    }
-
-    async fn check_mvx_esdt_safe_balance_with_amount(
-        &mut self,
-        shard: u32,
-        token: EsdtTokenInfo,
-        amount: BigUint<StaticApi>,
-    ) {
-        let expected_balance = vec![self.custom_amount_tokens(token.clone(), amount.clone())];
-        let mvx_esdt_safe_address = self.state().get_mvx_esdt_safe_address(shard).clone();
-
-        self.check_address_balance(&mvx_esdt_safe_address, expected_balance)
-            .await;
-    }
-
-    async fn check_testing_sc_balance_with_amount(
-        &mut self,
-        token: EsdtTokenInfo,
-        amount: BigUint<StaticApi>,
-    ) {
-        let expected_balance = vec![self.custom_amount_tokens(token.clone(), amount.clone())];
-        let testing_sc_address = self.state().current_testing_sc_address().clone();
-
-        self.check_address_balance(&testing_sc_address, expected_balance)
-            .await;
-    }
-
-    async fn check_fee_market_balance_with_amount(
-        &mut self,
-        shard: u32,
-        token: EsdtTokenInfo,
-        amount: BigUint<StaticApi>,
-    ) {
-        let expected_balance = vec![self.custom_amount_tokens(token.clone(), amount.clone())];
-        let fee_market_address = self.state().get_fee_market_address(shard).clone();
-
-        self.check_address_balance(&fee_market_address, expected_balance)
-            .await;
-    }
-
     async fn check_setup_phase_status(&mut self, chain_id: &str, expected_value: bool) {
         let sovereign_forge_address = self.state().current_sovereign_forge_sc_address().clone();
         let result_value = self
@@ -1556,116 +1169,44 @@ pub trait CommonInteractorTrait {
         );
     }
 
-    fn get_token_by_type(&mut self, token_type: EsdtTokenType) -> EsdtTokenInfo {
-        match token_type {
-            EsdtTokenType::NonFungibleV2 => self.state().get_nft_token_id(),
-            EsdtTokenType::Fungible => self.state().get_first_token_id(),
-            EsdtTokenType::SemiFungible => self.state().get_sft_token_id(),
-            EsdtTokenType::MetaFungible => self.state().get_meta_esdt_token_id(),
-            EsdtTokenType::DynamicNFT => self.state().get_dynamic_nft_token_id(),
-            EsdtTokenType::DynamicSFT => self.state().get_dynamic_sft_token_id(),
-            EsdtTokenType::DynamicMeta => self.state().get_dynamic_meta_esdt_token_id(),
-            _ => panic!("Unsupported token type for test"),
-        }
-    }
-
-    fn create_standard_fee(&mut self) -> FeeStruct<StaticApi> {
-        let per_transfer = BigUint::from(PER_TRANSFER);
-        let per_gas = BigUint::from(PER_GAS);
-        FeeStruct {
-            base_token: self.state().get_fee_token_identifier(),
-            fee_type: FeeType::Fixed {
-                token: self.state().get_fee_token_identifier(),
-                per_transfer,
-                per_gas,
-            },
-        }
-    }
-
-    fn get_bridge_service_for_shard(&self, shard_id: u32) -> Address {
-        let shard_0_wallet = Wallet::from_pem_file("wallets/shard-0-wallet.pem")
-            .expect(FAILED_TO_LOAD_WALLET_SHARD_0);
-        match shard_id {
-            0 => shard_0_wallet.to_address(),
-            1 => test_wallets::dan().to_address(),
-            2 => test_wallets::judy().to_address(),
-            _ => panic!("Invalid shard ID: {shard_id}"),
-        }
-    }
-    fn get_bridge_owner_for_shard(&self, shard_id: u32) -> Address {
-        match shard_id {
-            0 => test_wallets::bob().to_address(),
-            1 => test_wallets::alice().to_address(),
-            2 => test_wallets::carol().to_address(),
-            _ => panic!("Invalid shard ID: {shard_id}"),
-        }
-    }
-
-    fn get_sovereign_owner_for_shard(&self, shard_id: u32) -> Address {
-        match shard_id {
-            0 => test_wallets::mike().to_address(),
-            1 => test_wallets::frank().to_address(),
-            2 => test_wallets::heidi().to_address(),
-            _ => panic!("Invalid shard ID: {shard_id}"),
-        }
-    }
-
-    fn decode_from_hex(&mut self, hex_string: &str) -> String {
-        let bytes =
-            hex::decode(hex_string).expect("Failed to decode hex string: invalid hex format");
-        String::from_utf8(bytes).expect("Failed to decode UTF-8 string: invalid UTF-8 bytes")
-    }
-
-    fn get_operation_hash(&mut self, operation: &Operation<StaticApi>) -> ManagedBuffer<StaticApi> {
-        let mut serialized_operation: ManagedBuffer<StaticApi> = ManagedBuffer::new();
-        let _ = operation.top_encode(&mut serialized_operation);
-        let sha256 = sha256(&serialized_operation.to_vec());
-
-        ManagedBuffer::new_from_bytes(&sha256)
-    }
-
-    fn custom_amount_tokens(
+    async fn create_mapped_token(
         &mut self,
-        token: EsdtTokenInfo,
-        new_amount: BigUint<StaticApi>,
+        config: ActionConfig,
+        original_token: &EsdtTokenInfo,
+        amount: &BigUint<StaticApi>,
+        is_executed: bool,
     ) -> EsdtTokenInfo {
+        let edge_case = !is_executed
+            || original_token.token_type == EsdtTokenType::Fungible
+            || (self.is_nft(original_token) && config.expected_error.is_some());
+
+        let (mapped_token_id, mapped_nonce) = if edge_case {
+            let token_id = self
+                .get_sov_to_mvx_token_id(
+                    config.shard,
+                    TokenIdentifier::from_esdt_bytes(&original_token.token_id),
+                )
+                .await;
+            (token_id.to_string(), original_token.nonce)
+        } else {
+            let token_info = self
+                .get_sov_to_mvx_token_id_with_nonce(
+                    config.shard,
+                    TokenIdentifier::from_esdt_bytes(&original_token.token_id),
+                    original_token.nonce,
+                )
+                .await;
+            (
+                token_info.token_identifier.to_string(),
+                token_info.token_nonce,
+            )
+        };
+
         EsdtTokenInfo {
-            token_id: token.token_id,
-            amount: new_amount,
-            nonce: token.nonce,
-            token_type: token.token_type,
+            token_id: mapped_token_id,
+            nonce: mapped_nonce,
+            token_type: original_token.token_type,
+            amount: amount.clone(),
         }
-    }
-
-    fn get_address_name(&mut self, address: &Bech32Address) -> &'static str {
-        let testing_addr = self.state().current_testing_sc_address();
-        if address == testing_addr {
-            return "Testing SC";
-        }
-
-        // Check shard-specific contract addresses
-        for shard_id in 0..3 {
-            let mvx_addr = self.state().get_mvx_esdt_safe_address(shard_id);
-            if address == mvx_addr {
-                return match shard_id {
-                    0 => "MVX ESDT Safe Shard 0",
-                    1 => "MVX ESDT Safe Shard 1",
-                    2 => "MVX ESDT Safe Shard 2",
-                    _ => "Unknown MVX ESDT Safe",
-                };
-            }
-
-            let fee_addr = self.state().get_fee_market_address(shard_id);
-            if address == fee_addr {
-                return match shard_id {
-                    0 => "Fee Market Shard 0",
-                    1 => "Fee Market Shard 1",
-                    2 => "Fee Market Shard 2",
-                    _ => "Unknown Fee Market",
-                };
-            }
-        }
-
-        "Unknown Address"
     }
 }

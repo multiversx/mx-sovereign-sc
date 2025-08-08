@@ -1,0 +1,150 @@
+use multiversx_sc::{
+    imports::Bech32Address,
+    types::{BigUint, EsdtTokenType, TokenIdentifier},
+};
+use multiversx_sc_snippets::imports::StaticApi;
+use structs::fee::FeeStruct;
+
+use crate::interactor_state::EsdtTokenInfo;
+
+pub struct IssueTokenStruct {
+    pub token_display_name: String,
+    pub token_ticker: String,
+    pub token_type: EsdtTokenType,
+    pub num_decimals: usize,
+}
+#[derive(Clone)]
+pub struct MintTokenStruct {
+    pub name: Option<String>,
+    pub amount: BigUint<StaticApi>,
+    pub attributes: Option<Vec<u8>>,
+}
+
+#[derive(Clone, Default)]
+pub struct ActionConfig {
+    pub shard: u32,
+    pub expected_error: Option<String>,
+    pub expected_log: Option<String>,
+    pub expected_log_error: Option<String>,
+    pub is_sovereign: bool,
+    pub with_transfer_data: Option<bool>,
+    pub decimals: Option<usize>,
+    pub token_type: Option<EsdtTokenType>,
+    pub nonce: Option<u64>,
+    pub endpoint: Option<String>,
+    pub sovereign_token_id: Option<TokenIdentifier<StaticApi>>,
+}
+
+impl ActionConfig {
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    pub fn shard(mut self, shard: u32) -> Self {
+        self.shard = shard;
+        self
+    }
+
+    pub fn expect_error(mut self, error: String) -> Self {
+        self.expected_error = Some(error);
+        self
+    }
+
+    pub fn expect_log(mut self, log: String) -> Self {
+        self.expected_log = Some(log);
+        self
+    }
+
+    pub fn for_register(mut self, token_type: EsdtTokenType, decimals: usize, nonce: u64) -> Self {
+        self.token_type = Some(token_type);
+        self.decimals = Some(decimals);
+        self.nonce = Some(nonce);
+        self
+    }
+
+    pub fn with_endpoint(mut self, endpoint: String) -> Self {
+        self.endpoint = Some(endpoint);
+        self.with_transfer_data = Some(true);
+        self
+    }
+
+    pub fn with_sovereign_token_id(
+        mut self,
+        sovereign_token_id: TokenIdentifier<StaticApi>,
+    ) -> Self {
+        self.sovereign_token_id = Some(sovereign_token_id);
+        self.is_sovereign = true;
+        self
+    }
+}
+
+#[derive(Clone, Default)]
+pub struct BalanceCheckConfig {
+    pub shard: u32,
+    pub token: Option<EsdtTokenInfo>,
+    pub amount: Option<BigUint<StaticApi>>,
+    pub fee: Option<FeeStruct<StaticApi>>,
+    pub with_transfer_data: bool,
+    pub is_sovereign_token: bool,
+    pub is_execute: bool,
+    pub expected_error: Option<String>,
+}
+
+impl BalanceCheckConfig {
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    pub fn shard(mut self, shard: u32) -> Self {
+        self.shard = shard;
+        self
+    }
+
+    pub fn token(mut self, token: Option<EsdtTokenInfo>) -> Self {
+        self.token = token;
+        self
+    }
+
+    pub fn amount(mut self, amount: Option<BigUint<StaticApi>>) -> Self {
+        self.amount = amount;
+        self
+    }
+
+    pub fn fee(mut self, fee: Option<FeeStruct<StaticApi>>) -> Self {
+        self.fee = fee;
+        self
+    }
+
+    pub fn with_transfer_data(mut self, value: bool) -> Self {
+        self.with_transfer_data = value;
+        self
+    }
+
+    pub fn is_sovereign_token(mut self, value: bool) -> Self {
+        self.is_sovereign_token = value;
+        self
+    }
+
+    pub fn is_execute(mut self, value: bool) -> Self {
+        self.is_execute = value;
+        self
+    }
+
+    pub fn expected_error(mut self, value: Option<String>) -> Self {
+        self.expected_error = value;
+        self
+    }
+}
+
+pub enum EsdtSafeType {
+    MvxEsdtSafe,
+    EnshrineEsdtSafe,
+}
+
+#[derive(Clone)]
+pub struct TemplateAddresses {
+    pub chain_config_address: Bech32Address,
+    pub header_verifier_address: Bech32Address,
+    pub esdt_safe_address: Bech32Address,
+    pub fee_market_address: Bech32Address,
+}
