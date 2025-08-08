@@ -6,11 +6,11 @@ use common_test_setup::{
     },
 };
 use multiversx_sc::types::{
-    BigUint, ManagedBuffer, MultiEgldOrEsdtPayment, MultiValueEncoded, ReturnsResult, TestAddress,
+    BigUint, ManagedBuffer, MultiEgldOrEsdtPayment, MultiValueEncoded, ReturnsHandledOrError,
+    ReturnsResult, TestAddress,
 };
 use multiversx_sc_scenario::{
-    api::StaticApi, multiversx_chain_vm::crypto_functions::sha256, ReturnsHandledOrError,
-    ReturnsLogs, ScenarioTxRun,
+    api::StaticApi, multiversx_chain_vm::crypto_functions::sha256, ReturnsLogs, ScenarioTxRun,
 };
 use proxies::chain_config_proxy::ChainConfigContractProxy;
 use structs::configs::SovereignConfig;
@@ -114,7 +114,7 @@ impl ChainConfigTestState {
             .assert_expected_error_message(result, expect_error);
 
         self.common_setup
-            .assert_expected_log(logs, expected_custom_log);
+            .assert_expected_log(logs, expected_custom_log, None);
     }
 
     pub fn unregister_with_caller(
@@ -140,7 +140,7 @@ impl ChainConfigTestState {
             .assert_expected_error_message(result, expect_error);
 
         self.common_setup
-            .assert_expected_log(logs, expected_custom_log);
+            .assert_expected_log(logs, expected_custom_log, None);
     }
 
     pub fn unregister(
@@ -165,7 +165,7 @@ impl ChainConfigTestState {
             .assert_expected_error_message(result, expect_error);
 
         self.common_setup
-            .assert_expected_log(logs, expected_custom_log);
+            .assert_expected_log(logs, expected_custom_log, None);
     }
 
     pub fn get_bls_key_id(&mut self, bls_key: &ManagedBuffer<StaticApi>) -> BigUint<StaticApi> {

@@ -5,7 +5,7 @@ use common_test_setup::constants::{
 };
 use multiversx_sc::api::ManagedTypeApi;
 use multiversx_sc::types::{
-    ManagedBuffer, MultiValueEncoded, ReturnsHandledOrError, TestSCAddress,
+    BigUint, ManagedBuffer, MultiValueEncoded, ReturnsHandledOrError, TestSCAddress,
 };
 use multiversx_sc_scenario::ReturnsLogs;
 use multiversx_sc_scenario::{
