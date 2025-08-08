@@ -4,7 +4,7 @@ use common_test_setup::constants::{
     OWNER_BALANCE,
 };
 use multiversx_sc::api::ManagedTypeApi;
-use multiversx_sc::types::{BigUint, ManagedBuffer, ManagedVec, MultiValueEncoded, TestSCAddress};
+use multiversx_sc::types::{BigUint, ManagedBuffer, MultiValueEncoded, TestSCAddress};
 use multiversx_sc_scenario::{
     api::StaticApi, multiversx_chain_vm::crypto_functions::sha256, ScenarioTxRun,
 };
