@@ -48,6 +48,11 @@ pub trait MvxEsdtSafe:
     #[only_owner]
     #[endpoint(updateEsdtSafeConfigSetupPhase)]
     fn update_esdt_safe_config_during_setup_phase(&self, new_config: EsdtSafeConfig<Self::Api>) {
+        require!(
+            !self.is_setup_phase_complete(),
+            SETUP_PHASE_ALREADY_COMPLETED
+        );
+
         if let Some(error_message) = self.is_esdt_safe_config_valid(&new_config) {
             sc_panic!(error_message);
         }

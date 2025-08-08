@@ -1,5 +1,6 @@
 #![no_std]
 
+use error_messages::{ERROR_AT_ENCODING, SETUP_PHASE_ALREADY_COMPLETED};
 use multiversx_sc::imports::*;
 use structs::configs::SovereignConfig;
 
