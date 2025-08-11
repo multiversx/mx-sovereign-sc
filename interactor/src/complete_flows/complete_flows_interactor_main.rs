@@ -142,10 +142,12 @@ impl CompleteFlowInteract {
         )
         .await;
 
+        let amount = token.as_ref().map(|t| t.amount.clone()).unwrap_or_default();
+
         let balance_config = BalanceCheckConfig::new()
             .shard(config.shard)
             .token(token.clone())
-            .amount(token.unwrap().amount)
+            .amount(amount)
             .fee(fee)
             .is_sovereign_token(config.is_sovereign)
             .with_transfer_data(config.with_transfer_data.unwrap_or_default())
@@ -228,7 +230,10 @@ impl CompleteFlowInteract {
                     .await;
                 (Some(mapped_token.clone()), mapped_token.amount)
             }
-            None => (token.clone(), token.unwrap().amount),
+            None => {
+                let amount = token.as_ref().map(|t| t.amount.clone()).unwrap_or_default();
+                (token.clone(), amount)
+            }
         };
 
         let balance_config = BalanceCheckConfig::new()
