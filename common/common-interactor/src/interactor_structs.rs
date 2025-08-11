@@ -28,9 +28,6 @@ pub struct ActionConfig {
     pub expected_log_error: Option<String>,
     pub is_sovereign: bool,
     pub with_transfer_data: Option<bool>,
-    pub decimals: Option<usize>,
-    pub token_type: Option<EsdtTokenType>,
-    pub nonce: Option<u64>,
     pub endpoint: Option<String>,
     pub sovereign_token_id: Option<TokenIdentifier<StaticApi>>,
 }
@@ -52,13 +49,6 @@ impl ActionConfig {
 
     pub fn expect_log(mut self, log: String) -> Self {
         self.expected_log = Some(log);
-        self
-    }
-
-    pub fn for_register(mut self, token_type: EsdtTokenType, decimals: usize, nonce: u64) -> Self {
-        self.token_type = Some(token_type);
-        self.decimals = Some(decimals);
-        self.nonce = Some(nonce);
         self
     }
 
@@ -105,8 +95,8 @@ impl BalanceCheckConfig {
         self
     }
 
-    pub fn amount(mut self, amount: Option<BigUint<StaticApi>>) -> Self {
-        self.amount = amount;
+    pub fn amount(mut self, amount: BigUint<StaticApi>) -> Self {
+        self.amount = Some(amount);
         self
     }
 

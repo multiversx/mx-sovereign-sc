@@ -109,10 +109,13 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             .mint_tokens(token_id.clone(), issue.token_type, mint.clone())
             .await;
 
+        let decimals = self.get_token_decimals(issue.token_type);
+
         EsdtTokenInfo {
             token_id: token_id.clone(),
             nonce,
             token_type: issue.token_type,
+            decimals,
             amount: mint.amount,
         }
     }
@@ -1169,7 +1172,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
         );
     }
 
-    async fn create_mapped_token(
+    async fn get_mapped_token(
         &mut self,
         config: ActionConfig,
         original_token: &EsdtTokenInfo,
@@ -1206,6 +1209,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             token_id: mapped_token_id,
             nonce: mapped_nonce,
             token_type: original_token.token_type,
+            decimals: original_token.decimals,
             amount: amount.clone(),
         }
     }

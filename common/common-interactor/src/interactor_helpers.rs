@@ -66,7 +66,6 @@ pub trait InteractorHelpers {
     fn prepare_deposit_payments(
         &mut self,
         token: Option<EsdtTokenInfo>,
-        amount: Option<BigUint<StaticApi>>,
         fee: Option<FeeStruct<StaticApi>>,
         with_transfer_data: bool,
     ) -> PaymentsVec<StaticApi> {
@@ -88,11 +87,11 @@ pub trait InteractorHelpers {
         }
 
         // Add token payment if present
-        if let (Some(token), Some(amount)) = (token, amount) {
+        if let Some(token) = token {
             let token_payment = EsdtTokenPayment::<StaticApi>::new(
                 TokenIdentifier::from_esdt_bytes(&token.token_id),
                 token.nonce,
-                amount.clone(),
+                token.amount.clone(),
             );
             payment_vec.push(token_payment);
         }
@@ -103,12 +102,11 @@ pub trait InteractorHelpers {
     fn prepare_execute_payment(
         &self,
         token: Option<EsdtTokenInfo>,
-        amount: Option<BigUint<StaticApi>>,
     ) -> ManagedVec<StaticApi, OperationEsdtPayment<StaticApi>> {
-        match (token, amount) {
-            (Some(token), Some(amount)) => {
+        match token {
+            Some(token) => {
                 let token_data = EsdtTokenData {
-                    amount,
+                    amount: token.amount,
                     token_type: token.token_type,
                     ..Default::default()
                 };
@@ -130,12 +128,11 @@ pub trait InteractorHelpers {
     async fn prepare_operation(
         &mut self,
         token: Option<EsdtTokenInfo>,
-        amount: Option<BigUint<StaticApi>>,
         endpoint: Option<&str>,
     ) -> Operation<StaticApi> {
         let user_address = self.user_address().clone();
 
-        let payment_vec = self.prepare_execute_payment(token, amount);
+        let payment_vec = self.prepare_execute_payment(token);
 
         match endpoint {
             Some(endpoint) => {
@@ -305,7 +302,7 @@ pub trait InteractorHelpers {
         ManagedBuffer::new_from_bytes(&sha256)
     }
 
-    fn set_token_amount(
+    fn clone_token_with_amount(
         &mut self,
         token: EsdtTokenInfo,
         new_amount: BigUint<StaticApi>,
@@ -314,6 +311,7 @@ pub trait InteractorHelpers {
             token_id: token.token_id,
             amount: new_amount,
             nonce: token.nonce,
+            decimals: token.decimals,
             token_type: token.token_type,
         }
     }
@@ -432,6 +430,20 @@ pub trait InteractorHelpers {
                     .to_address(),
             ),
             _ => TestSCAddress::new("ERROR").to_managed_address(),
+        }
+    }
+
+    fn get_token_decimals(&self, token_type: EsdtTokenType) -> usize {
+        match token_type {
+            EsdtTokenType::NonFungibleV2
+            | EsdtTokenType::DynamicNFT
+            | EsdtTokenType::SemiFungible
+            | EsdtTokenType::NonFungible
+            | EsdtTokenType::DynamicSFT => 0,
+            EsdtTokenType::Fungible | EsdtTokenType::MetaFungible | EsdtTokenType::DynamicMeta => {
+                18
+            }
+            _ => panic!("Unsupported token type for getting decimals"),
         }
     }
 
@@ -583,14 +595,15 @@ pub trait InteractorHelpers {
                 (false, _) => Self::safe_subtract(initial_user_balance, amount.clone()),
             };
 
-            expected_user_tokens.push(self.set_token_amount(token.clone(), remaining_amount));
+            expected_user_tokens
+                .push(self.clone_token_with_amount(token.clone(), remaining_amount));
         }
 
         if fee.is_some() && fee_amount > 0u64 {
             let fee_token = self.state().get_fee_token_id();
             let initial_fee_balance = fee_token.clone().amount;
             let remaining_fee = Self::safe_subtract(initial_fee_balance, fee_amount.clone());
-            expected_user_tokens.push(self.set_token_amount(fee_token, remaining_fee));
+            expected_user_tokens.push(self.clone_token_with_amount(fee_token, remaining_fee));
         }
 
         if expected_user_tokens.is_empty() || expected_error.is_some() {
@@ -609,14 +622,14 @@ pub trait InteractorHelpers {
                         | EsdtTokenType::DynamicSFT
                         | EsdtTokenType::SemiFungible
                 ) {
-                    vec![self.set_token_amount(token.clone(), BigUint::from(1u64))]
+                    vec![self.clone_token_with_amount(token.clone(), BigUint::from(1u64))]
                 } else {
                     vec![]
                 }
             }
             (Some(token), Some(amount), false, false) => {
                 // Non-sovereign deposits: full amount goes to MVX safe
-                vec![self.set_token_amount(token.clone(), amount.clone())]
+                vec![self.clone_token_with_amount(token.clone(), amount.clone())]
             }
             _ => {
                 vec![]
@@ -628,7 +641,7 @@ pub trait InteractorHelpers {
         // FEE market
         if fee_amount > 0u64 {
             let fee_token = self.state().get_fee_token_id();
-            let expected_fee_tokens = vec![self.set_token_amount(fee_token, fee_amount)];
+            let expected_fee_tokens = vec![self.clone_token_with_amount(fee_token, fee_amount)];
             self.check_fee_market_balance(shard, expected_fee_tokens)
                 .await;
         } else {
@@ -639,7 +652,7 @@ pub trait InteractorHelpers {
         let testing_sc_tokens = match (&token, &amount) {
             (Some(token), Some(amount)) => {
                 if is_execute && with_transfer_data && expected_error.is_none() {
-                    vec![self.set_token_amount(token.clone(), amount.clone())]
+                    vec![self.clone_token_with_amount(token.clone(), amount.clone())]
                 } else {
                     vec![]
                 }

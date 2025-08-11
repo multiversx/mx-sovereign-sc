@@ -121,12 +121,10 @@ impl CompleteFlowInteract {
         &mut self,
         config: ActionConfig,
         token: Option<EsdtTokenInfo>,
-        amount: Option<BigUint<StaticApi>>,
         fee: Option<FeeStruct<StaticApi>>,
     ) {
         let payment_vec = self.prepare_deposit_payments(
             token.clone(),
-            amount.clone(),
             fee.clone(),
             config.with_transfer_data.unwrap_or_default(),
         );
@@ -146,8 +144,8 @@ impl CompleteFlowInteract {
 
         let balance_config = BalanceCheckConfig::new()
             .shard(config.shard)
-            .token(token)
-            .amount(amount)
+            .token(token.clone())
+            .amount(token.unwrap().amount)
             .fee(fee)
             .is_sovereign_token(config.is_sovereign)
             .with_transfer_data(config.with_transfer_data.unwrap_or_default())
@@ -160,10 +158,9 @@ impl CompleteFlowInteract {
         &mut self,
         config: ActionConfig,
         token: Option<EsdtTokenInfo>,
-        amount: Option<BigUint<StaticApi>>,
     ) {
         let operation = self
-            .prepare_operation(token, amount, config.endpoint.as_deref())
+            .prepare_operation(token, config.endpoint.as_deref())
             .await;
 
         let operation_hash = self.get_operation_hash(&operation);
@@ -215,28 +212,23 @@ impl CompleteFlowInteract {
         .await;
     }
 
-    pub async fn execute_wrapper(
-        &mut self,
-        config: ActionConfig,
-        token: Option<EsdtTokenInfo>,
-        amount: Option<BigUint<StaticApi>>,
-    ) {
-        self.register_and_execute_operation(config.clone(), token.clone(), amount.clone())
+    pub async fn execute_wrapper(&mut self, config: ActionConfig, token: Option<EsdtTokenInfo>) {
+        self.register_and_execute_operation(config.clone(), token.clone())
             .await;
 
         let (balance_check_token, balance_check_amount) = match config.sovereign_token_id.as_ref() {
             Some(_) => {
                 let mapped_token = self
-                    .create_mapped_token(
+                    .get_mapped_token(
                         config.clone(),
                         &token.clone().unwrap(),
-                        &amount.clone().unwrap_or_default(),
+                        &token.clone().unwrap().amount,
                         true,
                     )
                     .await;
-                (Some(mapped_token), amount)
+                (Some(mapped_token.clone()), mapped_token.amount)
             }
-            None => (token, amount),
+            None => (token.clone(), token.unwrap().amount),
         };
 
         let balance_config = BalanceCheckConfig::new()
@@ -253,7 +245,8 @@ impl CompleteFlowInteract {
 
     async fn register_sovereign_token(
         &mut self,
-        config: &ActionConfig,
+        shard: u32,
+        token: EsdtTokenInfo,
         amount: BigUint<StaticApi>,
     ) -> EsdtTokenInfo {
         let token_id = REGISTER_DEFAULT_TOKEN;
@@ -262,13 +255,13 @@ impl CompleteFlowInteract {
         let token_ticker = token_id.split('-').next().unwrap_or(TOKEN_TICKER);
 
         self.register_token(
-            config.shard,
+            shard,
             RegisterTokenArgs {
                 sov_token_id: sov_token_id.clone(),
-                token_type: config.token_type.unwrap(),
+                token_type: token.token_type,
                 token_display_name: TOKEN_DISPLAY_NAME,
                 token_ticker,
-                num_decimals: config.decimals.unwrap(),
+                num_decimals: token.decimals,
             },
             ISSUE_COST.into(),
             None,
@@ -277,8 +270,9 @@ impl CompleteFlowInteract {
 
         EsdtTokenInfo {
             token_id: sov_token_id.to_string(),
-            nonce: config.nonce.unwrap(),
-            token_type: config.token_type.unwrap(),
+            nonce: token.nonce,
+            token_type: token.token_type,
+            decimals: token.decimals,
             amount,
         }
     }
@@ -286,12 +280,15 @@ impl CompleteFlowInteract {
     pub async fn register_and_execute_sovereign_token(
         &mut self,
         mut config: ActionConfig,
+        token: EsdtTokenInfo,
         amount: BigUint<StaticApi>,
     ) -> EsdtTokenInfo {
-        let sov_token = self.register_sovereign_token(&config, amount.clone()).await;
+        let sov_token = self
+            .register_sovereign_token(config.shard, token, amount.clone())
+            .await;
 
         let mapped_token = self
-            .create_mapped_token(config.clone(), &sov_token, &amount, false)
+            .get_mapped_token(config.clone(), &sov_token, &amount, false)
             .await;
 
         if config.expected_error.is_none() {
@@ -305,7 +302,6 @@ impl CompleteFlowInteract {
                     mapped_token.token_id.clone(),
                 )),
             Some(sov_token.clone()),
-            Some(amount.clone()),
         )
         .await;
 

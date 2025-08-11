@@ -16,6 +16,7 @@ pub struct EsdtTokenInfo {
     pub token_id: String,
     pub nonce: u64,
     pub token_type: EsdtTokenType,
+    pub decimals: usize,
     pub amount: BigUint<StaticApi>,
 }
 

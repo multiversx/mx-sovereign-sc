@@ -394,24 +394,14 @@ async fn test_deposit_no_transfer_data() {
         .await;
 
     let first_token_id = chain_interactor.state.get_first_token_id();
-    let expected_mvx_balance =
-        chain_interactor.set_token_amount(first_token_id.clone(), ONE_HUNDRED_TOKENS.into());
-
-    chain_interactor
-        .check_mvx_esdt_balance(shard, vec![expected_mvx_balance])
-        .await;
 
     let balance_config = BalanceCheckConfig::new()
         .shard(shard)
         .token(Some(first_token_id))
-        .amount(Some(ONE_HUNDRED_TOKENS.into()));
+        .amount(ONE_HUNDRED_TOKENS.into());
 
     chain_interactor
         .check_balances_after_action(balance_config)
-        .await;
-
-    chain_interactor
-        .check_fee_market_balance(shard, Vec::new())
         .await;
 }
 
@@ -630,7 +620,7 @@ async fn test_deposit_fee_enabled() {
     let balance_config = BalanceCheckConfig::new()
         .shard(shard)
         .token(Some(first_token.clone()))
-        .amount(Some(ONE_HUNDRED_TOKENS.into()))
+        .amount(ONE_HUNDRED_TOKENS.into())
         .fee(Some(fee))
         .with_transfer_data(true);
 
@@ -878,7 +868,7 @@ async fn test_deposit_refund() {
             DEPLOY_COST.into(),
             OptionalValue::None,
             OptionalValue::Some(config),
-            Some(fee),
+            Some(fee.clone()),
         )
         .await;
 
@@ -923,7 +913,7 @@ async fn test_deposit_refund() {
         )
         .await;
 
-    let expected_tokens_wallet = vec![chain_interactor.set_token_amount(
+    let expected_tokens_wallet = vec![chain_interactor.clone_token_with_amount(
         chain_interactor.state.get_fee_token_id(),
         (ONE_THOUSAND_TOKENS - gas_limit as u128).into(),
     )];
@@ -931,12 +921,8 @@ async fn test_deposit_refund() {
         .check_address_balance(&Bech32Address::from(user_address), expected_tokens_wallet)
         .await;
 
-    chain_interactor
-        .check_mvx_esdt_balance(shard, Vec::new())
-        .await;
-
     let expected_fee_market_balance = chain_interactor
-        .set_token_amount(chain_interactor.state.get_fee_token_id(), gas_limit.into());
+        .clone_token_with_amount(chain_interactor.state.get_fee_token_id(), gas_limit.into());
     chain_interactor
         .check_fee_market_balance(shard, vec![expected_fee_market_balance.clone()])
         .await;
@@ -1498,28 +1484,12 @@ async fn test_execute_operation_success_no_fee() {
     let balance_config = BalanceCheckConfig::new()
         .shard(shard)
         .token(Some(chain_interactor.state.get_first_token_id()))
-        .amount(Some(TEN_TOKENS.into()))
+        .amount(TEN_TOKENS.into())
         .is_execute(true)
         .with_transfer_data(true);
 
     chain_interactor
         .check_balances_after_action(balance_config)
-        .await;
-
-    chain_interactor
-        .check_mvx_esdt_balance(shard, Vec::new())
-        .await;
-
-    chain_interactor
-        .check_fee_market_balance(shard, Vec::new())
-        .await;
-
-    let expected_testing_sc_balance = vec![chain_interactor.set_token_amount(
-        chain_interactor.state.get_first_token_id(),
-        TEN_TOKENS.into(),
-    )];
-    chain_interactor
-        .check_testing_sc_balance(expected_testing_sc_balance)
         .await;
 }
 

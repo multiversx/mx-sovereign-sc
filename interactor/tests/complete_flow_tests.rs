@@ -52,7 +52,6 @@ async fn test_complete_deposit_flow_no_fee_only_transfer_data(#[case] shard: u32
                 .expect_log(SC_CALL_LOG.to_string()),
             None,
             None,
-            None,
         )
         .await;
 }
@@ -91,7 +90,6 @@ async fn test_complete_deposit_flow_with_fee_only_transfer_data(#[case] shard: u
                 .shard(shard)
                 .with_endpoint(TESTING_SC_ENDPOINT.to_string())
                 .expect_log(SC_CALL_LOG.to_string()),
-            None,
             None,
             Some(fee),
         )
@@ -132,7 +130,6 @@ async fn test_complete_execute_flow_with_transfer_data_only_success(#[case] shar
                 .with_endpoint(TESTING_SC_ENDPOINT.to_string())
                 .expect_log("".to_string()),
             None,
-            None,
         )
         .await;
 }
@@ -172,7 +169,6 @@ async fn test_complete_execute_flow_with_transfer_data_only_fail(#[case] shard: 
                 .with_endpoint(WRONG_ENDPOINT_NAME.to_string())
                 .expect_error(FUNCTION_NOT_FOUND.to_string()),
             None,
-            None,
         )
         .await;
 }
@@ -186,19 +182,18 @@ async fn test_complete_execute_flow_with_transfer_data_only_fail(#[case] shard: 
 /// ### EXPECTED
 /// Deposit is successful and the event is found in logs
 #[rstest]
-#[case::fungible(EsdtTokenType::Fungible, BigUint::from(ONE_HUNDRED_TOKENS))]
-#[case::non_fungible(EsdtTokenType::NonFungibleV2, BigUint::from(1u64))]
-#[case::semi_fungible(EsdtTokenType::SemiFungible, BigUint::from(ONE_HUNDRED_TOKENS))]
-#[case::meta_fungible(EsdtTokenType::MetaFungible, BigUint::from(ONE_HUNDRED_TOKENS))]
-#[case::dynamic_nft(EsdtTokenType::DynamicNFT, BigUint::from(1u64))]
-#[case::dynamic_sft(EsdtTokenType::DynamicSFT, BigUint::from(ONE_HUNDRED_TOKENS))]
-#[case::dynamic_meta(EsdtTokenType::DynamicMeta, BigUint::from(ONE_HUNDRED_TOKENS))]
+#[case::fungible(EsdtTokenType::Fungible)]
+#[case::non_fungible(EsdtTokenType::NonFungibleV2)]
+#[case::semi_fungible(EsdtTokenType::SemiFungible)]
+#[case::meta_fungible(EsdtTokenType::MetaFungible)]
+#[case::dynamic_nft(EsdtTokenType::DynamicNFT)]
+#[case::dynamic_sft(EsdtTokenType::DynamicSFT)]
+#[case::dynamic_meta(EsdtTokenType::DynamicMeta)]
 #[tokio::test]
 #[serial]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn test_deposit_with_fee(
     #[case] token_type: EsdtTokenType,
-    #[case] amount: BigUint<StaticApi>,
     #[values(SHARD_1, SHARD_2)] shard: u32,
 ) {
     let mut chain_interactor = CompleteFlowInteract::new(Config::chain_simulator_config()).await;
@@ -222,7 +217,6 @@ async fn test_deposit_with_fee(
                 .shard(shard)
                 .expect_log(token.clone().token_id),
             Some(token),
-            Some(amount),
             Some(fee),
         )
         .await;
@@ -237,19 +231,18 @@ async fn test_deposit_with_fee(
 /// ### EXPECTED
 /// The operation is executed in the testing smart contract and the event is found in logs
 #[rstest]
-#[case::fungible(EsdtTokenType::Fungible, BigUint::from(ONE_HUNDRED_TOKENS))]
-#[case::non_fungible(EsdtTokenType::NonFungibleV2, BigUint::from(1u64))]
-#[case::semi_fungible(EsdtTokenType::SemiFungible, BigUint::from(ONE_HUNDRED_TOKENS))]
-#[case::meta_fungible(EsdtTokenType::MetaFungible, BigUint::from(ONE_HUNDRED_TOKENS))]
-#[case::dynamic_nft(EsdtTokenType::DynamicNFT, BigUint::from(1u64))]
-#[case::dynamic_sft(EsdtTokenType::DynamicSFT, BigUint::from(ONE_HUNDRED_TOKENS))]
-#[case::dynamic_meta(EsdtTokenType::DynamicMeta, BigUint::from(ONE_HUNDRED_TOKENS))]
+#[case::fungible(EsdtTokenType::Fungible)]
+#[case::non_fungible(EsdtTokenType::NonFungibleV2)]
+#[case::semi_fungible(EsdtTokenType::SemiFungible)]
+#[case::meta_fungible(EsdtTokenType::MetaFungible)]
+#[case::dynamic_nft(EsdtTokenType::DynamicNFT)]
+#[case::dynamic_sft(EsdtTokenType::DynamicSFT)]
+#[case::dynamic_meta(EsdtTokenType::DynamicMeta)]
 #[tokio::test]
 #[serial]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn test_deposit_without_fee_and_execute(
     #[case] token_type: EsdtTokenType,
-    #[case] amount: BigUint<StaticApi>,
     #[values(SHARD_1, SHARD_2)] shard: u32,
 ) {
     let mut chain_interactor = CompleteFlowInteract::new(Config::chain_simulator_config()).await;
@@ -271,7 +264,6 @@ async fn test_deposit_without_fee_and_execute(
                 .shard(shard)
                 .expect_log(token.clone().token_id),
             Some(token.clone()),
-            Some(amount.clone()),
             None,
         )
         .await;
@@ -282,7 +274,6 @@ async fn test_deposit_without_fee_and_execute(
                 .shard(shard)
                 .expect_log(token.clone().token_id),
             Some(token),
-            Some(amount),
         )
         .await;
 }
@@ -296,47 +287,19 @@ async fn test_deposit_without_fee_and_execute(
 /// ### EXPECTED
 /// The deposit is successful and the event is found in logs
 #[rstest]
-#[rstest]
-#[case::fungible(
-    EsdtTokenType::Fungible,
-    BigUint::from(ONE_HUNDRED_TOKENS),
-    0u64,
-    18usize
-)]
-#[case::non_fungible(EsdtTokenType::NonFungibleV2, BigUint::from(1u64), 1u64, 0usize)]
-#[case::semi_fungible(
-    EsdtTokenType::SemiFungible,
-    BigUint::from(ONE_HUNDRED_TOKENS),
-    1u64,
-    0usize
-)]
-#[case::meta_fungible(
-    EsdtTokenType::MetaFungible,
-    BigUint::from(ONE_HUNDRED_TOKENS),
-    1u64,
-    18usize
-)]
-#[case::dynamic_nft(EsdtTokenType::DynamicNFT, BigUint::from(1u64), 1u64, 0usize)]
-#[case::dynamic_sft(
-    EsdtTokenType::DynamicSFT,
-    BigUint::from(ONE_HUNDRED_TOKENS),
-    1u64,
-    0usize
-)]
-#[case::dynamic_meta(
-    EsdtTokenType::DynamicMeta,
-    BigUint::from(ONE_HUNDRED_TOKENS),
-    1u64,
-    18usize
-)]
+#[case::fungible(EsdtTokenType::Fungible, BigUint::from(ONE_HUNDRED_TOKENS))]
+#[case::non_fungible(EsdtTokenType::NonFungibleV2, BigUint::from(1u64))]
+#[case::semi_fungible(EsdtTokenType::SemiFungible, BigUint::from(ONE_HUNDRED_TOKENS))]
+#[case::meta_fungible(EsdtTokenType::MetaFungible, BigUint::from(ONE_HUNDRED_TOKENS))]
+#[case::dynamic_nft(EsdtTokenType::DynamicNFT, BigUint::from(1u64))]
+#[case::dynamic_sft(EsdtTokenType::DynamicSFT, BigUint::from(ONE_HUNDRED_TOKENS))]
+#[case::dynamic_meta(EsdtTokenType::DynamicMeta, BigUint::from(ONE_HUNDRED_TOKENS))]
 #[tokio::test]
 #[serial]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn test_register_execute_and_deposit_sov_token(
     #[case] token_type: EsdtTokenType,
     #[case] amount: BigUint<StaticApi>,
-    #[case] nonce: u64,
-    #[case] decimals: usize,
     #[values(SHARD_1, SHARD_2)] shard: u32,
 ) {
     let mut chain_interactor = CompleteFlowInteract::new(Config::chain_simulator_config()).await;
@@ -350,11 +313,12 @@ async fn test_register_execute_and_deposit_sov_token(
         )
         .await;
 
+    let token = chain_interactor.get_token_by_type(token_type);
+
     let sov_token = chain_interactor
         .register_and_execute_sovereign_token(
-            ActionConfig::new()
-                .shard(shard)
-                .for_register(token_type, decimals, nonce),
+            ActionConfig::new().shard(shard),
+            token,
             amount.clone(),
         )
         .await;
@@ -366,7 +330,6 @@ async fn test_register_execute_and_deposit_sov_token(
                 .with_sovereign_token_id(TokenIdentifier::from_esdt_bytes(&sov_token.token_id))
                 .expect_log(sov_token.clone().token_id),
             Some(sov_token),
-            Some(amount),
             None,
         )
         .await;
@@ -381,19 +344,18 @@ async fn test_register_execute_and_deposit_sov_token(
 /// ### EXPECTED
 /// The operation is executed in the testing smart contract and the event is found in logs
 #[rstest]
-#[case::fungible(EsdtTokenType::Fungible, BigUint::from(ONE_HUNDRED_TOKENS))]
-#[case::non_fungible(EsdtTokenType::NonFungibleV2, BigUint::from(1u64))]
-#[case::semi_fungible(EsdtTokenType::SemiFungible, BigUint::from(ONE_HUNDRED_TOKENS))]
-#[case::meta_fungible(EsdtTokenType::MetaFungible, BigUint::from(ONE_HUNDRED_TOKENS))]
-#[case::dynamic_nft(EsdtTokenType::DynamicNFT, BigUint::from(1u64))]
-#[case::dynamic_sft(EsdtTokenType::DynamicSFT, BigUint::from(ONE_HUNDRED_TOKENS))]
-#[case::dynamic_meta(EsdtTokenType::DynamicMeta, BigUint::from(ONE_HUNDRED_TOKENS))]
+#[case::fungible(EsdtTokenType::Fungible)]
+#[case::non_fungible(EsdtTokenType::NonFungibleV2)]
+#[case::semi_fungible(EsdtTokenType::SemiFungible)]
+#[case::meta_fungible(EsdtTokenType::MetaFungible)]
+#[case::dynamic_nft(EsdtTokenType::DynamicNFT)]
+#[case::dynamic_sft(EsdtTokenType::DynamicSFT)]
+#[case::dynamic_meta(EsdtTokenType::DynamicMeta)]
 #[tokio::test]
 #[serial]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn test_deposit_mvx_token_with_transfer_data(
     #[case] token_type: EsdtTokenType,
-    #[case] amount: BigUint<StaticApi>,
     #[values(SHARD_1, SHARD_2)] shard: u32,
 ) {
     let mut chain_interactor = CompleteFlowInteract::new(Config::chain_simulator_config()).await;
@@ -416,7 +378,6 @@ async fn test_deposit_mvx_token_with_transfer_data(
                 .with_endpoint(TESTING_SC_ENDPOINT.to_string())
                 .expect_log(token.clone().token_id),
             Some(token),
-            Some(amount),
             None,
         )
         .await;
@@ -431,19 +392,18 @@ async fn test_deposit_mvx_token_with_transfer_data(
 /// ### EXPECTED
 /// The operation is executed in the testing smart contract and the event is found in logs
 #[rstest]
-#[case::fungible(EsdtTokenType::Fungible, BigUint::from(ONE_HUNDRED_TOKENS))]
-#[case::non_fungible(EsdtTokenType::NonFungibleV2, BigUint::from(1u64))]
-#[case::semi_fungible(EsdtTokenType::SemiFungible, BigUint::from(ONE_HUNDRED_TOKENS))]
-#[case::meta_fungible(EsdtTokenType::MetaFungible, BigUint::from(ONE_HUNDRED_TOKENS))]
-#[case::dynamic_nft(EsdtTokenType::DynamicNFT, BigUint::from(1u64))]
-#[case::dynamic_sft(EsdtTokenType::DynamicSFT, BigUint::from(ONE_HUNDRED_TOKENS))]
-#[case::dynamic_meta(EsdtTokenType::DynamicMeta, BigUint::from(ONE_HUNDRED_TOKENS))]
+#[case::fungible(EsdtTokenType::Fungible)]
+#[case::non_fungible(EsdtTokenType::NonFungibleV2)]
+#[case::semi_fungible(EsdtTokenType::SemiFungible)]
+#[case::meta_fungible(EsdtTokenType::MetaFungible)]
+#[case::dynamic_nft(EsdtTokenType::DynamicNFT)]
+#[case::dynamic_sft(EsdtTokenType::DynamicSFT)]
+#[case::dynamic_meta(EsdtTokenType::DynamicMeta)]
 #[tokio::test]
 #[serial]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn test_deposit_mvx_token_with_transfer_data_and_fee(
     #[case] token_type: EsdtTokenType,
-    #[case] amount: BigUint<StaticApi>,
     #[values(SHARD_1, SHARD_2)] shard: u32,
 ) {
     let mut chain_interactor = CompleteFlowInteract::new(Config::chain_simulator_config()).await;
@@ -468,7 +428,6 @@ async fn test_deposit_mvx_token_with_transfer_data_and_fee(
                 .with_endpoint(TESTING_SC_ENDPOINT.to_string())
                 .expect_log(token.clone().token_id),
             Some(token),
-            Some(amount),
             Some(fee),
         )
         .await;
@@ -483,19 +442,18 @@ async fn test_deposit_mvx_token_with_transfer_data_and_fee(
 /// ### EXPECTED
 /// The operation is executed in the testing smart contract and the event is found in logs
 #[rstest]
-#[case::fungible(EsdtTokenType::Fungible, BigUint::from(ONE_HUNDRED_TOKENS))]
-#[case::non_fungible(EsdtTokenType::NonFungibleV2, BigUint::from(1u64))]
-#[case::semi_fungible(EsdtTokenType::SemiFungible, BigUint::from(ONE_HUNDRED_TOKENS))]
-#[case::meta_fungible(EsdtTokenType::MetaFungible, BigUint::from(ONE_HUNDRED_TOKENS))]
-#[case::dynamic_nft(EsdtTokenType::DynamicNFT, BigUint::from(1u64))]
-#[case::dynamic_sft(EsdtTokenType::DynamicSFT, BigUint::from(ONE_HUNDRED_TOKENS))]
-#[case::dynamic_meta(EsdtTokenType::DynamicMeta, BigUint::from(ONE_HUNDRED_TOKENS))]
+#[case::fungible(EsdtTokenType::Fungible)]
+#[case::non_fungible(EsdtTokenType::NonFungibleV2)]
+#[case::semi_fungible(EsdtTokenType::SemiFungible)]
+#[case::meta_fungible(EsdtTokenType::MetaFungible)]
+#[case::dynamic_nft(EsdtTokenType::DynamicNFT)]
+#[case::dynamic_sft(EsdtTokenType::DynamicSFT)]
+#[case::dynamic_meta(EsdtTokenType::DynamicMeta)]
 #[tokio::test]
 #[serial]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn test_deposit_and_execute_with_transfer_data(
     #[case] token_type: EsdtTokenType,
-    #[case] amount: BigUint<StaticApi>,
     #[values(SHARD_1, SHARD_2)] shard: u32,
 ) {
     let mut chain_interactor = CompleteFlowInteract::new(Config::chain_simulator_config()).await;
@@ -517,7 +475,6 @@ async fn test_deposit_and_execute_with_transfer_data(
                 .shard(shard)
                 .expect_log(token.clone().token_id),
             Some(token.clone()),
-            Some(amount.clone()),
             None,
         )
         .await;
@@ -529,7 +486,6 @@ async fn test_deposit_and_execute_with_transfer_data(
                 .with_endpoint(TESTING_SC_ENDPOINT.to_string())
                 .expect_log(token.clone().token_id),
             Some(token.clone()),
-            Some(amount.clone()),
         )
         .await;
 }
@@ -543,38 +499,13 @@ async fn test_deposit_and_execute_with_transfer_data(
 /// ### EXPECTED
 /// The deposit is successful and the event is found in logs
 #[rstest]
-#[case::fungible(
-    EsdtTokenType::Fungible,
-    BigUint::from(ONE_HUNDRED_TOKENS),
-    0u64,
-    18usize
-)]
-#[case::non_fungible(EsdtTokenType::NonFungibleV2, BigUint::from(1u64), 1u64, 0usize)]
-#[case::semi_fungible(
-    EsdtTokenType::SemiFungible,
-    BigUint::from(ONE_HUNDRED_TOKENS),
-    1u64,
-    0usize
-)]
-#[case::meta_fungible(
-    EsdtTokenType::MetaFungible,
-    BigUint::from(ONE_HUNDRED_TOKENS),
-    1u64,
-    18usize
-)]
-#[case::dynamic_nft(EsdtTokenType::DynamicNFT, BigUint::from(1u64), 1u64, 0usize)]
-#[case::dynamic_sft(
-    EsdtTokenType::DynamicSFT,
-    BigUint::from(ONE_HUNDRED_TOKENS),
-    1u64,
-    0usize
-)]
-#[case::dynamic_meta(
-    EsdtTokenType::DynamicMeta,
-    BigUint::from(ONE_HUNDRED_TOKENS),
-    1u64,
-    18usize
-)]
+#[case::fungible(EsdtTokenType::Fungible, BigUint::from(ONE_HUNDRED_TOKENS), 0u64)]
+#[case::non_fungible(EsdtTokenType::NonFungibleV2, BigUint::from(1u64), 1u64)]
+#[case::semi_fungible(EsdtTokenType::SemiFungible, BigUint::from(ONE_HUNDRED_TOKENS), 1u64)]
+#[case::meta_fungible(EsdtTokenType::MetaFungible, BigUint::from(ONE_HUNDRED_TOKENS), 1u64)]
+#[case::dynamic_nft(EsdtTokenType::DynamicNFT, BigUint::from(1u64), 1u64)]
+#[case::dynamic_sft(EsdtTokenType::DynamicSFT, BigUint::from(ONE_HUNDRED_TOKENS), 1u64)]
+#[case::dynamic_meta(EsdtTokenType::DynamicMeta, BigUint::from(ONE_HUNDRED_TOKENS), 1u64)]
 #[tokio::test]
 #[serial]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
@@ -582,7 +513,6 @@ async fn test_register_execute_with_transfer_data_and_deposit_sov_token(
     #[case] token_type: EsdtTokenType,
     #[case] amount: BigUint<StaticApi>,
     #[case] nonce: u64,
-    #[case] decimals: usize,
     #[values(SHARD_1, SHARD_2)] shard: u32,
 ) {
     let mut chain_interactor = CompleteFlowInteract::new(Config::chain_simulator_config()).await;
@@ -596,12 +526,14 @@ async fn test_register_execute_with_transfer_data_and_deposit_sov_token(
         )
         .await;
 
+    let token = chain_interactor.get_token_by_type(token_type);
+
     let sov_token = chain_interactor
         .register_and_execute_sovereign_token(
             ActionConfig::new()
                 .shard(shard)
-                .for_register(token_type, decimals, nonce)
                 .with_endpoint(TESTING_SC_ENDPOINT.to_string()),
+            token,
             amount.clone(),
         )
         .await;
@@ -618,7 +550,6 @@ async fn test_register_execute_with_transfer_data_and_deposit_sov_token(
                 .with_endpoint(TESTING_SC_ENDPOINT.to_string())
                 .expect_log(sov_token.clone().token_id),
             Some(sov_token.clone()),
-            Some(amount.clone()),
             None,
         )
         .await;
@@ -633,46 +564,19 @@ async fn test_register_execute_with_transfer_data_and_deposit_sov_token(
 /// ### EXPECTED
 /// The operation is not executed in the testing smart contract and the failed event is found in logs
 #[rstest]
-#[case::fungible(
-    EsdtTokenType::Fungible,
-    BigUint::from(ONE_HUNDRED_TOKENS),
-    0u64,
-    18usize
-)]
-#[case::non_fungible(EsdtTokenType::NonFungibleV2, BigUint::from(1u64), 1u64, 0usize)]
-#[case::semi_fungible(
-    EsdtTokenType::SemiFungible,
-    BigUint::from(ONE_HUNDRED_TOKENS),
-    1u64,
-    0usize
-)]
-#[case::meta_fungible(
-    EsdtTokenType::MetaFungible,
-    BigUint::from(ONE_HUNDRED_TOKENS),
-    1u64,
-    18usize
-)]
-#[case::dynamic_nft(EsdtTokenType::DynamicNFT, BigUint::from(1u64), 1u64, 0usize)]
-#[case::dynamic_sft(
-    EsdtTokenType::DynamicSFT,
-    BigUint::from(ONE_HUNDRED_TOKENS),
-    1u64,
-    0usize
-)]
-#[case::dynamic_meta(
-    EsdtTokenType::DynamicMeta,
-    BigUint::from(ONE_HUNDRED_TOKENS),
-    1u64,
-    18usize
-)]
+#[case::fungible(EsdtTokenType::Fungible, BigUint::from(ONE_HUNDRED_TOKENS))]
+#[case::non_fungible(EsdtTokenType::NonFungibleV2, BigUint::from(1u64))]
+#[case::semi_fungible(EsdtTokenType::SemiFungible, BigUint::from(ONE_HUNDRED_TOKENS))]
+#[case::meta_fungible(EsdtTokenType::MetaFungible, BigUint::from(ONE_HUNDRED_TOKENS))]
+#[case::dynamic_nft(EsdtTokenType::DynamicNFT, BigUint::from(1u64))]
+#[case::dynamic_sft(EsdtTokenType::DynamicSFT, BigUint::from(ONE_HUNDRED_TOKENS))]
+#[case::dynamic_meta(EsdtTokenType::DynamicMeta, BigUint::from(ONE_HUNDRED_TOKENS))]
 #[tokio::test]
 #[serial]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn test_register_execute_call_failed(
     #[case] token_type: EsdtTokenType,
     #[case] amount: BigUint<StaticApi>,
-    #[case] nonce: u64,
-    #[case] decimals: usize,
     #[values(SHARD_1, SHARD_2)] shard: u32,
 ) {
     let mut chain_interactor = CompleteFlowInteract::new(Config::chain_simulator_config()).await;
@@ -686,13 +590,15 @@ async fn test_register_execute_call_failed(
         )
         .await;
 
+    let token = chain_interactor.get_token_by_type(token_type);
+
     chain_interactor
         .register_and_execute_sovereign_token(
             ActionConfig::new()
                 .shard(shard)
-                .for_register(token_type, decimals, nonce)
                 .with_endpoint(WRONG_ENDPOINT_NAME.to_string())
                 .expect_error(FUNCTION_NOT_FOUND.to_string()),
+            token,
             amount,
         )
         .await;
