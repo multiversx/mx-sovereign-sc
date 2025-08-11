@@ -14,7 +14,7 @@ path = "../utils"
 path = "../error-messages"
 
 [dependencies.multiversx-sc]
-version = "=0.59.0"
+version = "=0.60.0"
 
 [dev-dependencies.multiversx-sc-scenario]
-version = "=0.59.0"
+version = "=0.60.0"
