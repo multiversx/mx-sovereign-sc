@@ -12,16 +12,19 @@ path = "src/lib.rs"
 num-bigint = "0.4.2"
 
 [dev-dependencies.multiversx-sc-scenario]
-version = "=0.60.0"
+git = "https://github.com/multiversx/mx-sdk-rs"
+rev = "b59411841984a2fcbf76498d29bc131f2d433af9"
 
 [dev-dependencies.common-test-setup]
 path = "../common/common-test-setup"
 
 [dependencies.multiversx-sc]
-version = "=0.60.0"
+git = "https://github.com/multiversx/mx-sdk-rs"
+rev = "b59411841984a2fcbf76498d29bc131f2d433af9"
 
 [dependencies.multiversx-sc-modules]
-version = "=0.60.0"
+git = "https://github.com/multiversx/mx-sdk-rs"
+rev = "b59411841984a2fcbf76498d29bc131f2d433af9"
 
 [dependencies.utils]
 path = "../common/utils"
