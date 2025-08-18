@@ -5,7 +5,7 @@ use base64::{engine::general_purpose::STANDARD as BASE64, Engine};
 use common_test_setup::constants::{
     CHAIN_CONFIG_CODE_PATH, CHAIN_FACTORY_CODE_PATH, FEE_MARKET_CODE_PATH,
     HEADER_VERIFIER_CODE_PATH, ISSUE_COST, MVX_ESDT_SAFE_CODE_PATH, ONE_HUNDRED_TOKENS,
-    ONE_THOUSAND_TOKENS, SOVEREIGN_FORGE_CODE_PATH, TESTING_SC_CODE_PATH, TOKEN_HANDLER_CODE_PATH,
+    ONE_THOUSAND_TOKENS, SOVEREIGN_FORGE_CODE_PATH, TESTING_SC_CODE_PATH,
 };
 use error_messages::{EMPTY_EXPECTED_LOG, FAILED_TO_PARSE_AS_NUMBER};
 use multiversx_sc::{
@@ -32,7 +32,7 @@ use proxies::{
     chain_config_proxy::ChainConfigContractProxy, chain_factory_proxy::ChainFactoryContractProxy,
     fee_market_proxy::FeeMarketProxy, header_verifier_proxy::HeaderverifierProxy,
     mvx_esdt_safe_proxy::MvxEsdtSafeProxy, sovereign_forge_proxy::SovereignForgeProxy,
-    testing_sc_proxy::TestingScProxy, token_handler_proxy,
+    testing_sc_proxy::TestingScProxy,
 };
 use structs::{
     aliases::{OptionalValueTransferDataTuple, PaymentsVec},
@@ -346,28 +346,6 @@ pub trait CommonInteractorTrait {
             .set_testing_sc_address(new_address_bech32.clone());
 
         println!("new testing sc address: {new_address_bech32}");
-    }
-
-    async fn deploy_token_handler(&mut self, chain_factory_address: Address) {
-        let bridge_owner = self.bridge_owner().clone();
-
-        let new_address = self
-            .interactor()
-            .tx()
-            .from(bridge_owner)
-            .gas(100_000_000u64)
-            .typed(token_handler_proxy::TokenHandlerProxy)
-            .init(chain_factory_address)
-            .code(TOKEN_HANDLER_CODE_PATH)
-            .code_metadata(CodeMetadata::all())
-            .returns(ReturnsNewAddress)
-            .run()
-            .await;
-
-        let new_address_bech32 = Bech32Address::from(&new_address);
-        self.state()
-            .set_token_handler_address(new_address_bech32.clone());
-        println!("new token_handler_address: {new_address_bech32}");
     }
 
     fn get_contract_info_struct_for_sc_type(

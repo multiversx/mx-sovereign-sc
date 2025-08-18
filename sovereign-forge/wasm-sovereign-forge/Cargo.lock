@@ -301,7 +301,6 @@ dependencies = [
  "mvx-esdt-safe",
  "proxies",
  "structs",
- "token-handler",
 ]
 
 [[package]]
@@ -335,18 +334,6 @@ name = "testing-sc"
 version = "0.1.0"
 dependencies = [
  "multiversx-sc",
-]
-
-[[package]]
-name = "token-handler"
-version = "0.0.0"
-dependencies = [
- "chain-factory",
- "error-messages",
- "multiversx-sc",
- "multiversx-sc-modules",
- "proxies",
- "structs",
 ]
 
 [[package]]

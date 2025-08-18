@@ -7,7 +7,6 @@ pub const CHAIN_CONFIG_ADDRESS: TestSCAddress = TestSCAddress::new("chain-config
 pub const TESTING_SC_ADDRESS: TestSCAddress = TestSCAddress::new("testing-sc");
 pub const CHAIN_FACTORY_SC_ADDRESS: TestSCAddress = TestSCAddress::new("chain-factory");
 pub const SOVEREIGN_FORGE_SC_ADDRESS: TestSCAddress = TestSCAddress::new("sovereign-forge");
-pub const TOKEN_HANDLER_SC_ADDRESS: TestSCAddress = TestSCAddress::new("token-handler");
 
 pub const OWNER_ADDRESS: TestAddress = TestAddress::new("owner");
 pub const USER_ADDRESS: TestAddress = TestAddress::new("user");
@@ -30,8 +29,6 @@ pub const CHAIN_FACTORY_CODE_PATH: MxscPath =
     MxscPath::new("../chain-factory/output/chain-factory.mxsc.json");
 pub const SOVEREIGN_FORGE_CODE_PATH: MxscPath =
     MxscPath::new("../sovereign-forge/output/sovereign-forge.mxsc.json");
-pub const TOKEN_HANDLER_CODE_PATH: MxscPath =
-    MxscPath::new("../token-handler/output/token-handler.mxsc.json");
 
 pub const FEE_TOKEN: TestTokenIdentifier = TestTokenIdentifier::new("INTERNS-eaad15");
 pub const FIRST_TEST_TOKEN: TestTokenIdentifier = TestTokenIdentifier::new("GREEN-0e161c");

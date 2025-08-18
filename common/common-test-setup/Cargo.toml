@@ -40,8 +40,5 @@ path = "../../chain-factory"
 [dependencies.sovereign-forge]
 path = "../../sovereign-forge"
 
-[dependencies.token-handler]
-path = "../../token-handler"
-
 [dependencies.error-messages]
 path = "../error-messages"

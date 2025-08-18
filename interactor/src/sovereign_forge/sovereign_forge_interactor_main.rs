@@ -166,15 +166,7 @@ impl SovereignForgeInteract {
             fee_market_address,
         )
         .await;
-        let chain_factory_address = self.state().current_chain_factory_sc_address().clone();
 
-        self.deploy_token_handler(chain_factory_address.to_address())
-            .await;
-
-        self.register_token_handler(0).await;
-        self.register_token_handler(1).await;
-        self.register_token_handler(2).await;
-        self.register_token_handler(3).await;
         self.register_chain_factory(0).await;
         self.register_chain_factory(1).await;
         self.register_chain_factory(2).await;
@@ -212,25 +204,6 @@ impl SovereignForgeInteract {
             .code(SOVEREIGN_FORGE_CODE_PATH)
             .code_metadata(CodeMetadata::UPGRADEABLE)
             .returns(ReturnsNewAddress)
-            .run()
-            .await;
-
-        println!("Result: {response:?}");
-    }
-
-    pub async fn register_token_handler(&mut self, shard_id: u32) {
-        let address = self.state.current_token_handler_address().to_address();
-        let token_handler_address = ManagedAddress::from(address);
-
-        let response = self
-            .interactor
-            .tx()
-            .from(&self.bridge_owner.clone())
-            .to(self.state.current_sovereign_forge_sc_address())
-            .gas(30_000_000u64)
-            .typed(SovereignForgeProxy)
-            .register_token_handler(shard_id, token_handler_address)
-            .returns(ReturnsResultUnmanaged)
             .run()
             .await;
 
@@ -300,22 +273,6 @@ impl SovereignForgeInteract {
             .to(self.state.current_sovereign_forge_sc_address())
             .typed(SovereignForgeProxy)
             .chain_factories(shard_id)
-            .returns(ReturnsResultUnmanaged)
-            .run()
-            .await;
-
-        println!("Result: {result_value:?}");
-    }
-
-    pub async fn get_token_handlers(&mut self) {
-        let shard_id = 0u32;
-
-        let result_value = self
-            .interactor
-            .query()
-            .to(self.state.current_sovereign_forge_sc_address())
-            .typed(SovereignForgeProxy)
-            .token_handlers(shard_id)
             .returns(ReturnsResultUnmanaged)
             .run()
             .await;
