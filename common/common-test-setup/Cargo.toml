@@ -40,9 +40,6 @@ path = "../../chain-factory"
 [dependencies.sovereign-forge]
 path = "../../sovereign-forge"
 
-[dependencies.enshrine-esdt-safe]
-path = "../../enshrine-esdt-safe"
-
 [dependencies.token-handler]
 path = "../../token-handler"
 

@@ -31,8 +31,6 @@ pub const CHAIN_FACTORY_CODE_PATH: MxscPath =
     MxscPath::new("../chain-factory/output/chain-factory.mxsc.json");
 pub const SOVEREIGN_FORGE_CODE_PATH: MxscPath =
     MxscPath::new("../sovereign-forge/output/sovereign-forge.mxsc.json");
-pub const ENSHRINE_ESDT_SAFE_CODE_PATH: MxscPath =
-    MxscPath::new("../enshrine-esdt-safe/output/enshrine-esdt-safe.mxsc.json");
 pub const TOKEN_HANDLER_CODE_PATH: MxscPath =
     MxscPath::new("../token-handler/output/token-handler.mxsc.json");
 

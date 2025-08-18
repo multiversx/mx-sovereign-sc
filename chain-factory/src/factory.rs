@@ -1,9 +1,8 @@
 use multiversx_sc::imports::*;
 use multiversx_sc_modules::only_admin;
 use proxies::{
-    chain_config_proxy::ChainConfigContractProxy, enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy,
-    fee_market_proxy::FeeMarketProxy, header_verifier_proxy::HeaderverifierProxy,
-    mvx_esdt_safe_proxy::MvxEsdtSafeProxy,
+    chain_config_proxy::ChainConfigContractProxy, fee_market_proxy::FeeMarketProxy,
+    header_verifier_proxy::HeaderverifierProxy, mvx_esdt_safe_proxy::MvxEsdtSafeProxy,
 };
 use structs::{
     configs::{EsdtSafeConfig, SovereignConfig},
@@ -45,35 +44,6 @@ pub trait FactoryModule: only_admin::OnlyAdminModule {
         self.tx()
             .typed(HeaderverifierProxy)
             .init(sovereign_contracts)
-            .gas(60_000_000)
-            .from_source(source_address)
-            .code_metadata(metadata)
-            .returns(ReturnsNewManagedAddress)
-            .sync_call()
-    }
-
-    #[only_admin]
-    #[endpoint(deployEnshrineEsdtSafe)]
-    fn deploy_enshrine_esdt_safe(
-        &self,
-        is_sovereign_chain: bool,
-        token_handler_address: ManagedAddress,
-        wegld_identifier: TokenIdentifier,
-        sov_token_prefix: ManagedBuffer,
-        opt_config: Option<EsdtSafeConfig<Self::Api>>,
-    ) -> ManagedAddress {
-        let source_address = self.mvx_esdt_safe_template().get();
-        let metadata = self.blockchain().get_code_metadata(&source_address);
-
-        self.tx()
-            .typed(EnshrineEsdtSafeProxy)
-            .init(
-                is_sovereign_chain,
-                token_handler_address,
-                Some(wegld_identifier),
-                Some(sov_token_prefix),
-                opt_config,
-            )
             .gas(60_000_000)
             .from_source(source_address)
             .code_metadata(metadata)

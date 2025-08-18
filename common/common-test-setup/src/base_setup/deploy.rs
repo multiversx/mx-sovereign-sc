@@ -8,10 +8,10 @@ use multiversx_sc_scenario::{
 };
 use proxies::{
     chain_config_proxy::ChainConfigContractProxy, chain_factory_proxy::ChainFactoryContractProxy,
-    enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy, fee_market_proxy::FeeMarketProxy,
-    header_verifier_proxy::HeaderverifierProxy, mvx_esdt_safe_proxy::MvxEsdtSafeProxy,
-    sov_esdt_safe_proxy::SovEsdtSafeProxy, sovereign_forge_proxy::SovereignForgeProxy,
-    testing_sc_proxy::TestingScProxy, token_handler_proxy::TokenHandlerProxy,
+    fee_market_proxy::FeeMarketProxy, header_verifier_proxy::HeaderverifierProxy,
+    mvx_esdt_safe_proxy::MvxEsdtSafeProxy, sov_esdt_safe_proxy::SovEsdtSafeProxy,
+    sovereign_forge_proxy::SovereignForgeProxy, testing_sc_proxy::TestingScProxy,
+    token_handler_proxy::TokenHandlerProxy,
 };
 use structs::{
     configs::{EsdtSafeConfig, SovereignConfig},
@@ -23,8 +23,8 @@ use crate::{
     base_setup::init::BaseSetup,
     constants::{
         CHAIN_CONFIG_ADDRESS, CHAIN_CONFIG_CODE_PATH, CHAIN_FACTORY_CODE_PATH,
-        CHAIN_FACTORY_SC_ADDRESS, DEPLOY_COST, ENSHRINE_ESDT_SAFE_CODE_PATH, ENSHRINE_SC_ADDRESS,
-        ESDT_SAFE_ADDRESS, FEE_MARKET_ADDRESS, FEE_MARKET_CODE_PATH, HEADER_VERIFIER_ADDRESS,
+        CHAIN_FACTORY_SC_ADDRESS, DEPLOY_COST, ENSHRINE_SC_ADDRESS, ESDT_SAFE_ADDRESS,
+        FEE_MARKET_ADDRESS, FEE_MARKET_CODE_PATH, HEADER_VERIFIER_ADDRESS,
         HEADER_VERIFIER_CODE_PATH, MVX_ESDT_SAFE_CODE_PATH, OWNER_ADDRESS,
         SOVEREIGN_FORGE_CODE_PATH, SOVEREIGN_FORGE_SC_ADDRESS, SOV_ESDT_SAFE_CODE_PATH,
         TESTING_SC_ADDRESS, TESTING_SC_CODE_PATH, TOKEN_HANDLER_CODE_PATH,
@@ -150,31 +150,6 @@ impl BaseSetup {
             .init(DEPLOY_COST)
             .code(SOVEREIGN_FORGE_CODE_PATH)
             .new_address(SOVEREIGN_FORGE_SC_ADDRESS)
-            .run();
-
-        self
-    }
-
-    pub fn deploy_enshrine_esdt_contract(
-        &mut self,
-        is_sovereign_chain: bool,
-        wegld_identifier: Option<TokenIdentifier<StaticApi>>,
-        sovereign_token_prefix: Option<ManagedBuffer<StaticApi>>,
-        opt_config: Option<EsdtSafeConfig<StaticApi>>,
-    ) -> &mut Self {
-        self.world
-            .tx()
-            .from(OWNER_ADDRESS)
-            .typed(EnshrineEsdtSafeProxy)
-            .init(
-                is_sovereign_chain,
-                TOKEN_HANDLER_SC_ADDRESS,
-                wegld_identifier,
-                sovereign_token_prefix,
-                opt_config,
-            )
-            .code(ENSHRINE_ESDT_SAFE_CODE_PATH)
-            .new_address(ENSHRINE_SC_ADDRESS)
             .run();
 
         self

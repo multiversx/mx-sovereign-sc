@@ -1,11 +1,9 @@
-pub mod enshrine_esdt_safe;
 pub mod mvx_esdt_safe;
 pub mod sovereign_forge;
 
 use common_interactor::{
     common_sovereign_interactor::CommonInteractorTrait, interactor_config::Config,
 };
-use enshrine_esdt_safe::enshrine_esdt_safe_interactor::EnshrineEsdtSafeInteract;
 use multiversx_sc::{
     imports::{MultiValueVec, OptionalValue},
     types::{BigUint, ManagedBuffer, ManagedVec},
@@ -115,80 +113,5 @@ pub async fn sovereign_forge_cli() {
         "getDeployCost" => interact.get_deploy_cost().await,
         "getChainIds" => interact.get_chain_ids().await,
         _ => panic!("Unknown command: {}", cmd),
-    }
-}
-
-pub async fn enshrine_esdt_safe_cli() {
-    env_logger::init();
-
-    let mut args = std::env::args();
-    let _ = args.next();
-    let cmd = args.next().expect("at least one argument required");
-
-    let config = Config::load_config();
-    let mut interact = EnshrineEsdtSafeInteract::new(config).await;
-    match cmd.as_str() {
-        "deploy" => {
-            interact
-                .deploy_enshrine_esdt(
-                    false,
-                    None,
-                    None,
-                    interact.state.current_token_handler_address().clone(),
-                    None,
-                )
-                .await
-        }
-        "upgrade" => interact.upgrade().await,
-        "setFeeMarketAddress" => {
-            interact
-                .set_fee_market_address_in_enshrine_esdt_safe(
-                    interact.state.current_fee_market_address().clone(),
-                )
-                .await
-        }
-        "deposit" => {
-            interact
-                .deposit(
-                    PaymentsVec::new(),
-                    interact.user_address.clone(),
-                    OptionalValue::None,
-                    None,
-                    None,
-                )
-                .await
-        }
-        "executeBridgeOps" => {
-            interact
-                .execute_operation(
-                    &ManagedBuffer::new(),
-                    Operation::new(
-                        interact.user_address.clone().into(),
-                        ManagedVec::new(),
-                        OperationData::new(0, interact.user_address.clone().into(), None),
-                    ),
-                    None,
-                    None,
-                )
-                .await
-        }
-        "addTokensToWhitelist" => interact.add_tokens_to_whitelist(MultiValueVec::new()).await,
-        "removeTokensFromWhitelist" => {
-            interact
-                .remove_tokens_from_whitelist(MultiValueVec::new())
-                .await
-        }
-        "addTokensToBlacklist" => interact.add_tokens_to_blacklist(MultiValueVec::new()).await,
-        "removeTokensFromBlacklist" => {
-            interact
-                .remove_tokens_from_blacklist(MultiValueVec::new())
-                .await
-        }
-        "getTokenWhitelist" => interact.token_whitelist().await,
-        "getTokenBlacklist" => interact.token_blacklist().await,
-        "pause" => interact.pause_endpoint().await,
-        "unpause" => interact.unpause_endpoint().await,
-        "isPaused" => interact.paused_status().await,
-        _ => panic!("unknown command: {}", &cmd),
     }
 }

@@ -76,8 +76,6 @@ pub const NO_ESDT_SAFE_ADDRESS: &str = "There is no registered ESDT address";
 pub const NO_HEADER_VERIFIER_ADDRESS: &str = "There is no registered Header-Verifier address";
 pub const NO_KNOWN_CHAIN_CONFIG_SC: &str = "No known Chain Config SC contract, deploy first";
 pub const NO_KNOWN_CHAIN_FACTORY_SC: &str = "No known Chain Factory SC, deploy first";
-pub const NO_KNOWN_ENSHRINE_ESDT_SAFE_SC: &str =
-    "No known Enshrine ESDT Safe SC contract, deploy first";
 pub const NO_KNOWN_FIRST_TOKEN: &str = "No known first token, register first";
 pub const NO_KNOWN_FEE_MARKET: &str = "No known Fee Market contract, deploy first";
 pub const NO_KNOWN_FEE_TOKEN: &str = "No known fee token, register first";

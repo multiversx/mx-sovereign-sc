@@ -1,10 +1,9 @@
 #![allow(non_snake_case)]
 
 use error_messages::{
-    NO_KNOWN_CHAIN_CONFIG_SC, NO_KNOWN_CHAIN_FACTORY_SC, NO_KNOWN_ENSHRINE_ESDT_SAFE_SC,
-    NO_KNOWN_FEE_MARKET, NO_KNOWN_FEE_TOKEN, NO_KNOWN_FIRST_TOKEN, NO_KNOWN_HEADER_VERIFIER,
-    NO_KNOWN_MVX_ESDT_SAFE, NO_KNOWN_SECOND_TOKEN, NO_KNOWN_SOVEREIGN_FORGE_SC,
-    NO_KNOWN_TESTING_SC, NO_KNOWN_TOKEN_HANDLER_SC,
+    NO_KNOWN_CHAIN_CONFIG_SC, NO_KNOWN_CHAIN_FACTORY_SC, NO_KNOWN_FEE_MARKET, NO_KNOWN_FEE_TOKEN,
+    NO_KNOWN_FIRST_TOKEN, NO_KNOWN_HEADER_VERIFIER, NO_KNOWN_MVX_ESDT_SAFE, NO_KNOWN_SECOND_TOKEN,
+    NO_KNOWN_SOVEREIGN_FORGE_SC, NO_KNOWN_TESTING_SC, NO_KNOWN_TOKEN_HANDLER_SC,
 };
 use multiversx_sc_snippets::imports::*;
 use serde::{Deserialize, Serialize};
@@ -30,7 +29,6 @@ pub struct State {
     pub chain_config_sc_address: Option<Bech32Address>,
     pub sovereign_forge_sc_address: Option<Bech32Address>,
     pub chain_factory_sc_address: Option<Bech32Address>,
-    pub enshrine_esdt_safe_sc_address: Option<Bech32Address>,
     pub token_handler_address: Option<Bech32Address>,
     pub first_token: Option<TokenProperties>,
     pub fee_token: Option<TokenProperties>,
@@ -77,10 +75,6 @@ impl State {
 
     pub fn set_chain_factory_sc_address(&mut self, address: Bech32Address) {
         self.chain_factory_sc_address = Some(address);
-    }
-
-    pub fn set_enshrine_esdt_safe_sc_address(&mut self, address: Bech32Address) {
-        self.enshrine_esdt_safe_sc_address = Some(address);
     }
 
     pub fn set_token_handler_address(&mut self, address: Bech32Address) {
@@ -136,12 +130,6 @@ impl State {
         self.chain_factory_sc_address
             .as_ref()
             .expect(NO_KNOWN_CHAIN_FACTORY_SC)
-    }
-
-    pub fn current_enshrine_esdt_safe_address(&self) -> &Bech32Address {
-        self.enshrine_esdt_safe_sc_address
-            .as_ref()
-            .expect(NO_KNOWN_ENSHRINE_ESDT_SAFE_SC)
     }
 
     pub fn current_token_handler_address(&self) -> &Bech32Address {
