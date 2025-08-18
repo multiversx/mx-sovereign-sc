@@ -1,5 +1,5 @@
-use common_interactor::common_sovereign_interactor::{
-    CommonInteractorTrait, IssueTokenStruct, MintTokenStruct,
+use common_interactor::{
+    common_sovereign_interactor::CommonInteractorTrait, interactor_helpers::InteractorHelpers,
 };
 use multiversx_sc_snippets::imports::*;
 use proxies::mvx_esdt_safe_proxy::MvxEsdtSafeProxy;
@@ -18,7 +18,8 @@ pub struct MvxEsdtSafeInteract {
     pub user_address: Address,
     pub state: State,
 }
-impl CommonInteractorTrait for MvxEsdtSafeInteract {
+
+impl InteractorHelpers for MvxEsdtSafeInteract {
     fn interactor(&mut self) -> &mut Interactor {
         &mut self.interactor
     }
@@ -31,6 +32,7 @@ impl CommonInteractorTrait for MvxEsdtSafeInteract {
         &self.user_address
     }
 }
+impl CommonInteractorTrait for MvxEsdtSafeInteract {}
 
 impl MvxEsdtSafeInteract {
     pub async fn new(config: Config) -> Self {
@@ -70,62 +72,39 @@ impl MvxEsdtSafeInteract {
     }
 
     async fn initialize_tokens_in_wallets(&mut self) {
-        let first_token_struct = IssueTokenStruct {
-            token_display_name: "MVX".to_string(),
-            token_ticker: "MVX".to_string(),
-            token_type: EsdtTokenType::Fungible,
-            num_decimals: 18,
-        };
-        let first_token_mint = MintTokenStruct {
-            name: None,
-            amount: BigUint::from(ONE_THOUSAND_TOKENS),
-            attributes: None,
-        };
-        let first_token = self
-            .issue_and_mint_token(first_token_struct, first_token_mint)
-            .await;
-        self.state.set_first_token(first_token);
-
-        let fee_token_struct = IssueTokenStruct {
-            token_display_name: "FEE".to_string(),
-            token_ticker: "FEE".to_string(),
-            token_type: EsdtTokenType::Fungible,
-            num_decimals: 0,
-        };
-        let fee_token_mint = MintTokenStruct {
-            name: None,
-            amount: BigUint::from(ONE_THOUSAND_TOKENS),
-            attributes: None,
-        };
-        let fee_token = self
-            .issue_and_mint_token(fee_token_struct, fee_token_mint)
-            .await;
-        self.state.set_fee_token(fee_token);
-
-        let second_token_struct = IssueTokenStruct {
-            token_display_name: "MVX2".to_string(),
-            token_ticker: "MVX2".to_string(),
-            token_type: EsdtTokenType::Fungible,
-            num_decimals: 18,
-        };
-        let second_token_mint = MintTokenStruct {
-            name: None,
-            amount: BigUint::from(ONE_THOUSAND_TOKENS),
-            attributes: None,
-        };
-        let second_token = self
-            .issue_and_mint_token(second_token_struct, second_token_mint)
-            .await;
-        self.state.set_second_token(second_token);
-
-        let initial_wallet_balance = vec![
-            self.state.get_first_token_id().clone(),
-            self.state.get_fee_token_id().clone(),
-            self.state.get_second_token_id().clone(),
+        let token_configs = [
+            ("MVX", EsdtTokenType::Fungible, 18),
+            ("MVX2", EsdtTokenType::Fungible, 18),
+            ("FEE", EsdtTokenType::Fungible, 18),
         ];
 
-        self.state
-            .set_initial_wallet_balance(initial_wallet_balance);
+        let mut all_tokens = Vec::new();
+
+        for (ticker, token_type, decimals) in token_configs {
+            let amount = if matches!(
+                token_type,
+                EsdtTokenType::NonFungibleV2 | EsdtTokenType::DynamicNFT
+            ) {
+                BigUint::from(1u64)
+            } else {
+                BigUint::from(ONE_THOUSAND_TOKENS)
+            };
+
+            let token = self
+                .create_token_with_config(token_type, ticker, amount, decimals)
+                .await;
+
+            match ticker {
+                "MVX" => self.state.set_first_token(token.clone()),
+                "MVX2" => self.state.set_second_token(token.clone()),
+                "FEE" => self.state.set_fee_token(token.clone()),
+                _ => {}
+            }
+
+            all_tokens.push(token);
+        }
+
+        self.state.set_initial_wallet_balance(all_tokens);
     }
 
     pub async fn upgrade(&mut self) {

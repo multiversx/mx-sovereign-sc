@@ -16,6 +16,7 @@ pub struct EsdtTokenInfo {
     pub token_id: String,
     pub nonce: u64,
     pub token_type: EsdtTokenType,
+    pub decimals: usize,
     pub amount: BigUint<StaticApi>,
 }
 
@@ -428,5 +429,17 @@ impl State {
 
     pub fn get_initial_wallet_balance(&self) -> &Option<Vec<EsdtTokenInfo>> {
         &self.initial_wallet_balance
+    }
+
+    pub fn get_initial_token_balance_for_wallet(
+        &self,
+        token_id: TokenIdentifier<StaticApi>,
+    ) -> BigUint<StaticApi> {
+        self.initial_wallet_balance
+            .as_ref()
+            .expect("No initial wallet balance set")
+            .iter()
+            .find(|token| token.token_id == token_id.to_string())
+            .map_or_else(BigUint::zero, |token| token.amount.clone())
     }
 }

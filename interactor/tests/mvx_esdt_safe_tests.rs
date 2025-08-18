@@ -1,9 +1,11 @@
 use common_interactor::common_sovereign_interactor::CommonInteractorTrait;
 use common_interactor::interactor_config::Config;
+use common_interactor::interactor_helpers::InteractorHelpers;
+use common_interactor::interactor_structs::BalanceCheckConfig;
 use common_test_setup::base_setup::init::RegisterTokenArgs;
 use common_test_setup::constants::{
-    CROWD_TOKEN_ID, DEPLOY_COST, DEPOSIT_LOG, EXECUTED_BRIDGE_LOG, FIRST_TEST_TOKEN, ISSUE_COST,
-    MVX_TO_SOV_TOKEN_STORAGE_KEY, NATIVE_TOKEN_STORAGE_KEY, ONE_HUNDRED_TOKENS,
+    CROWD_TOKEN_ID, DEPLOY_COST, DEPOSIT_LOG, EXECUTED_BRIDGE_LOG, FIRST_TEST_TOKEN, GAS_LIMIT,
+    ISSUE_COST, MVX_TO_SOV_TOKEN_STORAGE_KEY, NATIVE_TOKEN_STORAGE_KEY, ONE_HUNDRED_TOKENS,
     ONE_THOUSAND_TOKENS, OPERATION_HASH_STATUS_STORAGE_KEY, PER_GAS, PER_TRANSFER,
     PREFERRED_CHAIN_IDS, SC_CALL_LOG, SHARD_0, SOVEREIGN_RECEIVER_ADDRESS, SOV_TOKEN,
     SOV_TO_MVX_TOKEN_STORAGE_KEY, TEN_TOKENS, TESTING_SC_ENDPOINT, TOKEN_TICKER,
@@ -21,6 +23,7 @@ use multiversx_sc_snippets::multiversx_sc_scenario::multiversx_chain_vm::crypto_
 use multiversx_sc_snippets::{hex, imports::*};
 use rust_interact::mvx_esdt_safe::mvx_esdt_safe_interactor_main::MvxEsdtSafeInteract;
 use serial_test::serial;
+use std::vec;
 use structs::aliases::PaymentsVec;
 use structs::configs::{EsdtSafeConfig, MaxBridgedAmount};
 use structs::fee::{FeeStruct, FeeType};
@@ -253,10 +256,9 @@ async fn test_deposit_max_bridged_amount_exceeded() {
             None,
         )
         .await;
+    println!("Shard: {}", shard);
     chain_interactor.check_user_balance_unchanged().await;
-    chain_interactor
-        .check_mvx_esdt_safe_balance_is_empty(shard)
-        .await;
+    chain_interactor.check_all_contracts_empty(shard).await;
 }
 
 /// ### TEST
@@ -296,12 +298,7 @@ async fn test_deposit_nothing_to_transfer() {
         .await;
 
     chain_interactor.check_user_balance_unchanged().await;
-    chain_interactor
-        .check_mvx_esdt_safe_balance_is_empty(shard)
-        .await;
-    chain_interactor
-        .check_fee_market_balance_is_empty(shard)
-        .await;
+    chain_interactor.check_all_contracts_empty(shard).await;
 }
 
 /// ### TEST
@@ -349,12 +346,7 @@ async fn test_deposit_too_many_tokens_no_fee() {
         .await;
 
     chain_interactor.check_user_balance_unchanged().await;
-    chain_interactor
-        .check_mvx_esdt_safe_balance_is_empty(shard)
-        .await;
-    chain_interactor
-        .check_fee_market_balance_is_empty(shard)
-        .await;
+    chain_interactor.check_all_contracts_empty(shard).await;
 }
 
 /// ### TEST
@@ -403,20 +395,13 @@ async fn test_deposit_no_transfer_data() {
 
     let first_token_id = chain_interactor.state.get_first_token_id();
 
-    chain_interactor
-        .check_mvx_esdt_safe_balance_with_amount(
-            shard,
-            first_token_id.clone(),
-            ONE_HUNDRED_TOKENS.into(),
-        )
-        .await;
+    let balance_config = BalanceCheckConfig::new()
+        .shard(shard)
+        .token(Some(first_token_id))
+        .amount(ONE_HUNDRED_TOKENS.into());
 
     chain_interactor
-        .check_user_balance_after_deduction(first_token_id, ONE_HUNDRED_TOKENS.into())
-        .await;
-
-    chain_interactor
-        .check_fee_market_balance_is_empty(shard)
+        .check_balances_after_action(balance_config)
         .await;
 }
 
@@ -482,12 +467,7 @@ async fn test_deposit_gas_limit_too_high_no_fee() {
         .await;
 
     chain_interactor.check_user_balance_unchanged().await;
-    chain_interactor
-        .check_mvx_esdt_safe_balance_is_empty(shard)
-        .await;
-    chain_interactor
-        .check_fee_market_balance_is_empty(shard)
-        .await;
+    chain_interactor.check_all_contracts_empty(shard).await;
 }
 
 /// ### TEST
@@ -552,13 +532,7 @@ async fn test_deposit_endpoint_banned_no_fee() {
         .await;
 
     chain_interactor.check_user_balance_unchanged().await;
-    chain_interactor
-        .check_mvx_esdt_safe_balance_is_empty(shard)
-        .await;
-    chain_interactor
-        .check_fee_market_balance_is_empty(shard)
-        .await;
-    chain_interactor.check_testing_sc_balance_is_empty().await;
+    chain_interactor.check_all_contracts_empty(shard).await;
 }
 
 /// ### TEST
@@ -575,17 +549,9 @@ async fn test_deposit_endpoint_banned_no_fee() {
 async fn test_deposit_fee_enabled() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
     let shard = SHARD_0;
-    let config = EsdtSafeConfig::new(
-        ManagedVec::new(),
-        ManagedVec::new(),
-        50_000_000,
-        ManagedVec::new(),
-        ManagedVec::new(),
-    );
 
     let per_transfer = BigUint::from(PER_TRANSFER);
     let per_gas = BigUint::from(PER_GAS);
-    let fee_token = chain_interactor.state.get_fee_token_id();
 
     let fee = FeeStruct {
         base_token: chain_interactor.state.get_fee_token_identifier(),
@@ -601,16 +567,14 @@ async fn test_deposit_fee_enabled() {
             shard,
             DEPLOY_COST.into(),
             OptionalValue::None,
-            OptionalValue::Some(config),
-            Some(fee),
+            OptionalValue::None,
+            Some(fee.clone()),
         )
         .await;
 
     chain_interactor.deploy_testing_sc().await;
 
-    let gas_limit = 1000u64;
-
-    let fee_amount = BigUint::from(PER_TRANSFER) + (BigUint::from(gas_limit) * per_gas);
+    let fee_amount = BigUint::from(PER_TRANSFER) + (BigUint::from(GAS_LIMIT) * per_gas);
 
     let fee_payment = EsdtTokenPayment::<StaticApi>::new(
         chain_interactor.state.get_fee_token_identifier(),
@@ -631,7 +595,7 @@ async fn test_deposit_fee_enabled() {
         vec![ManagedBuffer::from("1")],
     ));
 
-    let transfer_data = MultiValue3::from((gas_limit, function, args));
+    let transfer_data = MultiValue3::from((GAS_LIMIT, function, args));
 
     chain_interactor
         .deposit_in_mvx_esdt_safe(
@@ -650,20 +614,18 @@ async fn test_deposit_fee_enabled() {
         .await;
 
     let first_token = chain_interactor.state.get_first_token_id();
-    chain_interactor
-        .check_mvx_esdt_safe_balance_with_amount(
-            shard,
-            first_token.clone(),
-            ONE_HUNDRED_TOKENS.into(),
-        )
-        .await;
+
+    println!("Fee amount: {}", fee_amount.to_display());
+
+    let balance_config = BalanceCheckConfig::new()
+        .shard(shard)
+        .token(Some(first_token.clone()))
+        .amount(ONE_HUNDRED_TOKENS.into())
+        .fee(Some(fee))
+        .with_transfer_data(true);
 
     chain_interactor
-        .check_fee_market_balance_with_amount(shard, fee_token, fee_amount.clone())
-        .await;
-
-    chain_interactor
-        .check_user_balance_with_fee_deduction(first_token, ONE_HUNDRED_TOKENS.into(), fee_amount)
+        .check_balances_after_action(balance_config)
         .await;
 }
 
@@ -731,13 +693,7 @@ async fn test_deposit_transfer_data_only_with_fee_nothing_to_transfer() {
         .await;
 
     chain_interactor.check_user_balance_unchanged().await;
-    chain_interactor
-        .check_mvx_esdt_safe_balance_is_empty(shard)
-        .await;
-    chain_interactor
-        .check_fee_market_balance_is_empty(shard)
-        .await;
-    chain_interactor.check_testing_sc_balance_is_empty().await;
+    chain_interactor.check_all_contracts_empty(shard).await;
 }
 
 /// ### TEST
@@ -794,12 +750,7 @@ async fn test_deposit_only_transfer_data_no_fee() {
         .await;
 
     chain_interactor.check_user_balance_unchanged().await;
-    chain_interactor
-        .check_mvx_esdt_safe_balance_is_empty(shard)
-        .await;
-    chain_interactor
-        .check_fee_market_balance_is_empty(shard)
-        .await;
+    chain_interactor.check_all_contracts_empty(shard).await;
 }
 
 /// ### TEST
@@ -880,13 +831,7 @@ async fn test_deposit_payment_does_not_cover_fee() {
         .await;
 
     chain_interactor.check_user_balance_unchanged().await;
-    chain_interactor
-        .check_mvx_esdt_safe_balance_is_empty(shard)
-        .await;
-    chain_interactor
-        .check_fee_market_balance_is_empty(shard)
-        .await;
-    chain_interactor.check_testing_sc_balance_is_empty().await;
+    chain_interactor.check_all_contracts_empty(shard).await;
 }
 
 #[tokio::test]
@@ -923,7 +868,7 @@ async fn test_deposit_refund() {
             DEPLOY_COST.into(),
             OptionalValue::None,
             OptionalValue::Some(config),
-            Some(fee),
+            Some(fee.clone()),
         )
         .await;
 
@@ -968,7 +913,7 @@ async fn test_deposit_refund() {
         )
         .await;
 
-    let expected_tokens_wallet = vec![chain_interactor.custom_amount_tokens(
+    let expected_tokens_wallet = vec![chain_interactor.clone_token_with_amount(
         chain_interactor.state.get_fee_token_id(),
         (ONE_THOUSAND_TOKENS - gas_limit as u128).into(),
     )];
@@ -976,18 +921,13 @@ async fn test_deposit_refund() {
         .check_address_balance(&Bech32Address::from(user_address), expected_tokens_wallet)
         .await;
 
+    let expected_fee_market_balance = chain_interactor
+        .clone_token_with_amount(chain_interactor.state.get_fee_token_id(), gas_limit.into());
     chain_interactor
-        .check_mvx_esdt_safe_balance_is_empty(shard)
+        .check_fee_market_balance(shard, vec![expected_fee_market_balance.clone()])
         .await;
 
-    chain_interactor
-        .check_fee_market_balance_with_amount(
-            shard,
-            chain_interactor.state.get_fee_token_id(),
-            gas_limit.into(),
-        )
-        .await;
-    chain_interactor.check_testing_sc_balance_is_empty().await;
+    chain_interactor.check_testing_sc_balance(Vec::new()).await;
 }
 
 /// ### TEST
@@ -1408,12 +1348,7 @@ async fn test_execute_operation_no_operation_registered() {
         .await;
 
     chain_interactor.check_user_balance_unchanged().await;
-
-    chain_interactor.check_testing_sc_balance_is_empty().await;
-
-    chain_interactor
-        .check_fee_market_balance_is_empty(shard)
-        .await;
+    chain_interactor.check_all_contracts_empty(shard).await;
 }
 
 /// ### TEST
@@ -1546,18 +1481,15 @@ async fn test_execute_operation_success_no_fee() {
         )
         .await;
 
-    chain_interactor
-        .check_user_balance_after_deduction(
-            chain_interactor.state.get_first_token_id(),
-            TEN_TOKENS.into(),
-        )
-        .await;
+    let balance_config = BalanceCheckConfig::new()
+        .shard(shard)
+        .token(Some(chain_interactor.state.get_first_token_id()))
+        .amount(TEN_TOKENS.into())
+        .is_execute(true)
+        .with_transfer_data(true);
 
     chain_interactor
-        .check_mvx_esdt_safe_balance_is_empty(shard)
-        .await;
-    chain_interactor
-        .check_fee_market_balance_is_empty(shard)
+        .check_balances_after_action(balance_config)
         .await;
 }
 
@@ -1665,12 +1597,7 @@ async fn test_execute_operation_only_transfer_data_no_fee() {
         .await;
 
     chain_interactor.check_user_balance_unchanged().await;
-    chain_interactor
-        .check_mvx_esdt_safe_balance_is_empty(shard)
-        .await;
-    chain_interactor
-        .check_fee_market_balance_is_empty(shard)
-        .await;
+    chain_interactor.check_all_contracts_empty(shard).await;
 }
 
 /// ### TEST
@@ -1777,10 +1704,5 @@ async fn test_execute_operation_no_payments_failed_event() {
         .await;
 
     chain_interactor.check_user_balance_unchanged().await;
-    chain_interactor
-        .check_mvx_esdt_safe_balance_is_empty(shard)
-        .await;
-    chain_interactor
-        .check_fee_market_balance_is_empty(shard)
-        .await;
+    chain_interactor.check_all_contracts_empty(shard).await;
 }
