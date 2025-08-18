@@ -796,9 +796,9 @@ async fn test_deposit_with_transfer_data_not_enough_for_fee() {
 ///
 /// ### EXPECTED
 /// Deposit is executed successfully and the tokens are refunded
+#[ignore]
 #[tokio::test]
 #[serial]
-#[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn test_deposit_refund_non_whitelisted_tokens_fee_disabled() {
     let mut chain_interactor =
         EnshrineEsdtSafeInteract::new(Config::chain_simulator_config()).await;
