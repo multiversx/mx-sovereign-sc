@@ -5,7 +5,6 @@ pub const FEE_MARKET_ADDRESS: TestSCAddress = TestSCAddress::new("fee-market");
 pub const HEADER_VERIFIER_ADDRESS: TestSCAddress = TestSCAddress::new("header-verifier");
 pub const CHAIN_CONFIG_ADDRESS: TestSCAddress = TestSCAddress::new("chain-config");
 pub const TESTING_SC_ADDRESS: TestSCAddress = TestSCAddress::new("testing-sc");
-pub const ENSHRINE_SC_ADDRESS: TestSCAddress = TestSCAddress::new("enshrine");
 pub const CHAIN_FACTORY_SC_ADDRESS: TestSCAddress = TestSCAddress::new("chain-factory");
 pub const SOVEREIGN_FORGE_SC_ADDRESS: TestSCAddress = TestSCAddress::new("sovereign-forge");
 pub const TOKEN_HANDLER_SC_ADDRESS: TestSCAddress = TestSCAddress::new("token-handler");
@@ -31,8 +30,6 @@ pub const CHAIN_FACTORY_CODE_PATH: MxscPath =
     MxscPath::new("../chain-factory/output/chain-factory.mxsc.json");
 pub const SOVEREIGN_FORGE_CODE_PATH: MxscPath =
     MxscPath::new("../sovereign-forge/output/sovereign-forge.mxsc.json");
-pub const ENSHRINE_ESDT_SAFE_CODE_PATH: MxscPath =
-    MxscPath::new("../enshrine-esdt-safe/output/enshrine-esdt-safe.mxsc.json");
 pub const TOKEN_HANDLER_CODE_PATH: MxscPath =
     MxscPath::new("../token-handler/output/token-handler.mxsc.json");
 
@@ -64,7 +61,7 @@ pub const ONE_HUNDRED_MILLION: u32 = 100_000_000;
 pub const ONE_HUNDRED_THOUSAND: u32 = 100_000;
 pub const OWNER_BALANCE: u128 = 100_000_000_000_000_000_000_000;
 pub const DEPLOY_COST: u64 = 100_000;
-pub const ENSHRINE_BALANCE: u128 = 100_000_000_000_000_000;
+pub const ESDT_SAFE_BALANCE: u128 = 100_000_000_000_000_000;
 pub const ONE_THOUSAND_TOKENS: u128 = 1_000_000_000_000_000_000_000u128;
 pub const ONE_HUNDRED_TOKENS: u128 = 100_000_000_000_000_000_000u128;
 pub const TEN_TOKENS: u128 = 10_000_000_000_000_000_000u128;

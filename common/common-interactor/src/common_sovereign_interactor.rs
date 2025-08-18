@@ -3,10 +3,9 @@
 use crate::interactor_state::{State, TokenProperties};
 use base64::{engine::general_purpose::STANDARD as BASE64, Engine};
 use common_test_setup::constants::{
-    CHAIN_CONFIG_CODE_PATH, CHAIN_FACTORY_CODE_PATH, ENSHRINE_ESDT_SAFE_CODE_PATH,
-    FEE_MARKET_CODE_PATH, HEADER_VERIFIER_CODE_PATH, ISSUE_COST, MVX_ESDT_SAFE_CODE_PATH,
-    ONE_HUNDRED_TOKENS, ONE_THOUSAND_TOKENS, SOVEREIGN_FORGE_CODE_PATH, TESTING_SC_CODE_PATH,
-    TOKEN_HANDLER_CODE_PATH,
+    CHAIN_CONFIG_CODE_PATH, CHAIN_FACTORY_CODE_PATH, FEE_MARKET_CODE_PATH,
+    HEADER_VERIFIER_CODE_PATH, ISSUE_COST, MVX_ESDT_SAFE_CODE_PATH, ONE_HUNDRED_TOKENS,
+    ONE_THOUSAND_TOKENS, SOVEREIGN_FORGE_CODE_PATH, TESTING_SC_CODE_PATH, TOKEN_HANDLER_CODE_PATH,
 };
 use error_messages::{EMPTY_EXPECTED_LOG, FAILED_TO_PARSE_AS_NUMBER};
 use multiversx_sc::{
@@ -31,10 +30,9 @@ use multiversx_sc_snippets::{
 };
 use proxies::{
     chain_config_proxy::ChainConfigContractProxy, chain_factory_proxy::ChainFactoryContractProxy,
-    enshrine_esdt_safe_proxy, fee_market_proxy::FeeMarketProxy,
-    header_verifier_proxy::HeaderverifierProxy, mvx_esdt_safe_proxy::MvxEsdtSafeProxy,
-    sovereign_forge_proxy::SovereignForgeProxy, testing_sc_proxy::TestingScProxy,
-    token_handler_proxy,
+    fee_market_proxy::FeeMarketProxy, header_verifier_proxy::HeaderverifierProxy,
+    mvx_esdt_safe_proxy::MvxEsdtSafeProxy, sovereign_forge_proxy::SovereignForgeProxy,
+    testing_sc_proxy::TestingScProxy, token_handler_proxy,
 };
 use structs::{
     aliases::{OptionalValueTransferDataTuple, PaymentsVec},
@@ -372,42 +370,6 @@ pub trait CommonInteractorTrait {
         println!("new token_handler_address: {new_address_bech32}");
     }
 
-    async fn deploy_enshrine_esdt(
-        &mut self,
-        is_sovereign_chain: bool,
-        opt_wegld_identifier: Option<TokenIdentifier<StaticApi>>,
-        opt_sov_token_prefix: Option<ManagedBuffer<StaticApi>>,
-        token_handler_address: Bech32Address,
-        opt_config: Option<EsdtSafeConfig<StaticApi>>,
-    ) {
-        let bridge_owner = self.bridge_owner().clone();
-
-        let new_address = self
-            .interactor()
-            .tx()
-            .from(bridge_owner)
-            .gas(100_000_000u64)
-            .typed(enshrine_esdt_safe_proxy::EnshrineEsdtSafeProxy)
-            .init(
-                is_sovereign_chain,
-                token_handler_address,
-                opt_wegld_identifier,
-                opt_sov_token_prefix,
-                opt_config,
-            )
-            .code(ENSHRINE_ESDT_SAFE_CODE_PATH)
-            .code_metadata(CodeMetadata::all())
-            .returns(ReturnsNewAddress)
-            .run()
-            .await;
-
-        let new_address_bech32 = Bech32Address::from(&new_address);
-        self.state()
-            .set_enshrine_esdt_safe_sc_address(new_address_bech32.clone());
-
-        println!("new address: {new_address_bech32}");
-    }
-
     fn get_contract_info_struct_for_sc_type(
         &mut self,
         sc_array: Vec<ScArray>,
@@ -437,12 +399,6 @@ pub trait CommonInteractorTrait {
             ),
             ScArray::FeeMarket => ManagedAddress::from_address(
                 &self.state().current_fee_market_address().to_address(),
-            ),
-            ScArray::EnshrineESDTSafe => ManagedAddress::from_address(
-                &self
-                    .state()
-                    .current_enshrine_esdt_safe_address()
-                    .to_address(),
             ),
             _ => TestSCAddress::new("ERROR").to_managed_address(),
         }
@@ -768,25 +724,6 @@ pub trait CommonInteractorTrait {
         self.assert_expected_log(logs, expected_log, expected_log_error);
     }
 
-    async fn whitelist_enshrine_esdt(&mut self, enshrine_esdt_safe_address: Bech32Address) {
-        let token_handler_address = self.state().current_token_handler_address().clone();
-        let bridge_owner = self.bridge_owner().clone();
-
-        let response = self
-            .interactor()
-            .tx()
-            .from(bridge_owner)
-            .to(token_handler_address)
-            .gas(50_000_000u64)
-            .typed(token_handler_proxy::TokenHandlerProxy)
-            .whitelist_enshrine_esdt(enshrine_esdt_safe_address)
-            .returns(ReturnsResultUnmanaged)
-            .run()
-            .await;
-
-        println!("Result: {response:?}");
-    }
-
     //NOTE: transferValue returns an empty log and calling this function on it will panic
     fn assert_expected_log(
         &mut self,
@@ -964,23 +901,6 @@ pub trait CommonInteractorTrait {
 
         self.check_address_balance(&testing_sc_address, expected_tokens_testing_sc)
             .await;
-    }
-
-    async fn check_enshrine_esdt_safe_balance_is_empty(&mut self) {
-        let enshrine_esdt_safe_address = self.state().current_enshrine_esdt_safe_address().clone();
-        let first_token_id = self.state().get_first_token_id_string();
-        let second_token_id = self.state().get_second_token_id_string();
-
-        let expected_tokens_enshrine_esdt_safe = vec![
-            self.zero_tokens(first_token_id),
-            self.zero_tokens(second_token_id),
-        ];
-
-        self.check_address_balance(
-            &enshrine_esdt_safe_address,
-            expected_tokens_enshrine_esdt_safe,
-        )
-        .await;
     }
 
     async fn check_address_balance(

@@ -1,6 +1,6 @@
 use common_test_setup::base_setup::init::{AccountSetup, BaseSetup};
 use common_test_setup::constants::{
-    ENSHRINE_ESDT_SAFE_CODE_PATH, ENSHRINE_SC_ADDRESS, HEADER_VERIFIER_ADDRESS, OWNER_ADDRESS,
+    ESDT_SAFE_ADDRESS, HEADER_VERIFIER_ADDRESS, MVX_ESDT_SAFE_CODE_PATH, OWNER_ADDRESS,
     OWNER_BALANCE,
 };
 use multiversx_sc::api::ManagedTypeApi;
@@ -34,14 +34,14 @@ impl HeaderVerifierTestState {
             egld_balance: Some(OWNER_BALANCE.into()),
         };
 
-        let enshrine_setup = AccountSetup {
-            address: ENSHRINE_SC_ADDRESS.to_address(),
-            code_path: Some(ENSHRINE_ESDT_SAFE_CODE_PATH),
+        let mvx_setup = AccountSetup {
+            address: ESDT_SAFE_ADDRESS.to_address(),
+            code_path: Some(MVX_ESDT_SAFE_CODE_PATH),
             esdt_balances: None,
             egld_balance: Some(OWNER_BALANCE.into()),
         };
 
-        let account_setups = vec![owner_setup, enshrine_setup];
+        let account_setups = vec![owner_setup, mvx_setup];
 
         let common_setup = BaseSetup::new(account_setups);
 
