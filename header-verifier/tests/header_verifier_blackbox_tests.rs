@@ -1,5 +1,5 @@
 use common_test_setup::constants::{
-    CHAIN_CONFIG_ADDRESS, ENSHRINE_SC_ADDRESS, HEADER_VERIFIER_ADDRESS,
+    CHAIN_CONFIG_ADDRESS, ESDT_SAFE_ADDRESS, HEADER_VERIFIER_ADDRESS,
 };
 use error_messages::{
     CALLER_NOT_FROM_CURRENT_SOVEREIGN, CURRENT_OPERATION_ALREADY_IN_EXECUTION,
@@ -165,7 +165,7 @@ fn test_remove_executed_hash_no_esdt_address_registered() {
 
     state.register_operations(operation.clone(), bitmap, 0, None);
     state.remove_executed_hash(
-        ENSHRINE_SC_ADDRESS,
+        ESDT_SAFE_ADDRESS,
         &operation.bridge_operation_hash,
         &operation_1,
         Some(CALLER_NOT_FROM_CURRENT_SOVEREIGN),
@@ -366,7 +366,7 @@ fn test_lock_operation_caller_not_from_sovereign() {
     let operation = state.generate_bridge_operation_struct(vec![&operation_1, &operation_2]);
 
     state.lock_operation_hash(
-        ENSHRINE_SC_ADDRESS,
+        ESDT_SAFE_ADDRESS,
         &operation.bridge_operation_hash,
         &operation_1,
         Some(CALLER_NOT_FROM_CURRENT_SOVEREIGN),

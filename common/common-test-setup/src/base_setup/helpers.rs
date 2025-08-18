@@ -15,8 +15,8 @@ use structs::{
 use crate::{
     base_setup::init::BaseSetup,
     constants::{
-        CHAIN_CONFIG_ADDRESS, CHAIN_FACTORY_SC_ADDRESS, ENSHRINE_SC_ADDRESS, ESDT_SAFE_ADDRESS,
-        FEE_MARKET_ADDRESS, HEADER_VERIFIER_ADDRESS, OWNER_ADDRESS,
+        CHAIN_CONFIG_ADDRESS, CHAIN_FACTORY_SC_ADDRESS, ESDT_SAFE_ADDRESS, FEE_MARKET_ADDRESS,
+        HEADER_VERIFIER_ADDRESS, OWNER_ADDRESS,
     },
 };
 
@@ -77,7 +77,6 @@ impl BaseSetup {
             ScArray::ESDTSafe => ESDT_SAFE_ADDRESS,
             ScArray::HeaderVerifier => HEADER_VERIFIER_ADDRESS,
             ScArray::FeeMarket => FEE_MARKET_ADDRESS,
-            ScArray::EnshrineESDTSafe => ENSHRINE_SC_ADDRESS,
             _ => TestSCAddress::new("ERROR"),
         }
     }
