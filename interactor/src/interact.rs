@@ -4,17 +4,10 @@ pub mod sovereign_forge;
 use common_interactor::{
     common_sovereign_interactor::CommonInteractorTrait, interactor_config::Config,
 };
-use multiversx_sc::{
-    imports::{MultiValueVec, OptionalValue},
-    types::{BigUint, ManagedBuffer, ManagedVec},
-};
+use multiversx_sc::{imports::OptionalValue, types::BigUint};
 use multiversx_sc_snippets::env_logger;
 use mvx_esdt_safe::mvx_esdt_safe_interactor_main::MvxEsdtSafeInteract;
 use sovereign_forge::sovereign_forge_interactor_main::SovereignForgeInteract;
-use structs::{
-    aliases::PaymentsVec,
-    operation::{Operation, OperationData},
-};
 
 pub async fn mvx_esdt_safe_cli() {
     env_logger::init();
@@ -97,7 +90,6 @@ pub async fn sovereign_forge_cli() {
                 )
                 .await
         }
-        "registerTokenHandler" => interact.register_token_handler(0).await,
         "registerChainFactory" => interact.register_chain_factory(0).await,
         "completeSetup" => interact.complete_setup_phase().await,
         "deployPhaseOne" => {
@@ -109,7 +101,6 @@ pub async fn sovereign_forge_cli() {
         "deployPhaseThree" => interact.deploy_phase_three(None).await,
         "deployPhaseFour" => interact.deploy_phase_four().await,
         "getChainFactories" => interact.get_chain_factories().await,
-        "getTokenHandlers" => interact.get_token_handlers().await,
         "getDeployCost" => interact.get_deploy_cost().await,
         "getChainIds" => interact.get_chain_ids().await,
         _ => panic!("Unknown command: {}", cmd),

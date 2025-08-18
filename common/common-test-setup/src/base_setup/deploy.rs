@@ -2,7 +2,7 @@ use multiversx_sc_scenario::{
     api::StaticApi,
     imports::{
         BigUint, ManagedBuffer, MultiValueEncoded, OptionalValue, ReturnsHandledOrError,
-        TestSCAddress, TokenIdentifier,
+        TestSCAddress,
     },
     ScenarioTxRun,
 };
@@ -11,7 +11,6 @@ use proxies::{
     fee_market_proxy::FeeMarketProxy, header_verifier_proxy::HeaderverifierProxy,
     mvx_esdt_safe_proxy::MvxEsdtSafeProxy, sov_esdt_safe_proxy::SovEsdtSafeProxy,
     sovereign_forge_proxy::SovereignForgeProxy, testing_sc_proxy::TestingScProxy,
-    token_handler_proxy::TokenHandlerProxy,
 };
 use structs::{
     configs::{EsdtSafeConfig, SovereignConfig},
@@ -27,7 +26,7 @@ use crate::{
         FEE_MARKET_CODE_PATH, HEADER_VERIFIER_ADDRESS, HEADER_VERIFIER_CODE_PATH,
         MVX_ESDT_SAFE_CODE_PATH, OWNER_ADDRESS, SOVEREIGN_FORGE_CODE_PATH,
         SOVEREIGN_FORGE_SC_ADDRESS, SOV_ESDT_SAFE_CODE_PATH, TESTING_SC_ADDRESS,
-        TESTING_SC_CODE_PATH, TOKEN_HANDLER_CODE_PATH, TOKEN_HANDLER_SC_ADDRESS,
+        TESTING_SC_CODE_PATH,
     },
 };
 
@@ -149,19 +148,6 @@ impl BaseSetup {
             .init(DEPLOY_COST)
             .code(SOVEREIGN_FORGE_CODE_PATH)
             .new_address(SOVEREIGN_FORGE_SC_ADDRESS)
-            .run();
-
-        self
-    }
-
-    pub fn deploy_token_handler(&mut self) -> &mut Self {
-        self.world
-            .tx()
-            .from(OWNER_ADDRESS)
-            .typed(TokenHandlerProxy)
-            .init(CHAIN_FACTORY_SC_ADDRESS)
-            .code(TOKEN_HANDLER_CODE_PATH)
-            .new_address(TOKEN_HANDLER_SC_ADDRESS)
             .run();
 
         self

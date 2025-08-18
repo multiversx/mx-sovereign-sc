@@ -84,7 +84,6 @@ pub const NO_KNOWN_HEADER_VERIFIER: &str = "No known Header Verifier contract, d
 pub const NO_KNOWN_SECOND_TOKEN: &str = "No known second token, register first";
 pub const NO_KNOWN_SOVEREIGN_FORGE_SC: &str = "No known Sovereign Forge SC, deploy first";
 pub const NO_KNOWN_TESTING_SC: &str = "No known Testing SC contract, deploy first";
-pub const NO_KNOWN_TOKEN_HANDLER_SC: &str = "No known Token Handler contract, deploy first";
 pub const NOT_ENOUGH_WEGLD_AMOUNT: &str = "WEGLD fee amount is not met";
 pub const NOTHING_TO_TRANSFER: &str = "Nothing to transfer";
 pub const ONLY_DEPLOYED_CONTRACTS_CAN_CALL_ENDPOINT: &str =

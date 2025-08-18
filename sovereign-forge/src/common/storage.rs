@@ -29,10 +29,6 @@ pub trait StorageModule {
     #[storage_mapper("chainFactories")]
     fn chain_factories(&self, shard_id: u32) -> SingleValueMapper<ManagedAddress>;
 
-    #[view(getTokenHandlerAddress)]
-    #[storage_mapper("tokenHadlersFactories")]
-    fn token_handlers(&self, shard_id: u32) -> SingleValueMapper<ManagedAddress>;
-
     #[view(getDeployCost)]
     #[storage_mapper("deployCost")]
     fn deploy_cost(&self) -> SingleValueMapper<BigUint>;
