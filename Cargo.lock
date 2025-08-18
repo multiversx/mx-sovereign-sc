@@ -2656,6 +2656,7 @@ name = "utils"
 version = "0.1.0"
 dependencies = [
  "error-messages",
+ "events",
  "multiversx-sc",
  "proxies",
  "structs",

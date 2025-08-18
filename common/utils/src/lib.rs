@@ -3,6 +3,7 @@
 use error_messages::{
     ERR_EMPTY_PAYMENTS, INVALID_SC_ADDRESS, ITEM_NOT_IN_LIST, TOKEN_ID_NO_PREFIX,
 };
+use events::EventsModule;
 use proxies::header_verifier_proxy::HeaderverifierProxy;
 use structs::aliases::PaymentsVec;
 
@@ -12,7 +13,7 @@ const DASH: u8 = b'-';
 const MAX_TOKEN_ID_LEN: usize = 32;
 
 #[multiversx_sc::module]
-pub trait UtilsModule {
+pub trait UtilsModule: events::EventsModule {
     fn lock_operation_hash(&self, hash_of_hashes: &ManagedBuffer, hash: &ManagedBuffer) {
         self.tx()
             .to(self.blockchain().get_owner_address())
@@ -27,6 +28,16 @@ pub trait UtilsModule {
             .typed(HeaderverifierProxy)
             .remove_executed_hash(hash_of_hashes, op_hash)
             .sync_call();
+    }
+
+    fn log_operation_event(
+        &self,
+        hash_of_hashes: &ManagedBuffer,
+        operation_hash: &ManagedBuffer,
+        error_message: Option<&str>,
+    ) {
+        self.execute_bridge_operation_event(hash_of_hashes, operation_hash, error_message);
+        self.remove_executed_hash(hash_of_hashes, operation_hash);
     }
 
     fn require_sc_address(&self, address: &ManagedAddress) {
