@@ -69,7 +69,7 @@ impl MvxEsdtSafeInteract {
         let bridge_service = interactor.register_wallet(test_wallets::carol()).await;
         let user_address = interactor.register_wallet(test_wallets::bob()).await;
 
-        interactor.generate_blocks_until_epoch(1u64).await.unwrap();
+        interactor.generate_blocks_until_epoch(2u64).await.unwrap();
 
         MvxEsdtSafeInteract {
             interactor,
