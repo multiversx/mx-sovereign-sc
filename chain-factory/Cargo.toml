@@ -40,3 +40,6 @@ path = "../common/structs/"
 
 [dependencies.error-messages]
 path = "../common/error-messages"
+
+[dependencies.custom-events]
+path = "../common/custom-events"

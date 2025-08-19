@@ -74,17 +74,12 @@ pub trait MvxEsdtSafe:
         self.lock_operation_hash(&hash_of_hashes, &config_hash);
 
         if let Some(error_message) = self.is_esdt_safe_config_valid(&new_config) {
-            self.failed_bridge_operation_event(
-                &hash_of_hashes,
-                &config_hash,
-                &ManagedBuffer::from(error_message),
-            );
+            self.complete_operation(&hash_of_hashes, &config_hash, Some(error_message));
         } else {
             self.esdt_safe_config().set(new_config);
         }
 
-        self.remove_executed_hash(&hash_of_hashes, &config_hash);
-        self.execute_bridge_operation_event(&hash_of_hashes, &config_hash);
+        self.complete_operation(&hash_of_hashes, &config_hash, None);
     }
 
     #[only_owner]

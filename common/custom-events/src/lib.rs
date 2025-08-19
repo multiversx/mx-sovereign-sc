@@ -27,7 +27,7 @@ pub trait CustomEventsModule {
         &self,
         #[indexed] hash_of_hashes: &ManagedBuffer,
         #[indexed] hash_of_bridge_op: &ManagedBuffer,
-        error_message: Option<&str>,
+        error_message: Option<ManagedBuffer>,
     );
 
     #[event("register")]

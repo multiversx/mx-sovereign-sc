@@ -1,4 +1,4 @@
-use error_messages::{ERROR_AT_ENCODING, ESDT_SAFE_STILL_PAUSED};
+use error_messages::{DEPOSIT_AMOUNT_NOT_ENOUGH, ERROR_AT_ENCODING, ESDT_SAFE_STILL_PAUSED};
 use structs::{
     aliases::GasLimit,
     generate_hash::GenerateHash,
@@ -28,14 +28,7 @@ pub trait ExecuteModule:
 
         let operation_hash = operation.generate_hash();
         if operation_hash.is_empty() {
-            self.failed_bridge_operation_event(
-                &hash_of_hashes,
-                &operation_hash,
-                &ManagedBuffer::from(ERROR_AT_ENCODING),
-            );
-
-            self.remove_executed_hash(&hash_of_hashes, &operation_hash);
-            return;
+            self.complete_operation(&hash_of_hashes, &operation_hash, Some(ERROR_AT_ENCODING));
         };
 
         self.lock_operation_hash(&hash_of_hashes, &operation_hash);
@@ -119,9 +112,11 @@ pub trait ExecuteModule:
             let deposited_amount = deposited_mapper.get();
 
             if operation_token.token_data.amount > deposited_amount {
-                self.emit_transfer_failed_events(hash_of_hashes, operation_tuple);
-                self.remove_executed_hash(hash_of_hashes, &operation_tuple.op_hash);
-
+                self.complete_operation(
+                    hash_of_hashes,
+                    &operation_tuple.op_hash,
+                    Some(DEPOSIT_AMOUNT_NOT_ENOUGH),
+                );
                 return None;
             }
 
@@ -273,6 +268,7 @@ pub trait ExecuteModule:
             .register_promise();
     }
 
+    // TODO: modify this to
     #[promises_callback]
     fn execute(
         &self,
@@ -282,10 +278,10 @@ pub trait ExecuteModule:
     ) {
         match result {
             ManagedAsyncCallResult::Ok(_) => {
-                self.execute_bridge_operation_event(hash_of_hashes, &operation_tuple.op_hash);
+                self.execute_bridge_operation_event(hash_of_hashes, &operation_tuple.op_hash, None);
             }
-            ManagedAsyncCallResult::Err(_) => {
-                self.emit_transfer_failed_events(hash_of_hashes, operation_tuple);
+            ManagedAsyncCallResult::Err(err) => {
+                self.emit_transfer_failed_events(err.err_msg, hash_of_hashes, operation_tuple);
             }
         }
 
@@ -294,10 +290,15 @@ pub trait ExecuteModule:
 
     fn emit_transfer_failed_events(
         &self,
+        err_msg: ManagedBuffer<Self::Api>,
         hash_of_hashes: &ManagedBuffer,
         operation_tuple: &OperationTuple<Self::Api>,
     ) {
-        self.execute_bridge_operation_event(hash_of_hashes, &operation_tuple.op_hash);
+        self.execute_bridge_operation_event(
+            hash_of_hashes,
+            &operation_tuple.op_hash,
+            Some(err_msg),
+        );
 
         if operation_tuple.operation.tokens.is_empty() {
             return;

@@ -1,5 +1,3 @@
-use core::error;
-
 use error_messages::{ERROR_AT_ENCODING, INVALID_REGISTRATION_STATUS};
 use structs::{configs::SovereignConfig, generate_hash::GenerateHash};
 
@@ -68,7 +66,11 @@ pub trait ConfigsModule:
         self.lock_operation_hash(&status_hash, &hash_of_hashes);
 
         if registration_status != DISABLED && registration_status != ENABLED {
-            self.complete_operation(&hash_of_hashes, &config_hash, INVALID_REGISTRATION_STATUS);
+            self.complete_operation(
+                &hash_of_hashes,
+                &status_hash,
+                Some(INVALID_REGISTRATION_STATUS),
+            );
             return;
         }
 
@@ -76,6 +78,6 @@ pub trait ConfigsModule:
 
         registration_status_mapper.set(registration_status);
 
-        self.complete_operation(&hash_of_hashes, &config_hash, None);
+        self.complete_operation(&hash_of_hashes, &status_hash, None);
     }
 }

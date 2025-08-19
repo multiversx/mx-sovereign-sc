@@ -128,3 +128,4 @@ pub const GENESIS_VALIDATORS_ALREADY_SET: &str = "Genesis Validator were already
 pub const CALLER_NOT_CHAIN_CONFIG: &str = "Only Chain-Config SC can call this endpoint";
 pub const CHAIN_CONFIG_SETUP_PHASE_NOT_COMPLETE: &str =
     "The Chain-Config SC setup phase is not completed";
+pub const DEPOSIT_AMOUNT_NOT_ENOUGH: &str = "Deposit amount is less than the operation amount";
