@@ -1,8 +1,7 @@
 use chain_config::{config_utils::ENABLED, storage::ChainConfigStorageModule};
 use chain_config_blackbox_setup::ChainConfigTestState;
 use common_test_setup::constants::{
-    CHAIN_CONFIG_ADDRESS, EXECUTED_BRIDGE_OP_EVENT, FIRST_TEST_TOKEN, OWNER_ADDRESS,
-    REGISTER_EVENT, USER_ADDRESS,
+    CHAIN_CONFIG_ADDRESS, FIRST_TEST_TOKEN, OWNER_ADDRESS, USER_ADDRESS,
 };
 use error_messages::{
     ADDITIONAL_STAKE_ZERO_VALUE, CHAIN_CONFIG_SETUP_PHASE_NOT_COMPLETE, INVALID_ADDITIONAL_STAKE,
@@ -270,7 +269,7 @@ fn test_update_config_invalid_config() {
         &genesis_validator,
         &MultiEgldOrEsdtPayment::new(),
         None,
-        Some(REGISTER_EVENT),
+        Some("register"),
     );
 
     state.common_setup.complete_chain_config_setup_phase(None);
@@ -298,7 +297,7 @@ fn test_update_config_invalid_config() {
         hash_of_hashes,
         new_config,
         None,
-        Some(EXECUTED_BRIDGE_OP_EVENT),
+        Some("executedBridgeOp"),
         Some(INVALID_MIN_MAX_VALIDATOR_NUMBERS),
     );
 }
@@ -328,7 +327,7 @@ fn test_update_config() {
         &genesis_validator,
         &MultiEgldOrEsdtPayment::new(),
         None,
-        Some(REGISTER_EVENT),
+        Some("register"),
     );
 
     state.common_setup.complete_chain_config_setup_phase(None);
@@ -359,7 +358,7 @@ fn test_update_config() {
         hash_of_hashes,
         new_config,
         None,
-        Some(EXECUTED_BRIDGE_OP_EVENT),
+        Some("executedBridgeOp"),
         None,
     );
 
@@ -396,21 +395,11 @@ fn test_register_validator_range_exceeded_too_many_validators() {
     let new_validator_two = ManagedBuffer::from("validator2");
     let new_validator_three = ManagedBuffer::from("validator3");
 
-    state.register(
-        &new_validator_one,
-        &payments_vec,
-        None,
-        Some(REGISTER_EVENT),
-    );
+    state.register(&new_validator_one, &payments_vec, None, Some("register"));
     let id_one = state.get_bls_key_id(&new_validator_one);
     assert!(state.get_bls_key_by_id(&id_one) == new_validator_one);
 
-    state.register(
-        &new_validator_two,
-        &payments_vec,
-        None,
-        Some(REGISTER_EVENT),
-    );
+    state.register(&new_validator_two, &payments_vec, None, Some("register"));
     let id_two = state.get_bls_key_id(&new_validator_two);
     assert!(state.get_bls_key_by_id(&id_two) == new_validator_two);
 
@@ -463,7 +452,7 @@ fn test_register_validator_not_enough_egld_stake() {
         &genesis_validator,
         &payments_vec_enough,
         None,
-        Some(REGISTER_EVENT),
+        Some("register"),
     );
 
     state.common_setup.complete_chain_config_setup_phase(None);
@@ -517,12 +506,7 @@ fn test_register_validator_already_registered() {
     let payments_vec = MultiEgldOrEsdtPayment::new();
 
     let genesis_validator = ManagedBuffer::from("genesis_validator");
-    state.register(
-        &genesis_validator,
-        &payments_vec,
-        None,
-        Some(REGISTER_EVENT),
-    );
+    state.register(&genesis_validator, &payments_vec, None, Some("register"));
 
     state.common_setup.complete_chain_config_setup_phase(None);
 
@@ -541,7 +525,7 @@ fn test_register_validator_already_registered() {
     state.register_and_update_registration_status(ENABLED, signature, bitmap, epoch);
 
     let new_validator = ManagedBuffer::from("validator1");
-    state.register(&new_validator, &payments_vec, None, Some(REGISTER_EVENT));
+    state.register(&new_validator, &payments_vec, None, Some("register"));
     assert!(state.get_bls_key_id(&new_validator) == 2);
 
     state.register(
@@ -592,12 +576,7 @@ fn test_register_validator_not_whitelisted() {
     payments_vec.push(payment);
 
     let genesis_validator = ManagedBuffer::from("genesis_validator");
-    state.register(
-        &genesis_validator,
-        &payments_vec,
-        None,
-        Some(REGISTER_EVENT),
-    );
+    state.register(&genesis_validator, &payments_vec, None, Some("register"));
 
     state.common_setup.complete_chain_config_setup_phase(None);
 
@@ -662,12 +641,7 @@ fn test_register_validator_is_whitelisted() {
     payments_vec.push(payment);
 
     let genesis_validator = ManagedBuffer::from("genesis_validator");
-    state.register(
-        &genesis_validator,
-        &payments_vec,
-        None,
-        Some(REGISTER_EVENT),
-    );
+    state.register(&genesis_validator, &payments_vec, None, Some("register"));
 
     state.common_setup.complete_chain_config_setup_phase(None);
 
@@ -686,7 +660,7 @@ fn test_register_validator_is_whitelisted() {
     state.register_and_update_registration_status(ENABLED, signature, bitmap, epoch);
 
     let new_validator = ManagedBuffer::from("validator1");
-    state.register(&new_validator, &payments_vec, None, Some(REGISTER_EVENT));
+    state.register(&new_validator, &payments_vec, None, Some("register"));
 }
 
 /// ### TEST
@@ -728,12 +702,7 @@ fn test_register_validator_not_whitelisted_after_genesis() {
     payments_vec.push(payment);
 
     let genesis_validator = ManagedBuffer::from("genesis_validator");
-    state.register(
-        &genesis_validator,
-        &payments_vec,
-        None,
-        Some(REGISTER_EVENT),
-    );
+    state.register(&genesis_validator, &payments_vec, None, Some("register"));
 
     state.common_setup.complete_chain_config_setup_phase(None);
 
@@ -756,12 +725,12 @@ fn test_register_validator_not_whitelisted_after_genesis() {
         &whitelisted_validator,
         &payments_vec,
         None,
-        Some(REGISTER_EVENT),
+        Some("register"),
     );
 
     let validator = ManagedBuffer::from("validator2");
 
-    state.register(&validator, &payments_vec, None, Some(REGISTER_EVENT));
+    state.register(&validator, &payments_vec, None, Some("register"));
 }
 
 /// ### TEST
@@ -809,7 +778,7 @@ fn test_register_validator_not_whitelisted_during_genesis() {
         &whitelisted_validator,
         &payments_vec_with_whitelist_stake,
         None,
-        Some(REGISTER_EVENT),
+        Some("register"),
     );
 
     let validator = ManagedBuffer::from("validator2");
@@ -882,7 +851,7 @@ fn test_unregister_validator_wrong_bls_key() {
         &new_validator_bls_key,
         &ManagedVec::new(),
         None,
-        Some(REGISTER_EVENT),
+        Some("register"),
     );
     assert!(state.get_bls_key_id(&new_validator_bls_key) == 1);
 
@@ -949,7 +918,7 @@ fn test_unregister_validator() {
         &new_validator_bls_key,
         &payments_vec,
         None,
-        Some(REGISTER_EVENT),
+        Some("register"),
     );
     assert!(state.get_bls_key_id(&new_validator_bls_key) == 1);
 
@@ -1026,7 +995,7 @@ fn update_registration_invalid_status() {
         &ManagedBuffer::new(),
         2,
         None,
-        Some(EXECUTED_BRIDGE_OP_EVENT),
+        Some("executedBridgeOp"),
     );
 }
 
@@ -1051,7 +1020,7 @@ fn update_registration_status() {
         &genesis_validator,
         &MultiEgldOrEsdtPayment::new(),
         None,
-        Some(REGISTER_EVENT),
+        Some("register"),
     );
 
     state.common_setup.complete_chain_config_setup_phase(None);
@@ -1116,12 +1085,7 @@ fn update_register_validator_registration_enabled_validator_not_whitelisted() {
 
     let payments_vec = MultiEgldOrEsdtPayment::new();
     let genesis_validator = ManagedBuffer::from("genesis_validator");
-    state.register(
-        &genesis_validator,
-        &payments_vec,
-        None,
-        Some(REGISTER_EVENT),
-    );
+    state.register(&genesis_validator, &payments_vec, None, Some("register"));
 
     state.common_setup.complete_chain_config_setup_phase(None);
 
@@ -1167,7 +1131,7 @@ fn update_register_validator_registration_enabled_validator_not_whitelisted() {
         });
 
     let validator = ManagedBuffer::from("validator_1");
-    state.register(&validator, &payments_vec, None, Some(REGISTER_EVENT));
+    state.register(&validator, &payments_vec, None, Some("register"));
 }
 
 /// ### TEST
@@ -1191,7 +1155,7 @@ fn update_register_validator_registration_disabled_validator_not_whitelisted() {
         &genesis_validator,
         &MultiEgldOrEsdtPayment::new(),
         None,
-        Some(REGISTER_EVENT),
+        Some("register"),
     );
 
     state.common_setup.complete_chain_config_setup_phase(None);
