@@ -258,6 +258,7 @@ impl CompleteFlowInteract {
             None,
         )
         .await
+        .expect("Failed to register sovereign token")
     }
 
     pub async fn register_and_execute_sovereign_token(

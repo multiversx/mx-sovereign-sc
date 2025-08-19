@@ -1093,10 +1093,11 @@ pub trait CommonInteractorTrait: InteractorHelpers {
         args: RegisterTokenArgs<'_>,
         egld_amount: BigUint<StaticApi>,
         expected_error_message: Option<&str>,
-    ) -> String{
+    ) -> Option<String> {
         let user_address = self.user_address().clone();
         let mvx_esdt_safe_address = self.state().get_mvx_esdt_safe_address(shard).clone();
-        let (response, token) = self
+
+        let base_transaction = self
             .interactor()
             .tx()
             .from(user_address)
@@ -1111,10 +1112,22 @@ pub trait CommonInteractorTrait: InteractorHelpers {
                 args.num_decimals,
             )
             .egld(egld_amount)
-            .returns(ReturnsHandledOrError::new())
-            .returns(ReturnsNewTokenIdentifier)
-            .run()
-            .await;
+            .returns(ReturnsHandledOrError::new());
+
+        let (response, token) = match expected_error_message {
+            Some(_) => {
+                let response = base_transaction.run().await;
+                (response, None)
+            }
+            None => {
+                let (response, token) = base_transaction
+                    .returns(ReturnsNewTokenIdentifier)
+                    .run()
+                    .await;
+                (response, Some(token))
+            }
+        };
+
         self.assert_expected_error_message(response, expected_error_message);
         token
     }
