@@ -1,7 +1,7 @@
 use base64::{engine::general_purpose::STANDARD as BASE64, Engine};
 use common_test_setup::constants::{
     FEE_MARKET_SHARD_0, FEE_MARKET_SHARD_1, FEE_MARKET_SHARD_2, GAS_LIMIT, MVX_ESDT_SAFE_SHARD_0,
-    MVX_ESDT_SAFE_SHARD_1, MVX_ESDT_SAFE_SHARD_2, PER_GAS, PER_TRANSFER, TESTING_SC,
+    MVX_ESDT_SAFE_SHARD_1, MVX_ESDT_SAFE_SHARD_2, PER_GAS, PER_TRANSFER, SHARD_1, TESTING_SC,
     TESTING_SC_ENDPOINT, UNKNOWN_FEE_MARKET, UNKNOWN_MVX_ESDT_SAFE, USER_ADDRESS_STR, WALLET_PATH,
 };
 use error_messages::{FAILED_TO_LOAD_WALLET_SHARD_0, FAILED_TO_PARSE_AS_NUMBER};
@@ -31,7 +31,7 @@ use structs::{
 
 use crate::{
     interactor_state::{EsdtTokenInfo, State},
-    interactor_structs::BalanceCheckConfig,
+    interactor_structs::{ActionConfig, BalanceCheckConfig},
 };
 
 #[allow(clippy::type_complexity)]
@@ -234,16 +234,16 @@ pub trait InteractorHelpers {
         }
     }
 
-    fn get_token_by_type(&mut self, token_type: EsdtTokenType) -> EsdtTokenInfo {
+    fn generate_nonce_and_decimals(&mut self, token_type: EsdtTokenType) -> (u64, usize) {
         match token_type {
-            EsdtTokenType::NonFungibleV2 => self.state().get_nft_token_id(),
-            EsdtTokenType::Fungible => self.state().get_first_token_id(),
-            EsdtTokenType::SemiFungible => self.state().get_sft_token_id(),
-            EsdtTokenType::MetaFungible => self.state().get_meta_esdt_token_id(),
-            EsdtTokenType::DynamicNFT => self.state().get_dynamic_nft_token_id(),
-            EsdtTokenType::DynamicSFT => self.state().get_dynamic_sft_token_id(),
-            EsdtTokenType::DynamicMeta => self.state().get_dynamic_meta_esdt_token_id(),
-            _ => panic!("Unsupported token type for test"),
+            EsdtTokenType::Fungible => (0, 18),
+            EsdtTokenType::MetaFungible | EsdtTokenType::DynamicMeta => (10, 18),
+            EsdtTokenType::NonFungible
+            | EsdtTokenType::NonFungibleV2
+            | EsdtTokenType::DynamicNFT
+            | EsdtTokenType::SemiFungible
+            | EsdtTokenType::DynamicSFT => (10, 0),
+            _ => panic!("Unsupported token type for getting decimals and nonce"),
         }
     }
 
@@ -314,6 +314,10 @@ pub trait InteractorHelpers {
             decimals: token.decimals,
             token_type: token.token_type,
         }
+    }
+
+    fn is_sovereign_token(&self, token: &EsdtTokenInfo) -> bool {
+        token.token_id.matches('-').count() == 2
     }
 
     //NOTE: transferValue returns an empty log and calling this function on it will panic
@@ -447,6 +451,30 @@ pub trait InteractorHelpers {
         }
     }
 
+    fn get_token_by_type(&mut self, token_type: EsdtTokenType) -> EsdtTokenInfo {
+        match token_type {
+            EsdtTokenType::NonFungibleV2 => self.state().get_nft_token_id(),
+            EsdtTokenType::Fungible => self.state().get_first_token_id(),
+            EsdtTokenType::SemiFungible => self.state().get_sft_token_id(),
+            EsdtTokenType::MetaFungible => self.state().get_meta_esdt_token_id(),
+            EsdtTokenType::DynamicNFT => self.state().get_dynamic_nft_token_id(),
+            EsdtTokenType::DynamicSFT => self.state().get_dynamic_sft_token_id(),
+            EsdtTokenType::DynamicMeta => self.state().get_dynamic_meta_esdt_token_id(),
+            _ => panic!("Unsupported token type for test"),
+        }
+    }
+
+    fn extract_log_based_on_shard(&mut self, config: &ActionConfig) -> Option<String> {
+        match &config.expected_log {
+            Some(logs) if logs.len() == 1 => Some(logs[0].clone()),
+            Some(logs) if logs.len() > 1 => match config.shard {
+                SHARD_1 => Some(logs[0].clone()),
+                _ => Some(logs[1].clone()),
+            },
+            _ => None,
+        }
+    }
+
     // CHECK BALANCE OPERATIONS
 
     async fn check_address_balance(
@@ -568,10 +596,15 @@ pub trait InteractorHelpers {
             amount,
             fee,
             with_transfer_data,
-            is_sovereign_token,
             is_execute,
             expected_error,
         } = bcc;
+
+        let is_sov_mapped_token = if token.is_some() {
+            token.clone().unwrap().token_id.split('-').nth(0) == Some("SOV")
+        } else {
+            false
+        };
 
         let fee_amount = fee
             .as_ref()
@@ -589,7 +622,7 @@ pub trait InteractorHelpers {
 
             let user_should_get_token_back = is_execute && !with_transfer_data;
 
-            let remaining_amount = match (user_should_get_token_back, is_sovereign_token) {
+            let remaining_amount = match (user_should_get_token_back, is_sov_mapped_token) {
                 (true, true) => amount,
                 (true, false) => initial_user_balance,
                 (false, _) => Self::safe_subtract(initial_user_balance, amount.clone()),
@@ -613,7 +646,7 @@ pub trait InteractorHelpers {
         }
 
         // MVX tokens
-        let mvx_tokens = match (&token, &amount, is_sovereign_token, is_execute) {
+        let mvx_tokens = match (&token, &amount, is_sov_mapped_token, is_execute) {
             (Some(token), Some(_), true, _) => {
                 if matches!(
                     token.token_type,
