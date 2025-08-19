@@ -672,7 +672,7 @@ fn distribute_fees_percentage_under_limit() {
         &hash_of_hashes,
         vec![address_pair_tuple],
         None,
-        Some("failedBridgeOp"),
+        Some("executedBridgeOp"),
     );
 }
 

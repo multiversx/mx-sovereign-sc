@@ -2737,7 +2737,7 @@ fn test_update_config_invalid_config() {
         &hash_of_hashes,
         new_config,
         None,
-        Some("failedBridgeOp"),
+        Some("executedBridgeOp"),
         Some(MAX_GAS_LIMIT_PER_TX_EXCEEDED),
     );
 }
