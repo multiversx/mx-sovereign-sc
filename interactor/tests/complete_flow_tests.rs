@@ -18,6 +18,7 @@ use rust_interact::complete_flows::complete_flows_interactor_main::CompleteFlowI
 use serial_test::serial;
 
 //TODO: Change expected log to be DEPOSIT_LOG and EXECUTED_BRIDGE_LOG instead of "" when the framework fix is implemented
+//TODO: Change expected log to be sov-token instead of main-token when the framework fix is implemented
 
 /// ### TEST
 /// S-FORGE_COMPLETE-DEPOSIT-FLOW_OK
@@ -332,7 +333,7 @@ async fn test_register_execute_and_deposit_sov_token(
         .deposit_wrapper(
             ActionConfig::new()
                 .shard(shard)
-                .expect_log(sov_token.clone().token_id),
+                .expect_log(main_token.clone().token_id),
             Some(main_token),
             None,
         )
@@ -561,7 +562,7 @@ async fn test_register_execute_with_transfer_data_and_deposit_sov_token(
             ActionConfig::new()
                 .shard(shard)
                 .with_endpoint(TESTING_SC_ENDPOINT.to_string())
-                .expect_log(sov_token.clone().token_id),
+                .expect_log(main_token.clone().token_id),
             Some(main_token.clone()),
             None,
         )

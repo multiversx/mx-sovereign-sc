@@ -1226,24 +1226,4 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             amount: amount.clone(),
         }
     }
-
-    async fn is_sovereign_token(
-        &mut self,
-        config: ActionConfig,
-        token_id: Option<EsdtTokenInfo>,
-    ) -> (Option<EsdtTokenInfo>, BigUint<StaticApi>) {
-        match &token_id {
-            Some(t) if t.token_id.matches('-').count() == 2 => {
-                let mapped_token = self.get_mapped_token(config.clone(), t, &t.amount).await;
-                (Some(mapped_token.clone()), mapped_token.amount)
-            }
-            _ => {
-                let amount = token_id
-                    .as_ref()
-                    .map(|t| t.amount.clone())
-                    .unwrap_or_default();
-                (token_id.clone(), amount)
-            }
-        }
-    }
 }

@@ -316,6 +316,10 @@ pub trait InteractorHelpers {
         }
     }
 
+    fn is_sovereign_token(&self, token: &EsdtTokenInfo) -> bool {
+        token.token_id.matches('-').count() == 2
+    }
+
     //NOTE: transferValue returns an empty log and calling this function on it will panic
     fn assert_expected_log(
         &mut self,
