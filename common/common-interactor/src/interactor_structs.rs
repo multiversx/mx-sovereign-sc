@@ -24,7 +24,7 @@ pub struct MintTokenStruct {
 pub struct ActionConfig {
     pub shard: u32,
     pub expected_error: Option<String>,
-    pub expected_log: Option<String>,
+    pub expected_log: Option<Vec<String>>,
     pub expected_log_error: Option<String>,
     pub with_transfer_data: Option<bool>,
     pub endpoint: Option<String>,
@@ -45,7 +45,7 @@ impl ActionConfig {
         self
     }
 
-    pub fn expect_log(mut self, log: String) -> Self {
+    pub fn expect_log(mut self, log: Vec<String>) -> Self {
         self.expected_log = Some(log);
         self
     }

@@ -1,7 +1,7 @@
 use base64::{engine::general_purpose::STANDARD as BASE64, Engine};
 use common_test_setup::constants::{
     FEE_MARKET_SHARD_0, FEE_MARKET_SHARD_1, FEE_MARKET_SHARD_2, GAS_LIMIT, MVX_ESDT_SAFE_SHARD_0,
-    MVX_ESDT_SAFE_SHARD_1, MVX_ESDT_SAFE_SHARD_2, PER_GAS, PER_TRANSFER, TESTING_SC,
+    MVX_ESDT_SAFE_SHARD_1, MVX_ESDT_SAFE_SHARD_2, PER_GAS, PER_TRANSFER, SHARD_1, TESTING_SC,
     TESTING_SC_ENDPOINT, UNKNOWN_FEE_MARKET, UNKNOWN_MVX_ESDT_SAFE, USER_ADDRESS_STR, WALLET_PATH,
 };
 use error_messages::{FAILED_TO_LOAD_WALLET_SHARD_0, FAILED_TO_PARSE_AS_NUMBER};
@@ -31,7 +31,7 @@ use structs::{
 
 use crate::{
     interactor_state::{EsdtTokenInfo, State},
-    interactor_structs::BalanceCheckConfig,
+    interactor_structs::{ActionConfig, BalanceCheckConfig},
 };
 
 #[allow(clippy::type_complexity)]
@@ -461,6 +461,17 @@ pub trait InteractorHelpers {
             EsdtTokenType::DynamicSFT => self.state().get_dynamic_sft_token_id(),
             EsdtTokenType::DynamicMeta => self.state().get_dynamic_meta_esdt_token_id(),
             _ => panic!("Unsupported token type for test"),
+        }
+    }
+
+    fn extract_log_based_on_shard(&mut self, config: &ActionConfig) -> Option<String> {
+        match &config.expected_log {
+            Some(logs) if logs.len() == 1 => Some(logs[0].clone()),
+            Some(logs) if logs.len() > 1 => match config.shard {
+                SHARD_1 => Some(logs[0].clone()),
+                _ => Some(logs[1].clone()),
+            },
+            _ => None,
         }
     }
 

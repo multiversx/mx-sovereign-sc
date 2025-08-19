@@ -4,8 +4,8 @@ use common_interactor::interactor_helpers::InteractorHelpers;
 use common_interactor::interactor_state::EsdtTokenInfo;
 use common_interactor::interactor_structs::ActionConfig;
 use common_test_setup::constants::{
-    DEPLOY_COST, ONE_HUNDRED_TOKENS, SC_CALL_LOG, SHARD_1, SHARD_2, TESTING_SC_ENDPOINT,
-    WRONG_ENDPOINT_NAME,
+    DEPLOY_COST, DEPOSIT_LOG, ONE_HUNDRED_TOKENS, SC_CALL_LOG, SHARD_1, SHARD_2,
+    TESTING_SC_ENDPOINT, WRONG_ENDPOINT_NAME,
 };
 use common_test_setup::constants::{REGISTER_DEFAULT_TOKEN, REGISTER_TOKEN_PREFIX};
 use multiversx_sc::imports::OptionalValue;
@@ -16,9 +16,6 @@ use multiversx_sc_snippets::multiversx_sc_scenario::multiversx_chain_vm::vm_err_
 use rstest::rstest;
 use rust_interact::complete_flows::complete_flows_interactor_main::CompleteFlowInteract;
 use serial_test::serial;
-
-//TODO: Change expected log to be DEPOSIT_LOG and EXECUTED_BRIDGE_LOG instead of "" when the framework fix is implemented
-//TODO: Change expected log to be sov-token instead of main-token when the framework fix is implemented
 
 /// ### TEST
 /// S-FORGE_COMPLETE-DEPOSIT-FLOW_OK
@@ -51,7 +48,7 @@ async fn test_complete_deposit_flow_no_fee_only_transfer_data(#[case] shard: u32
             ActionConfig::new()
                 .shard(shard)
                 .with_endpoint(TESTING_SC_ENDPOINT.to_string())
-                .expect_log(SC_CALL_LOG.to_string()),
+                .expect_log(vec![SC_CALL_LOG.to_string()]),
             None,
             None,
         )
@@ -91,7 +88,7 @@ async fn test_complete_deposit_flow_with_fee_only_transfer_data(#[case] shard: u
             ActionConfig::new()
                 .shard(shard)
                 .with_endpoint(TESTING_SC_ENDPOINT.to_string())
-                .expect_log(SC_CALL_LOG.to_string()),
+                .expect_log(vec![SC_CALL_LOG.to_string()]),
             None,
             Some(fee),
         )
@@ -130,7 +127,7 @@ async fn test_complete_execute_flow_with_transfer_data_only_success(#[case] shar
             ActionConfig::new()
                 .shard(shard)
                 .with_endpoint(TESTING_SC_ENDPOINT.to_string())
-                .expect_log("".to_string()),
+                .expect_log(vec!["".to_string()]),
             None,
         )
         .await;
@@ -217,7 +214,7 @@ async fn test_deposit_with_fee(
         .deposit_wrapper(
             ActionConfig::new()
                 .shard(shard)
-                .expect_log(token.clone().token_id),
+                .expect_log(vec![DEPOSIT_LOG.to_string(), token.clone().token_id]),
             Some(token),
             Some(fee),
         )
@@ -264,7 +261,7 @@ async fn test_deposit_without_fee_and_execute(
         .deposit_wrapper(
             ActionConfig::new()
                 .shard(shard)
-                .expect_log(token.clone().token_id),
+                .expect_log(vec![DEPOSIT_LOG.to_string(), token.clone().token_id]),
             Some(token.clone()),
             None,
         )
@@ -274,7 +271,7 @@ async fn test_deposit_without_fee_and_execute(
         .execute_wrapper(
             ActionConfig::new()
                 .shard(shard)
-                .expect_log(token.clone().token_id),
+                .expect_log(vec![token.clone().token_id]),
             Some(token),
         )
         .await;
@@ -331,9 +328,10 @@ async fn test_register_execute_and_deposit_sov_token(
 
     chain_interactor
         .deposit_wrapper(
-            ActionConfig::new()
-                .shard(shard)
-                .expect_log(main_token.clone().token_id),
+            ActionConfig::new().shard(shard).expect_log(vec![
+                sov_token.clone().token_id,
+                main_token.clone().token_id,
+            ]),
             Some(main_token),
             None,
         )
@@ -381,7 +379,7 @@ async fn test_deposit_mvx_token_with_transfer_data(
             ActionConfig::new()
                 .shard(shard)
                 .with_endpoint(TESTING_SC_ENDPOINT.to_string())
-                .expect_log(token.clone().token_id),
+                .expect_log(vec![DEPOSIT_LOG.to_string(), token.clone().token_id]),
             Some(token),
             None,
         )
@@ -431,7 +429,7 @@ async fn test_deposit_mvx_token_with_transfer_data_and_fee(
             ActionConfig::new()
                 .shard(shard)
                 .with_endpoint(TESTING_SC_ENDPOINT.to_string())
-                .expect_log(token.clone().token_id),
+                .expect_log(vec![DEPOSIT_LOG.to_string(), token.clone().token_id]),
             Some(token),
             Some(fee),
         )
@@ -478,7 +476,7 @@ async fn test_deposit_and_execute_with_transfer_data(
         .deposit_wrapper(
             ActionConfig::new()
                 .shard(shard)
-                .expect_log(token.clone().token_id),
+                .expect_log(vec![DEPOSIT_LOG.to_string(), token.clone().token_id]),
             Some(token.clone()),
             None,
         )
@@ -489,7 +487,7 @@ async fn test_deposit_and_execute_with_transfer_data(
             ActionConfig::new()
                 .shard(shard)
                 .with_endpoint(TESTING_SC_ENDPOINT.to_string())
-                .expect_log(token.clone().token_id),
+                .expect_log(vec![token.clone().token_id]),
             Some(token.clone()),
         )
         .await;
@@ -562,7 +560,10 @@ async fn test_register_execute_with_transfer_data_and_deposit_sov_token(
             ActionConfig::new()
                 .shard(shard)
                 .with_endpoint(TESTING_SC_ENDPOINT.to_string())
-                .expect_log(main_token.clone().token_id),
+                .expect_log(vec![
+                    sov_token.clone().token_id,
+                    main_token.clone().token_id,
+                ]),
             Some(main_token.clone()),
             None,
         )

@@ -122,6 +122,7 @@ impl CompleteFlowInteract {
         token: Option<EsdtTokenInfo>,
         fee: Option<FeeStruct<StaticApi>>,
     ) {
+        let expected_log = self.extract_log_based_on_shard(&config);
         let payment_vec = self.prepare_deposit_payments(
             token.clone(),
             fee.clone(),
@@ -137,7 +138,7 @@ impl CompleteFlowInteract {
             transfer_data,
             payment_vec,
             None,
-            config.expected_log.as_deref(),
+            expected_log.as_deref(),
         )
         .await;
 
@@ -159,6 +160,7 @@ impl CompleteFlowInteract {
         config: ActionConfig,
         token: Option<EsdtTokenInfo>,
     ) {
+        let expected_log = self.extract_log_based_on_shard(&config);
         let operation = self
             .prepare_operation(token, config.endpoint.as_deref())
             .await;
@@ -197,7 +199,7 @@ impl CompleteFlowInteract {
             hash_of_hashes,
             operation,
             config.expected_error.as_deref(),
-            config.expected_log.as_deref(),
+            expected_log.as_deref(),
             config.expected_log_error.as_deref(),
         )
         .await;
@@ -271,7 +273,7 @@ impl CompleteFlowInteract {
             .await;
 
         if config.expected_error.is_none() {
-            config = config.expect_log(expected_log);
+            config = config.expect_log(vec![expected_log]);
         }
 
         self.execute_wrapper(config, Some(token.clone()))
