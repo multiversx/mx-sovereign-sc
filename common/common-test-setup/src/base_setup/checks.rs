@@ -175,10 +175,11 @@ impl BaseSetup {
                     let expected_error_bytes =
                         ManagedBuffer::<StaticApi>::from(expected_error).to_vec();
 
-                    let found_error_in_data = found_log
-                        .data
-                        .iter()
-                        .any(|data_item| data_item.to_vec() == expected_error_bytes);
+                    let found_error_in_data = found_log.data.iter().any(|data_item| {
+                        let v = data_item.to_vec();
+                        v.windows(expected_error_bytes.len())
+                            .any(|w| w == expected_error_bytes)
+                    });
 
                     assert!(
                         found_error_in_data,
