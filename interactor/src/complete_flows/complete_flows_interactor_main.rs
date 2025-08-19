@@ -220,16 +220,8 @@ impl CompleteFlowInteract {
         self.register_and_execute_operation(config.clone(), token.clone())
             .await;
 
-        let (expected_token, expected_amount) = match &token {
-            Some(t) if t.token_id.matches('-').count() == 2 => {
-                let mapped_token = self.get_mapped_token(config.clone(), t, &t.amount).await;
-                (Some(mapped_token.clone()), mapped_token.amount)
-            }
-            _ => {
-                let amount = token.as_ref().map(|t| t.amount.clone()).unwrap_or_default();
-                (token.clone(), amount)
-            }
-        };
+        let (expected_token, expected_amount) =
+            self.is_sovereign_token(config.clone(), token).await;
 
         let balance_config = BalanceCheckConfig::new()
             .shard(config.shard)

@@ -234,7 +234,7 @@ pub trait InteractorHelpers {
         }
     }
 
-    fn get_nonce_and_decimals(&mut self, token_type: EsdtTokenType) -> (u64, usize) {
+    fn generate_nonce_and_decimals(&mut self, token_type: EsdtTokenType) -> (u64, usize) {
         match token_type {
             EsdtTokenType::Fungible => (0, 18),
             EsdtTokenType::MetaFungible | EsdtTokenType::DynamicMeta => (10, 18),
@@ -585,7 +585,7 @@ pub trait InteractorHelpers {
             expected_error,
         } = bcc;
 
-        let is_sovereign_token = if token.is_some() {
+        let is_sov_mapped_token = if token.is_some() {
             token.clone().unwrap().token_id.split('-').nth(0) == Some("SOV")
         } else {
             false
@@ -607,7 +607,7 @@ pub trait InteractorHelpers {
 
             let user_should_get_token_back = is_execute && !with_transfer_data;
 
-            let remaining_amount = match (user_should_get_token_back, is_sovereign_token) {
+            let remaining_amount = match (user_should_get_token_back, is_sov_mapped_token) {
                 (true, true) => amount,
                 (true, false) => initial_user_balance,
                 (false, _) => Self::safe_subtract(initial_user_balance, amount.clone()),
@@ -631,7 +631,7 @@ pub trait InteractorHelpers {
         }
 
         // MVX tokens
-        let mvx_tokens = match (&token, &amount, is_sovereign_token, is_execute) {
+        let mvx_tokens = match (&token, &amount, is_sov_mapped_token, is_execute) {
             (Some(token), Some(_), true, _) => {
                 if matches!(
                     token.token_type,

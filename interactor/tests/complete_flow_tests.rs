@@ -314,7 +314,7 @@ async fn test_register_execute_and_deposit_sov_token(
         )
         .await;
 
-    let (nonce, decimals) = chain_interactor.get_nonce_and_decimals(token_type);
+    let (nonce, decimals) = chain_interactor.generate_nonce_and_decimals(token_type);
 
     let sov_token = EsdtTokenInfo {
         token_id: REGISTER_TOKEN_PREFIX.to_string() + REGISTER_DEFAULT_TOKEN,
@@ -332,7 +332,7 @@ async fn test_register_execute_and_deposit_sov_token(
         .deposit_wrapper(
             ActionConfig::new()
                 .shard(shard)
-                .expect_log(main_token.clone().token_id),
+                .expect_log(sov_token.clone().token_id),
             Some(main_token),
             None,
         )
@@ -529,7 +529,7 @@ async fn test_register_execute_with_transfer_data_and_deposit_sov_token(
         )
         .await;
 
-    let (nonce, decimals) = chain_interactor.get_nonce_and_decimals(token_type);
+    let (nonce, decimals) = chain_interactor.generate_nonce_and_decimals(token_type);
 
     let sov_token = EsdtTokenInfo {
         token_id: REGISTER_TOKEN_PREFIX.to_string() + REGISTER_DEFAULT_TOKEN,
@@ -561,7 +561,7 @@ async fn test_register_execute_with_transfer_data_and_deposit_sov_token(
             ActionConfig::new()
                 .shard(shard)
                 .with_endpoint(TESTING_SC_ENDPOINT.to_string())
-                .expect_log(main_token.clone().token_id),
+                .expect_log(sov_token.clone().token_id),
             Some(main_token.clone()),
             None,
         )
@@ -603,7 +603,7 @@ async fn test_register_execute_call_failed(
         )
         .await;
 
-    let (nonce, decimals) = chain_interactor.get_nonce_and_decimals(token_type);
+    let (nonce, decimals) = chain_interactor.generate_nonce_and_decimals(token_type);
 
     let sov_token = EsdtTokenInfo {
         token_id: REGISTER_TOKEN_PREFIX.to_string() + REGISTER_DEFAULT_TOKEN,
