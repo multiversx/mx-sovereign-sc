@@ -78,6 +78,7 @@ pub trait ConfigsModule:
 
         registration_status_mapper.set(registration_status);
 
+        self.registration_status_update_event(&self.get_event_msg(registration_status));
         self.complete_operation(&hash_of_hashes, &status_hash, None);
     }
 }
