@@ -15,6 +15,7 @@ multiversx_sc::imports!();
 #[multiversx_sc::module]
 pub trait DepositCommonModule:
     crate::storage::CrossChainStorage + crate::execute_common::ExecuteCommonModule + utils::UtilsModule
+// + custom_custom_events::CustomEventsModule
 {
     fn match_fee_payment(
         &self,

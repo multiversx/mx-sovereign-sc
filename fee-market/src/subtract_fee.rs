@@ -20,7 +20,7 @@ pub trait SubtractFeeModule:
     + crate::price_aggregator::PriceAggregatorModule
     + utils::UtilsModule
     + setup_phase::SetupPhaseModule
-    + events::EventsModule
+    + custom_events::CustomEventsModule
 {
     #[only_owner]
     #[endpoint(addUsersToWhitelist)]

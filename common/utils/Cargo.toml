@@ -16,8 +16,8 @@ path = "../error-messages"
 [dependencies.proxies]
 path = "../proxies"
 
-[dependencies.events]
-path = "../events"
+[dependencies.custom-events]
+path = "../custom-events"
 
 [dependencies.multiversx-sc]
 git = "https://github.com/multiversx/mx-sdk-rs"

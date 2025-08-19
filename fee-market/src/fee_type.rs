@@ -12,7 +12,7 @@ multiversx_sc::derive_imports!();
 
 #[multiversx_sc::module]
 pub trait FeeTypeModule:
-    utils::UtilsModule + setup_phase::SetupPhaseModule + events::EventsModule
+    utils::UtilsModule + setup_phase::SetupPhaseModule + custom_events::CustomEventsModule
 {
     #[only_owner]
     #[endpoint(removeFeeDuringSetupPhase)]

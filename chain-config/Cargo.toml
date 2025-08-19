@@ -41,8 +41,8 @@ path = "../common/error-messages"
 [dependencies.cross-chain]
 path = "../common/cross-chain"
 
-[dependencies.events]
-path = "../common/events"
+[dependencies.custom-events]
+path = "../common/custom-events"
 
 [dependencies.utils]
 path = "../common/utils"

@@ -6,7 +6,7 @@ multiversx_sc::imports!();
 multiversx_sc::derive_imports!();
 
 #[multiversx_sc::module]
-pub trait EventsModule {
+pub trait CustomEventsModule {
     #[event("deposit")]
     fn deposit_event(
         &self,

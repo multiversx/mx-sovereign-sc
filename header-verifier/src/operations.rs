@@ -11,7 +11,7 @@ pub trait HeaderVerifierOperationsModule:
     utils::HeaderVerifierUtilsModule
     + storage::HeaderVerifierStorageModule
     + checks::HeaderVerifierChecksModule
-    + events::EventsModule
+    + custom_events::CustomEventsModule
     + setup_phase::SetupPhaseModule
 {
     #[endpoint(registerBridgeOps)]
