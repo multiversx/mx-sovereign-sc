@@ -1093,10 +1093,10 @@ pub trait CommonInteractorTrait: InteractorHelpers {
         args: RegisterTokenArgs<'_>,
         egld_amount: BigUint<StaticApi>,
         expected_error_message: Option<&str>,
-    ) {
+    ) -> String{
         let user_address = self.user_address().clone();
         let mvx_esdt_safe_address = self.state().get_mvx_esdt_safe_address(shard).clone();
-        let response = self
+        let (response, token) = self
             .interactor()
             .tx()
             .from(user_address)
@@ -1112,9 +1112,11 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             )
             .egld(egld_amount)
             .returns(ReturnsHandledOrError::new())
+            .returns(ReturnsNewTokenIdentifier)
             .run()
             .await;
         self.assert_expected_error_message(response, expected_error_message);
+        token
     }
 
     async fn get_sov_to_mvx_token_id(
@@ -1177,10 +1179,8 @@ pub trait CommonInteractorTrait: InteractorHelpers {
         config: ActionConfig,
         original_token: &EsdtTokenInfo,
         amount: &BigUint<StaticApi>,
-        is_executed: bool,
     ) -> EsdtTokenInfo {
-        let edge_case = !is_executed
-            || original_token.token_type == EsdtTokenType::Fungible
+        let edge_case = original_token.token_type == EsdtTokenType::Fungible
             || (self.is_nft(original_token) && config.expected_error.is_some());
 
         let (mapped_token_id, mapped_nonce) = if edge_case {

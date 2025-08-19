@@ -234,16 +234,16 @@ pub trait InteractorHelpers {
         }
     }
 
-    fn get_token_by_type(&mut self, token_type: EsdtTokenType) -> EsdtTokenInfo {
+    fn get_nonce_and_decimals(&mut self, token_type: EsdtTokenType) -> (u64, usize) {
         match token_type {
-            EsdtTokenType::NonFungibleV2 => self.state().get_nft_token_id(),
-            EsdtTokenType::Fungible => self.state().get_first_token_id(),
-            EsdtTokenType::SemiFungible => self.state().get_sft_token_id(),
-            EsdtTokenType::MetaFungible => self.state().get_meta_esdt_token_id(),
-            EsdtTokenType::DynamicNFT => self.state().get_dynamic_nft_token_id(),
-            EsdtTokenType::DynamicSFT => self.state().get_dynamic_sft_token_id(),
-            EsdtTokenType::DynamicMeta => self.state().get_dynamic_meta_esdt_token_id(),
-            _ => panic!("Unsupported token type for test"),
+            EsdtTokenType::Fungible => (0, 18),
+            EsdtTokenType::MetaFungible | EsdtTokenType::DynamicMeta => (10, 18),
+            EsdtTokenType::NonFungible
+            | EsdtTokenType::NonFungibleV2
+            | EsdtTokenType::DynamicNFT
+            | EsdtTokenType::SemiFungible
+            | EsdtTokenType::DynamicSFT => (10, 0),
+            _ => panic!("Unsupported token type for getting decimals and nonce"),
         }
     }
 
@@ -447,6 +447,19 @@ pub trait InteractorHelpers {
         }
     }
 
+    fn get_token_by_type(&mut self, token_type: EsdtTokenType) -> EsdtTokenInfo {
+        match token_type {
+            EsdtTokenType::NonFungibleV2 => self.state().get_nft_token_id(),
+            EsdtTokenType::Fungible => self.state().get_first_token_id(),
+            EsdtTokenType::SemiFungible => self.state().get_sft_token_id(),
+            EsdtTokenType::MetaFungible => self.state().get_meta_esdt_token_id(),
+            EsdtTokenType::DynamicNFT => self.state().get_dynamic_nft_token_id(),
+            EsdtTokenType::DynamicSFT => self.state().get_dynamic_sft_token_id(),
+            EsdtTokenType::DynamicMeta => self.state().get_dynamic_meta_esdt_token_id(),
+            _ => panic!("Unsupported token type for test"),
+        }
+    }
+
     // CHECK BALANCE OPERATIONS
 
     async fn check_address_balance(
@@ -568,10 +581,15 @@ pub trait InteractorHelpers {
             amount,
             fee,
             with_transfer_data,
-            is_sovereign_token,
             is_execute,
             expected_error,
         } = bcc;
+
+        let is_sovereign_token = if token.is_some() {
+            token.clone().unwrap().token_id.split('-').nth(0) == Some("SOV")
+        } else {
+            false
+        };
 
         let fee_amount = fee
             .as_ref()

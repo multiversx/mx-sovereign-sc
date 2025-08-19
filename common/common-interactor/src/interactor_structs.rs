@@ -1,6 +1,6 @@
 use multiversx_sc::{
     imports::Bech32Address,
-    types::{BigUint, EsdtTokenType, TokenIdentifier},
+    types::{BigUint, EsdtTokenType},
 };
 use multiversx_sc_snippets::imports::StaticApi;
 use structs::fee::FeeStruct;
@@ -26,10 +26,8 @@ pub struct ActionConfig {
     pub expected_error: Option<String>,
     pub expected_log: Option<String>,
     pub expected_log_error: Option<String>,
-    pub is_sovereign: bool,
     pub with_transfer_data: Option<bool>,
     pub endpoint: Option<String>,
-    pub sovereign_token_id: Option<TokenIdentifier<StaticApi>>,
 }
 
 impl ActionConfig {
@@ -57,15 +55,6 @@ impl ActionConfig {
         self.with_transfer_data = Some(true);
         self
     }
-
-    pub fn with_sovereign_token_id(
-        mut self,
-        sovereign_token_id: TokenIdentifier<StaticApi>,
-    ) -> Self {
-        self.sovereign_token_id = Some(sovereign_token_id);
-        self.is_sovereign = true;
-        self
-    }
 }
 
 #[derive(Clone, Default)]
@@ -75,7 +64,6 @@ pub struct BalanceCheckConfig {
     pub amount: Option<BigUint<StaticApi>>,
     pub fee: Option<FeeStruct<StaticApi>>,
     pub with_transfer_data: bool,
-    pub is_sovereign_token: bool,
     pub is_execute: bool,
     pub expected_error: Option<String>,
 }
@@ -107,11 +95,6 @@ impl BalanceCheckConfig {
 
     pub fn with_transfer_data(mut self, value: bool) -> Self {
         self.with_transfer_data = value;
-        self
-    }
-
-    pub fn is_sovereign_token(mut self, value: bool) -> Self {
-        self.is_sovereign_token = value;
         self
     }
 

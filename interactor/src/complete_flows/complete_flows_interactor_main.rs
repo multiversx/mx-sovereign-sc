@@ -8,8 +8,7 @@ use common_interactor::{
 use common_test_setup::base_setup::init::RegisterTokenArgs;
 use common_test_setup::constants::{
     INTERACTOR_WORKING_DIR, ISSUE_COST, ONE_THOUSAND_TOKENS, OPERATION_HASH_STATUS_STORAGE_KEY,
-    REGISTER_DEFAULT_TOKEN, REGISTER_TOKEN_PREFIX, SOVEREIGN_RECEIVER_ADDRESS, TOKEN_DISPLAY_NAME,
-    TOKEN_TICKER,
+    SOVEREIGN_RECEIVER_ADDRESS, TOKEN_DISPLAY_NAME, TOKEN_TICKER,
 };
 use header_verifier::OperationHashStatus;
 use multiversx_sc_snippets::multiversx_sc_scenario::multiversx_chain_vm::crypto_functions::sha256;
@@ -149,7 +148,6 @@ impl CompleteFlowInteract {
             .token(token.clone())
             .amount(amount)
             .fee(fee)
-            .is_sovereign_token(config.is_sovereign)
             .with_transfer_data(config.with_transfer_data.unwrap_or_default())
             .is_execute(false);
 
@@ -214,23 +212,20 @@ impl CompleteFlowInteract {
         .await;
     }
 
-    pub async fn execute_wrapper(&mut self, config: ActionConfig, token: Option<EsdtTokenInfo>) {
+    pub async fn execute_wrapper(
+        &mut self,
+        config: ActionConfig,
+        token: Option<EsdtTokenInfo>,
+    ) -> Option<EsdtTokenInfo> {
         self.register_and_execute_operation(config.clone(), token.clone())
             .await;
 
-        let (balance_check_token, balance_check_amount) = match config.sovereign_token_id.as_ref() {
-            Some(_) => {
-                let mapped_token = self
-                    .get_mapped_token(
-                        config.clone(),
-                        &token.clone().unwrap(),
-                        &token.clone().unwrap().amount,
-                        true,
-                    )
-                    .await;
+        let (expected_token, expected_amount) = match &token {
+            Some(t) if t.token_id.matches('-').count() == 2 => {
+                let mapped_token = self.get_mapped_token(config.clone(), t, &t.amount).await;
                 (Some(mapped_token.clone()), mapped_token.amount)
             }
-            None => {
+            _ => {
                 let amount = token.as_ref().map(|t| t.amount.clone()).unwrap_or_default();
                 (token.clone(), amount)
             }
@@ -238,78 +233,48 @@ impl CompleteFlowInteract {
 
         let balance_config = BalanceCheckConfig::new()
             .shard(config.shard)
-            .token(balance_check_token)
-            .amount(balance_check_amount)
-            .is_sovereign_token(config.is_sovereign)
+            .token(expected_token.clone())
+            .amount(expected_amount)
             .is_execute(true)
             .with_transfer_data(config.with_transfer_data.unwrap_or_default())
             .expected_error(config.expected_error.clone());
 
         self.check_balances_after_action(balance_config).await;
+
+        expected_token
     }
 
-    async fn register_sovereign_token(
-        &mut self,
-        shard: u32,
-        token: EsdtTokenInfo,
-        amount: BigUint<StaticApi>,
-    ) -> EsdtTokenInfo {
-        let token_id = REGISTER_DEFAULT_TOKEN;
-        let sov_token_id =
-            TokenIdentifier::from_esdt_bytes(REGISTER_TOKEN_PREFIX.to_string() + token_id);
-        let token_ticker = token_id.split('-').next().unwrap_or(TOKEN_TICKER);
-
+    async fn register_sovereign_token(&mut self, shard: u32, token: EsdtTokenInfo) -> String {
         self.register_token(
             shard,
             RegisterTokenArgs {
-                sov_token_id: sov_token_id.clone(),
+                sov_token_id: TokenIdentifier::from_esdt_bytes(&token.token_id),
                 token_type: token.token_type,
                 token_display_name: TOKEN_DISPLAY_NAME,
-                token_ticker,
+                token_ticker: token.token_id.split('-').nth(1).unwrap_or(TOKEN_TICKER),
                 num_decimals: token.decimals,
             },
             ISSUE_COST.into(),
             None,
         )
-        .await;
-
-        EsdtTokenInfo {
-            token_id: sov_token_id.to_string(),
-            nonce: token.nonce,
-            token_type: token.token_type,
-            decimals: token.decimals,
-            amount,
-        }
+        .await
     }
 
     pub async fn register_and_execute_sovereign_token(
         &mut self,
         mut config: ActionConfig,
         token: EsdtTokenInfo,
-        amount: BigUint<StaticApi>,
     ) -> EsdtTokenInfo {
-        let sov_token = self
-            .register_sovereign_token(config.shard, token, amount.clone())
-            .await;
-
-        let mapped_token = self
-            .get_mapped_token(config.clone(), &sov_token, &amount, false)
+        let expected_log = self
+            .register_sovereign_token(config.shard, token.clone())
             .await;
 
         if config.expected_error.is_none() {
-            config = config.expect_log(mapped_token.clone().token_id);
+            config = config.expect_log(expected_log);
         }
 
-        self.execute_wrapper(
-            config
-                .clone()
-                .with_sovereign_token_id(TokenIdentifier::from_esdt_bytes(
-                    mapped_token.token_id.clone(),
-                )),
-            Some(sov_token.clone()),
-        )
-        .await;
-
-        mapped_token
+        self.execute_wrapper(config, Some(token.clone()))
+            .await
+            .expect("Expected mapped token, got None")
     }
 }
