@@ -54,7 +54,7 @@ where
         sovereign_forge_address: Arg0,
         chain_config_template: Arg1,
         header_verifier_template: Arg2,
-        cross_chain_operation_template: Arg3,
+        mvx_esdt_safe_template: Arg3,
         fee_market_template: Arg4,
     ) -> TxTypedDeploy<Env, From, NotPayable, Gas, ()> {
         self.wrapped_tx
@@ -63,7 +63,7 @@ where
             .argument(&sovereign_forge_address)
             .argument(&chain_config_template)
             .argument(&header_verifier_template)
-            .argument(&cross_chain_operation_template)
+            .argument(&mvx_esdt_safe_template)
             .argument(&fee_market_template)
             .original_result()
     }
