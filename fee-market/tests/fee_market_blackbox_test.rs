@@ -62,12 +62,6 @@ fn test_set_fee_during_setup_phase_wrong_params() {
     );
 
     state.set_fee_during_setup_phase(SECOND_TEST_TOKEN, WantedFeeType::Fixed, Some(INVALID_FEE));
-
-    state.set_fee_during_setup_phase(
-        FIRST_TEST_TOKEN,
-        WantedFeeType::AnyTokenWrong,
-        Some(INVALID_TOKEN_ID),
-    );
 }
 
 /// ### TEST

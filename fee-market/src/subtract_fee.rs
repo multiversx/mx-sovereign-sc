@@ -17,7 +17,6 @@ const TOTAL_PERCENTAGE: usize = 10_000;
 pub trait SubtractFeeModule:
     crate::fee_type::FeeTypeModule
     + crate::fee_common::CommonFeeModule
-    + crate::price_aggregator::PriceAggregatorModule
     + utils::UtilsModule
     + setup_phase::SetupPhaseModule
     + custom_events::CustomEventsModule
@@ -183,26 +182,6 @@ pub trait SubtractFeeModule:
                 };
                 self.subtract_fee_same_token(args)
             }
-            FeeType::AnyToken {
-                base_fee_token,
-                per_transfer,
-                per_gas,
-            } => {
-                let args = SubtractPaymentArguments {
-                    fee_token: base_fee_token.clone(),
-                    per_transfer,
-                    per_gas,
-                    payment: payment.clone(),
-                    total_transfers,
-                    opt_gas_limit,
-                };
-
-                if base_fee_token == payment.token_identifier {
-                    self.subtract_fee_same_token(args)
-                } else {
-                    self.subtract_fee_any_token(args)
-                }
-            }
         }
     }
 
@@ -228,41 +207,6 @@ pub trait SubtractFeeModule:
         FinalPayment {
             fee: EsdtTokenPayment::new(payment.token_identifier.clone(), 0, total_fee),
             remaining_tokens: payment,
-        }
-    }
-
-    fn subtract_fee_any_token(
-        &self,
-        mut args: SubtractPaymentArguments<Self::Api>,
-    ) -> FinalPayment<Self::Api> {
-        let input_payment = args.payment.clone();
-        let payment_amount_in_fee_token =
-            self.get_safe_price(&args.payment.token_identifier, &args.fee_token);
-        args.payment = EsdtTokenPayment::new(
-            args.fee_token.clone(),
-            0,
-            payment_amount_in_fee_token.clone(),
-        );
-
-        let final_payment = self.subtract_fee_same_token(args);
-        if final_payment.remaining_tokens.amount == 0 {
-            return final_payment;
-        }
-
-        // Example: Total cost 1500 RIDE.
-        // User pays 100 EGLD, which by asking the pair you found out is 2000 RIDE
-        // Then the cost for the user is (1500 RIDE * 100 EGLD / 2000 RIDE = 75 EGLD)
-        let fee_amount_in_user_token =
-            &final_payment.fee.amount * &input_payment.amount / &payment_amount_in_fee_token;
-        let remaining_amount = input_payment.amount - fee_amount_in_user_token;
-
-        FinalPayment {
-            fee: final_payment.fee,
-            remaining_tokens: EsdtTokenPayment::new(
-                input_payment.token_identifier,
-                0,
-                remaining_amount,
-            ),
         }
     }
 

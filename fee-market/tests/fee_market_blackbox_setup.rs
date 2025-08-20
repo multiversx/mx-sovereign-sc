@@ -12,7 +12,7 @@ use common_test_setup::{
     constants::{
         CROWD_TOKEN_ID, ESDT_SAFE_ADDRESS, FEE_MARKET_ADDRESS, FIRST_TEST_TOKEN,
         HEADER_VERIFIER_ADDRESS, MVX_ESDT_SAFE_CODE_PATH, OWNER_ADDRESS, OWNER_BALANCE,
-        SECOND_TEST_TOKEN, USER_ADDRESS, WRONG_TOKEN_ID,
+        SECOND_TEST_TOKEN, USER_ADDRESS,
     },
 };
 use proxies::fee_market_proxy::FeeMarketProxy;
@@ -26,7 +26,6 @@ pub enum WantedFeeType {
     Correct,
     InvalidToken,
     LessThanFee,
-    AnyTokenWrong,
     None,
     Fixed,
 }
@@ -202,17 +201,6 @@ impl FeeMarketTestState {
             WantedFeeType::Fixed => {
                 let fee_type = FeeType::Fixed {
                     token: FIRST_TEST_TOKEN.to_token_identifier(),
-                    per_transfer: BigUint::from(10u8),
-                    per_gas: BigUint::from(10u8),
-                };
-                FeeStruct {
-                    base_token: token_id.to_token_identifier(),
-                    fee_type,
-                }
-            }
-            WantedFeeType::AnyTokenWrong => {
-                let fee_type = FeeType::AnyToken {
-                    base_fee_token: WRONG_TOKEN_ID.to_token_identifier(),
                     per_transfer: BigUint::from(10u8),
                     per_gas: BigUint::from(10u8),
                 };
