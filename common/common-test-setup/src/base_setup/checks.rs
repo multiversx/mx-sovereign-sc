@@ -1,6 +1,6 @@
 use cross_chain::storage::CrossChainStorage;
 use error_messages::EMPTY_EXPECTED_LOG;
-use header_verifier::{Headerverifier, OperationHashStatus};
+use header_verifier::{storage::HeaderVerifierStorageModule, utils::OperationHashStatus};
 use multiversx_sc_scenario::{
     api::StaticApi,
     imports::{Address, BigUint, ManagedBuffer, MultiValue3, TestTokenIdentifier},
@@ -49,6 +49,23 @@ impl BaseSetup {
                 expected_balance,
                 ManagedBuffer::<StaticApi>::new(),
             );
+    }
+
+    pub fn check_registered_validator_in_header_verifier(
+        &mut self,
+        epoch: u64,
+        bls_keys: Vec<&str>,
+    ) {
+        self.world.query().to(HEADER_VERIFIER_ADDRESS).whitebox(
+            header_verifier::contract_obj,
+            |sc| {
+                for bls_key in bls_keys {
+                    assert!(sc
+                        .bls_pub_keys(epoch)
+                        .contains(&ManagedBuffer::from(bls_key)));
+                }
+            },
+        )
     }
 
     pub fn check_deposited_tokens_amount(&mut self, tokens: Vec<(TestTokenIdentifier, u64)>) {
@@ -158,10 +175,11 @@ impl BaseSetup {
                     let expected_error_bytes =
                         ManagedBuffer::<StaticApi>::from(expected_error).to_vec();
 
-                    let found_error_in_data = found_log
-                        .data
-                        .iter()
-                        .any(|data_item| data_item.to_vec() == expected_error_bytes);
+                    let found_error_in_data = found_log.data.iter().any(|data_item| {
+                        let v = data_item.to_vec();
+                        v.windows(expected_error_bytes.len())
+                            .any(|w| w == expected_error_bytes)
+                    });
 
                     assert!(
                         found_error_in_data,

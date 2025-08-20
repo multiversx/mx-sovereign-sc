@@ -2,7 +2,7 @@ use common_test_setup::{
     base_setup::init::{AccountSetup, BaseSetup},
     constants::{
         CHAIN_FACTORY_SC_ADDRESS, ESDT_SAFE_ADDRESS, OWNER_ADDRESS, OWNER_BALANCE,
-        SOVEREIGN_FORGE_SC_ADDRESS, TOKEN_HANDLER_SC_ADDRESS,
+        SOVEREIGN_FORGE_SC_ADDRESS,
     },
 };
 use multiversx_sc::{
@@ -46,9 +46,7 @@ impl SovereignForgeTestState {
         self.register_chain_factory(0, CHAIN_FACTORY_SC_ADDRESS, None);
         self.register_chain_factory(1, CHAIN_FACTORY_SC_ADDRESS, None);
         self.register_chain_factory(2, CHAIN_FACTORY_SC_ADDRESS, None);
-        self.register_token_handler(0, TOKEN_HANDLER_SC_ADDRESS, None);
-        self.register_token_handler(1, TOKEN_HANDLER_SC_ADDRESS, None);
-        self.register_token_handler(2, TOKEN_HANDLER_SC_ADDRESS, None);
+        self.register_chain_factory(3, CHAIN_FACTORY_SC_ADDRESS, None);
     }
 
     pub fn deploy_template_scs(&mut self, templates: Option<Vec<ScArray>>) {
@@ -73,27 +71,6 @@ impl SovereignForgeTestState {
                 _ => {}
             }
         }
-    }
-
-    pub fn register_token_handler(
-        &mut self,
-        shard_id: u32,
-        token_handler_address: TestSCAddress,
-        expected_error_message: Option<&str>,
-    ) {
-        let response = self
-            .common_setup
-            .world
-            .tx()
-            .from(OWNER_ADDRESS)
-            .to(SOVEREIGN_FORGE_SC_ADDRESS)
-            .typed(SovereignForgeProxy)
-            .register_token_handler(shard_id, token_handler_address)
-            .returns(ReturnsHandledOrError::new())
-            .run();
-
-        self.common_setup
-            .assert_expected_error_message(response, expected_error_message);
     }
 
     pub fn register_chain_factory(

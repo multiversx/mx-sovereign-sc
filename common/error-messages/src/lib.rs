@@ -82,8 +82,6 @@ pub const NO_KNOWN_CHAIN_FACTORY_SC: &str = "No known Chain Factory SC, deploy f
 pub const NO_KNOWN_DYNAMIC_META_ESDT_TOKEN_ID: &str = "No known Dynamic Meta ESDT token ID";
 pub const NO_KNOWN_DYNAMIC_NFT_TOKEN_ID: &str = "No known Dynamic NFT token ID";
 pub const NO_KNOWN_DYNAMIC_SFT_TOKEN_ID: &str = "No known Dynamic SFT token ID";
-pub const NO_KNOWN_ENSHRINE_ESDT_SAFE_SC: &str =
-    "No known Enshrine ESDT Safe SC contract, deploy first";
 pub const NO_KNOWN_FIRST_TOKEN: &str = "No known first token, register first";
 pub const NO_KNOWN_FEE_MARKET: &str = "No known Fee Market contract, deploy first";
 pub const NO_KNOWN_FEE_TOKEN: &str = "No known fee token, register first";
@@ -96,9 +94,6 @@ pub const NO_KNOWN_NFT_TOKEN: &str = "No known NFT token, register first";
 pub const NO_KNOWN_SOV_TO_MVX_TOKEN: &str = "No known Sovereign to MVX token ID";
 pub const NO_KNOWN_SFT_TOKEN: &str = "No known SFT token, register first";
 pub const NO_KNOWN_TESTING_SC: &str = "No known Testing SC contract, deploy first";
-pub const NO_KNOWN_TOKEN_HANDLER_IN_THE_SPECIFIED_SHARD: &str =
-    "No token handler address found for the specified shard";
-pub const NO_KNOWN_TOKEN_HANDLER_SC: &str = "No known Token Handler contract, deploy first";
 pub const NOT_ENOUGH_WEGLD_AMOUNT: &str = "WEGLD fee amount is not met";
 pub const NOTHING_TO_TRANSFER: &str = "Nothing to transfer";
 pub const ONLY_DEPLOYED_CONTRACTS_CAN_CALL_ENDPOINT: &str =
@@ -121,3 +116,26 @@ pub const TOKEN_IS_FROM_SOVEREIGN: &str = "Token is from a Sovereign Chain, it c
 pub const TOKEN_NOT_ACCEPTED_AS_FEE: &str = "Token not accepted as fee";
 pub const TOO_MANY_TOKENS: &str = "Too many tokens";
 pub const ERROR_AT_ENCODING: &str = "Error at encoding hash";
+pub const VALIDATOR_RANGE_EXCEEDED: &str = "Validator range exceeded";
+pub const NOT_ENOUGH_VALIDATORS: &str = "Not enough validators registered";
+pub const VALIDATOR_NOT_REGISTERED: &str = "Validator not registered";
+pub const VALIDATOR_ALREADY_REGISTERED: &str = "Validator already registered";
+pub const BLS_KEY_NOT_REGISTERED: &str = "BLS key not registered";
+pub const MIN_NUMBER_OF_SIGNATURE_NOT_MET: &str = "Minimum number of signatures was not met";
+pub const VALIDATORS_ALREADY_REGISTERED_IN_EPOCH: &str =
+    "There already is a validator set registered for this epoch";
+pub const BITMAP_LEN_DOES_NOT_MATCH_BLS_KEY_LEN: &str =
+    "Bitmap length does not match BLS keys length";
+pub const INVALID_ADDITIONAL_STAKE: &str = "Invalid additional stake sent";
+pub const INVALID_EGLD_STAKE: &str = "Invalid EGLD stake sent";
+pub const REGISTRATION_DISABLED: &str = "Registration is disabled";
+pub const INVALID_REGISTRATION_STATUS: &str = "Registration status can only be 0 or 1";
+pub const EMPTY_ADDITIONAL_STAKE: &str = "Additional stake was sent as an empty array";
+pub const ADDITIONAL_STAKE_ZERO_VALUE: &str = "Additional stake cannot be a zero value";
+pub const ADDITIONAL_STAKE_NOT_REQUIRED: &str = "Additional stake was provided but is not required";
+pub const INVALID_BLS_KEY_FOR_CALLER: &str = "Invalid BLS key for caller";
+pub const GENESIS_VALIDATORS_ALREADY_SET: &str = "Genesis Validator were already set";
+pub const CALLER_NOT_CHAIN_CONFIG: &str = "Only Chain-Config SC can call this endpoint";
+pub const CHAIN_CONFIG_SETUP_PHASE_NOT_COMPLETE: &str =
+    "The Chain-Config SC setup phase is not completed";
+pub const DEPOSIT_AMOUNT_NOT_ENOUGH: &str = "Deposit amount is less than the operation amount";

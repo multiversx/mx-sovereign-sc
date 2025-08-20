@@ -23,7 +23,6 @@ pub enum ScArray {
     Controller,
     HeaderVerifier,
     ESDTSafe,
-    EnshrineESDTSafe,
     FeeMarket,
     TokenHandler,
     ChainConfig,

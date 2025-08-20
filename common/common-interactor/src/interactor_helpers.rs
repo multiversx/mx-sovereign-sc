@@ -365,7 +365,9 @@ pub trait InteractorHelpers {
 
                     let found_error_in_data = found_log.data.iter().any(|data_item| {
                         if let Ok(decoded_data) = BASE64.decode(data_item) {
-                            decoded_data == expected_error_bytes
+                            decoded_data
+                                .windows(expected_error_bytes.len())
+                                .any(|w| w == expected_error_bytes)
                         } else {
                             false
                         }
@@ -426,12 +428,6 @@ pub trait InteractorHelpers {
             ),
             ScArray::FeeMarket => ManagedAddress::from_address(
                 &self.state().current_fee_market_address().to_address(),
-            ),
-            ScArray::EnshrineESDTSafe => ManagedAddress::from_address(
-                &self
-                    .state()
-                    .current_enshrine_esdt_safe_address()
-                    .to_address(),
             ),
             _ => TestSCAddress::new("ERROR").to_managed_address(),
         }

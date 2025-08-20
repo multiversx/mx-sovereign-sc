@@ -43,3 +43,12 @@ pub struct IssueEsdtArgs<M: ManagedTypeApi> {
     pub token_ticker: ManagedBuffer<M>,
     pub num_decimals: usize,
 }
+
+#[type_abi]
+#[derive(TopEncode, TopDecode, NestedEncode)]
+pub struct ValidatorInfo<M: ManagedTypeApi> {
+    pub address: ManagedAddress<M>,
+    pub bls_key: ManagedBuffer<M>,
+    pub egld_stake: BigUint<M>,
+    pub token_stake: Option<ManagedVec<M, EsdtTokenPayment<M>>>,
+}

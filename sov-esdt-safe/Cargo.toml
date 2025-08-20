@@ -9,10 +9,12 @@ authors = ["you"]
 path = "src/lib.rs"
 
 [dependencies.multiversx-sc]
-version = "0.59.0"
+git = "https://github.com/multiversx/mx-sdk-rs"
+rev = "b59411841984a2fcbf76498d29bc131f2d433af9"
 
 [dependencies.multiversx-sc-modules]
-version = "=0.59.0"
+git = "https://github.com/multiversx/mx-sdk-rs"
+rev = "b59411841984a2fcbf76498d29bc131f2d433af9"
 
 [dependencies.testing-sc]
 path = "../testing-sc"
@@ -29,8 +31,8 @@ path = "../common/structs"
 [dependencies.cross-chain]
 path = "../common/cross-chain"
 
-[dependencies.events]
-path = "../common/events"
+[dependencies.custom-events]
+path = "../common/custom-events"
 
 [dependencies.setup-phase]
 path = "../common/setup-phase"
@@ -45,4 +47,5 @@ path = "../common/error-messages"
 path = "../common/common-test-setup"
 
 [dev-dependencies.multiversx-sc-scenario]
-version = "0.59.0"
+git = "https://github.com/multiversx/mx-sdk-rs"
+rev = "b59411841984a2fcbf76498d29bc131f2d433af9"

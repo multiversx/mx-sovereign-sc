@@ -27,6 +27,8 @@ pub trait ExecuteCommonModule: crate::storage::CrossChainStorage {
 
     #[inline]
     fn is_nft(self, token_type: &EsdtTokenType) -> bool {
-        *token_type == EsdtTokenType::NonFungible || *token_type == EsdtTokenType::DynamicNFT
+        *token_type == EsdtTokenType::NonFungible
+            || *token_type == EsdtTokenType::NonFungibleV2
+            || *token_type == EsdtTokenType::DynamicNFT
     }
 }

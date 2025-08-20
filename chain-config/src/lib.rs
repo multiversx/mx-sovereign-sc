@@ -1,19 +1,26 @@
 #![no_std]
 
-use error_messages::ERROR_AT_ENCODING;
 use multiversx_sc::imports::*;
-use structs::{configs::SovereignConfig, generate_hash::GenerateHash};
+use structs::configs::SovereignConfig;
+
+use crate::config_utils::{DISABLED, ENABLED};
 
 multiversx_sc::imports!();
 
-pub mod validator_rules;
+pub mod config_utils;
+pub mod configs;
+pub mod storage;
+pub mod validator;
 
 #[multiversx_sc::contract]
 pub trait ChainConfigContract:
-    validator_rules::ValidatorRulesModule
+    validator::ValidatorModule
+    + storage::ChainConfigStorageModule
+    + config_utils::ChainConfigUtilsModule
+    + configs::ConfigsModule
     + setup_phase::SetupPhaseModule
     + utils::UtilsModule
-    + events::EventsModule
+    + custom_events::CustomEventsModule
 {
     #[init]
     fn init(&self, opt_config: OptionalValue<SovereignConfig<Self::Api>>) {
@@ -28,55 +35,11 @@ pub trait ChainConfigContract:
         };
 
         self.sovereign_config().set(new_config.clone());
+        self.registration_status().set(ENABLED);
     }
 
-    #[only_owner]
-    #[endpoint(updateSovereignConfigSetupPhase)]
-    fn update_sovereign_config_during_setup_phase(&self, new_config: SovereignConfig<Self::Api>) {
-        if let Some(error_message) = self.is_new_config_valid(&new_config) {
-            sc_panic!(error_message);
-        }
-        self.sovereign_config().set(new_config);
-    }
-
-    #[endpoint(updateSovereignConfig)]
-    fn update_sovereign_config(
-        &self,
-        hash_of_hashes: ManagedBuffer,
-        new_config: SovereignConfig<Self::Api>,
-    ) {
-        self.require_setup_complete();
-
-        let config_hash = new_config.generate_hash();
-        if config_hash.is_empty() {
-            self.failed_bridge_operation_event(
-                &hash_of_hashes,
-                &config_hash,
-                &ManagedBuffer::from(ERROR_AT_ENCODING),
-            );
-
-            self.remove_executed_hash(&hash_of_hashes, &config_hash);
-            return;
-        };
-
-        self.lock_operation_hash(&config_hash, &hash_of_hashes);
-
-        if let Some(error_message) = self.is_new_config_valid(&new_config) {
-            self.failed_bridge_operation_event(
-                &hash_of_hashes,
-                &config_hash,
-                &ManagedBuffer::from(error_message),
-            );
-
-            self.remove_executed_hash(&hash_of_hashes, &config_hash);
-            return;
-        } else {
-            self.sovereign_config().set(new_config);
-        }
-
-        self.remove_executed_hash(&hash_of_hashes, &config_hash);
-        self.execute_bridge_operation_event(&hash_of_hashes, &config_hash);
-    }
+    #[upgrade]
+    fn upgrade(&self) {}
 
     #[only_owner]
     #[endpoint(completeSetupPhase)]
@@ -84,10 +47,10 @@ pub trait ChainConfigContract:
         if self.is_setup_phase_complete() {
             return;
         }
+        self.require_validator_set_valid(self.bls_keys_map().len());
 
+        self.registration_status().set(DISABLED);
+        self.complete_genesis_event();
         self.setup_phase_complete().set(true);
     }
-
-    #[upgrade]
-    fn upgrade(&self) {}
 }

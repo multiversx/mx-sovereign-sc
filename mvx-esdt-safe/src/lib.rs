@@ -18,7 +18,7 @@ pub trait MvxEsdtSafe:
     + register_token::RegisterTokenModule
     + bridging_mechanism::BridgingMechanism
     + cross_chain::deposit_common::DepositCommonModule
-    + events::EventsModule
+    + custom_events::CustomEventsModule
     + cross_chain::storage::CrossChainStorage
     + cross_chain::execute_common::ExecuteCommonModule
     + multiversx_sc_modules::pause::PauseModule
@@ -48,6 +48,11 @@ pub trait MvxEsdtSafe:
     #[only_owner]
     #[endpoint(updateEsdtSafeConfigSetupPhase)]
     fn update_esdt_safe_config_during_setup_phase(&self, new_config: EsdtSafeConfig<Self::Api>) {
+        require!(
+            !self.is_setup_phase_complete(),
+            SETUP_PHASE_ALREADY_COMPLETED
+        );
+
         if let Some(error_message) = self.is_esdt_safe_config_valid(&new_config) {
             sc_panic!(error_message);
         }
@@ -69,17 +74,16 @@ pub trait MvxEsdtSafe:
         self.lock_operation_hash(&hash_of_hashes, &config_hash);
 
         if let Some(error_message) = self.is_esdt_safe_config_valid(&new_config) {
-            self.failed_bridge_operation_event(
+            self.complete_operation(
                 &hash_of_hashes,
                 &config_hash,
-                &ManagedBuffer::from(error_message),
+                Some(ManagedBuffer::from(error_message)),
             );
         } else {
             self.esdt_safe_config().set(new_config);
         }
 
-        self.remove_executed_hash(&hash_of_hashes, &config_hash);
-        self.execute_bridge_operation_event(&hash_of_hashes, &config_hash);
+        self.complete_operation(&hash_of_hashes, &config_hash, None);
     }
 
     #[only_owner]

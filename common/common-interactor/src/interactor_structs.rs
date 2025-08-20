@@ -109,11 +109,6 @@ impl BalanceCheckConfig {
     }
 }
 
-pub enum EsdtSafeType {
-    MvxEsdtSafe,
-    EnshrineEsdtSafe,
-}
-
 #[derive(Clone)]
 pub struct TemplateAddresses {
     pub chain_config_address: Bech32Address,

@@ -85,22 +85,6 @@ where
     To: TxTo<Env>,
     Gas: TxGas<Env>,
 {
-    pub fn register_token_handler<
-        Arg0: ProxyArg<u32>,
-        Arg1: ProxyArg<ManagedAddress<Env::Api>>,
-    >(
-        self,
-        shard_id: Arg0,
-        token_handler_address: Arg1,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("registerTokenHandler")
-            .argument(&shard_id)
-            .argument(&token_handler_address)
-            .original_result()
-    }
-
     pub fn register_chain_factory<
         Arg0: ProxyArg<u32>,
         Arg1: ProxyArg<ManagedAddress<Env::Api>>,
@@ -211,19 +195,6 @@ where
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("getChainFactoryAddress")
-            .argument(&shard_id)
-            .original_result()
-    }
-
-    pub fn token_handlers<
-        Arg0: ProxyArg<u32>,
-    >(
-        self,
-        shard_id: Arg0,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ManagedAddress<Env::Api>> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("getTokenHandlerAddress")
             .argument(&shard_id)
             .original_result()
     }

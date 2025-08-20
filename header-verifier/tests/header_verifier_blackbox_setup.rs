@@ -1,11 +1,11 @@
 use common_test_setup::base_setup::init::{AccountSetup, BaseSetup};
 use common_test_setup::constants::{
-    ENSHRINE_ESDT_SAFE_CODE_PATH, ENSHRINE_SC_ADDRESS, HEADER_VERIFIER_ADDRESS, OWNER_ADDRESS,
+    ESDT_SAFE_ADDRESS, HEADER_VERIFIER_ADDRESS, MVX_ESDT_SAFE_CODE_PATH, OWNER_ADDRESS,
     OWNER_BALANCE,
 };
 use multiversx_sc::api::ManagedTypeApi;
 use multiversx_sc::types::{
-    ManagedBuffer, MultiValueEncoded, ReturnsHandledOrError, TestSCAddress,
+    BigUint, ManagedBuffer, MultiValueEncoded, ReturnsHandledOrError, TestSCAddress,
 };
 use multiversx_sc_scenario::imports::*;
 use multiversx_sc_scenario::multiversx_chain_vm::crypto_functions::sha256;
@@ -32,14 +32,14 @@ impl HeaderVerifierTestState {
             egld_balance: Some(OWNER_BALANCE.into()),
         };
 
-        let enshrine_setup = AccountSetup {
-            address: ENSHRINE_SC_ADDRESS.to_address(),
-            code_path: Some(ENSHRINE_ESDT_SAFE_CODE_PATH),
+        let mvx_setup = AccountSetup {
+            address: ESDT_SAFE_ADDRESS.to_address(),
+            code_path: Some(MVX_ESDT_SAFE_CODE_PATH),
             esdt_balances: None,
             egld_balance: Some(OWNER_BALANCE.into()),
         };
 
-        let account_setups = vec![owner_setup, enshrine_setup];
+        let account_setups = vec![owner_setup, mvx_setup];
 
         let common_setup = BaseSetup::new(account_setups);
 
@@ -49,6 +49,8 @@ impl HeaderVerifierTestState {
     pub fn register_operations(
         &mut self,
         operation: BridgeOperation<StaticApi>,
+        pub_keys_bitmap: ManagedBuffer<StaticApi>,
+        epoch: u64,
         expected_error_message: Option<&str>,
     ) {
         let response = self
@@ -61,8 +63,8 @@ impl HeaderVerifierTestState {
             .register_bridge_operations(
                 operation.signature,
                 operation.bridge_operation_hash,
-                ManagedBuffer::new(),
-                ManagedBuffer::new(),
+                pub_keys_bitmap,
+                epoch,
                 operation.operations_hashes,
             )
             .returns(ReturnsHandledOrError::new())
@@ -116,11 +118,15 @@ impl HeaderVerifierTestState {
             .assert_expected_error_message(response, expected_error_message);
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub fn change_validator_set(
         &mut self,
         signature: &ManagedBuffer<StaticApi>,
         hash_of_hashes: &ManagedBuffer<StaticApi>,
         operation_hash: &ManagedBuffer<StaticApi>,
+        epoch: u64,
+        pub_keys_bitmap: &ManagedBuffer<StaticApi>,
+        validator_set: MultiValueEncoded<StaticApi, BigUint<StaticApi>>,
         expected_error_message: Option<&str>,
         expected_log: Option<&str>,
     ) {
@@ -135,9 +141,9 @@ impl HeaderVerifierTestState {
                 signature,
                 hash_of_hashes,
                 operation_hash,
-                ManagedBuffer::new(),
-                ManagedBuffer::new(),
-                MultiValueEncoded::new(),
+                pub_keys_bitmap,
+                epoch,
+                validator_set,
             )
             .returns(ReturnsLogs)
             .returns(ReturnsHandledOrError::new())
@@ -163,7 +169,7 @@ impl HeaderVerifierTestState {
             bridge_operations.push(operation_hash.clone());
         }
 
-        let hash_of_hashes = self.get_operation_hash(&appended_hashes);
+        let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&appended_hashes.to_vec()));
 
         BridgeOperation {
             signature: ManagedBuffer::new(),

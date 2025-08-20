@@ -18,7 +18,7 @@ use error_messages::{
     MAX_GAS_LIMIT_PER_TX_EXCEEDED, NATIVE_TOKEN_ALREADY_REGISTERED, NOTHING_TO_TRANSFER,
     PAYMENT_DOES_NOT_COVER_FEE, TOO_MANY_TOKENS,
 };
-use header_verifier::OperationHashStatus;
+use header_verifier::utils::OperationHashStatus;
 use multiversx_sc_snippets::multiversx_sc_scenario::multiversx_chain_vm::crypto_functions::sha256;
 use multiversx_sc_snippets::{hex, imports::*};
 use rust_interact::mvx_esdt_safe::mvx_esdt_safe_interactor_main::MvxEsdtSafeInteract;
@@ -82,7 +82,7 @@ async fn test_update_invalid_config() {
             hash_of_hashes,
             config,
             None,
-            Some("failedBridgeOp"),
+            Some("executedBridgeOp"),
             Some(MAX_GAS_LIMIT_PER_TX_EXCEEDED),
         )
         .await;

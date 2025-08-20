@@ -3,11 +3,10 @@
 use error_messages::{
     NO_KNOWN_CHAIN_CONFIG_SC, NO_KNOWN_CHAIN_FACTORY_IN_THE_SPECIFIED_SHARD,
     NO_KNOWN_CHAIN_FACTORY_SC, NO_KNOWN_DYNAMIC_META_ESDT_TOKEN_ID, NO_KNOWN_DYNAMIC_NFT_TOKEN_ID,
-    NO_KNOWN_DYNAMIC_SFT_TOKEN_ID, NO_KNOWN_ENSHRINE_ESDT_SAFE_SC, NO_KNOWN_FEE_MARKET,
-    NO_KNOWN_FEE_TOKEN, NO_KNOWN_FIRST_TOKEN, NO_KNOWN_HEADER_VERIFIER, NO_KNOWN_META_ESDT_TOKEN,
-    NO_KNOWN_MVX_ESDT_SAFE, NO_KNOWN_NFT_TOKEN, NO_KNOWN_SECOND_TOKEN, NO_KNOWN_SFT_TOKEN,
-    NO_KNOWN_SOVEREIGN_FORGE_SC, NO_KNOWN_SOV_TO_MVX_TOKEN, NO_KNOWN_TESTING_SC,
-    NO_KNOWN_TOKEN_HANDLER_IN_THE_SPECIFIED_SHARD, NO_KNOWN_TOKEN_HANDLER_SC,
+    NO_KNOWN_DYNAMIC_SFT_TOKEN_ID, NO_KNOWN_FEE_MARKET, NO_KNOWN_FEE_TOKEN, NO_KNOWN_FIRST_TOKEN,
+    NO_KNOWN_HEADER_VERIFIER, NO_KNOWN_META_ESDT_TOKEN, NO_KNOWN_MVX_ESDT_SAFE, NO_KNOWN_NFT_TOKEN,
+    NO_KNOWN_SECOND_TOKEN, NO_KNOWN_SFT_TOKEN, NO_KNOWN_SOVEREIGN_FORGE_SC,
+    NO_KNOWN_SOV_TO_MVX_TOKEN, NO_KNOWN_TESTING_SC,
 };
 use multiversx_sc_snippets::imports::*;
 
@@ -108,16 +107,6 @@ impl State {
         list.push(address);
     }
 
-    pub fn set_enshrine_esdt_safe_sc_address(&mut self, address: AddressInfo) {
-        let list = self.enshrine_esdt_safe_sc_addresses.get_or_insert_default();
-        list.push(address);
-    }
-
-    pub fn set_token_handler_address(&mut self, address: Bech32Address) {
-        let list = self.token_handler_addresses.get_or_insert_default();
-        list.push(address);
-    }
-
     pub fn set_first_token(&mut self, token: EsdtTokenInfo) {
         self.first_token = Some(token);
     }
@@ -207,21 +196,6 @@ impl State {
             .expect(NO_KNOWN_CHAIN_FACTORY_SC)
             .first()
             .expect(NO_KNOWN_CHAIN_FACTORY_IN_THE_SPECIFIED_SHARD)
-    }
-
-    pub fn current_enshrine_esdt_safe_address(&self) -> &Bech32Address {
-        self.enshrine_esdt_safe_sc_addresses
-            .as_ref()
-            .expect(NO_KNOWN_ENSHRINE_ESDT_SAFE_SC)
-            .first()
-    }
-
-    pub fn current_token_handler_address(&self) -> &Bech32Address {
-        self.token_handler_addresses
-            .as_ref()
-            .expect(NO_KNOWN_TOKEN_HANDLER_SC)
-            .first()
-            .expect(NO_KNOWN_TOKEN_HANDLER_IN_THE_SPECIFIED_SHARD)
     }
 
     pub fn get_first_token_identifier(&self) -> TokenIdentifier<StaticApi> {
@@ -387,14 +361,6 @@ impl State {
             .expect(NO_KNOWN_CHAIN_FACTORY_SC)
             .get(shard as usize)
             .unwrap_or_else(|| panic!("No Chain Factory SC address for shard {}", shard))
-    }
-
-    pub fn get_token_handler_address(&self, shard: u32) -> &Bech32Address {
-        self.token_handler_addresses
-            .as_ref()
-            .expect(NO_KNOWN_TOKEN_HANDLER_SC)
-            .get(shard as usize)
-            .unwrap_or_else(|| panic!("No Token Handler address for shard {}", shard))
     }
 
     pub fn get_mvx_esdt_safe_address(&self, shard: u32) -> &Bech32Address {
