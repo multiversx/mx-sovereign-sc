@@ -14,7 +14,7 @@ pub trait ConfigsModule:
     + storage::ChainConfigStorageModule
     + utils::UtilsModule
     + config_utils::ChainConfigUtilsModule
-    + events::EventsModule
+    + custom_events::CustomEventsModule
     + setup_phase::SetupPhaseModule
 {
     #[only_owner]
@@ -36,33 +36,28 @@ pub trait ConfigsModule:
 
         let config_hash = new_config.generate_hash();
         if config_hash.is_empty() {
-            self.failed_bridge_operation_event(
+            self.complete_operation(
                 &hash_of_hashes,
                 &config_hash,
-                &ManagedBuffer::from(ERROR_AT_ENCODING),
+                Some(ManagedBuffer::from(ERROR_AT_ENCODING)),
             );
-
-            self.remove_executed_hash(&hash_of_hashes, &config_hash);
             return;
         };
 
         self.lock_operation_hash(&config_hash, &hash_of_hashes);
 
         if let Some(error_message) = self.is_new_config_valid(&new_config) {
-            self.failed_bridge_operation_event(
+            self.complete_operation(
                 &hash_of_hashes,
                 &config_hash,
-                &ManagedBuffer::from(error_message),
+                Some(ManagedBuffer::from(error_message)),
             );
-
-            self.remove_executed_hash(&hash_of_hashes, &config_hash);
             return;
         } else {
             self.sovereign_config().set(new_config);
         }
 
-        self.remove_executed_hash(&hash_of_hashes, &config_hash);
-        self.execute_bridge_operation_event(&hash_of_hashes, &config_hash);
+        self.complete_operation(&hash_of_hashes, &config_hash, None);
     }
 
     #[endpoint(updateRegistrationStatus)]
@@ -79,14 +74,11 @@ pub trait ConfigsModule:
         self.lock_operation_hash(&status_hash, &hash_of_hashes);
 
         if registration_status != DISABLED && registration_status != ENABLED {
-            self.failed_bridge_operation_event(
+            self.complete_operation(
                 &hash_of_hashes,
                 &status_hash,
-                &ManagedBuffer::from(INVALID_REGISTRATION_STATUS),
+                Some(ManagedBuffer::from(INVALID_REGISTRATION_STATUS)),
             );
-
-            self.remove_executed_hash(&hash_of_hashes, &status_hash);
-
             return;
         }
 
@@ -94,7 +86,7 @@ pub trait ConfigsModule:
 
         registration_status_mapper.set(registration_status);
 
-        self.remove_executed_hash(&hash_of_hashes, &status_hash);
         self.registration_status_update_event(&self.get_event_msg(registration_status));
+        self.complete_operation(&hash_of_hashes, &status_hash, None);
     }
 }

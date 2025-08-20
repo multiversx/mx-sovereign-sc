@@ -26,3 +26,6 @@ path = "../utils"
 
 [dependencies.error-messages]
 path = "../error-messages"
+
+[dependencies.custom-events]
+path = "../custom-events"

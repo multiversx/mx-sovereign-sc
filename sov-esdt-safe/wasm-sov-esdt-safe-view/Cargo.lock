@@ -24,12 +24,22 @@ checksum = "5c8214115b7bf84099f1309324e63141d4c5d7cc26862f97a0a857dbefe165bd"
 name = "cross-chain"
 version = "0.1.0"
 dependencies = [
+ "custom-events",
  "error-messages",
  "multiversx-sc",
  "multiversx-sc-modules",
  "proxies",
  "structs",
  "utils",
+]
+
+[[package]]
+name = "custom-events"
+version = "0.1.0"
+dependencies = [
+ "multiversx-sc",
+ "multiversx-sc-modules",
+ "structs",
 ]
 
 [[package]]
@@ -43,20 +53,11 @@ name = "error-messages"
 version = "0.1.0"
 
 [[package]]
-name = "events"
-version = "0.1.0"
-dependencies = [
- "multiversx-sc",
- "multiversx-sc-modules",
- "structs",
-]
-
-[[package]]
 name = "fee-market"
 version = "0.1.0"
 dependencies = [
+ "custom-events",
  "error-messages",
- "events",
  "multiversx-sc",
  "proxies",
  "setup-phase",
@@ -232,8 +233,8 @@ name = "sov-esdt-safe"
 version = "0.1.0"
 dependencies = [
  "cross-chain",
+ "custom-events",
  "error-messages",
- "events",
  "fee-market",
  "multiversx-sc",
  "multiversx-sc-modules",
@@ -299,6 +300,7 @@ checksum = "151ac09978d3c2862c4e39b557f4eceee2cc72150bc4cb4f16abf061b6e381fb"
 name = "utils"
 version = "0.1.0"
 dependencies = [
+ "custom-events",
  "error-messages",
  "multiversx-sc",
  "proxies",

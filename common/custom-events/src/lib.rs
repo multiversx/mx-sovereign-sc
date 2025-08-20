@@ -6,7 +6,7 @@ multiversx_sc::imports!();
 multiversx_sc::derive_imports!();
 
 #[multiversx_sc::module]
-pub trait EventsModule {
+pub trait CustomEventsModule {
     #[event("deposit")]
     fn deposit_event(
         &self,
@@ -27,14 +27,7 @@ pub trait EventsModule {
         &self,
         #[indexed] hash_of_hashes: &ManagedBuffer,
         #[indexed] hash_of_bridge_op: &ManagedBuffer,
-    );
-
-    #[event("failedBridgeOp")]
-    fn failed_bridge_operation_event(
-        &self,
-        #[indexed] hash_of_hashes: &ManagedBuffer,
-        #[indexed] hash: &ManagedBuffer,
-        error_message: &ManagedBuffer,
+        error_message: Option<ManagedBuffer>,
     );
 
     #[event("register")]

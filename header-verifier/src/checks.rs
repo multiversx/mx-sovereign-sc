@@ -11,7 +11,9 @@ multiversx_sc::derive_imports!();
 
 #[multiversx_sc::module]
 pub trait HeaderVerifierChecksModule:
-    crate::storage::HeaderVerifierStorageModule + events::EventsModule + setup_phase::SetupPhaseModule
+    crate::storage::HeaderVerifierStorageModule
+    + custom_events::CustomEventsModule
+    + setup_phase::SetupPhaseModule
 {
     fn require_bls_pub_keys_empty(&self, epoch: u64) {
         require!(

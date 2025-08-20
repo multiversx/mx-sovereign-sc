@@ -11,6 +11,7 @@ pub trait RegisterTokenModule:
     + cross_chain::storage::CrossChainStorage
     + cross_chain::deposit_common::DepositCommonModule
     + cross_chain::execute_common::ExecuteCommonModule
+    + custom_events::CustomEventsModule
 {
     #[payable("EGLD")]
     #[endpoint(registerToken)]

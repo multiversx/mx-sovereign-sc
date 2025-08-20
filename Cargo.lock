@@ -221,8 +221,8 @@ version = "0.1.0"
 dependencies = [
  "common-test-setup",
  "cross-chain",
+ "custom-events",
  "error-messages",
- "events",
  "multiversx-sc",
  "multiversx-sc-modules",
  "multiversx-sc-scenario",
@@ -247,6 +247,7 @@ version = "0.1.0"
 dependencies = [
  "chain-config",
  "common-test-setup",
+ "custom-events",
  "error-messages",
  "multiversx-sc",
  "multiversx-sc-modules",
@@ -407,6 +408,7 @@ dependencies = [
 name = "cross-chain"
 version = "0.1.0"
 dependencies = [
+ "custom-events",
  "error-messages",
  "multiversx-sc",
  "multiversx-sc-modules",
@@ -459,6 +461,15 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn",
+]
+
+[[package]]
+name = "custom-events"
+version = "0.1.0"
+dependencies = [
+ "multiversx-sc",
+ "multiversx-sc-modules",
+ "structs",
 ]
 
 [[package]]
@@ -573,15 +584,6 @@ name = "error-messages"
 version = "0.1.0"
 
 [[package]]
-name = "events"
-version = "0.1.0"
-dependencies = [
- "multiversx-sc",
- "multiversx-sc-modules",
- "structs",
-]
-
-[[package]]
 name = "fastrand"
 version = "2.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -592,8 +594,8 @@ name = "fee-market"
 version = "0.1.0"
 dependencies = [
  "common-test-setup",
+ "custom-events",
  "error-messages",
- "events",
  "multiversx-sc",
  "multiversx-sc-scenario",
  "num-bigint",
@@ -806,8 +808,8 @@ version = "0.1.0"
 dependencies = [
  "common-test-setup",
  "cross-chain",
+ "custom-events",
  "error-messages",
- "events",
  "multiversx-sc",
  "multiversx-sc-scenario",
  "proxies",
@@ -1492,8 +1494,8 @@ dependencies = [
  "chain-config",
  "common-test-setup",
  "cross-chain",
+ "custom-events",
  "error-messages",
- "events",
  "fee-market",
  "header-verifier",
  "multiversx-sc",
@@ -2242,8 +2244,8 @@ version = "0.1.0"
 dependencies = [
  "common-test-setup",
  "cross-chain",
+ "custom-events",
  "error-messages",
- "events",
  "fee-market",
  "multiversx-sc",
  "multiversx-sc-modules",
@@ -2425,6 +2427,7 @@ checksum = "1f3ccbac311fea05f86f61904b462b55fb3df8837a366dfc601a0161d0532f20"
 name = "token-whitelist"
 version = "0.1.0"
 dependencies = [
+ "custom-events",
  "error-messages",
  "multiversx-sc",
  "multiversx-sc-scenario",
@@ -2655,6 +2658,7 @@ checksum = "06abde3611657adf66d383f00b093d7faecc7fa57071cce2578660c9f1010821"
 name = "utils"
 version = "0.1.0"
 dependencies = [
+ "custom-events",
  "error-messages",
  "multiversx-sc",
  "proxies",

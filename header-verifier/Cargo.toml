@@ -24,8 +24,8 @@ path = "../common/setup-phase"
 [dependencies.error-messages]
 path = "../common/error-messages"
 
-[dependencies.events]
-path = "../common/events"
+[dependencies.custom-events]
+path = "../common/custom-events"
 
 [dependencies.cross-chain]
 path = "../common/cross-chain"

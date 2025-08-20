@@ -20,7 +20,7 @@ pub const MAX_STORED_EPOCHS: u64 = 3;
 pub trait HeaderVerifierUtilsModule:
     super::storage::HeaderVerifierStorageModule
     + checks::HeaderVerifierChecksModule
-    + events::EventsModule
+    + custom_events::CustomEventsModule
     + setup_phase::SetupPhaseModule
 {
     fn calculate_and_check_transfers_hashes(

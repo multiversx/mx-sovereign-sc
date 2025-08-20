@@ -27,8 +27,8 @@ path = "../common/structs"
 [dependencies.error-messages]
 path = "../common/error-messages"
 
-[dependencies.events]
-path = "../common/events"
+[dependencies.custom-events]
+path = "../common/custom-events"
 
 [dev-dependencies]
 num-bigint = "0.4.2"

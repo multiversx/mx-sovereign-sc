@@ -20,7 +20,7 @@ pub trait SubtractFeeModule:
     + crate::price_aggregator::PriceAggregatorModule
     + utils::UtilsModule
     + setup_phase::SetupPhaseModule
-    + events::EventsModule
+    + custom_events::CustomEventsModule
 {
     #[only_owner]
     #[endpoint(addUsersToWhitelist)]
@@ -59,13 +59,11 @@ pub trait SubtractFeeModule:
 
             let pair_hash = pair_struct.generate_hash();
             if pair_hash.is_empty() {
-                self.failed_bridge_operation_event(
+                self.complete_operation(
                     &hash_of_hashes,
                     &pair_hash,
-                    &ManagedBuffer::from(ERROR_AT_ENCODING),
+                    Some(ManagedBuffer::from(ERROR_AT_ENCODING)),
                 );
-
-                self.remove_executed_hash(&hash_of_hashes, &pair_hash);
                 return;
             };
 
@@ -80,14 +78,11 @@ pub trait SubtractFeeModule:
         self.lock_operation_hash(&hash_of_hashes, pairs_hash_byte_array.as_managed_buffer());
 
         if percentage_sum != TOTAL_PERCENTAGE as u64 {
-            self.failed_bridge_operation_event(
+            self.complete_operation(
                 &hash_of_hashes,
                 pairs_hash_byte_array.as_managed_buffer(),
-                &ManagedBuffer::from(INVALID_PERCENTAGE_SUM),
+                Some(ManagedBuffer::from(INVALID_PERCENTAGE_SUM)),
             );
-
-            self.remove_executed_hash(&hash_of_hashes, pairs_hash_byte_array.as_managed_buffer());
-
             return;
         }
 
@@ -117,10 +112,10 @@ pub trait SubtractFeeModule:
 
         self.tokens_for_fees().clear();
 
-        self.remove_executed_hash(&hash_of_hashes, pairs_hash_byte_array.as_managed_buffer());
-        self.execute_bridge_operation_event(
+        self.complete_operation(
             &hash_of_hashes,
             pairs_hash_byte_array.as_managed_buffer(),
+            None,
         );
     }
 

@@ -748,7 +748,9 @@ pub trait CommonInteractorTrait {
 
                     let found_error_in_data = found_log.data.iter().any(|data_item| {
                         if let Ok(decoded_data) = BASE64.decode(data_item) {
-                            decoded_data == expected_error_bytes
+                            decoded_data
+                                .windows(expected_error_bytes.len())
+                                .any(|w| w == expected_error_bytes)
                         } else {
                             false
                         }
