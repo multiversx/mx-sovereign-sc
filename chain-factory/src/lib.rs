@@ -23,25 +23,23 @@ pub trait ChainFactoryContract:
         sovereign_forge_address: ManagedAddress,
         chain_config_template: ManagedAddress,
         header_verifier_template: ManagedAddress,
-        cross_chain_operation_template: ManagedAddress,
+        mvx_esdt_safe_template: ManagedAddress,
         fee_market_template: ManagedAddress,
     ) {
         self.require_sc_address(&sovereign_forge_address);
         self.require_sc_address(&chain_config_template);
         self.require_sc_address(&header_verifier_template);
-        self.require_sc_address(&cross_chain_operation_template);
+        self.require_sc_address(&mvx_esdt_safe_template);
         self.require_sc_address(&fee_market_template);
 
         self.add_admin(sovereign_forge_address);
         self.chain_config_template().set(chain_config_template);
         self.header_verifier_template()
             .set(header_verifier_template);
-        self.mvx_esdt_safe_template()
-            .set(cross_chain_operation_template);
+        self.mvx_esdt_safe_template().set(mvx_esdt_safe_template);
         self.fee_market_template().set(fee_market_template);
     }
 
-    // TODO: Has to be voted first
     #[upgrade]
     fn upgrade(&self) {}
 }
