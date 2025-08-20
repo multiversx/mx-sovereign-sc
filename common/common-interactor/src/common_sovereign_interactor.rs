@@ -612,7 +612,14 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             optional_sov_config.clone(),
         )
         .await;
-        //TODO: here should be the registration of validators
+        let chain_config_address = self.get_chain_config_address(&preferred_chain_id).await;
+        self.register_as_validator(
+            shard,
+            ManagedBuffer::from("genesis_validator"),
+            MultiEgldOrEsdtPayment::new(),
+            chain_config_address,
+        )
+        .await;
         self.deploy_phase_two(caller.clone(), optional_esdt_safe_config.clone())
             .await;
         self.deploy_phase_three(caller.clone(), fee.clone()).await;
@@ -689,6 +696,28 @@ pub trait CommonInteractorTrait: InteractorHelpers {
                 _ => {}
             }
         }
+    }
+
+    async fn get_chain_config_address(&mut self, chain_id: &str) -> Bech32Address {
+        let sovereign_forge_address = self.state().current_sovereign_forge_sc_address().clone();
+
+        let result_value = self
+            .interactor()
+            .query()
+            .to(sovereign_forge_address)
+            .typed(SovereignForgeProxy)
+            .sovereign_deployed_contracts(chain_id)
+            .returns(ReturnsResult)
+            .run()
+            .await;
+
+        for contract in result_value {
+            if let ScArray::ChainConfig = contract.id {
+                return Bech32Address::from(contract.address.to_address());
+            }
+        }
+
+        panic!("Chain config address not found for chain_id: {}", chain_id);
     }
 
     async fn deploy_phase_one(
