@@ -82,7 +82,7 @@ async fn test_update_invalid_config() {
             hash_of_hashes,
             config,
             None,
-            Some("failedBridgeOp"),
+            Some("executedBridgeOp"),
             Some(MAX_GAS_LIMIT_PER_TX_EXCEEDED),
         )
         .await;

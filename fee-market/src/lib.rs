@@ -18,7 +18,7 @@ pub trait FeeMarket:
     + price_aggregator::PriceAggregatorModule
     + utils::UtilsModule
     + setup_phase::SetupPhaseModule
-    + events::EventsModule
+    + custom_events::CustomEventsModule
 {
     #[init]
     fn init(&self, esdt_safe_address: ManagedAddress, fee: Option<FeeStruct<Self::Api>>) {

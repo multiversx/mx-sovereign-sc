@@ -293,13 +293,11 @@ fn test_update_config_invalid_config() {
         MultiValueEncoded::from_iter(vec![config_hash]),
     );
 
-    state.common_setup.complete_chain_config_setup_phase(None);
-
     state.update_sovereign_config(
         hash_of_hashes,
         new_config,
         None,
-        Some("failedBridgeOp"),
+        Some("executedBridgeOp"),
         Some(INVALID_MIN_MAX_VALIDATOR_NUMBERS),
     );
 }
@@ -997,7 +995,7 @@ fn update_registration_invalid_status() {
         &ManagedBuffer::new(),
         2,
         None,
-        Some("failedBridgeOp"),
+        Some("executedBridgeOp"),
     );
 }
 

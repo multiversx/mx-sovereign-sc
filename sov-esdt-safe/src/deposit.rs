@@ -12,7 +12,7 @@ pub trait DepositModule:
     + cross_chain::deposit_common::DepositCommonModule
     + cross_chain::execute_common::ExecuteCommonModule
     + cross_chain::storage::CrossChainStorage
-    + events::EventsModule
+    + custom_events::CustomEventsModule
 {
     #[payable]
     #[endpoint]

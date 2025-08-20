@@ -1,4 +1,4 @@
-use error_messages::{ERROR_AT_ENCODING, ESDT_SAFE_STILL_PAUSED};
+use error_messages::{DEPOSIT_AMOUNT_NOT_ENOUGH, ERROR_AT_ENCODING, ESDT_SAFE_STILL_PAUSED};
 use structs::{
     aliases::GasLimit,
     generate_hash::GenerateHash,
@@ -15,7 +15,7 @@ pub trait ExecuteModule:
     + crate::register_token::RegisterTokenModule
     + utils::UtilsModule
     + setup_phase::SetupPhaseModule
-    + events::EventsModule
+    + custom_events::CustomEventsModule
     + cross_chain::storage::CrossChainStorage
     + cross_chain::deposit_common::DepositCommonModule
     + cross_chain::execute_common::ExecuteCommonModule
@@ -28,14 +28,11 @@ pub trait ExecuteModule:
 
         let operation_hash = operation.generate_hash();
         if operation_hash.is_empty() {
-            self.failed_bridge_operation_event(
+            self.complete_operation(
                 &hash_of_hashes,
                 &operation_hash,
-                &ManagedBuffer::from(ERROR_AT_ENCODING),
+                Some(ManagedBuffer::from(ERROR_AT_ENCODING)),
             );
-
-            self.remove_executed_hash(&hash_of_hashes, &operation_hash);
-            return;
         };
 
         self.lock_operation_hash(&hash_of_hashes, &operation_hash);
@@ -119,9 +116,11 @@ pub trait ExecuteModule:
             let deposited_amount = deposited_mapper.get();
 
             if operation_token.token_data.amount > deposited_amount {
-                self.emit_transfer_failed_events(hash_of_hashes, operation_tuple);
-                self.remove_executed_hash(hash_of_hashes, &operation_tuple.op_hash);
-
+                self.complete_operation(
+                    hash_of_hashes,
+                    &operation_tuple.op_hash,
+                    Some(ManagedBuffer::from(DEPOSIT_AMOUNT_NOT_ENOUGH)),
+                );
                 return None;
             }
 
@@ -282,23 +281,20 @@ pub trait ExecuteModule:
     ) {
         match result {
             ManagedAsyncCallResult::Ok(_) => {
-                self.execute_bridge_operation_event(hash_of_hashes, &operation_tuple.op_hash);
+                self.complete_operation(hash_of_hashes, &operation_tuple.op_hash, None);
             }
-            ManagedAsyncCallResult::Err(_) => {
-                self.emit_transfer_failed_events(hash_of_hashes, operation_tuple);
+            ManagedAsyncCallResult::Err(err) => {
+                self.complete_operation(
+                    hash_of_hashes,
+                    &operation_tuple.op_hash,
+                    Some(err.err_msg),
+                );
+                self.refund_transfers(operation_tuple);
             }
         }
-
-        self.remove_executed_hash(hash_of_hashes, &operation_tuple.op_hash);
     }
 
-    fn emit_transfer_failed_events(
-        &self,
-        hash_of_hashes: &ManagedBuffer,
-        operation_tuple: &OperationTuple<Self::Api>,
-    ) {
-        self.execute_bridge_operation_event(hash_of_hashes, &operation_tuple.op_hash);
-
+    fn refund_transfers(&self, operation_tuple: &OperationTuple<Self::Api>) {
         if operation_tuple.operation.tokens.is_empty() {
             return;
         }

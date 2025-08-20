@@ -11,7 +11,7 @@ pub trait HeaderVerifierOperationsModule:
     utils::HeaderVerifierUtilsModule
     + storage::HeaderVerifierStorageModule
     + checks::HeaderVerifierChecksModule
-    + events::EventsModule
+    + custom_events::CustomEventsModule
     + setup_phase::SetupPhaseModule
 {
     #[endpoint(registerBridgeOps)]
@@ -108,7 +108,7 @@ pub trait HeaderVerifierOperationsModule:
         self.bls_pub_keys(epoch).extend(new_bls_keys);
 
         hash_of_hashes_history_mapper.insert(bridge_operations_hash.clone());
-        self.execute_bridge_operation_event(&bridge_operations_hash, &operation_hash);
+        self.execute_bridge_operation_event(&bridge_operations_hash, &operation_hash, None);
     }
 
     #[endpoint(removeExecutedHash)]

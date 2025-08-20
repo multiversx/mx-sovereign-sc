@@ -25,8 +25,8 @@ name = "chain-config"
 version = "0.1.0"
 dependencies = [
  "cross-chain",
+ "custom-events",
  "error-messages",
- "events",
  "multiversx-sc",
  "multiversx-sc-modules",
  "proxies",
@@ -40,6 +40,7 @@ name = "chain-factory"
 version = "0.1.0"
 dependencies = [
  "chain-config",
+ "custom-events",
  "error-messages",
  "multiversx-sc",
  "multiversx-sc-modules",
@@ -60,12 +61,22 @@ dependencies = [
 name = "cross-chain"
 version = "0.1.0"
 dependencies = [
+ "custom-events",
  "error-messages",
  "multiversx-sc",
  "multiversx-sc-modules",
  "proxies",
  "structs",
  "utils",
+]
+
+[[package]]
+name = "custom-events"
+version = "0.1.0"
+dependencies = [
+ "multiversx-sc",
+ "multiversx-sc-modules",
+ "structs",
 ]
 
 [[package]]
@@ -77,15 +88,6 @@ checksum = "c34f04666d835ff5d62e058c3995147c06f42fe86ff053337632bca83e42702d"
 [[package]]
 name = "error-messages"
 version = "0.1.0"
-
-[[package]]
-name = "events"
-version = "0.1.0"
-dependencies = [
- "multiversx-sc",
- "multiversx-sc-modules",
- "structs",
-]
 
 [[package]]
 name = "generic-array"
@@ -290,6 +292,7 @@ checksum = "151ac09978d3c2862c4e39b557f4eceee2cc72150bc4cb4f16abf061b6e381fb"
 name = "utils"
 version = "0.1.0"
 dependencies = [
+ "custom-events",
  "error-messages",
  "multiversx-sc",
  "proxies",

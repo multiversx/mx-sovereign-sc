@@ -20,7 +20,7 @@ pub trait ChainConfigContract:
     + configs::ConfigsModule
     + setup_phase::SetupPhaseModule
     + utils::UtilsModule
-    + events::EventsModule
+    + custom_events::CustomEventsModule
 {
     #[init]
     fn init(&self, opt_config: OptionalValue<SovereignConfig<Self::Api>>) {

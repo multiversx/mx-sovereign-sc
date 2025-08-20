@@ -14,7 +14,7 @@ pub trait Headerverifier:
     + utils::HeaderVerifierUtilsModule
     + operations::HeaderVerifierOperationsModule
     + checks::HeaderVerifierChecksModule
-    + events::EventsModule
+    + custom_events::CustomEventsModule
     + setup_phase::SetupPhaseModule
 {
     #[init]
