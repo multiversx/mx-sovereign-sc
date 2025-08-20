@@ -281,7 +281,7 @@ pub trait ExecuteModule:
     ) {
         match result {
             ManagedAsyncCallResult::Ok(_) => {
-                self.execute_bridge_operation_event(hash_of_hashes, &operation_tuple.op_hash, None);
+                self.complete_operation(hash_of_hashes, &operation_tuple.op_hash, None);
             }
             ManagedAsyncCallResult::Err(err) => {
                 self.complete_operation(
@@ -289,12 +289,12 @@ pub trait ExecuteModule:
                     &operation_tuple.op_hash,
                     Some(err.err_msg),
                 );
-                self.emit_transfer_failed_events(operation_tuple);
+                self.refund_transfers(operation_tuple);
             }
         }
     }
 
-    fn emit_transfer_failed_events(&self, operation_tuple: &OperationTuple<Self::Api>) {
+    fn refund_transfers(&self, operation_tuple: &OperationTuple<Self::Api>) {
         if operation_tuple.operation.tokens.is_empty() {
             return;
         }
