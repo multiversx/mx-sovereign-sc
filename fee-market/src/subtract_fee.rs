@@ -59,7 +59,11 @@ pub trait SubtractFeeModule:
 
             let pair_hash = pair_struct.generate_hash();
             if pair_hash.is_empty() {
-                self.complete_operation(&hash_of_hashes, &pair_hash, Some(ERROR_AT_ENCODING));
+                self.complete_operation(
+                    &hash_of_hashes,
+                    &pair_hash,
+                    Some(ManagedBuffer::from(ERROR_AT_ENCODING)),
+                );
                 return;
             };
 
@@ -77,7 +81,7 @@ pub trait SubtractFeeModule:
             self.complete_operation(
                 &hash_of_hashes,
                 pairs_hash_byte_array.as_managed_buffer(),
-                Some(INVALID_PERCENTAGE_SUM),
+                Some(ManagedBuffer::from(INVALID_PERCENTAGE_SUM)),
             );
             return;
         }

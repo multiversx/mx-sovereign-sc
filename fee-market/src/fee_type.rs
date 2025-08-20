@@ -32,7 +32,11 @@ pub trait FeeTypeModule:
 
         let token_id_hash = base_token.generate_hash();
         if token_id_hash.is_empty() {
-            self.complete_operation(&hash_of_hashes, &token_id_hash, Some(ERROR_AT_ENCODING));
+            self.complete_operation(
+                &hash_of_hashes,
+                &token_id_hash,
+                Some(ManagedBuffer::from(ERROR_AT_ENCODING)),
+            );
             return;
         };
 
@@ -63,14 +67,22 @@ pub trait FeeTypeModule:
 
         let fee_hash = fee_struct.generate_hash();
         if fee_hash.is_empty() {
-            self.complete_operation(&hash_of_hashes, &fee_hash, Some(ERROR_AT_ENCODING));
+            self.complete_operation(
+                &hash_of_hashes,
+                &fee_hash,
+                Some(ManagedBuffer::from(ERROR_AT_ENCODING)),
+            );
             return;
         };
 
         self.lock_operation_hash(&hash_of_hashes, &fee_hash);
 
         if let Some(set_fee_error_msg) = self.set_fee_in_storage(&fee_struct) {
-            self.complete_operation(&hash_of_hashes, &fee_hash, Some(set_fee_error_msg));
+            self.complete_operation(
+                &hash_of_hashes,
+                &fee_hash,
+                Some(ManagedBuffer::from(set_fee_error_msg)),
+            );
             return;
         }
 

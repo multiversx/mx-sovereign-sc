@@ -28,7 +28,11 @@ pub trait ExecuteModule:
 
         let operation_hash = operation.generate_hash();
         if operation_hash.is_empty() {
-            self.complete_operation(&hash_of_hashes, &operation_hash, Some(ERROR_AT_ENCODING));
+            self.complete_operation(
+                &hash_of_hashes,
+                &operation_hash,
+                Some(ManagedBuffer::from(ERROR_AT_ENCODING)),
+            );
         };
 
         self.lock_operation_hash(&hash_of_hashes, &operation_hash);
@@ -115,7 +119,7 @@ pub trait ExecuteModule:
                 self.complete_operation(
                     hash_of_hashes,
                     &operation_tuple.op_hash,
-                    Some(DEPOSIT_AMOUNT_NOT_ENOUGH),
+                    Some(ManagedBuffer::from(DEPOSIT_AMOUNT_NOT_ENOUGH)),
                 );
                 return None;
             }
@@ -268,7 +272,6 @@ pub trait ExecuteModule:
             .register_promise();
     }
 
-    // TODO: modify this to
     #[promises_callback]
     fn execute(
         &self,
@@ -281,25 +284,17 @@ pub trait ExecuteModule:
                 self.execute_bridge_operation_event(hash_of_hashes, &operation_tuple.op_hash, None);
             }
             ManagedAsyncCallResult::Err(err) => {
-                self.emit_transfer_failed_events(err.err_msg, hash_of_hashes, operation_tuple);
+                self.complete_operation(
+                    hash_of_hashes,
+                    &operation_tuple.op_hash,
+                    Some(err.err_msg),
+                );
+                self.emit_transfer_failed_events(operation_tuple);
             }
         }
-
-        self.remove_executed_hash(hash_of_hashes, &operation_tuple.op_hash);
     }
 
-    fn emit_transfer_failed_events(
-        &self,
-        err_msg: ManagedBuffer<Self::Api>,
-        hash_of_hashes: &ManagedBuffer,
-        operation_tuple: &OperationTuple<Self::Api>,
-    ) {
-        self.execute_bridge_operation_event(
-            hash_of_hashes,
-            &operation_tuple.op_hash,
-            Some(err_msg),
-        );
-
+    fn emit_transfer_failed_events(&self, operation_tuple: &OperationTuple<Self::Api>) {
         if operation_tuple.operation.tokens.is_empty() {
             return;
         }

@@ -33,13 +33,9 @@ pub trait UtilsModule: custom_events::CustomEventsModule {
         &self,
         hash_of_hashes: &ManagedBuffer,
         operation_hash: &ManagedBuffer,
-        error_message: Option<&str>,
+        error_message: Option<ManagedBuffer>,
     ) {
-        self.execute_bridge_operation_event(
-            hash_of_hashes,
-            operation_hash,
-            error_message.map(ManagedBuffer::from),
-        );
+        self.execute_bridge_operation_event(hash_of_hashes, operation_hash, error_message);
         self.remove_executed_hash(hash_of_hashes, operation_hash);
     }
 

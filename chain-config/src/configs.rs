@@ -36,14 +36,22 @@ pub trait ConfigsModule:
 
         let config_hash = new_config.generate_hash();
         if config_hash.is_empty() {
-            self.complete_operation(&hash_of_hashes, &config_hash, Some(ERROR_AT_ENCODING));
+            self.complete_operation(
+                &hash_of_hashes,
+                &config_hash,
+                Some(ManagedBuffer::from(ERROR_AT_ENCODING)),
+            );
             return;
         };
 
         self.lock_operation_hash(&config_hash, &hash_of_hashes);
 
         if let Some(error_message) = self.is_new_config_valid(&new_config) {
-            self.complete_operation(&hash_of_hashes, &config_hash, Some(error_message));
+            self.complete_operation(
+                &hash_of_hashes,
+                &config_hash,
+                Some(ManagedBuffer::from(error_message)),
+            );
             return;
         } else {
             self.sovereign_config().set(new_config);
@@ -69,7 +77,7 @@ pub trait ConfigsModule:
             self.complete_operation(
                 &hash_of_hashes,
                 &status_hash,
-                Some(INVALID_REGISTRATION_STATUS),
+                Some(ManagedBuffer::from(INVALID_REGISTRATION_STATUS)),
             );
             return;
         }
