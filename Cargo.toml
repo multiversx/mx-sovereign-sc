@@ -20,5 +20,4 @@ members = [
   "testing-sc",
   "testing-sc/meta",
   "interactor",
-  "common/token-whitelist",
 ]
