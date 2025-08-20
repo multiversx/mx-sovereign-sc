@@ -14,11 +14,6 @@ pub enum FeeType<M: ManagedTypeApi> {
         per_transfer: BigUint<M>,
         per_gas: BigUint<M>,
     },
-    AnyToken {
-        base_fee_token: TokenIdentifier<M>,
-        per_transfer: BigUint<M>,
-        per_gas: BigUint<M>,
-    },
 }
 
 #[type_abi]
