@@ -36,4 +36,30 @@ pub trait EventsModule {
         #[indexed] hash: &ManagedBuffer,
         error_message: &ManagedBuffer,
     );
+
+    #[event("register")]
+    fn register_event(
+        &self,
+        #[indexed] id: &BigUint,
+        #[indexed] address: &ManagedAddress,
+        #[indexed] bls_key: &ManagedBuffer,
+        #[indexed] egld_stake: &BigUint,
+        #[indexed] token_stake: &Option<ManagedVec<EsdtTokenPayment<Self::Api>>>,
+    );
+
+    #[event("unregister")]
+    fn unregister_event(
+        &self,
+        #[indexed] id: &BigUint,
+        #[indexed] address: &ManagedAddress,
+        #[indexed] bls_key: &ManagedBuffer,
+        #[indexed] egld_stake: &BigUint,
+        #[indexed] token_stake: &Option<ManagedVec<EsdtTokenPayment<Self::Api>>>,
+    );
+
+    #[event("completeGenesisPhase")]
+    fn complete_genesis_event(&self);
+
+    #[event("registrationStatusUpdate")]
+    fn registration_status_update_event(&self, registration_status: &ManagedBuffer);
 }

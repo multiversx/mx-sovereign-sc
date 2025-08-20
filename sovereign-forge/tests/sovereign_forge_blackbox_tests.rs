@@ -1,4 +1,4 @@
-use chain_config::validator_rules::ValidatorRulesModule;
+use chain_config::storage::ChainConfigStorageModule;
 use common_test_setup::constants::{
     CHAIN_FACTORY_SC_ADDRESS, CHAIN_ID, DEPLOY_COST, ESDT_SAFE_ADDRESS, FIRST_TEST_TOKEN,
     ONE_HUNDRED_THOUSAND, OWNER_ADDRESS, SOVEREIGN_FORGE_SC_ADDRESS,
@@ -38,31 +38,6 @@ fn test_deploy_contracts() {
     let mut state = SovereignForgeTestState::new();
     state.common_setup.deploy_sovereign_forge();
     state.common_setup.deploy_chain_factory();
-}
-
-/// ### TEST
-/// S-FORGE_REGISTER_TOKEN_HANDLER_OK
-///
-/// ### ACTION
-/// Register token handler for any shard
-///
-/// ### EXPECTED
-/// sovereign_forge.token_handlers() storage is non-empty
-#[test]
-fn test_register_token_handler() {
-    let mut state = SovereignForgeTestState::new();
-    state.common_setup.deploy_sovereign_forge();
-
-    state.register_token_handler(2, CHAIN_FACTORY_SC_ADDRESS, None);
-
-    state
-        .common_setup
-        .world
-        .query()
-        .to(SOVEREIGN_FORGE_SC_ADDRESS)
-        .whitebox(sovereign_forge::contract_obj, |sc| {
-            assert!(!sc.token_handlers(2).is_empty());
-        });
 }
 
 /// ### TEST

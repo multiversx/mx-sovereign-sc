@@ -123,31 +123,6 @@ where
             .original_result()
     }
 
-    pub fn deploy_enshrine_esdt_safe<
-        Arg0: ProxyArg<bool>,
-        Arg1: ProxyArg<ManagedAddress<Env::Api>>,
-        Arg2: ProxyArg<TokenIdentifier<Env::Api>>,
-        Arg3: ProxyArg<ManagedBuffer<Env::Api>>,
-        Arg4: ProxyArg<Option<structs::configs::EsdtSafeConfig<Env::Api>>>,
-    >(
-        self,
-        is_sovereign_chain: Arg0,
-        token_handler_address: Arg1,
-        wegld_identifier: Arg2,
-        sov_token_prefix: Arg3,
-        opt_config: Arg4,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ManagedAddress<Env::Api>> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("deployEnshrineEsdtSafe")
-            .argument(&is_sovereign_chain)
-            .argument(&token_handler_address)
-            .argument(&wegld_identifier)
-            .argument(&sov_token_prefix)
-            .argument(&opt_config)
-            .original_result()
-    }
-
     pub fn deploy_mvx_esdt_safe<
         Arg0: ProxyArg<OptionalValue<structs::configs::EsdtSafeConfig<Env::Api>>>,
     >(

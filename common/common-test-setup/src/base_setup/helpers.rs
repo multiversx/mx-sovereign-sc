@@ -1,6 +1,9 @@
 use multiversx_sc_scenario::{
     api::StaticApi,
-    imports::{ManagedBuffer, ReturnsResultUnmanaged, TestSCAddress, TopEncode, UserBuiltinProxy},
+    imports::{
+        ManagedBuffer, MultiEgldOrEsdtPayment, ReturnsResultUnmanaged, TestSCAddress, TopEncode,
+        UserBuiltinProxy,
+    },
     multiversx_chain_vm::crypto_functions::sha256,
     ScenarioTxRun,
 };
@@ -12,12 +15,24 @@ use structs::{
 use crate::{
     base_setup::init::BaseSetup,
     constants::{
-        CHAIN_CONFIG_ADDRESS, CHAIN_FACTORY_SC_ADDRESS, ENSHRINE_SC_ADDRESS, ESDT_SAFE_ADDRESS,
-        FEE_MARKET_ADDRESS, HEADER_VERIFIER_ADDRESS, OWNER_ADDRESS,
+        CHAIN_CONFIG_ADDRESS, CHAIN_FACTORY_SC_ADDRESS, ESDT_SAFE_ADDRESS, FEE_MARKET_ADDRESS,
+        HEADER_VERIFIER_ADDRESS, OWNER_ADDRESS,
     },
 };
 
 impl BaseSetup {
+    // TODO: add payment
+    pub fn register_multiple_validators(&mut self, new_validators: Vec<ManagedBuffer<StaticApi>>) {
+        for new_validator in new_validators {
+            self.register_as_validator(
+                &new_validator,
+                &MultiEgldOrEsdtPayment::new(),
+                None,
+                Some("register"),
+            );
+        }
+    }
+
     pub fn change_ownership_to_header_verifier(&mut self, sc_address: TestSCAddress) {
         self.world
             .tx()
@@ -62,7 +77,6 @@ impl BaseSetup {
             ScArray::ESDTSafe => ESDT_SAFE_ADDRESS,
             ScArray::HeaderVerifier => HEADER_VERIFIER_ADDRESS,
             ScArray::FeeMarket => FEE_MARKET_ADDRESS,
-            ScArray::EnshrineESDTSafe => ENSHRINE_SC_ADDRESS,
             _ => TestSCAddress::new("ERROR"),
         }
     }

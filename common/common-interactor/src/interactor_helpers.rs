@@ -423,12 +423,6 @@ pub trait InteractorHelpers {
             ScArray::FeeMarket => ManagedAddress::from_address(
                 &self.state().current_fee_market_address().to_address(),
             ),
-            ScArray::EnshrineESDTSafe => ManagedAddress::from_address(
-                &self
-                    .state()
-                    .current_enshrine_esdt_safe_address()
-                    .to_address(),
-            ),
             _ => TestSCAddress::new("ERROR").to_managed_address(),
         }
     }

@@ -62,7 +62,7 @@ impl MvxEsdtSafeInteract {
 
         let user_address = interactor.register_wallet(test_wallets::grace()).await; //shard 1
 
-        interactor.generate_blocks_until_epoch(1u64).await.unwrap();
+        interactor.generate_blocks_until_epoch(2u64).await.unwrap();
 
         MvxEsdtSafeInteract {
             interactor,
@@ -105,6 +105,20 @@ impl MvxEsdtSafeInteract {
         }
 
         self.state.set_initial_wallet_balance(all_tokens);
+    }
+
+    pub async fn complete_setup_phase(&mut self, shard: u32) {
+        let caller = self.get_bridge_owner_for_shard(shard).clone();
+        self.interactor
+            .tx()
+            .from(&caller)
+            .to(self.state.current_mvx_esdt_safe_contract_address())
+            .gas(90_000_000u64)
+            .typed(MvxEsdtSafeProxy)
+            .complete_setup_phase()
+            .returns(ReturnsResultUnmanaged)
+            .run()
+            .await;
     }
 
     pub async fn upgrade(&mut self) {

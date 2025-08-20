@@ -11,7 +11,7 @@ use common_test_setup::constants::{
     REGISTER_DEFAULT_TOKEN, REGISTER_TOKEN_PREFIX, SOVEREIGN_RECEIVER_ADDRESS, TOKEN_DISPLAY_NAME,
     TOKEN_TICKER,
 };
-use header_verifier::OperationHashStatus;
+use header_verifier::utils::OperationHashStatus;
 use multiversx_sc_snippets::multiversx_sc_scenario::multiversx_chain_vm::crypto_functions::sha256;
 use multiversx_sc_snippets::{hex, imports::*};
 use structs::fee::FeeStruct;
