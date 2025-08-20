@@ -28,8 +28,8 @@ multiversx_sc_wasm_adapter::endpoints! {
         getTokenFee => token_fee
         addUsersToWhitelist => add_users_to_whitelist
         removeUsersFromWhitelist => remove_users_from_whitelist
-        distributeFees => distribute_fees
         subtractFee => subtract_fee
+        distributeFees => distribute_fees
         getUsersWhitelist => users_whitelist
     )
 }

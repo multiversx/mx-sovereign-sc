@@ -1,22 +1,18 @@
 use error_messages::{
-    ERROR_AT_ENCODING, INVALID_PERCENTAGE_SUM, INVALID_TOKEN_PROVIDED_FOR_FEE,
-    PAYMENT_DOES_NOT_COVER_FEE, TOKEN_NOT_ACCEPTED_AS_FEE,
+    INVALID_TOKEN_PROVIDED_FOR_FEE, PAYMENT_DOES_NOT_COVER_FEE, TOKEN_NOT_ACCEPTED_AS_FEE,
 };
 use structs::{
     aliases::GasLimit,
-    fee::{AddressPercentagePair, FeeType, FinalPayment, SubtractPaymentArguments},
-    generate_hash::GenerateHash,
+    fee::{FeeType, FinalPayment, SubtractPaymentArguments},
 };
 
 multiversx_sc::imports!();
 multiversx_sc::derive_imports!();
 
-const TOTAL_PERCENTAGE: usize = 10_000;
-
 #[multiversx_sc::module]
 pub trait SubtractFeeModule:
     crate::fee_type::FeeTypeModule
-    + crate::fee_common::CommonFeeModule
+    + crate::storage::FeeStorageModule
     + utils::UtilsModule
     + setup_phase::SetupPhaseModule
     + custom_events::CustomEventsModule
@@ -31,91 +27,6 @@ pub trait SubtractFeeModule:
     #[endpoint(removeUsersFromWhitelist)]
     fn remove_users_from_whitelist(&self, users: MultiValueEncoded<ManagedAddress>) {
         self.remove_items(&mut self.users_whitelist(), users);
-    }
-
-    /// Percentages have to be between 0 and 10_000, and must all add up to 100% (i.e. 10_000)
-    #[only_owner]
-    #[endpoint(distributeFees)]
-    fn distribute_fees(
-        &self,
-        hash_of_hashes: ManagedBuffer,
-        address_percentage_pairs: MultiValueEncoded<MultiValue2<ManagedAddress, usize>>,
-    ) {
-        self.require_setup_complete();
-
-        let percentage_total = BigUint::from(TOTAL_PERCENTAGE);
-
-        let mut percentage_sum = 0u64;
-        let mut pairs = ManagedVec::<Self::Api, AddressPercentagePair<Self::Api>>::new();
-        let mut aggregated_hashes = ManagedBuffer::new();
-
-        for pair in address_percentage_pairs {
-            let (address, percentage) = pair.into_tuple();
-            let pair_struct = AddressPercentagePair {
-                address,
-                percentage,
-            };
-
-            let pair_hash = pair_struct.generate_hash();
-            if pair_hash.is_empty() {
-                self.complete_operation(
-                    &hash_of_hashes,
-                    &pair_hash,
-                    Some(ManagedBuffer::from(ERROR_AT_ENCODING)),
-                );
-                return;
-            };
-
-            aggregated_hashes.append(&pair_hash);
-            pairs.push(pair_struct);
-
-            percentage_sum += percentage as u64;
-        }
-
-        let pairs_hash_byte_array = self.crypto().sha256(aggregated_hashes);
-
-        self.lock_operation_hash(&hash_of_hashes, pairs_hash_byte_array.as_managed_buffer());
-
-        if percentage_sum != TOTAL_PERCENTAGE as u64 {
-            self.complete_operation(
-                &hash_of_hashes,
-                pairs_hash_byte_array.as_managed_buffer(),
-                Some(ManagedBuffer::from(INVALID_PERCENTAGE_SUM)),
-            );
-            return;
-        }
-
-        for token_id in self.tokens_for_fees().iter() {
-            let accumulated_fees = self.accumulated_fees(&token_id).get();
-            if accumulated_fees == 0u32 {
-                continue;
-            }
-
-            let mut remaining_fees = accumulated_fees.clone();
-            for pair in &pairs {
-                let amount_to_send =
-                    &(&accumulated_fees * &BigUint::from(pair.percentage)) / &percentage_total;
-
-                if amount_to_send > 0 {
-                    remaining_fees -= &amount_to_send;
-
-                    self.tx()
-                        .to(&pair.address)
-                        .payment(EsdtTokenPayment::new(token_id.clone(), 0, amount_to_send))
-                        .transfer();
-                }
-            }
-
-            self.accumulated_fees(&token_id).set(&remaining_fees);
-        }
-
-        self.tokens_for_fees().clear();
-
-        self.complete_operation(
-            &hash_of_hashes,
-            pairs_hash_byte_array.as_managed_buffer(),
-            None,
-        );
     }
 
     #[payable("*")]
@@ -209,14 +120,4 @@ pub trait SubtractFeeModule:
             remaining_tokens: payment,
         }
     }
-
-    #[view(getUsersWhitelist)]
-    #[storage_mapper("usersWhitelist")]
-    fn users_whitelist(&self) -> UnorderedSetMapper<ManagedAddress>;
-
-    #[storage_mapper("accFees")]
-    fn accumulated_fees(&self, token_id: &TokenIdentifier) -> SingleValueMapper<BigUint>;
-
-    #[storage_mapper("tokensForFees")]
-    fn tokens_for_fees(&self) -> UnorderedSetMapper<TokenIdentifier>;
 }
