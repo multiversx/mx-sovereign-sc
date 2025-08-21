@@ -155,6 +155,22 @@ where
             .original_result()
     }
 
+    pub fn distribute_fees<
+        Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
+        Arg1: ProxyArg<MultiValueEncoded<Env::Api, MultiValue2<ManagedAddress<Env::Api>, usize>>>,
+    >(
+        self,
+        hash_of_hashes: Arg0,
+        address_percentage_pairs: Arg1,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("distributeFees")
+            .argument(&hash_of_hashes)
+            .argument(&address_percentage_pairs)
+            .original_result()
+    }
+
     pub fn token_fee<
         Arg0: ProxyArg<TokenIdentifier<Env::Api>>,
     >(
@@ -165,6 +181,15 @@ where
             .payment(NotPayable)
             .raw_call("getTokenFee")
             .argument(&token_id)
+            .original_result()
+    }
+
+    pub fn users_whitelist(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, MultiValueEncoded<Env::Api, ManagedAddress<Env::Api>>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getUsersWhitelist")
             .original_result()
     }
 
@@ -183,32 +208,6 @@ where
             .argument(&original_caller)
             .argument(&total_transfers)
             .argument(&opt_gas_limit)
-            .original_result()
-    }
-
-    /// Percentages have to be between 0 and 10_000, and must all add up to 100% (i.e. 10_000) 
-    pub fn distribute_fees<
-        Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
-        Arg1: ProxyArg<MultiValueEncoded<Env::Api, MultiValue2<ManagedAddress<Env::Api>, usize>>>,
-    >(
-        self,
-        hash_of_hashes: Arg0,
-        address_percentage_pairs: Arg1,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("distributeFees")
-            .argument(&hash_of_hashes)
-            .argument(&address_percentage_pairs)
-            .original_result()
-    }
-
-    pub fn users_whitelist(
-        self,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, MultiValueEncoded<Env::Api, ManagedAddress<Env::Api>>> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("getUsersWhitelist")
             .original_result()
     }
 

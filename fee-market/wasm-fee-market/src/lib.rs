@@ -25,10 +25,10 @@ multiversx_sc_wasm_adapter::endpoints! {
         removeFee => remove_fee
         setFeeDuringSetupPhase => set_fee_during_setup_phase
         setFee => set_fee
-        getTokenFee => token_fee
-        subtractFee => subtract_fee
         distributeFees => distribute_fees
+        getTokenFee => token_fee
         getUsersWhitelist => users_whitelist
+        subtractFee => subtract_fee
         addUsersToWhitelist => add_users_to_whitelist
         removeUsersFromWhitelist => remove_users_from_whitelist
     )

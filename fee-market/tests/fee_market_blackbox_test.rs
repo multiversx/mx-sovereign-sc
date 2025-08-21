@@ -7,7 +7,7 @@ use error_messages::{
     INVALID_TOKEN_ID, PAYMENT_DOES_NOT_COVER_FEE, SETUP_PHASE_NOT_COMPLETED,
     TOKEN_NOT_ACCEPTED_AS_FEE,
 };
-use fee_market::fee_type::FeeTypeModule;
+use fee_common::storage::FeeCommonStorageModule;
 use fee_market_blackbox_setup::*;
 use multiversx_sc::{
     imports::{MultiValue2, OptionalValue},

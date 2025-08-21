@@ -12,7 +12,10 @@ multiversx_sc::derive_imports!();
 
 #[multiversx_sc::module]
 pub trait FeeTypeModule:
-    utils::UtilsModule + setup_phase::SetupPhaseModule + custom_events::CustomEventsModule
+    utils::UtilsModule
+    + setup_phase::SetupPhaseModule
+    + custom_events::CustomEventsModule
+    + fee_common::storage::FeeCommonStorageModule
 {
     #[only_owner]
     #[endpoint(removeFeeDuringSetupPhase)]
@@ -117,15 +120,4 @@ pub trait FeeTypeModule:
 
         None
     }
-
-    fn is_fee_enabled(&self) -> bool {
-        self.fee_enabled().get()
-    }
-
-    #[view(getTokenFee)]
-    #[storage_mapper("tokenFee")]
-    fn token_fee(&self, token_id: &TokenIdentifier) -> SingleValueMapper<FeeType<Self::Api>>;
-
-    #[storage_mapper("feeEnabledFlag")]
-    fn fee_enabled(&self) -> SingleValueMapper<bool>;
 }

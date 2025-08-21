@@ -21,10 +21,36 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6a65b545ab31d687cff52899d4890855fec459eb6afe0da6417b8a18da87aa29"
 
 [[package]]
+name = "custom-events"
+version = "0.1.0"
+dependencies = [
+ "multiversx-sc",
+ "multiversx-sc-modules",
+ "structs",
+]
+
+[[package]]
 name = "endian-type"
 version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c34f04666d835ff5d62e058c3995147c06f42fe86ff053337632bca83e42702d"
+
+[[package]]
+name = "error-messages"
+version = "0.1.0"
+
+[[package]]
+name = "fee-common"
+version = "0.1.0"
+dependencies = [
+ "custom-events",
+ "error-messages",
+ "multiversx-sc",
+ "multiversx-sc-modules",
+ "proxies",
+ "structs",
+ "utils",
+]
 
 [[package]]
 name = "generic-array"
@@ -50,8 +76,7 @@ checksum = "bcaaec4551594c969335c98c903c1397853d4198408ea609190f420500f6be71"
 [[package]]
 name = "multiversx-chain-core"
 version = "0.17.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f5a64d24f8f9788f410ade5fa7c3c182c4d10fef5907bbb7e09a5237f5b1867e"
+source = "git+https://github.com/multiversx/mx-sdk-rs?rev=b59411841984a2fcbf76498d29bc131f2d433af9#b59411841984a2fcbf76498d29bc131f2d433af9"
 dependencies = [
  "bitflags",
  "multiversx-sc-codec",
@@ -60,8 +85,7 @@ dependencies = [
 [[package]]
 name = "multiversx-sc"
 version = "0.60.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a2b284a04c55a05851fc65bce9780601bbc75a76601286461e45712a74085f25"
+source = "git+https://github.com/multiversx/mx-sdk-rs?rev=b59411841984a2fcbf76498d29bc131f2d433af9#b59411841984a2fcbf76498d29bc131f2d433af9"
 dependencies = [
  "bitflags",
  "generic-array",
@@ -76,8 +100,7 @@ dependencies = [
 [[package]]
 name = "multiversx-sc-codec"
 version = "0.23.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "70685641eede17be7d3c678bc5ce4dc7ffeb100cf18399cdcdcdf52482cf98a5"
+source = "git+https://github.com/multiversx/mx-sdk-rs?rev=b59411841984a2fcbf76498d29bc131f2d433af9#b59411841984a2fcbf76498d29bc131f2d433af9"
 dependencies = [
  "arrayvec",
  "bitflags",
@@ -88,8 +111,7 @@ dependencies = [
 [[package]]
 name = "multiversx-sc-codec-derive"
 version = "0.23.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ce73df2ee4376ab524981f980126aba16f395386014207eb6e9efd9ff6015d62"
+source = "git+https://github.com/multiversx/mx-sdk-rs?rev=b59411841984a2fcbf76498d29bc131f2d433af9#b59411841984a2fcbf76498d29bc131f2d433af9"
 dependencies = [
  "hex",
  "proc-macro2",
@@ -100,8 +122,7 @@ dependencies = [
 [[package]]
 name = "multiversx-sc-derive"
 version = "0.60.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "916169a7484e7ba1464a8c011fd47f03365912bd3a3c5927432229e935a711fb"
+source = "git+https://github.com/multiversx/mx-sdk-rs?rev=b59411841984a2fcbf76498d29bc131f2d433af9#b59411841984a2fcbf76498d29bc131f2d433af9"
 dependencies = [
  "hex",
  "proc-macro2",
@@ -111,10 +132,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "multiversx-sc-modules"
+version = "0.60.0"
+source = "git+https://github.com/multiversx/mx-sdk-rs?rev=b59411841984a2fcbf76498d29bc131f2d433af9#b59411841984a2fcbf76498d29bc131f2d433af9"
+dependencies = [
+ "multiversx-sc",
+]
+
+[[package]]
 name = "multiversx-sc-wasm-adapter"
 version = "0.60.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f7e35261519a0f4e9010d3dde0567acc8374817e7243dc80f55527b373b846b9"
+source = "git+https://github.com/multiversx/mx-sdk-rs?rev=b59411841984a2fcbf76498d29bc131f2d433af9#b59411841984a2fcbf76498d29bc131f2d433af9"
 dependencies = [
  "multiversx-sc",
 ]
@@ -147,6 +175,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "proxies"
+version = "0.1.0"
+dependencies = [
+ "multiversx-sc",
+ "structs",
+]
+
+[[package]]
 name = "quote"
 version = "1.0.40"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -173,9 +209,15 @@ checksum = "67b1b7a3b5fe4f1376887184045fcf45c69e92af734b7aaddc05fb777b6fbd03"
 
 [[package]]
 name = "sov-fee-market"
-version = "0.0.0"
+version = "0.1.0"
 dependencies = [
+ "custom-events",
+ "error-messages",
+ "fee-common",
  "multiversx-sc",
+ "proxies",
+ "structs",
+ "utils",
 ]
 
 [[package]]
@@ -184,6 +226,13 @@ version = "0.0.0"
 dependencies = [
  "multiversx-sc-wasm-adapter",
  "sov-fee-market",
+]
+
+[[package]]
+name = "structs"
+version = "0.1.0"
+dependencies = [
+ "multiversx-sc",
 ]
 
 [[package]]
@@ -214,3 +263,14 @@ name = "unwrap-infallible"
 version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "151ac09978d3c2862c4e39b557f4eceee2cc72150bc4cb4f16abf061b6e381fb"
+
+[[package]]
+name = "utils"
+version = "0.1.0"
+dependencies = [
+ "custom-events",
+ "error-messages",
+ "multiversx-sc",
+ "proxies",
+ "structs",
+]
