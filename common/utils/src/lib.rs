@@ -1,8 +1,6 @@
 #![no_std]
 
-use error_messages::{
-    ERR_EMPTY_PAYMENTS, INVALID_SC_ADDRESS, ITEM_NOT_IN_LIST, TOKEN_ID_NO_PREFIX,
-};
+use error_messages::{ERR_EMPTY_PAYMENTS, INVALID_SC_ADDRESS, TOKEN_ID_NO_PREFIX};
 use proxies::header_verifier_proxy::HeaderverifierProxy;
 use structs::aliases::PaymentsVec;
 
