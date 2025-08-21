@@ -22,6 +22,7 @@ use multiversx_sc_snippets::{
     },
     test_wallets, Interactor,
 };
+use rand::{distr::Alphanumeric, Rng};
 use structs::{
     aliases::PaymentsVec,
     fee::{FeeStruct, FeeType},
@@ -74,7 +75,7 @@ pub trait InteractorHelpers {
 
         // Add fee payment if present
         if let Some(fee_struct) = fee {
-            fee_amount = self.calculate_fee_amount(fee_struct, with_transfer_data);
+            fee_amount = self.calculate_fee_amount(fee_struct, with_transfer_data, token.clone());
 
             if fee_amount > 0u64 {
                 let fee_payment = EsdtTokenPayment::<StaticApi>::new(
@@ -211,6 +212,7 @@ pub trait InteractorHelpers {
         &self,
         fee_struct: FeeStruct<StaticApi>,
         with_transfer_data: bool,
+        token: Option<EsdtTokenInfo>,
     ) -> BigUint<StaticApi> {
         match &fee_struct.fee_type {
             FeeType::Fixed {
@@ -218,13 +220,11 @@ pub trait InteractorHelpers {
                 per_gas,
                 ..
             } => {
-                let mut total_fee = per_transfer.clone();
-
-                if with_transfer_data {
-                    total_fee += per_gas.clone() * BigUint::from(GAS_LIMIT);
+                match (with_transfer_data, token.is_some()) {
+                    (true, true) => per_transfer.clone() + per_gas.clone() * GAS_LIMIT, // Transfer + SC call
+                    (true, false) => per_gas.clone() * GAS_LIMIT, // SC call only
+                    (false, _) => per_transfer.clone(),           // Transfer only
                 }
-
-                total_fee
             }
             FeeType::None => BigUint::zero(),
         }
@@ -600,7 +600,7 @@ pub trait InteractorHelpers {
 
         let fee_amount = fee
             .as_ref()
-            .map(|f| self.calculate_fee_amount(f.clone(), with_transfer_data))
+            .map(|f| self.calculate_fee_amount(f.clone(), with_transfer_data, token.clone()))
             .unwrap_or_else(BigUint::zero);
 
         let mut expected_user_tokens = Vec::new();
@@ -749,5 +749,14 @@ pub trait InteractorHelpers {
             token.token_type,
             EsdtTokenType::NonFungibleV2 | EsdtTokenType::DynamicNFT | EsdtTokenType::NonFungible
         )
+    }
+
+    fn generate_random_chain_id() -> String {
+        rand::rng()
+            .sample_iter(&Alphanumeric)
+            .filter(|c| c.is_ascii_alphabetic() && c.is_ascii_lowercase())
+            .take(4)
+            .map(char::from)
+            .collect()
     }
 }

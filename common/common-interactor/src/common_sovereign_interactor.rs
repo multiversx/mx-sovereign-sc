@@ -6,8 +6,8 @@ use crate::{
 };
 use common_test_setup::constants::{
     CHAIN_CONFIG_CODE_PATH, CHAIN_FACTORY_CODE_PATH, DEPLOY_COST, FEE_MARKET_CODE_PATH,
-    HEADER_VERIFIER_CODE_PATH, ISSUE_COST, MVX_ESDT_SAFE_CODE_PATH, NUMBER_OF_SHARDS,
-    PREFERRED_CHAIN_IDS, SHARD_0, SOVEREIGN_FORGE_CODE_PATH, TESTING_SC_CODE_PATH,
+    HEADER_VERIFIER_CODE_PATH, ISSUE_COST, MVX_ESDT_SAFE_CODE_PATH, NUMBER_OF_SHARDS, SHARD_0,
+    SOVEREIGN_FORGE_CODE_PATH, TESTING_SC_CODE_PATH,
 };
 use error_messages::FAILED_TO_LOAD_WALLET_SHARD_0;
 use multiversx_sc::{
@@ -604,7 +604,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
         fee: Option<FeeStruct<StaticApi>>,
     ) {
         let caller = self.get_sovereign_owner_for_shard(shard);
-        let preferred_chain_id = PREFERRED_CHAIN_IDS[shard as usize].to_string();
+        let preferred_chain_id = Self::generate_random_chain_id();
         self.deploy_phase_one(
             caller.clone(),
             deploy_cost.clone(),
