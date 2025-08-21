@@ -211,7 +211,7 @@ where
             .original_result()
     }
 
-    pub fn add_users_to_whitelist<
+    pub fn add_users_to_whitelist_during_setup_phase<
         Arg0: ProxyArg<MultiValueEncoded<Env::Api, ManagedAddress<Env::Api>>>,
     >(
         self,
@@ -219,20 +219,52 @@ where
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
+            .raw_call("addUsersToWhitelistSetupPhase")
+            .argument(&users)
+            .original_result()
+    }
+
+    pub fn add_users_to_whitelist<
+        Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
+        Arg1: ProxyArg<MultiValueEncoded<Env::Api, ManagedAddress<Env::Api>>>,
+    >(
+        self,
+        hash_of_hashes: Arg0,
+        users: Arg1,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
             .raw_call("addUsersToWhitelist")
+            .argument(&hash_of_hashes)
+            .argument(&users)
+            .original_result()
+    }
+
+    pub fn remove_users_from_whitelist_during_setup_phase<
+        Arg0: ProxyArg<MultiValueEncoded<Env::Api, ManagedAddress<Env::Api>>>,
+    >(
+        self,
+        users: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("removeUsersFromWhitelistSetupPhase")
             .argument(&users)
             .original_result()
     }
 
     pub fn remove_users_from_whitelist<
-        Arg0: ProxyArg<MultiValueEncoded<Env::Api, ManagedAddress<Env::Api>>>,
+        Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
+        Arg1: ProxyArg<MultiValueEncoded<Env::Api, ManagedAddress<Env::Api>>>,
     >(
         self,
-        users: Arg0,
+        hash_of_hashes: Arg0,
+        users: Arg1,
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("removeUsersFromWhitelist")
+            .argument(&hash_of_hashes)
             .argument(&users)
             .original_result()
     }

@@ -6,9 +6,9 @@
 
 // Init:                                 1
 // Upgrade:                              1
-// Endpoints:                           11
+// Endpoints:                           13
 // Async Callback (empty):               1
-// Total number of exported functions:  14
+// Total number of exported functions:  16
 
 #![no_std]
 
@@ -29,7 +29,9 @@ multiversx_sc_wasm_adapter::endpoints! {
         getTokenFee => token_fee
         getUsersWhitelist => users_whitelist
         subtractFee => subtract_fee
+        addUsersToWhitelistSetupPhase => add_users_to_whitelist_during_setup_phase
         addUsersToWhitelist => add_users_to_whitelist
+        removeUsersFromWhitelistSetupPhase => remove_users_from_whitelist_during_setup_phase
         removeUsersFromWhitelist => remove_users_from_whitelist
     )
 }
