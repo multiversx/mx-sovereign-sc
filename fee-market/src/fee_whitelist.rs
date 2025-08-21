@@ -1,12 +1,10 @@
 use error_messages::ITEM_NOT_IN_LIST;
 
-use crate::storage;
-
 multiversx_sc::imports!();
 multiversx_sc::derive_imports!();
 
 #[multiversx_sc::module]
-pub trait FeeWhitelistModule: storage::FeeStorageModule {
+pub trait FeeWhitelistModule: fee_common::storage::FeeCommonStorageModule {
     #[only_owner]
     #[endpoint(addUsersToWhitelist)]
     fn add_users_to_whitelist(&self, users: MultiValueEncoded<ManagedAddress>) {

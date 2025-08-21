@@ -19,7 +19,7 @@ pub trait FeeMarket:
     + setup_phase::SetupPhaseModule
     + custom_events::CustomEventsModule
     + fee_distribution::FeeDistributionModule
-    + storage::FeeStorageModule
+    + fee_common::storage::FeeCommonStorageModule
     + fee_whitelist::FeeWhitelistModule
 {
     #[init]

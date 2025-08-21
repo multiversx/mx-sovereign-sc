@@ -30,6 +30,9 @@ path = "../common/error-messages"
 [dependencies.custom-events]
 path = "../common/custom-events"
 
+[dependencies.fee-common]
+path = "../common/fee-common"
+
 [dev-dependencies]
 num-bigint = "0.4.2"
 

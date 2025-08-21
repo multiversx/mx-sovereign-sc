@@ -11,7 +11,7 @@ pub trait FeeDistributionModule:
     setup_phase::SetupPhaseModule
     + custom_events::CustomEventsModule
     + utils::UtilsModule
-    + crate::storage::FeeStorageModule
+    + fee_common::storage::FeeCommonStorageModule
 {
     /// Percentages have to be between 0 and 10_000, and must all add up to 100% (i.e. 10_000)
     #[only_owner]

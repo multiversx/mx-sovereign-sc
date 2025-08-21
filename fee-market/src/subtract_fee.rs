@@ -14,7 +14,7 @@ multiversx_sc::derive_imports!();
 #[multiversx_sc::module]
 pub trait SubtractFeeModule:
     crate::fee_type::FeeTypeModule
-    + crate::storage::FeeStorageModule
+    + fee_common::storage::FeeCommonStorageModule
     + utils::UtilsModule
     + setup_phase::SetupPhaseModule
     + custom_events::CustomEventsModule

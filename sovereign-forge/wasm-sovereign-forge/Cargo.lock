@@ -82,11 +82,25 @@ name = "error-messages"
 version = "0.1.0"
 
 [[package]]
+name = "fee-common"
+version = "0.1.0"
+dependencies = [
+ "custom-events",
+ "error-messages",
+ "multiversx-sc",
+ "multiversx-sc-modules",
+ "proxies",
+ "structs",
+ "utils",
+]
+
+[[package]]
 name = "fee-market"
 version = "0.1.0"
 dependencies = [
  "custom-events",
  "error-messages",
+ "fee-common",
  "multiversx-sc",
  "proxies",
  "setup-phase",
