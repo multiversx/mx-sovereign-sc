@@ -6,6 +6,8 @@ use structs::{
     fee::{FeeType, FinalPayment, SubtractPaymentArguments},
 };
 
+use crate::fee_whitelist;
+
 multiversx_sc::imports!();
 multiversx_sc::derive_imports!();
 
@@ -16,19 +18,8 @@ pub trait SubtractFeeModule:
     + utils::UtilsModule
     + setup_phase::SetupPhaseModule
     + custom_events::CustomEventsModule
+    + fee_whitelist::FeeWhitelistModule
 {
-    #[only_owner]
-    #[endpoint(addUsersToWhitelist)]
-    fn add_users_to_whitelist(&self, users: MultiValueEncoded<ManagedAddress>) {
-        self.users_whitelist().extend(users);
-    }
-
-    #[only_owner]
-    #[endpoint(removeUsersFromWhitelist)]
-    fn remove_users_from_whitelist(&self, users: MultiValueEncoded<ManagedAddress>) {
-        self.remove_items(&mut self.users_whitelist(), users);
-    }
-
     #[payable("*")]
     #[endpoint(subtractFee)]
     fn subtract_fee(

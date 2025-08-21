@@ -1,8 +1,6 @@
 #![no_std]
 
-use error_messages::{
-    ERR_EMPTY_PAYMENTS, INVALID_SC_ADDRESS, ITEM_NOT_IN_LIST, TOKEN_ID_NO_PREFIX,
-};
+use error_messages::{ERR_EMPTY_PAYMENTS, INVALID_SC_ADDRESS, TOKEN_ID_NO_PREFIX};
 use proxies::header_verifier_proxy::HeaderverifierProxy;
 use structs::aliases::PaymentsVec;
 
@@ -48,20 +46,6 @@ pub trait UtilsModule: custom_events::CustomEventsModule {
 
     fn is_valid_token_id(&self, token_id: &TokenIdentifier) -> bool {
         token_id.is_valid_esdt_identifier()
-    }
-
-    fn remove_items<
-        T: TopEncode + TopDecode + NestedEncode + NestedDecode + 'static,
-        I: IntoIterator<Item = T>,
-    >(
-        &self,
-        mapper: &mut UnorderedSetMapper<T>,
-        items: I,
-    ) {
-        for item in items {
-            let was_removed = mapper.swap_remove(&item);
-            require!(was_removed, ITEM_NOT_IN_LIST);
-        }
     }
 
     fn pop_first_payment(
