@@ -5,20 +5,18 @@ use structs::fee::FeeStruct;
 
 multiversx_sc::imports!();
 
-pub mod fee_distribution;
+pub mod fee_operations;
 pub mod fee_type;
 pub mod fee_whitelist;
 pub mod storage;
-pub mod subtract_fee;
 
 #[multiversx_sc::contract]
 pub trait FeeMarket:
     fee_type::FeeTypeModule
-    + subtract_fee::SubtractFeeModule
     + utils::UtilsModule
     + setup_phase::SetupPhaseModule
     + custom_events::CustomEventsModule
-    + fee_distribution::FeeDistributionModule
+    + fee_operations::FeeOperationsModule
     + fee_common::storage::FeeCommonStorageModule
     + fee_common::endpoints::FeeCommonEndpointsModule
     + fee_common::helpers::FeeCommonHelpersModule

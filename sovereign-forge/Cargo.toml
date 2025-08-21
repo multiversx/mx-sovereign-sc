@@ -30,6 +30,9 @@ path = "../header-verifier"
 [dependencies.fee-market]
 path = "../fee-market"
 
+[dependencies.fee-common]
+path = "../common/fee-common"
+
 [dependencies.proxies]
 path = "../common/proxies"
 

@@ -1,10 +1,12 @@
+use structs::{aliases::GasLimit, fee::FinalPayment};
+
 multiversx_sc::imports!();
 multiversx_sc::derive_imports!();
 
 pub const TOTAL_PERCENTAGE: usize = 10_000;
 
 #[multiversx_sc::module]
-pub trait FeeDistributionModule:
+pub trait FeeOperationsModule:
     setup_phase::SetupPhaseModule
     + custom_events::CustomEventsModule
     + utils::UtilsModule
@@ -21,5 +23,16 @@ pub trait FeeDistributionModule:
     ) {
         self.require_setup_complete();
         self.distribute_fees_common_function(&hash_of_hashes, address_percentage_pairs);
+    }
+
+    #[payable("*")]
+    #[endpoint(subtractFee)]
+    fn subtract_fee(
+        &self,
+        original_caller: ManagedAddress,
+        total_transfers: usize,
+        opt_gas_limit: OptionalValue<GasLimit>,
+    ) -> FinalPayment<Self::Api> {
+        self.subtract_fee_common_function(original_caller, total_transfers, opt_gas_limit)
     }
 }

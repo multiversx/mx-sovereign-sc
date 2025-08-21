@@ -311,6 +311,7 @@ dependencies = [
  "chain-factory",
  "cross-chain",
  "error-messages",
+ "fee-common",
  "fee-market",
  "header-verifier",
  "multiversx-sc",
