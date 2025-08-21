@@ -211,24 +211,21 @@ pub trait InteractorHelpers {
         &self,
         fee_struct: FeeStruct<StaticApi>,
         with_transfer_data: bool,
-        token: Option<EsdtTokenInfo>,
+        _token: Option<EsdtTokenInfo>,
     ) -> BigUint<StaticApi> {
         match &fee_struct.fee_type {
             FeeType::Fixed {
                 per_transfer,
                 per_gas,
                 ..
-            }
-            | FeeType::AnyToken {
-                per_transfer,
-                per_gas,
-                ..
             } => {
-                match (with_transfer_data, token.is_some()) {
-                    (true, true) => per_transfer.clone() + per_gas.clone() * GAS_LIMIT, // Transfer + SC call
-                    (true, false) => per_gas.clone() * GAS_LIMIT, // SC call only
-                    (false, _) => per_transfer.clone(),           // Transfer only
+                let mut total_fee = per_transfer.clone();
+
+                if with_transfer_data {
+                    total_fee += per_gas.clone() * BigUint::from(GAS_LIMIT);
                 }
+
+                total_fee
             }
             FeeType::None => BigUint::zero(),
         }
