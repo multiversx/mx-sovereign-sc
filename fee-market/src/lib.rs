@@ -7,6 +7,7 @@ multiversx_sc::imports!();
 
 pub mod fee_distribution;
 pub mod fee_type;
+pub mod fee_whitelist;
 pub mod storage;
 pub mod subtract_fee;
 
@@ -19,6 +20,7 @@ pub trait FeeMarket:
     + custom_events::CustomEventsModule
     + fee_distribution::FeeDistributionModule
     + storage::FeeStorageModule
+    + fee_whitelist::FeeWhitelistModule
 {
     #[init]
     fn init(&self, esdt_safe_address: ManagedAddress, fee: Option<FeeStruct<Self::Api>>) {

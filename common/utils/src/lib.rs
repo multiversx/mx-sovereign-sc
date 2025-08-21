@@ -50,20 +50,6 @@ pub trait UtilsModule: custom_events::CustomEventsModule {
         token_id.is_valid_esdt_identifier()
     }
 
-    fn remove_items<
-        T: TopEncode + TopDecode + NestedEncode + NestedDecode + 'static,
-        I: IntoIterator<Item = T>,
-    >(
-        &self,
-        mapper: &mut UnorderedSetMapper<T>,
-        items: I,
-    ) {
-        for item in items {
-            let was_removed = mapper.swap_remove(&item);
-            require!(was_removed, ITEM_NOT_IN_LIST);
-        }
-    }
-
     fn pop_first_payment(
         &self,
         payments: PaymentsVec<Self::Api>,
