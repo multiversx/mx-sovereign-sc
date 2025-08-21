@@ -2,6 +2,7 @@
 
 #[allow(unused_imports)]
 use multiversx_sc::imports::*;
+pub mod fee_operations;
 
 #[multiversx_sc::contract]
 pub trait SovFeeMarket {

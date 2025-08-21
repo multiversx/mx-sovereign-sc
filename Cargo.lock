@@ -225,7 +225,7 @@ dependencies = [
  "error-messages",
  "multiversx-sc 0.60.0 (git+https://github.com/multiversx/mx-sdk-rs?rev=b59411841984a2fcbf76498d29bc131f2d433af9)",
  "multiversx-sc-modules",
- "multiversx-sc-scenario 0.60.0 (git+https://github.com/multiversx/mx-sdk-rs?rev=b59411841984a2fcbf76498d29bc131f2d433af9)",
+ "multiversx-sc-scenario",
  "num-bigint",
  "proxies",
  "setup-phase",
@@ -251,7 +251,7 @@ dependencies = [
  "error-messages",
  "multiversx-sc 0.60.0 (git+https://github.com/multiversx/mx-sdk-rs?rev=b59411841984a2fcbf76498d29bc131f2d433af9)",
  "multiversx-sc-modules",
- "multiversx-sc-scenario 0.60.0 (git+https://github.com/multiversx/mx-sdk-rs?rev=b59411841984a2fcbf76498d29bc131f2d433af9)",
+ "multiversx-sc-scenario",
  "num-bigint",
  "proxies",
  "structs",
@@ -356,7 +356,7 @@ dependencies = [
  "error-messages",
  "fee-market",
  "header-verifier",
- "multiversx-sc-scenario 0.60.0 (git+https://github.com/multiversx/mx-sdk-rs?rev=b59411841984a2fcbf76498d29bc131f2d433af9)",
+ "multiversx-sc-scenario",
  "mvx-esdt-safe",
  "proxies",
  "sovereign-forge",
@@ -611,7 +611,7 @@ dependencies = [
  "error-messages",
  "fee-common",
  "multiversx-sc 0.60.0 (git+https://github.com/multiversx/mx-sdk-rs?rev=b59411841984a2fcbf76498d29bc131f2d433af9)",
- "multiversx-sc-scenario 0.60.0 (git+https://github.com/multiversx/mx-sdk-rs?rev=b59411841984a2fcbf76498d29bc131f2d433af9)",
+ "multiversx-sc-scenario",
  "num-bigint",
  "proxies",
  "setup-phase",
@@ -825,7 +825,7 @@ dependencies = [
  "custom-events",
  "error-messages",
  "multiversx-sc 0.60.0 (git+https://github.com/multiversx/mx-sdk-rs?rev=b59411841984a2fcbf76498d29bc131f2d433af9)",
- "multiversx-sc-scenario 0.60.0 (git+https://github.com/multiversx/mx-sdk-rs?rev=b59411841984a2fcbf76498d29bc131f2d433af9)",
+ "multiversx-sc-scenario",
  "proxies",
  "setup-phase",
  "structs",
@@ -1280,11 +1280,8 @@ version = "0.17.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f5a64d24f8f9788f410ade5fa7c3c182c4d10fef5907bbb7e09a5237f5b1867e"
 dependencies = [
- "bech32",
  "bitflags",
- "hex",
  "multiversx-sc-codec 0.23.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "serde",
 ]
 
 [[package]]
@@ -1302,21 +1299,6 @@ dependencies = [
 [[package]]
 name = "multiversx-chain-scenario-format"
 version = "0.23.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e688a0d32a5873871cd19224186ecbfaa0b26f7c8ec62f0ca35d7ee9d4616b40"
-dependencies = [
- "bech32",
- "hex",
- "num-bigint",
- "num-traits",
- "serde",
- "serde_json",
- "sha3",
-]
-
-[[package]]
-name = "multiversx-chain-scenario-format"
-version = "0.23.1"
 source = "git+https://github.com/multiversx/mx-sdk-rs?rev=b59411841984a2fcbf76498d29bc131f2d433af9#b59411841984a2fcbf76498d29bc131f2d433af9"
 dependencies = [
  "bech32",
@@ -1326,31 +1308,6 @@ dependencies = [
  "serde",
  "serde_json",
  "sha3",
-]
-
-[[package]]
-name = "multiversx-chain-vm"
-version = "0.17.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7b74df1ae2d22e1655a48d7cddbb67ba715461bd845284dc70c857b38781526e"
-dependencies = [
- "anyhow",
- "bitflags",
- "colored",
- "ed25519-dalek",
- "hex",
- "hex-literal",
- "itertools",
- "multiversx-chain-core 0.17.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "multiversx-chain-vm-executor",
- "num-bigint",
- "num-traits",
- "rand",
- "rand_seeder",
- "serde",
- "sha2",
- "sha3",
- "toml 0.8.20",
 ]
 
 [[package]]
@@ -1545,32 +1502,6 @@ dependencies = [
 [[package]]
 name = "multiversx-sc-scenario"
 version = "0.60.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ea008618b4b36c4222990310c540856e282c4e671027d16fd2084c1803579428"
-dependencies = [
- "base64 0.22.1",
- "colored",
- "hex",
- "itertools",
- "log",
- "multiversx-chain-scenario-format 0.23.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "multiversx-chain-vm 0.17.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "multiversx-chain-vm-executor",
- "multiversx-sc 0.60.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "multiversx-sc-meta-lib 0.60.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "num-bigint",
- "num-traits",
- "pathdiff",
- "serde",
- "serde_json",
- "sha2",
- "simple-error",
- "unwrap-infallible",
-]
-
-[[package]]
-name = "multiversx-sc-scenario"
-version = "0.60.0"
 source = "git+https://github.com/multiversx/mx-sdk-rs?rev=b59411841984a2fcbf76498d29bc131f2d433af9#b59411841984a2fcbf76498d29bc131f2d433af9"
 dependencies = [
  "base64 0.22.1",
@@ -1578,8 +1509,8 @@ dependencies = [
  "hex",
  "itertools",
  "log",
- "multiversx-chain-scenario-format 0.23.1 (git+https://github.com/multiversx/mx-sdk-rs?rev=b59411841984a2fcbf76498d29bc131f2d433af9)",
- "multiversx-chain-vm 0.17.0 (git+https://github.com/multiversx/mx-sdk-rs?rev=b59411841984a2fcbf76498d29bc131f2d433af9)",
+ "multiversx-chain-scenario-format",
+ "multiversx-chain-vm",
  "multiversx-chain-vm-executor",
  "multiversx-sc 0.60.0 (git+https://github.com/multiversx/mx-sdk-rs?rev=b59411841984a2fcbf76498d29bc131f2d433af9)",
  "multiversx-sc-meta-lib 0.60.0 (git+https://github.com/multiversx/mx-sdk-rs?rev=b59411841984a2fcbf76498d29bc131f2d433af9)",
@@ -1605,8 +1536,8 @@ dependencies = [
  "futures",
  "hex",
  "log",
- "multiversx-chain-scenario-format 0.23.1 (git+https://github.com/multiversx/mx-sdk-rs?rev=b59411841984a2fcbf76498d29bc131f2d433af9)",
- "multiversx-sc-scenario 0.60.0 (git+https://github.com/multiversx/mx-sdk-rs?rev=b59411841984a2fcbf76498d29bc131f2d433af9)",
+ "multiversx-chain-scenario-format",
+ "multiversx-sc-scenario",
  "multiversx-sdk",
  "multiversx-sdk-http",
  "serde_json",
@@ -1669,7 +1600,7 @@ dependencies = [
  "header-verifier",
  "multiversx-sc 0.60.0 (git+https://github.com/multiversx/mx-sdk-rs?rev=b59411841984a2fcbf76498d29bc131f2d433af9)",
  "multiversx-sc-modules",
- "multiversx-sc-scenario 0.60.0 (git+https://github.com/multiversx/mx-sdk-rs?rev=b59411841984a2fcbf76498d29bc131f2d433af9)",
+ "multiversx-sc-scenario",
  "proxies",
  "setup-phase",
  "structs",
@@ -2328,7 +2259,7 @@ version = "0.1.0"
 dependencies = [
  "error-messages",
  "multiversx-sc 0.60.0 (git+https://github.com/multiversx/mx-sdk-rs?rev=b59411841984a2fcbf76498d29bc131f2d433af9)",
- "multiversx-sc-scenario 0.60.0 (git+https://github.com/multiversx/mx-sdk-rs?rev=b59411841984a2fcbf76498d29bc131f2d433af9)",
+ "multiversx-sc-scenario",
 ]
 
 [[package]]
@@ -2418,7 +2349,7 @@ dependencies = [
  "fee-market",
  "multiversx-sc 0.60.0 (git+https://github.com/multiversx/mx-sdk-rs?rev=b59411841984a2fcbf76498d29bc131f2d433af9)",
  "multiversx-sc-modules",
- "multiversx-sc-scenario 0.60.0 (git+https://github.com/multiversx/mx-sdk-rs?rev=b59411841984a2fcbf76498d29bc131f2d433af9)",
+ "multiversx-sc-scenario",
  "proxies",
  "setup-phase",
  "structs",
@@ -2436,11 +2367,18 @@ dependencies = [
 
 [[package]]
 name = "sov-fee-market"
-version = "0.0.0"
+version = "0.1.0"
 dependencies = [
- "multiversx-sc 0.60.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "multiversx-sc-scenario 0.60.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "common-test-setup",
+ "custom-events",
+ "error-messages",
+ "fee-common",
+ "multiversx-sc 0.60.0 (git+https://github.com/multiversx/mx-sdk-rs?rev=b59411841984a2fcbf76498d29bc131f2d433af9)",
+ "multiversx-sc-scenario",
  "num-bigint",
+ "proxies",
+ "structs",
+ "utils",
 ]
 
 [[package]]
@@ -2465,7 +2403,7 @@ dependencies = [
  "header-verifier",
  "multiversx-sc 0.60.0 (git+https://github.com/multiversx/mx-sdk-rs?rev=b59411841984a2fcbf76498d29bc131f2d433af9)",
  "multiversx-sc-modules",
- "multiversx-sc-scenario 0.60.0 (git+https://github.com/multiversx/mx-sdk-rs?rev=b59411841984a2fcbf76498d29bc131f2d433af9)",
+ "multiversx-sc-scenario",
  "mvx-esdt-safe",
  "num-bigint",
  "proxies",
@@ -2573,7 +2511,7 @@ name = "testing-sc"
 version = "0.1.0"
 dependencies = [
  "multiversx-sc 0.60.0 (git+https://github.com/multiversx/mx-sdk-rs?rev=b59411841984a2fcbf76498d29bc131f2d433af9)",
- "multiversx-sc-scenario 0.60.0 (git+https://github.com/multiversx/mx-sdk-rs?rev=b59411841984a2fcbf76498d29bc131f2d433af9)",
+ "multiversx-sc-scenario",
  "num-bigint",
 ]
 
