@@ -8,6 +8,8 @@ members = [
   "chain-factory/meta",
   "fee-market",
   "fee-market/meta",
+  "sov-fee-market",
+  "sov-fee-market/meta",
   "header-verifier",
   "header-verifier/meta",
   "sovereign-forge",
