@@ -5,9 +5,9 @@ use crate::{
     interactor_structs::{ActionConfig, IssueTokenStruct, MintTokenStruct, TemplateAddresses},
 };
 use common_test_setup::constants::{
-    CHAIN_CONFIG_CODE_PATH, CHAIN_FACTORY_CODE_PATH, DEPLOY_COST, FEE_MARKET_CODE_PATH,
+    CATEGORIES, CHAIN_CONFIG_CODE_PATH, CHAIN_FACTORY_CODE_PATH, DEPLOY_COST, FEE_MARKET_CODE_PATH,
     HEADER_VERIFIER_CODE_PATH, ISSUE_COST, MVX_ESDT_SAFE_CODE_PATH, NUMBER_OF_SHARDS, SHARD_0,
-    SOVEREIGN_FORGE_CODE_PATH, TESTING_SC_CODE_PATH,
+    SOVEREIGN_FORGE_CODE_PATH, TESTING_SC_CODE_PATH, WALLETS_PATH,
 };
 use multiversx_sc::{
     imports::{ESDTSystemSCProxy, OptionalValue, UserBuiltinProxy},
@@ -48,17 +48,11 @@ fn metadata() -> CodeMetadata {
 
 pub trait CommonInteractorTrait: InteractorHelpers {
     async fn register_wallets(&mut self, test_id: u64) {
-        let test_path = Path::new("wallets").join(format!("test_{}", test_id));
-
-        let categories = [
-            ("bridge_owners", "bridge_owner"),
-            ("sovereign_owners", "sovereign_owner"),
-            ("bridge_services", "bridge_service"),
-        ];
+        let test_path = Path::new(WALLETS_PATH).join(format!("test_{}", test_id));
 
         let mut all_addresses = [Vec::new(), Vec::new(), Vec::new()];
 
-        for (idx, (folder_name, prefix)) in categories.iter().enumerate() {
+        for (idx, (folder_name, prefix)) in CATEGORIES.iter().enumerate() {
             let folder_path = test_path.join(folder_name);
 
             if !folder_path.exists() {
@@ -77,7 +71,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
         self.state().set_sovereign_owners(all_addresses[1].clone());
         self.state().set_bridge_services(all_addresses[2].clone());
 
-        self.interactor().generate_blocks(1u64).await.unwrap();
+        self.interactor().generate_blocks(2u64).await.unwrap();
     }
 
     async fn issue_and_mint_token(
