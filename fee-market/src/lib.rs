@@ -20,6 +20,8 @@ pub trait FeeMarket:
     + custom_events::CustomEventsModule
     + fee_distribution::FeeDistributionModule
     + fee_common::storage::FeeCommonStorageModule
+    + fee_common::endpoints::FeeCommonEndpointsModule
+    + fee_common::helpers::FeeCommonHelpersModule
     + fee_whitelist::FeeWhitelistModule
 {
     #[init]

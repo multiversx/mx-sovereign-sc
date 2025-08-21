@@ -1,4 +1,5 @@
 use error_messages::ONLY_ESDT_SAFE_CALLER;
+use structs::fee::FeeType;
 
 multiversx_sc::imports!();
 multiversx_sc::derive_imports!();
@@ -10,6 +11,17 @@ pub trait FeeCommonStorageModule {
         let esdt_safe_address = self.esdt_safe_address().get();
         require!(caller == esdt_safe_address, ONLY_ESDT_SAFE_CALLER);
     }
+
+    fn is_fee_enabled(&self) -> bool {
+        self.fee_enabled().get()
+    }
+
+    #[view(getTokenFee)]
+    #[storage_mapper("tokenFee")]
+    fn token_fee(&self, token_id: &TokenIdentifier) -> SingleValueMapper<FeeType<Self::Api>>;
+
+    #[storage_mapper("feeEnabledFlag")]
+    fn fee_enabled(&self) -> SingleValueMapper<bool>;
 
     #[view(getUsersWhitelist)]
     #[storage_mapper("usersWhitelist")]
