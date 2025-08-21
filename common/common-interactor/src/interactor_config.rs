@@ -18,6 +18,7 @@ pub enum ChainType {
 pub struct Config {
     pub gateway_uri: String,
     pub chain_type: ChainType,
+    pub test_id: u64,
 }
 
 impl Config {
@@ -29,10 +30,11 @@ impl Config {
         toml::from_str(&content).unwrap()
     }
 
-    pub fn chain_simulator_config() -> Self {
+    pub fn chain_simulator_config(test_id: u64) -> Self {
         Config {
             gateway_uri: "http://localhost:8085".to_owned(),
             chain_type: ChainType::Simulator,
+            test_id,
         }
     }
 

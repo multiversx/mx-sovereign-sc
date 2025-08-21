@@ -70,6 +70,9 @@ pub struct State {
     pub sft_token_id: Option<EsdtTokenInfo>,
     pub sov_to_mvx_token_id: Option<EsdtTokenInfo>,
     pub initial_wallet_balance: Option<Vec<EsdtTokenInfo>>,
+    pub sovereign_owners: Option<Vec<Address>>,
+    pub bridge_owners: Option<Vec<Address>>,
+    pub bridge_services: Option<Vec<Address>>,
 }
 
 impl State {
@@ -151,6 +154,18 @@ impl State {
         self.initial_wallet_balance = Some(tokens);
     }
 
+    pub fn set_bridge_owners(&mut self, owners: Vec<Address>) {
+        self.bridge_owners = Some(owners);
+    }
+
+    pub fn set_bridge_services(&mut self, services: Vec<Address>) {
+        self.bridge_services = Some(services);
+    }
+
+    pub fn set_sovereign_owners(&mut self, owners: Vec<Address>) {
+        self.sovereign_owners = Some(owners);
+    }
+
     /// Returns the contract addresses
     pub fn current_mvx_esdt_safe_contract_address(&self) -> &Bech32Address {
         self.mvx_esdt_safe_addresses
@@ -196,6 +211,18 @@ impl State {
             .expect(NO_KNOWN_CHAIN_FACTORY_SC)
             .first()
             .expect(NO_KNOWN_CHAIN_FACTORY_IN_THE_SPECIFIED_SHARD)
+    }
+
+    pub fn get_bridge_owners(&self) -> Vec<Address> {
+        self.bridge_owners.clone().unwrap_or_default()
+    }
+
+    pub fn get_bridge_services(&self) -> Vec<Address> {
+        self.bridge_services.clone().unwrap_or_default()
+    }
+
+    pub fn get_sovereign_owners(&self) -> Vec<Address> {
+        self.sovereign_owners.clone().unwrap_or_default()
     }
 
     pub fn get_first_token_identifier(&self) -> TokenIdentifier<StaticApi> {

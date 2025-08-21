@@ -9,7 +9,6 @@ use common_test_setup::constants::{
     HEADER_VERIFIER_CODE_PATH, ISSUE_COST, MVX_ESDT_SAFE_CODE_PATH, NUMBER_OF_SHARDS, SHARD_0,
     SOVEREIGN_FORGE_CODE_PATH, TESTING_SC_CODE_PATH,
 };
-use error_messages::FAILED_TO_LOAD_WALLET_SHARD_0;
 use multiversx_sc::{
     imports::{ESDTSystemSCProxy, OptionalValue, UserBuiltinProxy},
     types::{
@@ -21,9 +20,9 @@ use multiversx_sc::{
 use multiversx_sc_snippets::{
     imports::{
         Bech32Address, ReturnsGasUsed, ReturnsHandledOrError, ReturnsLogs,
-        ReturnsNewTokenIdentifier, StaticApi, Wallet,
+        ReturnsNewTokenIdentifier, StaticApi,
     },
-    test_wallets, InteractorRunAsync,
+    InteractorRunAsync,
 };
 use proxies::{
     chain_config_proxy::ChainConfigContractProxy, chain_factory_proxy::ChainFactoryContractProxy,
@@ -31,6 +30,7 @@ use proxies::{
     mvx_esdt_safe_proxy::MvxEsdtSafeProxy, sovereign_forge_proxy::SovereignForgeProxy,
     testing_sc_proxy::TestingScProxy,
 };
+use std::path::Path;
 use structs::{
     aliases::{OptionalValueTransferDataTuple, PaymentsVec},
     configs::{EsdtSafeConfig, SovereignConfig},
@@ -47,31 +47,35 @@ fn metadata() -> CodeMetadata {
 }
 
 pub trait CommonInteractorTrait: InteractorHelpers {
-    async fn register_wallets(&mut self) {
-        let shard_0_wallet = Wallet::from_pem_file("wallets/shard-0-wallet.pem")
-            .expect(FAILED_TO_LOAD_WALLET_SHARD_0);
+    async fn register_wallets(&mut self, test_id: u64) {
+        let test_path = Path::new("wallets").join(format!("test_{}", test_id));
 
-        self.interactor().register_wallet(test_wallets::bob()).await; // bridge_owner_shard_0
-        self.interactor()
-            .register_wallet(test_wallets::alice())
-            .await; // bridge_owner_shard_1
-        self.interactor()
-            .register_wallet(test_wallets::carol())
-            .await; // bridge_owner_shard_2
-        self.interactor()
-            .register_wallet(test_wallets::mike())
-            .await; // sovereign_owner_shard_0
-        self.interactor()
-            .register_wallet(test_wallets::frank())
-            .await; // sovereign_owner_shard_1
-        self.interactor()
-            .register_wallet(test_wallets::heidi())
-            .await; // sovereign_owner_shard_2
-        self.interactor().register_wallet(shard_0_wallet).await; // bridge_service_shard_0
-        self.interactor().register_wallet(test_wallets::dan()).await; // bridge_service_shard_1
-        self.interactor()
-            .register_wallet(test_wallets::judy())
-            .await; // bridge_service_shard_2
+        let categories = [
+            ("bridge_owners", "bridge_owner"),
+            ("sovereign_owners", "sovereign_owner"),
+            ("bridge_services", "bridge_service"),
+        ];
+
+        let mut all_addresses = [Vec::new(), Vec::new(), Vec::new()];
+
+        for (idx, (folder_name, prefix)) in categories.iter().enumerate() {
+            let folder_path = test_path.join(folder_name);
+
+            if !folder_path.exists() {
+                panic!("{} folder not found for test {}", folder_name, test_id);
+            }
+
+            for shard in 0..3 {
+                let wallet_path = folder_path.join(format!("{}_shard_{}.pem", prefix, shard));
+                let wallet = Self::load_wallet(&wallet_path, test_id);
+                let address = self.interactor().register_wallet(wallet).await;
+                all_addresses[idx].push(address);
+            }
+        }
+
+        self.state().set_bridge_owners(all_addresses[0].clone());
+        self.state().set_sovereign_owners(all_addresses[1].clone());
+        self.state().set_bridge_services(all_addresses[2].clone());
 
         self.interactor().generate_blocks(1u64).await.unwrap();
     }

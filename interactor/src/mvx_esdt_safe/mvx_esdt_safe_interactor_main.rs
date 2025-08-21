@@ -38,7 +38,7 @@ impl MvxEsdtSafeInteract {
     pub async fn new(config: Config) -> Self {
         let mut interactor = Self::initialize_interactor(config.clone()).await;
 
-        interactor.register_wallets().await;
+        interactor.register_wallets(0u64).await;
 
         match config.use_chain_simulator() {
             true => {

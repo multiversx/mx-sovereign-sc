@@ -1,4 +1,6 @@
 #![allow(non_snake_case)]
+use std::path::Path;
+
 use common_interactor::interactor_helpers::InteractorHelpers;
 use common_interactor::interactor_state::{EsdtTokenInfo, State};
 use common_interactor::interactor_structs::{ActionConfig, BalanceCheckConfig};
@@ -40,7 +42,7 @@ impl CompleteFlowInteract {
     pub async fn new(config: Config) -> Self {
         let mut interactor = Self::initialize_interactor(config.clone()).await;
 
-        interactor.register_wallets().await;
+        interactor.register_wallets(config.test_id).await;
 
         match config.use_chain_simulator() {
             true => {
@@ -61,7 +63,12 @@ impl CompleteFlowInteract {
         let current_working_dir = INTERACTOR_WORKING_DIR;
         interactor.set_current_dir_from_workspace(current_working_dir);
 
-        let user_address = interactor.register_wallet(test_wallets::grace()).await; //shard 1
+        let wallets_base_path = "wallets";
+        let test_folder = format!("test_{}", config.test_id);
+        let test_path = Path::new(wallets_base_path).join(&test_folder);
+        let user_wallet_path = test_path.join("user.pem");
+        let user_wallet = Self::load_wallet(&user_wallet_path, config.test_id);
+        let user_address = interactor.register_wallet(user_wallet).await;
 
         interactor.generate_blocks_until_epoch(1).await.unwrap();
 

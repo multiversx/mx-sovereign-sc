@@ -1,10 +1,12 @@
+use std::path::Path;
+
 use base64::{engine::general_purpose::STANDARD as BASE64, Engine};
 use common_test_setup::constants::{
     FEE_MARKET_SHARD_0, FEE_MARKET_SHARD_1, FEE_MARKET_SHARD_2, GAS_LIMIT, MVX_ESDT_SAFE_SHARD_0,
     MVX_ESDT_SAFE_SHARD_1, MVX_ESDT_SAFE_SHARD_2, PER_GAS, PER_TRANSFER, SHARD_1, TESTING_SC,
-    TESTING_SC_ENDPOINT, UNKNOWN_FEE_MARKET, UNKNOWN_MVX_ESDT_SAFE, USER_ADDRESS_STR, WALLET_PATH,
+    TESTING_SC_ENDPOINT, UNKNOWN_FEE_MARKET, UNKNOWN_MVX_ESDT_SAFE, USER_ADDRESS_STR,
 };
-use error_messages::{FAILED_TO_LOAD_WALLET_SHARD_0, FAILED_TO_PARSE_AS_NUMBER};
+use error_messages::FAILED_TO_PARSE_AS_NUMBER;
 use multiversx_sc::{
     codec::{num_bigint, TopEncode},
     imports::{Bech32Address, MultiValue3, OptionalValue},
@@ -20,7 +22,7 @@ use multiversx_sc_snippets::{
         multiversx_chain_vm::crypto_functions::sha256,
         scenario_model::{Log, TxResponseStatus},
     },
-    test_wallets, Interactor,
+    Interactor,
 };
 use rand::{distr::Alphanumeric, Rng};
 use structs::{
@@ -256,30 +258,73 @@ pub trait InteractorHelpers {
         }
     }
 
-    fn get_bridge_service_for_shard(&self, shard_id: u32) -> Address {
-        let shard_0_wallet =
-            Wallet::from_pem_file(WALLET_PATH).expect(FAILED_TO_LOAD_WALLET_SHARD_0);
+    fn get_bridge_service_for_shard(&mut self, shard_id: u32) -> Address {
         match shard_id {
-            0 => shard_0_wallet.to_address(),
-            1 => test_wallets::dan().to_address(),
-            2 => test_wallets::judy().to_address(),
+            0 => self
+                .state()
+                .get_bridge_services()
+                .first()
+                .cloned()
+                .expect("No bridge service found for shard 0"),
+            1 => self
+                .state()
+                .get_bridge_services()
+                .get(1)
+                .cloned()
+                .expect("No bridge service found for shard 1"),
+            2 => self
+                .state()
+                .get_bridge_services()
+                .get(2)
+                .cloned()
+                .expect("No bridge service found for shard 2"),
             _ => panic!("Invalid shard ID: {shard_id}"),
         }
     }
-    fn get_bridge_owner_for_shard(&self, shard_id: u32) -> Address {
+    fn get_bridge_owner_for_shard(&mut self, shard_id: u32) -> Address {
         match shard_id {
-            0 => test_wallets::bob().to_address(),
-            1 => test_wallets::alice().to_address(),
-            2 => test_wallets::carol().to_address(),
+            0 => self
+                .state()
+                .get_bridge_owners()
+                .first()
+                .cloned()
+                .expect("No bridge owner found for shard 0"),
+            1 => self
+                .state()
+                .get_bridge_owners()
+                .get(1)
+                .cloned()
+                .expect("No bridge owner found for shard 1"),
+            2 => self
+                .state()
+                .get_bridge_owners()
+                .get(2)
+                .cloned()
+                .expect("No bridge owner found for shard 2"),
             _ => panic!("Invalid shard ID: {shard_id}"),
         }
     }
 
-    fn get_sovereign_owner_for_shard(&self, shard_id: u32) -> Address {
+    fn get_sovereign_owner_for_shard(&mut self, shard_id: u32) -> Address {
         match shard_id {
-            0 => test_wallets::mike().to_address(),
-            1 => test_wallets::frank().to_address(),
-            2 => test_wallets::heidi().to_address(),
+            0 => self
+                .state()
+                .get_sovereign_owners()
+                .first()
+                .cloned()
+                .expect("No sovereign owner found for shard 0"),
+            1 => self
+                .state()
+                .get_sovereign_owners()
+                .get(1)
+                .cloned()
+                .expect("No sovereign owner found for shard 1"),
+            2 => self
+                .state()
+                .get_sovereign_owners()
+                .get(2)
+                .cloned()
+                .expect("No sovereign owner found for shard 2"),
             _ => panic!("Invalid shard ID: {shard_id}"),
         }
     }
@@ -758,5 +803,19 @@ pub trait InteractorHelpers {
             .take(4)
             .map(char::from)
             .collect()
+    }
+
+    fn load_wallet(wallet_path: &Path, test_id: u64) -> Wallet {
+        if wallet_path.exists() {
+            Wallet::from_pem_file(wallet_path.to_str().unwrap()).unwrap_or_else(|_| {
+                panic!(
+                    "Failed to load {} for test {}",
+                    wallet_path.display(),
+                    test_id
+                )
+            })
+        } else {
+            panic!("{} not found for test {}", wallet_path.display(), test_id);
+        }
     }
 }
