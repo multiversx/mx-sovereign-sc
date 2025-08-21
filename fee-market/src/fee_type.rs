@@ -105,11 +105,6 @@ pub trait FeeTypeModule:
 
                 token
             }
-            FeeType::AnyToken {
-                base_fee_token,
-                per_transfer: _,
-                per_gas: _,
-            } => base_fee_token,
         };
 
         if !self.is_valid_token_id(token) {

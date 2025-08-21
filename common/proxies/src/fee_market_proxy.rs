@@ -88,19 +88,6 @@ where
     To: TxTo<Env>,
     Gas: TxGas<Env>,
 {
-    pub fn set_price_aggregator_address<
-        Arg0: ProxyArg<ManagedAddress<Env::Api>>,
-    >(
-        self,
-        price_aggregator_address: Arg0,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("setPriceAggregatorAddress")
-            .argument(&price_aggregator_address)
-            .original_result()
-    }
-
     pub fn complete_setup_phase(
         self,
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
@@ -207,23 +194,6 @@ where
             .original_result()
     }
 
-    /// Percentages have to be between 0 and 10_000, and must all add up to 100% (i.e. 10_000) 
-    pub fn distribute_fees<
-        Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
-        Arg1: ProxyArg<MultiValueEncoded<Env::Api, MultiValue2<ManagedAddress<Env::Api>, usize>>>,
-    >(
-        self,
-        hash_of_hashes: Arg0,
-        address_percentage_pairs: Arg1,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("distributeFees")
-            .argument(&hash_of_hashes)
-            .argument(&address_percentage_pairs)
-            .original_result()
-    }
-
     pub fn subtract_fee<
         Arg0: ProxyArg<ManagedAddress<Env::Api>>,
         Arg1: ProxyArg<usize>,
@@ -239,6 +209,23 @@ where
             .argument(&original_caller)
             .argument(&total_transfers)
             .argument(&opt_gas_limit)
+            .original_result()
+    }
+
+    /// Percentages have to be between 0 and 10_000, and must all add up to 100% (i.e. 10_000) 
+    pub fn distribute_fees<
+        Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
+        Arg1: ProxyArg<MultiValueEncoded<Env::Api, MultiValue2<ManagedAddress<Env::Api>, usize>>>,
+    >(
+        self,
+        hash_of_hashes: Arg0,
+        address_percentage_pairs: Arg1,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("distributeFees")
+            .argument(&hash_of_hashes)
+            .argument(&address_percentage_pairs)
             .original_result()
     }
 
