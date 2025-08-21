@@ -71,3 +71,61 @@ where
             .original_result()
     }
 }
+
+#[rustfmt::skip]
+impl<Env, From, To, Gas> SovFeeMarketProxyMethods<Env, From, To, Gas>
+where
+    Env: TxEnv,
+    Env::Api: VMApi,
+    From: TxFrom<Env>,
+    To: TxTo<Env>,
+    Gas: TxGas<Env>,
+{
+    pub fn add_users_to_whitelist<
+        Arg0: ProxyArg<MultiValueEncoded<Env::Api, ManagedAddress<Env::Api>>>,
+    >(
+        self,
+        users: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("addUsersToWhitelist")
+            .argument(&users)
+            .original_result()
+    }
+
+    pub fn remove_users_from_whitelist<
+        Arg0: ProxyArg<MultiValueEncoded<Env::Api, ManagedAddress<Env::Api>>>,
+    >(
+        self,
+        users: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("removeUsersFromWhitelist")
+            .argument(&users)
+            .original_result()
+    }
+
+    pub fn token_fee<
+        Arg0: ProxyArg<TokenIdentifier<Env::Api>>,
+    >(
+        self,
+        token_id: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, structs::fee::FeeType<Env::Api>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getTokenFee")
+            .argument(&token_id)
+            .original_result()
+    }
+
+    pub fn users_whitelist(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, MultiValueEncoded<Env::Api, ManagedAddress<Env::Api>>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getUsersWhitelist")
+            .original_result()
+    }
+}
