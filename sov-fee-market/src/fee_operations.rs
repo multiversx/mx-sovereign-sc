@@ -1,5 +1,3 @@
-use structs::{aliases::GasLimit, fee::FinalPayment};
-
 multiversx_sc::imports!();
 multiversx_sc::derive_imports!();
 
@@ -17,9 +15,14 @@ pub trait FeeOperationsModule:
     #[endpoint(distributeFees)]
     fn distribute_fees(
         &self,
-        hash_of_hashes: ManagedBuffer,
         address_percentage_pairs: MultiValueEncoded<MultiValue2<ManagedAddress, usize>>,
     ) {
-        self.distribute_fees_common_function(&hash_of_hashes, address_percentage_pairs);
+        let pairs = self.parse_pairs(address_percentage_pairs);
+        if let Some(percentage_validation_err) = self.validate_percentage_sum(&pairs) {
+            sc_panic!(percentage_validation_err);
+        }
+
+        self.distribute_token_fees(&pairs);
+        self.tokens_for_fees().clear();
     }
 }

@@ -48,11 +48,10 @@ pub trait FeeCommonHelpersModule:
         }
     }
 
-    fn parse_and_validate_pairs(
+    fn parse_pairs(
         &self,
         address_percentage_pairs: MultiValueEncoded<MultiValue2<ManagedAddress, usize>>,
-        hash_of_hashes: &ManagedBuffer,
-    ) -> Option<ManagedVec<Self::Api, AddressPercentagePair<Self::Api>>> {
+    ) -> ManagedVec<Self::Api, AddressPercentagePair<Self::Api>> {
         let mut pairs = ManagedVec::<Self::Api, AddressPercentagePair<Self::Api>>::new();
 
         for pair in address_percentage_pairs {
@@ -62,20 +61,24 @@ pub trait FeeCommonHelpersModule:
                 percentage,
             };
 
-            let pair_hash = pair_struct.generate_hash();
-            if pair_hash.is_empty() {
-                self.complete_operation(
-                    hash_of_hashes,
-                    &pair_hash,
-                    Some(ManagedBuffer::from(ERROR_AT_ENCODING)),
-                );
-                return None;
-            }
-
             pairs.push(pair_struct);
         }
 
-        Some(pairs)
+        pairs
+    }
+
+    fn validate_pairs(
+        &self,
+        pairs: &ManagedVec<Self::Api, AddressPercentagePair<Self::Api>>,
+    ) -> Option<ManagedBuffer> {
+        for pair in pairs {
+            let pair_hash = pair.generate_hash();
+            if pair_hash.is_empty() {
+                return Some(ManagedBuffer::from(ERROR_AT_ENCODING));
+            }
+        }
+
+        None
     }
 
     fn generate_pairs_hash(
@@ -126,21 +129,14 @@ pub trait FeeCommonHelpersModule:
     fn validate_percentage_sum(
         &self,
         pairs: &ManagedVec<Self::Api, AddressPercentagePair<Self::Api>>,
-        hash_of_hashes: &ManagedBuffer,
-        pairs_hash: &ManagedBuffer,
-    ) -> bool {
+    ) -> Option<ManagedBuffer> {
         let percentage_sum: u64 = pairs.iter().map(|pair| pair.percentage as u64).sum();
 
         if percentage_sum != TOTAL_PERCENTAGE as u64 {
-            self.complete_operation(
-                hash_of_hashes,
-                pairs_hash,
-                Some(ManagedBuffer::from(INVALID_PERCENTAGE_SUM)),
-            );
-            return false;
+            return Some(ManagedBuffer::from(INVALID_PERCENTAGE_SUM));
         }
 
-        true
+        None
     }
 
     fn subtract_fee_by_type(
