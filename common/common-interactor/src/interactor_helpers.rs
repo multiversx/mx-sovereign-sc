@@ -74,7 +74,7 @@ pub trait InteractorHelpers {
 
         // Add fee payment if present
         if let Some(fee_struct) = fee {
-            fee_amount = self.calculate_fee_amount(fee_struct, with_transfer_data, token.clone());
+            fee_amount = self.calculate_fee_amount(fee_struct, with_transfer_data);
 
             if fee_amount > 0u64 {
                 let fee_payment = EsdtTokenPayment::<StaticApi>::new(
@@ -211,7 +211,6 @@ pub trait InteractorHelpers {
         &self,
         fee_struct: FeeStruct<StaticApi>,
         with_transfer_data: bool,
-        _token: Option<EsdtTokenInfo>,
     ) -> BigUint<StaticApi> {
         match &fee_struct.fee_type {
             FeeType::Fixed {
@@ -601,7 +600,7 @@ pub trait InteractorHelpers {
 
         let fee_amount = fee
             .as_ref()
-            .map(|f| self.calculate_fee_amount(f.clone(), with_transfer_data, token.clone()))
+            .map(|f| self.calculate_fee_amount(f.clone(), with_transfer_data))
             .unwrap_or_else(BigUint::zero);
 
         let mut expected_user_tokens = Vec::new();
