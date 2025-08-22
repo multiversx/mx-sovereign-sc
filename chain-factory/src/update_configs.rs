@@ -76,7 +76,7 @@ pub trait UpdateConfigsModule: only_admin::OnlyAdminModule {
 
     #[only_admin]
     #[endpoint(removeUsersFromWhitelistSetupPhase)]
-    fn remove_users_to_whitelist(
+    fn remove_users_from_whitelist(
         &self,
         fee_market_address: ManagedAddress,
         users: MultiValueEncoded<ManagedAddress>,

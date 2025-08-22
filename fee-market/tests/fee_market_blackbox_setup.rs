@@ -258,7 +258,7 @@ impl FeeMarketTestState {
             .assert_expected_log(logs, expected_custom_log, None);
     }
 
-    pub fn add_users_to_whitelist(&mut self, users_vector: Vec<TestAddress>) {
+    pub fn add_users_to_whitelist_during_setup_phase(&mut self, users_vector: Vec<TestAddress>) {
         let mut users_vec = ManagedVec::new();
 
         for user in users_vector {
@@ -273,7 +273,7 @@ impl FeeMarketTestState {
             .from(OWNER_ADDRESS)
             .to(FEE_MARKET_ADDRESS)
             .typed(FeeMarketProxy)
-            .add_users_to_whitelist(users)
+            .add_users_to_whitelist_during_setup_phase(users)
             .run();
     }
 }

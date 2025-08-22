@@ -280,7 +280,7 @@ where
             .original_result()
     }
 
-    pub fn remove_users_to_whitelist<
+    pub fn remove_users_from_whitelist<
         Arg0: ProxyArg<ManagedAddress<Env::Api>>,
         Arg1: ProxyArg<MultiValueEncoded<Env::Api, ManagedAddress<Env::Api>>>,
     >(

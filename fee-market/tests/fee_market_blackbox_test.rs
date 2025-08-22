@@ -831,7 +831,7 @@ fn test_subtract_fee_whitelisted() {
 
     let whitelisted_users = vec![USER_ADDRESS];
 
-    state.add_users_to_whitelist(whitelisted_users);
+    state.add_users_to_whitelist_during_setup_phase(whitelisted_users);
 
     state.subtract_fee(
         WantedFeeType::Correct,

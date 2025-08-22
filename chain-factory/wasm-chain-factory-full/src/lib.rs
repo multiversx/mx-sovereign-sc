@@ -33,7 +33,7 @@ multiversx_sc_wasm_adapter::endpoints! {
         setFee => set_fee
         removeFee => remove_fee
         addUsersToWhitelistSetupPhase => add_users_to_whitelist
-        removeUsersFromWhitelistSetupPhase => remove_users_to_whitelist
+        removeUsersFromWhitelistSetupPhase => remove_users_from_whitelist
         completeSetupPhase => complete_setup_phase
     )
 }

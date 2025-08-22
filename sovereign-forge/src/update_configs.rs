@@ -1,4 +1,4 @@
-use multiversx_sc::types::TokenIdentifier;
+use multiversx_sc::types::{MultiValueEncoded, TokenIdentifier};
 use proxies::chain_factory_proxy::ChainFactoryContractProxy;
 use structs::configs::{EsdtSafeConfig, SovereignConfig};
 use structs::fee::FeeStruct;
@@ -72,6 +72,40 @@ pub trait UpdateConfigsModule: common::utils::UtilsModule + common::storage::Sto
             .remove_fee(
                 self.get_contract_address(&caller, ScArray::FeeMarket),
                 token_id,
+            )
+            .sync_call();
+    }
+
+    #[endpoint(addUsersToWhitelist)]
+    fn add_users_to_whitelist(&self, users: MultiValueEncoded<ManagedAddress>) {
+        let blockchain_api = self.blockchain();
+        let caller = blockchain_api.get_caller();
+
+        self.require_phase_three_completed(&caller);
+
+        self.tx()
+            .to(self.get_chain_factory_address())
+            .typed(ChainFactoryContractProxy)
+            .add_users_to_whitelist(
+                self.get_contract_address(&caller, ScArray::FeeMarket),
+                users,
+            )
+            .sync_call();
+    }
+
+    #[endpoint(removeUsersFromWhitelist)]
+    fn remove_users_from_whitelist(&self, users: MultiValueEncoded<ManagedAddress>) {
+        let blockchain_api = self.blockchain();
+        let caller = blockchain_api.get_caller();
+
+        self.require_phase_three_completed(&caller);
+
+        self.tx()
+            .to(self.get_chain_factory_address())
+            .typed(ChainFactoryContractProxy)
+            .remove_users_from_whitelist(
+                self.get_contract_address(&caller, ScArray::FeeMarket),
+                users,
             )
             .sync_call();
     }
