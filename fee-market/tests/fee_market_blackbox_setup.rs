@@ -1,11 +1,13 @@
 use multiversx_sc::{
     imports::{MultiValue2, OptionalValue},
     types::{
-        Address, BigUint, EsdtTokenPayment, ManagedAddress, ManagedBuffer, ManagedVec,
-        MultiValueEncoded, ReturnsHandledOrError, TestAddress, TestTokenIdentifier,
+        Address, BigUint, EsdtTokenPayment, ManagedAddress, ManagedBuffer, ManagedByteArray,
+        ManagedVec, MultiValueEncoded, ReturnsHandledOrError, TestAddress, TestTokenIdentifier,
     },
 };
-use multiversx_sc_scenario::{api::StaticApi, ReturnsLogs, ScenarioTxRun};
+use multiversx_sc_scenario::{
+    api::StaticApi, multiversx_chain_vm::crypto_functions::sha256, ReturnsLogs, ScenarioTxRun,
+};
 
 use common_test_setup::{
     base_setup::init::{AccountSetup, BaseSetup},
@@ -258,7 +260,7 @@ impl FeeMarketTestState {
             .assert_expected_log(logs, expected_custom_log, None);
     }
 
-    pub fn add_users_to_whitelist(&mut self, users_vector: Vec<TestAddress>) {
+    pub fn add_users_to_whitelist_during_setup_phase(&mut self, users_vector: Vec<TestAddress>) {
         let mut users_vec = ManagedVec::new();
 
         for user in users_vector {
@@ -273,7 +275,62 @@ impl FeeMarketTestState {
             .from(OWNER_ADDRESS)
             .to(FEE_MARKET_ADDRESS)
             .typed(FeeMarketProxy)
-            .add_users_to_whitelist(users)
+            .add_users_to_whitelist_during_setup_phase(users)
             .run();
+    }
+
+    pub fn add_users_to_whitelist(
+        &mut self,
+        hash_of_hashes: &ManagedBuffer<StaticApi>,
+        users: Vec<ManagedAddress<StaticApi>>,
+    ) {
+        self.common_setup
+            .world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .to(FEE_MARKET_ADDRESS)
+            .typed(FeeMarketProxy)
+            .add_users_to_whitelist(
+                hash_of_hashes,
+                MultiValueEncoded::from(ManagedVec::from_iter(users)),
+            )
+            .run();
+    }
+
+    pub fn remove_users_from_whitelist(
+        &mut self,
+        hash_of_hashes: &ManagedBuffer<StaticApi>,
+        users: Vec<ManagedAddress<StaticApi>>,
+    ) {
+        self.common_setup
+            .world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .to(FEE_MARKET_ADDRESS)
+            .typed(FeeMarketProxy)
+            .remove_users_from_whitelist(
+                hash_of_hashes,
+                MultiValueEncoded::from(ManagedVec::from_iter(users)),
+            )
+            .run();
+    }
+
+    pub fn compute_users_hash(
+        &mut self,
+        users: Vec<ManagedAddress<StaticApi>>,
+    ) -> ManagedBuffer<StaticApi> {
+        let mut aggregated_hashes: ManagedBuffer<StaticApi> = ManagedBuffer::new();
+
+        for user in users {
+            let user_hash_byte_array =
+                ManagedByteArray::new_from_bytes(&sha256(&user.to_byte_array()));
+
+            aggregated_hashes.append(user_hash_byte_array.as_managed_buffer());
+        }
+
+        let users_hash_byte_array =
+            ManagedByteArray::new_from_bytes(&sha256(&aggregated_hashes.to_vec()));
+
+        users_hash_byte_array.as_managed_buffer().clone()
     }
 }

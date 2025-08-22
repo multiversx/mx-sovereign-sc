@@ -162,6 +162,79 @@ fn test_set_fee_invalid_fee_type() {
 }
 
 /// ### TEST
+/// F-MARKET_REMOVE_USERS_FROM_WHITELIST_OK
+///
+/// ### ACTION
+/// Call 'remove_users_from_whitelist`
+///
+/// ### EXPECTED
+/// SC whitelist is updated
+#[test]
+fn test_remove_users_from_whitelist() {
+    let mut state = FeeMarketTestState::new();
+
+    state
+        .common_setup
+        .deploy_chain_config(OptionalValue::None, None);
+
+    let genesis_validator = ManagedBuffer::from("genesis_validator");
+    state.common_setup.register_as_validator(
+        &genesis_validator,
+        &MultiEgldOrEsdtPayment::new(),
+        None,
+        Some("register"),
+    );
+
+    state.common_setup.complete_chain_config_setup_phase(None);
+
+    state
+        .common_setup
+        .deploy_fee_market(None, ESDT_SAFE_ADDRESS);
+
+    state
+        .common_setup
+        .deploy_header_verifier(vec![ScArray::FeeMarket, ScArray::ChainConfig]);
+
+    state.common_setup.complete_fee_market_setup_phase(None);
+
+    state
+        .common_setup
+        .complete_header_verifier_setup_phase(None);
+
+    let new_users = vec![
+        USER_ADDRESS.to_managed_address(),
+        OWNER_ADDRESS.to_managed_address(),
+    ];
+
+    let users_hash = state.compute_users_hash(new_users.clone());
+    let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&users_hash.to_vec()));
+
+    let signature = ManagedBuffer::new();
+    let bitmap = ManagedBuffer::new_from_bytes(&[1]);
+    let epoch = 0;
+
+    state.common_setup.register_operation(
+        OWNER_ADDRESS,
+        signature,
+        &hash_of_hashes,
+        bitmap,
+        epoch,
+        MultiValueEncoded::from_iter(vec![users_hash]),
+    );
+    state.add_users_to_whitelist(&hash_of_hashes, new_users.clone());
+
+    state
+        .common_setup
+        .query_user_fee_whitelist(Some(&new_users));
+
+    state.remove_users_from_whitelist(&hash_of_hashes, new_users.clone());
+
+    state
+        .common_setup
+        .query_user_fee_whitelist(Some(&new_users));
+}
+
+/// ### TEST
 /// F-MARKET_SET_FEE_FAIL
 ///
 /// ### ACTION
@@ -831,7 +904,7 @@ fn test_subtract_fee_whitelisted() {
 
     let whitelisted_users = vec![USER_ADDRESS];
 
-    state.add_users_to_whitelist(whitelisted_users);
+    state.add_users_to_whitelist_during_setup_phase(whitelisted_users);
 
     state.subtract_fee(
         WantedFeeType::Correct,
