@@ -1,19 +1,19 @@
 use common_test_setup::{
     base_setup::init::{AccountSetup, BaseSetup},
     constants::{
-        CHAIN_FACTORY_SC_ADDRESS, ESDT_SAFE_ADDRESS, OWNER_ADDRESS, OWNER_BALANCE,
-        SOVEREIGN_FORGE_SC_ADDRESS,
+        CHAIN_FACTORY_SC_ADDRESS, ESDT_SAFE_ADDRESS, FEE_MARKET_ADDRESS, OWNER_ADDRESS,
+        OWNER_BALANCE, SOVEREIGN_FORGE_SC_ADDRESS,
     },
 };
 use multiversx_sc::{
     imports::OptionalValue,
     types::{
-        BigUint, ManagedAddress, ReturnsHandledOrError, ReturnsResultUnmanaged, TestSCAddress,
-        TestTokenIdentifier,
+        BigUint, ManagedAddress, ManagedVec, MultiValueEncoded, ReturnsHandledOrError,
+        ReturnsResultUnmanaged, TestSCAddress, TestTokenIdentifier,
     },
 };
 use multiversx_sc_scenario::{api::StaticApi, ScenarioTxRun};
-use proxies::sovereign_forge_proxy::SovereignForgeProxy;
+use proxies::{fee_market_proxy::FeeMarketProxy, sovereign_forge_proxy::SovereignForgeProxy};
 use sovereign_forge::common::storage::ChainId;
 use structs::{
     configs::{EsdtSafeConfig, SovereignConfig},
@@ -187,6 +187,72 @@ impl SovereignForgeTestState {
 
         self.common_setup
             .assert_expected_error_message(response, error_message);
+    }
+
+    pub fn add_users_to_whitelist(
+        &mut self,
+        users: Vec<ManagedAddress<StaticApi>>,
+        error_message: Option<&str>,
+    ) {
+        let response = self
+            .common_setup
+            .world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .to(SOVEREIGN_FORGE_SC_ADDRESS)
+            .typed(SovereignForgeProxy)
+            .add_users_to_whitelist(MultiValueEncoded::from(ManagedVec::from_iter(users)))
+            .returns(ReturnsHandledOrError::new())
+            .run();
+
+        self.common_setup
+            .assert_expected_error_message(response, error_message);
+    }
+
+    pub fn remove_users_from_whitelist(
+        &mut self,
+        users: Vec<ManagedAddress<StaticApi>>,
+        error_message: Option<&str>,
+    ) {
+        let response = self
+            .common_setup
+            .world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .to(SOVEREIGN_FORGE_SC_ADDRESS)
+            .typed(SovereignForgeProxy)
+            .remove_users_from_whitelist(MultiValueEncoded::from(ManagedVec::from_iter(users)))
+            .returns(ReturnsHandledOrError::new())
+            .run();
+
+        self.common_setup
+            .assert_expected_error_message(response, error_message);
+    }
+
+    pub fn query_user_fee_whitelist(
+        &mut self,
+        users_to_query: Option<&[ManagedAddress<StaticApi>]>,
+    ) {
+        let query = self
+            .common_setup
+            .world
+            .query()
+            .to(FEE_MARKET_ADDRESS)
+            .typed(FeeMarketProxy)
+            .users_whitelist()
+            .returns(ReturnsResultUnmanaged)
+            .run();
+
+        match users_to_query {
+            Some(expected_users) => {
+                assert!(query
+                    .iter()
+                    .all(|u| expected_users.contains(&ManagedAddress::from(u))))
+            }
+            None => {
+                assert!(query.is_empty())
+            }
+        }
     }
 
     pub fn get_smart_contract_address_from_sovereign_forge(
