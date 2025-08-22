@@ -29,17 +29,6 @@ pub trait FeeOperationsModule:
             return;
         }
         let pairs_hash = opt_pairs_hash.unwrap();
-
-        if let Some(pairs_validation_error) = self.validate_pairs(&pairs) {
-            self.complete_operation(&hash_of_hashes, &pairs_hash, Some(pairs_validation_error));
-            return;
-        }
-
-        let pairs_hash = self.generate_pairs_hash(&pairs, &hash_of_hashes);
-        if pairs_hash.is_none() {
-            return;
-        }
-        let pairs_hash = pairs_hash.unwrap();
         self.lock_operation_hash(&hash_of_hashes, &pairs_hash);
 
         if let Some(err_msg) = self.validate_percentage_sum(&pairs) {
