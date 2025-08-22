@@ -984,58 +984,6 @@ fn test_deploy_phase_three() {
 }
 
 /// ### TEST
-/// S-FORGE_ADD_USERS_TO_FEE_WHITELIST
-///
-/// ### ACTION
-/// Call add_users_to_whitelist
-///
-/// ### EXPECTED
-/// Users are set in fee-market's storage
-#[test]
-fn test_add_users_to_whitelist() {
-    let mut state = SovereignForgeTestState::new();
-    state.common_setup.deploy_sovereign_forge();
-
-    state.deploy_template_scs(Some(vec![
-        ScArray::ChainFactory,
-        ScArray::ChainConfig,
-        ScArray::ESDTSafe,
-        ScArray::FeeMarket,
-    ]));
-
-    state.finish_setup();
-
-    let deploy_cost = BigUint::from(DEPLOY_COST);
-
-    state
-        .common_setup
-        .deploy_phase_one(&deploy_cost, None, OptionalValue::None, None);
-
-    state
-        .common_setup
-        .deploy_phase_two(OptionalValue::None, None);
-
-    state.common_setup.deploy_phase_three(None, None);
-
-    state
-        .common_setup
-        .world
-        .query()
-        .to(SOVEREIGN_FORGE_SC_ADDRESS)
-        .whitebox(sovereign_forge::contract_obj, |sc| {
-            let is_fee_market_deployed =
-                sc.is_contract_deployed(&OWNER_ADDRESS.to_managed_address(), ScArray::ESDTSafe);
-
-            assert!(is_fee_market_deployed);
-        });
-
-    let whitelisted_users = vec![USER_ADDRESS.to_managed_address()];
-
-    state.add_users_to_whitelist(whitelisted_users.clone(), None);
-    state.query_user_fee_whitelist(Some(&whitelisted_users));
-}
-
-/// ### TEST
 /// S-FORGE_REMOVE_USERS_FROM_FEE_WHITELIST
 ///
 /// ### ACTION
@@ -1087,13 +1035,17 @@ fn test_remove_users_from_whitelist() {
     ];
 
     state.add_users_to_whitelist(whitelisted_users.clone(), None);
-    state.query_user_fee_whitelist(Some(&whitelisted_users));
+    state
+        .common_setup
+        .query_user_fee_whitelist(Some(&whitelisted_users));
 
     let users_to_remove = vec![USER_ADDRESS.to_managed_address()];
     let expected_users = vec![OWNER_ADDRESS.to_managed_address()];
 
     state.remove_users_from_whitelist(users_to_remove.clone(), None);
-    state.query_user_fee_whitelist(Some(&expected_users));
+    state
+        .common_setup
+        .query_user_fee_whitelist(Some(&expected_users));
 }
 
 /// ### TEST
