@@ -229,32 +229,6 @@ impl SovereignForgeTestState {
             .assert_expected_error_message(response, error_message);
     }
 
-    pub fn query_user_fee_whitelist(
-        &mut self,
-        users_to_query: Option<&[ManagedAddress<StaticApi>]>,
-    ) {
-        let query = self
-            .common_setup
-            .world
-            .query()
-            .to(FEE_MARKET_ADDRESS)
-            .typed(FeeMarketProxy)
-            .users_whitelist()
-            .returns(ReturnsResultUnmanaged)
-            .run();
-
-        match users_to_query {
-            Some(expected_users) => {
-                assert!(query
-                    .iter()
-                    .all(|u| expected_users.contains(&ManagedAddress::from(u))))
-            }
-            None => {
-                assert!(query.is_empty())
-            }
-        }
-    }
-
     pub fn get_smart_contract_address_from_sovereign_forge(
         &mut self,
         chain_id: ChainId<StaticApi>,
