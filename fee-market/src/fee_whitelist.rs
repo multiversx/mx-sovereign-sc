@@ -48,8 +48,7 @@ pub trait FeeWhitelistModule:
         );
 
         for user in users {
-            let was_removed = self.users_whitelist().swap_remove(&user);
-            require!(was_removed, ITEM_NOT_IN_LIST);
+            self.users_whitelist().swap_remove(&user);
         }
     }
 
@@ -64,14 +63,7 @@ pub trait FeeWhitelistModule:
         let users_hash = self.get_users_aggregated_hash(users.clone());
 
         for user in users {
-            let was_removed = self.users_whitelist().swap_remove(&user);
-            if !was_removed {
-                self.complete_operation(
-                    &hash_of_hashes,
-                    &users_hash,
-                    Some(ManagedBuffer::from(ITEM_NOT_IN_LIST)),
-                );
-            }
+            self.users_whitelist().swap_remove(&user);
         }
 
         self.complete_operation(&hash_of_hashes, &users_hash, None);
