@@ -43,12 +43,19 @@ where
     From: TxFrom<Env>,
     Gas: TxGas<Env>,
 {
-    pub fn init(
+    pub fn init<
+        Arg0: ProxyArg<ManagedAddress<Env::Api>>,
+        Arg1: ProxyArg<Option<structs::fee::FeeStruct<Env::Api>>>,
+    >(
         self,
+        esdt_safe_address: Arg0,
+        fee: Arg1,
     ) -> TxTypedDeploy<Env, From, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_deploy()
+            .argument(&esdt_safe_address)
+            .argument(&fee)
             .original_result()
     }
 }
@@ -126,6 +133,63 @@ where
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("getUsersWhitelist")
+            .original_result()
+    }
+
+    pub fn distribute_fees<
+        Arg0: ProxyArg<MultiValueEncoded<Env::Api, MultiValue2<ManagedAddress<Env::Api>, usize>>>,
+    >(
+        self,
+        address_percentage_pairs: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("distributeFees")
+            .argument(&address_percentage_pairs)
+            .original_result()
+    }
+
+    pub fn remove_fee<
+        Arg0: ProxyArg<TokenIdentifier<Env::Api>>,
+    >(
+        self,
+        token_id: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("removeFee")
+            .argument(&token_id)
+            .original_result()
+    }
+
+    pub fn set_fee<
+        Arg0: ProxyArg<structs::fee::FeeStruct<Env::Api>>,
+    >(
+        self,
+        fee_struct: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("setFee")
+            .argument(&fee_struct)
+            .original_result()
+    }
+
+    pub fn subtract_fee<
+        Arg0: ProxyArg<ManagedAddress<Env::Api>>,
+        Arg1: ProxyArg<usize>,
+        Arg2: ProxyArg<OptionalValue<u64>>,
+    >(
+        self,
+        original_caller: Arg0,
+        total_transfers: Arg1,
+        opt_gas_limit: Arg2,
+    ) -> TxTypedCall<Env, From, To, (), Gas, structs::fee::FinalPayment<Env::Api>> {
+        self.wrapped_tx
+            .raw_call("subtractFee")
+            .argument(&original_caller)
+            .argument(&total_transfers)
+            .argument(&opt_gas_limit)
             .original_result()
     }
 }

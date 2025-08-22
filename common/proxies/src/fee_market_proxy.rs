@@ -116,13 +116,13 @@ where
     >(
         self,
         hash_of_hashes: Arg0,
-        base_token: Arg1,
+        token_id: Arg1,
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("removeFee")
             .argument(&hash_of_hashes)
-            .argument(&base_token)
+            .argument(&token_id)
             .original_result()
     }
 

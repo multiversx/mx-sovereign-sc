@@ -1,11 +1,5 @@
-use error_messages::{
-    ERROR_AT_ENCODING, INVALID_FEE, INVALID_FEE_TYPE, INVALID_TOKEN_ID,
-    SETUP_PHASE_ALREADY_COMPLETED,
-};
-use structs::{
-    fee::{FeeStruct, FeeType},
-    generate_hash::GenerateHash,
-};
+use error_messages::{ERROR_AT_ENCODING, SETUP_PHASE_ALREADY_COMPLETED};
+use structs::{fee::FeeStruct, generate_hash::GenerateHash};
 
 multiversx_sc::imports!();
 multiversx_sc::derive_imports!();
@@ -16,6 +10,7 @@ pub trait FeeTypeModule:
     + setup_phase::SetupPhaseModule
     + custom_events::CustomEventsModule
     + fee_common::storage::FeeCommonStorageModule
+    + fee_common::helpers::FeeCommonHelpersModule
 {
     #[only_owner]
     #[endpoint(removeFeeDuringSetupPhase)]
@@ -30,10 +25,10 @@ pub trait FeeTypeModule:
     }
 
     #[endpoint(removeFee)]
-    fn remove_fee(&self, hash_of_hashes: ManagedBuffer, base_token: TokenIdentifier) {
+    fn remove_fee(&self, hash_of_hashes: ManagedBuffer, token_id: TokenIdentifier) {
         self.require_setup_complete();
 
-        let token_id_hash = base_token.generate_hash();
+        let token_id_hash = token_id.generate_hash();
         if token_id_hash.is_empty() {
             self.complete_operation(
                 &hash_of_hashes,
@@ -45,7 +40,7 @@ pub trait FeeTypeModule:
 
         self.lock_operation_hash(&hash_of_hashes, &token_id_hash);
 
-        self.token_fee(&base_token).clear();
+        self.token_fee(&token_id).clear();
         self.fee_enabled().set(false);
 
         self.complete_operation(&hash_of_hashes, &token_id_hash, None);
@@ -90,34 +85,5 @@ pub trait FeeTypeModule:
         }
 
         self.complete_operation(&hash_of_hashes, &fee_hash, None);
-    }
-
-    fn set_fee_in_storage(&self, fee_struct: &FeeStruct<Self::Api>) -> Option<&str> {
-        if !self.is_valid_token_id(&fee_struct.base_token) {
-            return Some(INVALID_TOKEN_ID);
-        }
-
-        let token = match &fee_struct.fee_type {
-            FeeType::None => sc_panic!(INVALID_FEE_TYPE),
-            FeeType::Fixed {
-                token,
-                per_transfer: _,
-                per_gas: _,
-            } => {
-                require!(&fee_struct.base_token == token, INVALID_FEE);
-
-                token
-            }
-        };
-
-        if !self.is_valid_token_id(token) {
-            return Some(INVALID_TOKEN_ID);
-        }
-
-        self.fee_enabled().set(true);
-        self.token_fee(&fee_struct.base_token)
-            .set(fee_struct.fee_type.clone());
-
-        None
     }
 }
