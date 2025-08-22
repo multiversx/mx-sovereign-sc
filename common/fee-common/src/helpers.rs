@@ -1,10 +1,10 @@
 use error_messages::{
-    ERROR_AT_ENCODING, INVALID_PERCENTAGE_SUM, INVALID_TOKEN_PROVIDED_FOR_FEE,
-    PAYMENT_DOES_NOT_COVER_FEE, TOKEN_NOT_ACCEPTED_AS_FEE,
+    ERROR_AT_ENCODING, INVALID_FEE, INVALID_FEE_TYPE, INVALID_PERCENTAGE_SUM, INVALID_TOKEN_ID,
+    INVALID_TOKEN_PROVIDED_FOR_FEE, PAYMENT_DOES_NOT_COVER_FEE, TOKEN_NOT_ACCEPTED_AS_FEE,
 };
 use structs::{
     aliases::GasLimit,
-    fee::{AddressPercentagePair, FeeType, FinalPayment, SubtractPaymentArguments},
+    fee::{AddressPercentagePair, FeeStruct, FeeType, FinalPayment, SubtractPaymentArguments},
     generate_hash::GenerateHash,
 };
 
@@ -188,6 +188,47 @@ pub trait FeeCommonHelpersModule:
         FinalPayment {
             fee: EsdtTokenPayment::new(payment.token_identifier.clone(), 0, total_fee),
             remaining_tokens: payment,
+        }
+    }
+
+    fn set_fee_in_storage(&self, fee_struct: &FeeStruct<Self::Api>) -> Option<&str> {
+        if !self.is_valid_token_id(&fee_struct.base_token) {
+            return Some(INVALID_TOKEN_ID);
+        }
+
+        match &fee_struct.fee_type {
+            FeeType::None => sc_panic!(INVALID_FEE_TYPE),
+            FeeType::Fixed {
+                token,
+                per_transfer: _,
+                per_gas: _,
+            } => {
+                require!(&fee_struct.base_token == token, INVALID_FEE);
+
+                token
+            }
+        };
+
+        self.fee_enabled().set(true);
+        self.token_fee(&fee_struct.base_token)
+            .set(fee_struct.fee_type.clone());
+
+        None
+    }
+
+    fn init_fee_market(
+        &self,
+        esdt_safe_address: ManagedAddress,
+        fee: Option<FeeStruct<Self::Api>>,
+    ) {
+        self.require_sc_address(&esdt_safe_address);
+        self.esdt_safe_address().set(esdt_safe_address);
+
+        match fee {
+            Some(fee_struct) => {
+                let _ = self.set_fee_in_storage(&fee_struct);
+            }
+            _ => self.fee_enabled().set(false),
         }
     }
 }

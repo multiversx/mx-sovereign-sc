@@ -97,6 +97,22 @@ where
             .original_result()
     }
 
+    pub fn distribute_fees<
+        Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
+        Arg1: ProxyArg<MultiValueEncoded<Env::Api, MultiValue2<ManagedAddress<Env::Api>, usize>>>,
+    >(
+        self,
+        hash_of_hashes: Arg0,
+        address_percentage_pairs: Arg1,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("distributeFees")
+            .argument(&hash_of_hashes)
+            .argument(&address_percentage_pairs)
+            .original_result()
+    }
+
     pub fn remove_fee_during_setup_phase<
         Arg0: ProxyArg<TokenIdentifier<Env::Api>>,
     >(
@@ -116,13 +132,13 @@ where
     >(
         self,
         hash_of_hashes: Arg0,
-        base_token: Arg1,
+        token_id: Arg1,
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("removeFee")
             .argument(&hash_of_hashes)
-            .argument(&base_token)
+            .argument(&token_id)
             .original_result()
     }
 
@@ -152,22 +168,6 @@ where
             .raw_call("setFee")
             .argument(&hash_of_hashes)
             .argument(&fee_struct)
-            .original_result()
-    }
-
-    pub fn distribute_fees<
-        Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
-        Arg1: ProxyArg<MultiValueEncoded<Env::Api, MultiValue2<ManagedAddress<Env::Api>, usize>>>,
-    >(
-        self,
-        hash_of_hashes: Arg0,
-        address_percentage_pairs: Arg1,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("distributeFees")
-            .argument(&hash_of_hashes)
-            .argument(&address_percentage_pairs)
             .original_result()
     }
 
