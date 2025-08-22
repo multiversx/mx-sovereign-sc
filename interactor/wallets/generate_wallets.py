@@ -111,39 +111,6 @@ def generate_wallets_for_all_shards(folder_path, wallet_prefix):
     return found_shards
 
 
-def generate_user_wallet_for_shard_1(folder_path):
-    """Generate a user wallet specifically for shard 1"""
-    target_shard = 1
-    attempt = 1
-
-    print(f"  Generating user wallet for shard {target_shard}...")
-
-    while True:
-        wallet_name = f"user_attempt_{attempt}"
-        result = create_wallet_and_get_shard(folder_path, wallet_name)
-
-        if result[0] is not None:
-            shard, address, pem_file = result
-
-            if shard == target_shard:
-                final_name = "user.pem"
-                final_path = os.path.join(folder_path, final_name)
-                os.rename(pem_file, final_path)
-
-                print(f"    ✓ Found user wallet for shard {shard}: {address}")
-                return {"address": address, "file": final_path, "shard": shard}
-            else:
-                os.remove(pem_file)
-
-        attempt += 1
-
-        if attempt > 100:
-            print(f"    Warning: Reached 100 attempts for user wallet, stopping")
-            break
-
-    return None
-
-
 def generate_test_wallets(test_id):
     """Generate wallets for a single test"""
     base_path = f"test_{test_id}"
@@ -165,15 +132,11 @@ def generate_test_wallets(test_id):
     print("Bridge Services:")
     service_wallets = generate_wallets_for_all_shards(os.path.join(base_path, "bridge_services"), "bridge_service")
 
-    print("User Wallet:")
-    user_wallet = generate_user_wallet_for_shard_1(base_path)
-
     return {
         "test_id": test_id,
         "bridge_owners": bridge_wallets,
         "sovereign_owners": sovereign_wallets,
         "bridge_services": service_wallets,
-        "user_wallet": user_wallet,
     }
 
 
@@ -218,11 +181,6 @@ def main():
             print(f"  {category.replace('_', ' ').title()}:")
             for shard in sorted(wallets.keys()):
                 print(f"    Shard {shard}: {wallets[shard]['address']}")
-
-        if result["user_wallet"]:
-            user = result["user_wallet"]
-            print(f"  User Wallet:")
-            print(f"    Shard {user['shard']}: {user['address']}")
 
     print(f"\nSuccessfully generated {len(all_results)} test folder(s)!")
 

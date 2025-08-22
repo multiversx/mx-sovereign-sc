@@ -35,6 +35,7 @@ async fn test_complete_deposit_flow_no_fee_only_transfer_data(
     #[case] shard: u32,
     #[values(0)] test_id: u64,
 ) {
+    println!("Running test_complete_deposit_flow_no_fee_only_transfer_data");
     let mut chain_interactor =
         CompleteFlowInteract::new(Config::chain_simulator_config(test_id)).await;
 
@@ -77,6 +78,7 @@ async fn test_complete_deposit_flow_with_fee_only_transfer_data(
     #[case] shard: u32,
     #[values(1)] test_id: u64,
 ) {
+    println!("Running test_complete_deposit_flow_with_fee_only_transfer_data");
     let mut chain_interactor =
         CompleteFlowInteract::new(Config::chain_simulator_config(test_id)).await;
 
@@ -101,12 +103,6 @@ async fn test_complete_deposit_flow_with_fee_only_transfer_data(
             Some(fee),
         )
         .await;
-
-    chain_interactor
-        .interactor
-        .generate_blocks(2)
-        .await
-        .unwrap();
 }
 
 //TODO: Fix the logs after framework fix is implemented, check for the TESTING_SC_ENDPOINT executed log as well
@@ -128,6 +124,7 @@ async fn test_complete_execute_flow_with_transfer_data_only_success(
     #[case] shard: u32,
     #[values(2)] test_id: u64,
 ) {
+    println!("Running test_complete_execute_flow_with_transfer_data_only_success");
     let mut chain_interactor =
         CompleteFlowInteract::new(Config::chain_simulator_config(test_id)).await;
 
@@ -176,6 +173,7 @@ async fn test_complete_execute_flow_with_transfer_data_only_fail(
     #[case] shard: u32,
     #[values(3)] test_id: u64,
 ) {
+    println!("Running test_complete_execute_flow_with_transfer_data_only_fail");
     let mut chain_interactor =
         CompleteFlowInteract::new(Config::chain_simulator_config(test_id)).await;
 
@@ -230,6 +228,7 @@ async fn test_deposit_with_fee(
     #[values(SHARD_1, SHARD_2)] shard: u32,
     #[values(4)] test_id: u64,
 ) {
+    println!("Running test_deposit_with_fee");
     let mut chain_interactor =
         CompleteFlowInteract::new(Config::chain_simulator_config(test_id)).await;
 
@@ -287,6 +286,7 @@ async fn test_deposit_without_fee_and_execute(
     #[values(SHARD_1, SHARD_2)] shard: u32,
     #[values(5)] test_id: u64,
 ) {
+    println!("Running test_deposit_without_fee_and_execute");
     let mut chain_interactor =
         CompleteFlowInteract::new(Config::chain_simulator_config(test_id)).await;
 
@@ -352,6 +352,7 @@ async fn test_register_execute_and_deposit_sov_token(
     #[values(SHARD_1, SHARD_2)] shard: u32,
     #[values(6)] test_id: u64,
 ) {
+    println!("Running test_register_execute_and_deposit_sov_token");
     let mut chain_interactor =
         CompleteFlowInteract::new(Config::chain_simulator_config(test_id)).await;
 
@@ -420,6 +421,7 @@ async fn test_deposit_mvx_token_with_transfer_data(
     #[values(SHARD_1, SHARD_2)] shard: u32,
     #[values(7)] test_id: u64,
 ) {
+    println!("Running test_deposit_mvx_token_with_transfer_data");
     let mut chain_interactor =
         CompleteFlowInteract::new(Config::chain_simulator_config(test_id)).await;
 
@@ -470,6 +472,7 @@ async fn test_deposit_mvx_token_with_transfer_data_and_fee(
     #[values(SHARD_1, SHARD_2)] shard: u32,
     #[values(8)] test_id: u64,
 ) {
+    println!("Running test_deposit_mvx_token_with_transfer_data_and_fee");
     let mut chain_interactor =
         CompleteFlowInteract::new(Config::chain_simulator_config(test_id)).await;
 
@@ -522,6 +525,7 @@ async fn test_deposit_and_execute_with_transfer_data(
     #[values(SHARD_1, SHARD_2)] shard: u32,
     #[values(9)] test_id: u64,
 ) {
+    println!("Running test_deposit_and_execute_with_transfer_data");
     let mut chain_interactor =
         CompleteFlowInteract::new(Config::chain_simulator_config(test_id)).await;
 
@@ -582,6 +586,7 @@ async fn test_register_execute_with_transfer_data_and_deposit_sov_token(
     #[values(SHARD_1, SHARD_2)] shard: u32,
     #[values(10)] test_id: u64,
 ) {
+    println!("Running test_register_execute_with_transfer_data_and_deposit_sov_token");
     let mut chain_interactor =
         CompleteFlowInteract::new(Config::chain_simulator_config(test_id)).await;
 
@@ -661,6 +666,7 @@ async fn test_register_execute_call_failed(
     #[values(SHARD_1, SHARD_2)] shard: u32,
     #[values(11)] test_id: u64,
 ) {
+    println!("Running test_register_execute_call_failed");
     let mut chain_interactor =
         CompleteFlowInteract::new(Config::chain_simulator_config(test_id)).await;
 

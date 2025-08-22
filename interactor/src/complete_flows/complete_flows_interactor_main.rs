@@ -1,5 +1,4 @@
 #![allow(non_snake_case)]
-use std::path::Path;
 
 use common_interactor::interactor_helpers::InteractorHelpers;
 use common_interactor::interactor_state::{EsdtTokenInfo, State};
@@ -10,7 +9,7 @@ use common_interactor::{
 use common_test_setup::base_setup::init::RegisterTokenArgs;
 use common_test_setup::constants::{
     INTERACTOR_WORKING_DIR, ISSUE_COST, ONE_THOUSAND_TOKENS, OPERATION_HASH_STATUS_STORAGE_KEY,
-    SOVEREIGN_RECEIVER_ADDRESS, TOKEN_DISPLAY_NAME, TOKEN_TICKER, WALLETS_PATH,
+    SOVEREIGN_RECEIVER_ADDRESS, TOKEN_DISPLAY_NAME, TOKEN_TICKER,
 };
 use header_verifier::utils::OperationHashStatus;
 use multiversx_sc_snippets::multiversx_sc_scenario::multiversx_chain_vm::crypto_functions::sha256;
@@ -63,11 +62,12 @@ impl CompleteFlowInteract {
         let current_working_dir = INTERACTOR_WORKING_DIR;
         interactor.set_current_dir_from_workspace(current_working_dir);
 
-        let test_folder = format!("test_{}", config.test_id);
-        let test_path = Path::new(WALLETS_PATH).join(&test_folder);
-        let user_wallet_path = test_path.join("user.pem");
-        let user_wallet = Self::load_wallet(&user_wallet_path, config.test_id);
-        let user_address = interactor.register_wallet(user_wallet).await;
+        // let test_folder = format!("test_{}", config.test_id);
+        // let test_path = Path::new(WALLETS_PATH).join(&test_folder);
+        // let user_wallet_path = test_path.join("user.pem");
+        // let user_wallet = Self::load_wallet(&user_wallet_path, config.test_id);
+        // let user_address = interactor.register_wallet(user_wallet).await;
+        let user_address = interactor.register_wallet(test_wallets::grace()).await;
 
         interactor.generate_blocks_until_all_activations().await;
 
