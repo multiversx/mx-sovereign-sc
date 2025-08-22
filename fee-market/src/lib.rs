@@ -8,7 +8,6 @@ multiversx_sc::imports!();
 pub mod fee_operations;
 pub mod fee_type;
 pub mod fee_whitelist;
-pub mod storage;
 
 #[multiversx_sc::contract]
 pub trait FeeMarket:
