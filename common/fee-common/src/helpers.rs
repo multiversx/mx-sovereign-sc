@@ -196,7 +196,7 @@ pub trait FeeCommonHelpersModule:
             return Some(INVALID_TOKEN_ID);
         }
 
-        let token = match &fee_struct.fee_type {
+        match &fee_struct.fee_type {
             FeeType::None => sc_panic!(INVALID_FEE_TYPE),
             FeeType::Fixed {
                 token,
@@ -208,10 +208,6 @@ pub trait FeeCommonHelpersModule:
                 token
             }
         };
-
-        if !self.is_valid_token_id(token) {
-            return Some(INVALID_TOKEN_ID);
-        }
 
         self.fee_enabled().set(true);
         self.token_fee(&fee_struct.base_token)
