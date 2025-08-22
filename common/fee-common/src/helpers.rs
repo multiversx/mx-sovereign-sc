@@ -67,20 +67,6 @@ pub trait FeeCommonHelpersModule:
         pairs
     }
 
-    fn validate_pairs(
-        &self,
-        pairs: &ManagedVec<Self::Api, AddressPercentagePair<Self::Api>>,
-    ) -> Option<ManagedBuffer> {
-        for pair in pairs {
-            let pair_hash = pair.generate_hash();
-            if pair_hash.is_empty() {
-                return Some(ManagedBuffer::from(ERROR_AT_ENCODING));
-            }
-        }
-
-        None
-    }
-
     fn generate_pairs_hash(
         &self,
         pairs: &ManagedVec<Self::Api, AddressPercentagePair<Self::Api>>,
