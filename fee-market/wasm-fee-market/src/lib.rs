@@ -21,11 +21,11 @@ multiversx_sc_wasm_adapter::endpoints! {
         init => init
         upgrade => upgrade
         completeSetupPhase => complete_setup_phase
+        distributeFees => distribute_fees
         removeFeeDuringSetupPhase => remove_fee_during_setup_phase
         removeFee => remove_fee
         setFeeDuringSetupPhase => set_fee_during_setup_phase
         setFee => set_fee
-        distributeFees => distribute_fees
         getTokenFee => token_fee
         getUsersWhitelist => users_whitelist
         subtractFee => subtract_fee

@@ -6,13 +6,11 @@ use structs::fee::FeeStruct;
 multiversx_sc::imports!();
 
 pub mod fee_operations;
-pub mod fee_type;
 pub mod fee_whitelist;
 
 #[multiversx_sc::contract]
 pub trait FeeMarket:
-    fee_type::FeeTypeModule
-    + utils::UtilsModule
+    utils::UtilsModule
     + setup_phase::SetupPhaseModule
     + custom_events::CustomEventsModule
     + fee_operations::FeeOperationsModule
@@ -23,15 +21,7 @@ pub trait FeeMarket:
 {
     #[init]
     fn init(&self, esdt_safe_address: ManagedAddress, fee: Option<FeeStruct<Self::Api>>) {
-        self.require_sc_address(&esdt_safe_address);
-        self.esdt_safe_address().set(esdt_safe_address);
-
-        match fee {
-            Some(fee_struct) => {
-                let _ = self.set_fee_in_storage(&fee_struct);
-            }
-            _ => self.fee_enabled().set(false),
-        }
+        self.init_fee_market(esdt_safe_address, fee);
     }
 
     #[upgrade]

@@ -219,4 +219,20 @@ pub trait FeeCommonHelpersModule:
 
         None
     }
+
+    fn init_fee_market(
+        &self,
+        esdt_safe_address: ManagedAddress,
+        fee: Option<FeeStruct<Self::Api>>,
+    ) {
+        self.require_sc_address(&esdt_safe_address);
+        self.esdt_safe_address().set(esdt_safe_address);
+
+        match fee {
+            Some(fee_struct) => {
+                let _ = self.set_fee_in_storage(&fee_struct);
+            }
+            _ => self.fee_enabled().set(false),
+        }
+    }
 }
