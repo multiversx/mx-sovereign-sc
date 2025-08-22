@@ -1,4 +1,4 @@
-use error_messages::{ITEM_NOT_IN_LIST, SETUP_PHASE_ALREADY_COMPLETED};
+use error_messages::SETUP_PHASE_ALREADY_COMPLETED;
 
 multiversx_sc::imports!();
 multiversx_sc::derive_imports!();

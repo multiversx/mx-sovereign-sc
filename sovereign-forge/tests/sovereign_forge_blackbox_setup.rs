@@ -1,8 +1,8 @@
 use common_test_setup::{
     base_setup::init::{AccountSetup, BaseSetup},
     constants::{
-        CHAIN_FACTORY_SC_ADDRESS, ESDT_SAFE_ADDRESS, FEE_MARKET_ADDRESS, OWNER_ADDRESS,
-        OWNER_BALANCE, SOVEREIGN_FORGE_SC_ADDRESS,
+        CHAIN_FACTORY_SC_ADDRESS, ESDT_SAFE_ADDRESS, OWNER_ADDRESS, OWNER_BALANCE,
+        SOVEREIGN_FORGE_SC_ADDRESS,
     },
 };
 use multiversx_sc::{
@@ -13,7 +13,7 @@ use multiversx_sc::{
     },
 };
 use multiversx_sc_scenario::{api::StaticApi, ScenarioTxRun};
-use proxies::{fee_market_proxy::FeeMarketProxy, sovereign_forge_proxy::SovereignForgeProxy};
+use proxies::sovereign_forge_proxy::SovereignForgeProxy;
 use sovereign_forge::common::storage::ChainId;
 use structs::{
     configs::{EsdtSafeConfig, SovereignConfig},

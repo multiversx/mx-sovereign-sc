@@ -22,7 +22,7 @@ pub trait UpdateConfigsModule: common::utils::UtilsModule + common::storage::Sto
                 self.get_contract_address(&caller, ScArray::ESDTSafe),
                 new_config,
             )
-            .sync_call();
+            .transfer_execute();
     }
 
     #[endpoint(updateSovereignConfig)]
@@ -39,7 +39,7 @@ pub trait UpdateConfigsModule: common::utils::UtilsModule + common::storage::Sto
                 self.get_contract_address(&caller, ScArray::ChainConfig),
                 new_config,
             )
-            .sync_call();
+            .transfer_execute();
     }
 
     #[endpoint(setFee)]
@@ -56,7 +56,7 @@ pub trait UpdateConfigsModule: common::utils::UtilsModule + common::storage::Sto
                 self.get_contract_address(&caller, ScArray::FeeMarket),
                 new_fee,
             )
-            .sync_call();
+            .transfer_execute();
     }
 
     #[endpoint(removeFee)]
@@ -73,7 +73,7 @@ pub trait UpdateConfigsModule: common::utils::UtilsModule + common::storage::Sto
                 self.get_contract_address(&caller, ScArray::FeeMarket),
                 token_id,
             )
-            .sync_call();
+            .transfer_execute();
     }
 
     #[endpoint(addUsersToWhitelist)]
@@ -90,7 +90,7 @@ pub trait UpdateConfigsModule: common::utils::UtilsModule + common::storage::Sto
                 self.get_contract_address(&caller, ScArray::FeeMarket),
                 users,
             )
-            .sync_call();
+            .transfer_execute();
     }
 
     #[endpoint(removeUsersFromWhitelist)]
@@ -107,6 +107,6 @@ pub trait UpdateConfigsModule: common::utils::UtilsModule + common::storage::Sto
                 self.get_contract_address(&caller, ScArray::FeeMarket),
                 users,
             )
-            .sync_call();
+            .transfer_execute();
     }
 }
