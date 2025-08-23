@@ -5,7 +5,7 @@ use common_test_setup::constants::{
     CHAIN_ID, DEPLOY_COST, ESDT_SAFE_CONFIG_STORAGE_KEY, ONE_HUNDRED_TOKENS, ONE_THOUSAND_TOKENS,
     OPERATION_HASH_STATUS_STORAGE_KEY, TEN_TOKENS, TOKEN_FEE_STORAGE_KEY, WRONG_ENDPOINT_NAME,
 };
-use header_verifier::utils::OperationHashStatus;
+use header_verifier::header_utils::OperationHashStatus;
 use multiversx_sc::{
     imports::{MultiValue3, OptionalValue},
     types::{

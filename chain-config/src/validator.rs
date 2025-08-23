@@ -8,6 +8,7 @@ multiversx_sc::derive_imports!();
 #[multiversx_sc::module]
 pub trait ValidatorModule:
     setup_phase::SetupPhaseModule
+    + utils::UtilsModule
     + custom_events::CustomEventsModule
     + storage::ChainConfigStorageModule
     + config_utils::ChainConfigUtilsModule

@@ -85,6 +85,7 @@ impl BaseSetup {
         registration_status: u8,
         expected_error_message: Option<&str>,
         expected_log: Option<&str>,
+        expected_log_error: Option<&str>,
     ) {
         let (response, logs) = self
             .world
@@ -98,7 +99,7 @@ impl BaseSetup {
             .run();
 
         self.assert_expected_error_message(response, expected_error_message);
-        self.assert_expected_log(logs, expected_log, None);
+        self.assert_expected_log(logs, expected_log, expected_log_error);
     }
 
     // TODO: Use this for any validator registration

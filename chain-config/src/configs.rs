@@ -32,8 +32,6 @@ pub trait ConfigsModule:
         hash_of_hashes: ManagedBuffer,
         new_config: SovereignConfig<Self::Api>,
     ) {
-        self.require_setup_complete();
-
         let config_hash = new_config.generate_hash();
         if config_hash.is_empty() {
             self.complete_operation(
@@ -44,14 +42,12 @@ pub trait ConfigsModule:
             return;
         };
 
-        self.lock_operation_hash(&config_hash, &hash_of_hashes);
+        self.require_setup_complete_with_event(&hash_of_hashes, &config_hash);
+
+        self.lock_operation_hash_wrapper(&config_hash, &hash_of_hashes);
 
         if let Some(error_message) = self.is_new_config_valid(&new_config) {
-            self.complete_operation(
-                &hash_of_hashes,
-                &config_hash,
-                Some(ManagedBuffer::from(error_message)),
-            );
+            self.complete_operation(&hash_of_hashes, &config_hash, Some(error_message.into()));
             return;
         } else {
             self.sovereign_config().set(new_config);
@@ -62,8 +58,6 @@ pub trait ConfigsModule:
 
     #[endpoint(updateRegistrationStatus)]
     fn update_registration_status(&self, hash_of_hashes: ManagedBuffer, registration_status: u8) {
-        self.require_setup_complete();
-
         let status_hash = ManagedBuffer::new_from_bytes(
             &self
                 .crypto()
@@ -71,13 +65,15 @@ pub trait ConfigsModule:
                 .to_byte_array(),
         );
 
-        self.lock_operation_hash(&status_hash, &hash_of_hashes);
+        self.require_setup_complete_with_event(&hash_of_hashes, &status_hash);
+
+        self.lock_operation_hash_wrapper(&status_hash, &hash_of_hashes);
 
         if registration_status != DISABLED && registration_status != ENABLED {
             self.complete_operation(
                 &hash_of_hashes,
                 &status_hash,
-                Some(ManagedBuffer::from(INVALID_REGISTRATION_STATUS)),
+                Some(INVALID_REGISTRATION_STATUS.into()),
             );
             return;
         }

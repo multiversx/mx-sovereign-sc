@@ -1,7 +1,7 @@
 use chain_config::{config_utils::ENABLED, storage::ChainConfigStorageModule};
 use chain_config_blackbox_setup::ChainConfigTestState;
 use common_test_setup::constants::{
-    CHAIN_CONFIG_ADDRESS, FIRST_TEST_TOKEN, OWNER_ADDRESS, USER_ADDRESS,
+    CHAIN_CONFIG_ADDRESS, EXECUTED_BRIDGE_OP_EVENT, FIRST_TEST_TOKEN, OWNER_ADDRESS, USER_ADDRESS,
 };
 use error_messages::{
     ADDITIONAL_STAKE_ZERO_VALUE, CHAIN_CONFIG_SETUP_PHASE_NOT_COMPLETE, INVALID_ADDITIONAL_STAKE,
@@ -237,9 +237,9 @@ fn test_update_config_setup_phase_not_completed() {
     state.update_sovereign_config(
         ManagedBuffer::new(),
         new_config,
+        None,
+        Some(EXECUTED_BRIDGE_OP_EVENT),
         Some(SETUP_PHASE_NOT_COMPLETED),
-        None,
-        None,
     );
 }
 
@@ -297,7 +297,7 @@ fn test_update_config_invalid_config() {
         hash_of_hashes,
         new_config,
         None,
-        Some("executedBridgeOp"),
+        Some(EXECUTED_BRIDGE_OP_EVENT),
         Some(INVALID_MIN_MAX_VALIDATOR_NUMBERS),
     );
 }
@@ -968,8 +968,9 @@ fn update_registration_setup_not_complete() {
     state.common_setup.update_registration_status(
         &ManagedBuffer::new(),
         1,
-        Some(SETUP_PHASE_NOT_COMPLETED),
         None,
+        Some(EXECUTED_BRIDGE_OP_EVENT),
+        Some(SETUP_PHASE_NOT_COMPLETED),
     );
 }
 
@@ -995,7 +996,8 @@ fn update_registration_invalid_status() {
         &ManagedBuffer::new(),
         2,
         None,
-        Some("executedBridgeOp"),
+        Some(EXECUTED_BRIDGE_OP_EVENT),
+        None,
     );
 }
 
@@ -1055,6 +1057,7 @@ fn update_registration_status() {
         1,
         None,
         Some("registrationStatusUpdate"),
+        None,
     );
 
     state
@@ -1119,6 +1122,7 @@ fn update_register_validator_registration_enabled_validator_not_whitelisted() {
         1,
         None,
         Some("registrationStatusUpdate"),
+        None,
     );
 
     state

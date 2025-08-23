@@ -1,18 +1,20 @@
 use error_messages::CURRENT_OPERATION_ALREADY_IN_EXECUTION;
 
 use crate::{
-    checks, storage,
-    utils::{self, OperationHashStatus, MAX_STORED_EPOCHS},
+    checks,
+    header_utils::{self, OperationHashStatus, MAX_STORED_EPOCHS},
+    storage,
 };
 multiversx_sc::imports!();
 
 #[multiversx_sc::module]
 pub trait HeaderVerifierOperationsModule:
-    utils::HeaderVerifierUtilsModule
+    header_utils::HeaderVerifierUtilsModule
     + storage::HeaderVerifierStorageModule
     + checks::HeaderVerifierChecksModule
     + custom_events::CustomEventsModule
     + setup_phase::SetupPhaseModule
+    + utils::UtilsModule
 {
     #[endpoint(registerBridgeOps)]
     fn register_bridge_operations(

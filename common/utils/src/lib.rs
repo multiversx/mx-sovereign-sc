@@ -11,7 +11,7 @@ const MAX_TOKEN_ID_LEN: usize = 32;
 
 #[multiversx_sc::module]
 pub trait UtilsModule: custom_events::CustomEventsModule {
-    fn lock_operation_hash(&self, hash_of_hashes: &ManagedBuffer, hash: &ManagedBuffer) {
+    fn lock_operation_hash_wrapper(&self, hash_of_hashes: &ManagedBuffer, hash: &ManagedBuffer) {
         self.tx()
             .to(self.blockchain().get_owner_address())
             .typed(HeaderverifierProxy)
@@ -19,7 +19,11 @@ pub trait UtilsModule: custom_events::CustomEventsModule {
             .sync_call();
     }
 
-    fn remove_executed_hash(&self, hash_of_hashes: &ManagedBuffer, op_hash: &ManagedBuffer) {
+    fn remove_executed_hash_wrapper(
+        &self,
+        hash_of_hashes: &ManagedBuffer,
+        op_hash: &ManagedBuffer,
+    ) {
         self.tx()
             .to(self.blockchain().get_owner_address())
             .typed(HeaderverifierProxy)
@@ -34,7 +38,7 @@ pub trait UtilsModule: custom_events::CustomEventsModule {
         error_message: Option<ManagedBuffer>,
     ) {
         self.execute_bridge_operation_event(hash_of_hashes, operation_hash, error_message);
-        self.remove_executed_hash(hash_of_hashes, operation_hash);
+        self.remove_executed_hash_wrapper(hash_of_hashes, operation_hash);
     }
 
     fn require_sc_address(&self, address: &ManagedAddress) {

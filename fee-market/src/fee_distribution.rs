@@ -21,8 +21,6 @@ pub trait FeeDistributionModule:
         hash_of_hashes: ManagedBuffer,
         address_percentage_pairs: MultiValueEncoded<MultiValue2<ManagedAddress, usize>>,
     ) {
-        self.require_setup_complete();
-
         let pairs = match self.parse_and_validate_pairs(address_percentage_pairs, &hash_of_hashes) {
             Some(pairs) => pairs,
             None => return,
@@ -34,7 +32,9 @@ pub trait FeeDistributionModule:
         }
         let pairs_hash = pairs_hash.unwrap();
 
-        self.lock_operation_hash(&hash_of_hashes, &pairs_hash);
+        self.require_setup_complete_with_event(&hash_of_hashes, &pairs_hash);
+
+        self.lock_operation_hash_wrapper(&hash_of_hashes, &pairs_hash);
 
         if !self.validate_percentage_sum(&pairs, &hash_of_hashes, &pairs_hash) {
             return;
