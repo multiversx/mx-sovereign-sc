@@ -562,6 +562,7 @@ fn test_change_validator_set() {
         1,
         None,
         Some("registrationStatusUpdate"),
+        None,
     );
 
     let second_validator = ManagedBuffer::from("second_validator");
@@ -703,6 +704,7 @@ fn test_change_multiple_validator_sets() {
         1,
         None,
         Some("registrationStatusUpdate"),
+        None,
     );
 
     for epoch in 1..10 {
