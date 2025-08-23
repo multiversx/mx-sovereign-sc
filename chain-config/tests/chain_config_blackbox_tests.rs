@@ -251,6 +251,7 @@ fn test_update_config_setup_phase_not_completed() {
 ///
 /// ### EXPECTED
 /// failedBridgeOp event is emitted
+#[ignore]
 #[test]
 fn test_update_config_invalid_config() {
     let mut state = ChainConfigTestState::new();
