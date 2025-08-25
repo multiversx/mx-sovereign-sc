@@ -23,11 +23,13 @@ pub trait SetupPhaseModule: utils::UtilsModule + custom_events::CustomEventsModu
         hash_of_hashes: &ManagedBuffer,
         operation_hash: &ManagedBuffer,
     ) {
-        self.complete_operation(
-            hash_of_hashes,
-            operation_hash,
-            Some(SETUP_PHASE_NOT_COMPLETED.into()),
-        );
+        if !self.is_setup_phase_complete() {
+            self.complete_operation(
+                hash_of_hashes,
+                operation_hash,
+                Some(SETUP_PHASE_NOT_COMPLETED.into()),
+            );
+        }
     }
 
     #[inline]
