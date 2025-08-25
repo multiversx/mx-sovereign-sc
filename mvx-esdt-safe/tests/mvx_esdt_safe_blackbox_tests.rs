@@ -1,8 +1,9 @@
 use common_test_setup::base_setup::init::RegisterTokenArgs;
 use common_test_setup::constants::{
-    CROWD_TOKEN_ID, ESDT_SAFE_ADDRESS, FEE_MARKET_ADDRESS, FEE_TOKEN, FIRST_TEST_TOKEN,
-    HEADER_VERIFIER_ADDRESS, ONE_HUNDRED_MILLION, ONE_HUNDRED_THOUSAND, OWNER_ADDRESS,
-    SECOND_TEST_TOKEN, SOV_TOKEN, TESTING_SC_ADDRESS, USER_ADDRESS,
+    CROWD_TOKEN_ID, DEPOSIT_EVENT, ESDT_SAFE_ADDRESS, FEE_MARKET_ADDRESS, FEE_TOKEN,
+    FIRST_TEST_TOKEN, HEADER_VERIFIER_ADDRESS, ONE_HUNDRED_MILLION, ONE_HUNDRED_THOUSAND,
+    OWNER_ADDRESS, REGISTER_EVENT, SC_CALL_EVENT, SECOND_TEST_TOKEN, SOV_TOKEN, TESTING_SC_ADDRESS,
+    USER_ADDRESS,
 };
 use cross_chain::storage::CrossChainStorage;
 use cross_chain::{DEFAULT_ISSUE_COST, MAX_GAS_PER_TRANSACTION};
@@ -13,8 +14,8 @@ use error_messages::{
     NOTHING_TO_TRANSFER, PAYMENT_DOES_NOT_COVER_FEE, SETUP_PHASE_ALREADY_COMPLETED,
     SETUP_PHASE_NOT_COMPLETED, TOKEN_ID_IS_NOT_TRUSTED, TOKEN_IS_FROM_SOVEREIGN, TOO_MANY_TOKENS,
 };
+use header_verifier::header_utils::OperationHashStatus;
 use header_verifier::storage::HeaderVerifierStorageModule;
-use header_verifier::utils::OperationHashStatus;
 use multiversx_sc::types::{MultiEgldOrEsdtPayment, MultiValueEncoded};
 use multiversx_sc::{
     imports::{MultiValue3, OptionalValue},
@@ -419,7 +420,7 @@ fn test_deposit_too_many_tokens() {
 /// Call 'deposit()' with valid payments_vec and no transfer_data
 ///
 /// ### EXPECTED
-/// * USER's balance is updated
+/// USER's balance is updated
 #[test]
 fn test_deposit_no_transfer_data() {
     let mut state = MvxEsdtSafeTestState::new();
@@ -450,7 +451,7 @@ fn test_deposit_no_transfer_data() {
         OptionalValue::None,
         payments_vec,
         None,
-        Some("deposit"),
+        Some(DEPOSIT_EVENT),
     );
 
     let tokens_vec = vec![
@@ -747,7 +748,7 @@ fn test_deposit_transfer_data_only_no_fee() {
         OptionalValue::Some(transfer_data),
         PaymentsVec::new(),
         None,
-        Some("scCall"),
+        Some(SC_CALL_EVENT),
     );
 }
 
@@ -863,7 +864,7 @@ fn test_deposit_transfer_data_only_with_fee() {
         OptionalValue::Some(transfer_data),
         payments_vec,
         None,
-        Some("scCall"),
+        Some(SC_CALL_EVENT),
     );
 
     state.common_setup.check_account_single_esdt(
@@ -954,7 +955,7 @@ fn test_deposit_fee_enabled() {
         OptionalValue::Some(transfer_data),
         payments_vec.clone(),
         None,
-        Some("deposit"),
+        Some(DEPOSIT_EVENT),
     );
 
     let expected_amount_token_one =
@@ -1138,7 +1139,7 @@ fn test_deposit_refund() {
         OptionalValue::Some(transfer_data),
         payments_vec.clone(),
         None,
-        Some("deposit"),
+        Some(DEPOSIT_EVENT),
     );
 
     let expected_balances = vec![
@@ -1202,7 +1203,7 @@ fn test_deposit_success_burn_mechanism() {
         OptionalValue::None,
         payments_vec,
         None,
-        Some("deposit"),
+        Some(DEPOSIT_EVENT),
     );
 
     let expected_tokens = vec![
@@ -1540,7 +1541,7 @@ fn test_execute_operation_success() {
         &genesis_validator,
         &MultiEgldOrEsdtPayment::new(),
         None,
-        Some("register"),
+        Some(REGISTER_EVENT),
     );
 
     state.common_setup.complete_chain_config_setup_phase(None);
@@ -1644,7 +1645,7 @@ fn test_execute_operation_with_native_token_success() {
         &genesis_validator,
         &MultiEgldOrEsdtPayment::new(),
         None,
-        Some("register"),
+        Some(REGISTER_EVENT),
     );
 
     state.common_setup.complete_chain_config_setup_phase(None);
@@ -1742,7 +1743,7 @@ fn test_execute_operation_burn_mechanism_without_deposit_cannot_subtract() {
         &genesis_validator,
         &MultiEgldOrEsdtPayment::new(),
         None,
-        Some("register"),
+        Some(REGISTER_EVENT),
     );
 
     state.common_setup.complete_chain_config_setup_phase(None);
@@ -1833,7 +1834,7 @@ fn execute_operation_only_transfer_data_no_fee() {
         &genesis_validator,
         &MultiEgldOrEsdtPayment::new(),
         None,
-        Some("register"),
+        Some(REGISTER_EVENT),
     );
 
     state.common_setup.complete_chain_config_setup_phase(None);
@@ -1918,7 +1919,7 @@ fn test_execute_operation_success_burn_mechanism() {
         &genesis_validator,
         &MultiEgldOrEsdtPayment::new(),
         None,
-        Some("register"),
+        Some(REGISTER_EVENT),
     );
 
     state.common_setup.complete_chain_config_setup_phase(None);
@@ -1943,7 +1944,7 @@ fn test_execute_operation_success_burn_mechanism() {
         OptionalValue::None,
         PaymentsVec::from(vec![payment]),
         None,
-        Some("deposit"),
+        Some(DEPOSIT_EVENT),
     );
 
     let bitmap = ManagedBuffer::new_from_bytes(&[1]);
@@ -2035,7 +2036,7 @@ fn test_deposit_execute_switch_mechanism() {
         &genesis_validator,
         &MultiEgldOrEsdtPayment::new(),
         None,
-        Some("register"),
+        Some(REGISTER_EVENT),
     );
 
     state.common_setup.complete_chain_config_setup_phase(None);
@@ -2066,7 +2067,7 @@ fn test_deposit_execute_switch_mechanism() {
         OptionalValue::None,
         PaymentsVec::from(vec![deposit_trusted_token_payment.clone()]),
         None,
-        Some("deposit"),
+        Some(DEPOSIT_EVENT),
     );
 
     state.common_setup.check_account_single_esdt(
@@ -2153,7 +2154,7 @@ fn test_deposit_execute_switch_mechanism() {
         OptionalValue::None,
         PaymentsVec::from(vec![deposit_trusted_token_payment.clone()]),
         None,
-        Some("deposit"),
+        Some(DEPOSIT_EVENT),
     );
 
     expected_deposited_amount += deposited_trusted_token_payment_amount;
@@ -2240,7 +2241,7 @@ fn test_deposit_execute_switch_mechanism() {
         OptionalValue::None,
         PaymentsVec::from(vec![deposit_trusted_token_payment]),
         None,
-        Some("deposit"),
+        Some(DEPOSIT_EVENT),
     );
 
     expected_deposited_amount += deposited_trusted_token_payment_amount;
@@ -2319,7 +2320,7 @@ fn test_execute_operation_no_payments() {
         &genesis_validator,
         &MultiEgldOrEsdtPayment::new(),
         None,
-        Some("register"),
+        Some(REGISTER_EVENT),
     );
 
     state.common_setup.complete_chain_config_setup_phase(None);
@@ -2389,7 +2390,7 @@ fn test_execute_operation_no_payments_failed_event() {
         &genesis_validator,
         &MultiEgldOrEsdtPayment::new(),
         None,
-        Some("register"),
+        Some(REGISTER_EVENT),
     );
 
     state.common_setup.complete_chain_config_setup_phase(None);
@@ -2700,7 +2701,7 @@ fn test_update_config_invalid_config() {
         &genesis_validator,
         &MultiEgldOrEsdtPayment::new(),
         None,
-        Some("register"),
+        Some(REGISTER_EVENT),
     );
 
     state.common_setup.complete_chain_config_setup_phase(None);
@@ -2763,7 +2764,7 @@ fn test_update_config() {
         &genesis_validator,
         &MultiEgldOrEsdtPayment::new(),
         None,
-        Some("register"),
+        Some(REGISTER_EVENT),
     );
 
     state.common_setup.complete_chain_config_setup_phase(None);

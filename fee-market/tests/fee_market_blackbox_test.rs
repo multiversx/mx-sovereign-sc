@@ -1,6 +1,6 @@
 use common_test_setup::constants::{
-    ESDT_SAFE_ADDRESS, FEE_MARKET_ADDRESS, FIRST_TEST_TOKEN, OWNER_ADDRESS, OWNER_BALANCE,
-    SECOND_TEST_TOKEN, USER_ADDRESS, WRONG_TOKEN_ID,
+    ESDT_SAFE_ADDRESS, EXECUTED_BRIDGE_OP_EVENT, FEE_MARKET_ADDRESS, FIRST_TEST_TOKEN,
+    OWNER_ADDRESS, OWNER_BALANCE, SECOND_TEST_TOKEN, USER_ADDRESS, WRONG_TOKEN_ID,
 };
 use error_messages::{
     CALLER_NOT_OWNER, CURRENT_OPERATION_NOT_REGISTERED, INVALID_FEE, INVALID_FEE_TYPE,
@@ -86,15 +86,19 @@ fn test_set_fee_setup_not_completed() {
 
     let fee = FeeStruct {
         base_token: FIRST_TEST_TOKEN.to_token_identifier(),
-        fee_type: FeeType::None,
+        fee_type: FeeType::Fixed {
+            token: FIRST_TEST_TOKEN.to_token_identifier(),
+            per_transfer: BigUint::default(),
+            per_gas: BigUint::default(),
+        },
     };
 
     state.set_fee(
         &ManagedBuffer::new(),
         &fee,
+        None,
+        Some(EXECUTED_BRIDGE_OP_EVENT),
         Some(SETUP_PHASE_NOT_COMPLETED),
-        None,
-        None,
     );
 }
 
@@ -371,9 +375,9 @@ fn test_remove_fee_setup_phase_not_completed() {
     state.remove_fee(
         &ManagedBuffer::new(),
         FIRST_TEST_TOKEN,
+        None,
+        Some(EXECUTED_BRIDGE_OP_EVENT),
         Some(SETUP_PHASE_NOT_COMPLETED),
-        None,
-        None,
     );
 }
 

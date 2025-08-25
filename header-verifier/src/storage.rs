@@ -1,6 +1,6 @@
 use structs::{configs::SovereignConfig, forge::ContractInfo};
 
-use crate::utils::OperationHashStatus;
+use crate::header_utils::OperationHashStatus;
 
 multiversx_sc::imports!();
 

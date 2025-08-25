@@ -71,7 +71,7 @@ pub trait MvxEsdtSafe:
         let config_hash = new_config.generate_hash();
         require!(!config_hash.is_empty(), ERROR_AT_ENCODING);
 
-        self.lock_operation_hash(&hash_of_hashes, &config_hash);
+        self.lock_operation_hash_wrapper(&hash_of_hashes, &config_hash);
 
         if let Some(error_message) = self.is_esdt_safe_config_valid(&new_config) {
             self.complete_operation(
