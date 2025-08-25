@@ -4,7 +4,7 @@ use error_messages::{
     OUTGOING_TX_HASH_ALREADY_REGISTERED, VALIDATORS_ALREADY_REGISTERED_IN_EPOCH,
 };
 
-use crate::utils::OperationHashStatus;
+use crate::header_utils::OperationHashStatus;
 
 multiversx_sc::imports!();
 multiversx_sc::derive_imports!();
@@ -14,6 +14,7 @@ pub trait HeaderVerifierChecksModule:
     crate::storage::HeaderVerifierStorageModule
     + custom_events::CustomEventsModule
     + setup_phase::SetupPhaseModule
+    + utils::UtilsModule
 {
     fn require_bls_pub_keys_empty(&self, epoch: u64) {
         require!(

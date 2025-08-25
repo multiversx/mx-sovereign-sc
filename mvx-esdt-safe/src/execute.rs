@@ -23,9 +23,6 @@ pub trait ExecuteModule:
 {
     #[endpoint(executeBridgeOps)]
     fn execute_operations(&self, hash_of_hashes: ManagedBuffer, operation: Operation<Self::Api>) {
-        require!(self.not_paused(), ESDT_SAFE_STILL_PAUSED);
-        self.require_setup_complete();
-
         let operation_hash = operation.generate_hash();
         if operation_hash.is_empty() {
             self.complete_operation(
@@ -35,7 +32,17 @@ pub trait ExecuteModule:
             );
         };
 
-        self.lock_operation_hash(&hash_of_hashes, &operation_hash);
+        if self.is_paused() {
+            self.complete_operation(
+                &hash_of_hashes,
+                &operation_hash,
+                Some(ESDT_SAFE_STILL_PAUSED.into()),
+            );
+        }
+
+        self.require_setup_complete_with_event(&hash_of_hashes, &operation_hash);
+
+        self.lock_operation_hash_wrapper(&hash_of_hashes, &operation_hash);
 
         let operation_tuple = OperationTuple {
             op_hash: operation_hash,

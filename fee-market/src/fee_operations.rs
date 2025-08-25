@@ -29,7 +29,7 @@ pub trait FeeOperationsModule:
             return;
         }
         let pairs_hash = opt_pairs_hash.unwrap();
-        self.lock_operation_hash(&hash_of_hashes, &pairs_hash);
+        self.lock_operation_hash_wrapper(&hash_of_hashes, &pairs_hash);
 
         if let Some(err_msg) = self.validate_percentage_sum(&pairs) {
             self.complete_operation(&hash_of_hashes, &pairs_hash, Some(err_msg));
@@ -57,8 +57,6 @@ pub trait FeeOperationsModule:
 
     #[endpoint(removeFee)]
     fn remove_fee(&self, hash_of_hashes: ManagedBuffer, token_id: TokenIdentifier) {
-        self.require_setup_complete();
-
         let token_id_hash = token_id.generate_hash();
         if token_id_hash.is_empty() {
             self.complete_operation(
@@ -69,7 +67,9 @@ pub trait FeeOperationsModule:
             return;
         };
 
-        self.lock_operation_hash(&hash_of_hashes, &token_id_hash);
+        self.require_setup_complete_with_event(&hash_of_hashes, &token_id_hash);
+
+        self.lock_operation_hash_wrapper(&hash_of_hashes, &token_id_hash);
 
         self.token_fee(&token_id).clear();
         self.fee_enabled().set(false);
@@ -92,8 +92,6 @@ pub trait FeeOperationsModule:
 
     #[endpoint(setFee)]
     fn set_fee(&self, hash_of_hashes: ManagedBuffer, fee_struct: FeeStruct<Self::Api>) {
-        self.require_setup_complete();
-
         let fee_hash = fee_struct.generate_hash();
         if fee_hash.is_empty() {
             self.complete_operation(
@@ -104,7 +102,9 @@ pub trait FeeOperationsModule:
             return;
         };
 
-        self.lock_operation_hash(&hash_of_hashes, &fee_hash);
+        self.require_setup_complete_with_event(&hash_of_hashes, &fee_hash);
+
+        self.lock_operation_hash_wrapper(&hash_of_hashes, &fee_hash);
 
         if let Some(set_fee_error_msg) = self.set_fee_in_storage(&fee_struct) {
             self.complete_operation(
