@@ -148,7 +148,7 @@ pub trait CommonInteractorTrait {
         }
     }
 
-    async fn deploy_sovereign_forge(&mut self, deploy_cost: &BigUint<StaticApi>) {
+    async fn deploy_sovereign_forge(&mut self, deploy_cost: OptionalValue<BigUint<StaticApi>>) {
         let bridge_owner = self.bridge_owner().clone();
 
         let new_address = self
@@ -384,12 +384,18 @@ pub trait CommonInteractorTrait {
 
     async fn deploy_phase_one(
         &mut self,
-        egld_amount: BigUint<StaticApi>,
+        opt_egld_amount: OptionalValue<BigUint<StaticApi>>,
         opt_preferred_chain_id: Option<ManagedBuffer<StaticApi>>,
         opt_config: OptionalValue<SovereignConfig<StaticApi>>,
     ) {
         let sovereign_owner = self.sovereign_owner().clone();
         let sovereign_forge_address = self.state().current_sovereign_forge_sc_address().clone();
+
+        let mut egld_amount = BigUint::default();
+
+        if opt_egld_amount.is_some() {
+            egld_amount = opt_egld_amount.into_option().unwrap();
+        }
 
         let response = self
             .interactor()

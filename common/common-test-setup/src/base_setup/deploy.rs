@@ -140,12 +140,15 @@ impl BaseSetup {
         self
     }
 
-    pub fn deploy_sovereign_forge(&mut self) -> &mut Self {
+    pub fn deploy_sovereign_forge(
+        &mut self,
+        deploy_cost: OptionalValue<BigUint<StaticApi>>,
+    ) -> &mut Self {
         self.world
             .tx()
             .from(OWNER_ADDRESS)
             .typed(SovereignForgeProxy)
-            .init(DEPLOY_COST)
+            .init(deploy_cost)
             .code(SOVEREIGN_FORGE_CODE_PATH)
             .new_address(SOVEREIGN_FORGE_SC_ADDRESS)
             .run();

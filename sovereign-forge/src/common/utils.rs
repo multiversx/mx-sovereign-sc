@@ -1,7 +1,7 @@
 use error_messages::{
     CALLER_DID_NOT_DEPLOY_ANY_SOV_CHAIN, CHAIN_CONFIG_NOT_DEPLOYED, CHAIN_ID_ALREADY_IN_USE,
-    CHAIN_ID_NOT_FOUR_CHAR_LONG, CHAIN_ID_NOT_LOWERCASE_ALPHANUMERIC, DEPLOY_COST_NOT_ENOUGH,
-    ESDT_SAFE_NOT_DEPLOYED, FEE_MARKET_NOT_DEPLOYED, HEADER_VERIFIER_NOT_DEPLOYED,
+    CHAIN_ID_NOT_LOWERCASE_ALPHANUMERIC, DEPLOY_COST_NOT_ENOUGH, ESDT_SAFE_NOT_DEPLOYED,
+    FEE_MARKET_NOT_DEPLOYED, HEADER_VERIFIER_NOT_DEPLOYED, INVALID_CHAIN_ID,
 };
 use multiversx_sc::require;
 use structs::forge::ScArray;
@@ -127,7 +127,8 @@ pub trait UtilsModule: super::storage::StorageModule {
 
     #[inline]
     fn validate_chain_id(&self, chain_id: &ManagedBuffer) {
-        require!(chain_id.len() == 4, CHAIN_ID_NOT_FOUR_CHAR_LONG);
+        let id_length = chain_id.len();
+        require!(id_length >= 1 && id_length == 4, INVALID_CHAIN_ID);
 
         require!(
             self.is_chain_id_lowercase_alphanumeric(chain_id),

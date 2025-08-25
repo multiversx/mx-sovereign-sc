@@ -144,13 +144,13 @@ impl SovereignForgeInteract {
     pub async fn deploy_and_complete_setup_phase(
         &mut self,
         chain_id: &str,
-        deploy_cost: BigUint<StaticApi>,
+        deploy_cost: OptionalValue<BigUint<StaticApi>>,
         optional_sov_config: OptionalValue<SovereignConfig<StaticApi>>,
         optional_esdt_safe_config: OptionalValue<EsdtSafeConfig<StaticApi>>,
         fee: Option<FeeStruct<StaticApi>>,
     ) {
         self.deploy_template_contracts().await;
-        self.deploy_sovereign_forge(&deploy_cost).await;
+        self.deploy_sovereign_forge(deploy_cost.clone()).await;
 
         let sov_forge_address = self.state.current_sovereign_forge_sc_address().clone();
         let chain_config_address = self.state.current_chain_config_sc_address().clone();

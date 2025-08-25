@@ -57,11 +57,7 @@ pub async fn sovereign_forge_cli() {
 
     match cmd.as_str() {
         "upgrade" => interact.upgrade().await,
-        "deploySovereignForge" => {
-            interact
-                .deploy_sovereign_forge(&BigUint::from(100u64))
-                .await
-        }
+        "deploySovereignForge" => interact.deploy_sovereign_forge(OptionalValue::None).await,
         "deployChainFactory" => {
             interact
                 .deploy_chain_factory(
@@ -94,7 +90,7 @@ pub async fn sovereign_forge_cli() {
         "completeSetup" => interact.complete_setup_phase().await,
         "deployPhaseOne" => {
             interact
-                .deploy_phase_one(BigUint::from(100u64), None, OptionalValue::None)
+                .deploy_phase_one(OptionalValue::None, None, OptionalValue::None)
                 .await
         }
         "deployPhaseTwo" => interact.deploy_phase_two(OptionalValue::None).await,

@@ -12,9 +12,9 @@ use multiversx_sc::{
         ReturnsResultUnmanaged, TestSCAddress, TestTokenIdentifier,
     },
 };
-use multiversx_sc_scenario::{api::StaticApi, ScenarioTxRun};
+use multiversx_sc_scenario::{api::StaticApi, ScenarioTxRun, ScenarioTxWhitebox};
 use proxies::sovereign_forge_proxy::SovereignForgeProxy;
-use sovereign_forge::common::storage::ChainId;
+use sovereign_forge::common::storage::{ChainId, StorageModule};
 use structs::{
     configs::{EsdtSafeConfig, SovereignConfig},
     fee::FeeStruct,
@@ -43,9 +43,22 @@ impl SovereignForgeTestState {
     }
 
     pub fn finish_setup(&mut self) {
-        self.register_chain_factory(1, CHAIN_FACTORY_SC_ADDRESS, None);
-        self.register_chain_factory(2, CHAIN_FACTORY_SC_ADDRESS, None);
-        self.register_chain_factory(3, CHAIN_FACTORY_SC_ADDRESS, None);
+        self.common_setup
+            .world
+            .query()
+            .to(SOVEREIGN_FORGE_SC_ADDRESS)
+            .whitebox(sovereign_forge::contract_obj, |sc| {
+                sc.chain_factories(1)
+                    .set(CHAIN_FACTORY_SC_ADDRESS.to_managed_address());
+                sc.chain_factories(2)
+                    .set(CHAIN_FACTORY_SC_ADDRESS.to_managed_address());
+                sc.chain_factories(3)
+                    .set(CHAIN_FACTORY_SC_ADDRESS.to_managed_address());
+
+                assert!(!sc.chain_factories(1).is_empty());
+                assert!(!sc.chain_factories(2).is_empty());
+                assert!(!sc.chain_factories(3).is_empty());
+            });
     }
 
     pub fn deploy_template_scs(&mut self, templates: Option<Vec<ScArray>>) {
