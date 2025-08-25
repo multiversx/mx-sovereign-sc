@@ -64,3 +64,4 @@ pub const ONE_HUNDRED_TOKENS: u128 = 100_000_000_000_000_000_000u128;
 pub const TEN_TOKENS: u128 = 10_000_000_000_000_000_000u128;
 
 pub const EXECUTED_BRIDGE_OP_EVENT: &str = "executedBridgeOp";
+pub const REGISTER_EVENT: &str = "register";
