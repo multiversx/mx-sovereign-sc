@@ -1,5 +1,6 @@
 use common_test_setup::constants::{
     CHAIN_CONFIG_ADDRESS, ESDT_SAFE_ADDRESS, HEADER_VERIFIER_ADDRESS, REGISTER_EVENT,
+    REGISTRATION_STATUS_UPDATE_EVENT,
 };
 use error_messages::{
     CALLER_NOT_FROM_CURRENT_SOVEREIGN, CURRENT_OPERATION_ALREADY_IN_EXECUTION,
@@ -561,7 +562,7 @@ fn test_change_validator_set() {
         &hash_of_hashes,
         1,
         None,
-        Some("registrationStatusUpdate"),
+        Some(REGISTRATION_STATUS_UPDATE_EVENT),
         None,
     );
 
@@ -703,7 +704,7 @@ fn test_change_multiple_validator_sets() {
         &first_hash_of_hashes,
         1,
         None,
-        Some("registrationStatusUpdate"),
+        Some(REGISTRATION_STATUS_UPDATE_EVENT),
         None,
     );
 

@@ -1,8 +1,9 @@
 use common_test_setup::base_setup::init::RegisterTokenArgs;
 use common_test_setup::constants::{
-    CROWD_TOKEN_ID, ESDT_SAFE_ADDRESS, FEE_MARKET_ADDRESS, FEE_TOKEN, FIRST_TEST_TOKEN,
-    HEADER_VERIFIER_ADDRESS, ONE_HUNDRED_MILLION, ONE_HUNDRED_THOUSAND, OWNER_ADDRESS,
-    REGISTER_EVENT, SECOND_TEST_TOKEN, SOV_TOKEN, TESTING_SC_ADDRESS, USER_ADDRESS,
+    CROWD_TOKEN_ID, DEPOSIT_EVENT, ESDT_SAFE_ADDRESS, FEE_MARKET_ADDRESS, FEE_TOKEN,
+    FIRST_TEST_TOKEN, HEADER_VERIFIER_ADDRESS, ONE_HUNDRED_MILLION, ONE_HUNDRED_THOUSAND,
+    OWNER_ADDRESS, REGISTER_EVENT, REGISTRATION_STATUS_UPDATE_EVENT, SC_CALL_EVENT,
+    SECOND_TEST_TOKEN, SOV_TOKEN, TESTING_SC_ADDRESS, USER_ADDRESS,
 };
 use cross_chain::storage::CrossChainStorage;
 use cross_chain::{DEFAULT_ISSUE_COST, MAX_GAS_PER_TRANSACTION};
@@ -419,7 +420,7 @@ fn test_deposit_too_many_tokens() {
 /// Call 'deposit()' with valid payments_vec and no transfer_data
 ///
 /// ### EXPECTED
-/// * USER's balance is updated
+/// USER's balance is updated
 #[test]
 fn test_deposit_no_transfer_data() {
     let mut state = MvxEsdtSafeTestState::new();
@@ -450,7 +451,7 @@ fn test_deposit_no_transfer_data() {
         OptionalValue::None,
         payments_vec,
         None,
-        Some("deposit"),
+        Some(DEPOSIT_EVENT),
     );
 
     let tokens_vec = vec![
@@ -747,7 +748,7 @@ fn test_deposit_transfer_data_only_no_fee() {
         OptionalValue::Some(transfer_data),
         PaymentsVec::new(),
         None,
-        Some("scCall"),
+        Some(SC_CALL_EVENT),
     );
 }
 
@@ -863,7 +864,7 @@ fn test_deposit_transfer_data_only_with_fee() {
         OptionalValue::Some(transfer_data),
         payments_vec,
         None,
-        Some("scCall"),
+        Some(SC_CALL_EVENT),
     );
 
     state.common_setup.check_account_single_esdt(
@@ -954,7 +955,7 @@ fn test_deposit_fee_enabled() {
         OptionalValue::Some(transfer_data),
         payments_vec.clone(),
         None,
-        Some("deposit"),
+        Some(DEPOSIT_EVENT),
     );
 
     let expected_amount_token_one =
@@ -1138,7 +1139,7 @@ fn test_deposit_refund() {
         OptionalValue::Some(transfer_data),
         payments_vec.clone(),
         None,
-        Some("deposit"),
+        Some(DEPOSIT_EVENT),
     );
 
     let expected_balances = vec![
@@ -1202,7 +1203,7 @@ fn test_deposit_success_burn_mechanism() {
         OptionalValue::None,
         payments_vec,
         None,
-        Some("deposit"),
+        Some(DEPOSIT_EVENT),
     );
 
     let expected_tokens = vec![
@@ -1943,7 +1944,7 @@ fn test_execute_operation_success_burn_mechanism() {
         OptionalValue::None,
         PaymentsVec::from(vec![payment]),
         None,
-        Some("deposit"),
+        Some(DEPOSIT_EVENT),
     );
 
     let bitmap = ManagedBuffer::new_from_bytes(&[1]);
@@ -2066,7 +2067,7 @@ fn test_deposit_execute_switch_mechanism() {
         OptionalValue::None,
         PaymentsVec::from(vec![deposit_trusted_token_payment.clone()]),
         None,
-        Some("deposit"),
+        Some(DEPOSIT_EVENT),
     );
 
     state.common_setup.check_account_single_esdt(
@@ -2153,7 +2154,7 @@ fn test_deposit_execute_switch_mechanism() {
         OptionalValue::None,
         PaymentsVec::from(vec![deposit_trusted_token_payment.clone()]),
         None,
-        Some("deposit"),
+        Some(DEPOSIT_EVENT),
     );
 
     expected_deposited_amount += deposited_trusted_token_payment_amount;
@@ -2240,7 +2241,7 @@ fn test_deposit_execute_switch_mechanism() {
         OptionalValue::None,
         PaymentsVec::from(vec![deposit_trusted_token_payment]),
         None,
-        Some("deposit"),
+        Some(DEPOSIT_EVENT),
     );
 
     expected_deposited_amount += deposited_trusted_token_payment_amount;

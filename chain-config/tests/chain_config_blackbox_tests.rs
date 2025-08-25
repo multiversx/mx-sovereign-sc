@@ -2,7 +2,7 @@ use chain_config::{config_utils::ENABLED, storage::ChainConfigStorageModule};
 use chain_config_blackbox_setup::ChainConfigTestState;
 use common_test_setup::constants::{
     CHAIN_CONFIG_ADDRESS, EXECUTED_BRIDGE_OP_EVENT, FIRST_TEST_TOKEN, OWNER_ADDRESS,
-    REGISTER_EVENT, USER_ADDRESS,
+    REGISTER_EVENT, REGISTRATION_STATUS_UPDATE_EVENT, UNREGISTER_EVENT, USER_ADDRESS,
 };
 use error_messages::{
     ADDITIONAL_STAKE_ZERO_VALUE, CHAIN_CONFIG_SETUP_PHASE_NOT_COMPLETE, INVALID_ADDITIONAL_STAKE,
@@ -252,7 +252,6 @@ fn test_update_config_setup_phase_not_completed() {
 ///
 /// ### EXPECTED
 /// failedBridgeOp event is emitted
-#[ignore]
 #[test]
 fn test_update_config_invalid_config() {
     let mut state = ChainConfigTestState::new();
@@ -965,7 +964,7 @@ fn test_unregister_validator() {
         .check_account(CHAIN_CONFIG_ADDRESS)
         .esdt_balance(FIRST_TEST_TOKEN, &min_stake);
 
-    state.unregister(&new_validator_bls_key, None, Some("unregister"));
+    state.unregister(&new_validator_bls_key, None, Some(UNREGISTER_EVENT));
 
     state
         .common_setup
@@ -1040,7 +1039,7 @@ fn update_registration_invalid_status() {
 /// Call 'update_registration_status()'
 ///
 /// ### EXPECTED
-/// "registrationStatusUpdate" event is emitted and storage is updated
+/// REGISTRATION_STATUS_UPDATE_EVENT event is emitted and storage is updated
 #[test]
 fn update_registration_status() {
     let mut state = ChainConfigTestState::new();
@@ -1088,7 +1087,7 @@ fn update_registration_status() {
         &hash_of_hashes,
         1,
         None,
-        Some("registrationStatusUpdate"),
+        Some(REGISTRATION_STATUS_UPDATE_EVENT),
         None,
     );
 
@@ -1109,7 +1108,7 @@ fn update_registration_status() {
 /// Call 'register()' when registration is enabled as a non genesis validator
 ///
 /// ### EXPECTED
-/// "registrationStatusUpdate" event is emitted and storage is updated
+/// REGISTRATION_STATUS_UPDATE_EVENT event is emitted and storage is updated
 #[test]
 fn update_register_validator_registration_enabled_validator_not_whitelisted() {
     let mut state = ChainConfigTestState::new();
@@ -1158,7 +1157,7 @@ fn update_register_validator_registration_enabled_validator_not_whitelisted() {
         &hash_of_hashes,
         1,
         None,
-        Some("registrationStatusUpdate"),
+        Some(REGISTRATION_STATUS_UPDATE_EVENT),
         None,
     );
 
@@ -1239,7 +1238,7 @@ fn update_register_validator_registration_disabled_validator_not_whitelisted() {
 /// Call 'register()' when registration is disabled as a non genesis validator
 ///
 /// ### EXPECTED
-/// "registrationStatusUpdate" event is emitted and storage is updated
+/// REGISTRATION_STATUS_UPDATE_EVENT event is emitted and storage is updated
 #[test]
 fn update_register_validator_registration_disabled_validator_whitelisted() {
     let mut state = ChainConfigTestState::new();

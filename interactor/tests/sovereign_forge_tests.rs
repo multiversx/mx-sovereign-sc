@@ -2,8 +2,9 @@ use common_interactor::{
     common_sovereign_interactor::CommonInteractorTrait, interactor_config::Config,
 };
 use common_test_setup::constants::{
-    CHAIN_ID, DEPLOY_COST, ESDT_SAFE_CONFIG_STORAGE_KEY, ONE_HUNDRED_TOKENS, ONE_THOUSAND_TOKENS,
-    OPERATION_HASH_STATUS_STORAGE_KEY, TEN_TOKENS, TOKEN_FEE_STORAGE_KEY, WRONG_ENDPOINT_NAME,
+    CHAIN_ID, DEPLOY_COST, DEPOSIT_EVENT, ESDT_SAFE_CONFIG_STORAGE_KEY, ONE_HUNDRED_TOKENS,
+    ONE_THOUSAND_TOKENS, OPERATION_HASH_STATUS_STORAGE_KEY, TEN_TOKENS, TOKEN_FEE_STORAGE_KEY,
+    WRONG_ENDPOINT_NAME,
 };
 use header_verifier::header_utils::OperationHashStatus;
 use multiversx_sc::{
@@ -98,7 +99,7 @@ async fn test_complete_deposit_flow() {
             OptionalValue::None,
             payments_vec,
             None,
-            Some("deposit"),
+            Some(DEPOSIT_EVENT),
         )
         .await;
 
@@ -219,7 +220,7 @@ async fn test_complete_flow_execute_operation_with_transfer_data_success_no_fee(
             OptionalValue::None,
             payment_vec,
             None,
-            Some("deposit"),
+            Some(DEPOSIT_EVENT),
         )
         .await;
 
@@ -395,7 +396,7 @@ async fn test_complete_flow_execute_operation_success_with_fee() {
             OptionalValue::Some(deposit_transfer_data),
             payment_vec,
             None,
-            Some("deposit"),
+            Some(DEPOSIT_EVENT),
         )
         .await;
 
