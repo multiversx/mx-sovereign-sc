@@ -3,16 +3,20 @@ use error_messages::EMPTY_EXPECTED_LOG;
 use header_verifier::{header_utils::OperationHashStatus, storage::HeaderVerifierStorageModule};
 use multiversx_sc_scenario::{
     api::StaticApi,
-    imports::{Address, BigUint, ManagedBuffer, MultiValue3, TestTokenIdentifier},
+    imports::{
+        Address, BigUint, ManagedAddress, ManagedBuffer, MultiValue3, ReturnsResultUnmanaged,
+        TestTokenIdentifier,
+    },
     multiversx_chain_vm::crypto_functions::sha256,
     scenario_model::{Log, TxResponseStatus},
-    ScenarioTxWhitebox,
+    ScenarioTxRun, ScenarioTxWhitebox,
 };
 use mvx_esdt_safe::bridging_mechanism::BridgingMechanism;
+use proxies::fee_market_proxy::FeeMarketProxy;
 
 use crate::{
     base_setup::init::BaseSetup,
-    constants::{ESDT_SAFE_ADDRESS, HEADER_VERIFIER_ADDRESS, OWNER_ADDRESS},
+    constants::{ESDT_SAFE_ADDRESS, FEE_MARKET_ADDRESS, HEADER_VERIFIER_ADDRESS, OWNER_ADDRESS},
 };
 
 impl BaseSetup {
@@ -31,6 +35,31 @@ impl BaseSetup {
                     amount,
                     ManagedBuffer::<StaticApi>::new(),
                 );
+        }
+    }
+
+    pub fn query_user_fee_whitelist(
+        &mut self,
+        users_to_query: Option<&[ManagedAddress<StaticApi>]>,
+    ) {
+        let query = self
+            .world
+            .query()
+            .to(FEE_MARKET_ADDRESS)
+            .typed(FeeMarketProxy)
+            .users_whitelist()
+            .returns(ReturnsResultUnmanaged)
+            .run();
+
+        match users_to_query {
+            Some(expected_users) => {
+                assert!(query
+                    .iter()
+                    .all(|u| expected_users.contains(&ManagedAddress::from(u))))
+            }
+            None => {
+                assert!(query.is_empty())
+            }
         }
     }
 

@@ -1,5 +1,5 @@
 [package]
-name = "fee-market"
+name = "sov-fee-market"
 version = "0.1.0"
 authors = ["you"]
 edition = "2021"
@@ -14,9 +14,6 @@ rev = "b59411841984a2fcbf76498d29bc131f2d433af9"
 
 [dependencies.utils]
 path = "../common/utils"
-
-[dependencies.setup-phase]
-path = "../common/setup-phase"
 
 [dependencies.proxies]
 path = "../common/proxies"

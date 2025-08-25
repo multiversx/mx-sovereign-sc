@@ -1,19 +1,48 @@
-use error_messages::{
-    ERROR_AT_ENCODING, INVALID_FEE, INVALID_FEE_TYPE, INVALID_TOKEN_ID,
-    SETUP_PHASE_ALREADY_COMPLETED,
-};
-use structs::{
-    fee::{FeeStruct, FeeType},
-    generate_hash::GenerateHash,
-};
+use error_messages::{ERROR_AT_ENCODING, SETUP_PHASE_ALREADY_COMPLETED};
+use structs::{fee::FeeStruct, generate_hash::GenerateHash};
 
 multiversx_sc::imports!();
 multiversx_sc::derive_imports!();
 
+pub const TOTAL_PERCENTAGE: usize = 10_000;
+
 #[multiversx_sc::module]
-pub trait FeeTypeModule:
-    utils::UtilsModule + setup_phase::SetupPhaseModule + custom_events::CustomEventsModule
+pub trait FeeOperationsModule:
+    setup_phase::SetupPhaseModule
+    + custom_events::CustomEventsModule
+    + utils::UtilsModule
+    + fee_common::storage::FeeCommonStorageModule
+    + fee_common::helpers::FeeCommonHelpersModule
+    + fee_common::endpoints::FeeCommonEndpointsModule
 {
+    #[only_owner]
+    #[endpoint(distributeFees)]
+    fn distribute_fees(
+        &self,
+        hash_of_hashes: ManagedBuffer,
+        address_percentage_pairs: MultiValueEncoded<MultiValue2<ManagedAddress, usize>>,
+    ) {
+        self.require_setup_complete();
+        let pairs = self.parse_pairs(address_percentage_pairs);
+        let opt_pairs_hash = self.generate_pairs_hash(&pairs, &hash_of_hashes);
+        if opt_pairs_hash.is_none() {
+            return;
+        }
+        let pairs_hash = opt_pairs_hash.unwrap();
+        self.lock_operation_hash_wrapper(&hash_of_hashes, &pairs_hash);
+
+        if let Some(err_msg) = self.validate_percentage_sum(&pairs) {
+            self.complete_operation(&hash_of_hashes, &pairs_hash, Some(err_msg));
+            return;
+        }
+
+        self.distribute_token_fees(&pairs);
+
+        self.tokens_for_fees().clear();
+
+        self.complete_operation(&hash_of_hashes, &pairs_hash, None);
+    }
+
     #[only_owner]
     #[endpoint(removeFeeDuringSetupPhase)]
     fn remove_fee_during_setup_phase(&self, base_token: TokenIdentifier) {
@@ -27,8 +56,8 @@ pub trait FeeTypeModule:
     }
 
     #[endpoint(removeFee)]
-    fn remove_fee(&self, hash_of_hashes: ManagedBuffer, base_token: TokenIdentifier) {
-        let token_id_hash = base_token.generate_hash();
+    fn remove_fee(&self, hash_of_hashes: ManagedBuffer, token_id: TokenIdentifier) {
+        let token_id_hash = token_id.generate_hash();
         if token_id_hash.is_empty() {
             self.complete_operation(
                 &hash_of_hashes,
@@ -42,7 +71,7 @@ pub trait FeeTypeModule:
 
         self.lock_operation_hash_wrapper(&hash_of_hashes, &token_id_hash);
 
-        self.token_fee(&base_token).clear();
+        self.token_fee(&token_id).clear();
         self.fee_enabled().set(false);
 
         self.complete_operation(&hash_of_hashes, &token_id_hash, None);
@@ -88,44 +117,4 @@ pub trait FeeTypeModule:
 
         self.complete_operation(&hash_of_hashes, &fee_hash, None);
     }
-
-    fn set_fee_in_storage(&self, fee_struct: &FeeStruct<Self::Api>) -> Option<&str> {
-        if !self.is_valid_token_id(&fee_struct.base_token) {
-            return Some(INVALID_TOKEN_ID);
-        }
-
-        let token = match &fee_struct.fee_type {
-            FeeType::None => sc_panic!(INVALID_FEE_TYPE),
-            FeeType::Fixed {
-                token,
-                per_transfer: _,
-                per_gas: _,
-            } => {
-                require!(&fee_struct.base_token == token, INVALID_FEE);
-
-                token
-            }
-        };
-
-        if !self.is_valid_token_id(token) {
-            return Some(INVALID_TOKEN_ID);
-        }
-
-        self.fee_enabled().set(true);
-        self.token_fee(&fee_struct.base_token)
-            .set(fee_struct.fee_type.clone());
-
-        None
-    }
-
-    fn is_fee_enabled(&self) -> bool {
-        self.fee_enabled().get()
-    }
-
-    #[view(getTokenFee)]
-    #[storage_mapper("tokenFee")]
-    fn token_fee(&self, token_id: &TokenIdentifier) -> SingleValueMapper<FeeType<Self::Api>>;
-
-    #[storage_mapper("feeEnabledFlag")]
-    fn fee_enabled(&self) -> SingleValueMapper<bool>;
 }

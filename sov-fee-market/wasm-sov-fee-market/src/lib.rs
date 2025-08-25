@@ -6,9 +6,9 @@
 
 // Init:                                 1
 // Upgrade:                              1
-// Endpoints:                           13
+// Endpoints:                            8
 // Async Callback (empty):               1
-// Total number of exported functions:  16
+// Total number of exported functions:  11
 
 #![no_std]
 
@@ -16,23 +16,18 @@ multiversx_sc_wasm_adapter::allocator!();
 multiversx_sc_wasm_adapter::panic_handler!();
 
 multiversx_sc_wasm_adapter::endpoints! {
-    fee_market
+    sov_fee_market
     (
         init => init
         upgrade => upgrade
-        completeSetupPhase => complete_setup_phase
-        distributeFees => distribute_fees
-        removeFeeDuringSetupPhase => remove_fee_during_setup_phase
-        removeFee => remove_fee
-        setFeeDuringSetupPhase => set_fee_during_setup_phase
-        setFee => set_fee
+        addUsersToWhitelist => add_users_to_whitelist
+        removeUsersFromWhitelist => remove_users_from_whitelist
         getTokenFee => token_fee
         getUsersWhitelist => users_whitelist
+        distributeFees => distribute_fees
+        removeFee => remove_fee
+        setFee => set_fee
         subtractFee => subtract_fee
-        addUsersToWhitelistSetupPhase => add_users_to_whitelist_during_setup_phase
-        addUsersToWhitelist => add_users_to_whitelist
-        removeUsersFromWhitelistSetupPhase => remove_users_from_whitelist_during_setup_phase
-        removeUsersFromWhitelist => remove_users_from_whitelist
     )
 }
 

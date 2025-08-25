@@ -264,6 +264,38 @@ where
             .original_result()
     }
 
+    pub fn add_users_to_whitelist<
+        Arg0: ProxyArg<ManagedAddress<Env::Api>>,
+        Arg1: ProxyArg<MultiValueEncoded<Env::Api, ManagedAddress<Env::Api>>>,
+    >(
+        self,
+        fee_market_address: Arg0,
+        users: Arg1,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("addUsersToWhitelistSetupPhase")
+            .argument(&fee_market_address)
+            .argument(&users)
+            .original_result()
+    }
+
+    pub fn remove_users_from_whitelist<
+        Arg0: ProxyArg<ManagedAddress<Env::Api>>,
+        Arg1: ProxyArg<MultiValueEncoded<Env::Api, ManagedAddress<Env::Api>>>,
+    >(
+        self,
+        fee_market_address: Arg0,
+        users: Arg1,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("removeUsersFromWhitelistSetupPhase")
+            .argument(&fee_market_address)
+            .argument(&users)
+            .original_result()
+    }
+
     pub fn complete_setup_phase<
         Arg0: ProxyArg<ManagedAddress<Env::Api>>,
         Arg1: ProxyArg<ManagedAddress<Env::Api>>,

@@ -1,5 +1,5 @@
 use crate::err_msg;
-use multiversx_sc::types::TokenIdentifier;
+use multiversx_sc::types::{MultiValueEncoded, TokenIdentifier};
 use multiversx_sc_modules::only_admin;
 use proxies::{
     chain_config_proxy::ChainConfigContractProxy, fee_market_proxy::FeeMarketProxy,
@@ -57,6 +57,34 @@ pub trait UpdateConfigsModule: only_admin::OnlyAdminModule {
             .to(fee_market_address)
             .typed(FeeMarketProxy)
             .remove_fee_during_setup_phase(token_id)
+            .sync_call();
+    }
+
+    #[only_admin]
+    #[endpoint(addUsersToWhitelistSetupPhase)]
+    fn add_users_to_whitelist(
+        &self,
+        fee_market_address: ManagedAddress,
+        users: MultiValueEncoded<ManagedAddress>,
+    ) {
+        self.tx()
+            .to(fee_market_address)
+            .typed(FeeMarketProxy)
+            .add_users_to_whitelist_during_setup_phase(users)
+            .sync_call();
+    }
+
+    #[only_admin]
+    #[endpoint(removeUsersFromWhitelistSetupPhase)]
+    fn remove_users_from_whitelist(
+        &self,
+        fee_market_address: ManagedAddress,
+        users: MultiValueEncoded<ManagedAddress>,
+    ) {
+        self.tx()
+            .to(fee_market_address)
+            .typed(FeeMarketProxy)
+            .remove_users_from_whitelist_during_setup_phase(users)
             .sync_call();
     }
 }

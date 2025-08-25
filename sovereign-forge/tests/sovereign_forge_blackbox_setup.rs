@@ -8,8 +8,8 @@ use common_test_setup::{
 use multiversx_sc::{
     imports::OptionalValue,
     types::{
-        BigUint, ManagedAddress, ReturnsHandledOrError, ReturnsResultUnmanaged, TestSCAddress,
-        TestTokenIdentifier,
+        BigUint, ManagedAddress, ManagedVec, MultiValueEncoded, ReturnsHandledOrError,
+        ReturnsResultUnmanaged, TestSCAddress, TestTokenIdentifier,
     },
 };
 use multiversx_sc_scenario::{api::StaticApi, ScenarioTxRun};
@@ -182,6 +182,46 @@ impl SovereignForgeTestState {
             .to(SOVEREIGN_FORGE_SC_ADDRESS)
             .typed(SovereignForgeProxy)
             .complete_setup_phase()
+            .returns(ReturnsHandledOrError::new())
+            .run();
+
+        self.common_setup
+            .assert_expected_error_message(response, error_message);
+    }
+
+    pub fn add_users_to_whitelist(
+        &mut self,
+        users: Vec<ManagedAddress<StaticApi>>,
+        error_message: Option<&str>,
+    ) {
+        let response = self
+            .common_setup
+            .world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .to(SOVEREIGN_FORGE_SC_ADDRESS)
+            .typed(SovereignForgeProxy)
+            .add_users_to_whitelist(MultiValueEncoded::from(ManagedVec::from_iter(users)))
+            .returns(ReturnsHandledOrError::new())
+            .run();
+
+        self.common_setup
+            .assert_expected_error_message(response, error_message);
+    }
+
+    pub fn remove_users_from_whitelist(
+        &mut self,
+        users: Vec<ManagedAddress<StaticApi>>,
+        error_message: Option<&str>,
+    ) {
+        let response = self
+            .common_setup
+            .world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .to(SOVEREIGN_FORGE_SC_ADDRESS)
+            .typed(SovereignForgeProxy)
+            .remove_users_from_whitelist(MultiValueEncoded::from(ManagedVec::from_iter(users)))
             .returns(ReturnsHandledOrError::new())
             .run();
 
