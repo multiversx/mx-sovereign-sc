@@ -1,7 +1,7 @@
 use error_messages::{
-    ADDITIONAL_STAKE_NOT_REQUIRED, ADDITIONAL_STAKE_ZERO_VALUE, EMPTY_ADDITIONAL_STAKE,
-    INVALID_ADDITIONAL_STAKE, INVALID_BLS_KEY_FOR_CALLER, INVALID_EGLD_STAKE,
-    INVALID_MIN_MAX_VALIDATOR_NUMBERS, INVALID_REGISTRATION_STATUS, INVALID_TOKEN_ID,
+    ADDITIONAL_STAKE_NOT_REQUIRED, ADDITIONAL_STAKE_ZERO_VALUE, INVALID_ADDITIONAL_STAKE,
+    INVALID_BLS_KEY_FOR_CALLER, INVALID_EGLD_STAKE, INVALID_MIN_MAX_VALIDATOR_NUMBERS,
+    INVALID_REGISTRATION_STATUS, INVALID_TOKEN_ID,
 };
 use multiversx_sc::chain_core::EGLD_000000_TOKEN_IDENTIFIER;
 use structs::{configs::SovereignConfig, ValidatorInfo};
@@ -19,15 +19,16 @@ pub const DISABLED_STR: &str = "disabled";
 
 #[multiversx_sc::module]
 pub trait ChainConfigUtilsModule: storage::ChainConfigStorageModule {
+    // What should be the maximum number of validators ?
     fn is_new_config_valid(&self, config: &SovereignConfig<Self::Api>) -> Option<&str> {
         if let Some(additional_stake) = config.opt_additional_stake_required.clone() {
-            require!(!additional_stake.is_empty(), EMPTY_ADDITIONAL_STAKE);
             for stake in additional_stake {
-                require!(
-                    stake.token_identifier.is_valid_esdt_identifier(),
-                    INVALID_TOKEN_ID
-                );
-                require!(stake.amount > 0, ADDITIONAL_STAKE_ZERO_VALUE);
+                if !stake.token_identifier.is_valid_esdt_identifier() {
+                    return Some(INVALID_TOKEN_ID);
+                }
+                if stake.amount <= 0 {
+                    return Some(ADDITIONAL_STAKE_ZERO_VALUE);
+                }
             }
         }
 
