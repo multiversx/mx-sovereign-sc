@@ -58,9 +58,8 @@ pub trait ConfigsModule:
             return;
         } else {
             self.sovereign_config().set(new_config);
+            self.complete_operation(&hash_of_hashes, &config_hash, None);
         }
-
-        self.complete_operation(&hash_of_hashes, &config_hash, None);
     }
 
     #[endpoint(updateRegistrationStatus)]
