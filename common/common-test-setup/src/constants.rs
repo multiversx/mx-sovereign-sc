@@ -84,6 +84,7 @@ pub const CATEGORIES: [(&str, &str); 3] = [
     ("bridge_services", "bridge_service"),
 ];
 pub const WALLETS_PATH: &str = "wallets";
+pub const STATE_FILE: &str = "state.toml";
 
 pub const ISSUE_COST: u64 = 50_000_000_000_000_000; // 0.05 EGLD
 pub const GAS_LIMIT: u64 = 90_000_000; // 90 million gas limit

@@ -1,5 +1,6 @@
 #![allow(non_snake_case)]
 
+use common_interactor::interactor_deploy_state::DeployState;
 use common_interactor::interactor_helpers::InteractorHelpers;
 use common_interactor::interactor_state::{EsdtTokenInfo, State};
 use common_interactor::interactor_structs::{ActionConfig, BalanceCheckConfig};
@@ -20,6 +21,7 @@ pub struct CompleteFlowInteract {
     pub interactor: Interactor,
     pub user_address: Address,
     pub state: State,
+    pub deploy_state: DeployState,
 }
 
 impl InteractorHelpers for CompleteFlowInteract {
@@ -29,6 +31,10 @@ impl InteractorHelpers for CompleteFlowInteract {
 
     fn state(&mut self) -> &mut State {
         &mut self.state
+    }
+
+    fn deploy_state(&mut self) -> &mut DeployState {
+        &mut self.deploy_state
     }
 
     fn user_address(&self) -> &Address {
@@ -62,11 +68,6 @@ impl CompleteFlowInteract {
         let current_working_dir = INTERACTOR_WORKING_DIR;
         interactor.set_current_dir_from_workspace(current_working_dir);
 
-        // let test_folder = format!("test_{}", config.test_id);
-        // let test_path = Path::new(WALLETS_PATH).join(&test_folder);
-        // let user_wallet_path = test_path.join("user.pem");
-        // let user_wallet = Self::load_wallet(&user_wallet_path, config.test_id);
-        // let user_address = interactor.register_wallet(user_wallet).await;
         let user_address = interactor.register_wallet(test_wallets::grace()).await;
 
         interactor.generate_blocks_until_all_activations().await;
@@ -75,6 +76,7 @@ impl CompleteFlowInteract {
             interactor,
             user_address,
             state: State::default(),
+            deploy_state: DeployState::load_state(),
         }
     }
 
@@ -94,6 +96,21 @@ impl CompleteFlowInteract {
         let mut all_tokens = Vec::new();
 
         for (ticker, token_type, decimals) in token_configs {
+            if ticker == "FEE" && !self.deploy_state.fee_token_id.is_empty() {
+                let fee_token_id = self.deploy_state.fee_token_id.clone();
+                let current_amount = self
+                    .retrieve_current_fee_token_amount(fee_token_id.clone())
+                    .await;
+                let fee_token = EsdtTokenInfo {
+                    token_id: fee_token_id.clone(),
+                    nonce: 0,
+                    token_type: EsdtTokenType::Fungible,
+                    amount: current_amount,
+                    decimals: 18,
+                };
+                self.state.set_fee_token(fee_token);
+                continue;
+            }
             let amount = match token_type {
                 EsdtTokenType::NonFungibleV2 | EsdtTokenType::DynamicNFT => BigUint::from(1u64),
                 _ => BigUint::from(ONE_THOUSAND_TOKENS),
@@ -119,7 +136,7 @@ impl CompleteFlowInteract {
             all_tokens.push(token);
         }
 
-        self.state.set_initial_wallet_balance(all_tokens);
+        self.state.set_initial_wallet_tokens_state(all_tokens);
     }
 
     pub async fn deposit_wrapper(
@@ -190,7 +207,7 @@ impl CompleteFlowInteract {
         let encoded_key = &hex::encode(OPERATION_HASH_STATUS_STORAGE_KEY);
 
         self.check_account_storage(
-            self.state
+            self.deploy_state
                 .get_header_verifier_address(config.shard)
                 .to_address(),
             encoded_key,
@@ -211,7 +228,7 @@ impl CompleteFlowInteract {
         .await;
 
         self.check_account_storage(
-            self.state
+            self.deploy_state
                 .get_header_verifier_address(config.shard)
                 .to_address(),
             encoded_key,

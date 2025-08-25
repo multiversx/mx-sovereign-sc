@@ -7,7 +7,6 @@ use common_test_setup::constants::{
     DEPLOY_COST, DEPOSIT_LOG, ONE_HUNDRED_TOKENS, SC_CALL_LOG, SHARD_1, SHARD_2,
     TESTING_SC_ENDPOINT, WRONG_ENDPOINT_NAME,
 };
-use common_test_setup::constants::{REGISTER_DEFAULT_TOKEN, REGISTER_TOKEN_PREFIX};
 use multiversx_sc::imports::OptionalValue;
 use multiversx_sc::types::BigUint;
 use multiversx_sc::types::EsdtTokenType;
@@ -29,7 +28,7 @@ use serial_test::serial;
 #[case::different_shard(SHARD_2)]
 #[case::same_shard(SHARD_1)]
 #[tokio::test]
-#[serial(test_0)]
+#[serial]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn test_complete_deposit_flow_no_fee_only_transfer_data(
     #[case] shard: u32,
@@ -72,13 +71,12 @@ async fn test_complete_deposit_flow_no_fee_only_transfer_data(
 #[case::different_shard(SHARD_2)]
 #[case::same_shard(SHARD_1)]
 #[tokio::test]
-#[serial(test_1)]
+#[serial]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn test_complete_deposit_flow_with_fee_only_transfer_data(
     #[case] shard: u32,
     #[values(1)] test_id: u64,
 ) {
-    println!("Running test_complete_deposit_flow_with_fee_only_transfer_data");
     let mut chain_interactor =
         CompleteFlowInteract::new(Config::chain_simulator_config(test_id)).await;
 
@@ -118,7 +116,7 @@ async fn test_complete_deposit_flow_with_fee_only_transfer_data(
 #[case::different_shard(SHARD_2)]
 #[case::same_shard(SHARD_1)]
 #[tokio::test]
-#[serial(test_2)]
+#[serial]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn test_complete_execute_flow_with_transfer_data_only_success(
     #[case] shard: u32,
@@ -167,7 +165,7 @@ async fn test_complete_execute_flow_with_transfer_data_only_success(
 #[case::different_shard(SHARD_2)]
 #[case::same_shard(SHARD_1)]
 #[tokio::test]
-#[serial(test_3)]
+#[serial]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn test_complete_execute_flow_with_transfer_data_only_fail(
     #[case] shard: u32,
@@ -221,7 +219,7 @@ async fn test_complete_execute_flow_with_transfer_data_only_fail(
 #[case::dynamic_sft(EsdtTokenType::DynamicSFT)]
 #[case::dynamic_meta(EsdtTokenType::DynamicMeta)]
 #[tokio::test]
-#[serial(test_4)]
+#[serial]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn test_deposit_with_fee(
     #[case] token_type: EsdtTokenType,
@@ -279,7 +277,7 @@ async fn test_deposit_with_fee(
 #[case::dynamic_sft(EsdtTokenType::DynamicSFT)]
 #[case::dynamic_meta(EsdtTokenType::DynamicMeta)]
 #[tokio::test]
-#[serial(test_5)]
+#[serial]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn test_deposit_without_fee_and_execute(
     #[case] token_type: EsdtTokenType,
@@ -344,7 +342,7 @@ async fn test_deposit_without_fee_and_execute(
 #[case::dynamic_sft(EsdtTokenType::DynamicSFT, BigUint::from(ONE_HUNDRED_TOKENS))]
 #[case::dynamic_meta(EsdtTokenType::DynamicMeta, BigUint::from(ONE_HUNDRED_TOKENS))]
 #[tokio::test]
-#[serial(test_6)]
+#[serial]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn test_register_execute_and_deposit_sov_token(
     #[case] token_type: EsdtTokenType,
@@ -366,9 +364,10 @@ async fn test_register_execute_and_deposit_sov_token(
         .await;
 
     let (nonce, decimals) = chain_interactor.generate_nonce_and_decimals(token_type);
+    let token_id = chain_interactor.create_random_sovereign_token_id();
 
     let sov_token = EsdtTokenInfo {
-        token_id: REGISTER_TOKEN_PREFIX.to_string() + REGISTER_DEFAULT_TOKEN,
+        token_id,
         nonce,
         token_type,
         decimals,
@@ -414,7 +413,7 @@ async fn test_register_execute_and_deposit_sov_token(
 #[case::dynamic_sft(EsdtTokenType::DynamicSFT)]
 #[case::dynamic_meta(EsdtTokenType::DynamicMeta)]
 #[tokio::test]
-#[serial(test_7)]
+#[serial]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn test_deposit_mvx_token_with_transfer_data(
     #[case] token_type: EsdtTokenType,
@@ -465,7 +464,7 @@ async fn test_deposit_mvx_token_with_transfer_data(
 #[case::dynamic_sft(EsdtTokenType::DynamicSFT)]
 #[case::dynamic_meta(EsdtTokenType::DynamicMeta)]
 #[tokio::test]
-#[serial(test_8)]
+#[serial]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn test_deposit_mvx_token_with_transfer_data_and_fee(
     #[case] token_type: EsdtTokenType,
@@ -518,7 +517,7 @@ async fn test_deposit_mvx_token_with_transfer_data_and_fee(
 #[case::dynamic_sft(EsdtTokenType::DynamicSFT)]
 #[case::dynamic_meta(EsdtTokenType::DynamicMeta)]
 #[tokio::test]
-#[serial(test_9)]
+#[serial]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn test_deposit_and_execute_with_transfer_data(
     #[case] token_type: EsdtTokenType,
@@ -578,7 +577,7 @@ async fn test_deposit_and_execute_with_transfer_data(
 #[case::dynamic_sft(EsdtTokenType::DynamicSFT, BigUint::from(ONE_HUNDRED_TOKENS))]
 #[case::dynamic_meta(EsdtTokenType::DynamicMeta, BigUint::from(ONE_HUNDRED_TOKENS))]
 #[tokio::test]
-#[serial(test_10)]
+#[serial]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn test_register_execute_with_transfer_data_and_deposit_sov_token(
     #[case] token_type: EsdtTokenType,
@@ -600,9 +599,10 @@ async fn test_register_execute_with_transfer_data_and_deposit_sov_token(
         .await;
 
     let (nonce, decimals) = chain_interactor.generate_nonce_and_decimals(token_type);
+    let token_id = chain_interactor.create_random_sovereign_token_id();
 
     let sov_token = EsdtTokenInfo {
-        token_id: REGISTER_TOKEN_PREFIX.to_string() + REGISTER_DEFAULT_TOKEN,
+        token_id,
         nonce,
         token_type,
         decimals,
@@ -658,7 +658,7 @@ async fn test_register_execute_with_transfer_data_and_deposit_sov_token(
 #[case::dynamic_sft(EsdtTokenType::DynamicSFT, BigUint::from(ONE_HUNDRED_TOKENS))]
 #[case::dynamic_meta(EsdtTokenType::DynamicMeta, BigUint::from(ONE_HUNDRED_TOKENS))]
 #[tokio::test]
-#[serial(test_11)]
+#[serial]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn test_register_execute_call_failed(
     #[case] token_type: EsdtTokenType,
@@ -680,9 +680,10 @@ async fn test_register_execute_call_failed(
         .await;
 
     let (nonce, decimals) = chain_interactor.generate_nonce_and_decimals(token_type);
+    let token_id = chain_interactor.create_random_sovereign_token_id();
 
     let sov_token = EsdtTokenInfo {
-        token_id: REGISTER_TOKEN_PREFIX.to_string() + REGISTER_DEFAULT_TOKEN,
+        token_id,
         nonce,
         token_type,
         decimals,

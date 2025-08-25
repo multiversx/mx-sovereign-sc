@@ -1,5 +1,6 @@
 use common_interactor::{
-    common_sovereign_interactor::CommonInteractorTrait, interactor_helpers::InteractorHelpers,
+    common_sovereign_interactor::CommonInteractorTrait, interactor_deploy_state::DeployState,
+    interactor_helpers::InteractorHelpers,
 };
 use multiversx_sc_snippets::imports::*;
 use proxies::mvx_esdt_safe_proxy::MvxEsdtSafeProxy;
@@ -17,6 +18,7 @@ pub struct MvxEsdtSafeInteract {
     pub interactor: Interactor,
     pub user_address: Address,
     pub state: State,
+    pub deploy_state: DeployState,
 }
 
 impl InteractorHelpers for MvxEsdtSafeInteract {
@@ -26,6 +28,10 @@ impl InteractorHelpers for MvxEsdtSafeInteract {
 
     fn state(&mut self) -> &mut State {
         &mut self.state
+    }
+
+    fn deploy_state(&mut self) -> &mut DeployState {
+        &mut self.deploy_state
     }
 
     fn user_address(&self) -> &Address {
@@ -68,6 +74,7 @@ impl MvxEsdtSafeInteract {
             interactor,
             user_address,
             state: State::default(),
+            deploy_state: DeployState::load_state(),
         }
     }
 
@@ -104,7 +111,7 @@ impl MvxEsdtSafeInteract {
             all_tokens.push(token);
         }
 
-        self.state.set_initial_wallet_balance(all_tokens);
+        self.state.set_initial_wallet_tokens_state(all_tokens);
     }
 
     pub async fn complete_setup_phase(&mut self, shard: u32) {
@@ -112,7 +119,7 @@ impl MvxEsdtSafeInteract {
         self.interactor
             .tx()
             .from(&caller)
-            .to(self.state.current_mvx_esdt_safe_contract_address())
+            .to(self.deploy_state.current_mvx_esdt_safe_contract_address())
             .gas(90_000_000u64)
             .typed(MvxEsdtSafeProxy)
             .complete_setup_phase()
@@ -126,7 +133,7 @@ impl MvxEsdtSafeInteract {
         let response = self
             .interactor
             .tx()
-            .to(self.state.current_mvx_esdt_safe_contract_address())
+            .to(self.deploy_state.current_mvx_esdt_safe_contract_address())
             .from(caller)
             .gas(90_000_000u64)
             .typed(MvxEsdtSafeProxy)
@@ -154,7 +161,7 @@ impl MvxEsdtSafeInteract {
             .interactor
             .tx()
             .from(bridge_service)
-            .to(self.state.current_mvx_esdt_safe_contract_address())
+            .to(self.deploy_state.current_mvx_esdt_safe_contract_address())
             .gas(90_000_000u64)
             .typed(MvxEsdtSafeProxy)
             .update_esdt_safe_config(hash_of_hashes, new_config)
@@ -173,7 +180,7 @@ impl MvxEsdtSafeInteract {
             .interactor
             .tx()
             .from(caller)
-            .to(self.state.current_mvx_esdt_safe_contract_address())
+            .to(self.deploy_state.current_mvx_esdt_safe_contract_address())
             .gas(90_000_000u64)
             .typed(MvxEsdtSafeProxy)
             .set_fee_market_address(fee_market_address)
@@ -196,7 +203,7 @@ impl MvxEsdtSafeInteract {
             .interactor
             .tx()
             .from(&caller)
-            .to(self.state.current_mvx_esdt_safe_contract_address())
+            .to(self.deploy_state.current_mvx_esdt_safe_contract_address())
             .gas(90_000_000u64)
             .typed(MvxEsdtSafeProxy)
             .register_native_token(token_ticker, token_name)
