@@ -2,19 +2,19 @@ use common_interactor::common_sovereign_interactor::CommonInteractorTrait;
 use common_interactor::interactor_config::Config;
 use common_test_setup::base_setup::init::RegisterTokenArgs;
 use common_test_setup::constants::{
-    CROWD_TOKEN_ID, FIRST_TEST_TOKEN, ISSUE_COST, MVX_TO_SOV_TOKEN_STORAGE_KEY,
+    CROWD_TOKEN_ID, DEPOSIT_EVENT, FIRST_TEST_TOKEN, ISSUE_COST, MVX_TO_SOV_TOKEN_STORAGE_KEY,
     NATIVE_TOKEN_STORAGE_KEY, ONE_HUNDRED_TOKENS, ONE_THOUSAND_TOKENS,
-    OPERATION_HASH_STATUS_STORAGE_KEY, SOV_TOKEN, SOV_TO_MVX_TOKEN_STORAGE_KEY, TEN_TOKENS,
-    TOKEN_TICKER, WRONG_ENDPOINT_NAME,
+    OPERATION_HASH_STATUS_STORAGE_KEY, SC_CALL_EVENT, SOV_TOKEN, SOV_TO_MVX_TOKEN_STORAGE_KEY,
+    TEN_TOKENS, TOKEN_TICKER, WRONG_ENDPOINT_NAME,
 };
 use cross_chain::MAX_GAS_PER_TRANSACTION;
 use error_messages::{
     BANNED_ENDPOINT_NAME, CANNOT_REGISTER_TOKEN, DEPOSIT_OVER_MAX_AMOUNT, ERR_EMPTY_PAYMENTS,
     GAS_LIMIT_TOO_HIGH, INVALID_TYPE, MAX_GAS_LIMIT_PER_TX_EXCEEDED,
     NATIVE_TOKEN_ALREADY_REGISTERED, NOTHING_TO_TRANSFER, PAYMENT_DOES_NOT_COVER_FEE,
-    SETUP_PHASE_NOT_COMPLETED, TOO_MANY_TOKENS,
+    TOO_MANY_TOKENS,
 };
-use header_verifier::utils::OperationHashStatus;
+use header_verifier::header_utils::OperationHashStatus;
 use multiversx_sc_snippets::multiversx_sc_scenario::multiversx_chain_vm::crypto_functions::sha256;
 use multiversx_sc_snippets::{hex, imports::*};
 use rust_interact::mvx_esdt_safe::mvx_esdt_safe_interactor_main::MvxEsdtSafeInteract;
@@ -411,7 +411,7 @@ async fn test_deposit_no_transfer_data() {
             OptionalValue::None,
             payments_vec,
             None,
-            Some("deposit"),
+            Some(DEPOSIT_EVENT),
         )
         .await;
 
@@ -677,7 +677,7 @@ async fn test_deposit_fee_enabled() {
             OptionalValue::Some(transfer_data),
             payments_vec.clone(),
             None,
-            Some("deposit"),
+            Some(DEPOSIT_EVENT),
         )
         .await;
 
@@ -849,7 +849,7 @@ async fn test_deposit_only_transfer_data_no_fee() {
             OptionalValue::Some(transfer_data),
             ManagedVec::new(),
             None,
-            Some("scCall"),
+            Some(SC_CALL_EVENT),
         )
         .await;
 
@@ -1028,7 +1028,7 @@ async fn test_deposit_refund() {
             OptionalValue::Some(transfer_data),
             payments_vec.clone(),
             None,
-            Some("deposit"),
+            Some(DEPOSIT_EVENT),
         )
         .await;
 
@@ -1411,7 +1411,7 @@ async fn test_execute_operation_no_esdt_safe_registered() {
         .execute_operations_in_mvx_esdt_safe(
             hash_of_hashes,
             operation,
-            Some(SETUP_PHASE_NOT_COMPLETED),
+            Some("removeExecutedHash"),
             None,
             None,
         )
@@ -1564,7 +1564,7 @@ async fn test_execute_operation_with_native_token_success() {
             OptionalValue::None,
             payment_vec,
             None,
-            Some("deposit"),
+            Some(DEPOSIT_EVENT),
         )
         .await;
 
@@ -1703,7 +1703,7 @@ async fn test_execute_operation_success_no_fee() {
             OptionalValue::None,
             payment_vec,
             None,
-            Some("deposit"),
+            Some(DEPOSIT_EVENT),
         )
         .await;
 

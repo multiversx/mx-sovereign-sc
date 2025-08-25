@@ -226,6 +226,7 @@ impl ChainConfigTestState {
             1,
             None,
             Some("registrationStatusUpdate"),
+            None,
         );
     }
 }

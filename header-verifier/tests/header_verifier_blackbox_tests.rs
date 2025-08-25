@@ -1,12 +1,13 @@
 use common_test_setup::constants::{
-    CHAIN_CONFIG_ADDRESS, ESDT_SAFE_ADDRESS, HEADER_VERIFIER_ADDRESS,
+    CHAIN_CONFIG_ADDRESS, ESDT_SAFE_ADDRESS, HEADER_VERIFIER_ADDRESS, REGISTER_EVENT,
+    REGISTRATION_STATUS_UPDATE_EVENT,
 };
 use error_messages::{
     CALLER_NOT_FROM_CURRENT_SOVEREIGN, CURRENT_OPERATION_ALREADY_IN_EXECUTION,
     CURRENT_OPERATION_NOT_REGISTERED, OUTGOING_TX_HASH_ALREADY_REGISTERED,
     SETUP_PHASE_NOT_COMPLETED,
 };
-use header_verifier::{storage::HeaderVerifierStorageModule, utils::OperationHashStatus};
+use header_verifier::{header_utils::OperationHashStatus, storage::HeaderVerifierStorageModule};
 use header_verifier_blackbox_setup::*;
 use multiversx_sc::{
     imports::OptionalValue,
@@ -77,7 +78,7 @@ fn test_register_bridge_operation() {
         &genesis_validator,
         &MultiEgldOrEsdtPayment::new(),
         None,
-        Some("register"),
+        Some(REGISTER_EVENT),
     );
 
     state.common_setup.complete_chain_config_setup_phase(None);
@@ -146,7 +147,7 @@ fn test_remove_executed_hash_no_esdt_address_registered() {
         &genesis_validator,
         &MultiEgldOrEsdtPayment::new(),
         None,
-        Some("register"),
+        Some(REGISTER_EVENT),
     );
     state.common_setup.complete_chain_config_setup_phase(None);
 
@@ -193,7 +194,7 @@ fn test_remove_one_executed_hash() {
         &genesis_validator,
         &MultiEgldOrEsdtPayment::new(),
         None,
-        Some("register"),
+        Some(REGISTER_EVENT),
     );
     state.common_setup.complete_chain_config_setup_phase(None);
 
@@ -261,7 +262,7 @@ fn test_remove_all_executed_hashes() {
         &genesis_validator,
         &MultiEgldOrEsdtPayment::new(),
         None,
-        Some("register"),
+        Some(REGISTER_EVENT),
     );
     state.common_setup.complete_chain_config_setup_phase(None);
 
@@ -394,7 +395,7 @@ fn test_lock_operation() {
         &genesis_validator,
         &MultiEgldOrEsdtPayment::new(),
         None,
-        Some("register"),
+        Some(REGISTER_EVENT),
     );
 
     state.common_setup.complete_chain_config_setup_phase(None);
@@ -464,7 +465,7 @@ fn test_lock_operation_hash_already_locked() {
         &genesis_validator,
         &MultiEgldOrEsdtPayment::new(),
         None,
-        Some("register"),
+        Some(REGISTER_EVENT),
     );
     state.common_setup.complete_chain_config_setup_phase(None);
 
@@ -544,7 +545,7 @@ fn test_change_validator_set() {
         &genesis_validator,
         &MultiEgldOrEsdtPayment::new(),
         None,
-        Some("register"),
+        Some(REGISTER_EVENT),
     );
     state.common_setup.complete_chain_config_setup_phase(None);
     state
@@ -561,7 +562,8 @@ fn test_change_validator_set() {
         &hash_of_hashes,
         1,
         None,
-        Some("registrationStatusUpdate"),
+        Some(REGISTRATION_STATUS_UPDATE_EVENT),
+        None,
     );
 
     let second_validator = ManagedBuffer::from("second_validator");
@@ -569,14 +571,14 @@ fn test_change_validator_set() {
         &second_validator,
         &MultiEgldOrEsdtPayment::new(),
         None,
-        Some("register"),
+        Some(REGISTER_EVENT),
     );
     let third_validator = ManagedBuffer::from("third_validator");
     state.common_setup.register_as_validator(
         &third_validator,
         &MultiEgldOrEsdtPayment::new(),
         None,
-        Some("register"),
+        Some(REGISTER_EVENT),
     );
 
     let mut validator_set = MultiValueEncoded::new();
@@ -627,7 +629,7 @@ fn test_change_validator_set_operation_already_registered() {
         &genesis_validator,
         &MultiEgldOrEsdtPayment::new(),
         None,
-        Some("register"),
+        Some(REGISTER_EVENT),
     );
 
     state.common_setup.complete_chain_config_setup_phase(None);
@@ -685,7 +687,7 @@ fn test_change_multiple_validator_sets() {
         &genesis_validator,
         &MultiEgldOrEsdtPayment::new(),
         None,
-        Some("register"),
+        Some(REGISTER_EVENT),
     );
     state.common_setup.complete_chain_config_setup_phase(None);
     state
@@ -702,7 +704,8 @@ fn test_change_multiple_validator_sets() {
         &first_hash_of_hashes,
         1,
         None,
-        Some("registrationStatusUpdate"),
+        Some(REGISTRATION_STATUS_UPDATE_EVENT),
+        None,
     );
 
     for epoch in 1..10 {
@@ -711,7 +714,7 @@ fn test_change_multiple_validator_sets() {
             &ManagedBuffer::from(&validator_key),
             &MultiEgldOrEsdtPayment::new(),
             None,
-            Some("register"),
+            Some(REGISTER_EVENT),
         );
 
         let operation_hash = ManagedBuffer::from(format!("validators_epoch_{}", epoch));

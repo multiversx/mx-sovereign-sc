@@ -1,6 +1,6 @@
 use cross_chain::storage::CrossChainStorage;
 use error_messages::EMPTY_EXPECTED_LOG;
-use header_verifier::{storage::HeaderVerifierStorageModule, utils::OperationHashStatus};
+use header_verifier::{header_utils::OperationHashStatus, storage::HeaderVerifierStorageModule};
 use multiversx_sc_scenario::{
     api::StaticApi,
     imports::{Address, BigUint, ManagedBuffer, MultiValue3, TestTokenIdentifier},
