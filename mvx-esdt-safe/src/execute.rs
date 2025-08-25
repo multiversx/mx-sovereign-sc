@@ -32,7 +32,7 @@ pub trait ExecuteModule:
             );
         };
 
-        if self.not_paused() {
+        if self.is_paused() {
             self.complete_operation(
                 &hash_of_hashes,
                 &operation_hash,
