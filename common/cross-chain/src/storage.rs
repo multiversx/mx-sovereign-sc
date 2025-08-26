@@ -7,6 +7,9 @@ pub trait CrossChainStorage {
     #[storage_mapper("lastTxNonce")]
     fn last_tx_nonce(&self) -> SingleValueMapper<TxNonce>;
 
+    #[storage_mapper("sovTokenPrefix")]
+    fn sov_token_prefix(&self) -> SingleValueMapper<ManagedBuffer<Self::Api>>;
+
     #[storage_mapper("crossChainConfig")]
     fn esdt_safe_config(&self) -> SingleValueMapper<EsdtSafeConfig<Self::Api>>;
 

@@ -28,7 +28,7 @@ pub trait ExecuteModule:
             self.complete_operation(
                 &hash_of_hashes,
                 &operation_hash,
-                Some(ManagedBuffer::from(ERROR_AT_ENCODING)),
+                Some(ERROR_AT_ENCODING.into()),
             );
         };
 

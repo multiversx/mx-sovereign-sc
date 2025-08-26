@@ -102,6 +102,7 @@ pub const TOKEN_ALREADY_REGISTERED: &str = "This token was already registered";
 pub const TOKEN_BLACKLISTED: &str = "Token is blacklisted";
 pub const TOKEN_ID_IS_NOT_TRUSTED: &str = "Token is not trusted";
 pub const TOKEN_ID_NO_PREFIX: &str = "Token Id does not have prefix";
+pub const INVALID_PREFIX: &str = "The sovereign prefix should be between 2 and 4 characters long";
 pub const TOKEN_IS_FROM_SOVEREIGN: &str = "Token is from a Sovereign Chain, it cannot be locked";
 pub const TOKEN_NOT_ACCEPTED_AS_FEE: &str = "Token not accepted as fee";
 pub const TOO_MANY_TOKENS: &str = "Too many tokens";

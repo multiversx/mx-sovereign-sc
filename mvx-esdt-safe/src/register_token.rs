@@ -1,7 +1,10 @@
 use cross_chain::REGISTER_GAS;
-use error_messages::{CANNOT_REGISTER_TOKEN, INVALID_TYPE, NATIVE_TOKEN_ALREADY_REGISTERED};
+use error_messages::{
+    CANNOT_REGISTER_TOKEN, ERROR_AT_ENCODING, ESDT_SAFE_STILL_PAUSED, INVALID_TYPE,
+    NATIVE_TOKEN_ALREADY_REGISTERED,
+};
 use multiversx_sc::types::EsdtTokenType;
-use structs::{EsdtInfo, IssueEsdtArgs};
+use structs::{generate_hash::GenerateHash, EsdtInfo, IssueEsdtArgs, UnregisteredTokenProperties};
 multiversx_sc::imports!();
 multiversx_sc::derive_imports!();
 
@@ -12,33 +15,45 @@ pub trait RegisterTokenModule:
     + cross_chain::deposit_common::DepositCommonModule
     + cross_chain::execute_common::ExecuteCommonModule
     + custom_events::CustomEventsModule
+    + multiversx_sc_modules::pause::PauseModule
 {
     #[payable("EGLD")]
     #[endpoint(registerToken)]
     fn register_token(
         &self,
-        sov_token_id: TokenIdentifier,
-        token_type: EsdtTokenType,
-        token_display_name: ManagedBuffer,
-        token_ticker: ManagedBuffer,
-        num_decimals: usize,
+        hash_of_hashes: ManagedBuffer,
+        token_to_register: UnregisteredTokenProperties<Self::Api>,
     ) {
-        self.require_sov_token_id_not_registered(&sov_token_id);
+        let token_hash = token_to_register.generate_hash();
+        if token_hash.is_empty() {
+            self.complete_operation(&hash_of_hashes, &token_hash, Some(ERROR_AT_ENCODING.into()));
+        };
+        if self.is_paused() {
+            self.complete_operation(
+                &hash_of_hashes,
+                &token_hash,
+                Some(ESDT_SAFE_STILL_PAUSED.into()),
+            );
+        }
 
-        require!(self.has_prefix(&sov_token_id), CANNOT_REGISTER_TOKEN);
+        self.require_sov_token_id_not_registered(&token_to_register.token_id);
+
+        // if !self.is_token_registered(&token_to_register.token_id, token_to_register) {}
+
+        if self.has_sov_prefix(&token_to_register.token_id, &self.sov_token_prefix().get()) {}
         let issue_cost = self.call_value().egld().clone_value();
 
-        match token_type {
-            EsdtTokenType::Invalid => sc_panic!(INVALID_TYPE),
-            _ => self.handle_token_issue(IssueEsdtArgs {
-                sov_token_id: sov_token_id.clone(),
-                issue_cost,
-                token_display_name,
-                token_ticker,
-                token_type,
-                num_decimals,
-            }),
-        }
+        // match token_type {
+        //     EsdtTokenType::Invalid => sc_panic!(INVALID_TYPE),
+        //     _ => self.handle_token_issue(IssueEsdtArgs {
+        //         sov_token_id: sov_token_id.clone(),
+        //         issue_cost,
+        //         token_display_name,
+        //         token_ticker,
+        //         token_type,
+        //         num_decimals,
+        //     }),
+        // }
     }
 
     #[payable("EGLD")]
@@ -124,6 +139,12 @@ pub trait RegisterTokenModule:
 
         self.multiversx_to_sovereign_token_id_mapper(mvx_token_id)
             .set(sov_token_id);
+    }
+
+    fn is_token_registered(&self, token_id: &TokenIdentifier, token_nonce: u64) -> bool {
+        !self
+            .sovereign_to_multiversx_esdt_info_mapper(token_id, token_nonce)
+            .is_empty()
     }
 
     fn update_esdt_info_mappers(

@@ -44,14 +44,17 @@ where
     Gas: TxGas<Env>,
 {
     pub fn init<
-        Arg0: ProxyArg<OptionalValue<structs::configs::EsdtSafeConfig<Env::Api>>>,
+        Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
+        Arg1: ProxyArg<OptionalValue<structs::configs::EsdtSafeConfig<Env::Api>>>,
     >(
         self,
-        opt_config: Arg0,
+        sov_token_prefix: Arg0,
+        opt_config: Arg1,
     ) -> TxTypedDeploy<Env, From, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_deploy()
+            .argument(&sov_token_prefix)
             .argument(&opt_config)
             .original_result()
     }
@@ -168,26 +171,17 @@ where
     }
 
     pub fn register_token<
-        Arg0: ProxyArg<TokenIdentifier<Env::Api>>,
-        Arg1: ProxyArg<EsdtTokenType>,
-        Arg2: ProxyArg<ManagedBuffer<Env::Api>>,
-        Arg3: ProxyArg<ManagedBuffer<Env::Api>>,
-        Arg4: ProxyArg<usize>,
+        Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
+        Arg1: ProxyArg<structs::UnregisteredTokenProperties<Env::Api>>,
     >(
         self,
-        sov_token_id: Arg0,
-        token_type: Arg1,
-        token_display_name: Arg2,
-        token_ticker: Arg3,
-        num_decimals: Arg4,
+        hash_of_hashes: Arg0,
+        token_to_register: Arg1,
     ) -> TxTypedCall<Env, From, To, (), Gas, ()> {
         self.wrapped_tx
             .raw_call("registerToken")
-            .argument(&sov_token_id)
-            .argument(&token_type)
-            .argument(&token_display_name)
-            .argument(&token_ticker)
-            .argument(&num_decimals)
+            .argument(&hash_of_hashes)
+            .argument(&token_to_register)
             .original_result()
     }
 

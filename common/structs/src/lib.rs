@@ -1,5 +1,9 @@
 #![no_std]
 
+use multiversx_sc::api::CryptoApi;
+
+use crate::{generate_hash::GenerateHash, operation::OperationData};
+
 multiversx_sc::imports!();
 multiversx_sc::derive_imports!();
 
@@ -52,3 +56,16 @@ pub struct ValidatorInfo<M: ManagedTypeApi> {
     pub egld_stake: BigUint<M>,
     pub token_stake: Option<ManagedVec<M, EsdtTokenPayment<M>>>,
 }
+
+#[type_abi]
+#[derive(TopEncode, TopDecode, NestedEncode)]
+pub struct UnregisteredTokenProperties<M: ManagedTypeApi> {
+    pub token_id: TokenIdentifier<M>,
+    pub token_type: EsdtTokenType,
+    pub token_display_name: ManagedBuffer<M>,
+    pub token_ticker: ManagedBuffer<M>,
+    pub num_decimals: usize,
+    pub data: OperationData<M>,
+}
+
+impl<A: CryptoApi> GenerateHash<A> for UnregisteredTokenProperties<A> {}

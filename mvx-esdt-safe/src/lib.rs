@@ -1,6 +1,6 @@
 #![no_std]
 
-use error_messages::{ERROR_AT_ENCODING, SETUP_PHASE_ALREADY_COMPLETED};
+use error_messages::{ERROR_AT_ENCODING, INVALID_PREFIX, SETUP_PHASE_ALREADY_COMPLETED};
 
 use multiversx_sc::imports::*;
 use structs::{configs::EsdtSafeConfig, generate_hash::GenerateHash};
@@ -26,7 +26,16 @@ pub trait MvxEsdtSafe:
     + setup_phase::SetupPhaseModule
 {
     #[init]
-    fn init(&self, opt_config: OptionalValue<EsdtSafeConfig<Self::Api>>) {
+    fn init(
+        &self,
+        sov_token_prefix: ManagedBuffer,
+        opt_config: OptionalValue<EsdtSafeConfig<Self::Api>>,
+    ) {
+        let prefix_len = sov_token_prefix.len();
+        require!(prefix_len > 1 && prefix_len <= 4, INVALID_PREFIX);
+
+        self.sov_token_prefix().set(sov_token_prefix);
+
         let new_config = match opt_config {
             OptionalValue::Some(cfg) => {
                 if let Some(error_message) = self.is_esdt_safe_config_valid(&cfg) {
