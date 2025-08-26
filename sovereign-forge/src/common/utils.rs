@@ -111,10 +111,14 @@ pub trait UtilsModule: super::storage::StorageModule {
     }
 
     fn require_correct_deploy_cost(&self, call_value: &BigUint) {
-        require!(
-            call_value == &self.deploy_cost().get(),
-            DEPLOY_COST_NOT_ENOUGH
-        );
+        let deploy_cost_mapper = self.deploy_cost();
+
+        if !deploy_cost_mapper.is_empty() {
+            require!(
+                call_value == &deploy_cost_mapper.get(),
+                DEPLOY_COST_NOT_ENOUGH
+            );
+        }
     }
 
     fn get_chain_factory_address(&self) -> ManagedAddress {

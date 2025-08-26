@@ -641,7 +641,7 @@ fn test_deploy_phase_one_deploy_cost_too_low() {
     let mut state = SovereignForgeTestState::new();
     state
         .common_setup
-        .deploy_sovereign_forge(OptionalValue::None);
+        .deploy_sovereign_forge(OptionalValue::Some(BigUint::from(2u32)));
     state.common_setup.deploy_chain_factory();
     state.finish_setup();
 

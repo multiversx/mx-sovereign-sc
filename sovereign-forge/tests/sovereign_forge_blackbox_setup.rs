@@ -45,7 +45,8 @@ impl SovereignForgeTestState {
     pub fn finish_setup(&mut self) {
         self.common_setup
             .world
-            .query()
+            .tx()
+            .from(OWNER_ADDRESS)
             .to(SOVEREIGN_FORGE_SC_ADDRESS)
             .whitebox(sovereign_forge::contract_obj, |sc| {
                 sc.chain_factories(1)
