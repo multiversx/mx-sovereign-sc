@@ -1,6 +1,6 @@
 #![allow(non_snake_case)]
 
-use common_interactor::interactor_deploy_state::DeployState;
+use common_interactor::interactor_common_state::CommonState;
 use common_interactor::interactor_helpers::InteractorHelpers;
 use common_interactor::interactor_state::{EsdtTokenInfo, State};
 use common_interactor::interactor_structs::{ActionConfig, BalanceCheckConfig};
@@ -15,13 +15,14 @@ use common_test_setup::constants::{
 use header_verifier::utils::OperationHashStatus;
 use multiversx_sc_snippets::multiversx_sc_scenario::multiversx_chain_vm::crypto_functions::sha256;
 use multiversx_sc_snippets::{hex, imports::*};
+use structs::aliases::PaymentsVec;
 use structs::fee::FeeStruct;
 
 pub struct CompleteFlowInteract {
     pub interactor: Interactor,
     pub user_address: Address,
     pub state: State,
-    pub deploy_state: DeployState,
+    pub common_state: CommonState,
 }
 
 impl InteractorHelpers for CompleteFlowInteract {
@@ -33,8 +34,8 @@ impl InteractorHelpers for CompleteFlowInteract {
         &mut self.state
     }
 
-    fn deploy_state(&mut self) -> &mut DeployState {
-        &mut self.deploy_state
+    fn common_state(&mut self) -> &mut CommonState {
+        &mut self.common_state
     }
 
     fn user_address(&self) -> &Address {
@@ -76,7 +77,7 @@ impl CompleteFlowInteract {
             interactor,
             user_address,
             state: State::default(),
-            deploy_state: DeployState::load_state(),
+            common_state: CommonState::load_state(),
         }
     }
 
@@ -96,18 +97,8 @@ impl CompleteFlowInteract {
         let mut all_tokens = Vec::new();
 
         for (ticker, token_type, decimals) in token_configs {
-            if ticker == "FEE" && !self.deploy_state.fee_token_id.is_empty() {
-                let fee_token_id = self.deploy_state.fee_token_id.clone();
-                let current_amount = self
-                    .retrieve_current_fee_token_amount(fee_token_id.clone())
-                    .await;
-                let fee_token = EsdtTokenInfo {
-                    token_id: fee_token_id.clone(),
-                    nonce: 0,
-                    token_type: EsdtTokenType::Fungible,
-                    amount: current_amount,
-                    decimals: 18,
-                };
+            if ticker == "FEE" && !self.common_state.fee_market_tokens.is_empty() {
+                let fee_token = self.retrieve_current_fee_token_for_wallet().await;
                 self.state.set_fee_token(fee_token);
                 continue;
             }
@@ -159,7 +150,7 @@ impl CompleteFlowInteract {
             SOVEREIGN_RECEIVER_ADDRESS.to_address(),
             config.shard,
             transfer_data,
-            payment_vec,
+            payment_vec.clone(),
             None,
             expected_log.as_deref(),
         )
@@ -171,11 +162,13 @@ impl CompleteFlowInteract {
             .shard(config.shard)
             .token(token.clone())
             .amount(amount)
-            .fee(fee)
+            .fee(fee.clone())
             .with_transfer_data(config.with_transfer_data.unwrap_or_default())
             .is_execute(false);
 
         self.check_balances_after_action(balance_config).await;
+        self.update_fee_market_balance_state(fee, payment_vec, config.shard)
+            .await;
     }
 
     async fn register_and_execute_operation(
@@ -207,7 +200,7 @@ impl CompleteFlowInteract {
         let encoded_key = &hex::encode(OPERATION_HASH_STATUS_STORAGE_KEY);
 
         self.check_account_storage(
-            self.deploy_state
+            self.common_state
                 .get_header_verifier_address(config.shard)
                 .to_address(),
             encoded_key,
@@ -228,7 +221,7 @@ impl CompleteFlowInteract {
         .await;
 
         self.check_account_storage(
-            self.deploy_state
+            self.common_state
                 .get_header_verifier_address(config.shard)
                 .to_address(),
             encoded_key,
@@ -302,5 +295,24 @@ impl CompleteFlowInteract {
         self.execute_wrapper(config, Some(token.clone()))
             .await
             .expect("Expected mapped token, got None")
+    }
+
+    pub async fn update_fee_market_balance_state(
+        &mut self,
+        fee: Option<FeeStruct<StaticApi>>,
+        payment_vec: PaymentsVec<StaticApi>,
+        shard: u32,
+    ) {
+        if fee.is_none() || payment_vec.is_empty() {
+            return;
+        }
+        let mut fee_token_in_fee_market = self.common_state().get_fee_market_token_for_shard(shard);
+
+        let payment = payment_vec.get(0);
+        if let Some(payment_amount) = payment.amount.to_u64() {
+            fee_token_in_fee_market.amount += payment_amount;
+        }
+        self.common_state()
+            .set_fee_market_token_for_shard(shard, fee_token_in_fee_market);
     }
 }

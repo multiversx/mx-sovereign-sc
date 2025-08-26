@@ -3,6 +3,7 @@ use multiversx_sc::{
     types::{BigUint, EsdtTokenType},
 };
 use multiversx_sc_snippets::imports::StaticApi;
+use serde::{Deserialize, Serialize};
 use structs::fee::FeeStruct;
 
 use crate::interactor_state::EsdtTokenInfo;
@@ -28,6 +29,15 @@ pub struct ActionConfig {
     pub expected_log_error: Option<String>,
     pub with_transfer_data: Option<bool>,
     pub endpoint: Option<String>,
+}
+
+#[derive(Clone, Default, Serialize, Deserialize, Debug)]
+pub struct SerializableFeeMarketToken {
+    pub token_id: String,
+    pub nonce: u64,
+    pub token_type: u8,
+    pub decimals: usize,
+    pub amount: u64,
 }
 
 impl ActionConfig {

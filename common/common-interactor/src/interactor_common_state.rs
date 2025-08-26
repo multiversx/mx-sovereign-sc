@@ -1,4 +1,5 @@
 use std::{
+    collections::HashMap,
     io::{Read, Write},
     path::Path,
 };
@@ -6,16 +7,22 @@ use std::{
 use common_test_setup::constants::STATE_FILE;
 use error_messages::{
     NO_KNOWN_CHAIN_CONFIG_SC, NO_KNOWN_CHAIN_FACTORY_IN_THE_SPECIFIED_SHARD,
-    NO_KNOWN_CHAIN_FACTORY_SC, NO_KNOWN_FEE_MARKET, NO_KNOWN_HEADER_VERIFIER,
+    NO_KNOWN_CHAIN_FACTORY_SC, NO_KNOWN_FEE_MARKET, NO_KNOWN_FEE_TOKEN, NO_KNOWN_HEADER_VERIFIER,
     NO_KNOWN_MVX_ESDT_SAFE, NO_KNOWN_SOVEREIGN_FORGE_SC, NO_KNOWN_TESTING_SC,
 };
-use multiversx_sc::imports::Bech32Address;
+use multiversx_sc::{
+    imports::Bech32Address,
+    types::{BigUint, EsdtTokenType},
+};
 use serde::{Deserialize, Serialize};
 
-use crate::interactor_state::{AddressInfo, ShardAddresses};
+use crate::{
+    interactor_state::{AddressInfo, EsdtTokenInfo, ShardAddresses},
+    interactor_structs::SerializableFeeMarketToken,
+};
 
 #[derive(Debug, Default, Serialize, Deserialize)]
-pub struct DeployState {
+pub struct CommonState {
     pub mvx_esdt_safe_addresses: Option<ShardAddresses>,
     pub header_verfier_addresses: Option<ShardAddresses>,
     pub fee_market_addresses: Option<ShardAddresses>,
@@ -23,10 +30,11 @@ pub struct DeployState {
     pub testing_sc_address: Option<Bech32Address>,
     pub sovereign_forge_sc_address: Option<Bech32Address>,
     pub chain_factory_sc_addresses: Option<Vec<Bech32Address>>,
-    pub fee_token_id: String,
+    pub fee_market_tokens: HashMap<String, SerializableFeeMarketToken>,
+    pub fee_status: HashMap<String, bool>,
 }
 
-impl DeployState {
+impl CommonState {
     pub fn load_state() -> Self {
         if Path::new(STATE_FILE).exists() {
             let mut file = std::fs::File::open(STATE_FILE).unwrap();
@@ -71,8 +79,29 @@ impl DeployState {
         list.push(address);
     }
 
-    pub fn set_fee_token_id(&mut self, fee_token_id: String) {
-        self.fee_token_id = fee_token_id;
+    pub fn set_fee_status_for_shard(&mut self, shard: u32, status: bool) {
+        self.fee_status.insert(shard.to_string(), status);
+    }
+
+    pub fn set_fee_status_for_all_shards(&mut self, status: bool) {
+        for shard in 0..3 {
+            self.fee_status.insert(shard.to_string(), status);
+        }
+    }
+
+    pub fn set_fee_market_token_for_all_shards(&mut self, token: SerializableFeeMarketToken) {
+        for shard in 0..3 {
+            self.fee_market_tokens
+                .insert(shard.to_string(), token.clone());
+        }
+    }
+
+    pub fn set_fee_market_token_for_shard(
+        &mut self,
+        shard: u32,
+        token: SerializableFeeMarketToken,
+    ) {
+        self.fee_market_tokens.insert(shard.to_string(), token);
     }
 
     /// Returns the contract addresses
@@ -160,12 +189,45 @@ impl DeployState {
             .unwrap_or_else(|| panic!("No Header Verifier address for shard {}", shard))
     }
 
-    pub fn get_fee_token_id(&self) -> &String {
-        &self.fee_token_id
+    pub fn get_fee_status_for_shard(&self, shard: u32) -> bool {
+        self.fee_status
+            .get(&shard.to_string())
+            .cloned()
+            .unwrap_or(false)
+    }
+
+    pub fn get_fee_market_token_amount_for_shard(&self, shard: u32) -> u64 {
+        self.fee_market_tokens
+            .get(&shard.to_string())
+            .cloned()
+            .expect(NO_KNOWN_FEE_TOKEN)
+            .amount
+    }
+
+    pub fn get_fee_market_token_for_shard_converted(&self, shard: u32) -> EsdtTokenInfo {
+        let token = self
+            .fee_market_tokens
+            .get(&shard.to_string())
+            .cloned()
+            .expect(NO_KNOWN_FEE_TOKEN);
+        EsdtTokenInfo {
+            token_id: token.token_id,
+            nonce: token.nonce,
+            token_type: EsdtTokenType::from(token.token_type),
+            decimals: token.decimals,
+            amount: BigUint::from(token.amount),
+        }
+    }
+
+    pub fn get_fee_market_token_for_shard(&self, shard: u32) -> SerializableFeeMarketToken {
+        self.fee_market_tokens
+            .get(&shard.to_string())
+            .cloned()
+            .expect(NO_KNOWN_FEE_TOKEN)
     }
 }
 
-impl Drop for DeployState {
+impl Drop for CommonState {
     // Serializes state to file
     fn drop(&mut self) {
         let mut file = std::fs::File::create(STATE_FILE).unwrap();
