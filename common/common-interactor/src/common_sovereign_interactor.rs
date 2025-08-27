@@ -263,7 +263,7 @@ pub trait CommonInteractorTrait {
             .from(bridge_owner)
             .gas(100_000_000u64)
             .typed(MvxEsdtSafeProxy)
-            .init(opt_config)
+            .init(ManagedBuffer::new(), opt_config)
             .returns(ReturnsNewAddress)
             .code(MVX_ESDT_SAFE_CODE_PATH)
             .code_metadata(CodeMetadata::all())

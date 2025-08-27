@@ -2,6 +2,7 @@ use common_interactor::common_sovereign_interactor::{
     CommonInteractorTrait, IssueTokenStruct, MintTokenStruct,
 };
 use multiversx_sc_snippets::imports::*;
+use multiversx_sc_snippets::multiversx_sc_scenario::multiversx_chain_vm::crypto_functions::sha256;
 use proxies::mvx_esdt_safe_proxy::MvxEsdtSafeProxy;
 
 use structs::configs::{EsdtSafeConfig, SovereignConfig};
@@ -11,10 +12,11 @@ use structs::forge::ScArray;
 use common_interactor::interactor_config::Config;
 use common_interactor::interactor_state::State;
 
-use common_test_setup::base_setup::init::RegisterTokenArgs;
 use common_test_setup::constants::{
     INTERACTOR_WORKING_DIR, MVX_ESDT_SAFE_CODE_PATH, ONE_THOUSAND_TOKENS,
 };
+use structs::generate_hash::GenerateHash;
+use structs::SovTokenProperties;
 
 pub struct MvxEsdtSafeInteract {
     pub interactor: Interactor,
@@ -310,10 +312,11 @@ impl MvxEsdtSafeInteract {
 
     pub async fn register_token(
         &mut self,
-        args: RegisterTokenArgs<'_>,
-        egld_amount: BigUint<StaticApi>,
+        args: SovTokenProperties<StaticApi>,
         expected_error_message: Option<&str>,
     ) {
+        let token_hash = args.generate_hash();
+        let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&token_hash.to_vec()));
         let response = self
             .interactor
             .tx()
@@ -321,14 +324,7 @@ impl MvxEsdtSafeInteract {
             .to(self.state.current_mvx_esdt_safe_contract_address())
             .gas(90_000_000u64)
             .typed(MvxEsdtSafeProxy)
-            .register_token(
-                args.sov_token_id,
-                args.token_type,
-                args.token_display_name,
-                args.token_ticker,
-                args.num_decimals,
-            )
-            .egld(egld_amount)
+            .register_token(hash_of_hashes, args)
             .returns(ReturnsHandledOrError::new())
             .run()
             .await;

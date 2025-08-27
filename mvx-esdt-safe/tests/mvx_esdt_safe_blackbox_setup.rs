@@ -1,8 +1,8 @@
-use common_test_setup::base_setup::init::{AccountSetup, BaseSetup, RegisterTokenArgs};
+use common_test_setup::base_setup::init::{AccountSetup, BaseSetup};
 use common_test_setup::constants::{
     ESDT_SAFE_ADDRESS, FEE_TOKEN, FIRST_TEST_TOKEN, HEADER_VERIFIER_ADDRESS,
     MVX_ESDT_SAFE_CODE_PATH, ONE_HUNDRED_MILLION, OWNER_ADDRESS, OWNER_BALANCE, SECOND_TEST_TOKEN,
-    USER_ADDRESS,
+    SOVEREIGN_TOKEN_PREFIX, USER_ADDRESS,
 };
 use multiversx_sc::types::ReturnsHandledOrError;
 use multiversx_sc::{
@@ -13,9 +13,12 @@ use multiversx_sc::{
     },
 };
 use multiversx_sc_modules::transfer_role_proxy::PaymentsVec;
+use multiversx_sc_scenario::multiversx_chain_vm::crypto_functions::sha256;
 use multiversx_sc_scenario::{api::StaticApi, ReturnsLogs, ScenarioTxRun, ScenarioTxWhitebox};
 use mvx_esdt_safe::{bridging_mechanism::TRUSTED_TOKEN_IDS, MvxEsdtSafe};
 use proxies::mvx_esdt_safe_proxy::MvxEsdtSafeProxy;
+use structs::generate_hash::GenerateHash;
+use structs::SovTokenProperties;
 use structs::{
     aliases::OptionalValueTransferDataTuple, configs::EsdtSafeConfig, operation::Operation,
 };
@@ -109,7 +112,7 @@ impl MvxEsdtSafeTestState {
                     ManagedVec::new(),
                 );
 
-                sc.init(OptionalValue::Some(config));
+                sc.init(SOVEREIGN_TOKEN_PREFIX.into(), OptionalValue::Some(config));
             });
 
         self.common_setup
@@ -258,30 +261,30 @@ impl MvxEsdtSafeTestState {
 
     pub fn register_token(
         &mut self,
-        register_token_args: RegisterTokenArgs,
-        payment: BigUint<StaticApi>,
+        register_token_args: SovTokenProperties<StaticApi>,
         expected_error_message: Option<&str>,
+        expected_custom_log: Option<&str>,
+        expected_log_error: Option<&str>,
     ) {
-        let result = self
+        let token_hash = register_token_args.generate_hash();
+        let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&token_hash.to_vec()));
+        let (result, logs) = self
             .common_setup
             .world
             .tx()
             .from(OWNER_ADDRESS)
             .to(ESDT_SAFE_ADDRESS)
             .typed(MvxEsdtSafeProxy)
-            .register_token(
-                register_token_args.sov_token_id,
-                register_token_args.token_type,
-                ManagedBuffer::from(register_token_args.token_display_name),
-                ManagedBuffer::from(register_token_args.token_ticker),
-                register_token_args.num_decimals,
-            )
-            .egld(payment)
+            .register_token(hash_of_hashes, register_token_args)
             .returns(ReturnsHandledOrError::new())
+            .returns(ReturnsLogs)
             .run();
 
         self.common_setup
             .assert_expected_error_message(result, expected_error_message);
+
+        self.common_setup
+            .assert_expected_log(logs, expected_custom_log, expected_log_error);
     }
 
     pub fn register_native_token(

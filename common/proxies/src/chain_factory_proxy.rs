@@ -124,14 +124,17 @@ where
     }
 
     pub fn deploy_mvx_esdt_safe<
-        Arg0: ProxyArg<OptionalValue<structs::configs::EsdtSafeConfig<Env::Api>>>,
+        Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
+        Arg1: ProxyArg<OptionalValue<structs::configs::EsdtSafeConfig<Env::Api>>>,
     >(
         self,
-        opt_config: Arg0,
+        sov_token_prefix: Arg0,
+        opt_config: Arg1,
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ManagedAddress<Env::Api>> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("deployEsdtSafe")
+            .argument(&sov_token_prefix)
             .argument(&opt_config)
             .original_result()
     }

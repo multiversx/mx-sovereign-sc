@@ -1,12 +1,16 @@
 use cross_chain::REGISTER_GAS;
 use error_messages::{
-    ERROR_AT_ENCODING, ESDT_SAFE_STILL_PAUSED, NATIVE_TOKEN_ALREADY_REGISTERED,
-    TOKEN_ALREADY_REGISTERED,
+    ERROR_AT_ENCODING, ESDT_SAFE_STILL_PAUSED, INVALID_PREFIX, INVALID_TYPE,
+    NATIVE_TOKEN_ALREADY_REGISTERED, TOKEN_ALREADY_REGISTERED,
 };
 use multiversx_sc::types::EsdtTokenType;
-use structs::{generate_hash::GenerateHash, EsdtInfo, IssueEsdtArgs, UnregisteredTokenProperties};
+use structs::{
+    aliases::EventPaymentTuple, generate_hash::GenerateHash, EsdtInfo, SovTokenProperties,
+};
 multiversx_sc::imports!();
 multiversx_sc::derive_imports!();
+
+pub const ISSUE_COST: u64 = 50_000_000_000_000_000; // 0.05 EGLD
 
 #[multiversx_sc::module]
 pub trait RegisterTokenModule:
@@ -16,18 +20,20 @@ pub trait RegisterTokenModule:
     + cross_chain::execute_common::ExecuteCommonModule
     + custom_events::CustomEventsModule
     + multiversx_sc_modules::pause::PauseModule
+    + setup_phase::SetupPhaseModule
 {
     #[payable("EGLD")]
     #[endpoint(registerToken)]
     fn register_token(
         &self,
         hash_of_hashes: ManagedBuffer,
-        token_to_register: UnregisteredTokenProperties<Self::Api>,
+        token_to_register: SovTokenProperties<Self::Api>,
     ) {
         let token_hash = token_to_register.generate_hash();
         if token_hash.is_empty() {
             self.complete_operation(&hash_of_hashes, &token_hash, Some(ERROR_AT_ENCODING.into()));
         };
+
         if self.is_paused() {
             self.complete_operation(
                 &hash_of_hashes,
@@ -38,6 +44,10 @@ pub trait RegisterTokenModule:
             return;
         }
 
+        self.require_setup_complete_with_event(&hash_of_hashes, &token_hash);
+
+        self.lock_operation_hash_wrapper(&hash_of_hashes, &token_hash);
+
         if self.is_sov_token_id_registered(&token_to_register.token_id) {
             self.complete_operation(
                 &hash_of_hashes,
@@ -45,31 +55,29 @@ pub trait RegisterTokenModule:
                 Some(TOKEN_ALREADY_REGISTERED.into()),
             );
 
-            // self.deposit_event(
-            //     &token_to_register.data.op_sender,
-            //     &MultiValueEncoded::from(ManagedVec::from_single_item(
-            //         self.call_value().egld().clone(),
-            //     )),
-            //     token_to_register.data,
-            // );
+            let tokens = self.create_event_payment_tuple(&token_to_register);
+
+            self.deposit_event(
+                &token_to_register.data.op_sender.clone(),
+                &tokens,
+                token_to_register.data.clone(),
+            );
 
             return;
         }
 
-        if self.has_sov_prefix(&token_to_register.token_id, &self.sov_token_prefix().get()) {}
-        let issue_cost = self.call_value().egld().clone_value();
+        if !self.has_sov_prefix(&token_to_register.token_id, &self.sov_token_prefix().get()) {
+            self.complete_operation(&hash_of_hashes, &token_hash, Some(INVALID_PREFIX.into()));
 
-        // match token_type {
-        //     EsdtTokenType::Invalid => sc_panic!(INVALID_TYPE),
-        //     _ => self.handle_token_issue(IssueEsdtArgs {
-        //         sov_token_id: sov_token_id.clone(),
-        //         issue_cost,
-        //         token_display_name,
-        //         token_ticker,
-        //         token_type,
-        //         num_decimals,
-        //     }),
-        // }
+            return;
+        }
+
+        match token_to_register.token_type {
+            EsdtTokenType::Invalid => {
+                self.complete_operation(&hash_of_hashes, &token_hash, Some(INVALID_TYPE.into()))
+            }
+            _ => self.handle_token_issue(token_to_register, hash_of_hashes, token_hash),
+        }
     }
 
     #[payable("EGLD")]
@@ -96,34 +104,57 @@ pub trait RegisterTokenModule:
             .register_promise();
     }
 
-    fn handle_token_issue(&self, args: IssueEsdtArgs<Self::Api>) {
+    fn handle_token_issue(
+        &self,
+        args: SovTokenProperties<Self::Api>,
+        hash_of_hashes: ManagedBuffer,
+        token_hash: ManagedBuffer,
+    ) {
+        let token_display_name = args.token_display_name.clone();
+        let token_ticker = args.token_ticker.clone();
+        let token_type = args.token_type;
+        let num_decimals = args.num_decimals;
+
         self.tx()
             .to(ESDTSystemSCAddress)
             .typed(ESDTSystemSCProxy)
             .issue_and_set_all_roles(
-                args.issue_cost,
-                args.token_display_name,
-                args.token_ticker,
-                args.token_type,
-                args.num_decimals,
+                BigUint::from(ISSUE_COST),
+                token_display_name,
+                token_ticker,
+                token_type,
+                num_decimals,
             )
             .gas(REGISTER_GAS)
-            .callback(self.callbacks().issue_callback(&args.sov_token_id))
+            .callback(
+                self.callbacks()
+                    .issue_callback(&args, hash_of_hashes, token_hash),
+            )
             .register_promise();
     }
 
     #[promises_callback]
     fn issue_callback(
         &self,
-        sov_token_id: &TokenIdentifier,
+        token_to_register: &SovTokenProperties<Self::Api>,
+        hash_of_hashes: ManagedBuffer,
+        token_hash: ManagedBuffer,
         #[call_result] result: ManagedAsyncCallResult<TokenIdentifier<Self::Api>>,
     ) {
         match result {
             ManagedAsyncCallResult::Ok(mvx_token_id) => {
-                self.set_corresponding_token_ids(sov_token_id, &mvx_token_id);
+                self.set_corresponding_token_ids(&token_to_register.token_id, &mvx_token_id);
+                self.complete_operation(&hash_of_hashes, &token_hash, None);
             }
             ManagedAsyncCallResult::Err(error) => {
-                sc_panic!("There was an error at issuing token: '{}'", error.err_msg);
+                let tokens = self.create_event_payment_tuple(token_to_register);
+
+                self.deposit_event(
+                    &token_to_register.data.op_sender.clone(),
+                    &tokens,
+                    token_to_register.data.clone(),
+                );
+                self.complete_operation(&hash_of_hashes, &token_hash, Some(error.err_msg));
             }
         }
     }
@@ -181,5 +212,22 @@ pub trait RegisterTokenModule:
                 token_identifier: sov_id.clone(),
                 token_nonce: sov_nonce,
             });
+    }
+
+    fn create_event_payment_tuple(
+        &self,
+        token_to_register: &SovTokenProperties<Self::Api>,
+    ) -> MultiValueEncoded<Self::Api, EventPaymentTuple<Self::Api>> {
+        let token_data = self.blockchain().get_esdt_token_data(
+            &token_to_register.data.op_sender,
+            &token_to_register.token_id,
+            token_to_register.token_nonce,
+        );
+
+        MultiValueEncoded::from_iter([MultiValue3((
+            token_to_register.token_id.clone(),
+            token_to_register.token_nonce,
+            token_data,
+        ))])
     }
 }

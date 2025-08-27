@@ -172,7 +172,7 @@ where
 
     pub fn register_token<
         Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
-        Arg1: ProxyArg<structs::UnregisteredTokenProperties<Env::Api>>,
+        Arg1: ProxyArg<structs::SovTokenProperties<Env::Api>>,
     >(
         self,
         hash_of_hashes: Arg0,
