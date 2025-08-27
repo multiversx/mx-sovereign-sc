@@ -132,7 +132,7 @@ pub trait UtilsModule: super::storage::StorageModule {
     #[inline]
     fn validate_chain_id(&self, chain_id: &ManagedBuffer) {
         let id_length = chain_id.len();
-        require!(id_length >= 1 && id_length == 4, INVALID_CHAIN_ID);
+        require!((1..=4).contains(&id_length), INVALID_CHAIN_ID);
 
         require!(
             self.is_chain_id_lowercase_alphanumeric(chain_id),
