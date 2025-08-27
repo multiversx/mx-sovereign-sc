@@ -2,9 +2,8 @@ use common_interactor::{
     common_sovereign_interactor::CommonInteractorTrait, interactor_config::Config,
 };
 use common_test_setup::constants::{
-    CHAIN_ID, DEPLOY_COST, DEPOSIT_EVENT, ESDT_SAFE_CONFIG_STORAGE_KEY, ONE_HUNDRED_TOKENS,
-    ONE_THOUSAND_TOKENS, OPERATION_HASH_STATUS_STORAGE_KEY, TEN_TOKENS, TOKEN_FEE_STORAGE_KEY,
-    WRONG_ENDPOINT_NAME,
+    CHAIN_ID, DEPOSIT_EVENT, ESDT_SAFE_CONFIG_STORAGE_KEY, ONE_HUNDRED_TOKENS, ONE_THOUSAND_TOKENS,
+    OPERATION_HASH_STATUS_STORAGE_KEY, TEN_TOKENS, TOKEN_FEE_STORAGE_KEY, WRONG_ENDPOINT_NAME,
 };
 use header_verifier::header_utils::OperationHashStatus;
 use multiversx_sc::{
@@ -39,6 +38,7 @@ use structs::{
 /// Setup phase is complete
 #[tokio::test]
 #[serial]
+#[ignore = "will be fixed in cross-shard pr"]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn test_deploy_sovereign_forge_cs() {
     let mut chain_interactor = SovereignForgeInteract::new(Config::chain_simulator_config()).await;

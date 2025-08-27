@@ -4,7 +4,7 @@ pub mod sovereign_forge;
 use common_interactor::{
     common_sovereign_interactor::CommonInteractorTrait, interactor_config::Config,
 };
-use multiversx_sc::{imports::OptionalValue, types::BigUint};
+use multiversx_sc::imports::OptionalValue;
 use multiversx_sc_snippets::env_logger;
 use mvx_esdt_safe::mvx_esdt_safe_interactor_main::MvxEsdtSafeInteract;
 use sovereign_forge::sovereign_forge_interactor_main::SovereignForgeInteract;
@@ -22,8 +22,12 @@ pub async fn mvx_esdt_safe_cli() {
         "pause" => interact.pause_endpoint().await,
         "unpause" => interact.unpause_endpoint().await,
         "isPaused" => interact.paused_status().await,
-        "deployChainConfig" => interact.deploy_chain_config(OptionalValue::None).await,
-        "deployHeaderVerifier" => interact.deploy_header_verifier(vec![]).await,
+        "deployChainConfig" => {
+            interact.deploy_chain_config(OptionalValue::None).await;
+        }
+        "deployHeaderVerifier" => {
+            interact.deploy_header_verifier(vec![]).await;
+        }
         "deployEsdtSafe" => {
             interact.deploy_mvx_esdt_safe(OptionalValue::None).await;
         }
@@ -69,12 +73,19 @@ pub async fn sovereign_forge_cli() {
                         .current_mvx_esdt_safe_contract_address()
                         .clone(),
                     interact.state.current_fee_market_address().clone(),
+                    0,
                 )
                 .await
         }
-        "deployChainConfig" => interact.deploy_chain_config(OptionalValue::None).await,
-        "deployHeaderVerifier" => interact.deploy_header_verifier(vec![]).await,
-        "deployEsdtSafe" => interact.deploy_mvx_esdt_safe(OptionalValue::None).await,
+        "deployChainConfig" => {
+            interact.deploy_chain_config(OptionalValue::None).await;
+        }
+        "deployHeaderVerifier" => {
+            interact.deploy_header_verifier(vec![]).await;
+        }
+        "deployEsdtSafe" => {
+            interact.deploy_mvx_esdt_safe(OptionalValue::None).await;
+        }
         "deployFeeMarket" => {
             interact
                 .deploy_fee_market(
@@ -84,7 +95,7 @@ pub async fn sovereign_forge_cli() {
                         .clone(),
                     None,
                 )
-                .await
+                .await;
         }
         "registerChainFactory" => interact.register_chain_factory(0).await,
         "completeSetup" => interact.complete_setup_phase().await,
