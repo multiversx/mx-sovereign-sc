@@ -2,7 +2,14 @@
 
 use structs::{
     aliases::EventPaymentTuple,
-    fee::{DistributeFeesOperation, RemoveFeeOperation, SetFeeOperation},
+    configs::{
+        UpdateEsdtSafeConfigOperation, UpdateRegistrationStatusOperation,
+        UpdateSovereignConfigOperation,
+    },
+    fee::{
+        AddUsersToWhitelistOperation, DistributeFeesOperation, RemoveFeeOperation,
+        RemoveUsersFromWhitelistOperation, SetFeeOperation,
+    },
     operation::OperationData,
 };
 
@@ -68,4 +75,22 @@ pub trait CustomEventsModule {
 
     #[event("distributeFees")]
     fn distribute_fees_event(&self, operation: DistributeFeesOperation<Self::Api>);
+
+    #[event("updateSovereignConfig")]
+    fn update_sovereign_config_event(&self, operation: UpdateSovereignConfigOperation<Self::Api>);
+
+    #[event("updateRegistrationStatus")]
+    fn update_registration_status_event(&self, operation: UpdateRegistrationStatusOperation);
+
+    #[event("updateEsdtSafeConfig")]
+    fn update_esdt_safe_config_event(&self, operation: UpdateEsdtSafeConfigOperation<Self::Api>);
+
+    #[event("addUsersToFeeWhitelist")]
+    fn add_users_to_fee_whitelist_event(&self, operation: AddUsersToWhitelistOperation<Self::Api>);
+
+    #[event("removeUsersToFeeWhitelist")]
+    fn remove_users_from_fee_whitelist_event(
+        &self,
+        operation: RemoveUsersFromWhitelistOperation<Self::Api>,
+    );
 }

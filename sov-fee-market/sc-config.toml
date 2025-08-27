@@ -13,4 +13,4 @@ add-unlabelled = false
 add-labels = ["sov-fee-market-external-view"]
 
 [[proxy]]
-path = "../common/proxies/src/sov-fee_market_proxy.rs"
+path = "../common/proxies/src/sov_fee_market_proxy.rs"

@@ -20,6 +20,20 @@ pub enum FeeType<M: ManagedTypeApi> {
 }
 
 #[type_abi]
+#[derive(TopEncode, TopDecode, NestedDecode, Clone)]
+pub struct AddUsersToWhitelistOperation<M: ManagedTypeApi> {
+    pub nonce: TxNonce,
+    pub users: ManagedVec<M, ManagedAddress<M>>,
+}
+
+#[type_abi]
+#[derive(TopEncode, TopDecode, NestedDecode, Clone)]
+pub struct RemoveUsersFromWhitelistOperation<M: ManagedTypeApi> {
+    pub nonce: TxNonce,
+    pub users: ManagedVec<M, ManagedAddress<M>>,
+}
+
+#[type_abi]
 #[derive(TopDecode, TopEncode, NestedEncode, NestedDecode, Clone)]
 pub struct RemoveFeeOperation<M: ManagedTypeApi> {
     pub token_id: TokenIdentifier<M>,
