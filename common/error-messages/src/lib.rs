@@ -17,7 +17,7 @@ pub const CANNOT_TRANSFER_WHILE_PAUSED: &str = "Cannot transfer while paused";
 pub const CHAIN_CONFIG_ALREADY_DEPLOYED: &str = "The Chain-Config contract is already deployed";
 pub const CHAIN_CONFIG_NOT_DEPLOYED: &str = "The Chain-Config SC is not deployed";
 pub const CHAIN_ID_ALREADY_IN_USE: &str = "This chain ID is already used";
-pub const CHAIN_ID_NOT_FOUR_CHAR_LONG: &str = "Chain ID length must be four characters";
+pub const INVALID_CHAIN_ID: &str = "Invalid chain ID";
 pub const CHAIN_ID_NOT_LOWERCASE_ALPHANUMERIC: &str = "Chain ID is not lowercase alphanumeric";
 pub const CURRENT_OPERATION_ALREADY_IN_EXECUTION: &str =
     "The current operation is already in execution";
@@ -130,3 +130,5 @@ pub const CALLER_NOT_CHAIN_CONFIG: &str = "Only Chain-Config SC can call this en
 pub const CHAIN_CONFIG_SETUP_PHASE_NOT_COMPLETE: &str =
     "The Chain-Config SC setup phase is not completed";
 pub const DEPOSIT_AMOUNT_NOT_ENOUGH: &str = "Deposit amount is less than the operation amount";
+pub const CHAIN_FACTORY_ADDRESS_NOT_IN_EXPECTED_SHARD: &str =
+    "This Chain-Factory SC is not deployed in the specified shard ID";

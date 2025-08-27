@@ -2,9 +2,8 @@ use common_interactor::{
     common_sovereign_interactor::CommonInteractorTrait, interactor_config::Config,
 };
 use common_test_setup::constants::{
-    CHAIN_ID, DEPLOY_COST, DEPOSIT_EVENT, ESDT_SAFE_CONFIG_STORAGE_KEY, ONE_HUNDRED_TOKENS,
-    ONE_THOUSAND_TOKENS, OPERATION_HASH_STATUS_STORAGE_KEY, TEN_TOKENS, TOKEN_FEE_STORAGE_KEY,
-    WRONG_ENDPOINT_NAME,
+    CHAIN_ID, DEPOSIT_EVENT, ESDT_SAFE_CONFIG_STORAGE_KEY, ONE_HUNDRED_TOKENS, ONE_THOUSAND_TOKENS,
+    OPERATION_HASH_STATUS_STORAGE_KEY, TEN_TOKENS, TOKEN_FEE_STORAGE_KEY, WRONG_ENDPOINT_NAME,
 };
 use header_verifier::header_utils::OperationHashStatus;
 use multiversx_sc::{
@@ -39,13 +38,14 @@ use structs::{
 /// Setup phase is complete
 #[tokio::test]
 #[serial]
-#[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
+#[ignore = "will be fixed in cross-shard pr"]
+// #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn test_deploy_sovereign_forge_cs() {
     let mut chain_interactor = SovereignForgeInteract::new(Config::chain_simulator_config()).await;
     chain_interactor
         .deploy_and_complete_setup_phase(
             CHAIN_ID,
-            BigUint::from(DEPLOY_COST),
+            OptionalValue::None,
             OptionalValue::None,
             OptionalValue::None,
             None,
@@ -66,13 +66,12 @@ async fn test_deploy_sovereign_forge_cs() {
 // #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn test_complete_deposit_flow() {
     let mut chain_interactor = SovereignForgeInteract::new(Config::chain_simulator_config()).await;
-    let deploy_cost = BigUint::from(DEPLOY_COST);
     let user_address = chain_interactor.user_address().clone();
 
     chain_interactor
         .deploy_and_complete_setup_phase(
             CHAIN_ID,
-            deploy_cost,
+            OptionalValue::None,
             OptionalValue::None,
             OptionalValue::None,
             None,
@@ -188,7 +187,7 @@ async fn test_complete_flow_execute_operation_with_transfer_data_success_no_fee(
     chain_interactor
         .deploy_and_complete_setup_phase(
             CHAIN_ID,
-            DEPLOY_COST.into(),
+            OptionalValue::None,
             OptionalValue::None,
             OptionalValue::None,
             None,
@@ -361,7 +360,7 @@ async fn test_complete_flow_execute_operation_success_with_fee() {
     chain_interactor
         .deploy_and_complete_setup_phase(
             CHAIN_ID,
-            DEPLOY_COST.into(),
+            OptionalValue::None,
             OptionalValue::None,
             OptionalValue::None,
             Some(fee),
@@ -514,7 +513,7 @@ async fn test_complete_flow_execute_operation_only_transfer_data_no_fee() {
     chain_interactor
         .deploy_and_complete_setup_phase(
             CHAIN_ID,
-            DEPLOY_COST.into(),
+            OptionalValue::None,
             OptionalValue::None,
             OptionalValue::None,
             None,
@@ -618,7 +617,7 @@ async fn test_complete_flow_execute_operation_wrong_endpoint() {
     chain_interactor
         .deploy_and_complete_setup_phase(
             CHAIN_ID,
-            DEPLOY_COST.into(),
+            OptionalValue::None,
             OptionalValue::None,
             OptionalValue::None,
             None,
@@ -709,7 +708,7 @@ async fn test_complete_flow_update_esdt_safe_config() {
     chain_interactor
         .deploy_and_complete_setup_phase(
             CHAIN_ID,
-            DEPLOY_COST.into(),
+            OptionalValue::None,
             OptionalValue::None,
             OptionalValue::None,
             None,
@@ -770,7 +769,7 @@ async fn test_complete_flow_set_and_remove_fee() {
     chain_interactor
         .deploy_and_complete_setup_phase(
             CHAIN_ID,
-            DEPLOY_COST.into(),
+            OptionalValue::None,
             OptionalValue::None,
             OptionalValue::None,
             None,

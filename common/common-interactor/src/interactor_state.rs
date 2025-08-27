@@ -28,7 +28,7 @@ pub struct State {
     pub testing_sc_address: Option<Bech32Address>,
     pub chain_config_sc_address: Option<Bech32Address>,
     pub sovereign_forge_sc_address: Option<Bech32Address>,
-    pub chain_factory_sc_address: Option<Bech32Address>,
+    pub chain_factory_sc_address: Option<Vec<Bech32Address>>,
     pub first_token: Option<TokenProperties>,
     pub fee_token: Option<TokenProperties>,
     pub second_token: Option<TokenProperties>,
@@ -72,8 +72,10 @@ impl State {
         self.sovereign_forge_sc_address = Some(address);
     }
 
-    pub fn set_chain_factory_sc_address(&mut self, address: Bech32Address) {
-        self.chain_factory_sc_address = Some(address);
+    pub fn set_chain_factory_sc_address_for_shard(&mut self, address: Bech32Address) {
+        self.chain_factory_sc_address
+            .get_or_insert_with(Vec::new)
+            .push(address);
     }
 
     pub fn set_first_token(&mut self, token: TokenProperties) {
@@ -124,6 +126,14 @@ impl State {
     pub fn current_chain_factory_sc_address(&self) -> &Bech32Address {
         self.chain_factory_sc_address
             .as_ref()
+            .and_then(|v| v.first())
+            .expect(NO_KNOWN_CHAIN_FACTORY_SC)
+    }
+
+    pub fn get_chain_factory_address_for_shard(&self, shard: u32) -> &Bech32Address {
+        self.chain_factory_sc_address
+            .as_ref()
+            .and_then(|v| v.get(shard as usize))
             .expect(NO_KNOWN_CHAIN_FACTORY_SC)
     }
 

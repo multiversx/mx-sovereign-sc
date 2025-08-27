@@ -1,9 +1,5 @@
 multiversx_sc::imports!();
-use error_messages::ESDT_SAFE_STILL_PAUSED;
-use structs::{
-    aliases::{EventPaymentTuple, OptionalValueTransferDataTuple},
-    operation::{OperationData, TransferData},
-};
+use structs::aliases::{EventPaymentTuple, OptionalValueTransferDataTuple};
 
 #[multiversx_sc::module]
 pub trait DepositModule:
@@ -23,62 +19,10 @@ pub trait DepositModule:
         to: ManagedAddress,
         opt_transfer_data: OptionalValueTransferDataTuple<Self::Api>,
     ) {
-        require!(self.not_paused(), ESDT_SAFE_STILL_PAUSED);
         self.require_setup_complete();
-
-        let (fees_payment, payments) = self
-            .check_and_extract_fee(opt_transfer_data.is_some())
-            .into_tuple();
-
-        let mut total_tokens_for_fees = 0usize;
-        let mut event_payments = MultiValueEncoded::new();
-        let mut refundable_payments = ManagedVec::<Self::Api, _>::new();
-
-        for payment in &payments {
-            self.require_below_max_amount(&payment.token_identifier, &payment.amount);
-            self.require_token_not_on_blacklist(&payment.token_identifier);
-
-            if !self.is_token_whitelist_empty()
-                && !self.is_token_whitelisted(&payment.token_identifier)
-            {
-                refundable_payments.push(payment.clone());
-                continue;
-            }
-            total_tokens_for_fees += 1;
-
-            let processed_payment = self.process_payment(&payment);
-
-            event_payments.push(processed_payment);
-        }
-
-        let option_transfer_data = TransferData::from_optional_value(opt_transfer_data);
-
-        if let Some(transfer_data) = option_transfer_data.as_ref() {
-            self.require_gas_limit_under_limit(transfer_data.gas_limit);
-            self.require_endpoint_not_banned(&transfer_data.function);
-        }
-
-        self.match_fee_payment(total_tokens_for_fees, &fees_payment, &option_transfer_data);
-
-        let caller = self.blockchain().get_caller();
-        self.refund_tokens(&caller, refundable_payments);
-
-        let tx_nonce = self.get_and_save_next_tx_id();
-
-        if payments.is_empty() {
-            self.sc_call_event(
-                &to,
-                OperationData::new(tx_nonce, caller, option_transfer_data),
-            );
-
-            return;
-        }
-
-        self.deposit_event(
-            &to,
-            &event_payments,
-            OperationData::new(tx_nonce, caller, option_transfer_data),
-        );
+        self.deposit_common(to, opt_transfer_data, |payment| {
+            self.process_payment(payment)
+        });
     }
 
     fn process_payment(
