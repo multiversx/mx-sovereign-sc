@@ -60,10 +60,10 @@ impl MvxEsdtSafeInteract {
 
         let working_dir = INTERACTOR_WORKING_DIR;
         interactor.set_current_dir_from_workspace(working_dir);
-        let bridge_owner = interactor.register_wallet(test_wallets::mike()).await;
+        let bridge_owner = interactor.register_wallet(test_wallets::bob()).await;
         let sovereign_owner = interactor.register_wallet(test_wallets::alice()).await;
         let bridge_service = interactor.register_wallet(test_wallets::carol()).await;
-        let user_address = interactor.register_wallet(test_wallets::bob()).await;
+        let user_address = interactor.register_wallet(test_wallets::mike()).await;
 
         interactor.generate_blocks_until_epoch(2u64).await.unwrap();
 
@@ -192,7 +192,9 @@ impl MvxEsdtSafeInteract {
         fee_struct: Option<FeeStruct<StaticApi>>,
         sc_array: Vec<ScArray>,
     ) {
-        self.deploy_chain_config(sovereign_config).await;
+        let chain_config_address = self.deploy_chain_config(sovereign_config).await;
+        self.state()
+            .set_chain_config_sc_address(chain_config_address);
 
         let genesis_validator = ManagedBuffer::from("genesis_validator");
         let chain_config_address = self.state.current_chain_config_sc_address();
@@ -204,16 +206,23 @@ impl MvxEsdtSafeInteract {
         .await;
         self.complete_chain_config_setup_phase().await;
 
-        self.deploy_mvx_esdt_safe(esdt_safe_config).await;
-        self.deploy_fee_market(
-            self.state.current_mvx_esdt_safe_contract_address().clone(),
-            fee_struct,
-        )
-        .await;
-        self.set_fee_market_address(self.state.current_fee_market_address().to_address())
+        let mvx_esdt_safe_address = self.deploy_mvx_esdt_safe(esdt_safe_config).await;
+        self.state()
+            .set_mvx_esdt_safe_contract_address(mvx_esdt_safe_address);
+        let fee_market_address = self
+            .deploy_fee_market(
+                self.state.current_mvx_esdt_safe_contract_address().clone(),
+                fee_struct,
+            )
+            .await;
+        self.state()
+            .set_fee_market_address(fee_market_address.clone());
+        self.set_fee_market_address(fee_market_address.to_address())
             .await;
         let contracts_array = self.get_contract_info_struct_for_sc_type(sc_array);
-        self.deploy_header_verifier(contracts_array).await;
+        let header_verifier_address = self.deploy_header_verifier(contracts_array).await;
+        self.state()
+            .set_header_verifier_address(header_verifier_address);
         self.complete_header_verifier_setup_phase().await;
         self.complete_setup_phase().await;
         self.change_ownership_to_header_verifier(

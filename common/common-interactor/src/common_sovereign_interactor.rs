@@ -207,7 +207,10 @@ pub trait CommonInteractorTrait {
         println!("new Chain-Factory address: {new_address_bech32}");
     }
 
-    async fn deploy_chain_config(&mut self, opt_config: OptionalValue<SovereignConfig<StaticApi>>) {
+    async fn deploy_chain_config(
+        &mut self,
+        opt_config: OptionalValue<SovereignConfig<StaticApi>>,
+    ) -> Bech32Address {
         let bridge_owner = self.get_bridge_owner_for_shard(0).clone();
 
         let new_address = self
@@ -223,14 +226,13 @@ pub trait CommonInteractorTrait {
             .run()
             .await;
 
-        let new_address_bech32 = Bech32Address::from(&new_address);
-        self.state()
-            .set_chain_config_sc_address(new_address_bech32.clone());
-
-        println!("new Chain-Config address: {new_address_bech32}");
+        Bech32Address::from(&new_address)
     }
 
-    async fn deploy_header_verifier(&mut self, contracts_array: Vec<ContractInfo<StaticApi>>) {
+    async fn deploy_header_verifier(
+        &mut self,
+        contracts_array: Vec<ContractInfo<StaticApi>>,
+    ) -> Bech32Address {
         let bridge_owner = self.get_bridge_owner_for_shard(0).clone();
 
         let new_address = self
@@ -246,14 +248,13 @@ pub trait CommonInteractorTrait {
             .run()
             .await;
 
-        let new_address_bech32 = Bech32Address::from(&new_address);
-        self.state()
-            .set_header_verifier_address(new_address_bech32.clone());
-
-        println!("new Header-Verifier address: {new_address_bech32}");
+        Bech32Address::from(&new_address)
     }
 
-    async fn deploy_mvx_esdt_safe(&mut self, opt_config: OptionalValue<EsdtSafeConfig<StaticApi>>) {
+    async fn deploy_mvx_esdt_safe(
+        &mut self,
+        opt_config: OptionalValue<EsdtSafeConfig<StaticApi>>,
+    ) -> Bech32Address {
         let bridge_owner = self.get_bridge_owner_for_shard(0).clone();
 
         let new_address = self
@@ -269,11 +270,7 @@ pub trait CommonInteractorTrait {
             .run()
             .await;
 
-        let new_address_bech32 = Bech32Address::from(&new_address);
-        self.state()
-            .set_mvx_esdt_safe_contract_address(new_address_bech32.clone());
-
-        println!("new mvx-esdt-safe address: {new_address_bech32}");
+        Bech32Address::from(&new_address)
     }
 
     async fn register_as_validator(
@@ -301,7 +298,7 @@ pub trait CommonInteractorTrait {
         &mut self,
         esdt_safe_address: Bech32Address,
         fee: Option<FeeStruct<StaticApi>>,
-    ) {
+    ) -> Bech32Address {
         let bridge_owner = self.get_bridge_owner_for_shard(0).clone();
 
         let new_address = self
@@ -317,11 +314,7 @@ pub trait CommonInteractorTrait {
             .run()
             .await;
 
-        let new_address_bech32 = Bech32Address::from(&new_address);
-        self.state()
-            .set_fee_market_address(new_address_bech32.clone());
-
-        println!("new Fee-Market address: {new_address_bech32}");
+        Bech32Address::from(&new_address)
     }
 
     async fn deploy_testing_sc(&mut self) {

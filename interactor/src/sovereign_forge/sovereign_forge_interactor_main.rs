@@ -123,18 +123,26 @@ impl SovereignForgeInteract {
         self.state.set_fee_token(fee_token);
     }
 
-    pub async fn deploy_template_contracts(&mut self) {
-        self.deploy_chain_config(OptionalValue::None).await;
+    pub async fn deploy_template_contracts(&mut self) -> Vec<Bech32Address> {
+        let chain_config_template = self.deploy_chain_config(OptionalValue::None).await;
 
-        self.deploy_mvx_esdt_safe(OptionalValue::None).await;
+        let mvx_esdt_safe_template = self.deploy_mvx_esdt_safe(OptionalValue::None).await;
 
-        self.deploy_fee_market(
-            self.state.current_mvx_esdt_safe_contract_address().clone(),
-            None,
-        )
-        .await;
+        let fee_market_template = self
+            .deploy_fee_market(
+                self.state.current_mvx_esdt_safe_contract_address().clone(),
+                None,
+            )
+            .await;
 
-        self.deploy_header_verifier(Vec::new()).await;
+        let header_verifier_template = self.deploy_header_verifier(Vec::new()).await;
+
+        vec![
+            chain_config_template,
+            mvx_esdt_safe_template,
+            fee_market_template,
+            header_verifier_template,
+        ]
     }
 
     pub async fn deploy_and_complete_setup_phase(
@@ -145,14 +153,14 @@ impl SovereignForgeInteract {
         optional_esdt_safe_config: OptionalValue<EsdtSafeConfig<StaticApi>>,
         fee: Option<FeeStruct<StaticApi>>,
     ) {
-        self.deploy_template_contracts().await;
+        let template_addresses = self.deploy_template_contracts().await;
         self.deploy_sovereign_forge(deploy_cost.clone()).await;
 
         let sov_forge_address = self.state.current_sovereign_forge_sc_address().clone();
-        let chain_config_address = self.state.current_chain_config_sc_address().clone();
-        let mvx_esdt_safe_address = self.state.current_mvx_esdt_safe_contract_address().clone();
-        let fee_market_address = self.state.current_fee_market_address().clone();
-        let header_verifier_address = self.state.current_header_verifier_address().clone();
+        let chain_config_address = template_addresses[0].clone();
+        let mvx_esdt_safe_address = template_addresses[1].clone();
+        let fee_market_address = template_addresses[2].clone();
+        let header_verifier_address = template_addresses[3].clone();
 
         for shard_id in 0..3 {
             self.deploy_chain_factory(

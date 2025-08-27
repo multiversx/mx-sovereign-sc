@@ -22,8 +22,12 @@ pub async fn mvx_esdt_safe_cli() {
         "pause" => interact.pause_endpoint().await,
         "unpause" => interact.unpause_endpoint().await,
         "isPaused" => interact.paused_status().await,
-        "deployChainConfig" => interact.deploy_chain_config(OptionalValue::None).await,
-        "deployHeaderVerifier" => interact.deploy_header_verifier(vec![]).await,
+        "deployChainConfig" => {
+            interact.deploy_chain_config(OptionalValue::None).await;
+        }
+        "deployHeaderVerifier" => {
+            interact.deploy_header_verifier(vec![]).await;
+        }
         "deployEsdtSafe" => {
             interact.deploy_mvx_esdt_safe(OptionalValue::None).await;
         }
@@ -73,9 +77,15 @@ pub async fn sovereign_forge_cli() {
                 )
                 .await
         }
-        "deployChainConfig" => interact.deploy_chain_config(OptionalValue::None).await,
-        "deployHeaderVerifier" => interact.deploy_header_verifier(vec![]).await,
-        "deployEsdtSafe" => interact.deploy_mvx_esdt_safe(OptionalValue::None).await,
+        "deployChainConfig" => {
+            interact.deploy_chain_config(OptionalValue::None).await;
+        }
+        "deployHeaderVerifier" => {
+            interact.deploy_header_verifier(vec![]).await;
+        }
+        "deployEsdtSafe" => {
+            interact.deploy_mvx_esdt_safe(OptionalValue::None).await;
+        }
         "deployFeeMarket" => {
             interact
                 .deploy_fee_market(
@@ -85,7 +95,7 @@ pub async fn sovereign_forge_cli() {
                         .clone(),
                     None,
                 )
-                .await
+                .await;
         }
         "registerChainFactory" => interact.register_chain_factory(0).await,
         "completeSetup" => interact.complete_setup_phase().await,
