@@ -49,16 +49,16 @@ impl SovereignForgeTestState {
             .from(OWNER_ADDRESS)
             .to(SOVEREIGN_FORGE_SC_ADDRESS)
             .whitebox(sovereign_forge::contract_obj, |sc| {
+                sc.chain_factories(0)
+                    .set(CHAIN_FACTORY_SC_ADDRESS.to_managed_address());
                 sc.chain_factories(1)
                     .set(CHAIN_FACTORY_SC_ADDRESS.to_managed_address());
                 sc.chain_factories(2)
                     .set(CHAIN_FACTORY_SC_ADDRESS.to_managed_address());
-                sc.chain_factories(3)
-                    .set(CHAIN_FACTORY_SC_ADDRESS.to_managed_address());
 
+                assert!(!sc.chain_factories(0).is_empty());
                 assert!(!sc.chain_factories(1).is_empty());
                 assert!(!sc.chain_factories(2).is_empty());
-                assert!(!sc.chain_factories(3).is_empty());
             });
     }
 
