@@ -1,3 +1,5 @@
+#![no_std]
+
 use structs::aliases::TxNonce;
 
 multiversx_sc::imports!();

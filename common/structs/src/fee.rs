@@ -21,6 +21,13 @@ pub enum FeeType<M: ManagedTypeApi> {
 
 #[type_abi]
 #[derive(TopDecode, TopEncode, NestedEncode, NestedDecode, Clone)]
+pub struct RemoveFeeOperation<M: ManagedTypeApi> {
+    pub token_id: TokenIdentifier<M>,
+    pub nonce: TxNonce,
+}
+
+#[type_abi]
+#[derive(TopDecode, TopEncode, NestedEncode, NestedDecode, Clone)]
 pub struct SetFeeOperation<M: ManagedTypeApi> {
     pub fee_struct: FeeStruct<M>,
     pub nonce: TxNonce,
@@ -44,7 +51,14 @@ pub struct FinalPayment<M: ManagedTypeApi> {
 }
 
 #[type_abi]
-#[derive(TopEncode, TopDecode, ManagedVecItem)]
+#[derive(TopDecode, TopEncode, NestedEncode, NestedDecode, Clone)]
+pub struct DistributeFeesOperation<M: ManagedTypeApi> {
+    pub pairs: ManagedVec<M, AddressPercentagePair<M>>,
+    pub nonce: TxNonce,
+}
+
+#[type_abi]
+#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, Clone, ManagedVecItem)]
 pub struct AddressPercentagePair<M: ManagedTypeApi> {
     pub address: ManagedAddress<M>,
     pub percentage: usize,

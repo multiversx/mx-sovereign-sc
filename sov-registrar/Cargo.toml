@@ -21,6 +21,12 @@ path = "../common/tx-nonce"
 [dependencies.custom-events]
 path = "../common/custom-events"
 
+[dependencies.fee-common]
+path = "../common/fee-common"
+
+[dependencies.utils]
+path = "../common/utils"
+
 [dev-dependencies]
 num-bigint = "0.4"
 

@@ -2311,11 +2311,13 @@ name = "sov-registrar"
 version = "0.0.0"
 dependencies = [
  "custom-events",
+ "fee-common",
  "multiversx-sc",
  "multiversx-sc-scenario",
  "num-bigint",
  "structs",
  "tx-nonce",
+ "utils",
 ]
 
 [[package]]
