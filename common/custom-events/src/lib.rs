@@ -88,7 +88,7 @@ pub trait CustomEventsModule {
     #[event("addUsersToFeeWhitelist")]
     fn add_users_to_fee_whitelist_event(&self, operation: AddUsersToWhitelistOperation<Self::Api>);
 
-    #[event("removeUsersToFeeWhitelist")]
+    #[event("removeUsersFromFeeWhitelist")]
     fn remove_users_from_fee_whitelist_event(
         &self,
         operation: RemoveUsersFromWhitelistOperation<Self::Api>,
