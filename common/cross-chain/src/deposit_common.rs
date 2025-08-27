@@ -185,11 +185,8 @@ pub trait DepositCommonModule:
     }
 
     #[inline]
-    fn require_sov_token_id_not_registered(&self, id: &TokenIdentifier) {
-        require!(
-            self.sovereign_to_multiversx_token_id_mapper(id).is_empty(),
-            TOKEN_ALREADY_REGISTERED
-        );
+    fn is_sov_token_id_registered(&self, id: &TokenIdentifier) -> bool {
+        !self.sovereign_to_multiversx_token_id_mapper(id).is_empty()
     }
 
     #[inline]

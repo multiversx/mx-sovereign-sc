@@ -1,7 +1,7 @@
 use cross_chain::REGISTER_GAS;
 use error_messages::{
-    CANNOT_REGISTER_TOKEN, ERROR_AT_ENCODING, ESDT_SAFE_STILL_PAUSED, INVALID_TYPE,
-    NATIVE_TOKEN_ALREADY_REGISTERED,
+    ERROR_AT_ENCODING, ESDT_SAFE_STILL_PAUSED, NATIVE_TOKEN_ALREADY_REGISTERED,
+    TOKEN_ALREADY_REGISTERED,
 };
 use multiversx_sc::types::EsdtTokenType;
 use structs::{generate_hash::GenerateHash, EsdtInfo, IssueEsdtArgs, UnregisteredTokenProperties};
@@ -34,11 +34,27 @@ pub trait RegisterTokenModule:
                 &token_hash,
                 Some(ESDT_SAFE_STILL_PAUSED.into()),
             );
+
+            return;
         }
 
-        self.require_sov_token_id_not_registered(&token_to_register.token_id);
+        if self.is_sov_token_id_registered(&token_to_register.token_id) {
+            self.complete_operation(
+                &hash_of_hashes,
+                &token_hash,
+                Some(TOKEN_ALREADY_REGISTERED.into()),
+            );
 
-        // if !self.is_token_registered(&token_to_register.token_id, token_to_register) {}
+            // self.deposit_event(
+            //     &token_to_register.data.op_sender,
+            //     &MultiValueEncoded::from(ManagedVec::from_single_item(
+            //         self.call_value().egld().clone(),
+            //     )),
+            //     token_to_register.data,
+            // );
+
+            return;
+        }
 
         if self.has_sov_prefix(&token_to_register.token_id, &self.sov_token_prefix().get()) {}
         let issue_cost = self.call_value().egld().clone_value();
