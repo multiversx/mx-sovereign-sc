@@ -26,7 +26,7 @@ use multiversx_sc_snippets::{
         multiversx_chain_vm::crypto_functions::sha256,
         scenario_model::{Log, TxResponseStatus},
     },
-    Interactor, InteractorRunAsync,
+    test_wallets, Interactor, InteractorRunAsync,
 };
 use proxies::{
     chain_config_proxy::ChainConfigContractProxy, chain_factory_proxy::ChainFactoryContractProxy,
@@ -58,7 +58,6 @@ pub struct MintTokenStruct {
 pub trait CommonInteractorTrait {
     fn interactor(&mut self) -> &mut Interactor;
     fn state(&mut self) -> &mut State;
-    fn bridge_owner(&self) -> &Address;
     fn sovereign_owner(&self) -> &Address;
     fn bridge_service(&self) -> &Address;
     fn user_address(&self) -> &Address;
@@ -149,7 +148,7 @@ pub trait CommonInteractorTrait {
     }
 
     async fn deploy_sovereign_forge(&mut self, deploy_cost: OptionalValue<BigUint<StaticApi>>) {
-        let bridge_owner = self.bridge_owner().clone();
+        let bridge_owner = self.get_bridge_owner_for_shard(0).clone();
 
         let new_address = self
             .interactor()
@@ -178,8 +177,9 @@ pub trait CommonInteractorTrait {
         header_verifier_address: Bech32Address,
         mvx_esdt_safe_address: Bech32Address,
         fee_market_address: Bech32Address,
+        shard: u32,
     ) {
-        let bridge_owner = self.bridge_owner().clone();
+        let bridge_owner = self.get_bridge_owner_for_shard(shard).clone();
 
         let new_address = self
             .interactor()
@@ -202,13 +202,13 @@ pub trait CommonInteractorTrait {
 
         let new_address_bech32 = Bech32Address::from(&new_address);
         self.state()
-            .set_chain_factory_sc_address(new_address_bech32.clone());
+            .set_chain_factory_sc_address_for_shard(new_address_bech32.clone());
 
         println!("new Chain-Factory address: {new_address_bech32}");
     }
 
     async fn deploy_chain_config(&mut self, opt_config: OptionalValue<SovereignConfig<StaticApi>>) {
-        let bridge_owner = self.bridge_owner().clone();
+        let bridge_owner = self.get_bridge_owner_for_shard(0).clone();
 
         let new_address = self
             .interactor()
@@ -231,7 +231,7 @@ pub trait CommonInteractorTrait {
     }
 
     async fn deploy_header_verifier(&mut self, contracts_array: Vec<ContractInfo<StaticApi>>) {
-        let bridge_owner = self.bridge_owner().clone();
+        let bridge_owner = self.get_bridge_owner_for_shard(0).clone();
 
         let new_address = self
             .interactor()
@@ -254,7 +254,7 @@ pub trait CommonInteractorTrait {
     }
 
     async fn deploy_mvx_esdt_safe(&mut self, opt_config: OptionalValue<EsdtSafeConfig<StaticApi>>) {
-        let bridge_owner = self.bridge_owner().clone();
+        let bridge_owner = self.get_bridge_owner_for_shard(0).clone();
 
         let new_address = self
             .interactor()
@@ -282,7 +282,7 @@ pub trait CommonInteractorTrait {
         payment: MultiEgldOrEsdtPayment<StaticApi>,
         chain_config_address: Bech32Address,
     ) {
-        let bridge_owner = self.bridge_owner().clone();
+        let bridge_owner = self.get_bridge_owner_for_shard(0).clone();
 
         self.interactor()
             .tx()
@@ -302,7 +302,7 @@ pub trait CommonInteractorTrait {
         esdt_safe_address: Bech32Address,
         fee: Option<FeeStruct<StaticApi>>,
     ) {
-        let bridge_owner = self.bridge_owner().clone();
+        let bridge_owner = self.get_bridge_owner_for_shard(0).clone();
 
         let new_address = self
             .interactor()
@@ -325,7 +325,7 @@ pub trait CommonInteractorTrait {
     }
 
     async fn deploy_testing_sc(&mut self) {
-        let bridge_owner = self.bridge_owner().clone();
+        let bridge_owner = self.get_bridge_owner_for_shard(0).clone();
 
         let new_address = self
             .interactor()
@@ -614,7 +614,7 @@ pub trait CommonInteractorTrait {
     }
 
     async fn complete_header_verifier_setup_phase(&mut self) {
-        let bridge_owner = self.bridge_owner().clone();
+        let bridge_owner = self.get_bridge_owner_for_shard(0).clone();
         let header_verifier_address = self.state().current_header_verifier_address().clone();
 
         self.interactor()
@@ -630,7 +630,7 @@ pub trait CommonInteractorTrait {
     }
 
     async fn complete_chain_config_setup_phase(&mut self) {
-        let bridge_owner = self.bridge_owner().clone();
+        let bridge_owner = self.get_bridge_owner_for_shard(0).clone();
         let chain_config_address = self.state().current_chain_config_sc_address().clone();
 
         self.interactor()
@@ -963,5 +963,14 @@ pub trait CommonInteractorTrait {
         amount: T,
     ) -> (String, BigUint<StaticApi>) {
         (token_id.into(), amount.into())
+    }
+
+    fn get_bridge_owner_for_shard(&self, shard_id: u32) -> Address {
+        match shard_id {
+            0 => test_wallets::bob().to_address(),
+            1 => test_wallets::alice().to_address(),
+            2 => test_wallets::carol().to_address(),
+            _ => panic!("Invalid shard ID: {shard_id}"),
+        }
     }
 }

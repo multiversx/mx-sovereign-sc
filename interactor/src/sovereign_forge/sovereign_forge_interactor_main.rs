@@ -15,7 +15,6 @@ use structs::forge::ScArray;
 
 pub struct SovereignForgeInteract {
     pub interactor: Interactor,
-    pub bridge_owner: Address,
     pub sovereign_owner: Address,
     pub bridge_service: Address,
     pub user_address: Address,
@@ -24,10 +23,6 @@ pub struct SovereignForgeInteract {
 impl CommonInteractorTrait for SovereignForgeInteract {
     fn interactor(&mut self) -> &mut Interactor {
         &mut self.interactor
-    }
-
-    fn bridge_owner(&self) -> &Address {
-        &self.bridge_owner
     }
 
     fn sovereign_owner(&self) -> &Address {
@@ -60,16 +55,17 @@ impl SovereignForgeInteract {
 
         let current_working_dir = INTERACTOR_WORKING_DIR;
         interactor.set_current_dir_from_workspace(current_working_dir);
-        let bridge_owner = interactor.register_wallet(test_wallets::mike()).await;
-        let sovereign_owner = interactor.register_wallet(test_wallets::alice()).await;
-        let bridge_service = interactor.register_wallet(test_wallets::carol()).await;
-        let user_address = interactor.register_wallet(test_wallets::bob()).await;
+        interactor.register_wallet(test_wallets::bob()).await; //bridge owner shard 0
+        interactor.register_wallet(test_wallets::alice()).await; //bridge owner shard 1
+        interactor.register_wallet(test_wallets::carol()).await; //bridge owner shard 2
+        let sovereign_owner = interactor.register_wallet(test_wallets::dan()).await;
+        let bridge_service = interactor.register_wallet(test_wallets::heidi()).await;
+        let user_address = interactor.register_wallet(test_wallets::mike()).await;
 
         interactor.generate_blocks_until_epoch(1).await.unwrap();
 
         SovereignForgeInteract {
             interactor,
-            bridge_owner,
             sovereign_owner,
             bridge_service,
             user_address,
@@ -158,19 +154,18 @@ impl SovereignForgeInteract {
         let fee_market_address = self.state.current_fee_market_address().clone();
         let header_verifier_address = self.state.current_header_verifier_address().clone();
 
-        self.deploy_chain_factory(
-            sov_forge_address,
-            chain_config_address.clone(),
-            header_verifier_address,
-            mvx_esdt_safe_address,
-            fee_market_address,
-        )
-        .await;
-
-        self.register_chain_factory(0).await;
-        self.register_chain_factory(1).await;
-        self.register_chain_factory(2).await;
-        self.register_chain_factory(3).await;
+        for shard_id in 0..3 {
+            self.deploy_chain_factory(
+                sov_forge_address.clone(),
+                chain_config_address.clone(),
+                header_verifier_address.clone(),
+                mvx_esdt_safe_address.clone(),
+                fee_market_address.clone(),
+                shard_id,
+            )
+            .await;
+            self.register_chain_factory(shard_id).await;
+        }
 
         self.deploy_phase_one(deploy_cost, Some(chain_id.into()), optional_sov_config)
             .await;
@@ -193,11 +188,12 @@ impl SovereignForgeInteract {
     }
 
     pub async fn upgrade(&mut self) {
+        let bridge_owner = &self.get_bridge_owner_for_shard(0).clone();
         let response = self
             .interactor
             .tx()
             .to(self.state.current_sovereign_forge_sc_address())
-            .from(self.bridge_owner.clone())
+            .from(bridge_owner)
             .gas(50_000_000u64)
             .typed(SovereignForgeProxy)
             .upgrade()
@@ -211,14 +207,18 @@ impl SovereignForgeInteract {
     }
 
     pub async fn register_chain_factory(&mut self, shard_id: u32) {
+        let bridge_owner = &self.get_bridge_owner_for_shard(shard_id).clone();
         let response = self
             .interactor
             .tx()
-            .from(&self.bridge_owner.clone())
+            .from(bridge_owner)
             .to(self.state.current_sovereign_forge_sc_address())
             .gas(30_000_000u64)
             .typed(SovereignForgeProxy)
-            .register_chain_factory(shard_id, self.state.current_chain_factory_sc_address())
+            .register_chain_factory(
+                shard_id,
+                self.state.get_chain_factory_address_for_shard(shard_id),
+            )
             .returns(ReturnsResultUnmanaged)
             .run()
             .await;
@@ -240,7 +240,7 @@ impl SovereignForgeInteract {
         for contract in result_value {
             match contract.id {
                 ScArray::ChainConfig => {
-                    self.state.set_chain_factory_sc_address(Bech32Address::from(
+                    self.state.set_chain_config_sc_address(Bech32Address::from(
                         contract.address.to_address(),
                     ));
                 }

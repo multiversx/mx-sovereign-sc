@@ -33,10 +33,6 @@ impl CommonInteractorTrait for MvxEsdtSafeInteract {
         &mut self.state
     }
 
-    fn bridge_owner(&self) -> &Address {
-        &self.bridge_owner
-    }
-
     fn sovereign_owner(&self) -> &Address {
         &self.sovereign_owner
     }

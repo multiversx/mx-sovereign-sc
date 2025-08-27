@@ -40,7 +40,7 @@ use structs::operation::{Operation, OperationData, OperationEsdtPayment, Transfe
 async fn test_issue_tokens() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
 
-    let bridge_owner = chain_interactor.bridge_owner().clone();
+    let bridge_owner = chain_interactor.bridge_owner.clone();
     let user_address = chain_interactor.user_address.clone();
     let first_token_id = chain_interactor.state.get_first_token_id().clone();
 
