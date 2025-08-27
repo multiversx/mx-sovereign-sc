@@ -15,6 +15,12 @@ rev = "b59411841984a2fcbf76498d29bc131f2d433af9"
 [dependencies.structs]
 path = "../common/structs"
 
+[dependencies.tx-nonce]
+path = "../common/tx-nonce"
+
+[dependencies.custom-events]
+path = "../common/custom-events"
+
 [dev-dependencies]
 num-bigint = "0.4"
 
