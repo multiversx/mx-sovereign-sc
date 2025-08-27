@@ -129,7 +129,6 @@ async fn test_update_invalid_config() {
 #[tokio::test]
 #[serial]
 #[ignore = "will be fixed in cross shard pr"]
-#[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn test_register_token_invalid_type_token_no_prefix() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
 
@@ -192,7 +191,6 @@ async fn test_register_token_invalid_type_token_no_prefix() {
 #[tokio::test]
 #[serial]
 #[ignore = "will be fixed in cross shard pr"]
-#[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn test_register_token_invalid_type_token_with_prefix() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
 
@@ -1079,7 +1077,6 @@ async fn test_deposit_refund() {
 #[tokio::test]
 #[serial]
 #[ignore = "will be fixed in cross shard pr"]
-#[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn test_register_native_token() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
 
@@ -1126,7 +1123,6 @@ async fn test_register_native_token() {
 #[tokio::test]
 #[serial]
 #[ignore = "will be fixed in cross shard pr"]
-#[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn test_register_native_token_twice() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
 
@@ -1182,7 +1178,6 @@ async fn test_register_native_token_twice() {
 #[tokio::test]
 #[serial]
 #[ignore = "will be fixed in cross shard pr"]
-#[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn test_register_token_fungible_token() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
 
@@ -1269,7 +1264,6 @@ async fn test_register_token_fungible_token() {
 #[tokio::test]
 #[serial]
 #[ignore = "will be fixed in cross shard pr"]
-#[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn test_register_token_non_fungible_token() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
 
@@ -1356,7 +1350,6 @@ async fn test_register_token_non_fungible_token() {
 #[tokio::test]
 #[serial]
 #[ignore = "will be fixed in cross shard pr"]
-#[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn test_register_token_dynamic_non_fungible_token() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
 
