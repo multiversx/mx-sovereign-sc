@@ -1,7 +1,7 @@
 use error_messages::{
     CALLER_DID_NOT_DEPLOY_ANY_SOV_CHAIN, CHAIN_CONFIG_NOT_DEPLOYED, CHAIN_ID_ALREADY_IN_USE,
-    CHAIN_ID_NOT_FOUR_CHAR_LONG, CHAIN_ID_NOT_LOWERCASE_ALPHANUMERIC, DEPLOY_COST_NOT_ENOUGH,
-    ESDT_SAFE_NOT_DEPLOYED, FEE_MARKET_NOT_DEPLOYED, HEADER_VERIFIER_NOT_DEPLOYED,
+    CHAIN_ID_NOT_LOWERCASE_ALPHANUMERIC, DEPLOY_COST_NOT_ENOUGH, ESDT_SAFE_NOT_DEPLOYED,
+    FEE_MARKET_NOT_DEPLOYED, HEADER_VERIFIER_NOT_DEPLOYED, INVALID_CHAIN_ID,
 };
 use multiversx_sc::require;
 use structs::forge::ScArray;
@@ -15,7 +15,7 @@ const NUMBER_OF_SHARDS: u32 = 3;
 #[multiversx_sc::module]
 pub trait UtilsModule: super::storage::StorageModule {
     fn require_initialization_phase_complete(&self) {
-        for shard_id in 1..=NUMBER_OF_SHARDS {
+        for shard_id in 0..NUMBER_OF_SHARDS {
             require!(
                 !self.chain_factories(shard_id).is_empty(),
                 "There is no Chain-Factory contract assigned for shard {}",
@@ -111,10 +111,14 @@ pub trait UtilsModule: super::storage::StorageModule {
     }
 
     fn require_correct_deploy_cost(&self, call_value: &BigUint) {
-        require!(
-            call_value == &self.deploy_cost().get(),
-            DEPLOY_COST_NOT_ENOUGH
-        );
+        let deploy_cost_mapper = self.deploy_cost();
+
+        if !deploy_cost_mapper.is_empty() {
+            require!(
+                call_value == &deploy_cost_mapper.get(),
+                DEPLOY_COST_NOT_ENOUGH
+            );
+        }
     }
 
     fn get_chain_factory_address(&self) -> ManagedAddress {
@@ -127,7 +131,8 @@ pub trait UtilsModule: super::storage::StorageModule {
 
     #[inline]
     fn validate_chain_id(&self, chain_id: &ManagedBuffer) {
-        require!(chain_id.len() == 4, CHAIN_ID_NOT_FOUR_CHAR_LONG);
+        let id_length = chain_id.len();
+        require!((1..=4).contains(&id_length), INVALID_CHAIN_ID);
 
         require!(
             self.is_chain_id_lowercase_alphanumeric(chain_id),

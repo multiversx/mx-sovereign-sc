@@ -12,6 +12,7 @@ pub trait RegisterTokenModule:
     + cross_chain::deposit_common::DepositCommonModule
     + cross_chain::execute_common::ExecuteCommonModule
     + custom_events::CustomEventsModule
+    + multiversx_sc_modules::pause::PauseModule
 {
     #[payable("EGLD")]
     #[endpoint(registerToken)]
