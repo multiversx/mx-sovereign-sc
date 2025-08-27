@@ -1,8 +1,8 @@
 use common_test_setup::constants::{
-    CROWD_TOKEN_ID, DEPOSIT_EVENT, ESDT_SAFE_ADDRESS, FEE_MARKET_ADDRESS, FEE_TOKEN,
-    FIRST_TEST_TOKEN, HEADER_VERIFIER_ADDRESS, ONE_HUNDRED_MILLION, ONE_HUNDRED_THOUSAND,
-    OWNER_ADDRESS, REGISTER_EVENT, SC_CALL_EVENT, SECOND_TEST_TOKEN, SOV_TOKEN, TESTING_SC_ADDRESS,
-    USER_ADDRESS,
+    CROWD_TOKEN_ID, DEPOSIT_EVENT, ESDT_SAFE_ADDRESS, EXECUTED_BRIDGE_OP_EVENT, FEE_MARKET_ADDRESS,
+    FEE_TOKEN, FIRST_TEST_TOKEN, HEADER_VERIFIER_ADDRESS, ONE_HUNDRED_MILLION,
+    ONE_HUNDRED_THOUSAND, OWNER_ADDRESS, REGISTER_EVENT, SC_CALL_EVENT, SECOND_TEST_TOKEN,
+    SOV_TOKEN, TESTING_SC_ADDRESS, USER_ADDRESS,
 };
 use cross_chain::storage::CrossChainStorage;
 use cross_chain::{DEFAULT_ISSUE_COST, MAX_GAS_PER_TRANSACTION};
@@ -98,14 +98,14 @@ fn test_register_token_invalid_type() {
     let mut state = MvxEsdtSafeTestState::new();
     state.common_setup.deploy_mvx_esdt_safe(OptionalValue::None);
 
-    let sov_token_id = FIRST_TEST_TOKEN;
+    let sov_token_id = "sov-".to_string() + FIRST_TEST_TOKEN.as_str();
     let token_type = EsdtTokenType::Invalid;
     let token_display_name = "TokenOne";
     let num_decimals = 3;
     let token_ticker = FIRST_TEST_TOKEN.as_str();
 
     let register_token_args = SovTokenProperties {
-        token_id: sov_token_id.into(),
+        token_id: TokenIdentifier::from_esdt_bytes(sov_token_id),
         token_type,
         token_nonce: 0u64,
         token_display_name: token_display_name.into(),
@@ -114,7 +114,12 @@ fn test_register_token_invalid_type() {
         data: OperationData::new(0u64, USER_ADDRESS.to_managed_address(), None),
     };
 
-    state.register_token(register_token_args, None, Some(INVALID_TYPE));
+    state.register_token(
+        register_token_args,
+        None,
+        Some(EXECUTED_BRIDGE_OP_EVENT),
+        Some(INVALID_TYPE),
+    );
 
     state
         .common_setup
@@ -150,7 +155,12 @@ fn test_register_token_invalid_type_with_prefix() {
         data: OperationData::new(0u64, USER_ADDRESS.to_managed_address(), None),
     };
 
-    state.register_token(register_token_args, None, Some(INVALID_TYPE));
+    state.register_token(
+        register_token_args,
+        None,
+        Some(EXECUTED_BRIDGE_OP_EVENT),
+        Some(INVALID_TYPE),
+    );
 
     state
         .common_setup
@@ -189,7 +199,12 @@ fn test_register_token_fungible_token() {
         data: OperationData::new(0u64, USER_ADDRESS.to_managed_address(), None),
     };
 
-    state.register_token(register_token_args, None, None);
+    state.register_token(
+        register_token_args,
+        None,
+        Some(EXECUTED_BRIDGE_OP_EVENT),
+        None,
+    );
 
     // TODO: add check for storage after callback fix
 }
@@ -223,7 +238,12 @@ fn test_register_token_nonfungible_token() {
         data: OperationData::new(0u64, USER_ADDRESS.to_managed_address(), None),
     };
 
-    state.register_token(register_token_args, None, Some(INVALID_PREFIX));
+    state.register_token(
+        register_token_args,
+        None,
+        Some(EXECUTED_BRIDGE_OP_EVENT),
+        Some(INVALID_PREFIX),
+    );
 
     state
         .common_setup
@@ -1213,7 +1233,12 @@ fn test_register_token_fungible_token_with_prefix() {
         data: OperationData::new(0u64, USER_ADDRESS.to_managed_address(), None),
     };
 
-    state.register_token(register_token_args, None, None);
+    state.register_token(
+        register_token_args,
+        None,
+        Some(EXECUTED_BRIDGE_OP_EVENT),
+        None,
+    );
 
     // TODO: add check for storage after callback fix
 }
@@ -1247,7 +1272,12 @@ fn test_register_token_fungible_token_no_prefix() {
         data: OperationData::new(0u64, USER_ADDRESS.to_managed_address(), None),
     };
 
-    state.register_token(register_token_args, None, Some(INVALID_PREFIX));
+    state.register_token(
+        register_token_args,
+        None,
+        Some(EXECUTED_BRIDGE_OP_EVENT),
+        Some(INVALID_PREFIX),
+    );
 
     state
         .common_setup
@@ -1286,7 +1316,12 @@ fn test_register_token_non_fungible_token_dynamic() {
         data: OperationData::new(0u64, USER_ADDRESS.to_managed_address(), None),
     };
 
-    state.register_token(register_token_args, None, None);
+    state.register_token(
+        register_token_args,
+        None,
+        Some(EXECUTED_BRIDGE_OP_EVENT),
+        None,
+    );
 }
 
 /// ### TEST
