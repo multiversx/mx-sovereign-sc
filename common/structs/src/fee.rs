@@ -1,6 +1,9 @@
 use multiversx_sc::api::CryptoApi;
 
-use crate::{aliases::GasLimit, generate_hash::GenerateHash};
+use crate::{
+    aliases::{GasLimit, TxNonce},
+    generate_hash::GenerateHash,
+};
 
 multiversx_sc::imports!();
 multiversx_sc::derive_imports!();
@@ -14,6 +17,13 @@ pub enum FeeType<M: ManagedTypeApi> {
         per_transfer: BigUint<M>,
         per_gas: BigUint<M>,
     },
+}
+
+#[type_abi]
+#[derive(TopDecode, TopEncode, NestedEncode, NestedDecode, Clone)]
+pub struct SetFeeOperation<M: ManagedTypeApi> {
+    pub fee_struct: FeeStruct<M>,
+    pub nonce: TxNonce,
 }
 
 #[type_abi]

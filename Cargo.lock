@@ -2307,6 +2307,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "sov-registrar"
+version = "0.0.0"
+dependencies = [
+ "multiversx-sc",
+ "multiversx-sc-scenario",
+ "num-bigint",
+ "structs",
+]
+
+[[package]]
+name = "sov-registrar-meta"
+version = "0.0.0"
+dependencies = [
+ "multiversx-sc-meta-lib",
+ "sov-registrar",
+]
+
+[[package]]
 name = "sovereign-forge"
 version = "0.0.0"
 dependencies = [

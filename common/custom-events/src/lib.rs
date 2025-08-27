@@ -1,6 +1,6 @@
 #![no_std]
 
-use structs::{aliases::EventPaymentTuple, operation::OperationData};
+use structs::{aliases::EventPaymentTuple, fee::SetFeeOperation, operation::OperationData};
 
 multiversx_sc::imports!();
 multiversx_sc::derive_imports!();
@@ -55,4 +55,7 @@ pub trait CustomEventsModule {
 
     #[event("registrationStatusUpdate")]
     fn registration_status_update_event(&self, registration_status: &ManagedBuffer);
+
+    #[event("setFee")]
+    fn set_fee_event(&self, fee_struct: SetFeeOperation<Self::Api>);
 }
