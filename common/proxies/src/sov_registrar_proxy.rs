@@ -81,7 +81,7 @@ where
     To: TxTo<Env>,
     Gas: TxGas<Env>,
 {
-    pub fn register_set_fee<
+    pub fn set_fee<
         Arg0: ProxyArg<structs::fee::FeeStruct<Env::Api>>,
     >(
         self,
@@ -89,12 +89,12 @@ where
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
-            .raw_call("registerSetFee")
+            .raw_call("setFee")
             .argument(&fee_struct)
             .original_result()
     }
 
-    pub fn register_remove_fee<
+    pub fn remove_fee<
         Arg0: ProxyArg<TokenIdentifier<Env::Api>>,
     >(
         self,
@@ -102,25 +102,25 @@ where
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
-            .raw_call("registerRemoveFee")
+            .raw_call("removeFee")
             .argument(&token_id)
             .original_result()
     }
 
-    pub fn register_distribute_fees<
-        Arg0: ProxyArg<MultiValueEncoded<Env::Api, MultiValue2<ManagedAddress<Env::Api>, usize>>>,
+    pub fn distribute_fees<
+        Arg0: ProxyArg<ManagedVec<Env::Api, structs::fee::AddressPercentagePair<Env::Api>>>,
     >(
         self,
         address_percentage_pairs: Arg0,
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
-            .raw_call("registerDistributeFees")
+            .raw_call("distributeFees")
             .argument(&address_percentage_pairs)
             .original_result()
     }
 
-    pub fn register_add_users_to_fee_whitelist<
+    pub fn add_users_to_fee_whitelist<
         Arg0: ProxyArg<ManagedVec<Env::Api, ManagedAddress<Env::Api>>>,
     >(
         self,
@@ -128,12 +128,12 @@ where
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
-            .raw_call("registerAddUsersToFeeWhitelist")
+            .raw_call("addUsersToFeeWhitelist")
             .argument(&users)
             .original_result()
     }
 
-    pub fn register_remove_users_from_fee_whitelist<
+    pub fn remove_users_from_fee_whitelist<
         Arg0: ProxyArg<ManagedVec<Env::Api, ManagedAddress<Env::Api>>>,
     >(
         self,
@@ -141,12 +141,12 @@ where
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
-            .raw_call("registerRemoveUsersFromFeeWhitelist")
+            .raw_call("removeUsersFromFeeWhitelist")
             .argument(&users)
             .original_result()
     }
 
-    pub fn register_update_sovereign_config<
+    pub fn update_sovereign_config<
         Arg0: ProxyArg<structs::configs::SovereignConfig<Env::Api>>,
     >(
         self,
@@ -154,12 +154,12 @@ where
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
-            .raw_call("registerUpdateSovereignConfig")
+            .raw_call("updateSovereignConfig")
             .argument(&sovereign_config)
             .original_result()
     }
 
-    pub fn register_update_registration_status<
+    pub fn update_registration_status<
         Arg0: ProxyArg<u8>,
     >(
         self,
@@ -167,12 +167,12 @@ where
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
-            .raw_call("registerUpdateRegistrationStatus")
+            .raw_call("updateRegistrationStatus")
             .argument(&registration_status)
             .original_result()
     }
 
-    pub fn register_update_esdt_safe_config<
+    pub fn update_esdt_safe_config<
         Arg0: ProxyArg<structs::configs::EsdtSafeConfig<Env::Api>>,
     >(
         self,
@@ -180,7 +180,7 @@ where
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
-            .raw_call("registerUpdateEsdtSafeConfig")
+            .raw_call("updateEsdtSafeConfig")
             .argument(&esdt_safe_config)
             .original_result()
     }
