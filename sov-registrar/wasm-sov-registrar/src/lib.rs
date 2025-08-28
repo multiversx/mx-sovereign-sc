@@ -20,14 +20,14 @@ multiversx_sc_wasm_adapter::endpoints! {
     (
         init => init
         upgrade => upgrade
-        registerSetFee => register_set_fee
-        registerRemoveFee => register_remove_fee
-        registerDistributeFees => register_distribute_fees
-        registerAddUsersToFeeWhitelist => register_add_users_to_fee_whitelist
-        registerRemoveUsersFromFeeWhitelist => register_remove_users_from_fee_whitelist
-        registerUpdateSovereignConfig => register_update_sovereign_config
-        registerUpdateRegistrationStatus => register_update_registration_status
-        registerUpdateEsdtSafeConfig => register_update_esdt_safe_config
+        setFee => set_fee
+        removeFee => remove_fee
+        distributeFees => distribute_fees
+        addUsersToFeeWhitelist => add_users_to_fee_whitelist
+        removeUsersFromFeeWhitelist => remove_users_from_fee_whitelist
+        updateSovereignConfig => update_sovereign_config
+        updateRegistrationStatus => update_registration_status
+        updateEsdtSafeConfig => update_esdt_safe_config
         getTokenFee => token_fee
         getUsersWhitelist => users_whitelist
     )
