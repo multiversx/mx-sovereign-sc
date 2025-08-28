@@ -10,6 +10,9 @@ pub mod deposit;
 pub mod execute;
 pub mod register_token;
 
+const MIN_PREFIX_LENGTH: usize = 1;
+const MAX_PREFIX_LENGTH: usize = 4;
+
 #[multiversx_sc::contract]
 pub trait MvxEsdtSafe:
     deposit::DepositModule
@@ -32,7 +35,10 @@ pub trait MvxEsdtSafe:
         opt_config: OptionalValue<EsdtSafeConfig<Self::Api>>,
     ) {
         let prefix_len = sov_token_prefix.len();
-        require!(prefix_len > 1 && prefix_len <= 4, INVALID_PREFIX);
+        require!(
+            prefix_len > MIN_PREFIX_LENGTH && prefix_len <= MAX_PREFIX_LENGTH,
+            INVALID_PREFIX
+        );
 
         self.sov_token_prefix().set(sov_token_prefix);
 

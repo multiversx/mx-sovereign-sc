@@ -99,7 +99,7 @@ fn test_register_token_invalid_type() {
     state.common_setup.deploy_mvx_esdt_safe(OptionalValue::None);
     state.common_setup.complete_mvx_esdt_safe_setup_phase();
 
-    let sov_token_id = "sov-".to_string() + FIRST_TEST_TOKEN.as_str();
+    let sov_token_id = format!("sov-{}", FIRST_TEST_TOKEN.as_str());
     let token_type = EsdtTokenType::Invalid;
     let token_display_name = "TokenOne";
     let num_decimals = 3;

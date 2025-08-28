@@ -32,6 +32,7 @@ pub trait RegisterTokenModule:
         let token_hash = token_to_register.generate_hash();
         if token_hash.is_empty() {
             self.complete_operation(&hash_of_hashes, &token_hash, Some(ERROR_AT_ENCODING.into()));
+            return;
         };
 
         if self.is_paused() {
