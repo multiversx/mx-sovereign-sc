@@ -39,15 +39,6 @@ pub struct EsdtInfo<M: ManagedTypeApi> {
     pub token_nonce: u64,
 }
 
-pub struct IssueEsdtArgs<M: ManagedTypeApi> {
-    pub sov_token_id: TokenIdentifier<M>,
-    pub token_type: EsdtTokenType,
-    pub issue_cost: BigUint<M>,
-    pub token_display_name: ManagedBuffer<M>,
-    pub token_ticker: ManagedBuffer<M>,
-    pub num_decimals: usize,
-}
-
 #[type_abi]
 #[derive(TopEncode, TopDecode, NestedEncode)]
 pub struct ValidatorInfo<M: ManagedTypeApi> {
@@ -59,8 +50,9 @@ pub struct ValidatorInfo<M: ManagedTypeApi> {
 
 #[type_abi]
 #[derive(TopEncode, TopDecode, NestedEncode)]
-pub struct UnregisteredTokenProperties<M: ManagedTypeApi> {
+pub struct SovTokenProperties<M: ManagedTypeApi> {
     pub token_id: TokenIdentifier<M>,
+    pub token_nonce: u64,
     pub token_type: EsdtTokenType,
     pub token_display_name: ManagedBuffer<M>,
     pub token_ticker: ManagedBuffer<M>,
@@ -68,4 +60,4 @@ pub struct UnregisteredTokenProperties<M: ManagedTypeApi> {
     pub data: OperationData<M>,
 }
 
-impl<A: CryptoApi> GenerateHash<A> for UnregisteredTokenProperties<A> {}
+impl<A: CryptoApi> GenerateHash<A> for SovTokenProperties<A> {}

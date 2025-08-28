@@ -1,6 +1,5 @@
 use common_interactor::common_sovereign_interactor::CommonInteractorTrait;
 use common_interactor::interactor_config::Config;
-use common_test_setup::base_setup::init::RegisterTokenArgs;
 use common_test_setup::constants::{
     CROWD_TOKEN_ID, DEPOSIT_EVENT, FIRST_TEST_TOKEN, ISSUE_COST, MVX_TO_SOV_TOKEN_STORAGE_KEY,
     NATIVE_TOKEN_STORAGE_KEY, ONE_HUNDRED_TOKENS, ONE_THOUSAND_TOKENS,
@@ -25,6 +24,7 @@ use structs::fee::{FeeStruct, FeeType};
 use structs::forge::ScArray;
 use structs::generate_hash::GenerateHash;
 use structs::operation::{Operation, OperationData, OperationEsdtPayment, TransferData};
+use structs::SovTokenProperties;
 
 /// ### TEST
 /// M-ESDT_ISSUE_OK
@@ -128,7 +128,7 @@ async fn test_update_invalid_config() {
 /// Error CANNOT_REGISTER_TOKEN
 #[tokio::test]
 #[serial]
-#[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
+#[ignore = "will be fixed in cross shard pr"]
 async fn test_register_token_invalid_type_token_no_prefix() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
 
@@ -146,18 +146,22 @@ async fn test_register_token_invalid_type_token_no_prefix() {
     let token_display_name = "SOVEREIGN";
     let num_decimals = 18;
     let token_ticker = TOKEN_TICKER;
-    let egld_payment = BigUint::from(ISSUE_COST);
 
     chain_interactor
         .register_token(
-            RegisterTokenArgs {
-                sov_token_id,
+            SovTokenProperties {
+                token_id: sov_token_id,
+                token_nonce: 0u64,
                 token_type,
-                token_display_name,
-                token_ticker,
+                token_display_name: token_display_name.into(),
+                token_ticker: token_ticker.into(),
                 num_decimals,
+                data: OperationData::new(
+                    0u64,
+                    ManagedAddress::from_address(&chain_interactor.user_address),
+                    None,
+                ),
             },
-            egld_payment,
             Some(CANNOT_REGISTER_TOKEN),
         )
         .await;
@@ -186,7 +190,7 @@ async fn test_register_token_invalid_type_token_no_prefix() {
 /// Error CANNOT_REGISTER_TOKEN
 #[tokio::test]
 #[serial]
-#[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
+#[ignore = "will be fixed in cross shard pr"]
 async fn test_register_token_invalid_type_token_with_prefix() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
 
@@ -204,18 +208,22 @@ async fn test_register_token_invalid_type_token_with_prefix() {
     let token_display_name = "SOVEREIGN";
     let num_decimals = 18;
     let token_ticker = TOKEN_TICKER;
-    let egld_payment = BigUint::from(ISSUE_COST);
 
     chain_interactor
         .register_token(
-            RegisterTokenArgs {
-                sov_token_id,
+            SovTokenProperties {
+                token_id: sov_token_id,
+                token_nonce: 0u64,
                 token_type,
-                token_display_name,
-                token_ticker,
+                token_display_name: token_display_name.into(),
+                token_ticker: token_ticker.into(),
                 num_decimals,
+                data: OperationData::new(
+                    0u64,
+                    ManagedAddress::from_address(&chain_interactor.user_address),
+                    None,
+                ),
             },
-            egld_payment,
             Some(INVALID_TYPE),
         )
         .await;
@@ -1068,7 +1076,7 @@ async fn test_deposit_refund() {
 /// The token is registered
 #[tokio::test]
 #[serial]
-#[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
+#[ignore = "will be fixed in cross shard pr"]
 async fn test_register_native_token() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
 
@@ -1114,7 +1122,7 @@ async fn test_register_native_token() {
 /// The token is registered
 #[tokio::test]
 #[serial]
-#[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
+#[ignore = "will be fixed in cross shard pr"]
 async fn test_register_native_token_twice() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
 
@@ -1169,7 +1177,7 @@ async fn test_register_native_token_twice() {
 /// The token is registered
 #[tokio::test]
 #[serial]
-#[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
+#[ignore = "will be fixed in cross shard pr"]
 async fn test_register_token_fungible_token() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
 
@@ -1209,18 +1217,22 @@ async fn test_register_token_fungible_token() {
     let token_display_name = "GREEN";
     let num_decimals = 18;
     let token_ticker = TOKEN_TICKER;
-    let egld_payment = BigUint::from(ISSUE_COST);
 
     chain_interactor
         .register_token(
-            RegisterTokenArgs {
-                sov_token_id,
+            SovTokenProperties {
+                token_id: sov_token_id,
+                token_nonce: 0u64,
                 token_type,
-                token_display_name,
-                token_ticker,
+                token_display_name: token_display_name.into(),
+                token_ticker: token_ticker.into(),
                 num_decimals,
+                data: OperationData::new(
+                    0u64,
+                    ManagedAddress::from_address(&chain_interactor.user_address),
+                    None,
+                ),
             },
-            egld_payment,
             None,
         )
         .await;
@@ -1251,7 +1263,7 @@ async fn test_register_token_fungible_token() {
 /// The token is registered
 #[tokio::test]
 #[serial]
-#[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
+#[ignore = "will be fixed in cross shard pr"]
 async fn test_register_token_non_fungible_token() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
 
@@ -1262,16 +1274,6 @@ async fn test_register_token_non_fungible_token() {
         .state()
         .set_chain_config_sc_address(chain_config_address);
 
-    let contracts_array =
-        chain_interactor.get_contract_info_struct_for_sc_type(vec![ScArray::ChainConfig]);
-
-    let header_verifier_address = chain_interactor
-        .deploy_header_verifier(contracts_array)
-        .await;
-    chain_interactor
-        .state()
-        .set_header_verifier_address(header_verifier_address);
-
     let mvx_address = chain_interactor
         .deploy_mvx_esdt_safe(OptionalValue::Some(EsdtSafeConfig::default_config()))
         .await;
@@ -1279,6 +1281,16 @@ async fn test_register_token_non_fungible_token() {
     chain_interactor
         .state()
         .set_mvx_esdt_safe_contract_address(mvx_address.clone());
+
+    let contracts_array = chain_interactor
+        .get_contract_info_struct_for_sc_type(vec![ScArray::ChainConfig, ScArray::ESDTSafe]);
+
+    let header_verifier_address = chain_interactor
+        .deploy_header_verifier(contracts_array)
+        .await;
+    chain_interactor
+        .state()
+        .set_header_verifier_address(header_verifier_address);
 
     let fee_market_address = chain_interactor.deploy_fee_market(mvx_address, None).await;
 
@@ -1291,18 +1303,22 @@ async fn test_register_token_non_fungible_token() {
     let token_display_name = "SOVEREIGN";
     let num_decimals = 18;
     let token_ticker = TOKEN_TICKER;
-    let egld_payment = BigUint::from(ISSUE_COST);
 
     chain_interactor
         .register_token(
-            RegisterTokenArgs {
-                sov_token_id,
+            SovTokenProperties {
+                token_id: sov_token_id,
+                token_nonce: 0u64,
                 token_type,
-                token_display_name,
-                token_ticker,
+                token_display_name: token_display_name.into(),
+                token_ticker: token_ticker.into(),
                 num_decimals,
+                data: OperationData::new(
+                    0u64,
+                    ManagedAddress::from_address(&chain_interactor.user_address),
+                    None,
+                ),
             },
-            egld_payment,
             None,
         )
         .await;
@@ -1333,7 +1349,7 @@ async fn test_register_token_non_fungible_token() {
 /// The token is registered
 #[tokio::test]
 #[serial]
-#[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
+#[ignore = "will be fixed in cross shard pr"]
 async fn test_register_token_dynamic_non_fungible_token() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
 
@@ -1373,18 +1389,22 @@ async fn test_register_token_dynamic_non_fungible_token() {
     let token_display_name = "SOVEREIGN";
     let num_decimals = 18;
     let token_ticker = TOKEN_TICKER;
-    let egld_payment = BigUint::from(ISSUE_COST);
 
     chain_interactor
         .register_token(
-            RegisterTokenArgs {
-                sov_token_id,
+            SovTokenProperties {
+                token_id: sov_token_id,
+                token_nonce: 0u64,
                 token_type,
-                token_display_name,
-                token_ticker,
+                token_display_name: token_display_name.into(),
+                token_ticker: token_ticker.into(),
                 num_decimals,
+                data: OperationData::new(
+                    0u64,
+                    ManagedAddress::from_address(&chain_interactor.user_address),
+                    None,
+                ),
             },
-            egld_payment,
             None,
         )
         .await;

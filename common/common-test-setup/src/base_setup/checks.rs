@@ -189,30 +189,38 @@ impl BaseSetup {
                 assert!(!expected_str.is_empty(), "{}", EMPTY_EXPECTED_LOG);
                 let expected_bytes = ManagedBuffer::<StaticApi>::from(expected_str).to_vec();
 
-                let found_log = logs
+                let matching_logs: Vec<&Log> = logs
                     .iter()
-                    .find(|log| log.topics.iter().any(|topic| *topic == expected_bytes));
+                    .filter(|log| {
+                        log.topics.iter().any(|topic| {
+                            topic
+                                .windows(expected_bytes.len())
+                                .any(|window| window == expected_bytes)
+                        })
+                    })
+                    .collect();
 
                 assert!(
-                    found_log.is_some(),
+                    !matching_logs.is_empty(),
                     "Expected log '{}' not found",
                     expected_str
                 );
 
                 if let Some(expected_error) = expected_log_error {
-                    let found_log = found_log.unwrap();
                     let expected_error_bytes =
                         ManagedBuffer::<StaticApi>::from(expected_error).to_vec();
 
-                    let found_error_in_data = found_log.data.iter().any(|data_item| {
-                        let v = data_item.to_vec();
-                        v.windows(expected_error_bytes.len())
-                            .any(|w| w == expected_error_bytes)
+                    let found_error_in_data = matching_logs.iter().any(|log| {
+                        log.data.iter().any(|data_item| {
+                            let v = data_item.to_vec();
+                            v.windows(expected_error_bytes.len())
+                                .any(|w| w == expected_error_bytes)
+                        })
                     });
 
                     assert!(
                         found_error_in_data,
-                        "Expected error '{}' not found in data field of log with topic '{}'",
+                        "Expected error '{}' not found in data field of any log with topic '{}'",
                         expected_error, expected_str
                     );
                 }

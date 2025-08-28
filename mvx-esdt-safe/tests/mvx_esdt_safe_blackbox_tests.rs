@@ -1,18 +1,17 @@
-use common_test_setup::base_setup::init::RegisterTokenArgs;
 use common_test_setup::constants::{
-    CROWD_TOKEN_ID, DEPOSIT_EVENT, ESDT_SAFE_ADDRESS, FEE_MARKET_ADDRESS, FEE_TOKEN,
-    FIRST_TEST_TOKEN, HEADER_VERIFIER_ADDRESS, ONE_HUNDRED_MILLION, ONE_HUNDRED_THOUSAND,
-    OWNER_ADDRESS, REGISTER_EVENT, SC_CALL_EVENT, SECOND_TEST_TOKEN, SOV_TOKEN, TESTING_SC_ADDRESS,
-    USER_ADDRESS,
+    CROWD_TOKEN_ID, DEPOSIT_EVENT, ESDT_SAFE_ADDRESS, EXECUTED_BRIDGE_OP_EVENT, FEE_MARKET_ADDRESS,
+    FEE_TOKEN, FIRST_TEST_TOKEN, HEADER_VERIFIER_ADDRESS, ONE_HUNDRED_MILLION,
+    ONE_HUNDRED_THOUSAND, OWNER_ADDRESS, REGISTER_EVENT, SC_CALL_EVENT, SECOND_TEST_TOKEN,
+    SOV_TOKEN, TESTING_SC_ADDRESS, USER_ADDRESS,
 };
 use cross_chain::storage::CrossChainStorage;
 use cross_chain::{DEFAULT_ISSUE_COST, MAX_GAS_PER_TRANSACTION};
 use error_messages::{
-    BANNED_ENDPOINT_NAME, CALLER_NOT_FROM_CURRENT_SOVEREIGN, CANNOT_REGISTER_TOKEN,
-    CURRENT_OPERATION_NOT_REGISTERED, DEPOSIT_OVER_MAX_AMOUNT, ERR_EMPTY_PAYMENTS,
-    GAS_LIMIT_TOO_HIGH, INVALID_TYPE, MAX_GAS_LIMIT_PER_TX_EXCEEDED, MINT_AND_BURN_ROLES_NOT_FOUND,
-    NOTHING_TO_TRANSFER, PAYMENT_DOES_NOT_COVER_FEE, SETUP_PHASE_ALREADY_COMPLETED,
-    SETUP_PHASE_NOT_COMPLETED, TOKEN_ID_IS_NOT_TRUSTED, TOKEN_IS_FROM_SOVEREIGN, TOO_MANY_TOKENS,
+    BANNED_ENDPOINT_NAME, CALLER_NOT_FROM_CURRENT_SOVEREIGN, CURRENT_OPERATION_NOT_REGISTERED,
+    DEPOSIT_OVER_MAX_AMOUNT, ERR_EMPTY_PAYMENTS, GAS_LIMIT_TOO_HIGH, INVALID_PREFIX, INVALID_TYPE,
+    MAX_GAS_LIMIT_PER_TX_EXCEEDED, MINT_AND_BURN_ROLES_NOT_FOUND, NOTHING_TO_TRANSFER,
+    PAYMENT_DOES_NOT_COVER_FEE, SETUP_PHASE_ALREADY_COMPLETED, SETUP_PHASE_NOT_COMPLETED,
+    TOKEN_ID_IS_NOT_TRUSTED, TOKEN_IS_FROM_SOVEREIGN, TOO_MANY_TOKENS,
 };
 use header_verifier::header_utils::OperationHashStatus;
 use header_verifier::storage::HeaderVerifierStorageModule;
@@ -34,6 +33,7 @@ use structs::fee::{FeeStruct, FeeType};
 use structs::forge::ScArray;
 use structs::generate_hash::GenerateHash;
 use structs::operation::TransferData;
+use structs::SovTokenProperties;
 use structs::{
     aliases::PaymentsVec,
     configs::EsdtSafeConfig,
@@ -97,26 +97,29 @@ fn test_update_invalid_config() {
 fn test_register_token_invalid_type() {
     let mut state = MvxEsdtSafeTestState::new();
     state.common_setup.deploy_mvx_esdt_safe(OptionalValue::None);
+    state.common_setup.complete_mvx_esdt_safe_setup_phase();
 
-    let sov_token_id = FIRST_TEST_TOKEN;
+    let sov_token_id = "sov-".to_string() + FIRST_TEST_TOKEN.as_str();
     let token_type = EsdtTokenType::Invalid;
     let token_display_name = "TokenOne";
     let num_decimals = 3;
     let token_ticker = FIRST_TEST_TOKEN.as_str();
-    let egld_payment = BigUint::from(DEFAULT_ISSUE_COST);
 
-    let register_token_args = RegisterTokenArgs {
-        sov_token_id: sov_token_id.into(),
+    let register_token_args = SovTokenProperties {
+        token_id: TokenIdentifier::from_esdt_bytes(sov_token_id),
         token_type,
-        token_display_name,
-        token_ticker,
+        token_nonce: 0u64,
+        token_display_name: token_display_name.into(),
+        token_ticker: token_ticker.into(),
         num_decimals,
+        data: OperationData::new(0u64, USER_ADDRESS.to_managed_address(), None),
     };
 
     state.register_token(
         register_token_args,
-        egld_payment,
-        Some(CANNOT_REGISTER_TOKEN),
+        None,
+        Some(EXECUTED_BRIDGE_OP_EVENT),
+        Some(INVALID_TYPE),
     );
 
     state
@@ -136,61 +139,29 @@ fn test_register_token_invalid_type() {
 fn test_register_token_invalid_type_with_prefix() {
     let mut state = MvxEsdtSafeTestState::new();
     state.common_setup.deploy_mvx_esdt_safe(OptionalValue::None);
+    state.common_setup.complete_mvx_esdt_safe_setup_phase();
 
     let sov_token_id = SOV_TOKEN;
     let token_type = EsdtTokenType::Invalid;
     let token_display_name = "TokenOne";
     let num_decimals = 3;
     let token_ticker = FIRST_TEST_TOKEN.as_str();
-    let egld_payment = BigUint::from(DEFAULT_ISSUE_COST);
 
-    let register_token_args = RegisterTokenArgs {
-        sov_token_id: sov_token_id.into(),
+    let register_token_args = SovTokenProperties {
+        token_id: sov_token_id.into(),
         token_type,
-        token_display_name,
-        token_ticker,
+        token_nonce: 0u64,
+        token_display_name: token_display_name.into(),
+        token_ticker: token_ticker.into(),
         num_decimals,
-    };
-
-    state.register_token(register_token_args, egld_payment, Some(INVALID_TYPE));
-
-    state
-        .common_setup
-        .check_multiversx_to_sovereign_token_id_mapper_is_empty(SECOND_TEST_TOKEN.as_str());
-}
-
-/// ### TEST
-/// M-ESDT_REG_FAIL
-///
-/// ### ACTION
-/// Call 'register_token()' with token id not starting with prefix
-///
-/// ### EXPECTED
-/// Error CANNOT_REGISTER_TOKEN
-#[test]
-fn test_register_token_not_native() {
-    let mut state = MvxEsdtSafeTestState::new();
-    state.common_setup.deploy_mvx_esdt_safe(OptionalValue::None);
-
-    let sov_token_id = SECOND_TEST_TOKEN;
-    let token_type = EsdtTokenType::Fungible;
-    let token_display_name = "TokenOne";
-    let num_decimals = 3;
-    let token_ticker = FIRST_TEST_TOKEN.as_str();
-    let egld_payment = BigUint::from(DEFAULT_ISSUE_COST);
-
-    let register_token_args = RegisterTokenArgs {
-        sov_token_id: sov_token_id.into(),
-        token_type,
-        token_display_name,
-        token_ticker,
-        num_decimals,
+        data: OperationData::new(0u64, USER_ADDRESS.to_managed_address(), None),
     };
 
     state.register_token(
         register_token_args,
-        egld_payment,
-        Some(CANNOT_REGISTER_TOKEN),
+        None,
+        Some(EXECUTED_BRIDGE_OP_EVENT),
+        Some(INVALID_TYPE),
     );
 
     state
@@ -219,17 +190,23 @@ fn test_register_token_fungible_token() {
     let token_display_name = "TokenOne";
     let token_ticker = FIRST_TEST_TOKEN.as_str();
     let num_decimals = 3;
-    let egld_payment = BigUint::from(DEFAULT_ISSUE_COST);
 
-    let register_token_args = RegisterTokenArgs {
-        sov_token_id: sov_token_id.into(),
+    let register_token_args = SovTokenProperties {
+        token_id: sov_token_id.into(),
         token_type,
-        token_display_name,
-        token_ticker,
+        token_nonce: 0u64,
+        token_display_name: token_display_name.into(),
+        token_ticker: token_ticker.into(),
         num_decimals,
+        data: OperationData::new(0u64, USER_ADDRESS.to_managed_address(), None),
     };
 
-    state.register_token(register_token_args, egld_payment, None);
+    state.register_token(
+        register_token_args,
+        None,
+        Some(EXECUTED_BRIDGE_OP_EVENT),
+        None,
+    );
 
     // TODO: add check for storage after callback fix
 }
@@ -246,26 +223,29 @@ fn test_register_token_fungible_token() {
 fn test_register_token_nonfungible_token() {
     let mut state = MvxEsdtSafeTestState::new();
     state.common_setup.deploy_mvx_esdt_safe(OptionalValue::None);
+    state.common_setup.complete_mvx_esdt_safe_setup_phase();
 
     let sov_token_id = FIRST_TEST_TOKEN;
     let token_type = EsdtTokenType::NonFungible;
     let token_display_name = "TokenOne";
     let num_decimals = 0;
     let token_ticker = FIRST_TEST_TOKEN.as_str();
-    let egld_payment = BigUint::from(DEFAULT_ISSUE_COST);
 
-    let register_token_args = RegisterTokenArgs {
-        sov_token_id: sov_token_id.into(),
+    let register_token_args = SovTokenProperties {
+        token_id: sov_token_id.into(),
         token_type,
-        token_display_name,
-        token_ticker,
+        token_nonce: 1u64,
+        token_display_name: token_display_name.into(),
+        token_ticker: token_ticker.into(),
         num_decimals,
+        data: OperationData::new(0u64, USER_ADDRESS.to_managed_address(), None),
     };
 
     state.register_token(
         register_token_args,
-        egld_payment,
-        Some(CANNOT_REGISTER_TOKEN),
+        None,
+        Some(EXECUTED_BRIDGE_OP_EVENT),
+        Some(INVALID_PREFIX),
     );
 
     state
@@ -1245,17 +1225,23 @@ fn test_register_token_fungible_token_with_prefix() {
     let token_display_name = "TokenOne";
     let token_ticker = FIRST_TEST_TOKEN.as_str();
     let num_decimals = 3;
-    let egld_payment = BigUint::from(DEFAULT_ISSUE_COST);
 
-    let register_token_args = RegisterTokenArgs {
-        sov_token_id: sov_token_id.into(),
+    let register_token_args = SovTokenProperties {
+        token_id: sov_token_id.into(),
         token_type,
-        token_display_name,
-        token_ticker,
+        token_nonce: 0u64,
+        token_display_name: token_display_name.into(),
+        token_ticker: token_ticker.into(),
         num_decimals,
+        data: OperationData::new(0u64, USER_ADDRESS.to_managed_address(), None),
     };
 
-    state.register_token(register_token_args, egld_payment, None);
+    state.register_token(
+        register_token_args,
+        None,
+        Some(EXECUTED_BRIDGE_OP_EVENT),
+        None,
+    );
 
     // TODO: add check for storage after callback fix
 }
@@ -1272,26 +1258,29 @@ fn test_register_token_fungible_token_with_prefix() {
 fn test_register_token_fungible_token_no_prefix() {
     let mut state = MvxEsdtSafeTestState::new();
     state.common_setup.deploy_mvx_esdt_safe(OptionalValue::None);
+    state.common_setup.complete_mvx_esdt_safe_setup_phase();
 
     let sov_token_id = FIRST_TEST_TOKEN;
     let token_type = EsdtTokenType::Fungible;
     let token_display_name = "TokenOne";
     let token_ticker = FIRST_TEST_TOKEN.as_str();
     let num_decimals = 3;
-    let egld_payment = BigUint::from(DEFAULT_ISSUE_COST);
 
-    let register_token_args = RegisterTokenArgs {
-        sov_token_id: sov_token_id.into(),
+    let register_token_args = SovTokenProperties {
+        token_id: sov_token_id.into(),
         token_type,
-        token_display_name,
-        token_ticker,
+        token_nonce: 0u64,
+        token_display_name: token_display_name.into(),
+        token_ticker: token_ticker.into(),
         num_decimals,
+        data: OperationData::new(0u64, USER_ADDRESS.to_managed_address(), None),
     };
 
     state.register_token(
         register_token_args,
-        egld_payment,
-        Some(CANNOT_REGISTER_TOKEN),
+        None,
+        Some(EXECUTED_BRIDGE_OP_EVENT),
+        Some(INVALID_PREFIX),
     );
 
     state
@@ -1320,17 +1309,23 @@ fn test_register_token_non_fungible_token_dynamic() {
     let token_display_name = "TokenOne";
     let token_ticker = FIRST_TEST_TOKEN.as_str();
     let num_decimals = 3;
-    let egld_payment = BigUint::from(DEFAULT_ISSUE_COST);
 
-    let register_token_args = RegisterTokenArgs {
-        sov_token_id: sov_token_id.into(),
+    let register_token_args = SovTokenProperties {
+        token_id: sov_token_id.into(),
         token_type,
-        token_display_name,
-        token_ticker,
+        token_nonce: 1u64,
+        token_display_name: token_display_name.into(),
+        token_ticker: token_ticker.into(),
         num_decimals,
+        data: OperationData::new(0u64, USER_ADDRESS.to_managed_address(), None),
     };
 
-    state.register_token(register_token_args, egld_payment, None);
+    state.register_token(
+        register_token_args,
+        None,
+        Some(EXECUTED_BRIDGE_OP_EVENT),
+        None,
+    );
 }
 
 /// ### TEST

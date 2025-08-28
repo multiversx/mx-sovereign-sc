@@ -1,14 +1,18 @@
-use multiversx_sc_scenario::{imports::ReturnsHandledOrError, ScenarioTxRun};
+use multiversx_sc_scenario::{
+    imports::{ReturnsHandledOrError, ReturnsResultUnmanaged},
+    ScenarioTxRun,
+};
 use proxies::{
     chain_config_proxy::ChainConfigContractProxy, fee_market_proxy::FeeMarketProxy,
-    header_verifier_proxy::HeaderverifierProxy, sovereign_forge_proxy::SovereignForgeProxy,
+    header_verifier_proxy::HeaderverifierProxy, mvx_esdt_safe_proxy::MvxEsdtSafeProxy,
+    sovereign_forge_proxy::SovereignForgeProxy,
 };
 
 use crate::{
     base_setup::init::BaseSetup,
     constants::{
-        CHAIN_CONFIG_ADDRESS, FEE_MARKET_ADDRESS, HEADER_VERIFIER_ADDRESS, OWNER_ADDRESS,
-        SOVEREIGN_FORGE_SC_ADDRESS,
+        CHAIN_CONFIG_ADDRESS, ESDT_SAFE_ADDRESS, FEE_MARKET_ADDRESS, HEADER_VERIFIER_ADDRESS,
+        OWNER_ADDRESS, SOVEREIGN_FORGE_SC_ADDRESS,
     },
 };
 
@@ -69,5 +73,16 @@ impl BaseSetup {
             .run();
 
         self.assert_expected_error_message(transaction, expect_error);
+    }
+
+    pub fn complete_mvx_esdt_safe_setup_phase(&mut self) {
+        self.world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .to(ESDT_SAFE_ADDRESS)
+            .typed(MvxEsdtSafeProxy)
+            .complete_setup_phase()
+            .returns(ReturnsResultUnmanaged)
+            .run();
     }
 }
