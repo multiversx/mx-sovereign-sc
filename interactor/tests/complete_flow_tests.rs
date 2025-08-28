@@ -4,10 +4,9 @@ use common_interactor::interactor_helpers::InteractorHelpers;
 use common_interactor::interactor_state::EsdtTokenInfo;
 use common_interactor::interactor_structs::ActionConfig;
 use common_test_setup::constants::{
-    DEPLOY_COST, DEPOSIT_LOG, ONE_HUNDRED_TOKENS, SC_CALL_LOG, SHARD_1, SHARD_2,
-    TESTING_SC_ENDPOINT, WRONG_ENDPOINT_NAME,
+    DEPOSIT_LOG, ONE_HUNDRED_TOKENS, SC_CALL_LOG, SHARD_1, SHARD_2, TESTING_SC_ENDPOINT,
+    WRONG_ENDPOINT_NAME,
 };
-use multiversx_sc::imports::OptionalValue;
 use multiversx_sc::types::BigUint;
 use multiversx_sc::types::EsdtTokenType;
 use multiversx_sc_snippets::imports::{tokio, StaticApi};
@@ -35,17 +34,9 @@ async fn test_complete_deposit_flow_no_fee_only_transfer_data(
     #[values(0)] test_id: u64,
 ) {
     let mut chain_interactor =
-        CompleteFlowInteract::new(Config::chain_simulator_config(test_id)).await;
+        CompleteFlowInteract::new(Config::chain_simulator_config(Some(test_id))).await;
 
-    chain_interactor
-        .deploy_and_complete_setup_phase(
-            DEPLOY_COST.into(),
-            OptionalValue::None,
-            OptionalValue::None,
-            None,
-            shard,
-        )
-        .await;
+    chain_interactor.remove_fee(shard).await;
 
     chain_interactor
         .deposit_wrapper(
@@ -78,19 +69,11 @@ async fn test_complete_deposit_flow_with_fee_only_transfer_data(
     #[values(1)] test_id: u64,
 ) {
     let mut chain_interactor =
-        CompleteFlowInteract::new(Config::chain_simulator_config(test_id)).await;
+        CompleteFlowInteract::new(Config::chain_simulator_config(Some(test_id))).await;
 
     let fee = chain_interactor.create_standard_fee();
 
-    chain_interactor
-        .deploy_and_complete_setup_phase(
-            DEPLOY_COST.into(),
-            OptionalValue::None,
-            OptionalValue::None,
-            Some(fee.clone()),
-            shard,
-        )
-        .await;
+    chain_interactor.set_fee(fee.clone(), shard).await;
 
     chain_interactor
         .deposit_wrapper(
@@ -124,17 +107,9 @@ async fn test_complete_execute_flow_with_transfer_data_only_success(
     #[values(2)] test_id: u64,
 ) {
     let mut chain_interactor =
-        CompleteFlowInteract::new(Config::chain_simulator_config(test_id)).await;
+        CompleteFlowInteract::new(Config::chain_simulator_config(Some(test_id))).await;
 
-    chain_interactor
-        .deploy_and_complete_setup_phase(
-            DEPLOY_COST.into(),
-            OptionalValue::None,
-            OptionalValue::None,
-            None,
-            shard,
-        )
-        .await;
+    chain_interactor.remove_fee(shard).await;
 
     chain_interactor
         .execute_wrapper(
@@ -167,17 +142,9 @@ async fn test_complete_execute_flow_with_transfer_data_only_fail(
     #[values(3)] test_id: u64,
 ) {
     let mut chain_interactor =
-        CompleteFlowInteract::new(Config::chain_simulator_config(test_id)).await;
+        CompleteFlowInteract::new(Config::chain_simulator_config(Some(test_id))).await;
 
-    chain_interactor
-        .deploy_and_complete_setup_phase(
-            DEPLOY_COST.into(),
-            OptionalValue::None,
-            OptionalValue::None,
-            None,
-            shard,
-        )
-        .await;
+    chain_interactor.remove_fee(shard).await;
 
     //NOTE: For now, there is a failed log only for top_encode error, which is hard to achieve. If the sc returns an error, the logs are no longer retrieved by the framework
     chain_interactor
@@ -216,21 +183,13 @@ async fn test_deposit_with_fee(
     #[values(4)] test_id: u64,
 ) {
     let mut chain_interactor =
-        CompleteFlowInteract::new(Config::chain_simulator_config(test_id)).await;
+        CompleteFlowInteract::new(Config::chain_simulator_config(Some(test_id))).await;
 
     let token = chain_interactor.get_token_by_type(token_type);
 
     let fee = chain_interactor.create_standard_fee();
 
-    chain_interactor
-        .deploy_and_complete_setup_phase(
-            DEPLOY_COST.into(),
-            OptionalValue::None,
-            OptionalValue::None,
-            Some(fee.clone()),
-            shard,
-        )
-        .await;
+    chain_interactor.set_fee(fee.clone(), shard).await;
 
     chain_interactor
         .deposit_wrapper(
@@ -268,19 +227,11 @@ async fn test_deposit_without_fee_and_execute(
     #[values(5)] test_id: u64,
 ) {
     let mut chain_interactor =
-        CompleteFlowInteract::new(Config::chain_simulator_config(test_id)).await;
+        CompleteFlowInteract::new(Config::chain_simulator_config(Some(test_id))).await;
 
     let token = chain_interactor.get_token_by_type(token_type);
 
-    chain_interactor
-        .deploy_and_complete_setup_phase(
-            DEPLOY_COST.into(),
-            OptionalValue::None,
-            OptionalValue::None,
-            None,
-            shard,
-        )
-        .await;
+    chain_interactor.remove_fee(shard).await;
 
     chain_interactor
         .deposit_wrapper(
@@ -328,17 +279,9 @@ async fn test_register_execute_and_deposit_sov_token(
     #[values(6)] test_id: u64,
 ) {
     let mut chain_interactor =
-        CompleteFlowInteract::new(Config::chain_simulator_config(test_id)).await;
+        CompleteFlowInteract::new(Config::chain_simulator_config(Some(test_id))).await;
 
-    chain_interactor
-        .deploy_and_complete_setup_phase(
-            DEPLOY_COST.into(),
-            OptionalValue::None,
-            OptionalValue::None,
-            None,
-            shard,
-        )
-        .await;
+    chain_interactor.remove_fee(shard).await;
 
     let (nonce, decimals) = chain_interactor.generate_nonce_and_decimals(token_type);
     let token_id = chain_interactor.create_random_sovereign_token_id();
@@ -392,17 +335,9 @@ async fn test_deposit_mvx_token_with_transfer_data(
     #[values(7)] test_id: u64,
 ) {
     let mut chain_interactor =
-        CompleteFlowInteract::new(Config::chain_simulator_config(test_id)).await;
+        CompleteFlowInteract::new(Config::chain_simulator_config(Some(test_id))).await;
 
-    chain_interactor
-        .deploy_and_complete_setup_phase(
-            DEPLOY_COST.into(),
-            OptionalValue::None,
-            OptionalValue::None,
-            None,
-            shard,
-        )
-        .await;
+    chain_interactor.remove_fee(shard).await;
 
     let token = chain_interactor.get_token_by_type(token_type);
 
@@ -443,19 +378,11 @@ async fn test_deposit_mvx_token_with_transfer_data_and_fee(
     #[values(8)] test_id: u64,
 ) {
     let mut chain_interactor =
-        CompleteFlowInteract::new(Config::chain_simulator_config(test_id)).await;
+        CompleteFlowInteract::new(Config::chain_simulator_config(Some(test_id))).await;
 
     let fee = chain_interactor.create_standard_fee();
 
-    chain_interactor
-        .deploy_and_complete_setup_phase(
-            DEPLOY_COST.into(),
-            OptionalValue::None,
-            OptionalValue::None,
-            Some(fee.clone()),
-            shard,
-        )
-        .await;
+    chain_interactor.set_fee(fee.clone(), shard).await;
 
     let token = chain_interactor.get_token_by_type(token_type);
 
@@ -496,19 +423,11 @@ async fn test_deposit_and_execute_with_transfer_data(
     #[values(9)] test_id: u64,
 ) {
     let mut chain_interactor =
-        CompleteFlowInteract::new(Config::chain_simulator_config(test_id)).await;
+        CompleteFlowInteract::new(Config::chain_simulator_config(Some(test_id))).await;
 
     let token = chain_interactor.get_token_by_type(token_type);
 
-    chain_interactor
-        .deploy_and_complete_setup_phase(
-            DEPLOY_COST.into(),
-            OptionalValue::None,
-            OptionalValue::None,
-            None,
-            shard,
-        )
-        .await;
+    chain_interactor.remove_fee(shard).await;
 
     chain_interactor
         .deposit_wrapper(
@@ -557,17 +476,9 @@ async fn test_register_execute_with_transfer_data_and_deposit_sov_token(
     #[values(10)] test_id: u64,
 ) {
     let mut chain_interactor =
-        CompleteFlowInteract::new(Config::chain_simulator_config(test_id)).await;
+        CompleteFlowInteract::new(Config::chain_simulator_config(Some(test_id))).await;
 
-    chain_interactor
-        .deploy_and_complete_setup_phase(
-            DEPLOY_COST.into(),
-            OptionalValue::None,
-            OptionalValue::None,
-            None,
-            shard,
-        )
-        .await;
+    chain_interactor.remove_fee(shard).await;
 
     let (nonce, decimals) = chain_interactor.generate_nonce_and_decimals(token_type);
     let token_id = chain_interactor.create_random_sovereign_token_id();
@@ -638,17 +549,9 @@ async fn test_register_execute_call_failed(
     #[values(11)] test_id: u64,
 ) {
     let mut chain_interactor =
-        CompleteFlowInteract::new(Config::chain_simulator_config(test_id)).await;
+        CompleteFlowInteract::new(Config::chain_simulator_config(Some(test_id))).await;
 
-    chain_interactor
-        .deploy_and_complete_setup_phase(
-            DEPLOY_COST.into(),
-            OptionalValue::None,
-            OptionalValue::None,
-            None,
-            shard,
-        )
-        .await;
+    chain_interactor.remove_fee(shard).await;
 
     let (nonce, decimals) = chain_interactor.generate_nonce_and_decimals(token_type);
     let token_id = chain_interactor.create_random_sovereign_token_id();

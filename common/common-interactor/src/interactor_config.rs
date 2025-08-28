@@ -30,11 +30,11 @@ impl Config {
         toml::from_str(&content).unwrap()
     }
 
-    pub fn chain_simulator_config(test_id: u64) -> Self {
+    pub fn chain_simulator_config(test_id: Option<u64>) -> Self {
         Config {
             gateway_uri: "http://localhost:8085".to_owned(),
             chain_type: ChainType::Simulator,
-            test_id,
+            test_id: test_id.unwrap_or(0),
         }
     }
 

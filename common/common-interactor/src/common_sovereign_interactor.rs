@@ -472,26 +472,21 @@ pub trait CommonInteractorTrait: InteractorHelpers {
         deploy_cost: BigUint<StaticApi>,
         optional_sov_config: OptionalValue<SovereignConfig<StaticApi>>,
         optional_esdt_safe_config: OptionalValue<EsdtSafeConfig<StaticApi>>,
-        fee: Option<FeeStruct<StaticApi>>,
-        shard: u32,
     ) {
-        if self.common_state().sovereign_forge_sc_address.is_none() {
-            let fee_struct = self.create_standard_fee();
-            self.deploy_and_setup_common(
-                deploy_cost.clone(),
-                optional_sov_config,
-                optional_esdt_safe_config,
-                Some(fee_struct),
-                None,
-            )
-            .await;
-            let fee_token_id = self.state().get_fee_token_id();
-            let fee_token_fee_market = self.create_fee_market_token_state(fee_token_id, 0u64).await;
-            self.common_state()
-                .set_fee_market_token_for_all_shards(fee_token_fee_market);
-            self.common_state().set_fee_status_for_all_shards(true);
-        }
-        self.set_or_delete_fee(fee, shard).await;
+        let fee_struct = self.create_standard_fee();
+        self.deploy_and_setup_common(
+            deploy_cost.clone(),
+            optional_sov_config,
+            optional_esdt_safe_config,
+            Some(fee_struct),
+            None,
+        )
+        .await;
+        let fee_token_id = self.state().get_fee_token_id();
+        let fee_token_fee_market = self.create_fee_market_token_state(fee_token_id, 0u64).await;
+        self.common_state()
+            .set_fee_market_token_for_all_shards(fee_token_fee_market);
+        self.common_state().set_fee_status_for_all_shards(true);
     }
 
     async fn deploy_and_complete_setup_phase_on_a_shard(
@@ -1265,31 +1260,29 @@ pub trait CommonInteractorTrait: InteractorHelpers {
         }
     }
 
-    async fn set_or_delete_fee(&mut self, fee: Option<FeeStruct<StaticApi>>, shard: u32) {
+    async fn set_fee(&mut self, fee_struct: FeeStruct<StaticApi>, shard: u32) {
         let fee_activated = self.common_state().get_fee_status_for_shard(shard);
-
-        if let Some(fee_struct) = fee {
-            if fee_activated {
-                return;
-            }
-            let fee_hash = fee_struct.generate_hash();
-            let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&fee_hash.to_vec()));
-            let operations_hashes =
-                MultiValueEncoded::from(ManagedVec::from(vec![fee_hash.clone()]));
-            self.register_operation(
-                shard,
-                ManagedBuffer::new(),
-                &hash_of_hashes,
-                operations_hashes,
-            )
-            .await;
-
-            self.set_fee_after_setup_phase(hash_of_hashes, fee_struct, shard)
-                .await;
-            self.common_state().set_fee_status_for_shard(shard, true);
+        if fee_activated {
             return;
         }
+        let fee_hash = fee_struct.generate_hash();
+        let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&fee_hash.to_vec()));
+        let operations_hashes = MultiValueEncoded::from(ManagedVec::from(vec![fee_hash.clone()]));
+        self.register_operation(
+            shard,
+            ManagedBuffer::new(),
+            &hash_of_hashes,
+            operations_hashes,
+        )
+        .await;
 
+        self.set_fee_after_setup_phase(hash_of_hashes, fee_struct, shard)
+            .await;
+        self.common_state().set_fee_status_for_shard(shard, true);
+    }
+
+    async fn remove_fee(&mut self, shard: u32) {
+        let fee_activated = self.common_state().get_fee_status_for_shard(shard);
         if !fee_activated {
             return;
         }
