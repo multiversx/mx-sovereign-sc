@@ -1,15 +1,9 @@
 #![no_std]
 
 use structs::{
-    aliases::EventPaymentTuple,
-    configs::{
-        UpdateEsdtSafeConfigOperation, UpdateRegistrationStatusOperation,
-        UpdateSovereignConfigOperation,
-    },
-    fee::{
-        AddUsersToWhitelistOperation, DistributeFeesOperation, RemoveFeeOperation,
-        RemoveUsersFromWhitelistOperation, SetFeeOperation,
-    },
+    aliases::{EventPaymentTuple, TxId},
+    configs::{EsdtSafeConfig, SovereignConfig},
+    fee::{AddressPercentagePair, FeeStruct},
     operation::OperationData,
 };
 
@@ -68,29 +62,46 @@ pub trait CustomEventsModule {
     fn registration_status_update_event(&self, registration_status: &ManagedBuffer);
 
     #[event("setFee")]
-    fn set_fee_event(&self, operation: SetFeeOperation<Self::Api>);
+    fn set_fee_event(&self, #[indexed] fee_struct: FeeStruct<Self::Api>, op_nonce: TxId);
 
     #[event("removeFee")]
-    fn remove_fee_event(&self, operation: RemoveFeeOperation<Self::Api>);
+    fn remove_fee_event(&self, #[indexed] token_id: TokenIdentifier<Self::Api>, op_nonce: TxId);
 
     #[event("distributeFees")]
-    fn distribute_fees_event(&self, operation: DistributeFeesOperation<Self::Api>);
+    fn distribute_fees_event(
+        &self,
+        #[indexed] operation: ManagedVec<AddressPercentagePair<Self::Api>>,
+        op_nonce: TxId,
+    );
 
     #[event("updateSovereignConfig")]
-    fn update_sovereign_config_event(&self, operation: UpdateSovereignConfigOperation<Self::Api>);
+    fn update_sovereign_config_event(
+        &self,
+        #[indexed] sovereign_config: SovereignConfig<Self::Api>,
+        op_nonce: TxId,
+    );
 
     #[event("updateRegistrationStatus")]
-    fn update_registration_status_event(&self, operation: UpdateRegistrationStatusOperation);
+    fn update_registration_status_event(&self, #[indexed] registration_status: u8, op_nonce: TxId);
 
     #[event("updateEsdtSafeConfig")]
-    fn update_esdt_safe_config_event(&self, operation: UpdateEsdtSafeConfigOperation<Self::Api>);
+    fn update_esdt_safe_config_event(
+        &self,
+        #[indexed] esdt_safe_config: EsdtSafeConfig<Self::Api>,
+        op_nonce: TxId,
+    );
 
     #[event("addUsersToFeeWhitelist")]
-    fn add_users_to_fee_whitelist_event(&self, operation: AddUsersToWhitelistOperation<Self::Api>);
+    fn add_users_to_fee_whitelist_event(
+        &self,
+        #[indexed] users: ManagedVec<ManagedAddress<Self::Api>>,
+        op_nonce: TxId,
+    );
 
     #[event("removeUsersFromFeeWhitelist")]
     fn remove_users_from_fee_whitelist_event(
         &self,
-        operation: RemoveUsersFromWhitelistOperation<Self::Api>,
+        #[indexed] users: ManagedVec<ManagedAddress<Self::Api>>,
+        op_nonce: TxId,
     );
 }
