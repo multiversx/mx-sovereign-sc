@@ -97,6 +97,7 @@ fn test_update_invalid_config() {
 fn test_register_token_invalid_type() {
     let mut state = MvxEsdtSafeTestState::new();
     state.common_setup.deploy_mvx_esdt_safe(OptionalValue::None);
+    state.common_setup.complete_mvx_esdt_safe_setup_phase();
 
     let sov_token_id = "sov-".to_string() + FIRST_TEST_TOKEN.as_str();
     let token_type = EsdtTokenType::Invalid;
@@ -138,6 +139,7 @@ fn test_register_token_invalid_type() {
 fn test_register_token_invalid_type_with_prefix() {
     let mut state = MvxEsdtSafeTestState::new();
     state.common_setup.deploy_mvx_esdt_safe(OptionalValue::None);
+    state.common_setup.complete_mvx_esdt_safe_setup_phase();
 
     let sov_token_id = SOV_TOKEN;
     let token_type = EsdtTokenType::Invalid;
@@ -221,6 +223,7 @@ fn test_register_token_fungible_token() {
 fn test_register_token_nonfungible_token() {
     let mut state = MvxEsdtSafeTestState::new();
     state.common_setup.deploy_mvx_esdt_safe(OptionalValue::None);
+    state.common_setup.complete_mvx_esdt_safe_setup_phase();
 
     let sov_token_id = FIRST_TEST_TOKEN;
     let token_type = EsdtTokenType::NonFungible;
@@ -1255,6 +1258,7 @@ fn test_register_token_fungible_token_with_prefix() {
 fn test_register_token_fungible_token_no_prefix() {
     let mut state = MvxEsdtSafeTestState::new();
     state.common_setup.deploy_mvx_esdt_safe(OptionalValue::None);
+    state.common_setup.complete_mvx_esdt_safe_setup_phase();
 
     let sov_token_id = FIRST_TEST_TOKEN;
     let token_type = EsdtTokenType::Fungible;
