@@ -1,7 +1,7 @@
 use cross_chain::REGISTER_GAS;
 use error_messages::{
     ERROR_AT_ENCODING, ESDT_SAFE_STILL_PAUSED, INVALID_PREFIX, INVALID_TYPE,
-    NATIVE_TOKEN_ALREADY_REGISTERED, TOKEN_ALREADY_REGISTERED,
+    NATIVE_TOKEN_ALREADY_REGISTERED, SETUP_PHASE_NOT_COMPLETED, TOKEN_ALREADY_REGISTERED,
 };
 use multiversx_sc::types::EsdtTokenType;
 use structs::{
@@ -44,7 +44,14 @@ pub trait RegisterTokenModule:
             return;
         }
 
-        self.require_setup_complete_with_event(&hash_of_hashes, &token_hash);
+        if !self.is_setup_phase_complete() {
+            self.complete_operation(
+                &hash_of_hashes,
+                &token_hash,
+                Some(SETUP_PHASE_NOT_COMPLETED.into()),
+            );
+            return;
+        }
 
         self.lock_operation_hash_wrapper(&hash_of_hashes, &token_hash);
 
