@@ -99,17 +99,17 @@ where
 
     pub fn distribute_fees<
         Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
-        Arg1: ProxyArg<MultiValueEncoded<Env::Api, MultiValue2<ManagedAddress<Env::Api>, usize>>>,
+        Arg1: ProxyArg<structs::fee::DistributeFeesOperation<Env::Api>>,
     >(
         self,
         hash_of_hashes: Arg0,
-        address_percentage_pairs: Arg1,
+        operation: Arg1,
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("distributeFees")
             .argument(&hash_of_hashes)
-            .argument(&address_percentage_pairs)
+            .argument(&operation)
             .original_result()
     }
 
@@ -226,17 +226,17 @@ where
 
     pub fn add_users_to_whitelist<
         Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
-        Arg1: ProxyArg<MultiValueEncoded<Env::Api, ManagedAddress<Env::Api>>>,
+        Arg1: ProxyArg<structs::fee::AddUsersToWhitelistOperation<Env::Api>>,
     >(
         self,
         hash_of_hashes: Arg0,
-        users: Arg1,
+        operation: Arg1,
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("addUsersToWhitelist")
             .argument(&hash_of_hashes)
-            .argument(&users)
+            .argument(&operation)
             .original_result()
     }
 
@@ -255,17 +255,17 @@ where
 
     pub fn remove_users_from_whitelist<
         Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
-        Arg1: ProxyArg<MultiValueEncoded<Env::Api, ManagedAddress<Env::Api>>>,
+        Arg1: ProxyArg<structs::fee::RemoveUsersFromWhitelistOperation<Env::Api>>,
     >(
         self,
         hash_of_hashes: Arg0,
-        users: Arg1,
+        operation: Arg1,
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("removeUsersFromWhitelist")
             .argument(&hash_of_hashes)
-            .argument(&users)
+            .argument(&operation)
             .original_result()
     }
 }

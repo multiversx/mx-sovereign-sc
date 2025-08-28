@@ -10,14 +10,17 @@ use error_messages::{
 use fee_common::storage::FeeCommonStorageModule;
 use fee_market_blackbox_setup::*;
 use multiversx_sc::{
-    imports::{MultiValue2, OptionalValue},
-    types::{BigUint, ManagedBuffer, MultiEgldOrEsdtPayment, MultiValueEncoded},
+    imports::OptionalValue,
+    types::{BigUint, ManagedBuffer, ManagedVec, MultiEgldOrEsdtPayment, MultiValueEncoded},
 };
 use multiversx_sc_scenario::{
     api::StaticApi, multiversx_chain_vm::crypto_functions::sha256, ScenarioTxWhitebox,
 };
 use structs::{
-    fee::{AddressPercentagePair, FeeStruct, FeeType},
+    fee::{
+        AddUsersToWhitelistOperation, AddressPercentagePair, DistributeFeesOperation, FeeStruct,
+        FeeType,
+    },
     forge::ScArray,
     generate_hash::GenerateHash,
 };
@@ -210,8 +213,13 @@ fn test_remove_users_from_whitelist() {
         OWNER_ADDRESS.to_managed_address(),
     ];
 
-    let users_hash = state.compute_users_hash(new_users.clone());
-    let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&users_hash.to_vec()));
+    let operation = AddUsersToWhitelistOperation {
+        nonce: 1,
+        users: ManagedVec::from_iter(new_users.clone()),
+    };
+
+    let operation_hash = operation.generate_hash();
+    let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&operation_hash.to_vec()));
 
     let signature = ManagedBuffer::new();
     let bitmap = ManagedBuffer::new_from_bytes(&[1]);
@@ -223,15 +231,15 @@ fn test_remove_users_from_whitelist() {
         &hash_of_hashes,
         bitmap,
         epoch,
-        MultiValueEncoded::from_iter(vec![users_hash]),
+        MultiValueEncoded::from_iter(vec![operation_hash]),
     );
-    state.add_users_to_whitelist(&hash_of_hashes, new_users.clone());
+    state.add_users_to_whitelist(&hash_of_hashes, operation);
 
     state
         .common_setup
         .query_user_fee_whitelist(Some(&new_users));
 
-    state.remove_users_from_whitelist(&hash_of_hashes, new_users.clone());
+    state.remove_users_from_whitelist(&hash_of_hashes, new_users.clone(), 1);
 
     state
         .common_setup
@@ -632,7 +640,15 @@ fn distribute_fees_setup_not_completed() {
         .common_setup
         .deploy_header_verifier(vec![ScArray::FeeMarket]);
 
-    state.distribute_fees(&ManagedBuffer::new(), vec![], Some(CALLER_NOT_OWNER), None);
+    state.distribute_fees(
+        &ManagedBuffer::new(),
+        DistributeFeesOperation {
+            pairs: ManagedVec::new(),
+            nonce: 0,
+        },
+        Some(CALLER_NOT_OWNER),
+        None,
+    );
 }
 
 /// ### TEST
@@ -668,7 +684,10 @@ fn distribute_fees_operation_not_registered() {
 
     state.distribute_fees(
         &ManagedBuffer::new(),
-        vec![],
+        DistributeFeesOperation {
+            pairs: ManagedVec::new(),
+            nonce: 0,
+        },
         Some(CURRENT_OPERATION_NOT_REGISTERED),
         None,
     );
@@ -719,12 +738,14 @@ fn distribute_fees_percentage_under_limit() {
         percentage: 10,
     };
 
-    let address_pair_tuple =
-        MultiValue2::from((address_pair.address.clone(), address_pair.percentage));
-    let address_pair_hash = address_pair.generate_hash();
-    let pair_hash_byte_array = ManagedBuffer::new_from_bytes(&sha256(&address_pair_hash.to_vec()));
+    let operation = DistributeFeesOperation {
+        pairs: ManagedVec::from_iter(vec![address_pair.clone()]),
+        nonce: 1,
+    };
+
+    let operation_hash = operation.generate_hash();
     let mut aggregated_hash: ManagedBuffer<StaticApi> = ManagedBuffer::new();
-    aggregated_hash.append(&pair_hash_byte_array);
+    aggregated_hash.append(&operation_hash);
     let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&aggregated_hash.to_vec()));
     let signature = ManagedBuffer::new();
     let bitmap = ManagedBuffer::new_from_bytes(&[1]);
@@ -736,15 +757,10 @@ fn distribute_fees_percentage_under_limit() {
         &hash_of_hashes,
         bitmap,
         epoch,
-        MultiValueEncoded::from_iter(vec![pair_hash_byte_array]),
+        MultiValueEncoded::from_iter(vec![operation_hash]),
     );
 
-    state.distribute_fees(
-        &hash_of_hashes,
-        vec![address_pair_tuple],
-        None,
-        Some("executedBridgeOp"),
-    );
+    state.distribute_fees(&hash_of_hashes, operation, None, Some("executedBridgeOp"));
 }
 
 /// ### TEST
@@ -810,12 +826,14 @@ fn distribute_fees() {
         percentage: 10_000,
     };
 
-    let address_pair_tuple =
-        MultiValue2::from((address_pair.address.clone(), address_pair.percentage));
-    let address_pair_hash = address_pair.generate_hash();
-    let pair_hash_byte_array = ManagedBuffer::new_from_bytes(&sha256(&address_pair_hash.to_vec()));
+    let operation = DistributeFeesOperation {
+        pairs: ManagedVec::from_iter(vec![address_pair.clone()]),
+        nonce: 1,
+    };
+
+    let operation_hash = operation.generate_hash();
     let mut aggregated_hash: ManagedBuffer<StaticApi> = ManagedBuffer::new();
-    aggregated_hash.append(&pair_hash_byte_array);
+    aggregated_hash.append(&operation_hash);
     let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&aggregated_hash.to_vec()));
     let signature = ManagedBuffer::new();
     let bitmap = ManagedBuffer::new_from_bytes(&[1]);
@@ -827,15 +845,10 @@ fn distribute_fees() {
         &hash_of_hashes,
         bitmap,
         epoch,
-        MultiValueEncoded::from_iter(vec![pair_hash_byte_array]),
+        MultiValueEncoded::from_iter(vec![operation_hash]),
     );
 
-    state.distribute_fees(
-        &hash_of_hashes,
-        vec![address_pair_tuple],
-        None,
-        Some("executedBridgeOp"),
-    );
+    state.distribute_fees(&hash_of_hashes, operation, None, Some("executedBridgeOp"));
 
     state.common_setup.check_account_single_esdt(
         OWNER_ADDRESS.to_address(),
