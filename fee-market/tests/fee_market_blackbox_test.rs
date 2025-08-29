@@ -16,6 +16,7 @@ use multiversx_sc::{
 use multiversx_sc_scenario::{
     api::StaticApi, multiversx_chain_vm::crypto_functions::sha256, ScenarioTxWhitebox,
 };
+use common_test_setup::base_setup::helpers::BLSKey;
 use structs::{
     fee::{AddressPercentagePair, FeeStruct, FeeType},
     forge::ScArray,
@@ -118,12 +119,10 @@ fn test_set_fee_invalid_fee_type() {
         .common_setup
         .deploy_chain_config(OptionalValue::None, None);
 
-    let genesis_validator = ManagedBuffer::from("genesis_validator");
-    state.common_setup.register_as_validator(
-        &genesis_validator,
+    state.common_setup.register(
+        &BLSKey::random(),
         &MultiEgldOrEsdtPayment::new(),
         None,
-        Some("register"),
     );
 
     state.common_setup.complete_chain_config_setup_phase(None);
@@ -181,12 +180,10 @@ fn test_remove_users_from_whitelist() {
         .common_setup
         .deploy_chain_config(OptionalValue::None, None);
 
-    let genesis_validator = ManagedBuffer::from("genesis_validator");
-    state.common_setup.register_as_validator(
-        &genesis_validator,
+    state.common_setup.register(
+        &BLSKey::random(),
         &MultiEgldOrEsdtPayment::new(),
         None,
-        Some("register"),
     );
 
     state.common_setup.complete_chain_config_setup_phase(None);
@@ -290,12 +287,10 @@ fn test_set_fee() {
         .common_setup
         .deploy_chain_config(OptionalValue::None, None);
 
-    let genesis_validator = ManagedBuffer::from("genesis_validator");
-    state.common_setup.register_as_validator(
-        &genesis_validator,
+    state.common_setup.register(
+        &BLSKey::random(),
         &MultiEgldOrEsdtPayment::new(),
         None,
-        Some("register"),
     );
 
     state.common_setup.complete_chain_config_setup_phase(None);
@@ -397,12 +392,10 @@ fn test_remove_fee_register_separate_operations() {
         .common_setup
         .deploy_chain_config(OptionalValue::None, None);
 
-    let genesis_validator = ManagedBuffer::from("genesis_validator");
-    state.common_setup.register_as_validator(
-        &genesis_validator,
+    state.common_setup.register(
+        &BLSKey::random(),
         &MultiEgldOrEsdtPayment::new(),
         None,
-        Some("register"),
     );
 
     state.common_setup.complete_chain_config_setup_phase(None);
@@ -519,12 +512,10 @@ fn test_remove_fee_register_with_one_hash_of_hashes() {
         .common_setup
         .deploy_chain_config(OptionalValue::None, None);
 
-    let genesis_validator = ManagedBuffer::from("genesis_validator");
-    state.common_setup.register_as_validator(
-        &genesis_validator,
+    state.common_setup.register(
+        &BLSKey::random(),
         &MultiEgldOrEsdtPayment::new(),
         None,
-        Some("register"),
     );
 
     state.common_setup.complete_chain_config_setup_phase(None);
@@ -690,12 +681,10 @@ fn distribute_fees_percentage_under_limit() {
         .common_setup
         .deploy_chain_config(OptionalValue::None, None);
 
-    let genesis_validator = ManagedBuffer::from("genesis_validator");
-    state.common_setup.register_as_validator(
-        &genesis_validator,
+    state.common_setup.register(
+        &BLSKey::random(),
         &MultiEgldOrEsdtPayment::new(),
         None,
-        Some("register"),
     );
 
     state.common_setup.complete_chain_config_setup_phase(None);
@@ -763,12 +752,10 @@ fn distribute_fees() {
         .common_setup
         .deploy_chain_config(OptionalValue::None, None);
 
-    let genesis_validator = ManagedBuffer::from("genesis_validator");
-    state.common_setup.register_as_validator(
-        &genesis_validator,
+    state.common_setup.register(
+        &BLSKey::random(),
         &MultiEgldOrEsdtPayment::new(),
         None,
-        Some("register"),
     );
     state.common_setup.complete_chain_config_setup_phase(None);
 

@@ -1,6 +1,7 @@
 use cross_chain::storage::CrossChainStorage;
 use error_messages::EMPTY_EXPECTED_LOG;
 use header_verifier::{header_utils::OperationHashStatus, storage::HeaderVerifierStorageModule};
+use multiversx_sc_scenario::imports::ManagedVec;
 use multiversx_sc_scenario::{
     api::StaticApi,
     imports::{
@@ -80,21 +81,59 @@ impl BaseSetup {
             );
     }
 
-    pub fn check_registered_validator_in_header_verifier(
+    // pub fn check_bls_key_for_epoch_in_header_verifier(
+    //     &mut self,
+    //     epoch: u64,
+    //     bls_keys: Vec<&str>,
+    // ) {
+    //     self.world.query().to(HEADER_VERIFIER_ADDRESS).whitebox(
+    //         header_verifier::contract_obj,
+    //         |sc| {
+    //             for bls_key in bls_keys {
+    //                 assert!(sc
+    //                     .bls_pub_keys(epoch)
+    //                     .contains(&ManagedBuffer::from(bls_key)));
+    //             }
+    //         },
+    //     )
+    // }
+
+    pub fn check_bls_key_for_epoch_in_header_verifier(
         &mut self,
         epoch: u64,
-        bls_keys: Vec<&str>,
+        registered_bls_keys: &ManagedVec<StaticApi, ManagedBuffer<StaticApi>>,
     ) {
+        // Convert ManagedVec<...> -> Vec<String> (hex encoded)
+        let bls_keys_hex: Vec<String> = registered_bls_keys
+            // .into_vec()
+            // .into_iter()
+            .iter()
+            .map(|buffer| {
+                let bytes = buffer.to_boxed_bytes();
+                hex::encode(bytes) // encode each buffer as a hex string
+            })
+            .collect();
+
+        // Borrow as &str for iteration
+        let bls_keys: Vec<&str> = bls_keys_hex.iter().map(|s| s.as_str()).collect();
+
+        // Query contract and assert
         self.world.query().to(HEADER_VERIFIER_ADDRESS).whitebox(
             header_verifier::contract_obj,
             |sc| {
-                for bls_key in bls_keys {
-                    assert!(sc
-                        .bls_pub_keys(epoch)
-                        .contains(&ManagedBuffer::from(bls_key)));
+                for bls_key_hex in bls_keys {
+                    // Convert hex string back to bytes and build ManagedBuffer<DebugApi>
+                    let key_bytes = hex::decode(bls_key_hex).unwrap();
+                    let buffer = ManagedBuffer::new_from_bytes(&key_bytes);
+
+                    assert!(
+                        sc.bls_pub_keys(epoch).contains(&buffer),
+                        "BLS key not found in header verifier: {}",
+                        bls_key_hex
+                    );
                 }
             },
-        )
+        );
     }
 
     pub fn check_deposited_tokens_amount(&mut self, tokens: Vec<(TestTokenIdentifier, u64)>) {

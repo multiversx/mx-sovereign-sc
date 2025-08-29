@@ -2,7 +2,7 @@ use common_test_setup::base_setup::init::RegisterTokenArgs;
 use common_test_setup::constants::{
     CROWD_TOKEN_ID, DEPOSIT_EVENT, ESDT_SAFE_ADDRESS, FEE_MARKET_ADDRESS, FEE_TOKEN,
     FIRST_TEST_TOKEN, HEADER_VERIFIER_ADDRESS, ONE_HUNDRED_MILLION, ONE_HUNDRED_THOUSAND,
-    OWNER_ADDRESS, REGISTER_EVENT, SC_CALL_EVENT, SECOND_TEST_TOKEN, SOV_TOKEN, TESTING_SC_ADDRESS,
+    OWNER_ADDRESS, SC_CALL_EVENT, SECOND_TEST_TOKEN, SOV_TOKEN, TESTING_SC_ADDRESS,
     USER_ADDRESS,
 };
 use cross_chain::storage::CrossChainStorage;
@@ -26,6 +26,7 @@ use multiversx_sc::{
 };
 use multiversx_sc_scenario::multiversx_chain_vm::crypto_functions::sha256;
 use multiversx_sc_scenario::{api::StaticApi, ScenarioTxWhitebox};
+use common_test_setup::base_setup::helpers::BLSKey;
 use mvx_esdt_safe::bridging_mechanism::{BridgingMechanism, TRUSTED_TOKEN_IDS};
 use mvx_esdt_safe_blackbox_setup::MvxEsdtSafeTestState;
 use setup_phase::SetupPhaseModule;
@@ -1536,12 +1537,10 @@ fn test_execute_operation_success() {
         .common_setup
         .deploy_chain_config(OptionalValue::None, None);
 
-    let genesis_validator = ManagedBuffer::from("genesis_validator");
-    state.common_setup.register_as_validator(
-        &genesis_validator,
+    state.common_setup.register(
+        &BLSKey::random(),
         &MultiEgldOrEsdtPayment::new(),
         None,
-        Some(REGISTER_EVENT),
     );
 
     state.common_setup.complete_chain_config_setup_phase(None);
@@ -1640,12 +1639,10 @@ fn test_execute_operation_with_native_token_success() {
         .common_setup
         .deploy_chain_config(OptionalValue::None, None);
 
-    let genesis_validator = ManagedBuffer::from("genesis_validator");
-    state.common_setup.register_as_validator(
-        &genesis_validator,
+    state.common_setup.register(
+        &BLSKey::random(),
         &MultiEgldOrEsdtPayment::new(),
         None,
-        Some(REGISTER_EVENT),
     );
 
     state.common_setup.complete_chain_config_setup_phase(None);
@@ -1738,12 +1735,10 @@ fn test_execute_operation_burn_mechanism_without_deposit_cannot_subtract() {
         .common_setup
         .deploy_chain_config(OptionalValue::None, None);
 
-    let genesis_validator = ManagedBuffer::from("genesis_validator");
-    state.common_setup.register_as_validator(
-        &genesis_validator,
+    state.common_setup.register(
+        &BLSKey::random(),
         &MultiEgldOrEsdtPayment::new(),
         None,
-        Some(REGISTER_EVENT),
     );
 
     state.common_setup.complete_chain_config_setup_phase(None);
@@ -1829,12 +1824,10 @@ fn execute_operation_only_transfer_data_no_fee() {
         .common_setup
         .deploy_chain_config(OptionalValue::None, None);
 
-    let genesis_validator = ManagedBuffer::from("genesis_validator");
-    state.common_setup.register_as_validator(
-        &genesis_validator,
+    state.common_setup.register(
+        &BLSKey::random(),
         &MultiEgldOrEsdtPayment::new(),
         None,
-        Some(REGISTER_EVENT),
     );
 
     state.common_setup.complete_chain_config_setup_phase(None);
@@ -1914,12 +1907,10 @@ fn test_execute_operation_success_burn_mechanism() {
         .common_setup
         .deploy_chain_config(OptionalValue::None, None);
 
-    let genesis_validator = ManagedBuffer::from("genesis_validator");
-    state.common_setup.register_as_validator(
-        &genesis_validator,
+    state.common_setup.register(
+        &BLSKey::random(),
         &MultiEgldOrEsdtPayment::new(),
         None,
-        Some(REGISTER_EVENT),
     );
 
     state.common_setup.complete_chain_config_setup_phase(None);
@@ -2031,12 +2022,10 @@ fn test_deposit_execute_switch_mechanism() {
         .common_setup
         .deploy_chain_config(OptionalValue::None, None);
 
-    let genesis_validator = ManagedBuffer::from("genesis_validator");
-    state.common_setup.register_as_validator(
-        &genesis_validator,
+    state.common_setup.register(
+        &BLSKey::random(),
         &MultiEgldOrEsdtPayment::new(),
         None,
-        Some(REGISTER_EVENT),
     );
 
     state.common_setup.complete_chain_config_setup_phase(None);
@@ -2315,14 +2304,12 @@ fn test_execute_operation_no_payments() {
         .common_setup
         .deploy_chain_config(OptionalValue::None, None);
 
-    let genesis_validator = ManagedBuffer::from("genesis_validator");
-    state.common_setup.register_as_validator(
-        &genesis_validator,
+    state.common_setup.register(
+        &BLSKey::random(),
         &MultiEgldOrEsdtPayment::new(),
         None,
-        Some(REGISTER_EVENT),
     );
-
+    
     state.common_setup.complete_chain_config_setup_phase(None);
 
     state
@@ -2385,12 +2372,10 @@ fn test_execute_operation_no_payments_failed_event() {
         .common_setup
         .deploy_chain_config(OptionalValue::None, None);
 
-    let genesis_validator = ManagedBuffer::from("genesis_validator");
-    state.common_setup.register_as_validator(
-        &genesis_validator,
+    state.common_setup.register(
+        &BLSKey::random(),
         &MultiEgldOrEsdtPayment::new(),
         None,
-        Some(REGISTER_EVENT),
     );
 
     state.common_setup.complete_chain_config_setup_phase(None);
@@ -2696,12 +2681,10 @@ fn test_update_config_invalid_config() {
         .common_setup
         .deploy_chain_config(OptionalValue::None, None);
 
-    let genesis_validator = ManagedBuffer::from("genesis_validator");
-    state.common_setup.register_as_validator(
-        &genesis_validator,
+    state.common_setup.register(
+        &BLSKey::random(),
         &MultiEgldOrEsdtPayment::new(),
         None,
-        Some(REGISTER_EVENT),
     );
 
     state.common_setup.complete_chain_config_setup_phase(None);
@@ -2759,12 +2742,10 @@ fn test_update_config() {
         .common_setup
         .deploy_chain_config(OptionalValue::None, None);
 
-    let genesis_validator = ManagedBuffer::from("genesis_validator");
-    state.common_setup.register_as_validator(
-        &genesis_validator,
+    state.common_setup.register(
+        &BLSKey::random(),
         &MultiEgldOrEsdtPayment::new(),
         None,
-        Some(REGISTER_EVENT),
     );
 
     state.common_setup.complete_chain_config_setup_phase(None);

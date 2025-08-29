@@ -65,8 +65,5 @@ pub const ONE_HUNDRED_TOKENS: u128 = 100_000_000_000_000_000_000u128;
 pub const TEN_TOKENS: u128 = 10_000_000_000_000_000_000u128;
 
 pub const EXECUTED_BRIDGE_OP_EVENT: &str = "executedBridgeOp";
-pub const REGISTER_EVENT: &str = "register";
-pub const UNREGISTER_EVENT: &str = "unregister";
-pub const REGISTRATION_STATUS_UPDATE_EVENT: &str = "registrationStatusUpdate";
 pub const DEPOSIT_EVENT: &str = "deposit";
 pub const SC_CALL_EVENT: &str = "scCall";
