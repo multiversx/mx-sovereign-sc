@@ -7,6 +7,7 @@ use common_test_setup::constants::{
     OPERATION_HASH_STATUS_STORAGE_KEY, SC_CALL_EVENT, SOV_TOKEN, SOV_TO_MVX_TOKEN_STORAGE_KEY,
     TEN_TOKENS, TOKEN_TICKER, WRONG_ENDPOINT_NAME,
 };
+use common_test_setup::base_setup::helpers::BLSKey;
 use cross_chain::MAX_GAS_PER_TRANSACTION;
 use error_messages::{
     BANNED_ENDPOINT_NAME, CANNOT_REGISTER_TOKEN, DEPOSIT_OVER_MAX_AMOUNT, ERR_EMPTY_PAYMENTS,
@@ -1552,12 +1553,11 @@ async fn test_execute_operation_with_native_token_success() {
     let chain_config_address = chain_interactor
         .deploy_chain_config(OptionalValue::None)
         .await;
-    let genesis_validator = ManagedBuffer::from("genesis_validator");
     chain_interactor
         .state()
         .set_chain_config_sc_address(chain_config_address.clone());
     chain_interactor
-        .register_as_validator(genesis_validator, ManagedVec::new(), chain_config_address)
+        .register(BLSKey::random(), ManagedVec::new(), chain_config_address)
         .await;
     chain_interactor.complete_chain_config_setup_phase().await;
 

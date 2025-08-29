@@ -849,12 +849,12 @@ fn test_unregister() {
         .common_setup
         .world
         .check_account(OWNER_ADDRESS)
-        .balance(&BigUint::from(OWNER_BALANCE));
+        .balance(BigUint::from(OWNER_BALANCE));
     state
         .common_setup
         .world
         .check_account(OWNER_ADDRESS)
-        .esdt_balance(FIRST_TEST_TOKEN, &BigUint::from(ONE_HUNDRED_MILLION));
+        .esdt_balance(FIRST_TEST_TOKEN, BigUint::from(ONE_HUNDRED_MILLION));
 
     assert!(state.common_setup.get_bls_key_id(&new_validator_bls_key) == 0);
 }
@@ -994,7 +994,7 @@ fn test_unregister_validator_after_genesis() {
         .common_setup
         .world
         .check_account(OWNER_ADDRESS)
-        .esdt_balance(FIRST_TEST_TOKEN, &BigUint::from(ONE_HUNDRED_MILLION));
+        .esdt_balance(FIRST_TEST_TOKEN, BigUint::from(ONE_HUNDRED_MILLION));
 }
 
 /// ### TEST

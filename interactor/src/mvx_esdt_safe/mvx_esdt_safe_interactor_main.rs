@@ -198,7 +198,7 @@ impl MvxEsdtSafeInteract {
 
         let genesis_validator = ManagedBuffer::from("genesis_validator");
         let chain_config_address = self.state.current_chain_config_sc_address();
-        self.register_as_validator(
+        self.register(
             genesis_validator,
             MultiEgldOrEsdtPayment::new(),
             chain_config_address.clone(),
