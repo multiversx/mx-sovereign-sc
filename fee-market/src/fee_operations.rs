@@ -1,4 +1,4 @@
-use error_messages::SETUP_PHASE_ALREADY_COMPLETED;
+use error_messages::{SETUP_PHASE_ALREADY_COMPLETED, SETUP_PHASE_NOT_COMPLETED};
 use structs::{
     fee::{DistributeFeesOperation, FeeStruct},
     generate_hash::GenerateHash,
@@ -30,8 +30,14 @@ pub trait FeeOperationsModule:
             self.complete_operation(&hash_of_hashes, &operation_hash, Some(error_message));
             return;
         };
-
-        self.require_setup_complete_with_event(&hash_of_hashes, &operation_hash);
+        if !self.is_setup_phase_complete() {
+            self.complete_operation(
+                &hash_of_hashes,
+                &operation_hash,
+                Some(SETUP_PHASE_NOT_COMPLETED.into()),
+            );
+            return;
+        }
         self.lock_operation_hash_wrapper(&hash_of_hashes, &operation_hash);
 
         if let Some(err_msg) = self.validate_percentage_sum(&operation.pairs) {
@@ -63,7 +69,14 @@ pub trait FeeOperationsModule:
             self.complete_operation(&hash_of_hashes, &token_id_hash, Some(err_msg));
             return;
         };
-        self.require_setup_complete_with_event(&hash_of_hashes, &token_id_hash);
+        if !self.is_setup_phase_complete() {
+            self.complete_operation(
+                &hash_of_hashes,
+                &token_id_hash,
+                Some(SETUP_PHASE_NOT_COMPLETED.into()),
+            );
+            return;
+        }
 
         self.lock_operation_hash_wrapper(&hash_of_hashes, &token_id_hash);
         self.token_fee(&token_id).clear();
@@ -91,7 +104,14 @@ pub trait FeeOperationsModule:
             self.complete_operation(&hash_of_hashes, &fee_hash, Some(err_msg));
             return;
         };
-        self.require_setup_complete_with_event(&hash_of_hashes, &fee_hash);
+        if !self.is_setup_phase_complete() {
+            self.complete_operation(
+                &hash_of_hashes,
+                &fee_hash,
+                Some(SETUP_PHASE_NOT_COMPLETED.into()),
+            );
+            return;
+        }
 
         self.lock_operation_hash_wrapper(&hash_of_hashes, &fee_hash);
 

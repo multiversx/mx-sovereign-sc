@@ -10,16 +10,19 @@ pub trait ConfigOperationsModule:
     + fee_common::storage::FeeCommonStorageModule
     + utils::UtilsModule
 {
+    #[only_owner]
     #[endpoint(updateSovereignConfig)]
     fn update_sovereign_config(&self, sovereign_config: SovereignConfig<Self::Api>) {
         self.update_sovereign_config_event(sovereign_config, self.get_and_save_next_tx_id());
     }
 
+    #[only_owner]
     #[endpoint(updateRegistrationStatus)]
     fn update_registration_status(&self, registration_status: u8) {
         self.update_registration_status_event(registration_status, self.get_and_save_next_tx_id());
     }
 
+    #[only_owner]
     #[endpoint(updateEsdtSafeConfig)]
     fn update_esdt_safe_config(&self, esdt_safe_config: EsdtSafeConfig<Self::Api>) {
         self.update_esdt_safe_config_event(esdt_safe_config, self.get_and_save_next_tx_id());

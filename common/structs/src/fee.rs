@@ -22,8 +22,8 @@ pub enum FeeType<M: ManagedTypeApi> {
 #[type_abi]
 #[derive(TopEncode, TopDecode, NestedDecode, Clone)]
 pub struct AddUsersToWhitelistOperation<M: ManagedTypeApi> {
-    pub nonce: TxNonce,
     pub users: ManagedVec<M, ManagedAddress<M>>,
+    pub nonce: TxNonce,
 }
 
 impl<A: CryptoApi> GenerateHash<A> for AddUsersToWhitelistOperation<A> {}
@@ -31,8 +31,8 @@ impl<A: CryptoApi> GenerateHash<A> for AddUsersToWhitelistOperation<A> {}
 #[type_abi]
 #[derive(TopEncode, TopDecode, NestedDecode, Clone)]
 pub struct RemoveUsersFromWhitelistOperation<M: ManagedTypeApi> {
-    pub nonce: TxNonce,
     pub users: ManagedVec<M, ManagedAddress<M>>,
+    pub nonce: TxNonce,
 }
 
 impl<A: CryptoApi> GenerateHash<A> for RemoveUsersFromWhitelistOperation<A> {}
@@ -40,8 +40,8 @@ impl<A: CryptoApi> GenerateHash<A> for RemoveUsersFromWhitelistOperation<A> {}
 #[type_abi]
 #[derive(TopDecode, TopEncode, NestedEncode, NestedDecode, Clone)]
 pub struct RemoveFeeOperation<M: ManagedTypeApi> {
-    pub nonce: TxNonce,
     pub token_id: TokenIdentifier<M>,
+    pub nonce: TxNonce,
 }
 
 impl<A: CryptoApi> GenerateHash<A> for RemoveFeeOperation<A> {}
@@ -49,8 +49,8 @@ impl<A: CryptoApi> GenerateHash<A> for RemoveFeeOperation<A> {}
 #[type_abi]
 #[derive(TopDecode, TopEncode, NestedEncode, NestedDecode, Clone)]
 pub struct SetFeeOperation<M: ManagedTypeApi> {
-    pub nonce: TxNonce,
     pub fee_struct: FeeStruct<M>,
+    pub nonce: TxNonce,
 }
 
 impl<A: CryptoApi> GenerateHash<A> for SetFeeOperation<A> {}

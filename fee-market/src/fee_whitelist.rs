@@ -1,4 +1,4 @@
-use error_messages::SETUP_PHASE_ALREADY_COMPLETED;
+use error_messages::{SETUP_PHASE_ALREADY_COMPLETED, SETUP_PHASE_NOT_COMPLETED};
 use structs::{
     fee::{AddUsersToWhitelistOperation, RemoveUsersFromWhitelistOperation},
     generate_hash::GenerateHash,
@@ -38,6 +38,16 @@ pub trait FeeWhitelistModule:
             return;
         }
 
+        if !self.is_setup_phase_complete() {
+            self.complete_operation(
+                &hash_of_hashes,
+                &operation_hash,
+                Some(SETUP_PHASE_NOT_COMPLETED.into()),
+            );
+            return;
+        }
+        self.lock_operation_hash_wrapper(&hash_of_hashes, &operation_hash);
+
         self.users_whitelist().extend(operation.users);
         self.complete_operation(&hash_of_hashes, &operation_hash, None);
     }
@@ -70,6 +80,16 @@ pub trait FeeWhitelistModule:
             self.complete_operation(&hash_of_hashes, &operation_hash, Some(error_message));
             return;
         }
+
+        if !self.is_setup_phase_complete() {
+            self.complete_operation(
+                &hash_of_hashes,
+                &operation_hash,
+                Some(SETUP_PHASE_NOT_COMPLETED.into()),
+            );
+            return;
+        }
+        self.lock_operation_hash_wrapper(&hash_of_hashes, &operation_hash);
 
         for user in &operation.users {
             self.users_whitelist().swap_remove(&user);
