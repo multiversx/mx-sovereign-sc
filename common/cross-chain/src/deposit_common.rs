@@ -28,9 +28,17 @@ pub trait DepositCommonModule:
         opt_transfer_data: OptionalValueTransferDataTuple<Self::Api>,
         process_payment: F,
     ) where
-        F: Fn(&EsdtTokenPayment<Self::Api>) -> EventPaymentTuple<Self::Api>,
+        F: Fn(&EgldOrEsdtTokenPayment<Self::Api>) -> EventPaymentTuple<Self::Api>,
     {
         require!(self.not_paused(), ESDT_SAFE_STILL_PAUSED);
+
+        let option_transfer_data = TransferData::from_optional_value(opt_transfer_data.clone());
+
+        if let Some(transfer_data) = option_transfer_data.as_ref() {
+            self.require_gas_limit_under_limit(transfer_data.gas_limit);
+            self.require_endpoint_not_banned(&transfer_data.function);
+        }
+
         let (fees_payment, payments) = self
             .check_and_extract_fee(opt_transfer_data.is_some())
             .into_tuple();
@@ -40,12 +48,11 @@ pub trait DepositCommonModule:
         let mut refundable_payments = ManagedVec::<Self::Api, _>::new();
 
         for payment in &payments {
-            self.require_below_max_amount(&payment.token_identifier, &payment.amount);
-            self.require_token_not_on_blacklist(&payment.token_identifier);
+            let token_identifier = payment.token_identifier.clone().unwrap_esdt();
+            self.require_below_max_amount(&token_identifier, &payment.amount);
+            self.require_token_not_on_blacklist(&token_identifier);
 
-            if !self.is_token_whitelist_empty()
-                && !self.is_token_whitelisted(&payment.token_identifier)
-            {
+            if !self.is_token_whitelist_empty() && !self.is_token_whitelisted(&token_identifier) {
                 refundable_payments.push(payment.clone());
                 continue;
             }
@@ -54,13 +61,6 @@ pub trait DepositCommonModule:
             let processed_payment = process_payment(&payment);
 
             event_payments.push(processed_payment);
-        }
-
-        let option_transfer_data = TransferData::from_optional_value(opt_transfer_data);
-
-        if let Some(transfer_data) = option_transfer_data.as_ref() {
-            self.require_gas_limit_under_limit(transfer_data.gas_limit);
-            self.require_endpoint_not_banned(&transfer_data.function);
         }
 
         self.match_fee_payment(total_tokens_for_fees, &fees_payment, &option_transfer_data);
@@ -89,7 +89,7 @@ pub trait DepositCommonModule:
     fn match_fee_payment(
         &self,
         total_tokens_for_fees: usize,
-        fees_payment: &OptionalValue<EsdtTokenPayment<Self::Api>>,
+        fees_payment: &OptionalValue<EgldOrEsdtTokenPayment<Self::Api>>,
         opt_transfer_data: &Option<TransferData<<Self as ContractBase>::Api>>,
     ) {
         match fees_payment {
@@ -115,7 +115,7 @@ pub trait DepositCommonModule:
     }
 
     fn check_and_extract_fee(&self, has_transfer_data: bool) -> ExtractedFeeResult<Self::Api> {
-        let payments = self.call_value().all_esdt_transfers().clone();
+        let payments = self.call_value().all_transfers().clone();
         require!(payments.len() <= MAX_TRANSFERS_PER_TX, TOO_MANY_TOKENS);
 
         let fee_enabled = self
@@ -133,12 +133,12 @@ pub trait DepositCommonModule:
         }
     }
 
-    fn burn_sovereign_token(&self, payment: &EsdtTokenPayment<Self::Api>) {
+    fn burn_sovereign_token(&self, payment: &EgldOrEsdtTokenPayment<Self::Api>) {
         self.tx()
             .to(ToSelf)
             .typed(system_proxy::UserBuiltinProxy)
             .esdt_local_burn(
-                &payment.token_identifier,
+                payment.token_identifier.clone().unwrap_esdt(),
                 payment.token_nonce,
                 &payment.amount,
             )
@@ -148,17 +148,17 @@ pub trait DepositCommonModule:
     fn get_event_payment_token_data(
         &self,
         current_sc_address: &ManagedAddress,
-        payment: &EsdtTokenPayment<Self::Api>,
+        payment: &EgldOrEsdtTokenPayment<Self::Api>,
     ) -> EventPaymentTuple<Self::Api> {
         let mut current_token_data = self.blockchain().get_esdt_token_data(
             current_sc_address,
-            &payment.token_identifier,
+            &payment.token_identifier.clone().unwrap_esdt(),
             payment.token_nonce,
         );
         current_token_data.amount = payment.amount.clone();
 
         MultiValue3::from((
-            payment.token_identifier.clone(),
+            payment.token_identifier.clone().unwrap_esdt(),
             payment.token_nonce,
             current_token_data,
         ))
@@ -183,46 +183,38 @@ pub trait DepositCommonModule:
     fn refund_tokens(
         &self,
         caller: &ManagedAddress,
-        refundable_payments: ManagedVec<EsdtTokenPayment<Self::Api>>,
+        refundable_payments: ManagedVec<EgldOrEsdtTokenPayment<Self::Api>>,
     ) {
         self.tx()
             .to(caller)
-            .multi_esdt(refundable_payments)
+            .payment(refundable_payments)
             .transfer_if_not_empty();
     }
 
     fn burn_mainchain_token(
         &self,
-        payment: EsdtTokenPayment<Self::Api>,
+        token_id: &TokenIdentifier,
+        token_nonce: u64,
+        amount: &BigUint,
         payment_token_type: &EsdtTokenType,
         sov_token_id: &TokenIdentifier<Self::Api>,
     ) -> u64 {
         self.tx()
             .to(ToSelf)
             .typed(system_proxy::UserBuiltinProxy)
-            .esdt_local_burn(
-                &payment.token_identifier,
-                payment.token_nonce,
-                &payment.amount,
-            )
+            .esdt_local_burn(token_id, token_nonce, amount)
             .sync_call();
 
         let mut sov_token_nonce = 0;
 
-        if payment.token_nonce > 0 {
+        if token_nonce > 0 {
             sov_token_nonce = self
-                .multiversx_to_sovereign_esdt_info_mapper(
-                    &payment.token_identifier,
-                    payment.token_nonce,
-                )
+                .multiversx_to_sovereign_esdt_info_mapper(token_id, token_nonce)
                 .get()
                 .token_nonce;
 
             if self.is_nft(payment_token_type) {
-                self.clear_mvx_to_sov_esdt_info_mapper(
-                    &payment.token_identifier,
-                    payment.token_nonce,
-                );
+                self.clear_mvx_to_sov_esdt_info_mapper(token_id, token_nonce);
 
                 self.clear_sov_to_mvx_esdt_info_mapper(sov_token_id, sov_token_nonce);
             }

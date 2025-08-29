@@ -141,11 +141,11 @@ impl<M: ManagedTypeApi> OperationEsdtPayment<M> {
     }
 }
 
-impl<M: ManagedTypeApi> From<OperationEsdtPayment<M>> for EsdtTokenPayment<M> {
+impl<M: ManagedTypeApi> From<OperationEsdtPayment<M>> for EgldOrEsdtTokenPayment<M> {
     #[inline]
     fn from(payment: OperationEsdtPayment<M>) -> Self {
-        EsdtTokenPayment {
-            token_identifier: payment.token_identifier,
+        EgldOrEsdtTokenPayment {
+            token_identifier: EgldOrEsdtTokenIdentifier::esdt(payment.token_identifier),
             token_nonce: payment.token_nonce,
             amount: payment.token_data.amount,
         }

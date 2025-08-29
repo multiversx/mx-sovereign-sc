@@ -1,7 +1,8 @@
 use chain_config::storage::ChainConfigStorageModule;
 use common_test_setup::constants::{
     CHAIN_FACTORY_SC_ADDRESS, CHAIN_ID, DEPLOY_COST, ESDT_SAFE_ADDRESS, FIRST_TEST_TOKEN,
-    ONE_HUNDRED_THOUSAND, OWNER_ADDRESS, SOVEREIGN_FORGE_SC_ADDRESS, USER_ADDRESS,
+    NATIVE_TEST_TOKEN, ONE_HUNDRED_THOUSAND, OWNER_ADDRESS, SOVEREIGN_FORGE_SC_ADDRESS,
+    USER_ADDRESS,
 };
 use cross_chain::storage::CrossChainStorage;
 use error_messages::{
@@ -622,6 +623,19 @@ fn test_complete_setup_phase() {
                     && is_esdt_safe_deployed
                     && is_fee_market_deployed
             );
+        });
+
+    let address = state.retrieve_deployed_mvx_esdt_safe_address(preferred_chain_id.clone());
+
+    state
+        .common_setup
+        .world
+        .tx()
+        .from(OWNER_ADDRESS)
+        .to(address)
+        .whitebox(mvx_esdt_safe::contract_obj, |sc| {
+            sc.native_token()
+                .set(NATIVE_TEST_TOKEN.to_token_identifier());
         });
 
     state.complete_setup_phase(None);
