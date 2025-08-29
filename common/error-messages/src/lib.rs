@@ -133,3 +133,7 @@ pub const CHAIN_CONFIG_SETUP_PHASE_NOT_COMPLETE: &str =
 pub const DEPOSIT_AMOUNT_NOT_ENOUGH: &str = "Deposit amount is less than the operation amount";
 pub const CHAIN_FACTORY_ADDRESS_NOT_IN_EXPECTED_SHARD: &str =
     "This Chain-Factory SC is not deployed in the specified shard ID";
+pub const INVALID_BLS_KEY_PROVIDED:&str = "Invalid BLS key has been provided";
+pub const REGISTRATIONS_DISABLED_GENESIS_PHASE: &str = "Registrations are disabled after genesis phase";
+pub const VALIDATOR_ID_NOT_REGISTERED: &str = "Provided validator id is not registered";
+pub const INVALID_VALIDATOR_DATA: &str = "Invalid validator data has been provided";

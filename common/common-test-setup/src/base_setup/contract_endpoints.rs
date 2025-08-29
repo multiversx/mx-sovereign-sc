@@ -1,3 +1,10 @@
+use crate::constants::EXECUTED_BRIDGE_OP_EVENT;
+use crate::{
+    base_setup::init::BaseSetup,
+    constants::{CHAIN_CONFIG_ADDRESS, FEE_MARKET_ADDRESS, HEADER_VERIFIER_ADDRESS, OWNER_ADDRESS},
+};
+use multiversx_sc_scenario::imports::{BigUint, ReturnsResult};
+use multiversx_sc_scenario::multiversx_chain_vm::crypto_functions::sha256;
 use multiversx_sc_scenario::{
     api::StaticApi,
     imports::{
@@ -11,34 +18,25 @@ use proxies::{
     header_verifier_proxy::HeaderverifierProxy,
 };
 use structs::fee::FeeStruct;
-
-use crate::{
-    base_setup::init::BaseSetup,
-    constants::{CHAIN_CONFIG_ADDRESS, FEE_MARKET_ADDRESS, HEADER_VERIFIER_ADDRESS, OWNER_ADDRESS},
-};
+use structs::generate_hash::GenerateHash;
+use structs::ValidatorData;
 
 impl BaseSetup {
     pub fn register_operation(
         &mut self,
         caller: TestAddress,
+        signature: ManagedBuffer<StaticApi>,
         hash_of_hashes: &ManagedBuffer<StaticApi>,
+        bitmap: ManagedBuffer<StaticApi>,
+        epoch: u64,
         operations_hashes: MultiValueEncoded<StaticApi, ManagedBuffer<StaticApi>>,
     ) {
-        let signature = ManagedBuffer::new();
-        let bls_keys_bitmap = ManagedBuffer::new_from_bytes(&[1]);
-        let epoch = 0u64;
         self.world
             .tx()
             .from(caller)
             .to(HEADER_VERIFIER_ADDRESS)
             .typed(HeaderverifierProxy)
-            .register_bridge_operations(
-                signature,
-                hash_of_hashes,
-                bls_keys_bitmap,
-                epoch,
-                operations_hashes,
-            )
+            .register_bridge_operations(signature, hash_of_hashes, bitmap, epoch, operations_hashes)
             .run();
     }
 
@@ -79,34 +77,25 @@ impl BaseSetup {
         self.assert_expected_error_message(response, error_message);
     }
 
-    pub fn update_registration_status(
-        &mut self,
-        hash_of_hashes: &ManagedBuffer<StaticApi>,
-        registration_status: u8,
-        expected_error_message: Option<&str>,
-        expected_log: Option<&str>,
-        expected_log_error: Option<&str>,
-    ) {
-        let (response, logs) = self
+    pub fn unregister(&mut self, bls_key: &ManagedBuffer<StaticApi>, expect_error: Option<&str>) {
+        let (response, _) = self
             .world
             .tx()
             .from(OWNER_ADDRESS)
             .to(CHAIN_CONFIG_ADDRESS)
             .typed(ChainConfigContractProxy)
-            .update_registration_status(hash_of_hashes, registration_status)
+            .unregister(bls_key)
             .returns(ReturnsHandledOrError::new())
             .returns(ReturnsLogs)
             .run();
 
-        self.assert_expected_error_message(response, expected_error_message);
-        self.assert_expected_log(logs, expected_log, expected_log_error);
+        self.assert_expected_error_message(response, expect_error);
     }
 
-    // TODO: Use this for any validator registration
-    pub fn register_as_validator(
+    pub fn register_validator(
         &mut self,
-        bls_key: &ManagedBuffer<StaticApi>,
-        payment: &MultiEgldOrEsdtPayment<StaticApi>,
+        hash_of_hashes: &ManagedBuffer<StaticApi>,
+        validator_data: &ValidatorData<StaticApi>,
         expected_error_message: Option<&str>,
         expected_custom_log: Option<&str>,
     ) {
@@ -116,8 +105,61 @@ impl BaseSetup {
             .from(OWNER_ADDRESS)
             .to(CHAIN_CONFIG_ADDRESS)
             .typed(ChainConfigContractProxy)
-            .register(bls_key)
-            .payment(payment)
+            .register_validator(hash_of_hashes, validator_data)
+            .returns(ReturnsHandledOrError::new())
+            .returns(ReturnsLogs)
+            .run();
+
+        self.assert_expected_error_message(response, expected_error_message);
+        self.assert_expected_log(logs, expected_custom_log, None);
+    }
+
+    pub fn register_validator_operation(
+        &mut self,
+        validator_data: ValidatorData<StaticApi>,
+        signature: ManagedBuffer<StaticApi>,
+        bitmap: ManagedBuffer<StaticApi>,
+        epoch: u64,
+    ) {
+        let validator_data_hash = validator_data.generate_hash();
+        let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&validator_data_hash.to_vec()));
+
+        self.register_operation(
+            OWNER_ADDRESS,
+            signature,
+            &hash_of_hashes,
+            bitmap,
+            epoch,
+            MultiValueEncoded::from_iter(vec![validator_data_hash]),
+        );
+
+        self.register_validator(
+            &hash_of_hashes,
+            &validator_data,
+            None,
+            Some(EXECUTED_BRIDGE_OP_EVENT),
+        );
+
+        assert_eq!(
+            self.get_bls_key_id(&validator_data.bls_key),
+            validator_data.id
+        );
+    }
+
+    pub fn unregister_validator(
+        &mut self,
+        hash_of_hashes: &ManagedBuffer<StaticApi>,
+        validator_data: &ValidatorData<StaticApi>,
+        expected_error_message: Option<&str>,
+        expected_custom_log: Option<&str>,
+    ) {
+        let (response, logs) = self
+            .world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .to(CHAIN_CONFIG_ADDRESS)
+            .typed(ChainConfigContractProxy)
+            .unregister_validator(hash_of_hashes, validator_data)
             .returns(ReturnsHandledOrError::new())
             .returns(ReturnsLogs)
             .run();
@@ -131,9 +173,8 @@ impl BaseSetup {
         bls_key: &ManagedBuffer<StaticApi>,
         payment: &MultiEgldOrEsdtPayment<StaticApi>,
         expect_error: Option<&str>,
-        expected_custom_log: Option<&str>,
     ) {
-        let (result, logs) = self
+        let result = self
             .world
             .tx()
             .from(OWNER_ADDRESS)
@@ -141,12 +182,48 @@ impl BaseSetup {
             .typed(ChainConfigContractProxy)
             .register(bls_key)
             .returns(ReturnsHandledOrError::new())
-            .returns(ReturnsLogs)
             .payment(payment)
             .run();
 
         self.assert_expected_error_message(result, expect_error);
+    }
 
-        self.assert_expected_log(logs, expected_custom_log, None);
+    pub fn unregister_validator_operation(
+        &mut self,
+        validator_data: ValidatorData<StaticApi>,
+        signature: ManagedBuffer<StaticApi>,
+        bitmap: ManagedBuffer<StaticApi>,
+        epoch: u64,
+    ) {
+        let validator_data_hash = validator_data.generate_hash();
+        let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&validator_data_hash.to_vec()));
+
+        self.register_operation(
+            OWNER_ADDRESS,
+            signature,
+            &hash_of_hashes,
+            bitmap,
+            epoch,
+            MultiValueEncoded::from_iter(vec![validator_data_hash]),
+        );
+
+        self.unregister_validator(
+            &hash_of_hashes,
+            &validator_data,
+            None,
+            Some(EXECUTED_BRIDGE_OP_EVENT),
+        );
+
+        assert_eq!(self.get_bls_key_id(&validator_data.bls_key), 0);
+    }
+
+    pub fn get_bls_key_id(&mut self, bls_key: &ManagedBuffer<StaticApi>) -> BigUint<StaticApi> {
+        self.world
+            .query()
+            .to(CHAIN_CONFIG_ADDRESS)
+            .typed(ChainConfigContractProxy)
+            .bls_key_to_id_mapper(bls_key)
+            .returns(ReturnsResult)
+            .run()
     }
 }

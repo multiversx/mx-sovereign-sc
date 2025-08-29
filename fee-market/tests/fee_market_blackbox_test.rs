@@ -1,3 +1,4 @@
+use common_test_setup::base_setup::helpers::BLSKey;
 use common_test_setup::constants::{
     ESDT_SAFE_ADDRESS, EXECUTED_BRIDGE_OP_EVENT, FEE_MARKET_ADDRESS, FIRST_TEST_TOKEN,
     OWNER_ADDRESS, OWNER_BALANCE, SECOND_TEST_TOKEN, USER_ADDRESS, WRONG_TOKEN_ID,
@@ -118,13 +119,9 @@ fn test_set_fee_invalid_fee_type() {
         .common_setup
         .deploy_chain_config(OptionalValue::None, None);
 
-    let genesis_validator = ManagedBuffer::from("genesis_validator");
-    state.common_setup.register_as_validator(
-        &genesis_validator,
-        &MultiEgldOrEsdtPayment::new(),
-        None,
-        Some("register"),
-    );
+    state
+        .common_setup
+        .register(&BLSKey::random(), &MultiEgldOrEsdtPayment::new(), None);
 
     state.common_setup.complete_chain_config_setup_phase(None);
 
@@ -144,6 +141,9 @@ fn test_set_fee_invalid_fee_type() {
     };
     let fee_hash = fee.generate_hash();
     let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&fee_hash.to_vec()));
+    let bitmap = ManagedBuffer::new_from_bytes(&[1]);
+    let signature = ManagedBuffer::new();
+    let epoch = 0;
 
     state
         .common_setup
@@ -151,7 +151,10 @@ fn test_set_fee_invalid_fee_type() {
 
     state.common_setup.register_operation(
         OWNER_ADDRESS,
+        signature,
         &hash_of_hashes,
+        bitmap,
+        epoch,
         MultiValueEncoded::from_iter(vec![fee_hash]),
     );
 
@@ -174,13 +177,9 @@ fn test_remove_users_from_whitelist() {
         .common_setup
         .deploy_chain_config(OptionalValue::None, None);
 
-    let genesis_validator = ManagedBuffer::from("genesis_validator");
-    state.common_setup.register_as_validator(
-        &genesis_validator,
-        &MultiEgldOrEsdtPayment::new(),
-        None,
-        Some("register"),
-    );
+    state
+        .common_setup
+        .register(&BLSKey::random(), &MultiEgldOrEsdtPayment::new(), None);
 
     state.common_setup.complete_chain_config_setup_phase(None);
 
@@ -205,10 +204,16 @@ fn test_remove_users_from_whitelist() {
 
     let users_hash = state.compute_users_hash(new_users.clone());
     let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&users_hash.to_vec()));
+    let bitmap = ManagedBuffer::new_from_bytes(&[1]);
+    let signature = ManagedBuffer::new();
+    let epoch = 0;
 
     state.common_setup.register_operation(
         OWNER_ADDRESS,
+        signature,
         &hash_of_hashes,
+        bitmap,
+        epoch,
         MultiValueEncoded::from_iter(vec![users_hash]),
     );
     state.add_users_to_whitelist(&hash_of_hashes, new_users.clone());
@@ -276,13 +281,9 @@ fn test_set_fee() {
         .common_setup
         .deploy_chain_config(OptionalValue::None, None);
 
-    let genesis_validator = ManagedBuffer::from("genesis_validator");
-    state.common_setup.register_as_validator(
-        &genesis_validator,
-        &MultiEgldOrEsdtPayment::new(),
-        None,
-        Some("register"),
-    );
+    state
+        .common_setup
+        .register(&BLSKey::random(), &MultiEgldOrEsdtPayment::new(), None);
 
     state.common_setup.complete_chain_config_setup_phase(None);
 
@@ -306,6 +307,9 @@ fn test_set_fee() {
     };
     let fee_hash = fee.generate_hash();
     let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&fee_hash.to_vec()));
+    let bitmap = ManagedBuffer::new_from_bytes(&[1]);
+    let signature = ManagedBuffer::new();
+    let epoch = 0;
 
     state
         .common_setup
@@ -313,7 +317,10 @@ fn test_set_fee() {
 
     state.common_setup.register_operation(
         OWNER_ADDRESS,
+        signature,
         &hash_of_hashes,
+        bitmap,
+        epoch,
         MultiValueEncoded::from_iter(vec![fee_hash]),
     );
 
@@ -376,13 +383,9 @@ fn test_remove_fee_register_separate_operations() {
         .common_setup
         .deploy_chain_config(OptionalValue::None, None);
 
-    let genesis_validator = ManagedBuffer::from("genesis_validator");
-    state.common_setup.register_as_validator(
-        &genesis_validator,
-        &MultiEgldOrEsdtPayment::new(),
-        None,
-        Some("register"),
-    );
+    state
+        .common_setup
+        .register(&BLSKey::random(), &MultiEgldOrEsdtPayment::new(), None);
 
     state.common_setup.complete_chain_config_setup_phase(None);
 
@@ -407,6 +410,9 @@ fn test_remove_fee_register_separate_operations() {
     let register_fee_hash = fee.generate_hash();
     let register_fee_hash_of_hashes =
         ManagedBuffer::new_from_bytes(&sha256(&register_fee_hash.to_vec()));
+    let bitmap = ManagedBuffer::new_from_bytes(&[1]);
+    let signature = ManagedBuffer::new();
+    let epoch = 0;
 
     state
         .common_setup
@@ -414,7 +420,10 @@ fn test_remove_fee_register_separate_operations() {
 
     state.common_setup.register_operation(
         OWNER_ADDRESS,
+        signature,
         &register_fee_hash_of_hashes,
+        bitmap,
+        epoch,
         MultiValueEncoded::from_iter(vec![register_fee_hash]),
     );
 
@@ -445,10 +454,16 @@ fn test_remove_fee_register_separate_operations() {
     );
 
     let remove_fee_hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&remove_fee_hash));
+    let bitmap = ManagedBuffer::new_from_bytes(&[1]);
+    let signature = ManagedBuffer::new();
+    let epoch = 0;
 
     state.common_setup.register_operation(
         OWNER_ADDRESS,
+        signature,
         &remove_fee_hash_of_hashes,
+        bitmap,
+        epoch,
         MultiValueEncoded::from_iter(vec![ManagedBuffer::new_from_bytes(&remove_fee_hash)]),
     );
 
@@ -488,13 +503,9 @@ fn test_remove_fee_register_with_one_hash_of_hashes() {
         .common_setup
         .deploy_chain_config(OptionalValue::None, None);
 
-    let genesis_validator = ManagedBuffer::from("genesis_validator");
-    state.common_setup.register_as_validator(
-        &genesis_validator,
-        &MultiEgldOrEsdtPayment::new(),
-        None,
-        Some("register"),
-    );
+    state
+        .common_setup
+        .register(&BLSKey::random(), &MultiEgldOrEsdtPayment::new(), None);
 
     state.common_setup.complete_chain_config_setup_phase(None);
 
@@ -530,6 +541,9 @@ fn test_remove_fee_register_with_one_hash_of_hashes() {
     aggregated_hashes.append(&register_fee_hash);
 
     let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&aggregated_hashes.to_vec()));
+    let bitmap = ManagedBuffer::new_from_bytes(&[1]);
+    let signature = ManagedBuffer::new();
+    let epoch = 0;
 
     state
         .common_setup
@@ -537,7 +551,10 @@ fn test_remove_fee_register_with_one_hash_of_hashes() {
 
     state.common_setup.register_operation(
         OWNER_ADDRESS,
+        signature,
         &hash_of_hashes,
+        bitmap,
+        epoch,
         MultiValueEncoded::from_iter(vec![remove_fee_hash, register_fee_hash]),
     );
 
@@ -652,13 +669,9 @@ fn distribute_fees_percentage_under_limit() {
         .common_setup
         .deploy_chain_config(OptionalValue::None, None);
 
-    let genesis_validator = ManagedBuffer::from("genesis_validator");
-    state.common_setup.register_as_validator(
-        &genesis_validator,
-        &MultiEgldOrEsdtPayment::new(),
-        None,
-        Some("register"),
-    );
+    state
+        .common_setup
+        .register(&BLSKey::random(), &MultiEgldOrEsdtPayment::new(), None);
 
     state.common_setup.complete_chain_config_setup_phase(None);
 
@@ -688,10 +701,16 @@ fn distribute_fees_percentage_under_limit() {
     let mut aggregated_hash: ManagedBuffer<StaticApi> = ManagedBuffer::new();
     aggregated_hash.append(&pair_hash_byte_array);
     let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&aggregated_hash.to_vec()));
+    let bitmap = ManagedBuffer::new_from_bytes(&[1]);
+    let signature = ManagedBuffer::new();
+    let epoch = 0;
 
     state.common_setup.register_operation(
         OWNER_ADDRESS,
+        signature,
         &hash_of_hashes,
+        bitmap,
+        epoch,
         MultiValueEncoded::from_iter(vec![pair_hash_byte_array]),
     );
 
@@ -719,13 +738,9 @@ fn distribute_fees() {
         .common_setup
         .deploy_chain_config(OptionalValue::None, None);
 
-    let genesis_validator = ManagedBuffer::from("genesis_validator");
-    state.common_setup.register_as_validator(
-        &genesis_validator,
-        &MultiEgldOrEsdtPayment::new(),
-        None,
-        Some("register"),
-    );
+    state
+        .common_setup
+        .register(&BLSKey::random(), &MultiEgldOrEsdtPayment::new(), None);
     state.common_setup.complete_chain_config_setup_phase(None);
 
     let fee_per_transfer = BigUint::from(100u32);
@@ -773,10 +788,16 @@ fn distribute_fees() {
     let mut aggregated_hash: ManagedBuffer<StaticApi> = ManagedBuffer::new();
     aggregated_hash.append(&pair_hash_byte_array);
     let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&aggregated_hash.to_vec()));
+    let bitmap = ManagedBuffer::new_from_bytes(&[1]);
+    let signature = ManagedBuffer::new();
+    let epoch = 0;
 
     state.common_setup.register_operation(
         OWNER_ADDRESS,
+        signature,
         &hash_of_hashes,
+        bitmap,
+        epoch,
         MultiValueEncoded::from_iter(vec![pair_hash_byte_array]),
     );
 

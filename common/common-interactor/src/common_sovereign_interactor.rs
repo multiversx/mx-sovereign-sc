@@ -273,7 +273,7 @@ pub trait CommonInteractorTrait {
         Bech32Address::from(&new_address)
     }
 
-    async fn register_as_validator(
+    async fn register(
         &mut self,
         bls_key: ManagedBuffer<StaticApi>,
         payment: MultiEgldOrEsdtPayment<StaticApi>,

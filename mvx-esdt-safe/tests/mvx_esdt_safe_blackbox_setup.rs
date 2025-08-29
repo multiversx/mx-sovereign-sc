@@ -1,8 +1,9 @@
+use common_test_setup::base_setup::helpers::BLSKey;
 use common_test_setup::base_setup::init::{AccountSetup, BaseSetup};
 use common_test_setup::constants::{
     ESDT_SAFE_ADDRESS, FEE_MARKET_ADDRESS, FEE_TOKEN, FIRST_TEST_TOKEN, HEADER_VERIFIER_ADDRESS,
     MVX_ESDT_SAFE_CODE_PATH, NATIVE_TEST_TOKEN, ONE_HUNDRED_MILLION, OWNER_ADDRESS, OWNER_BALANCE,
-    REGISTER_EVENT, SECOND_TEST_TOKEN, SOVEREIGN_TOKEN_PREFIX, USER_ADDRESS,
+    SECOND_TEST_TOKEN, SOVEREIGN_TOKEN_PREFIX, USER_ADDRESS,
 };
 use cross_chain::storage::CrossChainStorage;
 use multiversx_sc::types::{MultiEgldOrEsdtPayment, ReturnsHandledOrError};
@@ -418,13 +419,8 @@ impl MvxEsdtSafeTestState {
         self.deploy_contract_with_roles(None);
         self.common_setup
             .deploy_chain_config(OptionalValue::None, None);
-        let genesis_validator = ManagedBuffer::from("genesis_validator");
-        self.common_setup.register(
-            &genesis_validator,
-            &MultiEgldOrEsdtPayment::new(),
-            None,
-            Some(REGISTER_EVENT),
-        );
+        self.common_setup
+            .register(&BLSKey::random(), &MultiEgldOrEsdtPayment::new(), None);
         self.common_setup.complete_chain_config_setup_phase(None);
 
         self.common_setup

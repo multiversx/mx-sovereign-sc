@@ -12,6 +12,7 @@ use structs::forge::ScArray;
 use common_interactor::interactor_config::Config;
 use common_interactor::interactor_state::State;
 
+use common_test_setup::base_setup::helpers::BLSKey;
 use common_test_setup::constants::{
     INTERACTOR_WORKING_DIR, MVX_ESDT_SAFE_CODE_PATH, ONE_THOUSAND_TOKENS,
 };
@@ -198,10 +199,9 @@ impl MvxEsdtSafeInteract {
         self.state()
             .set_chain_config_sc_address(chain_config_address);
 
-        let genesis_validator = ManagedBuffer::from("genesis_validator");
         let chain_config_address = self.state.current_chain_config_sc_address();
-        self.register_as_validator(
-            genesis_validator,
+        self.register(
+            BLSKey::random(),
             MultiEgldOrEsdtPayment::new(),
             chain_config_address.clone(),
         )

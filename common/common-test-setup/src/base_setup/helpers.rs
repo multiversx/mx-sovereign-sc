@@ -1,3 +1,7 @@
+use rand::RngCore;
+use rand_core::OsRng;
+
+use multiversx_sc_scenario::imports::ManagedTypeApi;
 use multiversx_sc_scenario::{
     api::StaticApi,
     imports::{
@@ -10,6 +14,7 @@ use multiversx_sc_scenario::{
 use structs::{
     forge::{ContractInfo, ScArray},
     operation::Operation,
+    BLS_KEY_BYTE_LENGTH,
 };
 
 use crate::{
@@ -24,12 +29,7 @@ impl BaseSetup {
     // TODO: add payment
     pub fn register_multiple_validators(&mut self, new_validators: Vec<ManagedBuffer<StaticApi>>) {
         for new_validator in new_validators {
-            self.register_as_validator(
-                &new_validator,
-                &MultiEgldOrEsdtPayment::new(),
-                None,
-                Some("register"),
-            );
+            self.register(&new_validator, &MultiEgldOrEsdtPayment::new(), None);
         }
     }
 
@@ -79,5 +79,16 @@ impl BaseSetup {
             ScArray::FeeMarket => FEE_MARKET_ADDRESS,
             _ => TestSCAddress::new("ERROR"),
         }
+    }
+}
+
+#[derive(Debug, PartialEq, Clone, Copy)]
+pub struct BLSKey([u8; BLS_KEY_BYTE_LENGTH]);
+
+impl BLSKey {
+    pub fn random<M: ManagedTypeApi>() -> ManagedBuffer<M> {
+        let mut bytes = [0u8; BLS_KEY_BYTE_LENGTH];
+        OsRng.fill_bytes(&mut bytes);
+        ManagedBuffer::new_from_bytes(&bytes)
     }
 }

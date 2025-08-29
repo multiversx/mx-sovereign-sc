@@ -3,8 +3,6 @@
 use multiversx_sc::imports::*;
 use structs::configs::SovereignConfig;
 
-use crate::config_utils::{DISABLED, ENABLED};
-
 multiversx_sc::imports!();
 
 pub mod config_utils;
@@ -35,7 +33,6 @@ pub trait ChainConfigContract:
         };
 
         self.sovereign_config().set(new_config.clone());
-        self.registration_status().set(ENABLED);
     }
 
     #[upgrade]
@@ -49,7 +46,6 @@ pub trait ChainConfigContract:
         }
         self.require_validator_set_valid(self.bls_keys_map().len());
 
-        self.registration_status().set(DISABLED);
         self.complete_genesis_event();
         self.setup_phase_complete().set(true);
     }

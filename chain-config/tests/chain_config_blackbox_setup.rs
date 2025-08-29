@@ -6,11 +6,9 @@ use common_test_setup::{
     },
 };
 use multiversx_sc::types::{
-    BigUint, ManagedBuffer, MultiValueEncoded, ReturnsHandledOrError, ReturnsResult, TestAddress,
+    BigUint, ManagedBuffer, ReturnsHandledOrError, ReturnsResult, TestAddress,
 };
-use multiversx_sc_scenario::{
-    api::StaticApi, multiversx_chain_vm::crypto_functions::sha256, ReturnsLogs, ScenarioTxRun,
-};
+use multiversx_sc_scenario::{api::StaticApi, ReturnsLogs, ScenarioTxRun};
 use proxies::chain_config_proxy::ChainConfigContractProxy;
 use structs::configs::SovereignConfig;
 
@@ -115,42 +113,6 @@ impl ChainConfigTestState {
             .assert_expected_log(logs, expected_custom_log, None);
     }
 
-    pub fn unregister(
-        &mut self,
-        bls_key: &ManagedBuffer<StaticApi>,
-        expect_error: Option<&str>,
-        expected_custom_log: Option<&str>,
-    ) {
-        let (result, logs) = self
-            .common_setup
-            .world
-            .tx()
-            .from(OWNER_ADDRESS)
-            .to(CHAIN_CONFIG_ADDRESS)
-            .typed(ChainConfigContractProxy)
-            .unregister(bls_key)
-            .returns(ReturnsHandledOrError::new())
-            .returns(ReturnsLogs)
-            .run();
-
-        self.common_setup
-            .assert_expected_error_message(result, expect_error);
-
-        self.common_setup
-            .assert_expected_log(logs, expected_custom_log, None);
-    }
-
-    pub fn get_bls_key_id(&mut self, bls_key: &ManagedBuffer<StaticApi>) -> BigUint<StaticApi> {
-        self.common_setup
-            .world
-            .query()
-            .to(CHAIN_CONFIG_ADDRESS)
-            .typed(ChainConfigContractProxy)
-            .bls_key_to_id_mapper(bls_key)
-            .returns(ReturnsResult)
-            .run()
-    }
-
     pub fn get_bls_key_by_id(&mut self, id: &BigUint<StaticApi>) -> ManagedBuffer<StaticApi> {
         let (_, bls_key) = self
             .common_setup
@@ -171,25 +133,5 @@ impl ChainConfigTestState {
             .into_tuple();
 
         bls_key
-    }
-
-    pub fn register_and_update_registration_status(&mut self, registration_status: u8) {
-        let new_status_hash_byte_array = sha256(&[registration_status]);
-        let new_status_hash = ManagedBuffer::new_from_bytes(&new_status_hash_byte_array);
-        let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&new_status_hash_byte_array));
-
-        self.common_setup.register_operation(
-            OWNER_ADDRESS,
-            &hash_of_hashes,
-            MultiValueEncoded::from_iter(vec![new_status_hash]),
-        );
-
-        self.common_setup.update_registration_status(
-            &hash_of_hashes,
-            1,
-            None,
-            Some("registrationStatusUpdate"),
-            None,
-        );
     }
 }

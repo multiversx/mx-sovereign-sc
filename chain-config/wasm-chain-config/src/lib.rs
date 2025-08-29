@@ -6,9 +6,9 @@
 
 // Init:                                 1
 // Upgrade:                              1
-// Endpoints:                           11
+// Endpoints:                           12
 // Async Callback (empty):               1
-// Total number of exported functions:  14
+// Total number of exported functions:  15
 
 #![no_std]
 
@@ -22,7 +22,9 @@ multiversx_sc_wasm_adapter::endpoints! {
         upgrade => upgrade
         completeSetupPhase => complete_setup_phase
         register => register
+        registerValidator => register_validator
         unregister => unregister
+        unregisterValidator => unregister_validator
         sovereignConfig => sovereign_config
         blsKeyToId => bls_key_to_id_mapper
         validator_info => validator_info
@@ -30,7 +32,6 @@ multiversx_sc_wasm_adapter::endpoints! {
         wasPreviouslySlashed => was_previously_slashed
         updateSovereignConfigSetupPhase => update_sovereign_config_during_setup_phase
         updateSovereignConfig => update_sovereign_config
-        updateRegistrationStatus => update_registration_status
     )
 }
 
