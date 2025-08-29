@@ -1,13 +1,13 @@
 use common_interactor::common_sovereign_interactor::CommonInteractorTrait;
 use common_interactor::interactor_config::Config;
 use common_test_setup::base_setup::init::RegisterTokenArgs;
+use common_test_setup::base_setup::helpers::BLSKey;
 use common_test_setup::constants::{
     CROWD_TOKEN_ID, DEPOSIT_EVENT, FIRST_TEST_TOKEN, ISSUE_COST, MVX_TO_SOV_TOKEN_STORAGE_KEY,
     NATIVE_TOKEN_STORAGE_KEY, ONE_HUNDRED_TOKENS, ONE_THOUSAND_TOKENS,
     OPERATION_HASH_STATUS_STORAGE_KEY, SC_CALL_EVENT, SOV_TOKEN, SOV_TO_MVX_TOKEN_STORAGE_KEY,
     TEN_TOKENS, TOKEN_TICKER, WRONG_ENDPOINT_NAME,
 };
-use common_test_setup::base_setup::helpers::BLSKey;
 use cross_chain::MAX_GAS_PER_TRANSACTION;
 use error_messages::{
     BANNED_ENDPOINT_NAME, CANNOT_REGISTER_TOKEN, DEPOSIT_OVER_MAX_AMOUNT, ERR_EMPTY_PAYMENTS,
