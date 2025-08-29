@@ -1530,11 +1530,11 @@ async fn test_execute_operation_with_native_token_success() {
     let payment =
         OperationEsdtPayment::new(chain_interactor.state.get_first_token_id(), 0, token_data);
     let mut payment_vec = PaymentsVec::new();
-    payment_vec.push(EsdtTokenPayment {
-        token_identifier: chain_interactor.state.get_first_token_id(),
-        token_nonce: 0,
-        amount: BigUint::from(TEN_TOKENS),
-    });
+    payment_vec.push(EgldOrEsdtTokenPayment::new(
+        EgldOrEsdtTokenIdentifier::esdt(chain_interactor.state.get_first_token_id()),
+        0,
+        BigUint::from(TEN_TOKENS),
+    ));
 
     let gas_limit = 90_000_000u64;
     let function = ManagedBuffer::<StaticApi>::from("hello");
@@ -1718,11 +1718,11 @@ async fn test_execute_operation_success_no_fee() {
     let payment =
         OperationEsdtPayment::new(chain_interactor.state.get_first_token_id(), 0, token_data);
     let mut payment_vec = PaymentsVec::new();
-    payment_vec.push(EsdtTokenPayment {
-        token_identifier: chain_interactor.state.get_first_token_id(),
-        token_nonce: 0,
-        amount: BigUint::from(TEN_TOKENS),
-    });
+    payment_vec.push(EgldOrEsdtTokenPayment::new(
+        EgldOrEsdtTokenIdentifier::esdt(chain_interactor.state.get_first_token_id()),
+        0,
+        BigUint::from(TEN_TOKENS),
+    ));
 
     let gas_limit = 90_000_000u64;
     let function = ManagedBuffer::<StaticApi>::from("hello");

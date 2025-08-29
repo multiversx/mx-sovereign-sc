@@ -24,7 +24,7 @@ pub trait DepositModule:
 
     fn process_payment(
         &self,
-        payment: &EsdtTokenPayment<Self::Api>,
+        payment: &EgldOrEsdtTokenPayment<Self::Api>,
     ) -> EventPaymentTuple<Self::Api> {
         let current_sc_address = &self.blockchain().get_sc_address();
         self.burn_sovereign_token(payment);
