@@ -98,11 +98,27 @@ where
         Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
     >(
         self,
-        new_bls_key: Arg0,
+        bls_key: Arg0,
     ) -> TxTypedCall<Env, From, To, (), Gas, ()> {
         self.wrapped_tx
             .raw_call("register")
-            .argument(&new_bls_key)
+            .argument(&bls_key)
+            .original_result()
+    }
+
+    pub fn register_validator<
+        Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
+        Arg1: ProxyArg<structs::ValidatorData<Env::Api>>,
+    >(
+        self,
+        hash_of_hashes: Arg0,
+        validator_data: Arg1,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("registerValidator")
+            .argument(&hash_of_hashes)
+            .argument(&validator_data)
             .original_result()
     }
 
@@ -116,6 +132,22 @@ where
             .payment(NotPayable)
             .raw_call("unregister")
             .argument(&bls_key)
+            .original_result()
+    }
+
+    pub fn unregister_validator<
+        Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
+        Arg1: ProxyArg<structs::ValidatorData<Env::Api>>,
+    >(
+        self,
+        hash_of_hashes: Arg0,
+        validator_data: Arg1,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("unregisterValidator")
+            .argument(&hash_of_hashes)
+            .argument(&validator_data)
             .original_result()
     }
 
@@ -202,22 +234,6 @@ where
             .raw_call("updateSovereignConfig")
             .argument(&hash_of_hashes)
             .argument(&new_config)
-            .original_result()
-    }
-
-    pub fn update_registration_status<
-        Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
-        Arg1: ProxyArg<u8>,
-    >(
-        self,
-        hash_of_hashes: Arg0,
-        registration_status: Arg1,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("updateRegistrationStatus")
-            .argument(&hash_of_hashes)
-            .argument(&registration_status)
             .original_result()
     }
 }

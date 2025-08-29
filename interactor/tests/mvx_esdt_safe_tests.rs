@@ -1,6 +1,7 @@
 use common_interactor::common_sovereign_interactor::CommonInteractorTrait;
 use common_interactor::interactor_config::Config;
 use common_test_setup::base_setup::init::RegisterTokenArgs;
+use common_test_setup::base_setup::helpers::BLSKey;
 use common_test_setup::constants::{
     CROWD_TOKEN_ID, DEPOSIT_EVENT, FIRST_TEST_TOKEN, ISSUE_COST, MVX_TO_SOV_TOKEN_STORAGE_KEY,
     NATIVE_TOKEN_STORAGE_KEY, ONE_HUNDRED_TOKENS, ONE_THOUSAND_TOKENS,
@@ -1552,12 +1553,11 @@ async fn test_execute_operation_with_native_token_success() {
     let chain_config_address = chain_interactor
         .deploy_chain_config(OptionalValue::None)
         .await;
-    let genesis_validator = ManagedBuffer::from("genesis_validator");
     chain_interactor
         .state()
         .set_chain_config_sc_address(chain_config_address.clone());
     chain_interactor
-        .register_as_validator(genesis_validator, ManagedVec::new(), chain_config_address)
+        .register(BLSKey::random(), ManagedVec::new(), chain_config_address)
         .await;
     chain_interactor.complete_chain_config_setup_phase().await;
 

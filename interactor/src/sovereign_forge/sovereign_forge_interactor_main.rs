@@ -7,6 +7,7 @@ use common_interactor::{
 use common_test_setup::constants::{
     INTERACTOR_WORKING_DIR, ONE_THOUSAND_TOKENS, SOVEREIGN_FORGE_CODE_PATH,
 };
+use common_test_setup::base_setup::helpers::BLSKey;
 use multiversx_sc_snippets::imports::*;
 use proxies::sovereign_forge_proxy::SovereignForgeProxy;
 use structs::configs::{EsdtSafeConfig, SovereignConfig};
@@ -178,8 +179,8 @@ impl SovereignForgeInteract {
         self.deploy_phase_one(deploy_cost, Some(chain_id.into()), optional_sov_config)
             .await;
 
-        self.register_as_validator(
-            ManagedBuffer::from("genesis_validator"),
+        self.register(
+            BLSKey::random(),
             MultiEgldOrEsdtPayment::new(),
             chain_config_address,
         )

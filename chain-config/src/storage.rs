@@ -1,22 +1,17 @@
-use error_messages::{
-    NOT_ENOUGH_VALIDATORS, REGISTRATION_DISABLED, VALIDATOR_ALREADY_REGISTERED,
-    VALIDATOR_NOT_REGISTERED, VALIDATOR_RANGE_EXCEEDED,
-};
-use structs::{configs::SovereignConfig, ValidatorInfo};
-
-use crate::config_utils::ENABLED;
+use error_messages::{INVALID_BLS_KEY_PROVIDED, NOT_ENOUGH_VALIDATORS, VALIDATOR_ALREADY_REGISTERED, VALIDATOR_NOT_REGISTERED, VALIDATOR_RANGE_EXCEEDED};
+use structs::{configs::SovereignConfig, ValidatorInfo, BLS_KEY_BYTE_LENGTH};
 
 multiversx_sc::imports!();
 
 #[multiversx_sc::module]
 pub trait ChainConfigStorageModule {
-    fn require_registration_enabled(&self) {
+    fn require_valid_bls_key(&self, bls_key: &ManagedBuffer) {
         require!(
-            self.registration_status().get() == ENABLED,
-            REGISTRATION_DISABLED
+            bls_key.len() == BLS_KEY_BYTE_LENGTH,
+            INVALID_BLS_KEY_PROVIDED
         );
     }
-
+    
     fn require_validator_not_registered(&self, bls_key: &ManagedBuffer) {
         require!(
             self.bls_key_to_id_mapper(bls_key).is_empty(),
@@ -75,9 +70,6 @@ pub trait ChainConfigStorageModule {
 
     #[storage_mapper("lastBlsKeyId")]
     fn last_bls_key_id(&self) -> SingleValueMapper<BigUint<Self::Api>>;
-
-    #[storage_mapper("registration_status")]
-    fn registration_status(&self) -> SingleValueMapper<u8>;
 
     #[view(wasPreviouslySlashed)]
     #[storage_mapper("wasPreviouslySlashed")]
