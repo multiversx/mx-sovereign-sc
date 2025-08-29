@@ -81,23 +81,6 @@ impl BaseSetup {
             );
     }
 
-    // pub fn check_bls_key_for_epoch_in_header_verifier(
-    //     &mut self,
-    //     epoch: u64,
-    //     bls_keys: Vec<&str>,
-    // ) {
-    //     self.world.query().to(HEADER_VERIFIER_ADDRESS).whitebox(
-    //         header_verifier::contract_obj,
-    //         |sc| {
-    //             for bls_key in bls_keys {
-    //                 assert!(sc
-    //                     .bls_pub_keys(epoch)
-    //                     .contains(&ManagedBuffer::from(bls_key)));
-    //             }
-    //         },
-    //     )
-    // }
-
     pub fn check_bls_key_for_epoch_in_header_verifier(
         &mut self,
         epoch: u64,
@@ -105,8 +88,6 @@ impl BaseSetup {
     ) {
         // Convert ManagedVec<...> -> Vec<String> (hex encoded)
         let bls_keys_hex: Vec<String> = registered_bls_keys
-            // .into_vec()
-            // .into_iter()
             .iter()
             .map(|buffer| {
                 let bytes = buffer.to_boxed_bytes();

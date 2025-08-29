@@ -40,7 +40,7 @@ pub trait ChainConfigUtilsModule: storage::ChainConfigStorageModule {
     ) {
         let stake = self.get_total_stake(validator_info);
         if stake.is_empty() {
-            return
+            return;
         }
 
         self.tx()
