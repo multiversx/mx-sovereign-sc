@@ -150,7 +150,7 @@ pub trait ExecuteModule:
     }
 
     fn esdt_create_and_update_mapper(
-        self,
+        &self,
         mvx_token_id: &TokenIdentifier<Self::Api>,
         operation_token: &OperationEsdtPayment<Self::Api>,
     ) -> u64 {
@@ -217,7 +217,7 @@ pub trait ExecuteModule:
         operation_tuple: &OperationTuple<Self::Api>,
         tokens_list: &ManagedVec<OperationEsdtPayment<Self::Api>>,
     ) {
-        let mapped_tokens: ManagedVec<Self::Api, EsdtTokenPayment<Self::Api>> = tokens_list
+        let mapped_tokens: ManagedVec<Self::Api, EgldOrEsdtTokenPayment<Self::Api>> = tokens_list
             .iter()
             .map(|token| token.clone().into())
             .collect();
@@ -242,7 +242,7 @@ pub trait ExecuteModule:
             None => {
                 self.tx()
                     .to(&operation_tuple.operation.to)
-                    .multi_esdt(mapped_tokens)
+                    .payment(mapped_tokens)
                     .gas(ESDT_TRANSACTION_GAS)
                     .callback(
                         <Self as ExecuteModule>::callbacks(self)

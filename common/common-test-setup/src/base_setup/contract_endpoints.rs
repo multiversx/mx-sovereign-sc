@@ -21,12 +21,12 @@ impl BaseSetup {
     pub fn register_operation(
         &mut self,
         caller: TestAddress,
-        signature: ManagedBuffer<StaticApi>,
         hash_of_hashes: &ManagedBuffer<StaticApi>,
-        bls_keys_bitmap: ManagedBuffer<StaticApi>,
-        epoch: u64,
         operations_hashes: MultiValueEncoded<StaticApi, ManagedBuffer<StaticApi>>,
     ) {
+        let signature = ManagedBuffer::new();
+        let bls_keys_bitmap = ManagedBuffer::new_from_bytes(&[1]);
+        let epoch = 0u64;
         self.world
             .tx()
             .from(caller)
@@ -123,6 +123,30 @@ impl BaseSetup {
             .run();
 
         self.assert_expected_error_message(response, expected_error_message);
+        self.assert_expected_log(logs, expected_custom_log, None);
+    }
+
+    pub fn register(
+        &mut self,
+        bls_key: &ManagedBuffer<StaticApi>,
+        payment: &MultiEgldOrEsdtPayment<StaticApi>,
+        expect_error: Option<&str>,
+        expected_custom_log: Option<&str>,
+    ) {
+        let (result, logs) = self
+            .world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .to(CHAIN_CONFIG_ADDRESS)
+            .typed(ChainConfigContractProxy)
+            .register(bls_key)
+            .returns(ReturnsHandledOrError::new())
+            .returns(ReturnsLogs)
+            .payment(payment)
+            .run();
+
+        self.assert_expected_error_message(result, expect_error);
+
         self.assert_expected_log(logs, expected_custom_log, None);
     }
 }

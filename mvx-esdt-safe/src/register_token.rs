@@ -1,7 +1,8 @@
 use cross_chain::REGISTER_GAS;
 use error_messages::{
     ERROR_AT_ENCODING, ESDT_SAFE_STILL_PAUSED, INVALID_PREFIX, INVALID_TYPE,
-    NATIVE_TOKEN_ALREADY_REGISTERED, SETUP_PHASE_NOT_COMPLETED, TOKEN_ALREADY_REGISTERED,
+    NATIVE_TOKEN_ALREADY_REGISTERED, SETUP_PHASE_ALREADY_COMPLETED, SETUP_PHASE_NOT_COMPLETED,
+    TOKEN_ALREADY_REGISTERED,
 };
 use multiversx_sc::types::EsdtTokenType;
 use structs::{
@@ -92,6 +93,11 @@ pub trait RegisterTokenModule:
     #[only_owner]
     #[endpoint(registerNativeToken)]
     fn register_native_token(&self, token_ticker: ManagedBuffer, token_name: ManagedBuffer) {
+        require!(
+            !self.is_setup_phase_complete(),
+            SETUP_PHASE_ALREADY_COMPLETED
+        );
+
         require!(
             self.native_token().is_empty(),
             NATIVE_TOKEN_ALREADY_REGISTERED

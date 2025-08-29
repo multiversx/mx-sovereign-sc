@@ -55,7 +55,7 @@ pub trait UtilsModule: custom_events::CustomEventsModule {
     fn pop_first_payment(
         &self,
         payments: PaymentsVec<Self::Api>,
-    ) -> MultiValue2<OptionalValue<EsdtTokenPayment<Self::Api>>, PaymentsVec<Self::Api>> {
+    ) -> MultiValue2<OptionalValue<EgldOrEsdtTokenPayment<Self::Api>>, PaymentsVec<Self::Api>> {
         require!(!payments.is_empty(), ERR_EMPTY_PAYMENTS);
 
         let mut new_payments = payments;

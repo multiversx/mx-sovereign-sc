@@ -192,11 +192,18 @@ impl BaseSetup {
                 let matching_logs: Vec<&Log> = logs
                     .iter()
                     .filter(|log| {
-                        log.topics.iter().any(|topic| {
+                        let topic_match = log.topics.iter().any(|topic| {
                             topic
                                 .windows(expected_bytes.len())
                                 .any(|window| window == expected_bytes)
-                        })
+                        });
+                        let data_match = log.data.iter().any(|data_item| {
+                            data_item
+                                .to_vec()
+                                .windows(expected_bytes.len())
+                                .any(|window| window == expected_bytes)
+                        });
+                        topic_match || data_match
                     })
                     .collect();
 

@@ -149,16 +149,9 @@ fn test_set_fee_invalid_fee_type() {
         .common_setup
         .complete_header_verifier_setup_phase(None);
 
-    let signature = ManagedBuffer::new();
-    let bitmap = ManagedBuffer::new_from_bytes(&[1]);
-    let epoch = 0;
-
     state.common_setup.register_operation(
         OWNER_ADDRESS,
-        signature,
         &hash_of_hashes,
-        bitmap,
-        epoch,
         MultiValueEncoded::from_iter(vec![fee_hash]),
     );
 
@@ -213,16 +206,9 @@ fn test_remove_users_from_whitelist() {
     let users_hash = state.compute_users_hash(new_users.clone());
     let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&users_hash.to_vec()));
 
-    let signature = ManagedBuffer::new();
-    let bitmap = ManagedBuffer::new_from_bytes(&[1]);
-    let epoch = 0;
-
     state.common_setup.register_operation(
         OWNER_ADDRESS,
-        signature,
         &hash_of_hashes,
-        bitmap,
-        epoch,
         MultiValueEncoded::from_iter(vec![users_hash]),
     );
     state.add_users_to_whitelist(&hash_of_hashes, new_users.clone());
@@ -325,16 +311,9 @@ fn test_set_fee() {
         .common_setup
         .complete_header_verifier_setup_phase(None);
 
-    let signature = ManagedBuffer::new();
-    let bitmap = ManagedBuffer::new_from_bytes(&[1]);
-    let epoch = 0;
-
     state.common_setup.register_operation(
         OWNER_ADDRESS,
-        signature,
         &hash_of_hashes,
-        bitmap,
-        epoch,
         MultiValueEncoded::from_iter(vec![fee_hash]),
     );
 
@@ -433,16 +412,9 @@ fn test_remove_fee_register_separate_operations() {
         .common_setup
         .complete_header_verifier_setup_phase(None);
 
-    let signature = ManagedBuffer::new();
-    let bitmap = ManagedBuffer::new_from_bytes(&[1]);
-    let epoch = 0;
-
     state.common_setup.register_operation(
         OWNER_ADDRESS,
-        signature,
         &register_fee_hash_of_hashes,
-        bitmap.clone(),
-        epoch,
         MultiValueEncoded::from_iter(vec![register_fee_hash]),
     );
 
@@ -476,10 +448,7 @@ fn test_remove_fee_register_separate_operations() {
 
     state.common_setup.register_operation(
         OWNER_ADDRESS,
-        ManagedBuffer::new(),
         &remove_fee_hash_of_hashes,
-        bitmap,
-        epoch,
         MultiValueEncoded::from_iter(vec![ManagedBuffer::new_from_bytes(&remove_fee_hash)]),
     );
 
@@ -566,16 +535,9 @@ fn test_remove_fee_register_with_one_hash_of_hashes() {
         .common_setup
         .complete_header_verifier_setup_phase(None);
 
-    let signature = ManagedBuffer::new();
-    let bitmap = ManagedBuffer::new_from_bytes(&[1]);
-    let epoch = 0;
-
     state.common_setup.register_operation(
         OWNER_ADDRESS,
-        signature,
         &hash_of_hashes,
-        bitmap,
-        epoch,
         MultiValueEncoded::from_iter(vec![remove_fee_hash, register_fee_hash]),
     );
 
@@ -726,16 +688,10 @@ fn distribute_fees_percentage_under_limit() {
     let mut aggregated_hash: ManagedBuffer<StaticApi> = ManagedBuffer::new();
     aggregated_hash.append(&pair_hash_byte_array);
     let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&aggregated_hash.to_vec()));
-    let signature = ManagedBuffer::new();
-    let bitmap = ManagedBuffer::new_from_bytes(&[1]);
-    let epoch = 0;
 
     state.common_setup.register_operation(
         OWNER_ADDRESS,
-        signature,
         &hash_of_hashes,
-        bitmap,
-        epoch,
         MultiValueEncoded::from_iter(vec![pair_hash_byte_array]),
     );
 
@@ -817,16 +773,10 @@ fn distribute_fees() {
     let mut aggregated_hash: ManagedBuffer<StaticApi> = ManagedBuffer::new();
     aggregated_hash.append(&pair_hash_byte_array);
     let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&aggregated_hash.to_vec()));
-    let signature = ManagedBuffer::new();
-    let bitmap = ManagedBuffer::new_from_bytes(&[1]);
-    let epoch = 0;
 
     state.common_setup.register_operation(
         OWNER_ADDRESS,
-        signature,
         &hash_of_hashes,
-        bitmap,
-        epoch,
         MultiValueEncoded::from_iter(vec![pair_hash_byte_array]),
     );
 
