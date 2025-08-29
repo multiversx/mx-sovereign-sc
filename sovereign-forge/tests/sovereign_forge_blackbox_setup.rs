@@ -6,10 +6,10 @@ use common_test_setup::{
     },
 };
 use multiversx_sc::{
-    imports::OptionalValue,
+    imports::{Bech32Address, OptionalValue},
     types::{
         BigUint, ManagedAddress, ManagedVec, MultiValueEncoded, ReturnsHandledOrError,
-        ReturnsResultUnmanaged, TestSCAddress, TestTokenIdentifier,
+        ReturnsResult, ReturnsResultUnmanaged, TestSCAddress, TestTokenIdentifier,
     },
 };
 use multiversx_sc_scenario::{api::StaticApi, ScenarioTxRun, ScenarioTxWhitebox};
@@ -279,5 +279,26 @@ impl SovereignForgeTestState {
             .run();
 
         assert_eq!(response, expected_result);
+    }
+
+    pub fn retrieve_deployed_mvx_esdt_safe_address(
+        &mut self,
+        preferred_chain_id: ChainId<StaticApi>,
+    ) -> Bech32Address {
+        let sc_addresses = self
+            .common_setup
+            .world
+            .query()
+            .to(SOVEREIGN_FORGE_SC_ADDRESS)
+            .typed(SovereignForgeProxy)
+            .sovereign_deployed_contracts(preferred_chain_id)
+            .returns(ReturnsResult)
+            .run();
+
+        for contract in sc_addresses {
+            let address = Bech32Address::from(contract.address.to_address());
+            if contract.id == ScArray::ESDTSafe { return address }
+        }
+        Bech32Address::zero_default_hrp()
     }
 }

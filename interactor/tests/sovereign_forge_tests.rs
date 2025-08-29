@@ -9,8 +9,8 @@ use header_verifier::header_utils::OperationHashStatus;
 use multiversx_sc::{
     imports::{MultiValue3, OptionalValue},
     types::{
-        BigUint, EsdtTokenData, EsdtTokenPayment, ManagedAddress, ManagedBuffer, ManagedVec,
-        MultiValueEncoded,
+        BigUint, EgldOrEsdtTokenIdentifier, EgldOrEsdtTokenPayment, EsdtTokenData,
+        EsdtTokenPayment, ManagedAddress, ManagedBuffer, ManagedVec, MultiValueEncoded,
     },
 };
 use multiversx_sc_snippets::{
@@ -165,11 +165,13 @@ async fn test_complete_flow_execute_operation_with_transfer_data_success_no_fee(
     let payment =
         OperationEsdtPayment::new(chain_interactor.state.get_first_token_id(), 0, token_data);
     let mut payment_vec = PaymentsVec::new();
-    payment_vec.push(EsdtTokenPayment {
-        token_identifier: chain_interactor.state.get_first_token_id(),
-        token_nonce: 0,
-        amount: BigUint::from(TEN_TOKENS),
-    });
+    payment_vec.push(EgldOrEsdtTokenPayment::new(
+        EgldOrEsdtTokenIdentifier::from(
+            chain_interactor.state.get_first_token_id_string().as_str(),
+        ),
+        0,
+        BigUint::from(TEN_TOKENS),
+    ));
 
     let gas_limit = 90_000_000u64;
     let function = ManagedBuffer::<StaticApi>::from("hello");
@@ -344,18 +346,18 @@ async fn test_complete_flow_execute_operation_success_with_fee() {
     let payment =
         OperationEsdtPayment::new(chain_interactor.state.get_first_token_id(), 0, token_data);
     let mut payment_vec = PaymentsVec::new();
-    let fee_payment = EsdtTokenPayment::<StaticApi>::new(
-        chain_interactor.state.get_fee_token_id(),
+    let fee_payment = EgldOrEsdtTokenPayment::new(
+        EgldOrEsdtTokenIdentifier::esdt(chain_interactor.state.get_fee_token_id()),
         0,
         fee_amount.clone(),
     );
 
     payment_vec.push(fee_payment);
-    payment_vec.push(EsdtTokenPayment {
-        token_identifier: chain_interactor.state.get_first_token_id(),
-        token_nonce: 0,
-        amount: BigUint::from(TEN_TOKENS),
-    });
+    payment_vec.push(EgldOrEsdtTokenPayment::new(
+        EgldOrEsdtTokenIdentifier::esdt(chain_interactor.state.get_first_token_id()),
+        0,
+        BigUint::from(TEN_TOKENS),
+    ));
 
     chain_interactor
         .deploy_and_complete_setup_phase(

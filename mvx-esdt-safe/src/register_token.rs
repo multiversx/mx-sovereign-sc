@@ -1,5 +1,8 @@
 use cross_chain::REGISTER_GAS;
-use error_messages::{CANNOT_REGISTER_TOKEN, INVALID_TYPE, NATIVE_TOKEN_ALREADY_REGISTERED};
+use error_messages::{
+    CANNOT_REGISTER_TOKEN, INVALID_TYPE, NATIVE_TOKEN_ALREADY_REGISTERED,
+    SETUP_PHASE_ALREADY_COMPLETED,
+};
 use multiversx_sc::types::EsdtTokenType;
 use structs::{EsdtInfo, IssueEsdtArgs};
 multiversx_sc::imports!();
@@ -13,6 +16,7 @@ pub trait RegisterTokenModule:
     + cross_chain::execute_common::ExecuteCommonModule
     + custom_events::CustomEventsModule
     + multiversx_sc_modules::pause::PauseModule
+    + setup_phase::SetupPhaseModule
 {
     #[payable("EGLD")]
     #[endpoint(registerToken)]
@@ -46,6 +50,11 @@ pub trait RegisterTokenModule:
     #[only_owner]
     #[endpoint(registerNativeToken)]
     fn register_native_token(&self, token_ticker: ManagedBuffer, token_name: ManagedBuffer) {
+        require!(
+            !self.is_setup_phase_complete(),
+            SETUP_PHASE_ALREADY_COMPLETED
+        );
+
         require!(
             self.native_token().is_empty(),
             NATIVE_TOKEN_ALREADY_REGISTERED
