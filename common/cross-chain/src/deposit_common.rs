@@ -193,27 +193,28 @@ pub trait DepositCommonModule:
 
     fn burn_mainchain_token(
         &self,
-        payment: EgldOrEsdtTokenPayment<Self::Api>,
+        token_id: &TokenIdentifier,
+        token_nonce: u64,
+        amount: &BigUint,
         payment_token_type: &EsdtTokenType,
         sov_token_id: &TokenIdentifier<Self::Api>,
     ) -> u64 {
-        let token_identifier = payment.token_identifier.clone().unwrap_esdt();
         self.tx()
             .to(ToSelf)
             .typed(system_proxy::UserBuiltinProxy)
-            .esdt_local_burn(&token_identifier, payment.token_nonce, &payment.amount)
+            .esdt_local_burn(token_id, token_nonce, amount)
             .sync_call();
 
         let mut sov_token_nonce = 0;
 
-        if payment.token_nonce > 0 {
+        if token_nonce > 0 {
             sov_token_nonce = self
-                .multiversx_to_sovereign_esdt_info_mapper(&token_identifier, payment.token_nonce)
+                .multiversx_to_sovereign_esdt_info_mapper(token_id, token_nonce)
                 .get()
                 .token_nonce;
 
             if self.is_nft(payment_token_type) {
-                self.clear_mvx_to_sov_esdt_info_mapper(&token_identifier, payment.token_nonce);
+                self.clear_mvx_to_sov_esdt_info_mapper(token_id, token_nonce);
 
                 self.clear_sov_to_mvx_esdt_info_mapper(sov_token_id, sov_token_nonce);
             }

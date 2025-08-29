@@ -40,8 +40,13 @@ pub trait DepositModule:
         let token_mapper = self.multiversx_to_sovereign_token_id_mapper(&token_identifier);
         if !token_mapper.is_empty() || self.is_native_token(&token_identifier) {
             let sov_token_id = token_mapper.get();
-            let sov_token_nonce =
-                self.burn_mainchain_token(payment.clone(), &token_data.token_type, &sov_token_id);
+            let sov_token_nonce = self.burn_mainchain_token(
+                &token_identifier,
+                payment.token_nonce,
+                &payment.amount,
+                &token_data.token_type,
+                &sov_token_id,
+            );
             MultiValue3::from((sov_token_id, sov_token_nonce, token_data))
         } else {
             if self.is_fungible(&token_data.token_type)
@@ -51,7 +56,7 @@ pub trait DepositModule:
                     .to(ToSelf)
                     .typed(UserBuiltinProxy)
                     .esdt_local_burn(
-                        payment.token_identifier.clone().unwrap_esdt(),
+                        &token_identifier,
                         payment.token_nonce,
                         payment.amount.clone(),
                     )
