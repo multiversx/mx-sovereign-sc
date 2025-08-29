@@ -34,6 +34,7 @@ pub const SOVEREIGN_FORGE_CODE_PATH: MxscPath =
 pub const FEE_TOKEN: TestTokenIdentifier = TestTokenIdentifier::new("INTERNS-eaad15");
 pub const FIRST_TEST_TOKEN: TestTokenIdentifier = TestTokenIdentifier::new("GREEN-0e161c");
 pub const SECOND_TEST_TOKEN: TestTokenIdentifier = TestTokenIdentifier::new("LTST-4f849e");
+pub const NATIVE_TEST_TOKEN: TestTokenIdentifier = TestTokenIdentifier::new("NATIVE-123456");
 pub const SOV_TOKEN: TestTokenIdentifier = TestTokenIdentifier::new("sov-GREEN-0e161c");
 pub const TOKEN_TICKER: &str = "GREEN";
 pub const NFT_TOKEN_ID: TestTokenIdentifier = TestTokenIdentifier::new("NFT-123456");

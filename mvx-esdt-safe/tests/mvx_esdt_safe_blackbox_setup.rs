@@ -1,8 +1,8 @@
 use common_test_setup::base_setup::init::{AccountSetup, BaseSetup, RegisterTokenArgs};
 use common_test_setup::constants::{
     ESDT_SAFE_ADDRESS, FEE_MARKET_ADDRESS, FEE_TOKEN, FIRST_TEST_TOKEN, HEADER_VERIFIER_ADDRESS,
-    MVX_ESDT_SAFE_CODE_PATH, ONE_HUNDRED_MILLION, OWNER_ADDRESS, OWNER_BALANCE, SECOND_TEST_TOKEN,
-    USER_ADDRESS,
+    MVX_ESDT_SAFE_CODE_PATH, NATIVE_TEST_TOKEN, ONE_HUNDRED_MILLION, OWNER_ADDRESS, OWNER_BALANCE,
+    SECOND_TEST_TOKEN, USER_ADDRESS,
 };
 use cross_chain::storage::CrossChainStorage;
 use multiversx_sc::types::ReturnsHandledOrError;
@@ -131,7 +131,7 @@ impl MvxEsdtSafeTestState {
             .to(ESDT_SAFE_ADDRESS)
             .whitebox(mvx_esdt_safe::contract_obj, |sc| {
                 sc.native_token()
-                    .set(SECOND_TEST_TOKEN.to_token_identifier());
+                    .set(NATIVE_TEST_TOKEN.to_token_identifier());
             });
 
         self.common_setup.deploy_fee_market(fee, ESDT_SAFE_ADDRESS);

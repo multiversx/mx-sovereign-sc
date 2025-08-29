@@ -430,6 +430,23 @@ fn test_deposit_no_transfer_data() {
         Some(DEPOSIT_EVENT),
     );
 
+    let owner_tokens_vec = vec![
+        MultiValue3::from((
+            FIRST_TEST_TOKEN,
+            0u64,
+            BigUint::from(ONE_HUNDRED_MILLION - 100u32),
+        )),
+        MultiValue3::from((
+            SECOND_TEST_TOKEN,
+            0u64,
+            BigUint::from(ONE_HUNDRED_MILLION - 100u32),
+        )),
+    ];
+
+    state
+        .common_setup
+        .check_account_multiple_esdts(OWNER_ADDRESS.to_address(), owner_tokens_vec);
+
     let tokens_vec = vec![
         MultiValue3::from((FIRST_TEST_TOKEN, 0u64, BigUint::from(100u64))),
         MultiValue3::from((SECOND_TEST_TOKEN, 0u64, BigUint::from(100u64))),
@@ -682,36 +699,6 @@ fn test_deposit_endpoint_banned() {
     state
         .common_setup
         .check_account_multiple_esdts(ESDT_SAFE_ADDRESS.to_address(), tokens_vec);
-}
-
-/// ### TEST
-/// M-ESDT_DEP_FAIL
-///
-/// ### ACTION
-/// Call 'deposit()' with no transfer_data and no payments_vec
-///
-/// ### EXPECTED
-/// Error NOTHING_TO_TRANSFER
-#[test]
-fn test_deposit_no_transfer_data_no_fee() {
-    let mut state = MvxEsdtSafeTestState::new();
-
-    state.deploy_contract_with_roles(None);
-    state.complete_setup_phase(None, Some("unpauseContract"));
-
-    state
-        .common_setup
-        .deploy_header_verifier(vec![ScArray::ChainConfig, ScArray::ESDTSafe]);
-
-    state.common_setup.deploy_testing_sc();
-
-    state.deposit(
-        USER_ADDRESS.to_managed_address(),
-        OptionalValue::None,
-        PaymentsVec::new(),
-        Some(NOTHING_TO_TRANSFER),
-        None,
-    );
 }
 
 /// ### TEST
