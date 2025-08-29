@@ -1,8 +1,8 @@
 use multiversx_sc::{
     imports::OptionalValue,
     types::{
-        Address, BigUint, EsdtTokenPayment, ManagedAddress, ManagedBuffer, ManagedVec,
-        MultiValueEncoded, ReturnsHandledOrError, TestAddress, TestTokenIdentifier,
+        Address, BigUint, EsdtTokenPayment, ManagedBuffer, ManagedVec, MultiValueEncoded,
+        ReturnsHandledOrError, TestAddress, TestTokenIdentifier,
     },
 };
 use multiversx_sc_scenario::{api::StaticApi, ReturnsLogs, ScenarioTxRun};
@@ -16,12 +16,9 @@ use common_test_setup::{
     },
 };
 use proxies::fee_market_proxy::FeeMarketProxy;
-use structs::{
-    aliases::TxNonce,
-    fee::{
-        AddUsersToWhitelistOperation, DistributeFeesOperation, FeeStruct, FeeType,
-        RemoveUsersFromWhitelistOperation,
-    },
+use structs::fee::{
+    AddUsersToWhitelistOperation, DistributeFeesOperation, FeeStruct, FeeType,
+    RemoveUsersFromWhitelistOperation,
 };
 
 pub struct FeeMarketTestState {
@@ -298,8 +295,7 @@ impl FeeMarketTestState {
     pub fn remove_users_from_whitelist(
         &mut self,
         hash_of_hashes: &ManagedBuffer<StaticApi>,
-        users: Vec<ManagedAddress<StaticApi>>,
-        nonce: TxNonce,
+        operation: RemoveUsersFromWhitelistOperation<StaticApi>,
     ) {
         self.common_setup
             .world
@@ -307,13 +303,7 @@ impl FeeMarketTestState {
             .from(OWNER_ADDRESS)
             .to(FEE_MARKET_ADDRESS)
             .typed(FeeMarketProxy)
-            .remove_users_from_whitelist(
-                hash_of_hashes,
-                RemoveUsersFromWhitelistOperation {
-                    users: ManagedVec::from_iter(users),
-                    nonce,
-                },
-            )
+            .remove_users_from_whitelist(hash_of_hashes, operation)
             .run();
     }
 }

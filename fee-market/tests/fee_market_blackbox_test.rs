@@ -19,7 +19,7 @@ use multiversx_sc_scenario::{
 use structs::{
     fee::{
         AddUsersToWhitelistOperation, AddressPercentagePair, DistributeFeesOperation, FeeStruct,
-        FeeType,
+        FeeType, RemoveUsersFromWhitelistOperation,
     },
     forge::ScArray,
     generate_hash::GenerateHash,
@@ -213,13 +213,20 @@ fn test_remove_users_from_whitelist() {
         OWNER_ADDRESS.to_managed_address(),
     ];
 
-    let operation = AddUsersToWhitelistOperation {
+    let operation_one = AddUsersToWhitelistOperation {
         nonce: 1,
         users: ManagedVec::from_iter(new_users.clone()),
     };
+    let operation_two = RemoveUsersFromWhitelistOperation {
+        nonce: 2,
+        users: ManagedVec::from_iter(new_users.clone()),
+    };
 
-    let operation_hash = operation.generate_hash();
-    let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&operation_hash.to_vec()));
+    let operation_one_hash = operation_one.generate_hash();
+    let mut aggregated_hashes = operation_one_hash.clone();
+    let operation_two_hash = operation_two.generate_hash();
+    aggregated_hashes.append(&operation_two_hash);
+    let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&aggregated_hashes.to_vec()));
 
     let signature = ManagedBuffer::new();
     let bitmap = ManagedBuffer::new_from_bytes(&[1]);
@@ -231,15 +238,15 @@ fn test_remove_users_from_whitelist() {
         &hash_of_hashes,
         bitmap,
         epoch,
-        MultiValueEncoded::from_iter(vec![operation_hash]),
+        MultiValueEncoded::from_iter(vec![operation_one_hash, operation_two_hash]),
     );
-    state.add_users_to_whitelist(&hash_of_hashes, operation);
+    state.add_users_to_whitelist(&hash_of_hashes, operation_one);
 
     state
         .common_setup
         .query_user_fee_whitelist(Some(&new_users));
 
-    state.remove_users_from_whitelist(&hash_of_hashes, new_users.clone(), 1);
+    state.remove_users_from_whitelist(&hash_of_hashes, operation_two);
 
     state
         .common_setup

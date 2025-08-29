@@ -32,7 +32,6 @@ pub trait FeeWhitelistModule:
         operation: AddUsersToWhitelistOperation<Self::Api>,
     ) {
         let operation_hash = operation.generate_hash();
-        self.require_setup_complete_with_event(&hash_of_hashes, &operation_hash);
         if let Some(error_message) = self.validate_operation_hash(&operation_hash) {
             self.complete_operation(&hash_of_hashes, &operation_hash, Some(error_message));
             return;
@@ -47,7 +46,6 @@ pub trait FeeWhitelistModule:
             return;
         }
         self.lock_operation_hash_wrapper(&hash_of_hashes, &operation_hash);
-
         self.users_whitelist().extend(operation.users);
         self.complete_operation(&hash_of_hashes, &operation_hash, None);
     }
@@ -75,12 +73,10 @@ pub trait FeeWhitelistModule:
         operation: RemoveUsersFromWhitelistOperation<Self::Api>,
     ) {
         let operation_hash = operation.generate_hash();
-        self.require_setup_complete_with_event(&hash_of_hashes, &operation_hash);
         if let Some(error_message) = self.validate_operation_hash(&operation_hash) {
             self.complete_operation(&hash_of_hashes, &operation_hash, Some(error_message));
             return;
         }
-
         if !self.is_setup_phase_complete() {
             self.complete_operation(
                 &hash_of_hashes,
