@@ -1,7 +1,7 @@
 #![no_std]
 
 use error_messages::{
-    ERROR_AT_ENCODING, INVALID_PREFIX, FEE_MARKET_NOT_SET, NATIVE_TOKEN_NOT_REGISTERED,
+    ERROR_AT_ENCODING, FEE_MARKET_NOT_SET, NATIVE_TOKEN_NOT_REGISTERED,
     SETUP_PHASE_ALREADY_COMPLETED, SETUP_PHASE_NOT_COMPLETED,
 };
 
@@ -12,9 +12,6 @@ pub mod bridging_mechanism;
 pub mod deposit;
 pub mod execute;
 pub mod register_token;
-
-const MIN_PREFIX_LENGTH: usize = 1;
-const MAX_PREFIX_LENGTH: usize = 4;
 
 #[multiversx_sc::contract]
 pub trait MvxEsdtSafe:
@@ -37,11 +34,7 @@ pub trait MvxEsdtSafe:
         sov_token_prefix: ManagedBuffer,
         opt_config: OptionalValue<EsdtSafeConfig<Self::Api>>,
     ) {
-        let prefix_len = sov_token_prefix.len();
-        require!(
-            prefix_len > MIN_PREFIX_LENGTH && prefix_len <= MAX_PREFIX_LENGTH,
-            INVALID_PREFIX
-        );
+        self.require_valid_sov_token_prefix(&sov_token_prefix);
 
         self.sov_token_prefix().set(sov_token_prefix);
 

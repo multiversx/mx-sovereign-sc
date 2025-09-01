@@ -1,6 +1,5 @@
 use common_interactor::common_sovereign_interactor::CommonInteractorTrait;
 use common_interactor::interactor_config::Config;
-use common_test_setup::base_setup::init::RegisterTokenArgs;
 use common_test_setup::base_setup::helpers::BLSKey;
 use common_test_setup::constants::{
     CROWD_TOKEN_ID, DEPOSIT_EVENT, FIRST_TEST_TOKEN, ISSUE_COST, MVX_TO_SOV_TOKEN_STORAGE_KEY,
@@ -26,7 +25,7 @@ use structs::fee::{FeeStruct, FeeType};
 use structs::forge::ScArray;
 use structs::generate_hash::GenerateHash;
 use structs::operation::{Operation, OperationData, OperationEsdtPayment, TransferData};
-use structs::SovTokenProperties;
+use structs::RegisterTokenOperation;
 
 /// ### TEST
 /// M-ESDT_ISSUE_OK
@@ -151,7 +150,7 @@ async fn test_register_token_invalid_type_token_no_prefix() {
 
     chain_interactor
         .register_token(
-            SovTokenProperties {
+            RegisterTokenOperation {
                 token_id: sov_token_id,
                 token_nonce: 0u64,
                 token_type,
@@ -213,7 +212,7 @@ async fn test_register_token_invalid_type_token_with_prefix() {
 
     chain_interactor
         .register_token(
-            SovTokenProperties {
+            RegisterTokenOperation {
                 token_id: sov_token_id,
                 token_nonce: 0u64,
                 token_type,
@@ -1222,7 +1221,7 @@ async fn test_register_token_fungible_token() {
 
     chain_interactor
         .register_token(
-            SovTokenProperties {
+            RegisterTokenOperation {
                 token_id: sov_token_id,
                 token_nonce: 0u64,
                 token_type,
@@ -1308,7 +1307,7 @@ async fn test_register_token_non_fungible_token() {
 
     chain_interactor
         .register_token(
-            SovTokenProperties {
+            RegisterTokenOperation {
                 token_id: sov_token_id,
                 token_nonce: 0u64,
                 token_type,
@@ -1394,7 +1393,7 @@ async fn test_register_token_dynamic_non_fungible_token() {
 
     chain_interactor
         .register_token(
-            SovTokenProperties {
+            RegisterTokenOperation {
                 token_id: sov_token_id,
                 token_nonce: 0u64,
                 token_type,

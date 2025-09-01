@@ -104,10 +104,13 @@ pub const TOKEN_BLACKLISTED: &str = "Token is blacklisted";
 pub const TOKEN_ID_IS_NOT_TRUSTED: &str = "Token is not trusted";
 pub const TOKEN_ID_NO_PREFIX: &str = "Token Id does not have prefix";
 pub const INVALID_PREFIX: &str = "The sovereign prefix should be between 2 and 4 characters long";
+pub const INVALID_PREFIX_FOR_REGISTER: &str =
+    "Provided sovereign token identifier has invalid prefix";
 pub const TOKEN_IS_FROM_SOVEREIGN: &str = "Token is from a Sovereign Chain, it cannot be locked";
 pub const TOKEN_NOT_ACCEPTED_AS_FEE: &str = "Token not accepted as fee";
 pub const TOO_MANY_TOKENS: &str = "Too many tokens";
 pub const ERROR_AT_ENCODING: &str = "Error at encoding hash";
+pub const NOT_ENOUGH_EGLD_FOR_REGISTER: &str = "Not enough EGLD for registering a new token";
 pub const VALIDATOR_RANGE_EXCEEDED: &str = "Validator range exceeded";
 pub const NOT_ENOUGH_VALIDATORS: &str = "Not enough validators registered";
 pub const VALIDATOR_NOT_REGISTERED: &str = "Validator not registered";
@@ -133,7 +136,8 @@ pub const CHAIN_CONFIG_SETUP_PHASE_NOT_COMPLETE: &str =
 pub const DEPOSIT_AMOUNT_NOT_ENOUGH: &str = "Deposit amount is less than the operation amount";
 pub const CHAIN_FACTORY_ADDRESS_NOT_IN_EXPECTED_SHARD: &str =
     "This Chain-Factory SC is not deployed in the specified shard ID";
-pub const INVALID_BLS_KEY_PROVIDED:&str = "Invalid BLS key has been provided";
-pub const REGISTRATIONS_DISABLED_GENESIS_PHASE: &str = "Registrations are disabled after genesis phase";
+pub const INVALID_BLS_KEY_PROVIDED: &str = "Invalid BLS key has been provided";
+pub const REGISTRATIONS_DISABLED_GENESIS_PHASE: &str =
+    "Registrations are disabled after genesis phase";
 pub const VALIDATOR_ID_NOT_REGISTERED: &str = "Provided validator id is not registered";
 pub const INVALID_VALIDATOR_DATA: &str = "Invalid validator data has been provided";

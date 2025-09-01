@@ -17,7 +17,7 @@ use common_test_setup::constants::{
     INTERACTOR_WORKING_DIR, MVX_ESDT_SAFE_CODE_PATH, ONE_THOUSAND_TOKENS,
 };
 use structs::generate_hash::GenerateHash;
-use structs::SovTokenProperties;
+use structs::RegisterTokenOperation;
 
 pub struct MvxEsdtSafeInteract {
     pub interactor: Interactor,
@@ -312,7 +312,7 @@ impl MvxEsdtSafeInteract {
 
     pub async fn register_token(
         &mut self,
-        args: SovTokenProperties<StaticApi>,
+        args: RegisterTokenOperation<StaticApi>,
         expected_error_message: Option<&str>,
     ) {
         let token_hash = args.generate_hash();

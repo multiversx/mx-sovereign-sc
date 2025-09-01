@@ -1,6 +1,6 @@
 #![no_std]
 
-use error_messages::{ERR_EMPTY_PAYMENTS, INVALID_SC_ADDRESS, TOKEN_ID_NO_PREFIX};
+use error_messages::{ERR_EMPTY_PAYMENTS, INVALID_PREFIX, INVALID_SC_ADDRESS, TOKEN_ID_NO_PREFIX};
 use proxies::header_verifier_proxy::HeaderverifierProxy;
 use structs::aliases::PaymentsVec;
 
@@ -8,6 +8,8 @@ multiversx_sc::imports!();
 
 const DASH: u8 = b'-';
 const MAX_TOKEN_ID_LEN: usize = 32;
+const MIN_PREFIX_LENGTH: usize = 1;
+const MAX_PREFIX_LENGTH: usize = 4;
 
 #[multiversx_sc::module]
 pub trait UtilsModule: custom_events::CustomEventsModule {
@@ -103,5 +105,13 @@ pub trait UtilsModule: custom_events::CustomEventsModule {
         }
 
         false
+    }
+
+    fn require_valid_sov_token_prefix(&self, sov_token_prefix: &ManagedBuffer) {
+        let prefix_len = sov_token_prefix.len();
+        require!(
+            prefix_len > MIN_PREFIX_LENGTH && prefix_len <= MAX_PREFIX_LENGTH,
+            INVALID_PREFIX
+        );
     }
 }

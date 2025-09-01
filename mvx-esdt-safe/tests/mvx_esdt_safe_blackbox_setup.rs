@@ -6,6 +6,7 @@ use common_test_setup::constants::{
     SECOND_TEST_TOKEN, SOVEREIGN_TOKEN_PREFIX, USER_ADDRESS,
 };
 use cross_chain::storage::CrossChainStorage;
+use multiversx_sc::chain_core::EGLD_000000_TOKEN_IDENTIFIER;
 use multiversx_sc::types::{MultiEgldOrEsdtPayment, ReturnsHandledOrError};
 use multiversx_sc::{
     imports::OptionalValue,
@@ -23,7 +24,7 @@ use structs::{
     configs::EsdtSafeConfig,
     fee::FeeStruct,
     operation::Operation,
-    SovTokenProperties,
+    RegisterTokenOperation,
 };
 
 pub struct MvxEsdtSafeTestState {
@@ -42,6 +43,11 @@ impl MvxEsdtSafeTestState {
                 (FEE_TOKEN, 0u64, ONE_HUNDRED_MILLION.into()),
                 (
                     TestTokenIdentifier::new(TRUSTED_TOKEN_IDS[0]),
+                    0u64,
+                    ONE_HUNDRED_MILLION.into(),
+                ),
+                (
+                    TestTokenIdentifier::new(EGLD_000000_TOKEN_IDENTIFIER),
                     0u64,
                     ONE_HUNDRED_MILLION.into(),
                 ),
@@ -277,7 +283,7 @@ impl MvxEsdtSafeTestState {
 
     pub fn register_token(
         &mut self,
-        register_token_args: SovTokenProperties<StaticApi>,
+        register_token_args: RegisterTokenOperation<StaticApi>,
         hash_of_hashes: ManagedBuffer<StaticApi>,
         expected_custom_log: Option<&str>,
         expected_log_error: Option<&str>,
@@ -292,8 +298,6 @@ impl MvxEsdtSafeTestState {
             .register_token(hash_of_hashes, register_token_args)
             .returns(ReturnsLogs)
             .run();
-
-        println!("Logs: {:?}", logs);
 
         self.common_setup
             .assert_expected_log(logs, expected_custom_log, expected_log_error);
