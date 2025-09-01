@@ -1,9 +1,31 @@
 use multiversx_sc::api::CryptoApi;
 
-use crate::{aliases::GasLimit, generate_hash::GenerateHash, DEFAULT_MAX_TX_GAS_LIMIT};
+use crate::{
+    aliases::{GasLimit, TxNonce},
+    generate_hash::GenerateHash,
+    DEFAULT_MAX_TX_GAS_LIMIT,
+};
 
 multiversx_sc::imports!();
 multiversx_sc::derive_imports!();
+
+#[type_abi]
+#[derive(
+    TopEncode, TopDecode, NestedEncode, NestedDecode, ManagedVecItem, Clone, Debug, PartialEq,
+)]
+pub struct UpdateRegistrationStatusOperation {
+    pub registration_status: u8,
+    pub nonce: TxNonce,
+}
+
+#[type_abi]
+#[derive(
+    TopEncode, TopDecode, NestedEncode, NestedDecode, ManagedVecItem, Clone, Debug, PartialEq,
+)]
+pub struct UpdateSovereignConfigOperation<M: ManagedTypeApi> {
+    pub sovereign_config: SovereignConfig<M>,
+    pub nonce: TxNonce,
+}
 
 #[type_abi]
 #[derive(
@@ -63,6 +85,13 @@ impl<M: ManagedTypeApi> StakeArgs<M> {
 pub struct MaxBridgedAmount<M: ManagedTypeApi> {
     pub token_id: TokenIdentifier<M>,
     pub amount: BigUint<M>,
+}
+
+#[type_abi]
+#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, ManagedVecItem, Clone)]
+pub struct UpdateEsdtSafeConfigOperation<M: ManagedTypeApi> {
+    pub esdt_safe_config: EsdtSafeConfig<M>,
+    pub nonce: TxNonce,
 }
 
 #[type_abi]

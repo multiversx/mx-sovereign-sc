@@ -1,5 +1,8 @@
-use error_messages::{ERROR_AT_ENCODING, SETUP_PHASE_ALREADY_COMPLETED};
-use structs::{fee::FeeStruct, generate_hash::GenerateHash};
+use error_messages::{SETUP_PHASE_ALREADY_COMPLETED, SETUP_PHASE_NOT_COMPLETED};
+use structs::{
+    fee::{DistributeFeesOperation, FeeStruct},
+    generate_hash::GenerateHash,
+};
 
 multiversx_sc::imports!();
 multiversx_sc::derive_imports!();
@@ -20,27 +23,31 @@ pub trait FeeOperationsModule:
     fn distribute_fees(
         &self,
         hash_of_hashes: ManagedBuffer,
-        address_percentage_pairs: MultiValueEncoded<MultiValue2<ManagedAddress, usize>>,
+        operation: DistributeFeesOperation<Self::Api>,
     ) {
-        self.require_setup_complete();
-        let pairs = self.parse_pairs(address_percentage_pairs);
-        let opt_pairs_hash = self.generate_pairs_hash(&pairs, &hash_of_hashes);
-        if opt_pairs_hash.is_none() {
+        let operation_hash = operation.generate_hash();
+        if let Some(error_message) = self.validate_operation_hash(&operation_hash) {
+            self.complete_operation(&hash_of_hashes, &operation_hash, Some(error_message));
+            return;
+        };
+        if !self.is_setup_phase_complete() {
+            self.complete_operation(
+                &hash_of_hashes,
+                &operation_hash,
+                Some(SETUP_PHASE_NOT_COMPLETED.into()),
+            );
             return;
         }
-        let pairs_hash = opt_pairs_hash.unwrap();
-        self.lock_operation_hash_wrapper(&hash_of_hashes, &pairs_hash);
+        self.lock_operation_hash_wrapper(&hash_of_hashes, &operation_hash);
 
-        if let Some(err_msg) = self.validate_percentage_sum(&pairs) {
-            self.complete_operation(&hash_of_hashes, &pairs_hash, Some(err_msg));
+        if let Some(err_msg) = self.validate_percentage_sum(&operation.pairs) {
+            self.complete_operation(&hash_of_hashes, &operation_hash, Some(err_msg));
             return;
         }
 
-        self.distribute_token_fees(&pairs);
-
+        self.distribute_token_fees(&operation.pairs);
         self.tokens_for_fees().clear();
-
-        self.complete_operation(&hash_of_hashes, &pairs_hash, None);
+        self.complete_operation(&hash_of_hashes, &operation_hash, None);
     }
 
     #[only_owner]
@@ -58,22 +65,22 @@ pub trait FeeOperationsModule:
     #[endpoint(removeFee)]
     fn remove_fee(&self, hash_of_hashes: ManagedBuffer, token_id: TokenIdentifier) {
         let token_id_hash = token_id.generate_hash();
-        if token_id_hash.is_empty() {
+        if let Some(err_msg) = self.validate_operation_hash(&token_id_hash) {
+            self.complete_operation(&hash_of_hashes, &token_id_hash, Some(err_msg));
+            return;
+        };
+        if !self.is_setup_phase_complete() {
             self.complete_operation(
                 &hash_of_hashes,
                 &token_id_hash,
-                Some(ManagedBuffer::from(ERROR_AT_ENCODING)),
+                Some(SETUP_PHASE_NOT_COMPLETED.into()),
             );
             return;
-        };
-
-        self.require_setup_complete_with_event(&hash_of_hashes, &token_id_hash);
+        }
 
         self.lock_operation_hash_wrapper(&hash_of_hashes, &token_id_hash);
-
         self.token_fee(&token_id).clear();
         self.fee_enabled().set(false);
-
         self.complete_operation(&hash_of_hashes, &token_id_hash, None);
     }
 
@@ -93,25 +100,23 @@ pub trait FeeOperationsModule:
     #[endpoint(setFee)]
     fn set_fee(&self, hash_of_hashes: ManagedBuffer, fee_struct: FeeStruct<Self::Api>) {
         let fee_hash = fee_struct.generate_hash();
-        if fee_hash.is_empty() {
+        if let Some(err_msg) = self.validate_operation_hash(&fee_hash) {
+            self.complete_operation(&hash_of_hashes, &fee_hash, Some(err_msg));
+            return;
+        };
+        if !self.is_setup_phase_complete() {
             self.complete_operation(
                 &hash_of_hashes,
                 &fee_hash,
-                Some(ManagedBuffer::from(ERROR_AT_ENCODING)),
+                Some(SETUP_PHASE_NOT_COMPLETED.into()),
             );
             return;
-        };
-
-        self.require_setup_complete_with_event(&hash_of_hashes, &fee_hash);
+        }
 
         self.lock_operation_hash_wrapper(&hash_of_hashes, &fee_hash);
 
         if let Some(set_fee_error_msg) = self.set_fee_in_storage(&fee_struct) {
-            self.complete_operation(
-                &hash_of_hashes,
-                &fee_hash,
-                Some(ManagedBuffer::from(set_fee_error_msg)),
-            );
+            self.complete_operation(&hash_of_hashes, &fee_hash, Some(set_fee_error_msg.into()));
             return;
         }
 

@@ -19,6 +19,8 @@ members = [
   "sov-esdt-safe/meta",
   "mvx-esdt-safe",
   "mvx-esdt-safe/meta",
+  "sov-registrar",
+  "sov-registrar/meta",
   "testing-sc",
   "testing-sc/meta",
   "interactor",

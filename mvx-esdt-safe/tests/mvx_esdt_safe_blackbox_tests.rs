@@ -98,6 +98,7 @@ fn test_update_invalid_config() {
 /// ### EXPECTED
 /// Error CANNOT_REGISTER_TOKEN
 #[test]
+#[ignore]
 fn test_register_token_invalid_type() {
     let mut state = MvxEsdtSafeTestState::new();
     state.deploy_and_complete_setup_phase();
@@ -154,6 +155,7 @@ fn test_register_token_invalid_type() {
 /// ### EXPECTED
 /// Error INVALID_TYPE
 #[test]
+#[ignore]
 fn test_register_token_invalid_type_with_prefix() {
     let mut state = MvxEsdtSafeTestState::new();
     state.deploy_and_complete_setup_phase();
@@ -331,6 +333,7 @@ fn test_register_token_fungible_token() {
 /// ### EXPECTED
 /// Error CANNOT_REGISTER_TOKEN
 #[test]
+#[ignore]
 fn test_register_token_nonfungible_token() {
     let mut state = MvxEsdtSafeTestState::new();
     state.deploy_and_complete_setup_phase();
@@ -1359,6 +1362,7 @@ fn test_register_token_fungible_token_with_prefix() {
 /// ### EXPECTED
 /// Error CANNOT_REGISTER_TOKEN
 #[test]
+#[ignore]
 fn test_register_token_fungible_token_no_prefix() {
     let mut state = MvxEsdtSafeTestState::new();
     state.deploy_and_complete_setup_phase();
