@@ -34,6 +34,7 @@ pub const SOVEREIGN_FORGE_CODE_PATH: MxscPath =
 pub const FEE_TOKEN: TestTokenIdentifier = TestTokenIdentifier::new("INTERNS-eaad15");
 pub const FIRST_TEST_TOKEN: TestTokenIdentifier = TestTokenIdentifier::new("GREEN-0e161c");
 pub const SECOND_TEST_TOKEN: TestTokenIdentifier = TestTokenIdentifier::new("LTST-4f849e");
+pub const NATIVE_TEST_TOKEN: TestTokenIdentifier = TestTokenIdentifier::new("NATIVE-123456");
 pub const SOV_TOKEN: TestTokenIdentifier = TestTokenIdentifier::new("sov-GREEN-0e161c");
 pub const TOKEN_TICKER: &str = "GREEN";
 pub const NFT_TOKEN_ID: TestTokenIdentifier = TestTokenIdentifier::new("NFT-123456");
@@ -65,8 +66,5 @@ pub const ONE_HUNDRED_TOKENS: u128 = 100_000_000_000_000_000_000u128;
 pub const TEN_TOKENS: u128 = 10_000_000_000_000_000_000u128;
 
 pub const EXECUTED_BRIDGE_OP_EVENT: &str = "executedBridgeOp";
-pub const REGISTER_EVENT: &str = "register";
-pub const UNREGISTER_EVENT: &str = "unregister";
-pub const REGISTRATION_STATUS_UPDATE_EVENT: &str = "registrationStatusUpdate";
 pub const DEPOSIT_EVENT: &str = "deposit";
 pub const SC_CALL_EVENT: &str = "scCall";

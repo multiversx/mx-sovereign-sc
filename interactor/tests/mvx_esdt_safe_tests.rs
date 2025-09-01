@@ -1,6 +1,7 @@
 use common_interactor::common_sovereign_interactor::CommonInteractorTrait;
 use common_interactor::interactor_config::Config;
 use common_test_setup::base_setup::init::RegisterTokenArgs;
+use common_test_setup::base_setup::helpers::BLSKey;
 use common_test_setup::constants::{
     CROWD_TOKEN_ID, DEPOSIT_EVENT, FIRST_TEST_TOKEN, ISSUE_COST, MVX_TO_SOV_TOKEN_STORAGE_KEY,
     NATIVE_TOKEN_STORAGE_KEY, ONE_HUNDRED_TOKENS, ONE_THOUSAND_TOKENS,
@@ -36,7 +37,7 @@ use structs::operation::{Operation, OperationData, OperationEsdtPayment, Transfe
 /// All the tokens are minted to the wallet address
 #[tokio::test]
 #[serial]
-#[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
+#[ignore]
 async fn test_issue_tokens() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
 
@@ -75,7 +76,7 @@ async fn test_issue_tokens() {
 /// Error 'failedBridgeOp' log
 #[tokio::test]
 #[serial]
-#[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
+#[ignore]
 async fn test_update_invalid_config() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
 
@@ -128,7 +129,7 @@ async fn test_update_invalid_config() {
 /// Error CANNOT_REGISTER_TOKEN
 #[tokio::test]
 #[serial]
-#[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
+#[ignore]
 async fn test_register_token_invalid_type_token_no_prefix() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
 
@@ -186,7 +187,7 @@ async fn test_register_token_invalid_type_token_no_prefix() {
 /// Error CANNOT_REGISTER_TOKEN
 #[tokio::test]
 #[serial]
-#[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
+#[ignore]
 async fn test_register_token_invalid_type_token_with_prefix() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
 
@@ -236,7 +237,7 @@ async fn test_register_token_invalid_type_token_with_prefix() {
 
 #[tokio::test]
 #[serial]
-#[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
+#[ignore]
 async fn test_deposit_max_bridged_amount_exceeded() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
 
@@ -289,7 +290,7 @@ async fn test_deposit_max_bridged_amount_exceeded() {
 /// Error NOTHING_TO_TRANSFER
 #[tokio::test]
 #[serial]
-#[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
+#[ignore]
 async fn test_deposit_nothing_to_transfer() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
 
@@ -329,7 +330,7 @@ async fn test_deposit_nothing_to_transfer() {
 /// Error TOO_MANY_TOKENS
 #[tokio::test]
 #[serial]
-#[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
+#[ignore]
 async fn test_deposit_too_many_tokens_no_fee() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
 
@@ -377,7 +378,7 @@ async fn test_deposit_too_many_tokens_no_fee() {
 /// The deposit is successful
 #[tokio::test]
 #[serial]
-#[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
+#[ignore]
 async fn test_deposit_no_transfer_data() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
     let user_address = chain_interactor.user_address().clone();
@@ -464,7 +465,7 @@ async fn test_deposit_no_transfer_data() {
 /// Error GAS_LIMIT_TOO_HIGH
 #[tokio::test]
 #[serial]
-#[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
+#[ignore]
 async fn test_deposit_gas_limit_too_high_no_fee() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
     let config = EsdtSafeConfig::new(
@@ -535,7 +536,7 @@ async fn test_deposit_gas_limit_too_high_no_fee() {
 /// Error BANNED_ENDPOINT_NAME
 #[tokio::test]
 #[serial]
-#[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
+#[ignore]
 async fn test_deposit_endpoint_banned_no_fee() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
     let config = EsdtSafeConfig::new(
@@ -606,7 +607,7 @@ async fn test_deposit_endpoint_banned_no_fee() {
 /// USER's balance is updated
 #[tokio::test]
 #[serial]
-#[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
+#[ignore]
 async fn test_deposit_fee_enabled() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
     let config = EsdtSafeConfig::new(
@@ -745,7 +746,7 @@ async fn test_deposit_fee_enabled() {
 /// Error ERR_EMPTY_PAYMENTS
 #[tokio::test]
 #[serial]
-#[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
+#[ignore]
 async fn test_deposit_transfer_data_only_with_fee_nothing_to_transfer() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
     let config = EsdtSafeConfig::new(
@@ -813,7 +814,7 @@ async fn test_deposit_transfer_data_only_with_fee_nothing_to_transfer() {
 /// The endpoint is called in the testing smart contract
 #[tokio::test]
 #[serial]
-#[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
+#[ignore]
 async fn test_deposit_only_transfer_data_no_fee() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
     let config = EsdtSafeConfig::new(
@@ -870,7 +871,7 @@ async fn test_deposit_only_transfer_data_no_fee() {
 /// Error PAYMENT_DOES_NOT_COVER_FEE
 #[tokio::test]
 #[serial]
-#[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
+#[ignore]
 async fn test_deposit_payment_does_not_cover_fee() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
     let config = EsdtSafeConfig::new(
@@ -953,7 +954,7 @@ async fn test_deposit_payment_does_not_cover_fee() {
 
 #[tokio::test]
 #[serial]
-#[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
+#[ignore]
 async fn test_deposit_refund() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
     let user_address = chain_interactor.user_address().clone();
@@ -1068,7 +1069,7 @@ async fn test_deposit_refund() {
 /// The token is registered
 #[tokio::test]
 #[serial]
-#[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
+#[ignore]
 async fn test_register_native_token() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
 
@@ -1114,7 +1115,7 @@ async fn test_register_native_token() {
 /// The token is registered
 #[tokio::test]
 #[serial]
-#[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
+#[ignore]
 async fn test_register_native_token_twice() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
 
@@ -1169,7 +1170,7 @@ async fn test_register_native_token_twice() {
 /// The token is registered
 #[tokio::test]
 #[serial]
-#[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
+#[ignore]
 async fn test_register_token_fungible_token() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
 
@@ -1251,7 +1252,7 @@ async fn test_register_token_fungible_token() {
 /// The token is registered
 #[tokio::test]
 #[serial]
-#[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
+#[ignore]
 async fn test_register_token_non_fungible_token() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
 
@@ -1333,7 +1334,7 @@ async fn test_register_token_non_fungible_token() {
 /// The token is registered
 #[tokio::test]
 #[serial]
-#[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
+#[ignore]
 async fn test_register_token_dynamic_non_fungible_token() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
 
@@ -1415,7 +1416,7 @@ async fn test_register_token_dynamic_non_fungible_token() {
 /// Error NO_ESDT_SAFE_ADDRESS
 #[tokio::test]
 #[serial]
-#[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
+#[ignore]
 async fn test_execute_operation_no_esdt_safe_registered() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
 
@@ -1518,7 +1519,7 @@ async fn test_execute_operation_no_esdt_safe_registered() {
 /// The operation is executed in the testing smart contract
 #[tokio::test]
 #[serial]
-#[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
+#[ignore]
 async fn test_execute_operation_with_native_token_success() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
     let user_address = chain_interactor.user_address().clone();
@@ -1530,11 +1531,11 @@ async fn test_execute_operation_with_native_token_success() {
     let payment =
         OperationEsdtPayment::new(chain_interactor.state.get_first_token_id(), 0, token_data);
     let mut payment_vec = PaymentsVec::new();
-    payment_vec.push(EsdtTokenPayment {
-        token_identifier: chain_interactor.state.get_first_token_id(),
-        token_nonce: 0,
-        amount: BigUint::from(TEN_TOKENS),
-    });
+    payment_vec.push(EgldOrEsdtTokenPayment::new(
+        EgldOrEsdtTokenIdentifier::esdt(chain_interactor.state.get_first_token_id()),
+        0,
+        BigUint::from(TEN_TOKENS),
+    ));
 
     let gas_limit = 90_000_000u64;
     let function = ManagedBuffer::<StaticApi>::from("hello");
@@ -1552,12 +1553,11 @@ async fn test_execute_operation_with_native_token_success() {
     let chain_config_address = chain_interactor
         .deploy_chain_config(OptionalValue::None)
         .await;
-    let genesis_validator = ManagedBuffer::from("genesis_validator");
     chain_interactor
         .state()
         .set_chain_config_sc_address(chain_config_address.clone());
     chain_interactor
-        .register_as_validator(genesis_validator, ManagedVec::new(), chain_config_address)
+        .register(BLSKey::random(), ManagedVec::new(), chain_config_address)
         .await;
     chain_interactor.complete_chain_config_setup_phase().await;
 
@@ -1706,7 +1706,7 @@ async fn test_execute_operation_with_native_token_success() {
 /// The operation is executed in the testing smart contract
 #[tokio::test]
 #[serial]
-#[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
+#[ignore]
 async fn test_execute_operation_success_no_fee() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
     let user_address = chain_interactor.user_address().clone();
@@ -1718,11 +1718,11 @@ async fn test_execute_operation_success_no_fee() {
     let payment =
         OperationEsdtPayment::new(chain_interactor.state.get_first_token_id(), 0, token_data);
     let mut payment_vec = PaymentsVec::new();
-    payment_vec.push(EsdtTokenPayment {
-        token_identifier: chain_interactor.state.get_first_token_id(),
-        token_nonce: 0,
-        amount: BigUint::from(TEN_TOKENS),
-    });
+    payment_vec.push(EgldOrEsdtTokenPayment::new(
+        EgldOrEsdtTokenIdentifier::esdt(chain_interactor.state.get_first_token_id()),
+        0,
+        BigUint::from(TEN_TOKENS),
+    ));
 
     let gas_limit = 90_000_000u64;
     let function = ManagedBuffer::<StaticApi>::from("hello");
@@ -1845,7 +1845,7 @@ async fn test_execute_operation_success_no_fee() {
 /// The operation is executed in the testing smart contract
 #[tokio::test]
 #[serial]
-#[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
+#[ignore]
 async fn test_execute_operation_only_transfer_data_no_fee() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
 
@@ -1946,7 +1946,7 @@ async fn test_execute_operation_only_transfer_data_no_fee() {
 /// The testing smart contract returns a failed event
 #[tokio::test]
 #[serial]
-#[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
+#[ignore]
 async fn test_execute_operation_no_payments_failed_event() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
 

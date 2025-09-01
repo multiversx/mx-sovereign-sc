@@ -1,5 +1,8 @@
 #![no_std]
 
+use multiversx_sc::api::CryptoApi;
+use crate::generate_hash::GenerateHash;
+
 multiversx_sc::imports!();
 multiversx_sc::derive_imports!();
 
@@ -28,6 +31,8 @@ pub const PHASE_FOUR_CALLBACK_GAS: u64 = 3_000_000;
 
 pub const COMPLETE_SETUP_PHASE_GAS: u64 = 80_000_000;
 
+pub const BLS_KEY_BYTE_LENGTH: usize = 96;
+
 #[type_abi]
 #[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, ManagedVecItem, Clone)]
 pub struct EsdtInfo<M: ManagedTypeApi> {
@@ -51,4 +56,14 @@ pub struct ValidatorInfo<M: ManagedTypeApi> {
     pub bls_key: ManagedBuffer<M>,
     pub egld_stake: BigUint<M>,
     pub token_stake: Option<ManagedVec<M, EsdtTokenPayment<M>>>,
+}
+
+impl<A: CryptoApi> GenerateHash<A> for ValidatorData<A> {}
+
+#[type_abi]
+#[derive(TopEncode, TopDecode, NestedEncode)]
+pub struct ValidatorData<M: ManagedTypeApi> {
+    pub id: BigUint<M>,
+    pub address: ManagedAddress<M>,
+    pub bls_key: ManagedBuffer<M>,
 }

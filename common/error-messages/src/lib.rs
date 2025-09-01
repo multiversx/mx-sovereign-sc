@@ -40,6 +40,7 @@ pub const ESDT_SAFE_STILL_PAUSED: &str = "Cannot create transaction while paused
 pub const FAILED_TO_PARSE_AS_NUMBER: &str = "Failed to parse actual amount as number";
 pub const FEE_MARKET_ALREADY_DEPLOYED: &str = "The Fee-Market SC is already deployed";
 pub const FEE_MARKET_NOT_DEPLOYED: &str = "The Fee-Market SC is not deployed";
+pub const FEE_MARKET_NOT_SET: &str = "There is no Fee-Market address set";
 pub const GAS_LIMIT_TOO_HIGH: &str = "Gas limit too high";
 pub const HASH_OF_HASHES_DOES_NOT_MATCH: &str =
     "Hash of all operations doesn't match the hash of transfer data";
@@ -131,3 +132,7 @@ pub const CHAIN_CONFIG_SETUP_PHASE_NOT_COMPLETE: &str =
 pub const DEPOSIT_AMOUNT_NOT_ENOUGH: &str = "Deposit amount is less than the operation amount";
 pub const CHAIN_FACTORY_ADDRESS_NOT_IN_EXPECTED_SHARD: &str =
     "This Chain-Factory SC is not deployed in the specified shard ID";
+pub const INVALID_BLS_KEY_PROVIDED:&str = "Invalid BLS key has been provided";
+pub const REGISTRATIONS_DISABLED_GENESIS_PHASE: &str = "Registrations are disabled after genesis phase";
+pub const VALIDATOR_ID_NOT_REGISTERED: &str = "Provided validator id is not registered";
+pub const INVALID_VALIDATOR_DATA: &str = "Invalid validator data has been provided";
