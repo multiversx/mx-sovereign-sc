@@ -46,11 +46,6 @@ impl MvxEsdtSafeTestState {
                     0u64,
                     ONE_HUNDRED_MILLION.into(),
                 ),
-                (
-                    TestTokenIdentifier::new(EGLD_000000_TOKEN_IDENTIFIER),
-                    0u64,
-                    ONE_HUNDRED_MILLION.into(),
-                ),
             ]),
             egld_balance: Some(OWNER_BALANCE.into()),
         };
