@@ -1,6 +1,9 @@
 use multiversx_sc::api::CryptoApi;
 
-use crate::{aliases::GasLimit, generate_hash::GenerateHash};
+use crate::{
+    aliases::{GasLimit, TxNonce},
+    generate_hash::GenerateHash,
+};
 
 multiversx_sc::imports!();
 multiversx_sc::derive_imports!();
@@ -15,6 +18,42 @@ pub enum FeeType<M: ManagedTypeApi> {
         per_gas: BigUint<M>,
     },
 }
+
+#[type_abi]
+#[derive(TopEncode, TopDecode, NestedDecode, Clone)]
+pub struct AddUsersToWhitelistOperation<M: ManagedTypeApi> {
+    pub users: ManagedVec<M, ManagedAddress<M>>,
+    pub nonce: TxNonce,
+}
+
+impl<A: CryptoApi> GenerateHash<A> for AddUsersToWhitelistOperation<A> {}
+
+#[type_abi]
+#[derive(TopEncode, TopDecode, NestedDecode, Clone)]
+pub struct RemoveUsersFromWhitelistOperation<M: ManagedTypeApi> {
+    pub users: ManagedVec<M, ManagedAddress<M>>,
+    pub nonce: TxNonce,
+}
+
+impl<A: CryptoApi> GenerateHash<A> for RemoveUsersFromWhitelistOperation<A> {}
+
+#[type_abi]
+#[derive(TopDecode, TopEncode, NestedEncode, NestedDecode, Clone)]
+pub struct RemoveFeeOperation<M: ManagedTypeApi> {
+    pub token_id: TokenIdentifier<M>,
+    pub nonce: TxNonce,
+}
+
+impl<A: CryptoApi> GenerateHash<A> for RemoveFeeOperation<A> {}
+
+#[type_abi]
+#[derive(TopDecode, TopEncode, NestedEncode, NestedDecode, Clone)]
+pub struct SetFeeOperation<M: ManagedTypeApi> {
+    pub fee_struct: FeeStruct<M>,
+    pub nonce: TxNonce,
+}
+
+impl<A: CryptoApi> GenerateHash<A> for SetFeeOperation<A> {}
 
 #[type_abi]
 #[derive(TopDecode, TopEncode, NestedEncode, NestedDecode, Clone)]
@@ -34,7 +73,16 @@ pub struct FinalPayment<M: ManagedTypeApi> {
 }
 
 #[type_abi]
-#[derive(TopEncode, TopDecode, ManagedVecItem)]
+#[derive(TopDecode, TopEncode, NestedEncode, NestedDecode, Clone)]
+pub struct DistributeFeesOperation<M: ManagedTypeApi> {
+    pub pairs: ManagedVec<M, AddressPercentagePair<M>>,
+    pub nonce: TxNonce,
+}
+
+impl<A: CryptoApi> GenerateHash<A> for DistributeFeesOperation<A> {}
+
+#[type_abi]
+#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, Clone, ManagedVecItem)]
 pub struct AddressPercentagePair<M: ManagedTypeApi> {
     pub address: ManagedAddress<M>,
     pub percentage: usize,

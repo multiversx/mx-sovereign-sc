@@ -1,6 +1,8 @@
 #![no_std]
 
-use error_messages::{ERR_EMPTY_PAYMENTS, INVALID_SC_ADDRESS, TOKEN_ID_NO_PREFIX};
+use error_messages::{
+    ERROR_AT_ENCODING, ERR_EMPTY_PAYMENTS, INVALID_SC_ADDRESS, TOKEN_ID_NO_PREFIX,
+};
 use proxies::header_verifier_proxy::HeaderverifierProxy;
 use structs::aliases::PaymentsVec;
 
@@ -103,5 +105,13 @@ pub trait UtilsModule: custom_events::CustomEventsModule {
         }
 
         false
+    }
+
+    fn validate_operation_hash(&self, hash: &ManagedBuffer) -> Option<ManagedBuffer> {
+        if hash.is_empty() {
+            return Some(ERROR_AT_ENCODING.into());
+        }
+
+        None
     }
 }

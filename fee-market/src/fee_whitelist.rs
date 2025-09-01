@@ -1,4 +1,8 @@
-use error_messages::SETUP_PHASE_ALREADY_COMPLETED;
+use error_messages::{SETUP_PHASE_ALREADY_COMPLETED, SETUP_PHASE_NOT_COMPLETED};
+use structs::{
+    fee::{AddUsersToWhitelistOperation, RemoveUsersFromWhitelistOperation},
+    generate_hash::GenerateHash,
+};
 
 multiversx_sc::imports!();
 multiversx_sc::derive_imports!();
@@ -25,15 +29,25 @@ pub trait FeeWhitelistModule:
     fn add_users_to_whitelist(
         &self,
         hash_of_hashes: ManagedBuffer,
-        users: MultiValueEncoded<ManagedAddress>,
+        operation: AddUsersToWhitelistOperation<Self::Api>,
     ) {
-        self.require_setup_complete();
+        let operation_hash = operation.generate_hash();
+        if let Some(error_message) = self.validate_operation_hash(&operation_hash) {
+            self.complete_operation(&hash_of_hashes, &operation_hash, Some(error_message));
+            return;
+        }
 
-        let users_hash = self.get_users_aggregated_hash(users.clone());
-
-        self.users_whitelist().extend(users);
-
-        self.complete_operation(&hash_of_hashes, &users_hash, None);
+        if !self.is_setup_phase_complete() {
+            self.complete_operation(
+                &hash_of_hashes,
+                &operation_hash,
+                Some(SETUP_PHASE_NOT_COMPLETED.into()),
+            );
+            return;
+        }
+        self.lock_operation_hash_wrapper(&hash_of_hashes, &operation_hash);
+        self.users_whitelist().extend(operation.users);
+        self.complete_operation(&hash_of_hashes, &operation_hash, None);
     }
 
     #[only_owner]
@@ -56,30 +70,27 @@ pub trait FeeWhitelistModule:
     fn remove_users_from_whitelist(
         &self,
         hash_of_hashes: ManagedBuffer,
-        users: MultiValueEncoded<ManagedAddress>,
+        operation: RemoveUsersFromWhitelistOperation<Self::Api>,
     ) {
-        self.require_setup_complete();
+        let operation_hash = operation.generate_hash();
+        if let Some(error_message) = self.validate_operation_hash(&operation_hash) {
+            self.complete_operation(&hash_of_hashes, &operation_hash, Some(error_message));
+            return;
+        }
+        if !self.is_setup_phase_complete() {
+            self.complete_operation(
+                &hash_of_hashes,
+                &operation_hash,
+                Some(SETUP_PHASE_NOT_COMPLETED.into()),
+            );
+            return;
+        }
+        self.lock_operation_hash_wrapper(&hash_of_hashes, &operation_hash);
 
-        let users_hash = self.get_users_aggregated_hash(users.clone());
-
-        for user in users {
+        for user in &operation.users {
             self.users_whitelist().swap_remove(&user);
         }
 
-        self.complete_operation(&hash_of_hashes, &users_hash, None);
-    }
-
-    fn get_users_aggregated_hash(&self, users: MultiValueEncoded<ManagedAddress>) -> ManagedBuffer {
-        let mut aggregated_hashes = ManagedBuffer::new();
-
-        for user in users {
-            let user_buffer = user.as_managed_buffer();
-            let user_hash_byte_array = self.crypto().sha256(user_buffer);
-
-            aggregated_hashes.append(user_hash_byte_array.as_managed_buffer());
-        }
-
-        let users_aggregated_byte_array = self.crypto().sha256(aggregated_hashes);
-        users_aggregated_byte_array.as_managed_buffer().clone()
+        self.complete_operation(&hash_of_hashes, &operation_hash, None);
     }
 }
