@@ -6,9 +6,9 @@
 
 // Init:                                 1
 // Upgrade:                              1
-// Endpoints:                           10
+// Endpoints:                            9
 // Async Callback (empty):               1
-// Total number of exported functions:  13
+// Total number of exported functions:  12
 
 #![no_std]
 
@@ -26,7 +26,6 @@ multiversx_sc_wasm_adapter::endpoints! {
         addUsersToFeeWhitelist => add_users_to_fee_whitelist
         removeUsersFromFeeWhitelist => remove_users_from_fee_whitelist
         updateSovereignConfig => update_sovereign_config
-        updateRegistrationStatus => update_registration_status
         updateEsdtSafeConfig => update_esdt_safe_config
         getTokenFee => token_fee
         getUsersWhitelist => users_whitelist

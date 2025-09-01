@@ -159,19 +159,6 @@ where
             .original_result()
     }
 
-    pub fn update_registration_status<
-        Arg0: ProxyArg<u8>,
-    >(
-        self,
-        registration_status: Arg0,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("updateRegistrationStatus")
-            .argument(&registration_status)
-            .original_result()
-    }
-
     pub fn update_esdt_safe_config<
         Arg0: ProxyArg<structs::configs::EsdtSafeConfig<Env::Api>>,
     >(
