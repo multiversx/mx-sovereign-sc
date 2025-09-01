@@ -172,13 +172,14 @@ where
 
     pub fn register_token<
         Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
-        Arg1: ProxyArg<structs::SovTokenProperties<Env::Api>>,
+        Arg1: ProxyArg<structs::RegisterTokenOperation<Env::Api>>,
     >(
         self,
         hash_of_hashes: Arg0,
         token_to_register: Arg1,
-    ) -> TxTypedCall<Env, From, To, (), Gas, ()> {
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
+            .payment(NotPayable)
             .raw_call("registerToken")
             .argument(&hash_of_hashes)
             .argument(&token_to_register)

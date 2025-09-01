@@ -9,13 +9,15 @@ use cross_chain::storage::CrossChainStorage;
 use cross_chain::{DEFAULT_ISSUE_COST, MAX_GAS_PER_TRANSACTION};
 use error_messages::{
     BANNED_ENDPOINT_NAME, CALLER_NOT_FROM_CURRENT_SOVEREIGN, CURRENT_OPERATION_NOT_REGISTERED,
-    DEPOSIT_OVER_MAX_AMOUNT, ERR_EMPTY_PAYMENTS, GAS_LIMIT_TOO_HIGH, INVALID_PREFIX, INVALID_TYPE,
-    MAX_GAS_LIMIT_PER_TX_EXCEEDED, MINT_AND_BURN_ROLES_NOT_FOUND, NATIVE_TOKEN_ALREADY_REGISTERED,
-    NOTHING_TO_TRANSFER, PAYMENT_DOES_NOT_COVER_FEE, SETUP_PHASE_NOT_COMPLETED,
-    TOKEN_ID_IS_NOT_TRUSTED, TOKEN_IS_FROM_SOVEREIGN, TOO_MANY_TOKENS,
+    DEPOSIT_OVER_MAX_AMOUNT, ERR_EMPTY_PAYMENTS, GAS_LIMIT_TOO_HIGH, INVALID_PREFIX_FOR_REGISTER,
+    INVALID_TYPE, MAX_GAS_LIMIT_PER_TX_EXCEEDED, MINT_AND_BURN_ROLES_NOT_FOUND,
+    NATIVE_TOKEN_ALREADY_REGISTERED, NOTHING_TO_TRANSFER, NOT_ENOUGH_EGLD_FOR_REGISTER,
+    PAYMENT_DOES_NOT_COVER_FEE, SETUP_PHASE_NOT_COMPLETED, TOKEN_ID_IS_NOT_TRUSTED,
+    TOKEN_IS_FROM_SOVEREIGN, TOO_MANY_TOKENS,
 };
 use header_verifier::header_utils::OperationHashStatus;
 use header_verifier::storage::HeaderVerifierStorageModule;
+use multiversx_sc::chain_core::EGLD_000000_TOKEN_IDENTIFIER;
 use multiversx_sc::types::{
     EgldOrEsdtTokenIdentifier, EgldOrEsdtTokenPayment, MultiEgldOrEsdtPayment, MultiValueEncoded,
 };
@@ -29,6 +31,7 @@ use multiversx_sc::{
 use multiversx_sc_scenario::multiversx_chain_vm::crypto_functions::sha256;
 use multiversx_sc_scenario::{api::StaticApi, ScenarioTxWhitebox};
 use mvx_esdt_safe::bridging_mechanism::{BridgingMechanism, TRUSTED_TOKEN_IDS};
+use mvx_esdt_safe::register_token::ISSUE_COST;
 use mvx_esdt_safe_blackbox_setup::MvxEsdtSafeTestState;
 use setup_phase::SetupPhaseModule;
 use structs::configs::MaxBridgedAmount;
@@ -36,7 +39,7 @@ use structs::fee::{FeeStruct, FeeType};
 use structs::forge::ScArray;
 use structs::generate_hash::GenerateHash;
 use structs::operation::TransferData;
-use structs::SovTokenProperties;
+use structs::RegisterTokenOperation;
 use structs::{
     aliases::PaymentsVec,
     configs::EsdtSafeConfig,
@@ -105,7 +108,7 @@ fn test_register_token_invalid_type() {
     let num_decimals = 3;
     let token_ticker = FIRST_TEST_TOKEN.as_str();
 
-    let register_token_args = SovTokenProperties {
+    let register_token_args = RegisterTokenOperation {
         token_id: TokenIdentifier::from_esdt_bytes(sov_token_id),
         token_type,
         token_nonce: 0u64,
@@ -161,7 +164,7 @@ fn test_register_token_invalid_type_with_prefix() {
     let num_decimals = 3;
     let token_ticker = FIRST_TEST_TOKEN.as_str();
 
-    let register_token_args = SovTokenProperties {
+    let register_token_args = RegisterTokenOperation {
         token_id: sov_token_id.into(),
         token_type,
         token_nonce: 0u64,
@@ -176,6 +179,17 @@ fn test_register_token_invalid_type_with_prefix() {
     let bitmap = ManagedBuffer::new_from_bytes(&[1]);
     let signature = ManagedBuffer::new();
     let epoch = 0;
+
+    let payment =
+        EgldOrEsdtTokenPayment::new(EGLD_000000_TOKEN_IDENTIFIER.into(), 0u64, ISSUE_COST.into());
+
+    state.deposit(
+        USER_ADDRESS.to_managed_address(),
+        OptionalValue::None,
+        ManagedVec::from_single_item(payment),
+        None,
+        None,
+    );
 
     state.common_setup.register_operation(
         OWNER_ADDRESS,
@@ -202,12 +216,12 @@ fn test_register_token_invalid_type_with_prefix() {
 /// M-ESDT_REG_FAIL
 ///
 /// ### ACTION
-/// Call 'register_token()' with token id not starting with prefix
+/// Call 'register_token()' with token id not starting with prefix and not enough egld in balance
 ///
 /// ### EXPECTED
 /// Error CANNOT_REGISTER_TOKEN
 #[test]
-fn test_register_token_not_native() {
+fn test_register_token_not_enough_egld() {
     let mut state = MvxEsdtSafeTestState::new();
     state.deploy_and_complete_setup_phase();
 
@@ -217,7 +231,7 @@ fn test_register_token_not_native() {
     let num_decimals = 3;
     let token_ticker = FIRST_TEST_TOKEN.as_str();
 
-    let register_token_args = SovTokenProperties {
+    let register_token_args = RegisterTokenOperation {
         token_id: sov_token_id.into(),
         token_type,
         token_nonce: 0u64,
@@ -246,7 +260,7 @@ fn test_register_token_not_native() {
         register_token_args,
         hash_of_hashes,
         Some(EXECUTED_BRIDGE_OP_EVENT),
-        Some(INVALID_PREFIX),
+        Some(NOT_ENOUGH_EGLD_FOR_REGISTER),
     );
 
     state
@@ -273,7 +287,7 @@ fn test_register_token_fungible_token() {
     let token_ticker = FIRST_TEST_TOKEN.as_str();
     let num_decimals = 3;
 
-    let register_token_args = SovTokenProperties {
+    let register_token_args = RegisterTokenOperation {
         token_id: sov_token_id.into(),
         token_type,
         token_nonce: 0u64,
@@ -327,7 +341,7 @@ fn test_register_token_nonfungible_token() {
     let num_decimals = 0;
     let token_ticker = FIRST_TEST_TOKEN.as_str();
 
-    let register_token_args = SovTokenProperties {
+    let register_token_args = RegisterTokenOperation {
         token_id: sov_token_id.into(),
         token_type,
         token_nonce: 1u64,
@@ -356,7 +370,7 @@ fn test_register_token_nonfungible_token() {
         register_token_args,
         hash_of_hashes,
         Some(EXECUTED_BRIDGE_OP_EVENT),
-        Some(INVALID_PREFIX),
+        Some(INVALID_PREFIX_FOR_REGISTER),
     );
 
     state
@@ -1301,7 +1315,7 @@ fn test_register_token_fungible_token_with_prefix() {
     let token_ticker = FIRST_TEST_TOKEN.as_str();
     let num_decimals = 3;
 
-    let register_token_args = SovTokenProperties {
+    let register_token_args = RegisterTokenOperation {
         token_id: sov_token_id.into(),
         token_type,
         token_nonce: 0u64,
@@ -1355,7 +1369,7 @@ fn test_register_token_fungible_token_no_prefix() {
     let token_ticker = FIRST_TEST_TOKEN.as_str();
     let num_decimals = 3;
 
-    let register_token_args = SovTokenProperties {
+    let register_token_args = RegisterTokenOperation {
         token_id: sov_token_id.into(),
         token_type,
         token_nonce: 0u64,
@@ -1384,7 +1398,7 @@ fn test_register_token_fungible_token_no_prefix() {
         register_token_args,
         hash_of_hashes,
         Some(EXECUTED_BRIDGE_OP_EVENT),
-        Some(INVALID_PREFIX),
+        Some(INVALID_PREFIX_FOR_REGISTER),
     );
 
     state
@@ -1412,7 +1426,7 @@ fn test_register_token_non_fungible_token_dynamic() {
     let token_ticker = FIRST_TEST_TOKEN.as_str();
     let num_decimals = 3;
 
-    let register_token_args = SovTokenProperties {
+    let register_token_args = RegisterTokenOperation {
         token_id: sov_token_id.into(),
         token_type,
         token_nonce: 1u64,

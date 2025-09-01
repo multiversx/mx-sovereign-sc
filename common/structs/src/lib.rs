@@ -61,7 +61,7 @@ pub struct ValidatorData<M: ManagedTypeApi> {
 
 #[type_abi]
 #[derive(TopEncode, TopDecode, NestedEncode)]
-pub struct SovTokenProperties<M: ManagedTypeApi> {
+pub struct RegisterTokenOperation<M: ManagedTypeApi> {
     pub token_id: TokenIdentifier<M>,
     pub token_nonce: u64,
     pub token_type: EsdtTokenType,
@@ -71,4 +71,4 @@ pub struct SovTokenProperties<M: ManagedTypeApi> {
     pub data: OperationData<M>,
 }
 
-impl<A: CryptoApi> GenerateHash<A> for SovTokenProperties<A> {}
+impl<A: CryptoApi> GenerateHash<A> for RegisterTokenOperation<A> {}

@@ -1,12 +1,12 @@
 use cross_chain::REGISTER_GAS;
 use error_messages::{
-    ERROR_AT_ENCODING, ESDT_SAFE_STILL_PAUSED, INVALID_PREFIX, INVALID_TYPE,
-    NATIVE_TOKEN_ALREADY_REGISTERED, SETUP_PHASE_ALREADY_COMPLETED, SETUP_PHASE_NOT_COMPLETED,
-    TOKEN_ALREADY_REGISTERED,
+    ERROR_AT_ENCODING, ESDT_SAFE_STILL_PAUSED, INVALID_PREFIX_FOR_REGISTER,
+    NATIVE_TOKEN_ALREADY_REGISTERED, NOT_ENOUGH_EGLD_FOR_REGISTER, SETUP_PHASE_ALREADY_COMPLETED,
+    SETUP_PHASE_NOT_COMPLETED, TOKEN_ALREADY_REGISTERED,
 };
-use multiversx_sc::types::EsdtTokenType;
+use multiversx_sc::{chain_core::EGLD_000000_TOKEN_IDENTIFIER, types::EsdtTokenType};
 use structs::{
-    aliases::EventPaymentTuple, generate_hash::GenerateHash, EsdtInfo, SovTokenProperties,
+    aliases::EventPaymentTuple, generate_hash::GenerateHash, EsdtInfo, RegisterTokenOperation,
 };
 multiversx_sc::imports!();
 multiversx_sc::derive_imports!();
@@ -23,12 +23,11 @@ pub trait RegisterTokenModule:
     + multiversx_sc_modules::pause::PauseModule
     + setup_phase::SetupPhaseModule
 {
-    #[payable("EGLD")]
     #[endpoint(registerToken)]
     fn register_token(
         &self,
         hash_of_hashes: ManagedBuffer,
-        token_to_register: SovTokenProperties<Self::Api>,
+        token_to_register: RegisterTokenOperation<Self::Api>,
     ) {
         let token_hash = token_to_register.generate_hash();
         if token_hash.is_empty() {
@@ -57,6 +56,19 @@ pub trait RegisterTokenModule:
 
         self.lock_operation_hash_wrapper(&hash_of_hashes, &token_hash);
 
+        let contract_balance = self
+            .blockchain()
+            .get_balance(&self.blockchain().get_sc_address());
+
+        if contract_balance < ISSUE_COST {
+            self.complete_operation(
+                &hash_of_hashes,
+                &token_hash,
+                Some(NOT_ENOUGH_EGLD_FOR_REGISTER.into()),
+            );
+            return;
+        }
+
         if self.is_sov_token_id_registered(&token_to_register.token_id) {
             self.complete_operation(
                 &hash_of_hashes,
@@ -64,7 +76,7 @@ pub trait RegisterTokenModule:
                 Some(TOKEN_ALREADY_REGISTERED.into()),
             );
 
-            let tokens = self.create_event_payment_tuple(&token_to_register);
+            let tokens = self.create_event_payment_tuple();
 
             self.deposit_event(
                 &token_to_register.data.op_sender.clone(),
@@ -76,17 +88,16 @@ pub trait RegisterTokenModule:
         }
 
         if !self.has_sov_prefix(&token_to_register.token_id, &self.sov_token_prefix().get()) {
-            self.complete_operation(&hash_of_hashes, &token_hash, Some(INVALID_PREFIX.into()));
+            self.complete_operation(
+                &hash_of_hashes,
+                &token_hash,
+                Some(INVALID_PREFIX_FOR_REGISTER.into()),
+            );
 
             return;
         }
 
-        match token_to_register.token_type {
-            EsdtTokenType::Invalid => {
-                self.complete_operation(&hash_of_hashes, &token_hash, Some(INVALID_TYPE.into()))
-            }
-            _ => self.handle_token_issue(token_to_register, hash_of_hashes, token_hash),
-        }
+        self.handle_token_issue(token_to_register, hash_of_hashes, token_hash);
     }
 
     #[payable("EGLD")]
@@ -120,7 +131,7 @@ pub trait RegisterTokenModule:
 
     fn handle_token_issue(
         &self,
-        args: SovTokenProperties<Self::Api>,
+        args: RegisterTokenOperation<Self::Api>,
         hash_of_hashes: ManagedBuffer,
         token_hash: ManagedBuffer,
     ) {
@@ -150,7 +161,7 @@ pub trait RegisterTokenModule:
     #[promises_callback]
     fn issue_callback(
         &self,
-        token_to_register: &SovTokenProperties<Self::Api>,
+        token_to_register: &RegisterTokenOperation<Self::Api>,
         hash_of_hashes: ManagedBuffer,
         token_hash: ManagedBuffer,
         #[call_result] result: ManagedAsyncCallResult<TokenIdentifier<Self::Api>>,
@@ -161,7 +172,7 @@ pub trait RegisterTokenModule:
                 self.complete_operation(&hash_of_hashes, &token_hash, None);
             }
             ManagedAsyncCallResult::Err(error) => {
-                let tokens = self.create_event_payment_tuple(token_to_register);
+                let tokens = self.create_event_payment_tuple();
 
                 self.deposit_event(
                     &token_to_register.data.op_sender.clone(),
@@ -202,12 +213,6 @@ pub trait RegisterTokenModule:
             .set(sov_token_id);
     }
 
-    fn is_token_registered(&self, token_id: &TokenIdentifier, token_nonce: u64) -> bool {
-        !self
-            .sovereign_to_multiversx_esdt_info_mapper(token_id, token_nonce)
-            .is_empty()
-    }
-
     fn update_esdt_info_mappers(
         &self,
         sov_id: &TokenIdentifier,
@@ -228,19 +233,16 @@ pub trait RegisterTokenModule:
             });
     }
 
+    #[allow(clippy::field_reassign_with_default)]
     fn create_event_payment_tuple(
         &self,
-        token_to_register: &SovTokenProperties<Self::Api>,
     ) -> MultiValueEncoded<Self::Api, EventPaymentTuple<Self::Api>> {
-        let token_data = self.blockchain().get_esdt_token_data(
-            &token_to_register.data.op_sender,
-            &token_to_register.token_id,
-            token_to_register.token_nonce,
-        );
+        let mut token_data = EsdtTokenData::default();
+        token_data.amount = ISSUE_COST.into();
 
         MultiValueEncoded::from_iter([MultiValue3((
-            token_to_register.token_id.clone(),
-            token_to_register.token_nonce,
+            TokenIdentifier::from_esdt_bytes(EGLD_000000_TOKEN_IDENTIFIER),
+            0u64,
             token_data,
         ))])
     }

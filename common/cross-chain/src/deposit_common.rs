@@ -2,6 +2,7 @@ use error_messages::{
     BANNED_ENDPOINT_NAME, DEPOSIT_OVER_MAX_AMOUNT, ESDT_SAFE_STILL_PAUSED, GAS_LIMIT_TOO_HIGH,
     NOTHING_TO_TRANSFER, TOKEN_BLACKLISTED, TOO_MANY_TOKENS,
 };
+use multiversx_sc::chain_core::EGLD_000000_TOKEN_IDENTIFIER;
 use proxies::fee_market_proxy::FeeMarketProxy;
 use structs::{
     aliases::{
@@ -48,7 +49,12 @@ pub trait DepositCommonModule:
         let mut refundable_payments = ManagedVec::<Self::Api, _>::new();
 
         for payment in &payments {
-            let token_identifier = payment.token_identifier.clone().unwrap_esdt();
+            let is_egld = payment.token_identifier.clone().is_egld();
+            let token_identifier = if is_egld {
+                TokenIdentifier::from(EGLD_000000_TOKEN_IDENTIFIER)
+            } else {
+                payment.token_identifier.clone().unwrap_esdt()
+            };
             self.require_below_max_amount(&token_identifier, &payment.amount);
             self.require_token_not_on_blacklist(&token_identifier);
 

@@ -23,7 +23,7 @@ use structs::{
     configs::EsdtSafeConfig,
     fee::FeeStruct,
     operation::Operation,
-    SovTokenProperties,
+    RegisterTokenOperation,
 };
 
 pub struct MvxEsdtSafeTestState {
@@ -277,7 +277,7 @@ impl MvxEsdtSafeTestState {
 
     pub fn register_token(
         &mut self,
-        register_token_args: SovTokenProperties<StaticApi>,
+        register_token_args: RegisterTokenOperation<StaticApi>,
         hash_of_hashes: ManagedBuffer<StaticApi>,
         expected_custom_log: Option<&str>,
         expected_log_error: Option<&str>,
@@ -292,8 +292,6 @@ impl MvxEsdtSafeTestState {
             .register_token(hash_of_hashes, register_token_args)
             .returns(ReturnsLogs)
             .run();
-
-        println!("Logs: {:?}", logs);
 
         self.common_setup
             .assert_expected_log(logs, expected_custom_log, expected_log_error);
