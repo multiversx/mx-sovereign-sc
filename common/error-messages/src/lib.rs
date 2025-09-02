@@ -6,6 +6,7 @@ pub const BANNED_ENDPOINT_NAME: &str = "Banned endpoint name";
 pub const BLS_SIGNATURE_NOT_VALID: &str = "BLS signature is not valid";
 pub const BRIDGE_ALREADY_DEPLOYED: &str = "Bridge already deployed";
 pub const BURN_NON_ESDT_TOKENS: &str = "Burning non-ESDT tokens is not allowed";
+pub const BURN_MECHANISM_NON_ESDT_TOKENS: &str = "Non-ESDT tokens can not have a burn mechanism";
 pub const CALLER_DID_NOT_DEPLOY_ANY_SOV_CHAIN: &str =
     "The current caller has not deployed any Sovereign Chain";
 pub const CALLER_NOT_FROM_CURRENT_SOVEREIGN: &str =

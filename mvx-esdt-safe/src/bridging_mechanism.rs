@@ -1,6 +1,6 @@
 use error_messages::{
-    LOCK_MECHANISM_NON_ESDT, MINT_AND_BURN_ROLES_NOT_FOUND, TOKEN_ID_IS_NOT_TRUSTED,
-    TOKEN_IS_FROM_SOVEREIGN,
+    BURN_MECHANISM_NON_ESDT_TOKENS, LOCK_MECHANISM_NON_ESDT, MINT_AND_BURN_ROLES_NOT_FOUND,
+    TOKEN_ID_IS_NOT_TRUSTED, TOKEN_IS_FROM_SOVEREIGN,
 };
 use multiversx_sc::imports::*;
 
@@ -11,6 +11,7 @@ pub trait BridgingMechanism: cross_chain::storage::CrossChainStorage {
     #[only_owner]
     #[endpoint(setTokenBurnMechanism)]
     fn set_token_burn_mechanism(&self, token_id: EgldOrEsdtTokenIdentifier) {
+        require!(token_id.is_esdt(), BURN_MECHANISM_NON_ESDT_TOKENS);
         let token_identifier = token_id.clone().unwrap_esdt();
         let token_esdt_roles = self.blockchain().get_esdt_local_roles(&token_identifier);
 
