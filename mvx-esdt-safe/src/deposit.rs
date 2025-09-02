@@ -30,21 +30,15 @@ pub trait DepositModule:
         payment: &EgldOrEsdtTokenPayment<Self::Api>,
     ) -> EventPaymentTuple<Self::Api> {
         let token_identifier = payment.token_identifier.clone();
-
-        let esdt_id = if token_identifier.is_egld() {
-            None
+        let mut token_data = if token_identifier.is_egld() {
+            EsdtTokenData::default()
         } else {
-            Some(token_identifier.clone().unwrap_esdt())
-        };
-
-        let mut token_data = if let Some(ref esdt_id) = esdt_id {
+            let esdt_id = token_identifier.clone().unwrap_esdt();
             self.blockchain().get_esdt_token_data(
                 &self.blockchain().get_sc_address(),
-                esdt_id,
+                &esdt_id,
                 payment.token_nonce,
             )
-        } else {
-            EsdtTokenData::default()
         };
 
         token_data.amount = payment.amount.clone();
@@ -64,13 +58,12 @@ pub trait DepositModule:
             if self.is_fungible(&token_data.token_type)
                 && self.burn_mechanism_tokens().contains(&token_identifier)
             {
-                if let Some(esdt_id) = esdt_id {
-                    self.tx()
-                        .to(ToSelf)
-                        .typed(UserBuiltinProxy)
-                        .esdt_local_burn(esdt_id, payment.token_nonce, payment.amount.clone())
-                        .sync_call();
-                }
+                let esdt_id = token_identifier.clone().unwrap_esdt();
+                self.tx()
+                    .to(ToSelf)
+                    .typed(UserBuiltinProxy)
+                    .esdt_local_burn(esdt_id, payment.token_nonce, payment.amount.clone())
+                    .sync_call();
 
                 self.deposited_tokens_amount(&token_identifier)
                     .update(|amount| *amount += payment.amount.clone());
