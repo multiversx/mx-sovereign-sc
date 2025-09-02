@@ -52,10 +52,11 @@ fn register_bridge_operation_setup_not_completed() {
     let operation_1 = ManagedBuffer::from("operation_1");
     let operation_2 = ManagedBuffer::from("operation_2");
     let operation = state.generate_bridge_operation_struct(vec![&operation_1, &operation_2]);
+    let bitmap = ManagedBuffer::new_from_bytes(&[1]);
 
     state.register_operations(
         operation.clone(),
-        ManagedBuffer::new(),
+        bitmap,
         0,
         Some(SETUP_PHASE_NOT_COMPLETED),
     );
@@ -575,8 +576,8 @@ fn test_change_validator_set() {
         epoch_for_new_set,
         &bitmap,
         validator_set,
-        None,
         Some(EXECUTED_BRIDGE_OP_EVENT),
+        None,
     );
 
     state
@@ -588,7 +589,7 @@ fn test_change_validator_set() {
 /// H-VERIFIER_CHANGE_VALIDATORS_FAIL
 ///
 /// ### ACTION
-/// Call 'change_validators_set()' after registering the operation
+/// Call 'change_validators_set()' before registering the operation
 ///
 /// ### EXPECTED
 /// Error OUTGOING_TX_HASH_ALREADY_REGISTERED
@@ -629,8 +630,8 @@ fn test_change_validator_set_operation_already_registered() {
         1,
         &bitmap,
         MultiValueEncoded::new(),
+        Some(EXECUTED_BRIDGE_OP_EVENT),
         Some(OUTGOING_TX_HASH_ALREADY_REGISTERED),
-        None,
     );
 }
 
@@ -699,12 +700,11 @@ fn test_change_multiple_validator_sets() {
             epoch,
             &bitmap,
             validator_set,
-            None,
             Some(EXECUTED_BRIDGE_OP_EVENT),
+            None,
         );
 
-        let mut bls_keys: ManagedVec<StaticApi, ManagedBuffer<StaticApi>> =
-            ManagedVec::new();
+        let mut bls_keys: ManagedVec<StaticApi, ManagedBuffer<StaticApi>> = ManagedVec::new();
         bls_keys.push(validator_bls_key);
         state
             .common_setup
