@@ -1,3 +1,10 @@
+use crate::constants::EXECUTED_BRIDGE_OP_EVENT;
+use crate::{
+    base_setup::init::BaseSetup,
+    constants::{CHAIN_CONFIG_ADDRESS, FEE_MARKET_ADDRESS, HEADER_VERIFIER_ADDRESS, OWNER_ADDRESS},
+};
+use multiversx_sc_scenario::imports::{BigUint, ReturnsResult};
+use multiversx_sc_scenario::multiversx_chain_vm::crypto_functions::sha256;
 use multiversx_sc_scenario::{
     api::StaticApi,
     imports::{
@@ -6,8 +13,6 @@ use multiversx_sc_scenario::{
     },
     ReturnsLogs, ScenarioTxRun,
 };
-use multiversx_sc_scenario::imports::{BigUint, ReturnsResult};
-use multiversx_sc_scenario::multiversx_chain_vm::crypto_functions::sha256;
 use proxies::{
     chain_config_proxy::ChainConfigContractProxy, fee_market_proxy::FeeMarketProxy,
     header_verifier_proxy::HeaderverifierProxy,
@@ -15,11 +20,6 @@ use proxies::{
 use structs::fee::FeeStruct;
 use structs::generate_hash::GenerateHash;
 use structs::ValidatorData;
-use crate::{
-    base_setup::init::BaseSetup,
-    constants::{CHAIN_CONFIG_ADDRESS, FEE_MARKET_ADDRESS, HEADER_VERIFIER_ADDRESS, OWNER_ADDRESS},
-};
-use crate::constants::EXECUTED_BRIDGE_OP_EVENT;
 
 impl BaseSetup {
     pub fn register_operation(
@@ -104,11 +104,7 @@ impl BaseSetup {
         self.assert_expected_error_message(response, expected_error_message);
     }
 
-    pub fn unregister(
-        &mut self,
-        bls_key: &ManagedBuffer<StaticApi>,
-        expect_error: Option<&str>,
-    ) {
+    pub fn unregister(&mut self, bls_key: &ManagedBuffer<StaticApi>, expect_error: Option<&str>) {
         let (response, _) = self
             .world
             .tx()
@@ -127,8 +123,8 @@ impl BaseSetup {
         &mut self,
         hash_of_hashes: &ManagedBuffer<StaticApi>,
         validator_data: &ValidatorData<StaticApi>,
-        expected_error_message: Option<&str>,
         expected_custom_log: Option<&str>,
+        expected_error_log: Option<&str>,
     ) {
         let (response, logs) = self
             .world
@@ -141,8 +137,8 @@ impl BaseSetup {
             .returns(ReturnsLogs)
             .run();
 
-        self.assert_expected_error_message(response, expected_error_message);
-        self.assert_expected_log(logs, expected_custom_log, None);
+        assert!(response.is_ok());
+        self.assert_expected_log(logs, expected_custom_log, expected_error_log);
     }
 
     pub fn register_validator_operation(
@@ -167,11 +163,14 @@ impl BaseSetup {
         self.register_validator(
             &hash_of_hashes,
             &validator_data,
-            None,
             Some(EXECUTED_BRIDGE_OP_EVENT),
+            None,
         );
 
-        assert_eq!(self.get_bls_key_id(&validator_data.bls_key), validator_data.id);
+        assert_eq!(
+            self.get_bls_key_id(&validator_data.bls_key),
+            validator_data.id
+        );
     }
 
     pub fn unregister_validator(

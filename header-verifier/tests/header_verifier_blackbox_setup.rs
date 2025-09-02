@@ -130,7 +130,7 @@ impl HeaderVerifierTestState {
             .returns(ReturnsResultUnmanaged)
             .run();
 
-        match response {
+        match response.into_option() {
             None => assert!(
                 expected_result.is_none(),
                 "Transaction was successful, but expected error"
