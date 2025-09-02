@@ -114,7 +114,7 @@ where
     }
 
     pub fn remove_fee_during_setup_phase<
-        Arg0: ProxyArg<TokenIdentifier<Env::Api>>,
+        Arg0: ProxyArg<EgldOrEsdtTokenIdentifier<Env::Api>>,
     >(
         self,
         base_token: Arg0,
@@ -128,7 +128,7 @@ where
 
     pub fn remove_fee<
         Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
-        Arg1: ProxyArg<TokenIdentifier<Env::Api>>,
+        Arg1: ProxyArg<EgldOrEsdtTokenIdentifier<Env::Api>>,
     >(
         self,
         hash_of_hashes: Arg0,
@@ -172,7 +172,7 @@ where
     }
 
     pub fn token_fee<
-        Arg0: ProxyArg<TokenIdentifier<Env::Api>>,
+        Arg0: ProxyArg<EgldOrEsdtTokenIdentifier<Env::Api>>,
     >(
         self,
         token_id: Arg0,
