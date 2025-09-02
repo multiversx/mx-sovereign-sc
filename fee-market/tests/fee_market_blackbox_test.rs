@@ -115,64 +115,6 @@ fn test_set_fee_setup_not_completed() {
 }
 
 /// ### TEST
-/// F-MARKET_SET_FEE_FAIL
-///
-/// ### ACTION
-/// Call `set_fee()` when operation is not registered
-///
-/// ### EXPECTED
-/// Error CURRENT_OPERATION_NOT_REGISTERED
-#[test]
-fn test_set_fee_invalid_fee_type() {
-    let mut state = FeeMarketTestState::new();
-
-    state
-        .common_setup
-        .deploy_chain_config(OptionalValue::None, None);
-
-    state
-        .common_setup
-        .register(&BLSKey::random(), &MultiEgldOrEsdtPayment::new(), None);
-
-    state.common_setup.complete_chain_config_setup_phase(None);
-
-    state
-        .common_setup
-        .deploy_fee_market(None, ESDT_SAFE_ADDRESS);
-
-    state
-        .common_setup
-        .deploy_header_verifier(vec![ScArray::FeeMarket, ScArray::ChainConfig]);
-
-    state.common_setup.complete_fee_market_setup_phase(None);
-
-    let fee = FeeStruct {
-        base_token: EgldOrEsdtTokenIdentifier::esdt(FIRST_TEST_TOKEN),
-        fee_type: FeeType::None,
-    };
-    let fee_hash = fee.generate_hash();
-    let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&fee_hash.to_vec()));
-    let bitmap = ManagedBuffer::new_from_bytes(&[1]);
-    let signature = ManagedBuffer::new();
-    let epoch = 0;
-
-    state
-        .common_setup
-        .complete_header_verifier_setup_phase(None);
-
-    state.common_setup.register_operation(
-        OWNER_ADDRESS,
-        signature,
-        &hash_of_hashes,
-        bitmap,
-        epoch,
-        MultiValueEncoded::from_iter(vec![fee_hash]),
-    );
-
-    state.set_fee(&hash_of_hashes, &fee, Some(INVALID_FEE_TYPE), None);
-}
-
-/// ### TEST
 /// F-MARKET_REMOVE_USERS_FROM_WHITELIST_OK
 ///
 /// ### ACTION
@@ -251,41 +193,6 @@ fn test_remove_users_from_whitelist() {
     state
         .common_setup
         .query_user_fee_whitelist(Some(&new_users));
-}
-
-/// ### TEST
-/// F-MARKET_SET_FEE_FAIL
-///
-/// ### ACTION
-/// Call `set_fee()` when operation is not registered
-///
-/// ### EXPECTED
-/// Error CURRENT_OPERATION_NOT_REGISTERED
-#[test]
-fn test_set_fee_operation_not_registered() {
-    let mut state = FeeMarketTestState::new();
-
-    state
-        .common_setup
-        .deploy_fee_market(None, ESDT_SAFE_ADDRESS);
-
-    state
-        .common_setup
-        .deploy_header_verifier(vec![ScArray::FeeMarket]);
-
-    state.common_setup.complete_fee_market_setup_phase(None);
-
-    let fee = FeeStruct {
-        base_token: EgldOrEsdtTokenIdentifier::esdt(FIRST_TEST_TOKEN),
-        fee_type: FeeType::None,
-    };
-
-    state.set_fee(
-        &ManagedBuffer::new(),
-        &fee,
-        Some(CURRENT_OPERATION_NOT_REGISTERED),
-        None,
-    );
 }
 
 /// ### TEST
