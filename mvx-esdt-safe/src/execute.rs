@@ -1,4 +1,6 @@
-use error_messages::{DEPOSIT_AMOUNT_NOT_ENOUGH, ERROR_AT_ENCODING, ESDT_SAFE_STILL_PAUSED};
+use error_messages::{
+    DEPOSIT_AMOUNT_NOT_ENOUGH, ERROR_AT_ENCODING, ESDT_SAFE_STILL_PAUSED, SETUP_PHASE_NOT_COMPLETED,
+};
 use structs::{
     aliases::GasLimit,
     generate_hash::GenerateHash,
@@ -28,21 +30,32 @@ pub trait ExecuteModule:
             self.complete_operation(
                 &hash_of_hashes,
                 &operation_hash,
-                Some(ManagedBuffer::from(ERROR_AT_ENCODING)),
+                Some(ERROR_AT_ENCODING.into()),
             );
+            return;
         };
-
         if self.is_paused() {
             self.complete_operation(
                 &hash_of_hashes,
                 &operation_hash,
                 Some(ESDT_SAFE_STILL_PAUSED.into()),
             );
+            return;
         }
-
-        self.require_setup_complete_with_event(&hash_of_hashes, &operation_hash);
-
-        self.lock_operation_hash_wrapper(&hash_of_hashes, &operation_hash);
+        if !self.is_setup_phase_complete() {
+            self.complete_operation(
+                &hash_of_hashes,
+                &operation_hash,
+                Some(SETUP_PHASE_NOT_COMPLETED.into()),
+            );
+            return;
+        }
+        if let Some(lock_operation_error) =
+            self.lock_operation_hash_wrapper(&hash_of_hashes, &operation_hash)
+        {
+            self.complete_operation(&hash_of_hashes, &operation_hash, Some(lock_operation_error));
+            return;
+        }
 
         let operation_tuple = OperationTuple {
             op_hash: operation_hash,

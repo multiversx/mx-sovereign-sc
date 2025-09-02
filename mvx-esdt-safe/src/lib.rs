@@ -78,7 +78,6 @@ pub trait MvxEsdtSafe:
             );
             return;
         }
-
         if !self.is_setup_phase_complete() {
             self.complete_operation(
                 &hash_of_hashes,
@@ -87,15 +86,19 @@ pub trait MvxEsdtSafe:
             );
             return;
         }
-
-        self.lock_operation_hash_wrapper(&hash_of_hashes, &config_hash);
-
+        if let Some(lock_operation_error) =
+            self.lock_operation_hash_wrapper(&hash_of_hashes, &config_hash)
+        {
+            self.complete_operation(&hash_of_hashes, &config_hash, Some(lock_operation_error));
+            return;
+        }
         if let Some(error_message) = self.is_esdt_safe_config_valid(&new_config) {
             self.complete_operation(
                 &hash_of_hashes,
                 &config_hash,
                 Some(ManagedBuffer::from(error_message)),
             );
+            return;
         } else {
             self.esdt_safe_config().set(new_config);
             self.complete_operation(&hash_of_hashes, &config_hash, None);

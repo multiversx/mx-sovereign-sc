@@ -45,7 +45,12 @@ pub trait FeeWhitelistModule:
             );
             return;
         }
-        self.lock_operation_hash_wrapper(&hash_of_hashes, &operation_hash);
+        if let Some(lock_operation_error) =
+            self.lock_operation_hash_wrapper(&hash_of_hashes, &operation_hash)
+        {
+            self.complete_operation(&hash_of_hashes, &operation_hash, Some(lock_operation_error));
+            return;
+        }
         self.users_whitelist().extend(operation.users);
         self.complete_operation(&hash_of_hashes, &operation_hash, None);
     }
@@ -85,7 +90,12 @@ pub trait FeeWhitelistModule:
             );
             return;
         }
-        self.lock_operation_hash_wrapper(&hash_of_hashes, &operation_hash);
+        if let Some(lock_operation_error) =
+            self.lock_operation_hash_wrapper(&hash_of_hashes, &operation_hash)
+        {
+            self.complete_operation(&hash_of_hashes, &operation_hash, Some(lock_operation_error));
+            return;
+        }
 
         for user in &operation.users {
             self.users_whitelist().swap_remove(&user);

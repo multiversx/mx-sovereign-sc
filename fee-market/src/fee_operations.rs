@@ -38,8 +38,12 @@ pub trait FeeOperationsModule:
             );
             return;
         }
-        self.lock_operation_hash_wrapper(&hash_of_hashes, &operation_hash);
-
+        if let Some(lock_operation_error) =
+            self.lock_operation_hash_wrapper(&hash_of_hashes, &operation_hash)
+        {
+            self.complete_operation(&hash_of_hashes, &operation_hash, Some(lock_operation_error));
+            return;
+        }
         if let Some(err_msg) = self.validate_percentage_sum(&operation.pairs) {
             self.complete_operation(&hash_of_hashes, &operation_hash, Some(err_msg));
             return;
@@ -78,7 +82,12 @@ pub trait FeeOperationsModule:
             return;
         }
 
-        self.lock_operation_hash_wrapper(&hash_of_hashes, &token_id_hash);
+        if let Some(lock_operation_error) =
+            self.lock_operation_hash_wrapper(&hash_of_hashes, &token_id_hash)
+        {
+            self.complete_operation(&hash_of_hashes, &token_id_hash, Some(lock_operation_error));
+            return;
+        }
         self.token_fee(&token_id).clear();
         self.fee_enabled().set(false);
         self.complete_operation(&hash_of_hashes, &token_id_hash, None);
@@ -112,9 +121,12 @@ pub trait FeeOperationsModule:
             );
             return;
         }
-
-        self.lock_operation_hash_wrapper(&hash_of_hashes, &fee_hash);
-
+        if let Some(lock_operation_error) =
+            self.lock_operation_hash_wrapper(&hash_of_hashes, &fee_hash)
+        {
+            self.complete_operation(&hash_of_hashes, &fee_hash, Some(lock_operation_error));
+            return;
+        }
         if let Some(set_fee_error_msg) = self.set_fee_in_storage(&fee_struct) {
             self.complete_operation(&hash_of_hashes, &fee_hash, Some(set_fee_error_msg.into()));
             return;
