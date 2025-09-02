@@ -6,7 +6,10 @@ use common_test_setup::constants::{
 use error_messages::NOTHING_TO_TRANSFER;
 use multiversx_sc::{
     imports::{MultiValue3, OptionalValue},
-    types::{BigUint, EsdtTokenPayment, ManagedBuffer, ManagedVec, MultiValueEncoded},
+    types::{
+        BigUint, EgldOrEsdtTokenIdentifier, EsdtTokenPayment, ManagedBuffer, ManagedVec,
+        MultiValueEncoded,
+    },
 };
 use multiversx_sc_scenario::api::StaticApi;
 use sov_esdt_safe_blackbox_setup::SovEsdtSafeTestState;
@@ -117,9 +120,9 @@ fn test_deposit_with_fee_no_transfer_data() {
     let fee_token_identifier = FEE_TOKEN;
 
     let fee = FeeStruct {
-        base_token: fee_token_identifier.into(),
+        base_token: EgldOrEsdtTokenIdentifier::esdt(fee_token_identifier),
         fee_type: FeeType::Fixed {
-            token: fee_token_identifier.into(),
+            token: EgldOrEsdtTokenIdentifier::esdt(fee_token_identifier),
             per_transfer: per_transfer.clone(),
             per_gas: per_gas.clone(),
         },
@@ -299,9 +302,9 @@ fn test_deposit_with_fee_with_transfer_data() {
     let fee_token_identifier = FEE_TOKEN;
 
     let fee = FeeStruct {
-        base_token: fee_token_identifier.into(),
+        base_token: EgldOrEsdtTokenIdentifier::esdt(fee_token_identifier),
         fee_type: FeeType::Fixed {
-            token: fee_token_identifier.into(),
+            token: EgldOrEsdtTokenIdentifier::esdt(fee_token_identifier),
             per_transfer: per_transfer.clone(),
             per_gas: per_gas.clone(),
         },

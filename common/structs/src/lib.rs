@@ -36,7 +36,7 @@ pub const BLS_KEY_BYTE_LENGTH: usize = 96;
 #[type_abi]
 #[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, ManagedVecItem, Clone)]
 pub struct EsdtInfo<M: ManagedTypeApi> {
-    pub token_identifier: TokenIdentifier<M>,
+    pub token_identifier: EgldOrEsdtTokenIdentifier<M>,
     pub token_nonce: u64,
 }
 
@@ -62,7 +62,7 @@ pub struct ValidatorData<M: ManagedTypeApi> {
 #[type_abi]
 #[derive(TopEncode, TopDecode, NestedEncode)]
 pub struct RegisterTokenOperation<M: ManagedTypeApi> {
-    pub token_id: TokenIdentifier<M>,
+    pub token_id: EgldOrEsdtTokenIdentifier<M>,
     pub token_nonce: u64,
     pub token_type: EsdtTokenType,
     pub token_display_name: ManagedBuffer<M>,
