@@ -5,6 +5,7 @@ pub const ADDRESS_NOT_VALID_SC_ADDRESS: &str = "The given address is not a valid
 pub const BANNED_ENDPOINT_NAME: &str = "Banned endpoint name";
 pub const BLS_SIGNATURE_NOT_VALID: &str = "BLS signature is not valid";
 pub const BRIDGE_ALREADY_DEPLOYED: &str = "Bridge already deployed";
+pub const BURN_NON_ESDT_TOKENS: &str = "Burning non-ESDT tokens is not allowed";
 pub const CALLER_DID_NOT_DEPLOY_ANY_SOV_CHAIN: &str =
     "The current caller has not deployed any Sovereign Chain";
 pub const CALLER_NOT_FROM_CURRENT_SOVEREIGN: &str =
@@ -68,9 +69,11 @@ pub const INVALID_VALIDATOR_SET_LENGTH: &str =
     "The current validator set length doesn't meet the Sovereign's requirements";
 pub const INVALID_WEGLD_USDC_PAIR_ADDRESS: &str = "Invalid WEGLD-USDC pair address from router";
 pub const ITEM_NOT_IN_LIST: &str = "Item not found in list";
+pub const LOCK_MECHANISM_NON_ESDT: &str = "Non-ESDT tokens can not have a lock mechanism";
 pub const MAX_GAS_LIMIT_PER_TX_EXCEEDED: &str =
     "The gas limit exceeds the maximum gas per transaction limit";
 pub const MINT_AND_BURN_ROLES_NOT_FOUND: &str = "This token does not have Mint and Burn roles";
+pub const MINT_NON_ESDT_TOKENS: &str = "Non-ESDT tokens can not be minted";
 pub const NATIVE_TOKEN_ALREADY_REGISTERED: &str = "Native token was already registered";
 pub const NATIVE_TOKEN_NOT_REGISTERED: &str = "There is no native token registered";
 pub const NO_ESDT_SAFE_ADDRESS: &str = "There is no registered ESDT address";

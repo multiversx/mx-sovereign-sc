@@ -1,5 +1,6 @@
 use error_messages::{
-    MINT_AND_BURN_ROLES_NOT_FOUND, TOKEN_ID_IS_NOT_TRUSTED, TOKEN_IS_FROM_SOVEREIGN,
+    LOCK_MECHANISM_NON_ESDT, MINT_AND_BURN_ROLES_NOT_FOUND, TOKEN_ID_IS_NOT_TRUSTED,
+    TOKEN_IS_FROM_SOVEREIGN,
 };
 use multiversx_sc::imports::*;
 
@@ -58,11 +59,13 @@ pub trait BridgingMechanism: cross_chain::storage::CrossChainStorage {
             TOKEN_IS_FROM_SOVEREIGN
         );
 
+        require!(token_id.is_esdt(), LOCK_MECHANISM_NON_ESDT);
+
         self.burn_mechanism_tokens().swap_remove(&token_id);
 
         let deposited_amount = self.deposited_tokens_amount(&token_id).get();
 
-        if deposited_amount != 0 && token_id.is_esdt() {
+        if deposited_amount != 0 {
             self.tx()
                 .to(ToSelf)
                 .typed(UserBuiltinProxy)

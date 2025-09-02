@@ -1,4 +1,7 @@
-use error_messages::{DEPOSIT_AMOUNT_NOT_ENOUGH, ERROR_AT_ENCODING, ESDT_SAFE_STILL_PAUSED};
+use error_messages::{
+    BURN_NON_ESDT_TOKENS, DEPOSIT_AMOUNT_NOT_ENOUGH, ERROR_AT_ENCODING, ESDT_SAFE_STILL_PAUSED,
+    MINT_NON_ESDT_TOKENS,
+};
 use structs::{
     aliases::GasLimit,
     generate_hash::GenerateHash,
@@ -146,13 +149,13 @@ pub trait ExecuteModule:
         token_id: &EgldOrEsdtTokenIdentifier<Self::Api>,
         amount: &BigUint,
     ) {
-        if token_id.is_esdt() {
-            self.tx()
-                .to(ToSelf)
-                .typed(UserBuiltinProxy)
-                .esdt_local_mint(token_id.clone().unwrap_esdt(), 0, amount)
-                .sync_call();
-        }
+        require!(token_id.is_esdt(), MINT_NON_ESDT_TOKENS);
+
+        self.tx()
+            .to(ToSelf)
+            .typed(UserBuiltinProxy)
+            .esdt_local_mint(token_id.clone().unwrap_esdt(), 0, amount)
+            .sync_call();
     }
 
     fn esdt_create_and_update_mapper(
@@ -161,6 +164,8 @@ pub trait ExecuteModule:
         operation_token: &OperationEsdtPayment<Self::Api>,
     ) -> u64 {
         let mut nonce = 0;
+
+        require!(mvx_token_id.is_esdt(), MINT_NON_ESDT_TOKENS);
 
         let current_token_type_ref = &operation_token.token_data.token_type;
 
@@ -180,7 +185,7 @@ pub trait ExecuteModule:
                 mvx_token_id,
                 nonce,
             );
-        } else if mvx_token_id.is_esdt() {
+        } else {
             self.tx()
                 .to(ToSelf)
                 .typed(system_proxy::UserBuiltinProxy)
@@ -204,25 +209,22 @@ pub trait ExecuteModule:
         if self.is_sft_or_meta(&token_data.token_type) {
             amount += BigUint::from(1u32);
         }
+        require!(mvx_token_id.is_esdt(), MINT_NON_ESDT_TOKENS);
 
-        if mvx_token_id.is_esdt() {
-            self.tx()
-                .to(ToSelf)
-                .typed(system_proxy::UserBuiltinProxy)
-                .esdt_nft_create(
-                    mvx_token_id.clone().unwrap_esdt(),
-                    &amount,
-                    &token_data.name,
-                    &token_data.royalties,
-                    &token_data.hash,
-                    &token_data.attributes,
-                    &token_data.uris,
-                )
-                .returns(ReturnsResult)
-                .sync_call()
-        } else {
-            sc_panic!("EGLD can not be used to mint non fungible tokens");
-        }
+        self.tx()
+            .to(ToSelf)
+            .typed(system_proxy::UserBuiltinProxy)
+            .esdt_nft_create(
+                mvx_token_id.clone().unwrap_esdt(),
+                &amount,
+                &token_data.name,
+                &token_data.royalties,
+                &token_data.hash,
+                &token_data.attributes,
+                &token_data.uris,
+            )
+            .returns(ReturnsResult)
+            .sync_call()
     }
 
     fn distribute_payments(
@@ -344,6 +346,7 @@ pub trait ExecuteModule:
         }
 
         let mvx_token_id = sov_to_mvx_mapper.get();
+        require!(mvx_token_id.is_esdt(), BURN_NON_ESDT_TOKENS);
         let mut mvx_token_nonce = 0;
 
         if operation_token.token_nonce > 0 {
@@ -364,17 +367,15 @@ pub trait ExecuteModule:
             }
         }
 
-        if mvx_token_id.is_esdt() {
-            self.tx()
-                .to(ToSelf)
-                .typed(system_proxy::UserBuiltinProxy)
-                .esdt_local_burn(
-                    mvx_token_id.unwrap_esdt(),
-                    mvx_token_nonce,
-                    &operation_token.token_data.amount,
-                )
-                .sync_call();
-        }
+        self.tx()
+            .to(ToSelf)
+            .typed(system_proxy::UserBuiltinProxy)
+            .esdt_local_burn(
+                mvx_token_id.unwrap_esdt(),
+                mvx_token_nonce,
+                &operation_token.token_data.amount,
+            )
+            .sync_call();
     }
 
     fn get_mvx_token_id(

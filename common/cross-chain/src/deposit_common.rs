@@ -1,6 +1,6 @@
 use error_messages::{
-    BANNED_ENDPOINT_NAME, DEPOSIT_OVER_MAX_AMOUNT, ESDT_SAFE_STILL_PAUSED, GAS_LIMIT_TOO_HIGH,
-    NOTHING_TO_TRANSFER, TOKEN_BLACKLISTED, TOO_MANY_TOKENS,
+    BANNED_ENDPOINT_NAME, BURN_NON_ESDT_TOKENS, DEPOSIT_OVER_MAX_AMOUNT, ESDT_SAFE_STILL_PAUSED,
+    GAS_LIMIT_TOO_HIGH, NOTHING_TO_TRANSFER, TOKEN_BLACKLISTED, TOO_MANY_TOKENS,
 };
 use proxies::fee_market_proxy::FeeMarketProxy;
 use structs::{
@@ -144,6 +144,8 @@ pub trait DepositCommonModule:
                     &payment.amount,
                 )
                 .sync_call();
+        } else {
+            sc_panic!(BURN_NON_ESDT_TOKENS);
         }
     }
 
