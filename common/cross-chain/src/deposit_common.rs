@@ -134,15 +134,17 @@ pub trait DepositCommonModule:
     }
 
     fn burn_sovereign_token(&self, payment: &EgldOrEsdtTokenPayment<Self::Api>) {
-        self.tx()
-            .to(ToSelf)
-            .typed(system_proxy::UserBuiltinProxy)
-            .esdt_local_burn(
-                payment.token_identifier.clone().unwrap_esdt(),
-                payment.token_nonce,
-                &payment.amount,
-            )
-            .sync_call();
+        if payment.token_identifier.is_esdt() {
+            self.tx()
+                .to(ToSelf)
+                .typed(system_proxy::UserBuiltinProxy)
+                .esdt_local_burn(
+                    payment.token_identifier.clone().unwrap_esdt(),
+                    payment.token_nonce,
+                    &payment.amount,
+                )
+                .sync_call();
+        }
     }
 
     fn get_event_payment_token_data(
@@ -286,7 +288,7 @@ pub trait DepositCommonModule:
     }
 
     #[inline]
-    fn is_token_whitelisted(&self, token_id: &EgldOrEsdtTokenIdentifier) -> bool {
+    fn is_token_whitelisted(&self, token_id: &EgldOrEsdtTokenIdentifier<Self::Api>) -> bool {
         self.esdt_safe_config()
             .get()
             .token_whitelist

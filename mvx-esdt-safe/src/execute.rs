@@ -146,11 +146,13 @@ pub trait ExecuteModule:
         token_id: &EgldOrEsdtTokenIdentifier<Self::Api>,
         amount: &BigUint,
     ) {
-        self.tx()
-            .to(ToSelf)
-            .typed(UserBuiltinProxy)
-            .esdt_local_mint(token_id.clone().unwrap_esdt(), 0, amount)
-            .sync_call();
+        if token_id.is_esdt() {
+            self.tx()
+                .to(ToSelf)
+                .typed(UserBuiltinProxy)
+                .esdt_local_mint(token_id.clone().unwrap_esdt(), 0, amount)
+                .sync_call();
+        }
     }
 
     fn esdt_create_and_update_mapper(
@@ -178,7 +180,7 @@ pub trait ExecuteModule:
                 mvx_token_id,
                 nonce,
             );
-        } else {
+        } else if mvx_token_id.is_esdt() {
             self.tx()
                 .to(ToSelf)
                 .typed(system_proxy::UserBuiltinProxy)
@@ -203,20 +205,24 @@ pub trait ExecuteModule:
             amount += BigUint::from(1u32);
         }
 
-        self.tx()
-            .to(ToSelf)
-            .typed(system_proxy::UserBuiltinProxy)
-            .esdt_nft_create(
-                mvx_token_id.clone().unwrap_esdt(),
-                &amount,
-                &token_data.name,
-                &token_data.royalties,
-                &token_data.hash,
-                &token_data.attributes,
-                &token_data.uris,
-            )
-            .returns(ReturnsResult)
-            .sync_call()
+        if mvx_token_id.is_esdt() {
+            self.tx()
+                .to(ToSelf)
+                .typed(system_proxy::UserBuiltinProxy)
+                .esdt_nft_create(
+                    mvx_token_id.clone().unwrap_esdt(),
+                    &amount,
+                    &token_data.name,
+                    &token_data.royalties,
+                    &token_data.hash,
+                    &token_data.attributes,
+                    &token_data.uris,
+                )
+                .returns(ReturnsResult)
+                .sync_call()
+        } else {
+            sc_panic!("EGLD can not be used to mint non fungible tokens");
+        }
     }
 
     fn distribute_payments(
@@ -358,15 +364,17 @@ pub trait ExecuteModule:
             }
         }
 
-        self.tx()
-            .to(ToSelf)
-            .typed(system_proxy::UserBuiltinProxy)
-            .esdt_local_burn(
-                mvx_token_id.unwrap_esdt(),
-                mvx_token_nonce,
-                &operation_token.token_data.amount,
-            )
-            .sync_call();
+        if mvx_token_id.is_esdt() {
+            self.tx()
+                .to(ToSelf)
+                .typed(system_proxy::UserBuiltinProxy)
+                .esdt_local_burn(
+                    mvx_token_id.unwrap_esdt(),
+                    mvx_token_nonce,
+                    &operation_token.token_data.amount,
+                )
+                .sync_call();
+        }
     }
 
     fn get_mvx_token_id(

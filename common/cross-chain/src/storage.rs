@@ -28,7 +28,7 @@ pub trait CrossChainStorage {
     fn multiversx_to_sovereign_token_id_mapper(
         &self,
         mvx_token_id: &EgldOrEsdtTokenIdentifier<Self::Api>,
-    ) -> SingleValueMapper<EgldOrEsdtTokenIdentifier>;
+    ) -> SingleValueMapper<EgldOrEsdtTokenIdentifier<Self::Api>>;
 
     #[storage_mapper("sovEsdtTokenInfoMapper")]
     fn sovereign_to_multiversx_esdt_info_mapper(

@@ -132,8 +132,8 @@ pub trait FeeCommonHelpersModule:
         opt_gas_limit: OptionalValue<GasLimit>,
     ) -> FinalPayment<Self::Api> {
         let fee_type = self
-            .token_fee(&EgldOrEsdtTokenIdentifier::from(
-                payment.token_identifier.clone().into_managed_buffer(),
+            .token_fee(&EgldOrEsdtTokenIdentifier::esdt(
+                payment.token_identifier.clone(),
             ))
             .get();
         match fee_type {

@@ -62,7 +62,7 @@ pub trait BridgingMechanism: cross_chain::storage::CrossChainStorage {
 
         let deposited_amount = self.deposited_tokens_amount(&token_id).get();
 
-        if deposited_amount != 0 {
+        if deposited_amount != 0 && token_id.is_esdt() {
             self.tx()
                 .to(ToSelf)
                 .typed(UserBuiltinProxy)

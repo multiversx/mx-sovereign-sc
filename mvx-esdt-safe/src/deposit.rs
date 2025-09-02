@@ -30,7 +30,7 @@ pub trait DepositModule:
         payment: &EgldOrEsdtTokenPayment<Self::Api>,
     ) -> EventPaymentTuple<Self::Api> {
         let token_identifier = payment.token_identifier.clone();
-        
+
         let esdt_id = if token_identifier.is_egld() {
             None
         } else {
@@ -64,7 +64,7 @@ pub trait DepositModule:
             if self.is_fungible(&token_data.token_type)
                 && self.burn_mechanism_tokens().contains(&token_identifier)
             {
-                if let Some(ref esdt_id) = esdt_id {
+                if let Some(esdt_id) = esdt_id {
                     self.tx()
                         .to(ToSelf)
                         .typed(UserBuiltinProxy)
