@@ -177,16 +177,16 @@ pub trait HeaderVerifierOperationsModule:
         &self,
         hash_of_hashes: ManagedBuffer,
         operation_hash: ManagedBuffer,
-    ) -> Option<ManagedBuffer> {
+    ) -> OptionalValue<ManagedBuffer> {
         if !self.is_caller_is_from_current_sovereign() {
-            return Some(CALLER_NOT_FROM_CURRENT_SOVEREIGN.into());
+            return OptionalValue::Some(CALLER_NOT_FROM_CURRENT_SOVEREIGN.into());
         }
 
         let operation_hash_status_mapper =
             self.operation_hash_status(&hash_of_hashes, &operation_hash);
 
         if self.is_operation_hash_registered(&operation_hash_status_mapper) {
-            return Some(CURRENT_OPERATION_NOT_REGISTERED.into());
+            return OptionalValue::Some(CURRENT_OPERATION_NOT_REGISTERED.into());
         }
 
         let is_hash_in_execution = operation_hash_status_mapper.get();
@@ -195,10 +195,10 @@ pub trait HeaderVerifierOperationsModule:
                 operation_hash_status_mapper.set(OperationHashStatus::Locked)
             }
             OperationHashStatus::Locked => {
-                return Some(CURRENT_OPERATION_ALREADY_IN_EXECUTION.into());
+                return OptionalValue::Some(CURRENT_OPERATION_ALREADY_IN_EXECUTION.into());
             }
         }
 
-        None
+        OptionalValue::None
     }
 }

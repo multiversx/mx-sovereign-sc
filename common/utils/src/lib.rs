@@ -18,20 +18,13 @@ pub trait UtilsModule: custom_events::CustomEventsModule {
         hash_of_hashes: &ManagedBuffer,
         hash: &ManagedBuffer,
     ) -> Option<ManagedBuffer> {
-        let result = self
-            .tx()
+        self.tx()
             .to(self.blockchain().get_owner_address())
             .typed(HeaderverifierProxy)
             .lock_operation_hash(hash_of_hashes, hash)
-            .returns(ReturnsResultUnmanaged)
-            .sync_call();
-
-        if let Some(error_message_bytes) = result {
-            let error_message_str: ManagedBuffer =
-                ManagedBuffer::new_from_bytes(&error_message_bytes);
-            return Some(error_message_str);
-        }
-        None
+            .returns(ReturnsResult)
+            .sync_call()
+            .into_option()
     }
 
     fn remove_executed_hash_wrapper(
