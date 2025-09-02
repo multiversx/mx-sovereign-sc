@@ -64,7 +64,6 @@ impl ChainConfigTestState {
         &mut self,
         hash_of_hashes: ManagedBuffer<StaticApi>,
         config: SovereignConfig<StaticApi>,
-        expect_error: Option<&str>,
         expected_custom_log: Option<&str>,
         expected_log_error: Option<&str>,
     ) {
@@ -80,8 +79,7 @@ impl ChainConfigTestState {
             .returns(ReturnsLogs)
             .run();
 
-        self.common_setup
-            .assert_expected_error_message(result, expect_error);
+        assert!(result.is_ok());
 
         self.common_setup
             .assert_expected_log(logs, expected_custom_log, expected_log_error);

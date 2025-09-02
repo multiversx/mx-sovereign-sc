@@ -164,7 +164,6 @@ impl FeeMarketTestState {
         &mut self,
         hash_of_hashes: &ManagedBuffer<StaticApi>,
         fee_struct: &FeeStruct<StaticApi>,
-        expected_error_message: Option<&str>,
         expected_custom_log: Option<&str>,
         expected_log_error: Option<&str>,
     ) {
@@ -180,8 +179,7 @@ impl FeeMarketTestState {
             .returns(ReturnsLogs)
             .run();
 
-        self.common_setup
-            .assert_expected_error_message(response, expected_error_message);
+        assert!(response.is_ok());
 
         self.common_setup
             .assert_expected_log(logs, expected_custom_log, expected_log_error);

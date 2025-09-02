@@ -109,7 +109,6 @@ fn test_set_fee_setup_not_completed() {
     state.set_fee(
         &ManagedBuffer::new(),
         &fee,
-        None,
         Some(EXECUTED_BRIDGE_OP_EVENT),
         Some(SETUP_PHASE_NOT_COMPLETED),
     );
@@ -170,7 +169,7 @@ fn test_set_fee_invalid_fee_type() {
         MultiValueEncoded::from_iter(vec![fee_hash]),
     );
 
-    state.set_fee(&hash_of_hashes, &fee, Some(INVALID_FEE_TYPE), None, None);
+    state.set_fee(&hash_of_hashes, &fee, Some(INVALID_FEE_TYPE), None);
 }
 
 /// ### TEST
@@ -286,7 +285,6 @@ fn test_set_fee_operation_not_registered() {
         &fee,
         Some(CURRENT_OPERATION_NOT_REGISTERED),
         None,
-        None,
     );
 }
 
@@ -349,7 +347,7 @@ fn test_set_fee() {
         MultiValueEncoded::from_iter(vec![fee_hash]),
     );
 
-    state.set_fee(&hash_of_hashes, &fee, None, Some("executedBridgeOp"), None);
+    state.set_fee(&hash_of_hashes, &fee, Some(EXECUTED_BRIDGE_OP_EVENT), None);
 
     state
         .common_setup
@@ -455,8 +453,7 @@ fn test_remove_fee_register_separate_operations() {
     state.set_fee(
         &register_fee_hash_of_hashes,
         &fee,
-        None,
-        Some("executedBridgeOp"),
+        Some(EXECUTED_BRIDGE_OP_EVENT),
         None,
     );
 
@@ -496,7 +493,7 @@ fn test_remove_fee_register_separate_operations() {
         &remove_fee_hash_of_hashes,
         FIRST_TEST_TOKEN,
         None,
-        Some("executedBridgeOp"),
+        Some(EXECUTED_BRIDGE_OP_EVENT),
         None,
     );
 
@@ -583,7 +580,7 @@ fn test_remove_fee_register_with_one_hash_of_hashes() {
         MultiValueEncoded::from_iter(vec![remove_fee_hash, register_fee_hash]),
     );
 
-    state.set_fee(&hash_of_hashes, &fee, None, Some("executedBridgeOp"), None);
+    state.set_fee(&hash_of_hashes, &fee, Some(EXECUTED_BRIDGE_OP_EVENT), None);
 
     state
         .common_setup
@@ -600,7 +597,7 @@ fn test_remove_fee_register_with_one_hash_of_hashes() {
         &hash_of_hashes,
         FIRST_TEST_TOKEN,
         None,
-        Some("executedBridgeOp"),
+        Some(EXECUTED_BRIDGE_OP_EVENT),
         None,
     );
 
@@ -752,7 +749,12 @@ fn distribute_fees_percentage_under_limit() {
         MultiValueEncoded::from_iter(vec![operation_hash]),
     );
 
-    state.distribute_fees(&hash_of_hashes, operation, None, Some("executedBridgeOp"));
+    state.distribute_fees(
+        &hash_of_hashes,
+        operation,
+        None,
+        Some(EXECUTED_BRIDGE_OP_EVENT),
+    );
 }
 
 /// ### TEST
@@ -836,7 +838,12 @@ fn distribute_fees() {
         MultiValueEncoded::from_iter(vec![operation_hash]),
     );
 
-    state.distribute_fees(&hash_of_hashes, operation, None, Some("executedBridgeOp"));
+    state.distribute_fees(
+        &hash_of_hashes,
+        operation,
+        None,
+        Some(EXECUTED_BRIDGE_OP_EVENT),
+    );
 
     state.common_setup.check_account_single_esdt(
         OWNER_ADDRESS.to_address(),

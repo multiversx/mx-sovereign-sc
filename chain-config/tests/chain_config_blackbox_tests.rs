@@ -241,7 +241,6 @@ fn test_update_config_setup_phase_not_completed() {
     state.update_sovereign_config(
         ManagedBuffer::new(),
         new_config,
-        None,
         Some(EXECUTED_BRIDGE_OP_EVENT),
         Some(SETUP_PHASE_NOT_COMPLETED),
     );
@@ -295,7 +294,6 @@ fn test_update_config_invalid_config() {
     state.update_sovereign_config(
         hash_of_hashes,
         new_config,
-        None,
         Some(EXECUTED_BRIDGE_OP_EVENT),
         Some(INVALID_MIN_MAX_VALIDATOR_NUMBERS),
     );
@@ -351,8 +349,7 @@ fn test_update_config() {
     state.update_sovereign_config(
         hash_of_hashes,
         new_config,
-        None,
-        Some("executedBridgeOp"),
+        Some(EXECUTED_BRIDGE_OP_EVENT),
         None,
     );
 
