@@ -1,3 +1,4 @@
+use common_test_setup::base_setup::helpers::BLSKey;
 use common_test_setup::constants::{
     ESDT_SAFE_ADDRESS, EXECUTED_BRIDGE_OP_EVENT, FEE_MARKET_ADDRESS, FIRST_TEST_TOKEN,
     OWNER_ADDRESS, OWNER_BALANCE, SECOND_TEST_TOKEN, USER_ADDRESS, WRONG_TOKEN_ID,
@@ -16,7 +17,6 @@ use multiversx_sc::{
 use multiversx_sc_scenario::{
     api::StaticApi, multiversx_chain_vm::crypto_functions::sha256, ScenarioTxWhitebox,
 };
-use common_test_setup::base_setup::helpers::BLSKey;
 use structs::{
     fee::{
         AddUsersToWhitelistOperation, AddressPercentagePair, DistributeFeesOperation, FeeStruct,
@@ -100,71 +100,9 @@ fn test_set_fee_setup_not_completed() {
     state.set_fee(
         &ManagedBuffer::new(),
         &fee,
-        None,
         Some(EXECUTED_BRIDGE_OP_EVENT),
         Some(SETUP_PHASE_NOT_COMPLETED),
     );
-}
-
-/// ### TEST
-/// F-MARKET_SET_FEE_FAIL
-///
-/// ### ACTION
-/// Call `set_fee()` when operation is not registered
-///
-/// ### EXPECTED
-/// Error CURRENT_OPERATION_NOT_REGISTERED
-#[test]
-fn test_set_fee_invalid_fee_type() {
-    let mut state = FeeMarketTestState::new();
-
-    state
-        .common_setup
-        .deploy_chain_config(OptionalValue::None, None);
-
-    state.common_setup.register(
-        &BLSKey::random(),
-        &MultiEgldOrEsdtPayment::new(),
-        None,
-    );
-
-    state.common_setup.complete_chain_config_setup_phase(None);
-
-    state
-        .common_setup
-        .deploy_fee_market(None, ESDT_SAFE_ADDRESS);
-
-    state
-        .common_setup
-        .deploy_header_verifier(vec![ScArray::FeeMarket, ScArray::ChainConfig]);
-
-    state.common_setup.complete_fee_market_setup_phase(None);
-
-    let fee = FeeStruct {
-        base_token: FIRST_TEST_TOKEN.to_token_identifier(),
-        fee_type: FeeType::None,
-    };
-    let fee_hash = fee.generate_hash();
-    let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&fee_hash.to_vec()));
-
-    state
-        .common_setup
-        .complete_header_verifier_setup_phase(None);
-
-    let signature = ManagedBuffer::new();
-    let bitmap = ManagedBuffer::new_from_bytes(&[1]);
-    let epoch = 0;
-
-    state.common_setup.register_operation(
-        OWNER_ADDRESS,
-        signature,
-        &hash_of_hashes,
-        bitmap,
-        epoch,
-        MultiValueEncoded::from_iter(vec![fee_hash]),
-    );
-
-    state.set_fee(&hash_of_hashes, &fee, Some(INVALID_FEE_TYPE), None, None);
 }
 
 /// ### TEST
@@ -183,11 +121,9 @@ fn test_remove_users_from_whitelist() {
         .common_setup
         .deploy_chain_config(OptionalValue::None, None);
 
-    state.common_setup.register(
-        &BLSKey::random(),
-        &MultiEgldOrEsdtPayment::new(),
-        None,
-    );
+    state
+        .common_setup
+        .register(&BLSKey::random(), &MultiEgldOrEsdtPayment::new(), None);
 
     state.common_setup.complete_chain_config_setup_phase(None);
 
@@ -251,42 +187,6 @@ fn test_remove_users_from_whitelist() {
 }
 
 /// ### TEST
-/// F-MARKET_SET_FEE_FAIL
-///
-/// ### ACTION
-/// Call `set_fee()` when operation is not registered
-///
-/// ### EXPECTED
-/// Error CURRENT_OPERATION_NOT_REGISTERED
-#[test]
-fn test_set_fee_operation_not_registered() {
-    let mut state = FeeMarketTestState::new();
-
-    state
-        .common_setup
-        .deploy_fee_market(None, ESDT_SAFE_ADDRESS);
-
-    state
-        .common_setup
-        .deploy_header_verifier(vec![ScArray::FeeMarket]);
-
-    state.common_setup.complete_fee_market_setup_phase(None);
-
-    let fee = FeeStruct {
-        base_token: FIRST_TEST_TOKEN.to_token_identifier(),
-        fee_type: FeeType::None,
-    };
-
-    state.set_fee(
-        &ManagedBuffer::new(),
-        &fee,
-        Some(CURRENT_OPERATION_NOT_REGISTERED),
-        None,
-        None,
-    );
-}
-
-/// ### TEST
 /// F-MARKET_SET_FEE_OK
 ///
 /// ### ACTION
@@ -302,11 +202,9 @@ fn test_set_fee() {
         .common_setup
         .deploy_chain_config(OptionalValue::None, None);
 
-    state.common_setup.register(
-        &BLSKey::random(),
-        &MultiEgldOrEsdtPayment::new(),
-        None,
-    );
+    state
+        .common_setup
+        .register(&BLSKey::random(), &MultiEgldOrEsdtPayment::new(), None);
 
     state.common_setup.complete_chain_config_setup_phase(None);
 
@@ -348,7 +246,7 @@ fn test_set_fee() {
         MultiValueEncoded::from_iter(vec![fee_hash]),
     );
 
-    state.set_fee(&hash_of_hashes, &fee, None, Some("executedBridgeOp"), None);
+    state.set_fee(&hash_of_hashes, &fee, Some(EXECUTED_BRIDGE_OP_EVENT), None);
 
     state
         .common_setup
@@ -407,11 +305,9 @@ fn test_remove_fee_register_separate_operations() {
         .common_setup
         .deploy_chain_config(OptionalValue::None, None);
 
-    state.common_setup.register(
-        &BLSKey::random(),
-        &MultiEgldOrEsdtPayment::new(),
-        None,
-    );
+    state
+        .common_setup
+        .register(&BLSKey::random(), &MultiEgldOrEsdtPayment::new(), None);
 
     state.common_setup.complete_chain_config_setup_phase(None);
 
@@ -457,8 +353,7 @@ fn test_remove_fee_register_separate_operations() {
     state.set_fee(
         &register_fee_hash_of_hashes,
         &fee,
-        None,
-        Some("executedBridgeOp"),
+        Some(EXECUTED_BRIDGE_OP_EVENT),
         None,
     );
 
@@ -495,7 +390,7 @@ fn test_remove_fee_register_separate_operations() {
         &remove_fee_hash_of_hashes,
         FIRST_TEST_TOKEN,
         None,
-        Some("executedBridgeOp"),
+        Some(EXECUTED_BRIDGE_OP_EVENT),
         None,
     );
 
@@ -527,11 +422,9 @@ fn test_remove_fee_register_with_one_hash_of_hashes() {
         .common_setup
         .deploy_chain_config(OptionalValue::None, None);
 
-    state.common_setup.register(
-        &BLSKey::random(),
-        &MultiEgldOrEsdtPayment::new(),
-        None,
-    );
+    state
+        .common_setup
+        .register(&BLSKey::random(), &MultiEgldOrEsdtPayment::new(), None);
 
     state.common_setup.complete_chain_config_setup_phase(None);
 
@@ -585,7 +478,7 @@ fn test_remove_fee_register_with_one_hash_of_hashes() {
         MultiValueEncoded::from_iter(vec![remove_fee_hash, register_fee_hash]),
     );
 
-    state.set_fee(&hash_of_hashes, &fee, None, Some("executedBridgeOp"), None);
+    state.set_fee(&hash_of_hashes, &fee, Some(EXECUTED_BRIDGE_OP_EVENT), None);
 
     state
         .common_setup
@@ -602,7 +495,7 @@ fn test_remove_fee_register_with_one_hash_of_hashes() {
         &hash_of_hashes,
         FIRST_TEST_TOKEN,
         None,
-        Some("executedBridgeOp"),
+        Some(EXECUTED_BRIDGE_OP_EVENT),
         None,
     );
 
@@ -707,11 +600,9 @@ fn distribute_fees_percentage_under_limit() {
         .common_setup
         .deploy_chain_config(OptionalValue::None, None);
 
-    state.common_setup.register(
-        &BLSKey::random(),
-        &MultiEgldOrEsdtPayment::new(),
-        None,
-    );
+    state
+        .common_setup
+        .register(&BLSKey::random(), &MultiEgldOrEsdtPayment::new(), None);
 
     state.common_setup.complete_chain_config_setup_phase(None);
 
@@ -756,7 +647,12 @@ fn distribute_fees_percentage_under_limit() {
         MultiValueEncoded::from_iter(vec![operation_hash]),
     );
 
-    state.distribute_fees(&hash_of_hashes, operation, None, Some("executedBridgeOp"));
+    state.distribute_fees(
+        &hash_of_hashes,
+        operation,
+        None,
+        Some(EXECUTED_BRIDGE_OP_EVENT),
+    );
 }
 
 /// ### TEST
@@ -775,11 +671,9 @@ fn distribute_fees() {
         .common_setup
         .deploy_chain_config(OptionalValue::None, None);
 
-    state.common_setup.register(
-        &BLSKey::random(),
-        &MultiEgldOrEsdtPayment::new(),
-        None,
-    );
+    state
+        .common_setup
+        .register(&BLSKey::random(), &MultiEgldOrEsdtPayment::new(), None);
     state.common_setup.complete_chain_config_setup_phase(None);
 
     let fee_per_transfer = BigUint::from(100u32);
@@ -842,7 +736,12 @@ fn distribute_fees() {
         MultiValueEncoded::from_iter(vec![operation_hash]),
     );
 
-    state.distribute_fees(&hash_of_hashes, operation, None, Some("executedBridgeOp"));
+    state.distribute_fees(
+        &hash_of_hashes,
+        operation,
+        None,
+        Some(EXECUTED_BRIDGE_OP_EVENT),
+    );
 
     state.common_setup.check_account_single_esdt(
         OWNER_ADDRESS.to_address(),
