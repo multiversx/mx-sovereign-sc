@@ -1,9 +1,10 @@
+use common_test_setup::base_setup::helpers::BLSKey;
 use common_test_setup::base_setup::init::RegisterTokenArgs;
 use common_test_setup::constants::{
     CROWD_TOKEN_ID, DEPOSIT_EVENT, ESDT_SAFE_ADDRESS, EXECUTED_BRIDGE_OP_EVENT, FEE_MARKET_ADDRESS,
     FEE_TOKEN, FIRST_TEST_TOKEN, HEADER_VERIFIER_ADDRESS, ONE_HUNDRED_MILLION,
-    ONE_HUNDRED_THOUSAND, OWNER_ADDRESS, SC_CALL_EVENT, SECOND_TEST_TOKEN,
-    SOV_TOKEN, TESTING_SC_ADDRESS, USER_ADDRESS,
+    ONE_HUNDRED_THOUSAND, OWNER_ADDRESS, SC_CALL_EVENT, SECOND_TEST_TOKEN, SOV_TOKEN,
+    TESTING_SC_ADDRESS, USER_ADDRESS,
 };
 use cross_chain::storage::CrossChainStorage;
 use cross_chain::{DEFAULT_ISSUE_COST, MAX_GAS_PER_TRANSACTION};
@@ -28,7 +29,6 @@ use multiversx_sc::{
 };
 use multiversx_sc_scenario::multiversx_chain_vm::crypto_functions::sha256;
 use multiversx_sc_scenario::{api::StaticApi, ScenarioTxWhitebox};
-use common_test_setup::base_setup::helpers::BLSKey;
 use mvx_esdt_safe::bridging_mechanism::{BridgingMechanism, TRUSTED_TOKEN_IDS};
 use mvx_esdt_safe_blackbox_setup::MvxEsdtSafeTestState;
 use setup_phase::SetupPhaseModule;
@@ -1361,10 +1361,8 @@ fn test_execute_operation_no_chain_config_registered() {
     state.execute_operation(
         &hash_of_hashes,
         &operation,
+        Some(EXECUTED_BRIDGE_OP_EVENT),
         Some(CALLER_NOT_FROM_CURRENT_SOVEREIGN),
-        None,
-        None,
-        None,
     );
 
     state
@@ -1409,10 +1407,8 @@ fn test_execute_operation_no_esdt_safe_registered() {
     state.execute_operation(
         &hash_of_hashes,
         &operation,
+        Some(EXECUTED_BRIDGE_OP_EVENT),
         Some(CALLER_NOT_FROM_CURRENT_SOVEREIGN),
-        None,
-        None,
-        None,
     );
 
     state
@@ -1465,11 +1461,9 @@ fn test_execute_operation_success() {
         .common_setup
         .deploy_chain_config(OptionalValue::None, None);
 
-    state.common_setup.register(
-        &BLSKey::random(),
-        &MultiEgldOrEsdtPayment::new(),
-        None,
-    );
+    state
+        .common_setup
+        .register(&BLSKey::random(), &MultiEgldOrEsdtPayment::new(), None);
 
     state.common_setup.complete_chain_config_setup_phase(None);
 
@@ -1501,9 +1495,7 @@ fn test_execute_operation_success() {
     state.execute_operation(
         &hash_of_hashes,
         &operation,
-        None,
-        Some("executedBridgeOp"),
-        None,
+        Some(EXECUTED_BRIDGE_OP_EVENT),
         None,
     );
 
@@ -1557,11 +1549,9 @@ fn test_execute_operation_with_native_token_success() {
         .common_setup
         .deploy_chain_config(OptionalValue::None, None);
 
-    state.common_setup.register(
-        &BLSKey::random(),
-        &MultiEgldOrEsdtPayment::new(),
-        None,
-    );
+    state
+        .common_setup
+        .register(&BLSKey::random(), &MultiEgldOrEsdtPayment::new(), None);
 
     state.common_setup.complete_chain_config_setup_phase(None);
 
@@ -1593,9 +1583,7 @@ fn test_execute_operation_with_native_token_success() {
     state.execute_operation(
         &hash_of_hashes,
         &operation,
-        None,
-        Some("executedBridgeOp"),
-        None,
+        Some(EXECUTED_BRIDGE_OP_EVENT),
         None,
     );
 
@@ -1648,11 +1636,9 @@ fn test_execute_operation_burn_mechanism_without_deposit_cannot_subtract() {
         .common_setup
         .deploy_chain_config(OptionalValue::None, None);
 
-    state.common_setup.register(
-        &BLSKey::random(),
-        &MultiEgldOrEsdtPayment::new(),
-        None,
-    );
+    state
+        .common_setup
+        .register(&BLSKey::random(), &MultiEgldOrEsdtPayment::new(), None);
 
     state.common_setup.complete_chain_config_setup_phase(None);
 
@@ -1682,9 +1668,7 @@ fn test_execute_operation_burn_mechanism_without_deposit_cannot_subtract() {
     state.execute_operation(
         &hash_of_hashes,
         &operation,
-        None,
-        Some("executedBridgeOp"),
-        None,
+        Some(EXECUTED_BRIDGE_OP_EVENT),
         None,
     );
 
@@ -1737,11 +1721,9 @@ fn execute_operation_only_transfer_data_no_fee() {
         .common_setup
         .deploy_chain_config(OptionalValue::None, None);
 
-    state.common_setup.register(
-        &BLSKey::random(),
-        &MultiEgldOrEsdtPayment::new(),
-        None,
-    );
+    state
+        .common_setup
+        .register(&BLSKey::random(), &MultiEgldOrEsdtPayment::new(), None);
 
     state.common_setup.complete_chain_config_setup_phase(None);
 
@@ -1770,9 +1752,7 @@ fn execute_operation_only_transfer_data_no_fee() {
     state.execute_operation(
         &hash_of_hashes,
         &operation,
-        None,
-        Some("executedBridgeOp"),
-        None,
+        Some(EXECUTED_BRIDGE_OP_EVENT),
         None,
     );
 
@@ -1821,11 +1801,9 @@ fn test_execute_operation_success_burn_mechanism() {
         .common_setup
         .deploy_chain_config(OptionalValue::None, None);
 
-    state.common_setup.register(
-        &BLSKey::random(),
-        &MultiEgldOrEsdtPayment::new(),
-        None,
-    );
+    state
+        .common_setup
+        .register(&BLSKey::random(), &MultiEgldOrEsdtPayment::new(), None);
 
     state.common_setup.complete_chain_config_setup_phase(None);
 
@@ -1868,9 +1846,7 @@ fn test_execute_operation_success_burn_mechanism() {
     state.execute_operation(
         &hash_of_hashes,
         &operation,
-        None,
-        Some("executedBridgeOp"),
-        None,
+        Some(EXECUTED_BRIDGE_OP_EVENT),
         None,
     );
 
@@ -1932,11 +1908,9 @@ fn test_deposit_execute_switch_mechanism() {
         .common_setup
         .deploy_chain_config(OptionalValue::None, None);
 
-    state.common_setup.register(
-        &BLSKey::random(),
-        &MultiEgldOrEsdtPayment::new(),
-        None,
-    );
+    state
+        .common_setup
+        .register(&BLSKey::random(), &MultiEgldOrEsdtPayment::new(), None);
 
     state.common_setup.complete_chain_config_setup_phase(None);
 
@@ -2022,9 +1996,7 @@ fn test_deposit_execute_switch_mechanism() {
     state.execute_operation(
         &hash_of_hashes_one,
         &operation_one,
-        None,
-        Some("executedBridgeOp"),
-        None,
+        Some(EXECUTED_BRIDGE_OP_EVENT),
         None,
     );
 
@@ -2103,9 +2075,7 @@ fn test_deposit_execute_switch_mechanism() {
     state.execute_operation(
         &hash_of_hashes_two,
         &operation_two,
-        None,
-        Some("executedBridgeOp"),
-        None,
+        Some(EXECUTED_BRIDGE_OP_EVENT),
         None,
     );
 
@@ -2196,11 +2166,9 @@ fn test_execute_operation_no_payments() {
         .common_setup
         .deploy_chain_config(OptionalValue::None, None);
 
-    state.common_setup.register(
-        &BLSKey::random(),
-        &MultiEgldOrEsdtPayment::new(),
-        None,
-    );
+    state
+        .common_setup
+        .register(&BLSKey::random(), &MultiEgldOrEsdtPayment::new(), None);
 
     state.common_setup.complete_chain_config_setup_phase(None);
 
@@ -2234,9 +2202,7 @@ fn test_execute_operation_no_payments() {
     state.execute_operation(
         &hash_of_hashes,
         &operation,
-        None,
-        Some("executedBridgeOp"),
-        None,
+        Some(EXECUTED_BRIDGE_OP_EVENT),
         None,
     );
 
@@ -2264,11 +2230,9 @@ fn test_execute_operation_no_payments_failed_event() {
         .common_setup
         .deploy_chain_config(OptionalValue::None, None);
 
-    state.common_setup.register(
-        &BLSKey::random(),
-        &MultiEgldOrEsdtPayment::new(),
-        None,
-    );
+    state
+        .common_setup
+        .register(&BLSKey::random(), &MultiEgldOrEsdtPayment::new(), None);
 
     state.common_setup.complete_chain_config_setup_phase(None);
 
@@ -2317,10 +2281,8 @@ fn test_execute_operation_no_payments_failed_event() {
     state.execute_operation(
         &hash_of_hashes,
         &operation,
-        None,
-        Some("executedBridgeOp"),
+        Some(EXECUTED_BRIDGE_OP_EVENT),
         Some("invalid function (not found)"),
-        None,
     );
 
     state
@@ -2506,7 +2468,6 @@ fn test_update_config_setup_phase_not_completed() {
     state.update_esdt_safe_config(
         &ManagedBuffer::new(),
         new_config,
-        None,
         Some(EXECUTED_BRIDGE_OP_EVENT),
         Some(SETUP_PHASE_NOT_COMPLETED),
     );
@@ -2541,9 +2502,8 @@ fn test_update_config_operation_not_registered() {
     state.update_esdt_safe_config(
         &ManagedBuffer::new(),
         new_config,
+        Some(EXECUTED_BRIDGE_OP_EVENT),
         Some(CURRENT_OPERATION_NOT_REGISTERED),
-        None,
-        None,
     );
 }
 
@@ -2565,11 +2525,9 @@ fn test_update_config_invalid_config() {
         .common_setup
         .deploy_chain_config(OptionalValue::None, None);
 
-    state.common_setup.register(
-        &BLSKey::random(),
-        &MultiEgldOrEsdtPayment::new(),
-        None,
-    );
+    state
+        .common_setup
+        .register(&BLSKey::random(), &MultiEgldOrEsdtPayment::new(), None);
 
     state.common_setup.complete_chain_config_setup_phase(None);
 
@@ -2602,8 +2560,7 @@ fn test_update_config_invalid_config() {
     state.update_esdt_safe_config(
         &hash_of_hashes,
         new_config,
-        None,
-        Some("executedBridgeOp"),
+        Some(EXECUTED_BRIDGE_OP_EVENT),
         Some(MAX_GAS_LIMIT_PER_TX_EXCEEDED),
     );
 }
@@ -2626,11 +2583,9 @@ fn test_update_config() {
         .common_setup
         .deploy_chain_config(OptionalValue::None, None);
 
-    state.common_setup.register(
-        &BLSKey::random(),
-        &MultiEgldOrEsdtPayment::new(),
-        None,
-    );
+    state
+        .common_setup
+        .register(&BLSKey::random(), &MultiEgldOrEsdtPayment::new(), None);
 
     state.common_setup.complete_chain_config_setup_phase(None);
 
@@ -2664,8 +2619,7 @@ fn test_update_config() {
     state.update_esdt_safe_config(
         &hash_of_hashes,
         new_config,
-        None,
-        Some("executedBridgeOp"),
+        Some(EXECUTED_BRIDGE_OP_EVENT),
         None,
     );
 

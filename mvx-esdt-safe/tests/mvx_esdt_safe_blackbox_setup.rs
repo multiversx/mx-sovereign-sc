@@ -164,7 +164,6 @@ impl MvxEsdtSafeTestState {
         &mut self,
         hash_of_hashes: &ManagedBuffer<StaticApi>,
         new_config: EsdtSafeConfig<StaticApi>,
-        err_message: Option<&str>,
         expected_custom_log: Option<&str>,
         expected_log_error: Option<&str>,
     ) {
@@ -180,10 +179,7 @@ impl MvxEsdtSafeTestState {
             .returns(ReturnsLogs)
             .run();
 
-        println!("Update ESDT Safe Config Result: {:?}", logs);
-
-        self.common_setup
-            .assert_expected_error_message(result, err_message);
+        assert!(result.is_ok());
 
         self.common_setup
             .assert_expected_log(logs, expected_custom_log, expected_log_error);
@@ -330,9 +326,7 @@ impl MvxEsdtSafeTestState {
         &mut self,
         hash_of_hashes: &ManagedBuffer<StaticApi>,
         operation: &Operation<StaticApi>,
-        expected_error_message: Option<&str>,
         expected_custom_log: Option<&str>,
-        expected_custom_log_data: Option<&str>,
         expected_log_error: Option<&str>,
     ) {
         let (logs, result) = self
@@ -347,19 +341,13 @@ impl MvxEsdtSafeTestState {
             .returns(ReturnsHandledOrError::new())
             .run();
 
-        self.common_setup
-            .assert_expected_error_message(result, expected_error_message);
+        assert!(result.is_ok());
 
         self.common_setup.assert_expected_log(
             logs.clone(),
             expected_custom_log,
             expected_log_error,
         );
-
-        if let Some(custom_log_data) = expected_custom_log_data {
-            self.common_setup
-                .assert_expected_data(logs, custom_log_data);
-        };
     }
 
     pub fn complete_setup_phase(
