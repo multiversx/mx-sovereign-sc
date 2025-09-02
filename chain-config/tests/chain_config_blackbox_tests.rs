@@ -241,7 +241,6 @@ fn test_update_config_setup_phase_not_completed() {
     state.update_sovereign_config(
         ManagedBuffer::new(),
         new_config,
-        None,
         Some(EXECUTED_BRIDGE_OP_EVENT),
         Some(SETUP_PHASE_NOT_COMPLETED),
     );
@@ -295,7 +294,6 @@ fn test_update_config_invalid_config() {
     state.update_sovereign_config(
         hash_of_hashes,
         new_config,
-        None,
         Some(EXECUTED_BRIDGE_OP_EVENT),
         Some(INVALID_MIN_MAX_VALIDATOR_NUMBERS),
     );
@@ -352,8 +350,7 @@ fn test_update_config() {
     state.update_sovereign_config(
         hash_of_hashes,
         new_config,
-        None,
-        Some("executedBridgeOp"),
+        Some(EXECUTED_BRIDGE_OP_EVENT),
         None,
     );
 
@@ -607,7 +604,12 @@ fn test_register_validator_after_genesis() {
             address: OWNER_ADDRESS.to_managed_address(),
             bls_key: BLSKey::random(),
         };
-        state.common_setup.register_validator_operation(validator_data, signature.clone(), bitmap.clone(), epoch);
+        state.common_setup.register_validator_operation(
+            validator_data,
+            signature.clone(),
+            bitmap.clone(),
+            epoch,
+        );
     }
 }
 
@@ -982,7 +984,12 @@ fn test_unregister_validator_after_genesis() {
             address: OWNER_ADDRESS.to_managed_address(),
             bls_key: validator_bls_key.clone(),
         };
-        state.common_setup.unregister_validator_operation(validator_data, signature.clone(), bitmap.clone(), epoch);
+        state.common_setup.unregister_validator_operation(
+            validator_data,
+            signature.clone(),
+            bitmap.clone(),
+            epoch,
+        );
     }
 
     state
