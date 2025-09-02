@@ -18,7 +18,6 @@ pub trait FeeOperationsModule:
     + fee_common::helpers::FeeCommonHelpersModule
     + fee_common::endpoints::FeeCommonEndpointsModule
 {
-    #[only_owner]
     #[endpoint(distributeFees)]
     fn distribute_fees(
         &self,
