@@ -136,15 +136,26 @@ pub trait HeaderVerifierOperationsModule:
             self.calculate_and_check_transfers_hashes(&hash_of_hashes, operations_hashes.clone())
         {
             self.complete_operation(&hash_of_hashes, &operation_hash, Some(error_message));
+            return;
         }
 
-        self.verify_bls(
-            epoch - 1, // Use the validator signatures from the last epoch
-            &signature,
-            &hash_of_hashes,
-            pub_keys_bitmap,
-            &ManagedVec::from_iter(bls_keys_previous_epoch.iter()),
-        );
+        if self
+            .verify_bls(
+                epoch - 1, // Use the validator signatures from the last epoch
+                &signature,
+                &hash_of_hashes,
+                pub_keys_bitmap,
+                &ManagedVec::from_iter(bls_keys_previous_epoch.iter()),
+            )
+            .is_some()
+        {
+            self.complete_operation(
+                &hash_of_hashes,
+                &operation_hash,
+                Some(BLS_SIGNATURE_NOT_VALID.into()),
+            );
+            return;
+        }
 
         if epoch >= MAX_STORED_EPOCHS && !self.bls_pub_keys(epoch - MAX_STORED_EPOCHS).is_empty() {
             self.bls_pub_keys(epoch - MAX_STORED_EPOCHS).clear();

@@ -139,7 +139,7 @@ pub trait ExecuteModule:
                 self.complete_operation(
                     hash_of_hashes,
                     &operation_tuple.op_hash,
-                    Some(ManagedBuffer::from(DEPOSIT_AMOUNT_NOT_ENOUGH)),
+                    Some(DEPOSIT_AMOUNT_NOT_ENOUGH.into()),
                 );
                 return None;
             }

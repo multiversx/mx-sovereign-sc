@@ -589,7 +589,7 @@ fn test_change_validator_set() {
 /// H-VERIFIER_CHANGE_VALIDATORS_FAIL
 ///
 /// ### ACTION
-/// Call 'change_validators_set()' before registering the operation
+/// Call 'change_validator_set()' before registering the operation
 ///
 /// ### EXPECTED
 /// Error OUTGOING_TX_HASH_ALREADY_REGISTERED
