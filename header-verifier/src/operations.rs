@@ -185,7 +185,7 @@ pub trait HeaderVerifierOperationsModule:
         let operation_hash_status_mapper =
             self.operation_hash_status(&hash_of_hashes, &operation_hash);
 
-        if self.is_operation_hash_registered(&operation_hash_status_mapper) {
+        if self.is_hash_status_mapper_empty(&operation_hash_status_mapper) {
             return OptionalValue::Some(CURRENT_OPERATION_NOT_REGISTERED.into());
         }
 

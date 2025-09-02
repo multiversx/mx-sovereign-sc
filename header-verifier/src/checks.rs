@@ -36,7 +36,7 @@ pub trait HeaderVerifierChecksModule:
         history_mapper.contains(hash_of_hashes)
     }
 
-    fn is_operation_hash_registered(
+    fn is_hash_status_mapper_empty(
         &self,
         hash_status_mapper: &SingleValueMapper<OperationHashStatus>,
     ) -> bool {
