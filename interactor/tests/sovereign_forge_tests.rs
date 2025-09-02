@@ -9,8 +9,8 @@ use header_verifier::header_utils::OperationHashStatus;
 use multiversx_sc::{
     imports::{MultiValue3, OptionalValue},
     types::{
-        BigUint, EgldOrEsdtTokenIdentifier, EgldOrEsdtTokenPayment, EsdtTokenData,
-        EsdtTokenPayment, ManagedAddress, ManagedBuffer, ManagedVec, MultiValueEncoded,
+        BigUint, EgldOrEsdtTokenIdentifier, EgldOrEsdtTokenPayment, EsdtTokenData, ManagedAddress,
+        ManagedBuffer, ManagedVec, MultiValueEncoded,
     },
 };
 use multiversx_sc_snippets::{
@@ -78,13 +78,13 @@ async fn test_complete_deposit_flow() {
         )
         .await;
 
-    let esdt_token_payment_one = EsdtTokenPayment::<StaticApi>::new(
+    let esdt_token_payment_one = EgldOrEsdtTokenPayment::<StaticApi>::new(
         chain_interactor.state.get_first_token_id(),
         0,
         BigUint::from(ONE_HUNDRED_TOKENS),
     );
 
-    let esdt_token_payment_two = EsdtTokenPayment::<StaticApi>::new(
+    let esdt_token_payment_two = EgldOrEsdtTokenPayment::<StaticApi>::new(
         chain_interactor.state.get_second_token_id(),
         0,
         BigUint::from(ONE_HUNDRED_TOKENS),
@@ -104,11 +104,11 @@ async fn test_complete_deposit_flow() {
 
     let expected_tokens_wallet = vec![
         chain_interactor.custom_amount_tokens(
-            chain_interactor.state.get_first_token_id_string(),
+            chain_interactor.state.get_first_token_id(),
             ONE_THOUSAND_TOKENS - ONE_HUNDRED_TOKENS,
         ),
         chain_interactor.custom_amount_tokens(
-            chain_interactor.state.get_second_token_id_string(),
+            chain_interactor.state.get_second_token_id(),
             ONE_THOUSAND_TOKENS - ONE_HUNDRED_TOKENS,
         ),
     ];
@@ -121,11 +121,11 @@ async fn test_complete_deposit_flow() {
 
     let expected_tokens_contract = vec![
         chain_interactor.custom_amount_tokens(
-            chain_interactor.state.get_first_token_id_string(),
+            chain_interactor.state.get_first_token_id(),
             ONE_HUNDRED_TOKENS,
         ),
         chain_interactor.custom_amount_tokens(
-            chain_interactor.state.get_second_token_id_string(),
+            chain_interactor.state.get_second_token_id(),
             ONE_HUNDRED_TOKENS,
         ),
     ];
@@ -269,11 +269,11 @@ async fn test_complete_flow_execute_operation_with_transfer_data_success_no_fee(
 
     let expected_tokens_wallet = vec![
         (
-            chain_interactor.state.get_first_token_id().to_string(),
+            chain_interactor.state.get_first_token_id(),
             BigUint::from(ONE_THOUSAND_TOKENS - TEN_TOKENS),
         ),
-        chain_interactor.thousand_tokens(chain_interactor.state.get_second_token_id_string()),
-        chain_interactor.thousand_tokens(chain_interactor.state.get_fee_token_id_string()),
+        chain_interactor.thousand_tokens(chain_interactor.state.get_second_token_id()),
+        chain_interactor.thousand_tokens(chain_interactor.state.get_fee_token_id()),
     ];
     chain_interactor
         .check_address_balance(&Bech32Address::from(user_address), expected_tokens_wallet)
@@ -285,7 +285,7 @@ async fn test_complete_flow_execute_operation_with_transfer_data_success_no_fee(
     chain_interactor.check_fee_market_balance_is_empty().await;
 
     let expected_testing_sc_balance = vec![(
-        chain_interactor.state.get_first_token_id().to_string(),
+        chain_interactor.state.get_first_token_id(),
         BigUint::from(TEN_TOKENS),
     )];
     chain_interactor
@@ -347,14 +347,14 @@ async fn test_complete_flow_execute_operation_success_with_fee() {
         OperationEsdtPayment::new(chain_interactor.state.get_first_token_id(), 0, token_data);
     let mut payment_vec = PaymentsVec::new();
     let fee_payment = EgldOrEsdtTokenPayment::new(
-        EgldOrEsdtTokenIdentifier::esdt(chain_interactor.state.get_fee_token_id()),
+        chain_interactor.state.get_fee_token_id(),
         0,
         fee_amount.clone(),
     );
 
     payment_vec.push(fee_payment);
     payment_vec.push(EgldOrEsdtTokenPayment::new(
-        EgldOrEsdtTokenIdentifier::esdt(chain_interactor.state.get_first_token_id()),
+        chain_interactor.state.get_first_token_id(),
         0,
         BigUint::from(TEN_TOKENS),
     ));
@@ -445,12 +445,12 @@ async fn test_complete_flow_execute_operation_success_with_fee() {
 
     let expected_tokens_wallet = vec![
         (
-            chain_interactor.state.get_first_token_id().to_string(),
+            chain_interactor.state.get_first_token_id(),
             BigUint::from(ONE_THOUSAND_TOKENS - TEN_TOKENS),
         ),
-        chain_interactor.thousand_tokens(chain_interactor.state.get_second_token_id_string()),
+        chain_interactor.thousand_tokens(chain_interactor.state.get_second_token_id()),
         (
-            chain_interactor.state.get_fee_token_id().to_string(),
+            chain_interactor.state.get_fee_token_id(),
             BigUint::from(ONE_THOUSAND_TOKENS) - fee_amount.clone(),
         ),
     ];
@@ -461,10 +461,7 @@ async fn test_complete_flow_execute_operation_success_with_fee() {
     chain_interactor
         .check_mvx_esdt_safe_balance_is_empty()
         .await;
-    let expected_token_fee_market = vec![(
-        chain_interactor.state.get_fee_token_id().to_string(),
-        fee_amount,
-    )];
+    let expected_token_fee_market = vec![(chain_interactor.state.get_fee_token_id(), fee_amount)];
     chain_interactor
         .check_address_balance(
             &chain_interactor.state.current_fee_market_address().clone(),
@@ -473,7 +470,7 @@ async fn test_complete_flow_execute_operation_success_with_fee() {
         .await;
 
     let expected_testing_sc_balance = vec![(
-        chain_interactor.state.get_first_token_id().to_string(),
+        chain_interactor.state.get_first_token_id(),
         BigUint::from(TEN_TOKENS),
     )];
     chain_interactor
@@ -839,7 +836,7 @@ async fn test_complete_flow_set_and_remove_fee() {
     chain_interactor
         .remove_fee_after_setup_phase(
             remove_fee_hash_of_hashes,
-            chain_interactor.state.get_fee_token_id(),
+            chain_interactor.state.get_fee_token_id().unwrap_esdt(),
         )
         .await;
 

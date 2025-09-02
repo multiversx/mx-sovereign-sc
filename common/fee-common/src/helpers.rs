@@ -131,7 +131,11 @@ pub trait FeeCommonHelpersModule:
         total_transfers: usize,
         opt_gas_limit: OptionalValue<GasLimit>,
     ) -> FinalPayment<Self::Api> {
-        let fee_type = self.token_fee(&payment.token_identifier).get();
+        let fee_type = self
+            .token_fee(&EgldOrEsdtTokenIdentifier::from(
+                payment.token_identifier.clone().into_managed_buffer(),
+            ))
+            .get();
         match fee_type {
             FeeType::None => sc_panic!(TOKEN_NOT_ACCEPTED_AS_FEE),
             FeeType::Fixed {

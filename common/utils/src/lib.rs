@@ -52,8 +52,8 @@ pub trait UtilsModule: custom_events::CustomEventsModule {
         );
     }
 
-    fn is_valid_token_id(&self, token_id: &TokenIdentifier) -> bool {
-        token_id.is_valid_esdt_identifier()
+    fn is_valid_token_id(&self, token_id: &EgldOrEsdtTokenIdentifier<Self::Api>) -> bool {
+        token_id.clone().unwrap_esdt().is_valid_esdt_identifier()
     }
 
     fn pop_first_payment(
@@ -70,7 +70,7 @@ pub trait UtilsModule: custom_events::CustomEventsModule {
         MultiValue2::from((OptionalValue::Some(first_payment.clone()), new_payments))
     }
 
-    fn has_prefix(&self, token_id: &TokenIdentifier) -> bool {
+    fn has_prefix(&self, token_id: &EgldOrEsdtTokenIdentifier<Self::Api>) -> bool {
         let buffer = token_id.as_managed_buffer();
         let mut array_buffer = [0u8; MAX_TOKEN_ID_LEN];
         let slice = buffer.load_to_byte_array(&mut array_buffer);
@@ -85,11 +85,15 @@ pub trait UtilsModule: custom_events::CustomEventsModule {
     }
 
     #[inline]
-    fn require_token_has_prefix(&self, token_id: &TokenIdentifier) {
+    fn require_token_has_prefix(&self, token_id: &EgldOrEsdtTokenIdentifier<Self::Api>) {
         require!(self.has_prefix(token_id), TOKEN_ID_NO_PREFIX);
     }
 
-    fn has_sov_prefix(&self, token_id: &TokenIdentifier, chain_prefix: &ManagedBuffer) -> bool {
+    fn has_sov_prefix(
+        &self,
+        token_id: &EgldOrEsdtTokenIdentifier<Self::Api>,
+        chain_prefix: &ManagedBuffer,
+    ) -> bool {
         if !self.has_prefix(token_id) {
             return false;
         }

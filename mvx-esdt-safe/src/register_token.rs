@@ -164,7 +164,7 @@ pub trait RegisterTokenModule:
         token_to_register: &RegisterTokenOperation<Self::Api>,
         hash_of_hashes: ManagedBuffer,
         token_hash: ManagedBuffer,
-        #[call_result] result: ManagedAsyncCallResult<TokenIdentifier<Self::Api>>,
+        #[call_result] result: ManagedAsyncCallResult<EgldOrEsdtTokenIdentifier<Self::Api>>,
     ) {
         match result {
             ManagedAsyncCallResult::Ok(mvx_token_id) => {
@@ -203,8 +203,8 @@ pub trait RegisterTokenModule:
     }
     fn set_corresponding_token_ids(
         &self,
-        sov_token_id: &TokenIdentifier,
-        mvx_token_id: &TokenIdentifier,
+        sov_token_id: &EgldOrEsdtTokenIdentifier<Self::Api>,
+        mvx_token_id: &EgldOrEsdtTokenIdentifier<Self::Api>,
     ) {
         self.sovereign_to_multiversx_token_id_mapper(sov_token_id)
             .set(mvx_token_id);
@@ -215,9 +215,9 @@ pub trait RegisterTokenModule:
 
     fn update_esdt_info_mappers(
         &self,
-        sov_id: &TokenIdentifier,
+        sov_id: &EgldOrEsdtTokenIdentifier<Self::Api>,
         sov_nonce: u64,
-        mvx_id: &TokenIdentifier,
+        mvx_id: &EgldOrEsdtTokenIdentifier<Self::Api>,
         new_nft_nonce: u64,
     ) {
         self.sovereign_to_multiversx_esdt_info_mapper(sov_id, sov_nonce)
@@ -241,7 +241,7 @@ pub trait RegisterTokenModule:
         token_data.amount = ISSUE_COST.into();
 
         MultiValueEncoded::from_iter([MultiValue3((
-            TokenIdentifier::from_esdt_bytes(EGLD_000000_TOKEN_IDENTIFIER),
+            EgldOrEsdtTokenIdentifier::from(EGLD_000000_TOKEN_IDENTIFIER),
             0u64,
             token_data,
         ))])

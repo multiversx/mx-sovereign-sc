@@ -10,6 +10,7 @@ use error_messages::{
 };
 use fee_common::storage::FeeCommonStorageModule;
 use fee_market_blackbox_setup::*;
+use multiversx_sc::types::EgldOrEsdtTokenIdentifier;
 use multiversx_sc::{
     imports::OptionalValue,
     types::{BigUint, ManagedBuffer, ManagedVec, MultiEgldOrEsdtPayment, MultiValueEncoded},
@@ -57,15 +58,23 @@ fn test_set_fee_during_setup_phase_wrong_params() {
         .common_setup
         .deploy_fee_market(Some(fee), ESDT_SAFE_ADDRESS);
 
-    state.set_fee_during_setup_phase(WRONG_TOKEN_ID, WantedFeeType::Fixed, Some(INVALID_TOKEN_ID));
+    state.set_fee_during_setup_phase(
+        EgldOrEsdtTokenIdentifier::esdt(WRONG_TOKEN_ID),
+        WantedFeeType::Fixed,
+        Some(INVALID_TOKEN_ID),
+    );
 
     state.set_fee_during_setup_phase(
-        FIRST_TEST_TOKEN,
+        EgldOrEsdtTokenIdentifier::esdt(FIRST_TEST_TOKEN),
         WantedFeeType::None,
         Some(INVALID_FEE_TYPE),
     );
 
-    state.set_fee_during_setup_phase(SECOND_TEST_TOKEN, WantedFeeType::Fixed, Some(INVALID_FEE));
+    state.set_fee_during_setup_phase(
+        EgldOrEsdtTokenIdentifier::esdt(SECOND_TEST_TOKEN),
+        WantedFeeType::Fixed,
+        Some(INVALID_FEE),
+    );
 }
 
 /// ### TEST
@@ -89,9 +98,9 @@ fn test_set_fee_setup_not_completed() {
         .deploy_header_verifier(vec![ScArray::FeeMarket, ScArray::ChainConfig]);
 
     let fee = FeeStruct {
-        base_token: FIRST_TEST_TOKEN.to_token_identifier(),
+        base_token: EgldOrEsdtTokenIdentifier::esdt(FIRST_TEST_TOKEN),
         fee_type: FeeType::Fixed {
-            token: FIRST_TEST_TOKEN.to_token_identifier(),
+            token: EgldOrEsdtTokenIdentifier::esdt(FIRST_TEST_TOKEN),
             per_transfer: BigUint::default(),
             per_gas: BigUint::default(),
         },
@@ -139,7 +148,7 @@ fn test_set_fee_invalid_fee_type() {
     state.common_setup.complete_fee_market_setup_phase(None);
 
     let fee = FeeStruct {
-        base_token: FIRST_TEST_TOKEN.to_token_identifier(),
+        base_token: EgldOrEsdtTokenIdentifier::esdt(FIRST_TEST_TOKEN),
         fee_type: FeeType::None,
     };
     let fee_hash = fee.generate_hash();
@@ -268,7 +277,7 @@ fn test_set_fee_operation_not_registered() {
     state.common_setup.complete_fee_market_setup_phase(None);
 
     let fee = FeeStruct {
-        base_token: FIRST_TEST_TOKEN.to_token_identifier(),
+        base_token: EgldOrEsdtTokenIdentifier::esdt(FIRST_TEST_TOKEN),
         fee_type: FeeType::None,
     };
 
@@ -314,9 +323,9 @@ fn test_set_fee() {
     state.common_setup.complete_fee_market_setup_phase(None);
 
     let fee = FeeStruct {
-        base_token: FIRST_TEST_TOKEN.to_token_identifier(),
+        base_token: EgldOrEsdtTokenIdentifier::esdt(FIRST_TEST_TOKEN),
         fee_type: FeeType::Fixed {
-            token: FIRST_TEST_TOKEN.to_token_identifier(),
+            token: EgldOrEsdtTokenIdentifier::esdt(FIRST_TEST_TOKEN),
             per_transfer: BigUint::default(),
             per_gas: BigUint::default(),
         },
@@ -349,7 +358,7 @@ fn test_set_fee() {
         .to(FEE_MARKET_ADDRESS)
         .whitebox(fee_market::contract_obj, |sc| {
             assert!(!sc
-                .token_fee(&FIRST_TEST_TOKEN.to_token_identifier())
+                .token_fee(&EgldOrEsdtTokenIdentifier::esdt(FIRST_TEST_TOKEN))
                 .is_empty());
         });
 }
@@ -416,9 +425,9 @@ fn test_remove_fee_register_separate_operations() {
     state.common_setup.complete_fee_market_setup_phase(None);
 
     let fee = FeeStruct {
-        base_token: FIRST_TEST_TOKEN.to_token_identifier(),
+        base_token: EgldOrEsdtTokenIdentifier::esdt(FIRST_TEST_TOKEN),
         fee_type: FeeType::Fixed {
-            token: FIRST_TEST_TOKEN.to_token_identifier(),
+            token: EgldOrEsdtTokenIdentifier::esdt(FIRST_TEST_TOKEN),
             per_transfer: BigUint::default(),
             per_gas: BigUint::default(),
         },
@@ -458,7 +467,7 @@ fn test_remove_fee_register_separate_operations() {
         .to(FEE_MARKET_ADDRESS)
         .whitebox(fee_market::contract_obj, |sc| {
             assert!(!sc
-                .token_fee(&FIRST_TEST_TOKEN.to_token_identifier())
+                .token_fee(&EgldOrEsdtTokenIdentifier::esdt(FIRST_TEST_TOKEN))
                 .is_empty());
         });
 
@@ -498,7 +507,7 @@ fn test_remove_fee_register_separate_operations() {
         .to(FEE_MARKET_ADDRESS)
         .whitebox(fee_market::contract_obj, |sc| {
             assert!(sc
-                .token_fee(&FIRST_TEST_TOKEN.to_token_identifier())
+                .token_fee(&EgldOrEsdtTokenIdentifier::esdt(FIRST_TEST_TOKEN))
                 .is_empty());
         });
 }
@@ -536,9 +545,9 @@ fn test_remove_fee_register_with_one_hash_of_hashes() {
     state.common_setup.complete_fee_market_setup_phase(None);
 
     let fee = FeeStruct {
-        base_token: FIRST_TEST_TOKEN.to_token_identifier(),
+        base_token: EgldOrEsdtTokenIdentifier::esdt(FIRST_TEST_TOKEN),
         fee_type: FeeType::Fixed {
-            token: FIRST_TEST_TOKEN.to_token_identifier(),
+            token: EgldOrEsdtTokenIdentifier::esdt(FIRST_TEST_TOKEN),
             per_transfer: BigUint::default(),
             per_gas: BigUint::default(),
         },
@@ -583,7 +592,7 @@ fn test_remove_fee_register_with_one_hash_of_hashes() {
         .to(FEE_MARKET_ADDRESS)
         .whitebox(fee_market::contract_obj, |sc| {
             assert!(!sc
-                .token_fee(&FIRST_TEST_TOKEN.to_token_identifier())
+                .token_fee(&EgldOrEsdtTokenIdentifier::esdt(FIRST_TEST_TOKEN))
                 .is_empty());
         });
 
@@ -602,7 +611,7 @@ fn test_remove_fee_register_with_one_hash_of_hashes() {
         .to(FEE_MARKET_ADDRESS)
         .whitebox(fee_market::contract_obj, |sc| {
             assert!(sc
-                .token_fee(&FIRST_TEST_TOKEN.to_token_identifier())
+                .token_fee(&EgldOrEsdtTokenIdentifier::esdt(FIRST_TEST_TOKEN))
                 .is_empty());
         });
 }
@@ -770,9 +779,9 @@ fn distribute_fees() {
     let fee_per_transfer = BigUint::from(100u32);
 
     let fee = FeeStruct {
-        base_token: FIRST_TEST_TOKEN.to_token_identifier(),
+        base_token: EgldOrEsdtTokenIdentifier::esdt(FIRST_TEST_TOKEN),
         fee_type: FeeType::Fixed {
-            token: FIRST_TEST_TOKEN.to_token_identifier(),
+            token: EgldOrEsdtTokenIdentifier::esdt(FIRST_TEST_TOKEN),
             per_transfer: fee_per_transfer.clone(),
             per_gas: BigUint::default(),
         },

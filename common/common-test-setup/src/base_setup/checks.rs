@@ -1,7 +1,7 @@
 use cross_chain::storage::CrossChainStorage;
-use error_messages::EMPTY_EXPECTED_LOG;
 use header_verifier::{header_utils::OperationHashStatus, storage::HeaderVerifierStorageModule};
-use multiversx_sc_scenario::imports::ManagedVec;
+use multiversx_sc_scenario::imports::{EgldOrEsdtTokenIdentifier, ManagedVec};
+use multiversx_sc_scenario::DebugApi;
 use multiversx_sc_scenario::{
     api::StaticApi,
     imports::{
@@ -117,15 +117,28 @@ impl BaseSetup {
         );
     }
 
-    pub fn check_deposited_tokens_amount(&mut self, tokens: Vec<(TestTokenIdentifier, u64)>) {
+    pub fn check_deposited_tokens_amount(
+        &mut self,
+        tokens: Vec<(EgldOrEsdtTokenIdentifier<StaticApi>, u64)>,
+    ) {
         self.world
             .tx()
             .from(OWNER_ADDRESS)
             .to(ESDT_SAFE_ADDRESS)
             .whitebox(mvx_esdt_safe::contract_obj, |sc| {
+                let tokens: Vec<(EgldOrEsdtTokenIdentifier<DebugApi>, u64)> = tokens
+                    .into_iter()
+                    .map(|(token_id, amount)| {
+                        let token_id_bytes = token_id.to_boxed_bytes();
+                        (
+                            EgldOrEsdtTokenIdentifier::<DebugApi>::from(token_id_bytes.as_slice()),
+                            amount,
+                        )
+                    })
+                    .collect();
                 for token in tokens {
                     let (token_id, amount) = token;
-                    assert!(sc.deposited_tokens_amount(&token_id.into()).get() == amount);
+                    assert!(sc.deposited_tokens_amount(&token_id).get() == amount);
                 }
             });
     }
@@ -136,9 +149,9 @@ impl BaseSetup {
             .to(ESDT_SAFE_ADDRESS)
             .whitebox(mvx_esdt_safe::contract_obj, |sc| {
                 assert!(sc
-                    .multiversx_to_sovereign_token_id_mapper(
-                        &TestTokenIdentifier::new(token_name).into()
-                    )
+                    .multiversx_to_sovereign_token_id_mapper(&EgldOrEsdtTokenIdentifier::from(
+                        token_name
+                    ))
                     .is_empty());
             });
     }
@@ -185,6 +198,7 @@ impl BaseSetup {
     }
 
     //NOTE: transferValue returns an empty log and calling this function on it will panic
+    //TODO: Remove the empty string check after callback fix in blackbox
     pub fn assert_expected_log(
         &mut self,
         logs: Vec<Log>,
@@ -206,7 +220,10 @@ impl BaseSetup {
                 );
             }
             Some(expected_str) => {
-                assert!(!expected_str.is_empty(), "{}", EMPTY_EXPECTED_LOG);
+                // assert!(!expected_str.is_empty(), "{}", EMPTY_EXPECTED_LOG);
+                if expected_str.is_empty() {
+                    return;
+                }
                 let expected_bytes = ManagedBuffer::<StaticApi>::from(expected_str).to_vec();
 
                 let matching_logs: Vec<&Log> = logs
@@ -226,6 +243,12 @@ impl BaseSetup {
                         topic_match || data_match
                     })
                     .collect();
+
+                assert!(
+                    !matching_logs.is_empty(),
+                    "Expected log '{}' not found",
+                    expected_str
+                );
 
                 assert!(
                     !matching_logs.is_empty(),

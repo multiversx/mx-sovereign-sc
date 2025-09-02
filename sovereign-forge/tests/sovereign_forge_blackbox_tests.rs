@@ -14,7 +14,7 @@ use error_messages::{
 use fee_common::storage::FeeCommonStorageModule;
 use multiversx_sc::{
     imports::OptionalValue,
-    types::{BigUint, ManagedBuffer, ManagedVec},
+    types::{BigUint, EgldOrEsdtTokenIdentifier, ManagedBuffer, ManagedVec},
 };
 use multiversx_sc_scenario::ScenarioTxWhitebox;
 use sovereign_forge::common::{storage::StorageModule, utils::UtilsModule};
@@ -349,13 +349,13 @@ fn test_set_fee() {
         });
 
     let fee_type = FeeType::Fixed {
-        token: FIRST_TEST_TOKEN.to_token_identifier(),
+        token: EgldOrEsdtTokenIdentifier::esdt(FIRST_TEST_TOKEN),
         per_transfer: BigUint::default(),
         per_gas: BigUint::default(),
     };
 
     let new_fee = FeeStruct {
-        base_token: FIRST_TEST_TOKEN.to_token_identifier(),
+        base_token: EgldOrEsdtTokenIdentifier::esdt(FIRST_TEST_TOKEN),
         fee_type,
     };
 
@@ -374,7 +374,7 @@ fn test_set_fee() {
         .whitebox(fee_market::contract_obj, |sc| {
             assert!(sc.is_fee_enabled());
             assert!(!sc
-                .token_fee(&FIRST_TEST_TOKEN.to_token_identifier())
+                .token_fee(&EgldOrEsdtTokenIdentifier::esdt(FIRST_TEST_TOKEN))
                 .is_empty());
         });
 }
@@ -416,13 +416,13 @@ fn test_set_fee_phase_three_not_completed() {
         .deploy_phase_two(OptionalValue::None, None);
 
     let fee_type = FeeType::Fixed {
-        token: FIRST_TEST_TOKEN.to_token_identifier(),
+        token: EgldOrEsdtTokenIdentifier::esdt(FIRST_TEST_TOKEN),
         per_transfer: BigUint::default(),
         per_gas: BigUint::default(),
     };
 
     let new_fee = FeeStruct {
-        base_token: FIRST_TEST_TOKEN.to_token_identifier(),
+        base_token: EgldOrEsdtTokenIdentifier::esdt(FIRST_TEST_TOKEN),
         fee_type,
     };
 
@@ -466,13 +466,13 @@ fn test_remove_fee() {
         .deploy_phase_two(OptionalValue::None, None);
 
     let fee_type = FeeType::Fixed {
-        token: FIRST_TEST_TOKEN.to_token_identifier(),
+        token: EgldOrEsdtTokenIdentifier::esdt(FIRST_TEST_TOKEN),
         per_transfer: BigUint::default(),
         per_gas: BigUint::default(),
     };
 
     let fee = FeeStruct {
-        base_token: FIRST_TEST_TOKEN.to_token_identifier(),
+        base_token: EgldOrEsdtTokenIdentifier::esdt(FIRST_TEST_TOKEN),
         fee_type,
     };
     state.common_setup.deploy_phase_three(Some(fee), None);
@@ -517,7 +517,7 @@ fn test_remove_fee() {
         .whitebox(fee_market::contract_obj, |sc| {
             assert!(!sc.is_fee_enabled());
             assert!(sc
-                .token_fee(&FIRST_TEST_TOKEN.to_token_identifier())
+                .token_fee(&EgldOrEsdtTokenIdentifier::esdt(FIRST_TEST_TOKEN))
                 .is_empty());
         })
 }

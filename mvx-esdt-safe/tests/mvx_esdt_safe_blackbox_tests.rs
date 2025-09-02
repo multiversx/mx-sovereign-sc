@@ -98,7 +98,7 @@ fn test_update_invalid_config() {
 /// ### EXPECTED
 /// Error CANNOT_REGISTER_TOKEN
 #[test]
-#[ignore]
+#[ignore = "needs blackbox callback fix"]
 fn test_register_token_invalid_type() {
     let mut state = MvxEsdtSafeTestState::new();
     state.deploy_and_complete_setup_phase();
@@ -110,7 +110,7 @@ fn test_register_token_invalid_type() {
     let token_ticker = FIRST_TEST_TOKEN.as_str();
 
     let register_token_args = RegisterTokenOperation {
-        token_id: TokenIdentifier::from_esdt_bytes(sov_token_id),
+        token_id: EgldOrEsdtTokenIdentifier::esdt(sov_token_id.as_str()),
         token_type,
         token_nonce: 0u64,
         token_display_name: token_display_name.into(),
@@ -124,6 +124,17 @@ fn test_register_token_invalid_type() {
     let bitmap = ManagedBuffer::new_from_bytes(&[1]);
     let signature = ManagedBuffer::new();
     let epoch = 0;
+
+    let payment =
+        EgldOrEsdtTokenPayment::new(EGLD_000000_TOKEN_IDENTIFIER.into(), 0u64, ISSUE_COST.into());
+
+    state.deposit(
+        USER_ADDRESS.to_managed_address(),
+        OptionalValue::None,
+        ManagedVec::from_single_item(payment),
+        None,
+        Some(DEPOSIT_EVENT),
+    );
 
     state.common_setup.register_operation(
         OWNER_ADDRESS,
@@ -155,7 +166,7 @@ fn test_register_token_invalid_type() {
 /// ### EXPECTED
 /// Error INVALID_TYPE
 #[test]
-#[ignore]
+#[ignore = "needs blackbox callback fix"]
 fn test_register_token_invalid_type_with_prefix() {
     let mut state = MvxEsdtSafeTestState::new();
     state.deploy_and_complete_setup_phase();
@@ -167,7 +178,7 @@ fn test_register_token_invalid_type_with_prefix() {
     let token_ticker = FIRST_TEST_TOKEN.as_str();
 
     let register_token_args = RegisterTokenOperation {
-        token_id: sov_token_id.into(),
+        token_id: EgldOrEsdtTokenIdentifier::esdt(sov_token_id),
         token_type,
         token_nonce: 0u64,
         token_display_name: token_display_name.into(),
@@ -190,7 +201,7 @@ fn test_register_token_invalid_type_with_prefix() {
         OptionalValue::None,
         ManagedVec::from_single_item(payment),
         None,
-        None,
+        Some(DEPOSIT_EVENT),
     );
 
     state.common_setup.register_operation(
@@ -234,7 +245,7 @@ fn test_register_token_not_enough_egld() {
     let token_ticker = FIRST_TEST_TOKEN.as_str();
 
     let register_token_args = RegisterTokenOperation {
-        token_id: sov_token_id.into(),
+        token_id: EgldOrEsdtTokenIdentifier::esdt(sov_token_id),
         token_type,
         token_nonce: 0u64,
         token_display_name: token_display_name.into(),
@@ -290,7 +301,7 @@ fn test_register_token_fungible_token() {
     let num_decimals = 3;
 
     let register_token_args = RegisterTokenOperation {
-        token_id: sov_token_id.into(),
+        token_id: EgldOrEsdtTokenIdentifier::esdt(sov_token_id),
         token_type,
         token_nonce: 0u64,
         token_display_name: token_display_name.into(),
@@ -305,6 +316,17 @@ fn test_register_token_fungible_token() {
     let signature = ManagedBuffer::new();
     let epoch = 0;
 
+    let payment =
+        EgldOrEsdtTokenPayment::new(EGLD_000000_TOKEN_IDENTIFIER.into(), 0u64, ISSUE_COST.into());
+
+    state.deposit(
+        USER_ADDRESS.to_managed_address(),
+        OptionalValue::None,
+        ManagedVec::from_single_item(payment),
+        None,
+        Some(DEPOSIT_EVENT),
+    );
+
     state.common_setup.register_operation(
         OWNER_ADDRESS,
         signature,
@@ -314,12 +336,7 @@ fn test_register_token_fungible_token() {
         MultiValueEncoded::from_iter(vec![token_hash.clone()]),
     );
 
-    state.register_token(
-        register_token_args,
-        hash_of_hashes,
-        Some(EXECUTED_BRIDGE_OP_EVENT),
-        None,
-    );
+    state.register_token(register_token_args, hash_of_hashes, Some(""), None);
 
     // TODO: add check for storage after callback fix
 }
@@ -333,7 +350,6 @@ fn test_register_token_fungible_token() {
 /// ### EXPECTED
 /// Error CANNOT_REGISTER_TOKEN
 #[test]
-#[ignore]
 fn test_register_token_nonfungible_token() {
     let mut state = MvxEsdtSafeTestState::new();
     state.deploy_and_complete_setup_phase();
@@ -345,7 +361,7 @@ fn test_register_token_nonfungible_token() {
     let token_ticker = FIRST_TEST_TOKEN.as_str();
 
     let register_token_args = RegisterTokenOperation {
-        token_id: sov_token_id.into(),
+        token_id: EgldOrEsdtTokenIdentifier::esdt(sov_token_id),
         token_type,
         token_nonce: 1u64,
         token_display_name: token_display_name.into(),
@@ -359,6 +375,17 @@ fn test_register_token_nonfungible_token() {
     let bitmap = ManagedBuffer::new_from_bytes(&[1]);
     let signature = ManagedBuffer::new();
     let epoch = 0;
+
+    let payment =
+        EgldOrEsdtTokenPayment::new(EGLD_000000_TOKEN_IDENTIFIER.into(), 0u64, ISSUE_COST.into());
+
+    state.deposit(
+        USER_ADDRESS.to_managed_address(),
+        OptionalValue::None,
+        ManagedVec::from_single_item(payment),
+        None,
+        Some(DEPOSIT_EVENT),
+    );
 
     state.common_setup.register_operation(
         OWNER_ADDRESS,
@@ -668,7 +695,7 @@ fn test_deposit_max_bridged_amount_exceeded() {
         50_000_000,
         ManagedVec::from(vec![ManagedBuffer::from("hello")]),
         ManagedVec::from(vec![MaxBridgedAmount {
-            token_id: TokenIdentifier::from(FIRST_TEST_TOKEN),
+            token_id: EgldOrEsdtTokenIdentifier::esdt(FIRST_TEST_TOKEN),
             amount: BigUint::default(),
         }]),
     );
@@ -863,9 +890,9 @@ fn test_deposit_transfer_data_only_with_fee_nothing_to_transfer() {
     let per_gas = BigUint::from(1u64);
 
     let fee = FeeStruct {
-        base_token: TokenIdentifier::from(FEE_TOKEN),
+        base_token: EgldOrEsdtTokenIdentifier::esdt(FEE_TOKEN),
         fee_type: FeeType::Fixed {
-            token: TokenIdentifier::from(FEE_TOKEN),
+            token: EgldOrEsdtTokenIdentifier::esdt(FEE_TOKEN),
             per_transfer: per_transfer.clone(),
             per_gas: per_gas.clone(),
         },
@@ -914,9 +941,9 @@ fn test_deposit_transfer_data_only_with_fee() {
     let per_gas = BigUint::from(1u64);
 
     let fee = FeeStruct {
-        base_token: TokenIdentifier::from(FEE_TOKEN),
+        base_token: EgldOrEsdtTokenIdentifier::esdt(FEE_TOKEN),
         fee_type: FeeType::Fixed {
-            token: TokenIdentifier::from(FEE_TOKEN),
+            token: EgldOrEsdtTokenIdentifier::esdt(FEE_TOKEN),
             per_transfer: per_transfer.clone(),
             per_gas: per_gas.clone(),
         },
@@ -982,9 +1009,9 @@ fn test_deposit_fee_enabled() {
     let per_gas = BigUint::from(1u64);
 
     let fee = FeeStruct {
-        base_token: TokenIdentifier::from(FEE_TOKEN),
+        base_token: EgldOrEsdtTokenIdentifier::esdt(FEE_TOKEN),
         fee_type: FeeType::Fixed {
-            token: TokenIdentifier::from(FEE_TOKEN),
+            token: EgldOrEsdtTokenIdentifier::esdt(FEE_TOKEN),
             per_transfer: per_transfer.clone(),
             per_gas: per_gas.clone(),
         },
@@ -1069,9 +1096,9 @@ fn test_deposit_payment_doesnt_cover_fee() {
     let mut state = MvxEsdtSafeTestState::new();
 
     let fee = FeeStruct {
-        base_token: TokenIdentifier::from(FIRST_TEST_TOKEN),
+        base_token: EgldOrEsdtTokenIdentifier::esdt(FIRST_TEST_TOKEN),
         fee_type: FeeType::Fixed {
-            token: TokenIdentifier::from(FIRST_TEST_TOKEN),
+            token: EgldOrEsdtTokenIdentifier::esdt(FIRST_TEST_TOKEN),
             per_transfer: BigUint::from(1u64),
             per_gas: BigUint::from(1u64),
         },
@@ -1135,7 +1162,7 @@ fn test_deposit_refund() {
     let mut state = MvxEsdtSafeTestState::new();
 
     let config = EsdtSafeConfig::new(
-        ManagedVec::from(vec![TokenIdentifier::from(CROWD_TOKEN_ID)]),
+        ManagedVec::from(vec![EgldOrEsdtTokenIdentifier::esdt(CROWD_TOKEN_ID)]),
         ManagedVec::new(),
         50_000_000,
         ManagedVec::new(),
@@ -1150,9 +1177,9 @@ fn test_deposit_refund() {
     let per_gas = BigUint::from(1u64);
 
     let fee = FeeStruct {
-        base_token: TokenIdentifier::from(FEE_TOKEN),
+        base_token: EgldOrEsdtTokenIdentifier::esdt(FEE_TOKEN),
         fee_type: FeeType::Fixed {
-            token: TokenIdentifier::from(FEE_TOKEN),
+            token: EgldOrEsdtTokenIdentifier::esdt(FEE_TOKEN),
             per_transfer: per_transfer.clone(),
             per_gas: per_gas.clone(),
         },
@@ -1292,8 +1319,11 @@ fn test_deposit_success_burn_mechanism() {
         .check_account_multiple_esdts(ESDT_SAFE_ADDRESS.to_address(), expected_tokens);
 
     let tokens = vec![
-        (TestTokenIdentifier::new(TRUSTED_TOKEN_IDS[0]), 100u64),
-        (SECOND_TEST_TOKEN, 0u64),
+        (
+            EgldOrEsdtTokenIdentifier::esdt(TRUSTED_TOKEN_IDS[0]),
+            100u64,
+        ),
+        (EgldOrEsdtTokenIdentifier::esdt(SECOND_TEST_TOKEN), 0u64),
     ];
 
     state.common_setup.check_deposited_tokens_amount(tokens);
@@ -1319,7 +1349,7 @@ fn test_register_token_fungible_token_with_prefix() {
     let num_decimals = 3;
 
     let register_token_args = RegisterTokenOperation {
-        token_id: sov_token_id.into(),
+        token_id: EgldOrEsdtTokenIdentifier::esdt(sov_token_id),
         token_type,
         token_nonce: 0u64,
         token_display_name: token_display_name.into(),
@@ -1334,6 +1364,17 @@ fn test_register_token_fungible_token_with_prefix() {
     let signature = ManagedBuffer::new();
     let epoch = 0;
 
+    let payment =
+        EgldOrEsdtTokenPayment::new(EGLD_000000_TOKEN_IDENTIFIER.into(), 0u64, ISSUE_COST.into());
+
+    state.deposit(
+        USER_ADDRESS.to_managed_address(),
+        OptionalValue::None,
+        ManagedVec::from_single_item(payment),
+        None,
+        Some(DEPOSIT_EVENT),
+    );
+
     state.common_setup.register_operation(
         OWNER_ADDRESS,
         signature,
@@ -1343,12 +1384,7 @@ fn test_register_token_fungible_token_with_prefix() {
         MultiValueEncoded::from_iter(vec![token_hash]),
     );
 
-    state.register_token(
-        register_token_args,
-        hash_of_hashes,
-        Some(EXECUTED_BRIDGE_OP_EVENT),
-        None,
-    );
+    state.register_token(register_token_args, hash_of_hashes, Some(""), None);
 
     // TODO: add check for storage after callback fix
 }
@@ -1362,7 +1398,6 @@ fn test_register_token_fungible_token_with_prefix() {
 /// ### EXPECTED
 /// Error CANNOT_REGISTER_TOKEN
 #[test]
-#[ignore]
 fn test_register_token_fungible_token_no_prefix() {
     let mut state = MvxEsdtSafeTestState::new();
     state.deploy_and_complete_setup_phase();
@@ -1374,7 +1409,7 @@ fn test_register_token_fungible_token_no_prefix() {
     let num_decimals = 3;
 
     let register_token_args = RegisterTokenOperation {
-        token_id: sov_token_id.into(),
+        token_id: EgldOrEsdtTokenIdentifier::esdt(sov_token_id),
         token_type,
         token_nonce: 0u64,
         token_display_name: token_display_name.into(),
@@ -1388,6 +1423,17 @@ fn test_register_token_fungible_token_no_prefix() {
     let bitmap = ManagedBuffer::new_from_bytes(&[1]);
     let signature = ManagedBuffer::new();
     let epoch = 0;
+
+    let payment =
+        EgldOrEsdtTokenPayment::new(EGLD_000000_TOKEN_IDENTIFIER.into(), 0u64, ISSUE_COST.into());
+
+    state.deposit(
+        USER_ADDRESS.to_managed_address(),
+        OptionalValue::None,
+        ManagedVec::from_single_item(payment),
+        None,
+        Some(DEPOSIT_EVENT),
+    );
 
     state.common_setup.register_operation(
         OWNER_ADDRESS,
@@ -1431,7 +1477,7 @@ fn test_register_token_non_fungible_token_dynamic() {
     let num_decimals = 3;
 
     let register_token_args = RegisterTokenOperation {
-        token_id: sov_token_id.into(),
+        token_id: EgldOrEsdtTokenIdentifier::esdt(sov_token_id),
         token_type,
         token_nonce: 1u64,
         token_display_name: token_display_name.into(),
@@ -1446,6 +1492,17 @@ fn test_register_token_non_fungible_token_dynamic() {
     let signature = ManagedBuffer::new();
     let epoch = 0;
 
+    let payment =
+        EgldOrEsdtTokenPayment::new(EGLD_000000_TOKEN_IDENTIFIER.into(), 0u64, ISSUE_COST.into());
+
+    state.deposit(
+        USER_ADDRESS.to_managed_address(),
+        OptionalValue::None,
+        ManagedVec::from_single_item(payment),
+        None,
+        Some(DEPOSIT_EVENT),
+    );
+
     state.common_setup.register_operation(
         OWNER_ADDRESS,
         signature,
@@ -1455,12 +1512,7 @@ fn test_register_token_non_fungible_token_dynamic() {
         MultiValueEncoded::from_iter(vec![token_hash]),
     );
 
-    state.register_token(
-        register_token_args,
-        hash_of_hashes,
-        Some(EXECUTED_BRIDGE_OP_EVENT),
-        None,
-    );
+    state.register_token(register_token_args, hash_of_hashes, Some(""), None);
 }
 
 /// ### TEST
@@ -1508,7 +1560,7 @@ fn test_execute_operation_no_chain_config_registered() {
     state.complete_setup_phase(None, Some("unpauseContract"));
 
     let payment = OperationEsdtPayment::new(
-        TokenIdentifier::from(FIRST_TEST_TOKEN),
+        EgldOrEsdtTokenIdentifier::esdt(FIRST_TEST_TOKEN),
         0,
         EsdtTokenData::default(),
     );
@@ -1554,7 +1606,7 @@ fn test_execute_operation_no_esdt_safe_registered() {
     state.complete_setup_phase(None, Some("unpauseContract"));
 
     let payment = OperationEsdtPayment::new(
-        TokenIdentifier::from(FIRST_TEST_TOKEN),
+        EgldOrEsdtTokenIdentifier::esdt(FIRST_TEST_TOKEN),
         0,
         EsdtTokenData::default(),
     );
@@ -1607,7 +1659,11 @@ fn test_execute_operation_success() {
         ..Default::default()
     };
 
-    let payment = OperationEsdtPayment::new(TokenIdentifier::from(FIRST_TEST_TOKEN), 0, token_data);
+    let payment = OperationEsdtPayment::new(
+        EgldOrEsdtTokenIdentifier::esdt(FIRST_TEST_TOKEN),
+        0,
+        token_data,
+    );
 
     let gas_limit = 1;
     let function = ManagedBuffer::<StaticApi>::from("hello");
@@ -1698,7 +1754,11 @@ fn test_execute_operation_with_native_token_success() {
         ..Default::default()
     };
 
-    let payment = OperationEsdtPayment::new(TokenIdentifier::from(FIRST_TEST_TOKEN), 0, token_data);
+    let payment = OperationEsdtPayment::new(
+        EgldOrEsdtTokenIdentifier::esdt(FIRST_TEST_TOKEN),
+        0,
+        token_data,
+    );
 
     let gas_limit = 1;
     let function = ManagedBuffer::<StaticApi>::from("hello");
@@ -1795,8 +1855,11 @@ fn test_execute_operation_burn_mechanism_without_deposit_cannot_subtract() {
         ..Default::default()
     };
 
-    let payment =
-        OperationEsdtPayment::new(TokenIdentifier::from(TRUSTED_TOKEN_IDS[0]), 0, token_data);
+    let payment = OperationEsdtPayment::new(
+        EgldOrEsdtTokenIdentifier::esdt(TRUSTED_TOKEN_IDS[0]),
+        0,
+        token_data,
+    );
 
     let operation_data = OperationData::new(1, OWNER_ADDRESS.to_managed_address(), None);
 
@@ -1964,7 +2027,7 @@ fn test_execute_operation_success_burn_mechanism() {
     };
 
     let payment = OperationEsdtPayment::new(
-        TokenIdentifier::from(TRUSTED_TOKEN_IDS[0]),
+        EgldOrEsdtTokenIdentifier::esdt(TRUSTED_TOKEN_IDS[0]),
         0,
         token_data.clone(),
     );
@@ -2053,9 +2116,10 @@ fn test_execute_operation_success_burn_mechanism() {
         BigUint::from(0u64),
     );
 
-    state
-        .common_setup
-        .check_deposited_tokens_amount(vec![(TestTokenIdentifier::new(TRUSTED_TOKEN_IDS[0]), 0)]);
+    state.common_setup.check_deposited_tokens_amount(vec![(
+        EgldOrEsdtTokenIdentifier::esdt(TRUSTED_TOKEN_IDS[0]),
+        0,
+    )]);
 
     state.common_setup.check_account_single_esdt(
         TESTING_SC_ADDRESS.to_address(),
@@ -2110,7 +2174,7 @@ fn test_deposit_execute_switch_mechanism() {
         ..Default::default()
     };
     let deposit_trusted_token_payment = OperationEsdtPayment::new(
-        TokenIdentifier::from(trusted_token_id),
+        EgldOrEsdtTokenIdentifier::esdt(trusted_token_id),
         0,
         deposit_trusted_token_payment_token_data,
     );
@@ -2135,7 +2199,7 @@ fn test_deposit_execute_switch_mechanism() {
     let mut expected_deposited_amount = deposited_trusted_token_payment_amount;
 
     state.common_setup.check_deposited_tokens_amount(vec![(
-        TestTokenIdentifier::new(trusted_token_id),
+        EgldOrEsdtTokenIdentifier::esdt(trusted_token_id),
         expected_deposited_amount,
     )]);
 
@@ -2152,7 +2216,7 @@ fn test_deposit_execute_switch_mechanism() {
         ..Default::default()
     };
     let execute_trusted_token_payment = OperationEsdtPayment::new(
-        TokenIdentifier::from(trusted_token_id),
+        EgldOrEsdtTokenIdentifier::esdt(trusted_token_id),
         0,
         execute_trusted_token_payment_token_data,
     );
@@ -2192,7 +2256,7 @@ fn test_deposit_execute_switch_mechanism() {
     expected_deposited_amount -= execute_trusted_token_payment_amount;
 
     state.common_setup.check_deposited_tokens_amount(vec![(
-        TestTokenIdentifier::new(trusted_token_id),
+        EgldOrEsdtTokenIdentifier::esdt(trusted_token_id),
         expected_deposited_amount,
     )]);
 
@@ -2214,7 +2278,7 @@ fn test_deposit_execute_switch_mechanism() {
     expected_deposited_amount += deposited_trusted_token_payment_amount;
 
     state.common_setup.check_deposited_tokens_amount(vec![(
-        TestTokenIdentifier::new(trusted_token_id),
+        EgldOrEsdtTokenIdentifier::esdt(trusted_token_id),
         expected_deposited_amount,
     )]);
 
@@ -2227,9 +2291,10 @@ fn test_deposit_execute_switch_mechanism() {
 
     state.set_token_lock_mechanism(trusted_token_id, None);
 
-    state
-        .common_setup
-        .check_deposited_tokens_amount(vec![(TestTokenIdentifier::new(trusted_token_id), 0)]);
+    state.common_setup.check_deposited_tokens_amount(vec![(
+        EgldOrEsdtTokenIdentifier::esdt(trusted_token_id),
+        0,
+    )]);
 
     state.common_setup.check_account_single_esdt(
         ESDT_SAFE_ADDRESS.to_address(),
@@ -2267,9 +2332,10 @@ fn test_deposit_execute_switch_mechanism() {
         None,
     );
 
-    state
-        .common_setup
-        .check_deposited_tokens_amount(vec![(TestTokenIdentifier::new(trusted_token_id), 0)]);
+    state.common_setup.check_deposited_tokens_amount(vec![(
+        EgldOrEsdtTokenIdentifier::esdt(trusted_token_id),
+        0,
+    )]);
 
     expected_receiver_amount += execute_trusted_token_payment_amount;
     expected_deposited_amount -= execute_trusted_token_payment_amount;
@@ -2298,9 +2364,10 @@ fn test_deposit_execute_switch_mechanism() {
 
     expected_deposited_amount += deposited_trusted_token_payment_amount;
 
-    state
-        .common_setup
-        .check_deposited_tokens_amount(vec![(TestTokenIdentifier::new(trusted_token_id), 0)]);
+    state.common_setup.check_deposited_tokens_amount(vec![(
+        EgldOrEsdtTokenIdentifier::esdt(trusted_token_id),
+        0,
+    )]);
 
     state.common_setup.check_account_single_esdt(
         ESDT_SAFE_ADDRESS.to_address(),
@@ -2553,7 +2620,7 @@ fn test_set_token_burn_mechanism() {
         .whitebox(mvx_esdt_safe::contract_obj, |sc| {
             assert!(sc
                 .burn_mechanism_tokens()
-                .contains(&TokenIdentifier::from(TRUSTED_TOKEN_IDS[0])))
+                .contains(&EgldOrEsdtTokenIdentifier::esdt(TRUSTED_TOKEN_IDS[0])))
         });
 
     state.common_setup.check_account_single_esdt(
@@ -2629,10 +2696,10 @@ fn test_set_token_lock_mechanism_token_from_sovereign() {
         .from(OWNER_ADDRESS)
         .to(ESDT_SAFE_ADDRESS)
         .whitebox(mvx_esdt_safe::contract_obj, |sc| {
-            sc.multiversx_to_sovereign_token_id_mapper(&TokenIdentifier::from(
+            sc.multiversx_to_sovereign_token_id_mapper(&EgldOrEsdtTokenIdentifier::esdt(
                 TRUSTED_TOKEN_IDS[0],
             ))
-            .set(TokenIdentifier::from("MOCK"));
+            .set(EgldOrEsdtTokenIdentifier::from("MOCK"));
         });
 
     state.set_token_lock_mechanism(TRUSTED_TOKEN_IDS[0], Some(TOKEN_IS_FROM_SOVEREIGN));

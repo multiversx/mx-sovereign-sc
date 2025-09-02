@@ -92,7 +92,7 @@ pub trait ExecuteModule:
 
     fn process_resolved_token(
         &self,
-        mvx_token_id: &TokenIdentifier,
+        mvx_token_id: &EgldOrEsdtTokenIdentifier<Self::Api>,
         operation_token: &OperationEsdtPayment<Self::Api>,
     ) -> OperationEsdtPayment<Self::Api> {
         if self.is_fungible(&operation_token.token_data.token_type) {
@@ -141,17 +141,21 @@ pub trait ExecuteModule:
         Some(operation_token.clone())
     }
 
-    fn mint_fungible_token(&self, token_id: &TokenIdentifier, amount: &BigUint) {
+    fn mint_fungible_token(
+        &self,
+        token_id: &EgldOrEsdtTokenIdentifier<Self::Api>,
+        amount: &BigUint,
+    ) {
         self.tx()
             .to(ToSelf)
             .typed(UserBuiltinProxy)
-            .esdt_local_mint(token_id, 0, amount)
+            .esdt_local_mint(token_id.clone().unwrap_esdt(), 0, amount)
             .sync_call();
     }
 
     fn esdt_create_and_update_mapper(
         &self,
-        mvx_token_id: &TokenIdentifier<Self::Api>,
+        mvx_token_id: &EgldOrEsdtTokenIdentifier<Self::Api>,
         operation_token: &OperationEsdtPayment<Self::Api>,
     ) -> u64 {
         let mut nonce = 0;
@@ -178,7 +182,11 @@ pub trait ExecuteModule:
             self.tx()
                 .to(ToSelf)
                 .typed(system_proxy::UserBuiltinProxy)
-                .esdt_local_mint(mvx_token_id, nonce, &operation_token.token_data.amount)
+                .esdt_local_mint(
+                    mvx_token_id.clone().unwrap_esdt(),
+                    nonce,
+                    &operation_token.token_data.amount,
+                )
                 .sync_call();
         }
 
@@ -187,7 +195,7 @@ pub trait ExecuteModule:
 
     fn mint_nft_tx(
         &self,
-        mvx_token_id: &TokenIdentifier,
+        mvx_token_id: &EgldOrEsdtTokenIdentifier<Self::Api>,
         token_data: &EsdtTokenData<Self::Api>,
     ) -> u64 {
         let mut amount = token_data.amount.clone();
@@ -199,7 +207,7 @@ pub trait ExecuteModule:
             .to(ToSelf)
             .typed(system_proxy::UserBuiltinProxy)
             .esdt_nft_create(
-                mvx_token_id,
+                mvx_token_id.clone().unwrap_esdt(),
                 &amount,
                 &token_data.name,
                 &token_data.royalties,
@@ -354,7 +362,7 @@ pub trait ExecuteModule:
             .to(ToSelf)
             .typed(system_proxy::UserBuiltinProxy)
             .esdt_local_burn(
-                &mvx_token_id,
+                mvx_token_id.unwrap_esdt(),
                 mvx_token_nonce,
                 &operation_token.token_data.amount,
             )
@@ -364,7 +372,7 @@ pub trait ExecuteModule:
     fn get_mvx_token_id(
         &self,
         operation_token: &OperationEsdtPayment<Self::Api>,
-    ) -> Option<TokenIdentifier<Self::Api>> {
+    ) -> Option<EgldOrEsdtTokenIdentifier<Self::Api>> {
         let sov_to_mvx_mapper =
             self.sovereign_to_multiversx_token_id_mapper(&operation_token.token_identifier);
 
@@ -379,7 +387,11 @@ pub trait ExecuteModule:
         }
     }
 
-    fn get_mvx_nonce_from_mapper(self, token_id: &TokenIdentifier, nonce: u64) -> u64 {
+    fn get_mvx_nonce_from_mapper(
+        &self,
+        token_id: &EgldOrEsdtTokenIdentifier<Self::Api>,
+        nonce: u64,
+    ) -> u64 {
         let esdt_info_mapper = self.sovereign_to_multiversx_esdt_info_mapper(token_id, nonce);
         if esdt_info_mapper.is_empty() {
             return 0;

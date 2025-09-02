@@ -2,7 +2,6 @@ use error_messages::{
     BANNED_ENDPOINT_NAME, DEPOSIT_OVER_MAX_AMOUNT, ESDT_SAFE_STILL_PAUSED, GAS_LIMIT_TOO_HIGH,
     NOTHING_TO_TRANSFER, TOKEN_BLACKLISTED, TOO_MANY_TOKENS,
 };
-use multiversx_sc::chain_core::EGLD_000000_TOKEN_IDENTIFIER;
 use proxies::fee_market_proxy::FeeMarketProxy;
 use structs::{
     aliases::{
@@ -49,12 +48,7 @@ pub trait DepositCommonModule:
         let mut refundable_payments = ManagedVec::<Self::Api, _>::new();
 
         for payment in &payments {
-            let is_egld = payment.token_identifier.clone().is_egld();
-            let token_identifier = if is_egld {
-                TokenIdentifier::from(EGLD_000000_TOKEN_IDENTIFIER)
-            } else {
-                payment.token_identifier.clone().unwrap_esdt()
-            };
+            let token_identifier = payment.token_identifier.clone();
             self.require_below_max_amount(&token_identifier, &payment.amount);
             self.require_token_not_on_blacklist(&token_identifier);
 
@@ -164,13 +158,13 @@ pub trait DepositCommonModule:
         current_token_data.amount = payment.amount.clone();
 
         MultiValue3::from((
-            payment.token_identifier.clone().unwrap_esdt(),
+            payment.token_identifier.clone(),
             payment.token_nonce,
             current_token_data,
         ))
     }
 
-    fn is_above_max_amount(&self, token_id: &TokenIdentifier, amount: &BigUint) -> bool {
+    fn is_above_max_amount(&self, token_id: &EgldOrEsdtTokenIdentifier, amount: &BigUint) -> bool {
         self.esdt_safe_config()
             .get()
             .max_bridged_token_amounts
@@ -178,7 +172,7 @@ pub trait DepositCommonModule:
             .any(|m| m.token_id == *token_id && amount > &m.amount)
     }
 
-    fn require_below_max_amount(&self, token_id: &TokenIdentifier, amount: &BigUint) {
+    fn require_below_max_amount(&self, token_id: &EgldOrEsdtTokenIdentifier, amount: &BigUint) {
         require!(
             !self.is_above_max_amount(token_id, amount),
             DEPOSIT_OVER_MAX_AMOUNT
@@ -199,16 +193,16 @@ pub trait DepositCommonModule:
 
     fn burn_mainchain_token(
         &self,
-        token_id: &TokenIdentifier,
+        token_id: &EgldOrEsdtTokenIdentifier<Self::Api>,
         token_nonce: u64,
         amount: &BigUint,
         payment_token_type: &EsdtTokenType,
-        sov_token_id: &TokenIdentifier<Self::Api>,
+        sov_token_id: &EgldOrEsdtTokenIdentifier<Self::Api>,
     ) -> u64 {
         self.tx()
             .to(ToSelf)
             .typed(system_proxy::UserBuiltinProxy)
-            .esdt_local_burn(token_id, token_nonce, amount)
+            .esdt_local_burn(token_id.clone().unwrap_esdt(), token_nonce, amount)
             .sync_call();
 
         let mut sov_token_nonce = 0;
@@ -230,13 +224,21 @@ pub trait DepositCommonModule:
     }
 
     #[inline]
-    fn clear_mvx_to_sov_esdt_info_mapper(&self, id: &TokenIdentifier, nonce: u64) {
+    fn clear_mvx_to_sov_esdt_info_mapper(
+        &self,
+        id: &EgldOrEsdtTokenIdentifier<Self::Api>,
+        nonce: u64,
+    ) {
         self.multiversx_to_sovereign_esdt_info_mapper(id, nonce)
             .take();
     }
 
     #[inline]
-    fn clear_sov_to_mvx_esdt_info_mapper(&self, id: &TokenIdentifier, nonce: u64) {
+    fn clear_sov_to_mvx_esdt_info_mapper(
+        &self,
+        id: &EgldOrEsdtTokenIdentifier<Self::Api>,
+        nonce: u64,
+    ) {
         self.sovereign_to_multiversx_esdt_info_mapper(id, nonce)
             .take();
     }
@@ -250,12 +252,12 @@ pub trait DepositCommonModule:
     }
 
     #[inline]
-    fn is_sov_token_id_registered(&self, id: &TokenIdentifier) -> bool {
+    fn is_sov_token_id_registered(&self, id: &EgldOrEsdtTokenIdentifier<Self::Api>) -> bool {
         !self.sovereign_to_multiversx_token_id_mapper(id).is_empty()
     }
 
     #[inline]
-    fn require_token_not_on_blacklist(&self, token_id: &TokenIdentifier) {
+    fn require_token_not_on_blacklist(&self, token_id: &EgldOrEsdtTokenIdentifier<Self::Api>) {
         require!(
             !self
                 .esdt_safe_config()
@@ -284,7 +286,7 @@ pub trait DepositCommonModule:
     }
 
     #[inline]
-    fn is_token_whitelisted(&self, token_id: &TokenIdentifier) -> bool {
+    fn is_token_whitelisted(&self, token_id: &EgldOrEsdtTokenIdentifier) -> bool {
         self.esdt_safe_config()
             .get()
             .token_whitelist

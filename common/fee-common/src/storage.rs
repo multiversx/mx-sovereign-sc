@@ -18,7 +18,10 @@ pub trait FeeCommonStorageModule {
 
     #[view(getTokenFee)]
     #[storage_mapper("tokenFee")]
-    fn token_fee(&self, token_id: &TokenIdentifier) -> SingleValueMapper<FeeType<Self::Api>>;
+    fn token_fee(
+        &self,
+        token_id: &EgldOrEsdtTokenIdentifier<Self::Api>,
+    ) -> SingleValueMapper<FeeType<Self::Api>>;
 
     #[storage_mapper("feeEnabledFlag")]
     fn fee_enabled(&self) -> SingleValueMapper<bool>;
