@@ -1,5 +1,4 @@
 use common_test_setup::base_setup::helpers::BLSKey;
-use common_test_setup::base_setup::init::RegisterTokenArgs;
 use common_test_setup::constants::{
     CROWD_TOKEN_ID, DEPOSIT_EVENT, ESDT_SAFE_ADDRESS, EXECUTED_BRIDGE_OP_EVENT, FEE_MARKET_ADDRESS,
     FEE_TOKEN, FIRST_TEST_TOKEN, HEADER_VERIFIER_ADDRESS, ONE_HUNDRED_MILLION,
