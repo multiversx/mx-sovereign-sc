@@ -5,8 +5,8 @@ use common_test_setup::constants::{
 };
 use multiversx_sc::api::ManagedTypeApi;
 use multiversx_sc::types::{
-    BigUint, ManagedBuffer, MultiValueEncoded, ReturnsHandledOrError, ReturnsResultUnmanaged,
-    TestSCAddress,
+    BigUint, ManagedBuffer, MultiValueEncoded, ReturnsHandledOrError, ReturnsResult,
+    ReturnsResultUnmanaged, TestSCAddress,
 };
 use multiversx_sc_scenario::ReturnsLogs;
 use multiversx_sc_scenario::{
@@ -92,8 +92,9 @@ impl HeaderVerifierTestState {
             .to(HEADER_VERIFIER_ADDRESS)
             .typed(HeaderverifierProxy)
             .remove_executed_hash(hash_of_hashes, operation_hash)
-            .returns(ReturnsResultUnmanaged)
-            .run();
+            .returns(ReturnsResult)
+            .run()
+            .into_option();
 
         // TODO: create a separate common function
         match response {
@@ -101,13 +102,8 @@ impl HeaderVerifierTestState {
                 expected_result.is_none(),
                 "Transaction was successful, but expected error"
             ),
-            Some(error_message_bytes) => {
-                let error_message_str: ManagedBuffer<StaticApi> =
-                    ManagedBuffer::new_from_bytes(&error_message_bytes);
-                assert_eq!(
-                    expected_result,
-                    Some(error_message_str.to_string().as_str())
-                );
+            Some(error_message) => {
+                assert_eq!(expected_result, Some(error_message.to_string().as_str()));
             }
         };
     }

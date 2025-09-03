@@ -154,7 +154,7 @@ where
         self,
         hash_of_hashes: Arg0,
         operation_hash: Arg1,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, Option<ManagedBuffer<Env::Api>>> {
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, OptionalValue<ManagedBuffer<Env::Api>>> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("removeExecutedHash")
