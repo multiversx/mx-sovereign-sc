@@ -313,6 +313,7 @@ dependencies = [
  "chain-config",
  "chain-factory",
  "cross-chain",
+ "custom-events",
  "error-messages",
  "fee-common",
  "fee-market",
@@ -321,6 +322,7 @@ dependencies = [
  "mvx-esdt-safe",
  "proxies",
  "structs",
+ "utils",
 ]
 
 [[package]]

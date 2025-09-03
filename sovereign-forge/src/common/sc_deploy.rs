@@ -15,7 +15,12 @@ use structs::{
 };
 
 #[multiversx_sc::module]
-pub trait ScDeployModule: super::utils::UtilsModule + super::storage::StorageModule {
+pub trait ScDeployModule:
+    super::utils::UtilsModule
+    + super::storage::StorageModule
+    + utils::UtilsModule
+    + custom_events::CustomEventsModule
+{
     #[inline]
     fn deploy_chain_config(
         &self,

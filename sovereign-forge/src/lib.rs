@@ -17,6 +17,8 @@ pub trait SovereignForge:
     + common::utils::UtilsModule
     + common::sc_deploy::ScDeployModule
     + update_configs::UpdateConfigsModule
+    + utils::UtilsModule
+    + custom_events::CustomEventsModule
 {
     #[init]
     fn init(&self, opt_deploy_cost: OptionalValue<BigUint>) {

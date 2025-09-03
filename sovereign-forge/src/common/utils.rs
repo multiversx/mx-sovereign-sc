@@ -3,6 +3,7 @@ use error_messages::{
     DEPLOY_COST_NOT_ENOUGH, ESDT_SAFE_NOT_DEPLOYED, FEE_MARKET_NOT_DEPLOYED,
     HEADER_VERIFIER_NOT_DEPLOYED,
 };
+use multiversx_sc::err_msg;
 use multiversx_sc::require;
 use structs::forge::ScArray;
 
@@ -11,7 +12,9 @@ const CHARSET: &[u8] = b"0123456789abcdefghijklmnopqrstuvwxyz";
 const NUMBER_OF_SHARDS: u32 = 3;
 
 #[multiversx_sc::module]
-pub trait UtilsModule: super::storage::StorageModule {
+pub trait UtilsModule:
+    super::storage::StorageModule + utils::UtilsModule + custom_events::CustomEventsModule
+{
     fn require_initialization_phase_complete(&self) {
         for shard_id in 0..NUMBER_OF_SHARDS {
             require!(

@@ -18,7 +18,11 @@ use crate::common::{self};
 
 #[multiversx_sc::module]
 pub trait PhasesModule:
-    common::utils::UtilsModule + common::storage::StorageModule + common::sc_deploy::ScDeployModule
+    common::utils::UtilsModule
+    + common::storage::StorageModule
+    + common::sc_deploy::ScDeployModule
+    + custom_events::CustomEventsModule
+    + utils::UtilsModule
 {
     #[payable("EGLD")]
     #[endpoint(deployPhaseOne)]
