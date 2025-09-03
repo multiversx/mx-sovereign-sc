@@ -115,7 +115,7 @@ pub trait HeaderVerifierUtilsModule:
         None
     }
 
-    fn is_caller_is_from_current_sovereign(&self) -> bool {
+    fn is_caller_from_current_sovereign(&self) -> bool {
         let caller = self.blockchain().get_caller();
         self.sovereign_contracts()
             .iter()
