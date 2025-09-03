@@ -14,12 +14,9 @@ use error_messages::{
 use fee_common::storage::FeeCommonStorageModule;
 use multiversx_sc::{
     imports::OptionalValue,
-    types::{BigUint, EgldOrEsdtTokenIdentifier, ManagedAddress, ManagedBuffer, ManagedVec},
+    types::{BigUint, EgldOrEsdtTokenIdentifier, ManagedBuffer, ManagedVec},
 };
-use multiversx_sc_scenario::{
-    api::{DebugApiBackend, VMHooksApi},
-    ScenarioTxWhitebox,
-};
+use multiversx_sc_scenario::ScenarioTxWhitebox;
 use sovereign_forge::forge_common::{forge_utils::ForgeUtilsModule, storage::StorageModule};
 use sovereign_forge_blackbox_setup::SovereignForgeTestState;
 use structs::{
