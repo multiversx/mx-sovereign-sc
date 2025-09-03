@@ -173,7 +173,7 @@ pub trait HeaderVerifierOperationsModule:
         hash_of_hashes: &ManagedBuffer,
         operation_hash: &ManagedBuffer,
     ) -> Option<ManagedBuffer> {
-        if !self.is_caller_is_from_current_sovereign() {
+        if !self.is_caller_from_current_sovereign() {
             return Some(CALLER_NOT_FROM_CURRENT_SOVEREIGN.into());
         }
 
@@ -189,7 +189,7 @@ pub trait HeaderVerifierOperationsModule:
         hash_of_hashes: ManagedBuffer,
         operation_hash: ManagedBuffer,
     ) -> OptionalValue<ManagedBuffer> {
-        if !self.is_caller_is_from_current_sovereign() {
+        if !self.is_caller_from_current_sovereign() {
             return OptionalValue::Some(CALLER_NOT_FROM_CURRENT_SOVEREIGN.into());
         }
 
