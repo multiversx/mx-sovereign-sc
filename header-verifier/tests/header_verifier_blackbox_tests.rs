@@ -16,6 +16,7 @@ use multiversx_sc::{
     types::{ManagedBuffer, MultiEgldOrEsdtPayment, MultiValueEncoded},
 };
 use multiversx_sc_scenario::api::StaticApi;
+use multiversx_sc_scenario::multiversx_chain_vm::crypto_functions::sha256;
 use multiversx_sc_scenario::{DebugApi, ScenarioTxWhitebox};
 use structs::configs::SovereignConfig;
 use structs::{forge::ScArray, ValidatorData};
@@ -616,17 +617,25 @@ fn test_change_validator_set_operation_already_registered() {
         .complete_header_verifier_setup_phase(None);
 
     let operation_1 = ManagedBuffer::from("operation_1");
-    let operation_2 = ManagedBuffer::from("operation_2");
-    let operation = state.generate_bridge_operation_struct(vec![&operation_1, &operation_2]);
+    let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&operation_1.to_vec()));
 
     let bitmap = ManagedBuffer::new_from_bytes(&[1]);
 
-    state.register_operations(operation.clone(), bitmap.clone(), 0, None);
+    state.change_validator_set(
+        &ManagedBuffer::new(),
+        &hash_of_hashes,
+        &operation_1,
+        1,
+        &bitmap,
+        MultiValueEncoded::new(),
+        Some(EXECUTED_BRIDGE_OP_EVENT),
+        None,
+    );
 
     state.change_validator_set(
         &ManagedBuffer::new(),
-        &operation.bridge_operation_hash,
-        &operation.operations_hashes.to_vec().get(0),
+        &hash_of_hashes,
+        &operation_1,
         1,
         &bitmap,
         MultiValueEncoded::new(),

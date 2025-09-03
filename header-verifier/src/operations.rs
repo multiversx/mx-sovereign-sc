@@ -1,8 +1,9 @@
 use error_messages::{
-    BITMAP_LEN_DOES_NOT_MATCH_BLS_KEY_LEN, BLS_KEY_NOT_REGISTERED, BLS_SIGNATURE_NOT_VALID,
+    BITMAP_LEN_DOES_NOT_MATCH_BLS_KEY_LEN, BLS_SIGNATURE_NOT_VALID,
     CALLER_NOT_FROM_CURRENT_SOVEREIGN, CURRENT_OPERATION_ALREADY_IN_EXECUTION,
     CURRENT_OPERATION_NOT_REGISTERED, HASH_OF_HASHES_DOES_NOT_MATCH,
     OUTGOING_TX_HASH_ALREADY_REGISTERED, SETUP_PHASE_NOT_COMPLETED,
+    VALIDATORS_ALREADY_REGISTERED_IN_EPOCH,
 };
 
 use crate::{
@@ -90,7 +91,7 @@ pub trait HeaderVerifierOperationsModule:
         pub_keys_id: MultiValueEncoded<BigUint<Self::Api>>,
     ) {
         if !self.is_setup_phase_complete() {
-            self.complete_operation(
+            self.execute_bridge_operation_event(
                 &hash_of_hashes,
                 &operation_hash,
                 Some(SETUP_PHASE_NOT_COMPLETED.into()),
@@ -99,10 +100,10 @@ pub trait HeaderVerifierOperationsModule:
             return;
         }
         if !self.is_bls_pub_keys_empty(epoch) {
-            self.complete_operation(
+            self.execute_bridge_operation_event(
                 &hash_of_hashes,
                 &operation_hash,
-                Some(BLS_KEY_NOT_REGISTERED.into()),
+                Some(VALIDATORS_ALREADY_REGISTERED_IN_EPOCH.into()),
             );
 
             return;
@@ -110,7 +111,7 @@ pub trait HeaderVerifierOperationsModule:
         let bls_keys_previous_epoch = self.bls_pub_keys(epoch - 1);
         if !self.is_bitmap_and_bls_same_length(pub_keys_bitmap.len(), bls_keys_previous_epoch.len())
         {
-            self.complete_operation(
+            self.execute_bridge_operation_event(
                 &hash_of_hashes,
                 &operation_hash,
                 Some(BITMAP_LEN_DOES_NOT_MATCH_BLS_KEY_LEN.into()),
@@ -120,7 +121,7 @@ pub trait HeaderVerifierOperationsModule:
         }
         let mut hash_of_hashes_history_mapper = self.hash_of_hashes_history();
         if self.is_hash_of_hashes_registered(&hash_of_hashes, &hash_of_hashes_history_mapper) {
-            self.complete_operation(
+            self.execute_bridge_operation_event(
                 &hash_of_hashes,
                 &operation_hash,
                 Some(OUTGOING_TX_HASH_ALREADY_REGISTERED.into()),
@@ -135,7 +136,11 @@ pub trait HeaderVerifierOperationsModule:
         if let Some(error_message) =
             self.calculate_and_check_transfers_hashes(&hash_of_hashes, operations_hashes.clone())
         {
-            self.complete_operation(&hash_of_hashes, &operation_hash, Some(error_message));
+            self.execute_bridge_operation_event(
+                &hash_of_hashes,
+                &operation_hash,
+                Some(error_message),
+            );
             return;
         }
 
@@ -149,7 +154,7 @@ pub trait HeaderVerifierOperationsModule:
             )
             .is_some()
         {
-            self.complete_operation(
+            self.execute_bridge_operation_event(
                 &hash_of_hashes,
                 &operation_hash,
                 Some(BLS_SIGNATURE_NOT_VALID.into()),
