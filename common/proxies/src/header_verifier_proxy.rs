@@ -129,7 +129,7 @@ where
     >(
         self,
         signature: Arg0,
-        bridge_operations_hash: Arg1,
+        hash_of_hashes: Arg1,
         operation_hash: Arg2,
         pub_keys_bitmap: Arg3,
         epoch: Arg4,
@@ -139,7 +139,7 @@ where
             .payment(NotPayable)
             .raw_call("changeValidatorSet")
             .argument(&signature)
-            .argument(&bridge_operations_hash)
+            .argument(&hash_of_hashes)
             .argument(&operation_hash)
             .argument(&pub_keys_bitmap)
             .argument(&epoch)
@@ -154,7 +154,7 @@ where
         self,
         hash_of_hashes: Arg0,
         operation_hash: Arg1,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, OptionalValue<ManagedBuffer<Env::Api>>> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("removeExecutedHash")
@@ -170,7 +170,7 @@ where
         self,
         hash_of_hashes: Arg0,
         operation_hash: Arg1,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, OptionalValue<ManagedBuffer<Env::Api>>> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("lockOperationHash")

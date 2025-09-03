@@ -77,6 +77,27 @@ impl BaseSetup {
         self.assert_expected_error_message(response, error_message);
     }
 
+    pub fn register(
+        &mut self,
+        bls_key: &ManagedBuffer<StaticApi>,
+        payment: &MultiEgldOrEsdtPayment<StaticApi>,
+        expected_error_message: Option<&str>,
+    ) {
+        let (response, _) = self
+            .world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .to(CHAIN_CONFIG_ADDRESS)
+            .typed(ChainConfigContractProxy)
+            .register(bls_key)
+            .payment(payment)
+            .returns(ReturnsHandledOrError::new())
+            .returns(ReturnsLogs)
+            .run();
+
+        self.assert_expected_error_message(response, expected_error_message);
+    }
+
     pub fn unregister(&mut self, bls_key: &ManagedBuffer<StaticApi>, expect_error: Option<&str>) {
         let (response, _) = self
             .world
@@ -96,8 +117,8 @@ impl BaseSetup {
         &mut self,
         hash_of_hashes: &ManagedBuffer<StaticApi>,
         validator_data: &ValidatorData<StaticApi>,
-        expected_error_message: Option<&str>,
         expected_custom_log: Option<&str>,
+        expected_error_log: Option<&str>,
     ) {
         let (response, logs) = self
             .world
@@ -110,8 +131,8 @@ impl BaseSetup {
             .returns(ReturnsLogs)
             .run();
 
-        self.assert_expected_error_message(response, expected_error_message);
-        self.assert_expected_log(logs, expected_custom_log, None);
+        assert!(response.is_ok());
+        self.assert_expected_log(logs, expected_custom_log, expected_error_log);
     }
 
     pub fn register_validator_operation(
@@ -136,8 +157,8 @@ impl BaseSetup {
         self.register_validator(
             &hash_of_hashes,
             &validator_data,
-            None,
             Some(EXECUTED_BRIDGE_OP_EVENT),
+            None,
         );
 
         assert_eq!(
@@ -166,26 +187,6 @@ impl BaseSetup {
 
         self.assert_expected_error_message(response, expected_error_message);
         self.assert_expected_log(logs, expected_custom_log, None);
-    }
-
-    pub fn register(
-        &mut self,
-        bls_key: &ManagedBuffer<StaticApi>,
-        payment: &MultiEgldOrEsdtPayment<StaticApi>,
-        expect_error: Option<&str>,
-    ) {
-        let result = self
-            .world
-            .tx()
-            .from(OWNER_ADDRESS)
-            .to(CHAIN_CONFIG_ADDRESS)
-            .typed(ChainConfigContractProxy)
-            .register(bls_key)
-            .returns(ReturnsHandledOrError::new())
-            .payment(payment)
-            .run();
-
-        self.assert_expected_error_message(result, expect_error);
     }
 
     pub fn unregister_validator_operation(

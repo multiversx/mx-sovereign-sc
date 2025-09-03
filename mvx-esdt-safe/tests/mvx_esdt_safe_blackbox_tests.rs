@@ -1,4 +1,5 @@
 use common_test_setup::base_setup::helpers::BLSKey;
+use common_test_setup::base_setup::init::RegisterTokenArgs;
 use common_test_setup::constants::{
     CROWD_TOKEN_ID, DEPOSIT_EVENT, ESDT_SAFE_ADDRESS, EXECUTED_BRIDGE_OP_EVENT, FEE_MARKET_ADDRESS,
     FEE_TOKEN, FIRST_TEST_TOKEN, HEADER_VERIFIER_ADDRESS, ONE_HUNDRED_MILLION,
@@ -1579,10 +1580,8 @@ fn test_execute_operation_no_chain_config_registered() {
     state.execute_operation(
         &hash_of_hashes,
         &operation,
+        Some(EXECUTED_BRIDGE_OP_EVENT),
         Some(CALLER_NOT_FROM_CURRENT_SOVEREIGN),
-        None,
-        None,
-        None,
     );
 
     state
@@ -1627,10 +1626,8 @@ fn test_execute_operation_no_esdt_safe_registered() {
     state.execute_operation(
         &hash_of_hashes,
         &operation,
+        Some(EXECUTED_BRIDGE_OP_EVENT),
         Some(CALLER_NOT_FROM_CURRENT_SOVEREIGN),
-        None,
-        None,
-        None,
     );
 
     state
@@ -1722,9 +1719,7 @@ fn test_execute_operation_success() {
     state.execute_operation(
         &hash_of_hashes,
         &operation,
-        None,
-        Some("executedBridgeOp"),
-        None,
+        Some(EXECUTED_BRIDGE_OP_EVENT),
         None,
     );
 
@@ -1817,9 +1812,7 @@ fn test_execute_operation_with_native_token_success() {
     state.execute_operation(
         &hash_of_hashes,
         &operation,
-        None,
-        Some("executedBridgeOp"),
-        None,
+        Some(EXECUTED_BRIDGE_OP_EVENT),
         None,
     );
 
@@ -1908,9 +1901,7 @@ fn test_execute_operation_burn_mechanism_without_deposit_cannot_subtract() {
     state.execute_operation(
         &hash_of_hashes,
         &operation,
-        None,
-        Some("executedBridgeOp"),
-        None,
+        Some(EXECUTED_BRIDGE_OP_EVENT),
         None,
     );
 
@@ -1995,9 +1986,7 @@ fn execute_operation_only_transfer_data_no_fee() {
     state.execute_operation(
         &hash_of_hashes,
         &operation,
-        None,
-        Some("executedBridgeOp"),
-        None,
+        Some(EXECUTED_BRIDGE_OP_EVENT),
         None,
     );
 
@@ -2091,9 +2080,7 @@ fn test_execute_operation_success_burn_mechanism() {
     state.execute_operation(
         &hash_of_hashes,
         &operation,
-        None,
-        Some("executedBridgeOp"),
-        None,
+        Some(EXECUTED_BRIDGE_OP_EVENT),
         None,
     );
 
@@ -2245,9 +2232,7 @@ fn test_deposit_execute_switch_mechanism() {
     state.execute_operation(
         &hash_of_hashes_one,
         &operation_one,
-        None,
-        Some("executedBridgeOp"),
-        None,
+        Some(EXECUTED_BRIDGE_OP_EVENT),
         None,
     );
 
@@ -2325,9 +2310,7 @@ fn test_deposit_execute_switch_mechanism() {
     state.execute_operation(
         &hash_of_hashes_two,
         &operation_two,
-        None,
-        Some("executedBridgeOp"),
-        None,
+        Some(EXECUTED_BRIDGE_OP_EVENT),
         None,
     );
 
@@ -2457,9 +2440,7 @@ fn test_execute_operation_no_payments() {
     state.execute_operation(
         &hash_of_hashes,
         &operation,
-        None,
-        Some("executedBridgeOp"),
-        None,
+        Some(EXECUTED_BRIDGE_OP_EVENT),
         None,
     );
 
@@ -2539,10 +2520,8 @@ fn test_execute_operation_no_payments_failed_event() {
     state.execute_operation(
         &hash_of_hashes,
         &operation,
-        None,
-        Some("executedBridgeOp"),
+        Some(EXECUTED_BRIDGE_OP_EVENT),
         Some("invalid function (not found)"),
-        None,
     );
 
     state
@@ -2728,7 +2707,6 @@ fn test_update_config_setup_phase_not_completed() {
     state.update_esdt_safe_config(
         &ManagedBuffer::new(),
         new_config,
-        None,
         Some(EXECUTED_BRIDGE_OP_EVENT),
         Some(SETUP_PHASE_NOT_COMPLETED),
     );
@@ -2763,9 +2741,8 @@ fn test_update_config_operation_not_registered() {
     state.update_esdt_safe_config(
         &ManagedBuffer::new(),
         new_config,
+        Some(EXECUTED_BRIDGE_OP_EVENT),
         Some(CURRENT_OPERATION_NOT_REGISTERED),
-        None,
-        None,
     );
 }
 
@@ -2823,8 +2800,7 @@ fn test_update_config_invalid_config() {
     state.update_esdt_safe_config(
         &hash_of_hashes,
         new_config,
-        None,
-        Some("executedBridgeOp"),
+        Some(EXECUTED_BRIDGE_OP_EVENT),
         Some(MAX_GAS_LIMIT_PER_TX_EXCEEDED),
     );
 }
@@ -2884,8 +2860,7 @@ fn test_update_config() {
     state.update_esdt_safe_config(
         &hash_of_hashes,
         new_config,
-        None,
-        Some("executedBridgeOp"),
+        Some(EXECUTED_BRIDGE_OP_EVENT),
         None,
     );
 

@@ -272,18 +272,6 @@ impl BaseSetup {
         }
     }
 
-    pub fn assert_expected_data(&self, logs: Vec<Log>, expected_data: &str) {
-        let expected_bytes = ManagedBuffer::<StaticApi>::from(expected_data).to_vec();
-
-        let found = logs.iter().any(|log| {
-            log.data
-                .iter()
-                .any(|data_item| data_item.to_vec() == expected_bytes)
-        });
-
-        assert!(found, "Expected data '{}' not found", expected_data);
-    }
-
     pub fn assert_expected_error_message(
         &mut self,
         response: Result<(), TxResponseStatus>,

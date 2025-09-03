@@ -17,12 +17,18 @@ const CHARSET: &[u8] = b"0123456789abcdefghijklmnopqrstuvwxyz";
 
 #[multiversx_sc::module]
 pub trait UtilsModule: custom_events::CustomEventsModule {
-    fn lock_operation_hash_wrapper(&self, hash_of_hashes: &ManagedBuffer, hash: &ManagedBuffer) {
+    fn lock_operation_hash_wrapper(
+        &self,
+        hash_of_hashes: &ManagedBuffer,
+        hash: &ManagedBuffer,
+    ) -> Option<ManagedBuffer> {
         self.tx()
             .to(self.blockchain().get_owner_address())
             .typed(HeaderverifierProxy)
             .lock_operation_hash(hash_of_hashes, hash)
-            .sync_call();
+            .returns(ReturnsResult)
+            .sync_call()
+            .into_option()
     }
 
     fn remove_executed_hash_wrapper(
