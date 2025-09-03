@@ -5,16 +5,17 @@ use base64::{engine::general_purpose::STANDARD as BASE64, Engine};
 use common_test_setup::constants::{
     CHAIN_CONFIG_CODE_PATH, CHAIN_FACTORY_CODE_PATH, FEE_MARKET_CODE_PATH,
     HEADER_VERIFIER_CODE_PATH, ISSUE_COST, MVX_ESDT_SAFE_CODE_PATH, ONE_HUNDRED_TOKENS,
-    ONE_THOUSAND_TOKENS, SOVEREIGN_FORGE_CODE_PATH, TESTING_SC_CODE_PATH,
+    ONE_THOUSAND_TOKENS, SOVEREIGN_FORGE_CODE_PATH, SOVEREIGN_TOKEN_PREFIX, TESTING_SC_CODE_PATH,
 };
 use error_messages::{EMPTY_EXPECTED_LOG, FAILED_TO_PARSE_AS_NUMBER};
 use multiversx_sc::{
     codec::{num_bigint, TopEncode},
     imports::{ESDTSystemSCProxy, OptionalValue, UserBuiltinProxy},
     types::{
-        Address, BigUint, CodeMetadata, ESDTSystemSCAddress, EsdtTokenType, ManagedAddress,
-        ManagedBuffer, ManagedVec, MultiEgldOrEsdtPayment, MultiValueEncoded, ReturnsNewAddress,
-        ReturnsResult, ReturnsResultUnmanaged, TestSCAddress, TokenIdentifier,
+        Address, BigUint, CodeMetadata, ESDTSystemSCAddress, EgldOrEsdtTokenIdentifier,
+        EsdtTokenType, ManagedAddress, ManagedBuffer, ManagedVec, MultiEgldOrEsdtPayment,
+        MultiValueEncoded, ReturnsNewAddress, ReturnsResult, ReturnsResultUnmanaged, TestSCAddress,
+        TokenIdentifier,
     },
 };
 use multiversx_sc_snippets::{
@@ -263,7 +264,7 @@ pub trait CommonInteractorTrait {
             .from(bridge_owner)
             .gas(100_000_000u64)
             .typed(MvxEsdtSafeProxy)
-            .init(opt_config)
+            .init(SOVEREIGN_TOKEN_PREFIX, opt_config)
             .returns(ReturnsNewAddress)
             .code(MVX_ESDT_SAFE_CODE_PATH)
             .code_metadata(CodeMetadata::all())
@@ -831,9 +832,9 @@ pub trait CommonInteractorTrait {
 
     async fn check_wallet_balance_unchanged(&mut self) {
         let user_address = self.user_address().clone();
-        let first_token_id = self.state().get_first_token_id_string();
-        let second_token_id = self.state().get_second_token_id_string();
-        let fee_token_id = self.state().get_fee_token_id_string();
+        let first_token_id = self.state().get_first_token_id();
+        let second_token_id = self.state().get_second_token_id();
+        let fee_token_id = self.state().get_fee_token_id();
 
         let expected_tokens_wallet = vec![
             self.thousand_tokens(first_token_id),
@@ -846,8 +847,8 @@ pub trait CommonInteractorTrait {
     }
 
     async fn check_mvx_esdt_safe_balance_is_empty(&mut self) {
-        let first_token_id = self.state().get_first_token_id_string();
-        let second_token_id = self.state().get_second_token_id_string();
+        let first_token_id = self.state().get_first_token_id();
+        let second_token_id = self.state().get_second_token_id();
         let mvx_esdt_safe_address = self
             .state()
             .current_mvx_esdt_safe_contract_address()
@@ -864,7 +865,7 @@ pub trait CommonInteractorTrait {
 
     async fn check_fee_market_balance_is_empty(&mut self) {
         let fee_market_address = self.state().current_fee_market_address().clone();
-        let fee_token_id = self.state().get_fee_token_id_string();
+        let fee_token_id = self.state().get_fee_token_id();
 
         let expected_tokens_fee_market = vec![self.zero_tokens(fee_token_id)];
 
@@ -874,7 +875,7 @@ pub trait CommonInteractorTrait {
 
     async fn check_testing_sc_balance_is_empty(&mut self) {
         let testing_sc_address = self.state().current_testing_sc_address().clone();
-        let first_token_id = self.state().get_first_token_id_string();
+        let first_token_id = self.state().get_first_token_id();
 
         let expected_tokens_testing_sc = vec![self.zero_tokens(first_token_id)];
 
@@ -885,14 +886,15 @@ pub trait CommonInteractorTrait {
     async fn check_address_balance(
         &mut self,
         address: &Bech32Address,
-        expected_tokens: Vec<(String, BigUint<StaticApi>)>,
+        expected_tokens: Vec<(EgldOrEsdtTokenIdentifier<StaticApi>, BigUint<StaticApi>)>,
     ) {
         let balances = self
             .interactor()
             .get_account_esdt(&address.to_address())
             .await;
 
-        for (token_id, expected_amount) in expected_tokens {
+        for (token_identifier, expected_amount) in expected_tokens {
+            let token_id = token_identifier.clone().unwrap_esdt().to_string();
             if expected_amount == 0u64 {
                 match balances.get(&token_id) {
                     None => {}
@@ -938,23 +940,32 @@ pub trait CommonInteractorTrait {
         ManagedBuffer::new_from_bytes(&sha256)
     }
 
-    fn thousand_tokens(&mut self, token_id: String) -> (String, BigUint<StaticApi>) {
+    fn thousand_tokens(
+        &mut self,
+        token_id: EgldOrEsdtTokenIdentifier<StaticApi>,
+    ) -> (EgldOrEsdtTokenIdentifier<StaticApi>, BigUint<StaticApi>) {
         (token_id, BigUint::from(ONE_THOUSAND_TOKENS))
     }
 
-    fn hundred_tokens(&mut self, token_id: String) -> (String, BigUint<StaticApi>) {
+    fn hundred_tokens(
+        &mut self,
+        token_id: EgldOrEsdtTokenIdentifier<StaticApi>,
+    ) -> (EgldOrEsdtTokenIdentifier<StaticApi>, BigUint<StaticApi>) {
         (token_id, BigUint::from(ONE_HUNDRED_TOKENS))
     }
 
-    fn zero_tokens(&mut self, token_id: String) -> (String, BigUint<StaticApi>) {
+    fn zero_tokens(
+        &mut self,
+        token_id: EgldOrEsdtTokenIdentifier<StaticApi>,
+    ) -> (EgldOrEsdtTokenIdentifier<StaticApi>, BigUint<StaticApi>) {
         (token_id, BigUint::from(0u64))
     }
 
     fn custom_amount_tokens<T: Into<BigUint<StaticApi>>>(
         &mut self,
-        token_id: impl Into<String>,
+        token_id: impl Into<EgldOrEsdtTokenIdentifier<StaticApi>>,
         amount: T,
-    ) -> (String, BigUint<StaticApi>) {
+    ) -> (EgldOrEsdtTokenIdentifier<StaticApi>, BigUint<StaticApi>) {
         (token_id.into(), amount.into())
     }
 

@@ -9,7 +9,7 @@ pub type TxNonce = u64;
 pub type BlockNonce = u64;
 pub type SenderAddress<M> = ManagedAddress<M>;
 pub type ReceiverAddress<M> = ManagedAddress<M>;
-pub type EventPaymentTuple<M> = MultiValue3<TokenIdentifier<M>, u64, EsdtTokenData<M>>;
+pub type EventPaymentTuple<M> = MultiValue3<EgldOrEsdtTokenIdentifier<M>, u64, EsdtTokenData<M>>;
 pub type PaymentsVec<M> = ManagedVec<M, EgldOrEsdtTokenPayment<M>>;
 pub type TransferDataTuple<M> =
     MultiValue3<GasLimit, ManagedBuffer<M>, MultiValueEncoded<M, ManagedBuffer<M>>>;

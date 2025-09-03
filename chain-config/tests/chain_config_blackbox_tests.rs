@@ -332,16 +332,15 @@ fn test_update_config() {
     let new_config = SovereignConfig::new(1, 2, BigUint::default(), None);
     let config_hash = new_config.generate_hash();
     let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&config_hash.to_vec()));
-    let signature = ManagedBuffer::new();
     let bitmap = ManagedBuffer::new_from_bytes(&[1]);
-    let epoch = 0;
+    let signature = ManagedBuffer::new();
 
     state.common_setup.register_operation(
         OWNER_ADDRESS,
         signature,
         &hash_of_hashes,
         bitmap,
-        epoch,
+        0,
         MultiValueEncoded::from_iter(vec![config_hash]),
     );
 

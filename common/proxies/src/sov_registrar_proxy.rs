@@ -173,7 +173,7 @@ where
     }
 
     pub fn token_fee<
-        Arg0: ProxyArg<TokenIdentifier<Env::Api>>,
+        Arg0: ProxyArg<EgldOrEsdtTokenIdentifier<Env::Api>>,
     >(
         self,
         token_id: Arg0,

@@ -1,5 +1,6 @@
 use error_messages::{
-    MINT_AND_BURN_ROLES_NOT_FOUND, TOKEN_ID_IS_NOT_TRUSTED, TOKEN_IS_FROM_SOVEREIGN,
+    BURN_MECHANISM_NON_ESDT_TOKENS, LOCK_MECHANISM_NON_ESDT, MINT_AND_BURN_ROLES_NOT_FOUND,
+    TOKEN_ID_IS_NOT_TRUSTED, TOKEN_IS_FROM_SOVEREIGN,
 };
 use multiversx_sc::imports::*;
 
@@ -9,8 +10,10 @@ pub const TRUSTED_TOKEN_IDS: [&str; 1] = ["USDC-c76f1f"];
 pub trait BridgingMechanism: cross_chain::storage::CrossChainStorage {
     #[only_owner]
     #[endpoint(setTokenBurnMechanism)]
-    fn set_token_burn_mechanism(&self, token_id: TokenIdentifier) {
-        let token_esdt_roles = self.blockchain().get_esdt_local_roles(&token_id);
+    fn set_token_burn_mechanism(&self, token_id: EgldOrEsdtTokenIdentifier) {
+        require!(token_id.is_esdt(), BURN_MECHANISM_NON_ESDT_TOKENS);
+        let token_identifier = token_id.clone().unwrap_esdt();
+        let token_esdt_roles = self.blockchain().get_esdt_local_roles(&token_identifier);
 
         require!(
             token_esdt_roles.contains(EsdtLocalRoleFlags::MINT)
@@ -32,15 +35,16 @@ pub trait BridgingMechanism: cross_chain::storage::CrossChainStorage {
             self.burn_mechanism_tokens().insert(token_id.clone());
         }
 
-        let sc_balance = self
-            .blockchain()
-            .get_sc_balance(&EgldOrEsdtTokenIdentifier::esdt(token_id.clone()), 0);
+        let sc_balance = self.blockchain().get_sc_balance(
+            &EgldOrEsdtTokenIdentifier::esdt(token_identifier.clone()),
+            0,
+        );
 
         if sc_balance != 0 {
             self.tx()
                 .to(ToSelf)
                 .typed(UserBuiltinProxy)
-                .esdt_local_burn(&token_id, 0, &sc_balance)
+                .esdt_local_burn(&token_identifier, 0, &sc_balance)
                 .sync_call();
 
             self.deposited_tokens_amount(&token_id).set(sc_balance);
@@ -49,12 +53,14 @@ pub trait BridgingMechanism: cross_chain::storage::CrossChainStorage {
 
     #[only_owner]
     #[endpoint(setTokenLockMechanism)]
-    fn set_token_lock_mechanism(&self, token_id: TokenIdentifier) {
+    fn set_token_lock_mechanism(&self, token_id: EgldOrEsdtTokenIdentifier<Self::Api>) {
         require!(
             self.multiversx_to_sovereign_token_id_mapper(&token_id)
                 .is_empty(),
             TOKEN_IS_FROM_SOVEREIGN
         );
+
+        require!(token_id.is_esdt(), LOCK_MECHANISM_NON_ESDT);
 
         self.burn_mechanism_tokens().swap_remove(&token_id);
 
@@ -64,7 +70,7 @@ pub trait BridgingMechanism: cross_chain::storage::CrossChainStorage {
             self.tx()
                 .to(ToSelf)
                 .typed(UserBuiltinProxy)
-                .esdt_local_mint(&token_id, 0, &deposited_amount)
+                .esdt_local_mint(token_id.clone().unwrap_esdt(), 0, &deposited_amount)
                 .sync_call();
 
             self.deposited_tokens_amount(&token_id).set(BigUint::zero());
@@ -72,11 +78,11 @@ pub trait BridgingMechanism: cross_chain::storage::CrossChainStorage {
     }
 
     #[storage_mapper("burnMechanismTokens")]
-    fn burn_mechanism_tokens(&self) -> UnorderedSetMapper<TokenIdentifier>;
+    fn burn_mechanism_tokens(&self) -> UnorderedSetMapper<EgldOrEsdtTokenIdentifier<Self::Api>>;
 
     #[storage_mapper("depositedTokensAmount")]
     fn deposited_tokens_amount(
         &self,
-        token_identifier: &TokenIdentifier,
+        token_identifier: &EgldOrEsdtTokenIdentifier<Self::Api>,
     ) -> SingleValueMapper<BigUint>;
 }

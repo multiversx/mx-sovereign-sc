@@ -161,7 +161,7 @@ impl State {
             .clone()
     }
 
-    pub fn get_first_token_id(&self) -> TokenIdentifier<StaticApi> {
+    pub fn get_first_token_id(&self) -> EgldOrEsdtTokenIdentifier<StaticApi> {
         self.first_token
             .as_ref()
             .expect(NO_KNOWN_FIRST_TOKEN)
@@ -170,7 +170,7 @@ impl State {
             .into()
     }
 
-    pub fn get_fee_token_id(&self) -> TokenIdentifier<StaticApi> {
+    pub fn get_fee_token_id(&self) -> EgldOrEsdtTokenIdentifier<StaticApi> {
         self.fee_token
             .as_ref()
             .expect(NO_KNOWN_FEE_TOKEN)
@@ -179,7 +179,7 @@ impl State {
             .into()
     }
 
-    pub fn get_second_token_id(&self) -> TokenIdentifier<StaticApi> {
+    pub fn get_second_token_id(&self) -> EgldOrEsdtTokenIdentifier<StaticApi> {
         self.second_token
             .as_ref()
             .expect(NO_KNOWN_SECOND_TOKEN)

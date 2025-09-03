@@ -9,6 +9,7 @@ use error_messages::{
 };
 use fee_common::storage::FeeCommonStorageModule;
 use fee_market_blackbox_setup::*;
+use multiversx_sc::types::EgldOrEsdtTokenIdentifier;
 use multiversx_sc::{
     imports::OptionalValue,
     types::{BigUint, ManagedBuffer, ManagedVec, MultiEgldOrEsdtPayment, MultiValueEncoded},
@@ -56,15 +57,23 @@ fn test_set_fee_during_setup_phase_wrong_params() {
         .common_setup
         .deploy_fee_market(Some(fee), ESDT_SAFE_ADDRESS);
 
-    state.set_fee_during_setup_phase(WRONG_TOKEN_ID, WantedFeeType::Fixed, Some(INVALID_TOKEN_ID));
+    state.set_fee_during_setup_phase(
+        EgldOrEsdtTokenIdentifier::esdt(WRONG_TOKEN_ID),
+        WantedFeeType::Fixed,
+        Some(INVALID_TOKEN_ID),
+    );
 
     state.set_fee_during_setup_phase(
-        FIRST_TEST_TOKEN,
+        EgldOrEsdtTokenIdentifier::esdt(FIRST_TEST_TOKEN),
         WantedFeeType::None,
         Some(INVALID_FEE_TYPE),
     );
 
-    state.set_fee_during_setup_phase(SECOND_TEST_TOKEN, WantedFeeType::Fixed, Some(INVALID_FEE));
+    state.set_fee_during_setup_phase(
+        EgldOrEsdtTokenIdentifier::esdt(SECOND_TEST_TOKEN),
+        WantedFeeType::Fixed,
+        Some(INVALID_FEE),
+    );
 }
 
 /// ### TEST
@@ -88,9 +97,9 @@ fn test_set_fee_setup_not_completed() {
         .deploy_header_verifier(vec![ScArray::FeeMarket, ScArray::ChainConfig]);
 
     let fee = FeeStruct {
-        base_token: FIRST_TEST_TOKEN.to_token_identifier(),
+        base_token: EgldOrEsdtTokenIdentifier::esdt(FIRST_TEST_TOKEN),
         fee_type: FeeType::Fixed {
-            token: FIRST_TEST_TOKEN.to_token_identifier(),
+            token: EgldOrEsdtTokenIdentifier::esdt(FIRST_TEST_TOKEN),
             per_transfer: BigUint::default(),
             per_gas: BigUint::default(),
         },
@@ -160,8 +169,8 @@ fn test_remove_users_from_whitelist() {
     aggregated_hashes.append(&operation_two_hash);
     let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&aggregated_hashes.to_vec()));
 
-    let signature = ManagedBuffer::new();
     let bitmap = ManagedBuffer::new_from_bytes(&[1]);
+    let signature = ManagedBuffer::new();
     let epoch = 0;
 
     state.common_setup.register_operation(
@@ -218,23 +227,22 @@ fn test_set_fee() {
     state.common_setup.complete_fee_market_setup_phase(None);
 
     let fee = FeeStruct {
-        base_token: FIRST_TEST_TOKEN.to_token_identifier(),
+        base_token: EgldOrEsdtTokenIdentifier::esdt(FIRST_TEST_TOKEN),
         fee_type: FeeType::Fixed {
-            token: FIRST_TEST_TOKEN.to_token_identifier(),
+            token: EgldOrEsdtTokenIdentifier::esdt(FIRST_TEST_TOKEN),
             per_transfer: BigUint::default(),
             per_gas: BigUint::default(),
         },
     };
     let fee_hash = fee.generate_hash();
     let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&fee_hash.to_vec()));
+    let bitmap = ManagedBuffer::new_from_bytes(&[1]);
+    let signature = ManagedBuffer::new();
+    let epoch = 0;
 
     state
         .common_setup
         .complete_header_verifier_setup_phase(None);
-
-    let signature = ManagedBuffer::new();
-    let bitmap = ManagedBuffer::new_from_bytes(&[1]);
-    let epoch = 0;
 
     state.common_setup.register_operation(
         OWNER_ADDRESS,
@@ -254,7 +262,7 @@ fn test_set_fee() {
         .to(FEE_MARKET_ADDRESS)
         .whitebox(fee_market::contract_obj, |sc| {
             assert!(!sc
-                .token_fee(&FIRST_TEST_TOKEN.to_token_identifier())
+                .token_fee(&EgldOrEsdtTokenIdentifier::esdt(FIRST_TEST_TOKEN))
                 .is_empty());
         });
 }
@@ -321,9 +329,9 @@ fn test_remove_fee_register_separate_operations() {
     state.common_setup.complete_fee_market_setup_phase(None);
 
     let fee = FeeStruct {
-        base_token: FIRST_TEST_TOKEN.to_token_identifier(),
+        base_token: EgldOrEsdtTokenIdentifier::esdt(FIRST_TEST_TOKEN),
         fee_type: FeeType::Fixed {
-            token: FIRST_TEST_TOKEN.to_token_identifier(),
+            token: EgldOrEsdtTokenIdentifier::esdt(FIRST_TEST_TOKEN),
             per_transfer: BigUint::default(),
             per_gas: BigUint::default(),
         },
@@ -331,20 +339,19 @@ fn test_remove_fee_register_separate_operations() {
     let register_fee_hash = fee.generate_hash();
     let register_fee_hash_of_hashes =
         ManagedBuffer::new_from_bytes(&sha256(&register_fee_hash.to_vec()));
+    let bitmap = ManagedBuffer::new_from_bytes(&[1]);
+    let signature = ManagedBuffer::new();
+    let epoch = 0;
 
     state
         .common_setup
         .complete_header_verifier_setup_phase(None);
 
-    let signature = ManagedBuffer::new();
-    let bitmap = ManagedBuffer::new_from_bytes(&[1]);
-    let epoch = 0;
-
     state.common_setup.register_operation(
         OWNER_ADDRESS,
         signature,
         &register_fee_hash_of_hashes,
-        bitmap.clone(),
+        bitmap,
         epoch,
         MultiValueEncoded::from_iter(vec![register_fee_hash]),
     );
@@ -363,7 +370,7 @@ fn test_remove_fee_register_separate_operations() {
         .to(FEE_MARKET_ADDRESS)
         .whitebox(fee_market::contract_obj, |sc| {
             assert!(!sc
-                .token_fee(&FIRST_TEST_TOKEN.to_token_identifier())
+                .token_fee(&EgldOrEsdtTokenIdentifier::esdt(FIRST_TEST_TOKEN))
                 .is_empty());
         });
 
@@ -375,10 +382,13 @@ fn test_remove_fee_register_separate_operations() {
     );
 
     let remove_fee_hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&remove_fee_hash));
+    let bitmap = ManagedBuffer::new_from_bytes(&[1]);
+    let signature = ManagedBuffer::new();
+    let epoch = 0;
 
     state.common_setup.register_operation(
         OWNER_ADDRESS,
-        ManagedBuffer::new(),
+        signature,
         &remove_fee_hash_of_hashes,
         bitmap,
         epoch,
@@ -400,7 +410,7 @@ fn test_remove_fee_register_separate_operations() {
         .to(FEE_MARKET_ADDRESS)
         .whitebox(fee_market::contract_obj, |sc| {
             assert!(sc
-                .token_fee(&FIRST_TEST_TOKEN.to_token_identifier())
+                .token_fee(&EgldOrEsdtTokenIdentifier::esdt(FIRST_TEST_TOKEN))
                 .is_empty());
         });
 }
@@ -438,9 +448,9 @@ fn test_remove_fee_register_with_one_hash_of_hashes() {
     state.common_setup.complete_fee_market_setup_phase(None);
 
     let fee = FeeStruct {
-        base_token: FIRST_TEST_TOKEN.to_token_identifier(),
+        base_token: EgldOrEsdtTokenIdentifier::esdt(FIRST_TEST_TOKEN),
         fee_type: FeeType::Fixed {
-            token: FIRST_TEST_TOKEN.to_token_identifier(),
+            token: EgldOrEsdtTokenIdentifier::esdt(FIRST_TEST_TOKEN),
             per_transfer: BigUint::default(),
             per_gas: BigUint::default(),
         },
@@ -459,14 +469,13 @@ fn test_remove_fee_register_with_one_hash_of_hashes() {
     aggregated_hashes.append(&register_fee_hash);
 
     let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&aggregated_hashes.to_vec()));
+    let bitmap = ManagedBuffer::new_from_bytes(&[1]);
+    let signature = ManagedBuffer::new();
+    let epoch = 0;
 
     state
         .common_setup
         .complete_header_verifier_setup_phase(None);
-
-    let signature = ManagedBuffer::new();
-    let bitmap = ManagedBuffer::new_from_bytes(&[1]);
-    let epoch = 0;
 
     state.common_setup.register_operation(
         OWNER_ADDRESS,
@@ -486,7 +495,7 @@ fn test_remove_fee_register_with_one_hash_of_hashes() {
         .to(FEE_MARKET_ADDRESS)
         .whitebox(fee_market::contract_obj, |sc| {
             assert!(!sc
-                .token_fee(&FIRST_TEST_TOKEN.to_token_identifier())
+                .token_fee(&EgldOrEsdtTokenIdentifier::esdt(FIRST_TEST_TOKEN))
                 .is_empty());
         });
 
@@ -505,7 +514,7 @@ fn test_remove_fee_register_with_one_hash_of_hashes() {
         .to(FEE_MARKET_ADDRESS)
         .whitebox(fee_market::contract_obj, |sc| {
             assert!(sc
-                .token_fee(&FIRST_TEST_TOKEN.to_token_identifier())
+                .token_fee(&EgldOrEsdtTokenIdentifier::esdt(FIRST_TEST_TOKEN))
                 .is_empty());
         });
 }
@@ -633,8 +642,8 @@ fn distribute_fees_percentage_under_limit() {
     let mut aggregated_hash: ManagedBuffer<StaticApi> = ManagedBuffer::new();
     aggregated_hash.append(&operation_hash);
     let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&aggregated_hash.to_vec()));
-    let signature = ManagedBuffer::new();
     let bitmap = ManagedBuffer::new_from_bytes(&[1]);
+    let signature = ManagedBuffer::new();
     let epoch = 0;
 
     state.common_setup.register_operation(
@@ -678,9 +687,9 @@ fn distribute_fees() {
     let fee_per_transfer = BigUint::from(100u32);
 
     let fee = FeeStruct {
-        base_token: FIRST_TEST_TOKEN.to_token_identifier(),
+        base_token: EgldOrEsdtTokenIdentifier::esdt(FIRST_TEST_TOKEN),
         fee_type: FeeType::Fixed {
-            token: FIRST_TEST_TOKEN.to_token_identifier(),
+            token: EgldOrEsdtTokenIdentifier::esdt(FIRST_TEST_TOKEN),
             per_transfer: fee_per_transfer.clone(),
             per_gas: BigUint::default(),
         },
@@ -722,8 +731,8 @@ fn distribute_fees() {
     let mut aggregated_hash: ManagedBuffer<StaticApi> = ManagedBuffer::new();
     aggregated_hash.append(&operation_hash);
     let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&aggregated_hash.to_vec()));
-    let signature = ManagedBuffer::new();
     let bitmap = ManagedBuffer::new_from_bytes(&[1]);
+    let signature = ManagedBuffer::new();
     let epoch = 0;
 
     state.common_setup.register_operation(

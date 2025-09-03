@@ -2,7 +2,7 @@ multiversx_sc::imports!();
 
 #[multiversx_sc::module]
 pub trait ExecuteCommonModule: crate::storage::CrossChainStorage {
-    fn is_native_token(&self, token_identifier: &TokenIdentifier) -> bool {
+    fn is_native_token(&self, token_identifier: &EgldOrEsdtTokenIdentifier<Self::Api>) -> bool {
         let esdt_safe_native_token_mapper = self.native_token();
 
         if esdt_safe_native_token_mapper.is_empty() {

@@ -27,7 +27,7 @@ impl BaseSetup {
         caller: TestAddress,
         signature: ManagedBuffer<StaticApi>,
         hash_of_hashes: &ManagedBuffer<StaticApi>,
-        bls_keys_bitmap: ManagedBuffer<StaticApi>,
+        bitmap: ManagedBuffer<StaticApi>,
         epoch: u64,
         operations_hashes: MultiValueEncoded<StaticApi, ManagedBuffer<StaticApi>>,
     ) {
@@ -36,13 +36,7 @@ impl BaseSetup {
             .from(caller)
             .to(HEADER_VERIFIER_ADDRESS)
             .typed(HeaderverifierProxy)
-            .register_bridge_operations(
-                signature,
-                hash_of_hashes,
-                bls_keys_bitmap,
-                epoch,
-                operations_hashes,
-            )
+            .register_bridge_operations(signature, hash_of_hashes, bitmap, epoch, operations_hashes)
             .run();
     }
 

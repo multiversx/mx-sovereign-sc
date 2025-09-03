@@ -2339,6 +2339,7 @@ dependencies = [
  "chain-factory",
  "common-test-setup",
  "cross-chain",
+ "custom-events",
  "error-messages",
  "fee-common",
  "fee-market",
@@ -2350,6 +2351,7 @@ dependencies = [
  "num-bigint",
  "proxies",
  "structs",
+ "utils",
 ]
 
 [[package]]

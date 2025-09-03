@@ -8,7 +8,12 @@ use crate::common::{self};
 use crate::err_msg;
 
 #[multiversx_sc::module]
-pub trait UpdateConfigsModule: common::utils::UtilsModule + common::storage::StorageModule {
+pub trait UpdateConfigsModule:
+    common::utils::UtilsModule
+    + common::storage::StorageModule
+    + utils::UtilsModule
+    + custom_events::CustomEventsModule
+{
     #[endpoint(updateEsdtSafeConfig)]
     fn update_esdt_safe_config(&self, new_config: EsdtSafeConfig<Self::Api>) {
         let caller = self.blockchain().get_caller();

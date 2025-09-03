@@ -1,6 +1,7 @@
-use rand_core::OsRng;
 use rand::RngCore;
+use rand_core::OsRng;
 
+use multiversx_sc_scenario::imports::ManagedTypeApi;
 use multiversx_sc_scenario::{
     api::StaticApi,
     imports::{
@@ -10,8 +11,11 @@ use multiversx_sc_scenario::{
     multiversx_chain_vm::crypto_functions::sha256,
     ScenarioTxRun,
 };
-use multiversx_sc_scenario::imports::ManagedTypeApi;
-use structs::{forge::{ContractInfo, ScArray}, operation::Operation, BLS_KEY_BYTE_LENGTH};
+use structs::{
+    forge::{ContractInfo, ScArray},
+    operation::Operation,
+    BLS_KEY_BYTE_LENGTH,
+};
 
 use crate::{
     base_setup::init::BaseSetup,
@@ -25,11 +29,7 @@ impl BaseSetup {
     // TODO: add payment
     pub fn register_multiple_validators(&mut self, new_validators: Vec<ManagedBuffer<StaticApi>>) {
         for new_validator in new_validators {
-            self.register(
-                &new_validator,
-                &MultiEgldOrEsdtPayment::new(),
-                None,
-            );
+            self.register(&new_validator, &MultiEgldOrEsdtPayment::new(), None);
         }
     }
 

@@ -1,7 +1,8 @@
 #![no_std]
 
 use error_messages::{
-    ERROR_AT_ENCODING, ERR_EMPTY_PAYMENTS, INVALID_SC_ADDRESS, TOKEN_ID_NO_PREFIX,
+    CHAIN_ID_NOT_LOWERCASE_ALPHANUMERIC, ERROR_AT_ENCODING, ERR_EMPTY_PAYMENTS, INVALID_CHAIN_ID,
+    INVALID_SC_ADDRESS, TOKEN_ID_NO_PREFIX,
 };
 use proxies::header_verifier_proxy::HeaderverifierProxy;
 use structs::aliases::PaymentsVec;
@@ -10,6 +11,9 @@ multiversx_sc::imports!();
 
 const DASH: u8 = b'-';
 const MAX_TOKEN_ID_LEN: usize = 32;
+const MIN_PREFIX_LENGTH: usize = 1;
+const MAX_PREFIX_LENGTH: usize = 4;
+const CHARSET: &[u8] = b"0123456789abcdefghijklmnopqrstuvwxyz";
 
 #[multiversx_sc::module]
 pub trait UtilsModule: custom_events::CustomEventsModule {
@@ -56,8 +60,8 @@ pub trait UtilsModule: custom_events::CustomEventsModule {
         );
     }
 
-    fn is_valid_token_id(&self, token_id: &TokenIdentifier) -> bool {
-        token_id.is_valid_esdt_identifier()
+    fn is_valid_token_id(&self, token_id: &EgldOrEsdtTokenIdentifier<Self::Api>) -> bool {
+        token_id.clone().unwrap_esdt().is_valid_esdt_identifier()
     }
 
     fn pop_first_payment(
@@ -74,7 +78,7 @@ pub trait UtilsModule: custom_events::CustomEventsModule {
         MultiValue2::from((OptionalValue::Some(first_payment.clone()), new_payments))
     }
 
-    fn has_prefix(&self, token_id: &TokenIdentifier) -> bool {
+    fn has_prefix(&self, token_id: &EgldOrEsdtTokenIdentifier<Self::Api>) -> bool {
         let buffer = token_id.as_managed_buffer();
         let mut array_buffer = [0u8; MAX_TOKEN_ID_LEN];
         let slice = buffer.load_to_byte_array(&mut array_buffer);
@@ -89,11 +93,15 @@ pub trait UtilsModule: custom_events::CustomEventsModule {
     }
 
     #[inline]
-    fn require_token_has_prefix(&self, token_id: &TokenIdentifier) {
+    fn require_token_has_prefix(&self, token_id: &EgldOrEsdtTokenIdentifier<Self::Api>) {
         require!(self.has_prefix(token_id), TOKEN_ID_NO_PREFIX);
     }
 
-    fn has_sov_prefix(&self, token_id: &TokenIdentifier, chain_prefix: &ManagedBuffer) -> bool {
+    fn has_sov_prefix(
+        &self,
+        token_id: &EgldOrEsdtTokenIdentifier<Self::Api>,
+        chain_prefix: &ManagedBuffer,
+    ) -> bool {
         if !self.has_prefix(token_id) {
             return false;
         }
@@ -119,5 +127,26 @@ pub trait UtilsModule: custom_events::CustomEventsModule {
         }
 
         None
+    }
+
+    fn is_chain_id_lowercase_alphanumeric(&self, chain_id: &ManagedBuffer) -> bool {
+        let mut chain_id_byte_array = [0u8; 4];
+        let chain_id_byte_array = chain_id.load_to_byte_array(&mut chain_id_byte_array);
+
+        chain_id_byte_array.iter().all(|b| CHARSET.contains(b))
+    }
+
+    #[inline]
+    fn validate_chain_id(&self, chain_id: &ManagedBuffer) {
+        let id_length = chain_id.len();
+        require!(
+            (MIN_PREFIX_LENGTH..=MAX_PREFIX_LENGTH).contains(&id_length),
+            INVALID_CHAIN_ID
+        );
+
+        require!(
+            self.is_chain_id_lowercase_alphanumeric(chain_id),
+            CHAIN_ID_NOT_LOWERCASE_ALPHANUMERIC
+        );
     }
 }

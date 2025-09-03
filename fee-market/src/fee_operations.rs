@@ -55,7 +55,7 @@ pub trait FeeOperationsModule:
 
     #[only_owner]
     #[endpoint(removeFeeDuringSetupPhase)]
-    fn remove_fee_during_setup_phase(&self, base_token: TokenIdentifier) {
+    fn remove_fee_during_setup_phase(&self, base_token: EgldOrEsdtTokenIdentifier<Self::Api>) {
         require!(
             !self.is_setup_phase_complete(),
             SETUP_PHASE_ALREADY_COMPLETED
@@ -66,7 +66,11 @@ pub trait FeeOperationsModule:
     }
 
     #[endpoint(removeFee)]
-    fn remove_fee(&self, hash_of_hashes: ManagedBuffer, token_id: TokenIdentifier) {
+    fn remove_fee(
+        &self,
+        hash_of_hashes: ManagedBuffer,
+        token_id: EgldOrEsdtTokenIdentifier<Self::Api>,
+    ) {
         let token_id_hash = token_id.generate_hash();
         if let Some(err_msg) = self.validate_operation_hash(&token_id_hash) {
             self.complete_operation(&hash_of_hashes, &token_id_hash, Some(err_msg));

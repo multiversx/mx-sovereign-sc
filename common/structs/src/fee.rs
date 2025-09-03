@@ -13,7 +13,7 @@ multiversx_sc::derive_imports!();
 pub enum FeeType<M: ManagedTypeApi> {
     None,
     Fixed {
-        token: TokenIdentifier<M>,
+        token: EgldOrEsdtTokenIdentifier<M>,
         per_transfer: BigUint<M>,
         per_gas: BigUint<M>,
     },
@@ -58,12 +58,12 @@ impl<A: CryptoApi> GenerateHash<A> for SetFeeOperation<A> {}
 #[type_abi]
 #[derive(TopDecode, TopEncode, NestedEncode, NestedDecode, Clone)]
 pub struct FeeStruct<M: ManagedTypeApi> {
-    pub base_token: TokenIdentifier<M>,
+    pub base_token: EgldOrEsdtTokenIdentifier<M>,
     pub fee_type: FeeType<M>,
 }
 
 impl<A: CryptoApi> GenerateHash<A> for FeeStruct<A> {}
-impl<A: CryptoApi> GenerateHash<A> for TokenIdentifier<A> {}
+impl<A: CryptoApi> GenerateHash<A> for EgldOrEsdtTokenIdentifier<A> {}
 
 #[type_abi]
 #[derive(TopEncode, TopDecode)]
@@ -91,7 +91,7 @@ pub struct AddressPercentagePair<M: ManagedTypeApi> {
 impl<A: CryptoApi> GenerateHash<A> for AddressPercentagePair<A> {}
 
 pub struct SubtractPaymentArguments<M: ManagedTypeApi> {
-    pub fee_token: TokenIdentifier<M>,
+    pub fee_token: EgldOrEsdtTokenIdentifier<M>,
     pub per_transfer: BigUint<M>,
     pub per_gas: BigUint<M>,
     pub payment: EsdtTokenPayment<M>,

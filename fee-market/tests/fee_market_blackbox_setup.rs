@@ -1,8 +1,8 @@
 use multiversx_sc::{
     imports::OptionalValue,
     types::{
-        Address, BigUint, EsdtTokenPayment, ManagedBuffer, ManagedVec, MultiValueEncoded,
-        ReturnsHandledOrError, TestAddress, TestTokenIdentifier,
+        Address, BigUint, EgldOrEsdtTokenIdentifier, EsdtTokenPayment, ManagedBuffer, ManagedVec,
+        MultiValueEncoded, ReturnsHandledOrError, TestAddress, TestTokenIdentifier,
     },
 };
 use multiversx_sc_scenario::{api::StaticApi, ReturnsLogs, ScenarioTxRun};
@@ -70,9 +70,9 @@ impl FeeMarketTestState {
 
     pub fn get_fee(&self) -> FeeStruct<StaticApi> {
         FeeStruct {
-            base_token: FIRST_TEST_TOKEN.to_token_identifier(),
+            base_token: EgldOrEsdtTokenIdentifier::esdt(FIRST_TEST_TOKEN),
             fee_type: FeeType::Fixed {
-                token: FIRST_TEST_TOKEN.to_token_identifier(),
+                token: EgldOrEsdtTokenIdentifier::esdt(FIRST_TEST_TOKEN),
                 per_transfer: BigUint::from(100u64),
                 per_gas: BigUint::from(0u64),
             },
@@ -187,7 +187,7 @@ impl FeeMarketTestState {
 
     pub fn set_fee_during_setup_phase(
         &mut self,
-        token_id: TestTokenIdentifier,
+        token_id: EgldOrEsdtTokenIdentifier<StaticApi>,
         fee_type: WantedFeeType,
         expected_error_message: Option<&str>,
     ) {
@@ -195,18 +195,18 @@ impl FeeMarketTestState {
             WantedFeeType::None => {
                 let fee_type = FeeType::None;
                 FeeStruct {
-                    base_token: token_id.to_token_identifier(),
+                    base_token: token_id.clone(),
                     fee_type,
                 }
             }
             WantedFeeType::Fixed => {
                 let fee_type = FeeType::Fixed {
-                    token: FIRST_TEST_TOKEN.to_token_identifier(),
+                    token: EgldOrEsdtTokenIdentifier::esdt(FIRST_TEST_TOKEN),
                     per_transfer: BigUint::from(10u8),
                     per_gas: BigUint::from(10u8),
                 };
                 FeeStruct {
-                    base_token: token_id.to_token_identifier(),
+                    base_token: token_id,
                     fee_type,
                 }
             }
