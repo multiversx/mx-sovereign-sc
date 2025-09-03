@@ -118,7 +118,7 @@ pub trait HeaderVerifierOperationsModule:
 
             return;
         }
-        let hash_of_hashes_history_mapper = self.hash_of_hashes_history();
+        let mut hash_of_hashes_history_mapper = self.hash_of_hashes_history();
         if self.is_hash_of_hashes_registered(&hash_of_hashes, &hash_of_hashes_history_mapper) {
             self.complete_operation(
                 &hash_of_hashes,
@@ -164,7 +164,8 @@ pub trait HeaderVerifierOperationsModule:
         let new_bls_keys = self.get_bls_keys_by_id(pub_keys_id);
         self.bls_pub_keys(epoch).extend(new_bls_keys);
 
-        self.complete_operation(&hash_of_hashes, &operation_hash, None);
+        hash_of_hashes_history_mapper.insert(hash_of_hashes.clone());
+        self.execute_bridge_operation_event(&hash_of_hashes, &operation_hash, None);
     }
 
     #[endpoint(removeExecutedHash)]
@@ -172,15 +173,15 @@ pub trait HeaderVerifierOperationsModule:
         &self,
         hash_of_hashes: &ManagedBuffer,
         operation_hash: &ManagedBuffer,
-    ) -> Option<ManagedBuffer> {
+    ) -> OptionalValue<ManagedBuffer> {
         if !self.is_caller_from_current_sovereign() {
-            return Some(CALLER_NOT_FROM_CURRENT_SOVEREIGN.into());
+            return OptionalValue::Some(CALLER_NOT_FROM_CURRENT_SOVEREIGN.into());
         }
 
         self.operation_hash_status(hash_of_hashes, operation_hash)
             .clear();
 
-        None
+        OptionalValue::None
     }
 
     #[endpoint(lockOperationHash)]
