@@ -43,7 +43,6 @@ pub trait ConfigsModule:
             );
             return;
         };
-
         if !self.is_setup_phase_complete() {
             self.complete_operation(
                 &hash_of_hashes,
@@ -52,8 +51,12 @@ pub trait ConfigsModule:
             );
             return;
         }
-
-        self.lock_operation_hash_wrapper(&config_hash, &hash_of_hashes);
+        if let Some(lock_operation_error) =
+            self.lock_operation_hash_wrapper(&config_hash, &hash_of_hashes)
+        {
+            self.complete_operation(&hash_of_hashes, &config_hash, Some(lock_operation_error));
+            return;
+        }
 
         if let Some(error_message) = self.is_new_config_valid(&new_config) {
             self.complete_operation(&hash_of_hashes, &config_hash, Some(error_message.into()));

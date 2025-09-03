@@ -4,9 +4,8 @@ use common_test_setup::constants::{
     OWNER_ADDRESS, OWNER_BALANCE, SECOND_TEST_TOKEN, USER_ADDRESS, WRONG_TOKEN_ID,
 };
 use error_messages::{
-    CALLER_NOT_OWNER, CURRENT_OPERATION_NOT_REGISTERED, INVALID_FEE, INVALID_FEE_TYPE,
-    INVALID_TOKEN_ID, PAYMENT_DOES_NOT_COVER_FEE, SETUP_PHASE_NOT_COMPLETED,
-    TOKEN_NOT_ACCEPTED_AS_FEE,
+    CURRENT_OPERATION_NOT_REGISTERED, INVALID_FEE, INVALID_FEE_TYPE, INVALID_TOKEN_ID,
+    PAYMENT_DOES_NOT_COVER_FEE, SETUP_PHASE_NOT_COMPLETED, TOKEN_NOT_ACCEPTED_AS_FEE,
 };
 use fee_common::storage::FeeCommonStorageModule;
 use fee_market_blackbox_setup::*;
@@ -537,8 +536,8 @@ fn distribute_fees_setup_not_completed() {
             pairs: ManagedVec::new(),
             nonce: 0,
         },
-        Some(CALLER_NOT_OWNER),
-        None,
+        Some(EXECUTED_BRIDGE_OP_EVENT),
+        Some(SETUP_PHASE_NOT_COMPLETED),
     );
 }
 
@@ -579,8 +578,8 @@ fn distribute_fees_operation_not_registered() {
             pairs: ManagedVec::new(),
             nonce: 0,
         },
+        Some(EXECUTED_BRIDGE_OP_EVENT),
         Some(CURRENT_OPERATION_NOT_REGISTERED),
-        None,
     );
 }
 
@@ -650,8 +649,8 @@ fn distribute_fees_percentage_under_limit() {
     state.distribute_fees(
         &hash_of_hashes,
         operation,
-        None,
         Some(EXECUTED_BRIDGE_OP_EVENT),
+        None,
     );
 }
 
@@ -739,8 +738,8 @@ fn distribute_fees() {
     state.distribute_fees(
         &hash_of_hashes,
         operation,
-        None,
         Some(EXECUTED_BRIDGE_OP_EVENT),
+        None,
     );
 
     state.common_setup.check_account_single_esdt(

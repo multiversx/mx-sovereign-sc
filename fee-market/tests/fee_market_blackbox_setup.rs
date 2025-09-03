@@ -234,8 +234,8 @@ impl FeeMarketTestState {
         &mut self,
         hash_of_hashes: &ManagedBuffer<StaticApi>,
         operation: DistributeFeesOperation<StaticApi>,
-        expected_error_message: Option<&str>,
         expected_custom_log: Option<&str>,
+        expected_error_log: Option<&str>,
     ) {
         let (response, logs) = self
             .common_setup
@@ -249,11 +249,10 @@ impl FeeMarketTestState {
             .returns(ReturnsLogs)
             .run();
 
-        self.common_setup
-            .assert_expected_error_message(response, expected_error_message);
+        assert!(response.is_ok());
 
         self.common_setup
-            .assert_expected_log(logs, expected_custom_log, None);
+            .assert_expected_log(logs, expected_custom_log, expected_error_log);
     }
 
     pub fn add_users_to_whitelist_during_setup_phase(&mut self, users_vector: Vec<TestAddress>) {
