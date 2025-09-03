@@ -5,7 +5,7 @@ authors = ["Dorin Iancu <dorin.iancu@multiversx.com>"]
 edition = "2021"
 
 [lib]
-path = "src/common_utils.rs"
+path = "src/lib.rs"
 
 [dependencies.structs]
 path = "../structs"
