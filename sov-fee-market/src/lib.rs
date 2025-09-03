@@ -11,7 +11,7 @@ pub trait SovFeeMarket:
     fee_whitelist::FeeWhitelistModule
     + storage::FeeCommonStorageModule
     + fee_operations::FeeOperationsModule
-    + utils::UtilsModule
+    + common_utils::CommonUtilsModule
     + custom_events::CustomEventsModule
     + fee_common::endpoints::FeeCommonEndpointsModule
     + fee_common::helpers::FeeCommonHelpersModule

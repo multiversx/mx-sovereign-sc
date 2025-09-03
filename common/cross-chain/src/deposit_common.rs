@@ -18,7 +18,7 @@ multiversx_sc::imports!();
 pub trait DepositCommonModule:
     crate::storage::CrossChainStorage
     + crate::execute_common::ExecuteCommonModule
-    + utils::UtilsModule
+    + common_utils::CommonUtilsModule
     + custom_events::CustomEventsModule
     + multiversx_sc_modules::pause::PauseModule
 {

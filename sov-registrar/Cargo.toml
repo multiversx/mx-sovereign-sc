@@ -24,8 +24,8 @@ path = "../common/custom-events"
 [dependencies.fee-common]
 path = "../common/fee-common"
 
-[dependencies.utils]
-path = "../common/utils"
+[dependencies.common-utils]
+path = "../common/common-utils"
 
 [dev-dependencies]
 num-bigint = "0.4"

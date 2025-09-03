@@ -7,7 +7,7 @@ multiversx_sc::derive_imports!();
 pub trait FeeCommonEndpointsModule:
     crate::helpers::FeeCommonHelpersModule
     + crate::storage::FeeCommonStorageModule
-    + utils::UtilsModule
+    + common_utils::CommonUtilsModule
     + custom_events::CustomEventsModule
 {
     #[payable("*")]

@@ -10,7 +10,7 @@ pub trait HeaderVerifierChecksModule:
     crate::storage::HeaderVerifierStorageModule
     + custom_events::CustomEventsModule
     + setup_phase::SetupPhaseModule
-    + utils::UtilsModule
+    + common_utils::CommonUtilsModule
 {
     fn is_bls_pub_keys_empty(&self, epoch: u64) -> bool {
         self.bls_pub_keys(epoch).is_empty()

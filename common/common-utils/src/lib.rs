@@ -16,7 +16,7 @@ const MAX_PREFIX_LENGTH: usize = 4;
 const CHARSET: &[u8] = b"0123456789abcdefghijklmnopqrstuvwxyz";
 
 #[multiversx_sc::module]
-pub trait UtilsModule: custom_events::CustomEventsModule {
+pub trait CommonUtilsModule: custom_events::CustomEventsModule {
     fn lock_operation_hash_wrapper(
         &self,
         hash_of_hashes: &ManagedBuffer,

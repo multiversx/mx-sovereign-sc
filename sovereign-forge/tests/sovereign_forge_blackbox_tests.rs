@@ -17,7 +17,7 @@ use multiversx_sc::{
     types::{BigUint, EgldOrEsdtTokenIdentifier, ManagedBuffer, ManagedVec},
 };
 use multiversx_sc_scenario::ScenarioTxWhitebox;
-use sovereign_forge::common::{storage::StorageModule, utils::UtilsModule};
+use sovereign_forge::forge_common::{forge_utils::ForgeUtilsModule, storage::StorageModule};
 use sovereign_forge_blackbox_setup::SovereignForgeTestState;
 use structs::{
     configs::{EsdtSafeConfig, SovereignConfig},

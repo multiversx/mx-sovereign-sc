@@ -4,14 +4,13 @@ use structs::configs::{EsdtSafeConfig, SovereignConfig};
 use structs::fee::FeeStruct;
 use structs::forge::ScArray;
 
-use crate::common::{self};
-use crate::err_msg;
+use crate::{err_msg, forge_common};
 
 #[multiversx_sc::module]
 pub trait UpdateConfigsModule:
-    common::utils::UtilsModule
-    + common::storage::StorageModule
-    + utils::UtilsModule
+    common_utils::CommonUtilsModule
+    + forge_common::storage::StorageModule
+    + forge_common::forge_utils::ForgeUtilsModule
     + custom_events::CustomEventsModule
 {
     #[endpoint(updateEsdtSafeConfig)]

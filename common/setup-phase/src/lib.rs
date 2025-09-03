@@ -5,7 +5,9 @@ use error_messages::{INVALID_CALLER, SETUP_PHASE_NOT_COMPLETED};
 multiversx_sc::imports!();
 
 #[multiversx_sc::module]
-pub trait SetupPhaseModule: utils::UtilsModule + custom_events::CustomEventsModule {
+pub trait SetupPhaseModule:
+    common_utils::CommonUtilsModule + custom_events::CustomEventsModule
+{
     fn require_caller_initiator(&self) {
         let caller = self.blockchain().get_caller();
         let initiator = self.initiator_address().get();

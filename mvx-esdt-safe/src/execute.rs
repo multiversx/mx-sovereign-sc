@@ -15,7 +15,7 @@ const ESDT_TRANSACTION_GAS: GasLimit = 5_000_000;
 pub trait ExecuteModule:
     crate::bridging_mechanism::BridgingMechanism
     + crate::register_token::RegisterTokenModule
-    + utils::UtilsModule
+    + common_utils::CommonUtilsModule
     + setup_phase::SetupPhaseModule
     + custom_events::CustomEventsModule
     + cross_chain::storage::CrossChainStorage

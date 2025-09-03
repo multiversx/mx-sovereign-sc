@@ -1,5 +1,5 @@
 [package]
-name = "utils"
+name = "common-utils"
 version = "0.1.0"
 authors = ["Dorin Iancu <dorin.iancu@multiversx.com>"]
 edition = "2021"

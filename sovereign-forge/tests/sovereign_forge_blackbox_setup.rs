@@ -14,7 +14,7 @@ use multiversx_sc::{
 };
 use multiversx_sc_scenario::{api::StaticApi, ScenarioTxRun, ScenarioTxWhitebox};
 use proxies::sovereign_forge_proxy::SovereignForgeProxy;
-use sovereign_forge::common::storage::{ChainId, StorageModule};
+use sovereign_forge::forge_common::storage::{ChainId, StorageModule};
 use structs::{
     configs::{EsdtSafeConfig, SovereignConfig},
     fee::FeeStruct,
@@ -297,7 +297,9 @@ impl SovereignForgeTestState {
 
         for contract in sc_addresses {
             let address = Bech32Address::from(contract.address.to_address());
-            if contract.id == ScArray::ESDTSafe { return address }
+            if contract.id == ScArray::ESDTSafe {
+                return address;
+            }
         }
         Bech32Address::zero_default_hrp()
     }

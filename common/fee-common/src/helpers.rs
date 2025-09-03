@@ -15,7 +15,9 @@ pub const TOTAL_PERCENTAGE: usize = 10_000;
 
 #[multiversx_sc::module]
 pub trait FeeCommonHelpersModule:
-    crate::storage::FeeCommonStorageModule + utils::UtilsModule + custom_events::CustomEventsModule
+    crate::storage::FeeCommonStorageModule
+    + common_utils::CommonUtilsModule
+    + custom_events::CustomEventsModule
 {
     fn distribute_token_fees(
         &self,

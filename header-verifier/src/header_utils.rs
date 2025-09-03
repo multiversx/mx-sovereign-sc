@@ -22,7 +22,7 @@ pub trait HeaderVerifierUtilsModule:
     + checks::HeaderVerifierChecksModule
     + custom_events::CustomEventsModule
     + setup_phase::SetupPhaseModule
-    + utils::UtilsModule
+    + common_utils::CommonUtilsModule
 {
     fn calculate_and_check_transfers_hashes(
         &self,

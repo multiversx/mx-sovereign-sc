@@ -17,7 +17,7 @@ pub trait ChainConfigContract:
     + config_utils::ChainConfigUtilsModule
     + configs::ConfigsModule
     + setup_phase::SetupPhaseModule
-    + utils::UtilsModule
+    + common_utils::CommonUtilsModule
     + custom_events::CustomEventsModule
 {
     #[init]

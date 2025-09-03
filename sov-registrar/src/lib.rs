@@ -13,7 +13,7 @@ pub trait SovRegistrar:
     + tx_nonce::TxNonceModule
     + fee_common::helpers::FeeCommonHelpersModule
     + fee_common::storage::FeeCommonStorageModule
-    + utils::UtilsModule
+    + common_utils::CommonUtilsModule
 {
     #[init]
     fn init(&self) {}

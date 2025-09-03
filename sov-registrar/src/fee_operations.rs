@@ -7,7 +7,7 @@ pub trait FeeOperationsModule:
     + custom_events::CustomEventsModule
     + fee_common::helpers::FeeCommonHelpersModule
     + fee_common::storage::FeeCommonStorageModule
-    + utils::UtilsModule
+    + common_utils::CommonUtilsModule
 {
     #[only_owner]
     #[endpoint(setFee)]

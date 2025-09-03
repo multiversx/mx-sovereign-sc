@@ -21,6 +21,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "34efbcccd345379ca2868b2b2c9d3782e9cc58ba87bc7d79d5b53d9c9ae6f25d"
 
 [[package]]
+name = "common-utils"
+version = "0.1.0"
+dependencies = [
+ "custom-events",
+ "error-messages",
+ "multiversx-sc",
+ "proxies",
+ "structs",
+]
+
+[[package]]
 name = "custom-events"
 version = "0.1.0"
 dependencies = [
@@ -43,13 +54,13 @@ version = "0.1.0"
 name = "fee-common"
 version = "0.1.0"
 dependencies = [
+ "common-utils",
  "custom-events",
  "error-messages",
  "multiversx-sc",
  "multiversx-sc-modules",
  "proxies",
  "structs",
- "utils",
 ]
 
 [[package]]
@@ -211,12 +222,12 @@ checksum = "67b1b7a3b5fe4f1376887184045fcf45c69e92af734b7aaddc05fb777b6fbd03"
 name = "sov-registrar"
 version = "0.0.0"
 dependencies = [
+ "common-utils",
  "custom-events",
  "fee-common",
  "multiversx-sc",
  "structs",
  "tx-nonce",
- "utils",
 ]
 
 [[package]]
@@ -270,14 +281,3 @@ name = "unwrap-infallible"
 version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "151ac09978d3c2862c4e39b557f4eceee2cc72150bc4cb4f16abf061b6e381fb"
-
-[[package]]
-name = "utils"
-version = "0.1.0"
-dependencies = [
- "custom-events",
- "error-messages",
- "multiversx-sc",
- "proxies",
- "structs",
-]
