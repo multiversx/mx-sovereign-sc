@@ -2,7 +2,7 @@ use crate::err_msg;
 use multiversx_sc::{
     imports::OptionalValue,
     sc_panic,
-    types::{EgldPayment, ManagedAsyncCallResult, MultiValueEncoded},
+    types::{ManagedAsyncCallResult, MultiValueEncoded},
 };
 use proxies::chain_factory_proxy::ChainFactoryContractProxy;
 use structs::{
