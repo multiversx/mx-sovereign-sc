@@ -316,8 +316,7 @@ fn test_register_token_fungible_token() {
     let signature = ManagedBuffer::new();
     let epoch = 0;
 
-    let payment =
-        EgldOrEsdtTokenPayment::new(EGLD_000000_TOKEN_IDENTIFIER.into(), 0u64, ISSUE_COST.into());
+    let payment = EgldOrEsdtTokenPayment::egld_payment(ISSUE_COST.into());
 
     state.deposit(
         USER_ADDRESS.to_managed_address(),

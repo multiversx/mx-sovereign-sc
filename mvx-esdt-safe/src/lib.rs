@@ -34,7 +34,7 @@ pub trait MvxEsdtSafe:
         sov_token_prefix: ManagedBuffer,
         opt_config: OptionalValue<EsdtSafeConfig<Self::Api>>,
     ) {
-        self.require_valid_sov_token_prefix(&sov_token_prefix);
+        self.validate_chain_id(&sov_token_prefix);
 
         self.sov_token_prefix().set(sov_token_prefix);
 

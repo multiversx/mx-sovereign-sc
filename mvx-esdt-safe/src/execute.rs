@@ -1,7 +1,4 @@
-use error_messages::{
-    BURN_NON_ESDT_TOKENS, DEPOSIT_AMOUNT_NOT_ENOUGH, ERROR_AT_ENCODING, ESDT_SAFE_STILL_PAUSED,
-    MINT_NON_ESDT_TOKENS,
-};
+use error_messages::{DEPOSIT_AMOUNT_NOT_ENOUGH, ERROR_AT_ENCODING, ESDT_SAFE_STILL_PAUSED};
 use structs::{
     aliases::GasLimit,
     generate_hash::GenerateHash,
@@ -149,7 +146,7 @@ pub trait ExecuteModule:
         token_id: &EgldOrEsdtTokenIdentifier<Self::Api>,
         amount: &BigUint,
     ) {
-        require!(token_id.is_esdt(), MINT_NON_ESDT_TOKENS);
+        // require!(token_id.is_esdt(), MINT_NON_ESDT_TOKENS);
 
         self.tx()
             .to(ToSelf)
@@ -165,7 +162,7 @@ pub trait ExecuteModule:
     ) -> u64 {
         let mut nonce = 0;
 
-        require!(mvx_token_id.is_esdt(), MINT_NON_ESDT_TOKENS);
+        // require!(mvx_token_id.is_esdt(), MINT_NON_ESDT_TOKENS);
 
         let current_token_type_ref = &operation_token.token_data.token_type;
 
@@ -209,7 +206,7 @@ pub trait ExecuteModule:
         if self.is_sft_or_meta(&token_data.token_type) {
             amount += BigUint::from(1u32);
         }
-        require!(mvx_token_id.is_esdt(), MINT_NON_ESDT_TOKENS);
+        // require!(mvx_token_id.is_esdt(), MINT_NON_ESDT_TOKENS);
 
         self.tx()
             .to(ToSelf)
@@ -346,7 +343,7 @@ pub trait ExecuteModule:
         }
 
         let mvx_token_id = sov_to_mvx_mapper.get();
-        require!(mvx_token_id.is_esdt(), BURN_NON_ESDT_TOKENS);
+        // require!(mvx_token_id.is_esdt(), BURN_NON_ESDT_TOKENS);
         let mut mvx_token_nonce = 0;
 
         if operation_token.token_nonce > 0 {

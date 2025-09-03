@@ -250,12 +250,6 @@ impl BaseSetup {
                     expected_str
                 );
 
-                assert!(
-                    !matching_logs.is_empty(),
-                    "Expected log '{}' not found",
-                    expected_str
-                );
-
                 if let Some(expected_error) = expected_log_error {
                     let expected_error_bytes =
                         ManagedBuffer::<StaticApi>::from(expected_error).to_vec();

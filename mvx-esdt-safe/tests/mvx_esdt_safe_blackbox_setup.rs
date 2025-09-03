@@ -268,6 +268,8 @@ impl MvxEsdtSafeTestState {
             .returns(ReturnsHandledOrError::new())
             .run();
 
+        println!("Deposit Logs: {:?}", logs);
+
         self.common_setup
             .assert_expected_error_message(result, expected_error_message);
 

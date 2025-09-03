@@ -1,7 +1,8 @@
 #![no_std]
 
 use error_messages::{
-    ERROR_AT_ENCODING, ERR_EMPTY_PAYMENTS, INVALID_PREFIX, INVALID_SC_ADDRESS, TOKEN_ID_NO_PREFIX,
+    CHAIN_ID_NOT_LOWERCASE_ALPHANUMERIC, ERROR_AT_ENCODING, ERR_EMPTY_PAYMENTS, INVALID_CHAIN_ID,
+    INVALID_SC_ADDRESS, TOKEN_ID_NO_PREFIX,
 };
 use proxies::header_verifier_proxy::HeaderverifierProxy;
 use structs::aliases::PaymentsVec;
@@ -12,6 +13,7 @@ const DASH: u8 = b'-';
 const MAX_TOKEN_ID_LEN: usize = 32;
 const MIN_PREFIX_LENGTH: usize = 1;
 const MAX_PREFIX_LENGTH: usize = 4;
+const CHARSET: &[u8] = b"0123456789abcdefghijklmnopqrstuvwxyz";
 
 #[multiversx_sc::module]
 pub trait UtilsModule: custom_events::CustomEventsModule {
@@ -121,11 +123,24 @@ pub trait UtilsModule: custom_events::CustomEventsModule {
         None
     }
 
-    fn require_valid_sov_token_prefix(&self, sov_token_prefix: &ManagedBuffer) {
-        let prefix_len = sov_token_prefix.len();
+    fn is_chain_id_lowercase_alphanumeric(&self, chain_id: &ManagedBuffer) -> bool {
+        let mut chain_id_byte_array = [0u8; 4];
+        let chain_id_byte_array = chain_id.load_to_byte_array(&mut chain_id_byte_array);
+
+        chain_id_byte_array.iter().all(|b| CHARSET.contains(b))
+    }
+
+    #[inline]
+    fn validate_chain_id(&self, chain_id: &ManagedBuffer) {
+        let id_length = chain_id.len();
         require!(
-            prefix_len > MIN_PREFIX_LENGTH && prefix_len <= MAX_PREFIX_LENGTH,
-            INVALID_PREFIX
+            (MIN_PREFIX_LENGTH..=MAX_PREFIX_LENGTH).contains(&id_length),
+            INVALID_CHAIN_ID
+        );
+
+        require!(
+            self.is_chain_id_lowercase_alphanumeric(chain_id),
+            CHAIN_ID_NOT_LOWERCASE_ALPHANUMERIC
         );
     }
 }

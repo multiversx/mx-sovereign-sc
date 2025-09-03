@@ -1,6 +1,6 @@
 use error_messages::{
-    BANNED_ENDPOINT_NAME, BURN_NON_ESDT_TOKENS, DEPOSIT_OVER_MAX_AMOUNT, ESDT_SAFE_STILL_PAUSED,
-    GAS_LIMIT_TOO_HIGH, NOTHING_TO_TRANSFER, TOKEN_BLACKLISTED, TOO_MANY_TOKENS,
+    BANNED_ENDPOINT_NAME, DEPOSIT_OVER_MAX_AMOUNT, ESDT_SAFE_STILL_PAUSED, GAS_LIMIT_TOO_HIGH,
+    NOTHING_TO_TRANSFER, TOKEN_BLACKLISTED, TOO_MANY_TOKENS,
 };
 use proxies::fee_market_proxy::FeeMarketProxy;
 use structs::{
@@ -134,19 +134,15 @@ pub trait DepositCommonModule:
     }
 
     fn burn_sovereign_token(&self, payment: &EgldOrEsdtTokenPayment<Self::Api>) {
-        if payment.token_identifier.is_esdt() {
-            self.tx()
-                .to(ToSelf)
-                .typed(system_proxy::UserBuiltinProxy)
-                .esdt_local_burn(
-                    payment.token_identifier.clone().unwrap_esdt(),
-                    payment.token_nonce,
-                    &payment.amount,
-                )
-                .sync_call();
-        } else {
-            sc_panic!(BURN_NON_ESDT_TOKENS);
-        }
+        self.tx()
+            .to(ToSelf)
+            .typed(system_proxy::UserBuiltinProxy)
+            .esdt_local_burn(
+                payment.token_identifier.clone().unwrap_esdt(),
+                payment.token_nonce,
+                &payment.amount,
+            )
+            .sync_call();
     }
 
     fn get_event_payment_token_data(
