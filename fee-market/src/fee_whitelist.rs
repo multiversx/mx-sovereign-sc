@@ -11,7 +11,7 @@ multiversx_sc::derive_imports!();
 pub trait FeeWhitelistModule:
     fee_common::storage::FeeCommonStorageModule
     + setup_phase::SetupPhaseModule
-    + utils::UtilsModule
+    + common_utils::CommonUtilsModule
     + custom_events::CustomEventsModule
 {
     #[only_owner]

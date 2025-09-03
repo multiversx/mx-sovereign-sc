@@ -4,7 +4,7 @@ use structs::aliases::{EventPaymentTuple, OptionalValueTransferDataTuple};
 #[multiversx_sc::module]
 pub trait DepositModule:
     crate::bridging_mechanism::BridgingMechanism
-    + utils::UtilsModule
+    + common_utils::CommonUtilsModule
     + setup_phase::SetupPhaseModule
     + cross_chain::deposit_common::DepositCommonModule
     + cross_chain::execute_common::ExecuteCommonModule

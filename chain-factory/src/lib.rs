@@ -11,7 +11,7 @@ pub mod update_configs;
 #[multiversx_sc::contract]
 pub trait ChainFactoryContract:
     factory::FactoryModule
-    + utils::UtilsModule
+    + common_utils::CommonUtilsModule
     + only_admin::OnlyAdminModule
     + update_configs::UpdateConfigsModule
     + complete_phases::CompletePhasesModule

@@ -13,7 +13,7 @@ pub const TOTAL_PERCENTAGE: usize = 10_000;
 pub trait FeeOperationsModule:
     setup_phase::SetupPhaseModule
     + custom_events::CustomEventsModule
-    + utils::UtilsModule
+    + common_utils::CommonUtilsModule
     + fee_common::storage::FeeCommonStorageModule
     + fee_common::helpers::FeeCommonHelpersModule
     + fee_common::endpoints::FeeCommonEndpointsModule

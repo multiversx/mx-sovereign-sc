@@ -10,7 +10,7 @@ pub mod fee_whitelist;
 
 #[multiversx_sc::contract]
 pub trait FeeMarket:
-    utils::UtilsModule
+    common_utils::CommonUtilsModule
     + setup_phase::SetupPhaseModule
     + custom_events::CustomEventsModule
     + fee_operations::FeeOperationsModule

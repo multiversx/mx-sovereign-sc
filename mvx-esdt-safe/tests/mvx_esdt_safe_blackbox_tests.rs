@@ -2532,7 +2532,7 @@ fn test_execute_operation_no_payments_failed_event() {
 /// M-ESDT_SET_BURN_FAIL
 ///
 /// ### ACTION
-/// Call 'set_token_burn_mechanism()' without the propper roles
+/// Call 'set_token_burn_mechanism()' without the proper roles
 ///
 /// ### EXPECTED
 /// Error MINT_AND_BURN_ROLES_NOT_FOUND

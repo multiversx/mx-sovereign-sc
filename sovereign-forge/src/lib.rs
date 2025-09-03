@@ -6,18 +6,18 @@ use error_messages::{
 };
 use multiversx_sc::imports::*;
 
-pub mod common;
+pub mod forge_common;
 pub mod phases;
 pub mod update_configs;
 
 #[multiversx_sc::contract]
 pub trait SovereignForge:
     phases::PhasesModule
-    + common::storage::StorageModule
-    + common::utils::UtilsModule
-    + common::sc_deploy::ScDeployModule
+    + forge_common::storage::StorageModule
+    + forge_common::forge_utils::ForgeUtilsModule
+    + forge_common::sc_deploy::ScDeployModule
     + update_configs::UpdateConfigsModule
-    + utils::UtilsModule
+    + common_utils::CommonUtilsModule
     + custom_events::CustomEventsModule
 {
     #[init]

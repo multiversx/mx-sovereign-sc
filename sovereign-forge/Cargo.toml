@@ -36,8 +36,8 @@ path = "../common/fee-common"
 [dependencies.proxies]
 path = "../common/proxies"
 
-[dependencies.utils]
-path = "../common/utils"
+[dependencies.common-utils]
+path = "../common/common-utils"
 
 [dependencies.custom-events]
 path = "../common/custom-events"

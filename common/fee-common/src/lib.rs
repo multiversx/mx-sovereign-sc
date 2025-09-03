@@ -12,7 +12,7 @@ pub trait FeeCommonModule:
     crate::helpers::FeeCommonHelpersModule
     + crate::storage::FeeCommonStorageModule
     + crate::endpoints::FeeCommonEndpointsModule
-    + utils::UtilsModule
+    + common_utils::CommonUtilsModule
     + custom_events::CustomEventsModule
 {
 }

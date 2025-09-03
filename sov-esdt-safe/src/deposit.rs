@@ -4,7 +4,7 @@ use structs::aliases::{EventPaymentTuple, OptionalValueTransferDataTuple};
 #[multiversx_sc::module]
 pub trait DepositModule:
     multiversx_sc_modules::pause::PauseModule
-    + utils::UtilsModule
+    + common_utils::CommonUtilsModule
     + cross_chain::deposit_common::DepositCommonModule
     + cross_chain::execute_common::ExecuteCommonModule
     + cross_chain::storage::CrossChainStorage

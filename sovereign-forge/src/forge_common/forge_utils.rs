@@ -12,8 +12,8 @@ const CHARSET: &[u8] = b"0123456789abcdefghijklmnopqrstuvwxyz";
 const NUMBER_OF_SHARDS: u32 = 3;
 
 #[multiversx_sc::module]
-pub trait UtilsModule:
-    super::storage::StorageModule + utils::UtilsModule + custom_events::CustomEventsModule
+pub trait ForgeUtilsModule:
+    super::storage::StorageModule + common_utils::CommonUtilsModule + custom_events::CustomEventsModule
 {
     fn require_initialization_phase_complete(&self) {
         for shard_id in 0..NUMBER_OF_SHARDS {

@@ -15,7 +15,7 @@ pub const ISSUE_COST: u64 = 50_000_000_000_000_000; // 0.05 EGLD
 
 #[multiversx_sc::module]
 pub trait RegisterTokenModule:
-    utils::UtilsModule
+    common_utils::CommonUtilsModule
     + cross_chain::storage::CrossChainStorage
     + cross_chain::deposit_common::DepositCommonModule
     + cross_chain::execute_common::ExecuteCommonModule

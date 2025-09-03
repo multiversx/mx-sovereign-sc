@@ -26,8 +26,8 @@ rev = "b59411841984a2fcbf76498d29bc131f2d433af9"
 git = "https://github.com/multiversx/mx-sdk-rs"
 rev = "b59411841984a2fcbf76498d29bc131f2d433af9"
 
-[dependencies.utils]
-path = "../common/utils"
+[dependencies.common-utils]
+path = "../common/common-utils"
 
 [dependencies.chain-config]
 path = "../chain-config"

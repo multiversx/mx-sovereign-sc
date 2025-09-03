@@ -20,7 +20,7 @@ pub trait HeaderVerifierOperationsModule:
     + checks::HeaderVerifierChecksModule
     + custom_events::CustomEventsModule
     + setup_phase::SetupPhaseModule
-    + utils::UtilsModule
+    + common_utils::CommonUtilsModule
 {
     #[endpoint(registerBridgeOps)]
     fn register_bridge_operations(

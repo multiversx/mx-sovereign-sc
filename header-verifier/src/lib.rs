@@ -15,7 +15,7 @@ pub trait Headerverifier:
     + checks::HeaderVerifierChecksModule
     + custom_events::CustomEventsModule
     + setup_phase::SetupPhaseModule
-    + utils::UtilsModule
+    + common_utils::CommonUtilsModule
 {
     #[init]
     fn init(&self, sovereign_contracts: MultiValueEncoded<ContractInfo<Self::Api>>) {

@@ -8,7 +8,7 @@ pub const TOTAL_PERCENTAGE: usize = 10_000;
 #[multiversx_sc::module]
 pub trait FeeOperationsModule:
     custom_events::CustomEventsModule
-    + utils::UtilsModule
+    + common_utils::CommonUtilsModule
     + fee_common::storage::FeeCommonStorageModule
     + fee_common::helpers::FeeCommonHelpersModule
     + fee_common::endpoints::FeeCommonEndpointsModule

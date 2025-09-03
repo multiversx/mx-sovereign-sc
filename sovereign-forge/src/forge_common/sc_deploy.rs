@@ -16,9 +16,9 @@ use structs::{
 
 #[multiversx_sc::module]
 pub trait ScDeployModule:
-    super::utils::UtilsModule
+    super::forge_utils::ForgeUtilsModule
     + super::storage::StorageModule
-    + utils::UtilsModule
+    + common_utils::CommonUtilsModule
     + custom_events::CustomEventsModule
 {
     #[inline]

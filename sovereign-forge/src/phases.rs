@@ -1,4 +1,4 @@
-use crate::err_msg;
+use crate::{err_msg, forge_common};
 use core::ops::Deref;
 use error_messages::{
     CHAIN_CONFIG_ALREADY_DEPLOYED, ESDT_SAFE_ALREADY_DEPLOYED, FEE_MARKET_ALREADY_DEPLOYED,
@@ -14,15 +14,13 @@ use structs::{
     COMPLETE_SETUP_PHASE_GAS,
 };
 
-use crate::common::{self};
-
 #[multiversx_sc::module]
 pub trait PhasesModule:
-    common::utils::UtilsModule
-    + common::storage::StorageModule
-    + common::sc_deploy::ScDeployModule
+    forge_common::forge_utils::ForgeUtilsModule
+    + forge_common::storage::StorageModule
+    + forge_common::sc_deploy::ScDeployModule
     + custom_events::CustomEventsModule
-    + utils::UtilsModule
+    + common_utils::CommonUtilsModule
 {
     #[payable("EGLD")]
     #[endpoint(deployPhaseOne)]
