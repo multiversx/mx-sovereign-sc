@@ -1,7 +1,7 @@
 use chain_config::storage::ChainConfigStorageModule;
 use common_test_setup::constants::{
     CHAIN_FACTORY_SC_ADDRESS, CHAIN_ID, DEPLOY_COST, ESDT_SAFE_ADDRESS, FIRST_TEST_TOKEN,
-    NATIVE_TEST_TOKEN, ONE_HUNDRED_THOUSAND, OWNER_ADDRESS, SOVEREIGN_FORGE_SC_ADDRESS,
+    ISSUE_COST, NATIVE_TEST_TOKEN, ONE_HUNDRED_THOUSAND, OWNER_ADDRESS, SOVEREIGN_FORGE_SC_ADDRESS,
     USER_ADDRESS,
 };
 use cross_chain::storage::CrossChainStorage;
@@ -14,15 +14,18 @@ use error_messages::{
 use fee_common::storage::FeeCommonStorageModule;
 use multiversx_sc::{
     imports::OptionalValue,
-    types::{BigUint, EgldOrEsdtTokenIdentifier, ManagedBuffer, ManagedVec},
+    types::{BigUint, EgldOrEsdtTokenIdentifier, ManagedAddress, ManagedBuffer, ManagedVec},
 };
-use multiversx_sc_scenario::ScenarioTxWhitebox;
+use multiversx_sc_scenario::{
+    api::{DebugApiBackend, VMHooksApi},
+    ScenarioTxWhitebox,
+};
 use sovereign_forge::forge_common::{forge_utils::ForgeUtilsModule, storage::StorageModule};
 use sovereign_forge_blackbox_setup::SovereignForgeTestState;
 use structs::{
     configs::{EsdtSafeConfig, SovereignConfig},
     fee::{FeeStruct, FeeType},
-    forge::ScArray,
+    forge::{NativeToken, ScArray},
 };
 mod sovereign_forge_blackbox_setup;
 
@@ -243,9 +246,17 @@ fn test_update_esdt_safe_config() {
         .common_setup
         .deploy_header_verifier(vec![ScArray::ESDTSafe]);
 
-    state
-        .common_setup
-        .deploy_phase_two(OptionalValue::None, None);
+    let native_token = NativeToken {
+        ticker: NATIVE_TEST_TOKEN.as_str().into(),
+        name: "Native".into(),
+    };
+
+    state.common_setup.deploy_phase_two(
+        &ISSUE_COST.into(),
+        native_token,
+        None,
+        OptionalValue::None,
+    );
     state
         .common_setup
         .world
@@ -319,9 +330,16 @@ fn test_set_fee() {
         OptionalValue::None,
         None,
     );
-    state
-        .common_setup
-        .deploy_phase_two(OptionalValue::None, None);
+    let native_token = NativeToken {
+        ticker: NATIVE_TEST_TOKEN.as_str().into(),
+        name: "Native".into(),
+    };
+    state.common_setup.deploy_phase_two(
+        &ISSUE_COST.into(),
+        native_token,
+        None,
+        OptionalValue::None,
+    );
     state.common_setup.deploy_phase_three(None, None);
     state.common_setup.deploy_phase_four(None);
 
@@ -411,9 +429,16 @@ fn test_set_fee_phase_three_not_completed() {
         OptionalValue::None,
         None,
     );
-    state
-        .common_setup
-        .deploy_phase_two(OptionalValue::None, None);
+    let native_token = NativeToken {
+        ticker: NATIVE_TEST_TOKEN.as_str().into(),
+        name: "Native".into(),
+    };
+    state.common_setup.deploy_phase_two(
+        &ISSUE_COST.into(),
+        native_token,
+        None,
+        OptionalValue::None,
+    );
 
     let fee_type = FeeType::Fixed {
         token: EgldOrEsdtTokenIdentifier::esdt(FIRST_TEST_TOKEN),
@@ -460,10 +485,16 @@ fn test_remove_fee() {
         OptionalValue::None,
         None,
     );
-
-    state
-        .common_setup
-        .deploy_phase_two(OptionalValue::None, None);
+    let native_token = NativeToken {
+        ticker: NATIVE_TEST_TOKEN.as_str().into(),
+        name: "Native".into(),
+    };
+    state.common_setup.deploy_phase_two(
+        &ISSUE_COST.into(),
+        native_token,
+        None,
+        OptionalValue::None,
+    );
 
     let fee_type = FeeType::Fixed {
         token: EgldOrEsdtTokenIdentifier::esdt(FIRST_TEST_TOKEN),
@@ -554,10 +585,16 @@ fn test_remove_fee_phase_three_not_completed() {
         OptionalValue::None,
         None,
     );
-
-    state
-        .common_setup
-        .deploy_phase_two(OptionalValue::None, None);
+    let native_token = NativeToken {
+        ticker: NATIVE_TEST_TOKEN.as_str().into(),
+        name: "Native".into(),
+    };
+    state.common_setup.deploy_phase_two(
+        &ISSUE_COST.into(),
+        native_token,
+        None,
+        OptionalValue::None,
+    );
 
     state.remove_fee(FIRST_TEST_TOKEN, Some(FEE_MARKET_NOT_DEPLOYED));
 }
@@ -596,9 +633,16 @@ fn test_complete_setup_phase() {
         None,
     );
 
-    state
-        .common_setup
-        .deploy_phase_two(OptionalValue::None, None);
+    let native_token = NativeToken {
+        ticker: NATIVE_TEST_TOKEN.as_str().into(),
+        name: "Native".into(),
+    };
+    state.common_setup.deploy_phase_two(
+        &ISSUE_COST.into(),
+        native_token,
+        None,
+        OptionalValue::None,
+    );
     state.common_setup.deploy_phase_three(None, None);
     state.common_setup.deploy_phase_four(None);
 
@@ -900,9 +944,15 @@ fn test_deploy_phase_two_without_first_phase() {
     state.common_setup.deploy_chain_factory();
     state.finish_setup();
 
+    let native_token = NativeToken {
+        ticker: NATIVE_TEST_TOKEN.as_str().into(),
+        name: "Native".into(),
+    };
     state.common_setup.deploy_phase_two(
-        OptionalValue::None,
+        &ISSUE_COST.into(),
+        native_token,
         Some(CALLER_DID_NOT_DEPLOY_ANY_SOV_CHAIN),
+        OptionalValue::None,
     );
 }
 
@@ -926,7 +976,6 @@ fn test_deploy_phase_two() {
         ScArray::ChainConfig,
         ScArray::ESDTSafe,
     ]));
-
     state.finish_setup();
 
     let deploy_cost = BigUint::from(DEPLOY_COST);
@@ -935,9 +984,18 @@ fn test_deploy_phase_two() {
         .common_setup
         .deploy_phase_one(&deploy_cost, None, OptionalValue::None, None);
 
-    state
-        .common_setup
-        .deploy_phase_two(OptionalValue::None, None);
+    let native_token = NativeToken {
+        ticker: NATIVE_TEST_TOKEN.as_str().into(),
+        name: "Native".into(),
+    };
+    state.common_setup.deploy_phase_two(
+        &ISSUE_COST.into(),
+        native_token,
+        None,
+        OptionalValue::None,
+    );
+
+    let mut esdt_safe_address_buffer_from_forge = [0u8; 32];
 
     state
         .common_setup
@@ -949,7 +1007,23 @@ fn test_deploy_phase_two() {
                 sc.is_contract_deployed(&OWNER_ADDRESS.to_managed_address(), ScArray::ESDTSafe);
 
             assert!(is_esdt_safe_deployed);
-        })
+
+            esdt_safe_address_buffer_from_forge = sc
+                .get_contract_address(&OWNER_ADDRESS.to_managed_address(), ScArray::ESDTSafe)
+                .to_byte_array();
+        });
+
+    // NOTE: This will fail since callback inside blackbox don't work
+    // state
+    //     .common_setup
+    //     .world
+    //     .query()
+    //     .to(ManagedAddress::new_from_bytes(
+    //         &esdt_safe_address_buffer_from_forge,
+    //     ))
+    //     .whitebox(mvx_esdt_safe::contract_obj, |sc| {
+    //         assert!(!sc.native_token().is_empty());
+    //     });
 }
 
 /// ### TEST
@@ -981,13 +1055,23 @@ fn test_deploy_phase_two_esdt_safe_already_deployed() {
         .common_setup
         .deploy_phase_one(&deploy_cost, None, OptionalValue::None, None);
 
-    state
-        .common_setup
-        .deploy_phase_two(OptionalValue::None, None);
+    let native_token = NativeToken {
+        ticker: NATIVE_TEST_TOKEN.as_str().into(),
+        name: "Native".into(),
+    };
+    state.common_setup.deploy_phase_two(
+        &ISSUE_COST.into(),
+        native_token.clone(),
+        None,
+        OptionalValue::None,
+    );
 
-    state
-        .common_setup
-        .deploy_phase_two(OptionalValue::None, Some(ESDT_SAFE_ALREADY_DEPLOYED));
+    state.common_setup.deploy_phase_two(
+        &ISSUE_COST.into(),
+        native_token,
+        Some(ESDT_SAFE_ALREADY_DEPLOYED),
+        OptionalValue::None,
+    );
 }
 
 /// ### TEST
@@ -1020,9 +1104,16 @@ fn test_deploy_phase_three() {
         .common_setup
         .deploy_phase_one(&deploy_cost, None, OptionalValue::None, None);
 
-    state
-        .common_setup
-        .deploy_phase_two(OptionalValue::None, None);
+    let native_token = NativeToken {
+        ticker: NATIVE_TEST_TOKEN.as_str().into(),
+        name: "Native".into(),
+    };
+    state.common_setup.deploy_phase_two(
+        &ISSUE_COST.into(),
+        native_token,
+        None,
+        OptionalValue::None,
+    );
 
     state.common_setup.deploy_phase_three(None, None);
 
@@ -1069,9 +1160,16 @@ fn test_remove_users_from_whitelist() {
         .common_setup
         .deploy_phase_one(&deploy_cost, None, OptionalValue::None, None);
 
-    state
-        .common_setup
-        .deploy_phase_two(OptionalValue::None, None);
+    let native_token = NativeToken {
+        ticker: NATIVE_TEST_TOKEN.as_str().into(),
+        name: "Native".into(),
+    };
+    state.common_setup.deploy_phase_two(
+        &ISSUE_COST.into(),
+        native_token,
+        None,
+        OptionalValue::None,
+    );
 
     state.common_setup.deploy_phase_three(None, None);
 
@@ -1192,9 +1290,16 @@ fn test_deploy_phase_three_already_deployed() {
         .common_setup
         .deploy_phase_one(&deploy_cost, None, OptionalValue::None, None);
 
-    state
-        .common_setup
-        .deploy_phase_two(OptionalValue::None, None);
+    let native_token = NativeToken {
+        ticker: NATIVE_TEST_TOKEN.as_str().into(),
+        name: "Native".into(),
+    };
+    state.common_setup.deploy_phase_two(
+        &ISSUE_COST.into(),
+        native_token,
+        None,
+        OptionalValue::None,
+    );
     state.common_setup.deploy_phase_three(None, None);
     state
         .common_setup
@@ -1251,9 +1356,16 @@ fn test_deploy_phase_four() {
         .common_setup
         .deploy_phase_one(&deploy_cost, None, OptionalValue::None, None);
 
-    state
-        .common_setup
-        .deploy_phase_two(OptionalValue::None, None);
+    let native_token = NativeToken {
+        ticker: NATIVE_TEST_TOKEN.as_str().into(),
+        name: "Native".into(),
+    };
+    state.common_setup.deploy_phase_two(
+        &ISSUE_COST.into(),
+        native_token,
+        None,
+        OptionalValue::None,
+    );
 
     state.common_setup.deploy_phase_three(None, None);
 
@@ -1302,9 +1414,16 @@ fn test_deploy_phase_four_without_previous_phase() {
     state
         .common_setup
         .deploy_phase_one(&deploy_cost, None, OptionalValue::None, None);
-    state
-        .common_setup
-        .deploy_phase_two(OptionalValue::None, None);
+    let native_token = NativeToken {
+        ticker: NATIVE_TEST_TOKEN.as_str().into(),
+        name: "Native".into(),
+    };
+    state.common_setup.deploy_phase_two(
+        &ISSUE_COST.into(),
+        native_token,
+        None,
+        OptionalValue::None,
+    );
     state
         .common_setup
         .deploy_phase_four(Some(FEE_MARKET_NOT_DEPLOYED));
@@ -1339,9 +1458,16 @@ fn test_deploy_phase_four_header_verifier_already_deployed() {
     state
         .common_setup
         .deploy_phase_one(&deploy_cost, None, OptionalValue::None, None);
-    state
-        .common_setup
-        .deploy_phase_two(OptionalValue::None, None);
+    let native_token = NativeToken {
+        ticker: NATIVE_TEST_TOKEN.as_str().into(),
+        name: "Native".into(),
+    };
+    state.common_setup.deploy_phase_two(
+        &ISSUE_COST.into(),
+        native_token,
+        None,
+        OptionalValue::None,
+    );
     state.common_setup.deploy_phase_three(None, None);
     state.common_setup.deploy_phase_four(None);
     state
