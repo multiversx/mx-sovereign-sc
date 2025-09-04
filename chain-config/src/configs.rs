@@ -1,4 +1,6 @@
-use error_messages::{ERROR_AT_ENCODING, SETUP_PHASE_ALREADY_COMPLETED, SETUP_PHASE_NOT_COMPLETED};
+use error_messages::{
+    ERROR_AT_GENERATING_OPERATION_HASH, SETUP_PHASE_ALREADY_COMPLETED, SETUP_PHASE_NOT_COMPLETED,
+};
 use structs::{configs::SovereignConfig, generate_hash::GenerateHash};
 
 use crate::{config_utils, storage, validator};
@@ -39,7 +41,7 @@ pub trait ConfigsModule:
             self.complete_operation(
                 &hash_of_hashes,
                 &config_hash,
-                Some(ManagedBuffer::from(ERROR_AT_ENCODING)),
+                Some(ERROR_AT_GENERATING_OPERATION_HASH.into()),
             );
             return;
         };

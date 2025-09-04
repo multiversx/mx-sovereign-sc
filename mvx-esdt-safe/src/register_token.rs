@@ -1,6 +1,6 @@
 use cross_chain::REGISTER_GAS;
 use error_messages::{
-    ERROR_AT_ENCODING, ESDT_SAFE_STILL_PAUSED, INVALID_PREFIX_FOR_REGISTER,
+    ERROR_AT_GENERATING_OPERATION_HASH, ESDT_SAFE_STILL_PAUSED, INVALID_PREFIX_FOR_REGISTER,
     NATIVE_TOKEN_ALREADY_REGISTERED, NOT_ENOUGH_EGLD_FOR_REGISTER, SETUP_PHASE_ALREADY_COMPLETED,
     SETUP_PHASE_NOT_COMPLETED, TOKEN_ALREADY_REGISTERED,
 };
@@ -32,7 +32,11 @@ pub trait RegisterTokenModule:
     ) {
         let token_hash = token_to_register.generate_hash();
         if token_hash.is_empty() {
-            self.complete_operation(&hash_of_hashes, &token_hash, Some(ERROR_AT_ENCODING.into()));
+            self.complete_operation(
+                &hash_of_hashes,
+                &token_hash,
+                Some(ERROR_AT_GENERATING_OPERATION_HASH.into()),
+            );
             return;
         };
 

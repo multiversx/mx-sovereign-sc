@@ -1,7 +1,7 @@
 #![no_std]
 
 use error_messages::{
-    ERROR_AT_ENCODING, FEE_MARKET_NOT_SET, NATIVE_TOKEN_NOT_REGISTERED,
+    ERROR_AT_GENERATING_OPERATION_HASH, FEE_MARKET_NOT_SET, NATIVE_TOKEN_NOT_REGISTERED,
     SETUP_PHASE_ALREADY_COMPLETED, SETUP_PHASE_NOT_COMPLETED,
 };
 
@@ -82,7 +82,7 @@ pub trait MvxEsdtSafe:
             self.complete_operation(
                 &hash_of_hashes,
                 &config_hash,
-                Some(ERROR_AT_ENCODING.into()),
+                Some(ERROR_AT_GENERATING_OPERATION_HASH.into()),
             );
             return;
         }
