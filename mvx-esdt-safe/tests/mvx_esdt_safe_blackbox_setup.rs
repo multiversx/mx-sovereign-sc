@@ -17,7 +17,7 @@ use multiversx_sc::{
 use multiversx_sc_scenario::{api::StaticApi, ReturnsLogs, ScenarioTxRun, ScenarioTxWhitebox};
 use mvx_esdt_safe::{bridging_mechanism::TRUSTED_TOKEN_IDS, MvxEsdtSafe};
 use proxies::mvx_esdt_safe_proxy::MvxEsdtSafeProxy;
-use structs::forge::ScArray;
+use structs::forge::{NativeToken, ScArray};
 use structs::{
     aliases::{OptionalValueTransferDataTuple, PaymentsVec},
     configs::EsdtSafeConfig,
@@ -309,10 +309,10 @@ impl MvxEsdtSafeTestState {
             .from(OWNER_ADDRESS)
             .to(ESDT_SAFE_ADDRESS)
             .typed(MvxEsdtSafeProxy)
-            .register_native_token(
-                ManagedBuffer::from(token_ticker),
-                ManagedBuffer::from(token_name),
-            )
+            .register_native_token(NativeToken {
+                ticker: ManagedBuffer::from(token_ticker),
+                name: ManagedBuffer::from(token_name),
+            })
             .egld(payment)
             .returns(ReturnsHandledOrError::new())
             .run();

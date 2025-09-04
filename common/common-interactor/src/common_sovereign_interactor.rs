@@ -39,7 +39,7 @@ use structs::{
     aliases::{OptionalValueTransferDataTuple, PaymentsVec},
     configs::{EsdtSafeConfig, SovereignConfig},
     fee::FeeStruct,
-    forge::{ContractInfo, ScArray},
+    forge::{ContractInfo, NativeToken, ScArray},
     operation::Operation,
 };
 
@@ -407,7 +407,12 @@ pub trait CommonInteractorTrait {
         println!("Result: {response:?}");
     }
 
-    async fn deploy_phase_two(&mut self, opt_config: OptionalValue<EsdtSafeConfig<StaticApi>>) {
+    async fn deploy_phase_two(
+        &mut self,
+        payment: &BigUint<StaticApi>,
+        native_token: NativeToken<StaticApi>,
+        opt_config: OptionalValue<EsdtSafeConfig<StaticApi>>,
+    ) {
         let sovereign_owner = self.sovereign_owner().clone();
         let sovereign_forge_address = self.state().current_sovereign_forge_sc_address().clone();
 
@@ -418,7 +423,8 @@ pub trait CommonInteractorTrait {
             .to(sovereign_forge_address)
             .gas(60_000_000u64)
             .typed(SovereignForgeProxy)
-            .deploy_phase_two(opt_config)
+            .deploy_phase_two(native_token, opt_config)
+            .egld(payment)
             .returns(ReturnsResultUnmanaged)
             .run()
             .await;

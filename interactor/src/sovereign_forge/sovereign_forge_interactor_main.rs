@@ -4,15 +4,16 @@ use common_interactor::interactor_state::State;
 use common_interactor::{
     common_sovereign_interactor::CommonInteractorTrait, interactor_config::Config,
 };
-use common_test_setup::constants::{
-    INTERACTOR_WORKING_DIR, ONE_THOUSAND_TOKENS, SOVEREIGN_FORGE_CODE_PATH,
-};
 use common_test_setup::base_setup::helpers::BLSKey;
+use common_test_setup::constants::{
+    INTERACTOR_WORKING_DIR, ISSUE_COST, NATIVE_TEST_TOKEN, ONE_THOUSAND_TOKENS,
+    SOVEREIGN_FORGE_CODE_PATH,
+};
 use multiversx_sc_snippets::imports::*;
 use proxies::sovereign_forge_proxy::SovereignForgeProxy;
 use structs::configs::{EsdtSafeConfig, SovereignConfig};
 use structs::fee::FeeStruct;
-use structs::forge::ScArray;
+use structs::forge::{NativeToken, ScArray};
 
 pub struct SovereignForgeInteract {
     pub interactor: Interactor,
@@ -186,7 +187,13 @@ impl SovereignForgeInteract {
         )
         .await;
 
-        self.deploy_phase_two(optional_esdt_safe_config).await;
+        let native_token = NativeToken {
+            ticker: NATIVE_TEST_TOKEN.as_str().into(),
+            name: "Native".into(),
+        };
+
+        self.deploy_phase_two(&ISSUE_COST.into(), native_token, optional_esdt_safe_config)
+            .await;
         self.deploy_phase_three(fee).await;
         self.deploy_phase_four().await;
 
