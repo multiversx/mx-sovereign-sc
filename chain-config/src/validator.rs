@@ -1,7 +1,7 @@
 use crate::{config_utils, storage};
 use error_messages::{
-    ERROR_AT_ENCODING, INVALID_VALIDATOR_DATA, REGISTRATIONS_DISABLED_GENESIS_PHASE,
-    VALIDATOR_ID_NOT_REGISTERED,
+    ERROR_AT_GENERATING_OPERATION_HASH, INVALID_VALIDATOR_DATA,
+    REGISTRATIONS_DISABLED_GENESIS_PHASE, VALIDATOR_ID_NOT_REGISTERED,
 };
 use structs::generate_hash::GenerateHash;
 use structs::{ValidatorData, ValidatorInfo};
@@ -65,7 +65,7 @@ pub trait ValidatorModule:
             self.complete_operation(
                 &hash_of_hashes,
                 &config_hash,
-                Some(ManagedBuffer::from(ERROR_AT_ENCODING)),
+                Some(ERROR_AT_GENERATING_OPERATION_HASH.into()),
             );
             return;
         };
@@ -130,7 +130,7 @@ pub trait ValidatorModule:
             self.complete_operation(
                 &hash_of_hashes,
                 &config_hash,
-                Some(ManagedBuffer::from(ERROR_AT_ENCODING)),
+                Some(ERROR_AT_GENERATING_OPERATION_HASH.into()),
             );
             return;
         };
@@ -142,7 +142,7 @@ pub trait ValidatorModule:
             self.complete_operation(
                 &hash_of_hashes,
                 &config_hash,
-                Some(ManagedBuffer::from(VALIDATOR_ID_NOT_REGISTERED)),
+                Some(VALIDATOR_ID_NOT_REGISTERED.into()),
             );
             return;
         }
@@ -152,7 +152,7 @@ pub trait ValidatorModule:
             self.complete_operation(
                 &hash_of_hashes,
                 &config_hash,
-                Some(ManagedBuffer::from(INVALID_VALIDATOR_DATA)),
+                Some(INVALID_VALIDATOR_DATA.into()),
             );
             return;
         }

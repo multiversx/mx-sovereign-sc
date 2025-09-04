@@ -1,8 +1,8 @@
 #![no_std]
 
 use error_messages::{
-    CHAIN_ID_NOT_LOWERCASE_ALPHANUMERIC, ERROR_AT_ENCODING, ERR_EMPTY_PAYMENTS, INVALID_CHAIN_ID,
-    INVALID_SC_ADDRESS, TOKEN_ID_NO_PREFIX,
+    CHAIN_ID_NOT_LOWERCASE_ALPHANUMERIC, ERROR_AT_GENERATING_OPERATION_HASH, ERR_EMPTY_PAYMENTS,
+    INVALID_CHAIN_ID, INVALID_SC_ADDRESS, TOKEN_ID_NO_PREFIX,
 };
 use proxies::header_verifier_proxy::HeaderverifierProxy;
 use structs::aliases::PaymentsVec;
@@ -123,7 +123,7 @@ pub trait CommonUtilsModule: custom_events::CustomEventsModule {
 
     fn validate_operation_hash(&self, hash: &ManagedBuffer) -> Option<ManagedBuffer> {
         if hash.is_empty() {
-            return Some(ERROR_AT_ENCODING.into());
+            return Some(ERROR_AT_GENERATING_OPERATION_HASH.into());
         }
 
         None

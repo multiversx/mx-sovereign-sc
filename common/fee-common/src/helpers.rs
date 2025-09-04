@@ -1,6 +1,7 @@
 use error_messages::{
-    ERROR_AT_ENCODING, INVALID_FEE, INVALID_FEE_TYPE, INVALID_PERCENTAGE_SUM, INVALID_TOKEN_ID,
-    INVALID_TOKEN_PROVIDED_FOR_FEE, PAYMENT_DOES_NOT_COVER_FEE, TOKEN_NOT_ACCEPTED_AS_FEE,
+    ERROR_AT_GENERATING_OPERATION_HASH, INVALID_FEE, INVALID_FEE_TYPE, INVALID_PERCENTAGE_SUM,
+    INVALID_TOKEN_ID, INVALID_TOKEN_PROVIDED_FOR_FEE, PAYMENT_DOES_NOT_COVER_FEE,
+    TOKEN_NOT_ACCEPTED_AS_FEE,
 };
 use structs::{
     aliases::GasLimit,
@@ -82,7 +83,7 @@ pub trait FeeCommonHelpersModule:
                 self.complete_operation(
                     hash_of_hashes,
                     &pair_hash,
-                    Some(ManagedBuffer::from(ERROR_AT_ENCODING)),
+                    Some(ERROR_AT_GENERATING_OPERATION_HASH.into()),
                 );
                 return None;
             }

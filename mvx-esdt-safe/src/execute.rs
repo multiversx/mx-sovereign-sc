@@ -1,5 +1,6 @@
 use error_messages::{
-    DEPOSIT_AMOUNT_NOT_ENOUGH, ERROR_AT_ENCODING, ESDT_SAFE_STILL_PAUSED, SETUP_PHASE_NOT_COMPLETED,
+    DEPOSIT_AMOUNT_NOT_ENOUGH, ERROR_AT_GENERATING_OPERATION_HASH, ESDT_SAFE_STILL_PAUSED,
+    SETUP_PHASE_NOT_COMPLETED,
 };
 use structs::{
     aliases::GasLimit,
@@ -30,7 +31,7 @@ pub trait ExecuteModule:
             self.complete_operation(
                 &hash_of_hashes,
                 &operation_hash,
-                Some(ERROR_AT_ENCODING.into()),
+                Some(ERROR_AT_GENERATING_OPERATION_HASH.into()),
             );
             return;
         };
