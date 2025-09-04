@@ -1,9 +1,31 @@
 use multiversx_sc::api::CryptoApi;
 
-use crate::{aliases::GasLimit, generate_hash::GenerateHash, DEFAULT_MAX_TX_GAS_LIMIT};
+use crate::{
+    aliases::{GasLimit, TxNonce},
+    generate_hash::GenerateHash,
+    DEFAULT_MAX_TX_GAS_LIMIT,
+};
 
 multiversx_sc::imports!();
 multiversx_sc::derive_imports!();
+
+#[type_abi]
+#[derive(
+    TopEncode, TopDecode, NestedEncode, NestedDecode, ManagedVecItem, Clone, Debug, PartialEq,
+)]
+pub struct UpdateRegistrationStatusOperation {
+    pub registration_status: u8,
+    pub nonce: TxNonce,
+}
+
+#[type_abi]
+#[derive(
+    TopEncode, TopDecode, NestedEncode, NestedDecode, ManagedVecItem, Clone, Debug, PartialEq,
+)]
+pub struct UpdateSovereignConfigOperation<M: ManagedTypeApi> {
+    pub sovereign_config: SovereignConfig<M>,
+    pub nonce: TxNonce,
+}
 
 #[type_abi]
 #[derive(
@@ -61,15 +83,22 @@ impl<M: ManagedTypeApi> StakeArgs<M> {
     TopEncode, TopDecode, NestedEncode, NestedDecode, ManagedVecItem, Clone, Debug, PartialEq,
 )]
 pub struct MaxBridgedAmount<M: ManagedTypeApi> {
-    pub token_id: TokenIdentifier<M>,
+    pub token_id: EgldOrEsdtTokenIdentifier<M>,
     pub amount: BigUint<M>,
 }
 
 #[type_abi]
 #[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, ManagedVecItem, Clone)]
+pub struct UpdateEsdtSafeConfigOperation<M: ManagedTypeApi> {
+    pub esdt_safe_config: EsdtSafeConfig<M>,
+    pub nonce: TxNonce,
+}
+
+#[type_abi]
+#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, ManagedVecItem, Clone)]
 pub struct EsdtSafeConfig<M: ManagedTypeApi> {
-    pub token_whitelist: ManagedVec<M, TokenIdentifier<M>>,
-    pub token_blacklist: ManagedVec<M, TokenIdentifier<M>>,
+    pub token_whitelist: ManagedVec<M, EgldOrEsdtTokenIdentifier<M>>,
+    pub token_blacklist: ManagedVec<M, EgldOrEsdtTokenIdentifier<M>>,
     pub max_tx_gas_limit: GasLimit,
     pub banned_endpoints: ManagedVec<M, ManagedBuffer<M>>,
     pub max_bridged_token_amounts: ManagedVec<M, MaxBridgedAmount<M>>,
@@ -90,8 +119,8 @@ impl<M: ManagedTypeApi> EsdtSafeConfig<M> {
     }
 
     pub fn new(
-        token_whitelist: ManagedVec<M, TokenIdentifier<M>>,
-        token_blacklist: ManagedVec<M, TokenIdentifier<M>>,
+        token_whitelist: ManagedVec<M, EgldOrEsdtTokenIdentifier<M>>,
+        token_blacklist: ManagedVec<M, EgldOrEsdtTokenIdentifier<M>>,
         max_tx_gas_limit: GasLimit,
         banned_endpoints: ManagedVec<M, ManagedBuffer<M>>,
         max_bridged_token_amounts: ManagedVec<M, MaxBridgedAmount<M>>,

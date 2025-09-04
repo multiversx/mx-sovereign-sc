@@ -21,7 +21,9 @@ fn test_deploy() {
 fn test_deploy_chain_config_from_factory() {
     let mut state = ChainFactoryTestState::new();
 
-    state.common_setup.deploy_sovereign_forge();
+    state
+        .common_setup
+        .deploy_sovereign_forge(OptionalValue::None);
     state
         .common_setup
         .deploy_chain_config(OptionalValue::None, None);

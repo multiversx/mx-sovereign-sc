@@ -1,7 +1,7 @@
 use error_messages::{
-    ADDITIONAL_STAKE_NOT_REQUIRED, ADDITIONAL_STAKE_ZERO_VALUE, EMPTY_ADDITIONAL_STAKE,
-    INVALID_ADDITIONAL_STAKE, INVALID_BLS_KEY_FOR_CALLER, INVALID_EGLD_STAKE,
-    INVALID_MIN_MAX_VALIDATOR_NUMBERS, INVALID_REGISTRATION_STATUS, INVALID_TOKEN_ID,
+    ADDITIONAL_STAKE_NOT_REQUIRED, ADDITIONAL_STAKE_ZERO_VALUE, INVALID_ADDITIONAL_STAKE,
+    INVALID_BLS_KEY_FOR_CALLER, INVALID_EGLD_STAKE, INVALID_MIN_MAX_VALIDATOR_NUMBERS,
+    INVALID_TOKEN_ID,
 };
 use multiversx_sc::chain_core::EGLD_000000_TOKEN_IDENTIFIER;
 use structs::{configs::SovereignConfig, ValidatorInfo};
@@ -11,23 +11,18 @@ use crate::storage;
 multiversx_sc::imports!();
 multiversx_sc::derive_imports!();
 
-pub const ENABLED: u8 = 1;
-pub const DISABLED: u8 = 0;
-
-pub const ENABLED_STR: &str = "enabled";
-pub const DISABLED_STR: &str = "disabled";
-
 #[multiversx_sc::module]
 pub trait ChainConfigUtilsModule: storage::ChainConfigStorageModule {
+    // What should be the maximum number of validators ?
     fn is_new_config_valid(&self, config: &SovereignConfig<Self::Api>) -> Option<&str> {
         if let Some(additional_stake) = config.opt_additional_stake_required.clone() {
-            require!(!additional_stake.is_empty(), EMPTY_ADDITIONAL_STAKE);
             for stake in additional_stake {
-                require!(
-                    stake.token_identifier.is_valid_esdt_identifier(),
-                    INVALID_TOKEN_ID
-                );
-                require!(stake.amount > 0, ADDITIONAL_STAKE_ZERO_VALUE);
+                if !stake.token_identifier.is_valid_esdt_identifier() {
+                    return Some(INVALID_TOKEN_ID);
+                }
+                if stake.amount <= 0 {
+                    return Some(ADDITIONAL_STAKE_ZERO_VALUE);
+                }
             }
         }
 
@@ -38,22 +33,19 @@ pub trait ChainConfigUtilsModule: storage::ChainConfigStorageModule {
         }
     }
 
-    fn get_event_msg(&self, registration_status: u8) -> ManagedBuffer {
-        match registration_status {
-            DISABLED => ManagedBuffer::from(DISABLED_STR),
-            ENABLED => ManagedBuffer::from(ENABLED_STR),
-            _ => ManagedBuffer::from(INVALID_REGISTRATION_STATUS),
-        }
-    }
-
     fn refund_stake(
         &self,
         caller: &ManagedAddress<Self::Api>,
         validator_info: &ValidatorInfo<Self::Api>,
     ) {
+        let stake = self.get_total_stake(validator_info);
+        if stake.is_empty() {
+            return;
+        }
+
         self.tx()
             .to(caller)
-            .payment(self.get_total_stake(validator_info))
+            .payment(stake)
             .transfer_execute();
     }
 

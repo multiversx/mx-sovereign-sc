@@ -1,7 +1,7 @@
 use multiversx_sc::{
-    imports::{MultiValue2, OptionalValue},
+    imports::OptionalValue,
     types::{
-        Address, BigUint, EsdtTokenPayment, ManagedAddress, ManagedBuffer, ManagedVec,
+        Address, BigUint, EgldOrEsdtTokenIdentifier, EsdtTokenPayment, ManagedBuffer, ManagedVec,
         MultiValueEncoded, ReturnsHandledOrError, TestAddress, TestTokenIdentifier,
     },
 };
@@ -16,7 +16,10 @@ use common_test_setup::{
     },
 };
 use proxies::fee_market_proxy::FeeMarketProxy;
-use structs::fee::{FeeStruct, FeeType};
+use structs::fee::{
+    AddUsersToWhitelistOperation, DistributeFeesOperation, FeeStruct, FeeType,
+    RemoveUsersFromWhitelistOperation,
+};
 
 pub struct FeeMarketTestState {
     pub common_setup: BaseSetup,
@@ -67,9 +70,9 @@ impl FeeMarketTestState {
 
     pub fn get_fee(&self) -> FeeStruct<StaticApi> {
         FeeStruct {
-            base_token: FIRST_TEST_TOKEN.to_token_identifier(),
+            base_token: EgldOrEsdtTokenIdentifier::esdt(FIRST_TEST_TOKEN),
             fee_type: FeeType::Fixed {
-                token: FIRST_TEST_TOKEN.to_token_identifier(),
+                token: EgldOrEsdtTokenIdentifier::esdt(FIRST_TEST_TOKEN),
                 per_transfer: BigUint::from(100u64),
                 per_gas: BigUint::from(0u64),
             },
@@ -153,15 +156,15 @@ impl FeeMarketTestState {
         self.common_setup
             .assert_expected_error_message(response, expected_error_message);
 
-        self.common_setup.assert_expected_log(logs, expected_log, expected_log_error);
+        self.common_setup
+            .assert_expected_log(logs, expected_log, expected_log_error);
     }
 
     pub fn set_fee(
         &mut self,
         hash_of_hashes: &ManagedBuffer<StaticApi>,
         fee_struct: &FeeStruct<StaticApi>,
-        expected_error_message: Option<&str>,
-        expected_log: Option<&str>,
+        expected_custom_log: Option<&str>,
         expected_log_error: Option<&str>,
     ) {
         let (response, logs) = self
@@ -176,15 +179,15 @@ impl FeeMarketTestState {
             .returns(ReturnsLogs)
             .run();
 
-        self.common_setup
-            .assert_expected_error_message(response, expected_error_message);
+        assert!(response.is_ok());
 
-        self.common_setup.assert_expected_log(logs, expected_log, expected_log_error);
+        self.common_setup
+            .assert_expected_log(logs, expected_custom_log, expected_log_error);
     }
 
     pub fn set_fee_during_setup_phase(
         &mut self,
-        token_id: TestTokenIdentifier,
+        token_id: EgldOrEsdtTokenIdentifier<StaticApi>,
         fee_type: WantedFeeType,
         expected_error_message: Option<&str>,
     ) {
@@ -192,18 +195,18 @@ impl FeeMarketTestState {
             WantedFeeType::None => {
                 let fee_type = FeeType::None;
                 FeeStruct {
-                    base_token: token_id.to_token_identifier(),
+                    base_token: token_id.clone(),
                     fee_type,
                 }
             }
             WantedFeeType::Fixed => {
                 let fee_type = FeeType::Fixed {
-                    token: FIRST_TEST_TOKEN.to_token_identifier(),
+                    token: EgldOrEsdtTokenIdentifier::esdt(FIRST_TEST_TOKEN),
                     per_transfer: BigUint::from(10u8),
                     per_gas: BigUint::from(10u8),
                 };
                 FeeStruct {
-                    base_token: token_id.to_token_identifier(),
+                    base_token: token_id,
                     fee_type,
                 }
             }
@@ -230,9 +233,9 @@ impl FeeMarketTestState {
     pub fn distribute_fees(
         &mut self,
         hash_of_hashes: &ManagedBuffer<StaticApi>,
-        address_percentage_pairs: Vec<MultiValue2<ManagedAddress<StaticApi>, usize>>,
-        expected_error_message: Option<&str>,
-        expected_log: Option<&str>,
+        operation: DistributeFeesOperation<StaticApi>,
+        expected_custom_log: Option<&str>,
+        expected_error_log: Option<&str>,
     ) {
         let (response, logs) = self
             .common_setup
@@ -241,21 +244,18 @@ impl FeeMarketTestState {
             .from(HEADER_VERIFIER_ADDRESS)
             .to(FEE_MARKET_ADDRESS)
             .typed(FeeMarketProxy)
-            .distribute_fees(
-                hash_of_hashes,
-                MultiValueEncoded::from_iter(address_percentage_pairs),
-            )
+            .distribute_fees(hash_of_hashes, operation)
             .returns(ReturnsHandledOrError::new())
             .returns(ReturnsLogs)
             .run();
 
-        self.common_setup
-            .assert_expected_error_message(response, expected_error_message);
+        assert!(response.is_ok());
 
-        self.common_setup.assert_expected_log(logs, expected_log, None);
+        self.common_setup
+            .assert_expected_log(logs, expected_custom_log, expected_error_log);
     }
 
-    pub fn add_users_to_whitelist(&mut self, users_vector: Vec<TestAddress>) {
+    pub fn add_users_to_whitelist_during_setup_phase(&mut self, users_vector: Vec<TestAddress>) {
         let mut users_vec = ManagedVec::new();
 
         for user in users_vector {
@@ -270,7 +270,37 @@ impl FeeMarketTestState {
             .from(OWNER_ADDRESS)
             .to(FEE_MARKET_ADDRESS)
             .typed(FeeMarketProxy)
-            .add_users_to_whitelist(users)
+            .add_users_to_whitelist_during_setup_phase(users)
+            .run();
+    }
+
+    pub fn add_users_to_whitelist(
+        &mut self,
+        hash_of_hashes: &ManagedBuffer<StaticApi>,
+        operation: AddUsersToWhitelistOperation<StaticApi>,
+    ) {
+        self.common_setup
+            .world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .to(FEE_MARKET_ADDRESS)
+            .typed(FeeMarketProxy)
+            .add_users_to_whitelist(hash_of_hashes, operation)
+            .run();
+    }
+
+    pub fn remove_users_from_whitelist(
+        &mut self,
+        hash_of_hashes: &ManagedBuffer<StaticApi>,
+        operation: RemoveUsersFromWhitelistOperation<StaticApi>,
+    ) {
+        self.common_setup
+            .world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .to(FEE_MARKET_ADDRESS)
+            .typed(FeeMarketProxy)
+            .remove_users_from_whitelist(hash_of_hashes, operation)
             .run();
     }
 }

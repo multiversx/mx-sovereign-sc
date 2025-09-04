@@ -357,9 +357,12 @@ dependencies = [
  "error-messages",
  "fee-market",
  "header-verifier",
+ "hex",
  "multiversx-sc-scenario",
  "mvx-esdt-safe",
  "proxies",
+ "rand 0.8.5",
+ "rand_core 0.6.4",
  "sovereign-forge",
  "structs",
  "testing-sc",
@@ -591,12 +594,26 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "37909eebbb50d72f9059c3b6d82c0463f2ff062c9e95845c43a6c9c0355411be"
 
 [[package]]
+name = "fee-common"
+version = "0.1.0"
+dependencies = [
+ "custom-events",
+ "error-messages",
+ "multiversx-sc",
+ "multiversx-sc-modules",
+ "proxies",
+ "structs",
+ "utils",
+]
+
+[[package]]
 name = "fee-market"
 version = "0.1.0"
 dependencies = [
  "common-test-setup",
  "custom-events",
  "error-messages",
+ "fee-common",
  "multiversx-sc",
  "multiversx-sc-scenario",
  "num-bigint",
@@ -828,6 +845,7 @@ dependencies = [
  "proxies",
  "setup-phase",
  "structs",
+ "utils",
 ]
 
 [[package]]
@@ -2245,9 +2263,11 @@ dependencies = [
 name = "setup-phase"
 version = "0.1.0"
 dependencies = [
+ "custom-events",
  "error-messages",
  "multiversx-sc",
  "multiversx-sc-scenario",
+ "utils",
 ]
 
 [[package]]
@@ -2354,6 +2374,52 @@ dependencies = [
 ]
 
 [[package]]
+name = "sov-fee-market"
+version = "0.1.0"
+dependencies = [
+ "common-test-setup",
+ "custom-events",
+ "error-messages",
+ "fee-common",
+ "multiversx-sc",
+ "multiversx-sc-scenario",
+ "num-bigint",
+ "proxies",
+ "structs",
+ "utils",
+]
+
+[[package]]
+name = "sov-fee-market-meta"
+version = "0.0.0"
+dependencies = [
+ "multiversx-sc-meta-lib",
+ "sov-fee-market",
+]
+
+[[package]]
+name = "sov-registrar"
+version = "0.0.0"
+dependencies = [
+ "custom-events",
+ "fee-common",
+ "multiversx-sc",
+ "multiversx-sc-scenario",
+ "num-bigint",
+ "structs",
+ "tx-nonce",
+ "utils",
+]
+
+[[package]]
+name = "sov-registrar-meta"
+version = "0.0.0"
+dependencies = [
+ "multiversx-sc-meta-lib",
+ "sov-registrar",
+]
+
+[[package]]
 name = "sovereign-forge"
 version = "0.0.0"
 dependencies = [
@@ -2361,7 +2427,9 @@ dependencies = [
  "chain-factory",
  "common-test-setup",
  "cross-chain",
+ "custom-events",
  "error-messages",
+ "fee-common",
  "fee-market",
  "header-verifier",
  "multiversx-sc",
@@ -2371,6 +2439,7 @@ dependencies = [
  "num-bigint",
  "proxies",
  "structs",
+ "utils",
 ]
 
 [[package]]
@@ -2661,6 +2730,14 @@ name = "try-lock"
 version = "0.2.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e421abadd41a4225275504ea4d6566923418b7f05506fbc9c0fe86ba7396114b"
+
+[[package]]
+name = "tx-nonce"
+version = "0.1.0"
+dependencies = [
+ "multiversx-sc",
+ "structs",
+]
 
 [[package]]
 name = "typenum"

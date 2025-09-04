@@ -18,7 +18,11 @@ use crate::common::{self};
 
 #[multiversx_sc::module]
 pub trait PhasesModule:
-    common::utils::UtilsModule + common::storage::StorageModule + common::sc_deploy::ScDeployModule
+    common::utils::UtilsModule
+    + common::storage::StorageModule
+    + common::sc_deploy::ScDeployModule
+    + custom_events::CustomEventsModule
+    + utils::UtilsModule
 {
     #[payable("EGLD")]
     #[endpoint(deployPhaseOne)]
@@ -57,6 +61,7 @@ pub trait PhasesModule:
     #[endpoint(deployPhaseTwo)]
     fn deploy_phase_two(&self, opt_config: OptionalValue<EsdtSafeConfig<Self::Api>>) {
         let caller = self.blockchain().get_caller();
+        let sov_prefix = self.sovereigns_mapper(&caller).get();
 
         self.require_phase_one_completed(&caller);
         require!(
@@ -64,7 +69,7 @@ pub trait PhasesModule:
             ESDT_SAFE_ALREADY_DEPLOYED
         );
 
-        self.deploy_mvx_esdt_safe(opt_config);
+        self.deploy_mvx_esdt_safe(sov_prefix, opt_config);
     }
 
     #[endpoint(deployPhaseThree)]

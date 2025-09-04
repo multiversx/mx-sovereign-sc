@@ -5,17 +5,18 @@ use crate::{
     interactor_structs::{ActionConfig, IssueTokenStruct, MintTokenStruct, TemplateAddresses},
 };
 use common_test_setup::constants::{
-    CATEGORIES, CHAIN_CONFIG_CODE_PATH, CHAIN_FACTORY_CODE_PATH, DEPLOY_COST, FEE_MARKET_CODE_PATH,
-    HEADER_VERIFIER_CODE_PATH, ISSUE_COST, MVX_ESDT_SAFE_CODE_PATH, NUMBER_OF_SHARDS, SHARD_0,
-    SOVEREIGN_FORGE_CODE_PATH, TESTING_SC_CODE_PATH, WALLETS_PATH,
+    CATEGORIES, CHAIN_CONFIG_CODE_PATH, CHAIN_FACTORY_CODE_PATH, CHAIN_ID, DEPLOY_COST,
+    FEE_MARKET_CODE_PATH, HEADER_VERIFIER_CODE_PATH, ISSUE_COST, MVX_ESDT_SAFE_CODE_PATH,
+    NUMBER_OF_SHARDS, SHARD_0, SOVEREIGN_FORGE_CODE_PATH, SOVEREIGN_TOKEN_PREFIX,
+    TESTING_SC_CODE_PATH, WALLETS_PATH,
 };
 use multiversx_sc::{
     codec::num_bigint,
     imports::{ESDTSystemSCProxy, OptionalValue, UserBuiltinProxy},
     types::{
-        Address, BigUint, CodeMetadata, ESDTSystemSCAddress, EsdtTokenType, ManagedBuffer,
-        ManagedVec, MultiEgldOrEsdtPayment, MultiValueEncoded, ReturnsNewAddress, ReturnsResult,
-        ReturnsResultUnmanaged, TokenIdentifier,
+        Address, BigUint, CodeMetadata, ESDTSystemSCAddress, EgldOrEsdtTokenIdentifier,
+        EsdtTokenType, ManagedBuffer, ManagedVec, MultiEgldOrEsdtPayment, MultiValueEncoded,
+        ReturnsNewAddress, ReturnsResult, ReturnsResultUnmanaged, TokenIdentifier,
     },
 };
 use multiversx_sc_snippets::{
@@ -24,7 +25,7 @@ use multiversx_sc_snippets::{
         ReturnsNewTokenIdentifier, StaticApi,
     },
     multiversx_sc_scenario::multiversx_chain_vm::crypto_functions::sha256,
-    InteractorRunAsync,
+    test_wallets, InteractorRunAsync,
 };
 use proxies::{
     chain_config_proxy::ChainConfigContractProxy, chain_factory_proxy::ChainFactoryContractProxy,
@@ -40,10 +41,8 @@ use structs::{
     forge::{ContractInfo, ScArray},
     generate_hash::GenerateHash,
     operation::Operation,
-    EsdtInfo,
+    EsdtInfo, RegisterTokenOperation,
 };
-
-use common_test_setup::base_setup::init::RegisterTokenArgs;
 
 fn metadata() -> CodeMetadata {
     CodeMetadata::UPGRADEABLE | CodeMetadata::READABLE
@@ -109,7 +108,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
         let decimals = self.get_token_decimals(issue.token_type);
 
         EsdtTokenInfo {
-            token_id: token_id.clone(),
+            token_id: EgldOrEsdtTokenIdentifier::from(token_id.as_str()),
             nonce,
             token_type: issue.token_type,
             decimals,
@@ -197,7 +196,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
     async fn deploy_sovereign_forge(
         &mut self,
         caller: Address,
-        deploy_cost: &BigUint<StaticApi>,
+        deploy_cost: OptionalValue<&BigUint<StaticApi>>,
     ) -> Address {
         let new_address = self
             .interactor()
@@ -276,7 +275,11 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             });
     }
 
-    async fn deploy_template_contracts(&mut self, caller: Address) -> Vec<Bech32Address> {
+    async fn deploy_template_contracts(
+        &mut self,
+        caller: Address,
+        sov_token_prefix: &str,
+    ) -> Vec<Bech32Address> {
         let mut template_contracts = vec![];
 
         let chain_config_template = self
@@ -299,7 +302,10 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             .from(caller.clone())
             .gas(100_000_000u64)
             .typed(MvxEsdtSafeProxy)
-            .init(OptionalValue::<EsdtSafeConfig<StaticApi>>::None)
+            .init(
+                sov_token_prefix,
+                OptionalValue::<EsdtSafeConfig<StaticApi>>::None,
+            )
             .returns(ReturnsNewAddress)
             .code(MVX_ESDT_SAFE_CODE_PATH)
             .code_metadata(metadata())
@@ -380,7 +386,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             .from(caller)
             .gas(100_000_000u64)
             .typed(MvxEsdtSafeProxy)
-            .init(opt_config)
+            .init(SOVEREIGN_TOKEN_PREFIX, opt_config)
             .returns(ReturnsNewAddress)
             .code(MVX_ESDT_SAFE_CODE_PATH)
             .code_metadata(metadata())
@@ -521,12 +527,17 @@ pub trait CommonInteractorTrait: InteractorHelpers {
         };
 
         let sovereign_forge_address = self
-            .deploy_sovereign_forge(initial_caller.clone(), &BigUint::from(DEPLOY_COST))
+            .deploy_sovereign_forge(
+                initial_caller.clone(),
+                OptionalValue::Some(&BigUint::from(DEPLOY_COST)),
+            )
             .await;
 
         for shard_id in 0..NUMBER_OF_SHARDS {
             let caller = self.get_bridge_owner_for_shard(shard_id);
-            let template_contracts = self.deploy_template_contracts(caller.clone()).await;
+            let template_contracts = self
+                .deploy_template_contracts(caller.clone(), CHAIN_ID)
+                .await;
 
             let (
                 chain_config_address,
@@ -900,7 +911,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
     async fn remove_fee_after_setup_phase(
         &mut self,
         hash_of_hashes: ManagedBuffer<StaticApi>,
-        base_token: TokenIdentifier<StaticApi>,
+        base_token: EgldOrEsdtTokenIdentifier<StaticApi>,
         shard: u32,
     ) {
         let bridge_service = self.get_bridge_service_for_shard(shard).clone();
@@ -1048,7 +1059,9 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             .gas(90_000_000u64)
             .typed(TestingScProxy)
             .send_tokens(
-                TokenIdentifier::from_esdt_bytes(expected_token.token_id.to_string()),
+                TokenIdentifier::from_esdt_bytes(
+                    expected_token.token_id.into_managed_buffer().to_string(),
+                ),
                 nonce,
                 amount.clone(),
             )
@@ -1091,12 +1104,14 @@ pub trait CommonInteractorTrait: InteractorHelpers {
     async fn register_token(
         &mut self,
         shard: u32,
-        args: RegisterTokenArgs<'_>,
-        egld_amount: BigUint<StaticApi>,
+        token: RegisterTokenOperation<StaticApi>,
         expected_error_message: Option<&str>,
     ) -> Option<String> {
         let user_address = self.user_address().clone();
         let mvx_esdt_safe_address = self.common_state().get_mvx_esdt_safe_address(shard).clone();
+
+        let token_hash = token.generate_hash();
+        let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&token_hash.to_vec()));
 
         let base_transaction = self
             .interactor()
@@ -1105,14 +1120,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             .to(mvx_esdt_safe_address)
             .gas(90_000_000u64)
             .typed(MvxEsdtSafeProxy)
-            .register_token(
-                args.sov_token_id,
-                args.token_type,
-                args.token_display_name,
-                args.token_ticker,
-                args.num_decimals,
-            )
-            .egld(egld_amount)
+            .register_token(hash_of_hashes, token)
             .returns(ReturnsHandledOrError::new());
 
         let (response, token) = match expected_error_message {
@@ -1136,8 +1144,8 @@ pub trait CommonInteractorTrait: InteractorHelpers {
     async fn get_sov_to_mvx_token_id(
         &mut self,
         shard: u32,
-        token_id: TokenIdentifier<StaticApi>,
-    ) -> TokenIdentifier<StaticApi> {
+        token_id: EgldOrEsdtTokenIdentifier<StaticApi>,
+    ) -> EgldOrEsdtTokenIdentifier<StaticApi> {
         let mvx_esdt_safe_address = self.common_state().get_mvx_esdt_safe_address(shard).clone();
         let user_address = self.user_address().clone();
         self.interactor()
@@ -1154,7 +1162,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
     async fn get_sov_to_mvx_token_id_with_nonce(
         &mut self,
         shard: u32,
-        token_id: TokenIdentifier<StaticApi>,
+        token_id: EgldOrEsdtTokenIdentifier<StaticApi>,
         nonce: u64,
     ) -> EsdtInfo<StaticApi> {
         let mvx_esdt_safe_address = self.common_state().get_mvx_esdt_safe_address(shard).clone();
@@ -1202,24 +1210,18 @@ pub trait CommonInteractorTrait: InteractorHelpers {
 
         let (mapped_token_id, mapped_nonce) = if edge_case {
             let token_id = self
-                .get_sov_to_mvx_token_id(
-                    config.shard,
-                    TokenIdentifier::from_esdt_bytes(&original_token.token_id),
-                )
+                .get_sov_to_mvx_token_id(config.shard, original_token.clone().token_id)
                 .await;
-            (token_id.to_string(), original_token.nonce)
+            (token_id, original_token.nonce)
         } else {
             let token_info = self
                 .get_sov_to_mvx_token_id_with_nonce(
                     config.shard,
-                    TokenIdentifier::from_esdt_bytes(&original_token.token_id),
+                    original_token.clone().token_id,
                     original_token.nonce,
                 )
                 .await;
-            (
-                token_info.token_identifier.to_string(),
-                token_info.token_nonce,
-            )
+            (token_info.token_identifier, token_info.token_nonce)
         };
 
         EsdtTokenInfo {
@@ -1252,7 +1254,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
         };
 
         EsdtTokenInfo {
-            token_id: fee_token_id.clone(),
+            token_id: EgldOrEsdtTokenIdentifier::from(fee_token_id.as_str()),
             nonce: 0,
             token_type: EsdtTokenType::Fungible,
             amount,
@@ -1304,5 +1306,14 @@ pub trait CommonInteractorTrait: InteractorHelpers {
         self.remove_fee_after_setup_phase(remove_fee_hash_of_hashes, fee_token, shard)
             .await;
         self.common_state().set_fee_status_for_shard(shard, false);
+    }
+
+    fn get_bridge_owner_for_shard(&self, shard_id: u32) -> Address {
+        match shard_id {
+            0 => test_wallets::bob().to_address(),
+            1 => test_wallets::alice().to_address(),
+            2 => test_wallets::carol().to_address(),
+            _ => panic!("Invalid shard ID: {shard_id}"),
+        }
     }
 }

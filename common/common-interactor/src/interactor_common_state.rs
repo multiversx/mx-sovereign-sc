@@ -12,7 +12,7 @@ use error_messages::{
 };
 use multiversx_sc::{
     imports::Bech32Address,
-    types::{BigUint, EsdtTokenType},
+    types::{BigUint, EgldOrEsdtTokenIdentifier, EsdtTokenType},
 };
 use serde::{Deserialize, Serialize};
 
@@ -211,7 +211,7 @@ impl CommonState {
             .cloned()
             .expect(NO_KNOWN_FEE_TOKEN);
         EsdtTokenInfo {
-            token_id: token.token_id,
+            token_id: EgldOrEsdtTokenIdentifier::from(token.token_id.as_str()),
             nonce: token.nonce,
             token_type: EsdtTokenType::from(token.token_type),
             decimals: token.decimals,

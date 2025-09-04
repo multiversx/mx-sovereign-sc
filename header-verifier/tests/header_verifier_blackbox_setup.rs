@@ -5,7 +5,8 @@ use common_test_setup::constants::{
 };
 use multiversx_sc::api::ManagedTypeApi;
 use multiversx_sc::types::{
-    BigUint, ManagedBuffer, MultiValueEncoded, ReturnsHandledOrError, TestSCAddress,
+    BigUint, ManagedBuffer, MultiValueEncoded, ReturnsHandledOrError, ReturnsResult,
+    ReturnsResultUnmanaged, TestSCAddress,
 };
 use multiversx_sc_scenario::imports::*;
 use multiversx_sc_scenario::multiversx_chain_vm::crypto_functions::sha256;
@@ -89,11 +90,22 @@ impl HeaderVerifierTestState {
             .to(HEADER_VERIFIER_ADDRESS)
             .typed(HeaderverifierProxy)
             .remove_executed_hash(hash_of_hashes, operation_hash)
-            .returns(ReturnsHandledOrError::new())
-            .run();
+            .returns(ReturnsResult)
+            .run()
+            .into_option();
 
-        self.common_setup
-            .assert_expected_error_message(response, expected_error_message);
+        // TODO: create a separate common function
+        match response {
+            None => assert!(
+                response.is_none(),
+                "Transaction was successful, but expected error"
+            ),
+            Some(error_message) => {
+                if let Some(expected_msg) = expected_error_message {
+                    assert_eq!(error_message.to_string(), expected_msg);
+                }
+            }
+        };
     }
 
     pub fn lock_operation_hash(
@@ -111,11 +123,23 @@ impl HeaderVerifierTestState {
             .to(HEADER_VERIFIER_ADDRESS)
             .typed(HeaderverifierProxy)
             .lock_operation_hash(hash_of_hashes, operation_hash)
-            .returns(ReturnsHandledOrError::new())
+            .returns(ReturnsResultUnmanaged)
             .run();
 
-        self.common_setup
-            .assert_expected_error_message(response, expected_error_message);
+        match response.clone().into_option() {
+            None => assert!(
+                response.is_none(),
+                "Transaction was successful, but expected error"
+            ),
+            Some(error_message_bytes) => {
+                let error_message_str: ManagedBuffer<StaticApi> =
+                    ManagedBuffer::new_from_bytes(&error_message_bytes);
+                assert_eq!(
+                    Some(error_message_str.to_string()),
+                    expected_error_message.map(|s| s.to_string())
+                );
+            }
+        };
     }
 
     #[allow(clippy::too_many_arguments)]
@@ -127,8 +151,8 @@ impl HeaderVerifierTestState {
         epoch: u64,
         pub_keys_bitmap: &ManagedBuffer<StaticApi>,
         validator_set: MultiValueEncoded<StaticApi, BigUint<StaticApi>>,
-        expected_error_message: Option<&str>,
-        expected_log: Option<&str>,
+        expected_custom_log: Option<&str>,
+        expected_log_error: Option<&str>,
     ) {
         let (logs, response) = self
             .common_setup
@@ -149,11 +173,14 @@ impl HeaderVerifierTestState {
             .returns(ReturnsHandledOrError::new())
             .run();
 
-        self.common_setup
-            .assert_expected_error_message(response, expected_error_message);
+        assert!(
+            response.is_ok(),
+            "Transaction failed with error: {:?}",
+            response.err()
+        );
 
         self.common_setup
-            .assert_expected_log(logs, expected_log, None);
+            .assert_expected_log(logs, expected_custom_log, expected_log_error);
     }
 
     pub fn generate_bridge_operation_struct(

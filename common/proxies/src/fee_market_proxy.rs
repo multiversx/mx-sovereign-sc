@@ -97,8 +97,24 @@ where
             .original_result()
     }
 
+    pub fn distribute_fees<
+        Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
+        Arg1: ProxyArg<structs::fee::DistributeFeesOperation<Env::Api>>,
+    >(
+        self,
+        hash_of_hashes: Arg0,
+        operation: Arg1,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("distributeFees")
+            .argument(&hash_of_hashes)
+            .argument(&operation)
+            .original_result()
+    }
+
     pub fn remove_fee_during_setup_phase<
-        Arg0: ProxyArg<TokenIdentifier<Env::Api>>,
+        Arg0: ProxyArg<EgldOrEsdtTokenIdentifier<Env::Api>>,
     >(
         self,
         base_token: Arg0,
@@ -112,17 +128,17 @@ where
 
     pub fn remove_fee<
         Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
-        Arg1: ProxyArg<TokenIdentifier<Env::Api>>,
+        Arg1: ProxyArg<EgldOrEsdtTokenIdentifier<Env::Api>>,
     >(
         self,
         hash_of_hashes: Arg0,
-        base_token: Arg1,
+        token_id: Arg1,
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("removeFee")
             .argument(&hash_of_hashes)
-            .argument(&base_token)
+            .argument(&token_id)
             .original_result()
     }
 
@@ -156,7 +172,7 @@ where
     }
 
     pub fn token_fee<
-        Arg0: ProxyArg<TokenIdentifier<Env::Api>>,
+        Arg0: ProxyArg<EgldOrEsdtTokenIdentifier<Env::Api>>,
     >(
         self,
         token_id: Arg0,
@@ -168,29 +184,12 @@ where
             .original_result()
     }
 
-    pub fn add_users_to_whitelist<
-        Arg0: ProxyArg<MultiValueEncoded<Env::Api, ManagedAddress<Env::Api>>>,
-    >(
+    pub fn users_whitelist(
         self,
-        users: Arg0,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, MultiValueEncoded<Env::Api, ManagedAddress<Env::Api>>> {
         self.wrapped_tx
             .payment(NotPayable)
-            .raw_call("addUsersToWhitelist")
-            .argument(&users)
-            .original_result()
-    }
-
-    pub fn remove_users_from_whitelist<
-        Arg0: ProxyArg<MultiValueEncoded<Env::Api, ManagedAddress<Env::Api>>>,
-    >(
-        self,
-        users: Arg0,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("removeUsersFromWhitelist")
-            .argument(&users)
+            .raw_call("getUsersWhitelist")
             .original_result()
     }
 
@@ -212,29 +211,61 @@ where
             .original_result()
     }
 
-    /// Percentages have to be between 0 and 10_000, and must all add up to 100% (i.e. 10_000) 
-    pub fn distribute_fees<
-        Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
-        Arg1: ProxyArg<MultiValueEncoded<Env::Api, MultiValue2<ManagedAddress<Env::Api>, usize>>>,
+    pub fn add_users_to_whitelist_during_setup_phase<
+        Arg0: ProxyArg<MultiValueEncoded<Env::Api, ManagedAddress<Env::Api>>>,
     >(
         self,
-        hash_of_hashes: Arg0,
-        address_percentage_pairs: Arg1,
+        users: Arg0,
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
-            .raw_call("distributeFees")
-            .argument(&hash_of_hashes)
-            .argument(&address_percentage_pairs)
+            .raw_call("addUsersToWhitelistSetupPhase")
+            .argument(&users)
             .original_result()
     }
 
-    pub fn users_whitelist(
+    pub fn add_users_to_whitelist<
+        Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
+        Arg1: ProxyArg<structs::fee::AddUsersToWhitelistOperation<Env::Api>>,
+    >(
         self,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, MultiValueEncoded<Env::Api, ManagedAddress<Env::Api>>> {
+        hash_of_hashes: Arg0,
+        operation: Arg1,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
-            .raw_call("getUsersWhitelist")
+            .raw_call("addUsersToWhitelist")
+            .argument(&hash_of_hashes)
+            .argument(&operation)
+            .original_result()
+    }
+
+    pub fn remove_users_from_whitelist_during_setup_phase<
+        Arg0: ProxyArg<MultiValueEncoded<Env::Api, ManagedAddress<Env::Api>>>,
+    >(
+        self,
+        users: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("removeUsersFromWhitelistSetupPhase")
+            .argument(&users)
+            .original_result()
+    }
+
+    pub fn remove_users_from_whitelist<
+        Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
+        Arg1: ProxyArg<structs::fee::RemoveUsersFromWhitelistOperation<Env::Api>>,
+    >(
+        self,
+        hash_of_hashes: Arg0,
+        operation: Arg1,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("removeUsersFromWhitelist")
+            .argument(&hash_of_hashes)
+            .argument(&operation)
             .original_result()
     }
 }

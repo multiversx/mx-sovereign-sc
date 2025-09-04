@@ -30,8 +30,17 @@ path = "../header-verifier"
 [dependencies.fee-market]
 path = "../fee-market"
 
+[dependencies.fee-common]
+path = "../common/fee-common"
+
 [dependencies.proxies]
 path = "../common/proxies"
+
+[dependencies.utils]
+path = "../common/utils"
+
+[dependencies.custom-events]
+path = "../common/custom-events"
 
 [dependencies.structs]
 path = "../common/structs"

@@ -1,12 +1,15 @@
 use common_test_setup::constants::{
-    DEPOSIT_LOG, ESDT_SAFE_ADDRESS, FEE_MARKET_ADDRESS, FEE_TOKEN, FIRST_TEST_TOKEN,
-    ONE_HUNDRED_MILLION, ONE_HUNDRED_THOUSAND, OWNER_ADDRESS, SC_CALL_LOG, SECOND_TEST_TOKEN,
+    DEPOSIT_EVENT, ESDT_SAFE_ADDRESS, FEE_MARKET_ADDRESS, FEE_TOKEN, FIRST_TEST_TOKEN,
+    ONE_HUNDRED_MILLION, ONE_HUNDRED_THOUSAND, OWNER_ADDRESS, SC_CALL_EVENT, SECOND_TEST_TOKEN,
     TESTING_SC_ENDPOINT, USER_ADDRESS,
 };
 use error_messages::NOTHING_TO_TRANSFER;
 use multiversx_sc::{
     imports::{MultiValue3, OptionalValue},
-    types::{BigUint, EsdtTokenPayment, ManagedBuffer, ManagedVec, MultiValueEncoded},
+    types::{
+        BigUint, EgldOrEsdtTokenIdentifier, EsdtTokenPayment, ManagedBuffer, ManagedVec,
+        MultiValueEncoded,
+    },
 };
 use multiversx_sc_scenario::api::StaticApi;
 use sov_esdt_safe_blackbox_setup::SovEsdtSafeTestState;
@@ -70,7 +73,7 @@ fn test_deposit_no_fee_no_transfer_data() {
         OptionalValue::None,
         payments_vec.clone(),
         None,
-        Some(DEPOSIT_LOG),
+        Some(DEPOSIT_EVENT),
     );
 
     let expected_tokens = vec![
@@ -117,9 +120,9 @@ fn test_deposit_with_fee_no_transfer_data() {
     let fee_token_identifier = FEE_TOKEN;
 
     let fee = FeeStruct {
-        base_token: fee_token_identifier.into(),
+        base_token: EgldOrEsdtTokenIdentifier::esdt(fee_token_identifier),
         fee_type: FeeType::Fixed {
-            token: fee_token_identifier.into(),
+            token: EgldOrEsdtTokenIdentifier::esdt(fee_token_identifier),
             per_transfer: per_transfer.clone(),
             per_gas: per_gas.clone(),
         },
@@ -153,7 +156,7 @@ fn test_deposit_with_fee_no_transfer_data() {
         OptionalValue::None,
         payments_vec.clone(),
         None,
-        Some(DEPOSIT_LOG),
+        Some(DEPOSIT_EVENT),
     );
 
     let expected_amount_token_one =
@@ -247,7 +250,7 @@ fn test_deposit_no_fee_with_transfer_data() {
         OptionalValue::Some(transfer_data),
         payments_vec.clone(),
         None,
-        Some(DEPOSIT_LOG),
+        Some(DEPOSIT_EVENT),
     );
 
     let expected_amount_token_one =
@@ -299,9 +302,9 @@ fn test_deposit_with_fee_with_transfer_data() {
     let fee_token_identifier = FEE_TOKEN;
 
     let fee = FeeStruct {
-        base_token: fee_token_identifier.into(),
+        base_token: EgldOrEsdtTokenIdentifier::esdt(fee_token_identifier),
         fee_type: FeeType::Fixed {
-            token: fee_token_identifier.into(),
+            token: EgldOrEsdtTokenIdentifier::esdt(fee_token_identifier),
             per_transfer: per_transfer.clone(),
             per_gas: per_gas.clone(),
         },
@@ -344,7 +347,7 @@ fn test_deposit_with_fee_with_transfer_data() {
         OptionalValue::Some(transfer_data),
         payments_vec.clone(),
         None,
-        Some(DEPOSIT_LOG),
+        Some(DEPOSIT_EVENT),
     );
 
     let expected_amount_token_one =
@@ -449,6 +452,6 @@ fn test_deposit_sc_call_only() {
         OptionalValue::Some(transfer_data.clone()),
         PaymentsVec::new(),
         None,
-        Some(SC_CALL_LOG),
+        Some(SC_CALL_EVENT),
     );
 }

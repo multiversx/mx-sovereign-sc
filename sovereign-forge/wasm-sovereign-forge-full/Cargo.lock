@@ -82,11 +82,25 @@ name = "error-messages"
 version = "0.1.0"
 
 [[package]]
+name = "fee-common"
+version = "0.1.0"
+dependencies = [
+ "custom-events",
+ "error-messages",
+ "multiversx-sc",
+ "multiversx-sc-modules",
+ "proxies",
+ "structs",
+ "utils",
+]
+
+[[package]]
 name = "fee-market"
 version = "0.1.0"
 dependencies = [
  "custom-events",
  "error-messages",
+ "fee-common",
  "multiversx-sc",
  "proxies",
  "setup-phase",
@@ -114,6 +128,7 @@ dependencies = [
  "proxies",
  "setup-phase",
  "structs",
+ "utils",
 ]
 
 [[package]]
@@ -279,8 +294,10 @@ dependencies = [
 name = "setup-phase"
 version = "0.1.0"
 dependencies = [
+ "custom-events",
  "error-messages",
  "multiversx-sc",
+ "utils",
 ]
 
 [[package]]
@@ -296,13 +313,16 @@ dependencies = [
  "chain-config",
  "chain-factory",
  "cross-chain",
+ "custom-events",
  "error-messages",
+ "fee-common",
  "fee-market",
  "header-verifier",
  "multiversx-sc",
  "mvx-esdt-safe",
  "proxies",
  "structs",
+ "utils",
 ]
 
 [[package]]

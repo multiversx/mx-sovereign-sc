@@ -6,13 +6,17 @@ multiversx_sc::derive_imports!();
 #[type_abi]
 #[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, ManagedVecItem, Clone)]
 pub struct EventPayment<M: ManagedTypeApi> {
-    pub identifier: TokenIdentifier<M>,
+    pub identifier: EgldOrEsdtTokenIdentifier<M>,
     pub nonce: u64,
     pub data: EsdtTokenData<M>,
 }
 
 impl<M: ManagedTypeApi> EventPayment<M> {
-    pub fn new(identifier: TokenIdentifier<M>, nonce: u64, data: EsdtTokenData<M>) -> Self {
+    pub fn new(
+        identifier: EgldOrEsdtTokenIdentifier<M>,
+        nonce: u64,
+        data: EsdtTokenData<M>,
+    ) -> Self {
         EventPayment {
             identifier,
             nonce,

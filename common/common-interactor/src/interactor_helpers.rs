@@ -11,8 +11,8 @@ use multiversx_sc::{
     codec::{num_bigint, TopEncode},
     imports::{Bech32Address, MultiValue3, OptionalValue},
     types::{
-        Address, BigUint, EsdtTokenData, EsdtTokenPayment, EsdtTokenType, ManagedAddress,
-        ManagedBuffer, ManagedVec, MultiValueEncoded, TestSCAddress, TokenIdentifier,
+        Address, BigUint, EgldOrEsdtTokenPayment, EsdtTokenData, EsdtTokenType, ManagedAddress,
+        ManagedBuffer, ManagedVec, MultiValueEncoded, TestSCAddress,
     },
 };
 use multiversx_sc_snippets::{
@@ -82,7 +82,7 @@ pub trait InteractorHelpers {
             fee_amount = self.calculate_fee_amount(fee_struct, with_transfer_data, token.clone());
 
             if fee_amount > 0u64 {
-                let fee_payment = EsdtTokenPayment::<StaticApi>::new(
+                let fee_payment = EgldOrEsdtTokenPayment::<StaticApi>::new(
                     self.state().get_fee_token_identifier(),
                     0,
                     fee_amount.clone(),
@@ -93,8 +93,8 @@ pub trait InteractorHelpers {
 
         // Add token payment if present
         if let Some(token) = token {
-            let token_payment = EsdtTokenPayment::<StaticApi>::new(
-                TokenIdentifier::from_esdt_bytes(&token.token_id),
+            let token_payment = EgldOrEsdtTokenPayment::<StaticApi>::new(
+                token.token_id,
                 token.nonce,
                 token.amount.clone(),
             );
@@ -116,11 +116,7 @@ pub trait InteractorHelpers {
                     ..Default::default()
                 };
 
-                let payment = OperationEsdtPayment::new(
-                    TokenIdentifier::from_esdt_bytes(&token.token_id),
-                    token.nonce,
-                    token_data,
-                );
+                let payment = OperationEsdtPayment::new(token.token_id, token.nonce, token_data);
 
                 let mut payments = ManagedVec::new();
                 payments.push(payment);
@@ -363,7 +359,8 @@ pub trait InteractorHelpers {
     }
 
     fn is_sovereign_token(&self, token: &EsdtTokenInfo) -> bool {
-        token.token_id.matches('-').count() == 2
+        let token_id = &token.token_id.clone().into_managed_buffer().to_string();
+        token_id.matches('-').count() == 2
     }
 
     //NOTE: transferValue returns an empty log and calling this function on it will panic
@@ -555,7 +552,7 @@ pub trait InteractorHelpers {
         }
 
         for token_balance in expected_token_balance {
-            let token_id = &token_balance.token_id;
+            let token_id = &token_balance.token_id.into_managed_buffer().to_string();
             let expected_amount = &token_balance.amount;
 
             if *expected_amount == 0u64 {
@@ -674,7 +671,7 @@ pub trait InteractorHelpers {
         amount: u64,
     ) -> SerializableFeeMarketToken {
         SerializableFeeMarketToken {
-            token_id: fee_token.token_id,
+            token_id: fee_token.token_id.into_managed_buffer().to_string(),
             token_type: fee_token.token_type as u8,
             nonce: fee_token.nonce,
             decimals: fee_token.decimals,
@@ -700,11 +697,13 @@ pub trait InteractorHelpers {
             expected_error,
         } = bcc;
 
-        let is_sov_mapped_token = if token.is_some() {
-            token.clone().unwrap().token_id.split('-').nth(0) == Some("SOV")
-        } else {
-            false
-        };
+        let is_sov_mapped_token = token
+            .as_ref()
+            .map(|t| {
+                let token_id = t.token_id.clone().into_managed_buffer().to_string();
+                token_id.split('-').next() == Some("SOV")
+            })
+            .unwrap_or(false);
 
         let fee_amount = fee
             .as_ref()
@@ -715,7 +714,7 @@ pub trait InteractorHelpers {
 
         // USER tokens
         if let (Some(token), Some(amount)) = (token.clone(), amount.clone()) {
-            let token_id = TokenIdentifier::from_esdt_bytes(token.token_id.clone());
+            let token_id = token.token_id.clone();
             let initial_user_balance = self
                 .state()
                 .get_initial_wallet_token_balance(token_id.clone());

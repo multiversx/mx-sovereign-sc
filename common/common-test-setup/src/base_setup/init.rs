@@ -1,20 +1,9 @@
 use crate::constants::*;
 use multiversx_sc_scenario::{
     api::StaticApi,
-    imports::{
-        Address, BigUint, EsdtTokenType, ManagedBuffer, MxscPath, TestTokenIdentifier,
-        TokenIdentifier, Vec,
-    },
+    imports::{Address, BigUint, ManagedBuffer, MxscPath, TestTokenIdentifier, Vec},
     ScenarioWorld,
 };
-
-pub struct RegisterTokenArgs<'a> {
-    pub sov_token_id: TokenIdentifier<StaticApi>,
-    pub token_type: EsdtTokenType,
-    pub token_display_name: &'a str,
-    pub token_ticker: &'a str,
-    pub num_decimals: usize,
-}
 
 pub struct BaseSetup {
     pub world: ScenarioWorld,

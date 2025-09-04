@@ -2,6 +2,7 @@ use multiversx_sc_scenario::imports::{MxscPath, TestAddress, TestSCAddress, Test
 
 pub const ESDT_SAFE_ADDRESS: TestSCAddress = TestSCAddress::new("esdt-safe");
 pub const FEE_MARKET_ADDRESS: TestSCAddress = TestSCAddress::new("fee-market");
+pub const SOV_FEE_MARKET_ADDRESS: TestSCAddress = TestSCAddress::new("sov-fee-market");
 pub const HEADER_VERIFIER_ADDRESS: TestSCAddress = TestSCAddress::new("header-verifier");
 pub const CHAIN_CONFIG_ADDRESS: TestSCAddress = TestSCAddress::new("chain-config");
 pub const TESTING_SC_ADDRESS: TestSCAddress = TestSCAddress::new("testing-sc");
@@ -43,6 +44,7 @@ pub const SOVEREIGN_FORGE_CODE_PATH: MxscPath =
 pub const FEE_TOKEN: TestTokenIdentifier = TestTokenIdentifier::new("INTERNS-eaad15");
 pub const FIRST_TEST_TOKEN: TestTokenIdentifier = TestTokenIdentifier::new("GREEN-0e161c");
 pub const SECOND_TEST_TOKEN: TestTokenIdentifier = TestTokenIdentifier::new("LTST-4f849e");
+pub const NATIVE_TEST_TOKEN: TestTokenIdentifier = TestTokenIdentifier::new("NATIVE-123456");
 pub const SOV_TOKEN: TestTokenIdentifier = TestTokenIdentifier::new("sov-GREEN-0e161c");
 pub const TOKEN_TICKER: &str = "GREEN";
 pub const TOKEN_DISPLAY_NAME: &str = "Sovereign";
@@ -98,3 +100,7 @@ pub const ONE_HUNDRED_TOKENS: u128 = 100_000_000_000_000_000_000u128;
 pub const TEN_TOKENS: u128 = 10_000_000_000_000_000_000u128;
 pub const PER_TRANSFER: u64 = 100;
 pub const PER_GAS: u64 = 1;
+
+pub const EXECUTED_BRIDGE_OP_EVENT: &str = "executedBridgeOp";
+pub const DEPOSIT_EVENT: &str = "deposit";
+pub const SC_CALL_EVENT: &str = "scCall";
