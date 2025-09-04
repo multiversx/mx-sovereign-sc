@@ -76,9 +76,7 @@ pub trait PhasesModule:
 
         let egld_payment = self.call_value().egld().clone();
 
-        require!(egld_payment == ISSUE_COST, ISSUE_COST_NOT_COVERED);
-
-        self.deploy_mvx_esdt_safe(sov_prefix, native_token, &egld_payment, opt_config);
+        self.deploy_mvx_esdt_safe(sov_prefix, native_token, opt_config);
     }
 
     #[endpoint(deployPhaseThree)]
