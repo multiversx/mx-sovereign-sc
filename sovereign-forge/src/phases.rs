@@ -60,11 +60,7 @@ pub trait PhasesModule:
 
     #[payable("EGLD")]
     #[endpoint(deployPhaseTwo)]
-    fn deploy_phase_two(
-        &self,
-        native_token: NativeToken<Self::Api>,
-        opt_config: OptionalValue<EsdtSafeConfig<Self::Api>>,
-    ) {
+    fn deploy_phase_two(&self, opt_config: OptionalValue<EsdtSafeConfig<Self::Api>>) {
         let caller = self.blockchain().get_caller();
         let sov_prefix = self.sovereigns_mapper(&caller).get();
 
@@ -74,9 +70,7 @@ pub trait PhasesModule:
             ESDT_SAFE_ALREADY_DEPLOYED
         );
 
-        let egld_payment = self.call_value().egld().clone();
-
-        self.deploy_mvx_esdt_safe(sov_prefix, native_token, opt_config);
+        self.deploy_mvx_esdt_safe(sov_prefix, opt_config);
     }
 
     #[endpoint(deployPhaseThree)]

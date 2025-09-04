@@ -44,7 +44,6 @@ pub trait ScDeployModule:
     fn deploy_mvx_esdt_safe(
         &self,
         sov_prefix: ManagedBuffer,
-        native_token: NativeToken<Self::Api>,
         opt_config: OptionalValue<EsdtSafeConfig<Self::Api>>,
     ) {
         let chain_id = self
@@ -54,7 +53,7 @@ pub trait ScDeployModule:
         self.tx()
             .to(self.get_chain_factory_address())
             .typed(ChainFactoryContractProxy)
-            .deploy_mvx_esdt_safe(sov_prefix, native_token, opt_config)
+            .deploy_mvx_esdt_safe(sov_prefix, opt_config)
             .gas(PHASE_TWO_ASYNC_CALL_GAS)
             .callback(
                 self.callbacks()
