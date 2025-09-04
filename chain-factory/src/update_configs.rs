@@ -25,6 +25,7 @@ pub trait UpdateConfigsModule: only_admin::OnlyAdminModule {
             .to(esdt_safe_address)
             .typed(MvxEsdtSafeProxy)
             .register_native_token(native_token)
+            .egld(self.call_value().egld().clone())
             .sync_call();
     }
 
