@@ -5,6 +5,7 @@ use multiversx_sc_snippets::imports::*;
 use proxies::mvx_esdt_safe_proxy::MvxEsdtSafeProxy;
 
 use structs::configs::EsdtSafeConfig;
+use structs::forge::NativeToken;
 
 use common_interactor::interactor_config::Config;
 use common_interactor::interactor_state::State;
@@ -186,8 +187,8 @@ impl MvxEsdtSafeInteract {
 
     pub async fn register_native_token(
         &mut self,
-        token_ticker: &str,
-        token_name: &str,
+        ticker: &str,
+        name: &str,
         egld_amount: BigUint<StaticApi>,
         expected_error_message: Option<&str>,
     ) {
@@ -199,7 +200,10 @@ impl MvxEsdtSafeInteract {
             .to(self.state.current_mvx_esdt_safe_contract_address())
             .gas(90_000_000u64)
             .typed(MvxEsdtSafeProxy)
-            .register_native_token(token_ticker, token_name)
+            .register_native_token(NativeToken {
+                ticker: ManagedBuffer::from(ticker),
+                name: ManagedBuffer::from(name),
+            })
             .egld(egld_amount)
             .returns(ReturnsHandledOrError::new())
             .run()

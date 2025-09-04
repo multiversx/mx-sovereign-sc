@@ -1,12 +1,13 @@
 use cross_chain::REGISTER_GAS;
 use error_messages::{
-    ERROR_AT_ENCODING, ESDT_SAFE_STILL_PAUSED, INVALID_PREFIX_FOR_REGISTER,
+    ERROR_AT_GENERATING_OPERATION_HASH, ESDT_SAFE_STILL_PAUSED, INVALID_PREFIX_FOR_REGISTER,
     NATIVE_TOKEN_ALREADY_REGISTERED, NOT_ENOUGH_EGLD_FOR_REGISTER, SETUP_PHASE_ALREADY_COMPLETED,
     SETUP_PHASE_NOT_COMPLETED, TOKEN_ALREADY_REGISTERED,
 };
 use multiversx_sc::{chain_core::EGLD_000000_TOKEN_IDENTIFIER, types::EsdtTokenType};
 use structs::{
-    aliases::EventPaymentTuple, generate_hash::GenerateHash, EsdtInfo, RegisterTokenOperation,
+    aliases::EventPaymentTuple, forge::NativeToken, generate_hash::GenerateHash, EsdtInfo,
+    RegisterTokenOperation,
 };
 multiversx_sc::imports!();
 multiversx_sc::derive_imports!();
@@ -31,7 +32,11 @@ pub trait RegisterTokenModule:
     ) {
         let token_hash = token_to_register.generate_hash();
         if token_hash.is_empty() {
-            self.complete_operation(&hash_of_hashes, &token_hash, Some(ERROR_AT_ENCODING.into()));
+            self.complete_operation(
+                &hash_of_hashes,
+                &token_hash,
+                Some(ERROR_AT_GENERATING_OPERATION_HASH.into()),
+            );
             return;
         };
 
@@ -103,7 +108,7 @@ pub trait RegisterTokenModule:
     #[payable("EGLD")]
     #[only_owner]
     #[endpoint(registerNativeToken)]
-    fn register_native_token(&self, token_ticker: ManagedBuffer, token_name: ManagedBuffer) {
+    fn register_native_token(&self, native_token: NativeToken<Self::Api>) {
         require!(
             !self.is_setup_phase_complete(),
             SETUP_PHASE_ALREADY_COMPLETED
@@ -119,8 +124,8 @@ pub trait RegisterTokenModule:
             .typed(ESDTSystemSCProxy)
             .issue_and_set_all_roles(
                 self.call_value().egld().clone_value(),
-                token_name,
-                &token_ticker,
+                native_token.name,
+                &native_token.ticker,
                 EsdtTokenType::Fungible,
                 18,
             )

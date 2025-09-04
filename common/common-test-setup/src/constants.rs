@@ -81,6 +81,8 @@ pub const UNPAUSE_CONTRACT_LOG: &str = "unpauseContract";
 pub const TESTING_SC_ENDPOINT: &str = "hello";
 pub const EXECUTED_BRIDGE_LOG: &str = "executedBridgeOp";
 pub const SC_CALL_LOG: &str = "scCall";
+pub const NATIVE_TOKEN_TICKER: &str = "SOV";
+pub const NATIVE_TOKEN_NAME: &str = "Sovereign Token";
 
 pub const ISSUE_COST: u64 = 50_000_000_000_000_000; // 0.05 EGLD
 pub const GAS_LIMIT: u64 = 90_000_000; // 90 million gas limit

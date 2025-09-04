@@ -123,7 +123,7 @@ pub const INVALID_PREFIX_FOR_REGISTER: &str =
 pub const TOKEN_IS_FROM_SOVEREIGN: &str = "Token is from a Sovereign Chain, it cannot be locked";
 pub const TOKEN_NOT_ACCEPTED_AS_FEE: &str = "Token not accepted as fee";
 pub const TOO_MANY_TOKENS: &str = "Too many tokens";
-pub const ERROR_AT_ENCODING: &str = "Error at encoding hash";
+pub const ERROR_AT_GENERATING_OPERATION_HASH: &str = "Error at generating operation hash";
 pub const NOT_ENOUGH_EGLD_FOR_REGISTER: &str = "Not enough EGLD for registering a new token";
 pub const VALIDATOR_RANGE_EXCEEDED: &str = "Validator range exceeded";
 pub const NOT_ENOUGH_VALIDATORS: &str = "Not enough validators registered";
@@ -155,3 +155,4 @@ pub const REGISTRATIONS_DISABLED_GENESIS_PHASE: &str =
     "Registrations are disabled after genesis phase";
 pub const VALIDATOR_ID_NOT_REGISTERED: &str = "Provided validator id is not registered";
 pub const INVALID_VALIDATOR_DATA: &str = "Invalid validator data has been provided";
+pub const ISSUE_COST_NOT_COVERED: &str = "Native token issue cost is not covered";

@@ -15,7 +15,7 @@ use proxies::{
 use structs::{
     configs::{EsdtSafeConfig, SovereignConfig},
     fee::FeeStruct,
-    forge::ScArray,
+    forge::{NativeToken, ScArray},
 };
 
 use crate::{
@@ -203,8 +203,10 @@ impl BaseSetup {
 
     pub fn deploy_phase_two(
         &mut self,
+        payment: &BigUint<StaticApi>,
+        native_token: NativeToken<StaticApi>,
+        error_message: Option<&str>,
         opt_config: OptionalValue<EsdtSafeConfig<StaticApi>>,
-        expected_error_message: Option<&str>,
     ) {
         let response = self
             .world
@@ -212,11 +214,12 @@ impl BaseSetup {
             .from(OWNER_ADDRESS)
             .to(SOVEREIGN_FORGE_SC_ADDRESS)
             .typed(SovereignForgeProxy)
-            .deploy_phase_two(opt_config)
+            .deploy_phase_two(native_token, opt_config)
+            .egld(payment)
             .returns(ReturnsHandledOrError::new())
             .run();
 
-        self.assert_expected_error_message(response, expected_error_message);
+        self.assert_expected_error_message(response, error_message);
     }
 
     pub fn deploy_phase_three(

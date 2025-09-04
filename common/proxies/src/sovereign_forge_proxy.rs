@@ -117,14 +117,16 @@ where
     }
 
     pub fn deploy_phase_two<
-        Arg0: ProxyArg<OptionalValue<structs::configs::EsdtSafeConfig<Env::Api>>>,
+        Arg0: ProxyArg<structs::forge::NativeToken<Env::Api>>,
+        Arg1: ProxyArg<OptionalValue<structs::configs::EsdtSafeConfig<Env::Api>>>,
     >(
         self,
-        opt_config: Arg0,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        native_token: Arg0,
+        opt_config: Arg1,
+    ) -> TxTypedCall<Env, From, To, (), Gas, ()> {
         self.wrapped_tx
-            .payment(NotPayable)
             .raw_call("deployPhaseTwo")
+            .argument(&native_token)
             .argument(&opt_config)
             .original_result()
     }
