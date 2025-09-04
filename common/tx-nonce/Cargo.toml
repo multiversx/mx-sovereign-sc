@@ -1,0 +1,15 @@
+[package]
+name = "tx-nonce"
+version = "0.1.0"
+authors = ["andrei-baltariu <andrei.baltariu@multiversx.com>"]
+edition = "2021"
+
+[lib]
+path = "src/lib.rs"
+
+[dependencies.multiversx-sc]
+git = "https://github.com/multiversx/mx-sdk-rs"
+rev = "b59411841984a2fcbf76498d29bc131f2d433af9"
+
+[dependencies.structs]
+path = "../structs"

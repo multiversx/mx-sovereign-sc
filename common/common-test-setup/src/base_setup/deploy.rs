@@ -15,18 +15,17 @@ use proxies::{
 use structs::{
     configs::{EsdtSafeConfig, SovereignConfig},
     fee::FeeStruct,
-    forge::ScArray,
+    forge::{NativeToken, ScArray},
 };
 
 use crate::{
     base_setup::init::BaseSetup,
     constants::{
         CHAIN_CONFIG_ADDRESS, CHAIN_CONFIG_CODE_PATH, CHAIN_FACTORY_CODE_PATH,
-        CHAIN_FACTORY_SC_ADDRESS, DEPLOY_COST, ESDT_SAFE_ADDRESS, FEE_MARKET_ADDRESS,
-        FEE_MARKET_CODE_PATH, HEADER_VERIFIER_ADDRESS, HEADER_VERIFIER_CODE_PATH,
-        MVX_ESDT_SAFE_CODE_PATH, OWNER_ADDRESS, SOVEREIGN_FORGE_CODE_PATH,
-        SOVEREIGN_FORGE_SC_ADDRESS, SOV_ESDT_SAFE_CODE_PATH, TESTING_SC_ADDRESS,
-        TESTING_SC_CODE_PATH,
+        CHAIN_FACTORY_SC_ADDRESS, ESDT_SAFE_ADDRESS, FEE_MARKET_ADDRESS, FEE_MARKET_CODE_PATH,
+        HEADER_VERIFIER_ADDRESS, HEADER_VERIFIER_CODE_PATH, MVX_ESDT_SAFE_CODE_PATH, OWNER_ADDRESS,
+        SOVEREIGN_FORGE_CODE_PATH, SOVEREIGN_FORGE_SC_ADDRESS, SOVEREIGN_TOKEN_PREFIX,
+        SOV_ESDT_SAFE_CODE_PATH, TESTING_SC_ADDRESS, TESTING_SC_CODE_PATH,
     },
 };
 
@@ -39,7 +38,7 @@ impl BaseSetup {
             .tx()
             .from(OWNER_ADDRESS)
             .typed(MvxEsdtSafeProxy)
-            .init(opt_config)
+            .init(SOVEREIGN_TOKEN_PREFIX, opt_config)
             .code(MVX_ESDT_SAFE_CODE_PATH)
             .new_address(ESDT_SAFE_ADDRESS)
             .run();
@@ -140,12 +139,15 @@ impl BaseSetup {
         self
     }
 
-    pub fn deploy_sovereign_forge(&mut self) -> &mut Self {
+    pub fn deploy_sovereign_forge(
+        &mut self,
+        deploy_cost: OptionalValue<BigUint<StaticApi>>,
+    ) -> &mut Self {
         self.world
             .tx()
             .from(OWNER_ADDRESS)
             .typed(SovereignForgeProxy)
-            .init(DEPLOY_COST)
+            .init(deploy_cost)
             .code(SOVEREIGN_FORGE_CODE_PATH)
             .new_address(SOVEREIGN_FORGE_SC_ADDRESS)
             .run();
@@ -201,8 +203,10 @@ impl BaseSetup {
 
     pub fn deploy_phase_two(
         &mut self,
+        payment: &BigUint<StaticApi>,
+        native_token: NativeToken<StaticApi>,
+        error_message: Option<&str>,
         opt_config: OptionalValue<EsdtSafeConfig<StaticApi>>,
-        expected_error_message: Option<&str>,
     ) {
         let response = self
             .world
@@ -210,11 +214,12 @@ impl BaseSetup {
             .from(OWNER_ADDRESS)
             .to(SOVEREIGN_FORGE_SC_ADDRESS)
             .typed(SovereignForgeProxy)
-            .deploy_phase_two(opt_config)
+            .deploy_phase_two(native_token, opt_config)
+            .egld(payment)
             .returns(ReturnsHandledOrError::new())
             .run();
 
-        self.assert_expected_error_message(response, expected_error_message);
+        self.assert_expected_error_message(response, error_message);
     }
 
     pub fn deploy_phase_three(

@@ -6,15 +6,15 @@ use common_test_setup::{
     },
 };
 use multiversx_sc::{
-    imports::OptionalValue,
+    imports::{Bech32Address, OptionalValue},
     types::{
-        BigUint, ManagedAddress, ReturnsHandledOrError, ReturnsResultUnmanaged, TestSCAddress,
-        TestTokenIdentifier,
+        BigUint, ManagedAddress, ManagedVec, MultiValueEncoded, ReturnsHandledOrError,
+        ReturnsResult, ReturnsResultUnmanaged, TestSCAddress, TestTokenIdentifier,
     },
 };
-use multiversx_sc_scenario::imports::*;
+use multiversx_sc_scenario::{api::StaticApi, ScenarioTxRun, ScenarioTxWhitebox};
 use proxies::sovereign_forge_proxy::SovereignForgeProxy;
-use sovereign_forge::common::storage::ChainId;
+use sovereign_forge::forge_common::storage::{ChainId, StorageModule};
 use structs::{
     configs::{EsdtSafeConfig, SovereignConfig},
     fee::FeeStruct,
@@ -43,10 +43,23 @@ impl SovereignForgeTestState {
     }
 
     pub fn finish_setup(&mut self) {
-        self.register_chain_factory(0, CHAIN_FACTORY_SC_ADDRESS, None);
-        self.register_chain_factory(1, CHAIN_FACTORY_SC_ADDRESS, None);
-        self.register_chain_factory(2, CHAIN_FACTORY_SC_ADDRESS, None);
-        self.register_chain_factory(3, CHAIN_FACTORY_SC_ADDRESS, None);
+        self.common_setup
+            .world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .to(SOVEREIGN_FORGE_SC_ADDRESS)
+            .whitebox(sovereign_forge::contract_obj, |sc| {
+                sc.chain_factories(0)
+                    .set(CHAIN_FACTORY_SC_ADDRESS.to_managed_address());
+                sc.chain_factories(1)
+                    .set(CHAIN_FACTORY_SC_ADDRESS.to_managed_address());
+                sc.chain_factories(2)
+                    .set(CHAIN_FACTORY_SC_ADDRESS.to_managed_address());
+
+                assert!(!sc.chain_factories(0).is_empty());
+                assert!(!sc.chain_factories(1).is_empty());
+                assert!(!sc.chain_factories(2).is_empty());
+            });
     }
 
     pub fn deploy_template_scs(&mut self, templates: Option<Vec<ScArray>>) {
@@ -190,6 +203,46 @@ impl SovereignForgeTestState {
             .assert_expected_error_message(response, expected_error_message);
     }
 
+    pub fn add_users_to_whitelist(
+        &mut self,
+        users: Vec<ManagedAddress<StaticApi>>,
+        error_message: Option<&str>,
+    ) {
+        let response = self
+            .common_setup
+            .world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .to(SOVEREIGN_FORGE_SC_ADDRESS)
+            .typed(SovereignForgeProxy)
+            .add_users_to_whitelist(MultiValueEncoded::from(ManagedVec::from_iter(users)))
+            .returns(ReturnsHandledOrError::new())
+            .run();
+
+        self.common_setup
+            .assert_expected_error_message(response, error_message);
+    }
+
+    pub fn remove_users_from_whitelist(
+        &mut self,
+        users: Vec<ManagedAddress<StaticApi>>,
+        error_message: Option<&str>,
+    ) {
+        let response = self
+            .common_setup
+            .world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .to(SOVEREIGN_FORGE_SC_ADDRESS)
+            .typed(SovereignForgeProxy)
+            .remove_users_from_whitelist(MultiValueEncoded::from(ManagedVec::from_iter(users)))
+            .returns(ReturnsHandledOrError::new())
+            .run();
+
+        self.common_setup
+            .assert_expected_error_message(response, error_message);
+    }
+
     pub fn get_smart_contract_address_from_sovereign_forge(
         &mut self,
         chain_id: ChainId<StaticApi>,
@@ -226,5 +279,28 @@ impl SovereignForgeTestState {
             .run();
 
         assert_eq!(response, expected_result);
+    }
+
+    pub fn retrieve_deployed_mvx_esdt_safe_address(
+        &mut self,
+        preferred_chain_id: ChainId<StaticApi>,
+    ) -> Bech32Address {
+        let sc_addresses = self
+            .common_setup
+            .world
+            .query()
+            .to(SOVEREIGN_FORGE_SC_ADDRESS)
+            .typed(SovereignForgeProxy)
+            .sovereign_deployed_contracts(preferred_chain_id)
+            .returns(ReturnsResult)
+            .run();
+
+        for contract in sc_addresses {
+            let address = Bech32Address::from(contract.address.to_address());
+            if contract.id == ScArray::ESDTSafe {
+                return address;
+            }
+        }
+        Bech32Address::zero_default_hrp()
     }
 }

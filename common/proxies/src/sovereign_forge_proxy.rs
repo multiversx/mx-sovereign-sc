@@ -44,15 +44,15 @@ where
     Gas: TxGas<Env>,
 {
     pub fn init<
-        Arg0: ProxyArg<BigUint<Env::Api>>,
+        Arg0: ProxyArg<OptionalValue<BigUint<Env::Api>>>,
     >(
         self,
-        deploy_cost: Arg0,
+        opt_deploy_cost: Arg0,
     ) -> TxTypedDeploy<Env, From, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_deploy()
-            .argument(&deploy_cost)
+            .argument(&opt_deploy_cost)
             .original_result()
     }
 }
@@ -117,14 +117,16 @@ where
     }
 
     pub fn deploy_phase_two<
-        Arg0: ProxyArg<OptionalValue<structs::configs::EsdtSafeConfig<Env::Api>>>,
+        Arg0: ProxyArg<structs::forge::NativeToken<Env::Api>>,
+        Arg1: ProxyArg<OptionalValue<structs::configs::EsdtSafeConfig<Env::Api>>>,
     >(
         self,
-        opt_config: Arg0,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        native_token: Arg0,
+        opt_config: Arg1,
+    ) -> TxTypedCall<Env, From, To, (), Gas, ()> {
         self.wrapped_tx
-            .payment(NotPayable)
             .raw_call("deployPhaseTwo")
+            .argument(&native_token)
             .argument(&opt_config)
             .original_result()
     }
@@ -266,6 +268,32 @@ where
             .payment(NotPayable)
             .raw_call("removeFee")
             .argument(&token_id)
+            .original_result()
+    }
+
+    pub fn add_users_to_whitelist<
+        Arg0: ProxyArg<MultiValueEncoded<Env::Api, ManagedAddress<Env::Api>>>,
+    >(
+        self,
+        users: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("addUsersToWhitelist")
+            .argument(&users)
+            .original_result()
+    }
+
+    pub fn remove_users_from_whitelist<
+        Arg0: ProxyArg<MultiValueEncoded<Env::Api, ManagedAddress<Env::Api>>>,
+    >(
+        self,
+        users: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("removeUsersFromWhitelist")
+            .argument(&users)
             .original_result()
     }
 }

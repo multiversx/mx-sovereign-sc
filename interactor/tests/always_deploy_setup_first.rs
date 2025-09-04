@@ -18,7 +18,7 @@ async fn test_deploy_setup() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config(None)).await;
     chain_interactor
         .deploy_and_complete_setup_phase(
-            DEPLOY_COST.into(),
+            OptionalValue::Some(DEPLOY_COST.into()),
             OptionalValue::None,
             OptionalValue::None,
         )

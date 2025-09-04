@@ -42,3 +42,8 @@ path = "../../sovereign-forge"
 
 [dependencies.error-messages]
 path = "../error-messages"
+
+[dependencies]
+rand_core = "0.6.4"
+rand = "0.8.5"
+hex = "0.4.3"

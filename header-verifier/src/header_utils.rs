@@ -1,5 +1,5 @@
 use error_messages::{
-    BLS_KEY_NOT_REGISTERED, CALLER_NOT_FROM_CURRENT_SOVEREIGN, CHAIN_CONFIG_NOT_DEPLOYED,
+    BLS_KEY_NOT_REGISTERED, CHAIN_CONFIG_NOT_DEPLOYED, HASH_OF_HASHES_DOES_NOT_MATCH,
 };
 use structs::forge::ScArray;
 
@@ -22,12 +22,13 @@ pub trait HeaderVerifierUtilsModule:
     + checks::HeaderVerifierChecksModule
     + custom_events::CustomEventsModule
     + setup_phase::SetupPhaseModule
+    + common_utils::CommonUtilsModule
 {
     fn calculate_and_check_transfers_hashes(
         &self,
         transfers_hash: &ManagedBuffer,
         transfers_data: MultiValueEncoded<ManagedBuffer>,
-    ) {
+    ) -> Option<ManagedBuffer> {
         let mut transfers_hashes = ManagedBuffer::new();
         for transfer in transfers_data {
             transfers_hashes.append(&transfer);
@@ -36,7 +37,11 @@ pub trait HeaderVerifierUtilsModule:
         let hash_of_hashes_sha256 = self.crypto().sha256(&transfers_hashes);
         let hash_of_hashes = hash_of_hashes_sha256.as_managed_buffer();
 
-        self.require_matching_hash_of_hashes(transfers_hash, hash_of_hashes);
+        if !self.are_hash_of_hashes_matching(transfers_hash, hash_of_hashes) {
+            return Some(HASH_OF_HASHES_DOES_NOT_MATCH.into());
+        }
+
+        None
     }
 
     fn get_chain_config_address(&self) -> ManagedAddress {
@@ -97,7 +102,7 @@ pub trait HeaderVerifierUtilsModule:
         _bridge_operations_hash: &ManagedBuffer,
         bls_keys_bitmap: ManagedBuffer,
         bls_pub_keys: &ManagedVec<ManagedBuffer>,
-    ) {
+    ) -> Option<ManagedBuffer> {
         let _approving_validators =
             self.get_approving_validators(epoch, &bls_keys_bitmap, bls_pub_keys.len());
 
@@ -106,15 +111,14 @@ pub trait HeaderVerifierUtilsModule:
         //     bridge_operations_hash,
         //     signature,
         // );
+
+        None
     }
 
-    fn require_caller_is_from_current_sovereign(&self) {
+    fn is_caller_from_current_sovereign(&self) -> bool {
         let caller = self.blockchain().get_caller();
-        require!(
-            self.sovereign_contracts()
-                .iter()
-                .any(|sc| sc.address == caller),
-            CALLER_NOT_FROM_CURRENT_SOVEREIGN
-        );
+        self.sovereign_contracts()
+            .iter()
+            .any(|sc| sc.address == caller)
     }
 }

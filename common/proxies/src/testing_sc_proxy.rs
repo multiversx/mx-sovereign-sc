@@ -94,7 +94,7 @@ where
     }
 
     pub fn send_tokens<
-        Arg0: ProxyArg<TokenIdentifier<Env::Api>>,
+        Arg0: ProxyArg<EgldOrEsdtTokenIdentifier<Env::Api>>,
         Arg1: ProxyArg<u64>,
         Arg2: ProxyArg<BigUint<Env::Api>>,
     >(

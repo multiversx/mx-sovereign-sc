@@ -124,14 +124,19 @@ where
     }
 
     pub fn deploy_mvx_esdt_safe<
-        Arg0: ProxyArg<OptionalValue<structs::configs::EsdtSafeConfig<Env::Api>>>,
+        Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
+        Arg1: ProxyArg<structs::forge::NativeToken<Env::Api>>,
+        Arg2: ProxyArg<OptionalValue<structs::configs::EsdtSafeConfig<Env::Api>>>,
     >(
         self,
-        opt_config: Arg0,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ManagedAddress<Env::Api>> {
+        sov_token_prefix: Arg0,
+        native_token: Arg1,
+        opt_config: Arg2,
+    ) -> TxTypedCall<Env, From, To, (), Gas, ManagedAddress<Env::Api>> {
         self.wrapped_tx
-            .payment(NotPayable)
             .raw_call("deployEsdtSafe")
+            .argument(&sov_token_prefix)
+            .argument(&native_token)
             .argument(&opt_config)
             .original_result()
     }
@@ -261,6 +266,38 @@ where
             .raw_call("removeFee")
             .argument(&fee_market_address)
             .argument(&token_id)
+            .original_result()
+    }
+
+    pub fn add_users_to_whitelist<
+        Arg0: ProxyArg<ManagedAddress<Env::Api>>,
+        Arg1: ProxyArg<MultiValueEncoded<Env::Api, ManagedAddress<Env::Api>>>,
+    >(
+        self,
+        fee_market_address: Arg0,
+        users: Arg1,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("addUsersToWhitelistSetupPhase")
+            .argument(&fee_market_address)
+            .argument(&users)
+            .original_result()
+    }
+
+    pub fn remove_users_from_whitelist<
+        Arg0: ProxyArg<ManagedAddress<Env::Api>>,
+        Arg1: ProxyArg<MultiValueEncoded<Env::Api, ManagedAddress<Env::Api>>>,
+    >(
+        self,
+        fee_market_address: Arg0,
+        users: Arg1,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("removeUsersFromWhitelistSetupPhase")
+            .argument(&fee_market_address)
+            .argument(&users)
             .original_result()
     }
 

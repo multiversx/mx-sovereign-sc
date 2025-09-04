@@ -1,0 +1,41 @@
+[package]
+name = "sov-fee-market"
+version = "0.1.0"
+authors = ["you"]
+edition = "2021"
+publish = false
+
+[lib]
+path = "src/lib.rs"
+
+[dependencies.multiversx-sc]
+git = "https://github.com/multiversx/mx-sdk-rs"
+rev = "b59411841984a2fcbf76498d29bc131f2d433af9"
+
+[dependencies.common-utils]
+path = "../common/common-utils"
+
+[dependencies.proxies]
+path = "../common/proxies"
+
+[dependencies.structs]
+path = "../common/structs"
+
+[dependencies.error-messages]
+path = "../common/error-messages"
+
+[dependencies.custom-events]
+path = "../common/custom-events"
+
+[dependencies.fee-common]
+path = "../common/fee-common"
+
+[dev-dependencies]
+num-bigint = "0.4.2"
+
+[dev-dependencies.multiversx-sc-scenario]
+git = "https://github.com/multiversx/mx-sdk-rs"
+rev = "b59411841984a2fcbf76498d29bc131f2d433af9"
+
+[dev-dependencies.common-test-setup]
+path = "../common/common-test-setup"

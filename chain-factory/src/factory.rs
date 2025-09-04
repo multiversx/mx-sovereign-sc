@@ -7,7 +7,7 @@ use proxies::{
 use structs::{
     configs::{EsdtSafeConfig, SovereignConfig},
     fee::FeeStruct,
-    forge::ContractInfo,
+    forge::{ContractInfo, NativeToken},
 };
 multiversx_sc::derive_imports!();
 
@@ -51,23 +51,36 @@ pub trait FactoryModule: only_admin::OnlyAdminModule {
             .sync_call()
     }
 
+    #[payable("EGLD")]
     #[only_admin]
     #[endpoint(deployEsdtSafe)]
     fn deploy_mvx_esdt_safe(
         &self,
+        sov_token_prefix: ManagedBuffer,
+        native_token: NativeToken<Self::Api>,
         opt_config: OptionalValue<EsdtSafeConfig<Self::Api>>,
     ) -> ManagedAddress {
         let source_address = self.mvx_esdt_safe_template().get();
         let metadata = self.blockchain().get_code_metadata(&source_address);
 
-        self.tx()
+        let mvx_esdt_safe_address = self
+            .tx()
             .typed(MvxEsdtSafeProxy)
-            .init(opt_config)
+            .init(sov_token_prefix, opt_config)
             .gas(self.blockchain().get_gas_left())
             .from_source(source_address)
             .code_metadata(metadata)
             .returns(ReturnsNewManagedAddress)
-            .sync_call()
+            .sync_call();
+
+        self.tx()
+            .to(&mvx_esdt_safe_address)
+            .typed(MvxEsdtSafeProxy)
+            .register_native_token(native_token)
+            .egld(self.call_value().egld().clone())
+            .sync_call();
+
+        mvx_esdt_safe_address
     }
 
     #[only_admin]

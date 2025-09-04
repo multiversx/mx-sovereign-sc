@@ -2,23 +2,21 @@
 // use common_interactor::interactor_config::Config;
 // use common_interactor::interactor_helpers::InteractorHelpers;
 // use common_interactor::interactor_structs::BalanceCheckConfig;
-// use common_test_setup::base_setup::init::RegisterTokenArgs;
+// use common_test_setup::base_setup::helpers::BLSKey;
 // use common_test_setup::constants::{
-//     CROWD_TOKEN_ID, DEPLOY_COST, DEPOSIT_LOG, EXECUTED_BRIDGE_LOG, FIRST_TEST_TOKEN, GAS_LIMIT,
-//     ISSUE_COST, MVX_TO_SOV_TOKEN_STORAGE_KEY, NATIVE_TOKEN_STORAGE_KEY, ONE_HUNDRED_TOKENS,
-//     ONE_THOUSAND_TOKENS, OPERATION_HASH_STATUS_STORAGE_KEY, PER_GAS, PER_TRANSFER,
-//     PREFERRED_CHAIN_IDS, SC_CALL_LOG, SHARD_0, SOVEREIGN_RECEIVER_ADDRESS, SOV_TOKEN,
-//     SOV_TO_MVX_TOKEN_STORAGE_KEY, TEN_TOKENS, TESTING_SC_ENDPOINT, TOKEN_TICKER,
-//     WRONG_ENDPOINT_NAME,
+//     CROWD_TOKEN_ID, DEPOSIT_EVENT, FIRST_TEST_TOKEN, ISSUE_COST, MVX_TO_SOV_TOKEN_STORAGE_KEY,
+//     NATIVE_TOKEN_STORAGE_KEY, ONE_HUNDRED_TOKENS, ONE_THOUSAND_TOKENS,
+//     OPERATION_HASH_STATUS_STORAGE_KEY, SC_CALL_EVENT, SOV_TOKEN, SOV_TO_MVX_TOKEN_STORAGE_KEY,
+//     TEN_TOKENS, TOKEN_TICKER, WRONG_ENDPOINT_NAME,
 // };
 // use cross_chain::MAX_GAS_PER_TRANSACTION;
 // use error_messages::{
-//     BANNED_ENDPOINT_NAME, CANNOT_REGISTER_TOKEN, CURRENT_OPERATION_NOT_REGISTERED,
-//     DEPOSIT_OVER_MAX_AMOUNT, ERR_EMPTY_PAYMENTS, GAS_LIMIT_TOO_HIGH, INVALID_TYPE,
-//     MAX_GAS_LIMIT_PER_TX_EXCEEDED, NATIVE_TOKEN_ALREADY_REGISTERED, NOTHING_TO_TRANSFER,
-//     PAYMENT_DOES_NOT_COVER_FEE, TOO_MANY_TOKENS,
+//     BANNED_ENDPOINT_NAME, CANNOT_REGISTER_TOKEN, DEPOSIT_OVER_MAX_AMOUNT, ERR_EMPTY_PAYMENTS,
+//     GAS_LIMIT_TOO_HIGH, INVALID_TYPE, MAX_GAS_LIMIT_PER_TX_EXCEEDED,
+//     NATIVE_TOKEN_ALREADY_REGISTERED, NOTHING_TO_TRANSFER, PAYMENT_DOES_NOT_COVER_FEE,
+//     TOO_MANY_TOKENS,
 // };
-// use header_verifier::utils::OperationHashStatus;
+// use header_verifier::header_utils::OperationHashStatus;
 // use multiversx_sc_snippets::multiversx_sc_scenario::multiversx_chain_vm::crypto_functions::sha256;
 // use multiversx_sc_snippets::{hex, imports::*};
 // use rust_interact::mvx_esdt_safe::mvx_esdt_safe_interactor_main::MvxEsdtSafeInteract;
@@ -30,6 +28,7 @@
 // use structs::forge::ScArray;
 // use structs::generate_hash::GenerateHash;
 // use structs::operation::{Operation, OperationData, OperationEsdtPayment, TransferData};
+// use structs::RegisterTokenOperation;
 
 // /// ### TEST
 // /// M-ESDT_DEPLOY_FAIL
@@ -41,7 +40,7 @@
 // /// Error 'failedBridgeOp' log
 // #[tokio::test]
 // #[serial]
-// #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
+// #[ignore]
 // async fn test_update_invalid_config() {
 //     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
 //     let shard = SHARD_0;
@@ -98,7 +97,7 @@
 // /// Error CANNOT_REGISTER_TOKEN
 // #[tokio::test]
 // #[serial]
-// #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
+// #[ignore = "will be fixed in cross shard pr"]
 // async fn test_register_token_invalid_type_token_no_prefix() {
 //     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
 //     let shard = SHARD_0;
@@ -113,24 +112,28 @@
 //         )
 //         .await;
 
-//     let sov_token_id = TokenIdentifier::from_esdt_bytes(FIRST_TEST_TOKEN.as_str());
+//     let sov_token_id = EgldOrEsdtTokenIdentifier::esdt(FIRST_TEST_TOKEN.as_str());
 //     let token_type = EsdtTokenType::Invalid;
 //     let token_display_name = "SOVEREIGN";
 //     let num_decimals = 18;
 //     let token_ticker = TOKEN_TICKER;
-//     let egld_payment = BigUint::from(ISSUE_COST);
 
 //     chain_interactor
 //         .register_token(
 //             SHARD_0,
-//             RegisterTokenArgs {
-//                 sov_token_id,
+//             RegisterTokenOperation {
+//                 token_id: sov_token_id,
+//                 token_nonce: 0u64,
 //                 token_type,
-//                 token_display_name,
-//                 token_ticker,
+//                 token_display_name: token_display_name.into(),
+//                 token_ticker: token_ticker.into(),
 //                 num_decimals,
+//                 data: OperationData::new(
+//                     0u64,
+//                     ManagedAddress::from_address(&chain_interactor.user_address),
+//                     None,
+//                 ),
 //             },
-//             egld_payment,
 //             Some(CANNOT_REGISTER_TOKEN),
 //         )
 //         .await;
@@ -159,7 +162,7 @@
 // /// Error CANNOT_REGISTER_TOKEN
 // #[tokio::test]
 // #[serial]
-// #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
+// #[ignore = "will be fixed in cross shard pr"]
 // async fn test_register_token_invalid_type_token_with_prefix() {
 //     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
 //     let shard = SHARD_0;
@@ -174,24 +177,28 @@
 //         )
 //         .await;
 
-//     let sov_token_id = TokenIdentifier::from_esdt_bytes(SOV_TOKEN.as_str());
+//     let sov_token_id = EgldOrEsdtTokenIdentifier::from(SOV_TOKEN.as_str());
 //     let token_type = EsdtTokenType::Invalid;
 //     let token_display_name = "SOVEREIGN";
 //     let num_decimals = 18;
 //     let token_ticker = TOKEN_TICKER;
-//     let egld_payment = BigUint::from(ISSUE_COST);
 
 //     chain_interactor
 //         .register_token(
 //             shard,
-//             RegisterTokenArgs {
-//                 sov_token_id,
+//             RegisterTokenOperation {
+//                 token_id: sov_token_id,
+//                 token_nonce: 0u64,
 //                 token_type,
-//                 token_display_name,
-//                 token_ticker,
+//                 token_display_name: token_display_name.into(),
+//                 token_ticker: token_ticker.into(),
 //                 num_decimals,
+//                 data: OperationData::new(
+//                     0u64,
+//                     ManagedAddress::from_address(&chain_interactor.user_address),
+//                     None,
+//                 ),
 //             },
-//             egld_payment,
 //             Some(INVALID_TYPE),
 //         )
 //         .await;
@@ -212,7 +219,7 @@
 
 // #[tokio::test]
 // #[serial]
-// #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
+// #[ignore]
 // async fn test_deposit_max_bridged_amount_exceeded() {
 //     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
 //     let shard = SHARD_0;
@@ -238,7 +245,7 @@
 //         )
 //         .await;
 
-//     let esdt_token_payment = EsdtTokenPayment::<StaticApi>::new(
+//     let esdt_token_payment = EgldOrEsdtTokenPayment::<StaticApi>::new(
 //         chain_interactor.state.get_first_token_identifier(),
 //         0,
 //         BigUint::from(ONE_HUNDRED_TOKENS),
@@ -271,7 +278,7 @@
 // /// Error NOTHING_TO_TRANSFER
 // #[tokio::test]
 // #[serial]
-// #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
+// #[ignore]
 // async fn test_deposit_nothing_to_transfer() {
 //     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
 //     let shard = SHARD_0;
@@ -311,7 +318,7 @@
 // /// Error TOO_MANY_TOKENS
 // #[tokio::test]
 // #[serial]
-// #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
+// #[ignore]
 // async fn test_deposit_too_many_tokens_no_fee() {
 //     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
 //     let shard = SHARD_0;
@@ -326,7 +333,7 @@
 //         )
 //         .await;
 
-//     let esdt_token_payment = EsdtTokenPayment::<StaticApi>::new(
+//     let esdt_token_payment = EgldOrEsdtTokenPayment::<StaticApi>::new(
 //         chain_interactor.state.get_first_token_identifier(),
 //         0,
 //         BigUint::from(1u64),
@@ -359,7 +366,7 @@
 // /// The deposit is successful
 // #[tokio::test]
 // #[serial]
-// #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
+// #[ignore]
 // async fn test_deposit_no_transfer_data() {
 //     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
 //     let shard = SHARD_0;
@@ -374,7 +381,7 @@
 //         )
 //         .await;
 
-//     let esdt_token_payment_one = EsdtTokenPayment::<StaticApi>::new(
+//     let esdt_token_payment_one = EgldOrEsdtTokenPayment::<StaticApi>::new(
 //         chain_interactor.state.get_first_token_identifier(),
 //         0,
 //         BigUint::from(ONE_HUNDRED_TOKENS),
@@ -389,7 +396,7 @@
 //             OptionalValue::None,
 //             payments_vec,
 //             None,
-//             Some(DEPOSIT_LOG),
+//             Some(DEPOSIT_EVENT),
 //         )
 //         .await;
 
@@ -415,7 +422,7 @@
 // /// Error GAS_LIMIT_TOO_HIGH
 // #[tokio::test]
 // #[serial]
-// #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
+// #[ignore]
 // async fn test_deposit_gas_limit_too_high_no_fee() {
 //     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
 //     let shard = SHARD_0;
@@ -439,7 +446,7 @@
 
 //     chain_interactor.deploy_testing_sc().await;
 
-//     let esdt_token_payment_one = EsdtTokenPayment::<StaticApi>::new(
+//     let esdt_token_payment_one = EgldOrEsdtTokenPayment::<StaticApi>::new(
 //         chain_interactor.state.get_first_token_identifier(),
 //         0,
 //         BigUint::from(ONE_HUNDRED_TOKENS),
@@ -480,7 +487,7 @@
 // /// Error BANNED_ENDPOINT_NAME
 // #[tokio::test]
 // #[serial]
-// #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
+// #[ignore]
 // async fn test_deposit_endpoint_banned_no_fee() {
 //     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
 //     let shard = SHARD_0;
@@ -504,7 +511,7 @@
 
 //     chain_interactor.deploy_testing_sc().await;
 
-//     let esdt_token_payment_one = EsdtTokenPayment::<StaticApi>::new(
+//     let esdt_token_payment_one = EgldOrEsdtTokenPayment::<StaticApi>::new(
 //         chain_interactor.state.get_first_token_identifier(),
 //         0,
 //         BigUint::from(ONE_HUNDRED_TOKENS),
@@ -545,7 +552,7 @@
 // /// USER's balance is updated
 // #[tokio::test]
 // #[serial]
-// #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
+// #[ignore]
 // async fn test_deposit_fee_enabled() {
 //     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
 //     let shard = SHARD_0;
@@ -574,15 +581,17 @@
 
 //     chain_interactor.deploy_testing_sc().await;
 
+
+//     let fee_payment = EgldOrEsdtTokenPayment::<StaticApi>::new(fee_token, 0, fee_amount);
 //     let fee_amount = BigUint::from(PER_TRANSFER) + (BigUint::from(GAS_LIMIT) * per_gas);
 
-//     let fee_payment = EsdtTokenPayment::<StaticApi>::new(
+//     let fee_payment = EgldOrEsdtTokenPayment::<StaticApi>::new(
 //         chain_interactor.state.get_fee_token_identifier(),
 //         0,
 //         fee_amount.clone(),
 //     );
 
-//     let esdt_token_payment_one = EsdtTokenPayment::<StaticApi>::new(
+//     let esdt_token_payment_one = EgldOrEsdtTokenPayment::<StaticApi>::new(
 //         chain_interactor.state.get_first_token_identifier(),
 //         0,
 //         BigUint::from(ONE_HUNDRED_TOKENS),
@@ -604,18 +613,39 @@
 //             OptionalValue::Some(transfer_data),
 //             payments_vec.clone(),
 //             None,
-//             Some(
-//                 &chain_interactor
-//                     .state
-//                     .get_first_token_identifier()
-//                     .to_string(),
-//             ),
+//             Some(DEPOSIT_EVENT),
 //         )
 //         .await;
 
-//     let first_token = chain_interactor.state.get_first_token_id();
+//     let expected_mvx_esdt_safe_tokens = vec![
+//         chain_interactor.hundred_tokens(chain_interactor.state.get_first_token_id()),
+//         chain_interactor.hundred_tokens(chain_interactor.state.get_second_token_id()),
+//     ];
+//     chain_interactor
+//         .check_address_balance(
+//             &chain_interactor
+//                 .state
+//                 .current_mvx_esdt_safe_contract_address()
+//                 .clone(),
+//             expected_mvx_esdt_safe_tokens,
+//         )
+//         .await;
 
-//     println!("Fee amount: {}", fee_amount.to_display());
+//     let expected_fee_market_token_amount =
+//         BigUint::from(gas_limit) + BigUint::from(payments_vec.len() - 1) * per_transfer.clone();
+
+//     let expected_fee_market_tokens = vec![
+//         (chain_interactor.custom_amount_tokens(
+//             chain_interactor.state.get_fee_token_id(),
+//             expected_fee_market_token_amount.clone(),
+//         )),
+//     ];
+//     chain_interactor
+//         .check_address_balance(
+//             &chain_interactor.state.current_fee_market_address().clone(),
+//             expected_fee_market_tokens,
+//         )
+//         .await;
 
 //     let balance_config = BalanceCheckConfig::new()
 //         .shard(shard)
@@ -639,7 +669,7 @@
 // /// Error ERR_EMPTY_PAYMENTS
 // #[tokio::test]
 // #[serial]
-// #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
+// #[ignore]
 // async fn test_deposit_transfer_data_only_with_fee_nothing_to_transfer() {
 //     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
 //     let shard = SHARD_0;
@@ -706,7 +736,7 @@
 // /// The endpoint is called in the testing smart contract
 // #[tokio::test]
 // #[serial]
-// #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
+// #[ignore]
 // async fn test_deposit_only_transfer_data_no_fee() {
 //     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
 //     let shard = SHARD_0;
@@ -745,7 +775,7 @@
 //             OptionalValue::Some(transfer_data),
 //             ManagedVec::new(),
 //             None,
-//             Some(SC_CALL_LOG),
+//             Some(SC_CALL_EVENT),
 //         )
 //         .await;
 
@@ -763,7 +793,7 @@
 // /// Error PAYMENT_DOES_NOT_COVER_FEE
 // #[tokio::test]
 // #[serial]
-// #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
+// #[ignore]
 // async fn test_deposit_payment_does_not_cover_fee() {
 //     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
 //     let shard = SHARD_0;
@@ -797,13 +827,19 @@
 //         )
 //         .await;
 
-//     let esdt_token_payment_one = EsdtTokenPayment::<StaticApi>::new(
-//         chain_interactor.state.get_first_token_identifier(),
+//     let esdt_token_payment_one = EgldOrEsdtTokenPayment::<StaticApi>::new(
+//         chain_interactor.state.get_first_token_id(),
 //         0,
 //         BigUint::from(ONE_HUNDRED_TOKENS),
 //     );
 
-//     let fee_payment = EsdtTokenPayment::<StaticApi>::new(
+//     let esdt_token_payment_two = EgldOrEsdtTokenPayment::<StaticApi>::new(
+//         chain_interactor.state.get_second_token_id(),
+//         0,
+//         BigUint::from(ONE_HUNDRED_TOKENS),
+//     );
+
+//     let fee_payment = EgldOrEsdtTokenPayment::<StaticApi>::new(
 //         chain_interactor.state.get_fee_token_identifier(),
 //         0,
 //         BigUint::from(1u64),
@@ -836,14 +872,14 @@
 
 // #[tokio::test]
 // #[serial]
-// #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
+// #[ignore]
 // async fn test_deposit_refund() {
 //     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
 //     let shard = SHARD_0;
 //     let user_address = chain_interactor.user_address().clone();
 
 //     let config = EsdtSafeConfig::new(
-//         ManagedVec::from(vec![TokenIdentifier::from(CROWD_TOKEN_ID)]),
+//         ManagedVec::from(vec![EgldOrEsdtTokenIdentifier::esdt(CROWD_TOKEN_ID)]),
 //         ManagedVec::new(),
 //         50_000_000,
 //         ManagedVec::new(),
@@ -875,13 +911,13 @@
 //     let fee_amount = BigUint::from(ONE_THOUSAND_TOKENS);
 
 //     let fee_payment = EsdtTokenPayment::<StaticApi>::new(
-//         chain_interactor.state.get_fee_token_identifier(),
+//         chain_interactor.state.get_fee_token_identifier().unwrap_esdt(),
 //         0,
 //         fee_amount.clone(),
 //     );
 
 //     let esdt_token_payment_one = EsdtTokenPayment::<StaticApi>::new(
-//         chain_interactor.state.get_first_token_identifier(),
+//         chain_interactor.state.get_first_token_identifier().unwrap_esdt(),
 //         0,
 //         BigUint::from(ONE_THOUSAND_TOKENS),
 //     );
@@ -904,12 +940,7 @@
 //             OptionalValue::Some(transfer_data),
 //             payments_vec.clone(),
 //             None,
-//             Some(
-//                 &chain_interactor
-//                     .state
-//                     .get_first_token_identifier()
-//                     .to_string(),
-//             ),
+//             Some(DEPOSIT_EVENT),
 //         )
 //         .await;
 
@@ -940,18 +971,22 @@
 // /// The token is registered
 // #[tokio::test]
 // #[serial]
-// #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
+// #[ignore = "will be fixed in cross shard pr"]
 // async fn test_register_native_token() {
 //     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
 //     let shard = SHARD_0;
 
-//     chain_interactor
+//     let mvx_address = chain_interactor
 //         .deploy_mvx_esdt_safe(
 //             chain_interactor.get_bridge_owner_for_shard(shard).clone(),
 //             PREFERRED_CHAIN_IDS[0].to_string(),
 //             OptionalValue::None,
 //         )
 //         .await;
+
+//     chain_interactor
+//         .state()
+//         .set_mvx_esdt_safe_contract_address(mvx_address.clone());
 
 //     let token_display_name = "SOVEREIGN";
 //     let token_ticker = TOKEN_TICKER;
@@ -987,18 +1022,22 @@
 // /// The token is registered
 // #[tokio::test]
 // #[serial]
-// #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
+// #[ignore = "will be fixed in cross shard pr"]
 // async fn test_register_native_token_twice() {
 //     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
 //     let shard = SHARD_0;
 
-//     chain_interactor
+//     let mvx_address = chain_interactor
 //         .deploy_mvx_esdt_safe(
 //             chain_interactor.get_bridge_owner_for_shard(shard).clone(),
 //             PREFERRED_CHAIN_IDS[0].to_string(),
 //             OptionalValue::None,
 //         )
 //         .await;
+
+//     chain_interactor
+//         .state()
+//         .set_mvx_esdt_safe_contract_address(mvx_address.clone());
 
 //     let token_display_name = "SOVEREIGN";
 //     let token_ticker = TOKEN_TICKER;
@@ -1043,31 +1082,37 @@
 // /// The token is registered
 // #[tokio::test]
 // #[serial]
-// #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
+// #[ignore = "will be fixed in cross shard pr"]
 // async fn test_register_token_fungible_token() {
 //     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
 //     let shard = SHARD_0;
 
-//     chain_interactor
+//     let chain_config_address = chain_interactor
 //         .deploy_chain_config(
 //             chain_interactor.get_bridge_owner_for_shard(shard).clone(),
 //             PREFERRED_CHAIN_IDS[0].to_string(),
 //             OptionalValue::None,
 //         )
 //         .await;
+//     chain_interactor
+//         .state()
+//         .set_chain_config_sc_address(chain_config_address);
 
 //     let contracts_array =
 //         chain_interactor.get_contract_info_struct_for_sc_type(vec![ScArray::ChainConfig]);
 
-//     chain_interactor
+//     let header_verifier_address = chain_interactor
 //         .deploy_header_verifier(
 //             chain_interactor.get_bridge_owner_for_shard(shard).clone(),
 //             PREFERRED_CHAIN_IDS[0].to_string(),
 //             contracts_array,
 //         )
 //         .await;
-
 //     chain_interactor
+//         .state()
+//         .set_header_verifier_address(header_verifier_address);
+
+//     let mvx_address = chain_interactor
 //         .deploy_mvx_esdt_safe(
 //             chain_interactor.get_bridge_owner_for_shard(shard).clone(),
 //             PREFERRED_CHAIN_IDS[0].to_string(),
@@ -1075,24 +1120,38 @@
 //         )
 //         .await;
 
-//     let sov_token_id = TokenIdentifier::from_esdt_bytes(SOV_TOKEN.as_str());
+//     chain_interactor
+//         .state()
+//         .set_mvx_esdt_safe_contract_address(mvx_address.clone());
+
+//     let fee_market_address = chain_interactor.deploy_fee_market(mvx_address, None).await;
+
+//     chain_interactor
+//         .state()
+//         .set_fee_market_address(fee_market_address);
+
+//     let sov_token_id = EgldOrEsdtTokenIdentifier::from(SOV_TOKEN.as_str());
 //     let token_type = EsdtTokenType::Fungible;
 //     let token_display_name = "GREEN";
 //     let num_decimals = 18;
 //     let token_ticker = TOKEN_TICKER;
-//     let egld_payment = BigUint::from(ISSUE_COST);
 
 //     chain_interactor
 //         .register_token(
 //             SHARD_0,
-//             RegisterTokenArgs {
-//                 sov_token_id,
+//             RegisterTokenOperation {
+//                 token_id: sov_token_id,
+//                 token_nonce: 0u64,
 //                 token_type,
-//                 token_display_name,
-//                 token_ticker,
+//                 token_display_name: token_display_name.into(),
+//                 token_ticker: token_ticker.into(),
 //                 num_decimals,
+//                 data: OperationData::new(
+//                     0u64,
+//                     ManagedAddress::from_address(&chain_interactor.user_address),
+//                     None,
+//                 ),
 //             },
-//             egld_payment,
 //             None,
 //         )
 //         .await;
@@ -1123,29 +1182,45 @@
 // /// The token is registered
 // #[tokio::test]
 // #[serial]
-// #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
+// #[ignore = "will be fixed in cross shard pr"]
 // async fn test_register_token_non_fungible_token() {
 //     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
 //     let shard = SHARD_0;
 
-//     chain_interactor
+//     let chain_config_address = chain_interactor
 //         .deploy_chain_config(
 //             chain_interactor.get_bridge_owner_for_shard(shard).clone(),
 //             PREFERRED_CHAIN_IDS[0].to_string(),
 //             OptionalValue::None,
 //         )
 //         .await;
+//     chain_interactor
+//         .state()
+//         .set_chain_config_sc_address(chain_config_address);
 
-//     let contracts_array =
-//         chain_interactor.get_contract_info_struct_for_sc_type(vec![ScArray::ChainConfig]);
+//     let mvx_address = chain_interactor
+//         .deploy_mvx_esdt_safe(OptionalValue::Some(EsdtSafeConfig::default_config()))
+//         .await;
 
 //     chain_interactor
+//         .state()
+//         .set_mvx_esdt_safe_contract_address(mvx_address.clone());
+
+//     let contracts_array = chain_interactor
+//         .get_contract_info_struct_for_sc_type(vec![ScArray::ChainConfig, ScArray::ESDTSafe]);
+
+//     let header_verifier_address = chain_interactor
 //         .deploy_header_verifier(
 //             chain_interactor.get_bridge_owner_for_shard(shard).clone(),
 //             PREFERRED_CHAIN_IDS[0].to_string(),
 //             contracts_array,
 //         )
 //         .await;
+//     chain_interactor
+//         .state()
+//         .set_header_verifier_address(header_verifier_address);
+
+//     let fee_market_address = chain_interactor.deploy_fee_market(mvx_address, None).await;
 
 //     chain_interactor
 //         .deploy_mvx_esdt_safe(
@@ -1155,24 +1230,28 @@
 //         )
 //         .await;
 
-//     let sov_token_id = TokenIdentifier::from_esdt_bytes(SOV_TOKEN.as_str());
+//     let sov_token_id = EgldOrEsdtTokenIdentifier::from(SOV_TOKEN.as_str());
 //     let token_type = EsdtTokenType::NonFungible;
 //     let token_display_name = "SOVEREIGN";
 //     let num_decimals = 18;
 //     let token_ticker = TOKEN_TICKER;
-//     let egld_payment = BigUint::from(ISSUE_COST);
 
 //     chain_interactor
 //         .register_token(
 //             SHARD_0,
-//             RegisterTokenArgs {
-//                 sov_token_id,
+//             RegisterTokenOperation {
+//                 token_id: sov_token_id,
+//                 token_nonce: 0u64,
 //                 token_type,
-//                 token_display_name,
-//                 token_ticker,
+//                 token_display_name: token_display_name.into(),
+//                 token_ticker: token_ticker.into(),
 //                 num_decimals,
+//                 data: OperationData::new(
+//                     0u64,
+//                     ManagedAddress::from_address(&chain_interactor.user_address),
+//                     None,
+//                 ),
 //             },
-//             egld_payment,
 //             None,
 //         )
 //         .await;
@@ -1203,31 +1282,37 @@
 // /// The token is registered
 // #[tokio::test]
 // #[serial]
-// #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
+// #[ignore = "will be fixed in cross shard pr"]
 // async fn test_register_token_dynamic_non_fungible_token() {
 //     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
 //     let shard = SHARD_0;
 
-//     chain_interactor
+//     let chain_config_address = chain_interactor
 //         .deploy_chain_config(
 //             chain_interactor.get_bridge_owner_for_shard(shard).clone(),
 //             PREFERRED_CHAIN_IDS[0].to_string(),
 //             OptionalValue::None,
 //         )
 //         .await;
+//     chain_interactor
+//         .state()
+//         .set_chain_config_sc_address(chain_config_address);
 
 //     let contracts_array =
 //         chain_interactor.get_contract_info_struct_for_sc_type(vec![ScArray::ChainConfig]);
 
-//     chain_interactor
+//     let header_verifier_address = chain_interactor
 //         .deploy_header_verifier(
 //             chain_interactor.get_bridge_owner_for_shard(shard).clone(),
 //             PREFERRED_CHAIN_IDS[0].to_string(),
 //             contracts_array,
 //         )
 //         .await;
-
 //     chain_interactor
+//         .state()
+//         .set_header_verifier_address(header_verifier_address);
+
+//     let mvx_address = chain_interactor
 //         .deploy_mvx_esdt_safe(
 //             chain_interactor.get_bridge_owner_for_shard(shard).clone(),
 //             PREFERRED_CHAIN_IDS[0].to_string(),
@@ -1235,24 +1320,38 @@
 //         )
 //         .await;
 
-//     let sov_token_id = TokenIdentifier::from_esdt_bytes(SOV_TOKEN.as_str());
+//     chain_interactor
+//         .state()
+//         .set_mvx_esdt_safe_contract_address(mvx_address.clone());
+
+//     let fee_market_address = chain_interactor.deploy_fee_market(mvx_address, None).await;
+
+//     chain_interactor
+//         .state()
+//         .set_fee_market_address(fee_market_address);
+
+//     let sov_token_id = EgldOrEsdtTokenIdentifier::from(SOV_TOKEN.as_str());
 //     let token_type = EsdtTokenType::DynamicNFT;
 //     let token_display_name = "SOVEREIGN";
 //     let num_decimals = 18;
 //     let token_ticker = TOKEN_TICKER;
-//     let egld_payment = BigUint::from(ISSUE_COST);
 
 //     chain_interactor
 //         .register_token(
 //             SHARD_0,
-//             RegisterTokenArgs {
-//                 sov_token_id,
+//             RegisterTokenOperation {
+//                 token_id: sov_token_id,
+//                 token_nonce: 0u64,
 //                 token_type,
-//                 token_display_name,
-//                 token_ticker,
+//                 token_display_name: token_display_name.into(),
+//                 token_ticker: token_ticker.into(),
 //                 num_decimals,
+//                 data: OperationData::new(
+//                     0u64,
+//                     ManagedAddress::from_address(&chain_interactor.user_address),
+//                     None,
+//                 ),
 //             },
-//             egld_payment,
 //             None,
 //         )
 //         .await;
@@ -1283,12 +1382,12 @@
 // /// Error NO_ESDT_SAFE_ADDRESS
 // #[tokio::test]
 // #[serial]
-// #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
+// #[ignore]
 // async fn test_execute_operation_no_operation_registered() {
 //     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
 //     let shard = SHARD_0;
 
-//     chain_interactor
+//     let chain_config_address = chain_interactor
 //         .deploy_and_complete_setup_phase_on_a_shard(
 //             shard,
 //             DEPLOY_COST.into(),
@@ -1297,6 +1396,9 @@
 //             None,
 //         )
 //         .await;
+//     chain_interactor
+//         .state()
+//         .set_chain_config_sc_address(chain_config_address);
 
 //     let payment = OperationEsdtPayment::new(
 //         chain_interactor.state.get_first_token_identifier(),
@@ -1361,7 +1463,7 @@
 // /// The operation is executed in the testing smart contract
 // #[tokio::test]
 // #[serial]
-// #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
+// #[ignore]
 // async fn test_execute_operation_success_no_fee() {
 //     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
 //     let shard = SHARD_0;
@@ -1376,11 +1478,11 @@
 //         token_data,
 //     );
 //     let mut payment_vec = PaymentsVec::new();
-//     payment_vec.push(EsdtTokenPayment {
-//         token_identifier: chain_interactor.state.get_first_token_identifier(),
-//         token_nonce: 0,
-//         amount: BigUint::from(TEN_TOKENS),
-//     });
+//     payment_vec.push(EgldOrEsdtTokenPayment::new(
+//         chain_interactor.state.get_first_token_identifier(),
+//         0,
+//         BigUint::from(TEN_TOKENS),
+//     ));
 
 //     let gas_limit = 90_000_000u64;
 //     let function = ManagedBuffer::<StaticApi>::from(TESTING_SC_ENDPOINT);
@@ -1428,7 +1530,7 @@
 //             OptionalValue::None,
 //             payment_vec,
 //             None,
-//             Some(DEPOSIT_LOG),
+//             Some(DEPOSIT_EVENT),
 //         )
 //         .await;
 
@@ -1503,7 +1605,7 @@
 // /// The operation is executed in the testing smart contract
 // #[tokio::test]
 // #[serial]
-// #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
+// #[ignore]
 // async fn test_execute_operation_only_transfer_data_no_fee() {
 //     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
 //     let shard = SHARD_0;
@@ -1610,7 +1712,7 @@
 // /// The testing smart contract returns a failed event
 // #[tokio::test]
 // #[serial]
-// #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
+// #[ignore]
 // async fn test_execute_operation_no_payments_failed_event() {
 //     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
 //     let shard = SHARD_0;
