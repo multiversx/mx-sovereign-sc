@@ -1,21 +1,21 @@
 #![no_std]
-
 use structs::forge::ContractInfo;
 pub mod checks;
+pub mod header_utils;
 pub mod operations;
 pub mod storage;
-pub mod utils;
 
 multiversx_sc::imports!();
 
 #[multiversx_sc::contract]
 pub trait Headerverifier:
     storage::HeaderVerifierStorageModule
-    + utils::HeaderVerifierUtilsModule
+    + header_utils::HeaderVerifierUtilsModule
     + operations::HeaderVerifierOperationsModule
     + checks::HeaderVerifierChecksModule
     + custom_events::CustomEventsModule
     + setup_phase::SetupPhaseModule
+    + common_utils::CommonUtilsModule
 {
     #[init]
     fn init(&self, sovereign_contracts: MultiValueEncoded<ContractInfo<Self::Api>>) {

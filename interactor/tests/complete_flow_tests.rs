@@ -10,6 +10,7 @@ use common_test_setup::constants::{
 use common_test_setup::constants::{REGISTER_DEFAULT_TOKEN, REGISTER_TOKEN_PREFIX};
 use multiversx_sc::imports::OptionalValue;
 use multiversx_sc::types::BigUint;
+use multiversx_sc::types::EgldOrEsdtTokenIdentifier;
 use multiversx_sc::types::EsdtTokenType;
 use multiversx_sc_snippets::imports::{tokio, StaticApi};
 use multiversx_sc_snippets::multiversx_sc_scenario::multiversx_chain_vm::vm_err_msg::FUNCTION_NOT_FOUND;
@@ -36,7 +37,7 @@ async fn test_complete_deposit_flow_no_fee_only_transfer_data(#[case] shard: u32
 
     chain_interactor
         .deploy_and_complete_setup_phase(
-            DEPLOY_COST.into(),
+            OptionalValue::Some(DEPLOY_COST.into()),
             OptionalValue::None,
             OptionalValue::None,
             None,
@@ -76,7 +77,7 @@ async fn test_complete_deposit_flow_with_fee_only_transfer_data(#[case] shard: u
 
     chain_interactor
         .deploy_and_complete_setup_phase(
-            DEPLOY_COST.into(),
+            OptionalValue::Some(DEPLOY_COST.into()),
             OptionalValue::None,
             OptionalValue::None,
             Some(fee.clone()),
@@ -115,7 +116,7 @@ async fn test_complete_execute_flow_with_transfer_data_only_success(#[case] shar
 
     chain_interactor
         .deploy_and_complete_setup_phase(
-            DEPLOY_COST.into(),
+            OptionalValue::Some(DEPLOY_COST.into()),
             OptionalValue::None,
             OptionalValue::None,
             None,
@@ -153,7 +154,7 @@ async fn test_complete_execute_flow_with_transfer_data_only_fail(#[case] shard: 
 
     chain_interactor
         .deploy_and_complete_setup_phase(
-            DEPLOY_COST.into(),
+            OptionalValue::Some(DEPLOY_COST.into()),
             OptionalValue::None,
             OptionalValue::None,
             None,
@@ -203,7 +204,7 @@ async fn test_deposit_with_fee(
 
     chain_interactor
         .deploy_and_complete_setup_phase(
-            DEPLOY_COST.into(),
+            OptionalValue::Some(DEPLOY_COST.into()),
             OptionalValue::None,
             OptionalValue::None,
             Some(fee.clone()),
@@ -212,9 +213,10 @@ async fn test_deposit_with_fee(
 
     chain_interactor
         .deposit_wrapper(
-            ActionConfig::new()
-                .shard(shard)
-                .expect_log(vec![DEPOSIT_LOG.to_string(), token.clone().token_id]),
+            ActionConfig::new().shard(shard).expect_log(vec![
+                DEPOSIT_LOG.to_string(),
+                token.clone().token_id.into_managed_buffer().to_string(),
+            ]),
             Some(token),
             Some(fee),
         )
@@ -250,7 +252,7 @@ async fn test_deposit_without_fee_and_execute(
 
     chain_interactor
         .deploy_and_complete_setup_phase(
-            DEPLOY_COST.into(),
+            OptionalValue::Some(DEPLOY_COST.into()),
             OptionalValue::None,
             OptionalValue::None,
             None,
@@ -259,9 +261,10 @@ async fn test_deposit_without_fee_and_execute(
 
     chain_interactor
         .deposit_wrapper(
-            ActionConfig::new()
-                .shard(shard)
-                .expect_log(vec![DEPOSIT_LOG.to_string(), token.clone().token_id]),
+            ActionConfig::new().shard(shard).expect_log(vec![
+                DEPOSIT_LOG.to_string(),
+                token.clone().token_id.into_managed_buffer().to_string(),
+            ]),
             Some(token.clone()),
             None,
         )
@@ -269,9 +272,11 @@ async fn test_deposit_without_fee_and_execute(
 
     chain_interactor
         .execute_wrapper(
-            ActionConfig::new()
-                .shard(shard)
-                .expect_log(vec![token.clone().token_id]),
+            ActionConfig::new().shard(shard).expect_log(vec![token
+                .clone()
+                .token_id
+                .into_managed_buffer()
+                .to_string()]),
             Some(token),
         )
         .await;
@@ -305,7 +310,7 @@ async fn test_register_execute_and_deposit_sov_token(
 
     chain_interactor
         .deploy_and_complete_setup_phase(
-            DEPLOY_COST.into(),
+            OptionalValue::Some(DEPLOY_COST.into()),
             OptionalValue::None,
             OptionalValue::None,
             None,
@@ -315,7 +320,9 @@ async fn test_register_execute_and_deposit_sov_token(
     let (nonce, decimals) = chain_interactor.generate_nonce_and_decimals(token_type);
 
     let sov_token = EsdtTokenInfo {
-        token_id: REGISTER_TOKEN_PREFIX.to_string() + REGISTER_DEFAULT_TOKEN,
+        token_id: EgldOrEsdtTokenIdentifier::from(
+            &(REGISTER_TOKEN_PREFIX.to_string() + REGISTER_DEFAULT_TOKEN),
+        ),
         nonce,
         token_type,
         decimals,
@@ -329,8 +336,12 @@ async fn test_register_execute_and_deposit_sov_token(
     chain_interactor
         .deposit_wrapper(
             ActionConfig::new().shard(shard).expect_log(vec![
-                sov_token.clone().token_id,
-                main_token.clone().token_id,
+                sov_token.clone().token_id.into_managed_buffer().to_string(),
+                main_token
+                    .clone()
+                    .token_id
+                    .into_managed_buffer()
+                    .to_string(),
             ]),
             Some(main_token),
             None,
@@ -365,7 +376,7 @@ async fn test_deposit_mvx_token_with_transfer_data(
 
     chain_interactor
         .deploy_and_complete_setup_phase(
-            DEPLOY_COST.into(),
+            OptionalValue::Some(DEPLOY_COST.into()),
             OptionalValue::None,
             OptionalValue::None,
             None,
@@ -379,7 +390,10 @@ async fn test_deposit_mvx_token_with_transfer_data(
             ActionConfig::new()
                 .shard(shard)
                 .with_endpoint(TESTING_SC_ENDPOINT.to_string())
-                .expect_log(vec![DEPOSIT_LOG.to_string(), token.clone().token_id]),
+                .expect_log(vec![
+                    DEPOSIT_LOG.to_string(),
+                    token.clone().token_id.into_managed_buffer().to_string(),
+                ]),
             Some(token),
             None,
         )
@@ -415,7 +429,7 @@ async fn test_deposit_mvx_token_with_transfer_data_and_fee(
 
     chain_interactor
         .deploy_and_complete_setup_phase(
-            DEPLOY_COST.into(),
+            OptionalValue::Some(DEPLOY_COST.into()),
             OptionalValue::None,
             OptionalValue::None,
             Some(fee.clone()),
@@ -429,7 +443,10 @@ async fn test_deposit_mvx_token_with_transfer_data_and_fee(
             ActionConfig::new()
                 .shard(shard)
                 .with_endpoint(TESTING_SC_ENDPOINT.to_string())
-                .expect_log(vec![DEPOSIT_LOG.to_string(), token.clone().token_id]),
+                .expect_log(vec![
+                    DEPOSIT_LOG.to_string(),
+                    token.clone().token_id.into_managed_buffer().to_string(),
+                ]),
             Some(token),
             Some(fee),
         )
@@ -465,7 +482,7 @@ async fn test_deposit_and_execute_with_transfer_data(
 
     chain_interactor
         .deploy_and_complete_setup_phase(
-            DEPLOY_COST.into(),
+            OptionalValue::Some(DEPLOY_COST.into()),
             OptionalValue::None,
             OptionalValue::None,
             None,
@@ -474,9 +491,10 @@ async fn test_deposit_and_execute_with_transfer_data(
 
     chain_interactor
         .deposit_wrapper(
-            ActionConfig::new()
-                .shard(shard)
-                .expect_log(vec![DEPOSIT_LOG.to_string(), token.clone().token_id]),
+            ActionConfig::new().shard(shard).expect_log(vec![
+                DEPOSIT_LOG.to_string(),
+                token.clone().token_id.into_managed_buffer().to_string(),
+            ]),
             Some(token.clone()),
             None,
         )
@@ -487,7 +505,11 @@ async fn test_deposit_and_execute_with_transfer_data(
             ActionConfig::new()
                 .shard(shard)
                 .with_endpoint(TESTING_SC_ENDPOINT.to_string())
-                .expect_log(vec![token.clone().token_id]),
+                .expect_log(vec![token
+                    .clone()
+                    .token_id
+                    .into_managed_buffer()
+                    .to_string()]),
             Some(token.clone()),
         )
         .await;
@@ -521,7 +543,7 @@ async fn test_register_execute_with_transfer_data_and_deposit_sov_token(
 
     chain_interactor
         .deploy_and_complete_setup_phase(
-            DEPLOY_COST.into(),
+            OptionalValue::Some(DEPLOY_COST.into()),
             OptionalValue::None,
             OptionalValue::None,
             None,
@@ -531,7 +553,9 @@ async fn test_register_execute_with_transfer_data_and_deposit_sov_token(
     let (nonce, decimals) = chain_interactor.generate_nonce_and_decimals(token_type);
 
     let sov_token = EsdtTokenInfo {
-        token_id: REGISTER_TOKEN_PREFIX.to_string() + REGISTER_DEFAULT_TOKEN,
+        token_id: EgldOrEsdtTokenIdentifier::from(
+            &(REGISTER_TOKEN_PREFIX.to_string() + REGISTER_DEFAULT_TOKEN),
+        ),
         nonce,
         token_type,
         decimals,
@@ -561,8 +585,12 @@ async fn test_register_execute_with_transfer_data_and_deposit_sov_token(
                 .shard(shard)
                 .with_endpoint(TESTING_SC_ENDPOINT.to_string())
                 .expect_log(vec![
-                    sov_token.clone().token_id,
-                    main_token.clone().token_id,
+                    sov_token.clone().token_id.into_managed_buffer().to_string(),
+                    main_token
+                        .clone()
+                        .token_id
+                        .into_managed_buffer()
+                        .to_string(),
                 ]),
             Some(main_token.clone()),
             None,
@@ -598,7 +626,7 @@ async fn test_register_execute_call_failed(
 
     chain_interactor
         .deploy_and_complete_setup_phase(
-            DEPLOY_COST.into(),
+            OptionalValue::Some(DEPLOY_COST.into()),
             OptionalValue::None,
             OptionalValue::None,
             None,
@@ -608,7 +636,9 @@ async fn test_register_execute_call_failed(
     let (nonce, decimals) = chain_interactor.generate_nonce_and_decimals(token_type);
 
     let sov_token = EsdtTokenInfo {
-        token_id: REGISTER_TOKEN_PREFIX.to_string() + REGISTER_DEFAULT_TOKEN,
+        token_id: EgldOrEsdtTokenIdentifier::from(
+            &(REGISTER_TOKEN_PREFIX.to_string() + REGISTER_DEFAULT_TOKEN),
+        ),
         nonce,
         token_type,
         decimals,

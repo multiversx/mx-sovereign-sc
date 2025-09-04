@@ -1,4 +1,6 @@
-use error_messages::{DEPOSIT_AMOUNT_NOT_ENOUGH, ERROR_AT_ENCODING, ESDT_SAFE_STILL_PAUSED};
+use error_messages::{
+    DEPOSIT_AMOUNT_NOT_ENOUGH, ERROR_AT_ENCODING, ESDT_SAFE_STILL_PAUSED, SETUP_PHASE_NOT_COMPLETED,
+};
 use structs::{
     aliases::GasLimit,
     generate_hash::GenerateHash,
@@ -13,7 +15,7 @@ const ESDT_TRANSACTION_GAS: GasLimit = 5_000_000;
 pub trait ExecuteModule:
     crate::bridging_mechanism::BridgingMechanism
     + crate::register_token::RegisterTokenModule
-    + utils::UtilsModule
+    + common_utils::CommonUtilsModule
     + setup_phase::SetupPhaseModule
     + custom_events::CustomEventsModule
     + cross_chain::storage::CrossChainStorage
@@ -23,19 +25,37 @@ pub trait ExecuteModule:
 {
     #[endpoint(executeBridgeOps)]
     fn execute_operations(&self, hash_of_hashes: ManagedBuffer, operation: Operation<Self::Api>) {
-        require!(self.not_paused(), ESDT_SAFE_STILL_PAUSED);
-        self.require_setup_complete();
-
         let operation_hash = operation.generate_hash();
         if operation_hash.is_empty() {
             self.complete_operation(
                 &hash_of_hashes,
                 &operation_hash,
-                Some(ManagedBuffer::from(ERROR_AT_ENCODING)),
+                Some(ERROR_AT_ENCODING.into()),
             );
+            return;
         };
-
-        self.lock_operation_hash(&hash_of_hashes, &operation_hash);
+        if self.is_paused() {
+            self.complete_operation(
+                &hash_of_hashes,
+                &operation_hash,
+                Some(ESDT_SAFE_STILL_PAUSED.into()),
+            );
+            return;
+        }
+        if !self.is_setup_phase_complete() {
+            self.complete_operation(
+                &hash_of_hashes,
+                &operation_hash,
+                Some(SETUP_PHASE_NOT_COMPLETED.into()),
+            );
+            return;
+        }
+        if let Some(lock_operation_error) =
+            self.lock_operation_hash_wrapper(&hash_of_hashes, &operation_hash)
+        {
+            self.complete_operation(&hash_of_hashes, &operation_hash, Some(lock_operation_error));
+            return;
+        }
 
         let operation_tuple = OperationTuple {
             op_hash: operation_hash,
@@ -85,7 +105,7 @@ pub trait ExecuteModule:
 
     fn process_resolved_token(
         &self,
-        mvx_token_id: &TokenIdentifier,
+        mvx_token_id: &EgldOrEsdtTokenIdentifier<Self::Api>,
         operation_token: &OperationEsdtPayment<Self::Api>,
     ) -> OperationEsdtPayment<Self::Api> {
         if self.is_fungible(&operation_token.token_data.token_type) {
@@ -119,7 +139,7 @@ pub trait ExecuteModule:
                 self.complete_operation(
                     hash_of_hashes,
                     &operation_tuple.op_hash,
-                    Some(ManagedBuffer::from(DEPOSIT_AMOUNT_NOT_ENOUGH)),
+                    Some(DEPOSIT_AMOUNT_NOT_ENOUGH.into()),
                 );
                 return None;
             }
@@ -134,20 +154,28 @@ pub trait ExecuteModule:
         Some(operation_token.clone())
     }
 
-    fn mint_fungible_token(&self, token_id: &TokenIdentifier, amount: &BigUint) {
+    fn mint_fungible_token(
+        &self,
+        token_id: &EgldOrEsdtTokenIdentifier<Self::Api>,
+        amount: &BigUint,
+    ) {
+        // require!(token_id.is_esdt(), MINT_NON_ESDT_TOKENS);
+
         self.tx()
             .to(ToSelf)
             .typed(UserBuiltinProxy)
-            .esdt_local_mint(token_id, 0, amount)
+            .esdt_local_mint(token_id.clone().unwrap_esdt(), 0, amount)
             .sync_call();
     }
 
     fn esdt_create_and_update_mapper(
-        self,
-        mvx_token_id: &TokenIdentifier<Self::Api>,
+        &self,
+        mvx_token_id: &EgldOrEsdtTokenIdentifier<Self::Api>,
         operation_token: &OperationEsdtPayment<Self::Api>,
     ) -> u64 {
         let mut nonce = 0;
+
+        // require!(mvx_token_id.is_esdt(), MINT_NON_ESDT_TOKENS);
 
         let current_token_type_ref = &operation_token.token_data.token_type;
 
@@ -171,7 +199,11 @@ pub trait ExecuteModule:
             self.tx()
                 .to(ToSelf)
                 .typed(system_proxy::UserBuiltinProxy)
-                .esdt_local_mint(mvx_token_id, nonce, &operation_token.token_data.amount)
+                .esdt_local_mint(
+                    mvx_token_id.clone().unwrap_esdt(),
+                    nonce,
+                    &operation_token.token_data.amount,
+                )
                 .sync_call();
         }
 
@@ -180,19 +212,20 @@ pub trait ExecuteModule:
 
     fn mint_nft_tx(
         &self,
-        mvx_token_id: &TokenIdentifier,
+        mvx_token_id: &EgldOrEsdtTokenIdentifier<Self::Api>,
         token_data: &EsdtTokenData<Self::Api>,
     ) -> u64 {
         let mut amount = token_data.amount.clone();
         if self.is_sft_or_meta(&token_data.token_type) {
             amount += BigUint::from(1u32);
         }
+        // require!(mvx_token_id.is_esdt(), MINT_NON_ESDT_TOKENS);
 
         self.tx()
             .to(ToSelf)
             .typed(system_proxy::UserBuiltinProxy)
             .esdt_nft_create(
-                mvx_token_id,
+                mvx_token_id.clone().unwrap_esdt(),
                 &amount,
                 &token_data.name,
                 &token_data.royalties,
@@ -210,7 +243,7 @@ pub trait ExecuteModule:
         operation_tuple: &OperationTuple<Self::Api>,
         tokens_list: &ManagedVec<OperationEsdtPayment<Self::Api>>,
     ) {
-        let mapped_tokens: ManagedVec<Self::Api, EsdtTokenPayment<Self::Api>> = tokens_list
+        let mapped_tokens: ManagedVec<Self::Api, EgldOrEsdtTokenPayment<Self::Api>> = tokens_list
             .iter()
             .map(|token| token.clone().into())
             .collect();
@@ -235,7 +268,7 @@ pub trait ExecuteModule:
             None => {
                 self.tx()
                     .to(&operation_tuple.operation.to)
-                    .multi_esdt(mapped_tokens)
+                    .payment(mapped_tokens)
                     .gas(ESDT_TRANSACTION_GAS)
                     .callback(
                         <Self as ExecuteModule>::callbacks(self)
@@ -323,6 +356,7 @@ pub trait ExecuteModule:
         }
 
         let mvx_token_id = sov_to_mvx_mapper.get();
+        // require!(mvx_token_id.is_esdt(), BURN_NON_ESDT_TOKENS);
         let mut mvx_token_nonce = 0;
 
         if operation_token.token_nonce > 0 {
@@ -347,7 +381,7 @@ pub trait ExecuteModule:
             .to(ToSelf)
             .typed(system_proxy::UserBuiltinProxy)
             .esdt_local_burn(
-                &mvx_token_id,
+                mvx_token_id.unwrap_esdt(),
                 mvx_token_nonce,
                 &operation_token.token_data.amount,
             )
@@ -357,7 +391,7 @@ pub trait ExecuteModule:
     fn get_mvx_token_id(
         &self,
         operation_token: &OperationEsdtPayment<Self::Api>,
-    ) -> Option<TokenIdentifier<Self::Api>> {
+    ) -> Option<EgldOrEsdtTokenIdentifier<Self::Api>> {
         let sov_to_mvx_mapper =
             self.sovereign_to_multiversx_token_id_mapper(&operation_token.token_identifier);
 
@@ -372,7 +406,11 @@ pub trait ExecuteModule:
         }
     }
 
-    fn get_mvx_nonce_from_mapper(self, token_id: &TokenIdentifier, nonce: u64) -> u64 {
+    fn get_mvx_nonce_from_mapper(
+        &self,
+        token_id: &EgldOrEsdtTokenIdentifier<Self::Api>,
+        nonce: u64,
+    ) -> u64 {
         let esdt_info_mapper = self.sovereign_to_multiversx_esdt_info_mapper(token_id, nonce);
         if esdt_info_mapper.is_empty() {
             return 0;

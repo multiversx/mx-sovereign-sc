@@ -44,5 +44,5 @@ path = "../common/cross-chain"
 [dependencies.custom-events]
 path = "../common/custom-events"
 
-[dependencies.utils]
-path = "../common/utils"
+[dependencies.common-utils]
+path = "../common/common-utils"

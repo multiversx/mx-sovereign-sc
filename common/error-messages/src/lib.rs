@@ -5,6 +5,8 @@ pub const ADDRESS_NOT_VALID_SC_ADDRESS: &str = "The given address is not a valid
 pub const BANNED_ENDPOINT_NAME: &str = "Banned endpoint name";
 pub const BLS_SIGNATURE_NOT_VALID: &str = "BLS signature is not valid";
 pub const BRIDGE_ALREADY_DEPLOYED: &str = "Bridge already deployed";
+pub const BURN_NON_ESDT_TOKENS: &str = "Burning non-ESDT tokens is not allowed";
+pub const BURN_MECHANISM_NON_ESDT_TOKENS: &str = "Non-ESDT tokens can not have a burn mechanism";
 pub const CALLER_DID_NOT_DEPLOY_ANY_SOV_CHAIN: &str =
     "The current caller has not deployed any Sovereign Chain";
 pub const CALLER_NOT_FROM_CURRENT_SOVEREIGN: &str =
@@ -17,7 +19,7 @@ pub const CANNOT_TRANSFER_WHILE_PAUSED: &str = "Cannot transfer while paused";
 pub const CHAIN_CONFIG_ALREADY_DEPLOYED: &str = "The Chain-Config contract is already deployed";
 pub const CHAIN_CONFIG_NOT_DEPLOYED: &str = "The Chain-Config SC is not deployed";
 pub const CHAIN_ID_ALREADY_IN_USE: &str = "This chain ID is already used";
-pub const CHAIN_ID_NOT_FOUR_CHAR_LONG: &str = "Chain ID length must be four characters";
+pub const INVALID_CHAIN_ID: &str = "Invalid chain ID";
 pub const CHAIN_ID_NOT_LOWERCASE_ALPHANUMERIC: &str = "Chain ID is not lowercase alphanumeric";
 pub const CURRENT_OPERATION_ALREADY_IN_EXECUTION: &str =
     "The current operation is already in execution";
@@ -41,6 +43,7 @@ pub const FAILED_TO_PARSE_AS_NUMBER: &str = "Failed to parse actual amount as nu
 pub const FAILED_TO_LOAD_WALLET_SHARD_0: &str = "Failed to load shard 0 wallet";
 pub const FEE_MARKET_ALREADY_DEPLOYED: &str = "The Fee-Market SC is already deployed";
 pub const FEE_MARKET_NOT_DEPLOYED: &str = "The Fee-Market SC is not deployed";
+pub const FEE_MARKET_NOT_SET: &str = "There is no Fee-Market address set";
 pub const GAS_LIMIT_TOO_HIGH: &str = "Gas limit too high";
 pub const HASH_OF_HASHES_DOES_NOT_MATCH: &str =
     "Hash of all operations doesn't match the hash of transfer data";
@@ -56,7 +59,7 @@ pub const INVALID_ESDT_IDENTIFIER: &str = "Invalid ESDT identifier";
 pub const INVALID_FEE: &str = "Invalid fee";
 pub const INVALID_FEE_TYPE: &str = "Invalid fee type";
 pub const INVALID_METHOD_TO_CALL_IN_CURRENT_CHAIN: &str = "Invalid method to call in current chain";
-pub const INVALID_MIN_MAX_VALIDATOR_NUMBERS: &str = "Invalid min/max validator numbers";
+pub const INVALID_MIN_MAX_VALIDATOR_NUMBERS: &str = "Invalid validator range";
 pub const INVALID_PAYMENT_AMOUNT: &str = "Invalid payment amount";
 pub const INVALID_PERCENTAGE_SUM: &str = "Invalid percentage sum";
 pub const INVALID_SC_ADDRESS: &str = "Invalid SC address";
@@ -68,9 +71,11 @@ pub const INVALID_VALIDATOR_SET_LENGTH: &str =
     "The current validator set length doesn't meet the Sovereign's requirements";
 pub const INVALID_WEGLD_USDC_PAIR_ADDRESS: &str = "Invalid WEGLD-USDC pair address from router";
 pub const ITEM_NOT_IN_LIST: &str = "Item not found in list";
+pub const LOCK_MECHANISM_NON_ESDT: &str = "Non-ESDT tokens can not have a lock mechanism";
 pub const MAX_GAS_LIMIT_PER_TX_EXCEEDED: &str =
     "The gas limit exceeds the maximum gas per transaction limit";
 pub const MINT_AND_BURN_ROLES_NOT_FOUND: &str = "This token does not have Mint and Burn roles";
+pub const MINT_NON_ESDT_TOKENS: &str = "Non-ESDT tokens can not be minted";
 pub const NATIVE_TOKEN_ALREADY_REGISTERED: &str = "Native token was already registered";
 pub const NATIVE_TOKEN_NOT_REGISTERED: &str = "There is no native token registered";
 pub const NO_ESDT_SAFE_ADDRESS: &str = "There is no registered ESDT address";
@@ -112,10 +117,14 @@ pub const TOKEN_ALREADY_REGISTERED: &str = "This token was already registered";
 pub const TOKEN_BLACKLISTED: &str = "Token is blacklisted";
 pub const TOKEN_ID_IS_NOT_TRUSTED: &str = "Token is not trusted";
 pub const TOKEN_ID_NO_PREFIX: &str = "Token Id does not have prefix";
+pub const INVALID_PREFIX: &str = "The sovereign prefix should be between 1 and 4 characters long";
+pub const INVALID_PREFIX_FOR_REGISTER: &str =
+    "Provided sovereign token identifier has invalid prefix";
 pub const TOKEN_IS_FROM_SOVEREIGN: &str = "Token is from a Sovereign Chain, it cannot be locked";
 pub const TOKEN_NOT_ACCEPTED_AS_FEE: &str = "Token not accepted as fee";
 pub const TOO_MANY_TOKENS: &str = "Too many tokens";
 pub const ERROR_AT_ENCODING: &str = "Error at encoding hash";
+pub const NOT_ENOUGH_EGLD_FOR_REGISTER: &str = "Not enough EGLD for registering a new token";
 pub const VALIDATOR_RANGE_EXCEEDED: &str = "Validator range exceeded";
 pub const NOT_ENOUGH_VALIDATORS: &str = "Not enough validators registered";
 pub const VALIDATOR_NOT_REGISTERED: &str = "Validator not registered";
@@ -139,3 +148,10 @@ pub const CALLER_NOT_CHAIN_CONFIG: &str = "Only Chain-Config SC can call this en
 pub const CHAIN_CONFIG_SETUP_PHASE_NOT_COMPLETE: &str =
     "The Chain-Config SC setup phase is not completed";
 pub const DEPOSIT_AMOUNT_NOT_ENOUGH: &str = "Deposit amount is less than the operation amount";
+pub const CHAIN_FACTORY_ADDRESS_NOT_IN_EXPECTED_SHARD: &str =
+    "This Chain-Factory SC is not deployed in the specified shard ID";
+pub const INVALID_BLS_KEY_PROVIDED: &str = "Invalid BLS key has been provided";
+pub const REGISTRATIONS_DISABLED_GENESIS_PHASE: &str =
+    "Registrations are disabled after genesis phase";
+pub const VALIDATOR_ID_NOT_REGISTERED: &str = "Provided validator id is not registered";
+pub const INVALID_VALIDATOR_DATA: &str = "Invalid validator data has been provided";

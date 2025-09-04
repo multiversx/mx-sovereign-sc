@@ -130,11 +130,11 @@ where
     }
 
     pub fn sovereign_to_multiversx_token_id_mapper<
-        Arg0: ProxyArg<TokenIdentifier<Env::Api>>,
+        Arg0: ProxyArg<EgldOrEsdtTokenIdentifier<Env::Api>>,
     >(
         self,
         sov_token_id: Arg0,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, TokenIdentifier<Env::Api>> {
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, EgldOrEsdtTokenIdentifier<Env::Api>> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("getSovToMvxTokenId")
@@ -143,11 +143,11 @@ where
     }
 
     pub fn multiversx_to_sovereign_token_id_mapper<
-        Arg0: ProxyArg<TokenIdentifier<Env::Api>>,
+        Arg0: ProxyArg<EgldOrEsdtTokenIdentifier<Env::Api>>,
     >(
         self,
         mvx_token_id: Arg0,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, TokenIdentifier<Env::Api>> {
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, EgldOrEsdtTokenIdentifier<Env::Api>> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("getMvxToSovTokenId")
@@ -156,7 +156,7 @@ where
     }
 
     pub fn sovereign_to_multiversx_esdt_info_mapper<
-        Arg0: ProxyArg<TokenIdentifier<Env::Api>>,
+        Arg0: ProxyArg<EgldOrEsdtTokenIdentifier<Env::Api>>,
         Arg1: ProxyArg<u64>,
     >(
         self,
@@ -172,7 +172,7 @@ where
     }
 
     pub fn multiversx_to_sovereign_esdt_info_mapper<
-        Arg0: ProxyArg<TokenIdentifier<Env::Api>>,
+        Arg0: ProxyArg<EgldOrEsdtTokenIdentifier<Env::Api>>,
         Arg1: ProxyArg<u64>,
     >(
         self,

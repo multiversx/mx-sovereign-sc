@@ -1,18 +1,17 @@
 #![allow(non_snake_case)]
 
 use error_messages::{
-    NO_KNOWN_CHAIN_CONFIG_SC, NO_KNOWN_CHAIN_FACTORY_IN_THE_SPECIFIED_SHARD,
-    NO_KNOWN_CHAIN_FACTORY_SC, NO_KNOWN_DYNAMIC_META_ESDT_TOKEN_ID, NO_KNOWN_DYNAMIC_NFT_TOKEN_ID,
-    NO_KNOWN_DYNAMIC_SFT_TOKEN_ID, NO_KNOWN_FEE_MARKET, NO_KNOWN_FEE_TOKEN, NO_KNOWN_FIRST_TOKEN,
-    NO_KNOWN_HEADER_VERIFIER, NO_KNOWN_META_ESDT_TOKEN, NO_KNOWN_MVX_ESDT_SAFE, NO_KNOWN_NFT_TOKEN,
-    NO_KNOWN_SECOND_TOKEN, NO_KNOWN_SFT_TOKEN, NO_KNOWN_SOVEREIGN_FORGE_SC,
-    NO_KNOWN_SOV_TO_MVX_TOKEN, NO_KNOWN_TESTING_SC,
+    NO_KNOWN_CHAIN_CONFIG_SC, NO_KNOWN_CHAIN_FACTORY_SC, NO_KNOWN_DYNAMIC_META_ESDT_TOKEN_ID,
+    NO_KNOWN_DYNAMIC_NFT_TOKEN_ID, NO_KNOWN_DYNAMIC_SFT_TOKEN_ID, NO_KNOWN_FEE_MARKET,
+    NO_KNOWN_FEE_TOKEN, NO_KNOWN_FIRST_TOKEN, NO_KNOWN_HEADER_VERIFIER, NO_KNOWN_META_ESDT_TOKEN,
+    NO_KNOWN_MVX_ESDT_SAFE, NO_KNOWN_NFT_TOKEN, NO_KNOWN_SECOND_TOKEN, NO_KNOWN_SFT_TOKEN,
+    NO_KNOWN_SOVEREIGN_FORGE_SC, NO_KNOWN_SOV_TO_MVX_TOKEN, NO_KNOWN_TESTING_SC,
 };
 use multiversx_sc_snippets::imports::*;
 
 #[derive(Debug, Clone)]
 pub struct EsdtTokenInfo {
-    pub token_id: String,
+    pub token_id: EgldOrEsdtTokenIdentifier<StaticApi>,
     pub nonce: u64,
     pub token_type: EsdtTokenType,
     pub decimals: usize,
@@ -57,8 +56,6 @@ pub struct State {
     pub chain_config_sc_addresses: Option<ShardAddresses>,
     pub sovereign_forge_sc_address: Option<Bech32Address>,
     pub chain_factory_sc_addresses: Option<Vec<Bech32Address>>,
-    pub enshrine_esdt_safe_sc_addresses: Option<ShardAddresses>,
-    pub token_handler_addresses: Option<Vec<Bech32Address>>,
     pub first_token: Option<EsdtTokenInfo>,
     pub fee_token: Option<EsdtTokenInfo>,
     pub second_token: Option<EsdtTokenInfo>,
@@ -193,99 +190,88 @@ impl State {
     pub fn current_chain_factory_sc_address(&self) -> &Bech32Address {
         self.chain_factory_sc_addresses
             .as_ref()
+            .and_then(|v| v.first())
             .expect(NO_KNOWN_CHAIN_FACTORY_SC)
-            .first()
-            .expect(NO_KNOWN_CHAIN_FACTORY_IN_THE_SPECIFIED_SHARD)
     }
 
-    pub fn get_first_token_identifier(&self) -> TokenIdentifier<StaticApi> {
-        TokenIdentifier::from_esdt_bytes(
-            self.first_token
-                .as_ref()
-                .expect(NO_KNOWN_FIRST_TOKEN)
-                .token_id
-                .clone(),
-        )
+    pub fn get_chain_factory_address_for_shard(&self, shard: u32) -> Bech32Address {
+        self.chain_factory_sc_addresses
+            .as_ref()
+            .and_then(|v| v.get(shard as usize))
+            .cloned()
+            .expect(NO_KNOWN_CHAIN_FACTORY_SC)
     }
 
-    pub fn get_fee_token_identifier(&self) -> TokenIdentifier<StaticApi> {
-        TokenIdentifier::from_esdt_bytes(
-            self.fee_token
-                .as_ref()
-                .expect(NO_KNOWN_FEE_TOKEN)
-                .token_id
-                .clone(),
-        )
+    pub fn get_first_token_identifier(&self) -> EgldOrEsdtTokenIdentifier<StaticApi> {
+        self.first_token
+            .as_ref()
+            .expect(NO_KNOWN_FIRST_TOKEN)
+            .token_id
+            .clone()
     }
 
-    pub fn get_second_token_identifier(&self) -> TokenIdentifier<StaticApi> {
-        TokenIdentifier::from_esdt_bytes(
-            self.second_token
-                .as_ref()
-                .expect(NO_KNOWN_SECOND_TOKEN)
-                .token_id
-                .clone(),
-        )
+    pub fn get_fee_token_identifier(&self) -> EgldOrEsdtTokenIdentifier<StaticApi> {
+        self.fee_token
+            .as_ref()
+            .expect(NO_KNOWN_FEE_TOKEN)
+            .token_id
+            .clone()
     }
 
-    pub fn get_nft_token_identifier(&self) -> TokenIdentifier<StaticApi> {
-        TokenIdentifier::from_esdt_bytes(
-            self.nft_token_id
-                .as_ref()
-                .expect(NO_KNOWN_NFT_TOKEN)
-                .token_id
-                .clone(),
-        )
+    pub fn get_second_token_identifier(&self) -> EgldOrEsdtTokenIdentifier<StaticApi> {
+        self.second_token
+            .as_ref()
+            .expect(NO_KNOWN_SECOND_TOKEN)
+            .token_id
+            .clone()
     }
 
-    pub fn get_meta_esdt_token_identifier(&self) -> TokenIdentifier<StaticApi> {
-        TokenIdentifier::from_esdt_bytes(
-            self.meta_esdt_token_id
-                .as_ref()
-                .expect(NO_KNOWN_META_ESDT_TOKEN)
-                .token_id
-                .clone(),
-        )
+    pub fn get_nft_token_identifier(&self) -> EgldOrEsdtTokenIdentifier<StaticApi> {
+        self.nft_token_id
+            .as_ref()
+            .expect(NO_KNOWN_NFT_TOKEN)
+            .token_id
+            .clone()
     }
 
-    pub fn get_dynamic_nft_token_identifier(&self) -> TokenIdentifier<StaticApi> {
-        TokenIdentifier::from_esdt_bytes(
-            self.dynamic_nft_token_id
-                .as_ref()
-                .expect(NO_KNOWN_DYNAMIC_NFT_TOKEN_ID)
-                .token_id
-                .clone(),
-        )
+    pub fn get_meta_esdt_token_identifier(&self) -> EgldOrEsdtTokenIdentifier<StaticApi> {
+        self.meta_esdt_token_id
+            .as_ref()
+            .expect(NO_KNOWN_META_ESDT_TOKEN)
+            .token_id
+            .clone()
     }
 
-    pub fn get_sft_token_identifier(&self) -> TokenIdentifier<StaticApi> {
-        TokenIdentifier::from_esdt_bytes(
-            self.sft_token_id
-                .as_ref()
-                .expect(NO_KNOWN_SFT_TOKEN)
-                .token_id
-                .clone(),
-        )
+    pub fn get_dynamic_nft_token_identifier(&self) -> EgldOrEsdtTokenIdentifier<StaticApi> {
+        self.dynamic_nft_token_id
+            .as_ref()
+            .expect(NO_KNOWN_DYNAMIC_NFT_TOKEN_ID)
+            .token_id
+            .clone()
     }
 
-    pub fn get_dynamic_sft_token_identifier(&self) -> TokenIdentifier<StaticApi> {
-        TokenIdentifier::from_esdt_bytes(
-            self.dynamic_sft_token_id
-                .as_ref()
-                .expect(NO_KNOWN_DYNAMIC_SFT_TOKEN_ID)
-                .token_id
-                .clone(),
-        )
+    pub fn get_sft_token_identifier(&self) -> EgldOrEsdtTokenIdentifier<StaticApi> {
+        self.sft_token_id
+            .as_ref()
+            .expect(NO_KNOWN_SFT_TOKEN)
+            .token_id
+            .clone()
     }
 
-    pub fn get_dynamic_meta_esdt_token_identifier(&self) -> TokenIdentifier<StaticApi> {
-        TokenIdentifier::from_esdt_bytes(
-            self.dynamic_meta_esdt_token_id
-                .as_ref()
-                .expect(NO_KNOWN_DYNAMIC_META_ESDT_TOKEN_ID)
-                .token_id
-                .clone(),
-        )
+    pub fn get_dynamic_sft_token_identifier(&self) -> EgldOrEsdtTokenIdentifier<StaticApi> {
+        self.dynamic_sft_token_id
+            .as_ref()
+            .expect(NO_KNOWN_DYNAMIC_SFT_TOKEN_ID)
+            .token_id
+            .clone()
+    }
+
+    pub fn get_dynamic_meta_esdt_token_identifier(&self) -> EgldOrEsdtTokenIdentifier<StaticApi> {
+        self.dynamic_meta_esdt_token_id
+            .as_ref()
+            .expect(NO_KNOWN_DYNAMIC_META_ESDT_TOKEN_ID)
+            .token_id
+            .clone()
     }
 
     pub fn get_first_token_id(&self) -> EsdtTokenInfo {
@@ -348,10 +334,11 @@ impl State {
             .clone()
     }
 
-    pub fn get_sov_to_mvx_token_id(&self) -> EsdtTokenInfo {
+    pub fn get_sov_to_mvx_token_id(&self) -> EgldOrEsdtTokenIdentifier<StaticApi> {
         self.sov_to_mvx_token_id
             .as_ref()
             .expect(NO_KNOWN_SOV_TO_MVX_TOKEN)
+            .token_id
             .clone()
     }
 
@@ -399,13 +386,13 @@ impl State {
 
     pub fn get_initial_token_balance_for_wallet(
         &self,
-        token_id: TokenIdentifier<StaticApi>,
+        token_id: EgldOrEsdtTokenIdentifier<StaticApi>,
     ) -> BigUint<StaticApi> {
         self.initial_wallet_balance
             .as_ref()
             .expect("No initial wallet balance set")
             .iter()
-            .find(|token| token.token_id == token_id.to_string())
+            .find(|token| token.token_id == token_id)
             .map_or_else(BigUint::zero, |token| token.amount.clone())
     }
 }

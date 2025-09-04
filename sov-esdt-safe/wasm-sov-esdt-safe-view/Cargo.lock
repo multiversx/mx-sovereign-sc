@@ -21,16 +21,27 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5c8214115b7bf84099f1309324e63141d4c5d7cc26862f97a0a857dbefe165bd"
 
 [[package]]
+name = "common-utils"
+version = "0.1.0"
+dependencies = [
+ "custom-events",
+ "error-messages",
+ "multiversx-sc",
+ "proxies",
+ "structs",
+]
+
+[[package]]
 name = "cross-chain"
 version = "0.1.0"
 dependencies = [
+ "common-utils",
  "custom-events",
  "error-messages",
  "multiversx-sc",
  "multiversx-sc-modules",
  "proxies",
  "structs",
- "utils",
 ]
 
 [[package]]
@@ -53,16 +64,30 @@ name = "error-messages"
 version = "0.1.0"
 
 [[package]]
+name = "fee-common"
+version = "0.1.0"
+dependencies = [
+ "common-utils",
+ "custom-events",
+ "error-messages",
+ "multiversx-sc",
+ "multiversx-sc-modules",
+ "proxies",
+ "structs",
+]
+
+[[package]]
 name = "fee-market"
 version = "0.1.0"
 dependencies = [
+ "common-utils",
  "custom-events",
  "error-messages",
+ "fee-common",
  "multiversx-sc",
  "proxies",
  "setup-phase",
  "structs",
- "utils",
 ]
 
 [[package]]
@@ -218,6 +243,8 @@ dependencies = [
 name = "setup-phase"
 version = "0.1.0"
 dependencies = [
+ "common-utils",
+ "custom-events",
  "error-messages",
  "multiversx-sc",
 ]
@@ -232,6 +259,7 @@ checksum = "8917285742e9f3e1683f0a9c4e6b57960b7314d0b08d30d1ecd426713ee2eee9"
 name = "sov-esdt-safe"
 version = "0.1.0"
 dependencies = [
+ "common-utils",
  "cross-chain",
  "custom-events",
  "error-messages",
@@ -242,7 +270,6 @@ dependencies = [
  "setup-phase",
  "structs",
  "testing-sc",
- "utils",
 ]
 
 [[package]]
@@ -295,14 +322,3 @@ name = "unwrap-infallible"
 version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "151ac09978d3c2862c4e39b557f4eceee2cc72150bc4cb4f16abf061b6e381fb"
-
-[[package]]
-name = "utils"
-version = "0.1.0"
-dependencies = [
- "custom-events",
- "error-messages",
- "multiversx-sc",
- "proxies",
- "structs",
-]

@@ -11,6 +11,12 @@ rev = "b59411841984a2fcbf76498d29bc131f2d433af9"
 [dependencies.error-messages]
 path = "../error-messages"
 
+[dependencies.common-utils]
+path = "../common-utils"
+
+[dependencies.custom-events]
+path = "../custom-events"
+
 [dev-dependencies.multiversx-sc-scenario]
 git = "https://github.com/multiversx/mx-sdk-rs"
 rev = "b59411841984a2fcbf76498d29bc131f2d433af9"

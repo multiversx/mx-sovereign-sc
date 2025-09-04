@@ -21,8 +21,8 @@ path = "../structs"
 [dependencies.proxies]
 path = "../proxies"
 
-[dependencies.utils]
-path = "../utils"
+[dependencies.common-utils]
+path = "../common-utils"
 
 [dependencies.error-messages]
 path = "../error-messages"

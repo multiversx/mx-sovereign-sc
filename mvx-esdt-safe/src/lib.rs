@@ -1,6 +1,9 @@
 #![no_std]
 
-use error_messages::{ERROR_AT_ENCODING, SETUP_PHASE_ALREADY_COMPLETED};
+use error_messages::{
+    ERROR_AT_ENCODING, FEE_MARKET_NOT_SET, NATIVE_TOKEN_NOT_REGISTERED,
+    SETUP_PHASE_ALREADY_COMPLETED, SETUP_PHASE_NOT_COMPLETED,
+};
 
 use multiversx_sc::imports::*;
 use structs::{configs::EsdtSafeConfig, generate_hash::GenerateHash};
@@ -22,11 +25,19 @@ pub trait MvxEsdtSafe:
     + cross_chain::storage::CrossChainStorage
     + cross_chain::execute_common::ExecuteCommonModule
     + multiversx_sc_modules::pause::PauseModule
-    + utils::UtilsModule
+    + common_utils::CommonUtilsModule
     + setup_phase::SetupPhaseModule
 {
     #[init]
-    fn init(&self, opt_config: OptionalValue<EsdtSafeConfig<Self::Api>>) {
+    fn init(
+        &self,
+        sov_token_prefix: ManagedBuffer,
+        opt_config: OptionalValue<EsdtSafeConfig<Self::Api>>,
+    ) {
+        self.validate_chain_id(&sov_token_prefix);
+
+        self.sov_token_prefix().set(sov_token_prefix);
+
         let new_config = match opt_config {
             OptionalValue::Some(cfg) => {
                 if let Some(error_message) = self.is_esdt_safe_config_valid(&cfg) {
@@ -66,29 +77,49 @@ pub trait MvxEsdtSafe:
         hash_of_hashes: ManagedBuffer,
         new_config: EsdtSafeConfig<Self::Api>,
     ) {
-        self.require_setup_complete();
-
         let config_hash = new_config.generate_hash();
-        require!(!config_hash.is_empty(), ERROR_AT_ENCODING);
-
-        self.lock_operation_hash(&hash_of_hashes, &config_hash);
-
+        if config_hash.is_empty() {
+            self.complete_operation(
+                &hash_of_hashes,
+                &config_hash,
+                Some(ERROR_AT_ENCODING.into()),
+            );
+            return;
+        }
+        if !self.is_setup_phase_complete() {
+            self.complete_operation(
+                &hash_of_hashes,
+                &config_hash,
+                Some(SETUP_PHASE_NOT_COMPLETED.into()),
+            );
+            return;
+        }
+        if let Some(lock_operation_error) =
+            self.lock_operation_hash_wrapper(&hash_of_hashes, &config_hash)
+        {
+            self.complete_operation(&hash_of_hashes, &config_hash, Some(lock_operation_error));
+            return;
+        }
         if let Some(error_message) = self.is_esdt_safe_config_valid(&new_config) {
             self.complete_operation(
                 &hash_of_hashes,
                 &config_hash,
                 Some(ManagedBuffer::from(error_message)),
             );
+            return;
         } else {
             self.esdt_safe_config().set(new_config);
+            self.complete_operation(&hash_of_hashes, &config_hash, None);
         }
-
-        self.complete_operation(&hash_of_hashes, &config_hash, None);
     }
 
     #[only_owner]
     #[endpoint(setFeeMarketAddress)]
     fn set_fee_market_address(&self, fee_market_address: ManagedAddress) {
+        require!(
+            !self.is_setup_phase_complete(),
+            SETUP_PHASE_ALREADY_COMPLETED
+        );
         self.require_sc_address(&fee_market_address);
         self.fee_market_address().set(fee_market_address);
     }
@@ -96,13 +127,12 @@ pub trait MvxEsdtSafe:
     #[only_owner]
     #[endpoint(completeSetupPhase)]
     fn complete_setup_phase(&self) {
-        require!(
-            !self.is_setup_phase_complete(),
-            SETUP_PHASE_ALREADY_COMPLETED
-        );
+        if self.is_setup_phase_complete() {
+            return;
+        }
 
-        // TODO:
-        // require!(!self.native_token().is_empty(), NATIVE_TOKEN_NOT_REGISTERED);
+        require!(!self.native_token().is_empty(), NATIVE_TOKEN_NOT_REGISTERED);
+        require!(!self.fee_market_address().is_empty(), FEE_MARKET_NOT_SET);
 
         self.unpause_endpoint();
 

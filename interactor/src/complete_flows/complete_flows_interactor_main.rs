@@ -5,15 +5,16 @@ use common_interactor::interactor_structs::{ActionConfig, BalanceCheckConfig};
 use common_interactor::{
     common_sovereign_interactor::CommonInteractorTrait, interactor_config::Config,
 };
-use common_test_setup::base_setup::init::RegisterTokenArgs;
 use common_test_setup::constants::{
-    INTERACTOR_WORKING_DIR, ISSUE_COST, ONE_THOUSAND_TOKENS, OPERATION_HASH_STATUS_STORAGE_KEY,
+    INTERACTOR_WORKING_DIR, ONE_THOUSAND_TOKENS, OPERATION_HASH_STATUS_STORAGE_KEY,
     SOVEREIGN_RECEIVER_ADDRESS, TOKEN_DISPLAY_NAME, TOKEN_TICKER,
 };
-use header_verifier::utils::OperationHashStatus;
+use header_verifier::header_utils::OperationHashStatus;
 use multiversx_sc_snippets::multiversx_sc_scenario::multiversx_chain_vm::crypto_functions::sha256;
 use multiversx_sc_snippets::{hex, imports::*};
 use structs::fee::FeeStruct;
+use structs::operation::OperationData;
+use structs::RegisterTokenOperation;
 
 pub struct CompleteFlowInteract {
     pub interactor: Interactor,
@@ -249,14 +250,23 @@ impl CompleteFlowInteract {
     async fn register_sovereign_token(&mut self, shard: u32, token: EsdtTokenInfo) -> String {
         self.register_token(
             shard,
-            RegisterTokenArgs {
-                sov_token_id: TokenIdentifier::from_esdt_bytes(&token.token_id),
+            RegisterTokenOperation {
+                token_id: token.token_id.clone(),
                 token_type: token.token_type,
-                token_display_name: TOKEN_DISPLAY_NAME,
-                token_ticker: token.token_id.split('-').nth(1).unwrap_or(TOKEN_TICKER),
+                token_display_name: ManagedBuffer::from(TOKEN_DISPLAY_NAME),
+                token_ticker: ManagedBuffer::from(
+                    token
+                        .token_id
+                        .into_managed_buffer()
+                        .to_string()
+                        .split('-')
+                        .nth(1)
+                        .unwrap_or(TOKEN_TICKER),
+                ),
                 num_decimals: token.decimals,
+                token_nonce: token.nonce,
+                data: OperationData::new(0u64, self.user_address().into(), None),
             },
-            ISSUE_COST.into(),
             None,
         )
         .await

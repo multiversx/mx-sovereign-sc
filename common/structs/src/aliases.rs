@@ -9,12 +9,12 @@ pub type TxNonce = u64;
 pub type BlockNonce = u64;
 pub type SenderAddress<M> = ManagedAddress<M>;
 pub type ReceiverAddress<M> = ManagedAddress<M>;
-pub type EventPaymentTuple<M> = MultiValue3<TokenIdentifier<M>, u64, EsdtTokenData<M>>;
-pub type PaymentsVec<M> = ManagedVec<M, EsdtTokenPayment<M>>;
+pub type EventPaymentTuple<M> = MultiValue3<EgldOrEsdtTokenIdentifier<M>, u64, EsdtTokenData<M>>;
+pub type PaymentsVec<M> = ManagedVec<M, EgldOrEsdtTokenPayment<M>>;
 pub type TransferDataTuple<M> =
     MultiValue3<GasLimit, ManagedBuffer<M>, MultiValueEncoded<M, ManagedBuffer<M>>>;
 pub type ExtractedFeeResult<M> =
-    MultiValue2<OptionalValue<EsdtTokenPayment<M>>, ManagedVec<M, EsdtTokenPayment<M>>>;
+    MultiValue2<OptionalValue<EgldOrEsdtTokenPayment<M>>, ManagedVec<M, EgldOrEsdtTokenPayment<M>>>;
 pub type OptionalValueTransferDataTuple<M> = OptionalValue<TransferDataTuple<M>>;
 pub type StakeMultiArg<M> = MultiValue2<TokenIdentifier<M>, BigUint<M>>;
 pub type OptionalTransferData<M> =

@@ -19,8 +19,8 @@ rev = "b59411841984a2fcbf76498d29bc131f2d433af9"
 [dependencies.testing-sc]
 path = "../testing-sc"
 
-[dependencies.utils]
-path = "../common/utils"
+[dependencies.common-utils]
+path = "../common/common-utils"
 
 [dependencies.fee-market]
 path = "../fee-market"
