@@ -2,7 +2,7 @@ use crate::err_msg;
 use multiversx_sc::{
     imports::OptionalValue,
     sc_panic,
-    types::{ManagedAsyncCallResult, MultiValueEncoded},
+    types::{BigUint, ManagedAsyncCallResult, MultiValueEncoded},
 };
 use proxies::chain_factory_proxy::ChainFactoryContractProxy;
 use structs::{
@@ -45,6 +45,7 @@ pub trait ScDeployModule:
         &self,
         sov_prefix: ManagedBuffer,
         native_token: NativeToken<Self::Api>,
+        payment: &BigUint<Self::Api>,
         opt_config: OptionalValue<EsdtSafeConfig<Self::Api>>,
     ) {
         let chain_id = self
@@ -56,7 +57,7 @@ pub trait ScDeployModule:
             .typed(ChainFactoryContractProxy)
             .deploy_mvx_esdt_safe(sov_prefix, native_token, opt_config)
             .gas(PHASE_TWO_ASYNC_CALL_GAS)
-            .egld(self.call_value().egld().clone())
+            .egld(payment)
             .callback(
                 self.callbacks()
                     .register_deployed_contract(&chain_id, ScArray::ESDTSafe),

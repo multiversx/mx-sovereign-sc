@@ -22,7 +22,7 @@ use sovereign_forge_blackbox_setup::SovereignForgeTestState;
 use structs::{
     configs::{EsdtSafeConfig, SovereignConfig},
     fee::{FeeStruct, FeeType},
-    forge::{NativeToken, ScArray},
+    forge::ScArray,
 };
 mod sovereign_forge_blackbox_setup;
 
@@ -243,11 +243,7 @@ fn test_update_esdt_safe_config() {
         .common_setup
         .deploy_header_verifier(vec![ScArray::ESDTSafe]);
 
-    let native_token = NativeToken {
-        ticker: NATIVE_TEST_TOKEN.as_str().into(),
-        name: "Native".into(),
-    };
-
+    let native_token = state.common_setup.get_native_token();
     state.common_setup.deploy_phase_two(
         &ISSUE_COST.into(),
         native_token,
@@ -327,10 +323,8 @@ fn test_set_fee() {
         OptionalValue::None,
         None,
     );
-    let native_token = NativeToken {
-        ticker: NATIVE_TEST_TOKEN.as_str().into(),
-        name: "Native".into(),
-    };
+
+    let native_token = state.common_setup.get_native_token();
     state.common_setup.deploy_phase_two(
         &ISSUE_COST.into(),
         native_token,
@@ -426,10 +420,7 @@ fn test_set_fee_phase_three_not_completed() {
         OptionalValue::None,
         None,
     );
-    let native_token = NativeToken {
-        ticker: NATIVE_TEST_TOKEN.as_str().into(),
-        name: "Native".into(),
-    };
+    let native_token = state.common_setup.get_native_token();
     state.common_setup.deploy_phase_two(
         &ISSUE_COST.into(),
         native_token,
@@ -482,10 +473,7 @@ fn test_remove_fee() {
         OptionalValue::None,
         None,
     );
-    let native_token = NativeToken {
-        ticker: NATIVE_TEST_TOKEN.as_str().into(),
-        name: "Native".into(),
-    };
+    let native_token = state.common_setup.get_native_token();
     state.common_setup.deploy_phase_two(
         &ISSUE_COST.into(),
         native_token,
@@ -582,10 +570,7 @@ fn test_remove_fee_phase_three_not_completed() {
         OptionalValue::None,
         None,
     );
-    let native_token = NativeToken {
-        ticker: NATIVE_TEST_TOKEN.as_str().into(),
-        name: "Native".into(),
-    };
+    let native_token = state.common_setup.get_native_token();
     state.common_setup.deploy_phase_two(
         &ISSUE_COST.into(),
         native_token,
@@ -630,10 +615,7 @@ fn test_complete_setup_phase() {
         None,
     );
 
-    let native_token = NativeToken {
-        ticker: NATIVE_TEST_TOKEN.as_str().into(),
-        name: "Native".into(),
-    };
+    let native_token = state.common_setup.get_native_token();
     state.common_setup.deploy_phase_two(
         &ISSUE_COST.into(),
         native_token,
@@ -941,10 +923,7 @@ fn test_deploy_phase_two_without_first_phase() {
     state.common_setup.deploy_chain_factory();
     state.finish_setup();
 
-    let native_token = NativeToken {
-        ticker: NATIVE_TEST_TOKEN.as_str().into(),
-        name: "Native".into(),
-    };
+    let native_token = state.common_setup.get_native_token();
     state.common_setup.deploy_phase_two(
         &ISSUE_COST.into(),
         native_token,
@@ -981,10 +960,7 @@ fn test_deploy_phase_two() {
         .common_setup
         .deploy_phase_one(&deploy_cost, None, OptionalValue::None, None);
 
-    let native_token = NativeToken {
-        ticker: NATIVE_TEST_TOKEN.as_str().into(),
-        name: "Native".into(),
-    };
+    let native_token = state.common_setup.get_native_token();
     state.common_setup.deploy_phase_two(
         &ISSUE_COST.into(),
         native_token,
@@ -1019,7 +995,7 @@ fn test_deploy_phase_two() {
     //         &esdt_safe_address_buffer_from_forge,
     //     ))
     //     .whitebox(mvx_esdt_safe::contract_obj, |sc| {
-    //         assert!(!sc.native_token().is_empty());
+    //         assert!(!sc.state.common_setup.get_native_token()().is_empty());
     //     });
 }
 
@@ -1052,10 +1028,8 @@ fn test_deploy_phase_two_esdt_safe_already_deployed() {
         .common_setup
         .deploy_phase_one(&deploy_cost, None, OptionalValue::None, None);
 
-    let native_token = NativeToken {
-        ticker: NATIVE_TEST_TOKEN.as_str().into(),
-        name: "Native".into(),
-    };
+    let native_token = state.common_setup.get_native_token();
+
     state.common_setup.deploy_phase_two(
         &ISSUE_COST.into(),
         native_token.clone(),
@@ -1101,10 +1075,7 @@ fn test_deploy_phase_three() {
         .common_setup
         .deploy_phase_one(&deploy_cost, None, OptionalValue::None, None);
 
-    let native_token = NativeToken {
-        ticker: NATIVE_TEST_TOKEN.as_str().into(),
-        name: "Native".into(),
-    };
+    let native_token = state.common_setup.get_native_token();
     state.common_setup.deploy_phase_two(
         &ISSUE_COST.into(),
         native_token,
@@ -1157,10 +1128,7 @@ fn test_remove_users_from_whitelist() {
         .common_setup
         .deploy_phase_one(&deploy_cost, None, OptionalValue::None, None);
 
-    let native_token = NativeToken {
-        ticker: NATIVE_TEST_TOKEN.as_str().into(),
-        name: "Native".into(),
-    };
+    let native_token = state.common_setup.get_native_token();
     state.common_setup.deploy_phase_two(
         &ISSUE_COST.into(),
         native_token,
@@ -1287,10 +1255,7 @@ fn test_deploy_phase_three_already_deployed() {
         .common_setup
         .deploy_phase_one(&deploy_cost, None, OptionalValue::None, None);
 
-    let native_token = NativeToken {
-        ticker: NATIVE_TEST_TOKEN.as_str().into(),
-        name: "Native".into(),
-    };
+    let native_token = state.common_setup.get_native_token();
     state.common_setup.deploy_phase_two(
         &ISSUE_COST.into(),
         native_token,
@@ -1353,10 +1318,7 @@ fn test_deploy_phase_four() {
         .common_setup
         .deploy_phase_one(&deploy_cost, None, OptionalValue::None, None);
 
-    let native_token = NativeToken {
-        ticker: NATIVE_TEST_TOKEN.as_str().into(),
-        name: "Native".into(),
-    };
+    let native_token = state.common_setup.get_native_token();
     state.common_setup.deploy_phase_two(
         &ISSUE_COST.into(),
         native_token,
@@ -1411,10 +1373,7 @@ fn test_deploy_phase_four_without_previous_phase() {
     state
         .common_setup
         .deploy_phase_one(&deploy_cost, None, OptionalValue::None, None);
-    let native_token = NativeToken {
-        ticker: NATIVE_TEST_TOKEN.as_str().into(),
-        name: "Native".into(),
-    };
+    let native_token = state.common_setup.get_native_token();
     state.common_setup.deploy_phase_two(
         &ISSUE_COST.into(),
         native_token,
@@ -1455,10 +1414,7 @@ fn test_deploy_phase_four_header_verifier_already_deployed() {
     state
         .common_setup
         .deploy_phase_one(&deploy_cost, None, OptionalValue::None, None);
-    let native_token = NativeToken {
-        ticker: NATIVE_TEST_TOKEN.as_str().into(),
-        name: "Native".into(),
-    };
+    let native_token = state.common_setup.get_native_token();
     state.common_setup.deploy_phase_two(
         &ISSUE_COST.into(),
         native_token,

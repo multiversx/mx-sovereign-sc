@@ -205,21 +205,6 @@ where
             .original_result()
     }
 
-    pub fn set_native_token<
-        Arg0: ProxyArg<ManagedAddress<Env::Api>>,
-        Arg1: ProxyArg<structs::forge::NativeToken<Env::Api>>,
-    >(
-        self,
-        esdt_safe_address: Arg0,
-        native_token: Arg1,
-    ) -> TxTypedCall<Env, From, To, (), Gas, ()> {
-        self.wrapped_tx
-            .raw_call("setNativeToken")
-            .argument(&esdt_safe_address)
-            .argument(&native_token)
-            .original_result()
-    }
-
     pub fn update_esdt_safe_config<
         Arg0: ProxyArg<ManagedAddress<Env::Api>>,
         Arg1: ProxyArg<structs::configs::EsdtSafeConfig<Env::Api>>,
