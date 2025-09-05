@@ -4,8 +4,7 @@ pub mod sovereign_forge;
 use common_interactor::{
     common_sovereign_interactor::CommonInteractorTrait, interactor_config::Config,
 };
-use common_test_setup::constants::ISSUE_COST;
-use multiversx_sc::{imports::OptionalValue, types::BigUint};
+use multiversx_sc::imports::OptionalValue;
 use multiversx_sc_snippets::env_logger;
 use mvx_esdt_safe::mvx_esdt_safe_interactor_main::MvxEsdtSafeInteract;
 use sovereign_forge::sovereign_forge_interactor_main::SovereignForgeInteract;
@@ -105,11 +104,7 @@ pub async fn sovereign_forge_cli() {
                 .deploy_phase_one(OptionalValue::None, None, OptionalValue::None)
                 .await
         }
-        "deployPhaseTwo" => {
-            interact
-                .deploy_phase_two(&BigUint::from(ISSUE_COST), OptionalValue::None)
-                .await
-        }
+        "deployPhaseTwo" => interact.deploy_phase_two(OptionalValue::None).await,
         "deployPhaseThree" => interact.deploy_phase_three(None).await,
         "deployPhaseFour" => interact.deploy_phase_four().await,
         "getChainFactories" => interact.get_chain_factories().await,

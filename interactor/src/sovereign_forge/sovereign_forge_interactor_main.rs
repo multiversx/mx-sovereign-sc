@@ -6,7 +6,7 @@ use common_interactor::{
 };
 use common_test_setup::base_setup::helpers::BLSKey;
 use common_test_setup::constants::{
-    INTERACTOR_WORKING_DIR, ISSUE_COST, ONE_THOUSAND_TOKENS, SOVEREIGN_FORGE_CODE_PATH,
+    INTERACTOR_WORKING_DIR, ONE_THOUSAND_TOKENS, SOVEREIGN_FORGE_CODE_PATH,
 };
 use multiversx_sc_snippets::imports::*;
 use proxies::sovereign_forge_proxy::SovereignForgeProxy;
@@ -186,8 +186,7 @@ impl SovereignForgeInteract {
         )
         .await;
 
-        self.deploy_phase_two(&ISSUE_COST.into(), optional_esdt_safe_config)
-            .await;
+        self.deploy_phase_two(optional_esdt_safe_config).await;
         self.deploy_phase_three(fee).await;
         self.deploy_phase_four().await;
 

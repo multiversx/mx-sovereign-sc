@@ -203,7 +203,6 @@ impl BaseSetup {
 
     pub fn deploy_phase_two(
         &mut self,
-        payment: &BigUint<StaticApi>,
         error_message: Option<&str>,
         opt_config: OptionalValue<EsdtSafeConfig<StaticApi>>,
     ) {
@@ -214,7 +213,6 @@ impl BaseSetup {
             .to(SOVEREIGN_FORGE_SC_ADDRESS)
             .typed(SovereignForgeProxy)
             .deploy_phase_two(opt_config)
-            .egld(payment)
             .returns(ReturnsHandledOrError::new())
             .run();
 
