@@ -8,10 +8,27 @@ use proxies::{
 use structs::{
     configs::{EsdtSafeConfig, SovereignConfig},
     fee::FeeStruct,
+    forge::NativeToken,
 };
 
 #[multiversx_sc::module]
 pub trait UpdateConfigsModule: only_admin::OnlyAdminModule {
+    #[payable("EGLD")]
+    #[only_admin]
+    #[endpoint(registerNativeToken)]
+    fn register_native_token(
+        &self,
+        esdt_safe_address: ManagedAddress,
+        native_token: NativeToken<Self::Api>,
+    ) {
+        self.tx()
+            .to(esdt_safe_address)
+            .typed(MvxEsdtSafeProxy)
+            .register_native_token(native_token)
+            .egld(self.call_value().egld().clone())
+            .sync_call();
+    }
+
     #[only_admin]
     #[endpoint(updateEsdtSafeConfig)]
     fn update_esdt_safe_config(

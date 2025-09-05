@@ -6,9 +6,8 @@ use crate::{
 };
 use common_test_setup::constants::{
     CHAIN_CONFIG_CODE_PATH, CHAIN_FACTORY_CODE_PATH, CHAIN_ID, DEPLOY_COST, FEE_MARKET_CODE_PATH,
-    HEADER_VERIFIER_CODE_PATH, ISSUE_COST, MVX_ESDT_SAFE_CODE_PATH, NATIVE_TOKEN_NAME,
-    NATIVE_TOKEN_TICKER, NUMBER_OF_SHARDS, SHARD_0, SOVEREIGN_FORGE_CODE_PATH,
-    SOVEREIGN_TOKEN_PREFIX, TESTING_SC_CODE_PATH,
+    HEADER_VERIFIER_CODE_PATH, ISSUE_COST, MVX_ESDT_SAFE_CODE_PATH, NUMBER_OF_SHARDS, SHARD_0,
+    SOVEREIGN_FORGE_CODE_PATH, SOVEREIGN_TOKEN_PREFIX, TESTING_SC_CODE_PATH,
 };
 use error_messages::FAILED_TO_LOAD_WALLET_SHARD_0;
 use multiversx_sc::{
@@ -37,7 +36,7 @@ use structs::{
     aliases::{OptionalValueTransferDataTuple, PaymentsVec},
     configs::{EsdtSafeConfig, SovereignConfig},
     fee::FeeStruct,
-    forge::{ContractInfo, NativeToken, ScArray},
+    forge::{ContractInfo, ScArray},
     generate_hash::GenerateHash,
     operation::Operation,
     EsdtInfo, RegisterTokenOperation,
@@ -630,17 +629,8 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             chain_config_address,
         )
         .await;
-        let native_token = NativeToken {
-            ticker: ManagedBuffer::from(NATIVE_TOKEN_TICKER),
-            name: ManagedBuffer::from(NATIVE_TOKEN_NAME),
-        };
-        self.deploy_phase_two(
-            &BigUint::from(ISSUE_COST),
-            native_token,
-            caller.clone(),
-            optional_esdt_safe_config.clone(),
-        )
-        .await;
+        self.deploy_phase_two(optional_esdt_safe_config.clone(), caller.clone())
+            .await;
         self.deploy_phase_three(caller.clone(), fee.clone()).await;
         self.deploy_phase_four(caller.clone()).await;
 
@@ -772,10 +762,8 @@ pub trait CommonInteractorTrait: InteractorHelpers {
 
     async fn deploy_phase_two(
         &mut self,
-        payment: &BigUint<StaticApi>,
-        native_token: NativeToken<StaticApi>,
-        caller: Address,
         opt_config: OptionalValue<EsdtSafeConfig<StaticApi>>,
+        caller: Address,
     ) {
         let sovereign_forge_address = self.state().current_sovereign_forge_sc_address().clone();
         let response = self
@@ -785,8 +773,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             .to(sovereign_forge_address)
             .gas(30_000_000u64)
             .typed(SovereignForgeProxy)
-            .deploy_phase_two(native_token, opt_config)
-            .egld(payment)
+            .deploy_phase_two(opt_config)
             .returns(ReturnsResultUnmanaged)
             .run()
             .await;

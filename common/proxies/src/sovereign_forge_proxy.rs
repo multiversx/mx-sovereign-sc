@@ -117,16 +117,14 @@ where
     }
 
     pub fn deploy_phase_two<
-        Arg0: ProxyArg<structs::forge::NativeToken<Env::Api>>,
-        Arg1: ProxyArg<OptionalValue<structs::configs::EsdtSafeConfig<Env::Api>>>,
+        Arg0: ProxyArg<OptionalValue<structs::configs::EsdtSafeConfig<Env::Api>>>,
     >(
         self,
-        native_token: Arg0,
-        opt_config: Arg1,
-    ) -> TxTypedCall<Env, From, To, (), Gas, ()> {
+        opt_config: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
+            .payment(NotPayable)
             .raw_call("deployPhaseTwo")
-            .argument(&native_token)
             .argument(&opt_config)
             .original_result()
     }
@@ -216,6 +214,18 @@ where
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("getAllChainIds")
+            .original_result()
+    }
+
+    pub fn register_native_token<
+        Arg0: ProxyArg<structs::forge::NativeToken<Env::Api>>,
+    >(
+        self,
+        native_token: Arg0,
+    ) -> TxTypedCall<Env, From, To, (), Gas, ()> {
+        self.wrapped_tx
+            .raw_call("registerNativeToken")
+            .argument(&native_token)
             .original_result()
     }
 

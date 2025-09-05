@@ -1,8 +1,11 @@
+use error_messages::ISSUE_COST_NOT_COVERED;
+use multiversx_sc::require;
 use multiversx_sc::types::{MultiValueEncoded, TokenIdentifier};
+use mvx_esdt_safe::register_token::ISSUE_COST;
 use proxies::chain_factory_proxy::ChainFactoryContractProxy;
 use structs::configs::{EsdtSafeConfig, SovereignConfig};
 use structs::fee::FeeStruct;
-use structs::forge::ScArray;
+use structs::forge::{NativeToken, ScArray};
 
 use crate::{err_msg, forge_common};
 
@@ -13,6 +16,27 @@ pub trait UpdateConfigsModule:
     + forge_common::forge_utils::ForgeUtilsModule
     + custom_events::CustomEventsModule
 {
+    #[payable("EGLD")]
+    #[endpoint(registerNativeToken)]
+    fn register_native_token(&self, native_token: NativeToken<Self::Api>) {
+        let caller = self.blockchain().get_caller();
+        let egld_payment = self.call_value().egld().clone();
+
+        require!(egld_payment == ISSUE_COST, ISSUE_COST_NOT_COVERED);
+
+        self.require_phase_two_completed(&caller);
+
+        self.tx()
+            .to(self.get_chain_factory_address())
+            .typed(ChainFactoryContractProxy)
+            .register_native_token(
+                self.get_contract_address(&caller, ScArray::ESDTSafe),
+                native_token,
+            )
+            .egld(egld_payment)
+            .transfer_execute();
+    }
+
     #[endpoint(updateEsdtSafeConfig)]
     fn update_esdt_safe_config(&self, new_config: EsdtSafeConfig<Self::Api>) {
         let caller = self.blockchain().get_caller();
