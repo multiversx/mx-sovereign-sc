@@ -2,11 +2,6 @@
 name = "sov-esdt-safe"
 allocator = "static64k"
 
-[contracts.full]
-name = "sov-esdt-safe-full"
-add-unlabelled = true
-add-labels = ["sov-esdt-safe-external-view"]
-
 [contracts.view]
 name = "sov-esdt-safe-view"
 external-view = true
