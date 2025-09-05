@@ -88,6 +88,18 @@ where
     To: TxTo<Env>,
     Gas: TxGas<Env>,
 {
+    pub fn register_token<
+        Arg0: ProxyArg<EgldOrEsdtTokenIdentifier<Env::Api>>,
+    >(
+        self,
+        token_identifier: Arg0,
+    ) -> TxTypedCall<Env, From, To, (), Gas, ()> {
+        self.wrapped_tx
+            .raw_call("registerToken")
+            .argument(&token_identifier)
+            .original_result()
+    }
+
     pub fn update_configuration<
         Arg0: ProxyArg<structs::configs::EsdtSafeConfig<Env::Api>>,
     >(

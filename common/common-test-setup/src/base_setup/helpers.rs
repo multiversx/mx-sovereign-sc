@@ -28,7 +28,6 @@ use crate::{
 };
 
 impl BaseSetup {
-    // TODO: add payment
     pub fn get_native_token(&mut self) -> NativeToken<StaticApi> {
         NativeToken {
             ticker: NATIVE_TEST_TOKEN.as_str().into(),

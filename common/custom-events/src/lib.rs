@@ -4,7 +4,8 @@ use structs::{
     aliases::{EventPaymentTuple, TxId},
     configs::{EsdtSafeConfig, SovereignConfig},
     fee::{AddressPercentagePair, FeeStruct},
-    operation::OperationData,
+    operation::{OperationData, RegisterTokenOperationData},
+    RegisterTokenStruct,
 };
 
 multiversx_sc::imports!();
@@ -58,9 +59,6 @@ pub trait CustomEventsModule {
     #[event("completeGenesisPhase")]
     fn complete_genesis_event(&self);
 
-    #[event("registrationStatusUpdate")]
-    fn registration_status_update_event(&self, registration_status: &ManagedBuffer);
-
     #[event("setFee")]
     fn set_fee_event(&self, #[indexed] fee_struct: FeeStruct<Self::Api>, op_nonce: TxId);
 
@@ -103,5 +101,15 @@ pub trait CustomEventsModule {
         &self,
         #[indexed] users: ManagedVec<ManagedAddress<Self::Api>>,
         op_nonce: TxId,
+    );
+
+    #[event("registerToken")]
+    fn register_token_event(
+        &self,
+        #[indexed] token_id: EgldOrEsdtTokenIdentifier<Self::Api>,
+        #[indexed] token_type: EsdtTokenType,
+        #[indexed] name: ManagedBuffer,
+        #[indexed] num_decimals: usize,
+        op_data: RegisterTokenOperationData<Self::Api>,
     );
 }
