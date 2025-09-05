@@ -1,5 +1,6 @@
 [contracts.main]
 name = "sov-esdt-safe"
+allocator = "static64k"
 
 [contracts.full]
 name = "sov-esdt-safe-full"
