@@ -7,7 +7,7 @@ use proxies::{
 use structs::{
     configs::{EsdtSafeConfig, SovereignConfig},
     fee::FeeStruct,
-    forge::{ContractInfo, NativeToken},
+    forge::ContractInfo,
 };
 multiversx_sc::derive_imports!();
 
@@ -25,7 +25,6 @@ pub trait FactoryModule: only_admin::OnlyAdminModule {
         self.tx()
             .typed(ChainConfigContractProxy)
             .init(opt_config)
-            .gas(self.blockchain().get_gas_left())
             .from_source(source_address)
             .code_metadata(metadata)
             .returns(ReturnsNewManagedAddress)
@@ -44,7 +43,6 @@ pub trait FactoryModule: only_admin::OnlyAdminModule {
         self.tx()
             .typed(HeaderverifierProxy)
             .init(sovereign_contracts)
-            .gas(self.blockchain().get_gas_left())
             .from_source(source_address)
             .code_metadata(metadata)
             .returns(ReturnsNewManagedAddress)
@@ -64,7 +62,6 @@ pub trait FactoryModule: only_admin::OnlyAdminModule {
         self.tx()
             .typed(MvxEsdtSafeProxy)
             .init(sov_token_prefix, opt_config)
-            .gas(self.blockchain().get_gas_left())
             .from_source(source_address)
             .code_metadata(metadata)
             .returns(ReturnsNewManagedAddress)
@@ -85,7 +82,6 @@ pub trait FactoryModule: only_admin::OnlyAdminModule {
             .tx()
             .typed(FeeMarketProxy)
             .init(&esdt_safe_address, fee)
-            .gas(self.blockchain().get_gas_left())
             .from_source(source_address)
             .code_metadata(metadata)
             .returns(ReturnsNewManagedAddress)

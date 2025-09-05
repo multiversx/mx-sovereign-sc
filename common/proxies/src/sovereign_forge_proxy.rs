@@ -121,8 +121,9 @@ where
     >(
         self,
         opt_config: Arg0,
-    ) -> TxTypedCall<Env, From, To, (), Gas, ()> {
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
+            .payment(NotPayable)
             .raw_call("deployPhaseTwo")
             .argument(&opt_config)
             .original_result()

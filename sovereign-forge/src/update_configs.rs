@@ -1,6 +1,6 @@
 use error_messages::ISSUE_COST_NOT_COVERED;
 use multiversx_sc::require;
-use multiversx_sc::types::{MultiValueEncoded, TokenIdentifier, TxPaymentEgldOnly};
+use multiversx_sc::types::{MultiValueEncoded, TokenIdentifier};
 use mvx_esdt_safe::register_token::ISSUE_COST;
 use proxies::chain_factory_proxy::ChainFactoryContractProxy;
 use structs::configs::{EsdtSafeConfig, SovereignConfig};

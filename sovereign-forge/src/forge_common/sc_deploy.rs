@@ -2,13 +2,13 @@ use crate::err_msg;
 use multiversx_sc::{
     imports::OptionalValue,
     sc_panic,
-    types::{BigUint, ManagedAsyncCallResult, MultiValueEncoded},
+    types::{ManagedAsyncCallResult, MultiValueEncoded},
 };
 use proxies::chain_factory_proxy::ChainFactoryContractProxy;
 use structs::{
     configs::{EsdtSafeConfig, SovereignConfig},
     fee::FeeStruct,
-    forge::{ContractInfo, NativeToken, ScArray},
+    forge::{ContractInfo, ScArray},
     PHASE_FOUR_ASYNC_CALL_GAS, PHASE_FOUR_CALLBACK_GAS, PHASE_ONE_ASYNC_CALL_GAS,
     PHASE_ONE_CALLBACK_GAS, PHASE_THREE_ASYNC_CALL_GAS, PHASE_THREE_CALLBACK_GAS,
     PHASE_TWO_ASYNC_CALL_GAS, PHASE_TWO_CALLBACK_GAS,
