@@ -1,7 +1,7 @@
 use chain_config::storage::ChainConfigStorageModule;
 use common_test_setup::constants::{
     CHAIN_FACTORY_SC_ADDRESS, CHAIN_ID, DEPLOY_COST, ESDT_SAFE_ADDRESS, FIRST_TEST_TOKEN,
-    ISSUE_COST, NATIVE_TEST_TOKEN, ONE_HUNDRED_THOUSAND, OWNER_ADDRESS, SOVEREIGN_FORGE_SC_ADDRESS,
+    NATIVE_TEST_TOKEN, ONE_HUNDRED_THOUSAND, OWNER_ADDRESS, SOVEREIGN_FORGE_SC_ADDRESS,
     USER_ADDRESS,
 };
 use cross_chain::storage::CrossChainStorage;
@@ -243,13 +243,9 @@ fn test_update_esdt_safe_config() {
         .common_setup
         .deploy_header_verifier(vec![ScArray::ESDTSafe]);
 
-    let native_token = state.common_setup.get_native_token();
-    state.common_setup.deploy_phase_two(
-        &ISSUE_COST.into(),
-        native_token,
-        None,
-        OptionalValue::None,
-    );
+    state
+        .common_setup
+        .deploy_phase_two(None, OptionalValue::None);
     state
         .common_setup
         .world
@@ -324,13 +320,9 @@ fn test_set_fee() {
         None,
     );
 
-    let native_token = state.common_setup.get_native_token();
-    state.common_setup.deploy_phase_two(
-        &ISSUE_COST.into(),
-        native_token,
-        None,
-        OptionalValue::None,
-    );
+    state
+        .common_setup
+        .deploy_phase_two(None, OptionalValue::None);
     state.common_setup.deploy_phase_three(None, None);
     state.common_setup.deploy_phase_four(None);
 
@@ -420,13 +412,9 @@ fn test_set_fee_phase_three_not_completed() {
         OptionalValue::None,
         None,
     );
-    let native_token = state.common_setup.get_native_token();
-    state.common_setup.deploy_phase_two(
-        &ISSUE_COST.into(),
-        native_token,
-        None,
-        OptionalValue::None,
-    );
+    state
+        .common_setup
+        .deploy_phase_two(None, OptionalValue::None);
 
     let fee_type = FeeType::Fixed {
         token: EgldOrEsdtTokenIdentifier::esdt(FIRST_TEST_TOKEN),
@@ -473,13 +461,9 @@ fn test_remove_fee() {
         OptionalValue::None,
         None,
     );
-    let native_token = state.common_setup.get_native_token();
-    state.common_setup.deploy_phase_two(
-        &ISSUE_COST.into(),
-        native_token,
-        None,
-        OptionalValue::None,
-    );
+    state
+        .common_setup
+        .deploy_phase_two(None, OptionalValue::None);
 
     let fee_type = FeeType::Fixed {
         token: EgldOrEsdtTokenIdentifier::esdt(FIRST_TEST_TOKEN),
@@ -570,13 +554,9 @@ fn test_remove_fee_phase_three_not_completed() {
         OptionalValue::None,
         None,
     );
-    let native_token = state.common_setup.get_native_token();
-    state.common_setup.deploy_phase_two(
-        &ISSUE_COST.into(),
-        native_token,
-        None,
-        OptionalValue::None,
-    );
+    state
+        .common_setup
+        .deploy_phase_two(None, OptionalValue::None);
 
     state.remove_fee(FIRST_TEST_TOKEN, Some(FEE_MARKET_NOT_DEPLOYED));
 }
@@ -615,13 +595,9 @@ fn test_complete_setup_phase() {
         None,
     );
 
-    let native_token = state.common_setup.get_native_token();
-    state.common_setup.deploy_phase_two(
-        &ISSUE_COST.into(),
-        native_token,
-        None,
-        OptionalValue::None,
-    );
+    state
+        .common_setup
+        .deploy_phase_two(None, OptionalValue::None);
     state.common_setup.deploy_phase_three(None, None);
     state.common_setup.deploy_phase_four(None);
 
@@ -923,10 +899,7 @@ fn test_deploy_phase_two_without_first_phase() {
     state.common_setup.deploy_chain_factory();
     state.finish_setup();
 
-    let native_token = state.common_setup.get_native_token();
     state.common_setup.deploy_phase_two(
-        &ISSUE_COST.into(),
-        native_token,
         Some(CALLER_DID_NOT_DEPLOY_ANY_SOV_CHAIN),
         OptionalValue::None,
     );
@@ -960,13 +933,9 @@ fn test_deploy_phase_two() {
         .common_setup
         .deploy_phase_one(&deploy_cost, None, OptionalValue::None, None);
 
-    let native_token = state.common_setup.get_native_token();
-    state.common_setup.deploy_phase_two(
-        &ISSUE_COST.into(),
-        native_token,
-        None,
-        OptionalValue::None,
-    );
+    state
+        .common_setup
+        .deploy_phase_two(None, OptionalValue::None);
 
     let mut esdt_safe_address_buffer_from_forge = [0u8; 32];
 
@@ -1028,21 +997,13 @@ fn test_deploy_phase_two_esdt_safe_already_deployed() {
         .common_setup
         .deploy_phase_one(&deploy_cost, None, OptionalValue::None, None);
 
-    let native_token = state.common_setup.get_native_token();
+    state
+        .common_setup
+        .deploy_phase_two(None, OptionalValue::None);
 
-    state.common_setup.deploy_phase_two(
-        &ISSUE_COST.into(),
-        native_token.clone(),
-        None,
-        OptionalValue::None,
-    );
-
-    state.common_setup.deploy_phase_two(
-        &ISSUE_COST.into(),
-        native_token,
-        Some(ESDT_SAFE_ALREADY_DEPLOYED),
-        OptionalValue::None,
-    );
+    state
+        .common_setup
+        .deploy_phase_two(Some(ESDT_SAFE_ALREADY_DEPLOYED), OptionalValue::None);
 }
 
 /// ### TEST
@@ -1075,13 +1036,9 @@ fn test_deploy_phase_three() {
         .common_setup
         .deploy_phase_one(&deploy_cost, None, OptionalValue::None, None);
 
-    let native_token = state.common_setup.get_native_token();
-    state.common_setup.deploy_phase_two(
-        &ISSUE_COST.into(),
-        native_token,
-        None,
-        OptionalValue::None,
-    );
+    state
+        .common_setup
+        .deploy_phase_two(None, OptionalValue::None);
 
     state.common_setup.deploy_phase_three(None, None);
 
@@ -1128,13 +1085,9 @@ fn test_remove_users_from_whitelist() {
         .common_setup
         .deploy_phase_one(&deploy_cost, None, OptionalValue::None, None);
 
-    let native_token = state.common_setup.get_native_token();
-    state.common_setup.deploy_phase_two(
-        &ISSUE_COST.into(),
-        native_token,
-        None,
-        OptionalValue::None,
-    );
+    state
+        .common_setup
+        .deploy_phase_two(None, OptionalValue::None);
 
     state.common_setup.deploy_phase_three(None, None);
 
@@ -1255,13 +1208,9 @@ fn test_deploy_phase_three_already_deployed() {
         .common_setup
         .deploy_phase_one(&deploy_cost, None, OptionalValue::None, None);
 
-    let native_token = state.common_setup.get_native_token();
-    state.common_setup.deploy_phase_two(
-        &ISSUE_COST.into(),
-        native_token,
-        None,
-        OptionalValue::None,
-    );
+    state
+        .common_setup
+        .deploy_phase_two(None, OptionalValue::None);
     state.common_setup.deploy_phase_three(None, None);
     state
         .common_setup
@@ -1318,13 +1267,9 @@ fn test_deploy_phase_four() {
         .common_setup
         .deploy_phase_one(&deploy_cost, None, OptionalValue::None, None);
 
-    let native_token = state.common_setup.get_native_token();
-    state.common_setup.deploy_phase_two(
-        &ISSUE_COST.into(),
-        native_token,
-        None,
-        OptionalValue::None,
-    );
+    state
+        .common_setup
+        .deploy_phase_two(None, OptionalValue::None);
 
     state.common_setup.deploy_phase_three(None, None);
 
@@ -1373,13 +1318,9 @@ fn test_deploy_phase_four_without_previous_phase() {
     state
         .common_setup
         .deploy_phase_one(&deploy_cost, None, OptionalValue::None, None);
-    let native_token = state.common_setup.get_native_token();
-    state.common_setup.deploy_phase_two(
-        &ISSUE_COST.into(),
-        native_token,
-        None,
-        OptionalValue::None,
-    );
+    state
+        .common_setup
+        .deploy_phase_two(None, OptionalValue::None);
     state
         .common_setup
         .deploy_phase_four(Some(FEE_MARKET_NOT_DEPLOYED));
@@ -1414,13 +1355,9 @@ fn test_deploy_phase_four_header_verifier_already_deployed() {
     state
         .common_setup
         .deploy_phase_one(&deploy_cost, None, OptionalValue::None, None);
-    let native_token = state.common_setup.get_native_token();
-    state.common_setup.deploy_phase_two(
-        &ISSUE_COST.into(),
-        native_token,
-        None,
-        OptionalValue::None,
-    );
+    state
+        .common_setup
+        .deploy_phase_two(None, OptionalValue::None);
     state.common_setup.deploy_phase_three(None, None);
     state.common_setup.deploy_phase_four(None);
     state

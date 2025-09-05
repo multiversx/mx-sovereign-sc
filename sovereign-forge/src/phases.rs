@@ -2,17 +2,15 @@ use crate::{err_msg, forge_common};
 use core::ops::Deref;
 use error_messages::{
     CHAIN_CONFIG_ALREADY_DEPLOYED, ESDT_SAFE_ALREADY_DEPLOYED, FEE_MARKET_ALREADY_DEPLOYED,
-    HEADER_VERIFIER_ALREADY_DEPLOYED, ISSUE_COST_NOT_COVERED,
-    SOVEREIGN_SETUP_PHASE_ALREADY_COMPLETED,
+    HEADER_VERIFIER_ALREADY_DEPLOYED, SOVEREIGN_SETUP_PHASE_ALREADY_COMPLETED,
 };
-use mvx_esdt_safe::register_token::ISSUE_COST;
 use proxies::chain_factory_proxy::ChainFactoryContractProxy;
 
 use multiversx_sc::{imports::OptionalValue, require, types::MultiValueEncoded};
 use structs::{
     configs::{EsdtSafeConfig, SovereignConfig},
     fee::FeeStruct,
-    forge::{NativeToken, ScArray},
+    forge::ScArray,
     COMPLETE_SETUP_PHASE_GAS,
 };
 
@@ -58,13 +56,8 @@ pub trait PhasesModule:
         self.sovereigns_mapper(&caller).set(chain_id);
     }
 
-    #[payable("EGLD")]
     #[endpoint(deployPhaseTwo)]
-    fn deploy_phase_two(
-        &self,
-        native_token: NativeToken<Self::Api>,
-        opt_config: OptionalValue<EsdtSafeConfig<Self::Api>>,
-    ) {
+    fn deploy_phase_two(&self, opt_config: OptionalValue<EsdtSafeConfig<Self::Api>>) {
         let caller = self.blockchain().get_caller();
         let sov_prefix = self.sovereigns_mapper(&caller).get();
 
@@ -74,11 +67,7 @@ pub trait PhasesModule:
             ESDT_SAFE_ALREADY_DEPLOYED
         );
 
-        let egld_payment = self.call_value().egld().clone();
-
-        require!(egld_payment == ISSUE_COST, ISSUE_COST_NOT_COVERED);
-
-        self.deploy_mvx_esdt_safe(sov_prefix, native_token, &egld_payment, opt_config);
+        self.deploy_mvx_esdt_safe(sov_prefix, opt_config);
     }
 
     #[endpoint(deployPhaseThree)]
