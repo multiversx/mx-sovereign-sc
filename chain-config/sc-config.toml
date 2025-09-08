@@ -1,16 +1,5 @@
 [contracts.main]
 name = "chain-config"
 
-[contracts.full]
-name = "chain-config-full"
-add-unlabelled = true
-add-labels = ["chain-config-external-view"]
-
-[contracts.view]
-name = "chain-config-view"
-external-view = true
-add-unlabelled = false
-add-labels = ["chain-config-external-view"]
-
 [[proxy]]
 path = "../common/proxies/src/chain_config_proxy.rs"
