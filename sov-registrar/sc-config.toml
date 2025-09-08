@@ -1,5 +1,2 @@
-[contracts.main]
-name = "sov-registrar"
-
 [[proxy]]
 path = "../common/proxies/src/sov_registrar_proxy.rs"

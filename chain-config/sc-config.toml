@@ -1,5 +1,2 @@
-[contracts.main]
-name = "chain-config"
-
 [[proxy]]
 path = "../common/proxies/src/chain_config_proxy.rs"

@@ -1,5 +1,2 @@
-[contracts.main]
-name = "sov-esdt-safe"
-
 [[proxy]]
 path = "../common/proxies/src/sov_esdt_safe_proxy.rs"

@@ -1,5 +1,2 @@
-[contracts.main]
-name = "sovereign-forge"
-
 [[proxy]]
 path = "../common/proxies/src/sovereign_forge_proxy.rs"

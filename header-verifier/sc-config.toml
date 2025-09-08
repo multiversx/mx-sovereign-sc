@@ -1,5 +1,2 @@
-[contracts.main]
-name = "header-verifier"
-
 [[proxy]]
 path = "../common/proxies/src/header_verifier_proxy.rs"

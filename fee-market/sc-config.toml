@@ -1,5 +1,2 @@
-[contracts.main]
-name = "fee-market"
-
 [[proxy]]
 path = "../common/proxies/src/fee_market_proxy.rs"
