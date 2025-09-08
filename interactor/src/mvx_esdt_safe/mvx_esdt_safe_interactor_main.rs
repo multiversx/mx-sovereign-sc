@@ -6,7 +6,6 @@ use multiversx_sc_snippets::imports::*;
 use proxies::mvx_esdt_safe_proxy::MvxEsdtSafeProxy;
 
 use structs::configs::EsdtSafeConfig;
-use structs::forge::NativeToken;
 
 use common_interactor::interactor_config::Config;
 use common_interactor::interactor_state::State;
@@ -45,7 +44,7 @@ impl MvxEsdtSafeInteract {
     pub async fn new(config: Config) -> Self {
         let mut interactor = Self::initialize_interactor(config.clone()).await;
 
-        interactor.register_wallets(0u64).await;
+        interactor.register_wallets().await;
 
         match config.use_chain_simulator() {
             true => {
@@ -69,7 +68,7 @@ impl MvxEsdtSafeInteract {
 
         let user_address = interactor.register_wallet(test_wallets::grace()).await; //shard 1
 
-        interactor.generate_blocks_until_epoch(2u64).await.unwrap();
+        interactor.generate_blocks_until_all_activations().await;
 
         MvxEsdtSafeInteract {
             interactor,
@@ -190,32 +189,5 @@ impl MvxEsdtSafeInteract {
             .await;
 
         println!("Result: {response:?}");
-    }
-
-    pub async fn register_native_token(
-        &mut self,
-        ticker: &str,
-        name: &str,
-        egld_amount: BigUint<StaticApi>,
-        expected_error_message: Option<&str>,
-    ) {
-        let caller = self.get_bridge_owner_for_shard(SHARD_0).clone();
-        let response = self
-            .interactor
-            .tx()
-            .from(&caller)
-            .to(self.common_state.current_mvx_esdt_safe_contract_address())
-            .gas(90_000_000u64)
-            .typed(MvxEsdtSafeProxy)
-            .register_native_token(NativeToken {
-                ticker: ManagedBuffer::from(ticker),
-                name: ManagedBuffer::from(name),
-            })
-            .egld(egld_amount)
-            .returns(ReturnsHandledOrError::new())
-            .run()
-            .await;
-
-        self.assert_expected_error_message(response, expected_error_message);
     }
 }

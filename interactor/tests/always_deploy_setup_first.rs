@@ -14,8 +14,8 @@ use serial_test::serial;
 #[tokio::test]
 #[serial]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
-async fn test_deploy_setup() {
-    let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config(None)).await;
+async fn deploy_setup() {
+    let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
     chain_interactor
         .deploy_and_complete_setup_phase(
             OptionalValue::Some(DEPLOY_COST.into()),

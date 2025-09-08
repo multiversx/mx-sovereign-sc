@@ -60,9 +60,6 @@ pub struct State {
     pub sft_token_id: Option<EsdtTokenInfo>,
     pub sov_to_mvx_token_id: Option<EsdtTokenInfo>,
     pub initial_wallet_tokens_state: Option<Vec<EsdtTokenInfo>>,
-    pub sovereign_owners: Option<Vec<Address>>,
-    pub bridge_owners: Option<Vec<Address>>,
-    pub bridge_services: Option<Vec<Address>>,
 }
 
 impl State {
@@ -108,30 +105,6 @@ impl State {
 
     pub fn set_initial_wallet_tokens_state(&mut self, tokens: Vec<EsdtTokenInfo>) {
         self.initial_wallet_tokens_state = Some(tokens);
-    }
-
-    pub fn set_bridge_owners(&mut self, owners: Vec<Address>) {
-        self.bridge_owners = Some(owners);
-    }
-
-    pub fn set_bridge_services(&mut self, services: Vec<Address>) {
-        self.bridge_services = Some(services);
-    }
-
-    pub fn set_sovereign_owners(&mut self, owners: Vec<Address>) {
-        self.sovereign_owners = Some(owners);
-    }
-
-    pub fn get_bridge_owners(&self) -> Vec<Address> {
-        self.bridge_owners.clone().unwrap_or_default()
-    }
-
-    pub fn get_bridge_services(&self) -> Vec<Address> {
-        self.bridge_services.clone().unwrap_or_default()
-    }
-
-    pub fn get_sovereign_owners(&self) -> Vec<Address> {
-        self.sovereign_owners.clone().unwrap_or_default()
     }
 
     pub fn get_first_token_identifier(&self) -> EgldOrEsdtTokenIdentifier<StaticApi> {

@@ -40,6 +40,8 @@ pub const CHAIN_FACTORY_CODE_PATH: MxscPath =
     MxscPath::new("../chain-factory/output/chain-factory.mxsc.json");
 pub const SOVEREIGN_FORGE_CODE_PATH: MxscPath =
     MxscPath::new("../sovereign-forge/output/sovereign-forge.mxsc.json");
+pub const SOV_REGISTRAR_CODE_PATH: MxscPath =
+    MxscPath::new("../sov-registrar/output/sov-registrar.mxsc.json");
 
 pub const FEE_TOKEN: TestTokenIdentifier = TestTokenIdentifier::new("INTERNS-eaad15");
 pub const FIRST_TEST_TOKEN: TestTokenIdentifier = TestTokenIdentifier::new("GREEN-0e161c");
@@ -88,7 +90,7 @@ pub const CATEGORIES: [(&str, &str); 3] = [
 pub const WALLETS_PATH: &str = "wallets";
 pub const STATE_FILE: &str = "state.toml";
 pub const NATIVE_TOKEN_TICKER: &str = "SOV";
-pub const NATIVE_TOKEN_NAME: &str = "Sovereign Token";
+pub const NATIVE_TOKEN_NAME: &str = "SovereignToken";
 
 pub const ISSUE_COST: u64 = 50_000_000_000_000_000; // 0.05 EGLD
 pub const GAS_LIMIT: u64 = 90_000_000; // 90 million gas limit

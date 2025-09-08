@@ -96,6 +96,8 @@ pub const NO_KNOWN_SOVEREIGN_FORGE_SC: &str = "No known Sovereign Forge SC, depl
 pub const NO_KNOWN_META_ESDT_TOKEN: &str = "No known Meta ESDT token ID";
 pub const NO_KNOWN_NFT_TOKEN: &str = "No known NFT token, register first";
 pub const NO_KNOWN_SOV_TO_MVX_TOKEN: &str = "No known Sovereign to MVX token ID";
+pub const NO_KNOWN_SOV_REGISTRAR: &str =
+    "No known Sovereign Registrar smart contract, deploy first";
 pub const NO_KNOWN_SFT_TOKEN: &str = "No known SFT token, register first";
 pub const NO_KNOWN_TESTING_SC: &str = "No known Testing SC contract, deploy first";
 pub const NOT_ENOUGH_WEGLD_AMOUNT: &str = "WEGLD fee amount is not met";

@@ -8,12 +8,13 @@ use common_interactor::{
     common_sovereign_interactor::CommonInteractorTrait, interactor_config::Config,
 };
 use common_test_setup::constants::{
-    INTERACTOR_WORKING_DIR, ONE_THOUSAND_TOKENS, OPERATION_HASH_STATUS_STORAGE_KEY,
+    DEPOSIT_EVENT, INTERACTOR_WORKING_DIR, ONE_THOUSAND_TOKENS, OPERATION_HASH_STATUS_STORAGE_KEY,
     SOVEREIGN_RECEIVER_ADDRESS, TOKEN_DISPLAY_NAME, TOKEN_TICKER,
 };
 use header_verifier::header_utils::OperationHashStatus;
 use multiversx_sc_snippets::multiversx_sc_scenario::multiversx_chain_vm::crypto_functions::sha256;
 use multiversx_sc_snippets::{hex, imports::*};
+use mvx_esdt_safe::register_token::ISSUE_COST;
 use structs::aliases::PaymentsVec;
 use structs::fee::FeeStruct;
 use structs::operation::OperationData;
@@ -49,7 +50,7 @@ impl CompleteFlowInteract {
     pub async fn new(config: Config) -> Self {
         let mut interactor = Self::initialize_interactor(config.clone()).await;
 
-        interactor.register_wallets(config.test_id).await;
+        interactor.register_wallets().await;
 
         match config.use_chain_simulator() {
             true => {
@@ -294,6 +295,16 @@ impl CompleteFlowInteract {
         mut config: ActionConfig,
         token: EsdtTokenInfo,
     ) -> EsdtTokenInfo {
+        self.deposit_in_mvx_esdt_safe(
+            SOVEREIGN_RECEIVER_ADDRESS.to_address(),
+            config.shard,
+            OptionalValue::None,
+            ManagedVec::from_single_item(EgldOrEsdtTokenPayment::egld_payment(ISSUE_COST.into())),
+            None,
+            Some(DEPOSIT_EVENT),
+        )
+        .await;
+
         let expected_log = self
             .register_sovereign_token(config.shard, token.clone())
             .await;

@@ -131,7 +131,7 @@ pub trait MvxEsdtSafe:
             return;
         }
 
-        require!(!self.native_token().is_empty(), NATIVE_TOKEN_NOT_REGISTERED);
+        // require!(!self.native_token().is_empty(), NATIVE_TOKEN_NOT_REGISTERED);
         require!(!self.fee_market_address().is_empty(), FEE_MARKET_NOT_SET);
 
         self.unpause_endpoint();

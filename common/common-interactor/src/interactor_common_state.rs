@@ -32,6 +32,8 @@ pub struct CommonState {
     pub chain_factory_sc_addresses: Option<Vec<Bech32Address>>,
     pub fee_market_tokens: HashMap<String, SerializableFeeMarketToken>,
     pub fee_status: HashMap<String, bool>,
+    pub fee_op_nonce: u64,
+    pub chain_ids: Vec<String>,
 }
 
 impl CommonState {
@@ -102,6 +104,10 @@ impl CommonState {
         token: SerializableFeeMarketToken,
     ) {
         self.fee_market_tokens.insert(shard.to_string(), token);
+    }
+
+    pub fn add_chain_id(&mut self, chain_id: String) {
+        self.chain_ids.push(chain_id);
     }
 
     /// Returns the contract addresses
@@ -224,6 +230,12 @@ impl CommonState {
             .get(&shard.to_string())
             .cloned()
             .expect(NO_KNOWN_FEE_TOKEN)
+    }
+
+    pub fn get_chain_id_for_shard(&self, shard: u32) -> &String {
+        self.chain_ids
+            .get(shard as usize)
+            .unwrap_or_else(|| panic!("No chain ID for shard {}", shard))
     }
 }
 

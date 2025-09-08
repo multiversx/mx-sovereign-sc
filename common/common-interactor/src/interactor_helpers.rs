@@ -22,7 +22,7 @@ use multiversx_sc_snippets::{
         multiversx_chain_vm::crypto_functions::sha256,
         scenario_model::{Log, TxResponseStatus},
     },
-    Interactor,
+    test_wallets, Interactor,
 };
 use rand::{distr::Alphanumeric, Rng};
 use structs::{
@@ -261,71 +261,31 @@ pub trait InteractorHelpers {
 
     fn get_bridge_service_for_shard(&mut self, shard_id: u32) -> Address {
         match shard_id {
-            0 => self
-                .state()
-                .get_bridge_services()
-                .first()
-                .cloned()
-                .expect("No bridge service found for shard 0"),
-            1 => self
-                .state()
-                .get_bridge_services()
-                .get(1)
-                .cloned()
-                .expect("No bridge service found for shard 1"),
-            2 => self
-                .state()
-                .get_bridge_services()
-                .get(2)
-                .cloned()
-                .expect("No bridge service found for shard 2"),
+            0 => test_wallets::bob().to_address(),
+            1 => test_wallets::dan().to_address(),
+            2 => test_wallets::heidi().to_address(),
             _ => panic!("Invalid shard ID: {shard_id}"),
         }
     }
     fn get_bridge_owner_for_shard(&mut self, shard_id: u32) -> Address {
         match shard_id {
-            0 => self
-                .state()
-                .get_bridge_owners()
-                .first()
-                .cloned()
-                .expect("No bridge owner found for shard 0"),
-            1 => self
-                .state()
-                .get_bridge_owners()
-                .get(1)
-                .cloned()
-                .expect("No bridge owner found for shard 1"),
-            2 => self
-                .state()
-                .get_bridge_owners()
-                .get(2)
-                .cloned()
-                .expect("No bridge owner found for shard 2"),
+            0 => test_wallets::mike().to_address(),
+            1 => test_wallets::eve().to_address(),
+            2 => test_wallets::judy().to_address(),
             _ => panic!("Invalid shard ID: {shard_id}"),
         }
     }
 
     fn get_sovereign_owner_for_shard(&mut self, shard_id: u32) -> Address {
         match shard_id {
-            0 => self
-                .state()
-                .get_sovereign_owners()
-                .first()
-                .cloned()
-                .expect("No sovereign owner found for shard 0"),
-            1 => self
-                .state()
-                .get_sovereign_owners()
-                .get(1)
-                .cloned()
-                .expect("No sovereign owner found for shard 1"),
-            2 => self
-                .state()
-                .get_sovereign_owners()
-                .get(2)
-                .cloned()
-                .expect("No sovereign owner found for shard 2"),
+            0 => {
+                let wallet_path = "wallets/wallet_shard_0.pem".to_string();
+                let wallet = Wallet::from_pem_file(&wallet_path)
+                    .unwrap_or_else(|_| panic!("Failed to load wallet for shard {}", shard_id));
+                wallet.to_address()
+            }
+            1 => test_wallets::frank().to_address(),
+            2 => test_wallets::carol().to_address(),
             _ => panic!("Invalid shard ID: {shard_id}"),
         }
     }
@@ -897,13 +857,14 @@ pub trait InteractorHelpers {
         }
     }
 
-    fn create_random_sovereign_token_id(&mut self) -> String {
+    fn create_random_sovereign_token_id(&mut self, shard: u32) -> String {
+        let current_chain_id = self.common_state().get_chain_id_for_shard(shard).clone();
         let rand_string: String = rand::rng()
             .sample_iter(&Alphanumeric)
-            .filter(|c| c.is_ascii_alphabetic() && c.is_ascii_lowercase())
+            .filter(|c| c.is_ascii_alphanumeric() && c.is_ascii_lowercase())
             .take(6)
             .map(char::from)
             .collect();
-        format!("sov-SOV-{}", rand_string)
+        format!("{}-SOV-{}", current_chain_id, rand_string)
     }
 }

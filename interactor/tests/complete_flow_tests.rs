@@ -30,12 +30,8 @@ use serial_test::serial;
 #[tokio::test]
 #[serial]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
-async fn test_complete_deposit_flow_no_fee_only_transfer_data(
-    #[case] shard: u32,
-    #[values(0)] test_id: u64,
-) {
-    let mut chain_interactor =
-        CompleteFlowInteract::new(Config::chain_simulator_config(Some(test_id))).await;
+async fn test_complete_deposit_flow_no_fee_only_transfer_data(#[case] shard: u32) {
+    let mut chain_interactor = CompleteFlowInteract::new(Config::chain_simulator_config()).await;
 
     chain_interactor.remove_fee(shard).await;
 
@@ -65,12 +61,8 @@ async fn test_complete_deposit_flow_no_fee_only_transfer_data(
 #[tokio::test]
 #[serial]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
-async fn test_complete_deposit_flow_with_fee_only_transfer_data(
-    #[case] shard: u32,
-    #[values(1)] test_id: u64,
-) {
-    let mut chain_interactor =
-        CompleteFlowInteract::new(Config::chain_simulator_config(Some(test_id))).await;
+async fn test_complete_deposit_flow_with_fee_only_transfer_data(#[case] shard: u32) {
+    let mut chain_interactor = CompleteFlowInteract::new(Config::chain_simulator_config()).await;
 
     let fee = chain_interactor.create_standard_fee();
 
@@ -103,12 +95,8 @@ async fn test_complete_deposit_flow_with_fee_only_transfer_data(
 #[tokio::test]
 #[serial]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
-async fn test_complete_execute_flow_with_transfer_data_only_success(
-    #[case] shard: u32,
-    #[values(2)] test_id: u64,
-) {
-    let mut chain_interactor =
-        CompleteFlowInteract::new(Config::chain_simulator_config(Some(test_id))).await;
+async fn test_complete_execute_flow_with_transfer_data_only_success(#[case] shard: u32) {
+    let mut chain_interactor = CompleteFlowInteract::new(Config::chain_simulator_config()).await;
 
     chain_interactor.remove_fee(shard).await;
 
@@ -138,12 +126,8 @@ async fn test_complete_execute_flow_with_transfer_data_only_success(
 #[tokio::test]
 #[serial]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
-async fn test_complete_execute_flow_with_transfer_data_only_fail(
-    #[case] shard: u32,
-    #[values(3)] test_id: u64,
-) {
-    let mut chain_interactor =
-        CompleteFlowInteract::new(Config::chain_simulator_config(Some(test_id))).await;
+async fn test_complete_execute_flow_with_transfer_data_only_fail(#[case] shard: u32) {
+    let mut chain_interactor = CompleteFlowInteract::new(Config::chain_simulator_config()).await;
 
     chain_interactor.remove_fee(shard).await;
 
@@ -181,10 +165,8 @@ async fn test_complete_execute_flow_with_transfer_data_only_fail(
 async fn test_deposit_with_fee(
     #[case] token_type: EsdtTokenType,
     #[values(SHARD_1, SHARD_2)] shard: u32,
-    #[values(4)] test_id: u64,
 ) {
-    let mut chain_interactor =
-        CompleteFlowInteract::new(Config::chain_simulator_config(Some(test_id))).await;
+    let mut chain_interactor = CompleteFlowInteract::new(Config::chain_simulator_config()).await;
 
     let token = chain_interactor.get_token_by_type(token_type);
 
@@ -226,10 +208,8 @@ async fn test_deposit_with_fee(
 async fn test_deposit_without_fee_and_execute(
     #[case] token_type: EsdtTokenType,
     #[values(SHARD_1, SHARD_2)] shard: u32,
-    #[values(5)] test_id: u64,
 ) {
-    let mut chain_interactor =
-        CompleteFlowInteract::new(Config::chain_simulator_config(Some(test_id))).await;
+    let mut chain_interactor = CompleteFlowInteract::new(Config::chain_simulator_config()).await;
 
     let token = chain_interactor.get_token_by_type(token_type);
 
@@ -281,15 +261,13 @@ async fn test_register_execute_and_deposit_sov_token(
     #[case] token_type: EsdtTokenType,
     #[case] amount: BigUint<StaticApi>,
     #[values(SHARD_1, SHARD_2)] shard: u32,
-    #[values(6)] test_id: u64,
 ) {
-    let mut chain_interactor =
-        CompleteFlowInteract::new(Config::chain_simulator_config(Some(test_id))).await;
+    let mut chain_interactor = CompleteFlowInteract::new(Config::chain_simulator_config()).await;
 
     chain_interactor.remove_fee(shard).await;
 
     let (nonce, decimals) = chain_interactor.generate_nonce_and_decimals(token_type);
-    let token_id = chain_interactor.create_random_sovereign_token_id();
+    let token_id = chain_interactor.create_random_sovereign_token_id(shard);
 
     let sov_token = EsdtTokenInfo {
         token_id: EgldOrEsdtTokenIdentifier::from(token_id.as_str()),
@@ -341,10 +319,8 @@ async fn test_register_execute_and_deposit_sov_token(
 async fn test_deposit_mvx_token_with_transfer_data(
     #[case] token_type: EsdtTokenType,
     #[values(SHARD_1, SHARD_2)] shard: u32,
-    #[values(7)] test_id: u64,
 ) {
-    let mut chain_interactor =
-        CompleteFlowInteract::new(Config::chain_simulator_config(Some(test_id))).await;
+    let mut chain_interactor = CompleteFlowInteract::new(Config::chain_simulator_config()).await;
 
     chain_interactor.remove_fee(shard).await;
 
@@ -387,10 +363,8 @@ async fn test_deposit_mvx_token_with_transfer_data(
 async fn test_deposit_mvx_token_with_transfer_data_and_fee(
     #[case] token_type: EsdtTokenType,
     #[values(SHARD_1, SHARD_2)] shard: u32,
-    #[values(8)] test_id: u64,
 ) {
-    let mut chain_interactor =
-        CompleteFlowInteract::new(Config::chain_simulator_config(Some(test_id))).await;
+    let mut chain_interactor = CompleteFlowInteract::new(Config::chain_simulator_config()).await;
 
     let fee = chain_interactor.create_standard_fee();
 
@@ -435,10 +409,8 @@ async fn test_deposit_mvx_token_with_transfer_data_and_fee(
 async fn test_deposit_and_execute_with_transfer_data(
     #[case] token_type: EsdtTokenType,
     #[values(SHARD_1, SHARD_2)] shard: u32,
-    #[values(9)] test_id: u64,
 ) {
-    let mut chain_interactor =
-        CompleteFlowInteract::new(Config::chain_simulator_config(Some(test_id))).await;
+    let mut chain_interactor = CompleteFlowInteract::new(Config::chain_simulator_config()).await;
 
     let token = chain_interactor.get_token_by_type(token_type);
 
@@ -493,15 +465,13 @@ async fn test_register_execute_with_transfer_data_and_deposit_sov_token(
     #[case] token_type: EsdtTokenType,
     #[case] amount: BigUint<StaticApi>,
     #[values(SHARD_1, SHARD_2)] shard: u32,
-    #[values(10)] test_id: u64,
 ) {
-    let mut chain_interactor =
-        CompleteFlowInteract::new(Config::chain_simulator_config(Some(test_id))).await;
+    let mut chain_interactor = CompleteFlowInteract::new(Config::chain_simulator_config()).await;
 
     chain_interactor.remove_fee(shard).await;
 
     let (nonce, decimals) = chain_interactor.generate_nonce_and_decimals(token_type);
-    let token_id = chain_interactor.create_random_sovereign_token_id();
+    let token_id = chain_interactor.create_random_sovereign_token_id(shard);
 
     let sov_token = EsdtTokenInfo {
         token_id: EgldOrEsdtTokenIdentifier::from(token_id.as_str()),
@@ -510,6 +480,8 @@ async fn test_register_execute_with_transfer_data_and_deposit_sov_token(
         decimals,
         amount: amount.clone(),
     };
+
+    println!("Token to be registered: {:?}", sov_token);
 
     let main_token = chain_interactor
         .register_and_execute_sovereign_token(
@@ -570,15 +542,13 @@ async fn test_register_execute_call_failed(
     #[case] token_type: EsdtTokenType,
     #[case] amount: BigUint<StaticApi>,
     #[values(SHARD_1, SHARD_2)] shard: u32,
-    #[values(11)] test_id: u64,
 ) {
-    let mut chain_interactor =
-        CompleteFlowInteract::new(Config::chain_simulator_config(Some(test_id))).await;
+    let mut chain_interactor = CompleteFlowInteract::new(Config::chain_simulator_config()).await;
 
     chain_interactor.remove_fee(shard).await;
 
     let (nonce, decimals) = chain_interactor.generate_nonce_and_decimals(token_type);
-    let token_id = chain_interactor.create_random_sovereign_token_id();
+    let token_id = chain_interactor.create_random_sovereign_token_id(shard);
 
     let sov_token = EsdtTokenInfo {
         token_id: EgldOrEsdtTokenIdentifier::from(token_id.as_str()),

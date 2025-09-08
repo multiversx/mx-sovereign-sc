@@ -4,11 +4,14 @@ use crate::{
     interactor_state::{AddressInfo, EsdtTokenInfo},
     interactor_structs::{ActionConfig, IssueTokenStruct, MintTokenStruct, TemplateAddresses},
 };
-use common_test_setup::constants::{
-    CATEGORIES, CHAIN_CONFIG_CODE_PATH, CHAIN_FACTORY_CODE_PATH, CHAIN_ID, DEPLOY_COST,
-    FEE_MARKET_CODE_PATH, HEADER_VERIFIER_CODE_PATH, ISSUE_COST, MVX_ESDT_SAFE_CODE_PATH,
-    NUMBER_OF_SHARDS, SHARD_0, SOVEREIGN_FORGE_CODE_PATH, SOVEREIGN_TOKEN_PREFIX,
-    TESTING_SC_CODE_PATH, WALLETS_PATH,
+use common_test_setup::{
+    base_setup::helpers::BLSKey,
+    constants::{
+        CHAIN_CONFIG_CODE_PATH, CHAIN_FACTORY_CODE_PATH, CHAIN_ID, DEPLOY_COST,
+        FEE_MARKET_CODE_PATH, HEADER_VERIFIER_CODE_PATH, ISSUE_COST, MVX_ESDT_SAFE_CODE_PATH,
+        NATIVE_TOKEN_NAME, NATIVE_TOKEN_TICKER, NUMBER_OF_SHARDS, SHARD_0,
+        SOVEREIGN_FORGE_CODE_PATH, SOVEREIGN_TOKEN_PREFIX, TESTING_SC_CODE_PATH,
+    },
 };
 use multiversx_sc::{
     codec::num_bigint,
@@ -22,10 +25,10 @@ use multiversx_sc::{
 use multiversx_sc_snippets::{
     imports::{
         Bech32Address, ReturnsGasUsed, ReturnsHandledOrError, ReturnsLogs,
-        ReturnsNewTokenIdentifier, StaticApi,
+        ReturnsNewTokenIdentifier, StaticApi, Wallet,
     },
     multiversx_sc_scenario::multiversx_chain_vm::crypto_functions::sha256,
-    InteractorRunAsync,
+    test_wallets, InteractorRunAsync,
 };
 use proxies::{
     chain_config_proxy::ChainConfigContractProxy, chain_factory_proxy::ChainFactoryContractProxy,
@@ -33,12 +36,11 @@ use proxies::{
     mvx_esdt_safe_proxy::MvxEsdtSafeProxy, sovereign_forge_proxy::SovereignForgeProxy,
     testing_sc_proxy::TestingScProxy,
 };
-use std::path::Path;
 use structs::{
     aliases::{OptionalValueTransferDataTuple, PaymentsVec},
     configs::{EsdtSafeConfig, SovereignConfig},
     fee::FeeStruct,
-    forge::{ContractInfo, ScArray},
+    forge::{ContractInfo, NativeToken, ScArray},
     generate_hash::GenerateHash,
     operation::Operation,
     EsdtInfo, RegisterTokenOperation,
@@ -49,29 +51,32 @@ fn metadata() -> CodeMetadata {
 }
 
 pub trait CommonInteractorTrait: InteractorHelpers {
-    async fn register_wallets(&mut self, test_id: u64) {
-        let test_path = Path::new(WALLETS_PATH).join(format!("test_{}", test_id));
+    async fn register_wallets(&mut self) {
+        let wallet_path = "wallets/wallet_shard_0.pem".to_string();
+        let wallet = Wallet::from_pem_file(&wallet_path)
+            .unwrap_or_else(|_| panic!("Failed to load wallet for shard 0"));
 
-        let mut all_addresses = [Vec::new(), Vec::new(), Vec::new()];
+        self.interactor().register_wallet(test_wallets::bob()).await;
+        self.interactor().register_wallet(test_wallets::dan()).await;
+        self.interactor()
+            .register_wallet(test_wallets::heidi())
+            .await;
 
-        for (idx, (folder_name, prefix)) in CATEGORIES.iter().enumerate() {
-            let folder_path = test_path.join(folder_name);
+        self.interactor()
+            .register_wallet(test_wallets::mike())
+            .await;
+        self.interactor().register_wallet(test_wallets::eve()).await;
+        self.interactor()
+            .register_wallet(test_wallets::judy())
+            .await;
 
-            if !folder_path.exists() {
-                panic!("{} folder not found for test {}", folder_name, test_id);
-            }
-
-            for shard in 0..3 {
-                let wallet_path = folder_path.join(format!("{}_shard_{}.pem", prefix, shard));
-                let wallet = Self::load_wallet(&wallet_path, test_id);
-                let address = self.interactor().register_wallet(wallet).await;
-                all_addresses[idx].push(address);
-            }
-        }
-
-        self.state().set_bridge_owners(all_addresses[0].clone());
-        self.state().set_sovereign_owners(all_addresses[1].clone());
-        self.state().set_bridge_services(all_addresses[2].clone());
+        self.interactor().register_wallet(wallet).await;
+        self.interactor()
+            .register_wallet(test_wallets::frank())
+            .await;
+        self.interactor()
+            .register_wallet(test_wallets::carol())
+            .await;
 
         self.interactor().generate_blocks(2u64).await.unwrap();
     }
@@ -202,7 +207,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             .interactor()
             .tx()
             .from(caller)
-            .gas(50_000_000u64)
+            .gas(70_000_000u64)
             .typed(SovereignForgeProxy)
             .init(deploy_cost)
             .code(SOVEREIGN_FORGE_CODE_PATH)
@@ -482,7 +487,6 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             optional_sov_config,
             optional_esdt_safe_config,
             Some(fee_struct),
-            None,
         )
         .await;
         let fee_token_id = self.state().get_fee_token_id();
@@ -490,24 +494,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
         self.common_state()
             .set_fee_market_token_for_all_shards(fee_token_fee_market);
         self.common_state().set_fee_status_for_all_shards(true);
-    }
-
-    async fn deploy_and_complete_setup_phase_on_a_shard(
-        &mut self,
-        shard: u32,
-        deploy_cost: OptionalValue<BigUint<StaticApi>>,
-        optional_sov_config: OptionalValue<SovereignConfig<StaticApi>>,
-        optional_esdt_safe_config: OptionalValue<EsdtSafeConfig<StaticApi>>,
-        fee: Option<FeeStruct<StaticApi>>,
-    ) {
-        self.deploy_and_setup_common(
-            deploy_cost.clone(),
-            optional_sov_config,
-            optional_esdt_safe_config,
-            fee,
-            Some(shard),
-        )
-        .await;
+        self.common_state().fee_op_nonce = 1u64;
     }
 
     async fn deploy_and_setup_common(
@@ -516,12 +503,8 @@ pub trait CommonInteractorTrait: InteractorHelpers {
         optional_sov_config: OptionalValue<SovereignConfig<StaticApi>>,
         optional_esdt_safe_config: OptionalValue<EsdtSafeConfig<StaticApi>>,
         fee: Option<FeeStruct<StaticApi>>,
-        target_shard: Option<u32>, // None = all shards, Some(shard) = specific shard
     ) {
-        let initial_caller = match target_shard {
-            Some(shard) => self.get_bridge_owner_for_shard(shard).clone(),
-            None => self.get_bridge_owner_for_shard(SHARD_0).clone(),
-        };
+        let initial_caller = self.get_bridge_owner_for_shard(SHARD_0).clone();
 
         let sovereign_forge_address = self
             .deploy_sovereign_forge(
@@ -564,29 +547,15 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             println!("Finished setup phase for shard {shard_id}");
         }
 
-        match target_shard {
-            Some(shard) => {
-                self.deploy_on_one_shard(
-                    shard,
-                    deploy_cost.clone(),
-                    optional_esdt_safe_config.clone(),
-                    optional_sov_config.clone(),
-                    fee.clone(),
-                )
-                .await;
-            }
-            None => {
-                for shard in 0..NUMBER_OF_SHARDS {
-                    self.deploy_on_one_shard(
-                        shard,
-                        deploy_cost.clone(),
-                        optional_esdt_safe_config.clone(),
-                        optional_sov_config.clone(),
-                        fee.clone(),
-                    )
-                    .await;
-                }
-            }
+        for shard in 0..NUMBER_OF_SHARDS {
+            self.deploy_on_one_shard(
+                shard,
+                deploy_cost.clone(),
+                optional_esdt_safe_config.clone(),
+                optional_sov_config.clone(),
+                fee.clone(),
+            )
+            .await;
         }
 
         self.deploy_testing_sc().await;
@@ -621,6 +590,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
     ) {
         let caller = self.get_sovereign_owner_for_shard(shard);
         let preferred_chain_id = Self::generate_random_chain_id();
+        self.common_state().add_chain_id(preferred_chain_id.clone());
         self.deploy_phase_one(
             caller.clone(),
             deploy_cost.clone(),
@@ -631,13 +601,14 @@ pub trait CommonInteractorTrait: InteractorHelpers {
         let chain_config_address = self.get_chain_config_address(&preferred_chain_id).await;
         self.register_as_validator(
             shard,
-            ManagedBuffer::from("genesis_validator"),
+            BLSKey::random(),
             MultiEgldOrEsdtPayment::new(),
             chain_config_address,
         )
         .await;
         self.deploy_phase_two(optional_esdt_safe_config.clone(), caller.clone())
             .await;
+        // self.register_native_token(caller.clone()).await;
         self.deploy_phase_three(caller.clone(), fee.clone()).await;
         self.deploy_phase_four(caller.clone()).await;
 
@@ -647,6 +618,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
 
         self.update_smart_contracts_addresses_in_state(preferred_chain_id.clone())
             .await;
+        println!("Finished deployment for shard {shard}");
     }
 
     async fn register_chain_factory(&mut self, caller: Address, shard_id: u32) {
@@ -672,6 +644,28 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             .await;
 
         println!("Result: {response:?}");
+    }
+
+    async fn register_native_token(&mut self, caller: Address) {
+        let sovereign_forge_address = self
+            .common_state()
+            .current_sovereign_forge_sc_address()
+            .clone();
+        let native_token = NativeToken {
+            name: ManagedBuffer::from(NATIVE_TOKEN_NAME),
+            ticker: ManagedBuffer::from(NATIVE_TOKEN_TICKER),
+        };
+        self.interactor()
+            .tx()
+            .from(caller)
+            .to(sovereign_forge_address)
+            .gas(80_000_000u64)
+            .typed(SovereignForgeProxy)
+            .register_native_token(native_token)
+            .egld(ISSUE_COST)
+            .returns(ReturnsResultUnmanaged)
+            .run()
+            .await;
     }
 
     async fn update_smart_contracts_addresses_in_state(&mut self, chain_id: String) {
@@ -1258,14 +1252,28 @@ pub trait CommonInteractorTrait: InteractorHelpers {
         }
     }
 
-    async fn set_fee(&mut self, fee_struct: FeeStruct<StaticApi>, shard: u32) {
+    async fn set_fee(&mut self, fee: FeeStruct<StaticApi>, shard: u32) {
         let fee_activated = self.common_state().get_fee_status_for_shard(shard);
+
         if fee_activated {
             return;
         }
-        let fee_hash = fee_struct.generate_hash();
-        let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&fee_hash.to_vec()));
-        let operations_hashes = MultiValueEncoded::from(ManagedVec::from(vec![fee_hash.clone()]));
+
+        let nonce_str = self.common_state().fee_op_nonce.to_string();
+        let nonce_buf = ManagedBuffer::<StaticApi>::from(&nonce_str);
+
+        let fee_hash = fee.generate_hash();
+
+        let mut bytes = Vec::with_capacity(fee_hash.len() + nonce_buf.len());
+        bytes.extend_from_slice(&fee_hash.to_vec());
+        bytes.extend_from_slice(&nonce_buf.to_vec());
+
+        let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&bytes));
+        let operations_hashes =
+            MultiValueEncoded::from(ManagedVec::from(vec![fee_hash.clone(), nonce_buf]));
+
+        self.common_state().fee_op_nonce += 1;
+
         self.register_operation(
             shard,
             ManagedBuffer::new(),
@@ -1274,32 +1282,42 @@ pub trait CommonInteractorTrait: InteractorHelpers {
         )
         .await;
 
-        self.set_fee_after_setup_phase(hash_of_hashes, fee_struct, shard)
+        self.set_fee_after_setup_phase(hash_of_hashes, fee, shard)
             .await;
         self.common_state().set_fee_status_for_shard(shard, true);
     }
 
     async fn remove_fee(&mut self, shard: u32) {
         let fee_activated = self.common_state().get_fee_status_for_shard(shard);
+
         if !fee_activated {
             return;
         }
+        let nonce_str = self.common_state().fee_op_nonce.to_string();
+        let nonce_buf = ManagedBuffer::<StaticApi>::from(&nonce_str);
+
         let fee_token = self.state().get_fee_token_identifier();
-        let remove_fee_hash = sha256(&fee_token.as_managed_buffer().to_vec());
-        let remove_fee_hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&remove_fee_hash));
+        let token_hash = fee_token.generate_hash();
+
+        let mut bytes = Vec::with_capacity(token_hash.len() + nonce_buf.len());
+        bytes.extend_from_slice(&token_hash.to_vec());
+        bytes.extend_from_slice(&nonce_buf.to_vec());
+
+        let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&bytes));
         let operations_hashes =
-            MultiValueEncoded::from(ManagedVec::from(vec![ManagedBuffer::from(
-                &remove_fee_hash,
-            )]));
+            MultiValueEncoded::from(ManagedVec::from(vec![token_hash.clone(), nonce_buf]));
+
+        self.common_state().fee_op_nonce += 1;
+
         self.register_operation(
             shard,
             ManagedBuffer::new(),
-            &remove_fee_hash_of_hashes,
+            &hash_of_hashes,
             operations_hashes,
         )
         .await;
 
-        self.remove_fee_after_setup_phase(remove_fee_hash_of_hashes, fee_token, shard)
+        self.remove_fee_after_setup_phase(hash_of_hashes, fee_token, shard)
             .await;
         self.common_state().set_fee_status_for_shard(shard, false);
     }
