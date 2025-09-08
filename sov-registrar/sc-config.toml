@@ -1,16 +1,2 @@
-[contracts.main]
-name = "sov-registrar"
-
-[contracts.full]
-name = "sov-registrar"
-add-unlabelled = true
-add-labels = ["sov-registrar-external-view"]
-
-[contracts.view]
-name = "sov-registrar-view"
-external-view = true
-add-unlabelled = false
-add-labels = ["sov-registrar-external-view"]
-
 [[proxy]]
 path = "../common/proxies/src/sov_registrar_proxy.rs"
