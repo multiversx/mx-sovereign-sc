@@ -4,8 +4,7 @@ use structs::{
     aliases::{EventPaymentTuple, TxId},
     configs::{EsdtSafeConfig, SovereignConfig},
     fee::{AddressPercentagePair, FeeStruct},
-    operation::{OperationData, RegisterTokenOperationData},
-    RegisterTokenStruct,
+    operation::OperationData,
 };
 
 multiversx_sc::imports!();
@@ -107,9 +106,6 @@ pub trait CustomEventsModule {
     fn register_token_event(
         &self,
         #[indexed] token_id: EgldOrEsdtTokenIdentifier<Self::Api>,
-        #[indexed] token_type: EsdtTokenType,
-        #[indexed] name: ManagedBuffer,
-        #[indexed] num_decimals: usize,
-        op_data: RegisterTokenOperationData<Self::Api>,
+        op_data: TxId,
     );
 }

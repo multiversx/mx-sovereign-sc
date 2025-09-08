@@ -3,7 +3,7 @@ use error_messages::{CALLER_IS_NOT_TOKEN_OWNER, ISSUE_COST_NOT_COVERED};
 use multiversx_sc::err_msg::TOKEN_IDENTIFIER_ESDT_EXPECTED;
 #[allow(unused_imports)]
 use multiversx_sc::imports::*;
-use structs::{configs::EsdtSafeConfig, operation::RegisterTokenOperationData};
+use structs::configs::EsdtSafeConfig;
 pub const ISSUE_COST: u64 = 50_000_000_000_000_000; // 0.05 EGLD
 
 pub mod deposit;
@@ -68,16 +68,7 @@ pub trait SovEsdtSafe:
             CALLER_IS_NOT_TOKEN_OWNER
         );
 
-        self.register_token_event(
-            token_identifier,
-            token_properties.token_type,
-            ManagedBuffer::from(token_properties.token_name.as_bytes()),
-            token_properties.num_decimals,
-            RegisterTokenOperationData {
-                op_nonce: self.get_and_save_next_tx_id(),
-                op_sender: self.blockchain().get_caller(),
-            },
-        );
+        self.register_token_event(token_identifier, self.get_and_save_next_tx_id());
     }
 
     #[only_owner]

@@ -89,13 +89,6 @@ impl<M: ManagedTypeApi> From<TransferDataTuple<M>> for TransferData<M> {
 
 #[type_abi]
 #[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, ManagedVecItem, Clone)]
-pub struct RegisterTokenOperationData<M: ManagedTypeApi> {
-    pub op_nonce: TxId,
-    pub op_sender: ManagedAddress<M>,
-}
-
-#[type_abi]
-#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, ManagedVecItem, Clone)]
 pub struct OperationData<M: ManagedTypeApi> {
     pub op_nonce: TxId,
     pub op_sender: ManagedAddress<M>,
