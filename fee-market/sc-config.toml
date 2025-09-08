@@ -1,16 +1,2 @@
-[contracts.main]
-name = "fee-market"
-
-[contracts.full]
-name = "fee-market"
-add-unlabelled = true
-add-labels = ["fee-market-external-view"]
-
-[contracts.view]
-name = "fee-market-view"
-external-view = true
-add-unlabelled = false
-add-labels = ["fee-market-external-view"]
-
 [[proxy]]
 path = "../common/proxies/src/fee_market_proxy.rs"
