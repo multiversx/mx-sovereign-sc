@@ -1197,7 +1197,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
         shard_id: u32,
         hash_of_hashes: ManagedBuffer<StaticApi>,
         operation_hash: ManagedBuffer<StaticApi>,
-        expected_value: Option<OperationHashStatus>,
+        expected_value: OperationHashStatus,
     ) {
         let header_verifier_address = self
             .common_state()
@@ -1213,17 +1213,11 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             .run()
             .await;
 
-        if let Some(expected) = expected_value {
-            assert_eq!(
-                response, expected,
-                "Expected operation hash status does not match with the actual value"
-            );
-        } else {
-            panic!(
-                "Expected value for operation hash status is None, but got Some({:?})",
-                response
-            );
-        }
+        assert_eq!(
+            response, expected_value,
+            "Expected operation hash status {:?} does not match with the actual value {:?}",
+            expected_value, response
+        );
     }
 
     async fn get_mapped_token(

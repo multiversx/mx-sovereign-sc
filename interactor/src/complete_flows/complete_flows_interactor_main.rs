@@ -204,7 +204,7 @@ impl CompleteFlowInteract {
             config.shard,
             hash_of_hashes.clone(),
             operation_hash.clone(),
-            Some(expected_operation_hash_status),
+            expected_operation_hash_status,
         )
         .await;
 
@@ -219,9 +219,6 @@ impl CompleteFlowInteract {
             config.expected_log_error.as_deref(),
         )
         .await;
-
-        self.check_registered_operation_status(config.shard, hash_of_hashes, operation_hash, None)
-            .await;
     }
 
     pub async fn execute_wrapper(

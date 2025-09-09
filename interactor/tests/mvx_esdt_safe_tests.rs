@@ -581,7 +581,6 @@
 
 //     chain_interactor.deploy_testing_sc().await;
 
-
 //     let fee_payment = EgldOrEsdtTokenPayment::<StaticApi>::new(fee_token, 0, fee_amount);
 //     let fee_amount = BigUint::from(PER_TRANSFER) + (BigUint::from(GAS_LIMIT) * per_gas);
 
@@ -911,13 +910,19 @@
 //     let fee_amount = BigUint::from(ONE_THOUSAND_TOKENS);
 
 //     let fee_payment = EsdtTokenPayment::<StaticApi>::new(
-//         chain_interactor.state.get_fee_token_identifier().unwrap_esdt(),
+//         chain_interactor
+//             .state
+//             .get_fee_token_identifier()
+//             .unwrap_esdt(),
 //         0,
 //         fee_amount.clone(),
 //     );
 
 //     let esdt_token_payment_one = EsdtTokenPayment::<StaticApi>::new(
-//         chain_interactor.state.get_first_token_identifier().unwrap_esdt(),
+//         chain_interactor
+//             .state
+//             .get_first_token_identifier()
+//             .unwrap_esdt(),
 //         0,
 //         BigUint::from(ONE_THOUSAND_TOKENS),
 //     );
