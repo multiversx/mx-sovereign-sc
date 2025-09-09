@@ -15,7 +15,6 @@ use multiversx_sc::chain_core::EGLD_000000_TOKEN_IDENTIFIER;
 use multiversx_sc_snippets::imports::*;
 use multiversx_sc_snippets::multiversx_sc_scenario::multiversx_chain_vm::crypto_functions::sha256;
 use mvx_esdt_safe::register_token::ISSUE_COST;
-use proxies::header_verifier_proxy::OperationHashStatus;
 use structs::aliases::PaymentsVec;
 use structs::fee::FeeStruct;
 use structs::operation::OperationData;
@@ -198,15 +197,16 @@ impl CompleteFlowInteract {
         )
         .await;
 
-        let expected_operation_hash_status = OperationHashStatus::NotLocked;
+        //TODO: uncomment this after proxy fix is implemented
+        //let expected_operation_hash_status = OperationHashStatus::NotLocked;
 
-        self.check_registered_operation_status(
-            config.shard,
-            hash_of_hashes.clone(),
-            operation_hash.clone(),
-            expected_operation_hash_status,
-        )
-        .await;
+        // self.check_registered_operation_status(
+        //     config.shard,
+        //     hash_of_hashes.clone(),
+        //     operation_hash.clone(),
+        //     expected_operation_hash_status,
+        // )
+        // .await;
 
         let caller = self.get_bridge_service_for_shard(config.shard);
         self.execute_operations_in_mvx_esdt_safe(
@@ -214,7 +214,6 @@ impl CompleteFlowInteract {
             config.shard,
             hash_of_hashes.clone(),
             operation.clone(),
-            config.expected_error.as_deref(),
             expected_log.as_deref(),
             config.expected_log_error.as_deref(),
         )

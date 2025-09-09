@@ -199,6 +199,6 @@ where
 #[type_abi]
 #[derive(TopEncode, TopDecode, PartialEq, Debug)]
 pub enum OperationHashStatus {
-    NotLocked = 1,
+    NotLocked,
     Locked,
 }

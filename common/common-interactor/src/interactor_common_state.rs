@@ -34,6 +34,7 @@ pub struct CommonState {
     pub fee_status: HashMap<String, bool>,
     pub fee_op_nonce: u64,
     pub chain_ids: Vec<String>,
+    pub update_config_nonce: u64,
 }
 
 impl CommonState {
@@ -236,6 +237,10 @@ impl CommonState {
         self.chain_ids
             .get(shard as usize)
             .unwrap_or_else(|| panic!("No chain ID for shard {}", shard))
+    }
+
+    pub fn get_update_config_nonce(&self) -> u64 {
+        self.update_config_nonce
     }
 }
 
