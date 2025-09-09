@@ -94,23 +94,22 @@ pub trait HeaderVerifierUtilsModule:
         bls_keys
     }
 
-    // TODO
     fn verify_bls(
         &self,
         epoch: u64,
-        _signature: &ManagedBuffer,
-        _bridge_operations_hash: &ManagedBuffer,
+        signature: &ManagedBuffer,
+        hash_of_hashes: &ManagedBuffer,
         bls_keys_bitmap: ManagedBuffer,
         bls_pub_keys: &ManagedVec<ManagedBuffer>,
     ) -> Option<ManagedBuffer> {
-        let _approving_validators =
+        let approving_validators =
             self.get_approving_validators(epoch, &bls_keys_bitmap, bls_pub_keys.len());
 
-        // self.crypto().verify_bls_aggregated_signature(
-        //     approving_validators,
-        //     bridge_operations_hash,
-        //     signature,
-        // );
+        self.crypto().verify_bls_aggregated_signature(
+            &approving_validators,
+            hash_of_hashes,
+            signature,
+        );
 
         None
     }
