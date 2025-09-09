@@ -481,8 +481,6 @@ async fn test_register_execute_with_transfer_data_and_deposit_sov_token(
         amount: amount.clone(),
     };
 
-    println!("Token to be registered: {:?}", sov_token);
-
     let main_token = chain_interactor
         .register_and_execute_sovereign_token(
             ActionConfig::new()

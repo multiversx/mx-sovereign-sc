@@ -8,13 +8,14 @@ use common_interactor::{
     common_sovereign_interactor::CommonInteractorTrait, interactor_config::Config,
 };
 use common_test_setup::constants::{
-    DEPOSIT_EVENT, INTERACTOR_WORKING_DIR, ONE_THOUSAND_TOKENS, OPERATION_HASH_STATUS_STORAGE_KEY,
-    SOVEREIGN_RECEIVER_ADDRESS, TOKEN_DISPLAY_NAME, TOKEN_TICKER,
+    INTERACTOR_WORKING_DIR, ONE_THOUSAND_TOKENS, SOVEREIGN_RECEIVER_ADDRESS, TOKEN_DISPLAY_NAME,
+    TOKEN_TICKER,
 };
-use header_verifier::header_utils::OperationHashStatus;
+use multiversx_sc::chain_core::EGLD_000000_TOKEN_IDENTIFIER;
+use multiversx_sc_snippets::imports::*;
 use multiversx_sc_snippets::multiversx_sc_scenario::multiversx_chain_vm::crypto_functions::sha256;
-use multiversx_sc_snippets::{hex, imports::*};
 use mvx_esdt_safe::register_token::ISSUE_COST;
+use proxies::header_verifier_proxy::OperationHashStatus;
 use structs::aliases::PaymentsVec;
 use structs::fee::FeeStruct;
 use structs::operation::OperationData;
@@ -197,16 +198,13 @@ impl CompleteFlowInteract {
         )
         .await;
 
-        let operation_status = OperationHashStatus::NotLocked as u8;
-        let expected_operation_hash_status = format!("{:02x}", operation_status);
-        let encoded_key = &hex::encode(OPERATION_HASH_STATUS_STORAGE_KEY);
+        let expected_operation_hash_status = OperationHashStatus::NotLocked;
 
-        self.check_account_storage(
-            self.common_state
-                .get_header_verifier_address(config.shard)
-                .to_address(),
-            encoded_key,
-            Some(&expected_operation_hash_status),
+        self.check_registered_operation_status(
+            config.shard,
+            hash_of_hashes.clone(),
+            operation_hash.clone(),
+            Some(expected_operation_hash_status),
         )
         .await;
 
@@ -214,22 +212,16 @@ impl CompleteFlowInteract {
         self.execute_operations_in_mvx_esdt_safe(
             caller,
             config.shard,
-            hash_of_hashes,
-            operation,
+            hash_of_hashes.clone(),
+            operation.clone(),
             config.expected_error.as_deref(),
             expected_log.as_deref(),
             config.expected_log_error.as_deref(),
         )
         .await;
 
-        self.check_account_storage(
-            self.common_state
-                .get_header_verifier_address(config.shard)
-                .to_address(),
-            encoded_key,
-            None,
-        )
-        .await;
+        self.check_registered_operation_status(config.shard, hash_of_hashes, operation_hash, None)
+            .await;
     }
 
     pub async fn execute_wrapper(
@@ -301,7 +293,7 @@ impl CompleteFlowInteract {
             OptionalValue::None,
             ManagedVec::from_single_item(EgldOrEsdtTokenPayment::egld_payment(ISSUE_COST.into())),
             None,
-            Some(DEPOSIT_EVENT),
+            Some(EGLD_000000_TOKEN_IDENTIFIER),
         )
         .await;
 

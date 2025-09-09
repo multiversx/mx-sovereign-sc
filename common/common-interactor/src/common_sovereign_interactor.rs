@@ -31,9 +31,12 @@ use multiversx_sc_snippets::{
     test_wallets, InteractorRunAsync,
 };
 use proxies::{
-    chain_config_proxy::ChainConfigContractProxy, chain_factory_proxy::ChainFactoryContractProxy,
-    fee_market_proxy::FeeMarketProxy, header_verifier_proxy::HeaderverifierProxy,
-    mvx_esdt_safe_proxy::MvxEsdtSafeProxy, sovereign_forge_proxy::SovereignForgeProxy,
+    chain_config_proxy::ChainConfigContractProxy,
+    chain_factory_proxy::ChainFactoryContractProxy,
+    fee_market_proxy::FeeMarketProxy,
+    header_verifier_proxy::{HeaderverifierProxy, OperationHashStatus},
+    mvx_esdt_safe_proxy::MvxEsdtSafeProxy,
+    sovereign_forge_proxy::SovereignForgeProxy,
     testing_sc_proxy::TestingScProxy,
 };
 use structs::{
@@ -1187,6 +1190,40 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             result_value, expected_value,
             "Expected setup phase status to be {expected_value}, but got {result_value}"
         );
+    }
+
+    async fn check_registered_operation_status(
+        &mut self,
+        shard_id: u32,
+        hash_of_hashes: ManagedBuffer<StaticApi>,
+        operation_hash: ManagedBuffer<StaticApi>,
+        expected_value: Option<OperationHashStatus>,
+    ) {
+        let header_verifier_address = self
+            .common_state()
+            .get_header_verifier_address(shard_id)
+            .clone();
+        let response = self
+            .interactor()
+            .query()
+            .to(header_verifier_address)
+            .typed(HeaderverifierProxy)
+            .operation_hash_status(hash_of_hashes, operation_hash)
+            .returns(ReturnsResult)
+            .run()
+            .await;
+
+        if let Some(expected) = expected_value {
+            assert_eq!(
+                response, expected,
+                "Expected operation hash status does not match with the actual value"
+            );
+        } else {
+            panic!(
+                "Expected value for operation hash status is None, but got Some({:?})",
+                response
+            );
+        }
     }
 
     async fn get_mapped_token(
