@@ -6,9 +6,9 @@
 
 // Init:                                 1
 // Upgrade:                              1
-// Endpoints:                            9
+// Endpoints:                           11
 // Async Callback (empty):               1
-// Total number of exported functions:  12
+// Total number of exported functions:  14
 
 #![no_std]
 
@@ -25,6 +25,8 @@ multiversx_sc_wasm_adapter::endpoints! {
         deposit => deposit
         getSovToMvxTokenId => sovereign_to_multiversx_token_id_mapper
         getMvxToSovTokenId => multiversx_to_sovereign_token_id_mapper
+        getSovEsdtTokenInfo => sovereign_to_multiversx_esdt_info_mapper
+        getMvxEsdtTokenInfo => multiversx_to_sovereign_esdt_info_mapper
         getNativeToken => native_token
         pause => pause_endpoint
         unpause => unpause_endpoint

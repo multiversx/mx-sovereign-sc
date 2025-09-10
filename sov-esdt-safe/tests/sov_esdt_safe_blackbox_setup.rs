@@ -6,7 +6,7 @@ use multiversx_sc::{
     },
 };
 
-use multiversx_sc_scenario::{api::StaticApi, ReturnsLogs, ScenarioTxRun, ScenarioTxWhitebox};
+use multiversx_sc_scenario::imports::*;
 
 use common_test_setup::base_setup::init::{AccountSetup, BaseSetup};
 use common_test_setup::constants::{
@@ -123,7 +123,7 @@ impl SovEsdtSafeTestState {
         opt_transfer_data: OptionalValueTransferDataTuple<StaticApi>,
         payment: PaymentsVec<StaticApi>,
         expected_error_message: Option<&str>,
-        expected_custom_log: Option<&str>,
+        expected_log: Option<&str>,
     ) {
         let (logs, response) = self
             .common_setup
@@ -141,8 +141,7 @@ impl SovEsdtSafeTestState {
         self.common_setup
             .assert_expected_error_message(response, expected_error_message);
 
-        self.common_setup
-            .assert_expected_log(logs, expected_custom_log, None);
+        self.common_setup.assert_expected_log(logs, expected_log, None);
     }
 
     pub fn set_fee_market_address(&mut self, fee_market_address: TestSCAddress) {
@@ -162,7 +161,7 @@ impl SovEsdtSafeTestState {
         opt_transfer_data: OptionalValueTransferDataTuple<StaticApi>,
         payment: PaymentsVec<StaticApi>,
         expected_error_message: Option<&str>,
-        expected_custom_log: Option<&str>,
+        expected_log: Option<&str>,
     ) {
         let (logs, response) = self
             .common_setup
@@ -180,7 +179,6 @@ impl SovEsdtSafeTestState {
         self.common_setup
             .assert_expected_error_message(response, expected_error_message);
 
-        self.common_setup
-            .assert_expected_log(logs, expected_custom_log, None);
+        self.common_setup.assert_expected_log(logs, expected_log, None);
     }
 }

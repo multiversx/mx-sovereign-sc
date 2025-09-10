@@ -5,7 +5,7 @@ use multiversx_sc::{
         MultiValueEncoded, ReturnsHandledOrError, TestAddress, TestTokenIdentifier,
     },
 };
-use multiversx_sc_scenario::{api::StaticApi, ReturnsLogs, ScenarioTxRun};
+use multiversx_sc_scenario::imports::*;
 
 use common_test_setup::{
     base_setup::init::{AccountSetup, BaseSetup},
@@ -138,7 +138,7 @@ impl FeeMarketTestState {
         hash_of_hashes: &ManagedBuffer<StaticApi>,
         token_id: TestTokenIdentifier,
         expected_error_message: Option<&str>,
-        expected_custom_log: Option<&str>,
+        expected_log: Option<&str>,
         expected_log_error: Option<&str>,
     ) {
         let (response, logs) = self
@@ -157,7 +157,7 @@ impl FeeMarketTestState {
             .assert_expected_error_message(response, expected_error_message);
 
         self.common_setup
-            .assert_expected_log(logs, expected_custom_log, expected_log_error);
+            .assert_expected_log(logs, expected_log, expected_log_error);
     }
 
     pub fn set_fee(

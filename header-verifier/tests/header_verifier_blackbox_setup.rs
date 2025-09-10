@@ -8,10 +8,8 @@ use multiversx_sc::types::{
     BigUint, ManagedBuffer, MultiValueEncoded, ReturnsHandledOrError, ReturnsResult,
     ReturnsResultUnmanaged, TestSCAddress,
 };
-use multiversx_sc_scenario::ReturnsLogs;
-use multiversx_sc_scenario::{
-    api::StaticApi, multiversx_chain_vm::crypto_functions::sha256, ScenarioTxRun,
-};
+use multiversx_sc_scenario::imports::*;
+use multiversx_sc_scenario::multiversx_chain_vm::crypto_functions::sha256;
 use proxies::header_verifier_proxy::HeaderverifierProxy;
 
 #[derive(Clone)]
@@ -82,7 +80,7 @@ impl HeaderVerifierTestState {
         caller: TestSCAddress,
         hash_of_hashes: &ManagedBuffer<StaticApi>,
         operation_hash: &ManagedBuffer<StaticApi>,
-        expected_result: Option<&str>,
+        expected_error_message: Option<&str>,
     ) {
         let response = self
             .common_setup
@@ -99,11 +97,16 @@ impl HeaderVerifierTestState {
         // TODO: create a separate common function
         match response {
             None => assert!(
-                expected_result.is_none(),
+                response.is_none(),
                 "Transaction was successful, but expected error"
             ),
             Some(error_message) => {
-                assert_eq!(expected_result, Some(error_message.to_string().as_str()));
+                let error_message_str = error_message.to_string();
+                assert_eq!(
+                    Some(error_message_str.as_str()),
+                    expected_error_message,
+                    "Expected error message did not match"
+                );
             }
         };
     }
@@ -113,7 +116,7 @@ impl HeaderVerifierTestState {
         caller: TestSCAddress,
         hash_of_hashes: &ManagedBuffer<StaticApi>,
         operation_hash: &ManagedBuffer<StaticApi>,
-        expected_result: Option<&str>,
+        expected_error_message: Option<&str>,
     ) {
         let response = self
             .common_setup
@@ -126,17 +129,17 @@ impl HeaderVerifierTestState {
             .returns(ReturnsResultUnmanaged)
             .run();
 
-        match response.into_option() {
+        match response.clone().into_option() {
             None => assert!(
-                expected_result.is_none(),
+                response.is_none(),
                 "Transaction was successful, but expected error"
             ),
             Some(error_message_bytes) => {
                 let error_message_str: ManagedBuffer<StaticApi> =
                     ManagedBuffer::new_from_bytes(&error_message_bytes);
                 assert_eq!(
-                    expected_result,
-                    Some(error_message_str.to_string().as_str())
+                    Some(error_message_str.to_string().as_str()),
+                    expected_error_message
                 );
             }
         };

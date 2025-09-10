@@ -3,7 +3,7 @@ use common_test_setup::constants::{
     CROWD_TOKEN_ID, DEPOSIT_EVENT, ESDT_SAFE_ADDRESS, EXECUTED_BRIDGE_OP_EVENT, FEE_MARKET_ADDRESS,
     FEE_TOKEN, FIRST_TEST_TOKEN, HEADER_VERIFIER_ADDRESS, ONE_HUNDRED_MILLION,
     ONE_HUNDRED_THOUSAND, OWNER_ADDRESS, SC_CALL_EVENT, SECOND_TEST_TOKEN, SOV_TOKEN,
-    TESTING_SC_ADDRESS, USER_ADDRESS,
+    TESTING_SC_ADDRESS, TESTING_SC_ENDPOINT, UNPAUSE_CONTRACT_LOG, USER_ADDRESS,
 };
 use cross_chain::storage::CrossChainStorage;
 use cross_chain::{DEFAULT_ISSUE_COST, MAX_GAS_PER_TRANSACTION};
@@ -478,7 +478,7 @@ fn test_complete_setup_phase_already_completed() {
         .common_setup
         .deploy_header_verifier(vec![ScArray::ChainConfig, ScArray::ESDTSafe]);
 
-    state.complete_setup_phase(None, Some("unpauseContract"));
+    state.complete_setup_phase(None, Some(UNPAUSE_CONTRACT_LOG));
     state
         .common_setup
         .world
@@ -633,7 +633,7 @@ fn test_deposit_gas_limit_too_high() {
         .deploy_fee_market(None, ESDT_SAFE_ADDRESS);
     state.set_fee_market_address(FEE_MARKET_ADDRESS);
     state.common_setup.deploy_testing_sc();
-    state.complete_setup_phase(None, Some("unpauseContract"));
+    state.complete_setup_phase(None, Some(UNPAUSE_CONTRACT_LOG));
 
     let esdt_token_payment_one = EsdtTokenPayment::<StaticApi>::new(
         TokenIdentifier::from(FIRST_TEST_TOKEN),
@@ -650,7 +650,7 @@ fn test_deposit_gas_limit_too_high() {
     let payments_vec = PaymentsVec::from(vec![esdt_token_payment_one, esdt_token_payment_two]);
 
     let gas_limit = 2;
-    let function = ManagedBuffer::<StaticApi>::from("hello");
+    let function = ManagedBuffer::<StaticApi>::from(TESTING_SC_ENDPOINT);
     let args =
         MultiValueEncoded::<StaticApi, ManagedBuffer<StaticApi>>::from(ManagedVec::from(vec![
             ManagedBuffer::from("1"),
@@ -692,7 +692,7 @@ fn test_deposit_max_bridged_amount_exceeded() {
         ManagedVec::new(),
         ManagedVec::new(),
         50_000_000,
-        ManagedVec::from(vec![ManagedBuffer::from("hello")]),
+        ManagedVec::from(vec![ManagedBuffer::from(TESTING_SC_ENDPOINT)]),
         ManagedVec::from(vec![MaxBridgedAmount {
             token_id: EgldOrEsdtTokenIdentifier::esdt(FIRST_TEST_TOKEN),
             amount: BigUint::default(),
@@ -718,7 +718,7 @@ fn test_deposit_max_bridged_amount_exceeded() {
         .deploy_fee_market(None, ESDT_SAFE_ADDRESS);
     state.common_setup.deploy_testing_sc();
     state.set_fee_market_address(FEE_MARKET_ADDRESS);
-    state.complete_setup_phase(None, Some("unpauseContract"));
+    state.complete_setup_phase(None, Some(UNPAUSE_CONTRACT_LOG));
 
     let esdt_token_payment_one = EsdtTokenPayment::<StaticApi>::new(
         TokenIdentifier::from(FIRST_TEST_TOKEN),
@@ -768,7 +768,7 @@ fn test_deposit_endpoint_banned() {
         ManagedVec::new(),
         ManagedVec::new(),
         50_000_000,
-        ManagedVec::from(vec![ManagedBuffer::from("hello")]),
+        ManagedVec::from(vec![ManagedBuffer::from(TESTING_SC_ENDPOINT)]),
         ManagedVec::new(),
     );
 
@@ -795,7 +795,7 @@ fn test_deposit_endpoint_banned() {
         .deploy_fee_market(None, ESDT_SAFE_ADDRESS);
     state.common_setup.deploy_testing_sc();
     state.set_fee_market_address(FEE_MARKET_ADDRESS);
-    state.complete_setup_phase(None, Some("unpauseContract"));
+    state.complete_setup_phase(None, Some(UNPAUSE_CONTRACT_LOG));
 
     let esdt_token_payment_one = EsdtTokenPayment::<StaticApi>::new(
         TokenIdentifier::from(FIRST_TEST_TOKEN),
@@ -812,7 +812,7 @@ fn test_deposit_endpoint_banned() {
     let payments_vec = PaymentsVec::from(vec![esdt_token_payment_one, esdt_token_payment_two]);
 
     let gas_limit = 2;
-    let function = ManagedBuffer::<StaticApi>::from("hello");
+    let function = ManagedBuffer::<StaticApi>::from(TESTING_SC_ENDPOINT);
     let args =
         MultiValueEncoded::<StaticApi, ManagedBuffer<StaticApi>>::from(ManagedVec::from(vec![
             ManagedBuffer::from("1"),
@@ -856,7 +856,7 @@ fn test_deposit_transfer_data_only_no_fee() {
     state.common_setup.deploy_testing_sc();
 
     let gas_limit = 2;
-    let function = ManagedBuffer::<StaticApi>::from("hello");
+    let function = ManagedBuffer::<StaticApi>::from(TESTING_SC_ENDPOINT);
     let args =
         MultiValueEncoded::<StaticApi, ManagedBuffer<StaticApi>>::from(ManagedVec::from(vec![
             ManagedBuffer::from("1"),
@@ -907,7 +907,7 @@ fn test_deposit_transfer_data_only_with_fee_nothing_to_transfer() {
     state.common_setup.deploy_testing_sc();
 
     let gas_limit = 2;
-    let function = ManagedBuffer::<StaticApi>::from("hello");
+    let function = ManagedBuffer::<StaticApi>::from(TESTING_SC_ENDPOINT);
     let args =
         MultiValueEncoded::<StaticApi, ManagedBuffer<StaticApi>>::from(ManagedVec::from(vec![
             ManagedBuffer::from("1"),
@@ -968,7 +968,7 @@ fn test_deposit_transfer_data_only_with_fee() {
     state.common_setup.deploy_testing_sc();
 
     let gas_limit = 2;
-    let function = ManagedBuffer::<StaticApi>::from("hello");
+    let function = ManagedBuffer::<StaticApi>::from(TESTING_SC_ENDPOINT);
     let args =
         MultiValueEncoded::<StaticApi, ManagedBuffer<StaticApi>>::from(ManagedVec::from(vec![
             ManagedBuffer::from("1"),
@@ -1045,7 +1045,7 @@ fn test_deposit_fee_enabled() {
     ]);
 
     let gas_limit = 2;
-    let function = ManagedBuffer::<StaticApi>::from("hello");
+    let function = ManagedBuffer::<StaticApi>::from(TESTING_SC_ENDPOINT);
     let args =
         MultiValueEncoded::<StaticApi, ManagedBuffer<StaticApi>>::from(ManagedVec::from(vec![
             ManagedBuffer::from("1"),
@@ -1123,7 +1123,7 @@ fn test_deposit_payment_doesnt_cover_fee() {
     let payments_vec = PaymentsVec::from(vec![esdt_token_payment_one, esdt_token_payment_two]);
 
     let gas_limit = 10_000;
-    let function = ManagedBuffer::<StaticApi>::from("hello");
+    let function = ManagedBuffer::<StaticApi>::from(TESTING_SC_ENDPOINT);
     let args =
         MultiValueEncoded::<StaticApi, ManagedBuffer<StaticApi>>::from(ManagedVec::from(vec![
             ManagedBuffer::from("1"),
@@ -1227,7 +1227,7 @@ fn test_deposit_refund() {
     ]);
 
     let gas_limit = 1;
-    let function = ManagedBuffer::<StaticApi>::from("hello");
+    let function = ManagedBuffer::<StaticApi>::from(TESTING_SC_ENDPOINT);
     let args =
         MultiValueEncoded::<StaticApi, ManagedBuffer<StaticApi>>::from(ManagedVec::from(vec![
             ManagedBuffer::from("1"),
@@ -1661,7 +1661,7 @@ fn test_execute_operation_success() {
     );
 
     let gas_limit = 1;
-    let function = ManagedBuffer::<StaticApi>::from("hello");
+    let function = ManagedBuffer::<StaticApi>::from(TESTING_SC_ENDPOINT);
     let args =
         ManagedVec::<StaticApi, ManagedBuffer<StaticApi>>::from(vec![ManagedBuffer::from("1")]);
 
@@ -1754,7 +1754,7 @@ fn test_execute_operation_with_native_token_success() {
     );
 
     let gas_limit = 1;
-    let function = ManagedBuffer::<StaticApi>::from("hello");
+    let function = ManagedBuffer::<StaticApi>::from(TESTING_SC_ENDPOINT);
     let args =
         ManagedVec::<StaticApi, ManagedBuffer<StaticApi>>::from(vec![ManagedBuffer::from("1")]);
 
@@ -1931,7 +1931,7 @@ fn execute_operation_only_transfer_data_no_fee() {
     state.complete_setup_phase(None, Some("unpauseContract"));
 
     let gas_limit = 90_000_000u64;
-    let function = ManagedBuffer::<StaticApi>::from("hello");
+    let function = ManagedBuffer::<StaticApi>::from(TESTING_SC_ENDPOINT);
     let args =
         ManagedVec::<StaticApi, ManagedBuffer<StaticApi>>::from(vec![ManagedBuffer::from("1")]);
 
@@ -2380,7 +2380,7 @@ fn test_execute_operation_no_payments() {
     state.complete_setup_phase(None, Some("unpauseContract"));
 
     let gas_limit = 1;
-    let function = ManagedBuffer::<StaticApi>::from("hello");
+    let function = ManagedBuffer::<StaticApi>::from(TESTING_SC_ENDPOINT);
     let args =
         ManagedVec::<StaticApi, ManagedBuffer<StaticApi>>::from(vec![ManagedBuffer::from("1")]);
 
