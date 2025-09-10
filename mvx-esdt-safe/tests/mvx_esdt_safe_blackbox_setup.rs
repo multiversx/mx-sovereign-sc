@@ -3,7 +3,7 @@ use common_test_setup::base_setup::init::{AccountSetup, BaseSetup};
 use common_test_setup::constants::{
     ESDT_SAFE_ADDRESS, FEE_MARKET_ADDRESS, FEE_TOKEN, FIRST_TEST_TOKEN, HEADER_VERIFIER_ADDRESS,
     MVX_ESDT_SAFE_CODE_PATH, NATIVE_TEST_TOKEN, ONE_HUNDRED_MILLION, OWNER_ADDRESS, OWNER_BALANCE,
-    SECOND_TEST_TOKEN, SOVEREIGN_TOKEN_PREFIX, USER_ADDRESS,
+    SECOND_TEST_TOKEN, SOVEREIGN_TOKEN_PREFIX, UNPAUSE_CONTRACT_LOG, USER_ADDRESS,
 };
 use cross_chain::storage::CrossChainStorage;
 use multiversx_sc::types::{MultiEgldOrEsdtPayment, ReturnsHandledOrError};
@@ -14,7 +14,7 @@ use multiversx_sc::{
         TestTokenIdentifier, TokenIdentifier,
     },
 };
-use multiversx_sc_scenario::{api::StaticApi, ReturnsLogs, ScenarioTxRun, ScenarioTxWhitebox};
+use multiversx_sc_scenario::imports::*;
 use mvx_esdt_safe::{bridging_mechanism::TRUSTED_TOKEN_IDS, MvxEsdtSafe};
 use proxies::mvx_esdt_safe_proxy::MvxEsdtSafeProxy;
 use structs::forge::{NativeToken, ScArray};
@@ -146,7 +146,7 @@ impl MvxEsdtSafeTestState {
     pub fn update_esdt_safe_config_during_setup_phase(
         &mut self,
         new_config: EsdtSafeConfig<StaticApi>,
-        err_message: Option<&str>,
+        expected_error_message: Option<&str>,
     ) {
         let result = self
             .common_setup
@@ -160,7 +160,7 @@ impl MvxEsdtSafeTestState {
             .run();
 
         self.common_setup
-            .assert_expected_error_message(result, err_message);
+            .assert_expected_error_message(result, expected_error_message);
     }
 
     pub fn update_esdt_safe_config(
@@ -249,7 +249,7 @@ impl MvxEsdtSafeTestState {
         opt_transfer_data: OptionalValueTransferDataTuple<StaticApi>,
         payment: PaymentsVec<StaticApi>,
         expected_error_message: Option<&str>,
-        expected_custom_log: Option<&str>,
+        expected_log: Option<&str>,
     ) {
         let (logs, result) = self
             .common_setup
@@ -270,7 +270,7 @@ impl MvxEsdtSafeTestState {
             .assert_expected_error_message(result, expected_error_message);
 
         self.common_setup
-            .assert_expected_log(logs, expected_custom_log, None);
+            .assert_expected_log(logs, expected_log, None);
     }
 
     pub fn register_token(
@@ -352,7 +352,7 @@ impl MvxEsdtSafeTestState {
     pub fn complete_setup_phase(
         &mut self,
         expected_error_message: Option<&str>,
-        expected_custom_log: Option<&str>,
+        expected_log: Option<&str>,
     ) {
         let (logs, result) = self
             .common_setup
@@ -370,7 +370,7 @@ impl MvxEsdtSafeTestState {
             .assert_expected_error_message(result, expected_error_message);
 
         self.common_setup
-            .assert_expected_log(logs, expected_custom_log, None);
+            .assert_expected_log(logs, expected_log, None);
 
         self.common_setup
             .change_ownership_to_header_verifier(ESDT_SAFE_ADDRESS);
@@ -414,6 +414,6 @@ impl MvxEsdtSafeTestState {
         self.common_setup
             .deploy_header_verifier(vec![ScArray::ChainConfig, ScArray::ESDTSafe]);
         self.common_setup.complete_header_verifier_setup_phase(None);
-        self.complete_setup_phase(None, Some("unpauseContract"));
+        self.complete_setup_phase(None, Some(UNPAUSE_CONTRACT_LOG));
     }
 }

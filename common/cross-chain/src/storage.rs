@@ -30,6 +30,7 @@ pub trait CrossChainStorage {
         mvx_token_id: &EgldOrEsdtTokenIdentifier<Self::Api>,
     ) -> SingleValueMapper<EgldOrEsdtTokenIdentifier<Self::Api>>;
 
+    #[view(getSovEsdtTokenInfo)]
     #[storage_mapper("sovEsdtTokenInfoMapper")]
     fn sovereign_to_multiversx_esdt_info_mapper(
         &self,
@@ -37,6 +38,7 @@ pub trait CrossChainStorage {
         nonce: u64,
     ) -> SingleValueMapper<EsdtInfo<Self::Api>>;
 
+    #[view(getMvxEsdtTokenInfo)]
     #[storage_mapper("mvxEsdtTokenInfoMapper")]
     fn multiversx_to_sovereign_esdt_info_mapper(
         &self,

@@ -6,7 +6,7 @@ use std::io::Read;
 /// Config file
 const CONFIG_FILE: &str = "config.toml";
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone)]
 #[serde(rename_all = "lowercase")]
 pub enum ChainType {
     Real,
@@ -14,7 +14,7 @@ pub enum ChainType {
 }
 
 /// Contract Interact configuration
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone)]
 pub struct Config {
     pub gateway_uri: String,
     pub chain_type: ChainType,

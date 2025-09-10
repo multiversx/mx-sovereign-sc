@@ -80,7 +80,12 @@ pub const NATIVE_TOKEN_NOT_REGISTERED: &str = "There is no native token register
 pub const NO_ESDT_SAFE_ADDRESS: &str = "There is no registered ESDT address";
 pub const NO_HEADER_VERIFIER_ADDRESS: &str = "There is no registered Header-Verifier address";
 pub const NO_KNOWN_CHAIN_CONFIG_SC: &str = "No known Chain Config SC contract, deploy first";
+pub const NO_KNOWN_CHAIN_FACTORY_IN_THE_SPECIFIED_SHARD: &str =
+    "No chain factory address found for the specified shard";
 pub const NO_KNOWN_CHAIN_FACTORY_SC: &str = "No known Chain Factory SC, deploy first";
+pub const NO_KNOWN_DYNAMIC_META_ESDT_TOKEN_ID: &str = "No known Dynamic Meta ESDT token ID";
+pub const NO_KNOWN_DYNAMIC_NFT_TOKEN_ID: &str = "No known Dynamic NFT token ID";
+pub const NO_KNOWN_DYNAMIC_SFT_TOKEN_ID: &str = "No known Dynamic SFT token ID";
 pub const NO_KNOWN_FIRST_TOKEN: &str = "No known first token, register first";
 pub const NO_KNOWN_FEE_MARKET: &str = "No known Fee Market contract, deploy first";
 pub const NO_KNOWN_FEE_TOKEN: &str = "No known fee token, register first";
@@ -88,6 +93,12 @@ pub const NO_KNOWN_MVX_ESDT_SAFE: &str = "No known MVX ESDT Safe contract, deplo
 pub const NO_KNOWN_HEADER_VERIFIER: &str = "No known Header Verifier contract, deploy first";
 pub const NO_KNOWN_SECOND_TOKEN: &str = "No known second token, register first";
 pub const NO_KNOWN_SOVEREIGN_FORGE_SC: &str = "No known Sovereign Forge SC, deploy first";
+pub const NO_KNOWN_META_ESDT_TOKEN: &str = "No known Meta ESDT token ID";
+pub const NO_KNOWN_NFT_TOKEN: &str = "No known NFT token, register first";
+pub const NO_KNOWN_SOV_TO_MVX_TOKEN: &str = "No known Sovereign to MVX token ID";
+pub const NO_KNOWN_SOV_REGISTRAR: &str =
+    "No known Sovereign Registrar smart contract, deploy first";
+pub const NO_KNOWN_SFT_TOKEN: &str = "No known SFT token, register first";
 pub const NO_KNOWN_TESTING_SC: &str = "No known Testing SC contract, deploy first";
 pub const NOT_ENOUGH_WEGLD_AMOUNT: &str = "WEGLD fee amount is not met";
 pub const NOTHING_TO_TRANSFER: &str = "Nothing to transfer";

@@ -62,7 +62,11 @@ pub trait CustomEventsModule {
     fn set_fee_event(&self, #[indexed] fee_struct: FeeStruct<Self::Api>, op_nonce: TxId);
 
     #[event("removeFee")]
-    fn remove_fee_event(&self, #[indexed] token_id: TokenIdentifier<Self::Api>, op_nonce: TxId);
+    fn remove_fee_event(
+        &self,
+        #[indexed] token_id: EgldOrEsdtTokenIdentifier<Self::Api>,
+        op_nonce: TxId,
+    );
 
     #[event("distributeFees")]
     fn distribute_fees_event(

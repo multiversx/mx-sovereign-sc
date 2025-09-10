@@ -1,7 +1,3 @@
-[[bin]]
-name = "rust-interact"
-path = "src/interactor_main.rs"
-
 [package]
 name = "rust-interact"
 version = "0.1.0"
@@ -58,6 +54,9 @@ path = "../common/common-interactor"
 
 [dependencies.cross-chain]
 path = "../common/cross-chain"
+
+[dev-dependencies]
+rstest = "0.25.0"
 
 [features]
 chain-simulator-tests = []

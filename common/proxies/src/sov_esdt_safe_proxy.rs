@@ -179,6 +179,38 @@ where
             .original_result()
     }
 
+    pub fn sovereign_to_multiversx_esdt_info_mapper<
+        Arg0: ProxyArg<EgldOrEsdtTokenIdentifier<Env::Api>>,
+        Arg1: ProxyArg<u64>,
+    >(
+        self,
+        token_identifier: Arg0,
+        nonce: Arg1,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, structs::EsdtInfo<Env::Api>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getSovEsdtTokenInfo")
+            .argument(&token_identifier)
+            .argument(&nonce)
+            .original_result()
+    }
+
+    pub fn multiversx_to_sovereign_esdt_info_mapper<
+        Arg0: ProxyArg<EgldOrEsdtTokenIdentifier<Env::Api>>,
+        Arg1: ProxyArg<u64>,
+    >(
+        self,
+        token_identifier: Arg0,
+        nonce: Arg1,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, structs::EsdtInfo<Env::Api>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getMvxEsdtTokenInfo")
+            .argument(&token_identifier)
+            .argument(&nonce)
+            .original_result()
+    }
+
     pub fn native_token(
         self,
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, TokenIdentifier<Env::Api>> {

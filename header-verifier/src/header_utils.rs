@@ -8,7 +8,8 @@ use crate::checks;
 multiversx_sc::imports!();
 multiversx_sc::derive_imports!();
 
-#[derive(TopEncode, TopDecode, PartialEq)]
+#[type_abi]
+#[derive(TopEncode, TopDecode, PartialEq, Debug)]
 pub enum OperationHashStatus {
     NotLocked = 1,
     Locked,

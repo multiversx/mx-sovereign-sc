@@ -43,7 +43,7 @@ impl ChainConfigTestState {
     pub fn update_sovereign_config_during_setup_phase(
         &mut self,
         config: SovereignConfig<StaticApi>,
-        expect_error: Option<&str>,
+        expected_error_message: Option<&str>,
     ) {
         let result = self
             .common_setup
@@ -57,7 +57,7 @@ impl ChainConfigTestState {
             .run();
 
         self.common_setup
-            .assert_expected_error_message(result, expect_error);
+            .assert_expected_error_message(result, expected_error_message);
     }
 
     pub fn update_sovereign_config(

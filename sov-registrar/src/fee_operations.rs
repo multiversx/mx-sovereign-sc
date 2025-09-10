@@ -17,7 +17,7 @@ pub trait FeeOperationsModule:
 
     #[only_owner]
     #[endpoint(removeFee)]
-    fn remove_fee(&self, token_id: TokenIdentifier<Self::Api>) {
+    fn remove_fee(&self, token_id: EgldOrEsdtTokenIdentifier<Self::Api>) {
         self.remove_fee_event(token_id, self.get_and_save_next_tx_id());
     }
 
