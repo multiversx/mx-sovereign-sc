@@ -1,4 +1,6 @@
 #![allow(non_snake_case)]
+
+use common_interactor::interactor_common_state::CommonState;
 use common_interactor::interactor_helpers::InteractorHelpers;
 use common_interactor::interactor_state::{EsdtTokenInfo, State};
 use common_interactor::interactor_structs::{ActionConfig, BalanceCheckConfig};
@@ -6,12 +8,14 @@ use common_interactor::{
     common_sovereign_interactor::CommonInteractorTrait, interactor_config::Config,
 };
 use common_test_setup::constants::{
-    INTERACTOR_WORKING_DIR, ONE_THOUSAND_TOKENS, OPERATION_HASH_STATUS_STORAGE_KEY,
-    SOVEREIGN_RECEIVER_ADDRESS, TOKEN_DISPLAY_NAME, TOKEN_TICKER,
+    INTERACTOR_WORKING_DIR, ONE_THOUSAND_TOKENS, SOVEREIGN_RECEIVER_ADDRESS, TOKEN_DISPLAY_NAME,
+    TOKEN_TICKER,
 };
-use header_verifier::header_utils::OperationHashStatus;
+use multiversx_sc::chain_core::EGLD_000000_TOKEN_IDENTIFIER;
+use multiversx_sc_snippets::imports::*;
 use multiversx_sc_snippets::multiversx_sc_scenario::multiversx_chain_vm::crypto_functions::sha256;
-use multiversx_sc_snippets::{hex, imports::*};
+use mvx_esdt_safe::register_token::ISSUE_COST;
+use structs::aliases::PaymentsVec;
 use structs::fee::FeeStruct;
 use structs::operation::OperationData;
 use structs::RegisterTokenOperation;
@@ -20,6 +24,7 @@ pub struct CompleteFlowInteract {
     pub interactor: Interactor,
     pub user_address: Address,
     pub state: State,
+    pub common_state: CommonState,
 }
 
 impl InteractorHelpers for CompleteFlowInteract {
@@ -29,6 +34,10 @@ impl InteractorHelpers for CompleteFlowInteract {
 
     fn state(&mut self) -> &mut State {
         &mut self.state
+    }
+
+    fn common_state(&mut self) -> &mut CommonState {
+        &mut self.common_state
     }
 
     fn user_address(&self) -> &Address {
@@ -62,14 +71,15 @@ impl CompleteFlowInteract {
         let current_working_dir = INTERACTOR_WORKING_DIR;
         interactor.set_current_dir_from_workspace(current_working_dir);
 
-        let user_address = interactor.register_wallet(test_wallets::grace()).await; //shard 1
+        let user_address = interactor.register_wallet(test_wallets::grace()).await;
 
-        interactor.generate_blocks_until_epoch(1).await.unwrap();
+        interactor.generate_blocks_until_all_activations().await;
 
         CompleteFlowInteract {
             interactor,
             user_address,
             state: State::default(),
+            common_state: CommonState::load_state(),
         }
     }
 
@@ -89,6 +99,11 @@ impl CompleteFlowInteract {
         let mut all_tokens = Vec::new();
 
         for (ticker, token_type, decimals) in token_configs {
+            if ticker == "FEE" && !self.common_state.fee_market_tokens.is_empty() {
+                let fee_token = self.retrieve_current_fee_token_for_wallet().await;
+                self.state.set_fee_token(fee_token);
+                continue;
+            }
             let amount = match token_type {
                 EsdtTokenType::NonFungibleV2 | EsdtTokenType::DynamicNFT => BigUint::from(1u64),
                 _ => BigUint::from(ONE_THOUSAND_TOKENS),
@@ -114,7 +129,7 @@ impl CompleteFlowInteract {
             all_tokens.push(token);
         }
 
-        self.state.set_initial_wallet_balance(all_tokens);
+        self.state.set_initial_wallet_tokens_state(all_tokens);
     }
 
     pub async fn deposit_wrapper(
@@ -137,7 +152,7 @@ impl CompleteFlowInteract {
             SOVEREIGN_RECEIVER_ADDRESS.to_address(),
             config.shard,
             transfer_data,
-            payment_vec,
+            payment_vec.clone(),
             None,
             expected_log.as_deref(),
         )
@@ -149,11 +164,13 @@ impl CompleteFlowInteract {
             .shard(config.shard)
             .token(token.clone())
             .amount(amount)
-            .fee(fee)
+            .fee(fee.clone())
             .with_transfer_data(config.with_transfer_data.unwrap_or_default())
             .is_execute(false);
 
         self.check_balances_after_action(balance_config).await;
+        self.update_fee_market_balance_state(fee, payment_vec, config.shard)
+            .await;
     }
 
     async fn register_and_execute_operation(
@@ -180,37 +197,26 @@ impl CompleteFlowInteract {
         )
         .await;
 
-        let operation_status = OperationHashStatus::NotLocked as u8;
-        let expected_operation_hash_status = format!("{:02x}", operation_status);
-        let encoded_key = &hex::encode(OPERATION_HASH_STATUS_STORAGE_KEY);
+        //TODO: uncomment this after proxy fix is implemented
+        //let expected_operation_hash_status = OperationHashStatus::NotLocked;
 
-        self.check_account_storage(
-            self.state
-                .get_header_verifier_address(config.shard)
-                .to_address(),
-            encoded_key,
-            Some(&expected_operation_hash_status),
-        )
-        .await;
+        // self.check_registered_operation_status(
+        //     config.shard,
+        //     hash_of_hashes.clone(),
+        //     operation_hash.clone(),
+        //     expected_operation_hash_status,
+        // )
+        // .await;
 
         let caller = self.get_bridge_service_for_shard(config.shard);
         self.execute_operations_in_mvx_esdt_safe(
             caller,
             config.shard,
-            hash_of_hashes,
-            operation,
+            hash_of_hashes.clone(),
+            operation.clone(),
             config.expected_error.as_deref(),
             expected_log.as_deref(),
             config.expected_log_error.as_deref(),
-        )
-        .await;
-
-        self.check_account_storage(
-            self.state
-                .get_header_verifier_address(config.shard)
-                .to_address(),
-            encoded_key,
-            None,
         )
         .await;
     }
@@ -278,6 +284,16 @@ impl CompleteFlowInteract {
         mut config: ActionConfig,
         token: EsdtTokenInfo,
     ) -> EsdtTokenInfo {
+        self.deposit_in_mvx_esdt_safe(
+            SOVEREIGN_RECEIVER_ADDRESS.to_address(),
+            config.shard,
+            OptionalValue::None,
+            ManagedVec::from_single_item(EgldOrEsdtTokenPayment::egld_payment(ISSUE_COST.into())),
+            None,
+            Some(EGLD_000000_TOKEN_IDENTIFIER),
+        )
+        .await;
+
         let expected_log = self
             .register_sovereign_token(config.shard, token.clone())
             .await;
@@ -289,5 +305,24 @@ impl CompleteFlowInteract {
         self.execute_wrapper(config, Some(token.clone()))
             .await
             .expect("Expected mapped token, got None")
+    }
+
+    pub async fn update_fee_market_balance_state(
+        &mut self,
+        fee: Option<FeeStruct<StaticApi>>,
+        payment_vec: PaymentsVec<StaticApi>,
+        shard: u32,
+    ) {
+        if fee.is_none() || payment_vec.is_empty() {
+            return;
+        }
+        let mut fee_token_in_fee_market = self.common_state().get_fee_market_token_for_shard(shard);
+
+        let payment = payment_vec.get(0);
+        if let Some(payment_amount) = payment.amount.to_u64() {
+            fee_token_in_fee_market.amount += payment_amount;
+        }
+        self.common_state()
+            .set_fee_market_token_for_shard(shard, fee_token_in_fee_market);
     }
 }

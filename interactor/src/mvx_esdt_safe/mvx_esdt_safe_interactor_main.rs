@@ -1,11 +1,13 @@
 use common_interactor::{
-    common_sovereign_interactor::CommonInteractorTrait, interactor_helpers::InteractorHelpers,
+    common_sovereign_interactor::CommonInteractorTrait, interactor_common_state::CommonState,
+    interactor_helpers::InteractorHelpers,
 };
-use multiversx_sc_snippets::imports::*;
+use multiversx_sc_snippets::{
+    imports::*, multiversx_sc_scenario::multiversx_chain_vm::crypto_functions::sha256,
+};
 use proxies::mvx_esdt_safe_proxy::MvxEsdtSafeProxy;
 
-use structs::configs::EsdtSafeConfig;
-use structs::forge::NativeToken;
+use structs::{configs::EsdtSafeConfig, generate_hash::GenerateHash};
 
 use common_interactor::interactor_config::Config;
 use common_interactor::interactor_state::State;
@@ -18,6 +20,7 @@ pub struct MvxEsdtSafeInteract {
     pub interactor: Interactor,
     pub user_address: Address,
     pub state: State,
+    pub common_state: CommonState,
 }
 
 impl InteractorHelpers for MvxEsdtSafeInteract {
@@ -27,6 +30,10 @@ impl InteractorHelpers for MvxEsdtSafeInteract {
 
     fn state(&mut self) -> &mut State {
         &mut self.state
+    }
+
+    fn common_state(&mut self) -> &mut CommonState {
+        &mut self.common_state
     }
 
     fn user_address(&self) -> &Address {
@@ -63,12 +70,13 @@ impl MvxEsdtSafeInteract {
 
         let user_address = interactor.register_wallet(test_wallets::grace()).await; //shard 1
 
-        interactor.generate_blocks_until_epoch(2u64).await.unwrap();
+        interactor.generate_blocks_until_all_activations().await;
 
         MvxEsdtSafeInteract {
             interactor,
             user_address,
             state: State::default(),
+            common_state: CommonState::load_state(),
         }
     }
 
@@ -105,7 +113,7 @@ impl MvxEsdtSafeInteract {
             all_tokens.push(token);
         }
 
-        self.state.set_initial_wallet_balance(all_tokens);
+        self.state.set_initial_wallet_tokens_state(all_tokens);
     }
 
     pub async fn complete_setup_phase(&mut self, shard: u32) {
@@ -113,7 +121,7 @@ impl MvxEsdtSafeInteract {
         self.interactor
             .tx()
             .from(&caller)
-            .to(self.state.current_mvx_esdt_safe_contract_address())
+            .to(self.common_state.current_mvx_esdt_safe_contract_address())
             .gas(90_000_000u64)
             .typed(MvxEsdtSafeProxy)
             .complete_setup_phase()
@@ -127,7 +135,7 @@ impl MvxEsdtSafeInteract {
         let response = self
             .interactor
             .tx()
-            .to(self.state.current_mvx_esdt_safe_contract_address())
+            .to(self.common_state.current_mvx_esdt_safe_contract_address())
             .from(caller)
             .gas(90_000_000u64)
             .typed(MvxEsdtSafeProxy)
@@ -141,30 +149,50 @@ impl MvxEsdtSafeInteract {
         println!("Result: {response:?}");
     }
 
-    pub async fn update_configuration(
+    pub async fn update_configuration_after_setup_phase(
         &mut self,
         shard: u32,
-        hash_of_hashes: ManagedBuffer<StaticApi>,
-        new_config: EsdtSafeConfig<StaticApi>,
-        expected_error_message: Option<&str>,
+        config: EsdtSafeConfig<StaticApi>,
         expected_log: Option<&str>,
         expected_log_error: Option<&str>,
     ) {
         let bridge_service = self.get_bridge_service_for_shard(shard);
+        let config_hash = config.generate_hash();
+
+        self.common_state().update_config_nonce += 1;
+        let nonce_str = self.common_state().update_config_nonce.to_string();
+        let nonce_buf = ManagedBuffer::<StaticApi>::from(&nonce_str);
+
+        let mut bytes = Vec::with_capacity(config_hash.len() + nonce_buf.len());
+        bytes.extend_from_slice(&config_hash.to_vec());
+        bytes.extend_from_slice(&nonce_buf.to_vec());
+
+        let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&bytes));
+        let operations_hashes =
+            MultiValueEncoded::from(ManagedVec::from(vec![config_hash.clone(), nonce_buf]));
+
+        self.register_operation(
+            shard,
+            ManagedBuffer::new(),
+            &hash_of_hashes,
+            operations_hashes,
+        )
+        .await;
+
         let (response, logs) = self
             .interactor
             .tx()
             .from(bridge_service)
-            .to(self.state.current_mvx_esdt_safe_contract_address())
+            .to(self.common_state.current_mvx_esdt_safe_contract_address())
             .gas(90_000_000u64)
             .typed(MvxEsdtSafeProxy)
-            .update_esdt_safe_config(hash_of_hashes, new_config)
+            .update_esdt_safe_config(hash_of_hashes, config)
             .returns(ReturnsHandledOrError::new())
             .returns(ReturnsLogs)
             .run()
             .await;
 
-        self.assert_expected_error_message(response, expected_error_message);
+        assert!(response.is_ok());
 
         self.assert_expected_log(logs, expected_log, expected_log_error);
     }
@@ -174,7 +202,7 @@ impl MvxEsdtSafeInteract {
             .interactor
             .tx()
             .from(caller)
-            .to(self.state.current_mvx_esdt_safe_contract_address())
+            .to(self.common_state.current_mvx_esdt_safe_contract_address())
             .gas(90_000_000u64)
             .typed(MvxEsdtSafeProxy)
             .set_fee_market_address(fee_market_address)
@@ -183,32 +211,5 @@ impl MvxEsdtSafeInteract {
             .await;
 
         println!("Result: {response:?}");
-    }
-
-    pub async fn register_native_token(
-        &mut self,
-        ticker: &str,
-        name: &str,
-        egld_amount: BigUint<StaticApi>,
-        expected_error_message: Option<&str>,
-    ) {
-        let caller = self.get_bridge_owner_for_shard(SHARD_0).clone();
-        let response = self
-            .interactor
-            .tx()
-            .from(&caller)
-            .to(self.state.current_mvx_esdt_safe_contract_address())
-            .gas(90_000_000u64)
-            .typed(MvxEsdtSafeProxy)
-            .register_native_token(NativeToken {
-                ticker: ManagedBuffer::from(ticker),
-                name: ManagedBuffer::from(name),
-            })
-            .egld(egld_amount)
-            .returns(ReturnsHandledOrError::new())
-            .run()
-            .await;
-
-        self.assert_expected_error_message(response, expected_error_message);
     }
 }

@@ -40,7 +40,6 @@ pub const ESDT_SAFE_NOT_DEPLOYED: &str =
     "The ESDT-Safe SC is not deployed, you skipped the second phase";
 pub const ESDT_SAFE_STILL_PAUSED: &str = "Cannot create transaction while paused";
 pub const FAILED_TO_PARSE_AS_NUMBER: &str = "Failed to parse actual amount as number";
-pub const FAILED_TO_LOAD_WALLET_SHARD_0: &str = "Failed to load shard 0 wallet";
 pub const FEE_MARKET_ALREADY_DEPLOYED: &str = "The Fee-Market SC is already deployed";
 pub const FEE_MARKET_NOT_DEPLOYED: &str = "The Fee-Market SC is not deployed";
 pub const FEE_MARKET_NOT_SET: &str = "There is no Fee-Market address set";
@@ -97,6 +96,8 @@ pub const NO_KNOWN_SOVEREIGN_FORGE_SC: &str = "No known Sovereign Forge SC, depl
 pub const NO_KNOWN_META_ESDT_TOKEN: &str = "No known Meta ESDT token ID";
 pub const NO_KNOWN_NFT_TOKEN: &str = "No known NFT token, register first";
 pub const NO_KNOWN_SOV_TO_MVX_TOKEN: &str = "No known Sovereign to MVX token ID";
+pub const NO_KNOWN_SOV_REGISTRAR: &str =
+    "No known Sovereign Registrar smart contract, deploy first";
 pub const NO_KNOWN_SFT_TOKEN: &str = "No known SFT token, register first";
 pub const NO_KNOWN_TESTING_SC: &str = "No known Testing SC contract, deploy first";
 pub const NOT_ENOUGH_WEGLD_AMOUNT: &str = "WEGLD fee amount is not met";

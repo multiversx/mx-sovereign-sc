@@ -94,6 +94,22 @@ where
             .original_result()
     }
 
+    pub fn operation_hash_status<
+        Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
+        Arg1: ProxyArg<ManagedBuffer<Env::Api>>,
+    >(
+        self,
+        hash_of_hashes: Arg0,
+        operation_hash: Arg1,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, OperationHashStatus> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("operationHashStatus")
+            .argument(&hash_of_hashes)
+            .argument(&operation_hash)
+            .original_result()
+    }
+
     pub fn register_bridge_operations<
         Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
         Arg1: ProxyArg<ManagedBuffer<Env::Api>>,
@@ -178,4 +194,11 @@ where
             .argument(&operation_hash)
             .original_result()
     }
+}
+
+#[type_abi]
+#[derive(TopEncode, TopDecode, PartialEq, Debug)]
+pub enum OperationHashStatus {
+    NotLocked,
+    Locked,
 }

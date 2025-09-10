@@ -28,6 +28,7 @@ pub trait HeaderVerifierStorageModule {
         sc_address: ManagedAddress,
     ) -> SingleValueMapper<bool, ManagedAddress>;
 
+    #[view(operationHashStatus)]
     #[storage_mapper("operationHashStatus")]
     fn operation_hash_status(
         &self,

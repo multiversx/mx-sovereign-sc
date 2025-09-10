@@ -4,11 +4,9 @@ use common_interactor::interactor_helpers::InteractorHelpers;
 use common_interactor::interactor_state::EsdtTokenInfo;
 use common_interactor::interactor_structs::ActionConfig;
 use common_test_setup::constants::{
-    DEPLOY_COST, DEPOSIT_LOG, ONE_HUNDRED_TOKENS, SC_CALL_LOG, SHARD_1, SHARD_2,
-    TESTING_SC_ENDPOINT, WRONG_ENDPOINT_NAME,
+    DEPOSIT_LOG, ONE_HUNDRED_TOKENS, SC_CALL_LOG, SHARD_1, SHARD_2, TESTING_SC_ENDPOINT,
+    WRONG_ENDPOINT_NAME,
 };
-use common_test_setup::constants::{REGISTER_DEFAULT_TOKEN, REGISTER_TOKEN_PREFIX};
-use multiversx_sc::imports::OptionalValue;
 use multiversx_sc::types::BigUint;
 use multiversx_sc::types::EgldOrEsdtTokenIdentifier;
 use multiversx_sc::types::EsdtTokenType;
@@ -35,14 +33,7 @@ use serial_test::serial;
 async fn test_complete_deposit_flow_no_fee_only_transfer_data(#[case] shard: u32) {
     let mut chain_interactor = CompleteFlowInteract::new(Config::chain_simulator_config()).await;
 
-    chain_interactor
-        .deploy_and_complete_setup_phase(
-            OptionalValue::Some(DEPLOY_COST.into()),
-            OptionalValue::None,
-            OptionalValue::None,
-            None,
-        )
-        .await;
+    chain_interactor.remove_fee(shard).await;
 
     chain_interactor
         .deposit_wrapper(
@@ -75,14 +66,7 @@ async fn test_complete_deposit_flow_with_fee_only_transfer_data(#[case] shard: u
 
     let fee = chain_interactor.create_standard_fee();
 
-    chain_interactor
-        .deploy_and_complete_setup_phase(
-            OptionalValue::Some(DEPLOY_COST.into()),
-            OptionalValue::None,
-            OptionalValue::None,
-            Some(fee.clone()),
-        )
-        .await;
+    chain_interactor.set_fee(fee.clone(), shard).await;
 
     chain_interactor
         .deposit_wrapper(
@@ -114,14 +98,7 @@ async fn test_complete_deposit_flow_with_fee_only_transfer_data(#[case] shard: u
 async fn test_complete_execute_flow_with_transfer_data_only_success(#[case] shard: u32) {
     let mut chain_interactor = CompleteFlowInteract::new(Config::chain_simulator_config()).await;
 
-    chain_interactor
-        .deploy_and_complete_setup_phase(
-            OptionalValue::Some(DEPLOY_COST.into()),
-            OptionalValue::None,
-            OptionalValue::None,
-            None,
-        )
-        .await;
+    chain_interactor.remove_fee(shard).await;
 
     chain_interactor
         .execute_wrapper(
@@ -152,14 +129,7 @@ async fn test_complete_execute_flow_with_transfer_data_only_success(#[case] shar
 async fn test_complete_execute_flow_with_transfer_data_only_fail(#[case] shard: u32) {
     let mut chain_interactor = CompleteFlowInteract::new(Config::chain_simulator_config()).await;
 
-    chain_interactor
-        .deploy_and_complete_setup_phase(
-            OptionalValue::Some(DEPLOY_COST.into()),
-            OptionalValue::None,
-            OptionalValue::None,
-            None,
-        )
-        .await;
+    chain_interactor.remove_fee(shard).await;
 
     //NOTE: For now, there is a failed log only for top_encode error, which is hard to achieve. If the sc returns an error, the logs are no longer retrieved by the framework
     chain_interactor
@@ -202,14 +172,7 @@ async fn test_deposit_with_fee(
 
     let fee = chain_interactor.create_standard_fee();
 
-    chain_interactor
-        .deploy_and_complete_setup_phase(
-            OptionalValue::Some(DEPLOY_COST.into()),
-            OptionalValue::None,
-            OptionalValue::None,
-            Some(fee.clone()),
-        )
-        .await;
+    chain_interactor.set_fee(fee.clone(), shard).await;
 
     chain_interactor
         .deposit_wrapper(
@@ -250,14 +213,7 @@ async fn test_deposit_without_fee_and_execute(
 
     let token = chain_interactor.get_token_by_type(token_type);
 
-    chain_interactor
-        .deploy_and_complete_setup_phase(
-            OptionalValue::Some(DEPLOY_COST.into()),
-            OptionalValue::None,
-            OptionalValue::None,
-            None,
-        )
-        .await;
+    chain_interactor.remove_fee(shard).await;
 
     chain_interactor
         .deposit_wrapper(
@@ -308,21 +264,13 @@ async fn test_register_execute_and_deposit_sov_token(
 ) {
     let mut chain_interactor = CompleteFlowInteract::new(Config::chain_simulator_config()).await;
 
-    chain_interactor
-        .deploy_and_complete_setup_phase(
-            OptionalValue::Some(DEPLOY_COST.into()),
-            OptionalValue::None,
-            OptionalValue::None,
-            None,
-        )
-        .await;
+    chain_interactor.remove_fee(shard).await;
 
     let (nonce, decimals) = chain_interactor.generate_nonce_and_decimals(token_type);
+    let token_id = chain_interactor.create_random_sovereign_token_id(shard);
 
     let sov_token = EsdtTokenInfo {
-        token_id: EgldOrEsdtTokenIdentifier::from(
-            &(REGISTER_TOKEN_PREFIX.to_string() + REGISTER_DEFAULT_TOKEN),
-        ),
+        token_id: EgldOrEsdtTokenIdentifier::from(token_id.as_str()),
         nonce,
         token_type,
         decimals,
@@ -374,14 +322,7 @@ async fn test_deposit_mvx_token_with_transfer_data(
 ) {
     let mut chain_interactor = CompleteFlowInteract::new(Config::chain_simulator_config()).await;
 
-    chain_interactor
-        .deploy_and_complete_setup_phase(
-            OptionalValue::Some(DEPLOY_COST.into()),
-            OptionalValue::None,
-            OptionalValue::None,
-            None,
-        )
-        .await;
+    chain_interactor.remove_fee(shard).await;
 
     let token = chain_interactor.get_token_by_type(token_type);
 
@@ -427,14 +368,7 @@ async fn test_deposit_mvx_token_with_transfer_data_and_fee(
 
     let fee = chain_interactor.create_standard_fee();
 
-    chain_interactor
-        .deploy_and_complete_setup_phase(
-            OptionalValue::Some(DEPLOY_COST.into()),
-            OptionalValue::None,
-            OptionalValue::None,
-            Some(fee.clone()),
-        )
-        .await;
+    chain_interactor.set_fee(fee.clone(), shard).await;
 
     let token = chain_interactor.get_token_by_type(token_type);
 
@@ -480,14 +414,7 @@ async fn test_deposit_and_execute_with_transfer_data(
 
     let token = chain_interactor.get_token_by_type(token_type);
 
-    chain_interactor
-        .deploy_and_complete_setup_phase(
-            OptionalValue::Some(DEPLOY_COST.into()),
-            OptionalValue::None,
-            OptionalValue::None,
-            None,
-        )
-        .await;
+    chain_interactor.remove_fee(shard).await;
 
     chain_interactor
         .deposit_wrapper(
@@ -541,21 +468,13 @@ async fn test_register_execute_with_transfer_data_and_deposit_sov_token(
 ) {
     let mut chain_interactor = CompleteFlowInteract::new(Config::chain_simulator_config()).await;
 
-    chain_interactor
-        .deploy_and_complete_setup_phase(
-            OptionalValue::Some(DEPLOY_COST.into()),
-            OptionalValue::None,
-            OptionalValue::None,
-            None,
-        )
-        .await;
+    chain_interactor.remove_fee(shard).await;
 
     let (nonce, decimals) = chain_interactor.generate_nonce_and_decimals(token_type);
+    let token_id = chain_interactor.create_random_sovereign_token_id(shard);
 
     let sov_token = EsdtTokenInfo {
-        token_id: EgldOrEsdtTokenIdentifier::from(
-            &(REGISTER_TOKEN_PREFIX.to_string() + REGISTER_DEFAULT_TOKEN),
-        ),
+        token_id: EgldOrEsdtTokenIdentifier::from(token_id.as_str()),
         nonce,
         token_type,
         decimals,
@@ -624,21 +543,13 @@ async fn test_register_execute_call_failed(
 ) {
     let mut chain_interactor = CompleteFlowInteract::new(Config::chain_simulator_config()).await;
 
-    chain_interactor
-        .deploy_and_complete_setup_phase(
-            OptionalValue::Some(DEPLOY_COST.into()),
-            OptionalValue::None,
-            OptionalValue::None,
-            None,
-        )
-        .await;
+    chain_interactor.remove_fee(shard).await;
 
     let (nonce, decimals) = chain_interactor.generate_nonce_and_decimals(token_type);
+    let token_id = chain_interactor.create_random_sovereign_token_id(shard);
 
     let sov_token = EsdtTokenInfo {
-        token_id: EgldOrEsdtTokenIdentifier::from(
-            &(REGISTER_TOKEN_PREFIX.to_string() + REGISTER_DEFAULT_TOKEN),
-        ),
+        token_id: EgldOrEsdtTokenIdentifier::from(token_id.as_str()),
         nonce,
         token_type,
         decimals,

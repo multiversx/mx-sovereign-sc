@@ -40,7 +40,8 @@ pub const CHAIN_FACTORY_CODE_PATH: MxscPath =
     MxscPath::new("../chain-factory/output/chain-factory.mxsc.json");
 pub const SOVEREIGN_FORGE_CODE_PATH: MxscPath =
     MxscPath::new("../sovereign-forge/output/sovereign-forge.mxsc.json");
-pub const WALLET_PATH: &str = "wallets/shard-0-wallet.pem";
+pub const SOV_REGISTRAR_CODE_PATH: MxscPath =
+    MxscPath::new("../sov-registrar/output/sov-registrar.mxsc.json");
 
 pub const FEE_TOKEN: TestTokenIdentifier = TestTokenIdentifier::new("INTERNS-eaad15");
 pub const FIRST_TEST_TOKEN: TestTokenIdentifier = TestTokenIdentifier::new("GREEN-0e161c");
@@ -81,8 +82,9 @@ pub const UNPAUSE_CONTRACT_LOG: &str = "unpauseContract";
 pub const TESTING_SC_ENDPOINT: &str = "hello";
 pub const EXECUTED_BRIDGE_LOG: &str = "executedBridgeOp";
 pub const SC_CALL_LOG: &str = "scCall";
+pub const STATE_FILE: &str = "state.toml";
 pub const NATIVE_TOKEN_TICKER: &str = "SOV";
-pub const NATIVE_TOKEN_NAME: &str = "Sovereign Token";
+pub const NATIVE_TOKEN_NAME: &str = "SovereignToken";
 
 pub const ISSUE_COST: u64 = 50_000_000_000_000_000; // 0.05 EGLD
 pub const GAS_LIMIT: u64 = 90_000_000; // 90 million gas limit
@@ -100,3 +102,6 @@ pub const PER_GAS: u64 = 1;
 pub const EXECUTED_BRIDGE_OP_EVENT: &str = "executedBridgeOp";
 pub const DEPOSIT_EVENT: &str = "deposit";
 pub const SC_CALL_EVENT: &str = "scCall";
+
+pub const WALLET_SHARD_0: &str = "wallets/wallet_shard_0.pem";
+pub const FAILED_TO_LOAD_WALLET_SHARD_0: &str = "Failed to load wallet for shard 0";
