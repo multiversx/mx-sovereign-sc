@@ -386,7 +386,7 @@ async fn test_deposit_fee_enabled() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
 
     let fee = chain_interactor.create_standard_fee();
-    chain_interactor.set_fee(fee.clone(), SHARD_0).await;
+    chain_interactor.set_fee_common(fee.clone(), SHARD_0).await;
 
     let fee_amount = BigUint::from(PER_TRANSFER) + (BigUint::from(GAS_LIMIT) * PER_GAS);
 
@@ -458,7 +458,7 @@ async fn test_deposit_transfer_data_only_with_fee_nothing_to_transfer() {
 
     let fee = chain_interactor.create_standard_fee();
 
-    chain_interactor.set_fee(fee, SHARD_0).await;
+    chain_interactor.set_fee_common(fee, SHARD_0).await;
 
     let gas_limit = 1000u64;
     let function = ManagedBuffer::<StaticApi>::from(TESTING_SC_ENDPOINT);

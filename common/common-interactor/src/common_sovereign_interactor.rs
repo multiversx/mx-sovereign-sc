@@ -1289,32 +1289,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
         if fee_activated {
             return;
         }
-
-        self.common_state().fee_op_nonce += 1;
-        let nonce_str = self.common_state().fee_op_nonce.to_string();
-        let nonce_buf = ManagedBuffer::<StaticApi>::from(&nonce_str);
-
-        let fee_hash = fee.generate_hash();
-
-        let mut bytes = Vec::with_capacity(fee_hash.len() + nonce_buf.len());
-        bytes.extend_from_slice(&fee_hash.to_vec());
-        bytes.extend_from_slice(&nonce_buf.to_vec());
-
-        let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&bytes));
-        let operations_hashes =
-            MultiValueEncoded::from(ManagedVec::from(vec![fee_hash.clone(), nonce_buf]));
-
-        self.register_operation(
-            shard,
-            ManagedBuffer::new(),
-            &hash_of_hashes,
-            operations_hashes,
-        )
-        .await;
-
-        self.set_fee_after_setup_phase(hash_of_hashes, fee, shard)
-            .await;
-        self.common_state().set_fee_status_for_shard(shard, true);
+        self.set_fee_common(fee, shard).await;
     }
 
     async fn remove_fee(&mut self, shard: u32) {
@@ -1349,5 +1324,33 @@ pub trait CommonInteractorTrait: InteractorHelpers {
         self.remove_fee_after_setup_phase(hash_of_hashes, fee_token, shard)
             .await;
         self.common_state().set_fee_status_for_shard(shard, false);
+    }
+
+    async fn set_fee_common(&mut self, fee: FeeStruct<StaticApi>, shard: u32) {
+        self.common_state().fee_op_nonce += 1;
+        let nonce_str = self.common_state().fee_op_nonce.to_string();
+        let nonce_buf = ManagedBuffer::<StaticApi>::from(&nonce_str);
+
+        let fee_hash = fee.generate_hash();
+
+        let mut bytes = Vec::with_capacity(fee_hash.len() + nonce_buf.len());
+        bytes.extend_from_slice(&fee_hash.to_vec());
+        bytes.extend_from_slice(&nonce_buf.to_vec());
+
+        let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&bytes));
+        let operations_hashes =
+            MultiValueEncoded::from(ManagedVec::from(vec![fee_hash.clone(), nonce_buf]));
+
+        self.register_operation(
+            shard,
+            ManagedBuffer::new(),
+            &hash_of_hashes,
+            operations_hashes,
+        )
+        .await;
+
+        self.set_fee_after_setup_phase(hash_of_hashes, fee, shard)
+            .await;
+        self.common_state().set_fee_status_for_shard(shard, true);
     }
 }
