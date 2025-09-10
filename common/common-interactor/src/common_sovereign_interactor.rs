@@ -8,9 +8,9 @@ use common_test_setup::{
     base_setup::helpers::BLSKey,
     constants::{
         CHAIN_CONFIG_CODE_PATH, CHAIN_FACTORY_CODE_PATH, CHAIN_ID, DEPLOY_COST,
-        FEE_MARKET_CODE_PATH, HEADER_VERIFIER_CODE_PATH, ISSUE_COST, MVX_ESDT_SAFE_CODE_PATH,
-        NATIVE_TOKEN_NAME, NATIVE_TOKEN_TICKER, NUMBER_OF_SHARDS, SHARD_0,
-        SOVEREIGN_FORGE_CODE_PATH, SOVEREIGN_TOKEN_PREFIX, TESTING_SC_CODE_PATH,
+        FAILED_TO_LOAD_WALLET_SHARD_0, FEE_MARKET_CODE_PATH, HEADER_VERIFIER_CODE_PATH, ISSUE_COST,
+        MVX_ESDT_SAFE_CODE_PATH, NATIVE_TOKEN_NAME, NATIVE_TOKEN_TICKER, NUMBER_OF_SHARDS, SHARD_0,
+        SOVEREIGN_FORGE_CODE_PATH, SOVEREIGN_TOKEN_PREFIX, TESTING_SC_CODE_PATH, WALLET_SHARD_0,
     },
 };
 use multiversx_sc::{
@@ -55,9 +55,9 @@ fn metadata() -> CodeMetadata {
 
 pub trait CommonInteractorTrait: InteractorHelpers {
     async fn register_wallets(&mut self) {
-        let wallet_path = "wallets/wallet_shard_0.pem".to_string();
+        let wallet_path = WALLET_SHARD_0.to_string();
         let wallet = Wallet::from_pem_file(&wallet_path)
-            .unwrap_or_else(|_| panic!("Failed to load wallet for shard 0"));
+            .unwrap_or_else(|_| panic!("{}", FAILED_TO_LOAD_WALLET_SHARD_0));
 
         self.interactor().register_wallet(test_wallets::bob()).await;
         self.interactor().register_wallet(test_wallets::dan()).await;

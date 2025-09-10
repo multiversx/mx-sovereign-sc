@@ -82,12 +82,6 @@ pub const UNPAUSE_CONTRACT_LOG: &str = "unpauseContract";
 pub const TESTING_SC_ENDPOINT: &str = "hello";
 pub const EXECUTED_BRIDGE_LOG: &str = "executedBridgeOp";
 pub const SC_CALL_LOG: &str = "scCall";
-pub const CATEGORIES: [(&str, &str); 3] = [
-    ("bridge_owners", "bridge_owner"),
-    ("sovereign_owners", "sovereign_owner"),
-    ("bridge_services", "bridge_service"),
-];
-pub const WALLETS_PATH: &str = "wallets";
 pub const STATE_FILE: &str = "state.toml";
 pub const NATIVE_TOKEN_TICKER: &str = "SOV";
 pub const NATIVE_TOKEN_NAME: &str = "SovereignToken";
@@ -108,3 +102,6 @@ pub const PER_GAS: u64 = 1;
 pub const EXECUTED_BRIDGE_OP_EVENT: &str = "executedBridgeOp";
 pub const DEPOSIT_EVENT: &str = "deposit";
 pub const SC_CALL_EVENT: &str = "scCall";
+
+pub const WALLET_SHARD_0: &str = "wallets/wallet_shard_0.pem";
+pub const FAILED_TO_LOAD_WALLET_SHARD_0: &str = "Failed to load wallet for shard 0";
