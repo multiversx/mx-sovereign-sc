@@ -214,6 +214,7 @@ impl CompleteFlowInteract {
             config.shard,
             hash_of_hashes.clone(),
             operation.clone(),
+            config.expected_error.as_deref(),
             expected_log.as_deref(),
             config.expected_log_error.as_deref(),
         )

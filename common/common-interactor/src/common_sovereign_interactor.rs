@@ -1071,6 +1071,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
         shard: u32,
         hash_of_hashes: ManagedBuffer<StaticApi>,
         operation: Operation<StaticApi>,
+        expected_error_message: Option<&str>,
         expected_log: Option<&str>,
         expected_log_error: Option<&str>,
     ) {
@@ -1089,7 +1090,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             .run()
             .await;
 
-        assert!(response.is_ok(), "Response is not ok: {response:?}");
+        self.assert_expected_error_message(response, expected_error_message);
 
         self.assert_expected_log(logs, expected_log, expected_log_error);
     }
@@ -1129,7 +1130,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             }
         };
 
-        self.assert_expected_log(response, None, expected_log_error);
+        self.assert_expected_log(response, Some(""), expected_log_error);
         token
     }
 
@@ -1289,6 +1290,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             return;
         }
 
+        self.common_state().fee_op_nonce += 1;
         let nonce_str = self.common_state().fee_op_nonce.to_string();
         let nonce_buf = ManagedBuffer::<StaticApi>::from(&nonce_str);
 
@@ -1301,8 +1303,6 @@ pub trait CommonInteractorTrait: InteractorHelpers {
         let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&bytes));
         let operations_hashes =
             MultiValueEncoded::from(ManagedVec::from(vec![fee_hash.clone(), nonce_buf]));
-
-        self.common_state().fee_op_nonce += 1;
 
         self.register_operation(
             shard,

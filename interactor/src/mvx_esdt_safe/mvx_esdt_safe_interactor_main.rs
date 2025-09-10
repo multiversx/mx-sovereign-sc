@@ -159,6 +159,7 @@ impl MvxEsdtSafeInteract {
         let bridge_service = self.get_bridge_service_for_shard(shard);
         let config_hash = config.generate_hash();
 
+        self.common_state().update_config_nonce += 1;
         let nonce_str = self.common_state().update_config_nonce.to_string();
         let nonce_buf = ManagedBuffer::<StaticApi>::from(&nonce_str);
 
@@ -169,8 +170,6 @@ impl MvxEsdtSafeInteract {
         let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&bytes));
         let operations_hashes =
             MultiValueEncoded::from(ManagedVec::from(vec![config_hash.clone(), nonce_buf]));
-
-        self.common_state().update_config_nonce += 1;
 
         self.register_operation(
             shard,
