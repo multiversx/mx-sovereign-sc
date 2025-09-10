@@ -30,5 +30,5 @@ fn test_deploy_chain_config_from_factory() {
 
     state.common_setup.deploy_chain_factory();
 
-    state.deploy_chain_config_from_factory(OptionalValue::None, None);
+    state.deploy_chain_config_from_factory(OptionalValue::None);
 }

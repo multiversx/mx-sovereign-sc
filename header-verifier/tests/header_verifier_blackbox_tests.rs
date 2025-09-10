@@ -83,7 +83,7 @@ fn test_register_bridge_operation() {
         .common_setup
         .register(&BLSKey::random(), &MultiEgldOrEsdtPayment::new(), None);
 
-    state.common_setup.complete_chain_config_setup_phase(None);
+    state.common_setup.complete_chain_config_setup_phase();
 
     state
         .common_setup
@@ -147,7 +147,7 @@ fn test_remove_executed_hash_no_esdt_address_registered() {
     state
         .common_setup
         .register(&BLSKey::random(), &MultiEgldOrEsdtPayment::new(), None);
-    state.common_setup.complete_chain_config_setup_phase(None);
+    state.common_setup.complete_chain_config_setup_phase();
 
     state
         .common_setup
@@ -190,7 +190,7 @@ fn test_remove_one_executed_hash() {
     state
         .common_setup
         .register(&BLSKey::random(), &MultiEgldOrEsdtPayment::new(), None);
-    state.common_setup.complete_chain_config_setup_phase(None);
+    state.common_setup.complete_chain_config_setup_phase();
 
     state
         .common_setup
@@ -254,7 +254,7 @@ fn test_remove_all_executed_hashes() {
     state
         .common_setup
         .register(&BLSKey::random(), &MultiEgldOrEsdtPayment::new(), None);
-    state.common_setup.complete_chain_config_setup_phase(None);
+    state.common_setup.complete_chain_config_setup_phase();
 
     state
         .common_setup
@@ -384,7 +384,7 @@ fn test_lock_operation() {
         .common_setup
         .register(&BLSKey::random(), &MultiEgldOrEsdtPayment::new(), None);
 
-    state.common_setup.complete_chain_config_setup_phase(None);
+    state.common_setup.complete_chain_config_setup_phase();
 
     state
         .common_setup
@@ -449,7 +449,7 @@ fn test_lock_operation_hash_already_locked() {
     state
         .common_setup
         .register(&BLSKey::random(), &MultiEgldOrEsdtPayment::new(), None);
-    state.common_setup.complete_chain_config_setup_phase(None);
+    state.common_setup.complete_chain_config_setup_phase();
 
     state
         .common_setup
@@ -531,7 +531,7 @@ fn test_change_validator_set() {
         .common_setup
         .register(&genesis_validator, &MultiEgldOrEsdtPayment::new(), None);
 
-    state.common_setup.complete_chain_config_setup_phase(None);
+    state.common_setup.complete_chain_config_setup_phase();
     state
         .common_setup
         .deploy_header_verifier(vec![ScArray::ChainConfig]);
@@ -606,7 +606,7 @@ fn test_change_validator_set_operation_already_registered() {
         .common_setup
         .register(&BLSKey::random(), &MultiEgldOrEsdtPayment::new(), None);
 
-    state.common_setup.complete_chain_config_setup_phase(None);
+    state.common_setup.complete_chain_config_setup_phase();
 
     state
         .common_setup
@@ -668,7 +668,7 @@ fn test_change_multiple_validator_sets() {
         .common_setup
         .register(&BLSKey::random(), &MultiEgldOrEsdtPayment::new(), None);
 
-    state.common_setup.complete_chain_config_setup_phase(None);
+    state.common_setup.complete_chain_config_setup_phase();
 
     state
         .common_setup

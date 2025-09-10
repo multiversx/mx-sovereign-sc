@@ -108,7 +108,7 @@ fn complete_setup_phase() {
         .common_setup
         .deploy_chain_config(OptionalValue::None, None);
 
-    state.common_setup.complete_chain_config_setup_phase(None);
+    state.common_setup.complete_chain_config_setup_phase();
 
     state
         .common_setup
@@ -209,7 +209,7 @@ fn test_complete_setup_phase() {
         .common_setup
         .deploy_chain_config(OptionalValue::None, None);
 
-    state.common_setup.complete_chain_config_setup_phase(None);
+    state.common_setup.complete_chain_config_setup_phase();
 }
 
 /// ### TEST
@@ -270,7 +270,7 @@ fn test_update_config_invalid_config() {
         .common_setup
         .register(&BLSKey::random(), &MultiEgldOrEsdtPayment::new(), None);
 
-    state.common_setup.complete_chain_config_setup_phase(None);
+    state.common_setup.complete_chain_config_setup_phase();
 
     state
         .common_setup
@@ -323,7 +323,7 @@ fn test_update_config() {
         .common_setup
         .register(&BLSKey::random(), &MultiEgldOrEsdtPayment::new(), None);
 
-    state.common_setup.complete_chain_config_setup_phase(None);
+    state.common_setup.complete_chain_config_setup_phase();
 
     state
         .common_setup
@@ -344,7 +344,7 @@ fn test_update_config() {
         MultiValueEncoded::from_iter(vec![config_hash]),
     );
 
-    state.common_setup.complete_chain_config_setup_phase(None);
+    state.common_setup.complete_chain_config_setup_phase();
 
     state.update_sovereign_config(
         hash_of_hashes,
@@ -524,7 +524,7 @@ fn test_register_after_genesis() {
         .common_setup
         .register(&BLSKey::random(), &ManagedVec::new(), None);
 
-    state.common_setup.complete_chain_config_setup_phase(None);
+    state.common_setup.complete_chain_config_setup_phase();
 
     state
         .common_setup
@@ -583,7 +583,7 @@ fn test_register_validator_after_genesis() {
         .common_setup
         .register(&BLSKey::random(), &payments_vec, None);
 
-    state.common_setup.complete_chain_config_setup_phase(None);
+    state.common_setup.complete_chain_config_setup_phase();
 
     state
         .common_setup
@@ -880,7 +880,7 @@ fn test_unregister_after_genesis() {
         .common_setup
         .register(&BLSKey::random(), &ManagedVec::new(), None);
 
-    state.common_setup.complete_chain_config_setup_phase(None);
+    state.common_setup.complete_chain_config_setup_phase();
 
     state
         .common_setup
@@ -961,7 +961,7 @@ fn test_unregister_validator_after_genesis() {
             &(BigUint::from(ONE_HUNDRED_MILLION) - expected_token_amount),
         );
 
-    state.common_setup.complete_chain_config_setup_phase(None);
+    state.common_setup.complete_chain_config_setup_phase();
 
     state
         .common_setup
@@ -1022,7 +1022,7 @@ fn test_unregister_validator_invalid() {
         .common_setup
         .register(&BLSKey::random(), &MultiEgldOrEsdtPayment::new(), None);
 
-    state.common_setup.complete_chain_config_setup_phase(None);
+    state.common_setup.complete_chain_config_setup_phase();
 
     state
         .common_setup

@@ -79,7 +79,8 @@ impl ChainConfigTestState {
             .returns(ReturnsLogs)
             .run();
 
-        assert!(result.is_ok());
+        self.common_setup
+            .assert_expected_error_message(result, None);
 
         self.common_setup
             .assert_expected_log(logs, expected_custom_log, expected_log_error);

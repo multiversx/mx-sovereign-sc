@@ -133,7 +133,7 @@ fn test_remove_users_from_whitelist() {
         .common_setup
         .register(&BLSKey::random(), &MultiEgldOrEsdtPayment::new(), None);
 
-    state.common_setup.complete_chain_config_setup_phase(None);
+    state.common_setup.complete_chain_config_setup_phase();
 
     state
         .common_setup
@@ -143,7 +143,7 @@ fn test_remove_users_from_whitelist() {
         .common_setup
         .deploy_header_verifier(vec![ScArray::FeeMarket, ScArray::ChainConfig]);
 
-    state.common_setup.complete_fee_market_setup_phase(None);
+    state.common_setup.complete_fee_market_setup_phase();
 
     state
         .common_setup
@@ -214,7 +214,7 @@ fn test_set_fee() {
         .common_setup
         .register(&BLSKey::random(), &MultiEgldOrEsdtPayment::new(), None);
 
-    state.common_setup.complete_chain_config_setup_phase(None);
+    state.common_setup.complete_chain_config_setup_phase();
 
     state
         .common_setup
@@ -224,7 +224,7 @@ fn test_set_fee() {
         .common_setup
         .deploy_header_verifier(vec![ScArray::FeeMarket, ScArray::ChainConfig]);
 
-    state.common_setup.complete_fee_market_setup_phase(None);
+    state.common_setup.complete_fee_market_setup_phase();
 
     let fee = FeeStruct {
         base_token: EgldOrEsdtTokenIdentifier::esdt(FIRST_TEST_TOKEN),
@@ -316,7 +316,7 @@ fn test_remove_fee_register_separate_operations() {
         .common_setup
         .register(&BLSKey::random(), &MultiEgldOrEsdtPayment::new(), None);
 
-    state.common_setup.complete_chain_config_setup_phase(None);
+    state.common_setup.complete_chain_config_setup_phase();
 
     state
         .common_setup
@@ -326,7 +326,7 @@ fn test_remove_fee_register_separate_operations() {
         .common_setup
         .deploy_header_verifier(vec![ScArray::ChainConfig, ScArray::FeeMarket]);
 
-    state.common_setup.complete_fee_market_setup_phase(None);
+    state.common_setup.complete_fee_market_setup_phase();
 
     let fee = FeeStruct {
         base_token: EgldOrEsdtTokenIdentifier::esdt(FIRST_TEST_TOKEN),
@@ -435,7 +435,7 @@ fn test_remove_fee_register_with_one_hash_of_hashes() {
         .common_setup
         .register(&BLSKey::random(), &MultiEgldOrEsdtPayment::new(), None);
 
-    state.common_setup.complete_chain_config_setup_phase(None);
+    state.common_setup.complete_chain_config_setup_phase();
 
     state
         .common_setup
@@ -445,7 +445,7 @@ fn test_remove_fee_register_with_one_hash_of_hashes() {
         .common_setup
         .deploy_header_verifier(vec![ScArray::ChainConfig, ScArray::FeeMarket]);
 
-    state.common_setup.complete_fee_market_setup_phase(None);
+    state.common_setup.complete_fee_market_setup_phase();
 
     let fee = FeeStruct {
         base_token: EgldOrEsdtTokenIdentifier::esdt(FIRST_TEST_TOKEN),
@@ -565,13 +565,13 @@ fn distribute_fees_operation_not_registered() {
     state
         .common_setup
         .deploy_chain_config(OptionalValue::None, None);
-    state.common_setup.complete_chain_config_setup_phase(None);
+    state.common_setup.complete_chain_config_setup_phase();
 
     state
         .common_setup
         .deploy_fee_market(None, ESDT_SAFE_ADDRESS);
 
-    state.common_setup.complete_fee_market_setup_phase(None);
+    state.common_setup.complete_fee_market_setup_phase();
 
     state
         .common_setup
@@ -612,13 +612,13 @@ fn distribute_fees_percentage_under_limit() {
         .common_setup
         .register(&BLSKey::random(), &MultiEgldOrEsdtPayment::new(), None);
 
-    state.common_setup.complete_chain_config_setup_phase(None);
+    state.common_setup.complete_chain_config_setup_phase();
 
     state
         .common_setup
         .deploy_fee_market(None, ESDT_SAFE_ADDRESS);
 
-    state.common_setup.complete_fee_market_setup_phase(None);
+    state.common_setup.complete_fee_market_setup_phase();
 
     state
         .common_setup
@@ -682,7 +682,7 @@ fn distribute_fees() {
     state
         .common_setup
         .register(&BLSKey::random(), &MultiEgldOrEsdtPayment::new(), None);
-    state.common_setup.complete_chain_config_setup_phase(None);
+    state.common_setup.complete_chain_config_setup_phase();
 
     let fee_per_transfer = BigUint::from(100u32);
 
@@ -707,7 +707,7 @@ fn distribute_fees() {
         None,
     );
 
-    state.common_setup.complete_fee_market_setup_phase(None);
+    state.common_setup.complete_fee_market_setup_phase();
 
     state
         .common_setup
