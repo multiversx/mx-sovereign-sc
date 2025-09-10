@@ -157,4 +157,5 @@ pub const REGISTRATIONS_DISABLED_GENESIS_PHASE: &str =
 pub const VALIDATOR_ID_NOT_REGISTERED: &str = "Provided validator id is not registered";
 pub const INVALID_VALIDATOR_DATA: &str = "Invalid validator data has been provided";
 pub const ISSUE_COST_NOT_COVERED: &str = "Native token issue cost is not covered";
-pub const CALLER_IS_NOT_TOKEN_OWNER: &str = "Caller is not the token owner";
+pub const EGLD_TOKEN_IDENTIFIER_EXPECTED: &str =
+    "The token identifier should be the EGLD token identifier";
