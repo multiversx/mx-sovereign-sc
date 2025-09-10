@@ -90,13 +90,25 @@ where
 {
     pub fn register_token<
         Arg0: ProxyArg<EgldOrEsdtTokenIdentifier<Env::Api>>,
+        Arg1: ProxyArg<EsdtTokenType>,
+        Arg2: ProxyArg<ManagedBuffer<Env::Api>>,
+        Arg3: ProxyArg<ManagedBuffer<Env::Api>>,
+        Arg4: ProxyArg<usize>,
     >(
         self,
         token_identifier: Arg0,
+        token_type: Arg1,
+        token_name: Arg2,
+        token_ticker: Arg3,
+        token_decimals: Arg4,
     ) -> TxTypedCall<Env, From, To, (), Gas, ()> {
         self.wrapped_tx
             .raw_call("registerToken")
             .argument(&token_identifier)
+            .argument(&token_type)
+            .argument(&token_name)
+            .argument(&token_ticker)
+            .argument(&token_decimals)
             .original_result()
     }
 

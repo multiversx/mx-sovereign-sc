@@ -1,5 +1,5 @@
 #![no_std]
-use error_messages::{CALLER_IS_NOT_TOKEN_OWNER, ISSUE_COST_NOT_COVERED};
+use error_messages::ISSUE_COST_NOT_COVERED;
 use multiversx_sc::err_msg::TOKEN_IDENTIFIER_ESDT_EXPECTED;
 #[allow(unused_imports)]
 use multiversx_sc::imports::*;
@@ -46,29 +46,28 @@ pub trait SovEsdtSafe:
     #[payable("EGLD")]
     #[only_owner]
     #[endpoint(registerToken)]
-    fn register_token(&self, token_identifier: EgldOrEsdtTokenIdentifier<Self::Api>) {
+    fn register_token(
+        &self,
+        token_identifier: EgldOrEsdtTokenIdentifier<Self::Api>,
+        token_type: EsdtTokenType,
+        token_name: ManagedBuffer,
+        token_ticker: ManagedBuffer,
+        token_decimals: usize,
+    ) {
         require!(
             self.call_value().egld().clone() == ISSUE_COST,
             ISSUE_COST_NOT_COVERED
         );
         require!(token_identifier.is_esdt(), TOKEN_IDENTIFIER_ESDT_EXPECTED);
-        let new_token_id = token_identifier.clone().unwrap_esdt();
 
-        let token_properties = self
-            .tx()
-            .to(ESDTSystemSCAddress)
-            .typed(ESDTSystemSCProxy)
-            .get_token_properties(new_token_id)
-            .returns(ReturnsResult)
-            .sync_call();
-
-        require!(
-            self.blockchain().get_caller()
-                == ManagedAddress::from_address(&token_properties.owner_address),
-            CALLER_IS_NOT_TOKEN_OWNER
+        self.register_token_event(
+            token_identifier,
+            token_type,
+            token_name,
+            token_ticker,
+            token_decimals,
+            self.get_and_save_next_tx_id(),
         );
-
-        self.register_token_event(token_identifier, self.get_and_save_next_tx_id());
     }
 
     #[only_owner]

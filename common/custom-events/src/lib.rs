@@ -106,6 +106,10 @@ pub trait CustomEventsModule {
     fn register_token_event(
         &self,
         #[indexed] token_id: EgldOrEsdtTokenIdentifier<Self::Api>,
+        #[indexed] token_type: EsdtTokenType,
+        #[indexed] token_name: ManagedBuffer,
+        #[indexed] token_ticker: ManagedBuffer,
+        #[indexed] token_decimals: usize,
         op_data: TxId,
     );
 }
