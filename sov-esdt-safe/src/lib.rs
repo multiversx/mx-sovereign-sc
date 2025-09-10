@@ -1,10 +1,8 @@
 #![no_std]
 use error_messages::{EGLD_TOKEN_IDENTIFIER_EXPECTED, ISSUE_COST_NOT_COVERED, TOKEN_ID_NO_PREFIX};
+use multiversx_sc::chain_core::EGLD_000000_TOKEN_IDENTIFIER;
 #[allow(unused_imports)]
 use multiversx_sc::imports::*;
-use multiversx_sc::{
-    chain_core::EGLD_000000_TOKEN_IDENTIFIER, err_msg::TOKEN_IDENTIFIER_ESDT_EXPECTED,
-};
 use structs::{configs::EsdtSafeConfig, RegisterTokenStruct};
 pub const ISSUE_COST: u64 = 50_000_000_000_000_000; // 0.05 EGLD
 
