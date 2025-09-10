@@ -192,7 +192,7 @@ impl MvxEsdtSafeInteract {
             .run()
             .await;
 
-        assert!(response.is_ok());
+        self.assert_expected_error_message(response, None);
 
         self.assert_expected_log(logs, expected_log, expected_log_error);
     }

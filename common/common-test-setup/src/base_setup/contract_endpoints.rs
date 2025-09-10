@@ -131,7 +131,7 @@ impl BaseSetup {
             .returns(ReturnsLogs)
             .run();
 
-        assert!(response.is_ok());
+        self.assert_expected_error_message(response, None);
         self.assert_expected_log(logs, expected_custom_log, expected_error_log);
     }
 
