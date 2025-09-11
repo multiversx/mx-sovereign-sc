@@ -1,5 +1,5 @@
 use common_test_setup::constants::{
-    DEPOSIT_EVENT, ESDT_SAFE_ADDRESS, FEE_MARKET_ADDRESS, FEE_TOKEN, FIRST_TEST_TOKEN,
+    DEPOSIT_EVENT, ESDT_SAFE_ADDRESS, FEE_MARKET_ADDRESS, FEE_TOKEN, FIRST_TEST_TOKEN, ISSUE_COST,
     ONE_HUNDRED_MILLION, ONE_HUNDRED_THOUSAND, OWNER_ADDRESS, SC_CALL_EVENT, SECOND_TEST_TOKEN,
     SOV_TOKEN, TESTING_SC_ENDPOINT, USER_ADDRESS,
 };
@@ -15,7 +15,6 @@ use multiversx_sc::{
     },
 };
 use multiversx_sc_scenario::api::StaticApi;
-use sov_esdt_safe::ISSUE_COST;
 use sov_esdt_safe_blackbox_setup::SovEsdtSafeTestState;
 use structs::{
     aliases::PaymentsVec,

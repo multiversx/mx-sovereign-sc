@@ -1,10 +1,10 @@
 #![no_std]
+use cross_chain::DEFAULT_ISSUE_COST;
 use error_messages::{EGLD_TOKEN_IDENTIFIER_EXPECTED, ISSUE_COST_NOT_COVERED, TOKEN_ID_NO_PREFIX};
 use multiversx_sc::chain_core::EGLD_000000_TOKEN_IDENTIFIER;
 #[allow(unused_imports)]
 use multiversx_sc::imports::*;
 use structs::{configs::EsdtSafeConfig, operation::OperationData};
-pub const ISSUE_COST: u64 = 50_000_000_000_000_000; // 0.05 EGLD
 
 pub mod deposit;
 
@@ -60,7 +60,10 @@ pub trait SovEsdtSafe:
                 == EgldOrEsdtTokenIdentifier::from(EGLD_000000_TOKEN_IDENTIFIER),
             EGLD_TOKEN_IDENTIFIER_EXPECTED
         );
-        require!(call_value.amount == ISSUE_COST, ISSUE_COST_NOT_COVERED);
+        require!(
+            call_value.amount == DEFAULT_ISSUE_COST,
+            ISSUE_COST_NOT_COVERED
+        );
         require!(self.has_prefix(&token_id), TOKEN_ID_NO_PREFIX);
 
         self.register_token_event(
