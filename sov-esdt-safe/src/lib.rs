@@ -43,7 +43,7 @@ pub trait SovEsdtSafe:
         self.set_paused(true);
     }
 
-    #[only_owner]
+    #[payable]
     #[endpoint(registerToken)]
     fn register_token(
         &self,

@@ -101,9 +101,8 @@ where
         token_name: Arg2,
         token_ticker: Arg3,
         token_decimals: Arg4,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+    ) -> TxTypedCall<Env, From, To, (), Gas, ()> {
         self.wrapped_tx
-            .payment(NotPayable)
             .raw_call("registerToken")
             .argument(&token_id)
             .argument(&token_type)
