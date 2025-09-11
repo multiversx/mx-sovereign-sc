@@ -3,7 +3,7 @@ use error_messages::{EGLD_TOKEN_IDENTIFIER_EXPECTED, ISSUE_COST_NOT_COVERED, TOK
 use multiversx_sc::chain_core::EGLD_000000_TOKEN_IDENTIFIER;
 #[allow(unused_imports)]
 use multiversx_sc::imports::*;
-use structs::{configs::EsdtSafeConfig, RegisterTokenStruct};
+use structs::{configs::EsdtSafeConfig, operation::OperationData};
 pub const ISSUE_COST: u64 = 50_000_000_000_000_000; // 0.05 EGLD
 
 pub mod deposit;
@@ -46,7 +46,14 @@ pub trait SovEsdtSafe:
     #[payable]
     #[only_owner]
     #[endpoint(registerToken)]
-    fn register_token(&self, new_token: RegisterTokenStruct<Self::Api>) {
+    fn register_token(
+        &self,
+        token_id: EgldOrEsdtTokenIdentifier<Self::Api>,
+        token_type: EsdtTokenType,
+        token_name: ManagedBuffer,
+        token_ticker: ManagedBuffer,
+        token_decimals: usize,
+    ) {
         let call_value = self.call_value().single_esdt();
         require!(
             call_value.clone().token_identifier
@@ -54,9 +61,20 @@ pub trait SovEsdtSafe:
             EGLD_TOKEN_IDENTIFIER_EXPECTED
         );
         require!(call_value.amount == ISSUE_COST, ISSUE_COST_NOT_COVERED);
-        require!(self.has_prefix(&new_token.token_id), TOKEN_ID_NO_PREFIX);
+        require!(self.has_prefix(&token_id), TOKEN_ID_NO_PREFIX);
 
-        self.register_token_event(new_token, self.get_and_save_next_tx_id());
+        self.register_token_event(
+            token_id,
+            token_type,
+            token_name,
+            token_ticker,
+            token_decimals,
+            OperationData {
+                op_nonce: self.get_and_save_next_tx_id(),
+                op_sender: self.blockchain().get_caller(),
+                opt_transfer_data: None,
+            },
+        );
     }
 
     #[only_owner]
