@@ -182,7 +182,8 @@ impl MvxEsdtSafeTestState {
             .returns(ReturnsLogs)
             .run();
 
-        assert!(result.is_ok());
+        self.common_setup
+            .assert_expected_error_message(result, None);
 
         self.common_setup
             .assert_expected_log(logs, expected_custom_log, expected_log_error);
@@ -340,7 +341,8 @@ impl MvxEsdtSafeTestState {
             .returns(ReturnsHandledOrError::new())
             .run();
 
-        assert!(result.is_ok());
+        self.common_setup
+            .assert_expected_error_message(result, None);
 
         self.common_setup.assert_expected_log(
             logs.clone(),
@@ -349,11 +351,7 @@ impl MvxEsdtSafeTestState {
         );
     }
 
-    pub fn complete_setup_phase(
-        &mut self,
-        expected_error_message: Option<&str>,
-        expected_log: Option<&str>,
-    ) {
+    pub fn complete_setup_phase(&mut self, expected_log: Option<&str>) {
         let (logs, result) = self
             .common_setup
             .world
@@ -367,7 +365,7 @@ impl MvxEsdtSafeTestState {
             .run();
 
         self.common_setup
-            .assert_expected_error_message(result, expected_error_message);
+            .assert_expected_error_message(result, None);
 
         self.common_setup
             .assert_expected_log(logs, expected_log, None);
@@ -378,7 +376,6 @@ impl MvxEsdtSafeTestState {
 
     pub fn complete_setup_phase_as_header_verifier(
         &mut self,
-        expected_error_message: Option<&str>,
         expected_custom_log: Option<&str>,
         expected_log_error: Option<&str>,
     ) {
@@ -397,7 +394,7 @@ impl MvxEsdtSafeTestState {
         println!("Logs: {:?}", logs);
 
         self.common_setup
-            .assert_expected_error_message(result, expected_error_message);
+            .assert_expected_error_message(result, None);
 
         self.common_setup
             .assert_expected_log(logs, expected_custom_log, expected_log_error);
@@ -409,11 +406,11 @@ impl MvxEsdtSafeTestState {
             .deploy_chain_config(OptionalValue::None, None);
         self.common_setup
             .register(&BLSKey::random(), &MultiEgldOrEsdtPayment::new(), None);
-        self.common_setup.complete_chain_config_setup_phase(None);
+        self.common_setup.complete_chain_config_setup_phase();
 
         self.common_setup
             .deploy_header_verifier(vec![ScArray::ChainConfig, ScArray::ESDTSafe]);
         self.common_setup.complete_header_verifier_setup_phase(None);
-        self.complete_setup_phase(None, Some(UNPAUSE_CONTRACT_LOG));
+        self.complete_setup_phase(Some(UNPAUSE_CONTRACT_LOG));
     }
 }

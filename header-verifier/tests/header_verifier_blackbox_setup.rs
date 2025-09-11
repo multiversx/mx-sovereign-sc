@@ -176,11 +176,8 @@ impl HeaderVerifierTestState {
             .returns(ReturnsHandledOrError::new())
             .run();
 
-        assert!(
-            response.is_ok(),
-            "Transaction failed with error: {:?}",
-            response.err()
-        );
+        self.common_setup
+            .assert_expected_error_message(response, None);
 
         self.common_setup
             .assert_expected_log(logs, expected_custom_log, expected_log_error);

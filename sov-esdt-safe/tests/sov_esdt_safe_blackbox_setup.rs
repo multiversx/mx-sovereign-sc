@@ -162,7 +162,6 @@ impl SovEsdtSafeTestState {
         to: ManagedAddress<StaticApi>,
         opt_transfer_data: OptionalValueTransferDataTuple<StaticApi>,
         payment: PaymentsVec<StaticApi>,
-        expected_error_message: Option<&str>,
         expected_log: Option<&str>,
     ) {
         let (logs, response) = self
@@ -179,7 +178,7 @@ impl SovEsdtSafeTestState {
             .run();
 
         self.common_setup
-            .assert_expected_error_message(response, expected_error_message);
+            .assert_expected_error_message(response, None);
 
         self.common_setup
             .assert_expected_log(logs, expected_log, None);

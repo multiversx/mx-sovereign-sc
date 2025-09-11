@@ -76,7 +76,6 @@ fn test_deposit_no_fee_no_transfer_data() {
         USER_ADDRESS.to_managed_address(),
         OptionalValue::None,
         payments_vec.clone(),
-        None,
         Some(DEPOSIT_EVENT),
     );
 
@@ -253,7 +252,6 @@ fn test_deposit_no_fee_with_transfer_data() {
         USER_ADDRESS.to_managed_address(),
         OptionalValue::Some(transfer_data),
         payments_vec.clone(),
-        None,
         Some(DEPOSIT_EVENT),
     );
 

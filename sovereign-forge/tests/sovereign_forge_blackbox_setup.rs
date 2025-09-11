@@ -86,12 +86,7 @@ impl SovereignForgeTestState {
         }
     }
 
-    pub fn register_chain_factory(
-        &mut self,
-        shard_id: u32,
-        chain_factory_address: TestSCAddress,
-        expected_error_message: Option<&str>,
-    ) {
+    pub fn register_chain_factory(&mut self, shard_id: u32, chain_factory_address: TestSCAddress) {
         let response = self
             .common_setup
             .world
@@ -104,7 +99,7 @@ impl SovereignForgeTestState {
             .run();
 
         self.common_setup
-            .assert_expected_error_message(response, expected_error_message);
+            .assert_expected_error_message(response, None);
     }
 
     pub fn update_sovereign_config(
@@ -203,11 +198,7 @@ impl SovereignForgeTestState {
             .assert_expected_error_message(response, expected_error_message);
     }
 
-    pub fn add_users_to_whitelist(
-        &mut self,
-        users: Vec<ManagedAddress<StaticApi>>,
-        error_message: Option<&str>,
-    ) {
+    pub fn add_users_to_whitelist(&mut self, users: Vec<ManagedAddress<StaticApi>>) {
         let response = self
             .common_setup
             .world
@@ -220,14 +211,10 @@ impl SovereignForgeTestState {
             .run();
 
         self.common_setup
-            .assert_expected_error_message(response, error_message);
+            .assert_expected_error_message(response, None);
     }
 
-    pub fn remove_users_from_whitelist(
-        &mut self,
-        users: Vec<ManagedAddress<StaticApi>>,
-        error_message: Option<&str>,
-    ) {
+    pub fn remove_users_from_whitelist(&mut self, users: Vec<ManagedAddress<StaticApi>>) {
         let response = self
             .common_setup
             .world
@@ -240,7 +227,7 @@ impl SovereignForgeTestState {
             .run();
 
         self.common_setup
-            .assert_expected_error_message(response, error_message);
+            .assert_expected_error_message(response, None);
     }
 
     pub fn get_smart_contract_address_from_sovereign_forge(

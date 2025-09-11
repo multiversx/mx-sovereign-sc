@@ -58,7 +58,7 @@ fn test_register_chain_factory() {
         .common_setup
         .deploy_sovereign_forge(OptionalValue::None);
 
-    state.register_chain_factory(2, CHAIN_FACTORY_SC_ADDRESS, None);
+    state.register_chain_factory(2, CHAIN_FACTORY_SC_ADDRESS);
 
     state
         .common_setup
@@ -85,7 +85,7 @@ fn test_update_sovereign_config_no_chain_config_deployed() {
         .common_setup
         .deploy_sovereign_forge(OptionalValue::None);
 
-    state.register_chain_factory(2, CHAIN_FACTORY_SC_ADDRESS, None);
+    state.register_chain_factory(2, CHAIN_FACTORY_SC_ADDRESS);
 
     state
         .common_setup
@@ -1108,7 +1108,7 @@ fn test_remove_users_from_whitelist() {
         OWNER_ADDRESS.to_managed_address(),
     ];
 
-    state.add_users_to_whitelist(whitelisted_users.clone(), None);
+    state.add_users_to_whitelist(whitelisted_users.clone());
     state
         .common_setup
         .query_user_fee_whitelist(Some(&whitelisted_users));
@@ -1116,7 +1116,7 @@ fn test_remove_users_from_whitelist() {
     let users_to_remove = vec![USER_ADDRESS.to_managed_address()];
     let expected_users = vec![OWNER_ADDRESS.to_managed_address()];
 
-    state.remove_users_from_whitelist(users_to_remove.clone(), None);
+    state.remove_users_from_whitelist(users_to_remove.clone());
     state
         .common_setup
         .query_user_fee_whitelist(Some(&expected_users));

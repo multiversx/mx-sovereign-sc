@@ -419,7 +419,7 @@ fn test_deposit_nothing_to_transfer() {
     let mut state = MvxEsdtSafeTestState::new();
 
     state.deploy_contract_with_roles(None);
-    state.complete_setup_phase(None, Some("unpauseContract"));
+    state.complete_setup_phase(Some(UNPAUSE_CONTRACT_LOG));
 
     state.deposit(
         USER_ADDRESS.to_managed_address(),
@@ -447,7 +447,7 @@ fn test_complete_setup_phase() {
     let mut state = MvxEsdtSafeTestState::new();
 
     state.deploy_contract_with_roles(None);
-    state.complete_setup_phase(None, Some("unpauseContract"));
+    state.complete_setup_phase(Some(UNPAUSE_CONTRACT_LOG));
 
     state
         .common_setup
@@ -477,7 +477,7 @@ fn test_complete_setup_phase_already_completed() {
         .common_setup
         .deploy_header_verifier(vec![ScArray::ChainConfig, ScArray::ESDTSafe]);
 
-    state.complete_setup_phase(None, Some(UNPAUSE_CONTRACT_LOG));
+    state.complete_setup_phase(Some(UNPAUSE_CONTRACT_LOG));
     state
         .common_setup
         .world
@@ -487,7 +487,7 @@ fn test_complete_setup_phase_already_completed() {
             assert!(sc.is_setup_phase_complete());
         });
 
-    state.complete_setup_phase_as_header_verifier(None, None, None);
+    state.complete_setup_phase_as_header_verifier(None, None);
 }
 
 /// ### TEST
@@ -503,7 +503,7 @@ fn test_deposit_too_many_tokens() {
     let mut state = MvxEsdtSafeTestState::new();
 
     state.deploy_contract_with_roles(None);
-    state.complete_setup_phase(None, Some("unpauseContract"));
+    state.complete_setup_phase(Some(UNPAUSE_CONTRACT_LOG));
 
     let esdt_token_payment = EsdtTokenPayment::<StaticApi>::new(
         TokenIdentifier::from(FIRST_TEST_TOKEN),
@@ -542,7 +542,7 @@ fn test_deposit_no_transfer_data() {
     let mut state = MvxEsdtSafeTestState::new();
 
     state.deploy_contract_with_roles(None);
-    state.complete_setup_phase(None, Some("unpauseContract"));
+    state.complete_setup_phase(Some(UNPAUSE_CONTRACT_LOG));
 
     let esdt_token_payment_one = EsdtTokenPayment::<StaticApi>::new(
         TokenIdentifier::from(FIRST_TEST_TOKEN),
@@ -632,7 +632,7 @@ fn test_deposit_gas_limit_too_high() {
         .deploy_fee_market(None, ESDT_SAFE_ADDRESS);
     state.set_fee_market_address(FEE_MARKET_ADDRESS);
     state.common_setup.deploy_testing_sc();
-    state.complete_setup_phase(None, Some(UNPAUSE_CONTRACT_LOG));
+    state.complete_setup_phase(Some(UNPAUSE_CONTRACT_LOG));
 
     let esdt_token_payment_one = EsdtTokenPayment::<StaticApi>::new(
         TokenIdentifier::from(FIRST_TEST_TOKEN),
@@ -717,7 +717,7 @@ fn test_deposit_max_bridged_amount_exceeded() {
         .deploy_fee_market(None, ESDT_SAFE_ADDRESS);
     state.common_setup.deploy_testing_sc();
     state.set_fee_market_address(FEE_MARKET_ADDRESS);
-    state.complete_setup_phase(None, Some(UNPAUSE_CONTRACT_LOG));
+    state.complete_setup_phase(Some(UNPAUSE_CONTRACT_LOG));
 
     let esdt_token_payment_one = EsdtTokenPayment::<StaticApi>::new(
         TokenIdentifier::from(FIRST_TEST_TOKEN),
@@ -794,7 +794,7 @@ fn test_deposit_endpoint_banned() {
         .deploy_fee_market(None, ESDT_SAFE_ADDRESS);
     state.common_setup.deploy_testing_sc();
     state.set_fee_market_address(FEE_MARKET_ADDRESS);
-    state.complete_setup_phase(None, Some(UNPAUSE_CONTRACT_LOG));
+    state.complete_setup_phase(Some(UNPAUSE_CONTRACT_LOG));
 
     let esdt_token_payment_one = EsdtTokenPayment::<StaticApi>::new(
         TokenIdentifier::from(FIRST_TEST_TOKEN),
@@ -850,7 +850,7 @@ fn test_deposit_transfer_data_only_no_fee() {
     let mut state = MvxEsdtSafeTestState::new();
 
     state.deploy_contract_with_roles(None);
-    state.complete_setup_phase(None, Some("unpauseContract"));
+    state.complete_setup_phase(Some(UNPAUSE_CONTRACT_LOG));
 
     state.common_setup.deploy_testing_sc();
 
@@ -897,7 +897,7 @@ fn test_deposit_transfer_data_only_with_fee_nothing_to_transfer() {
     };
 
     state.deploy_contract_with_roles(Some(fee));
-    state.complete_setup_phase(None, Some("unpauseContract"));
+    state.complete_setup_phase(Some(UNPAUSE_CONTRACT_LOG));
 
     state
         .common_setup
@@ -948,7 +948,7 @@ fn test_deposit_transfer_data_only_with_fee() {
     };
 
     state.deploy_contract_with_roles(Some(fee));
-    state.complete_setup_phase(None, Some("unpauseContract"));
+    state.complete_setup_phase(Some(UNPAUSE_CONTRACT_LOG));
 
     state
         .common_setup
@@ -1016,7 +1016,7 @@ fn test_deposit_fee_enabled() {
     };
 
     state.deploy_contract_with_roles(Some(fee));
-    state.complete_setup_phase(None, Some("unpauseContract"));
+    state.complete_setup_phase(Some(UNPAUSE_CONTRACT_LOG));
 
     state.common_setup.deploy_testing_sc();
 
@@ -1103,7 +1103,7 @@ fn test_deposit_payment_doesnt_cover_fee() {
     };
 
     state.deploy_contract_with_roles(Some(fee));
-    state.complete_setup_phase(None, Some("unpauseContract"));
+    state.complete_setup_phase(Some(UNPAUSE_CONTRACT_LOG));
 
     state.common_setup.deploy_testing_sc();
 
@@ -1198,7 +1198,7 @@ fn test_deposit_refund() {
         .common_setup
         .deploy_fee_market(Some(fee), ESDT_SAFE_ADDRESS);
     state.set_fee_market_address(FEE_MARKET_ADDRESS);
-    state.complete_setup_phase(None, Some("unpauseContract"));
+    state.complete_setup_phase(Some(UNPAUSE_CONTRACT_LOG));
 
     state.common_setup.deploy_testing_sc();
 
@@ -1270,7 +1270,7 @@ fn test_deposit_success_burn_mechanism() {
     let mut state = MvxEsdtSafeTestState::new();
 
     state.deploy_contract_with_roles(None);
-    state.complete_setup_phase(None, Some("unpauseContract"));
+    state.complete_setup_phase(Some(UNPAUSE_CONTRACT_LOG));
 
     state
         .common_setup
@@ -1555,7 +1555,7 @@ fn test_register_native_token_already_registered() {
 fn test_execute_operation_no_chain_config_registered() {
     let mut state = MvxEsdtSafeTestState::new();
     state.deploy_contract_with_roles(None);
-    state.complete_setup_phase(None, Some("unpauseContract"));
+    state.complete_setup_phase(Some(UNPAUSE_CONTRACT_LOG));
 
     let payment = OperationEsdtPayment::new(
         EgldOrEsdtTokenIdentifier::esdt(FIRST_TEST_TOKEN),
@@ -1599,7 +1599,7 @@ fn test_execute_operation_no_chain_config_registered() {
 fn test_execute_operation_no_esdt_safe_registered() {
     let mut state = MvxEsdtSafeTestState::new();
     state.deploy_contract_with_roles(None);
-    state.complete_setup_phase(None, Some("unpauseContract"));
+    state.complete_setup_phase(Some(UNPAUSE_CONTRACT_LOG));
 
     let payment = OperationEsdtPayment::new(
         EgldOrEsdtTokenIdentifier::esdt(FIRST_TEST_TOKEN),
@@ -1646,7 +1646,7 @@ fn test_execute_operation_success() {
     let mut state = MvxEsdtSafeTestState::new();
 
     state.deploy_contract_with_roles(None);
-    state.complete_setup_phase(None, Some("unpauseContract"));
+    state.complete_setup_phase(Some(UNPAUSE_CONTRACT_LOG));
 
     let token_data = EsdtTokenData {
         amount: BigUint::from(100u64),
@@ -1689,7 +1689,7 @@ fn test_execute_operation_success() {
         .common_setup
         .register(&BLSKey::random(), &MultiEgldOrEsdtPayment::new(), None);
 
-    state.common_setup.complete_chain_config_setup_phase(None);
+    state.common_setup.complete_chain_config_setup_phase();
 
     state
         .common_setup
@@ -1739,7 +1739,7 @@ fn test_execute_operation_with_native_token_success() {
     let mut state = MvxEsdtSafeTestState::new();
 
     state.deploy_contract_with_roles(None);
-    state.complete_setup_phase(None, Some("unpauseContract"));
+    state.complete_setup_phase(Some(UNPAUSE_CONTRACT_LOG));
 
     let token_data = EsdtTokenData {
         amount: BigUint::from(100u64),
@@ -1782,7 +1782,7 @@ fn test_execute_operation_with_native_token_success() {
         .common_setup
         .register(&BLSKey::random(), &MultiEgldOrEsdtPayment::new(), None);
 
-    state.common_setup.complete_chain_config_setup_phase(None);
+    state.common_setup.complete_chain_config_setup_phase();
 
     state
         .common_setup
@@ -1838,7 +1838,7 @@ fn test_execute_operation_with_native_token_success() {
 fn test_execute_operation_burn_mechanism_without_deposit_cannot_subtract() {
     let mut state = MvxEsdtSafeTestState::new();
     state.deploy_contract_with_roles(None);
-    state.complete_setup_phase(None, Some("unpauseContract"));
+    state.complete_setup_phase(Some(UNPAUSE_CONTRACT_LOG));
 
     let token_data = EsdtTokenData {
         amount: BigUint::from(100u64),
@@ -1873,7 +1873,7 @@ fn test_execute_operation_burn_mechanism_without_deposit_cannot_subtract() {
         .common_setup
         .register(&BLSKey::random(), &MultiEgldOrEsdtPayment::new(), None);
 
-    state.common_setup.complete_chain_config_setup_phase(None);
+    state.common_setup.complete_chain_config_setup_phase();
 
     state
         .common_setup
@@ -1927,7 +1927,7 @@ fn test_execute_operation_burn_mechanism_without_deposit_cannot_subtract() {
 fn execute_operation_only_transfer_data_no_fee() {
     let mut state = MvxEsdtSafeTestState::new();
     state.deploy_contract_with_roles(None);
-    state.complete_setup_phase(None, Some("unpauseContract"));
+    state.complete_setup_phase(Some(UNPAUSE_CONTRACT_LOG));
 
     let gas_limit = 90_000_000u64;
     let function = ManagedBuffer::<StaticApi>::from(TESTING_SC_ENDPOINT);
@@ -1959,7 +1959,7 @@ fn execute_operation_only_transfer_data_no_fee() {
         .common_setup
         .register(&BLSKey::random(), &MultiEgldOrEsdtPayment::new(), None);
 
-    state.common_setup.complete_chain_config_setup_phase(None);
+    state.common_setup.complete_chain_config_setup_phase();
 
     state
         .common_setup
@@ -2005,7 +2005,7 @@ fn execute_operation_only_transfer_data_no_fee() {
 fn test_execute_operation_success_burn_mechanism() {
     let mut state = MvxEsdtSafeTestState::new();
     state.deploy_contract_with_roles(None);
-    state.complete_setup_phase(None, Some("unpauseContract"));
+    state.complete_setup_phase(Some(UNPAUSE_CONTRACT_LOG));
 
     let token_data = EsdtTokenData {
         amount: BigUint::from(100u64),
@@ -2040,7 +2040,7 @@ fn test_execute_operation_success_burn_mechanism() {
         .common_setup
         .register(&BLSKey::random(), &MultiEgldOrEsdtPayment::new(), None);
 
-    state.common_setup.complete_chain_config_setup_phase(None);
+    state.common_setup.complete_chain_config_setup_phase();
 
     state
         .common_setup
@@ -2133,7 +2133,7 @@ fn test_deposit_execute_switch_mechanism() {
         .common_setup
         .deploy_header_verifier(vec![ScArray::ChainConfig, ScArray::ESDTSafe]);
     state.deploy_contract_with_roles(None);
-    state.complete_setup_phase(None, Some("unpauseContract"));
+    state.complete_setup_phase(Some(UNPAUSE_CONTRACT_LOG));
 
     let trusted_token_id = TRUSTED_TOKEN_IDS[0];
 
@@ -2145,7 +2145,7 @@ fn test_deposit_execute_switch_mechanism() {
         .common_setup
         .register(&BLSKey::random(), &MultiEgldOrEsdtPayment::new(), None);
 
-    state.common_setup.complete_chain_config_setup_phase(None);
+    state.common_setup.complete_chain_config_setup_phase();
 
     state
         .common_setup
@@ -2376,7 +2376,7 @@ fn test_deposit_execute_switch_mechanism() {
 fn test_execute_operation_no_payments() {
     let mut state = MvxEsdtSafeTestState::new();
     state.deploy_contract_with_roles(None);
-    state.complete_setup_phase(None, Some("unpauseContract"));
+    state.complete_setup_phase(Some(UNPAUSE_CONTRACT_LOG));
 
     let gas_limit = 1;
     let function = ManagedBuffer::<StaticApi>::from(TESTING_SC_ENDPOINT);
@@ -2405,7 +2405,7 @@ fn test_execute_operation_no_payments() {
         .common_setup
         .register(&BLSKey::random(), &MultiEgldOrEsdtPayment::new(), None);
 
-    state.common_setup.complete_chain_config_setup_phase(None);
+    state.common_setup.complete_chain_config_setup_phase();
 
     state
         .common_setup
@@ -2460,7 +2460,7 @@ fn test_execute_operation_no_payments_failed_event() {
     let mut state = MvxEsdtSafeTestState::new();
 
     state.deploy_contract_with_roles(None);
-    state.complete_setup_phase(None, Some("unpauseContract"));
+    state.complete_setup_phase(Some(UNPAUSE_CONTRACT_LOG));
 
     state
         .common_setup
@@ -2470,7 +2470,7 @@ fn test_execute_operation_no_payments_failed_event() {
         .common_setup
         .register(&BLSKey::random(), &MultiEgldOrEsdtPayment::new(), None);
 
-    state.common_setup.complete_chain_config_setup_phase(None);
+    state.common_setup.complete_chain_config_setup_phase();
 
     state
         .common_setup
@@ -2539,7 +2539,7 @@ fn test_execute_operation_no_payments_failed_event() {
 fn test_set_token_burn_mechanism_no_roles() {
     let mut state = MvxEsdtSafeTestState::new();
     state.deploy_contract_with_roles(None);
-    state.complete_setup_phase(None, Some("unpauseContract"));
+    state.complete_setup_phase(Some(UNPAUSE_CONTRACT_LOG));
 
     state
         .common_setup
@@ -2560,7 +2560,7 @@ fn test_set_token_burn_mechanism_no_roles() {
 fn test_set_token_burn_mechanism_token_not_trusted() {
     let mut state = MvxEsdtSafeTestState::new();
     state.deploy_contract_with_roles(None);
-    state.complete_setup_phase(None, Some("unpauseContract"));
+    state.complete_setup_phase(Some(UNPAUSE_CONTRACT_LOG));
     state
         .common_setup
         .deploy_header_verifier(vec![ScArray::ChainConfig, ScArray::ESDTSafe]);
@@ -2580,7 +2580,7 @@ fn test_set_token_burn_mechanism_token_not_trusted() {
 fn test_set_token_burn_mechanism() {
     let mut state = MvxEsdtSafeTestState::new();
     state.deploy_contract_with_roles(None);
-    state.complete_setup_phase(None, Some("unpauseContract"));
+    state.complete_setup_phase(Some(UNPAUSE_CONTRACT_LOG));
 
     state
         .common_setup
@@ -2619,7 +2619,7 @@ fn test_set_token_burn_mechanism() {
 fn test_set_token_lock_mechanism() {
     let mut state = MvxEsdtSafeTestState::new();
     state.deploy_contract_with_roles(None);
-    state.complete_setup_phase(None, Some("unpauseContract"));
+    state.complete_setup_phase(Some(UNPAUSE_CONTRACT_LOG));
 
     state
         .common_setup
@@ -2657,7 +2657,7 @@ fn test_set_token_lock_mechanism() {
 fn test_set_token_lock_mechanism_token_from_sovereign() {
     let mut state = MvxEsdtSafeTestState::new();
     state.deploy_contract_with_roles(None);
-    state.complete_setup_phase(None, Some("unpauseContract"));
+    state.complete_setup_phase(Some(UNPAUSE_CONTRACT_LOG));
 
     state
         .common_setup
@@ -2722,7 +2722,7 @@ fn test_update_config_setup_phase_not_completed() {
 fn test_update_config_operation_not_registered() {
     let mut state = MvxEsdtSafeTestState::new();
     state.deploy_contract_with_roles(None);
-    state.complete_setup_phase(None, Some("unpauseContract"));
+    state.complete_setup_phase(Some(UNPAUSE_CONTRACT_LOG));
 
     state
         .common_setup
@@ -2756,7 +2756,7 @@ fn test_update_config_operation_not_registered() {
 fn test_update_config_invalid_config() {
     let mut state = MvxEsdtSafeTestState::new();
     state.deploy_contract_with_roles(None);
-    state.complete_setup_phase(None, Some("unpauseContract"));
+    state.complete_setup_phase(Some(UNPAUSE_CONTRACT_LOG));
 
     state
         .common_setup
@@ -2766,7 +2766,7 @@ fn test_update_config_invalid_config() {
         .common_setup
         .register(&BLSKey::random(), &MultiEgldOrEsdtPayment::new(), None);
 
-    state.common_setup.complete_chain_config_setup_phase(None);
+    state.common_setup.complete_chain_config_setup_phase();
 
     state
         .common_setup
@@ -2815,7 +2815,7 @@ fn test_update_config_invalid_config() {
 fn test_update_config() {
     let mut state = MvxEsdtSafeTestState::new();
     state.deploy_contract_with_roles(None);
-    state.complete_setup_phase(None, Some("unpauseContract"));
+    state.complete_setup_phase(Some(UNPAUSE_CONTRACT_LOG));
 
     state
         .common_setup
@@ -2825,7 +2825,7 @@ fn test_update_config() {
         .common_setup
         .register(&BLSKey::random(), &MultiEgldOrEsdtPayment::new(), None);
 
-    state.common_setup.complete_chain_config_setup_phase(None);
+    state.common_setup.complete_chain_config_setup_phase();
 
     state
         .common_setup

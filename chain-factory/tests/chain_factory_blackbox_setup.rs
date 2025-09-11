@@ -33,7 +33,6 @@ impl ChainFactoryTestState {
     pub fn deploy_chain_config_from_factory(
         &mut self,
         opt_config: OptionalValue<SovereignConfig<StaticApi>>,
-        expected_error_message: Option<&str>,
     ) {
         let response = self
             .common_setup
@@ -47,6 +46,6 @@ impl ChainFactoryTestState {
             .run();
 
         self.common_setup
-            .assert_expected_error_message(response, expected_error_message);
+            .assert_expected_error_message(response, None);
     }
 }
