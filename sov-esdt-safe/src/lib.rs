@@ -54,10 +54,10 @@ pub trait SovEsdtSafe:
         token_ticker: ManagedBuffer,
         token_decimals: usize,
     ) {
-        let call_value = self.call_value().single_esdt();
+        let call_value = self.call_value().egld_or_single_esdt();
         require!(
             call_value.clone().token_identifier
-                == TokenIdentifier::from(EGLD_000000_TOKEN_IDENTIFIER),
+                == EgldOrEsdtTokenIdentifier::from(EGLD_000000_TOKEN_IDENTIFIER),
             EGLD_TOKEN_IDENTIFIER_EXPECTED
         );
         require!(call_value.amount == ISSUE_COST, ISSUE_COST_NOT_COVERED);
