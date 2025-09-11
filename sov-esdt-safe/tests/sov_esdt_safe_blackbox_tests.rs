@@ -3,7 +3,9 @@ use common_test_setup::constants::{
     ONE_HUNDRED_MILLION, ONE_HUNDRED_THOUSAND, OWNER_ADDRESS, SC_CALL_EVENT, SECOND_TEST_TOKEN,
     SOV_TOKEN, TESTING_SC_ENDPOINT, USER_ADDRESS,
 };
-use error_messages::NOTHING_TO_TRANSFER;
+use error_messages::{
+    EGLD_TOKEN_IDENTIFIER_EXPECTED, ISSUE_COST_NOT_COVERED, NOTHING_TO_TRANSFER, TOKEN_ID_NO_PREFIX,
+};
 use multiversx_sc::{
     chain_core::EGLD_000000_TOKEN_IDENTIFIER,
     imports::{MultiValue3, OptionalValue},
@@ -469,6 +471,129 @@ fn test_deposit_sc_call_only() {
 /// ISSUE_COST_NOT_COVERED
 #[test]
 fn test_register_token_not_enough_issue_cost() {
+    let mut state = SovEsdtSafeTestState::new();
+
+    state.deploy_contract_with_roles();
+    state
+        .common_setup
+        .deploy_fee_market(None, ESDT_SAFE_ADDRESS);
+    state.common_setup.deploy_testing_sc();
+    state.set_fee_market_address(FEE_MARKET_ADDRESS);
+
+    let egld_token_payment = EgldOrEsdtTokenPayment::<StaticApi>::new(
+        EGLD_000000_TOKEN_IDENTIFIER.into(),
+        0,
+        BigUint::from(1u64),
+    );
+
+    let new_token = RegisterTokenStruct {
+        token_id: EgldOrEsdtTokenIdentifier::from(SOV_TOKEN.as_str()),
+        token_type: EsdtTokenType::Fungible,
+        token_display_name: ManagedBuffer::from("Test Token"),
+        token_ticker: ManagedBuffer::from("TST"),
+        num_decimals: 18,
+    };
+
+    state.register_token(
+        new_token,
+        egld_token_payment,
+        None,
+        Some(ISSUE_COST_NOT_COVERED),
+    );
+}
+
+/// ### TEST
+/// S-ESDT_REGISTER_TOKEN_FAIL
+///
+/// ### ACTION
+/// Call 'register_token()' non sov token ID
+///
+/// ### EXPECTED
+/// TOKEN_ID_NO_PREFIX
+#[test]
+fn test_register_token_with_no_prefix() {
+    let mut state = SovEsdtSafeTestState::new();
+
+    state.deploy_contract_with_roles();
+    state
+        .common_setup
+        .deploy_fee_market(None, ESDT_SAFE_ADDRESS);
+    state.common_setup.deploy_testing_sc();
+    state.set_fee_market_address(FEE_MARKET_ADDRESS);
+
+    let egld_token_payment = EgldOrEsdtTokenPayment::<StaticApi>::new(
+        EGLD_000000_TOKEN_IDENTIFIER.into(),
+        0,
+        ISSUE_COST.into(),
+    );
+
+    let new_token = RegisterTokenStruct {
+        token_id: EgldOrEsdtTokenIdentifier::from(FIRST_TEST_TOKEN.as_str()),
+        token_type: EsdtTokenType::Fungible,
+        token_display_name: ManagedBuffer::from("Test Token"),
+        token_ticker: ManagedBuffer::from("TST"),
+        num_decimals: 18,
+    };
+
+    state.register_token(
+        new_token,
+        egld_token_payment,
+        None,
+        Some(TOKEN_ID_NO_PREFIX),
+    );
+}
+
+/// ### TEST
+/// S-ESDT_REGISTER_TOKEN_FAIL
+///
+/// ### ACTION
+/// Call 'register_token()' with wrong payment
+///
+/// ### EXPECTED
+/// EGLD_TOKEN_IDENTIFIER_EXPECTED
+#[test]
+fn test_register_token_wrong_payment() {
+    let mut state = SovEsdtSafeTestState::new();
+
+    state.deploy_contract_with_roles();
+    state
+        .common_setup
+        .deploy_fee_market(None, ESDT_SAFE_ADDRESS);
+    state.common_setup.deploy_testing_sc();
+    state.set_fee_market_address(FEE_MARKET_ADDRESS);
+
+    let egld_token_payment = EgldOrEsdtTokenPayment::<StaticApi>::new(
+        EgldOrEsdtTokenIdentifier::from(FIRST_TEST_TOKEN.as_str()),
+        0,
+        BigUint::from(1u64),
+    );
+
+    let new_token = RegisterTokenStruct {
+        token_id: EgldOrEsdtTokenIdentifier::from(FIRST_TEST_TOKEN.as_str()),
+        token_type: EsdtTokenType::Fungible,
+        token_display_name: ManagedBuffer::from("Test Token"),
+        token_ticker: ManagedBuffer::from("TST"),
+        num_decimals: 18,
+    };
+
+    state.register_token(
+        new_token,
+        egld_token_payment,
+        None,
+        Some(EGLD_TOKEN_IDENTIFIER_EXPECTED),
+    );
+}
+
+/// ### TEST
+/// S-ESDT_REGISTER_TOKEN_OK
+///
+/// ### ACTION
+/// Call 'register_token()'
+///
+/// ### EXPECTED
+/// Event is emitted
+#[test]
+fn test_register_token() {
     let mut state = SovEsdtSafeTestState::new();
 
     state.deploy_contract_with_roles();
