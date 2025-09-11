@@ -18,6 +18,7 @@ use sov_esdt_safe::SovEsdtSafe;
 use structs::{
     aliases::{OptionalValueTransferDataTuple, PaymentsVec},
     configs::EsdtSafeConfig,
+    RegisterTokenStruct,
 };
 
 pub struct SovEsdtSafeTestState {
@@ -141,7 +142,8 @@ impl SovEsdtSafeTestState {
         self.common_setup
             .assert_expected_error_message(response, expected_error_message);
 
-        self.common_setup.assert_expected_log(logs, expected_log, None);
+        self.common_setup
+            .assert_expected_log(logs, expected_log, None);
     }
 
     pub fn set_fee_market_address(&mut self, fee_market_address: TestSCAddress) {
@@ -179,6 +181,40 @@ impl SovEsdtSafeTestState {
         self.common_setup
             .assert_expected_error_message(response, expected_error_message);
 
-        self.common_setup.assert_expected_log(logs, expected_log, None);
+        self.common_setup
+            .assert_expected_log(logs, expected_log, None);
+    }
+
+    pub fn register_token(
+        &mut self,
+        new_token: RegisterTokenStruct<StaticApi>,
+        payment: EgldOrEsdtTokenPayment<StaticApi>,
+        expected_log: Option<&str>,
+        expected_error_message: Option<&str>,
+    ) {
+        let (logs, response) = self
+            .common_setup
+            .world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .to(ESDT_SAFE_ADDRESS)
+            .typed(SovEsdtSafeProxy)
+            .register_token(
+                new_token.token_id,
+                new_token.token_type,
+                new_token.token_display_name,
+                new_token.token_ticker,
+                new_token.num_decimals,
+            )
+            .payment(payment)
+            .returns(ReturnsLogs)
+            .returns(ReturnsHandledOrError::new())
+            .run();
+
+        self.common_setup
+            .assert_expected_error_message(response, expected_error_message);
+
+        self.common_setup
+            .assert_expected_log(logs, expected_log, None);
     }
 }
