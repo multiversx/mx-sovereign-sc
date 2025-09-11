@@ -68,7 +68,7 @@ pub trait SovEsdtSafe:
         self.tx()
             .to(SystemSCAddress)
             .raw_call(ESDT_LOCAL_BURN_FUNC_NAME)
-            .argument(&call_value.token_identifier.unwrap_esdt())
+            .argument(&call_value.token_identifier)
             .argument(&call_value.amount)
             .transfer_execute();
 
