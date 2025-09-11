@@ -43,7 +43,6 @@ pub trait SovEsdtSafe:
         self.set_paused(true);
     }
 
-    #[payable]
     #[only_owner]
     #[endpoint(registerToken)]
     fn register_token(
@@ -54,9 +53,9 @@ pub trait SovEsdtSafe:
         token_ticker: ManagedBuffer,
         token_decimals: usize,
     ) {
-        let call_value = self.call_value().egld_or_single_esdt();
+        let call_value = self.call_value().egld_or_single_esdt().clone();
         require!(
-            call_value.clone().token_identifier
+            call_value.token_identifier
                 == EgldOrEsdtTokenIdentifier::from(EGLD_000000_TOKEN_IDENTIFIER),
             EGLD_TOKEN_IDENTIFIER_EXPECTED
         );
@@ -65,6 +64,16 @@ pub trait SovEsdtSafe:
             ISSUE_COST_NOT_COVERED
         );
         require!(self.has_prefix(&token_id), TOKEN_ID_NO_PREFIX);
+
+        self.tx()
+            .to(ToSelf)
+            .typed(system_proxy::UserBuiltinProxy)
+            .esdt_local_burn(
+                call_value.token_identifier.unwrap_esdt(),
+                call_value.token_nonce,
+                call_value.amount,
+            )
+            .sync_call();
 
         self.register_token_event(
             token_id,
