@@ -11,10 +11,10 @@ use common_test_setup::constants::{
     INTERACTOR_WORKING_DIR, ONE_THOUSAND_TOKENS, SOVEREIGN_RECEIVER_ADDRESS, TOKEN_DISPLAY_NAME,
     TOKEN_TICKER,
 };
+use cross_chain::DEFAULT_ISSUE_COST;
 use multiversx_sc::chain_core::EGLD_000000_TOKEN_IDENTIFIER;
 use multiversx_sc_snippets::imports::*;
 use multiversx_sc_snippets::multiversx_sc_scenario::multiversx_chain_vm::crypto_functions::sha256;
-use mvx_esdt_safe::register_token::ISSUE_COST;
 use structs::aliases::PaymentsVec;
 use structs::fee::FeeStruct;
 use structs::operation::OperationData;
@@ -288,7 +288,9 @@ impl CompleteFlowInteract {
             SOVEREIGN_RECEIVER_ADDRESS.to_address(),
             config.shard,
             OptionalValue::None,
-            ManagedVec::from_single_item(EgldOrEsdtTokenPayment::egld_payment(ISSUE_COST.into())),
+            ManagedVec::from_single_item(EgldOrEsdtTokenPayment::egld_payment(
+                DEFAULT_ISSUE_COST.into(),
+            )),
             None,
             Some(EGLD_000000_TOKEN_IDENTIFIER),
         )
