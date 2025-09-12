@@ -2,7 +2,7 @@ use error_messages::{
     BANNED_ENDPOINT_NAME, DEPOSIT_OVER_MAX_AMOUNT, ESDT_SAFE_STILL_PAUSED, GAS_LIMIT_TOO_HIGH,
     NOTHING_TO_TRANSFER, TOKEN_BLACKLISTED, TOO_MANY_TOKENS,
 };
-use proxies::fee_market_proxy::FeeMarketProxy;
+use proxies::mvx_fee_market_proxy::MvxFeeMarketProxy;
 use structs::{
     aliases::{
         EventPaymentTuple, ExtractedFeeResult, GasLimit, OptionalValueTransferDataTuple, TxNonce,
@@ -105,7 +105,7 @@ pub trait DepositCommonModule:
 
                 self.tx()
                     .to(fee_market_address)
-                    .typed(FeeMarketProxy)
+                    .typed(MvxFeeMarketProxy)
                     .subtract_fee(caller, total_tokens_for_fees, OptionalValue::Some(gas))
                     .payment(fee.clone())
                     .sync_call();

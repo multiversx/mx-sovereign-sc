@@ -26,8 +26,8 @@ path = "../common/cross-chain"
 [dependencies.header-verifier]
 path = "../header-verifier"
 
-[dependencies.fee-market]
-path = "../fee-market"
+[dependencies.mvx-fee-market]
+path = "../mvx-fee-market"
 
 [dependencies.fee-common]
 path = "../common/fee-common"

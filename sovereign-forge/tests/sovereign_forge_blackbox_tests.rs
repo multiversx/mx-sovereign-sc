@@ -372,7 +372,7 @@ fn test_set_fee() {
         .world
         .query()
         .to(fee_market_address)
-        .whitebox(fee_market::contract_obj, |sc| {
+        .whitebox(mvx_fee_market::contract_obj, |sc| {
             assert!(sc.is_fee_enabled());
             assert!(!sc
                 .token_fee(&EgldOrEsdtTokenIdentifier::esdt(FIRST_TEST_TOKEN))
@@ -514,7 +514,7 @@ fn test_remove_fee() {
         .world
         .query()
         .to(fee_market_address)
-        .whitebox(fee_market::contract_obj, |sc| {
+        .whitebox(mvx_fee_market::contract_obj, |sc| {
             assert!(!sc.is_fee_enabled());
             assert!(sc
                 .token_fee(&EgldOrEsdtTokenIdentifier::esdt(FIRST_TEST_TOKEN))

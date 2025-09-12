@@ -23,8 +23,8 @@ path = "../structs"
 [dependencies.cross-chain]
 path = "../cross-chain"
 
-[dependencies.fee-market]
-path = "../../fee-market"
+[dependencies.mvx-fee-market]
+path = "../../mvx-fee-market"
 
 [dependencies.header-verifier]
 path = "../../header-verifier"

@@ -3,8 +3,8 @@ use multiversx_sc_scenario::{
     ScenarioTxRun,
 };
 use proxies::{
-    chain_config_proxy::ChainConfigContractProxy, fee_market_proxy::FeeMarketProxy,
-    header_verifier_proxy::HeaderverifierProxy, mvx_esdt_safe_proxy::MvxEsdtSafeProxy,
+    chain_config_proxy::ChainConfigContractProxy, header_verifier_proxy::HeaderverifierProxy,
+    mvx_esdt_safe_proxy::MvxEsdtSafeProxy, mvx_fee_market_proxy::MvxFeeMarketProxy,
     sovereign_forge_proxy::SovereignForgeProxy,
 };
 
@@ -37,7 +37,7 @@ impl BaseSetup {
             .tx()
             .from(OWNER_ADDRESS)
             .to(FEE_MARKET_ADDRESS)
-            .typed(FeeMarketProxy)
+            .typed(MvxFeeMarketProxy)
             .complete_setup_phase()
             .returns(ReturnsHandledOrError::new())
             .run();

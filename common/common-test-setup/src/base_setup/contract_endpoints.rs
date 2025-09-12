@@ -14,8 +14,8 @@ use multiversx_sc_scenario::{
     ReturnsLogs, ScenarioTxRun,
 };
 use proxies::{
-    chain_config_proxy::ChainConfigContractProxy, fee_market_proxy::FeeMarketProxy,
-    header_verifier_proxy::HeaderverifierProxy,
+    chain_config_proxy::ChainConfigContractProxy, header_verifier_proxy::HeaderverifierProxy,
+    mvx_fee_market_proxy::MvxFeeMarketProxy,
 };
 use structs::fee::FeeStruct;
 use structs::generate_hash::GenerateHash;
@@ -50,7 +50,7 @@ impl BaseSetup {
             .tx()
             .from(OWNER_ADDRESS)
             .to(FEE_MARKET_ADDRESS)
-            .typed(FeeMarketProxy)
+            .typed(MvxFeeMarketProxy)
             .set_fee_during_setup_phase(fee_struct)
             .returns(ReturnsHandledOrError::new())
             .run();
@@ -69,7 +69,7 @@ impl BaseSetup {
             .tx()
             .from(OWNER_ADDRESS)
             .to(FEE_MARKET_ADDRESS)
-            .typed(FeeMarketProxy)
+            .typed(MvxFeeMarketProxy)
             .set_fee(hash_of_hashes, fee_struct.unwrap())
             .returns(ReturnsHandledOrError::new())
             .run();

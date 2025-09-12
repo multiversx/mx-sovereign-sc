@@ -2,8 +2,8 @@ use crate::err_msg;
 use multiversx_sc::types::{MultiValueEncoded, TokenIdentifier};
 use multiversx_sc_modules::only_admin;
 use proxies::{
-    chain_config_proxy::ChainConfigContractProxy, fee_market_proxy::FeeMarketProxy,
-    mvx_esdt_safe_proxy::MvxEsdtSafeProxy,
+    chain_config_proxy::ChainConfigContractProxy, mvx_esdt_safe_proxy::MvxEsdtSafeProxy,
+    mvx_fee_market_proxy::MvxFeeMarketProxy,
 };
 use structs::{
     configs::{EsdtSafeConfig, SovereignConfig},
@@ -62,7 +62,7 @@ pub trait UpdateConfigsModule: only_admin::OnlyAdminModule {
     fn set_fee(&self, fee_market_address: ManagedAddress, new_fee: FeeStruct<Self::Api>) {
         self.tx()
             .to(fee_market_address)
-            .typed(FeeMarketProxy)
+            .typed(MvxFeeMarketProxy)
             .set_fee_during_setup_phase(new_fee)
             .sync_call();
     }
@@ -72,7 +72,7 @@ pub trait UpdateConfigsModule: only_admin::OnlyAdminModule {
     fn remove_fee(&self, fee_market_address: ManagedAddress, token_id: TokenIdentifier<Self::Api>) {
         self.tx()
             .to(fee_market_address)
-            .typed(FeeMarketProxy)
+            .typed(MvxFeeMarketProxy)
             .remove_fee_during_setup_phase(token_id)
             .sync_call();
     }
@@ -86,7 +86,7 @@ pub trait UpdateConfigsModule: only_admin::OnlyAdminModule {
     ) {
         self.tx()
             .to(fee_market_address)
-            .typed(FeeMarketProxy)
+            .typed(MvxFeeMarketProxy)
             .add_users_to_whitelist_during_setup_phase(users)
             .sync_call();
     }
@@ -100,7 +100,7 @@ pub trait UpdateConfigsModule: only_admin::OnlyAdminModule {
     ) {
         self.tx()
             .to(fee_market_address)
-            .typed(FeeMarketProxy)
+            .typed(MvxFeeMarketProxy)
             .remove_users_from_whitelist_during_setup_phase(users)
             .sync_call();
     }
