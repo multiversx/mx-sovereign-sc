@@ -55,8 +55,7 @@ pub trait SovEsdtSafe:
     ) {
         let call_value = self.call_value().egld_or_single_esdt().clone();
         require!(
-            call_value.token_identifier
-                == EgldOrEsdtTokenIdentifier::from(EGLD_000000_TOKEN_IDENTIFIER),
+            call_value.token_identifier.is_egld(),
             EGLD_TOKEN_IDENTIFIER_EXPECTED
         );
         require!(
