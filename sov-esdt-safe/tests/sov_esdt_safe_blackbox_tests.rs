@@ -1,10 +1,11 @@
 use common_test_setup::constants::{
     DEPOSIT_EVENT, ESDT_SAFE_ADDRESS, FEE_MARKET_ADDRESS, FEE_TOKEN, FIRST_TEST_TOKEN, ISSUE_COST,
-    ONE_HUNDRED_MILLION, ONE_HUNDRED_THOUSAND, OWNER_ADDRESS, SC_CALL_EVENT, SECOND_TEST_TOKEN,
-    SOV_TOKEN, TESTING_SC_ENDPOINT, USER_ADDRESS,
+    ONE_HUNDRED_MILLION, ONE_HUNDRED_THOUSAND, OWNER_ADDRESS, REGISTER_TOKEN_EVENT, SC_CALL_EVENT,
+    SECOND_TEST_TOKEN, SOV_TOKEN, TESTING_SC_ENDPOINT, USER_ADDRESS,
 };
 use error_messages::{
-    EGLD_TOKEN_IDENTIFIER_EXPECTED, ISSUE_COST_NOT_COVERED, NOTHING_TO_TRANSFER, TOKEN_ID_NO_PREFIX,
+    ACTION_IS_NOT_ALLOWED, EGLD_TOKEN_IDENTIFIER_EXPECTED, ISSUE_COST_NOT_COVERED,
+    NOTHING_TO_TRANSFER, TOKEN_ID_NO_PREFIX,
 };
 use multiversx_sc::{
     chain_core::EGLD_000000_TOKEN_IDENTIFIER,
@@ -614,5 +615,11 @@ fn test_register_token() {
         num_decimals: 18,
     };
 
-    state.register_token(new_token, egld_token_payment, Some("registerToken"), None);
+    // NOTE: Until the EGLD_000000_TOKEN_IDENTIFIER is considered an ESDT this will fail since the contract cannot burn any EGLD
+    state.register_token(
+        new_token,
+        egld_token_payment,
+        Some(REGISTER_TOKEN_EVENT),
+        Some(ACTION_IS_NOT_ALLOWED),
+    );
 }
