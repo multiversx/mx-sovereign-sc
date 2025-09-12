@@ -42,6 +42,8 @@ pub const SOVEREIGN_FORGE_CODE_PATH: MxscPath =
     MxscPath::new("../sovereign-forge/output/sovereign-forge.mxsc.json");
 pub const SOV_REGISTRAR_CODE_PATH: MxscPath =
     MxscPath::new("../sov-registrar/output/sov-registrar.mxsc.json");
+pub const SOV_FEE_MARKET_CODE_PATH: MxscPath =
+    MxscPath::new("../sov-fee-market/output/sov-fee-market.mxsc.json");
 
 pub const FEE_TOKEN: TestTokenIdentifier = TestTokenIdentifier::new("INTERNS-eaad15");
 pub const FIRST_TEST_TOKEN: TestTokenIdentifier = TestTokenIdentifier::new("GREEN-0e161c");

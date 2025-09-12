@@ -26,6 +26,7 @@ fn world() -> ScenarioWorld {
     blockchain.register_contract(CHAIN_FACTORY_CODE_PATH, chain_factory::ContractBuilder);
     blockchain.register_contract(SOVEREIGN_FORGE_CODE_PATH, sovereign_forge::ContractBuilder);
     blockchain.register_contract(MVX_ESDT_SAFE_CODE_PATH, mvx_esdt_safe::ContractBuilder);
+    blockchain.register_contract(SOV_FEE_MARKET_CODE_PATH, sov_fee_market::ContractBuilder);
 
     blockchain
 }

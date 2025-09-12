@@ -44,5 +44,8 @@ path = "../../chain-factory"
 [dependencies.sovereign-forge]
 path = "../../sovereign-forge"
 
+[dependencies.sov-fee-market]
+path = "../../sov-fee-market"
+
 [dependencies.error-messages]
 path = "../error-messages"
