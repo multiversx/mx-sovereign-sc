@@ -72,16 +72,6 @@ pub trait SovEsdtSafe:
             .argument(&call_value.amount)
             .sync_call();
 
-        // self.tx()
-        //     .to(ToSelf)
-        //     .typed(system_proxy::UserBuiltinProxy)
-        //     .esdt_local_burn(
-        //         call_value.token_identifier.unwrap_esdt(),
-        //         call_value.token_nonce,
-        //         call_value.amount,
-        //     )
-        //     .sync_call();
-
         self.register_token_event(
             token_id,
             token_type,
