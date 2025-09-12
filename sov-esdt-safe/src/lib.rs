@@ -1,9 +1,9 @@
 #![no_std]
 use cross_chain::DEFAULT_ISSUE_COST;
 use error_messages::{EGLD_TOKEN_IDENTIFIER_EXPECTED, ISSUE_COST_NOT_COVERED, TOKEN_ID_NO_PREFIX};
-use multiversx_sc::chain_core::EGLD_000000_TOKEN_IDENTIFIER;
 #[allow(unused_imports)]
 use multiversx_sc::imports::*;
+use multiversx_sc::{api::ESDT_LOCAL_BURN_FUNC_NAME, chain_core::EGLD_000000_TOKEN_IDENTIFIER};
 use structs::{configs::EsdtSafeConfig, operation::OperationData};
 
 pub mod deposit;
@@ -67,12 +67,9 @@ pub trait SovEsdtSafe:
 
         self.tx()
             .to(ToSelf)
-            .typed(system_proxy::UserBuiltinProxy)
-            .esdt_local_burn(
-                call_value.token_identifier.unwrap_esdt(),
-                call_value.token_nonce,
-                call_value.amount,
-            )
+            .raw_call(ESDT_LOCAL_BURN_FUNC_NAME)
+            .argument(&call_value.token_identifier.as_managed_buffer())
+            .argument(&call_value.amount)
             .sync_call();
 
         self.register_token_event(

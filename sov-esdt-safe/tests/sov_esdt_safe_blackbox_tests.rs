@@ -4,7 +4,8 @@ use common_test_setup::constants::{
     SOV_TOKEN, TESTING_SC_ENDPOINT, USER_ADDRESS,
 };
 use error_messages::{
-    EGLD_TOKEN_IDENTIFIER_EXPECTED, ISSUE_COST_NOT_COVERED, NOTHING_TO_TRANSFER, TOKEN_ID_NO_PREFIX,
+    ACTION_IS_NOT_ALLOWED, EGLD_TOKEN_IDENTIFIER_EXPECTED, ISSUE_COST_NOT_COVERED,
+    NOTHING_TO_TRANSFER, TOKEN_ID_NO_PREFIX,
 };
 use multiversx_sc::{
     chain_core::EGLD_000000_TOKEN_IDENTIFIER,
@@ -614,5 +615,11 @@ fn test_register_token() {
         num_decimals: 18,
     };
 
-    state.register_token(new_token, egld_token_payment, Some("registerToken"), None);
+    // NOTE: Until the EGLD_000000_TOKEN_IDENTIFIER is considered an ESDT this will fail since the contract cannot burn any EGLD
+    state.register_token(
+        new_token,
+        egld_token_payment,
+        None,
+        Some(ACTION_IS_NOT_ALLOWED),
+    );
 }

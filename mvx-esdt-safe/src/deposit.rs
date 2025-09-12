@@ -53,7 +53,11 @@ pub trait DepositModule:
                 &token_data.token_type,
                 &sov_token_id,
             );
-            MultiValue3::from((sov_token_id, sov_token_nonce, token_data))
+            MultiValue3::from((
+                sov_token_id.as_managed_buffer().clone(),
+                sov_token_nonce,
+                token_data,
+            ))
         } else {
             if self.is_fungible(&token_data.token_type)
                 && self.burn_mechanism_tokens().contains(&token_identifier)
@@ -69,7 +73,11 @@ pub trait DepositModule:
                     .update(|amount| *amount += payment.amount.clone());
             }
 
-            MultiValue3::from((token_identifier, payment.token_nonce, token_data))
+            MultiValue3::from((
+                token_identifier.as_managed_buffer().clone(),
+                payment.token_nonce,
+                token_data,
+            ))
         }
     }
 }

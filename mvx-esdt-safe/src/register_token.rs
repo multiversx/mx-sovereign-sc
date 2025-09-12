@@ -244,7 +244,7 @@ pub trait RegisterTokenModule:
         token_data.amount = DEFAULT_ISSUE_COST.into();
 
         MultiValueEncoded::from_iter([MultiValue3((
-            EgldOrEsdtTokenIdentifier::from(EGLD_000000_TOKEN_IDENTIFIER),
+            EGLD_000000_TOKEN_IDENTIFIER.into(),
             0u64,
             token_data,
         ))])
