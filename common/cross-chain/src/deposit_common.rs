@@ -139,7 +139,7 @@ pub trait DepositCommonModule:
             .to(ToSelf)
             .raw_call(ESDT_LOCAL_BURN_FUNC_NAME)
             .argument(&payment.token_identifier.as_managed_buffer())
-            .argument(&payment.clone().amount)
+            .argument(&payment.amount)
             .sync_call();
     }
 
