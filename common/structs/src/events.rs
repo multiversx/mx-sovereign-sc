@@ -35,16 +35,12 @@ impl<M: ManagedTypeApi> From<EventPaymentTuple<M>> for EventPayment<M> {
     fn from(value: EventPaymentTuple<M>) -> Self {
         let (identifier, nonce, data) = value.into_tuple();
 
-        EventPayment::new(EgldOrEsdtTokenIdentifier::from(identifier), nonce, data)
+        EventPayment::new(identifier, nonce, data)
     }
 }
 
 impl<M: ManagedTypeApi> From<EventPayment<M>> for EventPaymentTuple<M> {
     fn from(value: EventPayment<M>) -> EventPaymentTuple<M> {
-        MultiValue3((
-            value.identifier.as_managed_buffer().clone(),
-            value.nonce,
-            value.data,
-        ))
+        MultiValue3((value.identifier, value.nonce, value.data))
     }
 }

@@ -1,9 +1,8 @@
 #![no_std]
 use cross_chain::DEFAULT_ISSUE_COST;
 use error_messages::{EGLD_TOKEN_IDENTIFIER_EXPECTED, ISSUE_COST_NOT_COVERED, TOKEN_ID_NO_PREFIX};
-#[allow(unused_imports)]
+use multiversx_sc::api::ESDT_LOCAL_BURN_FUNC_NAME;
 use multiversx_sc::imports::*;
-use multiversx_sc::{api::ESDT_LOCAL_BURN_FUNC_NAME, chain_core::EGLD_000000_TOKEN_IDENTIFIER};
 use structs::{configs::EsdtSafeConfig, operation::OperationData};
 
 pub mod deposit;
