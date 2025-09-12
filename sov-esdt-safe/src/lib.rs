@@ -66,11 +66,11 @@ pub trait SovEsdtSafe:
         require!(self.has_prefix(&token_id), TOKEN_ID_NO_PREFIX);
 
         self.tx()
-            .to(SystemSCAddress)
+            .to(ToSelf)
             .raw_call(ESDT_LOCAL_BURN_FUNC_NAME)
             .argument(&call_value.token_identifier)
             .argument(&call_value.amount)
-            .transfer_execute();
+            .sync_call();
 
         // self.tx()
         //     .to(ToSelf)
