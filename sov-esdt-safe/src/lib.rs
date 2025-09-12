@@ -68,7 +68,7 @@ pub trait SovEsdtSafe:
         self.tx()
             .to(ToSelf)
             .raw_call(ESDT_LOCAL_BURN_FUNC_NAME)
-            .argument(&call_value.token_identifier)
+            .argument(&call_value.token_identifier.as_managed_buffer())
             .argument(&call_value.amount)
             .sync_call();
 
