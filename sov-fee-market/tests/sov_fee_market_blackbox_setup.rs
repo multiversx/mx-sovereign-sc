@@ -1,3 +1,4 @@
+use fee_common::storage::FeeCommonStorageModule;
 use multiversx_sc::{
     imports::OptionalValue,
     types::{
@@ -11,7 +12,8 @@ use common_test_setup::{
     base_setup::init::{AccountSetup, BaseSetup},
     constants::{
         CROWD_TOKEN_ID, ESDT_SAFE_ADDRESS, FIRST_TEST_TOKEN, MVX_ESDT_SAFE_CODE_PATH,
-        OWNER_ADDRESS, OWNER_BALANCE, SECOND_TEST_TOKEN, SOV_FEE_MARKET_ADDRESS, USER_ADDRESS,
+        OWNER_ADDRESS, OWNER_BALANCE, PER_GAS, PER_TRANSFER, SECOND_TEST_TOKEN,
+        SOV_FEE_MARKET_ADDRESS, USER_ADDRESS,
     },
 };
 use proxies::sov_fee_market_proxy::SovFeeMarketProxy;
@@ -67,8 +69,8 @@ impl SovFeeMarketTestState {
             base_token: EgldOrEsdtTokenIdentifier::esdt(FIRST_TEST_TOKEN),
             fee_type: FeeType::Fixed {
                 token: EgldOrEsdtTokenIdentifier::esdt(FIRST_TEST_TOKEN),
-                per_transfer: BigUint::from(100u64),
-                per_gas: BigUint::from(0u64),
+                per_transfer: BigUint::from(PER_TRANSFER),
+                per_gas: BigUint::from(PER_GAS),
             },
         }
     }
@@ -217,5 +219,28 @@ impl SovFeeMarketTestState {
 
         self.common_setup
             .assert_expected_error_message(response, expected_error_message);
+    }
+
+    pub fn check_token_fee_storage_is_empty(&mut self, token_id: TestTokenIdentifier) {
+        self.common_setup
+            .world
+            .query()
+            .to(SOV_FEE_MARKET_ADDRESS)
+            .whitebox(sov_fee_market::contract_obj, |sc| {
+                let token_fee = sc.token_fee(&EgldOrEsdtTokenIdentifier::esdt(token_id));
+                assert!(token_fee.is_empty());
+            });
+    }
+
+    pub fn check_accumulated_fees(&mut self, token_id: TestTokenIdentifier, amount: u64) {
+        self.common_setup
+            .world
+            .query()
+            .to(SOV_FEE_MARKET_ADDRESS)
+            .whitebox(sov_fee_market::contract_obj, |sc| {
+                let accumulated_fees =
+                    sc.accumulated_fees(&EgldOrEsdtTokenIdentifier::esdt(token_id).unwrap_esdt());
+                assert_eq!(accumulated_fees.get(), BigUint::from(amount));
+            });
     }
 }

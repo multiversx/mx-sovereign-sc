@@ -102,16 +102,7 @@ fn test_set_fee_invalid_token() {
 
     state.set_fee(&fee, Some(INVALID_TOKEN_ID));
 
-    state
-        .common_setup
-        .world
-        .query()
-        .to(SOV_FEE_MARKET_ADDRESS)
-        .whitebox(sov_fee_market::contract_obj, |sc| {
-            assert!(sc
-                .token_fee(&EgldOrEsdtTokenIdentifier::esdt(WRONG_TOKEN_ID))
-                .is_empty());
-        });
+    state.check_token_fee_storage_is_empty(WRONG_TOKEN_ID);
 }
 
 /// ### TEST
@@ -137,16 +128,7 @@ fn test_set_fee_invalid_fee_type() {
 
     state.set_fee(&fee, Some(INVALID_FEE_TYPE));
 
-    state
-        .common_setup
-        .world
-        .query()
-        .to(SOV_FEE_MARKET_ADDRESS)
-        .whitebox(sov_fee_market::contract_obj, |sc| {
-            assert!(sc
-                .token_fee(&EgldOrEsdtTokenIdentifier::esdt(FIRST_TEST_TOKEN))
-                .is_empty());
-        });
+    state.check_token_fee_storage_is_empty(FIRST_TEST_TOKEN);
 }
 
 /// ### TEST
@@ -176,16 +158,7 @@ fn test_set_fee_invalid_fee() {
 
     state.set_fee(&fee, Some(INVALID_FEE));
 
-    state
-        .common_setup
-        .world
-        .query()
-        .to(SOV_FEE_MARKET_ADDRESS)
-        .whitebox(sov_fee_market::contract_obj, |sc| {
-            assert!(sc
-                .token_fee(&EgldOrEsdtTokenIdentifier::esdt(FIRST_TEST_TOKEN))
-                .is_empty());
-        });
+    state.check_token_fee_storage_is_empty(FIRST_TEST_TOKEN);
 }
 
 /// ### TEST
@@ -207,16 +180,7 @@ fn test_remove_fee() {
 
     state.remove_fee(FIRST_TEST_TOKEN, None);
 
-    state
-        .common_setup
-        .world
-        .query()
-        .to(SOV_FEE_MARKET_ADDRESS)
-        .whitebox(sov_fee_market::contract_obj, |sc| {
-            assert!(sc
-                .token_fee(&EgldOrEsdtTokenIdentifier::esdt(FIRST_TEST_TOKEN))
-                .is_empty());
-        });
+    state.check_token_fee_storage_is_empty(FIRST_TEST_TOKEN);
 }
 
 /// ### TEST
@@ -237,16 +201,7 @@ fn test_remove_fee_non_existent() {
 
     state.remove_fee(SECOND_TEST_TOKEN, None);
 
-    state
-        .common_setup
-        .world
-        .query()
-        .to(SOV_FEE_MARKET_ADDRESS)
-        .whitebox(sov_fee_market::contract_obj, |sc| {
-            assert!(sc
-                .token_fee(&EgldOrEsdtTokenIdentifier::esdt(SECOND_TEST_TOKEN))
-                .is_empty());
-        });
+    state.check_token_fee_storage_is_empty(SECOND_TEST_TOKEN);
 }
 
 /// ### TEST
@@ -273,6 +228,8 @@ fn test_subtract_fee() {
         OptionalValue::None,
         None,
     );
+
+    state.check_accumulated_fees(FIRST_TEST_TOKEN, PER_TRANSFER);
 }
 
 /// ### TEST
@@ -299,6 +256,8 @@ fn test_subtract_fee_invalid_token() {
         OptionalValue::None,
         Some(TOKEN_NOT_ACCEPTED_AS_FEE),
     );
+
+    state.check_accumulated_fees(SECOND_TEST_TOKEN, 0);
 }
 
 /// ### TEST
@@ -325,6 +284,8 @@ fn test_subtract_fee_insufficient_payment() {
         OptionalValue::None,
         Some(PAYMENT_DOES_NOT_COVER_FEE),
     );
+
+    state.check_accumulated_fees(FIRST_TEST_TOKEN, 0);
 }
 
 /// ### TEST
@@ -352,12 +313,16 @@ fn test_distribute_fees() {
         None,
     );
 
+    state.check_accumulated_fees(FIRST_TEST_TOKEN, PER_TRANSFER);
+
     let pairs = vec![
         MultiValue2::from((USER_ADDRESS.to_managed_address(), 5000usize)),
         MultiValue2::from((OWNER_ADDRESS.to_managed_address(), 5000usize)),
     ];
 
     state.distribute_fees(pairs, None);
+
+    state.check_accumulated_fees(FIRST_TEST_TOKEN, 0);
 }
 
 /// ### TEST
@@ -383,6 +348,8 @@ fn test_distribute_fees_invalid_percentage() {
     ];
 
     state.distribute_fees(pairs, Some(INVALID_PERCENTAGE_SUM));
+
+    state.check_accumulated_fees(FIRST_TEST_TOKEN, 0);
 }
 
 /// ### TEST
