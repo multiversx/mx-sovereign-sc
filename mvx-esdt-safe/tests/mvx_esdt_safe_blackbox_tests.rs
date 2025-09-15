@@ -111,7 +111,6 @@ fn test_register_token_invalid_type() {
     let register_token_args = RegisterTokenOperation {
         token_id: EgldOrEsdtTokenIdentifier::esdt(sov_token_id.as_str()),
         token_type,
-        token_nonce: 0u64,
         token_display_name: token_display_name.into(),
         token_ticker: token_ticker.into(),
         num_decimals,
@@ -179,7 +178,6 @@ fn test_register_token_invalid_type_with_prefix() {
     let register_token_args = RegisterTokenOperation {
         token_id: EgldOrEsdtTokenIdentifier::esdt(sov_token_id),
         token_type,
-        token_nonce: 0u64,
         token_display_name: token_display_name.into(),
         token_ticker: token_ticker.into(),
         num_decimals,
@@ -246,7 +244,6 @@ fn test_register_token_not_enough_egld() {
     let register_token_args = RegisterTokenOperation {
         token_id: EgldOrEsdtTokenIdentifier::esdt(sov_token_id),
         token_type,
-        token_nonce: 0u64,
         token_display_name: token_display_name.into(),
         token_ticker: token_ticker.into(),
         num_decimals,
@@ -302,7 +299,6 @@ fn test_register_token_fungible_token() {
     let register_token_args = RegisterTokenOperation {
         token_id: EgldOrEsdtTokenIdentifier::esdt(sov_token_id),
         token_type,
-        token_nonce: 0u64,
         token_display_name: token_display_name.into(),
         token_ticker: token_ticker.into(),
         num_decimals,
@@ -361,7 +357,6 @@ fn test_register_token_nonfungible_token() {
     let register_token_args = RegisterTokenOperation {
         token_id: EgldOrEsdtTokenIdentifier::esdt(sov_token_id),
         token_type,
-        token_nonce: 1u64,
         token_display_name: token_display_name.into(),
         token_ticker: token_ticker.into(),
         num_decimals,
@@ -1349,7 +1344,6 @@ fn test_register_token_fungible_token_with_prefix() {
     let register_token_args = RegisterTokenOperation {
         token_id: EgldOrEsdtTokenIdentifier::esdt(sov_token_id),
         token_type,
-        token_nonce: 0u64,
         token_display_name: token_display_name.into(),
         token_ticker: token_ticker.into(),
         num_decimals,
@@ -1409,7 +1403,6 @@ fn test_register_token_fungible_token_no_prefix() {
     let register_token_args = RegisterTokenOperation {
         token_id: EgldOrEsdtTokenIdentifier::esdt(sov_token_id),
         token_type,
-        token_nonce: 0u64,
         token_display_name: token_display_name.into(),
         token_ticker: token_ticker.into(),
         num_decimals,
@@ -1477,7 +1470,6 @@ fn test_register_token_non_fungible_token_dynamic() {
     let register_token_args = RegisterTokenOperation {
         token_id: EgldOrEsdtTokenIdentifier::esdt(sov_token_id),
         token_type,
-        token_nonce: 1u64,
         token_display_name: token_display_name.into(),
         token_ticker: token_ticker.into(),
         num_decimals,

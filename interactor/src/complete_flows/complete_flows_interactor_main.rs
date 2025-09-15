@@ -270,7 +270,6 @@ impl CompleteFlowInteract {
                         .unwrap_or(TOKEN_TICKER),
                 ),
                 num_decimals: token.decimals,
-                token_nonce: token.nonce,
                 data: OperationData::new(0u64, self.user_address().into(), None),
             },
             None,
