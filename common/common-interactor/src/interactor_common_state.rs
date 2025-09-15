@@ -119,7 +119,7 @@ impl CommonState {
         }
     }
 
-    pub fn update_mvx_egld_balance(&mut self, shard: u32, amount: u64) {
+    pub fn update_mvx_egld_balance_with_amount(&mut self, shard: u32, amount: u64) {
         // Find existing balance for shard and add to it
         let shard_str = shard.to_string();
         if let Some((_, current_balance)) = self
@@ -131,7 +131,7 @@ impl CommonState {
         }
     }
 
-    pub fn update_testing_egld_balance(&mut self, amount: u64) {
+    pub fn update_testing_egld_balance_with_amount(&mut self, amount: u64) {
         self.testing_egld_balance += amount;
     }
 

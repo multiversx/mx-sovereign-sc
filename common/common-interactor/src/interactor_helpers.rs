@@ -6,7 +6,7 @@ use common_test_setup::constants::{
     MVX_ESDT_SAFE_SHARD_1, MVX_ESDT_SAFE_SHARD_2, PER_GAS, PER_TRANSFER, SHARD_1, TESTING_SC,
     TESTING_SC_ENDPOINT, UNKNOWN_FEE_MARKET, UNKNOWN_MVX_ESDT_SAFE, USER_ADDRESS_STR,
 };
-use error_messages::FAILED_TO_PARSE_AS_NUMBER;
+use error_messages::{AMOUNT_IS_TOO_LARGE, FAILED_TO_PARSE_AS_NUMBER};
 use multiversx_sc::{
     codec::{num_bigint, TopEncode},
     imports::{Bech32Address, MultiValue3, OptionalValue},
@@ -733,7 +733,7 @@ pub trait InteractorHelpers {
 
         if is_egld {
             let current_balance = self.common_state().get_mvx_egld_balance_for_shard(shard);
-            let amount_u64 = amount.clone().unwrap().to_u64().unwrap();
+            let amount_u64 = amount.clone().unwrap().to_u64().expect(AMOUNT_IS_TOO_LARGE);
             let expected_amount = if is_execute {
                 current_balance - amount_u64
             } else {
@@ -743,7 +743,7 @@ pub trait InteractorHelpers {
             self.check_address_egld_balance(&address, expected_amount)
                 .await;
             self.common_state()
-                .update_mvx_egld_balance(shard, expected_amount);
+                .update_mvx_egld_balance_with_amount(shard, expected_amount);
         } else {
             // ESDT tokens
             let mvx_tokens = match (&token, &amount, is_sov_mapped_token, is_execute) {
@@ -793,7 +793,7 @@ pub trait InteractorHelpers {
             self.check_address_egld_balance(&testing_address, expected_amount)
                 .await;
             self.common_state()
-                .update_testing_egld_balance(expected_amount);
+                .update_testing_egld_balance_with_amount(expected_amount);
         } else {
             let testing_sc_tokens = match (&token, &amount) {
                 (Some(token), Some(amount)) => {

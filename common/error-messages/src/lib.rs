@@ -2,6 +2,7 @@
 
 pub const ACTION_IS_NOT_ALLOWED: &str = "action is not allowed";
 pub const ADDRESS_NOT_VALID_SC_ADDRESS: &str = "The given address is not a valid SC address";
+pub const AMOUNT_IS_TOO_LARGE: &str = "Amount is too large";
 pub const BANNED_ENDPOINT_NAME: &str = "Banned endpoint name";
 pub const BLS_SIGNATURE_NOT_VALID: &str = "BLS signature is not valid";
 pub const BRIDGE_ALREADY_DEPLOYED: &str = "Bridge already deployed";
