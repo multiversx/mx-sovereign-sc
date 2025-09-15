@@ -35,6 +35,8 @@ pub struct CommonState {
     pub fee_op_nonce: u64,
     pub chain_ids: Vec<String>,
     pub update_config_nonce: u64,
+    pub mvx_egld_balances: Vec<(String, u64)>,
+    pub testing_egld_balance: u64,
 }
 
 impl CommonState {
@@ -109,6 +111,28 @@ impl CommonState {
 
     pub fn add_chain_id(&mut self, chain_id: String) {
         self.chain_ids.push(chain_id);
+    }
+
+    pub fn set_mvx_egld_balance_for_all_shards(&mut self, balance: u64) {
+        for shard in 0..3 {
+            self.mvx_egld_balances.push((shard.to_string(), balance));
+        }
+    }
+
+    pub fn update_mvx_egld_balance(&mut self, shard: u32, amount: u64) {
+        // Find existing balance for shard and add to it
+        let shard_str = shard.to_string();
+        if let Some((_, current_balance)) = self
+            .mvx_egld_balances
+            .iter_mut()
+            .find(|(s, _)| s == &shard_str)
+        {
+            *current_balance += amount;
+        }
+    }
+
+    pub fn update_testing_egld_balance(&mut self, amount: u64) {
+        self.testing_egld_balance += amount;
     }
 
     /// Returns the contract addresses
@@ -241,6 +265,17 @@ impl CommonState {
 
     pub fn get_update_config_nonce(&self) -> u64 {
         self.update_config_nonce
+    }
+
+    pub fn get_mvx_egld_balance_for_shard(&self, shard: u32) -> u64 {
+        self.mvx_egld_balances
+            .get(shard as usize)
+            .map(|(_, balance)| *balance)
+            .unwrap_or(0u64)
+    }
+
+    pub fn get_testing_egld_balance(&self) -> u64 {
+        self.testing_egld_balance
     }
 }
 

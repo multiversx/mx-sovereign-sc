@@ -580,6 +580,20 @@ pub trait InteractorHelpers {
         self.check_address_balance(&mvx_address, tokens).await;
     }
 
+    async fn check_address_egld_balance(&mut self, address: &Bech32Address, expected_amount: u64) {
+        let balance = self
+            .interactor()
+            .get_account(&address.clone().into_address())
+            .await
+            .balance;
+        assert_eq!(
+            balance,
+            expected_amount.to_string(),
+            "EGLD balance mismatch for {:?} :\n",
+            address,
+        );
+    }
+
     async fn check_fee_market_balance(&mut self, shard: u32, expected_tokens: Vec<EsdtTokenInfo>) {
         let fee_market_address = self.common_state().get_fee_market_address(shard).clone();
         let tokens = if expected_tokens.is_empty() {
@@ -676,6 +690,8 @@ pub trait InteractorHelpers {
             })
             .unwrap_or(false);
 
+        let is_egld = token.clone().map(|t| t.token_id.is_egld()).unwrap_or(false);
+
         let fee_amount = fee
             .as_ref()
             .map(|f| self.calculate_fee_amount(f.clone(), with_transfer_data, token.clone()))
@@ -715,31 +731,44 @@ pub trait InteractorHelpers {
             self.check_user_balance(expected_user_tokens).await;
         }
 
-        // MVX tokens
-        let mvx_tokens = match (&token, &amount, is_sov_mapped_token, is_execute) {
-            (Some(token), Some(_), true, _) => {
-                if matches!(
-                    token.token_type,
-                    EsdtTokenType::MetaFungible
-                        | EsdtTokenType::DynamicMeta
-                        | EsdtTokenType::DynamicSFT
-                        | EsdtTokenType::SemiFungible
-                ) {
-                    vec![self.clone_token_with_amount(token.clone(), BigUint::from(1u64))]
-                } else {
-                    vec![]
+        if is_egld {
+            let current_balance = self.common_state().get_mvx_egld_balance_for_shard(shard);
+            let amount_u64 = amount.clone().unwrap().to_u64().unwrap();
+            let expected_amount = if is_execute {
+                current_balance - amount_u64
+            } else {
+                current_balance + amount_u64
+            };
+            let address = self.common_state().get_mvx_esdt_safe_address(shard).clone();
+            self.check_address_egld_balance(&address, expected_amount)
+                .await;
+            self.common_state()
+                .update_mvx_egld_balance(shard, expected_amount);
+        } else {
+            // ESDT tokens
+            let mvx_tokens = match (&token, &amount, is_sov_mapped_token, is_execute) {
+                (Some(token), Some(_), true, _) => {
+                    // Sovereign mapped tokens: only keep 1 SFT/META token in the contract
+                    if matches!(
+                        token.token_type,
+                        EsdtTokenType::MetaFungible
+                            | EsdtTokenType::DynamicMeta
+                            | EsdtTokenType::DynamicSFT
+                            | EsdtTokenType::SemiFungible
+                    ) {
+                        vec![self.clone_token_with_amount(token.clone(), BigUint::from(1u64))]
+                    } else {
+                        vec![]
+                    }
                 }
-            }
-            (Some(token), Some(amount), false, false) => {
-                // Non-sovereign deposits: full amount goes to MVX safe
-                vec![self.clone_token_with_amount(token.clone(), amount.clone())]
-            }
-            _ => {
-                vec![]
-            }
-        };
-
-        self.check_mvx_esdt_balance(shard, mvx_tokens).await;
+                (Some(token), Some(amount), false, false) => {
+                    // Non-sovereign deposits: full amount goes to MVX safe
+                    vec![self.clone_token_with_amount(token.clone(), amount.clone())]
+                }
+                _ => vec![],
+            };
+            self.check_mvx_esdt_balance(shard, mvx_tokens).await;
+        }
 
         // FEE market
         if fee_amount > 0u64 {
@@ -757,18 +786,28 @@ pub trait InteractorHelpers {
         }
 
         // TESTING SC
-        let testing_sc_tokens = match (&token, &amount) {
-            (Some(token), Some(amount)) => {
-                if is_execute && with_transfer_data && expected_error.is_none() {
-                    vec![self.clone_token_with_amount(token.clone(), amount.clone())]
-                } else {
-                    vec![]
+        if is_egld && is_execute && with_transfer_data && expected_error.is_none() {
+            let expected_amount = self.common_state().get_testing_egld_balance()
+                + amount.clone().unwrap().to_u64().unwrap();
+            let testing_address = self.common_state().current_testing_sc_address().clone();
+            self.check_address_egld_balance(&testing_address, expected_amount)
+                .await;
+            self.common_state()
+                .update_testing_egld_balance(expected_amount);
+        } else {
+            let testing_sc_tokens = match (&token, &amount) {
+                (Some(token), Some(amount)) => {
+                    if is_execute && with_transfer_data && expected_error.is_none() {
+                        vec![self.clone_token_with_amount(token.clone(), amount.clone())]
+                    } else {
+                        vec![]
+                    }
                 }
-            }
-            _ => vec![],
-        };
+                _ => vec![],
+            };
 
-        self.check_testing_sc_balance(testing_sc_tokens).await;
+            self.check_testing_sc_balance(testing_sc_tokens).await;
+        }
     }
 
     /// Key and value should be in hex

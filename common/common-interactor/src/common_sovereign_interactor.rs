@@ -497,7 +497,8 @@ pub trait CommonInteractorTrait: InteractorHelpers {
         self.common_state()
             .set_fee_market_token_for_all_shards(fee_token_fee_market);
         self.common_state().set_fee_status_for_all_shards(true);
-        self.common_state().fee_op_nonce = 1u64;
+        self.common_state()
+            .set_mvx_egld_balance_for_all_shards(0u64);
     }
 
     async fn deploy_and_setup_common(
