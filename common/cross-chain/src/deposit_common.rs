@@ -161,7 +161,7 @@ pub trait DepositCommonModule:
         current_token_data.amount = payment.amount.clone();
 
         MultiValue3::from((
-            payment.token_identifier.as_managed_buffer().clone(),
+            payment.token_identifier.clone(),
             payment.token_nonce,
             current_token_data,
         ))
