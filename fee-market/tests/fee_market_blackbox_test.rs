@@ -565,6 +565,11 @@ fn distribute_fees_operation_not_registered() {
     state
         .common_setup
         .deploy_chain_config(OptionalValue::None, None);
+
+    state
+        .common_setup
+        .register(&BLSKey::random(), &MultiEgldOrEsdtPayment::new(), None);
+
     state.common_setup.complete_chain_config_setup_phase();
 
     state

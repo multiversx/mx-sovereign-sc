@@ -101,12 +101,16 @@ fn test_deploy_chain_config_invalid_config() {
 /// ### EXPECTED
 /// Setup phase is completed
 #[test]
-fn complete_setup_phase() {
+fn test_complete_setup_phase() {
     let mut state = ChainConfigTestState::new();
 
     state
         .common_setup
         .deploy_chain_config(OptionalValue::None, None);
+
+    state
+        .common_setup
+        .register(&BLSKey::random(), &MultiEgldOrEsdtPayment::new(), None);
 
     state.common_setup.complete_chain_config_setup_phase();
 
@@ -191,25 +195,6 @@ fn test_update_config_during_setup_phase_wrong_validators_array() {
         new_config,
         Some(INVALID_MIN_MAX_VALIDATOR_NUMBERS),
     );
-}
-
-/// ### TEST
-/// C-CONFIG_COMPLETE_SETUP_PHASE_OK
-///
-/// ### ACTION
-/// Call 'complete_chain_config_setup_phase()'
-///
-/// ### EXPECTED
-/// Chain config's setup phase is completed
-#[test]
-fn test_complete_setup_phase() {
-    let mut state = ChainConfigTestState::new();
-
-    state
-        .common_setup
-        .deploy_chain_config(OptionalValue::None, None);
-
-    state.common_setup.complete_chain_config_setup_phase();
 }
 
 /// ### TEST
