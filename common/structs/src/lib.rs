@@ -63,7 +63,6 @@ pub struct ValidatorData<M: ManagedTypeApi> {
 #[derive(TopEncode, TopDecode, NestedEncode)]
 pub struct RegisterTokenOperation<M: ManagedTypeApi> {
     pub token_id: EgldOrEsdtTokenIdentifier<M>,
-    pub token_nonce: u64,
     pub token_type: EsdtTokenType,
     pub token_display_name: ManagedBuffer<M>,
     pub token_ticker: ManagedBuffer<M>,
