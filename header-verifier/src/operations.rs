@@ -1,8 +1,7 @@
 use error_messages::{
-    BITMAP_LEN_DOES_NOT_MATCH_BLS_KEY_LEN, BLS_SIGNATURE_NOT_VALID,
-    CALLER_NOT_FROM_CURRENT_SOVEREIGN, CURRENT_OPERATION_ALREADY_IN_EXECUTION,
-    CURRENT_OPERATION_NOT_REGISTERED, HASH_OF_HASHES_DOES_NOT_MATCH,
-    OUTGOING_TX_HASH_ALREADY_REGISTERED, SETUP_PHASE_NOT_COMPLETED,
+    BLS_SIGNATURE_NOT_VALID, CALLER_NOT_FROM_CURRENT_SOVEREIGN,
+    CURRENT_OPERATION_ALREADY_IN_EXECUTION, CURRENT_OPERATION_NOT_REGISTERED,
+    HASH_OF_HASHES_DOES_NOT_MATCH, OUTGOING_TX_HASH_ALREADY_REGISTERED, SETUP_PHASE_NOT_COMPLETED,
     VALIDATORS_ALREADY_REGISTERED_IN_EPOCH,
 };
 
@@ -109,16 +108,16 @@ pub trait HeaderVerifierOperationsModule:
             return;
         }
         let bls_keys_previous_epoch = self.bls_pub_keys(epoch - 1);
-        if !self.is_bitmap_and_bls_same_length(pub_keys_bitmap.len(), bls_keys_previous_epoch.len())
-        {
-            self.execute_bridge_operation_event(
-                &hash_of_hashes,
-                &operation_hash,
-                Some(BITMAP_LEN_DOES_NOT_MATCH_BLS_KEY_LEN.into()),
-            );
+        // if !self.is_bitmap_and_bls_same_length(pub_keys_bitmap.len(), bls_keys_previous_epoch.len())
+        // {
+        //     self.execute_bridge_operation_event(
+        //         &hash_of_hashes,
+        //         &operation_hash,
+        //         Some(BITMAP_LEN_DOES_NOT_MATCH_BLS_KEY_LEN.into()),
+        //     );
 
-            return;
-        }
+        //     return;
+        // }
         let mut hash_of_hashes_history_mapper = self.hash_of_hashes_history();
         if self.is_hash_of_hashes_registered(&hash_of_hashes, &hash_of_hashes_history_mapper) {
             self.execute_bridge_operation_event(

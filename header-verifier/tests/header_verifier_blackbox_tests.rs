@@ -547,43 +547,32 @@ fn test_change_validator_set() {
     let operation_hash = ManagedBuffer::from("operation_1");
     let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&operation_hash.to_vec()));
 
-    let validator_bls_key_1 = BLSKey::random();
-    registered_bls_keys.push(validator_bls_key_1.clone());
-    let validator_data_1 = ValidatorData {
-        id: BigUint::from(2u32),
-        address: OWNER_ADDRESS.to_managed_address(),
-        bls_key: validator_bls_key_1,
-    };
-    let signature = ManagedBuffer::new();
-    let bitmap_1 = ManagedBuffer::new_from_bytes(&[0x01]);
-    state.common_setup.register_validator_operation(
-        validator_data_1,
-        signature.clone(),
-        bitmap_1,
-        0,
-    );
+    for id in 2..4 {
+        let validator_bls_key = BLSKey::random();
+        registered_bls_keys.push(validator_bls_key.clone());
+        let validator_data = ValidatorData {
+            id: BigUint::from(id as u32),
+            address: OWNER_ADDRESS.to_managed_address(),
+            bls_key: validator_bls_key,
+        };
 
-    let validator_bls_key_2 = BLSKey::random();
-    registered_bls_keys.push(validator_bls_key_2.clone());
-    let validator_data_2 = ValidatorData {
-        id: BigUint::from(3u32),
-        address: OWNER_ADDRESS.to_managed_address(),
-        bls_key: validator_bls_key_2,
-    };
-    let bitmap_2 = ManagedBuffer::new_from_bytes(&[0x02]);
-    state.common_setup.register_validator_operation(
-        validator_data_2,
-        signature.clone(),
-        bitmap_2,
-        0,
-    );
+        let signature = ManagedBuffer::new();
+        let bitmap = ManagedBuffer::new_from_bytes(&[0x01]);
+        let epoch = 0;
+        state.common_setup.register_validator_operation(
+            validator_data,
+            signature.clone(),
+            bitmap.clone(),
+            epoch,
+        );
+    }
 
     let mut validator_set = MultiValueEncoded::new();
     validator_set.push(BigUint::from(1u32));
     validator_set.push(BigUint::from(2u32));
     validator_set.push(BigUint::from(3u32));
 
-    let bitmap = ManagedBuffer::new_from_bytes(&[0x02]);
+    let bitmap = ManagedBuffer::new_from_bytes(&[0x01]);
     let epoch_for_new_set = 1;
 
     state.change_validator_set(

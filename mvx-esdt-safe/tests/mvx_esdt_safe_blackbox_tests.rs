@@ -252,7 +252,7 @@ fn test_register_token_not_enough_egld() {
 
     let token_hash = register_token_args.generate_hash();
     let hash_of_hashes = ManagedBuffer::from(&sha256(&token_hash.to_vec()));
-    let bitmap = ManagedBuffer::new_from_bytes(&[0x01, 0x02]);
+    let bitmap = ManagedBuffer::new_from_bytes(&[0x01]);
     let signature = ManagedBuffer::new();
     let epoch = 0;
 
@@ -307,7 +307,7 @@ fn test_register_token_fungible_token() {
 
     let token_hash = register_token_args.generate_hash();
     let hash_of_hashes = ManagedBuffer::from(&sha256(&token_hash.to_vec()));
-    let bitmap = ManagedBuffer::new_from_bytes(&[0x01, 0x02]);
+    let bitmap = ManagedBuffer::new_from_bytes(&[0x01]);
     let signature = ManagedBuffer::new();
     let epoch = 0;
 
@@ -365,7 +365,7 @@ fn test_register_token_nonfungible_token() {
 
     let token_hash = register_token_args.generate_hash();
     let hash_of_hashes = ManagedBuffer::from(&sha256(&token_hash.to_vec()));
-    let bitmap = ManagedBuffer::new_from_bytes(&[0x01, 0x02]);
+    let bitmap = ManagedBuffer::new_from_bytes(&[0x01]);
     let signature = ManagedBuffer::new();
     let epoch = 0;
 
@@ -1352,7 +1352,7 @@ fn test_register_token_fungible_token_with_prefix() {
 
     let token_hash = register_token_args.generate_hash();
     let hash_of_hashes = ManagedBuffer::from(&sha256(&token_hash.to_vec()));
-    let bitmap = ManagedBuffer::new_from_bytes(&[0x01, 0x02]);
+    let bitmap = ManagedBuffer::new_from_bytes(&[0x01]);
     let signature = ManagedBuffer::new();
     let epoch = 0;
 
@@ -1411,7 +1411,7 @@ fn test_register_token_fungible_token_no_prefix() {
 
     let token_hash = register_token_args.generate_hash();
     let hash_of_hashes = ManagedBuffer::from(&sha256(&token_hash.to_vec()));
-    let bitmap = ManagedBuffer::new_from_bytes(&[0x01, 0x02]);
+    let bitmap = ManagedBuffer::new_from_bytes(&[0x01]);
     let signature = ManagedBuffer::new();
     let epoch = 0;
 
@@ -1478,7 +1478,7 @@ fn test_register_token_non_fungible_token_dynamic() {
 
     let token_hash = register_token_args.generate_hash();
     let hash_of_hashes = ManagedBuffer::from(&sha256(&token_hash.to_vec()));
-    let bitmap = ManagedBuffer::new_from_bytes(&[0x01, 0x02]);
+    let bitmap = ManagedBuffer::new_from_bytes(&[0x01]);
     let signature = ManagedBuffer::new();
     let epoch = 0;
 
