@@ -84,10 +84,6 @@ fn test_register_bridge_operation() {
         .common_setup
         .register(&BLSKey::random(), &MultiEgldOrEsdtPayment::new(), None);
 
-    state
-        .common_setup
-        .register(&BLSKey::random(), &MultiEgldOrEsdtPayment::new(), None);
-
     state.common_setup.complete_chain_config_setup_phase();
 
     state
@@ -101,7 +97,7 @@ fn test_register_bridge_operation() {
     let operation_1 = ManagedBuffer::from("operation_1");
     let operation_2 = ManagedBuffer::from("operation_2");
     let operation = state.generate_bridge_operation_struct(vec![&operation_1, &operation_2]);
-    let bitmap = ManagedBuffer::new_from_bytes(&[0x01, 0x02]);
+    let bitmap = ManagedBuffer::new_from_bytes(&[0x01]);
 
     state.register_operations(operation.clone(), bitmap.clone(), 0, None);
 
@@ -153,10 +149,6 @@ fn test_remove_executed_hash_no_esdt_address_registered() {
         .common_setup
         .register(&BLSKey::random(), &MultiEgldOrEsdtPayment::new(), None);
 
-    state
-        .common_setup
-        .register(&BLSKey::random(), &MultiEgldOrEsdtPayment::new(), None);
-
     state.common_setup.complete_chain_config_setup_phase();
 
     state
@@ -170,7 +162,7 @@ fn test_remove_executed_hash_no_esdt_address_registered() {
     let operation_1 = ManagedBuffer::from("operation_1");
     let operation_2 = ManagedBuffer::from("operation_2");
     let operation = state.generate_bridge_operation_struct(vec![&operation_1, &operation_2]);
-    let bitmap = ManagedBuffer::new_from_bytes(&[0x01, 0x02]);
+    let bitmap = ManagedBuffer::new_from_bytes(&[0x01]);
 
     state.register_operations(operation.clone(), bitmap, 0, None);
     state.remove_executed_hash(
@@ -201,10 +193,6 @@ fn test_remove_one_executed_hash() {
         .common_setup
         .register(&BLSKey::random(), &MultiEgldOrEsdtPayment::new(), None);
 
-    state
-        .common_setup
-        .register(&BLSKey::random(), &MultiEgldOrEsdtPayment::new(), None);
-
     state.common_setup.complete_chain_config_setup_phase();
 
     state
@@ -219,7 +207,7 @@ fn test_remove_one_executed_hash() {
     let operation_hash_2 = ManagedBuffer::from("operation_2");
     let operation =
         state.generate_bridge_operation_struct(vec![&operation_hash_1, &operation_hash_2]);
-    let bitmap = ManagedBuffer::new_from_bytes(&[0x01, 0x02]);
+    let bitmap = ManagedBuffer::new_from_bytes(&[0x01]);
 
     state.register_operations(operation.clone(), bitmap, 0, None);
     state.remove_executed_hash(
@@ -270,10 +258,6 @@ fn test_remove_all_executed_hashes() {
         .common_setup
         .register(&BLSKey::random(), &MultiEgldOrEsdtPayment::new(), None);
 
-    state
-        .common_setup
-        .register(&BLSKey::random(), &MultiEgldOrEsdtPayment::new(), None);
-
     state.common_setup.complete_chain_config_setup_phase();
 
     state
@@ -287,7 +271,7 @@ fn test_remove_all_executed_hashes() {
     let operation_1 = ManagedBuffer::from("operation_1");
     let operation_2 = ManagedBuffer::from("operation_2");
     let operation = state.generate_bridge_operation_struct(vec![&operation_1, &operation_2]);
-    let bitmap = ManagedBuffer::new_from_bytes(&[0x01, 0x02]);
+    let bitmap = ManagedBuffer::new_from_bytes(&[0x01]);
 
     state.register_operations(operation.clone(), bitmap, 0, None);
 
@@ -404,10 +388,6 @@ fn test_lock_operation() {
         .common_setup
         .register(&BLSKey::random(), &MultiEgldOrEsdtPayment::new(), None);
 
-    state
-        .common_setup
-        .register(&BLSKey::random(), &MultiEgldOrEsdtPayment::new(), None);
-
     state.common_setup.complete_chain_config_setup_phase();
 
     state
@@ -421,7 +401,7 @@ fn test_lock_operation() {
     let operation_1 = ManagedBuffer::from("operation_1");
     let operation_2 = ManagedBuffer::from("operation_2");
     let operation = state.generate_bridge_operation_struct(vec![&operation_1, &operation_2]);
-    let bitmap = ManagedBuffer::new_from_bytes(&[0x01, 0x02]);
+    let bitmap = ManagedBuffer::new_from_bytes(&[0x01]);
 
     state.register_operations(operation.clone(), bitmap, 0, None);
 
@@ -474,10 +454,6 @@ fn test_lock_operation_hash_already_locked() {
         .common_setup
         .register(&BLSKey::random(), &MultiEgldOrEsdtPayment::new(), None);
 
-    state
-        .common_setup
-        .register(&BLSKey::random(), &MultiEgldOrEsdtPayment::new(), None);
-
     state.common_setup.complete_chain_config_setup_phase();
 
     state
@@ -491,7 +467,7 @@ fn test_lock_operation_hash_already_locked() {
     let operation_1 = ManagedBuffer::from("operation_1");
     let operation_2 = ManagedBuffer::from("operation_2");
     let operation = state.generate_bridge_operation_struct(vec![&operation_1, &operation_2]);
-    let bitmap = ManagedBuffer::new_from_bytes(&[0x01, 0x02]);
+    let bitmap = ManagedBuffer::new_from_bytes(&[0x01]);
 
     state.register_operations(operation.clone(), bitmap, 0, None);
 
@@ -579,7 +555,7 @@ fn test_change_validator_set() {
         bls_key: validator_bls_key_1,
     };
     let signature = ManagedBuffer::new();
-    let bitmap_1 = ManagedBuffer::new_from_bytes(&[0]);
+    let bitmap_1 = ManagedBuffer::new_from_bytes(&[0x01]);
     state.common_setup.register_validator_operation(
         validator_data_1,
         signature.clone(),
@@ -607,7 +583,7 @@ fn test_change_validator_set() {
     validator_set.push(BigUint::from(2u32));
     validator_set.push(BigUint::from(3u32));
 
-    let bitmap = ManagedBuffer::new_from_bytes(&[0]);
+    let bitmap = ManagedBuffer::new_from_bytes(&[0x02]);
     let epoch_for_new_set = 1;
 
     state.change_validator_set(
@@ -646,10 +622,6 @@ fn test_change_validator_set_operation_already_registered() {
         .common_setup
         .register(&BLSKey::random(), &MultiEgldOrEsdtPayment::new(), None);
 
-    state
-        .common_setup
-        .register(&BLSKey::random(), &MultiEgldOrEsdtPayment::new(), None);
-
     state.common_setup.complete_chain_config_setup_phase();
 
     state
@@ -663,7 +635,7 @@ fn test_change_validator_set_operation_already_registered() {
     let operation_1 = ManagedBuffer::from("operation_1");
     let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&operation_1.to_vec()));
 
-    let bitmap = ManagedBuffer::new_from_bytes(&[0x01, 0x02]);
+    let bitmap = ManagedBuffer::new_from_bytes(&[0x01]);
 
     state.change_validator_set(
         &ManagedBuffer::new(),
@@ -712,10 +684,6 @@ fn test_change_multiple_validator_sets() {
         .common_setup
         .register(&BLSKey::random(), &MultiEgldOrEsdtPayment::new(), None);
 
-    state
-        .common_setup
-        .register(&BLSKey::random(), &MultiEgldOrEsdtPayment::new(), None);
-
     state.common_setup.complete_chain_config_setup_phase();
 
     state
@@ -737,13 +705,7 @@ fn test_change_multiple_validator_sets() {
 
         let signature = ManagedBuffer::new();
 
-        let mut bitmap = ManagedBuffer::new();
-        if epoch == 1 {
-            bitmap.append_bytes(&[0x01]);
-            bitmap.append_bytes(&[0x01]);
-        } else {
-            bitmap.append_bytes(&[0x02]);
-        }
+        let bitmap = ManagedBuffer::new_from_bytes(&[0x01]);
 
         state.common_setup.register_validator_operation(
             validator_data,
@@ -843,36 +805,37 @@ fn test_get_approving_validators() {
 
             // Test Case 1: Bitmap [0b00000001] - Only validator at index 0 approves
             let bitmap = ManagedBuffer::new_from_bytes(&[0b00000001]);
-            let approving_validators = sc.get_approving_validators(epoch, &bitmap, 4);
+            let approving_validators = sc.get_approving_validators(epoch, &bitmap, 5);
             assert_eq!(approving_validators.len(), 1);
-            assert_eq!(approving_validators.get(0).clone(), validator1_bls_key);
+            assert_eq!(approving_validators.get(0).clone(), validator0_bls_key);
 
             // Test Case 2: Bitmap [0b00000101] - Validators at indices 0 and 2 approve
             let bitmap = ManagedBuffer::new_from_bytes(&[0b00000101]);
-            let approving_validators = sc.get_approving_validators(epoch, &bitmap, 4);
+            let approving_validators = sc.get_approving_validators(epoch, &bitmap, 5);
             assert_eq!(approving_validators.len(), 2);
-            assert_eq!(approving_validators.get(0).clone(), validator1_bls_key);
-            assert_eq!(approving_validators.get(1).clone(), validator3_bls_key);
+            assert_eq!(approving_validators.get(0).clone(), validator0_bls_key);
+            assert_eq!(approving_validators.get(1).clone(), validator2_bls_key);
 
             // Test Case 3: Bitmap [0b11111111] - All validators approve
             let bitmap = ManagedBuffer::new_from_bytes(&[0b11111111]);
-            let approving_validators = sc.get_approving_validators(epoch, &bitmap, 4);
-            assert_eq!(approving_validators.len(), 4);
-            assert_eq!(approving_validators.get(0).clone(), validator1_bls_key);
-            assert_eq!(approving_validators.get(1).clone(), validator2_bls_key);
-            assert_eq!(approving_validators.get(2).clone(), validator3_bls_key);
-            assert_eq!(approving_validators.get(3).clone(), validator4_bls_key);
+            let approving_validators = sc.get_approving_validators(epoch, &bitmap, 5);
+            assert_eq!(approving_validators.len(), 5);
+            assert_eq!(approving_validators.get(0).clone(), validator0_bls_key);
+            assert_eq!(approving_validators.get(1).clone(), validator1_bls_key);
+            assert_eq!(approving_validators.get(2).clone(), validator2_bls_key);
+            assert_eq!(approving_validators.get(3).clone(), validator3_bls_key);
+            assert_eq!(approving_validators.get(4).clone(), validator4_bls_key);
 
             // Test Case 4: Bitmap [0b00000000] - No validators approve
             let bitmap = ManagedBuffer::new_from_bytes(&[0b00000000]);
-            let approving_validators = sc.get_approving_validators(epoch, &bitmap, 4);
+            let approving_validators = sc.get_approving_validators(epoch, &bitmap, 5);
             assert_eq!(approving_validators.len(), 0);
 
             // Test Case 5: Bitmap [0b00001010] - Validators at indices 1 and 3 approve
             let bitmap = ManagedBuffer::new_from_bytes(&[0b00001010]);
-            let approving_validators = sc.get_approving_validators(epoch, &bitmap, 4);
+            let approving_validators = sc.get_approving_validators(epoch, &bitmap, 5);
             assert_eq!(approving_validators.len(), 2);
-            assert_eq!(approving_validators.get(0).clone(), validator2_bls_key);
-            assert_eq!(approving_validators.get(1).clone(), validator4_bls_key);
+            assert_eq!(approving_validators.get(0).clone(), validator1_bls_key);
+            assert_eq!(approving_validators.get(1).clone(), validator3_bls_key);
         });
 }

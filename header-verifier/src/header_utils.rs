@@ -82,7 +82,7 @@ pub trait HeaderVerifierUtilsModule:
 
                 if (byte >> bit) & 1 == 1 {
                     approving_validators_bls_keys
-                        .push(bls_keys_from_storage.get(validator_index + 1).clone());
+                        .push(bls_keys_from_storage.get(validator_index).clone());
                 }
 
                 validator_index += 1;

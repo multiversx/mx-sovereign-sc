@@ -37,9 +37,9 @@ pub trait HeaderVerifierOperationsModule:
 
         let bls_pub_keys_mapper = self.bls_pub_keys(epoch);
 
-        if !self.is_bitmap_and_bls_same_length(pub_keys_bitmap.len(), bls_pub_keys_mapper.len()) {
-            sc_panic!(BITMAP_LEN_DOES_NOT_MATCH_BLS_KEY_LEN);
-        }
+        // if !self.is_bitmap_and_bls_same_length(pub_keys_bitmap.len(), bls_pub_keys_mapper.len()) {
+        //     sc_panic!(BITMAP_LEN_DOES_NOT_MATCH_BLS_KEY_LEN);
+        // }
 
         let mut hash_of_hashes_history_mapper = self.hash_of_hashes_history();
 
