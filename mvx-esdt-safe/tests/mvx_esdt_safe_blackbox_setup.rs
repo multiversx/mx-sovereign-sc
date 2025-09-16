@@ -406,6 +406,8 @@ impl MvxEsdtSafeTestState {
             .deploy_chain_config(OptionalValue::None, None);
         self.common_setup
             .register(&BLSKey::random(), &MultiEgldOrEsdtPayment::new(), None);
+        self.common_setup
+            .register(&BLSKey::random(), &MultiEgldOrEsdtPayment::new(), None);
         self.common_setup.complete_chain_config_setup_phase();
 
         self.common_setup

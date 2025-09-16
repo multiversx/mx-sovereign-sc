@@ -606,9 +606,18 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             shard,
             BLSKey::random(),
             MultiEgldOrEsdtPayment::new(),
+            chain_config_address.clone(),
+        )
+        .await;
+
+        self.register_as_validator(
+            shard,
+            BLSKey::random(),
+            MultiEgldOrEsdtPayment::new(),
             chain_config_address,
         )
         .await;
+
         self.deploy_phase_two(optional_esdt_safe_config.clone(), caller.clone())
             .await;
         // self.register_native_token(caller.clone()).await;
@@ -961,7 +970,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             .get_header_verifier_address(shard)
             .clone();
 
-        let bitmap = ManagedBuffer::new_from_bytes(&[1]);
+        let bitmap = ManagedBuffer::new_from_bytes(&[0x01, 0x02]);
         let epoch = 0u32;
 
         self.interactor()

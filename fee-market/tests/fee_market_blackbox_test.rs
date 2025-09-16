@@ -133,6 +133,10 @@ fn test_remove_users_from_whitelist() {
         .common_setup
         .register(&BLSKey::random(), &MultiEgldOrEsdtPayment::new(), None);
 
+    state
+        .common_setup
+        .register(&BLSKey::random(), &MultiEgldOrEsdtPayment::new(), None);
+
     state.common_setup.complete_chain_config_setup_phase();
 
     state
@@ -169,7 +173,7 @@ fn test_remove_users_from_whitelist() {
     aggregated_hashes.append(&operation_two_hash);
     let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&aggregated_hashes.to_vec()));
 
-    let bitmap = ManagedBuffer::new_from_bytes(&[1]);
+    let bitmap = ManagedBuffer::new_from_bytes(&[0x01, 0x02]);
     let signature = ManagedBuffer::new();
     let epoch = 0;
 
@@ -214,6 +218,10 @@ fn test_set_fee() {
         .common_setup
         .register(&BLSKey::random(), &MultiEgldOrEsdtPayment::new(), None);
 
+    state
+        .common_setup
+        .register(&BLSKey::random(), &MultiEgldOrEsdtPayment::new(), None);
+
     state.common_setup.complete_chain_config_setup_phase();
 
     state
@@ -236,7 +244,7 @@ fn test_set_fee() {
     };
     let fee_hash = fee.generate_hash();
     let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&fee_hash.to_vec()));
-    let bitmap = ManagedBuffer::new_from_bytes(&[1]);
+    let bitmap = ManagedBuffer::new_from_bytes(&[0x01, 0x02]);
     let signature = ManagedBuffer::new();
     let epoch = 0;
 
@@ -316,6 +324,10 @@ fn test_remove_fee_register_separate_operations() {
         .common_setup
         .register(&BLSKey::random(), &MultiEgldOrEsdtPayment::new(), None);
 
+    state
+        .common_setup
+        .register(&BLSKey::random(), &MultiEgldOrEsdtPayment::new(), None);
+
     state.common_setup.complete_chain_config_setup_phase();
 
     state
@@ -339,7 +351,7 @@ fn test_remove_fee_register_separate_operations() {
     let register_fee_hash = fee.generate_hash();
     let register_fee_hash_of_hashes =
         ManagedBuffer::new_from_bytes(&sha256(&register_fee_hash.to_vec()));
-    let bitmap = ManagedBuffer::new_from_bytes(&[1]);
+    let bitmap = ManagedBuffer::new_from_bytes(&[0x01, 0x02]);
     let signature = ManagedBuffer::new();
     let epoch = 0;
 
@@ -382,7 +394,7 @@ fn test_remove_fee_register_separate_operations() {
     );
 
     let remove_fee_hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&remove_fee_hash));
-    let bitmap = ManagedBuffer::new_from_bytes(&[1]);
+    let bitmap = ManagedBuffer::new_from_bytes(&[0x01, 0x02]);
     let signature = ManagedBuffer::new();
     let epoch = 0;
 
@@ -435,6 +447,10 @@ fn test_remove_fee_register_with_one_hash_of_hashes() {
         .common_setup
         .register(&BLSKey::random(), &MultiEgldOrEsdtPayment::new(), None);
 
+    state
+        .common_setup
+        .register(&BLSKey::random(), &MultiEgldOrEsdtPayment::new(), None);
+
     state.common_setup.complete_chain_config_setup_phase();
 
     state
@@ -469,7 +485,7 @@ fn test_remove_fee_register_with_one_hash_of_hashes() {
     aggregated_hashes.append(&register_fee_hash);
 
     let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&aggregated_hashes.to_vec()));
-    let bitmap = ManagedBuffer::new_from_bytes(&[1]);
+    let bitmap = ManagedBuffer::new_from_bytes(&[0x01, 0x02]);
     let signature = ManagedBuffer::new();
     let epoch = 0;
 
@@ -617,6 +633,10 @@ fn distribute_fees_percentage_under_limit() {
         .common_setup
         .register(&BLSKey::random(), &MultiEgldOrEsdtPayment::new(), None);
 
+    state
+        .common_setup
+        .register(&BLSKey::random(), &MultiEgldOrEsdtPayment::new(), None);
+
     state.common_setup.complete_chain_config_setup_phase();
 
     state
@@ -647,7 +667,7 @@ fn distribute_fees_percentage_under_limit() {
     let mut aggregated_hash: ManagedBuffer<StaticApi> = ManagedBuffer::new();
     aggregated_hash.append(&operation_hash);
     let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&aggregated_hash.to_vec()));
-    let bitmap = ManagedBuffer::new_from_bytes(&[1]);
+    let bitmap = ManagedBuffer::new_from_bytes(&[0x01, 0x02]);
     let signature = ManagedBuffer::new();
     let epoch = 0;
 
@@ -687,6 +707,11 @@ fn distribute_fees() {
     state
         .common_setup
         .register(&BLSKey::random(), &MultiEgldOrEsdtPayment::new(), None);
+
+    state
+        .common_setup
+        .register(&BLSKey::random(), &MultiEgldOrEsdtPayment::new(), None);
+
     state.common_setup.complete_chain_config_setup_phase();
 
     let fee_per_transfer = BigUint::from(100u32);
@@ -736,7 +761,7 @@ fn distribute_fees() {
     let mut aggregated_hash: ManagedBuffer<StaticApi> = ManagedBuffer::new();
     aggregated_hash.append(&operation_hash);
     let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&aggregated_hash.to_vec()));
-    let bitmap = ManagedBuffer::new_from_bytes(&[1]);
+    let bitmap = ManagedBuffer::new_from_bytes(&[0x01, 0x02]);
     let signature = ManagedBuffer::new();
     let epoch = 0;
 
