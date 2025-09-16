@@ -58,14 +58,15 @@ pub trait CustomEventsModule {
     #[event("completeGenesisPhase")]
     fn complete_genesis_event(&self);
 
-    #[event("registrationStatusUpdate")]
-    fn registration_status_update_event(&self, registration_status: &ManagedBuffer);
-
     #[event("setFee")]
     fn set_fee_event(&self, #[indexed] fee_struct: FeeStruct<Self::Api>, op_nonce: TxId);
 
     #[event("removeFee")]
-    fn remove_fee_event(&self, #[indexed] token_id: TokenIdentifier<Self::Api>, op_nonce: TxId);
+    fn remove_fee_event(
+        &self,
+        #[indexed] token_id: EgldOrEsdtTokenIdentifier<Self::Api>,
+        op_nonce: TxId,
+    );
 
     #[event("distributeFees")]
     fn distribute_fees_event(
@@ -103,5 +104,16 @@ pub trait CustomEventsModule {
         &self,
         #[indexed] users: ManagedVec<ManagedAddress<Self::Api>>,
         op_nonce: TxId,
+    );
+
+    #[event("registerToken")]
+    fn register_token_event(
+        &self,
+        #[indexed] token_id: EgldOrEsdtTokenIdentifier<Self::Api>,
+        #[indexed] token_type: EsdtTokenType,
+        #[indexed] token_name: ManagedBuffer,
+        #[indexed] token_ticker: ManagedBuffer,
+        #[indexed] token_decimals: usize,
+        op_data: OperationData<Self::Api>,
     );
 }

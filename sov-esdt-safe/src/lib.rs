@@ -1,8 +1,9 @@
 #![no_std]
-
-#[allow(unused_imports)]
+use cross_chain::DEFAULT_ISSUE_COST;
+use error_messages::{EGLD_TOKEN_IDENTIFIER_EXPECTED, ISSUE_COST_NOT_COVERED, TOKEN_ID_NO_PREFIX};
+use multiversx_sc::api::ESDT_LOCAL_BURN_FUNC_NAME;
 use multiversx_sc::imports::*;
-use structs::configs::EsdtSafeConfig;
+use structs::{configs::EsdtSafeConfig, operation::OperationData};
 
 pub mod deposit;
 
@@ -39,6 +40,48 @@ pub trait SovEsdtSafe:
         self.esdt_safe_config().set(new_config);
 
         self.set_paused(true);
+    }
+
+    #[payable]
+    #[endpoint(registerToken)]
+    fn register_token(
+        &self,
+        token_id: EgldOrEsdtTokenIdentifier<Self::Api>,
+        token_type: EsdtTokenType,
+        token_name: ManagedBuffer,
+        token_ticker: ManagedBuffer,
+        token_decimals: usize,
+    ) {
+        let call_value = self.call_value().egld_or_single_esdt().clone();
+        require!(
+            call_value.token_identifier.is_egld(),
+            EGLD_TOKEN_IDENTIFIER_EXPECTED
+        );
+        require!(
+            call_value.amount == DEFAULT_ISSUE_COST,
+            ISSUE_COST_NOT_COVERED
+        );
+        require!(self.has_prefix(&token_id), TOKEN_ID_NO_PREFIX);
+
+        self.tx()
+            .to(ToSelf)
+            .raw_call(ESDT_LOCAL_BURN_FUNC_NAME)
+            .argument(&call_value.token_identifier.as_managed_buffer())
+            .argument(&call_value.amount)
+            .sync_call();
+
+        self.register_token_event(
+            token_id,
+            token_type,
+            token_name,
+            token_ticker,
+            token_decimals,
+            OperationData {
+                op_nonce: self.get_and_save_next_tx_id(),
+                op_sender: self.blockchain().get_caller(),
+                opt_transfer_data: None,
+            },
+        );
     }
 
     #[only_owner]

@@ -8,7 +8,8 @@ use crate::checks;
 multiversx_sc::imports!();
 multiversx_sc::derive_imports!();
 
-#[derive(TopEncode, TopDecode, PartialEq)]
+#[type_abi]
+#[derive(TopEncode, TopDecode, PartialEq, Debug)]
 pub enum OperationHashStatus {
     NotLocked = 1,
     Locked,
@@ -59,18 +60,32 @@ pub trait HeaderVerifierUtilsModule:
         bls_keys_length: usize,
     ) -> ManagedVec<ManagedBuffer> {
         let mut padded_bitmap_byte_array = [0u8; 1024];
-        bls_keys_bitmap.load_to_byte_array(&mut padded_bitmap_byte_array);
+        let bytes_count = bls_keys_bitmap
+            .load_to_byte_array(&mut padded_bitmap_byte_array)
+            .len();
 
-        let bitmap_byte_array = &padded_bitmap_byte_array[..bls_keys_length];
+        let bitmap_byte_array = &padded_bitmap_byte_array[..bytes_count];
 
         let mut approving_validators_bls_keys: ManagedVec<Self::Api, ManagedBuffer> =
             ManagedVec::new();
 
-        for (index, has_signed) in bitmap_byte_array.iter().enumerate() {
-            let bls_keys_from_storage: ManagedVec<ManagedBuffer> =
-                self.bls_pub_keys(epoch).iter().collect();
-            if *has_signed == 1u8 {
-                approving_validators_bls_keys.push(bls_keys_from_storage.get(index).clone());
+        let bls_keys_from_storage: ManagedVec<ManagedBuffer> =
+            self.bls_pub_keys(epoch).iter().collect();
+
+        let mut validator_index: usize = 0;
+
+        'outer: for byte in bitmap_byte_array {
+            for bit in 0..8 {
+                if validator_index >= bls_keys_length {
+                    break 'outer;
+                }
+
+                if (byte >> bit) & 1 == 1 {
+                    approving_validators_bls_keys
+                        .push(bls_keys_from_storage.get(validator_index).clone());
+                }
+
+                validator_index += 1;
             }
         }
 

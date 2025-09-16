@@ -101,14 +101,18 @@ fn test_deploy_chain_config_invalid_config() {
 /// ### EXPECTED
 /// Setup phase is completed
 #[test]
-fn complete_setup_phase() {
+fn test_complete_setup_phase() {
     let mut state = ChainConfigTestState::new();
 
     state
         .common_setup
         .deploy_chain_config(OptionalValue::None, None);
 
-    state.common_setup.complete_chain_config_setup_phase(None);
+    state
+        .common_setup
+        .register(&BLSKey::random(), &MultiEgldOrEsdtPayment::new(), None);
+
+    state.common_setup.complete_chain_config_setup_phase();
 
     state
         .common_setup
@@ -194,25 +198,6 @@ fn test_update_config_during_setup_phase_wrong_validators_array() {
 }
 
 /// ### TEST
-/// C-CONFIG_COMPLETE_SETUP_PHASE_OK
-///
-/// ### ACTION
-/// Call 'complete_chain_config_setup_phase()'
-///
-/// ### EXPECTED
-/// Chain config's setup phase is completed
-#[test]
-fn test_complete_setup_phase() {
-    let mut state = ChainConfigTestState::new();
-
-    state
-        .common_setup
-        .deploy_chain_config(OptionalValue::None, None);
-
-    state.common_setup.complete_chain_config_setup_phase(None);
-}
-
-/// ### TEST
 /// C-CONFIG_UPDATE_CONFIG_FAIL
 ///
 /// ### ACTION
@@ -270,7 +255,7 @@ fn test_update_config_invalid_config() {
         .common_setup
         .register(&BLSKey::random(), &MultiEgldOrEsdtPayment::new(), None);
 
-    state.common_setup.complete_chain_config_setup_phase(None);
+    state.common_setup.complete_chain_config_setup_phase();
 
     state
         .common_setup
@@ -279,7 +264,7 @@ fn test_update_config_invalid_config() {
     let new_config = SovereignConfig::new(2, 1, BigUint::default(), None);
     let config_hash = new_config.generate_hash();
     let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&config_hash.to_vec()));
-    let bitmap = ManagedBuffer::new_from_bytes(&[1]);
+    let bitmap = ManagedBuffer::new_from_bytes(&[0x01]);
     let signature = ManagedBuffer::new();
 
     state.common_setup.register_operation(
@@ -323,7 +308,7 @@ fn test_update_config() {
         .common_setup
         .register(&BLSKey::random(), &MultiEgldOrEsdtPayment::new(), None);
 
-    state.common_setup.complete_chain_config_setup_phase(None);
+    state.common_setup.complete_chain_config_setup_phase();
 
     state
         .common_setup
@@ -332,7 +317,7 @@ fn test_update_config() {
     let new_config = SovereignConfig::new(1, 2, BigUint::default(), None);
     let config_hash = new_config.generate_hash();
     let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&config_hash.to_vec()));
-    let bitmap = ManagedBuffer::new_from_bytes(&[1]);
+    let bitmap = ManagedBuffer::new_from_bytes(&[0x01]);
     let signature = ManagedBuffer::new();
 
     state.common_setup.register_operation(
@@ -344,7 +329,7 @@ fn test_update_config() {
         MultiValueEncoded::from_iter(vec![config_hash]),
     );
 
-    state.common_setup.complete_chain_config_setup_phase(None);
+    state.common_setup.complete_chain_config_setup_phase();
 
     state.update_sovereign_config(
         hash_of_hashes,
@@ -524,7 +509,7 @@ fn test_register_after_genesis() {
         .common_setup
         .register(&BLSKey::random(), &ManagedVec::new(), None);
 
-    state.common_setup.complete_chain_config_setup_phase(None);
+    state.common_setup.complete_chain_config_setup_phase();
 
     state
         .common_setup
@@ -583,7 +568,7 @@ fn test_register_validator_after_genesis() {
         .common_setup
         .register(&BLSKey::random(), &payments_vec, None);
 
-    state.common_setup.complete_chain_config_setup_phase(None);
+    state.common_setup.complete_chain_config_setup_phase();
 
     state
         .common_setup
@@ -594,7 +579,7 @@ fn test_register_validator_after_genesis() {
         .complete_header_verifier_setup_phase(None);
 
     let signature = ManagedBuffer::new();
-    let bitmap = ManagedBuffer::new_from_bytes(&[1]);
+    let bitmap = ManagedBuffer::new_from_bytes(&[0x06]);
     let epoch = 0;
 
     for id in 2..4 {
@@ -880,7 +865,7 @@ fn test_unregister_after_genesis() {
         .common_setup
         .register(&BLSKey::random(), &ManagedVec::new(), None);
 
-    state.common_setup.complete_chain_config_setup_phase(None);
+    state.common_setup.complete_chain_config_setup_phase();
 
     state
         .common_setup
@@ -961,7 +946,7 @@ fn test_unregister_validator_after_genesis() {
             &(BigUint::from(ONE_HUNDRED_MILLION) - expected_token_amount),
         );
 
-    state.common_setup.complete_chain_config_setup_phase(None);
+    state.common_setup.complete_chain_config_setup_phase();
 
     state
         .common_setup
@@ -972,7 +957,7 @@ fn test_unregister_validator_after_genesis() {
         .complete_header_verifier_setup_phase(None);
 
     let signature = ManagedBuffer::new();
-    let bitmap = ManagedBuffer::new_from_bytes(&vec![1; num_of_validators as usize]);
+    let bitmap = ManagedBuffer::new_from_bytes(&num_of_validators.to_be_bytes());
     let epoch = 0;
 
     for id in 1..4 {
@@ -1022,7 +1007,7 @@ fn test_unregister_validator_invalid() {
         .common_setup
         .register(&BLSKey::random(), &MultiEgldOrEsdtPayment::new(), None);
 
-    state.common_setup.complete_chain_config_setup_phase(None);
+    state.common_setup.complete_chain_config_setup_phase();
 
     state
         .common_setup
@@ -1033,7 +1018,7 @@ fn test_unregister_validator_invalid() {
         .complete_header_verifier_setup_phase(None);
 
     let signature = ManagedBuffer::new();
-    let bitmap = ManagedBuffer::new_from_bytes(&[1]);
+    let bitmap = ManagedBuffer::new_from_bytes(&[0x01]);
     let epoch = 0;
 
     // invalid validator id

@@ -1,14 +1,18 @@
 use common_test_setup::constants::{
-    DEPOSIT_EVENT, ESDT_SAFE_ADDRESS, FEE_MARKET_ADDRESS, FEE_TOKEN, FIRST_TEST_TOKEN,
+    DEPOSIT_EVENT, ESDT_SAFE_ADDRESS, FEE_MARKET_ADDRESS, FEE_TOKEN, FIRST_TEST_TOKEN, ISSUE_COST,
     ONE_HUNDRED_MILLION, ONE_HUNDRED_THOUSAND, OWNER_ADDRESS, SC_CALL_EVENT, SECOND_TEST_TOKEN,
-    USER_ADDRESS,
+    SOV_TOKEN, TESTING_SC_ENDPOINT, USER_ADDRESS,
 };
-use error_messages::NOTHING_TO_TRANSFER;
+use error_messages::{
+    ACTION_IS_NOT_ALLOWED, EGLD_TOKEN_IDENTIFIER_EXPECTED, ISSUE_COST_NOT_COVERED,
+    NOTHING_TO_TRANSFER, TOKEN_ID_NO_PREFIX,
+};
 use multiversx_sc::{
+    chain_core::EGLD_000000_TOKEN_IDENTIFIER,
     imports::{MultiValue3, OptionalValue},
     types::{
-        BigUint, EgldOrEsdtTokenIdentifier, EsdtTokenPayment, ManagedBuffer, ManagedVec,
-        MultiValueEncoded,
+        BigUint, EgldOrEsdtTokenIdentifier, EgldOrEsdtTokenPayment, EsdtTokenPayment,
+        EsdtTokenType, ManagedBuffer, ManagedVec, MultiValueEncoded,
     },
 };
 use multiversx_sc_scenario::api::StaticApi;
@@ -17,6 +21,7 @@ use structs::{
     aliases::PaymentsVec,
     configs::EsdtSafeConfig,
     fee::{FeeStruct, FeeType},
+    RegisterTokenStruct,
 };
 
 mod sov_esdt_safe_blackbox_setup;
@@ -72,7 +77,6 @@ fn test_deposit_no_fee_no_transfer_data() {
         USER_ADDRESS.to_managed_address(),
         OptionalValue::None,
         payments_vec.clone(),
-        None,
         Some(DEPOSIT_EVENT),
     );
 
@@ -237,7 +241,7 @@ fn test_deposit_no_fee_with_transfer_data() {
     ]);
 
     let gas_limit = 1;
-    let function = ManagedBuffer::<StaticApi>::from("hello");
+    let function = ManagedBuffer::<StaticApi>::from(TESTING_SC_ENDPOINT);
     let args =
         MultiValueEncoded::<StaticApi, ManagedBuffer<StaticApi>>::from(ManagedVec::from(vec![
             ManagedBuffer::from("1"),
@@ -249,7 +253,6 @@ fn test_deposit_no_fee_with_transfer_data() {
         USER_ADDRESS.to_managed_address(),
         OptionalValue::Some(transfer_data),
         payments_vec.clone(),
-        None,
         Some(DEPOSIT_EVENT),
     );
 
@@ -334,7 +337,7 @@ fn test_deposit_with_fee_with_transfer_data() {
     ]);
 
     let gas_limit = 2;
-    let function = ManagedBuffer::<StaticApi>::from("hello");
+    let function = ManagedBuffer::<StaticApi>::from(TESTING_SC_ENDPOINT);
     let args =
         MultiValueEncoded::<StaticApi, ManagedBuffer<StaticApi>>::from(ManagedVec::from(vec![
             ManagedBuffer::from("1"),
@@ -439,7 +442,7 @@ fn test_deposit_sc_call_only() {
     state.set_fee_market_address(FEE_MARKET_ADDRESS);
 
     let gas_limit = 2;
-    let function = ManagedBuffer::<StaticApi>::from("hello");
+    let function = ManagedBuffer::<StaticApi>::from(TESTING_SC_ENDPOINT);
     let args =
         MultiValueEncoded::<StaticApi, ManagedBuffer<StaticApi>>::from(ManagedVec::from(vec![
             ManagedBuffer::from("1"),
@@ -453,5 +456,170 @@ fn test_deposit_sc_call_only() {
         PaymentsVec::new(),
         None,
         Some(SC_CALL_EVENT),
+    );
+}
+
+/// ### TEST
+/// S-ESDT_REGISTER_TOKEN_FAIL
+///
+/// ### ACTION
+/// Call 'register_token()' with not enough EGLD to cover issue cost
+///
+/// ### EXPECTED
+/// ISSUE_COST_NOT_COVERED
+#[test]
+fn test_register_token_not_enough_issue_cost() {
+    let mut state = SovEsdtSafeTestState::new();
+
+    state.deploy_contract_with_roles();
+    state
+        .common_setup
+        .deploy_fee_market(None, ESDT_SAFE_ADDRESS);
+    state.common_setup.deploy_testing_sc();
+    state.set_fee_market_address(FEE_MARKET_ADDRESS);
+
+    let egld_token_payment = EgldOrEsdtTokenPayment::<StaticApi>::new(
+        EGLD_000000_TOKEN_IDENTIFIER.into(),
+        0,
+        BigUint::from(1u64),
+    );
+
+    let new_token = RegisterTokenStruct {
+        token_id: EgldOrEsdtTokenIdentifier::from(SOV_TOKEN.as_str()),
+        token_type: EsdtTokenType::Fungible,
+        token_display_name: ManagedBuffer::from("Test Token"),
+        token_ticker: ManagedBuffer::from("TST"),
+        num_decimals: 18,
+    };
+
+    state.register_token(
+        new_token,
+        egld_token_payment,
+        None,
+        Some(ISSUE_COST_NOT_COVERED),
+    );
+}
+
+/// ### TEST
+/// S-ESDT_REGISTER_TOKEN_FAIL
+///
+/// ### ACTION
+/// Call 'register_token()' non sov token ID
+///
+/// ### EXPECTED
+/// TOKEN_ID_NO_PREFIX
+#[test]
+fn test_register_token_with_no_prefix() {
+    let mut state = SovEsdtSafeTestState::new();
+
+    state.deploy_contract_with_roles();
+    state
+        .common_setup
+        .deploy_fee_market(None, ESDT_SAFE_ADDRESS);
+    state.common_setup.deploy_testing_sc();
+    state.set_fee_market_address(FEE_MARKET_ADDRESS);
+
+    let egld_token_payment = EgldOrEsdtTokenPayment::<StaticApi>::new(
+        EGLD_000000_TOKEN_IDENTIFIER.into(),
+        0,
+        ISSUE_COST.into(),
+    );
+
+    let new_token = RegisterTokenStruct {
+        token_id: EgldOrEsdtTokenIdentifier::from(FIRST_TEST_TOKEN.as_str()),
+        token_type: EsdtTokenType::Fungible,
+        token_display_name: ManagedBuffer::from("Test Token"),
+        token_ticker: ManagedBuffer::from("TST"),
+        num_decimals: 18,
+    };
+
+    state.register_token(
+        new_token,
+        egld_token_payment,
+        None,
+        Some(TOKEN_ID_NO_PREFIX),
+    );
+}
+
+/// ### TEST
+/// S-ESDT_REGISTER_TOKEN_FAIL
+///
+/// ### ACTION
+/// Call 'register_token()' with wrong payment
+///
+/// ### EXPECTED
+/// EGLD_TOKEN_IDENTIFIER_EXPECTED
+#[test]
+fn test_register_token_wrong_payment() {
+    let mut state = SovEsdtSafeTestState::new();
+
+    state.deploy_contract_with_roles();
+    state
+        .common_setup
+        .deploy_fee_market(None, ESDT_SAFE_ADDRESS);
+    state.common_setup.deploy_testing_sc();
+    state.set_fee_market_address(FEE_MARKET_ADDRESS);
+
+    let egld_token_payment = EgldOrEsdtTokenPayment::<StaticApi>::new(
+        EgldOrEsdtTokenIdentifier::from(FIRST_TEST_TOKEN.as_str()),
+        0,
+        BigUint::from(1u64),
+    );
+
+    let new_token = RegisterTokenStruct {
+        token_id: EgldOrEsdtTokenIdentifier::from(FIRST_TEST_TOKEN.as_str()),
+        token_type: EsdtTokenType::Fungible,
+        token_display_name: ManagedBuffer::from("Test Token"),
+        token_ticker: ManagedBuffer::from("TST"),
+        num_decimals: 18,
+    };
+
+    state.register_token(
+        new_token,
+        egld_token_payment,
+        None,
+        Some(EGLD_TOKEN_IDENTIFIER_EXPECTED),
+    );
+}
+
+/// ### TEST
+/// S-ESDT_REGISTER_TOKEN_OK
+///
+/// ### ACTION
+/// Call 'register_token()'
+///
+/// ### EXPECTED
+/// Event is emitted
+#[test]
+fn test_register_token() {
+    let mut state = SovEsdtSafeTestState::new();
+
+    state.deploy_contract_with_roles();
+    state
+        .common_setup
+        .deploy_fee_market(None, ESDT_SAFE_ADDRESS);
+    state.common_setup.deploy_testing_sc();
+    state.set_fee_market_address(FEE_MARKET_ADDRESS);
+
+    let egld_token_payment = EgldOrEsdtTokenPayment::<StaticApi>::new(
+        EGLD_000000_TOKEN_IDENTIFIER.into(),
+        0,
+        ISSUE_COST.into(),
+    );
+
+    let new_token = RegisterTokenStruct {
+        token_id: EgldOrEsdtTokenIdentifier::from(SOV_TOKEN.as_str()),
+        token_type: EsdtTokenType::Fungible,
+        token_display_name: ManagedBuffer::from("Test Token"),
+        token_ticker: ManagedBuffer::from("TST"),
+        num_decimals: 18,
+    };
+
+    // NOTE: Until the EGLD_000000_TOKEN_IDENTIFIER is considered an ESDT this will fail since the contract cannot burn any EGLD
+    state.register_token(
+        new_token,
+        egld_token_payment,
+        None,
+        Some(ACTION_IS_NOT_ALLOWED),
     );
 }

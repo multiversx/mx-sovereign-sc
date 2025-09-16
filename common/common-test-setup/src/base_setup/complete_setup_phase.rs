@@ -31,7 +31,7 @@ impl BaseSetup {
         self.assert_expected_error_message(response, expected_error_message);
     }
 
-    pub fn complete_fee_market_setup_phase(&mut self, expected_error_message: Option<&str>) {
+    pub fn complete_fee_market_setup_phase(&mut self) {
         let response = self
             .world
             .tx()
@@ -44,7 +44,7 @@ impl BaseSetup {
 
         self.change_ownership_to_header_verifier(FEE_MARKET_ADDRESS);
 
-        self.assert_expected_error_message(response, expected_error_message);
+        self.assert_expected_error_message(response, None);
     }
 
     pub fn complete_sovereign_forge_setup_phase(&mut self, expected_error_message: Option<&str>) {
@@ -61,7 +61,7 @@ impl BaseSetup {
         self.assert_expected_error_message(response, expected_error_message);
     }
 
-    pub fn complete_chain_config_setup_phase(&mut self, expect_error: Option<&str>) {
+    pub fn complete_chain_config_setup_phase(&mut self) {
         let transaction = self
             .world
             .tx()
@@ -72,7 +72,7 @@ impl BaseSetup {
             .returns(ReturnsHandledOrError::new())
             .run();
 
-        self.assert_expected_error_message(transaction, expect_error);
+        self.assert_expected_error_message(transaction, None);
     }
 
     pub fn complete_mvx_esdt_safe_setup_phase(&mut self) {
