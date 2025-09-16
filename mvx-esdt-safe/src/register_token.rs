@@ -1,4 +1,4 @@
-use cross_chain::REGISTER_GAS;
+use cross_chain::{DEFAULT_ISSUE_COST, REGISTER_GAS};
 use error_messages::{
     ERROR_AT_GENERATING_OPERATION_HASH, ESDT_SAFE_STILL_PAUSED, INVALID_PREFIX_FOR_REGISTER,
     NATIVE_TOKEN_ALREADY_REGISTERED, NOT_ENOUGH_EGLD_FOR_REGISTER, SETUP_PHASE_ALREADY_COMPLETED,
@@ -11,8 +11,6 @@ use structs::{
 };
 multiversx_sc::imports!();
 multiversx_sc::derive_imports!();
-
-pub const ISSUE_COST: u64 = 50_000_000_000_000_000; // 0.05 EGLD
 
 #[multiversx_sc::module]
 pub trait RegisterTokenModule:
@@ -65,7 +63,7 @@ pub trait RegisterTokenModule:
             .blockchain()
             .get_balance(&self.blockchain().get_sc_address());
 
-        if contract_balance < ISSUE_COST {
+        if contract_balance < DEFAULT_ISSUE_COST {
             self.complete_operation(
                 &hash_of_hashes,
                 &token_hash,
@@ -149,7 +147,7 @@ pub trait RegisterTokenModule:
             .to(ESDTSystemSCAddress)
             .typed(ESDTSystemSCProxy)
             .issue_and_set_all_roles(
-                BigUint::from(ISSUE_COST),
+                BigUint::from(DEFAULT_ISSUE_COST),
                 token_display_name,
                 token_ticker,
                 token_type,
@@ -243,10 +241,10 @@ pub trait RegisterTokenModule:
         &self,
     ) -> MultiValueEncoded<Self::Api, EventPaymentTuple<Self::Api>> {
         let mut token_data = EsdtTokenData::default();
-        token_data.amount = ISSUE_COST.into();
+        token_data.amount = DEFAULT_ISSUE_COST.into();
 
         MultiValueEncoded::from_iter([MultiValue3((
-            EgldOrEsdtTokenIdentifier::from(EGLD_000000_TOKEN_IDENTIFIER),
+            EGLD_000000_TOKEN_IDENTIFIER.into(),
             0u64,
             token_data,
         ))])

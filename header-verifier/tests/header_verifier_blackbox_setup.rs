@@ -204,23 +204,4 @@ impl HeaderVerifierTestState {
             operations_hashes: bridge_operations,
         }
     }
-
-    // TODO:
-    // Cleanup, use the example from chain-config tests
-    pub fn get_operation_hash(
-        &mut self,
-        operation: &ManagedBuffer<StaticApi>,
-    ) -> ManagedBuffer<StaticApi> {
-        let mut array = [0; 1024];
-
-        let len = {
-            let byte_array = operation.load_to_byte_array(&mut array);
-            byte_array.len()
-        };
-
-        let trimmed_slice = &array[..len];
-        let hash = sha256(trimmed_slice);
-
-        ManagedBuffer::from(&hash)
-    }
 }
