@@ -355,11 +355,11 @@ dependencies = [
  "chain-factory",
  "cross-chain",
  "error-messages",
- "fee-market",
  "header-verifier",
  "hex",
  "multiversx-sc-scenario",
  "mvx-esdt-safe",
+ "mvx-fee-market",
  "proxies",
  "rand 0.8.5",
  "rand_core 0.6.4",
@@ -616,31 +616,6 @@ dependencies = [
  "multiversx-sc-modules",
  "proxies",
  "structs",
-]
-
-[[package]]
-name = "fee-market"
-version = "0.1.0"
-dependencies = [
- "common-test-setup",
- "common-utils",
- "custom-events",
- "error-messages",
- "fee-common",
- "multiversx-sc",
- "multiversx-sc-scenario",
- "num-bigint",
- "proxies",
- "setup-phase",
- "structs",
-]
-
-[[package]]
-name = "fee-market-meta"
-version = "0.1.0"
-dependencies = [
- "fee-market",
- "multiversx-sc-meta-lib",
 ]
 
 [[package]]
@@ -1553,11 +1528,11 @@ dependencies = [
  "cross-chain",
  "custom-events",
  "error-messages",
- "fee-market",
  "header-verifier",
  "multiversx-sc",
  "multiversx-sc-modules",
  "multiversx-sc-scenario",
+ "mvx-fee-market",
  "proxies",
  "setup-phase",
  "structs",
@@ -1570,6 +1545,31 @@ version = "0.1.0"
 dependencies = [
  "multiversx-sc-meta-lib",
  "mvx-esdt-safe",
+]
+
+[[package]]
+name = "mvx-fee-market"
+version = "0.1.0"
+dependencies = [
+ "common-test-setup",
+ "common-utils",
+ "custom-events",
+ "error-messages",
+ "fee-common",
+ "multiversx-sc",
+ "multiversx-sc-scenario",
+ "num-bigint",
+ "proxies",
+ "setup-phase",
+ "structs",
+]
+
+[[package]]
+name = "mvx-fee-market-meta"
+version = "0.1.0"
+dependencies = [
+ "multiversx-sc-meta-lib",
+ "mvx-fee-market",
 ]
 
 [[package]]
@@ -2380,10 +2380,10 @@ dependencies = [
  "cross-chain",
  "custom-events",
  "error-messages",
- "fee-market",
  "multiversx-sc",
  "multiversx-sc-modules",
  "multiversx-sc-scenario",
+ "mvx-fee-market",
  "proxies",
  "setup-phase",
  "structs",
@@ -2456,12 +2456,12 @@ dependencies = [
  "custom-events",
  "error-messages",
  "fee-common",
- "fee-market",
  "header-verifier",
  "multiversx-sc",
  "multiversx-sc-modules",
  "multiversx-sc-scenario",
  "mvx-esdt-safe",
+ "mvx-fee-market",
  "num-bigint",
  "proxies",
  "structs",

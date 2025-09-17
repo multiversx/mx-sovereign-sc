@@ -25,7 +25,7 @@ pub const FEE_MARKET_SHARD_2: &str = "Fee Market Shard 2";
 pub const UNKNOWN_FEE_MARKET: &str = "Unknown Fee Market";
 
 pub const FEE_MARKET_CODE_PATH: MxscPath =
-    MxscPath::new("../fee-market/output/fee-market.mxsc.json");
+    MxscPath::new("../mvx-fee-market/output/mvx-fee-market.mxsc.json");
 pub const HEADER_VERIFIER_CODE_PATH: MxscPath =
     MxscPath::new("../header-verifier/output/header-verifier.mxsc.json");
 pub const CHAIN_CONFIG_CODE_PATH: MxscPath =

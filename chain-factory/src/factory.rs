@@ -1,8 +1,8 @@
 use multiversx_sc::imports::*;
 use multiversx_sc_modules::only_admin;
 use proxies::{
-    chain_config_proxy::ChainConfigContractProxy, fee_market_proxy::FeeMarketProxy,
-    header_verifier_proxy::HeaderverifierProxy, mvx_esdt_safe_proxy::MvxEsdtSafeProxy,
+    chain_config_proxy::ChainConfigContractProxy, header_verifier_proxy::HeaderverifierProxy,
+    mvx_esdt_safe_proxy::MvxEsdtSafeProxy, mvx_fee_market_proxy::MvxFeeMarketProxy,
 };
 use structs::{
     configs::{EsdtSafeConfig, SovereignConfig},
@@ -80,7 +80,7 @@ pub trait FactoryModule: only_admin::OnlyAdminModule {
 
         let fee_market_address = self
             .tx()
-            .typed(FeeMarketProxy)
+            .typed(MvxFeeMarketProxy)
             .init(&esdt_safe_address, fee)
             .from_source(source_address)
             .code_metadata(metadata)

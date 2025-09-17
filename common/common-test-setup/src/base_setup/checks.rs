@@ -13,7 +13,7 @@ use multiversx_sc_scenario::{
     ScenarioTxRun, ScenarioTxWhitebox,
 };
 use mvx_esdt_safe::bridging_mechanism::BridgingMechanism;
-use proxies::fee_market_proxy::FeeMarketProxy;
+use proxies::mvx_fee_market_proxy::MvxFeeMarketProxy;
 
 use crate::{
     base_setup::init::BaseSetup,
@@ -47,7 +47,7 @@ impl BaseSetup {
             .world
             .query()
             .to(FEE_MARKET_ADDRESS)
-            .typed(FeeMarketProxy)
+            .typed(MvxFeeMarketProxy)
             .users_whitelist()
             .returns(ReturnsResultUnmanaged)
             .run();

@@ -15,7 +15,7 @@ use common_test_setup::{
         SECOND_TEST_TOKEN, USER_ADDRESS,
     },
 };
-use proxies::fee_market_proxy::FeeMarketProxy;
+use proxies::mvx_fee_market_proxy::MvxFeeMarketProxy;
 use structs::fee::{
     AddUsersToWhitelistOperation, DistributeFeesOperation, FeeStruct, FeeType,
     RemoveUsersFromWhitelistOperation,
@@ -112,7 +112,7 @@ impl FeeMarketTestState {
             .tx()
             .from(ESDT_SAFE_ADDRESS)
             .to(FEE_MARKET_ADDRESS)
-            .typed(FeeMarketProxy)
+            .typed(MvxFeeMarketProxy)
             .subtract_fee(original_caller, total_transfers, opt_gas_limit)
             .payment(payment)
             .returns(ReturnsHandledOrError::new())
@@ -128,7 +128,7 @@ impl FeeMarketTestState {
             .tx()
             .from(OWNER_ADDRESS)
             .to(FEE_MARKET_ADDRESS)
-            .typed(FeeMarketProxy)
+            .typed(MvxFeeMarketProxy)
             .remove_fee_during_setup_phase(base_token)
             .run();
     }
@@ -147,7 +147,7 @@ impl FeeMarketTestState {
             .tx()
             .from(HEADER_VERIFIER_ADDRESS)
             .to(FEE_MARKET_ADDRESS)
-            .typed(FeeMarketProxy)
+            .typed(MvxFeeMarketProxy)
             .remove_fee(hash_of_hashes, token_id)
             .returns(ReturnsHandledOrError::new())
             .returns(ReturnsLogs)
@@ -173,7 +173,7 @@ impl FeeMarketTestState {
             .tx()
             .from(HEADER_VERIFIER_ADDRESS)
             .to(FEE_MARKET_ADDRESS)
-            .typed(FeeMarketProxy)
+            .typed(MvxFeeMarketProxy)
             .set_fee(hash_of_hashes, fee_struct)
             .returns(ReturnsHandledOrError::new())
             .returns(ReturnsLogs)
@@ -222,7 +222,7 @@ impl FeeMarketTestState {
             .tx()
             .from(OWNER_ADDRESS)
             .to(FEE_MARKET_ADDRESS)
-            .typed(FeeMarketProxy)
+            .typed(MvxFeeMarketProxy)
             .set_fee_during_setup_phase(fee_struct)
             .returns(ReturnsHandledOrError::new())
             .run();
@@ -244,7 +244,7 @@ impl FeeMarketTestState {
             .tx()
             .from(HEADER_VERIFIER_ADDRESS)
             .to(FEE_MARKET_ADDRESS)
-            .typed(FeeMarketProxy)
+            .typed(MvxFeeMarketProxy)
             .distribute_fees(hash_of_hashes, operation)
             .returns(ReturnsHandledOrError::new())
             .returns(ReturnsLogs)
@@ -271,7 +271,7 @@ impl FeeMarketTestState {
             .tx()
             .from(OWNER_ADDRESS)
             .to(FEE_MARKET_ADDRESS)
-            .typed(FeeMarketProxy)
+            .typed(MvxFeeMarketProxy)
             .add_users_to_whitelist_during_setup_phase(users)
             .run();
     }
@@ -286,7 +286,7 @@ impl FeeMarketTestState {
             .tx()
             .from(OWNER_ADDRESS)
             .to(FEE_MARKET_ADDRESS)
-            .typed(FeeMarketProxy)
+            .typed(MvxFeeMarketProxy)
             .add_users_to_whitelist(hash_of_hashes, operation)
             .run();
     }
@@ -301,7 +301,7 @@ impl FeeMarketTestState {
             .tx()
             .from(OWNER_ADDRESS)
             .to(FEE_MARKET_ADDRESS)
-            .typed(FeeMarketProxy)
+            .typed(MvxFeeMarketProxy)
             .remove_users_from_whitelist(hash_of_hashes, operation)
             .run();
     }

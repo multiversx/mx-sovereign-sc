@@ -8,8 +8,8 @@ use multiversx_sc_scenario::{
 };
 use proxies::{
     chain_config_proxy::ChainConfigContractProxy, chain_factory_proxy::ChainFactoryContractProxy,
-    fee_market_proxy::FeeMarketProxy, header_verifier_proxy::HeaderverifierProxy,
-    mvx_esdt_safe_proxy::MvxEsdtSafeProxy, sov_esdt_safe_proxy::SovEsdtSafeProxy,
+    header_verifier_proxy::HeaderverifierProxy, mvx_esdt_safe_proxy::MvxEsdtSafeProxy,
+    mvx_fee_market_proxy::MvxFeeMarketProxy, sov_esdt_safe_proxy::SovEsdtSafeProxy,
     sov_fee_market_proxy::SovFeeMarketProxy, sovereign_forge_proxy::SovereignForgeProxy,
     testing_sc_proxy::TestingScProxy,
 };
@@ -64,7 +64,7 @@ impl BaseSetup {
         self.world
             .tx()
             .from(OWNER_ADDRESS)
-            .typed(FeeMarketProxy)
+            .typed(MvxFeeMarketProxy)
             .init(esdt_safe_address, fee)
             .code(FEE_MARKET_CODE_PATH)
             .new_address(FEE_MARKET_ADDRESS)

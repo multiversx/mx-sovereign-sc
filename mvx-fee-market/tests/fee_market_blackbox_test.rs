@@ -260,7 +260,7 @@ fn test_set_fee() {
         .world
         .query()
         .to(FEE_MARKET_ADDRESS)
-        .whitebox(fee_market::contract_obj, |sc| {
+        .whitebox(mvx_fee_market::contract_obj, |sc| {
             assert!(!sc
                 .token_fee(&EgldOrEsdtTokenIdentifier::esdt(FIRST_TEST_TOKEN))
                 .is_empty());
@@ -368,7 +368,7 @@ fn test_remove_fee_register_separate_operations() {
         .world
         .query()
         .to(FEE_MARKET_ADDRESS)
-        .whitebox(fee_market::contract_obj, |sc| {
+        .whitebox(mvx_fee_market::contract_obj, |sc| {
             assert!(!sc
                 .token_fee(&EgldOrEsdtTokenIdentifier::esdt(FIRST_TEST_TOKEN))
                 .is_empty());
@@ -408,7 +408,7 @@ fn test_remove_fee_register_separate_operations() {
         .world
         .query()
         .to(FEE_MARKET_ADDRESS)
-        .whitebox(fee_market::contract_obj, |sc| {
+        .whitebox(mvx_fee_market::contract_obj, |sc| {
             assert!(sc
                 .token_fee(&EgldOrEsdtTokenIdentifier::esdt(FIRST_TEST_TOKEN))
                 .is_empty());
@@ -493,7 +493,7 @@ fn test_remove_fee_register_with_one_hash_of_hashes() {
         .world
         .query()
         .to(FEE_MARKET_ADDRESS)
-        .whitebox(fee_market::contract_obj, |sc| {
+        .whitebox(mvx_fee_market::contract_obj, |sc| {
             assert!(!sc
                 .token_fee(&EgldOrEsdtTokenIdentifier::esdt(FIRST_TEST_TOKEN))
                 .is_empty());
@@ -512,7 +512,7 @@ fn test_remove_fee_register_with_one_hash_of_hashes() {
         .world
         .query()
         .to(FEE_MARKET_ADDRESS)
-        .whitebox(fee_market::contract_obj, |sc| {
+        .whitebox(mvx_fee_market::contract_obj, |sc| {
             assert!(sc
                 .token_fee(&EgldOrEsdtTokenIdentifier::esdt(FIRST_TEST_TOKEN))
                 .is_empty());

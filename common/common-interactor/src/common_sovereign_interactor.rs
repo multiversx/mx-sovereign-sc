@@ -33,9 +33,9 @@ use multiversx_sc_snippets::{
 use proxies::{
     chain_config_proxy::ChainConfigContractProxy,
     chain_factory_proxy::ChainFactoryContractProxy,
-    fee_market_proxy::FeeMarketProxy,
     header_verifier_proxy::{HeaderverifierProxy, OperationHashStatus},
     mvx_esdt_safe_proxy::MvxEsdtSafeProxy,
+    mvx_fee_market_proxy::MvxFeeMarketProxy,
     sovereign_forge_proxy::SovereignForgeProxy,
     testing_sc_proxy::TestingScProxy,
 };
@@ -323,7 +323,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             .tx()
             .from(caller.clone())
             .gas(80_000_000u64)
-            .typed(FeeMarketProxy)
+            .typed(MvxFeeMarketProxy)
             .init(
                 Bech32Address::from(esdt_safe_template),
                 None::<FeeStruct<StaticApi>>,
@@ -440,7 +440,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             .tx()
             .from(caller)
             .gas(80_000_000u64)
-            .typed(FeeMarketProxy)
+            .typed(MvxFeeMarketProxy)
             .init(esdt_safe_address, fee)
             .returns(ReturnsNewAddress)
             .code(FEE_MARKET_CODE_PATH)
@@ -903,7 +903,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             .from(bridge_service)
             .to(current_fee_market_address)
             .gas(50_000_000u64)
-            .typed(FeeMarketProxy)
+            .typed(MvxFeeMarketProxy)
             .set_fee(hash_of_hashes, fee)
             .returns(ReturnsResultUnmanaged)
             .run()
@@ -924,7 +924,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             .from(bridge_service)
             .to(current_fee_market_address)
             .gas(50_000_000u64)
-            .typed(FeeMarketProxy)
+            .typed(MvxFeeMarketProxy)
             .remove_fee(hash_of_hashes, base_token)
             .returns(ReturnsResultUnmanaged)
             .run()

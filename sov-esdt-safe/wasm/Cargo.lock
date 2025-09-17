@@ -77,20 +77,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "fee-market"
-version = "0.1.0"
-dependencies = [
- "common-utils",
- "custom-events",
- "error-messages",
- "fee-common",
- "multiversx-sc",
- "proxies",
- "setup-phase",
- "structs",
-]
-
-[[package]]
 name = "generic-array"
 version = "1.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -193,6 +179,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "mvx-fee-market"
+version = "0.1.0"
+dependencies = [
+ "common-utils",
+ "custom-events",
+ "error-messages",
+ "fee-common",
+ "multiversx-sc",
+ "proxies",
+ "setup-phase",
+ "structs",
+]
+
+[[package]]
 name = "nibble_vec"
 version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -270,9 +270,9 @@ dependencies = [
  "cross-chain",
  "custom-events",
  "error-messages",
- "fee-market",
  "multiversx-sc",
  "multiversx-sc-modules",
+ "mvx-fee-market",
  "proxies",
  "setup-phase",
  "structs",

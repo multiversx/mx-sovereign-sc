@@ -1,10 +1,10 @@
 [package]
-name = "fee-market-meta"
+name = "mvx-fee-market-meta"
 version = "0.1.0"
 edition = "2021"
 publish = false
 
-[dependencies.fee-market]
+[dependencies.mvx-fee-market]
 path = ".."
 
 [dependencies.multiversx-sc-meta-lib]
