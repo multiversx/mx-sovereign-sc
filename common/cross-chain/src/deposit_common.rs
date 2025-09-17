@@ -136,12 +136,9 @@ pub trait DepositCommonModule:
     fn burn_sovereign_token(&self, payment: &EgldOrEsdtTokenPayment<Self::Api>) {
         self.tx()
             .to(ToSelf)
-            .typed(system_proxy::UserBuiltinProxy)
-            .esdt_local_burn(
-                payment.token_identifier.clone().unwrap_esdt(),
-                payment.token_nonce,
-                &payment.amount,
-            )
+            .raw_call(ESDT_LOCAL_BURN_FUNC_NAME)
+            .argument(&payment.token_identifier.as_managed_buffer())
+            .argument(&payment.amount)
             .sync_call();
     }
 
@@ -150,11 +147,16 @@ pub trait DepositCommonModule:
         current_sc_address: &ManagedAddress,
         payment: &EgldOrEsdtTokenPayment<Self::Api>,
     ) -> EventPaymentTuple<Self::Api> {
-        let mut current_token_data = self.blockchain().get_esdt_token_data(
-            current_sc_address,
-            &payment.token_identifier.clone().unwrap_esdt(),
-            payment.token_nonce,
-        );
+        let token_identifier = payment.token_identifier.clone();
+        let mut current_token_data = if payment.token_identifier.is_egld() {
+            EsdtTokenData::default()
+        } else {
+            self.blockchain().get_esdt_token_data(
+                current_sc_address,
+                &token_identifier.clone().unwrap_esdt(),
+                payment.token_nonce,
+            )
+        };
         current_token_data.amount = payment.amount.clone();
 
         MultiValue3::from((

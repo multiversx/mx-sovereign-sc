@@ -497,7 +497,8 @@ pub trait CommonInteractorTrait: InteractorHelpers {
         self.common_state()
             .set_fee_market_token_for_all_shards(fee_token_fee_market);
         self.common_state().set_fee_status_for_all_shards(true);
-        self.common_state().fee_op_nonce = 1u64;
+        self.common_state()
+            .set_mvx_egld_balance_for_all_shards(0u64);
     }
 
     async fn deploy_and_setup_common(
@@ -606,9 +607,10 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             shard,
             BLSKey::random(),
             MultiEgldOrEsdtPayment::new(),
-            chain_config_address,
+            chain_config_address.clone(),
         )
         .await;
+
         self.deploy_phase_two(optional_esdt_safe_config.clone(), caller.clone())
             .await;
         // self.register_native_token(caller.clone()).await;
@@ -961,7 +963,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             .get_header_verifier_address(shard)
             .clone();
 
-        let bitmap = ManagedBuffer::new_from_bytes(&[1]);
+        let bitmap = ManagedBuffer::new_from_bytes(&[0x01]);
         let epoch = 0u32;
 
         self.interactor()

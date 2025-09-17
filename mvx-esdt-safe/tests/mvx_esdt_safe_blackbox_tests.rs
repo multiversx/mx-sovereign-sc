@@ -1,7 +1,7 @@
 use common_test_setup::base_setup::helpers::BLSKey;
 use common_test_setup::constants::{
     CROWD_TOKEN_ID, DEPOSIT_EVENT, ESDT_SAFE_ADDRESS, EXECUTED_BRIDGE_OP_EVENT, FEE_MARKET_ADDRESS,
-    FEE_TOKEN, FIRST_TEST_TOKEN, HEADER_VERIFIER_ADDRESS, ONE_HUNDRED_MILLION,
+    FEE_TOKEN, FIRST_TEST_TOKEN, HEADER_VERIFIER_ADDRESS, ISSUE_COST, ONE_HUNDRED_MILLION,
     ONE_HUNDRED_THOUSAND, OWNER_ADDRESS, SC_CALL_EVENT, SECOND_TEST_TOKEN, SOV_TOKEN,
     TESTING_SC_ADDRESS, TESTING_SC_ENDPOINT, UNPAUSE_CONTRACT_LOG, USER_ADDRESS,
 };
@@ -31,7 +31,6 @@ use multiversx_sc::{
 use multiversx_sc_scenario::multiversx_chain_vm::crypto_functions::sha256;
 use multiversx_sc_scenario::{api::StaticApi, ScenarioTxWhitebox};
 use mvx_esdt_safe::bridging_mechanism::{BridgingMechanism, TRUSTED_TOKEN_IDS};
-use mvx_esdt_safe::register_token::ISSUE_COST;
 use mvx_esdt_safe_blackbox_setup::MvxEsdtSafeTestState;
 use setup_phase::SetupPhaseModule;
 use structs::configs::MaxBridgedAmount;
@@ -112,7 +111,6 @@ fn test_register_token_invalid_type() {
     let register_token_args = RegisterTokenOperation {
         token_id: EgldOrEsdtTokenIdentifier::esdt(sov_token_id.as_str()),
         token_type,
-        token_nonce: 0u64,
         token_display_name: token_display_name.into(),
         token_ticker: token_ticker.into(),
         num_decimals,
@@ -180,7 +178,6 @@ fn test_register_token_invalid_type_with_prefix() {
     let register_token_args = RegisterTokenOperation {
         token_id: EgldOrEsdtTokenIdentifier::esdt(sov_token_id),
         token_type,
-        token_nonce: 0u64,
         token_display_name: token_display_name.into(),
         token_ticker: token_ticker.into(),
         num_decimals,
@@ -247,7 +244,6 @@ fn test_register_token_not_enough_egld() {
     let register_token_args = RegisterTokenOperation {
         token_id: EgldOrEsdtTokenIdentifier::esdt(sov_token_id),
         token_type,
-        token_nonce: 0u64,
         token_display_name: token_display_name.into(),
         token_ticker: token_ticker.into(),
         num_decimals,
@@ -256,7 +252,7 @@ fn test_register_token_not_enough_egld() {
 
     let token_hash = register_token_args.generate_hash();
     let hash_of_hashes = ManagedBuffer::from(&sha256(&token_hash.to_vec()));
-    let bitmap = ManagedBuffer::new_from_bytes(&[1]);
+    let bitmap = ManagedBuffer::new_from_bytes(&[0x01]);
     let signature = ManagedBuffer::new();
     let epoch = 0;
 
@@ -303,7 +299,6 @@ fn test_register_token_fungible_token() {
     let register_token_args = RegisterTokenOperation {
         token_id: EgldOrEsdtTokenIdentifier::esdt(sov_token_id),
         token_type,
-        token_nonce: 0u64,
         token_display_name: token_display_name.into(),
         token_ticker: token_ticker.into(),
         num_decimals,
@@ -312,7 +307,7 @@ fn test_register_token_fungible_token() {
 
     let token_hash = register_token_args.generate_hash();
     let hash_of_hashes = ManagedBuffer::from(&sha256(&token_hash.to_vec()));
-    let bitmap = ManagedBuffer::new_from_bytes(&[1]);
+    let bitmap = ManagedBuffer::new_from_bytes(&[0x01]);
     let signature = ManagedBuffer::new();
     let epoch = 0;
 
@@ -362,7 +357,6 @@ fn test_register_token_nonfungible_token() {
     let register_token_args = RegisterTokenOperation {
         token_id: EgldOrEsdtTokenIdentifier::esdt(sov_token_id),
         token_type,
-        token_nonce: 1u64,
         token_display_name: token_display_name.into(),
         token_ticker: token_ticker.into(),
         num_decimals,
@@ -371,7 +365,7 @@ fn test_register_token_nonfungible_token() {
 
     let token_hash = register_token_args.generate_hash();
     let hash_of_hashes = ManagedBuffer::from(&sha256(&token_hash.to_vec()));
-    let bitmap = ManagedBuffer::new_from_bytes(&[1]);
+    let bitmap = ManagedBuffer::new_from_bytes(&[0x01]);
     let signature = ManagedBuffer::new();
     let epoch = 0;
 
@@ -1350,7 +1344,6 @@ fn test_register_token_fungible_token_with_prefix() {
     let register_token_args = RegisterTokenOperation {
         token_id: EgldOrEsdtTokenIdentifier::esdt(sov_token_id),
         token_type,
-        token_nonce: 0u64,
         token_display_name: token_display_name.into(),
         token_ticker: token_ticker.into(),
         num_decimals,
@@ -1359,7 +1352,7 @@ fn test_register_token_fungible_token_with_prefix() {
 
     let token_hash = register_token_args.generate_hash();
     let hash_of_hashes = ManagedBuffer::from(&sha256(&token_hash.to_vec()));
-    let bitmap = ManagedBuffer::new_from_bytes(&[1]);
+    let bitmap = ManagedBuffer::new_from_bytes(&[0x01]);
     let signature = ManagedBuffer::new();
     let epoch = 0;
 
@@ -1410,7 +1403,6 @@ fn test_register_token_fungible_token_no_prefix() {
     let register_token_args = RegisterTokenOperation {
         token_id: EgldOrEsdtTokenIdentifier::esdt(sov_token_id),
         token_type,
-        token_nonce: 0u64,
         token_display_name: token_display_name.into(),
         token_ticker: token_ticker.into(),
         num_decimals,
@@ -1419,7 +1411,7 @@ fn test_register_token_fungible_token_no_prefix() {
 
     let token_hash = register_token_args.generate_hash();
     let hash_of_hashes = ManagedBuffer::from(&sha256(&token_hash.to_vec()));
-    let bitmap = ManagedBuffer::new_from_bytes(&[1]);
+    let bitmap = ManagedBuffer::new_from_bytes(&[0x01]);
     let signature = ManagedBuffer::new();
     let epoch = 0;
 
@@ -1478,7 +1470,6 @@ fn test_register_token_non_fungible_token_dynamic() {
     let register_token_args = RegisterTokenOperation {
         token_id: EgldOrEsdtTokenIdentifier::esdt(sov_token_id),
         token_type,
-        token_nonce: 1u64,
         token_display_name: token_display_name.into(),
         token_ticker: token_ticker.into(),
         num_decimals,
@@ -1487,7 +1478,7 @@ fn test_register_token_non_fungible_token_dynamic() {
 
     let token_hash = register_token_args.generate_hash();
     let hash_of_hashes = ManagedBuffer::from(&sha256(&token_hash.to_vec()));
-    let bitmap = ManagedBuffer::new_from_bytes(&[1]);
+    let bitmap = ManagedBuffer::new_from_bytes(&[0x01]);
     let signature = ManagedBuffer::new();
     let epoch = 0;
 
@@ -1678,7 +1669,7 @@ fn test_execute_operation_success() {
 
     let operation_hash = state.common_setup.get_operation_hash(&operation);
     let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&operation_hash.to_vec()));
-    let bitmap = ManagedBuffer::new_from_bytes(&[1]);
+    let bitmap = ManagedBuffer::new_from_bytes(&[0x01]);
     let signature = ManagedBuffer::new();
     let epoch = 0;
 
@@ -1689,7 +1680,6 @@ fn test_execute_operation_success() {
     state
         .common_setup
         .register(&BLSKey::random(), &MultiEgldOrEsdtPayment::new(), None);
-
     state.common_setup.complete_chain_config_setup_phase();
 
     state
@@ -1771,7 +1761,7 @@ fn test_execute_operation_with_native_token_success() {
 
     let operation_hash = state.common_setup.get_operation_hash(&operation);
     let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&operation_hash.to_vec()));
-    let bitmap = ManagedBuffer::new_from_bytes(&[1]);
+    let bitmap = ManagedBuffer::new_from_bytes(&[0x01]);
     let signature = ManagedBuffer::new();
     let epoch = 0;
 
@@ -1862,7 +1852,7 @@ fn test_execute_operation_burn_mechanism_without_deposit_cannot_subtract() {
 
     let operation_hash = state.common_setup.get_operation_hash(&operation);
     let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&operation_hash.to_vec()));
-    let bitmap = ManagedBuffer::new_from_bytes(&[1]);
+    let bitmap = ManagedBuffer::new_from_bytes(&[0x01]);
     let signature = ManagedBuffer::new();
     let epoch = 0;
 
@@ -1948,7 +1938,7 @@ fn execute_operation_only_transfer_data_no_fee() {
 
     let operation_hash = state.common_setup.get_operation_hash(&operation);
     let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&operation_hash.to_vec()));
-    let bitmap = ManagedBuffer::new_from_bytes(&[1]);
+    let bitmap = ManagedBuffer::new_from_bytes(&[0x01]);
     let signature = ManagedBuffer::new();
     let epoch = 0;
 
@@ -2029,7 +2019,7 @@ fn test_execute_operation_success_burn_mechanism() {
 
     let operation_hash = state.common_setup.get_operation_hash(&operation);
     let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&operation_hash.to_vec()));
-    let bitmap = ManagedBuffer::new_from_bytes(&[1]);
+    let bitmap = ManagedBuffer::new_from_bytes(&[0x01]);
     let signature = ManagedBuffer::new();
     let epoch = 0;
 
@@ -2215,7 +2205,7 @@ fn test_deposit_execute_switch_mechanism() {
     let hash_of_hashes_one = ManagedBuffer::new_from_bytes(&sha256(&operation_one_hash.to_vec()));
     let operations_hashes_one =
         MultiValueEncoded::from(ManagedVec::from(vec![operation_one_hash.clone()]));
-    let bitmap = ManagedBuffer::new_from_bytes(&[1]);
+    let bitmap = ManagedBuffer::new_from_bytes(&[0x01]);
     let signature = ManagedBuffer::new();
     let epoch = 0;
 
@@ -2419,7 +2409,7 @@ fn test_execute_operation_no_payments() {
     state.common_setup.deploy_testing_sc();
 
     let operations_hashes = MultiValueEncoded::from(ManagedVec::from(vec![operation_hash.clone()]));
-    let bitmap = ManagedBuffer::new_from_bytes(&[1]);
+    let bitmap = ManagedBuffer::new_from_bytes(&[0x01]);
     let signature = ManagedBuffer::new();
     let epoch = 0;
 
@@ -2499,7 +2489,7 @@ fn test_execute_operation_no_payments_failed_event() {
     state.common_setup.deploy_testing_sc();
 
     let operations_hashes = MultiValueEncoded::from(ManagedVec::from(vec![operation_hash.clone()]));
-    let bitmap = ManagedBuffer::new_from_bytes(&[1]);
+    let bitmap = ManagedBuffer::new_from_bytes(&[0x01]);
     let signature = ManagedBuffer::new();
     let epoch = 0;
 
@@ -2783,7 +2773,7 @@ fn test_update_config_invalid_config() {
 
     let config_hash = new_config.generate_hash();
     let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&config_hash.to_vec()));
-    let bitmap = ManagedBuffer::new_from_bytes(&[1]);
+    let bitmap = ManagedBuffer::new_from_bytes(&[0x01]);
     let signature = ManagedBuffer::new();
     let epoch = 0;
 
@@ -2843,7 +2833,7 @@ fn test_update_config() {
 
     let config_hash = new_config.generate_hash();
     let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&config_hash.to_vec()));
-    let bitmap = ManagedBuffer::new_from_bytes(&[1]);
+    let bitmap = ManagedBuffer::new_from_bytes(&[0x01]);
     let signature = ManagedBuffer::new();
     let epoch = 0;
 

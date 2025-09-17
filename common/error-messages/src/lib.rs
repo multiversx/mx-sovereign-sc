@@ -2,6 +2,7 @@
 
 pub const ACTION_IS_NOT_ALLOWED: &str = "action is not allowed";
 pub const ADDRESS_NOT_VALID_SC_ADDRESS: &str = "The given address is not a valid SC address";
+pub const AMOUNT_IS_TOO_LARGE: &str = "Amount is too large";
 pub const BANNED_ENDPOINT_NAME: &str = "Banned endpoint name";
 pub const BLS_SIGNATURE_NOT_VALID: &str = "BLS signature is not valid";
 pub const BRIDGE_ALREADY_DEPLOYED: &str = "Bridge already deployed";
@@ -157,3 +158,5 @@ pub const REGISTRATIONS_DISABLED_GENESIS_PHASE: &str =
 pub const VALIDATOR_ID_NOT_REGISTERED: &str = "Provided validator id is not registered";
 pub const INVALID_VALIDATOR_DATA: &str = "Invalid validator data has been provided";
 pub const ISSUE_COST_NOT_COVERED: &str = "Native token issue cost is not covered";
+pub const EGLD_TOKEN_IDENTIFIER_EXPECTED: &str =
+    "The token identifier should be the EGLD token identifier";

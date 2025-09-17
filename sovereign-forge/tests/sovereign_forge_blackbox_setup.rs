@@ -290,4 +290,27 @@ impl SovereignForgeTestState {
         }
         Bech32Address::zero_default_hrp()
     }
+
+    pub fn retrieve_deployed_chain_config_address(
+        &mut self,
+        preferred_chain_id: ChainId<StaticApi>,
+    ) -> Bech32Address {
+        let sc_addresses = self
+            .common_setup
+            .world
+            .query()
+            .to(SOVEREIGN_FORGE_SC_ADDRESS)
+            .typed(SovereignForgeProxy)
+            .sovereign_deployed_contracts(preferred_chain_id)
+            .returns(ReturnsResult)
+            .run();
+
+        for contract in sc_addresses {
+            let address = Bech32Address::from(contract.address.to_address());
+            if contract.id == ScArray::ChainConfig {
+                return address;
+            }
+        }
+        Bech32Address::zero_default_hrp()
+    }
 }
