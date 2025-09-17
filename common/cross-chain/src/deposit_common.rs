@@ -2,6 +2,7 @@ use error_messages::{
     BANNED_ENDPOINT_NAME, DEPOSIT_OVER_MAX_AMOUNT, ESDT_SAFE_STILL_PAUSED, GAS_LIMIT_TOO_HIGH,
     NOTHING_TO_TRANSFER, TOKEN_BLACKLISTED, TOO_MANY_TOKENS,
 };
+use multiversx_sc::api::ESDT_LOCAL_BURN_FUNC_NAME;
 use proxies::mvx_fee_market_proxy::MvxFeeMarketProxy;
 use structs::{
     aliases::{
