@@ -4,8 +4,8 @@ use common_interactor::interactor_helpers::InteractorHelpers;
 use common_interactor::interactor_structs::BalanceCheckConfig;
 use common_test_setup::constants::{
     DEPOSIT_EVENT, EXECUTED_BRIDGE_LOG, EXECUTED_BRIDGE_OP_EVENT, GAS_LIMIT, ONE_HUNDRED_TOKENS,
-    OPERATION_HASH_STATUS_STORAGE_KEY, PER_GAS, PER_TRANSFER, SC_CALL_EVENT, SHARD_0,
-    SOVEREIGN_RECEIVER_ADDRESS, TEN_TOKENS, TESTING_SC_ENDPOINT,
+    PER_GAS, PER_TRANSFER, SC_CALL_EVENT, SHARD_0, SOVEREIGN_RECEIVER_ADDRESS, TEN_TOKENS,
+    TESTING_SC_ENDPOINT,
 };
 use cross_chain::MAX_GAS_PER_TRANSACTION;
 use error_messages::{
@@ -13,8 +13,8 @@ use error_messages::{
     ERR_EMPTY_PAYMENTS, GAS_LIMIT_TOO_HIGH, MAX_GAS_LIMIT_PER_TX_EXCEEDED, NOTHING_TO_TRANSFER,
     TOO_MANY_TOKENS,
 };
+use multiversx_sc_snippets::imports::*;
 use multiversx_sc_snippets::multiversx_sc_scenario::multiversx_chain_vm::crypto_functions::sha256;
-use multiversx_sc_snippets::{hex, imports::*};
 use rust_interact::mvx_esdt_safe::mvx_esdt_safe_interactor_main::MvxEsdtSafeInteract;
 use serial_test::serial;
 use std::vec;
@@ -677,12 +677,11 @@ async fn test_execute_operation_success_no_fee() {
         )
         .await;
 
-    // TODO: replace this with the view call after proxy fix
     let expected_operation_hash_status = OperationHashStatus::NotLocked;
     chain_interactor
         .check_registered_operation_status(
             SHARD_0,
-            hash_of_hashes.clone(),
+            &hash_of_hashes,
             operation_hash,
             expected_operation_hash_status,
         )
@@ -769,18 +768,13 @@ async fn test_execute_operation_only_transfer_data_no_fee() {
         )
         .await;
 
-    let operation_status = OperationHashStatus::NotLocked as u8;
-    let expected_operation_hash_status = format!("{:02x}", operation_status);
-    let encoded_key = &hex::encode(OPERATION_HASH_STATUS_STORAGE_KEY);
-
+    let expected_operation_status = OperationHashStatus::NotLocked;
     chain_interactor
-        .check_account_storage(
-            chain_interactor
-                .common_state
-                .current_header_verifier_address()
-                .to_address(),
-            encoded_key,
-            Some(&expected_operation_hash_status),
+        .check_registered_operation_status(
+            SHARD_0,
+            &hash_of_hashes,
+            operation_hash,
+            expected_operation_status,
         )
         .await;
 
@@ -798,17 +792,6 @@ async fn test_execute_operation_only_transfer_data_no_fee() {
             None,
         )
         .await;
-
-    // chain_interactor
-    //     .check_account_storage(
-    //         chain_interactor
-    //             .state
-    //             .current_header_verifier_address()
-    //             .to_address(),
-    //         encoded_key,
-    //         None,
-    //     )
-    //     .await;
 
     chain_interactor.check_user_balance_unchanged().await;
     chain_interactor.check_all_contracts_empty(SHARD_0).await;

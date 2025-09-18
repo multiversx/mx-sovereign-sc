@@ -1194,7 +1194,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
     async fn check_registered_operation_status(
         &mut self,
         shard_id: u32,
-        hash_of_hashes: ManagedBuffer<StaticApi>,
+        hash_of_hashes: &ManagedBuffer<StaticApi>,
         operation_hash: ManagedBuffer<StaticApi>,
         expected_value: OperationHashStatus,
     ) {
