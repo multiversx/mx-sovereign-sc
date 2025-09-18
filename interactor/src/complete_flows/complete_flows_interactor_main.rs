@@ -202,7 +202,7 @@ impl CompleteFlowInteract {
 
         self.check_registered_operation_status(
             config.shard,
-            hash_of_hashes.clone(),
+            &hash_of_hashes,
             operation_hash.clone(),
             expected_operation_hash_status,
         )
