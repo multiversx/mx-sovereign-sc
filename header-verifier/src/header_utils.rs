@@ -8,13 +8,6 @@ use crate::checks;
 multiversx_sc::imports!();
 multiversx_sc::derive_imports!();
 
-#[type_abi]
-#[derive(TopEncode, TopDecode, PartialEq, Debug)]
-pub enum OperationHashStatus {
-    NotLocked = 1,
-    Locked,
-}
-
 pub const MAX_STORED_EPOCHS: u64 = 3;
 
 #[multiversx_sc::module]

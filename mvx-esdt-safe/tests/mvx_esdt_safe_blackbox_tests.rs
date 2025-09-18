@@ -15,7 +15,6 @@ use error_messages::{
     PAYMENT_DOES_NOT_COVER_FEE, SETUP_PHASE_NOT_COMPLETED, TOKEN_ID_IS_NOT_TRUSTED,
     TOKEN_IS_FROM_SOVEREIGN, TOO_MANY_TOKENS,
 };
-use header_verifier::header_utils::OperationHashStatus;
 use header_verifier::storage::HeaderVerifierStorageModule;
 use multiversx_sc::chain_core::EGLD_000000_TOKEN_IDENTIFIER;
 use multiversx_sc::types::{
@@ -38,12 +37,12 @@ use structs::fee::{FeeStruct, FeeType};
 use structs::forge::ScArray;
 use structs::generate_hash::GenerateHash;
 use structs::operation::TransferData;
-use structs::RegisterTokenOperation;
 use structs::{
     aliases::PaymentsVec,
     configs::EsdtSafeConfig,
     operation::{Operation, OperationData, OperationEsdtPayment},
 };
+use structs::{OperationHashStatus, RegisterTokenOperation};
 mod mvx_esdt_safe_blackbox_setup;
 
 /// ### TEST

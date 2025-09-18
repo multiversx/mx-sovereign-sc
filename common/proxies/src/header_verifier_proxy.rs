@@ -8,6 +8,7 @@
 #![allow(clippy::all)]
 
 use multiversx_sc::proxy_imports::*;
+use structs::OperationHashStatus;
 
 pub struct HeaderverifierProxy;
 
@@ -194,11 +195,4 @@ where
             .argument(&operation_hash)
             .original_result()
     }
-}
-
-#[type_abi]
-#[derive(TopEncode, TopDecode, PartialEq, Debug)]
-pub enum OperationHashStatus {
-    NotLocked,
-    Locked,
 }
