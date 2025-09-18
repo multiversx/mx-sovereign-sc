@@ -677,12 +677,16 @@ async fn test_execute_operation_success_no_fee() {
         )
         .await;
 
-    let operation_status = OperationHashStatus::NotLocked as u8;
-    let expected_operation_hash_status = format!("{:02x}", operation_status);
-    let encoded_key = &hex::encode(OPERATION_HASH_STATUS_STORAGE_KEY);
-
     // TODO: replace this with the view call after proxy fix
     let expected_operation_hash_status = OperationHashStatus::NotLocked;
+    chain_interactor
+        .check_registered_operation_status(
+            SHARD_0,
+            hash_of_hashes.clone(),
+            operation_hash,
+            expected_operation_hash_status,
+        )
+        .await;
 
     let bridge_service = chain_interactor
         .get_bridge_service_for_shard(SHARD_0)
@@ -695,17 +699,6 @@ async fn test_execute_operation_success_no_fee() {
             operation,
             None,
             Some(EXECUTED_BRIDGE_LOG),
-            None,
-        )
-        .await;
-
-    chain_interactor
-        .check_account_storage(
-            chain_interactor
-                .common_state
-                .current_header_verifier_address()
-                .to_address(),
-            encoded_key,
             None,
         )
         .await;
