@@ -71,7 +71,11 @@ pub trait CommonUtilsModule: custom_events::CustomEventsModule {
         require!(!payments.is_empty(), ERR_EMPTY_PAYMENTS);
 
         let first_payment = payments.get(0).clone();
-        let remaining_payments = payments.slice(1, payments.len()).unwrap_or_default();
+        let remaining_payments = if payments.len() == 1 {
+            PaymentsVec::new()
+        } else {
+            payments.slice(1, payments.len()).unwrap()
+        };
 
         MultiValue2::from((OptionalValue::Some(first_payment), remaining_payments))
     }
@@ -107,7 +111,7 @@ pub trait CommonUtilsModule: custom_events::CustomEventsModule {
             .position(|&b| b == DASH)
             .map(|index| {
                 let prefix_slice = &slice[..index];
-                chain_prefix.len() == prefix_slice.len() && chain_prefix == prefix_slice
+                chain_prefix == prefix_slice
             })
             .unwrap_or(false)
     }
