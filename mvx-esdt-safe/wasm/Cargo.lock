@@ -70,9 +70,9 @@ dependencies = [
 
 [[package]]
 name = "endian-type"
-version = "0.1.2"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c34f04666d835ff5d62e058c3995147c06f42fe86ff053337632bca83e42702d"
+checksum = "869b0adbda23651a9c5c0c3d270aac9fcb52e8622a8f2b17e57802d7791962f2"
 
 [[package]]
 name = "error-messages"
@@ -129,8 +129,7 @@ checksum = "bcaaec4551594c969335c98c903c1397853d4198408ea609190f420500f6be71"
 [[package]]
 name = "multiversx-chain-core"
 version = "0.18.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fc2191acb1a0550010ba500a44ed0a2edc5a5a144f77940e2cbdbe42a1385e84"
+source = "git+https://github.com/multiversx/mx-sdk-rs?branch=rc%2Fv0.62#027fb3e5efdaa4fd14cb9cc66cc846c2b032e224"
 dependencies = [
  "bitflags",
  "multiversx-sc-codec",
@@ -139,8 +138,7 @@ dependencies = [
 [[package]]
 name = "multiversx-sc"
 version = "0.61.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dae072f871d314996673bbda0a1d82e944b1757a51b13360e14acf4136733fe3"
+source = "git+https://github.com/multiversx/mx-sdk-rs?branch=rc%2Fv0.62#027fb3e5efdaa4fd14cb9cc66cc846c2b032e224"
 dependencies = [
  "bitflags",
  "generic-array",
@@ -155,8 +153,7 @@ dependencies = [
 [[package]]
 name = "multiversx-sc-codec"
 version = "0.23.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "70685641eede17be7d3c678bc5ce4dc7ffeb100cf18399cdcdcdf52482cf98a5"
+source = "git+https://github.com/multiversx/mx-sdk-rs?branch=rc%2Fv0.62#027fb3e5efdaa4fd14cb9cc66cc846c2b032e224"
 dependencies = [
  "arrayvec",
  "bitflags",
@@ -167,8 +164,7 @@ dependencies = [
 [[package]]
 name = "multiversx-sc-codec-derive"
 version = "0.23.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ce73df2ee4376ab524981f980126aba16f395386014207eb6e9efd9ff6015d62"
+source = "git+https://github.com/multiversx/mx-sdk-rs?branch=rc%2Fv0.62#027fb3e5efdaa4fd14cb9cc66cc846c2b032e224"
 dependencies = [
  "hex",
  "proc-macro2",
@@ -179,8 +175,7 @@ dependencies = [
 [[package]]
 name = "multiversx-sc-derive"
 version = "0.61.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "57b04d3692a208f42d5250b61fa6404abe33c7865447f7cc195cc6a7199948b1"
+source = "git+https://github.com/multiversx/mx-sdk-rs?branch=rc%2Fv0.62#027fb3e5efdaa4fd14cb9cc66cc846c2b032e224"
 dependencies = [
  "hex",
  "proc-macro2",
@@ -192,8 +187,7 @@ dependencies = [
 [[package]]
 name = "multiversx-sc-modules"
 version = "0.61.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "13f9ab3787e3390907bf1754171749e6e10c4b55c9d651c44439d0c81d30ce9c"
+source = "git+https://github.com/multiversx/mx-sdk-rs?branch=rc%2Fv0.62#027fb3e5efdaa4fd14cb9cc66cc846c2b032e224"
 dependencies = [
  "multiversx-sc",
 ]
@@ -201,8 +195,7 @@ dependencies = [
 [[package]]
 name = "multiversx-sc-wasm-adapter"
 version = "0.61.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9ddc71237f76ef620c89439823e07edd3c7c591da075942eb9e2ee4cae1f1722"
+source = "git+https://github.com/multiversx/mx-sdk-rs?branch=rc%2Fv0.62#027fb3e5efdaa4fd14cb9cc66cc846c2b032e224"
 dependencies = [
  "multiversx-sc",
 ]
@@ -294,9 +287,9 @@ dependencies = [
 
 [[package]]
 name = "radix_trie"
-version = "0.2.1"
+version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c069c179fcdc6a2fe24d8d18305cf085fdbd4f922c041943e203685d6a1c58fd"
+checksum = "3b4431027dcd37fc2a73ef740b5f233aa805897935b8bce0195e41bbf9a3289a"
 dependencies = [
  "endian-type",
  "nibble_vec",
@@ -351,9 +344,9 @@ checksum = "1dccffe3ce07af9386bfd29e80c0ab1a8205a2fc34e4bcd40364df902cfa8f3f"
 
 [[package]]
 name = "unicode-ident"
-version = "1.0.18"
+version = "1.0.19"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5a5f39404a5da50712a4c1eecf25e90dd62b613502b7e925fd4e4d19b5c96512"
+checksum = "f63a545481291138910575129486daeaf8ac54aee4387fe7906919f7830c7d9d"
 
 [[package]]
 name = "unwrap-infallible"
