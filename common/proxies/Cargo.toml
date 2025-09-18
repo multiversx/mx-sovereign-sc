@@ -5,6 +5,8 @@ edition = "2021"
 
 [dependencies.multiversx-sc]
 version = "0.61.0"
+git = "https://github.com/multiversx/mx-sdk-rs"
+branch = "rc/v0.62"
 
 [dependencies.structs]
 path = "../structs"
