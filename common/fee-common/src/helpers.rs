@@ -170,7 +170,7 @@ pub trait FeeCommonHelpersModule:
 
         let mut total_fee = args.per_transfer * args.total_transfers as u32;
         if let OptionalValue::Some(gas_limit) = args.opt_gas_limit {
-            total_fee += args.per_gas * gas_limit;
+            total_fee += args.per_gas * BigUint::from(gas_limit);
         }
 
         let mut payment = args.payment;

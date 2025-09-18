@@ -70,12 +70,10 @@ pub trait CommonUtilsModule: custom_events::CustomEventsModule {
     ) -> MultiValue2<OptionalValue<EgldOrEsdtTokenPayment<Self::Api>>, PaymentsVec<Self::Api>> {
         require!(!payments.is_empty(), ERR_EMPTY_PAYMENTS);
 
-        let mut new_payments = payments;
+        let first_payment = payments.get(0).clone();
+        let remaining_payments = payments.slice(1, payments.len()).unwrap_or_default();
 
-        let first_payment = new_payments.get(0).clone();
-        new_payments.remove(0);
-
-        MultiValue2::from((OptionalValue::Some(first_payment.clone()), new_payments))
+        MultiValue2::from((OptionalValue::Some(first_payment), remaining_payments))
     }
 
     fn has_prefix(&self, token_id: &EgldOrEsdtTokenIdentifier<Self::Api>) -> bool {
@@ -83,13 +81,7 @@ pub trait CommonUtilsModule: custom_events::CustomEventsModule {
         let mut array_buffer = [0u8; MAX_TOKEN_ID_LEN];
         let slice = buffer.load_to_byte_array(&mut array_buffer);
 
-        let counter = slice.iter().filter(|&&c| c == DASH).count();
-
-        if counter == 2 {
-            return true;
-        }
-
-        false
+        slice.iter().filter(|&&c| c == DASH).count() == 2
     }
 
     #[inline]
@@ -110,15 +102,14 @@ pub trait CommonUtilsModule: custom_events::CustomEventsModule {
         let mut array_buffer = [0u8; MAX_TOKEN_ID_LEN];
         let slice = buffer.load_to_byte_array(&mut array_buffer);
 
-        if let Some(index) = slice.iter().position(|&b| b == DASH) {
-            let prefix = ManagedBuffer::from(&slice[..index]);
-
-            if prefix == chain_prefix.clone() {
-                return true;
-            }
-        }
-
-        false
+        slice
+            .iter()
+            .position(|&b| b == DASH)
+            .map(|index| {
+                let prefix_slice = &slice[..index];
+                chain_prefix.len() == prefix_slice.len() && chain_prefix == prefix_slice
+            })
+            .unwrap_or(false)
     }
 
     fn validate_operation_hash(&self, hash: &ManagedBuffer) -> Option<ManagedBuffer> {
