@@ -202,7 +202,7 @@ impl FeeMarketTestState {
             }
             WantedFeeType::Fixed => {
                 let fee_type = FeeType::Fixed {
-                    token: EgldOrEsdtTokenIdentifier::esdt(FIRST_TEST_TOKEN),
+                    token: token_id.clone(),
                     per_transfer: BigUint::from(10u8),
                     per_gas: BigUint::from(10u8),
                 };

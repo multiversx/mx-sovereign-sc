@@ -77,6 +77,42 @@ fn test_set_fee_during_setup_phase_wrong_params() {
 }
 
 /// ### TEST
+/// F-MARKET_SET_FEE_DURING_SETUP_PHASE_OK
+///
+/// ### ACTION
+/// Call 'set_fee_during_setup_phase()'
+///
+/// ### EXPECTED
+/// Fee is set in contract's storage
+#[test]
+fn test_set_fee_during_setup_phase() {
+    let mut state = FeeMarketTestState::new();
+
+    let fee = state.get_fee();
+
+    state
+        .common_setup
+        .deploy_fee_market(Some(fee), ESDT_SAFE_ADDRESS);
+
+    state.set_fee_during_setup_phase(
+        EgldOrEsdtTokenIdentifier::from(SECOND_TEST_TOKEN.as_str()),
+        WantedFeeType::Fixed,
+        None,
+    );
+
+    state
+        .common_setup
+        .world
+        .query()
+        .to(FEE_MARKET_ADDRESS)
+        .whitebox(mvx_fee_market::contract_obj, |sc| {
+            assert!(!sc
+                .token_fee(&EgldOrEsdtTokenIdentifier::esdt(SECOND_TEST_TOKEN))
+                .is_empty());
+        });
+}
+
+/// ### TEST
 /// F-MARKET_SET_FEE_FAIL
 ///
 /// ### ACTION
