@@ -31,12 +31,9 @@ use multiversx_sc_snippets::{
     test_wallets, InteractorRunAsync,
 };
 use proxies::{
-    chain_config_proxy::ChainConfigContractProxy,
-    chain_factory_proxy::ChainFactoryContractProxy,
-    header_verifier_proxy::{HeaderverifierProxy, OperationHashStatus},
-    mvx_esdt_safe_proxy::MvxEsdtSafeProxy,
-    mvx_fee_market_proxy::MvxFeeMarketProxy,
-    sovereign_forge_proxy::SovereignForgeProxy,
+    chain_config_proxy::ChainConfigContractProxy, chain_factory_proxy::ChainFactoryContractProxy,
+    header_verifier_proxy::HeaderverifierProxy, mvx_esdt_safe_proxy::MvxEsdtSafeProxy,
+    mvx_fee_market_proxy::MvxFeeMarketProxy, sovereign_forge_proxy::SovereignForgeProxy,
     testing_sc_proxy::TestingScProxy,
 };
 use structs::{
@@ -46,7 +43,7 @@ use structs::{
     forge::{ContractInfo, NativeToken, ScArray},
     generate_hash::GenerateHash,
     operation::Operation,
-    EsdtInfo, RegisterTokenOperation,
+    EsdtInfo, OperationHashStatus, RegisterTokenOperation,
 };
 
 fn metadata() -> CodeMetadata {

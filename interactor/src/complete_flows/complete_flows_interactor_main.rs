@@ -18,7 +18,7 @@ use multiversx_sc_snippets::multiversx_sc_scenario::multiversx_chain_vm::crypto_
 use structs::aliases::PaymentsVec;
 use structs::fee::FeeStruct;
 use structs::operation::OperationData;
-use structs::RegisterTokenOperation;
+use structs::{OperationHashStatus, RegisterTokenOperation};
 
 pub struct CompleteFlowInteract {
     pub interactor: Interactor,
@@ -198,15 +198,15 @@ impl CompleteFlowInteract {
         .await;
 
         //TODO: uncomment this after proxy fix is implemented
-        //let expected_operation_hash_status = OperationHashStatus::NotLocked;
+        let expected_operation_hash_status = OperationHashStatus::NotLocked;
 
-        // self.check_registered_operation_status(
-        //     config.shard,
-        //     hash_of_hashes.clone(),
-        //     operation_hash.clone(),
-        //     expected_operation_hash_status,
-        // )
-        // .await;
+        self.check_registered_operation_status(
+            config.shard,
+            hash_of_hashes.clone(),
+            operation_hash.clone(),
+            expected_operation_hash_status,
+        )
+        .await;
 
         let caller = self.get_bridge_service_for_shard(config.shard);
         self.execute_operations_in_mvx_esdt_safe(
