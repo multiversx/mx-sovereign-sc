@@ -1,3 +1,4 @@
+use multiversx_sc_scenario::multiversx_chain_vm::crypto_functions_bls::create_aggregated_signature;
 use rand::RngCore;
 use rand_core::OsRng;
 
@@ -86,6 +87,22 @@ impl BaseSetup {
             ScArray::FeeMarket => FEE_MARKET_ADDRESS,
             _ => TestSCAddress::new("ERROR"),
         }
+    }
+
+    pub fn get_sig_and_pub_keys(
+        &mut self,
+        message: &ManagedBuffer<StaticApi>,
+    ) -> (ManagedBuffer<StaticApi>, Vec<ManagedBuffer<StaticApi>>) {
+        let (signature, pub_keys) = create_aggregated_signature(1, &message.to_vec()).unwrap();
+        let pk_buffers: Vec<ManagedBuffer<StaticApi>> = pub_keys
+            .iter()
+            .map(|pk| ManagedBuffer::from(pk.serialize().unwrap()))
+            .collect();
+
+        (
+            ManagedBuffer::new_from_bytes(signature.serialize().unwrap().as_slice()),
+            pk_buffers,
+        )
     }
 }
 
