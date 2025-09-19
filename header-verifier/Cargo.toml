@@ -40,3 +40,4 @@ path = "../common/common-test-setup"
 [dev-dependencies.multiversx-sc-scenario]
 git = "https://github.com/multiversx/mx-sdk-rs"
 branch = "rc/v0.62"
+features = ["bls"]

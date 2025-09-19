@@ -565,16 +565,13 @@ fn test_register_validator_after_genesis() {
     let mut payments_vec = MultiEgldOrEsdtPayment::new();
     payments_vec.push(payment);
 
-    let (signature, pub_keys) = create_aggregated_signature(2, b"test message")
-        .expect("failed to create aggregate signature");
-    let pk_buffers: Vec<ManagedBuffer<StaticApi>> = pub_keys
-        .iter()
-        .map(|pk| ManagedBuffer::from(pk.serialize().unwrap()))
-        .collect();
+    let (signature, pub_keys) = state
+        .common_setup
+        .get_sig_and_pub_keys(&ManagedBuffer::new());
 
     state
         .common_setup
-        .register(&pk_buffers[0], &payments_vec, None);
+        .register(&pub_keys[0], &payments_vec, None);
 
     state.common_setup.complete_chain_config_setup_phase();
 
@@ -593,11 +590,11 @@ fn test_register_validator_after_genesis() {
         let validator_data = ValidatorData {
             id: BigUint::from(id as u32),
             address: OWNER_ADDRESS.to_managed_address(),
-            bls_key: pk_buffers[1].clone(),
+            bls_key: pub_keys[1].clone(),
         };
         state.common_setup.register_validator_operation(
             validator_data,
-            ManagedBuffer::from(signature.serialize().unwrap()),
+            signature.clone(),
             bitmap.clone(),
             epoch,
         );

@@ -57,6 +57,7 @@ fn register_bridge_operation_setup_not_completed() {
     let bitmap = ManagedBuffer::new_from_bytes(&[1]);
 
     state.register_operations(
+        &operation.signature,
         operation.clone(),
         bitmap,
         0,
@@ -79,10 +80,18 @@ fn test_register_bridge_operation() {
     state
         .common_setup
         .deploy_chain_config(OptionalValue::None, None);
+    let operation_1 = ManagedBuffer::from("operation_1");
+    let operation_2 = ManagedBuffer::from("operation_2");
+    let operation = state.generate_bridge_operation_struct(vec![&operation_1, &operation_2]);
+    let bitmap = ManagedBuffer::new_from_bytes(&[0x01]);
+
+    let (signature, pub_keys) = state
+        .common_setup
+        .get_sig_and_pub_keys(&operation.bridge_operation_hash);
 
     state
         .common_setup
-        .register(&BLSKey::random(), &MultiEgldOrEsdtPayment::new(), None);
+        .register(&pub_keys[0], &MultiEgldOrEsdtPayment::new(), None);
 
     state.common_setup.complete_chain_config_setup_phase();
 
@@ -94,12 +103,7 @@ fn test_register_bridge_operation() {
         .common_setup
         .complete_header_verifier_setup_phase(None);
 
-    let operation_1 = ManagedBuffer::from("operation_1");
-    let operation_2 = ManagedBuffer::from("operation_2");
-    let operation = state.generate_bridge_operation_struct(vec![&operation_1, &operation_2]);
-    let bitmap = ManagedBuffer::new_from_bytes(&[0x01]);
-
-    state.register_operations(operation.clone(), bitmap.clone(), 0, None);
+    state.register_operations(&signature, operation.clone(), bitmap.clone(), 0, None);
 
     state
         .common_setup
@@ -145,9 +149,18 @@ fn test_remove_executed_hash_no_esdt_address_registered() {
         .common_setup
         .deploy_chain_config(OptionalValue::None, None);
 
+    let operation_1 = ManagedBuffer::from("operation_1");
+    let operation_2 = ManagedBuffer::from("operation_2");
+    let operation = state.generate_bridge_operation_struct(vec![&operation_1, &operation_2]);
+    let bitmap = ManagedBuffer::new_from_bytes(&[0x01]);
+
+    let (signature, pub_keys) = state
+        .common_setup
+        .get_sig_and_pub_keys(&operation.bridge_operation_hash);
+
     state
         .common_setup
-        .register(&BLSKey::random(), &MultiEgldOrEsdtPayment::new(), None);
+        .register(&pub_keys[0], &MultiEgldOrEsdtPayment::new(), None);
 
     state.common_setup.complete_chain_config_setup_phase();
 
@@ -159,12 +172,7 @@ fn test_remove_executed_hash_no_esdt_address_registered() {
         .common_setup
         .complete_header_verifier_setup_phase(None);
 
-    let operation_1 = ManagedBuffer::from("operation_1");
-    let operation_2 = ManagedBuffer::from("operation_2");
-    let operation = state.generate_bridge_operation_struct(vec![&operation_1, &operation_2]);
-    let bitmap = ManagedBuffer::new_from_bytes(&[0x01]);
-
-    state.register_operations(operation.clone(), bitmap, 0, None);
+    state.register_operations(&signature, operation.clone(), bitmap, 0, None);
     state.remove_executed_hash(
         ESDT_SAFE_ADDRESS,
         &operation.bridge_operation_hash,
@@ -189,9 +197,19 @@ fn test_remove_one_executed_hash() {
         .common_setup
         .deploy_chain_config(OptionalValue::None, None);
 
+    let operation_hash_1 = ManagedBuffer::from("operation_1");
+    let operation_hash_2 = ManagedBuffer::from("operation_2");
+    let operation =
+        state.generate_bridge_operation_struct(vec![&operation_hash_1, &operation_hash_2]);
+    let bitmap = ManagedBuffer::new_from_bytes(&[0x01]);
+
+    let (signature, pub_keys) = state
+        .common_setup
+        .get_sig_and_pub_keys(&operation.bridge_operation_hash);
+
     state
         .common_setup
-        .register(&BLSKey::random(), &MultiEgldOrEsdtPayment::new(), None);
+        .register(&pub_keys[0], &MultiEgldOrEsdtPayment::new(), None);
 
     state.common_setup.complete_chain_config_setup_phase();
 
@@ -203,13 +221,7 @@ fn test_remove_one_executed_hash() {
         .common_setup
         .complete_header_verifier_setup_phase(None);
 
-    let operation_hash_1 = ManagedBuffer::from("operation_1");
-    let operation_hash_2 = ManagedBuffer::from("operation_2");
-    let operation =
-        state.generate_bridge_operation_struct(vec![&operation_hash_1, &operation_hash_2]);
-    let bitmap = ManagedBuffer::new_from_bytes(&[0x01]);
-
-    state.register_operations(operation.clone(), bitmap, 0, None);
+    state.register_operations(&signature, operation.clone(), bitmap, 0, None);
     state.remove_executed_hash(
         CHAIN_CONFIG_ADDRESS,
         &operation.bridge_operation_hash,
@@ -253,10 +265,18 @@ fn test_remove_all_executed_hashes() {
     state
         .common_setup
         .deploy_chain_config(OptionalValue::None, None);
+    let operation_1 = ManagedBuffer::from("operation_1");
+    let operation_2 = ManagedBuffer::from("operation_2");
+    let operation = state.generate_bridge_operation_struct(vec![&operation_1, &operation_2]);
+    let bitmap = ManagedBuffer::new_from_bytes(&[0x01]);
+
+    let (signature, pub_keys) = state
+        .common_setup
+        .get_sig_and_pub_keys(&operation.bridge_operation_hash);
 
     state
         .common_setup
-        .register(&BLSKey::random(), &MultiEgldOrEsdtPayment::new(), None);
+        .register(&pub_keys[0], &MultiEgldOrEsdtPayment::new(), None);
 
     state.common_setup.complete_chain_config_setup_phase();
 
@@ -268,12 +288,7 @@ fn test_remove_all_executed_hashes() {
         .common_setup
         .complete_header_verifier_setup_phase(None);
 
-    let operation_1 = ManagedBuffer::from("operation_1");
-    let operation_2 = ManagedBuffer::from("operation_2");
-    let operation = state.generate_bridge_operation_struct(vec![&operation_1, &operation_2]);
-    let bitmap = ManagedBuffer::new_from_bytes(&[0x01]);
-
-    state.register_operations(operation.clone(), bitmap, 0, None);
+    state.register_operations(&signature, operation.clone(), bitmap, 0, None);
 
     state.remove_executed_hash(
         CHAIN_CONFIG_ADDRESS,
@@ -384,9 +399,18 @@ fn test_lock_operation() {
         .common_setup
         .deploy_chain_config(OptionalValue::None, None);
 
+    let operation_1 = ManagedBuffer::from("operation_1");
+    let operation_2 = ManagedBuffer::from("operation_2");
+    let operation = state.generate_bridge_operation_struct(vec![&operation_1, &operation_2]);
+    let bitmap = ManagedBuffer::new_from_bytes(&[0x01]);
+
+    let (signature, pub_keys) = state
+        .common_setup
+        .get_sig_and_pub_keys(&operation.bridge_operation_hash);
+
     state
         .common_setup
-        .register(&BLSKey::random(), &MultiEgldOrEsdtPayment::new(), None);
+        .register(&pub_keys[0], &MultiEgldOrEsdtPayment::new(), None);
 
     state.common_setup.complete_chain_config_setup_phase();
 
@@ -398,12 +422,7 @@ fn test_lock_operation() {
         .common_setup
         .complete_header_verifier_setup_phase(None);
 
-    let operation_1 = ManagedBuffer::from("operation_1");
-    let operation_2 = ManagedBuffer::from("operation_2");
-    let operation = state.generate_bridge_operation_struct(vec![&operation_1, &operation_2]);
-    let bitmap = ManagedBuffer::new_from_bytes(&[0x01]);
-
-    state.register_operations(operation.clone(), bitmap, 0, None);
+    state.register_operations(&signature, operation.clone(), bitmap, 0, None);
 
     state.lock_operation_hash(
         CHAIN_CONFIG_ADDRESS,
@@ -450,10 +469,18 @@ fn test_lock_operation_hash_already_locked() {
         .common_setup
         .deploy_chain_config(OptionalValue::None, None);
 
+    let operation_1 = ManagedBuffer::from("operation_1");
+    let operation_2 = ManagedBuffer::from("operation_2");
+    let operation = state.generate_bridge_operation_struct(vec![&operation_1, &operation_2]);
+    let bitmap = ManagedBuffer::new_from_bytes(&[0x01]);
+
+    let (signature, pub_keys) = state
+        .common_setup
+        .get_sig_and_pub_keys(&operation.bridge_operation_hash);
+
     state
         .common_setup
-        .register(&BLSKey::random(), &MultiEgldOrEsdtPayment::new(), None);
-
+        .register(&pub_keys[0], &MultiEgldOrEsdtPayment::new(), None);
     state.common_setup.complete_chain_config_setup_phase();
 
     state
@@ -464,12 +491,7 @@ fn test_lock_operation_hash_already_locked() {
         .common_setup
         .complete_header_verifier_setup_phase(None);
 
-    let operation_1 = ManagedBuffer::from("operation_1");
-    let operation_2 = ManagedBuffer::from("operation_2");
-    let operation = state.generate_bridge_operation_struct(vec![&operation_1, &operation_2]);
-    let bitmap = ManagedBuffer::new_from_bytes(&[0x01]);
-
-    state.register_operations(operation.clone(), bitmap, 0, None);
+    state.register_operations(&signature, operation.clone(), bitmap, 0, None);
 
     state.lock_operation_hash(
         CHAIN_CONFIG_ADDRESS,
@@ -607,9 +629,17 @@ fn test_change_validator_set_operation_already_registered() {
         .common_setup
         .deploy_chain_config(OptionalValue::None, None);
 
+    let operation_hash_1 = ManagedBuffer::from("operation_1");
+    let operation = state.generate_bridge_operation_struct(vec![&operation_hash_1]);
+    let bitmap = ManagedBuffer::new_from_bytes(&[0x01]);
+
+    let (signature, pub_keys) = state
+        .common_setup
+        .get_sig_and_pub_keys(&operation.bridge_operation_hash);
+
     state
         .common_setup
-        .register(&BLSKey::random(), &MultiEgldOrEsdtPayment::new(), None);
+        .register(&pub_keys[0], &MultiEgldOrEsdtPayment::new(), None);
 
     state.common_setup.complete_chain_config_setup_phase();
 
@@ -621,15 +651,10 @@ fn test_change_validator_set_operation_already_registered() {
         .common_setup
         .complete_header_verifier_setup_phase(None);
 
-    let operation_1 = ManagedBuffer::from("operation_1");
-    let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&operation_1.to_vec()));
-
-    let bitmap = ManagedBuffer::new_from_bytes(&[0x01]);
-
     state.change_validator_set(
-        &ManagedBuffer::new(),
-        &hash_of_hashes,
-        &operation_1,
+        &signature,
+        &operation.bridge_operation_hash,
+        &operation_hash_1,
         1,
         &bitmap,
         MultiValueEncoded::new(),
@@ -638,9 +663,9 @@ fn test_change_validator_set_operation_already_registered() {
     );
 
     state.change_validator_set(
-        &ManagedBuffer::new(),
-        &hash_of_hashes,
-        &operation_1,
+        &signature,
+        &operation.bridge_operation_hash,
+        &operation_hash_1,
         1,
         &bitmap,
         MultiValueEncoded::new(),
