@@ -8,9 +8,10 @@ use multiversx_sc_scenario::{
 };
 use proxies::{
     chain_config_proxy::ChainConfigContractProxy, chain_factory_proxy::ChainFactoryContractProxy,
-    fee_market_proxy::FeeMarketProxy, header_verifier_proxy::HeaderverifierProxy,
-    mvx_esdt_safe_proxy::MvxEsdtSafeProxy, sov_esdt_safe_proxy::SovEsdtSafeProxy,
-    sovereign_forge_proxy::SovereignForgeProxy, testing_sc_proxy::TestingScProxy,
+    header_verifier_proxy::HeaderverifierProxy, mvx_esdt_safe_proxy::MvxEsdtSafeProxy,
+    mvx_fee_market_proxy::MvxFeeMarketProxy, sov_esdt_safe_proxy::SovEsdtSafeProxy,
+    sov_fee_market_proxy::SovFeeMarketProxy, sovereign_forge_proxy::SovereignForgeProxy,
+    testing_sc_proxy::TestingScProxy,
 };
 use structs::{
     configs::{EsdtSafeConfig, SovereignConfig},
@@ -25,7 +26,8 @@ use crate::{
         CHAIN_FACTORY_SC_ADDRESS, ESDT_SAFE_ADDRESS, FEE_MARKET_ADDRESS, FEE_MARKET_CODE_PATH,
         HEADER_VERIFIER_ADDRESS, HEADER_VERIFIER_CODE_PATH, MVX_ESDT_SAFE_CODE_PATH, OWNER_ADDRESS,
         SOVEREIGN_FORGE_CODE_PATH, SOVEREIGN_FORGE_SC_ADDRESS, SOVEREIGN_TOKEN_PREFIX,
-        SOV_ESDT_SAFE_CODE_PATH, TESTING_SC_ADDRESS, TESTING_SC_CODE_PATH,
+        SOV_ESDT_SAFE_CODE_PATH, SOV_FEE_MARKET_ADDRESS, SOV_FEE_MARKET_CODE_PATH,
+        TESTING_SC_ADDRESS, TESTING_SC_CODE_PATH,
     },
 };
 
@@ -62,10 +64,27 @@ impl BaseSetup {
         self.world
             .tx()
             .from(OWNER_ADDRESS)
-            .typed(FeeMarketProxy)
+            .typed(MvxFeeMarketProxy)
             .init(esdt_safe_address, fee)
             .code(FEE_MARKET_CODE_PATH)
             .new_address(FEE_MARKET_ADDRESS)
+            .run();
+
+        self
+    }
+
+    pub fn deploy_sov_fee_market(
+        &mut self,
+        fee: Option<FeeStruct<StaticApi>>,
+        esdt_safe_address: TestSCAddress,
+    ) -> &mut Self {
+        self.world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .typed(SovFeeMarketProxy)
+            .init(esdt_safe_address, fee)
+            .code(SOV_FEE_MARKET_CODE_PATH)
+            .new_address(SOV_FEE_MARKET_ADDRESS)
             .run();
 
         self
@@ -185,7 +204,7 @@ impl BaseSetup {
         payment: &BigUint<StaticApi>,
         opt_preferred_chain: Option<ManagedBuffer<StaticApi>>,
         opt_config: OptionalValue<SovereignConfig<StaticApi>>,
-        error_message: Option<&str>,
+        expected_error_message: Option<&str>,
     ) {
         let response = self
             .world
@@ -198,7 +217,7 @@ impl BaseSetup {
             .returns(ReturnsHandledOrError::new())
             .run();
 
-        self.assert_expected_error_message(response, error_message);
+        self.assert_expected_error_message(response, expected_error_message);
     }
 
     pub fn deploy_phase_two(
@@ -222,7 +241,7 @@ impl BaseSetup {
     pub fn deploy_phase_three(
         &mut self,
         fee: Option<FeeStruct<StaticApi>>,
-        error_message: Option<&str>,
+        expected_error_message: Option<&str>,
     ) {
         let response = self
             .world
@@ -234,10 +253,10 @@ impl BaseSetup {
             .returns(ReturnsHandledOrError::new())
             .run();
 
-        self.assert_expected_error_message(response, error_message);
+        self.assert_expected_error_message(response, expected_error_message);
     }
 
-    pub fn deploy_phase_four(&mut self, error_message: Option<&str>) {
+    pub fn deploy_phase_four(&mut self, expected_error_message: Option<&str>) {
         let response = self
             .world
             .tx()
@@ -248,6 +267,6 @@ impl BaseSetup {
             .returns(ReturnsHandledOrError::new())
             .run();
 
-        self.assert_expected_error_message(response, error_message);
+        self.assert_expected_error_message(response, expected_error_message);
     }
 }

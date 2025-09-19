@@ -88,6 +88,30 @@ where
     To: TxTo<Env>,
     Gas: TxGas<Env>,
 {
+    pub fn register_token<
+        Arg0: ProxyArg<EgldOrEsdtTokenIdentifier<Env::Api>>,
+        Arg1: ProxyArg<EsdtTokenType>,
+        Arg2: ProxyArg<ManagedBuffer<Env::Api>>,
+        Arg3: ProxyArg<ManagedBuffer<Env::Api>>,
+        Arg4: ProxyArg<usize>,
+    >(
+        self,
+        token_id: Arg0,
+        token_type: Arg1,
+        token_name: Arg2,
+        token_ticker: Arg3,
+        token_decimals: Arg4,
+    ) -> TxTypedCall<Env, From, To, (), Gas, ()> {
+        self.wrapped_tx
+            .raw_call("registerToken")
+            .argument(&token_id)
+            .argument(&token_type)
+            .argument(&token_name)
+            .argument(&token_ticker)
+            .argument(&token_decimals)
+            .original_result()
+    }
+
     pub fn update_configuration<
         Arg0: ProxyArg<structs::configs::EsdtSafeConfig<Env::Api>>,
     >(
@@ -152,6 +176,38 @@ where
             .payment(NotPayable)
             .raw_call("getMvxToSovTokenId")
             .argument(&mvx_token_id)
+            .original_result()
+    }
+
+    pub fn sovereign_to_multiversx_esdt_info_mapper<
+        Arg0: ProxyArg<EgldOrEsdtTokenIdentifier<Env::Api>>,
+        Arg1: ProxyArg<u64>,
+    >(
+        self,
+        token_identifier: Arg0,
+        nonce: Arg1,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, structs::EsdtInfo<Env::Api>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getSovEsdtTokenInfo")
+            .argument(&token_identifier)
+            .argument(&nonce)
+            .original_result()
+    }
+
+    pub fn multiversx_to_sovereign_esdt_info_mapper<
+        Arg0: ProxyArg<EgldOrEsdtTokenIdentifier<Env::Api>>,
+        Arg1: ProxyArg<u64>,
+    >(
+        self,
+        token_identifier: Arg0,
+        nonce: Arg1,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, structs::EsdtInfo<Env::Api>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getMvxEsdtTokenInfo")
+            .argument(&token_identifier)
+            .argument(&nonce)
             .original_result()
     }
 

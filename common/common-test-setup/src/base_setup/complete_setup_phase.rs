@@ -3,8 +3,8 @@ use multiversx_sc_scenario::{
     ScenarioTxRun,
 };
 use proxies::{
-    chain_config_proxy::ChainConfigContractProxy, fee_market_proxy::FeeMarketProxy,
-    header_verifier_proxy::HeaderverifierProxy, mvx_esdt_safe_proxy::MvxEsdtSafeProxy,
+    chain_config_proxy::ChainConfigContractProxy, header_verifier_proxy::HeaderverifierProxy,
+    mvx_esdt_safe_proxy::MvxEsdtSafeProxy, mvx_fee_market_proxy::MvxFeeMarketProxy,
     sovereign_forge_proxy::SovereignForgeProxy,
 };
 
@@ -31,20 +31,20 @@ impl BaseSetup {
         self.assert_expected_error_message(response, expected_error_message);
     }
 
-    pub fn complete_fee_market_setup_phase(&mut self, expected_error_message: Option<&str>) {
+    pub fn complete_fee_market_setup_phase(&mut self) {
         let response = self
             .world
             .tx()
             .from(OWNER_ADDRESS)
             .to(FEE_MARKET_ADDRESS)
-            .typed(FeeMarketProxy)
+            .typed(MvxFeeMarketProxy)
             .complete_setup_phase()
             .returns(ReturnsHandledOrError::new())
             .run();
 
         self.change_ownership_to_header_verifier(FEE_MARKET_ADDRESS);
 
-        self.assert_expected_error_message(response, expected_error_message);
+        self.assert_expected_error_message(response, None);
     }
 
     pub fn complete_sovereign_forge_setup_phase(&mut self, expected_error_message: Option<&str>) {
@@ -61,7 +61,7 @@ impl BaseSetup {
         self.assert_expected_error_message(response, expected_error_message);
     }
 
-    pub fn complete_chain_config_setup_phase(&mut self, expect_error: Option<&str>) {
+    pub fn complete_chain_config_setup_phase(&mut self) {
         let transaction = self
             .world
             .tx()
@@ -72,7 +72,7 @@ impl BaseSetup {
             .returns(ReturnsHandledOrError::new())
             .run();
 
-        self.assert_expected_error_message(transaction, expect_error);
+        self.assert_expected_error_message(transaction, None);
     }
 
     pub fn complete_mvx_esdt_safe_setup_phase(&mut self) {

@@ -1,20 +1,9 @@
 use crate::constants::*;
 use multiversx_sc_scenario::{
     api::StaticApi,
-    imports::{
-        Address, BigUint, EsdtTokenType, ManagedBuffer, MxscPath, TestTokenIdentifier,
-        TokenIdentifier, Vec,
-    },
+    imports::{Address, BigUint, ManagedBuffer, MxscPath, TestTokenIdentifier, Vec},
     ScenarioWorld,
 };
-
-pub struct RegisterTokenArgs<'a> {
-    pub sov_token_id: TokenIdentifier<StaticApi>,
-    pub token_type: EsdtTokenType,
-    pub token_display_name: &'a str,
-    pub token_ticker: &'a str,
-    pub num_decimals: usize,
-}
 
 pub struct BaseSetup {
     pub world: ScenarioWorld,
@@ -30,13 +19,14 @@ pub struct AccountSetup<'a> {
 fn world() -> ScenarioWorld {
     let mut blockchain = ScenarioWorld::new();
 
-    blockchain.register_contract(FEE_MARKET_CODE_PATH, fee_market::ContractBuilder);
+    blockchain.register_contract(FEE_MARKET_CODE_PATH, mvx_fee_market::ContractBuilder);
     blockchain.register_contract(HEADER_VERIFIER_CODE_PATH, header_verifier::ContractBuilder);
     blockchain.register_contract(CHAIN_CONFIG_CODE_PATH, chain_config::ContractBuilder);
     blockchain.register_contract(TESTING_SC_CODE_PATH, testing_sc::ContractBuilder);
     blockchain.register_contract(CHAIN_FACTORY_CODE_PATH, chain_factory::ContractBuilder);
     blockchain.register_contract(SOVEREIGN_FORGE_CODE_PATH, sovereign_forge::ContractBuilder);
     blockchain.register_contract(MVX_ESDT_SAFE_CODE_PATH, mvx_esdt_safe::ContractBuilder);
+    blockchain.register_contract(SOV_FEE_MARKET_CODE_PATH, sov_fee_market::ContractBuilder);
 
     blockchain
 }

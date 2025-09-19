@@ -1,5 +1,5 @@
 [package]
-name = "fee-market"
+name = "mvx-fee-market"
 version = "0.1.0"
 authors = ["you"]
 edition = "2021"

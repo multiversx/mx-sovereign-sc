@@ -2,8 +2,8 @@ use crate::err_msg;
 use multiversx_sc::imports::UserBuiltinProxy;
 use multiversx_sc_modules::only_admin;
 use proxies::{
-    chain_config_proxy::ChainConfigContractProxy, fee_market_proxy::FeeMarketProxy,
-    header_verifier_proxy::HeaderverifierProxy, mvx_esdt_safe_proxy::MvxEsdtSafeProxy,
+    chain_config_proxy::ChainConfigContractProxy, header_verifier_proxy::HeaderverifierProxy,
+    mvx_esdt_safe_proxy::MvxEsdtSafeProxy, mvx_fee_market_proxy::MvxFeeMarketProxy,
 };
 
 #[multiversx_sc::module]
@@ -55,7 +55,7 @@ pub trait CompletePhasesModule: only_admin::OnlyAdminModule {
 
         self.tx()
             .to(&fee_market_address)
-            .typed(FeeMarketProxy)
+            .typed(MvxFeeMarketProxy)
             .complete_setup_phase()
             .sync_call();
 

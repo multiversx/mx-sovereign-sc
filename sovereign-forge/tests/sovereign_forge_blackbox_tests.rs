@@ -1,8 +1,11 @@
 use chain_config::storage::ChainConfigStorageModule;
-use common_test_setup::constants::{
-    CHAIN_FACTORY_SC_ADDRESS, CHAIN_ID, DEPLOY_COST, ESDT_SAFE_ADDRESS, FIRST_TEST_TOKEN,
-    NATIVE_TEST_TOKEN, ONE_HUNDRED_THOUSAND, OWNER_ADDRESS, SOVEREIGN_FORGE_SC_ADDRESS,
-    USER_ADDRESS,
+use common_test_setup::{
+    base_setup::helpers::BLSKey,
+    constants::{
+        CHAIN_FACTORY_SC_ADDRESS, CHAIN_ID, DEPLOY_COST, ESDT_SAFE_ADDRESS, FIRST_TEST_TOKEN,
+        NATIVE_TEST_TOKEN, ONE_HUNDRED_THOUSAND, OWNER_ADDRESS, SOVEREIGN_FORGE_SC_ADDRESS,
+        USER_ADDRESS,
+    },
 };
 use cross_chain::storage::CrossChainStorage;
 use error_messages::{
@@ -14,9 +17,13 @@ use error_messages::{
 use fee_common::storage::FeeCommonStorageModule;
 use multiversx_sc::{
     imports::OptionalValue,
-    types::{BigUint, EgldOrEsdtTokenIdentifier, ManagedBuffer, ManagedVec},
+    types::{
+        BigUint, EgldOrEsdtTokenIdentifier, ManagedBuffer, ManagedVec, MultiEgldOrEsdtPayment,
+        ReturnsResultUnmanaged,
+    },
 };
-use multiversx_sc_scenario::ScenarioTxWhitebox;
+use multiversx_sc_scenario::{ScenarioTxRun, ScenarioTxWhitebox};
+use proxies::chain_config_proxy::ChainConfigContractProxy;
 use sovereign_forge::forge_common::{forge_utils::ForgeUtilsModule, storage::StorageModule};
 use sovereign_forge_blackbox_setup::SovereignForgeTestState;
 use structs::{
@@ -58,7 +65,7 @@ fn test_register_chain_factory() {
         .common_setup
         .deploy_sovereign_forge(OptionalValue::None);
 
-    state.register_chain_factory(2, CHAIN_FACTORY_SC_ADDRESS, None);
+    state.register_chain_factory(2, CHAIN_FACTORY_SC_ADDRESS);
 
     state
         .common_setup
@@ -85,7 +92,7 @@ fn test_update_sovereign_config_no_chain_config_deployed() {
         .common_setup
         .deploy_sovereign_forge(OptionalValue::None);
 
-    state.register_chain_factory(2, CHAIN_FACTORY_SC_ADDRESS, None);
+    state.register_chain_factory(2, CHAIN_FACTORY_SC_ADDRESS);
 
     state
         .common_setup
@@ -372,7 +379,7 @@ fn test_set_fee() {
         .world
         .query()
         .to(fee_market_address)
-        .whitebox(fee_market::contract_obj, |sc| {
+        .whitebox(mvx_fee_market::contract_obj, |sc| {
             assert!(sc.is_fee_enabled());
             assert!(!sc
                 .token_fee(&EgldOrEsdtTokenIdentifier::esdt(FIRST_TEST_TOKEN))
@@ -514,7 +521,7 @@ fn test_remove_fee() {
         .world
         .query()
         .to(fee_market_address)
-        .whitebox(fee_market::contract_obj, |sc| {
+        .whitebox(mvx_fee_market::contract_obj, |sc| {
             assert!(!sc.is_fee_enabled());
             assert!(sc
                 .token_fee(&EgldOrEsdtTokenIdentifier::esdt(FIRST_TEST_TOKEN))
@@ -624,18 +631,33 @@ fn test_complete_setup_phase() {
             );
         });
 
-    let address = state.retrieve_deployed_mvx_esdt_safe_address(preferred_chain_id.clone());
+    let mvx_address = state.retrieve_deployed_mvx_esdt_safe_address(preferred_chain_id.clone());
 
     state
         .common_setup
         .world
         .tx()
         .from(OWNER_ADDRESS)
-        .to(address)
+        .to(mvx_address)
         .whitebox(mvx_esdt_safe::contract_obj, |sc| {
             sc.native_token()
                 .set(NATIVE_TEST_TOKEN.to_token_identifier());
         });
+
+    let chain_config_address =
+        state.retrieve_deployed_chain_config_address(preferred_chain_id.clone());
+
+    state
+        .common_setup
+        .world
+        .tx()
+        .from(OWNER_ADDRESS)
+        .to(chain_config_address)
+        .typed(ChainConfigContractProxy)
+        .register(BLSKey::random())
+        .payment(MultiEgldOrEsdtPayment::new())
+        .returns(ReturnsResultUnmanaged)
+        .run();
 
     state.complete_setup_phase(None);
     state.check_setup_phase_completed(preferred_chain_id, true);
@@ -1108,7 +1130,7 @@ fn test_remove_users_from_whitelist() {
         OWNER_ADDRESS.to_managed_address(),
     ];
 
-    state.add_users_to_whitelist(whitelisted_users.clone(), None);
+    state.add_users_to_whitelist(whitelisted_users.clone());
     state
         .common_setup
         .query_user_fee_whitelist(Some(&whitelisted_users));
@@ -1116,7 +1138,7 @@ fn test_remove_users_from_whitelist() {
     let users_to_remove = vec![USER_ADDRESS.to_managed_address()];
     let expected_users = vec![OWNER_ADDRESS.to_managed_address()];
 
-    state.remove_users_from_whitelist(users_to_remove.clone(), None);
+    state.remove_users_from_whitelist(users_to_remove.clone());
     state
         .common_setup
         .query_user_fee_whitelist(Some(&expected_users));

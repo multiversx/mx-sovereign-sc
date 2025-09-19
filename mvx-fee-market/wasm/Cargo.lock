@@ -64,28 +64,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "fee-market"
-version = "0.1.0"
-dependencies = [
- "common-utils",
- "custom-events",
- "error-messages",
- "fee-common",
- "multiversx-sc",
- "proxies",
- "setup-phase",
- "structs",
-]
-
-[[package]]
-name = "fee-market-wasm"
-version = "0.0.0"
-dependencies = [
- "fee-market",
- "multiversx-sc-wasm-adapter",
-]
-
-[[package]]
 name = "generic-array"
 version = "1.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -185,6 +163,28 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9ddc71237f76ef620c89439823e07edd3c7c591da075942eb9e2ee4cae1f1722"
 dependencies = [
  "multiversx-sc",
+]
+
+[[package]]
+name = "mvx-fee-market"
+version = "0.1.0"
+dependencies = [
+ "common-utils",
+ "custom-events",
+ "error-messages",
+ "fee-common",
+ "multiversx-sc",
+ "proxies",
+ "setup-phase",
+ "structs",
+]
+
+[[package]]
+name = "mvx-fee-market-wasm"
+version = "0.0.0"
+dependencies = [
+ "multiversx-sc-wasm-adapter",
+ "mvx-fee-market",
 ]
 
 [[package]]

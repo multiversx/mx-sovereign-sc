@@ -20,8 +20,8 @@ path = "../testing-sc"
 [dependencies.common-utils]
 path = "../common/common-utils"
 
-[dependencies.fee-market]
-path = "../fee-market"
+[dependencies.mvx-fee-market]
+path = "../mvx-fee-market"
 
 [dependencies.structs]
 path = "../common/structs"

@@ -1,7 +1,7 @@
+use cross_chain::DEFAULT_ISSUE_COST;
 use error_messages::ISSUE_COST_NOT_COVERED;
 use multiversx_sc::require;
 use multiversx_sc::types::{MultiValueEncoded, TokenIdentifier};
-use mvx_esdt_safe::register_token::ISSUE_COST;
 use proxies::chain_factory_proxy::ChainFactoryContractProxy;
 use structs::configs::{EsdtSafeConfig, SovereignConfig};
 use structs::fee::FeeStruct;
@@ -22,7 +22,7 @@ pub trait UpdateConfigsModule:
         let caller = self.blockchain().get_caller();
         let egld_payment = self.call_value().egld().clone();
 
-        require!(egld_payment == ISSUE_COST, ISSUE_COST_NOT_COVERED);
+        require!(egld_payment == DEFAULT_ISSUE_COST, ISSUE_COST_NOT_COVERED);
 
         self.require_phase_two_completed(&caller);
 

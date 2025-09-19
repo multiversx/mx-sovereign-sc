@@ -1,33 +1,29 @@
-use common_interactor::common_sovereign_interactor::{
-    CommonInteractorTrait, IssueTokenStruct, MintTokenStruct,
+use common_interactor::{
+    common_sovereign_interactor::CommonInteractorTrait, interactor_common_state::CommonState,
+    interactor_helpers::InteractorHelpers,
 };
-use multiversx_sc_snippets::imports::*;
-use multiversx_sc_snippets::multiversx_sc_scenario::multiversx_chain_vm::crypto_functions::sha256;
+use multiversx_sc_snippets::{
+    imports::*, multiversx_sc_scenario::multiversx_chain_vm::crypto_functions::sha256,
+};
 use proxies::mvx_esdt_safe_proxy::MvxEsdtSafeProxy;
 
-use structs::configs::{EsdtSafeConfig, SovereignConfig};
-use structs::fee::FeeStruct;
-use structs::forge::{NativeToken, ScArray};
+use structs::{configs::EsdtSafeConfig, generate_hash::GenerateHash};
 
 use common_interactor::interactor_config::Config;
 use common_interactor::interactor_state::State;
 
-use common_test_setup::base_setup::helpers::BLSKey;
 use common_test_setup::constants::{
-    INTERACTOR_WORKING_DIR, MVX_ESDT_SAFE_CODE_PATH, ONE_THOUSAND_TOKENS,
+    INTERACTOR_WORKING_DIR, MVX_ESDT_SAFE_CODE_PATH, ONE_THOUSAND_TOKENS, SHARD_0,
 };
-use structs::generate_hash::GenerateHash;
-use structs::RegisterTokenOperation;
 
 pub struct MvxEsdtSafeInteract {
     pub interactor: Interactor,
-    pub bridge_owner: Address,
-    pub sovereign_owner: Address,
-    pub bridge_service: Address,
     pub user_address: Address,
     pub state: State,
+    pub common_state: CommonState,
 }
-impl CommonInteractorTrait for MvxEsdtSafeInteract {
+
+impl InteractorHelpers for MvxEsdtSafeInteract {
     fn interactor(&mut self) -> &mut Interactor {
         &mut self.interactor
     }
@@ -36,23 +32,31 @@ impl CommonInteractorTrait for MvxEsdtSafeInteract {
         &mut self.state
     }
 
-    fn sovereign_owner(&self) -> &Address {
-        &self.sovereign_owner
-    }
-
-    fn bridge_service(&self) -> &Address {
-        &self.bridge_service
+    fn common_state(&mut self) -> &mut CommonState {
+        &mut self.common_state
     }
 
     fn user_address(&self) -> &Address {
         &self.user_address
     }
 }
+impl CommonInteractorTrait for MvxEsdtSafeInteract {}
 
 impl MvxEsdtSafeInteract {
     pub async fn new(config: Config) -> Self {
-        let mut interactor = Self::initialize_interactor(config).await;
-        interactor.initialize_tokens_in_wallets().await;
+        let mut interactor = Self::initialize_interactor(config.clone()).await;
+
+        interactor.register_wallets().await;
+
+        match config.use_chain_simulator() {
+            true => {
+                interactor.initialize_tokens_in_wallets().await;
+            }
+            false => {
+                println!("Skipping token initialization for real network");
+            }
+        }
+
         interactor
     }
 
@@ -63,185 +67,61 @@ impl MvxEsdtSafeInteract {
 
         let working_dir = INTERACTOR_WORKING_DIR;
         interactor.set_current_dir_from_workspace(working_dir);
-        let bridge_owner = interactor.register_wallet(test_wallets::bob()).await;
-        let sovereign_owner = interactor.register_wallet(test_wallets::alice()).await;
-        let bridge_service = interactor.register_wallet(test_wallets::carol()).await;
-        let user_address = interactor.register_wallet(test_wallets::mike()).await;
 
-        interactor.generate_blocks_until_epoch(2u64).await.unwrap();
+        let user_address = interactor.register_wallet(test_wallets::grace()).await; //shard 1
+
+        interactor.generate_blocks_until_all_activations().await;
 
         MvxEsdtSafeInteract {
             interactor,
-            bridge_owner,
-            sovereign_owner,
-            bridge_service,
             user_address,
-            state: State::load_state(),
+            state: State::default(),
+            common_state: CommonState::load_state(),
         }
     }
 
     async fn initialize_tokens_in_wallets(&mut self) {
-        let first_token_struct = IssueTokenStruct {
-            token_display_name: "MVX".to_string(),
-            token_ticker: "MVX".to_string(),
-            token_type: EsdtTokenType::Fungible,
-            num_decimals: 18,
-        };
-        let first_token_mint = MintTokenStruct {
-            name: None,
-            amount: BigUint::from(ONE_THOUSAND_TOKENS),
-            attributes: None,
-        };
-        let first_token = self
-            .issue_and_mint_token(first_token_struct, first_token_mint)
-            .await;
-        self.state.set_first_token(first_token);
+        let token_configs = [
+            ("MVX", EsdtTokenType::Fungible, 18),
+            ("MVX2", EsdtTokenType::Fungible, 18),
+            ("FEE", EsdtTokenType::Fungible, 18),
+        ];
 
-        let fee_token_struct = IssueTokenStruct {
-            token_display_name: "FEE".to_string(),
-            token_ticker: "FEE".to_string(),
-            token_type: EsdtTokenType::Fungible,
-            num_decimals: 0,
-        };
-        let fee_token_mint = MintTokenStruct {
-            name: None,
-            amount: BigUint::from(ONE_THOUSAND_TOKENS),
-            attributes: None,
-        };
-        let fee_token = self
-            .issue_and_mint_token(fee_token_struct, fee_token_mint)
-            .await;
-        self.state.set_fee_token(fee_token);
+        let mut all_tokens = Vec::new();
 
-        let second_token_struct = IssueTokenStruct {
-            token_display_name: "MVX2".to_string(),
-            token_ticker: "MVX2".to_string(),
-            token_type: EsdtTokenType::Fungible,
-            num_decimals: 18,
-        };
-        let second_token_mint = MintTokenStruct {
-            name: None,
-            amount: BigUint::from(ONE_THOUSAND_TOKENS),
-            attributes: None,
-        };
-        let second_token = self
-            .issue_and_mint_token(second_token_struct, second_token_mint)
-            .await;
-        self.state.set_second_token(second_token);
+        for (ticker, token_type, decimals) in token_configs {
+            let amount = if matches!(
+                token_type,
+                EsdtTokenType::NonFungibleV2 | EsdtTokenType::DynamicNFT
+            ) {
+                BigUint::from(1u64)
+            } else {
+                BigUint::from(ONE_THOUSAND_TOKENS)
+            };
+
+            let token = self
+                .create_token_with_config(token_type, ticker, amount, decimals)
+                .await;
+
+            match ticker {
+                "MVX" => self.state.set_first_token(token.clone()),
+                "MVX2" => self.state.set_second_token(token.clone()),
+                "FEE" => self.state.set_fee_token(token.clone()),
+                _ => {}
+            }
+
+            all_tokens.push(token);
+        }
+
+        self.state.set_initial_wallet_tokens_state(all_tokens);
     }
 
-    pub async fn issue_and_mint_the_remaining_types_of_tokens(&mut self) {
-        let nft_token_struct = IssueTokenStruct {
-            token_display_name: "NFT".to_string(),
-            token_ticker: "NFT".to_string(),
-            token_type: EsdtTokenType::NonFungible,
-            num_decimals: 0,
-        };
-        let nft_token_mint = MintTokenStruct {
-            name: Some("NFT".to_string()),
-            amount: BigUint::from(1u64),
-            attributes: None,
-        };
-        self.issue_and_mint_token(nft_token_struct, nft_token_mint)
-            .await;
-
-        let sft_token_struct = IssueTokenStruct {
-            token_display_name: "SFT".to_string(),
-            token_ticker: "SFT".to_string(),
-            token_type: EsdtTokenType::SemiFungible,
-            num_decimals: 0,
-        };
-        let sft_token_mint = MintTokenStruct {
-            name: Some("SFT".to_string()),
-            amount: BigUint::from(ONE_THOUSAND_TOKENS),
-            attributes: None,
-        };
-        self.issue_and_mint_token(sft_token_struct, sft_token_mint)
-            .await;
-
-        let dyn_token_struct = IssueTokenStruct {
-            token_display_name: "DYN".to_string(),
-            token_ticker: "DYN".to_string(),
-            token_type: EsdtTokenType::DynamicNFT,
-            num_decimals: 10,
-        };
-        let dyn_token_mint = MintTokenStruct {
-            name: Some("DYN".to_string()),
-            amount: BigUint::from(1u64),
-            attributes: None,
-        };
-        self.issue_and_mint_token(dyn_token_struct, dyn_token_mint)
-            .await;
-
-        let meta_token_struct = IssueTokenStruct {
-            token_display_name: "META".to_string(),
-            token_ticker: "META".to_string(),
-            token_type: EsdtTokenType::MetaFungible,
-            num_decimals: 18,
-        };
-        let meta_token_mint = MintTokenStruct {
-            name: Some("META".to_string()),
-            amount: BigUint::from(ONE_THOUSAND_TOKENS),
-            attributes: None,
-        };
-        self.issue_and_mint_token(meta_token_struct, meta_token_mint)
-            .await;
-    }
-
-    pub async fn deploy_contracts(
-        &mut self,
-        sovereign_config: OptionalValue<SovereignConfig<StaticApi>>,
-        esdt_safe_config: OptionalValue<EsdtSafeConfig<StaticApi>>,
-        fee_struct: Option<FeeStruct<StaticApi>>,
-        sc_array: Vec<ScArray>,
-    ) {
-        let chain_config_address = self.deploy_chain_config(sovereign_config).await;
-        self.state()
-            .set_chain_config_sc_address(chain_config_address);
-
-        let chain_config_address = self.state.current_chain_config_sc_address();
-        self.register(
-            BLSKey::random(),
-            MultiEgldOrEsdtPayment::new(),
-            chain_config_address.clone(),
-        )
-        .await;
-        self.complete_chain_config_setup_phase().await;
-
-        let mvx_esdt_safe_address = self.deploy_mvx_esdt_safe(esdt_safe_config).await;
-        self.state()
-            .set_mvx_esdt_safe_contract_address(mvx_esdt_safe_address);
-        let fee_market_address = self
-            .deploy_fee_market(
-                self.state.current_mvx_esdt_safe_contract_address().clone(),
-                fee_struct,
-            )
-            .await;
-        self.state()
-            .set_fee_market_address(fee_market_address.clone());
-        self.set_fee_market_address(fee_market_address.to_address())
-            .await;
-        let contracts_array = self.get_contract_info_struct_for_sc_type(sc_array);
-        let header_verifier_address = self.deploy_header_verifier(contracts_array).await;
-        self.state()
-            .set_header_verifier_address(header_verifier_address);
-        self.complete_header_verifier_setup_phase().await;
-        self.complete_setup_phase().await;
-        self.change_ownership_to_header_verifier(
-            self.bridge_owner.clone(),
-            self.state
-                .current_mvx_esdt_safe_contract_address()
-                .clone()
-                .to_address(),
-        )
-        .await;
-    }
-
-    pub async fn complete_setup_phase(&mut self) {
+    pub async fn complete_setup_phase(&mut self, shard: u32) {
+        let caller = self.get_bridge_owner_for_shard(shard).clone();
         self.interactor
             .tx()
-            .from(&self.bridge_owner)
-            .to(self.state.current_mvx_esdt_safe_contract_address())
+            .from(&caller)
+            .to(self.common_state.current_mvx_esdt_safe_contract_address())
             .gas(90_000_000u64)
             .typed(MvxEsdtSafeProxy)
             .complete_setup_phase()
@@ -251,11 +131,12 @@ impl MvxEsdtSafeInteract {
     }
 
     pub async fn upgrade(&mut self) {
+        let caller = self.get_bridge_owner_for_shard(SHARD_0).clone();
         let response = self
             .interactor
             .tx()
-            .to(self.state.current_mvx_esdt_safe_contract_address())
-            .from(&self.bridge_owner)
+            .to(self.common_state.current_mvx_esdt_safe_contract_address())
+            .from(caller)
             .gas(90_000_000u64)
             .typed(MvxEsdtSafeProxy)
             .upgrade()
@@ -268,38 +149,60 @@ impl MvxEsdtSafeInteract {
         println!("Result: {response:?}");
     }
 
-    pub async fn update_configuration(
+    pub async fn update_configuration_after_setup_phase(
         &mut self,
-        hash_of_hashes: ManagedBuffer<StaticApi>,
-        new_config: EsdtSafeConfig<StaticApi>,
-        expected_error_message: Option<&str>,
+        shard: u32,
+        config: EsdtSafeConfig<StaticApi>,
         expected_log: Option<&str>,
         expected_log_error: Option<&str>,
     ) {
+        let bridge_service = self.get_bridge_service_for_shard(shard);
+        let config_hash = config.generate_hash();
+
+        self.common_state().update_config_nonce += 1;
+        let nonce_str = self.common_state().update_config_nonce.to_string();
+        let nonce_buf = ManagedBuffer::<StaticApi>::from(&nonce_str);
+
+        let mut bytes = Vec::with_capacity(config_hash.len() + nonce_buf.len());
+        bytes.extend_from_slice(&config_hash.to_vec());
+        bytes.extend_from_slice(&nonce_buf.to_vec());
+
+        let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&bytes));
+        let operations_hashes =
+            MultiValueEncoded::from(ManagedVec::from(vec![config_hash.clone(), nonce_buf]));
+
+        self.register_operation(
+            shard,
+            ManagedBuffer::new(),
+            &hash_of_hashes,
+            operations_hashes,
+        )
+        .await;
+
         let (response, logs) = self
             .interactor
             .tx()
-            .from(&self.bridge_service)
-            .to(self.state.current_mvx_esdt_safe_contract_address())
+            .from(bridge_service)
+            .to(self.common_state.current_mvx_esdt_safe_contract_address())
             .gas(90_000_000u64)
             .typed(MvxEsdtSafeProxy)
-            .update_esdt_safe_config(hash_of_hashes, new_config)
+            .update_esdt_safe_config(hash_of_hashes, config)
             .returns(ReturnsHandledOrError::new())
             .returns(ReturnsLogs)
             .run()
             .await;
 
-        self.assert_expected_error_message(response, expected_error_message);
+        self.assert_expected_error_message(response, None);
 
         self.assert_expected_log(logs, expected_log, expected_log_error);
     }
 
-    pub async fn set_fee_market_address(&mut self, fee_market_address: Address) {
+    pub async fn set_fee_market_address(&mut self, caller: Address, fee_market_address: Address) {
         let response = self
             .interactor
             .tx()
-            .from(&self.bridge_owner)
-            .to(self.state.current_mvx_esdt_safe_contract_address())
+            .from(caller)
+            .to(self.common_state.current_mvx_esdt_safe_contract_address())
             .gas(90_000_000u64)
             .typed(MvxEsdtSafeProxy)
             .set_fee_market_address(fee_market_address)
@@ -308,99 +211,5 @@ impl MvxEsdtSafeInteract {
             .await;
 
         println!("Result: {response:?}");
-    }
-
-    pub async fn register_token(
-        &mut self,
-        args: RegisterTokenOperation<StaticApi>,
-        expected_error_message: Option<&str>,
-    ) {
-        let token_hash = args.generate_hash();
-        let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&token_hash.to_vec()));
-        let response = self
-            .interactor
-            .tx()
-            .from(&self.user_address)
-            .to(self.state.current_mvx_esdt_safe_contract_address())
-            .gas(90_000_000u64)
-            .typed(MvxEsdtSafeProxy)
-            .register_token(hash_of_hashes, args)
-            .returns(ReturnsHandledOrError::new())
-            .run()
-            .await;
-
-        self.assert_expected_error_message(response, expected_error_message);
-    }
-
-    pub async fn register_native_token(
-        &mut self,
-        ticker: &str,
-        name: &str,
-        egld_amount: BigUint<StaticApi>,
-        expected_error_message: Option<&str>,
-    ) {
-        let response = self
-            .interactor
-            .tx()
-            .from(&self.bridge_owner)
-            .to(self.state.current_mvx_esdt_safe_contract_address())
-            .gas(90_000_000u64)
-            .typed(MvxEsdtSafeProxy)
-            .register_native_token(NativeToken {
-                ticker: ManagedBuffer::from(ticker),
-                name: ManagedBuffer::from(name),
-            })
-            .egld(egld_amount)
-            .returns(ReturnsHandledOrError::new())
-            .run()
-            .await;
-
-        self.assert_expected_error_message(response, expected_error_message);
-    }
-
-    pub async fn pause_endpoint(&mut self) {
-        let response = self
-            .interactor
-            .tx()
-            .from(&self.bridge_owner)
-            .to(self.state.current_mvx_esdt_safe_contract_address())
-            .gas(90_000_000u64)
-            .typed(MvxEsdtSafeProxy)
-            .pause_endpoint()
-            .returns(ReturnsResultUnmanaged)
-            .run()
-            .await;
-
-        println!("Result: {response:?}");
-    }
-
-    pub async fn unpause_endpoint(&mut self) {
-        let response = self
-            .interactor
-            .tx()
-            .from(&self.bridge_owner)
-            .to(self.state.current_mvx_esdt_safe_contract_address())
-            .gas(90_000_000u64)
-            .typed(MvxEsdtSafeProxy)
-            .unpause_endpoint()
-            .returns(ReturnsResultUnmanaged)
-            .run()
-            .await;
-
-        println!("Result: {response:?}");
-    }
-
-    pub async fn paused_status(&mut self) {
-        let result_value = self
-            .interactor
-            .query()
-            .to(self.state.current_mvx_esdt_safe_contract_address())
-            .typed(MvxEsdtSafeProxy)
-            .paused_status()
-            .returns(ReturnsResultUnmanaged)
-            .run()
-            .await;
-
-        println!("Result: {result_value:?}");
     }
 }
