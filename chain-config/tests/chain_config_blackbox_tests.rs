@@ -21,6 +21,7 @@ use multiversx_sc::{
     },
 };
 use multiversx_sc_scenario::api::StaticApi;
+use multiversx_sc_scenario::multiversx_chain_vm::crypto_functions_bls::create_aggregated_signature;
 use multiversx_sc_scenario::{multiversx_chain_vm::crypto_functions::sha256, ScenarioTxWhitebox};
 use setup_phase::SetupPhaseModule;
 use structs::{
@@ -251,21 +252,21 @@ fn test_update_config_invalid_config() {
         .common_setup
         .deploy_header_verifier(vec![ScArray::ChainConfig]);
 
+    let new_config = SovereignConfig::new(2, 1, BigUint::default(), None);
+    let config_hash = new_config.generate_hash();
+    let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&config_hash.to_vec()));
+    let (signature, pub_keys) = state.common_setup.get_sig_and_pub_keys(&hash_of_hashes);
+    let bitmap = ManagedBuffer::new_from_bytes(&[0x01]);
+
     state
         .common_setup
-        .register(&BLSKey::random(), &MultiEgldOrEsdtPayment::new(), None);
+        .register(&pub_keys[0], &MultiEgldOrEsdtPayment::new(), None);
 
     state.common_setup.complete_chain_config_setup_phase();
 
     state
         .common_setup
         .complete_header_verifier_setup_phase(None);
-
-    let new_config = SovereignConfig::new(2, 1, BigUint::default(), None);
-    let config_hash = new_config.generate_hash();
-    let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&config_hash.to_vec()));
-    let bitmap = ManagedBuffer::new_from_bytes(&[0x01]);
-    let signature = ManagedBuffer::new();
 
     state.common_setup.register_operation(
         OWNER_ADDRESS,
@@ -288,7 +289,7 @@ fn test_update_config_invalid_config() {
 /// C-CONFIG_UPDATE_CONFIG_OK
 ///
 /// ### ACTION
-/// Call 'update_sovereign_config()'  
+/// Call 'update_sovereign_config()'
 ///
 /// ### EXPECTED
 /// executedBridgeOp event is emitted
@@ -304,21 +305,21 @@ fn test_update_config() {
         .common_setup
         .deploy_header_verifier(vec![ScArray::ChainConfig]);
 
+    let new_config = SovereignConfig::new(1, 2, BigUint::default(), None);
+    let config_hash = new_config.generate_hash();
+    let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&config_hash.to_vec()));
+    let (signature, pub_keys) = state.common_setup.get_sig_and_pub_keys(&hash_of_hashes);
+    let bitmap = ManagedBuffer::new_from_bytes(&[0x01]);
+
     state
         .common_setup
-        .register(&BLSKey::random(), &MultiEgldOrEsdtPayment::new(), None);
+        .register(&pub_keys[0], &MultiEgldOrEsdtPayment::new(), None);
 
     state.common_setup.complete_chain_config_setup_phase();
 
     state
         .common_setup
         .complete_header_verifier_setup_phase(None);
-
-    let new_config = SovereignConfig::new(1, 2, BigUint::default(), None);
-    let config_hash = new_config.generate_hash();
-    let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&config_hash.to_vec()));
-    let bitmap = ManagedBuffer::new_from_bytes(&[0x01]);
-    let signature = ManagedBuffer::new();
 
     state.common_setup.register_operation(
         OWNER_ADDRESS,
@@ -564,9 +565,16 @@ fn test_register_validator_after_genesis() {
     let mut payments_vec = MultiEgldOrEsdtPayment::new();
     payments_vec.push(payment);
 
+    let (signature, pub_keys) = create_aggregated_signature(2, b"test message")
+        .expect("failed to create aggregate signature");
+    let pk_buffers: Vec<ManagedBuffer<StaticApi>> = pub_keys
+        .iter()
+        .map(|pk| ManagedBuffer::from(pk.serialize().unwrap()))
+        .collect();
+
     state
         .common_setup
-        .register(&BLSKey::random(), &payments_vec, None);
+        .register(&pk_buffers[0], &payments_vec, None);
 
     state.common_setup.complete_chain_config_setup_phase();
 
@@ -578,7 +586,6 @@ fn test_register_validator_after_genesis() {
         .common_setup
         .complete_header_verifier_setup_phase(None);
 
-    let signature = ManagedBuffer::new();
     let bitmap = ManagedBuffer::new_from_bytes(&[0x06]);
     let epoch = 0;
 
@@ -586,11 +593,11 @@ fn test_register_validator_after_genesis() {
         let validator_data = ValidatorData {
             id: BigUint::from(id as u32),
             address: OWNER_ADDRESS.to_managed_address(),
-            bls_key: BLSKey::random(),
+            bls_key: pk_buffers[1].clone(),
         };
         state.common_setup.register_validator_operation(
             validator_data,
-            signature.clone(),
+            ManagedBuffer::from(signature.serialize().unwrap()),
             bitmap.clone(),
             epoch,
         );
