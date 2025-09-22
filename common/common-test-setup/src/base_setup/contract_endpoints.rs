@@ -3,8 +3,12 @@ use crate::{
     base_setup::init::BaseSetup,
     constants::{CHAIN_CONFIG_ADDRESS, FEE_MARKET_ADDRESS, HEADER_VERIFIER_ADDRESS, OWNER_ADDRESS},
 };
-use multiversx_sc_scenario::imports::{BigUint, ReturnsResult};
+use chain_config::storage::ChainConfigStorageModule;
+use header_verifier::storage::HeaderVerifierStorageModule;
+use multiversx_sc_scenario::imports::{BigUint, ReturnsResult, StorageClearable};
 use multiversx_sc_scenario::multiversx_chain_vm::crypto_functions::sha256;
+use multiversx_sc_scenario::multiversx_chain_vm::crypto_functions_bls::create_aggregated_signature;
+use multiversx_sc_scenario::ScenarioTxWhitebox;
 use multiversx_sc_scenario::{
     api::StaticApi,
     imports::{
@@ -19,7 +23,7 @@ use proxies::{
 };
 use structs::fee::FeeStruct;
 use structs::generate_hash::GenerateHash;
-use structs::ValidatorData;
+use structs::{ValidatorData, ValidatorInfo};
 
 impl BaseSetup {
     pub fn register_operation(
@@ -145,9 +149,21 @@ impl BaseSetup {
         let validator_data_hash = validator_data.generate_hash();
         let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&validator_data_hash.to_vec()));
 
+        let (new_signature, pub_keys) = self.get_sig_and_pub_keys(&hash_of_hashes);
+
+        self.world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .to(HEADER_VERIFIER_ADDRESS)
+            .whitebox(header_verifier::contract_obj, |sc| {
+                let pub_key = ManagedBuffer::new_from_bytes(&pub_keys[0].to_vec());
+                sc.bls_pub_keys(0).clear();
+                sc.bls_pub_keys(0).insert(pub_key);
+            });
+
         self.register_operation(
             OWNER_ADDRESS,
-            signature,
+            new_signature,
             &hash_of_hashes,
             bitmap,
             epoch,
