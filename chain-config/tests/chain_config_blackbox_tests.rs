@@ -21,7 +21,6 @@ use multiversx_sc::{
     },
 };
 use multiversx_sc_scenario::api::StaticApi;
-use multiversx_sc_scenario::multiversx_chain_vm::crypto_functions_bls::create_aggregated_signature;
 use multiversx_sc_scenario::{multiversx_chain_vm::crypto_functions::sha256, ScenarioTxWhitebox};
 use setup_phase::SetupPhaseModule;
 use structs::{
@@ -255,7 +254,7 @@ fn test_update_config_invalid_config() {
     let new_config = SovereignConfig::new(2, 1, BigUint::default(), None);
     let config_hash = new_config.generate_hash();
     let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&config_hash.to_vec()));
-    let (signature, pub_keys) = state.common_setup.get_sig_and_pub_keys(&hash_of_hashes);
+    let (signature, pub_keys) = state.common_setup.get_sig_and_pub_keys(1, &hash_of_hashes);
     let bitmap = ManagedBuffer::new_from_bytes(&[0x01]);
 
     state
@@ -308,7 +307,7 @@ fn test_update_config() {
     let new_config = SovereignConfig::new(1, 2, BigUint::default(), None);
     let config_hash = new_config.generate_hash();
     let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&config_hash.to_vec()));
-    let (signature, pub_keys) = state.common_setup.get_sig_and_pub_keys(&hash_of_hashes);
+    let (signature, pub_keys) = state.common_setup.get_sig_and_pub_keys(1, &hash_of_hashes);
     let bitmap = ManagedBuffer::new_from_bytes(&[0x01]);
 
     state
@@ -567,7 +566,7 @@ fn test_register_validator_after_genesis() {
 
     let (signature, pub_keys) = state
         .common_setup
-        .get_sig_and_pub_keys(&ManagedBuffer::new());
+        .get_sig_and_pub_keys(1, &ManagedBuffer::new());
 
     state
         .common_setup
@@ -895,6 +894,9 @@ fn test_unregister_after_genesis() {
 /// Validator is unregistered successfully after genesis
 #[test]
 fn test_unregister_validator_after_genesis() {
+    // register with 3 random validators
+    // create the signature and pub keys
+    // modify storage with the created pub keys
     let mut state = ChainConfigTestState::new();
 
     let token_amount = BigUint::from(100_000u64);

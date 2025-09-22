@@ -135,7 +135,7 @@ pub trait ValidatorModule:
             return;
         };
 
-        self.lock_operation_hash_wrapper(&config_hash, &hash_of_hashes);
+        self.lock_operation_hash_wrapper(&hash_of_hashes, &config_hash);
 
         let validator_info_mapper = self.validator_info(&validator_data.id);
         if validator_info_mapper.is_empty() {

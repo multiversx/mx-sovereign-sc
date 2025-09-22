@@ -87,7 +87,7 @@ fn test_register_bridge_operation() {
 
     let (signature, pub_keys) = state
         .common_setup
-        .get_sig_and_pub_keys(&operation.bridge_operation_hash);
+        .get_sig_and_pub_keys(1, &operation.bridge_operation_hash);
 
     state
         .common_setup
@@ -650,7 +650,7 @@ fn test_change_validator_set_operation_already_registered() {
 
     let (signature, pub_keys) = state
         .common_setup
-        .get_sig_and_pub_keys(&operation.bridge_operation_hash);
+        .get_sig_and_pub_keys(1, &operation.bridge_operation_hash);
 
     state
         .common_setup

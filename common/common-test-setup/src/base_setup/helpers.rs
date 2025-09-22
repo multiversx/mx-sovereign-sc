@@ -91,9 +91,11 @@ impl BaseSetup {
 
     pub fn get_sig_and_pub_keys(
         &mut self,
+        pk_size: usize,
         message: &ManagedBuffer<StaticApi>,
     ) -> (ManagedBuffer<StaticApi>, Vec<ManagedBuffer<StaticApi>>) {
-        let (signature, pub_keys) = create_aggregated_signature(1, &message.to_vec()).unwrap();
+        let (signature, pub_keys) =
+            create_aggregated_signature(pk_size, &message.to_vec()).unwrap();
         let pk_buffers: Vec<ManagedBuffer<StaticApi>> = pub_keys
             .iter()
             .map(|pk| ManagedBuffer::from(pk.serialize().unwrap()))
