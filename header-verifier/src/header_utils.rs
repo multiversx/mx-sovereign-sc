@@ -116,7 +116,7 @@ pub trait HeaderVerifierUtilsModule:
         hash_of_hashes: &ManagedBuffer,
         bls_keys_bitmap: ManagedBuffer,
         bls_pub_keys: &ManagedVec<ManagedBuffer>,
-    ) -> Option<ManagedBuffer> {
+    ) {
         let approving_validators =
             self.get_approving_validators(epoch, &bls_keys_bitmap, bls_pub_keys.len());
 
@@ -125,8 +125,6 @@ pub trait HeaderVerifierUtilsModule:
             hash_of_hashes,
             signature,
         );
-
-        None
     }
 
     fn is_caller_from_current_sovereign(&self) -> bool {

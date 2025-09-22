@@ -3,11 +3,10 @@ use crate::{
     base_setup::init::BaseSetup,
     constants::{CHAIN_CONFIG_ADDRESS, FEE_MARKET_ADDRESS, HEADER_VERIFIER_ADDRESS, OWNER_ADDRESS},
 };
-use chain_config::storage::ChainConfigStorageModule;
+
 use header_verifier::storage::HeaderVerifierStorageModule;
 use multiversx_sc_scenario::imports::{BigUint, ReturnsResult, StorageClearable};
 use multiversx_sc_scenario::multiversx_chain_vm::crypto_functions::sha256;
-use multiversx_sc_scenario::multiversx_chain_vm::crypto_functions_bls::create_aggregated_signature;
 use multiversx_sc_scenario::ScenarioTxWhitebox;
 use multiversx_sc_scenario::{
     api::StaticApi,
@@ -23,7 +22,7 @@ use proxies::{
 };
 use structs::fee::FeeStruct;
 use structs::generate_hash::GenerateHash;
-use structs::{ValidatorData, ValidatorInfo};
+use structs::ValidatorData;
 
 impl BaseSetup {
     pub fn register_operation(
