@@ -4,6 +4,7 @@ use crate::{
     constants::{CHAIN_CONFIG_ADDRESS, FEE_MARKET_ADDRESS, HEADER_VERIFIER_ADDRESS, OWNER_ADDRESS},
 };
 
+use chain_config::storage::ChainConfigStorageModule;
 use header_verifier::storage::HeaderVerifierStorageModule;
 use multiversx_sc_scenario::api::{DebugApiBackend, VMHooksApi};
 use multiversx_sc_scenario::imports::{BigUint, ManagedVec, ReturnsResult, StorageClearable};
@@ -205,6 +206,25 @@ impl BaseSetup {
         self.assert_expected_log(logs, expected_custom_log, None);
     }
 
+    pub fn set_bls_keys_in_header_storage(&mut self, pub_keys: Vec<ManagedBuffer<StaticApi>>) {
+        self.world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .to(HEADER_VERIFIER_ADDRESS)
+            .whitebox(header_verifier::contract_obj, |sc| {
+                let mut new_pub_keys: ManagedVec<
+                    VMHooksApi<DebugApiBackend>,
+                    ManagedBuffer<VMHooksApi<DebugApiBackend>>,
+                > = ManagedVec::new();
+                for pub_key in pub_keys.clone() {
+                    let pub_key = ManagedBuffer::new_from_bytes(&pub_key.to_vec());
+                    new_pub_keys.push(pub_key);
+                }
+                sc.bls_pub_keys(0).clear();
+                sc.bls_pub_keys(0).extend(new_pub_keys);
+            });
+    }
+
     pub fn unregister_validator_operation(
         &mut self,
         validator_data: ValidatorData<StaticApi>,
@@ -221,13 +241,31 @@ impl BaseSetup {
         self.world
             .tx()
             .from(OWNER_ADDRESS)
+            .to(CHAIN_CONFIG_ADDRESS)
+            .whitebox(chain_config::contract_obj, |sc| {
+                let mut new_pub_keys: ManagedVec<
+                    VMHooksApi<DebugApiBackend>,
+                    ManagedBuffer<VMHooksApi<DebugApiBackend>>,
+                > = ManagedVec::new();
+                for pk in pub_keys.clone() {
+                    let pk = ManagedBuffer::new_from_bytes(&pk.to_vec());
+                    new_pub_keys.push(pk);
+                }
+                let id = validator_data.id.to_u64().unwrap();
+                sc.validator_info(&BigUint::from(id))
+                    .update(|v| v.bls_key = new_pub_keys.get((id - 1) as usize).clone());
+            });
+
+        self.world
+            .tx()
+            .from(OWNER_ADDRESS)
             .to(HEADER_VERIFIER_ADDRESS)
             .whitebox(header_verifier::contract_obj, |sc| {
                 let mut new_pub_keys: ManagedVec<
                     VMHooksApi<DebugApiBackend>,
                     ManagedBuffer<VMHooksApi<DebugApiBackend>>,
                 > = ManagedVec::new();
-                for pub_key in pub_keys {
+                for pub_key in pub_keys.clone() {
                     let pub_key = ManagedBuffer::new_from_bytes(&pub_key.to_vec());
                     new_pub_keys.push(pub_key);
                 }

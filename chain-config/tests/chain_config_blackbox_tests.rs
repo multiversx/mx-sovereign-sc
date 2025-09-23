@@ -2,8 +2,8 @@ use chain_config::storage::ChainConfigStorageModule;
 use chain_config_blackbox_setup::ChainConfigTestState;
 use common_test_setup::base_setup::helpers::BLSKey;
 use common_test_setup::constants::{
-    CHAIN_CONFIG_ADDRESS, EXECUTED_BRIDGE_OP_EVENT, FIRST_TEST_TOKEN, ONE_HUNDRED_MILLION,
-    OWNER_ADDRESS, OWNER_BALANCE, USER_ADDRESS,
+    CHAIN_CONFIG_ADDRESS, EXECUTED_BRIDGE_OP_EVENT, FIRST_TEST_TOKEN, HEADER_VERIFIER_ADDRESS,
+    ONE_HUNDRED_MILLION, OWNER_ADDRESS, OWNER_BALANCE, USER_ADDRESS,
 };
 use error_messages::{
     ADDITIONAL_STAKE_ZERO_VALUE, CHAIN_CONFIG_SETUP_PHASE_NOT_COMPLETE, INVALID_ADDITIONAL_STAKE,
@@ -20,7 +20,7 @@ use multiversx_sc::{
         MultiEgldOrEsdtPayment, MultiValueEncoded,
     },
 };
-use multiversx_sc_scenario::api::StaticApi;
+use multiversx_sc_scenario::api::{DebugApiBackend, StaticApi, VMHooksApi};
 use multiversx_sc_scenario::{multiversx_chain_vm::crypto_functions::sha256, ScenarioTxWhitebox};
 use setup_phase::SetupPhaseModule;
 use structs::{
@@ -894,9 +894,6 @@ fn test_unregister_after_genesis() {
 /// Validator is unregistered successfully after genesis
 #[test]
 fn test_unregister_validator_after_genesis() {
-    // register with 3 random validators
-    // create the signature and pub keys
-    // modify storage with the created pub keys
     let mut state = ChainConfigTestState::new();
 
     let token_amount = BigUint::from(100_000u64);
@@ -962,7 +959,6 @@ fn test_unregister_validator_after_genesis() {
         .common_setup
         .complete_header_verifier_setup_phase(None);
 
-    let signature = ManagedBuffer::new();
     let bitmap = ManagedBuffer::new_from_bytes(&num_of_validators.to_be_bytes());
     let epoch = 0;
 
@@ -974,11 +970,35 @@ fn test_unregister_validator_after_genesis() {
             address: OWNER_ADDRESS.to_managed_address(),
             bls_key: validator_bls_key.clone(),
         };
-        state.common_setup.unregister_validator_operation(
-            validator_data,
-            signature.clone(),
+
+        let validator_data_hash = validator_data.generate_hash();
+        let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&validator_data_hash.to_vec()));
+
+        let (signature, pub_keys) = state
+            .common_setup
+            .get_sig_and_pub_keys(num_of_validators as usize, &hash_of_hashes);
+
+        state.common_setup.set_bls_keys_in_header_storage(pub_keys);
+
+        state.common_setup.register_operation(
+            OWNER_ADDRESS,
+            signature,
+            &hash_of_hashes,
             bitmap.clone(),
             epoch,
+            MultiValueEncoded::from_iter(vec![validator_data_hash]),
+        );
+
+        state.common_setup.unregister_validator(
+            &hash_of_hashes,
+            &validator_data,
+            None,
+            Some(EXECUTED_BRIDGE_OP_EVENT),
+        );
+
+        assert_eq!(
+            state.common_setup.get_bls_key_id(&validator_data.bls_key),
+            0
         );
     }
 
