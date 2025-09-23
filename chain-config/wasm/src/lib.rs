@@ -22,9 +22,9 @@ multiversx_sc_wasm_adapter::endpoints! {
         upgrade => upgrade
         completeSetupPhase => complete_setup_phase
         register => register
-        registerValidator => register_validator
+        registerBlsKey => register_bls_key
         unregister => unregister
-        unregisterValidator => unregister_validator
+        unregisterBlsKey => unregister_bls_key
         sovereignConfig => sovereign_config
         blsKeyToId => bls_key_to_id_mapper
         validator_info => validator_info

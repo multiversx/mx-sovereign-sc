@@ -106,7 +106,7 @@ where
             .original_result()
     }
 
-    pub fn register_validator<
+    pub fn register_bls_key<
         Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
         Arg1: ProxyArg<structs::ValidatorData<Env::Api>>,
     >(
@@ -116,7 +116,7 @@ where
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
-            .raw_call("registerValidator")
+            .raw_call("registerBlsKey")
             .argument(&hash_of_hashes)
             .argument(&validator_data)
             .original_result()
@@ -135,7 +135,7 @@ where
             .original_result()
     }
 
-    pub fn unregister_validator<
+    pub fn unregister_bls_key<
         Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
         Arg1: ProxyArg<structs::ValidatorData<Env::Api>>,
     >(
@@ -145,7 +145,7 @@ where
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
-            .raw_call("unregisterValidator")
+            .raw_call("unregisterBlsKey")
             .argument(&hash_of_hashes)
             .argument(&validator_data)
             .original_result()
