@@ -43,7 +43,8 @@ pub trait ChainConfigUtilsModule: storage::ChainConfigStorageModule {
             return;
         }
 
-        self.tx()
+        self
+            .tx()
             .to(caller)
             .payment(stake)
             .transfer_execute();
