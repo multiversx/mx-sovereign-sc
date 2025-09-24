@@ -154,15 +154,12 @@ pub trait RegisterTokenModule:
                 num_decimals,
             )
             .gas(REGISTER_GAS)
-            .callback(
-                self.callbacks()
-                    .issue_callback(&args, hash_of_hashes, token_hash),
-            )
+            .callback(self.callbacks().register(&args, hash_of_hashes, token_hash))
             .register_promise();
     }
 
     #[promises_callback]
-    fn issue_callback(
+    fn register(
         &self,
         token_to_register: &RegisterTokenOperation<Self::Api>,
         hash_of_hashes: ManagedBuffer,
