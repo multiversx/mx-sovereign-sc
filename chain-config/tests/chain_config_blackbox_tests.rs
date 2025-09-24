@@ -2,8 +2,8 @@ use chain_config::storage::ChainConfigStorageModule;
 use chain_config_blackbox_setup::ChainConfigTestState;
 use common_test_setup::base_setup::helpers::BLSKey;
 use common_test_setup::constants::{
-    CHAIN_CONFIG_ADDRESS, EXECUTED_BRIDGE_OP_EVENT, FIRST_TEST_TOKEN, HEADER_VERIFIER_ADDRESS,
-    ONE_HUNDRED_MILLION, OWNER_ADDRESS, OWNER_BALANCE, USER_ADDRESS,
+    CHAIN_CONFIG_ADDRESS, EXECUTED_BRIDGE_OP_EVENT, FIRST_TEST_TOKEN, ONE_HUNDRED_MILLION,
+    OWNER_ADDRESS, OWNER_BALANCE, USER_ADDRESS,
 };
 use error_messages::{
     ADDITIONAL_STAKE_ZERO_VALUE, CHAIN_CONFIG_SETUP_PHASE_NOT_COMPLETE, INVALID_ADDITIONAL_STAKE,
@@ -20,7 +20,7 @@ use multiversx_sc::{
         MultiEgldOrEsdtPayment, MultiValueEncoded,
     },
 };
-use multiversx_sc_scenario::api::{DebugApiBackend, StaticApi, VMHooksApi};
+use multiversx_sc_scenario::api::StaticApi;
 use multiversx_sc_scenario::{multiversx_chain_vm::crypto_functions::sha256, ScenarioTxWhitebox};
 use setup_phase::SetupPhaseModule;
 use structs::{
@@ -961,7 +961,7 @@ fn test_unregister_validator_after_genesis() {
         .common_setup
         .complete_header_verifier_setup_phase(None);
 
-    let mut bitmap_bytes = vec![0u8; ((num_of_validators + 7) / 8) as usize];
+    let mut bitmap_bytes = vec![0u8; num_of_validators.div_ceil(8) as usize];
     for index in 0..num_of_validators {
         let byte_index = (index / 8) as usize;
         let bit_index = (index % 8) as u8;
