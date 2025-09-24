@@ -695,7 +695,7 @@ fn test_unregister_wrong_caller_for_bls_key() {
         .common_setup
         .register(&new_validator_bls_key, &ManagedVec::new(), None);
 
-    assert!(state.common_setup.get_bls_key_id(&new_validator_bls_key) == 1);
+    assert_eq!(state.common_setup.get_bls_key_id(&new_validator_bls_key), 1);
 
     state.unregister_with_caller(
         &new_validator_bls_key,
