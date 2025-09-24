@@ -564,9 +564,11 @@ fn test_register_validator_after_genesis() {
     let mut payments_vec = MultiEgldOrEsdtPayment::new();
     payments_vec.push(payment);
 
+    let num_of_validators = 3;
+    let dummy_message = ManagedBuffer::new_from_bytes(&[0x01]);
     let (signature, pub_keys) = state
         .common_setup
-        .get_sig_and_pub_keys(1, &ManagedBuffer::new());
+        .get_sig_and_pub_keys(num_of_validators as usize, &dummy_message);
 
     state
         .common_setup
@@ -582,14 +584,14 @@ fn test_register_validator_after_genesis() {
         .common_setup
         .complete_header_verifier_setup_phase(None);
 
-    let bitmap = ManagedBuffer::new_from_bytes(&[0x06]);
+    let bitmap = ManagedBuffer::new_from_bytes(&[0x07]);
     let epoch = 0;
 
-    for id in 2..4 {
+    for id in 2..=num_of_validators {
         let validator_data = ValidatorData {
             id: BigUint::from(id as u32),
             address: OWNER_ADDRESS.to_managed_address(),
-            bls_key: pub_keys[1].clone(),
+            bls_key: pub_keys[(id - 1) as usize].clone(),
         };
         state.common_setup.register_validator_operation(
             validator_data,
@@ -959,7 +961,13 @@ fn test_unregister_validator_after_genesis() {
         .common_setup
         .complete_header_verifier_setup_phase(None);
 
-    let bitmap = ManagedBuffer::new_from_bytes(&num_of_validators.to_be_bytes());
+    let mut bitmap_bytes = vec![0u8; ((num_of_validators + 7) / 8) as usize];
+    for index in 0..num_of_validators {
+        let byte_index = (index / 8) as usize;
+        let bit_index = (index % 8) as u8;
+        bitmap_bytes[byte_index] |= 1u8 << bit_index;
+    }
+    let bitmap = ManagedBuffer::new_from_bytes(&bitmap_bytes);
     let epoch = 0;
 
     for id in 1..4 {
