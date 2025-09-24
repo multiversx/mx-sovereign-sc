@@ -43,11 +43,7 @@ pub trait ChainConfigUtilsModule: storage::ChainConfigStorageModule {
             return;
         }
 
-        self
-            .tx()
-            .to(caller)
-            .payment(stake)
-            .transfer_execute();
+        self.tx().to(caller).payment(stake).transfer_execute();
     }
 
     fn get_total_stake(

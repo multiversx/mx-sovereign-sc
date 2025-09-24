@@ -189,13 +189,8 @@ impl CompleteFlowInteract {
         let operations_hashes =
             MultiValueEncoded::from(ManagedVec::from(vec![operation_hash.clone()]));
 
-        self.register_operation(
-            config.shard,
-            ManagedBuffer::new(),
-            &hash_of_hashes,
-            operations_hashes,
-        )
-        .await;
+        self.register_operation(config.shard, &hash_of_hashes, operations_hashes)
+            .await;
 
         //TODO: uncomment this after proxy fix is implemented
         //let expected_operation_hash_status = OperationHashStatus::NotLocked;

@@ -668,12 +668,7 @@ async fn test_execute_operation_success_no_fee() {
     let operations_hashes = MultiValueEncoded::from(ManagedVec::from(vec![operation_hash.clone()]));
 
     chain_interactor
-        .register_operation(
-            SHARD_0,
-            ManagedBuffer::new(),
-            &hash_of_hashes,
-            operations_hashes,
-        )
+        .register_operation(SHARD_0, &hash_of_hashes, operations_hashes)
         .await;
 
     // let operation_status = OperationHashStatus::NotLocked as u8;
@@ -776,12 +771,7 @@ async fn test_execute_operation_only_transfer_data_no_fee() {
     let operations_hashes = MultiValueEncoded::from(ManagedVec::from(vec![operation_hash.clone()]));
 
     chain_interactor
-        .register_operation(
-            SHARD_0,
-            ManagedBuffer::new(),
-            &hash_of_hashes,
-            operations_hashes,
-        )
+        .register_operation(SHARD_0, &hash_of_hashes, operations_hashes)
         .await;
 
     // let operation_status = OperationHashStatus::NotLocked as u8;

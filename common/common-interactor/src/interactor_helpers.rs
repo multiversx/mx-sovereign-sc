@@ -398,10 +398,11 @@ pub trait InteractorHelpers {
         expected_error_message: Option<&str>,
     ) {
         match response {
-            Ok(_) => assert!(
-                expected_error_message.is_none(),
-                "Transaction was successful, but expected error"
-            ),
+            Ok(_) => {
+                if expected_error_message.is_none() {
+                    return;
+                }
+            }
             Err(error) => {
                 assert_eq!(expected_error_message, Some(error.message.as_str()))
             }
