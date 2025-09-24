@@ -149,7 +149,7 @@ fn test_remove_users_from_whitelist() {
     aggregated_hashes.append(&operation_two_hash);
     let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&aggregated_hashes.to_vec()));
 
-    let (signature, public_keys) = state.common_setup.get_sig_and_pub_keys(&hash_of_hashes);
+    let (signature, public_keys) = state.common_setup.get_sig_and_pub_keys(1, &hash_of_hashes);
 
     state.common_setup.register(
         public_keys.first().unwrap(),
@@ -225,7 +225,7 @@ fn test_set_fee() {
     let fee_hash = fee.generate_hash();
     let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&fee_hash.to_vec()));
 
-    let (signature, public_keys) = state.common_setup.get_sig_and_pub_keys(&hash_of_hashes);
+    let (signature, public_keys) = state.common_setup.get_sig_and_pub_keys(1, &hash_of_hashes);
 
     state.common_setup.register(
         public_keys.first().unwrap(),
@@ -334,7 +334,7 @@ fn test_remove_fee_register_separate_operations() {
 
     let (signature, public_keys) = state
         .common_setup
-        .get_sig_and_pub_keys(&register_fee_hash_of_hashes);
+        .get_sig_and_pub_keys(1, &register_fee_hash_of_hashes);
 
     state.common_setup.register(
         public_keys.first().unwrap(),
@@ -353,7 +353,7 @@ fn test_remove_fee_register_separate_operations() {
 
     let (signature_remove_fee, public_keys_remove_fee) = state
         .common_setup
-        .get_sig_and_pub_keys(&remove_fee_hash_of_hashes);
+        .get_sig_and_pub_keys(1, &remove_fee_hash_of_hashes);
 
     state.common_setup.register(
         public_keys_remove_fee.first().unwrap(),
@@ -478,7 +478,7 @@ fn test_remove_fee_register_with_one_hash_of_hashes() {
 
     let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&aggregated_hashes.to_vec()));
 
-    let (signature, public_keys) = state.common_setup.get_sig_and_pub_keys(&hash_of_hashes);
+    let (signature, public_keys) = state.common_setup.get_sig_and_pub_keys(1, &hash_of_hashes);
 
     state.common_setup.register(
         public_keys.first().unwrap(),
@@ -656,7 +656,7 @@ fn test_distribute_fees_percentage_under_limit() {
     aggregated_hash.append(&operation_hash);
     let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&aggregated_hash.to_vec()));
 
-    let (signature, public_keys) = state.common_setup.get_sig_and_pub_keys(&hash_of_hashes);
+    let (signature, public_keys) = state.common_setup.get_sig_and_pub_keys(1, &hash_of_hashes);
 
     state.common_setup.register(
         public_keys.first().unwrap(),
@@ -732,7 +732,7 @@ fn test_distribute_fees() {
 
     let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&aggregated_hash.to_vec()));
 
-    let (signature, public_keys) = state.common_setup.get_sig_and_pub_keys(&hash_of_hashes);
+    let (signature, public_keys) = state.common_setup.get_sig_and_pub_keys(1, &hash_of_hashes);
     state.common_setup.register(
         public_keys.first().unwrap(),
         &MultiEgldOrEsdtPayment::new(),

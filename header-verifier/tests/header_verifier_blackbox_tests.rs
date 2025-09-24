@@ -156,7 +156,7 @@ fn test_remove_executed_hash_no_esdt_address_registered() {
 
     let (signature, pub_keys) = state
         .common_setup
-        .get_sig_and_pub_keys(&operation.bridge_operation_hash);
+        .get_sig_and_pub_keys(1, &operation.bridge_operation_hash);
 
     state
         .common_setup
@@ -205,7 +205,7 @@ fn test_remove_one_executed_hash() {
 
     let (signature, pub_keys) = state
         .common_setup
-        .get_sig_and_pub_keys(&operation.bridge_operation_hash);
+        .get_sig_and_pub_keys(1, &operation.bridge_operation_hash);
 
     state
         .common_setup
@@ -272,7 +272,7 @@ fn test_remove_all_executed_hashes() {
 
     let (signature, pub_keys) = state
         .common_setup
-        .get_sig_and_pub_keys(&operation.bridge_operation_hash);
+        .get_sig_and_pub_keys(1, &operation.bridge_operation_hash);
 
     state
         .common_setup
@@ -406,7 +406,7 @@ fn test_lock_operation() {
 
     let (signature, pub_keys) = state
         .common_setup
-        .get_sig_and_pub_keys(&operation.bridge_operation_hash);
+        .get_sig_and_pub_keys(1, &operation.bridge_operation_hash);
 
     state
         .common_setup
@@ -476,7 +476,7 @@ fn test_lock_operation_hash_already_locked() {
 
     let (signature, pub_keys) = state
         .common_setup
-        .get_sig_and_pub_keys(&operation.bridge_operation_hash);
+        .get_sig_and_pub_keys(1, &operation.bridge_operation_hash);
 
     state
         .common_setup
@@ -554,7 +554,7 @@ fn test_change_validator_set() {
     let operation_hash = ManagedBuffer::from("operation_1");
     let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&operation_hash.to_vec()));
 
-    let (signature, pub_keys) = state.common_setup.get_sig_and_pub_keys(&hash_of_hashes);
+    let (signature, pub_keys) = state.common_setup.get_sig_and_pub_keys(1, &hash_of_hashes);
 
     let genesis_validator = pub_keys[0].clone();
     registered_bls_keys.push(genesis_validator.clone());
@@ -598,7 +598,7 @@ fn test_change_validator_set() {
     let epoch_for_new_set = 1;
 
     let (change_validator_set_sig, change_validator_set_pub_keys) =
-        state.common_setup.get_sig_and_pub_keys(&hash_of_hashes);
+        state.common_setup.get_sig_and_pub_keys(1, &hash_of_hashes);
 
     state
         .common_setup

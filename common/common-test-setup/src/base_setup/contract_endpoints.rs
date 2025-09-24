@@ -143,7 +143,7 @@ impl BaseSetup {
     pub fn register_validator_operation(
         &mut self,
         validator_data: ValidatorData<StaticApi>,
-        signature: ManagedBuffer<StaticApi>,
+        _signature: ManagedBuffer<StaticApi>,
         bitmap: ManagedBuffer<StaticApi>,
         epoch: u64,
     ) {
@@ -228,14 +228,20 @@ impl BaseSetup {
     pub fn unregister_validator_operation(
         &mut self,
         validator_data: ValidatorData<StaticApi>,
-        signature: ManagedBuffer<StaticApi>,
+        _signature: ManagedBuffer<StaticApi>,
         bitmap: ManagedBuffer<StaticApi>,
         epoch: u64,
     ) {
         let validator_data_hash = validator_data.generate_hash();
         let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&validator_data_hash.to_vec()));
 
-        let pk_size = 3;
+        let bitmap_bytes = bitmap.to_vec();
+        let signer_count: usize = bitmap_bytes
+            .iter()
+            .map(|byte| byte.count_ones() as usize)
+            .sum();
+        let pk_size = signer_count.max(1);
+
         let (new_signature, pub_keys) = self.get_sig_and_pub_keys(pk_size, &hash_of_hashes);
 
         self.world
@@ -252,8 +258,12 @@ impl BaseSetup {
                     new_pub_keys.push(pk);
                 }
                 let id = validator_data.id.to_u64().unwrap();
-                sc.validator_info(&BigUint::from(id))
-                    .update(|v| v.bls_key = new_pub_keys.get((id - 1) as usize).clone());
+                let target_index = id.saturating_sub(1) as usize;
+                if target_index < new_pub_keys.len() {
+                    let new_key = new_pub_keys.get(target_index).clone();
+                    sc.validator_info(&BigUint::from(id))
+                        .update(|v| v.bls_key = new_key);
+                }
             });
 
         self.world

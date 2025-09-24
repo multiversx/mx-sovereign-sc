@@ -1675,7 +1675,7 @@ fn test_execute_operation_success() {
         .common_setup
         .deploy_chain_config(OptionalValue::None, None);
 
-    let (signature, public_keys) = state.common_setup.get_sig_and_pub_keys(&hash_of_hashes);
+    let (signature, public_keys) = state.common_setup.get_sig_and_pub_keys(1, &hash_of_hashes);
 
     state.common_setup.register(
         public_keys.first().unwrap(),
@@ -1770,7 +1770,7 @@ fn test_execute_operation_with_native_token_success() {
         .common_setup
         .deploy_chain_config(OptionalValue::None, None);
 
-    let (signature, public_keys) = state.common_setup.get_sig_and_pub_keys(&hash_of_hashes);
+    let (signature, public_keys) = state.common_setup.get_sig_and_pub_keys(1, &hash_of_hashes);
 
     state.common_setup.register(
         public_keys.first().unwrap(),
@@ -1864,7 +1864,7 @@ fn test_execute_operation_burn_mechanism_without_deposit_cannot_subtract() {
         .common_setup
         .deploy_chain_config(OptionalValue::None, None);
 
-    let (signature, public_keys) = state.common_setup.get_sig_and_pub_keys(&hash_of_hashes);
+    let (signature, public_keys) = state.common_setup.get_sig_and_pub_keys(1, &hash_of_hashes);
 
     state.common_setup.register(
         public_keys.first().unwrap(),
@@ -1953,7 +1953,7 @@ fn test_execute_operation_only_transfer_data_no_fee() {
         .common_setup
         .deploy_chain_config(OptionalValue::None, None);
 
-    let (signature, public_keys) = state.common_setup.get_sig_and_pub_keys(&hash_of_hashes);
+    let (signature, public_keys) = state.common_setup.get_sig_and_pub_keys(1, &hash_of_hashes);
 
     state.common_setup.register(
         public_keys.first().unwrap(),
@@ -2037,7 +2037,7 @@ fn test_execute_operation_success_burn_mechanism() {
         .common_setup
         .deploy_chain_config(OptionalValue::None, None);
 
-    let (signature, public_keys) = state.common_setup.get_sig_and_pub_keys(&hash_of_hashes);
+    let (signature, public_keys) = state.common_setup.get_sig_and_pub_keys(1, &hash_of_hashes);
 
     state.common_setup.register(
         public_keys.first().unwrap(),
@@ -2168,7 +2168,9 @@ fn test_deposit_execute_switch_mechanism() {
     let operations_hashes_one =
         MultiValueEncoded::from(ManagedVec::from(vec![operation_one_hash.clone()]));
 
-    let (signature_one, public_keys) = state.common_setup.get_sig_and_pub_keys(&hash_of_hashes_one);
+    let (signature_one, public_keys) = state
+        .common_setup
+        .get_sig_and_pub_keys(1, &hash_of_hashes_one);
 
     state.common_setup.register(
         public_keys.first().unwrap(),
@@ -2187,7 +2189,9 @@ fn test_deposit_execute_switch_mechanism() {
     let operations_hashes_two =
         MultiValueEncoded::from(ManagedVec::from(vec![operation_two_hash.clone()]));
 
-    let (signature_two, public_keys) = state.common_setup.get_sig_and_pub_keys(&hash_of_hashes_two);
+    let (signature_two, public_keys) = state
+        .common_setup
+        .get_sig_and_pub_keys(1, &hash_of_hashes_two);
 
     state.common_setup.register(
         public_keys.first().unwrap(),
@@ -2420,7 +2424,7 @@ fn test_execute_operation_no_payments() {
         .common_setup
         .deploy_chain_config(OptionalValue::None, None);
 
-    let (signature, public_keys) = state.common_setup.get_sig_and_pub_keys(&hash_of_hashes);
+    let (signature, public_keys) = state.common_setup.get_sig_and_pub_keys(1, &hash_of_hashes);
 
     state.common_setup.register(
         public_keys.first().unwrap(),
@@ -2503,7 +2507,7 @@ fn test_execute_operation_no_payments_failed_event() {
     let operation_hash = state.common_setup.get_operation_hash(&operation);
     let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&operation_hash.to_vec()));
 
-    let (signature, public_keys) = state.common_setup.get_sig_and_pub_keys(&hash_of_hashes);
+    let (signature, public_keys) = state.common_setup.get_sig_and_pub_keys(1, &hash_of_hashes);
 
     state.common_setup.register(
         public_keys.first().unwrap(),
@@ -2795,7 +2799,7 @@ fn test_update_config_invalid_config() {
     let config_hash = new_config.generate_hash();
     let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&config_hash.to_vec()));
 
-    let (signature, public_keys) = state.common_setup.get_sig_and_pub_keys(&hash_of_hashes);
+    let (signature, public_keys) = state.common_setup.get_sig_and_pub_keys(1, &hash_of_hashes);
 
     state.common_setup.register(
         public_keys.first().unwrap(),
@@ -2858,7 +2862,7 @@ fn test_update_config() {
     let config_hash = new_config.generate_hash();
     let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&config_hash.to_vec()));
 
-    let (signature, public_keys) = state.common_setup.get_sig_and_pub_keys(&hash_of_hashes);
+    let (signature, public_keys) = state.common_setup.get_sig_and_pub_keys(1, &hash_of_hashes);
 
     state.common_setup.register(
         public_keys.first().unwrap(),

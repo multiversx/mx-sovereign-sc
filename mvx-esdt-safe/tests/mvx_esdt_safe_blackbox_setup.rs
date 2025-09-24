@@ -406,7 +406,7 @@ impl MvxEsdtSafeTestState {
         self.deploy_contract_with_roles(None);
         self.common_setup
             .deploy_chain_config(OptionalValue::None, None);
-        let (signature, public_keys) = self.common_setup.get_sig_and_pub_keys(hash_of_hashes);
+        let (signature, public_keys) = self.common_setup.get_sig_and_pub_keys(1, hash_of_hashes);
         self.common_setup.register(
             public_keys.first().unwrap(),
             &MultiEgldOrEsdtPayment::new(),
