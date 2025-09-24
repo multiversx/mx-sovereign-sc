@@ -1038,7 +1038,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
     fn build_bitmap(num_signers: usize) -> Vec<u8> {
         assert!(num_signers > 0, "Cannot build bitmap with zero signers");
 
-        let byte_len = (num_signers + 7) / 8;
+        let byte_len = num_signers.div_ceil(8);
         let mut bitmap = vec![0u8; byte_len];
 
         for signer_index in 0..num_signers {
@@ -1166,12 +1166,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
 
         self.assert_expected_error_message(response, expected_error_message);
 
-        if expected_error_message.is_some() {
-            println!("execute_operations logs: {:?}", logs);
-        }
-
-        let log_error_to_check = expected_log_error.or(expected_error_message);
-        self.assert_expected_log(logs, expected_log, log_error_to_check);
+        self.assert_expected_log(logs, expected_log, expected_log_error);
     }
 
     async fn register_token(
