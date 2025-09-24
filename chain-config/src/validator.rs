@@ -54,8 +54,8 @@ pub trait ValidatorModule:
         current_bls_key_id
     }
 
-    #[endpoint(registerValidator)]
-    fn register_validator(
+    #[endpoint(registerBlsKey)]
+    fn register_bls_key(
         &self,
         hash_of_hashes: ManagedBuffer,
         validator_data: ValidatorData<Self::Api>,
@@ -119,8 +119,8 @@ pub trait ValidatorModule:
         self.refund_stake(&caller, &validator_info);
     }
 
-    #[endpoint(unregisterValidator)]
-    fn unregister_validator(
+    #[endpoint(unregisterBlsKey)]
+    fn unregister_bls_key(
         &self,
         hash_of_hashes: ManagedBuffer,
         validator_data: ValidatorData<Self::Api>,

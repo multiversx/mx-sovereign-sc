@@ -131,7 +131,7 @@ impl BaseSetup {
             .from(OWNER_ADDRESS)
             .to(CHAIN_CONFIG_ADDRESS)
             .typed(ChainConfigContractProxy)
-            .register_validator(hash_of_hashes, validator_data)
+            .register_bls_key(hash_of_hashes, validator_data)
             .returns(ReturnsHandledOrError::new())
             .returns(ReturnsLogs)
             .run();
@@ -197,7 +197,7 @@ impl BaseSetup {
             .from(OWNER_ADDRESS)
             .to(CHAIN_CONFIG_ADDRESS)
             .typed(ChainConfigContractProxy)
-            .unregister_validator(hash_of_hashes, validator_data)
+            .unregister_bls_key(hash_of_hashes, validator_data)
             .returns(ReturnsHandledOrError::new())
             .returns(ReturnsLogs)
             .run();
