@@ -65,6 +65,11 @@ impl ActionConfig {
         self.with_transfer_data = Some(true);
         self
     }
+
+    pub fn expected_log_error(mut self, value: String) -> Self {
+        self.expected_log_error = Some(value);
+        self
+    }
 }
 
 #[derive(Clone, Default)]

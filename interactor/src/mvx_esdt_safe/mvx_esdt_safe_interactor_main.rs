@@ -171,13 +171,8 @@ impl MvxEsdtSafeInteract {
         let operations_hashes =
             MultiValueEncoded::from(ManagedVec::from(vec![config_hash.clone(), nonce_buf]));
 
-        self.register_operation(
-            shard,
-            ManagedBuffer::new(),
-            &hash_of_hashes,
-            operations_hashes,
-        )
-        .await;
+        self.register_operation(shard, &hash_of_hashes, operations_hashes)
+            .await;
 
         let (response, logs) = self
             .interactor

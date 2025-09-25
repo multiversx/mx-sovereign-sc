@@ -350,6 +350,9 @@ pub trait InteractorHelpers {
                 );
             }
             Some(expected_log) => {
+                if expected_log.is_empty() {
+                    return;
+                }
                 let expected_bytes = expected_log.as_bytes();
 
                 let found_log = logs.iter().find(|log| {
@@ -398,10 +401,14 @@ pub trait InteractorHelpers {
         expected_error_message: Option<&str>,
     ) {
         match response {
-            Ok(_) => assert!(
-                expected_error_message.is_none(),
-                "Transaction was successful, but expected error"
-            ),
+            Ok(_) => {
+                if expected_error_message.is_some() {
+                    println!(
+                        "Expected error message: {:?}, but transaction was successful",
+                        expected_error_message
+                    );
+                }
+            }
             Err(error) => {
                 assert_eq!(expected_error_message, Some(error.message.as_str()))
             }

@@ -180,7 +180,13 @@ async fn test_deposit_too_many_tokens_no_fee() {
             OptionalValue::None,
             payments_vec,
             Some(TOO_MANY_TOKENS),
-            None,
+            Some(
+                &chain_interactor
+                    .state
+                    .get_first_token_identifier()
+                    .into_name()
+                    .to_string(),
+            ),
         )
         .await;
 
@@ -669,12 +675,7 @@ async fn test_execute_operation_success_no_fee() {
     let operations_hashes = MultiValueEncoded::from(ManagedVec::from(vec![operation_hash.clone()]));
 
     chain_interactor
-        .register_operation(
-            SHARD_0,
-            ManagedBuffer::new(),
-            &hash_of_hashes,
-            operations_hashes,
-        )
+        .register_operation(SHARD_0, &hash_of_hashes, operations_hashes)
         .await;
 
     let expected_operation_hash_status = OperationHashStatus::NotLocked;
@@ -760,12 +761,7 @@ async fn test_execute_operation_only_transfer_data_no_fee() {
     let operations_hashes = MultiValueEncoded::from(ManagedVec::from(vec![operation_hash.clone()]));
 
     chain_interactor
-        .register_operation(
-            SHARD_0,
-            ManagedBuffer::new(),
-            &hash_of_hashes,
-            operations_hashes,
-        )
+        .register_operation(SHARD_0, &hash_of_hashes, operations_hashes)
         .await;
 
     let expected_operation_status = OperationHashStatus::NotLocked;

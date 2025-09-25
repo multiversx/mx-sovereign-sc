@@ -37,6 +37,7 @@ pub struct CommonState {
     pub update_config_nonce: u64,
     pub mvx_egld_balances: Vec<(String, u64)>,
     pub testing_egld_balance: u64,
+    pub bls_secret_keys: HashMap<String, Vec<Vec<u8>>>,
 }
 
 impl CommonState {
@@ -276,6 +277,19 @@ impl CommonState {
 
     pub fn get_testing_egld_balance(&self) -> u64 {
         self.testing_egld_balance
+    }
+
+    pub fn add_bls_secret_key(&mut self, shard: u32, secret_key_bytes: Vec<u8>) {
+        let shard_key = shard.to_string();
+        self.bls_secret_keys
+            .entry(shard_key)
+            .or_default()
+            .push(secret_key_bytes);
+    }
+
+    pub fn get_bls_secret_keys(&self, shard: u32) -> Option<&Vec<Vec<u8>>> {
+        let shard_key = shard.to_string();
+        self.bls_secret_keys.get(&shard_key)
     }
 }
 

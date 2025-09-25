@@ -133,13 +133,14 @@ async fn test_complete_execute_flow_with_transfer_data_only_fail(#[case] shard: 
 
     chain_interactor.remove_fee(shard).await;
 
-    //NOTE: For now, there is a failed log only for top_encode error, which is hard to achieve. If the sc returns an error, the logs are no longer retrieved by the framework
+    //NOTE: The logs retrieved by the framework do not contain the full smart contract logs so wejust skip the log check with empty string
     chain_interactor
         .execute_wrapper(
             ActionConfig::new()
                 .shard(shard)
                 .with_endpoint(WRONG_ENDPOINT_NAME.to_string())
-                .expect_error(FUNCTION_NOT_FOUND.to_string()),
+                .expect_error(FUNCTION_NOT_FOUND.to_string())
+                .expect_log(vec!["".to_string()]),
             None,
         )
         .await;
@@ -577,7 +578,8 @@ async fn test_register_execute_call_failed(
             ActionConfig::new()
                 .shard(shard)
                 .with_endpoint(WRONG_ENDPOINT_NAME.to_string())
-                .expect_error(FUNCTION_NOT_FOUND.to_string()),
+                .expect_error(FUNCTION_NOT_FOUND.to_string())
+                .expect_log(vec!["".to_string()]),
             sov_token,
         )
         .await;

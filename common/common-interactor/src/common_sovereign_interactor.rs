@@ -4,15 +4,13 @@ use crate::{
     interactor_state::{AddressInfo, EsdtTokenInfo},
     interactor_structs::{ActionConfig, IssueTokenStruct, MintTokenStruct, TemplateAddresses},
 };
-use common_test_setup::{
-    base_setup::helpers::BLSKey,
-    constants::{
-        CHAIN_CONFIG_CODE_PATH, CHAIN_FACTORY_CODE_PATH, CHAIN_ID, DEPLOY_COST,
-        FAILED_TO_LOAD_WALLET_SHARD_0, FEE_MARKET_CODE_PATH, HEADER_VERIFIER_CODE_PATH, ISSUE_COST,
-        MVX_ESDT_SAFE_CODE_PATH, NATIVE_TOKEN_NAME, NATIVE_TOKEN_TICKER, NUMBER_OF_SHARDS, SHARD_0,
-        SOVEREIGN_FORGE_CODE_PATH, SOVEREIGN_TOKEN_PREFIX, TESTING_SC_CODE_PATH, WALLET_SHARD_0,
-    },
+use common_test_setup::constants::{
+    CHAIN_CONFIG_CODE_PATH, CHAIN_FACTORY_CODE_PATH, CHAIN_ID, DEPLOY_COST,
+    FAILED_TO_LOAD_WALLET_SHARD_0, FEE_MARKET_CODE_PATH, HEADER_VERIFIER_CODE_PATH, ISSUE_COST,
+    MVX_ESDT_SAFE_CODE_PATH, NATIVE_TOKEN_NAME, NATIVE_TOKEN_TICKER, NUMBER_OF_SHARDS, SHARD_0,
+    SOVEREIGN_FORGE_CODE_PATH, SOVEREIGN_TOKEN_PREFIX, TESTING_SC_CODE_PATH, WALLET_SHARD_0,
 };
+use multiversx_bls::{SecretKey, G1};
 use multiversx_sc::{
     codec::num_bigint,
     imports::{ESDTSystemSCProxy, OptionalValue, UserBuiltinProxy},
@@ -406,11 +404,26 @@ pub trait CommonInteractorTrait: InteractorHelpers {
     async fn register_as_validator(
         &mut self,
         shard: u32,
-        bls_key: ManagedBuffer<StaticApi>,
         payment: MultiEgldOrEsdtPayment<StaticApi>,
         chain_config_address: Bech32Address,
     ) {
         let bridge_owner = self.get_bridge_owner_for_shard(shard).clone();
+
+        let mut secret_key = SecretKey::default();
+        secret_key.set_by_csprng();
+
+        let secret_key_bytes = secret_key
+            .serialize()
+            .expect("Failed to serialize BLS secret key");
+        let public_key_bytes = secret_key
+            .get_public_key()
+            .serialize()
+            .expect("Failed to serialize BLS public key");
+
+        self.common_state()
+            .add_bls_secret_key(shard, secret_key_bytes);
+
+        let bls_key_buffer = ManagedBuffer::<StaticApi>::new_from_bytes(&public_key_bytes);
 
         self.interactor()
             .tx()
@@ -418,7 +431,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             .to(chain_config_address)
             .gas(90_000_000u64)
             .typed(ChainConfigContractProxy)
-            .register(bls_key)
+            .register(bls_key_buffer)
             .payment(payment)
             .returns(ReturnsResultUnmanaged)
             .run()
@@ -602,7 +615,6 @@ pub trait CommonInteractorTrait: InteractorHelpers {
         let chain_config_address = self.get_chain_config_address(&preferred_chain_id).await;
         self.register_as_validator(
             shard,
-            BLSKey::random(),
             MultiEgldOrEsdtPayment::new(),
             chain_config_address.clone(),
         )
@@ -950,7 +962,6 @@ pub trait CommonInteractorTrait: InteractorHelpers {
     async fn register_operation(
         &mut self,
         shard: u32,
-        signature: ManagedBuffer<StaticApi>,
         hash_of_hashes: &ManagedBuffer<StaticApi>,
         operations_hashes: MultiValueEncoded<StaticApi, ManagedBuffer<StaticApi>>,
     ) {
@@ -960,7 +971,14 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             .get_header_verifier_address(shard)
             .clone();
 
-        let bitmap = ManagedBuffer::new_from_bytes(&[0x01]);
+        let secret_keys = self
+            .common_state()
+            .get_bls_secret_keys(shard)
+            .cloned()
+            .unwrap_or_else(|| panic!("No BLS secret keys registered for shard {shard}"));
+
+        let (signature, bitmap) =
+            Self::create_aggregated_signature_and_bitmap(&secret_keys, hash_of_hashes);
         let epoch = 0u32;
 
         self.interactor()
@@ -969,10 +987,64 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             .to(header_verifier_address)
             .gas(90_000_000u64)
             .typed(HeaderverifierProxy)
-            .register_bridge_operations(signature, hash_of_hashes, bitmap, epoch, operations_hashes)
+            .register_bridge_operations(
+                signature,
+                hash_of_hashes.clone(),
+                bitmap,
+                epoch,
+                operations_hashes,
+            )
             .returns(ReturnsResultUnmanaged)
             .run()
             .await;
+    }
+
+    fn create_aggregated_signature_and_bitmap(
+        secret_keys: &[Vec<u8>],
+        message: &ManagedBuffer<StaticApi>,
+    ) -> (ManagedBuffer<StaticApi>, ManagedBuffer<StaticApi>) {
+        assert!(
+            !secret_keys.is_empty(),
+            "At least one BLS key is required to build the signature bitmap",
+        );
+
+        let message_bytes = message.to_vec();
+        let mut signatures = Vec::with_capacity(secret_keys.len());
+
+        for key_bytes in secret_keys {
+            let secret_key = SecretKey::from_serialized(key_bytes)
+                .expect("Failed to deserialize stored BLS secret key");
+            let signature = secret_key.sign(&message_bytes);
+            signatures.push(signature);
+        }
+
+        let mut aggregated_signature = G1::default();
+        aggregated_signature.aggregate(&signatures);
+
+        let signature_bytes = aggregated_signature
+            .serialize()
+            .expect("Failed to serialize aggregated BLS signature");
+        let bitmap_bytes = Self::build_bitmap(secret_keys.len());
+
+        (
+            ManagedBuffer::new_from_bytes(&signature_bytes),
+            ManagedBuffer::new_from_bytes(&bitmap_bytes),
+        )
+    }
+
+    fn build_bitmap(num_signers: usize) -> Vec<u8> {
+        assert!(num_signers > 0, "Cannot build bitmap with zero signers");
+
+        let byte_len = num_signers.div_ceil(8);
+        let mut bitmap = vec![0u8; byte_len];
+
+        for signer_index in 0..num_signers {
+            let byte_index = signer_index / 8;
+            let bit_index = signer_index % 8;
+            bitmap[byte_index] |= 1 << bit_index;
+        }
+
+        bitmap
     }
 
     async fn complete_header_verifier_setup_phase(&mut self, caller: Address) {
@@ -1312,13 +1384,8 @@ pub trait CommonInteractorTrait: InteractorHelpers {
         let operations_hashes =
             MultiValueEncoded::from(ManagedVec::from(vec![token_hash.clone(), nonce_buf]));
 
-        self.register_operation(
-            shard,
-            ManagedBuffer::new(),
-            &hash_of_hashes,
-            operations_hashes,
-        )
-        .await;
+        self.register_operation(shard, &hash_of_hashes, operations_hashes)
+            .await;
 
         self.remove_fee_after_setup_phase(hash_of_hashes, fee_token, shard)
             .await;
@@ -1340,13 +1407,8 @@ pub trait CommonInteractorTrait: InteractorHelpers {
         let operations_hashes =
             MultiValueEncoded::from(ManagedVec::from(vec![fee_hash.clone(), nonce_buf]));
 
-        self.register_operation(
-            shard,
-            ManagedBuffer::new(),
-            &hash_of_hashes,
-            operations_hashes,
-        )
-        .await;
+        self.register_operation(shard, &hash_of_hashes, operations_hashes)
+            .await;
 
         self.set_fee_after_setup_phase(hash_of_hashes, fee, shard)
             .await;
