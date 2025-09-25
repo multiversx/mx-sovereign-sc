@@ -9,7 +9,7 @@ use error_messages::{
     OUTGOING_TX_HASH_ALREADY_REGISTERED, SETUP_PHASE_NOT_COMPLETED,
 };
 use header_verifier::header_utils::HeaderVerifierUtilsModule;
-use header_verifier::{header_utils::OperationHashStatus, storage::HeaderVerifierStorageModule};
+use header_verifier::storage::HeaderVerifierStorageModule;
 use header_verifier_blackbox_setup::*;
 use multiversx_sc::imports::{BigUint, ManagedVec, StorageClearable};
 use multiversx_sc::{
@@ -20,6 +20,7 @@ use multiversx_sc_scenario::api::StaticApi;
 use multiversx_sc_scenario::multiversx_chain_vm::crypto_functions::sha256;
 use multiversx_sc_scenario::{DebugApi, ScenarioTxWhitebox};
 use structs::configs::SovereignConfig;
+use structs::OperationHashStatus;
 use structs::{forge::ScArray, ValidatorData};
 
 mod header_verifier_blackbox_setup;

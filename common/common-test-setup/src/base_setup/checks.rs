@@ -1,5 +1,5 @@
 use cross_chain::storage::CrossChainStorage;
-use header_verifier::{header_utils::OperationHashStatus, storage::HeaderVerifierStorageModule};
+use header_verifier::storage::HeaderVerifierStorageModule;
 use multiversx_sc_scenario::imports::{EgldOrEsdtTokenIdentifier, ManagedVec};
 use multiversx_sc_scenario::DebugApi;
 use multiversx_sc_scenario::{
@@ -14,6 +14,7 @@ use multiversx_sc_scenario::{
 };
 use mvx_esdt_safe::bridging_mechanism::BridgingMechanism;
 use proxies::mvx_fee_market_proxy::MvxFeeMarketProxy;
+use structs::OperationHashStatus;
 
 use crate::{
     base_setup::init::BaseSetup,

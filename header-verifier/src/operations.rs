@@ -4,10 +4,11 @@ use error_messages::{
     OUTGOING_TX_HASH_ALREADY_REGISTERED, SETUP_PHASE_NOT_COMPLETED,
     VALIDATORS_ALREADY_REGISTERED_IN_EPOCH,
 };
+use structs::OperationHashStatus;
 
 use crate::{
     checks,
-    header_utils::{self, OperationHashStatus, MAX_STORED_EPOCHS},
+    header_utils::{self, MAX_STORED_EPOCHS},
     storage,
 };
 multiversx_sc::imports!();
