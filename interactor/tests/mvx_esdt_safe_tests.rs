@@ -180,7 +180,13 @@ async fn test_deposit_too_many_tokens_no_fee() {
             OptionalValue::None,
             payments_vec,
             Some(TOO_MANY_TOKENS),
-            None,
+            Some(
+                &chain_interactor
+                    .state
+                    .get_first_token_identifier()
+                    .into_name()
+                    .to_string(),
+            ),
         )
         .await;
 

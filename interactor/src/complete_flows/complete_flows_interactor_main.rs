@@ -15,11 +15,11 @@ use cross_chain::DEFAULT_ISSUE_COST;
 use multiversx_sc::chain_core::EGLD_000000_TOKEN_IDENTIFIER;
 use multiversx_sc_snippets::imports::*;
 use multiversx_sc_snippets::multiversx_sc_scenario::multiversx_chain_vm::crypto_functions::sha256;
-use proxies::header_verifier_proxy::OperationHashStatus;
 use structs::aliases::PaymentsVec;
 use structs::fee::FeeStruct;
 use structs::operation::OperationData;
-use structs::{OperationHashStatus, RegisterTokenOperation};
+use structs::OperationHashStatus;
+use structs::RegisterTokenOperation;
 
 pub struct CompleteFlowInteract {
     pub interactor: Interactor,
@@ -197,7 +197,7 @@ impl CompleteFlowInteract {
 
         self.check_registered_operation_status(
             config.shard,
-            hash_of_hashes.clone(),
+            &hash_of_hashes,
             operation_hash.clone(),
             expected_operation_hash_status,
         )
