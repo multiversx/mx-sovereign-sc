@@ -1000,7 +1000,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
     }
 
     fn create_aggregated_signature_and_bitmap(
-        secret_keys: &Vec<Vec<u8>>,
+        secret_keys: &[Vec<u8>],
         message: &ManagedBuffer<StaticApi>,
     ) -> (ManagedBuffer<StaticApi>, ManagedBuffer<StaticApi>) {
         assert!(
