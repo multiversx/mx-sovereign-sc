@@ -101,7 +101,7 @@ where
         self,
         hash_of_hashes: Arg0,
         operation_hash: Arg1,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, OperationHashStatus> {
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, structs::OperationHashStatus> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("operationHashStatus")
@@ -194,11 +194,4 @@ where
             .argument(&operation_hash)
             .original_result()
     }
-}
-
-#[type_abi]
-#[derive(TopEncode, TopDecode, PartialEq, Debug)]
-pub enum OperationHashStatus {
-    NotLocked,
-    Locked,
 }
