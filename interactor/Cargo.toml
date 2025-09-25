@@ -9,7 +9,7 @@ publish = false
 path = "src/interact.rs"
 
 [dependencies]
-toml = "0.8.6"
+toml = "0.8"
 
 [dependencies.mvx-esdt-safe]
 path = "../mvx-esdt-safe"
@@ -28,9 +28,18 @@ path = "../common/structs"
 
 [dependencies.multiversx-sc-snippets]
 version = "0.61.0"
+git = "https://github.com/multiversx/mx-sdk-rs"
+branch = "rc/v0.62"
 
 [dependencies.multiversx-sc]
 version = "0.61.0"
+git = "https://github.com/multiversx/mx-sdk-rs"
+branch = "rc/v0.62"
+
+[dev-dependencies.multiversx-sc-scenario]
+git = "https://github.com/multiversx/mx-sdk-rs"
+branch = "rc/v0.62"
+features = ["bls"]
 
 [dependencies.clap]
 version = "4.4.7"

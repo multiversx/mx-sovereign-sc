@@ -1,4 +1,7 @@
-use error_messages::{INVALID_BLS_KEY_PROVIDED, NOT_ENOUGH_VALIDATORS, VALIDATOR_ALREADY_REGISTERED, VALIDATOR_NOT_REGISTERED, VALIDATOR_RANGE_EXCEEDED};
+use error_messages::{
+    INVALID_BLS_KEY_PROVIDED, NOT_ENOUGH_VALIDATORS, VALIDATOR_ALREADY_REGISTERED,
+    VALIDATOR_NOT_REGISTERED, VALIDATOR_RANGE_EXCEEDED,
+};
 use structs::{configs::SovereignConfig, ValidatorInfo, BLS_KEY_BYTE_LENGTH};
 
 multiversx_sc::imports!();
@@ -11,7 +14,7 @@ pub trait ChainConfigStorageModule {
             INVALID_BLS_KEY_PROVIDED
         );
     }
-    
+
     fn require_validator_not_registered(&self, bls_key: &ManagedBuffer) {
         require!(
             self.bls_key_to_id_mapper(bls_key).is_empty(),

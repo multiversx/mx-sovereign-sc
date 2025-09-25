@@ -20,5 +20,5 @@ path = "../proxies"
 path = "../custom-events"
 
 [dependencies.multiversx-sc]
-version = "0.61.0"
-features = ["esdt-token-payment-legacy-decode"]
+git = "https://github.com/multiversx/mx-sdk-rs"
+branch = "rc/v0.62"

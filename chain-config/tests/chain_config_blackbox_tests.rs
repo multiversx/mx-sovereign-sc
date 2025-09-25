@@ -251,21 +251,21 @@ fn test_update_config_invalid_config() {
         .common_setup
         .deploy_header_verifier(vec![ScArray::ChainConfig]);
 
+    let new_config = SovereignConfig::new(2, 1, BigUint::default(), None);
+    let config_hash = new_config.generate_hash();
+    let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&config_hash.to_vec()));
+    let (signature, pub_keys) = state.common_setup.get_sig_and_pub_keys(1, &hash_of_hashes);
+    let bitmap = ManagedBuffer::new_from_bytes(&[0x01]);
+
     state
         .common_setup
-        .register(&BLSKey::random(), &MultiEgldOrEsdtPayment::new(), None);
+        .register(&pub_keys[0], &MultiEgldOrEsdtPayment::new(), None);
 
     state.common_setup.complete_chain_config_setup_phase();
 
     state
         .common_setup
         .complete_header_verifier_setup_phase(None);
-
-    let new_config = SovereignConfig::new(2, 1, BigUint::default(), None);
-    let config_hash = new_config.generate_hash();
-    let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&config_hash.to_vec()));
-    let bitmap = ManagedBuffer::new_from_bytes(&[0x01]);
-    let signature = ManagedBuffer::new();
 
     state.common_setup.register_operation(
         OWNER_ADDRESS,
@@ -288,7 +288,7 @@ fn test_update_config_invalid_config() {
 /// C-CONFIG_UPDATE_CONFIG_OK
 ///
 /// ### ACTION
-/// Call 'update_sovereign_config()'  
+/// Call 'update_sovereign_config()'
 ///
 /// ### EXPECTED
 /// executedBridgeOp event is emitted
@@ -304,21 +304,21 @@ fn test_update_config() {
         .common_setup
         .deploy_header_verifier(vec![ScArray::ChainConfig]);
 
+    let new_config = SovereignConfig::new(1, 2, BigUint::default(), None);
+    let config_hash = new_config.generate_hash();
+    let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&config_hash.to_vec()));
+    let (signature, pub_keys) = state.common_setup.get_sig_and_pub_keys(1, &hash_of_hashes);
+    let bitmap = ManagedBuffer::new_from_bytes(&[0x01]);
+
     state
         .common_setup
-        .register(&BLSKey::random(), &MultiEgldOrEsdtPayment::new(), None);
+        .register(&pub_keys[0], &MultiEgldOrEsdtPayment::new(), None);
 
     state.common_setup.complete_chain_config_setup_phase();
 
     state
         .common_setup
         .complete_header_verifier_setup_phase(None);
-
-    let new_config = SovereignConfig::new(1, 2, BigUint::default(), None);
-    let config_hash = new_config.generate_hash();
-    let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&config_hash.to_vec()));
-    let bitmap = ManagedBuffer::new_from_bytes(&[0x01]);
-    let signature = ManagedBuffer::new();
 
     state.common_setup.register_operation(
         OWNER_ADDRESS,
@@ -564,9 +564,15 @@ fn test_register_validator_after_genesis() {
     let mut payments_vec = MultiEgldOrEsdtPayment::new();
     payments_vec.push(payment);
 
+    let num_of_validators: u64 = 3;
+    let dummy_message = ManagedBuffer::new_from_bytes(&[0x01]);
+    let (signature, pub_keys) = state
+        .common_setup
+        .get_sig_and_pub_keys(num_of_validators as usize, &dummy_message);
+
     state
         .common_setup
-        .register(&BLSKey::random(), &payments_vec, None);
+        .register(&pub_keys[0], &payments_vec, None);
 
     state.common_setup.complete_chain_config_setup_phase();
 
@@ -578,15 +584,14 @@ fn test_register_validator_after_genesis() {
         .common_setup
         .complete_header_verifier_setup_phase(None);
 
-    let signature = ManagedBuffer::new();
-    let bitmap = ManagedBuffer::new_from_bytes(&[0x06]);
+    let bitmap = ManagedBuffer::new_from_bytes(&[0x07]);
     let epoch = 0;
 
-    for id in 2..4 {
+    for id in 2..=num_of_validators {
         let validator_data = ValidatorData {
             id: BigUint::from(id as u32),
             address: OWNER_ADDRESS.to_managed_address(),
-            bls_key: BLSKey::random(),
+            bls_key: pub_keys[(id - 1) as usize].clone(),
         };
         state.common_setup.register_validator_operation(
             validator_data,
@@ -690,7 +695,7 @@ fn test_unregister_wrong_caller_for_bls_key() {
         .common_setup
         .register(&new_validator_bls_key, &ManagedVec::new(), None);
 
-    assert!(state.common_setup.get_bls_key_id(&new_validator_bls_key) == 1);
+    assert_eq!(state.common_setup.get_bls_key_id(&new_validator_bls_key), 1);
 
     state.unregister_with_caller(
         &new_validator_bls_key,
@@ -758,11 +763,10 @@ fn test_unregister() {
 
     let stake_amount = BigUint::from(100_000u64);
     let mut additional_stake_vec = ManagedVec::new();
-    let additional_stake = StakeArgs {
+    additional_stake_vec.push(StakeArgs {
         token_identifier: FIRST_TEST_TOKEN.to_token_identifier(),
         amount: stake_amount.clone(),
-    };
-    additional_stake_vec.push(additional_stake);
+    });
 
     let config = SovereignConfig {
         min_validators: 0,
@@ -774,75 +778,38 @@ fn test_unregister() {
         .common_setup
         .deploy_chain_config(OptionalValue::Some(config), None);
 
-    let payment = EgldOrEsdtTokenPayment::new(
-        EgldOrEsdtTokenIdentifier::from(EGLD_000000_TOKEN_IDENTIFIER.as_bytes()),
-        0,
-        stake_amount.clone(),
-    );
-    let first_token_payment = EgldOrEsdtTokenPayment::new(
-        EgldOrEsdtTokenIdentifier::from(FIRST_TEST_TOKEN.as_bytes()),
-        0,
-        stake_amount.clone(),
-    );
-
-    let mut payments_vec = MultiEgldOrEsdtPayment::new();
-    payments_vec.push(payment);
-    payments_vec.push(first_token_payment);
+    let payments = combined_stake_payments(&stake_amount);
 
     let new_validator_bls_key = BLSKey::random();
     state
         .common_setup
-        .register(&new_validator_bls_key, &payments_vec, None);
-    assert!(state.common_setup.get_bls_key_id(&new_validator_bls_key) == 1);
+        .register(&new_validator_bls_key, &payments, None);
+    assert_eq!(state.common_setup.get_bls_key_id(&new_validator_bls_key), 1);
 
-    state
-        .common_setup
-        .world
-        .check_account(CHAIN_CONFIG_ADDRESS)
-        .balance(&stake_amount);
-    state
-        .common_setup
-        .world
-        .check_account(CHAIN_CONFIG_ADDRESS)
-        .esdt_balance(FIRST_TEST_TOKEN, &stake_amount);
-    state
-        .common_setup
-        .world
-        .check_account(OWNER_ADDRESS)
-        .balance(&(BigUint::from(OWNER_BALANCE) - stake_amount.clone()));
-    state
-        .common_setup
-        .world
-        .check_account(OWNER_ADDRESS)
-        .esdt_balance(
-            FIRST_TEST_TOKEN,
-            &(BigUint::from(ONE_HUNDRED_MILLION) - stake_amount),
-        );
+    let owner_initial_egld = BigUint::from(OWNER_BALANCE);
+    let owner_initial_token = BigUint::from(ONE_HUNDRED_MILLION);
+    let expected_owner_egld = owner_initial_egld.clone() - stake_amount.clone();
+    let expected_owner_token = owner_initial_token.clone() - stake_amount.clone();
+    assert_contract_and_owner_balances(
+        &mut state,
+        &stake_amount,
+        &stake_amount,
+        &expected_owner_egld,
+        &expected_owner_token,
+    );
 
     state.common_setup.unregister(&new_validator_bls_key, None);
 
-    state
-        .common_setup
-        .world
-        .check_account(CHAIN_CONFIG_ADDRESS)
-        .balance(BigUint::zero());
-    state
-        .common_setup
-        .world
-        .check_account(CHAIN_CONFIG_ADDRESS)
-        .esdt_balance(FIRST_TEST_TOKEN, BigUint::zero());
-    state
-        .common_setup
-        .world
-        .check_account(OWNER_ADDRESS)
-        .balance(BigUint::from(OWNER_BALANCE));
-    state
-        .common_setup
-        .world
-        .check_account(OWNER_ADDRESS)
-        .esdt_balance(FIRST_TEST_TOKEN, BigUint::from(ONE_HUNDRED_MILLION));
+    let zero = BigUint::zero();
+    assert_contract_and_owner_balances(
+        &mut state,
+        &zero,
+        &zero,
+        &owner_initial_egld,
+        &owner_initial_token,
+    );
 
-    assert!(state.common_setup.get_bls_key_id(&new_validator_bls_key) == 0);
+    assert_eq!(state.common_setup.get_bls_key_id(&new_validator_bls_key), 0);
 }
 
 /// ### TEST
@@ -911,40 +878,17 @@ fn test_unregister_validator_after_genesis() {
         .common_setup
         .deploy_chain_config(OptionalValue::Some(config), None);
 
-    let payment = EgldOrEsdtTokenPayment::new(
-        EgldOrEsdtTokenIdentifier::from(FIRST_TEST_TOKEN.as_bytes()),
-        0,
-        token_amount.clone(),
+    let payments = single_token_payment(&token_amount);
+    let registered_bls_keys = register_validators(&mut state, num_of_validators, &payments);
+
+    let expected_token_amount = token_amount.clone() * num_of_validators;
+    let owner_token_after_stake =
+        BigUint::from(ONE_HUNDRED_MILLION) - expected_token_amount.clone();
+    assert_contract_and_owner_token_balances(
+        &mut state,
+        &expected_token_amount,
+        &owner_token_after_stake,
     );
-    let mut payments_vec = MultiEgldOrEsdtPayment::new();
-    payments_vec.push(payment);
-
-    let mut registered_bls_keys: ManagedVec<StaticApi, ManagedBuffer<StaticApi>> =
-        ManagedVec::new();
-    for id in 1..(num_of_validators + 1) {
-        let validator_bls_key = BLSKey::random();
-        registered_bls_keys.push(validator_bls_key.clone());
-        state
-            .common_setup
-            .register(&validator_bls_key, &payments_vec, None);
-
-        assert_eq!(state.common_setup.get_bls_key_id(&validator_bls_key), id);
-    }
-
-    let expected_token_amount = token_amount * num_of_validators;
-    state
-        .common_setup
-        .world
-        .check_account(CHAIN_CONFIG_ADDRESS)
-        .esdt_balance(FIRST_TEST_TOKEN, &expected_token_amount);
-    state
-        .common_setup
-        .world
-        .check_account(OWNER_ADDRESS)
-        .esdt_balance(
-            FIRST_TEST_TOKEN,
-            &(BigUint::from(ONE_HUNDRED_MILLION) - expected_token_amount),
-        );
 
     state.common_setup.complete_chain_config_setup_phase();
 
@@ -956,36 +900,27 @@ fn test_unregister_validator_after_genesis() {
         .common_setup
         .complete_header_verifier_setup_phase(None);
 
-    let signature = ManagedBuffer::new();
-    let bitmap = ManagedBuffer::new_from_bytes(&num_of_validators.to_be_bytes());
+    let bitmap = full_bitmap(num_of_validators);
     let epoch = 0;
 
-    for id in 1..4 {
-        let validator_bls_key = registered_bls_keys.get(id - 1);
+    for (index, validator_bls_key) in registered_bls_keys.iter().enumerate() {
+        let validator_id = (index + 1) as u32;
 
-        let validator_data = ValidatorData {
-            id: BigUint::from(id as u32), // IDs start from 1
-            address: OWNER_ADDRESS.to_managed_address(),
-            bls_key: validator_bls_key.clone(),
-        };
-        state.common_setup.unregister_validator_operation(
-            validator_data,
-            signature.clone(),
-            bitmap.clone(),
+        unregister_validator_via_bridge_operation(
+            &mut state,
+            validator_id,
+            validator_bls_key,
+            num_of_validators,
+            &bitmap,
             epoch,
         );
+
+        assert_eq!(state.common_setup.get_bls_key_id(validator_bls_key), 0);
     }
 
-    state
-        .common_setup
-        .world
-        .check_account(CHAIN_CONFIG_ADDRESS)
-        .esdt_balance(FIRST_TEST_TOKEN, BigUint::zero());
-    state
-        .common_setup
-        .world
-        .check_account(OWNER_ADDRESS)
-        .esdt_balance(FIRST_TEST_TOKEN, BigUint::from(ONE_HUNDRED_MILLION));
+    let zero = BigUint::zero();
+    let owner_initial_token = BigUint::from(ONE_HUNDRED_MILLION);
+    assert_contract_and_owner_token_balances(&mut state, &zero, &owner_initial_token);
 }
 
 /// ### TEST
@@ -1052,4 +987,143 @@ fn test_unregister_validator_invalid() {
     );
 
     assert_eq!(state.common_setup.get_bls_key_id(&validator2_bls_key), 0);
+}
+
+fn combined_stake_payments(amount: &BigUint<StaticApi>) -> MultiEgldOrEsdtPayment<StaticApi> {
+    let mut payments = MultiEgldOrEsdtPayment::new();
+    payments.push(EgldOrEsdtTokenPayment::new(
+        EgldOrEsdtTokenIdentifier::from(EGLD_000000_TOKEN_IDENTIFIER.as_bytes()),
+        0,
+        amount.clone(),
+    ));
+    payments.push(EgldOrEsdtTokenPayment::new(
+        EgldOrEsdtTokenIdentifier::from(FIRST_TEST_TOKEN.as_bytes()),
+        0,
+        amount.clone(),
+    ));
+
+    payments
+}
+
+fn single_token_payment(amount: &BigUint<StaticApi>) -> MultiEgldOrEsdtPayment<StaticApi> {
+    let mut payments = MultiEgldOrEsdtPayment::new();
+    payments.push(EgldOrEsdtTokenPayment::new(
+        EgldOrEsdtTokenIdentifier::from(FIRST_TEST_TOKEN.as_bytes()),
+        0,
+        amount.clone(),
+    ));
+
+    payments
+}
+
+fn assert_contract_and_owner_balances(
+    state: &mut ChainConfigTestState,
+    contract_egld: &BigUint<StaticApi>,
+    contract_token: &BigUint<StaticApi>,
+    owner_egld: &BigUint<StaticApi>,
+    owner_token: &BigUint<StaticApi>,
+) {
+    state
+        .common_setup
+        .world
+        .check_account(CHAIN_CONFIG_ADDRESS)
+        .balance(contract_egld);
+    state
+        .common_setup
+        .world
+        .check_account(CHAIN_CONFIG_ADDRESS)
+        .esdt_balance(FIRST_TEST_TOKEN, contract_token);
+    state
+        .common_setup
+        .world
+        .check_account(OWNER_ADDRESS)
+        .balance(owner_egld);
+    state
+        .common_setup
+        .world
+        .check_account(OWNER_ADDRESS)
+        .esdt_balance(FIRST_TEST_TOKEN, owner_token);
+}
+
+fn assert_contract_and_owner_token_balances(
+    state: &mut ChainConfigTestState,
+    contract_token: &BigUint<StaticApi>,
+    owner_token: &BigUint<StaticApi>,
+) {
+    state
+        .common_setup
+        .world
+        .check_account(CHAIN_CONFIG_ADDRESS)
+        .esdt_balance(FIRST_TEST_TOKEN, contract_token);
+    state
+        .common_setup
+        .world
+        .check_account(OWNER_ADDRESS)
+        .esdt_balance(FIRST_TEST_TOKEN, owner_token);
+}
+
+fn register_validators(
+    state: &mut ChainConfigTestState,
+    count: u64,
+    payments: &MultiEgldOrEsdtPayment<StaticApi>,
+) -> Vec<ManagedBuffer<StaticApi>> {
+    let mut bls_keys = Vec::new();
+
+    for expected_id in 1..=count {
+        let bls_key = BLSKey::random();
+        state.common_setup.register(&bls_key, payments, None);
+        assert_eq!(state.common_setup.get_bls_key_id(&bls_key), expected_id);
+        bls_keys.push(bls_key);
+    }
+
+    bls_keys
+}
+
+fn full_bitmap(num_of_validators: u64) -> ManagedBuffer<StaticApi> {
+    let mut bitmap_bytes = vec![0u8; num_of_validators.div_ceil(8) as usize];
+    for index in 0..num_of_validators {
+        let byte_index = (index / 8) as usize;
+        let bit_index = (index % 8) as u8;
+        bitmap_bytes[byte_index] |= 1u8 << bit_index;
+    }
+
+    ManagedBuffer::new_from_bytes(&bitmap_bytes)
+}
+
+fn unregister_validator_via_bridge_operation(
+    state: &mut ChainConfigTestState,
+    validator_id: u32,
+    validator_bls_key: &ManagedBuffer<StaticApi>,
+    num_of_validators: u64,
+    bitmap: &ManagedBuffer<StaticApi>,
+    epoch: u64,
+) {
+    let validator_data = ValidatorData {
+        id: BigUint::from(validator_id),
+        address: OWNER_ADDRESS.to_managed_address(),
+        bls_key: validator_bls_key.clone(),
+    };
+
+    let validator_data_hash = validator_data.generate_hash();
+    let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&validator_data_hash.to_vec()));
+    let (signature, pub_keys) = state
+        .common_setup
+        .get_sig_and_pub_keys(num_of_validators as usize, &hash_of_hashes);
+
+    state.common_setup.set_bls_keys_in_header_storage(pub_keys);
+    state.common_setup.register_operation(
+        OWNER_ADDRESS,
+        signature,
+        &hash_of_hashes,
+        bitmap.clone(),
+        epoch,
+        MultiValueEncoded::from_iter(vec![validator_data_hash]),
+    );
+
+    state.common_setup.unregister_validator(
+        &hash_of_hashes,
+        &validator_data,
+        None,
+        Some(EXECUTED_BRIDGE_OP_EVENT),
+    );
 }

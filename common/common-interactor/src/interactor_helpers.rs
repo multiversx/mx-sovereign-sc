@@ -350,6 +350,9 @@ pub trait InteractorHelpers {
                 );
             }
             Some(expected_log) => {
+                if expected_log.is_empty() {
+                    return;
+                }
                 let expected_bytes = expected_log.as_bytes();
 
                 let found_log = logs.iter().find(|log| {
@@ -398,10 +401,13 @@ pub trait InteractorHelpers {
         expected_error_message: Option<&str>,
     ) {
         match response {
-            Ok(_) => assert!(
-                expected_error_message.is_none(),
-                "Transaction was successful, but expected error"
-            ),
+            Ok(_) => {
+                assert!(
+                    expected_error_message.is_none(),
+                    "Expected error message: {:?}, but transaction was successful",
+                    expected_error_message
+                );
+            }
             Err(error) => {
                 assert_eq!(expected_error_message, Some(error.message.as_str()))
             }
@@ -525,7 +531,7 @@ pub trait InteractorHelpers {
                 match balances.get(token_id) {
                     None => {}
                     Some(esdt_balance) => {
-                        panic!("For {} ({}) -> Expected token '{}' to be absent (balance 0), but found it with balance: {}", 
+                        panic!("For {} ({}) -> Expected token '{}' to be absent (balance 0), but found it with balance: {}",
                            address_name, address, token_id, esdt_balance.balance);
                     }
                 }

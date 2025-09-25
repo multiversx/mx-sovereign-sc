@@ -49,6 +49,7 @@ impl HeaderVerifierTestState {
 
     pub fn register_operations(
         &mut self,
+        signature: &ManagedBuffer<StaticApi>,
         operation: BridgeOperation<StaticApi>,
         pub_keys_bitmap: ManagedBuffer<StaticApi>,
         epoch: u64,
@@ -62,7 +63,7 @@ impl HeaderVerifierTestState {
             .to(HEADER_VERIFIER_ADDRESS)
             .typed(HeaderverifierProxy)
             .register_bridge_operations(
-                operation.signature,
+                signature,
                 operation.bridge_operation_hash,
                 pub_keys_bitmap,
                 epoch,

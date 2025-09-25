@@ -1,4 +1,3 @@
-use common_test_setup::base_setup::helpers::BLSKey;
 use common_test_setup::base_setup::init::{AccountSetup, BaseSetup};
 use common_test_setup::constants::{
     ESDT_SAFE_ADDRESS, FEE_MARKET_ADDRESS, FEE_TOKEN, FIRST_TEST_TOKEN, HEADER_VERIFIER_ADDRESS,
@@ -6,7 +5,7 @@ use common_test_setup::constants::{
     SECOND_TEST_TOKEN, SOVEREIGN_TOKEN_PREFIX, UNPAUSE_CONTRACT_LOG, USER_ADDRESS,
 };
 use cross_chain::storage::CrossChainStorage;
-use multiversx_sc::types::{MultiEgldOrEsdtPayment, ReturnsHandledOrError};
+use multiversx_sc::types::ReturnsHandledOrError;
 use multiversx_sc::{
     imports::OptionalValue,
     types::{
@@ -400,17 +399,26 @@ impl MvxEsdtSafeTestState {
             .assert_expected_log(logs, expected_custom_log, expected_log_error);
     }
 
-    pub fn deploy_and_complete_setup_phase(&mut self) {
+    pub fn deploy_and_complete_setup_phase(
+        &mut self,
+        hash_of_hashes: &ManagedBuffer<StaticApi>,
+    ) -> ManagedBuffer<StaticApi> {
         self.deploy_contract_with_roles(None);
         self.common_setup
             .deploy_chain_config(OptionalValue::None, None);
-        self.common_setup
-            .register(&BLSKey::random(), &MultiEgldOrEsdtPayment::new(), None);
+        let (signature, public_keys) = self.common_setup.get_sig_and_pub_keys(1, hash_of_hashes);
+        self.common_setup.register(
+            public_keys.first().unwrap(),
+            &MultiEgldOrEsdtPayment::new(),
+            None,
+        );
         self.common_setup.complete_chain_config_setup_phase();
 
         self.common_setup
             .deploy_header_verifier(vec![ScArray::ChainConfig, ScArray::ESDTSafe]);
         self.common_setup.complete_header_verifier_setup_phase(None);
         self.complete_setup_phase(Some(UNPAUSE_CONTRACT_LOG));
+
+        signature
     }
 }

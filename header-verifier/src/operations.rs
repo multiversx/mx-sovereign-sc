@@ -1,7 +1,7 @@
 use error_messages::{
-    BLS_SIGNATURE_NOT_VALID, CALLER_NOT_FROM_CURRENT_SOVEREIGN,
-    CURRENT_OPERATION_ALREADY_IN_EXECUTION, CURRENT_OPERATION_NOT_REGISTERED,
-    HASH_OF_HASHES_DOES_NOT_MATCH, OUTGOING_TX_HASH_ALREADY_REGISTERED, SETUP_PHASE_NOT_COMPLETED,
+    CALLER_NOT_FROM_CURRENT_SOVEREIGN, CURRENT_OPERATION_ALREADY_IN_EXECUTION,
+    CURRENT_OPERATION_NOT_REGISTERED, HASH_OF_HASHES_DOES_NOT_MATCH,
+    OUTGOING_TX_HASH_ALREADY_REGISTERED, SETUP_PHASE_NOT_COMPLETED,
     VALIDATORS_ALREADY_REGISTERED_IN_EPOCH,
 };
 use structs::OperationHashStatus;
@@ -59,18 +59,13 @@ pub trait HeaderVerifierOperationsModule:
             sc_panic!(HASH_OF_HASHES_DOES_NOT_MATCH);
         }
 
-        if self
-            .verify_bls(
-                epoch,
-                &signature,
-                &bridge_operations_hash,
-                pub_keys_bitmap,
-                &ManagedVec::from_iter(bls_pub_keys_mapper.iter()),
-            )
-            .is_some()
-        {
-            sc_panic!(BLS_SIGNATURE_NOT_VALID);
-        }
+        self.verify_bls(
+            epoch,
+            &signature,
+            &bridge_operations_hash,
+            pub_keys_bitmap,
+            &ManagedVec::from_iter(bls_pub_keys_mapper.iter()),
+        );
 
         for operation_hash in operations_hashes {
             self.operation_hash_status(&bridge_operations_hash, &operation_hash)
@@ -144,23 +139,13 @@ pub trait HeaderVerifierOperationsModule:
             return;
         }
 
-        if self
-            .verify_bls(
-                epoch - 1, // Use the validator signatures from the last epoch
-                &signature,
-                &hash_of_hashes,
-                pub_keys_bitmap,
-                &ManagedVec::from_iter(bls_keys_previous_epoch.iter()),
-            )
-            .is_some()
-        {
-            self.execute_bridge_operation_event(
-                &hash_of_hashes,
-                &operation_hash,
-                Some(BLS_SIGNATURE_NOT_VALID.into()),
-            );
-            return;
-        }
+        self.verify_bls(
+            epoch - 1, // Use the validator signatures from the last epoch
+            &signature,
+            &hash_of_hashes,
+            pub_keys_bitmap,
+            &ManagedVec::from_iter(bls_keys_previous_epoch.iter()),
+        );
 
         if epoch >= MAX_STORED_EPOCHS && !self.bls_pub_keys(epoch - MAX_STORED_EPOCHS).is_empty() {
             self.bls_pub_keys(epoch - MAX_STORED_EPOCHS).clear();

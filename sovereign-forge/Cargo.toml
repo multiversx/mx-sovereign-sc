@@ -10,6 +10,8 @@ path = "src/lib.rs"
 
 [dependencies.multiversx-sc]
 version = "0.61.0"
+git = "https://github.com/multiversx/mx-sdk-rs"
+branch = "rc/v0.62"
 
 [dependencies.chain-factory]
 path = "../chain-factory"
@@ -52,9 +54,13 @@ num-bigint = "0.4"
 
 [dev-dependencies.multiversx-sc-modules]
 version = "0.61.0"
+git = "https://github.com/multiversx/mx-sdk-rs"
+branch = "rc/v0.62"
 
 [dev-dependencies.common-test-setup]
 path = "../common/common-test-setup"
 
 [dev-dependencies.multiversx-sc-scenario]
 version = "0.61.0"
+git = "https://github.com/multiversx/mx-sdk-rs"
+branch = "rc/v0.62"
