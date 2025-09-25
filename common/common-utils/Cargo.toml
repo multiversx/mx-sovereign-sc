@@ -20,5 +20,4 @@ path = "../proxies"
 path = "../custom-events"
 
 [dependencies.multiversx-sc]
-git = "https://github.com/multiversx/mx-sdk-rs"
-branch = "rc/v0.62"
+version = "0.62.0"

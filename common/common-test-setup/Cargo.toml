@@ -12,9 +12,7 @@ rand = "0.8.5"
 hex = "0.4.3"
 
 [dependencies.multiversx-sc-scenario]
-version = "0.61.0"
-git = "https://github.com/multiversx/mx-sdk-rs"
-branch = "rc/v0.62"
+version = "0.62.0"
 
 [dependencies.proxies]
 path = "../proxies"
