@@ -81,3 +81,10 @@ pub struct RegisterTokenStruct<M: ManagedTypeApi> {
 }
 
 impl<A: CryptoApi> GenerateHash<A> for RegisterTokenOperation<A> {}
+
+#[type_abi]
+#[derive(TopEncode, TopDecode, PartialEq, Debug)]
+pub enum OperationHashStatus {
+    NotLocked = 1,
+    Locked,
+}
