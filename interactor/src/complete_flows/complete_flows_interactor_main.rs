@@ -18,8 +18,7 @@ use multiversx_sc_snippets::multiversx_sc_scenario::multiversx_chain_vm::crypto_
 use structs::aliases::PaymentsVec;
 use structs::fee::FeeStruct;
 use structs::operation::OperationData;
-use structs::OperationHashStatus;
-use structs::RegisterTokenOperation;
+use structs::{OperationHashStatus, RegisterTokenOperation};
 
 pub struct CompleteFlowInteract {
     pub interactor: Interactor,

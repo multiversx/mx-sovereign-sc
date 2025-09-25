@@ -402,12 +402,11 @@ pub trait InteractorHelpers {
     ) {
         match response {
             Ok(_) => {
-                if expected_error_message.is_some() {
-                    println!(
-                        "Expected error message: {:?}, but transaction was successful",
-                        expected_error_message
-                    );
-                }
+                assert!(
+                    expected_error_message.is_none(),
+                    "Expected error message: {:?}, but transaction was successful",
+                    expected_error_message
+                );
             }
             Err(error) => {
                 assert_eq!(expected_error_message, Some(error.message.as_str()))
@@ -532,7 +531,7 @@ pub trait InteractorHelpers {
                 match balances.get(token_id) {
                     None => {}
                     Some(esdt_balance) => {
-                        panic!("For {} ({}) -> Expected token '{}' to be absent (balance 0), but found it with balance: {}", 
+                        panic!("For {} ({}) -> Expected token '{}' to be absent (balance 0), but found it with balance: {}",
                            address_name, address, token_id, esdt_balance.balance);
                     }
                 }
