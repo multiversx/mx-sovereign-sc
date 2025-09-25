@@ -160,7 +160,7 @@ async fn test_deposit_nothing_to_transfer() {
 #[tokio::test]
 #[serial]
 #[ignore = "This should fail but for now the failing logs are not retrieved by the framework"]
-#[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
+// #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn test_deposit_too_many_tokens_no_fee() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
 

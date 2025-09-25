@@ -128,7 +128,7 @@ async fn test_complete_execute_flow_with_transfer_data_only_success(#[case] shar
 #[tokio::test]
 #[serial]
 #[ignore = "This should fail but for now the failing logs are not retrieved by the framework"]
-#[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
+// #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn test_complete_execute_flow_with_transfer_data_only_fail(#[case] shard: u32) {
     let mut chain_interactor = CompleteFlowInteract::new(Config::chain_simulator_config()).await;
 
@@ -554,7 +554,7 @@ async fn test_register_execute_with_transfer_data_and_deposit_sov_token(
 #[tokio::test]
 #[serial]
 #[ignore = "This should fail but for now the failing logs are not retrieved by the framework"]
-#[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
+// #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn test_register_execute_call_failed(
     #[case] token_type: EsdtTokenType,
     #[case] amount: BigUint<StaticApi>,
