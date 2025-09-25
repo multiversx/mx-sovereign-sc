@@ -19,7 +19,7 @@ use proxies::header_verifier_proxy::OperationHashStatus;
 use structs::aliases::PaymentsVec;
 use structs::fee::FeeStruct;
 use structs::operation::OperationData;
-use structs::RegisterTokenOperation;
+use structs::{OperationHashStatus, RegisterTokenOperation};
 
 pub struct CompleteFlowInteract {
     pub interactor: Interactor,

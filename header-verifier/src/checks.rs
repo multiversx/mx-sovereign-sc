@@ -1,6 +1,5 @@
 use error_messages::CHAIN_CONFIG_SETUP_PHASE_NOT_COMPLETE;
-
-use crate::header_utils::OperationHashStatus;
+use structs::OperationHashStatus;
 
 multiversx_sc::imports!();
 multiversx_sc::derive_imports!();

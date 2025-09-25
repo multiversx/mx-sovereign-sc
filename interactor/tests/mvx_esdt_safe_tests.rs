@@ -21,6 +21,7 @@ use std::vec;
 use structs::aliases::PaymentsVec;
 use structs::configs::{EsdtSafeConfig, MaxBridgedAmount};
 use structs::operation::{Operation, OperationData, OperationEsdtPayment, TransferData};
+use structs::OperationHashStatus;
 
 /// ### TEST
 /// M-ESDT_UPDATE_CONFIG_FAIL
@@ -671,21 +672,15 @@ async fn test_execute_operation_success_no_fee() {
         .register_operation(SHARD_0, &hash_of_hashes, operations_hashes)
         .await;
 
-    // let operation_status = OperationHashStatus::NotLocked as u8;
-    // let expected_operation_hash_status = format!("{:02x}", operation_status);
-    // let encoded_key = &hex::encode(OPERATION_HASH_STATUS_STORAGE_KEY);
-
-    //TODO: replace this with the view call after proxy fix
-    // chain_interactor
-    //     .check_account_storage(
-    //         chain_interactor
-    //             .common_state()
-    //             .get_header_verifier_address(SHARD_0)
-    //             .to_address(),
-    //         encoded_key,
-    //         Some(&expected_operation_hash_status),
-    //     )
-    //     .await;
+    let expected_operation_hash_status = OperationHashStatus::NotLocked;
+    chain_interactor
+        .check_registered_operation_status(
+            SHARD_0,
+            &hash_of_hashes,
+            operation_hash,
+            expected_operation_hash_status,
+        )
+        .await;
 
     let bridge_service = chain_interactor
         .get_bridge_service_for_shard(SHARD_0)
@@ -701,17 +696,6 @@ async fn test_execute_operation_success_no_fee() {
             None,
         )
         .await;
-
-    // chain_interactor
-    //     .check_account_storage(
-    //         chain_interactor
-    //             .state
-    //             .current_header_verifier_address()
-    //             .to_address(),
-    //         encoded_key,
-    //         None,
-    //     )
-    //     .await;
 
     let balance_config = BalanceCheckConfig::new()
         .shard(SHARD_0)
@@ -774,20 +758,15 @@ async fn test_execute_operation_only_transfer_data_no_fee() {
         .register_operation(SHARD_0, &hash_of_hashes, operations_hashes)
         .await;
 
-    // let operation_status = OperationHashStatus::NotLocked as u8;
-    // let expected_operation_hash_status = format!("{:02x}", operation_status);
-    // let encoded_key = &hex::encode(OPERATION_HASH_STATUS_STORAGE_KEY);
-
-    // chain_interactor
-    //     .check_account_storage(
-    //         chain_interactor
-    //             .state
-    //             .current_header_verifier_address()
-    //             .to_address(),
-    //         encoded_key,
-    //         Some(&expected_operation_hash_status),
-    //     )
-    //     .await;
+    let expected_operation_status = OperationHashStatus::NotLocked;
+    chain_interactor
+        .check_registered_operation_status(
+            SHARD_0,
+            &hash_of_hashes,
+            operation_hash,
+            expected_operation_status,
+        )
+        .await;
 
     let bridge_service = chain_interactor
         .get_bridge_service_for_shard(SHARD_0)
@@ -803,17 +782,6 @@ async fn test_execute_operation_only_transfer_data_no_fee() {
             None,
         )
         .await;
-
-    // chain_interactor
-    //     .check_account_storage(
-    //         chain_interactor
-    //             .state
-    //             .current_header_verifier_address()
-    //             .to_address(),
-    //         encoded_key,
-    //         None,
-    //     )
-    //     .await;
 
     chain_interactor.check_user_balance_unchanged().await;
     chain_interactor.check_all_contracts_empty(SHARD_0).await;
