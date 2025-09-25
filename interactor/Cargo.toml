@@ -27,19 +27,10 @@ path = "../common/proxies"
 path = "../common/structs"
 
 [dependencies.multiversx-sc-snippets]
-version = "0.61.0"
-git = "https://github.com/multiversx/mx-sdk-rs"
-branch = "rc/v0.62"
+version = "0.62.0"
 
 [dependencies.multiversx-sc]
-version = "0.61.0"
-git = "https://github.com/multiversx/mx-sdk-rs"
-branch = "rc/v0.62"
-
-[dev-dependencies.multiversx-sc-scenario]
-git = "https://github.com/multiversx/mx-sdk-rs"
-branch = "rc/v0.62"
-features = ["bls"]
+version = "0.62.0"
 
 [dependencies.clap]
 version = "4.4.7"
@@ -66,6 +57,10 @@ path = "../common/cross-chain"
 
 [dev-dependencies]
 rstest = "0.25.0"
+
+[dev-dependencies.multiversx-sc-scenario]
+version = "0.62.0"
+features = ["bls"]
 
 [features]
 chain-simulator-tests = []

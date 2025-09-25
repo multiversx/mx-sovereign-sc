@@ -9,9 +9,7 @@ publish = false
 path = "src/lib.rs"
 
 [dependencies.multiversx-sc]
-version = "0.61.0"
-git = "https://github.com/multiversx/mx-sdk-rs"
-branch = "rc/v0.62"
+version = "0.62.0"
 
 [dependencies.common-utils]
 path = "../common/common-utils"
@@ -35,9 +33,7 @@ path = "../common/fee-common"
 num-bigint = "0.4.2"
 
 [dev-dependencies.multiversx-sc-scenario]
-version = "0.61.0"
-git = "https://github.com/multiversx/mx-sdk-rs"
-branch = "rc/v0.62"
+version = "0.62.0"
 
 [dev-dependencies.common-test-setup]
 path = "../common/common-test-setup"

@@ -9,9 +9,7 @@ authors = ["andrei-baltariu <andrei.baltariu@multiversx.com>"]
 path = "src/lib.rs"
 
 [dependencies.multiversx-sc]
-version = "0.61.0"
-git = "https://github.com/multiversx/mx-sdk-rs"
-branch = "rc/v0.62"
+version = "0.62.0"
 
 [dependencies.structs]
 path = "../common/structs"
@@ -32,6 +30,4 @@ path = "../common/common-utils"
 num-bigint = "0.4"
 
 [dev-dependencies.multiversx-sc-scenario]
-version = "0.61.0"
-git = "https://github.com/multiversx/mx-sdk-rs"
-branch = "rc/v0.62"
+version = "0.62.0"
