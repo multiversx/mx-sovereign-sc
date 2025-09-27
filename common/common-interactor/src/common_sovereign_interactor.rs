@@ -7,8 +7,8 @@ use crate::{
 use common_test_setup::constants::{
     CHAIN_CONFIG_CODE_PATH, CHAIN_FACTORY_CODE_PATH, CHAIN_ID, DEPLOY_COST,
     FAILED_TO_LOAD_WALLET_SHARD_0, FEE_MARKET_CODE_PATH, HEADER_VERIFIER_CODE_PATH, ISSUE_COST,
-    MVX_ESDT_SAFE_CODE_PATH, NATIVE_TOKEN_NAME, NATIVE_TOKEN_TICKER, NUMBER_OF_SHARDS, SHARD_0,
-    SOVEREIGN_FORGE_CODE_PATH, SOVEREIGN_TOKEN_PREFIX, TESTING_SC_CODE_PATH, WALLET_SHARD_0,
+    MVX_ESDT_SAFE_CODE_PATH, NUMBER_OF_SHARDS, SHARD_0, SOVEREIGN_FORGE_CODE_PATH,
+    SOVEREIGN_TOKEN_PREFIX, TESTING_SC_CODE_PATH, WALLET_SHARD_0,
 };
 use multiversx_bls::{SecretKey, G1};
 use multiversx_sc::{
@@ -38,7 +38,7 @@ use structs::{
     aliases::{OptionalValueTransferDataTuple, PaymentsVec},
     configs::{EsdtSafeConfig, SovereignConfig},
     fee::FeeStruct,
-    forge::{ContractInfo, NativeToken, ScArray},
+    forge::{ContractInfo, ScArray},
     generate_hash::GenerateHash,
     operation::Operation,
     EsdtInfo, OperationHashStatus, RegisterTokenOperation,
@@ -303,9 +303,13 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             .interactor()
             .tx()
             .from(caller.clone())
-            .gas(100_000_000u64)
+            .gas(120_000_000u64)
             .typed(MvxEsdtSafeProxy)
-            .init(chain_id, OptionalValue::<EsdtSafeConfig<StaticApi>>::None)
+            .init(
+                Bech32Address::from(caller.clone()),
+                chain_id,
+                OptionalValue::<EsdtSafeConfig<StaticApi>>::None,
+            )
             .returns(ReturnsNewAddress)
             .code(MVX_ESDT_SAFE_CODE_PATH)
             .code_metadata(metadata())
@@ -380,13 +384,14 @@ pub trait CommonInteractorTrait: InteractorHelpers {
         chain_id: String,
         opt_config: OptionalValue<EsdtSafeConfig<StaticApi>>,
     ) {
+        let owner_address = caller.clone();
         let new_address = self
             .interactor()
             .tx()
             .from(caller)
             .gas(100_000_000u64)
             .typed(MvxEsdtSafeProxy)
-            .init(SOVEREIGN_TOKEN_PREFIX, opt_config)
+            .init(owner_address, SOVEREIGN_TOKEN_PREFIX, opt_config)
             .returns(ReturnsNewAddress)
             .code(MVX_ESDT_SAFE_CODE_PATH)
             .code_metadata(metadata())
