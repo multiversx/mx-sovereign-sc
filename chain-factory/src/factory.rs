@@ -53,6 +53,7 @@ pub trait FactoryModule: only_admin::OnlyAdminModule {
     #[endpoint(deployEsdtSafe)]
     fn deploy_mvx_esdt_safe(
         &self,
+        sovereign_owner: ManagedAddress,
         sov_token_prefix: ManagedBuffer,
         opt_config: OptionalValue<EsdtSafeConfig<Self::Api>>,
     ) -> ManagedAddress {
@@ -61,7 +62,7 @@ pub trait FactoryModule: only_admin::OnlyAdminModule {
 
         self.tx()
             .typed(MvxEsdtSafeProxy)
-            .init(sov_token_prefix, opt_config)
+            .init(sovereign_owner, sov_token_prefix, opt_config)
             .from_source(source_address)
             .code_metadata(metadata)
             .returns(ReturnsNewManagedAddress)

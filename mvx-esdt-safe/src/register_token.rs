@@ -5,6 +5,7 @@ use error_messages::{
     SETUP_PHASE_NOT_COMPLETED, TOKEN_ALREADY_REGISTERED,
 };
 use multiversx_sc::{chain_core::EGLD_000000_TOKEN_IDENTIFIER, types::EsdtTokenType};
+use multiversx_sc_modules::only_admin;
 use structs::{
     aliases::EventPaymentTuple, forge::NativeToken, generate_hash::GenerateHash, EsdtInfo,
     RegisterTokenOperation,
@@ -21,6 +22,7 @@ pub trait RegisterTokenModule:
     + custom_events::CustomEventsModule
     + multiversx_sc_modules::pause::PauseModule
     + setup_phase::SetupPhaseModule
+    + only_admin::OnlyAdminModule
 {
     #[endpoint(registerToken)]
     fn register_token(
@@ -104,7 +106,7 @@ pub trait RegisterTokenModule:
     }
 
     #[payable("EGLD")]
-    #[only_owner]
+    #[only_admin]
     #[endpoint(registerNativeToken)]
     fn register_native_token(&self, native_token: NativeToken<Self::Api>) {
         require!(

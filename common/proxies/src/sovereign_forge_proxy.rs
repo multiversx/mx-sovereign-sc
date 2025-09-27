@@ -217,18 +217,6 @@ where
             .original_result()
     }
 
-    pub fn register_native_token<
-        Arg0: ProxyArg<structs::forge::NativeToken<Env::Api>>,
-    >(
-        self,
-        native_token: Arg0,
-    ) -> TxTypedCall<Env, From, To, (), Gas, ()> {
-        self.wrapped_tx
-            .raw_call("registerNativeToken")
-            .argument(&native_token)
-            .original_result()
-    }
-
     pub fn update_esdt_safe_config<
         Arg0: ProxyArg<structs::configs::EsdtSafeConfig<Env::Api>>,
     >(

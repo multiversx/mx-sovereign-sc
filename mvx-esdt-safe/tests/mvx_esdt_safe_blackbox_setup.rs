@@ -114,7 +114,11 @@ impl MvxEsdtSafeTestState {
                     ManagedVec::new(),
                 );
 
-                sc.init(SOVEREIGN_TOKEN_PREFIX.into(), OptionalValue::Some(config));
+                sc.init(
+                    OWNER_ADDRESS.to_managed_address(),
+                    SOVEREIGN_TOKEN_PREFIX.into(),
+                    OptionalValue::Some(config),
+                );
             });
 
         self.common_setup

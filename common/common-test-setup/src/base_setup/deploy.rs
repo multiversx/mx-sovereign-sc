@@ -40,7 +40,11 @@ impl BaseSetup {
             .tx()
             .from(OWNER_ADDRESS)
             .typed(MvxEsdtSafeProxy)
-            .init(SOVEREIGN_TOKEN_PREFIX, opt_config)
+            .init(
+                OWNER_ADDRESS.to_managed_address(),
+                SOVEREIGN_TOKEN_PREFIX,
+                opt_config,
+            )
             .code(MVX_ESDT_SAFE_CODE_PATH)
             .new_address(ESDT_SAFE_ADDRESS)
             .run();

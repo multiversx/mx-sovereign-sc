@@ -1,11 +1,12 @@
 #![no_std]
 
 use error_messages::{
-    ERROR_AT_GENERATING_OPERATION_HASH, FEE_MARKET_NOT_SET, SETUP_PHASE_ALREADY_COMPLETED,
-    SETUP_PHASE_NOT_COMPLETED,
+    ADMIN_CAN_NOT_BE_SC, ERROR_AT_GENERATING_OPERATION_HASH, FEE_MARKET_NOT_SET,
+    SETUP_PHASE_ALREADY_COMPLETED, SETUP_PHASE_NOT_COMPLETED,
 };
 
 use multiversx_sc::imports::*;
+use multiversx_sc_modules::only_admin;
 use structs::{configs::EsdtSafeConfig, generate_hash::GenerateHash};
 
 pub mod bridging_mechanism;
@@ -27,10 +28,12 @@ pub trait MvxEsdtSafe:
     + multiversx_sc_modules::pause::PauseModule
     + common_utils::CommonUtilsModule
     + setup_phase::SetupPhaseModule
+    + only_admin::OnlyAdminModule
 {
     #[init]
     fn init(
         &self,
+        sovereign_owner: ManagedAddress,
         sov_token_prefix: ManagedBuffer,
         opt_config: OptionalValue<EsdtSafeConfig<Self::Api>>,
     ) {
@@ -47,6 +50,8 @@ pub trait MvxEsdtSafe:
             }
             OptionalValue::None => EsdtSafeConfig::default_config(),
         };
+
+        self.add_admin(sovereign_owner);
 
         self.esdt_safe_config().set(new_config);
 

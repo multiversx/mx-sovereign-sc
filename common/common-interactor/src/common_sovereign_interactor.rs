@@ -660,28 +660,6 @@ pub trait CommonInteractorTrait: InteractorHelpers {
         println!("Result: {response:?}");
     }
 
-    async fn register_native_token(&mut self, caller: Address) {
-        let sovereign_forge_address = self
-            .common_state()
-            .current_sovereign_forge_sc_address()
-            .clone();
-        let native_token = NativeToken {
-            name: ManagedBuffer::from(NATIVE_TOKEN_NAME),
-            ticker: ManagedBuffer::from(NATIVE_TOKEN_TICKER),
-        };
-        self.interactor()
-            .tx()
-            .from(caller)
-            .to(sovereign_forge_address)
-            .gas(80_000_000u64)
-            .typed(SovereignForgeProxy)
-            .register_native_token(native_token)
-            .egld(ISSUE_COST)
-            .returns(ReturnsResultUnmanaged)
-            .run()
-            .await;
-    }
-
     async fn update_smart_contracts_addresses_in_state(&mut self, chain_id: String) {
         let sovereign_forge_address = self
             .common_state()
