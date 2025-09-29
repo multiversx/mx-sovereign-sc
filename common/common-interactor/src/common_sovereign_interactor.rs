@@ -7,7 +7,7 @@ use crate::{
 use common_test_setup::constants::{
     CHAIN_CONFIG_CODE_PATH, CHAIN_FACTORY_CODE_PATH, CHAIN_ID, DEPLOY_COST,
     FAILED_TO_LOAD_WALLET_SHARD_0, FEE_MARKET_CODE_PATH, HEADER_VERIFIER_CODE_PATH, ISSUE_COST,
-    MVX_ESDT_SAFE_CODE_PATH, NATIVE_TEST_TOKEN, NATIVE_TOKEN_NAME, NUMBER_OF_SHARDS, SHARD_0,
+    MVX_ESDT_SAFE_CODE_PATH, NATIVE_TOKEN_NAME, NATIVE_TOKEN_TICKER, NUMBER_OF_SHARDS, SHARD_0,
     SOVEREIGN_FORGE_CODE_PATH, SOVEREIGN_TOKEN_PREFIX, TESTING_SC_CODE_PATH, WALLET_SHARD_0,
 };
 use multiversx_bls::{SecretKey, G1};
@@ -652,12 +652,13 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             .tx()
             .from(caller)
             .to(mvx_esdt_safe_address)
-            .gas(50_000_000u64)
+            .gas(90_000_000u64)
             .typed(MvxEsdtSafeProxy)
             .register_native_token(
-                ManagedBuffer::from(NATIVE_TEST_TOKEN.as_str()),
+                ManagedBuffer::from(NATIVE_TOKEN_TICKER),
                 ManagedBuffer::from(NATIVE_TOKEN_NAME),
             )
+            .egld(BigUint::from(ISSUE_COST))
             .returns(ReturnsResultUnmanaged)
             .run()
             .await;
