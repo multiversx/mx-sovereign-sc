@@ -12,7 +12,6 @@ use multiversx_sc_scenario::{
     multiversx_chain_vm::crypto_functions::sha256,
     ScenarioTxRun,
 };
-use structs::forge::NativeToken;
 use structs::{
     forge::{ContractInfo, ScArray},
     operation::Operation,
@@ -29,11 +28,8 @@ use crate::{
 };
 
 impl BaseSetup {
-    pub fn get_native_token(&mut self) -> NativeToken<StaticApi> {
-        NativeToken {
-            ticker: NATIVE_TEST_TOKEN.as_str().into(),
-            name: "Native".into(),
-        }
+    pub fn get_native_token(&mut self) -> (ManagedBuffer<StaticApi>, ManagedBuffer<StaticApi>) {
+        (NATIVE_TEST_TOKEN.as_str().into(), "Native".into())
     }
     pub fn register_multiple_validators(&mut self, new_validators: Vec<ManagedBuffer<StaticApi>>) {
         for new_validator in new_validators {

@@ -7,8 +7,8 @@ use crate::{
 use common_test_setup::constants::{
     CHAIN_CONFIG_CODE_PATH, CHAIN_FACTORY_CODE_PATH, CHAIN_ID, DEPLOY_COST,
     FAILED_TO_LOAD_WALLET_SHARD_0, FEE_MARKET_CODE_PATH, HEADER_VERIFIER_CODE_PATH, ISSUE_COST,
-    MVX_ESDT_SAFE_CODE_PATH, NUMBER_OF_SHARDS, SHARD_0, SOVEREIGN_FORGE_CODE_PATH,
-    SOVEREIGN_TOKEN_PREFIX, TESTING_SC_CODE_PATH, WALLET_SHARD_0,
+    MVX_ESDT_SAFE_CODE_PATH, NATIVE_TEST_TOKEN, NATIVE_TOKEN_NAME, NUMBER_OF_SHARDS, SHARD_0,
+    SOVEREIGN_FORGE_CODE_PATH, SOVEREIGN_TOKEN_PREFIX, TESTING_SC_CODE_PATH, WALLET_SHARD_0,
 };
 use multiversx_bls::{SecretKey, G1};
 use multiversx_sc::{
@@ -627,7 +627,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
 
         self.deploy_phase_two(optional_esdt_safe_config.clone(), caller.clone())
             .await;
-        // self.register_native_token(caller.clone()).await;
+        self.register_native_token(caller.clone(), shard).await;
         self.deploy_phase_three(caller.clone(), fee.clone()).await;
         self.deploy_phase_four(caller.clone()).await;
 
@@ -638,6 +638,23 @@ pub trait CommonInteractorTrait: InteractorHelpers {
         self.update_smart_contracts_addresses_in_state(preferred_chain_id.clone())
             .await;
         println!("Finished deployment for shard {shard}");
+    }
+
+    async fn register_native_token(&mut self, caller: Address, shard: u32) {
+        let mvx_esdt_safe_address = self.common_state().get_mvx_esdt_safe_address(shard).clone();
+
+        self.interactor()
+            .tx()
+            .from(caller)
+            .to(mvx_esdt_safe_address)
+            .typed(MvxEsdtSafeProxy)
+            .register_native_token(
+                ManagedBuffer::from(NATIVE_TEST_TOKEN.as_str()),
+                ManagedBuffer::from(NATIVE_TOKEN_NAME),
+            )
+            .returns(ReturnsResultUnmanaged)
+            .run()
+            .await;
     }
 
     async fn register_chain_factory(&mut self, caller: Address, shard_id: u32) {

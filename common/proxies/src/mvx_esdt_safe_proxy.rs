@@ -190,14 +190,17 @@ where
     }
 
     pub fn register_native_token<
-        Arg0: ProxyArg<structs::forge::NativeToken<Env::Api>>,
+        Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
+        Arg1: ProxyArg<ManagedBuffer<Env::Api>>,
     >(
         self,
-        native_token: Arg0,
+        ticker: Arg0,
+        name: Arg1,
     ) -> TxTypedCall<Env, From, To, (), Gas, ()> {
         self.wrapped_tx
             .raw_call("registerNativeToken")
-            .argument(&native_token)
+            .argument(&ticker)
+            .argument(&name)
             .original_result()
     }
 
