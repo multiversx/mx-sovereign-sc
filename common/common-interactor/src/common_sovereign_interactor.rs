@@ -627,10 +627,8 @@ pub trait CommonInteractorTrait: InteractorHelpers {
 
         self.deploy_phase_two(optional_esdt_safe_config.clone(), caller.clone())
             .await;
-        println!("--------------------------BEFORE NATIVE TOKEN");
         self.register_native_token(caller.clone(), &preferred_chain_id)
             .await;
-        println!("--------------------------AFTER NATIVE TOKEN");
         self.deploy_phase_three(caller.clone(), fee.clone()).await;
         self.deploy_phase_four(caller.clone()).await;
 

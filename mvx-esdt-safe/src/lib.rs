@@ -136,7 +136,6 @@ pub trait MvxEsdtSafe:
             return;
         }
 
-        //TODO: Uncomment this after fixing the issue with the native token
         require!(!self.native_token().is_empty(), NATIVE_TOKEN_NOT_REGISTERED);
         require!(!self.fee_market_address().is_empty(), FEE_MARKET_NOT_SET);
 
