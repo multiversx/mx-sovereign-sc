@@ -141,7 +141,7 @@ pub trait MvxEsdtSafe:
         require!(!self.fee_market_address().is_empty(), FEE_MARKET_NOT_SET);
 
         self.unpause_endpoint();
-
+        self.remove_admin(self.admins().get_by_index(1));
         self.setup_phase_complete().set(true);
     }
 }
