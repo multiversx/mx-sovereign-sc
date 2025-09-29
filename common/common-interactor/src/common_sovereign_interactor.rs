@@ -627,7 +627,10 @@ pub trait CommonInteractorTrait: InteractorHelpers {
 
         self.deploy_phase_two(optional_esdt_safe_config.clone(), caller.clone())
             .await;
-        self.register_native_token(caller.clone(), shard).await;
+        println!("--------------------------BEFORE NATIVE TOKEN");
+        self.register_native_token(caller.clone(), &preferred_chain_id)
+            .await;
+        println!("--------------------------AFTER NATIVE TOKEN");
         self.deploy_phase_three(caller.clone(), fee.clone()).await;
         self.deploy_phase_four(caller.clone()).await;
 
@@ -640,13 +643,16 @@ pub trait CommonInteractorTrait: InteractorHelpers {
         println!("Finished deployment for shard {shard}");
     }
 
-    async fn register_native_token(&mut self, caller: Address, shard: u32) {
-        let mvx_esdt_safe_address = self.common_state().get_mvx_esdt_safe_address(shard).clone();
+    async fn register_native_token(&mut self, caller: Address, chain_id: &str) {
+        let mvx_esdt_safe_address = self
+            .get_sc_address_from_sovereign_forge(chain_id, ScArray::ESDTSafe)
+            .await;
 
         self.interactor()
             .tx()
             .from(caller)
             .to(mvx_esdt_safe_address)
+            .gas(50_000_000u64)
             .typed(MvxEsdtSafeProxy)
             .register_native_token(
                 ManagedBuffer::from(NATIVE_TEST_TOKEN.as_str()),
@@ -655,6 +661,31 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             .returns(ReturnsResultUnmanaged)
             .run()
             .await;
+    }
+
+    async fn get_sc_address_from_sovereign_forge(
+        &mut self,
+        chain_id: &str,
+        sc_id: ScArray,
+    ) -> Address {
+        let sovereign_forge_address = self
+            .common_state()
+            .current_sovereign_forge_sc_address()
+            .clone();
+
+        self.interactor()
+            .query()
+            .to(sovereign_forge_address)
+            .typed(SovereignForgeProxy)
+            .sovereign_deployed_contracts(chain_id)
+            .returns(ReturnsResult)
+            .run()
+            .await
+            .into_iter()
+            .find(|sc| sc.id == sc_id)
+            .unwrap()
+            .address
+            .to_address()
     }
 
     async fn register_chain_factory(&mut self, caller: Address, shard_id: u32) {
