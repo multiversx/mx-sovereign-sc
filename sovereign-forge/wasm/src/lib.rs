@@ -8,8 +8,8 @@
 // Upgrade:                              1
 // Endpoints:                           17
 // Async Callback (empty):               1
-// Promise callbacks:                    1
-// Total number of exported functions:  21
+// Promise callbacks:                    2
+// Total number of exported functions:  22
 
 #![no_std]
 
@@ -38,6 +38,7 @@ multiversx_sc_wasm_adapter::endpoints! {
         removeFee => remove_fee
         addUsersToWhitelist => add_users_to_whitelist
         removeUsersFromWhitelist => remove_users_from_whitelist
+        setup_phase => setup_phase
         register_deployed_contract => register_deployed_contract
     )
 }

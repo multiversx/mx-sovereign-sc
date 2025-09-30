@@ -1,9 +1,8 @@
-use crate::err_msg;
-use multiversx_sc::{
-    imports::OptionalValue,
-    sc_panic,
-    types::{ManagedAsyncCallResult, MultiValueEncoded},
+use crate::{
+    err_msg,
+    forge_common::callbacks::{self, CallbackProxy},
 };
+use multiversx_sc::{imports::OptionalValue, types::MultiValueEncoded};
 use proxies::chain_factory_proxy::ChainFactoryContractProxy;
 use structs::{
     configs::{EsdtSafeConfig, SovereignConfig},
@@ -20,6 +19,7 @@ pub trait ScDeployModule:
     + super::storage::StorageModule
     + common_utils::CommonUtilsModule
     + custom_events::CustomEventsModule
+    + callbacks::ForgeCallbackModule
 {
     #[inline]
     fn deploy_chain_config(
@@ -107,25 +107,5 @@ pub trait ScDeployModule:
             )
             .gas_for_callback(PHASE_FOUR_CALLBACK_GAS)
             .register_promise();
-    }
-
-    #[promises_callback]
-    fn register_deployed_contract(
-        &self,
-        chain_id: &ManagedBuffer,
-        sc_id: ScArray,
-        #[call_result] result: ManagedAsyncCallResult<ManagedAddress>,
-    ) {
-        match result {
-            ManagedAsyncCallResult::Ok(sc_address) => {
-                let new_contract_info = ContractInfo::new(sc_id, sc_address);
-
-                self.sovereign_deployed_contracts(chain_id)
-                    .insert(new_contract_info);
-            }
-            ManagedAsyncCallResult::Err(call_err) => {
-                sc_panic!(call_err.err_msg);
-            }
-        }
     }
 }

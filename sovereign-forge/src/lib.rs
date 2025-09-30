@@ -16,6 +16,7 @@ pub trait SovereignForge:
     + forge_common::storage::StorageModule
     + forge_common::forge_utils::ForgeUtilsModule
     + forge_common::sc_deploy::ScDeployModule
+    + forge_common::callbacks::ForgeCallbackModule
     + update_configs::UpdateConfigsModule
     + common_utils::CommonUtilsModule
     + custom_events::CustomEventsModule
