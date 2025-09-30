@@ -2,16 +2,14 @@ use crate::{err_msg, forge_common};
 use core::ops::Deref;
 use error_messages::{
     CHAIN_CONFIG_ALREADY_DEPLOYED, ESDT_SAFE_ALREADY_DEPLOYED, FEE_MARKET_ALREADY_DEPLOYED,
-    HEADER_VERIFIER_ALREADY_DEPLOYED, SOVEREIGN_SETUP_PHASE_ALREADY_COMPLETED,
+    HEADER_VERIFIER_ALREADY_DEPLOYED,
 };
-use proxies::chain_factory_proxy::ChainFactoryContractProxy;
 
 use multiversx_sc::{imports::OptionalValue, require, types::MultiValueEncoded};
 use structs::{
     configs::{EsdtSafeConfig, SovereignConfig},
     fee::FeeStruct,
     forge::ScArray,
-    COMPLETE_SETUP_PHASE_GAS,
 };
 
 #[multiversx_sc::module]
@@ -102,38 +100,5 @@ pub trait PhasesModule:
         );
 
         self.deploy_header_verifier(contract_addresses);
-    }
-
-    #[endpoint(completeSetupPhase)]
-    fn complete_setup_phase(&self) {
-        let caller = self.blockchain().get_caller();
-        let sovereign_setup_phase_mapper =
-            self.sovereign_setup_phase(&self.sovereigns_mapper(&caller).get());
-
-        require!(
-            sovereign_setup_phase_mapper.is_empty(),
-            SOVEREIGN_SETUP_PHASE_ALREADY_COMPLETED
-        );
-
-        self.require_phase_four_completed(&caller);
-
-        let chain_config_address = self.get_contract_address(&caller, ScArray::ChainConfig);
-        let header_verifier_address = self.get_contract_address(&caller, ScArray::HeaderVerifier);
-        let esdt_safe_address = self.get_contract_address(&caller, ScArray::ESDTSafe);
-        let fee_market_address = self.get_contract_address(&caller, ScArray::FeeMarket);
-
-        self.tx()
-            .to(self.get_chain_factory_address())
-            .typed(ChainFactoryContractProxy)
-            .complete_setup_phase(
-                chain_config_address,
-                header_verifier_address,
-                esdt_safe_address,
-                fee_market_address,
-            )
-            .gas(COMPLETE_SETUP_PHASE_GAS)
-            .transfer_execute();
-
-        sovereign_setup_phase_mapper.set(true);
     }
 }

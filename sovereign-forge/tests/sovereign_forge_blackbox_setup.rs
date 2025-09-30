@@ -250,7 +250,7 @@ impl SovereignForgeTestState {
             .clone()
     }
 
-    pub fn check_setup_phase_completed(
+    pub fn _check_setup_phase_completed(
         &mut self,
         chain_id: ChainId<StaticApi>,
         expected_result: bool,
