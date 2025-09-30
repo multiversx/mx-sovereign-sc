@@ -43,6 +43,7 @@ pub trait ScDeployModule:
     #[inline]
     fn deploy_mvx_esdt_safe(
         &self,
+        sovereign_owner: ManagedAddress,
         sov_prefix: ManagedBuffer,
         opt_config: OptionalValue<EsdtSafeConfig<Self::Api>>,
     ) {
@@ -53,7 +54,7 @@ pub trait ScDeployModule:
         self.tx()
             .to(self.get_chain_factory_address())
             .typed(ChainFactoryContractProxy)
-            .deploy_mvx_esdt_safe(sov_prefix, opt_config)
+            .deploy_mvx_esdt_safe(sovereign_owner, sov_prefix, opt_config)
             .gas(PHASE_TWO_ASYNC_CALL_GAS)
             .callback(
                 self.callbacks()

@@ -1,11 +1,12 @@
 #![no_std]
 
 use error_messages::{
-    ERROR_AT_GENERATING_OPERATION_HASH, FEE_MARKET_NOT_SET, SETUP_PHASE_ALREADY_COMPLETED,
-    SETUP_PHASE_NOT_COMPLETED,
+    ERROR_AT_GENERATING_OPERATION_HASH, FEE_MARKET_NOT_SET, NATIVE_TOKEN_NOT_REGISTERED,
+    SETUP_PHASE_ALREADY_COMPLETED, SETUP_PHASE_NOT_COMPLETED,
 };
 
 use multiversx_sc::imports::*;
+use multiversx_sc_modules::only_admin;
 use structs::{configs::EsdtSafeConfig, generate_hash::GenerateHash};
 
 pub mod bridging_mechanism;
@@ -27,10 +28,12 @@ pub trait MvxEsdtSafe:
     + multiversx_sc_modules::pause::PauseModule
     + common_utils::CommonUtilsModule
     + setup_phase::SetupPhaseModule
+    + only_admin::OnlyAdminModule
 {
     #[init]
     fn init(
         &self,
+        sovereign_owner: ManagedAddress,
         sov_token_prefix: ManagedBuffer,
         opt_config: OptionalValue<EsdtSafeConfig<Self::Api>>,
     ) {
@@ -47,6 +50,8 @@ pub trait MvxEsdtSafe:
             }
             OptionalValue::None => EsdtSafeConfig::default_config(),
         };
+
+        self.add_admin(sovereign_owner);
 
         self.esdt_safe_config().set(new_config);
 
@@ -131,12 +136,11 @@ pub trait MvxEsdtSafe:
             return;
         }
 
-        //TODO: Uncomment this after fixing the issue with the native token
-        // require!(!self.native_token().is_empty(), NATIVE_TOKEN_NOT_REGISTERED);
+        require!(!self.native_token().is_empty(), NATIVE_TOKEN_NOT_REGISTERED);
         require!(!self.fee_market_address().is_empty(), FEE_MARKET_NOT_SET);
 
         self.unpause_endpoint();
-
+        self.remove_admin(self.admins().get_by_index(1));
         self.setup_phase_complete().set(true);
     }
 }

@@ -10,14 +10,15 @@ use error_messages::{
     BANNED_ENDPOINT_NAME, CALLER_NOT_FROM_CURRENT_SOVEREIGN, CURRENT_OPERATION_NOT_REGISTERED,
     DEPOSIT_OVER_MAX_AMOUNT, ERR_EMPTY_PAYMENTS, GAS_LIMIT_TOO_HIGH, INVALID_PREFIX_FOR_REGISTER,
     INVALID_TYPE, MAX_GAS_LIMIT_PER_TX_EXCEEDED, MINT_AND_BURN_ROLES_NOT_FOUND,
-    NATIVE_TOKEN_ALREADY_REGISTERED, NOTHING_TO_TRANSFER, NOT_ENOUGH_EGLD_FOR_REGISTER,
-    PAYMENT_DOES_NOT_COVER_FEE, SETUP_PHASE_NOT_COMPLETED, TOKEN_ID_IS_NOT_TRUSTED,
-    TOKEN_IS_FROM_SOVEREIGN, TOO_MANY_TOKENS,
+    NATIVE_TOKEN_ALREADY_REGISTERED, NATIVE_TOKEN_NOT_REGISTERED, NOTHING_TO_TRANSFER,
+    NOT_ENOUGH_EGLD_FOR_REGISTER, PAYMENT_DOES_NOT_COVER_FEE, SETUP_PHASE_NOT_COMPLETED,
+    TOKEN_ID_IS_NOT_TRUSTED, TOKEN_IS_FROM_SOVEREIGN, TOO_MANY_TOKENS,
 };
 use header_verifier::storage::HeaderVerifierStorageModule;
 use multiversx_sc::chain_core::EGLD_000000_TOKEN_IDENTIFIER;
 use multiversx_sc::types::{
     EgldOrEsdtTokenIdentifier, EgldOrEsdtTokenPayment, MultiEgldOrEsdtPayment, MultiValueEncoded,
+    ReturnsHandledOrError,
 };
 use multiversx_sc::{
     imports::{MultiValue3, OptionalValue},
@@ -27,9 +28,11 @@ use multiversx_sc::{
     },
 };
 use multiversx_sc_scenario::multiversx_chain_vm::crypto_functions::sha256;
+use multiversx_sc_scenario::ScenarioTxRun;
 use multiversx_sc_scenario::{api::StaticApi, ScenarioTxWhitebox};
 use mvx_esdt_safe::bridging_mechanism::{BridgingMechanism, TRUSTED_TOKEN_IDS};
 use mvx_esdt_safe_blackbox_setup::MvxEsdtSafeTestState;
+use proxies::mvx_esdt_safe_proxy::MvxEsdtSafeProxy;
 use setup_phase::SetupPhaseModule;
 use structs::configs::MaxBridgedAmount;
 use structs::fee::{FeeStruct, FeeType};
@@ -1531,6 +1534,36 @@ fn test_register_native_token_already_registered() {
         egld_payment.clone(),
         Some(NATIVE_TOKEN_ALREADY_REGISTERED),
     );
+}
+
+/// ### TEST
+/// M-ESDT_REG_FAIL
+///
+/// ### ACTION
+/// Call complete_setup_phase() with no native token
+///
+/// ### EXPECTED
+/// NATIVE_TOKEN_NOT_REGISTERED
+#[test]
+fn test_complete_setup_with_no_native_token() {
+    let mut state = MvxEsdtSafeTestState::new();
+    state.common_setup.deploy_mvx_esdt_safe(OptionalValue::None);
+
+    state
+        .common_setup
+        .deploy_header_verifier(vec![ScArray::ChainConfig, ScArray::ESDTSafe]);
+
+    assert!(state
+        .common_setup
+        .world
+        .tx()
+        .from(OWNER_ADDRESS)
+        .to(ESDT_SAFE_ADDRESS)
+        .typed(MvxEsdtSafeProxy)
+        .complete_setup_phase()
+        .returns(ReturnsHandledOrError::new())
+        .run()
+        .is_err_and(|e| e.message == NATIVE_TOKEN_NOT_REGISTERED),);
 }
 
 /// ### TEST

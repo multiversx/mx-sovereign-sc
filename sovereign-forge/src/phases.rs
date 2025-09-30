@@ -67,7 +67,7 @@ pub trait PhasesModule:
             ESDT_SAFE_ALREADY_DEPLOYED
         );
 
-        self.deploy_mvx_esdt_safe(sov_prefix, opt_config);
+        self.deploy_mvx_esdt_safe(caller, sov_prefix, opt_config);
     }
 
     #[endpoint(deployPhaseThree)]
