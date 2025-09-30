@@ -10,9 +10,10 @@ use structs::{
     configs::{EsdtSafeConfig, SovereignConfig},
     fee::FeeStruct,
     forge::{ContractInfo, ScArray},
-    COMPLETE_SETUP_PHASE_GAS, PHASE_FOUR_ASYNC_CALL_GAS, PHASE_FOUR_CALLBACK_GAS,
-    PHASE_ONE_ASYNC_CALL_GAS, PHASE_ONE_CALLBACK_GAS, PHASE_THREE_ASYNC_CALL_GAS,
-    PHASE_THREE_CALLBACK_GAS, PHASE_TWO_ASYNC_CALL_GAS, PHASE_TWO_CALLBACK_GAS,
+    COMPLETE_SETUP_PHASE_CALLBACK_GAS, COMPLETE_SETUP_PHASE_GAS, PHASE_FOUR_ASYNC_CALL_GAS,
+    PHASE_FOUR_CALLBACK_GAS, PHASE_ONE_ASYNC_CALL_GAS, PHASE_ONE_CALLBACK_GAS,
+    PHASE_THREE_ASYNC_CALL_GAS, PHASE_THREE_CALLBACK_GAS, PHASE_TWO_ASYNC_CALL_GAS,
+    PHASE_TWO_CALLBACK_GAS,
 };
 
 #[multiversx_sc::module]
@@ -158,21 +159,21 @@ pub trait ScDeployModule:
                 fee_market_address,
             )
             .gas(COMPLETE_SETUP_PHASE_GAS)
-            .callback(self.callbacks().setup_phase())
-            .gas_for_callback(self.blockchain().get_gas_left())
+            .callback(self.callbacks().setup_phase(&caller))
+            .gas_for_callback(COMPLETE_SETUP_PHASE_CALLBACK_GAS)
             .register_promise();
     }
 
     #[promises_callback]
-    fn setup_phase(&self, #[call_result] result: ManagedAsyncCallResult<IgnoreValue>) {
+    fn setup_phase(
+        &self,
+        sovereign_owner: &ManagedAddress,
+        #[call_result] result: ManagedAsyncCallResult<IgnoreValue>,
+    ) {
         match result {
             ManagedAsyncCallResult::Ok(_) => {
-                self.sovereign_setup_phase(
-                    &self
-                        .sovereigns_mapper(&self.blockchain().get_caller())
-                        .get(),
-                )
-                .set(true);
+                self.sovereign_setup_phase(&self.sovereigns_mapper(sovereign_owner).get())
+                    .set(true);
             }
             ManagedAsyncCallResult::Err(result) => {
                 sc_panic!(result.err_msg);
