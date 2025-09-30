@@ -83,11 +83,8 @@ impl MvxEsdtSafeInteract {
     async fn initialize_tokens_in_wallets(&mut self) {
         let token_configs = [
             ("MVX", EsdtTokenType::Fungible, 18),
-            ("MVX2", EsdtTokenType::Fungible, 18),
             ("FEE", EsdtTokenType::Fungible, 18),
         ];
-
-        let mut all_tokens = Vec::new();
 
         for (ticker, token_type, decimals) in token_configs {
             let amount = if matches!(
@@ -99,21 +96,9 @@ impl MvxEsdtSafeInteract {
                 BigUint::from(ONE_THOUSAND_TOKENS)
             };
 
-            let token = self
-                .create_token_with_config(token_type, ticker, amount, decimals)
+            self.create_token_with_config(token_type, ticker, amount, decimals)
                 .await;
-
-            match ticker {
-                "MVX" => self.state.set_first_token(token.clone()),
-                "MVX2" => self.state.set_second_token(token.clone()),
-                "FEE" => self.state.set_fee_token(token.clone()),
-                _ => {}
-            }
-
-            all_tokens.push(token);
         }
-
-        self.state.set_initial_wallet_tokens_state(all_tokens);
     }
 
     pub async fn complete_setup_phase(&mut self, shard: u32) {

@@ -77,7 +77,7 @@ async fn test_deposit_max_bridged_amount_exceeded() {
         50_000_000,
         ManagedVec::from(vec![ManagedBuffer::from(TESTING_SC_ENDPOINT)]),
         ManagedVec::from(vec![MaxBridgedAmount {
-            token_id: chain_interactor.state.get_first_token_identifier(),
+            token_id: chain_interactor.state.get_first_fungible_token_identifier(),
             amount: BigUint::default(),
         }]),
     );
@@ -87,7 +87,7 @@ async fn test_deposit_max_bridged_amount_exceeded() {
         .await;
 
     let esdt_token_payment = EgldOrEsdtTokenPayment::<StaticApi>::new(
-        chain_interactor.state.get_first_token_identifier(),
+        chain_interactor.state.get_first_fungible_token_identifier(),
         0,
         BigUint::from(ONE_HUNDRED_TOKENS),
     );
@@ -167,7 +167,7 @@ async fn test_deposit_too_many_tokens_no_fee() {
     chain_interactor.remove_fee(SHARD_0).await;
 
     let esdt_token_payment = EgldOrEsdtTokenPayment::<StaticApi>::new(
-        chain_interactor.state.get_first_token_identifier(),
+        chain_interactor.state.get_first_fungible_token_identifier(),
         0,
         BigUint::from(1u64),
     );
@@ -184,7 +184,7 @@ async fn test_deposit_too_many_tokens_no_fee() {
             Some(
                 &chain_interactor
                     .state
-                    .get_first_token_identifier()
+                    .get_first_fungible_token_identifier()
                     .into_name()
                     .to_string(),
             ),
@@ -212,7 +212,7 @@ async fn test_deposit_no_transfer_data() {
     chain_interactor.remove_fee(SHARD_0).await;
 
     let esdt_token_payment_one = EgldOrEsdtTokenPayment::<StaticApi>::new(
-        chain_interactor.state.get_first_token_identifier(),
+        chain_interactor.state.get_first_fungible_token_identifier(),
         0,
         BigUint::from(ONE_HUNDRED_TOKENS),
     );
@@ -230,7 +230,7 @@ async fn test_deposit_no_transfer_data() {
         )
         .await;
 
-    let first_token_id = chain_interactor.state.get_first_token_id();
+    let first_token_id = chain_interactor.state.get_first_fungible_token_id();
 
     let balance_config = BalanceCheckConfig::new()
         .shard(SHARD_0)
@@ -272,7 +272,7 @@ async fn test_deposit_gas_limit_too_high_no_fee() {
         .await;
 
     let esdt_token_payment_one = EgldOrEsdtTokenPayment::<StaticApi>::new(
-        chain_interactor.state.get_first_token_identifier(),
+        chain_interactor.state.get_first_fungible_token_identifier(),
         0,
         BigUint::from(ONE_HUNDRED_TOKENS),
     );
@@ -340,7 +340,7 @@ async fn test_deposit_endpoint_banned_no_fee() {
         .await;
 
     let esdt_token_payment_one = EgldOrEsdtTokenPayment::<StaticApi>::new(
-        chain_interactor.state.get_first_token_identifier(),
+        chain_interactor.state.get_first_fungible_token_identifier(),
         0,
         BigUint::from(ONE_HUNDRED_TOKENS),
     );
@@ -405,7 +405,7 @@ async fn test_deposit_fee_enabled() {
     );
 
     let esdt_token_payment_one = EgldOrEsdtTokenPayment::<StaticApi>::new(
-        chain_interactor.state.get_first_token_identifier(),
+        chain_interactor.state.get_first_fungible_token_identifier(),
         0,
         BigUint::from(ONE_HUNDRED_TOKENS),
     );
@@ -437,7 +437,7 @@ async fn test_deposit_fee_enabled() {
         )
         .await;
 
-    let first_token_id = chain_interactor.state.get_first_token_id();
+    let first_token_id = chain_interactor.state.get_first_fungible_token_id();
     let balance_config = BalanceCheckConfig::new()
         .shard(SHARD_0)
         .token(Some(first_token_id.clone()))
@@ -547,7 +547,7 @@ async fn test_execute_operation_no_operation_registered() {
     chain_interactor.remove_fee(SHARD_0).await;
 
     let payment = OperationEsdtPayment::new(
-        chain_interactor.state.get_first_token_identifier(),
+        chain_interactor.state.get_first_fungible_token_identifier(),
         0,
         EsdtTokenData::default(),
     );
@@ -624,13 +624,13 @@ async fn test_execute_operation_success_no_fee() {
     };
 
     let payment = OperationEsdtPayment::new(
-        chain_interactor.state.get_first_token_identifier(),
+        chain_interactor.state.get_first_fungible_token_identifier(),
         0,
         token_data,
     );
     let mut payment_vec = PaymentsVec::new();
     payment_vec.push(EgldOrEsdtTokenPayment::new(
-        chain_interactor.state.get_first_token_identifier(),
+        chain_interactor.state.get_first_fungible_token_identifier(),
         0,
         BigUint::from(TEN_TOKENS),
     ));
@@ -706,7 +706,7 @@ async fn test_execute_operation_success_no_fee() {
 
     let balance_config = BalanceCheckConfig::new()
         .shard(SHARD_0)
-        .token(Some(chain_interactor.state.get_first_token_id()))
+        .token(Some(chain_interactor.state.get_first_fungible_token_id()))
         .amount(TEN_TOKENS.into())
         .is_execute(true)
         .with_transfer_data(true);

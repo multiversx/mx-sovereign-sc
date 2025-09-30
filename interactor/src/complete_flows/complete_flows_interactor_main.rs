@@ -86,7 +86,6 @@ impl CompleteFlowInteract {
     async fn initialize_tokens_in_wallets(&mut self) {
         let token_configs = [
             ("MVX", EsdtTokenType::Fungible, 18),
-            ("MVX2", EsdtTokenType::Fungible, 18),
             ("FEE", EsdtTokenType::Fungible, 18),
             ("NFT", EsdtTokenType::NonFungibleV2, 0),
             ("SFT", EsdtTokenType::SemiFungible, 0),
@@ -95,8 +94,6 @@ impl CompleteFlowInteract {
             ("DYNS", EsdtTokenType::DynamicSFT, 18),
             ("DYNM", EsdtTokenType::DynamicMeta, 18),
         ];
-
-        let mut all_tokens = Vec::new();
 
         for (ticker, token_type, decimals) in token_configs {
             if ticker == "FEE" && !self.common_state.fee_market_tokens.is_empty() {
@@ -109,27 +106,9 @@ impl CompleteFlowInteract {
                 _ => BigUint::from(ONE_THOUSAND_TOKENS),
             };
 
-            let token = self
-                .create_token_with_config(token_type, ticker, amount, decimals)
+            self.create_token_with_config(token_type, ticker, amount, decimals)
                 .await;
-
-            match ticker {
-                "MVX" => self.state.set_first_token(token.clone()),
-                "MVX2" => self.state.set_second_token(token.clone()),
-                "FEE" => self.state.set_fee_token(token.clone()),
-                "NFT" => self.state.set_nft_token_id(token.clone()),
-                "SFT" => self.state.set_sft_token_id(token.clone()),
-                "DYN" => self.state.set_dynamic_nft_token_id(token.clone()),
-                "META" => self.state.set_meta_esdt_token_id(token.clone()),
-                "DYNS" => self.state.set_dynamic_sft_token_id(token.clone()),
-                "DYNM" => self.state.set_dynamic_meta_esdt_token_id(token.clone()),
-                _ => {}
-            }
-
-            all_tokens.push(token);
         }
-
-        self.state.set_initial_wallet_tokens_state(all_tokens);
     }
 
     pub async fn deposit_wrapper(

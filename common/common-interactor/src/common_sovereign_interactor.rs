@@ -79,11 +79,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
         self.interactor().generate_blocks(2u64).await.unwrap();
     }
 
-    async fn issue_and_mint_token(
-        &mut self,
-        issue: IssueTokenStruct,
-        mint: MintTokenStruct,
-    ) -> EsdtTokenInfo {
+    async fn issue_and_mint_token(&mut self, issue: IssueTokenStruct, mint: MintTokenStruct) {
         let user_address = self.user_address().clone();
         let interactor = self.interactor();
 
@@ -96,7 +92,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             .issue_and_set_all_roles(
                 ISSUE_COST.into(),
                 issue.token_display_name,
-                issue.token_ticker,
+                issue.token_ticker.clone(),
                 issue.token_type,
                 issue.num_decimals,
             )
@@ -104,18 +100,35 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             .run()
             .await;
 
-        let nonce = self
-            .mint_tokens(token_id.clone(), issue.token_type, mint.clone())
-            .await;
+        for _ in 0..2 {
+            let nonce = self
+                .mint_tokens(token_id.clone(), issue.token_type, mint.clone())
+                .await;
 
-        let decimals = self.get_token_decimals(issue.token_type);
+            let decimals = self.get_token_decimals(issue.token_type);
 
-        EsdtTokenInfo {
-            token_id: EgldOrEsdtTokenIdentifier::from(token_id.as_bytes()),
-            nonce,
-            token_type: issue.token_type,
-            decimals,
-            amount: mint.amount,
+            let token = EsdtTokenInfo {
+                token_id: EgldOrEsdtTokenIdentifier::from(token_id.as_bytes()),
+                nonce,
+                token_type: issue.token_type,
+                decimals,
+                amount: mint.amount.clone(),
+            };
+
+            match issue.token_ticker.as_str() {
+                "MVX" => self.state().add_fungible_token(token.clone()),
+                "FEE" => self.state().set_fee_token(token.clone()),
+                "NFT" => self.state().add_nft_token(token.clone()),
+                "SFT" => self.state().add_sft_token(token.clone()),
+                "DYN" => self.state().add_dynamic_nft_token(token.clone()),
+                "META" => self.state().add_meta_esdt_token(token.clone()),
+                "DYNS" => self.state().add_dynamic_sft_token(token.clone()),
+                "DYNM" => self.state().add_dynamic_meta_esdt_token(token.clone()),
+                _ => {}
+            }
+
+            self.state()
+                .update_or_add_initial_wallet_token(token.clone());
         }
     }
 
@@ -175,7 +188,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
         ticker: &str,
         amount: BigUint<StaticApi>,
         decimals: usize,
-    ) -> EsdtTokenInfo {
+    ) {
         let token_struct = IssueTokenStruct {
             token_display_name: ticker.to_string(),
             token_ticker: ticker.to_string(),
@@ -193,7 +206,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             attributes: None,
         };
 
-        self.issue_and_mint_token(token_struct, mint_struct).await
+        self.issue_and_mint_token(token_struct, mint_struct).await;
     }
 
     async fn deploy_sovereign_forge(

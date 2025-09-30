@@ -18,6 +18,14 @@ use rstest::rstest;
 use rust_interact::complete_flows::complete_flows_interactor_main::CompleteFlowInteract;
 use serial_test::serial;
 
+/// Enum to differentiate between the special EGLD case and ESDT tokens at specific indices.
+#[derive(Debug)]
+enum TokenVariant {
+    Egld,
+    EsdtAtIndex0(EsdtTokenType),
+    EsdtAtIndex1(EsdtTokenType),
+}
+
 /// ### TEST
 /// S-FORGE_COMPLETE-DEPOSIT-FLOW_OK
 ///
@@ -168,10 +176,11 @@ async fn test_complete_execute_flow_with_transfer_data_only_fail(#[case] shard: 
 async fn test_deposit_with_fee(
     #[case] token_type: EsdtTokenType,
     #[values(SHARD_1, SHARD_2)] shard: u32,
+    #[values(0, 1)] token_index: usize,
 ) {
     let mut chain_interactor = CompleteFlowInteract::new(Config::chain_simulator_config()).await;
 
-    let token = chain_interactor.get_token_by_type(token_type);
+    let token = chain_interactor.get_token_by_type(token_type, token_index);
 
     let fee = chain_interactor.create_standard_fee();
 
@@ -211,10 +220,11 @@ async fn test_deposit_with_fee(
 async fn test_deposit_without_fee_and_execute(
     #[case] token_type: EsdtTokenType,
     #[values(SHARD_1, SHARD_2)] shard: u32,
+    #[values(0, 1)] token_index: usize,
 ) {
     let mut chain_interactor = CompleteFlowInteract::new(Config::chain_simulator_config()).await;
 
-    let token = chain_interactor.get_token_by_type(token_type);
+    let token = chain_interactor.get_token_by_type(token_type, token_index);
 
     chain_interactor.remove_fee(shard).await;
 
@@ -322,12 +332,13 @@ async fn test_register_execute_and_deposit_sov_token(
 async fn test_deposit_mvx_token_with_transfer_data(
     #[case] token_type: EsdtTokenType,
     #[values(SHARD_1, SHARD_2)] shard: u32,
+    #[values(0, 1)] token_index: usize,
 ) {
     let mut chain_interactor = CompleteFlowInteract::new(Config::chain_simulator_config()).await;
 
     chain_interactor.remove_fee(shard).await;
 
-    let token = chain_interactor.get_token_by_type(token_type);
+    let token = chain_interactor.get_token_by_type(token_type, token_index);
 
     chain_interactor
         .deposit_wrapper(
@@ -366,6 +377,7 @@ async fn test_deposit_mvx_token_with_transfer_data(
 async fn test_deposit_mvx_token_with_transfer_data_and_fee(
     #[case] token_type: EsdtTokenType,
     #[values(SHARD_1, SHARD_2)] shard: u32,
+    #[values(0, 1)] token_index: usize,
 ) {
     let mut chain_interactor = CompleteFlowInteract::new(Config::chain_simulator_config()).await;
 
@@ -373,7 +385,7 @@ async fn test_deposit_mvx_token_with_transfer_data_and_fee(
 
     chain_interactor.set_fee(fee.clone(), shard).await;
 
-    let token = chain_interactor.get_token_by_type(token_type);
+    let token = chain_interactor.get_token_by_type(token_type, token_index);
 
     chain_interactor
         .deposit_wrapper(
@@ -394,41 +406,46 @@ async fn test_deposit_mvx_token_with_transfer_data_and_fee(
 /// S-FORGE_COMPLETE-DEPOSIT-FLOW_OK
 ///
 /// ### ACTION
-/// Deploy and complete setup phase, then call deposit without fee and execute operation with transfer data
+/// Deploy and complete setup phase, then call deposit without fee and execute operation with transfer data for EGLD and various ESDT tokens.
 ///
 /// ### EXPECTED
-/// The operation is executed in the testing smart contract and the event is found in logs
+/// The operation is executed in the testing smart contract and the event is found in logs for all token types.
 #[rstest]
-#[case::egld(EsdtTokenType::Fungible)]
-#[case::fungible(EsdtTokenType::Fungible)]
-#[case::non_fungible(EsdtTokenType::NonFungibleV2)]
-#[case::semi_fungible(EsdtTokenType::SemiFungible)]
-#[case::meta_fungible(EsdtTokenType::MetaFungible)]
-#[case::dynamic_nft(EsdtTokenType::DynamicNFT)]
-#[case::dynamic_sft(EsdtTokenType::DynamicSFT)]
-#[case::dynamic_meta(EsdtTokenType::DynamicMeta)]
+#[case::egld(TokenVariant::Egld)]
+#[case::fungible_0(TokenVariant::EsdtAtIndex0(EsdtTokenType::Fungible))]
+#[case::non_fungible_0(TokenVariant::EsdtAtIndex0(EsdtTokenType::NonFungibleV2))]
+#[case::semi_fungible_0(TokenVariant::EsdtAtIndex0(EsdtTokenType::SemiFungible))]
+#[case::meta_fungible_0(TokenVariant::EsdtAtIndex0(EsdtTokenType::MetaFungible))]
+#[case::dynamic_nft_0(TokenVariant::EsdtAtIndex0(EsdtTokenType::DynamicNFT))]
+#[case::dynamic_sft_0(TokenVariant::EsdtAtIndex0(EsdtTokenType::DynamicSFT))]
+#[case::dynamic_meta_0(TokenVariant::EsdtAtIndex0(EsdtTokenType::DynamicMeta))]
+#[case::fungible_1(TokenVariant::EsdtAtIndex1(EsdtTokenType::Fungible))]
+#[case::non_fungible_1(TokenVariant::EsdtAtIndex1(EsdtTokenType::NonFungibleV2))]
+#[case::semi_fungible_1(TokenVariant::EsdtAtIndex1(EsdtTokenType::SemiFungible))]
+#[case::meta_fungible_1(TokenVariant::EsdtAtIndex1(EsdtTokenType::MetaFungible))]
+#[case::dynamic_nft_1(TokenVariant::EsdtAtIndex1(EsdtTokenType::DynamicNFT))]
+#[case::dynamic_sft_1(TokenVariant::EsdtAtIndex1(EsdtTokenType::DynamicSFT))]
+#[case::dynamic_meta_1(TokenVariant::EsdtAtIndex1(EsdtTokenType::DynamicMeta))]
 #[tokio::test]
 #[serial]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn test_deposit_and_execute_with_transfer_data(
-    #[case] token_type: EsdtTokenType,
+    #[case] token_variant: TokenVariant,
     #[values(SHARD_1, SHARD_2)] shard: u32,
 ) {
     let mut chain_interactor = CompleteFlowInteract::new(Config::chain_simulator_config()).await;
 
-    let thread = std::thread::current();
-    let thread_name = thread.name().unwrap_or("");
-    let is_egld_case = thread_name.contains("egld");
-
-    let token = match is_egld_case {
-        true => EsdtTokenInfo {
+    // The match statement now uses the hardcoded indices from the enum variants
+    let token = match token_variant {
+        TokenVariant::Egld => EsdtTokenInfo {
             token_id: EgldOrEsdtTokenIdentifier::from(EGLD_000000_TOKEN_IDENTIFIER),
             nonce: 0,
             token_type: EsdtTokenType::Fungible,
             decimals: 18,
             amount: BigUint::from(EGLD_0_05),
         },
-        false => chain_interactor.get_token_by_type(token_type),
+        TokenVariant::EsdtAtIndex0(token_type) => chain_interactor.get_token_by_type(token_type, 0),
+        TokenVariant::EsdtAtIndex1(token_type) => chain_interactor.get_token_by_type(token_type, 1),
     };
 
     chain_interactor.remove_fee(shard).await;
