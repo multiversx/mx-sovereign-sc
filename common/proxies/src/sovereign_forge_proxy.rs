@@ -151,6 +151,15 @@ where
             .original_result()
     }
 
+    pub fn complete_setup_phase(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("completeSetupPhase")
+            .original_result()
+    }
+
     pub fn sovereign_deployed_contracts<
         Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
     >(
@@ -205,15 +214,6 @@ where
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("getAllChainIds")
-            .original_result()
-    }
-
-    pub fn complete_setup_phase(
-        self,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("completeSetupPhase")
             .original_result()
     }
 
