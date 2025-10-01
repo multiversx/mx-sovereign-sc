@@ -98,6 +98,13 @@ impl MvxEsdtSafeTestState {
                     EsdtLocalRole::Burn.name().to_string(),
                     EsdtLocalRole::NftBurn.name().to_string(),
                 ],
+            )
+            .esdt_roles(
+                TokenIdentifier::from(NATIVE_TEST_TOKEN),
+                vec![
+                    EsdtLocalRole::Burn.name().to_string(),
+                    EsdtLocalRole::Mint.name().to_string(),
+                ],
             );
 
         self.common_setup

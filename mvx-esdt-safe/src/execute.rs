@@ -97,6 +97,7 @@ pub trait ExecuteModule:
                     ) {
                         output_payments.push(payment);
                     } else {
+                        self.refund_transfers(&output_payments, &operation_tuple.operation);
                         return None;
                     }
                 }
@@ -162,8 +163,6 @@ pub trait ExecuteModule:
         token_id: &EgldOrEsdtTokenIdentifier<Self::Api>,
         amount: &BigUint,
     ) {
-        // require!(token_id.is_esdt(), MINT_NON_ESDT_TOKENS);
-
         self.tx()
             .to(ToSelf)
             .typed(UserBuiltinProxy)
@@ -177,9 +176,6 @@ pub trait ExecuteModule:
         operation_token: &OperationEsdtPayment<Self::Api>,
     ) -> u64 {
         let mut nonce = 0;
-
-        // require!(mvx_token_id.is_esdt(), MINT_NON_ESDT_TOKENS);
-
         let current_token_type_ref = &operation_token.token_data.token_type;
 
         if self.is_sft_or_meta(current_token_type_ref) {
@@ -222,7 +218,6 @@ pub trait ExecuteModule:
         if self.is_sft_or_meta(&token_data.token_type) {
             amount += BigUint::from(1u32);
         }
-        // require!(mvx_token_id.is_esdt(), MINT_NON_ESDT_TOKENS);
 
         self.tx()
             .to(ToSelf)
@@ -244,12 +239,13 @@ pub trait ExecuteModule:
         &self,
         hash_of_hashes: &ManagedBuffer,
         operation_tuple: &OperationTuple<Self::Api>,
-        tokens_list: &ManagedVec<OperationEsdtPayment<Self::Api>>,
+        output_payments: &ManagedVec<OperationEsdtPayment<Self::Api>>,
     ) {
-        let mapped_tokens: ManagedVec<Self::Api, EgldOrEsdtTokenPayment<Self::Api>> = tokens_list
-            .iter()
-            .map(|token| token.clone().into())
-            .collect();
+        let payment_tokens: ManagedVec<Self::Api, EgldOrEsdtTokenPayment<Self::Api>> =
+            output_payments
+                .iter()
+                .map(|token| token.clone().into())
+                .collect();
 
         match &operation_tuple.operation.data.opt_transfer_data {
             Some(transfer_data) => {
@@ -259,24 +255,26 @@ pub trait ExecuteModule:
                     .to(&operation_tuple.operation.to)
                     .raw_call(transfer_data.function.clone())
                     .arguments_raw(args)
-                    .payment(&mapped_tokens)
+                    .payment(&payment_tokens)
                     .gas(transfer_data.gas_limit)
-                    .callback(
-                        <Self as ExecuteModule>::callbacks(self)
-                            .execute(hash_of_hashes, operation_tuple),
-                    )
+                    .callback(<Self as ExecuteModule>::callbacks(self).execute(
+                        hash_of_hashes,
+                        output_payments,
+                        operation_tuple,
+                    ))
                     .gas_for_callback(CALLBACK_GAS)
                     .register_promise();
             }
             None => {
                 self.tx()
                     .to(&operation_tuple.operation.to)
-                    .payment(mapped_tokens)
+                    .payment(&payment_tokens)
                     .gas(ESDT_TRANSACTION_GAS)
-                    .callback(
-                        <Self as ExecuteModule>::callbacks(self)
-                            .execute(hash_of_hashes, operation_tuple),
-                    )
+                    .callback(<Self as ExecuteModule>::callbacks(self).execute(
+                        hash_of_hashes,
+                        output_payments,
+                        operation_tuple,
+                    ))
                     .gas_for_callback(CALLBACK_GAS)
                     .register_promise();
             }
@@ -301,9 +299,11 @@ pub trait ExecuteModule:
             .raw_call(transfer_data.function.clone())
             .arguments_raw(args)
             .gas(transfer_data.gas_limit)
-            .callback(
-                <Self as ExecuteModule>::callbacks(self).execute(hash_of_hashes, operation_tuple),
-            )
+            .callback(<Self as ExecuteModule>::callbacks(self).execute(
+                hash_of_hashes,
+                &ManagedVec::new(),
+                operation_tuple,
+            ))
             .gas_for_callback(CALLBACK_GAS)
             .register_promise();
     }
@@ -312,6 +312,7 @@ pub trait ExecuteModule:
     fn execute(
         &self,
         hash_of_hashes: &ManagedBuffer,
+        output_payments: &ManagedVec<OperationEsdtPayment<Self::Api>>,
         operation_tuple: &OperationTuple<Self::Api>,
         #[call_result] result: ManagedAsyncCallResult<IgnoreValue>,
     ) {
@@ -325,68 +326,62 @@ pub trait ExecuteModule:
                     &operation_tuple.op_hash,
                     Some(err.err_msg),
                 );
-                self.refund_transfers(operation_tuple);
+                self.refund_transfers(output_payments, &operation_tuple.operation);
             }
         }
     }
 
-    fn refund_transfers(&self, operation_tuple: &OperationTuple<Self::Api>) {
-        if operation_tuple.operation.tokens.is_empty() {
+    fn refund_transfers(
+        &self,
+        output_payments: &ManagedVec<OperationEsdtPayment<Self::Api>>,
+        operation: &Operation<Self::Api>,
+    ) {
+        if output_payments.len() == 0 {
             return;
         }
 
-        for operation_token in &operation_tuple.operation.tokens {
-            self.burn_failed_transfer_token(&operation_token);
+        for i in 0..output_payments.len() {
+            self.burn_failed_transfer_token(&output_payments.get(i), &operation.tokens.get(i));
         }
 
         let sc_address = self.blockchain().get_sc_address();
         let tx_nonce = self.get_and_save_next_tx_id();
         self.deposit_event(
-            &operation_tuple.operation.data.op_sender,
-            &operation_tuple
-                .operation
-                .map_tokens_to_multi_value_encoded(),
+            &operation.data.op_sender,
+            &operation.map_tokens_to_multi_value_encoded(),
             OperationData::new(tx_nonce, sc_address.clone(), None),
         );
     }
 
-    fn burn_failed_transfer_token(&self, operation_token: &OperationEsdtPayment<Self::Api>) {
-        let sov_to_mvx_mapper =
-            self.sovereign_to_multiversx_token_id_mapper(&operation_token.token_identifier);
-
-        if sov_to_mvx_mapper.is_empty() {
+    fn burn_failed_transfer_token(
+        &self,
+        output_payment: &OperationEsdtPayment<Self::Api>,
+        operation_token: &OperationEsdtPayment<Self::Api>,
+    ) {
+        let mvx_to_sov_mapper =
+            self.multiversx_to_sovereign_token_id_mapper(&output_payment.token_identifier);
+        if mvx_to_sov_mapper.is_empty() && !self.is_native_token(&output_payment.token_identifier) {
             return;
         }
 
-        let mvx_token_id = sov_to_mvx_mapper.get();
-        // require!(mvx_token_id.is_esdt(), BURN_NON_ESDT_TOKENS);
-        let mut mvx_token_nonce = 0;
-
-        if operation_token.token_nonce > 0 {
-            mvx_token_nonce = self
-                .sovereign_to_multiversx_esdt_info_mapper(
-                    &operation_token.token_identifier,
-                    operation_token.token_nonce,
-                )
-                .get()
-                .token_nonce;
-
-            if self.is_nft(&operation_token.token_data.token_type) {
-                self.clear_sov_to_mvx_esdt_info_mapper(
-                    &operation_token.token_identifier,
-                    operation_token.token_nonce,
-                );
-                self.clear_mvx_to_sov_esdt_info_mapper(&mvx_token_id, mvx_token_nonce);
-            }
+        if self.is_nft(&operation_token.token_data.token_type) {
+            self.clear_mvx_to_sov_esdt_info_mapper(
+                &output_payment.token_identifier,
+                output_payment.token_nonce,
+            );
+            self.clear_sov_to_mvx_esdt_info_mapper(
+                &operation_token.token_identifier,
+                operation_token.token_nonce,
+            );
         }
 
         self.tx()
             .to(ToSelf)
-            .typed(system_proxy::UserBuiltinProxy)
+            .typed(UserBuiltinProxy)
             .esdt_local_burn(
-                mvx_token_id.unwrap_esdt(),
-                mvx_token_nonce,
-                &operation_token.token_data.amount,
+                output_payment.token_identifier.clone().unwrap_esdt(),
+                output_payment.token_nonce,
+                &output_payment.token_data.amount,
             )
             .sync_call();
     }

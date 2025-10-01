@@ -2,7 +2,7 @@ use common_test_setup::constants::{
     CROWD_TOKEN_ID, DEPOSIT_EVENT, ESDT_SAFE_ADDRESS, EXECUTED_BRIDGE_OP_EVENT, FEE_MARKET_ADDRESS,
     FEE_TOKEN, FIRST_TEST_TOKEN, HEADER_VERIFIER_ADDRESS, ISSUE_COST, ONE_HUNDRED_MILLION,
     ONE_HUNDRED_THOUSAND, OWNER_ADDRESS, SC_CALL_EVENT, SECOND_TEST_TOKEN, SOV_TOKEN,
-    TESTING_SC_ADDRESS, TESTING_SC_ENDPOINT, UNPAUSE_CONTRACT_LOG, USER_ADDRESS,
+    TESTING_SC_ADDRESS, TESTING_SC_ENDPOINT, UNPAUSE_CONTRACT_LOG, USER_ADDRESS, NATIVE_TEST_TOKEN
 };
 use cross_chain::storage::CrossChainStorage;
 use cross_chain::{DEFAULT_ISSUE_COST, MAX_GAS_PER_TRANSACTION};
@@ -1772,7 +1772,7 @@ fn test_execute_operation_with_native_token_success() {
     };
 
     let payment = OperationEsdtPayment::new(
-        EgldOrEsdtTokenIdentifier::esdt(FIRST_TEST_TOKEN),
+        EgldOrEsdtTokenIdentifier::esdt(NATIVE_TEST_TOKEN),
         0,
         token_data,
     );
@@ -1848,9 +1848,9 @@ fn test_execute_operation_with_native_token_success() {
 
     state.common_setup.check_account_single_esdt(
         TESTING_SC_ADDRESS.to_address(),
-        TestTokenIdentifier::new(TRUSTED_TOKEN_IDS[0]),
+        NATIVE_TEST_TOKEN,
         0u64,
-        BigUint::from(0u64),
+        BigUint::from(100u64),
     );
 }
 
@@ -2586,6 +2586,114 @@ fn test_execute_operation_no_payments_failed_event() {
     state
         .common_setup
         .check_operation_hash_status_is_empty(&operation_hash);
+}
+
+/// ### TEST
+/// M-NATIVE_ESDT_EXEC_OK
+///
+/// ### ACTION
+/// Call 'execute_operation()' with native esdt payment and wrong endpoint
+///
+/// ### EXPECTED
+/// The operation is not executed in the testing smart contract
+/// Native ESDT should be burned
+#[test]
+fn test_execute_operation_native_token_failed_event() {
+    let mut state = MvxEsdtSafeTestState::new();
+
+    state.deploy_contract_with_roles(None);
+    state.complete_setup_phase(Some(UNPAUSE_CONTRACT_LOG));
+
+    state
+        .common_setup
+        .deploy_chain_config(OptionalValue::None, None);
+
+    let token_data = EsdtTokenData {
+        amount: BigUint::from(100u64),
+        ..Default::default()
+    };
+    let payment = OperationEsdtPayment::new(
+        EgldOrEsdtTokenIdentifier::esdt(NATIVE_TEST_TOKEN),
+        0,
+        token_data,
+    );
+
+    let gas_limit = 1;
+    let function = ManagedBuffer::<StaticApi>::from("WRONG_ENDPOINT");
+    let args =
+        ManagedVec::<StaticApi, ManagedBuffer<StaticApi>>::from(vec![ManagedBuffer::from("1")]);
+    let transfer_data = TransferData::new(gas_limit, function, args);
+    let operation_data =
+        OperationData::new(1, OWNER_ADDRESS.to_managed_address(), Some(transfer_data));
+    let operation = Operation::new(
+        TESTING_SC_ADDRESS.to_managed_address(),
+        vec![payment].into(),
+        operation_data,
+    );
+    let operation_hash = state.common_setup.get_operation_hash(&operation);
+    let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&operation_hash.to_vec()));
+
+    let (signature, public_keys) = state.common_setup.get_sig_and_pub_keys(1, &hash_of_hashes);
+
+    state.common_setup.register(
+        public_keys.first().unwrap(),
+        &MultiEgldOrEsdtPayment::new(),
+        None,
+    );
+
+    state.common_setup.complete_chain_config_setup_phase();
+
+    state
+        .common_setup
+        .deploy_header_verifier(vec![ScArray::ChainConfig, ScArray::ESDTSafe]);
+
+    state
+        .common_setup
+        .complete_header_verifier_setup_phase(None);
+
+    state.common_setup.deploy_testing_sc();
+
+    let operations_hashes = MultiValueEncoded::from(ManagedVec::from(vec![operation_hash.clone()]));
+    let bitmap = ManagedBuffer::new_from_bytes(&[0x01]);
+    let epoch = 0;
+
+    state.common_setup.register_operation(
+        OWNER_ADDRESS,
+        signature,
+        &hash_of_hashes,
+        bitmap,
+        epoch,
+        operations_hashes,
+    );
+
+    state
+        .common_setup
+        .check_operation_hash_status(&operation_hash, OperationHashStatus::NotLocked);
+
+    state.execute_operation(
+        &hash_of_hashes,
+        &operation,
+        Some(EXECUTED_BRIDGE_OP_EVENT),
+        Some("invalid function (not found)"),
+    );
+
+    state
+        .common_setup
+        .check_operation_hash_status_is_empty(&operation_hash);
+
+    state.common_setup.check_account_single_esdt(
+        OWNER_ADDRESS.to_address(),
+        NATIVE_TEST_TOKEN,
+        0u64,
+        BigUint::from(0u64),
+    );
+
+    state.common_setup.check_account_single_esdt(
+        TESTING_SC_ADDRESS.to_address(),
+        NATIVE_TEST_TOKEN,
+        0u64,
+        BigUint::from(0u64),
+    );
 }
 
 /// ### TEST
