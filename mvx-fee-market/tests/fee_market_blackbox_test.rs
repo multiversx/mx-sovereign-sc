@@ -17,6 +17,8 @@ use multiversx_sc::{
 use multiversx_sc_scenario::{
     api::StaticApi, multiversx_chain_vm::crypto_functions::sha256, ScenarioTxWhitebox,
 };
+use mvx_fee_market::__endpoints_3__::remove_fee;
+use structs::fee::{RemoveFeeOperation, SetFeeOperation};
 use structs::{
     fee::{
         AddUsersToWhitelistOperation, AddressPercentagePair, DistributeFeesOperation, FeeStruct,
@@ -96,7 +98,7 @@ fn test_set_fee_setup_not_completed() {
         .common_setup
         .deploy_header_verifier(vec![ScArray::FeeMarket, ScArray::ChainConfig]);
 
-    let fee = FeeStruct {
+    let fee_struct = FeeStruct {
         base_token: EgldOrEsdtTokenIdentifier::esdt(FIRST_TEST_TOKEN),
         fee_type: FeeType::Fixed {
             token: EgldOrEsdtTokenIdentifier::esdt(FIRST_TEST_TOKEN),
@@ -107,8 +109,10 @@ fn test_set_fee_setup_not_completed() {
 
     state.set_fee(
         &ManagedBuffer::new(),
-        fee,
-        0,
+        SetFeeOperation {
+            fee_struct,
+            nonce: 0,
+        },
         Some(EXECUTED_BRIDGE_OP_EVENT),
         Some(SETUP_PHASE_NOT_COMPLETED),
     );
@@ -214,7 +218,7 @@ fn test_set_fee() {
         .common_setup
         .deploy_chain_config(OptionalValue::None, None);
 
-    let fee = FeeStruct {
+    let fee_struct = FeeStruct {
         base_token: EgldOrEsdtTokenIdentifier::esdt(FIRST_TEST_TOKEN),
         fee_type: FeeType::Fixed {
             token: EgldOrEsdtTokenIdentifier::esdt(FIRST_TEST_TOKEN),
@@ -223,7 +227,12 @@ fn test_set_fee() {
         },
     };
 
-    let fee_hash = fee.generate_hash();
+    let set_fee_operation = SetFeeOperation {
+        fee_struct,
+        nonce: 0,
+    };
+
+    let fee_hash = set_fee_operation.generate_hash();
     let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&fee_hash.to_vec()));
 
     let (signature, public_keys) = state.common_setup.get_sig_and_pub_keys(1, &hash_of_hashes);
@@ -264,8 +273,7 @@ fn test_set_fee() {
 
     state.set_fee(
         &hash_of_hashes,
-        fee,
-        0,
+        set_fee_operation,
         Some(EXECUTED_BRIDGE_OP_EVENT),
         None,
     );
@@ -304,8 +312,10 @@ fn test_remove_fee_setup_phase_not_completed() {
 
     state.remove_fee(
         &ManagedBuffer::new(),
-        FIRST_TEST_TOKEN,
-        0,
+        RemoveFeeOperation {
+            token_id: EgldOrEsdtTokenIdentifier::from(FIRST_TEST_TOKEN.as_str()),
+            nonce: 0,
+        },
         None,
         Some(EXECUTED_BRIDGE_OP_EVENT),
         Some(SETUP_PHASE_NOT_COMPLETED),
@@ -328,7 +338,7 @@ fn test_remove_fee_register_separate_operations() {
         .common_setup
         .deploy_chain_config(OptionalValue::None, None);
 
-    let fee = FeeStruct {
+    let fee_struct = FeeStruct {
         base_token: EgldOrEsdtTokenIdentifier::esdt(FIRST_TEST_TOKEN),
         fee_type: FeeType::Fixed {
             token: EgldOrEsdtTokenIdentifier::esdt(FIRST_TEST_TOKEN),
@@ -336,7 +346,11 @@ fn test_remove_fee_register_separate_operations() {
             per_gas: BigUint::default(),
         },
     };
-    let register_fee_hash = fee.generate_hash();
+    let set_fee_operation = SetFeeOperation {
+        fee_struct,
+        nonce: 0,
+    };
+    let register_fee_hash = set_fee_operation.generate_hash();
     let register_fee_hash_of_hashes =
         ManagedBuffer::new_from_bytes(&sha256(&register_fee_hash.to_vec()));
 
@@ -350,14 +364,14 @@ fn test_remove_fee_register_separate_operations() {
         None,
     );
 
-    let remove_fee_hash = sha256(
-        &FIRST_TEST_TOKEN
-            .to_token_identifier::<StaticApi>()
-            .as_managed_buffer()
-            .to_vec(),
-    );
+    let remove_fee_operation = RemoveFeeOperation {
+        token_id: EgldOrEsdtTokenIdentifier::from(FIRST_TEST_TOKEN.as_str()),
+        nonce: 1,
+    };
 
-    let remove_fee_hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&remove_fee_hash));
+    let remove_fee_hash = remove_fee_operation.generate_hash();
+    let remove_fee_hash_of_hashes =
+        ManagedBuffer::new_from_bytes(&sha256(&remove_fee_hash.to_vec()));
 
     let (signature_remove_fee, public_keys_remove_fee) = state
         .common_setup
@@ -399,8 +413,7 @@ fn test_remove_fee_register_separate_operations() {
 
     state.set_fee(
         &register_fee_hash_of_hashes,
-        fee,
-        0,
+        set_fee_operation,
         Some(EXECUTED_BRIDGE_OP_EVENT),
         None,
     );
@@ -425,13 +438,12 @@ fn test_remove_fee_register_separate_operations() {
         &remove_fee_hash_of_hashes,
         bitmap,
         epoch,
-        MultiValueEncoded::from_iter(vec![ManagedBuffer::new_from_bytes(&remove_fee_hash)]),
+        MultiValueEncoded::from_iter(vec![remove_fee_hash]),
     );
 
     state.remove_fee(
         &remove_fee_hash_of_hashes,
-        FIRST_TEST_TOKEN,
-        0,
+        remove_fee_operation,
         None,
         Some(EXECUTED_BRIDGE_OP_EVENT),
         None,
@@ -465,7 +477,7 @@ fn test_remove_fee_register_with_one_hash_of_hashes() {
         .common_setup
         .deploy_chain_config(OptionalValue::None, None);
 
-    let fee = FeeStruct {
+    let fee_struct = FeeStruct {
         base_token: EgldOrEsdtTokenIdentifier::esdt(FIRST_TEST_TOKEN),
         fee_type: FeeType::Fixed {
             token: EgldOrEsdtTokenIdentifier::esdt(FIRST_TEST_TOKEN),
@@ -474,13 +486,18 @@ fn test_remove_fee_register_with_one_hash_of_hashes() {
         },
     };
 
-    let remove_fee_hash: ManagedBuffer<StaticApi> = ManagedBuffer::new_from_bytes(&sha256(
-        &FIRST_TEST_TOKEN
-            .to_token_identifier::<StaticApi>()
-            .as_managed_buffer()
-            .to_vec(),
-    ));
-    let register_fee_hash = fee.generate_hash();
+    let set_fee_operation = SetFeeOperation {
+        fee_struct,
+        nonce: 0,
+    };
+
+    let remove_fee_operation = RemoveFeeOperation {
+        token_id: EgldOrEsdtTokenIdentifier::from(FIRST_TEST_TOKEN.as_str()),
+        nonce: 1,
+    };
+
+    let remove_fee_hash: ManagedBuffer<StaticApi> = remove_fee_operation.generate_hash();
+    let register_fee_hash = set_fee_operation.generate_hash();
     let mut aggregated_hashes = ManagedBuffer::new();
 
     aggregated_hashes.append(&remove_fee_hash);
@@ -526,8 +543,7 @@ fn test_remove_fee_register_with_one_hash_of_hashes() {
 
     state.set_fee(
         &hash_of_hashes,
-        fee,
-        0,
+        set_fee_operation,
         Some(EXECUTED_BRIDGE_OP_EVENT),
         None,
     );
@@ -545,8 +561,7 @@ fn test_remove_fee_register_with_one_hash_of_hashes() {
 
     state.remove_fee(
         &hash_of_hashes,
-        FIRST_TEST_TOKEN,
-        0,
+        remove_fee_operation,
         None,
         Some(EXECUTED_BRIDGE_OP_EVENT),
         None,
@@ -740,7 +755,7 @@ fn test_distribute_fees() {
 
     let operation = DistributeFeesOperation {
         pairs: ManagedVec::from_iter(vec![address_pair.clone()]),
-        nonce: 1,
+        nonce: 0,
     };
     let operation_hash = operation.generate_hash();
 

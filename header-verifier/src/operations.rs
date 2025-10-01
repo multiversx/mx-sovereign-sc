@@ -156,6 +156,7 @@ pub trait HeaderVerifierOperationsModule:
         OptionalValue::None
     }
 
+    // Add nonce increment
     #[endpoint(lockOperationHash)]
     fn lock_operation_hash(
         &self,
