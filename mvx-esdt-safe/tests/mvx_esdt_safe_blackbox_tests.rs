@@ -2052,7 +2052,7 @@ fn test_execute_operation_success_burn_mechanism() {
         token_data.clone(),
     );
 
-    let operation_data = OperationData::new(1, OWNER_ADDRESS.to_managed_address(), None);
+    let operation_data = OperationData::new(0, OWNER_ADDRESS.to_managed_address(), None);
 
     let operation = Operation::new(
         TESTING_SC_ADDRESS.to_managed_address(),
@@ -2189,7 +2189,7 @@ fn test_deposit_execute_switch_mechanism() {
         execute_trusted_token_payment_token_data,
     );
 
-    let operation_one_data = OperationData::new(1, OWNER_ADDRESS.to_managed_address(), None);
+    let operation_one_data = OperationData::new(0, OWNER_ADDRESS.to_managed_address(), None);
     let operation_one = Operation::new(
         TESTING_SC_ADDRESS.to_managed_address(),
         vec![execute_trusted_token_payment.clone()].into(),
@@ -2530,7 +2530,7 @@ fn test_execute_operation_no_payments_failed_event() {
         ManagedVec::<StaticApi, ManagedBuffer<StaticApi>>::from(vec![ManagedBuffer::from("1")]);
     let transfer_data = TransferData::new(gas_limit, function, args);
     let operation_data =
-        OperationData::new(1, OWNER_ADDRESS.to_managed_address(), Some(transfer_data));
+        OperationData::new(0, OWNER_ADDRESS.to_managed_address(), Some(transfer_data));
     let operation = Operation::new(
         TESTING_SC_ADDRESS.to_managed_address(),
         ManagedVec::new(),
