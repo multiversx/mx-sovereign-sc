@@ -5,7 +5,9 @@ use multiversx_sc::api::ESDT_LOCAL_BURN_FUNC_NAME;
 use multiversx_sc::imports::*;
 use structs::{configs::EsdtSafeConfig, operation::OperationData};
 
+pub mod config_operations;
 pub mod deposit;
+pub mod fee_operations;
 
 #[multiversx_sc::contract]
 pub trait SovEsdtSafe:

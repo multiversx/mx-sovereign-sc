@@ -2604,6 +2604,7 @@ dependencies = [
  "cross-chain",
  "custom-events",
  "error-messages",
+ "fee-common",
  "multiversx-sc",
  "multiversx-sc-modules",
  "multiversx-sc-scenario",
@@ -2612,6 +2613,7 @@ dependencies = [
  "setup-phase",
  "structs",
  "testing-sc",
+ "tx-nonce",
 ]
 
 [[package]]
@@ -2644,28 +2646,6 @@ version = "0.0.0"
 dependencies = [
  "multiversx-sc-meta-lib",
  "sov-fee-market",
-]
-
-[[package]]
-name = "sov-registrar"
-version = "0.0.0"
-dependencies = [
- "common-utils",
- "custom-events",
- "fee-common",
- "multiversx-sc",
- "multiversx-sc-scenario",
- "num-bigint",
- "structs",
- "tx-nonce",
-]
-
-[[package]]
-name = "sov-registrar-meta"
-version = "0.0.0"
-dependencies = [
- "multiversx-sc-meta-lib",
- "sov-registrar",
 ]
 
 [[package]]
