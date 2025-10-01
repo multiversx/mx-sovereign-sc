@@ -34,7 +34,7 @@ use mvx_esdt_safe::bridging_mechanism::{BridgingMechanism, TRUSTED_TOKEN_IDS};
 use mvx_esdt_safe_blackbox_setup::MvxEsdtSafeTestState;
 use proxies::mvx_esdt_safe_proxy::MvxEsdtSafeProxy;
 use setup_phase::SetupPhaseModule;
-use structs::configs::MaxBridgedAmount;
+use structs::configs::{MaxBridgedAmount, UpdateEsdtSafeConfigOperation};
 use structs::fee::{FeeStruct, FeeType};
 use structs::forge::ScArray;
 use structs::generate_hash::GenerateHash;
@@ -2755,7 +2755,7 @@ fn test_update_config_setup_phase_not_completed() {
     let mut state = MvxEsdtSafeTestState::new();
     state.deploy_contract_with_roles(None);
 
-    let new_config = EsdtSafeConfig {
+    let esdt_safe_config = EsdtSafeConfig {
         token_whitelist: ManagedVec::new(),
         token_blacklist: ManagedVec::new(),
         max_tx_gas_limit: 100_000,
@@ -2765,8 +2765,10 @@ fn test_update_config_setup_phase_not_completed() {
 
     state.update_esdt_safe_config(
         &ManagedBuffer::new(),
-        new_config,
-        0,
+        UpdateEsdtSafeConfigOperation {
+            esdt_safe_config,
+            nonce: 0,
+        },
         Some(EXECUTED_BRIDGE_OP_EVENT),
         Some(SETUP_PHASE_NOT_COMPLETED),
     );
@@ -2790,7 +2792,7 @@ fn test_update_config_operation_not_registered() {
         .common_setup
         .deploy_header_verifier(vec![ScArray::ChainConfig, ScArray::ESDTSafe]);
 
-    let new_config = EsdtSafeConfig {
+    let esdt_safe_config = EsdtSafeConfig {
         token_whitelist: ManagedVec::new(),
         token_blacklist: ManagedVec::new(),
         max_tx_gas_limit: 100_000,
@@ -2800,8 +2802,10 @@ fn test_update_config_operation_not_registered() {
 
     state.update_esdt_safe_config(
         &ManagedBuffer::new(),
-        new_config,
-        0,
+        UpdateEsdtSafeConfigOperation {
+            esdt_safe_config,
+            nonce: 0,
+        },
         Some(EXECUTED_BRIDGE_OP_EVENT),
         Some(CURRENT_OPERATION_NOT_REGISTERED),
     );
@@ -2825,12 +2829,16 @@ fn test_update_config_invalid_config() {
         .common_setup
         .deploy_chain_config(OptionalValue::None, None);
 
-    let new_config = EsdtSafeConfig {
+    let esdt_safe_config = EsdtSafeConfig {
         max_tx_gas_limit: MAX_GAS_PER_TRANSACTION + 1,
         ..EsdtSafeConfig::default_config()
     };
+    let update_config_operation = UpdateEsdtSafeConfigOperation {
+        esdt_safe_config: esdt_safe_config.clone(),
+        nonce: 0,
+    };
 
-    let config_hash = new_config.generate_hash();
+    let config_hash = update_config_operation.generate_hash();
     let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&config_hash.to_vec()));
 
     let (signature, public_keys) = state.common_setup.get_sig_and_pub_keys(1, &hash_of_hashes);
@@ -2864,8 +2872,7 @@ fn test_update_config_invalid_config() {
 
     state.update_esdt_safe_config(
         &hash_of_hashes,
-        new_config,
-        0,
+        update_config_operation,
         Some(EXECUTED_BRIDGE_OP_EVENT),
         Some(MAX_GAS_LIMIT_PER_TX_EXCEEDED),
     );
@@ -2889,12 +2896,16 @@ fn test_update_config() {
         .common_setup
         .deploy_chain_config(OptionalValue::None, None);
 
-    let new_config = EsdtSafeConfig {
+    let esdt_safe_config = EsdtSafeConfig {
         max_tx_gas_limit: 100_000,
         ..EsdtSafeConfig::default_config()
     };
+    let update_config_operation = UpdateEsdtSafeConfigOperation {
+        esdt_safe_config,
+        nonce: 0,
+    };
 
-    let config_hash = new_config.generate_hash();
+    let config_hash = update_config_operation.generate_hash();
     let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&config_hash.to_vec()));
 
     let (signature, public_keys) = state.common_setup.get_sig_and_pub_keys(1, &hash_of_hashes);
@@ -2929,8 +2940,7 @@ fn test_update_config() {
 
     state.update_esdt_safe_config(
         &hash_of_hashes,
-        new_config,
-        0,
+        update_config_operation,
         Some(EXECUTED_BRIDGE_OP_EVENT),
         None,
     );
