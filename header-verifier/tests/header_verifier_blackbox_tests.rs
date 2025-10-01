@@ -6,7 +6,7 @@ use common_test_setup::constants::{
 use error_messages::{
     CALLER_NOT_FROM_CURRENT_SOVEREIGN, CHAIN_CONFIG_SETUP_PHASE_NOT_COMPLETE,
     CURRENT_OPERATION_ALREADY_IN_EXECUTION, CURRENT_OPERATION_NOT_REGISTERED,
-    OUTGOING_TX_HASH_ALREADY_REGISTERED, SETUP_PHASE_NOT_COMPLETED,
+    INCORRECT_OPERATION_NONCE, OUTGOING_TX_HASH_ALREADY_REGISTERED, SETUP_PHASE_NOT_COMPLETED,
 };
 use header_verifier::header_utils::HeaderVerifierUtilsModule;
 use header_verifier::storage::HeaderVerifierStorageModule;
@@ -455,6 +455,129 @@ fn test_lock_operation() {
             assert!(is_hash_1_locked == OperationHashStatus::Locked);
             assert!(is_hash_2_locked == OperationHashStatus::NotLocked);
         })
+}
+
+/// ### TEST
+/// H-VERIFIER_LOCK_OPERATION_FAIL
+///
+/// ### ACTION
+/// Call 'lock_operation_hash()' with an operation nonce higher than the last recorded nonce
+///
+/// ### EXPECTED
+/// Error: INCORRECT_OPERATION_NONCE
+#[test]
+fn test_lock_operation_incorrect_nonce_rejected() {
+    let mut state = HeaderVerifierTestState::new();
+
+    state
+        .common_setup
+        .deploy_chain_config(OptionalValue::None, None);
+
+    let operation_hash = ManagedBuffer::from("operation_nonce_fail");
+    let operation = state.generate_bridge_operation_struct(vec![&operation_hash]);
+    let bitmap = ManagedBuffer::new_from_bytes(&[0x01]);
+
+    let (signature, pub_keys) = state
+        .common_setup
+        .get_sig_and_pub_keys(1, &operation.bridge_operation_hash);
+
+    state
+        .common_setup
+        .register(&pub_keys[0], &MultiEgldOrEsdtPayment::new(), None);
+
+    state.common_setup.complete_chain_config_setup_phase();
+
+    state
+        .common_setup
+        .deploy_header_verifier(vec![ScArray::ChainConfig]);
+
+    state
+        .common_setup
+        .complete_header_verifier_setup_phase(None);
+
+    state.register_operations(&signature, operation.clone(), bitmap, 0, None);
+
+    state
+        .common_setup
+        .world
+        .query()
+        .to(HEADER_VERIFIER_ADDRESS)
+        .whitebox(header_verifier::contract_obj, |sc| {
+            assert_eq!(sc.last_operation_nonce().get(), 1);
+        });
+
+    state.lock_operation_hash(
+        CHAIN_CONFIG_ADDRESS,
+        &operation.bridge_operation_hash,
+        &operation_hash,
+        2,
+        Some(INCORRECT_OPERATION_NONCE),
+    );
+}
+
+/// ### TEST
+/// H-VERIFIER_LOCK_OPERATION_OK
+///
+/// ### ACTION
+/// Call 'lock_operation_hash()' with the current last operation nonce value
+///
+/// ### EXPECTED
+/// The operation hash is locked successfully
+#[test]
+fn test_lock_operation_accepts_current_nonce() {
+    let mut state = HeaderVerifierTestState::new();
+
+    state
+        .common_setup
+        .deploy_chain_config(OptionalValue::None, None);
+
+    let operation_hash = ManagedBuffer::from("operation_nonce_success");
+    let operation = state.generate_bridge_operation_struct(vec![&operation_hash]);
+    let bitmap = ManagedBuffer::new_from_bytes(&[0x01]);
+
+    let (signature, pub_keys) = state
+        .common_setup
+        .get_sig_and_pub_keys(1, &operation.bridge_operation_hash);
+
+    state
+        .common_setup
+        .register(&pub_keys[0], &MultiEgldOrEsdtPayment::new(), None);
+
+    state.common_setup.complete_chain_config_setup_phase();
+
+    state
+        .common_setup
+        .deploy_header_verifier(vec![ScArray::ChainConfig]);
+
+    state
+        .common_setup
+        .complete_header_verifier_setup_phase(None);
+
+    state.register_operations(&signature, operation.clone(), bitmap, 0, None);
+
+    state.lock_operation_hash(
+        CHAIN_CONFIG_ADDRESS,
+        &operation.bridge_operation_hash,
+        &operation_hash,
+        1,
+        None,
+    );
+
+    state
+        .common_setup
+        .world
+        .query()
+        .to(HEADER_VERIFIER_ADDRESS)
+        .whitebox(header_verifier::contract_obj, |sc| {
+            let hash_of_hashes: ManagedBuffer<DebugApi> =
+                ManagedBuffer::from(operation.bridge_operation_hash.to_vec());
+            let operation_hash_debug_api = ManagedBuffer::from(operation_hash.to_vec());
+            let status = sc
+                .operation_hash_status(&hash_of_hashes, &operation_hash_debug_api)
+                .get();
+
+            assert_eq!(status, OperationHashStatus::Locked);
+        });
 }
 
 /// ### TEST
