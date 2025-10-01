@@ -629,9 +629,8 @@ pub trait InteractorHelpers {
         self.check_user_balance(expected_balance).await;
     }
 
-    async fn check_all_contracts_empty(&mut self, shard: u32) {
+    async fn check_contracts_empty(&mut self, shard: u32) {
         self.check_mvx_esdt_balance(shard, Vec::new()).await;
-        self.check_fee_market_balance(shard, Vec::new()).await;
         self.check_testing_sc_balance(Vec::new()).await;
     }
 

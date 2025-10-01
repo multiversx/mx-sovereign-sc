@@ -8,8 +8,7 @@ use common_interactor::{
     common_sovereign_interactor::CommonInteractorTrait, interactor_config::Config,
 };
 use common_test_setup::constants::{
-    INTERACTOR_WORKING_DIR, ONE_THOUSAND_TOKENS, SOVEREIGN_RECEIVER_ADDRESS, TOKEN_DISPLAY_NAME,
-    TOKEN_TICKER,
+    INTERACTOR_WORKING_DIR, SOVEREIGN_RECEIVER_ADDRESS, TOKEN_DISPLAY_NAME, TOKEN_TICKER,
 };
 use cross_chain::DEFAULT_ISSUE_COST;
 use multiversx_sc::chain_core::EGLD_000000_TOKEN_IDENTIFIER;
@@ -96,17 +95,7 @@ impl CompleteFlowInteract {
         ];
 
         for (ticker, token_type, decimals) in token_configs {
-            if ticker == "FEE" && !self.common_state.fee_market_tokens.is_empty() {
-                let fee_token = self.retrieve_current_fee_token_for_wallet().await;
-                self.state.set_fee_token(fee_token);
-                continue;
-            }
-            let amount = match token_type {
-                EsdtTokenType::NonFungibleV2 | EsdtTokenType::DynamicNFT => BigUint::from(1u64),
-                _ => BigUint::from(ONE_THOUSAND_TOKENS),
-            };
-
-            self.create_token_with_config(token_type, ticker, amount, decimals)
+            self.create_token_with_config(token_type, ticker, decimals)
                 .await;
         }
     }

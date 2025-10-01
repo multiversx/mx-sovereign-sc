@@ -7,8 +7,9 @@ use crate::{
 use common_test_setup::constants::{
     CHAIN_CONFIG_CODE_PATH, CHAIN_FACTORY_CODE_PATH, CHAIN_ID, DEPLOY_COST,
     FAILED_TO_LOAD_WALLET_SHARD_0, FEE_MARKET_CODE_PATH, HEADER_VERIFIER_CODE_PATH, ISSUE_COST,
-    MVX_ESDT_SAFE_CODE_PATH, NATIVE_TOKEN_NAME, NATIVE_TOKEN_TICKER, NUMBER_OF_SHARDS, SHARD_0,
-    SOVEREIGN_FORGE_CODE_PATH, SOVEREIGN_TOKEN_PREFIX, TESTING_SC_CODE_PATH, WALLET_SHARD_0,
+    MVX_ESDT_SAFE_CODE_PATH, NATIVE_TOKEN_NAME, NATIVE_TOKEN_TICKER, NUMBER_OF_SHARDS,
+    ONE_THOUSAND_TOKENS, SHARD_0, SOVEREIGN_FORGE_CODE_PATH, SOVEREIGN_TOKEN_PREFIX,
+    TESTING_SC_CODE_PATH, WALLET_SHARD_0,
 };
 use multiversx_bls::{SecretKey, G1};
 use multiversx_sc::{
@@ -186,9 +187,21 @@ pub trait CommonInteractorTrait: InteractorHelpers {
         &mut self,
         token_type: EsdtTokenType,
         ticker: &str,
-        amount: BigUint<StaticApi>,
         decimals: usize,
     ) {
+        if ticker == "FEE" && !self.common_state().fee_market_tokens.is_empty() {
+            let fee_token = self.retrieve_current_fee_token_for_wallet().await;
+            self.state().set_fee_token(fee_token);
+            return;
+        }
+        let amount = if matches!(
+            token_type,
+            EsdtTokenType::NonFungibleV2 | EsdtTokenType::DynamicNFT
+        ) {
+            BigUint::from(1u64)
+        } else {
+            BigUint::from(ONE_THOUSAND_TOKENS)
+        };
         let token_struct = IssueTokenStruct {
             token_display_name: ticker.to_string(),
             token_ticker: ticker.to_string(),
@@ -1373,7 +1386,26 @@ pub trait CommonInteractorTrait: InteractorHelpers {
         if fee_activated {
             return;
         }
-        self.set_fee_common(fee, shard).await;
+        self.common_state().fee_op_nonce += 1;
+        let nonce_str = self.common_state().fee_op_nonce.to_string();
+        let nonce_buf = ManagedBuffer::<StaticApi>::from(&nonce_str);
+
+        let fee_hash = fee.generate_hash();
+
+        let mut bytes = Vec::with_capacity(fee_hash.len() + nonce_buf.len());
+        bytes.extend_from_slice(&fee_hash.to_vec());
+        bytes.extend_from_slice(&nonce_buf.to_vec());
+
+        let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&bytes));
+        let operations_hashes =
+            MultiValueEncoded::from(ManagedVec::from(vec![fee_hash.clone(), nonce_buf]));
+
+        self.register_operation(shard, &hash_of_hashes, operations_hashes)
+            .await;
+
+        self.set_fee_after_setup_phase(hash_of_hashes, fee, shard)
+            .await;
+        self.common_state().set_fee_status_for_shard(shard, true);
     }
 
     async fn remove_fee(&mut self, shard: u32) {
@@ -1403,28 +1435,5 @@ pub trait CommonInteractorTrait: InteractorHelpers {
         self.remove_fee_after_setup_phase(hash_of_hashes, fee_token, shard)
             .await;
         self.common_state().set_fee_status_for_shard(shard, false);
-    }
-
-    async fn set_fee_common(&mut self, fee: FeeStruct<StaticApi>, shard: u32) {
-        self.common_state().fee_op_nonce += 1;
-        let nonce_str = self.common_state().fee_op_nonce.to_string();
-        let nonce_buf = ManagedBuffer::<StaticApi>::from(&nonce_str);
-
-        let fee_hash = fee.generate_hash();
-
-        let mut bytes = Vec::with_capacity(fee_hash.len() + nonce_buf.len());
-        bytes.extend_from_slice(&fee_hash.to_vec());
-        bytes.extend_from_slice(&nonce_buf.to_vec());
-
-        let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&bytes));
-        let operations_hashes =
-            MultiValueEncoded::from(ManagedVec::from(vec![fee_hash.clone(), nonce_buf]));
-
-        self.register_operation(shard, &hash_of_hashes, operations_hashes)
-            .await;
-
-        self.set_fee_after_setup_phase(hash_of_hashes, fee, shard)
-            .await;
-        self.common_state().set_fee_status_for_shard(shard, true);
     }
 }

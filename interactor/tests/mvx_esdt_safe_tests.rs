@@ -106,7 +106,7 @@ async fn test_deposit_max_bridged_amount_exceeded() {
         .await;
 
     chain_interactor.check_user_balance_unchanged().await;
-    chain_interactor.check_all_contracts_empty(SHARD_0).await;
+    chain_interactor.check_contracts_empty(SHARD_0).await;
 
     chain_interactor
         .update_configuration_after_setup_phase(
@@ -146,7 +146,7 @@ async fn test_deposit_nothing_to_transfer() {
         .await;
 
     chain_interactor.check_user_balance_unchanged().await;
-    chain_interactor.check_all_contracts_empty(SHARD_0).await;
+    chain_interactor.check_contracts_empty(SHARD_0).await;
 }
 
 /// ### TEST
@@ -192,7 +192,7 @@ async fn test_deposit_too_many_tokens_no_fee() {
         .await;
 
     chain_interactor.check_user_balance_unchanged().await;
-    chain_interactor.check_all_contracts_empty(SHARD_0).await;
+    chain_interactor.check_contracts_empty(SHARD_0).await;
 }
 
 /// ### TEST
@@ -299,7 +299,7 @@ async fn test_deposit_gas_limit_too_high_no_fee() {
         .await;
 
     chain_interactor.check_user_balance_unchanged().await;
-    chain_interactor.check_all_contracts_empty(shard).await;
+    chain_interactor.check_contracts_empty(shard).await;
 
     chain_interactor
         .update_configuration_after_setup_phase(
@@ -367,7 +367,7 @@ async fn test_deposit_endpoint_banned_no_fee() {
         .await;
 
     chain_interactor.check_user_balance_unchanged().await;
-    chain_interactor.check_all_contracts_empty(SHARD_0).await;
+    chain_interactor.check_contracts_empty(SHARD_0).await;
 
     chain_interactor
         .update_configuration_after_setup_phase(
@@ -394,7 +394,7 @@ async fn test_deposit_fee_enabled() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
 
     let fee = chain_interactor.create_standard_fee();
-    chain_interactor.set_fee_common(fee.clone(), SHARD_0).await;
+    chain_interactor.set_fee(fee.clone(), SHARD_0).await;
 
     let fee_amount = BigUint::from(PER_TRANSFER) + (BigUint::from(GAS_LIMIT) * PER_GAS);
 
@@ -466,7 +466,7 @@ async fn test_deposit_transfer_data_only_with_fee_nothing_to_transfer() {
 
     let fee = chain_interactor.create_standard_fee();
 
-    chain_interactor.set_fee_common(fee, SHARD_0).await;
+    chain_interactor.set_fee(fee, SHARD_0).await;
 
     let gas_limit = 1000u64;
     let function = ManagedBuffer::<StaticApi>::from(TESTING_SC_ENDPOINT);
@@ -488,7 +488,7 @@ async fn test_deposit_transfer_data_only_with_fee_nothing_to_transfer() {
         .await;
 
     chain_interactor.check_user_balance_unchanged().await;
-    chain_interactor.check_all_contracts_empty(SHARD_0).await;
+    chain_interactor.check_contracts_empty(SHARD_0).await;
 }
 
 /// ### TEST
@@ -527,7 +527,7 @@ async fn test_deposit_only_transfer_data_no_fee() {
         .await;
 
     chain_interactor.check_user_balance_unchanged().await;
-    chain_interactor.check_all_contracts_empty(SHARD_0).await;
+    chain_interactor.check_contracts_empty(SHARD_0).await;
 }
 
 /// ### TEST
@@ -599,7 +599,7 @@ async fn test_execute_operation_no_operation_registered() {
     //     .await;
 
     chain_interactor.check_user_balance_unchanged().await;
-    chain_interactor.check_all_contracts_empty(SHARD_0).await;
+    chain_interactor.check_contracts_empty(SHARD_0).await;
 }
 
 /// ### TEST
@@ -791,5 +791,5 @@ async fn test_execute_operation_only_transfer_data_no_fee() {
         .await;
 
     chain_interactor.check_user_balance_unchanged().await;
-    chain_interactor.check_all_contracts_empty(SHARD_0).await;
+    chain_interactor.check_contracts_empty(SHARD_0).await;
 }
