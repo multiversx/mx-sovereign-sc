@@ -336,7 +336,7 @@ pub trait ExecuteModule:
         output_payments: &ManagedVec<OperationEsdtPayment<Self::Api>>,
         operation: &Operation<Self::Api>,
     ) {
-        if output_payments.len() == 0 {
+        if output_payments.is_empty() {
             return;
         }
 
