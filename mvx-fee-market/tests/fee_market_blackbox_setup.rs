@@ -15,7 +15,6 @@ use common_test_setup::{
         SECOND_TEST_TOKEN, USER_ADDRESS,
     },
 };
-use mvx_fee_market::__endpoints_3__::set_fee;
 use proxies::mvx_fee_market_proxy::MvxFeeMarketProxy;
 use structs::fee::{
     AddUsersToWhitelistOperation, DistributeFeesOperation, FeeStruct, FeeType, RemoveFeeOperation,
