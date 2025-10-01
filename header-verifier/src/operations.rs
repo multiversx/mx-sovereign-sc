@@ -169,7 +169,8 @@ pub trait HeaderVerifierOperationsModule:
             return OptionalValue::Some(CALLER_NOT_FROM_CURRENT_SOVEREIGN.into());
         }
 
-        if operation_nonce != self.last_operation_nonce().get() + 1 {
+        let last_nonce = self.last_operation_nonce().get();
+        if operation_nonce <= last_nonce {
             return OptionalValue::Some(INCORRECT_OPERATION_NONCE.into());
         }
 

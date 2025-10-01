@@ -352,7 +352,7 @@ fn test_lock_operation_not_registered() {
         CHAIN_CONFIG_ADDRESS,
         &operation.bridge_operation_hash,
         &operation_1,
-        0,
+        1,
         Some(CURRENT_OPERATION_NOT_REGISTERED),
     );
 }
@@ -427,11 +427,15 @@ fn test_lock_operation() {
 
     state.register_operations(&signature, operation.clone(), bitmap, 0, None);
 
+    state.assert_last_operation_nonce(1);
+
+    let expected_operation_nonce = state.next_operation_nonce();
+
     state.lock_operation_hash(
         CHAIN_CONFIG_ADDRESS,
         &operation.bridge_operation_hash,
         &operation_1,
-        0,
+        expected_operation_nonce,
         None,
     );
 
@@ -461,7 +465,7 @@ fn test_lock_operation() {
 /// H-VERIFIER_LOCK_OPERATION_FAIL
 ///
 /// ### ACTION
-/// Call 'lock_operation_hash()' with an operation nonce higher than the last recorded nonce
+/// Call 'lock_operation_hash()' with a stale operation nonce value
 ///
 /// ### EXPECTED
 /// Error: INCORRECT_OPERATION_NONCE
@@ -497,20 +501,15 @@ fn test_lock_operation_incorrect_nonce_rejected() {
 
     state.register_operations(&signature, operation.clone(), bitmap, 0, None);
 
-    state
-        .common_setup
-        .world
-        .query()
-        .to(HEADER_VERIFIER_ADDRESS)
-        .whitebox(header_verifier::contract_obj, |sc| {
-            assert_eq!(sc.last_operation_nonce().get(), 1);
-        });
+    state.assert_last_operation_nonce(1);
+
+    let stale_operation_nonce = state.last_operation_nonce();
 
     state.lock_operation_hash(
         CHAIN_CONFIG_ADDRESS,
         &operation.bridge_operation_hash,
         &operation_hash,
-        2,
+        stale_operation_nonce,
         Some(INCORRECT_OPERATION_NONCE),
     );
 }
@@ -519,7 +518,7 @@ fn test_lock_operation_incorrect_nonce_rejected() {
 /// H-VERIFIER_LOCK_OPERATION_OK
 ///
 /// ### ACTION
-/// Call 'lock_operation_hash()' with the current last operation nonce value
+/// Call 'lock_operation_hash()' with the next expected operation nonce value
 ///
 /// ### EXPECTED
 /// The operation hash is locked successfully
@@ -555,11 +554,15 @@ fn test_lock_operation_accepts_current_nonce() {
 
     state.register_operations(&signature, operation.clone(), bitmap, 0, None);
 
+    state.assert_last_operation_nonce(1);
+
+    let expected_operation_nonce = state.next_operation_nonce();
+
     state.lock_operation_hash(
         CHAIN_CONFIG_ADDRESS,
         &operation.bridge_operation_hash,
         &operation_hash,
-        1,
+        expected_operation_nonce,
         None,
     );
 
@@ -620,11 +623,15 @@ fn test_lock_operation_hash_already_locked() {
 
     state.register_operations(&signature, operation.clone(), bitmap, 0, None);
 
+    state.assert_last_operation_nonce(1);
+
+    let expected_operation_nonce = state.next_operation_nonce();
+
     state.lock_operation_hash(
         CHAIN_CONFIG_ADDRESS,
         &operation.bridge_operation_hash,
         &operation_1,
-        0,
+        expected_operation_nonce,
         None,
     );
 
@@ -653,7 +660,7 @@ fn test_lock_operation_hash_already_locked() {
         CHAIN_CONFIG_ADDRESS,
         &operation.bridge_operation_hash,
         &operation_1,
-        0,
+        expected_operation_nonce,
         Some(CURRENT_OPERATION_ALREADY_IN_EXECUTION),
     );
 }
