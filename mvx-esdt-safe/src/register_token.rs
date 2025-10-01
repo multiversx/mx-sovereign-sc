@@ -58,17 +58,13 @@ pub trait RegisterTokenModule:
             return;
         }
 
-        self.lock_operation_hash_wrapper(
+        if let Some(lock_operation_error) = self.lock_operation_hash_wrapper(
             &hash_of_hashes,
             &token_hash,
             register_token_operation.data.op_nonce,
-        )
-        .map_or_else(
-            || {},
-            |lock_operation_error| {
-                self.complete_operation(&hash_of_hashes, &token_hash, Some(lock_operation_error));
-            },
-        );
+        ) {
+            self.complete_operation(&hash_of_hashes, &token_hash, Some(lock_operation_error));
+        };
 
         let contract_balance = self
             .blockchain()
