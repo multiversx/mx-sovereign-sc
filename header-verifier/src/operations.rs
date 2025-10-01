@@ -64,6 +64,7 @@ pub trait HeaderVerifierOperationsModule:
         }
 
         hash_of_hashes_history_mapper.insert(hash_of_hashes);
+        self.last_operation_nonce().update(|nonce| *nonce += 1);
     }
 
     #[endpoint(changeValidatorSet)]
