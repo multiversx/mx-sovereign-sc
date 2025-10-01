@@ -28,6 +28,7 @@ use structs::{
 
 pub struct MvxEsdtSafeTestState {
     pub common_setup: BaseSetup,
+    next_operation_nonce: u64,
 }
 
 impl MvxEsdtSafeTestState {
@@ -60,7 +61,19 @@ impl MvxEsdtSafeTestState {
 
         let common_setup = BaseSetup::new(account_setups);
 
-        Self { common_setup }
+        Self {
+            common_setup,
+            next_operation_nonce: 2,
+        }
+    }
+
+    pub fn allocate_operation_nonce(&mut self) -> u64 {
+        let nonce = self.next_operation_nonce;
+        self.next_operation_nonce = self
+            .next_operation_nonce
+            .checked_add(1)
+            .expect("operation nonce overflow");
+        nonce
     }
 
     pub fn deploy_contract_with_roles(&mut self, fee: Option<FeeStruct<StaticApi>>) -> &mut Self {

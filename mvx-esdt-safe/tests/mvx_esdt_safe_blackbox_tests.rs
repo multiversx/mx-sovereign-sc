@@ -108,13 +108,15 @@ fn test_register_token_invalid_type() {
     let num_decimals = 3;
     let token_ticker = FIRST_TEST_TOKEN.as_str();
 
+    let operation_nonce = state.allocate_operation_nonce();
+
     let register_token_args = RegisterTokenOperation {
         token_id: EgldOrEsdtTokenIdentifier::esdt(sov_token_id.as_str()),
         token_type,
         token_display_name: token_display_name.into(),
         token_ticker: token_ticker.into(),
         num_decimals,
-        data: OperationData::new(0u64, USER_ADDRESS.to_managed_address(), None),
+        data: OperationData::new(operation_nonce, USER_ADDRESS.to_managed_address(), None),
     };
 
     let token_hash = register_token_args.generate_hash();
@@ -175,13 +177,15 @@ fn test_register_token_invalid_type_with_prefix() {
     let num_decimals = 3;
     let token_ticker = FIRST_TEST_TOKEN.as_str();
 
+    let operation_nonce = state.allocate_operation_nonce();
+
     let register_token_args = RegisterTokenOperation {
         token_id: EgldOrEsdtTokenIdentifier::esdt(sov_token_id),
         token_type,
         token_display_name: token_display_name.into(),
         token_ticker: token_ticker.into(),
         num_decimals,
-        data: OperationData::new(0u64, USER_ADDRESS.to_managed_address(), None),
+        data: OperationData::new(operation_nonce, USER_ADDRESS.to_managed_address(), None),
     };
 
     let token_hash = register_token_args.generate_hash();
@@ -241,13 +245,15 @@ fn test_register_token_not_enough_egld() {
     let num_decimals = 3;
     let token_ticker = FIRST_TEST_TOKEN.as_str();
 
+    let operation_nonce = state.allocate_operation_nonce();
+
     let register_token_args = RegisterTokenOperation {
         token_id: EgldOrEsdtTokenIdentifier::esdt(sov_token_id),
         token_type,
         token_display_name: token_display_name.into(),
         token_ticker: token_ticker.into(),
         num_decimals,
-        data: OperationData::new(0u64, USER_ADDRESS.to_managed_address(), None),
+        data: OperationData::new(operation_nonce, USER_ADDRESS.to_managed_address(), None),
     };
 
     let token_hash = register_token_args.generate_hash();
@@ -296,13 +302,15 @@ fn test_register_token_fungible_token() {
     let token_ticker = FIRST_TEST_TOKEN.as_str();
     let num_decimals = 3;
 
+    let operation_nonce = state.allocate_operation_nonce();
+
     let register_token_args = RegisterTokenOperation {
         token_id: EgldOrEsdtTokenIdentifier::esdt(sov_token_id),
         token_type,
         token_display_name: token_display_name.into(),
         token_ticker: token_ticker.into(),
         num_decimals,
-        data: OperationData::new(0u64, USER_ADDRESS.to_managed_address(), None),
+        data: OperationData::new(operation_nonce, USER_ADDRESS.to_managed_address(), None),
     };
 
     let token_hash = register_token_args.generate_hash();
@@ -355,13 +363,15 @@ fn test_register_token_nonfungible_token() {
     let num_decimals = 0;
     let token_ticker = FIRST_TEST_TOKEN.as_str();
 
+    let operation_nonce = state.allocate_operation_nonce();
+
     let register_token_args = RegisterTokenOperation {
         token_id: EgldOrEsdtTokenIdentifier::esdt(sov_token_id),
         token_type,
         token_display_name: token_display_name.into(),
         token_ticker: token_ticker.into(),
         num_decimals,
-        data: OperationData::new(0u64, USER_ADDRESS.to_managed_address(), None),
+        data: OperationData::new(operation_nonce, USER_ADDRESS.to_managed_address(), None),
     };
 
     let token_hash = register_token_args.generate_hash();
@@ -1342,13 +1352,15 @@ fn test_register_token_fungible_token_with_prefix() {
     let token_ticker = FIRST_TEST_TOKEN.as_str();
     let num_decimals = 3;
 
+    let operation_nonce = state.allocate_operation_nonce();
+
     let register_token_args = RegisterTokenOperation {
         token_id: EgldOrEsdtTokenIdentifier::esdt(sov_token_id),
         token_type,
         token_display_name: token_display_name.into(),
         token_ticker: token_ticker.into(),
         num_decimals,
-        data: OperationData::new(0u64, USER_ADDRESS.to_managed_address(), None),
+        data: OperationData::new(operation_nonce, USER_ADDRESS.to_managed_address(), None),
     };
 
     let token_hash = register_token_args.generate_hash();
@@ -1401,13 +1413,15 @@ fn test_register_token_fungible_token_no_prefix() {
     let token_ticker = FIRST_TEST_TOKEN.as_str();
     let num_decimals = 3;
 
+    let operation_nonce = state.allocate_operation_nonce();
+
     let register_token_args = RegisterTokenOperation {
         token_id: EgldOrEsdtTokenIdentifier::esdt(sov_token_id),
         token_type,
         token_display_name: token_display_name.into(),
         token_ticker: token_ticker.into(),
         num_decimals,
-        data: OperationData::new(0u64, USER_ADDRESS.to_managed_address(), None),
+        data: OperationData::new(operation_nonce, USER_ADDRESS.to_managed_address(), None),
     };
 
     let token_hash = register_token_args.generate_hash();
@@ -1467,13 +1481,15 @@ fn test_register_token_non_fungible_token_dynamic() {
     let token_ticker = FIRST_TEST_TOKEN.as_str();
     let num_decimals = 3;
 
+    let operation_nonce = state.allocate_operation_nonce();
+
     let register_token_args = RegisterTokenOperation {
         token_id: EgldOrEsdtTokenIdentifier::esdt(sov_token_id),
         token_type,
         token_display_name: token_display_name.into(),
         token_ticker: token_ticker.into(),
         num_decimals,
-        data: OperationData::new(0u64, USER_ADDRESS.to_managed_address(), None),
+        data: OperationData::new(operation_nonce, USER_ADDRESS.to_managed_address(), None),
     };
 
     let token_hash = register_token_args.generate_hash();
@@ -1586,7 +1602,10 @@ fn test_execute_operation_no_chain_config_registered() {
         EsdtTokenData::default(),
     );
 
-    let operation_data = OperationData::new(1, OWNER_ADDRESS.to_managed_address(), None);
+    let operation_nonce = state.allocate_operation_nonce();
+
+    let operation_data =
+        OperationData::new(operation_nonce, OWNER_ADDRESS.to_managed_address(), None);
 
     let operation = Operation::new(
         TESTING_SC_ADDRESS.to_managed_address(),
@@ -1630,7 +1649,10 @@ fn test_execute_operation_no_esdt_safe_registered() {
         EsdtTokenData::default(),
     );
 
-    let operation_data = OperationData::new(1, OWNER_ADDRESS.to_managed_address(), None);
+    let operation_nonce = state.allocate_operation_nonce();
+
+    let operation_data =
+        OperationData::new(operation_nonce, OWNER_ADDRESS.to_managed_address(), None);
 
     let operation = Operation::new(
         TESTING_SC_ADDRESS.to_managed_address(),
@@ -1689,8 +1711,13 @@ fn test_execute_operation_success() {
 
     let transfer_data = TransferData::new(gas_limit, function, args);
 
-    let operation_data =
-        OperationData::new(1, OWNER_ADDRESS.to_managed_address(), Some(transfer_data));
+    let operation_nonce = state.allocate_operation_nonce();
+
+    let operation_data = OperationData::new(
+        operation_nonce,
+        OWNER_ADDRESS.to_managed_address(),
+        Some(transfer_data),
+    );
 
     let operation = Operation::new(
         TESTING_SC_ADDRESS.to_managed_address(),
@@ -1784,8 +1811,13 @@ fn test_execute_operation_with_native_token_success() {
 
     let transfer_data = TransferData::new(gas_limit, function, args);
 
-    let operation_data =
-        OperationData::new(1, OWNER_ADDRESS.to_managed_address(), Some(transfer_data));
+    let operation_nonce = state.allocate_operation_nonce();
+
+    let operation_data = OperationData::new(
+        operation_nonce,
+        OWNER_ADDRESS.to_managed_address(),
+        Some(transfer_data),
+    );
 
     let operation = Operation::new(
         TESTING_SC_ADDRESS.to_managed_address(),
@@ -1879,7 +1911,10 @@ fn test_execute_operation_burn_mechanism_without_deposit_cannot_subtract() {
         token_data,
     );
 
-    let operation_data = OperationData::new(1, OWNER_ADDRESS.to_managed_address(), None);
+    let operation_nonce = state.allocate_operation_nonce();
+
+    let operation_data =
+        OperationData::new(operation_nonce, OWNER_ADDRESS.to_managed_address(), None);
 
     let operation = Operation::new(
         TESTING_SC_ADDRESS.to_managed_address(),
@@ -1967,8 +2002,13 @@ fn test_execute_operation_only_transfer_data_no_fee() {
 
     let transfer_data = TransferData::new(gas_limit, function, args);
 
-    let operation_data =
-        OperationData::new(1, OWNER_ADDRESS.to_managed_address(), Some(transfer_data));
+    let operation_nonce = state.allocate_operation_nonce();
+
+    let operation_data = OperationData::new(
+        operation_nonce,
+        OWNER_ADDRESS.to_managed_address(),
+        Some(transfer_data),
+    );
 
     let operation = Operation::new(
         TESTING_SC_ADDRESS.to_managed_address(),
@@ -2052,7 +2092,10 @@ fn test_execute_operation_success_burn_mechanism() {
         token_data.clone(),
     );
 
-    let operation_data = OperationData::new(0, OWNER_ADDRESS.to_managed_address(), None);
+    let operation_nonce = state.allocate_operation_nonce();
+
+    let operation_data =
+        OperationData::new(operation_nonce, OWNER_ADDRESS.to_managed_address(), None);
 
     let operation = Operation::new(
         TESTING_SC_ADDRESS.to_managed_address(),
@@ -2189,7 +2232,12 @@ fn test_deposit_execute_switch_mechanism() {
         execute_trusted_token_payment_token_data,
     );
 
-    let operation_one_data = OperationData::new(0, OWNER_ADDRESS.to_managed_address(), None);
+    let operation_one_nonce = state.allocate_operation_nonce();
+    let operation_one_data = OperationData::new(
+        operation_one_nonce,
+        OWNER_ADDRESS.to_managed_address(),
+        None,
+    );
     let operation_one = Operation::new(
         TESTING_SC_ADDRESS.to_managed_address(),
         vec![execute_trusted_token_payment.clone()].into(),
@@ -2210,7 +2258,12 @@ fn test_deposit_execute_switch_mechanism() {
         None,
     );
 
-    let operation_two_data = OperationData::new(2, OWNER_ADDRESS.to_managed_address(), None);
+    let operation_two_nonce = state.allocate_operation_nonce();
+    let operation_two_data = OperationData::new(
+        operation_two_nonce,
+        OWNER_ADDRESS.to_managed_address(),
+        None,
+    );
     let operation_two = Operation::new(
         TESTING_SC_ADDRESS.to_managed_address(),
         vec![execute_trusted_token_payment.clone()].into(),
@@ -2440,8 +2493,13 @@ fn test_execute_operation_no_payments() {
 
     let transfer_data = TransferData::new(gas_limit, function, args);
 
-    let operation_data =
-        OperationData::new(1, OWNER_ADDRESS.to_managed_address(), Some(transfer_data));
+    let operation_nonce = state.allocate_operation_nonce();
+
+    let operation_data = OperationData::new(
+        operation_nonce,
+        OWNER_ADDRESS.to_managed_address(),
+        Some(transfer_data),
+    );
 
     let operation = Operation::new(
         TESTING_SC_ADDRESS.to_managed_address(),
@@ -2529,8 +2587,13 @@ fn test_execute_operation_no_payments_failed_event() {
     let args =
         ManagedVec::<StaticApi, ManagedBuffer<StaticApi>>::from(vec![ManagedBuffer::from("1")]);
     let transfer_data = TransferData::new(gas_limit, function, args);
-    let operation_data =
-        OperationData::new(0, OWNER_ADDRESS.to_managed_address(), Some(transfer_data));
+    let operation_nonce = state.allocate_operation_nonce();
+
+    let operation_data = OperationData::new(
+        operation_nonce,
+        OWNER_ADDRESS.to_managed_address(),
+        Some(transfer_data),
+    );
     let operation = Operation::new(
         TESTING_SC_ADDRESS.to_managed_address(),
         ManagedVec::new(),
@@ -2763,11 +2826,13 @@ fn test_update_config_setup_phase_not_completed() {
         max_bridged_token_amounts: ManagedVec::new(),
     };
 
+    let setup_phase_nonce = state.allocate_operation_nonce();
+
     state.update_esdt_safe_config(
         &ManagedBuffer::new(),
         UpdateEsdtSafeConfigOperation {
             esdt_safe_config,
-            nonce: 0,
+            nonce: setup_phase_nonce,
         },
         Some(EXECUTED_BRIDGE_OP_EVENT),
         Some(SETUP_PHASE_NOT_COMPLETED),
@@ -2800,11 +2865,13 @@ fn test_update_config_operation_not_registered() {
         max_bridged_token_amounts: ManagedVec::new(),
     };
 
+    let not_registered_nonce = state.allocate_operation_nonce();
+
     state.update_esdt_safe_config(
         &ManagedBuffer::new(),
         UpdateEsdtSafeConfigOperation {
             esdt_safe_config,
-            nonce: 0,
+            nonce: not_registered_nonce,
         },
         Some(EXECUTED_BRIDGE_OP_EVENT),
         Some(CURRENT_OPERATION_NOT_REGISTERED),
@@ -2833,9 +2900,11 @@ fn test_update_config_invalid_config() {
         max_tx_gas_limit: MAX_GAS_PER_TRANSACTION + 1,
         ..EsdtSafeConfig::default_config()
     };
+    let update_config_nonce = state.allocate_operation_nonce();
+
     let update_config_operation = UpdateEsdtSafeConfigOperation {
         esdt_safe_config: esdt_safe_config.clone(),
-        nonce: 0,
+        nonce: update_config_nonce,
     };
 
     let config_hash = update_config_operation.generate_hash();
@@ -2900,9 +2969,10 @@ fn test_update_config() {
         max_tx_gas_limit: 100_000,
         ..EsdtSafeConfig::default_config()
     };
+    let update_config_nonce = state.allocate_operation_nonce();
     let update_config_operation = UpdateEsdtSafeConfigOperation {
         esdt_safe_config,
-        nonce: 0,
+        nonce: update_config_nonce,
     };
 
     let config_hash = update_config_operation.generate_hash();
