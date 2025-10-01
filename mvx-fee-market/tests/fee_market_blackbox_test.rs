@@ -17,6 +17,7 @@ use multiversx_sc::{
 use multiversx_sc_scenario::{
     api::StaticApi, multiversx_chain_vm::crypto_functions::sha256, ScenarioTxWhitebox,
 };
+use structs::fee::{RemoveFeeOperation, SetFeeOperation};
 use structs::{
     fee::{
         AddUsersToWhitelistOperation, AddressPercentagePair, DistributeFeesOperation, FeeStruct,
@@ -223,7 +224,11 @@ fn test_set_fee() {
         },
     };
 
-    let fee_hash = fee.generate_hash();
+    let register_fee_operation = SetFeeOperation {
+        fee_struct: fee.clone(),
+        nonce: 0,
+    };
+    let fee_hash = register_fee_operation.generate_hash();
     let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&fee_hash.to_vec()));
 
     let (signature, public_keys) = state.common_setup.get_sig_and_pub_keys(1, &hash_of_hashes);
@@ -336,7 +341,11 @@ fn test_remove_fee_register_separate_operations() {
             per_gas: BigUint::default(),
         },
     };
-    let register_fee_hash = fee.generate_hash();
+    let register_fee_operation = SetFeeOperation {
+        fee_struct: fee.clone(),
+        nonce: 0,
+    };
+    let register_fee_hash = register_fee_operation.generate_hash();
     let register_fee_hash_of_hashes =
         ManagedBuffer::new_from_bytes(&sha256(&register_fee_hash.to_vec()));
 
@@ -350,14 +359,13 @@ fn test_remove_fee_register_separate_operations() {
         None,
     );
 
-    let remove_fee_hash = sha256(
-        &FIRST_TEST_TOKEN
-            .to_token_identifier::<StaticApi>()
-            .as_managed_buffer()
-            .to_vec(),
-    );
-
-    let remove_fee_hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&remove_fee_hash));
+    let remove_fee_hash = RemoveFeeOperation {
+        token_id: EgldOrEsdtTokenIdentifier::esdt(FIRST_TEST_TOKEN),
+        nonce: 0,
+    };
+    let remove_fee_hash = remove_fee_hash.generate_hash();
+    let remove_fee_hash_of_hashes =
+        ManagedBuffer::new_from_bytes(&sha256(&remove_fee_hash.to_vec()));
 
     let (signature_remove_fee, public_keys_remove_fee) = state
         .common_setup
@@ -425,7 +433,7 @@ fn test_remove_fee_register_separate_operations() {
         &remove_fee_hash_of_hashes,
         bitmap,
         epoch,
-        MultiValueEncoded::from_iter(vec![ManagedBuffer::new_from_bytes(&remove_fee_hash)]),
+        MultiValueEncoded::from_iter(vec![remove_fee_hash]),
     );
 
     state.remove_fee(
@@ -665,7 +673,7 @@ fn test_distribute_fees_percentage_under_limit() {
 
     let operation = DistributeFeesOperation {
         pairs: ManagedVec::from_iter(vec![address_pair.clone()]),
-        nonce: 1,
+        nonce: 0,
     };
 
     let operation_hash = operation.generate_hash();
