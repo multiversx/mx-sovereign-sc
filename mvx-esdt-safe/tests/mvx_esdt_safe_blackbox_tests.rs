@@ -12,7 +12,7 @@ use error_messages::{
     INVALID_TYPE, MAX_GAS_LIMIT_PER_TX_EXCEEDED, MINT_AND_BURN_ROLES_NOT_FOUND,
     NATIVE_TOKEN_ALREADY_REGISTERED, NATIVE_TOKEN_NOT_REGISTERED, NOTHING_TO_TRANSFER,
     NOT_ENOUGH_EGLD_FOR_REGISTER, PAYMENT_DOES_NOT_COVER_FEE, SETUP_PHASE_NOT_COMPLETED,
-    TOKEN_ID_IS_NOT_TRUSTED, TOKEN_IS_FROM_SOVEREIGN, TOO_MANY_TOKENS,
+    TOKEN_ID_IS_NOT_TRUSTED, TOKEN_IS_FROM_SOVEREIGN, TOO_MANY_TOKENS, INVALID_FUNCTION_NOT_FOUND
 };
 use header_verifier::storage::HeaderVerifierStorageModule;
 use multiversx_sc::chain_core::EGLD_000000_TOKEN_IDENTIFIER;
@@ -2580,7 +2580,7 @@ fn test_execute_operation_no_payments_failed_event() {
         &hash_of_hashes,
         &operation,
         Some(EXECUTED_BRIDGE_OP_EVENT),
-        Some("invalid function (not found)"),
+        Some(INVALID_FUNCTION_NOT_FOUND),
     );
 
     state
@@ -2674,7 +2674,7 @@ fn test_execute_operation_native_token_failed_event() {
         &hash_of_hashes,
         &operation,
         Some(EXECUTED_BRIDGE_OP_EVENT),
-        Some("invalid function (not found)"),
+        Some(INVALID_FUNCTION_NOT_FOUND),
     );
 
     state
