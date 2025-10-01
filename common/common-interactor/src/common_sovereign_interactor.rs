@@ -1409,19 +1409,20 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             return;
         }
         self.common_state().fee_op_nonce += 1;
-        let nonce_str = self.common_state().fee_op_nonce.to_string();
-        let nonce_buf = ManagedBuffer::<StaticApi>::from(&nonce_str);
+        let nonce = self.common_state().fee_op_nonce;
 
         let fee_token = self.state().get_fee_token_identifier();
-        let token_hash = fee_token.generate_hash();
 
-        let mut bytes = Vec::with_capacity(token_hash.len() + nonce_buf.len());
-        bytes.extend_from_slice(&token_hash.to_vec());
-        bytes.extend_from_slice(&nonce_buf.to_vec());
+        let operation: RemoveFeeOperation<StaticApi> = RemoveFeeOperation {
+            token_id: fee_token.clone(),
+            nonce,
+        };
 
-        let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&bytes));
+        let operation_hash = operation.generate_hash();
+        let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&operation_hash.to_vec()));
+
         let operations_hashes =
-            MultiValueEncoded::from(ManagedVec::from(vec![token_hash.clone(), nonce_buf]));
+            MultiValueEncoded::from(ManagedVec::from(vec![operation_hash.clone()]));
 
         self.register_operation(shard, &hash_of_hashes, operations_hashes)
             .await;
@@ -1433,18 +1434,18 @@ pub trait CommonInteractorTrait: InteractorHelpers {
 
     async fn set_fee_common(&mut self, fee: FeeStruct<StaticApi>, shard: u32) {
         self.common_state().fee_op_nonce += 1;
-        let nonce_str = self.common_state().fee_op_nonce.to_string();
-        let nonce_buf = ManagedBuffer::<StaticApi>::from(&nonce_str);
+        let nonce = self.common_state().fee_op_nonce;
 
-        let fee_hash = fee.generate_hash();
+        let operation: SetFeeOperation<StaticApi> = SetFeeOperation {
+            fee_struct: fee.clone(),
+            nonce,
+        };
 
-        let mut bytes = Vec::with_capacity(fee_hash.len() + nonce_buf.len());
-        bytes.extend_from_slice(&fee_hash.to_vec());
-        bytes.extend_from_slice(&nonce_buf.to_vec());
+        let operation_hash = operation.generate_hash();
+        let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&operation_hash.to_vec()));
 
-        let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&bytes));
         let operations_hashes =
-            MultiValueEncoded::from(ManagedVec::from(vec![fee_hash.clone(), nonce_buf]));
+            MultiValueEncoded::from(ManagedVec::from(vec![operation_hash.clone()]));
 
         self.register_operation(shard, &hash_of_hashes, operations_hashes)
             .await;

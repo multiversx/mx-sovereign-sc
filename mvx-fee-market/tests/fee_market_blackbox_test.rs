@@ -17,7 +17,6 @@ use multiversx_sc::{
 use multiversx_sc_scenario::{
     api::StaticApi, multiversx_chain_vm::crypto_functions::sha256, ScenarioTxWhitebox,
 };
-use mvx_fee_market::__endpoints_3__::remove_fee;
 use structs::fee::{RemoveFeeOperation, SetFeeOperation};
 use structs::{
     fee::{
@@ -227,12 +226,11 @@ fn test_set_fee() {
         },
     };
 
-    let set_fee_operation = SetFeeOperation {
+    let register_fee_operation = SetFeeOperation {
         fee_struct,
         nonce: 0,
     };
-
-    let fee_hash = set_fee_operation.generate_hash();
+    let fee_hash = register_fee_operation.generate_hash();
     let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&fee_hash.to_vec()));
 
     let (signature, public_keys) = state.common_setup.get_sig_and_pub_keys(1, &hash_of_hashes);
@@ -346,11 +344,11 @@ fn test_remove_fee_register_separate_operations() {
             per_gas: BigUint::default(),
         },
     };
-    let set_fee_operation = SetFeeOperation {
-        fee_struct,
+    let register_fee_operation = SetFeeOperation {
+        fee_struct: fee.clone(),
         nonce: 0,
     };
-    let register_fee_hash = set_fee_operation.generate_hash();
+    let register_fee_hash = register_fee_operation.generate_hash();
     let register_fee_hash_of_hashes =
         ManagedBuffer::new_from_bytes(&sha256(&register_fee_hash.to_vec()));
 
@@ -364,12 +362,11 @@ fn test_remove_fee_register_separate_operations() {
         None,
     );
 
-    let remove_fee_operation = RemoveFeeOperation {
-        token_id: EgldOrEsdtTokenIdentifier::from(FIRST_TEST_TOKEN.as_str()),
-        nonce: 1,
+    let remove_fee_hash = RemoveFeeOperation {
+        token_id: EgldOrEsdtTokenIdentifier::esdt(FIRST_TEST_TOKEN),
+        nonce: 0,
     };
-
-    let remove_fee_hash = remove_fee_operation.generate_hash();
+    let remove_fee_hash = remove_fee_hash.generate_hash();
     let remove_fee_hash_of_hashes =
         ManagedBuffer::new_from_bytes(&sha256(&remove_fee_hash.to_vec()));
 
@@ -680,7 +677,7 @@ fn test_distribute_fees_percentage_under_limit() {
 
     let operation = DistributeFeesOperation {
         pairs: ManagedVec::from_iter(vec![address_pair.clone()]),
-        nonce: 1,
+        nonce: 0,
     };
 
     let operation_hash = operation.generate_hash();
