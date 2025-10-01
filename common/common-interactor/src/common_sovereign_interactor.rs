@@ -36,8 +36,8 @@ use proxies::{
 };
 use structs::{
     aliases::{OptionalValueTransferDataTuple, PaymentsVec},
-    configs::{EsdtSafeConfig, SovereignConfig},
-    fee::FeeStruct,
+    configs::{EsdtSafeConfig, SovereignConfig, UpdateEsdtSafeConfigOperation},
+    fee::{FeeStruct, RemoveFeeOperation, SetFeeOperation},
     forge::{ContractInfo, ScArray},
     generate_hash::GenerateHash,
     operation::Operation,
@@ -909,7 +909,8 @@ pub trait CommonInteractorTrait: InteractorHelpers {
     async fn update_esdt_safe_config(
         &mut self,
         hash_of_hashes: ManagedBuffer<StaticApi>,
-        new_config: EsdtSafeConfig<StaticApi>,
+        esdt_safe_config: EsdtSafeConfig<StaticApi>,
+        nonce: u64,
         shard: u32,
     ) {
         let bridge_service = self.get_bridge_service_for_shard(shard).clone();
@@ -922,7 +923,13 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             .to(current_mvx_esdt_safe_address)
             .gas(90_000_000u64)
             .typed(MvxEsdtSafeProxy)
-            .update_esdt_safe_config(hash_of_hashes, new_config)
+            .update_esdt_safe_config(
+                hash_of_hashes,
+                UpdateEsdtSafeConfigOperation {
+                    esdt_safe_config,
+                    nonce,
+                },
+            )
             .returns(ReturnsResultUnmanaged)
             .run()
             .await;
@@ -931,7 +938,8 @@ pub trait CommonInteractorTrait: InteractorHelpers {
     async fn set_fee_after_setup_phase(
         &mut self,
         hash_of_hashes: ManagedBuffer<StaticApi>,
-        fee: FeeStruct<StaticApi>,
+        fee_struct: FeeStruct<StaticApi>,
+        nonce: u64,
         shard: u32,
     ) {
         let bridge_service = self.get_bridge_service_for_shard(shard).clone();
@@ -943,7 +951,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             .to(current_fee_market_address)
             .gas(50_000_000u64)
             .typed(MvxFeeMarketProxy)
-            .set_fee(hash_of_hashes, fee)
+            .set_fee(hash_of_hashes, SetFeeOperation { fee_struct, nonce })
             .returns(ReturnsResultUnmanaged)
             .run()
             .await;
@@ -952,7 +960,8 @@ pub trait CommonInteractorTrait: InteractorHelpers {
     async fn remove_fee_after_setup_phase(
         &mut self,
         hash_of_hashes: ManagedBuffer<StaticApi>,
-        base_token: EgldOrEsdtTokenIdentifier<StaticApi>,
+        token_id: EgldOrEsdtTokenIdentifier<StaticApi>,
+        nonce: u64,
         shard: u32,
     ) {
         let bridge_service = self.get_bridge_service_for_shard(shard).clone();
@@ -964,7 +973,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             .to(current_fee_market_address)
             .gas(50_000_000u64)
             .typed(MvxFeeMarketProxy)
-            .remove_fee(hash_of_hashes, base_token)
+            .remove_fee(hash_of_hashes, RemoveFeeOperation { token_id, nonce })
             .returns(ReturnsResultUnmanaged)
             .run()
             .await;
@@ -1417,7 +1426,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
         self.register_operation(shard, &hash_of_hashes, operations_hashes)
             .await;
 
-        self.remove_fee_after_setup_phase(hash_of_hashes, fee_token, shard)
+        self.remove_fee_after_setup_phase(hash_of_hashes, fee_token, 0, shard)
             .await;
         self.common_state().set_fee_status_for_shard(shard, false);
     }
@@ -1440,7 +1449,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
         self.register_operation(shard, &hash_of_hashes, operations_hashes)
             .await;
 
-        self.set_fee_after_setup_phase(hash_of_hashes, fee, shard)
+        self.set_fee_after_setup_phase(hash_of_hashes, fee, 0, shard)
             .await;
         self.common_state().set_fee_status_for_shard(shard, true);
     }

@@ -7,7 +7,10 @@ use multiversx_sc_snippets::{
 };
 use proxies::mvx_esdt_safe_proxy::MvxEsdtSafeProxy;
 
-use structs::{configs::EsdtSafeConfig, generate_hash::GenerateHash};
+use structs::{
+    configs::{EsdtSafeConfig, UpdateEsdtSafeConfigOperation},
+    generate_hash::GenerateHash,
+};
 
 use common_interactor::interactor_config::Config;
 use common_interactor::interactor_state::State;
@@ -152,12 +155,13 @@ impl MvxEsdtSafeInteract {
     pub async fn update_configuration_after_setup_phase(
         &mut self,
         shard: u32,
-        config: EsdtSafeConfig<StaticApi>,
+        esdt_safe_config: EsdtSafeConfig<StaticApi>,
+        nonce: u64,
         expected_log: Option<&str>,
         expected_log_error: Option<&str>,
     ) {
         let bridge_service = self.get_bridge_service_for_shard(shard);
-        let config_hash = config.generate_hash();
+        let config_hash = esdt_safe_config.generate_hash();
 
         self.common_state().update_config_nonce += 1;
         let nonce_str = self.common_state().update_config_nonce.to_string();
@@ -181,7 +185,13 @@ impl MvxEsdtSafeInteract {
             .to(self.common_state.current_mvx_esdt_safe_contract_address())
             .gas(90_000_000u64)
             .typed(MvxEsdtSafeProxy)
-            .update_esdt_safe_config(hash_of_hashes, config)
+            .update_esdt_safe_config(
+                hash_of_hashes,
+                UpdateEsdtSafeConfigOperation {
+                    esdt_safe_config,
+                    nonce,
+                },
+            )
             .returns(ReturnsHandledOrError::new())
             .returns(ReturnsLogs)
             .run()

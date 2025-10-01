@@ -108,17 +108,17 @@ where
 
     pub fn register_bls_key<
         Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
-        Arg1: ProxyArg<structs::ValidatorData<Env::Api>>,
+        Arg1: ProxyArg<structs::ValidatorOperation<Env::Api>>,
     >(
         self,
         hash_of_hashes: Arg0,
-        validator_data: Arg1,
+        validator_operation: Arg1,
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("registerBlsKey")
             .argument(&hash_of_hashes)
-            .argument(&validator_data)
+            .argument(&validator_operation)
             .original_result()
     }
 
@@ -137,17 +137,17 @@ where
 
     pub fn unregister_bls_key<
         Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
-        Arg1: ProxyArg<structs::ValidatorData<Env::Api>>,
+        Arg1: ProxyArg<structs::ValidatorOperation<Env::Api>>,
     >(
         self,
         hash_of_hashes: Arg0,
-        validator_data: Arg1,
+        validator_operation: Arg1,
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("unregisterBlsKey")
             .argument(&hash_of_hashes)
-            .argument(&validator_data)
+            .argument(&validator_operation)
             .original_result()
     }
 
@@ -223,17 +223,17 @@ where
 
     pub fn update_sovereign_config<
         Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
-        Arg1: ProxyArg<structs::configs::SovereignConfig<Env::Api>>,
+        Arg1: ProxyArg<structs::configs::UpdateSovereignConfigOperation<Env::Api>>,
     >(
         self,
         hash_of_hashes: Arg0,
-        new_config: Arg1,
+        update_config_operation: Arg1,
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("updateSovereignConfig")
             .argument(&hash_of_hashes)
-            .argument(&new_config)
+            .argument(&update_config_operation)
             .original_result()
     }
 }

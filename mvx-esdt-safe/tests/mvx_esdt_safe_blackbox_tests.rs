@@ -2766,6 +2766,7 @@ fn test_update_config_setup_phase_not_completed() {
     state.update_esdt_safe_config(
         &ManagedBuffer::new(),
         new_config,
+        0,
         Some(EXECUTED_BRIDGE_OP_EVENT),
         Some(SETUP_PHASE_NOT_COMPLETED),
     );
@@ -2800,6 +2801,7 @@ fn test_update_config_operation_not_registered() {
     state.update_esdt_safe_config(
         &ManagedBuffer::new(),
         new_config,
+        0,
         Some(EXECUTED_BRIDGE_OP_EVENT),
         Some(CURRENT_OPERATION_NOT_REGISTERED),
     );
@@ -2863,6 +2865,7 @@ fn test_update_config_invalid_config() {
     state.update_esdt_safe_config(
         &hash_of_hashes,
         new_config,
+        0,
         Some(EXECUTED_BRIDGE_OP_EVENT),
         Some(MAX_GAS_LIMIT_PER_TX_EXCEEDED),
     );
@@ -2927,6 +2930,7 @@ fn test_update_config() {
     state.update_esdt_safe_config(
         &hash_of_hashes,
         new_config,
+        0,
         Some(EXECUTED_BRIDGE_OP_EVENT),
         None,
     );

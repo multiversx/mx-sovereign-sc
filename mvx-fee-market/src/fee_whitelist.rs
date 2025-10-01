@@ -29,9 +29,9 @@ pub trait FeeWhitelistModule:
     fn add_users_to_whitelist(
         &self,
         hash_of_hashes: ManagedBuffer,
-        operation: AddUsersToWhitelistOperation<Self::Api>,
+        add_to_whitelist_operation: AddUsersToWhitelistOperation<Self::Api>,
     ) {
-        let operation_hash = operation.generate_hash();
+        let operation_hash = add_to_whitelist_operation.generate_hash();
         if let Some(error_message) = self.validate_operation_hash(&operation_hash) {
             self.complete_operation(&hash_of_hashes, &operation_hash, Some(error_message));
             return;
@@ -45,13 +45,16 @@ pub trait FeeWhitelistModule:
             );
             return;
         }
-        if let Some(lock_operation_error) =
-            self.lock_operation_hash_wrapper(&hash_of_hashes, &operation_hash)
-        {
+        if let Some(lock_operation_error) = self.lock_operation_hash_wrapper(
+            &hash_of_hashes,
+            &operation_hash,
+            add_to_whitelist_operation.nonce,
+        ) {
             self.complete_operation(&hash_of_hashes, &operation_hash, Some(lock_operation_error));
             return;
         }
-        self.users_whitelist().extend(operation.users);
+        self.users_whitelist()
+            .extend(add_to_whitelist_operation.users);
         self.complete_operation(&hash_of_hashes, &operation_hash, None);
     }
 
@@ -75,9 +78,9 @@ pub trait FeeWhitelistModule:
     fn remove_users_from_whitelist(
         &self,
         hash_of_hashes: ManagedBuffer,
-        operation: RemoveUsersFromWhitelistOperation<Self::Api>,
+        remove_from_whitelist_operation: RemoveUsersFromWhitelistOperation<Self::Api>,
     ) {
-        let operation_hash = operation.generate_hash();
+        let operation_hash = remove_from_whitelist_operation.generate_hash();
         if let Some(error_message) = self.validate_operation_hash(&operation_hash) {
             self.complete_operation(&hash_of_hashes, &operation_hash, Some(error_message));
             return;
@@ -90,14 +93,16 @@ pub trait FeeWhitelistModule:
             );
             return;
         }
-        if let Some(lock_operation_error) =
-            self.lock_operation_hash_wrapper(&hash_of_hashes, &operation_hash)
-        {
+        if let Some(lock_operation_error) = self.lock_operation_hash_wrapper(
+            &hash_of_hashes,
+            &operation_hash,
+            remove_from_whitelist_operation.nonce,
+        ) {
             self.complete_operation(&hash_of_hashes, &operation_hash, Some(lock_operation_error));
             return;
         }
 
-        for user in &operation.users {
+        for user in &remove_from_whitelist_operation.users {
             self.users_whitelist().swap_remove(&user);
         }
 

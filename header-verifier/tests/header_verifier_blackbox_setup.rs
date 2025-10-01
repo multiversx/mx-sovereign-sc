@@ -117,6 +117,7 @@ impl HeaderVerifierTestState {
         caller: TestSCAddress,
         hash_of_hashes: &ManagedBuffer<StaticApi>,
         operation_hash: &ManagedBuffer<StaticApi>,
+        operation_nonce: u64,
         expected_error_message: Option<&str>,
     ) {
         let response = self
@@ -126,7 +127,7 @@ impl HeaderVerifierTestState {
             .from(caller)
             .to(HEADER_VERIFIER_ADDRESS)
             .typed(HeaderverifierProxy)
-            .lock_operation_hash(hash_of_hashes, operation_hash)
+            .lock_operation_hash(hash_of_hashes, operation_hash, operation_nonce)
             .returns(ReturnsResultUnmanaged)
             .run();
 

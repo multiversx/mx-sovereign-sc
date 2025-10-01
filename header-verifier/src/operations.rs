@@ -1,6 +1,6 @@
 use error_messages::{
     CALLER_NOT_FROM_CURRENT_SOVEREIGN, CURRENT_OPERATION_ALREADY_IN_EXECUTION,
-    CURRENT_OPERATION_NOT_REGISTERED, HASH_OF_HASHES_DOES_NOT_MATCH,
+    CURRENT_OPERATION_NOT_REGISTERED, HASH_OF_HASHES_DOES_NOT_MATCH, INCORRECT_OPERATION_NONCE,
     OUTGOING_TX_HASH_ALREADY_REGISTERED, SETUP_PHASE_NOT_COMPLETED,
     VALIDATORS_ALREADY_REGISTERED_IN_EPOCH,
 };
@@ -26,7 +26,7 @@ pub trait HeaderVerifierOperationsModule:
     fn register_bridge_operations(
         &self,
         signature: ManagedBuffer,
-        bridge_operations_hash: ManagedBuffer,
+        hash_of_hashes: ManagedBuffer,
         pub_keys_bitmap: ManagedBuffer,
         epoch: u64,
         operations_hashes: MultiValueEncoded<ManagedBuffer>,
@@ -37,23 +37,14 @@ pub trait HeaderVerifierOperationsModule:
 
         let bls_pub_keys_mapper = self.bls_pub_keys(epoch);
 
-        // if !self.is_bitmap_and_bls_same_length(pub_keys_bitmap.len(), bls_pub_keys_mapper.len()) {
-        //     sc_panic!(BITMAP_LEN_DOES_NOT_MATCH_BLS_KEY_LEN);
-        // }
-
         let mut hash_of_hashes_history_mapper = self.hash_of_hashes_history();
 
-        if self
-            .is_hash_of_hashes_registered(&bridge_operations_hash, &hash_of_hashes_history_mapper)
-        {
+        if self.is_hash_of_hashes_registered(&hash_of_hashes, &hash_of_hashes_history_mapper) {
             sc_panic!(OUTGOING_TX_HASH_ALREADY_REGISTERED);
         }
 
         if self
-            .calculate_and_check_transfers_hashes(
-                &bridge_operations_hash,
-                operations_hashes.clone(),
-            )
+            .calculate_and_check_transfers_hashes(&hash_of_hashes, operations_hashes.clone())
             .is_some()
         {
             sc_panic!(HASH_OF_HASHES_DOES_NOT_MATCH);
@@ -62,17 +53,17 @@ pub trait HeaderVerifierOperationsModule:
         self.verify_bls(
             epoch,
             &signature,
-            &bridge_operations_hash,
+            &hash_of_hashes,
             pub_keys_bitmap,
             &ManagedVec::from_iter(bls_pub_keys_mapper.iter()),
         );
 
         for operation_hash in operations_hashes {
-            self.operation_hash_status(&bridge_operations_hash, &operation_hash)
+            self.operation_hash_status(&hash_of_hashes, &operation_hash)
                 .set(OperationHashStatus::NotLocked);
         }
 
-        hash_of_hashes_history_mapper.insert(bridge_operations_hash);
+        hash_of_hashes_history_mapper.insert(hash_of_hashes);
     }
 
     #[endpoint(changeValidatorSet)]
@@ -103,17 +94,8 @@ pub trait HeaderVerifierOperationsModule:
 
             return;
         }
-        let bls_keys_previous_epoch = self.bls_pub_keys(epoch - 1);
-        // if !self.is_bitmap_and_bls_same_length(pub_keys_bitmap.len(), bls_keys_previous_epoch.len())
-        // {
-        //     self.execute_bridge_operation_event(
-        //         &hash_of_hashes,
-        //         &operation_hash,
-        //         Some(BITMAP_LEN_DOES_NOT_MATCH_BLS_KEY_LEN.into()),
-        //     );
 
-        //     return;
-        // }
+        let bls_keys_previous_epoch = self.bls_pub_keys(epoch - 1);
         let mut hash_of_hashes_history_mapper = self.hash_of_hashes_history();
         if self.is_hash_of_hashes_registered(&hash_of_hashes, &hash_of_hashes_history_mapper) {
             self.execute_bridge_operation_event(
@@ -179,9 +161,14 @@ pub trait HeaderVerifierOperationsModule:
         &self,
         hash_of_hashes: ManagedBuffer,
         operation_hash: ManagedBuffer,
+        operation_nonce: u64,
     ) -> OptionalValue<ManagedBuffer> {
         if !self.is_caller_from_current_sovereign() {
             return OptionalValue::Some(CALLER_NOT_FROM_CURRENT_SOVEREIGN.into());
+        }
+
+        if operation_nonce == self.last_operation_nonce().get() + 1 {
+            return OptionalValue::Some(INCORRECT_OPERATION_NONCE.into());
         }
 
         let operation_hash_status_mapper =

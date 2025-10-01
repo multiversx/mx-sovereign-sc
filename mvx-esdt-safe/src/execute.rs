@@ -53,9 +53,11 @@ pub trait ExecuteModule:
             );
             return;
         }
-        if let Some(lock_operation_error) =
-            self.lock_operation_hash_wrapper(&hash_of_hashes, &operation_hash)
-        {
+        if let Some(lock_operation_error) = self.lock_operation_hash_wrapper(
+            &hash_of_hashes,
+            &operation_hash,
+            operation.data.op_nonce,
+        ) {
             self.complete_operation(&hash_of_hashes, &operation_hash, Some(lock_operation_error));
             return;
         }

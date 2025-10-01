@@ -107,7 +107,8 @@ fn test_set_fee_setup_not_completed() {
 
     state.set_fee(
         &ManagedBuffer::new(),
-        &fee,
+        fee,
+        0,
         Some(EXECUTED_BRIDGE_OP_EVENT),
         Some(SETUP_PHASE_NOT_COMPLETED),
     );
@@ -261,7 +262,13 @@ fn test_set_fee() {
         MultiValueEncoded::from_iter(vec![fee_hash]),
     );
 
-    state.set_fee(&hash_of_hashes, &fee, Some(EXECUTED_BRIDGE_OP_EVENT), None);
+    state.set_fee(
+        &hash_of_hashes,
+        fee,
+        0,
+        Some(EXECUTED_BRIDGE_OP_EVENT),
+        None,
+    );
 
     state
         .common_setup
@@ -298,6 +305,7 @@ fn test_remove_fee_setup_phase_not_completed() {
     state.remove_fee(
         &ManagedBuffer::new(),
         FIRST_TEST_TOKEN,
+        0,
         None,
         Some(EXECUTED_BRIDGE_OP_EVENT),
         Some(SETUP_PHASE_NOT_COMPLETED),
@@ -391,7 +399,8 @@ fn test_remove_fee_register_separate_operations() {
 
     state.set_fee(
         &register_fee_hash_of_hashes,
-        &fee,
+        fee,
+        0,
         Some(EXECUTED_BRIDGE_OP_EVENT),
         None,
     );
@@ -422,6 +431,7 @@ fn test_remove_fee_register_separate_operations() {
     state.remove_fee(
         &remove_fee_hash_of_hashes,
         FIRST_TEST_TOKEN,
+        0,
         None,
         Some(EXECUTED_BRIDGE_OP_EVENT),
         None,
@@ -514,7 +524,13 @@ fn test_remove_fee_register_with_one_hash_of_hashes() {
         MultiValueEncoded::from_iter(vec![remove_fee_hash, register_fee_hash]),
     );
 
-    state.set_fee(&hash_of_hashes, &fee, Some(EXECUTED_BRIDGE_OP_EVENT), None);
+    state.set_fee(
+        &hash_of_hashes,
+        fee,
+        0,
+        Some(EXECUTED_BRIDGE_OP_EVENT),
+        None,
+    );
 
     state
         .common_setup
@@ -530,6 +546,7 @@ fn test_remove_fee_register_with_one_hash_of_hashes() {
     state.remove_fee(
         &hash_of_hashes,
         FIRST_TEST_TOKEN,
+        0,
         None,
         Some(EXECUTED_BRIDGE_OP_EVENT),
         None,

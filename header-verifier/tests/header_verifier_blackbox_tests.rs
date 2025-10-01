@@ -352,6 +352,7 @@ fn test_lock_operation_not_registered() {
         CHAIN_CONFIG_ADDRESS,
         &operation.bridge_operation_hash,
         &operation_1,
+        0,
         Some(CURRENT_OPERATION_NOT_REGISTERED),
     );
 }
@@ -380,6 +381,7 @@ fn test_lock_operation_caller_not_from_sovereign() {
         ESDT_SAFE_ADDRESS,
         &operation.bridge_operation_hash,
         &operation_1,
+        0,
         Some(CALLER_NOT_FROM_CURRENT_SOVEREIGN),
     );
 }
@@ -429,6 +431,7 @@ fn test_lock_operation() {
         CHAIN_CONFIG_ADDRESS,
         &operation.bridge_operation_hash,
         &operation_1,
+        0,
         None,
     );
 
@@ -498,6 +501,7 @@ fn test_lock_operation_hash_already_locked() {
         CHAIN_CONFIG_ADDRESS,
         &operation.bridge_operation_hash,
         &operation_1,
+        0,
         None,
     );
 
@@ -526,6 +530,7 @@ fn test_lock_operation_hash_already_locked() {
         CHAIN_CONFIG_ADDRESS,
         &operation.bridge_operation_hash,
         &operation_1,
+        0,
         Some(CURRENT_OPERATION_ALREADY_IN_EXECUTION),
     );
 }

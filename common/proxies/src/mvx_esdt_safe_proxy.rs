@@ -106,17 +106,17 @@ where
 
     pub fn update_esdt_safe_config<
         Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
-        Arg1: ProxyArg<structs::configs::EsdtSafeConfig<Env::Api>>,
+        Arg1: ProxyArg<structs::configs::UpdateEsdtSafeConfigOperation<Env::Api>>,
     >(
         self,
         hash_of_hashes: Arg0,
-        new_config: Arg1,
+        update_config_operation: Arg1,
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("updateEsdtSafeConfig")
             .argument(&hash_of_hashes)
-            .argument(&new_config)
+            .argument(&update_config_operation)
             .original_result()
     }
 
@@ -179,13 +179,13 @@ where
     >(
         self,
         hash_of_hashes: Arg0,
-        token_to_register: Arg1,
+        register_token_operation: Arg1,
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("registerToken")
             .argument(&hash_of_hashes)
-            .argument(&token_to_register)
+            .argument(&register_token_operation)
             .original_result()
     }
 

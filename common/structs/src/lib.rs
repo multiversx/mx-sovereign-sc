@@ -53,7 +53,16 @@ pub struct ValidatorInfo<M: ManagedTypeApi> {
 impl<A: CryptoApi> GenerateHash<A> for ValidatorData<A> {}
 
 #[type_abi]
-#[derive(TopEncode, TopDecode, NestedEncode)]
+#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode)]
+pub struct ValidatorOperation<M: ManagedTypeApi> {
+    pub validator_data: ValidatorData<M>,
+    pub nonce: u64,
+}
+
+impl<A: CryptoApi> GenerateHash<A> for ValidatorOperation<A> {}
+
+#[type_abi]
+#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, Clone)]
 pub struct ValidatorData<M: ManagedTypeApi> {
     pub id: BigUint<M>,
     pub address: ManagedAddress<M>,

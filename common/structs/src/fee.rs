@@ -40,7 +40,7 @@ impl<A: CryptoApi> GenerateHash<A> for RemoveUsersFromWhitelistOperation<A> {}
 #[type_abi]
 #[derive(TopDecode, TopEncode, NestedEncode, NestedDecode, Clone)]
 pub struct RemoveFeeOperation<M: ManagedTypeApi> {
-    pub token_id: TokenIdentifier<M>,
+    pub token_id: EgldOrEsdtTokenIdentifier<M>,
     pub nonce: TxNonce,
 }
 

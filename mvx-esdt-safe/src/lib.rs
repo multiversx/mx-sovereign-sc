@@ -7,7 +7,10 @@ use error_messages::{
 
 use multiversx_sc::imports::*;
 use multiversx_sc_modules::only_admin;
-use structs::{configs::EsdtSafeConfig, generate_hash::GenerateHash};
+use structs::{
+    configs::{EsdtSafeConfig, UpdateEsdtSafeConfigOperation},
+    generate_hash::GenerateHash,
+};
 
 pub mod bridging_mechanism;
 pub mod deposit;
@@ -80,9 +83,9 @@ pub trait MvxEsdtSafe:
     fn update_esdt_safe_config(
         &self,
         hash_of_hashes: ManagedBuffer,
-        new_config: EsdtSafeConfig<Self::Api>,
+        update_config_operation: UpdateEsdtSafeConfigOperation<Self::Api>,
     ) {
-        let config_hash = new_config.generate_hash();
+        let config_hash = update_config_operation.generate_hash();
         if config_hash.is_empty() {
             self.complete_operation(
                 &hash_of_hashes,
@@ -99,13 +102,17 @@ pub trait MvxEsdtSafe:
             );
             return;
         }
-        if let Some(lock_operation_error) =
-            self.lock_operation_hash_wrapper(&hash_of_hashes, &config_hash)
-        {
+        if let Some(lock_operation_error) = self.lock_operation_hash_wrapper(
+            &hash_of_hashes,
+            &config_hash,
+            update_config_operation.nonce,
+        ) {
             self.complete_operation(&hash_of_hashes, &config_hash, Some(lock_operation_error));
             return;
         }
-        if let Some(error_message) = self.is_esdt_safe_config_valid(&new_config) {
+        if let Some(error_message) =
+            self.is_esdt_safe_config_valid(&update_config_operation.esdt_safe_config)
+        {
             self.complete_operation(
                 &hash_of_hashes,
                 &config_hash,
@@ -113,7 +120,8 @@ pub trait MvxEsdtSafe:
             );
             return;
         } else {
-            self.esdt_safe_config().set(new_config);
+            self.esdt_safe_config()
+                .set(update_config_operation.esdt_safe_config);
             self.complete_operation(&hash_of_hashes, &config_hash, None);
         }
     }

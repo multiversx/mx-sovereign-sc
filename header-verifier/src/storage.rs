@@ -46,6 +46,9 @@ pub trait HeaderVerifierStorageModule {
     #[storage_mapper("sovereignContracts")]
     fn sovereign_contracts(&self) -> UnorderedSetMapper<ContractInfo<Self::Api>>;
 
+    #[storage_mapper("operationNonce")]
+    fn last_operation_nonce(&self) -> SingleValueMapper<u64>;
+
     #[storage_mapper_from_address("sovereignConfig")]
     fn sovereign_config(
         &self,

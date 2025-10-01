@@ -17,8 +17,8 @@ use common_test_setup::{
 };
 use proxies::mvx_fee_market_proxy::MvxFeeMarketProxy;
 use structs::fee::{
-    AddUsersToWhitelistOperation, DistributeFeesOperation, FeeStruct, FeeType,
-    RemoveUsersFromWhitelistOperation,
+    AddUsersToWhitelistOperation, DistributeFeesOperation, FeeStruct, FeeType, RemoveFeeOperation,
+    RemoveUsersFromWhitelistOperation, SetFeeOperation,
 };
 
 pub struct FeeMarketTestState {
@@ -137,6 +137,7 @@ impl FeeMarketTestState {
         &mut self,
         hash_of_hashes: &ManagedBuffer<StaticApi>,
         token_id: TestTokenIdentifier,
+        nonce: u64,
         expected_error_message: Option<&str>,
         expected_log: Option<&str>,
         expected_log_error: Option<&str>,
@@ -148,7 +149,13 @@ impl FeeMarketTestState {
             .from(HEADER_VERIFIER_ADDRESS)
             .to(FEE_MARKET_ADDRESS)
             .typed(MvxFeeMarketProxy)
-            .remove_fee(hash_of_hashes, token_id)
+            .remove_fee(
+                hash_of_hashes,
+                RemoveFeeOperation {
+                    token_id: EgldOrEsdtTokenIdentifier::from(token_id.as_str()),
+                    nonce,
+                },
+            )
             .returns(ReturnsHandledOrError::new())
             .returns(ReturnsLogs)
             .run();
@@ -163,7 +170,8 @@ impl FeeMarketTestState {
     pub fn set_fee(
         &mut self,
         hash_of_hashes: &ManagedBuffer<StaticApi>,
-        fee_struct: &FeeStruct<StaticApi>,
+        fee_struct: FeeStruct<StaticApi>,
+        nonce: u64,
         expected_custom_log: Option<&str>,
         expected_log_error: Option<&str>,
     ) {
@@ -174,7 +182,7 @@ impl FeeMarketTestState {
             .from(HEADER_VERIFIER_ADDRESS)
             .to(FEE_MARKET_ADDRESS)
             .typed(MvxFeeMarketProxy)
-            .set_fee(hash_of_hashes, fee_struct)
+            .set_fee(hash_of_hashes, SetFeeOperation { fee_struct, nonce })
             .returns(ReturnsHandledOrError::new())
             .returns(ReturnsLogs)
             .run();

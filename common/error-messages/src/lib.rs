@@ -160,3 +160,4 @@ pub const INVALID_VALIDATOR_DATA: &str = "Invalid validator data has been provid
 pub const ISSUE_COST_NOT_COVERED: &str = "Native token issue cost is not covered";
 pub const EGLD_TOKEN_IDENTIFIER_EXPECTED: &str =
     "The token identifier should be the EGLD token identifier";
+pub const INCORRECT_OPERATION_NONCE: &str = "The operation nonce is incorrect";
