@@ -226,11 +226,11 @@ fn test_set_fee() {
         },
     };
 
-    let register_fee_operation = SetFeeOperation {
+    let set_fee_operation = SetFeeOperation {
         fee_struct,
         nonce: 0,
     };
-    let fee_hash = register_fee_operation.generate_hash();
+    let fee_hash = set_fee_operation.generate_hash();
     let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&fee_hash.to_vec()));
 
     let (signature, public_keys) = state.common_setup.get_sig_and_pub_keys(1, &hash_of_hashes);
@@ -344,11 +344,11 @@ fn test_remove_fee_register_separate_operations() {
             per_gas: BigUint::default(),
         },
     };
-    let register_fee_operation = SetFeeOperation {
-        fee_struct: fee.clone(),
+    let set_fee_operation = SetFeeOperation {
+        fee_struct,
         nonce: 0,
     };
-    let register_fee_hash = register_fee_operation.generate_hash();
+    let register_fee_hash = set_fee_operation.generate_hash();
     let register_fee_hash_of_hashes =
         ManagedBuffer::new_from_bytes(&sha256(&register_fee_hash.to_vec()));
 
@@ -362,11 +362,11 @@ fn test_remove_fee_register_separate_operations() {
         None,
     );
 
-    let remove_fee_hash = RemoveFeeOperation {
+    let remove_fee_operation = RemoveFeeOperation {
         token_id: EgldOrEsdtTokenIdentifier::esdt(FIRST_TEST_TOKEN),
         nonce: 0,
     };
-    let remove_fee_hash = remove_fee_hash.generate_hash();
+    let remove_fee_hash = remove_fee_operation.generate_hash();
     let remove_fee_hash_of_hashes =
         ManagedBuffer::new_from_bytes(&sha256(&remove_fee_hash.to_vec()));
 
