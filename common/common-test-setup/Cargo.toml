@@ -13,6 +13,7 @@ hex = "0.4.3"
 
 [dependencies.multiversx-sc-scenario]
 version = "0.62.0"
+features = ["bls"]
 
 [dependencies.proxies]
 path = "../proxies"

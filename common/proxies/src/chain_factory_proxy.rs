@@ -124,16 +124,19 @@ where
     }
 
     pub fn deploy_mvx_esdt_safe<
-        Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
-        Arg1: ProxyArg<OptionalValue<structs::configs::EsdtSafeConfig<Env::Api>>>,
+        Arg0: ProxyArg<ManagedAddress<Env::Api>>,
+        Arg1: ProxyArg<ManagedBuffer<Env::Api>>,
+        Arg2: ProxyArg<OptionalValue<structs::configs::EsdtSafeConfig<Env::Api>>>,
     >(
         self,
-        sov_token_prefix: Arg0,
-        opt_config: Arg1,
+        sovereign_owner: Arg0,
+        sov_token_prefix: Arg1,
+        opt_config: Arg2,
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ManagedAddress<Env::Api>> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("deployEsdtSafe")
+            .argument(&sovereign_owner)
             .argument(&sov_token_prefix)
             .argument(&opt_config)
             .original_result()
@@ -200,21 +203,6 @@ where
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("getAdmins")
-            .original_result()
-    }
-
-    pub fn register_native_token<
-        Arg0: ProxyArg<ManagedAddress<Env::Api>>,
-        Arg1: ProxyArg<structs::forge::NativeToken<Env::Api>>,
-    >(
-        self,
-        esdt_safe_address: Arg0,
-        native_token: Arg1,
-    ) -> TxTypedCall<Env, From, To, (), Gas, ()> {
-        self.wrapped_tx
-            .raw_call("registerNativeToken")
-            .argument(&esdt_safe_address)
-            .argument(&native_token)
             .original_result()
     }
 

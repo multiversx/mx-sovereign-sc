@@ -1,17 +1,23 @@
-use crate::{err_msg, forge_common};
+use crate::{
+    err_msg,
+    forge_common::{
+        self,
+        callbacks::{self, CallbackProxy},
+    },
+};
 use core::ops::Deref;
+
 use error_messages::{
     CHAIN_CONFIG_ALREADY_DEPLOYED, ESDT_SAFE_ALREADY_DEPLOYED, FEE_MARKET_ALREADY_DEPLOYED,
     HEADER_VERIFIER_ALREADY_DEPLOYED, SOVEREIGN_SETUP_PHASE_ALREADY_COMPLETED,
 };
-use proxies::chain_factory_proxy::ChainFactoryContractProxy;
-
 use multiversx_sc::{imports::OptionalValue, require, types::MultiValueEncoded};
+use proxies::chain_factory_proxy::ChainFactoryContractProxy;
 use structs::{
     configs::{EsdtSafeConfig, SovereignConfig},
     fee::FeeStruct,
     forge::ScArray,
-    COMPLETE_SETUP_PHASE_GAS,
+    COMPLETE_SETUP_PHASE_CALLBACK_GAS, COMPLETE_SETUP_PHASE_GAS,
 };
 
 #[multiversx_sc::module]
@@ -21,6 +27,7 @@ pub trait PhasesModule:
     + forge_common::sc_deploy::ScDeployModule
     + custom_events::CustomEventsModule
     + common_utils::CommonUtilsModule
+    + callbacks::ForgeCallbackModule
 {
     #[payable("EGLD")]
     #[endpoint(deployPhaseOne)]
@@ -67,7 +74,7 @@ pub trait PhasesModule:
             ESDT_SAFE_ALREADY_DEPLOYED
         );
 
-        self.deploy_mvx_esdt_safe(sov_prefix, opt_config);
+        self.deploy_mvx_esdt_safe(caller, sov_prefix, opt_config);
     }
 
     #[endpoint(deployPhaseThree)]
@@ -132,8 +139,8 @@ pub trait PhasesModule:
                 fee_market_address,
             )
             .gas(COMPLETE_SETUP_PHASE_GAS)
-            .transfer_execute();
-
-        sovereign_setup_phase_mapper.set(true);
+            .callback(self.callbacks().setup_phase(&caller))
+            .gas_for_callback(COMPLETE_SETUP_PHASE_CALLBACK_GAS)
+            .register_promise();
     }
 }

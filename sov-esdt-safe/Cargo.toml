@@ -20,6 +20,9 @@ path = "../testing-sc"
 [dependencies.common-utils]
 path = "../common/common-utils"
 
+[dependencies.fee-common]
+path = "../common/fee-common"
+
 [dependencies.mvx-fee-market]
 path = "../mvx-fee-market"
 
@@ -28,6 +31,9 @@ path = "../common/structs"
 
 [dependencies.cross-chain]
 path = "../common/cross-chain"
+
+[dependencies.tx-nonce]
+path = "../common/tx-nonce"
 
 [dependencies.custom-events]
 path = "../common/custom-events"

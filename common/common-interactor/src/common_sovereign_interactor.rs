@@ -39,7 +39,7 @@ use structs::{
     aliases::{OptionalValueTransferDataTuple, PaymentsVec},
     configs::{EsdtSafeConfig, SovereignConfig},
     fee::FeeStruct,
-    forge::{ContractInfo, NativeToken, ScArray},
+    forge::{ContractInfo, ScArray},
     generate_hash::GenerateHash,
     operation::Operation,
     EsdtInfo, OperationHashStatus, RegisterTokenOperation,
@@ -329,9 +329,13 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             .interactor()
             .tx()
             .from(caller.clone())
-            .gas(100_000_000u64)
+            .gas(120_000_000u64)
             .typed(MvxEsdtSafeProxy)
-            .init(chain_id, OptionalValue::<EsdtSafeConfig<StaticApi>>::None)
+            .init(
+                Bech32Address::from(caller.clone()),
+                chain_id,
+                OptionalValue::<EsdtSafeConfig<StaticApi>>::None,
+            )
             .returns(ReturnsNewAddress)
             .code(MVX_ESDT_SAFE_CODE_PATH)
             .code_metadata(metadata())
@@ -406,13 +410,14 @@ pub trait CommonInteractorTrait: InteractorHelpers {
         chain_id: String,
         opt_config: OptionalValue<EsdtSafeConfig<StaticApi>>,
     ) {
+        let owner_address = caller.clone();
         let new_address = self
             .interactor()
             .tx()
             .from(caller)
             .gas(100_000_000u64)
             .typed(MvxEsdtSafeProxy)
-            .init(SOVEREIGN_TOKEN_PREFIX, opt_config)
+            .init(owner_address, SOVEREIGN_TOKEN_PREFIX, opt_config)
             .returns(ReturnsNewAddress)
             .code(MVX_ESDT_SAFE_CODE_PATH)
             .code_metadata(metadata())
@@ -648,7 +653,8 @@ pub trait CommonInteractorTrait: InteractorHelpers {
 
         self.deploy_phase_two(optional_esdt_safe_config.clone(), caller.clone())
             .await;
-        // self.register_native_token(caller.clone()).await;
+        self.register_native_token(caller.clone(), &preferred_chain_id)
+            .await;
         self.deploy_phase_three(caller.clone(), fee.clone()).await;
         self.deploy_phase_four(caller.clone()).await;
 
@@ -659,6 +665,52 @@ pub trait CommonInteractorTrait: InteractorHelpers {
         self.update_smart_contracts_addresses_in_state(preferred_chain_id.clone())
             .await;
         println!("Finished deployment for shard {shard}");
+    }
+
+    async fn register_native_token(&mut self, caller: Address, chain_id: &str) {
+        let mvx_esdt_safe_address = self
+            .get_sc_address_from_sovereign_forge(chain_id, ScArray::ESDTSafe)
+            .await;
+
+        self.interactor()
+            .tx()
+            .from(caller)
+            .to(mvx_esdt_safe_address)
+            .gas(90_000_000u64)
+            .typed(MvxEsdtSafeProxy)
+            .register_native_token(
+                ManagedBuffer::from(NATIVE_TOKEN_TICKER),
+                ManagedBuffer::from(NATIVE_TOKEN_NAME),
+            )
+            .egld(BigUint::from(ISSUE_COST))
+            .returns(ReturnsResultUnmanaged)
+            .run()
+            .await;
+    }
+
+    async fn get_sc_address_from_sovereign_forge(
+        &mut self,
+        chain_id: &str,
+        sc_id: ScArray,
+    ) -> Address {
+        let sovereign_forge_address = self
+            .common_state()
+            .current_sovereign_forge_sc_address()
+            .clone();
+
+        self.interactor()
+            .query()
+            .to(sovereign_forge_address)
+            .typed(SovereignForgeProxy)
+            .sovereign_deployed_contracts(chain_id)
+            .returns(ReturnsResult)
+            .run()
+            .await
+            .into_iter()
+            .find(|sc| sc.id == sc_id)
+            .unwrap()
+            .address
+            .to_address()
     }
 
     async fn register_chain_factory(&mut self, caller: Address, shard_id: u32) {
@@ -684,28 +736,6 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             .await;
 
         println!("Result: {response:?}");
-    }
-
-    async fn register_native_token(&mut self, caller: Address) {
-        let sovereign_forge_address = self
-            .common_state()
-            .current_sovereign_forge_sc_address()
-            .clone();
-        let native_token = NativeToken {
-            name: ManagedBuffer::from(NATIVE_TOKEN_NAME),
-            ticker: ManagedBuffer::from(NATIVE_TOKEN_TICKER),
-        };
-        self.interactor()
-            .tx()
-            .from(caller)
-            .to(sovereign_forge_address)
-            .gas(80_000_000u64)
-            .typed(SovereignForgeProxy)
-            .register_native_token(native_token)
-            .egld(ISSUE_COST)
-            .returns(ReturnsResultUnmanaged)
-            .run()
-            .await;
     }
 
     async fn update_smart_contracts_addresses_in_state(&mut self, chain_id: String) {

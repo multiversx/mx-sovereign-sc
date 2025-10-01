@@ -28,10 +28,3 @@ pub enum ScArray {
     ChainConfig,
     Slashing,
 }
-
-#[type_abi]
-#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, Clone, ManagedVecItem, PartialEq)]
-pub struct NativeToken<M: ManagedTypeApi> {
-    pub ticker: ManagedBuffer<M>,
-    pub name: ManagedBuffer<M>,
-}

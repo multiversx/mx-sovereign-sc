@@ -1,2 +1,0 @@
-[[proxy]]
-path = "../common/proxies/src/sov_registrar_proxy.rs"

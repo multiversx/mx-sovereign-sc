@@ -270,6 +270,7 @@ dependencies = [
  "cross-chain",
  "custom-events",
  "error-messages",
+ "fee-common",
  "multiversx-sc",
  "multiversx-sc-modules",
  "mvx-fee-market",
@@ -277,6 +278,7 @@ dependencies = [
  "setup-phase",
  "structs",
  "testing-sc",
+ "tx-nonce",
 ]
 
 [[package]]
@@ -310,6 +312,14 @@ name = "testing-sc"
 version = "0.1.0"
 dependencies = [
  "multiversx-sc",
+]
+
+[[package]]
+name = "tx-nonce"
+version = "0.1.0"
+dependencies = [
+ "multiversx-sc",
+ "structs",
 ]
 
 [[package]]
