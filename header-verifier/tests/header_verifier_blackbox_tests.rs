@@ -427,7 +427,7 @@ fn test_lock_operation() {
 
     state.register_operations(&signature, operation.clone(), bitmap, 0, None);
 
-    state.assert_last_operation_nonce(1);
+    state.assert_last_operation_nonce(0);
 
     let expected_operation_nonce = state.next_operation_nonce();
 
@@ -438,6 +438,8 @@ fn test_lock_operation() {
         expected_operation_nonce,
         None,
     );
+
+    state.assert_last_operation_nonce(expected_operation_nonce);
 
     state
         .common_setup
@@ -477,8 +479,10 @@ fn test_lock_operation_incorrect_nonce_rejected() {
         .common_setup
         .deploy_chain_config(OptionalValue::None, None);
 
-    let operation_hash = ManagedBuffer::from("operation_nonce_fail");
-    let operation = state.generate_bridge_operation_struct(vec![&operation_hash]);
+    let operation_hash_1 = ManagedBuffer::from("operation_nonce_fail_1");
+    let operation_hash_2 = ManagedBuffer::from("operation_nonce_fail_2");
+    let operation =
+        state.generate_bridge_operation_struct(vec![&operation_hash_1, &operation_hash_2]);
     let bitmap = ManagedBuffer::new_from_bytes(&[0x01]);
 
     let (signature, pub_keys) = state
@@ -501,14 +505,26 @@ fn test_lock_operation_incorrect_nonce_rejected() {
 
     state.register_operations(&signature, operation.clone(), bitmap, 0, None);
 
-    state.assert_last_operation_nonce(1);
+    state.assert_last_operation_nonce(0);
+
+    let expected_operation_nonce = state.next_operation_nonce();
+
+    state.lock_operation_hash(
+        CHAIN_CONFIG_ADDRESS,
+        &operation.bridge_operation_hash,
+        &operation_hash_1,
+        expected_operation_nonce,
+        None,
+    );
+
+    state.assert_last_operation_nonce(expected_operation_nonce);
 
     let stale_operation_nonce = state.last_operation_nonce();
 
     state.lock_operation_hash(
         CHAIN_CONFIG_ADDRESS,
         &operation.bridge_operation_hash,
-        &operation_hash,
+        &operation_hash_2,
         stale_operation_nonce,
         Some(INCORRECT_OPERATION_NONCE),
     );
@@ -554,7 +570,7 @@ fn test_lock_operation_accepts_current_nonce() {
 
     state.register_operations(&signature, operation.clone(), bitmap, 0, None);
 
-    state.assert_last_operation_nonce(1);
+    state.assert_last_operation_nonce(0);
 
     let expected_operation_nonce = state.next_operation_nonce();
 
@@ -565,6 +581,8 @@ fn test_lock_operation_accepts_current_nonce() {
         expected_operation_nonce,
         None,
     );
+
+    state.assert_last_operation_nonce(expected_operation_nonce);
 
     state
         .common_setup
@@ -623,7 +641,7 @@ fn test_lock_operation_hash_already_locked() {
 
     state.register_operations(&signature, operation.clone(), bitmap, 0, None);
 
-    state.assert_last_operation_nonce(1);
+    state.assert_last_operation_nonce(0);
 
     let expected_operation_nonce = state.next_operation_nonce();
 
@@ -634,6 +652,8 @@ fn test_lock_operation_hash_already_locked() {
         expected_operation_nonce,
         None,
     );
+
+    state.assert_last_operation_nonce(expected_operation_nonce);
 
     state
         .common_setup
@@ -656,13 +676,17 @@ fn test_lock_operation_hash_already_locked() {
             assert!(is_hash_2_locked == OperationHashStatus::NotLocked);
         });
 
+    let next_operation_nonce = state.next_operation_nonce();
+
     state.lock_operation_hash(
         CHAIN_CONFIG_ADDRESS,
         &operation.bridge_operation_hash,
         &operation_1,
-        expected_operation_nonce,
+        next_operation_nonce,
         Some(CURRENT_OPERATION_ALREADY_IN_EXECUTION),
     );
+
+    state.assert_last_operation_nonce(expected_operation_nonce);
 }
 
 /// ### TEST

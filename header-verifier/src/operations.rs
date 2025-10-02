@@ -64,7 +64,6 @@ pub trait HeaderVerifierOperationsModule:
         }
 
         hash_of_hashes_history_mapper.insert(hash_of_hashes);
-        self.last_operation_nonce().update(|nonce| *nonce += 1);
     }
 
     #[endpoint(changeValidatorSet)]
@@ -157,7 +156,6 @@ pub trait HeaderVerifierOperationsModule:
         OptionalValue::None
     }
 
-    // Add nonce increment
     #[endpoint(lockOperationHash)]
     fn lock_operation_hash(
         &self,
@@ -169,11 +167,6 @@ pub trait HeaderVerifierOperationsModule:
             return OptionalValue::Some(CALLER_NOT_FROM_CURRENT_SOVEREIGN.into());
         }
 
-        let last_nonce = self.last_operation_nonce().get();
-        if operation_nonce <= last_nonce {
-            return OptionalValue::Some(INCORRECT_OPERATION_NONCE.into());
-        }
-
         let operation_hash_status_mapper =
             self.operation_hash_status(&hash_of_hashes, &operation_hash);
 
@@ -183,11 +176,17 @@ pub trait HeaderVerifierOperationsModule:
 
         let is_hash_in_execution = operation_hash_status_mapper.get();
         match is_hash_in_execution {
-            OperationHashStatus::NotLocked => {
-                operation_hash_status_mapper.set(OperationHashStatus::Locked)
-            }
             OperationHashStatus::Locked => {
                 return OptionalValue::Some(CURRENT_OPERATION_ALREADY_IN_EXECUTION.into());
+            }
+            OperationHashStatus::NotLocked => {
+                let last_nonce = self.last_operation_nonce().get();
+                if operation_nonce != last_nonce + 1 {
+                    return OptionalValue::Some(INCORRECT_OPERATION_NONCE.into());
+                }
+
+                operation_hash_status_mapper.set(OperationHashStatus::Locked);
+                self.last_operation_nonce().set(operation_nonce);
             }
         }
 

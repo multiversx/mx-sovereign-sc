@@ -228,7 +228,7 @@ fn test_set_fee() {
 
     let set_fee_operation = SetFeeOperation {
         fee_struct,
-        nonce: 0,
+        nonce: 1,
     };
     let fee_hash = set_fee_operation.generate_hash();
     let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&fee_hash.to_vec()));
@@ -346,7 +346,7 @@ fn test_remove_fee_register_separate_operations() {
     };
     let set_fee_operation = SetFeeOperation {
         fee_struct,
-        nonce: 0,
+        nonce: 1,
     };
     let register_fee_hash = set_fee_operation.generate_hash();
     let register_fee_hash_of_hashes =
@@ -364,7 +364,7 @@ fn test_remove_fee_register_separate_operations() {
 
     let remove_fee_operation = RemoveFeeOperation {
         token_id: EgldOrEsdtTokenIdentifier::esdt(FIRST_TEST_TOKEN),
-        nonce: 0,
+        nonce: 2,
     };
     let remove_fee_hash = remove_fee_operation.generate_hash();
     let remove_fee_hash_of_hashes =
@@ -485,12 +485,12 @@ fn test_remove_fee_register_with_one_hash_of_hashes() {
 
     let set_fee_operation = SetFeeOperation {
         fee_struct,
-        nonce: 0,
+        nonce: 1,
     };
 
     let remove_fee_operation = RemoveFeeOperation {
         token_id: EgldOrEsdtTokenIdentifier::from(FIRST_TEST_TOKEN.as_str()),
-        nonce: 1,
+        nonce: 2,
     };
 
     let remove_fee_hash: ManagedBuffer<StaticApi> = remove_fee_operation.generate_hash();
@@ -752,7 +752,7 @@ fn test_distribute_fees() {
 
     let operation = DistributeFeesOperation {
         pairs: ManagedVec::from_iter(vec![address_pair.clone()]),
-        nonce: 0,
+        nonce: 1,
     };
     let operation_hash = operation.generate_hash();
 
