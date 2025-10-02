@@ -1,8 +1,9 @@
 use common_test_setup::base_setup::init::{AccountSetup, BaseSetup};
 use common_test_setup::constants::{
-    ESDT_SAFE_ADDRESS, FEE_MARKET_ADDRESS, FEE_TOKEN, FIRST_TEST_TOKEN, HEADER_VERIFIER_ADDRESS,
-    MVX_ESDT_SAFE_CODE_PATH, NATIVE_TEST_TOKEN, ONE_HUNDRED_MILLION, OWNER_ADDRESS, OWNER_BALANCE,
-    SECOND_TEST_TOKEN, SOVEREIGN_TOKEN_PREFIX, UNPAUSE_CONTRACT_LOG, USER_ADDRESS,
+    ESDT_SAFE_ADDRESS, FEE_MARKET_ADDRESS, FEE_TOKEN, FIRST_TEST_TOKEN, FIRST_TOKEN_ID,
+    HEADER_VERIFIER_ADDRESS, MVX_ESDT_SAFE_CODE_PATH, NATIVE_TEST_TOKEN, ONE_HUNDRED_MILLION,
+    OWNER_ADDRESS, OWNER_BALANCE, SECOND_TEST_TOKEN, SECOND_TOKEN_ID, SOVEREIGN_TOKEN_PREFIX,
+    UNPAUSE_CONTRACT_LOG, USER_ADDRESS,
 };
 use cross_chain::storage::CrossChainStorage;
 use multiversx_sc::types::ReturnsHandledOrError;
@@ -101,6 +102,20 @@ impl MvxEsdtSafeTestState {
             )
             .esdt_roles(
                 TokenIdentifier::from(NATIVE_TEST_TOKEN),
+                vec![
+                    EsdtLocalRole::Burn.name().to_string(),
+                    EsdtLocalRole::Mint.name().to_string(),
+                ],
+            )
+            .esdt_roles(
+                TokenIdentifier::from(FIRST_TOKEN_ID),
+                vec![
+                    EsdtLocalRole::Burn.name().to_string(),
+                    EsdtLocalRole::Mint.name().to_string(),
+                ],
+            )
+            .esdt_roles(
+                TokenIdentifier::from(SECOND_TOKEN_ID),
                 vec![
                     EsdtLocalRole::Burn.name().to_string(),
                     EsdtLocalRole::Mint.name().to_string(),
@@ -336,7 +351,7 @@ impl MvxEsdtSafeTestState {
         &mut self,
         hash_of_hashes: &ManagedBuffer<StaticApi>,
         operation: &Operation<StaticApi>,
-        expected_custom_log: Option<&str>,
+        expected_custom_log: Option<Vec<&str>>,
         expected_log_error: Option<&str>,
     ) {
         let (logs, result) = self
@@ -354,11 +369,12 @@ impl MvxEsdtSafeTestState {
         self.common_setup
             .assert_expected_error_message(result, None);
 
-        self.common_setup.assert_expected_log(
-            logs.clone(),
-            expected_custom_log,
-            expected_log_error,
-        );
+        if let Some(logs_vec) = expected_custom_log {
+            for log in logs_vec {
+                self.common_setup
+                    .assert_expected_log(logs.clone(), Some(log), expected_log_error);
+            }
+        }
     }
 
     pub fn complete_setup_phase(&mut self, expected_log: Option<&str>) {
