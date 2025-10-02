@@ -180,13 +180,13 @@ pub trait HeaderVerifierOperationsModule:
                 return OptionalValue::Some(CURRENT_OPERATION_ALREADY_IN_EXECUTION.into());
             }
             OperationHashStatus::NotLocked => {
-                let last_nonce = self.last_operation_nonce().get();
-                if operation_nonce != last_nonce + 1 {
+                let last_nonce = self.current_execution_nonce().get();
+                if operation_nonce != last_nonce {
                     sc_panic!(INCORRECT_OPERATION_NONCE);
                 }
 
                 operation_hash_status_mapper.set(OperationHashStatus::Locked);
-                self.last_operation_nonce().set(operation_nonce);
+                self.current_execution_nonce().set(operation_nonce + 1);
             }
         }
 
