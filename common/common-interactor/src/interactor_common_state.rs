@@ -58,6 +58,9 @@ impl CommonState {
                 chain_factory_sc_addresses: None,
                 fee_market_tokens: HashMap::new(),
                 fee_status: HashMap::new(),
+                // Start from 2 because the header verifier increments its last nonce when
+                // registering operations, so the lock call must use a value strictly greater
+                // than the last registered nonce (i.e. `last + 1`).
                 fee_op_nonce: 2,
                 chain_ids: Vec::new(),
                 update_config_nonce: 0,
