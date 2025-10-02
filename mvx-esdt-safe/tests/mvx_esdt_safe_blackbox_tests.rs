@@ -2,7 +2,7 @@ use common_test_setup::constants::{
     CROWD_TOKEN_ID, DEPOSIT_EVENT, ESDT_SAFE_ADDRESS, EXECUTED_BRIDGE_OP_EVENT, FEE_MARKET_ADDRESS,
     FEE_TOKEN, FIRST_TEST_TOKEN, FIRST_TOKEN_ID, HEADER_VERIFIER_ADDRESS, ISSUE_COST,
     NATIVE_TEST_TOKEN, ONE_HUNDRED_MILLION, ONE_HUNDRED_THOUSAND, OWNER_ADDRESS, SC_CALL_EVENT,
-    SECOND_TEST_TOKEN, SECOND_TOKEN_ID, SOV_FIRST_TEST_TOKEN, SOV_SECOND_TEST_TOKEN, SOV_TOKEN,
+    SECOND_TEST_TOKEN, SECOND_TOKEN_ID, SOV_FIRST_TOKEN_ID, SOV_SECOND_TOKEN_ID, SOV_TOKEN,
     TESTING_SC_ADDRESS, TESTING_SC_ENDPOINT, UNPAUSE_CONTRACT_LOG, USER_ADDRESS,
 };
 use cross_chain::storage::CrossChainStorage;
@@ -3087,22 +3087,22 @@ fn test_execute_operation_partial_execution() {
                 FIRST_TOKEN_ID,
             ))
             .set(EgldOrEsdtTokenIdentifier::esdt(
-                SOV_FIRST_TEST_TOKEN.to_token_identifier(),
+                SOV_FIRST_TOKEN_ID.to_token_identifier(),
             ));
             sc.multiversx_to_sovereign_token_id_mapper(&EgldOrEsdtTokenIdentifier::esdt(
                 SECOND_TOKEN_ID,
             ))
             .set(EgldOrEsdtTokenIdentifier::esdt(
-                SOV_SECOND_TEST_TOKEN.to_token_identifier(),
+                SOV_SECOND_TOKEN_ID.to_token_identifier(),
             ));
             sc.sovereign_to_multiversx_token_id_mapper(&EgldOrEsdtTokenIdentifier::esdt(
-                SOV_FIRST_TEST_TOKEN.to_token_identifier(),
+                SOV_FIRST_TOKEN_ID.to_token_identifier(),
             ))
             .set(EgldOrEsdtTokenIdentifier::esdt(
                 FIRST_TOKEN_ID.to_token_identifier(),
             ));
             sc.sovereign_to_multiversx_token_id_mapper(&EgldOrEsdtTokenIdentifier::esdt(
-                SOV_SECOND_TEST_TOKEN.to_token_identifier(),
+                SOV_SECOND_TOKEN_ID.to_token_identifier(),
             ))
             .set(EgldOrEsdtTokenIdentifier::esdt(
                 SECOND_TOKEN_ID.to_token_identifier(),
@@ -3119,7 +3119,7 @@ fn test_execute_operation_partial_execution() {
     };
 
     let first_payment = OperationEsdtPayment::new(
-        EgldOrEsdtTokenIdentifier::esdt(SOV_FIRST_TEST_TOKEN),
+        EgldOrEsdtTokenIdentifier::esdt(SOV_FIRST_TOKEN_ID),
         0,
         token_data.clone(),
     );
@@ -3131,7 +3131,7 @@ fn test_execute_operation_partial_execution() {
     );
 
     let third_payment = OperationEsdtPayment::new(
-        EgldOrEsdtTokenIdentifier::esdt(SOV_SECOND_TEST_TOKEN),
+        EgldOrEsdtTokenIdentifier::esdt(SOV_SECOND_TOKEN_ID),
         0,
         token_data,
     );
@@ -3182,9 +3182,9 @@ fn test_execute_operation_partial_execution() {
         Some(vec![
             EXECUTED_BRIDGE_OP_EVENT,
             DEPOSIT_EVENT,
-            &SOV_FIRST_TEST_TOKEN.as_str(),
+            &SOV_FIRST_TOKEN_ID.as_str(),
             &TRUSTED_TOKEN_IDS[0],
-            &SOV_SECOND_TEST_TOKEN.as_str(),
+            &SOV_SECOND_TOKEN_ID.as_str(),
         ]),
         None,
     );
