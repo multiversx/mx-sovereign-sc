@@ -2,8 +2,8 @@ use common_test_setup::constants::{
     CROWD_TOKEN_ID, DEPOSIT_EVENT, ESDT_SAFE_ADDRESS, EXECUTED_BRIDGE_OP_EVENT, FEE_MARKET_ADDRESS,
     FEE_TOKEN, FIRST_TEST_TOKEN, FIRST_TOKEN_ID, HEADER_VERIFIER_ADDRESS, ISSUE_COST,
     NATIVE_TEST_TOKEN, ONE_HUNDRED_MILLION, ONE_HUNDRED_THOUSAND, OWNER_ADDRESS, SC_CALL_EVENT,
-    SECOND_TEST_TOKEN, SECOND_TOKEN_ID, SOV_ID_1, SOV_ID_2, SOV_TOKEN, TESTING_SC_ADDRESS,
-    TESTING_SC_ENDPOINT, UNPAUSE_CONTRACT_LOG, USER_ADDRESS,
+    SECOND_TEST_TOKEN, SECOND_TOKEN_ID, SOV_FIRST_TEST_TOKEN, SOV_SECOND_TEST_TOKEN, SOV_TOKEN,
+    TESTING_SC_ADDRESS, TESTING_SC_ENDPOINT, UNPAUSE_CONTRACT_LOG, USER_ADDRESS,
 };
 use cross_chain::storage::CrossChainStorage;
 use cross_chain::{DEFAULT_ISSUE_COST, MAX_GAS_PER_TRANSACTION};
@@ -3071,7 +3071,7 @@ fn test_update_config() {
 }
 
 #[test]
-fn test_refund_transfers() {
+fn test_execute_operation_partial_execution() {
     let mut state = MvxEsdtSafeTestState::new();
     state.deploy_contract_with_roles(None);
     state.complete_setup_phase(Some(UNPAUSE_CONTRACT_LOG));
@@ -3087,22 +3087,26 @@ fn test_refund_transfers() {
                 FIRST_TOKEN_ID,
             ))
             .set(EgldOrEsdtTokenIdentifier::esdt(
-                SOV_ID_1.to_token_identifier(),
+                SOV_FIRST_TEST_TOKEN.to_token_identifier(),
             ));
             sc.multiversx_to_sovereign_token_id_mapper(&EgldOrEsdtTokenIdentifier::esdt(
                 SECOND_TOKEN_ID,
             ))
             .set(EgldOrEsdtTokenIdentifier::esdt(
-                SOV_ID_2.to_token_identifier(),
+                SOV_SECOND_TEST_TOKEN.to_token_identifier(),
             ));
-            sc.sovereign_to_multiversx_token_id_mapper(&EgldOrEsdtTokenIdentifier::esdt(SOV_ID_1))
-                .set(EgldOrEsdtTokenIdentifier::esdt(
-                    FIRST_TOKEN_ID.to_token_identifier(),
-                ));
-            sc.sovereign_to_multiversx_token_id_mapper(&EgldOrEsdtTokenIdentifier::esdt(SOV_ID_2))
-                .set(EgldOrEsdtTokenIdentifier::esdt(
-                    SECOND_TOKEN_ID.to_token_identifier(),
-                ));
+            sc.sovereign_to_multiversx_token_id_mapper(&EgldOrEsdtTokenIdentifier::esdt(
+                SOV_FIRST_TEST_TOKEN.to_token_identifier(),
+            ))
+            .set(EgldOrEsdtTokenIdentifier::esdt(
+                FIRST_TOKEN_ID.to_token_identifier(),
+            ));
+            sc.sovereign_to_multiversx_token_id_mapper(&EgldOrEsdtTokenIdentifier::esdt(
+                SOV_SECOND_TEST_TOKEN.to_token_identifier(),
+            ))
+            .set(EgldOrEsdtTokenIdentifier::esdt(
+                SECOND_TOKEN_ID.to_token_identifier(),
+            ));
         });
 
     state
@@ -3115,7 +3119,7 @@ fn test_refund_transfers() {
     };
 
     let first_payment = OperationEsdtPayment::new(
-        EgldOrEsdtTokenIdentifier::esdt(SOV_ID_1),
+        EgldOrEsdtTokenIdentifier::esdt(SOV_FIRST_TEST_TOKEN),
         0,
         token_data.clone(),
     );
@@ -3126,11 +3130,14 @@ fn test_refund_transfers() {
         token_data.clone(),
     );
 
-    let third_payment =
-        OperationEsdtPayment::new(EgldOrEsdtTokenIdentifier::esdt(SOV_ID_2), 0, token_data);
+    let third_payment = OperationEsdtPayment::new(
+        EgldOrEsdtTokenIdentifier::esdt(SOV_SECOND_TEST_TOKEN),
+        0,
+        token_data,
+    );
 
     let operation = Operation::new(
-        TESTING_SC_ADDRESS.to_managed_address(),
+        USER_ADDRESS.to_managed_address(),
         vec![first_payment, second_payment, third_payment].into(),
         OperationData::new(1, USER_ADDRESS.to_managed_address(), None),
     );
@@ -3173,10 +3180,11 @@ fn test_refund_transfers() {
         &hash_of_hashes,
         &operation,
         Some(vec![
+            EXECUTED_BRIDGE_OP_EVENT,
             DEPOSIT_EVENT,
-            &SOV_ID_1.as_str(),
+            &SOV_FIRST_TEST_TOKEN.as_str(),
             &TRUSTED_TOKEN_IDS[0],
-            &SOV_ID_2.as_str(),
+            &SOV_SECOND_TEST_TOKEN.as_str(),
         ]),
         None,
     );
