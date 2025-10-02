@@ -21,7 +21,7 @@ use crate::{
     interactor_structs::SerializableFeeMarketToken,
 };
 
-#[derive(Debug, Default, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct CommonState {
     pub mvx_esdt_safe_addresses: Option<ShardAddresses>,
     pub header_verfier_addresses: Option<ShardAddresses>,
@@ -48,7 +48,23 @@ impl CommonState {
             file.read_to_string(&mut content).unwrap();
             toml::from_str(&content).unwrap()
         } else {
-            Self::default()
+            Self {
+                mvx_esdt_safe_addresses: None,
+                header_verfier_addresses: None,
+                fee_market_addresses: None,
+                chain_config_sc_addresses: None,
+                testing_sc_address: None,
+                sovereign_forge_sc_address: None,
+                chain_factory_sc_addresses: None,
+                fee_market_tokens: HashMap::new(),
+                fee_status: HashMap::new(),
+                fee_op_nonce: 2,
+                chain_ids: Vec::new(),
+                update_config_nonce: 0,
+                mvx_egld_balances: Vec::new(),
+                testing_egld_balance: 0,
+                bls_secret_keys: HashMap::new(),
+            }
         }
     }
 
