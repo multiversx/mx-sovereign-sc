@@ -182,7 +182,7 @@ pub trait HeaderVerifierOperationsModule:
             OperationHashStatus::NotLocked => {
                 let last_nonce = self.last_operation_nonce().get();
                 if operation_nonce != last_nonce + 1 {
-                    return OptionalValue::Some(INCORRECT_OPERATION_NONCE.into());
+                    sc_panic!(INCORRECT_OPERATION_NONCE);
                 }
 
                 operation_hash_status_mapper.set(OperationHashStatus::Locked);
