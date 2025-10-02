@@ -176,26 +176,19 @@ pub trait HeaderVerifierOperationsModule:
 
         let is_hash_in_execution = operation_hash_status_mapper.get();
         match is_hash_in_execution {
-            OperationHashStatus::NotLocked => {
-                operation_hash_status_mapper.set(OperationHashStatus::Locked)
-            }
             OperationHashStatus::Locked => {
                 return OptionalValue::Some(CURRENT_OPERATION_ALREADY_IN_EXECUTION.into());
             }
-        }
+            OperationHashStatus::NotLocked => {
+                let last_nonce = self.last_operation_nonce().get();
+                if operation_nonce != last_nonce + 1 {
+                    return OptionalValue::Some(INCORRECT_OPERATION_NONCE.into());
+                }
 
-        let last_nonce_mapper = self.last_operation_nonce();
-        let last_nonce = last_nonce_mapper.get();
-        if last_nonce == 0 {
-            last_nonce_mapper.set(operation_nonce);
-
-            return OptionalValue::None;
+                operation_hash_status_mapper.set(OperationHashStatus::Locked);
+                self.last_operation_nonce().set(operation_nonce);
+            }
         }
-        if operation_nonce <= last_nonce {
-            return OptionalValue::Some(INCORRECT_OPERATION_NONCE.into());
-        }
-
-        last_nonce_mapper.set(operation_nonce);
 
         OptionalValue::None
     }
