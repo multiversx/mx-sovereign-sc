@@ -2693,7 +2693,7 @@ fn test_execute_operation_native_token_failed_event() {
         TESTING_SC_ADDRESS.to_address(),
         NATIVE_TEST_TOKEN,
         0u64,
-        BigUint::from(0u64),
+        BigUint::zero(),
     );
 }
 
