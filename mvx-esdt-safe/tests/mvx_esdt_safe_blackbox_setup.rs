@@ -369,9 +369,11 @@ impl MvxEsdtSafeTestState {
         self.common_setup
             .assert_expected_error_message(result, None);
 
-        for log in expected_custom_log.unwrap() {
-            self.common_setup
-                .assert_expected_log(logs.clone(), Some(log), expected_log_error);
+        if let Some(logs_vec) = expected_custom_log {
+            for log in logs_vec {
+                self.common_setup
+                    .assert_expected_log(logs.clone(), Some(log), expected_log_error);
+            }
         }
     }
 
