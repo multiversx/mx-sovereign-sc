@@ -904,4 +904,23 @@ pub trait InteractorHelpers {
             .collect();
         format!("{}-SOV-{}", current_chain_id, rand_string)
     }
+
+    async fn update_fee_market_balance_state(
+        &mut self,
+        fee: Option<FeeStruct<StaticApi>>,
+        payment_vec: PaymentsVec<StaticApi>,
+        shard: u32,
+    ) {
+        if fee.is_none() || payment_vec.is_empty() {
+            return;
+        }
+        let mut fee_token_in_fee_market = self.common_state().get_fee_market_token_for_shard(shard);
+
+        let payment = payment_vec.get(0);
+        if let Some(payment_amount) = payment.amount.to_u64() {
+            fee_token_in_fee_market.amount += payment_amount;
+        }
+        self.common_state()
+            .set_fee_market_token_for_shard(shard, fee_token_in_fee_market);
+    }
 }

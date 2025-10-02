@@ -442,11 +442,14 @@ async fn test_deposit_fee_enabled() {
         .shard(SHARD_0)
         .token(Some(first_token_id.clone()))
         .amount(ONE_HUNDRED_TOKENS.into())
-        .fee(Some(fee))
+        .fee(fee.clone())
         .with_transfer_data(true);
 
     chain_interactor
         .check_balances_after_action(balance_config)
+        .await;
+    chain_interactor
+        .update_fee_market_balance_state(Some(fee.clone()), payments_vec, SHARD_0)
         .await;
 }
 
@@ -585,18 +588,6 @@ async fn test_execute_operation_no_operation_registered() {
             Some(CURRENT_OPERATION_NOT_REGISTERED),
         )
         .await;
-
-    // let encoded_key = &hex::encode(OPERATION_HASH_STATUS_STORAGE_KEY);
-    // chain_interactor
-    //     .check_account_storage(
-    //         chain_interactor
-    //             .common_state()
-    //             .get_header_verifier_address(SHARD_0)
-    //             .to_address(),
-    //         encoded_key,
-    //         None,
-    //     )
-    //     .await;
 
     chain_interactor.check_user_balance_unchanged().await;
     chain_interactor.check_contracts_empty(SHARD_0).await;

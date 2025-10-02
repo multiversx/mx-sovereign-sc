@@ -14,7 +14,6 @@ use cross_chain::DEFAULT_ISSUE_COST;
 use multiversx_sc::chain_core::EGLD_000000_TOKEN_IDENTIFIER;
 use multiversx_sc_snippets::imports::*;
 use multiversx_sc_snippets::multiversx_sc_scenario::multiversx_chain_vm::crypto_functions::sha256;
-use structs::aliases::PaymentsVec;
 use structs::fee::FeeStruct;
 use structs::operation::OperationData;
 use structs::{OperationHashStatus, RegisterTokenOperation};
@@ -132,7 +131,7 @@ impl CompleteFlowInteract {
             .shard(config.shard)
             .token(token.clone())
             .amount(amount)
-            .fee(fee.clone())
+            .fee(fee.clone().unwrap())
             .with_transfer_data(config.with_transfer_data.unwrap_or_default())
             .is_execute(false);
 
@@ -268,24 +267,5 @@ impl CompleteFlowInteract {
         self.execute_wrapper(config, Some(token.clone()))
             .await
             .expect("Expected mapped token, got None")
-    }
-
-    pub async fn update_fee_market_balance_state(
-        &mut self,
-        fee: Option<FeeStruct<StaticApi>>,
-        payment_vec: PaymentsVec<StaticApi>,
-        shard: u32,
-    ) {
-        if fee.is_none() || payment_vec.is_empty() {
-            return;
-        }
-        let mut fee_token_in_fee_market = self.common_state().get_fee_market_token_for_shard(shard);
-
-        let payment = payment_vec.get(0);
-        if let Some(payment_amount) = payment.amount.to_u64() {
-            fee_token_in_fee_market.amount += payment_amount;
-        }
-        self.common_state()
-            .set_fee_market_token_for_shard(shard, fee_token_in_fee_market);
     }
 }
