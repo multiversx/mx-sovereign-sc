@@ -3,7 +3,7 @@ use common_test_setup::constants::{
     FEE_TOKEN, FIRST_TEST_TOKEN, FIRST_TOKEN_ID, HEADER_VERIFIER_ADDRESS, ISSUE_COST,
     NATIVE_TEST_TOKEN, ONE_HUNDRED_MILLION, ONE_HUNDRED_THOUSAND, OWNER_ADDRESS, SC_CALL_EVENT,
     SECOND_TEST_TOKEN, SECOND_TOKEN_ID, SOV_FIRST_TOKEN_ID, SOV_SECOND_TOKEN_ID, SOV_TOKEN,
-    TESTING_SC_ADDRESS, TESTING_SC_ENDPOINT, UNPAUSE_CONTRACT_LOG, USER_ADDRESS,
+    TESTING_SC_ADDRESS, TESTING_SC_ENDPOINT, UNPAUSE_CONTRACT_LOG, USER_ADDRESS, ONE_HUNDRED_TOKENS
 };
 use cross_chain::storage::CrossChainStorage;
 use cross_chain::{DEFAULT_ISSUE_COST, MAX_GAS_PER_TRANSACTION};
@@ -2610,7 +2610,7 @@ fn test_execute_operation_native_token_failed_event() {
         .deploy_chain_config(OptionalValue::None, None);
 
     let token_data = EsdtTokenData {
-        amount: BigUint::from(100u64),
+        amount: BigUint::from(ONE_HUNDRED_TOKENS),
         ..Default::default()
     };
     let payment = OperationEsdtPayment::new(
@@ -2686,7 +2686,7 @@ fn test_execute_operation_native_token_failed_event() {
         OWNER_ADDRESS.to_address(),
         NATIVE_TEST_TOKEN,
         0u64,
-        BigUint::from(0u64),
+        BigUint::zero(),
     );
 
     state.common_setup.check_account_single_esdt(
