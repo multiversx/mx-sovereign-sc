@@ -12,13 +12,15 @@ use header_verifier::header_utils::HeaderVerifierUtilsModule;
 use header_verifier::storage::HeaderVerifierStorageModule;
 use header_verifier_blackbox_setup::*;
 use multiversx_sc::imports::{BigUint, ManagedVec, StorageClearable};
+use multiversx_sc::types::ReturnsHandledOrError;
 use multiversx_sc::{
     imports::OptionalValue,
     types::{ManagedBuffer, MultiEgldOrEsdtPayment, MultiValueEncoded},
 };
 use multiversx_sc_scenario::api::StaticApi;
 use multiversx_sc_scenario::multiversx_chain_vm::crypto_functions::sha256;
-use multiversx_sc_scenario::{DebugApi, ScenarioTxWhitebox};
+use multiversx_sc_scenario::{DebugApi, ScenarioTxRun, ScenarioTxWhitebox};
+use proxies::header_verifier_proxy::HeaderverifierProxy;
 use structs::configs::SovereignConfig;
 use structs::OperationHashStatus;
 use structs::{forge::ScArray, ValidatorData};
@@ -505,28 +507,21 @@ fn test_lock_operation_incorrect_nonce_rejected() {
 
     state.register_operations(&signature, operation.clone(), bitmap, 0, None);
 
-    state.assert_last_operation_nonce(0);
-
-    let expected_operation_nonce = state.next_operation_nonce();
-
-    state.lock_operation_hash(
-        CHAIN_CONFIG_ADDRESS,
-        &operation.bridge_operation_hash,
-        &operation_hash_1,
-        expected_operation_nonce,
-        None,
-    );
-
-    state.assert_last_operation_nonce(expected_operation_nonce);
-
-    let stale_operation_nonce = state.last_operation_nonce();
-
-    state.lock_operation_hash(
-        CHAIN_CONFIG_ADDRESS,
-        &operation.bridge_operation_hash,
-        &operation_hash_2,
-        stale_operation_nonce,
-        Some(INCORRECT_OPERATION_NONCE),
+    assert_eq!(
+        state
+            .common_setup
+            .world
+            .tx()
+            .from(CHAIN_CONFIG_ADDRESS)
+            .to(HEADER_VERIFIER_ADDRESS)
+            .typed(HeaderverifierProxy)
+            .lock_operation_hash(operation.bridge_operation_hash, operation_hash_1, 0u64)
+            .returns(ReturnsHandledOrError::new())
+            .run()
+            .err()
+            .unwrap()
+            .message,
+        INCORRECT_OPERATION_NONCE
     );
 }
 
