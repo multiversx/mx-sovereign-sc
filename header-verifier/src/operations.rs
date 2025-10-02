@@ -64,7 +64,6 @@ pub trait HeaderVerifierOperationsModule:
         }
 
         hash_of_hashes_history_mapper.insert(hash_of_hashes);
-        self.last_operation_nonce().update(|nonce| *nonce += 1);
     }
 
     #[endpoint(changeValidatorSet)]
@@ -157,7 +156,6 @@ pub trait HeaderVerifierOperationsModule:
         OptionalValue::None
     }
 
-    // Add nonce increment
     #[endpoint(lockOperationHash)]
     fn lock_operation_hash(
         &self,
@@ -167,11 +165,6 @@ pub trait HeaderVerifierOperationsModule:
     ) -> OptionalValue<ManagedBuffer> {
         if !self.is_caller_from_current_sovereign() {
             return OptionalValue::Some(CALLER_NOT_FROM_CURRENT_SOVEREIGN.into());
-        }
-
-        let last_nonce = self.last_operation_nonce().get();
-        if operation_nonce <= last_nonce {
-            return OptionalValue::Some(INCORRECT_OPERATION_NONCE.into());
         }
 
         let operation_hash_status_mapper =
@@ -190,6 +183,19 @@ pub trait HeaderVerifierOperationsModule:
                 return OptionalValue::Some(CURRENT_OPERATION_ALREADY_IN_EXECUTION.into());
             }
         }
+
+        let last_nonce_mapper = self.last_operation_nonce();
+        let last_nonce = last_nonce_mapper.get();
+        if last_nonce == 0 {
+            last_nonce_mapper.set(operation_nonce);
+
+            return OptionalValue::None;
+        }
+        if operation_nonce <= last_nonce {
+            return OptionalValue::Some(INCORRECT_OPERATION_NONCE.into());
+        }
+
+        last_nonce_mapper.set(operation_nonce);
 
         OptionalValue::None
     }

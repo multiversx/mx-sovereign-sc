@@ -2793,11 +2793,8 @@ fn test_update_config_operation_not_registered() {
         .deploy_header_verifier(vec![ScArray::ChainConfig, ScArray::ESDTSafe]);
 
     let esdt_safe_config = EsdtSafeConfig {
-        token_whitelist: ManagedVec::new(),
-        token_blacklist: ManagedVec::new(),
         max_tx_gas_limit: 100_000,
-        banned_endpoints: ManagedVec::new(),
-        max_bridged_token_amounts: ManagedVec::new(),
+        ..EsdtSafeConfig::default_config()
     };
 
     state.update_esdt_safe_config(
