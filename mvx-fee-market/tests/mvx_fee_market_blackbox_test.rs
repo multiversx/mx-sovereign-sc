@@ -601,12 +601,14 @@ fn distribute_fees_setup_not_completed() {
         .common_setup
         .deploy_header_verifier(vec![ScArray::FeeMarket]);
 
+    let operation_nonce = state.common_setup.next_operation_nonce();
+    let operation = DistributeFeesOperation {
+        pairs: ManagedVec::new(),
+        nonce: operation_nonce,
+    };
     state.distribute_fees(
         &ManagedBuffer::new(),
-        DistributeFeesOperation {
-            pairs: ManagedVec::new(),
-            nonce: 0,
-        },
+        operation,
         Some(EXECUTED_BRIDGE_OP_EVENT),
         Some(SETUP_PHASE_NOT_COMPLETED),
     );
@@ -648,12 +650,14 @@ fn distribute_fees_operation_not_registered() {
         .common_setup
         .complete_header_verifier_setup_phase(None);
 
+    let operation_nonce = state.common_setup.next_operation_nonce();
+    let operation = DistributeFeesOperation {
+        pairs: ManagedVec::new(),
+        nonce: operation_nonce,
+    };
     state.distribute_fees(
         &ManagedBuffer::new(),
-        DistributeFeesOperation {
-            pairs: ManagedVec::new(),
-            nonce: 0,
-        },
+        operation,
         Some(EXECUTED_BRIDGE_OP_EVENT),
         Some(CURRENT_OPERATION_NOT_REGISTERED),
     );
@@ -680,9 +684,10 @@ fn test_distribute_fees_percentage_under_limit() {
         percentage: 10,
     };
 
+    let operation_nonce = state.common_setup.next_operation_nonce();
     let operation = DistributeFeesOperation {
         pairs: ManagedVec::from_iter(vec![address_pair.clone()]),
-        nonce: 0,
+        nonce: operation_nonce,
     };
 
     let operation_hash = operation.generate_hash();
