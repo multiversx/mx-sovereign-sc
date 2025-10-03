@@ -145,8 +145,8 @@ fn test_remove_users_from_whitelist() {
         users: ManagedVec::from_iter(new_users.clone()),
     };
     let operation_two = RemoveUsersFromWhitelistOperation {
-        nonce: state.common_setup.next_operation_nonce(),
         users: ManagedVec::from_iter(new_users.clone()),
+        nonce: state.common_setup.next_operation_nonce(),
     };
 
     let operation_one_hash = operation_one.generate_hash();
