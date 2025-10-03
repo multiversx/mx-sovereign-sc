@@ -49,7 +49,6 @@ async fn test_update_invalid_config() {
         .update_configuration_after_setup_phase(
             SHARD_0,
             config,
-            0,
             Some(EXECUTED_BRIDGE_OP_EVENT),
             Some(MAX_GAS_LIMIT_PER_TX_EXCEEDED),
         )
@@ -84,7 +83,7 @@ async fn test_deposit_max_bridged_amount_exceeded() {
     );
 
     chain_interactor
-        .update_configuration_after_setup_phase(SHARD_0, config, 0, Some(EXECUTED_BRIDGE_LOG), None)
+        .update_configuration_after_setup_phase(SHARD_0, config, Some(EXECUTED_BRIDGE_LOG), None)
         .await;
 
     let esdt_token_payment = EgldOrEsdtTokenPayment::<StaticApi>::new(
@@ -113,7 +112,6 @@ async fn test_deposit_max_bridged_amount_exceeded() {
         .update_configuration_after_setup_phase(
             SHARD_0,
             EsdtSafeConfig::default_config(),
-            0,
             Some(EXECUTED_BRIDGE_LOG),
             None,
         )
@@ -270,7 +268,7 @@ async fn test_deposit_gas_limit_too_high_no_fee() {
     );
 
     chain_interactor
-        .update_configuration_after_setup_phase(SHARD_0, config, 0, Some(EXECUTED_BRIDGE_LOG), None)
+        .update_configuration_after_setup_phase(SHARD_0, config, Some(EXECUTED_BRIDGE_LOG), None)
         .await;
 
     let esdt_token_payment_one = EgldOrEsdtTokenPayment::<StaticApi>::new(
@@ -307,7 +305,6 @@ async fn test_deposit_gas_limit_too_high_no_fee() {
         .update_configuration_after_setup_phase(
             SHARD_0,
             EsdtSafeConfig::default_config(),
-            0,
             Some(EXECUTED_BRIDGE_LOG),
             None,
         )
@@ -339,7 +336,7 @@ async fn test_deposit_endpoint_banned_no_fee() {
     );
 
     chain_interactor
-        .update_configuration_after_setup_phase(SHARD_0, config, 0, Some(EXECUTED_BRIDGE_LOG), None)
+        .update_configuration_after_setup_phase(SHARD_0, config, Some(EXECUTED_BRIDGE_LOG), None)
         .await;
 
     let esdt_token_payment_one = EgldOrEsdtTokenPayment::<StaticApi>::new(
@@ -376,7 +373,6 @@ async fn test_deposit_endpoint_banned_no_fee() {
         .update_configuration_after_setup_phase(
             SHARD_0,
             EsdtSafeConfig::default_config(),
-            0,
             Some(EXECUTED_BRIDGE_LOG),
             None,
         )

@@ -1407,14 +1407,11 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             return;
         }
 
-        let nonce = self.common_state().fee_op_nonce;
-        self.common_state().fee_op_nonce += 1;
-
         let fee_token = self.state().get_fee_token_identifier();
 
         let operation: RemoveFeeOperation<StaticApi> = RemoveFeeOperation {
             token_id: fee_token.clone(),
-            nonce,
+            nonce: self.common_state().get_and_increment_operation_nonce(shard),
         };
 
         let operation_hash = operation.generate_hash();
@@ -1431,12 +1428,9 @@ pub trait CommonInteractorTrait: InteractorHelpers {
     }
 
     async fn set_fee_common(&mut self, fee: FeeStruct<StaticApi>, shard: u32) {
-        let nonce = self.common_state().fee_op_nonce;
-        self.common_state().fee_op_nonce += 1;
-
         let operation: SetFeeOperation<StaticApi> = SetFeeOperation {
             fee_struct: fee.clone(),
-            nonce,
+            nonce: self.common_state().get_and_increment_operation_nonce(shard),
         };
 
         let operation_hash = operation.generate_hash();
