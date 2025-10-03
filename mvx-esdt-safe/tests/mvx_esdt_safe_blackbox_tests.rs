@@ -1,9 +1,10 @@
 use common_test_setup::constants::{
     CROWD_TOKEN_ID, DEPOSIT_EVENT, ESDT_SAFE_ADDRESS, EXECUTED_BRIDGE_OP_EVENT, FEE_MARKET_ADDRESS,
     FEE_TOKEN, FIRST_TEST_TOKEN, FIRST_TOKEN_ID, HEADER_VERIFIER_ADDRESS, ISSUE_COST,
-    NATIVE_TEST_TOKEN, ONE_HUNDRED_MILLION, ONE_HUNDRED_THOUSAND, OWNER_ADDRESS, SC_CALL_EVENT,
-    SECOND_TEST_TOKEN, SECOND_TOKEN_ID, SOV_FIRST_TOKEN_ID, SOV_SECOND_TOKEN_ID, SOV_TOKEN,
-    TESTING_SC_ADDRESS, TESTING_SC_ENDPOINT, UNPAUSE_CONTRACT_LOG, USER_ADDRESS, ONE_HUNDRED_TOKENS
+    NATIVE_TEST_TOKEN, ONE_HUNDRED_MILLION, ONE_HUNDRED_THOUSAND, ONE_HUNDRED_TOKENS,
+    OWNER_ADDRESS, SC_CALL_EVENT, SECOND_TEST_TOKEN, SECOND_TOKEN_ID, SOV_FIRST_TOKEN_ID,
+    SOV_SECOND_TOKEN_ID, SOV_TOKEN, TESTING_SC_ADDRESS, TESTING_SC_ENDPOINT, UNPAUSE_CONTRACT_LOG,
+    USER_ADDRESS,
 };
 use cross_chain::storage::CrossChainStorage;
 use cross_chain::{DEFAULT_ISSUE_COST, MAX_GAS_PER_TRANSACTION};
@@ -2644,8 +2645,11 @@ fn test_execute_operation_native_token_failed_event() {
     let args =
         ManagedVec::<StaticApi, ManagedBuffer<StaticApi>>::from(vec![ManagedBuffer::from("1")]);
     let transfer_data = TransferData::new(gas_limit, function, args);
-    let operation_data =
-        OperationData::new(1, OWNER_ADDRESS.to_managed_address(), Some(transfer_data));
+    let operation_data = OperationData::new(
+        state.common_setup.next_operation_nonce(),
+        OWNER_ADDRESS.to_managed_address(),
+        Some(transfer_data),
+    );
     let operation = Operation::new(
         TESTING_SC_ADDRESS.to_managed_address(),
         vec![payment].into(),
@@ -3170,7 +3174,11 @@ fn test_execute_operation_partial_execution() {
     let operation = Operation::new(
         USER_ADDRESS.to_managed_address(),
         vec![first_payment, second_payment, third_payment].into(),
-        OperationData::new(1, USER_ADDRESS.to_managed_address(), None),
+        OperationData::new(
+            state.common_setup.next_operation_nonce(),
+            USER_ADDRESS.to_managed_address(),
+            None,
+        ),
     );
     let operation_hash = state.common_setup.get_operation_hash(&operation);
     let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&operation_hash.to_vec()));
