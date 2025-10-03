@@ -1586,12 +1586,14 @@ fn test_execute_operation_no_chain_config_registered() {
         EsdtTokenData::default(),
     );
 
-    let operation_data = OperationData::new(1, OWNER_ADDRESS.to_managed_address(), None);
-
     let operation = Operation::new(
         TESTING_SC_ADDRESS.to_managed_address(),
         vec![payment].into(),
-        operation_data,
+        OperationData::new(
+            state.common_setup.next_operation_nonce(),
+            OWNER_ADDRESS.to_managed_address(),
+            None,
+        ),
     );
 
     let hash_of_hashes = state.common_setup.get_operation_hash(&operation);
@@ -1630,12 +1632,14 @@ fn test_execute_operation_no_esdt_safe_registered() {
         EsdtTokenData::default(),
     );
 
-    let operation_data = OperationData::new(1, OWNER_ADDRESS.to_managed_address(), None);
-
     let operation = Operation::new(
         TESTING_SC_ADDRESS.to_managed_address(),
         vec![payment].into(),
-        operation_data,
+        OperationData::new(
+            state.common_setup.next_operation_nonce(),
+            OWNER_ADDRESS.to_managed_address(),
+            None,
+        ),
     );
 
     let hash_of_hashes = state.common_setup.get_operation_hash(&operation);
@@ -1689,13 +1693,14 @@ fn test_execute_operation_success() {
 
     let transfer_data = TransferData::new(gas_limit, function, args);
 
-    let operation_data =
-        OperationData::new(1, OWNER_ADDRESS.to_managed_address(), Some(transfer_data));
-
     let operation = Operation::new(
         TESTING_SC_ADDRESS.to_managed_address(),
         vec![payment].into(),
-        operation_data,
+        OperationData::new(
+            state.common_setup.next_operation_nonce(),
+            OWNER_ADDRESS.to_managed_address(),
+            Some(transfer_data),
+        ),
     );
 
     let operation_hash = state.common_setup.get_operation_hash(&operation);
@@ -1784,13 +1789,14 @@ fn test_execute_operation_with_native_token_success() {
 
     let transfer_data = TransferData::new(gas_limit, function, args);
 
-    let operation_data =
-        OperationData::new(1, OWNER_ADDRESS.to_managed_address(), Some(transfer_data));
-
     let operation = Operation::new(
         TESTING_SC_ADDRESS.to_managed_address(),
         vec![payment].into(),
-        operation_data,
+        OperationData::new(
+            state.common_setup.next_operation_nonce(),
+            OWNER_ADDRESS.to_managed_address(),
+            Some(transfer_data),
+        ),
     );
 
     let operation_hash = state.common_setup.get_operation_hash(&operation);
@@ -1879,12 +1885,14 @@ fn test_execute_operation_burn_mechanism_without_deposit_cannot_subtract() {
         token_data,
     );
 
-    let operation_data = OperationData::new(1, OWNER_ADDRESS.to_managed_address(), None);
-
     let operation = Operation::new(
         TESTING_SC_ADDRESS.to_managed_address(),
         vec![payment].into(),
-        operation_data,
+        OperationData::new(
+            state.common_setup.next_operation_nonce(),
+            OWNER_ADDRESS.to_managed_address(),
+            None,
+        ),
     );
 
     let operation_hash = state.common_setup.get_operation_hash(&operation);
@@ -1967,13 +1975,14 @@ fn test_execute_operation_only_transfer_data_no_fee() {
 
     let transfer_data = TransferData::new(gas_limit, function, args);
 
-    let operation_data =
-        OperationData::new(1, OWNER_ADDRESS.to_managed_address(), Some(transfer_data));
-
     let operation = Operation::new(
         TESTING_SC_ADDRESS.to_managed_address(),
         ManagedVec::new(),
-        operation_data,
+        OperationData::new(
+            state.common_setup.next_operation_nonce(),
+            OWNER_ADDRESS.to_managed_address(),
+            Some(transfer_data),
+        ),
     );
 
     let operation_hash = state.common_setup.get_operation_hash(&operation);
@@ -2052,12 +2061,14 @@ fn test_execute_operation_success_burn_mechanism() {
         token_data.clone(),
     );
 
-    let operation_data = OperationData::new(1, OWNER_ADDRESS.to_managed_address(), None);
-
     let operation = Operation::new(
         TESTING_SC_ADDRESS.to_managed_address(),
         vec![payment.clone()].into(),
-        operation_data,
+        OperationData::new(
+            state.common_setup.next_operation_nonce(),
+            OWNER_ADDRESS.to_managed_address(),
+            None,
+        ),
     );
 
     let operation_hash = state.common_setup.get_operation_hash(&operation);
@@ -2189,11 +2200,14 @@ fn test_deposit_execute_switch_mechanism() {
         execute_trusted_token_payment_token_data,
     );
 
-    let operation_one_data = OperationData::new(1, OWNER_ADDRESS.to_managed_address(), None);
     let operation_one = Operation::new(
         TESTING_SC_ADDRESS.to_managed_address(),
         vec![execute_trusted_token_payment.clone()].into(),
-        operation_one_data,
+        OperationData::new(
+            state.common_setup.next_operation_nonce(),
+            OWNER_ADDRESS.to_managed_address(),
+            None,
+        ),
     );
     let operation_one_hash = state.common_setup.get_operation_hash(&operation_one);
     let hash_of_hashes_one = ManagedBuffer::new_from_bytes(&sha256(&operation_one_hash.to_vec()));
@@ -2210,11 +2224,14 @@ fn test_deposit_execute_switch_mechanism() {
         None,
     );
 
-    let operation_two_data = OperationData::new(2, OWNER_ADDRESS.to_managed_address(), None);
     let operation_two = Operation::new(
         TESTING_SC_ADDRESS.to_managed_address(),
         vec![execute_trusted_token_payment.clone()].into(),
-        operation_two_data,
+        OperationData::new(
+            state.common_setup.next_operation_nonce(),
+            OWNER_ADDRESS.to_managed_address(),
+            None,
+        ),
     );
     let operation_two_hash = state.common_setup.get_operation_hash(&operation_two);
     let hash_of_hashes_two = ManagedBuffer::new_from_bytes(&sha256(&operation_two_hash.to_vec()));
@@ -2440,13 +2457,14 @@ fn test_execute_operation_no_payments() {
 
     let transfer_data = TransferData::new(gas_limit, function, args);
 
-    let operation_data =
-        OperationData::new(1, OWNER_ADDRESS.to_managed_address(), Some(transfer_data));
-
     let operation = Operation::new(
         TESTING_SC_ADDRESS.to_managed_address(),
         ManagedVec::new(),
-        operation_data,
+        OperationData::new(
+            state.common_setup.next_operation_nonce(),
+            OWNER_ADDRESS.to_managed_address(),
+            Some(transfer_data),
+        ),
     );
 
     let operation_hash = state.common_setup.get_operation_hash(&operation);
@@ -2529,12 +2547,14 @@ fn test_execute_operation_no_payments_failed_event() {
     let args =
         ManagedVec::<StaticApi, ManagedBuffer<StaticApi>>::from(vec![ManagedBuffer::from("1")]);
     let transfer_data = TransferData::new(gas_limit, function, args);
-    let operation_data =
-        OperationData::new(1, OWNER_ADDRESS.to_managed_address(), Some(transfer_data));
     let operation = Operation::new(
         TESTING_SC_ADDRESS.to_managed_address(),
         ManagedVec::new(),
-        operation_data,
+        OperationData::new(
+            state.common_setup.next_operation_nonce(),
+            OWNER_ADDRESS.to_managed_address(),
+            Some(transfer_data),
+        ),
     );
     let operation_hash = state.common_setup.get_operation_hash(&operation);
     let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&operation_hash.to_vec()));
@@ -2832,7 +2852,7 @@ fn test_update_config_invalid_config() {
     };
     let update_config_operation = UpdateEsdtSafeConfigOperation {
         esdt_safe_config: esdt_safe_config.clone(),
-        nonce: 1,
+        nonce: state.common_setup.next_operation_nonce(),
     };
 
     let config_hash = update_config_operation.generate_hash();
@@ -2899,7 +2919,7 @@ fn test_update_config() {
     };
     let update_config_operation = UpdateEsdtSafeConfigOperation {
         esdt_safe_config,
-        nonce: 1,
+        nonce: state.common_setup.next_operation_nonce(),
     };
 
     let config_hash = update_config_operation.generate_hash();

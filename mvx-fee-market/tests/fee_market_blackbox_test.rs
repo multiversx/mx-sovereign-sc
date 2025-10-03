@@ -106,12 +106,14 @@ fn test_set_fee_setup_not_completed() {
         },
     };
 
+    let set_fee_operation = SetFeeOperation {
+        fee_struct,
+        nonce: state.common_setup.next_operation_nonce(),
+    };
+
     state.set_fee(
         &ManagedBuffer::new(),
-        SetFeeOperation {
-            fee_struct,
-            nonce: 0,
-        },
+        set_fee_operation,
         Some(EXECUTED_BRIDGE_OP_EVENT),
         Some(SETUP_PHASE_NOT_COMPLETED),
     );
@@ -139,11 +141,11 @@ fn test_remove_users_from_whitelist() {
     ];
 
     let operation_one = AddUsersToWhitelistOperation {
-        nonce: 1,
+        nonce: state.common_setup.next_operation_nonce(),
         users: ManagedVec::from_iter(new_users.clone()),
     };
     let operation_two = RemoveUsersFromWhitelistOperation {
-        nonce: 2,
+        nonce: state.common_setup.next_operation_nonce(),
         users: ManagedVec::from_iter(new_users.clone()),
     };
 
@@ -228,7 +230,7 @@ fn test_set_fee() {
 
     let set_fee_operation = SetFeeOperation {
         fee_struct,
-        nonce: 1,
+        nonce: state.common_setup.next_operation_nonce(),
     };
     let fee_hash = set_fee_operation.generate_hash();
     let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&fee_hash.to_vec()));
@@ -308,12 +310,14 @@ fn test_remove_fee_setup_phase_not_completed() {
         .common_setup
         .deploy_header_verifier(vec![ScArray::FeeMarket]);
 
+    let remove_fee_operation = RemoveFeeOperation {
+        token_id: EgldOrEsdtTokenIdentifier::from(FIRST_TEST_TOKEN.as_str()),
+        nonce: state.common_setup.next_operation_nonce(),
+    };
+
     state.remove_fee(
         &ManagedBuffer::new(),
-        RemoveFeeOperation {
-            token_id: EgldOrEsdtTokenIdentifier::from(FIRST_TEST_TOKEN.as_str()),
-            nonce: 0,
-        },
+        remove_fee_operation,
         None,
         Some(EXECUTED_BRIDGE_OP_EVENT),
         Some(SETUP_PHASE_NOT_COMPLETED),
@@ -346,7 +350,7 @@ fn test_remove_fee_register_separate_operations() {
     };
     let set_fee_operation = SetFeeOperation {
         fee_struct,
-        nonce: 1,
+        nonce: state.common_setup.next_operation_nonce(),
     };
     let register_fee_hash = set_fee_operation.generate_hash();
     let register_fee_hash_of_hashes =
@@ -364,7 +368,7 @@ fn test_remove_fee_register_separate_operations() {
 
     let remove_fee_operation = RemoveFeeOperation {
         token_id: EgldOrEsdtTokenIdentifier::esdt(FIRST_TEST_TOKEN),
-        nonce: 2,
+        nonce: state.common_setup.next_operation_nonce(),
     };
     let remove_fee_hash = remove_fee_operation.generate_hash();
     let remove_fee_hash_of_hashes =
@@ -485,12 +489,12 @@ fn test_remove_fee_register_with_one_hash_of_hashes() {
 
     let set_fee_operation = SetFeeOperation {
         fee_struct,
-        nonce: 1,
+        nonce: state.common_setup.next_operation_nonce(),
     };
 
     let remove_fee_operation = RemoveFeeOperation {
         token_id: EgldOrEsdtTokenIdentifier::from(FIRST_TEST_TOKEN.as_str()),
-        nonce: 2,
+        nonce: state.common_setup.next_operation_nonce(),
     };
 
     let remove_fee_hash: ManagedBuffer<StaticApi> = remove_fee_operation.generate_hash();
@@ -752,7 +756,7 @@ fn test_distribute_fees() {
 
     let operation = DistributeFeesOperation {
         pairs: ManagedVec::from_iter(vec![address_pair.clone()]),
-        nonce: 1,
+        nonce: state.common_setup.next_operation_nonce(),
     };
     let operation_hash = operation.generate_hash();
 
