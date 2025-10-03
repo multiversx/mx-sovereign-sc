@@ -21,7 +21,7 @@ use structs::fee::{
     RemoveUsersFromWhitelistOperation, SetFeeOperation,
 };
 
-pub struct FeeMarketTestState {
+pub struct MvxFeeMarketTestState {
     pub common_setup: BaseSetup,
 }
 
@@ -33,7 +33,7 @@ pub enum WantedFeeType {
     Fixed,
 }
 
-impl FeeMarketTestState {
+impl MvxFeeMarketTestState {
     #[allow(clippy::new_without_default)]
     pub fn new() -> Self {
         let owner_account = AccountSetup {
