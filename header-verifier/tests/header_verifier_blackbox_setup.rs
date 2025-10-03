@@ -92,15 +92,14 @@ impl HeaderVerifierTestState {
     pub fn last_operation_nonce(&mut self) -> u64 {
         let mut nonce = 0u64;
         self.with_header_verifier(|sc| {
-            nonce = sc.last_operation_nonce().get();
+            let current = sc.current_execution_nonce().get();
+            nonce = current.saturating_sub(1);
         });
         nonce
     }
 
     pub fn next_operation_nonce(&mut self) -> u64 {
-        self.last_operation_nonce()
-            .checked_add(1)
-            .expect("operation nonce overflow")
+        self.common_setup.next_operation_nonce()
     }
 
     pub fn assert_last_operation_nonce(&mut self, expected: u64) {

@@ -223,10 +223,12 @@ fn test_update_config_setup_phase_not_completed() {
 
     let new_config = SovereignConfig::new(2, 1, BigUint::default(), None);
 
+    let operation_nonce = state.common_setup.next_operation_nonce();
+
     state.update_sovereign_config(
         ManagedBuffer::new(),
         new_config,
-        0,
+        operation_nonce,
         Some(EXECUTED_BRIDGE_OP_EVENT),
         Some(SETUP_PHASE_NOT_COMPLETED),
     );
@@ -277,10 +279,12 @@ fn test_update_config_invalid_config() {
         MultiValueEncoded::from_iter(vec![config_hash]),
     );
 
+    let operation_nonce = state.common_setup.next_operation_nonce();
+
     state.update_sovereign_config(
         hash_of_hashes,
         new_config,
-        0,
+        operation_nonce,
         Some(EXECUTED_BRIDGE_OP_EVENT),
         Some(INVALID_MIN_MAX_VALIDATOR_NUMBERS),
     );
@@ -333,10 +337,12 @@ fn test_update_config() {
 
     state.common_setup.complete_chain_config_setup_phase();
 
+    let operation_nonce = state.common_setup.next_operation_nonce();
+
     state.update_sovereign_config(
         hash_of_hashes,
         new_config,
-        0,
+        operation_nonce,
         Some(EXECUTED_BRIDGE_OP_EVENT),
         None,
     );

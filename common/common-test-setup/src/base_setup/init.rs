@@ -7,6 +7,7 @@ use multiversx_sc_scenario::{
 
 pub struct BaseSetup {
     pub world: ScenarioWorld,
+    operation_nonce: u64,
 }
 
 pub struct AccountSetup<'a> {
@@ -61,6 +62,18 @@ impl BaseSetup {
             }
         }
 
-        Self { world }
+        Self {
+            world,
+            operation_nonce: 0,
+        }
+    }
+
+    pub fn next_operation_nonce(&mut self) -> u64 {
+        let current = self.operation_nonce;
+        self.operation_nonce = self
+            .operation_nonce
+            .checked_add(1)
+            .expect("operation nonce overflow");
+        current
     }
 }
