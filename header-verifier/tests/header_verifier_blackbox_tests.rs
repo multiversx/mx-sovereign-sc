@@ -507,6 +507,10 @@ fn test_lock_operation_incorrect_nonce_rejected() {
 
     state.register_operations(&signature, operation.clone(), bitmap, 0, None);
 
+    state.assert_last_operation_nonce(0);
+    let expected_next_nonce = state.next_operation_nonce();
+    let incorrect_nonce = expected_next_nonce.checked_add(1).unwrap();
+
     assert_eq!(
         state
             .common_setup
@@ -515,7 +519,11 @@ fn test_lock_operation_incorrect_nonce_rejected() {
             .from(CHAIN_CONFIG_ADDRESS)
             .to(HEADER_VERIFIER_ADDRESS)
             .typed(HeaderverifierProxy)
-            .lock_operation_hash(operation.bridge_operation_hash, operation_hash_1, 0u64)
+            .lock_operation_hash(
+                operation.bridge_operation_hash,
+                operation_hash_1,
+                incorrect_nonce,
+            )
             .returns(ReturnsHandledOrError::new())
             .run()
             .err()
@@ -523,6 +531,8 @@ fn test_lock_operation_incorrect_nonce_rejected() {
             .message,
         INCORRECT_OPERATION_NONCE
     );
+
+    state.assert_last_operation_nonce(expected_next_nonce);
 }
 
 /// ### TEST

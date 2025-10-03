@@ -159,10 +159,12 @@ impl BaseSetup {
             MultiValueEncoded::from_iter(vec![validator_data_hash]),
         );
 
+        let operation_nonce = self.next_operation_nonce();
+
         self.register_validator(
             &hash_of_hashes,
             validator_data.clone(),
-            0,
+            operation_nonce,
             Some(EXECUTED_BRIDGE_OP_EVENT),
             None,
         );
@@ -288,10 +290,12 @@ impl BaseSetup {
             MultiValueEncoded::from_iter(vec![validator_data_hash]),
         );
 
+        let operation_nonce = self.next_operation_nonce();
+
         self.unregister_validator(
             &hash_of_hashes,
             validator_data.clone(),
-            0,
+            operation_nonce,
             None,
             Some(EXECUTED_BRIDGE_OP_EVENT),
         );

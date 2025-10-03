@@ -8,7 +8,6 @@ use error_messages::{
     PAYMENT_DOES_NOT_COVER_FEE, SETUP_PHASE_NOT_COMPLETED, TOKEN_NOT_ACCEPTED_AS_FEE,
 };
 use fee_common::storage::FeeCommonStorageModule;
-use fee_market_blackbox_setup::*;
 use multiversx_sc::types::EgldOrEsdtTokenIdentifier;
 use multiversx_sc::{
     imports::OptionalValue,
@@ -27,11 +26,13 @@ use structs::{
     generate_hash::GenerateHash,
 };
 
-mod fee_market_blackbox_setup;
+use crate::mvx_fee_market_blackbox_setup::{MvxFeeMarketTestState, WantedFeeType};
+
+mod mvx_fee_market_blackbox_setup;
 
 #[test]
 fn test_deploy_fee_market() {
-    let mut state = FeeMarketTestState::new();
+    let mut state = MvxFeeMarketTestState::new();
 
     let fee = state.get_fee();
 
@@ -50,7 +51,7 @@ fn test_deploy_fee_market() {
 /// Errors: INVALID_TOKEN_ID, INVALID_FEE_TYPE, INVALID_FEE
 #[test]
 fn test_set_fee_during_setup_phase_wrong_params() {
-    let mut state = FeeMarketTestState::new();
+    let mut state = MvxFeeMarketTestState::new();
 
     let fee = state.get_fee();
 
@@ -87,7 +88,7 @@ fn test_set_fee_during_setup_phase_wrong_params() {
 /// Error CALLER_NOT_OWNER
 #[test]
 fn test_set_fee_setup_not_completed() {
-    let mut state = FeeMarketTestState::new();
+    let mut state = MvxFeeMarketTestState::new();
 
     state
         .common_setup
@@ -106,12 +107,14 @@ fn test_set_fee_setup_not_completed() {
         },
     };
 
+    let set_fee_operation = SetFeeOperation {
+        fee_struct,
+        nonce: state.common_setup.next_operation_nonce(),
+    };
+
     state.set_fee(
         &ManagedBuffer::new(),
-        SetFeeOperation {
-            fee_struct,
-            nonce: 0,
-        },
+        set_fee_operation,
         Some(EXECUTED_BRIDGE_OP_EVENT),
         Some(SETUP_PHASE_NOT_COMPLETED),
     );
@@ -127,7 +130,7 @@ fn test_set_fee_setup_not_completed() {
 /// SC whitelist is updated
 #[test]
 fn test_remove_users_from_whitelist() {
-    let mut state = FeeMarketTestState::new();
+    let mut state = MvxFeeMarketTestState::new();
 
     state
         .common_setup
@@ -139,12 +142,12 @@ fn test_remove_users_from_whitelist() {
     ];
 
     let operation_one = AddUsersToWhitelistOperation {
-        nonce: 1,
+        nonce: state.common_setup.next_operation_nonce(),
         users: ManagedVec::from_iter(new_users.clone()),
     };
     let operation_two = RemoveUsersFromWhitelistOperation {
-        nonce: 2,
         users: ManagedVec::from_iter(new_users.clone()),
+        nonce: state.common_setup.next_operation_nonce(),
     };
 
     let operation_one_hash = operation_one.generate_hash();
@@ -211,7 +214,7 @@ fn test_remove_users_from_whitelist() {
 /// Fee is set in contract's storage
 #[test]
 fn test_set_fee() {
-    let mut state = FeeMarketTestState::new();
+    let mut state = MvxFeeMarketTestState::new();
 
     state
         .common_setup
@@ -228,7 +231,7 @@ fn test_set_fee() {
 
     let set_fee_operation = SetFeeOperation {
         fee_struct,
-        nonce: 1,
+        nonce: state.common_setup.next_operation_nonce(),
     };
     let fee_hash = set_fee_operation.generate_hash();
     let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&fee_hash.to_vec()));
@@ -298,7 +301,7 @@ fn test_set_fee() {
 /// Error CALLER_NOT_OWNER
 #[test]
 fn test_remove_fee_setup_phase_not_completed() {
-    let mut state = FeeMarketTestState::new();
+    let mut state = MvxFeeMarketTestState::new();
 
     state
         .common_setup
@@ -308,12 +311,14 @@ fn test_remove_fee_setup_phase_not_completed() {
         .common_setup
         .deploy_header_verifier(vec![ScArray::FeeMarket]);
 
+    let remove_fee_operation = RemoveFeeOperation {
+        token_id: EgldOrEsdtTokenIdentifier::from(FIRST_TEST_TOKEN.as_str()),
+        nonce: state.common_setup.next_operation_nonce(),
+    };
+
     state.remove_fee(
         &ManagedBuffer::new(),
-        RemoveFeeOperation {
-            token_id: EgldOrEsdtTokenIdentifier::from(FIRST_TEST_TOKEN.as_str()),
-            nonce: 0,
-        },
+        remove_fee_operation,
         None,
         Some(EXECUTED_BRIDGE_OP_EVENT),
         Some(SETUP_PHASE_NOT_COMPLETED),
@@ -330,7 +335,7 @@ fn test_remove_fee_setup_phase_not_completed() {
 /// Fee is removed the contract's storage
 #[test]
 fn test_remove_fee_register_separate_operations() {
-    let mut state = FeeMarketTestState::new();
+    let mut state = MvxFeeMarketTestState::new();
 
     state
         .common_setup
@@ -346,7 +351,7 @@ fn test_remove_fee_register_separate_operations() {
     };
     let set_fee_operation = SetFeeOperation {
         fee_struct,
-        nonce: 1,
+        nonce: state.common_setup.next_operation_nonce(),
     };
     let register_fee_hash = set_fee_operation.generate_hash();
     let register_fee_hash_of_hashes =
@@ -364,7 +369,7 @@ fn test_remove_fee_register_separate_operations() {
 
     let remove_fee_operation = RemoveFeeOperation {
         token_id: EgldOrEsdtTokenIdentifier::esdt(FIRST_TEST_TOKEN),
-        nonce: 2,
+        nonce: state.common_setup.next_operation_nonce(),
     };
     let remove_fee_hash = remove_fee_operation.generate_hash();
     let remove_fee_hash_of_hashes =
@@ -468,7 +473,7 @@ fn test_remove_fee_register_separate_operations() {
 /// Fee is removed the contract's storage
 #[test]
 fn test_remove_fee_register_with_one_hash_of_hashes() {
-    let mut state = FeeMarketTestState::new();
+    let mut state = MvxFeeMarketTestState::new();
 
     state
         .common_setup
@@ -485,12 +490,12 @@ fn test_remove_fee_register_with_one_hash_of_hashes() {
 
     let set_fee_operation = SetFeeOperation {
         fee_struct,
-        nonce: 1,
+        nonce: state.common_setup.next_operation_nonce(),
     };
 
     let remove_fee_operation = RemoveFeeOperation {
         token_id: EgldOrEsdtTokenIdentifier::from(FIRST_TEST_TOKEN.as_str()),
-        nonce: 2,
+        nonce: state.common_setup.next_operation_nonce(),
     };
 
     let remove_fee_hash: ManagedBuffer<StaticApi> = remove_fee_operation.generate_hash();
@@ -586,7 +591,7 @@ fn test_remove_fee_register_with_one_hash_of_hashes() {
 /// Error CALLER_NOT_OWNER
 #[test]
 fn distribute_fees_setup_not_completed() {
-    let mut state = FeeMarketTestState::new();
+    let mut state = MvxFeeMarketTestState::new();
 
     state
         .common_setup
@@ -617,7 +622,7 @@ fn distribute_fees_setup_not_completed() {
 /// Error CURRENT_OPERATION_NOT_REGISTERED
 #[test]
 fn distribute_fees_operation_not_registered() {
-    let mut state = FeeMarketTestState::new();
+    let mut state = MvxFeeMarketTestState::new();
 
     state
         .common_setup
@@ -664,7 +669,7 @@ fn distribute_fees_operation_not_registered() {
 /// OWNER balance is unchanged, `failedBridgeOp` event emitted
 #[test]
 fn test_distribute_fees_percentage_under_limit() {
-    let mut state = FeeMarketTestState::new();
+    let mut state = MvxFeeMarketTestState::new();
 
     state
         .common_setup
@@ -739,7 +744,7 @@ fn test_distribute_fees_percentage_under_limit() {
 /// OWNER balance is changed, `executedBridgeOp` event emitted
 #[test]
 fn test_distribute_fees() {
-    let mut state = FeeMarketTestState::new();
+    let mut state = MvxFeeMarketTestState::new();
 
     state
         .common_setup
@@ -752,7 +757,7 @@ fn test_distribute_fees() {
 
     let operation = DistributeFeesOperation {
         pairs: ManagedVec::from_iter(vec![address_pair.clone()]),
-        nonce: 1,
+        nonce: state.common_setup.next_operation_nonce(),
     };
     let operation_hash = operation.generate_hash();
 
@@ -840,7 +845,7 @@ fn test_distribute_fees() {
 /// User balance is unchanged
 #[test]
 fn test_subtract_fee_no_fee() {
-    let mut state = FeeMarketTestState::new();
+    let mut state = MvxFeeMarketTestState::new();
 
     let fee = state.get_fee();
 
@@ -883,7 +888,7 @@ fn test_subtract_fee_no_fee() {
 /// User balance is unchanged
 #[test]
 fn test_subtract_fee_whitelisted() {
-    let mut state = FeeMarketTestState::new();
+    let mut state = MvxFeeMarketTestState::new();
 
     let fee = state.get_fee();
 
@@ -928,7 +933,7 @@ fn test_subtract_fee_whitelisted() {
 /// Error TOKEN_NOT_ACCEPTED_AS_FEE
 #[test]
 fn test_subtract_fee_invalid_payment_token() {
-    let mut state = FeeMarketTestState::new();
+    let mut state = MvxFeeMarketTestState::new();
 
     let fee = state.get_fee();
 
@@ -969,7 +974,7 @@ fn test_subtract_fee_invalid_payment_token() {
 /// Error PAYMENT_DOES_NOT_COVER_FEE
 #[test]
 fn test_subtract_fixed_fee_payment_not_covered() {
-    let mut state = FeeMarketTestState::new();
+    let mut state = MvxFeeMarketTestState::new();
 
     let fee = state.get_fee();
 
@@ -1013,7 +1018,7 @@ fn test_subtract_fixed_fee_payment_not_covered() {
 /// User balance is refunded with the difference
 #[test]
 fn test_subtract_fee_fixed_payment_bigger_than_fee() {
-    let mut state = FeeMarketTestState::new();
+    let mut state = MvxFeeMarketTestState::new();
 
     let fee = state.get_fee();
 
