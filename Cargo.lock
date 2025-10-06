@@ -404,6 +404,7 @@ dependencies = [
  "error-messages",
  "header-verifier",
  "hex",
+ "multiversx-sc",
  "multiversx-sc-scenario",
  "mvx-esdt-safe",
  "mvx-fee-market",
