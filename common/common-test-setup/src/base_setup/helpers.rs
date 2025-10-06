@@ -42,7 +42,6 @@ impl BaseSetup {
         &self,
         amount: &BigUint<StaticApi>,
     ) -> MultiEgldOrEsdtPayment<StaticApi> {
-        let _ = self;
         let mut payments = MultiEgldOrEsdtPayment::new();
         payments.push(EgldOrEsdtTokenPayment::new(
             EgldOrEsdtTokenIdentifier::from(EGLD_000000_TOKEN_IDENTIFIER.as_bytes()),
@@ -62,7 +61,6 @@ impl BaseSetup {
         &self,
         amount: &BigUint<StaticApi>,
     ) -> MultiEgldOrEsdtPayment<StaticApi> {
-        let _ = self;
         let mut payments = MultiEgldOrEsdtPayment::new();
         payments.push(EgldOrEsdtTokenPayment::new(
             EgldOrEsdtTokenIdentifier::from(FIRST_TEST_TOKEN.as_bytes()),
@@ -139,7 +137,6 @@ impl BaseSetup {
     }
 
     pub fn full_bitmap(&self, num_of_validators: u64) -> ManagedBuffer<StaticApi> {
-        let _ = self;
         let mut bitmap_bytes = vec![0u8; num_of_validators.div_ceil(8) as usize];
         for index in 0..num_of_validators {
             let byte_index = (index / 8) as usize;
