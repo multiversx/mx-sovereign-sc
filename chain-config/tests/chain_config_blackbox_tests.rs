@@ -23,6 +23,7 @@ use multiversx_sc::{
 use multiversx_sc_scenario::api::StaticApi;
 use multiversx_sc_scenario::{multiversx_chain_vm::crypto_functions::sha256, ScenarioTxWhitebox};
 use setup_phase::SetupPhaseModule;
+use structs::ValidatorOperation;
 use structs::{
     configs::{SovereignConfig, StakeArgs},
     forge::ScArray,
@@ -1113,7 +1114,12 @@ fn unregister_validator_via_bridge_operation(
         bls_key: validator_bls_key.clone(),
     };
 
-    let validator_data_hash = validator_data.generate_hash();
+    let validator_operation = ValidatorOperation {
+        validator_data,
+        nonce: state.common_setup.next_operation_nonce(),
+    };
+
+    let validator_data_hash = validator_operation.generate_hash();
     let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&validator_data_hash.to_vec()));
     let (signature, pub_keys) = state
         .common_setup
@@ -1131,8 +1137,7 @@ fn unregister_validator_via_bridge_operation(
 
     state.common_setup.unregister_validator(
         &hash_of_hashes,
-        validator_data,
-        0,
+        validator_operation,
         None,
         Some(EXECUTED_BRIDGE_OP_EVENT),
     );

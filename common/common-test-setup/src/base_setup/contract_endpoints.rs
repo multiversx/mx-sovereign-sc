@@ -178,8 +178,7 @@ impl BaseSetup {
     pub fn unregister_validator(
         &mut self,
         hash_of_hashes: &ManagedBuffer<StaticApi>,
-        validator_data: ValidatorData<StaticApi>,
-        operation_nonce: u64,
+        validator_operation: ValidatorOperation<StaticApi>,
         expected_error_message: Option<&str>,
         expected_custom_log: Option<&str>,
     ) {
@@ -189,13 +188,7 @@ impl BaseSetup {
             .from(OWNER_ADDRESS)
             .to(CHAIN_CONFIG_ADDRESS)
             .typed(ChainConfigContractProxy)
-            .unregister_bls_key(
-                hash_of_hashes,
-                ValidatorOperation {
-                    validator_data,
-                    nonce: operation_nonce,
-                },
-            )
+            .unregister_bls_key(hash_of_hashes, validator_operation)
             .returns(ReturnsHandledOrError::new())
             .returns(ReturnsLogs)
             .run();
@@ -223,6 +216,7 @@ impl BaseSetup {
             });
     }
 
+    // TODO: Cleanup
     pub fn unregister_validator_operation(
         &mut self,
         validator_data: ValidatorData<StaticApi>,
@@ -292,10 +286,14 @@ impl BaseSetup {
 
         let operation_nonce = self.next_operation_nonce();
 
+        let validator_operation = ValidatorOperation {
+            validator_data: validator_data.clone(),
+            nonce: operation_nonce,
+        };
+
         self.unregister_validator(
             &hash_of_hashes,
-            validator_data.clone(),
-            operation_nonce,
+            validator_operation,
             None,
             Some(EXECUTED_BRIDGE_OP_EVENT),
         );
