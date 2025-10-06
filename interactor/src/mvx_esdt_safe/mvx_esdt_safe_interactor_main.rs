@@ -160,10 +160,13 @@ impl MvxEsdtSafeInteract {
         expected_log_error: Option<&str>,
     ) {
         let bridge_service = self.get_bridge_service_for_shard(shard);
+        let mvx_esdt_safe_address = self.common_state.get_mvx_esdt_safe_address(shard).clone();
 
         let operation: UpdateEsdtSafeConfigOperation<StaticApi> = UpdateEsdtSafeConfigOperation {
             esdt_safe_config,
-            nonce: self.common_state().get_and_increment_operation_nonce(shard),
+            nonce: self
+                .common_state()
+                .get_and_increment_operation_nonce(&mvx_esdt_safe_address.to_string()),
         };
 
         let operation_hash = operation.generate_hash();

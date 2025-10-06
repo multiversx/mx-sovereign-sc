@@ -1408,10 +1408,13 @@ pub trait CommonInteractorTrait: InteractorHelpers {
         }
 
         let fee_token = self.state().get_fee_token_identifier();
+        let mvx_esdt_safe_address = self.common_state().get_mvx_esdt_safe_address(shard).clone();
 
         let operation: RemoveFeeOperation<StaticApi> = RemoveFeeOperation {
             token_id: fee_token.clone(),
-            nonce: self.common_state().get_and_increment_operation_nonce(shard),
+            nonce: self
+                .common_state()
+                .get_and_increment_operation_nonce(&mvx_esdt_safe_address.to_string()),
         };
 
         let operation_hash = operation.generate_hash();
@@ -1428,9 +1431,12 @@ pub trait CommonInteractorTrait: InteractorHelpers {
     }
 
     async fn set_fee_common(&mut self, fee: FeeStruct<StaticApi>, shard: u32) {
+        let mvx_esdt_safe_address = self.common_state().get_mvx_esdt_safe_address(shard).clone();
         let operation: SetFeeOperation<StaticApi> = SetFeeOperation {
             fee_struct: fee.clone(),
-            nonce: self.common_state().get_and_increment_operation_nonce(shard),
+            nonce: self
+                .common_state()
+                .get_and_increment_operation_nonce(&mvx_esdt_safe_address.to_string()),
         };
 
         let operation_hash = operation.generate_hash();
