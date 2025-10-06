@@ -18,7 +18,10 @@ use structs::OperationHashStatus;
 
 use crate::{
     base_setup::init::BaseSetup,
-    constants::{ESDT_SAFE_ADDRESS, FEE_MARKET_ADDRESS, HEADER_VERIFIER_ADDRESS, OWNER_ADDRESS},
+    constants::{
+        CHAIN_CONFIG_ADDRESS, ESDT_SAFE_ADDRESS, FEE_MARKET_ADDRESS, FIRST_TEST_TOKEN,
+        HEADER_VERIFIER_ADDRESS, OWNER_ADDRESS,
+    },
 };
 
 impl BaseSetup {
@@ -287,5 +290,37 @@ impl BaseSetup {
                 assert_eq!(expected_error_message, Some(error.message.as_str()))
             }
         }
+    }
+
+    pub fn assert_contract_and_owner_balances(
+        &mut self,
+        contract_egld: &BigUint<StaticApi>,
+        contract_token: &BigUint<StaticApi>,
+        owner_egld: &BigUint<StaticApi>,
+        owner_token: &BigUint<StaticApi>,
+    ) {
+        self.world
+            .check_account(CHAIN_CONFIG_ADDRESS)
+            .balance(contract_egld);
+        self.world
+            .check_account(CHAIN_CONFIG_ADDRESS)
+            .esdt_balance(FIRST_TEST_TOKEN, contract_token);
+        self.world.check_account(OWNER_ADDRESS).balance(owner_egld);
+        self.world
+            .check_account(OWNER_ADDRESS)
+            .esdt_balance(FIRST_TEST_TOKEN, owner_token);
+    }
+
+    pub fn assert_contract_and_owner_token_balances(
+        &mut self,
+        contract_token: &BigUint<StaticApi>,
+        owner_token: &BigUint<StaticApi>,
+    ) {
+        self.world
+            .check_account(CHAIN_CONFIG_ADDRESS)
+            .esdt_balance(FIRST_TEST_TOKEN, contract_token);
+        self.world
+            .check_account(OWNER_ADDRESS)
+            .esdt_balance(FIRST_TEST_TOKEN, owner_token);
     }
 }

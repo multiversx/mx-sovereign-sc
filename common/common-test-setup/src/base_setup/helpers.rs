@@ -1,3 +1,7 @@
+use multiversx_sc::chain_core::EGLD_000000_TOKEN_IDENTIFIER;
+use multiversx_sc::types::{
+    BigUint, EgldOrEsdtTokenIdentifier, EgldOrEsdtTokenPayment, MultiEgldOrEsdtPayment,
+};
 use multiversx_sc_scenario::multiversx_chain_vm::crypto_functions_bls::create_aggregated_signature;
 use rand::RngCore;
 use rand_core::OsRng;
@@ -5,10 +9,7 @@ use rand_core::OsRng;
 use multiversx_sc_scenario::imports::ManagedTypeApi;
 use multiversx_sc_scenario::{
     api::StaticApi,
-    imports::{
-        ManagedBuffer, MultiEgldOrEsdtPayment, ReturnsResultUnmanaged, TestSCAddress, TopEncode,
-        UserBuiltinProxy,
-    },
+    imports::{ManagedBuffer, ReturnsResultUnmanaged, TestSCAddress, TopEncode, UserBuiltinProxy},
     multiversx_chain_vm::crypto_functions::sha256,
     ScenarioTxRun,
 };
@@ -18,7 +19,7 @@ use structs::{
     BLS_KEY_BYTE_LENGTH,
 };
 
-use crate::constants::NATIVE_TEST_TOKEN;
+use crate::constants::{FIRST_TEST_TOKEN, NATIVE_TEST_TOKEN};
 use crate::{
     base_setup::init::BaseSetup,
     constants::{
@@ -35,6 +36,41 @@ impl BaseSetup {
         for new_validator in new_validators {
             self.register(&new_validator, &MultiEgldOrEsdtPayment::new(), None);
         }
+    }
+
+    pub fn combined_stake_payments(
+        &self,
+        amount: &BigUint<StaticApi>,
+    ) -> MultiEgldOrEsdtPayment<StaticApi> {
+        let _ = self;
+        let mut payments = MultiEgldOrEsdtPayment::new();
+        payments.push(EgldOrEsdtTokenPayment::new(
+            EgldOrEsdtTokenIdentifier::from(EGLD_000000_TOKEN_IDENTIFIER.as_bytes()),
+            0,
+            amount.clone(),
+        ));
+        payments.push(EgldOrEsdtTokenPayment::new(
+            EgldOrEsdtTokenIdentifier::from(FIRST_TEST_TOKEN.as_bytes()),
+            0,
+            amount.clone(),
+        ));
+
+        payments
+    }
+
+    pub fn single_token_payment(
+        &self,
+        amount: &BigUint<StaticApi>,
+    ) -> MultiEgldOrEsdtPayment<StaticApi> {
+        let _ = self;
+        let mut payments = MultiEgldOrEsdtPayment::new();
+        payments.push(EgldOrEsdtTokenPayment::new(
+            EgldOrEsdtTokenIdentifier::from(FIRST_TEST_TOKEN.as_bytes()),
+            0,
+            amount.clone(),
+        ));
+
+        payments
     }
 
     pub fn change_ownership_to_header_verifier(&mut self, sc_address: TestSCAddress) {
@@ -83,6 +119,35 @@ impl BaseSetup {
             ScArray::FeeMarket => FEE_MARKET_ADDRESS,
             _ => TestSCAddress::new("ERROR"),
         }
+    }
+
+    pub fn register_validators(
+        &mut self,
+        count: u64,
+        payments: &MultiEgldOrEsdtPayment<StaticApi>,
+    ) -> Vec<ManagedBuffer<StaticApi>> {
+        let mut bls_keys = Vec::new();
+
+        for expected_id in 1..=count {
+            let bls_key = BLSKey::random();
+            self.register(&bls_key, payments, None);
+            assert_eq!(self.get_bls_key_id(&bls_key), BigUint::from(expected_id),);
+            bls_keys.push(bls_key);
+        }
+
+        bls_keys
+    }
+
+    pub fn full_bitmap(&self, num_of_validators: u64) -> ManagedBuffer<StaticApi> {
+        let _ = self;
+        let mut bitmap_bytes = vec![0u8; num_of_validators.div_ceil(8) as usize];
+        for index in 0..num_of_validators {
+            let byte_index = (index / 8) as usize;
+            let bit_index = (index % 8) as u8;
+            bitmap_bytes[byte_index] |= 1u8 << bit_index;
+        }
+
+        ManagedBuffer::new_from_bytes(&bitmap_bytes)
     }
 
     pub fn get_sig_and_pub_keys(

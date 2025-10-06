@@ -216,6 +216,48 @@ impl BaseSetup {
             });
     }
 
+    pub fn unregister_validator_via_bridge_operation(
+        &mut self,
+        validator_id: u32,
+        validator_bls_key: &ManagedBuffer<StaticApi>,
+        num_of_validators: u64,
+        bitmap: &ManagedBuffer<StaticApi>,
+        epoch: u64,
+    ) {
+        let validator_data = ValidatorData {
+            id: BigUint::from(validator_id),
+            address: OWNER_ADDRESS.to_managed_address(),
+            bls_key: validator_bls_key.clone(),
+        };
+
+        let validator_operation = ValidatorOperation {
+            validator_data,
+            nonce: self.next_operation_nonce(),
+        };
+
+        let validator_data_hash = validator_operation.generate_hash();
+        let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&validator_data_hash.to_vec()));
+        let (signature, pub_keys) =
+            self.get_sig_and_pub_keys(num_of_validators as usize, &hash_of_hashes);
+
+        self.set_bls_keys_in_header_storage(pub_keys);
+        self.register_operation(
+            OWNER_ADDRESS,
+            signature,
+            &hash_of_hashes,
+            bitmap.clone(),
+            epoch,
+            MultiValueEncoded::from_iter(vec![validator_data_hash]),
+        );
+
+        self.unregister_validator(
+            &hash_of_hashes,
+            validator_operation,
+            None,
+            Some(EXECUTED_BRIDGE_OP_EVENT),
+        );
+    }
+
     // TODO: Cleanup
     pub fn unregister_validator_operation(
         &mut self,
