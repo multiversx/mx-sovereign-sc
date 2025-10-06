@@ -24,7 +24,7 @@ use crate::{
 #[derive(Debug, Serialize, Deserialize)]
 pub struct CommonState {
     pub mvx_esdt_safe_addresses: Option<ShardAddresses>,
-    pub header_verfier_addresses: Option<ShardAddresses>,
+    pub header_verifier_addresses: Option<ShardAddresses>,
     pub fee_market_addresses: Option<ShardAddresses>,
     pub chain_config_sc_addresses: Option<ShardAddresses>,
     pub testing_sc_address: Option<Bech32Address>,
@@ -43,7 +43,7 @@ impl Default for CommonState {
     fn default() -> Self {
         Self {
             mvx_esdt_safe_addresses: None,
-            header_verfier_addresses: None,
+            header_verifier_addresses: None,
             fee_market_addresses: None,
             chain_config_sc_addresses: None,
             testing_sc_address: None,
@@ -78,7 +78,7 @@ impl CommonState {
     }
 
     pub fn set_header_verifier_address(&mut self, address: AddressInfo) {
-        let list = self.header_verfier_addresses.get_or_insert_default();
+        let list = self.header_verifier_addresses.get_or_insert_default();
         list.push(address);
     }
 
@@ -171,7 +171,7 @@ impl CommonState {
     }
 
     pub fn current_header_verifier_address(&self) -> &Bech32Address {
-        self.header_verfier_addresses
+        self.header_verifier_addresses
             .as_ref()
             .expect(NO_KNOWN_HEADER_VERIFIER)
             .first()
@@ -238,7 +238,7 @@ impl CommonState {
     }
 
     pub fn get_header_verifier_address(&self, shard: u32) -> &Bech32Address {
-        self.header_verfier_addresses
+        self.header_verifier_addresses
             .as_ref()
             .expect(NO_KNOWN_HEADER_VERIFIER)
             .addresses
