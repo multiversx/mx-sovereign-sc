@@ -131,7 +131,7 @@ impl CompleteFlowInteract {
             .shard(config.shard)
             .token(token.clone())
             .amount(amount)
-            .fee(fee.clone().unwrap())
+            .fee(fee.clone())
             .with_transfer_data(config.with_transfer_data.unwrap_or_default())
             .is_execute(false);
 

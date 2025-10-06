@@ -1444,7 +1444,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
 
         self.remove_fee_after_setup_phase(hash_of_hashes, operation, shard)
             .await;
-        self.common_state().set_fee_status_for_shard(shard, true);
+        self.common_state().set_fee_status_for_shard(shard, false);
     }
 
     async fn set_fee(&mut self, fee: FeeStruct<StaticApi>, shard: u32) {
@@ -1472,6 +1472,6 @@ pub trait CommonInteractorTrait: InteractorHelpers {
 
         self.set_fee_after_setup_phase(hash_of_hashes, operation, shard)
             .await;
-        self.common_state().set_fee_status_for_shard(shard, false);
+        self.common_state().set_fee_status_for_shard(shard, true);
     }
 }

@@ -431,7 +431,7 @@ async fn test_deposit_fee_enabled() {
         .shard(SHARD_0)
         .token(Some(first_token_id.clone()))
         .amount(ONE_HUNDRED_TOKENS.into())
-        .fee(fee.clone())
+        .fee(Some(fee.clone()))
         .with_transfer_data(true);
 
     chain_interactor

@@ -103,8 +103,8 @@ impl BalanceCheckConfig {
         self
     }
 
-    pub fn fee(mut self, fee: FeeStruct<StaticApi>) -> Self {
-        self.fee = Some(fee);
+    pub fn fee(mut self, fee: Option<FeeStruct<StaticApi>>) -> Self {
+        self.fee = fee;
         self
     }
 
