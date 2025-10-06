@@ -21,10 +21,10 @@ use crate::{
     interactor_structs::SerializableFeeMarketToken,
 };
 
-#[derive(Debug, Default, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Default)]
 pub struct CommonState {
     pub mvx_esdt_safe_addresses: Option<ShardAddresses>,
-    pub header_verfier_addresses: Option<ShardAddresses>,
+    pub header_verifier_addresses: Option<ShardAddresses>,
     pub fee_market_addresses: Option<ShardAddresses>,
     pub chain_config_sc_addresses: Option<ShardAddresses>,
     pub testing_sc_address: Option<Bech32Address>,
@@ -32,9 +32,8 @@ pub struct CommonState {
     pub chain_factory_sc_addresses: Option<Vec<Bech32Address>>,
     pub fee_market_tokens: HashMap<String, SerializableFeeMarketToken>,
     pub fee_status: HashMap<String, bool>,
-    pub fee_op_nonce: u64,
+    pub operation_nonce: HashMap<String, u64>,
     pub chain_ids: Vec<String>,
-    pub update_config_nonce: u64,
     pub mvx_egld_balances: Vec<(String, u64)>,
     pub testing_egld_balance: u64,
     pub bls_secret_keys: HashMap<String, Vec<Vec<u8>>>,
@@ -58,7 +57,7 @@ impl CommonState {
     }
 
     pub fn set_header_verifier_address(&mut self, address: AddressInfo) {
-        let list = self.header_verfier_addresses.get_or_insert_default();
+        let list = self.header_verifier_addresses.get_or_insert_default();
         list.push(address);
     }
 
@@ -136,6 +135,12 @@ impl CommonState {
         self.testing_egld_balance += amount;
     }
 
+    pub fn get_and_increment_operation_nonce(&mut self, contract_address: &str) -> u64 {
+        let nonce = self.get_operation_nonce(contract_address);
+        self.increment_operation_nonce(contract_address);
+        nonce
+    }
+
     /// Returns the contract addresses
     pub fn current_mvx_esdt_safe_contract_address(&self) -> &Bech32Address {
         self.mvx_esdt_safe_addresses
@@ -145,7 +150,7 @@ impl CommonState {
     }
 
     pub fn current_header_verifier_address(&self) -> &Bech32Address {
-        self.header_verfier_addresses
+        self.header_verifier_addresses
             .as_ref()
             .expect(NO_KNOWN_HEADER_VERIFIER)
             .first()
@@ -212,7 +217,7 @@ impl CommonState {
     }
 
     pub fn get_header_verifier_address(&self, shard: u32) -> &Bech32Address {
-        self.header_verfier_addresses
+        self.header_verifier_addresses
             .as_ref()
             .expect(NO_KNOWN_HEADER_VERIFIER)
             .addresses
@@ -264,10 +269,6 @@ impl CommonState {
             .unwrap_or_else(|| panic!("No chain ID for shard {}", shard))
     }
 
-    pub fn get_update_config_nonce(&self) -> u64 {
-        self.update_config_nonce
-    }
-
     pub fn get_mvx_egld_balance_for_shard(&self, shard: u32) -> u64 {
         self.mvx_egld_balances
             .get(shard as usize)
@@ -290,6 +291,21 @@ impl CommonState {
     pub fn get_bls_secret_keys(&self, shard: u32) -> Option<&Vec<Vec<u8>>> {
         let shard_key = shard.to_string();
         self.bls_secret_keys.get(&shard_key)
+    }
+
+    pub fn get_operation_nonce(&self, contract_address: &str) -> u64 {
+        self.operation_nonce
+            .get(contract_address)
+            .copied()
+            .unwrap_or(0)
+    }
+
+    pub fn increment_operation_nonce(&mut self, contract_address: &str) {
+        let current_nonce = self
+            .operation_nonce
+            .entry(contract_address.to_string())
+            .or_insert(0);
+        *current_nonce += 1;
     }
 }
 

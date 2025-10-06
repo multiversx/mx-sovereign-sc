@@ -128,12 +128,14 @@ pub trait InteractorHelpers {
 
     async fn prepare_operation(
         &mut self,
+        shard: u32,
         token: Option<EsdtTokenInfo>,
         endpoint: Option<&str>,
     ) -> Operation<StaticApi> {
         let user_address = self.user_address().clone();
 
         let payment_vec = self.prepare_execute_payment(token);
+        let mvx_esdt_safe_address = self.common_state().get_mvx_esdt_safe_address(shard).clone();
 
         match endpoint {
             Some(endpoint) => {
@@ -145,7 +147,8 @@ pub trait InteractorHelpers {
 
                 let transfer_data = TransferData::new(gas_limit, function, args);
                 let operation_data = OperationData::new(
-                    1,
+                    self.common_state()
+                        .get_and_increment_operation_nonce(&mvx_esdt_safe_address.to_string()),
                     ManagedAddress::from_address(&user_address),
                     Some(transfer_data),
                 );
@@ -162,8 +165,12 @@ pub trait InteractorHelpers {
                 )
             }
             None => {
-                let operation_data =
-                    OperationData::new(1, ManagedAddress::from_address(&user_address), None);
+                let operation_data = OperationData::new(
+                    self.common_state()
+                        .get_and_increment_operation_nonce(&mvx_esdt_safe_address.to_string()),
+                    ManagedAddress::from_address(&user_address),
+                    None,
+                );
 
                 Operation::new(
                     ManagedAddress::from_address(self.user_address()),

@@ -6,19 +6,21 @@ use common_test_setup::constants::{
 use error_messages::{
     CALLER_NOT_FROM_CURRENT_SOVEREIGN, CHAIN_CONFIG_SETUP_PHASE_NOT_COMPLETE,
     CURRENT_OPERATION_ALREADY_IN_EXECUTION, CURRENT_OPERATION_NOT_REGISTERED,
-    OUTGOING_TX_HASH_ALREADY_REGISTERED, SETUP_PHASE_NOT_COMPLETED,
+    INCORRECT_OPERATION_NONCE, OUTGOING_TX_HASH_ALREADY_REGISTERED, SETUP_PHASE_NOT_COMPLETED,
 };
 use header_verifier::header_utils::HeaderVerifierUtilsModule;
 use header_verifier::storage::HeaderVerifierStorageModule;
 use header_verifier_blackbox_setup::*;
 use multiversx_sc::imports::{BigUint, ManagedVec, StorageClearable};
+use multiversx_sc::types::ReturnsHandledOrError;
 use multiversx_sc::{
     imports::OptionalValue,
     types::{ManagedBuffer, MultiEgldOrEsdtPayment, MultiValueEncoded},
 };
 use multiversx_sc_scenario::api::StaticApi;
 use multiversx_sc_scenario::multiversx_chain_vm::crypto_functions::sha256;
-use multiversx_sc_scenario::{DebugApi, ScenarioTxWhitebox};
+use multiversx_sc_scenario::{DebugApi, ScenarioTxRun, ScenarioTxWhitebox};
+use proxies::header_verifier_proxy::HeaderverifierProxy;
 use structs::configs::SovereignConfig;
 use structs::OperationHashStatus;
 use structs::{forge::ScArray, ValidatorData};
@@ -352,6 +354,7 @@ fn test_lock_operation_not_registered() {
         CHAIN_CONFIG_ADDRESS,
         &operation.bridge_operation_hash,
         &operation_1,
+        1,
         Some(CURRENT_OPERATION_NOT_REGISTERED),
     );
 }
@@ -380,6 +383,7 @@ fn test_lock_operation_caller_not_from_sovereign() {
         ESDT_SAFE_ADDRESS,
         &operation.bridge_operation_hash,
         &operation_1,
+        0,
         Some(CALLER_NOT_FROM_CURRENT_SOVEREIGN),
     );
 }
@@ -425,12 +429,19 @@ fn test_lock_operation() {
 
     state.register_operations(&signature, operation.clone(), bitmap, 0, None);
 
+    state.assert_last_operation_nonce(0);
+
+    let expected_operation_nonce = state.next_operation_nonce();
+
     state.lock_operation_hash(
         CHAIN_CONFIG_ADDRESS,
         &operation.bridge_operation_hash,
         &operation_1,
+        expected_operation_nonce,
         None,
     );
+
+    state.assert_last_operation_nonce(expected_operation_nonce);
 
     state
         .common_setup
@@ -452,6 +463,76 @@ fn test_lock_operation() {
             assert!(is_hash_1_locked == OperationHashStatus::Locked);
             assert!(is_hash_2_locked == OperationHashStatus::NotLocked);
         })
+}
+
+/// ### TEST
+/// H-VERIFIER_LOCK_OPERATION_FAIL
+///
+/// ### ACTION
+/// Call 'lock_operation_hash()' with a stale operation nonce value
+///
+/// ### EXPECTED
+/// Error: INCORRECT_OPERATION_NONCE
+#[test]
+fn test_lock_operation_incorrect_nonce_rejected() {
+    let mut state = HeaderVerifierTestState::new();
+
+    state
+        .common_setup
+        .deploy_chain_config(OptionalValue::None, None);
+
+    let operation_hash_1 = ManagedBuffer::from("operation_nonce_fail_1");
+    let operation_hash_2 = ManagedBuffer::from("operation_nonce_fail_2");
+    let operation =
+        state.generate_bridge_operation_struct(vec![&operation_hash_1, &operation_hash_2]);
+    let bitmap = ManagedBuffer::new_from_bytes(&[0x01]);
+
+    let (signature, pub_keys) = state
+        .common_setup
+        .get_sig_and_pub_keys(1, &operation.bridge_operation_hash);
+
+    state
+        .common_setup
+        .register(&pub_keys[0], &MultiEgldOrEsdtPayment::new(), None);
+
+    state.common_setup.complete_chain_config_setup_phase();
+
+    state
+        .common_setup
+        .deploy_header_verifier(vec![ScArray::ChainConfig]);
+
+    state
+        .common_setup
+        .complete_header_verifier_setup_phase(None);
+
+    state.register_operations(&signature, operation.clone(), bitmap, 0, None);
+
+    state.assert_last_operation_nonce(0);
+    let expected_next_nonce = state.next_operation_nonce();
+    let incorrect_nonce = expected_next_nonce.checked_add(1).unwrap();
+
+    assert_eq!(
+        state
+            .common_setup
+            .world
+            .tx()
+            .from(CHAIN_CONFIG_ADDRESS)
+            .to(HEADER_VERIFIER_ADDRESS)
+            .typed(HeaderverifierProxy)
+            .lock_operation_hash(
+                operation.bridge_operation_hash,
+                operation_hash_1,
+                incorrect_nonce,
+            )
+            .returns(ReturnsHandledOrError::new())
+            .run()
+            .err()
+            .unwrap()
+            .message,
+        INCORRECT_OPERATION_NONCE
+    );
+
+    state.assert_last_operation_nonce(expected_next_nonce);
 }
 
 /// ### TEST
@@ -494,12 +575,19 @@ fn test_lock_operation_hash_already_locked() {
 
     state.register_operations(&signature, operation.clone(), bitmap, 0, None);
 
+    state.assert_last_operation_nonce(0);
+
+    let expected_operation_nonce = state.next_operation_nonce();
+
     state.lock_operation_hash(
         CHAIN_CONFIG_ADDRESS,
         &operation.bridge_operation_hash,
         &operation_1,
+        expected_operation_nonce,
         None,
     );
+
+    state.assert_last_operation_nonce(expected_operation_nonce);
 
     state
         .common_setup
@@ -522,12 +610,17 @@ fn test_lock_operation_hash_already_locked() {
             assert!(is_hash_2_locked == OperationHashStatus::NotLocked);
         });
 
+    let next_operation_nonce = state.next_operation_nonce();
+
     state.lock_operation_hash(
         CHAIN_CONFIG_ADDRESS,
         &operation.bridge_operation_hash,
         &operation_1,
+        next_operation_nonce,
         Some(CURRENT_OPERATION_ALREADY_IN_EXECUTION),
     );
+
+    state.assert_last_operation_nonce(expected_operation_nonce);
 }
 
 /// ### TEST

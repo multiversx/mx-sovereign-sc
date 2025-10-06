@@ -4,7 +4,7 @@ use error_messages::{
     REGISTRATIONS_DISABLED_GENESIS_PHASE, VALIDATOR_ID_NOT_REGISTERED,
 };
 use structs::generate_hash::GenerateHash;
-use structs::{ValidatorData, ValidatorInfo};
+use structs::{ValidatorInfo, ValidatorOperation};
 
 multiversx_sc::imports!();
 multiversx_sc::derive_imports!();
@@ -58,9 +58,9 @@ pub trait ValidatorModule:
     fn register_bls_key(
         &self,
         hash_of_hashes: ManagedBuffer,
-        validator_data: ValidatorData<Self::Api>,
+        validator_operation: ValidatorOperation<Self::Api>,
     ) {
-        let config_hash = validator_data.generate_hash();
+        let config_hash = validator_operation.generate_hash();
         if config_hash.is_empty() {
             self.complete_operation(
                 &hash_of_hashes,
@@ -70,18 +70,20 @@ pub trait ValidatorModule:
             return;
         };
 
-        if let Some(lock_operation_error) =
-            self.lock_operation_hash_wrapper(&config_hash, &hash_of_hashes)
-        {
+        if let Some(lock_operation_error) = self.lock_operation_hash_wrapper(
+            &config_hash,
+            &hash_of_hashes,
+            validator_operation.nonce,
+        ) {
             self.complete_operation(&hash_of_hashes, &config_hash, Some(lock_operation_error));
             return;
         }
 
         self.insert_validator(
-            validator_data.id,
+            validator_operation.validator_data.id,
             &ValidatorInfo {
-                address: validator_data.address,
-                bls_key: validator_data.bls_key,
+                address: validator_operation.validator_data.address,
+                bls_key: validator_operation.validator_data.bls_key,
                 egld_stake: BigUint::zero(),
                 token_stake: None,
             },
@@ -123,9 +125,9 @@ pub trait ValidatorModule:
     fn unregister_bls_key(
         &self,
         hash_of_hashes: ManagedBuffer,
-        validator_data: ValidatorData<Self::Api>,
+        validator_operation: ValidatorOperation<Self::Api>,
     ) {
-        let config_hash = validator_data.generate_hash();
+        let config_hash = validator_operation.generate_hash();
         if config_hash.is_empty() {
             self.complete_operation(
                 &hash_of_hashes,
@@ -135,9 +137,9 @@ pub trait ValidatorModule:
             return;
         };
 
-        self.lock_operation_hash_wrapper(&hash_of_hashes, &config_hash);
+        self.lock_operation_hash_wrapper(&hash_of_hashes, &config_hash, validator_operation.nonce);
 
-        let validator_info_mapper = self.validator_info(&validator_data.id);
+        let validator_info_mapper = self.validator_info(&validator_operation.validator_data.id);
         if validator_info_mapper.is_empty() {
             self.complete_operation(
                 &hash_of_hashes,
@@ -146,9 +148,11 @@ pub trait ValidatorModule:
             );
             return;
         }
-        let validator_info = self.validator_info(&validator_data.id).get();
+        let validator_info = self
+            .validator_info(&validator_operation.validator_data.id)
+            .get();
 
-        if validator_data.address != validator_info.address {
+        if validator_operation.validator_data.address != validator_info.address {
             self.complete_operation(
                 &hash_of_hashes,
                 &config_hash,
@@ -157,9 +161,9 @@ pub trait ValidatorModule:
             return;
         }
 
-        self.remove_validator(validator_data.id, &validator_info);
+        self.remove_validator(validator_operation.validator_data.id, &validator_info);
 
-        self.refund_stake(&validator_data.address, &validator_info);
+        self.refund_stake(&validator_operation.validator_data.address, &validator_info);
 
         self.complete_operation(&hash_of_hashes, &config_hash, None);
     }

@@ -17,6 +17,7 @@ use multiversx_sc::{
 use multiversx_sc_scenario::imports::*;
 use mvx_esdt_safe::{bridging_mechanism::TRUSTED_TOKEN_IDS, MvxEsdtSafe};
 use proxies::mvx_esdt_safe_proxy::MvxEsdtSafeProxy;
+use structs::configs::UpdateEsdtSafeConfigOperation;
 use structs::forge::ScArray;
 use structs::{
     aliases::{OptionalValueTransferDataTuple, PaymentsVec},
@@ -191,7 +192,7 @@ impl MvxEsdtSafeTestState {
     pub fn update_esdt_safe_config(
         &mut self,
         hash_of_hashes: &ManagedBuffer<StaticApi>,
-        new_config: EsdtSafeConfig<StaticApi>,
+        update_config_operation: UpdateEsdtSafeConfigOperation<StaticApi>,
         expected_custom_log: Option<&str>,
         expected_log_error: Option<&str>,
     ) {
@@ -202,7 +203,7 @@ impl MvxEsdtSafeTestState {
             .from(OWNER_ADDRESS)
             .to(ESDT_SAFE_ADDRESS)
             .typed(MvxEsdtSafeProxy)
-            .update_esdt_safe_config(hash_of_hashes, new_config)
+            .update_esdt_safe_config(hash_of_hashes, update_config_operation)
             .returns(ReturnsHandledOrError::new())
             .returns(ReturnsLogs)
             .run();

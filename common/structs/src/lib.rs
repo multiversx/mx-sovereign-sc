@@ -17,7 +17,7 @@ pub mod operation;
 pub const MIN_BLOCKS_FOR_FINALITY: u64 = 10;
 pub const DEFAULT_MAX_TX_GAS_LIMIT: u64 = 300_000_000;
 
-pub const PHASE_ONE_ASYNC_CALL_GAS: u64 = 7_500_000;
+pub const PHASE_ONE_ASYNC_CALL_GAS: u64 = 9_000_000;
 pub const PHASE_ONE_CALLBACK_GAS: u64 = 3_000_000;
 
 pub const PHASE_TWO_ASYNC_CALL_GAS: u64 = 17_000_000;
@@ -26,7 +26,7 @@ pub const PHASE_TWO_CALLBACK_GAS: u64 = 2_000_000;
 pub const PHASE_THREE_ASYNC_CALL_GAS: u64 = 16_000_000;
 pub const PHASE_THREE_CALLBACK_GAS: u64 = 2_000_000;
 
-pub const PHASE_FOUR_ASYNC_CALL_GAS: u64 = 7_500_000;
+pub const PHASE_FOUR_ASYNC_CALL_GAS: u64 = 9_000_000;
 pub const PHASE_FOUR_CALLBACK_GAS: u64 = 3_000_000;
 
 pub const COMPLETE_SETUP_PHASE_GAS: u64 = 50_000_000;
@@ -53,7 +53,16 @@ pub struct ValidatorInfo<M: ManagedTypeApi> {
 impl<A: CryptoApi> GenerateHash<A> for ValidatorData<A> {}
 
 #[type_abi]
-#[derive(TopEncode, TopDecode, NestedEncode)]
+#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode)]
+pub struct ValidatorOperation<M: ManagedTypeApi> {
+    pub validator_data: ValidatorData<M>,
+    pub nonce: u64,
+}
+
+impl<A: CryptoApi> GenerateHash<A> for ValidatorOperation<A> {}
+
+#[type_abi]
+#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, Clone)]
 pub struct ValidatorData<M: ManagedTypeApi> {
     pub id: BigUint<M>,
     pub address: ManagedAddress<M>,
