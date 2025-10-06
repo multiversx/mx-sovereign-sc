@@ -124,7 +124,7 @@ fn test_set_fee_setup_not_completed() {
 /// F-MARKET_REMOVE_USERS_FROM_WHITELIST_OK
 ///
 /// ### ACTION
-/// Call 'remove_users_from_whitelist`
+/// Call `remove_users_from_whitelist`
 ///
 /// ### EXPECTED
 /// SC whitelist is updated
