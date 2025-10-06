@@ -21,7 +21,7 @@ use crate::{
     interactor_structs::SerializableFeeMarketToken,
 };
 
-#[derive(Debug, Default, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct CommonState {
     pub mvx_esdt_safe_addresses: Option<ShardAddresses>,
     pub header_verfier_addresses: Option<ShardAddresses>,
@@ -32,12 +32,32 @@ pub struct CommonState {
     pub chain_factory_sc_addresses: Option<Vec<Bech32Address>>,
     pub fee_market_tokens: HashMap<String, SerializableFeeMarketToken>,
     pub fee_status: HashMap<String, bool>,
-    pub fee_op_nonce: u64,
+    pub operation_nonce: Vec<u64>,
     pub chain_ids: Vec<String>,
-    pub update_config_nonce: u64,
     pub mvx_egld_balances: Vec<(String, u64)>,
     pub testing_egld_balance: u64,
     pub bls_secret_keys: HashMap<String, Vec<Vec<u8>>>,
+}
+
+impl Default for CommonState {
+    fn default() -> Self {
+        Self {
+            mvx_esdt_safe_addresses: None,
+            header_verfier_addresses: None,
+            fee_market_addresses: None,
+            chain_config_sc_addresses: None,
+            testing_sc_address: None,
+            sovereign_forge_sc_address: None,
+            chain_factory_sc_addresses: None,
+            fee_market_tokens: HashMap::new(),
+            fee_status: HashMap::new(),
+            operation_nonce: vec![0, 0, 0],
+            chain_ids: Vec::new(),
+            mvx_egld_balances: Vec::new(),
+            testing_egld_balance: 0,
+            bls_secret_keys: HashMap::new(),
+        }
+    }
 }
 
 impl CommonState {
@@ -134,6 +154,12 @@ impl CommonState {
 
     pub fn update_testing_egld_balance_with_amount(&mut self, amount: u64) {
         self.testing_egld_balance += amount;
+    }
+
+    pub fn get_and_increment_operation_nonce(&mut self, shard: u32) -> u64 {
+        let nonce = self.get_operation_nonce(shard);
+        self.increment_operation_nonce(shard);
+        nonce
     }
 
     /// Returns the contract addresses
@@ -264,10 +290,6 @@ impl CommonState {
             .unwrap_or_else(|| panic!("No chain ID for shard {}", shard))
     }
 
-    pub fn get_update_config_nonce(&self) -> u64 {
-        self.update_config_nonce
-    }
-
     pub fn get_mvx_egld_balance_for_shard(&self, shard: u32) -> u64 {
         self.mvx_egld_balances
             .get(shard as usize)
@@ -290,6 +312,15 @@ impl CommonState {
     pub fn get_bls_secret_keys(&self, shard: u32) -> Option<&Vec<Vec<u8>>> {
         let shard_key = shard.to_string();
         self.bls_secret_keys.get(&shard_key)
+    }
+
+    pub fn get_operation_nonce(&self, shard: u32) -> u64 {
+        self.operation_nonce[shard as usize]
+    }
+
+    pub fn increment_operation_nonce(&mut self, shard: u32) -> u64 {
+        self.operation_nonce[shard as usize] += 1;
+        self.operation_nonce[shard as usize]
     }
 }
 
