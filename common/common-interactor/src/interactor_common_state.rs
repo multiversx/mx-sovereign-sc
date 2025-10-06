@@ -21,7 +21,7 @@ use crate::{
     interactor_structs::SerializableFeeMarketToken,
 };
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Default)]
 pub struct CommonState {
     pub mvx_esdt_safe_addresses: Option<ShardAddresses>,
     pub header_verifier_addresses: Option<ShardAddresses>,
@@ -32,32 +32,11 @@ pub struct CommonState {
     pub chain_factory_sc_addresses: Option<Vec<Bech32Address>>,
     pub fee_market_tokens: HashMap<String, SerializableFeeMarketToken>,
     pub fee_status: HashMap<String, bool>,
-    pub operation_nonce: Vec<u64>,
+    pub operation_nonce: HashMap<String, u64>,
     pub chain_ids: Vec<String>,
     pub mvx_egld_balances: Vec<(String, u64)>,
     pub testing_egld_balance: u64,
     pub bls_secret_keys: HashMap<String, Vec<Vec<u8>>>,
-}
-
-impl Default for CommonState {
-    fn default() -> Self {
-        Self {
-            mvx_esdt_safe_addresses: None,
-            header_verifier_addresses: None,
-            fee_market_addresses: None,
-            chain_config_sc_addresses: None,
-            testing_sc_address: None,
-            sovereign_forge_sc_address: None,
-            chain_factory_sc_addresses: None,
-            fee_market_tokens: HashMap::new(),
-            fee_status: HashMap::new(),
-            operation_nonce: vec![0, 0, 0],
-            chain_ids: Vec::new(),
-            mvx_egld_balances: Vec::new(),
-            testing_egld_balance: 0,
-            bls_secret_keys: HashMap::new(),
-        }
-    }
 }
 
 impl CommonState {
@@ -156,9 +135,9 @@ impl CommonState {
         self.testing_egld_balance += amount;
     }
 
-    pub fn get_and_increment_operation_nonce(&mut self, shard: u32) -> u64 {
-        let nonce = self.get_operation_nonce(shard);
-        self.increment_operation_nonce(shard);
+    pub fn get_and_increment_operation_nonce(&mut self, contract_address: &str) -> u64 {
+        let nonce = self.get_operation_nonce(contract_address);
+        self.increment_operation_nonce(contract_address);
         nonce
     }
 
@@ -314,13 +293,20 @@ impl CommonState {
         self.bls_secret_keys.get(&shard_key)
     }
 
-    pub fn get_operation_nonce(&self, shard: u32) -> u64 {
-        self.operation_nonce[shard as usize]
+    pub fn get_operation_nonce(&self, contract_address: &str) -> u64 {
+        self.operation_nonce
+            .get(contract_address)
+            .copied()
+            .unwrap_or(0)
     }
 
-    pub fn increment_operation_nonce(&mut self, shard: u32) -> u64 {
-        self.operation_nonce[shard as usize] += 1;
-        self.operation_nonce[shard as usize]
+    pub fn increment_operation_nonce(&mut self, contract_address: &str) -> u64 {
+        let current_nonce = self
+            .operation_nonce
+            .entry(contract_address.to_string())
+            .or_insert(0);
+        *current_nonce += 1;
+        *current_nonce
     }
 }
 

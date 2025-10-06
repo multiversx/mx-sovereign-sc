@@ -37,13 +37,11 @@ use structs::OperationHashStatus;
 async fn test_update_invalid_config() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
 
-    let config = EsdtSafeConfig::new(
-        ManagedVec::new(),
-        ManagedVec::new(),
-        MAX_GAS_PER_TRANSACTION + 1,
-        ManagedVec::new(),
-        ManagedVec::new(),
-    );
+    let max_tx_gas_limit = MAX_GAS_PER_TRANSACTION + 1;
+    let config = EsdtSafeConfig {
+        max_tx_gas_limit,
+        ..EsdtSafeConfig::default_config()
+    };
 
     chain_interactor
         .update_configuration_after_setup_phase(
@@ -71,16 +69,13 @@ async fn test_deposit_max_bridged_amount_exceeded() {
 
     chain_interactor.remove_fee(SHARD_0).await;
 
-    let config = EsdtSafeConfig::new(
-        ManagedVec::new(),
-        ManagedVec::new(),
-        50_000_000,
-        ManagedVec::from(vec![ManagedBuffer::from(TESTING_SC_ENDPOINT)]),
-        ManagedVec::from(vec![MaxBridgedAmount {
+    let config = EsdtSafeConfig {
+        max_bridged_token_amounts: ManagedVec::from(vec![MaxBridgedAmount {
             token_id: chain_interactor.state.get_first_token_identifier(),
             amount: BigUint::default(),
         }]),
-    );
+        ..EsdtSafeConfig::default_config()
+    };
 
     chain_interactor
         .update_configuration_after_setup_phase(SHARD_0, config, Some(EXECUTED_BRIDGE_LOG), None)
@@ -259,13 +254,10 @@ async fn test_deposit_gas_limit_too_high_no_fee() {
     chain_interactor.remove_fee(SHARD_0).await;
 
     let shard = SHARD_0;
-    let config = EsdtSafeConfig::new(
-        ManagedVec::new(),
-        ManagedVec::new(),
-        1,
-        ManagedVec::new(),
-        ManagedVec::new(),
-    );
+    let config = EsdtSafeConfig {
+        max_tx_gas_limit: 1,
+        ..EsdtSafeConfig::default_config()
+    };
 
     chain_interactor
         .update_configuration_after_setup_phase(SHARD_0, config, Some(EXECUTED_BRIDGE_LOG), None)
@@ -327,13 +319,10 @@ async fn test_deposit_endpoint_banned_no_fee() {
 
     chain_interactor.remove_fee(SHARD_0).await;
 
-    let config = EsdtSafeConfig::new(
-        ManagedVec::new(),
-        ManagedVec::new(),
-        50_000_000,
-        ManagedVec::from(vec![ManagedBuffer::from(TESTING_SC_ENDPOINT)]),
-        ManagedVec::new(),
-    );
+    let config = EsdtSafeConfig {
+        banned_endpoints: ManagedVec::from(vec![ManagedBuffer::from(TESTING_SC_ENDPOINT)]),
+        ..EsdtSafeConfig::default_config()
+    };
 
     chain_interactor
         .update_configuration_after_setup_phase(SHARD_0, config, Some(EXECUTED_BRIDGE_LOG), None)
@@ -641,11 +630,15 @@ async fn test_execute_operation_success_no_fee() {
         ManagedVec::<StaticApi, ManagedBuffer<StaticApi>>::from(vec![ManagedBuffer::from("1")]);
 
     let transfer_data = TransferData::new(gas_limit, function, args);
+    let mvx_esdt_safe_address = chain_interactor
+        .common_state
+        .get_mvx_esdt_safe_address(SHARD_0)
+        .clone();
 
     let operation_data = OperationData::new(
         chain_interactor
             .common_state()
-            .get_and_increment_operation_nonce(SHARD_0),
+            .get_and_increment_operation_nonce(&mvx_esdt_safe_address.to_string()),
         ManagedAddress::from_address(&chain_interactor.user_address),
         Some(transfer_data),
     );
@@ -740,11 +733,15 @@ async fn test_execute_operation_only_transfer_data_no_fee() {
         ManagedVec::<StaticApi, ManagedBuffer<StaticApi>>::from(vec![ManagedBuffer::from("1")]);
 
     let transfer_data = TransferData::new(gas_limit, function, args);
+    let mvx_esdt_safe_address = chain_interactor
+        .common_state
+        .get_mvx_esdt_safe_address(SHARD_0)
+        .clone();
 
     let operation_data = OperationData::new(
         chain_interactor
             .common_state()
-            .get_and_increment_operation_nonce(SHARD_0),
+            .get_and_increment_operation_nonce(&mvx_esdt_safe_address.to_string()),
         ManagedAddress::from_address(&chain_interactor.user_address),
         Some(transfer_data),
     );
