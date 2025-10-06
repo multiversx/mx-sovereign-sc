@@ -1,11 +1,9 @@
 use crate::constants::*;
-use header_verifier::storage::HeaderVerifierStorageModule;
 use multiversx_sc_scenario::{
     api::StaticApi,
     imports::{Address, BigUint, ManagedBuffer, MxscPath, TestTokenIdentifier, Vec},
-    ScenarioTxWhitebox, ScenarioWorld,
+    ScenarioWorld,
 };
-use std::panic::{self, AssertUnwindSafe};
 
 pub struct BaseSetup {
     pub world: ScenarioWorld,
@@ -70,32 +68,11 @@ impl BaseSetup {
         }
     }
 
-    fn sync_operation_nonce(&mut self) {
-        let mut current = None;
-
-        let _ = panic::catch_unwind(AssertUnwindSafe(|| {
-            self.world.query().to(HEADER_VERIFIER_ADDRESS).whitebox(
-                header_verifier::contract_obj,
-                |sc| {
-                    current = Some(sc.current_execution_nonce().get());
-                },
-            );
-        }));
-
-        if let Some(value) = current {
-            if value > self.operation_nonce {
-                self.operation_nonce = value;
-            }
-        }
-    }
-
     pub fn operation_nonce(&mut self) -> u64 {
-        self.sync_operation_nonce();
         self.operation_nonce
     }
 
     pub fn next_operation_nonce(&mut self) -> u64 {
-        self.sync_operation_nonce();
         let nonce = self.operation_nonce;
         self.operation_nonce = self
             .operation_nonce
