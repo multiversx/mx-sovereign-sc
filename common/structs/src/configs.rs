@@ -27,6 +27,8 @@ pub struct UpdateSovereignConfigOperation<M: ManagedTypeApi> {
     pub nonce: TxNonce,
 }
 
+impl<A: CryptoApi> GenerateHash<A> for UpdateSovereignConfigOperation<A> {}
+
 #[type_abi]
 #[derive(
     TopEncode, TopDecode, NestedEncode, NestedDecode, ManagedVecItem, Clone, Debug, PartialEq,
@@ -93,6 +95,8 @@ pub struct UpdateEsdtSafeConfigOperation<M: ManagedTypeApi> {
     pub esdt_safe_config: EsdtSafeConfig<M>,
     pub nonce: TxNonce,
 }
+
+impl<A: CryptoApi> GenerateHash<A> for UpdateEsdtSafeConfigOperation<A> {}
 
 #[type_abi]
 #[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, ManagedVecItem, Clone)]

@@ -10,7 +10,7 @@ use multiversx_sc::types::{
 };
 use multiversx_sc_scenario::{api::StaticApi, ReturnsLogs, ScenarioTxRun};
 use proxies::chain_config_proxy::ChainConfigContractProxy;
-use structs::configs::SovereignConfig;
+use structs::configs::{SovereignConfig, UpdateSovereignConfigOperation};
 
 pub struct ChainConfigTestState {
     pub common_setup: BaseSetup,
@@ -64,6 +64,7 @@ impl ChainConfigTestState {
         &mut self,
         hash_of_hashes: ManagedBuffer<StaticApi>,
         config: SovereignConfig<StaticApi>,
+        operation_nonce: u64,
         expected_custom_log: Option<&str>,
         expected_log_error: Option<&str>,
     ) {
@@ -74,7 +75,13 @@ impl ChainConfigTestState {
             .from(OWNER_ADDRESS)
             .to(CHAIN_CONFIG_ADDRESS)
             .typed(ChainConfigContractProxy)
-            .update_sovereign_config(hash_of_hashes, config)
+            .update_sovereign_config(
+                hash_of_hashes,
+                UpdateSovereignConfigOperation {
+                    sovereign_config: config,
+                    nonce: operation_nonce,
+                },
+            )
             .returns(ReturnsHandledOrError::new())
             .returns(ReturnsLogs)
             .run();

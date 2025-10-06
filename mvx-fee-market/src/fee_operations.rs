@@ -1,6 +1,6 @@
 use error_messages::{SETUP_PHASE_ALREADY_COMPLETED, SETUP_PHASE_NOT_COMPLETED};
 use structs::{
-    fee::{DistributeFeesOperation, FeeStruct},
+    fee::{DistributeFeesOperation, FeeStruct, RemoveFeeOperation, SetFeeOperation},
     generate_hash::GenerateHash,
 };
 
@@ -38,7 +38,7 @@ pub trait FeeOperationsModule:
             return;
         }
         if let Some(lock_operation_error) =
-            self.lock_operation_hash_wrapper(&hash_of_hashes, &operation_hash)
+            self.lock_operation_hash_wrapper(&hash_of_hashes, &operation_hash, operation.nonce)
         {
             self.complete_operation(&hash_of_hashes, &operation_hash, Some(lock_operation_error));
             return;
@@ -69,9 +69,9 @@ pub trait FeeOperationsModule:
     fn remove_fee(
         &self,
         hash_of_hashes: ManagedBuffer,
-        token_id: EgldOrEsdtTokenIdentifier<Self::Api>,
+        remove_fee_operation: RemoveFeeOperation<Self::Api>,
     ) {
-        let token_id_hash = token_id.generate_hash();
+        let token_id_hash = remove_fee_operation.generate_hash();
         if let Some(err_msg) = self.validate_operation_hash(&token_id_hash) {
             self.complete_operation(&hash_of_hashes, &token_id_hash, Some(err_msg));
             return;
@@ -85,13 +85,15 @@ pub trait FeeOperationsModule:
             return;
         }
 
-        if let Some(lock_operation_error) =
-            self.lock_operation_hash_wrapper(&hash_of_hashes, &token_id_hash)
-        {
+        if let Some(lock_operation_error) = self.lock_operation_hash_wrapper(
+            &hash_of_hashes,
+            &token_id_hash,
+            remove_fee_operation.nonce,
+        ) {
             self.complete_operation(&hash_of_hashes, &token_id_hash, Some(lock_operation_error));
             return;
         }
-        self.token_fee(&token_id).clear();
+        self.token_fee(&remove_fee_operation.token_id).clear();
         self.fee_enabled().set(false);
         self.complete_operation(&hash_of_hashes, &token_id_hash, None);
     }
@@ -110,8 +112,12 @@ pub trait FeeOperationsModule:
     }
 
     #[endpoint(setFee)]
-    fn set_fee(&self, hash_of_hashes: ManagedBuffer, fee_struct: FeeStruct<Self::Api>) {
-        let fee_hash = fee_struct.generate_hash();
+    fn set_fee(
+        &self,
+        hash_of_hashes: ManagedBuffer,
+        set_fee_operation: SetFeeOperation<Self::Api>,
+    ) {
+        let fee_hash = set_fee_operation.generate_hash();
         if let Some(err_msg) = self.validate_operation_hash(&fee_hash) {
             self.complete_operation(&hash_of_hashes, &fee_hash, Some(err_msg));
             return;
@@ -125,12 +131,12 @@ pub trait FeeOperationsModule:
             return;
         }
         if let Some(lock_operation_error) =
-            self.lock_operation_hash_wrapper(&hash_of_hashes, &fee_hash)
+            self.lock_operation_hash_wrapper(&hash_of_hashes, &fee_hash, set_fee_operation.nonce)
         {
             self.complete_operation(&hash_of_hashes, &fee_hash, Some(lock_operation_error));
             return;
         }
-        if let Some(set_fee_error_msg) = self.set_fee_in_storage(&fee_struct) {
+        if let Some(set_fee_error_msg) = self.set_fee_in_storage(&set_fee_operation.fee_struct) {
             self.complete_operation(&hash_of_hashes, &fee_hash, Some(set_fee_error_msg.into()));
             return;
         }

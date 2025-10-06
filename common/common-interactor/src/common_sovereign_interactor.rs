@@ -36,8 +36,8 @@ use proxies::{
 };
 use structs::{
     aliases::{OptionalValueTransferDataTuple, PaymentsVec},
-    configs::{EsdtSafeConfig, SovereignConfig},
-    fee::FeeStruct,
+    configs::{EsdtSafeConfig, SovereignConfig, UpdateEsdtSafeConfigOperation},
+    fee::{FeeStruct, RemoveFeeOperation, SetFeeOperation},
     forge::{ContractInfo, ScArray},
     generate_hash::GenerateHash,
     operation::Operation,
@@ -909,7 +909,8 @@ pub trait CommonInteractorTrait: InteractorHelpers {
     async fn update_esdt_safe_config(
         &mut self,
         hash_of_hashes: ManagedBuffer<StaticApi>,
-        new_config: EsdtSafeConfig<StaticApi>,
+        esdt_safe_config: EsdtSafeConfig<StaticApi>,
+        nonce: u64,
         shard: u32,
     ) {
         let bridge_service = self.get_bridge_service_for_shard(shard).clone();
@@ -922,7 +923,13 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             .to(current_mvx_esdt_safe_address)
             .gas(90_000_000u64)
             .typed(MvxEsdtSafeProxy)
-            .update_esdt_safe_config(hash_of_hashes, new_config)
+            .update_esdt_safe_config(
+                hash_of_hashes,
+                UpdateEsdtSafeConfigOperation {
+                    esdt_safe_config,
+                    nonce,
+                },
+            )
             .returns(ReturnsResultUnmanaged)
             .run()
             .await;
@@ -931,7 +938,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
     async fn set_fee_after_setup_phase(
         &mut self,
         hash_of_hashes: ManagedBuffer<StaticApi>,
-        fee: FeeStruct<StaticApi>,
+        fee_operation: SetFeeOperation<StaticApi>,
         shard: u32,
     ) {
         let bridge_service = self.get_bridge_service_for_shard(shard).clone();
@@ -943,7 +950,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             .to(current_fee_market_address)
             .gas(50_000_000u64)
             .typed(MvxFeeMarketProxy)
-            .set_fee(hash_of_hashes, fee)
+            .set_fee(hash_of_hashes, fee_operation)
             .returns(ReturnsResultUnmanaged)
             .run()
             .await;
@@ -952,7 +959,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
     async fn remove_fee_after_setup_phase(
         &mut self,
         hash_of_hashes: ManagedBuffer<StaticApi>,
-        base_token: EgldOrEsdtTokenIdentifier<StaticApi>,
+        fee_operation: RemoveFeeOperation<StaticApi>,
         shard: u32,
     ) {
         let bridge_service = self.get_bridge_service_for_shard(shard).clone();
@@ -964,7 +971,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             .to(current_fee_market_address)
             .gas(50_000_000u64)
             .typed(MvxFeeMarketProxy)
-            .remove_fee(hash_of_hashes, base_token)
+            .remove_fee(hash_of_hashes, fee_operation)
             .returns(ReturnsResultUnmanaged)
             .run()
             .await;
@@ -1399,48 +1406,42 @@ pub trait CommonInteractorTrait: InteractorHelpers {
         if !fee_activated {
             return;
         }
-        self.common_state().fee_op_nonce += 1;
-        let nonce_str = self.common_state().fee_op_nonce.to_string();
-        let nonce_buf = ManagedBuffer::<StaticApi>::from(&nonce_str);
 
         let fee_token = self.state().get_fee_token_identifier();
-        let token_hash = fee_token.generate_hash();
 
-        let mut bytes = Vec::with_capacity(token_hash.len() + nonce_buf.len());
-        bytes.extend_from_slice(&token_hash.to_vec());
-        bytes.extend_from_slice(&nonce_buf.to_vec());
+        let operation: RemoveFeeOperation<StaticApi> = RemoveFeeOperation {
+            token_id: fee_token.clone(),
+            nonce: self.common_state().get_and_increment_operation_nonce(shard),
+        };
 
-        let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&bytes));
-        let operations_hashes =
-            MultiValueEncoded::from(ManagedVec::from(vec![token_hash.clone(), nonce_buf]));
+        let operation_hash = operation.generate_hash();
+        let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&operation_hash.to_vec()));
+
+        let operations_hashes = MultiValueEncoded::from_iter(vec![operation_hash.clone()]);
 
         self.register_operation(shard, &hash_of_hashes, operations_hashes)
             .await;
 
-        self.remove_fee_after_setup_phase(hash_of_hashes, fee_token, shard)
+        self.remove_fee_after_setup_phase(hash_of_hashes, operation, shard)
             .await;
         self.common_state().set_fee_status_for_shard(shard, false);
     }
 
     async fn set_fee_common(&mut self, fee: FeeStruct<StaticApi>, shard: u32) {
-        self.common_state().fee_op_nonce += 1;
-        let nonce_str = self.common_state().fee_op_nonce.to_string();
-        let nonce_buf = ManagedBuffer::<StaticApi>::from(&nonce_str);
+        let operation: SetFeeOperation<StaticApi> = SetFeeOperation {
+            fee_struct: fee.clone(),
+            nonce: self.common_state().get_and_increment_operation_nonce(shard),
+        };
 
-        let fee_hash = fee.generate_hash();
+        let operation_hash = operation.generate_hash();
+        let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&operation_hash.to_vec()));
 
-        let mut bytes = Vec::with_capacity(fee_hash.len() + nonce_buf.len());
-        bytes.extend_from_slice(&fee_hash.to_vec());
-        bytes.extend_from_slice(&nonce_buf.to_vec());
-
-        let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&bytes));
-        let operations_hashes =
-            MultiValueEncoded::from(ManagedVec::from(vec![fee_hash.clone(), nonce_buf]));
+        let operations_hashes = MultiValueEncoded::from_iter(vec![operation_hash.clone()]);
 
         self.register_operation(shard, &hash_of_hashes, operations_hashes)
             .await;
 
-        self.set_fee_after_setup_phase(hash_of_hashes, fee, shard)
+        self.set_fee_after_setup_phase(hash_of_hashes, operation, shard)
             .await;
         self.common_state().set_fee_status_for_shard(shard, true);
     }

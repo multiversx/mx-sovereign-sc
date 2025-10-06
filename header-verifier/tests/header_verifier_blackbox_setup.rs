@@ -3,6 +3,7 @@ use common_test_setup::constants::{
     ESDT_SAFE_ADDRESS, HEADER_VERIFIER_ADDRESS, MVX_ESDT_SAFE_CODE_PATH, OWNER_ADDRESS,
     OWNER_BALANCE,
 };
+use header_verifier::storage::HeaderVerifierStorageModule;
 use multiversx_sc::api::ManagedTypeApi;
 use multiversx_sc::types::{
     BigUint, ManagedBuffer, MultiValueEncoded, ReturnsHandledOrError, ReturnsResult,
@@ -10,6 +11,7 @@ use multiversx_sc::types::{
 };
 use multiversx_sc_scenario::imports::*;
 use multiversx_sc_scenario::multiversx_chain_vm::crypto_functions::sha256;
+use multiversx_sc_scenario::DebugApi;
 use proxies::header_verifier_proxy::HeaderverifierProxy;
 
 #[derive(Clone)]
@@ -76,6 +78,35 @@ impl HeaderVerifierTestState {
             .assert_expected_error_message(response, expected_error_message);
     }
 
+    pub fn with_header_verifier<F>(&mut self, f: F)
+    where
+        F: FnOnce(header_verifier::ContractObj<DebugApi>),
+    {
+        self.common_setup
+            .world
+            .query()
+            .to(HEADER_VERIFIER_ADDRESS)
+            .whitebox(header_verifier::contract_obj, f);
+    }
+
+    pub fn last_operation_nonce(&mut self) -> u64 {
+        let mut nonce = 0u64;
+        self.with_header_verifier(|sc| {
+            let current = sc.current_execution_nonce().get();
+            nonce = current.saturating_sub(1);
+        });
+        nonce
+    }
+
+    pub fn next_operation_nonce(&mut self) -> u64 {
+        self.common_setup.next_operation_nonce()
+    }
+
+    pub fn assert_last_operation_nonce(&mut self, expected: u64) {
+        let actual = self.last_operation_nonce();
+        assert_eq!(actual, expected);
+    }
+
     pub fn remove_executed_hash(
         &mut self,
         caller: TestSCAddress,
@@ -117,6 +148,7 @@ impl HeaderVerifierTestState {
         caller: TestSCAddress,
         hash_of_hashes: &ManagedBuffer<StaticApi>,
         operation_hash: &ManagedBuffer<StaticApi>,
+        operation_nonce: u64,
         expected_error_message: Option<&str>,
     ) {
         let response = self
@@ -126,7 +158,7 @@ impl HeaderVerifierTestState {
             .from(caller)
             .to(HEADER_VERIFIER_ADDRESS)
             .typed(HeaderverifierProxy)
-            .lock_operation_hash(hash_of_hashes, operation_hash)
+            .lock_operation_hash(hash_of_hashes, operation_hash, operation_nonce)
             .returns(ReturnsResultUnmanaged)
             .run();
 

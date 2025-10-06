@@ -24,7 +24,7 @@ use proxies::{
 };
 use structs::fee::FeeStruct;
 use structs::generate_hash::GenerateHash;
-use structs::ValidatorData;
+use structs::{ValidatorData, ValidatorOperation};
 
 impl BaseSetup {
     pub fn register_operation(
@@ -57,25 +57,6 @@ impl BaseSetup {
             .to(FEE_MARKET_ADDRESS)
             .typed(MvxFeeMarketProxy)
             .set_fee_during_setup_phase(fee_struct)
-            .returns(ReturnsHandledOrError::new())
-            .run();
-
-        self.assert_expected_error_message(response, error_message);
-    }
-
-    pub fn set_fee(
-        &mut self,
-        hash_of_hashes: &ManagedBuffer<StaticApi>,
-        fee_struct: Option<FeeStruct<StaticApi>>,
-        error_message: Option<&str>,
-    ) {
-        let response = self
-            .world
-            .tx()
-            .from(OWNER_ADDRESS)
-            .to(FEE_MARKET_ADDRESS)
-            .typed(MvxFeeMarketProxy)
-            .set_fee(hash_of_hashes, fee_struct.unwrap())
             .returns(ReturnsHandledOrError::new())
             .run();
 
@@ -121,7 +102,8 @@ impl BaseSetup {
     pub fn register_validator(
         &mut self,
         hash_of_hashes: &ManagedBuffer<StaticApi>,
-        validator_data: &ValidatorData<StaticApi>,
+        validator_data: ValidatorData<StaticApi>,
+        operation_nonce: u64,
         expected_custom_log: Option<&str>,
         expected_error_log: Option<&str>,
     ) {
@@ -131,7 +113,13 @@ impl BaseSetup {
             .from(OWNER_ADDRESS)
             .to(CHAIN_CONFIG_ADDRESS)
             .typed(ChainConfigContractProxy)
-            .register_bls_key(hash_of_hashes, validator_data)
+            .register_bls_key(
+                hash_of_hashes,
+                ValidatorOperation {
+                    validator_data,
+                    nonce: operation_nonce,
+                },
+            )
             .returns(ReturnsHandledOrError::new())
             .returns(ReturnsLogs)
             .run();
@@ -171,9 +159,12 @@ impl BaseSetup {
             MultiValueEncoded::from_iter(vec![validator_data_hash]),
         );
 
+        let operation_nonce = self.next_operation_nonce();
+
         self.register_validator(
             &hash_of_hashes,
-            &validator_data,
+            validator_data.clone(),
+            operation_nonce,
             Some(EXECUTED_BRIDGE_OP_EVENT),
             None,
         );
@@ -187,7 +178,7 @@ impl BaseSetup {
     pub fn unregister_validator(
         &mut self,
         hash_of_hashes: &ManagedBuffer<StaticApi>,
-        validator_data: &ValidatorData<StaticApi>,
+        validator_operation: ValidatorOperation<StaticApi>,
         expected_error_message: Option<&str>,
         expected_custom_log: Option<&str>,
     ) {
@@ -197,7 +188,7 @@ impl BaseSetup {
             .from(OWNER_ADDRESS)
             .to(CHAIN_CONFIG_ADDRESS)
             .typed(ChainConfigContractProxy)
-            .unregister_bls_key(hash_of_hashes, validator_data)
+            .unregister_bls_key(hash_of_hashes, validator_operation)
             .returns(ReturnsHandledOrError::new())
             .returns(ReturnsLogs)
             .run();
@@ -225,6 +216,7 @@ impl BaseSetup {
             });
     }
 
+    // TODO: Cleanup
     pub fn unregister_validator_operation(
         &mut self,
         validator_data: ValidatorData<StaticApi>,
@@ -292,9 +284,16 @@ impl BaseSetup {
             MultiValueEncoded::from_iter(vec![validator_data_hash]),
         );
 
+        let operation_nonce = self.next_operation_nonce();
+
+        let validator_operation = ValidatorOperation {
+            validator_data: validator_data.clone(),
+            nonce: operation_nonce,
+        };
+
         self.unregister_validator(
             &hash_of_hashes,
-            &validator_data,
+            validator_operation,
             None,
             Some(EXECUTED_BRIDGE_OP_EVENT),
         );

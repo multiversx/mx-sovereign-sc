@@ -17,11 +17,11 @@ use common_test_setup::{
 };
 use proxies::mvx_fee_market_proxy::MvxFeeMarketProxy;
 use structs::fee::{
-    AddUsersToWhitelistOperation, DistributeFeesOperation, FeeStruct, FeeType,
-    RemoveUsersFromWhitelistOperation,
+    AddUsersToWhitelistOperation, DistributeFeesOperation, FeeStruct, FeeType, RemoveFeeOperation,
+    RemoveUsersFromWhitelistOperation, SetFeeOperation,
 };
 
-pub struct FeeMarketTestState {
+pub struct MvxFeeMarketTestState {
     pub common_setup: BaseSetup,
 }
 
@@ -33,7 +33,7 @@ pub enum WantedFeeType {
     Fixed,
 }
 
-impl FeeMarketTestState {
+impl MvxFeeMarketTestState {
     #[allow(clippy::new_without_default)]
     pub fn new() -> Self {
         let owner_account = AccountSetup {
@@ -136,7 +136,7 @@ impl FeeMarketTestState {
     pub fn remove_fee(
         &mut self,
         hash_of_hashes: &ManagedBuffer<StaticApi>,
-        token_id: TestTokenIdentifier,
+        remove_fee_operation: RemoveFeeOperation<StaticApi>,
         expected_error_message: Option<&str>,
         expected_log: Option<&str>,
         expected_log_error: Option<&str>,
@@ -148,7 +148,7 @@ impl FeeMarketTestState {
             .from(HEADER_VERIFIER_ADDRESS)
             .to(FEE_MARKET_ADDRESS)
             .typed(MvxFeeMarketProxy)
-            .remove_fee(hash_of_hashes, token_id)
+            .remove_fee(hash_of_hashes, remove_fee_operation)
             .returns(ReturnsHandledOrError::new())
             .returns(ReturnsLogs)
             .run();
@@ -163,7 +163,7 @@ impl FeeMarketTestState {
     pub fn set_fee(
         &mut self,
         hash_of_hashes: &ManagedBuffer<StaticApi>,
-        fee_struct: &FeeStruct<StaticApi>,
+        set_fee_operation: SetFeeOperation<StaticApi>,
         expected_custom_log: Option<&str>,
         expected_log_error: Option<&str>,
     ) {
@@ -174,7 +174,7 @@ impl FeeMarketTestState {
             .from(HEADER_VERIFIER_ADDRESS)
             .to(FEE_MARKET_ADDRESS)
             .typed(MvxFeeMarketProxy)
-            .set_fee(hash_of_hashes, fee_struct)
+            .set_fee(hash_of_hashes, set_fee_operation)
             .returns(ReturnsHandledOrError::new())
             .returns(ReturnsLogs)
             .run();

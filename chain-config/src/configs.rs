@@ -1,7 +1,10 @@
 use error_messages::{
     ERROR_AT_GENERATING_OPERATION_HASH, SETUP_PHASE_ALREADY_COMPLETED, SETUP_PHASE_NOT_COMPLETED,
 };
-use structs::{configs::SovereignConfig, generate_hash::GenerateHash};
+use structs::{
+    configs::{SovereignConfig, UpdateSovereignConfigOperation},
+    generate_hash::GenerateHash,
+};
 
 use crate::{config_utils, storage, validator};
 
@@ -34,9 +37,9 @@ pub trait ConfigsModule:
     fn update_sovereign_config(
         &self,
         hash_of_hashes: ManagedBuffer,
-        new_config: SovereignConfig<Self::Api>,
+        update_config_operation: UpdateSovereignConfigOperation<Self::Api>,
     ) {
-        let config_hash = new_config.generate_hash();
+        let config_hash = update_config_operation.generate_hash();
         if config_hash.is_empty() {
             self.complete_operation(
                 &hash_of_hashes,
@@ -53,18 +56,23 @@ pub trait ConfigsModule:
             );
             return;
         }
-        if let Some(lock_operation_error) =
-            self.lock_operation_hash_wrapper(&config_hash, &hash_of_hashes)
-        {
+        if let Some(lock_operation_error) = self.lock_operation_hash_wrapper(
+            &config_hash,
+            &hash_of_hashes,
+            update_config_operation.nonce,
+        ) {
             self.complete_operation(&hash_of_hashes, &config_hash, Some(lock_operation_error));
             return;
         }
 
-        if let Some(error_message) = self.is_new_config_valid(&new_config) {
+        if let Some(error_message) =
+            self.is_new_config_valid(&update_config_operation.sovereign_config)
+        {
             self.complete_operation(&hash_of_hashes, &config_hash, Some(error_message.into()));
             return;
         } else {
-            self.sovereign_config().set(new_config);
+            self.sovereign_config()
+                .set(update_config_operation.sovereign_config);
             self.complete_operation(&hash_of_hashes, &config_hash, None);
         }
     }

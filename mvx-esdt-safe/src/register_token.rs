@@ -27,9 +27,9 @@ pub trait RegisterTokenModule:
     fn register_token(
         &self,
         hash_of_hashes: ManagedBuffer,
-        token_to_register: RegisterTokenOperation<Self::Api>,
+        register_token_operation: RegisterTokenOperation<Self::Api>,
     ) {
-        let token_hash = token_to_register.generate_hash();
+        let token_hash = register_token_operation.generate_hash();
         if token_hash.is_empty() {
             self.complete_operation(
                 &hash_of_hashes,
@@ -58,7 +58,13 @@ pub trait RegisterTokenModule:
             return;
         }
 
-        self.lock_operation_hash_wrapper(&hash_of_hashes, &token_hash);
+        if let Some(lock_operation_error) = self.lock_operation_hash_wrapper(
+            &hash_of_hashes,
+            &token_hash,
+            register_token_operation.data.op_nonce,
+        ) {
+            self.complete_operation(&hash_of_hashes, &token_hash, Some(lock_operation_error));
+        };
 
         let contract_balance = self
             .blockchain()
@@ -73,7 +79,7 @@ pub trait RegisterTokenModule:
             return;
         }
 
-        if self.is_sov_token_id_registered(&token_to_register.token_id) {
+        if self.is_sov_token_id_registered(&register_token_operation.token_id) {
             self.complete_operation(
                 &hash_of_hashes,
                 &token_hash,
@@ -83,15 +89,18 @@ pub trait RegisterTokenModule:
             let tokens = self.create_event_payment_tuple();
 
             self.deposit_event(
-                &token_to_register.data.op_sender.clone(),
+                &register_token_operation.data.op_sender.clone(),
                 &tokens,
-                token_to_register.data.clone(),
+                register_token_operation.data.clone(),
             );
 
             return;
         }
 
-        if !self.has_sov_prefix(&token_to_register.token_id, &self.sov_token_prefix().get()) {
+        if !self.has_sov_prefix(
+            &register_token_operation.token_id,
+            &self.sov_token_prefix().get(),
+        ) {
             self.complete_operation(
                 &hash_of_hashes,
                 &token_hash,
@@ -101,7 +110,7 @@ pub trait RegisterTokenModule:
             return;
         }
 
-        self.handle_token_issue(token_to_register, hash_of_hashes, token_hash);
+        self.handle_token_issue(register_token_operation, hash_of_hashes, token_hash);
     }
 
     #[payable("EGLD")]

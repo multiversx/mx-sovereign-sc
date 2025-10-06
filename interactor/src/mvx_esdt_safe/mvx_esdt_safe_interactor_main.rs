@@ -7,7 +7,10 @@ use multiversx_sc_snippets::{
 };
 use proxies::mvx_esdt_safe_proxy::MvxEsdtSafeProxy;
 
-use structs::{configs::EsdtSafeConfig, generate_hash::GenerateHash};
+use structs::{
+    configs::{EsdtSafeConfig, UpdateEsdtSafeConfigOperation},
+    generate_hash::GenerateHash,
+};
 
 use common_interactor::interactor_config::Config;
 use common_interactor::interactor_state::State;
@@ -152,24 +155,21 @@ impl MvxEsdtSafeInteract {
     pub async fn update_configuration_after_setup_phase(
         &mut self,
         shard: u32,
-        config: EsdtSafeConfig<StaticApi>,
+        esdt_safe_config: EsdtSafeConfig<StaticApi>,
         expected_log: Option<&str>,
         expected_log_error: Option<&str>,
     ) {
         let bridge_service = self.get_bridge_service_for_shard(shard);
-        let config_hash = config.generate_hash();
 
-        self.common_state().update_config_nonce += 1;
-        let nonce_str = self.common_state().update_config_nonce.to_string();
-        let nonce_buf = ManagedBuffer::<StaticApi>::from(&nonce_str);
+        let operation: UpdateEsdtSafeConfigOperation<StaticApi> = UpdateEsdtSafeConfigOperation {
+            esdt_safe_config,
+            nonce: self.common_state().get_and_increment_operation_nonce(shard),
+        };
 
-        let mut bytes = Vec::with_capacity(config_hash.len() + nonce_buf.len());
-        bytes.extend_from_slice(&config_hash.to_vec());
-        bytes.extend_from_slice(&nonce_buf.to_vec());
+        let operation_hash = operation.generate_hash();
+        let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&operation_hash.to_vec()));
 
-        let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&bytes));
-        let operations_hashes =
-            MultiValueEncoded::from(ManagedVec::from(vec![config_hash.clone(), nonce_buf]));
+        let operations_hashes = MultiValueEncoded::from_iter(vec![operation_hash.clone()]);
 
         self.register_operation(shard, &hash_of_hashes, operations_hashes)
             .await;
@@ -181,7 +181,7 @@ impl MvxEsdtSafeInteract {
             .to(self.common_state.current_mvx_esdt_safe_contract_address())
             .gas(90_000_000u64)
             .typed(MvxEsdtSafeProxy)
-            .update_esdt_safe_config(hash_of_hashes, config)
+            .update_esdt_safe_config(hash_of_hashes, operation)
             .returns(ReturnsHandledOrError::new())
             .returns(ReturnsLogs)
             .run()

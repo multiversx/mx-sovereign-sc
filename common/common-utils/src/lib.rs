@@ -21,11 +21,12 @@ pub trait CommonUtilsModule: custom_events::CustomEventsModule {
         &self,
         hash_of_hashes: &ManagedBuffer,
         hash: &ManagedBuffer,
+        nonce: u64,
     ) -> Option<ManagedBuffer> {
         self.tx()
             .to(self.blockchain().get_owner_address())
             .typed(HeaderverifierProxy)
-            .lock_operation_hash(hash_of_hashes, hash)
+            .lock_operation_hash(hash_of_hashes, hash, nonce)
             .returns(ReturnsResult)
             .sync_call()
             .into_option()

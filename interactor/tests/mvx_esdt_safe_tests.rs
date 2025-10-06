@@ -643,7 +643,9 @@ async fn test_execute_operation_success_no_fee() {
     let transfer_data = TransferData::new(gas_limit, function, args);
 
     let operation_data = OperationData::new(
-        1,
+        chain_interactor
+            .common_state()
+            .get_and_increment_operation_nonce(SHARD_0),
         ManagedAddress::from_address(&chain_interactor.user_address),
         Some(transfer_data),
     );
@@ -740,7 +742,9 @@ async fn test_execute_operation_only_transfer_data_no_fee() {
     let transfer_data = TransferData::new(gas_limit, function, args);
 
     let operation_data = OperationData::new(
-        1,
+        chain_interactor
+            .common_state()
+            .get_and_increment_operation_nonce(SHARD_0),
         ManagedAddress::from_address(&chain_interactor.user_address),
         Some(transfer_data),
     );

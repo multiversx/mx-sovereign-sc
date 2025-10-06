@@ -180,7 +180,7 @@ impl CompleteFlowInteract {
     ) {
         let expected_log = self.extract_log_based_on_shard(&config);
         let operation = self
-            .prepare_operation(token, config.endpoint.as_deref())
+            .prepare_operation(config.shard, token, config.endpoint.as_deref())
             .await;
 
         let operation_hash = self.get_operation_hash(&operation);
