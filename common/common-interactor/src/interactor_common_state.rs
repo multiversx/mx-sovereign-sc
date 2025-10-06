@@ -300,13 +300,12 @@ impl CommonState {
             .unwrap_or(0)
     }
 
-    pub fn increment_operation_nonce(&mut self, contract_address: &str) -> u64 {
+    pub fn increment_operation_nonce(&mut self, contract_address: &str) {
         let current_nonce = self
             .operation_nonce
             .entry(contract_address.to_string())
             .or_insert(0);
         *current_nonce += 1;
-        *current_nonce
     }
 }
 
