@@ -35,7 +35,7 @@ use proxies::{
     testing_sc_proxy::TestingScProxy,
 };
 use structs::{
-    aliases::{OptionalValueTransferDataTuple, PaymentsVec},
+    aliases::{OptionalValueTransferDataTuple, PaymentsVec, TxNonce},
     configs::{EsdtSafeConfig, SovereignConfig, UpdateEsdtSafeConfigOperation},
     fee::{FeeStruct, RemoveFeeOperation, SetFeeOperation},
     forge::{ContractInfo, ScArray},
@@ -910,7 +910,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
         &mut self,
         hash_of_hashes: ManagedBuffer<StaticApi>,
         esdt_safe_config: EsdtSafeConfig<StaticApi>,
-        nonce: u64,
+        nonce: TxNonce,
         shard: u32,
     ) {
         let bridge_service = self.get_bridge_service_for_shard(shard).clone();
@@ -1155,7 +1155,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
     async fn withdraw_from_testing_sc(
         &mut self,
         expected_token: EsdtTokenInfo,
-        nonce: u64,
+        nonce: TxNonce,
         amount: BigUint<StaticApi>,
     ) {
         let user_address = self.user_address().clone();

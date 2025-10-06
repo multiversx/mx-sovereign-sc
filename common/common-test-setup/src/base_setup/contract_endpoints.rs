@@ -22,6 +22,7 @@ use proxies::{
     chain_config_proxy::ChainConfigContractProxy, header_verifier_proxy::HeaderverifierProxy,
     mvx_fee_market_proxy::MvxFeeMarketProxy,
 };
+use structs::aliases::TxNonce;
 use structs::fee::FeeStruct;
 use structs::generate_hash::GenerateHash;
 use structs::{ValidatorData, ValidatorOperation};
@@ -103,7 +104,7 @@ impl BaseSetup {
         &mut self,
         hash_of_hashes: &ManagedBuffer<StaticApi>,
         validator_data: ValidatorData<StaticApi>,
-        operation_nonce: u64,
+        operation_nonce: TxNonce,
         expected_custom_log: Option<&str>,
         expected_error_log: Option<&str>,
     ) {

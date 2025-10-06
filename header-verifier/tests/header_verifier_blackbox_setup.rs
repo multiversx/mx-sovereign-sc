@@ -13,6 +13,7 @@ use multiversx_sc_scenario::imports::*;
 use multiversx_sc_scenario::multiversx_chain_vm::crypto_functions::sha256;
 use multiversx_sc_scenario::DebugApi;
 use proxies::header_verifier_proxy::HeaderverifierProxy;
+use structs::aliases::TxNonce;
 
 #[derive(Clone)]
 pub struct BridgeOperation<M: ManagedTypeApi> {
@@ -89,8 +90,8 @@ impl HeaderVerifierTestState {
             .whitebox(header_verifier::contract_obj, f);
     }
 
-    pub fn last_operation_nonce(&mut self) -> u64 {
-        let mut nonce = 0u64;
+    pub fn last_operation_nonce(&mut self) -> TxNonce {
+        let mut nonce: TxNonce = 0;
         self.with_header_verifier(|sc| {
             let current = sc.current_execution_nonce().get();
             nonce = current.saturating_sub(1);
@@ -98,11 +99,11 @@ impl HeaderVerifierTestState {
         nonce
     }
 
-    pub fn next_operation_nonce(&mut self) -> u64 {
+    pub fn next_operation_nonce(&mut self) -> TxNonce {
         self.common_setup.next_operation_nonce()
     }
 
-    pub fn assert_last_operation_nonce(&mut self, expected: u64) {
+    pub fn assert_last_operation_nonce(&mut self, expected: TxNonce) {
         let actual = self.last_operation_nonce();
         assert_eq!(actual, expected);
     }
@@ -148,7 +149,7 @@ impl HeaderVerifierTestState {
         caller: TestSCAddress,
         hash_of_hashes: &ManagedBuffer<StaticApi>,
         operation_hash: &ManagedBuffer<StaticApi>,
-        operation_nonce: u64,
+        operation_nonce: TxNonce,
         expected_error_message: Option<&str>,
     ) {
         let response = self

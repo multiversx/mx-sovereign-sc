@@ -4,7 +4,7 @@ use error_messages::{
     OUTGOING_TX_HASH_ALREADY_REGISTERED, SETUP_PHASE_NOT_COMPLETED,
     VALIDATORS_ALREADY_REGISTERED_IN_EPOCH,
 };
-use structs::OperationHashStatus;
+use structs::{aliases::TxNonce, OperationHashStatus};
 
 use crate::{
     checks,
@@ -161,7 +161,7 @@ pub trait HeaderVerifierOperationsModule:
         &self,
         hash_of_hashes: ManagedBuffer,
         operation_hash: ManagedBuffer,
-        operation_nonce: u64,
+        operation_nonce: TxNonce,
     ) -> OptionalValue<ManagedBuffer> {
         if !self.is_caller_from_current_sovereign() {
             return OptionalValue::Some(CALLER_NOT_FROM_CURRENT_SOVEREIGN.into());
