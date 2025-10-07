@@ -3,12 +3,10 @@ use common_interactor::interactor_config::Config;
 use common_interactor::interactor_helpers::InteractorHelpers;
 use common_interactor::interactor_state::EsdtTokenInfo;
 use common_interactor::interactor_structs::ActionConfig;
-use common_test_setup::constants::EGLD_0_05;
 use common_test_setup::constants::{
     DEPOSIT_LOG, ONE_HUNDRED_TOKENS, SC_CALL_LOG, SHARD_1, SHARD_2, TESTING_SC_ENDPOINT,
     WRONG_ENDPOINT_NAME,
 };
-use multiversx_sc::chain_core::EGLD_000000_TOKEN_IDENTIFIER;
 use multiversx_sc::types::BigUint;
 use multiversx_sc::types::EgldOrEsdtTokenIdentifier;
 use multiversx_sc::types::EsdtTokenType;
@@ -17,14 +15,6 @@ use multiversx_sc_snippets::multiversx_sc_scenario::multiversx_chain_vm::vm_err_
 use rstest::rstest;
 use rust_interact::complete_flows::complete_flows_interactor_main::CompleteFlowInteract;
 use serial_test::serial;
-
-/// Enum to differentiate between the special EGLD case and ESDT tokens at specific indices.
-#[derive(Debug)]
-enum TokenVariant {
-    Egld,
-    EsdtAtIndex0(EsdtTokenType),
-    EsdtAtIndex1(EsdtTokenType),
-}
 
 /// ### TEST
 /// S-FORGE_COMPLETE-DEPOSIT-FLOW_OK
@@ -411,42 +401,24 @@ async fn test_deposit_mvx_token_with_transfer_data_and_fee(
 /// ### EXPECTED
 /// The operation is executed in the testing smart contract and the event is found in logs for all token types.
 #[rstest]
-#[case::egld(TokenVariant::Egld)]
-#[case::fungible_0(TokenVariant::EsdtAtIndex0(EsdtTokenType::Fungible))]
-#[case::non_fungible_0(TokenVariant::EsdtAtIndex0(EsdtTokenType::NonFungibleV2))]
-#[case::semi_fungible_0(TokenVariant::EsdtAtIndex0(EsdtTokenType::SemiFungible))]
-#[case::meta_fungible_0(TokenVariant::EsdtAtIndex0(EsdtTokenType::MetaFungible))]
-#[case::dynamic_nft_0(TokenVariant::EsdtAtIndex0(EsdtTokenType::DynamicNFT))]
-#[case::dynamic_sft_0(TokenVariant::EsdtAtIndex0(EsdtTokenType::DynamicSFT))]
-#[case::dynamic_meta_0(TokenVariant::EsdtAtIndex0(EsdtTokenType::DynamicMeta))]
-#[case::fungible_1(TokenVariant::EsdtAtIndex1(EsdtTokenType::Fungible))]
-#[case::non_fungible_1(TokenVariant::EsdtAtIndex1(EsdtTokenType::NonFungibleV2))]
-#[case::semi_fungible_1(TokenVariant::EsdtAtIndex1(EsdtTokenType::SemiFungible))]
-#[case::meta_fungible_1(TokenVariant::EsdtAtIndex1(EsdtTokenType::MetaFungible))]
-#[case::dynamic_nft_1(TokenVariant::EsdtAtIndex1(EsdtTokenType::DynamicNFT))]
-#[case::dynamic_sft_1(TokenVariant::EsdtAtIndex1(EsdtTokenType::DynamicSFT))]
-#[case::dynamic_meta_1(TokenVariant::EsdtAtIndex1(EsdtTokenType::DynamicMeta))]
+#[case::fungible(EsdtTokenType::Fungible)]
+#[case::non_fungible(EsdtTokenType::NonFungibleV2)]
+#[case::semi_fungible(EsdtTokenType::SemiFungible)]
+#[case::meta_fungible(EsdtTokenType::MetaFungible)]
+#[case::dynamic_nft(EsdtTokenType::DynamicNFT)]
+#[case::dynamic_sft(EsdtTokenType::DynamicSFT)]
+#[case::dynamic_meta(EsdtTokenType::DynamicMeta)]
 #[tokio::test]
 #[serial]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn test_deposit_and_execute_with_transfer_data(
-    #[case] token_variant: TokenVariant,
+    #[case] token_type: EsdtTokenType,
+    #[values(0, 1)] token_index: usize,
     #[values(SHARD_1, SHARD_2)] shard: u32,
 ) {
     let mut chain_interactor = CompleteFlowInteract::new(Config::chain_simulator_config()).await;
 
-    // The match statement now uses the hardcoded indices from the enum variants
-    let token = match token_variant {
-        TokenVariant::Egld => EsdtTokenInfo {
-            token_id: EgldOrEsdtTokenIdentifier::from(EGLD_000000_TOKEN_IDENTIFIER),
-            nonce: 0,
-            token_type: EsdtTokenType::Fungible,
-            decimals: 18,
-            amount: BigUint::from(EGLD_0_05),
-        },
-        TokenVariant::EsdtAtIndex0(token_type) => chain_interactor.get_token_by_type(token_type, 0),
-        TokenVariant::EsdtAtIndex1(token_type) => chain_interactor.get_token_by_type(token_type, 1),
-    };
+    let token = chain_interactor.get_token_by_type(token_type, token_index);
 
     chain_interactor.remove_fee(shard).await;
 

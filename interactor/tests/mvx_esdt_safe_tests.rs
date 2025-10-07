@@ -4,9 +4,9 @@ use common_interactor::interactor_helpers::InteractorHelpers;
 use common_interactor::interactor_state::EsdtTokenInfo;
 use common_interactor::interactor_structs::BalanceCheckConfig;
 use common_test_setup::constants::{
-    DEPOSIT_EVENT, EXECUTED_BRIDGE_LOG, EXECUTED_BRIDGE_OP_EVENT, GAS_LIMIT, ONE_HUNDRED_TOKENS,
-    PER_GAS, PER_TRANSFER, SC_CALL_EVENT, SHARD_0, SOVEREIGN_RECEIVER_ADDRESS, TEN_TOKENS,
-    TESTING_SC_ENDPOINT,
+    DEPOSIT_EVENT, EGLD_0_05, EXECUTED_BRIDGE_LOG, EXECUTED_BRIDGE_OP_EVENT, GAS_LIMIT,
+    ONE_HUNDRED_TOKENS, PER_GAS, PER_TRANSFER, SC_CALL_EVENT, SHARD_0, SOVEREIGN_RECEIVER_ADDRESS,
+    TEN_TOKENS, TESTING_SC_ENDPOINT,
 };
 use cross_chain::MAX_GAS_PER_TRANSACTION;
 use error_messages::{
@@ -439,7 +439,7 @@ async fn test_deposit_fee_enabled() {
         .check_balances_after_action(balance_config)
         .await;
     chain_interactor
-        .update_fee_market_balance_state(Some(fee.clone()), payments_vec, SHARD_0)
+        .update_fee_market_balance_state(Some(fee), payments_vec, SHARD_0)
         .await;
 }
 
@@ -594,26 +594,30 @@ async fn test_execute_operation_no_operation_registered() {
 #[tokio::test]
 #[serial]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
-async fn test_execute_operation_success_no_fee() {
+async fn test_execute_operation_with_egld_success_no_fee() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
 
     chain_interactor.remove_fee(SHARD_0).await;
 
+    let token = EsdtTokenInfo {
+        token_id: EgldOrEsdtTokenIdentifier::egld(),
+        amount: BigUint::from(EGLD_0_05),
+        nonce: 0,
+        decimals: 18,
+        token_type: EsdtTokenType::Fungible,
+    };
+
     let token_data = EsdtTokenData {
-        amount: BigUint::from(TEN_TOKENS),
+        amount: BigUint::from(EGLD_0_05),
         ..Default::default()
     };
 
-    let payment = OperationEsdtPayment::new(
-        chain_interactor.state.get_first_fungible_token_identifier(),
-        0,
-        token_data,
-    );
+    let payment = OperationEsdtPayment::new(EgldOrEsdtTokenIdentifier::egld(), 0, token_data);
     let mut payment_vec = PaymentsVec::new();
     payment_vec.push(EgldOrEsdtTokenPayment::new(
-        chain_interactor.state.get_first_fungible_token_identifier(),
+        EgldOrEsdtTokenIdentifier::egld(),
         0,
-        BigUint::from(TEN_TOKENS),
+        BigUint::from(EGLD_0_05),
     ));
 
     let gas_limit = 90_000_000u64;
@@ -656,8 +660,17 @@ async fn test_execute_operation_success_no_fee() {
             OptionalValue::None,
             payment_vec,
             None,
-            Some(DEPOSIT_EVENT),
+            Some(""),
         )
+        .await;
+
+    let balance_config = BalanceCheckConfig::new()
+        .shard(SHARD_0)
+        .token(Some(token.clone()))
+        .amount(EGLD_0_05.into());
+
+    chain_interactor
+        .check_balances_after_action(balance_config)
         .await;
 
     let operations_hashes = MultiValueEncoded::from(ManagedVec::from(vec![operation_hash.clone()]));
@@ -693,8 +706,8 @@ async fn test_execute_operation_success_no_fee() {
 
     let balance_config = BalanceCheckConfig::new()
         .shard(SHARD_0)
-        .token(Some(chain_interactor.state.get_first_fungible_token_id()))
-        .amount(TEN_TOKENS.into())
+        .token(Some(token))
+        .amount(EGLD_0_05.into())
         .is_execute(true)
         .with_transfer_data(true);
 

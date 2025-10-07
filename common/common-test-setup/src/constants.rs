@@ -105,6 +105,7 @@ pub const TEN_TOKENS: u128 = 10_000_000_000_000_000_000u128;
 pub const PER_TRANSFER: u64 = 100;
 pub const PER_GAS: u64 = 1;
 pub const EGLD_0_05: u64 = 50_000_000_000_000_000;
+pub const NUM_TOKENS_TO_MINT: u64 = 2;
 
 pub const EXECUTED_BRIDGE_OP_EVENT: &str = "executedBridgeOp";
 pub const DEPOSIT_EVENT: &str = "deposit";

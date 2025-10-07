@@ -8,8 +8,8 @@ use common_test_setup::constants::{
     CHAIN_CONFIG_CODE_PATH, CHAIN_FACTORY_CODE_PATH, CHAIN_ID, DEPLOY_COST,
     FAILED_TO_LOAD_WALLET_SHARD_0, FEE_MARKET_CODE_PATH, HEADER_VERIFIER_CODE_PATH, ISSUE_COST,
     MVX_ESDT_SAFE_CODE_PATH, NATIVE_TOKEN_NAME, NATIVE_TOKEN_TICKER, NUMBER_OF_SHARDS,
-    ONE_THOUSAND_TOKENS, SHARD_0, SOVEREIGN_FORGE_CODE_PATH, SOVEREIGN_TOKEN_PREFIX,
-    TESTING_SC_CODE_PATH, WALLET_SHARD_0,
+    NUM_TOKENS_TO_MINT, ONE_THOUSAND_TOKENS, SHARD_0, SOVEREIGN_FORGE_CODE_PATH,
+    SOVEREIGN_TOKEN_PREFIX, TESTING_SC_CODE_PATH, WALLET_SHARD_0,
 };
 use multiversx_bls::{SecretKey, G1};
 use multiversx_sc::{
@@ -101,7 +101,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             .run()
             .await;
 
-        for _ in 0..2 {
+        for _ in 0..NUM_TOKENS_TO_MINT {
             let nonce = self
                 .mint_tokens(token_id.clone(), issue.token_type, mint.clone())
                 .await;

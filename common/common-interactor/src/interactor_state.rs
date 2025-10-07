@@ -3,7 +3,8 @@
 use error_messages::{
     NO_KNOWN_DYNAMIC_META_ESDT_TOKEN_ID, NO_KNOWN_DYNAMIC_NFT_TOKEN_ID,
     NO_KNOWN_DYNAMIC_SFT_TOKEN_ID, NO_KNOWN_FEE_TOKEN, NO_KNOWN_FIRST_TOKEN,
-    NO_KNOWN_META_ESDT_TOKEN, NO_KNOWN_NFT_TOKEN, NO_KNOWN_SFT_TOKEN, NO_KNOWN_SOV_TO_MVX_TOKEN,
+    NO_KNOWN_FUNGIBLE_TOKEN, NO_KNOWN_META_ESDT_TOKEN, NO_KNOWN_NFT_TOKEN, NO_KNOWN_SFT_TOKEN,
+    NO_KNOWN_SOV_TO_MVX_TOKEN,
 };
 use multiversx_sc_snippets::imports::*;
 use serde::{Deserialize, Serialize};
@@ -254,7 +255,7 @@ impl State {
     pub fn get_fungible_token_by_index(&self, index: usize) -> EsdtTokenInfo {
         self.fungible_tokens
             .get(index)
-            .expect(NO_KNOWN_FIRST_TOKEN)
+            .expect(NO_KNOWN_FUNGIBLE_TOKEN)
             .clone()
     }
 
