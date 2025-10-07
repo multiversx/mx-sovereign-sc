@@ -197,7 +197,7 @@ pub trait RegisterTokenModule:
     #[promises_callback]
     fn native_token_issue_callback(
         &self,
-        #[call_result] result: ManagedAsyncCallResult<TokenIdentifier<Self::Api>>,
+        #[call_result] result: ManagedAsyncCallResult<EgldOrEsdtTokenIdentifier<Self::Api>>,
     ) {
         match result {
             ManagedAsyncCallResult::Ok(native_token_id) => {

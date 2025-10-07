@@ -160,7 +160,7 @@ impl MvxEsdtSafeTestState {
             .to(ESDT_SAFE_ADDRESS)
             .whitebox(mvx_esdt_safe::contract_obj, |sc| {
                 sc.native_token()
-                    .set(NATIVE_TEST_TOKEN.to_token_identifier());
+                    .set(EgldOrEsdtTokenIdentifier::esdt(NATIVE_TEST_TOKEN));
             });
 
         self.common_setup.deploy_fee_market(fee, ESDT_SAFE_ADDRESS);

@@ -1474,4 +1474,17 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             .await;
         self.common_state().set_fee_status_for_shard(shard, true);
     }
+
+    async fn get_native_token(&mut self, shard: u32) -> EgldOrEsdtTokenIdentifier<StaticApi> {
+        let mvx_esdt_safe_address = self.common_state().get_mvx_esdt_safe_address(shard).clone();
+
+        self.interactor()
+            .query()
+            .to(mvx_esdt_safe_address)
+            .typed(MvxEsdtSafeProxy)
+            .native_token()
+            .returns(ReturnsResult)
+            .run()
+            .await
+    }
 }
