@@ -13,7 +13,7 @@ use header_verifier::header_utils::HeaderVerifierUtilsModule;
 use header_verifier::storage::HeaderVerifierStorageModule;
 use header_verifier_blackbox_setup::*;
 use multiversx_sc::imports::{BigUint, ManagedVec, StorageClearable};
-use multiversx_sc::types::{EgldOrEsdtTokenPayment, ReturnsHandledOrError};
+use multiversx_sc::types::ReturnsHandledOrError;
 use multiversx_sc::{
     imports::OptionalValue,
     types::{ManagedBuffer, MultiEgldOrEsdtPayment, MultiValueEncoded},
