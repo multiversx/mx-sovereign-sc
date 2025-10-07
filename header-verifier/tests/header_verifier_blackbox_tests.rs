@@ -6,7 +6,7 @@ use common_test_setup::constants::{
 use error_messages::{
     CALLER_NOT_FROM_CURRENT_SOVEREIGN, CHAIN_CONFIG_SETUP_PHASE_NOT_COMPLETE,
     CURRENT_OPERATION_ALREADY_IN_EXECUTION, CURRENT_OPERATION_NOT_REGISTERED,
-    GENESIS_VALIDATORS_NOT_SET, INCORRECT_OPERATION_NONCE, OUTGOING_TX_HASH_ALREADY_REGISTERED,
+    INCORRECT_OPERATION_NONCE, INVALID_EPOCH, OUTGOING_TX_HASH_ALREADY_REGISTERED,
     SETUP_PHASE_NOT_COMPLETED,
 };
 use header_verifier::header_utils::HeaderVerifierUtilsModule;
@@ -727,10 +727,10 @@ fn test_change_validator_set() {
 /// H-VERIFIER_CHANGE_VALIDATORS_FAIL
 ///
 /// ### ACTION
-/// Call 'change_validator_set()' without registering the genesis validators
+/// Call 'change_validator_set()' for the genesis epoch
 ///
 /// ### EXPECTED
-/// Error GENESIS_VALIDATORS_NOT_SET is emitted
+/// Error INVALID_EPOCH is emitted
 #[test]
 fn test_change_validator_set_genesis_not_set() {
     let mut state = HeaderVerifierTestState::new();
@@ -760,17 +760,7 @@ fn test_change_validator_set_genesis_not_set() {
 
     let bitmap = ManagedBuffer::new_from_bytes(&[0x01]);
     let validator_set = MultiValueEncoded::new();
-    let epoch = 1u64;
-
-    state
-        .common_setup
-        .world
-        .tx()
-        .from(OWNER_ADDRESS)
-        .to(HEADER_VERIFIER_ADDRESS)
-        .whitebox(header_verifier::contract_obj, |sc| {
-            sc.bls_pub_keys(0).clear();
-        });
+    let epoch = 0u64;
 
     state.change_validator_set(
         &signature,
@@ -780,7 +770,7 @@ fn test_change_validator_set_genesis_not_set() {
         &bitmap,
         validator_set,
         Some(EXECUTED_BRIDGE_OP_EVENT),
-        Some(GENESIS_VALIDATORS_NOT_SET),
+        Some(INVALID_EPOCH),
     );
 }
 

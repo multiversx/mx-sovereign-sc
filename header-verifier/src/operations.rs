@@ -1,8 +1,8 @@
 use error_messages::{
     CALLER_NOT_FROM_CURRENT_SOVEREIGN, CURRENT_OPERATION_ALREADY_IN_EXECUTION,
-    CURRENT_OPERATION_NOT_REGISTERED, GENESIS_VALIDATORS_NOT_SET, HASH_OF_HASHES_DOES_NOT_MATCH,
-    INCORRECT_OPERATION_NONCE, INVALID_EPOCH, OUTGOING_TX_HASH_ALREADY_REGISTERED,
-    SETUP_PHASE_NOT_COMPLETED, VALIDATORS_ALREADY_REGISTERED_IN_EPOCH,
+    CURRENT_OPERATION_NOT_REGISTERED, HASH_OF_HASHES_DOES_NOT_MATCH, INCORRECT_OPERATION_NONCE,
+    INVALID_EPOCH, OUTGOING_TX_HASH_ALREADY_REGISTERED, SETUP_PHASE_NOT_COMPLETED,
+    VALIDATORS_ALREADY_REGISTERED_IN_EPOCH,
 };
 use structs::{aliases::TxNonce, OperationHashStatus};
 
@@ -91,16 +91,6 @@ pub trait HeaderVerifierOperationsModule:
                 &hash_of_hashes,
                 &operation_hash,
                 Some(INVALID_EPOCH.into()),
-            );
-
-            return;
-        }
-
-        if self.bls_pub_keys(0).is_empty() {
-            self.execute_bridge_operation_event(
-                &hash_of_hashes,
-                &operation_hash,
-                Some(GENESIS_VALIDATORS_NOT_SET.into()),
             );
 
             return;
