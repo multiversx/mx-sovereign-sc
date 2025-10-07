@@ -6,13 +6,14 @@ use common_test_setup::constants::{
 use error_messages::{
     CALLER_NOT_FROM_CURRENT_SOVEREIGN, CHAIN_CONFIG_SETUP_PHASE_NOT_COMPLETE,
     CURRENT_OPERATION_ALREADY_IN_EXECUTION, CURRENT_OPERATION_NOT_REGISTERED,
-    INCORRECT_OPERATION_NONCE, OUTGOING_TX_HASH_ALREADY_REGISTERED, SETUP_PHASE_NOT_COMPLETED,
+    GENESIS_VALIDATORS_NOT_SET, INCORRECT_OPERATION_NONCE, OUTGOING_TX_HASH_ALREADY_REGISTERED,
+    SETUP_PHASE_NOT_COMPLETED,
 };
 use header_verifier::header_utils::HeaderVerifierUtilsModule;
 use header_verifier::storage::HeaderVerifierStorageModule;
 use header_verifier_blackbox_setup::*;
 use multiversx_sc::imports::{BigUint, ManagedVec, StorageClearable};
-use multiversx_sc::types::ReturnsHandledOrError;
+use multiversx_sc::types::{EgldOrEsdtTokenPayment, ReturnsHandledOrError};
 use multiversx_sc::{
     imports::OptionalValue,
     types::{ManagedBuffer, MultiEgldOrEsdtPayment, MultiValueEncoded},
@@ -720,6 +721,67 @@ fn test_change_validator_set() {
     state
         .common_setup
         .check_bls_key_for_epoch_in_header_verifier(epoch_for_new_set, &registered_bls_keys);
+}
+
+/// ### TEST
+/// H-VERIFIER_CHANGE_VALIDATORS_FAIL
+///
+/// ### ACTION
+/// Call 'change_validator_set()' without registering the genesis validators
+///
+/// ### EXPECTED
+/// Error GENESIS_VALIDATORS_NOT_SET is emitted
+#[test]
+fn test_change_validator_set_genesis_not_set() {
+    let mut state = HeaderVerifierTestState::new();
+
+    state
+        .common_setup
+        .deploy_chain_config(OptionalValue::None, None);
+
+    let genesis_validator = BLSKey::random();
+    state
+        .common_setup
+        .register(&genesis_validator, &MultiEgldOrEsdtPayment::default(), None);
+
+    state.common_setup.complete_chain_config_setup_phase();
+
+    state
+        .common_setup
+        .deploy_header_verifier(vec![ScArray::ChainConfig]);
+
+    state
+        .common_setup
+        .complete_header_verifier_setup_phase(None);
+
+    let operation_hash = ManagedBuffer::from("operation_1");
+    let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&operation_hash.to_vec()));
+    let (signature, _) = state.common_setup.get_sig_and_pub_keys(1, &hash_of_hashes);
+
+    let bitmap = ManagedBuffer::new_from_bytes(&[0x01]);
+    let validator_set = MultiValueEncoded::new();
+    let epoch = 1u64;
+
+    state
+        .common_setup
+        .world
+        .tx()
+        .from(OWNER_ADDRESS)
+        .to(HEADER_VERIFIER_ADDRESS)
+        .whitebox(header_verifier::contract_obj, |sc| {
+            sc.bls_pub_keys(0).clear();
+        });
+
+    state.change_validator_set(
+        &signature,
+        &hash_of_hashes,
+        &operation_hash,
+        epoch,
+        &bitmap,
+        validator_set,
+        Some(EXECUTED_BRIDGE_OP_EVENT),
+        Some(GENESIS_VALIDATORS_NOT_SET),
+    );
 }
 
 /// ### TEST
