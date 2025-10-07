@@ -40,7 +40,9 @@ pub const ESDT_SAFE_CONFIG_NOT_SET: &str = "There is no config set for this cont
 pub const ESDT_SAFE_NOT_DEPLOYED: &str =
     "The ESDT-Safe SC is not deployed, you skipped the second phase";
 pub const ESDT_SAFE_STILL_PAUSED: &str = "Cannot create transaction while paused";
+pub const EXPECTED_MAPPED_TOKEN: &str = "Expected mapped token, got None";
 pub const FAILED_TO_PARSE_AS_NUMBER: &str = "Failed to parse actual amount as number";
+pub const FAILED_TO_REGISTER_SOVEREIGN_TOKEN: &str = "Failed to register sovereign token";
 pub const FEE_MARKET_ALREADY_DEPLOYED: &str = "The Fee-Market SC is already deployed";
 pub const FEE_MARKET_NOT_DEPLOYED: &str = "The Fee-Market SC is not deployed";
 pub const FEE_MARKET_NOT_SET: &str = "There is no Fee-Market address set";
