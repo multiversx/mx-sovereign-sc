@@ -396,7 +396,7 @@ async fn test_deposit_mvx_token_with_transfer_data_and_fee(
 /// S-FORGE_COMPLETE-DEPOSIT-FLOW_OK
 ///
 /// ### ACTION
-/// Deploy and complete setup phase, then call deposit without fee and execute operation with transfer data for EGLD and various ESDT tokens.
+/// Deploy and complete setup phase, then call deposit without fee and execute operation with transfer data for various ESDT tokens.
 ///
 /// ### EXPECTED
 /// The operation is executed in the testing smart contract and the event is found in logs for all token types.

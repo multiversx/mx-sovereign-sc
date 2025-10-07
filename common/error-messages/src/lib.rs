@@ -78,6 +78,7 @@ pub const MINT_AND_BURN_ROLES_NOT_FOUND: &str = "This token does not have Mint a
 pub const MINT_NON_ESDT_TOKENS: &str = "Non-ESDT tokens can not be minted";
 pub const NATIVE_TOKEN_ALREADY_REGISTERED: &str = "Native token was already registered";
 pub const NATIVE_TOKEN_NOT_REGISTERED: &str = "There is no native token registered";
+pub const NO_ADDRESSES_AVAILABLE: &str = "No addresses available";
 pub const NO_ESDT_SAFE_ADDRESS: &str = "There is no registered ESDT address";
 pub const NO_HEADER_VERIFIER_ADDRESS: &str = "There is no registered Header-Verifier address";
 pub const NO_KNOWN_CHAIN_CONFIG_SC: &str = "No known Chain Config SC contract, deploy first";
