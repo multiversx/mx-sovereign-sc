@@ -248,6 +248,10 @@ impl CompleteFlowInteract {
     }
 
     async fn register_sovereign_token(&mut self, shard: u32, token: EsdtTokenInfo) -> String {
+        let mvx_esdt_safe_address = self.common_state().get_mvx_esdt_safe_address(shard).clone();
+        let nonce = self
+            .common_state()
+            .get_and_increment_operation_nonce(&mvx_esdt_safe_address.to_string());
         self.register_token(
             shard,
             RegisterTokenOperation {
@@ -264,7 +268,7 @@ impl CompleteFlowInteract {
                         .unwrap_or(TOKEN_TICKER),
                 ),
                 num_decimals: token.decimals,
-                data: OperationData::new(0u64, self.user_address().into(), None),
+                data: OperationData::new(nonce, self.user_address().into(), None),
             },
             None,
         )
