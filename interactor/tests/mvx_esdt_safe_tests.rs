@@ -907,3 +907,85 @@ async fn test_execute_operation_native_token_success_no_fee() {
         .check_balances_after_action(balance_config)
         .await;
 }
+
+/// ### TEST
+/// M-ESDT_EXEC_OK
+///
+/// ### ACTION
+/// Call 'execute_operation()' with valid operation but no registered sovereign token
+///
+/// ### EXPECTED
+/// Transaction is successful but the logs contain the InternalVMError
+#[tokio::test]
+#[serial]
+#[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
+async fn test_execute_operation_sovereign_token_not_registered() {
+    let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
+
+    chain_interactor.remove_fee(SHARD_0).await;
+
+    let sov_token_id = chain_interactor.create_random_sovereign_token_id(SHARD_0);
+
+    let token_data = EsdtTokenData {
+        amount: BigUint::from(TEN_TOKENS),
+        ..Default::default()
+    };
+
+    let payment = OperationEsdtPayment::new(
+        EgldOrEsdtTokenIdentifier::esdt(TokenIdentifier::from_esdt_bytes(sov_token_id)),
+        0,
+        token_data,
+    );
+
+    let mvx_esdt_safe_address = chain_interactor
+        .common_state
+        .get_mvx_esdt_safe_address(SHARD_0)
+        .clone();
+
+    let operation_data = OperationData::new(
+        chain_interactor
+            .common_state()
+            .get_and_increment_operation_nonce(&mvx_esdt_safe_address.to_string()),
+        ManagedAddress::from_address(&chain_interactor.user_address),
+        None,
+    );
+
+    let operation = Operation::new(
+        SOVEREIGN_RECEIVER_ADDRESS.to_managed_address(),
+        vec![payment].into(),
+        operation_data,
+    );
+
+    let operation_hash = chain_interactor.get_operation_hash(&operation);
+    let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&operation_hash.to_vec()));
+    let operations_hashes = MultiValueEncoded::from(ManagedVec::from(vec![operation_hash.clone()]));
+
+    chain_interactor
+        .register_operation(SHARD_0, &hash_of_hashes, operations_hashes)
+        .await;
+
+    let expected_operation_hash_status = OperationHashStatus::NotLocked;
+    chain_interactor
+        .check_registered_operation_status(
+            SHARD_0,
+            &hash_of_hashes,
+            operation_hash,
+            expected_operation_hash_status,
+        )
+        .await;
+
+    let bridge_service = chain_interactor
+        .get_bridge_service_for_shard(SHARD_0)
+        .clone();
+    chain_interactor
+        .execute_operations_in_mvx_esdt_safe(
+            bridge_service,
+            SHARD_0,
+            hash_of_hashes,
+            operation,
+            None,
+            Some(EXECUTED_BRIDGE_LOG),
+            None,
+        )
+        .await;
+}
