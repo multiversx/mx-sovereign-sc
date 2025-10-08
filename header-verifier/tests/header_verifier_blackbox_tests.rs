@@ -732,7 +732,7 @@ fn test_change_validator_set() {
 /// ### EXPECTED
 /// Error INVALID_EPOCH is emitted
 #[test]
-fn test_change_validator_set_genesis_not_set() {
+fn test_change_validator_invalid_epoch() {
     let mut state = HeaderVerifierTestState::new();
 
     state
