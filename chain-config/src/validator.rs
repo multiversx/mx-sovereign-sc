@@ -71,8 +71,8 @@ pub trait ValidatorModule:
         };
 
         if let Some(lock_operation_error) = self.lock_operation_hash_wrapper(
-            &config_hash,
             &hash_of_hashes,
+            &config_hash,
             validator_operation.nonce,
         ) {
             self.complete_operation(&hash_of_hashes, &config_hash, Some(lock_operation_error));
@@ -137,7 +137,14 @@ pub trait ValidatorModule:
             return;
         };
 
-        self.lock_operation_hash_wrapper(&hash_of_hashes, &config_hash, validator_operation.nonce);
+        if let Some(lock_operation_error) = self.lock_operation_hash_wrapper(
+            &hash_of_hashes,
+            &config_hash,
+            validator_operation.nonce,
+        ) {
+            self.complete_operation(&hash_of_hashes, &config_hash, Some(lock_operation_error));
+            return;
+        }
 
         let validator_info_mapper = self.validator_info(&validator_operation.validator_data.id);
         if validator_info_mapper.is_empty() {

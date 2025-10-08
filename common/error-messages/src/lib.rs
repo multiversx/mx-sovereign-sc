@@ -40,7 +40,9 @@ pub const ESDT_SAFE_CONFIG_NOT_SET: &str = "There is no config set for this cont
 pub const ESDT_SAFE_NOT_DEPLOYED: &str =
     "The ESDT-Safe SC is not deployed, you skipped the second phase";
 pub const ESDT_SAFE_STILL_PAUSED: &str = "Cannot create transaction while paused";
+pub const EXPECTED_MAPPED_TOKEN: &str = "Expected mapped token, got None";
 pub const FAILED_TO_PARSE_AS_NUMBER: &str = "Failed to parse actual amount as number";
+pub const FAILED_TO_REGISTER_SOVEREIGN_TOKEN: &str = "Failed to register sovereign token";
 pub const FEE_MARKET_ALREADY_DEPLOYED: &str = "The Fee-Market SC is already deployed";
 pub const FEE_MARKET_NOT_DEPLOYED: &str = "The Fee-Market SC is not deployed";
 pub const FEE_MARKET_NOT_SET: &str = "There is no Fee-Market address set";
@@ -147,7 +149,9 @@ pub const EMPTY_ADDITIONAL_STAKE: &str = "Additional stake was sent as an empty 
 pub const ADDITIONAL_STAKE_ZERO_VALUE: &str = "Additional stake cannot be a zero value";
 pub const ADDITIONAL_STAKE_NOT_REQUIRED: &str = "Additional stake was provided but is not required";
 pub const INVALID_BLS_KEY_FOR_CALLER: &str = "Invalid BLS key for caller";
-pub const GENESIS_VALIDATORS_ALREADY_SET: &str = "Genesis Validator were already set";
+pub const GENESIS_VALIDATORS_ALREADY_SET: &str = "Genesis validators were already set";
+pub const GENESIS_VALIDATORS_NOT_SET: &str = "Genesis validators were not set";
+pub const INVALID_EPOCH: &str = "Cannot change the validator set for the genesis epoch";
 pub const CALLER_NOT_CHAIN_CONFIG: &str = "Only Chain-Config SC can call this endpoint";
 pub const CHAIN_CONFIG_SETUP_PHASE_NOT_COMPLETE: &str =
     "The Chain-Config SC setup phase is not completed";

@@ -69,7 +69,7 @@ pub trait DepositCommonModule:
         let caller = self.blockchain().get_caller();
         self.refund_tokens(&caller, refundable_payments);
 
-        let tx_nonce = self.get_and_save_next_tx_id();
+        let tx_nonce = self.get_current_and_increment_tx_nonce();
 
         if payments.is_empty() {
             self.sc_call_event(
@@ -247,11 +247,13 @@ pub trait DepositCommonModule:
     }
 
     #[inline]
-    fn get_and_save_next_tx_id(&self) -> TxNonce {
-        self.last_tx_nonce().update(|last_tx_nonce| {
-            *last_tx_nonce += 1;
-            *last_tx_nonce
-        })
+    fn get_current_and_increment_tx_nonce(&self) -> TxNonce {
+        let last_tx_nonce_mapper = self.last_tx_nonce();
+        let current_nonce = last_tx_nonce_mapper.get();
+        let next_nonce = current_nonce + 1;
+        last_tx_nonce_mapper.set(next_nonce);
+
+        current_nonce
     }
 
     #[inline]

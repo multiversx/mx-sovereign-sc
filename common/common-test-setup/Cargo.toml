@@ -11,6 +11,9 @@ rand_core = "0.6.4"
 rand = "0.8.5"
 hex = "0.4.3"
 
+[dependencies.multiversx-sc]
+version = "0.62.0"
+
 [dependencies.multiversx-sc-scenario]
 version = "0.62.0"
 features = ["bls"]

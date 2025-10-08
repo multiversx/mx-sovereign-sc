@@ -36,6 +36,7 @@ pub trait RegisterTokenModule:
                 &token_hash,
                 Some(ERROR_AT_GENERATING_OPERATION_HASH.into()),
             );
+
             return;
         };
 
@@ -55,6 +56,7 @@ pub trait RegisterTokenModule:
                 &token_hash,
                 Some(SETUP_PHASE_NOT_COMPLETED.into()),
             );
+
             return;
         }
 
@@ -64,6 +66,8 @@ pub trait RegisterTokenModule:
             register_token_operation.data.op_nonce,
         ) {
             self.complete_operation(&hash_of_hashes, &token_hash, Some(lock_operation_error));
+
+            return;
         };
 
         let contract_balance = self
@@ -76,6 +80,7 @@ pub trait RegisterTokenModule:
                 &token_hash,
                 Some(NOT_ENOUGH_EGLD_FOR_REGISTER.into()),
             );
+
             return;
         }
 

@@ -79,7 +79,7 @@ pub trait SovEsdtSafe:
             token_ticker,
             token_decimals,
             OperationData {
-                op_nonce: self.get_and_save_next_tx_id(),
+                op_nonce: self.get_current_and_increment_tx_nonce(),
                 op_sender: self.blockchain().get_caller(),
                 opt_transfer_data: None,
             },

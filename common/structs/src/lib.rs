@@ -1,6 +1,6 @@
 #![no_std]
 
-use crate::{generate_hash::GenerateHash, operation::OperationData};
+use crate::{aliases::TxNonce, generate_hash::GenerateHash, operation::OperationData};
 use multiversx_sc::api::CryptoApi;
 
 multiversx_sc::imports!();
@@ -56,7 +56,7 @@ impl<A: CryptoApi> GenerateHash<A> for ValidatorData<A> {}
 #[derive(TopEncode, TopDecode, NestedEncode, NestedDecode)]
 pub struct ValidatorOperation<M: ManagedTypeApi> {
     pub validator_data: ValidatorData<M>,
-    pub nonce: u64,
+    pub nonce: TxNonce,
 }
 
 impl<A: CryptoApi> GenerateHash<A> for ValidatorOperation<A> {}

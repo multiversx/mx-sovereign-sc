@@ -11,10 +11,12 @@ use common_test_setup::constants::{
     INTERACTOR_WORKING_DIR, SOVEREIGN_RECEIVER_ADDRESS, TOKEN_DISPLAY_NAME, TOKEN_TICKER,
 };
 use cross_chain::DEFAULT_ISSUE_COST;
+use error_messages::{EXPECTED_MAPPED_TOKEN, FAILED_TO_REGISTER_SOVEREIGN_TOKEN};
 use multiversx_sc::chain_core::EGLD_000000_TOKEN_IDENTIFIER;
 use multiversx_sc_snippets::imports::*;
 use multiversx_sc_snippets::multiversx_sc_scenario::multiversx_chain_vm::crypto_functions::sha256;
 use structs::fee::FeeStruct;
+use structs::generate_hash::GenerateHash;
 use structs::operation::OperationData;
 use structs::{OperationHashStatus, RegisterTokenOperation};
 
@@ -215,28 +217,40 @@ impl CompleteFlowInteract {
     }
 
     async fn register_sovereign_token(&mut self, shard: u32, token: EsdtTokenInfo) -> String {
-        self.register_token(
-            shard,
-            RegisterTokenOperation {
-                token_id: token.token_id.clone(),
-                token_type: token.token_type,
-                token_display_name: ManagedBuffer::from(TOKEN_DISPLAY_NAME),
-                token_ticker: ManagedBuffer::from(
-                    token
-                        .token_id
-                        .into_managed_buffer()
-                        .to_string()
-                        .split('-')
-                        .nth(1)
-                        .unwrap_or(TOKEN_TICKER),
-                ),
-                num_decimals: token.decimals,
-                data: OperationData::new(0u64, self.user_address().into(), None),
-            },
-            None,
-        )
-        .await
-        .expect("Failed to register sovereign token")
+        let mvx_esdt_safe_address = self.common_state().get_mvx_esdt_safe_address(shard).clone();
+        let nonce = self
+            .common_state()
+            .get_and_increment_operation_nonce(&mvx_esdt_safe_address.to_string());
+
+        let operation = RegisterTokenOperation {
+            token_id: token.token_id.clone(),
+            token_type: token.token_type,
+            token_display_name: ManagedBuffer::from(TOKEN_DISPLAY_NAME),
+            token_ticker: ManagedBuffer::from(
+                token
+                    .token_id
+                    .into_managed_buffer()
+                    .to_string()
+                    .split('-')
+                    .nth(1)
+                    .unwrap_or(TOKEN_TICKER),
+            ),
+            num_decimals: token.decimals,
+            data: OperationData::new(nonce, self.user_address().into(), None),
+        };
+
+        let operation_hash = operation.generate_hash();
+        let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&operation_hash.to_vec()));
+
+        let operations_hashes =
+            MultiValueEncoded::from(ManagedVec::from(vec![operation_hash.clone()]));
+
+        self.register_operation(shard, &hash_of_hashes, operations_hashes)
+            .await;
+
+        self.register_token(shard, operation, None)
+            .await
+            .expect(FAILED_TO_REGISTER_SOVEREIGN_TOKEN)
     }
 
     pub async fn register_and_execute_sovereign_token(
@@ -266,6 +280,6 @@ impl CompleteFlowInteract {
 
         self.execute_wrapper(config, Some(token.clone()))
             .await
-            .expect("Expected mapped token, got None")
+            .expect(EXPECTED_MAPPED_TOKEN)
     }
 }

@@ -4,10 +4,11 @@ use multiversx_sc_scenario::{
     imports::{Address, BigUint, ManagedBuffer, MxscPath, TestTokenIdentifier, Vec},
     ScenarioWorld,
 };
+use structs::aliases::TxNonce;
 
 pub struct BaseSetup {
     pub world: ScenarioWorld,
-    operation_nonce: u64,
+    operation_nonce: TxNonce,
 }
 
 pub struct AccountSetup<'a> {
@@ -68,11 +69,11 @@ impl BaseSetup {
         }
     }
 
-    pub fn operation_nonce(&mut self) -> u64 {
+    pub fn operation_nonce(&self) -> TxNonce {
         self.operation_nonce
     }
 
-    pub fn next_operation_nonce(&mut self) -> u64 {
+    pub fn next_operation_nonce(&mut self) -> TxNonce {
         let nonce = self.operation_nonce;
         self.operation_nonce = self
             .operation_nonce

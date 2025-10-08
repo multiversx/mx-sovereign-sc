@@ -219,9 +219,11 @@ pub trait FeeCommonHelpersModule:
 
         match fee {
             Some(fee_struct) => {
-                let _ = self.set_fee_in_storage(&fee_struct);
+                if let Some(err_msg) = self.set_fee_in_storage(&fee_struct) {
+                    sc_panic!(err_msg);
+                }
             }
-            _ => self.fee_enabled().set(false),
+            None => self.fee_enabled().set(false),
         }
     }
 }
