@@ -912,10 +912,10 @@ async fn test_execute_operation_native_token_success_no_fee() {
 /// M-ESDT_EXEC_OK
 ///
 /// ### ACTION
-/// Call 'execute_operation()' with valid operation
+/// Call 'execute_operation()' with valid operation but no registered sovereign token
 ///
 /// ### EXPECTED
-/// The operation is executed in the testing smart contract
+/// Transaction is successful but the logs contain the InternalVMError
 #[tokio::test]
 #[serial]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
