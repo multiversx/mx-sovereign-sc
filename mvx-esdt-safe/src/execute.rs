@@ -347,7 +347,7 @@ pub trait ExecuteModule:
         }
 
         let sc_address = self.blockchain().get_sc_address();
-        let tx_nonce = self.get_and_increment_tx_nonce();
+        let tx_nonce = self.get_current_and_increment_tx_nonce();
         self.deposit_event(
             &operation.data.op_sender,
             &operation.map_tokens_to_multi_value_encoded(),
