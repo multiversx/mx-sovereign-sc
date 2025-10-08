@@ -942,28 +942,16 @@ async fn test_execute_operation_sovereign_token_not_registered() {
         .get_mvx_esdt_safe_address(SHARD_0)
         .clone();
 
-    let gas_limit = 90_000_000u64;
-    let function = ManagedBuffer::<StaticApi>::from(TESTING_SC_ENDPOINT);
-    let args =
-        ManagedVec::<StaticApi, ManagedBuffer<StaticApi>>::from(vec![ManagedBuffer::from("1")]);
-
-    let transfer_data = TransferData::new(gas_limit, function, args);
-
     let operation_data = OperationData::new(
         chain_interactor
             .common_state()
             .get_and_increment_operation_nonce(&mvx_esdt_safe_address.to_string()),
         ManagedAddress::from_address(&chain_interactor.user_address),
-        Some(transfer_data),
+        None,
     );
 
     let operation = Operation::new(
-        ManagedAddress::from_address(
-            &chain_interactor
-                .common_state()
-                .current_testing_sc_address()
-                .to_address(),
-        ),
+        SOVEREIGN_RECEIVER_ADDRESS.to_managed_address(),
         vec![payment].into(),
         operation_data,
     );
