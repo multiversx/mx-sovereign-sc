@@ -48,7 +48,7 @@ pub trait CrossChainStorage {
 
     #[view(getNativeToken)]
     #[storage_mapper("nativeToken")]
-    fn native_token(&self) -> SingleValueMapper<TokenIdentifier<Self::Api>>;
+    fn native_token(&self) -> SingleValueMapper<EgldOrEsdtTokenIdentifier<Self::Api>>;
 
     #[storage_mapper("isSovereignChain")]
     fn is_sovereign_chain(&self) -> SingleValueMapper<bool>;

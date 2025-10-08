@@ -290,7 +290,7 @@ where
 
     pub fn native_token(
         self,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, TokenIdentifier<Env::Api>> {
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, EgldOrEsdtTokenIdentifier<Env::Api>> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("getNativeToken")

@@ -623,7 +623,7 @@ fn test_deposit_gas_limit_too_high() {
         .to(ESDT_SAFE_ADDRESS)
         .whitebox(mvx_esdt_safe::contract_obj, |sc| {
             sc.native_token()
-                .set(SECOND_TEST_TOKEN.to_token_identifier());
+                .set(EgldOrEsdtTokenIdentifier::esdt(SECOND_TEST_TOKEN));
         });
 
     state
@@ -708,7 +708,7 @@ fn test_deposit_max_bridged_amount_exceeded() {
         .to(ESDT_SAFE_ADDRESS)
         .whitebox(mvx_esdt_safe::contract_obj, |sc| {
             sc.native_token()
-                .set(SECOND_TEST_TOKEN.to_token_identifier());
+                .set(EgldOrEsdtTokenIdentifier::esdt(SECOND_TEST_TOKEN));
         });
 
     state
@@ -781,7 +781,7 @@ fn test_deposit_endpoint_banned() {
         .to(ESDT_SAFE_ADDRESS)
         .whitebox(mvx_esdt_safe::contract_obj, |sc| {
             sc.native_token()
-                .set(SECOND_TEST_TOKEN.to_token_identifier());
+                .set(EgldOrEsdtTokenIdentifier::esdt(SECOND_TEST_TOKEN));
         });
 
     state
@@ -1190,7 +1190,7 @@ fn test_deposit_refund() {
         .to(ESDT_SAFE_ADDRESS)
         .whitebox(mvx_esdt_safe::contract_obj, |sc| {
             sc.native_token()
-                .set(SECOND_TEST_TOKEN.to_token_identifier());
+                .set(EgldOrEsdtTokenIdentifier::esdt(SECOND_TEST_TOKEN));
         });
 
     state

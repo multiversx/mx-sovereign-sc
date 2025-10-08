@@ -3,12 +3,10 @@ use common_interactor::interactor_config::Config;
 use common_interactor::interactor_helpers::InteractorHelpers;
 use common_interactor::interactor_state::EsdtTokenInfo;
 use common_interactor::interactor_structs::ActionConfig;
-use common_test_setup::constants::EGLD_0_05;
 use common_test_setup::constants::{
     DEPOSIT_LOG, ONE_HUNDRED_TOKENS, SC_CALL_LOG, SHARD_1, SHARD_2, TESTING_SC_ENDPOINT,
     WRONG_ENDPOINT_NAME,
 };
-use multiversx_sc::chain_core::EGLD_000000_TOKEN_IDENTIFIER;
 use multiversx_sc::types::BigUint;
 use multiversx_sc::types::EgldOrEsdtTokenIdentifier;
 use multiversx_sc::types::EsdtTokenType;
@@ -168,10 +166,11 @@ async fn test_complete_execute_flow_with_transfer_data_only_fail(#[case] shard: 
 async fn test_deposit_with_fee(
     #[case] token_type: EsdtTokenType,
     #[values(SHARD_1, SHARD_2)] shard: u32,
+    #[values(0, 1)] token_index: usize,
 ) {
     let mut chain_interactor = CompleteFlowInteract::new(Config::chain_simulator_config()).await;
 
-    let token = chain_interactor.get_token_by_type(token_type);
+    let token = chain_interactor.get_token_by_type(token_type, token_index);
 
     let fee = chain_interactor.create_standard_fee();
 
@@ -211,10 +210,11 @@ async fn test_deposit_with_fee(
 async fn test_deposit_without_fee_and_execute(
     #[case] token_type: EsdtTokenType,
     #[values(SHARD_1, SHARD_2)] shard: u32,
+    #[values(0, 1)] token_index: usize,
 ) {
     let mut chain_interactor = CompleteFlowInteract::new(Config::chain_simulator_config()).await;
 
-    let token = chain_interactor.get_token_by_type(token_type);
+    let token = chain_interactor.get_token_by_type(token_type, token_index);
 
     chain_interactor.remove_fee(shard).await;
 
@@ -322,12 +322,13 @@ async fn test_register_execute_and_deposit_sov_token(
 async fn test_deposit_mvx_token_with_transfer_data(
     #[case] token_type: EsdtTokenType,
     #[values(SHARD_1, SHARD_2)] shard: u32,
+    #[values(0, 1)] token_index: usize,
 ) {
     let mut chain_interactor = CompleteFlowInteract::new(Config::chain_simulator_config()).await;
 
     chain_interactor.remove_fee(shard).await;
 
-    let token = chain_interactor.get_token_by_type(token_type);
+    let token = chain_interactor.get_token_by_type(token_type, token_index);
 
     chain_interactor
         .deposit_wrapper(
@@ -366,6 +367,7 @@ async fn test_deposit_mvx_token_with_transfer_data(
 async fn test_deposit_mvx_token_with_transfer_data_and_fee(
     #[case] token_type: EsdtTokenType,
     #[values(SHARD_1, SHARD_2)] shard: u32,
+    #[values(0, 1)] token_index: usize,
 ) {
     let mut chain_interactor = CompleteFlowInteract::new(Config::chain_simulator_config()).await;
 
@@ -373,7 +375,7 @@ async fn test_deposit_mvx_token_with_transfer_data_and_fee(
 
     chain_interactor.set_fee(fee.clone(), shard).await;
 
-    let token = chain_interactor.get_token_by_type(token_type);
+    let token = chain_interactor.get_token_by_type(token_type, token_index);
 
     chain_interactor
         .deposit_wrapper(
@@ -394,12 +396,11 @@ async fn test_deposit_mvx_token_with_transfer_data_and_fee(
 /// S-FORGE_COMPLETE-DEPOSIT-FLOW_OK
 ///
 /// ### ACTION
-/// Deploy and complete setup phase, then call deposit without fee and execute operation with transfer data
+/// Deploy and complete setup phase, then call deposit without fee and execute operation with transfer data for various ESDT tokens.
 ///
 /// ### EXPECTED
-/// The operation is executed in the testing smart contract and the event is found in logs
+/// The operation is executed in the testing smart contract and the event is found in logs for all token types.
 #[rstest]
-#[case::egld(EsdtTokenType::Fungible)]
 #[case::fungible(EsdtTokenType::Fungible)]
 #[case::non_fungible(EsdtTokenType::NonFungibleV2)]
 #[case::semi_fungible(EsdtTokenType::SemiFungible)]
@@ -412,24 +413,12 @@ async fn test_deposit_mvx_token_with_transfer_data_and_fee(
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn test_deposit_and_execute_with_transfer_data(
     #[case] token_type: EsdtTokenType,
+    #[values(0, 1)] token_index: usize,
     #[values(SHARD_1, SHARD_2)] shard: u32,
 ) {
     let mut chain_interactor = CompleteFlowInteract::new(Config::chain_simulator_config()).await;
 
-    let thread = std::thread::current();
-    let thread_name = thread.name().unwrap_or("");
-    let is_egld_case = thread_name.contains("egld");
-
-    let token = match is_egld_case {
-        true => EsdtTokenInfo {
-            token_id: EgldOrEsdtTokenIdentifier::from(EGLD_000000_TOKEN_IDENTIFIER),
-            nonce: 0,
-            token_type: EsdtTokenType::Fungible,
-            decimals: 18,
-            amount: BigUint::from(EGLD_0_05),
-        },
-        false => chain_interactor.get_token_by_type(token_type),
-    };
+    let token = chain_interactor.get_token_by_type(token_type, token_index);
 
     chain_interactor.remove_fee(shard).await;
 

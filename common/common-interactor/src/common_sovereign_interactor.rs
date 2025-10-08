@@ -7,8 +7,9 @@ use crate::{
 use common_test_setup::constants::{
     CHAIN_CONFIG_CODE_PATH, CHAIN_FACTORY_CODE_PATH, CHAIN_ID, DEPLOY_COST,
     FAILED_TO_LOAD_WALLET_SHARD_0, FEE_MARKET_CODE_PATH, HEADER_VERIFIER_CODE_PATH, ISSUE_COST,
-    MVX_ESDT_SAFE_CODE_PATH, NATIVE_TOKEN_NAME, NATIVE_TOKEN_TICKER, NUMBER_OF_SHARDS, SHARD_0,
-    SOVEREIGN_FORGE_CODE_PATH, SOVEREIGN_TOKEN_PREFIX, TESTING_SC_CODE_PATH, WALLET_SHARD_0,
+    MVX_ESDT_SAFE_CODE_PATH, NATIVE_TOKEN_NAME, NATIVE_TOKEN_TICKER, NUMBER_OF_SHARDS,
+    NUM_TOKENS_TO_MINT, ONE_THOUSAND_TOKENS, SHARD_0, SOVEREIGN_FORGE_CODE_PATH,
+    SOVEREIGN_TOKEN_PREFIX, TESTING_SC_CODE_PATH, WALLET_SHARD_0,
 };
 use multiversx_bls::{SecretKey, G1};
 use multiversx_sc::{
@@ -79,11 +80,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
         self.interactor().generate_blocks(2u64).await.unwrap();
     }
 
-    async fn issue_and_mint_token(
-        &mut self,
-        issue: IssueTokenStruct,
-        mint: MintTokenStruct,
-    ) -> EsdtTokenInfo {
+    async fn issue_and_mint_token(&mut self, issue: IssueTokenStruct, mint: MintTokenStruct) {
         let user_address = self.user_address().clone();
         let interactor = self.interactor();
 
@@ -96,7 +93,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             .issue_and_set_all_roles(
                 ISSUE_COST.into(),
                 issue.token_display_name,
-                issue.token_ticker,
+                issue.token_ticker.clone(),
                 issue.token_type,
                 issue.num_decimals,
             )
@@ -104,18 +101,35 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             .run()
             .await;
 
-        let nonce = self
-            .mint_tokens(token_id.clone(), issue.token_type, mint.clone())
-            .await;
+        for _ in 0..NUM_TOKENS_TO_MINT {
+            let nonce = self
+                .mint_tokens(token_id.clone(), issue.token_type, mint.clone())
+                .await;
 
-        let decimals = self.get_token_decimals(issue.token_type);
+            let decimals = self.get_token_decimals(issue.token_type);
 
-        EsdtTokenInfo {
-            token_id: EgldOrEsdtTokenIdentifier::from(token_id.as_bytes()),
-            nonce,
-            token_type: issue.token_type,
-            decimals,
-            amount: mint.amount,
+            let token = EsdtTokenInfo {
+                token_id: EgldOrEsdtTokenIdentifier::from(token_id.as_bytes()),
+                nonce,
+                token_type: issue.token_type,
+                decimals,
+                amount: mint.amount.clone(),
+            };
+
+            match issue.token_ticker.as_str() {
+                "MVX" => self.state().add_fungible_token(token.clone()),
+                "FEE" => self.state().set_fee_token(token.clone()),
+                "NFT" => self.state().add_nft_token(token.clone()),
+                "SFT" => self.state().add_sft_token(token.clone()),
+                "DYN" => self.state().add_dynamic_nft_token(token.clone()),
+                "META" => self.state().add_meta_esdt_token(token.clone()),
+                "DYNS" => self.state().add_dynamic_sft_token(token.clone()),
+                "DYNM" => self.state().add_dynamic_meta_esdt_token(token.clone()),
+                _ => {}
+            }
+
+            self.state()
+                .update_or_add_initial_wallet_token(token.clone());
         }
     }
 
@@ -173,9 +187,21 @@ pub trait CommonInteractorTrait: InteractorHelpers {
         &mut self,
         token_type: EsdtTokenType,
         ticker: &str,
-        amount: BigUint<StaticApi>,
         decimals: usize,
-    ) -> EsdtTokenInfo {
+    ) {
+        if ticker == "FEE" && !self.common_state().fee_market_tokens.is_empty() {
+            let fee_token = self.retrieve_current_fee_token_for_wallet().await;
+            self.state().set_fee_token(fee_token);
+            return;
+        }
+        let amount = if matches!(
+            token_type,
+            EsdtTokenType::NonFungibleV2 | EsdtTokenType::DynamicNFT
+        ) {
+            BigUint::from(1u64)
+        } else {
+            BigUint::from(ONE_THOUSAND_TOKENS)
+        };
         let token_struct = IssueTokenStruct {
             token_display_name: ticker.to_string(),
             token_ticker: ticker.to_string(),
@@ -193,7 +219,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             attributes: None,
         };
 
-        self.issue_and_mint_token(token_struct, mint_struct).await
+        self.issue_and_mint_token(token_struct, mint_struct).await;
     }
 
     async fn deploy_sovereign_forge(
@@ -1391,15 +1417,6 @@ pub trait CommonInteractorTrait: InteractorHelpers {
         }
     }
 
-    async fn set_fee(&mut self, fee: FeeStruct<StaticApi>, shard: u32) {
-        let fee_activated = self.common_state().get_fee_status_for_shard(shard);
-
-        if fee_activated {
-            return;
-        }
-        self.set_fee_common(fee, shard).await;
-    }
-
     async fn remove_fee(&mut self, shard: u32) {
         let fee_activated = self.common_state().get_fee_status_for_shard(shard);
 
@@ -1430,7 +1447,13 @@ pub trait CommonInteractorTrait: InteractorHelpers {
         self.common_state().set_fee_status_for_shard(shard, false);
     }
 
-    async fn set_fee_common(&mut self, fee: FeeStruct<StaticApi>, shard: u32) {
+    async fn set_fee(&mut self, fee: FeeStruct<StaticApi>, shard: u32) {
+        let fee_activated = self.common_state().get_fee_status_for_shard(shard);
+
+        if fee_activated {
+            return;
+        }
+
         let mvx_esdt_safe_address = self.common_state().get_mvx_esdt_safe_address(shard).clone();
         let operation: SetFeeOperation<StaticApi> = SetFeeOperation {
             fee_struct: fee.clone(),
@@ -1450,5 +1473,18 @@ pub trait CommonInteractorTrait: InteractorHelpers {
         self.set_fee_after_setup_phase(hash_of_hashes, operation, shard)
             .await;
         self.common_state().set_fee_status_for_shard(shard, true);
+    }
+
+    async fn get_native_token(&mut self, shard: u32) -> EgldOrEsdtTokenIdentifier<StaticApi> {
+        let mvx_esdt_safe_address = self.common_state().get_mvx_esdt_safe_address(shard).clone();
+
+        self.interactor()
+            .query()
+            .to(mvx_esdt_safe_address)
+            .typed(MvxEsdtSafeProxy)
+            .native_token()
+            .returns(ReturnsResult)
+            .run()
+            .await
     }
 }

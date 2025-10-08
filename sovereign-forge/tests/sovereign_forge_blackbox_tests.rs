@@ -641,7 +641,7 @@ fn test_complete_setup_phase() {
         .to(mvx_address)
         .whitebox(mvx_esdt_safe::contract_obj, |sc| {
             sc.native_token()
-                .set(NATIVE_TEST_TOKEN.to_token_identifier());
+                .set(EgldOrEsdtTokenIdentifier::esdt(NATIVE_TEST_TOKEN));
         });
 
     let chain_config_address =

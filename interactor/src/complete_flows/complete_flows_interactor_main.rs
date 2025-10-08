@@ -8,15 +8,13 @@ use common_interactor::{
     common_sovereign_interactor::CommonInteractorTrait, interactor_config::Config,
 };
 use common_test_setup::constants::{
-    INTERACTOR_WORKING_DIR, ONE_THOUSAND_TOKENS, SOVEREIGN_RECEIVER_ADDRESS, TOKEN_DISPLAY_NAME,
-    TOKEN_TICKER,
+    INTERACTOR_WORKING_DIR, SOVEREIGN_RECEIVER_ADDRESS, TOKEN_DISPLAY_NAME, TOKEN_TICKER,
 };
 use cross_chain::DEFAULT_ISSUE_COST;
 use error_messages::{EXPECTED_MAPPED_TOKEN, FAILED_TO_REGISTER_SOVEREIGN_TOKEN};
 use multiversx_sc::chain_core::EGLD_000000_TOKEN_IDENTIFIER;
 use multiversx_sc_snippets::imports::*;
 use multiversx_sc_snippets::multiversx_sc_scenario::multiversx_chain_vm::crypto_functions::sha256;
-use structs::aliases::PaymentsVec;
 use structs::fee::FeeStruct;
 use structs::generate_hash::GenerateHash;
 use structs::operation::OperationData;
@@ -88,7 +86,6 @@ impl CompleteFlowInteract {
     async fn initialize_tokens_in_wallets(&mut self) {
         let token_configs = [
             ("MVX", EsdtTokenType::Fungible, 18),
-            ("MVX2", EsdtTokenType::Fungible, 18),
             ("FEE", EsdtTokenType::Fungible, 18),
             ("NFT", EsdtTokenType::NonFungibleV2, 0),
             ("SFT", EsdtTokenType::SemiFungible, 0),
@@ -98,40 +95,10 @@ impl CompleteFlowInteract {
             ("DYNM", EsdtTokenType::DynamicMeta, 18),
         ];
 
-        let mut all_tokens = Vec::new();
-
         for (ticker, token_type, decimals) in token_configs {
-            if ticker == "FEE" && !self.common_state.fee_market_tokens.is_empty() {
-                let fee_token = self.retrieve_current_fee_token_for_wallet().await;
-                self.state.set_fee_token(fee_token);
-                continue;
-            }
-            let amount = match token_type {
-                EsdtTokenType::NonFungibleV2 | EsdtTokenType::DynamicNFT => BigUint::from(1u64),
-                _ => BigUint::from(ONE_THOUSAND_TOKENS),
-            };
-
-            let token = self
-                .create_token_with_config(token_type, ticker, amount, decimals)
+            self.create_token_with_config(token_type, ticker, decimals)
                 .await;
-
-            match ticker {
-                "MVX" => self.state.set_first_token(token.clone()),
-                "MVX2" => self.state.set_second_token(token.clone()),
-                "FEE" => self.state.set_fee_token(token.clone()),
-                "NFT" => self.state.set_nft_token_id(token.clone()),
-                "SFT" => self.state.set_sft_token_id(token.clone()),
-                "DYN" => self.state.set_dynamic_nft_token_id(token.clone()),
-                "META" => self.state.set_meta_esdt_token_id(token.clone()),
-                "DYNS" => self.state.set_dynamic_sft_token_id(token.clone()),
-                "DYNM" => self.state.set_dynamic_meta_esdt_token_id(token.clone()),
-                _ => {}
-            }
-
-            all_tokens.push(token);
         }
-
-        self.state.set_initial_wallet_tokens_state(all_tokens);
     }
 
     pub async fn deposit_wrapper(
@@ -314,24 +281,5 @@ impl CompleteFlowInteract {
         self.execute_wrapper(config, Some(token.clone()))
             .await
             .expect(EXPECTED_MAPPED_TOKEN)
-    }
-
-    pub async fn update_fee_market_balance_state(
-        &mut self,
-        fee: Option<FeeStruct<StaticApi>>,
-        payment_vec: PaymentsVec<StaticApi>,
-        shard: u32,
-    ) {
-        if fee.is_none() || payment_vec.is_empty() {
-            return;
-        }
-        let mut fee_token_in_fee_market = self.common_state().get_fee_market_token_for_shard(shard);
-
-        let payment = payment_vec.get(0);
-        if let Some(payment_amount) = payment.amount.to_u64() {
-            fee_token_in_fee_market.amount += payment_amount;
-        }
-        self.common_state()
-            .set_fee_market_token_for_shard(shard, fee_token_in_fee_market);
     }
 }

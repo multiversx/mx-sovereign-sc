@@ -481,15 +481,15 @@ pub trait InteractorHelpers {
         }
     }
 
-    fn get_token_by_type(&mut self, token_type: EsdtTokenType) -> EsdtTokenInfo {
+    fn get_token_by_type(&mut self, token_type: EsdtTokenType, index: usize) -> EsdtTokenInfo {
         match token_type {
-            EsdtTokenType::NonFungibleV2 => self.state().get_nft_token_id(),
-            EsdtTokenType::Fungible => self.state().get_first_token_id(),
-            EsdtTokenType::SemiFungible => self.state().get_sft_token_id(),
-            EsdtTokenType::MetaFungible => self.state().get_meta_esdt_token_id(),
-            EsdtTokenType::DynamicNFT => self.state().get_dynamic_nft_token_id(),
-            EsdtTokenType::DynamicSFT => self.state().get_dynamic_sft_token_id(),
-            EsdtTokenType::DynamicMeta => self.state().get_dynamic_meta_esdt_token_id(),
+            EsdtTokenType::NonFungibleV2 => self.state().get_nft_token_by_index(index),
+            EsdtTokenType::Fungible => self.state().get_fungible_token_by_index(index),
+            EsdtTokenType::SemiFungible => self.state().get_sft_token_by_index(index),
+            EsdtTokenType::MetaFungible => self.state().get_meta_esdt_token_by_index(index),
+            EsdtTokenType::DynamicNFT => self.state().get_dynamic_nft_token_by_index(index),
+            EsdtTokenType::DynamicSFT => self.state().get_dynamic_sft_token_by_index(index),
+            EsdtTokenType::DynamicMeta => self.state().get_dynamic_meta_esdt_token_by_index(index),
             _ => panic!("Unsupported token type for test"),
         }
     }
@@ -632,26 +632,17 @@ pub trait InteractorHelpers {
     }
 
     async fn check_user_balance_unchanged(&mut self) {
-        let expected_balance = self
-            .state()
-            .get_initial_wallet_tokens_state()
-            .clone()
-            .unwrap();
+        let expected_balance = self.state().get_initial_wallet_tokens_state().clone();
         self.check_user_balance(expected_balance).await;
     }
 
-    async fn check_all_contracts_empty(&mut self, shard: u32) {
+    async fn check_contracts_empty(&mut self, shard: u32) {
         self.check_mvx_esdt_balance(shard, Vec::new()).await;
-        self.check_fee_market_balance(shard, Vec::new()).await;
         self.check_testing_sc_balance(Vec::new()).await;
     }
 
     async fn create_empty_balance_state(&mut self) -> Vec<EsdtTokenInfo> {
-        let mut empty_balance_state = self
-            .state()
-            .get_initial_wallet_tokens_state()
-            .clone()
-            .unwrap();
+        let mut empty_balance_state = self.state().get_initial_wallet_tokens_state().clone();
         for token in empty_balance_state.iter_mut() {
             token.amount = BigUint::from(0u64);
         }
@@ -744,6 +735,7 @@ pub trait InteractorHelpers {
             self.check_user_balance(expected_user_tokens).await;
         }
 
+        //MVX Tokens
         if is_egld {
             let current_balance = self.common_state().get_mvx_egld_balance_for_shard(shard);
             let amount_u64 = amount.clone().unwrap().to_u64().expect(AMOUNT_IS_TOO_LARGE);
@@ -918,5 +910,24 @@ pub trait InteractorHelpers {
             .map(char::from)
             .collect();
         format!("{}-SOV-{}", current_chain_id, rand_string)
+    }
+
+    async fn update_fee_market_balance_state(
+        &mut self,
+        fee: Option<FeeStruct<StaticApi>>,
+        payment_vec: PaymentsVec<StaticApi>,
+        shard: u32,
+    ) {
+        if fee.is_none() || payment_vec.is_empty() {
+            return;
+        }
+        let mut fee_token_in_fee_market = self.common_state().get_fee_market_token_for_shard(shard);
+
+        let payment = payment_vec.get(0);
+        if let Some(payment_amount) = payment.amount.to_u64() {
+            fee_token_in_fee_market.amount += payment_amount;
+        }
+        self.common_state()
+            .set_fee_market_token_for_shard(shard, fee_token_in_fee_market);
     }
 }
