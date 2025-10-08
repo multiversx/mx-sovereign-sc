@@ -57,8 +57,8 @@ pub trait ConfigsModule:
             return;
         }
         if let Some(lock_operation_error) = self.lock_operation_hash_wrapper(
-            &config_hash,
             &hash_of_hashes,
+            &config_hash,
             update_config_operation.nonce,
         ) {
             self.complete_operation(&hash_of_hashes, &config_hash, Some(lock_operation_error));
