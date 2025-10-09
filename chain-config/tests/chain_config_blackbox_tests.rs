@@ -3,7 +3,7 @@ use chain_config_blackbox_setup::ChainConfigTestState;
 use common_test_setup::base_setup::helpers::BLSKey;
 use common_test_setup::constants::{
     CHAIN_CONFIG_ADDRESS, EXECUTED_BRIDGE_OP_EVENT, FIRST_TEST_TOKEN, ONE_HUNDRED_MILLION,
-    OWNER_ADDRESS, OWNER_BALANCE, USER_ADDRESS,
+    ONE_HUNDRED_THOUSAND, OWNER_ADDRESS, OWNER_BALANCE, SINGLE_VALIDATOR_BITMAP, USER_ADDRESS,
 };
 use error_messages::{
     ADDITIONAL_STAKE_ZERO_VALUE, CHAIN_CONFIG_SETUP_PHASE_NOT_COMPLETE, INVALID_ADDITIONAL_STAKE,
@@ -258,7 +258,7 @@ fn test_update_config_invalid_config() {
     let config_hash = new_config.generate_hash();
     let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&config_hash.to_vec()));
     let (signature, pub_keys) = state.common_setup.get_sig_and_pub_keys(1, &hash_of_hashes);
-    let bitmap = ManagedBuffer::new_from_bytes(&[0x01]);
+    let bitmap = ManagedBuffer::new_from_bytes(SINGLE_VALIDATOR_BITMAP);
 
     state
         .common_setup
@@ -314,7 +314,7 @@ fn test_update_config() {
     let config_hash = new_config.generate_hash();
     let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&config_hash.to_vec()));
     let (signature, pub_keys) = state.common_setup.get_sig_and_pub_keys(1, &hash_of_hashes);
-    let bitmap = ManagedBuffer::new_from_bytes(&[0x01]);
+    let bitmap = ManagedBuffer::new_from_bytes(SINGLE_VALIDATOR_BITMAP);
 
     state
         .common_setup
@@ -574,7 +574,7 @@ fn test_register_validator_after_genesis() {
     payments_vec.push(payment);
 
     let num_of_validators: u64 = 3;
-    let dummy_message = ManagedBuffer::new_from_bytes(&[0x01]);
+    let dummy_message = ManagedBuffer::new_from_bytes(SINGLE_VALIDATOR_BITMAP);
     let (signature, pub_keys) = state
         .common_setup
         .get_sig_and_pub_keys(num_of_validators as usize, &dummy_message);
@@ -625,7 +625,7 @@ fn test_register_additional_stake() {
 
     let first_token_stake_arg = StakeArgs {
         token_identifier: FIRST_TEST_TOKEN.to_token_identifier(),
-        amount: BigUint::from(100u64),
+        amount: BigUint::from(ONE_HUNDRED_MILLION),
     };
 
     let additional_stage_args = ManagedVec::from(vec![first_token_stake_arg]);
@@ -643,7 +643,7 @@ fn test_register_additional_stake() {
     let payment = EgldOrEsdtTokenPayment::new(
         EgldOrEsdtTokenIdentifier::from(FIRST_TEST_TOKEN.as_bytes()),
         0,
-        BigUint::from(100u64),
+        BigUint::from(ONE_HUNDRED_MILLION),
     );
 
     let mut payments_with_additional_stake = MultiEgldOrEsdtPayment::new();
@@ -770,7 +770,7 @@ fn test_unregister_no_stake() {
 fn test_unregister() {
     let mut state = ChainConfigTestState::new();
 
-    let stake_amount = BigUint::from(100_000u64);
+    let stake_amount = BigUint::from(ONE_HUNDRED_THOUSAND);
     let mut additional_stake_vec = ManagedVec::new();
     additional_stake_vec.push(StakeArgs {
         token_identifier: FIRST_TEST_TOKEN.to_token_identifier(),
@@ -963,7 +963,7 @@ fn test_unregister_validator_invalid() {
         .complete_header_verifier_setup_phase(None);
 
     let signature = ManagedBuffer::new();
-    let bitmap = ManagedBuffer::new_from_bytes(&[0x01]);
+    let bitmap = ManagedBuffer::new_from_bytes(SINGLE_VALIDATOR_BITMAP);
     let epoch = 0;
 
     // invalid validator id
