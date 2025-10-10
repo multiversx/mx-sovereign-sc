@@ -151,7 +151,7 @@ impl BaseSetup {
         ManagedBuffer::new_from_bytes(&bitmap_bytes)
     }
 
-    /// Creates a bitmap for the given validator indices. Each value in the array represents a validator index.
+    /// Creates a bitmap for the given validator indices
     pub fn bitmap_for_signers(&self, validator_indices: &[u64]) -> ManagedBuffer<StaticApi> {
         if validator_indices.is_empty() {
             return ManagedBuffer::new_from_bytes(&[]);
