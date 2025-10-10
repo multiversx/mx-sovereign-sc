@@ -180,7 +180,6 @@ impl BaseSetup {
         signer_count.max(1)
     }
 
-    /// Updates the validator key in the chain config contract storage.
     pub fn update_validator_key_in_chain_config(
         &mut self,
         validator_data: &ValidatorData<StaticApi>,
