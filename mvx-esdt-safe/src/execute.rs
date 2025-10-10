@@ -73,7 +73,17 @@ pub trait ExecuteModule:
             return;
         }
 
-        if let Some(minted_operation_tokens) = self.mint_tokens(&hash_of_hashes, &operation_tuple) {
+        let (opt_tokens, opt_error) = self.mint_tokens(&hash_of_hashes, &operation_tuple);
+        if let Some(error_message) = opt_error {
+            self.complete_operation(
+                &hash_of_hashes,
+                &operation_tuple.op_hash,
+                Some(error_message),
+            );
+            return;
+        }
+
+        if let Some(minted_operation_tokens) = opt_tokens {
             self.distribute_payments(&hash_of_hashes, &operation_tuple, &minted_operation_tokens);
         }
     }
@@ -82,14 +92,25 @@ pub trait ExecuteModule:
         &self,
         hash_of_hashes: &ManagedBuffer,
         operation_tuple: &OperationTuple<Self::Api>,
-    ) -> Option<ManagedVec<OperationEsdtPayment<Self::Api>>> {
+    ) -> (
+        Option<ManagedVec<OperationEsdtPayment<Self::Api>>>,
+        Option<ManagedBuffer>,
+    ) {
         let mut output_payments = ManagedVec::new();
 
         for operation_token in operation_tuple.operation.tokens.iter() {
             match self.get_mvx_token_id(&operation_token) {
                 Some(mvx_token_id) => {
-                    let payment = self.process_resolved_token(&mvx_token_id, &operation_token);
-                    output_payments.push(payment);
+                    let (opt_payment, opt_error) =
+                        self.process_resolved_token(&mvx_token_id, &operation_token);
+                    if let Some(error_msg) = opt_error {
+                        // Burn any previously minted tokens for this operation
+                        self.refund_transfers(&output_payments, &operation_tuple.operation);
+                        return (None, Some(error_msg));
+                    }
+                    if let Some(payment) = opt_payment {
+                        output_payments.push(payment);
+                    }
                 }
                 None => {
                     if let Some(payment) = self.process_unresolved_token(
@@ -100,29 +121,46 @@ pub trait ExecuteModule:
                         output_payments.push(payment);
                     } else {
                         self.refund_transfers(&output_payments, &operation_tuple.operation);
-                        return None;
+                        return (None, None);
                     }
                 }
             }
         }
 
-        Some(output_payments)
+        (Some(output_payments), None)
     }
 
     fn process_resolved_token(
         &self,
         mvx_token_id: &EgldOrEsdtTokenIdentifier<Self::Api>,
         operation_token: &OperationEsdtPayment<Self::Api>,
-    ) -> OperationEsdtPayment<Self::Api> {
+    ) -> (
+        Option<OperationEsdtPayment<Self::Api>>,
+        Option<ManagedBuffer>,
+    ) {
         if self.is_fungible(&operation_token.token_data.token_type) {
             self.mint_fungible_token(mvx_token_id, &operation_token.token_data.amount);
-            OperationEsdtPayment::new(mvx_token_id.clone(), 0, operation_token.token_data.clone())
+            (
+                Some(OperationEsdtPayment::new(
+                    mvx_token_id.clone(),
+                    0,
+                    operation_token.token_data.clone(),
+                )),
+                None,
+            )
         } else {
-            let nft_nonce = self.esdt_create_and_update_mapper(mvx_token_id, operation_token);
-            OperationEsdtPayment::new(
-                mvx_token_id.clone(),
-                nft_nonce,
-                operation_token.token_data.clone(),
+            let (nft_nonce, opt_error) =
+                self.esdt_create_and_update_mapper(mvx_token_id, operation_token);
+            if let Some(err) = opt_error {
+                return (None, Some(err));
+            }
+            (
+                Some(OperationEsdtPayment::new(
+                    mvx_token_id.clone(),
+                    nft_nonce,
+                    operation_token.token_data.clone(),
+                )),
+                None,
             )
         }
     }
@@ -176,8 +214,8 @@ pub trait ExecuteModule:
         &self,
         mvx_token_id: &EgldOrEsdtTokenIdentifier<Self::Api>,
         operation_token: &OperationEsdtPayment<Self::Api>,
-    ) -> u64 {
-        let mut nonce = 0;
+    ) -> (u64, Option<ManagedBuffer>) {
+        let mut nonce = 0u64;
         let current_token_type_ref = &operation_token.token_data.token_type;
 
         if self.is_sft_or_meta(current_token_type_ref) {
@@ -188,14 +226,23 @@ pub trait ExecuteModule:
         }
 
         if nonce == 0 {
-            nonce = self.mint_nft_tx(mvx_token_id, &operation_token.token_data);
+            let (opt_nonce, opt_error) =
+                self.mint_nft_tx(mvx_token_id, &operation_token.token_data);
+            if let Some(err) = opt_error {
+                return (0, Some(err));
+            }
 
-            self.update_esdt_info_mappers(
-                &operation_token.token_identifier,
-                operation_token.token_nonce,
-                mvx_token_id,
-                nonce,
-            );
+            if let Some(new_nonce) = opt_nonce {
+                self.update_esdt_info_mappers(
+                    &operation_token.token_identifier,
+                    operation_token.token_nonce,
+                    mvx_token_id,
+                    new_nonce,
+                );
+                return (new_nonce, None);
+            }
+
+            return (0, Some(sc_format!("Minted NFT nonce missing")));
         } else {
             self.tx()
                 .to(ToSelf)
@@ -208,7 +255,7 @@ pub trait ExecuteModule:
                 .sync_call();
         }
 
-        nonce
+        (nonce, None)
     }
 
     fn mint_nft_tx(
