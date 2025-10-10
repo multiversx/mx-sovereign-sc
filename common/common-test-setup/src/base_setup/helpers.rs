@@ -151,6 +151,25 @@ impl BaseSetup {
         ManagedBuffer::new_from_bytes(&bitmap_bytes)
     }
 
+    /// Creates a bitmap for the given validator indices. Each value in the array represents a validator index.
+    pub fn bitmap_for_signers(&self, validator_indices: &[u64]) -> ManagedBuffer<StaticApi> {
+        if validator_indices.is_empty() {
+            return ManagedBuffer::new_from_bytes(&[]);
+        }
+
+        let max_index = *validator_indices.iter().max().unwrap();
+        let byte_len = (max_index / 8 + 1) as usize;
+        let mut bitmap_bytes = vec![0u8; byte_len];
+
+        for &validator_index in validator_indices {
+            let byte_index = (validator_index / 8) as usize;
+            let bit_index = (validator_index % 8) as u8;
+            bitmap_bytes[byte_index] |= 1u8 << bit_index;
+        }
+
+        ManagedBuffer::new_from_bytes(&bitmap_bytes)
+    }
+
     pub fn get_sig_and_pub_keys(
         &mut self,
         pk_size: usize,

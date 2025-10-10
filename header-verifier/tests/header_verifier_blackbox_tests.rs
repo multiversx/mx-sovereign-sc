@@ -1,7 +1,7 @@
 use common_test_setup::base_setup::helpers::BLSKey;
 use common_test_setup::constants::{
     CHAIN_CONFIG_ADDRESS, ESDT_SAFE_ADDRESS, EXECUTED_BRIDGE_OP_EVENT, HEADER_VERIFIER_ADDRESS,
-    OWNER_ADDRESS, SINGLE_VALIDATOR_BITMAP,
+    OWNER_ADDRESS,
 };
 use error_messages::{
     CALLER_NOT_FROM_CURRENT_SOVEREIGN, CHAIN_CONFIG_SETUP_PHASE_NOT_COMPLETE,
@@ -58,7 +58,7 @@ fn register_bridge_operation_setup_not_completed() {
     let operation_1 = ManagedBuffer::from("operation_1");
     let operation_2 = ManagedBuffer::from("operation_2");
     let operation = state.generate_bridge_operation_struct(vec![&operation_1, &operation_2]);
-    let bitmap = ManagedBuffer::new_from_bytes(SINGLE_VALIDATOR_BITMAP);
+    let bitmap = state.common_setup.full_bitmap(1);
 
     state.register_operations(
         &operation.signature,
@@ -87,7 +87,7 @@ fn test_register_bridge_operation() {
     let operation_1 = ManagedBuffer::from("operation_1");
     let operation_2 = ManagedBuffer::from("operation_2");
     let operation = state.generate_bridge_operation_struct(vec![&operation_1, &operation_2]);
-    let bitmap = ManagedBuffer::new_from_bytes(SINGLE_VALIDATOR_BITMAP);
+    let bitmap = state.common_setup.full_bitmap(1);
 
     let (signature, pub_keys) = state
         .common_setup
@@ -156,7 +156,7 @@ fn test_remove_executed_hash_no_esdt_address_registered() {
     let operation_1 = ManagedBuffer::from("operation_1");
     let operation_2 = ManagedBuffer::from("operation_2");
     let operation = state.generate_bridge_operation_struct(vec![&operation_1, &operation_2]);
-    let bitmap = ManagedBuffer::new_from_bytes(SINGLE_VALIDATOR_BITMAP);
+    let bitmap = state.common_setup.full_bitmap(1);
 
     let (signature, pub_keys) = state
         .common_setup
@@ -205,7 +205,7 @@ fn test_remove_one_executed_hash() {
     let operation_hash_2 = ManagedBuffer::from("operation_2");
     let operation =
         state.generate_bridge_operation_struct(vec![&operation_hash_1, &operation_hash_2]);
-    let bitmap = ManagedBuffer::new_from_bytes(SINGLE_VALIDATOR_BITMAP);
+    let bitmap = state.common_setup.full_bitmap(1);
 
     let (signature, pub_keys) = state
         .common_setup
@@ -272,7 +272,7 @@ fn test_remove_all_executed_hashes() {
     let operation_1 = ManagedBuffer::from("operation_1");
     let operation_2 = ManagedBuffer::from("operation_2");
     let operation = state.generate_bridge_operation_struct(vec![&operation_1, &operation_2]);
-    let bitmap = ManagedBuffer::new_from_bytes(SINGLE_VALIDATOR_BITMAP);
+    let bitmap = state.common_setup.full_bitmap(1);
 
     let (signature, pub_keys) = state
         .common_setup
@@ -408,7 +408,7 @@ fn test_lock_operation() {
     let operation_1 = ManagedBuffer::from("operation_1");
     let operation_2 = ManagedBuffer::from("operation_2");
     let operation = state.generate_bridge_operation_struct(vec![&operation_1, &operation_2]);
-    let bitmap = ManagedBuffer::new_from_bytes(SINGLE_VALIDATOR_BITMAP);
+    let bitmap = state.common_setup.full_bitmap(1);
 
     let (signature, pub_keys) = state
         .common_setup
@@ -486,7 +486,7 @@ fn test_lock_operation_incorrect_nonce_rejected() {
     let operation_hash_2 = ManagedBuffer::from("operation_nonce_fail_2");
     let operation =
         state.generate_bridge_operation_struct(vec![&operation_hash_1, &operation_hash_2]);
-    let bitmap = ManagedBuffer::new_from_bytes(SINGLE_VALIDATOR_BITMAP);
+    let bitmap = state.common_setup.full_bitmap(1);
 
     let (signature, pub_keys) = state
         .common_setup
@@ -555,7 +555,7 @@ fn test_lock_operation_hash_already_locked() {
     let operation_1 = ManagedBuffer::from("operation_1");
     let operation_2 = ManagedBuffer::from("operation_2");
     let operation = state.generate_bridge_operation_struct(vec![&operation_1, &operation_2]);
-    let bitmap = ManagedBuffer::new_from_bytes(SINGLE_VALIDATOR_BITMAP);
+    let bitmap = state.common_setup.full_bitmap(1);
 
     let (signature, pub_keys) = state
         .common_setup
@@ -674,7 +674,7 @@ fn test_change_validator_set() {
             bls_key: validator_bls_key,
         };
 
-        let bitmap = ManagedBuffer::new_from_bytes(SINGLE_VALIDATOR_BITMAP);
+        let bitmap = state.common_setup.full_bitmap(1);
         let epoch = 0;
         state.common_setup.register_validator_operation(
             validator_data,
@@ -689,7 +689,7 @@ fn test_change_validator_set() {
     validator_set.push(BigUint::from(2u32));
     validator_set.push(BigUint::from(3u32));
 
-    let bitmap = ManagedBuffer::new_from_bytes(SINGLE_VALIDATOR_BITMAP);
+    let bitmap = state.common_setup.full_bitmap(1);
     let epoch_for_new_set = 1;
 
     let (change_validator_set_sig, change_validator_set_pub_keys) =
@@ -758,7 +758,7 @@ fn test_change_validator_invalid_epoch() {
     let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&operation_hash.to_vec()));
     let (signature, _) = state.common_setup.get_sig_and_pub_keys(1, &hash_of_hashes);
 
-    let bitmap = ManagedBuffer::new_from_bytes(SINGLE_VALIDATOR_BITMAP);
+    let bitmap = state.common_setup.full_bitmap(1);
     let validator_set = MultiValueEncoded::new();
     let epoch = 0u64;
 
@@ -792,7 +792,7 @@ fn test_change_validator_set_operation_already_registered() {
 
     let operation_hash_1 = ManagedBuffer::from("operation_1");
     let operation = state.generate_bridge_operation_struct(vec![&operation_hash_1]);
-    let bitmap = ManagedBuffer::new_from_bytes(SINGLE_VALIDATOR_BITMAP);
+    let bitmap = state.common_setup.full_bitmap(1);
 
     let (signature, pub_keys) = state
         .common_setup
@@ -881,7 +881,7 @@ fn test_change_multiple_validator_sets() {
 
         let signature = ManagedBuffer::new();
 
-        let bitmap = ManagedBuffer::new_from_bytes(SINGLE_VALIDATOR_BITMAP);
+        let bitmap = state.common_setup.full_bitmap(1);
 
         state.common_setup.register_validator_operation(
             validator_data,

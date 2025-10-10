@@ -3,9 +3,8 @@ use common_test_setup::constants::{
     FEE_TOKEN, FIRST_TEST_TOKEN, FIRST_TOKEN_ID, HEADER_VERIFIER_ADDRESS, ISSUE_COST,
     NATIVE_TEST_TOKEN, ONE_HUNDRED_MILLION, ONE_HUNDRED_THOUSAND, ONE_HUNDRED_TOKENS,
     OWNER_ADDRESS, PER_GAS, PER_TRANSFER, SC_CALL_EVENT, SECOND_TEST_TOKEN, SECOND_TOKEN_ID,
-    SINGLE_VALIDATOR_BITMAP, SOV_FIRST_TOKEN_ID, SOV_SECOND_TOKEN_ID, SOV_TOKEN,
-    TESTING_SC_ADDRESS, TESTING_SC_ENDPOINT, UNPAUSE_CONTRACT_LOG, USER_ADDRESS,
-    WRONG_ENDPOINT_NAME,
+    SOV_FIRST_TOKEN_ID, SOV_SECOND_TOKEN_ID, SOV_TOKEN, TESTING_SC_ADDRESS, TESTING_SC_ENDPOINT,
+    UNPAUSE_CONTRACT_LOG, USER_ADDRESS, WRONG_ENDPOINT_NAME,
 };
 use cross_chain::storage::CrossChainStorage;
 use cross_chain::{DEFAULT_ISSUE_COST, MAX_GAS_PER_TRANSACTION};
@@ -119,7 +118,7 @@ fn test_register_token_invalid_type() {
 
     let token_hash = register_token_args.generate_hash();
     let hash_of_hashes = ManagedBuffer::from(&sha256(&token_hash.to_vec()));
-    let bitmap = ManagedBuffer::new_from_bytes(SINGLE_VALIDATOR_BITMAP);
+    let bitmap = state.common_setup.full_bitmap(1);
     let epoch = 0;
 
     let payment =
@@ -186,7 +185,7 @@ fn test_register_token_invalid_type_with_prefix() {
 
     let token_hash = register_token_args.generate_hash();
     let hash_of_hashes = ManagedBuffer::from(&sha256(&token_hash.to_vec()));
-    let bitmap = ManagedBuffer::new_from_bytes(SINGLE_VALIDATOR_BITMAP);
+    let bitmap = state.common_setup.full_bitmap(1);
     let epoch = 0;
 
     let payment =
@@ -252,7 +251,7 @@ fn test_register_token_not_enough_egld() {
 
     let token_hash = register_token_args.generate_hash();
     let hash_of_hashes = ManagedBuffer::from(&sha256(&token_hash.to_vec()));
-    let bitmap = ManagedBuffer::new_from_bytes(SINGLE_VALIDATOR_BITMAP);
+    let bitmap = state.common_setup.full_bitmap(1);
     let epoch = 0;
 
     let signature = state.deploy_and_complete_setup_phase(&hash_of_hashes);
@@ -307,7 +306,7 @@ fn test_register_token_fungible_token() {
 
     let token_hash = register_token_args.generate_hash();
     let hash_of_hashes = ManagedBuffer::from(&sha256(&token_hash.to_vec()));
-    let bitmap = ManagedBuffer::new_from_bytes(SINGLE_VALIDATOR_BITMAP);
+    let bitmap = state.common_setup.full_bitmap(1);
 
     let epoch = 0;
 
@@ -366,7 +365,7 @@ fn test_register_token_nonfungible_token() {
 
     let token_hash = register_token_args.generate_hash();
     let hash_of_hashes = ManagedBuffer::from(&sha256(&token_hash.to_vec()));
-    let bitmap = ManagedBuffer::new_from_bytes(SINGLE_VALIDATOR_BITMAP);
+    let bitmap = state.common_setup.full_bitmap(1);
     let epoch = 0;
 
     let signature = state.deploy_and_complete_setup_phase(&hash_of_hashes);
@@ -1329,7 +1328,7 @@ fn test_register_token_fungible_token_with_prefix() {
 
     let token_hash = register_token_args.generate_hash();
     let hash_of_hashes = ManagedBuffer::from(&sha256(&token_hash.to_vec()));
-    let bitmap = ManagedBuffer::new_from_bytes(SINGLE_VALIDATOR_BITMAP);
+    let bitmap = state.common_setup.full_bitmap(1);
     let epoch = 0;
 
     let payment =
@@ -1388,7 +1387,7 @@ fn test_register_token_fungible_token_no_prefix() {
 
     let token_hash = register_token_args.generate_hash();
     let hash_of_hashes = ManagedBuffer::from(&sha256(&token_hash.to_vec()));
-    let bitmap = ManagedBuffer::new_from_bytes(SINGLE_VALIDATOR_BITMAP);
+    let bitmap = state.common_setup.full_bitmap(1);
     let epoch = 0;
 
     let payment =
@@ -1454,7 +1453,7 @@ fn test_register_token_non_fungible_token_dynamic() {
 
     let token_hash = register_token_args.generate_hash();
     let hash_of_hashes = ManagedBuffer::from(&sha256(&token_hash.to_vec()));
-    let bitmap = ManagedBuffer::new_from_bytes(SINGLE_VALIDATOR_BITMAP);
+    let bitmap = state.common_setup.full_bitmap(1);
     let epoch = 0;
 
     let payment =
@@ -1681,7 +1680,7 @@ fn test_execute_operation_success() {
 
     let operation_hash = state.common_setup.get_operation_hash(&operation);
     let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&operation_hash.to_vec()));
-    let bitmap = ManagedBuffer::new_from_bytes(SINGLE_VALIDATOR_BITMAP);
+    let bitmap = state.common_setup.full_bitmap(1);
     let epoch = 0;
 
     state
@@ -1777,7 +1776,7 @@ fn test_execute_operation_with_native_token_success() {
 
     let operation_hash = state.common_setup.get_operation_hash(&operation);
     let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&operation_hash.to_vec()));
-    let bitmap = ManagedBuffer::new_from_bytes(SINGLE_VALIDATOR_BITMAP);
+    let bitmap = state.common_setup.full_bitmap(1);
     let epoch = 0;
 
     state
@@ -1873,7 +1872,7 @@ fn test_execute_operation_burn_mechanism_without_deposit_cannot_subtract() {
 
     let operation_hash = state.common_setup.get_operation_hash(&operation);
     let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&operation_hash.to_vec()));
-    let bitmap = ManagedBuffer::new_from_bytes(SINGLE_VALIDATOR_BITMAP);
+    let bitmap = state.common_setup.full_bitmap(1);
     let epoch = 0;
 
     state
@@ -1963,7 +1962,7 @@ fn test_execute_operation_only_transfer_data_no_fee() {
 
     let operation_hash = state.common_setup.get_operation_hash(&operation);
     let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&operation_hash.to_vec()));
-    let bitmap = ManagedBuffer::new_from_bytes(SINGLE_VALIDATOR_BITMAP);
+    let bitmap = state.common_setup.full_bitmap(1);
     let epoch = 0;
 
     state
@@ -2049,7 +2048,7 @@ fn test_execute_operation_success_burn_mechanism() {
 
     let operation_hash = state.common_setup.get_operation_hash(&operation);
     let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&operation_hash.to_vec()));
-    let bitmap = ManagedBuffer::new_from_bytes(SINGLE_VALIDATOR_BITMAP);
+    let bitmap = state.common_setup.full_bitmap(1);
     let epoch = 0;
 
     state
@@ -2273,7 +2272,7 @@ fn test_deposit_execute_switch_mechanism() {
         BigUint::zero(),
     );
 
-    let bitmap = ManagedBuffer::new_from_bytes(SINGLE_VALIDATOR_BITMAP);
+    let bitmap = state.common_setup.full_bitmap(1);
     let epoch = 0;
 
     state.common_setup.register_operation(
@@ -2343,7 +2342,7 @@ fn test_deposit_execute_switch_mechanism() {
         BigUint::from(expected_deposited_amount),
     );
 
-    let bitmap_two = ManagedBuffer::new_from_bytes(&[0x02]);
+    let bitmap_two = state.common_setup.bitmap_for_signers(&[1]);
     state.common_setup.register_operation(
         OWNER_ADDRESS,
         signature_two,
@@ -2471,7 +2470,7 @@ fn test_execute_operation_no_payments() {
     state.common_setup.deploy_testing_sc();
 
     let operations_hashes = MultiValueEncoded::from(ManagedVec::from(vec![operation_hash.clone()]));
-    let bitmap = ManagedBuffer::new_from_bytes(SINGLE_VALIDATOR_BITMAP);
+    let bitmap = state.common_setup.full_bitmap(1);
     let epoch = 0;
 
     state.common_setup.register_operation(
@@ -2556,7 +2555,7 @@ fn test_execute_operation_no_payments_failed_event() {
     state.common_setup.deploy_testing_sc();
 
     let operations_hashes = MultiValueEncoded::from(ManagedVec::from(vec![operation_hash.clone()]));
-    let bitmap = ManagedBuffer::new_from_bytes(SINGLE_VALIDATOR_BITMAP);
+    let bitmap = state.common_setup.full_bitmap(1);
     let epoch = 0;
 
     state.common_setup.register_operation(
@@ -2653,7 +2652,7 @@ fn test_execute_operation_native_token_failed_event() {
     state.common_setup.deploy_testing_sc();
 
     let operations_hashes = MultiValueEncoded::from(ManagedVec::from(vec![operation_hash.clone()]));
-    let bitmap = ManagedBuffer::new_from_bytes(SINGLE_VALIDATOR_BITMAP);
+    let bitmap = state.common_setup.full_bitmap(1);
     let epoch = 0;
 
     state.common_setup.register_operation(
@@ -2955,7 +2954,7 @@ fn test_update_config_invalid_config() {
         .common_setup
         .complete_header_verifier_setup_phase(None);
 
-    let bitmap = ManagedBuffer::new_from_bytes(SINGLE_VALIDATOR_BITMAP);
+    let bitmap = state.common_setup.full_bitmap(1);
     let epoch = 0;
 
     state.common_setup.register_operation(
@@ -3023,7 +3022,7 @@ fn test_update_config() {
         .common_setup
         .complete_header_verifier_setup_phase(None);
 
-    let bitmap = ManagedBuffer::new_from_bytes(SINGLE_VALIDATOR_BITMAP);
+    let bitmap = state.common_setup.full_bitmap(1);
     let epoch = 0;
 
     state.common_setup.register_operation(
@@ -3170,7 +3169,7 @@ fn test_execute_operation_partial_execution() {
 
     state.set_token_burn_mechanism(TRUSTED_TOKEN_IDS[0], None);
 
-    let bitmap = ManagedBuffer::new_from_bytes(SINGLE_VALIDATOR_BITMAP);
+    let bitmap = state.common_setup.full_bitmap(1);
     let epoch = 0;
 
     state.common_setup.register_operation(

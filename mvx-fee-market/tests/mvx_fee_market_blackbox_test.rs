@@ -1,8 +1,7 @@
 use common_test_setup::base_setup::helpers::BLSKey;
 use common_test_setup::constants::{
     ESDT_SAFE_ADDRESS, EXECUTED_BRIDGE_OP_EVENT, FEE_MARKET_ADDRESS, FIRST_TEST_TOKEN,
-    OWNER_ADDRESS, OWNER_BALANCE, PER_TRANSFER, SECOND_TEST_TOKEN, SINGLE_VALIDATOR_BITMAP,
-    USER_ADDRESS, WRONG_TOKEN_ID,
+    OWNER_ADDRESS, OWNER_BALANCE, PER_TRANSFER, SECOND_TEST_TOKEN, USER_ADDRESS, WRONG_TOKEN_ID,
 };
 use error_messages::{
     CURRENT_OPERATION_NOT_REGISTERED, INVALID_FEE, INVALID_FEE_TYPE, INVALID_TOKEN_ID,
@@ -181,7 +180,7 @@ fn test_remove_users_from_whitelist() {
         .common_setup
         .complete_header_verifier_setup_phase(None);
 
-    let bitmap = ManagedBuffer::new_from_bytes(SINGLE_VALIDATOR_BITMAP);
+    let bitmap = state.common_setup.full_bitmap(1);
     let epoch = 0;
 
     state.common_setup.register_operation(
@@ -257,7 +256,7 @@ fn test_set_fee() {
 
     state.common_setup.complete_fee_market_setup_phase();
 
-    let bitmap = ManagedBuffer::new_from_bytes(SINGLE_VALIDATOR_BITMAP);
+    let bitmap = state.common_setup.full_bitmap(1);
     let epoch = 0;
 
     state
@@ -398,7 +397,7 @@ fn test_remove_fee_register_separate_operations() {
 
     state.common_setup.complete_fee_market_setup_phase();
 
-    let bitmap = ManagedBuffer::new_from_bytes(SINGLE_VALIDATOR_BITMAP);
+    let bitmap = state.common_setup.full_bitmap(1);
     let epoch = 0;
 
     state
@@ -432,7 +431,7 @@ fn test_remove_fee_register_separate_operations() {
                 .is_empty());
         });
 
-    let bitmap = ManagedBuffer::new_from_bytes(&[0x02]);
+    let bitmap = state.common_setup.bitmap_for_signers(&[1]);
     let epoch = 0;
 
     state.common_setup.register_operation(
@@ -528,7 +527,7 @@ fn test_remove_fee_register_with_one_hash_of_hashes() {
 
     state.common_setup.complete_fee_market_setup_phase();
 
-    let bitmap = ManagedBuffer::new_from_bytes(SINGLE_VALIDATOR_BITMAP);
+    let bitmap = state.common_setup.full_bitmap(1);
     let epoch = 0;
 
     state
@@ -720,7 +719,7 @@ fn test_distribute_fees_percentage_under_limit() {
         .common_setup
         .complete_header_verifier_setup_phase(None);
 
-    let bitmap = ManagedBuffer::new_from_bytes(SINGLE_VALIDATOR_BITMAP);
+    let bitmap = state.common_setup.full_bitmap(1);
     let epoch = 0;
 
     state.common_setup.register_operation(
@@ -812,7 +811,7 @@ fn test_distribute_fees() {
         .common_setup
         .complete_header_verifier_setup_phase(None);
 
-    let bitmap = ManagedBuffer::new_from_bytes(SINGLE_VALIDATOR_BITMAP);
+    let bitmap = state.common_setup.full_bitmap(1);
     let epoch = 0;
 
     state.common_setup.register_operation(
