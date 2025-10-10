@@ -109,8 +109,7 @@ impl MvxEsdtSafeInteract {
 
     pub async fn upgrade(&mut self) {
         let caller = self.get_bridge_owner_for_shard(SHARD_0).clone();
-        let response = self
-            .interactor
+        self.interactor
             .tx()
             .to(self.common_state.current_mvx_esdt_safe_contract_address())
             .from(caller)
@@ -122,8 +121,6 @@ impl MvxEsdtSafeInteract {
             .returns(ReturnsResultUnmanaged)
             .run()
             .await;
-
-        println!("Result: {response:?}");
     }
 
     pub async fn update_configuration_after_setup_phase(
@@ -170,8 +167,7 @@ impl MvxEsdtSafeInteract {
     }
 
     pub async fn set_fee_market_address(&mut self, caller: Address, fee_market_address: Address) {
-        let response = self
-            .interactor
+        self.interactor
             .tx()
             .from(caller)
             .to(self.common_state.current_mvx_esdt_safe_contract_address())
@@ -181,7 +177,5 @@ impl MvxEsdtSafeInteract {
             .returns(ReturnsResultUnmanaged)
             .run()
             .await;
-
-        println!("Result: {response:?}");
     }
 }
