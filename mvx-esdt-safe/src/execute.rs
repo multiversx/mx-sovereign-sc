@@ -1,6 +1,6 @@
 use error_messages::{
     DEPOSIT_AMOUNT_NOT_ENOUGH, ERROR_AT_GENERATING_OPERATION_HASH, ESDT_SAFE_STILL_PAUSED,
-    SETUP_PHASE_NOT_COMPLETED,
+    NFT_MINTING_FAILED_WITH_ERROR_CODE_PREFIX, SETUP_PHASE_NOT_COMPLETED,
 };
 use multiversx_sc_modules::only_admin;
 use structs::{
@@ -226,23 +226,19 @@ pub trait ExecuteModule:
         }
 
         if nonce == 0 {
-            let (opt_nonce, opt_error) =
+            let (new_nonce, opt_error) =
                 self.mint_nft_tx(mvx_token_id, &operation_token.token_data);
             if let Some(err) = opt_error {
                 return (0, Some(err));
             }
 
-            if let Some(new_nonce) = opt_nonce {
-                self.update_esdt_info_mappers(
-                    &operation_token.token_identifier,
-                    operation_token.token_nonce,
-                    mvx_token_id,
-                    new_nonce,
-                );
-                return (new_nonce, None);
-            }
-
-            return (0, Some(sc_format!("Minted NFT nonce missing")));
+            self.update_esdt_info_mappers(
+                &operation_token.token_identifier,
+                operation_token.token_nonce,
+                mvx_token_id,
+                new_nonce,
+            );
+            return (new_nonce, None);
         } else {
             self.tx()
                 .to(ToSelf)
@@ -262,7 +258,7 @@ pub trait ExecuteModule:
         &self,
         mvx_token_id: &EgldOrEsdtTokenIdentifier<Self::Api>,
         token_data: &EsdtTokenData<Self::Api>,
-    ) -> (Option<u64>, Option<ManagedBuffer>) {
+    ) -> (u64, Option<ManagedBuffer>) {
         let mut amount = token_data.amount.clone();
         if self.is_sft_or_meta(&token_data.token_type) {
             amount += BigUint::from(1u32);
@@ -285,11 +281,11 @@ pub trait ExecuteModule:
             .sync_call_fallible();
 
         match result {
-            Ok(nonce) => return (Some(nonce), None),
+            Ok(nonce) => return (nonce, None),
             Err(error_code) => {
-                let error_message =
-                    sc_format!("Failed NFT minting with error code: {}", error_code);
-                return (None, Some(error_message));
+                let prefix: ManagedBuffer = NFT_MINTING_FAILED_WITH_ERROR_CODE_PREFIX.into();
+                let error_message = sc_format!("{}{}", prefix, error_code);
+                return (0, Some(error_message));
             }
         }
     }
