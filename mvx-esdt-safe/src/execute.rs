@@ -1,6 +1,6 @@
 use error_messages::{
     DEPOSIT_AMOUNT_NOT_ENOUGH, ERROR_AT_GENERATING_OPERATION_HASH, ESDT_SAFE_STILL_PAUSED,
-    NFT_MINTING_FAILED_WITH_ERROR_CODE_PREFIX, SETUP_PHASE_NOT_COMPLETED,
+    MINTING_FAILED_WITH_ERROR_CODE_PREFIX, SETUP_PHASE_NOT_COMPLETED,
 };
 use multiversx_sc_modules::only_admin;
 use structs::{
@@ -91,17 +91,8 @@ pub trait ExecuteModule:
 
         for operation_token in operation_tuple.operation.tokens.iter() {
             match self.get_mvx_token_id(&operation_token) {
-                Some(mvx_token_id) => match self
-                    .process_resolved_token(&mvx_token_id, &operation_token)
-                {
-                    Ok(payment) => output_payments.push(payment),
-                    Err(err_msg) => {
-                        self.refund_transfers(&output_payments, &operation_tuple.operation);
-                        return Err(err_msg);
-                    }
-                },
-                None => {
-                    match self.process_unresolved_token(&operation_token) {
+                Some(mvx_token_id) => {
+                    match self.process_resolved_token(&mvx_token_id, &operation_token) {
                         Ok(payment) => output_payments.push(payment),
                         Err(err_msg) => {
                             self.refund_transfers(&output_payments, &operation_tuple.operation);
@@ -109,6 +100,13 @@ pub trait ExecuteModule:
                         }
                     }
                 }
+                None => match self.process_unresolved_token(&operation_token) {
+                    Ok(payment) => output_payments.push(payment),
+                    Err(err_msg) => {
+                        self.refund_transfers(&output_payments, &operation_tuple.operation);
+                        return Err(err_msg);
+                    }
+                },
             }
         }
 
