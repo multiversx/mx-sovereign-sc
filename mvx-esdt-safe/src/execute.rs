@@ -73,104 +73,74 @@ pub trait ExecuteModule:
             return;
         }
 
-        let (opt_tokens, opt_error) = self.mint_tokens(&hash_of_hashes, &operation_tuple);
-        if let Some(error_message) = opt_error {
-            self.complete_operation(
-                &hash_of_hashes,
-                &operation_tuple.op_hash,
-                Some(error_message),
-            );
-            return;
-        }
-
-        if let Some(minted_operation_tokens) = opt_tokens {
-            self.distribute_payments(&hash_of_hashes, &operation_tuple, &minted_operation_tokens);
-        }
+        let minted_operation_tokens = match self.mint_tokens(&operation_tuple) {
+            Ok(tokens) => tokens,
+            Err(err_msg) => {
+                self.complete_operation(&hash_of_hashes, &operation_tuple.op_hash, Some(err_msg));
+                return;
+            }
+        };
+        self.distribute_payments(&hash_of_hashes, &operation_tuple, &minted_operation_tokens);
     }
 
     fn mint_tokens(
         &self,
-        hash_of_hashes: &ManagedBuffer,
         operation_tuple: &OperationTuple<Self::Api>,
-    ) -> (
-        Option<ManagedVec<OperationEsdtPayment<Self::Api>>>,
-        Option<ManagedBuffer>,
-    ) {
+    ) -> Result<ManagedVec<OperationEsdtPayment<Self::Api>>, ManagedBuffer> {
         let mut output_payments = ManagedVec::new();
 
         for operation_token in operation_tuple.operation.tokens.iter() {
             match self.get_mvx_token_id(&operation_token) {
-                Some(mvx_token_id) => {
-                    let (opt_payment, opt_error) =
-                        self.process_resolved_token(&mvx_token_id, &operation_token);
-                    if let Some(error_msg) = opt_error {
-                        // Burn any previously minted tokens for this operation
+                Some(mvx_token_id) => match self
+                    .process_resolved_token(&mvx_token_id, &operation_token)
+                {
+                    Ok(payment) => output_payments.push(payment),
+                    Err(err_msg) => {
                         self.refund_transfers(&output_payments, &operation_tuple.operation);
-                        return (None, Some(error_msg));
+                        return Err(err_msg);
                     }
-                    if let Some(payment) = opt_payment {
-                        output_payments.push(payment);
-                    }
-                }
+                },
                 None => {
-                    if let Some(payment) = self.process_unresolved_token(
-                        hash_of_hashes,
-                        operation_tuple,
-                        &operation_token,
-                    ) {
-                        output_payments.push(payment);
-                    } else {
-                        self.refund_transfers(&output_payments, &operation_tuple.operation);
-                        return (None, None);
+                    match self.process_unresolved_token(&operation_token) {
+                        Ok(payment) => output_payments.push(payment),
+                        Err(err_msg) => {
+                            self.refund_transfers(&output_payments, &operation_tuple.operation);
+                            return Err(err_msg);
+                        }
                     }
                 }
             }
         }
 
-        (Some(output_payments), None)
+        Ok(output_payments)
     }
 
     fn process_resolved_token(
         &self,
         mvx_token_id: &EgldOrEsdtTokenIdentifier<Self::Api>,
         operation_token: &OperationEsdtPayment<Self::Api>,
-    ) -> (
-        Option<OperationEsdtPayment<Self::Api>>,
-        Option<ManagedBuffer>,
-    ) {
+    ) -> Result<OperationEsdtPayment<Self::Api>, ManagedBuffer> {
         if self.is_fungible(&operation_token.token_data.token_type) {
             self.mint_fungible_token(mvx_token_id, &operation_token.token_data.amount);
-            (
-                Some(OperationEsdtPayment::new(
-                    mvx_token_id.clone(),
-                    0,
-                    operation_token.token_data.clone(),
-                )),
-                None,
-            )
+            return Ok(OperationEsdtPayment::new(
+                mvx_token_id.clone(),
+                0,
+                operation_token.token_data.clone(),
+            ));
         } else {
-            let (nft_nonce, opt_error) =
-                self.esdt_create_and_update_mapper(mvx_token_id, operation_token);
-            if let Some(err) = opt_error {
-                return (None, Some(err));
-            }
-            (
-                Some(OperationEsdtPayment::new(
-                    mvx_token_id.clone(),
-                    nft_nonce,
-                    operation_token.token_data.clone(),
-                )),
-                None,
-            )
+            let nft_nonce = self.esdt_create_and_update_mapper(mvx_token_id, operation_token)?;
+            return Ok(OperationEsdtPayment::new(
+                mvx_token_id.clone(),
+                nft_nonce,
+                operation_token.token_data.clone(),
+            ));
         }
     }
 
     fn process_unresolved_token(
         &self,
-        hash_of_hashes: &ManagedBuffer,
-        operation_tuple: &OperationTuple<Self::Api>,
         operation_token: &OperationEsdtPayment<Self::Api>,
-    ) -> Option<OperationEsdtPayment<Self::Api>> {
+    ) -> Result<OperationEsdtPayment<Self::Api>, ManagedBuffer> {
         if self.is_fungible(&operation_token.token_data.token_type)
             && self
                 .burn_mechanism_tokens()
@@ -180,12 +150,7 @@ pub trait ExecuteModule:
             let deposited_amount = deposited_mapper.get();
 
             if operation_token.token_data.amount > deposited_amount {
-                self.complete_operation(
-                    hash_of_hashes,
-                    &operation_tuple.op_hash,
-                    Some(DEPOSIT_AMOUNT_NOT_ENOUGH.into()),
-                );
-                return None;
+                return Err(DEPOSIT_AMOUNT_NOT_ENOUGH.into());
             }
 
             deposited_mapper.update(|amount| *amount -= operation_token.token_data.amount.clone());
@@ -195,7 +160,7 @@ pub trait ExecuteModule:
             );
         }
 
-        Some(operation_token.clone())
+        Ok(operation_token.clone())
     }
 
     fn mint_fungible_token(
@@ -214,7 +179,7 @@ pub trait ExecuteModule:
         &self,
         mvx_token_id: &EgldOrEsdtTokenIdentifier<Self::Api>,
         operation_token: &OperationEsdtPayment<Self::Api>,
-    ) -> (u64, Option<ManagedBuffer>) {
+    ) -> Result<u64, ManagedBuffer> {
         let mut nonce = 0u64;
         let current_token_type_ref = &operation_token.token_data.token_type;
 
@@ -226,19 +191,14 @@ pub trait ExecuteModule:
         }
 
         if nonce == 0 {
-            let (new_nonce, opt_error) =
-                self.mint_nft_tx(mvx_token_id, &operation_token.token_data);
-            if let Some(err) = opt_error {
-                return (0, Some(err));
-            }
-
+            let new_nonce = self.mint_nft_tx(mvx_token_id, &operation_token.token_data)?;
             self.update_esdt_info_mappers(
                 &operation_token.token_identifier,
                 operation_token.token_nonce,
                 mvx_token_id,
                 new_nonce,
             );
-            return (new_nonce, None);
+            return Ok(new_nonce);
         } else {
             self.tx()
                 .to(ToSelf)
@@ -251,14 +211,14 @@ pub trait ExecuteModule:
                 .sync_call();
         }
 
-        (nonce, None)
+        Ok(nonce)
     }
 
     fn mint_nft_tx(
         &self,
         mvx_token_id: &EgldOrEsdtTokenIdentifier<Self::Api>,
         token_data: &EsdtTokenData<Self::Api>,
-    ) -> (u64, Option<ManagedBuffer>) {
+    ) -> Result<u64, ManagedBuffer> {
         let mut amount = token_data.amount.clone();
         if self.is_sft_or_meta(&token_data.token_type) {
             amount += BigUint::from(1u32);
@@ -281,11 +241,11 @@ pub trait ExecuteModule:
             .sync_call_fallible();
 
         match result {
-            Ok(nonce) => return (nonce, None),
+            Ok(nonce) => return Ok(nonce),
             Err(error_code) => {
                 let prefix: ManagedBuffer = NFT_MINTING_FAILED_WITH_ERROR_CODE_PREFIX.into();
                 let error_message = sc_format!("{}{}", prefix, error_code);
-                return (0, Some(error_message));
+                return Err(error_message);
             }
         }
     }
