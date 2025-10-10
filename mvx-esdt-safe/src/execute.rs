@@ -243,7 +243,7 @@ pub trait ExecuteModule:
         match result {
             Ok(nonce) => return Ok(nonce),
             Err(error_code) => {
-                let prefix: ManagedBuffer = NFT_MINTING_FAILED_WITH_ERROR_CODE_PREFIX.into();
+                let prefix: ManagedBuffer = MINTING_FAILED_WITH_ERROR_CODE_PREFIX.into();
                 let error_message = sc_format!("{}{}", prefix, error_code);
                 return Err(error_message);
             }
