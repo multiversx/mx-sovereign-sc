@@ -119,7 +119,8 @@ pub trait ExecuteModule:
         operation_token: &OperationEsdtPayment<Self::Api>,
     ) -> Result<OperationEsdtPayment<Self::Api>, ManagedBuffer> {
         if self.is_fungible(&operation_token.token_data.token_type) {
-            self.mint_fungible_token(mvx_token_id, &operation_token.token_data.amount);
+            // Mint fungible amount and propagate any mint error
+            self.mint_fungible_token(mvx_token_id, &operation_token.token_data.amount)?;
             return Ok(OperationEsdtPayment::new(
                 mvx_token_id.clone(),
                 0,
@@ -151,11 +152,12 @@ pub trait ExecuteModule:
                 return Err(DEPOSIT_AMOUNT_NOT_ENOUGH.into());
             }
 
-            deposited_mapper.update(|amount| *amount -= operation_token.token_data.amount.clone());
+            // Mint fungible tokens first; only deduct deposited amount after success
             self.mint_fungible_token(
                 &operation_token.token_identifier,
                 &operation_token.token_data.amount,
-            );
+            )?;
+            deposited_mapper.update(|amount| *amount -= operation_token.token_data.amount.clone());
         }
 
         Ok(operation_token.clone())
@@ -165,12 +167,23 @@ pub trait ExecuteModule:
         &self,
         token_id: &EgldOrEsdtTokenIdentifier<Self::Api>,
         amount: &BigUint,
-    ) {
-        self.tx()
+    ) -> Result<(), ManagedBuffer> {
+        let result = self
+            .tx()
             .to(ToSelf)
             .typed(UserBuiltinProxy)
             .esdt_local_mint(token_id.clone().unwrap_esdt(), 0, amount)
-            .sync_call();
+            .returns(ReturnsHandledOrError::new())
+            .sync_call_fallible();
+
+        match result {
+            Ok(_) => Ok(()),
+            Err(error_code) => {
+                let prefix: ManagedBuffer = MINTING_FAILED_WITH_ERROR_CODE_PREFIX.into();
+                let error_message = sc_format!("{}{}", prefix, error_code);
+                Err(error_message)
+            }
+        }
     }
 
     fn esdt_create_and_update_mapper(
