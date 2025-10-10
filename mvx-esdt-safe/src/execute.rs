@@ -215,13 +215,14 @@ pub trait ExecuteModule:
         &self,
         mvx_token_id: &EgldOrEsdtTokenIdentifier<Self::Api>,
         token_data: &EsdtTokenData<Self::Api>,
-    ) -> u64 {
+    ) -> (Option<u64>, Option<ManagedBuffer>) {
         let mut amount = token_data.amount.clone();
         if self.is_sft_or_meta(&token_data.token_type) {
             amount += BigUint::from(1u32);
         }
 
-        self.tx()
+        let result = self
+            .tx()
             .to(ToSelf)
             .typed(system_proxy::UserBuiltinProxy)
             .esdt_nft_create(
@@ -233,8 +234,17 @@ pub trait ExecuteModule:
                 &token_data.attributes,
                 &token_data.uris,
             )
-            .returns(ReturnsResult)
-            .sync_call()
+            .returns(ReturnsHandledOrError::new().returns(ReturnsResult))
+            .sync_call_fallible();
+
+        match result {
+            Ok(nonce) => return (Some(nonce), None),
+            Err(error_code) => {
+                let error_message =
+                    sc_format!("Failed NFT minting with error code: {}", error_code);
+                return (None, Some(error_message));
+            }
+        }
     }
 
     fn distribute_payments(
