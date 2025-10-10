@@ -211,18 +211,34 @@ pub trait ExecuteModule:
             );
             return Ok(new_nonce);
         } else {
-            self.tx()
-                .to(ToSelf)
-                .typed(system_proxy::UserBuiltinProxy)
-                .esdt_local_mint(
-                    mvx_token_id.clone().unwrap_esdt(),
-                    nonce,
-                    &operation_token.token_data.amount,
-                )
-                .sync_call();
+            self.mint_token_at_nonce(mvx_token_id, nonce, &operation_token.token_data.amount)?;
         }
 
         Ok(nonce)
+    }
+
+    fn mint_token_at_nonce(
+        &self,
+        token_id: &EgldOrEsdtTokenIdentifier<Self::Api>,
+        nonce: u64,
+        amount: &BigUint,
+    ) -> Result<(), ManagedBuffer> {
+        let result = self
+            .tx()
+            .to(ToSelf)
+            .typed(system_proxy::UserBuiltinProxy)
+            .esdt_local_mint(token_id.clone().unwrap_esdt(), nonce, amount)
+            .returns(ReturnsHandledOrError::new())
+            .sync_call_fallible();
+
+        match result {
+            Ok(_) => Ok(()),
+            Err(error_code) => {
+                let prefix: ManagedBuffer = MINTING_FAILED_WITH_ERROR_CODE_PREFIX.into();
+                let error_message = sc_format!("{}{}", prefix, error_code);
+                Err(error_message)
+            }
+        }
     }
 
     fn mint_nft_tx(
