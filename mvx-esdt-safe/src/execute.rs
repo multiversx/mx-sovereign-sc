@@ -91,35 +91,42 @@ pub trait ExecuteModule:
         let mut output_payments = ManagedVec::new();
 
         for operation_token in operation_tuple.operation.tokens.iter() {
-            match self.get_mvx_token_id(&operation_token) {
-                Some(mvx_token_id) => {
-                    match self.process_resolved_token(&mvx_token_id, &operation_token) {
-                        Ok(payment) => output_payments.push(payment),
-                        Err(err_msg) => {
-                            return match self
-                                .refund_transfers(&output_payments, &operation_tuple.operation)
-                            {
-                                Ok(()) => Err(err_msg),
-                                Err(refund_err) => Err(refund_err),
-                            };
-                        }
-                    }
+            let processing_result = match self.get_mvx_token_id(&operation_token) {
+                Some(mvx_token_id) => self.process_resolved_token(&mvx_token_id, &operation_token),
+                None => self.process_unresolved_token(&operation_token),
+            };
+
+            match processing_result {
+                Ok(payment) => output_payments.push(payment),
+                Err(err_msg) => {
+                    let combined_error = self.combine_mint_and_refund_errors(
+                        &output_payments,
+                        &operation_tuple.operation,
+                        err_msg,
+                    );
+                    return Err(combined_error);
                 }
-                None => match self.process_unresolved_token(&operation_token) {
-                    Ok(payment) => output_payments.push(payment),
-                    Err(err_msg) => {
-                        return match self
-                            .refund_transfers(&output_payments, &operation_tuple.operation)
-                        {
-                            Ok(()) => Err(err_msg),
-                            Err(refund_err) => Err(refund_err),
-                        };
-                    }
-                },
-            }
+            };
         }
 
         Ok(output_payments)
+    }
+
+    fn combine_mint_and_refund_errors(
+        &self,
+        output_payments: &ManagedVec<OperationEsdtPayment<Self::Api>>,
+        operation: &Operation<Self::Api>,
+        processing_err: ManagedBuffer,
+    ) -> ManagedBuffer {
+        match self.refund_transfers(output_payments, operation) {
+            Ok(()) => processing_err,
+            Err(refund_err) => {
+                let mut errors: ManagedVec<Self::Api, ManagedBuffer> = ManagedVec::new();
+                errors.push(processing_err);
+                errors.push(refund_err);
+                self.concatenate_error_messages(&errors)
+            }
+        }
     }
 
     fn process_resolved_token(
@@ -377,10 +384,10 @@ pub trait ExecuteModule:
                 if let Err(refund_err) =
                     self.refund_transfers(output_payments, &operation_tuple.operation)
                 {
-                    if !error_message.is_empty() {
-                        let separator: ManagedBuffer = "; ".into();
-                        error_message.append(&separator);
-                    }
+                    let separator: ManagedBuffer = "; ".into();
+                    let newline: ManagedBuffer = "\n".into();
+                    error_message.append(&separator);
+                    error_message.append(&newline);
                     error_message.append(&refund_err);
                 }
 
@@ -402,8 +409,18 @@ pub trait ExecuteModule:
             return Ok(());
         }
 
+        let mut burn_errors = ManagedVec::new();
+
         for i in 0..output_payments.len() {
-            self.burn_failed_transfer_token(&output_payments.get(i), &operation.tokens.get(i))?;
+            if let Err(err_msg) =
+                self.burn_failed_transfer_token(&output_payments.get(i), &operation.tokens.get(i))
+            {
+                burn_errors.push(err_msg);
+            }
+        }
+
+        if !burn_errors.is_empty() {
+            return Err(self.concatenate_error_messages(&burn_errors));
         }
 
         let sc_address = self.blockchain().get_sc_address();
@@ -461,6 +478,19 @@ pub trait ExecuteModule:
                 return Err(error_message);
             }
         }
+    }
+
+    fn concatenate_error_messages(&self, errors: &ManagedVec<ManagedBuffer>) -> ManagedBuffer {
+        let newline: ManagedBuffer = "\n".into();
+        let mut aggregated = ManagedBuffer::new();
+
+        for i in 0..errors.len() {
+            let error_message = errors.get(i);
+            aggregated.append(&error_message);
+            aggregated.append(&newline);
+        }
+
+        aggregated
     }
 
     fn get_mvx_token_id(
