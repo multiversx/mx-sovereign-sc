@@ -1,7 +1,7 @@
 use common_test_setup::constants::{
     DEPOSIT_EVENT, ESDT_SAFE_ADDRESS, FEE_MARKET_ADDRESS, FEE_TOKEN, FIRST_TEST_TOKEN, ISSUE_COST,
-    ONE_HUNDRED_MILLION, ONE_HUNDRED_THOUSAND, OWNER_ADDRESS, SC_CALL_EVENT, SECOND_TEST_TOKEN,
-    SOV_TOKEN, TESTING_SC_ENDPOINT, USER_ADDRESS,
+    ONE_HUNDRED_MILLION, ONE_HUNDRED_THOUSAND, OWNER_ADDRESS, PER_GAS, PER_TRANSFER, SC_CALL_EVENT,
+    SECOND_TEST_TOKEN, SOV_TOKEN, TESTING_SC_ENDPOINT, USER_ADDRESS,
 };
 use error_messages::{
     ACTION_IS_NOT_ALLOWED, EGLD_TOKEN_IDENTIFIER_EXPECTED, ISSUE_COST_NOT_COVERED,
@@ -81,8 +81,8 @@ fn test_deposit_no_fee_no_transfer_data() {
     );
 
     let expected_tokens = vec![
-        MultiValue3::from((FIRST_TEST_TOKEN, 0u64, BigUint::from(0u64))),
-        MultiValue3::from((SECOND_TEST_TOKEN, 0u64, BigUint::from(0u64))),
+        MultiValue3::from((FIRST_TEST_TOKEN, 0u64, BigUint::zero())),
+        MultiValue3::from((SECOND_TEST_TOKEN, 0u64, BigUint::zero())),
     ];
 
     state
@@ -119,16 +119,14 @@ fn test_deposit_with_fee_no_transfer_data() {
 
     state.deploy_contract_with_roles();
 
-    let per_transfer = BigUint::from(100u64);
-    let per_gas = BigUint::from(1u64);
     let fee_token_identifier = FEE_TOKEN;
 
     let fee = FeeStruct {
         base_token: EgldOrEsdtTokenIdentifier::esdt(fee_token_identifier),
         fee_type: FeeType::Fixed {
             token: EgldOrEsdtTokenIdentifier::esdt(fee_token_identifier),
-            per_transfer: per_transfer.clone(),
-            per_gas: per_gas.clone(),
+            per_transfer: PER_TRANSFER.into(),
+            per_gas: PER_GAS.into(),
         },
     };
 
@@ -177,8 +175,8 @@ fn test_deposit_with_fee_no_transfer_data() {
         BigUint::from(ONE_HUNDRED_MILLION) - &esdt_token_payment_two.amount;
 
     let expected_tokens = vec![
-        MultiValue3::from((FIRST_TEST_TOKEN, 0u64, BigUint::from(0u64))),
-        MultiValue3::from((SECOND_TEST_TOKEN, 0u64, BigUint::from(0u64))),
+        MultiValue3::from((FIRST_TEST_TOKEN, 0u64, BigUint::zero())),
+        MultiValue3::from((SECOND_TEST_TOKEN, 0u64, BigUint::zero())),
     ];
 
     state
@@ -193,7 +191,7 @@ fn test_deposit_with_fee_no_transfer_data() {
     );
 
     let expected_amount_token_fee =
-        BigUint::from(ONE_HUNDRED_MILLION) - BigUint::from(payments_vec.len() - 1) * per_transfer;
+        BigUint::from(ONE_HUNDRED_MILLION) - BigUint::from(payments_vec.len() - 1) * PER_TRANSFER;
 
     state.common_setup.check_account_single_esdt(
         OWNER_ADDRESS.to_address(),
@@ -260,8 +258,8 @@ fn test_deposit_no_fee_with_transfer_data() {
         BigUint::from(ONE_HUNDRED_MILLION) - &esdt_token_payment_one.amount;
 
     let expected_tokens = vec![
-        MultiValue3::from((FIRST_TEST_TOKEN, 0u64, BigUint::from(0u64))),
-        MultiValue3::from((SECOND_TEST_TOKEN, 0u64, BigUint::from(0u64))),
+        MultiValue3::from((FIRST_TEST_TOKEN, 0u64, BigUint::zero())),
+        MultiValue3::from((SECOND_TEST_TOKEN, 0u64, BigUint::zero())),
     ];
 
     state
@@ -300,16 +298,14 @@ fn test_deposit_with_fee_with_transfer_data() {
 
     state.deploy_contract_with_roles();
 
-    let per_transfer = BigUint::from(100u64);
-    let per_gas = BigUint::from(1u64);
     let fee_token_identifier = FEE_TOKEN;
 
     let fee = FeeStruct {
         base_token: EgldOrEsdtTokenIdentifier::esdt(fee_token_identifier),
         fee_type: FeeType::Fixed {
             token: EgldOrEsdtTokenIdentifier::esdt(fee_token_identifier),
-            per_transfer: per_transfer.clone(),
-            per_gas: per_gas.clone(),
+            per_transfer: PER_TRANSFER.into(),
+            per_gas: PER_GAS.into(),
         },
     };
 
@@ -367,8 +363,8 @@ fn test_deposit_with_fee_with_transfer_data() {
         BigUint::from(ONE_HUNDRED_MILLION) - &esdt_token_payment_two.amount;
 
     let expected_tokens = vec![
-        MultiValue3::from((FIRST_TEST_TOKEN, 0u64, BigUint::from(0u64))),
-        MultiValue3::from((SECOND_TEST_TOKEN, 0u64, BigUint::from(0u64))),
+        MultiValue3::from((FIRST_TEST_TOKEN, 0u64, BigUint::zero())),
+        MultiValue3::from((SECOND_TEST_TOKEN, 0u64, BigUint::zero())),
     ];
 
     state
@@ -383,8 +379,8 @@ fn test_deposit_with_fee_with_transfer_data() {
     );
 
     let expected_amount_token_fee = BigUint::from(ONE_HUNDRED_MILLION)
-        - BigUint::from(payments_vec.len() - 1) * per_transfer
-        - BigUint::from(gas_limit) * per_gas;
+        - BigUint::from(payments_vec.len() - 1) * PER_TRANSFER
+        - BigUint::from(gas_limit) * PER_GAS;
 
     state.common_setup.check_account_single_esdt(
         OWNER_ADDRESS.to_address(),

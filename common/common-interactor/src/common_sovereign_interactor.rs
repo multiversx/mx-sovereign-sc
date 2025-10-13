@@ -751,8 +751,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             .get_chain_factory_sc_address(shard_id)
             .clone();
 
-        let response = self
-            .interactor()
+        self.interactor()
             .tx()
             .from(caller)
             .to(sovereign_forge_address)
@@ -762,8 +761,6 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             .returns(ReturnsResultUnmanaged)
             .run()
             .await;
-
-        println!("Result: {response:?}");
     }
 
     async fn update_smart_contracts_addresses_in_state(&mut self, chain_id: String) {
@@ -860,8 +857,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             egld_amount = opt_egld_amount.into_option().unwrap();
         }
 
-        let response = self
-            .interactor()
+        self.interactor()
             .tx()
             .from(caller)
             .to(sovereign_forge_address)
@@ -872,8 +868,6 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             .returns(ReturnsResultUnmanaged)
             .run()
             .await;
-
-        println!("Result: {response:?}");
     }
 
     async fn deploy_phase_two(
@@ -885,8 +879,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             .common_state()
             .current_sovereign_forge_sc_address()
             .clone();
-        let response = self
-            .interactor()
+        self.interactor()
             .tx()
             .from(caller)
             .to(sovereign_forge_address)
@@ -896,8 +889,6 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             .returns(ReturnsResultUnmanaged)
             .run()
             .await;
-
-        println!("Result: {response:?}");
     }
 
     async fn deploy_phase_three(&mut self, caller: Address, fee: Option<FeeStruct<StaticApi>>) {
@@ -906,8 +897,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             .current_sovereign_forge_sc_address()
             .clone();
 
-        let response = self
-            .interactor()
+        self.interactor()
             .tx()
             .from(caller)
             .to(sovereign_forge_address)
@@ -917,8 +907,6 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             .returns(ReturnsResultUnmanaged)
             .run()
             .await;
-
-        println!("Result: {response:?}");
     }
 
     async fn deploy_phase_four(&mut self, caller: Address) {
@@ -927,8 +915,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             .current_sovereign_forge_sc_address()
             .clone();
 
-        let response = self
-            .interactor()
+        self.interactor()
             .tx()
             .from(caller)
             .to(sovereign_forge_address)
@@ -938,8 +925,6 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             .returns(ReturnsResultUnmanaged)
             .run()
             .await;
-
-        println!("Result: {response:?}");
     }
 
     async fn complete_setup_phase(&mut self, caller: Address) {
