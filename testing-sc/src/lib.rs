@@ -2,6 +2,7 @@
 
 #[allow(unused_imports)]
 use multiversx_sc::imports::*;
+use proxies::mvx_esdt_safe_proxy::MvxEsdtSafeProxy;
 
 #[multiversx_sc::contract]
 pub trait TestingSc {
@@ -15,6 +16,33 @@ pub trait TestingSc {
     #[endpoint]
     fn hello(&self, value: BigUint) {
         require!(value > BigUint::zero(), "Value should be greater than 0")
+    }
+
+    #[endpoint]
+    fn view_storage(&self, wanted_address: ManagedAddress) {
+        self.tx()
+            .to(&wanted_address)
+            .typed(MvxEsdtSafeProxy)
+            .native_token()
+            .sync_call();
+    }
+
+    #[endpoint]
+    fn view_storage_async(&self, wanted_address: ManagedAddress) {
+        self.tx()
+            .to(&wanted_address)
+            .typed(MvxEsdtSafeProxy)
+            .native_token()
+            .async_call_and_exit();
+    }
+
+    #[endpoint]
+    fn view_storage_sync(&self, wanted_address: ManagedAddress) {
+        self.tx()
+            .to(&wanted_address)
+            .typed(MvxEsdtSafeProxy)
+            .native_token()
+            .sync_call();
     }
 
     #[endpoint]

@@ -374,6 +374,7 @@ name = "testing-sc"
 version = "0.1.0"
 dependencies = [
  "multiversx-sc",
+ "proxies",
 ]
 
 [[package]]
