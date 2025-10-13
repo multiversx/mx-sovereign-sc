@@ -341,80 +341,72 @@ fn test_remove_fee_register_separate_operations() {
         .common_setup
         .deploy_chain_config(OptionalValue::None, None);
 
-    let fee_struct = FeeStruct {
-        base_token: EgldOrEsdtTokenIdentifier::esdt(FIRST_TEST_TOKEN),
-        fee_type: FeeType::Fixed {
-            token: EgldOrEsdtTokenIdentifier::esdt(FIRST_TEST_TOKEN),
-            per_transfer: BigUint::default(),
-            per_gas: BigUint::default(),
-        },
-    };
+    let token = EgldOrEsdtTokenIdentifier::esdt(FIRST_TEST_TOKEN);
+
+    // Setup set_fee operation with validator 0
     let set_fee_operation = SetFeeOperation {
-        fee_struct,
+        fee_struct: FeeStruct {
+            base_token: token.clone(),
+            fee_type: FeeType::Fixed {
+                token: token.clone(),
+                per_transfer: BigUint::default(),
+                per_gas: BigUint::default(),
+            },
+        },
         nonce: state.common_setup.next_operation_nonce(),
     };
-    let register_fee_hash = set_fee_operation.generate_hash();
-    let register_fee_hash_of_hashes =
-        ManagedBuffer::new_from_bytes(&sha256(&register_fee_hash.to_vec()));
-
-    let (signature, public_keys) = state
+    let set_fee_hash = set_fee_operation.generate_hash();
+    let set_fee_hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&set_fee_hash.to_vec()));
+    let (signature_set, pub_keys_set) = state
         .common_setup
-        .get_sig_and_pub_keys(1, &register_fee_hash_of_hashes);
-
+        .get_sig_and_pub_keys(1, &set_fee_hash_of_hashes);
     state.common_setup.register(
-        public_keys.first().unwrap(),
+        pub_keys_set.first().unwrap(),
         &MultiEgldOrEsdtPayment::new(),
         None,
     );
 
+    // Setup remove_fee operation with validator 1
     let remove_fee_operation = RemoveFeeOperation {
-        token_id: EgldOrEsdtTokenIdentifier::esdt(FIRST_TEST_TOKEN),
+        token_id: token.clone(),
         nonce: state.common_setup.next_operation_nonce(),
     };
     let remove_fee_hash = remove_fee_operation.generate_hash();
     let remove_fee_hash_of_hashes =
         ManagedBuffer::new_from_bytes(&sha256(&remove_fee_hash.to_vec()));
-
-    let (signature_remove_fee, public_keys_remove_fee) = state
+    let (signature_remove, pub_keys_remove) = state
         .common_setup
         .get_sig_and_pub_keys(1, &remove_fee_hash_of_hashes);
-
     state.common_setup.register(
-        public_keys_remove_fee.first().unwrap(),
+        pub_keys_remove.first().unwrap(),
         &MultiEgldOrEsdtPayment::new(),
         None,
     );
 
     state.common_setup.complete_chain_config_setup_phase();
-
     state
         .common_setup
         .deploy_fee_market(None, ESDT_SAFE_ADDRESS);
-
     state
         .common_setup
         .deploy_header_verifier(vec![ScArray::ChainConfig, ScArray::FeeMarket]);
-
     state.common_setup.complete_fee_market_setup_phase();
-
-    let bitmap = state.common_setup.full_bitmap(1);
-    let epoch = 0;
-
     state
         .common_setup
         .complete_header_verifier_setup_phase(None);
 
+    // === Execute set_fee operation (validator 0) ===
     state.common_setup.register_operation(
         OWNER_ADDRESS,
-        signature,
-        &register_fee_hash_of_hashes,
-        bitmap,
-        epoch,
-        MultiValueEncoded::from_iter(vec![register_fee_hash]),
+        signature_set,
+        &set_fee_hash_of_hashes,
+        state.common_setup.bitmap_for_signers(&[0]),
+        0,
+        MultiValueEncoded::from_iter(vec![set_fee_hash]),
     );
 
     state.set_fee(
-        &register_fee_hash_of_hashes,
+        &set_fee_hash_of_hashes,
         set_fee_operation,
         Some(EXECUTED_BRIDGE_OP_EVENT),
         None,
@@ -431,15 +423,13 @@ fn test_remove_fee_register_separate_operations() {
                 .is_empty());
         });
 
-    let bitmap = state.common_setup.bitmap_for_signers(&[1]);
-    let epoch = 0;
-
+    // === Execute remove_fee operation (validator 1) ===
     state.common_setup.register_operation(
         OWNER_ADDRESS,
-        signature_remove_fee,
+        signature_remove,
         &remove_fee_hash_of_hashes,
-        bitmap,
-        epoch,
+        state.common_setup.bitmap_for_signers(&[1]),
+        0,
         MultiValueEncoded::from_iter(vec![remove_fee_hash]),
     );
 
