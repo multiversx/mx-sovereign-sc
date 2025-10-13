@@ -2269,7 +2269,7 @@ fn test_deposit_execute_switch_mechanism() {
         OWNER_ADDRESS,
         signature_one,
         &hash_of_hashes_one,
-        state.common_setup.full_bitmap(1),
+        state.common_setup.bitmap_for_signers(&[0]),
         0,
         MultiValueEncoded::from(ManagedVec::from(vec![operation_one_hash])),
     );

@@ -400,7 +400,7 @@ fn test_remove_fee_register_separate_operations() {
         OWNER_ADDRESS,
         signature_set,
         &set_fee_hash_of_hashes,
-        state.common_setup.full_bitmap(1),
+        state.common_setup.bitmap_for_signers(&[0]),
         0,
         MultiValueEncoded::from_iter(vec![set_fee_hash]),
     );
