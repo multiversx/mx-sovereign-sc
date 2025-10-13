@@ -1,5 +1,6 @@
 use error_messages::{
-    DEPOSIT_AMOUNT_NOT_ENOUGH, ERROR_AT_GENERATING_OPERATION_HASH, ESDT_SAFE_STILL_PAUSED,
+    BURN_FAILED_WITH_ERROR_CODE_PREFIX, DEPOSIT_AMOUNT_NOT_ENOUGH,
+    ERROR_AT_GENERATING_OPERATION_HASH, ESDT_SAFE_STILL_PAUSED,
     MINTING_FAILED_WITH_ERROR_CODE_PREFIX, SETUP_PHASE_NOT_COMPLETED,
 };
 use multiversx_sc_modules::only_admin;
@@ -199,7 +200,7 @@ pub trait ExecuteModule:
         mvx_token_id: &EgldOrEsdtTokenIdentifier<Self::Api>,
         operation_token: &OperationEsdtPayment<Self::Api>,
     ) -> Result<u64, ManagedBuffer> {
-        let mut nonce = 0u64;
+        let mut nonce = 0;
         let current_token_type_ref = &operation_token.token_data.token_type;
 
         if self.is_sft_or_meta(current_token_type_ref) {
@@ -276,11 +277,11 @@ pub trait ExecuteModule:
             .sync_call_fallible();
 
         match result {
-            Ok(nonce) => return Ok(nonce),
+            Ok(nonce) => Ok(nonce),
             Err(error_code) => {
                 let prefix: ManagedBuffer = MINTING_FAILED_WITH_ERROR_CODE_PREFIX.into();
                 let error_message = sc_format!("{}{}", prefix, error_code);
-                return Err(error_message);
+                Err(error_message)
             }
         }
     }
@@ -453,7 +454,7 @@ pub trait ExecuteModule:
         match result {
             Ok(_) => Ok(()),
             Err(error_code) => {
-                let prefix: ManagedBuffer = MINTING_FAILED_WITH_ERROR_CODE_PREFIX.into();
+                let prefix: ManagedBuffer = BURN_FAILED_WITH_ERROR_CODE_PREFIX.into();
                 let error_message = sc_format!("{}{}", prefix, error_code);
                 return Err(error_message);
             }
