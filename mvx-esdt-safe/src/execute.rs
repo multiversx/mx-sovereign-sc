@@ -95,16 +95,24 @@ pub trait ExecuteModule:
                     match self.process_resolved_token(&mvx_token_id, &operation_token) {
                         Ok(payment) => output_payments.push(payment),
                         Err(err_msg) => {
-                            self.refund_transfers(&output_payments, &operation_tuple.operation);
-                            return Err(err_msg);
+                            return match self
+                                .refund_transfers(&output_payments, &operation_tuple.operation)
+                            {
+                                Ok(()) => Err(err_msg),
+                                Err(refund_err) => Err(refund_err),
+                            };
                         }
                     }
                 }
                 None => match self.process_unresolved_token(&operation_token) {
                     Ok(payment) => output_payments.push(payment),
                     Err(err_msg) => {
-                        self.refund_transfers(&output_payments, &operation_tuple.operation);
-                        return Err(err_msg);
+                        return match self
+                            .refund_transfers(&output_payments, &operation_tuple.operation)
+                        {
+                            Ok(()) => Err(err_msg),
+                            Err(refund_err) => Err(refund_err),
+                        };
                     }
                 },
             }
@@ -363,12 +371,23 @@ pub trait ExecuteModule:
                 self.complete_operation(hash_of_hashes, &operation_tuple.op_hash, None);
             }
             ManagedAsyncCallResult::Err(err) => {
+                let mut error_message = err.err_msg;
+
+                if let Err(refund_err) =
+                    self.refund_transfers(output_payments, &operation_tuple.operation)
+                {
+                    if !error_message.is_empty() {
+                        let separator: ManagedBuffer = "; ".into();
+                        error_message.append(&separator);
+                    }
+                    error_message.append(&refund_err);
+                }
+
                 self.complete_operation(
                     hash_of_hashes,
                     &operation_tuple.op_hash,
-                    Some(err.err_msg),
+                    Some(error_message),
                 );
-                self.refund_transfers(output_payments, &operation_tuple.operation);
             }
         }
     }
@@ -377,13 +396,13 @@ pub trait ExecuteModule:
         &self,
         output_payments: &ManagedVec<OperationEsdtPayment<Self::Api>>,
         operation: &Operation<Self::Api>,
-    ) {
+    ) -> Result<(), ManagedBuffer> {
         if output_payments.is_empty() {
-            return;
+            return Ok(());
         }
 
         for i in 0..output_payments.len() {
-            self.burn_failed_transfer_token(&output_payments.get(i), &operation.tokens.get(i));
+            self.burn_failed_transfer_token(&output_payments.get(i), &operation.tokens.get(i))?;
         }
 
         let sc_address = self.blockchain().get_sc_address();
@@ -393,17 +412,19 @@ pub trait ExecuteModule:
             &operation.map_tokens_to_multi_value_encoded(),
             OperationData::new(tx_nonce, sc_address.clone(), None),
         );
+
+        Ok(())
     }
 
     fn burn_failed_transfer_token(
         &self,
         output_payment: &OperationEsdtPayment<Self::Api>,
         operation_token: &OperationEsdtPayment<Self::Api>,
-    ) {
+    ) -> Result<(), ManagedBuffer> {
         let mvx_to_sov_mapper =
             self.multiversx_to_sovereign_token_id_mapper(&output_payment.token_identifier);
         if mvx_to_sov_mapper.is_empty() && !self.is_native_token(&output_payment.token_identifier) {
-            return;
+            return Ok(());
         }
 
         if self.is_nft(&operation_token.token_data.token_type) {
@@ -417,7 +438,8 @@ pub trait ExecuteModule:
             );
         }
 
-        self.tx()
+        let result = self
+            .tx()
             .to(ToSelf)
             .typed(UserBuiltinProxy)
             .esdt_local_burn(
@@ -425,7 +447,17 @@ pub trait ExecuteModule:
                 output_payment.token_nonce,
                 &output_payment.token_data.amount,
             )
-            .sync_call();
+            .returns(ReturnsHandledOrError::new())
+            .sync_call_fallible();
+
+        match result {
+            Ok(_) => Ok(()),
+            Err(error_code) => {
+                let prefix: ManagedBuffer = MINTING_FAILED_WITH_ERROR_CODE_PREFIX.into();
+                let error_message = sc_format!("{}{}", prefix, error_code);
+                return Err(error_message);
+            }
+        }
     }
 
     fn get_mvx_token_id(
