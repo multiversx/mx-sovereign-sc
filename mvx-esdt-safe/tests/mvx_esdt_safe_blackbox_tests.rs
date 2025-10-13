@@ -2,9 +2,9 @@ use common_test_setup::constants::{
     CROWD_TOKEN_ID, DEPOSIT_EVENT, ESDT_SAFE_ADDRESS, EXECUTED_BRIDGE_OP_EVENT, FEE_MARKET_ADDRESS,
     FEE_TOKEN, FIRST_TEST_TOKEN, FIRST_TOKEN_ID, HEADER_VERIFIER_ADDRESS, ISSUE_COST,
     NATIVE_TEST_TOKEN, ONE_HUNDRED_MILLION, ONE_HUNDRED_THOUSAND, ONE_HUNDRED_TOKENS,
-    OWNER_ADDRESS, SC_CALL_EVENT, SECOND_TEST_TOKEN, SECOND_TOKEN_ID, SOV_FIRST_TOKEN_ID,
-    SOV_SECOND_TOKEN_ID, SOV_TOKEN, TESTING_SC_ADDRESS, TESTING_SC_ENDPOINT, TRUSTED_TOKEN,
-    UNPAUSE_CONTRACT_LOG, USER_ADDRESS,
+    OWNER_ADDRESS, PER_GAS, PER_TRANSFER, SC_CALL_EVENT, SECOND_TEST_TOKEN, SECOND_TOKEN_ID,
+    SOV_FIRST_TOKEN_ID, SOV_SECOND_TOKEN_ID, SOV_TOKEN, TESTING_SC_ADDRESS, TESTING_SC_ENDPOINT,
+    TRUSTED_TOKEN, UNPAUSE_CONTRACT_LOG, USER_ADDRESS, WRONG_ENDPOINT_NAME,
 };
 use cross_chain::storage::CrossChainStorage;
 use cross_chain::{DEFAULT_ISSUE_COST, MAX_GAS_PER_TRANSACTION};
@@ -2155,13 +2155,11 @@ fn test_deposit_execute_switch_mechanism() {
     state.deploy_contract_with_roles(None);
     state.complete_setup_phase(Some(UNPAUSE_CONTRACT_LOG));
 
-    let trusted_token_id = TRUSTED_TOKEN;
-
     state
         .common_setup
         .deploy_chain_config(OptionalValue::None, None);
 
-    let trusted_token_id = TRUSTED_TOKEN_IDS[0];
+    let trusted_token_id = TRUSTED_TOKEN;
     let execute_amount = 500u64;
     let deposit_amount = 1000u64;
 
