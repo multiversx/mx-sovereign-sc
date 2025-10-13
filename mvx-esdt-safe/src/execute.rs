@@ -1,7 +1,7 @@
 use error_messages::{
-    BURN_FAILED_WITH_ERROR_CODE_PREFIX, DEPOSIT_AMOUNT_NOT_ENOUGH,
-    ERROR_AT_GENERATING_OPERATION_HASH, ESDT_SAFE_STILL_PAUSED,
-    MINTING_FAILED_WITH_ERROR_CODE_PREFIX, SETUP_PHASE_NOT_COMPLETED,
+    BURN_ESDT_FAILED, CREATE_ESDT_FAILED, DEPOSIT_AMOUNT_NOT_ENOUGH,
+    ERROR_AT_GENERATING_OPERATION_HASH, ESDT_SAFE_STILL_PAUSED, MINT_ESDT_FAILED,
+    SETUP_PHASE_NOT_COMPLETED,
 };
 use multiversx_sc_modules::only_admin;
 use structs::{
@@ -188,7 +188,7 @@ pub trait ExecuteModule:
         match result {
             Ok(_) => Ok(()),
             Err(error_code) => {
-                let prefix: ManagedBuffer = MINTING_FAILED_WITH_ERROR_CODE_PREFIX.into();
+                let prefix: ManagedBuffer = MINT_ESDT_FAILED.into();
                 let error_message = sc_format!("{}{}", prefix, error_code);
                 Err(error_message)
             }
@@ -243,7 +243,7 @@ pub trait ExecuteModule:
         match result {
             Ok(_) => Ok(()),
             Err(error_code) => {
-                let prefix: ManagedBuffer = MINTING_FAILED_WITH_ERROR_CODE_PREFIX.into();
+                let prefix: ManagedBuffer = MINT_ESDT_FAILED.into();
                 let error_message = sc_format!("{}{}", prefix, error_code);
                 Err(error_message)
             }
@@ -279,7 +279,7 @@ pub trait ExecuteModule:
         match result {
             Ok(nonce) => Ok(nonce),
             Err(error_code) => {
-                let prefix: ManagedBuffer = MINTING_FAILED_WITH_ERROR_CODE_PREFIX.into();
+                let prefix: ManagedBuffer = CREATE_ESDT_FAILED.into();
                 let error_message = sc_format!("{}{}", prefix, error_code);
                 Err(error_message)
             }
@@ -439,12 +439,13 @@ pub trait ExecuteModule:
             );
         }
 
+        let esdt_token_id = output_payment.token_identifier.clone().unwrap_esdt();
         let result = self
             .tx()
             .to(ToSelf)
             .typed(UserBuiltinProxy)
             .esdt_local_burn(
-                output_payment.token_identifier.clone().unwrap_esdt(),
+                esdt_token_id.clone(),
                 output_payment.token_nonce,
                 &output_payment.token_data.amount,
             )
@@ -454,8 +455,9 @@ pub trait ExecuteModule:
         match result {
             Ok(_) => Ok(()),
             Err(error_code) => {
-                let prefix: ManagedBuffer = BURN_FAILED_WITH_ERROR_CODE_PREFIX.into();
-                let error_message = sc_format!("{}{}", prefix, error_code);
+                let prefix: ManagedBuffer = BURN_ESDT_FAILED.into();
+                let error_message =
+                    sc_format!("{}{}, error code: {}", prefix, esdt_token_id, error_code);
                 return Err(error_message);
             }
         }

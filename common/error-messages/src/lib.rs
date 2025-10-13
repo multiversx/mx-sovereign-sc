@@ -168,6 +168,6 @@ pub const EGLD_TOKEN_IDENTIFIER_EXPECTED: &str =
     "The token identifier should be the EGLD token identifier";
 pub const INCORRECT_OPERATION_NONCE: &str = "The operation nonce is incorrect";
 pub const INVALID_FUNCTION_NOT_FOUND: &str = "invalid function (not found)";
-pub const MINTING_FAILED_WITH_ERROR_CODE_PREFIX: &str = "Failed token minting with error code: ";
-pub const BURN_FAILED_WITH_ERROR_CODE_PREFIX: &str = "Failed token burning with error code: ";
-pub const MINTED_NFT_NONCE_MISSING: &str = "Minted NFT nonce missing";
+pub const MINT_ESDT_FAILED: &str = "Failed to mint ESDT: ";
+pub const CREATE_ESDT_FAILED: &str = "Failed to create ESDT: ";
+pub const BURN_ESDT_FAILED: &str = "Failed to burn ESDT: ";
