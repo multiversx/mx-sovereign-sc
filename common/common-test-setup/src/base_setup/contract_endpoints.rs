@@ -1,4 +1,4 @@
-use crate::constants::EXECUTED_BRIDGE_OP_EVENT;
+use crate::constants::{EXECUTED_BRIDGE_OP_EVENT, SOVEREIGN_FORGE_SC_ADDRESS};
 use crate::{
     base_setup::init::BaseSetup,
     constants::{CHAIN_CONFIG_ADDRESS, FEE_MARKET_ADDRESS, HEADER_VERIFIER_ADDRESS, OWNER_ADDRESS},
@@ -18,6 +18,7 @@ use multiversx_sc_scenario::{
     },
     ReturnsLogs, ScenarioTxRun,
 };
+use proxies::sovereign_forge_proxy::SovereignForgeProxy;
 use proxies::{
     chain_config_proxy::ChainConfigContractProxy, header_verifier_proxy::HeaderverifierProxy,
     mvx_fee_market_proxy::MvxFeeMarketProxy,
@@ -98,6 +99,16 @@ impl BaseSetup {
             .run();
 
         self.assert_expected_error_message(response, expect_error);
+    }
+
+    pub fn register_trusted_token(&mut self, trusted_token: &str) {
+        self.world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .to(SOVEREIGN_FORGE_SC_ADDRESS)
+            .typed(SovereignForgeProxy)
+            .register_trusted_token(ManagedBuffer::from(trusted_token))
+            .run();
     }
 
     pub fn register_validator(

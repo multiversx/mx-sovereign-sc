@@ -8,7 +8,7 @@ use common_test_setup::constants::{
     CHAIN_CONFIG_CODE_PATH, CHAIN_FACTORY_CODE_PATH, CHAIN_ID, DEPLOY_COST,
     FAILED_TO_LOAD_WALLET_SHARD_0, FEE_MARKET_CODE_PATH, HEADER_VERIFIER_CODE_PATH, ISSUE_COST,
     MVX_ESDT_SAFE_CODE_PATH, NATIVE_TOKEN_NAME, NATIVE_TOKEN_TICKER, NUMBER_OF_SHARDS,
-    NUM_TOKENS_TO_MINT, ONE_THOUSAND_TOKENS, SHARD_0, SOVEREIGN_FORGE_CODE_PATH,
+    NUM_TOKENS_TO_MINT, ONE_THOUSAND_TOKENS, OWNER_ADDRESS, SHARD_0, SOVEREIGN_FORGE_CODE_PATH,
     SOVEREIGN_TOKEN_PREFIX, TESTING_SC_CODE_PATH, WALLET_SHARD_0,
 };
 use multiversx_bls::{SecretKey, G1};
@@ -307,6 +307,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
     async fn deploy_template_contracts(
         &mut self,
         caller: Address,
+        forge_address: &Address,
         chain_id: &str,
     ) -> Vec<Bech32Address> {
         let mut template_contracts = vec![];
@@ -333,6 +334,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             .typed(MvxEsdtSafeProxy)
             .init(
                 Bech32Address::from(caller.clone()),
+                forge_address,
                 chain_id,
                 OptionalValue::<EsdtSafeConfig<StaticApi>>::None,
             )
@@ -407,6 +409,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
     async fn deploy_mvx_esdt_safe(
         &mut self,
         caller: Address,
+        forge_address: &Address,
         chain_id: String,
         opt_config: OptionalValue<EsdtSafeConfig<StaticApi>>,
     ) {
@@ -417,7 +420,12 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             .from(caller)
             .gas(100_000_000u64)
             .typed(MvxEsdtSafeProxy)
-            .init(owner_address, SOVEREIGN_TOKEN_PREFIX, opt_config)
+            .init(
+                owner_address,
+                forge_address,
+                SOVEREIGN_TOKEN_PREFIX,
+                opt_config,
+            )
             .returns(ReturnsNewAddress)
             .code(MVX_ESDT_SAFE_CODE_PATH)
             .code_metadata(metadata())
@@ -558,10 +566,12 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             )
             .await;
 
+        self.register_trusted_token("USDC-c76f1f").await;
+
         for shard_id in 0..NUMBER_OF_SHARDS {
             let caller = self.get_bridge_owner_for_shard(shard_id);
             let template_contracts = self
-                .deploy_template_contracts(caller.clone(), CHAIN_ID)
+                .deploy_template_contracts(caller.clone(), &sovereign_forge_address, CHAIN_ID)
                 .await;
 
             let (
@@ -622,6 +632,24 @@ pub trait CommonInteractorTrait: InteractorHelpers {
         )
         .await;
         self.register_chain_factory(initial_caller.clone(), shard_id)
+            .await;
+    }
+
+    async fn register_trusted_token(&mut self, trusted_token: &str) {
+        let forge_address = &self
+            .common_state()
+            .sovereign_forge_sc_address
+            .clone()
+            .unwrap();
+
+        self.interactor()
+            .tx()
+            .from(OWNER_ADDRESS)
+            .to(forge_address)
+            .typed(SovereignForgeProxy)
+            .register_trusted_token(ManagedBuffer::from(trusted_token))
+            .gas(90_000_000)
+            .run()
             .await;
     }
 

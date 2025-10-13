@@ -46,6 +46,12 @@ pub trait SovereignForge:
         self.chain_factories(shard_id).set(chain_factory_address);
     }
 
+    #[only_owner]
+    #[endpoint(registerTrustedToken)]
+    fn register_trusted_token(&self, trusted_token: ManagedBuffer) {
+        self.trusted_tokens().insert(trusted_token);
+    }
+
     #[upgrade]
     fn upgrade(&self) {}
 }

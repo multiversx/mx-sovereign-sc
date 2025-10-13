@@ -2,20 +2,20 @@ use common_test_setup::base_setup::init::{AccountSetup, BaseSetup};
 use common_test_setup::constants::{
     ESDT_SAFE_ADDRESS, FEE_MARKET_ADDRESS, FEE_TOKEN, FIRST_TEST_TOKEN, FIRST_TOKEN_ID,
     HEADER_VERIFIER_ADDRESS, MVX_ESDT_SAFE_CODE_PATH, NATIVE_TEST_TOKEN, ONE_HUNDRED_MILLION,
-    OWNER_ADDRESS, OWNER_BALANCE, SECOND_TEST_TOKEN, SECOND_TOKEN_ID, SOVEREIGN_TOKEN_PREFIX,
-    UNPAUSE_CONTRACT_LOG, USER_ADDRESS,
+    OWNER_ADDRESS, OWNER_BALANCE, SECOND_TEST_TOKEN, SECOND_TOKEN_ID, SOVEREIGN_FORGE_SC_ADDRESS,
+    SOVEREIGN_TOKEN_PREFIX, TRUSTED_TOKEN, UNPAUSE_CONTRACT_LOG, USER_ADDRESS,
 };
 use cross_chain::storage::CrossChainStorage;
 use multiversx_sc::types::ReturnsHandledOrError;
 use multiversx_sc::{
     imports::OptionalValue,
     types::{
-        BigUint, EsdtLocalRole, ManagedAddress, ManagedBuffer, ManagedVec, TestSCAddress,
-        TestTokenIdentifier, TokenIdentifier,
+        BigUint, EsdtLocalRole, ManagedAddress, ManagedBuffer, TestSCAddress, TestTokenIdentifier,
+        TokenIdentifier,
     },
 };
 use multiversx_sc_scenario::imports::*;
-use mvx_esdt_safe::{bridging_mechanism::TRUSTED_TOKEN_IDS, MvxEsdtSafe};
+use mvx_esdt_safe::MvxEsdtSafe;
 use proxies::mvx_esdt_safe_proxy::MvxEsdtSafeProxy;
 use structs::configs::UpdateEsdtSafeConfigOperation;
 use structs::forge::ScArray;
@@ -42,7 +42,7 @@ impl MvxEsdtSafeTestState {
                 (SECOND_TEST_TOKEN, 0u64, ONE_HUNDRED_MILLION.into()),
                 (FEE_TOKEN, 0u64, ONE_HUNDRED_MILLION.into()),
                 (
-                    TestTokenIdentifier::new(TRUSTED_TOKEN_IDS[0]),
+                    TestTokenIdentifier::new(TRUSTED_TOKEN),
                     0u64,
                     ONE_HUNDRED_MILLION.into(),
                 ),
@@ -66,6 +66,8 @@ impl MvxEsdtSafeTestState {
 
     pub fn deploy_contract_with_roles(&mut self, fee: Option<FeeStruct<StaticApi>>) -> &mut Self {
         self.common_setup
+            .deploy_sovereign_forge(OptionalValue::None);
+        self.common_setup
             .world
             .account(ESDT_SAFE_ADDRESS)
             .nonce(1)
@@ -80,7 +82,7 @@ impl MvxEsdtSafeTestState {
                 ],
             )
             .esdt_roles(
-                TokenIdentifier::from(TRUSTED_TOKEN_IDS[0]),
+                TokenIdentifier::from(TRUSTED_TOKEN),
                 vec![
                     EsdtLocalRole::Burn.name().to_string(),
                     EsdtLocalRole::NftBurn.name().to_string(),
@@ -123,22 +125,22 @@ impl MvxEsdtSafeTestState {
                 ],
             );
 
+        self.common_setup.register_trusted_token(TRUSTED_TOKEN);
+
         self.common_setup
             .world
             .tx()
             .from(OWNER_ADDRESS)
             .to(ESDT_SAFE_ADDRESS)
             .whitebox(mvx_esdt_safe::contract_obj, |sc| {
-                let config = EsdtSafeConfig::new(
-                    ManagedVec::new(),
-                    ManagedVec::new(),
-                    50_000_000,
-                    ManagedVec::new(),
-                    ManagedVec::new(),
-                );
+                let config = EsdtSafeConfig {
+                    max_tx_gas_limit: 50_000_000,
+                    ..EsdtSafeConfig::default_config()
+                };
 
                 sc.init(
                     OWNER_ADDRESS.to_managed_address(),
+                    SOVEREIGN_FORGE_SC_ADDRESS.to_managed_address(),
                     SOVEREIGN_TOKEN_PREFIX.into(),
                     OptionalValue::Some(config),
                 );

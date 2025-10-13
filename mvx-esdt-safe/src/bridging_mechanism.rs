@@ -4,8 +4,6 @@ use error_messages::{
 };
 use multiversx_sc::imports::*;
 
-pub const TRUSTED_TOKEN_IDS: [&str; 1] = ["USDC-c76f1f"];
-
 #[multiversx_sc::module]
 pub trait BridgingMechanism: cross_chain::storage::CrossChainStorage {
     #[only_owner]
@@ -22,9 +20,9 @@ pub trait BridgingMechanism: cross_chain::storage::CrossChainStorage {
         );
 
         require!(
-            TRUSTED_TOKEN_IDS
+            self.trusted_tokens(self.sovereign_forge_address().get())
                 .iter()
-                .any(|trusted_token_id| TokenIdentifier::from(*trusted_token_id) == token_id),
+                .any(|trusted_token_id| TokenIdentifier::from(trusted_token_id) == token_id),
             TOKEN_ID_IS_NOT_TRUSTED
         );
 
@@ -76,6 +74,15 @@ pub trait BridgingMechanism: cross_chain::storage::CrossChainStorage {
             self.deposited_tokens_amount(&token_id).set(BigUint::zero());
         }
     }
+
+    #[storage_mapper_from_address("trustedTokens")]
+    fn trusted_tokens(
+        &self,
+        sc_address: ManagedAddress,
+    ) -> UnorderedSetMapper<ManagedBuffer, ManagedAddress>;
+
+    #[storage_mapper("sovereignForgeAddress")]
+    fn sovereign_forge_address(&self) -> SingleValueMapper<ManagedAddress>;
 
     #[storage_mapper("burnMechanismTokens")]
     fn burn_mechanism_tokens(&self) -> UnorderedSetMapper<EgldOrEsdtTokenIdentifier<Self::Api>>;

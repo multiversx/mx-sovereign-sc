@@ -45,18 +45,21 @@ where
 {
     pub fn init<
         Arg0: ProxyArg<ManagedAddress<Env::Api>>,
-        Arg1: ProxyArg<ManagedBuffer<Env::Api>>,
-        Arg2: ProxyArg<OptionalValue<structs::configs::EsdtSafeConfig<Env::Api>>>,
+        Arg1: ProxyArg<ManagedAddress<Env::Api>>,
+        Arg2: ProxyArg<ManagedBuffer<Env::Api>>,
+        Arg3: ProxyArg<OptionalValue<structs::configs::EsdtSafeConfig<Env::Api>>>,
     >(
         self,
         sovereign_owner: Arg0,
-        sov_token_prefix: Arg1,
-        opt_config: Arg2,
+        sovereign_forge_address: Arg1,
+        sov_token_prefix: Arg2,
+        opt_config: Arg3,
     ) -> TxTypedDeploy<Env, From, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_deploy()
             .argument(&sovereign_owner)
+            .argument(&sovereign_forge_address)
             .argument(&sov_token_prefix)
             .argument(&opt_config)
             .original_result()
