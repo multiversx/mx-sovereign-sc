@@ -64,7 +64,7 @@ pub trait FactoryModule: only_admin::OnlyAdminModule {
             .typed(MvxEsdtSafeProxy)
             .init(
                 sovereign_owner,
-                self.blockchain().get_sc_address(),
+                self.blockchain().get_caller(),
                 sov_token_prefix,
                 opt_config,
             )
