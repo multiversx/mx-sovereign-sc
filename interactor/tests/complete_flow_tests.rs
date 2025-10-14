@@ -595,9 +595,14 @@ async fn test_register_execute_call_failed(
 async fn test_execute_operation_transfer_data_only_async_call_in_endpoint(#[case] shard: u32) {
     let mut chain_interactor = CompleteFlowInteract::new(Config::chain_simulator_config()).await;
 
-    chain_interactor.remove_fee(shard).await;
+    chain_interactor.remove_fee(SHARD_1).await;
 
     let mvx_esdt_safe_address = chain_interactor
+        .common_state
+        .get_mvx_esdt_safe_address(SHARD_1)
+        .clone();
+
+    let wanted_mvx_esdt_safe_address = chain_interactor
         .common_state
         .get_mvx_esdt_safe_address(shard)
         .clone();
@@ -605,7 +610,7 @@ async fn test_execute_operation_transfer_data_only_async_call_in_endpoint(#[case
     let gas_limit = 90_000_000u64;
     let function = ManagedBuffer::<StaticApi>::from(READ_NATIVE_TOKEN_TESTING_SC_ENDPOINT);
     let args = ManagedVec::<StaticApi, ManagedBuffer<StaticApi>>::from(vec![
-        ManagedBuffer::new_from_bytes(mvx_esdt_safe_address.to_address().as_bytes()),
+        ManagedBuffer::new_from_bytes(wanted_mvx_esdt_safe_address.to_address().as_bytes()),
     ]);
 
     let transfer_data = TransferData::new(gas_limit, function, args);
@@ -634,24 +639,26 @@ async fn test_execute_operation_transfer_data_only_async_call_in_endpoint(#[case
     let operations_hashes = MultiValueEncoded::from(ManagedVec::from(vec![operation_hash.clone()]));
 
     chain_interactor
-        .register_operation(shard, &hash_of_hashes, operations_hashes)
+        .register_operation(SHARD_1, &hash_of_hashes, operations_hashes)
         .await;
 
     let expected_operation_hash_status = OperationHashStatus::NotLocked;
     chain_interactor
         .check_registered_operation_status(
-            shard,
+            SHARD_1,
             &hash_of_hashes,
             operation_hash,
             expected_operation_hash_status,
         )
         .await;
 
-    let bridge_service = chain_interactor.get_bridge_service_for_shard(shard).clone();
+    let bridge_service = chain_interactor
+        .get_bridge_service_for_shard(SHARD_1)
+        .clone();
     chain_interactor
         .execute_operations_in_mvx_esdt_safe(
             bridge_service,
-            shard,
+            SHARD_1,
             hash_of_hashes,
             operation,
             None,
