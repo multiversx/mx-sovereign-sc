@@ -1,6 +1,6 @@
 use error_messages::{
-    BURN_ESDT_FAILED, CREATE_ESDT_FAILED, DEPOSIT_AMOUNT_NOT_ENOUGH,
-    ERROR_AT_GENERATING_OPERATION_HASH, ESDT_SAFE_STILL_PAUSED, MINT_ESDT_FAILED,
+    ADD_ESDT_SUPPLY_FAILED, BURN_ESDT_FAILED, CREATE_ESDT_FAILED, DEPOSIT_AMOUNT_NOT_ENOUGH,
+    ERROR_AT_GENERATING_OPERATION_HASH, ESDT_SAFE_STILL_PAUSED, MINT_FUNGIBLE_FAILED,
     SETUP_PHASE_NOT_COMPLETED,
 };
 use multiversx_sc_modules::only_admin;
@@ -74,7 +74,7 @@ pub trait ExecuteModule:
             return;
         }
 
-        let minted_operation_tokens = match self.mint_tokens(&operation_tuple) {
+        let minted_operation_tokens = match self.process_operation_payments(&operation_tuple) {
             Ok(tokens) => tokens,
             Err(err_msg) => {
                 self.complete_operation(&hash_of_hashes, &operation_tuple.op_hash, Some(err_msg));
@@ -84,7 +84,7 @@ pub trait ExecuteModule:
         self.distribute_payments(&hash_of_hashes, &operation_tuple, &minted_operation_tokens);
     }
 
-    fn mint_tokens(
+    fn process_operation_payments(
         &self,
         operation_tuple: &OperationTuple<Self::Api>,
     ) -> Result<ManagedVec<OperationEsdtPayment<Self::Api>>, ManagedBuffer> {
@@ -109,54 +109,30 @@ pub trait ExecuteModule:
         Ok(output_payments)
     }
 
-    fn merge_error_if_any(
-        &self,
-        outer_error: ManagedBuffer,
-        result: Result<(), ManagedBuffer>,
-    ) -> ManagedBuffer {
-        match result {
-            Ok(()) => outer_error,
-            Err(refund_err) => {
-                let mut errors: ManagedVec<Self::Api, ManagedBuffer> = ManagedVec::new();
-                errors.push(outer_error);
-                errors.push(refund_err);
-                self.combine_error_messages(&errors)
-            }
-        }
-    }
-
     fn process_resolved_token(
         &self,
         mvx_token_id: &EgldOrEsdtTokenIdentifier<Self::Api>,
         operation_token: &OperationEsdtPayment<Self::Api>,
     ) -> Result<OperationEsdtPayment<Self::Api>, ManagedBuffer> {
+        let mut nonce: u64 = 0;
         if self.is_fungible(&operation_token.token_data.token_type) {
-            // Mint fungible amount and propagate any mint error
             self.mint_fungible_token(mvx_token_id, &operation_token.token_data.amount)?;
-            return Ok(OperationEsdtPayment::new(
-                mvx_token_id.clone(),
-                0,
-                operation_token.token_data.clone(),
-            ));
         } else {
-            let nft_nonce = self.esdt_create_and_update_mapper(mvx_token_id, operation_token)?;
-            return Ok(OperationEsdtPayment::new(
-                mvx_token_id.clone(),
-                nft_nonce,
-                operation_token.token_data.clone(),
-            ));
+            nonce = self.esdt_create_and_update_mapper(mvx_token_id, operation_token)?;
         }
+
+        Ok(OperationEsdtPayment::new(
+            mvx_token_id.clone(),
+            nonce,
+            operation_token.token_data.clone(),
+        ))
     }
 
     fn process_unresolved_token(
         &self,
         operation_token: &OperationEsdtPayment<Self::Api>,
     ) -> Result<OperationEsdtPayment<Self::Api>, ManagedBuffer> {
-        if self.is_fungible(&operation_token.token_data.token_type)
-            && self
-                .burn_mechanism_tokens()
-                .contains(&operation_token.token_identifier)
-        {
+        if self.is_burn_mechanism_set(operation_token) {
             let deposited_mapper = self.deposited_tokens_amount(&operation_token.token_identifier);
             let deposited_amount = deposited_mapper.get();
 
@@ -180,22 +156,19 @@ pub trait ExecuteModule:
         token_id: &EgldOrEsdtTokenIdentifier<Self::Api>,
         amount: &BigUint,
     ) -> Result<(), ManagedBuffer> {
-        let mvx_token_id = token_id.clone().unwrap_esdt();
+        let esdt_token_id = token_id.clone().unwrap_esdt();
         let result = self
             .tx()
             .to(ToSelf)
             .typed(UserBuiltinProxy)
-            .esdt_local_mint(mvx_token_id.clone(), 0, amount)
+            .esdt_local_mint(esdt_token_id.clone(), 0, amount)
             .returns(ReturnsHandledOrError::new())
             .sync_call_fallible();
 
         match result {
             Ok(_) => Ok(()),
             Err(error_code) => {
-                let prefix: ManagedBuffer = MINT_ESDT_FAILED.into();
-                let error_message =
-                    sc_format!("{} {}; error code: {}", prefix, mvx_token_id, error_code);
-                Err(error_message)
+                Err(self.format_error(MINT_FUNGIBLE_FAILED, esdt_token_id, error_code))
             }
         }
     }
@@ -224,10 +197,9 @@ pub trait ExecuteModule:
                 new_nonce,
             );
             return Ok(new_nonce);
-        } else {
-            self.add_esdt_supply(mvx_token_id, nonce, &operation_token.token_data.amount)?;
         }
 
+        self.add_esdt_supply(mvx_token_id, nonce, &operation_token.token_data.amount)?;
         Ok(nonce)
     }
 
@@ -237,29 +209,26 @@ pub trait ExecuteModule:
         nonce: u64,
         amount: &BigUint,
     ) -> Result<(), ManagedBuffer> {
-        let mvx_token_id = token_id.clone().unwrap_esdt();
+        let esdt_token_id = token_id.clone().unwrap_esdt();
         let result = self
             .tx()
             .to(ToSelf)
-            .typed(system_proxy::UserBuiltinProxy)
-            .esdt_local_mint(mvx_token_id.clone(), nonce, amount)
+            .typed(UserBuiltinProxy)
+            .esdt_local_mint(esdt_token_id.clone(), nonce, amount)
             .returns(ReturnsHandledOrError::new())
             .sync_call_fallible();
 
         match result {
             Ok(_) => Ok(()),
             Err(error_code) => {
-                let prefix: ManagedBuffer = MINT_ESDT_FAILED.into();
-                let error_message =
-                    sc_format!("{} {}; error code: {}", prefix, mvx_token_id, error_code);
-                Err(error_message)
+                Err(self.format_error(ADD_ESDT_SUPPLY_FAILED, esdt_token_id, error_code))
             }
         }
     }
 
     fn create_esdt(
         &self,
-        mvx_token_id: &EgldOrEsdtTokenIdentifier<Self::Api>,
+        token_id: &EgldOrEsdtTokenIdentifier<Self::Api>,
         token_data: &EsdtTokenData<Self::Api>,
     ) -> Result<u64, ManagedBuffer> {
         let mut amount = token_data.amount.clone();
@@ -267,13 +236,13 @@ pub trait ExecuteModule:
             amount += BigUint::from(1u32);
         }
 
-        let token_identifier = mvx_token_id.clone().unwrap_esdt();
+        let esdt_token_id = token_id.clone().unwrap_esdt();
         let result = self
             .tx()
             .to(ToSelf)
-            .typed(system_proxy::UserBuiltinProxy)
+            .typed(UserBuiltinProxy)
             .esdt_nft_create(
-                token_identifier.clone(),
+                esdt_token_id.clone(),
                 &amount,
                 &token_data.name,
                 &token_data.royalties,
@@ -287,14 +256,7 @@ pub trait ExecuteModule:
         match result {
             Ok(nonce) => Ok(nonce),
             Err(error_code) => {
-                let prefix: ManagedBuffer = CREATE_ESDT_FAILED.into();
-                let error_message = sc_format!(
-                    "{} {}; error code: {}",
-                    prefix,
-                    token_identifier,
-                    error_code
-                );
-                Err(error_message)
+                Err(self.format_error(CREATE_ESDT_FAILED, esdt_token_id, error_code))
             }
         }
     }
@@ -410,21 +372,30 @@ pub trait ExecuteModule:
         let mut burn_errors = ManagedVec::new();
 
         for i in 0..output_payments.len() {
-            if let Err(err_msg) =
-                self.burn_failed_transfer_token(&output_payments.get(i), &operation.tokens.get(i))
+            match self.burn_failed_transfer_token(&output_payments.get(i), &operation.tokens.get(i))
             {
-                burn_errors.push(err_msg);
+                Ok(_) => {
+                    if self.is_burn_mechanism_set(&output_payments.get(i)) {
+                        self.deposited_tokens_amount(&output_payments.get(i).token_identifier)
+                            .update(|amount| {
+                                *amount += output_payments.get(i).token_data.amount.clone()
+                            });
+                    }
+                }
+                Err(err_msg) => {
+                    burn_errors.push(err_msg);
+                }
             }
         }
 
         let sc_address = self.blockchain().get_sc_address();
         let tx_nonce = self.get_current_and_increment_tx_nonce();
-
         self.deposit_event(
             &operation.data.op_sender,
             &operation.map_tokens_to_multi_value_encoded(),
             OperationData::new(tx_nonce, sc_address.clone(), None),
         );
+
         if !burn_errors.is_empty() {
             return Err(self.combine_error_messages(&burn_errors));
         }
@@ -442,17 +413,6 @@ pub trait ExecuteModule:
             return Ok(());
         }
 
-        if self.is_nft(&operation_token.token_data.token_type) {
-            self.clear_mvx_to_sov_esdt_info_mapper(
-                &output_payment.token_identifier,
-                output_payment.token_nonce,
-            );
-            self.clear_sov_to_mvx_esdt_info_mapper(
-                &operation_token.token_identifier,
-                operation_token.token_nonce,
-            );
-        }
-
         let esdt_token_id = output_payment.token_identifier.clone().unwrap_esdt();
         let result = self
             .tx()
@@ -467,12 +427,38 @@ pub trait ExecuteModule:
             .sync_call_fallible();
 
         match result {
-            Ok(_) => Ok(()),
+            Ok(_) => {
+                if self.is_nft(&operation_token.token_data.token_type) {
+                    self.clear_mvx_to_sov_esdt_info_mapper(
+                        &output_payment.token_identifier,
+                        output_payment.token_nonce,
+                    );
+                    self.clear_sov_to_mvx_esdt_info_mapper(
+                        &operation_token.token_identifier,
+                        operation_token.token_nonce,
+                    );
+                }
+
+                Ok(())
+            }
             Err(error_code) => {
-                let prefix: ManagedBuffer = BURN_ESDT_FAILED.into();
-                let error_message =
-                    sc_format!("{} {}; error code: {}", prefix, esdt_token_id, error_code);
-                return Err(error_message);
+                Err(self.format_error(BURN_ESDT_FAILED, esdt_token_id, error_code))
+            }
+        }
+    }
+
+    fn merge_error_if_any(
+        &self,
+        outer_error: ManagedBuffer,
+        result: Result<(), ManagedBuffer>,
+    ) -> ManagedBuffer {
+        match result {
+            Ok(()) => outer_error,
+            Err(refund_err) => {
+                let mut errors: ManagedVec<Self::Api, ManagedBuffer> = ManagedVec::new();
+                errors.push(outer_error);
+                errors.push(refund_err);
+                self.combine_error_messages(&errors)
             }
         }
     }
@@ -523,5 +509,26 @@ pub trait ExecuteModule:
             return 0;
         }
         esdt_info_mapper.get().token_nonce
+    }
+
+    #[inline]
+    fn format_error(
+        &self,
+        error: &str,
+        token_id: TokenIdentifier,
+        error_code: u32,
+    ) -> ManagedBuffer {
+        let prefix: ManagedBuffer = error.into();
+        let error_message = sc_format!("{} {}; error code: {}", prefix, token_id, error_code);
+
+        error_message
+    }
+
+    #[inline]
+    fn is_burn_mechanism_set(&self, operation_token: &OperationEsdtPayment<Self::Api>) -> bool {
+        self.is_fungible(&operation_token.token_data.token_type)
+            && self
+            .burn_mechanism_tokens()
+            .contains(&operation_token.token_identifier)
     }
 }
