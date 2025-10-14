@@ -28,16 +28,7 @@ pub trait TestingSc {
     }
 
     #[endpoint]
-    fn view_storage_async(&self, wanted_address: ManagedAddress) {
-        self.tx()
-            .to(&wanted_address)
-            .typed(MvxEsdtSafeProxy)
-            .native_token()
-            .async_call_and_exit();
-    }
-
-    #[endpoint]
-    fn view_storage_sync(&self, wanted_address: ManagedAddress) {
+    fn read_native_token(&self, wanted_address: ManagedAddress) {
         self.tx()
             .to(&wanted_address)
             .typed(MvxEsdtSafeProxy)

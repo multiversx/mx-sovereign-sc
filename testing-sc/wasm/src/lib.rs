@@ -6,9 +6,9 @@
 
 // Init:                                 1
 // Upgrade:                              1
-// Endpoints:                            5
+// Endpoints:                            4
 // Async Callback (empty):               1
-// Total number of exported functions:   8
+// Total number of exported functions:   7
 
 #![no_std]
 
@@ -22,8 +22,7 @@ multiversx_sc_wasm_adapter::endpoints! {
         upgrade => upgrade
         hello => hello
         view_storage => view_storage
-        view_storage_async => view_storage_async
-        view_storage_sync => view_storage_sync
+        read_native_token => read_native_token
         send_tokens => send_tokens
     )
 }

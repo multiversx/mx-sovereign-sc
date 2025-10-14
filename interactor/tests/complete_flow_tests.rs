@@ -4,17 +4,26 @@ use common_interactor::interactor_helpers::InteractorHelpers;
 use common_interactor::interactor_state::EsdtTokenInfo;
 use common_interactor::interactor_structs::ActionConfig;
 use common_test_setup::constants::{
-    DEPOSIT_LOG, ONE_HUNDRED_TOKENS, SC_CALL_LOG, SHARD_1, SHARD_2, TESTING_SC_ENDPOINT,
+    DEPOSIT_LOG, ONE_HUNDRED_TOKENS, SC_CALL_LOG, SHARD_0, SHARD_1, SHARD_2, TESTING_SC_ENDPOINT,
     WRONG_ENDPOINT_NAME,
 };
 use multiversx_sc::types::BigUint;
 use multiversx_sc::types::EgldOrEsdtTokenIdentifier;
 use multiversx_sc::types::EsdtTokenType;
+use multiversx_sc::types::ManagedAddress;
+use multiversx_sc::types::ManagedBuffer;
+use multiversx_sc::types::ManagedVec;
+use multiversx_sc::types::MultiValueEncoded;
+use multiversx_sc_scenario::multiversx_chain_vm::crypto_functions::sha256;
 use multiversx_sc_snippets::imports::{tokio, StaticApi};
 use multiversx_sc_snippets::multiversx_sc_scenario::multiversx_chain_vm::vm_err_msg::FUNCTION_NOT_FOUND;
 use rstest::rstest;
 use rust_interact::complete_flows::complete_flows_interactor_main::CompleteFlowInteract;
 use serial_test::serial;
+use structs::operation::Operation;
+use structs::operation::OperationData;
+use structs::operation::TransferData;
+use structs::OperationHashStatus;
 
 /// ### TEST
 /// S-FORGE_COMPLETE-DEPOSIT-FLOW_OK
@@ -572,6 +581,83 @@ async fn test_register_execute_call_failed(
                 .expect_error(FUNCTION_NOT_FOUND.to_string())
                 .expect_log(vec!["".to_string()]),
             sov_token,
+        )
+        .await;
+}
+
+#[rstest]
+#[case::async_call(SHARD_1)]
+#[case::sync_call(SHARD_0)]
+#[tokio::test]
+#[serial]
+#[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
+async fn test_execute_operation_transfer_data_only_async_call_in_endpoint(#[case] shard: u32) {
+    use common_test_setup::constants::READ_NATIVE_TOKEN_TESTING_SC_ENDPOINT;
+
+    let mut chain_interactor = CompleteFlowInteract::new(Config::chain_simulator_config()).await;
+
+    chain_interactor.remove_fee(shard).await;
+
+    let mvx_esdt_safe_address = chain_interactor
+        .common_state
+        .get_mvx_esdt_safe_address(shard)
+        .clone();
+
+    let gas_limit = 90_000_000u64;
+    let function = ManagedBuffer::<StaticApi>::from(READ_NATIVE_TOKEN_TESTING_SC_ENDPOINT);
+    let args = ManagedVec::<StaticApi, ManagedBuffer<StaticApi>>::from(vec![
+        ManagedBuffer::new_from_bytes(mvx_esdt_safe_address.to_address().as_bytes()),
+    ]);
+
+    let transfer_data = TransferData::new(gas_limit, function, args);
+
+    let operation_data = OperationData::new(
+        chain_interactor
+            .common_state()
+            .get_and_increment_operation_nonce(&mvx_esdt_safe_address.to_string()),
+        ManagedAddress::from_address(&chain_interactor.user_address),
+        Some(transfer_data),
+    );
+
+    let operation = Operation::new(
+        ManagedAddress::from_address(
+            &chain_interactor
+                .common_state()
+                .current_testing_sc_address()
+                .to_address(),
+        ),
+        ManagedVec::new(),
+        operation_data,
+    );
+
+    let operation_hash = chain_interactor.get_operation_hash(&operation);
+    let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&operation_hash.to_vec()));
+    let operations_hashes = MultiValueEncoded::from(ManagedVec::from(vec![operation_hash.clone()]));
+
+    chain_interactor
+        .register_operation(shard, &hash_of_hashes, operations_hashes)
+        .await;
+
+    let expected_operation_hash_status = OperationHashStatus::NotLocked;
+    chain_interactor
+        .check_registered_operation_status(
+            shard,
+            &hash_of_hashes,
+            operation_hash,
+            expected_operation_hash_status,
+        )
+        .await;
+
+    let bridge_service = chain_interactor.get_bridge_service_for_shard(shard).clone();
+    chain_interactor
+        .execute_operations_in_mvx_esdt_safe(
+            bridge_service,
+            shard,
+            hash_of_hashes,
+            operation,
+            None,
+            Some(""),
+            None,
         )
         .await;
 }
