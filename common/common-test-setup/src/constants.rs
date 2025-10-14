@@ -86,6 +86,7 @@ pub const SHARD_2: u32 = 2;
 pub const DEPOSIT_LOG: &str = "deposit";
 pub const UNPAUSE_CONTRACT_LOG: &str = "unpauseContract";
 pub const TESTING_SC_ENDPOINT: &str = "hello";
+pub const READ_NATIVE_TOKEN_TESTING_SC_ENDPOINT: &str = "read_native_token";
 pub const EXECUTED_BRIDGE_LOG: &str = "executedBridgeOp";
 pub const SC_CALL_LOG: &str = "scCall";
 pub const STATE_FILE: &str = "state.toml";
