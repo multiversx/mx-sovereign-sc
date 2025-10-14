@@ -9,6 +9,7 @@ use error_messages::{
     NO_KNOWN_CHAIN_CONFIG_SC, NO_KNOWN_CHAIN_FACTORY_IN_THE_SPECIFIED_SHARD,
     NO_KNOWN_CHAIN_FACTORY_SC, NO_KNOWN_FEE_MARKET, NO_KNOWN_FEE_TOKEN, NO_KNOWN_HEADER_VERIFIER,
     NO_KNOWN_MVX_ESDT_SAFE, NO_KNOWN_SOVEREIGN_FORGE_SC, NO_KNOWN_TESTING_SC,
+    NO_KNOWN_TRUSTED_TOKEN,
 };
 use multiversx_sc::{
     imports::Bech32Address,
@@ -18,7 +19,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     interactor_state::{AddressInfo, EsdtTokenInfo, ShardAddresses},
-    interactor_structs::SerializableFeeMarketToken,
+    interactor_structs::SerializableToken,
 };
 
 #[derive(Debug, Serialize, Deserialize, Default)]
@@ -30,7 +31,8 @@ pub struct CommonState {
     pub testing_sc_address: Option<Bech32Address>,
     pub sovereign_forge_sc_address: Option<Bech32Address>,
     pub chain_factory_sc_addresses: Option<Vec<Bech32Address>>,
-    pub fee_market_tokens: HashMap<String, SerializableFeeMarketToken>,
+    pub fee_market_tokens: HashMap<String, SerializableToken>,
+    pub trusted_token: Option<String>,
     pub fee_status: HashMap<String, bool>,
     pub operation_nonce: HashMap<String, u64>,
     pub chain_ids: Vec<String>,
@@ -94,18 +96,14 @@ impl CommonState {
         }
     }
 
-    pub fn set_fee_market_token_for_all_shards(&mut self, token: SerializableFeeMarketToken) {
+    pub fn set_fee_market_token_for_all_shards(&mut self, token: SerializableToken) {
         for shard in 0..3 {
             self.fee_market_tokens
                 .insert(shard.to_string(), token.clone());
         }
     }
 
-    pub fn set_fee_market_token_for_shard(
-        &mut self,
-        shard: u32,
-        token: SerializableFeeMarketToken,
-    ) {
+    pub fn set_fee_market_token_for_shard(&mut self, shard: u32, token: SerializableToken) {
         self.fee_market_tokens.insert(shard.to_string(), token);
     }
 
@@ -117,6 +115,10 @@ impl CommonState {
         for shard in 0..3 {
             self.mvx_egld_balances.push((shard.to_string(), balance));
         }
+    }
+
+    pub fn set_trusted_token(&mut self, token: String) {
+        self.trusted_token = Some(token);
     }
 
     pub fn update_mvx_egld_balance_with_amount(&mut self, shard: u32, amount: u64) {
@@ -255,7 +257,7 @@ impl CommonState {
         }
     }
 
-    pub fn get_fee_market_token_for_shard(&self, shard: u32) -> SerializableFeeMarketToken {
+    pub fn get_fee_market_token_for_shard(&self, shard: u32) -> SerializableToken {
         self.fee_market_tokens
             .get(&shard.to_string())
             .cloned()
@@ -277,6 +279,13 @@ impl CommonState {
 
     pub fn get_testing_egld_balance(&self) -> u64 {
         self.testing_egld_balance
+    }
+
+    pub fn get_trusted_token(&self) -> String {
+        self.trusted_token
+            .as_ref()
+            .expect(NO_KNOWN_TRUSTED_TOKEN)
+            .clone()
     }
 
     pub fn add_bls_secret_key(&mut self, shard: u32, secret_key_bytes: Vec<u8>) {

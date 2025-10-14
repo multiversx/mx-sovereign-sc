@@ -1281,7 +1281,7 @@ fn test_deposit_success_burn_mechanism() {
             0u64,
             BigUint::zero(),
         )),
-        MultiValue3::from((SECOND_TEST_TOKEN, 100u64, BigUint::zero())),
+        MultiValue3::from((SECOND_TEST_TOKEN, 0u64, BigUint::from(ONE_HUNDRED_THOUSAND))),
     ];
 
     state
@@ -1289,7 +1289,10 @@ fn test_deposit_success_burn_mechanism() {
         .check_account_multiple_esdts(ESDT_SAFE_ADDRESS.to_address(), expected_tokens);
 
     let tokens = vec![
-        (EgldOrEsdtTokenIdentifier::esdt(TRUSTED_TOKEN), 100u64),
+        (
+            EgldOrEsdtTokenIdentifier::esdt(TRUSTED_TOKEN),
+            ONE_HUNDRED_THOUSAND.into(),
+        ),
         (EgldOrEsdtTokenIdentifier::esdt(SECOND_TEST_TOKEN), 0u64),
     ];
 

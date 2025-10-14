@@ -8,7 +8,7 @@ use common_test_setup::constants::{
     CHAIN_CONFIG_CODE_PATH, CHAIN_FACTORY_CODE_PATH, CHAIN_ID, DEPLOY_COST,
     FAILED_TO_LOAD_WALLET_SHARD_0, FEE_MARKET_CODE_PATH, HEADER_VERIFIER_CODE_PATH, ISSUE_COST,
     MVX_ESDT_SAFE_CODE_PATH, NATIVE_TOKEN_NAME, NATIVE_TOKEN_TICKER, NUMBER_OF_SHARDS,
-    NUM_TOKENS_TO_MINT, ONE_THOUSAND_TOKENS, OWNER_ADDRESS, SHARD_0, SOVEREIGN_FORGE_CODE_PATH,
+    NUM_TOKENS_TO_MINT, ONE_THOUSAND_TOKENS, SHARD_0, SOVEREIGN_FORGE_CODE_PATH,
     SOVEREIGN_TOKEN_PREFIX, TESTING_SC_CODE_PATH, WALLET_SHARD_0,
 };
 use multiversx_bls::{SecretKey, G1};
@@ -101,7 +101,13 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             .run()
             .await;
 
-        for _ in 0..NUM_TOKENS_TO_MINT {
+        let num_mints = if issue.token_ticker == "TRUSTED" || issue.token_ticker == "FEE" {
+            1
+        } else {
+            NUM_TOKENS_TO_MINT
+        };
+
+        for _ in 0..num_mints {
             let nonce = self
                 .mint_tokens(token_id.clone(), issue.token_type, mint.clone())
                 .await;
@@ -118,6 +124,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
 
             match issue.token_ticker.as_str() {
                 "MVX" => self.state().add_fungible_token(token.clone()),
+                "TRUSTED" => self.common_state().set_trusted_token(token_id.clone()),
                 "FEE" => self.state().set_fee_token(token.clone()),
                 "NFT" => self.state().add_nft_token(token.clone()),
                 "SFT" => self.state().add_sft_token(token.clone()),
@@ -192,6 +199,11 @@ pub trait CommonInteractorTrait: InteractorHelpers {
         if ticker == "FEE" && !self.common_state().fee_market_tokens.is_empty() {
             let fee_token = self.retrieve_current_fee_token_for_wallet().await;
             self.state().set_fee_token(fee_token);
+            return;
+        }
+        if ticker == "TRUSTED" && self.common_state().trusted_token.is_some() {
+            let trusted_token = self.retrieve_current_trusted_token_for_wallet().await;
+            self.state().set_trusted_token(trusted_token);
             return;
         }
         let amount = if matches!(
@@ -542,7 +554,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
         )
         .await;
         let fee_token_id = self.state().get_fee_token_id();
-        let fee_token_fee_market = self.create_fee_market_token_state(fee_token_id, 0u64).await;
+        let fee_token_fee_market = self.create_serializable_token(fee_token_id, 0u64).await;
         self.common_state()
             .set_fee_market_token_for_all_shards(fee_token_fee_market);
         self.common_state().set_fee_status_for_all_shards(true);
@@ -566,7 +578,9 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             )
             .await;
 
-        self.register_trusted_token("USDC-c76f1f").await;
+        let trusted_token = self.common_state().get_trusted_token();
+        self.register_trusted_token(initial_caller.clone(), trusted_token.as_str())
+            .await;
 
         for shard_id in 0..NUMBER_OF_SHARDS {
             let caller = self.get_bridge_owner_for_shard(shard_id);
@@ -635,7 +649,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             .await;
     }
 
-    async fn register_trusted_token(&mut self, trusted_token: &str) {
+    async fn register_trusted_token(&mut self, caller: Address, trusted_token: &str) {
         let forge_address = &self
             .common_state()
             .sovereign_forge_sc_address
@@ -644,7 +658,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
 
         self.interactor()
             .tx()
-            .from(OWNER_ADDRESS)
+            .from(caller)
             .to(forge_address)
             .typed(SovereignForgeProxy)
             .register_trusted_token(ManagedBuffer::from(trusted_token))
@@ -683,6 +697,10 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             .await;
         self.register_native_token(caller.clone(), &preferred_chain_id)
             .await;
+
+        self.set_burn_mechanism(caller.clone(), &preferred_chain_id)
+            .await;
+
         self.deploy_phase_three(caller.clone(), fee.clone()).await;
         self.deploy_phase_four(caller.clone()).await;
 
@@ -1430,6 +1448,29 @@ pub trait CommonInteractorTrait: InteractorHelpers {
         }
     }
 
+    async fn retrieve_current_trusted_token_for_wallet(&mut self) -> EsdtTokenInfo {
+        let user_address = &self.user_address().clone();
+        let balances = self.interactor().get_account_esdt(user_address).await;
+        let trusted_token = self.common_state().get_trusted_token();
+
+        let amount = if let Some(esdt_balance) = balances.get(trusted_token.as_str()) {
+            BigUint::from(
+                num_bigint::BigUint::parse_bytes(esdt_balance.balance.as_bytes(), 10)
+                    .expect("Failed to parse fee token balance as number"),
+            )
+        } else {
+            BigUint::zero()
+        };
+
+        EsdtTokenInfo {
+            token_id: EgldOrEsdtTokenIdentifier::from(trusted_token.as_str()),
+            nonce: 0,
+            token_type: EsdtTokenType::Fungible,
+            amount,
+            decimals: 18,
+        }
+    }
+
     async fn remove_fee(&mut self, shard: u32) {
         let fee_activated = self.common_state().get_fee_status_for_shard(shard);
 
@@ -1499,5 +1540,22 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             .returns(ReturnsResult)
             .run()
             .await
+    }
+
+    async fn set_burn_mechanism(&mut self, caller: Address, chain_id: &str) {
+        let mvx_esdt_safe_address = self
+            .get_sc_address_from_sovereign_forge(chain_id, ScArray::ESDTSafe)
+            .await;
+        let trusted_token = self.common_state().get_trusted_token();
+
+        self.interactor()
+            .tx()
+            .from(caller)
+            .to(mvx_esdt_safe_address)
+            .typed(MvxEsdtSafeProxy)
+            .set_token_burn_mechanism(EgldOrEsdtTokenIdentifier::esdt(trusted_token.as_str()))
+            .returns(ReturnsResultUnmanaged)
+            .run()
+            .await;
     }
 }
