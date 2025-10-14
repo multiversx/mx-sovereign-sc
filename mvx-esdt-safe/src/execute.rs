@@ -99,11 +99,10 @@ pub trait ExecuteModule:
             match processing_result {
                 Ok(payment) => output_payments.push(payment),
                 Err(err_msg) => {
-                    let combined_error = self.combine_mint_and_refund_errors(
-                        &output_payments,
-                        &operation_tuple.operation,
-                        err_msg,
-                    );
+                    let refund_result =
+                        self.refund_transfers(&output_payments, &operation_tuple.operation);
+                    let combined_error =
+                        self.combine_mint_and_refund_errors(err_msg, refund_result);
                     return Err(combined_error);
                 }
             };
@@ -114,17 +113,16 @@ pub trait ExecuteModule:
 
     fn combine_mint_and_refund_errors(
         &self,
-        output_payments: &ManagedVec<OperationEsdtPayment<Self::Api>>,
-        operation: &Operation<Self::Api>,
         processing_err: ManagedBuffer,
+        refund_result: Result<(), ManagedBuffer>,
     ) -> ManagedBuffer {
-        match self.refund_transfers(output_payments, operation) {
+        match refund_result {
             Ok(()) => processing_err,
             Err(refund_err) => {
                 let mut errors: ManagedVec<Self::Api, ManagedBuffer> = ManagedVec::new();
                 errors.push(processing_err);
                 errors.push(refund_err);
-                self.concatenate_error_messages(&errors)
+                self.combine_error_messages(&errors)
             }
         }
     }
@@ -184,11 +182,12 @@ pub trait ExecuteModule:
         token_id: &EgldOrEsdtTokenIdentifier<Self::Api>,
         amount: &BigUint,
     ) -> Result<(), ManagedBuffer> {
+        let mvx_token_id = token_id.clone().unwrap_esdt();
         let result = self
             .tx()
             .to(ToSelf)
             .typed(UserBuiltinProxy)
-            .esdt_local_mint(token_id.clone().unwrap_esdt(), 0, amount)
+            .esdt_local_mint(mvx_token_id.clone(), 0, amount)
             .returns(ReturnsHandledOrError::new())
             .sync_call_fallible();
 
@@ -196,7 +195,8 @@ pub trait ExecuteModule:
             Ok(_) => Ok(()),
             Err(error_code) => {
                 let prefix: ManagedBuffer = MINT_ESDT_FAILED.into();
-                let error_message = sc_format!("{}{}", prefix, error_code);
+                let error_message =
+                    sc_format!("{} {}; error code: {}", prefix, mvx_token_id, error_code);
                 Err(error_message)
             }
         }
@@ -218,7 +218,7 @@ pub trait ExecuteModule:
         }
 
         if nonce == 0 {
-            let new_nonce = self.mint_nft_tx(mvx_token_id, &operation_token.token_data)?;
+            let new_nonce = self.create_esdt(mvx_token_id, &operation_token.token_data)?;
             self.update_esdt_info_mappers(
                 &operation_token.token_identifier,
                 operation_token.token_nonce,
@@ -227,23 +227,24 @@ pub trait ExecuteModule:
             );
             return Ok(new_nonce);
         } else {
-            self.mint_token_at_nonce(mvx_token_id, nonce, &operation_token.token_data.amount)?;
+            self.add_esdt_supply(mvx_token_id, nonce, &operation_token.token_data.amount)?;
         }
 
         Ok(nonce)
     }
 
-    fn mint_token_at_nonce(
+    fn add_esdt_supply(
         &self,
         token_id: &EgldOrEsdtTokenIdentifier<Self::Api>,
         nonce: u64,
         amount: &BigUint,
     ) -> Result<(), ManagedBuffer> {
+        let mvx_token_id = token_id.clone().unwrap_esdt();
         let result = self
             .tx()
             .to(ToSelf)
             .typed(system_proxy::UserBuiltinProxy)
-            .esdt_local_mint(token_id.clone().unwrap_esdt(), nonce, amount)
+            .esdt_local_mint(mvx_token_id.clone(), nonce, amount)
             .returns(ReturnsHandledOrError::new())
             .sync_call_fallible();
 
@@ -251,13 +252,14 @@ pub trait ExecuteModule:
             Ok(_) => Ok(()),
             Err(error_code) => {
                 let prefix: ManagedBuffer = MINT_ESDT_FAILED.into();
-                let error_message = sc_format!("{}{}", prefix, error_code);
+                let error_message =
+                    sc_format!("{} {}; error code: {}", prefix, mvx_token_id, error_code);
                 Err(error_message)
             }
         }
     }
 
-    fn mint_nft_tx(
+    fn create_esdt(
         &self,
         mvx_token_id: &EgldOrEsdtTokenIdentifier<Self::Api>,
         token_data: &EsdtTokenData<Self::Api>,
@@ -267,12 +269,13 @@ pub trait ExecuteModule:
             amount += BigUint::from(1u32);
         }
 
+        let token_identifier = mvx_token_id.clone().unwrap_esdt();
         let result = self
             .tx()
             .to(ToSelf)
             .typed(system_proxy::UserBuiltinProxy)
             .esdt_nft_create(
-                mvx_token_id.clone().unwrap_esdt(),
+                token_identifier.clone(),
                 &amount,
                 &token_data.name,
                 &token_data.royalties,
@@ -287,7 +290,12 @@ pub trait ExecuteModule:
             Ok(nonce) => Ok(nonce),
             Err(error_code) => {
                 let prefix: ManagedBuffer = CREATE_ESDT_FAILED.into();
-                let error_message = sc_format!("{}{}", prefix, error_code);
+                let error_message = sc_format!(
+                    "{} {}; error code: {}",
+                    prefix,
+                    token_identifier,
+                    error_code
+                );
                 Err(error_message)
             }
         }
@@ -384,11 +392,10 @@ pub trait ExecuteModule:
                 if let Err(refund_err) =
                     self.refund_transfers(output_payments, &operation_tuple.operation)
                 {
-                    let separator: ManagedBuffer = "; ".into();
-                    let newline: ManagedBuffer = "\n".into();
-                    error_message.append(&separator);
-                    error_message.append(&newline);
-                    error_message.append(&refund_err);
+                    let mut errors: ManagedVec<Self::Api, ManagedBuffer> = ManagedVec::new();
+                    errors.push(error_message);
+                    errors.push(refund_err);
+                    error_message = self.combine_error_messages(&errors);
                 }
 
                 self.complete_operation(
@@ -420,7 +427,7 @@ pub trait ExecuteModule:
         }
 
         if !burn_errors.is_empty() {
-            return Err(self.concatenate_error_messages(&burn_errors));
+            return Err(self.combine_error_messages(&burn_errors));
         }
 
         let sc_address = self.blockchain().get_sc_address();
@@ -474,20 +481,27 @@ pub trait ExecuteModule:
             Err(error_code) => {
                 let prefix: ManagedBuffer = BURN_ESDT_FAILED.into();
                 let error_message =
-                    sc_format!("{}{}, error code: {}", prefix, esdt_token_id, error_code);
+                    sc_format!("{} {}; error code: {}", prefix, esdt_token_id, error_code);
                 return Err(error_message);
             }
         }
     }
 
-    fn concatenate_error_messages(&self, errors: &ManagedVec<ManagedBuffer>) -> ManagedBuffer {
+    fn combine_error_messages(
+        &self,
+        errors: &ManagedVec<Self::Api, ManagedBuffer>,
+    ) -> ManagedBuffer {
+        let separator: ManagedBuffer = ";".into();
         let newline: ManagedBuffer = "\n".into();
         let mut aggregated = ManagedBuffer::new();
 
         for i in 0..errors.len() {
             let error_message = errors.get(i);
             aggregated.append(&error_message);
-            aggregated.append(&newline);
+            aggregated.append(&separator);
+            if i + 1 < errors.len() {
+                aggregated.append(&newline);
+            }
         }
 
         aggregated
