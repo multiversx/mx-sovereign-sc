@@ -4,7 +4,7 @@ use common_interactor::interactor_helpers::InteractorHelpers;
 use common_interactor::interactor_state::EsdtTokenInfo;
 use common_interactor::interactor_structs::ActionConfig;
 use common_test_setup::constants::{
-    DEPOSIT_LOG, ONE_HUNDRED_TOKENS, SC_CALL_LOG, SHARD_1, SHARD_2, TESTING_SC_ENDPOINT,
+    DEPOSIT_LOG, ONE_HUNDRED_TOKENS, SC_CALL_LOG, SHARD_0, SHARD_1, TESTING_SC_ENDPOINT,
     WRONG_ENDPOINT_NAME,
 };
 use multiversx_sc::types::BigUint;
@@ -25,8 +25,8 @@ use serial_test::serial;
 /// ### EXPECTED
 /// Deposit is successful and the event is found in logs
 #[rstest]
-#[case::different_shard(SHARD_2)]
-#[case::same_shard(SHARD_1)]
+#[case::async_to_sync(SHARD_0)]
+#[case::sync_to_async(SHARD_1)]
 #[tokio::test]
 #[serial]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
@@ -56,8 +56,8 @@ async fn test_complete_deposit_flow_no_fee_only_transfer_data(#[case] shard: u32
 /// ### EXPECTED
 /// Deposit is successful and the event is found in logs
 #[rstest]
-#[case::different_shard(SHARD_2)]
-#[case::same_shard(SHARD_1)]
+#[case::async_to_sync(SHARD_0)]
+#[case::sync_to_async(SHARD_1)]
 #[tokio::test]
 #[serial]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
@@ -90,8 +90,8 @@ async fn test_complete_deposit_flow_with_fee_only_transfer_data(#[case] shard: u
 /// ### EXPECTED
 /// The operation is executed in the testing smart contract
 #[rstest]
-#[case::different_shard(SHARD_2)]
-#[case::same_shard(SHARD_1)]
+#[case::sync_to_sync(SHARD_0)]
+#[case::sync_to_async(SHARD_1)]
 #[tokio::test]
 #[serial]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
@@ -121,8 +121,8 @@ async fn test_complete_execute_flow_with_transfer_data_only_success(#[case] shar
 /// ### EXPECTED
 /// The operation is not executed in the testing smart contract
 #[rstest]
-#[case::different_shard(SHARD_2)]
-#[case::same_shard(SHARD_1)]
+#[case::async_to_sync(SHARD_0)]
+#[case::sync_to_async(SHARD_1)]
 #[tokio::test]
 #[serial]
 #[ignore = "This should fail but for now the failing logs are not retrieved by the framework"]
@@ -165,7 +165,7 @@ async fn test_complete_execute_flow_with_transfer_data_only_fail(#[case] shard: 
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn test_deposit_with_fee(
     #[case] token_type: EsdtTokenType,
-    #[values(SHARD_1, SHARD_2)] shard: u32,
+    #[values(SHARD_0, SHARD_1)] shard: u32,
     #[values(0, 1)] token_index: usize,
 ) {
     let mut chain_interactor = CompleteFlowInteract::new(Config::chain_simulator_config()).await;
@@ -209,7 +209,7 @@ async fn test_deposit_with_fee(
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn test_deposit_without_fee_and_execute(
     #[case] token_type: EsdtTokenType,
-    #[values(SHARD_1, SHARD_2)] shard: u32,
+    #[values(SHARD_0, SHARD_1)] shard: u32,
     #[values(0, 1)] token_index: usize,
 ) {
     let mut chain_interactor = CompleteFlowInteract::new(Config::chain_simulator_config()).await;
@@ -263,7 +263,7 @@ async fn test_deposit_without_fee_and_execute(
 async fn test_register_execute_and_deposit_sov_token(
     #[case] token_type: EsdtTokenType,
     #[case] amount: BigUint<StaticApi>,
-    #[values(SHARD_1, SHARD_2)] shard: u32,
+    #[values(SHARD_0, SHARD_1)] shard: u32,
 ) {
     let mut chain_interactor = CompleteFlowInteract::new(Config::chain_simulator_config()).await;
 
@@ -321,7 +321,7 @@ async fn test_register_execute_and_deposit_sov_token(
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn test_deposit_mvx_token_with_transfer_data(
     #[case] token_type: EsdtTokenType,
-    #[values(SHARD_1, SHARD_2)] shard: u32,
+    #[values(SHARD_0, SHARD_1)] shard: u32,
     #[values(0, 1)] token_index: usize,
 ) {
     let mut chain_interactor = CompleteFlowInteract::new(Config::chain_simulator_config()).await;
@@ -366,7 +366,7 @@ async fn test_deposit_mvx_token_with_transfer_data(
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn test_deposit_mvx_token_with_transfer_data_and_fee(
     #[case] token_type: EsdtTokenType,
-    #[values(SHARD_1, SHARD_2)] shard: u32,
+    #[values(SHARD_0, SHARD_1)] shard: u32,
     #[values(0, 1)] token_index: usize,
 ) {
     let mut chain_interactor = CompleteFlowInteract::new(Config::chain_simulator_config()).await;
@@ -414,7 +414,7 @@ async fn test_deposit_mvx_token_with_transfer_data_and_fee(
 async fn test_deposit_and_execute_with_transfer_data(
     #[case] token_type: EsdtTokenType,
     #[values(0, 1)] token_index: usize,
-    #[values(SHARD_1, SHARD_2)] shard: u32,
+    #[values(SHARD_0, SHARD_1)] shard: u32,
 ) {
     let mut chain_interactor = CompleteFlowInteract::new(Config::chain_simulator_config()).await;
 
@@ -470,7 +470,7 @@ async fn test_deposit_and_execute_with_transfer_data(
 async fn test_register_execute_with_transfer_data_and_deposit_sov_token(
     #[case] token_type: EsdtTokenType,
     #[case] amount: BigUint<StaticApi>,
-    #[values(SHARD_1, SHARD_2)] shard: u32,
+    #[values(SHARD_0, SHARD_1)] shard: u32,
 ) {
     let mut chain_interactor = CompleteFlowInteract::new(Config::chain_simulator_config()).await;
 
@@ -547,7 +547,7 @@ async fn test_register_execute_with_transfer_data_and_deposit_sov_token(
 async fn test_register_execute_call_failed(
     #[case] token_type: EsdtTokenType,
     #[case] amount: BigUint<StaticApi>,
-    #[values(SHARD_1, SHARD_2)] shard: u32,
+    #[values(SHARD_0, SHARD_1)] shard: u32,
 ) {
     let mut chain_interactor = CompleteFlowInteract::new(Config::chain_simulator_config()).await;
 

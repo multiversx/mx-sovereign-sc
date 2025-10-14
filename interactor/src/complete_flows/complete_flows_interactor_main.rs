@@ -8,7 +8,7 @@ use common_interactor::{
     common_sovereign_interactor::CommonInteractorTrait, interactor_config::Config,
 };
 use common_test_setup::constants::{
-    INTERACTOR_WORKING_DIR, SHARD_1, SOVEREIGN_RECEIVER_ADDRESS, TOKEN_DISPLAY_NAME, TOKEN_TICKER,
+    INTERACTOR_WORKING_DIR, SOVEREIGN_RECEIVER_ADDRESS, TOKEN_DISPLAY_NAME, TOKEN_TICKER,
 };
 use cross_chain::DEFAULT_ISSUE_COST;
 use error_messages::{EXPECTED_MAPPED_TOKEN, FAILED_TO_REGISTER_SOVEREIGN_TOKEN};
@@ -171,7 +171,7 @@ impl CompleteFlowInteract {
         )
         .await;
 
-        let caller = self.get_bridge_service_for_shard(SHARD_1);
+        let caller = self.get_bridge_service_for_shard(config.shard);
         self.execute_operations_in_mvx_esdt_safe(
             caller,
             config.shard,
