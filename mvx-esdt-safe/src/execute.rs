@@ -420,21 +420,14 @@ pub trait ExecuteModule:
         let sc_address = self.blockchain().get_sc_address();
         let tx_nonce = self.get_current_and_increment_tx_nonce();
 
-        if !burn_errors.is_empty() {
-            self.deposit_event(
-                &operation.data.op_sender,
-                &operation.map_tokens_to_multi_value_encoded(),
-                OperationData::new(tx_nonce, sc_address.clone(), None),
-            );
-            return Err(self.combine_error_messages(&burn_errors));
-        }
-
         self.deposit_event(
             &operation.data.op_sender,
             &operation.map_tokens_to_multi_value_encoded(),
             OperationData::new(tx_nonce, sc_address.clone(), None),
         );
-
+        if !burn_errors.is_empty() {
+            return Err(self.combine_error_messages(&burn_errors));
+        }
         Ok(())
     }
 
