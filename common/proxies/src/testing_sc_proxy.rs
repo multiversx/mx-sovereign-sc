@@ -93,19 +93,6 @@ where
             .original_result()
     }
 
-    pub fn view_storage<
-        Arg0: ProxyArg<ManagedAddress<Env::Api>>,
-    >(
-        self,
-        wanted_address: Arg0,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("view_storage")
-            .argument(&wanted_address)
-            .original_result()
-    }
-
     pub fn read_native_token<
         Arg0: ProxyArg<ManagedAddress<Env::Api>>,
     >(

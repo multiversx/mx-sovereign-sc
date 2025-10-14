@@ -19,21 +19,12 @@ pub trait TestingSc {
     }
 
     #[endpoint]
-    fn view_storage(&self, wanted_address: ManagedAddress) {
-        self.tx()
-            .to(&wanted_address)
-            .typed(MvxEsdtSafeProxy)
-            .native_token()
-            .sync_call();
-    }
-
-    #[endpoint]
     fn read_native_token(&self, wanted_address: ManagedAddress) {
         self.tx()
             .to(&wanted_address)
             .typed(MvxEsdtSafeProxy)
             .native_token()
-            .sync_call();
+            .async_call_and_exit();
     }
 
     #[endpoint]
