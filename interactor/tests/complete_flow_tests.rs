@@ -3,6 +3,7 @@ use common_interactor::interactor_config::Config;
 use common_interactor::interactor_helpers::InteractorHelpers;
 use common_interactor::interactor_state::EsdtTokenInfo;
 use common_interactor::interactor_structs::ActionConfig;
+use common_test_setup::constants::READ_NATIVE_TOKEN_TESTING_SC_ENDPOINT;
 use common_test_setup::constants::{
     DEPOSIT_LOG, ONE_HUNDRED_TOKENS, SC_CALL_LOG, SHARD_0, SHARD_1, SHARD_2, TESTING_SC_ENDPOINT,
     WRONG_ENDPOINT_NAME,
@@ -592,8 +593,6 @@ async fn test_register_execute_call_failed(
 #[serial]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn test_execute_operation_transfer_data_only_async_call_in_endpoint(#[case] shard: u32) {
-    use common_test_setup::constants::READ_NATIVE_TOKEN_TESTING_SC_ENDPOINT;
-
     let mut chain_interactor = CompleteFlowInteract::new(Config::chain_simulator_config()).await;
 
     chain_interactor.remove_fee(shard).await;
