@@ -101,9 +101,7 @@ pub trait ExecuteModule:
                 Err(err_msg) => {
                     let refund_result =
                         self.refund_transfers(&output_payments, &operation_tuple.operation);
-                    let combined_error =
-                        self.combine_mint_and_refund_errors(err_msg, refund_result);
-                    return Err(combined_error);
+                    return Err(self.merge_error_if_any(err_msg, refund_result));
                 }
             };
         }
@@ -111,16 +109,16 @@ pub trait ExecuteModule:
         Ok(output_payments)
     }
 
-    fn combine_mint_and_refund_errors(
+    fn merge_error_if_any(
         &self,
-        processing_err: ManagedBuffer,
-        refund_result: Result<(), ManagedBuffer>,
+        outer_error: ManagedBuffer,
+        result: Result<(), ManagedBuffer>,
     ) -> ManagedBuffer {
-        match refund_result {
-            Ok(()) => processing_err,
+        match result {
+            Ok(()) => outer_error,
             Err(refund_err) => {
                 let mut errors: ManagedVec<Self::Api, ManagedBuffer> = ManagedVec::new();
-                errors.push(processing_err);
+                errors.push(outer_error);
                 errors.push(refund_err);
                 self.combine_error_messages(&errors)
             }
@@ -387,16 +385,9 @@ pub trait ExecuteModule:
                 self.complete_operation(hash_of_hashes, &operation_tuple.op_hash, None);
             }
             ManagedAsyncCallResult::Err(err) => {
-                let mut error_message = err.err_msg;
-
-                if let Err(refund_err) =
-                    self.refund_transfers(output_payments, &operation_tuple.operation)
-                {
-                    let mut errors: ManagedVec<Self::Api, ManagedBuffer> = ManagedVec::new();
-                    errors.push(error_message);
-                    errors.push(refund_err);
-                    error_message = self.combine_error_messages(&errors);
-                }
+                let refund_result =
+                    self.refund_transfers(output_payments, &operation_tuple.operation);
+                let error_message = self.merge_error_if_any(err.err_msg, refund_result);
 
                 self.complete_operation(
                     hash_of_hashes,
@@ -426,12 +417,18 @@ pub trait ExecuteModule:
             }
         }
 
+        let sc_address = self.blockchain().get_sc_address();
+        let tx_nonce = self.get_current_and_increment_tx_nonce();
+
         if !burn_errors.is_empty() {
+            self.deposit_event(
+                &operation.data.op_sender,
+                &operation.map_tokens_to_multi_value_encoded(),
+                OperationData::new(tx_nonce, sc_address.clone(), None),
+            );
             return Err(self.combine_error_messages(&burn_errors));
         }
 
-        let sc_address = self.blockchain().get_sc_address();
-        let tx_nonce = self.get_current_and_increment_tx_nonce();
         self.deposit_event(
             &operation.data.op_sender,
             &operation.map_tokens_to_multi_value_encoded(),
@@ -491,14 +488,12 @@ pub trait ExecuteModule:
         &self,
         errors: &ManagedVec<Self::Api, ManagedBuffer>,
     ) -> ManagedBuffer {
-        let separator: ManagedBuffer = ";".into();
         let newline: ManagedBuffer = "\n".into();
         let mut aggregated = ManagedBuffer::new();
 
         for i in 0..errors.len() {
             let error_message = errors.get(i);
             aggregated.append(&error_message);
-            aggregated.append(&separator);
             if i + 1 < errors.len() {
                 aggregated.append(&newline);
             }
