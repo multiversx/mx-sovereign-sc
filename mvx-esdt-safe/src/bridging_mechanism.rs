@@ -4,7 +4,10 @@ use error_messages::{
     TOKEN_IS_FROM_SOVEREIGN,
 };
 use multiversx_sc::imports::*;
-use structs::{configs::SetBurnMechanismOperation, generate_hash::GenerateHash};
+use structs::{
+    configs::{SetBurnMechanismOperation, SetLockMechanismOperation},
+    generate_hash::GenerateHash,
+};
 
 #[multiversx_sc::module]
 pub trait BridgingMechanism:
@@ -79,7 +82,7 @@ pub trait BridgingMechanism:
             );
             return;
         }
-        if set_burn_mechanism_operation.token_id.is_esdt() {
+        if !set_burn_mechanism_operation.token_id.is_esdt() {
             self.complete_operation(
                 &hash_of_hashes,
                 &operation_hash,
@@ -91,8 +94,8 @@ pub trait BridgingMechanism:
         let token_identifier = set_burn_mechanism_operation.token_id.clone().unwrap_esdt();
         let token_esdt_roles = self.blockchain().get_esdt_local_roles(&token_identifier);
 
-        if token_esdt_roles.contains(EsdtLocalRoleFlags::MINT)
-            && token_esdt_roles.contains(EsdtLocalRoleFlags::BURN)
+        if !(token_esdt_roles.contains(EsdtLocalRoleFlags::MINT)
+            && token_esdt_roles.contains(EsdtLocalRoleFlags::BURN))
         {
             self.complete_operation(
                 &hash_of_hashes,
@@ -101,7 +104,7 @@ pub trait BridgingMechanism:
             );
             return;
         }
-        if self
+        if !self
             .trusted_tokens(self.sovereign_forge_address().get())
             .iter()
             .any(|trusted_token_id| {
@@ -168,6 +171,69 @@ pub trait BridgingMechanism:
                 .sync_call();
 
             self.deposited_tokens_amount(&token_id).set(BigUint::zero());
+        }
+    }
+
+    #[endpoint(setTokenLockMechanism)]
+    fn set_token_lock_mechanism(
+        &self,
+        hash_of_hashes: ManagedBuffer,
+        set_lock_mechanism_operation: SetLockMechanismOperation<Self::Api>,
+    ) {
+        let operation_hash = set_lock_mechanism_operation.generate_hash();
+        if let Some(error_message) = self.validate_operation_hash(&operation_hash) {
+            self.complete_operation(&hash_of_hashes, &operation_hash, Some(error_message));
+            return;
+        }
+        if !self.is_setup_phase_complete() {
+            self.complete_operation(
+                &hash_of_hashes,
+                &operation_hash,
+                Some(SETUP_PHASE_NOT_COMPLETED.into()),
+            );
+            return;
+        }
+        if !self
+            .multiversx_to_sovereign_token_id_mapper(&set_lock_mechanism_operation.token_id)
+            .is_empty()
+        {
+            self.complete_operation(
+                &hash_of_hashes,
+                &operation_hash,
+                Some(TOKEN_IS_FROM_SOVEREIGN.into()),
+            );
+            return;
+        }
+
+        if !set_lock_mechanism_operation.token_id.is_esdt() {
+            self.complete_operation(
+                &hash_of_hashes,
+                &operation_hash,
+                Some(LOCK_MECHANISM_NON_ESDT.into()),
+            );
+            return;
+        }
+
+        self.burn_mechanism_tokens()
+            .swap_remove(&set_lock_mechanism_operation.token_id);
+
+        let deposited_amount = self
+            .deposited_tokens_amount(&set_lock_mechanism_operation.token_id)
+            .get();
+
+        if deposited_amount != 0 {
+            self.tx()
+                .to(ToSelf)
+                .typed(UserBuiltinProxy)
+                .esdt_local_mint(
+                    set_lock_mechanism_operation.token_id.clone().unwrap_esdt(),
+                    0,
+                    &deposited_amount,
+                )
+                .sync_call();
+
+            self.deposited_tokens_amount(&set_lock_mechanism_operation.token_id)
+                .set(BigUint::zero());
         }
     }
 
