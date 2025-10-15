@@ -21,4 +21,16 @@ pub trait ConfigOperationsModule:
     fn update_esdt_safe_config(&self, esdt_safe_config: EsdtSafeConfig<Self::Api>) {
         self.update_esdt_safe_config_event(esdt_safe_config, self.get_and_save_next_tx_id());
     }
+
+    #[only_owner]
+    #[endpoint(setTokenBurnMechanism)]
+    fn set_token_burn_mechanism(&self, token_id: EgldOrEsdtTokenIdentifier<Self::Api>) {
+        self.set_token_burn_mechanism_event(token_id, self.get_and_save_next_tx_id());
+    }
+
+    #[only_owner]
+    #[endpoint(setTokenLockMechanism)]
+    fn set_token_lock_mechanism(&self, token_id: EgldOrEsdtTokenIdentifier<Self::Api>) {
+        self.set_token_lock_mechanism_event(token_id, self.get_and_save_next_tx_id());
+    }
 }
