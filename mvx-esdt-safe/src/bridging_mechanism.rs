@@ -142,6 +142,9 @@ pub trait BridgingMechanism:
             self.deposited_tokens_amount(&set_burn_mechanism_operation.token_id)
                 .set(sc_balance);
         }
+
+        self.complete_operation(&hash_of_hashes, &operation_hash, None);
+        return;
     }
 
     #[only_owner]
@@ -235,6 +238,9 @@ pub trait BridgingMechanism:
             self.deposited_tokens_amount(&set_lock_mechanism_operation.token_id)
                 .set(BigUint::zero());
         }
+
+        self.complete_operation(&hash_of_hashes, &operation_hash, None);
+        return;
     }
 
     #[storage_mapper_from_address("trustedTokens")]
