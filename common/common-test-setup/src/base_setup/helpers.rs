@@ -108,7 +108,7 @@ impl BaseSetup {
             .collect()
     }
 
-    pub fn get_sc_address(&mut self, sc_type: ScArray) -> TestSCAddress {
+    pub fn get_sc_address(&'_ mut self, sc_type: ScArray) -> TestSCAddress<'_> {
         match sc_type {
             ScArray::ChainConfig => CHAIN_CONFIG_ADDRESS,
             ScArray::ChainFactory => CHAIN_FACTORY_SC_ADDRESS,
