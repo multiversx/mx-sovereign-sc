@@ -119,7 +119,7 @@ pub trait UpdateConfigsModule:
         let blockchain_api = self.blockchain();
         let caller = blockchain_api.get_caller();
 
-        self.require_phase_three_completed(&caller);
+        self.require_phase_two_completed(&caller);
 
         self.tx()
             .to(self.get_chain_factory_address())
