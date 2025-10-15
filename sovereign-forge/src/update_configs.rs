@@ -113,4 +113,38 @@ pub trait UpdateConfigsModule:
             )
             .transfer_execute();
     }
+
+    #[endpoint(setTokenBurnMechanism)]
+    fn set_token_burn_mechanism(&self, token_id: EgldOrEsdtTokenIdentifier) {
+        let blockchain_api = self.blockchain();
+        let caller = blockchain_api.get_caller();
+
+        self.require_phase_three_completed(&caller);
+
+        self.tx()
+            .to(self.get_chain_factory_address())
+            .typed(ChainFactoryContractProxy)
+            .set_token_burn_mechanism(
+                self.get_contract_address(&caller, ScArray::ESDTSafe),
+                token_id,
+            )
+            .transfer_execute();
+    }
+
+    #[endpoint(setTokenLockMechanism)]
+    fn set_token_lock_mechanism(&self, token_id: EgldOrEsdtTokenIdentifier) {
+        let blockchain_api = self.blockchain();
+        let caller = blockchain_api.get_caller();
+
+        self.require_phase_three_completed(&caller);
+
+        self.tx()
+            .to(self.get_chain_factory_address())
+            .typed(ChainFactoryContractProxy)
+            .set_token_lock_mechanism(
+                self.get_contract_address(&caller, ScArray::ESDTSafe),
+                token_id,
+            )
+            .transfer_execute();
+    }
 }

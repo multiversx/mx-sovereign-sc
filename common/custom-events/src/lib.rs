@@ -116,4 +116,18 @@ pub trait CustomEventsModule {
         #[indexed] token_decimals: usize,
         op_data: OperationData<Self::Api>,
     );
+
+    #[event("setTokenBurnMechanism")]
+    fn set_token_burn_mechanism_event(
+        &self,
+        #[indexed] token_id: EgldOrEsdtTokenIdentifier<Self::Api>,
+        op_nonce: TxId,
+    );
+
+    #[event("setTokenLockMechanism")]
+    fn set_token_lock_mechanism_event(
+        &self,
+        #[indexed] token_id: EgldOrEsdtTokenIdentifier<Self::Api>,
+        op_nonce: TxId,
+    );
 }

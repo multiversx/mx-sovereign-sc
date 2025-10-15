@@ -6,10 +6,10 @@
 
 // Init:                                 1
 // Upgrade:                              1
-// Endpoints:                           22
+// Endpoints:                           23
 // Async Callback (empty):               1
 // Promise callbacks:                    3
-// Total number of exported functions:  28
+// Total number of exported functions:  29
 
 #![no_std]
 
@@ -29,8 +29,9 @@ multiversx_sc_wasm_adapter::endpoints! {
         executeBridgeOps => execute_operations
         registerToken => register_token
         registerNativeToken => register_native_token
+        setTokenBurnMechanismSetupPhase => set_token_burn_mechanism_setup_phase
         setTokenBurnMechanism => set_token_burn_mechanism
-        setTokenLockMechanism => set_token_lock_mechanism
+        setTokenLockMechanismSetupPhase => set_token_lock_mechanism_setup_phase
         getSovToMvxTokenId => sovereign_to_multiversx_token_id_mapper
         getMvxToSovTokenId => multiversx_to_sovereign_token_id_mapper
         getSovEsdtTokenInfo => sovereign_to_multiversx_esdt_info_mapper

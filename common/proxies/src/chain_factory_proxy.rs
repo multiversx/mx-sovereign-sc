@@ -302,6 +302,38 @@ where
             .original_result()
     }
 
+    pub fn set_token_burn_mechanism<
+        Arg0: ProxyArg<ManagedAddress<Env::Api>>,
+        Arg1: ProxyArg<EgldOrEsdtTokenIdentifier<Env::Api>>,
+    >(
+        self,
+        mvx_esdt_safe_address: Arg0,
+        token_id: Arg1,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("setTokenBurnMechanismSetupPhase")
+            .argument(&mvx_esdt_safe_address)
+            .argument(&token_id)
+            .original_result()
+    }
+
+    pub fn set_token_lock_mechanism<
+        Arg0: ProxyArg<ManagedAddress<Env::Api>>,
+        Arg1: ProxyArg<EgldOrEsdtTokenIdentifier<Env::Api>>,
+    >(
+        self,
+        mvx_esdt_safe_address: Arg0,
+        token_id: Arg1,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("setTokenLockMechanismSetupPhase")
+            .argument(&mvx_esdt_safe_address)
+            .argument(&token_id)
+            .original_result()
+    }
+
     pub fn complete_setup_phase<
         Arg0: ProxyArg<ManagedAddress<Env::Api>>,
         Arg1: ProxyArg<ManagedAddress<Env::Api>>,

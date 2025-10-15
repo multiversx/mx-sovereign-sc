@@ -207,7 +207,7 @@ where
             .original_result()
     }
 
-    pub fn set_token_burn_mechanism<
+    pub fn set_token_burn_mechanism_setup_phase<
         Arg0: ProxyArg<EgldOrEsdtTokenIdentifier<Env::Api>>,
     >(
         self,
@@ -215,12 +215,28 @@ where
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
-            .raw_call("setTokenBurnMechanism")
+            .raw_call("setTokenBurnMechanismSetupPhase")
             .argument(&token_id)
             .original_result()
     }
 
-    pub fn set_token_lock_mechanism<
+    pub fn set_token_burn_mechanism<
+        Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
+        Arg1: ProxyArg<structs::configs::SetBurnMechanismOperation<Env::Api>>,
+    >(
+        self,
+        hash_of_hashes: Arg0,
+        set_burn_mechanism_operation: Arg1,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("setTokenBurnMechanism")
+            .argument(&hash_of_hashes)
+            .argument(&set_burn_mechanism_operation)
+            .original_result()
+    }
+
+    pub fn set_token_lock_mechanism_setup_phase<
         Arg0: ProxyArg<EgldOrEsdtTokenIdentifier<Env::Api>>,
     >(
         self,
@@ -228,7 +244,7 @@ where
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
-            .raw_call("setTokenLockMechanism")
+            .raw_call("setTokenLockMechanismSetupPhase")
             .argument(&token_id)
             .original_result()
     }
