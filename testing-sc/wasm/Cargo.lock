@@ -147,6 +147,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "proxies"
+version = "0.1.0"
+dependencies = [
+ "multiversx-sc",
+ "structs",
+]
+
+[[package]]
 name = "quote"
 version = "1.0.40"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -172,6 +180,13 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "67b1b7a3b5fe4f1376887184045fcf45c69e92af734b7aaddc05fb777b6fbd03"
 
 [[package]]
+name = "structs"
+version = "0.1.0"
+dependencies = [
+ "multiversx-sc",
+]
+
+[[package]]
 name = "syn"
 version = "2.0.106"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -187,6 +202,7 @@ name = "testing-sc"
 version = "0.1.0"
 dependencies = [
  "multiversx-sc",
+ "proxies",
 ]
 
 [[package]]
