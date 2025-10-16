@@ -17,8 +17,9 @@ use multiversx_sc::{
     imports::{ESDTSystemSCProxy, OptionalValue, UserBuiltinProxy},
     types::{
         Address, BigUint, CodeMetadata, ESDTSystemSCAddress, EgldOrEsdtTokenIdentifier,
-        EsdtTokenType, ManagedBuffer, ManagedVec, MultiEgldOrEsdtPayment, MultiValueEncoded,
-        ReturnsNewAddress, ReturnsResult, ReturnsResultUnmanaged, TokenIdentifier,
+        EsdtLocalRole, EsdtTokenType, ManagedAddress, ManagedBuffer, ManagedVec,
+        MultiEgldOrEsdtPayment, MultiValueEncoded, ReturnsNewAddress, ReturnsResult,
+        ReturnsResultUnmanaged, TokenIdentifier,
     },
 };
 use multiversx_sc_snippets::{
@@ -579,6 +580,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             .await;
 
         let trusted_token = self.common_state().get_trusted_token();
+
         self.register_trusted_token(initial_caller.clone(), trusted_token.as_str())
             .await;
 
@@ -698,7 +700,11 @@ pub trait CommonInteractorTrait: InteractorHelpers {
         self.register_native_token(caller.clone(), &preferred_chain_id)
             .await;
 
-        self.set_burn_mechanism(caller.clone(), &preferred_chain_id)
+        let mvx_esdt_safe_address = self
+            .get_sc_address_from_sovereign_forge(preferred_chain_id.as_str(), ScArray::ESDTSafe)
+            .await;
+
+        self.set_special_roles_for_token(mvx_esdt_safe_address.clone())
             .await;
 
         self.deploy_phase_three(caller.clone(), fee.clone()).await;
@@ -1026,7 +1032,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             .tx()
             .from(bridge_service)
             .to(current_fee_market_address)
-            .gas(50_000_000u64)
+            .gas(90_000_000u64)
             .typed(MvxFeeMarketProxy)
             .remove_fee(hash_of_hashes, fee_operation)
             .returns(ReturnsResultUnmanaged)
@@ -1034,21 +1040,42 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             .await;
     }
 
-    async fn set_token_burn_mechanism(&mut self, token_id: TokenIdentifier<StaticApi>) {
-        let current_mvx_esdt_safe_address = self
+    async fn set_token_burn_mechanism_before_setup_phase(&mut self, caller: Address) {
+        let sovereign_forge_address = self
             .common_state()
-            .current_mvx_esdt_safe_contract_address()
+            .current_sovereign_forge_sc_address()
             .clone();
-        let sovereign_owner = self.get_sovereign_owner_for_shard(SHARD_0).clone();
+        let trusted_token = self.common_state().get_trusted_token();
 
         self.interactor()
             .tx()
-            .to(current_mvx_esdt_safe_address)
-            .from(sovereign_owner)
-            .gas(30_000_000u64)
-            .typed(MvxEsdtSafeProxy)
-            .set_token_burn_mechanism(token_id)
+            .from(caller)
+            .to(sovereign_forge_address)
+            .gas(90_000_000u64)
+            .typed(SovereignForgeProxy)
+            .set_token_burn_mechanism(EgldOrEsdtTokenIdentifier::esdt(trusted_token.as_str()))
             .returns(ReturnsResultUnmanaged)
+            .run()
+            .await;
+    }
+
+    async fn set_special_roles_for_token(&mut self, for_address: Address) {
+        let user_address = self.user_address().clone();
+        let trusted_token = self.common_state().get_trusted_token();
+
+        let roles = vec![EsdtLocalRole::Mint, EsdtLocalRole::Burn];
+
+        self.interactor()
+            .tx()
+            .from(user_address)
+            .to(ESDTSystemSCAddress)
+            .gas(80_000_000u64)
+            .typed(ESDTSystemSCProxy)
+            .set_special_roles(
+                ManagedAddress::from_address(&for_address),
+                TokenIdentifier::from(trusted_token.as_str()),
+                roles.into_iter(),
+            )
             .run()
             .await;
     }
@@ -1540,22 +1567,5 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             .returns(ReturnsResult)
             .run()
             .await
-    }
-
-    async fn set_burn_mechanism(&mut self, caller: Address, chain_id: &str) {
-        let mvx_esdt_safe_address = self
-            .get_sc_address_from_sovereign_forge(chain_id, ScArray::ESDTSafe)
-            .await;
-        let trusted_token = self.common_state().get_trusted_token();
-
-        self.interactor()
-            .tx()
-            .from(caller)
-            .to(mvx_esdt_safe_address)
-            .typed(MvxEsdtSafeProxy)
-            .set_token_burn_mechanism(EgldOrEsdtTokenIdentifier::esdt(trusted_token.as_str()))
-            .returns(ReturnsResultUnmanaged)
-            .run()
-            .await;
     }
 }
