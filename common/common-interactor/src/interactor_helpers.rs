@@ -649,7 +649,7 @@ pub trait InteractorHelpers {
         empty_balance_state
     }
 
-    async fn create_serializable_token(
+    fn create_serializable_token(
         &mut self,
         token: EsdtTokenInfo,
         amount: u64,

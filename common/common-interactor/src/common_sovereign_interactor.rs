@@ -555,7 +555,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
         )
         .await;
         let fee_token_id = self.state().get_fee_token_id();
-        let fee_token_fee_market = self.create_serializable_token(fee_token_id, 0u64).await;
+        let fee_token_fee_market = self.create_serializable_token(fee_token_id, 0u64);
         self.common_state()
             .set_fee_market_token_for_all_shards(fee_token_fee_market);
         self.common_state().set_fee_status_for_all_shards(true);
@@ -1490,7 +1490,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
         };
 
         EsdtTokenInfo {
-            token_id: EgldOrEsdtTokenIdentifier::from(trusted_token.as_str()),
+            token_id: EgldOrEsdtTokenIdentifier::esdt(trusted_token.as_str()),
             nonce: 0,
             token_type: EsdtTokenType::Fungible,
             amount,
