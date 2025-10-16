@@ -6,9 +6,9 @@
 
 // Init:                                 1
 // Upgrade:                              1
-// Endpoints:                           17
+// Endpoints:                           19
 // Async Callback (empty):               1
-// Total number of exported functions:  20
+// Total number of exported functions:  22
 
 #![no_std]
 
@@ -24,6 +24,10 @@ multiversx_sc_wasm_adapter::endpoints! {
         deployHeaderVerifier => deploy_header_verifier
         deployEsdtSafe => deploy_mvx_esdt_safe
         deployFeeMarket => deploy_fee_market
+        getChainConfigTemplateAddress => chain_config_template
+        getHeaderVerifierTemplateAddress => header_verifier_template
+        getEsdtSafeTemplateAddress => esdt_safe_template
+        getFeeMarketTemplateAddress => fee_market_template
         isAdmin => is_admin
         addAdmin => add_admin
         removeAdmin => remove_admin

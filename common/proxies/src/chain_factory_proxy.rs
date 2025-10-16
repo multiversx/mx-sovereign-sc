@@ -158,6 +158,42 @@ where
             .original_result()
     }
 
+    pub fn chain_config_template(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ManagedAddress<Env::Api>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getChainConfigTemplateAddress")
+            .original_result()
+    }
+
+    pub fn header_verifier_template(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ManagedAddress<Env::Api>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getHeaderVerifierTemplateAddress")
+            .original_result()
+    }
+
+    pub fn esdt_safe_template(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ManagedAddress<Env::Api>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getEsdtSafeTemplateAddress")
+            .original_result()
+    }
+
+    pub fn fee_market_template(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ManagedAddress<Env::Api>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getFeeMarketTemplateAddress")
+            .original_result()
+    }
+
     pub fn is_admin<
         Arg0: ProxyArg<ManagedAddress<Env::Api>>,
     >(
