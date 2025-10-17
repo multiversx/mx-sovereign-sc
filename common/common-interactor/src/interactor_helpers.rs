@@ -35,7 +35,7 @@ use structs::{
 use crate::{
     interactor_common_state::CommonState,
     interactor_state::{EsdtTokenInfo, State},
-    interactor_structs::{ActionConfig, BalanceCheckConfig, SerializableFeeMarketToken},
+    interactor_structs::{ActionConfig, BalanceCheckConfig, SerializableToken},
 };
 
 #[allow(clippy::type_complexity)]
@@ -649,16 +649,16 @@ pub trait InteractorHelpers {
         empty_balance_state
     }
 
-    async fn create_fee_market_token_state(
+    fn create_serializable_token(
         &mut self,
-        fee_token: EsdtTokenInfo,
+        token: EsdtTokenInfo,
         amount: u64,
-    ) -> SerializableFeeMarketToken {
-        SerializableFeeMarketToken {
-            token_id: fee_token.token_id.into_managed_buffer().to_string(),
-            token_type: fee_token.token_type as u8,
-            nonce: fee_token.nonce,
-            decimals: fee_token.decimals,
+    ) -> SerializableToken {
+        SerializableToken {
+            token_id: token.token_id.into_managed_buffer().to_string(),
+            token_type: token.token_type as u8,
+            nonce: token.nonce,
+            decimals: token.decimals,
             amount,
         }
     }

@@ -8,7 +8,7 @@ use common_test_setup::constants::{
     CHAIN_CONFIG_CODE_PATH, CHAIN_FACTORY_CODE_PATH, CHAIN_ID, DEPLOY_COST,
     FAILED_TO_LOAD_WALLET_SHARD_0, FEE_MARKET_CODE_PATH, HEADER_VERIFIER_CODE_PATH, ISSUE_COST,
     MVX_ESDT_SAFE_CODE_PATH, NATIVE_TOKEN_NAME, NATIVE_TOKEN_TICKER, NUMBER_OF_SHARDS,
-    NUM_TOKENS_TO_MINT, ONE_THOUSAND_TOKENS, OWNER_ADDRESS, SHARD_0, SOVEREIGN_FORGE_CODE_PATH,
+    NUM_TOKENS_TO_MINT, ONE_THOUSAND_TOKENS, SHARD_0, SOVEREIGN_FORGE_CODE_PATH,
     SOVEREIGN_TOKEN_PREFIX, TESTING_SC_CODE_PATH, WALLET_SHARD_0,
 };
 use multiversx_bls::{SecretKey, G1};
@@ -17,8 +17,9 @@ use multiversx_sc::{
     imports::{ESDTSystemSCProxy, OptionalValue, UserBuiltinProxy},
     types::{
         Address, BigUint, CodeMetadata, ESDTSystemSCAddress, EgldOrEsdtTokenIdentifier,
-        EsdtTokenType, ManagedBuffer, ManagedVec, MultiEgldOrEsdtPayment, MultiValueEncoded,
-        ReturnsNewAddress, ReturnsResult, ReturnsResultUnmanaged, TokenIdentifier,
+        EsdtLocalRole, EsdtTokenType, ManagedAddress, ManagedBuffer, ManagedVec,
+        MultiEgldOrEsdtPayment, MultiValueEncoded, ReturnsNewAddress, ReturnsResult,
+        ReturnsResultUnmanaged, TokenIdentifier,
     },
 };
 use multiversx_sc_snippets::{
@@ -101,7 +102,13 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             .run()
             .await;
 
-        for _ in 0..NUM_TOKENS_TO_MINT {
+        let num_mints = if issue.token_ticker == "TRUSTED" || issue.token_ticker == "FEE" {
+            1
+        } else {
+            NUM_TOKENS_TO_MINT
+        };
+
+        for _ in 0..num_mints {
             let nonce = self
                 .mint_tokens(token_id.clone(), issue.token_type, mint.clone())
                 .await;
@@ -118,6 +125,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
 
             match issue.token_ticker.as_str() {
                 "MVX" => self.state().add_fungible_token(token.clone()),
+                "TRUSTED" => self.common_state().set_trusted_token(token_id.clone()),
                 "FEE" => self.state().set_fee_token(token.clone()),
                 "NFT" => self.state().add_nft_token(token.clone()),
                 "SFT" => self.state().add_sft_token(token.clone()),
@@ -192,6 +200,11 @@ pub trait CommonInteractorTrait: InteractorHelpers {
         if ticker == "FEE" && !self.common_state().fee_market_tokens.is_empty() {
             let fee_token = self.retrieve_current_fee_token_for_wallet().await;
             self.state().set_fee_token(fee_token);
+            return;
+        }
+        if ticker == "TRUSTED" && self.common_state().trusted_token.is_some() {
+            let trusted_token = self.retrieve_current_trusted_token_for_wallet().await;
+            self.state().set_trusted_token(trusted_token);
             return;
         }
         let amount = if matches!(
@@ -542,7 +555,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
         )
         .await;
         let fee_token_id = self.state().get_fee_token_id();
-        let fee_token_fee_market = self.create_fee_market_token_state(fee_token_id, 0u64).await;
+        let fee_token_fee_market = self.create_serializable_token(fee_token_id, 0u64);
         self.common_state()
             .set_fee_market_token_for_all_shards(fee_token_fee_market);
         self.common_state().set_fee_status_for_all_shards(true);
@@ -566,7 +579,10 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             )
             .await;
 
-        self.register_trusted_token("USDC-c76f1f").await;
+        let trusted_token = self.common_state().get_trusted_token();
+
+        self.register_trusted_token(initial_caller.clone(), trusted_token.as_str())
+            .await;
 
         for shard_id in 0..NUMBER_OF_SHARDS {
             let caller = self.get_bridge_owner_for_shard(shard_id);
@@ -635,7 +651,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             .await;
     }
 
-    async fn register_trusted_token(&mut self, trusted_token: &str) {
+    async fn register_trusted_token(&mut self, caller: Address, trusted_token: &str) {
         let forge_address = &self
             .common_state()
             .sovereign_forge_sc_address
@@ -644,7 +660,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
 
         self.interactor()
             .tx()
-            .from(OWNER_ADDRESS)
+            .from(caller)
             .to(forge_address)
             .typed(SovereignForgeProxy)
             .register_trusted_token(ManagedBuffer::from(trusted_token))
@@ -683,6 +699,14 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             .await;
         self.register_native_token(caller.clone(), &preferred_chain_id)
             .await;
+
+        let mvx_esdt_safe_address = self
+            .get_sc_address_from_sovereign_forge(preferred_chain_id.as_str(), ScArray::ESDTSafe)
+            .await;
+
+        self.set_special_roles_for_token(mvx_esdt_safe_address.clone())
+            .await;
+
         self.deploy_phase_three(caller.clone(), fee.clone()).await;
         self.deploy_phase_four(caller.clone()).await;
 
@@ -1008,7 +1032,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             .tx()
             .from(bridge_service)
             .to(current_fee_market_address)
-            .gas(50_000_000u64)
+            .gas(90_000_000u64)
             .typed(MvxFeeMarketProxy)
             .remove_fee(hash_of_hashes, fee_operation)
             .returns(ReturnsResultUnmanaged)
@@ -1016,21 +1040,42 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             .await;
     }
 
-    async fn set_token_burn_mechanism(&mut self, token_id: TokenIdentifier<StaticApi>) {
-        let current_mvx_esdt_safe_address = self
+    async fn set_token_burn_mechanism_before_setup_phase(&mut self, caller: Address) {
+        let sovereign_forge_address = self
             .common_state()
-            .current_mvx_esdt_safe_contract_address()
+            .current_sovereign_forge_sc_address()
             .clone();
-        let sovereign_owner = self.get_sovereign_owner_for_shard(SHARD_0).clone();
+        let trusted_token = self.common_state().get_trusted_token();
 
         self.interactor()
             .tx()
-            .to(current_mvx_esdt_safe_address)
-            .from(sovereign_owner)
-            .gas(30_000_000u64)
-            .typed(MvxEsdtSafeProxy)
-            .set_token_burn_mechanism_setup_phase(token_id)
+            .from(caller)
+            .to(sovereign_forge_address)
+            .gas(90_000_000u64)
+            .typed(SovereignForgeProxy)
+            .set_token_burn_mechanism(EgldOrEsdtTokenIdentifier::esdt(trusted_token.as_str()))
             .returns(ReturnsResultUnmanaged)
+            .run()
+            .await;
+    }
+
+    async fn set_special_roles_for_token(&mut self, for_address: Address) {
+        let user_address = self.user_address().clone();
+        let trusted_token = self.common_state().get_trusted_token();
+
+        let roles = vec![EsdtLocalRole::Mint, EsdtLocalRole::Burn];
+
+        self.interactor()
+            .tx()
+            .from(user_address)
+            .to(ESDTSystemSCAddress)
+            .gas(80_000_000u64)
+            .typed(ESDTSystemSCProxy)
+            .set_special_roles(
+                ManagedAddress::from_address(&for_address),
+                TokenIdentifier::from(trusted_token.as_str()),
+                roles.into_iter(),
+            )
             .run()
             .await;
     }
@@ -1423,6 +1468,29 @@ pub trait CommonInteractorTrait: InteractorHelpers {
 
         EsdtTokenInfo {
             token_id: EgldOrEsdtTokenIdentifier::from(fee_token_id.as_str()),
+            nonce: 0,
+            token_type: EsdtTokenType::Fungible,
+            amount,
+            decimals: 18,
+        }
+    }
+
+    async fn retrieve_current_trusted_token_for_wallet(&mut self) -> EsdtTokenInfo {
+        let user_address = &self.user_address().clone();
+        let balances = self.interactor().get_account_esdt(user_address).await;
+        let trusted_token = self.common_state().get_trusted_token();
+
+        let amount = if let Some(esdt_balance) = balances.get(trusted_token.as_str()) {
+            BigUint::from(
+                num_bigint::BigUint::parse_bytes(esdt_balance.balance.as_bytes(), 10)
+                    .expect("Failed to parse fee token balance as number"),
+            )
+        } else {
+            BigUint::zero()
+        };
+
+        EsdtTokenInfo {
+            token_id: EgldOrEsdtTokenIdentifier::esdt(trusted_token.as_str()),
             nonce: 0,
             token_type: EsdtTokenType::Fungible,
             amount,

@@ -142,7 +142,24 @@ impl BaseSetup {
                     .collect();
                 for token in tokens {
                     let (token_id, amount) = token;
-                    assert!(sc.deposited_tokens_amount(&token_id).get() == amount);
+                    let deposited_token_handle = sc.deposited_tokens_amount(&token_id);
+                    if amount == 0 {
+                        let stored_amount = deposited_token_handle.get();
+                        assert!(
+                            deposited_token_handle.is_empty(),
+                            "Expected no storage entry for token {:?}, but found: {:?}",
+                            token_id,
+                            stored_amount
+                        );
+                    } else {
+                        assert!(
+                            deposited_token_handle.get() == amount,
+                            "Expected deposited amount for token {:?} to be {:?}, but found {:?}",
+                            token_id,
+                            amount,
+                            deposited_token_handle.get()
+                        );
+                    }
                 }
             });
     }

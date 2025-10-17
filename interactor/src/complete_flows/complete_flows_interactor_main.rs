@@ -93,6 +93,7 @@ impl CompleteFlowInteract {
             ("META", EsdtTokenType::MetaFungible, 0),
             ("DYNS", EsdtTokenType::DynamicSFT, 18),
             ("DYNM", EsdtTokenType::DynamicMeta, 18),
+            ("TRUSTED", EsdtTokenType::Fungible, 18),
         ];
 
         for (ticker, token_type, decimals) in token_configs {

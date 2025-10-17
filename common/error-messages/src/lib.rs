@@ -93,6 +93,7 @@ pub const NO_KNOWN_DYNAMIC_SFT_TOKEN_ID: &str = "No known Dynamic SFT token ID";
 pub const NO_KNOWN_FIRST_TOKEN: &str = "No known first token, register first";
 pub const NO_KNOWN_FEE_MARKET: &str = "No known Fee Market contract, deploy first";
 pub const NO_KNOWN_FEE_TOKEN: &str = "No known fee token, register first";
+pub const NO_KNOWN_TRUSTED_TOKEN: &str = "No known trusted token, register first";
 pub const NO_KNOWN_FUNGIBLE_TOKEN: &str = "No known fungible token, register first";
 pub const NO_KNOWN_MVX_ESDT_SAFE: &str = "No known MVX ESDT Safe contract, deploy first";
 pub const NO_KNOWN_HEADER_VERIFIER: &str = "No known Header Verifier contract, deploy first";
