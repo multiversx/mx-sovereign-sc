@@ -8,8 +8,8 @@
 // Upgrade:                              1
 // Endpoints:                           21
 // Async Callback (empty):               1
-// Promise callbacks:                    2
-// Total number of exported functions:  26
+// Promise callbacks:                    3
+// Total number of exported functions:  27
 
 #![no_std]
 
@@ -44,6 +44,7 @@ multiversx_sc_wasm_adapter::endpoints! {
         setTokenLockMechanism => set_token_lock_mechanism
         setup_phase => setup_phase
         register_deployed_contract => register_deployed_contract
+        update_configs => update_configs
     )
 }
 

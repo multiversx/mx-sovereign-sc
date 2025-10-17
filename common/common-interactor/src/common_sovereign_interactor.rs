@@ -1029,7 +1029,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             .from(sovereign_owner)
             .gas(30_000_000u64)
             .typed(MvxEsdtSafeProxy)
-            .set_token_burn_mechanism(token_id)
+            .set_token_burn_mechanism_setup_phase(token_id)
             .returns(ReturnsResultUnmanaged)
             .run()
             .await;
