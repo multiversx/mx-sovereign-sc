@@ -664,7 +664,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             .to(forge_address)
             .typed(SovereignForgeProxy)
             .register_trusted_token(ManagedBuffer::from(trusted_token))
-            .gas(90_000_000)
+            .gas(20_000_000)
             .run()
             .await;
     }
@@ -704,7 +704,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             .get_sc_address_from_sovereign_forge(preferred_chain_id.as_str(), ScArray::ESDTSafe)
             .await;
 
-        self.set_special_roles_for_token(mvx_esdt_safe_address.clone())
+        self.set_special_roles_for_trusted_token(mvx_esdt_safe_address.clone())
             .await;
 
         self.deploy_phase_three(caller.clone(), fee.clone()).await;
@@ -1059,7 +1059,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             .await;
     }
 
-    async fn set_special_roles_for_token(&mut self, for_address: Address) {
+    async fn set_special_roles_for_trusted_token(&mut self, for_address: Address) {
         let user_address = self.user_address().clone();
         let trusted_token = self.common_state().get_trusted_token();
 
