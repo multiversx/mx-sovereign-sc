@@ -144,7 +144,6 @@ pub trait BridgingMechanism:
         }
 
         self.complete_operation(&hash_of_hashes, &operation_hash, None);
-        return;
     }
 
     #[only_owner]
@@ -240,7 +239,6 @@ pub trait BridgingMechanism:
         }
 
         self.complete_operation(&hash_of_hashes, &operation_hash, None);
-        return;
     }
 
     #[storage_mapper_from_address("trustedTokens")]

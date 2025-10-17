@@ -3,6 +3,7 @@ use proxies::chain_factory_proxy::ChainFactoryContractProxy;
 use structs::configs::{EsdtSafeConfig, SovereignConfig};
 use structs::fee::FeeStruct;
 use structs::forge::ScArray;
+use structs::{UPDATE_CONFIGS_CALLBACK_GAS, UPDATE_CONFIGS_GAS};
 
 use crate::forge_common::callbacks::{self, CallbackProxy};
 use crate::{err_msg, forge_common};
@@ -28,9 +29,9 @@ pub trait UpdateConfigsModule:
                 self.get_contract_address(&caller, ScArray::ESDTSafe),
                 new_config,
             )
-            .gas(10_000_000)
+            .gas(UPDATE_CONFIGS_GAS)
             .callback(self.callbacks().update_configs())
-            .gas_for_callback(5_000_000)
+            .gas_for_callback(UPDATE_CONFIGS_CALLBACK_GAS)
             .register_promise();
     }
 
@@ -48,7 +49,10 @@ pub trait UpdateConfigsModule:
                 self.get_contract_address(&caller, ScArray::ChainConfig),
                 new_config,
             )
-            .transfer_execute();
+            .gas(UPDATE_CONFIGS_GAS)
+            .callback(self.callbacks().update_configs())
+            .gas_for_callback(UPDATE_CONFIGS_CALLBACK_GAS)
+            .register_promise();
     }
 
     #[endpoint(setFee)]
@@ -65,9 +69,9 @@ pub trait UpdateConfigsModule:
                 self.get_contract_address(&caller, ScArray::FeeMarket),
                 new_fee,
             )
-            .gas(10_000_000)
+            .gas(UPDATE_CONFIGS_GAS)
             .callback(self.callbacks().update_configs())
-            .gas_for_callback(5_000_000)
+            .gas_for_callback(UPDATE_CONFIGS_CALLBACK_GAS)
             .register_promise();
     }
 
@@ -85,9 +89,9 @@ pub trait UpdateConfigsModule:
                 self.get_contract_address(&caller, ScArray::FeeMarket),
                 token_id,
             )
-            .gas(10_000_000)
+            .gas(UPDATE_CONFIGS_GAS)
             .callback(self.callbacks().update_configs())
-            .gas_for_callback(5_000_000)
+            .gas_for_callback(UPDATE_CONFIGS_CALLBACK_GAS)
             .register_promise();
     }
 
@@ -105,9 +109,9 @@ pub trait UpdateConfigsModule:
                 self.get_contract_address(&caller, ScArray::FeeMarket),
                 users,
             )
-            .gas(10_000_000)
+            .gas(UPDATE_CONFIGS_GAS)
             .callback(self.callbacks().update_configs())
-            .gas_for_callback(5_000_000)
+            .gas_for_callback(UPDATE_CONFIGS_CALLBACK_GAS)
             .register_promise();
     }
 
@@ -125,7 +129,10 @@ pub trait UpdateConfigsModule:
                 self.get_contract_address(&caller, ScArray::FeeMarket),
                 users,
             )
-            .transfer_execute();
+            .gas(UPDATE_CONFIGS_GAS)
+            .callback(self.callbacks().update_configs())
+            .gas_for_callback(UPDATE_CONFIGS_CALLBACK_GAS)
+            .register_promise();
     }
 
     #[endpoint(setTokenBurnMechanism)]
@@ -142,9 +149,9 @@ pub trait UpdateConfigsModule:
                 self.get_contract_address(&caller, ScArray::ESDTSafe),
                 token_id,
             )
-            .gas(10_000_000)
+            .gas(UPDATE_CONFIGS_GAS)
             .callback(self.callbacks().update_configs())
-            .gas_for_callback(5_000_000)
+            .gas_for_callback(UPDATE_CONFIGS_CALLBACK_GAS)
             .register_promise();
     }
 
@@ -162,9 +169,9 @@ pub trait UpdateConfigsModule:
                 self.get_contract_address(&caller, ScArray::ESDTSafe),
                 token_id,
             )
-            .gas(10_000_000)
+            .gas(UPDATE_CONFIGS_GAS)
             .callback(self.callbacks().update_configs())
-            .gas_for_callback(5_000_000)
+            .gas_for_callback(UPDATE_CONFIGS_CALLBACK_GAS)
             .register_promise();
     }
 }
