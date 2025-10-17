@@ -17,7 +17,9 @@ use multiversx_sc::{
 use multiversx_sc_scenario::imports::*;
 use mvx_esdt_safe::MvxEsdtSafe;
 use proxies::mvx_esdt_safe_proxy::MvxEsdtSafeProxy;
-use structs::configs::UpdateEsdtSafeConfigOperation;
+use structs::configs::{
+    SetBurnMechanismOperation, SetLockMechanismOperation, UpdateEsdtSafeConfigOperation,
+};
 use structs::forge::ScArray;
 use structs::{
     aliases::{OptionalValueTransferDataTuple, PaymentsVec},
@@ -219,6 +221,28 @@ impl MvxEsdtSafeTestState {
 
     pub fn set_token_burn_mechanism(
         &mut self,
+        hash_of_hashes: &ManagedBuffer<StaticApi>,
+        set_burn_mechanism_operation: SetBurnMechanismOperation<StaticApi>,
+    ) -> &mut Self {
+        let result = self
+            .common_setup
+            .world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .to(ESDT_SAFE_ADDRESS)
+            .typed(MvxEsdtSafeProxy)
+            .set_token_burn_mechanism(hash_of_hashes, set_burn_mechanism_operation)
+            .returns(ReturnsHandledOrError::new())
+            .run();
+
+        self.common_setup
+            .assert_expected_error_message(result, None);
+
+        self
+    }
+
+    pub fn set_token_burn_mechanism_before_setup_phase(
+        &mut self,
         token_id: &str,
         expected_error_message: Option<&str>,
     ) -> &mut Self {
@@ -226,10 +250,32 @@ impl MvxEsdtSafeTestState {
             .common_setup
             .world
             .tx()
-            .from(HEADER_VERIFIER_ADDRESS)
+            .from(OWNER_ADDRESS)
             .to(ESDT_SAFE_ADDRESS)
             .typed(MvxEsdtSafeProxy)
-            .set_token_burn_mechanism(TokenIdentifier::from(token_id))
+            .set_token_burn_mechanism_setup_phase(EgldOrEsdtTokenIdentifier::esdt(token_id))
+            .returns(ReturnsHandledOrError::new())
+            .run();
+
+        self.common_setup
+            .assert_expected_error_message(result, expected_error_message);
+
+        self
+    }
+
+    pub fn set_token_lock_mechanism_before_setup_phase(
+        &mut self,
+        token_id: &str,
+        expected_error_message: Option<&str>,
+    ) -> &mut Self {
+        let result = self
+            .common_setup
+            .world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .to(ESDT_SAFE_ADDRESS)
+            .typed(MvxEsdtSafeProxy)
+            .set_token_lock_mechanism_setup_phase(EgldOrEsdtTokenIdentifier::esdt(token_id))
             .returns(ReturnsHandledOrError::new())
             .run();
 
@@ -241,8 +287,8 @@ impl MvxEsdtSafeTestState {
 
     pub fn set_token_lock_mechanism(
         &mut self,
-        token_id: &str,
-        expected_error_message: Option<&str>,
+        hash_of_hashes: &ManagedBuffer<StaticApi>,
+        set_lock_mechanism_operation: SetLockMechanismOperation<StaticApi>,
     ) -> &mut Self {
         let result = self
             .common_setup
@@ -251,12 +297,12 @@ impl MvxEsdtSafeTestState {
             .from(HEADER_VERIFIER_ADDRESS)
             .to(ESDT_SAFE_ADDRESS)
             .typed(MvxEsdtSafeProxy)
-            .set_token_lock_mechanism(TokenIdentifier::from(token_id))
+            .set_token_lock_mechanism(hash_of_hashes, set_lock_mechanism_operation)
             .returns(ReturnsHandledOrError::new())
             .run();
 
         self.common_setup
-            .assert_expected_error_message(result, expected_error_message);
+            .assert_expected_error_message(result, None);
 
         self
     }
