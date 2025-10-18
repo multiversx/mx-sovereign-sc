@@ -62,7 +62,12 @@ pub trait FactoryModule: only_admin::OnlyAdminModule {
 
         self.tx()
             .typed(MvxEsdtSafeProxy)
-            .init(sovereign_owner, sov_token_prefix, opt_config)
+            .init(
+                sovereign_owner,
+                self.blockchain().get_caller(),
+                sov_token_prefix,
+                opt_config,
+            )
             .from_source(source_address)
             .code_metadata(metadata)
             .returns(ReturnsNewManagedAddress)

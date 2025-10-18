@@ -93,6 +93,7 @@ pub const NO_KNOWN_DYNAMIC_SFT_TOKEN_ID: &str = "No known Dynamic SFT token ID";
 pub const NO_KNOWN_FIRST_TOKEN: &str = "No known first token, register first";
 pub const NO_KNOWN_FEE_MARKET: &str = "No known Fee Market contract, deploy first";
 pub const NO_KNOWN_FEE_TOKEN: &str = "No known fee token, register first";
+pub const NO_KNOWN_TRUSTED_TOKEN: &str = "No known trusted token, register first";
 pub const NO_KNOWN_FUNGIBLE_TOKEN: &str = "No known fungible token, register first";
 pub const NO_KNOWN_MVX_ESDT_SAFE: &str = "No known MVX ESDT Safe contract, deploy first";
 pub const NO_KNOWN_HEADER_VERIFIER: &str = "No known Header Verifier contract, deploy first";
@@ -168,3 +169,4 @@ pub const EGLD_TOKEN_IDENTIFIER_EXPECTED: &str =
     "The token identifier should be the EGLD token identifier";
 pub const INCORRECT_OPERATION_NONCE: &str = "The operation nonce is incorrect";
 pub const INVALID_FUNCTION_NOT_FOUND: &str = "invalid function (not found)";
+pub const INCORRECT_DEPOSIT_AMOUNT: &str = "Incorrect deposit amount";

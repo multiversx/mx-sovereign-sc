@@ -4,7 +4,7 @@ use common_test_setup::constants::{
     NATIVE_TEST_TOKEN, ONE_HUNDRED_MILLION, ONE_HUNDRED_THOUSAND, ONE_HUNDRED_TOKENS,
     OWNER_ADDRESS, PER_GAS, PER_TRANSFER, SC_CALL_EVENT, SECOND_TEST_TOKEN, SECOND_TOKEN_ID,
     SOV_FIRST_TOKEN_ID, SOV_SECOND_TOKEN_ID, SOV_TOKEN, TESTING_SC_ADDRESS, TESTING_SC_ENDPOINT,
-    UNPAUSE_CONTRACT_LOG, USER_ADDRESS, WRONG_ENDPOINT_NAME,
+    TRUSTED_TOKEN, UNPAUSE_CONTRACT_LOG, USER_ADDRESS, WRONG_ENDPOINT_NAME,
 };
 use cross_chain::storage::CrossChainStorage;
 use cross_chain::{DEFAULT_ISSUE_COST, MAX_GAS_PER_TRANSACTION};
@@ -32,11 +32,14 @@ use multiversx_sc::{
 use multiversx_sc_scenario::multiversx_chain_vm::crypto_functions::sha256;
 use multiversx_sc_scenario::ScenarioTxRun;
 use multiversx_sc_scenario::{api::StaticApi, ScenarioTxWhitebox};
-use mvx_esdt_safe::bridging_mechanism::{BridgingMechanism, TRUSTED_TOKEN_IDS};
+use mvx_esdt_safe::bridging_mechanism::BridgingMechanism;
 use mvx_esdt_safe_blackbox_setup::MvxEsdtSafeTestState;
 use proxies::mvx_esdt_safe_proxy::MvxEsdtSafeProxy;
 use setup_phase::SetupPhaseModule;
-use structs::configs::{MaxBridgedAmount, UpdateEsdtSafeConfigOperation};
+use structs::configs::{
+    MaxBridgedAmount, SetBurnMechanismOperation, SetLockMechanismOperation, SovereignConfig,
+    UpdateEsdtSafeConfigOperation,
+};
 use structs::fee::{FeeStruct, FeeType};
 use structs::forge::ScArray;
 use structs::generate_hash::GenerateHash;
@@ -1242,16 +1245,15 @@ fn test_deposit_success_burn_mechanism() {
     let mut state = MvxEsdtSafeTestState::new();
 
     state.deploy_contract_with_roles(None);
+    state.set_token_burn_mechanism_before_setup_phase(TRUSTED_TOKEN, None);
     state.complete_setup_phase(Some(UNPAUSE_CONTRACT_LOG));
 
     state
         .common_setup
         .deploy_header_verifier(vec![ScArray::ChainConfig, ScArray::ESDTSafe]);
 
-    state.set_token_burn_mechanism(TRUSTED_TOKEN_IDS[0], None);
-
     let esdt_token_payment_trusted_token = EsdtTokenPayment::<StaticApi>::new(
-        TokenIdentifier::from(TRUSTED_TOKEN_IDS[0]),
+        TokenIdentifier::from(TRUSTED_TOKEN),
         0,
         BigUint::from(ONE_HUNDRED_THOUSAND),
     );
@@ -1277,11 +1279,11 @@ fn test_deposit_success_burn_mechanism() {
 
     let expected_tokens = vec![
         MultiValue3::from((
-            TestTokenIdentifier::new(TRUSTED_TOKEN_IDS[0]),
+            TestTokenIdentifier::new(TRUSTED_TOKEN),
             0u64,
             BigUint::zero(),
         )),
-        MultiValue3::from((SECOND_TEST_TOKEN, 100u64, BigUint::zero())),
+        MultiValue3::from((SECOND_TEST_TOKEN, 0u64, BigUint::from(ONE_HUNDRED_THOUSAND))),
     ];
 
     state
@@ -1290,8 +1292,8 @@ fn test_deposit_success_burn_mechanism() {
 
     let tokens = vec![
         (
-            EgldOrEsdtTokenIdentifier::esdt(TRUSTED_TOKEN_IDS[0]),
-            ONE_HUNDRED_THOUSAND as u64,
+            EgldOrEsdtTokenIdentifier::esdt(TRUSTED_TOKEN),
+            ONE_HUNDRED_THOUSAND.into(),
         ),
         (EgldOrEsdtTokenIdentifier::esdt(SECOND_TEST_TOKEN), 0u64),
     ];
@@ -1839,25 +1841,23 @@ fn test_execute_operation_with_native_token_success() {
 /// M-ESDT_EXEC_OK
 ///
 /// ### ACTION
-/// Call 'execute_operation()' after setting the burn mechanism
+/// Call 'execute_operation()' after setting the burn mechanism without prior deposit
 ///
 /// ### EXPECTED
-/// The operation is executed in the testing smart contract
+/// The operation executes successfully with minted tokens
 #[test]
 fn test_execute_operation_burn_mechanism_without_deposit_cannot_subtract() {
     let mut state = MvxEsdtSafeTestState::new();
     state.deploy_contract_with_roles(None);
     state.complete_setup_phase(Some(UNPAUSE_CONTRACT_LOG));
 
-    let token_data = EsdtTokenData {
-        amount: BigUint::from(ONE_HUNDRED_THOUSAND),
-        ..Default::default()
-    };
-
     let payment = OperationEsdtPayment::new(
-        EgldOrEsdtTokenIdentifier::esdt(TRUSTED_TOKEN_IDS[0]),
+        EgldOrEsdtTokenIdentifier::esdt(TRUSTED_TOKEN),
         0,
-        token_data,
+        EsdtTokenData {
+            amount: BigUint::from(ONE_HUNDRED_THOUSAND),
+            ..Default::default()
+        },
     );
 
     let operation = Operation::new(
@@ -1869,47 +1869,65 @@ fn test_execute_operation_burn_mechanism_without_deposit_cannot_subtract() {
             None,
         ),
     );
-
     let operation_hash = state.common_setup.get_operation_hash(&operation);
     let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&operation_hash.to_vec()));
-    let bitmap = state.common_setup.full_bitmap(1);
-    let epoch = 0;
 
+    let burn_operation = SetBurnMechanismOperation {
+        token_id: EgldOrEsdtTokenIdentifier::esdt(TRUSTED_TOKEN),
+        nonce: state.common_setup.next_operation_nonce(),
+    };
+    let burn_operation_hash = burn_operation.generate_hash();
+    let burn_hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&burn_operation_hash.to_vec()));
+
+    // Deploy and register validators
     state
         .common_setup
         .deploy_chain_config(OptionalValue::None, None);
 
     let (signature, public_keys) = state.common_setup.get_sig_and_pub_keys(1, &hash_of_hashes);
+    let (signature_burn, public_keys_burn) = state
+        .common_setup
+        .get_sig_and_pub_keys(1, &burn_hash_of_hashes);
 
     state.common_setup.register(
         public_keys.first().unwrap(),
         &MultiEgldOrEsdtPayment::new(),
         None,
     );
-
+    state.common_setup.register(
+        public_keys_burn.first().unwrap(),
+        &MultiEgldOrEsdtPayment::new(),
+        None,
+    );
     state.common_setup.complete_chain_config_setup_phase();
 
     state
         .common_setup
         .deploy_header_verifier(vec![ScArray::ChainConfig, ScArray::ESDTSafe]);
-
-    state.common_setup.deploy_testing_sc();
     state
         .common_setup
         .complete_header_verifier_setup_phase(None);
-
-    let operations_hashes = MultiValueEncoded::from(ManagedVec::from(vec![operation_hash.clone()]));
+    state.common_setup.deploy_testing_sc();
 
     state.common_setup.register_operation(
         OWNER_ADDRESS,
         signature,
         &hash_of_hashes,
-        bitmap,
-        epoch,
-        operations_hashes,
+        state.common_setup.full_bitmap(1),
+        0,
+        MultiValueEncoded::from(ManagedVec::from(vec![operation_hash.clone()])),
     );
-    state.set_token_burn_mechanism(TRUSTED_TOKEN_IDS[0], None);
 
+    state.common_setup.register_operation(
+        OWNER_ADDRESS,
+        signature_burn,
+        &burn_hash_of_hashes,
+        state.common_setup.bitmap_for_signers(&[1]),
+        0,
+        MultiValueEncoded::from(ManagedVec::from(vec![burn_operation_hash])),
+    );
+
+    state.set_token_burn_mechanism(&burn_hash_of_hashes, burn_operation);
     state.execute_operation(
         &hash_of_hashes,
         &operation,
@@ -1920,10 +1938,9 @@ fn test_execute_operation_burn_mechanism_without_deposit_cannot_subtract() {
     state
         .common_setup
         .check_operation_hash_status_is_empty(&operation_hash);
-
     state.common_setup.check_account_single_esdt(
         TESTING_SC_ADDRESS.to_address(),
-        TestTokenIdentifier::new(TRUSTED_TOKEN_IDS[0]),
+        TestTokenIdentifier::new(TRUSTED_TOKEN),
         0u64,
         BigUint::zero(),
     );
@@ -2015,25 +2032,24 @@ fn test_execute_operation_only_transfer_data_no_fee() {
 /// M-ESDT_EXEC_OK
 ///
 /// ### ACTION
-/// Call 'execute_operation()' after setting the burn mechanism
+/// Call 'execute_operation()' with burn mechanism after deposit
 ///
 /// ### EXPECTED
-/// The operation is executed in the testing smart contract
+/// The operation executes successfully, tokens are burned
 #[test]
 fn test_execute_operation_success_burn_mechanism() {
     let mut state = MvxEsdtSafeTestState::new();
     state.deploy_contract_with_roles(None);
     state.complete_setup_phase(Some(UNPAUSE_CONTRACT_LOG));
 
-    let token_data = EsdtTokenData {
-        amount: BigUint::from(ONE_HUNDRED_THOUSAND),
-        ..Default::default()
-    };
-
+    let amount = BigUint::from(ONE_HUNDRED_THOUSAND);
     let payment = OperationEsdtPayment::new(
-        EgldOrEsdtTokenIdentifier::esdt(TRUSTED_TOKEN_IDS[0]),
+        EgldOrEsdtTokenIdentifier::esdt(TRUSTED_TOKEN),
         0,
-        token_data.clone(),
+        EsdtTokenData {
+            amount: amount.clone(),
+            ..Default::default()
+        },
     );
 
     let operation = Operation::new(
@@ -2045,24 +2061,35 @@ fn test_execute_operation_success_burn_mechanism() {
             None,
         ),
     );
-
     let operation_hash = state.common_setup.get_operation_hash(&operation);
     let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&operation_hash.to_vec()));
-    let bitmap = state.common_setup.full_bitmap(1);
-    let epoch = 0;
+
+    let burn_operation = SetBurnMechanismOperation {
+        token_id: EgldOrEsdtTokenIdentifier::esdt(TRUSTED_TOKEN),
+        nonce: state.common_setup.next_operation_nonce(),
+    };
+    let burn_operation_hash = burn_operation.generate_hash();
+    let burn_hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&burn_operation_hash.to_vec()));
 
     state
         .common_setup
         .deploy_chain_config(OptionalValue::None, None);
 
     let (signature, public_keys) = state.common_setup.get_sig_and_pub_keys(1, &hash_of_hashes);
+    let (signature_burn, public_keys_burn) = state
+        .common_setup
+        .get_sig_and_pub_keys(1, &burn_hash_of_hashes);
 
     state.common_setup.register(
         public_keys.first().unwrap(),
         &MultiEgldOrEsdtPayment::new(),
         None,
     );
-
+    state.common_setup.register(
+        public_keys_burn.first().unwrap(),
+        &MultiEgldOrEsdtPayment::new(),
+        None,
+    );
     state.common_setup.complete_chain_config_setup_phase();
 
     state
@@ -2072,8 +2099,6 @@ fn test_execute_operation_success_burn_mechanism() {
         .common_setup
         .complete_header_verifier_setup_phase(None);
     state.common_setup.deploy_testing_sc();
-
-    let operations_hashes = MultiValueEncoded::from(ManagedVec::from(vec![operation_hash.clone()]));
 
     state.deposit(
         USER_ADDRESS.to_managed_address(),
@@ -2087,17 +2112,25 @@ fn test_execute_operation_success_burn_mechanism() {
         OWNER_ADDRESS,
         signature,
         &hash_of_hashes,
-        bitmap,
-        epoch,
-        operations_hashes,
+        state.common_setup.full_bitmap(1),
+        0,
+        MultiValueEncoded::from(ManagedVec::from(vec![operation_hash.clone()])),
     );
 
     state
         .common_setup
         .check_operation_hash_status(&operation_hash, OperationHashStatus::NotLocked);
 
-    state.set_token_burn_mechanism(TRUSTED_TOKEN_IDS[0], None);
+    state.common_setup.register_operation(
+        OWNER_ADDRESS,
+        signature_burn,
+        &burn_hash_of_hashes,
+        state.common_setup.bitmap_for_signers(&[1]),
+        0,
+        MultiValueEncoded::from(ManagedVec::from(vec![burn_operation_hash])),
+    );
 
+    state.set_token_burn_mechanism(&burn_hash_of_hashes, burn_operation);
     state.execute_operation(
         &hash_of_hashes,
         &operation,
@@ -2105,34 +2138,31 @@ fn test_execute_operation_success_burn_mechanism() {
         None,
     );
 
-    let expected_amount_trusted_token = BigUint::from(ONE_HUNDRED_MILLION) - &token_data.amount;
-
     state
         .common_setup
         .world
         .check_account(OWNER_ADDRESS)
         .esdt_balance(
-            TokenIdentifier::from(TRUSTED_TOKEN_IDS[0]),
-            &expected_amount_trusted_token,
+            TokenIdentifier::from(TRUSTED_TOKEN),
+            &(BigUint::from(ONE_HUNDRED_MILLION) - &amount),
         );
 
     state.common_setup.check_account_single_esdt(
         ESDT_SAFE_ADDRESS.to_address(),
-        TestTokenIdentifier::new(TRUSTED_TOKEN_IDS[0]),
+        TestTokenIdentifier::new(TRUSTED_TOKEN),
         0u64,
         BigUint::zero(),
     );
 
-    state.common_setup.check_deposited_tokens_amount(vec![(
-        EgldOrEsdtTokenIdentifier::esdt(TRUSTED_TOKEN_IDS[0]),
-        0,
-    )]);
+    state
+        .common_setup
+        .check_deposited_tokens_amount(vec![(EgldOrEsdtTokenIdentifier::esdt(TRUSTED_TOKEN), 0)]);
 
     state.common_setup.check_account_single_esdt(
         TESTING_SC_ADDRESS.to_address(),
-        TestTokenIdentifier::new(TRUSTED_TOKEN_IDS[0]),
+        TestTokenIdentifier::new(TRUSTED_TOKEN),
         0u64,
-        BigUint::from(ONE_HUNDRED_THOUSAND),
+        amount,
     );
 
     state
@@ -2144,29 +2174,32 @@ fn test_execute_operation_success_burn_mechanism() {
 /// M-ESDT_EXEC_OK
 ///
 /// ### ACTION
-/// Call 'execute_operation()' after switching to the lock mechanism from the burn mechanism
+/// Call 'execute_operation()' after switching between LOCK and BURN mechanisms
 ///
 /// ### EXPECTED
-/// The operation is executed the first time in the testing smart contract
-/// The operation is executed again in the testing smart contract
+/// - Operations execute successfully in different mechanism states
+/// - Token balances are tracked correctly during mechanism switches
 #[test]
 fn test_deposit_execute_switch_mechanism() {
     let mut state = MvxEsdtSafeTestState::new();
 
-    state
-        .common_setup
-        .deploy_header_verifier(vec![ScArray::ChainConfig, ScArray::ESDTSafe]);
+    // === Initial Setup ===
     state.deploy_contract_with_roles(None);
     state.complete_setup_phase(Some(UNPAUSE_CONTRACT_LOG));
+
+    let chain_config_config = SovereignConfig {
+        max_validators: 4,
+        ..SovereignConfig::default_config()
+    };
     state
         .common_setup
-        .deploy_chain_config(OptionalValue::None, None);
+        .deploy_chain_config(OptionalValue::Some(chain_config_config), None);
 
-    let trusted_token_id = TRUSTED_TOKEN_IDS[0];
+    let trusted_token_id = TRUSTED_TOKEN;
     let execute_amount = 500u64;
     let deposit_amount = 1000u64;
 
-    // Create payment for operations
+    // === Setup Execute Operations ===
     let execute_payment = OperationEsdtPayment::new(
         EgldOrEsdtTokenIdentifier::esdt(trusted_token_id),
         0,
@@ -2176,7 +2209,7 @@ fn test_deposit_execute_switch_mechanism() {
         },
     );
 
-    // Setup operation 1 with validator 0
+    // Operation 1 with validator 0
     let operation_one = Operation::new(
         TESTING_SC_ADDRESS.to_managed_address(),
         vec![execute_payment.clone()].into(),
@@ -2197,7 +2230,7 @@ fn test_deposit_execute_switch_mechanism() {
         None,
     );
 
-    // Setup operation 2 with validator 1
+    // Operation 2 with validator 1
     let operation_two = Operation::new(
         TESTING_SC_ADDRESS.to_managed_address(),
         vec![execute_payment].into(),
@@ -2218,7 +2251,44 @@ fn test_deposit_execute_switch_mechanism() {
         None,
     );
 
+    // === Setup Mechanism Switch Operations ===
+    let burn_operation = SetBurnMechanismOperation {
+        token_id: EgldOrEsdtTokenIdentifier::esdt(TRUSTED_TOKEN),
+        nonce: state.common_setup.next_operation_nonce(),
+    };
+    let burn_operation_hash = burn_operation.generate_hash();
+    let burn_operation_hash_of_hashes =
+        ManagedBuffer::new_from_bytes(&sha256(&burn_operation_hash.to_vec()));
+    let (signature_burn, pub_keys_burn) = state
+        .common_setup
+        .get_sig_and_pub_keys(1, &burn_operation_hash_of_hashes);
+    state.common_setup.register(
+        pub_keys_burn.first().unwrap(),
+        &MultiEgldOrEsdtPayment::new(),
+        None,
+    );
+
+    let lock_operation = SetLockMechanismOperation {
+        token_id: EgldOrEsdtTokenIdentifier::esdt(TRUSTED_TOKEN),
+        nonce: state.common_setup.next_operation_nonce(),
+    };
+    let lock_operation_hash = lock_operation.generate_hash();
+    let lock_operation_hash_of_hashes =
+        ManagedBuffer::new_from_bytes(&sha256(&lock_operation_hash.to_vec()));
+    let (signature_lock, pub_keys_lock) = state
+        .common_setup
+        .get_sig_and_pub_keys(1, &lock_operation_hash_of_hashes);
+    state.common_setup.register(
+        pub_keys_lock.first().unwrap(),
+        &MultiEgldOrEsdtPayment::new(),
+        None,
+    );
+
+    // === Complete Remaining Setup ===
     state.common_setup.complete_chain_config_setup_phase();
+    state
+        .common_setup
+        .deploy_header_verifier(vec![ScArray::ChainConfig, ScArray::ESDTSafe]);
     state
         .common_setup
         .complete_header_verifier_setup_phase(None);
@@ -2233,7 +2303,8 @@ fn test_deposit_execute_switch_mechanism() {
         },
     );
 
-    // === First deposit (default LOCK mechanism) ===
+    // === Test Flow ===
+    // 1. First deposit (default LOCK mechanism)
     state.deposit(
         USER_ADDRESS.to_managed_address(),
         OptionalValue::None,
@@ -2249,8 +2320,17 @@ fn test_deposit_execute_switch_mechanism() {
         BigUint::from(deposit_amount),
     );
 
-    // === Switch to BURN mechanism ===
-    state.set_token_burn_mechanism(trusted_token_id, None);
+    // 2. Switch to BURN mechanism
+    let burn_bitmap = state.common_setup.bitmap_for_signers(&[2]);
+    state.common_setup.register_operation(
+        OWNER_ADDRESS,
+        signature_burn,
+        &burn_operation_hash_of_hashes,
+        burn_bitmap,
+        0,
+        MultiValueEncoded::from(ManagedVec::from(vec![burn_operation_hash.clone()])),
+    );
+    state.set_token_burn_mechanism(&burn_operation_hash_of_hashes, burn_operation);
 
     let mut expected_deposited = deposit_amount;
     state.common_setup.check_deposited_tokens_amount(vec![(
@@ -2264,7 +2344,7 @@ fn test_deposit_execute_switch_mechanism() {
         BigUint::zero(),
     );
 
-    // === Execute operation 1 (validator 0) ===
+    // 3. Execute operation 1 (BURN mechanism, validator 0)
     state.common_setup.register_operation(
         OWNER_ADDRESS,
         signature_one,
@@ -2295,7 +2375,7 @@ fn test_deposit_execute_switch_mechanism() {
         BigUint::zero(),
     );
 
-    // === Second deposit (BURN mechanism) ===
+    // 4. Second deposit (BURN mechanism)
     state.deposit(
         USER_ADDRESS.to_managed_address(),
         OptionalValue::None,
@@ -2316,10 +2396,18 @@ fn test_deposit_execute_switch_mechanism() {
         BigUint::zero(),
     );
 
-    // === Switch back to LOCK mechanism ===
-    state.set_token_lock_mechanism(trusted_token_id, None);
+    // 5. Switch back to LOCK mechanism
+    let lock_bitmap = state.common_setup.bitmap_for_signers(&[3]);
+    state.common_setup.register_operation(
+        OWNER_ADDRESS,
+        signature_lock,
+        &lock_operation_hash_of_hashes,
+        lock_bitmap,
+        0,
+        MultiValueEncoded::from(ManagedVec::from(vec![lock_operation_hash.clone()])),
+    );
+    state.set_token_lock_mechanism(&lock_operation_hash_of_hashes, lock_operation);
 
-    // When switching mechanisms, deposited amount resets but balance is now held in contract
     state.common_setup.check_deposited_tokens_amount(vec![(
         EgldOrEsdtTokenIdentifier::esdt(trusted_token_id),
         0,
@@ -2331,7 +2419,7 @@ fn test_deposit_execute_switch_mechanism() {
         BigUint::from(expected_deposited),
     );
 
-    // === Execute operation 2 (validator 1) ===
+    // 6. Execute operation 2 (LOCK mechanism, validator 1)
     state.common_setup.register_operation(
         OWNER_ADDRESS,
         signature_two,
@@ -2368,7 +2456,7 @@ fn test_deposit_execute_switch_mechanism() {
         BigUint::from(expected_receiver),
     );
 
-    // === Third deposit (LOCK mechanism) ===
+    // 7. Third deposit (LOCK mechanism)
     state.deposit(
         USER_ADDRESS.to_managed_address(),
         OptionalValue::None,
@@ -2692,13 +2780,12 @@ fn test_execute_operation_native_token_failed_event() {
 fn test_set_token_burn_mechanism_no_roles() {
     let mut state = MvxEsdtSafeTestState::new();
     state.deploy_contract_with_roles(None);
-    state.complete_setup_phase(Some(UNPAUSE_CONTRACT_LOG));
 
     state
         .common_setup
         .deploy_header_verifier(vec![ScArray::ChainConfig, ScArray::ESDTSafe]);
 
-    state.set_token_burn_mechanism("WEGLD", Some(MINT_AND_BURN_ROLES_NOT_FOUND));
+    state.set_token_burn_mechanism_before_setup_phase("WEGLD", Some(MINT_AND_BURN_ROLES_NOT_FOUND));
 }
 
 /// ### TEST
@@ -2713,12 +2800,14 @@ fn test_set_token_burn_mechanism_no_roles() {
 fn test_set_token_burn_mechanism_token_not_trusted() {
     let mut state = MvxEsdtSafeTestState::new();
     state.deploy_contract_with_roles(None);
-    state.complete_setup_phase(Some(UNPAUSE_CONTRACT_LOG));
     state
         .common_setup
         .deploy_header_verifier(vec![ScArray::ChainConfig, ScArray::ESDTSafe]);
 
-    state.set_token_burn_mechanism(FIRST_TEST_TOKEN.as_str(), Some(TOKEN_ID_IS_NOT_TRUSTED));
+    state.set_token_burn_mechanism_before_setup_phase(
+        FIRST_TEST_TOKEN.as_str(),
+        Some(TOKEN_ID_IS_NOT_TRUSTED),
+    );
 }
 
 /// ### TEST
@@ -2733,13 +2822,12 @@ fn test_set_token_burn_mechanism_token_not_trusted() {
 fn test_set_token_burn_mechanism() {
     let mut state = MvxEsdtSafeTestState::new();
     state.deploy_contract_with_roles(None);
-    state.complete_setup_phase(Some(UNPAUSE_CONTRACT_LOG));
 
     state
         .common_setup
         .deploy_header_verifier(vec![ScArray::ChainConfig, ScArray::ESDTSafe]);
 
-    state.set_token_burn_mechanism(TRUSTED_TOKEN_IDS[0], None);
+    state.set_token_burn_mechanism_before_setup_phase(TRUSTED_TOKEN, None);
 
     state
         .common_setup
@@ -2749,12 +2837,12 @@ fn test_set_token_burn_mechanism() {
         .whitebox(mvx_esdt_safe::contract_obj, |sc| {
             assert!(sc
                 .burn_mechanism_tokens()
-                .contains(&EgldOrEsdtTokenIdentifier::esdt(TRUSTED_TOKEN_IDS[0])))
+                .contains(&EgldOrEsdtTokenIdentifier::esdt(TRUSTED_TOKEN)))
         });
 
     state.common_setup.check_account_single_esdt(
         ESDT_SAFE_ADDRESS.to_address(),
-        TestTokenIdentifier::new(TRUSTED_TOKEN_IDS[0]),
+        TestTokenIdentifier::new(TRUSTED_TOKEN),
         0u64,
         BigUint::zero(),
     );
@@ -2772,14 +2860,13 @@ fn test_set_token_burn_mechanism() {
 fn test_set_token_lock_mechanism() {
     let mut state = MvxEsdtSafeTestState::new();
     state.deploy_contract_with_roles(None);
-    state.complete_setup_phase(Some(UNPAUSE_CONTRACT_LOG));
+
+    state.set_token_burn_mechanism_before_setup_phase(TRUSTED_TOKEN, None);
+    state.set_token_lock_mechanism_before_setup_phase(TRUSTED_TOKEN, None);
 
     state
         .common_setup
         .deploy_header_verifier(vec![ScArray::ChainConfig, ScArray::ESDTSafe]);
-
-    state.set_token_burn_mechanism(TRUSTED_TOKEN_IDS[0], None);
-    state.set_token_lock_mechanism(TRUSTED_TOKEN_IDS[0], None);
 
     state
         .common_setup
@@ -2792,7 +2879,7 @@ fn test_set_token_lock_mechanism() {
 
     state.common_setup.check_account_single_esdt(
         ESDT_SAFE_ADDRESS.to_address(),
-        TestTokenIdentifier::new(TRUSTED_TOKEN_IDS[0]),
+        TestTokenIdentifier::new(TRUSTED_TOKEN),
         100u64,
         BigUint::zero(),
     );
@@ -2810,13 +2897,11 @@ fn test_set_token_lock_mechanism() {
 fn test_set_token_lock_mechanism_token_from_sovereign() {
     let mut state = MvxEsdtSafeTestState::new();
     state.deploy_contract_with_roles(None);
-    state.complete_setup_phase(Some(UNPAUSE_CONTRACT_LOG));
+    state.set_token_burn_mechanism_before_setup_phase(TRUSTED_TOKEN, None);
 
     state
         .common_setup
         .deploy_header_verifier(vec![ScArray::ChainConfig, ScArray::ESDTSafe]);
-
-    state.set_token_burn_mechanism(TRUSTED_TOKEN_IDS[0], None);
 
     state
         .common_setup
@@ -2826,12 +2911,12 @@ fn test_set_token_lock_mechanism_token_from_sovereign() {
         .to(ESDT_SAFE_ADDRESS)
         .whitebox(mvx_esdt_safe::contract_obj, |sc| {
             sc.multiversx_to_sovereign_token_id_mapper(&EgldOrEsdtTokenIdentifier::esdt(
-                TRUSTED_TOKEN_IDS[0],
+                TRUSTED_TOKEN,
             ))
             .set(EgldOrEsdtTokenIdentifier::from("MOCK"));
         });
 
-    state.set_token_lock_mechanism(TRUSTED_TOKEN_IDS[0], Some(TOKEN_IS_FROM_SOVEREIGN));
+    state.set_token_lock_mechanism_before_setup_phase(TRUSTED_TOKEN, Some(TOKEN_IS_FROM_SOVEREIGN));
 }
 
 /// ### TEST
@@ -3061,6 +3146,7 @@ fn test_update_config() {
 fn test_execute_operation_partial_execution() {
     let mut state = MvxEsdtSafeTestState::new();
     state.deploy_contract_with_roles(None);
+    state.set_token_burn_mechanism_before_setup_phase(TRUSTED_TOKEN, None);
     state.complete_setup_phase(Some(UNPAUSE_CONTRACT_LOG));
 
     state
@@ -3112,7 +3198,7 @@ fn test_execute_operation_partial_execution() {
     );
 
     let second_payment = OperationEsdtPayment::new(
-        EgldOrEsdtTokenIdentifier::esdt(TRUSTED_TOKEN_IDS[0]),
+        EgldOrEsdtTokenIdentifier::esdt(TRUSTED_TOKEN),
         0,
         token_data.clone(),
     );
@@ -3153,8 +3239,6 @@ fn test_execute_operation_partial_execution() {
         .common_setup
         .complete_header_verifier_setup_phase(None);
 
-    state.set_token_burn_mechanism(TRUSTED_TOKEN_IDS[0], None);
-
     let bitmap = state.common_setup.full_bitmap(1);
     let epoch = 0;
 
@@ -3174,7 +3258,7 @@ fn test_execute_operation_partial_execution() {
             EXECUTED_BRIDGE_OP_EVENT,
             DEPOSIT_EVENT,
             &SOV_FIRST_TOKEN_ID.as_str(),
-            &TRUSTED_TOKEN_IDS[0],
+            &TRUSTED_TOKEN,
             &SOV_SECOND_TOKEN_ID.as_str(),
         ]),
         None,
@@ -3196,7 +3280,7 @@ fn test_execute_operation_partial_execution() {
 
     state.common_setup.check_account_single_esdt(
         USER_ADDRESS.to_address(),
-        TestTokenIdentifier::new(TRUSTED_TOKEN_IDS[0]),
+        TestTokenIdentifier::new(TRUSTED_TOKEN),
         0,
         BigUint::zero(),
     );
@@ -3217,7 +3301,7 @@ fn test_execute_operation_partial_execution() {
 
     state.common_setup.check_account_single_esdt(
         ESDT_SAFE_ADDRESS.to_address(),
-        TestTokenIdentifier::new(TRUSTED_TOKEN_IDS[0]),
+        TestTokenIdentifier::new(TRUSTED_TOKEN),
         0,
         BigUint::zero(),
     );

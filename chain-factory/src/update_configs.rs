@@ -87,4 +87,32 @@ pub trait UpdateConfigsModule: only_admin::OnlyAdminModule {
             .remove_users_from_whitelist_during_setup_phase(users)
             .sync_call();
     }
+
+    #[only_admin]
+    #[endpoint(setTokenBurnMechanismSetupPhase)]
+    fn set_token_burn_mechanism(
+        &self,
+        mvx_esdt_safe_address: ManagedAddress,
+        token_id: EgldOrEsdtTokenIdentifier,
+    ) {
+        self.tx()
+            .to(mvx_esdt_safe_address)
+            .typed(MvxEsdtSafeProxy)
+            .set_token_burn_mechanism_setup_phase(token_id)
+            .sync_call();
+    }
+
+    #[only_admin]
+    #[endpoint(setTokenLockMechanismSetupPhase)]
+    fn set_token_lock_mechanism(
+        &self,
+        mvx_esdt_safe_address: ManagedAddress,
+        token_id: EgldOrEsdtTokenIdentifier,
+    ) {
+        self.tx()
+            .to(mvx_esdt_safe_address)
+            .typed(MvxEsdtSafeProxy)
+            .set_token_lock_mechanism_setup_phase(token_id)
+            .sync_call();
+    }
 }

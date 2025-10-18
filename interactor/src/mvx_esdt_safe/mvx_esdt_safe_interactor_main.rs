@@ -85,6 +85,7 @@ impl MvxEsdtSafeInteract {
         let token_configs = [
             ("MVX", EsdtTokenType::Fungible, 18),
             ("FEE", EsdtTokenType::Fungible, 18),
+            ("TRUSTED", EsdtTokenType::Fungible, 18),
         ];
 
         for (ticker, token_type, decimals) in token_configs {

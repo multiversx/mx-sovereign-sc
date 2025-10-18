@@ -47,4 +47,12 @@ pub trait ForgeCallbackModule:
             }
         }
     }
+
+    #[promises_callback]
+    fn update_configs(&self, #[call_result] result: ManagedAsyncCallResult<IgnoreValue>) {
+        match result {
+            ManagedAsyncCallResult::Ok(_) => {}
+            ManagedAsyncCallResult::Err(err) => sc_panic!("{}", err.err_msg),
+        }
+    }
 }

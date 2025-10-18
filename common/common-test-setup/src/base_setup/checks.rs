@@ -1,4 +1,5 @@
 use cross_chain::storage::CrossChainStorage;
+use error_messages::INCORRECT_DEPOSIT_AMOUNT;
 use header_verifier::storage::HeaderVerifierStorageModule;
 use multiversx_sc_scenario::imports::{EgldOrEsdtTokenIdentifier, ManagedVec};
 use multiversx_sc_scenario::DebugApi;
@@ -142,7 +143,11 @@ impl BaseSetup {
                     .collect();
                 for token in tokens {
                     let (token_id, amount) = token;
-                    assert!(sc.deposited_tokens_amount(&token_id).get() == amount);
+                    assert!(
+                        sc.deposited_tokens_amount(&token_id).get() == amount,
+                        "{}",
+                        INCORRECT_DEPOSIT_AMOUNT
+                    );
                 }
             });
     }
