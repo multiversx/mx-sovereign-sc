@@ -1,9 +1,7 @@
 #![no_std]
 
 use crate::err_msg;
-use error_messages::{
-    ADDRESS_NOT_VALID_SC_ADDRESS, CHAIN_FACTORY_ADDRESS_NOT_IN_EXPECTED_SHARD, DEPLOY_COST_IS_ZERO,
-};
+use error_messages::{ADDRESS_NOT_VALID_SC_ADDRESS, CHAIN_FACTORY_ADDRESS_NOT_IN_EXPECTED_SHARD};
 use multiversx_sc::imports::*;
 
 pub mod forge_common;
@@ -24,7 +22,6 @@ pub trait SovereignForge:
     #[init]
     fn init(&self, opt_deploy_cost: OptionalValue<BigUint>) {
         if let OptionalValue::Some(deploy_cost) = opt_deploy_cost {
-            require!(deploy_cost > 0, DEPLOY_COST_IS_ZERO);
             self.deploy_cost().set(deploy_cost);
         }
     }
