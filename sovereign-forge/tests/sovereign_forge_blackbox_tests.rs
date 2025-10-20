@@ -46,7 +46,7 @@ fn test_deploy_contracts() {
     let mut state = SovereignForgeTestState::new();
     state
         .common_setup
-        .deploy_sovereign_forge(OptionalValue::None);
+        .deploy_sovereign_forge(OptionalValue::Some(DEPLOY_COST.into()));
     state.common_setup.deploy_chain_factory();
 }
 
@@ -63,7 +63,7 @@ fn test_register_chain_factory() {
     let mut state = SovereignForgeTestState::new();
     state
         .common_setup
-        .deploy_sovereign_forge(OptionalValue::None);
+        .deploy_sovereign_forge(OptionalValue::Some(DEPLOY_COST.into()));
 
     state.register_chain_factory(2, CHAIN_FACTORY_SC_ADDRESS);
 
@@ -90,7 +90,7 @@ fn test_update_sovereign_config_no_chain_config_deployed() {
     let mut state = SovereignForgeTestState::new();
     state
         .common_setup
-        .deploy_sovereign_forge(OptionalValue::None);
+        .deploy_sovereign_forge(OptionalValue::Some(DEPLOY_COST.into()));
 
     state.register_chain_factory(2, CHAIN_FACTORY_SC_ADDRESS);
 
@@ -123,7 +123,7 @@ fn test_update_sovereign_config() {
 
     state
         .common_setup
-        .deploy_sovereign_forge(OptionalValue::None);
+        .deploy_sovereign_forge(OptionalValue::Some(DEPLOY_COST.into()));
 
     state.deploy_template_scs(Some(vec![
         ScArray::ChainFactory,
@@ -199,7 +199,7 @@ fn test_update_esdt_safe_config() {
     let mut state = SovereignForgeTestState::new();
     state
         .common_setup
-        .deploy_sovereign_forge(OptionalValue::None);
+        .deploy_sovereign_forge(OptionalValue::Some(DEPLOY_COST.into()));
 
     state.deploy_template_scs(Some(vec![
         ScArray::ChainFactory,
@@ -303,7 +303,7 @@ fn test_set_fee() {
     let mut state = SovereignForgeTestState::new();
     state
         .common_setup
-        .deploy_sovereign_forge(OptionalValue::None);
+        .deploy_sovereign_forge(OptionalValue::Some(DEPLOY_COST.into()));
 
     state.deploy_template_scs(Some(vec![
         ScArray::ChainFactory,
@@ -395,7 +395,7 @@ fn test_set_fee_phase_three_not_completed() {
     let mut state = SovereignForgeTestState::new();
     state
         .common_setup
-        .deploy_sovereign_forge(OptionalValue::None);
+        .deploy_sovereign_forge(OptionalValue::Some(DEPLOY_COST.into()));
 
     state.deploy_template_scs(Some(vec![
         ScArray::ChainFactory,
@@ -443,7 +443,7 @@ fn test_remove_fee() {
     let mut state = SovereignForgeTestState::new();
     state
         .common_setup
-        .deploy_sovereign_forge(OptionalValue::None);
+        .deploy_sovereign_forge(OptionalValue::Some(DEPLOY_COST.into()));
 
     state.deploy_template_scs(Some(vec![
         ScArray::ChainFactory,
@@ -535,7 +535,7 @@ fn test_remove_fee_phase_three_not_completed() {
     let mut state = SovereignForgeTestState::new();
     state
         .common_setup
-        .deploy_sovereign_forge(OptionalValue::None);
+        .deploy_sovereign_forge(OptionalValue::Some(DEPLOY_COST.into()));
 
     state.deploy_template_scs(Some(vec![
         ScArray::ChainFactory,
@@ -573,7 +573,7 @@ fn test_complete_setup_phase() {
     let mut state = SovereignForgeTestState::new();
     state
         .common_setup
-        .deploy_sovereign_forge(OptionalValue::None);
+        .deploy_sovereign_forge(OptionalValue::Some(DEPLOY_COST.into()));
 
     state.deploy_template_scs(Some(vec![
         ScArray::ChainFactory,
@@ -695,7 +695,7 @@ fn test_deploy_phase_one_chain_config_already_deployed() {
     let mut state = SovereignForgeTestState::new();
     state
         .common_setup
-        .deploy_sovereign_forge(OptionalValue::None);
+        .deploy_sovereign_forge(OptionalValue::Some(DEPLOY_COST.into()));
 
     state.deploy_template_scs(Some(vec![ScArray::ChainFactory, ScArray::ChainConfig]));
 
@@ -726,7 +726,7 @@ fn test_deploy_phase_one_preferred_chain_id_not_lowercase_alphanumeric() {
     let mut state = SovereignForgeTestState::new();
     state
         .common_setup
-        .deploy_sovereign_forge(OptionalValue::None);
+        .deploy_sovereign_forge(OptionalValue::Some(DEPLOY_COST.into()));
 
     state.deploy_template_scs(Some(vec![ScArray::ChainFactory, ScArray::ChainConfig]));
 
@@ -753,7 +753,7 @@ fn test_deploy_phase_one_preferred_chain_id_not_correct_length() {
     let mut state = SovereignForgeTestState::new();
     state
         .common_setup
-        .deploy_sovereign_forge(OptionalValue::None);
+        .deploy_sovereign_forge(OptionalValue::Some(DEPLOY_COST.into()));
 
     state.deploy_template_scs(Some(vec![ScArray::ChainFactory, ScArray::ChainConfig]));
 
@@ -780,7 +780,7 @@ fn test_deploy_phase_one_no_preferred_chain_id() {
     let mut state = SovereignForgeTestState::new();
     state
         .common_setup
-        .deploy_sovereign_forge(OptionalValue::None);
+        .deploy_sovereign_forge(OptionalValue::Some(DEPLOY_COST.into()));
 
     state.deploy_template_scs(Some(vec![ScArray::ChainFactory, ScArray::ChainConfig]));
 
@@ -819,7 +819,7 @@ fn test_deploy_phase_one_preferred_chain_id() {
     let mut state = SovereignForgeTestState::new();
     state
         .common_setup
-        .deploy_sovereign_forge(OptionalValue::None);
+        .deploy_sovereign_forge(OptionalValue::Some(DEPLOY_COST.into()));
 
     state.deploy_template_scs(Some(vec![ScArray::ChainFactory, ScArray::ChainConfig]));
 
@@ -863,7 +863,7 @@ fn test_deploy_phase_one_with_chain_id_used() {
     let mut state = SovereignForgeTestState::new();
     state
         .common_setup
-        .deploy_sovereign_forge(OptionalValue::None);
+        .deploy_sovereign_forge(OptionalValue::Some(DEPLOY_COST.into()));
 
     state.deploy_template_scs(Some(vec![ScArray::ChainFactory, ScArray::ChainConfig]));
 
@@ -897,7 +897,7 @@ fn test_deploy_phase_two_without_first_phase() {
     let mut state = SovereignForgeTestState::new();
     state
         .common_setup
-        .deploy_sovereign_forge(OptionalValue::None);
+        .deploy_sovereign_forge(OptionalValue::Some(DEPLOY_COST.into()));
     state.common_setup.deploy_chain_factory();
     state.finish_setup();
 
@@ -920,7 +920,7 @@ fn test_deploy_phase_two() {
     let mut state = SovereignForgeTestState::new();
     state
         .common_setup
-        .deploy_sovereign_forge(OptionalValue::None);
+        .deploy_sovereign_forge(OptionalValue::Some(DEPLOY_COST.into()));
 
     state.deploy_template_scs(Some(vec![
         ScArray::ChainFactory,
@@ -983,7 +983,7 @@ fn test_deploy_phase_two_esdt_safe_already_deployed() {
     let mut state = SovereignForgeTestState::new();
     state
         .common_setup
-        .deploy_sovereign_forge(OptionalValue::None);
+        .deploy_sovereign_forge(OptionalValue::Some(DEPLOY_COST.into()));
 
     state.deploy_template_scs(Some(vec![
         ScArray::ChainFactory,
@@ -1019,7 +1019,7 @@ fn test_deploy_phase_three() {
     let mut state = SovereignForgeTestState::new();
     state
         .common_setup
-        .deploy_sovereign_forge(OptionalValue::None);
+        .deploy_sovereign_forge(OptionalValue::Some(DEPLOY_COST.into()));
 
     state.deploy_template_scs(Some(vec![
         ScArray::ChainFactory,
@@ -1066,7 +1066,7 @@ fn test_remove_users_from_whitelist() {
     let mut state = SovereignForgeTestState::new();
     state
         .common_setup
-        .deploy_sovereign_forge(OptionalValue::None);
+        .deploy_sovereign_forge(OptionalValue::Some(DEPLOY_COST.into()));
 
     state.deploy_template_scs(Some(vec![
         ScArray::ChainFactory,
@@ -1131,7 +1131,7 @@ fn test_deploy_phase_three_without_phase_one() {
     let mut state = SovereignForgeTestState::new();
     state
         .common_setup
-        .deploy_sovereign_forge(OptionalValue::None);
+        .deploy_sovereign_forge(OptionalValue::Some(DEPLOY_COST.into()));
     state.deploy_template_scs(Some(vec![ScArray::ChainFactory, ScArray::ChainConfig]));
     state.finish_setup();
 
@@ -1153,7 +1153,7 @@ fn test_deploy_phase_three_without_phase_two() {
     let mut state = SovereignForgeTestState::new();
     state
         .common_setup
-        .deploy_sovereign_forge(OptionalValue::None);
+        .deploy_sovereign_forge(OptionalValue::Some(DEPLOY_COST.into()));
 
     state.deploy_template_scs(Some(vec![
         ScArray::ChainFactory,
@@ -1187,7 +1187,7 @@ fn test_deploy_phase_three_already_deployed() {
     let mut state = SovereignForgeTestState::new();
     state
         .common_setup
-        .deploy_sovereign_forge(OptionalValue::None);
+        .deploy_sovereign_forge(OptionalValue::Some(DEPLOY_COST.into()));
 
     state.deploy_template_scs(Some(vec![
         ScArray::ChainFactory,
@@ -1224,7 +1224,7 @@ fn test_complete_setup_phase_four_not_deployed() {
     let mut state = SovereignForgeTestState::new();
     state
         .common_setup
-        .deploy_sovereign_forge(OptionalValue::None);
+        .deploy_sovereign_forge(OptionalValue::Some(DEPLOY_COST.into()));
     state
         .common_setup
         .deploy_fee_market(None, ESDT_SAFE_ADDRESS);
@@ -1244,7 +1244,7 @@ fn test_deploy_phase_four() {
     let mut state = SovereignForgeTestState::new();
     state
         .common_setup
-        .deploy_sovereign_forge(OptionalValue::None);
+        .deploy_sovereign_forge(OptionalValue::Some(DEPLOY_COST.into()));
 
     state.deploy_template_scs(Some(vec![
         ScArray::ChainFactory,
@@ -1294,7 +1294,7 @@ fn test_deploy_phase_four_without_previous_phase() {
     let mut state = SovereignForgeTestState::new();
     state
         .common_setup
-        .deploy_sovereign_forge(OptionalValue::None);
+        .deploy_sovereign_forge(OptionalValue::Some(DEPLOY_COST.into()));
 
     state.deploy_template_scs(Some(vec![
         ScArray::ChainFactory,
@@ -1330,7 +1330,7 @@ fn test_deploy_phase_four_header_verifier_already_deployed() {
     let mut state = SovereignForgeTestState::new();
     state
         .common_setup
-        .deploy_sovereign_forge(OptionalValue::None);
+        .deploy_sovereign_forge(OptionalValue::Some(DEPLOY_COST.into()));
 
     state.deploy_template_scs(Some(vec![
         ScArray::ChainFactory,

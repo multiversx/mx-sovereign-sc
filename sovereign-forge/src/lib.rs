@@ -21,8 +21,9 @@ pub trait SovereignForge:
 {
     #[init]
     fn init(&self, opt_deploy_cost: OptionalValue<BigUint>) {
-        if let OptionalValue::Some(deploy_cost) = opt_deploy_cost {
-            self.deploy_cost().set(deploy_cost);
+        match opt_deploy_cost {
+            OptionalValue::Some(deploy_cost) => self.deploy_cost().set(deploy_cost),
+            OptionalValue::None => self.deploy_cost().set(BigUint::zero()),
         }
     }
 
