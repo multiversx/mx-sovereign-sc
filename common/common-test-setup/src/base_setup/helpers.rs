@@ -119,7 +119,6 @@ impl BaseSetup {
             ScArray::ESDTSafe => ESDT_SAFE_ADDRESS,
             ScArray::HeaderVerifier => HEADER_VERIFIER_ADDRESS,
             ScArray::FeeMarket => FEE_MARKET_ADDRESS,
-            _ => TestSCAddress::new("ERROR"),
         }
     }
 

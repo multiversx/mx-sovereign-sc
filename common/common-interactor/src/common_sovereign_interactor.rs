@@ -921,6 +921,11 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             .current_sovereign_forge_sc_address()
             .clone();
 
+        let fee = match fee {
+            Some(fee) => OptionalValue::Some(fee),
+            None => OptionalValue::None,
+        };
+
         self.interactor()
             .tx()
             .from(caller)

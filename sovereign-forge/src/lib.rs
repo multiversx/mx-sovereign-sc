@@ -33,6 +33,11 @@ pub trait SovereignForge:
     #[endpoint(registerChainFactory)]
     fn register_chain_factory(&self, shard_id: u32, chain_factory_address: ManagedAddress) {
         require!(
+            shard_id < forge_common::forge_utils::NUMBER_OF_SHARDS,
+            "Shard id {} is out of range",
+            shard_id
+        );
+        require!(
             self.blockchain()
                 .get_shard_of_address(&chain_factory_address)
                 == shard_id,

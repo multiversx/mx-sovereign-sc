@@ -78,7 +78,7 @@ pub trait PhasesModule:
     }
 
     #[endpoint(deployPhaseThree)]
-    fn deploy_phase_three(&self, fee: Option<FeeStruct<Self::Api>>) {
+    fn deploy_phase_three(&self, fee: OptionalValue<FeeStruct<Self::Api>>) {
         let caller = self.blockchain().get_caller();
 
         self.require_phase_two_completed(&caller);
@@ -89,7 +89,7 @@ pub trait PhasesModule:
 
         let esdt_safe_address = self.get_contract_address(&caller, ScArray::ESDTSafe);
 
-        self.deploy_fee_market(&esdt_safe_address, fee);
+        self.deploy_fee_market(&caller, &esdt_safe_address, fee);
     }
 
     #[endpoint(deployPhaseFour)]
@@ -130,7 +130,7 @@ pub trait PhasesModule:
         let fee_market_address = self.get_contract_address(&caller, ScArray::FeeMarket);
 
         self.tx()
-            .to(self.get_chain_factory_address())
+            .to(self.get_chain_factory_address(&caller))
             .typed(ChainFactoryContractProxy)
             .complete_setup_phase(
                 chain_config_address,

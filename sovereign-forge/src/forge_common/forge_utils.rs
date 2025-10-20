@@ -9,7 +9,7 @@ use structs::forge::ScArray;
 
 const CHARSET: &[u8] = b"0123456789abcdefghijklmnopqrstuvwxyz";
 
-const NUMBER_OF_SHARDS: u32 = 3;
+pub const NUMBER_OF_SHARDS: u32 = 3;
 
 #[multiversx_sc::module]
 pub trait ForgeUtilsModule:
@@ -122,10 +122,8 @@ pub trait ForgeUtilsModule:
         }
     }
 
-    fn get_chain_factory_address(&self) -> ManagedAddress {
-        let blockchain_api = self.blockchain();
-        let caller = blockchain_api.get_caller();
-        let shard_id = blockchain_api.get_shard_of_address(&caller);
+    fn get_chain_factory_address(&self, caller: &ManagedAddress) -> ManagedAddress {
+        let shard_id = self.blockchain().get_shard_of_address(caller);
 
         self.chain_factories(shard_id).get()
     }

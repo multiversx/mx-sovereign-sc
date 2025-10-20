@@ -12,7 +12,7 @@ use multiversx_sc::{
     imports::{Bech32Address, MultiValue3, OptionalValue},
     types::{
         Address, BigUint, EgldOrEsdtTokenPayment, EsdtTokenData, EsdtTokenType, ManagedAddress,
-        ManagedBuffer, ManagedVec, MultiValueEncoded, TestSCAddress,
+        ManagedBuffer, ManagedVec, MultiValueEncoded,
     },
 };
 use multiversx_sc_snippets::{
@@ -463,7 +463,6 @@ pub trait InteractorHelpers {
                     .current_fee_market_address()
                     .to_address(),
             ),
-            _ => TestSCAddress::new("ERROR").to_managed_address(),
         }
     }
 

@@ -6,10 +6,10 @@
 
 // Init:                                 1
 // Upgrade:                              1
-// Endpoints:                           21
+// Endpoints:                           22
 // Async Callback (empty):               1
 // Promise callbacks:                    3
-// Total number of exported functions:  27
+// Total number of exported functions:  28
 
 #![no_std]
 
@@ -42,6 +42,7 @@ multiversx_sc_wasm_adapter::endpoints! {
         removeUsersFromWhitelist => remove_users_from_whitelist
         setTokenBurnMechanism => set_token_burn_mechanism
         setTokenLockMechanism => set_token_lock_mechanism
+        updateDeployCost => update_deploy_cost
         setup_phase => setup_phase
         register_deployed_contract => register_deployed_contract
         update_configs => update_configs

@@ -143,7 +143,7 @@ where
     }
 
     pub fn deploy_phase_three<
-        Arg0: ProxyArg<Option<structs::fee::FeeStruct<Env::Api>>>,
+        Arg0: ProxyArg<OptionalValue<structs::fee::FeeStruct<Env::Api>>>,
     >(
         self,
         fee: Arg0,
@@ -340,6 +340,19 @@ where
             .payment(NotPayable)
             .raw_call("setTokenLockMechanism")
             .argument(&token_id)
+            .original_result()
+    }
+
+    pub fn update_deploy_cost<
+        Arg0: ProxyArg<OptionalValue<BigUint<Env::Api>>>,
+    >(
+        self,
+        opt_deploy_cost: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("updateDeployCost")
+            .argument(&opt_deploy_cost)
             .original_result()
     }
 }
