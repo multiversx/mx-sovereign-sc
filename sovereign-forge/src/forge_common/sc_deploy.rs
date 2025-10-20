@@ -24,13 +24,12 @@ pub trait ScDeployModule:
     #[inline]
     fn deploy_chain_config(
         &self,
+        sovereign_owner: &ManagedAddress,
         chain_id: &ManagedBuffer,
         config: OptionalValue<SovereignConfig<Self::Api>>,
     ) {
-        let caller = self.blockchain().get_caller();
-
         self.tx()
-            .to(self.get_chain_factory_address(&caller))
+            .to(self.get_chain_factory_address(sovereign_owner))
             .typed(ChainFactoryContractProxy)
             .deploy_sovereign_chain_config_contract(config)
             .gas(PHASE_ONE_ASYNC_CALL_GAS)
@@ -68,14 +67,14 @@ pub trait ScDeployModule:
     #[inline]
     fn deploy_fee_market(
         &self,
-        caller: &ManagedAddress,
+        sovereign_owner: &ManagedAddress,
         esdt_safe_address: &ManagedAddress,
         fee: OptionalValue<FeeStruct<Self::Api>>,
     ) {
-        let chain_id = self.sovereigns_mapper(caller).get();
+        let chain_id = self.sovereigns_mapper(sovereign_owner).get();
 
         self.tx()
-            .to(self.get_chain_factory_address(caller))
+            .to(self.get_chain_factory_address(sovereign_owner))
             .typed(ChainFactoryContractProxy)
             .deploy_fee_market(esdt_safe_address, fee.into_option())
             .gas(PHASE_THREE_ASYNC_CALL_GAS)
@@ -90,13 +89,13 @@ pub trait ScDeployModule:
     #[inline]
     fn deploy_header_verifier(
         &self,
+        sovereign_owner: &ManagedAddress,
         sovereign_contract: MultiValueEncoded<ContractInfo<Self::Api>>,
     ) {
-        let caller = self.blockchain().get_caller();
-        let chain_id = self.sovereigns_mapper(&caller).get();
+        let chain_id = self.sovereigns_mapper(sovereign_owner).get();
 
         self.tx()
-            .to(self.get_chain_factory_address(&caller))
+            .to(self.get_chain_factory_address(sovereign_owner))
             .typed(ChainFactoryContractProxy)
             .deploy_header_verifier(sovereign_contract)
             .gas(PHASE_FOUR_ASYNC_CALL_GAS)

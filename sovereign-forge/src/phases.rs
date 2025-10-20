@@ -59,7 +59,7 @@ pub trait PhasesModule:
             CHAIN_CONFIG_ALREADY_DEPLOYED
         );
 
-        self.deploy_chain_config(&chain_id, config);
+        self.deploy_chain_config(&caller, &chain_id, config);
         self.sovereigns_mapper(&caller).set(chain_id);
     }
 
@@ -108,7 +108,7 @@ pub trait PhasesModule:
                 .iter(),
         );
 
-        self.deploy_header_verifier(contract_addresses);
+        self.deploy_header_verifier(&caller, contract_addresses);
     }
 
     #[endpoint(completeSetupPhase)]
