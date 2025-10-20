@@ -48,11 +48,10 @@ pub trait ScDeployModule:
         sov_prefix: ManagedBuffer,
         opt_config: OptionalValue<EsdtSafeConfig<Self::Api>>,
     ) {
-        let caller = self.blockchain().get_caller();
-        let chain_id = self.sovereigns_mapper(&caller).get();
+        let chain_id = self.sovereigns_mapper(&sovereign_owner).get();
 
         self.tx()
-            .to(self.get_chain_factory_address(&caller))
+            .to(self.get_chain_factory_address(&sovereign_owner))
             .typed(ChainFactoryContractProxy)
             .deploy_mvx_esdt_safe(sovereign_owner, sov_prefix, opt_config)
             .gas(PHASE_TWO_ASYNC_CALL_GAS)
