@@ -1,9 +1,7 @@
 #![no_std]
 
 use crate::err_msg;
-use error_messages::{
-    ADDRESS_NOT_VALID_SC_ADDRESS, CHAIN_FACTORY_ADDRESS_NOT_IN_EXPECTED_SHARD, DEPLOY_COST_IS_ZERO,
-};
+use error_messages::{ADDRESS_NOT_VALID_SC_ADDRESS, CHAIN_FACTORY_ADDRESS_NOT_IN_EXPECTED_SHARD};
 use multiversx_sc::imports::*;
 
 pub mod forge_common;
@@ -23,15 +21,20 @@ pub trait SovereignForge:
 {
     #[init]
     fn init(&self, opt_deploy_cost: OptionalValue<BigUint>) {
-        if let OptionalValue::Some(deploy_cost) = opt_deploy_cost {
-            require!(deploy_cost > 0, DEPLOY_COST_IS_ZERO);
-            self.deploy_cost().set(deploy_cost);
+        match opt_deploy_cost {
+            OptionalValue::Some(deploy_cost) => self.deploy_cost().set(deploy_cost),
+            OptionalValue::None => self.deploy_cost().set(BigUint::zero()),
         }
     }
 
     #[only_owner]
     #[endpoint(registerChainFactory)]
     fn register_chain_factory(&self, shard_id: u32, chain_factory_address: ManagedAddress) {
+        require!(
+            shard_id < forge_common::forge_utils::NUMBER_OF_SHARDS,
+            "Shard id {} is out of range",
+            shard_id
+        );
         require!(
             self.blockchain()
                 .get_shard_of_address(&chain_factory_address)

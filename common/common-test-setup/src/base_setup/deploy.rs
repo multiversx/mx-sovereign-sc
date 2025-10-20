@@ -248,6 +248,11 @@ impl BaseSetup {
         fee: Option<FeeStruct<StaticApi>>,
         expected_error_message: Option<&str>,
     ) {
+        let fee = match fee {
+            Some(fee) => OptionalValue::Some(fee),
+            None => OptionalValue::None,
+        };
+
         let response = self
             .world
             .tx()
