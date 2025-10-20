@@ -495,8 +495,10 @@ pub trait CommonInteractorTrait: InteractorHelpers {
         caller: Address,
         chain_id: String,
         esdt_safe_address: Bech32Address,
-        fee: Option<FeeStruct<StaticApi>>,
+        fee: OptionalValue<FeeStruct<StaticApi>>,
     ) {
+        let fee = fee.into_option();
+
         let new_address = self
             .interactor()
             .tx()
@@ -551,7 +553,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             deploy_cost.clone(),
             optional_sov_config,
             optional_esdt_safe_config,
-            Some(fee_struct),
+            OptionalValue::Some(fee_struct),
         )
         .await;
         let fee_token_id = self.state().get_fee_token_id();
@@ -568,7 +570,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
         deploy_cost: OptionalValue<BigUint<StaticApi>>,
         optional_sov_config: OptionalValue<SovereignConfig<StaticApi>>,
         optional_esdt_safe_config: OptionalValue<EsdtSafeConfig<StaticApi>>,
-        fee: Option<FeeStruct<StaticApi>>,
+        fee: OptionalValue<FeeStruct<StaticApi>>,
     ) {
         let initial_caller = self.get_bridge_owner_for_shard(SHARD_0).clone();
 
@@ -675,7 +677,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
         deploy_cost: OptionalValue<BigUint<StaticApi>>,
         optional_esdt_safe_config: OptionalValue<EsdtSafeConfig<StaticApi>>,
         optional_sov_config: OptionalValue<SovereignConfig<StaticApi>>,
-        fee: Option<FeeStruct<StaticApi>>,
+        fee: OptionalValue<FeeStruct<StaticApi>>,
     ) {
         let caller = self.get_sovereign_owner_for_shard(shard);
         let preferred_chain_id = Self::generate_random_chain_id();
@@ -915,7 +917,11 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             .await;
     }
 
-    async fn deploy_phase_three(&mut self, caller: Address, fee: Option<FeeStruct<StaticApi>>) {
+    async fn deploy_phase_three(
+        &mut self,
+        caller: Address,
+        fee: OptionalValue<FeeStruct<StaticApi>>,
+    ) {
         let sovereign_forge_address = self
             .common_state()
             .current_sovereign_forge_sc_address()

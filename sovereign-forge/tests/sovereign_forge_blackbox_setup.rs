@@ -81,7 +81,6 @@ impl SovereignForgeTestState {
                 ScArray::ChainFactory => {
                     self.common_setup.deploy_chain_factory();
                 }
-                _ => {}
             }
         }
     }
