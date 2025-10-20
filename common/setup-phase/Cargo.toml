@@ -6,6 +6,8 @@ edition = "2021"
 
 [dependencies.multiversx-sc]
 version = "0.62.0"
+git = "https://github.com/multiversx/mx-sdk-rs"
+branch = "master"
 
 [dependencies.error-messages]
 path = "../error-messages"
@@ -18,3 +20,5 @@ path = "../custom-events"
 
 [dev-dependencies.multiversx-sc-scenario]
 version = "0.62.0"
+git = "https://github.com/multiversx/mx-sdk-rs"
+branch = "master"

@@ -10,12 +10,16 @@ path = "src/lib.rs"
 
 [dependencies.multiversx-sc]
 version = "0.62.0"
+git = "https://github.com/multiversx/mx-sdk-rs"
+branch = "master"
 
 [dev-dependencies]
 num-bigint = "0.4"
 
 [dev-dependencies.multiversx-sc-scenario]
 version = "0.62.0"
+git = "https://github.com/multiversx/mx-sdk-rs"
+branch = "master"
 
 [dependencies.proxies]
 path = "../common/proxies"
