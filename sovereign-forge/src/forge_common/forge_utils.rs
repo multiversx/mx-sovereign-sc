@@ -1,7 +1,6 @@
 use error_messages::{
     CALLER_DID_NOT_DEPLOY_ANY_SOV_CHAIN, CHAIN_CONFIG_NOT_DEPLOYED, CHAIN_ID_ALREADY_IN_USE,
-    DEPLOY_COST_NOT_ENOUGH, ESDT_SAFE_NOT_DEPLOYED, FEE_MARKET_NOT_DEPLOYED,
-    HEADER_VERIFIER_NOT_DEPLOYED,
+    ESDT_SAFE_NOT_DEPLOYED, FEE_MARKET_NOT_DEPLOYED, HEADER_VERIFIER_NOT_DEPLOYED,
 };
 use multiversx_sc::err_msg;
 use multiversx_sc::require;
@@ -109,17 +108,6 @@ pub trait ForgeUtilsModule:
             byte_array[i] = CHARSET[rand_index];
         });
         ManagedBuffer::new_from_bytes(&byte_array)
-    }
-
-    fn require_correct_deploy_cost(&self, call_value: &BigUint) {
-        let deploy_cost_mapper = self.deploy_cost();
-
-        if !deploy_cost_mapper.is_empty() {
-            require!(
-                call_value == &deploy_cost_mapper.get(),
-                DEPLOY_COST_NOT_ENOUGH
-            );
-        }
     }
 
     fn get_chain_factory_address(&self, caller: &ManagedAddress) -> ManagedAddress {

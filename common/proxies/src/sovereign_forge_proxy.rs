@@ -344,15 +344,15 @@ where
     }
 
     pub fn update_deploy_cost<
-        Arg0: ProxyArg<OptionalValue<BigUint<Env::Api>>>,
+        Arg0: ProxyArg<BigUint<Env::Api>>,
     >(
         self,
-        opt_deploy_cost: Arg0,
+        deploy_cost: Arg0,
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("updateDeployCost")
-            .argument(&opt_deploy_cost)
+            .argument(&deploy_cost)
             .original_result()
     }
 }

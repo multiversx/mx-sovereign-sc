@@ -1,9 +1,4 @@
-use error_messages::DEPLOY_COST_IS_ZERO;
-use multiversx_sc::{
-    imports::OptionalValue,
-    require,
-    types::{MultiValueEncoded, TokenIdentifier},
-};
+use multiversx_sc::types::{MultiValueEncoded, TokenIdentifier};
 use proxies::chain_factory_proxy::ChainFactoryContractProxy;
 use structs::configs::{EsdtSafeConfig, SovereignConfig};
 use structs::fee::FeeStruct;
@@ -183,15 +178,7 @@ pub trait UpdateConfigsModule:
 
     #[only_owner]
     #[endpoint(updateDeployCost)]
-    fn update_deploy_cost(&self, opt_deploy_cost: OptionalValue<BigUint>) {
-        match opt_deploy_cost {
-            OptionalValue::Some(deploy_cost) => {
-                require!(deploy_cost > 0, DEPLOY_COST_IS_ZERO);
-                self.deploy_cost().set(deploy_cost);
-            }
-            OptionalValue::None => {
-                self.deploy_cost().clear();
-            }
-        }
+    fn update_deploy_cost(&self, deploy_cost: BigUint) {
+        self.deploy_cost().set(deploy_cost);
     }
 }

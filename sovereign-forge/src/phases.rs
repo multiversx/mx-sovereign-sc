@@ -5,11 +5,11 @@ use crate::{
         callbacks::{self, CallbackProxy},
     },
 };
-use core::ops::Deref;
 
 use error_messages::{
-    CHAIN_CONFIG_ALREADY_DEPLOYED, ESDT_SAFE_ALREADY_DEPLOYED, FEE_MARKET_ALREADY_DEPLOYED,
-    HEADER_VERIFIER_ALREADY_DEPLOYED, SOVEREIGN_SETUP_PHASE_ALREADY_COMPLETED,
+    CHAIN_CONFIG_ALREADY_DEPLOYED, DEPLOY_COST_NOT_ENOUGH, ESDT_SAFE_ALREADY_DEPLOYED,
+    FEE_MARKET_ALREADY_DEPLOYED, HEADER_VERIFIER_ALREADY_DEPLOYED,
+    SOVEREIGN_SETUP_PHASE_ALREADY_COMPLETED,
 };
 use multiversx_sc::{imports::OptionalValue, require, types::MultiValueEncoded};
 use proxies::chain_factory_proxy::ChainFactoryContractProxy;
@@ -38,8 +38,11 @@ pub trait PhasesModule:
     ) {
         self.require_initialization_phase_complete();
 
-        let call_value = self.call_value().egld();
-        self.require_correct_deploy_cost(call_value.deref());
+        let call_value = self.call_value().egld().clone();
+        require!(
+            call_value == self.deploy_cost().get(),
+            DEPLOY_COST_NOT_ENOUGH
+        );
 
         let chain_id = self.generate_chain_id(opt_preferred_chain_id);
 
