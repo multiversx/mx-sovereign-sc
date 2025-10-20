@@ -45,18 +45,21 @@ where
 {
     pub fn init<
         Arg0: ProxyArg<ManagedAddress<Env::Api>>,
-        Arg1: ProxyArg<ManagedBuffer<Env::Api>>,
-        Arg2: ProxyArg<OptionalValue<structs::configs::EsdtSafeConfig<Env::Api>>>,
+        Arg1: ProxyArg<ManagedAddress<Env::Api>>,
+        Arg2: ProxyArg<ManagedBuffer<Env::Api>>,
+        Arg3: ProxyArg<OptionalValue<structs::configs::EsdtSafeConfig<Env::Api>>>,
     >(
         self,
         sovereign_owner: Arg0,
-        sov_token_prefix: Arg1,
-        opt_config: Arg2,
+        sovereign_forge_address: Arg1,
+        sov_token_prefix: Arg2,
+        opt_config: Arg3,
     ) -> TxTypedDeploy<Env, From, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_deploy()
             .argument(&sovereign_owner)
+            .argument(&sovereign_forge_address)
             .argument(&sov_token_prefix)
             .argument(&opt_config)
             .original_result()
@@ -204,7 +207,7 @@ where
             .original_result()
     }
 
-    pub fn set_token_burn_mechanism<
+    pub fn set_token_burn_mechanism_setup_phase<
         Arg0: ProxyArg<EgldOrEsdtTokenIdentifier<Env::Api>>,
     >(
         self,
@@ -212,21 +215,53 @@ where
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
+            .raw_call("setTokenBurnMechanismSetupPhase")
+            .argument(&token_id)
+            .original_result()
+    }
+
+    pub fn set_token_burn_mechanism<
+        Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
+        Arg1: ProxyArg<structs::configs::SetBurnMechanismOperation<Env::Api>>,
+    >(
+        self,
+        hash_of_hashes: Arg0,
+        set_burn_mechanism_operation: Arg1,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
             .raw_call("setTokenBurnMechanism")
+            .argument(&hash_of_hashes)
+            .argument(&set_burn_mechanism_operation)
+            .original_result()
+    }
+
+    pub fn set_token_lock_mechanism_setup_phase<
+        Arg0: ProxyArg<EgldOrEsdtTokenIdentifier<Env::Api>>,
+    >(
+        self,
+        token_id: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("setTokenLockMechanismSetupPhase")
             .argument(&token_id)
             .original_result()
     }
 
     pub fn set_token_lock_mechanism<
-        Arg0: ProxyArg<EgldOrEsdtTokenIdentifier<Env::Api>>,
+        Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
+        Arg1: ProxyArg<structs::configs::SetLockMechanismOperation<Env::Api>>,
     >(
         self,
-        token_id: Arg0,
+        hash_of_hashes: Arg0,
+        set_lock_mechanism_operation: Arg1,
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("setTokenLockMechanism")
-            .argument(&token_id)
+            .argument(&hash_of_hashes)
+            .argument(&set_lock_mechanism_operation)
             .original_result()
     }
 

@@ -6,9 +6,9 @@
 
 // Init:                                 1
 // Upgrade:                              1
-// Endpoints:                           15
+// Endpoints:                           21
 // Async Callback (empty):               1
-// Total number of exported functions:  18
+// Total number of exported functions:  24
 
 #![no_std]
 
@@ -24,6 +24,10 @@ multiversx_sc_wasm_adapter::endpoints! {
         deployHeaderVerifier => deploy_header_verifier
         deployEsdtSafe => deploy_mvx_esdt_safe
         deployFeeMarket => deploy_fee_market
+        getChainConfigTemplateAddress => chain_config_template
+        getHeaderVerifierTemplateAddress => header_verifier_template
+        getEsdtSafeTemplateAddress => esdt_safe_template
+        getFeeMarketTemplateAddress => fee_market_template
         isAdmin => is_admin
         addAdmin => add_admin
         removeAdmin => remove_admin
@@ -34,6 +38,8 @@ multiversx_sc_wasm_adapter::endpoints! {
         removeFee => remove_fee
         addUsersToWhitelistSetupPhase => add_users_to_whitelist
         removeUsersFromWhitelistSetupPhase => remove_users_from_whitelist
+        setTokenBurnMechanismSetupPhase => set_token_burn_mechanism
+        setTokenLockMechanismSetupPhase => set_token_lock_mechanism
         completeSetupPhase => complete_setup_phase
     )
 }

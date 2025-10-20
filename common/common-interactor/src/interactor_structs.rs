@@ -32,7 +32,7 @@ pub struct ActionConfig {
 }
 
 #[derive(Clone, Default, Serialize, Deserialize, Debug)]
-pub struct SerializableFeeMarketToken {
+pub struct SerializableToken {
     pub token_id: String,
     pub nonce: u64,
     pub token_type: u8,

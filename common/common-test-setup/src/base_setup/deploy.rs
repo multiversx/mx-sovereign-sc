@@ -42,6 +42,7 @@ impl BaseSetup {
             .typed(MvxEsdtSafeProxy)
             .init(
                 OWNER_ADDRESS.to_managed_address(),
+                SOVEREIGN_FORGE_SC_ADDRESS,
                 SOVEREIGN_TOKEN_PREFIX,
                 opt_config,
             )

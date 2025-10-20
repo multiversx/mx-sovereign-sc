@@ -57,12 +57,17 @@ pub trait FactoryModule: only_admin::OnlyAdminModule {
         sov_token_prefix: ManagedBuffer,
         opt_config: OptionalValue<EsdtSafeConfig<Self::Api>>,
     ) -> ManagedAddress {
-        let source_address = self.mvx_esdt_safe_template().get();
+        let source_address = self.esdt_safe_template().get();
         let metadata = self.blockchain().get_code_metadata(&source_address);
 
         self.tx()
             .typed(MvxEsdtSafeProxy)
-            .init(sovereign_owner, sov_token_prefix, opt_config)
+            .init(
+                sovereign_owner,
+                self.blockchain().get_caller(),
+                sov_token_prefix,
+                opt_config,
+            )
             .from_source(source_address)
             .code_metadata(metadata)
             .returns(ReturnsNewManagedAddress)
@@ -97,15 +102,19 @@ pub trait FactoryModule: only_admin::OnlyAdminModule {
         fee_market_address
     }
 
+    #[view(getChainConfigTemplateAddress)]
     #[storage_mapper("chainConfigTemplate")]
     fn chain_config_template(&self) -> SingleValueMapper<ManagedAddress>;
 
+    #[view(getHeaderVerifierTemplateAddress)]
     #[storage_mapper("headerVerifierTemplate")]
     fn header_verifier_template(&self) -> SingleValueMapper<ManagedAddress>;
 
-    #[storage_mapper("crossChainOperationsTemplate")]
-    fn mvx_esdt_safe_template(&self) -> SingleValueMapper<ManagedAddress>;
+    #[view(getEsdtSafeTemplateAddress)]
+    #[storage_mapper("esdtSafeTemplate")]
+    fn esdt_safe_template(&self) -> SingleValueMapper<ManagedAddress>;
 
+    #[view(getFeeMarketTemplateAddress)]
     #[storage_mapper("feeMarketTemplate")]
     fn fee_market_template(&self) -> SingleValueMapper<ManagedAddress>;
 }

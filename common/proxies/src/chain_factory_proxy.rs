@@ -158,6 +158,42 @@ where
             .original_result()
     }
 
+    pub fn chain_config_template(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ManagedAddress<Env::Api>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getChainConfigTemplateAddress")
+            .original_result()
+    }
+
+    pub fn header_verifier_template(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ManagedAddress<Env::Api>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getHeaderVerifierTemplateAddress")
+            .original_result()
+    }
+
+    pub fn esdt_safe_template(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ManagedAddress<Env::Api>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getEsdtSafeTemplateAddress")
+            .original_result()
+    }
+
+    pub fn fee_market_template(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ManagedAddress<Env::Api>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getFeeMarketTemplateAddress")
+            .original_result()
+    }
+
     pub fn is_admin<
         Arg0: ProxyArg<ManagedAddress<Env::Api>>,
     >(
@@ -299,6 +335,38 @@ where
             .raw_call("removeUsersFromWhitelistSetupPhase")
             .argument(&fee_market_address)
             .argument(&users)
+            .original_result()
+    }
+
+    pub fn set_token_burn_mechanism<
+        Arg0: ProxyArg<ManagedAddress<Env::Api>>,
+        Arg1: ProxyArg<EgldOrEsdtTokenIdentifier<Env::Api>>,
+    >(
+        self,
+        mvx_esdt_safe_address: Arg0,
+        token_id: Arg1,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("setTokenBurnMechanismSetupPhase")
+            .argument(&mvx_esdt_safe_address)
+            .argument(&token_id)
+            .original_result()
+    }
+
+    pub fn set_token_lock_mechanism<
+        Arg0: ProxyArg<ManagedAddress<Env::Api>>,
+        Arg1: ProxyArg<EgldOrEsdtTokenIdentifier<Env::Api>>,
+    >(
+        self,
+        mvx_esdt_safe_address: Arg0,
+        token_id: Arg1,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("setTokenLockMechanismSetupPhase")
+            .argument(&mvx_esdt_safe_address)
+            .argument(&token_id)
             .original_result()
     }
 
