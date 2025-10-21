@@ -265,6 +265,19 @@ where
             .original_result()
     }
 
+    pub fn deposited_tokens_amount<
+        Arg0: ProxyArg<EgldOrEsdtTokenIdentifier<Env::Api>>,
+    >(
+        self,
+        token_identifier: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, BigUint<Env::Api>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getDepositedTokensAmount")
+            .argument(&token_identifier)
+            .original_result()
+    }
+
     pub fn sovereign_to_multiversx_token_id_mapper<
         Arg0: ProxyArg<EgldOrEsdtTokenIdentifier<Env::Api>>,
     >(

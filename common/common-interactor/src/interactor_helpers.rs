@@ -677,6 +677,7 @@ pub trait InteractorHelpers {
             fee,
             with_transfer_data,
             is_execute,
+            is_burn_mechanism_set,
             expected_error,
         } = bcc;
 
@@ -750,8 +751,14 @@ pub trait InteractorHelpers {
                 .update_mvx_egld_balance_with_amount(shard, expected_amount);
         } else {
             // ESDT tokens
-            let mvx_tokens = match (&token, &amount, is_sov_mapped_token, is_execute) {
-                (Some(token), Some(_), true, _) => {
+            let mvx_tokens = match (
+                &token,
+                &amount,
+                is_sov_mapped_token,
+                is_execute,
+                is_burn_mechanism_set,
+            ) {
+                (Some(token), Some(_), true, _, false) => {
                     // Sovereign mapped tokens: only keep 1 SFT/META token in the contract
                     if matches!(
                         token.token_type,
@@ -765,7 +772,7 @@ pub trait InteractorHelpers {
                         vec![]
                     }
                 }
-                (Some(token), Some(amount), false, false) => {
+                (Some(token), Some(amount), false, false, false) => {
                     // Non-sovereign deposits: full amount goes to MVX safe
                     vec![self.clone_token_with_amount(token.clone(), amount.clone())]
                 }

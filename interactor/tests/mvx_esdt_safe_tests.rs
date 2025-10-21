@@ -20,7 +20,10 @@ use rust_interact::mvx_esdt_safe::mvx_esdt_safe_interactor_main::MvxEsdtSafeInte
 use serial_test::serial;
 use std::vec;
 use structs::aliases::PaymentsVec;
-use structs::configs::{EsdtSafeConfig, MaxBridgedAmount};
+use structs::configs::{
+    EsdtSafeConfig, MaxBridgedAmount, SetBurnMechanismOperation, SetLockMechanismOperation,
+};
+use structs::generate_hash::GenerateHash;
 use structs::operation::{Operation, OperationData, OperationEsdtPayment, TransferData};
 use structs::OperationHashStatus;
 
@@ -987,5 +990,295 @@ async fn test_execute_operation_sovereign_token_not_registered() {
             Some(EXECUTED_BRIDGE_LOG),
             None,
         )
+        .await;
+}
+
+/// ### TEST
+/// M-ESDT_SWITCH_MECHANISM_OK
+///
+/// ### ACTION
+/// Deposit a trusted token into the MVX ESDT Safe with burn mechanism set up and switch to lock mechanism
+///
+/// ### EXPECTED
+/// The token is burned and the deposited amount is tracked in storage, then the mechanism is switched
+#[tokio::test]
+#[serial]
+#[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
+async fn test_switch_mechanism_with_deposit() {
+    let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
+
+    chain_interactor.remove_fee(SHARD_0).await;
+
+    let trusted_token = chain_interactor.common_state().get_trusted_token();
+    let trusted_token_id = EgldOrEsdtTokenIdentifier::esdt(trusted_token.as_str());
+    let trusted_token_info = EsdtTokenInfo {
+        token_id: trusted_token_id.clone(),
+        amount: BigUint::from(ONE_HUNDRED_TOKENS),
+        nonce: 0,
+        decimals: 18,
+        token_type: EsdtTokenType::Fungible,
+    };
+    let mvx_esdt_safe_address = chain_interactor
+        .common_state
+        .get_mvx_esdt_safe_address(SHARD_0)
+        .clone();
+
+    let token_burn_mechanism_operation = SetBurnMechanismOperation {
+        token_id: trusted_token_id.clone(),
+        nonce: chain_interactor
+            .common_state()
+            .get_and_increment_operation_nonce(&mvx_esdt_safe_address.to_string()),
+    };
+
+    let token_burn_mechanism_operation_hash = token_burn_mechanism_operation.generate_hash();
+    let token_burn_mechanism_hash_of_hashes =
+        ManagedBuffer::new_from_bytes(&sha256(&token_burn_mechanism_operation_hash.to_vec()));
+
+    chain_interactor
+        .register_operation(
+            SHARD_0,
+            &token_burn_mechanism_hash_of_hashes,
+            MultiValueEncoded::from(ManagedVec::from(vec![
+                token_burn_mechanism_operation_hash.clone()
+            ])),
+        )
+        .await;
+
+    chain_interactor
+        .set_token_burn_mechanism_after_setup_phase(
+            token_burn_mechanism_hash_of_hashes,
+            token_burn_mechanism_operation,
+            SHARD_0,
+        )
+        .await;
+
+    let deposit_amount = BigUint::from(ONE_HUNDRED_TOKENS);
+    let esdt_token_payment = EgldOrEsdtTokenPayment::<StaticApi>::new(
+        trusted_token_id.clone(),
+        0,
+        deposit_amount.clone(),
+    );
+
+    let payments_vec = PaymentsVec::from(vec![esdt_token_payment]);
+
+    chain_interactor
+        .deposit_in_mvx_esdt_safe(
+            SOVEREIGN_RECEIVER_ADDRESS.to_address(),
+            SHARD_0,
+            OptionalValue::None,
+            payments_vec.clone(),
+            None,
+            Some(DEPOSIT_EVENT),
+        )
+        .await;
+
+    let balance_config = BalanceCheckConfig::new()
+        .shard(SHARD_0)
+        .token(Some(trusted_token_info.clone()))
+        .amount(deposit_amount.clone())
+        .is_burn_mechanism_set(true);
+
+    chain_interactor
+        .check_balances_after_action(balance_config)
+        .await;
+
+    chain_interactor
+        .check_deposited_tokens_amount(trusted_token_id.clone(), SHARD_0, deposit_amount.clone())
+        .await;
+
+    // === Switch to Lock Mechanism ===
+    let token_lock_mechanism_operation = SetLockMechanismOperation {
+        token_id: trusted_token_id.clone(),
+        nonce: chain_interactor
+            .common_state()
+            .get_and_increment_operation_nonce(&mvx_esdt_safe_address.to_string()),
+    };
+
+    let token_lock_mechanism_operation_hash = token_lock_mechanism_operation.generate_hash();
+    let token_lock_mechanism_hash_of_hashes =
+        ManagedBuffer::new_from_bytes(&sha256(&token_lock_mechanism_operation_hash.to_vec()));
+
+    chain_interactor
+        .register_operation(
+            SHARD_0,
+            &token_lock_mechanism_hash_of_hashes,
+            MultiValueEncoded::from(ManagedVec::from(vec![
+                token_lock_mechanism_operation_hash.clone()
+            ])),
+        )
+        .await;
+
+    chain_interactor
+        .set_token_lock_mechanism_after_setup_phase(
+            token_lock_mechanism_hash_of_hashes,
+            token_lock_mechanism_operation,
+            SHARD_0,
+        )
+        .await;
+
+    chain_interactor
+        .deposit_in_mvx_esdt_safe(
+            SOVEREIGN_RECEIVER_ADDRESS.to_address(),
+            SHARD_0,
+            OptionalValue::None,
+            payments_vec,
+            None,
+            Some(DEPOSIT_EVENT),
+        )
+        .await;
+
+    // Since the mechanism was switched, the trusted token amount was minted in the sc, now we check for both the mint and the new deposit amount
+    let balance_config = BalanceCheckConfig::new()
+        .shard(SHARD_0)
+        .token(Some(trusted_token_info))
+        .amount(BigUint::from(2u64) * deposit_amount);
+
+    chain_interactor
+        .check_balances_after_action(balance_config)
+        .await;
+
+    chain_interactor
+        .check_deposited_tokens_amount(trusted_token_id.clone(), SHARD_0, BigUint::zero())
+        .await;
+}
+
+/// ### TEST
+/// M-ESDT_EXEC_WITH_BURN_MECHANISM_OK
+///
+/// ### ACTION
+/// Execute an operation with a trusted token with burn mechanism set up
+///
+/// ### EXPECTED
+/// The operation is executed successfully and the deposited amount is updated in storage
+#[tokio::test]
+#[serial]
+#[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
+async fn test_execute_operation_with_burn_mechanism() {
+    let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
+
+    chain_interactor.remove_fee(SHARD_0).await;
+
+    let trusted_token = chain_interactor.common_state().get_trusted_token();
+    let trusted_token_id = EgldOrEsdtTokenIdentifier::esdt(trusted_token.as_str());
+    let trusted_token_info = EsdtTokenInfo {
+        token_id: trusted_token_id.clone(),
+        amount: BigUint::from(ONE_HUNDRED_TOKENS),
+        nonce: 0,
+        decimals: 18,
+        token_type: EsdtTokenType::Fungible,
+    };
+    let mvx_esdt_safe_address = chain_interactor
+        .common_state
+        .get_mvx_esdt_safe_address(SHARD_0)
+        .clone();
+
+    let token_burn_mechanism_operation = SetBurnMechanismOperation {
+        token_id: trusted_token_id.clone(),
+        nonce: chain_interactor
+            .common_state()
+            .get_and_increment_operation_nonce(&mvx_esdt_safe_address.to_string()),
+    };
+
+    let token_burn_mechanism_operation_hash = token_burn_mechanism_operation.generate_hash();
+    let token_burn_mechanism_hash_of_hashes =
+        ManagedBuffer::new_from_bytes(&sha256(&token_burn_mechanism_operation_hash.to_vec()));
+
+    chain_interactor
+        .register_operation(
+            SHARD_0,
+            &token_burn_mechanism_hash_of_hashes,
+            MultiValueEncoded::from(ManagedVec::from(vec![
+                token_burn_mechanism_operation_hash.clone()
+            ])),
+        )
+        .await;
+
+    chain_interactor
+        .set_token_burn_mechanism_after_setup_phase(
+            token_burn_mechanism_hash_of_hashes,
+            token_burn_mechanism_operation,
+            SHARD_0,
+        )
+        .await;
+
+    let deposit_amount = BigUint::from(ONE_HUNDRED_TOKENS);
+    let esdt_token_payment = EgldOrEsdtTokenPayment::<StaticApi>::new(
+        trusted_token_id.clone(),
+        0,
+        deposit_amount.clone(),
+    );
+
+    let payments_vec = PaymentsVec::from(vec![esdt_token_payment]);
+
+    chain_interactor
+        .deposit_in_mvx_esdt_safe(
+            SOVEREIGN_RECEIVER_ADDRESS.to_address(),
+            SHARD_0,
+            OptionalValue::None,
+            payments_vec.clone(),
+            None,
+            Some(DEPOSIT_EVENT),
+        )
+        .await;
+
+    let balance_config = BalanceCheckConfig::new()
+        .shard(SHARD_0)
+        .token(Some(trusted_token_info.clone()))
+        .amount(deposit_amount.clone())
+        .is_burn_mechanism_set(true);
+
+    chain_interactor
+        .check_balances_after_action(balance_config)
+        .await;
+
+    chain_interactor
+        .check_deposited_tokens_amount(trusted_token_id.clone(), SHARD_0, deposit_amount.clone())
+        .await;
+
+    let operation = chain_interactor
+        .prepare_operation(
+            SHARD_0,
+            Some(trusted_token_info.clone()),
+            Some(TESTING_SC_ENDPOINT),
+        )
+        .await;
+
+    let operation_hash = chain_interactor.get_operation_hash(&operation);
+    let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&operation_hash.to_vec()));
+    let operations_hashes = MultiValueEncoded::from(ManagedVec::from(vec![operation_hash.clone()]));
+
+    chain_interactor
+        .register_operation(SHARD_0, &hash_of_hashes, operations_hashes)
+        .await;
+
+    let bridge_service = chain_interactor
+        .get_bridge_service_for_shard(SHARD_0)
+        .clone();
+
+    chain_interactor
+        .execute_operations_in_mvx_esdt_safe(
+            bridge_service,
+            SHARD_0,
+            hash_of_hashes,
+            operation,
+            None,
+            Some(EXECUTED_BRIDGE_LOG),
+            None,
+        )
+        .await;
+
+    let balance_config = BalanceCheckConfig::new()
+        .shard(SHARD_0)
+        .token(Some(trusted_token_info))
+        .amount(deposit_amount.clone())
+        .is_execute(true)
+        .with_transfer_data(true);
+
+    chain_interactor
+        .check_balances_after_action(balance_config)
+        .await;
+
+    chain_interactor
+        .check_deposited_tokens_amount(trusted_token_id.clone(), SHARD_0, BigUint::zero())
         .await;
 }
