@@ -1685,9 +1685,10 @@ fn test_execute_operation_success() {
     let bitmap = state.common_setup.full_bitmap(1);
     let epoch = 0;
 
-    state
-        .common_setup
-        .deploy_chain_config(OptionalValue::None, None);
+    state.common_setup.deploy_chain_config(
+        OptionalValue::Some(SovereignConfig::default_config_for_test()),
+        None,
+    );
 
     let (signature, public_keys) = state.common_setup.get_sig_and_pub_keys(1, &hash_of_hashes);
 
@@ -1781,9 +1782,10 @@ fn test_execute_operation_with_native_token_success() {
     let bitmap = state.common_setup.full_bitmap(1);
     let epoch = 0;
 
-    state
-        .common_setup
-        .deploy_chain_config(OptionalValue::None, None);
+    state.common_setup.deploy_chain_config(
+        OptionalValue::Some(SovereignConfig::default_config_for_test()),
+        None,
+    );
 
     let (signature, public_keys) = state.common_setup.get_sig_and_pub_keys(1, &hash_of_hashes);
 
@@ -1880,9 +1882,10 @@ fn test_execute_operation_burn_mechanism_without_deposit_cannot_subtract() {
     let burn_hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&burn_operation_hash.to_vec()));
 
     // Deploy and register validators
-    state
-        .common_setup
-        .deploy_chain_config(OptionalValue::None, None);
+    state.common_setup.deploy_chain_config(
+        OptionalValue::Some(SovereignConfig::default_config_for_test()),
+        None,
+    );
 
     let (signature, public_keys) = state.common_setup.get_sig_and_pub_keys(1, &hash_of_hashes);
     let (signature_burn, public_keys_burn) = state
@@ -1982,9 +1985,10 @@ fn test_execute_operation_only_transfer_data_no_fee() {
     let bitmap = state.common_setup.full_bitmap(1);
     let epoch = 0;
 
-    state
-        .common_setup
-        .deploy_chain_config(OptionalValue::None, None);
+    state.common_setup.deploy_chain_config(
+        OptionalValue::Some(SovereignConfig::default_config_for_test()),
+        None,
+    );
 
     let (signature, public_keys) = state.common_setup.get_sig_and_pub_keys(1, &hash_of_hashes);
 
@@ -2071,9 +2075,10 @@ fn test_execute_operation_success_burn_mechanism() {
     let burn_operation_hash = burn_operation.generate_hash();
     let burn_hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&burn_operation_hash.to_vec()));
 
-    state
-        .common_setup
-        .deploy_chain_config(OptionalValue::None, None);
+    state.common_setup.deploy_chain_config(
+        OptionalValue::Some(SovereignConfig::default_config_for_test()),
+        None,
+    );
 
     let (signature, public_keys) = state.common_setup.get_sig_and_pub_keys(1, &hash_of_hashes);
     let (signature_burn, public_keys_burn) = state
@@ -2189,7 +2194,7 @@ fn test_deposit_execute_switch_mechanism() {
 
     let chain_config_config = SovereignConfig {
         max_validators: 4,
-        ..SovereignConfig::default_config()
+        ..SovereignConfig::default_config_for_test()
     };
     state
         .common_setup
@@ -2519,9 +2524,10 @@ fn test_execute_operation_no_payments() {
     let operation_hash = state.common_setup.get_operation_hash(&operation);
     let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&operation_hash.to_vec()));
 
-    state
-        .common_setup
-        .deploy_chain_config(OptionalValue::None, None);
+    state.common_setup.deploy_chain_config(
+        OptionalValue::Some(SovereignConfig::default_config_for_test()),
+        None,
+    );
 
     let (signature, public_keys) = state.common_setup.get_sig_and_pub_keys(1, &hash_of_hashes);
 
@@ -2587,9 +2593,10 @@ fn test_execute_operation_no_payments_failed_event() {
     state.deploy_contract_with_roles(None);
     state.complete_setup_phase(Some(UNPAUSE_CONTRACT_LOG));
 
-    state
-        .common_setup
-        .deploy_chain_config(OptionalValue::None, None);
+    state.common_setup.deploy_chain_config(
+        OptionalValue::Some(SovereignConfig::default_config_for_test()),
+        None,
+    );
 
     let gas_limit = 1;
     let function = ManagedBuffer::<StaticApi>::from(WRONG_ENDPOINT_NAME);
@@ -2673,9 +2680,10 @@ fn test_execute_operation_native_token_failed_event() {
     state.deploy_contract_with_roles(None);
     state.complete_setup_phase(Some(UNPAUSE_CONTRACT_LOG));
 
-    state
-        .common_setup
-        .deploy_chain_config(OptionalValue::None, None);
+    state.common_setup.deploy_chain_config(
+        OptionalValue::Some(SovereignConfig::default_config_for_test()),
+        None,
+    );
 
     let token_data = EsdtTokenData {
         amount: BigUint::from(ONE_HUNDRED_TOKENS),
@@ -2992,9 +3000,10 @@ fn test_update_config_invalid_config() {
     state.deploy_contract_with_roles(None);
     state.complete_setup_phase(Some(UNPAUSE_CONTRACT_LOG));
 
-    state
-        .common_setup
-        .deploy_chain_config(OptionalValue::None, None);
+    state.common_setup.deploy_chain_config(
+        OptionalValue::Some(SovereignConfig::default_config_for_test()),
+        None,
+    );
 
     let esdt_safe_config = EsdtSafeConfig {
         max_tx_gas_limit: MAX_GAS_PER_TRANSACTION + 1,
@@ -3059,9 +3068,10 @@ fn test_update_config() {
     state.deploy_contract_with_roles(None);
     state.complete_setup_phase(Some(UNPAUSE_CONTRACT_LOG));
 
-    state
-        .common_setup
-        .deploy_chain_config(OptionalValue::None, None);
+    state.common_setup.deploy_chain_config(
+        OptionalValue::Some(SovereignConfig::default_config_for_test()),
+        None,
+    );
 
     let esdt_safe_config = EsdtSafeConfig {
         max_tx_gas_limit: 100_000,
@@ -3182,9 +3192,10 @@ fn test_execute_operation_partial_execution() {
             ));
         });
 
-    state
-        .common_setup
-        .deploy_chain_config(OptionalValue::None, None);
+    state.common_setup.deploy_chain_config(
+        OptionalValue::Some(SovereignConfig::default_config_for_test()),
+        None,
+    );
 
     let token_data = EsdtTokenData {
         amount: BigUint::from(ONE_HUNDRED_THOUSAND),

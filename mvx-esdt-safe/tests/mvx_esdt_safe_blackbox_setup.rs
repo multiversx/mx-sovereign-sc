@@ -18,7 +18,8 @@ use multiversx_sc_scenario::imports::*;
 use mvx_esdt_safe::MvxEsdtSafe;
 use proxies::mvx_esdt_safe_proxy::MvxEsdtSafeProxy;
 use structs::configs::{
-    SetBurnMechanismOperation, SetLockMechanismOperation, UpdateEsdtSafeConfigOperation,
+    SetBurnMechanismOperation, SetLockMechanismOperation, SovereignConfig,
+    UpdateEsdtSafeConfigOperation,
 };
 use structs::forge::ScArray;
 use structs::{
@@ -476,8 +477,10 @@ impl MvxEsdtSafeTestState {
         hash_of_hashes: &ManagedBuffer<StaticApi>,
     ) -> ManagedBuffer<StaticApi> {
         self.deploy_contract_with_roles(None);
-        self.common_setup
-            .deploy_chain_config(OptionalValue::None, None);
+        self.common_setup.deploy_chain_config(
+            OptionalValue::Some(SovereignConfig::default_config_for_test()),
+            None,
+        );
         let (signature, public_keys) = self.common_setup.get_sig_and_pub_keys(1, hash_of_hashes);
         self.common_setup.register(
             public_keys.first().unwrap(),

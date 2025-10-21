@@ -45,8 +45,6 @@ pub trait ChainConfigContract:
             return;
         }
         self.require_validator_set_valid(self.bls_keys_map().len());
-
-        self.complete_genesis_event();
         self.setup_phase_complete().set(true);
     }
 }

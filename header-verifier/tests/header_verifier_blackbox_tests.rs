@@ -51,9 +51,10 @@ fn register_bridge_operation_setup_not_completed() {
         .common_setup
         .deploy_header_verifier(vec![ScArray::ChainConfig, ScArray::ESDTSafe]);
 
-    state
-        .common_setup
-        .deploy_chain_config(OptionalValue::None, None);
+    state.common_setup.deploy_chain_config(
+        OptionalValue::Some(SovereignConfig::default_config_for_test()),
+        None,
+    );
 
     let operation_1 = ManagedBuffer::from("operation_1");
     let operation_2 = ManagedBuffer::from("operation_2");
@@ -81,9 +82,10 @@ fn register_bridge_operation_setup_not_completed() {
 fn test_register_bridge_operation() {
     let mut state = HeaderVerifierTestState::new();
 
-    state
-        .common_setup
-        .deploy_chain_config(OptionalValue::None, None);
+    state.common_setup.deploy_chain_config(
+        OptionalValue::Some(SovereignConfig::default_config_for_test()),
+        None,
+    );
     let operation_1 = ManagedBuffer::from("operation_1");
     let operation_2 = ManagedBuffer::from("operation_2");
     let operation = state.generate_bridge_operation_struct(vec![&operation_1, &operation_2]);
@@ -149,9 +151,10 @@ fn test_register_bridge_operation() {
 fn test_remove_executed_hash_no_esdt_address_registered() {
     let mut state = HeaderVerifierTestState::new();
 
-    state
-        .common_setup
-        .deploy_chain_config(OptionalValue::None, None);
+    state.common_setup.deploy_chain_config(
+        OptionalValue::Some(SovereignConfig::default_config_for_test()),
+        None,
+    );
 
     let operation_1 = ManagedBuffer::from("operation_1");
     let operation_2 = ManagedBuffer::from("operation_2");
@@ -197,9 +200,10 @@ fn test_remove_executed_hash_no_esdt_address_registered() {
 fn test_remove_one_executed_hash() {
     let mut state = HeaderVerifierTestState::new();
 
-    state
-        .common_setup
-        .deploy_chain_config(OptionalValue::None, None);
+    state.common_setup.deploy_chain_config(
+        OptionalValue::Some(SovereignConfig::default_config_for_test()),
+        None,
+    );
 
     let operation_hash_1 = ManagedBuffer::from("operation_1");
     let operation_hash_2 = ManagedBuffer::from("operation_2");
@@ -266,9 +270,10 @@ fn test_remove_one_executed_hash() {
 fn test_remove_all_executed_hashes() {
     let mut state = HeaderVerifierTestState::new();
 
-    state
-        .common_setup
-        .deploy_chain_config(OptionalValue::None, None);
+    state.common_setup.deploy_chain_config(
+        OptionalValue::Some(SovereignConfig::default_config_for_test()),
+        None,
+    );
     let operation_1 = ManagedBuffer::from("operation_1");
     let operation_2 = ManagedBuffer::from("operation_2");
     let operation = state.generate_bridge_operation_struct(vec![&operation_1, &operation_2]);
@@ -339,9 +344,10 @@ fn test_remove_all_executed_hashes() {
 fn test_lock_operation_not_registered() {
     let mut state = HeaderVerifierTestState::new();
 
-    state
-        .common_setup
-        .deploy_chain_config(OptionalValue::None, None);
+    state.common_setup.deploy_chain_config(
+        OptionalValue::Some(SovereignConfig::default_config_for_test()),
+        None,
+    );
 
     state
         .common_setup
@@ -401,9 +407,10 @@ fn test_lock_operation_caller_not_from_sovereign() {
 fn test_lock_operation() {
     let mut state = HeaderVerifierTestState::new();
 
-    state
-        .common_setup
-        .deploy_chain_config(OptionalValue::None, None);
+    state.common_setup.deploy_chain_config(
+        OptionalValue::Some(SovereignConfig::default_config_for_test()),
+        None,
+    );
 
     let operation_1 = ManagedBuffer::from("operation_1");
     let operation_2 = ManagedBuffer::from("operation_2");
@@ -478,9 +485,10 @@ fn test_lock_operation() {
 fn test_lock_operation_incorrect_nonce_rejected() {
     let mut state = HeaderVerifierTestState::new();
 
-    state
-        .common_setup
-        .deploy_chain_config(OptionalValue::None, None);
+    state.common_setup.deploy_chain_config(
+        OptionalValue::Some(SovereignConfig::default_config_for_test()),
+        None,
+    );
 
     let operation_hash_1 = ManagedBuffer::from("operation_nonce_fail_1");
     let operation_hash_2 = ManagedBuffer::from("operation_nonce_fail_2");
@@ -548,9 +556,10 @@ fn test_lock_operation_incorrect_nonce_rejected() {
 fn test_lock_operation_hash_already_locked() {
     let mut state = HeaderVerifierTestState::new();
 
-    state
-        .common_setup
-        .deploy_chain_config(OptionalValue::None, None);
+    state.common_setup.deploy_chain_config(
+        OptionalValue::Some(SovereignConfig::default_config_for_test()),
+        None,
+    );
 
     let operation_1 = ManagedBuffer::from("operation_1");
     let operation_2 = ManagedBuffer::from("operation_2");
@@ -637,7 +646,7 @@ fn test_change_validator_set() {
     let mut state = HeaderVerifierTestState::new();
     let sovereign_config = SovereignConfig {
         max_validators: 3,
-        ..SovereignConfig::default_config()
+        ..SovereignConfig::default_config_for_test()
     };
 
     state
@@ -735,9 +744,10 @@ fn test_change_validator_set() {
 fn test_change_validator_invalid_epoch() {
     let mut state = HeaderVerifierTestState::new();
 
-    state
-        .common_setup
-        .deploy_chain_config(OptionalValue::None, None);
+    state.common_setup.deploy_chain_config(
+        OptionalValue::Some(SovereignConfig::default_config_for_test()),
+        None,
+    );
 
     let genesis_validator = BLSKey::random();
     state
@@ -786,9 +796,10 @@ fn test_change_validator_invalid_epoch() {
 fn test_change_validator_set_operation_already_registered() {
     let mut state = HeaderVerifierTestState::new();
 
-    state
-        .common_setup
-        .deploy_chain_config(OptionalValue::None, None);
+    state.common_setup.deploy_chain_config(
+        OptionalValue::Some(SovereignConfig::default_config_for_test()),
+        None,
+    );
 
     let operation_hash_1 = ManagedBuffer::from("operation_1");
     let operation = state.generate_bridge_operation_struct(vec![&operation_hash_1]);
@@ -849,7 +860,7 @@ fn test_change_multiple_validator_sets() {
     let mut state = HeaderVerifierTestState::new();
     let sovereign_config = SovereignConfig {
         max_validators: 11,
-        ..SovereignConfig::default_config()
+        ..SovereignConfig::default_config_for_test()
     };
 
     state
@@ -937,9 +948,10 @@ fn test_change_multiple_validator_sets() {
 fn test_complete_setup_phase_chain_config_fail() {
     let mut state = HeaderVerifierTestState::new();
 
-    state
-        .common_setup
-        .deploy_chain_config(OptionalValue::None, None);
+    state.common_setup.deploy_chain_config(
+        OptionalValue::Some(SovereignConfig::default_config_for_test()),
+        None,
+    );
 
     state
         .common_setup
