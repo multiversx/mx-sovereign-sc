@@ -1418,7 +1418,7 @@ dependencies = [
 [[package]]
 name = "multiversx-chain-core"
 version = "0.19.0"
-source = "git+https://github.com/multiversx/mx-sdk-rs?branch=rc%2Fv0.63#d23fc3b6834925e68c25eb7622efb2e2c3344d15"
+source = "git+https://github.com/multiversx/mx-sdk-rs?rev=d23fc3b6834925e68c25eb7622efb2e2c3344d15#d23fc3b6834925e68c25eb7622efb2e2c3344d15"
 dependencies = [
  "bech32",
  "bitflags",
@@ -1430,7 +1430,7 @@ dependencies = [
 [[package]]
 name = "multiversx-chain-scenario-format"
 version = "0.23.1"
-source = "git+https://github.com/multiversx/mx-sdk-rs?branch=rc%2Fv0.63#d23fc3b6834925e68c25eb7622efb2e2c3344d15"
+source = "git+https://github.com/multiversx/mx-sdk-rs?rev=d23fc3b6834925e68c25eb7622efb2e2c3344d15#d23fc3b6834925e68c25eb7622efb2e2c3344d15"
 dependencies = [
  "bech32",
  "hex",
@@ -1444,7 +1444,7 @@ dependencies = [
 [[package]]
 name = "multiversx-chain-vm"
 version = "0.19.0"
-source = "git+https://github.com/multiversx/mx-sdk-rs?branch=rc%2Fv0.63#d23fc3b6834925e68c25eb7622efb2e2c3344d15"
+source = "git+https://github.com/multiversx/mx-sdk-rs?rev=d23fc3b6834925e68c25eb7622efb2e2c3344d15#d23fc3b6834925e68c25eb7622efb2e2c3344d15"
 dependencies = [
  "anyhow",
  "bitflags",
@@ -1480,7 +1480,7 @@ dependencies = [
 [[package]]
 name = "multiversx-sc"
 version = "0.62.0"
-source = "git+https://github.com/multiversx/mx-sdk-rs?branch=rc%2Fv0.63#d23fc3b6834925e68c25eb7622efb2e2c3344d15"
+source = "git+https://github.com/multiversx/mx-sdk-rs?rev=d23fc3b6834925e68c25eb7622efb2e2c3344d15#d23fc3b6834925e68c25eb7622efb2e2c3344d15"
 dependencies = [
  "bitflags",
  "generic-array 1.2.0",
@@ -1495,7 +1495,7 @@ dependencies = [
 [[package]]
 name = "multiversx-sc-codec"
 version = "0.23.1"
-source = "git+https://github.com/multiversx/mx-sdk-rs?branch=rc%2Fv0.63#d23fc3b6834925e68c25eb7622efb2e2c3344d15"
+source = "git+https://github.com/multiversx/mx-sdk-rs?rev=d23fc3b6834925e68c25eb7622efb2e2c3344d15#d23fc3b6834925e68c25eb7622efb2e2c3344d15"
 dependencies = [
  "arrayvec",
  "bitflags",
@@ -1507,7 +1507,7 @@ dependencies = [
 [[package]]
 name = "multiversx-sc-codec-derive"
 version = "0.23.1"
-source = "git+https://github.com/multiversx/mx-sdk-rs?branch=rc%2Fv0.63#d23fc3b6834925e68c25eb7622efb2e2c3344d15"
+source = "git+https://github.com/multiversx/mx-sdk-rs?rev=d23fc3b6834925e68c25eb7622efb2e2c3344d15#d23fc3b6834925e68c25eb7622efb2e2c3344d15"
 dependencies = [
  "hex",
  "proc-macro2",
@@ -1518,7 +1518,7 @@ dependencies = [
 [[package]]
 name = "multiversx-sc-derive"
 version = "0.62.0"
-source = "git+https://github.com/multiversx/mx-sdk-rs?branch=rc%2Fv0.63#d23fc3b6834925e68c25eb7622efb2e2c3344d15"
+source = "git+https://github.com/multiversx/mx-sdk-rs?rev=d23fc3b6834925e68c25eb7622efb2e2c3344d15#d23fc3b6834925e68c25eb7622efb2e2c3344d15"
 dependencies = [
  "hex",
  "proc-macro2",
@@ -1530,7 +1530,7 @@ dependencies = [
 [[package]]
 name = "multiversx-sc-meta-lib"
 version = "0.62.0"
-source = "git+https://github.com/multiversx/mx-sdk-rs?branch=rc%2Fv0.63#d23fc3b6834925e68c25eb7622efb2e2c3344d15"
+source = "git+https://github.com/multiversx/mx-sdk-rs?rev=d23fc3b6834925e68c25eb7622efb2e2c3344d15#d23fc3b6834925e68c25eb7622efb2e2c3344d15"
 dependencies = [
  "clap",
  "colored",
@@ -1551,7 +1551,7 @@ dependencies = [
 [[package]]
 name = "multiversx-sc-modules"
 version = "0.62.0"
-source = "git+https://github.com/multiversx/mx-sdk-rs?branch=rc%2Fv0.63#d23fc3b6834925e68c25eb7622efb2e2c3344d15"
+source = "git+https://github.com/multiversx/mx-sdk-rs?rev=d23fc3b6834925e68c25eb7622efb2e2c3344d15#d23fc3b6834925e68c25eb7622efb2e2c3344d15"
 dependencies = [
  "multiversx-sc",
 ]
@@ -1559,7 +1559,7 @@ dependencies = [
 [[package]]
 name = "multiversx-sc-scenario"
 version = "0.62.0"
-source = "git+https://github.com/multiversx/mx-sdk-rs?branch=rc%2Fv0.63#d23fc3b6834925e68c25eb7622efb2e2c3344d15"
+source = "git+https://github.com/multiversx/mx-sdk-rs?rev=d23fc3b6834925e68c25eb7622efb2e2c3344d15#d23fc3b6834925e68c25eb7622efb2e2c3344d15"
 dependencies = [
  "base64 0.22.1",
  "colored",
@@ -1584,7 +1584,7 @@ dependencies = [
 [[package]]
 name = "multiversx-sc-snippets"
 version = "0.62.0"
-source = "git+https://github.com/multiversx/mx-sdk-rs?branch=rc%2Fv0.63#d23fc3b6834925e68c25eb7622efb2e2c3344d15"
+source = "git+https://github.com/multiversx/mx-sdk-rs?rev=d23fc3b6834925e68c25eb7622efb2e2c3344d15#d23fc3b6834925e68c25eb7622efb2e2c3344d15"
 dependencies = [
  "anyhow",
  "base64 0.22.1",
@@ -1604,7 +1604,7 @@ dependencies = [
 [[package]]
 name = "multiversx-sdk"
 version = "0.12.0"
-source = "git+https://github.com/multiversx/mx-sdk-rs?branch=rc%2Fv0.63#d23fc3b6834925e68c25eb7622efb2e2c3344d15"
+source = "git+https://github.com/multiversx/mx-sdk-rs?rev=d23fc3b6834925e68c25eb7622efb2e2c3344d15#d23fc3b6834925e68c25eb7622efb2e2c3344d15"
 dependencies = [
  "aes",
  "anyhow",
@@ -1632,7 +1632,7 @@ dependencies = [
 [[package]]
 name = "multiversx-sdk-http"
 version = "0.12.0"
-source = "git+https://github.com/multiversx/mx-sdk-rs?branch=rc%2Fv0.63#d23fc3b6834925e68c25eb7622efb2e2c3344d15"
+source = "git+https://github.com/multiversx/mx-sdk-rs?rev=d23fc3b6834925e68c25eb7622efb2e2c3344d15#d23fc3b6834925e68c25eb7622efb2e2c3344d15"
 dependencies = [
  "anyhow",
  "hex",
