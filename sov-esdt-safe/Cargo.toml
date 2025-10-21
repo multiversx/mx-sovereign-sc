@@ -11,12 +11,12 @@ path = "src/lib.rs"
 [dependencies.multiversx-sc]
 version = "0.62.0"
 git = "https://github.com/multiversx/mx-sdk-rs"
-branch = "master"
+branch = "rc/v0.63"
 
 [dependencies.multiversx-sc-modules]
 version = "0.62.0"
 git = "https://github.com/multiversx/mx-sdk-rs"
-branch = "master"
+branch = "rc/v0.63"
 
 [dependencies.testing-sc]
 path = "../testing-sc"
@@ -57,4 +57,4 @@ path = "../common/common-test-setup"
 [dev-dependencies.multiversx-sc-scenario]
 version = "0.62.0"
 git = "https://github.com/multiversx/mx-sdk-rs"
-branch = "master"
+branch = "rc/v0.63"
