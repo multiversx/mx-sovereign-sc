@@ -1,7 +1,8 @@
 use error_messages::{
     CALLER_NOT_FROM_CURRENT_SOVEREIGN, CURRENT_OPERATION_ALREADY_IN_EXECUTION,
     CURRENT_OPERATION_NOT_REGISTERED, HASH_OF_HASHES_DOES_NOT_MATCH, INCORRECT_OPERATION_NONCE,
-    INVALID_EPOCH, OUTGOING_TX_HASH_ALREADY_REGISTERED, SETUP_PHASE_NOT_COMPLETED,
+    INVALID_EPOCH, NO_VALIDATORS_FOR_GIVEN_EPOCH, NO_VALIDATORS_FOR_PREVIOUS_EPOCH,
+    OUTGOING_TX_HASH_ALREADY_REGISTERED, SETUP_PHASE_NOT_COMPLETED,
     VALIDATORS_ALREADY_REGISTERED_IN_EPOCH,
 };
 use structs::{aliases::TxNonce, OperationHashStatus};
@@ -39,16 +40,19 @@ pub trait HeaderVerifierOperationsModule:
 
         let mut hash_of_hashes_history_mapper = self.hash_of_hashes_history();
 
-        if self.is_hash_of_hashes_registered(&hash_of_hashes, &hash_of_hashes_history_mapper) {
-            sc_panic!(OUTGOING_TX_HASH_ALREADY_REGISTERED);
-        }
-
-        if self
-            .calculate_and_check_transfers_hashes(&hash_of_hashes, operations_hashes.clone())
-            .is_some()
-        {
-            sc_panic!(HASH_OF_HASHES_DOES_NOT_MATCH);
-        }
+        require!(
+            !self.is_hash_of_hashes_registered(&hash_of_hashes, &hash_of_hashes_history_mapper),
+            OUTGOING_TX_HASH_ALREADY_REGISTERED
+        );
+        require!(
+            self.calculate_and_check_transfers_hashes(&hash_of_hashes, operations_hashes.clone())
+                .is_none(),
+            HASH_OF_HASHES_DOES_NOT_MATCH
+        );
+        require!(
+            self.bls_pub_keys(epoch).is_empty(),
+            NO_VALIDATORS_FOR_GIVEN_EPOCH
+        );
 
         self.verify_bls(
             epoch,
@@ -106,6 +110,16 @@ pub trait HeaderVerifierOperationsModule:
             return;
         }
 
+        if self.is_bls_pub_keys_empty(epoch - 1) {
+            self.execute_bridge_operation_event(
+                &hash_of_hashes,
+                &operation_hash,
+                Some(NO_VALIDATORS_FOR_PREVIOUS_EPOCH.into()),
+            );
+
+            return;
+        }
+
         let bls_keys_previous_epoch = self.bls_pub_keys(epoch - 1);
         let mut hash_of_hashes_history_mapper = self.hash_of_hashes_history();
         if self.is_hash_of_hashes_registered(&hash_of_hashes, &hash_of_hashes_history_mapper) {
@@ -144,8 +158,17 @@ pub trait HeaderVerifierOperationsModule:
             self.bls_pub_keys(epoch - MAX_STORED_EPOCHS).clear();
         }
 
-        let new_bls_keys = self.get_bls_keys_by_id(pub_keys_id);
-        self.bls_pub_keys(epoch).extend(new_bls_keys);
+        match self.get_bls_keys_by_id(pub_keys_id) {
+            Ok(new_bls_keys) => self.bls_pub_keys(epoch).extend(new_bls_keys),
+            Err(error_message) => {
+                self.execute_bridge_operation_event(
+                    &hash_of_hashes,
+                    &operation_hash,
+                    Some(error_message.into()),
+                );
+                return;
+            }
+        }
 
         hash_of_hashes_history_mapper.insert(hash_of_hashes.clone());
         self.execute_bridge_operation_event(&hash_of_hashes, &operation_hash, None);
