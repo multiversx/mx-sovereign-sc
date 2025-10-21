@@ -173,4 +173,4 @@ pub const INCORRECT_DEPOSIT_AMOUNT: &str = "Incorrect deposit amount";
 pub const NO_VALIDATORS_FOR_GIVEN_EPOCH: &str =
     "There are no registered validators for the given epoch";
 pub const NO_VALIDATORS_FOR_PREVIOUS_EPOCH: &str =
-    "There are no registered validator for the previous epoch";
+    "There are no registered validators for the previous epoch";

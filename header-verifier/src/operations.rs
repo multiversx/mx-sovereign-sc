@@ -50,7 +50,7 @@ pub trait HeaderVerifierOperationsModule:
             HASH_OF_HASHES_DOES_NOT_MATCH
         );
         require!(
-            self.bls_pub_keys(epoch).is_empty(),
+            !self.bls_pub_keys(epoch).is_empty(),
             NO_VALIDATORS_FOR_GIVEN_EPOCH
         );
 
