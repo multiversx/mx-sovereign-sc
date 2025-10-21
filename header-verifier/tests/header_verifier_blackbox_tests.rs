@@ -805,22 +805,12 @@ fn change_validator_set_previous_epoch_has_no_validators() {
         .common_setup
         .complete_header_verifier_setup_phase(None);
 
-    state
-        .common_setup
-        .world
-        .tx()
-        .from(OWNER_ADDRESS)
-        .to(HEADER_VERIFIER_ADDRESS)
-        .whitebox(header_verifier::contract_obj, |sc| {
-            sc.bls_pub_keys(0).clear();
-        });
-
     let operation_hash = ManagedBuffer::from("operation_1");
     let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&operation_hash.to_vec()));
     let signature = ManagedBuffer::new();
     let bitmap = ManagedBuffer::new();
     let validator_set = MultiValueEncoded::new();
-    let epoch = 1u64;
+    let epoch = 2u64;
 
     state.change_validator_set(
         &signature,
