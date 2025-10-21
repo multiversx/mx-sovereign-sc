@@ -88,18 +88,18 @@ pub trait HeaderVerifierUtilsModule:
     fn get_bls_keys_by_id(
         &self,
         ids: MultiValueEncoded<BigUint<Self::Api>>,
-    ) -> ManagedVec<ManagedBuffer> {
+    ) -> Result<ManagedVec<ManagedBuffer>, &str> {
         let mut bls_keys = ManagedVec::new();
 
         for id in ids.into_iter() {
-            bls_keys.push(
-                self.bls_keys_map(self.get_chain_config_address())
-                    .get(&id)
-                    .unwrap_or_else(|| sc_panic!(BLS_KEY_NOT_REGISTERED)),
-            );
+            let id = self.bls_keys_map(self.get_chain_config_address()).get(&id);
+            if id.is_none() {
+                return Err(BLS_KEY_NOT_REGISTERED);
+            }
+            bls_keys.push(id.unwrap());
         }
 
-        bls_keys
+        Ok(bls_keys)
     }
 
     fn verify_bls(
