@@ -1868,6 +1868,13 @@ fn test_execute_operation_burn_mechanism_without_deposit_cannot_subtract() {
         },
     );
 
+    let burn_operation = SetBurnMechanismOperation {
+        token_id: EgldOrEsdtTokenIdentifier::esdt(TRUSTED_TOKEN),
+        nonce: state.common_setup.next_operation_nonce(),
+    };
+    let burn_operation_hash = burn_operation.generate_hash();
+    let burn_hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&burn_operation_hash.to_vec()));
+
     let operation = Operation::new(
         TESTING_SC_ADDRESS.to_managed_address(),
         vec![payment].into(),
@@ -1879,13 +1886,6 @@ fn test_execute_operation_burn_mechanism_without_deposit_cannot_subtract() {
     );
     let operation_hash = state.common_setup.get_operation_hash(&operation);
     let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&operation_hash.to_vec()));
-
-    let burn_operation = SetBurnMechanismOperation {
-        token_id: EgldOrEsdtTokenIdentifier::esdt(TRUSTED_TOKEN),
-        nonce: state.common_setup.next_operation_nonce(),
-    };
-    let burn_operation_hash = burn_operation.generate_hash();
-    let burn_hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&burn_operation_hash.to_vec()));
 
     // Deploy and register validators
     state
@@ -2060,6 +2060,13 @@ fn test_execute_operation_success_burn_mechanism() {
         },
     );
 
+    let burn_operation = SetBurnMechanismOperation {
+        token_id: EgldOrEsdtTokenIdentifier::esdt(TRUSTED_TOKEN),
+        nonce: state.common_setup.next_operation_nonce(),
+    };
+    let burn_operation_hash = burn_operation.generate_hash();
+    let burn_hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&burn_operation_hash.to_vec()));
+
     let operation = Operation::new(
         TESTING_SC_ADDRESS.to_managed_address(),
         vec![payment.clone()].into(),
@@ -2071,13 +2078,6 @@ fn test_execute_operation_success_burn_mechanism() {
     );
     let operation_hash = state.common_setup.get_operation_hash(&operation);
     let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&operation_hash.to_vec()));
-
-    let burn_operation = SetBurnMechanismOperation {
-        token_id: EgldOrEsdtTokenIdentifier::esdt(TRUSTED_TOKEN),
-        nonce: state.common_setup.next_operation_nonce(),
-    };
-    let burn_operation_hash = burn_operation.generate_hash();
-    let burn_hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&burn_operation_hash.to_vec()));
 
     state
         .common_setup
