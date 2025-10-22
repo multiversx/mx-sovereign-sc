@@ -119,6 +119,15 @@ pub trait BridgingMechanism:
             return;
         }
 
+        if let Some(lock_operation_error) = self.lock_operation_hash_wrapper(
+            &hash_of_hashes,
+            &operation_hash,
+            set_burn_mechanism_operation.nonce,
+        ) {
+            self.complete_operation(&hash_of_hashes, &operation_hash, Some(lock_operation_error));
+            return;
+        }
+
         if self
             .multiversx_to_sovereign_token_id_mapper(&set_burn_mechanism_operation.token_id)
             .is_empty()
@@ -213,6 +222,15 @@ pub trait BridgingMechanism:
                 &operation_hash,
                 Some(LOCK_MECHANISM_NON_ESDT.into()),
             );
+            return;
+        }
+
+        if let Some(lock_operation_error) = self.lock_operation_hash_wrapper(
+            &hash_of_hashes,
+            &operation_hash,
+            set_lock_mechanism_operation.nonce,
+        ) {
+            self.complete_operation(&hash_of_hashes, &operation_hash, Some(lock_operation_error));
             return;
         }
 
