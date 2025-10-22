@@ -1311,7 +1311,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             .to(mvx_esdt_safe_address)
             .gas(90_000_000u64)
             .typed(MvxEsdtSafeProxy)
-            .register_token(hash_of_hashes, token)
+            .register_sovereign_token(hash_of_hashes, token)
             .returns(ReturnsLogs);
 
         let (response, token) = match expected_log_error {

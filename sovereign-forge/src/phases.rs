@@ -36,7 +36,11 @@ pub trait PhasesModule:
         opt_preferred_chain_id: Option<ManagedBuffer>,
         config: OptionalValue<SovereignConfig<Self::Api>>,
     ) {
-        self.require_initialization_phase_complete();
+        let blockchain_api = self.blockchain();
+        let caller = blockchain_api.get_caller();
+        let caller_shard_id = blockchain_api.get_shard_of_address(&caller);
+        
+        self.require_initialization_phase_complete(caller_shard_id);
 
         let call_value = self.call_value().egld().clone();
         require!(
@@ -45,10 +49,6 @@ pub trait PhasesModule:
         );
 
         let chain_id = self.generate_chain_id(opt_preferred_chain_id);
-
-        let blockchain_api = self.blockchain();
-        let caller = blockchain_api.get_caller();
-        let caller_shard_id = blockchain_api.get_shard_of_address(&caller);
 
         let chain_factories_mapper = self.chain_factories(caller_shard_id);
         require!(
