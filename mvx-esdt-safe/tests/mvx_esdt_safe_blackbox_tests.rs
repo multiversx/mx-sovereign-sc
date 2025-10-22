@@ -2208,7 +2208,6 @@ fn test_deposit_execute_switch_mechanism() {
     let deposit_amount = 1000u64;
 
     // === Setup Operations ===
-    // Step 1: Prepare execute payment
     let execute_payment = OperationEsdtPayment::new(
         EgldOrEsdtTokenIdentifier::esdt(trusted_token_id),
         0,
@@ -2218,7 +2217,6 @@ fn test_deposit_execute_switch_mechanism() {
         },
     );
 
-    // Step 2: Burn mechanism operation (nonce 0, validator 0)
     let burn_operation = SetBurnMechanismOperation {
         token_id: EgldOrEsdtTokenIdentifier::esdt(TRUSTED_TOKEN),
         nonce: state.common_setup.next_operation_nonce(),
@@ -2235,7 +2233,6 @@ fn test_deposit_execute_switch_mechanism() {
         None,
     );
 
-    // Step 3: Execute Operation 1 (nonce 1, validator 1)
     let operation_one = Operation::new(
         TESTING_SC_ADDRESS.to_managed_address(),
         vec![execute_payment.clone()].into(),
@@ -2256,7 +2253,6 @@ fn test_deposit_execute_switch_mechanism() {
         None,
     );
 
-    // Step 5: Lock mechanism operation (nonce 2, validator 2)
     let lock_operation = SetLockMechanismOperation {
         token_id: EgldOrEsdtTokenIdentifier::esdt(TRUSTED_TOKEN),
         nonce: state.common_setup.next_operation_nonce(),
@@ -2273,7 +2269,6 @@ fn test_deposit_execute_switch_mechanism() {
         None,
     );
 
-    // Step 6: Execute Operation 2 (nonce 3, validator 3)
     let operation_two = Operation::new(
         TESTING_SC_ADDRESS.to_managed_address(),
         vec![execute_payment].into(),
