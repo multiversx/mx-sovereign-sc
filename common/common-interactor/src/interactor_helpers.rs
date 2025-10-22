@@ -336,6 +336,20 @@ pub trait InteractorHelpers {
             == 2
     }
 
+    fn search_for_error_in_logs(&self, logs: &[Log], expected_error_bytes: &[u8]) -> bool {
+        logs.iter().any(|log| {
+            log.data.iter().any(|data_item| {
+                if let Ok(decoded_data) = BASE64.decode(data_item) {
+                    decoded_data
+                        .windows(expected_error_bytes.len())
+                        .any(|w| w == expected_error_bytes)
+                } else {
+                    false
+                }
+            })
+        })
+    }
+
     //NOTE: transferValue returns an empty log and calling this function on it will panic
     fn assert_expected_log(
         &mut self,
@@ -348,17 +362,7 @@ pub trait InteractorHelpers {
                 // If expecting an error, just check it exists. Otherwise, no logs allowed.
                 if let Some(expected_error) = expected_log_error {
                     let expected_error_bytes = expected_error.as_bytes();
-                    let found_error = logs.iter().any(|log| {
-                        log.data.iter().any(|data_item| {
-                            if let Ok(decoded_data) = BASE64.decode(data_item) {
-                                decoded_data
-                                    .windows(expected_error_bytes.len())
-                                    .any(|w| w == expected_error_bytes)
-                            } else {
-                                false
-                            }
-                        })
-                    });
+                    let found_error = self.search_for_error_in_logs(&logs, expected_error_bytes);
                     assert!(found_error, "Expected error '{}' not found", expected_error);
                 } else {
                     assert!(logs.is_empty(), "Expected no logs, but found: {:?}", logs);
@@ -387,24 +391,9 @@ pub trait InteractorHelpers {
                 );
 
                 if let Some(expected_error) = expected_log_error {
-                    let found_log = found_log.unwrap();
                     let expected_error_bytes = expected_error.as_bytes();
-
-                    let found_error_in_data = found_log.data.iter().any(|data_item| {
-                        if let Ok(decoded_data) = BASE64.decode(data_item) {
-                            decoded_data
-                                .windows(expected_error_bytes.len())
-                                .any(|w| w == expected_error_bytes)
-                        } else {
-                            false
-                        }
-                    });
-
-                    assert!(
-                        found_error_in_data,
-                        "Expected error '{}' not found in data field of log with topic '{}'",
-                        expected_error, expected_log
-                    );
+                    let found_error = self.search_for_error_in_logs(&logs, expected_error_bytes);
+                    assert!(found_error, "Expected error '{}' not found", expected_error);
                 }
             }
         }
