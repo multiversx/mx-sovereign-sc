@@ -223,7 +223,7 @@ impl BaseSetup {
                     let found_error = logs.iter().any(|log| {
                         log.data.iter().any(|data_item| {
                             data_item
-                                .to_vec()
+                                .as_slice()
                                 .windows(expected_error_bytes.len())
                                 .any(|w| w == expected_error_bytes)
                         })
@@ -250,7 +250,7 @@ impl BaseSetup {
                         });
                         let data_match = log.data.iter().any(|data_item| {
                             data_item
-                                .to_vec()
+                                .as_slice()
                                 .windows(expected_bytes.len())
                                 .any(|window| window == expected_bytes)
                         });
@@ -270,8 +270,9 @@ impl BaseSetup {
 
                     let found_error_in_data = matching_logs.iter().any(|log| {
                         log.data.iter().any(|data_item| {
-                            let v = data_item.to_vec();
-                            v.windows(expected_error_bytes.len())
+                            data_item
+                                .as_slice()
+                                .windows(expected_error_bytes.len())
                                 .any(|w| w == expected_error_bytes)
                         })
                     });
