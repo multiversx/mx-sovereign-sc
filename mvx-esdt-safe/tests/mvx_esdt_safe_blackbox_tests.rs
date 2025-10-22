@@ -2207,7 +2207,8 @@ fn test_deposit_execute_switch_mechanism() {
     let execute_amount = 500u64;
     let deposit_amount = 1000u64;
 
-    // === Setup Execute Operations ===
+    // === Setup Operations ===
+    // Step 1: Prepare execute payment
     let execute_payment = OperationEsdtPayment::new(
         EgldOrEsdtTokenIdentifier::esdt(trusted_token_id),
         0,
@@ -2217,7 +2218,24 @@ fn test_deposit_execute_switch_mechanism() {
         },
     );
 
-    // Operation 1 with validator 0
+    // Step 2: Burn mechanism operation (nonce 0, validator 0)
+    let burn_operation = SetBurnMechanismOperation {
+        token_id: EgldOrEsdtTokenIdentifier::esdt(TRUSTED_TOKEN),
+        nonce: state.common_setup.next_operation_nonce(),
+    };
+    let burn_operation_hash = burn_operation.generate_hash();
+    let burn_operation_hash_of_hashes =
+        ManagedBuffer::new_from_bytes(&sha256(&burn_operation_hash.to_vec()));
+    let (signature_burn, pub_keys_burn) = state
+        .common_setup
+        .get_sig_and_pub_keys(1, &burn_operation_hash_of_hashes);
+    state.common_setup.register(
+        pub_keys_burn.first().unwrap(),
+        &MultiEgldOrEsdtPayment::new(),
+        None,
+    );
+
+    // Step 3: Execute Operation 1 (nonce 1, validator 1)
     let operation_one = Operation::new(
         TESTING_SC_ADDRESS.to_managed_address(),
         vec![execute_payment.clone()].into(),
@@ -2238,7 +2256,24 @@ fn test_deposit_execute_switch_mechanism() {
         None,
     );
 
-    // Operation 2 with validator 1
+    // Step 5: Lock mechanism operation (nonce 2, validator 2)
+    let lock_operation = SetLockMechanismOperation {
+        token_id: EgldOrEsdtTokenIdentifier::esdt(TRUSTED_TOKEN),
+        nonce: state.common_setup.next_operation_nonce(),
+    };
+    let lock_operation_hash = lock_operation.generate_hash();
+    let lock_operation_hash_of_hashes =
+        ManagedBuffer::new_from_bytes(&sha256(&lock_operation_hash.to_vec()));
+    let (signature_lock, pub_keys_lock) = state
+        .common_setup
+        .get_sig_and_pub_keys(1, &lock_operation_hash_of_hashes);
+    state.common_setup.register(
+        pub_keys_lock.first().unwrap(),
+        &MultiEgldOrEsdtPayment::new(),
+        None,
+    );
+
+    // Step 6: Execute Operation 2 (nonce 3, validator 3)
     let operation_two = Operation::new(
         TESTING_SC_ADDRESS.to_managed_address(),
         vec![execute_payment].into(),
@@ -2255,39 +2290,6 @@ fn test_deposit_execute_switch_mechanism() {
         .get_sig_and_pub_keys(1, &hash_of_hashes_two);
     state.common_setup.register(
         pub_keys_two.first().unwrap(),
-        &MultiEgldOrEsdtPayment::new(),
-        None,
-    );
-
-    // === Setup Mechanism Switch Operations ===
-    let burn_operation = SetBurnMechanismOperation {
-        token_id: EgldOrEsdtTokenIdentifier::esdt(TRUSTED_TOKEN),
-        nonce: state.common_setup.next_operation_nonce(),
-    };
-    let burn_operation_hash = burn_operation.generate_hash();
-    let burn_operation_hash_of_hashes =
-        ManagedBuffer::new_from_bytes(&sha256(&burn_operation_hash.to_vec()));
-    let (signature_burn, pub_keys_burn) = state
-        .common_setup
-        .get_sig_and_pub_keys(1, &burn_operation_hash_of_hashes);
-    state.common_setup.register(
-        pub_keys_burn.first().unwrap(),
-        &MultiEgldOrEsdtPayment::new(),
-        None,
-    );
-
-    let lock_operation = SetLockMechanismOperation {
-        token_id: EgldOrEsdtTokenIdentifier::esdt(TRUSTED_TOKEN),
-        nonce: state.common_setup.next_operation_nonce(),
-    };
-    let lock_operation_hash = lock_operation.generate_hash();
-    let lock_operation_hash_of_hashes =
-        ManagedBuffer::new_from_bytes(&sha256(&lock_operation_hash.to_vec()));
-    let (signature_lock, pub_keys_lock) = state
-        .common_setup
-        .get_sig_and_pub_keys(1, &lock_operation_hash_of_hashes);
-    state.common_setup.register(
-        pub_keys_lock.first().unwrap(),
         &MultiEgldOrEsdtPayment::new(),
         None,
     );
@@ -2328,8 +2330,8 @@ fn test_deposit_execute_switch_mechanism() {
         BigUint::from(deposit_amount),
     );
 
-    // 2. Switch to BURN mechanism
-    let burn_bitmap = state.common_setup.bitmap_for_signers(&[2]);
+    // 2. Switch to BURN mechanism (uses validator 0)
+    let burn_bitmap = state.common_setup.bitmap_for_signers(&[0]);
     state.common_setup.register_operation(
         OWNER_ADDRESS,
         signature_burn,
@@ -2352,12 +2354,12 @@ fn test_deposit_execute_switch_mechanism() {
         BigUint::zero(),
     );
 
-    // 3. Execute operation 1 (BURN mechanism, validator 0)
+    // 3. Execute operation 1 (BURN mechanism, uses validator 1)
     state.common_setup.register_operation(
         OWNER_ADDRESS,
         signature_one,
         &hash_of_hashes_one,
-        state.common_setup.bitmap_for_signers(&[0]),
+        state.common_setup.bitmap_for_signers(&[1]),
         0,
         MultiValueEncoded::from(ManagedVec::from(vec![operation_one_hash])),
     );
@@ -2404,8 +2406,8 @@ fn test_deposit_execute_switch_mechanism() {
         BigUint::zero(),
     );
 
-    // 5. Switch back to LOCK mechanism
-    let lock_bitmap = state.common_setup.bitmap_for_signers(&[3]);
+    // 5. Switch back to LOCK mechanism (uses validator 2)
+    let lock_bitmap = state.common_setup.bitmap_for_signers(&[2]);
     state.common_setup.register_operation(
         OWNER_ADDRESS,
         signature_lock,
@@ -2427,12 +2429,12 @@ fn test_deposit_execute_switch_mechanism() {
         BigUint::from(expected_deposited),
     );
 
-    // 6. Execute operation 2 (LOCK mechanism, validator 1)
+    // 6. Execute operation 2 (LOCK mechanism, uses validator 3)
     state.common_setup.register_operation(
         OWNER_ADDRESS,
         signature_two,
         &hash_of_hashes_two,
-        state.common_setup.bitmap_for_signers(&[1]),
+        state.common_setup.bitmap_for_signers(&[3]),
         0,
         MultiValueEncoded::from(ManagedVec::from(vec![operation_two_hash])),
     );
