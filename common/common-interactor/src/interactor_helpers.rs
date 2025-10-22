@@ -662,6 +662,41 @@ pub trait InteractorHelpers {
         }
     }
 
+    fn get_expected_mvx_tokens(
+        &mut self,
+        token: &Option<EsdtTokenInfo>,
+        amount: &Option<BigUint<StaticApi>>,
+        is_sov_mapped_token: bool,
+        is_execute: bool,
+        is_burn_mechanism_set: bool,
+    ) -> Vec<EsdtTokenInfo> {
+        // Sovereign mapped tokens without burn mechanism: only keep 1 SFT/META token
+        if is_sov_mapped_token && !is_burn_mechanism_set {
+            if let Some(token) = token {
+                if matches!(
+                    token.token_type,
+                    EsdtTokenType::MetaFungible
+                        | EsdtTokenType::DynamicMeta
+                        | EsdtTokenType::DynamicSFT
+                        | EsdtTokenType::SemiFungible
+                ) {
+                    return vec![self.clone_token_with_amount(token.clone(), BigUint::from(1u64))];
+                }
+            }
+            return vec![];
+        }
+
+        // Non-sovereign deposits: full amount goes to MVX safe
+        if !is_sov_mapped_token && !is_execute && !is_burn_mechanism_set {
+            if let (Some(token), Some(amount)) = (token, amount) {
+                return vec![self.clone_token_with_amount(token.clone(), amount.clone())];
+            }
+        }
+
+        // All other cases: no tokens remain in MVX safe
+        vec![]
+    }
+
     /// For user we have two cases:
     /// 1. User should get tokens back after execute call (with_transfer_data = false)
     /// 2. User should not get tokens back after execute call (with_transfer_data = true)
@@ -751,33 +786,13 @@ pub trait InteractorHelpers {
                 .update_mvx_egld_balance_with_amount(shard, expected_amount);
         } else {
             // ESDT tokens
-            let mvx_tokens = match (
+            let mvx_tokens = self.get_expected_mvx_tokens(
                 &token,
                 &amount,
                 is_sov_mapped_token,
                 is_execute,
                 is_burn_mechanism_set,
-            ) {
-                (Some(token), Some(_), true, _, false) => {
-                    // Sovereign mapped tokens: only keep 1 SFT/META token in the contract
-                    if matches!(
-                        token.token_type,
-                        EsdtTokenType::MetaFungible
-                            | EsdtTokenType::DynamicMeta
-                            | EsdtTokenType::DynamicSFT
-                            | EsdtTokenType::SemiFungible
-                    ) {
-                        vec![self.clone_token_with_amount(token.clone(), BigUint::from(1u64))]
-                    } else {
-                        vec![]
-                    }
-                }
-                (Some(token), Some(amount), false, false, false) => {
-                    // Non-sovereign deposits: full amount goes to MVX safe
-                    vec![self.clone_token_with_amount(token.clone(), amount.clone())]
-                }
-                _ => vec![],
-            };
+            );
             self.check_mvx_esdt_balance(shard, mvx_tokens).await;
         }
 
