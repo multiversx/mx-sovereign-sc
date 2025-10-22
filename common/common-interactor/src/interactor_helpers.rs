@@ -345,16 +345,24 @@ pub trait InteractorHelpers {
     ) {
         match expected_log {
             None => {
-                assert!(
-                    logs.is_empty(),
-                    "Expected no logs, but found some: {:?}",
-                    logs
-                );
-                assert!(
-                    expected_log_error.is_none(),
-                    "Expected no logs, but wanted to check for error: {}",
-                    expected_log_error.unwrap()
-                );
+                // If expecting an error, just check it exists. Otherwise, no logs allowed.
+                if let Some(expected_error) = expected_log_error {
+                    let expected_error_bytes = expected_error.as_bytes();
+                    let found_error = logs.iter().any(|log| {
+                        log.data.iter().any(|data_item| {
+                            if let Ok(decoded_data) = BASE64.decode(data_item) {
+                                decoded_data
+                                    .windows(expected_error_bytes.len())
+                                    .any(|w| w == expected_error_bytes)
+                            } else {
+                                false
+                            }
+                        })
+                    });
+                    assert!(found_error, "Expected error '{}' not found", expected_error);
+                } else {
+                    assert!(logs.is_empty(), "Expected no logs, but found: {:?}", logs);
+                }
             }
             Some(expected_log) => {
                 if expected_log.is_empty() {

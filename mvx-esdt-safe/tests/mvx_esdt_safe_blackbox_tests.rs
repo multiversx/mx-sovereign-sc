@@ -414,7 +414,6 @@ fn test_register_token_nonfungible_token() {
 /// ### EXPECTED
 /// Error NOTHING_TO_TRANSFER
 #[test]
-#[ignore = "Ignore until log assertion fix"]
 fn test_deposit_nothing_to_transfer() {
     let mut state = MvxEsdtSafeTestState::new();
 
@@ -499,7 +498,6 @@ fn test_complete_setup_phase_already_completed() {
 /// ### EXPECTED
 /// Error TOO_MANY_TOKENS
 #[test]
-#[ignore = "Ignore until log assertion fix"]
 fn test_deposit_too_many_tokens() {
     let mut state = MvxEsdtSafeTestState::new();
 
@@ -603,7 +601,6 @@ fn test_deposit_no_transfer_data() {
 /// ### EXPECTED
 /// Error GAS_LIMIT_TOO_HIGH
 #[test]
-#[ignore = "Ignore until log assertion fix"]
 fn test_deposit_gas_limit_too_high() {
     let mut state = MvxEsdtSafeTestState::new();
 
@@ -683,7 +680,6 @@ fn test_deposit_gas_limit_too_high() {
 /// ### EXPECTED
 /// Error DEPOSIT_OVER_MAX_AMOUNT
 #[test]
-#[ignore = "Ignore until log assertion fix"]
 fn test_deposit_max_bridged_amount_exceeded() {
     let mut state = MvxEsdtSafeTestState::new();
 
@@ -757,7 +753,6 @@ fn test_deposit_max_bridged_amount_exceeded() {
 /// ### EXPECTED
 /// Error BANNED_ENDPOINT_NAME
 #[test]
-#[ignore = "Ignore until log assertion fix"]
 fn test_deposit_endpoint_banned() {
     let mut state = MvxEsdtSafeTestState::new();
 
@@ -876,7 +871,6 @@ fn test_deposit_transfer_data_only_no_fee() {
 /// ### EXPECTED
 /// Error ERR_EMPTY_PAYMENTS
 #[test]
-#[ignore = "Ignore until log assertion fix"]
 fn test_deposit_transfer_data_only_with_fee_nothing_to_transfer() {
     let mut state = MvxEsdtSafeTestState::new();
 
@@ -1077,7 +1071,6 @@ fn test_deposit_fee_enabled() {
 /// ### EXPECTED
 /// Error PAYMENT_DOES_NOT_COVER_FEE
 #[test]
-#[ignore = "Ignore until log assertion fix"]
 fn test_deposit_payment_doesnt_cover_fee() {
     let mut state = MvxEsdtSafeTestState::new();
 
@@ -1441,8 +1434,8 @@ fn test_register_token_fungible_token_no_prefix() {
 ///
 /// ### EXPECTED
 /// The token is registered
+#[ignore = "Needs system sc function fix (registerAndSetAllRolesDynamic)"]
 #[test]
-#[ignore = "Ignore until log assertion fix"]
 fn test_register_token_non_fungible_token_dynamic() {
     let mut state = MvxEsdtSafeTestState::new();
 

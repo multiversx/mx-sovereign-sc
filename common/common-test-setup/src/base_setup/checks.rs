@@ -216,17 +216,22 @@ impl BaseSetup {
     ) {
         match expected_log {
             None => {
-                assert!(
-                    logs.is_empty(),
-                    "Expected no logs, but found some: {:?}",
-                    logs
-                );
-
-                assert!(
-                    expected_log_error.is_none(),
-                    "Expected no logs, but wanted to check for error: {}",
-                    expected_log_error.unwrap()
-                );
+                // If expecting an error, just check it exists. Otherwise, no logs allowed.
+                if let Some(expected_error) = expected_log_error {
+                    let expected_error_bytes =
+                        ManagedBuffer::<StaticApi>::from(expected_error).to_vec();
+                    let found_error = logs.iter().any(|log| {
+                        log.data.iter().any(|data_item| {
+                            data_item
+                                .to_vec()
+                                .windows(expected_error_bytes.len())
+                                .any(|w| w == expected_error_bytes)
+                        })
+                    });
+                    assert!(found_error, "Expected error '{}' not found", expected_error);
+                } else {
+                    assert!(logs.is_empty(), "Expected no logs, but found: {:?}", logs);
+                }
             }
             Some(expected_str) => {
                 // assert!(!expected_str.is_empty(), "{}", EMPTY_EXPECTED_LOG);
