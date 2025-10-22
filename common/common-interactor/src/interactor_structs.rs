@@ -50,11 +50,6 @@ impl ActionConfig {
         self
     }
 
-    pub fn expect_error(mut self, error: String) -> Self {
-        self.expected_error = Some(error);
-        self
-    }
-
     pub fn expect_log(mut self, log: Vec<String>) -> Self {
         self.expected_log = Some(log);
         self
