@@ -145,7 +145,8 @@ async fn test_complete_execute_flow_with_transfer_data_only_fail(#[case] shard: 
             ActionConfig::new()
                 .shard(shard)
                 .with_endpoint(WRONG_ENDPOINT_NAME.to_string())
-                .expected_log_error(FUNCTION_NOT_FOUND.to_string()),
+                .expect_log(vec!["".to_string()])
+                .expected_log_error(vec![FUNCTION_NOT_FOUND.to_string()]),
             None,
         )
         .await;
@@ -574,7 +575,7 @@ async fn test_register_execute_call_failed(
             ActionConfig::new()
                 .shard(shard)
                 .with_endpoint(WRONG_ENDPOINT_NAME.to_string())
-                .expected_log_error(FUNCTION_NOT_FOUND.to_string()),
+                .expected_log_error(vec![FUNCTION_NOT_FOUND.to_string()]),
             sov_token,
         )
         .await;
