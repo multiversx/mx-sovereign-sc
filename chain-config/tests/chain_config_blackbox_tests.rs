@@ -44,9 +44,10 @@ mod chain_config_blackbox_setup;
 fn test_deploy_chain_config_default_config() {
     let mut state = ChainConfigTestState::new();
 
-    state
-        .common_setup
-        .deploy_chain_config(OptionalValue::None, None);
+    state.common_setup.deploy_chain_config(
+        OptionalValue::Some(SovereignConfig::default_config_for_test()),
+        None,
+    );
 }
 
 /// ### TEST
@@ -83,7 +84,7 @@ fn test_deploy_chain_config_invalid_config() {
     let config = SovereignConfig {
         min_validators: 2,
         max_validators: 1,
-        ..SovereignConfig::default_config()
+        ..SovereignConfig::default_config_for_test()
     };
 
     state.common_setup.deploy_chain_config(
@@ -104,9 +105,10 @@ fn test_deploy_chain_config_invalid_config() {
 fn test_complete_setup_phase() {
     let mut state = ChainConfigTestState::new();
 
-    state
-        .common_setup
-        .deploy_chain_config(OptionalValue::None, None);
+    state.common_setup.deploy_chain_config(
+        OptionalValue::Some(SovereignConfig::default_config_for_test()),
+        None,
+    );
 
     state
         .common_setup
@@ -136,9 +138,10 @@ fn test_complete_setup_phase() {
 fn test_update_config_during_setup_phase() {
     let mut state = ChainConfigTestState::new();
 
-    state
-        .common_setup
-        .deploy_chain_config(OptionalValue::None, None);
+    state.common_setup.deploy_chain_config(
+        OptionalValue::Some(SovereignConfig::default_config_for_test()),
+        None,
+    );
 
     let new_config = SovereignConfig::new(2, 4, BigUint::default(), None);
 
@@ -157,9 +160,10 @@ fn test_update_config_during_setup_phase() {
 fn test_update_config_during_setup_phase_additional_stake_zero_amount() {
     let mut state = ChainConfigTestState::new();
 
-    state
-        .common_setup
-        .deploy_chain_config(OptionalValue::None, None);
+    state.common_setup.deploy_chain_config(
+        OptionalValue::Some(SovereignConfig::default_config_for_test()),
+        None,
+    );
 
     let first_token_stake_arg = StakeArgs {
         token_identifier: FIRST_TEST_TOKEN.to_token_identifier(),
@@ -185,9 +189,10 @@ fn test_update_config_during_setup_phase_additional_stake_zero_amount() {
 fn test_update_config_during_setup_phase_wrong_validators_array() {
     let mut state = ChainConfigTestState::new();
 
-    state
-        .common_setup
-        .deploy_chain_config(OptionalValue::None, None);
+    state.common_setup.deploy_chain_config(
+        OptionalValue::Some(SovereignConfig::default_config_for_test()),
+        None,
+    );
 
     let new_config = SovereignConfig::new(2, 1, BigUint::default(), None);
 
@@ -209,9 +214,10 @@ fn test_update_config_during_setup_phase_wrong_validators_array() {
 fn test_update_config_setup_phase_not_completed() {
     let mut state = ChainConfigTestState::new();
 
-    state
-        .common_setup
-        .deploy_chain_config(OptionalValue::None, None);
+    state.common_setup.deploy_chain_config(
+        OptionalValue::Some(SovereignConfig::default_config_for_test()),
+        None,
+    );
 
     state
         .common_setup
@@ -246,9 +252,10 @@ fn test_update_config_setup_phase_not_completed() {
 fn test_update_config_invalid_config() {
     let mut state = ChainConfigTestState::new();
 
-    state
-        .common_setup
-        .deploy_chain_config(OptionalValue::None, None);
+    state.common_setup.deploy_chain_config(
+        OptionalValue::Some(SovereignConfig::default_config_for_test()),
+        None,
+    );
 
     state
         .common_setup
@@ -302,9 +309,10 @@ fn test_update_config_invalid_config() {
 fn test_update_config() {
     let mut state = ChainConfigTestState::new();
 
-    state
-        .common_setup
-        .deploy_chain_config(OptionalValue::None, None);
+    state.common_setup.deploy_chain_config(
+        OptionalValue::Some(SovereignConfig::default_config_for_test()),
+        None,
+    );
 
     state
         .common_setup
@@ -370,9 +378,10 @@ fn test_update_config() {
 fn test_register_range_exceeded_too_many_validators() {
     let mut state = ChainConfigTestState::new();
 
-    state
-        .common_setup
-        .deploy_chain_config(OptionalValue::Some(SovereignConfig::default_config()), None);
+    state.common_setup.deploy_chain_config(
+        OptionalValue::Some(SovereignConfig::default_config_for_test()),
+        None,
+    );
 
     let payments_vec = MultiEgldOrEsdtPayment::new();
 
@@ -414,7 +423,7 @@ fn test_register_not_enough_egld_stake() {
     let config = SovereignConfig {
         max_validators: 3,
         min_stake: BigUint::from(100u64),
-        ..SovereignConfig::default_config()
+        ..SovereignConfig::default_config_for_test()
     };
 
     state
@@ -451,7 +460,7 @@ fn test_register_already_registered() {
 
     let sovereign_config = SovereignConfig {
         max_validators: 10,
-        ..SovereignConfig::default_config()
+        ..SovereignConfig::default_config_for_test()
     };
     state
         .common_setup
@@ -487,9 +496,10 @@ fn test_register_already_registered() {
 #[test]
 fn test_register_invalid_bls_key() {
     let mut state = ChainConfigTestState::new();
-    state
-        .common_setup
-        .deploy_chain_config(OptionalValue::None, None);
+    state.common_setup.deploy_chain_config(
+        OptionalValue::Some(SovereignConfig::default_config_for_test()),
+        None,
+    );
 
     state.common_setup.register(
         &ManagedBuffer::from("invalid bls key"),
@@ -510,9 +520,10 @@ fn test_register_invalid_bls_key() {
 fn test_register_after_genesis() {
     let mut state = ChainConfigTestState::new();
 
-    state
-        .common_setup
-        .deploy_chain_config(OptionalValue::None, None);
+    state.common_setup.deploy_chain_config(
+        OptionalValue::Some(SovereignConfig::default_config_for_test()),
+        None,
+    );
 
     state
         .common_setup
@@ -557,7 +568,7 @@ fn test_register_validator_after_genesis() {
     let config = SovereignConfig {
         max_validators: 3,
         opt_additional_stake_required: Some(additional_stage_args),
-        ..SovereignConfig::default_config()
+        ..SovereignConfig::default_config_for_test()
     };
 
     state
@@ -633,7 +644,7 @@ fn test_register_additional_stake() {
     let config = SovereignConfig {
         max_validators: 2,
         opt_additional_stake_required: Some(additional_stage_args),
-        ..SovereignConfig::default_config()
+        ..SovereignConfig::default_config_for_test()
     };
 
     state
@@ -671,9 +682,10 @@ fn test_register_additional_stake() {
 #[test]
 fn test_unregister_not_registered() {
     let mut state = ChainConfigTestState::new();
-    state
-        .common_setup
-        .deploy_chain_config(OptionalValue::None, None);
+    state.common_setup.deploy_chain_config(
+        OptionalValue::Some(SovereignConfig::default_config_for_test()),
+        None,
+    );
 
     let bls_key = BLSKey::random();
     state
@@ -696,9 +708,10 @@ fn test_unregister_not_registered() {
 fn test_unregister_wrong_caller_for_bls_key() {
     let mut state = ChainConfigTestState::new();
 
-    state
-        .common_setup
-        .deploy_chain_config(OptionalValue::None, None);
+    state.common_setup.deploy_chain_config(
+        OptionalValue::Some(SovereignConfig::default_config_for_test()),
+        None,
+    );
 
     let new_validator_bls_key = BLSKey::random();
     state
@@ -726,9 +739,10 @@ fn test_unregister_wrong_caller_for_bls_key() {
 #[test]
 fn test_unregister_invalid_bls_key() {
     let mut state = ChainConfigTestState::new();
-    state
-        .common_setup
-        .deploy_chain_config(OptionalValue::None, None);
+    state.common_setup.deploy_chain_config(
+        OptionalValue::Some(SovereignConfig::default_config_for_test()),
+        None,
+    );
 
     state.common_setup.unregister(
         &ManagedBuffer::from("invalid bls key"),
@@ -747,9 +761,10 @@ fn test_unregister_invalid_bls_key() {
 #[test]
 fn test_unregister_no_stake() {
     let mut state = ChainConfigTestState::new();
-    state
-        .common_setup
-        .deploy_chain_config(OptionalValue::None, None);
+    state.common_setup.deploy_chain_config(
+        OptionalValue::Some(SovereignConfig::default_config_for_test()),
+        None,
+    );
 
     let validator_bls_key = BLSKey::random();
     state
@@ -832,9 +847,10 @@ fn test_unregister() {
 fn test_unregister_after_genesis() {
     let mut state = ChainConfigTestState::new();
 
-    state
-        .common_setup
-        .deploy_chain_config(OptionalValue::None, None);
+    state.common_setup.deploy_chain_config(
+        OptionalValue::Some(SovereignConfig::default_config_for_test()),
+        None,
+    );
 
     state
         .common_setup
@@ -879,7 +895,7 @@ fn test_unregister_validator_after_genesis() {
     let config = SovereignConfig {
         max_validators: num_of_validators,
         opt_additional_stake_required: Some(additional_stage_args),
-        ..SovereignConfig::default_config()
+        ..SovereignConfig::default_config_for_test()
     };
 
     state
@@ -945,9 +961,10 @@ fn test_unregister_validator_after_genesis() {
 #[test]
 fn test_unregister_validator_invalid() {
     let mut state = ChainConfigTestState::new();
-    state
-        .common_setup
-        .deploy_chain_config(OptionalValue::None, None);
+    state.common_setup.deploy_chain_config(
+        OptionalValue::Some(SovereignConfig::default_config_for_test()),
+        None,
+    );
 
     state
         .common_setup

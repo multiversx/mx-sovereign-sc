@@ -16,6 +16,7 @@ use multiversx_sc::{
 use multiversx_sc_scenario::{
     api::StaticApi, multiversx_chain_vm::crypto_functions::sha256, ScenarioTxWhitebox,
 };
+use structs::configs::SovereignConfig;
 use structs::fee::{RemoveFeeOperation, SetFeeOperation};
 use structs::{
     fee::{
@@ -132,9 +133,10 @@ fn test_set_fee_setup_not_completed() {
 fn test_remove_users_from_whitelist() {
     let mut state = MvxFeeMarketTestState::new();
 
-    state
-        .common_setup
-        .deploy_chain_config(OptionalValue::None, None);
+    state.common_setup.deploy_chain_config(
+        OptionalValue::Some(SovereignConfig::default_config_for_test()),
+        None,
+    );
 
     let new_users = vec![
         USER_ADDRESS.to_managed_address(),
@@ -216,9 +218,10 @@ fn test_remove_users_from_whitelist() {
 fn test_set_fee() {
     let mut state = MvxFeeMarketTestState::new();
 
-    state
-        .common_setup
-        .deploy_chain_config(OptionalValue::None, None);
+    state.common_setup.deploy_chain_config(
+        OptionalValue::Some(SovereignConfig::default_config_for_test()),
+        None,
+    );
 
     let fee_struct = FeeStruct {
         base_token: EgldOrEsdtTokenIdentifier::esdt(FIRST_TEST_TOKEN),
@@ -337,9 +340,10 @@ fn test_remove_fee_setup_phase_not_completed() {
 fn test_remove_fee_register_separate_operations() {
     let mut state = MvxFeeMarketTestState::new();
 
-    state
-        .common_setup
-        .deploy_chain_config(OptionalValue::None, None);
+    state.common_setup.deploy_chain_config(
+        OptionalValue::Some(SovereignConfig::default_config_for_test()),
+        None,
+    );
 
     let token = EgldOrEsdtTokenIdentifier::esdt(FIRST_TEST_TOKEN);
 
@@ -465,9 +469,10 @@ fn test_remove_fee_register_separate_operations() {
 fn test_remove_fee_register_with_one_hash_of_hashes() {
     let mut state = MvxFeeMarketTestState::new();
 
-    state
-        .common_setup
-        .deploy_chain_config(OptionalValue::None, None);
+    state.common_setup.deploy_chain_config(
+        OptionalValue::Some(SovereignConfig::default_config_for_test()),
+        None,
+    );
 
     let fee_struct = FeeStruct {
         base_token: EgldOrEsdtTokenIdentifier::esdt(FIRST_TEST_TOKEN),
@@ -616,9 +621,10 @@ fn distribute_fees_setup_not_completed() {
 fn distribute_fees_operation_not_registered() {
     let mut state = MvxFeeMarketTestState::new();
 
-    state
-        .common_setup
-        .deploy_chain_config(OptionalValue::None, None);
+    state.common_setup.deploy_chain_config(
+        OptionalValue::Some(SovereignConfig::default_config_for_test()),
+        None,
+    );
 
     state
         .common_setup
@@ -665,9 +671,10 @@ fn distribute_fees_operation_not_registered() {
 fn test_distribute_fees_percentage_under_limit() {
     let mut state = MvxFeeMarketTestState::new();
 
-    state
-        .common_setup
-        .deploy_chain_config(OptionalValue::None, None);
+    state.common_setup.deploy_chain_config(
+        OptionalValue::Some(SovereignConfig::default_config_for_test()),
+        None,
+    );
 
     let address_pair: AddressPercentagePair<StaticApi> = AddressPercentagePair {
         address: OWNER_ADDRESS.to_managed_address(),
@@ -741,9 +748,10 @@ fn test_distribute_fees_percentage_under_limit() {
 fn test_distribute_fees() {
     let mut state = MvxFeeMarketTestState::new();
 
-    state
-        .common_setup
-        .deploy_chain_config(OptionalValue::None, None);
+    state.common_setup.deploy_chain_config(
+        OptionalValue::Some(SovereignConfig::default_config_for_test()),
+        None,
+    );
 
     let address_pair: AddressPercentagePair<StaticApi> = AddressPercentagePair {
         address: OWNER_ADDRESS.to_managed_address(),

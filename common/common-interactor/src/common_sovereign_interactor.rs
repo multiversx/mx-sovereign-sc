@@ -331,7 +331,9 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             .from(caller.clone())
             .gas(50_000_000u64)
             .typed(ChainConfigContractProxy)
-            .init(OptionalValue::<SovereignConfig<StaticApi>>::None)
+            .init(OptionalValue::<SovereignConfig<StaticApi>>::Some(
+                SovereignConfig::default_config_for_test(),
+            ))
             .returns(ReturnsNewAddress)
             .code(CHAIN_CONFIG_CODE_PATH)
             .code_metadata(metadata())
