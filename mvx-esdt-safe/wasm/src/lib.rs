@@ -27,7 +27,7 @@ multiversx_sc_wasm_adapter::endpoints! {
         completeSetupPhase => complete_setup_phase
         deposit => deposit
         executeBridgeOps => execute_operations
-        registerToken => register_token
+        registerToken => register_sovereign_token
         registerNativeToken => register_native_token
         setTokenBurnMechanismSetupPhase => set_token_burn_mechanism_setup_phase
         setTokenBurnMechanism => set_token_burn_mechanism
@@ -47,7 +47,7 @@ multiversx_sc_wasm_adapter::endpoints! {
         removeAdmin => remove_admin
         getAdmins => admins
         execute => execute
-        register => register
+        register_token => register_token
         native_token_issue_callback => native_token_issue_callback
     )
 }

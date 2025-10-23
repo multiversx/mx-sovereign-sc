@@ -3,8 +3,8 @@ use std::path::Path;
 use base64::{engine::general_purpose::STANDARD as BASE64, Engine};
 use common_test_setup::constants::{
     FEE_MARKET_SHARD_0, FEE_MARKET_SHARD_1, FEE_MARKET_SHARD_2, GAS_LIMIT, MVX_ESDT_SAFE_SHARD_0,
-    MVX_ESDT_SAFE_SHARD_1, MVX_ESDT_SAFE_SHARD_2, PER_GAS, PER_TRANSFER, SHARD_1, TESTING_SC,
-    TESTING_SC_ENDPOINT, UNKNOWN_FEE_MARKET, UNKNOWN_MVX_ESDT_SAFE, USER_ADDRESS_STR,
+    MVX_ESDT_SAFE_SHARD_1, MVX_ESDT_SAFE_SHARD_2, PER_GAS, PER_TRANSFER, SHARD_0, SHARD_1,
+    TESTING_SC, TESTING_SC_ENDPOINT, UNKNOWN_FEE_MARKET, UNKNOWN_MVX_ESDT_SAFE, USER_ADDRESS_STR,
 };
 use error_messages::{AMOUNT_IS_TOO_LARGE, FAILED_TO_PARSE_AS_NUMBER};
 use multiversx_sc::{
@@ -336,6 +336,20 @@ pub trait InteractorHelpers {
             == 2
     }
 
+    fn search_for_error_in_logs(&self, logs: &[Log], expected_error_bytes: &[u8]) -> bool {
+        logs.iter().any(|log| {
+            log.data.iter().any(|data_item| {
+                if let Ok(decoded_data) = BASE64.decode(data_item) {
+                    decoded_data
+                        .windows(expected_error_bytes.len())
+                        .any(|w| w == expected_error_bytes)
+                } else {
+                    false
+                }
+            })
+        })
+    }
+
     //NOTE: transferValue returns an empty log and calling this function on it will panic
     fn assert_expected_log(
         &mut self,
@@ -345,16 +359,14 @@ pub trait InteractorHelpers {
     ) {
         match expected_log {
             None => {
-                assert!(
-                    logs.is_empty(),
-                    "Expected no logs, but found some: {:?}",
-                    logs
-                );
-                assert!(
-                    expected_log_error.is_none(),
-                    "Expected no logs, but wanted to check for error: {}",
-                    expected_log_error.unwrap()
-                );
+                // If expecting an error, just check it exists. Otherwise, no logs allowed.
+                if let Some(expected_error) = expected_log_error {
+                    let expected_error_bytes = expected_error.as_bytes();
+                    let found_error = self.search_for_error_in_logs(&logs, expected_error_bytes);
+                    assert!(found_error, "Expected error '{}' not found", expected_error);
+                } else {
+                    assert!(logs.is_empty(), "Expected no logs, but found: {:?}", logs);
+                }
             }
             Some(expected_log) => {
                 if expected_log.is_empty() {
@@ -379,24 +391,9 @@ pub trait InteractorHelpers {
                 );
 
                 if let Some(expected_error) = expected_log_error {
-                    let found_log = found_log.unwrap();
                     let expected_error_bytes = expected_error.as_bytes();
-
-                    let found_error_in_data = found_log.data.iter().any(|data_item| {
-                        if let Ok(decoded_data) = BASE64.decode(data_item) {
-                            decoded_data
-                                .windows(expected_error_bytes.len())
-                                .any(|w| w == expected_error_bytes)
-                        } else {
-                            false
-                        }
-                    });
-
-                    assert!(
-                        found_error_in_data,
-                        "Expected error '{}' not found in data field of log with topic '{}'",
-                        expected_error, expected_log
-                    );
+                    let found_error = self.search_for_error_in_logs(&logs, expected_error_bytes);
+                    assert!(found_error, "Expected error '{}' not found", expected_error);
                 }
             }
         }
@@ -499,6 +496,16 @@ pub trait InteractorHelpers {
             Some(logs) if logs.len() > 1 => match config.shard {
                 SHARD_1 => Some(logs[0].clone()),
                 _ => Some(logs[1].clone()),
+            },
+            _ => None,
+        }
+    }
+
+    fn extract_log_error_based_on_shard(&mut self, config: &ActionConfig) -> Option<String> {
+        match &config.expected_log_error {
+            Some(error) => match config.shard {
+                SHARD_0 => Some(error[0].clone()),
+                _ => None,
             },
             _ => None,
         }

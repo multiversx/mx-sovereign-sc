@@ -80,6 +80,10 @@ impl<M: ManagedTypeApi> SovereignConfig<M> {
     }
 
     pub fn default_config() -> Self {
+        SovereignConfig::new(2, 50, BigUint::default(), None)
+    }
+
+    pub fn default_config_for_test() -> Self {
         SovereignConfig::new(1, 2, BigUint::default(), None)
     }
 }

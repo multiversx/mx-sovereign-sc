@@ -18,7 +18,8 @@ use multiversx_sc_scenario::imports::*;
 use mvx_esdt_safe::MvxEsdtSafe;
 use proxies::mvx_esdt_safe_proxy::MvxEsdtSafeProxy;
 use structs::configs::{
-    SetBurnMechanismOperation, SetLockMechanismOperation, UpdateEsdtSafeConfigOperation,
+    SetBurnMechanismOperation, SetLockMechanismOperation, SovereignConfig,
+    UpdateEsdtSafeConfigOperation,
 };
 use structs::forge::ScArray;
 use structs::{
@@ -343,7 +344,7 @@ impl MvxEsdtSafeTestState {
             .assert_expected_error_message(result, expected_error_message);
 
         self.common_setup
-            .assert_expected_log(logs, expected_log, None);
+            .assert_expected_log(logs, expected_log, expected_error_message);
     }
 
     pub fn register_token(
@@ -360,7 +361,7 @@ impl MvxEsdtSafeTestState {
             .from(OWNER_ADDRESS)
             .to(ESDT_SAFE_ADDRESS)
             .typed(MvxEsdtSafeProxy)
-            .register_token(hash_of_hashes, register_token_args)
+            .register_sovereign_token(hash_of_hashes, register_token_args)
             .returns(ReturnsLogs)
             .run();
 
@@ -476,8 +477,10 @@ impl MvxEsdtSafeTestState {
         hash_of_hashes: &ManagedBuffer<StaticApi>,
     ) -> ManagedBuffer<StaticApi> {
         self.deploy_contract_with_roles(None);
-        self.common_setup
-            .deploy_chain_config(OptionalValue::None, None);
+        self.common_setup.deploy_chain_config(
+            OptionalValue::Some(SovereignConfig::default_config_for_test()),
+            None,
+        );
         let (signature, public_keys) = self.common_setup.get_sig_and_pub_keys(1, hash_of_hashes);
         self.common_setup.register(
             public_keys.first().unwrap(),

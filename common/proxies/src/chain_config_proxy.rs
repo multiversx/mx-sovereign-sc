@@ -195,19 +195,6 @@ where
             .original_result()
     }
 
-    pub fn was_previously_slashed<
-        Arg0: ProxyArg<ManagedAddress<Env::Api>>,
-    >(
-        self,
-        validator: Arg0,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, bool> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("wasPreviouslySlashed")
-            .argument(&validator)
-            .original_result()
-    }
-
     pub fn update_sovereign_config_during_setup_phase<
         Arg0: ProxyArg<structs::configs::SovereignConfig<Env::Api>>,
     >(

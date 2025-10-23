@@ -4,10 +4,11 @@ use common_test_setup::constants::{
     OWNER_ADDRESS,
 };
 use error_messages::{
-    CALLER_NOT_FROM_CURRENT_SOVEREIGN, CHAIN_CONFIG_SETUP_PHASE_NOT_COMPLETE,
-    CURRENT_OPERATION_ALREADY_IN_EXECUTION, CURRENT_OPERATION_NOT_REGISTERED,
-    INCORRECT_OPERATION_NONCE, INVALID_EPOCH, OUTGOING_TX_HASH_ALREADY_REGISTERED,
-    SETUP_PHASE_NOT_COMPLETED,
+    BLS_KEY_NOT_REGISTERED, CALLER_NOT_FROM_CURRENT_SOVEREIGN,
+    CHAIN_CONFIG_SETUP_PHASE_NOT_COMPLETE, CURRENT_OPERATION_ALREADY_IN_EXECUTION,
+    CURRENT_OPERATION_NOT_REGISTERED, INCORRECT_OPERATION_NONCE, INVALID_EPOCH,
+    NO_VALIDATORS_FOR_GIVEN_EPOCH, NO_VALIDATORS_FOR_PREVIOUS_EPOCH,
+    OUTGOING_TX_HASH_ALREADY_REGISTERED, SETUP_PHASE_NOT_COMPLETED,
 };
 use header_verifier::header_utils::HeaderVerifierUtilsModule;
 use header_verifier::storage::HeaderVerifierStorageModule;
@@ -51,9 +52,10 @@ fn register_bridge_operation_setup_not_completed() {
         .common_setup
         .deploy_header_verifier(vec![ScArray::ChainConfig, ScArray::ESDTSafe]);
 
-    state
-        .common_setup
-        .deploy_chain_config(OptionalValue::None, None);
+    state.common_setup.deploy_chain_config(
+        OptionalValue::Some(SovereignConfig::default_config_for_test()),
+        None,
+    );
 
     let operation_1 = ManagedBuffer::from("operation_1");
     let operation_2 = ManagedBuffer::from("operation_2");
@@ -70,6 +72,54 @@ fn register_bridge_operation_setup_not_completed() {
 }
 
 /// ### TEST
+/// H-VERIFIER_REGISTER_OPERATION_NO_VALIDATORS
+///
+/// ### ACTION
+/// Call 'register_operations' without registering validators for the given epoch
+///
+/// ### EXPECTED
+/// Error NO_VALIDATORS_FOR_GIVEN_EPOCH
+#[test]
+fn test_register_bridge_operation_no_validators_for_epoch() {
+    let mut state = HeaderVerifierTestState::new();
+
+    state.common_setup.deploy_chain_config(
+        OptionalValue::Some(SovereignConfig::default_config_for_test()),
+        None,
+    );
+
+    state
+        .common_setup
+        .register(&BLSKey::random(), &MultiEgldOrEsdtPayment::new(), None);
+
+    let operation_1 = ManagedBuffer::from("operation_1");
+    let operation = state.generate_bridge_operation_struct(vec![&operation_1]);
+    let bitmap = state.common_setup.full_bitmap(1);
+
+    let (signature, _pub_keys) = state
+        .common_setup
+        .get_sig_and_pub_keys(1, &operation.bridge_operation_hash);
+
+    state.common_setup.complete_chain_config_setup_phase();
+
+    state
+        .common_setup
+        .deploy_header_verifier(vec![ScArray::ChainConfig]);
+
+    state
+        .common_setup
+        .complete_header_verifier_setup_phase(None);
+
+    state.register_operations(
+        &signature,
+        operation,
+        bitmap,
+        1,
+        Some(NO_VALIDATORS_FOR_GIVEN_EPOCH),
+    );
+}
+
+/// ### TEST
 /// H-VERIFIER_REGISTER_OPERATION_OK
 ///
 /// ### ACTION
@@ -81,9 +131,10 @@ fn register_bridge_operation_setup_not_completed() {
 fn test_register_bridge_operation() {
     let mut state = HeaderVerifierTestState::new();
 
-    state
-        .common_setup
-        .deploy_chain_config(OptionalValue::None, None);
+    state.common_setup.deploy_chain_config(
+        OptionalValue::Some(SovereignConfig::default_config_for_test()),
+        None,
+    );
     let operation_1 = ManagedBuffer::from("operation_1");
     let operation_2 = ManagedBuffer::from("operation_2");
     let operation = state.generate_bridge_operation_struct(vec![&operation_1, &operation_2]);
@@ -149,9 +200,10 @@ fn test_register_bridge_operation() {
 fn test_remove_executed_hash_no_esdt_address_registered() {
     let mut state = HeaderVerifierTestState::new();
 
-    state
-        .common_setup
-        .deploy_chain_config(OptionalValue::None, None);
+    state.common_setup.deploy_chain_config(
+        OptionalValue::Some(SovereignConfig::default_config_for_test()),
+        None,
+    );
 
     let operation_1 = ManagedBuffer::from("operation_1");
     let operation_2 = ManagedBuffer::from("operation_2");
@@ -197,9 +249,10 @@ fn test_remove_executed_hash_no_esdt_address_registered() {
 fn test_remove_one_executed_hash() {
     let mut state = HeaderVerifierTestState::new();
 
-    state
-        .common_setup
-        .deploy_chain_config(OptionalValue::None, None);
+    state.common_setup.deploy_chain_config(
+        OptionalValue::Some(SovereignConfig::default_config_for_test()),
+        None,
+    );
 
     let operation_hash_1 = ManagedBuffer::from("operation_1");
     let operation_hash_2 = ManagedBuffer::from("operation_2");
@@ -266,9 +319,10 @@ fn test_remove_one_executed_hash() {
 fn test_remove_all_executed_hashes() {
     let mut state = HeaderVerifierTestState::new();
 
-    state
-        .common_setup
-        .deploy_chain_config(OptionalValue::None, None);
+    state.common_setup.deploy_chain_config(
+        OptionalValue::Some(SovereignConfig::default_config_for_test()),
+        None,
+    );
     let operation_1 = ManagedBuffer::from("operation_1");
     let operation_2 = ManagedBuffer::from("operation_2");
     let operation = state.generate_bridge_operation_struct(vec![&operation_1, &operation_2]);
@@ -339,9 +393,10 @@ fn test_remove_all_executed_hashes() {
 fn test_lock_operation_not_registered() {
     let mut state = HeaderVerifierTestState::new();
 
-    state
-        .common_setup
-        .deploy_chain_config(OptionalValue::None, None);
+    state.common_setup.deploy_chain_config(
+        OptionalValue::Some(SovereignConfig::default_config_for_test()),
+        None,
+    );
 
     state
         .common_setup
@@ -401,9 +456,10 @@ fn test_lock_operation_caller_not_from_sovereign() {
 fn test_lock_operation() {
     let mut state = HeaderVerifierTestState::new();
 
-    state
-        .common_setup
-        .deploy_chain_config(OptionalValue::None, None);
+    state.common_setup.deploy_chain_config(
+        OptionalValue::Some(SovereignConfig::default_config_for_test()),
+        None,
+    );
 
     let operation_1 = ManagedBuffer::from("operation_1");
     let operation_2 = ManagedBuffer::from("operation_2");
@@ -478,9 +534,10 @@ fn test_lock_operation() {
 fn test_lock_operation_incorrect_nonce_rejected() {
     let mut state = HeaderVerifierTestState::new();
 
-    state
-        .common_setup
-        .deploy_chain_config(OptionalValue::None, None);
+    state.common_setup.deploy_chain_config(
+        OptionalValue::Some(SovereignConfig::default_config_for_test()),
+        None,
+    );
 
     let operation_hash_1 = ManagedBuffer::from("operation_nonce_fail_1");
     let operation_hash_2 = ManagedBuffer::from("operation_nonce_fail_2");
@@ -548,9 +605,10 @@ fn test_lock_operation_incorrect_nonce_rejected() {
 fn test_lock_operation_hash_already_locked() {
     let mut state = HeaderVerifierTestState::new();
 
-    state
-        .common_setup
-        .deploy_chain_config(OptionalValue::None, None);
+    state.common_setup.deploy_chain_config(
+        OptionalValue::Some(SovereignConfig::default_config_for_test()),
+        None,
+    );
 
     let operation_1 = ManagedBuffer::from("operation_1");
     let operation_2 = ManagedBuffer::from("operation_2");
@@ -637,7 +695,7 @@ fn test_change_validator_set() {
     let mut state = HeaderVerifierTestState::new();
     let sovereign_config = SovereignConfig {
         max_validators: 3,
-        ..SovereignConfig::default_config()
+        ..SovereignConfig::default_config_for_test()
     };
 
     state
@@ -735,9 +793,10 @@ fn test_change_validator_set() {
 fn test_change_validator_invalid_epoch() {
     let mut state = HeaderVerifierTestState::new();
 
-    state
-        .common_setup
-        .deploy_chain_config(OptionalValue::None, None);
+    state.common_setup.deploy_chain_config(
+        OptionalValue::Some(SovereignConfig::default_config_for_test()),
+        None,
+    );
 
     let genesis_validator = BLSKey::random();
     state
@@ -778,6 +837,57 @@ fn test_change_validator_invalid_epoch() {
 /// H-VERIFIER_CHANGE_VALIDATORS_FAIL
 ///
 /// ### ACTION
+/// Call 'change_validator_set()' when the previous epoch has no registered validators
+///
+/// ### EXPECTED
+/// Error NO_VALIDATORS_FOR_PREVIOUS_EPOCH is emitted
+#[test]
+fn change_validator_set_previous_epoch_has_no_validators() {
+    let mut state = HeaderVerifierTestState::new();
+
+    state.common_setup.deploy_chain_config(
+        OptionalValue::Some(SovereignConfig::default_config_for_test()),
+        None,
+    );
+
+    let genesis_validator = BLSKey::random();
+    state
+        .common_setup
+        .register(&genesis_validator, &MultiEgldOrEsdtPayment::new(), None);
+
+    state.common_setup.complete_chain_config_setup_phase();
+
+    state
+        .common_setup
+        .deploy_header_verifier(vec![ScArray::ChainConfig]);
+
+    state
+        .common_setup
+        .complete_header_verifier_setup_phase(None);
+
+    let operation_hash = ManagedBuffer::from("operation_1");
+    let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&operation_hash.to_vec()));
+    let signature = ManagedBuffer::new();
+    let bitmap = ManagedBuffer::new();
+    let validator_set = MultiValueEncoded::new();
+    let epoch = 2u64;
+
+    state.change_validator_set(
+        &signature,
+        &hash_of_hashes,
+        &operation_hash,
+        epoch,
+        &bitmap,
+        validator_set,
+        Some(EXECUTED_BRIDGE_OP_EVENT),
+        Some(NO_VALIDATORS_FOR_PREVIOUS_EPOCH),
+    );
+}
+
+/// ### TEST
+/// H-VERIFIER_CHANGE_VALIDATORS_FAIL
+///
+/// ### ACTION
 /// Call 'change_validator_set()' before registering the operation
 ///
 /// ### EXPECTED
@@ -786,9 +896,10 @@ fn test_change_validator_invalid_epoch() {
 fn test_change_validator_set_operation_already_registered() {
     let mut state = HeaderVerifierTestState::new();
 
-    state
-        .common_setup
-        .deploy_chain_config(OptionalValue::None, None);
+    state.common_setup.deploy_chain_config(
+        OptionalValue::Some(SovereignConfig::default_config_for_test()),
+        None,
+    );
 
     let operation_hash_1 = ManagedBuffer::from("operation_1");
     let operation = state.generate_bridge_operation_struct(vec![&operation_hash_1]);
@@ -836,6 +947,60 @@ fn test_change_validator_set_operation_already_registered() {
 }
 
 /// ### TEST
+/// H-VERIFIER_CHANGE_VALIDATORS_FAIL_BLS_KEY
+///
+/// ### ACTION
+/// Call 'change_validator_set()' with a validator id that is not registered
+///
+/// ### EXPECTED
+/// Error BLS_KEY_NOT_REGISTERED is emitted
+#[test]
+fn test_change_validator_set_bls_key_not_found() {
+    let mut state = HeaderVerifierTestState::new();
+
+    state.common_setup.deploy_chain_config(
+        OptionalValue::Some(SovereignConfig::default_config_for_test()),
+        None,
+    );
+
+    let operation_hash = ManagedBuffer::from("operation_missing_validator");
+    let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&operation_hash.to_vec()));
+
+    let (signature, pub_keys) = state.common_setup.get_sig_and_pub_keys(1, &hash_of_hashes);
+
+    state
+        .common_setup
+        .register(&pub_keys[0], &MultiEgldOrEsdtPayment::new(), None);
+
+    state.common_setup.complete_chain_config_setup_phase();
+
+    state
+        .common_setup
+        .deploy_header_verifier(vec![ScArray::ChainConfig]);
+
+    state
+        .common_setup
+        .complete_header_verifier_setup_phase(None);
+
+    let bitmap = state.common_setup.full_bitmap(1);
+    let epoch = 1u64;
+
+    let mut validator_set = MultiValueEncoded::new();
+    validator_set.push(BigUint::from(999u32));
+
+    state.change_validator_set(
+        &signature,
+        &hash_of_hashes,
+        &operation_hash,
+        epoch,
+        &bitmap,
+        validator_set,
+        Some(EXECUTED_BRIDGE_OP_EVENT),
+        Some(BLS_KEY_NOT_REGISTERED),
+    );
+}
+
+/// ### TEST
 /// H-VERIFIER_CHANGE_VALIDATORS_OK
 ///
 /// ### ACTION
@@ -849,7 +1014,7 @@ fn test_change_multiple_validator_sets() {
     let mut state = HeaderVerifierTestState::new();
     let sovereign_config = SovereignConfig {
         max_validators: 11,
-        ..SovereignConfig::default_config()
+        ..SovereignConfig::default_config_for_test()
     };
 
     state
@@ -937,9 +1102,10 @@ fn test_change_multiple_validator_sets() {
 fn test_complete_setup_phase_chain_config_fail() {
     let mut state = HeaderVerifierTestState::new();
 
-    state
-        .common_setup
-        .deploy_chain_config(OptionalValue::None, None);
+    state.common_setup.deploy_chain_config(
+        OptionalValue::Some(SovereignConfig::default_config_for_test()),
+        None,
+    );
 
     state
         .common_setup

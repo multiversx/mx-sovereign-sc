@@ -587,6 +587,7 @@ fn test_register_token_wrong_payment() {
 /// ### EXPECTED
 /// Event is emitted
 #[test]
+#[ignore = "Until the EGLD_000000_TOKEN_IDENTIFIER is considered an ESDT this will fail since the contract cannot burn any EGLD"]
 fn test_register_token() {
     let mut state = SovEsdtSafeTestState::new();
 
@@ -611,7 +612,6 @@ fn test_register_token() {
         num_decimals: 18,
     };
 
-    // NOTE: Until the EGLD_000000_TOKEN_IDENTIFIER is considered an ESDT this will fail since the contract cannot burn any EGLD
     state.register_token(
         new_token,
         egld_token_payment,

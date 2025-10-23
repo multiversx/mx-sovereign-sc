@@ -5,6 +5,7 @@ use multiversx_sc::imports::OptionalValue;
 use multiversx_sc_snippets::imports::tokio;
 use rust_interact::mvx_esdt_safe::mvx_esdt_safe_interactor_main::MvxEsdtSafeInteract;
 use serial_test::serial;
+use structs::configs::SovereignConfig;
 
 /// ### SETUP
 /// DEPLOY_CONTRACTS
@@ -19,7 +20,7 @@ async fn deploy_setup() {
     chain_interactor
         .deploy_and_complete_setup_phase(
             OptionalValue::Some(DEPLOY_COST.into()),
-            OptionalValue::None,
+            OptionalValue::Some(SovereignConfig::default_config_for_test()),
             OptionalValue::None,
         )
         .await;
