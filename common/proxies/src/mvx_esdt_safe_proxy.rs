@@ -176,7 +176,7 @@ where
             .original_result()
     }
 
-    pub fn register_token<
+    pub fn register_sovereign_token<
         Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
         Arg1: ProxyArg<structs::RegisterTokenOperation<Env::Api>>,
     >(

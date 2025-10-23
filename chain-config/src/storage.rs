@@ -73,8 +73,4 @@ pub trait ChainConfigStorageModule {
 
     #[storage_mapper("lastBlsKeyId")]
     fn last_bls_key_id(&self) -> SingleValueMapper<BigUint<Self::Api>>;
-
-    #[view(wasPreviouslySlashed)]
-    #[storage_mapper("wasPreviouslySlashed")]
-    fn was_previously_slashed(&self, validator: &ManagedAddress) -> SingleValueMapper<bool>;
 }

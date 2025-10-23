@@ -149,6 +149,7 @@ impl CompleteFlowInteract {
         token: Option<EsdtTokenInfo>,
     ) {
         let expected_log = self.extract_log_based_on_shard(&config);
+        let expected_log_error = self.extract_log_error_based_on_shard(&config);
         let operation = self
             .prepare_operation(config.shard, token, config.endpoint.as_deref())
             .await;
@@ -180,7 +181,7 @@ impl CompleteFlowInteract {
             operation.clone(),
             config.expected_error.as_deref(),
             expected_log.as_deref(),
-            config.expected_log_error.as_deref(),
+            expected_log_error.as_deref(),
         )
         .await;
     }
@@ -210,7 +211,7 @@ impl CompleteFlowInteract {
             .amount(expected_amount)
             .is_execute(true)
             .with_transfer_data(config.with_transfer_data.unwrap_or_default())
-            .expected_error(config.expected_error.clone());
+            .expected_error(config.expected_log_error.clone());
 
         self.check_balances_after_action(balance_config).await;
 
@@ -275,9 +276,7 @@ impl CompleteFlowInteract {
             .register_sovereign_token(config.shard, token.clone())
             .await;
 
-        if config.expected_error.is_none() {
-            config = config.expect_log(vec![expected_log]);
-        }
+        config = config.expect_log(vec![expected_log]);
 
         self.execute_wrapper(config, Some(token.clone()))
             .await

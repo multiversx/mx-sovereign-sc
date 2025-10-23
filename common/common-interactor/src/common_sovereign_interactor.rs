@@ -331,7 +331,9 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             .from(caller.clone())
             .gas(50_000_000u64)
             .typed(ChainConfigContractProxy)
-            .init(OptionalValue::<SovereignConfig<StaticApi>>::None)
+            .init(OptionalValue::<SovereignConfig<StaticApi>>::Some(
+                SovereignConfig::default_config_for_test(),
+            ))
             .returns(ReturnsNewAddress)
             .code(CHAIN_CONFIG_CODE_PATH)
             .code_metadata(metadata())
@@ -1311,7 +1313,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             .to(mvx_esdt_safe_address)
             .gas(90_000_000u64)
             .typed(MvxEsdtSafeProxy)
-            .register_token(hash_of_hashes, token)
+            .register_sovereign_token(hash_of_hashes, token)
             .returns(ReturnsLogs);
 
         let (response, token) = match expected_log_error {
@@ -1425,7 +1427,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
         amount: &BigUint<StaticApi>,
     ) -> EsdtTokenInfo {
         let edge_case = original_token.token_type == EsdtTokenType::Fungible
-            || (self.is_nft(original_token) && config.expected_error.is_some());
+            || (self.is_nft(original_token) && config.expected_log_error.is_some());
 
         let (mapped_token_id, mapped_nonce) = if edge_case {
             let token_id = self

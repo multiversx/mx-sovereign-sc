@@ -414,7 +414,6 @@ fn test_register_token_nonfungible_token() {
 /// ### EXPECTED
 /// Error NOTHING_TO_TRANSFER
 #[test]
-#[ignore = "Ignore until log assertion fix"]
 fn test_deposit_nothing_to_transfer() {
     let mut state = MvxEsdtSafeTestState::new();
 
@@ -499,7 +498,6 @@ fn test_complete_setup_phase_already_completed() {
 /// ### EXPECTED
 /// Error TOO_MANY_TOKENS
 #[test]
-#[ignore = "Ignore until log assertion fix"]
 fn test_deposit_too_many_tokens() {
     let mut state = MvxEsdtSafeTestState::new();
 
@@ -603,7 +601,6 @@ fn test_deposit_no_transfer_data() {
 /// ### EXPECTED
 /// Error GAS_LIMIT_TOO_HIGH
 #[test]
-#[ignore = "Ignore until log assertion fix"]
 fn test_deposit_gas_limit_too_high() {
     let mut state = MvxEsdtSafeTestState::new();
 
@@ -683,7 +680,6 @@ fn test_deposit_gas_limit_too_high() {
 /// ### EXPECTED
 /// Error DEPOSIT_OVER_MAX_AMOUNT
 #[test]
-#[ignore = "Ignore until log assertion fix"]
 fn test_deposit_max_bridged_amount_exceeded() {
     let mut state = MvxEsdtSafeTestState::new();
 
@@ -757,7 +753,6 @@ fn test_deposit_max_bridged_amount_exceeded() {
 /// ### EXPECTED
 /// Error BANNED_ENDPOINT_NAME
 #[test]
-#[ignore = "Ignore until log assertion fix"]
 fn test_deposit_endpoint_banned() {
     let mut state = MvxEsdtSafeTestState::new();
 
@@ -876,7 +871,6 @@ fn test_deposit_transfer_data_only_no_fee() {
 /// ### EXPECTED
 /// Error ERR_EMPTY_PAYMENTS
 #[test]
-#[ignore = "Ignore until log assertion fix"]
 fn test_deposit_transfer_data_only_with_fee_nothing_to_transfer() {
     let mut state = MvxEsdtSafeTestState::new();
 
@@ -1077,7 +1071,6 @@ fn test_deposit_fee_enabled() {
 /// ### EXPECTED
 /// Error PAYMENT_DOES_NOT_COVER_FEE
 #[test]
-#[ignore = "Ignore until log assertion fix"]
 fn test_deposit_payment_doesnt_cover_fee() {
     let mut state = MvxEsdtSafeTestState::new();
 
@@ -1441,8 +1434,8 @@ fn test_register_token_fungible_token_no_prefix() {
 ///
 /// ### EXPECTED
 /// The token is registered
+#[ignore = "Needs system sc function fix (registerAndSetAllRolesDynamic)"]
 #[test]
-#[ignore = "Ignore until log assertion fix"]
 fn test_register_token_non_fungible_token_dynamic() {
     let mut state = MvxEsdtSafeTestState::new();
 
@@ -1693,9 +1686,10 @@ fn test_execute_operation_success() {
     let bitmap = state.common_setup.full_bitmap(1);
     let epoch = 0;
 
-    state
-        .common_setup
-        .deploy_chain_config(OptionalValue::None, None);
+    state.common_setup.deploy_chain_config(
+        OptionalValue::Some(SovereignConfig::default_config_for_test()),
+        None,
+    );
 
     let (signature, public_keys) = state.common_setup.get_sig_and_pub_keys(1, &hash_of_hashes);
 
@@ -1789,9 +1783,10 @@ fn test_execute_operation_with_native_token_success() {
     let bitmap = state.common_setup.full_bitmap(1);
     let epoch = 0;
 
-    state
-        .common_setup
-        .deploy_chain_config(OptionalValue::None, None);
+    state.common_setup.deploy_chain_config(
+        OptionalValue::Some(SovereignConfig::default_config_for_test()),
+        None,
+    );
 
     let (signature, public_keys) = state.common_setup.get_sig_and_pub_keys(1, &hash_of_hashes);
 
@@ -1888,9 +1883,10 @@ fn test_execute_operation_burn_mechanism_without_deposit_cannot_subtract() {
     let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&operation_hash.to_vec()));
 
     // Deploy and register validators
-    state
-        .common_setup
-        .deploy_chain_config(OptionalValue::None, None);
+    state.common_setup.deploy_chain_config(
+        OptionalValue::Some(SovereignConfig::default_config_for_test()),
+        None,
+    );
 
     let (signature, public_keys) = state.common_setup.get_sig_and_pub_keys(1, &hash_of_hashes);
     let (signature_burn, public_keys_burn) = state
@@ -1990,9 +1986,10 @@ fn test_execute_operation_only_transfer_data_no_fee() {
     let bitmap = state.common_setup.full_bitmap(1);
     let epoch = 0;
 
-    state
-        .common_setup
-        .deploy_chain_config(OptionalValue::None, None);
+    state.common_setup.deploy_chain_config(
+        OptionalValue::Some(SovereignConfig::default_config_for_test()),
+        None,
+    );
 
     let (signature, public_keys) = state.common_setup.get_sig_and_pub_keys(1, &hash_of_hashes);
 
@@ -2079,9 +2076,10 @@ fn test_execute_operation_success_burn_mechanism() {
     let operation_hash = state.common_setup.get_operation_hash(&operation);
     let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&operation_hash.to_vec()));
 
-    state
-        .common_setup
-        .deploy_chain_config(OptionalValue::None, None);
+    state.common_setup.deploy_chain_config(
+        OptionalValue::Some(SovereignConfig::default_config_for_test()),
+        None,
+    );
 
     let (signature, public_keys) = state.common_setup.get_sig_and_pub_keys(1, &hash_of_hashes);
     let (signature_burn, public_keys_burn) = state
@@ -2197,7 +2195,7 @@ fn test_deposit_execute_switch_mechanism() {
 
     let chain_config_config = SovereignConfig {
         max_validators: 4,
-        ..SovereignConfig::default_config()
+        ..SovereignConfig::default_config_for_test()
     };
     state
         .common_setup
@@ -2524,9 +2522,10 @@ fn test_execute_operation_no_payments() {
     let operation_hash = state.common_setup.get_operation_hash(&operation);
     let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&operation_hash.to_vec()));
 
-    state
-        .common_setup
-        .deploy_chain_config(OptionalValue::None, None);
+    state.common_setup.deploy_chain_config(
+        OptionalValue::Some(SovereignConfig::default_config_for_test()),
+        None,
+    );
 
     let (signature, public_keys) = state.common_setup.get_sig_and_pub_keys(1, &hash_of_hashes);
 
@@ -2592,9 +2591,10 @@ fn test_execute_operation_no_payments_failed_event() {
     state.deploy_contract_with_roles(None);
     state.complete_setup_phase(Some(UNPAUSE_CONTRACT_LOG));
 
-    state
-        .common_setup
-        .deploy_chain_config(OptionalValue::None, None);
+    state.common_setup.deploy_chain_config(
+        OptionalValue::Some(SovereignConfig::default_config_for_test()),
+        None,
+    );
 
     let gas_limit = 1;
     let function = ManagedBuffer::<StaticApi>::from(WRONG_ENDPOINT_NAME);
@@ -2678,9 +2678,10 @@ fn test_execute_operation_native_token_failed_event() {
     state.deploy_contract_with_roles(None);
     state.complete_setup_phase(Some(UNPAUSE_CONTRACT_LOG));
 
-    state
-        .common_setup
-        .deploy_chain_config(OptionalValue::None, None);
+    state.common_setup.deploy_chain_config(
+        OptionalValue::Some(SovereignConfig::default_config_for_test()),
+        None,
+    );
 
     let token_data = EsdtTokenData {
         amount: BigUint::from(ONE_HUNDRED_TOKENS),
@@ -2997,9 +2998,10 @@ fn test_update_config_invalid_config() {
     state.deploy_contract_with_roles(None);
     state.complete_setup_phase(Some(UNPAUSE_CONTRACT_LOG));
 
-    state
-        .common_setup
-        .deploy_chain_config(OptionalValue::None, None);
+    state.common_setup.deploy_chain_config(
+        OptionalValue::Some(SovereignConfig::default_config_for_test()),
+        None,
+    );
 
     let esdt_safe_config = EsdtSafeConfig {
         max_tx_gas_limit: MAX_GAS_PER_TRANSACTION + 1,
@@ -3064,9 +3066,10 @@ fn test_update_config() {
     state.deploy_contract_with_roles(None);
     state.complete_setup_phase(Some(UNPAUSE_CONTRACT_LOG));
 
-    state
-        .common_setup
-        .deploy_chain_config(OptionalValue::None, None);
+    state.common_setup.deploy_chain_config(
+        OptionalValue::Some(SovereignConfig::default_config_for_test()),
+        None,
+    );
 
     let esdt_safe_config = EsdtSafeConfig {
         max_tx_gas_limit: 100_000,
@@ -3187,9 +3190,10 @@ fn test_execute_operation_partial_execution() {
             ));
         });
 
-    state
-        .common_setup
-        .deploy_chain_config(OptionalValue::None, None);
+    state.common_setup.deploy_chain_config(
+        OptionalValue::Some(SovereignConfig::default_config_for_test()),
+        None,
+    );
 
     let token_data = EsdtTokenData {
         amount: BigUint::from(ONE_HUNDRED_THOUSAND),

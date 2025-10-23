@@ -143,7 +143,7 @@ impl SovEsdtSafeTestState {
             .assert_expected_error_message(response, expected_error_message);
 
         self.common_setup
-            .assert_expected_log(logs, expected_log, None);
+            .assert_expected_log(logs, expected_log, expected_error_message);
     }
 
     pub fn set_fee_market_address(&mut self, fee_market_address: TestSCAddress) {
@@ -214,6 +214,6 @@ impl SovEsdtSafeTestState {
             .assert_expected_error_message(response, expected_error_message);
 
         self.common_setup
-            .assert_expected_log(logs, expected_log, None);
+            .assert_expected_log(logs, expected_log, expected_error_message);
     }
 }

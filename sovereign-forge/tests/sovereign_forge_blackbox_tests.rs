@@ -104,7 +104,7 @@ fn test_update_sovereign_config_no_chain_config_deployed() {
         });
 
     state.update_sovereign_config(
-        SovereignConfig::default_config(),
+        SovereignConfig::default_config_for_test(),
         Some(CALLER_DID_NOT_DEPLOY_ANY_SOV_CHAIN),
     );
 }

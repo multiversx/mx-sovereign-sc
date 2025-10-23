@@ -14,14 +14,12 @@ pub const NUMBER_OF_SHARDS: u32 = 3;
 pub trait ForgeUtilsModule:
     super::storage::StorageModule + common_utils::CommonUtilsModule + custom_events::CustomEventsModule
 {
-    fn require_initialization_phase_complete(&self) {
-        for shard_id in 0..NUMBER_OF_SHARDS {
-            require!(
-                !self.chain_factories(shard_id).is_empty(),
-                "There is no Chain-Factory contract assigned for shard {}",
-                shard_id
-            );
-        }
+    fn require_initialization_phase_complete(&self, shard_id: u32) {
+        require!(
+            !self.chain_factories(shard_id).is_empty(),
+            "There is no Chain-Factory contract assigned for shard {}",
+            shard_id
+        );
     }
 
     fn require_phase_four_completed(&self, caller: &ManagedAddress) {
