@@ -170,4 +170,11 @@ pub const EGLD_TOKEN_IDENTIFIER_EXPECTED: &str =
     "The token identifier should be the EGLD token identifier";
 pub const INCORRECT_OPERATION_NONCE: &str = "The operation nonce is incorrect";
 pub const INVALID_FUNCTION_NOT_FOUND: &str = "invalid function (not found)";
+pub const MINT_ESDT_FAILED: &str = "Failed to mint ESDT:";
+pub const CREATE_ESDT_FAILED: &str = "Failed to create ESDT:";
+pub const BURN_ESDT_FAILED: &str = "Failed to burn ESDT:";
 pub const INCORRECT_DEPOSIT_AMOUNT: &str = "Incorrect deposit amount";
+pub const NO_VALIDATORS_FOR_GIVEN_EPOCH: &str =
+    "There are no registered validators for the given epoch";
+pub const NO_VALIDATORS_FOR_PREVIOUS_EPOCH: &str =
+    "There are no registered validators for the previous epoch";

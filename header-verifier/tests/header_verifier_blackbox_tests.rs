@@ -6,10 +6,11 @@ use common_test_setup::constants::{
 };
 use common_test_setup::log;
 use error_messages::{
-    CALLER_NOT_FROM_CURRENT_SOVEREIGN, CHAIN_CONFIG_SETUP_PHASE_NOT_COMPLETE,
-    CURRENT_OPERATION_ALREADY_IN_EXECUTION, CURRENT_OPERATION_NOT_REGISTERED,
-    INCORRECT_OPERATION_NONCE, INVALID_EPOCH, OUTGOING_TX_HASH_ALREADY_REGISTERED,
-    SETUP_PHASE_NOT_COMPLETED,
+    BLS_KEY_NOT_REGISTERED, CALLER_NOT_FROM_CURRENT_SOVEREIGN,
+    CHAIN_CONFIG_SETUP_PHASE_NOT_COMPLETE, CURRENT_OPERATION_ALREADY_IN_EXECUTION,
+    CURRENT_OPERATION_NOT_REGISTERED, INCORRECT_OPERATION_NONCE, INVALID_EPOCH,
+    NO_VALIDATORS_FOR_GIVEN_EPOCH, NO_VALIDATORS_FOR_PREVIOUS_EPOCH,
+    OUTGOING_TX_HASH_ALREADY_REGISTERED, SETUP_PHASE_NOT_COMPLETED,
 };
 use header_verifier::header_utils::HeaderVerifierUtilsModule;
 use header_verifier::storage::HeaderVerifierStorageModule;
@@ -69,6 +70,54 @@ fn register_bridge_operation_setup_not_completed() {
         bitmap,
         0,
         Some(SETUP_PHASE_NOT_COMPLETED),
+    );
+}
+
+/// ### TEST
+/// H-VERIFIER_REGISTER_OPERATION_NO_VALIDATORS
+///
+/// ### ACTION
+/// Call 'register_operations' without registering validators for the given epoch
+///
+/// ### EXPECTED
+/// Error NO_VALIDATORS_FOR_GIVEN_EPOCH
+#[test]
+fn test_register_bridge_operation_no_validators_for_epoch() {
+    let mut state = HeaderVerifierTestState::new();
+
+    state.common_setup.deploy_chain_config(
+        OptionalValue::Some(SovereignConfig::default_config_for_test()),
+        None,
+    );
+
+    state
+        .common_setup
+        .register(&BLSKey::random(), &MultiEgldOrEsdtPayment::new(), None);
+
+    let operation_1 = ManagedBuffer::from("operation_1");
+    let operation = state.generate_bridge_operation_struct(vec![&operation_1]);
+    let bitmap = state.common_setup.full_bitmap(1);
+
+    let (signature, _pub_keys) = state
+        .common_setup
+        .get_sig_and_pub_keys(1, &operation.bridge_operation_hash);
+
+    state.common_setup.complete_chain_config_setup_phase();
+
+    state
+        .common_setup
+        .deploy_header_verifier(vec![ScArray::ChainConfig]);
+
+    state
+        .common_setup
+        .complete_header_verifier_setup_phase(None);
+
+    state.register_operations(
+        &signature,
+        operation,
+        bitmap,
+        1,
+        Some(NO_VALIDATORS_FOR_GIVEN_EPOCH),
     );
 }
 
@@ -796,6 +845,57 @@ fn test_change_validator_invalid_epoch() {
 /// H-VERIFIER_CHANGE_VALIDATORS_FAIL
 ///
 /// ### ACTION
+/// Call 'change_validator_set()' when the previous epoch has no registered validators
+///
+/// ### EXPECTED
+/// Error NO_VALIDATORS_FOR_PREVIOUS_EPOCH is emitted
+#[test]
+fn change_validator_set_previous_epoch_has_no_validators() {
+    let mut state = HeaderVerifierTestState::new();
+
+    state.common_setup.deploy_chain_config(
+        OptionalValue::Some(SovereignConfig::default_config_for_test()),
+        None,
+    );
+
+    let genesis_validator = BLSKey::random();
+    state
+        .common_setup
+        .register(&genesis_validator, &MultiEgldOrEsdtPayment::new(), None);
+
+    state.common_setup.complete_chain_config_setup_phase();
+
+    state
+        .common_setup
+        .deploy_header_verifier(vec![ScArray::ChainConfig]);
+
+    state
+        .common_setup
+        .complete_header_verifier_setup_phase(None);
+
+    let operation_hash = ManagedBuffer::from("operation_1");
+    let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&operation_hash.to_vec()));
+    let signature = ManagedBuffer::new();
+    let bitmap = ManagedBuffer::new();
+    let validator_set = MultiValueEncoded::new();
+    let epoch = 2u64;
+
+    state.change_validator_set(
+        &signature,
+        &hash_of_hashes,
+        &operation_hash,
+        epoch,
+        &bitmap,
+        validator_set,
+        Some(EXECUTED_BRIDGE_OP_EVENT),
+        Some(NO_VALIDATORS_FOR_PREVIOUS_EPOCH),
+    );
+}
+
+/// ### TEST
+/// H-VERIFIER_CHANGE_VALIDATORS_FAIL
+///
+/// ### ACTION
 /// Call 'change_validator_set()' before registering the operation
 ///
 /// ### EXPECTED
@@ -857,6 +957,60 @@ fn test_change_validator_set_operation_already_registered() {
         &bitmap,
         MultiValueEncoded::new(),
         second_expected_logs,
+    );
+}
+
+/// ### TEST
+/// H-VERIFIER_CHANGE_VALIDATORS_FAIL_BLS_KEY
+///
+/// ### ACTION
+/// Call 'change_validator_set()' with a validator id that is not registered
+///
+/// ### EXPECTED
+/// Error BLS_KEY_NOT_REGISTERED is emitted
+#[test]
+fn test_change_validator_set_bls_key_not_found() {
+    let mut state = HeaderVerifierTestState::new();
+
+    state.common_setup.deploy_chain_config(
+        OptionalValue::Some(SovereignConfig::default_config_for_test()),
+        None,
+    );
+
+    let operation_hash = ManagedBuffer::from("operation_missing_validator");
+    let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&operation_hash.to_vec()));
+
+    let (signature, pub_keys) = state.common_setup.get_sig_and_pub_keys(1, &hash_of_hashes);
+
+    state
+        .common_setup
+        .register(&pub_keys[0], &MultiEgldOrEsdtPayment::new(), None);
+
+    state.common_setup.complete_chain_config_setup_phase();
+
+    state
+        .common_setup
+        .deploy_header_verifier(vec![ScArray::ChainConfig]);
+
+    state
+        .common_setup
+        .complete_header_verifier_setup_phase(None);
+
+    let bitmap = state.common_setup.full_bitmap(1);
+    let epoch = 1u64;
+
+    let mut validator_set = MultiValueEncoded::new();
+    validator_set.push(BigUint::from(999u32));
+
+    state.change_validator_set(
+        &signature,
+        &hash_of_hashes,
+        &operation_hash,
+        epoch,
+        &bitmap,
+        validator_set,
+        Some(EXECUTED_BRIDGE_OP_EVENT),
+        Some(BLS_KEY_NOT_REGISTERED),
     );
 }
 
