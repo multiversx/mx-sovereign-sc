@@ -2083,13 +2083,6 @@ fn test_execute_operation_success_burn_mechanism() {
     let operation_hash = state.common_setup.get_operation_hash(&operation);
     let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&operation_hash.to_vec()));
 
-    let burn_operation = SetBurnMechanismOperation {
-        token_id: EgldOrEsdtTokenIdentifier::esdt(TRUSTED_TOKEN),
-        nonce: state.common_setup.next_operation_nonce(),
-    };
-    let burn_operation_hash = burn_operation.generate_hash();
-    let burn_hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&burn_operation_hash.to_vec()));
-
     state.common_setup.deploy_chain_config(
         OptionalValue::Some(SovereignConfig::default_config_for_test()),
         None,
