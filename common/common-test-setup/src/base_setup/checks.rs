@@ -299,42 +299,10 @@ impl BaseSetup {
                         expected_log.identifier
                     );
                     if let OptionalValue::Some(topics) = &expected_log.topics {
-                        let expected_topics_bytes: Vec<Vec<u8>> =
-                            topics.iter().map(|s| s.as_bytes().to_vec()).collect();
-                        assert!(
-                            matching_logs.iter().any(|log| {
-                                expected_topics_bytes
-                                    .iter()
-                                    .all(|expected_topic| log.topics.contains(expected_topic))
-                            }),
-                            "Expected topics '{}' not found",
-                            expected_log
-                                .topics
-                                .into_option()
-                                .unwrap_or_default()
-                                .join(", ")
-                        );
+                        self.validate_expected_topics(topics, &matching_logs);
                     }
                     if let OptionalValue::Some(data) = &expected_log.data {
-                        let expected_data_bytes: Vec<Vec<u8>> =
-                            data.iter().map(|s| s.as_bytes().to_vec()).collect();
-                        assert!(
-                            matching_logs.iter().any(|log| {
-                                expected_data_bytes.iter().all(|expected_data| {
-                                    log.data.iter().any(|log_data| {
-                                        log_data
-                                            .windows(expected_data.len())
-                                            .any(|window| window == expected_data)
-                                    })
-                                })
-                            }),
-                            "Expected data '{}' not found",
-                            expected_log
-                                .data
-                                .into_option()
-                                .unwrap_or_default()
-                                .join(", ")
-                        );
+                        self.validate_expected_data(data, &matching_logs);
                     }
                 }
             }
@@ -387,5 +355,37 @@ impl BaseSetup {
         self.world
             .check_account(OWNER_ADDRESS)
             .esdt_balance(FIRST_TEST_TOKEN, owner_token);
+    }
+
+    fn validate_expected_topics(&self, topics: &[&str], matching_logs: &[&Log]) {
+        let expected_topics_bytes: Vec<Vec<u8>> =
+            topics.iter().map(|s| s.as_bytes().to_vec()).collect();
+        assert!(
+            matching_logs.iter().any(|log| {
+                expected_topics_bytes
+                    .iter()
+                    .all(|expected_topic| log.topics.contains(expected_topic))
+            }),
+            "Expected topics '{}' not found",
+            topics.join(", ")
+        );
+    }
+
+    fn validate_expected_data(&self, data: &[&str], matching_logs: &[&Log]) {
+        let expected_data_bytes: Vec<Vec<u8>> =
+            data.iter().map(|s| s.as_bytes().to_vec()).collect();
+        assert!(
+            matching_logs.iter().any(|log| {
+                expected_data_bytes.iter().all(|expected_data| {
+                    log.data.iter().any(|log_data| {
+                        log_data
+                            .windows(expected_data.len())
+                            .any(|window| window == expected_data)
+                    })
+                })
+            }),
+            "Expected data '{}' not found",
+            data.join(", ")
+        );
     }
 }
