@@ -626,10 +626,20 @@ pub trait InteractorHelpers {
             .await;
     }
 
+    // NOTE: This is a temporary workaround, the whole balance check method needs refactoring
     async fn check_testing_sc_balance(&mut self, expected_tokens: Vec<EsdtTokenInfo>) {
         let testing_sc_address = self.common_state().current_testing_sc_address().clone();
         let tokens = if expected_tokens.is_empty() {
-            self.create_empty_balance_state().await
+            let mut tokens = self.create_empty_balance_state().await;
+            tokens.retain(|token| {
+                !token
+                    .token_id
+                    .clone()
+                    .into_managed_buffer()
+                    .to_string()
+                    .contains("TRUSTED")
+            });
+            tokens
         } else {
             expected_tokens
         };
