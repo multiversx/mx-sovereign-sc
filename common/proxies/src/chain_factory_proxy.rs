@@ -292,7 +292,7 @@ where
 
     pub fn remove_fee<
         Arg0: ProxyArg<ManagedAddress<Env::Api>>,
-        Arg1: ProxyArg<TokenIdentifier<Env::Api>>,
+        Arg1: ProxyArg<EsdtTokenIdentifier<Env::Api>>,
     >(
         self,
         fee_market_address: Arg0,
