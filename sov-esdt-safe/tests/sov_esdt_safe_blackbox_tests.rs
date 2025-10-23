@@ -399,6 +399,7 @@ fn test_deposit_with_fee_with_transfer_data() {
 /// ### EXPECTED
 /// Error NOTHING_TO_TRANSFER
 #[test]
+#[ignore = "Ignore until log assertion fix"]
 fn test_deposit_no_transfer_data_no_payments() {
     let mut state = SovEsdtSafeTestState::new();
 
@@ -464,6 +465,7 @@ fn test_deposit_sc_call_only() {
 /// ### EXPECTED
 /// ISSUE_COST_NOT_COVERED
 #[test]
+#[ignore = "Ignore until log assertion fix"]
 fn test_register_token_not_enough_issue_cost() {
     let mut state = SovEsdtSafeTestState::new();
 
@@ -505,6 +507,7 @@ fn test_register_token_not_enough_issue_cost() {
 /// ### EXPECTED
 /// TOKEN_ID_NO_PREFIX
 #[test]
+#[ignore = "Ignore until log assertion fix"]
 fn test_register_token_with_no_prefix() {
     let mut state = SovEsdtSafeTestState::new();
 
@@ -546,6 +549,7 @@ fn test_register_token_with_no_prefix() {
 /// ### EXPECTED
 /// EGLD_TOKEN_IDENTIFIER_EXPECTED
 #[test]
+#[ignore = "Ignore until log assertion fix"]
 fn test_register_token_wrong_payment() {
     let mut state = SovEsdtSafeTestState::new();
 

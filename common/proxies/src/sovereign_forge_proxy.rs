@@ -279,7 +279,7 @@ where
     }
 
     pub fn remove_fee<
-        Arg0: ProxyArg<TokenIdentifier<Env::Api>>,
+        Arg0: ProxyArg<EsdtTokenIdentifier<Env::Api>>,
     >(
         self,
         token_id: Arg0,
