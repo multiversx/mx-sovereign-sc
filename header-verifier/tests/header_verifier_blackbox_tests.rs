@@ -880,6 +880,10 @@ fn change_validator_set_previous_epoch_has_no_validators() {
     let validator_set = MultiValueEncoded::new();
     let epoch = 2u64;
 
+    let expected_logs = Some(vec![
+        log!(CHANGE_VALIDATOR_SET_ENDPOINT, topics: [EXECUTED_BRIDGE_OP_EVENT], data: [NO_VALIDATORS_FOR_PREVIOUS_EPOCH]),
+    ]);
+
     state.change_validator_set(
         &signature,
         &hash_of_hashes,
@@ -887,8 +891,7 @@ fn change_validator_set_previous_epoch_has_no_validators() {
         epoch,
         &bitmap,
         validator_set,
-        Some(EXECUTED_BRIDGE_OP_EVENT),
-        Some(NO_VALIDATORS_FOR_PREVIOUS_EPOCH),
+        expected_logs,
     );
 }
 
@@ -1002,6 +1005,10 @@ fn test_change_validator_set_bls_key_not_found() {
     let mut validator_set = MultiValueEncoded::new();
     validator_set.push(BigUint::from(999u32));
 
+    let expected_logs = Some(vec![
+        log!(CHANGE_VALIDATOR_SET_ENDPOINT, topics: [EXECUTED_BRIDGE_OP_EVENT], data: [BLS_KEY_NOT_REGISTERED]),
+    ]);
+
     state.change_validator_set(
         &signature,
         &hash_of_hashes,
@@ -1009,8 +1016,7 @@ fn test_change_validator_set_bls_key_not_found() {
         epoch,
         &bitmap,
         validator_set,
-        Some(EXECUTED_BRIDGE_OP_EVENT),
-        Some(BLS_KEY_NOT_REGISTERED),
+        expected_logs,
     );
 }
 
