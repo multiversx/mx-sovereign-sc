@@ -119,7 +119,7 @@ impl ChainConfigTestState {
             .assert_expected_error_message(result, expect_error);
 
         self.common_setup
-            .assert_expected_log(logs, expected_custom_log, None);
+            .assert_expected_log(logs, expected_custom_log, expect_error);
     }
 
     pub fn get_bls_key_by_id(&mut self, id: &BigUint<StaticApi>) -> ManagedBuffer<StaticApi> {
