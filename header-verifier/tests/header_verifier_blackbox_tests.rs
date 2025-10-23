@@ -968,18 +968,6 @@ fn test_change_validator_set_bls_key_not_found() {
         .common_setup
         .complete_header_verifier_setup_phase(None);
 
-    state
-        .common_setup
-        .world
-        .tx()
-        .from(OWNER_ADDRESS)
-        .to(HEADER_VERIFIER_ADDRESS)
-        .whitebox(header_verifier::contract_obj, |sc| {
-            sc.bls_pub_keys(0).clear();
-            sc.bls_pub_keys(0)
-                .insert(ManagedBuffer::new_from_bytes(&pub_keys[0].to_vec()));
-        });
-
     let bitmap = state.common_setup.full_bitmap(1);
     let epoch = 1u64;
 
