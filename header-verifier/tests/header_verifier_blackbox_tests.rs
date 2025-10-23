@@ -83,9 +83,10 @@ fn register_bridge_operation_setup_not_completed() {
 fn test_register_bridge_operation_no_validators_for_epoch() {
     let mut state = HeaderVerifierTestState::new();
 
-    state
-        .common_setup
-        .deploy_chain_config(OptionalValue::None, None);
+    state.common_setup.deploy_chain_config(
+        OptionalValue::Some(SovereignConfig::default_config_for_test()),
+        None,
+    );
 
     state
         .common_setup
@@ -844,9 +845,10 @@ fn test_change_validator_invalid_epoch() {
 fn change_validator_set_previous_epoch_has_no_validators() {
     let mut state = HeaderVerifierTestState::new();
 
-    state
-        .common_setup
-        .deploy_chain_config(OptionalValue::None, None);
+    state.common_setup.deploy_chain_config(
+        OptionalValue::Some(SovereignConfig::default_config_for_test()),
+        None,
+    );
 
     let genesis_validator = BLSKey::random();
     state
@@ -956,9 +958,10 @@ fn test_change_validator_set_operation_already_registered() {
 fn test_change_validator_set_bls_key_not_found() {
     let mut state = HeaderVerifierTestState::new();
 
-    state
-        .common_setup
-        .deploy_chain_config(OptionalValue::None, None);
+    state.common_setup.deploy_chain_config(
+        OptionalValue::Some(SovereignConfig::default_config_for_test()),
+        None,
+    );
 
     let operation_hash = ManagedBuffer::from("operation_missing_validator");
     let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&operation_hash.to_vec()));
