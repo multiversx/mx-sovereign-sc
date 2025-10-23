@@ -360,7 +360,7 @@ impl MvxEsdtSafeTestState {
             .from(OWNER_ADDRESS)
             .to(ESDT_SAFE_ADDRESS)
             .typed(MvxEsdtSafeProxy)
-            .register_token(hash_of_hashes, register_token_args)
+            .register_sovereign_token(hash_of_hashes, register_token_args)
             .returns(ReturnsLogs)
             .run();
 
