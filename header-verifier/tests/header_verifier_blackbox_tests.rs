@@ -4,9 +4,10 @@ use common_test_setup::constants::{
     OWNER_ADDRESS,
 };
 use error_messages::{
-    CALLER_NOT_FROM_CURRENT_SOVEREIGN, CHAIN_CONFIG_SETUP_PHASE_NOT_COMPLETE,
-    CURRENT_OPERATION_ALREADY_IN_EXECUTION, CURRENT_OPERATION_NOT_REGISTERED,
-    INCORRECT_OPERATION_NONCE, INVALID_EPOCH, NO_VALIDATORS_FOR_PREVIOUS_EPOCH,
+    BLS_KEY_NOT_REGISTERED, CALLER_NOT_FROM_CURRENT_SOVEREIGN,
+    CHAIN_CONFIG_SETUP_PHASE_NOT_COMPLETE, CURRENT_OPERATION_ALREADY_IN_EXECUTION,
+    CURRENT_OPERATION_NOT_REGISTERED, INCORRECT_OPERATION_NONCE, INVALID_EPOCH,
+    NO_VALIDATORS_FOR_GIVEN_EPOCH, NO_VALIDATORS_FOR_PREVIOUS_EPOCH,
     OUTGOING_TX_HASH_ALREADY_REGISTERED, SETUP_PHASE_NOT_COMPLETED,
 };
 use header_verifier::header_utils::HeaderVerifierUtilsModule;
@@ -66,6 +67,53 @@ fn register_bridge_operation_setup_not_completed() {
         bitmap,
         0,
         Some(SETUP_PHASE_NOT_COMPLETED),
+    );
+}
+
+/// ### TEST
+/// H-VERIFIER_REGISTER_OPERATION_NO_VALIDATORS
+///
+/// ### ACTION
+/// Call 'register_operations' without registering validators for the given epoch
+///
+/// ### EXPECTED
+/// Error NO_VALIDATORS_FOR_GIVEN_EPOCH
+#[test]
+fn test_register_bridge_operation_no_validators_for_epoch() {
+    let mut state = HeaderVerifierTestState::new();
+
+    state
+        .common_setup
+        .deploy_chain_config(OptionalValue::None, None);
+
+    state
+        .common_setup
+        .register(&BLSKey::random(), &MultiEgldOrEsdtPayment::new(), None);
+
+    let operation_1 = ManagedBuffer::from("operation_1");
+    let operation = state.generate_bridge_operation_struct(vec![&operation_1]);
+    let bitmap = state.common_setup.full_bitmap(1);
+
+    let (signature, _pub_keys) = state
+        .common_setup
+        .get_sig_and_pub_keys(1, &operation.bridge_operation_hash);
+
+    state.common_setup.complete_chain_config_setup_phase();
+
+    state
+        .common_setup
+        .deploy_header_verifier(vec![ScArray::ChainConfig]);
+
+    state
+        .common_setup
+        .complete_header_verifier_setup_phase(None);
+
+    state.register_operations(
+        &signature,
+        operation,
+        bitmap,
+        1,
+        Some(NO_VALIDATORS_FOR_GIVEN_EPOCH),
     );
 }
 
@@ -882,6 +930,71 @@ fn test_change_validator_set_operation_already_registered() {
         MultiValueEncoded::new(),
         Some(EXECUTED_BRIDGE_OP_EVENT),
         Some(OUTGOING_TX_HASH_ALREADY_REGISTERED),
+    );
+}
+
+/// ### TEST
+/// H-VERIFIER_CHANGE_VALIDATORS_FAIL_BLS_KEY
+///
+/// ### ACTION
+/// Call 'change_validator_set()' with a validator id that is not registered
+///
+/// ### EXPECTED
+/// Error BLS_KEY_NOT_REGISTERED is emitted
+#[test]
+fn test_change_validator_set_bls_key_not_found() {
+    let mut state = HeaderVerifierTestState::new();
+
+    state
+        .common_setup
+        .deploy_chain_config(OptionalValue::None, None);
+
+    let operation_hash = ManagedBuffer::from("operation_missing_validator");
+    let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&operation_hash.to_vec()));
+
+    let (signature, pub_keys) = state.common_setup.get_sig_and_pub_keys(1, &hash_of_hashes);
+
+    state
+        .common_setup
+        .register(&pub_keys[0], &MultiEgldOrEsdtPayment::new(), None);
+
+    state.common_setup.complete_chain_config_setup_phase();
+
+    state
+        .common_setup
+        .deploy_header_verifier(vec![ScArray::ChainConfig]);
+
+    state
+        .common_setup
+        .complete_header_verifier_setup_phase(None);
+
+    state
+        .common_setup
+        .world
+        .tx()
+        .from(OWNER_ADDRESS)
+        .to(HEADER_VERIFIER_ADDRESS)
+        .whitebox(header_verifier::contract_obj, |sc| {
+            sc.bls_pub_keys(0).clear();
+            sc.bls_pub_keys(0)
+                .insert(ManagedBuffer::new_from_bytes(&pub_keys[0].to_vec()));
+        });
+
+    let bitmap = state.common_setup.full_bitmap(1);
+    let epoch = 1u64;
+
+    let mut validator_set = MultiValueEncoded::new();
+    validator_set.push(BigUint::from(999u32));
+
+    state.change_validator_set(
+        &signature,
+        &hash_of_hashes,
+        &operation_hash,
+        epoch,
+        &bitmap,
+        validator_set,
+        Some(EXECUTED_BRIDGE_OP_EVENT),
+        Some(BLS_KEY_NOT_REGISTERED),
     );
 }
 
