@@ -1,4 +1,5 @@
 use crate::constants::*;
+use multiversx_sc::imports::OptionalValue;
 use multiversx_sc_scenario::{
     api::StaticApi,
     imports::{Address, BigUint, ManagedBuffer, MxscPath, TestTokenIdentifier, Vec},
@@ -16,6 +17,45 @@ pub struct AccountSetup<'a> {
     pub code_path: Option<MxscPath<'a>>,
     pub esdt_balances: Option<Vec<(TestTokenIdentifier<'a>, u64, BigUint<StaticApi>)>>,
     pub egld_balance: Option<BigUint<StaticApi>>,
+}
+
+#[derive(Clone, Debug)]
+pub struct ExpectedLogs<'a> {
+    pub identifier: &'a str,
+    pub topics: OptionalValue<Vec<&'a str>>,
+    pub data: OptionalValue<Vec<&'a str>>,
+}
+
+#[macro_export]
+macro_rules! log {
+    ($identifier:expr) => {
+        ExpectedLogs {
+            identifier: $identifier,
+            topics: OptionalValue::None,
+            data: OptionalValue::None,
+        }
+    };
+    ($identifier:expr, topics: [$($topic:expr),*]) => {
+        ExpectedLogs {
+            identifier: $identifier,
+            topics: OptionalValue::Some(vec![$($topic),*]),
+            data: OptionalValue::None,
+        }
+    };
+    ($identifier:expr, data: [$($data:expr),*]) => {
+        ExpectedLogs {
+            identifier: $identifier,
+            topics: OptionalValue::None,
+            data: OptionalValue::Some(vec![$($data),*]),
+        }
+    };
+    ($identifier:expr, topics: [$($topic:expr),*], data: [$($data:expr),*]) => {
+        ExpectedLogs {
+            identifier: $identifier,
+            topics: OptionalValue::Some(vec![$($topic),*]),
+            data: OptionalValue::Some(vec![$($data),*]),
+        }
+    };
 }
 
 fn world() -> ScenarioWorld {

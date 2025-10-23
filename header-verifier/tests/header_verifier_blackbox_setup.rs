@@ -1,4 +1,4 @@
-use common_test_setup::base_setup::init::{AccountSetup, BaseSetup};
+use common_test_setup::base_setup::init::{AccountSetup, BaseSetup, ExpectedLogs};
 use common_test_setup::constants::{
     ESDT_SAFE_ADDRESS, HEADER_VERIFIER_ADDRESS, MVX_ESDT_SAFE_CODE_PATH, OWNER_ADDRESS,
     OWNER_BALANCE,
@@ -188,8 +188,7 @@ impl HeaderVerifierTestState {
         epoch: u64,
         pub_keys_bitmap: &ManagedBuffer<StaticApi>,
         validator_set: MultiValueEncoded<StaticApi, BigUint<StaticApi>>,
-        expected_custom_log: Option<&str>,
-        expected_log_error: Option<&str>,
+        expected_logs: Option<Vec<ExpectedLogs>>,
     ) {
         let (logs, response) = self
             .common_setup
@@ -214,7 +213,7 @@ impl HeaderVerifierTestState {
             .assert_expected_error_message(response, None);
 
         self.common_setup
-            .assert_expected_log(logs, expected_custom_log, expected_log_error);
+            .assert_expected_log_refactored(logs, expected_logs);
     }
 
     pub fn generate_bridge_operation_struct(

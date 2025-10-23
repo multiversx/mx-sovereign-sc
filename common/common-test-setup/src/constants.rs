@@ -113,6 +113,7 @@ pub const EXECUTED_BRIDGE_OP_EVENT: &str = "executedBridgeOp";
 pub const DEPOSIT_EVENT: &str = "deposit";
 pub const SC_CALL_EVENT: &str = "scCall";
 pub const REGISTER_TOKEN_EVENT: &str = "registerToken";
+pub const CHANGE_VALIDATOR_SET_ENDPOINT: &str = "changeValidatorSet";
 
 pub const WALLET_SHARD_0: &str = "wallets/wallet_shard_0.pem";
 pub const FAILED_TO_LOAD_WALLET_SHARD_0: &str = "Failed to load wallet for shard 0";

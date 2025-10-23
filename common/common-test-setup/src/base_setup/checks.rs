@@ -1,6 +1,7 @@
 use cross_chain::storage::CrossChainStorage;
 use error_messages::INCORRECT_DEPOSIT_AMOUNT;
 use header_verifier::storage::HeaderVerifierStorageModule;
+use multiversx_sc::imports::OptionalValue;
 use multiversx_sc_scenario::imports::{EgldOrEsdtTokenIdentifier, ManagedVec};
 use multiversx_sc_scenario::DebugApi;
 use multiversx_sc_scenario::{
@@ -17,6 +18,7 @@ use mvx_esdt_safe::bridging_mechanism::BridgingMechanism;
 use proxies::mvx_fee_market_proxy::MvxFeeMarketProxy;
 use structs::OperationHashStatus;
 
+use crate::base_setup::init::ExpectedLogs;
 use crate::{
     base_setup::init::BaseSetup,
     constants::{
@@ -273,6 +275,67 @@ impl BaseSetup {
                         ManagedBuffer::<StaticApi>::from(expected_error).to_vec();
                     let found_error = self.search_for_error_in_logs(&logs, &expected_error_bytes);
                     assert!(found_error, "Expected error '{}' not found", expected_error);
+                }
+            }
+        }
+    }
+
+    pub fn assert_expected_log_refactored(
+        &mut self,
+        logs: Vec<Log>,
+        expected_logs: Option<Vec<ExpectedLogs>>,
+    ) {
+        match expected_logs {
+            None => {}
+            Some(expected_logs) => {
+                for expected_log in expected_logs {
+                    let matching_logs: Vec<&Log> = logs
+                        .iter()
+                        .filter(|log| log.endpoint == expected_log.identifier)
+                        .collect();
+                    assert!(
+                        !matching_logs.is_empty(),
+                        "Expected log '{}' not found",
+                        expected_log.identifier
+                    );
+                    if let OptionalValue::Some(topics) = &expected_log.topics {
+                        let expected_topics_bytes: Vec<Vec<u8>> =
+                            topics.iter().map(|s| s.as_bytes().to_vec()).collect();
+                        assert!(
+                            matching_logs.iter().any(|log| {
+                                expected_topics_bytes
+                                    .iter()
+                                    .all(|expected_topic| log.topics.contains(expected_topic))
+                            }),
+                            "Expected topics '{}' not found",
+                            expected_log
+                                .topics
+                                .into_option()
+                                .unwrap_or_default()
+                                .join(", ")
+                        );
+                    }
+                    if let OptionalValue::Some(data) = &expected_log.data {
+                        let expected_data_bytes: Vec<Vec<u8>> =
+                            data.iter().map(|s| s.as_bytes().to_vec()).collect();
+                        assert!(
+                            matching_logs.iter().any(|log| {
+                                expected_data_bytes.iter().all(|expected_data| {
+                                    log.data.iter().any(|log_data| {
+                                        log_data
+                                            .windows(expected_data.len())
+                                            .any(|window| window == expected_data)
+                                    })
+                                })
+                            }),
+                            "Expected data '{}' not found",
+                            expected_log
+                                .data
+                                .into_option()
+                                .unwrap_or_default()
+                                .join(", ")
+                        );
+                    }
                 }
             }
         }

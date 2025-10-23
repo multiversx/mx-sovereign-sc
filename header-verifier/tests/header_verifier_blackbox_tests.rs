@@ -1,8 +1,10 @@
 use common_test_setup::base_setup::helpers::BLSKey;
+use common_test_setup::base_setup::init::ExpectedLogs;
 use common_test_setup::constants::{
-    CHAIN_CONFIG_ADDRESS, ESDT_SAFE_ADDRESS, EXECUTED_BRIDGE_OP_EVENT, HEADER_VERIFIER_ADDRESS,
-    OWNER_ADDRESS,
+    CHAIN_CONFIG_ADDRESS, CHANGE_VALIDATOR_SET_ENDPOINT, ESDT_SAFE_ADDRESS,
+    EXECUTED_BRIDGE_OP_EVENT, HEADER_VERIFIER_ADDRESS, OWNER_ADDRESS,
 };
+use common_test_setup::log;
 use error_messages::{
     CALLER_NOT_FROM_CURRENT_SOVEREIGN, CHAIN_CONFIG_SETUP_PHASE_NOT_COMPLETE,
     CURRENT_OPERATION_ALREADY_IN_EXECUTION, CURRENT_OPERATION_NOT_REGISTERED,
@@ -716,6 +718,10 @@ fn test_change_validator_set() {
             sc.bls_pub_keys(0).insert(pub_key);
         });
 
+    let expected_logs = Some(vec![
+        log!(CHANGE_VALIDATOR_SET_ENDPOINT, topics: [EXECUTED_BRIDGE_OP_EVENT]),
+    ]);
+
     state.change_validator_set(
         &change_validator_set_sig,
         &hash_of_hashes,
@@ -723,8 +729,7 @@ fn test_change_validator_set() {
         epoch_for_new_set,
         &bitmap,
         validator_set,
-        Some(EXECUTED_BRIDGE_OP_EVENT),
-        None,
+        expected_logs,
     );
 
     state
@@ -772,6 +777,10 @@ fn test_change_validator_invalid_epoch() {
     let validator_set = MultiValueEncoded::new();
     let epoch = 0u64;
 
+    let expected_logs = Some(vec![
+        log!(CHANGE_VALIDATOR_SET_ENDPOINT, topics: [EXECUTED_BRIDGE_OP_EVENT], data: [INVALID_EPOCH]),
+    ]);
+
     state.change_validator_set(
         &signature,
         &hash_of_hashes,
@@ -779,8 +788,7 @@ fn test_change_validator_invalid_epoch() {
         epoch,
         &bitmap,
         validator_set,
-        Some(EXECUTED_BRIDGE_OP_EVENT),
-        Some(INVALID_EPOCH),
+        expected_logs,
     );
 }
 
@@ -823,16 +831,9 @@ fn test_change_validator_set_operation_already_registered() {
         .common_setup
         .complete_header_verifier_setup_phase(None);
 
-    state.change_validator_set(
-        &signature,
-        &operation.bridge_operation_hash,
-        &operation_hash_1,
-        1,
-        &bitmap,
-        MultiValueEncoded::new(),
-        Some(EXECUTED_BRIDGE_OP_EVENT),
-        None,
-    );
+    let first_expected_logs = Some(vec![
+        log!(CHANGE_VALIDATOR_SET_ENDPOINT, topics: [EXECUTED_BRIDGE_OP_EVENT]),
+    ]);
 
     state.change_validator_set(
         &signature,
@@ -841,8 +842,21 @@ fn test_change_validator_set_operation_already_registered() {
         1,
         &bitmap,
         MultiValueEncoded::new(),
-        Some(EXECUTED_BRIDGE_OP_EVENT),
-        Some(OUTGOING_TX_HASH_ALREADY_REGISTERED),
+        first_expected_logs,
+    );
+
+    let second_expected_logs = Some(vec![
+        log!(CHANGE_VALIDATOR_SET_ENDPOINT, topics: [EXECUTED_BRIDGE_OP_EVENT], data: [OUTGOING_TX_HASH_ALREADY_REGISTERED]),
+    ]);
+
+    state.change_validator_set(
+        &signature,
+        &operation.bridge_operation_hash,
+        &operation_hash_1,
+        1,
+        &bitmap,
+        MultiValueEncoded::new(),
+        second_expected_logs,
     );
 }
 
@@ -906,6 +920,10 @@ fn test_change_multiple_validator_sets() {
         let mut validator_set = MultiValueEncoded::new();
         validator_set.push(BigUint::from(epoch + 1));
 
+        let first_expected_logs = Some(vec![
+            log!(CHANGE_VALIDATOR_SET_ENDPOINT, topics: [EXECUTED_BRIDGE_OP_EVENT]),
+        ]);
+
         state.change_validator_set(
             &ManagedBuffer::new(),
             &hash_of_hashes,
@@ -913,8 +931,7 @@ fn test_change_multiple_validator_sets() {
             epoch,
             &bitmap,
             validator_set,
-            Some(EXECUTED_BRIDGE_OP_EVENT),
-            None,
+            first_expected_logs,
         );
 
         let mut bls_keys: ManagedVec<StaticApi, ManagedBuffer<StaticApi>> = ManagedVec::new();
