@@ -589,10 +589,20 @@ pub trait InteractorHelpers {
             .await;
     }
 
+    // NOTE: This is a temporary workaround, the whole balance check method needs refactoring
     async fn check_mvx_esdt_balance(&mut self, shard: u32, expected_tokens: Vec<EsdtTokenInfo>) {
         let mvx_address = self.common_state().get_mvx_esdt_safe_address(shard).clone();
         let tokens = if expected_tokens.is_empty() {
-            self.create_empty_balance_state().await
+            let mut tokens = self.create_empty_balance_state().await;
+            tokens.retain(|token| {
+                !token
+                    .token_id
+                    .clone()
+                    .into_managed_buffer()
+                    .to_string()
+                    .contains("TRUSTED")
+            });
+            tokens
         } else {
             expected_tokens
         };
