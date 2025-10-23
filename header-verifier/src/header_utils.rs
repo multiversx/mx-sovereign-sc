@@ -108,10 +108,10 @@ pub trait HeaderVerifierUtilsModule:
         signature: &ManagedBuffer,
         hash_of_hashes: &ManagedBuffer,
         bls_keys_bitmap: ManagedBuffer,
-        bls_pub_keys: &ManagedVec<ManagedBuffer>,
+        bls_pub_keys_len: usize,
     ) {
         let approving_validators =
-            self.get_approving_validators(epoch, &bls_keys_bitmap, bls_pub_keys.len());
+            self.get_approving_validators(epoch, &bls_keys_bitmap, bls_pub_keys_len);
 
         self.crypto().verify_bls_aggregated_signature(
             &approving_validators,

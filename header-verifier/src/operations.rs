@@ -32,12 +32,13 @@ pub trait HeaderVerifierOperationsModule:
         epoch: u64,
         operations_hashes: MultiValueEncoded<ManagedBuffer>,
     ) {
-        if !self.is_setup_phase_complete() {
-            sc_panic!(SETUP_PHASE_NOT_COMPLETED);
-        }
+        require!(self.is_setup_phase_complete(), SETUP_PHASE_NOT_COMPLETED);
+        require!(
+            !self.is_bls_pub_keys_empty(epoch),
+            NO_VALIDATORS_FOR_GIVEN_EPOCH
+        );
 
         let bls_pub_keys_mapper = self.bls_pub_keys(epoch);
-
         let mut hash_of_hashes_history_mapper = self.hash_of_hashes_history();
 
         require!(
@@ -49,17 +50,13 @@ pub trait HeaderVerifierOperationsModule:
                 .is_none(),
             HASH_OF_HASHES_DOES_NOT_MATCH
         );
-        require!(
-            !self.bls_pub_keys(epoch).is_empty(),
-            NO_VALIDATORS_FOR_GIVEN_EPOCH
-        );
 
         self.verify_bls(
             epoch,
             &signature,
             &hash_of_hashes,
             pub_keys_bitmap,
-            &ManagedVec::from_iter(bls_pub_keys_mapper.iter()),
+            bls_pub_keys_mapper.len(),
         );
 
         for operation_hash in operations_hashes {
@@ -143,6 +140,7 @@ pub trait HeaderVerifierOperationsModule:
                 &operation_hash,
                 Some(error_message),
             );
+
             return;
         }
 
@@ -151,7 +149,7 @@ pub trait HeaderVerifierOperationsModule:
             &signature,
             &hash_of_hashes,
             pub_keys_bitmap,
-            &ManagedVec::from_iter(bls_keys_previous_epoch.iter()),
+            bls_keys_previous_epoch.len(),
         );
 
         if epoch >= MAX_STORED_EPOCHS && !self.bls_pub_keys(epoch - MAX_STORED_EPOCHS).is_empty() {
@@ -166,6 +164,7 @@ pub trait HeaderVerifierOperationsModule:
                     &operation_hash,
                     Some(error_message.into()),
                 );
+
                 return;
             }
         }
