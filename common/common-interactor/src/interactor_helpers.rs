@@ -4,7 +4,8 @@ use base64::{engine::general_purpose::STANDARD as BASE64, Engine};
 use common_test_setup::constants::{
     FEE_MARKET_SHARD_0, FEE_MARKET_SHARD_1, FEE_MARKET_SHARD_2, GAS_LIMIT, MVX_ESDT_SAFE_SHARD_0,
     MVX_ESDT_SAFE_SHARD_1, MVX_ESDT_SAFE_SHARD_2, PER_GAS, PER_TRANSFER, SHARD_0, SHARD_1,
-    TESTING_SC, TESTING_SC_ENDPOINT, UNKNOWN_FEE_MARKET, UNKNOWN_MVX_ESDT_SAFE, USER_ADDRESS_STR,
+    TESTING_SC, TESTING_SC_ENDPOINT, TRUSTED_TOKEN_NAME, UNKNOWN_FEE_MARKET, UNKNOWN_MVX_ESDT_SAFE,
+    USER_ADDRESS_STR,
 };
 use error_messages::{AMOUNT_IS_TOO_LARGE, FAILED_TO_PARSE_AS_NUMBER};
 use multiversx_sc::{
@@ -600,7 +601,7 @@ pub trait InteractorHelpers {
                     .clone()
                     .into_managed_buffer()
                     .to_string()
-                    .contains("TRUSTED")
+                    .contains(TRUSTED_TOKEN_NAME)
             });
             tokens
         } else {
@@ -647,7 +648,7 @@ pub trait InteractorHelpers {
                     .clone()
                     .into_managed_buffer()
                     .to_string()
-                    .contains("TRUSTED")
+                    .contains(TRUSTED_TOKEN_NAME)
             });
             tokens
         } else {

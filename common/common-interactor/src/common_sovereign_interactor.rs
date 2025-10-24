@@ -1011,7 +1011,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             .await;
     }
 
-    async fn set_fee_after_setup_phase(
+    async fn set_fee(
         &mut self,
         hash_of_hashes: ManagedBuffer<StaticApi>,
         fee_operation: SetFeeOperation<StaticApi>,
@@ -1032,7 +1032,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             .await;
     }
 
-    async fn remove_fee_after_setup_phase(
+    async fn remove_fee(
         &mut self,
         hash_of_hashes: ManagedBuffer<StaticApi>,
         fee_operation: RemoveFeeOperation<StaticApi>,
@@ -1053,7 +1053,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             .await;
     }
 
-    async fn set_token_burn_mechanism_after_setup_phase(
+    async fn set_token_burn_mechanism(
         &mut self,
         hash_of_hashes: ManagedBuffer<StaticApi>,
         token_burn_mechanism_operation: SetBurnMechanismOperation<StaticApi>,
@@ -1075,7 +1075,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             .await;
     }
 
-    async fn set_token_lock_mechanism_after_setup_phase(
+    async fn set_token_lock_mechanism(
         &mut self,
         hash_of_hashes: ManagedBuffer<StaticApi>,
         token_lock_mechanism_operation: SetLockMechanismOperation<StaticApi>,
@@ -1555,7 +1555,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
         }
     }
 
-    async fn remove_fee(&mut self, shard: u32) {
+    async fn remove_fee_wrapper(&mut self, shard: u32) {
         let fee_activated = self.common_state().get_fee_status_for_shard(shard);
 
         if !fee_activated {
@@ -1580,12 +1580,11 @@ pub trait CommonInteractorTrait: InteractorHelpers {
         self.register_operation(shard, &hash_of_hashes, operations_hashes)
             .await;
 
-        self.remove_fee_after_setup_phase(hash_of_hashes, operation, shard)
-            .await;
+        self.remove_fee(hash_of_hashes, operation, shard).await;
         self.common_state().set_fee_status_for_shard(shard, false);
     }
 
-    async fn set_fee(&mut self, fee: FeeStruct<StaticApi>, shard: u32) {
+    async fn set_fee_wrapper(&mut self, fee: FeeStruct<StaticApi>, shard: u32) {
         let fee_activated = self.common_state().get_fee_status_for_shard(shard);
 
         if fee_activated {
@@ -1608,8 +1607,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
         self.register_operation(shard, &hash_of_hashes, operations_hashes)
             .await;
 
-        self.set_fee_after_setup_phase(hash_of_hashes, operation, shard)
-            .await;
+        self.set_fee(hash_of_hashes, operation, shard).await;
         self.common_state().set_fee_status_for_shard(shard, true);
     }
 

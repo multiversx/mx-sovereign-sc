@@ -93,6 +93,7 @@ pub const SC_CALL_LOG: &str = "scCall";
 pub const STATE_FILE: &str = "state.toml";
 pub const NATIVE_TOKEN_TICKER: &str = "SOV";
 pub const NATIVE_TOKEN_NAME: &str = "SovereignToken";
+pub const TRUSTED_TOKEN_NAME: &str = "TRUSTED";
 
 pub const ISSUE_COST: u64 = 50_000_000_000_000_000; // 0.05 EGLD
 pub const GAS_LIMIT: u64 = 90_000_000; // 90 million gas limit
