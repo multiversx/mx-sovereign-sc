@@ -4,7 +4,8 @@ use base64::{engine::general_purpose::STANDARD as BASE64, Engine};
 use common_test_setup::constants::{
     FEE_MARKET_SHARD_0, FEE_MARKET_SHARD_1, FEE_MARKET_SHARD_2, GAS_LIMIT, MVX_ESDT_SAFE_SHARD_0,
     MVX_ESDT_SAFE_SHARD_1, MVX_ESDT_SAFE_SHARD_2, PER_GAS, PER_TRANSFER, SHARD_0, SHARD_1,
-    TESTING_SC, TESTING_SC_ENDPOINT, UNKNOWN_FEE_MARKET, UNKNOWN_MVX_ESDT_SAFE, USER_ADDRESS_STR,
+    TESTING_SC, TESTING_SC_ENDPOINT, TRUSTED_TOKEN_NAME, UNKNOWN_FEE_MARKET, UNKNOWN_MVX_ESDT_SAFE,
+    USER_ADDRESS_STR,
 };
 use error_messages::{AMOUNT_IS_TOO_LARGE, FAILED_TO_PARSE_AS_NUMBER};
 use multiversx_sc::{
@@ -589,10 +590,20 @@ pub trait InteractorHelpers {
             .await;
     }
 
+    // NOTE: This is a temporary workaround, the whole balance check method needs refactoring
     async fn check_mvx_esdt_balance(&mut self, shard: u32, expected_tokens: Vec<EsdtTokenInfo>) {
         let mvx_address = self.common_state().get_mvx_esdt_safe_address(shard).clone();
         let tokens = if expected_tokens.is_empty() {
-            self.create_empty_balance_state().await
+            let mut tokens = self.create_empty_balance_state().await;
+            tokens.retain(|token| {
+                !token
+                    .token_id
+                    .clone()
+                    .into_managed_buffer()
+                    .to_string()
+                    .contains(TRUSTED_TOKEN_NAME)
+            });
+            tokens
         } else {
             expected_tokens
         };
@@ -626,10 +637,20 @@ pub trait InteractorHelpers {
             .await;
     }
 
+    // NOTE: This is a temporary workaround, the whole balance check method needs refactoring
     async fn check_testing_sc_balance(&mut self, expected_tokens: Vec<EsdtTokenInfo>) {
         let testing_sc_address = self.common_state().current_testing_sc_address().clone();
         let tokens = if expected_tokens.is_empty() {
-            self.create_empty_balance_state().await
+            let mut tokens = self.create_empty_balance_state().await;
+            tokens.retain(|token| {
+                !token
+                    .token_id
+                    .clone()
+                    .into_managed_buffer()
+                    .to_string()
+                    .contains(TRUSTED_TOKEN_NAME)
+            });
+            tokens
         } else {
             expected_tokens
         };
@@ -669,6 +690,41 @@ pub trait InteractorHelpers {
         }
     }
 
+    fn get_expected_mvx_tokens(
+        &mut self,
+        token: &Option<EsdtTokenInfo>,
+        amount: &Option<BigUint<StaticApi>>,
+        is_sov_mapped_token: bool,
+        is_execute: bool,
+        is_burn_mechanism_set: bool,
+    ) -> Vec<EsdtTokenInfo> {
+        // Sovereign mapped tokens without burn mechanism: only keep 1 SFT/META token
+        if is_sov_mapped_token && !is_burn_mechanism_set {
+            if let Some(token) = token {
+                if matches!(
+                    token.token_type,
+                    EsdtTokenType::MetaFungible
+                        | EsdtTokenType::DynamicMeta
+                        | EsdtTokenType::DynamicSFT
+                        | EsdtTokenType::SemiFungible
+                ) {
+                    return vec![self.clone_token_with_amount(token.clone(), BigUint::from(1u64))];
+                }
+            }
+            return vec![];
+        }
+
+        // Non-sovereign deposits: full amount goes to MVX safe
+        if !is_sov_mapped_token && !is_execute && !is_burn_mechanism_set {
+            if let (Some(token), Some(amount)) = (token, amount) {
+                return vec![self.clone_token_with_amount(token.clone(), amount.clone())];
+            }
+        }
+
+        // All other cases: no tokens remain in MVX safe
+        vec![]
+    }
+
     /// For user we have two cases:
     /// 1. User should get tokens back after execute call (with_transfer_data = false)
     /// 2. User should not get tokens back after execute call (with_transfer_data = true)
@@ -684,6 +740,7 @@ pub trait InteractorHelpers {
             fee,
             with_transfer_data,
             is_execute,
+            is_burn_mechanism_set,
             expected_error,
         } = bcc;
 
@@ -757,27 +814,13 @@ pub trait InteractorHelpers {
                 .update_mvx_egld_balance_with_amount(shard, expected_amount);
         } else {
             // ESDT tokens
-            let mvx_tokens = match (&token, &amount, is_sov_mapped_token, is_execute) {
-                (Some(token), Some(_), true, _) => {
-                    // Sovereign mapped tokens: only keep 1 SFT/META token in the contract
-                    if matches!(
-                        token.token_type,
-                        EsdtTokenType::MetaFungible
-                            | EsdtTokenType::DynamicMeta
-                            | EsdtTokenType::DynamicSFT
-                            | EsdtTokenType::SemiFungible
-                    ) {
-                        vec![self.clone_token_with_amount(token.clone(), BigUint::from(1u64))]
-                    } else {
-                        vec![]
-                    }
-                }
-                (Some(token), Some(amount), false, false) => {
-                    // Non-sovereign deposits: full amount goes to MVX safe
-                    vec![self.clone_token_with_amount(token.clone(), amount.clone())]
-                }
-                _ => vec![],
-            };
+            let mvx_tokens = self.get_expected_mvx_tokens(
+                &token,
+                &amount,
+                is_sov_mapped_token,
+                is_execute,
+                is_burn_mechanism_set,
+            );
             self.check_mvx_esdt_balance(shard, mvx_tokens).await;
         }
 

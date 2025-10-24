@@ -76,6 +76,7 @@ pub struct BalanceCheckConfig {
     pub with_transfer_data: bool,
     pub is_execute: bool,
     pub expected_error: Option<Vec<String>>,
+    pub is_burn_mechanism_set: bool,
 }
 
 impl BalanceCheckConfig {
@@ -115,6 +116,11 @@ impl BalanceCheckConfig {
 
     pub fn expected_error(mut self, value: Option<Vec<String>>) -> Self {
         self.expected_error = value;
+        self
+    }
+
+    pub fn is_burn_mechanism_set(mut self, value: bool) -> Self {
+        self.is_burn_mechanism_set = value;
         self
     }
 }

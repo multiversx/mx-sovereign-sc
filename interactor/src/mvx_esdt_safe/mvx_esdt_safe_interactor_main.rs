@@ -179,4 +179,24 @@ impl MvxEsdtSafeInteract {
             .run()
             .await;
     }
+
+    pub async fn check_deposited_tokens_amount(
+        &mut self,
+        token_id: EgldOrEsdtTokenIdentifier<StaticApi>,
+        shard: u32,
+        expected_amount: BigUint<StaticApi>,
+    ) {
+        let mvx_esdt_safe_address = self.common_state.get_mvx_esdt_safe_address(shard).clone();
+        let result = self
+            .interactor()
+            .query()
+            .to(mvx_esdt_safe_address)
+            .typed(MvxEsdtSafeProxy)
+            .deposited_tokens_amount(token_id)
+            .returns(ReturnsResult)
+            .run()
+            .await;
+
+        assert_eq!(result, expected_amount, "Incorrect deposited tokens amount");
+    }
 }
