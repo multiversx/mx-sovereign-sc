@@ -1,6 +1,6 @@
 use error_messages::{
-    ADD_ESDT_SUPPLY_FAILED, BURN_ESDT_FAILED, CREATE_ESDT_FAILED, DEPOSIT_AMOUNT_NOT_ENOUGH,
-    ERROR_AT_GENERATING_OPERATION_HASH, ESDT_SAFE_STILL_PAUSED, MINT_FUNGIBLE_FAILED,
+    BURN_ESDT_FAILED, CREATE_ESDT_FAILED, DEPOSIT_AMOUNT_NOT_ENOUGH,
+    ERROR_AT_GENERATING_OPERATION_HASH, ESDT_SAFE_STILL_PAUSED, MINT_ESDT_FAILED,
     SETUP_PHASE_NOT_COMPLETED,
 };
 use multiversx_sc_modules::only_admin;
@@ -167,9 +167,7 @@ pub trait ExecuteModule:
 
         match result {
             Ok(_) => Ok(()),
-            Err(error_code) => {
-                Err(self.format_error(MINT_FUNGIBLE_FAILED, esdt_token_id, error_code))
-            }
+            Err(error_code) => Err(self.format_error(MINT_ESDT_FAILED, esdt_token_id, error_code)),
         }
     }
 
@@ -220,9 +218,7 @@ pub trait ExecuteModule:
 
         match result {
             Ok(_) => Ok(()),
-            Err(error_code) => {
-                Err(self.format_error(ADD_ESDT_SUPPLY_FAILED, esdt_token_id, error_code))
-            }
+            Err(error_code) => Err(self.format_error(MINT_ESDT_FAILED, esdt_token_id, error_code)),
         }
     }
 
@@ -441,9 +437,7 @@ pub trait ExecuteModule:
 
                 Ok(())
             }
-            Err(error_code) => {
-                Err(self.format_error(BURN_ESDT_FAILED, esdt_token_id, error_code))
-            }
+            Err(error_code) => Err(self.format_error(BURN_ESDT_FAILED, esdt_token_id, error_code)),
         }
     }
 
@@ -528,7 +522,7 @@ pub trait ExecuteModule:
     fn is_burn_mechanism_set(&self, operation_token: &OperationEsdtPayment<Self::Api>) -> bool {
         self.is_fungible(&operation_token.token_data.token_type)
             && self
-            .burn_mechanism_tokens()
-            .contains(&operation_token.token_identifier)
+                .burn_mechanism_tokens()
+                .contains(&operation_token.token_identifier)
     }
 }
