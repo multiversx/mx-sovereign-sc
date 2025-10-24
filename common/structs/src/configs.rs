@@ -22,6 +22,28 @@ pub struct UpdateRegistrationStatusOperation {
 #[derive(
     TopEncode, TopDecode, NestedEncode, NestedDecode, ManagedVecItem, Clone, Debug, PartialEq,
 )]
+pub struct SetBurnMechanismOperation<M: ManagedTypeApi> {
+    pub token_id: EgldOrEsdtTokenIdentifier<M>,
+    pub nonce: TxNonce,
+}
+
+impl<A: CryptoApi> GenerateHash<A> for SetBurnMechanismOperation<A> {}
+
+#[type_abi]
+#[derive(
+    TopEncode, TopDecode, NestedEncode, NestedDecode, ManagedVecItem, Clone, Debug, PartialEq,
+)]
+pub struct SetLockMechanismOperation<M: ManagedTypeApi> {
+    pub token_id: EgldOrEsdtTokenIdentifier<M>,
+    pub nonce: TxNonce,
+}
+
+impl<A: CryptoApi> GenerateHash<A> for SetLockMechanismOperation<A> {}
+
+#[type_abi]
+#[derive(
+    TopEncode, TopDecode, NestedEncode, NestedDecode, ManagedVecItem, Clone, Debug, PartialEq,
+)]
 pub struct UpdateSovereignConfigOperation<M: ManagedTypeApi> {
     pub sovereign_config: SovereignConfig<M>,
     pub nonce: TxNonce,
@@ -58,6 +80,10 @@ impl<M: ManagedTypeApi> SovereignConfig<M> {
     }
 
     pub fn default_config() -> Self {
+        SovereignConfig::new(2, 50, BigUint::default(), None)
+    }
+
+    pub fn default_config_for_test() -> Self {
         SovereignConfig::new(1, 2, BigUint::default(), None)
     }
 }

@@ -42,6 +42,7 @@ impl BaseSetup {
             .typed(MvxEsdtSafeProxy)
             .init(
                 OWNER_ADDRESS.to_managed_address(),
+                SOVEREIGN_FORGE_SC_ADDRESS,
                 SOVEREIGN_TOKEN_PREFIX,
                 opt_config,
             )
@@ -247,6 +248,11 @@ impl BaseSetup {
         fee: Option<FeeStruct<StaticApi>>,
         expected_error_message: Option<&str>,
     ) {
+        let fee = match fee {
+            Some(fee) => OptionalValue::Some(fee),
+            None => OptionalValue::None,
+        };
+
         let response = self
             .world
             .tx()

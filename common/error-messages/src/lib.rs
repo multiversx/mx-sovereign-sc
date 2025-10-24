@@ -93,6 +93,7 @@ pub const NO_KNOWN_DYNAMIC_SFT_TOKEN_ID: &str = "No known Dynamic SFT token ID";
 pub const NO_KNOWN_FIRST_TOKEN: &str = "No known first token, register first";
 pub const NO_KNOWN_FEE_MARKET: &str = "No known Fee Market contract, deploy first";
 pub const NO_KNOWN_FEE_TOKEN: &str = "No known fee token, register first";
+pub const NO_KNOWN_TRUSTED_TOKEN: &str = "No known trusted token, register first";
 pub const NO_KNOWN_FUNGIBLE_TOKEN: &str = "No known fungible token, register first";
 pub const NO_KNOWN_MVX_ESDT_SAFE: &str = "No known MVX ESDT Safe contract, deploy first";
 pub const NO_KNOWN_HEADER_VERIFIER: &str = "No known Header Verifier contract, deploy first";
@@ -148,6 +149,7 @@ pub const INVALID_REGISTRATION_STATUS: &str = "Registration status can only be 0
 pub const EMPTY_ADDITIONAL_STAKE: &str = "Additional stake was sent as an empty array";
 pub const ADDITIONAL_STAKE_ZERO_VALUE: &str = "Additional stake cannot be a zero value";
 pub const ADDITIONAL_STAKE_NOT_REQUIRED: &str = "Additional stake was provided but is not required";
+pub const DUPLICATE_ADDITIONAL_STAKE_TOKEN_ID: &str = "Duplicate additional stake token identifier";
 pub const INVALID_BLS_KEY_FOR_CALLER: &str = "Invalid BLS key for caller";
 pub const GENESIS_VALIDATORS_ALREADY_SET: &str = "Genesis validators were already set";
 pub const GENESIS_VALIDATORS_NOT_SET: &str = "Genesis validators were not set";
@@ -168,7 +170,11 @@ pub const EGLD_TOKEN_IDENTIFIER_EXPECTED: &str =
     "The token identifier should be the EGLD token identifier";
 pub const INCORRECT_OPERATION_NONCE: &str = "The operation nonce is incorrect";
 pub const INVALID_FUNCTION_NOT_FOUND: &str = "invalid function (not found)";
-pub const MINT_FUNGIBLE_FAILED: &str = "Failed to mint ESDT";
-pub const ADD_ESDT_SUPPLY_FAILED: &str = "Failed to add ESDT supply";
-pub const CREATE_ESDT_FAILED: &str = "Failed to create ESDT";
-pub const BURN_ESDT_FAILED: &str = "Failed to burn ESDT";
+pub const MINT_ESDT_FAILED: &str = "Failed to mint ESDT:";
+pub const CREATE_ESDT_FAILED: &str = "Failed to create ESDT:";
+pub const BURN_ESDT_FAILED: &str = "Failed to burn ESDT:";
+pub const INCORRECT_DEPOSIT_AMOUNT: &str = "Incorrect deposit amount";
+pub const NO_VALIDATORS_FOR_GIVEN_EPOCH: &str =
+    "There are no registered validators for the given epoch";
+pub const NO_VALIDATORS_FOR_PREVIOUS_EPOCH: &str =
+    "There are no registered validators for the previous epoch";

@@ -26,13 +26,13 @@ pub struct ActionConfig {
     pub shard: u32,
     pub expected_error: Option<String>,
     pub expected_log: Option<Vec<String>>,
-    pub expected_log_error: Option<String>,
+    pub expected_log_error: Option<Vec<String>>,
     pub with_transfer_data: Option<bool>,
     pub endpoint: Option<String>,
 }
 
 #[derive(Clone, Default, Serialize, Deserialize, Debug)]
-pub struct SerializableFeeMarketToken {
+pub struct SerializableToken {
     pub token_id: String,
     pub nonce: u64,
     pub token_type: u8,
@@ -50,11 +50,6 @@ impl ActionConfig {
         self
     }
 
-    pub fn expect_error(mut self, error: String) -> Self {
-        self.expected_error = Some(error);
-        self
-    }
-
     pub fn expect_log(mut self, log: Vec<String>) -> Self {
         self.expected_log = Some(log);
         self
@@ -66,7 +61,7 @@ impl ActionConfig {
         self
     }
 
-    pub fn expected_log_error(mut self, value: String) -> Self {
+    pub fn expected_log_error(mut self, value: Vec<String>) -> Self {
         self.expected_log_error = Some(value);
         self
     }
@@ -80,7 +75,7 @@ pub struct BalanceCheckConfig {
     pub fee: Option<FeeStruct<StaticApi>>,
     pub with_transfer_data: bool,
     pub is_execute: bool,
-    pub expected_error: Option<String>,
+    pub expected_error: Option<Vec<String>>,
 }
 
 impl BalanceCheckConfig {
@@ -118,7 +113,7 @@ impl BalanceCheckConfig {
         self
     }
 
-    pub fn expected_error(mut self, value: Option<String>) -> Self {
+    pub fn expected_error(mut self, value: Option<Vec<String>>) -> Self {
         self.expected_error = value;
         self
     }

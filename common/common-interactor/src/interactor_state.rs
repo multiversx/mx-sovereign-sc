@@ -4,6 +4,7 @@ use error_messages::{
     NO_ADDRESSES_AVAILABLE, NO_KNOWN_DYNAMIC_META_ESDT_TOKEN_ID, NO_KNOWN_DYNAMIC_NFT_TOKEN_ID,
     NO_KNOWN_DYNAMIC_SFT_TOKEN_ID, NO_KNOWN_FEE_TOKEN, NO_KNOWN_FIRST_TOKEN,
     NO_KNOWN_FUNGIBLE_TOKEN, NO_KNOWN_META_ESDT_TOKEN, NO_KNOWN_NFT_TOKEN, NO_KNOWN_SFT_TOKEN,
+    NO_KNOWN_TRUSTED_TOKEN,
 };
 use multiversx_sc_snippets::imports::*;
 use serde::{Deserialize, Serialize};
@@ -57,6 +58,7 @@ pub struct State {
     pub dynamic_meta_esdt_tokens: Vec<EsdtTokenInfo>,
     pub sft_tokens: Vec<EsdtTokenInfo>,
     pub initial_wallet_tokens_state: Vec<EsdtTokenInfo>,
+    pub trusted_token: Option<EsdtTokenInfo>,
 }
 
 impl State {
@@ -102,6 +104,17 @@ impl State {
         } else {
             self.initial_wallet_tokens_state.push(token);
         }
+    }
+
+    pub fn set_trusted_token(&mut self, token: EsdtTokenInfo) {
+        self.trusted_token = Some(token);
+    }
+
+    pub fn get_trusted_token(&self) -> EsdtTokenInfo {
+        self.trusted_token
+            .as_ref()
+            .expect(NO_KNOWN_TRUSTED_TOKEN)
+            .clone()
     }
 
     pub fn get_first_fungible_token_identifier(&self) -> EgldOrEsdtTokenIdentifier<StaticApi> {

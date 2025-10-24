@@ -101,6 +101,19 @@ where
             .original_result()
     }
 
+    pub fn register_trusted_token<
+        Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
+    >(
+        self,
+        trusted_token: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("registerTrustedToken")
+            .argument(&trusted_token)
+            .original_result()
+    }
+
     pub fn deploy_phase_one<
         Arg0: ProxyArg<Option<ManagedBuffer<Env::Api>>>,
         Arg1: ProxyArg<OptionalValue<structs::configs::SovereignConfig<Env::Api>>>,
@@ -130,7 +143,7 @@ where
     }
 
     pub fn deploy_phase_three<
-        Arg0: ProxyArg<Option<structs::fee::FeeStruct<Env::Api>>>,
+        Arg0: ProxyArg<OptionalValue<structs::fee::FeeStruct<Env::Api>>>,
     >(
         self,
         fee: Arg0,
@@ -170,6 +183,15 @@ where
             .payment(NotPayable)
             .raw_call("getDeployedSovereignContracts")
             .argument(&chain_id)
+            .original_result()
+    }
+
+    pub fn trusted_tokens(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, MultiValueEncoded<Env::Api, ManagedBuffer<Env::Api>>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getTrustedTokens")
             .original_result()
     }
 
@@ -257,7 +279,7 @@ where
     }
 
     pub fn remove_fee<
-        Arg0: ProxyArg<TokenIdentifier<Env::Api>>,
+        Arg0: ProxyArg<EsdtTokenIdentifier<Env::Api>>,
     >(
         self,
         token_id: Arg0,
@@ -292,6 +314,45 @@ where
             .payment(NotPayable)
             .raw_call("removeUsersFromWhitelist")
             .argument(&users)
+            .original_result()
+    }
+
+    pub fn set_token_burn_mechanism<
+        Arg0: ProxyArg<EgldOrEsdtTokenIdentifier<Env::Api>>,
+    >(
+        self,
+        token_id: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("setTokenBurnMechanism")
+            .argument(&token_id)
+            .original_result()
+    }
+
+    pub fn set_token_lock_mechanism<
+        Arg0: ProxyArg<EgldOrEsdtTokenIdentifier<Env::Api>>,
+    >(
+        self,
+        token_id: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("setTokenLockMechanism")
+            .argument(&token_id)
+            .original_result()
+    }
+
+    pub fn update_deploy_cost<
+        Arg0: ProxyArg<BigUint<Env::Api>>,
+    >(
+        self,
+        deploy_cost: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("updateDeployCost")
+            .argument(&deploy_cost)
             .original_result()
     }
 }

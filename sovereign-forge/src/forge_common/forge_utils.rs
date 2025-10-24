@@ -1,7 +1,6 @@
 use error_messages::{
     CALLER_DID_NOT_DEPLOY_ANY_SOV_CHAIN, CHAIN_CONFIG_NOT_DEPLOYED, CHAIN_ID_ALREADY_IN_USE,
-    DEPLOY_COST_NOT_ENOUGH, ESDT_SAFE_NOT_DEPLOYED, FEE_MARKET_NOT_DEPLOYED,
-    HEADER_VERIFIER_NOT_DEPLOYED,
+    ESDT_SAFE_NOT_DEPLOYED, FEE_MARKET_NOT_DEPLOYED, HEADER_VERIFIER_NOT_DEPLOYED,
 };
 use multiversx_sc::err_msg;
 use multiversx_sc::require;
@@ -9,20 +8,18 @@ use structs::forge::ScArray;
 
 const CHARSET: &[u8] = b"0123456789abcdefghijklmnopqrstuvwxyz";
 
-const NUMBER_OF_SHARDS: u32 = 3;
+pub const NUMBER_OF_SHARDS: u32 = 3;
 
 #[multiversx_sc::module]
 pub trait ForgeUtilsModule:
     super::storage::StorageModule + common_utils::CommonUtilsModule + custom_events::CustomEventsModule
 {
-    fn require_initialization_phase_complete(&self) {
-        for shard_id in 0..NUMBER_OF_SHARDS {
-            require!(
-                !self.chain_factories(shard_id).is_empty(),
-                "There is no Chain-Factory contract assigned for shard {}",
-                shard_id
-            );
-        }
+    fn require_initialization_phase_complete(&self, shard_id: u32) {
+        require!(
+            !self.chain_factories(shard_id).is_empty(),
+            "There is no Chain-Factory contract assigned for shard {}",
+            shard_id
+        );
     }
 
     fn require_phase_four_completed(&self, caller: &ManagedAddress) {
@@ -111,21 +108,8 @@ pub trait ForgeUtilsModule:
         ManagedBuffer::new_from_bytes(&byte_array)
     }
 
-    fn require_correct_deploy_cost(&self, call_value: &BigUint) {
-        let deploy_cost_mapper = self.deploy_cost();
-
-        if !deploy_cost_mapper.is_empty() {
-            require!(
-                call_value == &deploy_cost_mapper.get(),
-                DEPLOY_COST_NOT_ENOUGH
-            );
-        }
-    }
-
-    fn get_chain_factory_address(&self) -> ManagedAddress {
-        let blockchain_api = self.blockchain();
-        let caller = blockchain_api.get_caller();
-        let shard_id = blockchain_api.get_shard_of_address(&caller);
+    fn get_chain_factory_address(&self, caller: &ManagedAddress) -> ManagedAddress {
+        let shard_id = self.blockchain().get_shard_of_address(caller);
 
         self.chain_factories(shard_id).get()
     }

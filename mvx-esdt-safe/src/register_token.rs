@@ -24,7 +24,7 @@ pub trait RegisterTokenModule:
     + only_admin::OnlyAdminModule
 {
     #[endpoint(registerToken)]
-    fn register_token(
+    fn register_sovereign_token(
         &self,
         hash_of_hashes: ManagedBuffer,
         register_token_operation: RegisterTokenOperation<Self::Api>,
@@ -169,12 +169,12 @@ pub trait RegisterTokenModule:
                 num_decimals,
             )
             .gas(REGISTER_GAS)
-            .callback(self.callbacks().register(&args, hash_of_hashes, token_hash))
+            .callback(self.callbacks().register_token(&args, hash_of_hashes, token_hash))
             .register_promise();
     }
 
     #[promises_callback]
-    fn register(
+    fn register_token(
         &self,
         token_to_register: &RegisterTokenOperation<Self::Api>,
         hash_of_hashes: ManagedBuffer,

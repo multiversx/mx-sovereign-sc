@@ -93,6 +93,19 @@ where
             .original_result()
     }
 
+    pub fn read_native_token<
+        Arg0: ProxyArg<ManagedAddress<Env::Api>>,
+    >(
+        self,
+        wanted_address: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("read_native_token")
+            .argument(&wanted_address)
+            .original_result()
+    }
+
     pub fn send_tokens<
         Arg0: ProxyArg<EgldOrEsdtTokenIdentifier<Env::Api>>,
         Arg1: ProxyArg<u64>,

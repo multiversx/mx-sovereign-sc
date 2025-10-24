@@ -1,4 +1,5 @@
 use cross_chain::storage::CrossChainStorage;
+use error_messages::INCORRECT_DEPOSIT_AMOUNT;
 use header_verifier::storage::HeaderVerifierStorageModule;
 use multiversx_sc_scenario::imports::{EgldOrEsdtTokenIdentifier, ManagedVec};
 use multiversx_sc_scenario::DebugApi;
@@ -142,7 +143,11 @@ impl BaseSetup {
                     .collect();
                 for token in tokens {
                     let (token_id, amount) = token;
-                    assert!(sc.deposited_tokens_amount(&token_id).get() == amount);
+                    assert!(
+                        sc.deposited_tokens_amount(&token_id).get() == amount,
+                        "{}",
+                        INCORRECT_DEPOSIT_AMOUNT
+                    );
                 }
             });
     }
@@ -201,6 +206,17 @@ impl BaseSetup {
         )
     }
 
+    fn search_for_error_in_logs(&self, logs: &[Log], expected_error_bytes: &[u8]) -> bool {
+        logs.iter().any(|log| {
+            log.data.iter().any(|data_item| {
+                data_item
+                    .as_slice()
+                    .windows(expected_error_bytes.len())
+                    .any(|w| w == expected_error_bytes)
+            })
+        })
+    }
+
     //NOTE: transferValue returns an empty log and calling this function on it will panic
     //TODO: Remove the empty string check after callback fix in blackbox
     pub fn assert_expected_log(
@@ -211,17 +227,15 @@ impl BaseSetup {
     ) {
         match expected_log {
             None => {
-                assert!(
-                    logs.is_empty(),
-                    "Expected no logs, but found some: {:?}",
-                    logs
-                );
-
-                assert!(
-                    expected_log_error.is_none(),
-                    "Expected no logs, but wanted to check for error: {}",
-                    expected_log_error.unwrap()
-                );
+                // If expecting an error, just check it exists. Otherwise, no logs allowed.
+                if let Some(expected_error) = expected_log_error {
+                    let expected_error_bytes =
+                        ManagedBuffer::<StaticApi>::from(expected_error).to_vec();
+                    let found_error = self.search_for_error_in_logs(&logs, &expected_error_bytes);
+                    assert!(found_error, "Expected error '{}' not found", expected_error);
+                } else {
+                    assert!(logs.is_empty(), "Expected no logs, but found: {:?}", logs);
+                }
             }
             Some(expected_str) => {
                 // assert!(!expected_str.is_empty(), "{}", EMPTY_EXPECTED_LOG);
@@ -240,7 +254,7 @@ impl BaseSetup {
                         });
                         let data_match = log.data.iter().any(|data_item| {
                             data_item
-                                .to_vec()
+                                .as_slice()
                                 .windows(expected_bytes.len())
                                 .any(|window| window == expected_bytes)
                         });
@@ -257,20 +271,8 @@ impl BaseSetup {
                 if let Some(expected_error) = expected_log_error {
                     let expected_error_bytes =
                         ManagedBuffer::<StaticApi>::from(expected_error).to_vec();
-
-                    let found_error_in_data = matching_logs.iter().any(|log| {
-                        log.data.iter().any(|data_item| {
-                            let v = data_item.to_vec();
-                            v.windows(expected_error_bytes.len())
-                                .any(|w| w == expected_error_bytes)
-                        })
-                    });
-
-                    assert!(
-                        found_error_in_data,
-                        "Expected error '{}' not found in data field of any log with topic '{}'",
-                        expected_error, expected_str
-                    );
+                    let found_error = self.search_for_error_in_logs(&logs, &expected_error_bytes);
+                    assert!(found_error, "Expected error '{}' not found", expected_error);
                 }
             }
         }

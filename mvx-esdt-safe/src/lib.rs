@@ -1,8 +1,8 @@
 #![no_std]
 
 use error_messages::{
-    ERROR_AT_GENERATING_OPERATION_HASH, FEE_MARKET_NOT_SET, NATIVE_TOKEN_NOT_REGISTERED,
-    SETUP_PHASE_ALREADY_COMPLETED, SETUP_PHASE_NOT_COMPLETED,
+    ADDRESS_NOT_VALID_SC_ADDRESS, ERROR_AT_GENERATING_OPERATION_HASH, FEE_MARKET_NOT_SET,
+    NATIVE_TOKEN_NOT_REGISTERED, SETUP_PHASE_ALREADY_COMPLETED, SETUP_PHASE_NOT_COMPLETED,
 };
 
 use multiversx_sc::imports::*;
@@ -37,6 +37,7 @@ pub trait MvxEsdtSafe:
     fn init(
         &self,
         sovereign_owner: ManagedAddress,
+        sovereign_forge_address: ManagedAddress,
         sov_token_prefix: ManagedBuffer,
         opt_config: OptionalValue<EsdtSafeConfig<Self::Api>>,
     ) {
@@ -55,9 +56,13 @@ pub trait MvxEsdtSafe:
         };
 
         self.add_admin(sovereign_owner);
-
+        require!(
+            self.blockchain()
+                .is_smart_contract(&sovereign_forge_address),
+            ADDRESS_NOT_VALID_SC_ADDRESS
+        );
+        self.sovereign_forge_address().set(sovereign_forge_address);
         self.esdt_safe_config().set(new_config);
-
         self.set_paused(true);
     }
 

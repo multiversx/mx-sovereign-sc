@@ -12,3 +12,5 @@ path = ".."
 
 [dependencies.multiversx-sc-meta-lib]
 version = "0.62.0"
+git = "https://github.com/multiversx/mx-sdk-rs"
+rev = "d23fc3b6834925e68c25eb7622efb2e2c3344d15"

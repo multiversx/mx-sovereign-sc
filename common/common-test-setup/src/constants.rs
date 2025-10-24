@@ -64,6 +64,7 @@ pub const FUNGIBLE_TOKEN_ID: TestTokenIdentifier = TestTokenIdentifier::new("FUN
 pub const PREFIX_NFT_TOKEN_ID: TestTokenIdentifier = TestTokenIdentifier::new("sov-NFT-123456");
 pub const WEGLD_IDENTIFIER: TestTokenIdentifier = TestTokenIdentifier::new("WEGLD-123456");
 pub const WRONG_TOKEN_ID: TestTokenIdentifier = TestTokenIdentifier::new("WRONG-TOKEN");
+pub const TRUSTED_TOKEN: &str = "USDC-c76f1f";
 
 pub const SOVEREIGN_RECEIVER_ADDRESS: TestAddress =
     TestAddress::new("erd18tudnj2z8vjh0339yu3vrkgzz2jpz8mjq0uhgnmklnap6z33qqeszq2yn4");
@@ -86,6 +87,7 @@ pub const SHARD_2: u32 = 2;
 pub const DEPOSIT_LOG: &str = "deposit";
 pub const UNPAUSE_CONTRACT_LOG: &str = "unpauseContract";
 pub const TESTING_SC_ENDPOINT: &str = "hello";
+pub const READ_NATIVE_TOKEN_TESTING_SC_ENDPOINT: &str = "read_native_token";
 pub const EXECUTED_BRIDGE_LOG: &str = "executedBridgeOp";
 pub const SC_CALL_LOG: &str = "scCall";
 pub const STATE_FILE: &str = "state.toml";

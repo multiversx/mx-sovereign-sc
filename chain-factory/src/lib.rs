@@ -36,7 +36,7 @@ pub trait ChainFactoryContract:
         self.chain_config_template().set(chain_config_template);
         self.header_verifier_template()
             .set(header_verifier_template);
-        self.mvx_esdt_safe_template().set(mvx_esdt_safe_template);
+        self.esdt_safe_template().set(mvx_esdt_safe_template);
         self.fee_market_template().set(fee_market_template);
     }
 

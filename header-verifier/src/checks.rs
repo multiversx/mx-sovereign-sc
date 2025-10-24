@@ -23,10 +23,6 @@ pub trait HeaderVerifierChecksModule:
         );
     }
 
-    fn is_bitmap_and_bls_same_length(&self, bitmap_len: usize, bls_len: usize) -> bool {
-        bitmap_len == bls_len
-    }
-
     fn is_hash_of_hashes_registered(
         &self,
         hash_of_hashes: &ManagedBuffer,

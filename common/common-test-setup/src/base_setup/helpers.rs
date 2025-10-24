@@ -1,8 +1,11 @@
+use chain_config::storage::ChainConfigStorageModule;
 use multiversx_sc::chain_core::EGLD_000000_TOKEN_IDENTIFIER;
 use multiversx_sc::types::{
-    BigUint, EgldOrEsdtTokenIdentifier, EgldOrEsdtTokenPayment, MultiEgldOrEsdtPayment,
+    BigUint, EgldOrEsdtTokenIdentifier, EgldOrEsdtTokenPayment, ManagedVec, MultiEgldOrEsdtPayment,
 };
+use multiversx_sc_scenario::api::{DebugApiBackend, VMHooksApi};
 use multiversx_sc_scenario::multiversx_chain_vm::crypto_functions_bls::create_aggregated_signature;
+use multiversx_sc_scenario::ScenarioTxWhitebox;
 use rand::RngCore;
 use rand_core::OsRng;
 
@@ -13,6 +16,7 @@ use multiversx_sc_scenario::{
     multiversx_chain_vm::crypto_functions::sha256,
     ScenarioTxRun,
 };
+use structs::ValidatorData;
 use structs::{
     forge::{ContractInfo, ScArray},
     operation::Operation,
@@ -115,7 +119,6 @@ impl BaseSetup {
             ScArray::ESDTSafe => ESDT_SAFE_ADDRESS,
             ScArray::HeaderVerifier => HEADER_VERIFIER_ADDRESS,
             ScArray::FeeMarket => FEE_MARKET_ADDRESS,
-            _ => TestSCAddress::new("ERROR"),
         }
     }
 
@@ -147,6 +150,25 @@ impl BaseSetup {
         ManagedBuffer::new_from_bytes(&bitmap_bytes)
     }
 
+    /// Creates a bitmap for the given validator indices
+    pub fn bitmap_for_signers(&self, validator_indices: &[u64]) -> ManagedBuffer<StaticApi> {
+        if validator_indices.is_empty() {
+            return ManagedBuffer::new_from_bytes(&[]);
+        }
+
+        let max_index = *validator_indices.iter().max().unwrap();
+        let byte_len = (max_index / 8 + 1) as usize;
+        let mut bitmap_bytes = vec![0u8; byte_len];
+
+        for &validator_index in validator_indices {
+            let byte_index = (validator_index / 8) as usize;
+            let bit_index = (validator_index % 8) as u8;
+            bitmap_bytes[byte_index] |= 1u8 << bit_index;
+        }
+
+        ManagedBuffer::new_from_bytes(&bitmap_bytes)
+    }
+
     pub fn get_sig_and_pub_keys(
         &mut self,
         pk_size: usize,
@@ -163,6 +185,46 @@ impl BaseSetup {
             ManagedBuffer::new_from_bytes(signature.serialize().unwrap().as_slice()),
             pk_buffers,
         )
+    }
+
+    /// Calculates the number of signers based on the bitmap.
+    /// Each bit in the bitmap represents whether a validator signed.
+    pub fn calculate_signer_count(&self, bitmap: &ManagedBuffer<StaticApi>) -> usize {
+        let bitmap_bytes = bitmap.to_vec();
+        let signer_count: usize = bitmap_bytes
+            .iter()
+            .map(|byte| byte.count_ones() as usize)
+            .sum();
+        signer_count.max(1)
+    }
+
+    pub fn update_validator_key_in_chain_config(
+        &mut self,
+        validator_data: &ValidatorData<StaticApi>,
+        pub_keys: &[ManagedBuffer<StaticApi>],
+    ) {
+        self.world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .to(CHAIN_CONFIG_ADDRESS)
+            .whitebox(chain_config::contract_obj, |sc| {
+                let new_pub_keys: ManagedVec<
+                    VMHooksApi<DebugApiBackend>,
+                    ManagedBuffer<VMHooksApi<DebugApiBackend>>,
+                > = pub_keys
+                    .iter()
+                    .map(|pk| ManagedBuffer::new_from_bytes(&pk.to_vec()))
+                    .collect();
+
+                let validator_id = validator_data.id.to_u64().unwrap();
+                let target_index = validator_id.saturating_sub(1) as usize;
+
+                if target_index < new_pub_keys.len() {
+                    let new_key = new_pub_keys.get(target_index).clone();
+                    sc.validator_info(&BigUint::from(validator_id))
+                        .update(|v| v.bls_key = new_key);
+                }
+            });
     }
 }
 

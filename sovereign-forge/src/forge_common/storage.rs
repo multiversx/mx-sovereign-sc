@@ -21,6 +21,10 @@ pub trait StorageModule {
         chain_id: &ChainId<Self::Api>,
     ) -> UnorderedSetMapper<ContractInfo<Self::Api>>;
 
+    #[view(getTrustedTokens)]
+    #[storage_mapper("trustedTokens")]
+    fn trusted_tokens(&self) -> UnorderedSetMapper<ManagedBuffer>;
+
     #[view(getSovereignSetupPhase)]
     #[storage_mapper("sovereignSetupPhase")]
     fn sovereign_setup_phase(&self, chain_id: &ChainId<Self::Api>) -> SingleValueMapper<bool>;
