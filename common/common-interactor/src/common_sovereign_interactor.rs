@@ -38,7 +38,10 @@ use proxies::{
 };
 use structs::{
     aliases::{OptionalValueTransferDataTuple, PaymentsVec, TxNonce},
-    configs::{EsdtSafeConfig, SovereignConfig, UpdateEsdtSafeConfigOperation},
+    configs::{
+        EsdtSafeConfig, SetBurnMechanismOperation, SetLockMechanismOperation, SovereignConfig,
+        UpdateEsdtSafeConfigOperation,
+    },
     fee::{FeeStruct, RemoveFeeOperation, SetFeeOperation},
     forge::{ContractInfo, ScArray},
     generate_hash::GenerateHash,
@@ -204,7 +207,9 @@ pub trait CommonInteractorTrait: InteractorHelpers {
         }
         if ticker == "TRUSTED" && self.common_state().trusted_token.is_some() {
             let trusted_token = self.retrieve_current_trusted_token_for_wallet().await;
-            self.state().set_trusted_token(trusted_token);
+            self.state().set_trusted_token(trusted_token.clone());
+            self.state()
+                .update_or_add_initial_wallet_token(trusted_token.clone());
             return;
         }
         let amount = if matches!(
@@ -1006,7 +1011,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             .await;
     }
 
-    async fn set_fee_after_setup_phase(
+    async fn set_fee(
         &mut self,
         hash_of_hashes: ManagedBuffer<StaticApi>,
         fee_operation: SetFeeOperation<StaticApi>,
@@ -1027,7 +1032,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             .await;
     }
 
-    async fn remove_fee_after_setup_phase(
+    async fn remove_fee(
         &mut self,
         hash_of_hashes: ManagedBuffer<StaticApi>,
         fee_operation: RemoveFeeOperation<StaticApi>,
@@ -1043,6 +1048,50 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             .gas(90_000_000u64)
             .typed(MvxFeeMarketProxy)
             .remove_fee(hash_of_hashes, fee_operation)
+            .returns(ReturnsResultUnmanaged)
+            .run()
+            .await;
+    }
+
+    async fn set_token_burn_mechanism(
+        &mut self,
+        hash_of_hashes: ManagedBuffer<StaticApi>,
+        token_burn_mechanism_operation: SetBurnMechanismOperation<StaticApi>,
+        shard: u32,
+    ) {
+        let bridge_service = self.get_bridge_service_for_shard(shard).clone();
+        let current_mvx_esdt_safe_address =
+            self.common_state().get_mvx_esdt_safe_address(shard).clone();
+
+        self.interactor()
+            .tx()
+            .from(bridge_service)
+            .to(current_mvx_esdt_safe_address)
+            .gas(90_000_000u64)
+            .typed(MvxEsdtSafeProxy)
+            .set_token_burn_mechanism(hash_of_hashes, token_burn_mechanism_operation)
+            .returns(ReturnsResultUnmanaged)
+            .run()
+            .await;
+    }
+
+    async fn set_token_lock_mechanism(
+        &mut self,
+        hash_of_hashes: ManagedBuffer<StaticApi>,
+        token_lock_mechanism_operation: SetLockMechanismOperation<StaticApi>,
+        shard: u32,
+    ) {
+        let bridge_service = self.get_bridge_service_for_shard(shard).clone();
+        let current_mvx_esdt_safe_address =
+            self.common_state().get_mvx_esdt_safe_address(shard).clone();
+
+        self.interactor()
+            .tx()
+            .from(bridge_service)
+            .to(current_mvx_esdt_safe_address)
+            .gas(90_000_000u64)
+            .typed(MvxEsdtSafeProxy)
+            .set_token_lock_mechanism(hash_of_hashes, token_lock_mechanism_operation)
             .returns(ReturnsResultUnmanaged)
             .run()
             .await;
@@ -1506,7 +1555,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
         }
     }
 
-    async fn remove_fee(&mut self, shard: u32) {
+    async fn remove_fee_wrapper(&mut self, shard: u32) {
         let fee_activated = self.common_state().get_fee_status_for_shard(shard);
 
         if !fee_activated {
@@ -1531,12 +1580,11 @@ pub trait CommonInteractorTrait: InteractorHelpers {
         self.register_operation(shard, &hash_of_hashes, operations_hashes)
             .await;
 
-        self.remove_fee_after_setup_phase(hash_of_hashes, operation, shard)
-            .await;
+        self.remove_fee(hash_of_hashes, operation, shard).await;
         self.common_state().set_fee_status_for_shard(shard, false);
     }
 
-    async fn set_fee(&mut self, fee: FeeStruct<StaticApi>, shard: u32) {
+    async fn set_fee_wrapper(&mut self, fee: FeeStruct<StaticApi>, shard: u32) {
         let fee_activated = self.common_state().get_fee_status_for_shard(shard);
 
         if fee_activated {
@@ -1559,8 +1607,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
         self.register_operation(shard, &hash_of_hashes, operations_hashes)
             .await;
 
-        self.set_fee_after_setup_phase(hash_of_hashes, operation, shard)
-            .await;
+        self.set_fee(hash_of_hashes, operation, shard).await;
         self.common_state().set_fee_status_for_shard(shard, true);
     }
 

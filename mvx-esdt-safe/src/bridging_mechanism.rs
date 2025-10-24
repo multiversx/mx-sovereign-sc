@@ -271,6 +271,7 @@ pub trait BridgingMechanism:
     #[storage_mapper("burnMechanismTokens")]
     fn burn_mechanism_tokens(&self) -> UnorderedSetMapper<EgldOrEsdtTokenIdentifier<Self::Api>>;
 
+    #[view(getDepositedTokensAmount)]
     #[storage_mapper("depositedTokensAmount")]
     fn deposited_tokens_amount(
         &self,
