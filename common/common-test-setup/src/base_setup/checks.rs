@@ -298,11 +298,11 @@ impl BaseSetup {
                         "Expected log '{}' not found",
                         expected_log.identifier
                     );
-                    if let OptionalValue::Some(topics) = &expected_log.topics {
-                        self.validate_expected_topics(topics, &matching_logs);
+                    if let OptionalValue::Some(topics) = expected_log.topics {
+                        self.validate_expected_topics(&topics, &matching_logs);
                     }
-                    if let OptionalValue::Some(data) = &expected_log.data {
-                        self.validate_expected_data(data, &matching_logs);
+                    if let OptionalValue::Some(data) = expected_log.data {
+                        self.validate_expected_data(&[data], &matching_logs);
                     }
                 }
             }
@@ -366,8 +366,11 @@ impl BaseSetup {
                     .iter()
                     .all(|expected_topic| log.topics.contains(expected_topic))
             }),
-            "Expected topics '{}' not found",
-            topics.join(", ")
+            "Expected topics '{}' not found for event '{}'",
+            topics.join(", "),
+            matching_logs
+                .first()
+                .map_or("unknown", |log| log.endpoint.as_str())
         );
     }
 
@@ -375,17 +378,24 @@ impl BaseSetup {
         let expected_data_bytes: Vec<Vec<u8>> =
             data.iter().map(|s| s.as_bytes().to_vec()).collect();
         assert!(
-            matching_logs.iter().any(|log| {
-                expected_data_bytes.iter().all(|expected_data| {
-                    log.data.iter().any(|log_data| {
-                        log_data
-                            .windows(expected_data.len())
-                            .any(|window| window == expected_data)
-                    })
-                })
-            }),
-            "Expected data '{}' not found",
-            data.join(", ")
+            matching_logs
+                .iter()
+                .any(|log| { self.log_contains_expected_data(log, &expected_data_bytes) }),
+            "Expected data '{}' not found for event '{}'",
+            data.join(", "),
+            matching_logs
+                .first()
+                .map_or("unknown", |log| log.endpoint.as_str())
         );
+    }
+
+    fn log_contains_expected_data(&self, log: &Log, expected_data_bytes: &[Vec<u8>]) -> bool {
+        expected_data_bytes.iter().all(|expected_data| {
+            log.data.iter().any(|log_data| {
+                log_data
+                    .windows(expected_data.len())
+                    .any(|window| window == expected_data)
+            })
+        })
     }
 }

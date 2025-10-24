@@ -23,7 +23,7 @@ pub struct AccountSetup<'a> {
 pub struct ExpectedLogs<'a> {
     pub identifier: &'a str,
     pub topics: OptionalValue<Vec<&'a str>>,
-    pub data: OptionalValue<Vec<&'a str>>,
+    pub data: OptionalValue<&'a str>,
 }
 
 #[macro_export]
@@ -42,18 +42,18 @@ macro_rules! log {
             data: OptionalValue::None,
         }
     };
-    ($identifier:expr, data: [$($data:expr),*]) => {
+    ($identifier:expr, data: $data:expr) => {
         ExpectedLogs {
             identifier: $identifier,
             topics: OptionalValue::None,
-            data: OptionalValue::Some(vec![$($data),*]),
+            data: OptionalValue::Some($data),
         }
     };
-    ($identifier:expr, topics: [$($topic:expr),*], data: [$($data:expr),*]) => {
+    ($identifier:expr, topics: [$($topic:expr),*], data: $data:expr) => {
         ExpectedLogs {
             identifier: $identifier,
             topics: OptionalValue::Some(vec![$($topic),*]),
-            data: OptionalValue::Some(vec![$($data),*]),
+            data: OptionalValue::Some($data),
         }
     };
 }
