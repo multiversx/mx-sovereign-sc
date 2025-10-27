@@ -410,14 +410,12 @@ pub trait ExecuteModule:
         }
 
         let esdt_token_id = output_payment.token_identifier.clone().unwrap_esdt();
-        if let Err(error_message) = self.try_esdt_local_burn(
+        self.try_esdt_local_burn(
             &esdt_token_id,
             output_payment.token_nonce,
             &output_payment.token_data.amount,
             BURN_ESDT_FAILED,
-        ) {
-            return Err(error_message);
-        }
+        )?;
 
         if self.is_nft(&operation_token.token_data.token_type) {
             self.clear_mvx_to_sov_esdt_info_mapper(
