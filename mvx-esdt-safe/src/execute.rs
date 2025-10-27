@@ -506,19 +506,6 @@ pub trait ExecuteModule:
     }
 
     #[inline]
-    fn format_error(
-        &self,
-        error: &str,
-        token_id: TokenIdentifier,
-        error_code: u32,
-    ) -> ManagedBuffer {
-        let prefix: ManagedBuffer = error.into();
-        let error_message = sc_format!("{} {}; error code: {}", prefix, token_id, error_code);
-
-        error_message
-    }
-
-    #[inline]
     fn is_burn_mechanism_set(&self, operation_token: &OperationEsdtPayment<Self::Api>) -> bool {
         self.is_fungible(&operation_token.token_data.token_type)
             && self

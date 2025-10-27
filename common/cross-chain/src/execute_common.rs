@@ -13,6 +13,19 @@ pub trait ExecuteCommonModule: crate::storage::CrossChainStorage {
     }
 
     #[inline]
+    fn format_error(
+        &self,
+        error: &str,
+        token_id: TokenIdentifier,
+        error_code: u32,
+    ) -> ManagedBuffer {
+        let prefix: ManagedBuffer = error.into();
+        let error_message = sc_format!("{} {}; error code: {}", prefix, token_id, error_code);
+
+        error_message
+    }
+
+    #[inline]
     fn is_fungible(self, token_type: &EsdtTokenType) -> bool {
         *token_type == EsdtTokenType::Fungible
     }
