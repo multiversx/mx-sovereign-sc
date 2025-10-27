@@ -42,18 +42,9 @@ pub trait MvxEsdtSafe:
         opt_config: OptionalValue<EsdtSafeConfig<Self::Api>>,
     ) {
         self.validate_chain_id(&sov_token_prefix);
-
         self.sov_token_prefix().set(sov_token_prefix);
 
-        let new_config = match opt_config {
-            OptionalValue::Some(cfg) => {
-                if let Some(error_message) = self.is_esdt_safe_config_valid(&cfg) {
-                    sc_panic!(error_message);
-                }
-                cfg
-            }
-            OptionalValue::None => EsdtSafeConfig::default_config(),
-        };
+        let new_config = self.resolve_esdt_safe_config(opt_config);
 
         self.add_admin(sovereign_owner);
         require!(
