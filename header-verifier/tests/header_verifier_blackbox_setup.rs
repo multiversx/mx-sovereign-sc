@@ -214,7 +214,7 @@ impl HeaderVerifierTestState {
             .assert_expected_error_message(response, None);
 
         let expected_logs = Some(vec![
-            log!(CHANGE_VALIDATOR_SET_ENDPOINT, topics: [EXECUTED_BRIDGE_OP_EVENT], optional_data: execution_error),
+            log!(CHANGE_VALIDATOR_SET_ENDPOINT, topics: [EXECUTED_BRIDGE_OP_EVENT], data: execution_error),
         ]);
 
         self.common_setup
