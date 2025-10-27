@@ -38,19 +38,19 @@ pub trait ExecuteModule:
             );
             return;
         };
-        if self.is_paused() {
-            self.complete_operation(
-                &hash_of_hashes,
-                &operation_hash,
-                Some(ESDT_SAFE_STILL_PAUSED.into()),
-            );
-            return;
-        }
         if !self.is_setup_phase_complete() {
             self.complete_operation(
                 &hash_of_hashes,
                 &operation_hash,
                 Some(SETUP_PHASE_NOT_COMPLETED.into()),
+            );
+            return;
+        }
+        if self.is_paused() {
+            self.complete_operation(
+                &hash_of_hashes,
+                &operation_hash,
+                Some(ESDT_SAFE_STILL_PAUSED.into()),
             );
             return;
         }
