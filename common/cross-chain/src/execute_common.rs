@@ -37,7 +37,7 @@ pub trait ExecuteCommonModule: crate::storage::CrossChainStorage {
             .tx()
             .to(ToSelf)
             .typed(UserBuiltinProxy)
-            .esdt_local_burn(token_id.clone(), token_nonce, amount.clone())
+            .esdt_local_burn(token_id, token_nonce, amount)
             .returns(ReturnsHandledOrError::new())
             .sync_call_fallible();
 
@@ -56,7 +56,7 @@ pub trait ExecuteCommonModule: crate::storage::CrossChainStorage {
             .tx()
             .to(ToSelf)
             .typed(UserBuiltinProxy)
-            .esdt_local_mint(token_id.clone(), token_nonce, amount.clone())
+            .esdt_local_mint(token_id, token_nonce, amount)
             .returns(ReturnsHandledOrError::new())
             .sync_call_fallible();
 
