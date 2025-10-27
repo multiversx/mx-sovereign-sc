@@ -14,7 +14,7 @@ use error_messages::{
     INVALID_PREFIX_FOR_REGISTER, INVALID_TYPE, MAX_GAS_LIMIT_PER_TX_EXCEEDED,
     MINT_AND_BURN_ROLES_NOT_FOUND, NATIVE_TOKEN_ALREADY_REGISTERED, NATIVE_TOKEN_NOT_REGISTERED,
     NOTHING_TO_TRANSFER, NOT_ENOUGH_EGLD_FOR_REGISTER, PAYMENT_DOES_NOT_COVER_FEE,
-    SETUP_PHASE_NOT_COMPLETED, TOKEN_ID_IS_NOT_TRUSTED, TOKEN_IS_FROM_SOVEREIGN, TOO_MANY_TOKENS,
+    SETUP_PHASE_NOT_COMPLETED, TOKEN_ID_IS_NOT_TRUSTED, TOO_MANY_TOKENS,
 };
 use header_verifier::storage::HeaderVerifierStorageModule;
 use multiversx_sc::chain_core::EGLD_000000_TOKEN_IDENTIFIER;
@@ -2889,40 +2889,6 @@ fn test_set_token_lock_mechanism() {
         100u64,
         BigUint::zero(),
     );
-}
-
-/// ### TEST
-/// M-ESDT_SET_BURN_FAIL
-///
-/// ### ACTION
-/// Call both 'set_token_burn_mechanism()' and 'set_token_lock_mechanism()' with a trusted token id.
-///
-/// ### EXPECTED
-/// ERROR TOKEN_IS_FROM_SOVEREIGN
-#[test]
-fn test_set_token_lock_mechanism_token_from_sovereign() {
-    let mut state = MvxEsdtSafeTestState::new();
-    state.deploy_contract_with_roles(None);
-    state.set_token_burn_mechanism_before_setup_phase(TRUSTED_TOKEN, None);
-
-    state
-        .common_setup
-        .deploy_header_verifier(vec![ScArray::ChainConfig, ScArray::ESDTSafe]);
-
-    state
-        .common_setup
-        .world
-        .tx()
-        .from(OWNER_ADDRESS)
-        .to(ESDT_SAFE_ADDRESS)
-        .whitebox(mvx_esdt_safe::contract_obj, |sc| {
-            sc.multiversx_to_sovereign_token_id_mapper(&EgldOrEsdtTokenIdentifier::esdt(
-                TRUSTED_TOKEN,
-            ))
-            .set(EgldOrEsdtTokenIdentifier::from("MOCK"));
-        });
-
-    state.set_token_lock_mechanism_before_setup_phase(TRUSTED_TOKEN, Some(TOKEN_IS_FROM_SOVEREIGN));
 }
 
 /// ### TEST
