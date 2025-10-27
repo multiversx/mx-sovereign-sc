@@ -147,28 +147,15 @@ pub trait BridgingMechanism:
             return;
         }
 
-        let result = self
-            .tx()
-            .to(ToSelf)
-            .typed(UserBuiltinProxy)
-            .esdt_local_burn(&esdt_identifier, 0, &sc_balance)
-            .returns(ReturnsHandledOrError::new())
-            .sync_call_fallible();
-
-        match result {
-            Ok(()) => self
-                .deposited_tokens_amount(&set_burn_mechanism_operation.token_id)
-                .set(sc_balance),
-            Err(error_code) => {
-                self.complete_operation(
-                    &hash_of_hashes,
-                    &operation_hash,
-                    Some(self.format_error(BURN_ESDT_FAILED, esdt_identifier, error_code)),
-                );
-                return;
-            }
+        if let Err(error_message) =
+            self.try_esdt_local_burn(&esdt_identifier, 0, &sc_balance, BURN_ESDT_FAILED)
+        {
+            self.complete_operation(&hash_of_hashes, &operation_hash, Some(error_message));
+            return;
         }
 
+        self.deposited_tokens_amount(&set_burn_mechanism_operation.token_id)
+            .set(sc_balance);
         self.complete_operation(&hash_of_hashes, &operation_hash, None);
     }
 
@@ -258,36 +245,16 @@ pub trait BridgingMechanism:
             return;
         }
 
-        let result = self
-            .tx()
-            .to(ToSelf)
-            .typed(UserBuiltinProxy)
-            .esdt_local_mint(
-                set_lock_mechanism_operation.token_id.clone().unwrap_esdt(),
-                0,
-                &deposited_amount,
-            )
-            .returns(ReturnsHandledOrError::new())
-            .sync_call_fallible();
-
-        match result {
-            Ok(()) => self
-                .deposited_tokens_amount(&set_lock_mechanism_operation.token_id)
-                .set(BigUint::zero()),
-            Err(error_code) => {
-                self.complete_operation(
-                    &hash_of_hashes,
-                    &operation_hash,
-                    Some(self.format_error(
-                        MINT_ESDT_FAILED,
-                        set_lock_mechanism_operation.token_id.unwrap_esdt(),
-                        error_code,
-                    )),
-                );
-                return;
-            }
+        let esdt_identifier = set_lock_mechanism_operation.token_id.clone().unwrap_esdt();
+        if let Err(error_message) =
+            self.try_esdt_local_mint(&esdt_identifier, 0, &deposited_amount, MINT_ESDT_FAILED)
+        {
+            self.complete_operation(&hash_of_hashes, &operation_hash, Some(error_message));
+            return;
         }
 
+        self.deposited_tokens_amount(&set_lock_mechanism_operation.token_id)
+            .set(BigUint::zero());
         self.complete_operation(&hash_of_hashes, &operation_hash, None);
     }
 
