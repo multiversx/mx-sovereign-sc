@@ -1,7 +1,6 @@
 use common_test_setup::base_setup::helpers::BLSKey;
 use common_test_setup::constants::{
-    CHAIN_CONFIG_ADDRESS, ESDT_SAFE_ADDRESS, EXECUTED_BRIDGE_OP_EVENT, HEADER_VERIFIER_ADDRESS,
-    OWNER_ADDRESS,
+    CHAIN_CONFIG_ADDRESS, ESDT_SAFE_ADDRESS, HEADER_VERIFIER_ADDRESS, OWNER_ADDRESS,
 };
 use error_messages::{
     BLS_KEY_NOT_REGISTERED, CALLER_NOT_FROM_CURRENT_SOVEREIGN,
@@ -772,7 +771,6 @@ fn test_change_validator_set() {
         epoch_for_new_set,
         &bitmap,
         validator_set,
-        Some(EXECUTED_BRIDGE_OP_EVENT),
         None,
     );
 
@@ -828,7 +826,6 @@ fn test_change_validator_invalid_epoch() {
         epoch,
         &bitmap,
         validator_set,
-        Some(EXECUTED_BRIDGE_OP_EVENT),
         Some(INVALID_EPOCH),
     );
 }
@@ -879,7 +876,6 @@ fn change_validator_set_previous_epoch_has_no_validators() {
         epoch,
         &bitmap,
         validator_set,
-        Some(EXECUTED_BRIDGE_OP_EVENT),
         Some(NO_VALIDATORS_FOR_PREVIOUS_EPOCH),
     );
 }
@@ -930,7 +926,6 @@ fn test_change_validator_set_operation_already_registered() {
         1,
         &bitmap,
         MultiValueEncoded::new(),
-        Some(EXECUTED_BRIDGE_OP_EVENT),
         None,
     );
 
@@ -941,7 +936,6 @@ fn test_change_validator_set_operation_already_registered() {
         1,
         &bitmap,
         MultiValueEncoded::new(),
-        Some(EXECUTED_BRIDGE_OP_EVENT),
         Some(OUTGOING_TX_HASH_ALREADY_REGISTERED),
     );
 }
@@ -995,7 +989,6 @@ fn test_change_validator_set_bls_key_not_found() {
         epoch,
         &bitmap,
         validator_set,
-        Some(EXECUTED_BRIDGE_OP_EVENT),
         Some(BLS_KEY_NOT_REGISTERED),
     );
 }
@@ -1067,7 +1060,6 @@ fn test_change_multiple_validator_sets() {
             epoch,
             &bitmap,
             validator_set,
-            Some(EXECUTED_BRIDGE_OP_EVENT),
             None,
         );
 
