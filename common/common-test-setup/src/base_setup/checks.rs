@@ -299,10 +299,18 @@ impl BaseSetup {
                         expected_log.identifier
                     );
                     if let OptionalValue::Some(topics) = expected_log.topics {
-                        self.validate_expected_topics(&topics, &matching_logs);
+                        self.validate_expected_topics(
+                            &topics,
+                            &matching_logs,
+                            expected_log.identifier,
+                        );
                     }
                     if let OptionalValue::Some(data) = expected_log.data {
-                        self.validate_expected_data(&[data], &matching_logs);
+                        self.validate_expected_data(
+                            &[data],
+                            &matching_logs,
+                            expected_log.identifier,
+                        );
                     }
                 }
             }
@@ -357,7 +365,7 @@ impl BaseSetup {
             .esdt_balance(FIRST_TEST_TOKEN, owner_token);
     }
 
-    fn validate_expected_topics(&self, topics: &[&str], matching_logs: &[&Log]) {
+    fn validate_expected_topics(&self, topics: &[&str], matching_logs: &[&Log], endpoint: &str) {
         let expected_topics_bytes: Vec<Vec<u8>> =
             topics.iter().map(|s| s.as_bytes().to_vec()).collect();
         assert!(
@@ -368,13 +376,11 @@ impl BaseSetup {
             }),
             "Expected topics '{}' not found for event '{}'",
             topics.join(", "),
-            matching_logs
-                .first()
-                .map_or("unknown", |log| log.endpoint.as_str())
+            endpoint
         );
     }
 
-    fn validate_expected_data(&self, data: &[&str], matching_logs: &[&Log]) {
+    fn validate_expected_data(&self, data: &[&str], matching_logs: &[&Log], endpoint: &str) {
         let expected_data_bytes: Vec<Vec<u8>> =
             data.iter().map(|s| s.as_bytes().to_vec()).collect();
         assert!(
@@ -383,9 +389,7 @@ impl BaseSetup {
                 .any(|log| { self.log_contains_expected_data(log, &expected_data_bytes) }),
             "Expected data '{}' not found for event '{}'",
             data.join(", "),
-            matching_logs
-                .first()
-                .map_or("unknown", |log| log.endpoint.as_str())
+            endpoint
         );
     }
 

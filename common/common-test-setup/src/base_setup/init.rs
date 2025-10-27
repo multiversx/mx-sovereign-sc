@@ -56,6 +56,16 @@ macro_rules! log {
             data: OptionalValue::Some($data),
         }
     };
+    ($identifier:expr, topics: [$($topic:expr),*], optional_data: $data:expr) => {
+        ExpectedLogs {
+            identifier: $identifier,
+            topics: OptionalValue::Some(vec![$($topic),*]),
+            data: match $data {
+                Some(data) => OptionalValue::Some(data),
+                None => OptionalValue::None,
+            },
+        }
+    };
 }
 
 fn world() -> ScenarioWorld {
