@@ -1,10 +1,15 @@
+use common_test_setup::base_setup::init::ExpectedLogs;
 use common_test_setup::base_setup::init::{AccountSetup, BaseSetup};
 use common_test_setup::constants::{
-    ESDT_SAFE_ADDRESS, FEE_MARKET_ADDRESS, FEE_TOKEN, FIRST_TEST_TOKEN, FIRST_TOKEN_ID,
-    HEADER_VERIFIER_ADDRESS, MVX_ESDT_SAFE_CODE_PATH, NATIVE_TEST_TOKEN, ONE_HUNDRED_MILLION,
-    OWNER_ADDRESS, OWNER_BALANCE, SECOND_TEST_TOKEN, SECOND_TOKEN_ID, SOVEREIGN_FORGE_SC_ADDRESS,
-    SOVEREIGN_TOKEN_PREFIX, TRUSTED_TOKEN, UNPAUSE_CONTRACT_LOG, USER_ADDRESS,
+    DEPOSIT_EVENT, ESDT_SAFE_ADDRESS, EXECUTED_BRIDGE_OP_EVENT, EXECUTE_BRIDGE_OPS_ENDPOINT,
+    EXECUTE_OPERATION_ENDPOINT, FEE_MARKET_ADDRESS, FEE_TOKEN, FIRST_TEST_TOKEN, FIRST_TOKEN_ID,
+    HEADER_VERIFIER_ADDRESS, INTERNAL_VM_ERRORS, MVX_ESDT_SAFE_CODE_PATH, NATIVE_TEST_TOKEN,
+    ONE_HUNDRED_MILLION, OWNER_ADDRESS, OWNER_BALANCE, REGISTER_TOKEN_ENDPOINT,
+    REGISTER_TOKEN_EVENT, SC_CALL_EVENT, SECOND_TEST_TOKEN, SECOND_TOKEN_ID,
+    SOVEREIGN_FORGE_SC_ADDRESS, SOVEREIGN_TOKEN_PREFIX, TRUSTED_TOKEN, UNPAUSE_CONTRACT_LOG,
+    USER_ADDRESS,
 };
+use common_test_setup::log;
 use cross_chain::storage::CrossChainStorage;
 use multiversx_sc::types::ReturnsHandledOrError;
 use multiversx_sc::{
@@ -32,6 +37,7 @@ use structs::{
 
 pub struct MvxEsdtSafeTestState {
     pub common_setup: BaseSetup,
+    pub fees_enabled: bool,
 }
 
 impl MvxEsdtSafeTestState {
@@ -64,10 +70,14 @@ impl MvxEsdtSafeTestState {
 
         let common_setup = BaseSetup::new(account_setups);
 
-        Self { common_setup }
+        Self {
+            common_setup,
+            fees_enabled: false,
+        }
     }
 
     pub fn deploy_contract_with_roles(&mut self, fee: Option<FeeStruct<StaticApi>>) -> &mut Self {
+        self.fees_enabled = fee.is_some();
         self.common_setup
             .deploy_sovereign_forge(OptionalValue::None);
         self.common_setup
@@ -325,7 +335,6 @@ impl MvxEsdtSafeTestState {
         opt_transfer_data: OptionalValueTransferDataTuple<StaticApi>,
         payment: PaymentsVec<StaticApi>,
         expected_error_message: Option<&str>,
-        expected_log: Option<&str>,
     ) {
         let (logs, result) = self
             .common_setup
@@ -343,16 +352,27 @@ impl MvxEsdtSafeTestState {
         self.common_setup
             .assert_expected_error_message(result, expected_error_message);
 
+        let expected_logs = if let Some(expected_error_message) = expected_error_message {
+            Some(vec![
+                log!(INTERNAL_VM_ERRORS, topics: [DEPOSIT_EVENT], data: expected_error_message),
+            ])
+        } else if opt_transfer_data.is_some()
+            && (payment.is_empty() || (payment.len() == 1 && self.fees_enabled))
+        {
+            Some(vec![log!(DEPOSIT_EVENT, topics: [SC_CALL_EVENT])])
+        } else {
+            Some(vec![log!(DEPOSIT_EVENT, topics: [DEPOSIT_EVENT])])
+        };
+
         self.common_setup
-            .assert_expected_log(logs, expected_log, expected_error_message);
+            .assert_expected_log_refactored(logs, expected_logs);
     }
 
     pub fn register_token(
         &mut self,
         register_token_args: RegisterTokenOperation<StaticApi>,
         hash_of_hashes: ManagedBuffer<StaticApi>,
-        expected_custom_log: Option<&str>,
-        expected_log_error: Option<&str>,
+        expected_error_message: Option<&str>,
     ) {
         let logs = self
             .common_setup
@@ -361,12 +381,22 @@ impl MvxEsdtSafeTestState {
             .from(OWNER_ADDRESS)
             .to(ESDT_SAFE_ADDRESS)
             .typed(MvxEsdtSafeProxy)
-            .register_sovereign_token(hash_of_hashes, register_token_args)
+            .register_sovereign_token(&hash_of_hashes, register_token_args)
             .returns(ReturnsLogs)
             .run();
 
+        let expected_logs = if let Some(expected_error_message) = expected_error_message {
+            Some(vec![
+                log!(REGISTER_TOKEN_ENDPOINT, topics: [EXECUTED_BRIDGE_OP_EVENT], data: expected_error_message),
+            ])
+        } else {
+            Some(vec![
+                log!(REGISTER_TOKEN_EVENT, topics: [EXECUTED_BRIDGE_OP_EVENT]),
+            ])
+        };
+
         self.common_setup
-            .assert_expected_log(logs, expected_custom_log, expected_log_error);
+            .assert_expected_log_refactored(logs, expected_logs);
     }
 
     pub fn register_native_token(
@@ -399,8 +429,8 @@ impl MvxEsdtSafeTestState {
         &mut self,
         hash_of_hashes: &ManagedBuffer<StaticApi>,
         operation: &Operation<StaticApi>,
-        expected_custom_log: Option<Vec<&str>>,
-        expected_log_error: Option<&str>,
+        expected_error_message: Option<&str>,
+        additional_logs: Option<Vec<ExpectedLogs>>,
     ) {
         let (logs, result) = self
             .common_setup
@@ -414,15 +444,29 @@ impl MvxEsdtSafeTestState {
             .returns(ReturnsHandledOrError::new())
             .run();
 
+        println!("logs: {:?}", logs);
+
         self.common_setup
             .assert_expected_error_message(result, None);
 
-        if let Some(logs_vec) = expected_custom_log {
-            for log in logs_vec {
-                self.common_setup
-                    .assert_expected_log(logs.clone(), Some(log), expected_log_error);
+        let mut expected_logs = if operation.to.to_address().is_smart_contract_address() {
+            Some(vec![
+                log!(EXECUTE_OPERATION_ENDPOINT, topics: [EXECUTED_BRIDGE_OP_EVENT], optional_data: expected_error_message),
+            ])
+        } else {
+            Some(vec![
+                log!(EXECUTE_BRIDGE_OPS_ENDPOINT, topics: [EXECUTED_BRIDGE_OP_EVENT], optional_data: expected_error_message),
+            ])
+        };
+
+        if let Some(additional_logs) = additional_logs {
+            if let Some(ref mut logs) = expected_logs {
+                logs.extend(additional_logs);
             }
         }
+
+        self.common_setup
+            .assert_expected_log_refactored(logs, expected_logs);
     }
 
     pub fn complete_setup_phase(&mut self, expected_log: Option<&str>) {

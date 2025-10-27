@@ -169,7 +169,10 @@ pub trait RegisterTokenModule:
                 num_decimals,
             )
             .gas(REGISTER_GAS)
-            .callback(self.callbacks().register_token(&args, hash_of_hashes, token_hash))
+            .callback(
+                self.callbacks()
+                    .register_token(&args, hash_of_hashes, token_hash),
+            )
             .register_promise();
     }
 
