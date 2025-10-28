@@ -29,15 +29,7 @@ pub trait SovEsdtSafe:
         self.require_sc_address(&fee_market_address);
         self.fee_market_address().set(fee_market_address);
 
-        let new_config = match opt_config {
-            OptionalValue::Some(cfg) => {
-                if let Some(error_message) = self.is_esdt_safe_config_valid(&cfg) {
-                    sc_panic!(error_message);
-                }
-                cfg
-            }
-            OptionalValue::None => EsdtSafeConfig::default_config(),
-        };
+        let new_config = self.resolve_esdt_safe_config(opt_config);
 
         self.esdt_safe_config().set(new_config);
 

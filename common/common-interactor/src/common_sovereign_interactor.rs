@@ -1063,6 +1063,10 @@ pub trait CommonInteractorTrait: InteractorHelpers {
         let current_mvx_esdt_safe_address =
             self.common_state().get_mvx_esdt_safe_address(shard).clone();
 
+        if self.common_state().get_is_burn_mechanism_set() {
+            return;
+        }
+
         self.interactor()
             .tx()
             .from(bridge_service)
@@ -1073,6 +1077,8 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             .returns(ReturnsResultUnmanaged)
             .run()
             .await;
+
+        self.common_state().set_is_burn_mechanism_set(true);
     }
 
     async fn set_token_lock_mechanism(
@@ -1095,6 +1101,8 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             .returns(ReturnsResultUnmanaged)
             .run()
             .await;
+
+        self.common_state().set_is_burn_mechanism_set(false);
     }
 
     async fn set_token_burn_mechanism_before_setup_phase(&mut self, caller: Address) {

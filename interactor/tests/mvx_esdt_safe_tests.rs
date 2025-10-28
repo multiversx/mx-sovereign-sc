@@ -1072,6 +1072,10 @@ async fn test_switch_mechanism_with_deposit() {
         )
         .await;
 
+    chain_interactor
+        .common_state()
+        .add_to_deposited_amount(deposit_amount.clone());
+
     let balance_config = BalanceCheckConfig::new()
         .shard(SHARD_0)
         .token(Some(trusted_token_info.clone()))
@@ -1126,6 +1130,10 @@ async fn test_switch_mechanism_with_deposit() {
             Some(DEPOSIT_EVENT),
         )
         .await;
+
+    chain_interactor
+        .common_state()
+        .add_to_deposited_amount(deposit_amount.clone());
 
     // Since the mechanism was switched, the trusted token amount was minted in the sc, now we check for both the mint and the new deposit amount
     let balance_config = BalanceCheckConfig::new()
@@ -1221,6 +1229,10 @@ async fn test_execute_operation_with_burn_mechanism() {
         )
         .await;
 
+    chain_interactor
+        .common_state()
+        .add_to_deposited_amount(deposit_amount.clone());
+
     let balance_config = BalanceCheckConfig::new()
         .shard(SHARD_0)
         .token(Some(trusted_token_info.clone()))
@@ -1231,8 +1243,10 @@ async fn test_execute_operation_with_burn_mechanism() {
         .check_balances_after_action(balance_config)
         .await;
 
+    let current_deposited_amount = chain_interactor.common_state().get_deposited_amount();
+
     chain_interactor
-        .check_deposited_tokens_amount(trusted_token_id.clone(), SHARD_0, deposit_amount.clone())
+        .check_deposited_tokens_amount(trusted_token_id.clone(), SHARD_0, current_deposited_amount)
         .await;
 
     let operation = chain_interactor
@@ -1267,6 +1281,10 @@ async fn test_execute_operation_with_burn_mechanism() {
         )
         .await;
 
+    chain_interactor
+        .common_state()
+        .subtract_from_deposited_amount(deposit_amount.clone());
+
     let balance_config = BalanceCheckConfig::new()
         .shard(SHARD_0)
         .token(Some(trusted_token_info))
@@ -1278,7 +1296,9 @@ async fn test_execute_operation_with_burn_mechanism() {
         .check_balances_after_action(balance_config)
         .await;
 
+    let current_deposited_amount = chain_interactor.common_state().get_deposited_amount();
+
     chain_interactor
-        .check_deposited_tokens_amount(trusted_token_id.clone(), SHARD_0, BigUint::zero())
+        .check_deposited_tokens_amount(trusted_token_id.clone(), SHARD_0, current_deposited_amount)
         .await;
 }

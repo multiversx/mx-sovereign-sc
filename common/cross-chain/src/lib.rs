@@ -22,4 +22,19 @@ pub trait LibCommon: crate::storage::CrossChainStorage {
             Some(MAX_GAS_LIMIT_PER_TX_EXCEEDED)
         }
     }
+
+    fn resolve_esdt_safe_config(
+        &self,
+        opt_config: OptionalValue<EsdtSafeConfig<Self::Api>>,
+    ) -> EsdtSafeConfig<Self::Api> {
+        match opt_config {
+            OptionalValue::Some(cfg) => {
+                if let Some(error_message) = self.is_esdt_safe_config_valid(&cfg) {
+                    sc_panic!(error_message);
+                }
+                cfg
+            }
+            OptionalValue::None => EsdtSafeConfig::default_config(),
+        }
+    }
 }
