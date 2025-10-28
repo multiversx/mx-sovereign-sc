@@ -354,7 +354,7 @@ impl MvxEsdtSafeTestState {
 
         let expected_logs = if let Some(expected_error_message) = expected_error_message {
             Some(vec![
-                log!(INTERNAL_VM_ERRORS, topics: [DEPOSIT_EVENT], data: expected_error_message),
+                log!(INTERNAL_VM_ERRORS, topics: [DEPOSIT_EVENT], data: Some(expected_error_message)),
             ])
         } else if opt_transfer_data.is_some()
             && (payment.is_empty() || (payment.len() == 1 && self.fees_enabled))
@@ -387,7 +387,7 @@ impl MvxEsdtSafeTestState {
 
         let expected_logs = if let Some(expected_error_message) = expected_error_message {
             Some(vec![
-                log!(REGISTER_TOKEN_ENDPOINT, topics: [EXECUTED_BRIDGE_OP_EVENT], data: expected_error_message),
+                log!(REGISTER_TOKEN_ENDPOINT, topics: [EXECUTED_BRIDGE_OP_EVENT], data: Some(expected_error_message)),
             ])
         } else {
             Some(vec![
@@ -444,20 +444,18 @@ impl MvxEsdtSafeTestState {
             .returns(ReturnsHandledOrError::new())
             .run();
 
-        println!("logs: {:?}", logs);
-
         self.common_setup
             .assert_expected_error_message(result, None);
 
-        let mut expected_logs = if operation.to.to_address().is_smart_contract_address() {
-            Some(vec![
-                log!(EXECUTE_OPERATION_ENDPOINT, topics: [EXECUTED_BRIDGE_OP_EVENT], optional_data: expected_error_message),
-            ])
+        let endpoint = if operation.to.to_address().is_smart_contract_address() {
+            EXECUTE_OPERATION_ENDPOINT
         } else {
-            Some(vec![
-                log!(EXECUTE_BRIDGE_OPS_ENDPOINT, topics: [EXECUTED_BRIDGE_OP_EVENT], optional_data: expected_error_message),
-            ])
+            EXECUTE_BRIDGE_OPS_ENDPOINT
         };
+
+        let mut expected_logs = Some(vec![
+            log!(endpoint, topics: [EXECUTED_BRIDGE_OP_EVENT], data: expected_error_message),
+        ]);
 
         if let Some(additional_logs) = additional_logs {
             if let Some(ref mut logs) = expected_logs {

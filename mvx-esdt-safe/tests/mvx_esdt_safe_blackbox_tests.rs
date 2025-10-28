@@ -1,9 +1,10 @@
 use common_test_setup::base_setup::init::ExpectedLogs;
 use common_test_setup::constants::{
-    CROWD_TOKEN_ID, DEPOSIT_EVENT, ESDT_SAFE_ADDRESS, EXECUTED_BRIDGE_OP_EVENT, FEE_MARKET_ADDRESS,
-    FEE_TOKEN, FIRST_TEST_TOKEN, FIRST_TOKEN_ID, HEADER_VERIFIER_ADDRESS, ISSUE_COST,
-    NATIVE_TEST_TOKEN, ONE_HUNDRED_MILLION, ONE_HUNDRED_THOUSAND, ONE_HUNDRED_TOKENS,
-    OWNER_ADDRESS, PER_GAS, PER_TRANSFER, SECOND_TEST_TOKEN, SECOND_TOKEN_ID, SOV_FIRST_TOKEN_ID,
+    CROWD_TOKEN_ID, DEPOSIT_EVENT, ESDT_SAFE_ADDRESS, EXECUTED_BRIDGE_OP_EVENT,
+    EXECUTE_BRIDGE_OPS_ENDPOINT, FEE_MARKET_ADDRESS, FEE_TOKEN, FIRST_TEST_TOKEN, FIRST_TOKEN_ID,
+    HEADER_VERIFIER_ADDRESS, ISSUE_COST, NATIVE_TEST_TOKEN, ONE_HUNDRED_MILLION,
+    ONE_HUNDRED_THOUSAND, ONE_HUNDRED_TOKENS, OWNER_ADDRESS, PER_GAS, PER_TRANSFER,
+    SECOND_TEST_TOKEN, SECOND_TOKEN_ID, SOVEREIGN_RECEIVER_ADDRESS, SOV_FIRST_TOKEN_ID,
     SOV_SECOND_TOKEN_ID, SOV_TOKEN, TESTING_SC_ADDRESS, TESTING_SC_ENDPOINT, TRUSTED_TOKEN,
     UNPAUSE_CONTRACT_LOG, USER_ADDRESS, WRONG_ENDPOINT_NAME,
 };
@@ -12,11 +13,12 @@ use cross_chain::storage::CrossChainStorage;
 use cross_chain::{DEFAULT_ISSUE_COST, MAX_GAS_PER_TRANSACTION};
 use error_messages::{
     BANNED_ENDPOINT_NAME, CALLER_NOT_FROM_CURRENT_SOVEREIGN, CURRENT_OPERATION_NOT_REGISTERED,
-    DEPOSIT_OVER_MAX_AMOUNT, ERR_EMPTY_PAYMENTS, GAS_LIMIT_TOO_HIGH, INVALID_FUNCTION_NOT_FOUND,
-    INVALID_PREFIX_FOR_REGISTER, INVALID_TYPE, MAX_GAS_LIMIT_PER_TX_EXCEEDED,
-    MINT_AND_BURN_ROLES_NOT_FOUND, NATIVE_TOKEN_ALREADY_REGISTERED, NATIVE_TOKEN_NOT_REGISTERED,
-    NOTHING_TO_TRANSFER, NOT_ENOUGH_EGLD_FOR_REGISTER, PAYMENT_DOES_NOT_COVER_FEE,
-    SETUP_PHASE_NOT_COMPLETED, TOKEN_ID_IS_NOT_TRUSTED, TOO_MANY_TOKENS,
+    DEPOSIT_AMOUNT_NOT_ENOUGH, DEPOSIT_OVER_MAX_AMOUNT, ERR_EMPTY_PAYMENTS, GAS_LIMIT_TOO_HIGH,
+    INVALID_FUNCTION_NOT_FOUND, INVALID_PREFIX_FOR_REGISTER, INVALID_TYPE,
+    MAX_GAS_LIMIT_PER_TX_EXCEEDED, MINT_AND_BURN_ROLES_NOT_FOUND, NATIVE_TOKEN_ALREADY_REGISTERED,
+    NATIVE_TOKEN_NOT_REGISTERED, NOTHING_TO_TRANSFER, NOT_ENOUGH_EGLD_FOR_REGISTER,
+    PAYMENT_DOES_NOT_COVER_FEE, SETUP_PHASE_NOT_COMPLETED, TOKEN_ID_IS_NOT_TRUSTED,
+    TOO_MANY_TOKENS,
 };
 use header_verifier::storage::HeaderVerifierStorageModule;
 use multiversx_sc::chain_core::EGLD_000000_TOKEN_IDENTIFIER;
@@ -1534,7 +1536,7 @@ fn test_execute_operation_no_chain_config_registered() {
     );
 
     let operation = Operation::new(
-        TESTING_SC_ADDRESS.to_managed_address(),
+        SOVEREIGN_RECEIVER_ADDRESS.to_managed_address(),
         vec![payment].into(),
         OperationData::new(
             state.common_setup.next_operation_nonce(),
@@ -1580,7 +1582,7 @@ fn test_execute_operation_no_esdt_safe_registered() {
     );
 
     let operation = Operation::new(
-        TESTING_SC_ADDRESS.to_managed_address(),
+        SOVEREIGN_RECEIVER_ADDRESS.to_managed_address(),
         vec![payment].into(),
         OperationData::new(
             state.common_setup.next_operation_nonce(),
@@ -1808,7 +1810,7 @@ fn test_execute_operation_with_native_token_success() {
 /// ### EXPECTED
 /// The operation executes successfully with minted tokens
 #[test]
-fn test_execute_operation_burn_mechanism_without_deposit_cannot_subtract() {
+fn test_execute_operation_burn_mechanism_without_deposit() {
     let mut state = MvxEsdtSafeTestState::new();
     state.deploy_contract_with_roles(None);
     state.complete_setup_phase(Some(UNPAUSE_CONTRACT_LOG));
@@ -1830,7 +1832,7 @@ fn test_execute_operation_burn_mechanism_without_deposit_cannot_subtract() {
     let burn_hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&burn_operation_hash.to_vec()));
 
     let operation = Operation::new(
-        TESTING_SC_ADDRESS.to_managed_address(),
+        SOVEREIGN_RECEIVER_ADDRESS.to_managed_address(),
         vec![payment].into(),
         OperationData::new(
             state.common_setup.next_operation_nonce(),
@@ -1891,7 +1893,12 @@ fn test_execute_operation_burn_mechanism_without_deposit_cannot_subtract() {
     );
 
     state.set_token_burn_mechanism(&burn_hash_of_hashes, burn_operation);
-    state.execute_operation(&hash_of_hashes, &operation, None, None);
+    state.execute_operation(
+        &hash_of_hashes,
+        &operation,
+        Some(DEPOSIT_AMOUNT_NOT_ENOUGH),
+        None,
+    );
 
     state
         .common_setup
@@ -3152,10 +3159,7 @@ fn test_execute_operation_partial_execution() {
     );
 
     let additional_logs = vec![
-        log!(DEPOSIT_EVENT, topics: [DEPOSIT_EVENT], data: DEPOSIT_EVENT),
-        log!(SOV_FIRST_TOKEN_ID.as_str(), topics: [SOV_FIRST_TOKEN_ID.as_str()], data: SOV_FIRST_TOKEN_ID.as_str()),
-        log!(TRUSTED_TOKEN, topics: [TRUSTED_TOKEN], data: TRUSTED_TOKEN),
-        log!(SOV_SECOND_TOKEN_ID.as_str(), topics: [SOV_SECOND_TOKEN_ID.as_str()], data: SOV_SECOND_TOKEN_ID.as_str()),
+        log!(EXECUTE_BRIDGE_OPS_ENDPOINT, topics: [DEPOSIT_EVENT, SOV_FIRST_TOKEN_ID.as_str(), TRUSTED_TOKEN, SOV_SECOND_TOKEN_ID.as_str()]),
     ];
 
     state.execute_operation(&hash_of_hashes, &operation, None, Some(additional_logs));
