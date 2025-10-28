@@ -141,37 +141,39 @@ impl CommonState {
         self.testing_egld_balance += amount;
     }
 
-    pub fn add_to_deposited_amount(&mut self, amount: BigUint<StaticApi>) {
-        let current = if self.deposited_amount.is_empty() {
-            num_bigint::BigUint::from(0u64)
-        } else {
-            let trimmed = self.deposited_amount.trim();
-            num_bigint::BigUint::from_str(trimmed).unwrap_or_else(|_| {
-                println!("Failed to parse deposited_amount '{}'", trimmed);
-                num_bigint::BigUint::from(0u64)
-            })
-        };
+    fn parse_deposited_amount(&self) -> num_bigint::BigUint {
+        if self.deposited_amount.is_empty() {
+            return num_bigint::BigUint::from(0u64);
+        }
 
+        let trimmed = self.deposited_amount.trim();
+        num_bigint::BigUint::from_str(trimmed).unwrap_or_else(|_| {
+            eprintln!("Failed to parse deposited_amount '{}'", trimmed);
+            num_bigint::BigUint::from(0u64)
+        })
+    }
+
+    fn biguint_to_num_biguint(amount: &BigUint<StaticApi>) -> num_bigint::BigUint {
         let amount_bytes = amount.to_bytes_be();
-        let amount_biguint = num_bigint::BigUint::from_bytes_be(amount_bytes.as_slice());
+        num_bigint::BigUint::from_bytes_be(amount_bytes.as_slice())
+    }
+
+    fn num_biguint_to_biguint(num: &num_bigint::BigUint) -> BigUint<StaticApi> {
+        let bytes = num.to_bytes_be();
+        BigUint::from_bytes_be(&bytes)
+    }
+
+    pub fn add_to_deposited_amount(&mut self, amount: BigUint<StaticApi>) {
+        let current = self.parse_deposited_amount();
+        let amount_biguint = Self::biguint_to_num_biguint(&amount);
         let sum = current + amount_biguint;
 
         self.deposited_amount = sum.to_string();
     }
 
     pub fn subtract_from_deposited_amount(&mut self, amount: BigUint<StaticApi>) {
-        let current = if self.deposited_amount.is_empty() {
-            num_bigint::BigUint::from(0u64)
-        } else {
-            let trimmed = self.deposited_amount.trim();
-            num_bigint::BigUint::from_str(trimmed).unwrap_or_else(|_| {
-                println!("Failed to parse deposited_amount '{}'", trimmed);
-                num_bigint::BigUint::from(0u64)
-            })
-        };
-
-        let amount_bytes = amount.to_bytes_be();
-        let amount_biguint = num_bigint::BigUint::from_bytes_be(amount_bytes.as_slice());
+        let current = self.parse_deposited_amount();
+        let amount_biguint = Self::biguint_to_num_biguint(&amount);
         let result = if current >= amount_biguint {
             current - amount_biguint
         } else {
@@ -190,18 +192,8 @@ impl CommonState {
     }
 
     pub fn get_deposited_amount(&self) -> BigUint<StaticApi> {
-        if self.deposited_amount.is_empty() {
-            return BigUint::zero();
-        }
-
-        let trimmed = self.deposited_amount.trim();
-        let num_biguint = num_bigint::BigUint::from_str(trimmed).unwrap_or_else(|_| {
-            eprintln!("Failed to parse deposited_amount '{}'", trimmed);
-            num_bigint::BigUint::from(0u64)
-        });
-
-        let bytes = num_biguint.to_bytes_be();
-        BigUint::from_bytes_be(&bytes)
+        let num_biguint = self.parse_deposited_amount();
+        Self::num_biguint_to_biguint(&num_biguint)
     }
 
     pub fn get_and_increment_operation_nonce(&mut self, contract_address: &str) -> u64 {
