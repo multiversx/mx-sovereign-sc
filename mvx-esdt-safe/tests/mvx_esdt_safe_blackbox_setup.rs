@@ -329,6 +329,15 @@ impl MvxEsdtSafeTestState {
             .run();
     }
 
+    fn has_transfer_data_with_no_or_fee_payment(
+        &self,
+        opt_transfer_data: &OptionalValueTransferDataTuple<StaticApi>,
+        payment: &PaymentsVec<StaticApi>,
+    ) -> bool {
+        opt_transfer_data.is_some()
+            && (payment.is_empty() || (payment.len() == 1 && self.fees_enabled))
+    }
+
     pub fn deposit(
         &mut self,
         to: ManagedAddress<StaticApi>,
@@ -356,9 +365,7 @@ impl MvxEsdtSafeTestState {
             Some(vec![
                 log!(INTERNAL_VM_ERRORS, topics: [DEPOSIT_EVENT], data: Some(expected_error_message)),
             ])
-        } else if opt_transfer_data.is_some()
-            && (payment.is_empty() || (payment.len() == 1 && self.fees_enabled))
-        {
+        } else if self.has_transfer_data_with_no_or_fee_payment(&opt_transfer_data, &payment) {
             Some(vec![log!(DEPOSIT_EVENT, topics: [SC_CALL_EVENT])])
         } else {
             Some(vec![log!(DEPOSIT_EVENT, topics: [DEPOSIT_EVENT])])
