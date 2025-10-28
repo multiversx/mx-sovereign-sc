@@ -2,6 +2,7 @@ use std::{
     collections::HashMap,
     io::{Read, Write},
     path::Path,
+    str::FromStr,
 };
 
 use common_test_setup::constants::STATE_FILE;
@@ -12,9 +13,11 @@ use error_messages::{
     NO_KNOWN_TRUSTED_TOKEN,
 };
 use multiversx_sc::{
+    codec::num_bigint,
     imports::Bech32Address,
     types::{BigUint, EgldOrEsdtTokenIdentifier, EsdtTokenType},
 };
+use multiversx_sc_snippets::imports::StaticApi;
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -39,6 +42,8 @@ pub struct CommonState {
     pub mvx_egld_balances: Vec<(String, u64)>,
     pub testing_egld_balance: u64,
     pub bls_secret_keys: HashMap<String, Vec<Vec<u8>>>,
+    pub deposited_amount: String,
+    pub is_burn_mechanism_set: bool,
 }
 
 impl CommonState {
@@ -134,6 +139,69 @@ impl CommonState {
 
     pub fn update_testing_egld_balance_with_amount(&mut self, amount: u64) {
         self.testing_egld_balance += amount;
+    }
+
+    pub fn add_to_deposited_amount(&mut self, amount: BigUint<StaticApi>) {
+        let current = if self.deposited_amount.is_empty() {
+            num_bigint::BigUint::from(0u64)
+        } else {
+            let trimmed = self.deposited_amount.trim();
+            num_bigint::BigUint::from_str(trimmed).unwrap_or_else(|_| {
+                println!("Failed to parse deposited_amount '{}'", trimmed);
+                num_bigint::BigUint::from(0u64)
+            })
+        };
+
+        let amount_bytes = amount.to_bytes_be();
+        let amount_biguint = num_bigint::BigUint::from_bytes_be(amount_bytes.as_slice());
+        let sum = current + amount_biguint;
+
+        self.deposited_amount = sum.to_string();
+    }
+
+    pub fn subtract_from_deposited_amount(&mut self, amount: BigUint<StaticApi>) {
+        let current = if self.deposited_amount.is_empty() {
+            num_bigint::BigUint::from(0u64)
+        } else {
+            let trimmed = self.deposited_amount.trim();
+            num_bigint::BigUint::from_str(trimmed).unwrap_or_else(|_| {
+                println!("Failed to parse deposited_amount '{}'", trimmed);
+                num_bigint::BigUint::from(0u64)
+            })
+        };
+
+        let amount_bytes = amount.to_bytes_be();
+        let amount_biguint = num_bigint::BigUint::from_bytes_be(amount_bytes.as_slice());
+        let result = if current >= amount_biguint {
+            current - amount_biguint
+        } else {
+            num_bigint::BigUint::from(0u64)
+        };
+
+        self.deposited_amount = result.to_string();
+    }
+
+    pub fn set_is_burn_mechanism_set(&mut self, is_burn_mechanism_set: bool) {
+        self.is_burn_mechanism_set = is_burn_mechanism_set;
+    }
+
+    pub fn get_is_burn_mechanism_set(&self) -> bool {
+        self.is_burn_mechanism_set
+    }
+
+    pub fn get_deposited_amount(&self) -> BigUint<StaticApi> {
+        if self.deposited_amount.is_empty() {
+            return BigUint::zero();
+        }
+
+        let trimmed = self.deposited_amount.trim();
+        let num_biguint = num_bigint::BigUint::from_str(trimmed).unwrap_or_else(|_| {
+            eprintln!("Failed to parse deposited_amount '{}'", trimmed);
+            num_bigint::BigUint::from(0u64)
+        });
+
+        let bytes = num_biguint.to_bytes_be();
+        BigUint::from_bytes_be(&bytes)
     }
 
     pub fn get_and_increment_operation_nonce(&mut self, contract_address: &str) -> u64 {
