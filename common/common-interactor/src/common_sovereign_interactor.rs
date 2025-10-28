@@ -1055,8 +1055,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
 
     async fn set_token_burn_mechanism(
         &mut self,
-        hash_of_hashes: ManagedBuffer<StaticApi>,
-        token_burn_mechanism_operation: SetBurnMechanismOperation<StaticApi>,
+        token_id: EgldOrEsdtTokenIdentifier<StaticApi>,
         shard: u32,
     ) {
         let bridge_service = self.get_bridge_service_for_shard(shard).clone();
@@ -1067,13 +1066,34 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             return;
         }
 
+        let token_burn_mechanism_operation = SetBurnMechanismOperation {
+            token_id,
+            nonce: self
+                .common_state()
+                .get_and_increment_operation_nonce(&current_mvx_esdt_safe_address.to_string()),
+        };
+
+        let token_burn_mechanism_operation_hash = token_burn_mechanism_operation.generate_hash();
+        let token_burn_mechanism_hash_of_hashes =
+            ManagedBuffer::new_from_bytes(&sha256(&token_burn_mechanism_operation_hash.to_vec()));
+
+        self.register_operation(
+            shard,
+            &token_burn_mechanism_hash_of_hashes,
+            MultiValueEncoded::from(ManagedVec::from(vec![token_burn_mechanism_operation_hash])),
+        )
+        .await;
+
         self.interactor()
             .tx()
             .from(bridge_service)
             .to(current_mvx_esdt_safe_address)
             .gas(90_000_000u64)
             .typed(MvxEsdtSafeProxy)
-            .set_token_burn_mechanism(hash_of_hashes, token_burn_mechanism_operation)
+            .set_token_burn_mechanism(
+                token_burn_mechanism_hash_of_hashes,
+                token_burn_mechanism_operation,
+            )
             .returns(ReturnsResultUnmanaged)
             .run()
             .await;
@@ -1083,13 +1103,30 @@ pub trait CommonInteractorTrait: InteractorHelpers {
 
     async fn set_token_lock_mechanism(
         &mut self,
-        hash_of_hashes: ManagedBuffer<StaticApi>,
-        token_lock_mechanism_operation: SetLockMechanismOperation<StaticApi>,
+        token_id: EgldOrEsdtTokenIdentifier<StaticApi>,
         shard: u32,
     ) {
         let bridge_service = self.get_bridge_service_for_shard(shard).clone();
         let current_mvx_esdt_safe_address =
             self.common_state().get_mvx_esdt_safe_address(shard).clone();
+
+        let token_lock_mechanism_operation = SetLockMechanismOperation {
+            token_id,
+            nonce: self
+                .common_state()
+                .get_and_increment_operation_nonce(&current_mvx_esdt_safe_address.to_string()),
+        };
+
+        let token_lock_mechanism_operation_hash = token_lock_mechanism_operation.generate_hash();
+        let token_lock_mechanism_hash_of_hashes =
+            ManagedBuffer::new_from_bytes(&sha256(&token_lock_mechanism_operation_hash.to_vec()));
+
+        self.register_operation(
+            shard,
+            &token_lock_mechanism_hash_of_hashes,
+            MultiValueEncoded::from(ManagedVec::from(vec![token_lock_mechanism_operation_hash])),
+        )
+        .await;
 
         self.interactor()
             .tx()
@@ -1097,7 +1134,10 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             .to(current_mvx_esdt_safe_address)
             .gas(90_000_000u64)
             .typed(MvxEsdtSafeProxy)
-            .set_token_lock_mechanism(hash_of_hashes, token_lock_mechanism_operation)
+            .set_token_lock_mechanism(
+                token_lock_mechanism_hash_of_hashes,
+                token_lock_mechanism_operation,
+            )
             .returns(ReturnsResultUnmanaged)
             .run()
             .await;
