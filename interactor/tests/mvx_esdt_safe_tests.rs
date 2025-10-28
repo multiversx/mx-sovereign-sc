@@ -20,10 +20,7 @@ use rust_interact::mvx_esdt_safe::mvx_esdt_safe_interactor_main::MvxEsdtSafeInte
 use serial_test::serial;
 use std::vec;
 use structs::aliases::PaymentsVec;
-use structs::configs::{
-    EsdtSafeConfig, MaxBridgedAmount, SetBurnMechanismOperation, SetLockMechanismOperation,
-};
-use structs::generate_hash::GenerateHash;
+use structs::configs::{EsdtSafeConfig, MaxBridgedAmount};
 use structs::operation::{Operation, OperationData, OperationEsdtPayment, TransferData};
 use structs::OperationHashStatus;
 
@@ -1018,38 +1015,9 @@ async fn test_switch_mechanism_with_deposit() {
         decimals: 18,
         token_type: EsdtTokenType::Fungible,
     };
-    let mvx_esdt_safe_address = chain_interactor
-        .common_state
-        .get_mvx_esdt_safe_address(SHARD_0)
-        .clone();
-
-    let token_burn_mechanism_operation = SetBurnMechanismOperation {
-        token_id: trusted_token_id.clone(),
-        nonce: chain_interactor
-            .common_state()
-            .get_and_increment_operation_nonce(&mvx_esdt_safe_address.to_string()),
-    };
-
-    let token_burn_mechanism_operation_hash = token_burn_mechanism_operation.generate_hash();
-    let token_burn_mechanism_hash_of_hashes =
-        ManagedBuffer::new_from_bytes(&sha256(&token_burn_mechanism_operation_hash.to_vec()));
 
     chain_interactor
-        .register_operation(
-            SHARD_0,
-            &token_burn_mechanism_hash_of_hashes,
-            MultiValueEncoded::from(ManagedVec::from(vec![
-                token_burn_mechanism_operation_hash.clone()
-            ])),
-        )
-        .await;
-
-    chain_interactor
-        .set_token_burn_mechanism(
-            token_burn_mechanism_hash_of_hashes,
-            token_burn_mechanism_operation,
-            SHARD_0,
-        )
+        .set_token_burn_mechanism(trusted_token_id.clone(), SHARD_0)
         .await;
 
     let deposit_amount = BigUint::from(ONE_HUNDRED_TOKENS);
@@ -1091,33 +1059,9 @@ async fn test_switch_mechanism_with_deposit() {
         .await;
 
     // === Switch to Lock Mechanism ===
-    let token_lock_mechanism_operation = SetLockMechanismOperation {
-        token_id: trusted_token_id.clone(),
-        nonce: chain_interactor
-            .common_state()
-            .get_and_increment_operation_nonce(&mvx_esdt_safe_address.to_string()),
-    };
-
-    let token_lock_mechanism_operation_hash = token_lock_mechanism_operation.generate_hash();
-    let token_lock_mechanism_hash_of_hashes =
-        ManagedBuffer::new_from_bytes(&sha256(&token_lock_mechanism_operation_hash.to_vec()));
 
     chain_interactor
-        .register_operation(
-            SHARD_0,
-            &token_lock_mechanism_hash_of_hashes,
-            MultiValueEncoded::from(ManagedVec::from(vec![
-                token_lock_mechanism_operation_hash.clone()
-            ])),
-        )
-        .await;
-
-    chain_interactor
-        .set_token_lock_mechanism(
-            token_lock_mechanism_hash_of_hashes,
-            token_lock_mechanism_operation,
-            SHARD_0,
-        )
+        .set_token_lock_mechanism(trusted_token_id.clone(), SHARD_0)
         .await;
 
     chain_interactor
@@ -1175,38 +1119,9 @@ async fn test_execute_operation_with_burn_mechanism() {
         decimals: 18,
         token_type: EsdtTokenType::Fungible,
     };
-    let mvx_esdt_safe_address = chain_interactor
-        .common_state
-        .get_mvx_esdt_safe_address(SHARD_0)
-        .clone();
-
-    let token_burn_mechanism_operation = SetBurnMechanismOperation {
-        token_id: trusted_token_id.clone(),
-        nonce: chain_interactor
-            .common_state()
-            .get_and_increment_operation_nonce(&mvx_esdt_safe_address.to_string()),
-    };
-
-    let token_burn_mechanism_operation_hash = token_burn_mechanism_operation.generate_hash();
-    let token_burn_mechanism_hash_of_hashes =
-        ManagedBuffer::new_from_bytes(&sha256(&token_burn_mechanism_operation_hash.to_vec()));
 
     chain_interactor
-        .register_operation(
-            SHARD_0,
-            &token_burn_mechanism_hash_of_hashes,
-            MultiValueEncoded::from(ManagedVec::from(vec![
-                token_burn_mechanism_operation_hash.clone()
-            ])),
-        )
-        .await;
-
-    chain_interactor
-        .set_token_burn_mechanism(
-            token_burn_mechanism_hash_of_hashes,
-            token_burn_mechanism_operation,
-            SHARD_0,
-        )
+        .set_token_burn_mechanism(trusted_token_id.clone(), SHARD_0)
         .await;
 
     let deposit_amount = BigUint::from(ONE_HUNDRED_TOKENS);
