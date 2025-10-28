@@ -39,7 +39,7 @@ pub trait PhasesModule:
         let blockchain_api = self.blockchain();
         let caller = blockchain_api.get_caller();
         let caller_shard_id = blockchain_api.get_shard_of_address(&caller);
-        
+
         self.require_initialization_phase_complete(caller_shard_id);
 
         let call_value = self.call_value().egld().clone();

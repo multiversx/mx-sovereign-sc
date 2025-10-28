@@ -38,19 +38,19 @@ pub trait ExecuteModule:
             );
             return;
         };
-        if self.is_paused() {
-            self.complete_operation(
-                &hash_of_hashes,
-                &operation_hash,
-                Some(ESDT_SAFE_STILL_PAUSED.into()),
-            );
-            return;
-        }
         if !self.is_setup_phase_complete() {
             self.complete_operation(
                 &hash_of_hashes,
                 &operation_hash,
                 Some(SETUP_PHASE_NOT_COMPLETED.into()),
+            );
+            return;
+        }
+        if self.is_paused() {
+            self.complete_operation(
+                &hash_of_hashes,
+                &operation_hash,
+                Some(ESDT_SAFE_STILL_PAUSED.into()),
             );
             return;
         }
@@ -410,35 +410,25 @@ pub trait ExecuteModule:
         }
 
         let esdt_token_id = output_payment.token_identifier.clone().unwrap_esdt();
-        let result = self
-            .tx()
-            .to(ToSelf)
-            .typed(UserBuiltinProxy)
-            .esdt_local_burn(
-                esdt_token_id.clone(),
+        self.try_esdt_local_burn(
+            &esdt_token_id,
+            output_payment.token_nonce,
+            &output_payment.token_data.amount,
+            BURN_ESDT_FAILED,
+        )?;
+
+        if self.is_nft(&operation_token.token_data.token_type) {
+            self.clear_mvx_to_sov_esdt_info_mapper(
+                &output_payment.token_identifier,
                 output_payment.token_nonce,
-                &output_payment.token_data.amount,
-            )
-            .returns(ReturnsHandledOrError::new())
-            .sync_call_fallible();
-
-        match result {
-            Ok(_) => {
-                if self.is_nft(&operation_token.token_data.token_type) {
-                    self.clear_mvx_to_sov_esdt_info_mapper(
-                        &output_payment.token_identifier,
-                        output_payment.token_nonce,
-                    );
-                    self.clear_sov_to_mvx_esdt_info_mapper(
-                        &operation_token.token_identifier,
-                        operation_token.token_nonce,
-                    );
-                }
-
-                Ok(())
-            }
-            Err(error_code) => Err(self.format_error(BURN_ESDT_FAILED, esdt_token_id, error_code)),
+            );
+            self.clear_sov_to_mvx_esdt_info_mapper(
+                &operation_token.token_identifier,
+                operation_token.token_nonce,
+            );
         }
+
+        Ok(())
     }
 
     fn merge_error_if_any(
@@ -503,19 +493,6 @@ pub trait ExecuteModule:
             return 0;
         }
         esdt_info_mapper.get().token_nonce
-    }
-
-    #[inline]
-    fn format_error(
-        &self,
-        error: &str,
-        token_id: TokenIdentifier,
-        error_code: u32,
-    ) -> ManagedBuffer {
-        let prefix: ManagedBuffer = error.into();
-        let error_message = sc_format!("{} {}; error code: {}", prefix, token_id, error_code);
-
-        error_message
     }
 
     #[inline]
