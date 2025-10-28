@@ -178,3 +178,6 @@ pub const NO_VALIDATORS_FOR_GIVEN_EPOCH: &str =
     "There are no registered validators for the given epoch";
 pub const NO_VALIDATORS_FOR_PREVIOUS_EPOCH: &str =
     "There are no registered validators for the previous epoch";
+pub const TOKEN_ALREADY_REGISTERED_WITH_BURN_MECHANISM: &str =
+    "Token already registered in burn mechanism";
+pub const TOKEN_NOT_REGISTERED_WITH_BURN_MECHANISM: &str = "Token not registered in burn mechanism";

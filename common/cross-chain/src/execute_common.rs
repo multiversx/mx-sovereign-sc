@@ -13,6 +13,57 @@ pub trait ExecuteCommonModule: crate::storage::CrossChainStorage {
     }
 
     #[inline]
+    fn format_error(
+        &self,
+        error: &str,
+        token_id: TokenIdentifier,
+        error_code: u32,
+    ) -> ManagedBuffer<Self::Api> {
+        let prefix: ManagedBuffer = error.into();
+        let error_message = sc_format!("{} {}; error code: {}", prefix, token_id, error_code);
+
+        error_message
+    }
+
+    #[inline]
+    fn try_esdt_local_burn(
+        &self,
+        token_id: &TokenIdentifier<Self::Api>,
+        token_nonce: u64,
+        amount: &BigUint<Self::Api>,
+        error: &'static str,
+    ) -> Result<(), ManagedBuffer<Self::Api>> {
+        let result = self
+            .tx()
+            .to(ToSelf)
+            .typed(UserBuiltinProxy)
+            .esdt_local_burn(token_id, token_nonce, amount)
+            .returns(ReturnsHandledOrError::new())
+            .sync_call_fallible();
+
+        result.map_err(|error_code| self.format_error(error, token_id.clone(), error_code))
+    }
+
+    #[inline]
+    fn try_esdt_local_mint(
+        &self,
+        token_id: &TokenIdentifier<Self::Api>,
+        token_nonce: u64,
+        amount: &BigUint<Self::Api>,
+        error: &'static str,
+    ) -> Result<(), ManagedBuffer<Self::Api>> {
+        let result = self
+            .tx()
+            .to(ToSelf)
+            .typed(UserBuiltinProxy)
+            .esdt_local_mint(token_id, token_nonce, amount)
+            .returns(ReturnsHandledOrError::new())
+            .sync_call_fallible();
+
+        result.map_err(|error_code| self.format_error(error, token_id.clone(), error_code))
+    }
+
+    #[inline]
     fn is_fungible(self, token_type: &EsdtTokenType) -> bool {
         *token_type == EsdtTokenType::Fungible
     }

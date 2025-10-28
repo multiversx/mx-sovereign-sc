@@ -1,7 +1,8 @@
 use error_messages::{
-    BURN_MECHANISM_NON_ESDT_TOKENS, LOCK_MECHANISM_NON_ESDT, MINT_AND_BURN_ROLES_NOT_FOUND,
-    SETUP_PHASE_ALREADY_COMPLETED, SETUP_PHASE_NOT_COMPLETED, TOKEN_ID_IS_NOT_TRUSTED,
-    TOKEN_IS_FROM_SOVEREIGN,
+    BURN_ESDT_FAILED, BURN_MECHANISM_NON_ESDT_TOKENS, LOCK_MECHANISM_NON_ESDT,
+    MINT_AND_BURN_ROLES_NOT_FOUND, MINT_ESDT_FAILED, SETUP_PHASE_ALREADY_COMPLETED,
+    SETUP_PHASE_NOT_COMPLETED, TOKEN_ALREADY_REGISTERED_WITH_BURN_MECHANISM,
+    TOKEN_ID_IS_NOT_TRUSTED, TOKEN_NOT_REGISTERED_WITH_BURN_MECHANISM,
 };
 use multiversx_sc::imports::*;
 use structs::{
@@ -12,6 +13,7 @@ use structs::{
 #[multiversx_sc::module]
 pub trait BridgingMechanism:
     cross_chain::storage::CrossChainStorage
+    + cross_chain::execute_common::ExecuteCommonModule
     + setup_phase::SetupPhaseModule
     + common_utils::CommonUtilsModule
     + custom_events::CustomEventsModule
@@ -23,9 +25,13 @@ pub trait BridgingMechanism:
             !self.is_setup_phase_complete(),
             SETUP_PHASE_ALREADY_COMPLETED
         );
-        require!(token_id.is_esdt(), BURN_MECHANISM_NON_ESDT_TOKENS);
-        let token_identifier = token_id.clone().unwrap_esdt();
-        let token_esdt_roles = self.blockchain().get_esdt_local_roles(&token_identifier);
+        let mut burn_mechanism_tokens_mapper = self.burn_mechanism_tokens();
+        require!(
+            !burn_mechanism_tokens_mapper.contains(&token_id),
+            TOKEN_ALREADY_REGISTERED_WITH_BURN_MECHANISM
+        );
+        let esdt_identifier = token_id.clone().unwrap_esdt();
+        let token_esdt_roles = self.blockchain().get_esdt_local_roles(&esdt_identifier);
 
         require!(
             token_esdt_roles.contains(EsdtLocalRoleFlags::MINT)
@@ -40,23 +46,16 @@ pub trait BridgingMechanism:
             TOKEN_ID_IS_NOT_TRUSTED
         );
 
-        if self
-            .multiversx_to_sovereign_token_id_mapper(&token_id)
-            .is_empty()
-        {
-            self.burn_mechanism_tokens().insert(token_id.clone());
-        }
-
-        let sc_balance = self.blockchain().get_sc_balance(
-            &EgldOrEsdtTokenIdentifier::esdt(token_identifier.clone()),
-            0,
-        );
+        burn_mechanism_tokens_mapper.insert(token_id.clone());
+        let sc_balance = self
+            .blockchain()
+            .get_sc_balance(&EgldOrEsdtTokenIdentifier::esdt(esdt_identifier.clone()), 0);
 
         if sc_balance != 0 {
             self.tx()
                 .to(ToSelf)
                 .typed(UserBuiltinProxy)
-                .esdt_local_burn(&token_identifier, 0, &sc_balance)
+                .esdt_local_burn(&esdt_identifier, 0, &sc_balance)
                 .sync_call();
 
             self.deposited_tokens_amount(&token_id).set(sc_balance);
@@ -91,8 +90,18 @@ pub trait BridgingMechanism:
             return;
         }
 
-        let token_identifier = set_burn_mechanism_operation.token_id.clone().unwrap_esdt();
-        let token_esdt_roles = self.blockchain().get_esdt_local_roles(&token_identifier);
+        let mut burn_mechanism_tokens_mapper = self.burn_mechanism_tokens();
+        if burn_mechanism_tokens_mapper.contains(&set_burn_mechanism_operation.token_id) {
+            self.complete_operation(
+                &hash_of_hashes,
+                &operation_hash,
+                Some(TOKEN_ALREADY_REGISTERED_WITH_BURN_MECHANISM.into()),
+            );
+            return;
+        }
+
+        let esdt_identifier = set_burn_mechanism_operation.token_id.clone().unwrap_esdt();
+        let token_esdt_roles = self.blockchain().get_esdt_local_roles(&esdt_identifier);
 
         if !(token_esdt_roles.contains(EsdtLocalRoleFlags::MINT)
             && token_esdt_roles.contains(EsdtLocalRoleFlags::BURN))
@@ -128,30 +137,25 @@ pub trait BridgingMechanism:
             return;
         }
 
-        if self
-            .multiversx_to_sovereign_token_id_mapper(&set_burn_mechanism_operation.token_id)
-            .is_empty()
+        burn_mechanism_tokens_mapper.insert(set_burn_mechanism_operation.token_id.clone());
+        let sc_balance = self
+            .blockchain()
+            .get_sc_balance(&EgldOrEsdtTokenIdentifier::esdt(esdt_identifier.clone()), 0);
+
+        if sc_balance == 0 {
+            self.complete_operation(&hash_of_hashes, &operation_hash, None);
+            return;
+        }
+
+        if let Err(error_message) =
+            self.try_esdt_local_burn(&esdt_identifier, 0, &sc_balance, BURN_ESDT_FAILED)
         {
-            self.burn_mechanism_tokens()
-                .insert(set_burn_mechanism_operation.token_id.clone());
+            self.complete_operation(&hash_of_hashes, &operation_hash, Some(error_message));
+            return;
         }
 
-        let sc_balance = self.blockchain().get_sc_balance(
-            &EgldOrEsdtTokenIdentifier::esdt(token_identifier.clone()),
-            0,
-        );
-
-        if sc_balance != 0 {
-            self.tx()
-                .to(ToSelf)
-                .typed(UserBuiltinProxy)
-                .esdt_local_burn(&token_identifier, 0, &sc_balance)
-                .sync_call();
-
-            self.deposited_tokens_amount(&set_burn_mechanism_operation.token_id)
-                .set(sc_balance);
-        }
-
+        self.deposited_tokens_amount(&set_burn_mechanism_operation.token_id)
+            .set(sc_balance);
         self.complete_operation(&hash_of_hashes, &operation_hash, None);
     }
 
@@ -163,11 +167,9 @@ pub trait BridgingMechanism:
             SETUP_PHASE_ALREADY_COMPLETED
         );
         require!(
-            self.multiversx_to_sovereign_token_id_mapper(&token_id)
-                .is_empty(),
-            TOKEN_IS_FROM_SOVEREIGN
+            self.burn_mechanism_tokens().contains(&token_id),
+            TOKEN_NOT_REGISTERED_WITH_BURN_MECHANISM
         );
-
         require!(token_id.is_esdt(), LOCK_MECHANISM_NON_ESDT);
 
         self.burn_mechanism_tokens().swap_remove(&token_id);
@@ -204,23 +206,21 @@ pub trait BridgingMechanism:
             );
             return;
         }
-        if !self
-            .multiversx_to_sovereign_token_id_mapper(&set_lock_mechanism_operation.token_id)
-            .is_empty()
-        {
-            self.complete_operation(
-                &hash_of_hashes,
-                &operation_hash,
-                Some(TOKEN_IS_FROM_SOVEREIGN.into()),
-            );
-            return;
-        }
-
         if !set_lock_mechanism_operation.token_id.is_esdt() {
             self.complete_operation(
                 &hash_of_hashes,
                 &operation_hash,
                 Some(LOCK_MECHANISM_NON_ESDT.into()),
+            );
+            return;
+        }
+
+        let mut burn_mechanism_tokens_mapper = self.burn_mechanism_tokens();
+        if !burn_mechanism_tokens_mapper.contains(&set_lock_mechanism_operation.token_id) {
+            self.complete_operation(
+                &hash_of_hashes,
+                &operation_hash,
+                Some(TOKEN_NOT_REGISTERED_WITH_BURN_MECHANISM.into()),
             );
             return;
         }
@@ -234,28 +234,27 @@ pub trait BridgingMechanism:
             return;
         }
 
-        self.burn_mechanism_tokens()
-            .swap_remove(&set_lock_mechanism_operation.token_id);
+        burn_mechanism_tokens_mapper.swap_remove(&set_lock_mechanism_operation.token_id);
 
         let deposited_amount = self
             .deposited_tokens_amount(&set_lock_mechanism_operation.token_id)
             .get();
 
-        if deposited_amount != 0 {
-            self.tx()
-                .to(ToSelf)
-                .typed(UserBuiltinProxy)
-                .esdt_local_mint(
-                    set_lock_mechanism_operation.token_id.clone().unwrap_esdt(),
-                    0,
-                    &deposited_amount,
-                )
-                .sync_call();
-
-            self.deposited_tokens_amount(&set_lock_mechanism_operation.token_id)
-                .set(BigUint::zero());
+        if deposited_amount == 0 {
+            self.complete_operation(&hash_of_hashes, &operation_hash, None);
+            return;
         }
 
+        let esdt_identifier = set_lock_mechanism_operation.token_id.clone().unwrap_esdt();
+        if let Err(error_message) =
+            self.try_esdt_local_mint(&esdt_identifier, 0, &deposited_amount, MINT_ESDT_FAILED)
+        {
+            self.complete_operation(&hash_of_hashes, &operation_hash, Some(error_message));
+            return;
+        }
+
+        self.deposited_tokens_amount(&set_lock_mechanism_operation.token_id)
+            .set(BigUint::zero());
         self.complete_operation(&hash_of_hashes, &operation_hash, None);
     }
 

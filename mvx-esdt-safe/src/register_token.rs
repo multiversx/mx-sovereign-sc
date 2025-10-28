@@ -36,30 +36,24 @@ pub trait RegisterTokenModule:
                 &token_hash,
                 Some(ERROR_AT_GENERATING_OPERATION_HASH.into()),
             );
-
             return;
         };
-
-        if self.is_paused() {
-            self.complete_operation(
-                &hash_of_hashes,
-                &token_hash,
-                Some(ESDT_SAFE_STILL_PAUSED.into()),
-            );
-
-            return;
-        }
-
         if !self.is_setup_phase_complete() {
             self.complete_operation(
                 &hash_of_hashes,
                 &token_hash,
                 Some(SETUP_PHASE_NOT_COMPLETED.into()),
             );
-
             return;
         }
-
+        if self.is_paused() {
+            self.complete_operation(
+                &hash_of_hashes,
+                &token_hash,
+                Some(ESDT_SAFE_STILL_PAUSED.into()),
+            );
+            return;
+        }
         if let Some(lock_operation_error) = self.lock_operation_hash_wrapper(
             &hash_of_hashes,
             &token_hash,
@@ -70,17 +64,16 @@ pub trait RegisterTokenModule:
             return;
         };
 
-        let contract_balance = self
+        if self
             .blockchain()
-            .get_balance(&self.blockchain().get_sc_address());
-
-        if contract_balance < DEFAULT_ISSUE_COST {
+            .get_balance(&self.blockchain().get_sc_address())
+            < DEFAULT_ISSUE_COST
+        {
             self.complete_operation(
                 &hash_of_hashes,
                 &token_hash,
                 Some(NOT_ENOUGH_EGLD_FOR_REGISTER.into()),
             );
-
             return;
         }
 
@@ -169,7 +162,10 @@ pub trait RegisterTokenModule:
                 num_decimals,
             )
             .gas(REGISTER_GAS)
-            .callback(self.callbacks().register_token(&args, hash_of_hashes, token_hash))
+            .callback(
+                self.callbacks()
+                    .register_token(&args, hash_of_hashes, token_hash),
+            )
             .register_promise();
     }
 
