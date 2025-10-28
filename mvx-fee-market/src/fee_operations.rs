@@ -7,8 +7,6 @@ use structs::{
 multiversx_sc::imports!();
 multiversx_sc::derive_imports!();
 
-pub const TOTAL_PERCENTAGE: usize = 10_000;
-
 #[multiversx_sc::module]
 pub trait FeeOperationsModule:
     setup_phase::SetupPhaseModule
@@ -48,8 +46,7 @@ pub trait FeeOperationsModule:
             return;
         }
 
-        self.distribute_token_fees(&operation.pairs);
-        self.tokens_for_fees().clear();
+        self.distribute_fees_and_reset(&operation.pairs);
         self.complete_operation(&hash_of_hashes, &operation_hash, None);
     }
 
@@ -93,8 +90,7 @@ pub trait FeeOperationsModule:
             self.complete_operation(&hash_of_hashes, &token_id_hash, Some(lock_operation_error));
             return;
         }
-        self.token_fee(&remove_fee_operation.token_id).clear();
-        self.fee_enabled().set(false);
+        self.remove_fee_from_storage(&remove_fee_operation.token_id);
         self.complete_operation(&hash_of_hashes, &token_id_hash, None);
     }
 

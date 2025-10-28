@@ -51,6 +51,19 @@ pub trait FeeCommonHelpersModule:
         }
     }
 
+    fn distribute_fees_and_reset(
+        &self,
+        pairs: &ManagedVec<Self::Api, AddressPercentagePair<Self::Api>>,
+    ) {
+        self.distribute_token_fees(pairs);
+        self.tokens_for_fees().clear();
+    }
+
+    fn remove_fee_from_storage(&self, token_id: &EgldOrEsdtTokenIdentifier) {
+        self.token_fee(token_id).clear();
+        self.fee_enabled().set(false);
+    }
+
     fn parse_pairs(
         &self,
         address_percentage_pairs: MultiValueEncoded<MultiValue2<ManagedAddress, usize>>,

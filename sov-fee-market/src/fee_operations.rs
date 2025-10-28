@@ -3,8 +3,6 @@ use structs::fee::FeeStruct;
 multiversx_sc::imports!();
 multiversx_sc::derive_imports!();
 
-pub const TOTAL_PERCENTAGE: usize = 10_000;
-
 #[multiversx_sc::module]
 pub trait FeeOperationsModule:
     custom_events::CustomEventsModule
@@ -24,15 +22,13 @@ pub trait FeeOperationsModule:
             sc_panic!(percentage_validation_err);
         }
 
-        self.distribute_token_fees(&pairs);
-        self.tokens_for_fees().clear();
+        self.distribute_fees_and_reset(&pairs);
     }
 
     #[only_owner]
     #[endpoint(removeFee)]
-    fn remove_fee(&self, token_id: EgldOrEsdtTokenIdentifier<Self::Api>) {
-        self.token_fee(&token_id).clear();
-        self.fee_enabled().set(false);
+    fn remove_fee(&self, token_id: EgldOrEsdtTokenIdentifier) {
+        self.remove_fee_from_storage(&token_id);
     }
 
     #[only_owner]
