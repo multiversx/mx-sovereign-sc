@@ -75,7 +75,7 @@ pub trait RegisterTokenModule:
             );
             self.deposit_event(
                 &register_token_operation.data.op_sender.clone(),
-                &self.create_deploy_cost_event_payment_tuple(),
+                &self.create_issue_cost_event_payment_tuple(),
                 register_token_operation.data.clone(),
             );
             return;
@@ -88,7 +88,7 @@ pub trait RegisterTokenModule:
             );
             self.deposit_event(
                 &register_token_operation.data.op_sender.clone(),
-                &self.create_deploy_cost_event_payment_tuple(),
+                &self.create_issue_cost_event_payment_tuple(),
                 register_token_operation.data.clone(),
             );
             return;
@@ -104,7 +104,7 @@ pub trait RegisterTokenModule:
             );
             self.deposit_event(
                 &register_token_operation.data.op_sender.clone(),
-                &self.create_deploy_cost_event_payment_tuple(),
+                &self.create_issue_cost_event_payment_tuple(),
                 register_token_operation.data.clone(),
             );
             return;
@@ -185,7 +185,7 @@ pub trait RegisterTokenModule:
                 self.complete_operation(&hash_of_hashes, &token_hash, None);
             }
             ManagedAsyncCallResult::Err(error) => {
-                let tokens = self.create_deploy_cost_event_payment_tuple();
+                let tokens = self.create_issue_cost_event_payment_tuple();
 
                 self.deposit_event(
                     &token_to_register.data.op_sender.clone(),
@@ -247,7 +247,7 @@ pub trait RegisterTokenModule:
     }
 
     #[allow(clippy::field_reassign_with_default)]
-    fn create_deploy_cost_event_payment_tuple(
+    fn create_issue_cost_event_payment_tuple(
         &self,
     ) -> MultiValueEncoded<Self::Api, EventPaymentTuple<Self::Api>> {
         let mut token_data = EsdtTokenData::default();
