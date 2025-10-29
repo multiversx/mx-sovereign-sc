@@ -5,9 +5,9 @@
 This repository contains the **Sovereign Bridge Smart Contracts** for MultiversX blockchain. It implements a cross-chain bridge system between MultiversX mainnet and sovereign chains.
 
 **Project Type:** Rust Smart Contracts for MultiversX blockchain  
-**Framework:** MultiversX Smart Contract SDK (mx-sdk-rs v0.62.0)  
+**Framework:** MultiversX Smart Contract SDK
 **Language:** Rust (toolchain 1.87)  
-**Target:** WebAssembly (wasm32v1-none)  
+**Target:** WebAssembly (wasm32-unknown-unknown)  
 **Repository Size:** ~130 Rust source files  
 **Build Tool:** `sc-meta` (multiversx-sc-meta)
 
@@ -58,13 +58,12 @@ Each contract directory contains:
 ```bash
 cargo install multiversx-sc-meta --locked
 ```
-Installation takes ~3-4 minutes. This is REQUIRED for all build operations.
+Installation is REQUIRED for all build operations.
 
 ### Build All Contracts
 ```bash
 sc-meta all build
 ```
-**Time:** ~60-90 seconds (first build), ~10-20 seconds (incremental)  
 **Output:** WASM files in each `{contract}/output/` directory  
 **Warning:** You will see "wasm-opt not installed" warnings - these are safe to ignore. The build succeeds without wasm-opt.
 
@@ -92,7 +91,6 @@ Removes all `output/` directories. Use before fresh builds or to free disk space
 ```bash
 cargo test --workspace
 ```
-**Time:** ~20 seconds first run, ~5 seconds incremental  
 **Note:** These are standard Rust unit tests using the MultiversX scenario testing framework.
 
 **Run specific contract tests:**
@@ -101,41 +99,17 @@ cargo test --package chain-config --test chain_config_blackbox_tests
 ```
 
 ### Chain Simulator Integration Tests
-The interactor tests require a running Chain Simulator and follow a specific workflow:
+The interactor tests require a running Chain Simulator and follow a specific workflow.
 
-**ALWAYS follow this sequence:**
+**CRITICAL: ALWAYS read `interactor/HowToRun.md` before running or modifying interactor tests.**
 
-1. **Start Chain Simulator (in separate terminal):**
-```bash
-sc-meta cs start
-```
-Keep this running for all interactor tests.
+The HowToRun.md file contains the complete, authoritative workflow including:
+- Chain Simulator startup and state management
+- Required test execution sequence (deployment test must run first)
+- Exact command syntax for running tests
+- Troubleshooting guide for common issues
 
-2. **Delete state.toml if restarting simulator:**
-```bash
-find . -name state.toml -delete
-# Or: rm -f interactor/state.toml
-```
-
-3. **Run deployment test FIRST (creates common state):**
-```bash
-cargo test --package rust-interact --test always_deploy_setup_first --all-features -- deploy_setup --exact --show-output
-```
-This MUST run before any other interactor test. It deploys all contracts to the simulator.
-
-4. **Run specific interactor tests:**
-```bash
-# Single test
-cargo test --package rust-interact --test mvx_esdt_safe_tests --all-features -- test_name --show-output
-
-# All tests in a file
-cargo test --package rust-interact --test complete_flow_tests --all-features -- --show-output
-```
-
-**Troubleshooting:**
-- "Missing address / not deployed" error → Re-run deploy_setup test
-- State inconsistent → Stop simulator, delete state.toml, restart, re-run deploy_setup
-- See `interactor/HowToRun.md` for details
+**Do not rely on this summary alone** - always reference `interactor/HowToRun.md` for the most up-to-date instructions.
 
 ## Linting and Code Quality
 
@@ -143,14 +117,12 @@ cargo test --package rust-interact --test complete_flow_tests --all-features -- 
 ```bash
 cargo clippy --all-targets --all-features
 ```
-**Time:** ~30-60 seconds  
 **Output:** Clippy will complete with no errors (clean codebase)
 
 ### Proxy Comparison (Validates generated proxies match committed ones)
 ```bash
 sc-meta all proxy --compare
-```
-**Time:** ~5 seconds  
+```  
 This command is used in CI to ensure proxy files are up to date.
 
 ## GitHub Actions CI Workflows
@@ -236,21 +208,7 @@ sc-meta all proxy
 ```
 This updates files in `common/proxies/src/`.
 
-## Performance Notes
-
-- **Full workspace build:** 60-90 seconds (cold), 10-20 seconds (warm)
-- **Blackbox tests:** 20 seconds (cold), 5 seconds (warm)
-- **Single contract blackbox tests:** ~20 seconds
-- **Clippy full check:** 30-60 seconds
-- **sc-meta install:** 3-4 minutes (one-time)
-
 ## Key Dependencies
-
-The project uses a specific git revision of mx-sdk-rs:
-```toml
-git = "https://github.com/multiversx/mx-sdk-rs"
-rev = "d23fc3b6834925e68c25eb7622efb2e2c3344d15"
-```
 
 All contracts share common modules from the `common/` directory. When modifying common modules, test all contracts that depend on them.
 
