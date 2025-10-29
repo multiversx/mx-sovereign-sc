@@ -541,7 +541,7 @@ impl MvxEsdtSafeTestState {
     ) {
         let expected_logs = if let Some(expected_error_message) = expected_error_message {
             Some(vec![
-                log!(REGISTER_TOKEN_ENDPOINT, topics: [EXECUTED_BRIDGE_OP_EVENT], data: Some(expected_error_message)),
+                log!(REGISTER_TOKEN_ENDPOINT, topics: [DEPOSIT_EVENT], data: Some(expected_error_message)),
             ])
         } else {
             Some(vec![
