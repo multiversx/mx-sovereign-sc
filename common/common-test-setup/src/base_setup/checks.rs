@@ -283,36 +283,23 @@ impl BaseSetup {
     pub fn assert_expected_log_refactored(
         &mut self,
         logs: Vec<Log>,
-        expected_logs: Option<Vec<ExpectedLogs>>,
+        expected_logs: Vec<ExpectedLogs>,
     ) {
-        match expected_logs {
-            None => {}
-            Some(expected_logs) => {
-                for expected_log in expected_logs {
-                    let matching_logs: Vec<&Log> = logs
-                        .iter()
-                        .filter(|log| log.endpoint == expected_log.identifier)
-                        .collect();
-                    assert!(
-                        !matching_logs.is_empty(),
-                        "Expected log '{}' not found",
-                        expected_log.identifier
-                    );
-                    if let OptionalValue::Some(topics) = expected_log.topics {
-                        self.validate_expected_topics(
-                            &topics,
-                            &matching_logs,
-                            expected_log.identifier,
-                        );
-                    }
-                    if let OptionalValue::Some(data) = expected_log.data {
-                        self.validate_expected_data(
-                            &[data],
-                            &matching_logs,
-                            expected_log.identifier,
-                        );
-                    }
-                }
+        for expected_log in expected_logs {
+            let matching_logs: Vec<&Log> = logs
+                .iter()
+                .filter(|log| log.endpoint == expected_log.identifier)
+                .collect();
+            assert!(
+                !matching_logs.is_empty(),
+                "Expected log '{}' not found",
+                expected_log.identifier
+            );
+            if let OptionalValue::Some(topics) = expected_log.topics {
+                self.validate_expected_topics(&topics, &matching_logs, expected_log.identifier);
+            }
+            if let OptionalValue::Some(data) = expected_log.data {
+                self.validate_expected_data(&[data], &matching_logs, expected_log.identifier);
             }
         }
     }

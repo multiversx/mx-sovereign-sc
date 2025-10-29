@@ -1,13 +1,11 @@
 use common_test_setup::base_setup::init::ExpectedLogs;
 use common_test_setup::base_setup::init::{AccountSetup, BaseSetup};
 use common_test_setup::constants::{
-    DEPOSIT_EVENT, ESDT_SAFE_ADDRESS, EXECUTED_BRIDGE_OP_EVENT, EXECUTE_BRIDGE_OPS_ENDPOINT,
-    EXECUTE_OPERATION_ENDPOINT, FEE_MARKET_ADDRESS, FEE_TOKEN, FIRST_TEST_TOKEN, FIRST_TOKEN_ID,
-    HEADER_VERIFIER_ADDRESS, INTERNAL_VM_ERRORS, MVX_ESDT_SAFE_CODE_PATH, NATIVE_TEST_TOKEN,
-    ONE_HUNDRED_MILLION, OWNER_ADDRESS, OWNER_BALANCE, REGISTER_TOKEN_ENDPOINT,
-    REGISTER_TOKEN_EVENT, SC_CALL_EVENT, SECOND_TEST_TOKEN, SECOND_TOKEN_ID,
-    SOVEREIGN_FORGE_SC_ADDRESS, SOVEREIGN_TOKEN_PREFIX, TRUSTED_TOKEN, UNPAUSE_CONTRACT_LOG,
-    USER_ADDRESS,
+    DEPOSIT_EVENT, ESDT_SAFE_ADDRESS, FEE_MARKET_ADDRESS, FEE_TOKEN, FIRST_TEST_TOKEN,
+    FIRST_TOKEN_ID, HEADER_VERIFIER_ADDRESS, MVX_ESDT_SAFE_CODE_PATH, NATIVE_TEST_TOKEN,
+    ONE_HUNDRED_MILLION, OWNER_ADDRESS, OWNER_BALANCE, SC_CALL_EVENT, SECOND_TEST_TOKEN,
+    SECOND_TOKEN_ID, SOVEREIGN_FORGE_SC_ADDRESS, SOVEREIGN_TOKEN_PREFIX, TRUSTED_TOKEN,
+    UNPAUSE_CONTRACT_LOG, USER_ADDRESS,
 };
 use common_test_setup::log;
 use cross_chain::storage::CrossChainStorage;
@@ -20,7 +18,6 @@ use multiversx_sc::{
     },
 };
 use multiversx_sc_scenario::imports::*;
-use multiversx_sc_scenario::scenario_model::Log;
 use mvx_esdt_safe::MvxEsdtSafe;
 use proxies::mvx_esdt_safe_proxy::MvxEsdtSafeProxy;
 use structs::configs::{
@@ -362,7 +359,15 @@ impl MvxEsdtSafeTestState {
         self.common_setup
             .assert_expected_error_message(result, expected_error_message);
 
-        self.assert_expected_deposit_logs(logs, expected_error_message, opt_transfer_data, payment);
+        if expected_error_message.is_none() {
+            let expected_logs = if self.is_fee_or_no_payment(&opt_transfer_data, &payment) {
+                vec![log!(DEPOSIT_EVENT, topics: [SC_CALL_EVENT])]
+            } else {
+                vec![log!(DEPOSIT_EVENT, topics: [DEPOSIT_EVENT])]
+            };
+            self.common_setup
+                .assert_expected_log_refactored(logs, expected_logs);
+        }
     }
 
     pub fn register_token(
@@ -370,8 +375,9 @@ impl MvxEsdtSafeTestState {
         register_token_args: RegisterTokenOperation<StaticApi>,
         hash_of_hashes: ManagedBuffer<StaticApi>,
         expected_error_message: Option<&str>,
+        expected_logs: Vec<ExpectedLogs>,
     ) {
-        let logs = self
+        let (result, logs) = self
             .common_setup
             .world
             .tx()
@@ -379,10 +385,17 @@ impl MvxEsdtSafeTestState {
             .to(ESDT_SAFE_ADDRESS)
             .typed(MvxEsdtSafeProxy)
             .register_sovereign_token(&hash_of_hashes, register_token_args)
+            .returns(ReturnsHandledOrError::new())
             .returns(ReturnsLogs)
             .run();
 
-        self.assert_expected_register_token_logs(logs, expected_error_message);
+        println!("logs: {:?}", logs);
+
+        self.common_setup
+            .assert_expected_error_message(result, expected_error_message);
+
+        self.common_setup
+            .assert_expected_log_refactored(logs, expected_logs);
     }
 
     pub fn register_native_token(
@@ -415,8 +428,7 @@ impl MvxEsdtSafeTestState {
         &mut self,
         hash_of_hashes: &ManagedBuffer<StaticApi>,
         operation: &Operation<StaticApi>,
-        expected_error_message: Option<&str>,
-        additional_logs: Option<Vec<ExpectedLogs>>,
+        expected_logs: Vec<ExpectedLogs>,
     ) {
         let (logs, result) = self
             .common_setup
@@ -433,12 +445,8 @@ impl MvxEsdtSafeTestState {
         self.common_setup
             .assert_expected_error_message(result, None);
 
-        self.assert_expected_execute_operation_logs(
-            logs,
-            expected_error_message,
-            additional_logs,
-            operation,
-        );
+        self.common_setup
+            .assert_expected_log_refactored(logs, expected_logs);
     }
 
     pub fn complete_setup_phase(&mut self, expected_log: Option<&str>) {
@@ -511,72 +519,5 @@ impl MvxEsdtSafeTestState {
         self.complete_setup_phase(Some(UNPAUSE_CONTRACT_LOG));
 
         signature
-    }
-
-    pub fn assert_expected_deposit_logs(
-        &mut self,
-        logs: Vec<Log>,
-        expected_error_message: Option<&str>,
-        opt_transfer_data: OptionalValueTransferDataTuple<StaticApi>,
-        payment: PaymentsVec<StaticApi>,
-    ) {
-        let expected_logs = if let Some(expected_error_message) = expected_error_message {
-            Some(vec![
-                log!(INTERNAL_VM_ERRORS, topics: [DEPOSIT_EVENT], data: Some(expected_error_message)),
-            ])
-        } else if self.is_fee_or_no_payment(&opt_transfer_data, &payment) {
-            Some(vec![log!(DEPOSIT_EVENT, topics: [SC_CALL_EVENT])])
-        } else {
-            Some(vec![log!(DEPOSIT_EVENT, topics: [DEPOSIT_EVENT])])
-        };
-
-        self.common_setup
-            .assert_expected_log_refactored(logs, expected_logs);
-    }
-
-    pub fn assert_expected_register_token_logs(
-        &mut self,
-        logs: Vec<Log>,
-        expected_error_message: Option<&str>,
-    ) {
-        let expected_logs = if let Some(expected_error_message) = expected_error_message {
-            Some(vec![
-                log!(REGISTER_TOKEN_ENDPOINT, topics: [DEPOSIT_EVENT], data: Some(expected_error_message)),
-            ])
-        } else {
-            Some(vec![
-                log!(REGISTER_TOKEN_EVENT, topics: [EXECUTED_BRIDGE_OP_EVENT]),
-            ])
-        };
-
-        self.common_setup
-            .assert_expected_log_refactored(logs, expected_logs);
-    }
-
-    pub fn assert_expected_execute_operation_logs(
-        &mut self,
-        logs: Vec<Log>,
-        expected_error_message: Option<&str>,
-        additional_logs: Option<Vec<ExpectedLogs>>,
-        operation: &Operation<StaticApi>,
-    ) {
-        let endpoint = if operation.to.to_address().is_smart_contract_address() {
-            EXECUTE_OPERATION_ENDPOINT
-        } else {
-            EXECUTE_BRIDGE_OPS_ENDPOINT
-        };
-
-        let mut expected_logs = Some(vec![
-            log!(endpoint, topics: [EXECUTED_BRIDGE_OP_EVENT], data: expected_error_message),
-        ]);
-
-        if let Some(additional_logs) = additional_logs {
-            if let Some(ref mut logs) = expected_logs {
-                logs.extend(additional_logs);
-            }
-        }
-
-        self.common_setup
-            .assert_expected_log_refactored(logs, expected_logs);
     }
 }
