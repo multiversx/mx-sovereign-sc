@@ -271,7 +271,7 @@ fn test_register_token_not_enough_egld() {
     state.register_token(
         register_token_args,
         hash_of_hashes,
-        Some(EXECUTED_BRIDGE_OP_EVENT),
+        Some(DEPOSIT_EVENT),
         Some(NOT_ENOUGH_EGLD_FOR_REGISTER),
     );
 
@@ -396,7 +396,7 @@ fn test_register_token_nonfungible_token() {
     state.register_token(
         register_token_args,
         hash_of_hashes,
-        Some(EXECUTED_BRIDGE_OP_EVENT),
+        Some(DEPOSIT_EVENT),
         Some(INVALID_PREFIX_FOR_REGISTER),
     );
 
@@ -1417,7 +1417,7 @@ fn test_register_token_fungible_token_no_prefix() {
     state.register_token(
         register_token_args,
         hash_of_hashes,
-        Some(EXECUTED_BRIDGE_OP_EVENT),
+        Some(DEPOSIT_EVENT),
         Some(INVALID_PREFIX_FOR_REGISTER),
     );
 

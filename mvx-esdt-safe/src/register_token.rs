@@ -60,7 +60,6 @@ pub trait RegisterTokenModule:
             register_token_operation.data.op_nonce,
         ) {
             self.complete_operation(&hash_of_hashes, &token_hash, Some(lock_operation_error));
-
             return;
         };
 
@@ -74,27 +73,26 @@ pub trait RegisterTokenModule:
                 &token_hash,
                 Some(NOT_ENOUGH_EGLD_FOR_REGISTER.into()),
             );
+            self.deposit_event(
+                &register_token_operation.data.op_sender.clone(),
+                &self.create_deploy_cost_event_payment_tuple(),
+                register_token_operation.data.clone(),
+            );
             return;
         }
-
         if self.is_sov_token_id_registered(&register_token_operation.token_id) {
             self.complete_operation(
                 &hash_of_hashes,
                 &token_hash,
                 Some(TOKEN_ALREADY_REGISTERED.into()),
             );
-
-            let tokens = self.create_event_payment_tuple();
-
             self.deposit_event(
                 &register_token_operation.data.op_sender.clone(),
-                &tokens,
+                &self.create_deploy_cost_event_payment_tuple(),
                 register_token_operation.data.clone(),
             );
-
             return;
         }
-
         if !self.has_sov_prefix(
             &register_token_operation.token_id,
             &self.sov_token_prefix().get(),
@@ -104,7 +102,11 @@ pub trait RegisterTokenModule:
                 &token_hash,
                 Some(INVALID_PREFIX_FOR_REGISTER.into()),
             );
-
+            self.deposit_event(
+                &register_token_operation.data.op_sender.clone(),
+                &self.create_deploy_cost_event_payment_tuple(),
+                register_token_operation.data.clone(),
+            );
             return;
         }
 
@@ -183,7 +185,7 @@ pub trait RegisterTokenModule:
                 self.complete_operation(&hash_of_hashes, &token_hash, None);
             }
             ManagedAsyncCallResult::Err(error) => {
-                let tokens = self.create_event_payment_tuple();
+                let tokens = self.create_deploy_cost_event_payment_tuple();
 
                 self.deposit_event(
                     &token_to_register.data.op_sender.clone(),
@@ -245,7 +247,7 @@ pub trait RegisterTokenModule:
     }
 
     #[allow(clippy::field_reassign_with_default)]
-    fn create_event_payment_tuple(
+    fn create_deploy_cost_event_payment_tuple(
         &self,
     ) -> MultiValueEncoded<Self::Api, EventPaymentTuple<Self::Api>> {
         let mut token_data = EsdtTokenData::default();
