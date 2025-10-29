@@ -257,7 +257,7 @@ All contracts share common modules from the `common/` directory. When modifying 
 ## Repository Root Files
 - `.github/` - GitHub Actions workflows
 - `.gitignore` - Excludes target/, output/, and build artifacts
-- `Cargo.toml` - Workspace definition with all 24 members
+- `Cargo.toml` - Workspace definition with 19 members (9 contracts + 9 meta + interactor)
 - `Cargo.lock` - Locked dependencies (committed)
 - `README.md` - Basic repository description
 
