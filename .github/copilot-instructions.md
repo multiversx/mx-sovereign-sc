@@ -8,7 +8,7 @@ This repository contains **Sovereign Bridge Smart Contracts** for the MultiversX
 - Language: Rust
 - Framework: MultiversX SC v0.57.1
 - Smart Contracts: 7 (header-verifier, fee-market, sov-esdt-safe, mvx-esdt-safe, chain-config, chain-factory, testing-sc)
-- Common Libraries: 10 (in `common/` directory)
+- Common Libraries: 8 (in `common/` directory)
 - Build Target: wasm32-unknown-unknown
 - Rust Toolchain: stable (currently 1.90.0)
 
@@ -109,12 +109,13 @@ The repository has 3 main CI workflows (in `.github/workflows/`):
 - **Purpose:** Ensures reproducible contract builds
 
 ### 3. proxy-compare.yml
-- **Trigger:** Push to master, PRs
+- **Trigger:** Push to master branch, PRs
 - **Steps:**
   1. Install Rust with wasm32-unknown-unknown target
   2. Install multiversx-sc-meta
   3. Run `sc-meta all proxy --compare`
 - **Purpose:** Verifies proxy files are up-to-date
+- **Note:** Uses 'master' branch while main CI uses 'main/feat/*' branches
 
 ### 4. release.yml
 - **Trigger:** Release published
