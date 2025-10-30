@@ -26,6 +26,22 @@ pub struct ExpectedLogs<'a> {
     pub data: OptionalValue<&'a str>,
 }
 
+pub trait ErrorPayloadToString {
+    fn to_error_string(self) -> String;
+}
+
+impl ErrorPayloadToString for ManagedBuffer<StaticApi> {
+    fn to_error_string(self) -> String {
+        self.to_string()
+    }
+}
+
+impl ErrorPayloadToString for Vec<u8> {
+    fn to_error_string(self) -> String {
+        ManagedBuffer::<StaticApi>::new_from_bytes(&self).to_string()
+    }
+}
+
 #[macro_export]
 macro_rules! log {
     ($identifier:expr) => {
