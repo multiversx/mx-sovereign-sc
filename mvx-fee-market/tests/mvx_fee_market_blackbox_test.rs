@@ -1,7 +1,7 @@
 use common_test_setup::base_setup::helpers::BLSKey;
 use common_test_setup::constants::{
-    ESDT_SAFE_ADDRESS, EXECUTED_BRIDGE_OP_EVENT, FEE_MARKET_ADDRESS, FIRST_TEST_TOKEN,
-    OWNER_ADDRESS, OWNER_BALANCE, PER_TRANSFER, SECOND_TEST_TOKEN, USER_ADDRESS, WRONG_TOKEN_ID,
+    ESDT_SAFE_ADDRESS, FEE_MARKET_ADDRESS, FIRST_TEST_TOKEN, OWNER_ADDRESS, OWNER_BALANCE,
+    PER_TRANSFER, SECOND_TEST_TOKEN, USER_ADDRESS, WRONG_TOKEN_ID,
 };
 use error_messages::{
     CURRENT_OPERATION_NOT_REGISTERED, INVALID_FEE, INVALID_FEE_TYPE, INVALID_TOKEN_ID,
@@ -116,7 +116,6 @@ fn test_set_fee_setup_not_completed() {
     state.set_fee(
         &ManagedBuffer::new(),
         set_fee_operation,
-        Some(EXECUTED_BRIDGE_OP_EVENT),
         Some(SETUP_PHASE_NOT_COMPLETED),
     );
 }
@@ -275,12 +274,7 @@ fn test_set_fee() {
         MultiValueEncoded::from_iter(vec![fee_hash]),
     );
 
-    state.set_fee(
-        &hash_of_hashes,
-        set_fee_operation,
-        Some(EXECUTED_BRIDGE_OP_EVENT),
-        None,
-    );
+    state.set_fee(&hash_of_hashes, set_fee_operation, None);
 
     state
         .common_setup
@@ -322,8 +316,6 @@ fn test_remove_fee_setup_phase_not_completed() {
     state.remove_fee(
         &ManagedBuffer::new(),
         remove_fee_operation,
-        None,
-        Some(EXECUTED_BRIDGE_OP_EVENT),
         Some(SETUP_PHASE_NOT_COMPLETED),
     );
 }
@@ -409,12 +401,7 @@ fn test_remove_fee_register_separate_operations() {
         MultiValueEncoded::from_iter(vec![set_fee_hash]),
     );
 
-    state.set_fee(
-        &set_fee_hash_of_hashes,
-        set_fee_operation,
-        Some(EXECUTED_BRIDGE_OP_EVENT),
-        None,
-    );
+    state.set_fee(&set_fee_hash_of_hashes, set_fee_operation, None);
 
     state
         .common_setup
@@ -437,13 +424,7 @@ fn test_remove_fee_register_separate_operations() {
         MultiValueEncoded::from_iter(vec![remove_fee_hash]),
     );
 
-    state.remove_fee(
-        &remove_fee_hash_of_hashes,
-        remove_fee_operation,
-        None,
-        Some(EXECUTED_BRIDGE_OP_EVENT),
-        None,
-    );
+    state.remove_fee(&remove_fee_hash_of_hashes, remove_fee_operation, None);
 
     state
         .common_setup
@@ -538,12 +519,7 @@ fn test_remove_fee_register_with_one_hash_of_hashes() {
         MultiValueEncoded::from_iter(vec![remove_fee_hash, register_fee_hash]),
     );
 
-    state.set_fee(
-        &hash_of_hashes,
-        set_fee_operation,
-        Some(EXECUTED_BRIDGE_OP_EVENT),
-        None,
-    );
+    state.set_fee(&hash_of_hashes, set_fee_operation, None);
 
     state
         .common_setup
@@ -556,13 +532,7 @@ fn test_remove_fee_register_with_one_hash_of_hashes() {
                 .is_empty());
         });
 
-    state.remove_fee(
-        &hash_of_hashes,
-        remove_fee_operation,
-        None,
-        Some(EXECUTED_BRIDGE_OP_EVENT),
-        None,
-    );
+    state.remove_fee(&hash_of_hashes, remove_fee_operation, None);
 
     state
         .common_setup
@@ -604,7 +574,6 @@ fn distribute_fees_setup_not_completed() {
     state.distribute_fees(
         &ManagedBuffer::new(),
         operation,
-        Some(EXECUTED_BRIDGE_OP_EVENT),
         Some(SETUP_PHASE_NOT_COMPLETED),
     );
 }
@@ -654,7 +623,6 @@ fn distribute_fees_operation_not_registered() {
     state.distribute_fees(
         &ManagedBuffer::new(),
         operation,
-        Some(EXECUTED_BRIDGE_OP_EVENT),
         Some(CURRENT_OPERATION_NOT_REGISTERED),
     );
 }
@@ -728,12 +696,7 @@ fn test_distribute_fees_percentage_under_limit() {
         MultiValueEncoded::from_iter(vec![operation_hash]),
     );
 
-    state.distribute_fees(
-        &hash_of_hashes,
-        operation,
-        Some(EXECUTED_BRIDGE_OP_EVENT),
-        None,
-    );
+    state.distribute_fees(&hash_of_hashes, operation, None);
 }
 
 /// ### TEST
@@ -821,12 +784,7 @@ fn test_distribute_fees() {
         MultiValueEncoded::from_iter(vec![operation_hash]),
     );
 
-    state.distribute_fees(
-        &hash_of_hashes,
-        operation,
-        Some(EXECUTED_BRIDGE_OP_EVENT),
-        None,
-    );
+    state.distribute_fees(&hash_of_hashes, operation, None);
 
     state.common_setup.check_account_single_esdt(
         OWNER_ADDRESS.to_address(),
