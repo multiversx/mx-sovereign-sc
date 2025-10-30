@@ -1,13 +1,16 @@
+use common_test_setup::base_setup::init::ExpectedLogs;
 use common_test_setup::{
     base_setup::init::{AccountSetup, BaseSetup},
     constants::{
-        CHAIN_CONFIG_ADDRESS, FIRST_TEST_TOKEN, ONE_HUNDRED_MILLION, OWNER_ADDRESS, OWNER_BALANCE,
-        USER_ADDRESS,
+        CHAIN_CONFIG_ADDRESS, EXECUTED_BRIDGE_OP_EVENT, FIRST_TEST_TOKEN, ONE_HUNDRED_MILLION,
+        OWNER_ADDRESS, OWNER_BALANCE, UPDATE_SOVEREIGN_CONFIG_ENDPOINT, USER_ADDRESS,
     },
+    log,
 };
 use multiversx_sc::types::{
     BigUint, ManagedBuffer, ReturnsHandledOrError, ReturnsResult, TestAddress,
 };
+use multiversx_sc_scenario::imports::OptionalValue;
 use multiversx_sc_scenario::{api::StaticApi, ReturnsLogs, ScenarioTxRun};
 use proxies::chain_config_proxy::ChainConfigContractProxy;
 use structs::{
@@ -68,8 +71,7 @@ impl ChainConfigTestState {
         hash_of_hashes: ManagedBuffer<StaticApi>,
         config: SovereignConfig<StaticApi>,
         operation_nonce: TxNonce,
-        expected_custom_log: Option<&str>,
-        expected_log_error: Option<&str>,
+        expected_error_message: Option<&str>,
     ) {
         let (result, logs) = self
             .common_setup
@@ -92,8 +94,11 @@ impl ChainConfigTestState {
         self.common_setup
             .assert_expected_error_message(result, None);
 
-        self.common_setup
-            .assert_expected_log(logs, expected_custom_log, expected_log_error);
+        let expected_logs = vec![
+            log!(UPDATE_SOVEREIGN_CONFIG_ENDPOINT, topics: [EXECUTED_BRIDGE_OP_EVENT], data: expected_error_message),
+        ];
+
+        self.common_setup.assert_expected_logs(logs, expected_logs);
     }
 
     pub fn unregister_with_caller(
@@ -101,9 +106,8 @@ impl ChainConfigTestState {
         bls_key: &ManagedBuffer<StaticApi>,
         caller: TestAddress,
         expect_error: Option<&str>,
-        expected_custom_log: Option<&str>,
     ) {
-        let (result, logs) = self
+        let result = self
             .common_setup
             .world
             .tx()
@@ -112,14 +116,10 @@ impl ChainConfigTestState {
             .typed(ChainConfigContractProxy)
             .unregister(bls_key)
             .returns(ReturnsHandledOrError::new())
-            .returns(ReturnsLogs)
             .run();
 
         self.common_setup
             .assert_expected_error_message(result, expect_error);
-
-        self.common_setup
-            .assert_expected_log(logs, expected_custom_log, expect_error);
     }
 
     pub fn get_bls_key_by_id(&mut self, id: &BigUint<StaticApi>) -> ManagedBuffer<StaticApi> {

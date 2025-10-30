@@ -123,6 +123,10 @@ pub const UPDATE_ESDT_SAFE_CONFIG_ENDPOINT: &str = "updateEsdtSafeConfig";
 pub const SET_FEE_ENDPOINT: &str = "setFee";
 pub const REMOVE_FEE_ENDPOINT: &str = "removeFee";
 pub const DISTRIBUTE_FEES_ENDPOINT: &str = "distributeFees";
+pub const COMPLETE_SETUP_PHASE_ENDPOINT: &str = "completeSetupPhase";
+pub const REGISTER_BLS_KEY_ENDPOINT: &str = "registerBlsKey";
+pub const UNREGISTER_BLS_KEY_ENDPOINT: &str = "unregisterBlsKey";
+pub const UPDATE_SOVEREIGN_CONFIG_ENDPOINT: &str = "updateSovereignConfig";
 
 pub const WALLET_SHARD_0: &str = "wallets/wallet_shard_0.pem";
 pub const FAILED_TO_LOAD_WALLET_SHARD_0: &str = "Failed to load wallet for shard 0";

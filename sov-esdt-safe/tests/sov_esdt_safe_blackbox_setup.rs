@@ -1,4 +1,7 @@
-use common_test_setup::{base_setup::init::ExpectedLogs, constants::SC_CALL_EVENT};
+use common_test_setup::{
+    base_setup::init::ExpectedLogs,
+    constants::{EXECUTED_BRIDGE_OP_EVENT, REGISTER_TOKEN_ENDPOINT, SC_CALL_EVENT},
+};
 use multiversx_sc::{
     imports::OptionalValue,
     types::{
@@ -152,8 +155,7 @@ impl SovEsdtSafeTestState {
             } else {
                 vec![log!(DEPOSIT_EVENT, topics: [DEPOSIT_EVENT])]
             };
-            self.common_setup
-                .assert_expected_log_refactored(logs, expected_logs);
+            self.common_setup.assert_expected_logs(logs, expected_logs);
         }
     }
 
@@ -172,7 +174,6 @@ impl SovEsdtSafeTestState {
         &mut self,
         new_token: RegisterTokenStruct<StaticApi>,
         payment: EgldOrEsdtTokenPayment<StaticApi>,
-        expected_log: Option<&str>,
         expected_error_message: Option<&str>,
     ) {
         let (logs, response) = self
@@ -197,7 +198,12 @@ impl SovEsdtSafeTestState {
         self.common_setup
             .assert_expected_error_message(response, expected_error_message);
 
-        self.common_setup
-            .assert_expected_log(logs, expected_log, expected_error_message);
+        if expected_error_message.is_none() {
+            let expected_logs = vec![
+                log!(REGISTER_TOKEN_ENDPOINT, topics: [EXECUTED_BRIDGE_OP_EVENT], data: expected_error_message),
+            ];
+
+            self.common_setup.assert_expected_logs(logs, expected_logs);
+        }
     }
 }

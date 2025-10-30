@@ -484,12 +484,7 @@ fn test_register_token_not_enough_issue_cost() {
         num_decimals: 18,
     };
 
-    state.register_token(
-        new_token,
-        egld_token_payment,
-        None,
-        Some(ISSUE_COST_NOT_COVERED),
-    );
+    state.register_token(new_token, egld_token_payment, Some(ISSUE_COST_NOT_COVERED));
 }
 
 /// ### TEST
@@ -525,12 +520,7 @@ fn test_register_token_with_no_prefix() {
         num_decimals: 18,
     };
 
-    state.register_token(
-        new_token,
-        egld_token_payment,
-        None,
-        Some(TOKEN_ID_NO_PREFIX),
-    );
+    state.register_token(new_token, egld_token_payment, Some(TOKEN_ID_NO_PREFIX));
 }
 
 /// ### TEST
@@ -569,7 +559,6 @@ fn test_register_token_wrong_payment() {
     state.register_token(
         new_token,
         egld_token_payment,
-        None,
         Some(EGLD_TOKEN_IDENTIFIER_EXPECTED),
     );
 }
@@ -608,10 +597,5 @@ fn test_register_token() {
         num_decimals: 18,
     };
 
-    state.register_token(
-        new_token,
-        egld_token_payment,
-        None,
-        Some(ACTION_IS_NOT_ALLOWED),
-    );
+    state.register_token(new_token, egld_token_payment, Some(ACTION_IS_NOT_ALLOWED));
 }

@@ -1,10 +1,15 @@
-use crate::constants::{EXECUTED_BRIDGE_OP_EVENT, SOVEREIGN_FORGE_SC_ADDRESS};
+use crate::base_setup::init::ExpectedLogs;
+use crate::constants::{
+    EXECUTED_BRIDGE_OP_EVENT, REGISTER_BLS_KEY_ENDPOINT, SOVEREIGN_FORGE_SC_ADDRESS,
+    UNREGISTER_BLS_KEY_ENDPOINT,
+};
+use crate::log;
 use crate::{
     base_setup::init::BaseSetup,
     constants::{CHAIN_CONFIG_ADDRESS, FEE_MARKET_ADDRESS, HEADER_VERIFIER_ADDRESS, OWNER_ADDRESS},
 };
-
 use header_verifier::storage::HeaderVerifierStorageModule;
+use multiversx_sc::imports::OptionalValue;
 use multiversx_sc_scenario::api::{DebugApiBackend, VMHooksApi};
 use multiversx_sc_scenario::imports::{BigUint, ManagedVec, ReturnsResult, StorageClearable};
 use multiversx_sc_scenario::multiversx_chain_vm::crypto_functions::sha256;
@@ -115,8 +120,6 @@ impl BaseSetup {
         hash_of_hashes: &ManagedBuffer<StaticApi>,
         validator_data: ValidatorData<StaticApi>,
         operation_nonce: TxNonce,
-        expected_custom_log: Option<&str>,
-        expected_error_log: Option<&str>,
     ) {
         let (response, logs) = self
             .world
@@ -136,7 +139,10 @@ impl BaseSetup {
             .run();
 
         self.assert_expected_error_message(response, None);
-        self.assert_expected_log(logs, expected_custom_log, expected_error_log);
+
+        let expected_logs =
+            vec![log!(REGISTER_BLS_KEY_ENDPOINT, topics: [EXECUTED_BRIDGE_OP_EVENT])];
+        self.assert_expected_logs(logs, expected_logs);
     }
 
     pub fn register_validator_operation(
@@ -172,13 +178,7 @@ impl BaseSetup {
 
         let operation_nonce = self.next_operation_nonce();
 
-        self.register_validator(
-            &hash_of_hashes,
-            validator_data.clone(),
-            operation_nonce,
-            Some(EXECUTED_BRIDGE_OP_EVENT),
-            None,
-        );
+        self.register_validator(&hash_of_hashes, validator_data.clone(), operation_nonce);
 
         assert_eq!(
             self.get_bls_key_id(&validator_data.bls_key),
@@ -191,7 +191,6 @@ impl BaseSetup {
         hash_of_hashes: &ManagedBuffer<StaticApi>,
         validator_operation: ValidatorOperation<StaticApi>,
         expected_error_message: Option<&str>,
-        expected_custom_log: Option<&str>,
     ) {
         let (response, logs) = self
             .world
@@ -205,7 +204,10 @@ impl BaseSetup {
             .run();
 
         self.assert_expected_error_message(response, expected_error_message);
-        self.assert_expected_log(logs, expected_custom_log, None);
+
+        let expected_logs =
+            vec![log!(UNREGISTER_BLS_KEY_ENDPOINT, topics: [EXECUTED_BRIDGE_OP_EVENT])];
+        self.assert_expected_logs(logs, expected_logs);
     }
 
     pub fn set_bls_keys_in_header_storage(&mut self, pub_keys: Vec<ManagedBuffer<StaticApi>>) {
@@ -261,12 +263,7 @@ impl BaseSetup {
             MultiValueEncoded::from_iter(vec![validator_data_hash]),
         );
 
-        self.unregister_validator(
-            &hash_of_hashes,
-            validator_operation,
-            None,
-            Some(EXECUTED_BRIDGE_OP_EVENT),
-        );
+        self.unregister_validator(&hash_of_hashes, validator_operation, None);
     }
 
     pub fn unregister_validator_operation(
@@ -300,12 +297,7 @@ impl BaseSetup {
             nonce: self.next_operation_nonce(),
         };
 
-        self.unregister_validator(
-            &hash_of_hashes,
-            validator_operation,
-            None,
-            Some(EXECUTED_BRIDGE_OP_EVENT),
-        );
+        self.unregister_validator(&hash_of_hashes, validator_operation, None);
 
         assert_eq!(self.get_bls_key_id(&validator_data.bls_key), 0);
     }

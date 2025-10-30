@@ -2,8 +2,8 @@ use chain_config::storage::ChainConfigStorageModule;
 use chain_config_blackbox_setup::ChainConfigTestState;
 use common_test_setup::base_setup::helpers::BLSKey;
 use common_test_setup::constants::{
-    CHAIN_CONFIG_ADDRESS, EXECUTED_BRIDGE_OP_EVENT, FIRST_TEST_TOKEN, ONE_HUNDRED_MILLION,
-    ONE_HUNDRED_THOUSAND, OWNER_ADDRESS, OWNER_BALANCE, USER_ADDRESS,
+    CHAIN_CONFIG_ADDRESS, FIRST_TEST_TOKEN, ONE_HUNDRED_MILLION, ONE_HUNDRED_THOUSAND,
+    OWNER_ADDRESS, OWNER_BALANCE, USER_ADDRESS,
 };
 use error_messages::{
     ADDITIONAL_STAKE_ZERO_VALUE, CHAIN_CONFIG_SETUP_PHASE_NOT_COMPLETE, INVALID_ADDITIONAL_STAKE,
@@ -235,7 +235,6 @@ fn test_update_config_setup_phase_not_completed() {
         ManagedBuffer::new(),
         new_config,
         operation_nonce,
-        Some(EXECUTED_BRIDGE_OP_EVENT),
         Some(SETUP_PHASE_NOT_COMPLETED),
     );
 }
@@ -292,7 +291,6 @@ fn test_update_config_invalid_config() {
         hash_of_hashes,
         new_config,
         operation_nonce,
-        Some(EXECUTED_BRIDGE_OP_EVENT),
         Some(INVALID_MIN_MAX_VALIDATOR_NUMBERS),
     );
 }
@@ -347,13 +345,7 @@ fn test_update_config() {
 
     let operation_nonce = state.common_setup.next_operation_nonce();
 
-    state.update_sovereign_config(
-        hash_of_hashes,
-        new_config,
-        operation_nonce,
-        Some(EXECUTED_BRIDGE_OP_EVENT),
-        None,
-    );
+    state.update_sovereign_config(hash_of_hashes, new_config, operation_nonce, None);
 
     state
         .common_setup
@@ -723,7 +715,6 @@ fn test_unregister_wrong_caller_for_bls_key() {
         &new_validator_bls_key,
         USER_ADDRESS,
         Some(INVALID_BLS_KEY_FOR_CALLER),
-        None,
     );
 }
 
