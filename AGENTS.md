@@ -13,4 +13,4 @@ Follow rustfmt defaults (4-space indentation, trailing commas) and run `cargo fm
 Prefer `multiversx-sc-scenario` tests for endpoint coverage, naming them after the contract and behavior (e.g. `fee_market_complete_setup.rs`). Seed fixtures through `common-test-setup` helpers to keep any contract interaction easy to use across all the smart contracts. For simulator-backed tests, follow the bootstrap steps in `interactor/HowToRun.md` so the common state is seeded before running per-file suites. Include negative-path assertions for guard checks and document any skipped cases inline. When touching deployment presets, rerun `chain-config/tests` to confirm serialized output still mirrors `sc-config.toml`.
 
 ## Commit & Pull Request Guidelines
-DO NOT COMMIT ANYTHING YOURSELF
+CRITICAL: DO NOT COMMIT ANYTHING YOURSELF
