@@ -170,9 +170,8 @@ sc-meta all build
 If proxy compare fails in CI:
 ```bash
 sc-meta all proxy
-git add common/proxies/
-git commit -m "Update proxies"
 ```
+This regenerates proxies under `common/proxies/`. Verify the changes and include them in your suggestions.
 
 ## Development Workflow
 
