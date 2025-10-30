@@ -316,11 +316,27 @@ impl BaseSetup {
                 "Expected log '{}' not found",
                 expected_log.identifier
             );
-            if let OptionalValue::Some(topics) = expected_log.topics {
-                self.validate_expected_topics(&topics, &matching_logs, expected_log.identifier);
-            }
-            if let OptionalValue::Some(data) = expected_log.data {
-                self.validate_expected_data(&[data], &matching_logs, expected_log.identifier);
+            if let OptionalValue::Some(ref topics) = expected_log.topics {
+                self.validate_expected_topics_separately(
+                    topics,
+                    &matching_logs,
+                    expected_log.identifier,
+                );
+
+                if let OptionalValue::Some(data) = expected_log.data {
+                    let first_topic_bytes = topics[0].as_bytes().to_vec();
+                    let filtered_logs: Vec<&Log> = matching_logs
+                        .iter()
+                        .copied()
+                        .filter(|log| {
+                            log.topics
+                                .first()
+                                .map(|t| *t == first_topic_bytes)
+                                .unwrap_or(false)
+                        })
+                        .collect();
+                    self.validate_expected_data(&[data], &filtered_logs, expected_log.identifier);
+                }
             }
         }
     }
@@ -373,19 +389,23 @@ impl BaseSetup {
             .esdt_balance(FIRST_TEST_TOKEN, owner_token);
     }
 
-    fn validate_expected_topics(&self, topics: &[&str], matching_logs: &[&Log], endpoint: &str) {
-        let expected_topics_bytes: Vec<Vec<u8>> =
-            topics.iter().map(|s| s.as_bytes().to_vec()).collect();
-        assert!(
-            matching_logs.iter().any(|log| {
-                expected_topics_bytes
-                    .iter()
-                    .all(|expected_topic| log.topics.contains(expected_topic))
-            }),
-            "Expected topics '{}' not found for event '{}'",
-            topics.join(", "),
-            endpoint
-        );
+    fn validate_expected_topics_separately(
+        &self,
+        topics: &[&str],
+        matching_logs: &[&Log],
+        endpoint: &str,
+    ) {
+        for topic in topics {
+            let topic_bytes = topic.as_bytes().to_vec();
+            let found = matching_logs
+                .iter()
+                .any(|log| log.topics.contains(&topic_bytes));
+            assert!(
+                found,
+                "Expected topic '{}' not found for event '{}'",
+                topic, endpoint
+            );
+        }
     }
 
     fn validate_expected_data(&self, data: &[&str], matching_logs: &[&Log], endpoint: &str) {

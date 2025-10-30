@@ -150,8 +150,9 @@ fn test_register_token_invalid_type() {
         MultiValueEncoded::from_iter(vec![token_hash]),
     );
 
-    let expected_logs =
-        vec![log!(REGISTER_TOKEN_ENDPOINT, topics: [DEPOSIT_EVENT], data: Some(INVALID_TYPE))];
+    let expected_logs = vec![
+        log!(REGISTER_TOKEN_ENDPOINT, topics: [EXECUTED_BRIDGE_OP_EVENT, DEPOSIT_EVENT], data: Some(INVALID_TYPE)),
+    ];
     state.register_token(
         register_token_args,
         hash_of_hashes,
@@ -218,8 +219,9 @@ fn test_register_token_invalid_type_with_prefix() {
         MultiValueEncoded::from_iter(vec![token_hash]),
     );
 
-    let expected_logs =
-        vec![log!(REGISTER_TOKEN_ENDPOINT, topics: [DEPOSIT_EVENT], data: Some(INVALID_TYPE))];
+    let expected_logs = vec![
+        log!(REGISTER_TOKEN_ENDPOINT, topics: [EXECUTED_BRIDGE_OP_EVENT,DEPOSIT_EVENT], data: Some(INVALID_TYPE)),
+    ];
     state.register_token(
         register_token_args,
         hash_of_hashes,
@@ -276,7 +278,7 @@ fn test_register_token_not_enough_egld() {
     );
 
     let expected_logs = vec![
-        log!(REGISTER_TOKEN_ENDPOINT, topics: [DEPOSIT_EVENT], data: Some(NOT_ENOUGH_EGLD_FOR_REGISTER)),
+        log!(REGISTER_TOKEN_ENDPOINT, topics: [EXECUTED_BRIDGE_OP_EVENT,DEPOSIT_EVENT], data: Some(NOT_ENOUGH_EGLD_FOR_REGISTER)),
     ];
     state.register_token(register_token_args, hash_of_hashes, None, expected_logs);
 
@@ -398,7 +400,7 @@ fn test_register_token_nonfungible_token() {
     );
 
     let expected_logs = vec![
-        log!(REGISTER_TOKEN_ENDPOINT, topics: [DEPOSIT_EVENT], data: Some(INVALID_PREFIX_FOR_REGISTER)),
+        log!(REGISTER_TOKEN_ENDPOINT, topics: [EXECUTED_BRIDGE_OP_EVENT,DEPOSIT_EVENT], data: Some(INVALID_PREFIX_FOR_REGISTER)),
     ];
     state.register_token(register_token_args, hash_of_hashes, None, expected_logs);
 
@@ -1404,7 +1406,7 @@ fn test_register_token_fungible_token_no_prefix() {
     );
 
     let expected_logs = vec![
-        log!(REGISTER_TOKEN_ENDPOINT, topics: [DEPOSIT_EVENT], data: Some(INVALID_PREFIX_FOR_REGISTER)),
+        log!(REGISTER_TOKEN_ENDPOINT, topics: [EXECUTED_BRIDGE_OP_EVENT,DEPOSIT_EVENT], data: Some(INVALID_PREFIX_FOR_REGISTER)),
     ];
     state.register_token(register_token_args, hash_of_hashes, None, expected_logs);
 
@@ -1467,7 +1469,8 @@ fn test_register_token_non_fungible_token_dynamic() {
         MultiValueEncoded::from_iter(vec![token_hash]),
     );
 
-    let expected_logs = vec![log!(REGISTER_TOKEN_ENDPOINT, topics: [DEPOSIT_EVENT])];
+    let expected_logs =
+        vec![log!(REGISTER_TOKEN_ENDPOINT, topics: [DEPOSIT_EVENT, EXECUTED_BRIDGE_OP_EVENT])];
     state.register_token(
         register_token_args,
         hash_of_hashes,
@@ -2866,7 +2869,6 @@ fn test_update_config_setup_phase_not_completed() {
             esdt_safe_config,
             nonce,
         },
-        Some(EXECUTED_BRIDGE_OP_EVENT),
         Some(SETUP_PHASE_NOT_COMPLETED),
     );
 }
@@ -2898,7 +2900,6 @@ fn test_update_config_operation_not_registered() {
             esdt_safe_config,
             nonce,
         },
-        Some(EXECUTED_BRIDGE_OP_EVENT),
         Some(CURRENT_OPERATION_NOT_REGISTERED),
     );
 }
@@ -2966,7 +2967,6 @@ fn test_update_config_invalid_config() {
     state.update_esdt_safe_config(
         &hash_of_hashes,
         update_config_operation,
-        Some(EXECUTED_BRIDGE_OP_EVENT),
         Some(MAX_GAS_LIMIT_PER_TX_EXCEEDED),
     );
 }
@@ -3032,12 +3032,7 @@ fn test_update_config() {
         MultiValueEncoded::from_iter(vec![config_hash]),
     );
 
-    state.update_esdt_safe_config(
-        &hash_of_hashes,
-        update_config_operation,
-        Some(EXECUTED_BRIDGE_OP_EVENT),
-        None,
-    );
+    state.update_esdt_safe_config(&hash_of_hashes, update_config_operation, None);
 
     state
         .common_setup
@@ -3180,7 +3175,7 @@ fn test_execute_operation_partial_execution() {
     );
 
     let expected_logs = vec![
-        log!(EXECUTE_BRIDGE_OPS_ENDPOINT, topics: [DEPOSIT_EVENT, SOV_FIRST_TOKEN_ID.as_str(), TRUSTED_TOKEN, SOV_SECOND_TOKEN_ID.as_str()]),
+        log!(EXECUTE_BRIDGE_OPS_ENDPOINT, topics: [EXECUTED_BRIDGE_OP_EVENT,DEPOSIT_EVENT, SOV_FIRST_TOKEN_ID.as_str(), TRUSTED_TOKEN, SOV_SECOND_TOKEN_ID.as_str()]),
     ];
 
     state.execute_operation(&hash_of_hashes, &operation, expected_logs);

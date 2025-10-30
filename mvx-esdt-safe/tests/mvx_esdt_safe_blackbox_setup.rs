@@ -1,11 +1,11 @@
 use common_test_setup::base_setup::init::ExpectedLogs;
 use common_test_setup::base_setup::init::{AccountSetup, BaseSetup};
 use common_test_setup::constants::{
-    DEPOSIT_EVENT, ESDT_SAFE_ADDRESS, FEE_MARKET_ADDRESS, FEE_TOKEN, FIRST_TEST_TOKEN,
-    FIRST_TOKEN_ID, HEADER_VERIFIER_ADDRESS, MVX_ESDT_SAFE_CODE_PATH, NATIVE_TEST_TOKEN,
-    ONE_HUNDRED_MILLION, OWNER_ADDRESS, OWNER_BALANCE, SC_CALL_EVENT, SECOND_TEST_TOKEN,
-    SECOND_TOKEN_ID, SOVEREIGN_FORGE_SC_ADDRESS, SOVEREIGN_TOKEN_PREFIX, TRUSTED_TOKEN,
-    UNPAUSE_CONTRACT_LOG, USER_ADDRESS,
+    DEPOSIT_EVENT, ESDT_SAFE_ADDRESS, EXECUTED_BRIDGE_OP_EVENT, FEE_MARKET_ADDRESS, FEE_TOKEN,
+    FIRST_TEST_TOKEN, FIRST_TOKEN_ID, HEADER_VERIFIER_ADDRESS, MVX_ESDT_SAFE_CODE_PATH,
+    NATIVE_TEST_TOKEN, ONE_HUNDRED_MILLION, OWNER_ADDRESS, OWNER_BALANCE, SC_CALL_EVENT,
+    SECOND_TEST_TOKEN, SECOND_TOKEN_ID, SOVEREIGN_FORGE_SC_ADDRESS, SOVEREIGN_TOKEN_PREFIX,
+    TRUSTED_TOKEN, UNPAUSE_CONTRACT_LOG, UPDATE_ESDT_SAFE_CONFIG_ENDPOINT, USER_ADDRESS,
 };
 use common_test_setup::log;
 use cross_chain::storage::CrossChainStorage;
@@ -206,8 +206,7 @@ impl MvxEsdtSafeTestState {
         &mut self,
         hash_of_hashes: &ManagedBuffer<StaticApi>,
         update_config_operation: UpdateEsdtSafeConfigOperation<StaticApi>,
-        expected_custom_log: Option<&str>,
-        expected_log_error: Option<&str>,
+        expected_error_message: Option<&str>,
     ) {
         let (result, logs) = self
             .common_setup
@@ -224,8 +223,16 @@ impl MvxEsdtSafeTestState {
         self.common_setup
             .assert_expected_error_message(result, None);
 
+        let expected_logs = if expected_error_message.is_some() {
+            vec![
+                log!(UPDATE_ESDT_SAFE_CONFIG_ENDPOINT, topics: [EXECUTED_BRIDGE_OP_EVENT], data: Some(expected_error_message.unwrap())),
+            ]
+        } else {
+            vec![log!(UPDATE_ESDT_SAFE_CONFIG_ENDPOINT, topics: [EXECUTED_BRIDGE_OP_EVENT])]
+        };
+
         self.common_setup
-            .assert_expected_log(logs, expected_custom_log, expected_log_error);
+            .assert_expected_log_refactored(logs, expected_logs);
     }
 
     pub fn set_token_burn_mechanism(
