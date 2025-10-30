@@ -94,6 +94,7 @@ pub const STATE_FILE: &str = "state.toml";
 pub const NATIVE_TOKEN_TICKER: &str = "SOV";
 pub const NATIVE_TOKEN_NAME: &str = "SovereignToken";
 pub const TRUSTED_TOKEN_NAME: &str = "TRUSTED";
+pub const INTERNAL_VM_ERRORS: &str = "internalVMErrors";
 
 pub const ISSUE_COST: u64 = 50_000_000_000_000_000; // 0.05 EGLD
 pub const GAS_LIMIT: u64 = 90_000_000; // 90 million gas limit
@@ -113,7 +114,10 @@ pub const NUM_TOKENS_TO_MINT: u64 = 2;
 pub const EXECUTED_BRIDGE_OP_EVENT: &str = "executedBridgeOp";
 pub const DEPOSIT_EVENT: &str = "deposit";
 pub const SC_CALL_EVENT: &str = "scCall";
-pub const REGISTER_TOKEN_EVENT: &str = "registerToken";
+pub const REGISTER_TOKEN_ENDPOINT: &str = "registerToken";
+pub const EXECUTE_OPERATION_ENDPOINT: &str = "execute";
+pub const EXECUTE_BRIDGE_OPS_ENDPOINT: &str = "executeBridgeOps";
+pub const REGISTER_TOKEN_EVENT: &str = "register_token";
 pub const CHANGE_VALIDATOR_SET_ENDPOINT: &str = "changeValidatorSet";
 
 pub const WALLET_SHARD_0: &str = "wallets/wallet_shard_0.pem";

@@ -1,20 +1,25 @@
+use common_test_setup::base_setup::init::ExpectedLogs;
 use common_test_setup::constants::{
-    CROWD_TOKEN_ID, DEPOSIT_EVENT, ESDT_SAFE_ADDRESS, EXECUTED_BRIDGE_OP_EVENT, FEE_MARKET_ADDRESS,
-    FEE_TOKEN, FIRST_TEST_TOKEN, FIRST_TOKEN_ID, HEADER_VERIFIER_ADDRESS, ISSUE_COST,
-    NATIVE_TEST_TOKEN, ONE_HUNDRED_MILLION, ONE_HUNDRED_THOUSAND, ONE_HUNDRED_TOKENS,
-    OWNER_ADDRESS, PER_GAS, PER_TRANSFER, SC_CALL_EVENT, SECOND_TEST_TOKEN, SECOND_TOKEN_ID,
-    SOV_FIRST_TOKEN_ID, SOV_SECOND_TOKEN_ID, SOV_TOKEN, TESTING_SC_ADDRESS, TESTING_SC_ENDPOINT,
-    TRUSTED_TOKEN, UNPAUSE_CONTRACT_LOG, USER_ADDRESS, WRONG_ENDPOINT_NAME,
+    CROWD_TOKEN_ID, DEPOSIT_EVENT, ESDT_SAFE_ADDRESS, EXECUTED_BRIDGE_OP_EVENT,
+    EXECUTE_BRIDGE_OPS_ENDPOINT, EXECUTE_OPERATION_ENDPOINT, FEE_MARKET_ADDRESS, FEE_TOKEN,
+    FIRST_TEST_TOKEN, FIRST_TOKEN_ID, HEADER_VERIFIER_ADDRESS, ISSUE_COST, NATIVE_TEST_TOKEN,
+    ONE_HUNDRED_MILLION, ONE_HUNDRED_THOUSAND, ONE_HUNDRED_TOKENS, OWNER_ADDRESS, PER_GAS,
+    PER_TRANSFER, REGISTER_TOKEN_ENDPOINT, REGISTER_TOKEN_EVENT, SECOND_TEST_TOKEN,
+    SECOND_TOKEN_ID, SOVEREIGN_RECEIVER_ADDRESS, SOV_FIRST_TOKEN_ID, SOV_SECOND_TOKEN_ID,
+    SOV_TOKEN, TESTING_SC_ADDRESS, TESTING_SC_ENDPOINT, TRUSTED_TOKEN, UNPAUSE_CONTRACT_LOG,
+    USER_ADDRESS, WRONG_ENDPOINT_NAME,
 };
+use common_test_setup::log;
 use cross_chain::storage::CrossChainStorage;
 use cross_chain::{DEFAULT_ISSUE_COST, MAX_GAS_PER_TRANSACTION};
 use error_messages::{
     BANNED_ENDPOINT_NAME, CALLER_NOT_FROM_CURRENT_SOVEREIGN, CURRENT_OPERATION_NOT_REGISTERED,
-    DEPOSIT_OVER_MAX_AMOUNT, ERR_EMPTY_PAYMENTS, GAS_LIMIT_TOO_HIGH, INVALID_FUNCTION_NOT_FOUND,
-    INVALID_PREFIX_FOR_REGISTER, INVALID_TYPE, MAX_GAS_LIMIT_PER_TX_EXCEEDED,
-    MINT_AND_BURN_ROLES_NOT_FOUND, NATIVE_TOKEN_ALREADY_REGISTERED, NATIVE_TOKEN_NOT_REGISTERED,
-    NOTHING_TO_TRANSFER, NOT_ENOUGH_EGLD_FOR_REGISTER, PAYMENT_DOES_NOT_COVER_FEE,
-    SETUP_PHASE_NOT_COMPLETED, TOKEN_ID_IS_NOT_TRUSTED, TOO_MANY_TOKENS,
+    DEPOSIT_AMOUNT_NOT_ENOUGH, DEPOSIT_OVER_MAX_AMOUNT, ERR_EMPTY_PAYMENTS, GAS_LIMIT_TOO_HIGH,
+    INVALID_FUNCTION_NOT_FOUND, INVALID_PREFIX_FOR_REGISTER, INVALID_TYPE,
+    MAX_GAS_LIMIT_PER_TX_EXCEEDED, MINT_AND_BURN_ROLES_NOT_FOUND, NATIVE_TOKEN_ALREADY_REGISTERED,
+    NATIVE_TOKEN_NOT_REGISTERED, NOTHING_TO_TRANSFER, NOT_ENOUGH_EGLD_FOR_REGISTER,
+    PAYMENT_DOES_NOT_COVER_FEE, SETUP_PHASE_NOT_COMPLETED, TOKEN_ID_IS_NOT_TRUSTED,
+    TOO_MANY_TOKENS,
 };
 use header_verifier::storage::HeaderVerifierStorageModule;
 use multiversx_sc::chain_core::EGLD_000000_TOKEN_IDENTIFIER;
@@ -134,7 +139,6 @@ fn test_register_token_invalid_type() {
         OptionalValue::None,
         ManagedVec::from_single_item(payment),
         None,
-        Some(DEPOSIT_EVENT),
     );
 
     state.common_setup.register_operation(
@@ -146,11 +150,13 @@ fn test_register_token_invalid_type() {
         MultiValueEncoded::from_iter(vec![token_hash]),
     );
 
+    let expected_logs =
+        vec![log!(REGISTER_TOKEN_ENDPOINT, topics: [DEPOSIT_EVENT], data: Some(INVALID_TYPE))];
     state.register_token(
         register_token_args,
         hash_of_hashes,
-        Some(EXECUTED_BRIDGE_OP_EVENT),
         Some(INVALID_TYPE),
+        expected_logs,
     );
 
     state
@@ -201,7 +207,6 @@ fn test_register_token_invalid_type_with_prefix() {
         OptionalValue::None,
         ManagedVec::from_single_item(payment),
         None,
-        Some(DEPOSIT_EVENT),
     );
 
     state.common_setup.register_operation(
@@ -213,11 +218,13 @@ fn test_register_token_invalid_type_with_prefix() {
         MultiValueEncoded::from_iter(vec![token_hash]),
     );
 
+    let expected_logs =
+        vec![log!(REGISTER_TOKEN_ENDPOINT, topics: [DEPOSIT_EVENT], data: Some(INVALID_TYPE))];
     state.register_token(
         register_token_args,
         hash_of_hashes,
-        Some(EXECUTED_BRIDGE_OP_EVENT),
         Some(INVALID_TYPE),
+        expected_logs,
     );
 
     state
@@ -268,12 +275,10 @@ fn test_register_token_not_enough_egld() {
         MultiValueEncoded::from_iter(vec![token_hash]),
     );
 
-    state.register_token(
-        register_token_args,
-        hash_of_hashes,
-        Some(DEPOSIT_EVENT),
-        Some(NOT_ENOUGH_EGLD_FOR_REGISTER),
-    );
+    let expected_logs = vec![
+        log!(REGISTER_TOKEN_ENDPOINT, topics: [DEPOSIT_EVENT], data: Some(NOT_ENOUGH_EGLD_FOR_REGISTER)),
+    ];
+    state.register_token(register_token_args, hash_of_hashes, None, expected_logs);
 
     state
         .common_setup
@@ -322,7 +327,6 @@ fn test_register_token_fungible_token() {
         OptionalValue::None,
         ManagedVec::from_single_item(payment),
         None,
-        Some(DEPOSIT_EVENT),
     );
 
     state.common_setup.register_operation(
@@ -334,7 +338,8 @@ fn test_register_token_fungible_token() {
         MultiValueEncoded::from_iter(vec![token_hash.clone()]),
     );
 
-    state.register_token(register_token_args, hash_of_hashes, Some(""), None);
+    let expected_logs = vec![log!(REGISTER_TOKEN_EVENT, topics: [EXECUTED_BRIDGE_OP_EVENT])];
+    state.register_token(register_token_args, hash_of_hashes, None, expected_logs);
 
     // TODO: add check for storage after callback fix
 }
@@ -381,7 +386,6 @@ fn test_register_token_nonfungible_token() {
         OptionalValue::None,
         ManagedVec::from_single_item(payment),
         None,
-        Some(DEPOSIT_EVENT),
     );
 
     state.common_setup.register_operation(
@@ -393,12 +397,10 @@ fn test_register_token_nonfungible_token() {
         MultiValueEncoded::from_iter(vec![token_hash]),
     );
 
-    state.register_token(
-        register_token_args,
-        hash_of_hashes,
-        Some(DEPOSIT_EVENT),
-        Some(INVALID_PREFIX_FOR_REGISTER),
-    );
+    let expected_logs = vec![
+        log!(REGISTER_TOKEN_ENDPOINT, topics: [DEPOSIT_EVENT], data: Some(INVALID_PREFIX_FOR_REGISTER)),
+    ];
+    state.register_token(register_token_args, hash_of_hashes, None, expected_logs);
 
     state
         .common_setup
@@ -425,7 +427,6 @@ fn test_deposit_nothing_to_transfer() {
         OptionalValue::None,
         PaymentsVec::new(),
         Some(NOTHING_TO_TRANSFER),
-        None,
     );
 
     state
@@ -517,7 +518,6 @@ fn test_deposit_too_many_tokens() {
         OptionalValue::None,
         payments_vec,
         Some(TOO_MANY_TOKENS),
-        None,
     );
 
     state.common_setup.check_account_single_esdt(
@@ -562,7 +562,6 @@ fn test_deposit_no_transfer_data() {
         OptionalValue::None,
         payments_vec,
         None,
-        Some(DEPOSIT_EVENT),
     );
 
     let owner_tokens_vec = vec![
@@ -658,7 +657,6 @@ fn test_deposit_gas_limit_too_high() {
         OptionalValue::Some(transfer_data),
         payments_vec,
         Some(GAS_LIMIT_TOO_HIGH),
-        None,
     );
 
     let tokens_vec = vec![
@@ -731,7 +729,6 @@ fn test_deposit_max_bridged_amount_exceeded() {
         OptionalValue::None,
         payments_vec,
         Some(DEPOSIT_OVER_MAX_AMOUNT),
-        None,
     );
 
     let tokens_vec = vec![
@@ -819,7 +816,6 @@ fn test_deposit_endpoint_banned() {
         OptionalValue::Some(transfer_data),
         payments_vec,
         Some(BANNED_ENDPOINT_NAME),
-        None,
     );
 
     state
@@ -858,7 +854,6 @@ fn test_deposit_transfer_data_only_no_fee() {
         OptionalValue::Some(transfer_data),
         PaymentsVec::new(),
         None,
-        Some(SC_CALL_EVENT),
     );
 }
 
@@ -906,7 +901,6 @@ fn test_deposit_transfer_data_only_with_fee_nothing_to_transfer() {
         OptionalValue::Some(transfer_data),
         PaymentsVec::new(),
         Some(ERR_EMPTY_PAYMENTS),
-        None,
     );
 }
 
@@ -964,7 +958,6 @@ fn test_deposit_transfer_data_only_with_fee() {
         OptionalValue::Some(transfer_data),
         payments_vec,
         None,
-        Some(SC_CALL_EVENT),
     );
 
     state.common_setup.check_account_single_esdt(
@@ -1038,7 +1031,6 @@ fn test_deposit_fee_enabled() {
         OptionalValue::Some(transfer_data),
         payments_vec.clone(),
         None,
-        Some(DEPOSIT_EVENT),
     );
 
     let expected_amount_token_one =
@@ -1116,7 +1108,6 @@ fn test_deposit_payment_doesnt_cover_fee() {
         OptionalValue::Some(transfer_data),
         payments_vec,
         Some(PAYMENT_DOES_NOT_COVER_FEE),
-        None,
     );
 
     let tokens_vec = vec![
@@ -1214,7 +1205,6 @@ fn test_deposit_refund() {
         OptionalValue::Some(transfer_data),
         payments_vec.clone(),
         None,
-        Some(DEPOSIT_EVENT),
     );
 
     let expected_balances = vec![
@@ -1274,7 +1264,6 @@ fn test_deposit_success_burn_mechanism() {
         OptionalValue::None,
         payments_vec,
         None,
-        Some(DEPOSIT_EVENT),
     );
 
     let expected_tokens = vec![
@@ -1343,7 +1332,6 @@ fn test_register_token_fungible_token_with_prefix() {
         OptionalValue::None,
         ManagedVec::from_single_item(payment),
         None,
-        Some(DEPOSIT_EVENT),
     );
 
     state.common_setup.register_operation(
@@ -1355,7 +1343,9 @@ fn test_register_token_fungible_token_with_prefix() {
         MultiValueEncoded::from_iter(vec![token_hash]),
     );
 
-    state.register_token(register_token_args, hash_of_hashes, Some(""), None);
+    let expected_logs = vec![log!(REGISTER_TOKEN_EVENT, topics: [EXECUTED_BRIDGE_OP_EVENT])];
+
+    state.register_token(register_token_args, hash_of_hashes, None, expected_logs);
 
     // TODO: add check for storage after callback fix
 }
@@ -1402,7 +1392,6 @@ fn test_register_token_fungible_token_no_prefix() {
         OptionalValue::None,
         ManagedVec::from_single_item(payment),
         None,
-        Some(DEPOSIT_EVENT),
     );
 
     state.common_setup.register_operation(
@@ -1414,12 +1403,10 @@ fn test_register_token_fungible_token_no_prefix() {
         MultiValueEncoded::from_iter(vec![token_hash]),
     );
 
-    state.register_token(
-        register_token_args,
-        hash_of_hashes,
-        Some(DEPOSIT_EVENT),
-        Some(INVALID_PREFIX_FOR_REGISTER),
-    );
+    let expected_logs = vec![
+        log!(REGISTER_TOKEN_ENDPOINT, topics: [DEPOSIT_EVENT], data: Some(INVALID_PREFIX_FOR_REGISTER)),
+    ];
+    state.register_token(register_token_args, hash_of_hashes, None, expected_logs);
 
     state
         .common_setup
@@ -1469,7 +1456,6 @@ fn test_register_token_non_fungible_token_dynamic() {
         OptionalValue::None,
         ManagedVec::from_single_item(payment),
         None,
-        Some(DEPOSIT_EVENT),
     );
 
     state.common_setup.register_operation(
@@ -1481,7 +1467,13 @@ fn test_register_token_non_fungible_token_dynamic() {
         MultiValueEncoded::from_iter(vec![token_hash]),
     );
 
-    state.register_token(register_token_args, hash_of_hashes, Some(""), None);
+    let expected_logs = vec![log!(REGISTER_TOKEN_ENDPOINT, topics: [DEPOSIT_EVENT])];
+    state.register_token(
+        register_token_args,
+        hash_of_hashes,
+        Some(INVALID_PREFIX_FOR_REGISTER),
+        expected_logs,
+    );
 }
 
 /// ### TEST
@@ -1565,7 +1557,7 @@ fn test_execute_operation_no_chain_config_registered() {
     );
 
     let operation = Operation::new(
-        TESTING_SC_ADDRESS.to_managed_address(),
+        SOVEREIGN_RECEIVER_ADDRESS.to_managed_address(),
         vec![payment].into(),
         OperationData::new(
             state.common_setup.next_operation_nonce(),
@@ -1578,12 +1570,11 @@ fn test_execute_operation_no_chain_config_registered() {
 
     state.common_setup.deploy_header_verifier(vec![]);
 
-    state.execute_operation(
-        &hash_of_hashes,
-        &operation,
-        Some(vec![EXECUTED_BRIDGE_OP_EVENT]),
-        Some(CALLER_NOT_FROM_CURRENT_SOVEREIGN),
-    );
+    let expected_logs = vec![
+        log!(EXECUTE_BRIDGE_OPS_ENDPOINT, topics: [EXECUTED_BRIDGE_OP_EVENT], data: Some(CALLER_NOT_FROM_CURRENT_SOVEREIGN)),
+    ];
+
+    state.execute_operation(&hash_of_hashes, &operation, expected_logs);
 
     state
         .common_setup
@@ -1611,7 +1602,7 @@ fn test_execute_operation_no_esdt_safe_registered() {
     );
 
     let operation = Operation::new(
-        TESTING_SC_ADDRESS.to_managed_address(),
+        SOVEREIGN_RECEIVER_ADDRESS.to_managed_address(),
         vec![payment].into(),
         OperationData::new(
             state.common_setup.next_operation_nonce(),
@@ -1626,12 +1617,11 @@ fn test_execute_operation_no_esdt_safe_registered() {
         .common_setup
         .deploy_header_verifier(vec![ScArray::ChainConfig]);
 
-    state.execute_operation(
-        &hash_of_hashes,
-        &operation,
-        Some(vec![EXECUTED_BRIDGE_OP_EVENT]),
-        Some(CALLER_NOT_FROM_CURRENT_SOVEREIGN),
-    );
+    let expected_logs = vec![
+        log!(EXECUTE_BRIDGE_OPS_ENDPOINT, topics: [EXECUTED_BRIDGE_OP_EVENT], data: Some(CALLER_NOT_FROM_CURRENT_SOVEREIGN)),
+    ];
+
+    state.execute_operation(&hash_of_hashes, &operation, expected_logs);
 
     state
         .common_setup
@@ -1722,13 +1712,9 @@ fn test_execute_operation_success() {
     state
         .common_setup
         .check_operation_hash_status(&operation_hash, OperationHashStatus::NotLocked);
+    let expected_logs = vec![log!(EXECUTE_OPERATION_ENDPOINT, topics: [EXECUTED_BRIDGE_OP_EVENT])];
 
-    state.execute_operation(
-        &hash_of_hashes,
-        &operation,
-        Some(vec![EXECUTED_BRIDGE_OP_EVENT]),
-        None,
-    );
+    state.execute_operation(&hash_of_hashes, &operation, expected_logs);
 
     state
         .common_setup
@@ -1821,12 +1807,9 @@ fn test_execute_operation_with_native_token_success() {
         .common_setup
         .check_operation_hash_status(&operation_hash, OperationHashStatus::NotLocked);
 
-    state.execute_operation(
-        &hash_of_hashes,
-        &operation,
-        Some(vec![EXECUTED_BRIDGE_OP_EVENT]),
-        None,
-    );
+    let expected_logs = vec![log!(EXECUTE_OPERATION_ENDPOINT, topics: [EXECUTED_BRIDGE_OP_EVENT])];
+
+    state.execute_operation(&hash_of_hashes, &operation, expected_logs);
 
     state
         .common_setup
@@ -1849,7 +1832,7 @@ fn test_execute_operation_with_native_token_success() {
 /// ### EXPECTED
 /// The operation executes successfully with minted tokens
 #[test]
-fn test_execute_operation_burn_mechanism_without_deposit_cannot_subtract() {
+fn test_execute_operation_burn_mechanism_without_deposit() {
     let mut state = MvxEsdtSafeTestState::new();
     state.deploy_contract_with_roles(None);
     state.complete_setup_phase(Some(UNPAUSE_CONTRACT_LOG));
@@ -1871,7 +1854,7 @@ fn test_execute_operation_burn_mechanism_without_deposit_cannot_subtract() {
     let burn_hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&burn_operation_hash.to_vec()));
 
     let operation = Operation::new(
-        TESTING_SC_ADDRESS.to_managed_address(),
+        SOVEREIGN_RECEIVER_ADDRESS.to_managed_address(),
         vec![payment].into(),
         OperationData::new(
             state.common_setup.next_operation_nonce(),
@@ -1932,12 +1915,10 @@ fn test_execute_operation_burn_mechanism_without_deposit_cannot_subtract() {
     );
 
     state.set_token_burn_mechanism(&burn_hash_of_hashes, burn_operation);
-    state.execute_operation(
-        &hash_of_hashes,
-        &operation,
-        Some(vec![EXECUTED_BRIDGE_OP_EVENT]),
-        None,
-    );
+    let expected_logs = vec![
+        log!(EXECUTE_BRIDGE_OPS_ENDPOINT, topics: [EXECUTED_BRIDGE_OP_EVENT], data: Some(DEPOSIT_AMOUNT_NOT_ENOUGH)),
+    ];
+    state.execute_operation(&hash_of_hashes, &operation, expected_logs);
 
     state
         .common_setup
@@ -2021,12 +2002,8 @@ fn test_execute_operation_only_transfer_data_no_fee() {
         operations_hashes,
     );
 
-    state.execute_operation(
-        &hash_of_hashes,
-        &operation,
-        Some(vec![EXECUTED_BRIDGE_OP_EVENT]),
-        None,
-    );
+    let expected_logs = vec![log!(EXECUTE_OPERATION_ENDPOINT, topics: [EXECUTED_BRIDGE_OP_EVENT])];
+    state.execute_operation(&hash_of_hashes, &operation, expected_logs);
 
     state
         .common_setup
@@ -2111,7 +2088,6 @@ fn test_execute_operation_success_burn_mechanism() {
         OptionalValue::None,
         PaymentsVec::from(vec![payment]),
         None,
-        Some(DEPOSIT_EVENT),
     );
 
     state.common_setup.register_operation(
@@ -2137,12 +2113,8 @@ fn test_execute_operation_success_burn_mechanism() {
     );
 
     state.set_token_burn_mechanism(&burn_hash_of_hashes, burn_operation);
-    state.execute_operation(
-        &hash_of_hashes,
-        &operation,
-        Some(vec![EXECUTED_BRIDGE_OP_EVENT]),
-        None,
-    );
+    let expected_logs = vec![log!(EXECUTE_OPERATION_ENDPOINT, topics: [EXECUTED_BRIDGE_OP_EVENT])];
+    state.execute_operation(&hash_of_hashes, &operation, expected_logs);
 
     state
         .common_setup
@@ -2313,7 +2285,6 @@ fn test_deposit_execute_switch_mechanism() {
         OptionalValue::None,
         PaymentsVec::from(vec![deposit_payment.clone()]),
         None,
-        Some(DEPOSIT_EVENT),
     );
 
     state.common_setup.check_account_single_esdt(
@@ -2357,12 +2328,8 @@ fn test_deposit_execute_switch_mechanism() {
         MultiValueEncoded::from(ManagedVec::from(vec![operation_one_hash])),
     );
 
-    state.execute_operation(
-        &hash_of_hashes_one,
-        &operation_one,
-        Some(vec![EXECUTED_BRIDGE_OP_EVENT]),
-        None,
-    );
+    let expected_logs = vec![log!(EXECUTE_OPERATION_ENDPOINT, topics: [EXECUTED_BRIDGE_OP_EVENT])];
+    state.execute_operation(&hash_of_hashes_one, &operation_one, expected_logs);
 
     let mut expected_receiver = execute_amount;
     expected_deposited -= execute_amount;
@@ -2384,7 +2351,6 @@ fn test_deposit_execute_switch_mechanism() {
         OptionalValue::None,
         PaymentsVec::from(vec![deposit_payment.clone()]),
         None,
-        Some(DEPOSIT_EVENT),
     );
 
     expected_deposited += deposit_amount;
@@ -2432,12 +2398,8 @@ fn test_deposit_execute_switch_mechanism() {
         MultiValueEncoded::from(ManagedVec::from(vec![operation_two_hash])),
     );
 
-    state.execute_operation(
-        &hash_of_hashes_two,
-        &operation_two,
-        Some(vec![EXECUTED_BRIDGE_OP_EVENT]),
-        None,
-    );
+    let expected_logs = vec![log!(EXECUTE_OPERATION_ENDPOINT, topics: [EXECUTED_BRIDGE_OP_EVENT])];
+    state.execute_operation(&hash_of_hashes_two, &operation_two, expected_logs);
 
     expected_receiver += execute_amount;
     expected_deposited -= execute_amount;
@@ -2465,7 +2427,6 @@ fn test_deposit_execute_switch_mechanism() {
         OptionalValue::None,
         PaymentsVec::from(vec![deposit_payment]),
         None,
-        Some(DEPOSIT_EVENT),
     );
 
     expected_deposited += deposit_amount;
@@ -2564,12 +2525,8 @@ fn test_execute_operation_no_payments() {
         .common_setup
         .check_operation_hash_status(&operation_hash, OperationHashStatus::NotLocked);
 
-    state.execute_operation(
-        &hash_of_hashes,
-        &operation,
-        Some(vec![EXECUTED_BRIDGE_OP_EVENT]),
-        None,
-    );
+    let expected_logs = vec![log!(EXECUTE_OPERATION_ENDPOINT, topics: [EXECUTED_BRIDGE_OP_EVENT])];
+    state.execute_operation(&hash_of_hashes, &operation, expected_logs);
 
     state
         .common_setup
@@ -2650,12 +2607,10 @@ fn test_execute_operation_no_payments_failed_event() {
         .common_setup
         .check_operation_hash_status(&operation_hash, OperationHashStatus::NotLocked);
 
-    state.execute_operation(
-        &hash_of_hashes,
-        &operation,
-        Some(vec![EXECUTED_BRIDGE_OP_EVENT]),
-        Some(INVALID_FUNCTION_NOT_FOUND),
-    );
+    let expected_logs = vec![
+        log!(EXECUTE_OPERATION_ENDPOINT, topics: [EXECUTED_BRIDGE_OP_EVENT], data: Some(INVALID_FUNCTION_NOT_FOUND)),
+    ];
+    state.execute_operation(&hash_of_hashes, &operation, expected_logs);
 
     state
         .common_setup
@@ -2748,12 +2703,10 @@ fn test_execute_operation_native_token_failed_event() {
         .common_setup
         .check_operation_hash_status(&operation_hash, OperationHashStatus::NotLocked);
 
-    state.execute_operation(
-        &hash_of_hashes,
-        &operation,
-        Some(vec![EXECUTED_BRIDGE_OP_EVENT]),
-        Some(INVALID_FUNCTION_NOT_FOUND),
-    );
+    let expected_logs = vec![
+        log!(EXECUTE_OPERATION_ENDPOINT, topics: [EXECUTED_BRIDGE_OP_EVENT], data: Some(INVALID_FUNCTION_NOT_FOUND)),
+    ];
+    state.execute_operation(&hash_of_hashes, &operation, expected_logs);
 
     state
         .common_setup
@@ -3226,18 +3179,11 @@ fn test_execute_operation_partial_execution() {
         MultiValueEncoded::from_iter(vec![operation_hash]),
     );
 
-    state.execute_operation(
-        &hash_of_hashes,
-        &operation,
-        Some(vec![
-            EXECUTED_BRIDGE_OP_EVENT,
-            DEPOSIT_EVENT,
-            &SOV_FIRST_TOKEN_ID.as_str(),
-            &TRUSTED_TOKEN,
-            &SOV_SECOND_TOKEN_ID.as_str(),
-        ]),
-        None,
-    );
+    let expected_logs = vec![
+        log!(EXECUTE_BRIDGE_OPS_ENDPOINT, topics: [DEPOSIT_EVENT, SOV_FIRST_TOKEN_ID.as_str(), TRUSTED_TOKEN, SOV_SECOND_TOKEN_ID.as_str()]),
+    ];
+
+    state.execute_operation(&hash_of_hashes, &operation, expected_logs);
 
     state.common_setup.check_account_single_esdt(
         USER_ADDRESS.to_address(),
