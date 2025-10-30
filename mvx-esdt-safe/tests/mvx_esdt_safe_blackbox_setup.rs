@@ -389,8 +389,6 @@ impl MvxEsdtSafeTestState {
             .returns(ReturnsLogs)
             .run();
 
-        println!("logs: {:?}", logs);
-
         self.common_setup
             .assert_expected_error_message(result, expected_error_message);
 

@@ -18,7 +18,7 @@ use mvx_esdt_safe::bridging_mechanism::BridgingMechanism;
 use proxies::mvx_fee_market_proxy::MvxFeeMarketProxy;
 use structs::OperationHashStatus;
 
-use crate::base_setup::init::ExpectedLogs;
+use crate::base_setup::init::{ErrorPayloadToString, ExpectedLogs};
 use crate::{
     base_setup::init::BaseSetup,
     constants::{
@@ -28,6 +28,27 @@ use crate::{
 };
 
 impl BaseSetup {
+    pub fn assert_optional_error_message<T: ErrorPayloadToString>(
+        &mut self,
+        response: Option<T>,
+        expected_error_message: Option<&str>,
+    ) {
+        match response {
+            None => assert!(
+                expected_error_message.is_none(),
+                "Transaction was successful, but expected error"
+            ),
+            Some(payload) => {
+                let error_message_str = payload.to_error_string();
+                assert_eq!(
+                    Some(error_message_str.as_str()),
+                    expected_error_message,
+                    "Expected error message did not match"
+                );
+            }
+        }
+    }
+
     pub fn check_account_multiple_esdts(
         &mut self,
         address: Address,
