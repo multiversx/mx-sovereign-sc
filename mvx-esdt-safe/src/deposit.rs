@@ -1,4 +1,5 @@
 multiversx_sc::imports!();
+use error_messages::CALLER_IS_BLACKLISTED;
 use structs::aliases::{EventPaymentTuple, OptionalValueTransferDataTuple};
 
 #[multiversx_sc::module]
@@ -20,9 +21,18 @@ pub trait DepositModule:
         opt_transfer_data: OptionalValueTransferDataTuple<Self::Api>,
     ) {
         self.require_setup_complete();
+        self.require_caller_not_blacklisted();
         self.deposit_common(to, opt_transfer_data, |payment| {
             self.process_payment(payment)
         });
+    }
+
+    fn require_caller_not_blacklisted(&self) {
+        let caller = self.blockchain().get_caller();
+        require!(
+            !self.deposit_callers_blacklist().contains(&caller),
+            CALLER_IS_BLACKLISTED
+        );
     }
 
     fn process_payment(
@@ -72,4 +82,8 @@ pub trait DepositModule:
             MultiValue3::from((token_identifier.clone(), payment.token_nonce, token_data))
         }
     }
+
+    #[view(getDepositCallersBlacklist)]
+    #[storage_mapper("depositCallersBlacklist")]
+    fn deposit_callers_blacklist(&self) -> UnorderedSetMapper<ManagedAddress>;
 }

@@ -9,12 +9,13 @@ use common_test_setup::constants::{
 use cross_chain::storage::CrossChainStorage;
 use cross_chain::{DEFAULT_ISSUE_COST, MAX_GAS_PER_TRANSACTION};
 use error_messages::{
-    BANNED_ENDPOINT_NAME, CALLER_NOT_FROM_CURRENT_SOVEREIGN, CURRENT_OPERATION_NOT_REGISTERED,
-    DEPOSIT_OVER_MAX_AMOUNT, ERR_EMPTY_PAYMENTS, GAS_LIMIT_TOO_HIGH, INVALID_FUNCTION_NOT_FOUND,
-    INVALID_PREFIX_FOR_REGISTER, INVALID_TYPE, MAX_GAS_LIMIT_PER_TX_EXCEEDED,
-    MINT_AND_BURN_ROLES_NOT_FOUND, NATIVE_TOKEN_ALREADY_REGISTERED, NATIVE_TOKEN_NOT_REGISTERED,
-    NOTHING_TO_TRANSFER, NOT_ENOUGH_EGLD_FOR_REGISTER, PAYMENT_DOES_NOT_COVER_FEE,
-    SETUP_PHASE_NOT_COMPLETED, TOKEN_ID_IS_NOT_TRUSTED, TOO_MANY_TOKENS,
+    BANNED_ENDPOINT_NAME, CALLER_IS_BLACKLISTED, CALLER_NOT_FROM_CURRENT_SOVEREIGN,
+    CURRENT_OPERATION_NOT_REGISTERED, DEPOSIT_OVER_MAX_AMOUNT, ERR_EMPTY_PAYMENTS,
+    GAS_LIMIT_TOO_HIGH, INVALID_FUNCTION_NOT_FOUND, INVALID_PREFIX_FOR_REGISTER, INVALID_TYPE,
+    MAX_GAS_LIMIT_PER_TX_EXCEEDED, MINT_AND_BURN_ROLES_NOT_FOUND, NATIVE_TOKEN_ALREADY_REGISTERED,
+    NATIVE_TOKEN_NOT_REGISTERED, NOTHING_TO_TRANSFER, NOT_ENOUGH_EGLD_FOR_REGISTER,
+    PAYMENT_DOES_NOT_COVER_FEE, SETUP_PHASE_NOT_COMPLETED, TOKEN_ID_IS_NOT_TRUSTED,
+    TOO_MANY_TOKENS,
 };
 use header_verifier::storage::HeaderVerifierStorageModule;
 use multiversx_sc::chain_core::EGLD_000000_TOKEN_IDENTIFIER;
@@ -36,6 +37,7 @@ use mvx_esdt_safe::bridging_mechanism::BridgingMechanism;
 use mvx_esdt_safe_blackbox_setup::MvxEsdtSafeTestState;
 use proxies::mvx_esdt_safe_proxy::MvxEsdtSafeProxy;
 use setup_phase::SetupPhaseModule;
+use structs::aliases::OptionalValueTransferDataTuple;
 use structs::configs::{
     MaxBridgedAmount, SetBurnMechanismOperation, SetLockMechanismOperation, SovereignConfig,
     UpdateEsdtSafeConfigOperation,
@@ -431,6 +433,48 @@ fn test_deposit_nothing_to_transfer() {
     state
         .common_setup
         .check_multiversx_to_sovereign_token_id_mapper_is_empty(FIRST_TEST_TOKEN.as_str());
+}
+
+/// ### TEST
+/// M-ESDT_DEP_OK
+///
+/// ### ACTION
+/// Call 'deposit()' as a blacklisted caller and then remove from blacklist
+///
+/// ### EXPECTED
+/// Error CALLER_IS_BLACKLISTED for the deposit attempt and successful removal from blacklist
+#[test]
+fn test_deposit_blacklist() {
+    let mut state = MvxEsdtSafeTestState::new();
+
+    state.deploy_contract_with_roles(None);
+    state.complete_setup_phase(Some(UNPAUSE_CONTRACT_LOG));
+    state
+        .common_setup
+        .deploy_header_verifier(vec![ScArray::ESDTSafe]);
+    let payment = EgldOrEsdtTokenPayment::egld_payment(ONE_HUNDRED_TOKENS.into());
+    let payments_vec = PaymentsVec::from_single_item(payment);
+    let caller = &USER_ADDRESS.to_managed_address();
+
+    state.add_caller_to_deposit_blacklist(caller);
+
+    let result = state
+        .common_setup
+        .world
+        .tx()
+        .from(USER_ADDRESS)
+        .to(ESDT_SAFE_ADDRESS)
+        .typed(MvxEsdtSafeProxy)
+        .deposit(OWNER_ADDRESS, OptionalValueTransferDataTuple::None)
+        .payment(payments_vec)
+        .returns(ReturnsHandledOrError::new())
+        .run();
+
+    state
+        .common_setup
+        .assert_expected_error_message(result, Some(CALLER_IS_BLACKLISTED));
+
+    state.remove_caller_from_deposit_blacklist(caller);
 }
 
 /// ### TEST

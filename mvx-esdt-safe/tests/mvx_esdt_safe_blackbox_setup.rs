@@ -15,6 +15,7 @@ use multiversx_sc::{
     },
 };
 use multiversx_sc_scenario::imports::*;
+use mvx_esdt_safe::deposit::DepositModule;
 use mvx_esdt_safe::MvxEsdtSafe;
 use proxies::mvx_esdt_safe_proxy::MvxEsdtSafeProxy;
 use structs::configs::{
@@ -470,6 +471,42 @@ impl MvxEsdtSafeTestState {
 
         self.common_setup
             .assert_expected_log(logs, expected_custom_log, expected_log_error);
+    }
+
+    pub fn add_caller_to_deposit_blacklist(&mut self, caller: &ManagedAddress<StaticApi>) {
+        self.common_setup
+            .world
+            .tx()
+            .from(HEADER_VERIFIER_ADDRESS)
+            .to(ESDT_SAFE_ADDRESS)
+            .typed(MvxEsdtSafeProxy)
+            .blacklist_deposit_caller(caller)
+            .run();
+    }
+
+    pub fn remove_caller_from_deposit_blacklist(&mut self, caller: &ManagedAddress<StaticApi>) {
+        self.common_setup
+            .world
+            .tx()
+            .from(HEADER_VERIFIER_ADDRESS)
+            .to(ESDT_SAFE_ADDRESS)
+            .typed(MvxEsdtSafeProxy)
+            .remove_deposit_caller_from_blacklist(caller)
+            .run();
+
+        let caller_byte_array = caller.as_managed_byte_array();
+
+        self.common_setup
+            .world
+            .query()
+            .to(ESDT_SAFE_ADDRESS)
+            .whitebox(mvx_esdt_safe::contract_obj, |sc| {
+                assert!(!sc
+                    .deposit_callers_blacklist()
+                    .contains(&ManagedAddress::new_from_bytes(
+                        &caller_byte_array.to_byte_array()
+                    )));
+            })
     }
 
     pub fn deploy_and_complete_setup_phase(
