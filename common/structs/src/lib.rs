@@ -15,7 +15,7 @@ pub mod generate_hash;
 pub mod operation;
 
 pub const MIN_BLOCKS_FOR_FINALITY: u64 = 10;
-pub const DEFAULT_MAX_TX_GAS_LIMIT: u64 = 300_000_000;
+pub const DEFAULT_MAX_TX_GAS_LIMIT: u64 = 500_000_000;
 
 pub const PHASE_ONE_ASYNC_CALL_GAS: u64 = 9_000_000;
 pub const PHASE_ONE_CALLBACK_GAS: u64 = 3_000_000;
