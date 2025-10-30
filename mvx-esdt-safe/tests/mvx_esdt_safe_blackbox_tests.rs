@@ -41,7 +41,6 @@ use mvx_esdt_safe::bridging_mechanism::BridgingMechanism;
 use mvx_esdt_safe_blackbox_setup::MvxEsdtSafeTestState;
 use proxies::mvx_esdt_safe_proxy::MvxEsdtSafeProxy;
 use setup_phase::SetupPhaseModule;
-use structs::aliases::OptionalValueTransferDataTuple;
 use structs::configs::{
     MaxBridgedAmount, SetBurnMechanismOperation, SetLockMechanismOperation, SovereignConfig,
     UpdateEsdtSafeConfigOperation,
@@ -454,25 +453,16 @@ fn test_deposit_blacklist() {
         .deploy_header_verifier(vec![ScArray::ESDTSafe]);
     let payment = EgldOrEsdtTokenPayment::egld_payment(ONE_HUNDRED_TOKENS.into());
     let payments_vec = PaymentsVec::from_single_item(payment);
-    let caller = &USER_ADDRESS.to_managed_address();
+    let caller = &OWNER_ADDRESS.to_managed_address();
 
     state.add_caller_to_deposit_blacklist(caller);
 
-    let result = state
-        .common_setup
-        .world
-        .tx()
-        .from(USER_ADDRESS)
-        .to(ESDT_SAFE_ADDRESS)
-        .typed(MvxEsdtSafeProxy)
-        .deposit(OWNER_ADDRESS, OptionalValueTransferDataTuple::None)
-        .payment(payments_vec)
-        .returns(ReturnsHandledOrError::new())
-        .run();
-
-    state
-        .common_setup
-        .assert_expected_error_message(result, Some(CALLER_IS_BLACKLISTED));
+    state.deposit(
+        USER_ADDRESS.to_managed_address(),
+        OptionalValue::None,
+        payments_vec,
+        Some(CALLER_IS_BLACKLISTED),
+    );
 
     state.remove_caller_from_deposit_blacklist(caller);
 }
