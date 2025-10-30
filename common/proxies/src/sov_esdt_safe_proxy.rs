@@ -153,6 +153,32 @@ where
             .original_result()
     }
 
+    pub fn blacklist_deposit_caller<
+        Arg0: ProxyArg<ManagedAddress<Env::Api>>,
+    >(
+        self,
+        caller: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("blacklistDepositCaller")
+            .argument(&caller)
+            .original_result()
+    }
+
+    pub fn remove_deposit_caller_from_blacklist<
+        Arg0: ProxyArg<ManagedAddress<Env::Api>>,
+    >(
+        self,
+        caller: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("removeDepositCallerFromBlacklist")
+            .argument(&caller)
+            .original_result()
+    }
+
     pub fn sovereign_to_multiversx_token_id_mapper<
         Arg0: ProxyArg<EgldOrEsdtTokenIdentifier<Env::Api>>,
     >(
@@ -217,6 +243,15 @@ where
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("getNativeToken")
+            .original_result()
+    }
+
+    pub fn deposit_callers_blacklist(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, MultiValueEncoded<Env::Api, ManagedAddress<Env::Api>>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getDepositCallersBlacklist")
             .original_result()
     }
 

@@ -147,16 +147,4 @@ pub trait MvxEsdtSafe:
         self.remove_admin(self.admins().get_by_index(1));
         self.setup_phase_complete().set(true);
     }
-
-    #[only_owner]
-    #[endpoint(blacklistDepositCaller)]
-    fn blacklist_deposit_caller(&self, caller: ManagedAddress) {
-        self.deposit_callers_blacklist().insert(caller);
-    }
-
-    #[only_owner]
-    #[endpoint(removeDepositCallerFromBlacklist)]
-    fn remove_deposit_caller_from_blacklist(&self, caller: ManagedAddress) {
-        self.deposit_callers_blacklist().swap_remove(&caller);
-    }
 }

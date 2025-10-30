@@ -1,6 +1,6 @@
 use error_messages::{
-    BANNED_ENDPOINT_NAME, DEPOSIT_OVER_MAX_AMOUNT, ESDT_SAFE_STILL_PAUSED, GAS_LIMIT_TOO_HIGH,
-    NOTHING_TO_TRANSFER, TOKEN_BLACKLISTED, TOO_MANY_TOKENS,
+    BANNED_ENDPOINT_NAME, CALLER_IS_BLACKLISTED, DEPOSIT_OVER_MAX_AMOUNT, ESDT_SAFE_STILL_PAUSED,
+    GAS_LIMIT_TOO_HIGH, NOTHING_TO_TRANSFER, TOKEN_BLACKLISTED, TOO_MANY_TOKENS,
 };
 use multiversx_sc::api::ESDT_LOCAL_BURN_FUNC_NAME;
 use proxies::mvx_fee_market_proxy::MvxFeeMarketProxy;
@@ -23,6 +23,26 @@ pub trait DepositCommonModule:
     + custom_events::CustomEventsModule
     + multiversx_sc_modules::pause::PauseModule
 {
+    #[only_owner]
+    #[endpoint(blacklistDepositCaller)]
+    fn blacklist_deposit_caller(&self, caller: ManagedAddress) {
+        self.deposit_callers_blacklist().insert(caller);
+    }
+
+    #[only_owner]
+    #[endpoint(removeDepositCallerFromBlacklist)]
+    fn remove_deposit_caller_from_blacklist(&self, caller: ManagedAddress) {
+        self.deposit_callers_blacklist().swap_remove(&caller);
+    }
+
+    fn require_caller_not_blacklisted(&self) {
+        let caller = self.blockchain().get_caller();
+        require!(
+            !self.deposit_callers_blacklist().contains(&caller),
+            CALLER_IS_BLACKLISTED
+        );
+    }
+
     fn deposit_common<F>(
         &self,
         to: ManagedAddress,

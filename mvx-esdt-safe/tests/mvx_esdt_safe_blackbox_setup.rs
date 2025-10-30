@@ -18,7 +18,6 @@ use multiversx_sc::{
     },
 };
 use multiversx_sc_scenario::imports::*;
-use mvx_esdt_safe::deposit::DepositModule;
 use mvx_esdt_safe::MvxEsdtSafe;
 use proxies::mvx_esdt_safe_proxy::MvxEsdtSafeProxy;
 use structs::configs::{
