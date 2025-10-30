@@ -223,13 +223,9 @@ impl MvxEsdtSafeTestState {
         self.common_setup
             .assert_expected_error_message(result, None);
 
-        let expected_logs = if expected_error_message.is_some() {
-            vec![
-                log!(UPDATE_ESDT_SAFE_CONFIG_ENDPOINT, topics: [EXECUTED_BRIDGE_OP_EVENT], data: Some(expected_error_message.unwrap())),
-            ]
-        } else {
-            vec![log!(UPDATE_ESDT_SAFE_CONFIG_ENDPOINT, topics: [EXECUTED_BRIDGE_OP_EVENT])]
-        };
+        let expected_logs = vec![
+            log!(UPDATE_ESDT_SAFE_CONFIG_ENDPOINT, topics: [EXECUTED_BRIDGE_OP_EVENT], data: expected_error_message),
+        ];
 
         self.common_setup
             .assert_expected_log_refactored(logs, expected_logs);
