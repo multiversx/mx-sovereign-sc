@@ -2996,7 +2996,7 @@ fn test_update_config() {
     );
 
     let esdt_safe_config = EsdtSafeConfig {
-        max_tx_gas_limit: 100_000,
+        max_tx_gas_limit: ONE_HUNDRED_THOUSAND as u64,
         deposit_blacklist: ManagedVec::from_iter(vec![OWNER_ADDRESS.to_managed_address()]),
         ..EsdtSafeConfig::default_config()
     };
@@ -3048,7 +3048,7 @@ fn test_update_config() {
         .whitebox(mvx_esdt_safe::contract_obj, |sc| {
             let config = sc.esdt_safe_config().get();
             assert!(
-                config.max_tx_gas_limit == 100_000
+                config.max_tx_gas_limit == ONE_HUNDRED_THOUSAND as u64
                     && config
                         .deposit_blacklist
                         .contains(&OWNER_ADDRESS.to_managed_address())
@@ -3071,7 +3071,7 @@ fn test_update_config() {
         .to(HEADER_VERIFIER_ADDRESS)
         .whitebox(header_verifier::contract_obj, |sc| {
             let new_config_whitebox = EsdtSafeConfig {
-                max_tx_gas_limit: 100_000,
+                max_tx_gas_limit: ONE_HUNDRED_THOUSAND as u64,
                 ..EsdtSafeConfig::default_config()
             };
 
