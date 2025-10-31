@@ -199,9 +199,8 @@ impl SovEsdtSafeTestState {
             .assert_expected_error_message(response, expected_error_message);
 
         if expected_error_message.is_none() {
-            let expected_logs = vec![
-                log!(REGISTER_TOKEN_ENDPOINT, topics: [EXECUTED_BRIDGE_OP_EVENT], data: expected_error_message),
-            ];
+            let expected_logs =
+                vec![log!(REGISTER_TOKEN_ENDPOINT, topics: [EXECUTED_BRIDGE_OP_EVENT])];
 
             self.common_setup.assert_expected_logs(logs, expected_logs);
         }
