@@ -1,3 +1,7 @@
+use common_test_setup::{
+    base_setup::init::ExpectedLogs,
+    constants::{DISTRIBUTE_FEES_ENDPOINT, REMOVE_FEE_ENDPOINT},
+};
 use multiversx_sc::{
     imports::OptionalValue,
     types::{
@@ -10,10 +14,11 @@ use multiversx_sc_scenario::imports::*;
 use common_test_setup::{
     base_setup::init::{AccountSetup, BaseSetup},
     constants::{
-        CROWD_TOKEN_ID, ESDT_SAFE_ADDRESS, FEE_MARKET_ADDRESS, FIRST_TEST_TOKEN,
-        HEADER_VERIFIER_ADDRESS, MVX_ESDT_SAFE_CODE_PATH, OWNER_ADDRESS, OWNER_BALANCE,
-        SECOND_TEST_TOKEN, USER_ADDRESS,
+        CROWD_TOKEN_ID, ESDT_SAFE_ADDRESS, EXECUTED_BRIDGE_OP_EVENT, FEE_MARKET_ADDRESS,
+        FIRST_TEST_TOKEN, HEADER_VERIFIER_ADDRESS, MVX_ESDT_SAFE_CODE_PATH, OWNER_ADDRESS,
+        OWNER_BALANCE, SECOND_TEST_TOKEN, SET_FEE_ENDPOINT, USER_ADDRESS,
     },
+    log,
 };
 use proxies::mvx_fee_market_proxy::MvxFeeMarketProxy;
 use structs::fee::{
@@ -138,8 +143,6 @@ impl MvxFeeMarketTestState {
         hash_of_hashes: &ManagedBuffer<StaticApi>,
         remove_fee_operation: RemoveFeeOperation<StaticApi>,
         expected_error_message: Option<&str>,
-        expected_log: Option<&str>,
-        expected_log_error: Option<&str>,
     ) {
         let (response, logs) = self
             .common_setup
@@ -153,19 +156,22 @@ impl MvxFeeMarketTestState {
             .returns(ReturnsLogs)
             .run();
 
-        self.common_setup
-            .assert_expected_error_message(response, expected_error_message);
+        let expected_logs = vec![
+            log!(REMOVE_FEE_ENDPOINT, topics: [EXECUTED_BRIDGE_OP_EVENT], data: expected_error_message),
+        ];
 
         self.common_setup
-            .assert_expected_log(logs, expected_log, expected_log_error);
+            .assert_expected_error_message(response, None);
+
+        self.common_setup
+            .assert_expected_log_refactored(logs, expected_logs);
     }
 
     pub fn set_fee(
         &mut self,
         hash_of_hashes: &ManagedBuffer<StaticApi>,
         set_fee_operation: SetFeeOperation<StaticApi>,
-        expected_custom_log: Option<&str>,
-        expected_log_error: Option<&str>,
+        expected_error_message: Option<&str>,
     ) {
         let (response, logs) = self
             .common_setup
@@ -182,8 +188,12 @@ impl MvxFeeMarketTestState {
         self.common_setup
             .assert_expected_error_message(response, None);
 
+        let expected_logs = vec![
+            log!(SET_FEE_ENDPOINT, topics: [EXECUTED_BRIDGE_OP_EVENT], data: expected_error_message),
+        ];
+
         self.common_setup
-            .assert_expected_log(logs, expected_custom_log, expected_log_error);
+            .assert_expected_log_refactored(logs, expected_logs);
     }
 
     pub fn set_fee_during_setup_phase(
@@ -235,8 +245,7 @@ impl MvxFeeMarketTestState {
         &mut self,
         hash_of_hashes: &ManagedBuffer<StaticApi>,
         operation: DistributeFeesOperation<StaticApi>,
-        expected_custom_log: Option<&str>,
-        expected_error_log: Option<&str>,
+        expected_error_message: Option<&str>,
     ) {
         let (response, logs) = self
             .common_setup
@@ -253,8 +262,12 @@ impl MvxFeeMarketTestState {
         self.common_setup
             .assert_expected_error_message(response, None);
 
+        let expected_logs = vec![
+            log!(DISTRIBUTE_FEES_ENDPOINT, topics: [EXECUTED_BRIDGE_OP_EVENT], data: expected_error_message),
+        ];
+
         self.common_setup
-            .assert_expected_log(logs, expected_custom_log, expected_error_log);
+            .assert_expected_log_refactored(logs, expected_logs);
     }
 
     pub fn add_users_to_whitelist_during_setup_phase(&mut self, users_vector: Vec<TestAddress>) {

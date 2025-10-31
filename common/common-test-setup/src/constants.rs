@@ -120,6 +120,9 @@ pub const EXECUTE_BRIDGE_OPS_ENDPOINT: &str = "executeBridgeOps";
 pub const REGISTER_TOKEN_EVENT: &str = "register_token";
 pub const CHANGE_VALIDATOR_SET_ENDPOINT: &str = "changeValidatorSet";
 pub const UPDATE_ESDT_SAFE_CONFIG_ENDPOINT: &str = "updateEsdtSafeConfig";
+pub const SET_FEE_ENDPOINT: &str = "setFee";
+pub const REMOVE_FEE_ENDPOINT: &str = "removeFee";
+pub const DISTRIBUTE_FEES_ENDPOINT: &str = "distributeFees";
 
 pub const WALLET_SHARD_0: &str = "wallets/wallet_shard_0.pem";
 pub const FAILED_TO_LOAD_WALLET_SHARD_0: &str = "Failed to load wallet for shard 0";
