@@ -65,8 +65,4 @@ pub trait CrossChainStorage {
         sc_address: ManagedAddress,
         token_id: &TokenIdentifier,
     ) -> SingleValueMapper<FeeType<Self::Api>, ManagedAddress>;
-
-    #[view(getDepositCallersBlacklist)]
-    #[storage_mapper("depositCallersBlacklist")]
-    fn deposit_callers_blacklist(&self) -> UnorderedSetMapper<ManagedAddress>;
 }

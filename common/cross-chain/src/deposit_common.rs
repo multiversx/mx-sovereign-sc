@@ -23,22 +23,14 @@ pub trait DepositCommonModule:
     + custom_events::CustomEventsModule
     + multiversx_sc_modules::pause::PauseModule
 {
-    #[only_owner]
-    #[endpoint(blacklistDepositCaller)]
-    fn blacklist_deposit_caller(&self, caller: ManagedAddress) {
-        self.deposit_callers_blacklist().insert(caller);
-    }
-
-    #[only_owner]
-    #[endpoint(removeDepositCallerFromBlacklist)]
-    fn remove_deposit_caller_from_blacklist(&self, caller: ManagedAddress) {
-        self.deposit_callers_blacklist().swap_remove(&caller);
-    }
-
     fn require_caller_not_blacklisted(&self) {
         let caller = self.blockchain().get_caller();
         require!(
-            !self.deposit_callers_blacklist().contains(&caller),
+            !self
+                .esdt_safe_config()
+                .get()
+                .deposit_blacklist
+                .contains(&caller),
             CALLER_IS_BLACKLISTED
         );
     }

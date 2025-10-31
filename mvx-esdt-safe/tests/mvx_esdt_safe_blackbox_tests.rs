@@ -441,39 +441,6 @@ fn test_deposit_nothing_to_transfer() {
 }
 
 /// ### TEST
-/// M-ESDT_DEP_OK
-///
-/// ### ACTION
-/// Call 'deposit()' as a blacklisted caller and then remove from blacklist
-///
-/// ### EXPECTED
-/// Error CALLER_IS_BLACKLISTED for the deposit attempt and successful removal from blacklist
-#[test]
-fn test_deposit_blacklist() {
-    let mut state = MvxEsdtSafeTestState::new();
-
-    state.deploy_contract_with_roles(None);
-    state.complete_setup_phase(Some(UNPAUSE_CONTRACT_LOG));
-    state
-        .common_setup
-        .deploy_header_verifier(vec![ScArray::ESDTSafe]);
-    let payment = EgldOrEsdtTokenPayment::egld_payment(ONE_HUNDRED_TOKENS.into());
-    let payments_vec = PaymentsVec::from_single_item(payment);
-    let caller = &OWNER_ADDRESS.to_managed_address();
-
-    state.add_caller_to_deposit_blacklist(caller);
-
-    state.deposit(
-        USER_ADDRESS.to_managed_address(),
-        OptionalValue::None,
-        payments_vec,
-        Some(CALLER_IS_BLACKLISTED),
-    );
-
-    state.remove_caller_from_deposit_blacklist(caller);
-}
-
-/// ### TEST
 /// M-ESDT_SETUP_OK
 ///
 /// ### ACTION
@@ -3030,6 +2997,7 @@ fn test_update_config() {
 
     let esdt_safe_config = EsdtSafeConfig {
         max_tx_gas_limit: 100_000,
+        deposit_blacklist: ManagedVec::from_iter(vec![OWNER_ADDRESS.to_managed_address()]),
         ..EsdtSafeConfig::default_config()
     };
     let update_config_operation = UpdateEsdtSafeConfigOperation {
@@ -3079,8 +3047,22 @@ fn test_update_config() {
         .to(ESDT_SAFE_ADDRESS)
         .whitebox(mvx_esdt_safe::contract_obj, |sc| {
             let config = sc.esdt_safe_config().get();
-            assert!(config.max_tx_gas_limit == 100_000);
+            assert!(
+                config.max_tx_gas_limit == 100_000
+                    && config
+                        .deposit_blacklist
+                        .contains(&OWNER_ADDRESS.to_managed_address())
+            );
         });
+
+    let payment = EgldOrEsdtTokenPayment::egld_payment(BigUint::zero());
+    let payment_vec = PaymentsVec::from(vec![payment]);
+    state.deposit(
+        USER_ADDRESS.to_managed_address(),
+        OptionalValue::None,
+        payment_vec,
+        Some(CALLER_IS_BLACKLISTED),
+    );
 
     state
         .common_setup

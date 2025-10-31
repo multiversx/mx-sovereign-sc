@@ -6,10 +6,10 @@
 
 // Init:                                 1
 // Upgrade:                              1
-// Endpoints:                           28
+// Endpoints:                           25
 // Async Callback (empty):               1
 // Promise callbacks:                    3
-// Total number of exported functions:  34
+// Total number of exported functions:  31
 
 #![no_std]
 
@@ -34,14 +34,11 @@ multiversx_sc_wasm_adapter::endpoints! {
         setTokenLockMechanismSetupPhase => set_token_lock_mechanism_setup_phase
         setTokenLockMechanism => set_token_lock_mechanism
         getDepositedTokensAmount => deposited_tokens_amount
-        blacklistDepositCaller => blacklist_deposit_caller
-        removeDepositCallerFromBlacklist => remove_deposit_caller_from_blacklist
         getSovToMvxTokenId => sovereign_to_multiversx_token_id_mapper
         getMvxToSovTokenId => multiversx_to_sovereign_token_id_mapper
         getSovEsdtTokenInfo => sovereign_to_multiversx_esdt_info_mapper
         getMvxEsdtTokenInfo => multiversx_to_sovereign_esdt_info_mapper
         getNativeToken => native_token
-        getDepositCallersBlacklist => deposit_callers_blacklist
         pause => pause_endpoint
         unpause => unpause_endpoint
         isPaused => paused_status
