@@ -128,21 +128,8 @@ impl HeaderVerifierTestState {
             .run()
             .into_option();
 
-        // TODO: create a separate common function
-        match response {
-            None => assert!(
-                response.is_none(),
-                "Transaction was successful, but expected error"
-            ),
-            Some(error_message) => {
-                let error_message_str = error_message.to_string();
-                assert_eq!(
-                    Some(error_message_str.as_str()),
-                    expected_error_message,
-                    "Expected error message did not match"
-                );
-            }
-        };
+        self.common_setup
+            .assert_optional_error_message(response, expected_error_message);
     }
 
     pub fn lock_operation_hash(
@@ -162,22 +149,11 @@ impl HeaderVerifierTestState {
             .typed(HeaderverifierProxy)
             .lock_operation_hash(hash_of_hashes, operation_hash, operation_nonce)
             .returns(ReturnsResultUnmanaged)
-            .run();
+            .run()
+            .into_option();
 
-        match response.clone().into_option() {
-            None => assert!(
-                response.is_none(),
-                "Transaction was successful, but expected error"
-            ),
-            Some(error_message_bytes) => {
-                let error_message_str: ManagedBuffer<StaticApi> =
-                    ManagedBuffer::new_from_bytes(&error_message_bytes);
-                assert_eq!(
-                    Some(error_message_str.to_string().as_str()),
-                    expected_error_message
-                );
-            }
-        };
+        self.common_setup
+            .assert_optional_error_message(response, expected_error_message);
     }
 
     #[allow(clippy::too_many_arguments)]
