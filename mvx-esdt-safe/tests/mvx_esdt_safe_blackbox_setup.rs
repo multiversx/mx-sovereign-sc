@@ -1,11 +1,12 @@
 use common_test_setup::base_setup::init::ExpectedLogs;
 use common_test_setup::base_setup::init::{AccountSetup, BaseSetup};
 use common_test_setup::constants::{
-    DEPOSIT_EVENT, ESDT_SAFE_ADDRESS, EXECUTED_BRIDGE_OP_EVENT, FEE_MARKET_ADDRESS, FEE_TOKEN,
-    FIRST_TEST_TOKEN, FIRST_TOKEN_ID, HEADER_VERIFIER_ADDRESS, MVX_ESDT_SAFE_CODE_PATH,
-    NATIVE_TEST_TOKEN, ONE_HUNDRED_MILLION, OWNER_ADDRESS, OWNER_BALANCE, SC_CALL_EVENT,
-    SECOND_TEST_TOKEN, SECOND_TOKEN_ID, SOVEREIGN_FORGE_SC_ADDRESS, SOVEREIGN_TOKEN_PREFIX,
-    TRUSTED_TOKEN, UNPAUSE_CONTRACT_LOG, UPDATE_ESDT_SAFE_CONFIG_ENDPOINT, USER_ADDRESS,
+    COMPLETE_SETUP_PHASE_ENDPOINT, DEPOSIT_EVENT, ESDT_SAFE_ADDRESS, EXECUTED_BRIDGE_OP_EVENT,
+    FEE_MARKET_ADDRESS, FEE_TOKEN, FIRST_TEST_TOKEN, FIRST_TOKEN_ID, HEADER_VERIFIER_ADDRESS,
+    MVX_ESDT_SAFE_CODE_PATH, NATIVE_TEST_TOKEN, ONE_HUNDRED_MILLION, OWNER_ADDRESS, OWNER_BALANCE,
+    SC_CALL_EVENT, SECOND_TEST_TOKEN, SECOND_TOKEN_ID, SOVEREIGN_FORGE_SC_ADDRESS,
+    SOVEREIGN_TOKEN_PREFIX, TRUSTED_TOKEN, UNPAUSE_CONTRACT_LOG, UPDATE_ESDT_SAFE_CONFIG_ENDPOINT,
+    USER_ADDRESS,
 };
 use common_test_setup::log;
 use cross_chain::storage::CrossChainStorage;
@@ -228,7 +229,7 @@ impl MvxEsdtSafeTestState {
         ];
 
         self.common_setup
-            .assert_expected_log_refactored(logs, expected_logs);
+            .assert_expected_logs(logs, expected_logs);
     }
 
     pub fn set_token_burn_mechanism(
@@ -369,7 +370,7 @@ impl MvxEsdtSafeTestState {
                 vec![log!(DEPOSIT_EVENT, topics: [DEPOSIT_EVENT])]
             };
             self.common_setup
-                .assert_expected_log_refactored(logs, expected_logs);
+                .assert_expected_logs(logs, expected_logs);
         }
     }
 
@@ -396,7 +397,7 @@ impl MvxEsdtSafeTestState {
             .assert_expected_error_message(result, expected_error_message);
 
         self.common_setup
-            .assert_expected_log_refactored(logs, expected_logs);
+            .assert_expected_logs(logs, expected_logs);
     }
 
     pub fn register_native_token(
@@ -447,10 +448,10 @@ impl MvxEsdtSafeTestState {
             .assert_expected_error_message(result, None);
 
         self.common_setup
-            .assert_expected_log_refactored(logs, expected_logs);
+            .assert_expected_logs(logs, expected_logs);
     }
 
-    pub fn complete_setup_phase(&mut self, expected_log: Option<&str>) {
+    pub fn complete_setup_phase(&mut self) {
         let (logs, result) = self
             .common_setup
             .world
@@ -466,19 +467,18 @@ impl MvxEsdtSafeTestState {
         self.common_setup
             .assert_expected_error_message(result, None);
 
+        let expected_logs =
+            vec![log!(COMPLETE_SETUP_PHASE_ENDPOINT, topics: [UNPAUSE_CONTRACT_LOG])];
+
         self.common_setup
-            .assert_expected_log(logs, expected_log, None);
+            .assert_expected_logs(logs, expected_logs);
 
         self.common_setup
             .change_ownership_to_header_verifier(ESDT_SAFE_ADDRESS);
     }
 
-    pub fn complete_setup_phase_as_header_verifier(
-        &mut self,
-        expected_custom_log: Option<&str>,
-        expected_log_error: Option<&str>,
-    ) {
-        let (result, logs) = self
+    pub fn complete_setup_phase_as_header_verifier(&mut self) {
+        let result = self
             .common_setup
             .world
             .tx()
@@ -487,14 +487,10 @@ impl MvxEsdtSafeTestState {
             .typed(MvxEsdtSafeProxy)
             .complete_setup_phase()
             .returns(ReturnsHandledOrError::new())
-            .returns(ReturnsLogs)
             .run();
 
         self.common_setup
             .assert_expected_error_message(result, None);
-
-        self.common_setup
-            .assert_expected_log(logs, expected_custom_log, expected_log_error);
     }
 
     pub fn deploy_and_complete_setup_phase(
@@ -517,7 +513,7 @@ impl MvxEsdtSafeTestState {
         self.common_setup
             .deploy_header_verifier(vec![ScArray::ChainConfig, ScArray::ESDTSafe]);
         self.common_setup.complete_header_verifier_setup_phase(None);
-        self.complete_setup_phase(Some(UNPAUSE_CONTRACT_LOG));
+        self.complete_setup_phase();
 
         signature
     }

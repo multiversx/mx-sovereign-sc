@@ -193,8 +193,7 @@ impl HeaderVerifierTestState {
             log!(CHANGE_VALIDATOR_SET_ENDPOINT, topics: [EXECUTED_BRIDGE_OP_EVENT], data: execution_error),
         ];
 
-        self.common_setup
-            .assert_expected_log_refactored(logs, expected_logs);
+        self.common_setup.assert_expected_logs(logs, expected_logs);
     }
 
     pub fn generate_bridge_operation_struct(

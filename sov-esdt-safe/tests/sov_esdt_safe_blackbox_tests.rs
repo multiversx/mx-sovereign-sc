@@ -1,6 +1,6 @@
 use common_test_setup::constants::{
-    DEPOSIT_EVENT, ESDT_SAFE_ADDRESS, FEE_MARKET_ADDRESS, FEE_TOKEN, FIRST_TEST_TOKEN, ISSUE_COST,
-    ONE_HUNDRED_MILLION, ONE_HUNDRED_THOUSAND, OWNER_ADDRESS, PER_GAS, PER_TRANSFER, SC_CALL_EVENT,
+    ESDT_SAFE_ADDRESS, FEE_MARKET_ADDRESS, FEE_TOKEN, FIRST_TEST_TOKEN, ISSUE_COST,
+    ONE_HUNDRED_MILLION, ONE_HUNDRED_THOUSAND, OWNER_ADDRESS, PER_GAS, PER_TRANSFER,
     SECOND_TEST_TOKEN, SOV_TOKEN, TESTING_SC_ENDPOINT, USER_ADDRESS,
 };
 use error_messages::{
@@ -73,11 +73,11 @@ fn test_deposit_no_fee_no_transfer_data() {
         esdt_token_payment_two.clone(),
     ]);
 
-    state.deposit_with_logs(
+    state.deposit(
         USER_ADDRESS.to_managed_address(),
         OptionalValue::None,
         payments_vec.clone(),
-        Some(DEPOSIT_EVENT),
+        None,
     );
 
     let expected_tokens = vec![
@@ -158,7 +158,6 @@ fn test_deposit_with_fee_no_transfer_data() {
         OptionalValue::None,
         payments_vec.clone(),
         None,
-        Some(DEPOSIT_EVENT),
     );
 
     let expected_amount_token_one =
@@ -247,11 +246,11 @@ fn test_deposit_no_fee_with_transfer_data() {
 
     let transfer_data = MultiValue3::from((gas_limit, function, args));
 
-    state.deposit_with_logs(
+    state.deposit(
         USER_ADDRESS.to_managed_address(),
         OptionalValue::Some(transfer_data),
         payments_vec.clone(),
-        Some(DEPOSIT_EVENT),
+        None,
     );
 
     let expected_amount_token_one =
@@ -346,7 +345,6 @@ fn test_deposit_with_fee_with_transfer_data() {
         OptionalValue::Some(transfer_data),
         payments_vec.clone(),
         None,
-        Some(DEPOSIT_EVENT),
     );
 
     let expected_amount_token_one =
@@ -414,7 +412,6 @@ fn test_deposit_no_transfer_data_no_payments() {
         OptionalValue::None,
         PaymentsVec::new(),
         Some(NOTHING_TO_TRANSFER),
-        None,
     );
 }
 
@@ -451,7 +448,6 @@ fn test_deposit_sc_call_only() {
         OptionalValue::Some(transfer_data.clone()),
         PaymentsVec::new(),
         None,
-        Some(SC_CALL_EVENT),
     );
 }
 
@@ -488,12 +484,7 @@ fn test_register_token_not_enough_issue_cost() {
         num_decimals: 18,
     };
 
-    state.register_token(
-        new_token,
-        egld_token_payment,
-        None,
-        Some(ISSUE_COST_NOT_COVERED),
-    );
+    state.register_token(new_token, egld_token_payment, Some(ISSUE_COST_NOT_COVERED));
 }
 
 /// ### TEST
@@ -529,12 +520,7 @@ fn test_register_token_with_no_prefix() {
         num_decimals: 18,
     };
 
-    state.register_token(
-        new_token,
-        egld_token_payment,
-        None,
-        Some(TOKEN_ID_NO_PREFIX),
-    );
+    state.register_token(new_token, egld_token_payment, Some(TOKEN_ID_NO_PREFIX));
 }
 
 /// ### TEST
@@ -573,7 +559,6 @@ fn test_register_token_wrong_payment() {
     state.register_token(
         new_token,
         egld_token_payment,
-        None,
         Some(EGLD_TOKEN_IDENTIFIER_EXPECTED),
     );
 }
@@ -612,10 +597,5 @@ fn test_register_token() {
         num_decimals: 18,
     };
 
-    state.register_token(
-        new_token,
-        egld_token_payment,
-        None,
-        Some(ACTION_IS_NOT_ALLOWED),
-    );
+    state.register_token(new_token, egld_token_payment, Some(ACTION_IS_NOT_ALLOWED));
 }

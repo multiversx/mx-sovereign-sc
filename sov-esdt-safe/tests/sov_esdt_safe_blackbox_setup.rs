@@ -1,3 +1,7 @@
+use common_test_setup::{
+    base_setup::init::ExpectedLogs,
+    constants::{REGISTER_TOKEN_ENDPOINT, SC_CALL_EVENT},
+};
 use multiversx_sc::{
     imports::OptionalValue,
     types::{
@@ -8,10 +12,14 @@ use multiversx_sc::{
 
 use multiversx_sc_scenario::imports::*;
 
-use common_test_setup::base_setup::init::{AccountSetup, BaseSetup};
 use common_test_setup::constants::{
-    ESDT_SAFE_ADDRESS, FEE_MARKET_ADDRESS, FEE_TOKEN, FIRST_TEST_TOKEN, ONE_HUNDRED_MILLION,
-    OWNER_ADDRESS, OWNER_BALANCE, SECOND_TEST_TOKEN, SOV_ESDT_SAFE_CODE_PATH, USER_ADDRESS,
+    DEPOSIT_EVENT, ESDT_SAFE_ADDRESS, FEE_MARKET_ADDRESS, FEE_TOKEN, FIRST_TEST_TOKEN,
+    ONE_HUNDRED_MILLION, OWNER_ADDRESS, OWNER_BALANCE, SECOND_TEST_TOKEN, SOV_ESDT_SAFE_CODE_PATH,
+    USER_ADDRESS,
+};
+use common_test_setup::{
+    base_setup::init::{AccountSetup, BaseSetup},
+    log,
 };
 use proxies::sov_esdt_safe_proxy::SovEsdtSafeProxy;
 use sov_esdt_safe::SovEsdtSafe;
@@ -124,7 +132,6 @@ impl SovEsdtSafeTestState {
         opt_transfer_data: OptionalValueTransferDataTuple<StaticApi>,
         payment: PaymentsVec<StaticApi>,
         expected_error_message: Option<&str>,
-        expected_log: Option<&str>,
     ) {
         let (logs, response) = self
             .common_setup
@@ -134,7 +141,7 @@ impl SovEsdtSafeTestState {
             .to(ESDT_SAFE_ADDRESS)
             .typed(SovEsdtSafeProxy)
             .deposit(to, opt_transfer_data.clone())
-            .payment(payment)
+            .payment(payment.clone())
             .returns(ReturnsLogs)
             .returns(ReturnsHandledOrError::new())
             .run();
@@ -142,8 +149,14 @@ impl SovEsdtSafeTestState {
         self.common_setup
             .assert_expected_error_message(response, expected_error_message);
 
-        self.common_setup
-            .assert_expected_log(logs, expected_log, expected_error_message);
+        if expected_error_message.is_none() {
+            let expected_logs = if payment.is_empty() {
+                vec![log!(DEPOSIT_EVENT, topics: [SC_CALL_EVENT])]
+            } else {
+                vec![log!(DEPOSIT_EVENT, topics: [DEPOSIT_EVENT])]
+            };
+            self.common_setup.assert_expected_logs(logs, expected_logs);
+        }
     }
 
     pub fn set_fee_market_address(&mut self, fee_market_address: TestSCAddress) {
@@ -157,38 +170,10 @@ impl SovEsdtSafeTestState {
             .run();
     }
 
-    pub fn deposit_with_logs(
-        &mut self,
-        to: ManagedAddress<StaticApi>,
-        opt_transfer_data: OptionalValueTransferDataTuple<StaticApi>,
-        payment: PaymentsVec<StaticApi>,
-        expected_log: Option<&str>,
-    ) {
-        let (logs, response) = self
-            .common_setup
-            .world
-            .tx()
-            .from(OWNER_ADDRESS)
-            .to(ESDT_SAFE_ADDRESS)
-            .typed(SovEsdtSafeProxy)
-            .deposit(to, opt_transfer_data)
-            .payment(payment)
-            .returns(ReturnsLogs)
-            .returns(ReturnsHandledOrError::new())
-            .run();
-
-        self.common_setup
-            .assert_expected_error_message(response, None);
-
-        self.common_setup
-            .assert_expected_log(logs, expected_log, None);
-    }
-
     pub fn register_token(
         &mut self,
         new_token: RegisterTokenStruct<StaticApi>,
         payment: EgldOrEsdtTokenPayment<StaticApi>,
-        expected_log: Option<&str>,
         expected_error_message: Option<&str>,
     ) {
         let (logs, response) = self
@@ -213,7 +198,11 @@ impl SovEsdtSafeTestState {
         self.common_setup
             .assert_expected_error_message(response, expected_error_message);
 
-        self.common_setup
-            .assert_expected_log(logs, expected_log, expected_error_message);
+        if expected_error_message.is_none() {
+            let expected_logs =
+                vec![log!(REGISTER_TOKEN_ENDPOINT, topics: [REGISTER_TOKEN_ENDPOINT])];
+
+            self.common_setup.assert_expected_logs(logs, expected_logs);
+        }
     }
 }
