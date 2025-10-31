@@ -1,6 +1,6 @@
 use common_test_setup::{
     base_setup::init::ExpectedLogs,
-    constants::{EXECUTED_BRIDGE_OP_EVENT, REGISTER_TOKEN_ENDPOINT, SC_CALL_EVENT},
+    constants::{REGISTER_TOKEN_ENDPOINT, SC_CALL_EVENT},
 };
 use multiversx_sc::{
     imports::OptionalValue,
@@ -200,7 +200,7 @@ impl SovEsdtSafeTestState {
 
         if expected_error_message.is_none() {
             let expected_logs =
-                vec![log!(REGISTER_TOKEN_ENDPOINT, topics: [EXECUTED_BRIDGE_OP_EVENT])];
+                vec![log!(REGISTER_TOKEN_ENDPOINT, topics: [REGISTER_TOKEN_ENDPOINT])];
 
             self.common_setup.assert_expected_logs(logs, expected_logs);
         }
