@@ -44,6 +44,7 @@ pub trait DepositCommonModule:
         F: Fn(&EgldOrEsdtTokenPayment<Self::Api>) -> EventPaymentTuple<Self::Api>,
     {
         require!(self.not_paused(), ESDT_SAFE_STILL_PAUSED);
+        self.require_caller_not_blacklisted();
 
         let option_transfer_data = TransferData::from_optional_value(opt_transfer_data.clone());
 

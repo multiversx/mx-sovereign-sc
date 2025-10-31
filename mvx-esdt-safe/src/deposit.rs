@@ -20,7 +20,6 @@ pub trait DepositModule:
         opt_transfer_data: OptionalValueTransferDataTuple<Self::Api>,
     ) {
         self.require_setup_complete();
-        self.require_caller_not_blacklisted();
         self.deposit_common(to, opt_transfer_data, |payment| {
             self.process_payment(payment)
         });
