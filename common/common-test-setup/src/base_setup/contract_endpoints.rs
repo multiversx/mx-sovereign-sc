@@ -1,4 +1,5 @@
 use crate::base_setup::init::ExpectedLogs;
+use crate::base_setup::log_validations::assert_expected_logs;
 use crate::constants::{
     EXECUTED_BRIDGE_OP_EVENT, REGISTER_BLS_KEY_ENDPOINT, SOVEREIGN_FORGE_SC_ADDRESS,
     UNREGISTER_BLS_KEY_ENDPOINT,
@@ -142,7 +143,7 @@ impl BaseSetup {
 
         let expected_logs =
             vec![log!(REGISTER_BLS_KEY_ENDPOINT, topics: [EXECUTED_BRIDGE_OP_EVENT])];
-        self.assert_expected_logs(logs, expected_logs);
+        assert_expected_logs(logs, expected_logs);
     }
 
     pub fn register_validator_operation(
@@ -207,7 +208,7 @@ impl BaseSetup {
 
         let expected_logs =
             vec![log!(UNREGISTER_BLS_KEY_ENDPOINT, topics: [EXECUTED_BRIDGE_OP_EVENT])];
-        self.assert_expected_logs(logs, expected_logs);
+        assert_expected_logs(logs, expected_logs);
     }
 
     pub fn set_bls_keys_in_header_storage(&mut self, pub_keys: Vec<ManagedBuffer<StaticApi>>) {

@@ -4,3 +4,4 @@ pub mod contract_endpoints;
 pub mod deploy;
 pub mod helpers;
 pub mod init;
+pub mod log_validations;

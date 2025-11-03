@@ -1,5 +1,5 @@
 use common_test_setup::{
-    base_setup::init::ExpectedLogs,
+    base_setup::{init::ExpectedLogs, log_validations::assert_expected_logs},
     constants::{DISTRIBUTE_FEES_ENDPOINT, REMOVE_FEE_ENDPOINT},
 };
 use multiversx_sc::{
@@ -163,7 +163,7 @@ impl MvxFeeMarketTestState {
         self.common_setup
             .assert_expected_error_message(response, None);
 
-        self.common_setup.assert_expected_logs(logs, expected_logs);
+        assert_expected_logs(logs, expected_logs);
     }
 
     pub fn set_fee(
@@ -191,7 +191,7 @@ impl MvxFeeMarketTestState {
             log!(SET_FEE_ENDPOINT, topics: [EXECUTED_BRIDGE_OP_EVENT], data: expected_error_message),
         ];
 
-        self.common_setup.assert_expected_logs(logs, expected_logs);
+        assert_expected_logs(logs, expected_logs);
     }
 
     pub fn set_fee_during_setup_phase(
@@ -264,7 +264,7 @@ impl MvxFeeMarketTestState {
             log!(DISTRIBUTE_FEES_ENDPOINT, topics: [EXECUTED_BRIDGE_OP_EVENT], data: expected_error_message),
         ];
 
-        self.common_setup.assert_expected_logs(logs, expected_logs);
+        assert_expected_logs(logs, expected_logs);
     }
 
     pub fn add_users_to_whitelist_during_setup_phase(&mut self, users_vector: Vec<TestAddress>) {
