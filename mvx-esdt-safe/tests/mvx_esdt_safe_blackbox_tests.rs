@@ -2997,7 +2997,7 @@ fn test_update_config() {
 
     let esdt_safe_config = EsdtSafeConfig {
         max_tx_gas_limit: ONE_HUNDRED_THOUSAND as u64,
-        deposit_blacklist: ManagedVec::from_iter(vec![OWNER_ADDRESS.to_managed_address()]),
+        address_blacklist: ManagedVec::from_iter(vec![OWNER_ADDRESS.to_managed_address()]),
         ..EsdtSafeConfig::default_config()
     };
     let update_config_operation = UpdateEsdtSafeConfigOperation {
@@ -3050,7 +3050,7 @@ fn test_update_config() {
             assert!(
                 config.max_tx_gas_limit == ONE_HUNDRED_THOUSAND as u64
                     && config
-                        .deposit_blacklist
+                        .address_blacklist
                         .contains(&OWNER_ADDRESS.to_managed_address())
             );
         });

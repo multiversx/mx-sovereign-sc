@@ -314,7 +314,7 @@ pub trait DepositCommonModule:
             !self
                 .esdt_safe_config()
                 .get()
-                .deposit_blacklist
+                .address_blacklist
                 .contains(&caller),
             CALLER_IS_BLACKLISTED
         );
