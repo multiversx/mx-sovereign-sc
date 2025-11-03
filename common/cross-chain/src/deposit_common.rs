@@ -23,18 +23,6 @@ pub trait DepositCommonModule:
     + custom_events::CustomEventsModule
     + multiversx_sc_modules::pause::PauseModule
 {
-    fn require_caller_not_blacklisted(&self) {
-        let caller = self.blockchain().get_caller();
-        require!(
-            !self
-                .esdt_safe_config()
-                .get()
-                .deposit_blacklist
-                .contains(&caller),
-            CALLER_IS_BLACKLISTED
-        );
-    }
-
     fn deposit_common<F>(
         &self,
         to: ManagedAddress,
@@ -316,6 +304,19 @@ pub trait DepositCommonModule:
         require!(
             gas_limit <= self.esdt_safe_config().get().max_tx_gas_limit,
             GAS_LIMIT_TOO_HIGH
+        );
+    }
+
+    #[inline]
+    fn require_caller_not_blacklisted(&self) {
+        let caller = self.blockchain().get_caller();
+        require!(
+            !self
+                .esdt_safe_config()
+                .get()
+                .deposit_blacklist
+                .contains(&caller),
+            CALLER_IS_BLACKLISTED
         );
     }
 }

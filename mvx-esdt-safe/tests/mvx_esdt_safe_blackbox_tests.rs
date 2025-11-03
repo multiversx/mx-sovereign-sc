@@ -3038,7 +3038,7 @@ fn test_update_config() {
         MultiValueEncoded::from_iter(vec![config_hash]),
     );
 
-    state.update_esdt_safe_config(&hash_of_hashes, update_config_operation, None);
+    state.update_esdt_safe_config(&hash_of_hashes, update_config_operation.clone(), None);
 
     state
         .common_setup
@@ -3070,12 +3070,8 @@ fn test_update_config() {
         .query()
         .to(HEADER_VERIFIER_ADDRESS)
         .whitebox(header_verifier::contract_obj, |sc| {
-            let new_config_whitebox = EsdtSafeConfig {
-                max_tx_gas_limit: ONE_HUNDRED_THOUSAND as u64,
-                ..EsdtSafeConfig::default_config()
-            };
-
-            let config_hash_whitebox = new_config_whitebox.generate_hash();
+            let config_hash_whitebox =
+                ManagedBuffer::from(update_config_operation.generate_hash().to_vec());
             let hash_of_hashes_whitebox =
                 ManagedBuffer::new_from_bytes(&sha256(&config_hash_whitebox.to_vec()));
             assert!(sc
