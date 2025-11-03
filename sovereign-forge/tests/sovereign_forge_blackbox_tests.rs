@@ -18,7 +18,7 @@ use fee_common::storage::FeeCommonStorageModule;
 use multiversx_sc::{
     imports::OptionalValue,
     types::{
-        BigUint, EgldOrEsdtTokenIdentifier, ManagedBuffer, ManagedVec, MultiEgldOrEsdtPayment,
+        BigUint, EgldOrEsdtTokenIdentifier, ManagedBuffer, MultiEgldOrEsdtPayment,
         ReturnsResultUnmanaged,
     },
 };
@@ -262,13 +262,10 @@ fn test_update_esdt_safe_config() {
         });
 
     state.update_esdt_safe_config(
-        EsdtSafeConfig::new(
-            ManagedVec::new(),
-            ManagedVec::new(),
-            ONE_HUNDRED_THOUSAND.into(),
-            ManagedVec::new(),
-            ManagedVec::new(),
-        ),
+        EsdtSafeConfig {
+            max_tx_gas_limit: ONE_HUNDRED_THOUSAND.into(),
+            ..EsdtSafeConfig::default_config()
+        },
         None,
     );
 

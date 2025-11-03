@@ -131,6 +131,7 @@ pub struct EsdtSafeConfig<M: ManagedTypeApi> {
     pub token_blacklist: ManagedVec<M, EgldOrEsdtTokenIdentifier<M>>,
     pub max_tx_gas_limit: GasLimit,
     pub banned_endpoints: ManagedVec<M, ManagedBuffer<M>>,
+    pub address_blacklist: ManagedVec<M, ManagedAddress<M>>,
     pub max_bridged_token_amounts: ManagedVec<M, MaxBridgedAmount<M>>,
 }
 
@@ -144,6 +145,7 @@ impl<M: ManagedTypeApi> EsdtSafeConfig<M> {
             token_blacklist: ManagedVec::new(),
             max_tx_gas_limit: DEFAULT_MAX_TX_GAS_LIMIT,
             banned_endpoints: ManagedVec::new(),
+            address_blacklist: ManagedVec::new(),
             max_bridged_token_amounts: ManagedVec::new(),
         }
     }
@@ -153,6 +155,7 @@ impl<M: ManagedTypeApi> EsdtSafeConfig<M> {
         token_blacklist: ManagedVec<M, EgldOrEsdtTokenIdentifier<M>>,
         max_tx_gas_limit: GasLimit,
         banned_endpoints: ManagedVec<M, ManagedBuffer<M>>,
+        deposit_blacklist: ManagedVec<M, ManagedAddress<M>>,
         max_bridged_token_amounts: ManagedVec<M, MaxBridgedAmount<M>>,
     ) -> Self {
         EsdtSafeConfig {
@@ -160,6 +163,7 @@ impl<M: ManagedTypeApi> EsdtSafeConfig<M> {
             token_blacklist,
             max_tx_gas_limit,
             banned_endpoints,
+            address_blacklist: deposit_blacklist,
             max_bridged_token_amounts,
         }
     }

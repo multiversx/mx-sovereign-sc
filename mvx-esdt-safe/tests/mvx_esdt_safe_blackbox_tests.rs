@@ -13,13 +13,13 @@ use common_test_setup::log;
 use cross_chain::storage::CrossChainStorage;
 use cross_chain::{DEFAULT_ISSUE_COST, MAX_GAS_PER_TRANSACTION};
 use error_messages::{
-    BANNED_ENDPOINT_NAME, CALLER_NOT_FROM_CURRENT_SOVEREIGN, CURRENT_OPERATION_NOT_REGISTERED,
-    DEPOSIT_AMOUNT_NOT_ENOUGH, DEPOSIT_OVER_MAX_AMOUNT, ERR_EMPTY_PAYMENTS, GAS_LIMIT_TOO_HIGH,
-    INVALID_FUNCTION_NOT_FOUND, INVALID_PREFIX_FOR_REGISTER, INVALID_TYPE,
-    MAX_GAS_LIMIT_PER_TX_EXCEEDED, MINT_AND_BURN_ROLES_NOT_FOUND, NATIVE_TOKEN_ALREADY_REGISTERED,
-    NATIVE_TOKEN_NOT_REGISTERED, NOTHING_TO_TRANSFER, NOT_ENOUGH_EGLD_FOR_REGISTER,
-    PAYMENT_DOES_NOT_COVER_FEE, SETUP_PHASE_NOT_COMPLETED, TOKEN_ID_IS_NOT_TRUSTED,
-    TOO_MANY_TOKENS,
+    BANNED_ENDPOINT_NAME, CALLER_IS_BLACKLISTED, CALLER_NOT_FROM_CURRENT_SOVEREIGN,
+    CURRENT_OPERATION_NOT_REGISTERED, DEPOSIT_AMOUNT_NOT_ENOUGH, DEPOSIT_OVER_MAX_AMOUNT,
+    ERR_EMPTY_PAYMENTS, GAS_LIMIT_TOO_HIGH, INVALID_FUNCTION_NOT_FOUND,
+    INVALID_PREFIX_FOR_REGISTER, INVALID_TYPE, MAX_GAS_LIMIT_PER_TX_EXCEEDED,
+    MINT_AND_BURN_ROLES_NOT_FOUND, NATIVE_TOKEN_ALREADY_REGISTERED, NATIVE_TOKEN_NOT_REGISTERED,
+    NOTHING_TO_TRANSFER, NOT_ENOUGH_EGLD_FOR_REGISTER, PAYMENT_DOES_NOT_COVER_FEE,
+    SETUP_PHASE_NOT_COMPLETED, TOKEN_ID_IS_NOT_TRUSTED, TOO_MANY_TOKENS,
 };
 use header_verifier::storage::HeaderVerifierStorageModule;
 use multiversx_sc::chain_core::EGLD_000000_TOKEN_IDENTIFIER;
@@ -2996,7 +2996,8 @@ fn test_update_config() {
     );
 
     let esdt_safe_config = EsdtSafeConfig {
-        max_tx_gas_limit: 100_000,
+        max_tx_gas_limit: ONE_HUNDRED_THOUSAND as u64,
+        address_blacklist: ManagedVec::from_iter(vec![OWNER_ADDRESS.to_managed_address()]),
         ..EsdtSafeConfig::default_config()
     };
     let update_config_operation = UpdateEsdtSafeConfigOperation {
@@ -3037,7 +3038,7 @@ fn test_update_config() {
         MultiValueEncoded::from_iter(vec![config_hash]),
     );
 
-    state.update_esdt_safe_config(&hash_of_hashes, update_config_operation, None);
+    state.update_esdt_safe_config(&hash_of_hashes, update_config_operation.clone(), None);
 
     state
         .common_setup
@@ -3046,8 +3047,22 @@ fn test_update_config() {
         .to(ESDT_SAFE_ADDRESS)
         .whitebox(mvx_esdt_safe::contract_obj, |sc| {
             let config = sc.esdt_safe_config().get();
-            assert!(config.max_tx_gas_limit == 100_000);
+            assert!(
+                config.max_tx_gas_limit == ONE_HUNDRED_THOUSAND as u64
+                    && config
+                        .address_blacklist
+                        .contains(&OWNER_ADDRESS.to_managed_address())
+            );
         });
+
+    let payment = EgldOrEsdtTokenPayment::egld_payment(BigUint::zero());
+    let payment_vec = PaymentsVec::from(vec![payment]);
+    state.deposit(
+        USER_ADDRESS.to_managed_address(),
+        OptionalValue::None,
+        payment_vec,
+        Some(CALLER_IS_BLACKLISTED),
+    );
 
     state
         .common_setup
@@ -3055,12 +3070,8 @@ fn test_update_config() {
         .query()
         .to(HEADER_VERIFIER_ADDRESS)
         .whitebox(header_verifier::contract_obj, |sc| {
-            let new_config_whitebox = EsdtSafeConfig {
-                max_tx_gas_limit: 100_000,
-                ..EsdtSafeConfig::default_config()
-            };
-
-            let config_hash_whitebox = new_config_whitebox.generate_hash();
+            let config_hash_whitebox =
+                ManagedBuffer::from(update_config_operation.generate_hash().to_vec());
             let hash_of_hashes_whitebox =
                 ManagedBuffer::new_from_bytes(&sha256(&config_hash_whitebox.to_vec()));
             assert!(sc

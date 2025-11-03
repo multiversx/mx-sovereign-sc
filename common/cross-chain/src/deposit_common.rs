@@ -1,6 +1,6 @@
 use error_messages::{
-    BANNED_ENDPOINT_NAME, DEPOSIT_OVER_MAX_AMOUNT, ESDT_SAFE_STILL_PAUSED, GAS_LIMIT_TOO_HIGH,
-    NOTHING_TO_TRANSFER, TOKEN_BLACKLISTED, TOO_MANY_TOKENS,
+    BANNED_ENDPOINT_NAME, CALLER_IS_BLACKLISTED, DEPOSIT_OVER_MAX_AMOUNT, ESDT_SAFE_STILL_PAUSED,
+    GAS_LIMIT_TOO_HIGH, NOTHING_TO_TRANSFER, TOKEN_BLACKLISTED, TOO_MANY_TOKENS,
 };
 use multiversx_sc::api::ESDT_LOCAL_BURN_FUNC_NAME;
 use proxies::mvx_fee_market_proxy::MvxFeeMarketProxy;
@@ -32,6 +32,7 @@ pub trait DepositCommonModule:
         F: Fn(&EgldOrEsdtTokenPayment<Self::Api>) -> EventPaymentTuple<Self::Api>,
     {
         require!(self.not_paused(), ESDT_SAFE_STILL_PAUSED);
+        self.require_caller_not_blacklisted();
 
         let option_transfer_data = TransferData::from_optional_value(opt_transfer_data.clone());
 
@@ -303,6 +304,19 @@ pub trait DepositCommonModule:
         require!(
             gas_limit <= self.esdt_safe_config().get().max_tx_gas_limit,
             GAS_LIMIT_TOO_HIGH
+        );
+    }
+
+    #[inline]
+    fn require_caller_not_blacklisted(&self) {
+        let caller = self.blockchain().get_caller();
+        require!(
+            !self
+                .esdt_safe_config()
+                .get()
+                .address_blacklist
+                .contains(&caller),
+            CALLER_IS_BLACKLISTED
         );
     }
 }
