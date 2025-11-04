@@ -116,7 +116,12 @@ pub trait ExecuteModule:
     ) -> Result<OperationEsdtPayment<Self::Api>, ManagedBuffer> {
         let mut nonce: u64 = 0;
         if self.is_fungible(&operation_token.token_data.token_type) {
-            self.mint_fungible_token(mvx_token_id, &operation_token.token_data.amount)?;
+            self.try_esdt_local_mint(
+                &mvx_token_id.clone().unwrap_esdt(),
+                0,
+                &operation_token.token_data.amount,
+                MINT_ESDT_FAILED,
+            )?;
         } else {
             nonce = self.esdt_create_and_update_mapper(mvx_token_id, operation_token)?;
         }
@@ -140,35 +145,16 @@ pub trait ExecuteModule:
                 return Err(DEPOSIT_AMOUNT_NOT_ENOUGH.into());
             }
 
-            // Mint fungible tokens first; only deduct deposited amount after success
-            self.mint_fungible_token(
-                &operation_token.token_identifier,
+            self.try_esdt_local_mint(
+                &operation_token.token_identifier.clone().unwrap_esdt(),
+                0,
                 &operation_token.token_data.amount,
+                MINT_ESDT_FAILED,
             )?;
             deposited_mapper.update(|amount| *amount -= operation_token.token_data.amount.clone());
         }
 
         Ok(operation_token.clone())
-    }
-
-    fn mint_fungible_token(
-        &self,
-        token_id: &EgldOrEsdtTokenIdentifier<Self::Api>,
-        amount: &BigUint,
-    ) -> Result<(), ManagedBuffer> {
-        let esdt_token_id = token_id.clone().unwrap_esdt();
-        let result = self
-            .tx()
-            .to(ToSelf)
-            .typed(UserBuiltinProxy)
-            .esdt_local_mint(esdt_token_id.clone(), 0, amount)
-            .returns(ReturnsHandledOrError::new())
-            .sync_call_fallible();
-
-        match result {
-            Ok(_) => Ok(()),
-            Err(error_code) => Err(self.format_error(MINT_ESDT_FAILED, esdt_token_id, error_code)),
-        }
     }
 
     fn esdt_create_and_update_mapper(
@@ -197,29 +183,14 @@ pub trait ExecuteModule:
             return Ok(new_nonce);
         }
 
-        self.add_esdt_supply(mvx_token_id, nonce, &operation_token.token_data.amount)?;
+        self.try_esdt_local_mint(
+            &mvx_token_id.clone().unwrap_esdt(),
+            nonce,
+            &operation_token.token_data.amount,
+            MINT_ESDT_FAILED,
+        )?;
+
         Ok(nonce)
-    }
-
-    fn add_esdt_supply(
-        &self,
-        token_id: &EgldOrEsdtTokenIdentifier<Self::Api>,
-        nonce: u64,
-        amount: &BigUint,
-    ) -> Result<(), ManagedBuffer> {
-        let esdt_token_id = token_id.clone().unwrap_esdt();
-        let result = self
-            .tx()
-            .to(ToSelf)
-            .typed(UserBuiltinProxy)
-            .esdt_local_mint(esdt_token_id.clone(), nonce, amount)
-            .returns(ReturnsHandledOrError::new())
-            .sync_call_fallible();
-
-        match result {
-            Ok(_) => Ok(()),
-            Err(error_code) => Err(self.format_error(MINT_ESDT_FAILED, esdt_token_id, error_code)),
-        }
     }
 
     fn create_esdt(
