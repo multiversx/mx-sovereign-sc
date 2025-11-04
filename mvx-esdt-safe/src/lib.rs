@@ -8,7 +8,7 @@ use error_messages::{
 use multiversx_sc::imports::*;
 use multiversx_sc_modules::only_admin;
 use structs::{
-    configs::{EsdtSafeConfig, UpdateEsdtSafeConfigOperation},
+    configs::{EsdtSafeConfig, PauseStatusOperation, UpdateEsdtSafeConfigOperation},
     generate_hash::GenerateHash,
 };
 
@@ -120,6 +120,47 @@ pub trait MvxEsdtSafe:
                 .set(update_config_operation.esdt_safe_config);
             self.complete_operation(&hash_of_hashes, &config_hash, None);
         }
+    }
+
+    #[endpoint(pauseContract)]
+    fn switch_pause_status(
+        &self,
+        hash_of_hashes: ManagedBuffer,
+        pause_status_operation: PauseStatusOperation,
+    ) {
+        let operation_hash = pause_status_operation.generate_hash();
+        if operation_hash.is_empty() {
+            self.complete_operation(
+                &hash_of_hashes,
+                &operation_hash,
+                Some(ERROR_AT_GENERATING_OPERATION_HASH.into()),
+            );
+            return;
+        }
+        if !self.is_setup_phase_complete() {
+            self.complete_operation(
+                &hash_of_hashes,
+                &operation_hash,
+                Some(SETUP_PHASE_NOT_COMPLETED.into()),
+            );
+            return;
+        }
+        if let Some(lock_operation_error) = self.lock_operation_hash_wrapper(
+            &hash_of_hashes,
+            &operation_hash,
+            pause_status_operation.nonce,
+        ) {
+            self.complete_operation(&hash_of_hashes, &operation_hash, Some(lock_operation_error));
+            return;
+        }
+
+        if pause_status_operation.status {
+            self.pause_endpoint();
+        } else {
+            self.unpause_endpoint();
+        }
+
+        self.complete_operation(&hash_of_hashes, &operation_hash, None);
     }
 
     #[only_owner]

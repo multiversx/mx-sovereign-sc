@@ -107,6 +107,14 @@ impl<M: ManagedTypeApi> StakeArgs<M> {
 }
 
 #[type_abi]
+#[derive(TopEncode, TopDecode)]
+pub struct PauseStatusOperation {
+    pub status: bool,
+    pub nonce: TxNonce,
+}
+impl<A: CryptoApi> GenerateHash<A> for PauseStatusOperation {}
+
+#[type_abi]
 #[derive(
     TopEncode, TopDecode, NestedEncode, NestedDecode, ManagedVecItem, Clone, Debug, PartialEq,
 )]
