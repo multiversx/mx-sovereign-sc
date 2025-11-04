@@ -1,3 +1,4 @@
+use common_test_setup::base_setup::init::ExpectedLogs;
 use multiversx_sc::{
     imports::Bech32Address,
     types::{BigUint, EsdtTokenType},
@@ -25,8 +26,9 @@ pub struct MintTokenStruct {
 pub struct ActionConfig {
     pub shard: u32,
     pub expected_error: Option<String>,
-    pub expected_log: Option<Vec<String>>,
-    pub expected_log_error: Option<Vec<String>>,
+    pub expected_log: Option<ExpectedLogs<'static>>,
+    pub override_expected_log: Option<Vec<ExpectedLogs<'static>>>,
+    pub expected_log_error: Option<&'static str>,
     pub with_transfer_data: Option<bool>,
     pub endpoint: Option<String>,
 }
@@ -50,7 +52,7 @@ impl ActionConfig {
         self
     }
 
-    pub fn expect_log(mut self, log: Vec<String>) -> Self {
+    pub fn expect_additional_log(mut self, log: ExpectedLogs<'static>) -> Self {
         self.expected_log = Some(log);
         self
     }
@@ -61,8 +63,13 @@ impl ActionConfig {
         self
     }
 
-    pub fn expected_log_error(mut self, value: Vec<String>) -> Self {
+    pub fn expected_log_error(mut self, value: &'static str) -> Self {
         self.expected_log_error = Some(value);
+        self
+    }
+
+    pub fn override_expected_log(mut self, log: Vec<ExpectedLogs<'static>>) -> Self {
+        self.override_expected_log = Some(log);
         self
     }
 }
@@ -75,7 +82,7 @@ pub struct BalanceCheckConfig {
     pub fee: Option<FeeStruct<StaticApi>>,
     pub with_transfer_data: bool,
     pub is_execute: bool,
-    pub expected_error: Option<Vec<String>>,
+    pub expected_error: Option<&'static str>,
     pub is_burn_mechanism_set: bool,
 }
 
@@ -114,7 +121,7 @@ impl BalanceCheckConfig {
         self
     }
 
-    pub fn expected_error(mut self, value: Option<Vec<String>>) -> Self {
+    pub fn expected_error(mut self, value: Option<&'static str>) -> Self {
         self.expected_error = value;
         self
     }

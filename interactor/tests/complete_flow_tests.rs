@@ -3,10 +3,9 @@ use common_interactor::interactor_config::Config;
 use common_interactor::interactor_helpers::InteractorHelpers;
 use common_interactor::interactor_state::EsdtTokenInfo;
 use common_interactor::interactor_structs::ActionConfig;
-use common_test_setup::constants::READ_NATIVE_TOKEN_TESTING_SC_ENDPOINT;
 use common_test_setup::constants::{
-    DEPOSIT_LOG, ONE_HUNDRED_TOKENS, SC_CALL_LOG, SHARD_0, SHARD_1, TESTING_SC_ENDPOINT,
-    WRONG_ENDPOINT_NAME,
+    ONE_HUNDRED_TOKENS, READ_NATIVE_TOKEN_TESTING_SC_ENDPOINT, SHARD_0, SHARD_1,
+    TESTING_SC_ENDPOINT, WRONG_ENDPOINT_NAME,
 };
 use multiversx_sc::types::BigUint;
 use multiversx_sc::types::EgldOrEsdtTokenIdentifier;
@@ -49,8 +48,7 @@ async fn test_complete_deposit_flow_no_fee_only_transfer_data(#[case] shard: u32
         .deposit_wrapper(
             ActionConfig::new()
                 .shard(shard)
-                .with_endpoint(TESTING_SC_ENDPOINT.to_string())
-                .expect_log(vec![SC_CALL_LOG.to_string()]),
+                .with_endpoint(TESTING_SC_ENDPOINT.to_string()),
             None,
             None,
         )
@@ -82,8 +80,7 @@ async fn test_complete_deposit_flow_with_fee_only_transfer_data(#[case] shard: u
         .deposit_wrapper(
             ActionConfig::new()
                 .shard(shard)
-                .with_endpoint(TESTING_SC_ENDPOINT.to_string())
-                .expect_log(vec![SC_CALL_LOG.to_string()]),
+                .with_endpoint(TESTING_SC_ENDPOINT.to_string()),
             None,
             Some(fee),
         )
@@ -114,8 +111,8 @@ async fn test_complete_execute_flow_with_transfer_data_only_success(#[case] shar
         .execute_wrapper(
             ActionConfig::new()
                 .shard(shard)
-                .with_endpoint(TESTING_SC_ENDPOINT.to_string())
-                .expect_log(vec!["".to_string()]),
+                .with_endpoint(TESTING_SC_ENDPOINT.to_string()),
+            // .expect_additional_log(vec!["".to_string()]),
             None,
         )
         .await;
@@ -145,8 +142,7 @@ async fn test_complete_execute_flow_with_transfer_data_only_fail(#[case] shard: 
             ActionConfig::new()
                 .shard(shard)
                 .with_endpoint(WRONG_ENDPOINT_NAME.to_string())
-                .expect_log(vec!["".to_string()])
-                .expected_log_error(vec![FUNCTION_NOT_FOUND.to_string()]),
+                .expected_log_error(FUNCTION_NOT_FOUND),
             None,
         )
         .await;
@@ -185,14 +181,7 @@ async fn test_deposit_with_fee(
     chain_interactor.set_fee_wrapper(fee.clone(), shard).await;
 
     chain_interactor
-        .deposit_wrapper(
-            ActionConfig::new().shard(shard).expect_log(vec![
-                DEPOSIT_LOG.to_string(),
-                token.clone().token_id.into_managed_buffer().to_string(),
-            ]),
-            Some(token),
-            Some(fee),
-        )
+        .deposit_wrapper(ActionConfig::new().shard(shard), Some(token), Some(fee))
         .await;
 }
 
@@ -227,23 +216,17 @@ async fn test_deposit_without_fee_and_execute(
     chain_interactor.remove_fee_wrapper(shard).await;
 
     chain_interactor
-        .deposit_wrapper(
-            ActionConfig::new().shard(shard).expect_log(vec![
-                DEPOSIT_LOG.to_string(),
-                token.clone().token_id.into_managed_buffer().to_string(),
-            ]),
-            Some(token.clone()),
-            None,
-        )
+        .deposit_wrapper(ActionConfig::new().shard(shard), Some(token.clone()), None)
         .await;
 
     chain_interactor
         .execute_wrapper(
-            ActionConfig::new().shard(shard).expect_log(vec![token
-                .clone()
-                .token_id
-                .into_managed_buffer()
-                .to_string()]),
+            ActionConfig::new().shard(shard),
+            // .expect_additional_log(vec![token
+            //     .clone()
+            //     .token_id
+            //     .into_managed_buffer()
+            //     .to_string()]),
             Some(token),
         )
         .await;
@@ -292,16 +275,13 @@ async fn test_register_execute_and_deposit_sov_token(
         .register_and_execute_sovereign_token(ActionConfig::new().shard(shard), sov_token.clone())
         .await;
 
+    let override_expected_log =
+        chain_interactor.build_sovereign_deposit_logs(token_id, &main_token);
     chain_interactor
         .deposit_wrapper(
-            ActionConfig::new().shard(shard).expect_log(vec![
-                sov_token.clone().token_id.into_managed_buffer().to_string(),
-                main_token
-                    .clone()
-                    .token_id
-                    .into_managed_buffer()
-                    .to_string(),
-            ]),
+            ActionConfig::new()
+                .shard(shard)
+                .override_expected_log(override_expected_log),
             Some(main_token),
             None,
         )
@@ -342,11 +322,7 @@ async fn test_deposit_mvx_token_with_transfer_data(
         .deposit_wrapper(
             ActionConfig::new()
                 .shard(shard)
-                .with_endpoint(TESTING_SC_ENDPOINT.to_string())
-                .expect_log(vec![
-                    DEPOSIT_LOG.to_string(),
-                    token.clone().token_id.into_managed_buffer().to_string(),
-                ]),
+                .with_endpoint(TESTING_SC_ENDPOINT.to_string()),
             Some(token),
             None,
         )
@@ -389,11 +365,7 @@ async fn test_deposit_mvx_token_with_transfer_data_and_fee(
         .deposit_wrapper(
             ActionConfig::new()
                 .shard(shard)
-                .with_endpoint(TESTING_SC_ENDPOINT.to_string())
-                .expect_log(vec![
-                    DEPOSIT_LOG.to_string(),
-                    token.clone().token_id.into_managed_buffer().to_string(),
-                ]),
+                .with_endpoint(TESTING_SC_ENDPOINT.to_string()),
             Some(token),
             Some(fee),
         )
@@ -431,26 +403,14 @@ async fn test_deposit_and_execute_with_transfer_data(
     chain_interactor.remove_fee_wrapper(shard).await;
 
     chain_interactor
-        .deposit_wrapper(
-            ActionConfig::new().shard(shard).expect_log(vec![
-                DEPOSIT_LOG.to_string(),
-                token.clone().token_id.into_managed_buffer().to_string(),
-            ]),
-            Some(token.clone()),
-            None,
-        )
+        .deposit_wrapper(ActionConfig::new().shard(shard), Some(token.clone()), None)
         .await;
 
     chain_interactor
         .execute_wrapper(
             ActionConfig::new()
                 .shard(shard)
-                .with_endpoint(TESTING_SC_ENDPOINT.to_string())
-                .expect_log(vec![token
-                    .clone()
-                    .token_id
-                    .into_managed_buffer()
-                    .to_string()]),
+                .with_endpoint(TESTING_SC_ENDPOINT.to_string()),
             Some(token.clone()),
         )
         .await;
@@ -512,19 +472,14 @@ async fn test_register_execute_with_transfer_data_and_deposit_sov_token(
         )
         .await;
 
+    let override_expected_log =
+        chain_interactor.build_sovereign_deposit_logs(token_id, &main_token);
     chain_interactor
         .deposit_wrapper(
             ActionConfig::new()
                 .shard(shard)
                 .with_endpoint(TESTING_SC_ENDPOINT.to_string())
-                .expect_log(vec![
-                    sov_token.clone().token_id.into_managed_buffer().to_string(),
-                    main_token
-                        .clone()
-                        .token_id
-                        .into_managed_buffer()
-                        .to_string(),
-                ]),
+                .override_expected_log(override_expected_log),
             Some(main_token.clone()),
             None,
         )
@@ -575,7 +530,7 @@ async fn test_register_execute_call_failed(
             ActionConfig::new()
                 .shard(shard)
                 .with_endpoint(WRONG_ENDPOINT_NAME.to_string())
-                .expected_log_error(vec![FUNCTION_NOT_FOUND.to_string()]),
+                .expected_log_error(FUNCTION_NOT_FOUND),
             sov_token,
         )
         .await;
@@ -656,8 +611,6 @@ async fn test_execute_operation_transfer_data_only_async_call_in_endpoint(#[case
             SHARD_1,
             hash_of_hashes,
             operation,
-            None,
-            Some(""),
             None,
         )
         .await;

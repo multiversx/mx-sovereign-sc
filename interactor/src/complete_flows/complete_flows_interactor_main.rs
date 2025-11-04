@@ -7,11 +7,15 @@ use common_interactor::interactor_structs::{ActionConfig, BalanceCheckConfig};
 use common_interactor::{
     common_sovereign_interactor::CommonInteractorTrait, interactor_config::Config,
 };
+use common_test_setup::base_setup::init::ExpectedLogs;
 use common_test_setup::constants::{
-    INTERACTOR_WORKING_DIR, SOVEREIGN_RECEIVER_ADDRESS, TOKEN_DISPLAY_NAME, TOKEN_TICKER,
+    INTERACTOR_WORKING_DIR, MULTI_ESDT_NFT_TRANSFER_EVENT, SHARD_1, SOVEREIGN_RECEIVER_ADDRESS,
+    TOKEN_DISPLAY_NAME, TOKEN_TICKER,
 };
+use common_test_setup::log;
 use cross_chain::DEFAULT_ISSUE_COST;
-use error_messages::{EXPECTED_MAPPED_TOKEN, FAILED_TO_REGISTER_SOVEREIGN_TOKEN};
+use error_messages::EXPECTED_MAPPED_TOKEN;
+use multiversx_sc::api::ESDT_LOCAL_MINT_FUNC_NAME;
 use multiversx_sc::chain_core::EGLD_000000_TOKEN_IDENTIFIER;
 use multiversx_sc_snippets::imports::*;
 use multiversx_sc_snippets::multiversx_sc_scenario::multiversx_chain_vm::crypto_functions::sha256;
@@ -108,7 +112,7 @@ impl CompleteFlowInteract {
         token: Option<EsdtTokenInfo>,
         fee: Option<FeeStruct<StaticApi>>,
     ) {
-        let expected_log = self.extract_log_based_on_shard(&config);
+        let expected_log = self.build_expected_deposit_log(config.clone(), token.clone());
         let payment_vec = self.prepare_deposit_payments(
             token.clone(),
             fee.clone(),
@@ -124,7 +128,7 @@ impl CompleteFlowInteract {
             transfer_data,
             payment_vec.clone(),
             None,
-            expected_log.as_deref(),
+            Some(expected_log),
         )
         .await;
 
@@ -148,8 +152,7 @@ impl CompleteFlowInteract {
         config: ActionConfig,
         token: Option<EsdtTokenInfo>,
     ) {
-        let expected_log = self.extract_log_based_on_shard(&config);
-        let expected_log_error = self.extract_log_error_based_on_shard(&config);
+        let expected_logs = self.build_expected_execute_log(config.clone());
         let operation = self
             .prepare_operation(config.shard, token, config.endpoint.as_deref())
             .await;
@@ -179,9 +182,7 @@ impl CompleteFlowInteract {
             config.shard,
             hash_of_hashes.clone(),
             operation.clone(),
-            config.expected_error.as_deref(),
-            expected_log.as_deref(),
-            expected_log_error.as_deref(),
+            Some(expected_logs),
         )
         .await;
     }
@@ -211,7 +212,7 @@ impl CompleteFlowInteract {
             .amount(expected_amount)
             .is_execute(true)
             .with_transfer_data(config.with_transfer_data.unwrap_or_default())
-            .expected_error(config.expected_log_error.clone());
+            .expected_error(config.expected_log_error);
 
         self.check_balances_after_action(balance_config).await;
 
@@ -250,9 +251,7 @@ impl CompleteFlowInteract {
         self.register_operation(shard, &hash_of_hashes, operations_hashes)
             .await;
 
-        self.register_token(shard, operation, None)
-            .await
-            .expect(FAILED_TO_REGISTER_SOVEREIGN_TOKEN)
+        self.register_token(shard, operation).await
     }
 
     pub async fn register_and_execute_sovereign_token(
@@ -260,6 +259,12 @@ impl CompleteFlowInteract {
         mut config: ActionConfig,
         token: EsdtTokenInfo,
     ) -> EsdtTokenInfo {
+        let expected_deposit_log = match config.shard {
+            SHARD_1 => {
+                vec![log!(MULTI_ESDT_NFT_TRANSFER_EVENT, topics: [EGLD_000000_TOKEN_IDENTIFIER])]
+            }
+            _ => vec![],
+        };
         self.deposit_in_mvx_esdt_safe(
             SOVEREIGN_RECEIVER_ADDRESS.to_address(),
             config.shard,
@@ -268,15 +273,18 @@ impl CompleteFlowInteract {
                 DEFAULT_ISSUE_COST.into(),
             )),
             None,
-            Some(EGLD_000000_TOKEN_IDENTIFIER),
+            Some(expected_deposit_log),
         )
         .await;
 
-        let expected_log = self
+        let token_id = self
             .register_sovereign_token(config.shard, token.clone())
             .await;
 
-        config = config.expect_log(vec![expected_log]);
+        let token_id_static: &'static str = Box::leak(token_id.clone().into_boxed_str());
+        let additional_log = log!(ESDT_LOCAL_MINT_FUNC_NAME, topics: [token_id_static]);
+
+        config = config.expect_additional_log(additional_log);
 
         self.execute_wrapper(config, Some(token.clone()))
             .await

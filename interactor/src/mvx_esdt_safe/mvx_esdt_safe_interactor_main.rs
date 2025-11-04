@@ -2,6 +2,7 @@ use common_interactor::{
     common_sovereign_interactor::CommonInteractorTrait, interactor_common_state::CommonState,
     interactor_helpers::InteractorHelpers,
 };
+use common_test_setup::base_setup::init::ExpectedLogs;
 use multiversx_sc_snippets::{
     imports::*, multiversx_sc_scenario::multiversx_chain_vm::crypto_functions::sha256,
 };
@@ -15,7 +16,14 @@ use structs::{
 use common_interactor::interactor_config::Config;
 use common_interactor::interactor_state::State;
 
-use common_test_setup::constants::{INTERACTOR_WORKING_DIR, MVX_ESDT_SAFE_CODE_PATH, SHARD_0};
+use common_test_setup::{
+    base_setup::log_validations::assert_expected_logs,
+    constants::{
+        EXECUTED_BRIDGE_OP_EVENT, INTERACTOR_WORKING_DIR, MVX_ESDT_SAFE_CODE_PATH, SHARD_0,
+        UPDATE_ESDT_SAFE_CONFIG_ENDPOINT,
+    },
+    log,
+};
 
 pub struct MvxEsdtSafeInteract {
     pub interactor: Interactor,
@@ -128,7 +136,6 @@ impl MvxEsdtSafeInteract {
         &mut self,
         shard: u32,
         esdt_safe_config: EsdtSafeConfig<StaticApi>,
-        expected_log: Option<&str>,
         expected_log_error: Option<&str>,
     ) {
         let bridge_service = self.get_bridge_service_for_shard(shard);
@@ -153,7 +160,7 @@ impl MvxEsdtSafeInteract {
             .interactor
             .tx()
             .from(bridge_service)
-            .to(self.common_state.current_mvx_esdt_safe_contract_address())
+            .to(mvx_esdt_safe_address)
             .gas(90_000_000u64)
             .typed(MvxEsdtSafeProxy)
             .update_esdt_safe_config(hash_of_hashes, operation)
@@ -164,7 +171,14 @@ impl MvxEsdtSafeInteract {
 
         self.assert_expected_error_message(response, None);
 
-        self.assert_expected_log(logs, expected_log, expected_log_error);
+        let expected_logs = if expected_log_error.is_some() {
+            vec![
+                log!(UPDATE_ESDT_SAFE_CONFIG_ENDPOINT, topics: [EXECUTED_BRIDGE_OP_EVENT], data: expected_log_error),
+            ]
+        } else {
+            vec![log!(UPDATE_ESDT_SAFE_CONFIG_ENDPOINT, topics: [EXECUTED_BRIDGE_OP_EVENT])]
+        };
+        assert_expected_logs(logs, expected_logs);
     }
 
     pub async fn set_fee_market_address(&mut self, caller: Address, fee_market_address: Address) {

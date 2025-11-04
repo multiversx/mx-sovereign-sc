@@ -4,12 +4,15 @@ use crate::{
     interactor_state::{AddressInfo, EsdtTokenInfo},
     interactor_structs::{ActionConfig, IssueTokenStruct, MintTokenStruct, TemplateAddresses},
 };
-use common_test_setup::constants::{
-    CHAIN_CONFIG_CODE_PATH, CHAIN_FACTORY_CODE_PATH, CHAIN_ID, DEPLOY_COST,
-    FAILED_TO_LOAD_WALLET_SHARD_0, FEE_MARKET_CODE_PATH, HEADER_VERIFIER_CODE_PATH, ISSUE_COST,
-    MVX_ESDT_SAFE_CODE_PATH, NATIVE_TOKEN_NAME, NATIVE_TOKEN_TICKER, NUMBER_OF_SHARDS,
-    NUM_TOKENS_TO_MINT, ONE_THOUSAND_TOKENS, SHARD_0, SOVEREIGN_FORGE_CODE_PATH,
-    SOVEREIGN_TOKEN_PREFIX, TESTING_SC_CODE_PATH, WALLET_SHARD_0,
+use common_test_setup::{
+    base_setup::{init::ExpectedLogs, log_validations::assert_expected_logs},
+    constants::{
+        CHAIN_CONFIG_CODE_PATH, CHAIN_FACTORY_CODE_PATH, CHAIN_ID, DEPLOY_COST,
+        FAILED_TO_LOAD_WALLET_SHARD_0, FEE_MARKET_CODE_PATH, HEADER_VERIFIER_CODE_PATH, ISSUE_COST,
+        MVX_ESDT_SAFE_CODE_PATH, NATIVE_TOKEN_NAME, NATIVE_TOKEN_TICKER, NUMBER_OF_SHARDS,
+        NUM_TOKENS_TO_MINT, ONE_THOUSAND_TOKENS, SHARD_0, SOVEREIGN_FORGE_CODE_PATH,
+        SOVEREIGN_TOKEN_PREFIX, TESTING_SC_CODE_PATH, WALLET_SHARD_0,
+    },
 };
 use multiversx_bls::{SecretKey, G1};
 use multiversx_sc::{
@@ -1317,7 +1320,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
         opt_transfer_data: OptionalValueTransferDataTuple<StaticApi>,
         payments: PaymentsVec<StaticApi>,
         expected_error_message: Option<&str>,
-        expected_log: Option<&str>,
+        expected_log: Option<Vec<ExpectedLogs<'_>>>,
     ) {
         let user_address = self.user_address().clone();
         let current_mvx_esdt_safe_address =
@@ -1338,7 +1341,9 @@ pub trait CommonInteractorTrait: InteractorHelpers {
 
         self.assert_expected_error_message(response, expected_error_message);
 
-        self.assert_expected_log(logs, expected_log, None);
+        if expected_error_message.is_none() {
+            assert_expected_logs(logs, expected_log.unwrap_or_default());
+        }
     }
 
     async fn withdraw_from_testing_sc(
@@ -1361,16 +1366,13 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             .await;
     }
 
-    #[allow(clippy::too_many_arguments)]
     async fn execute_operations_in_mvx_esdt_safe(
         &mut self,
         caller: Address,
         shard: u32,
         hash_of_hashes: ManagedBuffer<StaticApi>,
         operation: Operation<StaticApi>,
-        expected_error_message: Option<&str>,
-        expected_log: Option<&str>,
-        expected_log_error: Option<&str>,
+        expected_logs: Option<Vec<ExpectedLogs<'_>>>,
     ) {
         let current_mvx_esdt_safe_address =
             self.common_state().get_mvx_esdt_safe_address(shard).clone();
@@ -1387,23 +1389,22 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             .run()
             .await;
 
-        self.assert_expected_error_message(response, expected_error_message);
+        self.assert_expected_error_message(response, None);
 
-        self.assert_expected_log(logs, expected_log, expected_log_error);
+        assert_expected_logs(logs, expected_logs.unwrap_or_default());
     }
 
     async fn register_token(
         &mut self,
         shard: u32,
         token: RegisterTokenOperation<StaticApi>,
-        expected_log_error: Option<&str>,
-    ) -> Option<String> {
+    ) -> String {
         let user_address = self.user_address().clone();
         let mvx_esdt_safe_address = self.common_state().get_mvx_esdt_safe_address(shard).clone();
         let token_hash = token.generate_hash();
         let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&token_hash.to_vec()));
 
-        let base_transaction = self
+        let (response, token_id) = self
             .interactor()
             .tx()
             .from(user_address)
@@ -1411,24 +1412,14 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             .gas(90_000_000u64)
             .typed(MvxEsdtSafeProxy)
             .register_sovereign_token(hash_of_hashes, token)
-            .returns(ReturnsLogs);
+            .returns(ReturnsHandledOrError::new())
+            .returns(ReturnsNewTokenIdentifier)
+            .run()
+            .await;
 
-        let (response, token) = match expected_log_error {
-            Some(_) => {
-                let response = base_transaction.run().await;
-                (response, None)
-            }
-            None => {
-                let (response, token) = base_transaction
-                    .returns(ReturnsNewTokenIdentifier)
-                    .run()
-                    .await;
-                (response, Some(token))
-            }
-        };
+        self.assert_expected_error_message(response, None);
 
-        self.assert_expected_log(response, Some(""), expected_log_error);
-        token
+        token_id
     }
 
     async fn get_sov_to_mvx_token_id(

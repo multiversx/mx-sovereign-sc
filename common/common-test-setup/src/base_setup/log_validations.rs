@@ -1,3 +1,4 @@
+use base64::{engine::general_purpose::STANDARD as BASE64_STANDARD, Engine};
 use multiversx_sc::imports::OptionalValue;
 use multiversx_sc_scenario::scenario_model::Log;
 
@@ -11,8 +12,9 @@ pub fn assert_expected_logs(logs: Vec<Log>, expected_logs: Vec<ExpectedLogs>) {
             .collect();
         assert!(
             !matching_logs.is_empty(),
-            "Expected log '{}' not found",
-            expected_log.identifier
+            "Expected log '{}' not found. Logs: {:?}",
+            expected_log.identifier,
+            logs
         );
         if let OptionalValue::Some(ref topics) = expected_log.topics {
             validate_expected_topics(topics, &matching_logs, expected_log.identifier);
@@ -38,15 +40,29 @@ pub fn assert_expected_logs(logs: Vec<Log>, expected_logs: Vec<ExpectedLogs>) {
 pub fn validate_expected_topics(topics: &[&str], matching_logs: &[&Log], endpoint: &str) {
     let expected_topics_bytes: Vec<Vec<u8>> =
         topics.iter().map(|s| s.as_bytes().to_vec()).collect();
+
     assert!(
         matching_logs.iter().any(|log| {
-            expected_topics_bytes
-                .iter()
-                .all(|expected_topic| log.topics.contains(expected_topic))
+            expected_topics_bytes.iter().all(|expected_topic| {
+                // Check raw bytes match (blackbox scenario format)
+                if log.topics.contains(expected_topic) {
+                    return true;
+                }
+
+                // Check if any log topic, when decoded from base64, matches (chain simulator format)
+                log.topics.iter().any(|log_topic| {
+                    // Try to decode the log topic from base64 and compare
+                    BASE64_STANDARD
+                        .decode(log_topic)
+                        .map(|decoded| decoded == *expected_topic)
+                        .unwrap_or(false)
+                })
+            })
         }),
-        "Expected topics '{}' not found for event '{}'",
+        "Expected topics '{}' not found for event '{}' \n Logs: {:?}",
         topics.join(", "),
-        endpoint
+        endpoint,
+        matching_logs
     );
 }
 
@@ -56,18 +72,32 @@ pub fn validate_expected_data(data: &[&str], matching_logs: &[&Log], endpoint: &
         matching_logs
             .iter()
             .any(|log| log_contains_expected_data(log, &expected_data_bytes)),
-        "Expected data '{}' not found for event '{}'",
+        "Expected data '{}' not found for event '{}'. Logs: {:?}",
         data.join(", "),
-        endpoint
+        endpoint,
+        matching_logs
     );
 }
 
 pub fn log_contains_expected_data(log: &Log, expected_data_bytes: &[Vec<u8>]) -> bool {
     expected_data_bytes.iter().all(|expected_data| {
         log.data.iter().any(|log_data| {
-            log_data
+            // Check raw bytes match (blackbox scenario format)
+            if log_data
                 .windows(expected_data.len())
                 .any(|window| window == expected_data)
+            {
+                return true;
+            }
+
+            // Check if any log data, when decoded from base64, matches (chain simulator format)
+            if let Ok(decoded_data) = BASE64_STANDARD.decode(log_data) {
+                decoded_data
+                    .windows(expected_data.len())
+                    .any(|window| window == expected_data)
+            } else {
+                false
+            }
         })
     })
 }
