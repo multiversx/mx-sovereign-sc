@@ -8,7 +8,10 @@ use error_messages::{
 use multiversx_sc::imports::*;
 use multiversx_sc_modules::only_admin;
 use structs::{
-    configs::{EsdtSafeConfig, UpdateEsdtSafeConfigOperation},
+    configs::{
+        EsdtSafeConfig, PauseEsdtSafeOperation, UnpauseEsdtSafeOperation,
+        UpdateEsdtSafeConfigOperation,
+    },
     generate_hash::GenerateHash,
 };
 
@@ -120,6 +123,84 @@ pub trait MvxEsdtSafe:
                 .set(update_config_operation.esdt_safe_config);
             self.complete_operation(&hash_of_hashes, &config_hash, None);
         }
+    }
+
+    #[endpoint(pauseContract)]
+    fn pause_contract(
+        &self,
+        hash_of_hashes: ManagedBuffer,
+        pause_operation: PauseEsdtSafeOperation,
+    ) {
+        let operation_hash = pause_operation.generate_hash();
+        if operation_hash.is_empty() {
+            self.complete_operation(
+                &hash_of_hashes,
+                &operation_hash,
+                Some(ERROR_AT_GENERATING_OPERATION_HASH.into()),
+            );
+            return;
+        }
+        if !self.is_setup_phase_complete() {
+            self.complete_operation(
+                &hash_of_hashes,
+                &operation_hash,
+                Some(SETUP_PHASE_NOT_COMPLETED.into()),
+            );
+            return;
+        }
+        if let Some(lock_operation_error) = self.lock_operation_hash_wrapper(
+            &hash_of_hashes,
+            &operation_hash,
+            pause_operation.nonce,
+        ) {
+            self.complete_operation(&hash_of_hashes, &operation_hash, Some(lock_operation_error));
+            return;
+        }
+
+        if !self.is_paused() {
+            self.pause_endpoint();
+        }
+
+        self.complete_operation(&hash_of_hashes, &operation_hash, None);
+    }
+
+    #[endpoint(unpauseContract)]
+    fn unpause_contract(
+        &self,
+        hash_of_hashes: ManagedBuffer,
+        unpause_operation: UnpauseEsdtSafeOperation,
+    ) {
+        let operation_hash = unpause_operation.generate_hash();
+        if operation_hash.is_empty() {
+            self.complete_operation(
+                &hash_of_hashes,
+                &operation_hash,
+                Some(ERROR_AT_GENERATING_OPERATION_HASH.into()),
+            );
+            return;
+        }
+        if !self.is_setup_phase_complete() {
+            self.complete_operation(
+                &hash_of_hashes,
+                &operation_hash,
+                Some(SETUP_PHASE_NOT_COMPLETED.into()),
+            );
+            return;
+        }
+        if let Some(lock_operation_error) = self.lock_operation_hash_wrapper(
+            &hash_of_hashes,
+            &operation_hash,
+            unpause_operation.nonce,
+        ) {
+            self.complete_operation(&hash_of_hashes, &operation_hash, Some(lock_operation_error));
+            return;
+        }
+
+        if self.is_paused() {
+            self.unpause_endpoint();
+        }
+
+        self.complete_operation(&hash_of_hashes, &operation_hash, None);
     }
 
     #[only_owner]

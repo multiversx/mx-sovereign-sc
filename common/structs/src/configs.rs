@@ -107,6 +107,20 @@ impl<M: ManagedTypeApi> StakeArgs<M> {
 }
 
 #[type_abi]
+#[derive(TopEncode, TopDecode)]
+pub struct UnpauseEsdtSafeOperation {
+    pub nonce: TxNonce,
+}
+impl<A: CryptoApi> GenerateHash<A> for UnpauseEsdtSafeOperation {}
+
+#[type_abi]
+#[derive(TopEncode, TopDecode)]
+pub struct PauseEsdtSafeOperation {
+    pub nonce: TxNonce,
+}
+impl<A: CryptoApi> GenerateHash<A> for PauseEsdtSafeOperation {}
+
+#[type_abi]
 #[derive(
     TopEncode, TopDecode, NestedEncode, NestedDecode, ManagedVecItem, Clone, Debug, PartialEq,
 )]

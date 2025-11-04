@@ -85,6 +85,7 @@ pub const SHARD_0: u32 = 0;
 pub const SHARD_1: u32 = 1;
 pub const SHARD_2: u32 = 2;
 pub const DEPOSIT_LOG: &str = "deposit";
+pub const PAUSE_CONTRACT_LOG: &str = "pauseContract";
 pub const UNPAUSE_CONTRACT_LOG: &str = "unpauseContract";
 pub const TESTING_SC_ENDPOINT: &str = "hello";
 pub const READ_NATIVE_TOKEN_TESTING_SC_ENDPOINT: &str = "read_native_token";

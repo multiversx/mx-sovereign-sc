@@ -123,6 +123,38 @@ where
             .original_result()
     }
 
+    pub fn pause_contract<
+        Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
+        Arg1: ProxyArg<structs::configs::PauseEsdtSafeOperation>,
+    >(
+        self,
+        hash_of_hashes: Arg0,
+        pause_operation: Arg1,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("pauseContract")
+            .argument(&hash_of_hashes)
+            .argument(&pause_operation)
+            .original_result()
+    }
+
+    pub fn unpause_contract<
+        Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
+        Arg1: ProxyArg<structs::configs::UnpauseEsdtSafeOperation>,
+    >(
+        self,
+        hash_of_hashes: Arg0,
+        unpause_operation: Arg1,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("unpauseContract")
+            .argument(&hash_of_hashes)
+            .argument(&unpause_operation)
+            .original_result()
+    }
+
     pub fn set_fee_market_address<
         Arg0: ProxyArg<ManagedAddress<Env::Api>>,
     >(

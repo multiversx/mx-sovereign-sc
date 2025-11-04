@@ -21,9 +21,10 @@ use multiversx_sc::{
 use multiversx_sc_scenario::imports::*;
 use mvx_esdt_safe::MvxEsdtSafe;
 use proxies::mvx_esdt_safe_proxy::MvxEsdtSafeProxy;
+use structs::aliases::TxNonce;
 use structs::configs::{
-    SetBurnMechanismOperation, SetLockMechanismOperation, SovereignConfig,
-    UpdateEsdtSafeConfigOperation,
+    PauseEsdtSafeOperation, SetBurnMechanismOperation, SetLockMechanismOperation, SovereignConfig,
+    UnpauseEsdtSafeOperation, UpdateEsdtSafeConfigOperation,
 };
 use structs::forge::ScArray;
 use structs::{
@@ -203,6 +204,48 @@ impl MvxEsdtSafeTestState {
             .assert_expected_error_message(result, expected_error_message);
     }
 
+    pub fn pause_unpause_contract(
+        &mut self,
+        pause: bool,
+        hash_of_hashes: &ManagedBuffer<StaticApi>,
+        operation_nonce: TxNonce,
+        expected_logs: Vec<ExpectedLogs>,
+    ) {
+        let logs = if pause {
+            self.common_setup
+                .world
+                .tx()
+                .from(OWNER_ADDRESS)
+                .to(ESDT_SAFE_ADDRESS)
+                .typed(MvxEsdtSafeProxy)
+                .pause_contract(
+                    hash_of_hashes,
+                    PauseEsdtSafeOperation {
+                        nonce: operation_nonce,
+                    },
+                )
+                .returns(ReturnsLogs)
+                .run()
+        } else {
+            self.common_setup
+                .world
+                .tx()
+                .from(OWNER_ADDRESS)
+                .to(ESDT_SAFE_ADDRESS)
+                .typed(MvxEsdtSafeProxy)
+                .unpause_contract(
+                    hash_of_hashes,
+                    UnpauseEsdtSafeOperation {
+                        nonce: operation_nonce,
+                    },
+                )
+                .returns(ReturnsLogs)
+                .run()
+        };
+
+        self.common_setup.assert_expected_logs(logs, expected_logs);
+    }
+
     pub fn update_esdt_safe_config(
         &mut self,
         hash_of_hashes: &ManagedBuffer<StaticApi>,
@@ -228,8 +271,7 @@ impl MvxEsdtSafeTestState {
             log!(UPDATE_ESDT_SAFE_CONFIG_ENDPOINT, topics: [EXECUTED_BRIDGE_OP_EVENT], data: expected_error_message),
         ];
 
-        self.common_setup
-            .assert_expected_logs(logs, expected_logs);
+        self.common_setup.assert_expected_logs(logs, expected_logs);
     }
 
     pub fn set_token_burn_mechanism(
@@ -369,8 +411,7 @@ impl MvxEsdtSafeTestState {
             } else {
                 vec![log!(DEPOSIT_EVENT, topics: [DEPOSIT_EVENT])]
             };
-            self.common_setup
-                .assert_expected_logs(logs, expected_logs);
+            self.common_setup.assert_expected_logs(logs, expected_logs);
         }
     }
 
@@ -396,8 +437,7 @@ impl MvxEsdtSafeTestState {
         self.common_setup
             .assert_expected_error_message(result, expected_error_message);
 
-        self.common_setup
-            .assert_expected_logs(logs, expected_logs);
+        self.common_setup.assert_expected_logs(logs, expected_logs);
     }
 
     pub fn register_native_token(
@@ -447,8 +487,7 @@ impl MvxEsdtSafeTestState {
         self.common_setup
             .assert_expected_error_message(result, None);
 
-        self.common_setup
-            .assert_expected_logs(logs, expected_logs);
+        self.common_setup.assert_expected_logs(logs, expected_logs);
     }
 
     pub fn complete_setup_phase(&mut self) {
@@ -470,8 +509,7 @@ impl MvxEsdtSafeTestState {
         let expected_logs =
             vec![log!(COMPLETE_SETUP_PHASE_ENDPOINT, topics: [UNPAUSE_CONTRACT_LOG])];
 
-        self.common_setup
-            .assert_expected_logs(logs, expected_logs);
+        self.common_setup.assert_expected_logs(logs, expected_logs);
 
         self.common_setup
             .change_ownership_to_header_verifier(ESDT_SAFE_ADDRESS);
