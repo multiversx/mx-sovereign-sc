@@ -2,7 +2,7 @@ use cross_chain::{DEFAULT_ISSUE_COST, REGISTER_GAS};
 use error_messages::{
     ERROR_AT_GENERATING_OPERATION_HASH, ESDT_SAFE_STILL_PAUSED, INVALID_PREFIX_FOR_REGISTER,
     NATIVE_TOKEN_ALREADY_REGISTERED, NOT_ENOUGH_EGLD_FOR_REGISTER, SETUP_PHASE_ALREADY_COMPLETED,
-    SETUP_PHASE_NOT_COMPLETED, TOKEN_ALREADY_REGISTERED,
+    TOKEN_ALREADY_REGISTERED,
 };
 use multiversx_sc::{chain_core::EGLD_000000_TOKEN_IDENTIFIER, types::EsdtTokenType};
 use multiversx_sc_modules::only_admin;
@@ -38,14 +38,6 @@ pub trait RegisterTokenModule:
             );
             return;
         };
-        if !self.is_setup_phase_complete() {
-            self.complete_operation(
-                &hash_of_hashes,
-                &token_hash,
-                Some(SETUP_PHASE_NOT_COMPLETED.into()),
-            );
-            return;
-        }
         if self.is_paused() {
             self.complete_operation(
                 &hash_of_hashes,

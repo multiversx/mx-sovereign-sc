@@ -1,7 +1,6 @@
 use error_messages::{
     BURN_ESDT_FAILED, CREATE_ESDT_FAILED, DEPOSIT_AMOUNT_NOT_ENOUGH,
     ERROR_AT_GENERATING_OPERATION_HASH, ESDT_SAFE_STILL_PAUSED, MINT_ESDT_FAILED,
-    SETUP_PHASE_NOT_COMPLETED,
 };
 use multiversx_sc_modules::only_admin;
 use structs::{
@@ -38,14 +37,6 @@ pub trait ExecuteModule:
             );
             return;
         };
-        if !self.is_setup_phase_complete() {
-            self.complete_operation(
-                &hash_of_hashes,
-                &operation_hash,
-                Some(SETUP_PHASE_NOT_COMPLETED.into()),
-            );
-            return;
-        }
         if self.is_paused() {
             self.complete_operation(
                 &hash_of_hashes,
