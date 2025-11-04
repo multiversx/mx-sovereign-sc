@@ -3163,12 +3163,12 @@ fn test_pause_contract_changes_status() {
 /// M-ESDT_UNPAUSE_OK
 ///
 /// ### ACTION
-/// Call `unpause_contract()` when the contract is already unpaused
+/// Call `pause_contract()` when the contract is unpaused
 ///
 /// ### EXPECTED
-/// Operation succeeds and the contract remains unpaused
+/// Contract is paused and deposit endpoint fails
 #[test]
-fn test_pause_contract_unpaused() {
+fn test_pause_contract() {
     let mut state = MvxEsdtSafeTestState::new();
     state.deploy_contract_with_roles(None);
 
@@ -3211,12 +3211,15 @@ fn test_pause_contract_unpaused() {
         MultiValueEncoded::from_iter(vec![operation_hash]),
     );
 
-    let expected_logs = vec![log!(
-        PAUSE_CONTRACT_LOG,
-        topics: [EXECUTED_BRIDGE_OP_EVENT]
-    )];
-
-    state.pause_unpause_contract(true, &hash_of_hashes, nonce, expected_logs);
+    state.pause_unpause_contract(
+        true,
+        &hash_of_hashes,
+        nonce,
+        vec![log!(
+            PAUSE_CONTRACT_LOG,
+            topics: [EXECUTED_BRIDGE_OP_EVENT]
+        )],
+    );
 
     state
         .common_setup
@@ -3238,6 +3241,14 @@ fn test_pause_contract_unpaused() {
     );
 }
 
+/// ### TEST
+/// M-ESDT_EXEC_OK
+///
+/// ### ACTION
+/// Execute a bridge operation with mixed token payments, including one without prefunded liquidity.
+///
+/// ### EXPECTED
+/// Contract emits the partial-execution logs and refunds earlier mints, leaving balances unchanged.
 #[test]
 fn test_execute_operation_partial_execution() {
     let mut state = MvxEsdtSafeTestState::new();
