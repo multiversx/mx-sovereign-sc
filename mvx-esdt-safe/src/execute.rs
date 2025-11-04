@@ -147,7 +147,7 @@ pub trait ExecuteModule:
 
             self.try_esdt_local_mint(
                 &operation_token.token_identifier.clone().unwrap_esdt(),
-                operation_token.token_nonce,
+                0,
                 &operation_token.token_data.amount,
                 MINT_ESDT_FAILED,
             )?;
