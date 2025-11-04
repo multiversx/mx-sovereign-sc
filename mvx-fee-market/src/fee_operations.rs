@@ -58,8 +58,7 @@ pub trait FeeOperationsModule:
             SETUP_PHASE_ALREADY_COMPLETED
         );
 
-        self.token_fee(&base_token).clear();
-        self.fee_enabled().set(false);
+        self.remove_fee_from_storage(&base_token);
     }
 
     #[endpoint(removeFee)]

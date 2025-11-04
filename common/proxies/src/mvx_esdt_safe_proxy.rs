@@ -123,6 +123,22 @@ where
             .original_result()
     }
 
+    pub fn switch_pause_status<
+        Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
+        Arg1: ProxyArg<structs::configs::PauseStatusOperation>,
+    >(
+        self,
+        hash_of_hashes: Arg0,
+        pause_status_operation: Arg1,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("pauseContract")
+            .argument(&hash_of_hashes)
+            .argument(&pause_status_operation)
+            .original_result()
+    }
+
     pub fn set_fee_market_address<
         Arg0: ProxyArg<ManagedAddress<Env::Api>>,
     >(

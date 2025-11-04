@@ -3,11 +3,11 @@ use common_test_setup::constants::{
     CROWD_TOKEN_ID, DEPOSIT_EVENT, ESDT_SAFE_ADDRESS, EXECUTED_BRIDGE_OP_EVENT,
     EXECUTE_BRIDGE_OPS_ENDPOINT, EXECUTE_OPERATION_ENDPOINT, FEE_MARKET_ADDRESS, FEE_TOKEN,
     FIRST_TEST_TOKEN, FIRST_TOKEN_ID, HEADER_VERIFIER_ADDRESS, ISSUE_COST, NATIVE_TEST_TOKEN,
-    ONE_HUNDRED_MILLION, ONE_HUNDRED_THOUSAND, ONE_HUNDRED_TOKENS, OWNER_ADDRESS, PER_GAS,
-    PER_TRANSFER, REGISTER_TOKEN_ENDPOINT, REGISTER_TOKEN_EVENT, SECOND_TEST_TOKEN,
-    SECOND_TOKEN_ID, SOVEREIGN_RECEIVER_ADDRESS, SOV_FIRST_TOKEN_ID, SOV_SECOND_TOKEN_ID,
-    SOV_TOKEN, TESTING_SC_ADDRESS, TESTING_SC_ENDPOINT, TRUSTED_TOKEN, USER_ADDRESS,
-    WRONG_ENDPOINT_NAME,
+    ONE_HUNDRED_MILLION, ONE_HUNDRED_THOUSAND, ONE_HUNDRED_TOKENS, OWNER_ADDRESS,
+    PAUSE_CONTRACT_LOG, PER_GAS, PER_TRANSFER, REGISTER_TOKEN_ENDPOINT, REGISTER_TOKEN_EVENT,
+    SECOND_TEST_TOKEN, SECOND_TOKEN_ID, SOVEREIGN_RECEIVER_ADDRESS, SOV_FIRST_TOKEN_ID,
+    SOV_SECOND_TOKEN_ID, SOV_TOKEN, TESTING_SC_ADDRESS, TESTING_SC_ENDPOINT, TRUSTED_TOKEN,
+    USER_ADDRESS, WRONG_ENDPOINT_NAME,
 };
 use common_test_setup::log;
 use cross_chain::storage::CrossChainStorage;
@@ -15,7 +15,7 @@ use cross_chain::{DEFAULT_ISSUE_COST, MAX_GAS_PER_TRANSACTION};
 use error_messages::{
     BANNED_ENDPOINT_NAME, CALLER_IS_BLACKLISTED, CALLER_NOT_FROM_CURRENT_SOVEREIGN,
     CURRENT_OPERATION_NOT_REGISTERED, DEPOSIT_AMOUNT_NOT_ENOUGH, DEPOSIT_OVER_MAX_AMOUNT,
-    ERR_EMPTY_PAYMENTS, GAS_LIMIT_TOO_HIGH, INVALID_FUNCTION_NOT_FOUND,
+    ERR_EMPTY_PAYMENTS, ESDT_SAFE_STILL_PAUSED, GAS_LIMIT_TOO_HIGH, INVALID_FUNCTION_NOT_FOUND,
     INVALID_PREFIX_FOR_REGISTER, INVALID_TYPE, MAX_GAS_LIMIT_PER_TX_EXCEEDED,
     MINT_AND_BURN_ROLES_NOT_FOUND, NATIVE_TOKEN_ALREADY_REGISTERED, NATIVE_TOKEN_NOT_REGISTERED,
     NOTHING_TO_TRANSFER, NOT_ENOUGH_EGLD_FOR_REGISTER, PAYMENT_DOES_NOT_COVER_FEE,
@@ -34,6 +34,7 @@ use multiversx_sc::{
         TestTokenIdentifier, TokenIdentifier,
     },
 };
+use multiversx_sc_modules::pause::PauseModule;
 use multiversx_sc_scenario::multiversx_chain_vm::crypto_functions::sha256;
 use multiversx_sc_scenario::ScenarioTxRun;
 use multiversx_sc_scenario::{api::StaticApi, ScenarioTxWhitebox};
@@ -42,8 +43,8 @@ use mvx_esdt_safe_blackbox_setup::MvxEsdtSafeTestState;
 use proxies::mvx_esdt_safe_proxy::MvxEsdtSafeProxy;
 use setup_phase::SetupPhaseModule;
 use structs::configs::{
-    MaxBridgedAmount, SetBurnMechanismOperation, SetLockMechanismOperation, SovereignConfig,
-    UpdateEsdtSafeConfigOperation,
+    MaxBridgedAmount, PauseStatusOperation, SetBurnMechanismOperation, SetLockMechanismOperation,
+    SovereignConfig, UpdateEsdtSafeConfigOperation,
 };
 use structs::fee::{FeeStruct, FeeType};
 use structs::forge::ScArray;
@@ -3080,6 +3081,98 @@ fn test_update_config() {
         });
 }
 
+/// ### TEST
+/// M-ESDT_PAUSE_STATUS_OK
+///
+/// ### ACTION
+/// Call `switch_pause_status()` when the contract is unpaused
+///
+/// ### EXPECTED
+/// Contract is paused and deposit endpoint fails
+#[test]
+fn test_pause_contract() {
+    let mut state = MvxEsdtSafeTestState::new();
+    state.deploy_contract_with_roles(None);
+
+    state.common_setup.deploy_chain_config(
+        OptionalValue::Some(SovereignConfig::default_config_for_test()),
+        None,
+    );
+
+    let nonce = state.common_setup.next_operation_nonce();
+    let pause_operation = PauseStatusOperation {
+        status: true,
+        nonce,
+    };
+    let operation_hash = pause_operation.generate_hash();
+    let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&operation_hash.to_vec()));
+
+    let (signature, public_keys) = state.common_setup.get_sig_and_pub_keys(1, &hash_of_hashes);
+
+    state.common_setup.register(
+        public_keys.first().unwrap(),
+        &MultiEgldOrEsdtPayment::new(),
+        None,
+    );
+    state.common_setup.complete_chain_config_setup_phase();
+
+    state
+        .common_setup
+        .deploy_header_verifier(vec![ScArray::ChainConfig, ScArray::ESDTSafe]);
+    state
+        .common_setup
+        .complete_header_verifier_setup_phase(None);
+
+    state.complete_setup_phase();
+
+    let bitmap = state.common_setup.full_bitmap(1);
+    let epoch = 0;
+    state.common_setup.register_operation(
+        OWNER_ADDRESS,
+        signature,
+        &hash_of_hashes,
+        bitmap,
+        epoch,
+        MultiValueEncoded::from_iter(vec![operation_hash]),
+    );
+
+    state.switch_pause_status(
+        &hash_of_hashes,
+        pause_operation,
+        vec![log!(
+            PAUSE_CONTRACT_LOG,
+            topics: [EXECUTED_BRIDGE_OP_EVENT]
+        )],
+    );
+
+    state
+        .common_setup
+        .world
+        .query()
+        .to(ESDT_SAFE_ADDRESS)
+        .whitebox(mvx_esdt_safe::contract_obj, |sc| {
+            assert!(sc.is_paused());
+        });
+
+    let egld_payment = EgldOrEsdtTokenPayment::egld_payment(BigUint::from(100u64));
+    let payments_vec = PaymentsVec::from(vec![egld_payment]);
+
+    state.deposit(
+        USER_ADDRESS.to_managed_address(),
+        OptionalValue::None,
+        payments_vec,
+        Some(ESDT_SAFE_STILL_PAUSED),
+    );
+}
+
+/// ### TEST
+/// M-ESDT_EXEC_OK
+///
+/// ### ACTION
+/// Execute a bridge operation with mixed token payments, including one without prefunded liquidity.
+///
+/// ### EXPECTED
+/// Contract emits the partial-execution logs and refunds earlier mints, leaving balances unchanged.
 #[test]
 fn test_execute_operation_partial_execution() {
     let mut state = MvxEsdtSafeTestState::new();

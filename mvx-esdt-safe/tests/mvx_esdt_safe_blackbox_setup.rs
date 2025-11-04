@@ -23,7 +23,7 @@ use multiversx_sc_scenario::imports::*;
 use mvx_esdt_safe::MvxEsdtSafe;
 use proxies::mvx_esdt_safe_proxy::MvxEsdtSafeProxy;
 use structs::configs::{
-    SetBurnMechanismOperation, SetLockMechanismOperation, SovereignConfig,
+    PauseStatusOperation, SetBurnMechanismOperation, SetLockMechanismOperation, SovereignConfig,
     UpdateEsdtSafeConfigOperation,
 };
 use structs::forge::ScArray;
@@ -202,6 +202,26 @@ impl MvxEsdtSafeTestState {
 
         self.common_setup
             .assert_expected_error_message(result, expected_error_message);
+    }
+
+    pub fn switch_pause_status(
+        &mut self,
+        hash_of_hashes: &ManagedBuffer<StaticApi>,
+        operation: PauseStatusOperation,
+        expected_logs: Vec<ExpectedLogs>,
+    ) {
+        let logs = self
+            .common_setup
+            .world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .to(ESDT_SAFE_ADDRESS)
+            .typed(MvxEsdtSafeProxy)
+            .switch_pause_status(hash_of_hashes, operation)
+            .returns(ReturnsLogs)
+            .run();
+
+        assert_expected_logs(logs, expected_logs);
     }
 
     pub fn update_esdt_safe_config(
