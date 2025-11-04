@@ -1,10 +1,11 @@
 use error_messages::{
-    BURN_ESDT_FAILED, BURN_MECHANISM_NON_ESDT_TOKENS, LOCK_MECHANISM_NON_ESDT,
-    MINT_AND_BURN_ROLES_NOT_FOUND, MINT_ESDT_FAILED, SETUP_PHASE_ALREADY_COMPLETED,
-    SETUP_PHASE_NOT_COMPLETED, TOKEN_ALREADY_REGISTERED_WITH_BURN_MECHANISM,
+    BURN_ESDT_FAILED, BURN_MECHANISM_NON_ESDT_TOKENS, ESDT_SAFE_STILL_PAUSED,
+    LOCK_MECHANISM_NON_ESDT, MINT_AND_BURN_ROLES_NOT_FOUND, MINT_ESDT_FAILED,
+    SETUP_PHASE_ALREADY_COMPLETED, TOKEN_ALREADY_REGISTERED_WITH_BURN_MECHANISM,
     TOKEN_ID_IS_NOT_TRUSTED, TOKEN_NOT_REGISTERED_WITH_BURN_MECHANISM,
 };
 use multiversx_sc::imports::*;
+use multiversx_sc_modules::pause;
 use structs::{
     configs::{SetBurnMechanismOperation, SetLockMechanismOperation},
     generate_hash::GenerateHash,
@@ -17,6 +18,7 @@ pub trait BridgingMechanism:
     + setup_phase::SetupPhaseModule
     + common_utils::CommonUtilsModule
     + custom_events::CustomEventsModule
+    + pause::PauseModule
 {
     #[only_owner]
     #[endpoint(setTokenBurnMechanismSetupPhase)]
@@ -73,11 +75,11 @@ pub trait BridgingMechanism:
             self.complete_operation(&hash_of_hashes, &operation_hash, Some(error_message));
             return;
         }
-        if !self.is_setup_phase_complete() {
+        if self.is_paused() {
             self.complete_operation(
                 &hash_of_hashes,
                 &operation_hash,
-                Some(SETUP_PHASE_NOT_COMPLETED.into()),
+                Some(ESDT_SAFE_STILL_PAUSED.into()),
             );
             return;
         }
@@ -127,7 +129,6 @@ pub trait BridgingMechanism:
             );
             return;
         }
-
         if let Some(lock_operation_error) = self.lock_operation_hash_wrapper(
             &hash_of_hashes,
             &operation_hash,
@@ -198,11 +199,11 @@ pub trait BridgingMechanism:
             self.complete_operation(&hash_of_hashes, &operation_hash, Some(error_message));
             return;
         }
-        if !self.is_setup_phase_complete() {
+        if self.is_paused() {
             self.complete_operation(
                 &hash_of_hashes,
                 &operation_hash,
-                Some(SETUP_PHASE_NOT_COMPLETED.into()),
+                Some(ESDT_SAFE_STILL_PAUSED.into()),
             );
             return;
         }
@@ -224,7 +225,6 @@ pub trait BridgingMechanism:
             );
             return;
         }
-
         if let Some(lock_operation_error) = self.lock_operation_hash_wrapper(
             &hash_of_hashes,
             &operation_hash,
