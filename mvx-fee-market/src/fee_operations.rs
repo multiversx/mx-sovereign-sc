@@ -105,6 +105,8 @@ pub trait FeeOperationsModule:
         if let Some(set_fee_error_msg) = self.set_fee_in_storage(&fee_struct) {
             sc_panic!(set_fee_error_msg);
         }
+
+        self.remove_fee_from_storage(&fee_struct.base_token);
     }
 
     #[endpoint(setFee)]
