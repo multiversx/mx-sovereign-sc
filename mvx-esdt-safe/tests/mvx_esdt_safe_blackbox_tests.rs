@@ -43,8 +43,8 @@ use mvx_esdt_safe_blackbox_setup::MvxEsdtSafeTestState;
 use proxies::mvx_esdt_safe_proxy::MvxEsdtSafeProxy;
 use setup_phase::SetupPhaseModule;
 use structs::configs::{
-    MaxBridgedAmount, PauseEsdtSafeOperation, SetBurnMechanismOperation, SetLockMechanismOperation,
-    SovereignConfig, UnpauseEsdtSafeOperation, UpdateEsdtSafeConfigOperation,
+    MaxBridgedAmount, PauseStatusOperation, SetBurnMechanismOperation, SetLockMechanismOperation,
+    SovereignConfig, UpdateEsdtSafeConfigOperation,
 };
 use structs::fee::{FeeStruct, FeeType};
 use structs::forge::ScArray;
@@ -3082,15 +3082,15 @@ fn test_update_config() {
 }
 
 /// ### TEST
-/// M-ESDT_PAUSE_OK
+/// M-ESDT_PAUSE_STATUS_OK
 ///
 /// ### ACTION
-/// Call `pause_contract()` while the contract is unpaused
+/// Call `switch_pause_status()` when the contract is unpaused
 ///
 /// ### EXPECTED
-/// Contract transitions to the paused state
+/// Contract is paused and deposit endpoint fails
 #[test]
-fn test_pause_contract_changes_status() {
+fn test_pause_contract() {
     let mut state = MvxEsdtSafeTestState::new();
     state.deploy_contract_with_roles(None);
 
@@ -3100,7 +3100,10 @@ fn test_pause_contract_changes_status() {
     );
 
     let nonce = state.common_setup.next_operation_nonce();
-    let pause_operation = PauseEsdtSafeOperation { nonce };
+    let pause_operation = PauseStatusOperation {
+        status: true,
+        nonce,
+    };
     let operation_hash = pause_operation.generate_hash();
     let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&operation_hash.to_vec()));
 
@@ -3122,15 +3125,6 @@ fn test_pause_contract_changes_status() {
 
     state.complete_setup_phase();
 
-    state
-        .common_setup
-        .world
-        .query()
-        .to(ESDT_SAFE_ADDRESS)
-        .whitebox(mvx_esdt_safe::contract_obj, |sc| {
-            assert!(!sc.is_paused());
-        });
-
     let bitmap = state.common_setup.full_bitmap(1);
     let epoch = 0;
     state.common_setup.register_operation(
@@ -3142,79 +3136,9 @@ fn test_pause_contract_changes_status() {
         MultiValueEncoded::from_iter(vec![operation_hash]),
     );
 
-    let expected_logs = vec![log!(
-        PAUSE_CONTRACT_LOG,
-        topics: [EXECUTED_BRIDGE_OP_EVENT]
-    )];
-
-    state.pause_unpause_contract(true, &hash_of_hashes, nonce, expected_logs);
-
-    state
-        .common_setup
-        .world
-        .query()
-        .to(ESDT_SAFE_ADDRESS)
-        .whitebox(mvx_esdt_safe::contract_obj, |sc| {
-            assert!(sc.is_paused());
-        });
-}
-
-/// ### TEST
-/// M-ESDT_UNPAUSE_OK
-///
-/// ### ACTION
-/// Call `pause_contract()` when the contract is unpaused
-///
-/// ### EXPECTED
-/// Contract is paused and deposit endpoint fails
-#[test]
-fn test_pause_contract() {
-    let mut state = MvxEsdtSafeTestState::new();
-    state.deploy_contract_with_roles(None);
-
-    state.common_setup.deploy_chain_config(
-        OptionalValue::Some(SovereignConfig::default_config_for_test()),
-        None,
-    );
-
-    let nonce = state.common_setup.next_operation_nonce();
-    let unpause_operation = UnpauseEsdtSafeOperation { nonce };
-    let operation_hash = unpause_operation.generate_hash();
-    let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&operation_hash.to_vec()));
-
-    let (signature, public_keys) = state.common_setup.get_sig_and_pub_keys(1, &hash_of_hashes);
-
-    state.common_setup.register(
-        public_keys.first().unwrap(),
-        &MultiEgldOrEsdtPayment::new(),
-        None,
-    );
-    state.common_setup.complete_chain_config_setup_phase();
-
-    state
-        .common_setup
-        .deploy_header_verifier(vec![ScArray::ChainConfig, ScArray::ESDTSafe]);
-    state
-        .common_setup
-        .complete_header_verifier_setup_phase(None);
-
-    state.complete_setup_phase();
-
-    let bitmap = state.common_setup.full_bitmap(1);
-    let epoch = 0;
-    state.common_setup.register_operation(
-        OWNER_ADDRESS,
-        signature,
+    state.switch_pause_status(
         &hash_of_hashes,
-        bitmap,
-        epoch,
-        MultiValueEncoded::from_iter(vec![operation_hash]),
-    );
-
-    state.pause_unpause_contract(
-        true,
-        &hash_of_hashes,
-        nonce,
+        pause_operation,
         vec![log!(
             PAUSE_CONTRACT_LOG,
             topics: [EXECUTED_BRIDGE_OP_EVENT]

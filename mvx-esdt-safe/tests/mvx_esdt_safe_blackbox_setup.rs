@@ -21,10 +21,9 @@ use multiversx_sc::{
 use multiversx_sc_scenario::imports::*;
 use mvx_esdt_safe::MvxEsdtSafe;
 use proxies::mvx_esdt_safe_proxy::MvxEsdtSafeProxy;
-use structs::aliases::TxNonce;
 use structs::configs::{
-    PauseEsdtSafeOperation, SetBurnMechanismOperation, SetLockMechanismOperation, SovereignConfig,
-    UnpauseEsdtSafeOperation, UpdateEsdtSafeConfigOperation,
+    PauseStatusOperation, SetBurnMechanismOperation, SetLockMechanismOperation, SovereignConfig,
+    UpdateEsdtSafeConfigOperation,
 };
 use structs::forge::ScArray;
 use structs::{
@@ -204,44 +203,22 @@ impl MvxEsdtSafeTestState {
             .assert_expected_error_message(result, expected_error_message);
     }
 
-    pub fn pause_unpause_contract(
+    pub fn switch_pause_status(
         &mut self,
-        pause: bool,
         hash_of_hashes: &ManagedBuffer<StaticApi>,
-        operation_nonce: TxNonce,
+        operation: PauseStatusOperation,
         expected_logs: Vec<ExpectedLogs>,
     ) {
-        let logs = if pause {
-            self.common_setup
-                .world
-                .tx()
-                .from(OWNER_ADDRESS)
-                .to(ESDT_SAFE_ADDRESS)
-                .typed(MvxEsdtSafeProxy)
-                .pause_contract(
-                    hash_of_hashes,
-                    PauseEsdtSafeOperation {
-                        nonce: operation_nonce,
-                    },
-                )
-                .returns(ReturnsLogs)
-                .run()
-        } else {
-            self.common_setup
-                .world
-                .tx()
-                .from(OWNER_ADDRESS)
-                .to(ESDT_SAFE_ADDRESS)
-                .typed(MvxEsdtSafeProxy)
-                .unpause_contract(
-                    hash_of_hashes,
-                    UnpauseEsdtSafeOperation {
-                        nonce: operation_nonce,
-                    },
-                )
-                .returns(ReturnsLogs)
-                .run()
-        };
+        let logs = self
+            .common_setup
+            .world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .to(ESDT_SAFE_ADDRESS)
+            .typed(MvxEsdtSafeProxy)
+            .switch_pause_status(hash_of_hashes, operation)
+            .returns(ReturnsLogs)
+            .run();
 
         self.common_setup.assert_expected_logs(logs, expected_logs);
     }
