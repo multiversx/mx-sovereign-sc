@@ -118,7 +118,7 @@ pub trait ExecuteModule:
         if self.is_fungible(&operation_token.token_data.token_type) {
             self.try_esdt_local_mint(
                 &mvx_token_id.clone().unwrap_esdt(),
-                operation_token.token_nonce,
+                0,
                 &operation_token.token_data.amount,
                 MINT_ESDT_FAILED,
             )?;
