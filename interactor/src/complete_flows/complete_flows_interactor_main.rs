@@ -15,7 +15,7 @@ use common_test_setup::constants::{
 use common_test_setup::log;
 use cross_chain::DEFAULT_ISSUE_COST;
 use error_messages::EXPECTED_MAPPED_TOKEN;
-use multiversx_sc::api::ESDT_LOCAL_MINT_FUNC_NAME;
+use multiversx_sc::api::{ESDT_LOCAL_MINT_FUNC_NAME, ESDT_NFT_CREATE_FUNC_NAME};
 use multiversx_sc::chain_core::EGLD_000000_TOKEN_IDENTIFIER;
 use multiversx_sc_snippets::imports::*;
 use multiversx_sc_snippets::multiversx_sc_scenario::multiversx_chain_vm::crypto_functions::sha256;
@@ -152,7 +152,7 @@ impl CompleteFlowInteract {
         config: ActionConfig,
         token: Option<EsdtTokenInfo>,
     ) {
-        let expected_logs = self.build_expected_execute_log(config.clone());
+        let expected_logs = self.build_expected_execute_log(config.clone(), token.clone());
         let operation = self
             .prepare_operation(config.shard, token, config.endpoint.as_deref())
             .await;
@@ -282,7 +282,11 @@ impl CompleteFlowInteract {
             .await;
 
         let token_id_static: &'static str = Box::leak(token_id.clone().into_boxed_str());
-        let additional_log = log!(ESDT_LOCAL_MINT_FUNC_NAME, topics: [token_id_static]);
+        let additional_log = if token.token_type != EsdtTokenType::Fungible {
+            log!(ESDT_NFT_CREATE_FUNC_NAME, topics: [token_id_static])
+        } else {
+            log!(ESDT_LOCAL_MINT_FUNC_NAME, topics: [token_id_static])
+        };
 
         config = config.expect_additional_log(additional_log);
 

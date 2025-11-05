@@ -2,14 +2,15 @@ use std::path::Path;
 
 use common_test_setup::base_setup::init::ExpectedLogs;
 use common_test_setup::constants::{
-    DEPOSIT_EVENT, ESDT_LOCAL_BURN_EVENT, EXECUTED_BRIDGE_LOG, EXECUTED_BRIDGE_OP_EVENT,
-    EXECUTE_OPERATION_ENDPOINT, FEE_MARKET_SHARD_0, FEE_MARKET_SHARD_1, FEE_MARKET_SHARD_2,
-    GAS_LIMIT, MVX_ESDT_SAFE_SHARD_0, MVX_ESDT_SAFE_SHARD_1, MVX_ESDT_SAFE_SHARD_2, PER_GAS,
-    PER_TRANSFER, SC_CALL_LOG, SHARD_1, TESTING_SC, TESTING_SC_ENDPOINT, TRUSTED_TOKEN_NAME,
-    UNKNOWN_FEE_MARKET, UNKNOWN_MVX_ESDT_SAFE, USER_ADDRESS_STR,
+    DEPOSIT_EVENT, EXECUTED_BRIDGE_LOG, EXECUTED_BRIDGE_OP_EVENT, EXECUTE_OPERATION_ENDPOINT,
+    FEE_MARKET_SHARD_0, FEE_MARKET_SHARD_1, FEE_MARKET_SHARD_2, GAS_LIMIT, MVX_ESDT_SAFE_SHARD_0,
+    MVX_ESDT_SAFE_SHARD_1, MVX_ESDT_SAFE_SHARD_2, PER_GAS, PER_TRANSFER, SC_CALL_LOG, SHARD_0,
+    SHARD_1, TESTING_SC, TESTING_SC_ENDPOINT, TRUSTED_TOKEN_NAME, UNKNOWN_FEE_MARKET,
+    UNKNOWN_MVX_ESDT_SAFE, USER_ADDRESS_STR,
 };
 use common_test_setup::log;
 use error_messages::{AMOUNT_IS_TOO_LARGE, FAILED_TO_PARSE_AS_NUMBER};
+use multiversx_sc::api::{ESDT_LOCAL_BURN_FUNC_NAME, ESDT_NFT_BURN_FUNC_NAME};
 use multiversx_sc::{
     codec::{num_bigint, TopEncode},
     imports::{Bech32Address, MultiValue3, OptionalValue},
@@ -473,34 +474,51 @@ pub trait InteractorHelpers {
                 .to_string()
                 .into_boxed_str(),
         );
-        vec![
-            log!(DEPOSIT_EVENT, topics: [token_id_static]),
-            log!(ESDT_LOCAL_BURN_EVENT, topics: [main_token_id_static]),
-        ]
+        let mut expected_logs = vec![log!(DEPOSIT_EVENT, topics: [token_id_static])];
+        if main_token.token_type != EsdtTokenType::Fungible {
+            expected_logs.push(log!(ESDT_NFT_BURN_FUNC_NAME, topics: [main_token_id_static]));
+        } else {
+            expected_logs.push(log!(ESDT_LOCAL_BURN_FUNC_NAME, topics: [main_token_id_static]));
+        }
+        expected_logs
     }
 
-    fn build_expected_execute_log(&mut self, config: ActionConfig) -> Vec<ExpectedLogs<'static>> {
-        if config.shard != SHARD_1 {
+    fn build_expected_execute_log(
+        &mut self,
+        config: ActionConfig,
+        token: Option<EsdtTokenInfo>,
+    ) -> Vec<ExpectedLogs<'static>> {
+        if let Some(error) = config.expected_log_error {
+            if config.shard == SHARD_0 {
+                return vec![log!(
+                    EXECUTE_OPERATION_ENDPOINT,
+                    topics: [EXECUTED_BRIDGE_OP_EVENT],
+                    data: Some(error)
+                )];
+            }
             return vec![];
         }
 
-        if let Some(override_expected_log) = config.override_expected_log {
-            return override_expected_log;
+        if config.shard == SHARD_0 {
+            if config.endpoint.is_some() {
+                return vec![log!(EXECUTE_OPERATION_ENDPOINT, topics: [EXECUTED_BRIDGE_LOG])];
+            }
+            return vec![];
         }
 
-        let mut expected_logs = if config.expected_log_error.is_some() {
-            vec![
-                log!(EXECUTE_OPERATION_ENDPOINT, topics: [EXECUTED_BRIDGE_OP_EVENT], data: config.expected_log_error),
-            ]
-        } else {
-            vec![log!(EXECUTE_OPERATION_ENDPOINT, topics: [EXECUTED_BRIDGE_LOG])]
-        };
-
-        if let Some(additional_log) = config.expected_log {
-            expected_logs.push(additional_log);
+        if config.shard == SHARD_1 {
+            if config.endpoint.is_some() || token.is_none() {
+                return vec![];
+            }
+            let mut expected_logs =
+                vec![log!(EXECUTE_OPERATION_ENDPOINT, topics: [EXECUTED_BRIDGE_LOG])];
+            if let Some(additional_log) = config.expected_log {
+                expected_logs.push(additional_log);
+            }
+            return expected_logs;
         }
 
-        expected_logs
+        vec![]
     }
 
     // CHECK BALANCE OPERATIONS

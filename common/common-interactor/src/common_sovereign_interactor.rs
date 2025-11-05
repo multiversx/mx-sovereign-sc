@@ -1381,7 +1381,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             .tx()
             .from(caller)
             .to(current_mvx_esdt_safe_address)
-            .gas(120_000_000u64)
+            .gas(130_000_000u64)
             .typed(MvxEsdtSafeProxy)
             .execute_operations(hash_of_hashes, operation)
             .returns(ReturnsHandledOrError::new())

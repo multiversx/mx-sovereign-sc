@@ -3,10 +3,12 @@ use common_interactor::interactor_config::Config;
 use common_interactor::interactor_helpers::InteractorHelpers;
 use common_interactor::interactor_state::EsdtTokenInfo;
 use common_interactor::interactor_structs::ActionConfig;
+use common_test_setup::base_setup::init::ExpectedLogs;
 use common_test_setup::constants::{
     ONE_HUNDRED_TOKENS, READ_NATIVE_TOKEN_TESTING_SC_ENDPOINT, SHARD_0, SHARD_1,
-    TESTING_SC_ENDPOINT, WRONG_ENDPOINT_NAME,
+    TESTING_SC_ENDPOINT, TRANSFER_VALUE_ONLY_LOG, WRONG_ENDPOINT_NAME,
 };
+use common_test_setup::log;
 use multiversx_sc::types::BigUint;
 use multiversx_sc::types::EgldOrEsdtTokenIdentifier;
 use multiversx_sc::types::EsdtTokenType;
@@ -14,6 +16,7 @@ use multiversx_sc::types::ManagedAddress;
 use multiversx_sc::types::ManagedBuffer;
 use multiversx_sc::types::ManagedVec;
 use multiversx_sc::types::MultiValueEncoded;
+use multiversx_sc_scenario::imports::OptionalValue;
 use multiversx_sc_scenario::multiversx_chain_vm::crypto_functions::sha256;
 use multiversx_sc_snippets::imports::{tokio, StaticApi};
 use multiversx_sc_snippets::multiversx_sc_scenario::multiversx_chain_vm::vm_err_msg::FUNCTION_NOT_FOUND;
@@ -87,7 +90,6 @@ async fn test_complete_deposit_flow_with_fee_only_transfer_data(#[case] shard: u
         .await;
 }
 
-//TODO: Fix the logs after framework fix is implemented, check for the TESTING_SC_ENDPOINT executed log as well
 /// ### TEST
 /// S-FORGE_COMPLETE-EXEC-FLOW_OK
 ///
@@ -107,12 +109,15 @@ async fn test_complete_execute_flow_with_transfer_data_only_success(#[case] shar
 
     chain_interactor.remove_fee_wrapper(shard).await;
 
+    let additional_log =
+        log!(TRANSFER_VALUE_ONLY_LOG, topics: [""], data: Some(TESTING_SC_ENDPOINT));
+
     chain_interactor
         .execute_wrapper(
             ActionConfig::new()
                 .shard(shard)
-                .with_endpoint(TESTING_SC_ENDPOINT.to_string()),
-            // .expect_additional_log(vec!["".to_string()]),
+                .with_endpoint(TESTING_SC_ENDPOINT.to_string())
+                .expect_additional_log(additional_log),
             None,
         )
         .await;
@@ -220,15 +225,7 @@ async fn test_deposit_without_fee_and_execute(
         .await;
 
     chain_interactor
-        .execute_wrapper(
-            ActionConfig::new().shard(shard),
-            // .expect_additional_log(vec![token
-            //     .clone()
-            //     .token_id
-            //     .into_managed_buffer()
-            //     .to_string()]),
-            Some(token),
-        )
+        .execute_wrapper(ActionConfig::new().shard(shard), Some(token))
         .await;
 }
 

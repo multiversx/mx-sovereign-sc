@@ -27,7 +27,17 @@ pub fn assert_expected_logs(logs: Vec<Log>, expected_logs: Vec<ExpectedLogs>) {
                     .filter(|log| {
                         log.topics
                             .first()
-                            .map(|t| *t == first_topic_bytes)
+                            .map(|t| {
+                                // Check raw bytes match (blackbox scenario format)
+                                if *t == first_topic_bytes {
+                                    return true;
+                                }
+                                // Check if log topic, when decoded from base64, matches (chain simulator format)
+                                BASE64_STANDARD
+                                    .decode(t)
+                                    .map(|decoded| decoded == first_topic_bytes)
+                                    .unwrap_or(false)
+                            })
                             .unwrap_or(false)
                     })
                     .collect();
@@ -51,7 +61,6 @@ pub fn validate_expected_topics(topics: &[&str], matching_logs: &[&Log], endpoin
 
                 // Check if any log topic, when decoded from base64, matches (chain simulator format)
                 log.topics.iter().any(|log_topic| {
-                    // Try to decode the log topic from base64 and compare
                     BASE64_STANDARD
                         .decode(log_topic)
                         .map(|decoded| decoded == *expected_topic)
