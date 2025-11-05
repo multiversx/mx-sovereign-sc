@@ -1,8 +1,8 @@
 #![no_std]
 
 use error_messages::{
-    ADDRESS_NOT_VALID_SC_ADDRESS, ERROR_AT_GENERATING_OPERATION_HASH, FEE_MARKET_NOT_SET,
-    NATIVE_TOKEN_NOT_REGISTERED, SETUP_PHASE_ALREADY_COMPLETED, SETUP_PHASE_NOT_COMPLETED,
+    ADDRESS_NOT_VALID_SC_ADDRESS, FEE_MARKET_NOT_SET, NATIVE_TOKEN_NOT_REGISTERED,
+    SETUP_PHASE_ALREADY_COMPLETED, SETUP_PHASE_NOT_COMPLETED,
 };
 
 use multiversx_sc::imports::*;
@@ -82,12 +82,12 @@ pub trait MvxEsdtSafe:
         update_config_operation: UpdateEsdtSafeConfigOperation<Self::Api>,
     ) {
         let config_hash = update_config_operation.generate_hash();
-        if config_hash.is_empty() {
-            self.complete_operation(
-                &hash_of_hashes,
-                &config_hash,
-                Some(ERROR_AT_GENERATING_OPERATION_HASH.into()),
-            );
+        if let Some(lock_operation_error) = self.lock_operation_hash_wrapper(
+            &hash_of_hashes,
+            &config_hash,
+            update_config_operation.nonce,
+        ) {
+            self.complete_operation(&hash_of_hashes, &config_hash, Some(lock_operation_error));
             return;
         }
         if !self.is_setup_phase_complete() {
@@ -96,14 +96,6 @@ pub trait MvxEsdtSafe:
                 &config_hash,
                 Some(SETUP_PHASE_NOT_COMPLETED.into()),
             );
-            return;
-        }
-        if let Some(lock_operation_error) = self.lock_operation_hash_wrapper(
-            &hash_of_hashes,
-            &config_hash,
-            update_config_operation.nonce,
-        ) {
-            self.complete_operation(&hash_of_hashes, &config_hash, Some(lock_operation_error));
             return;
         }
         if let Some(error_message) =
@@ -129,12 +121,12 @@ pub trait MvxEsdtSafe:
         pause_status_operation: PauseStatusOperation,
     ) {
         let operation_hash = pause_status_operation.generate_hash();
-        if operation_hash.is_empty() {
-            self.complete_operation(
-                &hash_of_hashes,
-                &operation_hash,
-                Some(ERROR_AT_GENERATING_OPERATION_HASH.into()),
-            );
+        if let Some(lock_operation_error) = self.lock_operation_hash_wrapper(
+            &hash_of_hashes,
+            &operation_hash,
+            pause_status_operation.nonce,
+        ) {
+            self.complete_operation(&hash_of_hashes, &operation_hash, Some(lock_operation_error));
             return;
         }
         if !self.is_setup_phase_complete() {
@@ -143,14 +135,6 @@ pub trait MvxEsdtSafe:
                 &operation_hash,
                 Some(SETUP_PHASE_NOT_COMPLETED.into()),
             );
-            return;
-        }
-        if let Some(lock_operation_error) = self.lock_operation_hash_wrapper(
-            &hash_of_hashes,
-            &operation_hash,
-            pause_status_operation.nonce,
-        ) {
-            self.complete_operation(&hash_of_hashes, &operation_hash, Some(lock_operation_error));
             return;
         }
 
