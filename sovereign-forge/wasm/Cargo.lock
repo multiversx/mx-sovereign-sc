@@ -330,6 +330,7 @@ dependencies = [
  "fee-common",
  "header-verifier",
  "multiversx-sc",
+ "multiversx-sc-modules",
  "mvx-esdt-safe",
  "mvx-fee-market",
  "proxies",
