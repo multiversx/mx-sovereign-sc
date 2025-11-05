@@ -32,25 +32,20 @@ pub trait FeeWhitelistModule:
         add_to_whitelist_operation: AddUsersToWhitelistOperation<Self::Api>,
     ) {
         let operation_hash = add_to_whitelist_operation.generate_hash();
-        if let Some(error_message) = self.validate_operation_hash(&operation_hash) {
-            self.complete_operation(&hash_of_hashes, &operation_hash, Some(error_message));
-            return;
-        }
-
-        if !self.is_setup_phase_complete() {
-            self.complete_operation(
-                &hash_of_hashes,
-                &operation_hash,
-                Some(SETUP_PHASE_NOT_COMPLETED.into()),
-            );
-            return;
-        }
         if let Some(lock_operation_error) = self.lock_operation_hash_wrapper(
             &hash_of_hashes,
             &operation_hash,
             add_to_whitelist_operation.nonce,
         ) {
             self.complete_operation(&hash_of_hashes, &operation_hash, Some(lock_operation_error));
+            return;
+        }
+        if !self.is_setup_phase_complete() {
+            self.complete_operation(
+                &hash_of_hashes,
+                &operation_hash,
+                Some(SETUP_PHASE_NOT_COMPLETED.into()),
+            );
             return;
         }
         self.users_whitelist()
@@ -81,8 +76,12 @@ pub trait FeeWhitelistModule:
         remove_from_whitelist_operation: RemoveUsersFromWhitelistOperation<Self::Api>,
     ) {
         let operation_hash = remove_from_whitelist_operation.generate_hash();
-        if let Some(error_message) = self.validate_operation_hash(&operation_hash) {
-            self.complete_operation(&hash_of_hashes, &operation_hash, Some(error_message));
+        if let Some(lock_operation_error) = self.lock_operation_hash_wrapper(
+            &hash_of_hashes,
+            &operation_hash,
+            remove_from_whitelist_operation.nonce,
+        ) {
+            self.complete_operation(&hash_of_hashes, &operation_hash, Some(lock_operation_error));
             return;
         }
         if !self.is_setup_phase_complete() {
@@ -91,14 +90,6 @@ pub trait FeeWhitelistModule:
                 &operation_hash,
                 Some(SETUP_PHASE_NOT_COMPLETED.into()),
             );
-            return;
-        }
-        if let Some(lock_operation_error) = self.lock_operation_hash_wrapper(
-            &hash_of_hashes,
-            &operation_hash,
-            remove_from_whitelist_operation.nonce,
-        ) {
-            self.complete_operation(&hash_of_hashes, &operation_hash, Some(lock_operation_error));
             return;
         }
 

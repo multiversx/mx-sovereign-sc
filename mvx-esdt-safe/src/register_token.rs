@@ -1,8 +1,7 @@
 use cross_chain::{DEFAULT_ISSUE_COST, REGISTER_GAS};
 use error_messages::{
-    ERROR_AT_GENERATING_OPERATION_HASH, ESDT_SAFE_STILL_PAUSED, INVALID_PREFIX_FOR_REGISTER,
-    NATIVE_TOKEN_ALREADY_REGISTERED, NOT_ENOUGH_EGLD_FOR_REGISTER, SETUP_PHASE_ALREADY_COMPLETED,
-    TOKEN_ALREADY_REGISTERED,
+    ESDT_SAFE_STILL_PAUSED, INVALID_PREFIX_FOR_REGISTER, NATIVE_TOKEN_ALREADY_REGISTERED,
+    NOT_ENOUGH_EGLD_FOR_REGISTER, SETUP_PHASE_ALREADY_COMPLETED, TOKEN_ALREADY_REGISTERED,
 };
 use multiversx_sc::{chain_core::EGLD_000000_TOKEN_IDENTIFIER, types::EsdtTokenType};
 use multiversx_sc_modules::only_admin;
@@ -30,14 +29,14 @@ pub trait RegisterTokenModule:
         register_token_operation: RegisterTokenOperation<Self::Api>,
     ) {
         let token_hash = register_token_operation.generate_hash();
-        if token_hash.is_empty() {
-            self.complete_operation(
-                &hash_of_hashes,
-                &token_hash,
-                Some(ERROR_AT_GENERATING_OPERATION_HASH.into()),
-            );
+        if let Some(lock_operation_error) = self.lock_operation_hash_wrapper(
+            &hash_of_hashes,
+            &token_hash,
+            register_token_operation.data.op_nonce,
+        ) {
+            self.complete_operation(&hash_of_hashes, &token_hash, Some(lock_operation_error));
             return;
-        };
+        }
         if self.is_paused() {
             self.complete_operation(
                 &hash_of_hashes,
@@ -46,14 +45,6 @@ pub trait RegisterTokenModule:
             );
             return;
         }
-        if let Some(lock_operation_error) = self.lock_operation_hash_wrapper(
-            &hash_of_hashes,
-            &token_hash,
-            register_token_operation.data.op_nonce,
-        ) {
-            self.complete_operation(&hash_of_hashes, &token_hash, Some(lock_operation_error));
-            return;
-        };
 
         if self
             .blockchain()

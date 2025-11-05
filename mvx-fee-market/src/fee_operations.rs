@@ -23,22 +23,18 @@ pub trait FeeOperationsModule:
         operation: DistributeFeesOperation<Self::Api>,
     ) {
         let operation_hash = operation.generate_hash();
-        if let Some(error_message) = self.validate_operation_hash(&operation_hash) {
-            self.complete_operation(&hash_of_hashes, &operation_hash, Some(error_message));
+        if let Some(lock_operation_error) =
+            self.lock_operation_hash_wrapper(&hash_of_hashes, &operation_hash, operation.nonce)
+        {
+            self.complete_operation(&hash_of_hashes, &operation_hash, Some(lock_operation_error));
             return;
-        };
+        }
         if !self.is_setup_phase_complete() {
             self.complete_operation(
                 &hash_of_hashes,
                 &operation_hash,
                 Some(SETUP_PHASE_NOT_COMPLETED.into()),
             );
-            return;
-        }
-        if let Some(lock_operation_error) =
-            self.lock_operation_hash_wrapper(&hash_of_hashes, &operation_hash, operation.nonce)
-        {
-            self.complete_operation(&hash_of_hashes, &operation_hash, Some(lock_operation_error));
             return;
         }
         if let Some(err_msg) = self.validate_percentage_sum(&operation.pairs) {
@@ -68,25 +64,20 @@ pub trait FeeOperationsModule:
         remove_fee_operation: RemoveFeeOperation<Self::Api>,
     ) {
         let token_id_hash = remove_fee_operation.generate_hash();
-        if let Some(err_msg) = self.validate_operation_hash(&token_id_hash) {
-            self.complete_operation(&hash_of_hashes, &token_id_hash, Some(err_msg));
-            return;
-        };
-        if !self.is_setup_phase_complete() {
-            self.complete_operation(
-                &hash_of_hashes,
-                &token_id_hash,
-                Some(SETUP_PHASE_NOT_COMPLETED.into()),
-            );
-            return;
-        }
-
         if let Some(lock_operation_error) = self.lock_operation_hash_wrapper(
             &hash_of_hashes,
             &token_id_hash,
             remove_fee_operation.nonce,
         ) {
             self.complete_operation(&hash_of_hashes, &token_id_hash, Some(lock_operation_error));
+            return;
+        }
+        if !self.is_setup_phase_complete() {
+            self.complete_operation(
+                &hash_of_hashes,
+                &token_id_hash,
+                Some(SETUP_PHASE_NOT_COMPLETED.into()),
+            );
             return;
         }
         self.remove_fee_from_storage(&remove_fee_operation.token_id);
@@ -113,22 +104,18 @@ pub trait FeeOperationsModule:
         set_fee_operation: SetFeeOperation<Self::Api>,
     ) {
         let fee_hash = set_fee_operation.generate_hash();
-        if let Some(err_msg) = self.validate_operation_hash(&fee_hash) {
-            self.complete_operation(&hash_of_hashes, &fee_hash, Some(err_msg));
+        if let Some(lock_operation_error) =
+            self.lock_operation_hash_wrapper(&hash_of_hashes, &fee_hash, set_fee_operation.nonce)
+        {
+            self.complete_operation(&hash_of_hashes, &fee_hash, Some(lock_operation_error));
             return;
-        };
+        }
         if !self.is_setup_phase_complete() {
             self.complete_operation(
                 &hash_of_hashes,
                 &fee_hash,
                 Some(SETUP_PHASE_NOT_COMPLETED.into()),
             );
-            return;
-        }
-        if let Some(lock_operation_error) =
-            self.lock_operation_hash_wrapper(&hash_of_hashes, &fee_hash, set_fee_operation.nonce)
-        {
-            self.complete_operation(&hash_of_hashes, &fee_hash, Some(lock_operation_error));
             return;
         }
         if let Some(set_fee_error_msg) = self.set_fee_in_storage(&set_fee_operation.fee_struct) {

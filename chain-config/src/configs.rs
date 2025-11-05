@@ -1,6 +1,4 @@
-use error_messages::{
-    ERROR_AT_GENERATING_OPERATION_HASH, SETUP_PHASE_ALREADY_COMPLETED, SETUP_PHASE_NOT_COMPLETED,
-};
+use error_messages::{SETUP_PHASE_ALREADY_COMPLETED, SETUP_PHASE_NOT_COMPLETED};
 use structs::{
     configs::{SovereignConfig, UpdateSovereignConfigOperation},
     generate_hash::GenerateHash,
@@ -40,28 +38,20 @@ pub trait ConfigsModule:
         update_config_operation: UpdateSovereignConfigOperation<Self::Api>,
     ) {
         let config_hash = update_config_operation.generate_hash();
-        if config_hash.is_empty() {
-            self.complete_operation(
-                &hash_of_hashes,
-                &config_hash,
-                Some(ERROR_AT_GENERATING_OPERATION_HASH.into()),
-            );
-            return;
-        };
-        if !self.is_setup_phase_complete() {
-            self.complete_operation(
-                &hash_of_hashes,
-                &config_hash,
-                Some(SETUP_PHASE_NOT_COMPLETED.into()),
-            );
-            return;
-        }
         if let Some(lock_operation_error) = self.lock_operation_hash_wrapper(
             &hash_of_hashes,
             &config_hash,
             update_config_operation.nonce,
         ) {
             self.complete_operation(&hash_of_hashes, &config_hash, Some(lock_operation_error));
+            return;
+        }
+        if !self.is_setup_phase_complete() {
+            self.complete_operation(
+                &hash_of_hashes,
+                &config_hash,
+                Some(SETUP_PHASE_NOT_COMPLETED.into()),
+            );
             return;
         }
 

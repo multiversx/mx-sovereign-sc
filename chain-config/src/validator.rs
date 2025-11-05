@@ -1,7 +1,6 @@
 use crate::{config_utils, storage};
 use error_messages::{
-    ERROR_AT_GENERATING_OPERATION_HASH, INVALID_VALIDATOR_DATA,
-    REGISTRATIONS_DISABLED_GENESIS_PHASE, VALIDATOR_ID_NOT_REGISTERED,
+    INVALID_VALIDATOR_DATA, REGISTRATIONS_DISABLED_GENESIS_PHASE, VALIDATOR_ID_NOT_REGISTERED,
 };
 use structs::generate_hash::GenerateHash;
 use structs::{ValidatorInfo, ValidatorOperation};
@@ -61,15 +60,6 @@ pub trait ValidatorModule:
         validator_operation: ValidatorOperation<Self::Api>,
     ) {
         let config_hash = validator_operation.generate_hash();
-        if config_hash.is_empty() {
-            self.complete_operation(
-                &hash_of_hashes,
-                &config_hash,
-                Some(ERROR_AT_GENERATING_OPERATION_HASH.into()),
-            );
-            return;
-        };
-
         if let Some(lock_operation_error) = self.lock_operation_hash_wrapper(
             &hash_of_hashes,
             &config_hash,
@@ -128,15 +118,6 @@ pub trait ValidatorModule:
         validator_operation: ValidatorOperation<Self::Api>,
     ) {
         let config_hash = validator_operation.generate_hash();
-        if config_hash.is_empty() {
-            self.complete_operation(
-                &hash_of_hashes,
-                &config_hash,
-                Some(ERROR_AT_GENERATING_OPERATION_HASH.into()),
-            );
-            return;
-        };
-
         if let Some(lock_operation_error) = self.lock_operation_hash_wrapper(
             &hash_of_hashes,
             &config_hash,
