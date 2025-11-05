@@ -1,6 +1,4 @@
-use error_messages::{
-    ERROR_AT_GENERATING_OPERATION_HASH, SETUP_PHASE_ALREADY_COMPLETED, SETUP_PHASE_NOT_COMPLETED,
-};
+use error_messages::{SETUP_PHASE_ALREADY_COMPLETED, SETUP_PHASE_NOT_COMPLETED};
 use structs::{
     fee::{AddUsersToWhitelistOperation, RemoveUsersFromWhitelistOperation},
     generate_hash::GenerateHash,

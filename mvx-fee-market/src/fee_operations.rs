@@ -1,6 +1,4 @@
-use error_messages::{
-    ERROR_AT_GENERATING_OPERATION_HASH, SETUP_PHASE_ALREADY_COMPLETED, SETUP_PHASE_NOT_COMPLETED,
-};
+use error_messages::{SETUP_PHASE_ALREADY_COMPLETED, SETUP_PHASE_NOT_COMPLETED};
 use structs::{
     fee::{DistributeFeesOperation, FeeStruct, RemoveFeeOperation, SetFeeOperation},
     generate_hash::GenerateHash,
@@ -66,7 +64,6 @@ pub trait FeeOperationsModule:
         remove_fee_operation: RemoveFeeOperation<Self::Api>,
     ) {
         let token_id_hash = remove_fee_operation.generate_hash();
-
         if let Some(lock_operation_error) = self.lock_operation_hash_wrapper(
             &hash_of_hashes,
             &token_id_hash,
