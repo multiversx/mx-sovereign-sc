@@ -1372,6 +1372,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
         shard: u32,
         hash_of_hashes: ManagedBuffer<StaticApi>,
         operation: Operation<StaticApi>,
+        expected_error: Option<&str>,
         expected_logs: Option<Vec<ExpectedLogs<'_>>>,
     ) {
         let current_mvx_esdt_safe_address =
@@ -1389,9 +1390,11 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             .run()
             .await;
 
-        self.assert_expected_error_message(response, None);
+        self.assert_expected_error_message(response, expected_error);
 
-        assert_expected_logs(logs, expected_logs.unwrap_or_default());
+        if expected_error.is_none() {
+            assert_expected_logs(logs, expected_logs.unwrap_or_default());
+        }
     }
 
     async fn register_token(

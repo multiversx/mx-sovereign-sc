@@ -182,6 +182,7 @@ impl CompleteFlowInteract {
             config.shard,
             hash_of_hashes.clone(),
             operation.clone(),
+            None,
             Some(expected_logs),
         )
         .await;

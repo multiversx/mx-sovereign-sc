@@ -609,6 +609,7 @@ async fn test_execute_operation_transfer_data_only_async_call_in_endpoint(#[case
             hash_of_hashes,
             operation,
             None,
+            None,
         )
         .await;
 }

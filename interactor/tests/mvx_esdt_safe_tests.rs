@@ -15,6 +15,7 @@ use error_messages::{
     ERR_EMPTY_PAYMENTS, GAS_LIMIT_TOO_HIGH, MAX_GAS_LIMIT_PER_TX_EXCEEDED, NOTHING_TO_TRANSFER,
     TOO_MANY_TOKENS,
 };
+use multiversx_sc::api::ESDT_LOCAL_MINT_FUNC_NAME;
 use multiversx_sc::chain_core::EGLD_000000_TOKEN_IDENTIFIER;
 use multiversx_sc_snippets::imports::*;
 use multiversx_sc_snippets::multiversx_sc_scenario::multiversx_chain_vm::crypto_functions::sha256;
@@ -554,6 +555,7 @@ async fn test_execute_operation_no_operation_registered() {
         ActionConfig::new()
             .shard(SHARD_1)
             .expected_log_error(CURRENT_OPERATION_NOT_REGISTERED),
+        Some(chain_interactor.state.get_first_fungible_token_id()),
     );
     chain_interactor
         .execute_operations_in_mvx_esdt_safe(
@@ -561,6 +563,7 @@ async fn test_execute_operation_no_operation_registered() {
             SHARD_1,
             hash_of_hashes,
             operation,
+            None,
             Some(expected_logs),
         )
         .await;
@@ -680,14 +683,19 @@ async fn test_execute_operation_with_egld_success_no_fee() {
     let bridge_service = chain_interactor
         .get_bridge_service_for_shard(SHARD_1)
         .clone();
-    let expected_logs =
-        chain_interactor.build_expected_execute_log(ActionConfig::new().shard(SHARD_1));
+    let expected_logs = chain_interactor.build_expected_execute_log(
+        ActionConfig::new()
+            .shard(SHARD_1)
+            .with_endpoint(TESTING_SC_ENDPOINT.to_string()),
+        Some(token.clone()),
+    );
     chain_interactor
         .execute_operations_in_mvx_esdt_safe(
             bridge_service,
             SHARD_1,
             hash_of_hashes,
             operation,
+            None,
             Some(expected_logs),
         )
         .await;
@@ -773,13 +781,14 @@ async fn test_execute_operation_only_transfer_data_no_fee() {
         .get_bridge_service_for_shard(SHARD_1)
         .clone();
     let expected_logs =
-        chain_interactor.build_expected_execute_log(ActionConfig::new().shard(SHARD_1));
+        chain_interactor.build_expected_execute_log(ActionConfig::new().shard(SHARD_1), None);
     chain_interactor
         .execute_operations_in_mvx_esdt_safe(
             bridge_service,
             SHARD_1,
             hash_of_hashes,
             operation,
+            None,
             Some(expected_logs),
         )
         .await;
@@ -866,25 +875,34 @@ async fn test_execute_operation_native_token_success_no_fee() {
         .get_bridge_service_for_shard(SHARD_1)
         .clone();
 
-    let expected_logs =
-        chain_interactor.build_expected_execute_log(ActionConfig::new().shard(SHARD_1));
+    let native_token_info = EsdtTokenInfo {
+        token_id: native_token.clone(),
+        amount: BigUint::from(TEN_TOKENS),
+        nonce: 0,
+        decimals: 18,
+        token_type: EsdtTokenType::Fungible,
+    };
+
+    let native_token_id_static = Box::leak(
+        native_token
+            .clone()
+            .into_managed_buffer()
+            .to_string()
+            .into_boxed_str(),
+    );
+
+    let expected_logs = vec![log!(ESDT_LOCAL_MINT_FUNC_NAME, topics: [native_token_id_static])];
     chain_interactor
         .execute_operations_in_mvx_esdt_safe(
             bridge_service,
             SHARD_1,
             hash_of_hashes,
             operation,
+            None,
             Some(expected_logs),
         )
         .await;
 
-    let native_token_info = EsdtTokenInfo {
-        token_id: native_token,
-        amount: BigUint::from(TEN_TOKENS),
-        nonce: 0,
-        decimals: 18,
-        token_type: EsdtTokenType::Fungible,
-    };
     let balance_config = BalanceCheckConfig::new()
         .shard(SHARD_1)
         .token(Some(native_token_info))
@@ -904,7 +922,7 @@ async fn test_execute_operation_native_token_success_no_fee() {
 /// Call 'execute_operation()' with valid operation but no registered sovereign token
 ///
 /// ### EXPECTED
-/// Transaction is successful but the logs contain the InternalVMError
+/// Transaction is not successful and the logs contain the InternalVMError
 #[tokio::test]
 #[serial]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
@@ -921,7 +939,7 @@ async fn test_execute_operation_sovereign_token_not_registered() {
     };
 
     let payment = OperationEsdtPayment::new(
-        EgldOrEsdtTokenIdentifier::esdt(TokenIdentifier::from_esdt_bytes(sov_token_id)),
+        EgldOrEsdtTokenIdentifier::esdt(TokenIdentifier::from_esdt_bytes(sov_token_id.clone())),
         0,
         token_data,
     );
@@ -966,16 +984,14 @@ async fn test_execute_operation_sovereign_token_not_registered() {
     let bridge_service = chain_interactor
         .get_bridge_service_for_shard(SHARD_1)
         .clone();
-
-    let expected_logs =
-        chain_interactor.build_expected_execute_log(ActionConfig::new().shard(SHARD_1));
     chain_interactor
         .execute_operations_in_mvx_esdt_safe(
             bridge_service,
             SHARD_1,
             hash_of_hashes,
             operation,
-            Some(expected_logs),
+            Some(MULTI_ESDT_NFT_TRANSFER_EVENT),
+            None,
         )
         .await;
 }
@@ -1182,14 +1198,17 @@ async fn test_execute_operation_with_burn_mechanism() {
         .get_bridge_service_for_shard(SHARD_1)
         .clone();
 
-    let expected_logs =
-        chain_interactor.build_expected_execute_log(ActionConfig::new().shard(SHARD_1));
+    let expected_logs = chain_interactor.build_expected_execute_log(
+        ActionConfig::new().shard(SHARD_1),
+        Some(trusted_token_info.clone()),
+    );
     chain_interactor
         .execute_operations_in_mvx_esdt_safe(
             bridge_service,
             SHARD_1,
             hash_of_hashes,
             operation,
+            None,
             Some(expected_logs),
         )
         .await;
