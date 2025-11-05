@@ -1,7 +1,7 @@
 use error_messages::{
-    BURN_ESDT_FAILED, BURN_MECHANISM_NON_ESDT_TOKENS, ESDT_SAFE_STILL_PAUSED,
-    LOCK_MECHANISM_NON_ESDT, MINT_AND_BURN_ROLES_NOT_FOUND, MINT_ESDT_FAILED,
-    SETUP_PHASE_ALREADY_COMPLETED, TOKEN_ALREADY_REGISTERED_WITH_BURN_MECHANISM,
+    BURN_ESDT_FAILED, BURN_MECHANISM_NON_ESDT_TOKENS, ERROR_AT_GENERATING_OPERATION_HASH,
+    ESDT_SAFE_STILL_PAUSED, LOCK_MECHANISM_NON_ESDT, MINT_AND_BURN_ROLES_NOT_FOUND,
+    MINT_ESDT_FAILED, SETUP_PHASE_ALREADY_COMPLETED, TOKEN_ALREADY_REGISTERED_WITH_BURN_MECHANISM,
     TOKEN_ID_IS_NOT_TRUSTED, TOKEN_NOT_REGISTERED_WITH_BURN_MECHANISM,
 };
 use multiversx_sc::imports::*;
@@ -71,8 +71,12 @@ pub trait BridgingMechanism:
         set_burn_mechanism_operation: SetBurnMechanismOperation<Self::Api>,
     ) {
         let operation_hash = set_burn_mechanism_operation.generate_hash();
-        if let Some(error_message) = self.validate_operation_hash(&operation_hash) {
-            self.complete_operation(&hash_of_hashes, &operation_hash, Some(error_message));
+        if let Some(lock_operation_error) = self.lock_operation_hash_wrapper(
+            &hash_of_hashes,
+            &operation_hash,
+            set_burn_mechanism_operation.nonce,
+        ) {
+            self.complete_operation(&hash_of_hashes, &operation_hash, Some(lock_operation_error));
             return;
         }
         if self.is_paused() {
@@ -127,14 +131,6 @@ pub trait BridgingMechanism:
                 &operation_hash,
                 Some(TOKEN_ID_IS_NOT_TRUSTED.into()),
             );
-            return;
-        }
-        if let Some(lock_operation_error) = self.lock_operation_hash_wrapper(
-            &hash_of_hashes,
-            &operation_hash,
-            set_burn_mechanism_operation.nonce,
-        ) {
-            self.complete_operation(&hash_of_hashes, &operation_hash, Some(lock_operation_error));
             return;
         }
 
@@ -195,8 +191,12 @@ pub trait BridgingMechanism:
         set_lock_mechanism_operation: SetLockMechanismOperation<Self::Api>,
     ) {
         let operation_hash = set_lock_mechanism_operation.generate_hash();
-        if let Some(error_message) = self.validate_operation_hash(&operation_hash) {
-            self.complete_operation(&hash_of_hashes, &operation_hash, Some(error_message));
+        if let Some(lock_operation_error) = self.lock_operation_hash_wrapper(
+            &hash_of_hashes,
+            &operation_hash,
+            set_lock_mechanism_operation.nonce,
+        ) {
+            self.complete_operation(&hash_of_hashes, &operation_hash, Some(lock_operation_error));
             return;
         }
         if self.is_paused() {
@@ -223,14 +223,6 @@ pub trait BridgingMechanism:
                 &operation_hash,
                 Some(TOKEN_NOT_REGISTERED_WITH_BURN_MECHANISM.into()),
             );
-            return;
-        }
-        if let Some(lock_operation_error) = self.lock_operation_hash_wrapper(
-            &hash_of_hashes,
-            &operation_hash,
-            set_lock_mechanism_operation.nonce,
-        ) {
-            self.complete_operation(&hash_of_hashes, &operation_hash, Some(lock_operation_error));
             return;
         }
 

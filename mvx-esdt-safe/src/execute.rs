@@ -29,28 +29,20 @@ pub trait ExecuteModule:
     #[endpoint(executeBridgeOps)]
     fn execute_operations(&self, hash_of_hashes: ManagedBuffer, operation: Operation<Self::Api>) {
         let operation_hash = operation.generate_hash();
-        if operation_hash.is_empty() {
-            self.complete_operation(
-                &hash_of_hashes,
-                &operation_hash,
-                Some(ERROR_AT_GENERATING_OPERATION_HASH.into()),
-            );
-            return;
-        };
-        if self.is_paused() {
-            self.complete_operation(
-                &hash_of_hashes,
-                &operation_hash,
-                Some(ESDT_SAFE_STILL_PAUSED.into()),
-            );
-            return;
-        }
         if let Some(lock_operation_error) = self.lock_operation_hash_wrapper(
             &hash_of_hashes,
             &operation_hash,
             operation.data.op_nonce,
         ) {
             self.complete_operation(&hash_of_hashes, &operation_hash, Some(lock_operation_error));
+            return;
+        }
+        if self.is_paused() {
+            self.complete_operation(
+                &hash_of_hashes,
+                &operation_hash,
+                Some(ESDT_SAFE_STILL_PAUSED.into()),
+            );
             return;
         }
 

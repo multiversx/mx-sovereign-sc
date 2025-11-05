@@ -30,14 +30,14 @@ pub trait RegisterTokenModule:
         register_token_operation: RegisterTokenOperation<Self::Api>,
     ) {
         let token_hash = register_token_operation.generate_hash();
-        if token_hash.is_empty() {
-            self.complete_operation(
-                &hash_of_hashes,
-                &token_hash,
-                Some(ERROR_AT_GENERATING_OPERATION_HASH.into()),
-            );
+        if let Some(lock_operation_error) = self.lock_operation_hash_wrapper(
+            &hash_of_hashes,
+            &token_hash,
+            register_token_operation.data.op_nonce,
+        ) {
+            self.complete_operation(&hash_of_hashes, &token_hash, Some(lock_operation_error));
             return;
-        };
+        }
         if self.is_paused() {
             self.complete_operation(
                 &hash_of_hashes,
@@ -46,14 +46,6 @@ pub trait RegisterTokenModule:
             );
             return;
         }
-        if let Some(lock_operation_error) = self.lock_operation_hash_wrapper(
-            &hash_of_hashes,
-            &token_hash,
-            register_token_operation.data.op_nonce,
-        ) {
-            self.complete_operation(&hash_of_hashes, &token_hash, Some(lock_operation_error));
-            return;
-        };
 
         if self
             .blockchain()
