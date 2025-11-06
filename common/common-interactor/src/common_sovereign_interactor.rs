@@ -15,7 +15,6 @@ use multiversx_bls::{SecretKey, G1};
 use multiversx_sc::{
     codec::num_bigint,
     imports::{ESDTSystemSCProxy, OptionalValue, UserBuiltinProxy},
-    typenum::operator_aliases,
     types::{
         Address, BigUint, CodeMetadata, ESDTSystemSCAddress, EgldOrEsdtTokenIdentifier,
         EsdtLocalRole, EsdtTokenType, ManagedAddress, ManagedBuffer, ManagedVec,
