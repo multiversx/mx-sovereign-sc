@@ -3105,10 +3105,15 @@ fn test_execute_paused_refund() {
             sc.paused_status().set(true);
         });
 
+    let token_data = EsdtTokenData {
+        amount: BigUint::from(100u64),
+        ..Default::default()
+    };
+
     let payment = OperationEsdtPayment::new(
         EgldOrEsdtTokenIdentifier::from(FIRST_TEST_TOKEN.as_bytes()),
         0,
-        EsdtTokenData::default(),
+        token_data,
     );
     let operation_data = OperationData::new(
         state.common_setup.next_operation_nonce(),
