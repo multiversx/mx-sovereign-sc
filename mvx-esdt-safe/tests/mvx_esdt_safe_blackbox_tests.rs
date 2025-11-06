@@ -3081,6 +3081,14 @@ fn test_update_config() {
         });
 }
 
+/// ### TEST
+/// M-ESDT_EXEC_OK
+///
+/// ### ACTION
+/// Call `execute_operation()` when the contract is paused
+///
+/// ### EXPECTED
+/// The operation is executed and the tokens are burned from SC
 #[test]
 fn test_execute_paused_refund() {
     let mut state = MvxEsdtSafeTestState::new();
@@ -3148,7 +3156,14 @@ fn test_execute_paused_refund() {
     state.execute_operation(
         &hash_of_hashes,
         &operation,
-        vec![log!(EXECUTE_OPERATION_ENDPOINT, topics: [EXECUTED_BRIDGE_OP_EVENT], data: None)],
+        vec![log!(EXECUTE_BRIDGE_OPS_ENDPOINT, topics: [EXECUTED_BRIDGE_OP_EVENT], data: None)],
+    );
+
+    state.common_setup.check_account_single_esdt(
+        ESDT_SAFE_ADDRESS.to_address(),
+        FIRST_TEST_TOKEN,
+        0,
+        BigUint::zero(),
     );
 }
 
