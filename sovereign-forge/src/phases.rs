@@ -12,6 +12,7 @@ use error_messages::{
     SOVEREIGN_SETUP_PHASE_ALREADY_COMPLETED,
 };
 use multiversx_sc::{imports::OptionalValue, require, types::MultiValueEncoded};
+use multiversx_sc_modules::pause;
 use proxies::chain_factory_proxy::ChainFactoryContractProxy;
 use structs::{
     configs::{EsdtSafeConfig, SovereignConfig},
@@ -28,6 +29,7 @@ pub trait PhasesModule:
     + custom_events::CustomEventsModule
     + common_utils::CommonUtilsModule
     + callbacks::ForgeCallbackModule
+    + pause::PauseModule
 {
     #[payable("EGLD")]
     #[endpoint(deployPhaseOne)]
@@ -36,6 +38,7 @@ pub trait PhasesModule:
         opt_preferred_chain_id: Option<ManagedBuffer>,
         config: OptionalValue<SovereignConfig<Self::Api>>,
     ) {
+        self.require_not_paused();
         let blockchain_api = self.blockchain();
         let caller = blockchain_api.get_caller();
         let caller_shard_id = blockchain_api.get_shard_of_address(&caller);
@@ -68,6 +71,7 @@ pub trait PhasesModule:
 
     #[endpoint(deployPhaseTwo)]
     fn deploy_phase_two(&self, opt_config: OptionalValue<EsdtSafeConfig<Self::Api>>) {
+        self.require_not_paused();
         let caller = self.blockchain().get_caller();
         let sov_prefix = self.sovereigns_mapper(&caller).get();
 
@@ -82,6 +86,7 @@ pub trait PhasesModule:
 
     #[endpoint(deployPhaseThree)]
     fn deploy_phase_three(&self, fee: OptionalValue<FeeStruct<Self::Api>>) {
+        self.require_not_paused();
         let caller = self.blockchain().get_caller();
 
         self.require_phase_two_completed(&caller);
@@ -97,6 +102,7 @@ pub trait PhasesModule:
 
     #[endpoint(deployPhaseFour)]
     fn deploy_phase_four(&self) {
+        self.require_not_paused();
         let blockchain_api = self.blockchain();
         let caller = blockchain_api.get_caller();
 
@@ -116,6 +122,7 @@ pub trait PhasesModule:
 
     #[endpoint(completeSetupPhase)]
     fn complete_setup_phase(&self) {
+        self.require_not_paused();
         let caller = self.blockchain().get_caller();
         let sovereign_setup_phase_mapper =
             self.sovereign_setup_phase(&self.sovereigns_mapper(&caller).get());

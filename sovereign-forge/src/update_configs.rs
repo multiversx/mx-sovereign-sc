@@ -1,4 +1,5 @@
 use multiversx_sc::types::{MultiValueEncoded, TokenIdentifier};
+use multiversx_sc_modules::pause;
 use proxies::chain_factory_proxy::ChainFactoryContractProxy;
 use structs::configs::{EsdtSafeConfig, SovereignConfig};
 use structs::fee::FeeStruct;
@@ -16,9 +17,11 @@ pub trait UpdateConfigsModule:
     + forge_common::forge_utils::ForgeUtilsModule
     + custom_events::CustomEventsModule
     + callbacks::ForgeCallbackModule
+    + pause::PauseModule
 {
     #[endpoint(updateEsdtSafeConfig)]
     fn update_esdt_safe_config(&self, new_config: EsdtSafeConfig<Self::Api>) {
+        self.require_not_paused();
         let caller = self.blockchain().get_caller();
 
         self.require_phase_two_completed(&caller);
@@ -38,6 +41,7 @@ pub trait UpdateConfigsModule:
 
     #[endpoint(updateSovereignConfig)]
     fn update_sovereign_config(&self, new_config: SovereignConfig<Self::Api>) {
+        self.require_not_paused();
         let blockchain_api = self.blockchain();
         let caller = blockchain_api.get_caller();
 
@@ -58,6 +62,7 @@ pub trait UpdateConfigsModule:
 
     #[endpoint(setFee)]
     fn set_fee(&self, new_fee: FeeStruct<Self::Api>) {
+        self.require_not_paused();
         let blockchain_api = self.blockchain();
         let caller = blockchain_api.get_caller();
 
@@ -78,6 +83,7 @@ pub trait UpdateConfigsModule:
 
     #[endpoint(removeFee)]
     fn remove_fee(&self, token_id: TokenIdentifier<Self::Api>) {
+        self.require_not_paused();
         let blockchain_api = self.blockchain();
         let caller = blockchain_api.get_caller();
 
@@ -98,6 +104,7 @@ pub trait UpdateConfigsModule:
 
     #[endpoint(addUsersToWhitelist)]
     fn add_users_to_whitelist(&self, users: MultiValueEncoded<ManagedAddress>) {
+        self.require_not_paused();
         let blockchain_api = self.blockchain();
         let caller = blockchain_api.get_caller();
 
@@ -118,6 +125,7 @@ pub trait UpdateConfigsModule:
 
     #[endpoint(removeUsersFromWhitelist)]
     fn remove_users_from_whitelist(&self, users: MultiValueEncoded<ManagedAddress>) {
+        self.require_not_paused();
         let blockchain_api = self.blockchain();
         let caller = blockchain_api.get_caller();
 
@@ -138,6 +146,7 @@ pub trait UpdateConfigsModule:
 
     #[endpoint(setTokenBurnMechanism)]
     fn set_token_burn_mechanism(&self, token_id: EgldOrEsdtTokenIdentifier) {
+        self.require_not_paused();
         let blockchain_api = self.blockchain();
         let caller = blockchain_api.get_caller();
 
@@ -158,6 +167,7 @@ pub trait UpdateConfigsModule:
 
     #[endpoint(setTokenLockMechanism)]
     fn set_token_lock_mechanism(&self, token_id: EgldOrEsdtTokenIdentifier) {
+        self.require_not_paused();
         let blockchain_api = self.blockchain();
         let caller = blockchain_api.get_caller();
 
@@ -179,6 +189,7 @@ pub trait UpdateConfigsModule:
     #[only_owner]
     #[endpoint(updateDeployCost)]
     fn update_deploy_cost(&self, deploy_cost: BigUint) {
+        self.require_not_paused();
         self.deploy_cost().set(deploy_cost);
     }
 }
