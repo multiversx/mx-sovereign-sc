@@ -38,29 +38,37 @@ pub trait ExecuteModule:
             return;
         }
         if self.is_paused() {
+            let refund_result = self.refund_transfers(&operation.tokens, &operation);
             self.complete_operation(
                 &hash_of_hashes,
                 &operation_hash,
-                Some(ESDT_SAFE_STILL_PAUSED.into()),
+                Some(self.merge_error_if_any(
+                    ManagedBuffer::from(ESDT_SAFE_STILL_PAUSED),
+                    refund_result,
+                )),
             );
             return;
         }
 
         let operation_tuple = OperationTuple {
-            op_hash: operation_hash,
+            op_hash: operation_hash.clone(),
             operation: operation.clone(),
         };
 
         if operation.tokens.is_empty() {
             self.execute_sc_call(&hash_of_hashes, &operation_tuple);
-
             return;
         }
 
         let minted_operation_tokens = match self.process_operation_payments(&operation_tuple) {
             Ok(tokens) => tokens,
             Err(err_msg) => {
-                self.complete_operation(&hash_of_hashes, &operation_tuple.op_hash, Some(err_msg));
+                let refund_result = self.refund_transfers(&operation.tokens, &operation);
+                self.complete_operation(
+                    &hash_of_hashes,
+                    &operation_hash,
+                    Some(self.merge_error_if_any(err_msg, refund_result)),
+                );
                 return;
             }
         };

@@ -38,6 +38,11 @@ pub trait RegisterTokenModule:
             return;
         }
         if self.is_paused() {
+            self.deposit_event(
+                &register_token_operation.data.op_sender.clone(),
+                &self.create_issue_cost_event_payment_tuple(),
+                register_token_operation.data.clone(),
+            );
             self.complete_operation(
                 &hash_of_hashes,
                 &token_hash,
@@ -51,28 +56,28 @@ pub trait RegisterTokenModule:
             .get_balance(&self.blockchain().get_sc_address())
             < DEFAULT_ISSUE_COST
         {
+            self.deposit_event(
+                &register_token_operation.data.op_sender.clone(),
+                &self.create_issue_cost_event_payment_tuple(),
+                register_token_operation.data.clone(),
+            );
             self.complete_operation(
                 &hash_of_hashes,
                 &token_hash,
                 Some(NOT_ENOUGH_EGLD_FOR_REGISTER.into()),
             );
+            return;
+        }
+        if self.is_sov_token_id_registered(&register_token_operation.token_id) {
             self.deposit_event(
                 &register_token_operation.data.op_sender.clone(),
                 &self.create_issue_cost_event_payment_tuple(),
                 register_token_operation.data.clone(),
             );
-            return;
-        }
-        if self.is_sov_token_id_registered(&register_token_operation.token_id) {
             self.complete_operation(
                 &hash_of_hashes,
                 &token_hash,
                 Some(TOKEN_ALREADY_REGISTERED.into()),
-            );
-            self.deposit_event(
-                &register_token_operation.data.op_sender.clone(),
-                &self.create_issue_cost_event_payment_tuple(),
-                register_token_operation.data.clone(),
             );
             return;
         }
@@ -80,15 +85,15 @@ pub trait RegisterTokenModule:
             &register_token_operation.token_id,
             &self.sov_token_prefix().get(),
         ) {
-            self.complete_operation(
-                &hash_of_hashes,
-                &token_hash,
-                Some(INVALID_PREFIX_FOR_REGISTER.into()),
-            );
             self.deposit_event(
                 &register_token_operation.data.op_sender.clone(),
                 &self.create_issue_cost_event_payment_tuple(),
                 register_token_operation.data.clone(),
+            );
+            self.complete_operation(
+                &hash_of_hashes,
+                &token_hash,
+                Some(INVALID_PREFIX_FOR_REGISTER.into()),
             );
             return;
         }
@@ -169,7 +174,6 @@ pub trait RegisterTokenModule:
             }
             ManagedAsyncCallResult::Err(error) => {
                 let tokens = self.create_issue_cost_event_payment_tuple();
-
                 self.deposit_event(
                     &token_to_register.data.op_sender.clone(),
                     &tokens,
