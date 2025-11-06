@@ -6,7 +6,7 @@ use error_messages::{
 };
 
 use multiversx_sc::imports::*;
-use multiversx_sc_modules::only_admin;
+use multiversx_sc_modules::{only_admin, pause};
 use structs::{
     configs::{EsdtSafeConfig, PauseStatusOperation, UpdateEsdtSafeConfigOperation},
     generate_hash::GenerateHash,
@@ -28,7 +28,7 @@ pub trait MvxEsdtSafe:
     + custom_events::CustomEventsModule
     + cross_chain::storage::CrossChainStorage
     + cross_chain::execute_common::ExecuteCommonModule
-    + multiversx_sc_modules::pause::PauseModule
+    + pause::PauseModule
     + common_utils::CommonUtilsModule
     + setup_phase::SetupPhaseModule
     + only_admin::OnlyAdminModule
