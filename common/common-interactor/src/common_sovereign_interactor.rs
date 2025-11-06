@@ -572,6 +572,20 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             .set_mvx_egld_balance_for_all_shards(0u64);
     }
 
+    async fn unpause_forge(&mut self, sovereign_forge_address: Address) {
+        let bridge_owner = self.get_bridge_owner_for_shard(SHARD_0).clone();
+
+        self.interactor()
+            .tx()
+            .from(bridge_owner)
+            .to(sovereign_forge_address)
+            .typed(SovereignForgeProxy)
+            .unpause_endpoint()
+            .gas(20_000_000)
+            .run()
+            .await;
+    }
+
     async fn deploy_and_setup_common(
         &mut self,
         deploy_cost: OptionalValue<BigUint<StaticApi>>,
@@ -587,6 +601,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
                 OptionalValue::Some(&BigUint::from(DEPLOY_COST)),
             )
             .await;
+        self.unpause_forge(sovereign_forge_address.clone()).await;
 
         let trusted_token = self.common_state().get_trusted_token();
 

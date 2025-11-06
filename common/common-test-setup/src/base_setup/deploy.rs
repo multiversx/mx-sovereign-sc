@@ -176,6 +176,14 @@ impl BaseSetup {
             .new_address(SOVEREIGN_FORGE_SC_ADDRESS)
             .run();
 
+        self.world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .to(SOVEREIGN_FORGE_SC_ADDRESS)
+            .typed(SovereignForgeProxy)
+            .unpause_endpoint()
+            .run();
+
         self
     }
 
