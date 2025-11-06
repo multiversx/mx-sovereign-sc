@@ -138,12 +138,7 @@ pub trait MvxEsdtSafe:
             return;
         }
 
-        if pause_status_operation.status {
-            self.pause_endpoint();
-        } else {
-            self.unpause_endpoint();
-        }
-
+        self.set_paused(pause_status_operation.status);
         self.complete_operation(&hash_of_hashes, &operation_hash, None);
     }
 
