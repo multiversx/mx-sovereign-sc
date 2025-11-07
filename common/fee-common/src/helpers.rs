@@ -177,15 +177,11 @@ pub trait FeeCommonHelpersModule:
         }
 
         match &fee_struct.fee_type {
-            FeeType::None => sc_panic!(INVALID_FEE_TYPE),
-            FeeType::Fixed {
-                token,
-                per_transfer: _,
-                per_gas: _,
-            } => {
-                require!(&fee_struct.base_token == token, INVALID_FEE);
-
-                token
+            FeeType::None => return Some(INVALID_FEE_TYPE),
+            FeeType::Fixed { token, .. } => {
+                if &fee_struct.base_token != token {
+                    return Some(INVALID_FEE);
+                }
             }
         };
 
