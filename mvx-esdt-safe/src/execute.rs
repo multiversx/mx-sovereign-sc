@@ -1,12 +1,12 @@
 use error_messages::{
-    BURN_ESDT_FAILED, CREATE_ESDT_FAILED, DEPOSIT_AMOUNT_NOT_ENOUGH, ESDT_SAFE_STILL_PAUSED,
-    MINT_ESDT_FAILED,
+    BANNED_ENDPOINT_NAME, BURN_ESDT_FAILED, CREATE_ESDT_FAILED, DEPOSIT_AMOUNT_NOT_ENOUGH,
+    ESDT_SAFE_STILL_PAUSED, GAS_LIMIT_TOO_HIGH, MINT_ESDT_FAILED, NOTHING_TO_TRANSFER,
 };
 use multiversx_sc_modules::only_admin;
 use structs::{
     aliases::GasLimit,
     generate_hash::GenerateHash,
-    operation::{Operation, OperationData, OperationEsdtPayment, OperationTuple},
+    operation::{Operation, OperationData, OperationEsdtPayment, OperationTuple, TransferData},
 };
 
 multiversx_sc::imports!();
@@ -56,6 +56,23 @@ pub trait ExecuteModule:
         };
 
         if operation.tokens.is_empty() {
+            let transfer_data = match operation.data.opt_transfer_data.as_ref() {
+                Some(data) => data,
+                None => {
+                    self.complete_operation(
+                        &hash_of_hashes,
+                        &operation_hash,
+                        Some(ManagedBuffer::from(NOTHING_TO_TRANSFER)),
+                    );
+                    return;
+                }
+            };
+
+            if let Some(err_msg) = self.validate_transfer_data(transfer_data) {
+                self.complete_operation(&hash_of_hashes, &operation_hash, Some(err_msg));
+                return;
+            }
+
             self.execute_sc_call(&hash_of_hashes, &operation_tuple);
             return;
         }
@@ -458,5 +475,25 @@ pub trait ExecuteModule:
             && self
                 .burn_mechanism_tokens()
                 .contains(&operation_token.token_identifier)
+    }
+
+    fn validate_transfer_data(
+        &self,
+        transfer_data: &TransferData<Self::Api>,
+    ) -> Option<ManagedBuffer> {
+        if transfer_data.gas_limit > self.esdt_safe_config().get().max_tx_gas_limit {
+            return Some(ManagedBuffer::from(GAS_LIMIT_TOO_HIGH));
+        }
+
+        if self
+            .esdt_safe_config()
+            .get()
+            .banned_endpoints
+            .contains(&transfer_data.function)
+        {
+            return Some(ManagedBuffer::from(BANNED_ENDPOINT_NAME));
+        }
+
+        None
     }
 }

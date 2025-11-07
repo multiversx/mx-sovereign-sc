@@ -1941,6 +1941,186 @@ fn test_execute_operation_burn_mechanism_without_deposit() {
 }
 
 /// ### TEST
+/// M-ESDT_EXEC_FAIL
+///
+/// ### ACTION
+/// Call 'execute_operation()' with no tokens and no transfer data
+///
+/// ### EXPECTED
+/// Error NOTHING_TO_TRANSFER
+#[test]
+fn test_execute_no_transfer_data_no_token_transfer() {
+    let mut state = MvxEsdtSafeTestState::new();
+    state.deploy_contract_with_roles(None);
+    state.complete_setup_phase();
+
+    let operation = Operation::new(
+        TESTING_SC_ADDRESS.to_managed_address(),
+        ManagedVec::new(),
+        OperationData::new(
+            state.common_setup.next_operation_nonce(),
+            OWNER_ADDRESS.to_managed_address(),
+            None,
+        ),
+    );
+
+    let operation_hash = state.common_setup.get_operation_hash(&operation);
+    let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&operation_hash.to_vec()));
+
+    state.common_setup.deploy_chain_config(
+        OptionalValue::Some(SovereignConfig::default_config_for_test()),
+        None,
+    );
+
+    let (signature, public_keys) = state.common_setup.get_sig_and_pub_keys(1, &hash_of_hashes);
+
+    state.common_setup.register(
+        public_keys.first().unwrap(),
+        &MultiEgldOrEsdtPayment::new(),
+        None,
+    );
+
+    state.common_setup.complete_chain_config_setup_phase();
+
+    state
+        .common_setup
+        .deploy_header_verifier(vec![ScArray::ChainConfig, ScArray::ESDTSafe]);
+
+    state
+        .common_setup
+        .complete_header_verifier_setup_phase(None);
+
+    state.common_setup.deploy_testing_sc();
+
+    let operations_hashes = MultiValueEncoded::from(ManagedVec::from(vec![operation_hash.clone()]));
+    let bitmap = state.common_setup.full_bitmap(1);
+    let epoch = 0;
+
+    state.common_setup.register_operation(
+        OWNER_ADDRESS,
+        signature,
+        &hash_of_hashes,
+        bitmap,
+        epoch,
+        operations_hashes,
+    );
+
+    state
+        .common_setup
+        .check_operation_hash_status(&operation_hash, OperationHashStatus::NotLocked);
+
+    let expected_logs = vec![log!(
+        EXECUTE_BRIDGE_OPS_ENDPOINT,
+        topics: [EXECUTED_BRIDGE_OP_EVENT],
+        data: Some(NOTHING_TO_TRANSFER)
+    )];
+    state.execute_operation(&hash_of_hashes, &operation, expected_logs);
+    state
+        .common_setup
+        .check_operation_hash_status_is_empty(&operation_hash);
+}
+
+/// ### TEST
+/// M-ESDT_EXEC_FAIL
+///
+/// ### ACTION
+/// Call 'execute_operation()' with transfer data targeting a banned endpoint
+///
+/// ### EXPECTED
+/// Error BANNED_ENDPOINT_NAME
+#[test]
+fn test_execute_operation_banned_endpoint() {
+    let mut state = MvxEsdtSafeTestState::new();
+    state.deploy_contract_with_roles(None);
+    state.complete_setup_phase();
+
+    state.common_setup.deploy_chain_config(
+        OptionalValue::Some(SovereignConfig::default_config_for_test()),
+        None,
+    );
+
+    let gas_limit = 1;
+    let function = ManagedBuffer::<StaticApi>::from(WRONG_ENDPOINT_NAME);
+    let args =
+        ManagedVec::<StaticApi, ManagedBuffer<StaticApi>>::from(vec![ManagedBuffer::from("1")]);
+    let transfer_data = TransferData::new(gas_limit, function, args);
+
+    let operation = Operation::new(
+        TESTING_SC_ADDRESS.to_managed_address(),
+        ManagedVec::new(),
+        OperationData::new(
+            state.common_setup.next_operation_nonce(),
+            OWNER_ADDRESS.to_managed_address(),
+            Some(transfer_data),
+        ),
+    );
+
+    let operation_hash = state.common_setup.get_operation_hash(&operation);
+    let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&operation_hash.to_vec()));
+
+    let (signature, public_keys) = state.common_setup.get_sig_and_pub_keys(1, &hash_of_hashes);
+
+    state.common_setup.register(
+        public_keys.first().unwrap(),
+        &MultiEgldOrEsdtPayment::new(),
+        None,
+    );
+
+    state.common_setup.complete_chain_config_setup_phase();
+
+    state
+        .common_setup
+        .deploy_header_verifier(vec![ScArray::ChainConfig, ScArray::ESDTSafe]);
+
+    state
+        .common_setup
+        .complete_header_verifier_setup_phase(None);
+
+    state.common_setup.deploy_testing_sc();
+
+    state
+        .common_setup
+        .world
+        .tx()
+        .from(OWNER_ADDRESS)
+        .to(ESDT_SAFE_ADDRESS)
+        .whitebox(mvx_esdt_safe::contract_obj, |sc| {
+            sc.esdt_safe_config().update(|cfg| {
+                cfg.banned_endpoints
+                    .push(ManagedBuffer::from(WRONG_ENDPOINT_NAME));
+            });
+        });
+
+    let operations_hashes = MultiValueEncoded::from(ManagedVec::from(vec![operation_hash.clone()]));
+    let bitmap = state.common_setup.full_bitmap(1);
+    let epoch = 0;
+
+    state.common_setup.register_operation(
+        OWNER_ADDRESS,
+        signature,
+        &hash_of_hashes,
+        bitmap,
+        epoch,
+        operations_hashes,
+    );
+
+    state
+        .common_setup
+        .check_operation_hash_status(&operation_hash, OperationHashStatus::NotLocked);
+
+    let expected_logs = vec![log!(
+        EXECUTE_OPERATION_ENDPOINT,
+        topics: [EXECUTED_BRIDGE_OP_EVENT],
+        data: Some(BANNED_ENDPOINT_NAME)
+    )];
+    state.execute_operation(&hash_of_hashes, &operation, expected_logs);
+
+    state
+        .common_setup
+        .check_operation_hash_status_is_empty(&operation_hash);
+}
+
+/// ### TEST
 /// M-ESDT_EXEC_OK
 ///
 /// ### ACTION
@@ -1954,7 +2134,7 @@ fn test_execute_operation_only_transfer_data_no_fee() {
     state.deploy_contract_with_roles(None);
     state.complete_setup_phase();
 
-    let gas_limit = 90_000_000u64;
+    let gas_limit = 40_000_000u64;
     let function = ManagedBuffer::<StaticApi>::from(TESTING_SC_ENDPOINT);
     let args =
         ManagedVec::<StaticApi, ManagedBuffer<StaticApi>>::from(vec![ManagedBuffer::from("1")]);
