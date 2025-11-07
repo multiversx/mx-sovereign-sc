@@ -3082,6 +3082,98 @@ fn test_update_config() {
 }
 
 /// ### TEST
+/// M-ESDT_EXEC_OK
+///
+/// ### ACTION
+/// Call `execute_operation()` when the contract is paused
+///
+/// ### EXPECTED
+/// The operation is executed and the tokens are burned from SC
+#[test]
+fn test_execute_paused_refund() {
+    let mut state = MvxEsdtSafeTestState::new();
+    state.deploy_contract_with_roles(None);
+    state.complete_setup_phase();
+
+    state
+        .common_setup
+        .world
+        .tx()
+        .from(OWNER_ADDRESS)
+        .to(ESDT_SAFE_ADDRESS)
+        .whitebox(mvx_esdt_safe::contract_obj, |sc| {
+            sc.paused_status().set(true);
+        });
+
+    let token_data = EsdtTokenData {
+        amount: BigUint::from(100u64),
+        ..Default::default()
+    };
+
+    let payment = OperationEsdtPayment::new(
+        EgldOrEsdtTokenIdentifier::from(FIRST_TEST_TOKEN.as_bytes()),
+        0,
+        token_data,
+    );
+    let operation_data = OperationData::new(
+        state.common_setup.next_operation_nonce(),
+        OWNER_ADDRESS.to_managed_address(),
+        None,
+    );
+    let operation = Operation {
+        to: USER_ADDRESS.to_managed_address(),
+        tokens: vec![payment].into(),
+        data: operation_data,
+    };
+
+    let operation_hash = operation.generate_hash();
+    let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&operation_hash.to_vec()));
+    let (signature, bls_key) = state.common_setup.get_sig_and_pub_keys(1, &hash_of_hashes);
+    let bitmap = state.common_setup.full_bitmap(1);
+    let egld_payment = EgldOrEsdtTokenPayment::egld_payment(BigUint::default());
+    let payments_vec = PaymentsVec::from(vec![egld_payment]);
+
+    state.common_setup.deploy_chain_config(
+        OptionalValue::Some(SovereignConfig::default_config_for_test()),
+        None,
+    );
+    state
+        .common_setup
+        .register(&bls_key[0], &payments_vec, None);
+    state.common_setup.complete_chain_config_setup_phase();
+
+    state
+        .common_setup
+        .deploy_header_verifier(vec![ScArray::ChainConfig, ScArray::ESDTSafe]);
+    state
+        .common_setup
+        .complete_header_verifier_setup_phase(None);
+
+    state.common_setup.register_operation(
+        OWNER_ADDRESS,
+        signature,
+        &hash_of_hashes,
+        bitmap,
+        0,
+        MultiValueEncoded::from_iter(vec![operation_hash]),
+    );
+
+    let expected_logs = vec![
+        log!(EXECUTE_BRIDGE_OPS_ENDPOINT, topics: [EXECUTED_BRIDGE_OP_EVENT], data: Some(ESDT_SAFE_STILL_PAUSED)),
+        log!(EXECUTE_BRIDGE_OPS_ENDPOINT, topics: [DEPOSIT_EVENT, FIRST_TEST_TOKEN.as_str()]),
+    ];
+
+    state.execute_operation(&hash_of_hashes, &operation, expected_logs);
+
+    state.common_setup.check_account_single_esdt(
+        ESDT_SAFE_ADDRESS.to_address(),
+        FIRST_TEST_TOKEN,
+        0,
+        BigUint::zero(),
+    );
+}
+
+/// ### TEST
 /// M-ESDT_PAUSE_STATUS_OK
 ///
 /// ### ACTION
