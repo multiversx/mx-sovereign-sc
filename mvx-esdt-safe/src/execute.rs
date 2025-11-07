@@ -63,12 +63,7 @@ pub trait ExecuteModule:
         let minted_operation_tokens = match self.process_operation_payments(&operation_tuple) {
             Ok(tokens) => tokens,
             Err(err_msg) => {
-                let refund_result = self.refund_transfers(&operation.tokens, &operation);
-                self.complete_operation(
-                    &hash_of_hashes,
-                    &operation_hash,
-                    Some(self.merge_error_if_any(err_msg, refund_result)),
-                );
+                self.complete_operation(&hash_of_hashes, &operation_hash, Some(err_msg));
                 return;
             }
         };

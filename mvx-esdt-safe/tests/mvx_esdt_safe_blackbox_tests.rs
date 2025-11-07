@@ -3158,11 +3158,12 @@ fn test_execute_paused_refund() {
         MultiValueEncoded::from_iter(vec![operation_hash]),
     );
 
-    state.execute_operation(
-        &hash_of_hashes,
-        &operation,
-        vec![log!(EXECUTE_BRIDGE_OPS_ENDPOINT, topics: [EXECUTED_BRIDGE_OP_EVENT], data: None)],
-    );
+    let expected_logs = vec![
+        log!(EXECUTE_BRIDGE_OPS_ENDPOINT, topics: [EXECUTED_BRIDGE_OP_EVENT], data: Some(ESDT_SAFE_STILL_PAUSED)),
+        log!(EXECUTE_BRIDGE_OPS_ENDPOINT, topics: [DEPOSIT_EVENT, FIRST_TEST_TOKEN.as_str()]),
+    ];
+
+    state.execute_operation(&hash_of_hashes, &operation, expected_logs);
 
     state.common_setup.check_account_single_esdt(
         ESDT_SAFE_ADDRESS.to_address(),
