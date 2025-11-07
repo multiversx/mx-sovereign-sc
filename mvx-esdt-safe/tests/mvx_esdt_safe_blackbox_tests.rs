@@ -2109,7 +2109,7 @@ fn test_execute_operation_banned_endpoint() {
         .check_operation_hash_status(&operation_hash, OperationHashStatus::NotLocked);
 
     let expected_logs = vec![log!(
-        EXECUTE_OPERATION_ENDPOINT,
+        EXECUTE_BRIDGE_OPS_ENDPOINT,
         topics: [EXECUTED_BRIDGE_OP_EVENT],
         data: Some(BANNED_ENDPOINT_NAME)
     )];
