@@ -20,8 +20,7 @@ use rust_interact::mvx_esdt_safe::mvx_esdt_safe_interactor_main::MvxEsdtSafeInte
 use serial_test::serial;
 use std::vec;
 use structs::aliases::PaymentsVec;
-use structs::configs::{EsdtSafeConfig, MaxBridgedAmount, PauseStatusOperation};
-use structs::generate_hash::GenerateHash;
+use structs::configs::{EsdtSafeConfig, MaxBridgedAmount};
 use structs::operation::{Operation, OperationData, OperationEsdtPayment, TransferData};
 use structs::OperationHashStatus;
 
@@ -1226,27 +1225,7 @@ async fn test_pause_contract() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
     chain_interactor.remove_fee_wrapper(SHARD_0).await;
 
-    let mvx_esdt_safe_address = chain_interactor
-        .common_state
-        .get_mvx_esdt_safe_address(SHARD_0)
-        .clone();
+    chain_interactor.switch_pause_status(true, SHARD_0).await;
 
-    let operation = PauseStatusOperation {
-        status: true,
-        nonce: chain_interactor
-            .common_state()
-            .get_and_increment_operation_nonce(&mvx_esdt_safe_address.to_string()),
-    };
-
-    let operation_hash = operation.generate_hash();
-    let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&operation_hash.to_vec()));
-    let operations_hashes = MultiValueEncoded::from(ManagedVec::from(vec![operation_hash.clone()]));
-
-    chain_interactor
-        .register_operation(SHARD_0, &hash_of_hashes, operations_hashes)
-        .await;
-
-    chain_interactor
-        .switch_pause_status(&hash_of_hashes, operation)
-        .await;
+    chain_interactor.switch_pause_status(false, SHARD_0).await;
 }
