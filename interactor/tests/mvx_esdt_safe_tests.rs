@@ -1231,22 +1231,45 @@ async fn test_pause_contract() {
         .get_mvx_esdt_safe_address(SHARD_0)
         .clone();
 
-    let operation = PauseStatusOperation {
+    let pause_operation = PauseStatusOperation {
         status: true,
         nonce: chain_interactor
             .common_state()
             .get_and_increment_operation_nonce(&mvx_esdt_safe_address.to_string()),
     };
 
-    let operation_hash = operation.generate_hash();
-    let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&operation_hash.to_vec()));
-    let operations_hashes = MultiValueEncoded::from(ManagedVec::from(vec![operation_hash.clone()]));
+    let pause_operation_hash = pause_operation.generate_hash();
+    let pause_hash_of_hashes =
+        ManagedBuffer::new_from_bytes(&sha256(&pause_operation_hash.to_vec()));
+    let pause_operations_hashes =
+        MultiValueEncoded::from(ManagedVec::from(vec![pause_operation_hash.clone()]));
 
     chain_interactor
-        .register_operation(SHARD_0, &hash_of_hashes, operations_hashes)
+        .register_operation(SHARD_0, &pause_hash_of_hashes, pause_operations_hashes)
         .await;
 
     chain_interactor
-        .switch_pause_status(&hash_of_hashes, operation)
+        .switch_pause_status(&pause_hash_of_hashes, pause_operation)
+        .await;
+
+    let unpause_operation = PauseStatusOperation {
+        status: false,
+        nonce: chain_interactor
+            .common_state()
+            .get_and_increment_operation_nonce(&mvx_esdt_safe_address.to_string()),
+    };
+
+    let unpause_operation_hash = unpause_operation.generate_hash();
+    let unpause_hash_of_hashes =
+        ManagedBuffer::new_from_bytes(&sha256(&unpause_operation_hash.to_vec()));
+    let unpause_operations_hashes =
+        MultiValueEncoded::from(ManagedVec::from(vec![unpause_operation_hash.clone()]));
+
+    chain_interactor
+        .register_operation(SHARD_0, &unpause_hash_of_hashes, unpause_operations_hashes)
+        .await;
+
+    chain_interactor
+        .switch_pause_status(&unpause_hash_of_hashes, unpause_operation)
         .await;
 }
