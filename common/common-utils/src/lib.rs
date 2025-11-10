@@ -36,12 +36,14 @@ pub trait CommonUtilsModule: custom_events::CustomEventsModule {
         &self,
         hash_of_hashes: &ManagedBuffer,
         op_hash: &ManagedBuffer,
-    ) {
+    ) -> Option<ManagedBuffer> {
         self.tx()
             .to(self.blockchain().get_owner_address())
             .typed(HeaderverifierProxy)
             .remove_executed_hash(hash_of_hashes, op_hash)
-            .sync_call();
+            .returns(ReturnsResult)
+            .sync_call()
+            .into_option()
     }
 
     fn complete_operation(
@@ -50,8 +52,20 @@ pub trait CommonUtilsModule: custom_events::CustomEventsModule {
         operation_hash: &ManagedBuffer,
         error_message: Option<ManagedBuffer>,
     ) {
-        self.execute_bridge_operation_event(hash_of_hashes, operation_hash, error_message);
-        self.remove_executed_hash_wrapper(hash_of_hashes, operation_hash);
+        let remove_error = self.remove_executed_hash_wrapper(hash_of_hashes, operation_hash);
+
+        let merged_error = match (error_message, remove_error) {
+            (None, None) => None,
+            (Some(err), None) | (None, Some(err)) => Some(err),
+            (Some(err1), Some(err2)) => {
+                let mut errors: ManagedVec<Self::Api, ManagedBuffer> = ManagedVec::new();
+                errors.push(err1);
+                errors.push(err2);
+                Some(self.combine_error_messages(&errors))
+            }
+        };
+
+        self.execute_bridge_operation_event(hash_of_hashes, operation_hash, merged_error);
     }
 
     fn require_sc_address(&self, address: &ManagedAddress) {
@@ -135,6 +149,24 @@ pub trait CommonUtilsModule: custom_events::CustomEventsModule {
         let chain_id_byte_array = chain_id.load_to_byte_array(&mut chain_id_byte_array);
 
         chain_id_byte_array.iter().all(|b| CHARSET.contains(b))
+    }
+
+    fn combine_error_messages(
+        &self,
+        errors: &ManagedVec<Self::Api, ManagedBuffer>,
+    ) -> ManagedBuffer {
+        let newline: ManagedBuffer = "\n".into();
+        let mut aggregated = ManagedBuffer::new();
+
+        for i in 0..errors.len() {
+            let error_message = errors.get(i);
+            aggregated.append(&error_message);
+            if i + 1 < errors.len() {
+                aggregated.append(&newline);
+            }
+        }
+
+        aggregated
     }
 
     #[inline]
