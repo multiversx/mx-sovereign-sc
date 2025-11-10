@@ -42,8 +42,8 @@ use proxies::{
 use structs::{
     aliases::{OptionalValueTransferDataTuple, PaymentsVec, TxNonce},
     configs::{
-        EsdtSafeConfig, SetBurnMechanismOperation, SetLockMechanismOperation, SovereignConfig,
-        UpdateEsdtSafeConfigOperation,
+        EsdtSafeConfig, PauseStatusOperation, SetBurnMechanismOperation, SetLockMechanismOperation,
+        SovereignConfig, UpdateEsdtSafeConfigOperation,
     },
     fee::{FeeStruct, RemoveFeeOperation, SetFeeOperation},
     forge::{ContractInfo, ScArray},
@@ -1289,6 +1289,28 @@ pub trait CommonInteractorTrait: InteractorHelpers {
         }
 
         bitmap
+    }
+
+    async fn switch_pause_status(
+        &mut self,
+        hash_of_hashes: &ManagedBuffer<StaticApi>,
+        operation: PauseStatusOperation,
+    ) {
+        let mvx_esdt_safe_address = self
+            .common_state()
+            .current_mvx_esdt_safe_contract_address()
+            .clone();
+        let bridge_address = self.get_bridge_service_for_shard(SHARD_0).clone();
+
+        self.interactor()
+            .tx()
+            .from(bridge_address)
+            .to(mvx_esdt_safe_address)
+            .gas(90_000_000u64)
+            .typed(MvxEsdtSafeProxy)
+            .switch_pause_status(hash_of_hashes, operation)
+            .run()
+            .await;
     }
 
     async fn complete_header_verifier_setup_phase(&mut self, caller: Address) {

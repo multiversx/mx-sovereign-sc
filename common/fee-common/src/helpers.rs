@@ -1,12 +1,10 @@
 use error_messages::{
-    ERROR_AT_GENERATING_OPERATION_HASH, INVALID_FEE, INVALID_FEE_TYPE, INVALID_PERCENTAGE_SUM,
-    INVALID_TOKEN_ID, INVALID_TOKEN_PROVIDED_FOR_FEE, PAYMENT_DOES_NOT_COVER_FEE,
-    TOKEN_NOT_ACCEPTED_AS_FEE,
+    INVALID_FEE, INVALID_FEE_TYPE, INVALID_PERCENTAGE_SUM, INVALID_TOKEN_ID,
+    INVALID_TOKEN_PROVIDED_FOR_FEE, PAYMENT_DOES_NOT_COVER_FEE, TOKEN_NOT_ACCEPTED_AS_FEE,
 };
 use structs::{
     aliases::GasLimit,
     fee::{AddressPercentagePair, FeeStruct, FeeType, FinalPayment, SubtractPaymentArguments},
-    generate_hash::GenerateHash,
 };
 
 multiversx_sc::imports!();
@@ -81,30 +79,6 @@ pub trait FeeCommonHelpersModule:
         }
 
         pairs
-    }
-
-    fn generate_pairs_hash(
-        &self,
-        pairs: &ManagedVec<Self::Api, AddressPercentagePair<Self::Api>>,
-        hash_of_hashes: &ManagedBuffer,
-    ) -> Option<ManagedBuffer> {
-        let mut aggregated_hashes = ManagedBuffer::new();
-
-        for pair in pairs {
-            let pair_hash = pair.generate_hash();
-            if pair_hash.is_empty() {
-                self.complete_operation(
-                    hash_of_hashes,
-                    &pair_hash,
-                    Some(ERROR_AT_GENERATING_OPERATION_HASH.into()),
-                );
-                return None;
-            }
-            aggregated_hashes.append(&pair_hash);
-        }
-
-        let pairs_hash_bytes = self.crypto().sha256(aggregated_hashes);
-        Some(pairs_hash_bytes.as_managed_buffer().clone())
     }
 
     fn calculate_fee_amount(
@@ -203,15 +177,11 @@ pub trait FeeCommonHelpersModule:
         }
 
         match &fee_struct.fee_type {
-            FeeType::None => sc_panic!(INVALID_FEE_TYPE),
-            FeeType::Fixed {
-                token,
-                per_transfer: _,
-                per_gas: _,
-            } => {
-                require!(&fee_struct.base_token == token, INVALID_FEE);
-
-                token
+            FeeType::None => return Some(INVALID_FEE_TYPE),
+            FeeType::Fixed { token, .. } => {
+                if &fee_struct.base_token != token {
+                    return Some(INVALID_FEE);
+                }
             }
         };
 
