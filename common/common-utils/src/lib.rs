@@ -158,12 +158,11 @@ pub trait CommonUtilsModule: custom_events::CustomEventsModule {
         let newline: ManagedBuffer = "\n".into();
         let mut aggregated = ManagedBuffer::new();
 
-        for i in 0..errors.len() {
-            let error_message = errors.get(i);
-            aggregated.append(&error_message);
-            if i + 1 < errors.len() {
+        for (index, error_message) in errors.iter().enumerate() {
+            if index > 0 {
                 aggregated.append(&newline);
             }
+            aggregated.append(&error_message);
         }
 
         aggregated
