@@ -744,7 +744,6 @@ pub trait CommonInteractorTrait: InteractorHelpers {
         self.update_smart_contracts_addresses_in_state(preferred_chain_id.clone())
             .await;
 
-        self.unpause_mvx_esdt_safe(shard).await;
         println!("Finished deployment for shard {shard}");
     }
 
@@ -1031,41 +1030,6 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             .await;
     }
 
-    async fn unpause_mvx_esdt_safe(&mut self, shard: u32) {
-        let bridge_service = self.get_bridge_service_for_shard(shard).clone();
-        let current_mvx_esdt_safe_address =
-            self.common_state().get_mvx_esdt_safe_address(shard).clone();
-
-        let unpause_operation = PauseStatusOperation {
-            status: false,
-            nonce: self
-                .common_state()
-                .get_and_increment_operation_nonce(&current_mvx_esdt_safe_address.to_string()),
-        };
-
-        let unpause_operation_hash: ManagedBuffer<StaticApi> = unpause_operation.generate_hash();
-        let unpause_hash_of_hashes =
-            ManagedBuffer::<StaticApi>::new_from_bytes(&sha256(&unpause_operation_hash.to_vec()));
-
-        self.register_operation(
-            shard,
-            &unpause_hash_of_hashes,
-            MultiValueEncoded::from(ManagedVec::from(vec![unpause_operation_hash])),
-        )
-        .await;
-
-        self.interactor()
-            .tx()
-            .from(bridge_service)
-            .to(current_mvx_esdt_safe_address)
-            .gas(90_000_000u64)
-            .typed(MvxEsdtSafeProxy)
-            .switch_pause_status(unpause_hash_of_hashes, unpause_operation)
-            .returns(ReturnsResultUnmanaged)
-            .run()
-            .await;
-    }
-
     async fn set_fee(
         &mut self,
         hash_of_hashes: ManagedBuffer<StaticApi>,
@@ -1328,26 +1292,49 @@ pub trait CommonInteractorTrait: InteractorHelpers {
         bitmap
     }
 
-    async fn switch_pause_status(
-        &mut self,
-        hash_of_hashes: &ManagedBuffer<StaticApi>,
-        operation: PauseStatusOperation,
-    ) {
+    async fn switch_pause_status(&mut self, status: bool, shard: u32) {
         let mvx_esdt_safe_address = self
             .common_state()
             .current_mvx_esdt_safe_contract_address()
             .clone();
-        let bridge_address = self.get_bridge_service_for_shard(SHARD_0).clone();
+        let bridge_address = self.get_bridge_service_for_shard(shard).clone();
+
+        let operation = PauseStatusOperation {
+            status,
+            nonce: self
+                .common_state()
+                .get_and_increment_operation_nonce(&mvx_esdt_safe_address.to_string()),
+        };
+
+        let operation_hash = operation.generate_hash();
+        let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&operation_hash.to_vec()));
+        let operations_hashes =
+            MultiValueEncoded::from(ManagedVec::from(vec![operation_hash.clone()]));
+
+        self.register_operation(shard, &hash_of_hashes, operations_hashes)
+            .await;
 
         self.interactor()
             .tx()
             .from(bridge_address)
-            .to(mvx_esdt_safe_address)
+            .to(mvx_esdt_safe_address.clone())
             .gas(90_000_000u64)
             .typed(MvxEsdtSafeProxy)
             .switch_pause_status(hash_of_hashes, operation)
             .run()
             .await;
+
+        let current_status = self
+            .interactor()
+            .query()
+            .to(mvx_esdt_safe_address)
+            .typed(MvxEsdtSafeProxy)
+            .paused_status()
+            .returns(ReturnsResult)
+            .run()
+            .await;
+
+        assert_eq!(current_status, status, "Pause status is not correct");
     }
 
     async fn complete_header_verifier_setup_phase(&mut self, caller: Address) {
