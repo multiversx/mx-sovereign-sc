@@ -422,24 +422,6 @@ pub trait ExecuteModule:
         }
     }
 
-    fn combine_error_messages(
-        &self,
-        errors: &ManagedVec<Self::Api, ManagedBuffer>,
-    ) -> ManagedBuffer {
-        let newline: ManagedBuffer = "\n".into();
-        let mut aggregated = ManagedBuffer::new();
-
-        for i in 0..errors.len() {
-            let error_message = errors.get(i);
-            aggregated.append(&error_message);
-            if i + 1 < errors.len() {
-                aggregated.append(&newline);
-            }
-        }
-
-        aggregated
-    }
-
     fn get_mvx_token_id(
         &self,
         operation_token: &OperationEsdtPayment<Self::Api>,
