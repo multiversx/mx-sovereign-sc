@@ -1,6 +1,7 @@
+use cross_chain::MAX_GAS_PER_TRANSACTION;
 use error_messages::{
-    BANNED_ENDPOINT_NAME, BURN_ESDT_FAILED, CREATE_ESDT_FAILED, DEPOSIT_AMOUNT_NOT_ENOUGH,
-    ESDT_SAFE_STILL_PAUSED, GAS_LIMIT_TOO_HIGH, MINT_ESDT_FAILED, NOTHING_TO_TRANSFER,
+    BURN_ESDT_FAILED, CREATE_ESDT_FAILED, DEPOSIT_AMOUNT_NOT_ENOUGH, ESDT_SAFE_STILL_PAUSED,
+    GAS_LIMIT_TOO_HIGH, MINT_ESDT_FAILED, NOTHING_TO_TRANSFER,
 };
 use multiversx_sc_modules::only_admin;
 use structs::{
@@ -481,17 +482,8 @@ pub trait ExecuteModule:
         &self,
         transfer_data: &TransferData<Self::Api>,
     ) -> Option<ManagedBuffer> {
-        if transfer_data.gas_limit > self.esdt_safe_config().get().max_tx_gas_limit {
+        if transfer_data.gas_limit > MAX_GAS_PER_TRANSACTION {
             return Some(ManagedBuffer::from(GAS_LIMIT_TOO_HIGH));
-        }
-
-        if self
-            .esdt_safe_config()
-            .get()
-            .banned_endpoints
-            .contains(&transfer_data.function)
-        {
-            return Some(ManagedBuffer::from(BANNED_ENDPOINT_NAME));
         }
 
         None

@@ -11,7 +11,7 @@ pub mod storage;
 pub const MAX_TRANSFERS_PER_TX: usize = 10;
 pub const DEFAULT_ISSUE_COST: u64 = 50_000_000_000_000_000; // 0.05 EGLD
 pub const REGISTER_GAS: u64 = 60_000_000;
-pub const MAX_GAS_PER_TRANSACTION: u64 = 600_000_000;
+pub const MAX_GAS_PER_TRANSACTION: u64 = 500_000_000;
 
 #[multiversx_sc::module]
 pub trait LibCommon: crate::storage::CrossChainStorage {
