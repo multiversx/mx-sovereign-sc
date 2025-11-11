@@ -1,12 +1,13 @@
+use cross_chain::MAX_GAS_PER_TRANSACTION;
 use error_messages::{
     BURN_ESDT_FAILED, CREATE_ESDT_FAILED, DEPOSIT_AMOUNT_NOT_ENOUGH, ESDT_SAFE_STILL_PAUSED,
-    MINT_ESDT_FAILED,
+    GAS_LIMIT_TOO_HIGH, MINT_ESDT_FAILED, NOTHING_TO_TRANSFER,
 };
 use multiversx_sc_modules::only_admin;
 use structs::{
     aliases::GasLimit,
     generate_hash::GenerateHash,
-    operation::{Operation, OperationData, OperationEsdtPayment, OperationTuple},
+    operation::{Operation, OperationData, OperationEsdtPayment, OperationTuple, TransferData},
 };
 
 multiversx_sc::imports!();
@@ -56,9 +57,12 @@ pub trait ExecuteModule:
         };
 
         if operation.tokens.is_empty() {
-            self.execute_sc_call(&hash_of_hashes, &operation_tuple);
+            if let Err(err_msg) = self.execute_sc_call(&hash_of_hashes, &operation_tuple) {
+                self.complete_operation(&hash_of_hashes, &operation_hash, Some(err_msg));
+            }
+
             return;
-        }
+        };
 
         let minted_operation_tokens = match self.process_operation_payments(&operation_tuple) {
             Ok(tokens) => tokens,
@@ -67,7 +71,18 @@ pub trait ExecuteModule:
                 return;
             }
         };
-        self.distribute_payments(&hash_of_hashes, &operation_tuple, &minted_operation_tokens);
+
+        if let Err(err_msg) =
+            self.distribute_payments(&hash_of_hashes, &operation_tuple, &minted_operation_tokens)
+        {
+            let refund_result = self.refund_transfers(&minted_operation_tokens, &operation);
+            self.complete_operation(
+                &hash_of_hashes,
+                &operation_hash,
+                Some(self.merge_error_if_any(err_msg, refund_result)),
+            );
+            return;
+        }
     }
 
     fn process_operation_payments(
@@ -219,7 +234,7 @@ pub trait ExecuteModule:
         hash_of_hashes: &ManagedBuffer,
         operation_tuple: &OperationTuple<Self::Api>,
         output_payments: &ManagedVec<OperationEsdtPayment<Self::Api>>,
-    ) {
+    ) -> Result<(), ManagedBuffer> {
         let payment_tokens: ManagedVec<Self::Api, EgldOrEsdtTokenPayment<Self::Api>> =
             output_payments
                 .iter()
@@ -228,13 +243,17 @@ pub trait ExecuteModule:
 
         match &operation_tuple.operation.data.opt_transfer_data {
             Some(transfer_data) => {
+                if let Some(err_msg) = self.validate_transfer_data(transfer_data) {
+                    return Err(err_msg);
+                }
+
                 let args = ManagedArgBuffer::from(transfer_data.args.clone());
 
                 self.tx()
                     .to(&operation_tuple.operation.to)
                     .raw_call(transfer_data.function.clone())
                     .arguments_raw(args)
-                    .payment(&payment_tokens)
+                    .payment(payment_tokens)
                     .gas(transfer_data.gas_limit)
                     .callback(<Self as ExecuteModule>::callbacks(self).execute(
                         hash_of_hashes,
@@ -258,19 +277,24 @@ pub trait ExecuteModule:
                     .register_promise();
             }
         }
+
+        Ok(())
     }
 
     fn execute_sc_call(
         &self,
         hash_of_hashes: &ManagedBuffer,
         operation_tuple: &OperationTuple<Self::Api>,
-    ) {
-        let transfer_data = operation_tuple
-            .operation
-            .data
-            .opt_transfer_data
-            .as_ref()
-            .unwrap();
+    ) -> Result<(), ManagedBuffer> {
+        let transfer_data = match operation_tuple.operation.data.opt_transfer_data.as_ref() {
+            Some(data) => data,
+            None => return Err(ManagedBuffer::from(NOTHING_TO_TRANSFER)),
+        };
+
+        if let Some(err_msg) = self.validate_transfer_data(transfer_data) {
+            return Err(err_msg);
+        }
+
         let args = ManagedArgBuffer::from(transfer_data.args.clone());
 
         self.tx()
@@ -285,6 +309,8 @@ pub trait ExecuteModule:
             ))
             .gas_for_callback(CALLBACK_GAS)
             .register_promise();
+
+        Ok(())
     }
 
     #[promises_callback]
@@ -440,5 +466,16 @@ pub trait ExecuteModule:
             && self
                 .burn_mechanism_tokens()
                 .contains(&operation_token.token_identifier)
+    }
+
+    fn validate_transfer_data(
+        &self,
+        transfer_data: &TransferData<Self::Api>,
+    ) -> Option<ManagedBuffer> {
+        if transfer_data.gas_limit > MAX_GAS_PER_TRANSACTION {
+            return Some(ManagedBuffer::from(GAS_LIMIT_TOO_HIGH));
+        }
+
+        None
     }
 }
