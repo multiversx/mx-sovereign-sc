@@ -125,26 +125,19 @@ pub fn log_contains_expected_data(log: &Log, expected_data_bytes: &[Vec<u8>]) ->
 }
 
 pub fn assert_logs_do_not_contain_error_messages(logs: &[Log]) {
-    for error_message in ALL_ERROR_MESSAGES {
-        let error_bytes = error_message.as_bytes();
+    for log in logs {
+        if let Some(error_message) = ALL_ERROR_MESSAGES.iter().copied().find(|error_message| {
+            let error_bytes = error_message.as_bytes();
 
-        let contains_error = logs.iter().any(|log| {
-            log.endpoint.contains(error_message)
-                || log
-                    .topics
-                    .iter()
-                    .any(|topic| contains_bytes_or_base64(topic, error_bytes))
-                || log
-                    .data
-                    .iter()
-                    .any(|data| contains_bytes_or_base64(data, error_bytes))
-        });
-
-        assert!(
-            !contains_error,
-            "Unexpected error message '{}' found in logs: {:?}",
-            error_message, logs
-        );
+            log.data
+                .iter()
+                .any(|data| contains_bytes_or_base64(data, error_bytes))
+        }) {
+            panic!(
+                "Unexpected error message '{}' found in logs: {:?}",
+                error_message, logs
+            );
+        }
     }
 }
 

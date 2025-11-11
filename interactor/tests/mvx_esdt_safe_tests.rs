@@ -5,8 +5,9 @@ use common_interactor::interactor_state::EsdtTokenInfo;
 use common_interactor::interactor_structs::{ActionConfig, BalanceCheckConfig};
 use common_test_setup::base_setup::init::ExpectedLogs;
 use common_test_setup::constants::{
-    EGLD_0_05, GAS_LIMIT, MULTI_ESDT_NFT_TRANSFER_EVENT, ONE_HUNDRED_TOKENS, PER_GAS, PER_TRANSFER,
-    SHARD_0, SHARD_1, SOVEREIGN_RECEIVER_ADDRESS, TEN_TOKENS, TESTING_SC_ENDPOINT,
+    EGLD_0_05, EXECUTED_BRIDGE_OP_EVENT, EXECUTE_BRIDGE_OPS_ENDPOINT, GAS_LIMIT,
+    MULTI_ESDT_NFT_TRANSFER_EVENT, ONE_HUNDRED_TOKENS, PER_GAS, PER_TRANSFER, SHARD_0, SHARD_1,
+    SOVEREIGN_RECEIVER_ADDRESS, TEN_TOKENS, TESTING_SC_ENDPOINT,
 };
 use common_test_setup::log;
 use cross_chain::MAX_GAS_PER_TRANSACTION;
@@ -512,12 +513,9 @@ async fn test_execute_operation_no_operation_registered() {
         .get_bridge_service_for_shard(SHARD_1)
         .clone();
 
-    let expected_logs = chain_interactor.build_expected_execute_log(
-        ActionConfig::new()
-            .shard(SHARD_1)
-            .expected_log_error(CURRENT_OPERATION_NOT_REGISTERED),
-        Some(chain_interactor.state.get_first_fungible_token_id()),
-    );
+    let expected_logs = vec![
+        log!(EXECUTE_BRIDGE_OPS_ENDPOINT, topics: [EXECUTED_BRIDGE_OP_EVENT], data: Some(CURRENT_OPERATION_NOT_REGISTERED)),
+    ];
     chain_interactor
         .execute_operations_in_mvx_esdt_safe(
             bridge_service,
