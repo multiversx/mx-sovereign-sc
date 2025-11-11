@@ -57,26 +57,20 @@ pub trait ExecuteModule:
         };
 
         if operation.tokens.is_empty() {
-            let transfer_data = match operation.data.opt_transfer_data.as_ref() {
-                Some(data) => data,
-                None => {
-                    self.complete_operation(
-                        &hash_of_hashes,
-                        &operation_hash,
-                        Some(ManagedBuffer::from(NOTHING_TO_TRANSFER)),
-                    );
-                    return;
-                }
-            };
-
-            if let Some(err_msg) = self.validate_transfer_data(transfer_data) {
-                self.complete_operation(&hash_of_hashes, &operation_hash, Some(err_msg));
+            if operation.data.opt_transfer_data.is_none() {
+                self.complete_operation(
+                    &hash_of_hashes,
+                    &operation_hash,
+                    Some(ManagedBuffer::from(NOTHING_TO_TRANSFER)),
+                );
                 return;
             }
 
-            self.execute_sc_call(&hash_of_hashes, &operation_tuple);
-            return;
-        }
+            if let Err(err_msg) = self.execute_sc_call(&hash_of_hashes, &operation_tuple) {
+                self.complete_operation(&hash_of_hashes, &operation_hash, Some(err_msg));
+                return;
+            }
+        };
 
         let minted_operation_tokens = match self.process_operation_payments(&operation_tuple) {
             Ok(tokens) => tokens,
@@ -85,7 +79,13 @@ pub trait ExecuteModule:
                 return;
             }
         };
-        self.distribute_payments(&hash_of_hashes, &operation_tuple, &minted_operation_tokens);
+
+        if let Err(err_msg) =
+            self.distribute_payments(&hash_of_hashes, &operation_tuple, &minted_operation_tokens)
+        {
+            self.complete_operation(&hash_of_hashes, &operation_hash, Some(err_msg));
+            return;
+        }
     }
 
     fn process_operation_payments(
@@ -237,7 +237,7 @@ pub trait ExecuteModule:
         hash_of_hashes: &ManagedBuffer,
         operation_tuple: &OperationTuple<Self::Api>,
         output_payments: &ManagedVec<OperationEsdtPayment<Self::Api>>,
-    ) {
+    ) -> Result<(), ManagedBuffer> {
         let payment_tokens: ManagedVec<Self::Api, EgldOrEsdtTokenPayment<Self::Api>> =
             output_payments
                 .iter()
@@ -246,6 +246,10 @@ pub trait ExecuteModule:
 
         match &operation_tuple.operation.data.opt_transfer_data {
             Some(transfer_data) => {
+                if let Some(err_msg) = self.validate_transfer_data(transfer_data) {
+                    return Err(err_msg);
+                }
+
                 let args = ManagedArgBuffer::from(transfer_data.args.clone());
 
                 self.tx()
@@ -276,19 +280,26 @@ pub trait ExecuteModule:
                     .register_promise();
             }
         }
+
+        Ok(())
     }
 
     fn execute_sc_call(
         &self,
         hash_of_hashes: &ManagedBuffer,
         operation_tuple: &OperationTuple<Self::Api>,
-    ) {
+    ) -> Result<(), ManagedBuffer> {
         let transfer_data = operation_tuple
             .operation
             .data
             .opt_transfer_data
             .as_ref()
             .unwrap();
+
+        if let Some(err_msg) = self.validate_transfer_data(transfer_data) {
+            return Err(err_msg);
+        }
+
         let args = ManagedArgBuffer::from(transfer_data.args.clone());
 
         self.tx()
@@ -303,6 +314,8 @@ pub trait ExecuteModule:
             ))
             .gas_for_callback(CALLBACK_GAS)
             .register_promise();
+
+        Ok(())
     }
 
     #[promises_callback]
