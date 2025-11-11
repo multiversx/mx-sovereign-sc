@@ -1,10 +1,23 @@
 use base64::{engine::general_purpose::STANDARD as BASE64_STANDARD, Engine};
+use error_messages::ALL_ERROR_MESSAGES;
 use multiversx_sc::imports::OptionalValue;
 use multiversx_sc_scenario::scenario_model::Log;
 
 use crate::base_setup::init::ExpectedLogs;
 
 pub fn assert_expected_logs(logs: Vec<Log>, expected_logs: Vec<ExpectedLogs>) {
+    let should_check_for_errors =
+        expected_logs
+            .iter()
+            .all(|expected_log| match expected_log.data {
+                OptionalValue::Some(data) => !ALL_ERROR_MESSAGES.contains(&data),
+                OptionalValue::None => true,
+            });
+
+    if should_check_for_errors {
+        assert_logs_do_not_contain_error_messages(&logs);
+    }
+
     for expected_log in expected_logs {
         let matching_logs: Vec<&Log> = logs
             .iter()
@@ -109,4 +122,40 @@ pub fn log_contains_expected_data(log: &Log, expected_data_bytes: &[Vec<u8>]) ->
             }
         })
     })
+}
+
+pub fn assert_logs_do_not_contain_error_messages(logs: &[Log]) {
+    for error_message in ALL_ERROR_MESSAGES {
+        let error_bytes = error_message.as_bytes();
+
+        let contains_error = logs.iter().any(|log| {
+            log.endpoint.contains(error_message)
+                || log
+                    .topics
+                    .iter()
+                    .any(|topic| contains_bytes_or_base64(topic, error_bytes))
+                || log
+                    .data
+                    .iter()
+                    .any(|data| contains_bytes_or_base64(data, error_bytes))
+        });
+
+        assert!(
+            !contains_error,
+            "Unexpected error message '{}' found in logs: {:?}",
+            error_message, logs
+        );
+    }
+}
+
+fn contains_bytes_or_base64(source: &[u8], needle: &[u8]) -> bool {
+    if source.windows(needle.len()).any(|window| window == needle) {
+        return true;
+    }
+
+    if let Ok(decoded) = BASE64_STANDARD.decode(source) {
+        return decoded.windows(needle.len()).any(|window| window == needle);
+    }
+
+    false
 }
