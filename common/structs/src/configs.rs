@@ -151,7 +151,7 @@ impl<M: ManagedTypeApi> EsdtSafeConfig<M> {
         EsdtSafeConfig {
             token_whitelist: ManagedVec::new(),
             token_blacklist: ManagedVec::new(),
-            max_tx_gas_limit: DEFAULT_MAX_TX_GAS_LIMIT,
+            max_tx_gas_limit: DEFAULT_MAX_TX_GAS_LIMIT - 1,
             banned_endpoints: ManagedVec::new(),
             address_blacklist: ManagedVec::new(),
             max_bridged_token_amounts: ManagedVec::new(),
