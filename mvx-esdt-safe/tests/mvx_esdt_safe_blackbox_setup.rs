@@ -145,10 +145,7 @@ impl MvxEsdtSafeTestState {
             .from(OWNER_ADDRESS)
             .to(ESDT_SAFE_ADDRESS)
             .whitebox(mvx_esdt_safe::contract_obj, |sc| {
-                let config = EsdtSafeConfig {
-                    max_tx_gas_limit: 50_000_000,
-                    ..EsdtSafeConfig::default_config()
-                };
+                let config = EsdtSafeConfig::default_config();
 
                 sc.init(
                     OWNER_ADDRESS.to_managed_address(),
