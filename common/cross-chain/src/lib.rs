@@ -16,7 +16,7 @@ pub const MAX_GAS_PER_TRANSACTION: u64 = 500_000_000;
 #[multiversx_sc::module]
 pub trait LibCommon: crate::storage::CrossChainStorage {
     fn is_esdt_safe_config_valid(&self, config: &EsdtSafeConfig<Self::Api>) -> Option<&str> {
-        if config.max_tx_gas_limit < MAX_GAS_PER_TRANSACTION {
+        if config.max_tx_gas_limit <= MAX_GAS_PER_TRANSACTION {
             None
         } else {
             Some(MAX_GAS_LIMIT_PER_TX_EXCEEDED)
