@@ -282,11 +282,10 @@ impl CompleteFlowInteract {
             .register_sovereign_token(config.shard, token.clone())
             .await;
 
-        let token_id_static: &'static str = Box::leak(token_id.clone().into_boxed_str());
         let additional_log = if token.token_type != EsdtTokenType::Fungible {
-            log!(ESDT_NFT_CREATE_FUNC_NAME, topics: [token_id_static])
+            log!(ESDT_NFT_CREATE_FUNC_NAME, topics: [token_id.clone()])
         } else {
-            log!(ESDT_LOCAL_MINT_FUNC_NAME, topics: [token_id_static])
+            log!(ESDT_LOCAL_MINT_FUNC_NAME, topics: [token_id])
         };
 
         config = config.expect_additional_log(additional_log);

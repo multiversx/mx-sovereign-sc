@@ -1,6 +1,7 @@
 use base64::{engine::general_purpose::STANDARD as BASE64_STANDARD, Engine};
 use multiversx_sc::imports::OptionalValue;
 use multiversx_sc_scenario::scenario_model::Log;
+use std::borrow::Cow;
 
 use crate::base_setup::init::ExpectedLogs;
 
@@ -8,16 +9,16 @@ pub fn assert_expected_logs(logs: Vec<Log>, expected_logs: Vec<ExpectedLogs>) {
     for expected_log in expected_logs {
         let matching_logs: Vec<&Log> = logs
             .iter()
-            .filter(|log| log.endpoint == expected_log.identifier)
+            .filter(|log| log.endpoint == expected_log.identifier.as_ref())
             .collect();
         assert!(
             !matching_logs.is_empty(),
             "Expected log '{}' not found. Logs: {:?}",
-            expected_log.identifier,
+            expected_log.identifier.as_ref(),
             logs
         );
         if let OptionalValue::Some(ref topics) = expected_log.topics {
-            validate_expected_topics(topics, &matching_logs, expected_log.identifier);
+            validate_expected_topics(topics, &matching_logs, expected_log.identifier.as_ref());
 
             if let OptionalValue::Some(data) = expected_log.data {
                 let first_topic_bytes = topics[0].as_bytes().to_vec();
@@ -41,13 +42,17 @@ pub fn assert_expected_logs(logs: Vec<Log>, expected_logs: Vec<ExpectedLogs>) {
                             .unwrap_or(false)
                     })
                     .collect();
-                validate_expected_data(&[data], &filtered_logs, expected_log.identifier);
+                validate_expected_data(
+                    &[data.as_ref()],
+                    &filtered_logs,
+                    expected_log.identifier.as_ref(),
+                );
             }
         }
     }
 }
 
-pub fn validate_expected_topics(topics: &[&str], matching_logs: &[&Log], endpoint: &str) {
+pub fn validate_expected_topics(topics: &[Cow<'_, str>], matching_logs: &[&Log], endpoint: &str) {
     let expected_topics_bytes: Vec<Vec<u8>> =
         topics.iter().map(|s| s.as_bytes().to_vec()).collect();
 
@@ -69,7 +74,11 @@ pub fn validate_expected_topics(topics: &[&str], matching_logs: &[&Log], endpoin
             })
         }),
         "Expected topics '{}' not found for event '{}' \n Logs: {:?}",
-        topics.join(", "),
+        topics
+            .iter()
+            .map(|topic| topic.as_ref())
+            .collect::<Vec<_>>()
+            .join(", "),
         endpoint,
         matching_logs
     );

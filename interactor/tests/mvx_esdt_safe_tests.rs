@@ -26,7 +26,7 @@ use structs::configs::{EsdtSafeConfig, MaxBridgedAmount};
 use structs::operation::{Operation, OperationData, OperationEsdtPayment, TransferData};
 use structs::OperationHashStatus;
 
-//NOTE: The chain sim enviroment can not handle storage reads from other shards
+//NOTE: The chain sim environment can not handle storage reads from other shards
 
 /// ### TEST
 /// M-ESDT_UPDATE_CONFIG_FAIL
@@ -844,15 +844,9 @@ async fn test_execute_operation_native_token_success_no_fee() {
         token_type: EsdtTokenType::Fungible,
     };
 
-    let native_token_id_static = Box::leak(
-        native_token
-            .clone()
-            .into_managed_buffer()
-            .to_string()
-            .into_boxed_str(),
-    );
+    let native_token_id = native_token.clone().into_managed_buffer().to_string();
 
-    let expected_logs = vec![log!(ESDT_LOCAL_MINT_FUNC_NAME, topics: [native_token_id_static])];
+    let expected_logs = vec![log!(ESDT_LOCAL_MINT_FUNC_NAME, topics: [native_token_id])];
     chain_interactor
         .execute_operations_in_mvx_esdt_safe(
             bridge_service,

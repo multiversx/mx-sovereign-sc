@@ -28,7 +28,7 @@ use structs::operation::OperationData;
 use structs::operation::TransferData;
 use structs::OperationHashStatus;
 
-//NOTE: The chain sim enviroment can not handle storage reads from other shards
+//NOTE: The chain sim environment can not handle storage reads from other shards
 
 /// ### TEST
 /// S-FORGE_COMPLETE-DEPOSIT-FLOW_OK

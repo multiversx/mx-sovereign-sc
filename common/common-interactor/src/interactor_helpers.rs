@@ -444,11 +444,8 @@ pub trait InteractorHelpers {
         }
 
         let topic_value = match &token {
-            Some(t) => {
-                let token_id = t.token_id.clone().into_managed_buffer().to_string();
-                Box::leak(token_id.into_boxed_str())
-            }
-            None => SC_CALL_LOG,
+            Some(t) => t.token_id.clone().into_managed_buffer().to_string(),
+            None => SC_CALL_LOG.to_string(),
         };
 
         let mut logs = vec![log!(DEPOSIT_EVENT, topics: [topic_value])];
@@ -465,21 +462,19 @@ pub trait InteractorHelpers {
         token_id: String,
         main_token: &EsdtTokenInfo,
     ) -> Vec<ExpectedLogs<'static>> {
-        let token_id_static = Box::leak(token_id.into_boxed_str());
-        let main_token_id_static = Box::leak(
-            main_token
-                .token_id
-                .clone()
-                .into_managed_buffer()
-                .to_string()
-                .into_boxed_str(),
-        );
-        let mut expected_logs = vec![log!(DEPOSIT_EVENT, topics: [token_id_static])];
-        if main_token.token_type != EsdtTokenType::Fungible {
-            expected_logs.push(log!(ESDT_NFT_BURN_FUNC_NAME, topics: [main_token_id_static]));
+        let main_token_id_topic = main_token
+            .token_id
+            .clone()
+            .into_managed_buffer()
+            .to_string();
+        let mut expected_logs = vec![log!(DEPOSIT_EVENT, topics: [token_id])];
+        let burn_topic = main_token_id_topic;
+        let burn_log = if main_token.token_type != EsdtTokenType::Fungible {
+            log!(ESDT_NFT_BURN_FUNC_NAME, topics: [burn_topic.clone()])
         } else {
-            expected_logs.push(log!(ESDT_LOCAL_BURN_FUNC_NAME, topics: [main_token_id_static]));
-        }
+            log!(ESDT_LOCAL_BURN_FUNC_NAME, topics: [burn_topic])
+        };
+        expected_logs.push(burn_log);
         expected_logs
     }
 
