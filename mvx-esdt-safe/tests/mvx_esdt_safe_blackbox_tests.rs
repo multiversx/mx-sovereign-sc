@@ -69,10 +69,7 @@ mod mvx_esdt_safe_blackbox_setup;
 #[test]
 fn test_deploy() {
     let mut state = MvxEsdtSafeTestState::new();
-
-    state
-        .common_setup
-        .deploy_mvx_esdt_safe(OptionalValue::Some(EsdtSafeConfig::default_config()));
+    state.common_setup.deploy_mvx_esdt_safe(OptionalValue::None);
 }
 
 /// ### TEST
@@ -1731,6 +1728,104 @@ fn test_execute_operation_success() {
 }
 
 /// ### TEST
+/// M-ESDT_EXEC_FAIL
+///
+/// ### ACTION
+/// Call 'execute_operation()' with payments and transfer data that exceeds the max gas limit
+///
+/// ### EXPECTED
+/// Error GAS_LIMIT_TOO_HIGH, operation does not execute
+#[test]
+fn test_execute_operation_transfer_data_gas_limit_too_high_with_payments() {
+    let mut state = MvxEsdtSafeTestState::new();
+
+    state.deploy_contract_with_roles(None);
+    state.complete_setup_phase();
+
+    let token_data = EsdtTokenData {
+        amount: BigUint::from(ONE_HUNDRED_THOUSAND),
+        ..Default::default()
+    };
+
+    let payment = OperationEsdtPayment::new(
+        EgldOrEsdtTokenIdentifier::esdt(FIRST_TEST_TOKEN),
+        0,
+        token_data,
+    );
+
+    let gas_limit = MAX_GAS_PER_TRANSACTION + 1;
+    let function = ManagedBuffer::<StaticApi>::from(TESTING_SC_ENDPOINT);
+    let args =
+        ManagedVec::<StaticApi, ManagedBuffer<StaticApi>>::from(vec![ManagedBuffer::from("1")]);
+
+    let transfer_data = TransferData::new(gas_limit, function, args);
+
+    let operation = Operation::new(
+        TESTING_SC_ADDRESS.to_managed_address(),
+        vec![payment].into(),
+        OperationData::new(
+            state.common_setup.next_operation_nonce(),
+            OWNER_ADDRESS.to_managed_address(),
+            Some(transfer_data),
+        ),
+    );
+
+    let operation_hash = state.common_setup.get_operation_hash(&operation);
+    let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&operation_hash.to_vec()));
+    let bitmap = state.common_setup.full_bitmap(1);
+    let epoch = 0;
+
+    state.common_setup.deploy_chain_config(
+        OptionalValue::Some(SovereignConfig::default_config_for_test()),
+        None,
+    );
+
+    let (signature, public_keys) = state.common_setup.get_sig_and_pub_keys(1, &hash_of_hashes);
+
+    state.common_setup.register(
+        public_keys.first().unwrap(),
+        &MultiEgldOrEsdtPayment::new(),
+        None,
+    );
+    state.common_setup.complete_chain_config_setup_phase();
+
+    state
+        .common_setup
+        .deploy_header_verifier(vec![ScArray::ChainConfig, ScArray::ESDTSafe]);
+    state
+        .common_setup
+        .complete_header_verifier_setup_phase(None);
+    state.common_setup.deploy_testing_sc();
+
+    let operations_hashes = MultiValueEncoded::from(ManagedVec::from(vec![operation_hash.clone()]));
+
+    state.common_setup.register_operation(
+        OWNER_ADDRESS,
+        signature,
+        &hash_of_hashes,
+        bitmap,
+        epoch,
+        operations_hashes,
+    );
+
+    state
+        .common_setup
+        .check_operation_hash_status(&operation_hash, OperationHashStatus::NotLocked);
+
+    let expected_logs = vec![log!(
+        EXECUTE_BRIDGE_OPS_ENDPOINT,
+        topics: [EXECUTED_BRIDGE_OP_EVENT],
+        data: Some(GAS_LIMIT_TOO_HIGH)
+    )];
+
+    state.execute_operation(&hash_of_hashes, &operation, expected_logs);
+
+    state
+        .common_setup
+        .check_operation_hash_status_is_empty(&operation_hash);
+}
+
+/// ### TEST
 /// M-ESDT_EXEC_OK
 ///
 /// ### ACTION
@@ -2092,6 +2187,89 @@ fn test_execute_operation_only_transfer_data_no_fee() {
     );
 
     let expected_logs = vec![log!(EXECUTE_OPERATION_ENDPOINT, topics: [EXECUTED_BRIDGE_OP_EVENT])];
+    state.execute_operation(&hash_of_hashes, &operation, expected_logs);
+
+    state
+        .common_setup
+        .check_operation_hash_status_is_empty(&operation_hash);
+}
+
+/// ### TEST
+/// M-ESDT_EXEC_FAIL
+///
+/// ### ACTION
+/// Call 'execute_operation()' with only transfer data whose gas limit exceeds the max threshold
+///
+/// ### EXPECTED
+/// Error GAS_LIMIT_TOO_HIGH, no SC call is performed
+#[test]
+fn test_execute_operation_only_transfer_data_gas_limit_too_high() {
+    let mut state = MvxEsdtSafeTestState::new();
+    state.deploy_contract_with_roles(None);
+    state.complete_setup_phase();
+
+    let gas_limit = MAX_GAS_PER_TRANSACTION + 1;
+    let function = ManagedBuffer::<StaticApi>::from(TESTING_SC_ENDPOINT);
+    let args =
+        ManagedVec::<StaticApi, ManagedBuffer<StaticApi>>::from(vec![ManagedBuffer::from("1")]);
+
+    let transfer_data = TransferData::new(gas_limit, function, args);
+
+    let operation = Operation::new(
+        TESTING_SC_ADDRESS.to_managed_address(),
+        ManagedVec::new(),
+        OperationData::new(
+            state.common_setup.next_operation_nonce(),
+            OWNER_ADDRESS.to_managed_address(),
+            Some(transfer_data),
+        ),
+    );
+
+    let operation_hash = state.common_setup.get_operation_hash(&operation);
+    let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&operation_hash.to_vec()));
+    let bitmap = state.common_setup.full_bitmap(1);
+    let epoch = 0;
+
+    state.common_setup.deploy_chain_config(
+        OptionalValue::Some(SovereignConfig::default_config_for_test()),
+        None,
+    );
+
+    let (signature, public_keys) = state.common_setup.get_sig_and_pub_keys(1, &hash_of_hashes);
+
+    state.common_setup.register(
+        public_keys.first().unwrap(),
+        &MultiEgldOrEsdtPayment::new(),
+        None,
+    );
+
+    state.common_setup.complete_chain_config_setup_phase();
+
+    state
+        .common_setup
+        .deploy_header_verifier(vec![ScArray::ChainConfig, ScArray::ESDTSafe]);
+    state
+        .common_setup
+        .complete_header_verifier_setup_phase(None);
+
+    state.common_setup.deploy_testing_sc();
+
+    let operations_hashes = MultiValueEncoded::from(ManagedVec::from(vec![operation_hash.clone()]));
+
+    state.common_setup.register_operation(
+        OWNER_ADDRESS,
+        signature,
+        &hash_of_hashes,
+        bitmap,
+        epoch,
+        operations_hashes,
+    );
+
+    let expected_logs = vec![log!(
+        EXECUTE_BRIDGE_OPS_ENDPOINT,
+        topics: [EXECUTED_BRIDGE_OP_EVENT],
+        data: Some(GAS_LIMIT_TOO_HIGH)
+    )];
     state.execute_operation(&hash_of_hashes, &operation, expected_logs);
 
     state
