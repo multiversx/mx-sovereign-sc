@@ -83,7 +83,12 @@ pub trait ExecuteModule:
         if let Err(err_msg) =
             self.distribute_payments(&hash_of_hashes, &operation_tuple, &minted_operation_tokens)
         {
-            self.complete_operation(&hash_of_hashes, &operation_hash, Some(err_msg));
+            let refund_result = self.refund_transfers(&operation.tokens, &operation);
+            self.complete_operation(
+                &hash_of_hashes,
+                &operation_hash,
+                Some(self.merge_error_if_any(err_msg, refund_result)),
+            );
             return;
         }
     }
