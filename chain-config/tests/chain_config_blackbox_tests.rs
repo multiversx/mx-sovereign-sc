@@ -8,9 +8,9 @@ use common_test_setup::constants::{
 use error_messages::{
     ADDITIONAL_STAKE_ZERO_VALUE, CHAIN_CONFIG_SETUP_PHASE_NOT_COMPLETE, INVALID_ADDITIONAL_STAKE,
     INVALID_BLS_KEY_FOR_CALLER, INVALID_BLS_KEY_PROVIDED, INVALID_EGLD_STAKE,
-    INVALID_MIN_MAX_VALIDATOR_NUMBERS, REGISTRATIONS_DISABLED_GENESIS_PHASE,
-    SETUP_PHASE_NOT_COMPLETED, VALIDATOR_ALREADY_REGISTERED, VALIDATOR_NOT_REGISTERED,
-    VALIDATOR_RANGE_EXCEEDED,
+    INVALID_MIN_MAX_VALIDATOR_NUMBERS, INVALID_VALIDATOR_DATA,
+    REGISTRATIONS_DISABLED_GENESIS_PHASE, SETUP_PHASE_NOT_COMPLETED, VALIDATOR_ALREADY_REGISTERED,
+    VALIDATOR_ID_NOT_REGISTERED, VALIDATOR_NOT_REGISTERED, VALIDATOR_RANGE_EXCEEDED,
 };
 use multiversx_sc::{
     chain_core::EGLD_000000_TOKEN_IDENTIFIER,
@@ -986,6 +986,7 @@ fn test_unregister_validator_invalid() {
         signature.clone(),
         bitmap.clone(),
         epoch,
+        Some(VALIDATOR_ID_NOT_REGISTERED),
     );
 
     assert_eq!(state.common_setup.get_bls_key_id(&validator1_bls_key), 0);
@@ -1002,6 +1003,7 @@ fn test_unregister_validator_invalid() {
         signature.clone(),
         bitmap.clone(),
         epoch,
+        Some(INVALID_VALIDATOR_DATA),
     );
 
     assert_eq!(state.common_setup.get_bls_key_id(&validator2_bls_key), 0);

@@ -3376,7 +3376,7 @@ fn test_execute_operation_partial_execution() {
     );
 
     let expected_logs = vec![
-        log!(EXECUTE_BRIDGE_OPS_ENDPOINT, topics: [EXECUTED_BRIDGE_OP_EVENT]),
+        log!(EXECUTE_BRIDGE_OPS_ENDPOINT, topics: [EXECUTED_BRIDGE_OP_EVENT], data: Some(DEPOSIT_AMOUNT_NOT_ENOUGH)),
         log!(EXECUTE_BRIDGE_OPS_ENDPOINT, topics: [DEPOSIT_EVENT, SOV_FIRST_TOKEN_ID.as_str(), TRUSTED_TOKEN, SOV_SECOND_TOKEN_ID.as_str()]),
     ];
 
