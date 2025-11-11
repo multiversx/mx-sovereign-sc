@@ -949,6 +949,15 @@ async fn test_execute_operation_sovereign_token_not_registered() {
             None,
         )
         .await;
+
+    // Reset the nonce to the previous value
+    let current_nonce = chain_interactor
+        .common_state()
+        .get_operation_nonce(&mvx_esdt_safe_address.to_string());
+
+    chain_interactor
+        .common_state()
+        .set_operation_nonce(&mvx_esdt_safe_address.to_string(), current_nonce - 1);
 }
 
 /// ### TEST
@@ -1195,9 +1204,9 @@ async fn test_execute_operation_with_burn_mechanism() {
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn test_pause_contract() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
-    chain_interactor.remove_fee_wrapper(SHARD_0).await;
+    chain_interactor.remove_fee_wrapper(SHARD_1).await;
 
-    chain_interactor.switch_pause_status(true, SHARD_0).await;
+    chain_interactor.switch_pause_status(true, SHARD_1).await;
 
-    chain_interactor.switch_pause_status(false, SHARD_0).await;
+    chain_interactor.switch_pause_status(false, SHARD_1).await;
 }

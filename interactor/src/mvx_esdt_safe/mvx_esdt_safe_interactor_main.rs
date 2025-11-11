@@ -107,7 +107,7 @@ impl MvxEsdtSafeInteract {
         self.interactor
             .tx()
             .from(&caller)
-            .to(self.common_state.current_mvx_esdt_safe_contract_address())
+            .to(self.common_state.get_mvx_esdt_safe_address(shard).clone())
             .gas(90_000_000u64)
             .typed(MvxEsdtSafeProxy)
             .complete_setup_phase()
@@ -120,7 +120,7 @@ impl MvxEsdtSafeInteract {
         let caller = self.get_bridge_owner_for_shard(SHARD_0).clone();
         self.interactor
             .tx()
-            .to(self.common_state.current_mvx_esdt_safe_contract_address())
+            .to(self.common_state.get_mvx_esdt_safe_address(SHARD_0).clone())
             .from(caller)
             .gas(90_000_000u64)
             .typed(MvxEsdtSafeProxy)
@@ -185,7 +185,7 @@ impl MvxEsdtSafeInteract {
         self.interactor
             .tx()
             .from(caller)
-            .to(self.common_state.current_mvx_esdt_safe_contract_address())
+            .to(self.common_state.get_mvx_esdt_safe_address(SHARD_0).clone())
             .gas(90_000_000u64)
             .typed(MvxEsdtSafeProxy)
             .set_fee_market_address(fee_market_address)

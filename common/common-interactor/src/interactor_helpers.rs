@@ -31,7 +31,6 @@ use rand::{distr::Alphanumeric, Rng};
 use structs::{
     aliases::PaymentsVec,
     fee::{FeeStruct, FeeType},
-    forge::{ContractInfo, ScArray},
     operation::{Operation, OperationData, OperationEsdtPayment, TransferData},
 };
 
@@ -355,51 +354,6 @@ pub trait InteractorHelpers {
             Err(error) => {
                 assert_eq!(expected_error_message, Some(error.message.as_str()))
             }
-        }
-    }
-
-    fn get_contract_info_struct_for_sc_type(
-        &mut self,
-        sc_array: Vec<ScArray>,
-    ) -> Vec<ContractInfo<StaticApi>> {
-        sc_array
-            .iter()
-            .map(|sc| ContractInfo::new(sc.clone(), self.get_sc_address(sc.clone())))
-            .collect()
-    }
-
-    fn get_sc_address(&mut self, sc_type: ScArray) -> ManagedAddress<StaticApi> {
-        match sc_type {
-            ScArray::ChainConfig => ManagedAddress::from_address(
-                &self
-                    .common_state()
-                    .current_chain_config_sc_address()
-                    .to_address(),
-            ),
-            ScArray::ChainFactory => ManagedAddress::from_address(
-                &self
-                    .common_state()
-                    .current_chain_factory_sc_address()
-                    .to_address(),
-            ),
-            ScArray::ESDTSafe => ManagedAddress::from_address(
-                &self
-                    .common_state()
-                    .current_mvx_esdt_safe_contract_address()
-                    .to_address(),
-            ),
-            ScArray::HeaderVerifier => ManagedAddress::from_address(
-                &self
-                    .common_state()
-                    .current_header_verifier_address()
-                    .to_address(),
-            ),
-            ScArray::FeeMarket => ManagedAddress::from_address(
-                &self
-                    .common_state()
-                    .current_fee_market_address()
-                    .to_address(),
-            ),
         }
     }
 

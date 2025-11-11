@@ -1293,10 +1293,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
     }
 
     async fn switch_pause_status(&mut self, status: bool, shard: u32) {
-        let mvx_esdt_safe_address = self
-            .common_state()
-            .current_mvx_esdt_safe_contract_address()
-            .clone();
+        let mvx_esdt_safe_address = self.common_state().get_mvx_esdt_safe_address(shard).clone();
         let bridge_address = self.get_bridge_service_for_shard(shard).clone();
 
         let operation = PauseStatusOperation {
@@ -1337,10 +1334,10 @@ pub trait CommonInteractorTrait: InteractorHelpers {
         assert_eq!(current_status, status, "Pause status is not correct");
     }
 
-    async fn complete_header_verifier_setup_phase(&mut self, caller: Address) {
+    async fn complete_header_verifier_setup_phase(&mut self, caller: Address, shard: u32) {
         let header_verifier_address = self
             .common_state()
-            .current_header_verifier_address()
+            .get_header_verifier_address(shard)
             .clone();
 
         self.interactor()
