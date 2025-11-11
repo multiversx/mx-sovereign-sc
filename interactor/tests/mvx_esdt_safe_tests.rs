@@ -129,7 +129,6 @@ async fn test_deposit_nothing_to_transfer() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
 
     chain_interactor.remove_fee_wrapper(SHARD_0).await;
-    chain_interactor.unpause_mvx_esdt_safe(SHARD_0).await;
 
     chain_interactor
         .deposit_in_mvx_esdt_safe(
@@ -254,7 +253,6 @@ async fn test_deposit_gas_limit_too_high_no_fee() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
 
     chain_interactor.remove_fee_wrapper(SHARD_0).await;
-    chain_interactor.unpause_mvx_esdt_safe(SHARD_0).await;
 
     let shard = SHARD_0;
     let config = EsdtSafeConfig {
@@ -410,8 +408,6 @@ async fn test_deposit_fee_enabled() {
     ));
 
     let transfer_data = MultiValue3::from((GAS_LIMIT, function, args));
-
-    chain_interactor.unpause_mvx_esdt_safe(SHARD_0).await;
 
     chain_interactor
         .deposit_in_mvx_esdt_safe(
