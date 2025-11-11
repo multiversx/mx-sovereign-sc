@@ -68,8 +68,9 @@ pub trait ExecuteModule:
 
             if let Err(err_msg) = self.execute_sc_call(&hash_of_hashes, &operation_tuple) {
                 self.complete_operation(&hash_of_hashes, &operation_hash, Some(err_msg));
-                return;
             }
+
+            return;
         };
 
         let minted_operation_tokens = match self.process_operation_payments(&operation_tuple) {
@@ -83,7 +84,7 @@ pub trait ExecuteModule:
         if let Err(err_msg) =
             self.distribute_payments(&hash_of_hashes, &operation_tuple, &minted_operation_tokens)
         {
-            let refund_result = self.refund_transfers(&operation.tokens, &operation);
+            let refund_result = self.refund_transfers(&minted_operation_tokens, &operation);
             self.complete_operation(
                 &hash_of_hashes,
                 &operation_hash,
