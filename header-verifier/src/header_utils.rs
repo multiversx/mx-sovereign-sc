@@ -22,7 +22,7 @@ pub trait HeaderVerifierUtilsModule:
         &self,
         transfers_hash: &ManagedBuffer,
         transfers_data: MultiValueEncoded<ManagedBuffer>,
-    ) -> Option<ManagedBuffer> {
+    ) -> Result<(), ManagedBuffer> {
         let mut transfers_hashes = ManagedBuffer::new();
         for transfer in transfers_data {
             transfers_hashes.append(&transfer);
@@ -32,10 +32,10 @@ pub trait HeaderVerifierUtilsModule:
         let hash_of_hashes = hash_of_hashes_sha256.as_managed_buffer();
 
         if !self.are_hash_of_hashes_matching(transfers_hash, hash_of_hashes) {
-            return Some(HASH_OF_HASHES_DOES_NOT_MATCH.into());
+            return Err(HASH_OF_HASHES_DOES_NOT_MATCH.into());
         }
 
-        None
+        Ok(())
     }
 
     fn get_chain_config_address(&self) -> ManagedAddress {
