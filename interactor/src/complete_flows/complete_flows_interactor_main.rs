@@ -9,7 +9,7 @@ use common_interactor::{
 };
 use common_test_setup::base_setup::init::ExpectedLogs;
 use common_test_setup::constants::{
-    INTERACTOR_WORKING_DIR, MULTI_ESDT_NFT_TRANSFER_EVENT, SHARD_1, SOVEREIGN_RECEIVER_ADDRESS,
+    INTERACTOR_WORKING_DIR, MULTI_ESDT_NFT_TRANSFER_EVENT, SOVEREIGN_RECEIVER_ADDRESS,
     TOKEN_DISPLAY_NAME, TOKEN_TICKER,
 };
 use common_test_setup::log;
@@ -182,8 +182,7 @@ impl CompleteFlowInteract {
             config.shard,
             hash_of_hashes.clone(),
             operation.clone(),
-            None,
-            Some(expected_logs),
+            expected_logs,
         )
         .await;
     }
@@ -260,12 +259,8 @@ impl CompleteFlowInteract {
         mut config: ActionConfig,
         token: EsdtTokenInfo,
     ) -> EsdtTokenInfo {
-        let expected_deposit_log = match config.shard {
-            SHARD_1 => {
-                vec![log!(MULTI_ESDT_NFT_TRANSFER_EVENT, topics: [EGLD_000000_TOKEN_IDENTIFIER])]
-            }
-            _ => vec![],
-        };
+        let expected_deposit_log =
+            vec![log!(MULTI_ESDT_NFT_TRANSFER_EVENT, topics: [EGLD_000000_TOKEN_IDENTIFIER])];
         self.deposit_in_mvx_esdt_safe(
             SOVEREIGN_RECEIVER_ADDRESS.to_address(),
             config.shard,
@@ -288,7 +283,7 @@ impl CompleteFlowInteract {
             log!(ESDT_LOCAL_MINT_FUNC_NAME, topics: [token_id])
         };
 
-        config = config.expect_additional_log(additional_log);
+        config = config.additional_logs(vec![additional_log]);
 
         self.execute_wrapper(config, Some(token.clone()))
             .await

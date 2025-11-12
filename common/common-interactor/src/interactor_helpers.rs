@@ -386,26 +386,28 @@ pub trait InteractorHelpers {
 
     fn build_expected_deposit_log(
         &mut self,
-        config: ActionConfig,
+        mut config: ActionConfig,
         token: Option<EsdtTokenInfo>,
     ) -> Vec<ExpectedLogs<'static>> {
         if config.shard != SHARD_1 {
             return vec![];
         }
 
-        if let Some(override_expected_log) = config.override_expected_log {
-            return override_expected_log;
+        let mut logs = Vec::new();
+        let deposit_token = config.expected_deposit_token_log.clone().or(token);
+
+        match deposit_token {
+            Some(t) => {
+                let topic_value = t.token_id.into_managed_buffer().to_string();
+                logs.push(log!(DEPOSIT_EVENT, topics: [DEPOSIT_EVENT, topic_value]));
+            }
+            None => {
+                logs.push(log!(DEPOSIT_EVENT, topics: [SC_CALL_LOG]));
+            }
         }
 
-        let topic_value = match &token {
-            Some(t) => t.token_id.clone().into_managed_buffer().to_string(),
-            None => SC_CALL_LOG.to_string(),
-        };
-
-        let mut logs = vec![log!(DEPOSIT_EVENT, topics: [topic_value])];
-
-        if let Some(additional_log) = config.expected_log {
-            logs.push(additional_log);
+        if let Some(additional_logs) = config.additional_logs.take() {
+            logs.extend(additional_logs);
         }
 
         logs
@@ -413,7 +415,6 @@ pub trait InteractorHelpers {
 
     fn build_sovereign_deposit_logs(
         &mut self,
-        token_id: String,
         main_token: &EsdtTokenInfo,
     ) -> Vec<ExpectedLogs<'static>> {
         let main_token_id_topic = main_token
@@ -421,15 +422,15 @@ pub trait InteractorHelpers {
             .clone()
             .into_managed_buffer()
             .to_string();
-        let mut expected_logs = vec![log!(DEPOSIT_EVENT, topics: [token_id])];
-        let burn_topic = main_token_id_topic;
-        let burn_log = if main_token.token_type != EsdtTokenType::Fungible {
-            log!(ESDT_NFT_BURN_FUNC_NAME, topics: [burn_topic.clone()])
-        } else {
-            log!(ESDT_LOCAL_BURN_FUNC_NAME, topics: [burn_topic])
+
+        let burn_log = match main_token.token_type {
+            EsdtTokenType::Fungible => {
+                log!(ESDT_LOCAL_BURN_FUNC_NAME, topics: [main_token_id_topic])
+            }
+            _ => log!(ESDT_NFT_BURN_FUNC_NAME, topics: [main_token_id_topic]),
         };
-        expected_logs.push(burn_log);
-        expected_logs
+
+        vec![burn_log]
     }
 
     fn build_expected_execute_log(
@@ -461,8 +462,8 @@ pub trait InteractorHelpers {
             }
             let mut expected_logs =
                 vec![log!(EXECUTE_OPERATION_ENDPOINT, topics: [EXECUTED_BRIDGE_LOG])];
-            if let Some(additional_log) = config.expected_log {
-                expected_logs.push(additional_log);
+            if let Some(additional_logs) = config.additional_logs {
+                expected_logs.extend(additional_logs);
             }
             return expected_logs;
         }

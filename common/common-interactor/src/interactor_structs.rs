@@ -26,8 +26,8 @@ pub struct MintTokenStruct {
 pub struct ActionConfig {
     pub shard: u32,
     pub expected_error: Option<String>,
-    pub expected_log: Option<ExpectedLogs<'static>>,
-    pub override_expected_log: Option<Vec<ExpectedLogs<'static>>>,
+    pub additional_logs: Option<Vec<ExpectedLogs<'static>>>,
+    pub expected_deposit_token_log: Option<EsdtTokenInfo>,
     pub expected_log_error: Option<&'static str>,
     pub with_transfer_data: Option<bool>,
     pub endpoint: Option<String>,
@@ -52,8 +52,13 @@ impl ActionConfig {
         self
     }
 
-    pub fn expect_additional_log(mut self, log: ExpectedLogs<'static>) -> Self {
-        self.expected_log = Some(log);
+    pub fn additional_logs(mut self, logs: Vec<ExpectedLogs<'static>>) -> Self {
+        self.additional_logs = Some(logs);
+        self
+    }
+
+    pub fn expected_deposit_token_log(mut self, token: EsdtTokenInfo) -> Self {
+        self.expected_deposit_token_log = Some(token);
         self
     }
 
@@ -65,11 +70,6 @@ impl ActionConfig {
 
     pub fn expected_log_error(mut self, value: &'static str) -> Self {
         self.expected_log_error = Some(value);
-        self
-    }
-
-    pub fn override_expected_log(mut self, log: Vec<ExpectedLogs<'static>>) -> Self {
-        self.override_expected_log = Some(log);
         self
     }
 }

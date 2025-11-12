@@ -21,6 +21,13 @@ pub fn assert_expected_logs(logs: Vec<Log>, expected_logs: Vec<ExpectedLogs>) {
             validate_expected_topics(topics, &matching_logs, expected_log.identifier.as_ref());
 
             if let OptionalValue::Some(data) = expected_log.data {
+                if topics.is_empty() {
+                    panic!(
+                        "Expected at least one topic for data validation in log '{}', but got none. Logs: {:?}",
+                        expected_log.identifier,
+                        logs
+                    );
+                }
                 let first_topic_bytes = topics[0].as_bytes().to_vec();
                 let filtered_logs: Vec<&Log> = matching_logs
                     .iter()

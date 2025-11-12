@@ -171,13 +171,9 @@ impl MvxEsdtSafeInteract {
 
         self.assert_expected_error_message(response, None);
 
-        let expected_logs = if expected_log_error.is_some() {
-            vec![
-                log!(UPDATE_ESDT_SAFE_CONFIG_ENDPOINT, topics: [EXECUTED_BRIDGE_OP_EVENT], data: expected_log_error),
-            ]
-        } else {
-            vec![log!(UPDATE_ESDT_SAFE_CONFIG_ENDPOINT, topics: [EXECUTED_BRIDGE_OP_EVENT])]
-        };
+        let expected_logs = vec![
+            log!(UPDATE_ESDT_SAFE_CONFIG_ENDPOINT, topics: [EXECUTED_BRIDGE_OP_EVENT], data: expected_log_error),
+        ];
         assert_expected_logs(logs, expected_logs);
     }
 

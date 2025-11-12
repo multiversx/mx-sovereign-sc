@@ -5,14 +5,16 @@ use common_interactor::interactor_state::EsdtTokenInfo;
 use common_interactor::interactor_structs::{ActionConfig, BalanceCheckConfig};
 use common_test_setup::base_setup::init::ExpectedLogs;
 use common_test_setup::constants::{
-    EGLD_0_05, GAS_LIMIT, MULTI_ESDT_NFT_TRANSFER_EVENT, ONE_HUNDRED_TOKENS, PER_GAS, PER_TRANSFER,
-    SHARD_0, SHARD_1, SOVEREIGN_RECEIVER_ADDRESS, TEN_TOKENS, TESTING_SC_ENDPOINT,
+    EGLD_0_05, EXECUTED_BRIDGE_OP_EVENT, EXECUTE_BRIDGE_OPS_ENDPOINT, GAS_LIMIT,
+    MULTI_ESDT_NFT_TRANSFER_EVENT, ONE_HUNDRED_TOKENS, PER_GAS, PER_TRANSFER, SHARD_0, SHARD_1,
+    SOVEREIGN_RECEIVER_ADDRESS, TEN_TOKENS, TESTING_SC_ENDPOINT,
 };
 use common_test_setup::log;
 use cross_chain::MAX_GAS_PER_TRANSACTION;
 use error_messages::{
     BANNED_ENDPOINT_NAME, CURRENT_OPERATION_NOT_REGISTERED, DEPOSIT_OVER_MAX_AMOUNT,
     ERR_EMPTY_PAYMENTS, GAS_LIMIT_TOO_HIGH, MAX_GAS_LIMIT_PER_TX_EXCEEDED, NOTHING_TO_TRANSFER,
+    TOKEN_NOT_REGISTERED,
 };
 use multiversx_sc::api::ESDT_LOCAL_MINT_FUNC_NAME;
 use multiversx_sc::chain_core::EGLD_000000_TOKEN_IDENTIFIER;
@@ -524,8 +526,7 @@ async fn test_execute_operation_no_operation_registered() {
             SHARD_1,
             hash_of_hashes,
             operation,
-            None,
-            Some(expected_logs),
+            expected_logs,
         )
         .await;
 
@@ -656,8 +657,7 @@ async fn test_execute_operation_with_egld_success_no_fee() {
             SHARD_1,
             hash_of_hashes,
             operation,
-            None,
-            Some(expected_logs),
+            expected_logs,
         )
         .await;
 
@@ -749,8 +749,7 @@ async fn test_execute_operation_only_transfer_data_no_fee() {
             SHARD_1,
             hash_of_hashes,
             operation,
-            None,
-            Some(expected_logs),
+            expected_logs,
         )
         .await;
 
@@ -853,8 +852,7 @@ async fn test_execute_operation_native_token_success_no_fee() {
             SHARD_1,
             hash_of_hashes,
             operation,
-            None,
-            Some(expected_logs),
+            expected_logs,
         )
         .await;
 
@@ -939,25 +937,19 @@ async fn test_execute_operation_sovereign_token_not_registered() {
     let bridge_service = chain_interactor
         .get_bridge_service_for_shard(SHARD_1)
         .clone();
+
+    let expected_logs = vec![
+        log!(EXECUTE_BRIDGE_OPS_ENDPOINT, topics: [EXECUTED_BRIDGE_OP_EVENT], data: Some(TOKEN_NOT_REGISTERED)),
+    ];
     chain_interactor
         .execute_operations_in_mvx_esdt_safe(
             bridge_service,
             SHARD_1,
             hash_of_hashes,
             operation,
-            Some(MULTI_ESDT_NFT_TRANSFER_EVENT),
-            None,
+            expected_logs,
         )
         .await;
-
-    // Reset the nonce to the previous value
-    let current_nonce = chain_interactor
-        .common_state()
-        .get_operation_nonce(&mvx_esdt_safe_address.to_string());
-
-    chain_interactor
-        .common_state()
-        .set_operation_nonce(&mvx_esdt_safe_address.to_string(), current_nonce - 1);
 }
 
 /// ### TEST
@@ -1172,8 +1164,7 @@ async fn test_execute_operation_with_burn_mechanism() {
             SHARD_0,
             hash_of_hashes,
             operation,
-            None,
-            Some(expected_logs),
+            expected_logs,
         )
         .await;
 
