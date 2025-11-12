@@ -33,7 +33,6 @@ pub trait SovereignForge:
     #[only_owner]
     #[endpoint(registerChainFactory)]
     fn register_chain_factory(&self, shard_id: u32, chain_factory_address: ManagedAddress) {
-        self.require_not_paused();
         require!(
             shard_id < forge_common::forge_utils::NUMBER_OF_SHARDS,
             "Shard id {} is out of range",
@@ -56,7 +55,6 @@ pub trait SovereignForge:
     #[only_owner]
     #[endpoint(registerTrustedToken)]
     fn register_trusted_token(&self, trusted_token: ManagedBuffer) {
-        self.require_not_paused();
         self.trusted_tokens().insert(trusted_token);
     }
 

@@ -14,6 +14,7 @@ use cross_chain::MAX_GAS_PER_TRANSACTION;
 use error_messages::{
     BANNED_ENDPOINT_NAME, CURRENT_OPERATION_NOT_REGISTERED, DEPOSIT_OVER_MAX_AMOUNT,
     ERR_EMPTY_PAYMENTS, GAS_LIMIT_TOO_HIGH, MAX_GAS_LIMIT_PER_TX_EXCEEDED, NOTHING_TO_TRANSFER,
+    TOKEN_NOT_REGISTERED,
 };
 use multiversx_sc::api::ESDT_LOCAL_MINT_FUNC_NAME;
 use multiversx_sc::chain_core::EGLD_000000_TOKEN_IDENTIFIER;
@@ -27,7 +28,7 @@ use structs::configs::{EsdtSafeConfig, MaxBridgedAmount};
 use structs::operation::{Operation, OperationData, OperationEsdtPayment, TransferData};
 use structs::OperationHashStatus;
 
-//NOTE: The chain sim enviroment can not handle storage reads from other shards
+//NOTE: The chain sim environment can not handle storage reads from other shards
 
 /// ### TEST
 /// M-ESDT_UPDATE_CONFIG_FAIL
@@ -522,8 +523,7 @@ async fn test_execute_operation_no_operation_registered() {
             SHARD_1,
             hash_of_hashes,
             operation,
-            None,
-            Some(expected_logs),
+            expected_logs,
         )
         .await;
 
@@ -654,8 +654,7 @@ async fn test_execute_operation_with_egld_success_no_fee() {
             SHARD_1,
             hash_of_hashes,
             operation,
-            None,
-            Some(expected_logs),
+            expected_logs,
         )
         .await;
 
@@ -747,8 +746,7 @@ async fn test_execute_operation_only_transfer_data_no_fee() {
             SHARD_1,
             hash_of_hashes,
             operation,
-            None,
-            Some(expected_logs),
+            expected_logs,
         )
         .await;
 
@@ -842,23 +840,16 @@ async fn test_execute_operation_native_token_success_no_fee() {
         token_type: EsdtTokenType::Fungible,
     };
 
-    let native_token_id_static = Box::leak(
-        native_token
-            .clone()
-            .into_managed_buffer()
-            .to_string()
-            .into_boxed_str(),
-    );
+    let native_token_id = native_token.clone().into_managed_buffer().to_string();
 
-    let expected_logs = vec![log!(ESDT_LOCAL_MINT_FUNC_NAME, topics: [native_token_id_static])];
+    let expected_logs = vec![log!(ESDT_LOCAL_MINT_FUNC_NAME, topics: [native_token_id])];
     chain_interactor
         .execute_operations_in_mvx_esdt_safe(
             bridge_service,
             SHARD_1,
             hash_of_hashes,
             operation,
-            None,
-            Some(expected_logs),
+            expected_logs,
         )
         .await;
 
@@ -943,14 +934,17 @@ async fn test_execute_operation_sovereign_token_not_registered() {
     let bridge_service = chain_interactor
         .get_bridge_service_for_shard(SHARD_1)
         .clone();
+
+    let expected_logs = vec![
+        log!(EXECUTE_BRIDGE_OPS_ENDPOINT, topics: [EXECUTED_BRIDGE_OP_EVENT], data: Some(TOKEN_NOT_REGISTERED)),
+    ];
     chain_interactor
         .execute_operations_in_mvx_esdt_safe(
             bridge_service,
             SHARD_1,
             hash_of_hashes,
             operation,
-            Some(MULTI_ESDT_NFT_TRANSFER_EVENT),
-            None,
+            expected_logs,
         )
         .await;
 }
@@ -1167,8 +1161,7 @@ async fn test_execute_operation_with_burn_mechanism() {
             SHARD_0,
             hash_of_hashes,
             operation,
-            None,
-            Some(expected_logs),
+            expected_logs,
         )
         .await;
 
@@ -1199,9 +1192,9 @@ async fn test_execute_operation_with_burn_mechanism() {
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn test_pause_contract() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
-    chain_interactor.remove_fee_wrapper(SHARD_0).await;
+    chain_interactor.remove_fee_wrapper(SHARD_1).await;
 
-    chain_interactor.switch_pause_status(true, SHARD_0).await;
+    chain_interactor.switch_pause_status(true, SHARD_1).await;
 
-    chain_interactor.switch_pause_status(false, SHARD_0).await;
+    chain_interactor.switch_pause_status(false, SHARD_1).await;
 }

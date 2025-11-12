@@ -7,10 +7,9 @@ use std::{
 
 use common_test_setup::constants::STATE_FILE;
 use error_messages::{
-    NO_KNOWN_CHAIN_CONFIG_SC, NO_KNOWN_CHAIN_FACTORY_IN_THE_SPECIFIED_SHARD,
-    NO_KNOWN_CHAIN_FACTORY_SC, NO_KNOWN_FEE_MARKET, NO_KNOWN_FEE_TOKEN, NO_KNOWN_HEADER_VERIFIER,
-    NO_KNOWN_MVX_ESDT_SAFE, NO_KNOWN_SOVEREIGN_FORGE_SC, NO_KNOWN_TESTING_SC,
-    NO_KNOWN_TRUSTED_TOKEN,
+    NO_KNOWN_CHAIN_CONFIG_SC, NO_KNOWN_CHAIN_FACTORY_SC, NO_KNOWN_FEE_MARKET, NO_KNOWN_FEE_TOKEN,
+    NO_KNOWN_HEADER_VERIFIER, NO_KNOWN_MVX_ESDT_SAFE, NO_KNOWN_SOVEREIGN_FORGE_SC,
+    NO_KNOWN_TESTING_SC, NO_KNOWN_TRUSTED_TOKEN,
 };
 use multiversx_sc::{
     codec::num_bigint,
@@ -203,27 +202,6 @@ impl CommonState {
     }
 
     /// Returns the contract addresses
-    pub fn current_mvx_esdt_safe_contract_address(&self) -> &Bech32Address {
-        self.mvx_esdt_safe_addresses
-            .as_ref()
-            .expect(NO_KNOWN_MVX_ESDT_SAFE)
-            .first()
-    }
-
-    pub fn current_header_verifier_address(&self) -> &Bech32Address {
-        self.header_verifier_addresses
-            .as_ref()
-            .expect(NO_KNOWN_HEADER_VERIFIER)
-            .first()
-    }
-
-    pub fn current_fee_market_address(&self) -> &Bech32Address {
-        self.fee_market_addresses
-            .as_ref()
-            .expect(NO_KNOWN_FEE_MARKET)
-            .first()
-    }
-
     pub fn current_chain_config_sc_address(&self) -> &Bech32Address {
         self.chain_config_sc_addresses
             .as_ref()
@@ -239,14 +217,6 @@ impl CommonState {
         self.sovereign_forge_sc_address
             .as_ref()
             .expect(NO_KNOWN_SOVEREIGN_FORGE_SC)
-    }
-
-    pub fn current_chain_factory_sc_address(&self) -> &Bech32Address {
-        self.chain_factory_sc_addresses
-            .as_ref()
-            .expect(NO_KNOWN_CHAIN_FACTORY_SC)
-            .first()
-            .expect(NO_KNOWN_CHAIN_FACTORY_IN_THE_SPECIFIED_SHARD)
     }
 
     pub fn get_chain_factory_sc_address(&self, shard: u32) -> &Bech32Address {
@@ -374,6 +344,13 @@ impl CommonState {
             .entry(contract_address.to_string())
             .or_insert(0);
         *current_nonce += 1;
+    }
+
+    pub fn set_operation_nonce(&mut self, contract_address: &str, nonce: u64) {
+        self.operation_nonce
+            .entry(contract_address.to_string())
+            .and_modify(|existing| *existing = nonce)
+            .or_insert(nonce);
     }
 }
 

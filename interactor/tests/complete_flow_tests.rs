@@ -28,7 +28,7 @@ use structs::operation::OperationData;
 use structs::operation::TransferData;
 use structs::OperationHashStatus;
 
-//NOTE: The chain sim enviroment can not handle storage reads from other shards
+//NOTE: The chain sim environment can not handle storage reads from other shards
 
 /// ### TEST
 /// S-FORGE_COMPLETE-DEPOSIT-FLOW_OK
@@ -119,7 +119,7 @@ async fn test_complete_execute_flow_with_transfer_data_only_success(#[case] shar
             ActionConfig::new()
                 .shard(shard)
                 .with_endpoint(TESTING_SC_ENDPOINT.to_string())
-                .expect_additional_log(additional_log),
+                .additional_logs(vec![additional_log]),
             None,
         )
         .await;
@@ -274,13 +274,13 @@ async fn test_register_execute_and_deposit_sov_token(
         .register_and_execute_sovereign_token(ActionConfig::new().shard(shard), sov_token.clone())
         .await;
 
-    let override_expected_log =
-        chain_interactor.build_sovereign_deposit_logs(token_id, &main_token);
+    let additional_logs = chain_interactor.build_sovereign_deposit_logs(&main_token);
     chain_interactor
         .deposit_wrapper(
             ActionConfig::new()
                 .shard(shard)
-                .override_expected_log(override_expected_log),
+                .expected_deposit_token_log(sov_token.clone())
+                .additional_logs(additional_logs),
             Some(main_token),
             None,
         )
@@ -471,14 +471,14 @@ async fn test_register_execute_with_transfer_data_and_deposit_sov_token(
         )
         .await;
 
-    let override_expected_log =
-        chain_interactor.build_sovereign_deposit_logs(token_id, &main_token);
+    let additional_log = chain_interactor.build_sovereign_deposit_logs(&main_token);
     chain_interactor
         .deposit_wrapper(
             ActionConfig::new()
                 .shard(shard)
                 .with_endpoint(TESTING_SC_ENDPOINT.to_string())
-                .override_expected_log(override_expected_log),
+                .expected_deposit_token_log(sov_token)
+                .additional_logs(additional_log),
             Some(main_token.clone()),
             None,
         )
@@ -610,8 +610,7 @@ async fn test_execute_operation_transfer_data_only_async_call_in_endpoint(#[case
             SHARD_1,
             hash_of_hashes,
             operation,
-            None,
-            None,
+            vec![],
         )
         .await;
 }

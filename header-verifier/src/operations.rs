@@ -47,7 +47,7 @@ pub trait HeaderVerifierOperationsModule:
         );
         require!(
             self.calculate_and_check_transfers_hashes(&hash_of_hashes, operations_hashes.clone())
-                .is_none(),
+                .is_ok(),
             HASH_OF_HASHES_DOES_NOT_MATCH
         );
 
@@ -132,7 +132,7 @@ pub trait HeaderVerifierOperationsModule:
         let mut operations_hashes = MultiValueEncoded::new();
         operations_hashes.push(operation_hash.clone());
 
-        if let Some(error_message) =
+        if let Err(error_message) =
             self.calculate_and_check_transfers_hashes(&hash_of_hashes, operations_hashes.clone())
         {
             self.execute_bridge_operation_event(

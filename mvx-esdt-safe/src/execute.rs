@@ -1,12 +1,13 @@
+use cross_chain::MAX_GAS_PER_TRANSACTION;
 use error_messages::{
     BURN_ESDT_FAILED, CREATE_ESDT_FAILED, DEPOSIT_AMOUNT_NOT_ENOUGH, ESDT_SAFE_STILL_PAUSED,
-    MINT_ESDT_FAILED,
+    GAS_LIMIT_TOO_HIGH, MINT_ESDT_FAILED, NOTHING_TO_TRANSFER, TOKEN_NOT_REGISTERED,
 };
 use multiversx_sc_modules::only_admin;
 use structs::{
     aliases::GasLimit,
     generate_hash::GenerateHash,
-    operation::{Operation, OperationData, OperationEsdtPayment, OperationTuple},
+    operation::{Operation, OperationData, OperationEsdtPayment, OperationTuple, TransferData},
 };
 
 multiversx_sc::imports!();
@@ -56,9 +57,12 @@ pub trait ExecuteModule:
         };
 
         if operation.tokens.is_empty() {
-            self.execute_sc_call(&hash_of_hashes, &operation_tuple);
+            if let Err(err_msg) = self.execute_sc_call(&hash_of_hashes, &operation_tuple) {
+                self.complete_operation(&hash_of_hashes, &operation_hash, Some(err_msg));
+            }
+
             return;
-        }
+        };
 
         let minted_operation_tokens = match self.process_operation_payments(&operation_tuple) {
             Ok(tokens) => tokens,
@@ -67,7 +71,18 @@ pub trait ExecuteModule:
                 return;
             }
         };
-        self.distribute_payments(&hash_of_hashes, &operation_tuple, &minted_operation_tokens);
+
+        if let Err(err_msg) =
+            self.distribute_payments(&hash_of_hashes, &operation_tuple, &minted_operation_tokens)
+        {
+            let refund_result = self.refund_transfers(&minted_operation_tokens, &operation);
+            self.complete_operation(
+                &hash_of_hashes,
+                &operation_hash,
+                Some(self.merge_error_if_any(err_msg, refund_result)),
+            );
+            return;
+        }
     }
 
     fn process_operation_payments(
@@ -78,8 +93,14 @@ pub trait ExecuteModule:
 
         for operation_token in operation_tuple.operation.tokens.iter() {
             let processing_result = match self.get_mvx_token_id(&operation_token) {
-                Some(mvx_token_id) => self.process_resolved_token(&mvx_token_id, &operation_token),
-                None => self.process_unresolved_token(&operation_token),
+                Ok(mvx_token_id) => {
+                    if mvx_token_id.is_none() {
+                        self.process_unresolved_token(&operation_token)
+                    } else {
+                        self.process_resolved_token(&mvx_token_id.unwrap(), &operation_token)
+                    }
+                }
+                Err(err_msg) => return Err(err_msg),
             };
 
             match processing_result {
@@ -97,7 +118,7 @@ pub trait ExecuteModule:
 
     fn process_resolved_token(
         &self,
-        mvx_token_id: &EgldOrEsdtTokenIdentifier<Self::Api>,
+        mvx_token_id: &EgldOrEsdtTokenIdentifier,
         operation_token: &OperationEsdtPayment<Self::Api>,
     ) -> Result<OperationEsdtPayment<Self::Api>, ManagedBuffer> {
         let mut nonce: u64 = 0;
@@ -145,7 +166,7 @@ pub trait ExecuteModule:
 
     fn esdt_create_and_update_mapper(
         &self,
-        mvx_token_id: &EgldOrEsdtTokenIdentifier<Self::Api>,
+        mvx_token_id: &EgldOrEsdtTokenIdentifier,
         operation_token: &OperationEsdtPayment<Self::Api>,
     ) -> Result<u64, ManagedBuffer> {
         let mut nonce = 0;
@@ -181,7 +202,7 @@ pub trait ExecuteModule:
 
     fn create_esdt(
         &self,
-        token_id: &EgldOrEsdtTokenIdentifier<Self::Api>,
+        token_id: &EgldOrEsdtTokenIdentifier,
         token_data: &EsdtTokenData<Self::Api>,
     ) -> Result<u64, ManagedBuffer> {
         let mut amount = token_data.amount.clone();
@@ -219,7 +240,7 @@ pub trait ExecuteModule:
         hash_of_hashes: &ManagedBuffer,
         operation_tuple: &OperationTuple<Self::Api>,
         output_payments: &ManagedVec<OperationEsdtPayment<Self::Api>>,
-    ) {
+    ) -> Result<(), ManagedBuffer> {
         let payment_tokens: ManagedVec<Self::Api, EgldOrEsdtTokenPayment<Self::Api>> =
             output_payments
                 .iter()
@@ -228,13 +249,14 @@ pub trait ExecuteModule:
 
         match &operation_tuple.operation.data.opt_transfer_data {
             Some(transfer_data) => {
+                self.validate_transfer_data(transfer_data)?;
                 let args = ManagedArgBuffer::from(transfer_data.args.clone());
 
                 self.tx()
                     .to(&operation_tuple.operation.to)
                     .raw_call(transfer_data.function.clone())
                     .arguments_raw(args)
-                    .payment(&payment_tokens)
+                    .payment(payment_tokens)
                     .gas(transfer_data.gas_limit)
                     .callback(<Self as ExecuteModule>::callbacks(self).execute(
                         hash_of_hashes,
@@ -258,19 +280,22 @@ pub trait ExecuteModule:
                     .register_promise();
             }
         }
+
+        Ok(())
     }
 
     fn execute_sc_call(
         &self,
         hash_of_hashes: &ManagedBuffer,
         operation_tuple: &OperationTuple<Self::Api>,
-    ) {
-        let transfer_data = operation_tuple
-            .operation
-            .data
-            .opt_transfer_data
-            .as_ref()
-            .unwrap();
+    ) -> Result<(), ManagedBuffer> {
+        let transfer_data = match operation_tuple.operation.data.opt_transfer_data.as_ref() {
+            Some(data) => data,
+            None => return Err(ManagedBuffer::from(NOTHING_TO_TRANSFER)),
+        };
+
+        self.validate_transfer_data(transfer_data)?;
+
         let args = ManagedArgBuffer::from(transfer_data.args.clone());
 
         self.tx()
@@ -285,6 +310,8 @@ pub trait ExecuteModule:
             ))
             .gas_for_callback(CALLBACK_GAS)
             .register_promise();
+
+        Ok(())
     }
 
     #[promises_callback]
@@ -407,26 +434,26 @@ pub trait ExecuteModule:
     fn get_mvx_token_id(
         &self,
         operation_token: &OperationEsdtPayment<Self::Api>,
-    ) -> Option<EgldOrEsdtTokenIdentifier<Self::Api>> {
-        let sov_to_mvx_mapper =
-            self.sovereign_to_multiversx_token_id_mapper(&operation_token.token_identifier);
+    ) -> Result<Option<EgldOrEsdtTokenIdentifier>, ManagedBuffer> {
+        let token_identifier = &operation_token.token_identifier;
+        let registered_mapping = self.sovereign_to_multiversx_token_id_mapper(token_identifier);
 
-        if !sov_to_mvx_mapper.is_empty() {
-            return Some(sov_to_mvx_mapper.get());
+        if !registered_mapping.is_empty() {
+            return Ok(Some(registered_mapping.get()));
         }
 
-        if self.is_native_token(&operation_token.token_identifier) {
-            Some(operation_token.token_identifier.clone())
-        } else {
-            None
+        if self.has_prefix(token_identifier) {
+            return Err(TOKEN_NOT_REGISTERED.into());
         }
+
+        if self.is_native_token(token_identifier) {
+            return Ok(Some(token_identifier.clone()));
+        }
+
+        Ok(None)
     }
 
-    fn get_mvx_nonce_from_mapper(
-        &self,
-        token_id: &EgldOrEsdtTokenIdentifier<Self::Api>,
-        nonce: u64,
-    ) -> u64 {
+    fn get_mvx_nonce_from_mapper(&self, token_id: &EgldOrEsdtTokenIdentifier, nonce: u64) -> u64 {
         let esdt_info_mapper = self.sovereign_to_multiversx_esdt_info_mapper(token_id, nonce);
         if esdt_info_mapper.is_empty() {
             return 0;
@@ -440,5 +467,16 @@ pub trait ExecuteModule:
             && self
                 .burn_mechanism_tokens()
                 .contains(&operation_token.token_identifier)
+    }
+
+    fn validate_transfer_data(
+        &self,
+        transfer_data: &TransferData<Self::Api>,
+    ) -> Result<(), ManagedBuffer> {
+        if transfer_data.gas_limit > MAX_GAS_PER_TRANSACTION {
+            return Err(ManagedBuffer::from(GAS_LIMIT_TOO_HIGH));
+        }
+
+        Ok(())
     }
 }

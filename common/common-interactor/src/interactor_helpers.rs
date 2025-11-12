@@ -31,7 +31,6 @@ use rand::{distr::Alphanumeric, Rng};
 use structs::{
     aliases::PaymentsVec,
     fee::{FeeStruct, FeeType},
-    forge::{ContractInfo, ScArray},
     operation::{Operation, OperationData, OperationEsdtPayment, TransferData},
 };
 
@@ -358,51 +357,6 @@ pub trait InteractorHelpers {
         }
     }
 
-    fn get_contract_info_struct_for_sc_type(
-        &mut self,
-        sc_array: Vec<ScArray>,
-    ) -> Vec<ContractInfo<StaticApi>> {
-        sc_array
-            .iter()
-            .map(|sc| ContractInfo::new(sc.clone(), self.get_sc_address(sc.clone())))
-            .collect()
-    }
-
-    fn get_sc_address(&mut self, sc_type: ScArray) -> ManagedAddress<StaticApi> {
-        match sc_type {
-            ScArray::ChainConfig => ManagedAddress::from_address(
-                &self
-                    .common_state()
-                    .current_chain_config_sc_address()
-                    .to_address(),
-            ),
-            ScArray::ChainFactory => ManagedAddress::from_address(
-                &self
-                    .common_state()
-                    .current_chain_factory_sc_address()
-                    .to_address(),
-            ),
-            ScArray::ESDTSafe => ManagedAddress::from_address(
-                &self
-                    .common_state()
-                    .current_mvx_esdt_safe_contract_address()
-                    .to_address(),
-            ),
-            ScArray::HeaderVerifier => ManagedAddress::from_address(
-                &self
-                    .common_state()
-                    .current_header_verifier_address()
-                    .to_address(),
-            ),
-            ScArray::FeeMarket => ManagedAddress::from_address(
-                &self
-                    .common_state()
-                    .current_fee_market_address()
-                    .to_address(),
-            ),
-        }
-    }
-
     fn get_token_decimals(&self, token_type: EsdtTokenType) -> usize {
         match token_type {
             EsdtTokenType::NonFungibleV2
@@ -432,29 +386,28 @@ pub trait InteractorHelpers {
 
     fn build_expected_deposit_log(
         &mut self,
-        config: ActionConfig,
+        mut config: ActionConfig,
         token: Option<EsdtTokenInfo>,
     ) -> Vec<ExpectedLogs<'static>> {
         if config.shard != SHARD_1 {
             return vec![];
         }
 
-        if let Some(override_expected_log) = config.override_expected_log {
-            return override_expected_log;
+        let mut logs = Vec::new();
+        let deposit_token = config.expected_deposit_token_log.clone().or(token);
+
+        match deposit_token {
+            Some(t) => {
+                let topic_value = t.token_id.into_managed_buffer().to_string();
+                logs.push(log!(DEPOSIT_EVENT, topics: [DEPOSIT_EVENT, topic_value]));
+            }
+            None => {
+                logs.push(log!(DEPOSIT_EVENT, topics: [SC_CALL_LOG]));
+            }
         }
 
-        let topic_value = match &token {
-            Some(t) => {
-                let token_id = t.token_id.clone().into_managed_buffer().to_string();
-                Box::leak(token_id.into_boxed_str())
-            }
-            None => SC_CALL_LOG,
-        };
-
-        let mut logs = vec![log!(DEPOSIT_EVENT, topics: [topic_value])];
-
-        if let Some(additional_log) = config.expected_log {
-            logs.push(additional_log);
+        if let Some(additional_logs) = config.additional_logs.take() {
+            logs.extend(additional_logs);
         }
 
         logs
@@ -462,25 +415,22 @@ pub trait InteractorHelpers {
 
     fn build_sovereign_deposit_logs(
         &mut self,
-        token_id: String,
         main_token: &EsdtTokenInfo,
     ) -> Vec<ExpectedLogs<'static>> {
-        let token_id_static = Box::leak(token_id.into_boxed_str());
-        let main_token_id_static = Box::leak(
-            main_token
-                .token_id
-                .clone()
-                .into_managed_buffer()
-                .to_string()
-                .into_boxed_str(),
-        );
-        let mut expected_logs = vec![log!(DEPOSIT_EVENT, topics: [token_id_static])];
-        if main_token.token_type != EsdtTokenType::Fungible {
-            expected_logs.push(log!(ESDT_NFT_BURN_FUNC_NAME, topics: [main_token_id_static]));
-        } else {
-            expected_logs.push(log!(ESDT_LOCAL_BURN_FUNC_NAME, topics: [main_token_id_static]));
-        }
-        expected_logs
+        let main_token_id_topic = main_token
+            .token_id
+            .clone()
+            .into_managed_buffer()
+            .to_string();
+
+        let burn_log = match main_token.token_type {
+            EsdtTokenType::Fungible => {
+                log!(ESDT_LOCAL_BURN_FUNC_NAME, topics: [main_token_id_topic])
+            }
+            _ => log!(ESDT_NFT_BURN_FUNC_NAME, topics: [main_token_id_topic]),
+        };
+
+        vec![burn_log]
     }
 
     fn build_expected_execute_log(
@@ -512,8 +462,8 @@ pub trait InteractorHelpers {
             }
             let mut expected_logs =
                 vec![log!(EXECUTE_OPERATION_ENDPOINT, topics: [EXECUTED_BRIDGE_LOG])];
-            if let Some(additional_log) = config.expected_log {
-                expected_logs.push(additional_log);
+            if let Some(additional_logs) = config.additional_logs {
+                expected_logs.extend(additional_logs);
             }
             return expected_logs;
         }

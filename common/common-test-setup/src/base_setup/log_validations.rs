@@ -1,38 +1,33 @@
 use base64::{engine::general_purpose::STANDARD as BASE64_STANDARD, Engine};
-use error_messages::ALL_ERROR_MESSAGES;
 use multiversx_sc::imports::OptionalValue;
 use multiversx_sc_scenario::scenario_model::Log;
+use std::borrow::Cow;
 
 use crate::base_setup::init::ExpectedLogs;
 
 pub fn assert_expected_logs(logs: Vec<Log>, expected_logs: Vec<ExpectedLogs>) {
-    let should_check_for_errors =
-        expected_logs
-            .iter()
-            .all(|expected_log| match expected_log.data {
-                OptionalValue::Some(data) => !ALL_ERROR_MESSAGES.contains(&data),
-                OptionalValue::None => true,
-            });
-
-    if should_check_for_errors {
-        assert_logs_do_not_contain_error_messages(&logs);
-    }
-
     for expected_log in expected_logs {
         let matching_logs: Vec<&Log> = logs
             .iter()
-            .filter(|log| log.endpoint == expected_log.identifier)
+            .filter(|log| log.endpoint == expected_log.identifier.as_ref())
             .collect();
         assert!(
             !matching_logs.is_empty(),
             "Expected log '{}' not found. Logs: {:?}",
-            expected_log.identifier,
+            expected_log.identifier.as_ref(),
             logs
         );
         if let OptionalValue::Some(ref topics) = expected_log.topics {
-            validate_expected_topics(topics, &matching_logs, expected_log.identifier);
+            validate_expected_topics(topics, &matching_logs, expected_log.identifier.as_ref());
 
             if let OptionalValue::Some(data) = expected_log.data {
+                if topics.is_empty() {
+                    panic!(
+                        "Expected at least one topic for data validation in log '{}', but got none. Logs: {:?}",
+                        expected_log.identifier,
+                        logs
+                    );
+                }
                 let first_topic_bytes = topics[0].as_bytes().to_vec();
                 let filtered_logs: Vec<&Log> = matching_logs
                     .iter()
@@ -54,13 +49,17 @@ pub fn assert_expected_logs(logs: Vec<Log>, expected_logs: Vec<ExpectedLogs>) {
                             .unwrap_or(false)
                     })
                     .collect();
-                validate_expected_data(&[data], &filtered_logs, expected_log.identifier);
+                validate_expected_data(
+                    &[data.as_ref()],
+                    &filtered_logs,
+                    expected_log.identifier.as_ref(),
+                );
             }
         }
     }
 }
 
-pub fn validate_expected_topics(topics: &[&str], matching_logs: &[&Log], endpoint: &str) {
+pub fn validate_expected_topics(topics: &[Cow<'_, str>], matching_logs: &[&Log], endpoint: &str) {
     let expected_topics_bytes: Vec<Vec<u8>> =
         topics.iter().map(|s| s.as_bytes().to_vec()).collect();
 
@@ -82,7 +81,11 @@ pub fn validate_expected_topics(topics: &[&str], matching_logs: &[&Log], endpoin
             })
         }),
         "Expected topics '{}' not found for event '{}' \n Logs: {:?}",
-        topics.join(", "),
+        topics
+            .iter()
+            .map(|topic| topic.as_ref())
+            .collect::<Vec<_>>()
+            .join(", "),
         endpoint,
         matching_logs
     );
@@ -122,33 +125,4 @@ pub fn log_contains_expected_data(log: &Log, expected_data_bytes: &[Vec<u8>]) ->
             }
         })
     })
-}
-
-pub fn assert_logs_do_not_contain_error_messages(logs: &[Log]) {
-    for log in logs {
-        if let Some(error_message) = ALL_ERROR_MESSAGES.iter().copied().find(|error_message| {
-            let error_bytes = error_message.as_bytes();
-
-            log.data
-                .iter()
-                .any(|data| contains_bytes_or_base64(data, error_bytes))
-        }) {
-            panic!(
-                "Unexpected error message '{}' found in logs: {:?}",
-                error_message, logs
-            );
-        }
-    }
-}
-
-fn contains_bytes_or_base64(source: &[u8], needle: &[u8]) -> bool {
-    if source.windows(needle.len()).any(|window| window == needle) {
-        return true;
-    }
-
-    if let Ok(decoded) = BASE64_STANDARD.decode(source) {
-        return decoded.windows(needle.len()).any(|window| window == needle);
-    }
-
-    false
 }

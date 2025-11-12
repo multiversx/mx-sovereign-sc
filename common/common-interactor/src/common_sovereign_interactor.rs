@@ -1293,10 +1293,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
     }
 
     async fn switch_pause_status(&mut self, status: bool, shard: u32) {
-        let mvx_esdt_safe_address = self
-            .common_state()
-            .current_mvx_esdt_safe_contract_address()
-            .clone();
+        let mvx_esdt_safe_address = self.common_state().get_mvx_esdt_safe_address(shard).clone();
         let bridge_address = self.get_bridge_service_for_shard(shard).clone();
 
         let operation = PauseStatusOperation {
@@ -1337,10 +1334,10 @@ pub trait CommonInteractorTrait: InteractorHelpers {
         assert_eq!(current_status, status, "Pause status is not correct");
     }
 
-    async fn complete_header_verifier_setup_phase(&mut self, caller: Address) {
+    async fn complete_header_verifier_setup_phase(&mut self, caller: Address, shard: u32) {
         let header_verifier_address = self
             .common_state()
-            .current_header_verifier_address()
+            .get_header_verifier_address(shard)
             .clone();
 
         self.interactor()
@@ -1402,9 +1399,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
 
         self.assert_expected_error_message(response, expected_error_message);
 
-        if expected_error_message.is_none() {
-            assert_expected_logs(logs, expected_log.unwrap_or_default());
-        }
+        assert_expected_logs(logs, expected_log.unwrap_or_default());
     }
 
     async fn withdraw_from_testing_sc(
@@ -1433,8 +1428,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
         shard: u32,
         hash_of_hashes: ManagedBuffer<StaticApi>,
         operation: Operation<StaticApi>,
-        expected_error: Option<&str>,
-        expected_logs: Option<Vec<ExpectedLogs<'_>>>,
+        expected_logs: Vec<ExpectedLogs<'_>>,
     ) {
         let current_mvx_esdt_safe_address =
             self.common_state().get_mvx_esdt_safe_address(shard).clone();
@@ -1451,11 +1445,9 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             .run()
             .await;
 
-        self.assert_expected_error_message(response, expected_error);
+        self.assert_expected_error_message(response, None);
 
-        if expected_error.is_none() {
-            assert_expected_logs(logs, expected_logs.unwrap_or_default());
-        }
+        assert_expected_logs(logs, expected_logs);
     }
 
     async fn register_token(
