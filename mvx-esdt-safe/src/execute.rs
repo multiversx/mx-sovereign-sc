@@ -2,7 +2,6 @@ use cross_chain::MAX_GAS_PER_TRANSACTION;
 use error_messages::{
     BURN_ESDT_FAILED, CREATE_ESDT_FAILED, DEPOSIT_AMOUNT_NOT_ENOUGH, ESDT_SAFE_STILL_PAUSED,
     GAS_LIMIT_TOO_HIGH, MINT_ESDT_FAILED, NOTHING_TO_TRANSFER, TOKEN_NOT_REGISTERED,
-    UNRESOLVED_TOKEN,
 };
 use multiversx_sc_modules::only_admin;
 use structs::{
@@ -94,9 +93,12 @@ pub trait ExecuteModule:
 
         for operation_token in operation_tuple.operation.tokens.iter() {
             let processing_result = match self.get_mvx_token_id(&operation_token) {
-                Ok(mvx_token_id) => self.process_resolved_token(&mvx_token_id, &operation_token),
-                Err(err_msg) if err_msg == ManagedBuffer::from(UNRESOLVED_TOKEN) => {
-                    self.process_unresolved_token(&operation_token)
+                Ok(mvx_token_id) => {
+                    if mvx_token_id.is_none() {
+                        self.process_unresolved_token(&operation_token)
+                    } else {
+                        self.process_resolved_token(&mvx_token_id.unwrap(), &operation_token)
+                    }
                 }
                 Err(err_msg) => return Err(err_msg),
             };
@@ -432,12 +434,12 @@ pub trait ExecuteModule:
     fn get_mvx_token_id(
         &self,
         operation_token: &OperationEsdtPayment<Self::Api>,
-    ) -> Result<EgldOrEsdtTokenIdentifier<Self::Api>, ManagedBuffer> {
+    ) -> Result<Option<EgldOrEsdtTokenIdentifier>, ManagedBuffer> {
         let token_identifier = &operation_token.token_identifier;
         let registered_mapping = self.sovereign_to_multiversx_token_id_mapper(token_identifier);
 
         if !registered_mapping.is_empty() {
-            return Ok(registered_mapping.get());
+            return Ok(Some(registered_mapping.get()));
         }
 
         if self.has_prefix(token_identifier) {
@@ -445,10 +447,10 @@ pub trait ExecuteModule:
         }
 
         if self.is_native_token(token_identifier) {
-            return Ok(token_identifier.clone());
+            return Ok(Some(token_identifier.clone()));
         }
 
-        Err(UNRESOLVED_TOKEN.into())
+        Ok(None)
     }
 
     fn get_mvx_nonce_from_mapper(&self, token_id: &EgldOrEsdtTokenIdentifier, nonce: u64) -> u64 {
