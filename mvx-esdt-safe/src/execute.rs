@@ -95,13 +95,10 @@ pub trait ExecuteModule:
         for operation_token in operation_tuple.operation.tokens.iter() {
             let processing_result = match self.get_mvx_token_id(&operation_token) {
                 Ok(mvx_token_id) => self.process_resolved_token(&mvx_token_id, &operation_token),
-                Err(err_msg) => {
-                    if err_msg == ManagedBuffer::from(UNRESOLVED_TOKEN) {
-                        self.process_unresolved_token(&operation_token)
-                    } else {
-                        return Err(err_msg);
-                    }
+                Err(err_msg) if err_msg == ManagedBuffer::from(UNRESOLVED_TOKEN) => {
+                    self.process_unresolved_token(&operation_token)
                 }
+                Err(err_msg) => return Err(err_msg),
             };
 
             match processing_result {
@@ -435,23 +432,23 @@ pub trait ExecuteModule:
     fn get_mvx_token_id(
         &self,
         operation_token: &OperationEsdtPayment<Self::Api>,
-    ) -> Result<EgldOrEsdtTokenIdentifier, ManagedBuffer> {
-        let sov_to_mvx_mapper =
-            self.sovereign_to_multiversx_token_id_mapper(&operation_token.token_identifier);
+    ) -> Result<EgldOrEsdtTokenIdentifier<Self::Api>, ManagedBuffer> {
+        let token_identifier = &operation_token.token_identifier;
+        let registered_mapping = self.sovereign_to_multiversx_token_id_mapper(token_identifier);
 
-        if !sov_to_mvx_mapper.is_empty() {
-            return Ok(sov_to_mvx_mapper.get());
+        if !registered_mapping.is_empty() {
+            return Ok(registered_mapping.get());
         }
 
-        if self.has_prefix(&operation_token.token_identifier) {
+        if self.has_prefix(token_identifier) {
             return Err(TOKEN_NOT_REGISTERED.into());
         }
 
-        if self.is_native_token(&operation_token.token_identifier) {
-            Ok(operation_token.token_identifier.clone())
-        } else {
-            Err(UNRESOLVED_TOKEN.into())
+        if self.is_native_token(token_identifier) {
+            return Ok(token_identifier.clone());
         }
+
+        Err(UNRESOLVED_TOKEN.into())
     }
 
     fn get_mvx_nonce_from_mapper(&self, token_id: &EgldOrEsdtTokenIdentifier, nonce: u64) -> u64 {
