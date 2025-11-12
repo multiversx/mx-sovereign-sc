@@ -139,3 +139,4 @@ pub const NO_VALIDATORS_FOR_PREVIOUS_EPOCH: &str =
 pub const TOKEN_ALREADY_REGISTERED_WITH_BURN_MECHANISM: &str =
     "Token already registered in burn mechanism";
 pub const TOKEN_NOT_REGISTERED_WITH_BURN_MECHANISM: &str = "Token not registered in burn mechanism";
+pub const TOKEN_NOT_REGISTERED: &str = "Token not registered";
