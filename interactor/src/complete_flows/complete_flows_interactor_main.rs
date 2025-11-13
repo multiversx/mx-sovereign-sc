@@ -259,8 +259,11 @@ impl CompleteFlowInteract {
         mut config: ActionConfig,
         token: EsdtTokenInfo,
     ) -> EsdtTokenInfo {
-        let expected_deposit_log =
-            vec![log!(MULTI_ESDT_NFT_TRANSFER_EVENT, topics: [EGLD_000000_TOKEN_IDENTIFIER])];
+        config = config.additional_logs(vec![
+            log!(MULTI_ESDT_NFT_TRANSFER_EVENT, topics: [EGLD_000000_TOKEN_IDENTIFIER]),
+        ]);
+        let expected_deposit_logs =
+            self.build_expected_deposit_log(config.clone(), Some(token.clone()));
         self.deposit_in_mvx_esdt_safe(
             SOVEREIGN_RECEIVER_ADDRESS.to_address(),
             config.shard,
@@ -269,7 +272,7 @@ impl CompleteFlowInteract {
                 DEFAULT_ISSUE_COST.into(),
             )),
             None,
-            Some(expected_deposit_log),
+            Some(expected_deposit_logs),
         )
         .await;
 
