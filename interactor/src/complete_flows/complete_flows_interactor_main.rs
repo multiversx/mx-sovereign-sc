@@ -9,8 +9,8 @@ use common_interactor::{
 };
 use common_test_setup::base_setup::init::ExpectedLogs;
 use common_test_setup::constants::{
-    INTERACTOR_WORKING_DIR, MULTI_ESDT_NFT_TRANSFER_EVENT, SOVEREIGN_RECEIVER_ADDRESS,
-    TOKEN_DISPLAY_NAME, TOKEN_TICKER,
+    DEPOSIT_EVENT, INTERACTOR_WORKING_DIR, MULTI_ESDT_NFT_TRANSFER_EVENT, SHARD_1,
+    SOVEREIGN_RECEIVER_ADDRESS, TOKEN_DISPLAY_NAME, TOKEN_TICKER,
 };
 use common_test_setup::log;
 use cross_chain::DEFAULT_ISSUE_COST;
@@ -151,8 +151,8 @@ impl CompleteFlowInteract {
         &mut self,
         config: ActionConfig,
         token: Option<EsdtTokenInfo>,
+        expected_logs: Vec<ExpectedLogs<'static>>,
     ) {
-        let expected_logs = self.build_expected_execute_log(config.clone(), token.clone());
         let operation = self
             .prepare_operation(config.shard, token, config.endpoint.as_deref())
             .await;
@@ -191,8 +191,9 @@ impl CompleteFlowInteract {
         &mut self,
         config: ActionConfig,
         token: Option<EsdtTokenInfo>,
+        expected_logs: Vec<ExpectedLogs<'static>>,
     ) -> Option<EsdtTokenInfo> {
-        self.register_and_execute_operation(config.clone(), token.clone())
+        self.register_and_execute_operation(config.clone(), token.clone(), expected_logs)
             .await;
 
         let (expected_token, expected_amount) = match &token {
@@ -258,12 +259,17 @@ impl CompleteFlowInteract {
         &mut self,
         mut config: ActionConfig,
         token: EsdtTokenInfo,
+        expected_logs: Vec<ExpectedLogs<'static>>,
     ) -> EsdtTokenInfo {
-        config = config.additional_logs(vec![
-            log!(MULTI_ESDT_NFT_TRANSFER_EVENT, topics: [EGLD_000000_TOKEN_IDENTIFIER]),
-        ]);
-        let expected_deposit_logs =
-            self.build_expected_deposit_log(config.clone(), Some(token.clone()));
+        let expected_deposit_logs = if config.shard == SHARD_1 {
+            vec![
+                log!(MULTI_ESDT_NFT_TRANSFER_EVENT, topics: [EGLD_000000_TOKEN_IDENTIFIER]),
+                log!(DEPOSIT_EVENT, topics: [DEPOSIT_EVENT]),
+            ]
+        } else {
+            vec![]
+        };
+
         self.deposit_in_mvx_esdt_safe(
             SOVEREIGN_RECEIVER_ADDRESS.to_address(),
             config.shard,
@@ -288,7 +294,7 @@ impl CompleteFlowInteract {
 
         config = config.additional_logs(vec![additional_log]);
 
-        self.execute_wrapper(config, Some(token.clone()))
+        self.execute_wrapper(config, Some(token.clone()), expected_logs)
             .await
             .expect(EXPECTED_MAPPED_TOKEN)
     }

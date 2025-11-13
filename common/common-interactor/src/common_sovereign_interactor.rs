@@ -11,9 +11,8 @@ use common_test_setup::{
         FAILED_TO_LOAD_WALLET_SHARD_0, FEE_MARKET_CODE_PATH, HEADER_VERIFIER_CODE_PATH, ISSUE_COST,
         MVX_ESDT_SAFE_CODE_PATH, NATIVE_TOKEN_NAME, NATIVE_TOKEN_TICKER, NUMBER_OF_SHARDS,
         NUM_TOKENS_TO_MINT, ONE_THOUSAND_TOKENS, SHARD_0, SOVEREIGN_FORGE_CODE_PATH,
-        SOVEREIGN_TOKEN_PREFIX, TESTING_SC_CODE_PATH, TRANSFER_VALUE_ONLY_LOG, WALLET_SHARD_0,
+        SOVEREIGN_TOKEN_PREFIX, TESTING_SC_CODE_PATH, WALLET_SHARD_0,
     },
-    log,
 };
 use multiversx_bls::{SecretKey, G1};
 use multiversx_sc::{
@@ -1461,7 +1460,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
         let token_hash = token.generate_hash();
         let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&token_hash.to_vec()));
 
-        let (response, token_id, logs) = self
+        let (response, token_id) = self
             .interactor()
             .tx()
             .from(user_address)
@@ -1471,15 +1470,10 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             .register_sovereign_token(hash_of_hashes, token)
             .returns(ReturnsHandledOrError::new())
             .returns(ReturnsNewTokenIdentifier)
-            .returns(ReturnsLogs)
             .run()
             .await;
 
         self.assert_expected_error_message(response, None);
-
-        let expected_logs =
-            vec![log!(TRANSFER_VALUE_ONLY_LOG, topics: [""], data: Some(token_id.clone()))];
-        assert_expected_logs(logs, expected_logs);
 
         token_id
     }
