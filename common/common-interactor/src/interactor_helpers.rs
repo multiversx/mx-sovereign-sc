@@ -2,11 +2,10 @@ use std::path::Path;
 
 use common_test_setup::base_setup::init::ExpectedLogs;
 use common_test_setup::constants::{
-    DEPOSIT_EVENT, EXECUTED_BRIDGE_LOG, EXECUTED_BRIDGE_OP_EVENT, EXECUTE_OPERATION_ENDPOINT,
-    FEE_MARKET_SHARD_0, FEE_MARKET_SHARD_1, FEE_MARKET_SHARD_2, GAS_LIMIT, MVX_ESDT_SAFE_SHARD_0,
-    MVX_ESDT_SAFE_SHARD_1, MVX_ESDT_SAFE_SHARD_2, PER_GAS, PER_TRANSFER, SC_CALL_LOG, SHARD_0,
-    SHARD_1, TESTING_SC, TESTING_SC_ENDPOINT, TRUSTED_TOKEN_NAME, UNKNOWN_FEE_MARKET,
-    UNKNOWN_MVX_ESDT_SAFE, USER_ADDRESS_STR,
+    DEPOSIT_EVENT, FEE_MARKET_SHARD_0, FEE_MARKET_SHARD_1, FEE_MARKET_SHARD_2, GAS_LIMIT,
+    MVX_ESDT_SAFE_SHARD_0, MVX_ESDT_SAFE_SHARD_1, MVX_ESDT_SAFE_SHARD_2, PER_GAS, PER_TRANSFER,
+    SC_CALL_EVENT, SHARD_1, TESTING_SC, TESTING_SC_ENDPOINT, TRUSTED_TOKEN_NAME,
+    UNKNOWN_FEE_MARKET, UNKNOWN_MVX_ESDT_SAFE, USER_ADDRESS_STR,
 };
 use common_test_setup::log;
 use error_messages::{AMOUNT_IS_TOO_LARGE, FAILED_TO_PARSE_AS_NUMBER};
@@ -402,7 +401,7 @@ pub trait InteractorHelpers {
                 logs.push(log!(DEPOSIT_EVENT, topics: [DEPOSIT_EVENT, topic_value]));
             }
             None => {
-                logs.push(log!(DEPOSIT_EVENT, topics: [SC_CALL_LOG]));
+                logs.push(log!(DEPOSIT_EVENT, topics: [SC_CALL_EVENT]));
             }
         }
 
@@ -431,44 +430,6 @@ pub trait InteractorHelpers {
         };
 
         vec![burn_log]
-    }
-
-    fn build_expected_execute_log(
-        &mut self,
-        config: ActionConfig,
-        token: Option<EsdtTokenInfo>,
-    ) -> Vec<ExpectedLogs<'static>> {
-        if let Some(error) = config.expected_log_error {
-            if config.shard == SHARD_0 {
-                return vec![log!(
-                    EXECUTE_OPERATION_ENDPOINT,
-                    topics: [EXECUTED_BRIDGE_OP_EVENT],
-                    data: Some(error)
-                )];
-            }
-            return vec![];
-        }
-
-        if config.shard == SHARD_0 {
-            if config.endpoint.is_some() {
-                return vec![log!(EXECUTE_OPERATION_ENDPOINT, topics: [EXECUTED_BRIDGE_LOG])];
-            }
-            return vec![];
-        }
-
-        if config.shard == SHARD_1 {
-            if config.endpoint.is_some() || token.is_none() {
-                return vec![];
-            }
-            let mut expected_logs =
-                vec![log!(EXECUTE_OPERATION_ENDPOINT, topics: [EXECUTED_BRIDGE_LOG])];
-            if let Some(additional_logs) = config.additional_logs {
-                expected_logs.extend(additional_logs);
-            }
-            return expected_logs;
-        }
-
-        vec![]
     }
 
     // CHECK BALANCE OPERATIONS

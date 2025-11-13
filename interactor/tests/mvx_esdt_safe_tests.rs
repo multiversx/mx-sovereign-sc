@@ -5,9 +5,9 @@ use common_interactor::interactor_state::EsdtTokenInfo;
 use common_interactor::interactor_structs::{ActionConfig, BalanceCheckConfig};
 use common_test_setup::base_setup::init::ExpectedLogs;
 use common_test_setup::constants::{
-    EGLD_0_05, EXECUTED_BRIDGE_OP_EVENT, EXECUTE_BRIDGE_OPS_ENDPOINT, GAS_LIMIT,
-    MULTI_ESDT_NFT_TRANSFER_EVENT, ONE_HUNDRED_TOKENS, PER_GAS, PER_TRANSFER, SHARD_0, SHARD_1,
-    SOVEREIGN_RECEIVER_ADDRESS, TEN_TOKENS, TESTING_SC_ENDPOINT,
+    EGLD_0_05, EXECUTED_BRIDGE_OP_EVENT, EXECUTE_BRIDGE_OPS_ENDPOINT, EXECUTE_OPERATION_ENDPOINT,
+    GAS_LIMIT, MULTI_ESDT_NFT_TRANSFER_EVENT, ONE_HUNDRED_TOKENS, PER_GAS, PER_TRANSFER, SHARD_0,
+    SHARD_1, SOVEREIGN_RECEIVER_ADDRESS, TEN_TOKENS, TESTING_SC_ENDPOINT,
 };
 use common_test_setup::log;
 use cross_chain::MAX_GAS_PER_TRANSACTION;
@@ -545,7 +545,7 @@ async fn test_execute_operation_no_operation_registered() {
 async fn test_execute_operation_with_egld_success_no_fee() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
 
-    chain_interactor.remove_fee_wrapper(SHARD_1).await;
+    chain_interactor.remove_fee_wrapper(SHARD_0).await;
 
     let token = EsdtTokenInfo {
         token_id: EgldOrEsdtTokenIdentifier::egld(),
@@ -576,7 +576,7 @@ async fn test_execute_operation_with_egld_success_no_fee() {
     let transfer_data = TransferData::new(gas_limit, function, args);
     let mvx_esdt_safe_address = chain_interactor
         .common_state
-        .get_mvx_esdt_safe_address(SHARD_1)
+        .get_mvx_esdt_safe_address(SHARD_0)
         .clone();
 
     let operation_data = OperationData::new(
@@ -606,7 +606,7 @@ async fn test_execute_operation_with_egld_success_no_fee() {
     chain_interactor
         .deposit_in_mvx_esdt_safe(
             SOVEREIGN_RECEIVER_ADDRESS.to_address(),
-            SHARD_1,
+            SHARD_0,
             OptionalValue::None,
             payment_vec,
             None,
@@ -615,7 +615,7 @@ async fn test_execute_operation_with_egld_success_no_fee() {
         .await;
 
     let balance_config = BalanceCheckConfig::new()
-        .shard(SHARD_1)
+        .shard(SHARD_0)
         .token(Some(token.clone()))
         .amount(EGLD_0_05.into());
 
@@ -626,13 +626,13 @@ async fn test_execute_operation_with_egld_success_no_fee() {
     let operations_hashes = MultiValueEncoded::from(ManagedVec::from(vec![operation_hash.clone()]));
 
     chain_interactor
-        .register_operation(SHARD_1, &hash_of_hashes, operations_hashes)
+        .register_operation(SHARD_0, &hash_of_hashes, operations_hashes)
         .await;
 
     let expected_operation_hash_status = OperationHashStatus::NotLocked;
     chain_interactor
         .check_registered_operation_status(
-            SHARD_1,
+            SHARD_0,
             &hash_of_hashes,
             operation_hash,
             expected_operation_hash_status,
@@ -640,18 +640,14 @@ async fn test_execute_operation_with_egld_success_no_fee() {
         .await;
 
     let bridge_service = chain_interactor
-        .get_bridge_service_for_shard(SHARD_1)
+        .get_bridge_service_for_shard(SHARD_0)
         .clone();
-    let expected_logs = chain_interactor.build_expected_execute_log(
-        ActionConfig::new()
-            .shard(SHARD_1)
-            .with_endpoint(TESTING_SC_ENDPOINT.to_string()),
-        Some(token.clone()),
-    );
+    let expected_logs = vec![log!(EXECUTE_OPERATION_ENDPOINT, topics: [EXECUTED_BRIDGE_OP_EVENT])];
+
     chain_interactor
         .execute_operations_in_mvx_esdt_safe(
             bridge_service,
-            SHARD_1,
+            SHARD_0,
             hash_of_hashes,
             operation,
             expected_logs,
@@ -659,7 +655,7 @@ async fn test_execute_operation_with_egld_success_no_fee() {
         .await;
 
     let balance_config = BalanceCheckConfig::new()
-        .shard(SHARD_1)
+        .shard(SHARD_0)
         .token(Some(token))
         .amount(EGLD_0_05.into())
         .is_execute(true)
@@ -684,7 +680,7 @@ async fn test_execute_operation_with_egld_success_no_fee() {
 async fn test_execute_operation_only_transfer_data_no_fee() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
 
-    chain_interactor.remove_fee_wrapper(SHARD_1).await;
+    chain_interactor.remove_fee_wrapper(SHARD_0).await;
 
     let gas_limit = 90_000_000u64;
     let function = ManagedBuffer::<StaticApi>::from(TESTING_SC_ENDPOINT);
@@ -694,7 +690,7 @@ async fn test_execute_operation_only_transfer_data_no_fee() {
     let transfer_data = TransferData::new(gas_limit, function, args);
     let mvx_esdt_safe_address = chain_interactor
         .common_state
-        .get_mvx_esdt_safe_address(SHARD_1)
+        .get_mvx_esdt_safe_address(SHARD_0)
         .clone();
 
     let operation_data = OperationData::new(
@@ -722,13 +718,13 @@ async fn test_execute_operation_only_transfer_data_no_fee() {
     let operations_hashes = MultiValueEncoded::from(ManagedVec::from(vec![operation_hash.clone()]));
 
     chain_interactor
-        .register_operation(SHARD_1, &hash_of_hashes, operations_hashes)
+        .register_operation(SHARD_0, &hash_of_hashes, operations_hashes)
         .await;
 
     let expected_operation_status = OperationHashStatus::NotLocked;
     chain_interactor
         .check_registered_operation_status(
-            SHARD_1,
+            SHARD_0,
             &hash_of_hashes,
             operation_hash,
             expected_operation_status,
@@ -736,14 +732,13 @@ async fn test_execute_operation_only_transfer_data_no_fee() {
         .await;
 
     let bridge_service = chain_interactor
-        .get_bridge_service_for_shard(SHARD_1)
+        .get_bridge_service_for_shard(SHARD_0)
         .clone();
-    let expected_logs =
-        chain_interactor.build_expected_execute_log(ActionConfig::new().shard(SHARD_1), None);
+    let expected_logs = vec![log!(EXECUTE_OPERATION_ENDPOINT, topics: [EXECUTED_BRIDGE_OP_EVENT])];
     chain_interactor
         .execute_operations_in_mvx_esdt_safe(
             bridge_service,
-            SHARD_1,
+            SHARD_0,
             hash_of_hashes,
             operation,
             expected_logs,
@@ -751,7 +746,7 @@ async fn test_execute_operation_only_transfer_data_no_fee() {
         .await;
 
     chain_interactor.check_user_balance_unchanged().await;
-    chain_interactor.check_contracts_empty(SHARD_1).await;
+    chain_interactor.check_contracts_empty(SHARD_0).await;
 }
 
 /// ### TEST
@@ -872,7 +867,7 @@ async fn test_execute_operation_native_token_success_no_fee() {
 /// Call 'execute_operation()' with valid operation but no registered sovereign token
 ///
 /// ### EXPECTED
-/// Transaction is not successful and the logs contain the InternalVMError
+/// Transaction is successful and the logs contain the TOKEN_NOT_REGISTERED error
 #[tokio::test]
 #[serial]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
@@ -1151,10 +1146,7 @@ async fn test_execute_operation_with_burn_mechanism() {
         .get_bridge_service_for_shard(SHARD_0)
         .clone();
 
-    let expected_logs = chain_interactor.build_expected_execute_log(
-        ActionConfig::new().shard(SHARD_0),
-        Some(trusted_token_info.clone()),
-    );
+    let expected_logs = vec![log!(EXECUTE_OPERATION_ENDPOINT, topics: [EXECUTED_BRIDGE_OP_EVENT])];
     chain_interactor
         .execute_operations_in_mvx_esdt_safe(
             bridge_service,

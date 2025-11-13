@@ -53,7 +53,11 @@ impl ActionConfig {
     }
 
     pub fn additional_logs(mut self, logs: Vec<ExpectedLogs<'static>>) -> Self {
-        self.additional_logs = Some(logs);
+        if let Some(existing_logs) = &mut self.additional_logs {
+            existing_logs.extend(logs);
+        } else {
+            self.additional_logs = Some(logs);
+        }
         self
     }
 
