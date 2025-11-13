@@ -867,7 +867,7 @@ async fn test_execute_operation_native_token_success_no_fee() {
 /// Call 'execute_operation()' with valid operation but no registered sovereign token
 ///
 /// ### EXPECTED
-/// Transaction is not successful and the logs contain the InternalVMError
+/// Transaction is successful and the logs contain the TOKEN_NOT_REGISTERED error
 #[tokio::test]
 #[serial]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
