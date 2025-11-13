@@ -3,150 +3,137 @@ use multiversx_sc::imports::OptionalValue;
 use multiversx_sc_scenario::scenario_model::Log;
 use std::borrow::Cow;
 
-use crate::{base_setup::init::ExpectedLogs, constants::INTERNAL_VM_ERRORS};
+use crate::{
+    base_setup::init::ExpectedLogs,
+    constants::{EXECUTED_BRIDGE_OP_EVENT, INTERNAL_VM_ERRORS},
+};
 
 pub fn assert_expected_logs(logs: Vec<Log>, expected_logs: Vec<ExpectedLogs>) {
     for expected_log in expected_logs {
         let identifier = expected_log.identifier.as_ref();
-        let matching_logs: Vec<&Log> = logs
+        let mut matching_logs: Vec<&Log> = logs
             .iter()
             .filter(|log| log.endpoint == identifier)
             .collect();
+
         assert!(
             !matching_logs.is_empty(),
             "Expected log '{}' not found. Logs: {:?}",
             identifier,
             logs
         );
-        if let OptionalValue::Some(ref topics) = expected_log.topics {
-            let expected_data = optional_value_to_str(&expected_log.data);
 
-            validate_expected_topics(topics, &matching_logs, identifier);
-            validate_logs_with_topics(&logs, &matching_logs, topics, expected_data, identifier);
-        } else if expected_log.data.is_some() {
-            panic!(
-                "Expected data for log '{}' but no topics provided. Logs: {:?}",
-                identifier, logs
-            );
+        if let OptionalValue::Some(ref topics) = expected_log.topics {
+            matching_logs = validate_expected_topics(matching_logs, topics, identifier);
         }
+
+        if let OptionalValue::Some(ref data) = expected_log.data {
+            validate_expected_data(&matching_logs, data.as_ref(), identifier);
+        }
+
+        validate_error_log_if_necessary(&logs, &expected_log);
     }
 }
 
-pub fn validate_expected_topics(topics: &[Cow<'_, str>], matching_logs: &[&Log], endpoint: &str) {
-    let expected_topics_bytes: Vec<Vec<u8>> =
-        topics.iter().map(|s| s.as_bytes().to_vec()).collect();
+fn validate_expected_topics<'a>(
+    logs: Vec<&'a Log>,
+    topics: &[Cow<'_, str>],
+    endpoint: &str,
+) -> Vec<&'a Log> {
+    let expected_topics_bytes: Vec<Vec<u8>> = topics
+        .iter()
+        .map(|topic| topic.as_bytes().to_vec())
+        .collect();
+
+    let filtered_logs: Vec<&Log> = logs
+        .into_iter()
+        .filter(|log| log_contains_all_topics(log, &expected_topics_bytes))
+        .collect();
 
     assert!(
-        matching_logs.iter().any(|log| {
-            expected_topics_bytes.iter().all(|expected_topic| {
-                // Check raw bytes match (blackbox scenario format)
-                if log.topics.contains(expected_topic) {
-                    return true;
-                }
-
-                // Check if any log topic, when decoded from base64, matches (chain simulator format)
-                log.topics.iter().any(|log_topic| {
-                    BASE64_STANDARD
-                        .decode(log_topic)
-                        .map(|decoded| decoded == *expected_topic)
-                        .unwrap_or(false)
-                })
-            })
-        }),
-        "Expected topics '{}' not found for event '{}' \n Logs: {:?}",
+        !filtered_logs.is_empty(),
+        "Expected topics '{}' not found for event '{}'. Logs: {:?}",
         topics
             .iter()
             .map(|topic| topic.as_ref())
             .collect::<Vec<_>>()
             .join(", "),
         endpoint,
-        matching_logs
+        filtered_logs
     );
+
+    filtered_logs
 }
 
-pub fn validate_expected_data(data: &[&str], matching_logs: &[&Log], endpoint: &str) {
-    let expected_data_bytes: Vec<Vec<u8>> = data.iter().map(|s| s.as_bytes().to_vec()).collect();
+fn validate_expected_data(logs: &[&Log], expected_data: &str, endpoint: &str) {
+    let expected_data_bytes = vec![expected_data.as_bytes().to_vec()];
     assert!(
-        matching_logs
-            .iter()
+        logs.iter()
             .any(|log| log_contains_expected_data(log, &expected_data_bytes)),
         "Expected data '{}' not found for event '{}'. Logs: {:?}",
-        data.join(", "),
+        expected_data,
         endpoint,
-        matching_logs
+        logs
     );
 }
 
-pub fn log_contains_expected_data(log: &Log, expected_data_bytes: &[Vec<u8>]) -> bool {
-    expected_data_bytes.iter().all(|expected_data| {
-        log.data.iter().any(|log_data| {
-            // Check raw bytes match (blackbox scenario format)
-            if log_data
-                .windows(expected_data.len())
-                .any(|window| window == expected_data)
-            {
-                return true;
-            }
+fn validate_error_log_if_necessary(all_logs: &[Log], expected_log: &ExpectedLogs) {
+    let topics = match expected_log.topics {
+        OptionalValue::Some(ref topics) if !topics.is_empty() => topics,
+        _ => return,
+    };
 
-            // Check if any log data, when decoded from base64, matches (chain simulator format)
-            if let Ok(decoded_data) = BASE64_STANDARD.decode(log_data) {
-                decoded_data
-                    .windows(expected_data.len())
-                    .any(|window| window == expected_data)
-            } else {
-                false
-            }
-        })
-    })
-}
+    if topics[0].as_ref() != EXECUTED_BRIDGE_OP_EVENT {
+        return;
+    }
 
-fn validate_internal_vm_logs(
-    logs: &[Log],
-    expected_topic: &[u8],
-    topic_display: &str,
-    expected_data: Option<&str>,
-    endpoint: &str,
-) {
-    let all_internal_vm_logs: Vec<&Log> = logs
+    let internal_vm_logs: Vec<&Log> = all_logs
         .iter()
         .filter(|log| log.endpoint == INTERNAL_VM_ERRORS)
         .collect();
 
-    let matching_internal_vm_logs: Vec<&Log> = all_internal_vm_logs
-        .iter()
-        .copied()
-        .filter(|log| log_has_first_topic(log, expected_topic))
-        .collect();
+    match expected_log.data {
+        OptionalValue::Some(ref data) => {
+            let expected_topic_bytes = data.as_bytes().to_vec();
+            let has_matching_topic = internal_vm_logs.iter().any(|log| {
+                log.topics
+                    .iter()
+                    .any(|topic| topic_matches(topic, &expected_topic_bytes))
+            });
 
-    match expected_data {
-        Some(data) => {
             assert!(
-                !matching_internal_vm_logs.is_empty(),
-                "Expected internal VM error log with topic '{}' and data '{}' while validating event '{}' but none found. Logs: {:?}",
-                topic_display,
-                data,
-                endpoint,
-                logs
+                has_matching_topic,
+                "Expected internal VM error log containing topic '{}' when validating event '{}'. Logs: {:?}",
+                data.as_ref(),
+                expected_log.identifier.as_ref(),
+                all_logs
             );
-            validate_expected_data(&[data], &matching_internal_vm_logs, INTERNAL_VM_ERRORS);
         }
-        None => {
+        OptionalValue::None => {
             assert!(
-                matching_internal_vm_logs.is_empty(),
-                "Unexpected internal VM error log with topic '{}' found while validating event '{}'. Logs: {:?}",
-                topic_display,
-                endpoint,
-                logs
+                internal_vm_logs.is_empty(),
+                "Unexpected internal VM error log found while validating event '{}'. Logs: {:?}",
+                expected_log.identifier.as_ref(),
+                all_logs
             );
         }
     }
 }
 
-fn log_has_first_topic(log: &Log, expected_topic: &[u8]) -> bool {
-    log.topics
-        .first()
-        .map(|topic| topic_matches(topic, expected_topic))
-        .unwrap_or(false)
+fn log_contains_all_topics(log: &Log, expected_topics: &[Vec<u8>]) -> bool {
+    expected_topics.iter().all(|expected_topic| {
+        log.topics
+            .iter()
+            .any(|topic| topic_matches(topic, expected_topic))
+    })
+}
+
+fn log_contains_expected_data(log: &Log, expected_data_bytes: &[Vec<u8>]) -> bool {
+    expected_data_bytes.iter().all(|expected_data| {
+        log.data
+            .iter()
+            .any(|log_data| data_matches(log_data, expected_data))
+    })
 }
 
 fn topic_matches(log_topic: &[u8], expected_topic: &[u8]) -> bool {
@@ -160,49 +147,20 @@ fn topic_matches(log_topic: &[u8], expected_topic: &[u8]) -> bool {
         .unwrap_or(false)
 }
 
-fn validate_logs_with_topics(
-    all_logs: &[Log],
-    matching_logs: &[&Log],
-    topics: &[Cow<'_, str>],
-    expected_data: Option<&str>,
-    endpoint: &str,
-) {
-    let Some(first_topic) = topics.first() else {
-        assert!(
-            expected_data.is_none(),
-            "Expected at least one topic for data validation in log '{}', but got none. Logs: {:?}",
-            endpoint,
-            all_logs
-        );
-        return;
-    };
-
-    let first_topic_bytes = first_topic.as_bytes();
-
-    if let Some(data) = expected_data {
-        let filtered_logs = filter_logs_by_first_topic(matching_logs, first_topic_bytes);
-        validate_expected_data(&[data], &filtered_logs, endpoint);
+fn data_matches(log_data: &[u8], expected_data: &[u8]) -> bool {
+    if log_data
+        .windows(expected_data.len())
+        .any(|window| window == expected_data)
+    {
+        return true;
     }
 
-    validate_internal_vm_logs(
-        all_logs,
-        first_topic_bytes,
-        first_topic.as_ref(),
-        expected_data,
-        endpoint,
-    );
-}
-
-fn filter_logs_by_first_topic<'a>(logs: &[&'a Log], expected_topic: &[u8]) -> Vec<&'a Log> {
-    logs.iter()
-        .copied()
-        .filter(|log| log_has_first_topic(log, expected_topic))
-        .collect()
-}
-
-fn optional_value_to_str<'a>(optional_value: &'a OptionalValue<Cow<'a, str>>) -> Option<&'a str> {
-    match optional_value {
-        OptionalValue::Some(value) => Some(value.as_ref()),
-        OptionalValue::None => None,
-    }
+    BASE64_STANDARD
+        .decode(log_data)
+        .map(|decoded| {
+            decoded
+                .windows(expected_data.len())
+                .any(|window| window == expected_data)
+        })
+        .unwrap_or(false)
 }
