@@ -5,7 +5,10 @@ use std::borrow::Cow;
 
 use crate::{
     base_setup::init::ExpectedLogs,
-    constants::{EXECUTED_BRIDGE_OP_EVENT, INTERNAL_VM_ERRORS},
+    constants::{
+        EXECUTED_BRIDGE_OP_EVENT, EXECUTE_BRIDGE_OPS_ENDPOINT, EXECUTE_OPERATION_ENDPOINT,
+        INTERNAL_VM_ERRORS,
+    },
 };
 
 pub fn assert_expected_logs(logs: Vec<Log>, expected_logs: Vec<ExpectedLogs>) {
@@ -29,9 +32,24 @@ pub fn assert_expected_logs(logs: Vec<Log>, expected_logs: Vec<ExpectedLogs>) {
 
         if let OptionalValue::Some(ref data) = expected_log.data {
             validate_expected_data(&matching_logs, data.as_ref(), identifier);
+        } else {
+            let bridge_op_logs: Vec<&Log> = matching_logs
+                .iter()
+                .copied()
+                .filter(|log| {
+                    !log.topics.is_empty()
+                        && log
+                            .topics
+                            .first()
+                            .map(|topic| {
+                                topic_matches(topic.as_slice(), EXECUTED_BRIDGE_OP_EVENT.as_bytes())
+                            })
+                            .unwrap_or(false)
+                })
+                .collect();
+            check_for_internal_vm_error_log(&bridge_op_logs, &expected_log);
+            check_data_is_empty_if_necessary(&bridge_op_logs, identifier);
         }
-
-        validate_error_log_if_necessary(&logs, &expected_log);
     }
 }
 
@@ -77,47 +95,38 @@ fn validate_expected_data(logs: &[&Log], expected_data: &str, endpoint: &str) {
     );
 }
 
-fn validate_error_log_if_necessary(all_logs: &[Log], expected_log: &ExpectedLogs) {
-    let topics = match expected_log.topics {
-        OptionalValue::Some(ref topics) if !topics.is_empty() => topics,
-        _ => return,
-    };
-
-    if topics[0].as_ref() != EXECUTED_BRIDGE_OP_EVENT {
+fn check_data_is_empty_if_necessary(logs: &[&Log], endpoint: &str) {
+    if endpoint != EXECUTE_BRIDGE_OPS_ENDPOINT && endpoint != EXECUTE_OPERATION_ENDPOINT {
         return;
     }
 
-    let internal_vm_logs: Vec<&Log> = all_logs
+    let logs_with_data: Vec<&Log> = logs
         .iter()
+        .copied()
+        .filter(|log| !log.data.is_empty() && log.data.iter().any(|data| !data.is_empty()))
+        .collect();
+
+    if !logs_with_data.is_empty() {
+        panic!(
+            "Expected no error for event '{}' but found one. Logs: {:?}",
+            endpoint, logs
+        );
+    }
+}
+
+fn check_for_internal_vm_error_log(expected_logs: &[&Log], expected_log: &ExpectedLogs) {
+    let internal_vm_logs: Vec<&Log> = expected_logs
+        .iter()
+        .copied()
         .filter(|log| log.endpoint == INTERNAL_VM_ERRORS)
         .collect();
 
-    match expected_log.data {
-        OptionalValue::Some(ref data) => {
-            let expected_topic_bytes = data.as_bytes().to_vec();
-            let has_matching_topic = internal_vm_logs.iter().any(|log| {
-                log.topics
-                    .iter()
-                    .any(|topic| topic_matches(topic, &expected_topic_bytes))
-            });
-
-            assert!(
-                has_matching_topic,
-                "Expected internal VM error log containing topic '{}' when validating event '{}'. Logs: {:?}",
-                data.as_ref(),
-                expected_log.identifier.as_ref(),
-                all_logs
-            );
-        }
-        OptionalValue::None => {
-            assert!(
-                internal_vm_logs.is_empty(),
-                "Unexpected internal VM error log found while validating event '{}'. Logs: {:?}",
-                expected_log.identifier.as_ref(),
-                all_logs
-            );
-        }
-    }
+    assert!(
+        internal_vm_logs.is_empty(),
+        "Unexpected internal VM error log found while validating event '{}'. Logs: {:?}",
+        expected_log.identifier.as_ref(),
+        expected_logs
+    );
 }
 
 fn log_contains_all_topics(log: &Log, expected_topics: &[Vec<u8>]) -> bool {
