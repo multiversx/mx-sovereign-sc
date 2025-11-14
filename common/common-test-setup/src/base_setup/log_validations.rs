@@ -33,22 +33,29 @@ pub fn assert_expected_logs(logs: Vec<Log>, expected_logs: Vec<ExpectedLogs>) {
         if let OptionalValue::Some(ref data) = expected_log.data {
             validate_expected_data(&matching_logs, data.as_ref(), identifier);
         } else {
-            let bridge_op_logs: Vec<&Log> = matching_logs
-                .iter()
-                .copied()
-                .filter(|log| {
-                    !log.topics.is_empty()
-                        && log
-                            .topics
-                            .first()
-                            .map(|topic| {
-                                topic_matches(topic.as_slice(), EXECUTED_BRIDGE_OP_EVENT.as_bytes())
-                            })
-                            .unwrap_or(false)
-                })
-                .collect();
-            check_for_internal_vm_error_log(&bridge_op_logs, &expected_log);
-            check_data_is_empty_if_necessary(&bridge_op_logs, identifier);
+            if identifier != EXECUTE_BRIDGE_OPS_ENDPOINT && identifier != EXECUTE_OPERATION_ENDPOINT
+            {
+                continue;
+            }
+
+            if let OptionalValue::Some(ref topics) = expected_log.topics {
+                if !topics.is_empty() && topics[0] != EXECUTED_BRIDGE_OP_EVENT {
+                    continue;
+                }
+            }
+
+            assert!(
+                matching_logs.len() == 1,
+                "Expected exactly one log for event '{}', but found {}. Logs: {:?}",
+                identifier,
+                matching_logs.len(),
+                matching_logs
+            );
+
+            check_for_internal_vm_error_log(logs.clone(), &expected_log);
+
+            let first_log = matching_logs.first().unwrap();
+            check_data_is_empty_if_necessary(&[first_log], identifier);
         }
     }
 }
@@ -96,10 +103,6 @@ fn validate_expected_data(logs: &[&Log], expected_data: &str, endpoint: &str) {
 }
 
 fn check_data_is_empty_if_necessary(logs: &[&Log], endpoint: &str) {
-    if endpoint != EXECUTE_BRIDGE_OPS_ENDPOINT && endpoint != EXECUTE_OPERATION_ENDPOINT {
-        return;
-    }
-
     let logs_with_data: Vec<&Log> = logs
         .iter()
         .copied()
@@ -114,10 +117,9 @@ fn check_data_is_empty_if_necessary(logs: &[&Log], endpoint: &str) {
     }
 }
 
-fn check_for_internal_vm_error_log(expected_logs: &[&Log], expected_log: &ExpectedLogs) {
-    let internal_vm_logs: Vec<&Log> = expected_logs
-        .iter()
-        .copied()
+fn check_for_internal_vm_error_log(expected_logs: Vec<Log>, expected_log: &ExpectedLogs) {
+    let internal_vm_logs: Vec<Log> = expected_logs
+        .into_iter()
         .filter(|log| log.endpoint == INTERNAL_VM_ERRORS)
         .collect();
 
@@ -125,7 +127,7 @@ fn check_for_internal_vm_error_log(expected_logs: &[&Log], expected_log: &Expect
         internal_vm_logs.is_empty(),
         "Unexpected internal VM error log found while validating event '{}'. Logs: {:?}",
         expected_log.identifier.as_ref(),
-        expected_logs
+        internal_vm_logs
     );
 }
 
