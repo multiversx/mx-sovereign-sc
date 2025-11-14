@@ -568,7 +568,9 @@ async fn test_register_execute_call_failed(
     };
 
     let expected_logs = if shard == SHARD_0 {
-        vec![log!(EXECUTE_OPERATION_ENDPOINT, topics: [EXECUTED_BRIDGE_OP_EVENT])]
+        vec![
+            log!(EXECUTE_OPERATION_ENDPOINT, topics: [EXECUTED_BRIDGE_OP_EVENT], data: Some(FUNCTION_NOT_FOUND)),
+        ]
     } else {
         vec![]
     };
