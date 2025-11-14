@@ -38,10 +38,10 @@ pub fn assert_expected_logs(logs: Vec<Log>, expected_logs: Vec<ExpectedLogs>) {
                 continue;
             }
 
-            if let OptionalValue::Some(ref topics) = expected_log.topics {
-                if !topics.is_empty() && topics[0] != EXECUTED_BRIDGE_OP_EVENT {
-                    continue;
-                }
+            if matches!(&expected_log.topics, OptionalValue::None)
+                || matches!(&expected_log.topics, OptionalValue::Some(topics) if topics[0] != EXECUTED_BRIDGE_OP_EVENT)
+            {
+                continue;
             }
 
             assert!(
@@ -55,7 +55,12 @@ pub fn assert_expected_logs(logs: Vec<Log>, expected_logs: Vec<ExpectedLogs>) {
             check_for_internal_vm_error_log(logs.clone(), &expected_log);
 
             let first_log = matching_logs.first().unwrap();
-            check_data_is_empty_if_necessary(&[first_log], identifier);
+            let has_data = first_log.data.iter().any(|data| !data.is_empty());
+            assert!(
+                !has_data,
+                "Expected no data (None or empty) for event '{}', but found one. Logs: {:?}",
+                identifier, first_log
+            );
         }
     }
 }
@@ -100,21 +105,6 @@ fn validate_expected_data(logs: &[&Log], expected_data: &str, endpoint: &str) {
         endpoint,
         logs
     );
-}
-
-fn check_data_is_empty_if_necessary(logs: &[&Log], endpoint: &str) {
-    let logs_with_data: Vec<&Log> = logs
-        .iter()
-        .copied()
-        .filter(|log| !log.data.is_empty() && log.data.iter().any(|data| !data.is_empty()))
-        .collect();
-
-    if !logs_with_data.is_empty() {
-        panic!(
-            "Expected no error for event '{}' but found one. Logs: {:?}",
-            endpoint, logs
-        );
-    }
 }
 
 fn check_for_internal_vm_error_log(expected_logs: Vec<Log>, expected_log: &ExpectedLogs) {
