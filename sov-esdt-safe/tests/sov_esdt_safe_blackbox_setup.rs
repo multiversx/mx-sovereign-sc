@@ -19,6 +19,7 @@ use common_test_setup::constants::{
 };
 use common_test_setup::{
     base_setup::init::{AccountSetup, BaseSetup},
+    base_setup::log_validations::assert_expected_logs,
     log,
 };
 use proxies::sov_esdt_safe_proxy::SovEsdtSafeProxy;
@@ -156,7 +157,7 @@ impl SovEsdtSafeTestState {
             } else {
                 vec![log!(DEPOSIT_EVENT, topics: [DEPOSIT_EVENT])]
             };
-            self.common_setup.assert_expected_logs(logs, expected_logs);
+            assert_expected_logs(logs, expected_logs);
         }
     }
 
@@ -203,7 +204,7 @@ impl SovEsdtSafeTestState {
             let expected_logs =
                 vec![log!(REGISTER_TOKEN_ENDPOINT, topics: [REGISTER_TOKEN_ENDPOINT])];
 
-            self.common_setup.assert_expected_logs(logs, expected_logs);
+            assert_expected_logs(logs, expected_logs);
         }
     }
 }

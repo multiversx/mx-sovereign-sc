@@ -1,4 +1,5 @@
 use crate::base_setup::init::ExpectedLogs;
+use crate::base_setup::log_validations::assert_expected_logs;
 use crate::constants::{
     EXECUTED_BRIDGE_OP_EVENT, REGISTER_BLS_KEY_ENDPOINT, SOVEREIGN_FORGE_SC_ADDRESS,
     UNREGISTER_BLS_KEY_ENDPOINT,
@@ -142,7 +143,7 @@ impl BaseSetup {
 
         let expected_logs =
             vec![log!(REGISTER_BLS_KEY_ENDPOINT, topics: [EXECUTED_BRIDGE_OP_EVENT])];
-        self.assert_expected_logs(logs, expected_logs);
+        assert_expected_logs(logs, expected_logs);
     }
 
     pub fn register_validator_operation(
@@ -203,11 +204,14 @@ impl BaseSetup {
             .returns(ReturnsLogs)
             .run();
 
-        self.assert_expected_error_message(response, expected_error_message);
+        self.assert_expected_error_message(response, None);
 
-        let expected_logs =
-            vec![log!(UNREGISTER_BLS_KEY_ENDPOINT, topics: [EXECUTED_BRIDGE_OP_EVENT])];
-        self.assert_expected_logs(logs, expected_logs);
+        let expected_logs = vec![log!(
+            UNREGISTER_BLS_KEY_ENDPOINT,
+            topics: [EXECUTED_BRIDGE_OP_EVENT],
+            data: expected_error_message
+        )];
+        assert_expected_logs(logs, expected_logs);
     }
 
     pub fn set_bls_keys_in_header_storage(&mut self, pub_keys: Vec<ManagedBuffer<StaticApi>>) {
@@ -272,6 +276,7 @@ impl BaseSetup {
         _signature: ManagedBuffer<StaticApi>,
         bitmap: ManagedBuffer<StaticApi>,
         epoch: u64,
+        expected_error_message: Option<&str>,
     ) {
         let validator_data_hash = validator_data.generate_hash();
         let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&validator_data_hash.to_vec()));
@@ -297,7 +302,7 @@ impl BaseSetup {
             nonce: self.next_operation_nonce(),
         };
 
-        self.unregister_validator(&hash_of_hashes, validator_operation, None);
+        self.unregister_validator(&hash_of_hashes, validator_operation, expected_error_message);
 
         assert_eq!(self.get_bls_key_id(&validator_data.bls_key), 0);
     }

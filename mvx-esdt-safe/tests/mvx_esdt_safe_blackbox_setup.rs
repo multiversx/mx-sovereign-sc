@@ -1,5 +1,6 @@
 use common_test_setup::base_setup::init::ExpectedLogs;
 use common_test_setup::base_setup::init::{AccountSetup, BaseSetup};
+use common_test_setup::base_setup::log_validations::assert_expected_logs;
 use common_test_setup::constants::{
     COMPLETE_SETUP_PHASE_ENDPOINT, DEPOSIT_EVENT, ESDT_SAFE_ADDRESS, EXECUTED_BRIDGE_OP_EVENT,
     FEE_MARKET_ADDRESS, FEE_TOKEN, FIRST_TEST_TOKEN, FIRST_TOKEN_ID, HEADER_VERIFIER_ADDRESS,
@@ -217,7 +218,7 @@ impl MvxEsdtSafeTestState {
             .returns(ReturnsLogs)
             .run();
 
-        self.common_setup.assert_expected_logs(logs, expected_logs);
+        assert_expected_logs(logs, expected_logs);
     }
 
     pub fn update_esdt_safe_config(
@@ -245,7 +246,7 @@ impl MvxEsdtSafeTestState {
             log!(UPDATE_ESDT_SAFE_CONFIG_ENDPOINT, topics: [EXECUTED_BRIDGE_OP_EVENT], data: expected_error_message),
         ];
 
-        self.common_setup.assert_expected_logs(logs, expected_logs);
+        assert_expected_logs(logs, expected_logs);
     }
 
     pub fn set_token_burn_mechanism(
@@ -385,7 +386,7 @@ impl MvxEsdtSafeTestState {
             } else {
                 vec![log!(DEPOSIT_EVENT, topics: [DEPOSIT_EVENT])]
             };
-            self.common_setup.assert_expected_logs(logs, expected_logs);
+            assert_expected_logs(logs, expected_logs);
         }
     }
 
@@ -411,7 +412,7 @@ impl MvxEsdtSafeTestState {
         self.common_setup
             .assert_expected_error_message(result, expected_error_message);
 
-        self.common_setup.assert_expected_logs(logs, expected_logs);
+        assert_expected_logs(logs, expected_logs);
     }
 
     pub fn register_native_token(
@@ -461,7 +462,7 @@ impl MvxEsdtSafeTestState {
         self.common_setup
             .assert_expected_error_message(result, None);
 
-        self.common_setup.assert_expected_logs(logs, expected_logs);
+        assert_expected_logs(logs, expected_logs);
     }
 
     pub fn complete_setup_phase(&mut self) {
@@ -483,7 +484,7 @@ impl MvxEsdtSafeTestState {
         let expected_logs =
             vec![log!(COMPLETE_SETUP_PHASE_ENDPOINT, topics: [UNPAUSE_CONTRACT_LOG])];
 
-        self.common_setup.assert_expected_logs(logs, expected_logs);
+        assert_expected_logs(logs, expected_logs);
 
         self.common_setup
             .change_ownership_to_header_verifier(ESDT_SAFE_ADDRESS);

@@ -1,6 +1,7 @@
 use common_test_setup::base_setup::init::ExpectedLogs;
 use common_test_setup::{
     base_setup::init::{AccountSetup, BaseSetup},
+    base_setup::log_validations::assert_expected_logs,
     constants::{
         CHAIN_CONFIG_ADDRESS, EXECUTED_BRIDGE_OP_EVENT, FIRST_TEST_TOKEN, ONE_HUNDRED_MILLION,
         OWNER_ADDRESS, OWNER_BALANCE, UPDATE_SOVEREIGN_CONFIG_ENDPOINT, USER_ADDRESS,
@@ -98,7 +99,7 @@ impl ChainConfigTestState {
             log!(UPDATE_SOVEREIGN_CONFIG_ENDPOINT, topics: [EXECUTED_BRIDGE_OP_EVENT], data: expected_error_message),
         ];
 
-        self.common_setup.assert_expected_logs(logs, expected_logs);
+        assert_expected_logs(logs, expected_logs);
     }
 
     pub fn unregister_with_caller(

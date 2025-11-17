@@ -1,13 +1,15 @@
 use std::path::Path;
 
-use base64::{engine::general_purpose::STANDARD as BASE64, Engine};
+use common_test_setup::base_setup::init::ExpectedLogs;
 use common_test_setup::constants::{
-    FEE_MARKET_SHARD_0, FEE_MARKET_SHARD_1, FEE_MARKET_SHARD_2, GAS_LIMIT, MVX_ESDT_SAFE_SHARD_0,
-    MVX_ESDT_SAFE_SHARD_1, MVX_ESDT_SAFE_SHARD_2, PER_GAS, PER_TRANSFER, SHARD_0, SHARD_1,
-    TESTING_SC, TESTING_SC_ENDPOINT, TRUSTED_TOKEN_NAME, UNKNOWN_FEE_MARKET, UNKNOWN_MVX_ESDT_SAFE,
-    USER_ADDRESS_STR,
+    DEPOSIT_EVENT, FEE_MARKET_SHARD_0, FEE_MARKET_SHARD_1, FEE_MARKET_SHARD_2, GAS_LIMIT,
+    MVX_ESDT_SAFE_SHARD_0, MVX_ESDT_SAFE_SHARD_1, MVX_ESDT_SAFE_SHARD_2, PER_GAS, PER_TRANSFER,
+    SC_CALL_EVENT, SHARD_1, TESTING_SC, TESTING_SC_ENDPOINT, TRUSTED_TOKEN_NAME,
+    UNKNOWN_FEE_MARKET, UNKNOWN_MVX_ESDT_SAFE, USER_ADDRESS_STR,
 };
+use common_test_setup::log;
 use error_messages::{AMOUNT_IS_TOO_LARGE, FAILED_TO_PARSE_AS_NUMBER};
+use multiversx_sc::api::{ESDT_LOCAL_BURN_FUNC_NAME, ESDT_NFT_BURN_FUNC_NAME};
 use multiversx_sc::{
     codec::{num_bigint, TopEncode},
     imports::{Bech32Address, MultiValue3, OptionalValue},
@@ -20,8 +22,7 @@ use multiversx_sc_snippets::{
     hex,
     imports::{StaticApi, Wallet},
     multiversx_sc_scenario::{
-        multiversx_chain_vm::crypto_functions::sha256,
-        scenario_model::{Log, TxResponseStatus},
+        multiversx_chain_vm::crypto_functions::sha256, scenario_model::TxResponseStatus,
     },
     test_wallets, Interactor,
 };
@@ -29,7 +30,6 @@ use rand::{distr::Alphanumeric, Rng};
 use structs::{
     aliases::PaymentsVec,
     fee::{FeeStruct, FeeType},
-    forge::{ContractInfo, ScArray},
     operation::{Operation, OperationData, OperationEsdtPayment, TransferData},
 };
 
@@ -337,69 +337,6 @@ pub trait InteractorHelpers {
             == 2
     }
 
-    fn search_for_error_in_logs(&self, logs: &[Log], expected_error_bytes: &[u8]) -> bool {
-        logs.iter().any(|log| {
-            log.data.iter().any(|data_item| {
-                if let Ok(decoded_data) = BASE64.decode(data_item) {
-                    decoded_data
-                        .windows(expected_error_bytes.len())
-                        .any(|w| w == expected_error_bytes)
-                } else {
-                    false
-                }
-            })
-        })
-    }
-
-    //NOTE: transferValue returns an empty log and calling this function on it will panic
-    fn assert_expected_log(
-        &mut self,
-        logs: Vec<Log>,
-        expected_log: Option<&str>,
-        expected_log_error: Option<&str>,
-    ) {
-        match expected_log {
-            None => {
-                // If expecting an error, just check it exists. Otherwise, no logs allowed.
-                if let Some(expected_error) = expected_log_error {
-                    let expected_error_bytes = expected_error.as_bytes();
-                    let found_error = self.search_for_error_in_logs(&logs, expected_error_bytes);
-                    assert!(found_error, "Expected error '{}' not found", expected_error);
-                } else {
-                    assert!(logs.is_empty(), "Expected no logs, but found: {:?}", logs);
-                }
-            }
-            Some(expected_log) => {
-                if expected_log.is_empty() {
-                    return;
-                }
-                let expected_bytes = expected_log.as_bytes();
-
-                let found_log = logs.iter().find(|log| {
-                    log.topics.iter().any(|topic| {
-                        if let Ok(decoded_topic) = BASE64.decode(topic) {
-                            decoded_topic == expected_bytes
-                        } else {
-                            false
-                        }
-                    })
-                });
-
-                assert!(
-                    found_log.is_some(),
-                    "Expected log '{}' not found",
-                    expected_log
-                );
-
-                if let Some(expected_error) = expected_log_error {
-                    let expected_error_bytes = expected_error.as_bytes();
-                    let found_error = self.search_for_error_in_logs(&logs, expected_error_bytes);
-                    assert!(found_error, "Expected error '{}' not found", expected_error);
-                }
-            }
-        }
-    }
-
     fn assert_expected_error_message(
         &mut self,
         response: Result<(), TxResponseStatus>,
@@ -416,51 +353,6 @@ pub trait InteractorHelpers {
             Err(error) => {
                 assert_eq!(expected_error_message, Some(error.message.as_str()))
             }
-        }
-    }
-
-    fn get_contract_info_struct_for_sc_type(
-        &mut self,
-        sc_array: Vec<ScArray>,
-    ) -> Vec<ContractInfo<StaticApi>> {
-        sc_array
-            .iter()
-            .map(|sc| ContractInfo::new(sc.clone(), self.get_sc_address(sc.clone())))
-            .collect()
-    }
-
-    fn get_sc_address(&mut self, sc_type: ScArray) -> ManagedAddress<StaticApi> {
-        match sc_type {
-            ScArray::ChainConfig => ManagedAddress::from_address(
-                &self
-                    .common_state()
-                    .current_chain_config_sc_address()
-                    .to_address(),
-            ),
-            ScArray::ChainFactory => ManagedAddress::from_address(
-                &self
-                    .common_state()
-                    .current_chain_factory_sc_address()
-                    .to_address(),
-            ),
-            ScArray::ESDTSafe => ManagedAddress::from_address(
-                &self
-                    .common_state()
-                    .current_mvx_esdt_safe_contract_address()
-                    .to_address(),
-            ),
-            ScArray::HeaderVerifier => ManagedAddress::from_address(
-                &self
-                    .common_state()
-                    .current_header_verifier_address()
-                    .to_address(),
-            ),
-            ScArray::FeeMarket => ManagedAddress::from_address(
-                &self
-                    .common_state()
-                    .current_fee_market_address()
-                    .to_address(),
-            ),
         }
     }
 
@@ -491,25 +383,53 @@ pub trait InteractorHelpers {
         }
     }
 
-    fn extract_log_based_on_shard(&mut self, config: &ActionConfig) -> Option<String> {
-        match &config.expected_log {
-            Some(logs) if logs.len() == 1 => Some(logs[0].clone()),
-            Some(logs) if logs.len() > 1 => match config.shard {
-                SHARD_1 => Some(logs[0].clone()),
-                _ => Some(logs[1].clone()),
-            },
-            _ => None,
+    fn build_expected_deposit_log(
+        &mut self,
+        mut config: ActionConfig,
+        token: Option<EsdtTokenInfo>,
+    ) -> Vec<ExpectedLogs<'static>> {
+        if config.shard != SHARD_1 {
+            return vec![];
         }
+
+        let mut logs = Vec::new();
+        let deposit_token = config.expected_deposit_token_log.clone().or(token);
+
+        match deposit_token {
+            Some(t) => {
+                let topic_value = t.token_id.into_managed_buffer().to_string();
+                logs.push(log!(DEPOSIT_EVENT, topics: [DEPOSIT_EVENT, topic_value]));
+            }
+            None => {
+                logs.push(log!(DEPOSIT_EVENT, topics: [SC_CALL_EVENT]));
+            }
+        }
+
+        if let Some(additional_logs) = config.additional_logs.take() {
+            logs.extend(additional_logs);
+        }
+
+        logs
     }
 
-    fn extract_log_error_based_on_shard(&mut self, config: &ActionConfig) -> Option<String> {
-        match &config.expected_log_error {
-            Some(error) => match config.shard {
-                SHARD_0 => Some(error[0].clone()),
-                _ => None,
-            },
-            _ => None,
-        }
+    fn build_sovereign_deposit_logs(
+        &mut self,
+        main_token: &EsdtTokenInfo,
+    ) -> Vec<ExpectedLogs<'static>> {
+        let main_token_id_topic = main_token
+            .token_id
+            .clone()
+            .into_managed_buffer()
+            .to_string();
+
+        let burn_log = match main_token.token_type {
+            EsdtTokenType::Fungible => {
+                log!(ESDT_LOCAL_BURN_FUNC_NAME, topics: [main_token_id_topic])
+            }
+            _ => log!(ESDT_NFT_BURN_FUNC_NAME, topics: [main_token_id_topic]),
+        };
+
+        vec![burn_log]
     }
 
     // CHECK BALANCE OPERATIONS

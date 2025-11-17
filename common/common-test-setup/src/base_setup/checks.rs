@@ -1,7 +1,6 @@
 use cross_chain::storage::CrossChainStorage;
 use error_messages::INCORRECT_DEPOSIT_AMOUNT;
 use header_verifier::storage::HeaderVerifierStorageModule;
-use multiversx_sc::imports::OptionalValue;
 use multiversx_sc_scenario::imports::{EgldOrEsdtTokenIdentifier, ManagedVec};
 use multiversx_sc_scenario::DebugApi;
 use multiversx_sc_scenario::{
@@ -11,14 +10,14 @@ use multiversx_sc_scenario::{
         TestTokenIdentifier,
     },
     multiversx_chain_vm::crypto_functions::sha256,
-    scenario_model::{Log, TxResponseStatus},
+    scenario_model::TxResponseStatus,
     ScenarioTxRun, ScenarioTxWhitebox,
 };
 use mvx_esdt_safe::bridging_mechanism::BridgingMechanism;
 use proxies::mvx_fee_market_proxy::MvxFeeMarketProxy;
 use structs::OperationHashStatus;
 
-use crate::base_setup::init::{ErrorPayloadToString, ExpectedLogs};
+use crate::base_setup::init::ErrorPayloadToString;
 use crate::{
     base_setup::init::BaseSetup,
     constants::{
@@ -229,38 +228,6 @@ impl BaseSetup {
         )
     }
 
-    pub fn assert_expected_logs(&mut self, logs: Vec<Log>, expected_logs: Vec<ExpectedLogs>) {
-        for expected_log in expected_logs {
-            let matching_logs: Vec<&Log> = logs
-                .iter()
-                .filter(|log| log.endpoint == expected_log.identifier)
-                .collect();
-            assert!(
-                !matching_logs.is_empty(),
-                "Expected log '{}' not found",
-                expected_log.identifier
-            );
-            if let OptionalValue::Some(ref topics) = expected_log.topics {
-                self.validate_expected_topics(topics, &matching_logs, expected_log.identifier);
-
-                if let OptionalValue::Some(data) = expected_log.data {
-                    let first_topic_bytes = topics[0].as_bytes().to_vec();
-                    let filtered_logs: Vec<&Log> = matching_logs
-                        .iter()
-                        .copied()
-                        .filter(|log| {
-                            log.topics
-                                .first()
-                                .map(|t| *t == first_topic_bytes)
-                                .unwrap_or(false)
-                        })
-                        .collect();
-                    self.validate_expected_data(&[data], &filtered_logs, expected_log.identifier);
-                }
-            }
-        }
-    }
-
     pub fn assert_expected_error_message(
         &mut self,
         response: Result<(), TxResponseStatus>,
@@ -307,43 +274,5 @@ impl BaseSetup {
         self.world
             .check_account(OWNER_ADDRESS)
             .esdt_balance(FIRST_TEST_TOKEN, owner_token);
-    }
-
-    fn validate_expected_topics(&self, topics: &[&str], matching_logs: &[&Log], endpoint: &str) {
-        let expected_topics_bytes: Vec<Vec<u8>> =
-            topics.iter().map(|s| s.as_bytes().to_vec()).collect();
-        assert!(
-            matching_logs.iter().any(|log| {
-                expected_topics_bytes
-                    .iter()
-                    .all(|expected_topic| log.topics.contains(expected_topic))
-            }),
-            "Expected topics '{}' not found for event '{}'",
-            topics.join(", "),
-            endpoint
-        );
-    }
-
-    fn validate_expected_data(&self, data: &[&str], matching_logs: &[&Log], endpoint: &str) {
-        let expected_data_bytes: Vec<Vec<u8>> =
-            data.iter().map(|s| s.as_bytes().to_vec()).collect();
-        assert!(
-            matching_logs
-                .iter()
-                .any(|log| { self.log_contains_expected_data(log, &expected_data_bytes) }),
-            "Expected data '{}' not found for event '{}'",
-            data.join(", "),
-            endpoint
-        );
-    }
-
-    fn log_contains_expected_data(&self, log: &Log, expected_data_bytes: &[Vec<u8>]) -> bool {
-        expected_data_bytes.iter().all(|expected_data| {
-            log.data.iter().any(|log_data| {
-                log_data
-                    .windows(expected_data.len())
-                    .any(|window| window == expected_data)
-            })
-        })
     }
 }

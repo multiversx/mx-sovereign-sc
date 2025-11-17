@@ -5,6 +5,7 @@ use multiversx_sc_scenario::{
     imports::{Address, BigUint, ManagedBuffer, MxscPath, TestTokenIdentifier, Vec},
     ScenarioWorld,
 };
+use std::borrow::Cow;
 use structs::aliases::TxNonce;
 
 pub struct BaseSetup {
@@ -21,9 +22,9 @@ pub struct AccountSetup<'a> {
 
 #[derive(Clone, Debug)]
 pub struct ExpectedLogs<'a> {
-    pub identifier: &'a str,
-    pub topics: OptionalValue<Vec<&'a str>>,
-    pub data: OptionalValue<&'a str>,
+    pub identifier: Cow<'a, str>,
+    pub topics: OptionalValue<Vec<Cow<'a, str>>>,
+    pub data: OptionalValue<Cow<'a, str>>,
 }
 
 pub trait ErrorPayloadToString {
@@ -46,31 +47,31 @@ impl ErrorPayloadToString for Vec<u8> {
 macro_rules! log {
     ($identifier:expr) => {
         ExpectedLogs {
-            identifier: $identifier,
+            identifier: ::std::borrow::Cow::<'_, str>::from($identifier),
             topics: OptionalValue::None,
             data: OptionalValue::None,
         }
     };
     ($identifier:expr, topics: [$($topic:expr),*]) => {
         ExpectedLogs {
-            identifier: $identifier,
-            topics: OptionalValue::Some(vec![$($topic),*]),
+            identifier: ::std::borrow::Cow::<'_, str>::from($identifier),
+            topics: OptionalValue::Some(vec![$(::std::borrow::Cow::<'_, str>::from($topic)),*]),
             data: OptionalValue::None,
         }
     };
     ($identifier:expr, data: $data:expr) => {
         ExpectedLogs {
-            identifier: $identifier,
+            identifier: ::std::borrow::Cow::<'_, str>::from($identifier),
             topics: OptionalValue::None,
-            data: OptionalValue::Some($data),
+            data: OptionalValue::Some(::std::borrow::Cow::<'_, str>::from($data)),
         }
     };
     ($identifier:expr, topics: [$($topic:expr),*], data: $data:expr) => {
         ExpectedLogs {
-            identifier: $identifier,
-            topics: OptionalValue::Some(vec![$($topic),*]),
+            identifier: ::std::borrow::Cow::<'_, str>::from($identifier),
+            topics: OptionalValue::Some(vec![$(::std::borrow::Cow::<'_, str>::from($topic)),*]),
             data: match $data {
-                Some(data) => OptionalValue::Some(data),
+                Some(data) => OptionalValue::Some(::std::borrow::Cow::<'_, str>::from(data)),
                 None => OptionalValue::None,
             },
         }

@@ -1,4 +1,5 @@
 use common_test_setup::base_setup::init::{AccountSetup, BaseSetup, ExpectedLogs};
+use common_test_setup::base_setup::log_validations::assert_expected_logs;
 use common_test_setup::constants::{
     CHANGE_VALIDATOR_SET_ENDPOINT, ESDT_SAFE_ADDRESS, EXECUTED_BRIDGE_OP_EVENT,
     HEADER_VERIFIER_ADDRESS, MVX_ESDT_SAFE_CODE_PATH, OWNER_ADDRESS, OWNER_BALANCE,
@@ -193,7 +194,7 @@ impl HeaderVerifierTestState {
             log!(CHANGE_VALIDATOR_SET_ENDPOINT, topics: [EXECUTED_BRIDGE_OP_EVENT], data: execution_error),
         ];
 
-        self.common_setup.assert_expected_logs(logs, expected_logs);
+        assert_expected_logs(logs, expected_logs);
     }
 
     pub fn generate_bridge_operation_struct(

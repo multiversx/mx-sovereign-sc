@@ -3,11 +3,13 @@ use common_interactor::interactor_config::Config;
 use common_interactor::interactor_helpers::InteractorHelpers;
 use common_interactor::interactor_state::EsdtTokenInfo;
 use common_interactor::interactor_structs::ActionConfig;
-use common_test_setup::constants::READ_NATIVE_TOKEN_TESTING_SC_ENDPOINT;
+use common_test_setup::base_setup::init::ExpectedLogs;
+use common_test_setup::constants::EXECUTE_OPERATION_ENDPOINT;
 use common_test_setup::constants::{
-    DEPOSIT_LOG, ONE_HUNDRED_TOKENS, SC_CALL_LOG, SHARD_0, SHARD_1, TESTING_SC_ENDPOINT,
-    WRONG_ENDPOINT_NAME,
+    EXECUTED_BRIDGE_OP_EVENT, ONE_HUNDRED_TOKENS, READ_NATIVE_TOKEN_TESTING_SC_ENDPOINT, SHARD_0,
+    SHARD_1, TESTING_SC_ENDPOINT, WRONG_ENDPOINT_NAME,
 };
+use common_test_setup::log;
 use multiversx_sc::types::BigUint;
 use multiversx_sc::types::EgldOrEsdtTokenIdentifier;
 use multiversx_sc::types::EsdtTokenType;
@@ -15,6 +17,7 @@ use multiversx_sc::types::ManagedAddress;
 use multiversx_sc::types::ManagedBuffer;
 use multiversx_sc::types::ManagedVec;
 use multiversx_sc::types::MultiValueEncoded;
+use multiversx_sc_scenario::imports::OptionalValue;
 use multiversx_sc_scenario::multiversx_chain_vm::crypto_functions::sha256;
 use multiversx_sc_snippets::imports::{tokio, StaticApi};
 use multiversx_sc_snippets::multiversx_sc_scenario::multiversx_chain_vm::vm_err_msg::FUNCTION_NOT_FOUND;
@@ -26,6 +29,8 @@ use structs::operation::OperationData;
 use structs::operation::TransferData;
 use structs::OperationHashStatus;
 
+//NOTE: The chain sim environment can not handle storage reads from other shards
+
 /// ### TEST
 /// S-FORGE_COMPLETE-DEPOSIT-FLOW_OK
 ///
@@ -35,7 +40,7 @@ use structs::OperationHashStatus;
 /// ### EXPECTED
 /// Deposit is successful and the event is found in logs
 #[rstest]
-#[case::async_to_sync(SHARD_0)]
+#[case::sync_to_sync(SHARD_0)]
 #[case::sync_to_async(SHARD_1)]
 #[tokio::test]
 #[serial]
@@ -49,8 +54,7 @@ async fn test_complete_deposit_flow_no_fee_only_transfer_data(#[case] shard: u32
         .deposit_wrapper(
             ActionConfig::new()
                 .shard(shard)
-                .with_endpoint(TESTING_SC_ENDPOINT.to_string())
-                .expect_log(vec![SC_CALL_LOG.to_string()]),
+                .with_endpoint(TESTING_SC_ENDPOINT.to_string()),
             None,
             None,
         )
@@ -66,7 +70,7 @@ async fn test_complete_deposit_flow_no_fee_only_transfer_data(#[case] shard: u32
 /// ### EXPECTED
 /// Deposit is successful and the event is found in logs
 #[rstest]
-#[case::async_to_sync(SHARD_0)]
+#[case::sync_to_sync(SHARD_0)]
 #[case::sync_to_async(SHARD_1)]
 #[tokio::test]
 #[serial]
@@ -82,15 +86,13 @@ async fn test_complete_deposit_flow_with_fee_only_transfer_data(#[case] shard: u
         .deposit_wrapper(
             ActionConfig::new()
                 .shard(shard)
-                .with_endpoint(TESTING_SC_ENDPOINT.to_string())
-                .expect_log(vec![SC_CALL_LOG.to_string()]),
+                .with_endpoint(TESTING_SC_ENDPOINT.to_string()),
             None,
             Some(fee),
         )
         .await;
 }
 
-//TODO: Fix the logs after framework fix is implemented, check for the TESTING_SC_ENDPOINT executed log as well
 /// ### TEST
 /// S-FORGE_COMPLETE-EXEC-FLOW_OK
 ///
@@ -110,13 +112,19 @@ async fn test_complete_execute_flow_with_transfer_data_only_success(#[case] shar
 
     chain_interactor.remove_fee_wrapper(shard).await;
 
+    let expected_logs = if shard == SHARD_0 {
+        vec![log!(EXECUTE_OPERATION_ENDPOINT, topics: [EXECUTED_BRIDGE_OP_EVENT])]
+    } else {
+        vec![]
+    };
+
     chain_interactor
         .execute_wrapper(
             ActionConfig::new()
                 .shard(shard)
-                .with_endpoint(TESTING_SC_ENDPOINT.to_string())
-                .expect_log(vec!["".to_string()]),
+                .with_endpoint(TESTING_SC_ENDPOINT.to_string()),
             None,
+            expected_logs,
         )
         .await;
 }
@@ -130,7 +138,7 @@ async fn test_complete_execute_flow_with_transfer_data_only_success(#[case] shar
 /// ### EXPECTED
 /// The operation is not executed in the testing smart contract
 #[rstest]
-#[case::async_to_sync(SHARD_0)]
+#[case::sync_to_sync(SHARD_0)]
 #[case::sync_to_async(SHARD_1)]
 #[tokio::test]
 #[serial]
@@ -140,14 +148,22 @@ async fn test_complete_execute_flow_with_transfer_data_only_fail(#[case] shard: 
 
     chain_interactor.remove_fee_wrapper(shard).await;
 
+    let expected_logs = if shard == SHARD_0 {
+        vec![
+            log!(EXECUTE_OPERATION_ENDPOINT, topics: [EXECUTED_BRIDGE_OP_EVENT], data: Some(FUNCTION_NOT_FOUND)),
+        ]
+    } else {
+        vec![]
+    };
+
     chain_interactor
         .execute_wrapper(
             ActionConfig::new()
                 .shard(shard)
                 .with_endpoint(WRONG_ENDPOINT_NAME.to_string())
-                .expect_log(vec!["".to_string()])
-                .expected_log_error(vec![FUNCTION_NOT_FOUND.to_string()]),
+                .expected_log_error(FUNCTION_NOT_FOUND),
             None,
+            expected_logs,
         )
         .await;
 }
@@ -185,14 +201,7 @@ async fn test_deposit_with_fee(
     chain_interactor.set_fee_wrapper(fee.clone(), shard).await;
 
     chain_interactor
-        .deposit_wrapper(
-            ActionConfig::new().shard(shard).expect_log(vec![
-                DEPOSIT_LOG.to_string(),
-                token.clone().token_id.into_managed_buffer().to_string(),
-            ]),
-            Some(token),
-            Some(fee),
-        )
+        .deposit_wrapper(ActionConfig::new().shard(shard), Some(token), Some(fee))
         .await;
 }
 
@@ -227,25 +236,17 @@ async fn test_deposit_without_fee_and_execute(
     chain_interactor.remove_fee_wrapper(shard).await;
 
     chain_interactor
-        .deposit_wrapper(
-            ActionConfig::new().shard(shard).expect_log(vec![
-                DEPOSIT_LOG.to_string(),
-                token.clone().token_id.into_managed_buffer().to_string(),
-            ]),
-            Some(token.clone()),
-            None,
-        )
+        .deposit_wrapper(ActionConfig::new().shard(shard), Some(token.clone()), None)
         .await;
 
+    let expected_logs = if shard == SHARD_1 {
+        vec![log!(EXECUTE_OPERATION_ENDPOINT, topics: [EXECUTED_BRIDGE_OP_EVENT])]
+    } else {
+        vec![]
+    };
+
     chain_interactor
-        .execute_wrapper(
-            ActionConfig::new().shard(shard).expect_log(vec![token
-                .clone()
-                .token_id
-                .into_managed_buffer()
-                .to_string()]),
-            Some(token),
-        )
+        .execute_wrapper(ActionConfig::new().shard(shard), Some(token), expected_logs)
         .await;
 }
 
@@ -288,20 +289,27 @@ async fn test_register_execute_and_deposit_sov_token(
         amount,
     };
 
+    let expected_logs = if shard == SHARD_1 {
+        vec![log!(EXECUTE_OPERATION_ENDPOINT, topics: [EXECUTED_BRIDGE_OP_EVENT])]
+    } else {
+        vec![]
+    };
+
     let main_token = chain_interactor
-        .register_and_execute_sovereign_token(ActionConfig::new().shard(shard), sov_token.clone())
+        .register_and_execute_sovereign_token(
+            ActionConfig::new().shard(shard),
+            sov_token.clone(),
+            expected_logs,
+        )
         .await;
 
+    let additional_logs = chain_interactor.build_sovereign_deposit_logs(&main_token);
     chain_interactor
         .deposit_wrapper(
-            ActionConfig::new().shard(shard).expect_log(vec![
-                sov_token.clone().token_id.into_managed_buffer().to_string(),
-                main_token
-                    .clone()
-                    .token_id
-                    .into_managed_buffer()
-                    .to_string(),
-            ]),
+            ActionConfig::new()
+                .shard(shard)
+                .expected_deposit_token_log(sov_token.clone())
+                .additional_logs(additional_logs),
             Some(main_token),
             None,
         )
@@ -342,11 +350,7 @@ async fn test_deposit_mvx_token_with_transfer_data(
         .deposit_wrapper(
             ActionConfig::new()
                 .shard(shard)
-                .with_endpoint(TESTING_SC_ENDPOINT.to_string())
-                .expect_log(vec![
-                    DEPOSIT_LOG.to_string(),
-                    token.clone().token_id.into_managed_buffer().to_string(),
-                ]),
+                .with_endpoint(TESTING_SC_ENDPOINT.to_string()),
             Some(token),
             None,
         )
@@ -389,11 +393,7 @@ async fn test_deposit_mvx_token_with_transfer_data_and_fee(
         .deposit_wrapper(
             ActionConfig::new()
                 .shard(shard)
-                .with_endpoint(TESTING_SC_ENDPOINT.to_string())
-                .expect_log(vec![
-                    DEPOSIT_LOG.to_string(),
-                    token.clone().token_id.into_managed_buffer().to_string(),
-                ]),
+                .with_endpoint(TESTING_SC_ENDPOINT.to_string()),
             Some(token),
             Some(fee),
         )
@@ -431,27 +431,22 @@ async fn test_deposit_and_execute_with_transfer_data(
     chain_interactor.remove_fee_wrapper(shard).await;
 
     chain_interactor
-        .deposit_wrapper(
-            ActionConfig::new().shard(shard).expect_log(vec![
-                DEPOSIT_LOG.to_string(),
-                token.clone().token_id.into_managed_buffer().to_string(),
-            ]),
-            Some(token.clone()),
-            None,
-        )
+        .deposit_wrapper(ActionConfig::new().shard(shard), Some(token.clone()), None)
         .await;
+
+    let expected_logs = if shard == SHARD_0 {
+        vec![log!(EXECUTE_OPERATION_ENDPOINT, topics: [EXECUTED_BRIDGE_OP_EVENT])]
+    } else {
+        vec![]
+    };
 
     chain_interactor
         .execute_wrapper(
             ActionConfig::new()
                 .shard(shard)
-                .with_endpoint(TESTING_SC_ENDPOINT.to_string())
-                .expect_log(vec![token
-                    .clone()
-                    .token_id
-                    .into_managed_buffer()
-                    .to_string()]),
+                .with_endpoint(TESTING_SC_ENDPOINT.to_string()),
             Some(token.clone()),
+            expected_logs,
         )
         .await;
 }
@@ -495,12 +490,19 @@ async fn test_register_execute_with_transfer_data_and_deposit_sov_token(
         amount: amount.clone(),
     };
 
+    let expected_logs = if shard == SHARD_0 {
+        vec![log!(EXECUTE_OPERATION_ENDPOINT, topics: [EXECUTED_BRIDGE_OP_EVENT])]
+    } else {
+        vec![]
+    };
+
     let main_token = chain_interactor
         .register_and_execute_sovereign_token(
             ActionConfig::new()
                 .shard(shard)
                 .with_endpoint(TESTING_SC_ENDPOINT.to_string()),
             sov_token.clone(),
+            expected_logs,
         )
         .await;
 
@@ -512,19 +514,14 @@ async fn test_register_execute_with_transfer_data_and_deposit_sov_token(
         )
         .await;
 
+    let additional_log = chain_interactor.build_sovereign_deposit_logs(&main_token);
     chain_interactor
         .deposit_wrapper(
             ActionConfig::new()
                 .shard(shard)
                 .with_endpoint(TESTING_SC_ENDPOINT.to_string())
-                .expect_log(vec![
-                    sov_token.clone().token_id.into_managed_buffer().to_string(),
-                    main_token
-                        .clone()
-                        .token_id
-                        .into_managed_buffer()
-                        .to_string(),
-                ]),
+                .expected_deposit_token_log(sov_token)
+                .additional_logs(additional_log),
             Some(main_token.clone()),
             None,
         )
@@ -570,13 +567,22 @@ async fn test_register_execute_call_failed(
         amount,
     };
 
+    let expected_logs = if shard == SHARD_0 {
+        vec![
+            log!(EXECUTE_OPERATION_ENDPOINT, topics: [EXECUTED_BRIDGE_OP_EVENT], data: Some(FUNCTION_NOT_FOUND)),
+        ]
+    } else {
+        vec![]
+    };
+
     chain_interactor
         .register_and_execute_sovereign_token(
             ActionConfig::new()
                 .shard(shard)
                 .with_endpoint(WRONG_ENDPOINT_NAME.to_string())
-                .expected_log_error(vec![FUNCTION_NOT_FOUND.to_string()]),
+                .expected_log_error(FUNCTION_NOT_FOUND),
             sov_token,
+            expected_logs,
         )
         .await;
 }
@@ -656,9 +662,7 @@ async fn test_execute_operation_transfer_data_only_async_call_in_endpoint(#[case
             SHARD_1,
             hash_of_hashes,
             operation,
-            None,
-            Some(""),
-            None,
+            vec![],
         )
         .await;
 }
