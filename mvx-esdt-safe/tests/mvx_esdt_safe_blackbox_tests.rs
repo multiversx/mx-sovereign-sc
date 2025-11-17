@@ -1704,6 +1704,17 @@ fn test_execute_operation_success() {
         .complete_header_verifier_setup_phase(None);
     state.common_setup.deploy_testing_sc();
 
+    state.deposit(
+        USER_ADDRESS.to_managed_address(),
+        OptionalValue::None,
+        ManagedVec::from_single_item(EgldOrEsdtTokenPayment::new(
+            EgldOrEsdtTokenIdentifier::esdt(FIRST_TEST_TOKEN),
+            0,
+            BigUint::from(ONE_HUNDRED_THOUSAND),
+        )),
+        None,
+    );
+
     let operations_hashes = MultiValueEncoded::from(ManagedVec::from(vec![operation_hash.clone()]));
 
     state.common_setup.register_operation(
@@ -3634,7 +3645,7 @@ fn test_execute_operation_partial_execution() {
     );
 
     let expected_logs = vec![
-        log!(EXECUTE_BRIDGE_OPS_ENDPOINT, topics: [EXECUTED_BRIDGE_OP_EVENT]),
+        log!(EXECUTE_BRIDGE_OPS_ENDPOINT, topics: [EXECUTED_BRIDGE_OP_EVENT], data: Some(DEPOSIT_AMOUNT_NOT_ENOUGH)),
         log!(EXECUTE_BRIDGE_OPS_ENDPOINT, topics: [DEPOSIT_EVENT, SOV_FIRST_TOKEN_ID.as_str(), TRUSTED_TOKEN, SOV_SECOND_TOKEN_ID.as_str()]),
     ];
 

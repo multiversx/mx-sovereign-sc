@@ -4,8 +4,9 @@ use common_test_setup::constants::{
     PER_TRANSFER, SECOND_TEST_TOKEN, USER_ADDRESS, WRONG_TOKEN_ID,
 };
 use error_messages::{
-    CURRENT_OPERATION_NOT_REGISTERED, INVALID_FEE, INVALID_FEE_TYPE, INVALID_TOKEN_ID,
-    PAYMENT_DOES_NOT_COVER_FEE, SETUP_PHASE_NOT_COMPLETED, TOKEN_NOT_ACCEPTED_AS_FEE,
+    CURRENT_OPERATION_NOT_REGISTERED, INVALID_FEE, INVALID_FEE_TYPE, INVALID_PERCENTAGE_SUM,
+    INVALID_TOKEN_ID, PAYMENT_DOES_NOT_COVER_FEE, SETUP_PHASE_NOT_COMPLETED,
+    TOKEN_NOT_ACCEPTED_AS_FEE,
 };
 use fee_common::storage::FeeCommonStorageModule;
 use multiversx_sc::types::EgldOrEsdtTokenIdentifier;
@@ -696,7 +697,7 @@ fn test_distribute_fees_percentage_under_limit() {
         MultiValueEncoded::from_iter(vec![operation_hash]),
     );
 
-    state.distribute_fees(&hash_of_hashes, operation, None);
+    state.distribute_fees(&hash_of_hashes, operation, Some(INVALID_PERCENTAGE_SUM));
 }
 
 /// ### TEST
