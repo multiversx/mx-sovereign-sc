@@ -1,6 +1,21 @@
-#!/usr/bin/env bash
+#!/usr/bin/bash
 # Cargo wrapper that intercepts test commands for interactor tests
 # This script is activated by direnv (.envrc) which adds it to PATH
+
+# Ensure basic PATH is set if not already available
+# This is needed when the script is run in environments with minimal PATH (e.g., Flycheck)
+# Always prepend standard system paths to ensure basic commands are available
+STANDARD_PATHS="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+if [ -z "$PATH" ]; then
+    export PATH="$STANDARD_PATHS"
+else
+    # Prepend standard paths (duplicates are harmless, first match wins)
+    export PATH="$STANDARD_PATHS:$PATH"
+fi
+# Add cargo bin if it exists
+if [ -d "$HOME/.cargo/bin" ]; then
+    export PATH="$HOME/.cargo/bin:$PATH"
+fi
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 WRAPPER_SCRIPT="${SCRIPT_DIR}/cargo-test-wrapper.py"
