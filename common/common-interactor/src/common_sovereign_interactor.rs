@@ -239,7 +239,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             .interactor()
             .tx()
             .from(caller)
-            .gas(70_000_000u64)
+            .gas(120_000_000u64)
             .typed(SovereignForgeProxy)
             .init(deploy_cost)
             .code(SOVEREIGN_FORGE_CODE_PATH)
@@ -323,7 +323,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             .interactor()
             .tx()
             .from(caller.clone())
-            .gas(50_000_000u64)
+            .gas(80_000_000u64)
             .typed(ChainConfigContractProxy)
             .init(OptionalValue::<SovereignConfig<StaticApi>>::Some(
                 SovereignConfig::default_config_for_test(),
@@ -375,7 +375,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             .interactor()
             .tx()
             .from(caller.clone())
-            .gas(50_000_000u64)
+            .gas(80_000_000u64)
             .typed(HeaderverifierProxy)
             .init(MultiValueEncoded::new())
             .returns(ReturnsNewAddress)
