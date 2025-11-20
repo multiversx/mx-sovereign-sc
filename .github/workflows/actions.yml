@@ -45,6 +45,11 @@ jobs:
         run: |
           cargo install multiversx-sc-meta
 
+      - name: Build contracts and generate proxies
+        run: |
+          sc-meta all build
+          sc-meta all proxy
+
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
