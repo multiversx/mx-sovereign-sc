@@ -21,7 +21,10 @@ INTERACTOR_DIR = "interactor"
 INTERACTOR_PACKAGE = "rust-interact"
 
 # Maximum number of test cases to run in parallel
-MAX_CONCURRENCY = 4
+# Can be overridden via MAX_TEST_CONCURRENCY environment variable
+def get_max_concurrency() -> int:
+    """Get maximum concurrency from environment or default to 4."""
+    return int(os.environ.get("MAX_TEST_CONCURRENCY", "4"))
 
 
 def remove_script_dir_from_path(script_dir: Path) -> str:
@@ -363,7 +366,8 @@ def run_parallel_tests(test_cases: List[str], args: List[str]) -> None:
 
     Exits with 0 if all tests pass, 1 if any fail, 130 on KeyboardInterrupt.
     """
-    print(f"Running {len(test_cases)} test cases with max concurrency: {MAX_CONCURRENCY}", file=sys.stderr)
+    max_concurrency = get_max_concurrency()
+    print(f"Running {len(test_cases)} test cases with max concurrency: {max_concurrency}", file=sys.stderr)
 
     processes = {}
     completed_processes = set()
@@ -371,8 +375,8 @@ def run_parallel_tests(test_cases: List[str], args: List[str]) -> None:
     test_index = 0
 
     try:
-        # Start initial batch of processes up to MAX_CONCURRENCY
-        while test_index < len(test_cases) and len(processes) < MAX_CONCURRENCY:
+        # Start initial batch of processes up to max_concurrency
+        while test_index < len(test_cases) and len(processes) < max_concurrency:
             case_name = test_cases[test_index]
             case_args = list(args)
             found_separator = False
@@ -496,8 +500,10 @@ def start_simulator_container(port: int, container_name: str) -> bool:
         True if simulator started successfully, False otherwise.
     """
     print(f"Starting chain simulator on port {port}...", file=sys.stderr)
+    # Add memory limit (2GB per container) to prevent OOM kills with 4 parallel containers
+    # With 16GB total RAM, 4 containers * 2GB = 8GB, leaving 8GB for system and other processes
     result = subprocess.run(
-        ["docker", "run", "-d", "-p", f"{port}:8085", "--name", container_name, "multiversx/chainsimulator"],
+        ["docker", "run", "-d", "-p", f"{port}:8085", "--memory=2g", "--name", container_name, "multiversx/chainsimulator"],
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
         check=False,
