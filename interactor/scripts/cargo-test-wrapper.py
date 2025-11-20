@@ -4,7 +4,6 @@ Full lifecycle wrapper for interactor tests
 Called by the cargo wrapper script when an interactor test is detected
 """
 
-import fcntl
 import os
 import random
 import signal
@@ -22,92 +21,12 @@ from typing import List, Optional, Tuple
 INTERACTOR_DIR = "interactor"
 INTERACTOR_PACKAGE = "rust-interact"
 
+
 # Maximum number of test cases to run in parallel
 # Can be overridden via MAX_TEST_CONCURRENCY environment variable
 def get_max_concurrency() -> int:
     """Get maximum concurrency from environment or default to 4."""
     return int(os.environ.get("MAX_TEST_CONCURRENCY", "4"))
-
-
-# Port pool for pre-started containers (file-based for cross-process coordination)
-def get_port_pool() -> Optional[List[int]]:
-    """Get port pool from SIMULATOR_PORTS environment variable."""
-    ports_str = os.environ.get("SIMULATOR_PORTS")
-    if ports_str:
-        return [int(p.strip()) for p in ports_str.split(",") if p.strip()]
-    return None
-
-
-def acquire_port_from_pool() -> Optional[int]:
-    """Acquire a port from the pool (process-safe using file lock). Returns None if pool is empty."""
-    pool = get_port_pool()
-    if not pool:
-        return None
-    
-    # Use a lock file to coordinate port assignment across processes
-    lock_file_path = os.path.join(tempfile.gettempdir(), "chain-sim-port-pool.lock")
-    port_file_path = os.path.join(tempfile.gettempdir(), "chain-sim-port-pool.txt")
-    
-    try:
-        # Initialize port file if it doesn't exist
-        if not os.path.exists(port_file_path):
-            with open(port_file_path, "w") as f:
-                f.write(",".join(map(str, pool)))
-        
-        # Acquire lock and read available ports
-        with open(lock_file_path, "w") as lock_file:
-            fcntl.flock(lock_file.fileno(), fcntl.LOCK_EX)
-            try:
-                with open(port_file_path, "r") as f:
-                    available_ports = [int(p.strip()) for p in f.read().split(",") if p.strip()]
-                
-                if available_ports:
-                    port = available_ports.pop(0)
-                    # Write back remaining ports
-                    with open(port_file_path, "w") as f:
-                        f.write(",".join(map(str, available_ports)))
-                    return port
-            finally:
-                fcntl.flock(lock_file.fileno(), fcntl.LOCK_UN)
-    except (OSError, ValueError, IOError):
-        # If file operations fail, fall back to finding available port
-        pass
-    
-    return None
-
-
-def return_port_to_pool(port: int) -> None:
-    """Return a port to the pool so it can be reused by other tests."""
-    pool = get_port_pool()
-    if not pool or port not in pool:
-        return  # Only return ports that were in the original pool
-    
-    lock_file_path = os.path.join(tempfile.gettempdir(), "chain-sim-port-pool.lock")
-    port_file_path = os.path.join(tempfile.gettempdir(), "chain-sim-port-pool.txt")
-    
-    try:
-        with open(lock_file_path, "w") as lock_file:
-            fcntl.flock(lock_file.fileno(), fcntl.LOCK_EX)
-            try:
-                # Read current available ports
-                available_ports = []
-                if os.path.exists(port_file_path):
-                    with open(port_file_path, "r") as f:
-                        available_ports = [int(p.strip()) for p in f.read().split(",") if p.strip()]
-                
-                # Add port back if not already present
-                if port not in available_ports:
-                    available_ports.append(port)
-                    available_ports.sort()  # Keep sorted for consistency
-                    
-                    # Write back
-                    with open(port_file_path, "w") as f:
-                        f.write(",".join(map(str, available_ports)))
-            finally:
-                fcntl.flock(lock_file.fileno(), fcntl.LOCK_UN)
-    except (OSError, ValueError, IOError):
-        # Silently fail - port won't be reused but that's okay
-        pass
 
 
 def remove_script_dir_from_path(script_dir: Path) -> str:
@@ -220,7 +139,6 @@ def cleanup_orphaned_containers():
 
     Finds all Docker containers with names starting with "chain-sim-",
     stops any running ones, and removes them all. Silently handles errors.
-    Excludes pre-started CI containers (chain-sim-ci-*) from cleanup.
     """
     try:
         result = subprocess.run(
@@ -236,10 +154,6 @@ def cleanup_orphaned_containers():
         containers = [line.strip() for line in result.stdout.strip().split("\n") if line.strip() and line.strip().startswith("chain-sim-")]
 
         for container in containers:
-            # Skip pre-started CI containers - they're managed by GitHub Actions
-            if container.startswith("chain-sim-ci-"):
-                continue
-                
             check_result = subprocess.run(
                 ["docker", "ps", "--filter", f"name=^{container}$", "--format", "{{.Names}}"],
                 capture_output=True,
@@ -673,58 +587,6 @@ def main():
 
     cleanup_orphaned_containers()
 
-    # Try to get a port from the pre-started container pool
-    port = acquire_port_from_pool()
-    port_from_pool = port is not None
-    if port:
-        # Check if container already exists on this port
-        result = subprocess.run(
-            ["docker", "ps", "--filter", f"publish={port}", "--format", "{{.Names}}"],
-            capture_output=True,
-            text=True,
-            check=False,
-        )
-        if result.returncode == 0 and result.stdout.strip():
-            container_name = result.stdout.strip().split("\n")[0]
-            print(f"Using pre-started chain simulator container '{container_name}' on port {port}", file=sys.stderr)
-            os.environ["CHAIN_SIMULATOR_PORT"] = str(port)
-            # Verify it's still running and ready (wait longer for pre-started containers)
-            if not wait_for_simulator(port, container_name, max_attempts=10):
-                print(f"ERROR: Pre-started container {container_name} on port {port} is not ready!", file=sys.stderr)
-                # Check container status
-                status_result = subprocess.run(
-                    ["docker", "ps", "-a", "--filter", f"name=^{container_name}$", "--format", "{{.Status}}"],
-                    capture_output=True,
-                    text=True,
-                    check=False,
-                )
-                if status_result.stdout:
-                    print(f"Container status: {status_result.stdout.strip()}", file=sys.stderr)
-                # Check logs
-                logs_result = subprocess.run(
-                    ["docker", "logs", "--tail", "50", container_name],
-                    capture_output=True,
-                    text=True,
-                    check=False,
-                )
-                if logs_result.stdout:
-                    print(f"Container logs:\n{logs_result.stdout}", file=sys.stderr)
-                # Return port to pool and exit with error
-                if port_from_pool:
-                    return_port_to_pool(port)
-                sys.exit(1)
-            exit_code = run_test(args, script_dir, port, test_file, test_name)
-            # Return port to pool so it can be reused by other tests
-            if port_from_pool:
-                return_port_to_pool(port)
-            # Don't cleanup pre-started containers
-            sys.exit(exit_code)
-        else:
-            # Container doesn't exist on this port - return it to pool and fall through
-            print(f"WARNING: No container found on port {port}, returning to pool", file=sys.stderr)
-            if port_from_pool:
-                return_port_to_pool(port)
-    
     # Check if CHAIN_SIMULATOR_PORT is already set (container started externally)
     port_str = os.environ.get("CHAIN_SIMULATOR_PORT")
     if port_str:
@@ -744,7 +606,7 @@ def main():
                 print(f"Warning: Container {container_name} on port {port} may not be ready", file=sys.stderr)
             exit_code = run_test(args, script_dir, port, test_file, test_name)
             sys.exit(exit_code)
-    
+
     # Otherwise, start a new container as before
     port = find_available_port()
     os.environ["CHAIN_SIMULATOR_PORT"] = str(port)
