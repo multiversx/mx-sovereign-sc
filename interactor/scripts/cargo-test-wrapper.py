@@ -220,6 +220,7 @@ def cleanup_orphaned_containers():
 
     Finds all Docker containers with names starting with "chain-sim-",
     stops any running ones, and removes them all. Silently handles errors.
+    Excludes pre-started CI containers (chain-sim-ci-*) from cleanup.
     """
     try:
         result = subprocess.run(
@@ -235,6 +236,10 @@ def cleanup_orphaned_containers():
         containers = [line.strip() for line in result.stdout.strip().split("\n") if line.strip() and line.strip().startswith("chain-sim-")]
 
         for container in containers:
+            # Skip pre-started CI containers - they're managed by GitHub Actions
+            if container.startswith("chain-sim-ci-"):
+                continue
+                
             check_result = subprocess.run(
                 ["docker", "ps", "--filter", f"name=^{container}$", "--format", "{{.Names}}"],
                 capture_output=True,
@@ -683,15 +688,42 @@ def main():
             container_name = result.stdout.strip().split("\n")[0]
             print(f"Using pre-started chain simulator container '{container_name}' on port {port}", file=sys.stderr)
             os.environ["CHAIN_SIMULATOR_PORT"] = str(port)
-            # Verify it's still running and ready
-            if not wait_for_simulator(port, container_name, max_attempts=5):
-                print(f"Warning: Container {container_name} on port {port} may not be ready", file=sys.stderr)
+            # Verify it's still running and ready (wait longer for pre-started containers)
+            if not wait_for_simulator(port, container_name, max_attempts=10):
+                print(f"ERROR: Pre-started container {container_name} on port {port} is not ready!", file=sys.stderr)
+                # Check container status
+                status_result = subprocess.run(
+                    ["docker", "ps", "-a", "--filter", f"name=^{container_name}$", "--format", "{{.Status}}"],
+                    capture_output=True,
+                    text=True,
+                    check=False,
+                )
+                if status_result.stdout:
+                    print(f"Container status: {status_result.stdout.strip()}", file=sys.stderr)
+                # Check logs
+                logs_result = subprocess.run(
+                    ["docker", "logs", "--tail", "50", container_name],
+                    capture_output=True,
+                    text=True,
+                    check=False,
+                )
+                if logs_result.stdout:
+                    print(f"Container logs:\n{logs_result.stdout}", file=sys.stderr)
+                # Return port to pool and exit with error
+                if port_from_pool:
+                    return_port_to_pool(port)
+                sys.exit(1)
             exit_code = run_test(args, script_dir, port, test_file, test_name)
             # Return port to pool so it can be reused by other tests
             if port_from_pool:
                 return_port_to_pool(port)
             # Don't cleanup pre-started containers
             sys.exit(exit_code)
+        else:
+            # Container doesn't exist on this port - return it to pool and fall through
+            print(f"WARNING: No container found on port {port}, returning to pool", file=sys.stderr)
+            if port_from_pool:
+                return_port_to_pool(port)
     
     # Check if CHAIN_SIMULATOR_PORT is already set (container started externally)
     port_str = os.environ.get("CHAIN_SIMULATOR_PORT")
