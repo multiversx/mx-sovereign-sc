@@ -60,13 +60,55 @@ jobs:
           sudo systemctl start docker || true
           docker pull multiversx/chainsimulator || true
 
+      - name: Start chain simulator containers
+        run: |
+          # Start 4 simulator containers on fixed ports for parallel test execution
+          for i in {0..3}; do
+            port=$((8085 + $i))
+            container_name="chain-sim-ci-$port"
+            echo "Starting chain simulator on port $port..."
+            docker run -d -p $port:8085 --memory=2g --name $container_name multiversx/chainsimulator || true
+          done
+          
+          # Wait for all containers to be ready
+          echo "Waiting for simulators to be ready..."
+          for i in {0..3}; do
+            port=$((8085 + $i))
+            container_name="chain-sim-ci-$port"
+            for j in {1..60}; do
+              if curl -s http://localhost:$port/network/config > /dev/null 2>&1; then
+                echo "Simulator on port $port is ready"
+                break
+              fi
+              if [ $j -eq 60 ]; then
+                echo "Simulator on port $port failed to start"
+                docker logs $container_name || true
+                exit 1
+              fi
+              sleep 1
+            done
+          done
+          echo "All simulators are ready!"
+
       - name: Run interactor tests with Python wrapper
         env:
           PATH: ${{ github.workspace }}/interactor/scripts:${{ env.PATH }}
           WORKSPACE_ROOT: ${{ github.workspace }}
           MAX_TEST_CONCURRENCY: "4"
+          # Ports for the 4 parallel test slots
+          SIMULATOR_PORTS: "8085,8086,8087,8088"
         run: |
           cargo test --package rust-interact --test complete_flow_tests --all-features
           cargo test --package rust-interact --test mvx_esdt_safe_tests --all-features
+
+      - name: Stop chain simulator containers
+        if: always()
+        run: |
+          for i in {0..3}; do
+            port=$((8085 + $i))
+            container_name="chain-sim-ci-$port"
+            docker stop $container_name || true
+            docker rm $container_name || true
+          done
 
   
