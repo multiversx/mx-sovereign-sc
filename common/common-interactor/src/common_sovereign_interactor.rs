@@ -339,7 +339,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             .interactor()
             .tx()
             .from(caller.clone())
-            .gas(120_000_000u64)
+            .gas(140_000_000u64)
             .typed(MvxEsdtSafeProxy)
             .init(
                 Bech32Address::from(caller.clone()),
