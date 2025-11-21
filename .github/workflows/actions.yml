@@ -66,6 +66,6 @@ jobs:
           WORKSPACE_ROOT: ${{ github.workspace }}
           MAX_TEST_CONCURRENCY: "4"
         run: |
-          ./interactor/scripts/cargo test --package rust-interact --test complete_flow_tests --features chain-simulator-tests -- test_complete_deposit_flow_no_fee_only_transfer_data
+          ./interactor/scripts/cargo test --package rust-interact --test complete_flow_tests --features chain-simulator-tests -- test_complete_deposit_flow_no_fee_only_transfer_data --nocapture
 
   
