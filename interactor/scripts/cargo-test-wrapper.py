@@ -6,7 +6,6 @@ Called by the cargo wrapper script when an interactor test is detected
 
 import os
 import random
-import signal
 import socket
 import subprocess
 import sys
@@ -25,8 +24,8 @@ INTERACTOR_PACKAGE = "rust-interact"
 # Maximum number of test cases to run in parallel
 # Can be overridden via MAX_TEST_CONCURRENCY environment variable
 def get_max_concurrency() -> int:
-    """Get maximum concurrency from environment or default to 4."""
-    return int(os.environ.get("MAX_TEST_CONCURRENCY", "4"))
+    """Get maximum concurrency from environment or default to 2."""
+    return int(os.environ.get("MAX_TEST_CONCURRENCY", "2"))
 
 
 def remove_script_dir_from_path(script_dir: Path) -> str:
@@ -134,46 +133,6 @@ def discover_test_cases(test_file: str, package: str, workspace_root: str, filte
     return test_cases
 
 
-def cleanup_orphaned_containers():
-    """Clean up stopped chain simulator containers.
-
-    Finds all Docker containers with names starting with "chain-sim-" that are
-    already stopped and removes them. Silently handles errors.
-    """
-    try:
-        result = subprocess.run(
-            [
-                "docker",
-                "ps",
-                "-a",
-                "--filter",
-                "name=chain-sim-",
-                "--filter",
-                "status=exited",
-                "--format",
-                "{{.Names}}",
-            ],
-            capture_output=True,
-            text=True,
-            check=False,
-        )
-
-        if result.returncode != 0:
-            return
-
-        containers = [line.strip() for line in result.stdout.strip().split("\n") if line.strip() and line.strip().startswith("chain-sim-")]
-
-        for container in containers:
-            subprocess.run(
-                ["docker", "rm", "-f", container],
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
-                check=False,
-            )
-    except (subprocess.SubprocessError, OSError):
-        pass
-
-
 def find_available_port() -> int:
     """Find an available port for the chain simulator.
 
@@ -250,39 +209,6 @@ def wait_for_simulator(port: int, container_name: str, max_attempts: int = 30) -
 
     return False
 
-
-def cleanup_containers(container_name: str, skip_on_failure: bool = False):
-    """Stop and remove containers.
-
-    Args:
-        container_name: Name of the container to clean up
-        skip_on_failure: If True, skip cleanup when called (used to keep containers for debugging)
-    """
-    if skip_on_failure:
-        print(f"Container is accessible on port {os.environ.get('CHAIN_SIMULATOR_PORT', 'unknown')}", file=sys.stderr)
-        return
-
-    result = subprocess.run(["docker", "ps", "--format", "{{.Names}}"], capture_output=True, text=True, check=False)
-    if result.returncode == 0 and container_name in result.stdout:
-        print(f"Stopping chain simulator container: {container_name}", file=sys.stderr)
-        subprocess.run(["docker", "stop", "-t", "10", container_name], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False)
-
-    result = subprocess.run(["docker", "ps", "-a", "--format", "{{.Names}}"], capture_output=True, text=True, check=False)
-    if result.returncode == 0 and container_name in result.stdout:
-        subprocess.run(["docker", "rm", "-f", container_name], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False)
-
-
-def cleanup_signal(signum: int, container_name: str):
-    """Signal handler for cleanup on SIGINT or SIGTERM.
-
-    Args:
-        signum: Signal number received.
-        container_name: Name of the container to clean up.
-
-    Exits with code 128 + signum (standard Unix convention).
-    """
-    cleanup_containers(container_name)
-    sys.exit(128 + signum)
 
 
 def filter_output(output: str) -> str:
@@ -495,8 +421,8 @@ def start_simulator_container(port: int, container_name: str) -> bool:
         True if simulator started successfully, False otherwise.
     """
     print(f"Starting chain simulator on port {port}...", file=sys.stderr)
-    # Add memory limit (2GB per container) to prevent OOM kills with 4 parallel containers
-    # With 16GB total RAM, 4 containers * 2GB = 8GB, leaving 8GB for system and other processes
+    # Add memory limit (2GB per container) to prevent OOM kills with 2 parallel containers
+    # With 16GB total RAM, 2 containers * 2GB = 4GB, leaving 12GB for system and other processes
     result = subprocess.run(
         ["docker", "run", "-d", "-p", f"{port}:8085", "--memory=2g", "--name", container_name, "multiversx/chainsimulator"],
         stdout=subprocess.DEVNULL,
@@ -578,8 +504,6 @@ def main():
         if test_cases:
             run_parallel_tests(test_cases, args)
 
-    cleanup_orphaned_containers()
-
     # Check if CHAIN_SIMULATOR_PORT is already set (container started externally)
     port_str = os.environ.get("CHAIN_SIMULATOR_PORT")
     if port_str:
@@ -607,16 +531,10 @@ def main():
     random_suffix = random.randint(1000, 9999)
     container_name = f"chain-sim-{port}-{os.getpid()}-{int(time.time())}-{random_suffix}"
 
-    signal.signal(signal.SIGINT, lambda s, f: cleanup_signal(s, container_name))
-    signal.signal(signal.SIGTERM, lambda s, f: cleanup_signal(s, container_name))
-
     exit_code = 0
     try:
         if not start_simulator_container(port, container_name):
             exit_code = 1
-            cleanup_containers(container_name, skip_on_failure=False)
-            return
-
         exit_code = run_test(args, script_dir, port, test_file, test_name)
 
     except KeyboardInterrupt:
@@ -624,9 +542,6 @@ def main():
     except Exception as e:
         print(f"Unexpected error: {e}", file=sys.stderr)
         exit_code = 1
-    finally:
-        should_cleanup = exit_code == 0 or exit_code == 130
-        cleanup_containers(container_name, skip_on_failure=not should_cleanup)
 
     sys.exit(exit_code)
 
