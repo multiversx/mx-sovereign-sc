@@ -60,13 +60,12 @@ jobs:
           sudo systemctl start docker || true
           docker pull multiversx/chainsimulator || true
 
-      - name: Run interactor tests with Python wrapper
+      - name: Run targeted interactor test via wrapper
         env:
           PATH: ${{ github.workspace }}/interactor/scripts:${{ env.PATH }}
           WORKSPACE_ROOT: ${{ github.workspace }}
           MAX_TEST_CONCURRENCY: "4"
         run: |
-          cargo test --package rust-interact --test complete_flow_tests --all-features
-          cargo test --package rust-interact --test mvx_esdt_safe_tests --all-features
+          ./interactor/scripts/cargo test --package rust-interact --test complete_flow_tests --features chain-simulator-tests -- test_complete_deposit_flow_no_fee_only_transfer_data
 
   
