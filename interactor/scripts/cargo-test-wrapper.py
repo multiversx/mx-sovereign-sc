@@ -135,14 +135,24 @@ def discover_test_cases(test_file: str, package: str, workspace_root: str, filte
 
 
 def cleanup_orphaned_containers():
-    """Clean up all previous chain simulator containers (both stopped and running).
+    """Clean up stopped chain simulator containers.
 
-    Finds all Docker containers with names starting with "chain-sim-",
-    stops any running ones, and removes them all. Silently handles errors.
+    Finds all Docker containers with names starting with "chain-sim-" that are
+    already stopped and removes them. Silently handles errors.
     """
     try:
         result = subprocess.run(
-            ["docker", "ps", "-a", "--filter", "name=chain-sim-", "--format", "{{.Names}}"],
+            [
+                "docker",
+                "ps",
+                "-a",
+                "--filter",
+                "name=chain-sim-",
+                "--filter",
+                "status=exited",
+                "--format",
+                "{{.Names}}",
+            ],
             capture_output=True,
             text=True,
             check=False,
@@ -154,23 +164,6 @@ def cleanup_orphaned_containers():
         containers = [line.strip() for line in result.stdout.strip().split("\n") if line.strip() and line.strip().startswith("chain-sim-")]
 
         for container in containers:
-            check_result = subprocess.run(
-                ["docker", "ps", "--filter", f"name=^{container}$", "--format", "{{.Names}}"],
-                capture_output=True,
-                text=True,
-                check=False,
-            )
-
-            is_running = check_result.returncode == 0 and container in check_result.stdout
-
-            if is_running:
-                subprocess.run(
-                    ["docker", "stop", "-t", "10", container],
-                    stdout=subprocess.DEVNULL,
-                    stderr=subprocess.DEVNULL,
-                    check=False,
-                )
-
             subprocess.run(
                 ["docker", "rm", "-f", container],
                 stdout=subprocess.DEVNULL,
