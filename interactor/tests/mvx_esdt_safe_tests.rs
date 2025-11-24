@@ -1179,6 +1179,131 @@ async fn test_execute_operation_with_burn_mechanism() {
         .await;
 }
 
+/// ### TEST
+/// M-ESDT_EXEC_AND_DEPOSIT_OK
+///
+/// ### ACTION
+/// Call 'execute_operation()' for a native token and deposit it
+///
+/// ### EXPECTED
+/// The native token is minted and then burned via deposit
+#[tokio::test]
+#[serial]
+#[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
+async fn test_execute_and_deposit_with_native_token_no_fee() {
+    let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
+
+    chain_interactor.remove_fee_wrapper(SHARD_1).await;
+
+    let token_data = EsdtTokenData {
+        amount: BigUint::from(TEN_TOKENS),
+        ..Default::default()
+    };
+
+    let native_token = chain_interactor.get_native_token(SHARD_1).await;
+
+    let payment = OperationEsdtPayment::new(native_token.clone(), 0, token_data);
+
+    let mvx_esdt_safe_address = chain_interactor
+        .common_state
+        .get_mvx_esdt_safe_address(SHARD_1)
+        .clone();
+
+    let operation_data = OperationData::new(
+        chain_interactor
+            .common_state()
+            .get_and_increment_operation_nonce(&mvx_esdt_safe_address.to_string()),
+        ManagedAddress::from_address(&chain_interactor.user_address),
+        None,
+    );
+
+    let operation = Operation::new(
+        ManagedAddress::from_address(&chain_interactor.user_address),
+        vec![payment].into(),
+        operation_data,
+    );
+
+    let operation_hash = chain_interactor.get_operation_hash(&operation);
+    let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&operation_hash.to_vec()));
+    let operations_hashes = MultiValueEncoded::from(ManagedVec::from(vec![operation_hash.clone()]));
+
+    chain_interactor
+        .register_operation(SHARD_1, &hash_of_hashes, operations_hashes)
+        .await;
+
+    let expected_operation_hash_status = OperationHashStatus::NotLocked;
+    chain_interactor
+        .check_registered_operation_status(
+            SHARD_1,
+            &hash_of_hashes,
+            operation_hash,
+            expected_operation_hash_status,
+        )
+        .await;
+
+    let bridge_service = chain_interactor
+        .get_bridge_service_for_shard(SHARD_1)
+        .clone();
+
+    let native_token_info = EsdtTokenInfo {
+        token_id: native_token.clone(),
+        amount: BigUint::from(TEN_TOKENS),
+        nonce: 0,
+        decimals: 18,
+        token_type: EsdtTokenType::Fungible,
+    };
+
+    let native_token_id = native_token.clone().into_managed_buffer().to_string();
+    let expected_logs = vec![log!(ESDT_LOCAL_MINT_FUNC_NAME, topics: [native_token_id])];
+    chain_interactor
+        .execute_operations_in_mvx_esdt_safe(
+            bridge_service,
+            SHARD_1,
+            hash_of_hashes,
+            operation,
+            expected_logs,
+        )
+        .await;
+
+    let balance_config = BalanceCheckConfig::new()
+        .shard(SHARD_1)
+        .token(Some(native_token_info.clone()))
+        .amount(TEN_TOKENS.into())
+        .is_execute(true);
+
+    chain_interactor
+        .check_balances_after_action(balance_config)
+        .await;
+
+    let esdt_token_payment_one =
+        EgldOrEsdtTokenPayment::<StaticApi>::new(native_token, 0, BigUint::from(TEN_TOKENS));
+
+    let payments_vec = PaymentsVec::from(vec![esdt_token_payment_one]);
+
+    let expected_logs = chain_interactor.build_expected_deposit_log(
+        ActionConfig::new().shard(SHARD_1),
+        Some(native_token_info.clone()),
+    );
+    chain_interactor
+        .deposit_in_mvx_esdt_safe(
+            SOVEREIGN_RECEIVER_ADDRESS.to_address(),
+            SHARD_1,
+            OptionalValue::None,
+            payments_vec,
+            None,
+            Some(expected_logs),
+        )
+        .await;
+
+    let balance_config = BalanceCheckConfig::new()
+        .shard(SHARD_1)
+        .token(Some(native_token_info.clone()))
+        .amount(TEN_TOKENS.into());
+
+    chain_interactor
+        .check_balances_after_action(balance_config)
+        .await;
+}
 #[tokio::test]
 #[serial]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
