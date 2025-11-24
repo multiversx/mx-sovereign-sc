@@ -5,8 +5,8 @@ use common_test_setup::{
 use multiversx_sc::{
     imports::OptionalValue,
     types::{
-        EsdtLocalRole, ManagedAddress, ManagedVec, ReturnsHandledOrError, TestSCAddress,
-        TokenIdentifier,
+        EsdtLocalRole, EsdtTokenIdentifier, ManagedAddress, ManagedVec, ReturnsHandledOrError,
+        TestSCAddress,
     },
 };
 
@@ -74,21 +74,21 @@ impl SovEsdtSafeTestState {
             .code(SOV_ESDT_SAFE_CODE_PATH)
             .owner(OWNER_ADDRESS)
             .esdt_roles(
-                TokenIdentifier::from(FIRST_TEST_TOKEN),
+                EsdtTokenIdentifier::from(FIRST_TEST_TOKEN),
                 vec![
                     EsdtLocalRole::Burn.name().to_string(),
                     EsdtLocalRole::NftBurn.name().to_string(),
                 ],
             )
             .esdt_roles(
-                TokenIdentifier::from(SECOND_TEST_TOKEN),
+                EsdtTokenIdentifier::from(SECOND_TEST_TOKEN),
                 vec![
                     EsdtLocalRole::Burn.name().to_string(),
                     EsdtLocalRole::NftBurn.name().to_string(),
                 ],
             )
             .esdt_roles(
-                TokenIdentifier::from(FEE_TOKEN),
+                EsdtTokenIdentifier::from(FEE_TOKEN),
                 vec![
                     EsdtLocalRole::Burn.name().to_string(),
                     EsdtLocalRole::NftBurn.name().to_string(),

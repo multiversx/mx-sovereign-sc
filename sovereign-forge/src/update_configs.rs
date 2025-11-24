@@ -1,4 +1,4 @@
-use multiversx_sc::types::{MultiValueEncoded, TokenIdentifier};
+use multiversx_sc::types::{EsdtTokenIdentifier, MultiValueEncoded};
 use multiversx_sc_modules::pause;
 use proxies::chain_factory_proxy::ChainFactoryContractProxy;
 use structs::configs::{EsdtSafeConfig, SovereignConfig};
@@ -82,7 +82,7 @@ pub trait UpdateConfigsModule:
     }
 
     #[endpoint(removeFee)]
-    fn remove_fee(&self, token_id: TokenIdentifier<Self::Api>) {
+    fn remove_fee(&self, token_id: EsdtTokenIdentifier<Self::Api>) {
         self.require_not_paused();
         let blockchain_api = self.blockchain();
         let caller = blockchain_api.get_caller();
