@@ -822,8 +822,6 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             .run()
             .await;
 
-        println!("result_value: {:?}", result_value.len());
-
         for contract in result_value {
             if let ScArray::ChainConfig = contract.id {
                 return Bech32Address::from(contract.address.to_address());
@@ -851,14 +849,23 @@ pub trait CommonInteractorTrait: InteractorHelpers {
         self.interactor()
             .tx()
             .from(caller)
-            .to(sovereign_forge_address)
-            .gas(90_000_000u64)
+            .to(sovereign_forge_address.clone())
+            .gas(30_000_000u64)
             .typed(SovereignForgeProxy)
             .deploy_phase_one(opt_preferred_chain_id, opt_config)
             .egld(egld_amount)
             .returns(ReturnsResultUnmanaged)
             .run()
             .await;
+
+        let pairs = self
+            .interactor()
+            .get_account_storage(&sovereign_forge_address.to_address())
+            .await;
+
+        for (key, value) in pairs {
+            println!("key: {}, value: {}", key, value);
+        }
     }
 
     async fn deploy_phase_two(
