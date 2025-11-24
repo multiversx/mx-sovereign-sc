@@ -20,9 +20,9 @@ use multiversx_sc::{
     imports::{ESDTSystemSCProxy, OptionalValue, UserBuiltinProxy},
     types::{
         Address, BigUint, CodeMetadata, ESDTSystemSCAddress, EgldOrEsdtTokenIdentifier,
-        EsdtLocalRole, EsdtTokenType, ManagedAddress, ManagedBuffer, ManagedVec,
-        MultiEgldOrEsdtPayment, MultiValueEncoded, ReturnsNewAddress, ReturnsResult,
-        ReturnsResultUnmanaged, TokenIdentifier,
+        EsdtLocalRole, EsdtTokenIdentifier, EsdtTokenType, ManagedAddress, ManagedBuffer,
+        ManagedVec, MultiEgldOrEsdtPayment, MultiValueEncoded, ReturnsNewAddress, ReturnsResult,
+        ReturnsResultUnmanaged,
     },
 };
 use multiversx_sc_snippets::{
@@ -165,7 +165,11 @@ pub trait CommonInteractorTrait: InteractorHelpers {
         match token_type {
             EsdtTokenType::Fungible => {
                 mint_base_tx
-                    .esdt_local_mint(TokenIdentifier::from(token_id.as_bytes()), 0, mint.amount)
+                    .esdt_local_mint(
+                        EsdtTokenIdentifier::from(token_id.as_bytes()),
+                        0,
+                        mint.amount,
+                    )
                     .returns(ReturnsResultUnmanaged)
                     .run()
                     .await;
@@ -179,7 +183,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             | EsdtTokenType::MetaFungible => {
                 mint_base_tx
                     .esdt_nft_create(
-                        TokenIdentifier::from(token_id.as_bytes()),
+                        EsdtTokenIdentifier::from(token_id.as_bytes()),
                         mint.amount,
                         mint.name.unwrap_or_default(),
                         BigUint::zero(),
@@ -1197,7 +1201,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             .typed(ESDTSystemSCProxy)
             .set_special_roles(
                 ManagedAddress::from_address(&for_address),
-                TokenIdentifier::from(trusted_token.as_str()),
+                EsdtTokenIdentifier::from(trusted_token.as_str()),
                 roles.into_iter(),
             )
             .run()

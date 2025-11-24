@@ -1,5 +1,5 @@
 use crate::err_msg;
-use multiversx_sc::types::{MultiValueEncoded, TokenIdentifier};
+use multiversx_sc::types::{EsdtTokenIdentifier, MultiValueEncoded};
 use multiversx_sc_modules::only_admin;
 use proxies::{
     chain_config_proxy::ChainConfigContractProxy, mvx_esdt_safe_proxy::MvxEsdtSafeProxy,
@@ -52,7 +52,11 @@ pub trait UpdateConfigsModule: only_admin::OnlyAdminModule {
 
     #[only_admin]
     #[endpoint(removeFee)]
-    fn remove_fee(&self, fee_market_address: ManagedAddress, token_id: TokenIdentifier<Self::Api>) {
+    fn remove_fee(
+        &self,
+        fee_market_address: ManagedAddress,
+        token_id: EsdtTokenIdentifier<Self::Api>,
+    ) {
         self.tx()
             .to(fee_market_address)
             .typed(MvxFeeMarketProxy)

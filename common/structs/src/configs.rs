@@ -93,12 +93,12 @@ impl<M: ManagedTypeApi> SovereignConfig<M> {
     TopEncode, TopDecode, NestedEncode, NestedDecode, ManagedVecItem, Clone, Debug, PartialEq,
 )]
 pub struct StakeArgs<M: ManagedTypeApi> {
-    pub token_identifier: TokenIdentifier<M>,
+    pub token_identifier: EsdtTokenIdentifier<M>,
     pub amount: BigUint<M>,
 }
 
 impl<M: ManagedTypeApi> StakeArgs<M> {
-    pub fn new(token_identifier: TokenIdentifier<M>, amount: BigUint<M>) -> Self {
+    pub fn new(token_identifier: EsdtTokenIdentifier<M>, amount: BigUint<M>) -> Self {
         StakeArgs {
             token_identifier,
             amount,

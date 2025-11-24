@@ -44,7 +44,7 @@ pub trait BridgingMechanism:
         require!(
             self.trusted_tokens(self.sovereign_forge_address().get())
                 .iter()
-                .any(|trusted_token_id| TokenIdentifier::from(trusted_token_id) == token_id),
+                .any(|trusted_token_id| EsdtTokenIdentifier::from(trusted_token_id) == token_id),
             TOKEN_ID_IS_NOT_TRUSTED
         );
 
@@ -123,7 +123,7 @@ pub trait BridgingMechanism:
             .trusted_tokens(self.sovereign_forge_address().get())
             .iter()
             .any(|trusted_token_id| {
-                TokenIdentifier::from(trusted_token_id) == set_burn_mechanism_operation.token_id
+                EsdtTokenIdentifier::from(trusted_token_id) == set_burn_mechanism_operation.token_id
             })
         {
             self.complete_operation(

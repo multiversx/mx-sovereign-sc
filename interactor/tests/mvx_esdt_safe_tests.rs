@@ -884,7 +884,7 @@ async fn test_execute_operation_sovereign_token_not_registered() {
     };
 
     let payment = OperationEsdtPayment::new(
-        EgldOrEsdtTokenIdentifier::esdt(TokenIdentifier::from_esdt_bytes(sov_token_id.clone())),
+        EgldOrEsdtTokenIdentifier::esdt(EsdtTokenIdentifier::from_esdt_bytes(sov_token_id.clone())),
         0,
         token_data,
     );
