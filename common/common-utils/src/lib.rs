@@ -76,10 +76,7 @@ pub trait CommonUtilsModule: custom_events::CustomEventsModule {
     }
 
     fn is_valid_token_id(&self, token_id: &EgldOrEsdtTokenIdentifier<Self::Api>) -> bool {
-        if token_id.is_egld() {
-            return false;
-        }
-        token_id.clone().unwrap_esdt().is_valid_esdt_identifier()
+        token_id.clone().is_valid()
     }
 
     fn pop_first_payment(
