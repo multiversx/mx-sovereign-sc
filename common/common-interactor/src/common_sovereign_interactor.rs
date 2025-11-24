@@ -849,7 +849,8 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             egld_amount = opt_egld_amount.into_option().unwrap();
         }
 
-        self.interactor()
+        let logs = self
+            .interactor()
             .tx()
             .from(caller)
             .to(sovereign_forge_address.clone())
@@ -857,18 +858,11 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             .typed(SovereignForgeProxy)
             .deploy_phase_one(opt_preferred_chain_id, opt_config)
             .egld(egld_amount)
-            .returns(ReturnsResultUnmanaged)
+            .returns(ReturnsLogs)
             .run()
             .await;
 
-        let pairs = self
-            .interactor()
-            .get_account_storage(&sovereign_forge_address.to_address())
-            .await;
-
-        for (key, value) in pairs {
-            println!("key: {}, value: {}", key, value);
-        }
+        println!("logs: {:?}", logs);
     }
 
     async fn deploy_phase_two(
