@@ -822,6 +822,8 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             .run()
             .await;
 
+        println!("result_value: {:?}", result_value.len());
+
         for contract in result_value {
             if let ScArray::ChainConfig = contract.id {
                 return Bech32Address::from(contract.address.to_address());
