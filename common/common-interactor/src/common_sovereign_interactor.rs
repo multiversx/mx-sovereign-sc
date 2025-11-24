@@ -671,6 +671,9 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             optional_sov_config.clone(),
         )
         .await;
+        // Generate blocks to ensure async callback (register_deployed_contract) executes
+        // The callback registers the chain config in sovereignDeployedContracts storage
+        self.interactor().generate_blocks(2u64).await.unwrap();
         let chain_config_address = self.get_chain_config_address(&preferred_chain_id).await;
         self.register_as_validator(
             shard,
