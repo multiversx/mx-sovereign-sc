@@ -847,20 +847,17 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             egld_amount = opt_egld_amount.into_option().unwrap();
         }
 
-        let result = self
-            .interactor()
+        self.interactor()
             .tx()
             .from(caller)
             .to(sovereign_forge_address.clone())
-            .gas(120_000_000u64)
+            .gas(40_000_000u64)
             .typed(SovereignForgeProxy)
             .deploy_phase_one(opt_preferred_chain_id, opt_config)
             .egld(egld_amount)
-            .returns(ReturnsHandledOrError::new())
+            .returns(ReturnsResultUnmanaged)
             .run()
             .await;
-
-        self.assert_expected_error_message(result, None);
     }
 
     async fn deploy_phase_two(
