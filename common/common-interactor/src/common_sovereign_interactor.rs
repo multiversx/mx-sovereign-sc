@@ -870,7 +870,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             .tx()
             .from(caller)
             .to(sovereign_forge_address)
-            .gas(30_000_000u64)
+            .gas(40_000_000u64)
             .typed(SovereignForgeProxy)
             .deploy_phase_two(opt_config)
             .returns(ReturnsResultUnmanaged)
