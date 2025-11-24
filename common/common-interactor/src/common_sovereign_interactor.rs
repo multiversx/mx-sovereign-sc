@@ -265,7 +265,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             .interactor()
             .tx()
             .from(caller)
-            .gas(50_000_000u64)
+            .gas(90_000_000u64)
             .typed(ChainFactoryContractProxy)
             .init(
                 sovereign_forge_address,
