@@ -64,12 +64,12 @@ pub trait ExecuteCommonModule: crate::storage::CrossChainStorage {
     }
 
     #[inline]
-    fn is_fungible(self, token_type: &EsdtTokenType) -> bool {
+    fn is_fungible(&self, token_type: &EsdtTokenType) -> bool {
         *token_type == EsdtTokenType::Fungible
     }
 
     #[inline]
-    fn is_sft_or_meta(self, token_type: &EsdtTokenType) -> bool {
+    fn is_sft_or_meta(&self, token_type: &EsdtTokenType) -> bool {
         *token_type == EsdtTokenType::SemiFungible
             || *token_type == EsdtTokenType::DynamicSFT
             || *token_type == EsdtTokenType::MetaFungible
@@ -77,7 +77,7 @@ pub trait ExecuteCommonModule: crate::storage::CrossChainStorage {
     }
 
     #[inline]
-    fn is_nft(self, token_type: &EsdtTokenType) -> bool {
+    fn is_nft(&self, token_type: &EsdtTokenType) -> bool {
         *token_type == EsdtTokenType::NonFungible
             || *token_type == EsdtTokenType::NonFungibleV2
             || *token_type == EsdtTokenType::DynamicNFT
