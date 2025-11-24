@@ -671,9 +671,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             optional_sov_config.clone(),
         )
         .await;
-        // Generate blocks to ensure async callback (register_deployed_contract) executes
-        // The callback registers the chain config in sovereignDeployedContracts storage
-        self.interactor().generate_blocks(2u64).await.unwrap();
+
         let chain_config_address = self.get_chain_config_address(&preferred_chain_id).await;
         self.register_as_validator(
             shard,
@@ -849,20 +847,20 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             egld_amount = opt_egld_amount.into_option().unwrap();
         }
 
-        let logs = self
+        let result = self
             .interactor()
             .tx()
             .from(caller)
             .to(sovereign_forge_address.clone())
-            .gas(30_000_000u64)
+            .gas(120_000_000u64)
             .typed(SovereignForgeProxy)
             .deploy_phase_one(opt_preferred_chain_id, opt_config)
             .egld(egld_amount)
-            .returns(ReturnsLogs)
+            .returns(ReturnsHandledOrError::new())
             .run()
             .await;
 
-        println!("logs: {:?}", logs);
+        self.assert_expected_error_message(result, None);
     }
 
     async fn deploy_phase_two(
