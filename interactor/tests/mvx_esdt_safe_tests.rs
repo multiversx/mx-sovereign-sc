@@ -1253,6 +1253,7 @@ async fn test_execute_and_deposit_with_native_token_no_fee() {
         token_type: EsdtTokenType::Fungible,
     };
 
+    let native_token_id = native_token.clone().into_managed_buffer().to_string();
     let expected_logs = vec![log!(ESDT_LOCAL_MINT_FUNC_NAME, topics: [native_token_id])];
     chain_interactor
         .execute_operations_in_mvx_esdt_safe(
@@ -1273,8 +1274,6 @@ async fn test_execute_and_deposit_with_native_token_no_fee() {
     chain_interactor
         .check_balances_after_action(balance_config)
         .await;
-
-    let native_token = chain_interactor.get_native_token(SHARD_1).await;
 
     let esdt_token_payment_one =
         EgldOrEsdtTokenPayment::<StaticApi>::new(native_token, 0, BigUint::from(TEN_TOKENS));
