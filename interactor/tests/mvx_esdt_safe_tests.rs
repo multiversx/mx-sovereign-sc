@@ -1253,8 +1253,6 @@ async fn test_execute_and_deposit_with_native_token_no_fee() {
         token_type: EsdtTokenType::Fungible,
     };
 
-    let native_token_id = native_token.clone().into_managed_buffer().to_string();
-
     let expected_logs = vec![log!(ESDT_LOCAL_MINT_FUNC_NAME, topics: [native_token_id])];
     chain_interactor
         .execute_operations_in_mvx_esdt_safe(
