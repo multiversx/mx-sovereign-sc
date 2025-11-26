@@ -1,7 +1,7 @@
 use cross_chain::MAX_GAS_PER_TRANSACTION;
 use error_messages::{
-    BURN_ESDT_FAILED, CREATE_ESDT_FAILED, DEPOSIT_AMOUNT_NOT_ENOUGH, ESDT_SAFE_STILL_PAUSED,
-    GAS_LIMIT_TOO_HIGH, MINT_ESDT_FAILED, NOTHING_TO_TRANSFER, TOKEN_NOT_REGISTERED,
+    CREATE_ESDT_FAILED, DEPOSIT_AMOUNT_NOT_ENOUGH, ESDT_SAFE_STILL_PAUSED, GAS_LIMIT_TOO_HIGH,
+    NOTHING_TO_TRANSFER, TOKEN_NOT_REGISTERED,
 };
 use multiversx_sc_modules::only_admin;
 use structs::{
@@ -43,10 +43,7 @@ pub trait ExecuteModule:
             self.complete_operation(
                 &hash_of_hashes,
                 &operation_hash,
-                Some(self.merge_error_if_any(
-                    ManagedBuffer::from(ESDT_SAFE_STILL_PAUSED),
-                    refund_result,
-                )),
+                Some(self.merge_error_if_any(ESDT_SAFE_STILL_PAUSED.into(), refund_result)),
             );
             return;
         }
@@ -56,7 +53,6 @@ pub trait ExecuteModule:
             {
                 self.complete_operation(&hash_of_hashes, &operation_hash, Some(err_msg));
             }
-
             return;
         };
 
@@ -89,7 +85,6 @@ pub trait ExecuteModule:
         operation: &Operation<Self::Api>,
     ) -> Result<ManagedVec<OperationEsdtPayment<Self::Api>>, ManagedBuffer> {
         let mut output_payments = ManagedVec::new();
-
         for operation_token in operation.tokens.iter() {
             let processing_result = match self.get_mvx_token_id(&operation_token) {
                 Ok(mvx_token_id) => {
@@ -101,7 +96,6 @@ pub trait ExecuteModule:
                 }
                 Err(err_msg) => return Err(err_msg),
             };
-
             match processing_result {
                 Ok(payment) => output_payments.push(payment),
                 Err(err_msg) => {
@@ -125,7 +119,6 @@ pub trait ExecuteModule:
                 &mvx_token_id.clone().unwrap_esdt(),
                 0,
                 &operation_token.token_data.amount,
-                MINT_ESDT_FAILED,
             )?;
         } else {
             nonce = self.esdt_create_and_update_mapper(mvx_token_id, operation_token)?;
@@ -154,7 +147,6 @@ pub trait ExecuteModule:
                 &operation_token.token_identifier.clone().unwrap_esdt(),
                 0,
                 &operation_token.token_data.amount,
-                MINT_ESDT_FAILED,
             )?;
             deposited_mapper.update(|amount| *amount -= operation_token.token_data.amount.clone());
         }
@@ -192,7 +184,6 @@ pub trait ExecuteModule:
             &mvx_token_id.clone().unwrap_esdt(),
             nonce,
             &operation_token.token_data.amount,
-            MINT_ESDT_FAILED,
         )?;
 
         Ok(nonce)
@@ -293,7 +284,7 @@ pub trait ExecuteModule:
     ) -> Result<(), ManagedBuffer> {
         let transfer_data = match operation.data.opt_transfer_data.as_ref() {
             Some(data) => data,
-            None => return Err(ManagedBuffer::from(NOTHING_TO_TRANSFER)),
+            None => return Err(NOTHING_TO_TRANSFER.into()),
         };
 
         self.validate_transfer_data(transfer_data)?;
@@ -332,9 +323,9 @@ pub trait ExecuteModule:
             }
             ManagedAsyncCallResult::Err(err) => {
                 let refund_result = self.refund_transfers(output_payments, operation);
-                let error_message = self.merge_error_if_any(err.err_msg, refund_result);
+                let merged_err_message = self.merge_error_if_any(err.err_msg, refund_result);
 
-                self.complete_operation(hash_of_hashes, operation_hash, Some(error_message));
+                self.complete_operation(hash_of_hashes, operation_hash, Some(merged_err_message));
             }
         }
     }
@@ -397,7 +388,6 @@ pub trait ExecuteModule:
             &esdt_token_id,
             output_payment.token_nonce,
             &output_payment.token_data.amount,
-            BURN_ESDT_FAILED,
         )?;
 
         if self.is_nft(&operation_token.token_data.token_type) {
@@ -473,7 +463,7 @@ pub trait ExecuteModule:
         transfer_data: &TransferData<Self::Api>,
     ) -> Result<(), ManagedBuffer> {
         if transfer_data.gas_limit > MAX_GAS_PER_TRANSACTION {
-            return Err(ManagedBuffer::from(GAS_LIMIT_TOO_HIGH));
+            return Err(GAS_LIMIT_TOO_HIGH.into());
         }
 
         Ok(())
