@@ -93,7 +93,7 @@ pub trait FeeCommonHelpersModule:
     fn send_fee_payment(
         &self,
         address: &ManagedAddress,
-        token_id: &TokenIdentifier,
+        token_id: &EsdtTokenIdentifier,
         amount: BigUint,
     ) {
         self.tx()

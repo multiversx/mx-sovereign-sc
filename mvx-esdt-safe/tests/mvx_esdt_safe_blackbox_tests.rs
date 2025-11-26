@@ -30,8 +30,8 @@ use multiversx_sc::types::{
 use multiversx_sc::{
     imports::{MultiValue3, OptionalValue},
     types::{
-        BigUint, EsdtTokenData, EsdtTokenPayment, EsdtTokenType, ManagedBuffer, ManagedVec,
-        TestTokenIdentifier, TokenIdentifier,
+        BigUint, EsdtTokenData, EsdtTokenIdentifier, EsdtTokenPayment, EsdtTokenType,
+        ManagedBuffer, ManagedVec, TestTokenIdentifier,
     },
 };
 use multiversx_sc_modules::pause::PauseModule;
@@ -510,7 +510,7 @@ fn test_deposit_too_many_tokens() {
     state.complete_setup_phase();
 
     let esdt_token_payment = EsdtTokenPayment::<StaticApi>::new(
-        TokenIdentifier::from(FIRST_TEST_TOKEN),
+        EsdtTokenIdentifier::from(FIRST_TEST_TOKEN),
         0,
         BigUint::default(),
     );
@@ -548,13 +548,13 @@ fn test_deposit_no_transfer_data() {
     state.complete_setup_phase();
 
     let esdt_token_payment_one = EsdtTokenPayment::<StaticApi>::new(
-        TokenIdentifier::from(FIRST_TEST_TOKEN),
+        EsdtTokenIdentifier::from(FIRST_TEST_TOKEN),
         0,
         BigUint::from(ONE_HUNDRED_THOUSAND),
     );
 
     let esdt_token_payment_two = EsdtTokenPayment::<StaticApi>::new(
-        TokenIdentifier::from(SECOND_TEST_TOKEN),
+        EsdtTokenIdentifier::from(SECOND_TEST_TOKEN),
         0,
         BigUint::from(ONE_HUNDRED_THOUSAND),
     );
@@ -634,13 +634,13 @@ fn test_deposit_gas_limit_too_high() {
     state.complete_setup_phase();
 
     let esdt_token_payment_one = EsdtTokenPayment::<StaticApi>::new(
-        TokenIdentifier::from(FIRST_TEST_TOKEN),
+        EsdtTokenIdentifier::from(FIRST_TEST_TOKEN),
         0,
         BigUint::from(ONE_HUNDRED_THOUSAND),
     );
 
     let esdt_token_payment_two = EsdtTokenPayment::<StaticApi>::new(
-        TokenIdentifier::from(SECOND_TEST_TOKEN),
+        EsdtTokenIdentifier::from(SECOND_TEST_TOKEN),
         0,
         BigUint::from(ONE_HUNDRED_THOUSAND),
     );
@@ -715,13 +715,13 @@ fn test_deposit_max_bridged_amount_exceeded() {
     state.complete_setup_phase();
 
     let esdt_token_payment_one = EsdtTokenPayment::<StaticApi>::new(
-        TokenIdentifier::from(FIRST_TEST_TOKEN),
+        EsdtTokenIdentifier::from(FIRST_TEST_TOKEN),
         0,
         BigUint::from(ONE_HUNDRED_THOUSAND),
     );
 
     let esdt_token_payment_two = EsdtTokenPayment::<StaticApi>::new(
-        TokenIdentifier::from(SECOND_TEST_TOKEN),
+        EsdtTokenIdentifier::from(SECOND_TEST_TOKEN),
         0,
         BigUint::from(ONE_HUNDRED_THOUSAND),
     );
@@ -788,13 +788,13 @@ fn test_deposit_endpoint_banned() {
     state.complete_setup_phase();
 
     let esdt_token_payment_one = EsdtTokenPayment::<StaticApi>::new(
-        TokenIdentifier::from(FIRST_TEST_TOKEN),
+        EsdtTokenIdentifier::from(FIRST_TEST_TOKEN),
         0,
         BigUint::from(ONE_HUNDRED_THOUSAND),
     );
 
     let esdt_token_payment_two = EsdtTokenPayment::<StaticApi>::new(
-        TokenIdentifier::from(SECOND_TEST_TOKEN),
+        EsdtTokenIdentifier::from(SECOND_TEST_TOKEN),
         0,
         BigUint::from(ONE_HUNDRED_THOUSAND),
     );
@@ -1000,17 +1000,20 @@ fn test_deposit_fee_enabled() {
 
     let fee_amount = BigUint::from(ONE_HUNDRED_THOUSAND);
 
-    let fee_payment =
-        EsdtTokenPayment::<StaticApi>::new(TokenIdentifier::from(FEE_TOKEN), 0, fee_amount.clone());
+    let fee_payment = EsdtTokenPayment::<StaticApi>::new(
+        EsdtTokenIdentifier::from(FEE_TOKEN),
+        0,
+        fee_amount.clone(),
+    );
 
     let esdt_token_payment_one = EsdtTokenPayment::<StaticApi>::new(
-        TokenIdentifier::from(FIRST_TEST_TOKEN),
+        EsdtTokenIdentifier::from(FIRST_TEST_TOKEN),
         0,
         BigUint::from(ONE_HUNDRED_THOUSAND),
     );
 
     let esdt_token_payment_two = EsdtTokenPayment::<StaticApi>::new(
-        TokenIdentifier::from(SECOND_TEST_TOKEN),
+        EsdtTokenIdentifier::from(SECOND_TEST_TOKEN),
         0,
         BigUint::from(ONE_HUNDRED_THOUSAND),
     );
@@ -1085,13 +1088,13 @@ fn test_deposit_payment_doesnt_cover_fee() {
     state.common_setup.deploy_testing_sc();
 
     let esdt_token_payment_one = EsdtTokenPayment::<StaticApi>::new(
-        TokenIdentifier::from(FIRST_TEST_TOKEN),
+        EsdtTokenIdentifier::from(FIRST_TEST_TOKEN),
         0,
         BigUint::from(10u64),
     );
 
     let esdt_token_payment_two = EsdtTokenPayment::<StaticApi>::new(
-        TokenIdentifier::from(SECOND_TEST_TOKEN),
+        EsdtTokenIdentifier::from(SECOND_TEST_TOKEN),
         0,
         BigUint::from(ONE_HUNDRED_THOUSAND),
     );
@@ -1174,17 +1177,20 @@ fn test_deposit_refund() {
 
     let fee_amount = BigUint::from(ONE_HUNDRED_THOUSAND);
 
-    let fee_payment =
-        EsdtTokenPayment::<StaticApi>::new(TokenIdentifier::from(FEE_TOKEN), 0, fee_amount.clone());
+    let fee_payment = EsdtTokenPayment::<StaticApi>::new(
+        EsdtTokenIdentifier::from(FEE_TOKEN),
+        0,
+        fee_amount.clone(),
+    );
 
     let esdt_token_payment_one = EsdtTokenPayment::<StaticApi>::new(
-        TokenIdentifier::from(FIRST_TEST_TOKEN),
+        EsdtTokenIdentifier::from(FIRST_TEST_TOKEN),
         0,
         BigUint::from(ONE_HUNDRED_THOUSAND),
     );
 
     let esdt_token_payment_two = EsdtTokenPayment::<StaticApi>::new(
-        TokenIdentifier::from(SECOND_TEST_TOKEN),
+        EsdtTokenIdentifier::from(SECOND_TEST_TOKEN),
         0,
         BigUint::from(ONE_HUNDRED_THOUSAND),
     );
@@ -1247,13 +1253,13 @@ fn test_deposit_success_burn_mechanism() {
         .deploy_header_verifier(vec![ScArray::ChainConfig, ScArray::ESDTSafe]);
 
     let esdt_token_payment_trusted_token = EsdtTokenPayment::<StaticApi>::new(
-        TokenIdentifier::from(TRUSTED_TOKEN),
+        EsdtTokenIdentifier::from(TRUSTED_TOKEN),
         0,
         BigUint::from(ONE_HUNDRED_THOUSAND),
     );
 
     let esdt_token_payment_two = EsdtTokenPayment::<StaticApi>::new(
-        TokenIdentifier::from(SECOND_TEST_TOKEN),
+        EsdtTokenIdentifier::from(SECOND_TEST_TOKEN),
         0,
         BigUint::from(ONE_HUNDRED_THOUSAND),
     );
@@ -2399,7 +2405,7 @@ fn test_execute_operation_success_burn_mechanism() {
         .world
         .check_account(OWNER_ADDRESS)
         .esdt_balance(
-            TokenIdentifier::from(TRUSTED_TOKEN),
+            EsdtTokenIdentifier::from(TRUSTED_TOKEN),
             &(BigUint::from(ONE_HUNDRED_MILLION) - &amount),
         );
 

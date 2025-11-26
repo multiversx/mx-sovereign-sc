@@ -16,6 +16,6 @@ pub type TransferDataTuple<M> =
 pub type ExtractedFeeResult<M> =
     MultiValue2<OptionalValue<EgldOrEsdtTokenPayment<M>>, ManagedVec<M, EgldOrEsdtTokenPayment<M>>>;
 pub type OptionalValueTransferDataTuple<M> = OptionalValue<TransferDataTuple<M>>;
-pub type StakeMultiArg<M> = MultiValue2<TokenIdentifier<M>, BigUint<M>>;
+pub type StakeMultiArg<M> = MultiValue2<EsdtTokenIdentifier<M>, BigUint<M>>;
 pub type OptionalTransferData<M> =
     OptionalValue<MultiValue3<GasLimit, ManagedBuffer<M>, MultiValueEncoded<M, ManagedBuffer<M>>>>;

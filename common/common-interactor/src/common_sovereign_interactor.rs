@@ -20,9 +20,9 @@ use multiversx_sc::{
     imports::{ESDTSystemSCProxy, OptionalValue, UserBuiltinProxy},
     types::{
         Address, BigUint, CodeMetadata, ESDTSystemSCAddress, EgldOrEsdtTokenIdentifier,
-        EsdtLocalRole, EsdtTokenType, ManagedAddress, ManagedBuffer, ManagedVec,
-        MultiEgldOrEsdtPayment, MultiValueEncoded, ReturnsNewAddress, ReturnsResult,
-        ReturnsResultUnmanaged, TokenIdentifier,
+        EsdtLocalRole, EsdtTokenIdentifier, EsdtTokenType, ManagedAddress, ManagedBuffer,
+        ManagedVec, MultiEgldOrEsdtPayment, MultiValueEncoded, ReturnsNewAddress, ReturnsResult,
+        ReturnsResultUnmanaged,
     },
 };
 use multiversx_sc_snippets::{
@@ -31,7 +31,7 @@ use multiversx_sc_snippets::{
         ReturnsNewTokenIdentifier, StaticApi, Wallet,
     },
     multiversx_sc_scenario::multiversx_chain_vm::crypto_functions::sha256,
-    test_wallets, InteractorRunAsync,
+    test_wallets, InteractorRunAsync, SimulateGas,
 };
 use proxies::{
     chain_config_proxy::ChainConfigContractProxy, chain_factory_proxy::ChainFactoryContractProxy,
@@ -95,7 +95,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             .tx()
             .from(user_address)
             .to(ESDTSystemSCAddress)
-            .gas(100_000_000u64)
+            .gas(SimulateGas)
             .typed(ESDTSystemSCProxy)
             .issue_and_set_all_roles(
                 ISSUE_COST.into(),
@@ -159,13 +159,17 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             .tx()
             .from(user_address.clone())
             .to(user_address)
-            .gas(100_000_000u64)
+            .gas(SimulateGas)
             .typed(UserBuiltinProxy);
 
         match token_type {
             EsdtTokenType::Fungible => {
                 mint_base_tx
-                    .esdt_local_mint(TokenIdentifier::from(token_id.as_bytes()), 0, mint.amount)
+                    .esdt_local_mint(
+                        EsdtTokenIdentifier::from(token_id.as_bytes()),
+                        0,
+                        mint.amount,
+                    )
                     .returns(ReturnsResultUnmanaged)
                     .run()
                     .await;
@@ -179,7 +183,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             | EsdtTokenType::MetaFungible => {
                 mint_base_tx
                     .esdt_nft_create(
-                        TokenIdentifier::from(token_id.as_bytes()),
+                        EsdtTokenIdentifier::from(token_id.as_bytes()),
                         mint.amount,
                         mint.name.unwrap_or_default(),
                         BigUint::zero(),
@@ -252,7 +256,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             .interactor()
             .tx()
             .from(caller)
-            .gas(70_000_000u64)
+            .gas(SimulateGas)
             .typed(SovereignForgeProxy)
             .init(deploy_cost)
             .code(SOVEREIGN_FORGE_CODE_PATH)
@@ -278,7 +282,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             .interactor()
             .tx()
             .from(caller)
-            .gas(50_000_000u64)
+            .gas(SimulateGas)
             .typed(ChainFactoryContractProxy)
             .init(
                 sovereign_forge_address,
@@ -308,7 +312,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             .interactor()
             .tx()
             .from(caller)
-            .gas(50_000_000u64)
+            .gas(SimulateGas)
             .typed(ChainConfigContractProxy)
             .init(opt_config)
             .returns(ReturnsNewAddress)
@@ -337,7 +341,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             .interactor()
             .tx()
             .from(caller.clone())
-            .gas(50_000_000u64)
+            .gas(SimulateGas)
             .typed(ChainConfigContractProxy)
             .init(OptionalValue::<SovereignConfig<StaticApi>>::Some(
                 SovereignConfig::default_config_for_test(),
@@ -353,7 +357,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             .interactor()
             .tx()
             .from(caller.clone())
-            .gas(120_000_000u64)
+            .gas(SimulateGas)
             .typed(MvxEsdtSafeProxy)
             .init(
                 Bech32Address::from(caller.clone()),
@@ -372,7 +376,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             .interactor()
             .tx()
             .from(caller.clone())
-            .gas(80_000_000u64)
+            .gas(SimulateGas)
             .typed(MvxFeeMarketProxy)
             .init(
                 Bech32Address::from(esdt_safe_template),
@@ -389,7 +393,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             .interactor()
             .tx()
             .from(caller.clone())
-            .gas(50_000_000u64)
+            .gas(SimulateGas)
             .typed(HeaderverifierProxy)
             .init(MultiValueEncoded::new())
             .returns(ReturnsNewAddress)
@@ -491,7 +495,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             .tx()
             .from(bridge_owner)
             .to(chain_config_address)
-            .gas(90_000_000u64)
+            .gas(SimulateGas)
             .typed(ChainConfigContractProxy)
             .register(bls_key_buffer)
             .payment(payment)
@@ -535,7 +539,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             .interactor()
             .tx()
             .from(bridge_owner)
-            .gas(120_000_000u64)
+            .gas(SimulateGas)
             .typed(TestingScProxy)
             .init()
             .code(TESTING_SC_CODE_PATH)
@@ -584,7 +588,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             .to(sovereign_forge_address)
             .typed(SovereignForgeProxy)
             .unpause_endpoint()
-            .gas(20_000_000)
+            .gas(SimulateGas)
             .run()
             .await;
     }
@@ -691,7 +695,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             .to(forge_address)
             .typed(SovereignForgeProxy)
             .register_trusted_token(ManagedBuffer::from(trusted_token))
-            .gas(20_000_000)
+            .gas(SimulateGas)
             .run()
             .await;
     }
@@ -1016,7 +1020,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             .tx()
             .from(bridge_service)
             .to(current_mvx_esdt_safe_address)
-            .gas(90_000_000u64)
+            .gas(SimulateGas)
             .typed(MvxEsdtSafeProxy)
             .update_esdt_safe_config(
                 hash_of_hashes,
@@ -1043,7 +1047,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             .tx()
             .from(bridge_service)
             .to(current_fee_market_address)
-            .gas(50_000_000u64)
+            .gas(SimulateGas)
             .typed(MvxFeeMarketProxy)
             .set_fee(hash_of_hashes, fee_operation)
             .returns(ReturnsResultUnmanaged)
@@ -1064,7 +1068,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             .tx()
             .from(bridge_service)
             .to(current_fee_market_address)
-            .gas(90_000_000u64)
+            .gas(SimulateGas)
             .typed(MvxFeeMarketProxy)
             .remove_fee(hash_of_hashes, fee_operation)
             .returns(ReturnsResultUnmanaged)
@@ -1107,7 +1111,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             .tx()
             .from(bridge_service)
             .to(current_mvx_esdt_safe_address)
-            .gas(90_000_000u64)
+            .gas(SimulateGas)
             .typed(MvxEsdtSafeProxy)
             .set_token_burn_mechanism(
                 token_burn_mechanism_hash_of_hashes,
@@ -1151,7 +1155,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             .tx()
             .from(bridge_service)
             .to(current_mvx_esdt_safe_address)
-            .gas(90_000_000u64)
+            .gas(SimulateGas)
             .typed(MvxEsdtSafeProxy)
             .set_token_lock_mechanism(
                 token_lock_mechanism_hash_of_hashes,
@@ -1193,11 +1197,11 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             .tx()
             .from(user_address)
             .to(ESDTSystemSCAddress)
-            .gas(80_000_000u64)
+            .gas(SimulateGas)
             .typed(ESDTSystemSCProxy)
             .set_special_roles(
                 ManagedAddress::from_address(&for_address),
-                TokenIdentifier::from(trusted_token.as_str()),
+                EsdtTokenIdentifier::from(trusted_token.as_str()),
                 roles.into_iter(),
             )
             .run()
@@ -1230,7 +1234,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             .tx()
             .from(bridge_service)
             .to(header_verifier_address)
-            .gas(90_000_000u64)
+            .gas(SimulateGas)
             .typed(HeaderverifierProxy)
             .register_bridge_operations(
                 signature,
@@ -1315,7 +1319,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             .tx()
             .from(bridge_address)
             .to(mvx_esdt_safe_address.clone())
-            .gas(90_000_000u64)
+            .gas(SimulateGas)
             .typed(MvxEsdtSafeProxy)
             .switch_pause_status(hash_of_hashes, operation)
             .run()
@@ -1363,7 +1367,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             .tx()
             .from(bridge_owner)
             .to(chain_config_address)
-            .gas(90_000_000u64)
+            .gas(SimulateGas)
             .typed(HeaderverifierProxy)
             .complete_setup_phase()
             .returns(ReturnsResultUnmanaged)
