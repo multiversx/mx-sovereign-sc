@@ -15,8 +15,8 @@ use multiversx_sc::types::ReturnsHandledOrError;
 use multiversx_sc::{
     imports::OptionalValue,
     types::{
-        BigUint, EsdtLocalRole, ManagedAddress, ManagedBuffer, TestSCAddress, TestTokenIdentifier,
-        TokenIdentifier,
+        BigUint, EsdtLocalRole, EsdtTokenIdentifier, ManagedAddress, ManagedBuffer, TestSCAddress,
+        TestTokenIdentifier,
     },
 };
 use multiversx_sc_scenario::imports::*;
@@ -87,7 +87,7 @@ impl MvxEsdtSafeTestState {
             .code(MVX_ESDT_SAFE_CODE_PATH)
             .owner(OWNER_ADDRESS)
             .esdt_roles(
-                TokenIdentifier::from(FIRST_TEST_TOKEN),
+                EsdtTokenIdentifier::from(FIRST_TEST_TOKEN),
                 vec![
                     EsdtLocalRole::Burn.name().to_string(),
                     EsdtLocalRole::NftBurn.name().to_string(),
@@ -95,7 +95,7 @@ impl MvxEsdtSafeTestState {
                 ],
             )
             .esdt_roles(
-                TokenIdentifier::from(TRUSTED_TOKEN),
+                EsdtTokenIdentifier::from(TRUSTED_TOKEN),
                 vec![
                     EsdtLocalRole::Burn.name().to_string(),
                     EsdtLocalRole::NftBurn.name().to_string(),
@@ -103,35 +103,35 @@ impl MvxEsdtSafeTestState {
                 ],
             )
             .esdt_roles(
-                TokenIdentifier::from(SECOND_TEST_TOKEN),
+                EsdtTokenIdentifier::from(SECOND_TEST_TOKEN),
                 vec![
                     EsdtLocalRole::Burn.name().to_string(),
                     EsdtLocalRole::NftBurn.name().to_string(),
                 ],
             )
             .esdt_roles(
-                TokenIdentifier::from(FEE_TOKEN),
+                EsdtTokenIdentifier::from(FEE_TOKEN),
                 vec![
                     EsdtLocalRole::Burn.name().to_string(),
                     EsdtLocalRole::NftBurn.name().to_string(),
                 ],
             )
             .esdt_roles(
-                TokenIdentifier::from(NATIVE_TEST_TOKEN),
+                EsdtTokenIdentifier::from(NATIVE_TEST_TOKEN),
                 vec![
                     EsdtLocalRole::Burn.name().to_string(),
                     EsdtLocalRole::Mint.name().to_string(),
                 ],
             )
             .esdt_roles(
-                TokenIdentifier::from(FIRST_TOKEN_ID),
+                EsdtTokenIdentifier::from(FIRST_TOKEN_ID),
                 vec![
                     EsdtLocalRole::Burn.name().to_string(),
                     EsdtLocalRole::Mint.name().to_string(),
                 ],
             )
             .esdt_roles(
-                TokenIdentifier::from(SECOND_TOKEN_ID),
+                EsdtTokenIdentifier::from(SECOND_TOKEN_ID),
                 vec![
                     EsdtLocalRole::Burn.name().to_string(),
                     EsdtLocalRole::Mint.name().to_string(),

@@ -31,10 +31,10 @@ pub trait FeeCommonStorageModule {
     fn users_whitelist(&self) -> UnorderedSetMapper<ManagedAddress>;
 
     #[storage_mapper("accFees")]
-    fn accumulated_fees(&self, token_id: &TokenIdentifier) -> SingleValueMapper<BigUint>;
+    fn accumulated_fees(&self, token_id: &EsdtTokenIdentifier) -> SingleValueMapper<BigUint>;
 
     #[storage_mapper("tokensForFees")]
-    fn tokens_for_fees(&self) -> UnorderedSetMapper<TokenIdentifier>;
+    fn tokens_for_fees(&self) -> UnorderedSetMapper<EsdtTokenIdentifier>;
 
     #[storage_mapper("esdtSafeAddress")]
     fn esdt_safe_address(&self) -> SingleValueMapper<ManagedAddress>;
