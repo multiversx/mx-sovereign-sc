@@ -112,13 +112,6 @@ impl<M: ManagedTypeApi> OperationData<M> {
 
 #[type_abi]
 #[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, ManagedVecItem, Clone)]
-pub struct OperationTuple<M: ManagedTypeApi> {
-    pub op_hash: ManagedBuffer<M>,
-    pub operation: Operation<M>,
-}
-
-#[type_abi]
-#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, ManagedVecItem, Clone)]
 pub struct OperationEsdtPayment<M: ManagedTypeApi> {
     pub token_identifier: EgldOrEsdtTokenIdentifier<M>,
     pub token_nonce: u64,
@@ -158,12 +151,5 @@ impl<M: ManagedTypeApi> Default for OperationEsdtPayment<M> {
             token_nonce: 0,
             token_data: EsdtTokenData::default(),
         }
-    }
-}
-
-impl<M: ManagedTypeApi> OperationTuple<M> {
-    #[inline]
-    pub fn new(op_hash: ManagedBuffer<M>, operation: Operation<M>) -> Self {
-        OperationTuple { op_hash, operation }
     }
 }
