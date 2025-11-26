@@ -63,6 +63,6 @@ pub trait CrossChainStorage {
     fn external_token_fee(
         &self,
         sc_address: ManagedAddress,
-        token_id: &TokenIdentifier,
+        token_id: &EsdtTokenIdentifier,
     ) -> SingleValueMapper<FeeType<Self::Api>, ManagedAddress>;
 }

@@ -45,7 +45,11 @@ pub trait DepositModule:
 
         let token_mapper = self.multiversx_to_sovereign_token_id_mapper(&token_identifier);
         if !token_mapper.is_empty() || self.is_native_token(&token_identifier) {
-            let sov_token_id = token_mapper.get();
+            let sov_token_id = if token_mapper.is_empty() {
+                token_identifier.clone()
+            } else {
+                token_mapper.get()
+            };
             let sov_token_nonce = self.burn_mainchain_token(
                 &token_identifier,
                 payment.token_nonce,
