@@ -66,7 +66,15 @@ jobs:
           WORKSPACE_ROOT: ${{ github.workspace }}
           MAX_TEST_CONCURRENCY: "4"
         run: |
-           cargo test --package rust-interact --test complete_flow_tests --all-features 
-           cargo test --package rust-interact --test mvx_esdt_safe_tests --all-features
+          cargo test --package rust-interact --test complete_flow_tests --all-features
+          cargo test --package rust-interact --test mvx_esdt_safe_tests --all-features
 
+      - name: Cleanup chain simulator containers
+        if: always()
+        run: |
+          # Remove only the per-test chain simulator containers created by the wrapper
+          CONTAINERS=$(docker ps -a --filter "name=chain-sim-" --format "{{.ID}}")
+          if [ -n "$CONTAINERS" ]; then
+            docker rm -f $CONTAINERS
+          fi
   
