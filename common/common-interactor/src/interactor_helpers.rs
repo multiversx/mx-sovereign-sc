@@ -34,7 +34,6 @@ use structs::{
 };
 
 use crate::{
-    interactor_common_state::CommonState,
     interactor_state::{EsdtTokenInfo, State},
     interactor_structs::{ActionConfig, BalanceCheckConfig, SerializableToken},
 };
@@ -44,7 +43,6 @@ use crate::{
 pub trait InteractorHelpers {
     fn interactor(&mut self) -> &mut Interactor;
     fn state(&mut self) -> &mut State;
-    fn common_state(&mut self) -> &mut CommonState;
     fn user_address(&self) -> &Address;
 
     fn prepare_transfer_data(
@@ -136,7 +134,7 @@ pub trait InteractorHelpers {
         let user_address = self.user_address().clone();
 
         let payment_vec = self.prepare_execute_payment(token);
-        let mvx_esdt_safe_address = self.common_state().get_mvx_esdt_safe_address(shard).clone();
+        let mvx_esdt_safe_address = self.state().get_mvx_esdt_safe_address(shard).clone();
 
         match endpoint {
             Some(endpoint) => {
@@ -148,7 +146,7 @@ pub trait InteractorHelpers {
 
                 let transfer_data = TransferData::new(gas_limit, function, args);
                 let operation_data = OperationData::new(
-                    self.common_state()
+                    self.state()
                         .get_and_increment_operation_nonce(&mvx_esdt_safe_address.to_string()),
                     ManagedAddress::from_address(&user_address),
                     Some(transfer_data),
@@ -156,10 +154,7 @@ pub trait InteractorHelpers {
 
                 Operation::new(
                     ManagedAddress::from_address(
-                        &self
-                            .common_state()
-                            .current_testing_sc_address()
-                            .to_address(),
+                        &self.state().current_testing_sc_address().to_address(),
                     ),
                     payment_vec,
                     operation_data,
@@ -167,7 +162,7 @@ pub trait InteractorHelpers {
             }
             None => {
                 let operation_data = OperationData::new(
-                    self.common_state()
+                    self.state()
                         .get_and_increment_operation_nonce(&mvx_esdt_safe_address.to_string()),
                     ManagedAddress::from_address(&user_address),
                     None,
@@ -183,7 +178,7 @@ pub trait InteractorHelpers {
     }
 
     fn get_address_name(&mut self, address: &Bech32Address) -> &'static str {
-        let testing_addr = self.common_state().current_testing_sc_address();
+        let testing_addr = self.state().current_testing_sc_address();
         if address == testing_addr {
             return TESTING_SC;
         }
@@ -195,7 +190,7 @@ pub trait InteractorHelpers {
 
         // Check shard-specific contract addresses
         for shard_id in 0..3 {
-            let mvx_addr = self.common_state().get_mvx_esdt_safe_address(shard_id);
+            let mvx_addr = self.state().get_mvx_esdt_safe_address(shard_id);
             if address == mvx_addr {
                 return match shard_id {
                     0 => MVX_ESDT_SAFE_SHARD_0,
@@ -205,7 +200,7 @@ pub trait InteractorHelpers {
                 };
             }
 
-            let fee_addr = self.common_state().get_fee_market_address(shard_id);
+            let fee_addr = self.state().get_fee_market_address(shard_id);
             if address == fee_addr {
                 return match shard_id {
                     0 => FEE_MARKET_SHARD_0,
@@ -512,7 +507,7 @@ pub trait InteractorHelpers {
 
     // NOTE: This is a temporary workaround, the whole balance check method needs refactoring
     async fn check_mvx_esdt_balance(&mut self, shard: u32, expected_tokens: Vec<EsdtTokenInfo>) {
-        let mvx_address = self.common_state().get_mvx_esdt_safe_address(shard).clone();
+        let mvx_address = self.state().get_mvx_esdt_safe_address(shard).clone();
         let tokens = if expected_tokens.is_empty() {
             let mut tokens = self.create_empty_balance_state().await;
             tokens.retain(|token| {
@@ -545,21 +540,14 @@ pub trait InteractorHelpers {
     }
 
     async fn check_fee_market_balance(&mut self, shard: u32, expected_tokens: Vec<EsdtTokenInfo>) {
-        let fee_market_address = self.common_state().get_fee_market_address(shard).clone();
-        let tokens = if expected_tokens.is_empty() {
-            vec![self
-                .common_state()
-                .get_fee_market_token_for_shard_converted(shard)]
-        } else {
-            expected_tokens
-        };
-        self.check_address_balance(&fee_market_address, tokens)
+        let fee_market_address = self.state().get_fee_market_address(shard).clone();
+        self.check_address_balance(&fee_market_address, expected_tokens)
             .await;
     }
 
     // NOTE: This is a temporary workaround, the whole balance check method needs refactoring
     async fn check_testing_sc_balance(&mut self, expected_tokens: Vec<EsdtTokenInfo>) {
-        let testing_sc_address = self.common_state().current_testing_sc_address().clone();
+        let testing_sc_address = self.state().current_testing_sc_address().clone();
         let tokens = if expected_tokens.is_empty() {
             let mut tokens = self.create_empty_balance_state().await;
             tokens.retain(|token| {
@@ -720,18 +708,9 @@ pub trait InteractorHelpers {
 
         //MVX Tokens
         if is_egld {
-            let current_balance = self.common_state().get_mvx_egld_balance_for_shard(shard);
             let amount_u64 = amount.clone().unwrap().to_u64().expect(AMOUNT_IS_TOO_LARGE);
-            let expected_amount = if is_execute {
-                current_balance - amount_u64
-            } else {
-                current_balance + amount_u64
-            };
-            let address = self.common_state().get_mvx_esdt_safe_address(shard).clone();
-            self.check_address_egld_balance(&address, expected_amount)
-                .await;
-            self.common_state()
-                .update_mvx_egld_balance_with_amount(shard, expected_amount);
+            let address = self.state().get_mvx_esdt_safe_address(shard).clone();
+            self.check_address_egld_balance(&address, amount_u64).await;
         } else {
             // ESDT tokens
             let mvx_tokens = self.get_expected_mvx_tokens(
@@ -747,12 +726,7 @@ pub trait InteractorHelpers {
         // FEE market
         if fee_amount > 0u64 {
             let fee_token = self.state().get_fee_token_id();
-            let previous_fee_amount = BigUint::from(
-                self.common_state()
-                    .get_fee_market_token_amount_for_shard(shard),
-            );
-            let expected_fee_tokens =
-                vec![self.clone_token_with_amount(fee_token, previous_fee_amount + fee_amount)];
+            let expected_fee_tokens = vec![self.clone_token_with_amount(fee_token, fee_amount)];
             self.check_fee_market_balance(shard, expected_fee_tokens)
                 .await;
         } else {
@@ -761,13 +735,10 @@ pub trait InteractorHelpers {
 
         // TESTING SC
         if is_egld && is_execute && with_transfer_data && expected_error.is_none() {
-            let expected_amount = self.common_state().get_testing_egld_balance()
-                + amount.clone().unwrap().to_u64().unwrap();
-            let testing_address = self.common_state().current_testing_sc_address().clone();
-            self.check_address_egld_balance(&testing_address, expected_amount)
+            let amount_u64 = amount.clone().unwrap().to_u64().expect(AMOUNT_IS_TOO_LARGE);
+            let testing_address = self.state().current_testing_sc_address().clone();
+            self.check_address_egld_balance(&testing_address, amount_u64)
                 .await;
-            self.common_state()
-                .update_testing_egld_balance_with_amount(expected_amount);
         } else {
             let testing_sc_tokens = match (&token, &amount) {
                 (Some(token), Some(amount)) => {
@@ -871,7 +842,7 @@ pub trait InteractorHelpers {
     }
 
     fn create_random_sovereign_token_id(&mut self, shard: u32) -> String {
-        let current_chain_id = self.common_state().get_chain_id_for_shard(shard).clone();
+        let current_chain_id = self.state().get_chain_id_for_shard(shard).clone();
         let rand_string: String = rand::rng()
             .sample_iter(&Alphanumeric)
             .filter(|c| c.is_ascii_alphanumeric() && c.is_ascii_lowercase())
@@ -879,24 +850,5 @@ pub trait InteractorHelpers {
             .map(char::from)
             .collect();
         format!("{}-SOV-{}", current_chain_id, rand_string)
-    }
-
-    async fn update_fee_market_balance_state(
-        &mut self,
-        fee: Option<FeeStruct<StaticApi>>,
-        payment_vec: PaymentsVec<StaticApi>,
-        shard: u32,
-    ) {
-        if fee.is_none() || payment_vec.is_empty() {
-            return;
-        }
-        let mut fee_token_in_fee_market = self.common_state().get_fee_market_token_for_shard(shard);
-
-        let payment = payment_vec.get(0);
-        if let Some(payment_amount) = payment.amount.to_u64() {
-            fee_token_in_fee_market.amount += payment_amount;
-        }
-        self.common_state()
-            .set_fee_market_token_for_shard(shard, fee_token_in_fee_market);
     }
 }
