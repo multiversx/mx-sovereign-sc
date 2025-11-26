@@ -675,6 +675,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             optional_sov_config.clone(),
         )
         .await;
+
         let chain_config_address = self.get_chain_config_address(&preferred_chain_id).await;
         self.register_as_validator(
             shard,
@@ -853,8 +854,8 @@ pub trait CommonInteractorTrait: InteractorHelpers {
         self.interactor()
             .tx()
             .from(caller)
-            .to(sovereign_forge_address)
-            .gas(30_000_000u64)
+            .to(sovereign_forge_address.clone())
+            .gas(40_000_000u64)
             .typed(SovereignForgeProxy)
             .deploy_phase_one(opt_preferred_chain_id, opt_config)
             .egld(egld_amount)
@@ -873,7 +874,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             .tx()
             .from(caller)
             .to(sovereign_forge_address)
-            .gas(30_000_000u64)
+            .gas(40_000_000u64)
             .typed(SovereignForgeProxy)
             .deploy_phase_two(opt_config)
             .returns(ReturnsResultUnmanaged)
