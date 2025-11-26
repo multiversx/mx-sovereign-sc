@@ -1,3 +1,5 @@
+use error_messages::{BURN_ESDT_FAILED, MINT_ESDT_FAILED};
+
 multiversx_sc::imports!();
 
 #[multiversx_sc::module]
@@ -31,7 +33,6 @@ pub trait ExecuteCommonModule: crate::storage::CrossChainStorage {
         token_id: &EsdtTokenIdentifier<Self::Api>,
         token_nonce: u64,
         amount: &BigUint<Self::Api>,
-        error: &'static str,
     ) -> Result<(), ManagedBuffer<Self::Api>> {
         let result = self
             .tx()
@@ -41,7 +42,8 @@ pub trait ExecuteCommonModule: crate::storage::CrossChainStorage {
             .returns(ReturnsHandledOrError::new())
             .sync_call_fallible();
 
-        result.map_err(|error_code| self.format_error(error, token_id.clone(), error_code))
+        result
+            .map_err(|error_code| self.format_error(BURN_ESDT_FAILED, token_id.clone(), error_code))
     }
 
     #[inline]
@@ -50,7 +52,6 @@ pub trait ExecuteCommonModule: crate::storage::CrossChainStorage {
         token_id: &EsdtTokenIdentifier<Self::Api>,
         token_nonce: u64,
         amount: &BigUint<Self::Api>,
-        error: &'static str,
     ) -> Result<(), ManagedBuffer<Self::Api>> {
         let result = self
             .tx()
@@ -60,7 +61,8 @@ pub trait ExecuteCommonModule: crate::storage::CrossChainStorage {
             .returns(ReturnsHandledOrError::new())
             .sync_call_fallible();
 
-        result.map_err(|error_code| self.format_error(error, token_id.clone(), error_code))
+        result
+            .map_err(|error_code| self.format_error(MINT_ESDT_FAILED, token_id.clone(), error_code))
     }
 
     #[inline]

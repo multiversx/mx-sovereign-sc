@@ -1,8 +1,8 @@
 use error_messages::{
-    BURN_ESDT_FAILED, BURN_MECHANISM_NON_ESDT_TOKENS, ESDT_SAFE_STILL_PAUSED,
-    LOCK_MECHANISM_NON_ESDT, MINT_AND_BURN_ROLES_NOT_FOUND, MINT_ESDT_FAILED,
-    SETUP_PHASE_ALREADY_COMPLETED, TOKEN_ALREADY_REGISTERED_WITH_BURN_MECHANISM,
-    TOKEN_ID_IS_NOT_TRUSTED, TOKEN_NOT_REGISTERED_WITH_BURN_MECHANISM,
+    BURN_MECHANISM_NON_ESDT_TOKENS, ESDT_SAFE_STILL_PAUSED, LOCK_MECHANISM_NON_ESDT,
+    MINT_AND_BURN_ROLES_NOT_FOUND, SETUP_PHASE_ALREADY_COMPLETED,
+    TOKEN_ALREADY_REGISTERED_WITH_BURN_MECHANISM, TOKEN_ID_IS_NOT_TRUSTED,
+    TOKEN_NOT_REGISTERED_WITH_BURN_MECHANISM,
 };
 use multiversx_sc::imports::*;
 use multiversx_sc_modules::pause;
@@ -144,9 +144,7 @@ pub trait BridgingMechanism:
             return;
         }
 
-        if let Err(error_message) =
-            self.try_esdt_local_burn(&esdt_identifier, 0, &sc_balance, BURN_ESDT_FAILED)
-        {
+        if let Err(error_message) = self.try_esdt_local_burn(&esdt_identifier, 0, &sc_balance) {
             self.complete_operation(&hash_of_hashes, &operation_hash, Some(error_message));
             return;
         }
@@ -238,8 +236,7 @@ pub trait BridgingMechanism:
         }
 
         let esdt_identifier = set_lock_mechanism_operation.token_id.clone().unwrap_esdt();
-        if let Err(error_message) =
-            self.try_esdt_local_mint(&esdt_identifier, 0, &deposited_amount, MINT_ESDT_FAILED)
+        if let Err(error_message) = self.try_esdt_local_mint(&esdt_identifier, 0, &deposited_amount)
         {
             self.complete_operation(&hash_of_hashes, &operation_hash, Some(error_message));
             return;
