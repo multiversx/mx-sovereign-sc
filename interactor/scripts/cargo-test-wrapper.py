@@ -514,55 +514,7 @@ def start_simulator_container(port: int, container_name: str) -> bool:
     return True
 
 
-def run_deployment_test(script_dir: Path, port: int) -> bool:
-    """Run the deployment setup test.
-
-    Args:
-        script_dir: Path to the script directory.
-        port: Port number where the simulator is running.
-
-    Returns:
-        True if deployment test succeeded, False otherwise.
-    """
-    print(f"Running deployment test...", file=sys.stderr)
-
-    env = os.environ.copy()
-    env["PATH"] = remove_script_dir_from_path(script_dir)
-    env["CHAIN_SIMULATOR_PORT"] = str(port)
-
-    result = subprocess.run(
-        [
-            "cargo",
-            "test",
-            "--package",
-            INTERACTOR_PACKAGE,
-            "--test",
-            "always_deploy_setup_first",
-            "--all-features",
-            "--",
-            "deploy_setup",
-            "--exact",
-            "--show-output",
-        ],
-        env=env,
-        capture_output=True,
-        text=True,
-        check=False,
-    )
-
-    if result.returncode != 0:
-        if result.stdout:
-            print(result.stdout, file=sys.stderr)
-        if result.stderr:
-            print(result.stderr, file=sys.stderr)
-        print("Deployment test failed - see output above", file=sys.stderr)
-        return False
-
-    print(f"Deployment test succeeded.", file=sys.stderr)
-    return True
-
-
-def run_actual_test(args: List[str], script_dir: Path, port: int, test_file: Optional[str], test_name: Optional[str]) -> int:
+def run_test(args: List[str], script_dir: Path, port: int, test_file: Optional[str], test_name: Optional[str]) -> int:
     """Run the actual test case.
 
     Args:
@@ -625,8 +577,6 @@ def main():
         if test_cases:
             run_parallel_tests(test_cases, args)
 
-    is_deployment_test = test_file == "always_deploy_setup_first" and test_name == "deploy_setup"
-
     cleanup_orphaned_containers()
 
     port = find_available_port()
@@ -645,13 +595,7 @@ def main():
             cleanup_containers(container_name, skip_on_failure=False)
             return
 
-        if not is_deployment_test:
-            if not run_deployment_test(script_dir, port):
-                exit_code = 1
-                cleanup_containers(container_name, skip_on_failure=True)
-                return
-
-        exit_code = run_actual_test(args, script_dir, port, test_file, test_name)
+        exit_code = run_test(args, script_dir, port, test_file, test_name)
 
     except KeyboardInterrupt:
         exit_code = 130

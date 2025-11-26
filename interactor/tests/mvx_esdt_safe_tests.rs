@@ -21,7 +21,6 @@ use multiversx_sc::chain_core::EGLD_000000_TOKEN_IDENTIFIER;
 use multiversx_sc_snippets::imports::*;
 use multiversx_sc_snippets::multiversx_sc_scenario::multiversx_chain_vm::crypto_functions::sha256;
 use rust_interact::mvx_esdt_safe::mvx_esdt_safe_interactor_main::MvxEsdtSafeInteract;
-use serial_test::serial;
 use std::vec;
 use structs::aliases::PaymentsVec;
 use structs::configs::{EsdtSafeConfig, MaxBridgedAmount};
@@ -39,7 +38,6 @@ use structs::OperationHashStatus;
 /// ### EXPECTED
 /// Error 'MAX_GAS_LIMIT_PER_TX_EXCEEDED' log
 #[tokio::test]
-#[serial]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn test_update_invalid_config() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
@@ -68,12 +66,9 @@ async fn test_update_invalid_config() {
 /// ### EXPECTED
 /// Error 'DEPOSIT_OVER_MAX_AMOUNT' log
 #[tokio::test]
-#[serial]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn test_deposit_max_bridged_amount_exceeded() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
-
-    chain_interactor.remove_fee_wrapper(SHARD_1).await;
 
     let config = EsdtSafeConfig {
         max_bridged_token_amounts: ManagedVec::from(vec![MaxBridgedAmount {
@@ -123,12 +118,9 @@ async fn test_deposit_max_bridged_amount_exceeded() {
 /// ### EXPECTED
 /// Error NOTHING_TO_TRANSFER
 #[tokio::test]
-#[serial]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn test_deposit_nothing_to_transfer() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
-
-    chain_interactor.remove_fee_wrapper(SHARD_1).await;
 
     chain_interactor
         .deposit_in_mvx_esdt_safe(
@@ -154,12 +146,9 @@ async fn test_deposit_nothing_to_transfer() {
 /// ### EXPECTED
 /// The deposit is successful
 #[tokio::test]
-#[serial]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn test_deposit_no_transfer_data() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
-
-    chain_interactor.remove_fee_wrapper(SHARD_1).await;
 
     let esdt_token_payment_one = EgldOrEsdtTokenPayment::<StaticApi>::new(
         chain_interactor.state.get_first_fungible_token_identifier(),
@@ -205,12 +194,9 @@ async fn test_deposit_no_transfer_data() {
 /// ### EXPECTED
 /// Error GAS_LIMIT_TOO_HIGH
 #[tokio::test]
-#[serial]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn test_deposit_gas_limit_too_high_no_fee() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
-
-    chain_interactor.remove_fee_wrapper(SHARD_1).await;
 
     let shard = SHARD_1;
     let config = EsdtSafeConfig {
@@ -266,12 +252,9 @@ async fn test_deposit_gas_limit_too_high_no_fee() {
 /// ### EXPECTED
 /// Error BANNED_ENDPOINT_NAME
 #[tokio::test]
-#[serial]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn test_deposit_endpoint_banned_no_fee() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
-
-    chain_interactor.remove_fee_wrapper(SHARD_1).await;
 
     let config = EsdtSafeConfig {
         banned_endpoints: ManagedVec::from(vec![ManagedBuffer::from(TESTING_SC_ENDPOINT)]),
@@ -326,7 +309,6 @@ async fn test_deposit_endpoint_banned_no_fee() {
 /// ### EXPECTED
 /// USER's balance is updated
 #[tokio::test]
-#[serial]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn test_deposit_fee_enabled() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
@@ -383,9 +365,6 @@ async fn test_deposit_fee_enabled() {
     chain_interactor
         .check_balances_after_action(balance_config)
         .await;
-    chain_interactor
-        .update_fee_market_balance_state(Some(fee), payments_vec, SHARD_1)
-        .await;
 }
 
 /// ### TEST
@@ -397,7 +376,6 @@ async fn test_deposit_fee_enabled() {
 /// ### EXPECTED
 /// Error ERR_EMPTY_PAYMENTS
 #[tokio::test]
-#[serial]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn test_deposit_transfer_data_only_with_fee_nothing_to_transfer() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
@@ -438,12 +416,9 @@ async fn test_deposit_transfer_data_only_with_fee_nothing_to_transfer() {
 /// ### EXPECTED
 /// The endpoint is called in the testing smart contract
 #[tokio::test]
-#[serial]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn test_deposit_only_transfer_data_no_fee() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
-
-    chain_interactor.remove_fee_wrapper(SHARD_1).await;
 
     let gas_limit = 1000u64;
     let function = ManagedBuffer::<StaticApi>::from(TESTING_SC_ENDPOINT);
@@ -479,12 +454,9 @@ async fn test_deposit_only_transfer_data_no_fee() {
 /// ### EXPECTED
 /// Error NO_ESDT_SAFE_ADDRESS
 #[tokio::test]
-#[serial]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn test_execute_operation_no_operation_registered() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
-
-    chain_interactor.remove_fee_wrapper(SHARD_1).await;
 
     let payment = OperationEsdtPayment::new(
         chain_interactor.state.get_first_fungible_token_identifier(),
@@ -501,7 +473,7 @@ async fn test_execute_operation_no_operation_registered() {
     let operation = Operation::new(
         ManagedAddress::from_address(
             &chain_interactor
-                .common_state()
+                .state()
                 .current_testing_sc_address()
                 .to_address(),
         ),
@@ -540,12 +512,9 @@ async fn test_execute_operation_no_operation_registered() {
 /// ### EXPECTED
 /// The operation is executed in the testing smart contract
 #[tokio::test]
-#[serial]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn test_execute_operation_with_egld_success_no_fee() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
-
-    chain_interactor.remove_fee_wrapper(SHARD_0).await;
 
     let token = EsdtTokenInfo {
         token_id: EgldOrEsdtTokenIdentifier::egld(),
@@ -575,13 +544,13 @@ async fn test_execute_operation_with_egld_success_no_fee() {
 
     let transfer_data = TransferData::new(gas_limit, function, args);
     let mvx_esdt_safe_address = chain_interactor
-        .common_state
+        .state()
         .get_mvx_esdt_safe_address(SHARD_0)
         .clone();
 
     let operation_data = OperationData::new(
         chain_interactor
-            .common_state()
+            .state()
             .get_and_increment_operation_nonce(&mvx_esdt_safe_address.to_string()),
         ManagedAddress::from_address(&chain_interactor.user_address),
         Some(transfer_data),
@@ -590,7 +559,7 @@ async fn test_execute_operation_with_egld_success_no_fee() {
     let operation = Operation::new(
         ManagedAddress::from_address(
             &chain_interactor
-                .common_state()
+                .state()
                 .current_testing_sc_address()
                 .to_address(),
         ),
@@ -675,12 +644,9 @@ async fn test_execute_operation_with_egld_success_no_fee() {
 /// ### EXPECTED
 /// The operation is executed in the testing smart contract
 #[tokio::test]
-#[serial]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn test_execute_operation_only_transfer_data_no_fee() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
-
-    chain_interactor.remove_fee_wrapper(SHARD_0).await;
 
     let gas_limit = 90_000_000u64;
     let function = ManagedBuffer::<StaticApi>::from(TESTING_SC_ENDPOINT);
@@ -689,13 +655,13 @@ async fn test_execute_operation_only_transfer_data_no_fee() {
 
     let transfer_data = TransferData::new(gas_limit, function, args);
     let mvx_esdt_safe_address = chain_interactor
-        .common_state
+        .state()
         .get_mvx_esdt_safe_address(SHARD_0)
         .clone();
 
     let operation_data = OperationData::new(
         chain_interactor
-            .common_state()
+            .state()
             .get_and_increment_operation_nonce(&mvx_esdt_safe_address.to_string()),
         ManagedAddress::from_address(&chain_interactor.user_address),
         Some(transfer_data),
@@ -704,7 +670,7 @@ async fn test_execute_operation_only_transfer_data_no_fee() {
     let operation = Operation::new(
         ManagedAddress::from_address(
             &chain_interactor
-                .common_state()
+                .state()
                 .current_testing_sc_address()
                 .to_address(),
         ),
@@ -758,12 +724,9 @@ async fn test_execute_operation_only_transfer_data_no_fee() {
 /// ### EXPECTED
 /// The operation is executed in the testing smart contract
 #[tokio::test]
-#[serial]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn test_execute_operation_native_token_success_no_fee() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
-
-    chain_interactor.remove_fee_wrapper(SHARD_1).await;
 
     let token_data = EsdtTokenData {
         amount: BigUint::from(TEN_TOKENS),
@@ -775,7 +738,7 @@ async fn test_execute_operation_native_token_success_no_fee() {
     let payment = OperationEsdtPayment::new(native_token.clone(), 0, token_data);
 
     let mvx_esdt_safe_address = chain_interactor
-        .common_state
+        .state()
         .get_mvx_esdt_safe_address(SHARD_1)
         .clone();
 
@@ -788,7 +751,7 @@ async fn test_execute_operation_native_token_success_no_fee() {
 
     let operation_data = OperationData::new(
         chain_interactor
-            .common_state()
+            .state()
             .get_and_increment_operation_nonce(&mvx_esdt_safe_address.to_string()),
         ManagedAddress::from_address(&chain_interactor.user_address),
         Some(transfer_data),
@@ -797,7 +760,7 @@ async fn test_execute_operation_native_token_success_no_fee() {
     let operation = Operation::new(
         ManagedAddress::from_address(
             &chain_interactor
-                .common_state()
+                .state()
                 .current_testing_sc_address()
                 .to_address(),
         ),
@@ -869,12 +832,9 @@ async fn test_execute_operation_native_token_success_no_fee() {
 /// ### EXPECTED
 /// Transaction is successful and the logs contain the TOKEN_NOT_REGISTERED error
 #[tokio::test]
-#[serial]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn test_execute_operation_sovereign_token_not_registered() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
-
-    chain_interactor.remove_fee_wrapper(SHARD_1).await;
 
     let sov_token_id = chain_interactor.create_random_sovereign_token_id(SHARD_1);
 
@@ -890,13 +850,13 @@ async fn test_execute_operation_sovereign_token_not_registered() {
     );
 
     let mvx_esdt_safe_address = chain_interactor
-        .common_state
+        .state()
         .get_mvx_esdt_safe_address(SHARD_1)
         .clone();
 
     let operation_data = OperationData::new(
         chain_interactor
-            .common_state()
+            .state()
             .get_and_increment_operation_nonce(&mvx_esdt_safe_address.to_string()),
         ManagedAddress::from_address(&chain_interactor.user_address),
         None,
@@ -953,22 +913,15 @@ async fn test_execute_operation_sovereign_token_not_registered() {
 /// ### EXPECTED
 /// The token is burned and the deposited amount is tracked in storage, then the mechanism is switched
 #[tokio::test]
-#[serial]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn test_switch_mechanism_with_deposit() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
 
-    chain_interactor.remove_fee_wrapper(SHARD_0).await;
+    let trusted_token_id = chain_interactor.state().get_trusted_token().token_id;
+    let trusted_token = chain_interactor.state().get_trusted_token();
 
-    let trusted_token = chain_interactor.common_state().get_trusted_token();
-    let trusted_token_id = EgldOrEsdtTokenIdentifier::esdt(trusted_token.as_str());
-    let trusted_token_info = EsdtTokenInfo {
-        token_id: trusted_token_id.clone(),
-        amount: BigUint::from(ONE_HUNDRED_TOKENS),
-        nonce: 0,
-        decimals: 18,
-        token_type: EsdtTokenType::Fungible,
-    };
+    let trusted_token_info =
+        chain_interactor.clone_token_with_amount(trusted_token, BigUint::from(ONE_HUNDRED_TOKENS));
 
     chain_interactor
         .set_token_burn_mechanism(trusted_token_id.clone(), SHARD_0)
@@ -997,10 +950,6 @@ async fn test_switch_mechanism_with_deposit() {
             Some(expected_logs.clone()),
         )
         .await;
-
-    chain_interactor
-        .common_state()
-        .add_to_deposited_amount(deposit_amount.clone());
 
     let balance_config = BalanceCheckConfig::new()
         .shard(SHARD_0)
@@ -1033,10 +982,6 @@ async fn test_switch_mechanism_with_deposit() {
         )
         .await;
 
-    chain_interactor
-        .common_state()
-        .add_to_deposited_amount(deposit_amount.clone());
-
     // Since the mechanism was switched, the trusted token amount was minted in the sc, now we check for both the mint and the new deposit amount
     let balance_config = BalanceCheckConfig::new()
         .shard(SHARD_0)
@@ -1061,22 +1006,15 @@ async fn test_switch_mechanism_with_deposit() {
 /// ### EXPECTED
 /// The operation is executed successfully and the deposited amount is updated in storage
 #[tokio::test]
-#[serial]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn test_execute_operation_with_burn_mechanism() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
 
-    chain_interactor.remove_fee_wrapper(SHARD_0).await;
+    let trusted_token_id = chain_interactor.state().get_trusted_token().token_id;
+    let trusted_token = chain_interactor.state().get_trusted_token();
 
-    let trusted_token = chain_interactor.common_state().get_trusted_token();
-    let trusted_token_id = EgldOrEsdtTokenIdentifier::esdt(trusted_token.as_str());
-    let trusted_token_info = EsdtTokenInfo {
-        token_id: trusted_token_id.clone(),
-        amount: BigUint::from(ONE_HUNDRED_TOKENS),
-        nonce: 0,
-        decimals: 18,
-        token_type: EsdtTokenType::Fungible,
-    };
+    let trusted_token_info =
+        chain_interactor.clone_token_with_amount(trusted_token, BigUint::from(ONE_HUNDRED_TOKENS));
 
     chain_interactor
         .set_token_burn_mechanism(trusted_token_id.clone(), SHARD_0)
@@ -1106,10 +1044,6 @@ async fn test_execute_operation_with_burn_mechanism() {
         )
         .await;
 
-    chain_interactor
-        .common_state()
-        .add_to_deposited_amount(deposit_amount.clone());
-
     let balance_config = BalanceCheckConfig::new()
         .shard(SHARD_0)
         .token(Some(trusted_token_info.clone()))
@@ -1120,10 +1054,8 @@ async fn test_execute_operation_with_burn_mechanism() {
         .check_balances_after_action(balance_config)
         .await;
 
-    let current_deposited_amount = chain_interactor.common_state().get_deposited_amount();
-
     chain_interactor
-        .check_deposited_tokens_amount(trusted_token_id.clone(), SHARD_0, current_deposited_amount)
+        .check_deposited_tokens_amount(trusted_token_id.clone(), SHARD_0, deposit_amount.clone())
         .await;
 
     let operation = chain_interactor
@@ -1157,10 +1089,6 @@ async fn test_execute_operation_with_burn_mechanism() {
         )
         .await;
 
-    chain_interactor
-        .common_state()
-        .subtract_from_deposited_amount(deposit_amount.clone());
-
     let balance_config = BalanceCheckConfig::new()
         .shard(SHARD_0)
         .token(Some(trusted_token_info))
@@ -1172,10 +1100,8 @@ async fn test_execute_operation_with_burn_mechanism() {
         .check_balances_after_action(balance_config)
         .await;
 
-    let current_deposited_amount = chain_interactor.common_state().get_deposited_amount();
-
     chain_interactor
-        .check_deposited_tokens_amount(trusted_token_id.clone(), SHARD_0, current_deposited_amount)
+        .check_deposited_tokens_amount(trusted_token_id.clone(), SHARD_0, BigUint::zero())
         .await;
 }
 
@@ -1188,12 +1114,9 @@ async fn test_execute_operation_with_burn_mechanism() {
 /// ### EXPECTED
 /// The native token is minted and then burned via deposit
 #[tokio::test]
-#[serial]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn test_execute_and_deposit_with_native_token_no_fee() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
-
-    chain_interactor.remove_fee_wrapper(SHARD_1).await;
 
     let token_data = EsdtTokenData {
         amount: BigUint::from(TEN_TOKENS),
@@ -1205,13 +1128,13 @@ async fn test_execute_and_deposit_with_native_token_no_fee() {
     let payment = OperationEsdtPayment::new(native_token.clone(), 0, token_data);
 
     let mvx_esdt_safe_address = chain_interactor
-        .common_state
+        .state()
         .get_mvx_esdt_safe_address(SHARD_1)
         .clone();
 
     let operation_data = OperationData::new(
         chain_interactor
-            .common_state()
+            .state()
             .get_and_increment_operation_nonce(&mvx_esdt_safe_address.to_string()),
         ManagedAddress::from_address(&chain_interactor.user_address),
         None,
@@ -1305,11 +1228,9 @@ async fn test_execute_and_deposit_with_native_token_no_fee() {
         .await;
 }
 #[tokio::test]
-#[serial]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn test_pause_contract() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
-    chain_interactor.remove_fee_wrapper(SHARD_1).await;
 
     chain_interactor.switch_pause_status(true, SHARD_1).await;
 
