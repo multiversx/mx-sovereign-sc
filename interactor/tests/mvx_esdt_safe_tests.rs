@@ -1114,12 +1114,9 @@ async fn test_execute_operation_with_burn_mechanism() {
 /// ### EXPECTED
 /// The native token is minted and then burned via deposit
 #[tokio::test]
-#[serial]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn test_execute_and_deposit_with_native_token_no_fee() {
     let mut chain_interactor = MvxEsdtSafeInteract::new(Config::chain_simulator_config()).await;
-
-    chain_interactor.remove_fee_wrapper(SHARD_1).await;
 
     let token_data = EsdtTokenData {
         amount: BigUint::from(TEN_TOKENS),
@@ -1131,13 +1128,13 @@ async fn test_execute_and_deposit_with_native_token_no_fee() {
     let payment = OperationEsdtPayment::new(native_token.clone(), 0, token_data);
 
     let mvx_esdt_safe_address = chain_interactor
-        .common_state
+        .state()
         .get_mvx_esdt_safe_address(SHARD_1)
         .clone();
 
     let operation_data = OperationData::new(
         chain_interactor
-            .common_state()
+            .state()
             .get_and_increment_operation_nonce(&mvx_esdt_safe_address.to_string()),
         ManagedAddress::from_address(&chain_interactor.user_address),
         None,
