@@ -77,4 +77,11 @@ jobs:
           if [ -n "$CONTAINERS" ]; then
             docker rm -f $CONTAINERS
           fi
+
+      - name: Interactor test summary
+        if: always()
+        run: |
+          if [ -f interactor_test_summary.md ]; then
+            cat interactor_test_summary.md >> "$GITHUB_STEP_SUMMARY"
+          fi
   

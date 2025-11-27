@@ -9,7 +9,6 @@ import random
 import socket
 import subprocess
 import sys
-import tempfile
 import time
 import urllib.error
 import urllib.request
@@ -24,8 +23,8 @@ INTERACTOR_PACKAGE = "rust-interact"
 # Maximum number of test cases to run in parallel
 # Can be overridden via MAX_TEST_CONCURRENCY environment variable
 def get_max_concurrency() -> int:
-    """Get maximum concurrency from environment or default to 2."""
-    return int(os.environ.get("MAX_TEST_CONCURRENCY", "2"))
+    """Get maximum concurrency from environment or default to 4."""
+    return int(os.environ.get("MAX_TEST_CONCURRENCY", "4"))
 
 
 def remove_script_dir_from_path(script_dir: Path) -> str:
@@ -210,7 +209,6 @@ def wait_for_simulator(port: int, container_name: str, max_attempts: int = 30) -
     return False
 
 
-
 def filter_output(output: str) -> str:
     """Filter out duplicate and empty 'successes:' and 'failures:' sections.
 
@@ -296,7 +294,6 @@ def run_parallel_tests(test_cases: List[str], args: List[str]) -> None:
     test_index = 0
 
     try:
-        # Start initial batch of processes up to max_concurrency
         while test_index < len(test_cases) and len(processes) < max_concurrency:
             case_name = test_cases[test_index]
             case_args = list(args)
@@ -323,7 +320,6 @@ def run_parallel_tests(test_cases: List[str], args: List[str]) -> None:
             processes[case_name] = process
             test_index += 1
 
-        # Process completed tests and start new ones as slots become available
         while len(completed_processes) < len(test_cases):
             for case_name, process in list(processes.items()):
                 if case_name in completed_processes:
@@ -338,7 +334,6 @@ def run_parallel_tests(test_cases: List[str], args: List[str]) -> None:
 
                     print_test_output(case_name, output, exit_code)
 
-                    # Start next test if available
                     if test_index < len(test_cases):
                         next_case_name = test_cases[test_index]
                         case_args = list(args)
@@ -368,7 +363,6 @@ def run_parallel_tests(test_cases: List[str], args: List[str]) -> None:
             if len(completed_processes) < len(test_cases):
                 time.sleep(0.1)
 
-        # Calculate summary statistics
         passed_tests = []
         failed_tests = []
 
@@ -379,7 +373,6 @@ def run_parallel_tests(test_cases: List[str], args: List[str]) -> None:
             else:
                 failed_tests.append(case_name)
 
-        # Print summary
         total_tests = len(test_cases)
         passed_count = len(passed_tests)
         failed_count = len(failed_tests)
@@ -395,6 +388,21 @@ def run_parallel_tests(test_cases: List[str], args: List[str]) -> None:
             print(f"\nFailed tests:", file=sys.stderr)
             for test_name in failed_tests:
                 print(f"  - {test_name}", file=sys.stderr)
+
+        if os.environ.get("GITHUB_ACTIONS") == "true":
+            summary_path = os.environ.get("INTERACTOR_TEST_SUMMARY_PATH", "interactor_test_summary.md")
+            try:
+                with open(summary_path, "w", encoding="utf-8") as f:
+                    f.write("## Interactor Test Summary\n\n")
+                    f.write(f"- **Total tests**: {total_tests}\n")
+                    f.write(f"- **Passed**: {passed_count}\n")
+                    f.write(f"- **Failed**: {failed_count}\n\n")
+                    if failed_tests:
+                        f.write("### Failed tests\n")
+                        for test_name in failed_tests:
+                            f.write(f"- `{test_name}`\n")
+            except OSError:
+                pass
 
         overall_exit_code = 0 if failed_count == 0 else 1
         sys.exit(overall_exit_code)
@@ -421,8 +429,6 @@ def start_simulator_container(port: int, container_name: str) -> bool:
         True if simulator started successfully, False otherwise.
     """
     print(f"Starting chain simulator on port {port}...", file=sys.stderr)
-    # Add memory limit (2GB per container) to prevent OOM kills with 2 parallel containers
-    # With 16GB total RAM, 2 containers * 2GB = 4GB, leaving 12GB for system and other processes
     result = subprocess.run(
         ["docker", "run", "-d", "-p", f"{port}:8085", "--memory=2g", "--name", container_name, "multiversx/chainsimulator"],
         stdout=subprocess.DEVNULL,
@@ -504,11 +510,9 @@ def main():
         if test_cases:
             run_parallel_tests(test_cases, args)
 
-    # Check if CHAIN_SIMULATOR_PORT is already set (container started externally)
     port_str = os.environ.get("CHAIN_SIMULATOR_PORT")
     if port_str:
         port = int(port_str)
-        # Check if container already exists on this port
         result = subprocess.run(
             ["docker", "ps", "--filter", f"publish={port}", "--format", "{{.Names}}"],
             capture_output=True,
@@ -518,13 +522,11 @@ def main():
         if result.returncode == 0 and result.stdout.strip():
             container_name = result.stdout.strip().split("\n")[0]
             print(f"Using existing chain simulator container '{container_name}' on port {port}", file=sys.stderr)
-            # Verify it's still running and ready
             if not wait_for_simulator(port, container_name, max_attempts=5):
                 print(f"Warning: Container {container_name} on port {port} may not be ready", file=sys.stderr)
             exit_code = run_test(args, script_dir, port, test_file, test_name)
             sys.exit(exit_code)
 
-    # Otherwise, start a new container as before
     port = find_available_port()
     os.environ["CHAIN_SIMULATOR_PORT"] = str(port)
 
